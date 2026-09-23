@@ -1,0 +1,6 @@
+exit=1
+line=setup-check: facts FAIL hash: README.md does not match docs/setup/facts.sha256
+line=setup-check: facts FAIL hash: line 2 of docs/setup/facts.sha256 has no path
+line=setup-check: facts FAIL hash: docs/facts/x.md does not match docs/setup/facts.sha256
+line=setup-check: facts FAIL listed: docs/facts/problem-statement-brief.md is not in docs/setup/facts.sha256
+line=setup-check: facts FAIL listed: docs/facts/architectural-vision-brief.md is not in docs/setup/facts.sha256
