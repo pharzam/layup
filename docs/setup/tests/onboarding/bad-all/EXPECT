@@ -1,0 +1,4 @@
+exit=1
+line=setup-check: onboarding FAIL marker: docs/onboarding-for-engineers.md holds a ‹ character
+line=setup-check: onboarding FAIL link: docs/onboarding-for-engineers.md has no link to facts/problem-statement-brief.md
+line=setup-check: onboarding FAIL fact: F-0001#99 is not a fact of the F-0001 record

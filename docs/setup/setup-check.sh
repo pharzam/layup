@@ -26,7 +26,7 @@
 
 set -u
 
-CHECKS="pin kit-history facts"
+CHECKS="pin kit-history facts onboarding"
 
 if [ "${1:-}" = --only ]; then
 	[ $# -ge 2 ] && [ -n "$2" ] || { echo "setup-check: --only needs a list of checks" >&2; exit 2; }
@@ -167,6 +167,26 @@ check_facts() {
 		grep -Eq "^\|.*$fa_id" "$ROOT/docs/facts/README.md" 2>/dev/null \
 			|| fail facts "index: docs/facts/README.md has no row for $fa_id"
 	done
+}
+
+# --- onboarding (bound to the PSB) ---------------------------------------------
+# The first door has no unfilled marker, links the PSB file, and cites only facts
+# that the F-0001 record holds. A section citation such as `F-0001 §6` is not
+# checked; the pattern is `F-0001#<digits>`.
+check_onboarding() {
+	on_doc="$ROOT/docs/onboarding-for-engineers.md"
+	if [ ! -f "$on_doc" ]; then fail onboarding "missing: docs/onboarding-for-engineers.md is absent"; return; fi
+	grep -q '‹' "$on_doc" && fail onboarding "marker: docs/onboarding-for-engineers.md holds a ‹ character"
+	grep -Fq '](facts/problem-statement-brief.md)' "$on_doc" \
+		|| fail onboarding "link: docs/onboarding-for-engineers.md has no link to facts/problem-statement-brief.md"
+	on_rec=$(ls "$ROOT"/docs/facts/F-0001-*.md 2>/dev/null | head -1)
+	grep -Eo 'F-0001#[0-9]+' "$on_doc" | sort -u > "$tmpdir/cited"
+	while IFS= read -r on_id; do
+		on_n=${on_id#F-0001#}
+		if [ -z "$on_rec" ] || ! grep -Eq "^0*$on_n\. " "$on_rec"; then
+			fail onboarding "fact: $on_id is not a fact of the F-0001 record"
+		fi
+	done < "$tmpdir/cited"
 }
 
 for check_name in $CHECKS; do
