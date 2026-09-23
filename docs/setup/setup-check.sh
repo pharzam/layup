@@ -239,6 +239,7 @@ check_guardrails() {
 		gr_i=$((gr_i + 1))
 	done
 	while IFS="$(printf '\t')" read -r gr_n gr_text; do
+		case "$gr_n" in [1-9]) ;; *) fail guardrails "entry: Inv-$gr_n is not one of Inv-1 to Inv-9"; continue ;; esac
 		printf '%s' "$gr_text" | grep -Fq "F-0001#$gr_n\`" || fail guardrails "citation: Inv-$gr_n does not cite F-0001#$gr_n"
 		gr_check=$(printf '%s' "$gr_text" | tr '\037' '\n' | sed -n 's/.*Check: //p' | head -1 | sed 's/[[:space:]]*$//')
 		case "$gr_check" in
@@ -246,7 +247,7 @@ check_guardrails() {
 		*" ("*")")
 			gr_path=${gr_check%% (*}
 			gr_gate=${gr_check##* (}; gr_gate=${gr_gate%)}
-			[ -e "$ROOT/$gr_path" ] || fail guardrails "check: Inv-$gr_n names $gr_path, which does not exist"
+			[ -n "$gr_path" ] && [ -f "$ROOT/$gr_path" ] || fail guardrails "check: Inv-$gr_n names \"$gr_path\", which is not a file"
 			case "$gr_gate" in hook|ci:?*) ;; *) fail guardrails "check: Inv-$gr_n gate \"$gr_gate\" is not hook or ci:<job>" ;; esac ;;
 		*) fail guardrails "check: Inv-$gr_n has no valid Check: value (\"$gr_check\")" ;;
 		esac

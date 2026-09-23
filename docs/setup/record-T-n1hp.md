@@ -90,4 +90,4 @@ to an Armature rule.
 | D-01 | Worktrees are under `../layup-worktrees/`, outside the repository. | The worktree-directory value of the kit is not yet set; its evidence is decided in `T-nfh8`. | `T-nfh8` |
 | D-02 | `setup-check.sh` and its self-test `tests/run.sh` are not yet run by the `pre-commit` hook or by CI. | CI wiring is `T-q344`; no child names the hook. | `T-q344` |
 | D-03 | The PSB was cited as `F-0001` before the facts document existed. | Facts were stored by a later child. | Ended by `T-fvwj` ([#4](https://github.com/pharzam/layup/issues/4)): [`F-0001`](../facts/F-0001-layup-problem-statement-brief.md). |
-| D-04 | PR #18 was merged while 3 of its 8 CI jobs were pending; all 8 passed after the merge. | Human error: the merge did not wait. Lesson in `guardrails.md` §2. | `T-afa5` ([#12](https://github.com/pharzam/layup/issues/12)) makes the jobs required. |
+| D-04 | PR #18 was merged while `gh pr checks` showed 3 of its 8 CI jobs pending; all 8 passed. | Human error: the merge did not wait. Lesson in `guardrails.md` §2. | `T-afa5` ([#12](https://github.com/pharzam/layup/issues/12)) makes the jobs required. |
