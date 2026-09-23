@@ -1,0 +1,8 @@
+id	rule	line	excerpt	question
+Q-001	G1	0	—	Which technology stack does the product use (languages, frameworks, tools)?
+Q-002	G4	3	The system must be fast for every user.	Which number or threshold does "fast" stand for here?
+Q-003	G2	9	| Lead time | half (start value) | |	How is this metric measured? The row gives no measurement method.
+Q-004	G5	9	| Lead time | half (start value) | |	Which start value does the pilot use for this target, and who sets it?
+Q-005	G2	10	| Cost | lower | Not measured. |	How is this metric measured? The row gives no measurement method.
+Q-006	G3	12	The SLA is agreed with the PMO.	What does "SLA" mean? The terms table does not define it.
+Q-007	G3	12	The SLA is agreed with the PMO.	What does "PMO" mean? The terms table does not define it.

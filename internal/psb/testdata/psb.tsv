@@ -1,0 +1,20 @@
+id	rule	line	excerpt	question
+Q-001	G1	0	—	Which technology stack does the product use (languages, frameworks, tools)?
+Q-002	G3	1	# PROBLEM STATEMENT BRIEF	What does "BRIEF" mean? The terms table does not define it.
+Q-003	G3	28	Modern engineering organizations are shifting from isolated developer copilots t	What does "QA" mean? The terms table does not define it.
+Q-004	G3	49	* **Symptom:** Code delivered across sprints or by different agent sessions exhi	What does "API" mean? The terms table does not define it.
+Q-005	G3	84	| **Idea Owners & Product (PO/PM)** | Requirements stall in discovery loops; int	What does "PO" mean? The terms table does not define it.
+Q-006	G3	84	| **Idea Owners & Product (PO/PM)** | Requirements stall in discovery loops; int	What does "PM" mean? The terms table does not define it.
+Q-007	G3	91	## 5. Cost of Inaction (COI)	What does "COI" mean? The terms table does not define it.
+Q-008	G3	121	* Modifying base LLM weights or training custom foundation models.	What does "LLM" mean? The terms table does not define it.
+Q-009	G3	127	Humans can monitor a project at any time. Monitoring is not input. A human who r	What does "PR" mean? The terms table does not define it.
+Q-010	G3	143	6. **A deterministic check is preferred to an LLM judgement** where a rule can b	What does "R5" mean? The terms table does not define it.
+Q-011	G5	152	The criteria have two layers. Layer 1 holds the checks that must pass. They come	Which start value does the pilot use for this target, and who sets it?
+Q-012	G5	176	| **Delivery Lead Time** | Not measured. | Median $\le 50\%$ *(start value)* of 	Which start value does the pilot use for this target, and who sets it?
+Q-013	G5	177	| **First-Review Acceptance** | Not measured. | The idea owner accepts $\ge 90\%	Which start value does the pilot use for this target, and who sets it?
+Q-014	G5	178	| **Task Intervention Rate** | Not measured per task. Estimate per question: hum	Which start value does the pilot use for this target, and who sets it?
+Q-015	G5	179	| **Clarification Turnaround (autonomous resolution)** | 4 to 48 hours (human as	Which start value does the pilot use for this target, and who sets it?
+Q-016	G5	180	| **Reversal Rate** | Not measured. | $< 5\%$ *(start value)* of agent answers a	Which start value does the pilot use for this target, and who sets it?
+Q-017	G5	181	| **Stall Rate and Resolution** | Not measured. | $\le 5\%$ *(start value)* of t	Which start value does the pilot use for this target, and who sets it?
+Q-018	G5	182	| **Cost per Requirement** | Not measured. | Median cost per requirement $\le$ t	Which start value does the pilot use for this target, and who sets it?
+Q-019	G5	183	| **Early Question Share** | Gaps are found during delivery. | $\ge 80\%$ *(star	Which start value does the pilot use for this target, and who sets it?
