@@ -111,9 +111,10 @@ check_kit_history() {
 
 # --- facts (raw facts, docs/facts/README.md) ----------------------------------
 # A raw facts file is evidence: it must match the hash recorded when it was
-# collected. Each numbered fact of the F-0001 record must be a byte-exact
-# substring of the PSB file (the list number `N. ` removed), and the record must
-# hold facts 1 to 39 each exactly once. The index lists F-0001 and F-0002.
+# collected. Each numbered fact of a record over the PSB file — F-0001 (facts 1
+# to 39) and F-0003 (facts 1 to 75) — must be a byte-exact substring of that file
+# (the list number `N. ` removed), and each record holds its facts each exactly
+# once. The index lists F-0001, F-0002 and F-0003.
 sha256_of() {
 	if command -v sha256sum >/dev/null 2>&1; then sha256sum "$1" | cut -d' ' -f1
 	else shasum -a 256 "$1" | cut -d' ' -f1; fi
@@ -140,30 +141,34 @@ check_facts() {
 		done
 	fi
 	fa_src="$ROOT/docs/facts/problem-statement-brief.md"
-	fa_rec=$(ls "$ROOT"/docs/facts/F-0001-*.md 2>/dev/null)
-	if [ -z "$fa_rec" ] || [ "$(printf '%s\n' "$fa_rec" | grep -c .)" != 1 ]; then
-		fail facts "record: expected one docs/facts/F-0001-*.md"
-	elif [ ! -f "$fa_src" ]; then
-		fail facts "source: docs/facts/problem-statement-brief.md is absent"
-	else
+	# Each numbered record over the PSB file, with its fact count.
+	for fa_spec in F-0001:39 F-0003:75; do
+		fa_id=${fa_spec%%:*}
+		fa_max=${fa_spec#*:}
+		fa_rec=$(ls "$ROOT"/docs/facts/"$fa_id"-*.md 2>/dev/null)
+		if [ -z "$fa_rec" ] || [ "$(printf '%s\n' "$fa_rec" | grep -c .)" != 1 ]; then
+			fail facts "record: expected one docs/facts/$fa_id-*.md"; continue
+		elif [ ! -f "$fa_src" ]; then
+			fail facts "source: docs/facts/problem-statement-brief.md is absent"; continue
+		fi
 		# Numbers are read as integers, so `01.` and `1.` are the same fact.
 		grep -E '^[0-9]+\. ' "$fa_rec" | sed -E 's/^0*([0-9])/\1/' > "$tmpdir/facts" || true
 		while IFS= read -r fa_line; do
 			fa_n=${fa_line%%. *}
 			fa_text=${fa_line#*. }
-			if [ -z "$(printf '%s' "$fa_text" | tr -d ' ')" ]; then fail facts "verbatim: F-0001 fact $fa_n is empty"; continue; fi
-			if [ "$fa_n" -lt 1 ] || [ "$fa_n" -gt 39 ]; then fail facts "numbering: F-0001 fact $fa_n is outside 1..39"; fi
+			if [ -z "$(printf '%s' "$fa_text" | tr -d ' ')" ]; then fail facts "verbatim: $fa_id fact $fa_n is empty"; continue; fi
+			if [ "$fa_n" -lt 1 ] || [ "$fa_n" -gt "$fa_max" ]; then fail facts "numbering: $fa_id fact $fa_n is outside 1..$fa_max"; fi
 			grep -Fq -- "$fa_text" "$fa_src" \
-				|| fail facts "verbatim: F-0001 fact $fa_n is not a byte-exact substring of docs/facts/problem-statement-brief.md"
+				|| fail facts "verbatim: $fa_id fact $fa_n is not a byte-exact substring of docs/facts/problem-statement-brief.md"
 		done < "$tmpdir/facts"
-		fa_distinct=$(sed 's/\..*//' "$tmpdir/facts" | awk '$1 >= 1 && $1 <= 39' | sort -un | grep -c .)
-		[ "$fa_distinct" = 39 ] || fail facts "numbering: F-0001 holds $fa_distinct distinct fact numbers in 1..39, expected 39"
+		fa_distinct=$(sed 's/\..*//' "$tmpdir/facts" | awk -v m="$fa_max" '$1 >= 1 && $1 <= m' | sort -un | grep -c .)
+		[ "$fa_distinct" = "$fa_max" ] || fail facts "numbering: $fa_id holds $fa_distinct distinct fact numbers in 1..$fa_max, expected $fa_max"
 		sed 's/\..*//' "$tmpdir/facts" | sort -n | uniq -c | while read -r fa_c fa_num; do
-			[ "$fa_c" = 1 ] || printf 'setup-check: facts FAIL numbering: F-0001 fact %s appears %s times\n' "$fa_num" "$fa_c"
+			[ "$fa_c" = 1 ] || printf 'setup-check: facts FAIL numbering: %s fact %s appears %s times\n' "$fa_id" "$fa_num" "$fa_c"
 		done > "$tmpdir/repeats"
 		if [ -s "$tmpdir/repeats" ]; then cat "$tmpdir/repeats"; cur_fail=1; failed=1; fi
-	fi
-	for fa_id in F-0001 F-0002; do
+	done
+	for fa_id in F-0001 F-0002 F-0003; do
 		grep -Eq "^\|.*$fa_id" "$ROOT/docs/facts/README.md" 2>/dev/null \
 			|| fail facts "index: docs/facts/README.md has no row for $fa_id"
 	done
