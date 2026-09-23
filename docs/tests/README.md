@@ -17,19 +17,6 @@ stack's own layout); Armature ships no product tests — only these patterns for
 adopter to fill. The discipline self-tests are the exceptions because their subject
 — the kit's linters — ships with the kit, so their tests can too.
 
-> **How to adapt this section.** Do three things, then delete this note.
-> 1. **Fill the placeholders.** Replace every `‹…›` command in
->    [`test-levels.md`](test-levels.md) with your stack's real command
->    (`‹unit test command›`, `‹integration test command›`, and so on). That file
->    is the one place the commands are defined; the templates inherit them.
-> 2. **Wire enforcement.** Fill the matching `‹…›` steps in the
->    [`pre-commit` hook](../../.githooks/pre-commit) and the [CI templates](../ci/),
->    including the `‹security scanner›` step — see
->    [Enforcement](#enforcement-hook--ci) below.
-> 3. **Adopt the patterns.** Copy a `template-*.md` pattern for each new test, and
->    add a [traceability](traceability-template.md) row so every test names what it
->    proves. Delete a document you genuinely do not use.
-
 ## In plain terms
 
 > This folder tells you how to test on this project: what the four kinds of test
@@ -116,7 +103,7 @@ wired, cheap-first, into two layers:
   then integration, and optionally an end-to-end smoke subset) and a fast security
   step before a commit is recorded.
 - The [CI templates](../ci/) run the whole ladder plus the long-running checks —
-  E2E and the full [security scan](security-checklist.md) behind `‹security scanner›`.
+  E2E and the full [security scan](security-checklist.md) behind `govulncheck v1.8.0, go vet, and gitleaks`.
 
 Both are inert until you fill the `‹…›` steps for your stack. This mirrors how the
 [ADR and PRD linters](../engineering-discipline.md#testing) are already wired.

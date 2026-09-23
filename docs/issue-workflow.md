@@ -11,14 +11,6 @@ criteria"; this document says how those tickets are opened, scoped, and linked.
 > ordered, test-first steps, and the plan is checked once before building begins.
 > Decisions are written down where the next person — human or agent — can find them.
 
-> **How to adapt this file.** This is a generic policy. The kit is **forge-free**,
-> so an *issue* here means a tracked ticket in whatever forge you use (or none),
-> and forge-specific issue/PR templates ship **inert** under [`templates/`](templates/) —
-> copy them into place only when you adopt that forge. Replace each `‹…›` marker
-> (your `‹task-ID scheme›`, your forge's linking keywords if they differ), delete
-> a rule you consciously reject — and record why in an [ADR](adr/) — then delete
-> this note. The decision to work this way is [ADR-0003](adr/0003-adopt-issue-first-workflow.md).
-
 These rules bind **every operator — each human and each LLM coding agent.** They
 are numbered R1–R13 so a review or a commit can cite one by number.
 
@@ -35,7 +27,7 @@ plan, and the decisions live; the code is the answer to it.
 | `Closes #N` (also `Fixes #N`, `Resolves #N`) | Auto-closes issue `N` when the PR merges — use it when the PR fully satisfies the issue. |
 | `Refs #N` (also `Part of #N`) | Links a parent, meta, or multi-part issue **without** closing it. |
 
-**Two namespaces, keep both.** The kit already puts a task ID (`‹task-ID scheme›`)
+**Two namespaces, keep both.** The kit already puts a task ID (task-ID scheme (`T-` plus four random characters from `0-9 a-z` without `i l o u`))
 in the **commit subject** — see [Commit messages](engineering-discipline.md#commit-messages).
 The **issue reference** (`Closes`/`Refs #N`) lives in the **PR body**. The task ID
 tracks the unit of work locally; the issue number tracks it in the forge. They
@@ -248,6 +240,6 @@ kit already ships the green rows.
 | Decision-driving text admits one reading, not two | R13, [One reading, not two](engineering-discipline.md#one-reading-not-two) | — | — | — | Written rule — reviewer judgement; ambiguity is semantic (like independence and materiality), and no deterministic check settles it |
 
 This layers **on top of** the [`tasks/`](tasks/) backlog, it does not replace it:
-the issue is the outward ticket, the `‹task-ID scheme›` card in
+the issue is the outward ticket, the task-ID scheme (`T-` plus four random characters from `0-9 a-z` without `i l o u`) card in
 [`tasks/backlog.md`](tasks/backlog.md) is the local detail. The gate gains an
 implicit **step 0 — open an issue** before step 1 (Isolate).

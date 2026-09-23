@@ -116,19 +116,19 @@ if [ -f docs/links/link-lint.sh ]; then
 	sh docs/links/link-lint.sh
 fi
 
-# 2. Lint / format — ‹lint command, e.g. a formatter --check plus a linter›
-# ‹your-linter› || exit 1
+# 2. Lint / format — gofmt and go vet (not active: no Go code yet; Step 2 turns it on)
+# test -z "$(gofmt -l .)" && go vet ./... || exit 1
 
 # 3. Tests, cheap → expensive — run the fast levels here; leave the slow ones to
 #    CI. Fill each ‹…› with your stack's command (see docs/tests/test-levels.md).
-# ‹unit test command›         || exit 1   # fastest — run on every commit
-# ‹integration test command›  || exit 1   # must be the fast subset; the full set in CI
-# ‹end-to-end test command›   || exit 1   # usually CI only — enable a smoke subset if cheap
+# go test ./...         || exit 1   # fastest — run on every commit
+# go test -tags=integration ./...  || exit 1   # must be the fast subset; the full set in CI
+# go test -tags=e2e ./...   || exit 1   # usually CI only — enable a smoke subset if cheap
 
 # 4. Security scan (staged changes) — the fast subset here: a secret scan, plus a
 #    static-analysis subset where it stays fast; the full set (dependency scan,
-#    static analysis) runs in CI. ‹security test command› drives your
-#    ‹security scanner›. See docs/tests/security-checklist.md.
-# ‹security test command› || exit 1
+#    static analysis) runs in CI. go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./... && go vet ./... && gitleaks git --redact drives your
+#    govulncheck v1.8.0, go vet, and gitleaks. See docs/tests/security-checklist.md.
+# go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./... && go vet ./... && gitleaks git --redact || exit 1
 
 exit 0

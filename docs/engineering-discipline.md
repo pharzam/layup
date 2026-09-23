@@ -60,15 +60,15 @@ input; the fourth removes the kit's own history.
 **2. Replace the `‹…›` markers.** These are the per-project values with no file
 of their own:
 
-- `‹test runner›` — how tests run in your stack (the command and any rule, for
+- `go test` — how tests run in your stack (the command and any rule, for
   example "no external test framework"); the per-level commands
-  (`‹unit test command›`, `‹integration test command›`, …) are defined in
+  (`go test ./...`, `go test -tags=integration ./...`, …) are defined in
   [`tests/test-levels.md`](tests/test-levels.md).
-- `‹evidence store›` — where you commit run outputs, logs, or results (for
+- `runs/` — where you commit run outputs, logs, or results (for
   example `runs/` or `artifacts/`).
-- `‹task-ID scheme›` — how you tag a task (for example `T-` plus four random
+- task-ID scheme (`T-` plus four random characters from `0-9 a-z` without `i l o u`) — how you tag a task (for example `T-` plus four random
   characters).
-- `‹worktree dir›` — your per-task isolation directory (for example `.worktree/`).
+- `.worktree` — your per-task isolation directory (for example `.worktree/`).
 
 **3. Turn on enforcement.** The gate below is only as real as what enforces it.
 Wire in the two enforcement layers so a violation is caught automatically, not by
@@ -82,10 +82,10 @@ memory:
   [commit format](#commit-messages), and the `pre-commit` hook runs the three
   repo-file [discipline linters](#testing) — ADR, PRD and link — and the discipline
   self-tests, plus the fast gate you fill in. See [Git hooks](#git-hooks).
-- **Fill the hook and CI `‹…›` steps** for your stack — `‹lint›`, the test-level
+- **Fill the hook and CI `‹…›` steps** for your stack — `test -z "$(gofmt -l .)" && go vet ./...`, the test-level
   commands from [`tests/test-levels.md`](tests/test-levels.md)
-  (`‹unit test command›`, `‹integration test command›`, `‹end-to-end test command›`),
-  and the `‹security scanner›` scan — then, if you use GitHub or GitLab, **activate
+  (`go test ./...`, `go test -tags=integration ./...`, `go test -tags=e2e ./...`),
+  and the `govulncheck v1.8.0, go vet, and gitleaks` scan — then, if you use GitHub or GitLab, **activate
   CI** by copying
   the matching template from [`docs/ci/`](ci/) into place — see
   [Continuous integration](#continuous-integration-optional). CI is optional but
@@ -120,7 +120,7 @@ on the issue
 [solution-selection standard](#solution-selection) when you select the approach,
 the plan, the tests, or another technical part of the task.
 
-1. **Isolate.** Do the work in a per-task git worktree under `‹worktree dir›/<task>`,
+1. **Isolate.** Do the work in a per-task git worktree under `.worktree/<task>`,
    branched off `origin/main` — see [Starting a task](#starting-a-task). Never
    work on the operator's main worktree.
 
@@ -151,7 +151,7 @@ the plan, the tests, or another technical part of the task.
    [clause-by-clause semantic pass](#reviewing-for-semantic-agreement).
 
 6. **Be honest, keep evidence.** State outcomes plainly and commit run evidence
-   under `‹evidence store›` — see [Honesty and evidence](#honesty-and-evidence).
+   under `runs/` — see [Honesty and evidence](#honesty-and-evidence).
    When that evidence comes from a costly action, review the producing code
    *first* — see
    [Review before a costly or irreversible action](#review-before-a-costly-or-irreversible-action).
@@ -215,8 +215,8 @@ identical agents is none — two agents given the same prompt, context and model
 "one reviewer run twice, and they share every blind spot" — so a panel's members
 differ in domain, and which domains sit on one is a `‹…›` marker. A panel costs model
 calls: convene one only where the challenge earns it, under an iteration bound, and
-required only for the architecturally-significant or novel decisions
-`‹your project treats as panel-worthy›` — never on every task. This is recorded in
+required only for the architecturally-significant or novel decisions —
+in this project, each decision that becomes a new ADR — never on every task. This is recorded in
 [ADR-0006](adr/0006-convene-a-panel-to-generate-options.md).
 
 ## Model tiers
@@ -229,8 +229,8 @@ the work is known to need a model; it never overturns the preference, and a
 deterministic check still outranks a model of any tier.
 
 Where a model is warranted, route by **tier**. Which concrete models fill each tier
-is the adopter's to set — `‹name your reasoning-tier models›` and
-`‹name your execution-tier models›`; the kit names none.
+is the adopter's to set — `Claude Opus 5.5 and Claude Fable 5.1` and
+`Claude Sonnet 5 and Claude Haiku 4.5`; the kit names none.
 
 | Tier | Class of model | Owns the gate steps that … |
 | ---- | -------------- | -------------------------- |
@@ -275,8 +275,7 @@ the branch after it except a fix to a finding. Then run rounds of independent
 blind reviews on that commit. Each reviewer is fresh — it does not see your
 reasoning — and each round applies a different lens:
 
-- correctness and failure modes — `‹name the failure modes that hurt you most,
-  for example data leakage, race conditions, off-by-one, unhandled errors›`,
+- correctness and failure modes — for this project: a value that comes from a guess, a check that is not active or cannot fail, a claim in a document that the tree makes false, and shell portability (see `guardrails.md` §1.1 and §2),
 - guardrails and acceptance criteria,
 - clean and simple,
 - adversarial bug-hunt,
@@ -538,7 +537,7 @@ correctness of the result that the action exists to produce.
 
 State outcomes plainly. Report failing tests, skipped steps, and inconclusive or
 below-the-bar results as they are — never hidden, never with the goalposts moved.
-Commit the run evidence under `‹evidence store›` so a reader can check the claim
+Commit the run evidence under `runs/` so a reader can check the claim
 against the data that produced it.
 
 ## Architecture Decision Records
@@ -648,8 +647,7 @@ top, in a short **"In plain terms"** block.
 
 The rule for that block: **no unexplained jargon**. If a sentence needs the
 [`glossary`](glossary.md) to parse, rewrite it. State the consequence in units the
-reader already knows — `‹for example money in currency, time in hours, counts such
-as "about 996 times in 1,000" rather than a percentage of a percentage›`. The
+reader already knows — tokens, seconds, and "N of M tasks" rather than a percentage of a percentage — the units of PSB §7 (`F-0001 §7`). The
 block states the consequence, not the derivation. The derivation stays in the
 body, where it belongs.
 
@@ -723,7 +721,7 @@ _why_ is not obvious from the summary line alone.
 When a commit implements or closes a [backlog](tasks/backlog.md) task, its ID goes
 immediately after the colon, before the rest of the description:
 `<type>: <ID> <description>`, for example `feat(store): <ID> add SQLite datastore`.
-Give each task a stable ID under your `‹task-ID scheme›`. Commits with no task keep
+Give each task a stable ID under your task-ID scheme (`T-` plus four random characters from `0-9 a-z` without `i l o u`). Commits with no task keep
 the plain `<type>: <description>` form.
 
 ## Testing
@@ -735,7 +733,7 @@ shape allows it. It is the default way of working, not an afterthought bolted on
 once the code already "works". A bug fix's test must fail against the old code and
 pass against the fix — otherwise it is not proof that the bug is gone.
 
-Tests run through `‹test runner›`.
+Tests run through `go test`.
 
 The full testing conventions — the levels, a pattern to write each kind, the
 security, scaling, and Definition-of-Done (DoD) checklists, and the traceability
@@ -749,9 +747,9 @@ tests, defined in [`tests/test-levels.md`](tests/test-levels.md). The cheap leve
 — unit and integration, with an optional end-to-end smoke subset — run in the
 [`pre-commit` hook](#git-hooks); the whole ladder runs in
 [CI](#continuous-integration-optional). Each level has its own command placeholder
-— `‹unit test command›`, `‹integration test command›`, `‹end-to-end test command›`,
-and `‹security test command›` for the parallel security track — with
-`‹test timeout›` bounding a hanging test and `‹test directory›` naming where the
+— `go test ./...`, `go test -tags=integration ./...`, `go test -tags=e2e ./...`,
+and `go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./... && go vet ./... && gitleaks git --redact` for the parallel security track — with
+`-timeout 10m` bounding a hanging test and `*_test.go beside the code; root tests/ for end-to-end fixtures` naming where the
 product tests live (the repo-root [`tests/`](../tests/) drop-in).
 
 **Coverage, stated as rules:**
@@ -839,8 +837,8 @@ It pins `core.hooksPath` to the relative `.githooks`. Two hooks ship with the ki
   the three repo-file
   [discipline linters](#testing) — ADR, PRD and link —
   and their fixture self-tests,
-  then the `‹lint›`, the fast [test levels](#testing) (`‹unit test command›`, then
-  `‹integration test command›`), and the `‹security scanner›` step you fill in for
+  then the `test -z "$(gofmt -l .)" && go vet ./...`, the fast [test levels](#testing) (`go test ./...`, then
+  `go test -tags=integration ./...`), and the `govulncheck v1.8.0, go vet, and gitleaks` step you fill in for
   your stack. Keep it cheap-first; the full suite — the end-to-end level and the
   full security scan — belongs in [CI](#continuous-integration-optional).
 
@@ -901,9 +899,9 @@ If you are an agent, every task starts on its own feature branch, checked out in
 its own git worktree — never directly on the operator's main worktree (whatever
 branch it happened to have checked out), and never as uncommitted changes that
 sit on top of someone else's in-progress work. Create the worktree and branch
-together under the repo-local `‹worktree dir›` directory (gitignored), branched
+together under the repo-local `.worktree` directory (gitignored), branched
 off the latest `origin/main`, for example
-`git worktree add ‹worktree dir›/<slug> -b <slug> origin/main`. Do the work
+`git worktree add .worktree/<slug> -b <slug> origin/main`. Do the work
 there, and remove the worktree (`git worktree remove`) once it is merged or
 abandoned. This keeps the main worktree clean and available at all times, and
 lets many tasks (including ones run by agents) proceed at the same time without
@@ -939,7 +937,7 @@ names and leaves the review pointing at a commit that no longer exists.
 
 Before the PR lands, tick the ticket's acceptance-criteria boxes and write the
 task's verdict — the plain statement of what the work found or delivered, backed
-by the evidence under `‹evidence store›`.
+by the evidence under `runs/`.
 
 The **same PR that lands a task's work moves it from
 [`tasks/backlog.md`](tasks/backlog.md) to
@@ -969,8 +967,7 @@ no expectation but are still summed, so the `Total` is a true total. The figures
 are **recorded, not budgeted** ([ADR-0007](adr/0007-record-task-resource-use.md)):
 they carry no approval number and no cap, and an overrun is not a finding.
 
-Copy this shape. Fill each cell from `‹how the harness reports model, effort,
-tokens and elapsed time›`; write `not reported` where it cannot (never a guess),
+Copy this shape. Fill each cell from the harness task report (Claude Code gives the token count and the duration of each subagent run; it does not report the tokens of the author session, so that cell is `not reported`); write `not reported` where it cannot (never a guess),
 and `not applicable` in a human-worked part's model, effort and tokens columns.
 `Elapsed` is wall-clock, so model and human rows compare.
 

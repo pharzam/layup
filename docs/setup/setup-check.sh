@@ -257,7 +257,9 @@ check_guardrails() {
 # --- markers (Invariants 4 and 5) ----------------------------------------------
 # A marker is `‹` plus one or more characters other than `›`, then `›`; one that
 # does not close on its line runs to the line end (its key is that first line).
-# The literal `‹…›` names the convention and is not a marker. Each marker in a
+# The literal `‹…›` names the convention and is not a marker, and neither is a
+# `‹` followed by a backtick (the character named in a code span, as in "search
+# for `‹`"). Each marker in a
 # git-tracked file must be exempt, allowed as a record-shape example, or listed in
 # docs/setup/open-gaps.tsv (`path<TAB>marker<TAB>question`); each listed marker
 # must still occur. Key: path plus exact marker text; equal markers in one file
@@ -303,7 +305,7 @@ check_markers() {
 				j = index(rest, "›")
 				if (j > 0) { m = substr(rest, 1, j + length("›") - 1); line = substr(rest, j + length("›")) }
 				else { m = rest; line = "" }
-				if (m != "‹…›") print f "\t" m
+				if (m != "‹…›" && substr(m, length("‹") + 1, 1) != "`") print f "\t" m
 			}
 		}' "$ROOT/$mk_f"
 	done | sort -u > "$tmpdir/mk_found"

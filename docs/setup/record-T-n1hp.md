@@ -51,6 +51,9 @@ child task adds its own rows in the same PR that lands its work.
 | 20 | `T-xgz4` worktree created | 12:50:28 | shell `date` |
 | 21 | `T-xgz4` merged (PR #18), after 3 review rounds | 13:22:02 | GitHub API `mergedAt` |
 | 22 | `T-7ndb` worktree created | 13:22:05 | shell `date` |
+| 23 | `T-7ndb` merged (PR #19), after 2 review rounds | 13:48:38 | GitHub API `mergedAt` |
+| 24 | `T-nfh8` worktree created | 13:48:41 | shell `date` |
+| 25 | Operator answered one batch of 8 setup questions (O-1 to O-8) | about 13:50 | comment on [#8](https://github.com/pharzam/layup/issues/8) |
 
 ## Values
 
@@ -63,6 +66,17 @@ child task adds its own rows in the same PR that lands its work.
 | V-05 | `date=2026-09-23` | [`armature.pin`](armature.pin) | timeline row 2 | recorded | `T-r7zg` |
 | V-06 | PSB SHA-256 `3e96862b2578e74f42bfd24929926d0c64496f1a9a51f78dc8c6ca9ecf394ab8` | [`facts.sha256`](facts.sha256) | `shasum -a 256` of the approved Revision 6 file in the local research repository (`4cdf9d0`, no remote) | active | `T-fvwj` |
 | V-07 | Vision brief SHA-256 `b1354c71b3d686331a2cfd1f37a175f5a8ec44fb8dcd863e2cac0138d2d9f625` | [`facts.sha256`](facts.sha256) | same command, same repository | active | `T-fvwj` |
+| V-08 | default branch `main`; owner `pharzam`; repo `layup` | `docs/ci/README.md` | `gh repo view pharzam/layup --json defaultBranchRef` | recorded | `T-nfh8` |
+| V-09 | worktree directory `.worktree` (gitignored) | `AGENTS.md`, `engineering-discipline.md`, `.gitignore` | O-1, Operator decision on [#8](https://github.com/pharzam/layup/issues/8) | recorded | `T-nfh8` |
+| V-10 | evidence store `runs/` | `engineering-discipline.md` | O-2, Operator decision on [#8](https://github.com/pharzam/layup/issues/8) | not active | `T-nfh8` |
+| V-11 | reasoning tier: Claude Opus 5.5, Claude Fable 5.1; execution tier: Claude Sonnet 5, Claude Haiku 4.5 | `engineering-discipline.md` | O-3, Operator decision on [#8](https://github.com/pharzam/layup/issues/8) | recorded | `T-nfh8` |
+| V-12 | panel-worthy: each new ADR | `engineering-discipline.md` | O-4, Operator decision on [#8](https://github.com/pharzam/layup/issues/8) | recorded | `T-nfh8` |
+| V-13 | test runner `go test`; unit `go test ./...`; integration `go test -tags=integration ./...`; e2e `go test -tags=e2e ./...`; test directory `*_test.go` beside the code, root `tests/` for e2e fixtures | `docs/tests/*`, `.githooks/pre-commit`, `tests/README.md`, `docs/prd/README.md` | O-5, Operator decision on [#8](https://github.com/pharzam/layup/issues/8); `go help test`, `go help buildconstraint` (build tags) | not active | `T-nfh8` |
+| V-14 | lint `test -z "$(gofmt -l .)" && go vet ./...` | `.githooks/*`, `engineering-discipline.md`, `docs/ci/README.md` | `gofmt -h` (`-l` lists files that differ), `go help vet`; stack from [ADR-0010](../adr/0010-use-go-as-the-technology-stack.md) | not active | `T-nfh8` |
+| V-15 | test timeout `-timeout 10m` | `docs/tests/*`, `guardrails.md` | `go help testflag`: "The default is 10 minutes (10m)" | not active | `T-nfh8` |
+| V-16 | security: govulncheck `v1.8.0`, `go vet`, gitleaks (`gitleaks git --redact`) | `docs/tests/*`, `.githooks/pre-commit`, `docs/ci/README.md` | O-6, Operator decision on [#8](https://github.com/pharzam/layup/issues/8); `go list -m golang.org/x/vuln@latest` gave `v1.8.0`, which needs Go 1.26; the gitleaks command line is not yet run | not active | `T-nfh8` |
+| V-17 | task-ID scheme `T-` + 4 of `0-9 a-z` without `i l o u` | `backlog.md`, `issue-workflow.md`, `engineering-discipline.md` | O-8, Operator decision on [#8](https://github.com/pharzam/layup/issues/8) (confirms the kit example in use since `T-n1hp`) | recorded | `T-nfh8` |
+| V-18 | record of record: Git; plain-terms units: tokens, seconds, "N of M"; failure modes; harness report source | `guardrails.md`, `engineering-discipline.md` | `F-0001#1`, `F-0001 §7`, `guardrails.md` §1.1–§2, this session's task reports | recorded | `T-nfh8` |
 
 The decision behind V-01 to V-05 is
 [ADR-0009](../adr/0009-pin-armature-at-a-recorded-commit.md).
@@ -87,7 +101,9 @@ to an Armature rule.
 
 | ID | Deviation | Reason | Ends |
 |----|-----------|--------|------|
-| D-01 | Worktrees are under `../layup-worktrees/`, outside the repository. | The worktree-directory value of the kit is not yet set; its evidence is decided in `T-nfh8`. | `T-nfh8` |
+| D-01 | Worktrees were under `../layup-worktrees/`, outside the repository. | The worktree-directory value was not yet set. | Ended by `T-nfh8`: O-1 set `.worktree`, and the `T-nfh8` worktree moved there. |
 | D-02 | `setup-check.sh` and its self-test `tests/run.sh` are not yet run by the `pre-commit` hook or by CI. | CI wiring is `T-q344`; no child names the hook. | `T-q344` |
 | D-03 | The PSB was cited as `F-0001` before the facts document existed. | Facts were stored by a later child. | Ended by `T-fvwj` ([#4](https://github.com/pharzam/layup/issues/4)): [`F-0001`](../facts/F-0001-layup-problem-statement-brief.md). |
 | D-04 | PR #18 was merged while `gh pr checks` showed 3 of its 8 CI jobs pending; all 8 passed. | Human error: the merge did not wait. Lesson in `guardrails.md` §2. | `T-afa5` ([#12](https://github.com/pharzam/layup/issues/12)) makes the jobs required. |
+
+Open gaps: the values with no source are listed in [`open-gaps.tsv`](open-gaps.tsv) with their question (`T-nfh8`). Check `markers` fails when a gap is not listed there.
