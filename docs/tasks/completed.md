@@ -20,6 +20,7 @@ here directly, in the shape above.
 - **YYYY-MM-DD** — **‹ID›** — ‹one-sentence summary of what the task found or delivered› ([‹link›](...); [detail](‹id›.md))
 -->
 
+- **2026-09-23** — **T-fvng** — Made `pr-link.yml` and `review-record.yml` restore their lint script from `main`, and added cause `restore` to check `ci` ([#23](https://github.com/pharzam/layup/issues/23); [detail](T-fvng.md))
 - **2026-09-23** — **T-q344** — Replaced the kit's workflow headers, added CI job `setup-check` (full history, checks restored from `main`) and check `ci` ([#9](https://github.com/pharzam/layup/issues/9); [detail](T-q344.md))
 - **2026-09-23** — **T-nfh8** — Filled each adopter marker that has a source (Operator batch O-1 to O-8, the Go command reference), listed the rest as open gaps, added ADR-0010 (Go) and check `markers` ([#8](https://github.com/pharzam/layup/issues/8); [detail](T-nfh8.md))
 - **2026-09-23** — **T-7ndb** — Encoded the 9 System Invariants into `docs/guardrails.md` §1.1, wrote back three lessons to §2, and added check `guardrails` ([#7](https://github.com/pharzam/layup/issues/7); [detail](T-7ndb.md))
