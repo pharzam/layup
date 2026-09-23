@@ -1,0 +1,3 @@
+only=kit-history
+exit=0
+line=setup-check: kit-history OK

@@ -9,6 +9,8 @@
 #               line=<text>        a line the output must hold (exact match);
 #                                  repeat for more lines
 #               mode=root|self|shallow   how the case is run (default: root)
+#               only=<check,check>  pass `--only <check,check>`, so the case runs
+#                                  only those checks (a fixture tree is not a full setup)
 #               stub-fail=<path>   (mode=self) this stub linter exits 1
 #               stub-absent=<path> (mode=self) this stub linter is not written
 #
@@ -49,11 +51,14 @@ for case in "$here"/*/*/; do
 
 	mode=$(sed -n 's/^mode=//p' "$case/EXPECT" | head -1)
 	want=$(sed -n 's/^exit=//p' "$case/EXPECT" | head -1)
+	only=$(sed -n 's/^only=//p' "$case/EXPECT" | head -1)
+	set --
+	[ -n "$only" ] && set -- --only "$only"
 	case "${mode:-root}" in
-	root) out=$(sh "$check" "$repo" 2>&1); got=$? ;;
+	root) out=$(sh "$check" "$@" "$repo" 2>&1); got=$? ;;
 	shallow)
 		g clone -q --depth 1 "file://$repo" "$tmp/$n/shallow" 2>/dev/null
-		out=$(sh "$check" "$tmp/$n/shallow" 2>&1); got=$? ;;
+		out=$(sh "$check" "$@" "$tmp/$n/shallow" 2>&1); got=$? ;;
 	self)
 		mkdir -p "$repo/docs/setup" && cp "$check" "$repo/docs/setup/setup-check.sh"
 		for f in docs/tests/run-discipline-tests.sh docs/adr/adr-lint.sh docs/prd/prd-lint.sh docs/links/link-lint.sh; do
@@ -65,7 +70,7 @@ for case in "$here"/*/*/; do
 				printf '#!/bin/sh\necho "stub %s OK"\nexit 0\n' "$f" > "$repo/$f"
 			fi
 		done
-		out=$(sh "$repo/docs/setup/setup-check.sh" 2>&1); got=$? ;;
+		out=$(sh "$repo/docs/setup/setup-check.sh" "$@" 2>&1); got=$? ;;
 	*) echo "FAIL  $name: unknown mode '$mode'"; fail=$((fail + 1)); continue ;;
 	esac
 

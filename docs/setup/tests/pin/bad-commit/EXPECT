@@ -1,3 +1,4 @@
 exit=1
 line=setup-check: pin FAIL commit: not 40 hexadecimal characters: a959655
 line=setup-check: pin FAIL key: commit appears 2 times, expected 1
+only=pin
