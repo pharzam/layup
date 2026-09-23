@@ -1,4 +1,3 @@
 mode=shallow
 exit=1
 line=setup-check: pin FAIL shallow: the clone is shallow, so the root commit is not visible (fetch the full history)
-only=pin

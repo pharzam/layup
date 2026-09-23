@@ -1,3 +1,2 @@
 exit=1
 line=setup-check: pin FAIL missing: docs/setup/armature.pin is absent
-only=pin

@@ -1,3 +1,2 @@
-only=kit-history
 exit=1
 line=setup-check: kit-history FAIL audit: docs/audit/ exists (kit step 4 deletes it)

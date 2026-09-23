@@ -10,7 +10,10 @@
 #                                  repeat for more lines
 #               mode=root|self|shallow   how the case is run (default: root)
 #               only=<check,check>  pass `--only <check,check>`, so the case runs
-#                                  only those checks (a fixture tree is not a full setup)
+#                                  only those checks (a fixture tree is not a full
+#                                  setup). Default: the case's directory name, so
+#                                  pin/<case> runs --only pin. frame/ is not a
+#                                  check, so a frame case names its checks.
 #               stub-fail=<path>   (mode=self) this stub linter exits 1
 #               stub-absent=<path> (mode=self) this stub linter is not written
 #
@@ -52,6 +55,8 @@ for case in "$here"/*/*/; do
 	mode=$(sed -n 's/^mode=//p' "$case/EXPECT" | head -1)
 	want=$(sed -n 's/^exit=//p' "$case/EXPECT" | head -1)
 	only=$(sed -n 's/^only=//p' "$case/EXPECT" | head -1)
+	group=${name%%/*}
+	[ -z "$only" ] && [ "$group" != frame ] && only=$group
 	set --
 	[ -n "$only" ] && set -- --only "$only"
 	case "${mode:-root}" in
