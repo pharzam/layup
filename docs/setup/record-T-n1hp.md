@@ -49,6 +49,8 @@ child task adds its own rows in the same PR that lands its work.
 | 18 | `T-vpty` worktree created | 12:29:08 | shell `date` |
 | 19 | `T-vpty` merged (PR #17), after 2 review rounds | 12:50:25 | GitHub API `mergedAt` |
 | 20 | `T-xgz4` worktree created | 12:50:28 | shell `date` |
+| 21 | `T-xgz4` merged (PR #18), after 3 review rounds | 13:22:02 | GitHub API `mergedAt` |
+| 22 | `T-7ndb` worktree created | 13:22:05 | shell `date` |
 
 ## Values
 
@@ -88,3 +90,4 @@ to an Armature rule.
 | D-01 | Worktrees are under `../layup-worktrees/`, outside the repository. | The worktree-directory value of the kit is not yet set; its evidence is decided in `T-nfh8`. | `T-nfh8` |
 | D-02 | `setup-check.sh` and its self-test `tests/run.sh` are not yet run by the `pre-commit` hook or by CI. | CI wiring is `T-q344`; no child names the hook. | `T-q344` |
 | D-03 | The PSB was cited as `F-0001` before the facts document existed. | Facts were stored by a later child. | Ended by `T-fvwj` ([#4](https://github.com/pharzam/layup/issues/4)): [`F-0001`](../facts/F-0001-layup-problem-statement-brief.md). |
+| D-04 | PR #18 was merged while 3 of its 8 CI jobs were pending; all 8 passed after the merge. | Human error: the merge did not wait. Lesson in `guardrails.md` §2. | `T-afa5` ([#12](https://github.com/pharzam/layup/issues/12)) makes the jobs required. |
