@@ -92,7 +92,7 @@ the setting as a file, [`branch-protection.json`](../setup/branch-protection.jso
 (`T-afa5`).
 
 **This repository (LAYUP).** The body is
-[`docs/setup/branch-protection.json`](../setup/branch-protection.json): nine
+[`docs/setup/branch-protection.json`](../setup/branch-protection.json): twelve
 checks, one per workflow job, each pinned to GitHub Actions. Apply it with
 `gh api -X PUT repos/pharzam/layup/branches/main/protection --input docs/setup/branch-protection.json`;
 check `protection` in [`setup-check.sh`](../setup/setup-check.sh) keeps its
