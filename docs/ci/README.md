@@ -181,7 +181,7 @@ access to the repository.
 ### Drop what you did not install
 
 The six contexts above are the ones the kit's own repository requires; LAYUP
-requires the nine in [`branch-protection.json`](../setup/branch-protection.json). Two of them are
+requires the twelve in [`branch-protection.json`](../setup/branch-protection.json). Two of them are
 jobs the kit itself tells you elsewhere that you may leave out, and the array names
 them anyway. Delete the line for each one you did not install:
 
