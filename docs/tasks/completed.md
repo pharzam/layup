@@ -20,6 +20,7 @@ here directly, in the shape above.
 - **YYYY-MM-DD** — **‹ID›** — ‹one-sentence summary of what the task found or delivered› ([‹link›](...); [detail](‹id›.md))
 -->
 
+- **2026-09-23** — **T-mtb9** — Added the first Go code (`layup version`) and turned on the Go gates in CI and the hook; successor of `T-t8qp` (#32) after the issue split ([#38](https://github.com/pharzam/layup/issues/38); [detail](T-mtb9.md))
 - **2026-09-23** — **T-edtd** — Decided the core engine's architecture in ADR-0011 (one Go CLI over repository files; LAYUP's machinery never in a target) after a three-member panel and Operator decisions O-9 to O-13 ([#30](https://github.com/pharzam/layup/issues/30); [detail](T-edtd.md))
 - **2026-09-23** — **T-9mmm** — Recorded the setup procedure (15 steps, `docs/setup/README.md` and `steps.tsv`) and the baseline summary, replaced the kit adaptation section, and added check `procedure` ([#11](https://github.com/pharzam/layup/issues/11); [detail](T-9mmm.md))
 - **2026-09-23** — **T-6rg3** — Made `README.md` and `AGENTS.md` describe LAYUP (an Armature project pinned at `a959655`) and added check `identity` ([#10](https://github.com/pharzam/layup/issues/10); [detail](T-6rg3.md))
