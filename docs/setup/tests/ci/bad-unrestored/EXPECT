@@ -4,3 +4,4 @@ line=setup-check: ci FAIL restore: .github/workflows/x.yml job b runs or needs d
 line=setup-check: ci FAIL restore: .github/workflows/x.yml job b runs or needs docs/ci/review-record-lint.sh but does not restore it
 line=setup-check: ci FAIL restore: .github/workflows/x.yml job c runs or needs docs/adr/adr-lint.sh but does not restore it
 line=setup-check: ci FAIL restore: .github/workflows/y.yaml job d runs or needs docs/prd/prd-lint.sh but does not restore it
+line=setup-check: ci FAIL restore: .github/workflows/x.yml job e runs or needs docs/ci/review-record-lint.sh but does not restore it

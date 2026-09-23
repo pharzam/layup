@@ -17,3 +17,10 @@ jobs:
       - name: Lint docs/adr and docs/prd
         # docs/adr/adr-lint.sh is named only in this comment
         run: bash -e ./docs/adr/adr-lint.sh
+  e:
+    steps:
+      - name: Restore the checks
+        run: |
+          # docs/ci/review-record-lint.sh is named only in this comment
+          cp x y
+      - run: "/bin/sh -- docs/ci/review-record-lint.sh"

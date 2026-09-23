@@ -53,8 +53,9 @@ Whether a named gate really runs the path is a review judgement.
   judges it. The CI restore step (`guardrails.md` §2, "A check the change
   supplies is not a control") covers each check script a workflow runs, except
   `docs/tests/nested-checkout-check.sh`. Check `ci` (cause `restore`) fails when a
-  job runs a script with `sh`, `bash`, `dash` or `.` that the job's Restore step
-  does not name. Neither covers the workflow file itself, which a branch can
+  job names a `docs/...sh` script outside its Restore step, in any form, and the
+  Restore step does not name it (a script run through a relative
+  `working-directory:` is not seen). Neither covers the workflow file itself, which a branch can
   edit, so this invariant has no check yet. Check: no check yet
 - **Inv-4** — No configuration value without evidence (`F-0001#4`). Trap: a
   kit example accepted as a project value. Check: no check yet
