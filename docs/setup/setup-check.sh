@@ -200,7 +200,7 @@ check_glossary() {
 		fail glossary "section: docs/glossary.md has no heading \"$gl_head\""; return
 	fi
 	awk -v h="$gl_head" '$0 == h { on = 1; next } on && /^## / { on = 0 } on' "$gl_doc" \
-		| grep '^|' | grep -v '^| Term |' | grep -v '^|[-| ]*$' > "$tmpdir/gl_rows"
+		| grep '^|' | grep -v '^| Term |' | grep -v '^|[-|: ]*$' > "$tmpdir/gl_rows"
 	gl_n=$(grep -c . "$tmpdir/gl_rows")
 	[ "$gl_n" = 25 ] || fail glossary "rows: the LAYUP domain section holds $gl_n rows, expected 25"
 	gl_i=15
