@@ -661,9 +661,8 @@ that ties a test to what it proves — live in their own section,
 
 **Four test levels, run cheap-first.** Tests sit on a fixed ladder — **unit**,
 **integration**, **end-to-end (E2E)** — plus the process-level **discipline**
-tests, defined in [`tests/test-levels.md`](tests/test-levels.md). The cheap levels
-— unit and integration, with an optional end-to-end smoke subset — run in the
-[`pre-commit` hook](#git-hooks); the whole ladder runs in
+tests, defined in [`tests/test-levels.md`](tests/test-levels.md). The unit level
+runs in the [`pre-commit` hook](#git-hooks); the whole ladder runs in
 [CI](#continuous-integration-optional). Each level has its own command — `go test ./...`,
 `go test -tags=integration ./...`, `go test -tags=e2e ./...`, and
 `go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./... && go vet ./... && gitleaks git --redact`
@@ -757,9 +756,9 @@ It pins `core.hooksPath` to the relative `.githooks`. Two hooks ship with the ki
   the three repo-file
   [discipline linters](#testing) — ADR, PRD and link —
   and their fixture self-tests,
-  then the `test -z "$(gofmt -l .)" && go vet ./...`, the fast [test levels](#testing) (`go test ./...`, then
-  `go test -tags=integration ./...`), and the `govulncheck v1.8.0, go vet, and gitleaks` step you fill in for
-  your stack. Keep it cheap-first; the full suite — the end-to-end level and the
+  then the Go lint (`gofmt -l` over the tracked Go files, and `go vet ./...`) and
+  the unit [test level](#testing) (`go test ./...`). The integration and
+  end-to-end levels and the security scans run in CI. Keep it cheap-first; the full suite — the end-to-end level and the
   full security scan — belongs in [CI](#continuous-integration-optional).
 
 [`.githooks/README.md`](../.githooks/README.md) has the details and the optional

@@ -37,6 +37,18 @@
       {
         "context": "setup-check (the Armature setup and its evidence)",
         "app_id": 15368
+      },
+      {
+        "context": "lint (gofmt, go vet)",
+        "app_id": 15368
+      },
+      {
+        "context": "tests (unit → integration → e2e)",
+        "app_id": 15368
+      },
+      {
+        "context": "security (govulncheck v1.8.0, go vet, and gitleaks)",
+        "app_id": 15368
       }
     ]
   },

@@ -18,9 +18,9 @@ parallel track to the test ladder, not a rung on it.
 
 | Check | What it catches | Where it runs | Pass condition |
 |-------|------------------|----------------|-----------------|
-| Secret scan | committed credentials, keys, or tokens | hook (staged changes) + CI (full history) | no secret found |
-| Dependency scan | known-vulnerable third-party dependencies | CI (and hook if fast enough) | no known-vulnerable dependency at or above the agreed severity |
-| Static analysis | insecure code patterns, found without running the code | CI (and a hook subset) | no finding at or above the agreed severity |
+| Secret scan | committed credentials, keys, or tokens | CI (full history); not the hook | no secret found |
+| Dependency scan | known-vulnerable third-party dependencies | CI; not the hook (it needs the network) | no known-vulnerable dependency at or above the agreed severity |
+| Static analysis | insecure code patterns, found without running the code | CI and the hook (`go vet`) | no finding at or above the agreed severity |
 
 Run them cheap-first, in the order above: a failing secret scan stops the
 slower checks from running at all.
@@ -30,14 +30,15 @@ slower checks from running at all.
 Like the [ADR and PRD linters](../engineering-discipline.md#testing), the
 security checks are wired into two layers, cheap-first:
 
-- The fast subset — a secret scan on staged changes, and a static-analysis
-  subset where it is fast enough — runs via `go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./... && go vet ./... && gitleaks git --redact` in the
-  [`pre-commit` hook](../../.githooks/pre-commit), before a commit is recorded.
+- The fast subset in the [`pre-commit` hook](../../.githooks/pre-commit) is the
+  static analysis only (`go vet`), before a commit is recorded; the secret and
+  dependency scans need the network and run in CI.
 - The full set — all three checks, run in full — runs via `go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./... && go vet ./... && gitleaks git --redact`
   in [CI](../ci/), as the authority.
 
-`govulncheck v1.8.0, go vet, and gitleaks` names the tool both layers drive. Both are not active until
-the first Go code exists; the task that lands it turns them on.
+`govulncheck v1.8.0, go vet, and gitleaks` names the three tools. The CI job
+`security` runs all three since `T-t8qp`. The hook runs `go vet` only; it does not
+run govulncheck or gitleaks, because they need the network.
 
 ## A pre-registered bar
 

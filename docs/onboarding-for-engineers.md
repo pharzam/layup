@@ -78,8 +78,10 @@ duration of a task (`F-0001#38`).
 
 ## 3. What the system actually does
 
-No system exists yet. The PSB states the problem only, and this repository holds
-the discipline system and the setup record, not a product.
+The PSB states the problem only. This repository holds the discipline system,
+the setup record, and the first code: the skeleton of the `layup` command
+([ADR-0011](adr/0011-structure-the-core-engine-as-a-go-cli-over-repository-files.md)),
+which so far prints its version.
 
 ## 4. Why it is hard
 
@@ -140,10 +142,9 @@ Consequences you will meet immediately, and which are not negotiable:
 
 ### Where the project stands
 
-The Armature setup of this repository is in progress under
-[#1](https://github.com/pharzam/layup/issues/1). That parent issue lists its
-children, and [`tasks/completed.md`](tasks/completed.md) lists the ones that are
-done; this section does not repeat the list, so it does not go stale. No product
-code exists yet. The open question is the batch of setup values that have no
-evidence; the markers task `T-nfh8` ([#8](https://github.com/pharzam/layup/issues/8))
-lists them.
+The Armature setup of this repository is done
+([#1](https://github.com/pharzam/layup/issues/1), closed). The core engine is in
+progress under [#29](https://github.com/pharzam/layup/issues/29); that parent
+issue lists its children, and [`tasks/completed.md`](tasks/completed.md) lists the
+ones that are done, so this section does not repeat the list. The open setup
+questions are listed in [`setup/open-gaps.tsv`](setup/open-gaps.tsv).

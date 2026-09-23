@@ -56,7 +56,9 @@ Whether a named gate really runs the path is a review judgement.
   job names a `docs/...sh` script outside its Restore step, in any form, and the
   Restore step does not name it (a script run through a relative
   `working-directory:` is not seen). Neither covers the workflow file itself, which a branch can
-  edit, so this invariant has no check yet. Check: no check yet
+  edit, nor the Go jobs `lint`, `tests` and `security`, which run the pull
+  request's own Go code and tests; so this invariant has no check yet (O-9,
+  ADR-0011). Check: no check yet
 - **Inv-4** — No configuration value without evidence (`F-0001#4`). Trap: a
   kit example accepted as a project value. Check: no check yet
 - **Inv-5** — A check that is not active does not count as passed (`F-0001#5`).

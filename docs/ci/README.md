@@ -16,10 +16,10 @@ subset for itself, under [`.github/workflows/`](../../.github/workflows/):
 [`ci.yml`](../../.github/workflows/ci.yml) (`adr-lint`, `prd-lint`,
 `discipline-tests`, `link-lint`),
 [`pr-title.yml`](../../.github/workflows/pr-title.yml), and
-[`pr-link.yml`](../../.github/workflows/pr-link.yml). It omits the `lint`, `tests`,
-and `security` jobs because the kit ships no product code to run them against — a
-worked instance of "delete any job your project does not need." Use those files as a
-filled-in reference alongside the templates here.
+[`pr-link.yml`](../../.github/workflows/pr-link.yml). The kit's copy omitted the `lint`,
+`tests`, and `security` jobs because the kit ships no product code; LAYUP added them
+for Go in `T-t8qp`. Use those files as a filled-in reference alongside the
+templates here.
 
 ## Activate
 

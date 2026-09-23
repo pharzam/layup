@@ -3,16 +3,11 @@
 # pre-commit — run the cheap quality-gate checks before a commit is recorded,
 # so a violation is caught here rather than in CI (docs/ci/) or review.
 #
-# It runs the ADR, PRD and link linters, plus the discipline
-# self-tests, out of the box (docs-only, no toolchain needed). The
-# lint, test-level, and security steps are ‹…› placeholders you fill for your stack —
-# keep them cheap-first (unit before integration before end-to-end), so a failure
-# stops the expensive checks; see docs/tests/test-levels.md. This hook is inert until
-# you run `sh .githooks/install.sh` (see .githooks/README.md).
-#
-# How to adapt: replace each ‹…› with your project's command and uncomment the
-# line. Delete any step you do not use. Run only the fast subset here; the full
-# suite belongs in CI.
+# It runs the ADR, PRD and link linters and the discipline self-tests (docs
+# only, no toolchain), then, when go.mod exists, the Go lint (gofmt over the
+# tracked Go files, go vet) and the unit test level. The integration and
+# end-to-end levels and the security scans run in CI only (docs/tests/). This
+# hook is inert until you run `sh .githooks/install.sh` (see .githooks/README.md).
 
 set -e
 
@@ -116,19 +111,32 @@ if [ -f docs/links/link-lint.sh ]; then
 	sh docs/links/link-lint.sh
 fi
 
-# 2. Lint / format — gofmt and go vet (not active: no Go code yet; the task that lands the first Go code turns it on)
-# test -z "$(gofmt -l .)" && go vet ./... || exit 1
+# 2. Lint / format — gofmt (fails on any listed file) and go vet (ADR-0010).
+#    Active since T-t8qp, the first Go code.
+#    Only tracked Go files are formatted-checked, so a worktree under .worktree/
+#    or a nested checkout does not change the result.
+if [ -f go.mod ]; then
+	go_files=$(git ls-files '*.go')
+	if [ -n "$go_files" ]; then
+		# shellcheck disable=SC2086 # one path per word; tracked Go paths hold no space
+		gofmt_out=$(gofmt -l $go_files) || { echo "pre-commit: gofmt failed" >&2; exit 1; }
+		[ -z "$gofmt_out" ] || { printf 'pre-commit: gofmt lists these files; run gofmt -w:\n%s\n' "$gofmt_out" >&2; exit 1; }
+	fi
+	go vet ./... || exit 1
+else
+	echo "pre-commit: no go.mod, so the Go lint and unit steps are skipped" >&2
+fi
 
 # 3. Tests, cheap → expensive — run the fast levels here; leave the slow ones to
-#    CI. Fill each ‹…› with your stack's command (see docs/tests/test-levels.md).
-# go test ./...         || exit 1   # fastest — run on every commit
-# go test -tags=integration ./...  || exit 1   # must be the fast subset; the full set in CI
-# go test -tags=e2e ./...   || exit 1   # usually CI only — enable a smoke subset if cheap
+#    CI (see docs/tests/test-levels.md). The unit level runs here; the
+#    integration and e2e levels run in CI only.
+if [ -f go.mod ]; then
+	go test ./... || exit 1
+fi
+# The integration and end-to-end levels run in CI only (job `tests`).
 
-# 4. Security scan (staged changes) — the fast subset here: a secret scan, plus a
-#    static-analysis subset where it stays fast; the full set (dependency scan,
-#    static analysis) runs in CI. go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./... && go vet ./... && gitleaks git --redact drives your
-#    govulncheck v1.8.0, go vet, and gitleaks. See docs/tests/security-checklist.md.
-# go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./... && go vet ./... && gitleaks git --redact || exit 1
+# 4. Security — the static analysis (go vet) already ran in step 2. The secret
+#    and dependency scans need the network and run in CI only (job `security`;
+#    see docs/tests/security-checklist.md).
 
 exit 0
