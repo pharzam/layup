@@ -65,7 +65,7 @@ Whether a named gate really runs the path is a review judgement.
   rule (`F-0001#7`).
   Trap: a kit rule edited during adaptation. Check: no check yet
 - **Inv-8** — Armature is used at a pinned, recorded version (`F-0001#8`). Trap:
-  a copy with no record of the commit it came from. Check: no check yet
+  a copy with no record of the commit it came from. Check: docs/setup/setup-check.sh (ci:setup-check)
 - **Inv-9** — A harness agent is replaceable (`F-0001#9`). Trap: rules kept only
   in one agent product's own file format. Check: no check yet
 

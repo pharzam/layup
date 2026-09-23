@@ -1,11 +1,11 @@
-# Continuous integration for the Armature repo itself.
+# Continuous integration for LAYUP.
 #
-# This is the ACTIVATED, tailored copy of docs/ci/github-actions-ci.yml. It runs
-# only the jobs that apply to the kit's own repository — the discipline checks,
-# which need no toolchain. The template's lint / tests / security jobs are omitted
-# on purpose: Armature is domain-free and ships no product code, so there is
-# nothing for them to run (the template README says to delete jobs a project does
-# not need). The kit's own "tests" are the discipline checks below.
+# The kit's own activated workflow, kept because it restores each check script
+# from the default branch (the #84 guardrail) and the template in docs/ci/ does
+# not (setup record, finding K-04). It runs the kit discipline checks and the
+# LAYUP setup check. The template's lint / tests / security jobs are not here
+# yet: LAYUP has no Go code, so they would pass over nothing (Invariant 5). The
+# task that lands the first Go code adds them (ADR-0010).
 #
 # The PR-title and PR-link checks live in their own workflows (pr-title.yml,
 # pr-link.yml) because they run on pull-request events only.
@@ -251,3 +251,41 @@ jobs:
       # main's copy no longer guards it; accepted, since it is non-required and
       # drives only the restored link-lint.sh.
       - run: sh docs/tests/nested-checkout-check.sh
+
+  setup-check:
+    name: setup-check (the Armature setup and its evidence)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The pin check compares the pin tree with the tree of the ROOT commit;
+          # a shallow clone hides it and the check fails with cause `shallow`.
+          fetch-depth: 0
+      # The same #84 restore as the jobs above: the setup check and its fixtures
+      # come from the default branch, so a change cannot judge itself. LIMIT: a
+      # check that a pull request ADDS runs here only after it merges.
+      - name: Restore the setup check from the default branch
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -eu
+          rm -rf .checks-from-default
+          git clone --quiet --depth 1 --branch "$DEFAULT_BRANCH" \
+            "https://github.com/${GITHUB_REPOSITORY}.git" .checks-from-default
+          for f in docs/setup/setup-check.sh docs/adr/adr-lint.sh docs/prd/prd-lint.sh \
+                   docs/links/link-lint.sh docs/tests/run-discipline-tests.sh; do
+            if [ -f ".checks-from-default/$f" ]; then
+              cp ".checks-from-default/$f" "$f"
+              printf 'restored from %s: %s\n' "$DEFAULT_BRANCH" "$f"
+            else
+              printf 'not on %s, kept as written: %s\n' "$DEFAULT_BRANCH" "$f"
+            fi
+          done
+          if [ -d .checks-from-default/docs/setup/tests ]; then
+            rm -rf docs/setup/tests
+            cp -R .checks-from-default/docs/setup/tests docs/setup/tests
+            printf 'restored from %s: docs/setup/tests/\n' "$DEFAULT_BRANCH"
+          fi
+          rm -rf .checks-from-default
+      - run: sh docs/setup/tests/run.sh
+      - run: sh docs/setup/setup-check.sh
