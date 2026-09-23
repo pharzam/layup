@@ -1,0 +1,2 @@
+exit=1
+line=setup-check: glossary FAIL section: docs/glossary.md has no heading "## 1. LAYUP domain (PSB §8)"
