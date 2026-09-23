@@ -20,6 +20,7 @@ here directly, in the shape above.
 - **YYYY-MM-DD** — **‹ID›** — ‹one-sentence summary of what the task found or delivered› ([‹link›](...); [detail](‹id›.md))
 -->
 
+- **2026-09-23** — **T-bhsf** — Required the three Go CI jobs on `main` (12 required checks in all) and recorded the read-back ([#35](https://github.com/pharzam/layup/issues/35); [detail](T-bhsf.md))
 - **2026-09-23** — **T-dq05** — Added `layup psb check`, a deterministic gap check of a problem statement (rules G1–G5, one TSV batch); on LAYUP's own PSB it asks 19 questions ([#37](https://github.com/pharzam/layup/issues/37); [detail](T-dq05.md))
 - **2026-09-23** — **T-mtb9** — Added the first Go code (`layup version`) and turned on the Go gates in CI and the hook; successor of `T-t8qp` (#32) after the issue split ([#38](https://github.com/pharzam/layup/issues/38); [detail](T-mtb9.md))
 - **2026-09-23** — **T-edtd** — Decided the core engine's architecture in ADR-0011 (one Go CLI over repository files; LAYUP's machinery never in a target) after a three-member panel and Operator decisions O-9 to O-13 ([#30](https://github.com/pharzam/layup/issues/30); [detail](T-edtd.md))
