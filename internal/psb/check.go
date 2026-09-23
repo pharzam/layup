@@ -58,7 +58,7 @@ func Check(text string) []Gap {
 		add("G1", 0, "Which technology stack does the product use (languages, frameworks, tools)?")
 	}
 
-	defined := definedTerms(lines)
+	defined, hasTerms := definedTerms(lines)
 	seen := map[string]bool{}
 	col := -1 // index of the Measurement or Verification column in the current table
 	for i, l := range lines {
@@ -68,16 +68,16 @@ func Check(text string) []Gap {
 		case !isRow:
 			col = -1
 		case isSeparator(cells):
-		case col < 0:
+		case col == -1:
 			col = measureColumn(cells) // a header row; -2 when it has no such column
 			if col == -1 {
 				col = -2
 			}
-		case col >= 0 && col < len(cells) && noMeasure[strings.ToLower(strings.TrimSuffix(strings.TrimSpace(cells[col]), "."))]:
+		case col >= 0 && noMeasure[strings.ToLower(strings.TrimSuffix(strings.TrimSpace(cellAt(cells, col)), "."))]:
 			add("G2", n, "How is this metric measured? The row gives no measurement method.")
 		}
 		for _, m := range allAbbrevs(l) {
-			if !defined[m] && !seen[m] {
+			if hasTerms && !defined[m] && !seen[m] {
 				seen[m] = true
 				add("G3", n, fmt.Sprintf("What does %q mean? The terms table does not define it.", m))
 			}
@@ -124,6 +124,15 @@ func tableCells(l string) ([]string, bool) {
 	return strings.Split(t, "|"), true
 }
 
+// cellAt returns the cell, or "" when the row omits it (a Markdown table fills a
+// short row with empty cells).
+func cellAt(cells []string, i int) string {
+	if i < len(cells) {
+		return cells[i]
+	}
+	return ""
+}
+
 func isSeparator(cells []string) bool {
 	for _, c := range cells {
 		if strings.Trim(strings.TrimSpace(c), ":-") != "" {
@@ -156,15 +165,16 @@ func allAbbrevs(l string) []string {
 }
 
 // definedTerms reads the first table under a heading that contains "Terms":
-// each capital word inside a bold span of a row's first cell is defined.
-func definedTerms(lines []string) map[string]bool {
+// each capital word inside a bold span of a row's first cell is defined. The
+// second result is false when the text has no such table; G3 then gives no row.
+func definedTerms(lines []string) (map[string]bool, bool) {
 	def := map[string]bool{}
 	under, inTable := false, false
 	for _, l := range lines {
 		t := strings.TrimSpace(l)
 		if strings.HasPrefix(t, "#") {
 			if inTable {
-				return def
+				return def, true
 			}
 			under = strings.Contains(t, "Terms")
 			continue
@@ -172,7 +182,7 @@ func definedTerms(lines []string) map[string]bool {
 		cells, isRow := tableCells(l)
 		if !under || !isRow {
 			if inTable {
-				return def
+				return def, true
 			}
 			continue
 		}
@@ -183,5 +193,5 @@ func definedTerms(lines []string) map[string]bool {
 			}
 		}
 	}
-	return def
+	return def, inTable
 }

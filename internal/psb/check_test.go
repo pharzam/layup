@@ -27,7 +27,7 @@ func golden(t *testing.T, input, want string) {
 }
 
 func TestGolden(t *testing.T) {
-	for _, name := range []string{"triggers", "clean"} {
+	for _, name := range []string{"triggers", "clean", "edge"} {
 		t.Run(name, func(t *testing.T) {
 			golden(t, filepath.Join("testdata", name+".md"), filepath.Join("testdata", name+".tsv"))
 		})
