@@ -36,17 +36,67 @@ rule. Write the pass/fail numbers first, somewhere they cannot be quietly edited
   before you look — for example, one re-examination whose scope is fixed in
   advance; landing there twice counts as Fail.
 
+### 1.1 LAYUP System Invariants (PSB §6)
+
+These nine rules bind every solution in this repository. They come from the
+approved PSB and are frozen with it: a change needs a new PSB revision, not an
+edit here. Each entry gives the rule with its fact ID, the trap that breaks it
+in silence, and the check that catches a violation. A `Check:` value is a path
+plus the gate that runs it (`hook` or `ci:<job>`), or the words `no check yet`.
+A script that exists but that no gate runs is `no check yet` (Invariant 5).
+Whether a named gate really runs the path is a review judgement.
+
+- **Inv-1** — Git is the system of record (`F-0001#1`). Trap: a decision made in
+  a chat, a dashboard, or a tool database, and never written to the repository.
+  Check: no check yet
+- **Inv-2** — The project repository is independent (`F-0001#2`). Trap: a gate
+  that passes only while the automation that made the repository is present.
+  Check: no check yet
+- **Inv-3** — The agents that do the work cannot change the rules or the gates
+  that check the work (`F-0001#3`). Trap: a change that edits the check that
+  judges it. The CI restore step (`guardrails.md` §2, "A check the change
+  supplies is not a control") covers six named check scripts only, not the
+  workflow file. Check: no check yet
+- **Inv-4** — No configuration value without evidence (`F-0001#4`). Trap: a
+  kit example accepted as a project value. Check: no check yet
+- **Inv-5** — A check that is not active does not count as passed (`F-0001#5`).
+  Trap: a script in the tree that no hook or CI job runs. Check: no check yet
+- **Inv-6** — A deterministic check is preferred to an LLM judgement where a rule
+  can be checked mechanically (`F-0001#6`). Trap: a review round asked to settle
+  a claim that a script could settle. Check: no check yet
+- **Inv-7** — The project domain changes content, never rules; the technology
+  stack can add stack-dependent gates but cannot remove or weaken a baseline
+  rule (`F-0001#7`).
+  Trap: a kit rule edited during adaptation. Check: no check yet
+- **Inv-8** — Armature is used at a pinned, recorded version (`F-0001#8`). Trap:
+  a copy with no record of the commit it came from. Check: no check yet
+- **Inv-9** — A harness agent is replaceable (`F-0001#9`). Trap: rules kept only
+  in one agent product's own file format. Check: no check yet
+
 ## 2. Known pitfalls — the traps specific to this domain
 
-`‹List the failure modes that have actually hurt this project or its field. For
-each: the trap, why it is silent, and the check that catches it. Examples of the
-kind of thing that goes here:›`
+The traps below hurt this project. Each has the trap, why it is silent, and the
+check that catches it.
 
-- ❌ `‹pitfall 1 — e.g. a data / input leak: future or out-of-scope information
-  reaching the code that must not see it›`
-- ❌ `‹pitfall 2 — e.g. a measurement that looks strong for the wrong reason›`
-- ❌ `‹pitfall 3 — e.g. an environment or scale difference between test and
-  production›`
+- ❌ **A shell function overwrites its caller's variable.** POSIX `sh` has no
+  local variables, so a loop variable in a check function can replace the loop
+  variable of the main loop in `setup-check.sh`. The first try of a fix in
+  `T-r7zg` used `c` and `k`; the fixture run went red before the commit. It is
+  silent when the names happen to agree. **The check:**
+  prefix each variable of a check function with the check name (`pin_`, `fa_`),
+  and keep a fixture that runs two or more checks in one call
+  (`frame/good-passthrough`). Learned in `T-r7zg`.
+- ❌ **`while read` drops a last line that has no final newline.** A hash list
+  whose last entry had no newline skipped that entry, and a changed file passed.
+  It is silent because the loop ends normally. **The check:** write
+  `while read -r a b || [ -n "$a" ]`, and keep a fixture whose last line has no
+  newline (`facts/bad-hash`). Learned in `T-fvwj`.
+- ❌ **A merge while checks are pending.** A pull request was merged while
+  `gh pr checks` showed 3 of 8 CI jobs pending; all 8 passed, but a red would have
+  merged the same way. It is silent because the merge command does not wait. **The check:**
+  read `gh pr checks` until no job is pending before the merge, and make the jobs
+  required on `main` (`T-afa5`, [#12](https://github.com/pharzam/layup/issues/12)).
+  Learned in `T-xgz4`.
 
 ### Writing a lesson back (kit-wide — keep this)
 

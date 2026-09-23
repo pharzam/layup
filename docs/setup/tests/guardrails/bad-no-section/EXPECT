@@ -1,0 +1,2 @@
+exit=1
+line=setup-check: guardrails FAIL section: docs/guardrails.md has no heading "### 1.1 LAYUP System Invariants (PSB §6)"

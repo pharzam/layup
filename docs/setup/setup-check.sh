@@ -26,7 +26,7 @@
 
 set -u
 
-CHECKS="pin kit-history facts onboarding glossary"
+CHECKS="pin kit-history facts onboarding glossary guardrails"
 
 if [ "${1:-}" = --only ]; then
 	[ $# -ge 2 ] && [ -n "$2" ] || { echo "setup-check: --only needs a list of checks" >&2; exit 2; }
@@ -209,6 +209,49 @@ check_glossary() {
 		[ "$gl_c" = 1 ] || fail glossary "citation: F-0001#$gl_i is cited $gl_c times, expected 1"
 		gl_i=$((gl_i + 1))
 	done
+}
+
+# --- guardrails (the 9 System Invariants) --------------------------------------
+# Under `### 1.1 LAYUP System Invariants (PSB §6)`, an entry starts with a line
+# `- **Inv-N**` and runs to the next entry or heading. Inv-1 to Inv-9 appear once
+# each; entry N cites F-0001#N; its `Check:` value is `no check yet` or
+# `<existing path> (<gate>)` with gate `hook` or `ci:<job>`. Whether the gate
+# really runs the path is a review judgement, not this check.
+check_guardrails() {
+	gr_doc="$ROOT/docs/guardrails.md"
+	gr_head='### 1.1 LAYUP System Invariants (PSB §6)'
+	if ! grep -Fxq "$gr_head" "$gr_doc" 2>/dev/null; then
+		fail guardrails "section: docs/guardrails.md has no heading \"$gr_head\""; return
+	fi
+	# One line per entry: `N<TAB>entry lines joined by the unit separator (octal 037)`,
+	# so a `Check:` value can end where its own line ends.
+	awk -v h="$gr_head" '
+		$0 == h { on = 1; next }
+		on && /^#/ { on = 0 }
+		!on { next }
+		/^- \*\*Inv-[0-9]+\*\*/ { if (cur != "") print cur; n = $0; sub(/^- \*\*Inv-/, "", n); sub(/\*\*.*/, "", n); cur = n "\t" $0; next }
+		cur != "" { cur = cur "\037" $0 }
+		END { if (cur != "") print cur }' "$gr_doc" > "$tmpdir/gr_entries"
+	gr_i=1
+	while [ "$gr_i" -le 9 ]; do
+		gr_c=$(cut -f1 "$tmpdir/gr_entries" | grep -cx "$gr_i")
+		[ "$gr_c" = 1 ] || fail guardrails "entry: Inv-$gr_i appears $gr_c times, expected 1"
+		gr_i=$((gr_i + 1))
+	done
+	while IFS="$(printf '\t')" read -r gr_n gr_text; do
+		case "$gr_n" in [1-9]) ;; *) fail guardrails "entry: Inv-$gr_n is not one of Inv-1 to Inv-9"; continue ;; esac
+		printf '%s' "$gr_text" | grep -Fq "F-0001#$gr_n\`" || fail guardrails "citation: Inv-$gr_n does not cite F-0001#$gr_n"
+		gr_check=$(printf '%s' "$gr_text" | tr '\037' '\n' | sed -n 's/.*Check: //p' | head -1 | sed 's/[[:space:]]*$//')
+		case "$gr_check" in
+		"no check yet") ;;
+		*" ("*")")
+			gr_path=${gr_check%% (*}
+			gr_gate=${gr_check##* (}; gr_gate=${gr_gate%)}
+			[ -n "$gr_path" ] && [ -f "$ROOT/$gr_path" ] || fail guardrails "check: Inv-$gr_n names \"$gr_path\", which is not a file"
+			case "$gr_gate" in hook|ci:?*) ;; *) fail guardrails "check: Inv-$gr_n gate \"$gr_gate\" is not hook or ci:<job>" ;; esac ;;
+		*) fail guardrails "check: Inv-$gr_n has no valid Check: value (\"$gr_check\")" ;;
+		esac
+	done < "$tmpdir/gr_entries"
 }
 
 for check_name in $CHECKS; do
