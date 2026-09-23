@@ -26,7 +26,7 @@
 
 set -u
 
-CHECKS="pin kit-history facts onboarding glossary guardrails markers"
+CHECKS="pin kit-history facts onboarding glossary guardrails markers ci"
 
 if [ "${1:-}" = --only ]; then
 	[ $# -ge 2 ] && [ -n "$2" ] || { echo "setup-check: --only needs a list of checks" >&2; exit 2; }
@@ -327,6 +327,24 @@ check_markers() {
 		printf 'setup-check: markers FAIL stale: %s %s is listed in docs/setup/open-gaps.tsv but does not occur\n' "$mk_p" "$mk_m"
 	done >> "$tmpdir/mk_out"
 	if [ -s "$tmpdir/mk_out" ]; then cat "$tmpdir/mk_out"; cur_fail=1; failed=1; fi
+}
+
+# --- ci (the kit's own CI replaced; setup-check runs in CI) --------------------
+# No workflow may call itself the Armature repo's CI. ci.yml must run the fixture
+# self-test and the setup check, with the full history (the pin tree check reads
+# the root commit, and a shallow clone fails it).
+check_ci() {
+	for ci_f in "$ROOT"/.github/workflows/*.yml; do
+		[ -f "$ci_f" ] || continue
+		grep -Fq 'Armature repo' "$ci_f" \
+			&& fail ci "kit-header: .github/workflows/$(basename "$ci_f") says it is the Armature repo's workflow"
+	done
+	ci_yml="$ROOT/.github/workflows/ci.yml"
+	for ci_cmd in 'sh docs/setup/setup-check.sh' 'sh docs/setup/tests/run.sh'; do
+		grep -Fq -- "$ci_cmd" "$ci_yml" 2>/dev/null || fail ci "job: .github/workflows/ci.yml does not run $ci_cmd"
+	done
+	grep -Eq 'fetch-depth:[[:space:]]*0([^0-9]|$)' "$ci_yml" 2>/dev/null \
+		|| fail ci "history: .github/workflows/ci.yml has no fetch-depth: 0 (the pin check needs the root commit)"
 }
 
 for check_name in $CHECKS; do

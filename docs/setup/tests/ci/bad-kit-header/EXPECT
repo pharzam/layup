@@ -1,0 +1,2 @@
+exit=1
+line=setup-check: ci FAIL kit-header: .github/workflows/pr-link.yml says it is the Armature repo's workflow

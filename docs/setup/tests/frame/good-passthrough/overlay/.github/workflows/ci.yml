@@ -1,0 +1,9 @@
+# Continuous integration for LAYUP.
+jobs:
+  setup-check:
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: sh docs/setup/tests/run.sh
+      - run: sh docs/setup/setup-check.sh

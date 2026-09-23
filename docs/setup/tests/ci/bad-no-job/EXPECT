@@ -1,0 +1,4 @@
+exit=1
+line=setup-check: ci FAIL job: .github/workflows/ci.yml does not run sh docs/setup/setup-check.sh
+line=setup-check: ci FAIL job: .github/workflows/ci.yml does not run sh docs/setup/tests/run.sh
+line=setup-check: ci FAIL history: .github/workflows/ci.yml has no fetch-depth: 0 (the pin check needs the root commit)
