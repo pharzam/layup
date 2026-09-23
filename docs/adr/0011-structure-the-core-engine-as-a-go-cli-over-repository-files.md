@@ -23,8 +23,9 @@ Git-native state; governance and the invariants) generated options, one pass eac
 with no vote (ADR-0006, Operator decision O-4). The compared set and the recorded
 disagreement are on the issue of this decision.
 
-The Operator decided, on 2026-09-23, after the panel's questions (the words are
-copied from the issue of this decision):
+The Operator decided, on 2026-09-23, after the panel's questions. O-12 and O-13
+are copied word for word; O-9 to O-11 summarise the answers, whose full text is on
+the issue of this decision:
 
 | ID | Decision |
 |----|----------|
@@ -57,8 +58,11 @@ these properties:
 2. **State.** All state is plain files in a repository, read and written as
    tab-separated tables with a fixed header row (one file per record kind, one
    row per event, rows only added), beside Markdown records in the kit's shape.
-   Per-task records go under the evidence store `runs/<task-id>/` (Operator
-   decision O-2); setup state stays under `docs/setup/`. A deterministic check
+   An event table (telemetry, gate results) only adds rows; a register (for
+   example `open-gaps.tsv`) is edited in place, and Git history is its log.
+   Per-task records go under an evidence store, `runs/<task-id>/` in LAYUP's own
+   repository (Operator decision O-2) and the value the setup of a target sets
+   for it; setup state stays under `docs/setup/`. A deterministic check
    validates each table's header and columns. A human reads every state file
    with no tool.
 3. **Where it writes.** Into a target, the engine writes the adapted Armature kit
@@ -87,8 +91,11 @@ these properties:
 7. **Copy without Node.** The engine copies the kit with `git clone` of the
    pinned commit and removes the `.git` directory; it does not call `npx degit`
    (ADR-0010 rejected a Node runtime). The manual run used `npx degit`, and
-   step S02 of `setup/steps.tsv` still says so; the task that builds
-   `layup setup` changes S02.
+   step S02 of `setup/steps.tsv` still says so. Likewise, step S12 adds a CI job
+   that runs LAYUP's `setup-check.sh`, which cannot go into a target (decision 3):
+   in a target, CI runs the kit's own jobs only, and `layup setup verify` checks
+   the setup from outside (decision 4). The task that builds `layup setup`
+   changes S02 and S12.
 8. **No LLM in the engine.** The engine makes no model call; judgement stays with
    the harness agents that call it. Its interface is plain text and files, so any
    harness agent can run it (Invariant 9).
@@ -110,8 +117,8 @@ repository (a target then fails its gates without it).
   decision 3 changes with it, in a new ADR.
 - Invariant 3 has no check (O-9). **The missing control** is a guard before the
   merge: a code-owners rule on the rule paths (`docs/*.md` rules, `.github/**`,
-  the check scripts) that needs an approval from an account that the agents do
-  not use. It waits for O-9. Until then, a deterministic post-merge list of each
+  the check scripts, and the gate code under `cmd/layup` and `internal/`) that
+  needs an approval from an account that the agents do not use. It waits for O-9. Until then, a deterministic post-merge list of each
   change to a rule path is the complement.
 - Two languages hold checks: `sh` for LAYUP's own setup, Go for the engine. A
   check that exists in both can drift apart, the risk that `guardrails.md` §2
