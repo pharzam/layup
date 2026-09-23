@@ -116,12 +116,19 @@ if [ -f docs/links/link-lint.sh ]; then
 	sh docs/links/link-lint.sh
 fi
 
-# 2. Lint / format — gofmt and go vet (not active: no Go code yet; the task that lands the first Go code turns it on)
-# test -z "$(gofmt -l .)" && go vet ./... || exit 1
+# 2. Lint / format — gofmt (fails on any listed file) and go vet (ADR-0010).
+#    Active since T-t8qp, the first Go code.
+if [ -f go.mod ]; then
+	test -z "$(gofmt -l .)" || { echo "pre-commit: gofmt lists files; run gofmt -w" >&2; exit 1; }
+	go vet ./... || exit 1
+fi
 
 # 3. Tests, cheap → expensive — run the fast levels here; leave the slow ones to
-#    CI. Fill each ‹…› with your stack's command (see docs/tests/test-levels.md).
-# go test ./...         || exit 1   # fastest — run on every commit
+#    CI (see docs/tests/test-levels.md). The unit level runs here; the
+#    integration and e2e levels run in CI only.
+if [ -f go.mod ]; then
+	go test ./... || exit 1
+fi
 # go test -tags=integration ./...  || exit 1   # must be the fast subset; the full set in CI
 # go test -tags=e2e ./...   || exit 1   # usually CI only — enable a smoke subset if cheap
 

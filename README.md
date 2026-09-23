@@ -9,7 +9,7 @@ same discipline that it will set up for other projects: this repository is an
 Armature project, a one-time copy of the Armature kit pinned at commit `a959655`
 ([`docs/setup/armature.pin`](docs/setup/armature.pin),
 [ADR-0009](docs/adr/0009-pin-armature-at-a-recorded-commit.md)), with no upstream
-link. No product code exists yet; the stack is Go
+link. The code so far is the skeleton of the `layup` command; the stack is Go
 ([ADR-0010](docs/adr/0010-use-go-as-the-technology-stack.md)), and the core engine
 will be one Go command-line program over files in the repository
 ([ADR-0011](docs/adr/0011-structure-the-core-engine-as-a-go-cli-over-repository-files.md)).
@@ -44,7 +44,7 @@ will be one Go command-line program over files in the repository
 | [`docs/facts/`](docs/facts/) | Raw facts kept as immutable evidence — the PSB (`F-0001`) and the vision brief (`F-0002`, a solution document) — and the citation convention that derives requirements from them. |
 | [`docs/prd/`](docs/prd/) | Product Requirements Documents derived from the facts, plus [`prd-lint.sh`](docs/prd/prd-lint.sh), the discipline test that keeps them honest. |
 | [`docs/tests/`](docs/tests/) | The testing conventions — the test levels, a pattern per level, the security, scaling, and Definition-of-Done checklists, and test-to-requirement traceability — plus [`run-discipline-tests.sh`](docs/tests/run-discipline-tests.sh), which tests the kit's own linters against fixtures. |
-| [`tests/`](tests/) | Cross-package end-to-end fixtures; Go unit and integration tests sit beside the code. Empty until Go code exists, kept in git by a `.gitkeep`. |
+| [`tests/`](tests/) | Cross-package end-to-end fixtures; Go unit and integration tests sit beside the code. Empty so far (the first e2e test sits beside its package), kept in git by a `.gitkeep`. |
 | [`docs/tasks/`](docs/tasks/) | The task index — [`backlog.md`](docs/tasks/backlog.md) and [`completed.md`](docs/tasks/completed.md). |
 | [`.githooks/`](.githooks/) | Git hooks that enforce the cheap gate locally — a commit-message check and a pre-commit runner. Install with `sh .githooks/install.sh`. |
 | [`.gitattributes`](.gitattributes) | **Copy this one.** It keeps the kit's scripts and hooks at line-feed endings, without which none of them runs on a Windows checkout, and pins the handful of fixtures whose Windows endings *are* the assertion. Leave it behind and the gate is either unrunnable or quietly testing nothing. |

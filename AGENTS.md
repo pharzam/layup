@@ -16,8 +16,9 @@ system is a one-time copy of the Armature kit, pinned in
 [`docs/setup/armature.pin`](docs/setup/armature.pin): a quality gate, guardrails,
 decision records, a glossary, a facts-and-requirements convention, a test section
 and a task backlog. The stack is Go
-([ADR-0010](docs/adr/0010-use-go-as-the-technology-stack.md)); no product code
-exists yet, so there is nothing to build.
+([ADR-0010](docs/adr/0010-use-go-as-the-technology-stack.md)). The code is the
+`layup` command (`cmd/layup`, `internal/`); build it with `go build ./...` and
+test it with the levels in [`docs/tests/test-levels.md`](docs/tests/test-levels.md).
 
 Two things catch agents out: a remaining `‹…›` marker is an open gap listed in
 [`docs/setup/open-gaps.tsv`](docs/setup/open-gaps.tsv), never a value to guess;
