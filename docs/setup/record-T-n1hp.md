@@ -21,9 +21,55 @@ child task adds its own rows in the same PR that lands its work.
   whose only source is a guess is a defect (PSB Invariant 4).
 - **Status** is `active` when a gate reads the value today, `not active` when a
   gate must read it but none does yet (PSB Invariant 5), and `recorded` when the
-  value is provenance that no gate reads by design.
+  value is provenance that no gate reads by design. V-22 is `active` in each
+  clone that ran the install; it is not a file in Git.
 - Times are UTC, from the Git commit, the GitHub API `created_at`, or the file
   system, as the Source column says.
+
+## Baseline summary
+
+The figures below are the baseline for an automated setup. Each elapsed time and
+each token count is copied from the child's resource record (`docs/tasks/<id>.md`,
+ADR-0007); the plan-review runs are listed apart, because one run served several
+children. Author tokens are `not reported` in every record, so each total is a
+lower bound.
+
+| Task | Issue | Goal | Review rounds | Round tokens | Elapsed (min, about) | Budget approval |
+|------|-------|------|---------------|--------------|----------------------|-----------------|
+| [`T-r7zg`](../tasks/T-r7zg.md) | [#2](https://github.com/pharzam/layup/issues/2) | pin + frame | 2 | 288,187 | 80 | 412/22 |
+| [`T-vbwc`](../tasks/T-vbwc.md) | [#3](https://github.com/pharzam/layup/issues/3) | kit history | 3 | 424,770 | 70 | 3,340/53 |
+| [`T-fvwj`](../tasks/T-fvwj.md) | [#4](https://github.com/pharzam/layup/issues/4) | facts | 2 | 242,615 | 50 | 594/21 |
+| [`T-vpty`](../tasks/T-vpty.md) | [#5](https://github.com/pharzam/layup/issues/5) | onboarding | 2 | 258,443 | 46 | — |
+| [`T-xgz4`](../tasks/T-xgz4.md) | [#6](https://github.com/pharzam/layup/issues/6) | glossary | 3 | 410,660 | 63 | 165/12 |
+| [`T-7ndb`](../tasks/T-7ndb.md) | [#7](https://github.com/pharzam/layup/issues/7) | guardrails | 2 | 275,330 | 56 | — |
+| [`T-nfh8`](../tasks/T-nfh8.md) | [#8](https://github.com/pharzam/layup/issues/8) | markers | 3 | 566,001 | 89 | 538/35 |
+| [`T-q344`](../tasks/T-q344.md) | [#9](https://github.com/pharzam/layup/issues/9) | CI | 1 | 148,320 | 40 | 134/15 |
+| [`T-fvng`](../tasks/T-fvng.md) | [#23](https://github.com/pharzam/layup/issues/23) | CI restore (revealed blocker) | 3 | 449,478 | 84 | — |
+| [`T-afa5`](../tasks/T-afa5.md) | [#12](https://github.com/pharzam/layup/issues/12) | branch protection | 3 | 376,908 | 65 | 244/15 |
+| [`T-6rg3`](../tasks/T-6rg3.md) | [#10](https://github.com/pharzam/layup/issues/10) | identity | 1 | 136,971 | 30 | — |
+| **Total** | | 11 tasks | 25 | 3,577,683 | 673 | 7 |
+
+Plan reviews: 531,964 tokens for #1 and its children (three runs of one reviewer
+session: 119,958 + 195,984 + 216,022, from the harness task reports of that
+reviewer; this summary is the first place in Git that holds them) and 108,245
+for #23 (in `T-fvng.md`). This task, `T-9mmm`, writes its own figures in
+`docs/tasks/T-9mmm.md` at close-out, so they are not in this table.
+
+Counts from this record and the issues:
+
+- **Human input:** 3 project decisions before the root commit (timeline row 1); one
+  batch of 8 setup decisions (O-1 to O-8); 8 budget approvals (#1, #2, #3, #4,
+  #6, #8, #9, #12); and the Operator's authorization of the public repository.
+  Each was asked in the session and written to Git or to its issue.
+- **Values:** 22 value rows (V-01 to V-22); 2 questions left open in
+  [`open-gaps.tsv`](open-gaps.tsv) (the Definition of Done; the coverage
+  threshold).
+- **Kit findings:** 8 (K-01 to K-08). **Deviations:** 4 (D-01 to D-04).
+- **Revealed issues:** #15, #21, #23 (a blocker, fixed as `T-fvng`), #24.
+- **Wall-clock:** from the copy (10:21:59 UTC, row 2) to the start of this task
+  (17:12:02 UTC) is about 6 hours 50 minutes on 2026-09-23. The per-task elapsed
+  times above add to more than the wall-clock time, because rounds ran while the
+  next task was prepared.
 
 ## Timeline
 
@@ -63,6 +109,8 @@ child task adds its own rows in the same PR that lands its work.
 | 32 | Branch protection applied to `main` (`PUT`), after review round 1 of #12 | 16:35:40 | shell `date -u` after the `PUT` |
 | 33 | `T-afa5` merged (PR #26), after 3 review rounds | 16:58:57 | GitHub API `mergedAt` |
 | 34 | `T-6rg3` worktree created | 16:59:12 | shell `date` |
+| 35 | `T-6rg3` merged (PR #27), after 1 review round | 17:11:49 | GitHub API `mergedAt` |
+| 36 | `T-9mmm` worktree created | 17:12:02 | shell `date` |
 
 ## Values
 
@@ -89,6 +137,7 @@ child task adds its own rows in the same PR that lands its work.
 | V-19 | `guardrails.md`: plain-terms sentence; §1 what is pre-registered (PSB §7.1 checks, §7.2 targets, each task's budget and cap) and where it freezes (the PSB, hashed; the plan-review comment); §3 validation table (`setup-check.sh`, `tests/run.sh`, review rounds); Sources | `docs/guardrails.md` | `F-0001#4`, `F-0001#5`, `F-0001 §7`; `docs/issue-workflow.md` R12 (budget and cap); the scripts named exist in `docs/setup/` | recorded | `T-nfh8` |
 | V-20 | `docs/ci/README.md`: the other-forge setting is "not applicable, because this project uses GitHub" | `docs/ci/README.md` | `gh repo view pharzam/layup` (a GitHub repository) | recorded | `T-nfh8` |
 | V-21 | branch protection of `main`: 9 required checks (one per workflow job, app 15368), `strict`, `enforce_admins`, a PR with 0 approvals, conversation resolution | [`branch-protection.json`](branch-protection.json) | job names derived by check `protection`, equal byte for byte to the check-run names of `c432d21` (check-runs API, review round 1 of #12); read-back at 16:35:40 UTC with `gh api repos/pharzam/layup/branches/main/protection --jq '.required_status_checks.contexts \| sort'` equals the file's contexts under `jq -c '[.required_status_checks.checks[].context] \| sort'` | active | `T-afa5` |
+| V-22 | git hooks installed: `core.hooksPath` = `.githooks` (relative) | `.git/config` of this clone (not in Git; each clone runs `sh .githooks/install.sh`) | `install.sh` output, run between timeline rows 4 and 5 ("core.hooksPath set to '.githooks'"); `git config core.hooksPath` prints `.githooks` | active | `T-n1hp` |
 
 The decision behind V-01 to V-05 is
 [ADR-0009](../adr/0009-pin-armature-at-a-recorded-commit.md).

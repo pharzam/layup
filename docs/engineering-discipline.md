@@ -15,98 +15,14 @@ This document is the project's *how*. For the *what and why* — the problem the
 project solves — see the
 [Problem statement](onboarding-for-engineers.md#1-problem-statement).
 
-## How to adapt this kit
+## How this project was set up
 
-**Before you fill anything, start from a clean history.** Your project is a *new*
-repository, not a fork of the kit — do not keep Armature's git history or remote.
-Use GitHub's *Use this template*, or detach by hand: delete `.git`, run `git init`,
-commit, and add your own remote. Then work through the steps below.
-
-Four things need doing, then delete this section. The first three add your
-input; the fourth removes the kit's own history.
-
-**1. Fill the sibling documents.** Each is a generic template with its own
-"How to adapt" notes:
-
-- [`guardrails.md`](guardrails.md) — your known-pitfall, decision, and validation
-  rules. Referenced by gate step 2.
-- [`adr/`](adr/) — your Architecture Decision Records. Start at
-  [`adr/README.md`](adr/README.md); copy [`adr/template.md`](adr/template.md) for
-  each new record.
-- [`facts/`](facts/) — the facts documents you collect from a customer, stored
-  as-is. Skip this if your project has no external customer. Start at
-  [`facts/README.md`](facts/README.md); copy [`facts/template.md`](facts/template.md)
-  for each new record.
-- [`prd/`](prd/) — your Product Requirements Documents, derived from the facts.
-  Skip this if your project tracks no requirements. Start at
-  [`prd/README.md`](prd/README.md); copy [`prd/template.md`](prd/template.md) for
-  each new record.
-- [`tests/`](tests/) — your testing conventions: the levels, a pattern per level,
-  the security, scaling, and DoD checklists, and the traceability that ties a test
-  to a requirement. Start at [`tests/README.md`](tests/README.md); the product
-  tests themselves go in the repo-root [`tests/`](../tests/) drop-in.
-- [`glossary.md`](glossary.md) — your shared-vocabulary document.
-- [`onboarding-for-engineers.md`](onboarding-for-engineers.md) — the first
-  document a new engineer reads.
-- [`tasks/backlog.md`](tasks/backlog.md) and
-  [`tasks/completed.md`](tasks/completed.md) — your task index. Keep both files and
-  fill them with your own tasks in place of the kit's; step 4 clears the kit's
-  completed-log history and deletes its `T-*.md` detail files.
-- [`issue-workflow.md`](issue-workflow.md) — the issue-first rules (R1–R13), the
-  ticket policy the gate assumes.
-- [`templates/`](templates/) — inert forge issue/PR templates; copy into place
-  only if you adopt that forge.
-
-**2. Replace the `‹…›` markers.** These are the per-project values with no file
-of their own:
-
-- `go test` — how tests run in your stack (the command and any rule, for
-  example "no external test framework"); the per-level commands
-  (`go test ./...`, `go test -tags=integration ./...`, …) are defined in
-  [`tests/test-levels.md`](tests/test-levels.md).
-- `runs/` — where you commit run outputs, logs, or results (for
-  example `runs/` or `artifacts/`).
-- task-ID scheme (`T-` plus four random characters from `0-9 a-z` without `i l o u`) — how you tag a task (for example `T-` plus four random
-  characters).
-- `.worktree` — your per-task isolation directory (for example `.worktree/`).
-
-**3. Turn on enforcement.** The gate below is only as real as what enforces it.
-Wire in the two enforcement layers so a violation is caught automatically, not by
-memory:
-
-- **Install the git hooks** — run `sh .githooks/install.sh` once per clone. It pins
-  `core.hooksPath` to the relative `.githooks` — and **that path must stay
-  relative**: `.git/config` is shared by every worktree, so an absolute value binds
-  them all to one checkout's hooks. This turns
-  on [`.githooks/`](../.githooks/): the `commit-msg` hook checks
-  [commit format](#commit-messages), and the `pre-commit` hook runs the three
-  repo-file [discipline linters](#testing) — ADR, PRD and link — and the discipline
-  self-tests, plus the fast gate you fill in. See [Git hooks](#git-hooks).
-- **Fill the hook and CI `‹…›` steps** for your stack — `test -z "$(gofmt -l .)" && go vet ./...`, the test-level
-  commands from [`tests/test-levels.md`](tests/test-levels.md)
-  (`go test ./...`, `go test -tags=integration ./...`, `go test -tags=e2e ./...`),
-  and the `govulncheck v1.8.0, go vet, and gitleaks` scan — then, if you use GitHub or GitLab, **activate
-  CI** by copying
-  the matching template from [`docs/ci/`](ci/) into place — see
-  [Continuous integration](#continuous-integration-optional). CI is optional but
-  recommended; it is the authority the hooks give you fast feedback against.
-- **Confirm the discipline linters run** — `sh docs/adr/adr-lint.sh` should print
-  `adr-lint: OK` and `sh docs/prd/prd-lint.sh` should print `prd-lint: OK`. Both ship
-  wired into the hook and the CI templates.
-
-**4. Clear this repository's own history.** Detaching from git (above) drops the
-commit log, but these files are the kit's *content* — a fresh `git init` keeps
-them. They record how Armature itself was built, not your project, so remove them
-by hand:
-
-- Delete `docs/decisions/` — the kit's own Architecture Decision Records, archived
-  out of the constitution so [`adr/`](adr/) ships only the records you adopt. No
-  adopter-facing rule links into it, so your live rules stay green without it.
-- Delete `docs/audit/` — the independent assessment of *this* repository, not a
-  document your project reuses.
-- Clear the kit's own entries from `docs/tasks/completed.md` — keep the file, it is
-  your task index (step 1) — and delete the kit's `docs/tasks/T-*.md` detail files,
-  each wholly one kit task's record. Then log your own.
+This repository was set up from the Armature kit once, by hand, and the kit's
+adaptation steps are done: the kit history is removed, the documents are filled,
+and each adopter value has its evidence or is an open gap. The procedure, as
+ordered steps for later automation, is [`setup/README.md`](setup/README.md); the
+measured run is [`setup/record-T-n1hp.md`](setup/record-T-n1hp.md); and
+`sh docs/setup/setup-check.sh` proves the result.
 
 ## Working a task under the quality gate
 
@@ -814,7 +730,8 @@ before a merge. The [git hooks](#git-hooks) run the same rules locally for fast 
 It is optional because the kit is forge-free. Ready-to-copy templates for GitHub
 Actions and GitLab CI live in [`docs/ci/`](ci/), inert until you copy one into
 place and fill its `‹…›` steps — see [`docs/ci/README.md`](ci/README.md). Turn CI
-on as part of [adapting the kit](#how-to-adapt-this-kit).
+on as part of [the setup](#how-this-project-was-set-up) (step S12 of
+[`setup/README.md`](setup/README.md)).
 
 ## Git hooks
 

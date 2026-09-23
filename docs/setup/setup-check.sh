@@ -26,7 +26,7 @@
 
 set -u
 
-CHECKS="pin kit-history facts onboarding glossary guardrails markers ci protection identity"
+CHECKS="pin kit-history facts onboarding glossary guardrails markers ci protection identity procedure"
 
 if [ "${1:-}" = --only ]; then
 	[ $# -ge 2 ] && [ -n "$2" ] || { echo "setup-check: --only needs a list of checks" >&2; exit 2; }
@@ -463,6 +463,41 @@ check_identity() {
 	done
 	grep -Fq '](docs/setup/armature.pin)' "$ROOT/README.md" 2>/dev/null \
 		|| fail identity "pin: README.md has no link to docs/setup/armature.pin"
+}
+
+# --- procedure (the setup procedure, for later automation) ---------------------
+# docs/setup/steps.tsv is the machine-readable procedure: a fixed header and six
+# tab-separated columns per row (CR line ends ignored). Each step ID has a
+# `### <id>` heading in docs/setup/README.md and each `### S<digits>` heading has
+# a row; other `###` headings are free text. The kit section "How to
+# adapt this kit" is gone: the procedure replaced it.
+check_procedure() {
+	pc_tsv="$ROOT/docs/setup/steps.tsv"
+	pc_md="$ROOT/docs/setup/README.md"
+	if [ ! -f "$pc_tsv" ]; then fail procedure "missing: docs/setup/steps.tsv is absent"
+	else
+		pc_want="$(printf 'id\tinput\taction\toutput\tevidence\thuman_decision')"
+		[ "$(head -1 "$pc_tsv" | tr -d '\r')" = "$pc_want" ] \
+			|| fail procedure "header: docs/setup/steps.tsv header is not id, input, action, output, evidence, human_decision"
+		awk -F'\t' '
+			{ sub(/\r$/, "") }
+			NR == 1 { next }
+			NF != 6 { print "setup-check: procedure FAIL columns: docs/setup/steps.tsv line " NR " has " NF " columns, expected 6" }
+			$1 == "" { print "setup-check: procedure FAIL id: docs/setup/steps.tsv line " NR " has an empty id" }
+			$1 != "" && seen[$1]++ { print "setup-check: procedure FAIL id: " $1 " appears more than once in docs/setup/steps.tsv" }
+			NF >= 6 && $6 != "yes" && $6 != "no" { print "setup-check: procedure FAIL decision: docs/setup/steps.tsv line " NR " human_decision is \"" $6 "\", expected yes or no" }
+		' "$pc_tsv" > "$tmpdir/pc_cols"
+		if [ -s "$tmpdir/pc_cols" ]; then cat "$tmpdir/pc_cols"; cur_fail=1; failed=1; fi
+		awk -F'\t' 'NR > 1 && $1 != "" { print $1 }' "$pc_tsv" | sort -u > "$tmpdir/pc_ids"
+		sed -n 's/^### \(S[0-9][0-9]*\)\([^0-9].*\)\{0,1\}$/\1/p' "$pc_md" 2>/dev/null | sort -u > "$tmpdir/pc_heads"
+		comm -23 "$tmpdir/pc_ids" "$tmpdir/pc_heads" | while IFS= read -r pc_i; do
+			printf 'setup-check: procedure FAIL step: %s is in steps.tsv but has no "### %s" heading in docs/setup/README.md\n' "$pc_i" "$pc_i"; done > "$tmpdir/pc_out"
+		comm -13 "$tmpdir/pc_ids" "$tmpdir/pc_heads" | while IFS= read -r pc_i; do
+			printf 'setup-check: procedure FAIL step: %s has a heading in docs/setup/README.md but is not in steps.tsv\n' "$pc_i"; done >> "$tmpdir/pc_out"
+		if [ -s "$tmpdir/pc_out" ]; then cat "$tmpdir/pc_out"; cur_fail=1; failed=1; fi
+	fi
+	grep -q '^## How to adapt this kit' "$ROOT/docs/engineering-discipline.md" 2>/dev/null \
+		&& fail procedure "kit: docs/engineering-discipline.md still holds the heading \"How to adapt this kit\""
 }
 
 for check_name in $CHECKS; do
