@@ -30,6 +30,16 @@ The Operator decided, on 2026-09-23, after the panel's questions:
 | O-9 | Rule protection for Invariant 3 is decided later. The agents and the Operator push with the same GitHub account today, so no forge setting can tell them apart. |
 | O-10 | Nothing from LAYUP goes into a target repository beyond the Armature kit itself. |
 | O-11 | Strict reading of O-10: LAYUP writes nothing into a target except the Armature kit copy and the facts; stack gates run outside the target, in LAYUP's own runner. |
+| O-12 | What LAYUP is, in the Operator's words: "The layup project final result is the product that uses armature as a kit to get a new problem statement brief and architectural vision brief from the idea owner and orchestrate the paths to deliver the solution for that problem statement. It's not a scaffold or template for obeying or adapting to the Product that should be created" |
+
+This record reads O-10 to O-12 together as follows, and the Operator can correct
+the reading: LAYUP is an **orchestrator product**. A **target** is the repository
+of the new product that LAYUP delivers from the idea owner's problem statement and
+vision brief. The target holds the adapted Armature kit (its discipline system),
+the facts, the product code that the orchestrated role agents deliver, and the
+project's own state records, because Invariant 1 puts project state in the
+project repository. LAYUP's own machinery — its engine code, scripts, and binary —
+is never written into a target.
 
 ## Decision
 
@@ -47,11 +57,12 @@ these properties:
    decision O-2); setup state stays under `docs/setup/`. A deterministic check
    validates each table's header and columns. A human reads every state file
    with no tool.
-3. **Where it writes.** The engine writes state only into a repository whose
-   Operator allows it. Into a target repository it writes only the Armature kit
-   copy, its adaptation (the filled values and the setup record of
-   `setup/steps.tsv`), and the facts (O-11). It writes no LAYUP code, script, or
-   binary into a target (O-10).
+3. **Where it writes.** Into a target, the engine writes the adapted Armature kit
+   copy (the steps of `setup/steps.tsv`), the facts (the problem statement and
+   the vision brief), and the project's state records under `runs/` and
+   `docs/`. The product code is written by the role agents that LAYUP
+   orchestrates. The engine writes no LAYUP code, script, or binary into a target
+   (O-10, O-11).
 4. **Gates.** A target's own gates are the Armature kit's gates, so the target
    passes them without LAYUP (Invariant 2). LAYUP's stack-dependent gates and its
    setup verification are `layup` commands that run **outside** the target,
@@ -82,11 +93,10 @@ repository (a target then fails its gates without it).
 - A target passes its own gates without LAYUP by construction. LAYUP's stack
   gates need a LAYUP runner that reports on the target's pull requests; the task
   that builds the stack gates (`T-vk3k`) decides that runner.
-- **Open question Q-1 for the Operator.** PSB §6 wants each task's telemetry, gap
-  answers, and gate results in the project repository (Invariant 1), and O-11
-  forbids LAYUP-written files in a target beyond the kit copy and the facts. Until
-  Q-1 is answered, the engine writes state only into LAYUP's own repository, and
-  target state is blocked, not written elsewhere.
+- The question Q-1 (may LAYUP write state records into a target?) is answered by
+  the reading of O-12 above: state records are project data, not LAYUP
+  machinery, so they go into the target. If the Operator corrects the reading,
+  decision 3 changes with it, in a new ADR.
 - Invariant 3 has no check (O-9). A deterministic post-merge list of each change
   to a rule path is the complement until O-9 is decided.
 - Two languages hold checks: `sh` for LAYUP's own setup, Go for the engine. A
