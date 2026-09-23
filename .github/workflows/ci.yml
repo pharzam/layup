@@ -273,7 +273,8 @@ jobs:
           git clone --quiet --depth 1 --branch "$DEFAULT_BRANCH" \
             "https://github.com/${GITHUB_REPOSITORY}.git" .checks-from-default
           for f in docs/setup/setup-check.sh docs/adr/adr-lint.sh docs/prd/prd-lint.sh \
-                   docs/links/link-lint.sh docs/tests/run-discipline-tests.sh; do
+                   docs/links/link-lint.sh docs/tests/run-discipline-tests.sh \
+                   docs/ci/pr-link-lint.sh docs/ci/review-record-lint.sh; do
             if [ -f ".checks-from-default/$f" ]; then
               cp ".checks-from-default/$f" "$f"
               printf 'restored from %s: %s\n' "$DEFAULT_BRANCH" "$f"

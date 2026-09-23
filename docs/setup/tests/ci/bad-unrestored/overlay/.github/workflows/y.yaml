@@ -1,0 +1,5 @@
+# A LAYUP workflow with four-space job keys.
+jobs:
+    d:   # a trailing comment
+        steps:
+            - run: . docs/prd/prd-lint.sh

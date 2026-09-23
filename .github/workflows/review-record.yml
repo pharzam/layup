@@ -30,6 +30,25 @@ jobs:
       pull-requests: read
     steps:
       - uses: actions/checkout@v4
+      # The same #84 restore as ci.yml: the script that judges this pull request
+      # comes from the default branch, so a branch cannot gut its own check
+      # (issue #23). LIMIT: a branch that edits THIS FILE can remove this step.
+      - name: Restore the check from the default branch
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -eu
+          rm -rf .checks-from-default
+          git clone --quiet --depth 1 --branch "$DEFAULT_BRANCH" \
+            "https://github.com/${GITHUB_REPOSITORY}.git" .checks-from-default
+          f=docs/ci/review-record-lint.sh
+          if [ -f ".checks-from-default/$f" ]; then
+            cp ".checks-from-default/$f" "$f"
+            printf 'restored from %s: %s\n' "$DEFAULT_BRANCH" "$f"
+          else
+            printf 'not on %s, kept as written: %s\n' "$DEFAULT_BRANCH" "$f"
+          fi
+          rm -rf .checks-from-default
 
       - name: Find the issue this pull request answers
         id: issue

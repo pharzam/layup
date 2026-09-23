@@ -56,6 +56,8 @@ child task adds its own rows in the same PR that lands its work.
 | 25 | Operator answered one batch of 8 setup questions (O-1 to O-8) | about 13:50 | comment on [#8](https://github.com/pharzam/layup/issues/8) |
 | 26 | `T-nfh8` merged (PR #20), after 3 review rounds | 14:40:05 | GitHub API `mergedAt` |
 | 27 | `T-q344` worktree created | 14:40:08 | shell `date` |
+| 28 | `T-q344` merged (PR #22), after 1 review round | 14:55:00 | GitHub API `mergedAt` |
+| 29 | `T-fvng` worktree created (blocker #23) | 15:02:08 | shell `date` |
 
 ## Values
 
@@ -122,6 +124,7 @@ to an Armature rule.
 | K-05 | The first push to `main` must come before the `pre-push` hook is installed, because the hook refuses a direct push to `main`. | README step 1 and step 3 order | The root commit was pushed before `sh .githooks/install.sh`. |
 | K-06 | The adoption steps do not say to rewrite the "what this is" text of `README.md` and `AGENTS.md`, which name the kit. | README "Using it as a template" | Handled by `T-6rg3`. |
 | K-07 | The pin tree check needs the full history; `actions/checkout` is shallow by default. | not in the kit (LAYUP check) | `T-q344` sets `fetch-depth: 0` in job `setup-check`. A check that a pull request adds runs in CI only after it merges, because the job restores the check from `main`. |
+| K-08 | The kit's own `pr-link.yml` and `review-record.yml` run their lint script from the pull request's checkout, with no restore from the default branch, so a branch could gut its own required check. | `.github/workflows/` (kit's active copies) | `T-fvng` ([#23](https://github.com/pharzam/layup/issues/23)) added the restore step and cause `restore` to check `ci`. |
 
 ## Deviations
 

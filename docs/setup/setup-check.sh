@@ -334,7 +334,7 @@ check_markers() {
 # self-test and the setup check, with the full history (the pin tree check reads
 # the root commit, and a shallow clone fails it).
 check_ci() {
-	for ci_f in "$ROOT"/.github/workflows/*.yml; do
+	for ci_f in "$ROOT"/.github/workflows/*.yml "$ROOT"/.github/workflows/*.yaml; do
 		[ -f "$ci_f" ] || continue
 		grep -Fq 'Armature repo' "$ci_f" \
 			&& fail ci "kit-header: .github/workflows/$(basename "$ci_f") says it is the Armature repo's workflow"
@@ -345,6 +345,65 @@ check_ci() {
 	done
 	grep -Eq 'fetch-depth:[[:space:]]*0([^0-9]|$)' "$ci_yml" 2>/dev/null \
 		|| fail ci "history: .github/workflows/ci.yml has no fetch-depth: 0 (the pin check needs the root commit)"
+	# Cause `restore` (the #84 guardrail): per job, each `docs/...sh` path that the
+	# job names outside its restore step (a step whose name starts with
+	# "Restore"), in any form — `sh`, `bash`, `/bin/sh`, quoted, `./docs/...`,
+	# `$GITHUB_WORKSPACE/docs/...` — counts as a script the job runs, and must be
+	# named inside the restore step by its path or a parent directory. Comment
+	# lines count on neither side; CR line ends are ignored. A job is a key under
+	# `jobs:` at the first key's indent. setup-check.sh runs the four kit linters
+	# and the discipline runner; the runner tests the two docs/ci lint scripts.
+	# nested-checkout-check.sh is exempt: ci.yml documents why it runs from the
+	# branch. LIMIT: a script run through `working-directory:` with a relative
+	# path is not seen. Both *.yml and *.yaml workflows are read.
+	for ci_f in "$ROOT"/.github/workflows/*.yml "$ROOT"/.github/workflows/*.yaml; do
+		[ -f "$ci_f" ] || continue
+		ci_name=.github/workflows/$(basename "$ci_f")
+		awk '
+			function ind(l) { match(l, /^ */); return RLENGTH }
+			{ sub(/\r$/, "") }
+			/^jobs:/ { inj = 1; jind = -1; next }
+			inj && /^[^ #]/ { inj = 0 }
+			!inj { next }
+			/^[ \t]*#/ { next }
+			{
+				if (jind < 0 && $0 ~ /^ +[A-Za-z0-9_-]+:[ \t]*(#.*)?$/) jind = ind($0)
+				if (ind($0) == jind && $0 ~ /^ +[A-Za-z0-9_-]+:[ \t]*(#.*)?$/) {
+					job = $0; sub(/^ +/, "", job); sub(/:.*/, "", job); inrs = 0; next
+				}
+				if (job == "") next
+				if ($0 ~ /^ *- /) { sind = ind($0); inrs = ($0 ~ /^ *- name:[ \t]*["\047]?Restore/) }
+				else if (inrs && ind($0) <= sind) inrs = 0
+				if ($0 ~ /^ *name:[ \t]*["\047]?Restore/) inrs = 1
+				line = $0
+				while (match(line, /docs\/[A-Za-z0-9_.\/-]+/)) {
+					tok = substr(line, RSTART, RLENGTH); pre = substr(line, 1, RSTART - 1)
+					sub(/\/$/, "", tok)
+					if (inrs) print job "\tmention\t" tok
+					else if (tok ~ /\.sh$/) print job "\trun\t" tok
+					line = substr(line, RSTART + RLENGTH)
+				}
+			}' "$ci_f" > "$tmpdir/ci_tok"
+		for ci_job in $(cut -f1 "$tmpdir/ci_tok" | sort -u); do
+			awk -F'\t' -v j="$ci_job" '$1 == j && $2 == "run" { print $3 }' "$tmpdir/ci_tok" | sort -u > "$tmpdir/ci_need"
+			awk -F'\t' -v j="$ci_job" '$1 == j && $2 == "mention" { print $3 }' "$tmpdir/ci_tok" | sort -u > "$tmpdir/ci_named"
+			if grep -qx docs/setup/setup-check.sh "$tmpdir/ci_need"; then
+				printf '%s\n' docs/adr/adr-lint.sh docs/prd/prd-lint.sh docs/links/link-lint.sh docs/tests/run-discipline-tests.sh >> "$tmpdir/ci_need"
+			fi
+			if cat "$tmpdir/ci_need" "$tmpdir/ci_named" | grep -qx docs/tests/run-discipline-tests.sh; then
+				printf '%s\n' docs/ci/pr-link-lint.sh docs/ci/review-record-lint.sh >> "$tmpdir/ci_need"
+			fi
+			sort -u "$tmpdir/ci_need" | grep -vx docs/tests/nested-checkout-check.sh | while IFS= read -r ci_s; do
+				ci_ok=0 ci_p=$ci_s
+				while :; do
+					grep -qx -- "$ci_p" "$tmpdir/ci_named" && { ci_ok=1; break; }
+					case "$ci_p" in */*) ci_p=${ci_p%/*} ;; *) break ;; esac
+				done
+				[ "$ci_ok" = 1 ] || printf 'setup-check: ci FAIL restore: %s job %s runs or needs %s but does not restore it\n' "$ci_name" "$ci_job" "$ci_s"
+			done
+		done
+	done > "$tmpdir/ci_restore"
+	if [ -s "$tmpdir/ci_restore" ]; then cat "$tmpdir/ci_restore"; cur_fail=1; failed=1; fi
 }
 
 for check_name in $CHECKS; do

@@ -1,0 +1,26 @@
+# A LAYUP workflow.
+on:
+  pull_request:
+jobs:
+  a:
+    steps:
+      - run: printf '%s' "$BODY" | sh docs/ci/pr-link-lint.sh
+  b:
+    steps:
+      - name: Restore
+        run: |
+          for f in docs/setup/setup-check.sh docs/adr/adr-lint.sh docs/prd/prd-lint.sh docs/links/link-lint.sh docs/tests/run-discipline-tests.sh; do cp ".d/$f" "$f"; done
+      - run: sh docs/setup/setup-check.sh
+      - run: sh docs/tests/nested-checkout-check.sh
+  c:
+    steps:
+      - name: Lint docs/adr and docs/prd
+        # docs/adr/adr-lint.sh is named only in this comment
+        run: bash -e ./docs/adr/adr-lint.sh
+  e:
+    steps:
+      - name: Restore the checks
+        run: |
+          # docs/ci/review-record-lint.sh is named only in this comment
+          cp x y
+      - run: "/bin/sh -- docs/ci/review-record-lint.sh"
