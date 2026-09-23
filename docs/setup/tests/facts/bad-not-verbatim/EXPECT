@@ -1,7 +1,9 @@
 exit=1
 line=setup-check: facts FAIL verbatim: F-0001 fact 2 is not a byte-exact substring of docs/facts/problem-statement-brief.md
-line=setup-check: facts FAIL numbering: F-0001 holds 2 distinct fact numbers in 1..39, expected 39
+line=setup-check: facts FAIL numbering: F-0001 holds 3 distinct fact numbers in 1..39, expected 39
 line=setup-check: facts FAIL numbering: F-0001 fact 2 appears 2 times
 line=setup-check: facts FAIL index: docs/facts/README.md has no row for F-0001
 line=setup-check: facts FAIL index: docs/facts/README.md has no row for F-0002
 line=setup-check: facts FAIL hash: docs/setup/facts.sha256 is absent
+line=setup-check: facts FAIL numbering: F-0001 fact 40 is outside 1..39
+line=setup-check: facts FAIL verbatim: F-0001 fact 7 is empty

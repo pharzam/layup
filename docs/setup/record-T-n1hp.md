@@ -55,7 +55,6 @@ child task adds its own rows in the same PR that lands its work.
 | V-03 | `tree=8ffb250afd584da8b418bc220fb6d72e802924ce` | [`armature.pin`](armature.pin) | `git rev-parse d2516fd^{tree}`; equal to the Armature commit tree (plan review of #1, GitHub API) | active | `T-r7zg` |
 | V-04 | `method=npx degit pharzam/armature#<commit>` | [`armature.pin`](armature.pin) | the command that was run (kit README, step 1, with the commit added) | recorded | `T-r7zg` |
 | V-05 | `date=2026-09-23` | [`armature.pin`](armature.pin) | timeline row 2 | recorded | `T-r7zg` |
-
 | V-06 | PSB SHA-256 `3e96862b2578e74f42bfd24929926d0c64496f1a9a51f78dc8c6ca9ecf394ab8` | [`facts.sha256`](facts.sha256) | `shasum -a 256` of the approved Revision 6 file in the local research repository (`4cdf9d0`, no remote) | active | `T-fvwj` |
 | V-07 | Vision brief SHA-256 `b1354c71b3d686331a2cfd1f37a175f5a8ec44fb8dcd863e2cac0138d2d9f625` | [`facts.sha256`](facts.sha256) | same command, same repository | active | `T-fvwj` |
 
