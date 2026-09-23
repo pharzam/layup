@@ -45,6 +45,8 @@ child task adds its own rows in the same PR that lands its work.
 | 14 | `T-vbwc` worktree created | 11:34:46 | shell `date` |
 | 15 | `T-vbwc` merged (PR #14), after 3 review rounds | 12:08:57 | GitHub API `mergedAt` |
 | 16 | `T-fvwj` worktree created | 12:09:37 | shell `date` |
+| 17 | `T-fvwj` merged (PR #16), after 2 review rounds | 12:29:05 | GitHub API `mergedAt` |
+| 18 | `T-vpty` worktree created | 12:29:08 | shell `date` |
 
 ## Values
 

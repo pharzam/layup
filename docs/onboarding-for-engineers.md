@@ -8,69 +8,120 @@
 > **Read this first.** Every other document is written for someone already fluent
 > in the terminology. This one gets you to that point. Budget half an hour.
 
-> **How to adapt this file.** This is a skeleton. Fill each `‹…›` marker with your
-> project's own content, delete the sections you do not need, and — most
-> importantly — keep the headline numbers in step. This is the first document a
-> new engineer reads, so a stale number here is worse than a stale number
-> anywhere else (see the [plain-language-summaries](engineering-discipline.md#plain-language-summaries)
-> rule). Delete this note when the file is real.
-
 ## 1. Problem statement
 
-`‹Describe the product in plain language, with no unexplained jargon. What does it
-do, for whom, and what question was the project set out to answer. If the project
-has already answered part of that question, say so here.›`
+The source of truth is the approved LAYUP Problem Statement Brief (PSB),
+Revision 6, stored as the raw fact [`F-0001`](facts/F-0001-layup-problem-statement-brief.md)
+next to the file itself, [`facts/problem-statement-brief.md`](facts/problem-statement-brief.md).
+This section is a plain summary. Where the two disagree, the PSB wins.
+
+Teams now give software work to several autonomous agents, each with one
+function, for example a product owner, an architect, an engineer, and a QA
+engineer (`F-0001 §2`). The agents write code fast, but the delivery does not
+get fast. The PSB names seven causes (`F-0001 §1`):
+
+1. **The human is the message bus.** An agent that meets an unclear point stops
+   and asks a human, because it cannot tell who owns the answer.
+2. **Discipline decays.** Nothing that a machine enforces keeps the layout, the
+   boundaries, and the tests the same across agents and sessions.
+3. **Gaps are found late, and setup is manual.** Gaps in the problem statement
+   come up one at a time during delivery, and the discipline template of a new
+   project is filled by hand, with guesses.
+4. **Deadlock has no exit.** When agents disagree or a step repeats, nothing stops
+   the loop or diagnoses it.
+5. **Cost is invisible.** Nobody knows the tokens, the latency, or the duration
+   of a task.
+6. **Specifications are written by hand.** Nothing turns the approved problem
+   statement into requirements that trace back to its text.
+7. **Harness agents are fragmented.** The rules are copied into the format of
+   each agent product, and the copies drift.
+
+The PSB states the problem only. It does not choose a solution (`F-0001` header
+note). This repository has not yet answered any part of the problem; see
+[Where the project stands](#where-the-project-stands).
 
 ## 2. Crash course: the domain
 
-`‹The vocabulary a reader hits in every other document, in dependency order — each
-term building on the last, not alphabetical. This is the same vocabulary as
-[glossary.md](glossary.md), but taught in prose, because definitions in isolation
-are hard to absorb. Use small diagrams and worked examples where they help.›`
+The terms below build on each other. Each one is defined in full in the
+[glossary](glossary.md), section 1, which cites the PSB row it comes from.
 
-### 2.1 `‹First concept›`
+### 2.1 Harness agent and role agent
 
-`‹Explain it. Prefer a concrete example or a small ASCII diagram.›`
+A **harness agent** is an agent product, for example Claude Code or Codex. It
+gives the model, the session, the tools, and the context window. A **role agent**
+is an autonomous agent with one function. A harness agent runs role agents
+(`F-0001#18`, `F-0001#21`).
 
-### 2.2 `‹Second concept, building on the first›`
+### 2.2 Discipline system, rule, gate, content
 
-`‹…›`
+The **discipline system** is the set of rules and gates that a machine enforces
+in a project repository. Armature is its baseline (`F-0001#19`). A **rule** says
+what the work must satisfy; a **gate** applies rules to a change and gives pass
+or fail; **content** is the project-specific text and values that the rules
+check (`F-0001#34`–`F-0001#36`).
+
+### 2.3 Operator, idea owner, and the Human Decision Points
+
+The **Operator** starts, monitors, and approves. The **idea owner** owns the
+problem, the success criteria, and the funding (`F-0001#22`, `F-0001#23`).
+Humans monitor at any time, but monitoring is not input. Humans give input only
+at five **Human Decision Points**: intent decisions, problem statement answers,
+planned approval points, escalations, and stalls (`F-0001#10`–`F-0001#14`).
+
+### 2.4 Task, stall, telemetry
+
+A **task** is one unit of delivery work with one goal (`F-0001#29`). A **stall**
+is a task that neither reaches its goal nor fails cleanly (`F-0001#37`).
+**Telemetry** is the record of the token count, the latency, and the wall-clock
+duration of a task (`F-0001#38`).
 
 ## 3. What the system actually does
 
-`‹The core mechanism, concretely. If there is one central design — a main loop, a
-pipeline, a state machine — draw it and walk through it once.›`
+No system exists yet. The PSB states the problem only, and this repository holds
+the discipline system and the setup record, not a product. The first product
+work follows the setup ([#1](https://github.com/pharzam/layup/issues/1)).
 
 ## 4. Why it is hard
 
-`‹The one or two numbers, or the one hard constraint, that make this project
-difficult. State the consequence in units the reader already knows. This is the
-section that stops a new engineer from proposing the obvious thing that does not
-work.›`
+Nine System Invariants bind any solution (`F-0001#1`–`F-0001#9`, and
+[`guardrails.md`](guardrails.md)). Two of them stop the obvious designs:
+
+- **Git is the system of record** (`F-0001#1`). A dashboard or a database that
+  holds project state is not allowed to be the only copy.
+- **The project repository is independent** (`F-0001#2`). A human or a different
+  agent must be able to continue the work without the automation that made it.
+
+The success criteria have two layers: checks that must pass, from the
+invariants, and numbers that a pilot calibrates (`F-0001 §7`).
 
 ## 5. How this project works
 
 ### The one cultural thing to understand
 
-`‹State the single most important cultural value — the thing that surprises new
-engineers and that they must not fight. For a research project it might be "we are
-more afraid of fooling ourselves than of being slow"; for a product it might be
-something else entirely.›`
+**No value without evidence.** A value that comes from a guess is a defect
+(`F-0001#4`). When you do not know a value, you do not fill it: you write it down
+as an open question for the idea owner. This surprises engineers who are used to
+a sensible default.
 
 Consequences you will meet immediately, and which are not negotiable:
 
-- `‹non-negotiable 1 — link the guardrail or gate it comes from›`
-- `‹non-negotiable 2›`
+- Every setup value has a row with its evidence in
+  [`setup/record-T-n1hp.md`](setup/record-T-n1hp.md), and
+  [`setup/setup-check.sh`](setup/setup-check.sh) fails when one is missing.
+- A check that is not active does not count as passed (`F-0001#5`). The record
+  says `not active` for a value that no gate runs yet.
+- Git is the system of record (`F-0001#1`). A decision made in a chat goes onto
+  its issue or into an ADR before anyone acts on it.
 
 ### Repo layout
 
 | Path | What |
 |------|------|
-| `‹path›` | `‹what lives there›` |
+| [`setup/`](setup/) | The Armature pin, the setup record with the evidence for each value, and `setup-check.sh`, which proves the setup. |
 | [`AGENTS.md`](../AGENTS.md) | The agent entry point — the gate in brief and a pointer to the R1–R13 rules, in one short file. [`CLAUDE.md`](../CLAUDE.md) imports it for Claude Code. |
 | [`engineering-discipline.md`](engineering-discipline.md) | **How we work**: the quality gate, solution selection, branches, worktrees, commits, tests, reviews, and ADRs. Read before your first commit. |
 | [`glossary.md`](glossary.md) | The shared vocabulary. Skim it; come back constantly. |
-| [`facts/`](facts/) | Facts collected from the customer, stored as-is as immutable evidence. Derived requirements cite them by `F-NNNN` ID. |
+| [`facts/`](facts/) | Facts stored as-is as immutable evidence: the PSB (`F-0001`) and the vision brief (`F-0002`, a solution document, not requirements). Derived requirements cite them by `F-NNNN` ID. |
 | [`prd/`](prd/) | Product Requirements Documents, derived from the facts; each `REQ`/`NFR` cites an `F-NNNN` fact. |
 | [`issue-workflow.md`](issue-workflow.md) | The issue-first rules (R1–R13): the ticket policy the gate assumes. |
 | [`tasks/backlog.md`](tasks/backlog.md) | What to work on next. |
@@ -87,5 +138,8 @@ Consequences you will meet immediately, and which are not negotiable:
 
 ### Where the project stands
 
-`‹A short, honest status: what is built, what is in progress, and what the open
-question is. Keep this in step with the backlog and the headline numbers above.›`
+The Armature setup of this repository is in progress under
+[#1](https://github.com/pharzam/layup/issues/1): the pin, the kit-history removal,
+and the facts are done; the glossary, the guardrails, the markers, CI, and the
+setup procedure are open. No product code exists yet. The open question is the
+batch of setup values that have no evidence; the setup record lists them.
