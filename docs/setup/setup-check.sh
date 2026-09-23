@@ -26,7 +26,7 @@
 
 set -u
 
-CHECKS="pin kit-history facts onboarding"
+CHECKS="pin kit-history facts onboarding glossary"
 
 if [ "${1:-}" = --only ]; then
 	[ $# -ge 2 ] && [ -n "$2" ] || { echo "setup-check: --only needs a list of checks" >&2; exit 2; }
@@ -187,6 +187,28 @@ check_onboarding() {
 			fail onboarding "fact: $on_id is not a fact of the F-0001 record"
 		fi
 	done < "$tmpdir/cited"
+}
+
+# --- glossary (PSB §8 terms) ---------------------------------------------------
+# The section `## 1. LAYUP domain (PSB §8)` holds the 25 rows of PSB §8, and its
+# rows cite F-0001#15 to F-0001#39 each exactly once. The section ends at the next
+# `## ` heading. A row is a table line that is not the header or the separator.
+check_glossary() {
+	gl_doc="$ROOT/docs/glossary.md"
+	gl_head='## 1. LAYUP domain (PSB §8)'
+	if ! grep -Fxq "$gl_head" "$gl_doc" 2>/dev/null; then
+		fail glossary "section: docs/glossary.md has no heading \"$gl_head\""; return
+	fi
+	awk -v h="$gl_head" '$0 == h { on = 1; next } on && /^## / { on = 0 } on' "$gl_doc" \
+		| grep '^|' | grep -v '^| Term |' | grep -v '^|[-|: ]*$' > "$tmpdir/gl_rows"
+	gl_n=$(grep -c . "$tmpdir/gl_rows")
+	[ "$gl_n" = 25 ] || fail glossary "rows: the LAYUP domain section holds $gl_n rows, expected 25"
+	gl_i=15
+	while [ "$gl_i" -le 39 ]; do
+		gl_c=$(grep -o "F-0001#$gl_i\`" "$tmpdir/gl_rows" | grep -c .)
+		[ "$gl_c" = 1 ] || fail glossary "citation: F-0001#$gl_i is cited $gl_c times, expected 1"
+		gl_i=$((gl_i + 1))
+	done
 }
 
 for check_name in $CHECKS; do

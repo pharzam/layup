@@ -6,3 +6,4 @@ line=setup-check: kit-linters OK
 line=setup-check: kit-history OK
 line=setup-check: facts OK
 line=setup-check: onboarding OK
+line=setup-check: glossary OK

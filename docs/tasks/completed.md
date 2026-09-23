@@ -20,6 +20,7 @@ here directly, in the shape above.
 - **YYYY-MM-DD** — **‹ID›** — ‹one-sentence summary of what the task found or delivered› ([‹link›](...); [detail](‹id›.md))
 -->
 
+- **2026-09-23** — **T-xgz4** — Merged the 25 PSB §8 terms into `docs/glossary.md` §1, each citing its `F-0001` fact, and added check `glossary` ([#6](https://github.com/pharzam/layup/issues/6); [detail](T-xgz4.md))
 - **2026-09-23** — **T-vpty** — Bound `docs/onboarding-for-engineers.md` to the PSB (`F-0001`) and added check `onboarding` ([#5](https://github.com/pharzam/layup/issues/5); [detail](T-vpty.md))
 - **2026-09-23** — **T-fvwj** — Stored the PSB (`F-0001`, 39 numbered verbatim facts) and the vision brief (`F-0002`, a solution document) byte-identical, with hashes and check `facts` ([#4](https://github.com/pharzam/layup/issues/4); [detail](T-fvwj.md))
 - **2026-09-23** — **T-vbwc** — Removed the kit's own history (kit step 4: `docs/decisions/`, `docs/audit/`, 19 kit task files, kit log and backlog lines) and added check `kit-history` ([#3](https://github.com/pharzam/layup/issues/3); [detail](T-vbwc.md))

@@ -141,8 +141,9 @@ Consequences you will meet immediately, and which are not negotiable:
 ### Where the project stands
 
 The Armature setup of this repository is in progress under
-[#1](https://github.com/pharzam/layup/issues/1): the pin, the kit-history removal,
-and the facts are done; the glossary, the guardrails, the markers, CI, and the
-setup procedure are open. No product code exists yet. The open question is the
-batch of setup values that have no evidence; the markers task `T-nfh8`
-([#8](https://github.com/pharzam/layup/issues/8)) lists them.
+[#1](https://github.com/pharzam/layup/issues/1). That parent issue lists its
+children, and [`tasks/completed.md`](tasks/completed.md) lists the ones that are
+done; this section does not repeat the list, so it does not go stale. No product
+code exists yet. The open question is the batch of setup values that have no
+evidence; the markers task `T-nfh8` ([#8](https://github.com/pharzam/layup/issues/8))
+lists them.
