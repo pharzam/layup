@@ -1,0 +1,2 @@
+exit=1
+line=setup-check: pin FAIL tree: pin names 8ffb250afd584da8b418bc220fb6d72e802924ce, root commit has cb89dd90fb277f5d5767688e3e56bb2872814180

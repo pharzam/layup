@@ -1,0 +1,9 @@
+# Armature pin (PSB Invariant 8). Read by docs/setup/setup-check.sh, check `pin`.
+# The commit is not in this repository's history (degit copies files only).
+# The tree hash is: it equals the tree of this repository's root commit, which
+# is the unmodified copy. Decision: docs/adr/0009-pin-armature-at-a-recorded-commit.md
+source=https://github.com/pharzam/armature
+commit=a95965534b14b0bf14ad74da0c9a45b5f4aedf88
+tree=8ffb250afd584da8b418bc220fb6d72e802924ce
+method=npx degit pharzam/armature#a95965534b14b0bf14ad74da0c9a45b5f4aedf88
+date=2026-09-23
