@@ -29,7 +29,7 @@ set -u
 CHECKS="pin kit-history"
 
 if [ "${1:-}" = --only ]; then
-	[ $# -ge 2 ] || { echo "setup-check: --only needs a list of checks" >&2; exit 2; }
+	[ $# -ge 2 ] && [ -n "$2" ] || { echo "setup-check: --only needs a list of checks" >&2; exit 2; }
 	for want in $(printf '%s' "$2" | tr ',' ' '); do
 		case " $CHECKS " in *" $want "*) ;; *) echo "setup-check: unknown check: $want" >&2; exit 2 ;; esac
 	done

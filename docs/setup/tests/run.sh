@@ -22,8 +22,12 @@
 # the root-commit tree of every case is the same, and a pin can name it.
 #
 #   mode=root     run `sh setup-check.sh <temp repo>` — the checks, no pass-through
-#   mode=self     copy setup-check.sh into the temp repo and run it with no
-#                 argument — the checks and the pass-through of the kit linters
+#   mode=self     copy setup-check.sh into the temp repo and run it with no ROOT
+#                 argument (and no --only unless EXPECT has only=) — the checks
+#                 and the pass-through of the kit linters. frame/good-passthrough
+#                 has no only=, so it runs every check with no argument at all:
+#                 its overlay must hold a full setup, and a task that adds a
+#                 check extends that overlay
 #                 (the runner writes a stub for each kit linter; each stub
 #                 prints `stub <path> OK` and exits 0 unless EXPECT says otherwise)
 #   mode=shallow  clone the temp repo with --depth 1, then run as mode=root

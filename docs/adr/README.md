@@ -139,6 +139,8 @@ record by number here, and let the index table below do the linking.
 
 <!-- Add one row per ADR as you write them. Keep the newest at the bottom. -->
 
-This repository's own past governance decisions — the archive's `D-0000`–`D-0007`
-sequence — are archived under `docs/decisions/`; see the index there. They are not
-part of the constitution an adopter adopts.
+Armature's own past governance decisions — the `D-0000`–`D-0008` sequence — were
+archived under `docs/decisions/` in the kit. LAYUP deleted that directory (kit step
+4, task `T-vbwc`); the records stay readable in Armature at the pinned commit
+(see [ADR-0009](0009-pin-armature-at-a-recorded-commit.md)). They are not part of
+this project's constitution.
