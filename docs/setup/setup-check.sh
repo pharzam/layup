@@ -334,7 +334,7 @@ check_markers() {
 # self-test and the setup check, with the full history (the pin tree check reads
 # the root commit, and a shallow clone fails it).
 check_ci() {
-	for ci_f in "$ROOT"/.github/workflows/*.yml; do
+	for ci_f in "$ROOT"/.github/workflows/*.yml "$ROOT"/.github/workflows/*.yaml; do
 		[ -f "$ci_f" ] || continue
 		grep -Fq 'Armature repo' "$ci_f" \
 			&& fail ci "kit-header: .github/workflows/$(basename "$ci_f") says it is the Armature repo's workflow"
@@ -346,26 +346,38 @@ check_ci() {
 	grep -Eq 'fetch-depth:[[:space:]]*0([^0-9]|$)' "$ci_yml" 2>/dev/null \
 		|| fail ci "history: .github/workflows/ci.yml has no fetch-depth: 0 (the pin check needs the root commit)"
 	# Cause `restore` (the #84 guardrail): per job, each check script that the job
-	# runs, or needs through another script, must be named on a line of that job
-	# that does not run it — the restore list — by its path or a parent directory.
-	# `sh docs/X.sh` runs X; any other `docs/...` path in the job is a restore
-	# mention. setup-check.sh runs the four kit linters and the discipline runner;
-	# the runner tests the two docs/ci lint scripts. nested-checkout-check.sh is
-	# exempt: ci.yml documents why it runs from the branch.
-	for ci_f in "$ROOT"/.github/workflows/*.yml; do
+	# runs, or needs through another script, must be named in that job's restore
+	# step (a step whose name starts with "Restore"), on a line that is not a
+	# comment, by its path or a parent directory. A run is `sh`, `bash`, `dash` or
+	# `.` (flags allowed) before `docs/...sh` or `./docs/...sh`. A job is a key
+	# under `jobs:` at the first key's indent. setup-check.sh runs the four kit
+	# linters and the discipline runner; the runner tests the two docs/ci lint
+	# scripts. nested-checkout-check.sh is exempt: ci.yml documents why it runs
+	# from the branch. Both *.yml and *.yaml workflows are read.
+	for ci_f in "$ROOT"/.github/workflows/*.yml "$ROOT"/.github/workflows/*.yaml; do
 		[ -f "$ci_f" ] || continue
 		ci_name=.github/workflows/$(basename "$ci_f")
 		awk '
-			/^jobs:/ { inj = 1; next }
+			function ind(l) { match(l, /^ */); return RLENGTH }
+			/^jobs:/ { inj = 1; jind = -1; next }
 			inj && /^[^ #]/ { inj = 0 }
-			inj && /^  [A-Za-z0-9_-]+:[ \t]*$/ { job = $1; sub(/:$/, "", job); next }
-			inj && job != "" {
+			!inj { next }
+			/^[ \t]*#/ { next }
+			{
+				if (jind < 0 && $0 ~ /^ +[A-Za-z0-9_-]+:[ \t]*(#.*)?$/) jind = ind($0)
+				if (ind($0) == jind && $0 ~ /^ +[A-Za-z0-9_-]+:[ \t]*(#.*)?$/) {
+					job = $0; sub(/^ +/, "", job); sub(/:.*/, "", job); inrs = 0; next
+				}
+				if (job == "") next
+				if ($0 ~ /^ *- /) { sind = ind($0); inrs = ($0 ~ /^ *- name:[ \t]*["\047]?Restore/) }
+				else if (inrs && ind($0) <= sind) inrs = 0
+				if ($0 ~ /^ *name:[ \t]*["\047]?Restore/) inrs = 1
 				line = $0
 				while (match(line, /docs\/[A-Za-z0-9_.\/-]+/)) {
 					tok = substr(line, RSTART, RLENGTH); pre = substr(line, 1, RSTART - 1)
 					sub(/\/$/, "", tok)
-					kind = (tok ~ /\.sh$/ && pre ~ /(^|[ \t|;&(])sh[ \t]+$/) ? "run" : "mention"
-					print job "\t" kind "\t" tok
+					if (tok ~ /\.sh$/ && pre ~ /(^|[ \t|;&(])(sh|bash|dash|\.)([ \t]+-[A-Za-z]+)*[ \t]+(\.\/)?$/) print job "\trun\t" tok
+					else if (inrs) print job "\tmention\t" tok
 					line = substr(line, RSTART + RLENGTH)
 				}
 			}' "$ci_f" > "$tmpdir/ci_tok"

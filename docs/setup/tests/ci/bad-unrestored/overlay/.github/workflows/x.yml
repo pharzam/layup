@@ -12,3 +12,8 @@ jobs:
           for f in docs/setup/setup-check.sh docs/adr/adr-lint.sh docs/prd/prd-lint.sh docs/links/link-lint.sh docs/tests/run-discipline-tests.sh; do cp ".d/$f" "$f"; done
       - run: sh docs/setup/setup-check.sh
       - run: sh docs/tests/nested-checkout-check.sh
+  c:
+    steps:
+      - name: Lint docs/adr and docs/prd
+        # docs/adr/adr-lint.sh is named only in this comment
+        run: bash -e ./docs/adr/adr-lint.sh
