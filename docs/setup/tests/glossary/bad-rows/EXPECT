@@ -2,3 +2,4 @@ exit=1
 line=setup-check: glossary FAIL rows: the LAYUP domain section holds 2 rows, expected 25
 line=setup-check: glossary FAIL citation: F-0001#15 is cited 2 times, expected 1
 line=setup-check: glossary FAIL citation: F-0001#16 is cited 0 times, expected 1
+line=setup-check: glossary FAIL citation: F-0001#39 is cited 0 times, expected 1
