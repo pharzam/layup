@@ -116,7 +116,7 @@ if [ -f docs/links/link-lint.sh ]; then
 	sh docs/links/link-lint.sh
 fi
 
-# 2. Lint / format — gofmt and go vet (not active: no Go code yet; Step 2 turns it on)
+# 2. Lint / format — gofmt and go vet (not active: no Go code yet; the task that lands the first Go code turns it on)
 # test -z "$(gofmt -l .)" && go vet ./... || exit 1
 
 # 3. Tests, cheap → expensive — run the fast levels here; leave the slow ones to

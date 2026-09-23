@@ -748,11 +748,12 @@ that ties a test to what it proves — live in their own section,
 tests, defined in [`tests/test-levels.md`](tests/test-levels.md). The cheap levels
 — unit and integration, with an optional end-to-end smoke subset — run in the
 [`pre-commit` hook](#git-hooks); the whole ladder runs in
-[CI](#continuous-integration-optional). Each level has its own command placeholder
-— `go test ./...`, `go test -tags=integration ./...`, `go test -tags=e2e ./...`,
-and `go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./... && go vet ./... && gitleaks git --redact` for the parallel security track — with
-`-timeout 10m` bounding a hanging test and `*_test.go beside the code; root tests/ for end-to-end fixtures` naming where the
-product tests live (the repo-root [`tests/`](../tests/) drop-in).
+[CI](#continuous-integration-optional). Each level has its own command — `go test ./...`,
+`go test -tags=integration ./...`, `go test -tags=e2e ./...`, and
+`go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./... && go vet ./... && gitleaks git --redact`
+for the parallel security track — with `-timeout 10m` bounding a hanging test.
+Unit and integration tests are `*_test.go` files beside the code they test; the
+repo-root [`tests/`](../tests/) holds cross-package end-to-end fixtures only.
 
 **Coverage, stated as rules:**
 

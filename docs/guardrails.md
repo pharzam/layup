@@ -280,7 +280,8 @@ expensive ones.
 | 2 | sh docs/setup/tests/run.sh | every fixture case matches its EXPECT | seconds |
 | 3 | the review rounds on a frozen head | the last round says `nothing material in scope` | one reviewer session per round |
 
-Notes on how to read a failure: `setup-check.sh` catches a missing or unsupported setup value; the fixture
+Notes on how to read a failure: `setup-check.sh` catches a marker that is neither filled nor listed as an open
+gap, and a missing pin, fact, or required section; the fixture
 run catches a check that cannot fail; the review rounds catch a claim that no
 script can settle. The first two are cheap enough for the hook and CI; the
 rounds run once per change.

@@ -212,7 +212,7 @@ of, and they run green while blocking nothing until you add them — the trap th
 section exists to close, met from the third side. Add each one **as you fill it**, and
 add its *context*, which is the job's `name:` and not its id:
 `lint (gofmt, go vet)`, `tests (unit → integration → e2e)` and
-`security (govulncheck v1.8.0, go vet, and gitleaks)`. Two of those names still hold a `‹…›` marker, so
-replace the marker in the workflow first and copy the resulting name: a context that
+`security (govulncheck v1.8.0, go vet, and gitleaks)`. In the kit template two of those names held a `‹…›` marker; replace the marker
+in the workflow first and copy the resulting name: a context that
 names a marker is a context nothing will ever report, which is this section's own
 failure by another route. Add none of them before the job has reported once.

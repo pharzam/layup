@@ -72,16 +72,38 @@ child task adds its own rows in the same PR that lands its work.
 | V-11 | reasoning tier: Claude Opus 5.5, Claude Fable 5.1; execution tier: Claude Sonnet 5, Claude Haiku 4.5 | `engineering-discipline.md` | O-3, Operator decision on [#8](https://github.com/pharzam/layup/issues/8) | recorded | `T-nfh8` |
 | V-12 | panel-worthy: each new ADR | `engineering-discipline.md` | O-4, Operator decision on [#8](https://github.com/pharzam/layup/issues/8) | recorded | `T-nfh8` |
 | V-13 | test runner `go test`; unit `go test ./...`; integration `go test -tags=integration ./...`; e2e `go test -tags=e2e ./...`; test directory `*_test.go` beside the code, root `tests/` for e2e fixtures | `docs/tests/*`, `.githooks/pre-commit`, `tests/README.md`, `docs/prd/README.md` | O-5, Operator decision on [#8](https://github.com/pharzam/layup/issues/8); `go help test`, `go help buildconstraint` (build tags) | not active | `T-nfh8` |
-| V-14 | lint `test -z "$(gofmt -l .)" && go vet ./...` (the author's command form inside O-5 and O-6) | `.githooks/*`, `engineering-discipline.md`, `docs/ci/README.md` | `gofmt -h` (`-l` lists files that differ), `go help vet`; stack from [ADR-0010](../adr/0010-use-go-as-the-technology-stack.md) | not active | `T-nfh8` |
+| V-14 | lint `test -z "$(gofmt -l .)" && go vet ./...` (the author's command form; no Operator decision names a linter) | `.githooks/*`, `engineering-discipline.md`, `docs/ci/README.md` | `gofmt -h` (`-l` lists files that differ), `go help vet`; stack from [ADR-0010](../adr/0010-use-go-as-the-technology-stack.md) | not active | `T-nfh8` |
 | V-15 | test timeout `-timeout 10m` | `docs/tests/*`, `guardrails.md` | `go help testflag`: "The default is 10 minutes (10m)" | not active | `T-nfh8` |
 | V-16 | security: govulncheck `v1.8.0`, `go vet`, gitleaks (`gitleaks git --redact`) | `docs/tests/*`, `.githooks/pre-commit`, `docs/ci/README.md` | O-6, Operator decision on [#8](https://github.com/pharzam/layup/issues/8); `go list -m golang.org/x/vuln@latest` gave `v1.8.0`, which needs Go 1.26; `gitleaks git --redact` is the author's command form, from the gitleaks README (v8 `git` subcommand and `--redact` flag), not yet run; `go run …@v1.8.0` pins the version that `go list` gave | not active | `T-nfh8` |
 | V-17 | task-ID scheme `T-` + 4 of `0-9 a-z` without `i l o u` | `backlog.md`, `issue-workflow.md`, `engineering-discipline.md` | O-8, Operator decision on [#8](https://github.com/pharzam/layup/issues/8) (confirms the kit example in use since `T-n1hp`) | recorded | `T-nfh8` |
-| V-18 | record of record: Git; plain-terms units: tokens, seconds, "N of M"; failure modes; harness report source | `guardrails.md`, `engineering-discipline.md` | `F-0001#1`, `F-0001 §7`, `guardrails.md` §1.1–§2, this session's task reports | recorded | `T-nfh8` |
+| V-18 | record of record: Git; plain-terms units: tokens, seconds, "N of M"; failure modes; harness report source | `guardrails.md`, `engineering-discipline.md` | `F-0001#1`, `F-0001 §7`, `guardrails.md` §1.1–§2; the harness reports: this session's subagent task reports (tokens, duration) and the Claude Code documentation of the `/usage` command | recorded | `T-nfh8` |
 | V-19 | `guardrails.md`: plain-terms sentence; §1 what is pre-registered (PSB §7.1 checks, §7.2 targets, each task's budget and cap) and where it freezes (the PSB, hashed; the plan-review comment); §3 validation table (`setup-check.sh`, `tests/run.sh`, review rounds); Sources | `docs/guardrails.md` | `F-0001#4`, `F-0001#5`, `F-0001 §7`; `docs/issue-workflow.md` R12 (budget and cap); the scripts named exist in `docs/setup/` | recorded | `T-nfh8` |
 | V-20 | `docs/ci/README.md`: the other-forge setting is "not applicable, because this project uses GitHub" | `docs/ci/README.md` | `gh repo view pharzam/layup` (a GitHub repository) | recorded | `T-nfh8` |
 
 The decision behind V-01 to V-05 is
 [ADR-0009](../adr/0009-pin-armature-at-a-recorded-commit.md).
+
+## Operator decisions
+
+The Operator answered these setup questions in one batch on 2026-09-23, in the
+session, and they were first written on
+[#8](https://github.com/pharzam/layup/issues/8). They are copied here so the
+decisions live in Git (PSB Invariant 1).
+
+| ID | Question | Decision |
+|----|----------|----------|
+| O-1 | Worktree directory | `.worktree/` (repo-local, gitignored; the kit's example) |
+| O-2 | Evidence store | `runs/`, one subdirectory per task ID; telemetry records go here too |
+| O-3 | Model tiers | Reasoning: Claude Opus 5.5, Claude Fable 5.1. Execution: Claude Sonnet 5, Claude Haiku 4.5 |
+| O-4 | Panel-worthy decisions | Each new ADR gets a panel before selection |
+| O-5 | Test layout and levels | `*_test.go` beside the code; unit `go test ./...`; integration `go test -tags=integration ./...`; e2e `go test -tags=e2e ./...`; root `tests/` for cross-package e2e fixtures only |
+| O-6 | Security scanner | govulncheck `v1.8.0` (dependencies), `go vet` (static analysis), gitleaks (secrets) |
+| O-7 | Coverage gate | None yet; an open gap until Go code exists and a baseline is measured |
+| O-8 | Task-ID scheme | `T-` plus four random characters from `0-9 a-z` without `i l o u` |
+
+Earlier decisions in the same session: stack Go, public repository
+`pharzam/layup`, full gate (timeline row 1); the parent budget of #1 and the
+budgets of #2, #3, #4 and #6, each on its issue.
 
 ## Findings about the kit's setup procedure
 

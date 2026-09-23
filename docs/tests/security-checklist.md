@@ -36,8 +36,8 @@ security checks are wired into two layers, cheap-first:
 - The full set — all three checks, run in full — runs via `go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./... && go vet ./... && gitleaks git --redact`
   in [CI](../ci/), as the authority.
 
-`govulncheck v1.8.0, go vet, and gitleaks` names the tool both layers drive. Both are inert until the
-`‹…›` steps are filled for your stack.
+`govulncheck v1.8.0, go vet, and gitleaks` names the tool both layers drive. Both are not active until
+the first Go code exists; the task that lands it turns them on.
 
 ## A pre-registered bar
 

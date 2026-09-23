@@ -8,17 +8,17 @@ until the first Go code exists.
 
 ## In plain terms
 
-> Put the tests of your actual code in this folder. It is empty now because the
-> template has no code yet. The rules for what to write and how live one folder
-> over, in `docs/tests/`.
+> Unit and integration tests sit beside the Go code they test. This folder is for
+> end-to-end fixtures that span packages; it is empty because no Go code exists
+> yet. The rules for what to write and how live in `docs/tests/`.
 
 ## Where the conventions live
 
-This directory holds the tests; the **conventions** for writing them live in
+This directory holds end-to-end fixtures; the **conventions** for writing them live in
 [`docs/tests/`](../docs/tests/):
 
 - [`docs/tests/test-levels.md`](../docs/tests/test-levels.md) — the test levels and
-  the command placeholders.
+  their Go commands.
 - [`docs/tests/template-unit.md`](../docs/tests/template-unit.md),
   [`template-integration.md`](../docs/tests/template-integration.md),
   [`template-e2e.md`](../docs/tests/template-e2e.md) — a pattern to copy per level.

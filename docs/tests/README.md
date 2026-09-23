@@ -105,7 +105,8 @@ wired, cheap-first, into two layers:
 - The [CI templates](../ci/) run the whole ladder plus the long-running checks —
   E2E and the full [security scan](security-checklist.md) behind `govulncheck v1.8.0, go vet, and gitleaks`.
 
-Both are inert until you fill the `‹…›` steps for your stack. This mirrors how the
+Both are not active until the first Go code exists; the task that lands it turns
+them on. This mirrors how the
 [ADR and PRD linters](../engineering-discipline.md#testing) are already wired.
 
 ## The rules behind this section

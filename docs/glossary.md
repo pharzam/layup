@@ -128,3 +128,9 @@ harness agent", holds two names.
 | **Stall** | — | A task that does not reach its goal and does not fail cleanly, because role agents do not agree, or because a step repeats without progress. Source: `F-0001#37`. | Two role agents give different answers, and neither one gives way. |
 | **Telemetry** | — | The record of the token count, the latency, and the wall-clock duration of a task. Collision to watch for: the kit's resource record is a different record; it also names the model and the effort per gate part. Source: `F-0001#38`. | A task record with tokens, latency, and wall-clock duration. |
 | **Specification** | — | The requirement and design documents that a project derives from the approved problem statement. Each requirement in them has an identifier, a trace to the problem statement, and an acceptance criterion. Source: `F-0001#39`. | A PRD whose each requirement cites `F-0001#n` and has an acceptance criterion. |
+
+## 2. LAYUP setup
+
+| Term | Abbr. | Description | Example |
+|------|-------|-------------|---------|
+| Open gap | — | A setup value that no source supports yet, so it is not filled: its marker stays, and [`setup/open-gaps.tsv`](setup/open-gaps.tsv) lists it with the question that would settle it. PSB Invariant 4 makes a guessed value a defect, so an open gap is the honest state, not a failure. Collision to watch for: not a gap in the problem statement that the PSB's gap check finds (PSB §6 In Scope). | The coverage threshold is an open gap until Go code exists and a baseline is measured. |

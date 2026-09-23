@@ -295,7 +295,7 @@ docs/prd/README.md	‹slug›
 MK_ALLOW
 }
 check_markers() {
-	git -C "$ROOT" ls-files > "$tmpdir/mk_files" || { fail markers "git: cannot list the tracked files"; return; }
+	git -C "$ROOT" -c core.quotePath=false ls-files > "$tmpdir/mk_files" || { fail markers "git: cannot list the tracked files"; return; }
 	grep -Ev "$MK_EXEMPT" "$tmpdir/mk_files" | while IFS= read -r mk_f; do
 		[ -f "$ROOT/$mk_f" ] || continue
 		awk -v f="$mk_f" '{
@@ -316,6 +316,9 @@ check_markers() {
 	mk_allowed | sort -u > "$tmpdir/mk_allow"
 	mk_gaps="$ROOT/docs/setup/open-gaps.tsv"
 	if [ -f "$mk_gaps" ]; then cut -f1,2 "$mk_gaps" | grep . | sort -u > "$tmpdir/mk_listed"; else : > "$tmpdir/mk_listed"; fi
+	# Each open gap carries its question; a row without one asks nothing.
+	[ -f "$mk_gaps" ] && awk -F'\t' 'NF && $3 == "" { print "setup-check: markers FAIL question: docs/setup/open-gaps.tsv line " NR " has no question" }' "$mk_gaps" > "$tmpdir/mk_q"
+	if [ -s "$tmpdir/mk_q" ]; then cat "$tmpdir/mk_q"; cur_fail=1; failed=1; fi
 	sort -u "$tmpdir/mk_allow" "$tmpdir/mk_listed" > "$tmpdir/mk_known"
 	comm -23 "$tmpdir/mk_found" "$tmpdir/mk_known" | while IFS="$(printf '\t')" read -r mk_p mk_m; do
 		printf 'setup-check: markers FAIL unlisted: %s %s\n' "$mk_p" "$mk_m"
