@@ -10,7 +10,9 @@ Armature project, a one-time copy of the Armature kit pinned at commit `a959655`
 ([`docs/setup/armature.pin`](docs/setup/armature.pin),
 [ADR-0009](docs/adr/0009-pin-armature-at-a-recorded-commit.md)), with no upstream
 link. No product code exists yet; the stack is Go
-([ADR-0010](docs/adr/0010-use-go-as-the-technology-stack.md)).
+([ADR-0010](docs/adr/0010-use-go-as-the-technology-stack.md)), and the core engine
+will be one Go command-line program over files in the repository
+([ADR-0011](docs/adr/0011-structure-the-core-engine-as-a-go-cli-over-repository-files.md)).
 
 ## Start here
 
