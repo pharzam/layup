@@ -20,4 +20,5 @@ here directly, in the shape above.
 - **YYYY-MM-DD** — **‹ID›** — ‹one-sentence summary of what the task found or delivered› ([‹link›](...); [detail](‹id›.md))
 -->
 
+- **2026-09-23** — **T-vbwc** — Removed the kit's own history (kit step 4: `docs/decisions/`, `docs/audit/`, 19 kit task files, kit log and backlog lines) and added check `kit-history` ([#3](https://github.com/pharzam/layup/issues/3); [detail](T-vbwc.md))
 - **2026-09-23** — **T-r7zg** — Recorded the Armature pin (`a959655`, tree `8ffb250a`) and started `docs/setup/setup-check.sh` with check `pin` and the kit-linter pass-through ([#2](https://github.com/pharzam/layup/issues/2); [ADR-0009](../adr/0009-pin-armature-at-a-recorded-commit.md); [detail](T-r7zg.md))
