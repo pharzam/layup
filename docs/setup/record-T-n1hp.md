@@ -58,6 +58,9 @@ child task adds its own rows in the same PR that lands its work.
 | 27 | `T-q344` worktree created | 14:40:08 | shell `date` |
 | 28 | `T-q344` merged (PR #22), after 1 review round | 14:55:00 | GitHub API `mergedAt` |
 | 29 | `T-fvng` worktree created (blocker #23) | 15:02:08 | shell `date` |
+| 30 | `T-fvng` merged (PR #25), after 3 review rounds | 16:24:09 | GitHub API `mergedAt` |
+| 31 | `T-afa5` worktree created | 16:24:32 | shell `date` |
+| 32 | Branch protection applied to `main` (`PUT`), after review round 1 of #12 | 16:35:40 | shell `date -u` after the `PUT` |
 
 ## Values
 
@@ -83,6 +86,7 @@ child task adds its own rows in the same PR that lands its work.
 | V-18 | record of record: Git; plain-terms units: tokens, seconds, "N of M"; failure modes; harness report source | `guardrails.md`, `engineering-discipline.md` | `F-0001#1`, `F-0001 §7`, `guardrails.md` §1.1–§2; the harness reports: this session's subagent task reports (tokens, duration) and the Claude Code documentation of the `/usage` command | recorded | `T-nfh8` |
 | V-19 | `guardrails.md`: plain-terms sentence; §1 what is pre-registered (PSB §7.1 checks, §7.2 targets, each task's budget and cap) and where it freezes (the PSB, hashed; the plan-review comment); §3 validation table (`setup-check.sh`, `tests/run.sh`, review rounds); Sources | `docs/guardrails.md` | `F-0001#4`, `F-0001#5`, `F-0001 §7`; `docs/issue-workflow.md` R12 (budget and cap); the scripts named exist in `docs/setup/` | recorded | `T-nfh8` |
 | V-20 | `docs/ci/README.md`: the other-forge setting is "not applicable, because this project uses GitHub" | `docs/ci/README.md` | `gh repo view pharzam/layup` (a GitHub repository) | recorded | `T-nfh8` |
+| V-21 | branch protection of `main`: 9 required checks (one per workflow job, app 15368), `strict`, `enforce_admins`, a PR with 0 approvals, conversation resolution | [`branch-protection.json`](branch-protection.json) | job names derived by check `protection`, equal byte for byte to the check-run names of `c432d21` (check-runs API, review round 1 of #12); read-back at 16:35:40 UTC with `gh api repos/pharzam/layup/branches/main/protection --jq '.required_status_checks.contexts \| sort'` equals the file's contexts under `jq -c '[.required_status_checks.checks[].context] \| sort'` | active | `T-afa5` |
 
 The decision behind V-01 to V-05 is
 [ADR-0009](../adr/0009-pin-armature-at-a-recorded-commit.md).
@@ -133,6 +137,6 @@ to an Armature rule.
 | D-01 | Worktrees were under `../layup-worktrees/`, outside the repository. | The worktree-directory value was not yet set. | Ended by `T-nfh8`: O-1 set `.worktree`, and the `T-nfh8` worktree moved there. |
 | D-02 | `setup-check.sh` and its self-test `tests/run.sh` were not run by the `pre-commit` hook or by CI. | CI wiring was `T-q344`; no child names the hook. | CI part ended by `T-q344`: job `setup-check` runs both, restored from `main`. The hook part is open on [#21](https://github.com/pharzam/layup/issues/21). |
 | D-03 | The PSB was cited as `F-0001` before the facts document existed. | Facts were stored by a later child. | Ended by `T-fvwj` ([#4](https://github.com/pharzam/layup/issues/4)): [`F-0001`](../facts/F-0001-layup-problem-statement-brief.md). |
-| D-04 | PR #18 was merged while `gh pr checks` showed 3 of its 8 CI jobs pending; all 8 passed. | Human error: the merge did not wait. Lesson in `guardrails.md` §2. | `T-afa5` ([#12](https://github.com/pharzam/layup/issues/12)) makes the jobs required. |
+| D-04 | PR #18 was merged while `gh pr checks` showed 3 of its 8 CI jobs pending; all 8 passed. | Human error: the merge did not wait. Lesson in `guardrails.md` §2. | Ended by `T-afa5` ([#12](https://github.com/pharzam/layup/issues/12)): the jobs are required on `main` (V-21). |
 
 Open gaps: the values with no source are listed in [`open-gaps.tsv`](open-gaps.tsv) with their question (`T-nfh8`). Check `markers` fails when a gap is not listed there.

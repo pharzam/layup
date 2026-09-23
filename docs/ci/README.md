@@ -86,8 +86,17 @@ A check that runs but does not block is a run result, not a merge control. Until
 check is required on the default branch, a red run and a green one merge alike, and
 the kit's own [`ci.yml`](../../.github/workflows/ci.yml) says at its head that
 making them block is a repository setting, not a file in the tree. This is the step
-the two `‹…›` rows of the
-[enforcement table](../issue-workflow.md#what-is-enforced-where) leave to you.
+the two branch-protection rows of the
+[enforcement table](../issue-workflow.md#what-is-enforced-where) name; LAYUP
+filled them in `T-afa5`.
+
+**This repository (LAYUP).** The body is
+[`docs/setup/branch-protection.json`](../setup/branch-protection.json): nine
+checks, one per workflow job, each pinned to GitHub Actions. Apply it with
+`gh api -X PUT repos/pharzam/layup/branches/main/protection --input docs/setup/branch-protection.json`;
+check `protection` in [`setup-check.sh`](../setup/setup-check.sh) keeps its
+contexts equal to the job names. The six-check body below is the kit's own
+example, not this repository's set.
 
 **GitHub.** One `PUT` to the branch-protection endpoint sets the whole protection
 object. The body goes on standard input with `--input -`, because `gh api` flag
@@ -168,7 +177,8 @@ access to the repository.
 
 ### Drop what you did not install
 
-The six contexts above are the ones **this** repository requires. Two of them are
+The six contexts above are the ones the kit's own repository requires; LAYUP
+requires the nine in [`branch-protection.json`](../setup/branch-protection.json). Two of them are
 jobs the kit itself tells you elsewhere that you may leave out, and the array names
 them anyway. Delete the line for each one you did not install:
 

@@ -2,3 +2,6 @@ exit=1
 line=setup-check: protection FAIL contexts: y (the y job) is a job but not a required context
 line=setup-check: protection FAIL contexts: w is a job but not a required context
 line=setup-check: protection FAIL contexts: x is a required context but not a job
+line=setup-check: protection FAIL body: docs/setup/branch-protection.json has no "enforce_admins" (a partial body is destructive)
+line=setup-check: protection FAIL body: 2 contexts but 1 app_id values (pin each check to its app)
+line=setup-check: protection FAIL contexts: z is a required context but not a job

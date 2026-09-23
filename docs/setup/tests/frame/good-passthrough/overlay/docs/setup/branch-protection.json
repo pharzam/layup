@@ -4,5 +4,8 @@
     "checks": [
       {"context": "setup-check", "app_id": 15368}
     ]
-  }
+  },
+  "enforce_admins": true,
+  "required_pull_request_reviews": {"required_approving_review_count": 0},
+  "restrictions": null
 }

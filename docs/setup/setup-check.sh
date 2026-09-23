@@ -415,7 +415,16 @@ check_ci() {
 check_protection() {
 	pr_json="$ROOT/docs/setup/branch-protection.json"
 	if [ ! -f "$pr_json" ]; then fail protection "missing: docs/setup/branch-protection.json is absent"; return; fi
-	sed -n 's/.*"context"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$pr_json" | sort -u > "$tmpdir/pr_req"
+	# The PUT replaces the whole protection object, so a partial body is
+	# destructive: the four parameters GitHub requires must be present, and each
+	# check must name its app, or any token could post a status under the name.
+	for pr_key in required_status_checks enforce_admins required_pull_request_reviews restrictions; do
+		grep -Fq "\"$pr_key\"" "$pr_json" || fail protection "body: docs/setup/branch-protection.json has no \"$pr_key\" (a partial body is destructive)"
+	done
+	pr_nctx=$(grep -o '"context"' "$pr_json" | grep -c .)
+	pr_napp=$(grep -o '"app_id"' "$pr_json" | grep -c .)
+	[ "$pr_nctx" = "$pr_napp" ] || fail protection "body: $pr_nctx contexts but $pr_napp app_id values (pin each check to its app)"
+	grep -o '"context"[[:space:]]*:[[:space:]]*"[^"]*"' "$pr_json" | sed 's/.*"\([^"]*\)"$/\1/' | sort -u > "$tmpdir/pr_req"
 	for pr_f in "$ROOT"/.github/workflows/*.yml "$ROOT"/.github/workflows/*.yaml; do
 		[ -f "$pr_f" ] || continue
 		awk '

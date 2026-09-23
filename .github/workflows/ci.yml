@@ -10,9 +10,9 @@
 # The PR-title and PR-link checks live in their own workflows (pr-title.yml,
 # pr-link.yml) because they run on pull-request events only.
 #
-# CI is the authority for the quality gate. To make these checks block a merge,
-# mark them required on `main` (Settings → Branches → branch protection) — a
-# repo-settings step, not a file here.
+# CI is the authority for the quality gate. Every job here is a required check on
+# `main`: the protection body is docs/setup/branch-protection.json (T-afa5), and
+# check `protection` in docs/setup/setup-check.sh keeps it equal to the job names.
 
 name: CI
 
