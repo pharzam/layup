@@ -14,6 +14,7 @@
 #
 # Output: one line per check, `setup-check: <check> OK` or
 # `setup-check: <check> FAIL <cause>: <detail>` (one FAIL line per cause found).
+# Each pin key must appear exactly once; an absent key fails as `key: <k> appears 0 times`.
 # Exit status: 0 when every check passes, 1 otherwise.
 #
 # Each check is a function `check_<name>` listed in CHECKS. A later setup task
@@ -44,9 +45,16 @@ fail() { # fail <check> <cause>: <detail>
 # The pin names the Armature commit and its tree. The tree must equal the tree of
 # this repository's one root commit, which is the unmodified kit copy.
 pin_value() { sed -n "s/^$1=//p" "$ROOT/docs/setup/armature.pin" | head -1; }
+pin_count() { grep -c "^$1=" "$ROOT/docs/setup/armature.pin"; }
 check_pin() {
 	pin="$ROOT/docs/setup/armature.pin"
 	if [ ! -f "$pin" ]; then fail pin "missing: docs/setup/armature.pin is absent"; return; fi
+	# Each key once: with two `commit=` lines the pin has two readings.
+	# POSIX sh has no local variables, so these names start with pin_.
+	for pin_key in source commit tree method date; do
+		pin_n=$(pin_count "$pin_key")
+		[ "$pin_n" = 1 ] || fail pin "key: $pin_key appears $pin_n times, expected 1"
+	done
 	commit=$(pin_value commit)
 	tree=$(pin_value tree)
 	if ! printf '%s\n' "$commit" | grep -Eqx '[0-9a-f]{40}'; then
@@ -68,10 +76,10 @@ check_pin() {
 	fi
 }
 
-for c in $CHECKS; do
+for check_name in $CHECKS; do
 	cur_fail=0
-	"check_$c"
-	[ "$cur_fail" = 0 ] && printf 'setup-check: %s OK\n' "$c"
+	"check_$check_name"
+	[ "$cur_fail" = 0 ] && printf 'setup-check: %s OK\n' "$check_name"
 done
 
 # --- kit linters (pass-through, no argument only) -----------------------------
@@ -80,8 +88,8 @@ done
 if [ "$passthrough" = 1 ]; then
 	cur_fail=0
 	for f in docs/tests/run-discipline-tests.sh docs/adr/adr-lint.sh docs/prd/prd-lint.sh docs/links/link-lint.sh; do
-		if [ ! -f "$ROOT/$f" ]; then fail kit-linters "$f is absent"; continue; fi
-		sh "$ROOT/$f" || fail kit-linters "$f"
+		if [ ! -f "$ROOT/$f" ]; then fail kit-linters "absent: $f"; continue; fi
+		sh "$ROOT/$f" || fail kit-linters "failed: $f"
 	done
 	[ "$cur_fail" = 0 ] && printf 'setup-check: kit-linters OK\n'
 fi

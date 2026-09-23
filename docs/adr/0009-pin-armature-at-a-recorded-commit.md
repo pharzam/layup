@@ -9,8 +9,9 @@ Accepted
 ## Context
 
 LAYUP is a software product, so it obeys the discipline that it enforces on
-other projects. Its discipline system is the Armature kit. The PSB
-([`F-0001`](../facts/README.md)) sets Invariant 8: "Armature is used at a pinned,
+other projects. Its discipline system is the Armature kit. The PSB (fact
+`F-0001`, stored as a facts document by task `T-fvwj`,
+[#4](https://github.com/pharzam/layup/issues/4)) sets Invariant 8: "Armature is used at a pinned,
 recorded version." It also puts a change of the Armature rules out of scope
 (PSB §6 Out of Scope).
 
