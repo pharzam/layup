@@ -21,7 +21,8 @@ child task adds its own rows in the same PR that lands its work.
   whose only source is a guess is a defect (PSB Invariant 4).
 - **Status** is `active` when a gate reads the value today, `not active` when a
   gate must read it but none does yet (PSB Invariant 5), and `recorded` when the
-  value is provenance that no gate reads by design.
+  value is provenance that no gate reads by design. V-22 is `active` in each
+  clone that ran the install; it is not a file in Git.
 - Times are UTC, from the Git commit, the GitHub API `created_at`, or the file
   system, as the Source column says.
 
@@ -60,7 +61,7 @@ Counts from this record and the issues:
   batch of 8 setup decisions (O-1 to O-8); 8 budget approvals (#1, #2, #3, #4,
   #6, #8, #9, #12); and the Operator's authorization of the public repository.
   Each was asked in the session and written to Git or to its issue.
-- **Values:** 21 value rows (V-01 to V-21); 2 questions left open in
+- **Values:** 22 value rows (V-01 to V-22); 2 questions left open in
   [`open-gaps.tsv`](open-gaps.tsv) (the Definition of Done; the coverage
   threshold).
 - **Kit findings:** 8 (K-01 to K-08). **Deviations:** 4 (D-01 to D-04).
@@ -136,7 +137,7 @@ Counts from this record and the issues:
 | V-19 | `guardrails.md`: plain-terms sentence; §1 what is pre-registered (PSB §7.1 checks, §7.2 targets, each task's budget and cap) and where it freezes (the PSB, hashed; the plan-review comment); §3 validation table (`setup-check.sh`, `tests/run.sh`, review rounds); Sources | `docs/guardrails.md` | `F-0001#4`, `F-0001#5`, `F-0001 §7`; `docs/issue-workflow.md` R12 (budget and cap); the scripts named exist in `docs/setup/` | recorded | `T-nfh8` |
 | V-20 | `docs/ci/README.md`: the other-forge setting is "not applicable, because this project uses GitHub" | `docs/ci/README.md` | `gh repo view pharzam/layup` (a GitHub repository) | recorded | `T-nfh8` |
 | V-21 | branch protection of `main`: 9 required checks (one per workflow job, app 15368), `strict`, `enforce_admins`, a PR with 0 approvals, conversation resolution | [`branch-protection.json`](branch-protection.json) | job names derived by check `protection`, equal byte for byte to the check-run names of `c432d21` (check-runs API, review round 1 of #12); read-back at 16:35:40 UTC with `gh api repos/pharzam/layup/branches/main/protection --jq '.required_status_checks.contexts \| sort'` equals the file's contexts under `jq -c '[.required_status_checks.checks[].context] \| sort'` | active | `T-afa5` |
-| V-22 | git hooks installed: `core.hooksPath` = `.githooks` (relative) | `.git/config` of this clone (not in Git; each clone runs `sh .githooks/install.sh`) | `install.sh` output, run between timeline rows 4 and 5 ("core.hooksPath set to '.githooks'"); `git config core.hooksPath` prints `.githooks` | active (local) | `T-n1hp` |
+| V-22 | git hooks installed: `core.hooksPath` = `.githooks` (relative) | `.git/config` of this clone (not in Git; each clone runs `sh .githooks/install.sh`) | `install.sh` output, run between timeline rows 4 and 5 ("core.hooksPath set to '.githooks'"); `git config core.hooksPath` prints `.githooks` | active | `T-n1hp` |
 
 The decision behind V-01 to V-05 is
 [ADR-0009](../adr/0009-pin-armature-at-a-recorded-commit.md).

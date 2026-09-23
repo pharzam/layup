@@ -6,7 +6,7 @@ run is [`record-T-n1hp.md`](record-T-n1hp.md). In this run each step was a task
 under the full quality gate (an issue, a reviewed plan, test first, independent
 review rounds, a pull request); the automation keeps that gate. The same steps are in
 [`steps.tsv`](steps.tsv) in a form a program can read; check `procedure` in
-[`setup-check.sh`](setup-check.sh) keeps the two in step.
+[`setup-check.sh`](setup-check.sh) keeps their step IDs in step.
 
 ## In plain terms
 
@@ -30,8 +30,12 @@ and waits. A value with no source is never filled; it becomes an open gap
 - The `yes` rows (S01, S03, S10, S13) are the interactive screens; each one
   collects its answers in one batch and writes them to Git before the next step
   (PSB Invariant 1, Decision Point 2).
-- A `no` row is done when its evidence holds; for most steps that evidence is one
-  check of `setup-check.sh` (`--only <check> <root>` runs one check).
+- A `no` row is done when its evidence holds. In this run the evidence of most
+  steps is one check of LAYUP's own `setup-check.sh` (`--only <check> <root>` runs
+  one check). The kit does not ship that script, and the Operator decided that
+  nothing from LAYUP goes into a target repository (O-10 on
+  [#30](https://github.com/pharzam/layup/issues/30)); how a target proves each
+  step is for ADR-0011 to decide.
 - The manual run gives the baseline to compare against: the elapsed time of each
   step, and each finding K-01 to K-08 where the kit left a decision open, in
   [`record-T-n1hp.md`](record-T-n1hp.md).
@@ -41,7 +45,7 @@ and waits. A value with no source is never filled; it becomes an open gap
 ### S01 — Operator decisions before the copy
 
 - **Input:** PSB of the target project; Armature repository URL
-- **Action:** Ask the Operator the project decisions that no file answers: stack, repository name and visibility, gate mode
+- **Action:** Ask the Operator the project decisions that no file answers: the technology stack; the repository name and visibility; the gate mode (full: each task gets a reviewed plan and review rounds; light: branch, tests and one PR per step)
 - **Output:** Operator decisions in Git (setup record, Operator decisions table)
 - **Evidence:** The Operator's answers, with the date
 - **Human decision:** yes
@@ -59,7 +63,7 @@ and waits. A value with no source is never filled; it becomes an open gap
 ### S03 — Root commit and remote
 
 - **Input:** The copied directory
-- **Action:** git init; commit the unmodified copy as the root commit; create the remote; push main BEFORE the hooks are installed (the pre-push hook refuses a push to main)
+- **Action:** git init; commit the unmodified copy as the root commit; create the remote under the name and visibility from S01 (the Operator authorizes the create); push main BEFORE the hooks are installed (the pre-push hook refuses a push to main)
 - **Output:** Root commit = the kit tree; remote main
 - **Evidence:** git rev-parse <root>^{tree} equals the Armature commit tree (GitHub API)
 - **Human decision:** yes
@@ -72,7 +76,7 @@ and waits. A value with no source is never filled; it becomes an open gap
 - **Output:** Pin file; ADR; check pin passes
 - **Evidence:** git config core.hooksPath prints .githooks; setup-check pin OK
 - **Human decision:** no
-- **Done in this run by:** `T-r7zg`
+- **Done in this run by:** `T-n1hp` (the hooks install, record V-22) and `T-r7zg` (the pin)
 
 ### S05 — Remove the kit's own history
 

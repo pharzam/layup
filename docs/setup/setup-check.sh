@@ -467,8 +467,9 @@ check_identity() {
 
 # --- procedure (the setup procedure, for later automation) ---------------------
 # docs/setup/steps.tsv is the machine-readable procedure: a fixed header and six
-# tab-separated columns per row. Each step ID has a `### <id>` heading in
-# docs/setup/README.md and each such heading has a row. The kit section "How to
+# tab-separated columns per row (CR line ends ignored). Each step ID has a
+# `### <id>` heading in docs/setup/README.md and each `### S<digits>` heading has
+# a row; other `###` headings are free text. The kit section "How to
 # adapt this kit" is gone: the procedure replaced it.
 check_procedure() {
 	pc_tsv="$ROOT/docs/setup/steps.tsv"
@@ -479,6 +480,7 @@ check_procedure() {
 		[ "$(head -1 "$pc_tsv" | tr -d '\r')" = "$pc_want" ] \
 			|| fail procedure "header: docs/setup/steps.tsv header is not id, input, action, output, evidence, human_decision"
 		awk -F'\t' '
+			{ sub(/\r$/, "") }
 			NR == 1 { next }
 			NF != 6 { print "setup-check: procedure FAIL columns: docs/setup/steps.tsv line " NR " has " NF " columns, expected 6" }
 			$1 == "" { print "setup-check: procedure FAIL id: docs/setup/steps.tsv line " NR " has an empty id" }
@@ -487,7 +489,7 @@ check_procedure() {
 		' "$pc_tsv" > "$tmpdir/pc_cols"
 		if [ -s "$tmpdir/pc_cols" ]; then cat "$tmpdir/pc_cols"; cur_fail=1; failed=1; fi
 		awk -F'\t' 'NR > 1 && $1 != "" { print $1 }' "$pc_tsv" | sort -u > "$tmpdir/pc_ids"
-		sed -n 's/^### \([A-Za-z0-9-]*\).*/\1/p' "$pc_md" 2>/dev/null | sort -u > "$tmpdir/pc_heads"
+		sed -n 's/^### \(S[0-9][0-9]*\)\([^0-9].*\)\{0,1\}$/\1/p' "$pc_md" 2>/dev/null | sort -u > "$tmpdir/pc_heads"
 		comm -23 "$tmpdir/pc_ids" "$tmpdir/pc_heads" | while IFS= read -r pc_i; do
 			printf 'setup-check: procedure FAIL step: %s is in steps.tsv but has no "### %s" heading in docs/setup/README.md\n' "$pc_i" "$pc_i"; done > "$tmpdir/pc_out"
 		comm -13 "$tmpdir/pc_ids" "$tmpdir/pc_heads" | while IFS= read -r pc_i; do
