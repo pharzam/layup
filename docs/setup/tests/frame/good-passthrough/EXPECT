@@ -3,3 +3,4 @@ exit=0
 line=setup-check: pin OK
 line=stub docs/links/link-lint.sh OK
 line=setup-check: kit-linters OK
+line=setup-check: kit-history OK

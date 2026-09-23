@@ -4,7 +4,7 @@ Date: YYYY-MM-DD
 
 ## Status
 
-Accepted. Amended by D-0005 and D-0006 (both later archived under `docs/decisions/`)
+Accepted. Amended by D-0005 and D-0006 (Armature's archived decision records; not in this repository since `T-vbwc` removed `docs/decisions/`; readable in Armature at the pinned commit, [ADR-0009](0009-pin-armature-at-a-recorded-commit.md))
 
 ## Context
 

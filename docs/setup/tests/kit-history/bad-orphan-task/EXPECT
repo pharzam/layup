@@ -1,0 +1,2 @@
+exit=1
+line=setup-check: kit-history FAIL orphan: docs/tasks/T-zzzz.md has no line with T-zzzz in backlog.md or completed.md

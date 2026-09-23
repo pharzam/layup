@@ -1,0 +1,2 @@
+exit=1
+line=setup-check: kit-history FAIL decisions: docs/decisions/ exists (kit step 4 deletes it)

@@ -8,6 +8,9 @@
 #                                         the script), then run the kit linters
 #   sh docs/setup/setup-check.sh ROOT     check the repository at ROOT only; the
 #                                         kit linters do not run (fixtures use this)
+#   --only a,b   (before ROOT) run only the named checks. Fixtures use it, because
+#                a fixture tree is not a full setup. It does not change the rule
+#                for the kit linters below.
 #
 # The rule for the pass-through is the argument, not the path: with no argument
 # the kit linters run, with an argument they do not — even when ROOT is `.`.
@@ -17,13 +20,22 @@
 # Each pin key must appear exactly once; an absent key fails as `key: <k> appears 0 times`.
 # Exit status: 0 when every check passes, 1 otherwise.
 #
-# Each check is a function `check_<name>` listed in CHECKS. A later setup task
+# Each check is a function `check_<name>` (a `-` in the name is `_`) listed in CHECKS. A later setup task
 # adds its check here, with fixtures under docs/setup/tests/<name>/, in the same
 # change. Self-test: sh docs/setup/tests/run.sh
 
 set -u
 
-CHECKS="pin"
+CHECKS="pin kit-history"
+
+if [ "${1:-}" = --only ]; then
+	[ $# -ge 2 ] && [ -n "$2" ] || { echo "setup-check: --only needs a list of checks" >&2; exit 2; }
+	for want in $(printf '%s' "$2" | tr ',' ' '); do
+		case " $CHECKS " in *" $want "*) ;; *) echo "setup-check: unknown check: $want" >&2; exit 2 ;; esac
+	done
+	CHECKS=$(printf '%s' "$2" | tr ',' ' ')
+	shift 2
+fi
 
 if [ $# -gt 0 ]; then
 	ROOT=$1
@@ -76,9 +88,28 @@ check_pin() {
 	fi
 }
 
+# --- kit-history (kit step 4) -------------------------------------------------
+# The kit's own history is not LAYUP state. A task detail file must have a line in
+# a task index that holds its ID; no task index may link the kit's own issues.
+check_kit_history() {
+	for kh_dir in decisions audit; do
+		[ -e "$ROOT/docs/$kh_dir" ] && fail kit-history "$kh_dir: docs/$kh_dir/ exists (kit step 4 deletes it)"
+	done
+	for kh_file in "$ROOT"/docs/tasks/T-*.md; do
+		[ -f "$kh_file" ] || continue
+		kh_id=$(basename "$kh_file" .md)
+		cat "$ROOT/docs/tasks/backlog.md" "$ROOT/docs/tasks/completed.md" 2>/dev/null | grep -Fq -- "$kh_id" \
+			|| fail kit-history "orphan: docs/tasks/$kh_id.md has no line with $kh_id in backlog.md or completed.md"
+	done
+	for kh_index in backlog completed; do
+		grep -Fq 'github.com/pharzam/armature/' "$ROOT/docs/tasks/$kh_index.md" 2>/dev/null \
+			&& fail kit-history "kit-link: docs/tasks/$kh_index.md links github.com/pharzam/armature/ (a kit task or note)"
+	done
+}
+
 for check_name in $CHECKS; do
 	cur_fail=0
-	"check_$check_name"
+	"check_$(printf %s "$check_name" | tr - _)"
 	[ "$cur_fail" = 0 ] && printf 'setup-check: %s OK\n' "$check_name"
 done
 

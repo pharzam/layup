@@ -9,6 +9,11 @@
 #               line=<text>        a line the output must hold (exact match);
 #                                  repeat for more lines
 #               mode=root|self|shallow   how the case is run (default: root)
+#               only=<check,check>  pass `--only <check,check>`, so the case runs
+#                                  only those checks (a fixture tree is not a full
+#                                  setup). Default: the case's directory name, so
+#                                  pin/<case> runs --only pin. frame/ is not a
+#                                  check, so a frame case names its checks.
 #               stub-fail=<path>   (mode=self) this stub linter exits 1
 #               stub-absent=<path> (mode=self) this stub linter is not written
 #
@@ -17,8 +22,12 @@
 # the root-commit tree of every case is the same, and a pin can name it.
 #
 #   mode=root     run `sh setup-check.sh <temp repo>` — the checks, no pass-through
-#   mode=self     copy setup-check.sh into the temp repo and run it with no
-#                 argument — the checks and the pass-through of the kit linters
+#   mode=self     copy setup-check.sh into the temp repo and run it with no ROOT
+#                 argument (and no --only unless EXPECT has only=) — the checks
+#                 and the pass-through of the kit linters. frame/good-passthrough
+#                 has no only=, so it runs every check with no argument at all:
+#                 its overlay must hold a full setup, and a task that adds a
+#                 check extends that overlay
 #                 (the runner writes a stub for each kit linter; each stub
 #                 prints `stub <path> OK` and exits 0 unless EXPECT says otherwise)
 #   mode=shallow  clone the temp repo with --depth 1, then run as mode=root
@@ -49,11 +58,16 @@ for case in "$here"/*/*/; do
 
 	mode=$(sed -n 's/^mode=//p' "$case/EXPECT" | head -1)
 	want=$(sed -n 's/^exit=//p' "$case/EXPECT" | head -1)
+	only=$(sed -n 's/^only=//p' "$case/EXPECT" | head -1)
+	group=${name%%/*}
+	[ -z "$only" ] && [ "$group" != frame ] && only=$group
+	set --
+	[ -n "$only" ] && set -- --only "$only"
 	case "${mode:-root}" in
-	root) out=$(sh "$check" "$repo" 2>&1); got=$? ;;
+	root) out=$(sh "$check" "$@" "$repo" 2>&1); got=$? ;;
 	shallow)
 		g clone -q --depth 1 "file://$repo" "$tmp/$n/shallow" 2>/dev/null
-		out=$(sh "$check" "$tmp/$n/shallow" 2>&1); got=$? ;;
+		out=$(sh "$check" "$@" "$tmp/$n/shallow" 2>&1); got=$? ;;
 	self)
 		mkdir -p "$repo/docs/setup" && cp "$check" "$repo/docs/setup/setup-check.sh"
 		for f in docs/tests/run-discipline-tests.sh docs/adr/adr-lint.sh docs/prd/prd-lint.sh docs/links/link-lint.sh; do
@@ -65,7 +79,7 @@ for case in "$here"/*/*/; do
 				printf '#!/bin/sh\necho "stub %s OK"\nexit 0\n' "$f" > "$repo/$f"
 			fi
 		done
-		out=$(sh "$repo/docs/setup/setup-check.sh" 2>&1); got=$? ;;
+		out=$(sh "$repo/docs/setup/setup-check.sh" "$@" 2>&1); got=$? ;;
 	*) echo "FAIL  $name: unknown mode '$mode'"; fail=$((fail + 1)); continue ;;
 	esac
 

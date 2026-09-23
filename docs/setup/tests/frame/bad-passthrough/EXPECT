@@ -3,3 +3,4 @@ exit=1
 stub-fail=docs/links/link-lint.sh
 line=setup-check: pin OK
 line=setup-check: kit-linters FAIL failed: docs/links/link-lint.sh
+only=pin

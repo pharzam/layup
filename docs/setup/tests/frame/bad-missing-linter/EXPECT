@@ -2,3 +2,4 @@ mode=self
 exit=1
 stub-absent=docs/prd/prd-lint.sh
 line=setup-check: kit-linters FAIL absent: docs/prd/prd-lint.sh
+only=pin
