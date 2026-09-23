@@ -99,6 +99,13 @@ check that catches it.
   read `gh pr checks` until no job is pending before the merge, and make the jobs
   required on `main` (`T-afa5`, [#12](https://github.com/pharzam/layup/issues/12)).
   Learned in `T-xgz4`.
+- ❌ **The hook refuses a red commit.** Test first means a commit whose tests
+  fail, but the `pre-commit` hook runs `go vet` and the unit level, so a
+  test-only commit does not compile or does not pass and is refused. It is silent
+  in the history, because the red step then leaves no commit. **The check:** run
+  the red step and paste its failing output into the task's decision note (R7),
+  then commit the tests with the code; never bypass the hook (`--no-verify`).
+  Learned in `T-dq05`.
 
 ### Writing a lesson back (kit-wide — keep this)
 
