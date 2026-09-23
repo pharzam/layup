@@ -661,9 +661,8 @@ that ties a test to what it proves — live in their own section,
 
 **Four test levels, run cheap-first.** Tests sit on a fixed ladder — **unit**,
 **integration**, **end-to-end (E2E)** — plus the process-level **discipline**
-tests, defined in [`tests/test-levels.md`](tests/test-levels.md). The cheap levels
-— unit and integration, with an optional end-to-end smoke subset — run in the
-[`pre-commit` hook](#git-hooks); the whole ladder runs in
+tests, defined in [`tests/test-levels.md`](tests/test-levels.md). The unit level
+runs in the [`pre-commit` hook](#git-hooks); the whole ladder runs in
 [CI](#continuous-integration-optional). Each level has its own command — `go test ./...`,
 `go test -tags=integration ./...`, `go test -tags=e2e ./...`, and
 `go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./... && go vet ./... && gitleaks git --redact`
