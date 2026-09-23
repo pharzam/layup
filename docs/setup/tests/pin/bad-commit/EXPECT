@@ -1,0 +1,2 @@
+exit=1
+line=setup-check: pin FAIL commit: not 40 hexadecimal characters: a959655
