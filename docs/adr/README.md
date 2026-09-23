@@ -21,18 +21,19 @@ are their enforcement:
    template. A forge number resolves to a different issue, or to nothing, in the
    adopter's repository; a link to a sibling document travels with the copy.
 2. **A record here never links into `docs/decisions/`** (a bare textual mention is
-   the most it may make). That directory is this repository's own past governance
+   the most it may make). That directory held Armature's own past governance
    decisions — the records that shaped *the kit* rather than a project built with
-   it — kept as a **closed archive** an adopter deletes. A constitutional record
+   it — kept as a **closed archive** an adopter deletes; this repository deleted it
+   (kit step 4, task `T-vbwc`), and the rule stays for any later copy. A constitutional record
    that linked into it would turn an adopter's tree red the moment they removed the
    archive; that is why this very rule names the directory without linking it. (A
    record inside `docs/decisions/` *may* link up to a record here — that direction
    survives the deletion.)
 
 **Numbering.** `docs/adr/` is the single living ADR sequence, numbered
-contiguously from `0001`, and it grows — the next constitutional ADR is `0009`. A
-bare "ADR-NNNN" means this directory's sequence. The archive under `docs/decisions/`
-has its **own namespace**: a prefixed, zero-based sequence `D-0000`–`D-0007` that
+contiguously from `0001`, and it grows — the next constitutional ADR is `0010`. A
+bare "ADR-NNNN" means this directory's sequence. The archive that was under `docs/decisions/`
+has its **own namespace**: a prefixed, zero-based sequence `D-0000`–`D-0008` that
 shares no number with this one and is cited **by its `D-NNNN` identifier** — named
 here without a link, since a constitutional record never links into the archive.
 
@@ -142,5 +143,5 @@ record by number here, and let the index table below do the linking.
 Armature's own past governance decisions — the `D-0000`–`D-0008` sequence — were
 archived under `docs/decisions/` in the kit. LAYUP deleted that directory (kit step
 4, task `T-vbwc`); the records stay readable in Armature at the pinned commit
-(see [ADR-0009](0009-pin-armature-at-a-recorded-commit.md)). They are not part of
+(see ADR-0009). They are not part of
 this project's constitution.
