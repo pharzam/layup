@@ -422,8 +422,11 @@ check_protection() {
 		grep -Fq "\"$pr_key\"" "$pr_json" || fail protection "body: docs/setup/branch-protection.json has no \"$pr_key\" (a partial body is destructive)"
 	done
 	pr_nctx=$(grep -o '"context"' "$pr_json" | grep -c .)
-	pr_napp=$(grep -o '"app_id"' "$pr_json" | grep -c .)
-	[ "$pr_nctx" = "$pr_napp" ] || fail protection "body: $pr_nctx contexts but $pr_napp app_id values (pin each check to its app)"
+	pr_napp=$(grep -Eo '"app_id"[[:space:]]*:[[:space:]]*15368([^0-9]|$)' "$pr_json" | grep -c .)
+	[ "$pr_nctx" = "$pr_napp" ] || fail protection "body: $pr_nctx contexts but $pr_napp app_id values of 15368 (pin each check to GitHub Actions)"
+	grep -o '"context"[[:space:]]*:[[:space:]]*"[^"]*"' "$pr_json" | sed 's/.*"\([^"]*\)"$/\1/' | sort | uniq -d | while IFS= read -r pr_d; do
+		printf 'setup-check: protection FAIL body: context %s appears more than once\n' "$pr_d"; done > "$tmpdir/pr_dup"
+	if [ -s "$tmpdir/pr_dup" ]; then cat "$tmpdir/pr_dup"; cur_fail=1; failed=1; fi
 	grep -o '"context"[[:space:]]*:[[:space:]]*"[^"]*"' "$pr_json" | sed 's/.*"\([^"]*\)"$/\1/' | sort -u > "$tmpdir/pr_req"
 	for pr_f in "$ROOT"/.github/workflows/*.yml "$ROOT"/.github/workflows/*.yaml; do
 		[ -f "$pr_f" ] || continue

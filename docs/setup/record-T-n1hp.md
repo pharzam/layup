@@ -113,6 +113,27 @@ Earlier decisions in the same session: stack Go, public repository
 `pharzam/layup`, full gate (timeline row 1); the parent budget of #1 and the
 budgets of #2, #3, #4 and #6, each on its issue.
 
+## Branch protection read-back (V-21)
+
+Command, run at 16:35:40 UTC on 2026-09-23, right after the `PUT`:
+`gh api repos/pharzam/layup/branches/main/protection --jq '.required_status_checks.contexts | sort'`.
+Output, one context per line:
+
+- `adr-lint (docs/adr discipline)`
+- `conventional-title`
+- `discipline-tests (linter fixtures)`
+- `link-lint (in-tree links and anchors)`
+- `nested-checkout-check (the linters skip a nested checkout)`
+- `pr-link (PR body links an issue)`
+- `prd-lint (docs/prd discipline)`
+- `review-record (the issue carries a parseable record)`
+- `setup-check (the Armature setup and its evidence)`
+
+It equals `jq -c '[.required_status_checks.checks[].context] | sort'` of
+[`branch-protection.json`](branch-protection.json). The same read-back also gave
+`enforce_admins` true, `strict` true, 0 required approvals, and app 15368 for
+every check.
+
 ## Findings about the kit's setup procedure
 
 Each finding is a place where the manual setup needed a decision that the kit

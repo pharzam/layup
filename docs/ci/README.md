@@ -84,11 +84,12 @@ network and no token.
 
 A check that runs but does not block is a run result, not a merge control. Until a
 check is required on the default branch, a red run and a green one merge alike, and
-the kit's own [`ci.yml`](../../.github/workflows/ci.yml) says at its head that
-making them block is a repository setting, not a file in the tree. This is the step
-the two branch-protection rows of the
-[enforcement table](../issue-workflow.md#what-is-enforced-where) name; LAYUP
-filled them in `T-afa5`.
+the kit template [`github-actions-ci.yml`](github-actions-ci.yml) says at its head
+that making them block is a repository setting. This is the step the
+branch-protection column of the
+[enforcement table](../issue-workflow.md#what-is-enforced-where) names; LAYUP keeps
+the setting as a file, [`branch-protection.json`](../setup/branch-protection.json)
+(`T-afa5`).
 
 **This repository (LAYUP).** The body is
 [`docs/setup/branch-protection.json`](../setup/branch-protection.json): nine
@@ -105,13 +106,15 @@ kit's own repository requires — a context is the check's displayed name, the j
 `name:` or its id when it has none, which is why `conventional-title` carries no
 parenthesis —
 each pinned to `"app_id": 15368`, GitHub Actions; a bare `contexts` list would let
-any app or token satisfy a name by posting a status under it. The array is this
-repository's set, not yours: before you paste it, check every context against
+any app or token satisfy a name by posting a status under it. The array is the kit's
+own set, not LAYUP's: do not paste it into this repository, which applies
+[`branch-protection.json`](../setup/branch-protection.json) (above). An adopter who
+starts from it checks every context against
 [Drop what you did not install](#drop-what-you-did-not-install) and delete the line
 for each job you did not install — and add your own jobs as you fill them.
 
 ```bash
-gh api -X PUT repos/pharzam/layup/branches/main/protection --input - <<'EOF'
+gh api -X PUT repos/OWNER/REPO/branches/main/protection --input - <<'EOF'
 {
   "required_status_checks": {
     "strict": true,

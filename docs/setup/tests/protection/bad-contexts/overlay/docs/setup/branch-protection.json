@@ -1,1 +1,1 @@
-{"required_status_checks": {"checks": [{"context": "x", "app_id": 15368}, {"context": "z"}]}}
+{"required_status_checks": {"checks": [{"context": "x", "app_id": 15368}, {"context": "z"}, {"context": "x", "app_id": 1}]}}
