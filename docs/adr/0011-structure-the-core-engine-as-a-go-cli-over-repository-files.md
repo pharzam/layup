@@ -23,23 +23,27 @@ Git-native state; governance and the invariants) generated options, one pass eac
 with no vote (ADR-0006, Operator decision O-4). The compared set and the recorded
 disagreement are on the issue of this decision.
 
-The Operator decided, on 2026-09-23, after the panel's questions:
+The Operator decided, on 2026-09-23, after the panel's questions (the words are
+copied from the issue of this decision):
 
 | ID | Decision |
 |----|----------|
-| O-9 | Rule protection for Invariant 3 is decided later. The agents and the Operator push with the same GitHub account today, so no forge setting can tell them apart. |
+| O-9 | Rule protection for Invariant 3 (`F-0001#3`): **decide later.** Invariant 3 stays an open gap, and this ADR names the missing control. (Fact recorded with it: the agents and the Operator push with the same GitHub account today.) |
 | O-10 | Nothing from LAYUP goes into a target repository beyond the Armature kit itself. |
 | O-11 | Strict reading of O-10: LAYUP writes nothing into a target except the Armature kit copy and the facts; stack gates run outside the target, in LAYUP's own runner. |
 | O-12 | What LAYUP is, in the Operator's words: "The layup project final result is the product that uses armature as a kit to get a new problem statement brief and architectural vision brief from the idea owner and orchestrate the paths to deliver the solution for that problem statement. It's not a scaffold or template for obeying or adapting to the Product that should be created" |
+| O-13 | The Operator's clarification of O-12, word for word: "The layup project final result is the product that uses armature as a kit to get a new problem statement brief and architectural vision brief from the idea owner and orchestrate the paths to deliver the solution for that problem statement. It's not a scaffold or template for obeying lay up help the idea honors idea owners to idea owners or anyone has product statement brief or vision brief and want to solve it and deliver the product. And lay up here help this role for using armature as a baseline. With adapting it in new repository. And machinery it as a principle and discipline in the armature kit. Or based on armature kit rules that adapted in new product repository. For going forward and deliver the final product." |
 
-This record reads O-10 to O-12 together as follows, and the Operator can correct
-the reading: LAYUP is an **orchestrator product**. A **target** is the repository
-of the new product that LAYUP delivers from the idea owner's problem statement and
-vision brief. The target holds the adapted Armature kit (its discipline system),
-the facts, the product code that the orchestrated role agents deliver, and the
-project's own state records, because Invariant 1 puts project state in the
-project repository. LAYUP's own machinery — its engine code, scripts, and binary —
-is never written into a target.
+This record reads O-10 to O-13 together: LAYUP is an **orchestrator product**. It
+helps anyone who has a problem statement and a vision brief to deliver the
+product. A **target** is the repository of that new product. LAYUP creates it,
+adapts Armature into it as the baseline, and then drives delivery by the adapted
+kit's own rules. So the target holds the adapted kit, the facts, the product that
+the orchestrated role agents deliver, and the records that the kit's rules
+require — task files, decisions, and resource records of tokens and time
+([ADR-0007](0007-record-task-resource-use.md)). "The kit copy" in O-11 is read as
+the kit with those records. LAYUP's own machinery — its engine code, scripts, and
+binary — is never written into a target.
 
 ## Decision
 
@@ -66,18 +70,25 @@ these properties:
 4. **Gates.** A target's own gates are the Armature kit's gates, so the target
    passes them without LAYUP (Invariant 2). LAYUP's stack-dependent gates and its
    setup verification are `layup` commands that run **outside** the target,
-   against a checkout of it; they add rules and weaken none (Invariant 7). Every
-   gate verdict is deterministic, and each gate reports `pass`, `fail` or
-   `not-active`; `not-active` never counts as passed (Invariant 5).
+   against a checkout of it; they add rules and weaken none (`F-0001#7`). Every
+   gate verdict is deterministic (`F-0001#6`), and each gate reports `pass`,
+   `fail` or `not-active`; `not-active` never counts as passed (`F-0001#5`).
 5. **LAYUP's own checks.** In this repository, `docs/setup/setup-check.sh` stays
    the POSIX `sh` gate for LAYUP's own setup, and the Go code is tested with
    `go test` under the Go gates. The engine does not replace the kit's checks.
-6. **Steps.** `layup setup` follows `setup/steps.tsv`: it performs each row whose
-   `human_decision` is `no`, and it stops at each `yes` row to ask its questions
-   in one batch and write the answers to Git before the next step.
+6. **Steps.** `layup setup` follows `setup/steps.tsv`. It stops at each row whose
+   `human_decision` is `yes`, asks its questions in one batch, and writes the
+   answers to Git before the next step (Decision Point 2, `F-0001#11`). A `no`
+   row needs no human decision, but it is not always a program step: the rows
+   that write prose (S07 onboarding, S08 glossary, S09 guardrails, S14 identity)
+   are done by a role agent that a harness agent runs, and the engine then runs
+   the row's deterministic check. The engine itself performs the other `no`
+   rows.
 7. **Copy without Node.** The engine copies the kit with `git clone` of the
    pinned commit and removes the `.git` directory; it does not call `npx degit`
-   (ADR-0010 rejected a Node runtime).
+   (ADR-0010 rejected a Node runtime). The manual run used `npx degit`, and
+   step S02 of `setup/steps.tsv` still says so; the task that builds
+   `layup setup` changes S02.
 8. **No LLM in the engine.** The engine makes no model call; judgement stays with
    the harness agents that call it. Its interface is plain text and files, so any
    harness agent can run it (Invariant 9).
@@ -91,15 +102,19 @@ repository (a target then fails its gates without it).
 ## Consequences
 
 - A target passes its own gates without LAYUP by construction. LAYUP's stack
-  gates need a LAYUP runner that reports on the target's pull requests; the task
-  that builds the stack gates (`T-vk3k`) decides that runner.
+  gates need a LAYUP runner that reports on the target's pull requests; the
+  stack-gate child of the Step 2 parent issue decides that runner.
 - The question Q-1 (may LAYUP write state records into a target?) is answered by
-  the reading of O-12 above: state records are project data, not LAYUP
-  machinery, so they go into the target. If the Operator corrects the reading,
+  O-13: the target follows the adapted kit's rules, and those rules keep the
+  records in the project repository. If the Operator corrects the reading,
   decision 3 changes with it, in a new ADR.
-- Invariant 3 has no check (O-9). A deterministic post-merge list of each change
-  to a rule path is the complement until O-9 is decided.
+- Invariant 3 has no check (O-9). **The missing control** is a guard before the
+  merge: a code-owners rule on the rule paths (`docs/*.md` rules, `.github/**`,
+  the check scripts) that needs an approval from an account that the agents do
+  not use. It waits for O-9. Until then, a deterministic post-merge list of each
+  change to a rule path is the complement.
 - Two languages hold checks: `sh` for LAYUP's own setup, Go for the engine. A
-  check that exists in both is a hand mirror (`guardrails.md` §2); the engine's
-  setup verification must run the same fixtures as `setup/tests/run.sh`.
+  check that exists in both can drift apart, the risk that `guardrails.md` §2
+  names for a hand-mirrored check set; the engine's setup verification must run
+  the same fixtures as `setup/tests/run.sh`.
 - The next ADR is `0012`.
