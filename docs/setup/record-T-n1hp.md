@@ -41,6 +41,8 @@ child task adds its own rows in the same PR that lands its work.
 | 10 | Operator approval of the parent budget, 7,000 lines over 145 files | 11:05:53 | GitHub API |
 | 11 | Child #12 opened (branch protection, split out of #9) | 11:05:51 | GitHub API |
 | 12 | `T-r7zg` worktree created | 11:06:44 | shell `date` |
+| 13 | `T-r7zg` merged (PR #13), after 2 review rounds | 11:34:13 | GitHub API `mergedAt` |
+| 14 | `T-vbwc` worktree created | 11:34:46 | shell `date` |
 
 ## Values
 
@@ -65,7 +67,7 @@ to an Armature rule.
 |----|---------|------------------|--------------------|
 | K-01 | The Operator gave the count "17 domain terms"; PSB Revision 6 §8 holds 25 rows (one row holds two names). | not a kit gap: a gap between the instruction and the fact | All 25 rows are merged (`T-xgz4`). |
 | K-02 | degit copies the kit's own active workflows under `.github/workflows/`; kit step 4 does not name them. | `engineering-discipline.md` How to adapt, step 4 | Handled by `T-q344`. |
-| K-03 | `docs/tasks/backlog.md` holds the kit's own tasks and a pivot note that links the kit's issues. Kit step 1 says to fill `backlog.md` with your own tasks, but step 4, the removal list, names only `completed.md` entries and the `T-*.md` files, so the kit backlog lines are easy to miss. | How to adapt, step 4 | Handled by `T-vbwc`. |
+| K-03 | `docs/tasks/backlog.md` holds the kit's own tasks and a pivot note that links the kit's issues. Kit step 1 says to fill `backlog.md` with your own tasks, but step 4, the removal list, names only `completed.md` entries and the `T-*.md` files, so the kit backlog lines are easy to miss. | How to adapt, step 4 | `T-vbwc` removed 31 kit files (3,133 lines: `docs/decisions/` 10, `docs/audit/` 2, `docs/tasks/T-*.md` 19), the kit entries of `completed.md`, and the 6 kit lines and the pivot note of `backlog.md`. |
 | K-04 | The CI template `docs/ci/github-actions-ci.yml` has no "restore the checks from the default branch" step, which `guardrails.md` §2 requires and the kit's own `ci.yml` has. | `docs/ci/github-actions-ci.yml` | `T-q344` keeps the kit's own workflows. |
 | K-05 | The first push to `main` must come before the `pre-push` hook is installed, because the hook refuses a direct push to `main`. | README step 1 and step 3 order | The root commit was pushed before `sh .githooks/install.sh`. |
 | K-06 | The adoption steps do not say to rewrite the "what this is" text of `README.md` and `AGENTS.md`, which name the kit. | README "Using it as a template" | Handled by `T-6rg3`. |
