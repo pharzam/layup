@@ -20,6 +20,7 @@ here directly, in the shape above.
 - **YYYY-MM-DD** — **‹ID›** — ‹one-sentence summary of what the task found or delivered› ([‹link›](...); [detail](‹id›.md))
 -->
 
+- **2026-09-23** — **T-6rg3** — Made `README.md` and `AGENTS.md` describe LAYUP (an Armature project pinned at `a959655`) and added check `identity` ([#10](https://github.com/pharzam/layup/issues/10); [detail](T-6rg3.md))
 - **2026-09-23** — **T-afa5** — Required all nine CI jobs on `main` by branch protection, kept the body in `docs/setup/branch-protection.json`, and added check `protection` ([#12](https://github.com/pharzam/layup/issues/12); [detail](T-afa5.md))
 - **2026-09-23** — **T-fvng** — Made `pr-link.yml` and `review-record.yml` restore their lint script from `main`, and added cause `restore` to check `ci` ([#23](https://github.com/pharzam/layup/issues/23); [detail](T-fvng.md))
 - **2026-09-23** — **T-q344** — Replaced the kit's workflow headers, added CI job `setup-check` (full history, checks restored from `main`) and check `ci` ([#9](https://github.com/pharzam/layup/issues/9); [detail](T-q344.md))
