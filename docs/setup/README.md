@@ -2,7 +2,9 @@
 
 This is the procedure that set up this repository by hand, written as ordered
 steps so that it can be repeated, measured, and later automated. The measured
-run is [`record-T-n1hp.md`](record-T-n1hp.md). The same steps are in
+run is [`record-T-n1hp.md`](record-T-n1hp.md). In this run each step was a task
+under the full quality gate (an issue, a reviewed plan, test first, independent
+review rounds, a pull request); the automation keeps that gate. The same steps are in
 [`steps.tsv`](steps.tsv) in a form a program can read; check `procedure` in
 [`setup-check.sh`](setup-check.sh) keeps the two in step.
 
@@ -43,7 +45,7 @@ and waits. A value with no source is never filled; it becomes an open gap
 - **Output:** Operator decisions in Git (setup record, Operator decisions table)
 - **Evidence:** The Operator's answers, with the date
 - **Human decision:** yes
-- **Done in this run by:** session, before `T-n1hp`
+- **Done in this run by:** the session, after S02 and before S03 (in this run the copy came first; the decisions do not depend on it)
 
 ### S02 — Copy the kit at one commit
 
@@ -66,9 +68,9 @@ and waits. A value with no source is never filled; it becomes an open gap
 ### S04 — Pin the version
 
 - **Input:** Root commit, Armature SHA
-- **Action:** sh .githooks/install.sh; write docs/setup/armature.pin (source, commit, tree, method, date); ADR for the pin
+- **Action:** sh .githooks/install.sh (it sets core.hooksPath to the relative .githooks); write docs/setup/armature.pin (source, commit, tree, method, date); ADR for the pin
 - **Output:** Pin file; ADR; check pin passes
-- **Evidence:** setup-check pin OK
+- **Evidence:** git config core.hooksPath prints .githooks; setup-check pin OK
 - **Human decision:** no
 - **Done in this run by:** `T-r7zg`
 
@@ -138,16 +140,16 @@ and waits. A value with no source is never filled; it becomes an open gap
 ### S12 — Activate CI
 
 - **Input:** The kit's active workflows
-- **Action:** Keep the kit's workflows (they restore the checks from the default branch); replace their headers; add the setup-check job with fetch-depth 0 and a Restore step
+- **Action:** Keep the kit's workflows and replace their headers; add a Restore step to every workflow that runs a check script and lacks one (at the pin, pr-link.yml and review-record.yml lack it: finding K-08); add the setup-check job with fetch-depth 0 and a Restore step
 - **Output:** CI runs every check from the default branch; check ci passes
-- **Evidence:** CI run logs; setup-check ci OK
+- **Evidence:** CI run logs show each script restored from the default branch; setup-check ci OK (cause restore)
 - **Human decision:** no
-- **Done in this run by:** `T-q344`, `T-fvng`
+- **Done in this run by:** `T-q344` (headers, setup-check job) and `T-fvng` (the missing Restore steps, found by review as blocker #23)
 
 ### S13 — Require the checks
 
 - **Input:** Job names of every workflow
-- **Action:** Write docs/setup/branch-protection.json (one required check per job, pinned to the GitHub Actions app); review it; PUT it; read it back
+- **Action:** Write docs/setup/branch-protection.json (one required check per job, pinned to the GitHub Actions app); wait until each job has reported once; review the body; PUT it; read it back
 - **Output:** main requires every job; check protection passes
 - **Evidence:** gh api read-back equals the file
 - **Human decision:** yes

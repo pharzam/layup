@@ -49,13 +49,14 @@ lower bound.
 | **Total** | | 11 tasks | 25 | 3,577,683 | 673 | 7 |
 
 Plan reviews: 531,964 tokens for #1 and its children (three runs of one reviewer
-session: 119,958 + 195,984 + 216,022, from the harness task reports) and 108,245
+session: 119,958 + 195,984 + 216,022, from the harness task reports of that
+reviewer; this summary is the first place in Git that holds them) and 108,245
 for #23 (in `T-fvng.md`). This task, `T-9mmm`, writes its own figures in
 `docs/tasks/T-9mmm.md` at close-out, so they are not in this table.
 
 Counts from this record and the issues:
 
-- **Human input:** 3 project decisions before the copy (timeline row 1); one
+- **Human input:** 3 project decisions before the root commit (timeline row 1); one
   batch of 8 setup decisions (O-1 to O-8); 8 budget approvals (#1, #2, #3, #4,
   #6, #8, #9, #12); and the Operator's authorization of the public repository.
   Each was asked in the session and written to Git or to its issue.
@@ -66,7 +67,7 @@ Counts from this record and the issues:
 - **Revealed issues:** #15, #21, #23 (a blocker, fixed as `T-fvng`), #24.
 - **Wall-clock:** from the copy (10:21:59 UTC, row 2) to the start of this task
   (17:12:02 UTC) is about 6 hours 50 minutes on 2026-09-23. The per-task elapsed
-  times above add to more than the review time, because rounds ran while the
+  times above add to more than the wall-clock time, because rounds ran while the
   next task was prepared.
 
 ## Timeline
@@ -135,6 +136,7 @@ Counts from this record and the issues:
 | V-19 | `guardrails.md`: plain-terms sentence; §1 what is pre-registered (PSB §7.1 checks, §7.2 targets, each task's budget and cap) and where it freezes (the PSB, hashed; the plan-review comment); §3 validation table (`setup-check.sh`, `tests/run.sh`, review rounds); Sources | `docs/guardrails.md` | `F-0001#4`, `F-0001#5`, `F-0001 §7`; `docs/issue-workflow.md` R12 (budget and cap); the scripts named exist in `docs/setup/` | recorded | `T-nfh8` |
 | V-20 | `docs/ci/README.md`: the other-forge setting is "not applicable, because this project uses GitHub" | `docs/ci/README.md` | `gh repo view pharzam/layup` (a GitHub repository) | recorded | `T-nfh8` |
 | V-21 | branch protection of `main`: 9 required checks (one per workflow job, app 15368), `strict`, `enforce_admins`, a PR with 0 approvals, conversation resolution | [`branch-protection.json`](branch-protection.json) | job names derived by check `protection`, equal byte for byte to the check-run names of `c432d21` (check-runs API, review round 1 of #12); read-back at 16:35:40 UTC with `gh api repos/pharzam/layup/branches/main/protection --jq '.required_status_checks.contexts \| sort'` equals the file's contexts under `jq -c '[.required_status_checks.checks[].context] \| sort'` | active | `T-afa5` |
+| V-22 | git hooks installed: `core.hooksPath` = `.githooks` (relative) | `.git/config` of this clone (not in Git; each clone runs `sh .githooks/install.sh`) | `install.sh` output, run between timeline rows 4 and 5 ("core.hooksPath set to '.githooks'"); `git config core.hooksPath` prints `.githooks` | active (local) | `T-n1hp` |
 
 The decision behind V-01 to V-05 is
 [ADR-0009](../adr/0009-pin-armature-at-a-recorded-commit.md).

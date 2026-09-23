@@ -478,7 +478,13 @@ check_procedure() {
 		pc_want="$(printf 'id\tinput\taction\toutput\tevidence\thuman_decision')"
 		[ "$(head -1 "$pc_tsv" | tr -d '\r')" = "$pc_want" ] \
 			|| fail procedure "header: docs/setup/steps.tsv header is not id, input, action, output, evidence, human_decision"
-		awk -F'\t' 'NR > 1 && NF != 6 { print "setup-check: procedure FAIL columns: docs/setup/steps.tsv line " NR " has " NF " columns, expected 6" }' "$pc_tsv" > "$tmpdir/pc_cols"
+		awk -F'\t' '
+			NR == 1 { next }
+			NF != 6 { print "setup-check: procedure FAIL columns: docs/setup/steps.tsv line " NR " has " NF " columns, expected 6" }
+			$1 == "" { print "setup-check: procedure FAIL id: docs/setup/steps.tsv line " NR " has an empty id" }
+			$1 != "" && seen[$1]++ { print "setup-check: procedure FAIL id: " $1 " appears more than once in docs/setup/steps.tsv" }
+			NF >= 6 && $6 != "yes" && $6 != "no" { print "setup-check: procedure FAIL decision: docs/setup/steps.tsv line " NR " human_decision is \"" $6 "\", expected yes or no" }
+		' "$pc_tsv" > "$tmpdir/pc_cols"
 		if [ -s "$tmpdir/pc_cols" ]; then cat "$tmpdir/pc_cols"; cur_fail=1; failed=1; fi
 		awk -F'\t' 'NR > 1 && $1 != "" { print $1 }' "$pc_tsv" | sort -u > "$tmpdir/pc_ids"
 		sed -n 's/^### \([A-Za-z0-9-]*\).*/\1/p' "$pc_md" 2>/dev/null | sort -u > "$tmpdir/pc_heads"

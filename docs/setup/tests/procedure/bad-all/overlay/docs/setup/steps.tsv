@@ -1,3 +1,5 @@
 id	input	action	output	evidence
 S01	a	b	c	d	no
 S02	a	b	c	d
+S01	a	b	c	d	maybe	7
+	a	b	c	d	no
