@@ -47,6 +47,8 @@ child task adds its own rows in the same PR that lands its work.
 | 16 | `T-fvwj` worktree created | 12:09:37 | shell `date` |
 | 17 | `T-fvwj` merged (PR #16), after 2 review rounds | 12:29:05 | GitHub API `mergedAt` |
 | 18 | `T-vpty` worktree created | 12:29:08 | shell `date` |
+| 19 | `T-vpty` merged (PR #17), after 2 review rounds | 12:50:25 | GitHub API `mergedAt` |
+| 20 | `T-xgz4` worktree created | 12:50:28 | shell `date` |
 
 ## Values
 
@@ -71,7 +73,7 @@ to an Armature rule.
 
 | ID | Finding | Where in the kit | Effect on this run |
 |----|---------|------------------|--------------------|
-| K-01 | The Operator gave the count "17 domain terms"; PSB Revision 6 §8 holds 25 rows (one row holds two names). | not a kit gap: a gap between the instruction and the fact | All 25 rows are merged (`T-xgz4`). |
+| K-01 | The Operator gave the count "17 domain terms"; PSB Revision 6 §8 holds 25 rows (one row holds two names). | not a kit gap: a gap between the instruction and the fact | All 25 rows are merged into [`glossary.md`](../glossary.md) §1 (`T-xgz4`). |
 | K-02 | degit copies the kit's own active workflows under `.github/workflows/`; kit step 4 does not name them. | `engineering-discipline.md` How to adapt, step 4 | Handled by `T-q344`. |
 | K-03 | `docs/tasks/backlog.md` holds the kit's own tasks and a pivot note that links the kit's issues. Kit step 1 says to fill `backlog.md` with your own tasks, but step 4, the removal list, names only `completed.md` entries and the `T-*.md` files, so the kit backlog lines are easy to miss. | How to adapt, step 4 | `T-vbwc` removed 31 kit files (3,133 lines: `docs/decisions/` 10, `docs/audit/` 2, `docs/tasks/T-*.md` 19), the kit entries of `completed.md`, and the 6 kit lines and the pivot note of `backlog.md`. |
 | K-04 | The CI template `docs/ci/github-actions-ci.yml` has no "restore the checks from the default branch" step, which `guardrails.md` §2 requires and the kit's own `ci.yml` has. | `docs/ci/github-actions-ci.yml` | `T-q344` keeps the kit's own workflows. |

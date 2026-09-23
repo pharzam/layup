@@ -10,12 +10,6 @@ LLM or operator who uses one that is missing adds it in the same turn. General-E
 abbreviations (`e.g.`, `i.e.`, `etc.`) are exempt unless they carry a
 project-specific meaning.
 
-> **How to adapt this file.** The **Kit vocabulary** section below is real content —
-> it defines the abbreviations these discipline docs themselves use, so keep it.
-> Everything after it is skeleton: keep the format, then fill the domain sections with
-> your own terms and rename the sections to match your domain. Delete this note once
-> your own terms are in.
-
 ## The format — three columns, plus two rules
 
 Each entry is a row in a table:
@@ -100,14 +94,37 @@ section as-is; add your domain terms in the sections below.
 | Frozen head | `—` | The named commit a review round reads. Nothing lands on the branch after it except a fix to a finding of that round, a plain merge of the default branch, which re-freezes the head and consumes no cycle, or the close-out bookkeeping that gate step 8 requires of the landing pull request; the first two produce a frozen head a next round names, the close-out is named by none, and the last round's verdict is on it. A branch carrying such a verdict is never rebased, because a rebase rewrites the SHA the verdict names. Collision to watch for: not version control's `HEAD`, which moves with every commit — a frozen head is one SHA written into the review record, and it stays that SHA after the branch moves on. | Round 2 reviewed `c9af4e4`; its fixes landed as `b569583`, which round 3 named as its frozen head and found nothing material in. |
 | Revealed defect | `—` | A defect a review round finds that is pre-existing and off the path the Definition of Done names. It leaves the branch as a new issue, opened by the author with its measurement before the merge — a blocker if it is a silent false green, normal if it fails loudly. Its counterpart is a defect *in the change*, fixed inside the budget. Collision to watch for: "revealed" says where the defect sits, not who found it — a defect the branch itself introduced is in the change however it came to light. | A linter that misreads a spaced path, found while reviewing a change to a different check, opens its own issue instead of entering the branch. |
 
-## 1. `‹Domain area one›`
+## 1. LAYUP domain (PSB §8)
+
+The 25 rows of PSB §8, in source order. Each Description holds the PSB meaning
+word for word, then any collision note, then its source fact. The PSB is fact
+[`F-0001`](facts/F-0001-layup-problem-statement-brief.md); one row, "Harness,
+harness agent", holds two names.
 
 | Term | Abbr. | Description | Example |
 |------|-------|-------------|---------|
-| `‹term›` | `‹—›` | `‹definition›` | `‹example›` |
-
-## 2. `‹Domain area two›`
-
-| Term | Abbr. | Description | Example |
-|------|-------|-------------|---------|
-| `‹term›` | `‹—›` | `‹definition›` | `‹example›` |
+| **LAYUP** | — | The name of this initiative. The name does not select a solution. Source: `F-0001#15`. | This repository, `pharzam/layup`, is the LAYUP project repository. |
+| **PSB** | `PSB` | Problem Statement Brief. A document of this kind. Collision to watch for: not a product requirements document (`PRD`); a PSB states the problem only. Source: `F-0001#16`. | [`F-0001`](facts/F-0001-layup-problem-statement-brief.md) is the LAYUP PSB, Revision 6. |
+| **Armature** | — | The discipline template that is the baseline. It is used at a pinned version. Source: `F-0001#17`. | [`setup/armature.pin`](setup/armature.pin) pins Armature at commit `a959655`. |
+| **Harness**, **harness agent** | — | An agent product that runs a role agent, for example Claude Code or Codex. It gives the model, the session, the tools, and the context window. In this document, the word "harness" always has this meaning, in the title and in each section. A harness is not the discipline system. Collision to watch for: not a *test harness* such as [`setup/tests/run.sh`](setup/tests/run.sh), and not the discipline system. Source: `F-0001#18`. | Claude Code and Codex are two harness agents. |
+| **Discipline system** | — | The set of rules and gates that a machine enforces in a project repository. Armature is its baseline. Source: `F-0001#19`. | The kit linters plus `setup-check.sh`, run by the hooks and CI, are part of this repository's discipline system. |
+| **Project repository** | — | The Git repository of one project. It is the system of record. Source: `F-0001#20`. | `pharzam/layup` is the project repository of LAYUP itself. |
+| **Role agent** | — | An autonomous agent with one function, for example one of the functions in §2. This document does not set the list of roles. Collision to watch for: not a harness agent; one harness agent can run several role agents. Source: `F-0001#21`. | A QA Engineer role agent, one of the functions that PSB §2 names. |
+| **Operator** | — | The human who starts, monitors, and approves. This is the Armature meaning of the word. Same meaning as in the kit's issue workflow. Source: `F-0001#22`. | The Operator approved the budget of issue #1 once, on the issue. |
+| **Idea owner** | — | The human who owns the intent of a project: the problem, the success criteria, and the funding. The idea owner answers the gap questions about the problem statement, makes the business-forking decisions, and accepts the delivered requirements. The idea owner and the Operator can be the same person. Source: `F-0001#23`. | The idea owner answers the batch of gap questions before delivery starts. |
+| **Human-on-the-Loop** | — | Humans monitor delivery and give input only at the Human Decision Points (§6). No human approves each task. Collision to watch for: not *human-in-the-loop*, where a human approves each step. Source: `F-0001#24`. | A human reads a PR (monitoring) but gives input only at a Human Decision Point. |
+| **Planned approval point** | — | A project-level approval step that is recorded in the project repository before delivery starts, for example the approval to start delivery. It is not a step inside each task. Source: `F-0001#25`. | The approval to start delivery, recorded in the repository before delivery starts. |
+| **Business-forking decision** | — | A decision that changes the budget, the legal or compliance position, or the approved intent of a project, or that makes a strategic trade-off between approved goals (for example, scope against date). A trade-off inside the approved intent, for example an architectural trade-off, is not business-forking. Source: `F-0001#26`. | A change to the budget is business-forking; an architectural trade-off inside the approved intent is not. |
+| **Escalation** | — | A decision that an agent stops on and sends to the idea owner, because the escalation rule selects it as business-forking. The idea owner confirms each escalation as business-forking or not. Collision to watch for: not the kit's reviewer escalation in *When reviewers disagree*. Source: `F-0001#27`. | An agent stops on a budget change and sends it to the idea owner. |
+| **Unplanned human input** | — | Human input to a task that is not at a Human Decision Point (§6), for example an answer, a correction, a restart, or a change to a gate. An answer to an escalation that the idea owner does not confirm as business-forking is unplanned human input. Source: `F-0001#28`. | A human restarts a task that is not at a Human Decision Point. |
+| **Task** | — | One unit of delivery work with one goal. It starts when an agent takes it. It ends when its result merges or when the task is closed. Collision to watch for: the kit also gives a task a task ID and a detail file under [`tasks/`](tasks/); the PSB meaning adds the start and end events. Source: `F-0001#29`. | Task `T-fvwj` started when its worktree was made and ends when PR #16 merges. |
+| **Delivery** | — | The work from the start of the first task to the acceptance of the last requirement. Source: `F-0001#30`. | Delivery starts with the first task for a requirement. |
+| **Requirement** | — | One need that the problem statement states. The idea owner accepts or rejects each delivered requirement. Collision to watch for: a kit `REQ-NNN` in a PRD is the written form of one requirement. Source: `F-0001#31`. | A PRD row `REQ-001` that cites `F-0001#n`. |
+| **Project domain** | — | The business area of a project, with its vocabulary and requirements. The technology stack is not part of the domain. Collision to watch for: not the *domain* of a kit work slice. Source: `F-0001#32`. | For LAYUP, the domain is software delivery by teams of role agents (PSB §2). |
+| **Technology stack** | — | The languages, frameworks, and tools that a project uses. Source: `F-0001#33`. | LAYUP uses Go (Operator decision, 2026-09-23). |
+| **Rule** | — | A statement of what the work must satisfy, for example a layout, boundary, contract, or test requirement. Collision to watch for: not only the kit's numbered issue rules R1–R13; those are rules of the discipline system. Source: `F-0001#34`. | "Every PR links its issue" is a rule. |
+| **Gate** | — | A check that applies one or more rules to a change and gives pass or fail. Collision to watch for: not the whole eight-step *quality gate*; a gate here is one check. Source: `F-0001#35`. | `adr-lint` is a gate: it applies the ADR rules and gives pass or fail. |
+| **Content** | — | The project-specific text and values that the rules check or use: terms, requirements, decisions, and configuration values. Source: `F-0001#36`. | The terms in this glossary are content; the glossary rule is a rule. |
+| **Stall** | — | A task that does not reach its goal and does not fail cleanly, because role agents do not agree, or because a step repeats without progress. Source: `F-0001#37`. | Two role agents give different answers, and neither one gives way. |
+| **Telemetry** | — | The record of the token count, the latency, and the wall-clock duration of a task. Collision to watch for: not the kit's resource record alone, which also names model and effort per gate part. Source: `F-0001#38`. | A task record with tokens, latency, and wall-clock duration. |
+| **Specification** | — | The requirement and design documents that a project derives from the approved problem statement. Each requirement in them has an identifier, a trace to the problem statement, and an acceptance criterion. Source: `F-0001#39`. | A PRD whose each requirement cites `F-0001#n` and has an acceptance criterion. |
