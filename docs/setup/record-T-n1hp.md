@@ -189,8 +189,12 @@ Output, one context per line:
 
 It equals `jq -c '[.required_status_checks.checks[].context] | sort'` of
 [`branch-protection.json`](branch-protection.json). The same read-back gave
-`enforce_admins` true, `strict` true, and app 15368 for every check. The first
-`PUT` (16:35:40 UTC, `T-afa5`) had the first nine of these contexts.
+`enforce_admins` true, `strict` true, app 15368 for every check, 0 required
+approvals, and conversation resolution on. The first `PUT` (16:35:40 UTC,
+`T-afa5`) had nine of these contexts: all except `lint (gofmt, go vet)`,
+`tests (unit → integration → e2e)` and
+`security (govulncheck v1.8.0, go vet, and gitleaks)`, which the second `PUT`
+added.
 
 ## Findings about the kit's setup procedure
 
