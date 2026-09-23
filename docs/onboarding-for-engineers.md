@@ -42,8 +42,9 @@ note). This repository has not yet answered any part of the problem; see
 
 ## 2. Crash course: the domain
 
-The terms below build on each other. Each one is defined in full in the
-[glossary](glossary.md), section 1, which cites the PSB row it comes from.
+The terms below build on each other. PSB §8 defines each one
+(`F-0001#15`–`F-0001#39`). The [glossary](glossary.md) takes these terms in task
+`T-xgz4` ([#6](https://github.com/pharzam/layup/issues/6)).
 
 ### 2.1 Harness agent and role agent
 
@@ -58,7 +59,7 @@ The **discipline system** is the set of rules and gates that a machine enforces
 in a project repository. Armature is its baseline (`F-0001#19`). A **rule** says
 what the work must satisfy; a **gate** applies rules to a change and gives pass
 or fail; **content** is the project-specific text and values that the rules
-check (`F-0001#34`–`F-0001#36`).
+check or use (`F-0001#34`–`F-0001#36`).
 
 ### 2.3 Operator, idea owner, and the Human Decision Points
 
@@ -78,13 +79,13 @@ duration of a task (`F-0001#38`).
 ## 3. What the system actually does
 
 No system exists yet. The PSB states the problem only, and this repository holds
-the discipline system and the setup record, not a product. The first product
-work follows the setup ([#1](https://github.com/pharzam/layup/issues/1)).
+the discipline system and the setup record, not a product.
 
 ## 4. Why it is hard
 
-Nine System Invariants bind any solution (`F-0001#1`–`F-0001#9`, and
-[`guardrails.md`](guardrails.md)). Two of them stop the obvious designs:
+Nine System Invariants bind any solution (`F-0001#1`–`F-0001#9`).
+[`guardrails.md`](guardrails.md) takes them in task `T-7ndb`
+([#7](https://github.com/pharzam/layup/issues/7)). Two of them stop the obvious designs:
 
 - **Git is the system of record** (`F-0001#1`). A dashboard or a database that
   holds project state is not allowed to be the only copy.
@@ -106,8 +107,9 @@ a sensible default.
 Consequences you will meet immediately, and which are not negotiable:
 
 - Every setup value has a row with its evidence in
-  [`setup/record-T-n1hp.md`](setup/record-T-n1hp.md), and
-  [`setup/setup-check.sh`](setup/setup-check.sh) fails when one is missing.
+  [`setup/record-T-n1hp.md`](setup/record-T-n1hp.md). A reviewer checks the rows;
+  [`setup/setup-check.sh`](setup/setup-check.sh) checks what a script can: the
+  pin, the facts, and this document.
 - A check that is not active does not count as passed (`F-0001#5`). The record
   says `not active` for a value that no gate runs yet.
 - Git is the system of record (`F-0001#1`). A decision made in a chat goes onto
@@ -142,4 +144,5 @@ The Armature setup of this repository is in progress under
 [#1](https://github.com/pharzam/layup/issues/1): the pin, the kit-history removal,
 and the facts are done; the glossary, the guardrails, the markers, CI, and the
 setup procedure are open. No product code exists yet. The open question is the
-batch of setup values that have no evidence; the setup record lists them.
+batch of setup values that have no evidence; the markers task `T-nfh8`
+([#8](https://github.com/pharzam/layup/issues/8)) lists them.
