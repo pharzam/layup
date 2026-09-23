@@ -26,7 +26,7 @@
 
 set -u
 
-CHECKS="pin kit-history facts onboarding glossary guardrails"
+CHECKS="pin kit-history facts onboarding glossary guardrails markers"
 
 if [ "${1:-}" = --only ]; then
 	[ $# -ge 2 ] && [ -n "$2" ] || { echo "setup-check: --only needs a list of checks" >&2; exit 2; }
@@ -252,6 +252,72 @@ check_guardrails() {
 		*) fail guardrails "check: Inv-$gr_n has no valid Check: value (\"$gr_check\")" ;;
 		esac
 	done < "$tmpdir/gr_entries"
+}
+
+# --- markers (Invariants 4 and 5) ----------------------------------------------
+# A marker is `‹` plus one or more characters other than `›`, then `›`; one that
+# does not close on its line runs to the line end (its key is that first line).
+# The literal `‹…›` names the convention and is not a marker. Each marker in a
+# git-tracked file must be exempt, allowed as a record-shape example, or listed in
+# docs/setup/open-gaps.tsv (`path<TAB>marker<TAB>question`); each listed marker
+# must still occur. Key: path plus exact marker text; equal markers in one file
+# are one key.
+MK_EXEMPT='^(docs/(adr|ci|links|prd|setup)/tests/|\.githooks/tests/|docs/templates/)|^docs/ci/[^/]*\.yml$|^docs/[^/]+/template\.md$|^docs/tests/template-[^/]*\.md$|^docs/tests/traceability-template\.md$|^docs/adr/000[1-8]-[^/]*\.md$|^docs/links/link-lint\.sh$|^docs/prd/prd-lint\.sh$|^docs/setup/setup-check\.sh$|^docs/setup/open-gaps\.tsv$'
+# Record-shape examples: a marker that shows the shape of a record, not a value.
+mk_allowed() {
+	cat <<'MK_ALLOW'
+docs/engineering-discipline.md	‹the plan and its review›
+docs/engineering-discipline.md	‹the decay review rounds›
+docs/engineering-discipline.md	‹writing the tests and the code›
+docs/engineering-discipline.md	‹isolate, guardrails, docs, close-out›
+docs/engineering-discipline.md	‹model›
+docs/engineering-discipline.md	‹model / `not applicable`›
+docs/engineering-discipline.md	‹effort›
+docs/engineering-discipline.md	‹tokens›
+docs/engineering-discipline.md	‹wall-clock›
+docs/engineering-discipline.md	‹sum›
+docs/engineering-discipline.md	‹task-ID›
+docs/glossary.md	‹term›
+docs/glossary.md	‹abbr or —›
+docs/glossary.md	‹one or two sentences. State what it is and why it matters here.›
+docs/glossary.md	‹a concrete instance that makes it real›
+docs/tasks/backlog.md	‹ID›
+docs/tasks/backlog.md	‹one-sentence summary›
+docs/tasks/backlog.md	‹ADR or doc link›
+docs/tasks/backlog.md	‹id›
+docs/tasks/completed.md	‹ID›
+docs/tasks/completed.md	‹one-sentence summary of what the task found or delivered›
+docs/tasks/completed.md	‹link›
+docs/tasks/completed.md	‹id›
+docs/prd/README.md	‹slug›
+MK_ALLOW
+}
+check_markers() {
+	git -C "$ROOT" ls-files > "$tmpdir/mk_files" || { fail markers "git: cannot list the tracked files"; return; }
+	grep -Ev "$MK_EXEMPT" "$tmpdir/mk_files" | while IFS= read -r mk_f; do
+		[ -f "$ROOT/$mk_f" ] || continue
+		awk -v f="$mk_f" '{
+			line = $0
+			while ((i = index(line, "‹")) > 0) {
+				rest = substr(line, i)
+				j = index(rest, "›")
+				if (j > 0) { m = substr(rest, 1, j + length("›") - 1); line = substr(rest, j + length("›")) }
+				else { m = rest; line = "" }
+				if (m != "‹…›") print f "\t" m
+			}
+		}' "$ROOT/$mk_f"
+	done | sort -u > "$tmpdir/mk_found"
+	mk_allowed | sort -u > "$tmpdir/mk_allow"
+	mk_gaps="$ROOT/docs/setup/open-gaps.tsv"
+	if [ -f "$mk_gaps" ]; then cut -f1,2 "$mk_gaps" | grep . | sort -u > "$tmpdir/mk_listed"; else : > "$tmpdir/mk_listed"; fi
+	sort -u "$tmpdir/mk_allow" "$tmpdir/mk_listed" > "$tmpdir/mk_known"
+	comm -23 "$tmpdir/mk_found" "$tmpdir/mk_known" | while IFS="$(printf '\t')" read -r mk_p mk_m; do
+		printf 'setup-check: markers FAIL unlisted: %s %s\n' "$mk_p" "$mk_m"
+	done > "$tmpdir/mk_out"
+	comm -13 "$tmpdir/mk_found" "$tmpdir/mk_listed" | while IFS="$(printf '\t')" read -r mk_p mk_m; do
+		printf 'setup-check: markers FAIL stale: %s %s is listed in docs/setup/open-gaps.tsv but does not occur\n' "$mk_p" "$mk_m"
+	done >> "$tmpdir/mk_out"
+	if [ -s "$tmpdir/mk_out" ]; then cat "$tmpdir/mk_out"; cur_fail=1; failed=1; fi
 }
 
 for check_name in $CHECKS; do

@@ -1,0 +1,2 @@
+exit=1
+line=setup-check: markers FAIL stale: docs/y.md ‹bar› is listed in docs/setup/open-gaps.tsv but does not occur

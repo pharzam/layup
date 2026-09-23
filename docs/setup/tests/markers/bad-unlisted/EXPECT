@@ -1,0 +1,2 @@
+exit=1
+line=setup-check: markers FAIL unlisted: docs/x.md ‹foo›
