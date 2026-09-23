@@ -1,0 +1,19 @@
+docs/issue-workflow.md	‹add a coverage gate›	Coverage threshold for CI. Operator decision O-7 (#8): none yet; set it after the first Go code exists and a baseline is measured.
+docs/issue-workflow.md	‹require a PR before merge›	Branch protection on main. To be closed by T-afa5 (#12), which is open.
+docs/issue-workflow.md	‹require the check before merge›	Branch protection on main. To be closed by T-afa5 (#12), which is open.
+docs/tests/dod-checklist.md	‹a REQ/NFR row in the traceability table›	What is LAYUP's Definition of Done? No source gives it yet; the kit's example items are not LAYUP's (question for the idea owner).
+docs/tests/dod-checklist.md	‹a UAT row, human-checked›	What is LAYUP's Definition of Done? No source gives it yet; the kit's example items are not LAYUP's (question for the idea owner).
+docs/tests/dod-checklist.md	‹a bug fix has a test that fails on the old code›	What is LAYUP's Definition of Done? No source gives it yet; the kit's example items are not LAYUP's (question for the idea owner).
+docs/tests/dod-checklist.md	‹a delivered feature is signed off by a person›	What is LAYUP's Definition of Done? No source gives it yet; the kit's example items are not LAYUP's (question for the idea owner).
+docs/tests/dod-checklist.md	‹a known pitfall from guardrails.md is defended against›	What is LAYUP's Definition of Done? No source gives it yet; the kit's example items are not LAYUP's (question for the idea owner).
+docs/tests/dod-checklist.md	‹a row citing the bug's task ID›	What is LAYUP's Definition of Done? No source gives it yet; the kit's example items are not LAYUP's (question for the idea owner).
+docs/tests/dod-checklist.md	‹a row with a Guardrail cell filled in›	What is LAYUP's Definition of Done? No source gives it yet; the kit's example items are not LAYUP's (question for the idea owner).
+docs/tests/dod-checklist.md	‹an E2E row per scenario›	What is LAYUP's Definition of Done? No source gives it yet; the kit's example items are not LAYUP's (question for the idea owner).
+docs/tests/dod-checklist.md	‹e2e›	What is LAYUP's Definition of Done? No source gives it yet; the kit's example items are not LAYUP's (question for the idea owner).
+docs/tests/dod-checklist.md	‹every requirement has a test›	What is LAYUP's Definition of Done? No source gives it yet; the kit's example items are not LAYUP's (question for the idea owner).
+docs/tests/dod-checklist.md	‹every user-facing path has a test›	What is LAYUP's Definition of Done? No source gives it yet; the kit's example items are not LAYUP's (question for the idea owner).
+docs/tests/dod-checklist.md	‹the review round citing commit, reviewer, lens and verdict›	What is LAYUP's Definition of Done? No source gives it yet; the kit's example items are not LAYUP's (question for the idea owner).
+docs/tests/dod-checklist.md	‹uat›	What is LAYUP's Definition of Done? No source gives it yet; the kit's example items are not LAYUP's (question for the idea owner).
+docs/tests/dod-checklist.md	‹unit \| integration \| e2e›	What is LAYUP's Definition of Done? No source gives it yet; the kit's example items are not LAYUP's (question for the idea owner).
+docs/tests/dod-checklist.md	‹unit \| integration›	What is LAYUP's Definition of Done? No source gives it yet; the kit's example items are not LAYUP's (question for the idea owner).
+docs/tests/dod-checklist.md	‹✓ / ✗›	What is LAYUP's Definition of Done? No source gives it yet; the kit's example items are not LAYUP's (question for the idea owner).

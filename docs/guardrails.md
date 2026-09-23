@@ -10,27 +10,23 @@ in separate files — **decision gates** (pre-registered pass/fail rules) and
 **validation** (how you check you are not fooling yourself). Keep them together or
 split them; the rule is that both exist and both are read before work starts.
 
-> **How to adapt this file.** Replace every `‹…›` marker with your project's own
-> rule. Delete the sections you do not need. Keep the ones you keep short — a
-> guardrail nobody reads is not a guardrail.
-
 ## In plain terms
 
-`‹State, in one plain sentence, the single worst mistake this project can make and
-what stops it — for example: "It is easy to build a result that looks great and is
-wrong; the defense is to write the pass/fail numbers down before the experiment
-runs."›`
+The worst mistake this project can make is to fill a setup value with a guess
+and then report the setup as done; the defense is a recorded source for each
+value, a script that fails on each gap, and an open question where no source
+exists (`F-0001#4`, `F-0001#5`).
 
 ## 1. Pre-registered decisions — or the goalposts move
 
 A decision rule chosen **after** seeing the result is a fitted parameter, not a
 rule. Write the pass/fail numbers first, somewhere they cannot be quietly edited.
 
-- **What must be pre-registered:** `‹list the decisions that need a frozen rule —
-  thresholds, acceptance bars, go / no-go criteria›`.
-- **Where the numbers freeze:** `‹where a frozen rule is recorded so it provably
-  predates the result — for example a ticket, an intent record, a committed
-  config›`.
+- **What must be pre-registered:** the Layer 1 checks of PSB §7.1 (pass or fail, from the invariants), each
+  Layer 2 target of PSB §7.2 before a pilot measures it, and each task's `Budget
+  maximum` and `Cycle cap`.
+- **Where the numbers freeze:** the PSB itself (fact `F-0001`, hashed in
+  `docs/setup/facts.sha256`), and the plan-review comment on each issue.
 - **The bands, not a single line:** prefer **Pass / Investigate / Fail** to a
   single pass line on a noisy measure. Define "Investigate" with a rule written
   before you look — for example, one re-examination whose scope is fixed in
@@ -212,7 +208,7 @@ kit ships them filled. Keep them, and add your own above.
 - ❌ **Tests that slow down as the project grows.** A suite that creeps past the
   hook's patience gets skipped, and a skipped gate is no gate. The check: keep the
   cheap levels fast and cheap-first, push slow ones to CI, and bound each with
-  `‹test timeout›` — see [`tests/scaling-checklist.md`](tests/scaling-checklist.md).
+  `-timeout 10m` — see [`tests/scaling-checklist.md`](tests/scaling-checklist.md).
 
 ### Reference-sweep pitfalls (kit-wide — keep these)
 
@@ -280,12 +276,15 @@ expensive ones.
 
 | # | Check | Pass condition | Cost |
 |---|-------|----------------|------|
-| 1 | `‹cheap smoke check›` | `‹what "clean" looks like›` | minutes |
-| 2 | `‹stronger check›` | `‹pass condition›` | `‹cost›` |
-| 3 | `‹end-of-work check›` | `‹pass condition›` | `‹cost›` |
+| 1 | sh docs/setup/setup-check.sh | every check prints OK; exit 0 | minutes |
+| 2 | sh docs/setup/tests/run.sh | every fixture case matches its EXPECT | seconds |
+| 3 | the review rounds on a frozen head | the last round says `nothing material in scope` | one reviewer session per round |
 
-Notes on how to read a failure: `‹which checks catch which class of bug; which are
-cheap enough to wire into CI; which run once per change of a given kind›`.
+Notes on how to read a failure: `setup-check.sh` catches a marker that is neither filled nor listed as an open
+gap, and a missing pin, fact, or required section; the fixture
+run catches a check that cannot fail; the review rounds catch a claim that no
+script can settle. The first two are cheap enough for the hook and CI; the
+rounds run once per change.
 
 **The automated gate is this validation layer, mechanized.** The cheap, always-on
 checks — the [discipline linters](engineering-discipline.md#testing) the kit
@@ -305,11 +304,11 @@ both layers.
 - **Frozen rules do not get edited.** Changing a guardrail after it is set means a
   new version with a written reason, the old one preserved. Legitimate reasons
   exist (a bug in the measure); silent edits do not.
-- **This document holds the structure; `‹your record of record›` holds the frozen
+- **This document holds the structure; Git (`F-0001#1`) holds the frozen
   values.** When real values exist, mirror them here as history, after the fact,
   never as the primary copy.
 
 ## Sources
 
-`‹Link the references that justify your thresholds and checks, so a later reader
-can see they are not arbitrary.›`
+- [`F-0001`](facts/F-0001-layup-problem-statement-brief.md) — the PSB, §6 and §7.
+- [`setup/record-T-n1hp.md`](setup/record-T-n1hp.md) — the evidence for each setup value.

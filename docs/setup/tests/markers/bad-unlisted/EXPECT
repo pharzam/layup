@@ -1,0 +1,5 @@
+exit=1
+line=setup-check: markers FAIL unlisted: docs/x.md ‹foo›
+line=setup-check: markers FAIL unlisted: docs/x.md ‹hidden gap›
+line=setup-check: markers FAIL unlisted: docs/x.md ‹`x`›
+line=setup-check: markers FAIL unlisted: docs/é.md ‹q›

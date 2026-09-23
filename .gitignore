@@ -3,3 +3,6 @@
 
 # Local build/report output, not project content
 output/
+
+# Per-task git worktrees (Operator decision O-1, issue #8)
+.worktree/

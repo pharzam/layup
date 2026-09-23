@@ -14,8 +14,7 @@ shows); every other link is filled.
 > **How to adapt this file.** This is an **illustrative** example — the "order"
 > domain below is a stand-in, not part of the kit. Replace it with one real line
 > from your own project once you have a fact and a requirement, or simply delete
-> this file. It names no test runner: the test's command stays the `‹unit test
-> command›` placeholder throughout. Delete this note if you keep and adapt the
+> this file. It names no test runner: the test's command stays the `go test ./...` placeholder throughout. Delete this note if you keep and adapt the
 > file.
 
 ## In plain terms
@@ -67,16 +66,16 @@ strict [red-then-green](../engineering-discipline.md#requirements-traceability)
 order:
 
 1. **Red.** Write the test first: submit an order with zero items, assert it is
-   rejected with the expected error. Run `‹unit test command›`; watch it **fail**
+   rejected with the expected error. Run `go test ./...`; watch it **fail**
    against code that still accepts the empty order — failing for the *right*
    reason.
-2. **Green.** Add the rejection rule, run `‹unit test command›` again, watch it
+2. **Green.** Add the rejection rule, run `go test ./...` again, watch it
    **pass**.
 3. **Freeze.** Once a fresh context confirms it
    ([R9](../issue-workflow.md#r9--test-freeze-after-confirmation)), the test is
    frozen: not weakened later to make new code pass.
 
-The test lives under `‹test directory›` and is tagged `unit` so it can run alone.
+The test lives under `*_test.go beside the code; root tests/ for end-to-end fixtures` and is tagged `unit` so it can run alone.
 
 ## 5. The traceability row (the line, written down)
 

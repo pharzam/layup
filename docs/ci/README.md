@@ -51,7 +51,7 @@ Then replace every `‹…›` marker with your stack's command, and
 | `link-lint` | Every in-tree Markdown link and heading anchor, via [`link-lint.sh`](../links/link-lint.sh). | Ready as-is. |
 | `lint` | Your formatter/linter. | Fill `‹…›`. |
 | `tests` | The test ladder, cheap → expensive — unit → integration → end-to-end (see [`test-levels.md`](../tests/test-levels.md)). | Fill each `‹…›`. |
-| `security` | Secret, dependency, and static-analysis scans over full history, behind `‹security scanner›` (see [`security-checklist.md`](../tests/security-checklist.md)). | Fill `‹…›`. |
+| `security` | Secret, dependency, and static-analysis scans over full history, behind `govulncheck v1.8.0, go vet, and gitleaks` (see [`security-checklist.md`](../tests/security-checklist.md)). | Fill `‹…›`. |
 | PR title | Conventional Commits on the PR title (GitHub only). | Ready as-is — but its workflow copy is optional; skip the copy and [drop `conventional-title` with it](#drop-what-you-did-not-install). |
 | PR link | The PR body links an issue (R1), via [`pr-link-lint.sh`](pr-link-lint.sh). Its own PR-event workflow (GitHub); an `mr-link` job (GitLab). | Ready as-is — but its workflow copy is optional; skip the copy and [drop `pr-link` with it](#drop-what-you-did-not-install). |
 | Review record | The linked issue carries a plan, a plan review with its budget and cycle cap, and a parseable review record per round whose chronology holds (see [What a round records](../engineering-discipline.md#what-a-round-records)), via [`review-record-lint.sh`](review-record-lint.sh). Its own PR-event workflow ([`github-actions-review-record.yml`](github-actions-review-record.yml)). **Make this one required last** — it fails a pull request whose issue carries no record, so turning it on before your team writes records blocks every merge. |
@@ -102,7 +102,7 @@ repository's set, not yours: before you paste it, check every context against
 for each job you did not install — and add your own jobs as you fill them.
 
 ```bash
-gh api -X PUT repos/‹owner›/‹repo›/branches/‹default branch›/protection --input - <<'EOF'
+gh api -X PUT repos/pharzam/layup/branches/main/protection --input - <<'EOF'
 {
   "required_status_checks": {
     "strict": true,
@@ -143,12 +143,11 @@ requirement while adding the check requirement. `"restrictions": null` is requir
 and must be null on a user-owned repository, because push restrictions exist for
 organizations only. `required_signatures` is a separate endpoint the `PUT` does not
 touch. Read the setting back with
-`gh api repos/‹owner›/‹repo›/branches/‹default branch›/protection`; that output, not
+`gh api repos/pharzam/layup/branches/main/protection`; that output, not
 the green run, is the evidence a close-out records.
 
 **Another forge.** GitLab: protect the default branch and turn on "Pipelines must
-succeed". Elsewhere: `‹the setting under which a failing pipeline blocks the merge,
-and the command that sets it›`.
+succeed". Elsewhere: not applicable, because this project uses GitHub.
 
 **Limits.** Writing or reading the setting needs an administration-scoped token,
 which `secrets.GITHUB_TOKEN` does not carry, so no text-only check in this kit
@@ -204,17 +203,16 @@ GitLab adopter deletes instead is the **job**, in `gitlab-ci.yml` itself, for an
 they did not install or will not fill: a job left unfilled fails the whole pipeline and
 blocks every merge, where GitHub would leave one check pending. That is the same trap
 with a louder failure, and the edit that avoids it is in the pipeline file rather than
-in a list of contexts. `‹the setting under which a failing
-pipeline blocks the merge›` is where an adopter on a third forge records what their
-own gate does.
+in a list of contexts. An adopter on a third forge records here what their own gate
+does; not applicable, because this project uses GitHub.
 
 **The same instruction, read the other way.**
 [`github-actions-ci.yml`](github-actions-ci.yml) ships three jobs the array names none
 of, and they run green while blocking nothing until you add them — the trap this
 section exists to close, met from the third side. Add each one **as you fill it**, and
 add its *context*, which is the job's `name:` and not its id:
-`lint (‹your linter/formatter›)`, `tests (unit → integration → e2e)` and
-`security (‹security scanner›)`. Two of those names still hold a `‹…›` marker, so
-replace the marker in the workflow first and copy the resulting name: a context that
+`lint (gofmt, go vet)`, `tests (unit → integration → e2e)` and
+`security (govulncheck v1.8.0, go vet, and gitleaks)`. In the kit template two of those names held a `‹…›` marker; replace the marker
+in the workflow first and copy the resulting name: a context that
 names a marker is a context nothing will ever report, which is this section's own
 failure by another route. Add none of them before the job has reported once.

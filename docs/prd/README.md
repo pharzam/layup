@@ -63,7 +63,7 @@ fresh kit (no PRDs yet). It is wired into the
 this template's shape, change the linter in the same change** — the two must
 agree. Its self-tests live in [`tests/`](tests/) (sample good and bad PRDs, not
 example content to fill in). A project on a specific stack may instead port these
-checks to its `‹test runner›`.
+checks to its `go test`.
 
 ## Index
 
