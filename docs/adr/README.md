@@ -31,7 +31,7 @@ are their enforcement:
    survives the deletion.)
 
 **Numbering.** `docs/adr/` is the single living ADR sequence, numbered
-contiguously from `0001`, and it grows — the next constitutional ADR is `0010`. A
+contiguously from `0001`, and it grows — the next constitutional ADR is `0011`. A
 bare "ADR-NNNN" means this directory's sequence. The archive that was under `docs/decisions/`
 has its **own namespace**: a prefixed, zero-based sequence `D-0000`–`D-0008` that
 shares no number with this one and is cited **by its `D-NNNN` identifier** — named
@@ -137,6 +137,7 @@ record by number here, and let the index table below do the linking.
 | [0007](0007-record-task-resource-use.md)        | Record each task's resource use | Accepted |
 | [0008](0008-require-one-reading-in-decision-driving-text.md) | Require one reading in decision-driving text | Accepted |
 | [0009](0009-pin-armature-at-a-recorded-commit.md) | Pin Armature at a recorded commit | Accepted |
+| [0010](0010-use-go-as-the-technology-stack.md) | Use Go as the technology stack | Accepted |
 
 <!-- Add one row per ADR as you write them. Keep the newest at the bottom. -->
 
