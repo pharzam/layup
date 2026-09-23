@@ -26,7 +26,7 @@
 
 set -u
 
-CHECKS="pin kit-history facts onboarding glossary guardrails markers ci"
+CHECKS="pin kit-history facts onboarding glossary guardrails markers ci protection"
 
 if [ "${1:-}" = --only ]; then
 	[ $# -ge 2 ] && [ -n "$2" ] || { echo "setup-check: --only needs a list of checks" >&2; exit 2; }
@@ -404,6 +404,39 @@ check_ci() {
 		done
 	done > "$tmpdir/ci_restore"
 	if [ -s "$tmpdir/ci_restore" ]; then cat "$tmpdir/ci_restore"; cur_fail=1; failed=1; fi
+}
+
+# --- protection (branch protection kept in Git) --------------------------------
+# docs/setup/branch-protection.json is the body of the `PUT` that protects main
+# (Invariant 1: the forge setting also lives in the repository). Its required
+# contexts must equal the check-run names of every job in every workflow: the
+# job's own `name:` (the first key at the job's child indent), else its id.
+# The live setting is compared by hand, with the command in the setup record.
+check_protection() {
+	pr_json="$ROOT/docs/setup/branch-protection.json"
+	if [ ! -f "$pr_json" ]; then fail protection "missing: docs/setup/branch-protection.json is absent"; return; fi
+	sed -n 's/.*"context"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$pr_json" | sort -u > "$tmpdir/pr_req"
+	for pr_f in "$ROOT"/.github/workflows/*.yml "$ROOT"/.github/workflows/*.yaml; do
+		[ -f "$pr_f" ] || continue
+		awk '
+			function ind(l) { match(l, /^ */); return RLENGTH }
+			{ sub(/\r$/, "") }
+			/^jobs:/ { inj = 1; jind = -1; next }
+			inj && /^[^ #]/ { inj = 0 }
+			!inj || /^[ \t]*(#.*)?$/ { next }
+			{
+				if (jind < 0) jind = ind($0)
+				if (ind($0) == jind) { if (job != "") print (name != "" ? name : job); job = $0; sub(/^ +/, "", job); sub(/:.*/, "", job); name = ""; cind = -1; next }
+				if (cind < 0) cind = ind($0)
+				if (ind($0) == cind && $0 ~ /^ +name:/) { name = $0; sub(/^ +name:[ \t]*/, "", name); sub(/[ \t]+#.*$/, "", name); gsub(/^["\047]|["\047]$/, "", name) }
+			}
+			END { if (job != "") print (name != "" ? name : job) }' "$pr_f"
+	done | sort -u > "$tmpdir/pr_jobs"
+	comm -23 "$tmpdir/pr_jobs" "$tmpdir/pr_req" | while IFS= read -r pr_n; do
+		printf 'setup-check: protection FAIL contexts: %s is a job but not a required context\n' "$pr_n"; done > "$tmpdir/pr_out"
+	comm -13 "$tmpdir/pr_jobs" "$tmpdir/pr_req" | while IFS= read -r pr_n; do
+		printf 'setup-check: protection FAIL contexts: %s is a required context but not a job\n' "$pr_n"; done >> "$tmpdir/pr_out"
+	if [ -s "$tmpdir/pr_out" ]; then cat "$tmpdir/pr_out"; cur_fail=1; failed=1; fi
 }
 
 for check_name in $CHECKS; do

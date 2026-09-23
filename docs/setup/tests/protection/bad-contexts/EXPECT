@@ -1,0 +1,4 @@
+exit=1
+line=setup-check: protection FAIL contexts: y (the y job) is a job but not a required context
+line=setup-check: protection FAIL contexts: w is a job but not a required context
+line=setup-check: protection FAIL contexts: x is a required context but not a job

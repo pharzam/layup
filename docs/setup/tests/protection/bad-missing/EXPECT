@@ -1,0 +1,2 @@
+exit=1
+line=setup-check: protection FAIL missing: docs/setup/branch-protection.json is absent
