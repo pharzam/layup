@@ -51,8 +51,9 @@ Whether a named gate really runs the path is a review judgement.
 - **Inv-3** — The agents that do the work cannot change the rules or the gates
   that check the work (`F-0001#3`). Trap: a change that edits the check that
   judges it. The CI restore step (`guardrails.md` §2, "A check the change
-  supplies is not a control") covers six named check scripts only, not the
-  workflow file. Check: no check yet
+  supplies is not a control") covers each check script a workflow runs, except
+  `docs/tests/nested-checkout-check.sh`, and check `ci` fails when one is missing
+  (cause `restore`); it does not cover the workflow file itself. Check: no check yet
 - **Inv-4** — No configuration value without evidence (`F-0001#4`). Trap: a
   kit example accepted as a project value. Check: no check yet
 - **Inv-5** — A check that is not active does not count as passed (`F-0001#5`).
