@@ -113,6 +113,8 @@ Counts from this record and the issues:
 | 36 | `T-9mmm` worktree created | 17:12:02 | shell `date` |
 | 37 | `T-edtd` merged (PR #31): ADR-0011 | 18:46:12 | GitHub API `mergedAt` |
 | 38 | `T-t8qp` worktree created: the first Go code | 18:46:42 | shell `date` |
+| 39 | `T-mtb9` merged (PR #39): the Go skeleton and gates, after the split of #32 | 19:41:47 | GitHub API `mergedAt` |
+| 40 | Second `PUT` of the branch protection: 12 checks | 19:49:55 | shell `date -u` after the `PUT` |
 
 ## Values
 
@@ -138,7 +140,7 @@ Counts from this record and the issues:
 | V-18 | record of record: Git; plain-terms units: tokens, seconds, "N of M"; failure modes; harness report source | `guardrails.md`, `engineering-discipline.md` | `F-0001#1`, `F-0001 §7`, `guardrails.md` §1.1–§2; the harness reports: this session's subagent task reports (tokens, duration) and the Claude Code documentation of the `/usage` command | recorded | `T-nfh8` |
 | V-19 | `guardrails.md`: plain-terms sentence; §1 what is pre-registered (PSB §7.1 checks, §7.2 targets, each task's budget and cap) and where it freezes (the PSB, hashed; the plan-review comment); §3 validation table (`setup-check.sh`, `tests/run.sh`, review rounds); Sources | `docs/guardrails.md` | `F-0001#4`, `F-0001#5`, `F-0001 §7`; `docs/issue-workflow.md` R12 (budget and cap); the scripts named exist in `docs/setup/` | recorded | `T-nfh8` |
 | V-20 | `docs/ci/README.md`: the other-forge setting is "not applicable, because this project uses GitHub" | `docs/ci/README.md` | `gh repo view pharzam/layup` (a GitHub repository) | recorded | `T-nfh8` |
-| V-21 | branch protection of `main`: 9 required checks (one per workflow job, app 15368), `strict`, `enforce_admins`, a PR with 0 approvals, conversation resolution | [`branch-protection.json`](branch-protection.json) | job names derived by check `protection`, equal byte for byte to the check-run names of `c432d21` (check-runs API, review round 1 of #12); read-back at 16:35:40 UTC with `gh api repos/pharzam/layup/branches/main/protection --jq '.required_status_checks.contexts \| sort'` equals the file's contexts under `jq -c '[.required_status_checks.checks[].context] \| sort'` | active | `T-afa5` |
+| V-21 | branch protection of `main`: 12 required checks (one per workflow job, app 15368), `strict`, `enforce_admins`, a PR with 0 approvals, conversation resolution | [`branch-protection.json`](branch-protection.json) | first `PUT` 2026-09-23 16:35:40 UTC (9 checks, `T-afa5`); second `PUT` 2026-09-23 19:49:55 UTC (12 checks, `T-bhsf`), run by the author with the Operator's token, after all 12 contexts reported `success` on `b9dbfa2` (the head of PR #39); read-back `gh api repos/pharzam/layup/branches/main/protection --jq '.required_status_checks.contexts \| sort'` equals `jq -c '[.required_status_checks.checks[].context] \| sort' docs/setup/branch-protection.json` | active | `T-afa5`, `T-bhsf` |
 | V-22 | git hooks installed: `core.hooksPath` = `.githooks` (relative) | `.git/config` of this clone (not in Git; each clone runs `sh .githooks/install.sh`) | `install.sh` output, run between timeline rows 4 and 5 ("core.hooksPath set to '.githooks'"); `git config core.hooksPath` prints `.githooks` | active | `T-n1hp` |
 
 The decision behind V-01 to V-05 is
@@ -168,7 +170,7 @@ budgets of #2, #3, #4 and #6, each on its issue.
 
 ## Branch protection read-back (V-21)
 
-Command, run at 16:35:40 UTC on 2026-09-23, right after the `PUT`:
+The latest `PUT` ran at 19:49:55 UTC on 2026-09-23 (`T-bhsf`). Command:
 `gh api repos/pharzam/layup/branches/main/protection --jq '.required_status_checks.contexts | sort'`.
 Output, one context per line:
 
@@ -176,16 +178,23 @@ Output, one context per line:
 - `conventional-title`
 - `discipline-tests (linter fixtures)`
 - `link-lint (in-tree links and anchors)`
+- `lint (gofmt, go vet)`
 - `nested-checkout-check (the linters skip a nested checkout)`
 - `pr-link (PR body links an issue)`
 - `prd-lint (docs/prd discipline)`
 - `review-record (the issue carries a parseable record)`
+- `security (govulncheck v1.8.0, go vet, and gitleaks)`
 - `setup-check (the Armature setup and its evidence)`
+- `tests (unit → integration → e2e)`
 
 It equals `jq -c '[.required_status_checks.checks[].context] | sort'` of
-[`branch-protection.json`](branch-protection.json). The same read-back also gave
-`enforce_admins` true, `strict` true, 0 required approvals, and app 15368 for
-every check.
+[`branch-protection.json`](branch-protection.json). The same read-back gave
+`enforce_admins` true, `strict` true, app 15368 for every check, 0 required
+approvals, and conversation resolution on. The first `PUT` (16:35:40 UTC,
+`T-afa5`) had nine of these contexts: all except `lint (gofmt, go vet)`,
+`tests (unit → integration → e2e)` and
+`security (govulncheck v1.8.0, go vet, and gitleaks)`, which the second `PUT`
+added.
 
 ## Findings about the kit's setup procedure
 

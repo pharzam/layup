@@ -92,7 +92,7 @@ the setting as a file, [`branch-protection.json`](../setup/branch-protection.jso
 (`T-afa5`).
 
 **This repository (LAYUP).** The body is
-[`docs/setup/branch-protection.json`](../setup/branch-protection.json): nine
+[`docs/setup/branch-protection.json`](../setup/branch-protection.json): twelve
 checks, one per workflow job, each pinned to GitHub Actions. Apply it with
 `gh api -X PUT repos/pharzam/layup/branches/main/protection --input docs/setup/branch-protection.json`;
 check `protection` in [`setup-check.sh`](../setup/setup-check.sh) keeps its
@@ -181,7 +181,7 @@ access to the repository.
 ### Drop what you did not install
 
 The six contexts above are the ones the kit's own repository requires; LAYUP
-requires the nine in [`branch-protection.json`](../setup/branch-protection.json). Two of them are
+requires the twelve in [`branch-protection.json`](../setup/branch-protection.json). Two of them are
 jobs the kit itself tells you elsewhere that you may leave out, and the array names
 them anyway. Delete the line for each one you did not install:
 
