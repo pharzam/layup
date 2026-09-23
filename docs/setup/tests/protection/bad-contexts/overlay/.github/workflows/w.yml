@@ -1,0 +1,11 @@
+on:
+  pull_request:
+jobs:
+  y:
+    name: "y (the y job)"
+    steps:
+      - run: true
+  w:
+    steps:
+      - name: not the job name
+        run: true

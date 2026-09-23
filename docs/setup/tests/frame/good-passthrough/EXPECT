@@ -10,3 +10,4 @@ line=setup-check: glossary OK
 line=setup-check: guardrails OK
 line=setup-check: markers OK
 line=setup-check: ci OK
+line=setup-check: protection OK

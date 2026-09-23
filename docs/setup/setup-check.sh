@@ -26,7 +26,7 @@
 
 set -u
 
-CHECKS="pin kit-history facts onboarding glossary guardrails markers ci"
+CHECKS="pin kit-history facts onboarding glossary guardrails markers ci protection"
 
 if [ "${1:-}" = --only ]; then
 	[ $# -ge 2 ] && [ -n "$2" ] || { echo "setup-check: --only needs a list of checks" >&2; exit 2; }
@@ -404,6 +404,51 @@ check_ci() {
 		done
 	done > "$tmpdir/ci_restore"
 	if [ -s "$tmpdir/ci_restore" ]; then cat "$tmpdir/ci_restore"; cur_fail=1; failed=1; fi
+}
+
+# --- protection (branch protection kept in Git) --------------------------------
+# docs/setup/branch-protection.json is the body of the `PUT` that protects main
+# (Invariant 1: the forge setting also lives in the repository). Its required
+# contexts must equal the check-run names of every job in every workflow: the
+# job's own `name:` (the first key at the job's child indent), else its id.
+# The live setting is compared by hand, with the command in the setup record.
+check_protection() {
+	pr_json="$ROOT/docs/setup/branch-protection.json"
+	if [ ! -f "$pr_json" ]; then fail protection "missing: docs/setup/branch-protection.json is absent"; return; fi
+	# The PUT replaces the whole protection object, so a partial body is
+	# destructive: the four parameters GitHub requires must be present, and each
+	# check must name its app, or any token could post a status under the name.
+	for pr_key in required_status_checks enforce_admins required_pull_request_reviews restrictions; do
+		grep -Fq "\"$pr_key\"" "$pr_json" || fail protection "body: docs/setup/branch-protection.json has no \"$pr_key\" (a partial body is destructive)"
+	done
+	pr_nctx=$(grep -o '"context"' "$pr_json" | grep -c .)
+	pr_napp=$(grep -Eo '"app_id"[[:space:]]*:[[:space:]]*15368([^0-9]|$)' "$pr_json" | grep -c .)
+	[ "$pr_nctx" = "$pr_napp" ] || fail protection "body: $pr_nctx contexts but $pr_napp app_id values of 15368 (pin each check to GitHub Actions)"
+	grep -o '"context"[[:space:]]*:[[:space:]]*"[^"]*"' "$pr_json" | sed 's/.*"\([^"]*\)"$/\1/' | sort | uniq -d | while IFS= read -r pr_d; do
+		printf 'setup-check: protection FAIL body: context %s appears more than once\n' "$pr_d"; done > "$tmpdir/pr_dup"
+	if [ -s "$tmpdir/pr_dup" ]; then cat "$tmpdir/pr_dup"; cur_fail=1; failed=1; fi
+	grep -o '"context"[[:space:]]*:[[:space:]]*"[^"]*"' "$pr_json" | sed 's/.*"\([^"]*\)"$/\1/' | sort -u > "$tmpdir/pr_req"
+	for pr_f in "$ROOT"/.github/workflows/*.yml "$ROOT"/.github/workflows/*.yaml; do
+		[ -f "$pr_f" ] || continue
+		awk '
+			function ind(l) { match(l, /^ */); return RLENGTH }
+			{ sub(/\r$/, "") }
+			/^jobs:/ { inj = 1; jind = -1; next }
+			inj && /^[^ #]/ { inj = 0 }
+			!inj || /^[ \t]*(#.*)?$/ { next }
+			{
+				if (jind < 0) jind = ind($0)
+				if (ind($0) == jind) { if (job != "") print (name != "" ? name : job); job = $0; sub(/^ +/, "", job); sub(/:.*/, "", job); name = ""; cind = -1; next }
+				if (cind < 0) cind = ind($0)
+				if (ind($0) == cind && $0 ~ /^ +name:/) { name = $0; sub(/^ +name:[ \t]*/, "", name); sub(/[ \t]+#.*$/, "", name); gsub(/^["\047]|["\047]$/, "", name) }
+			}
+			END { if (job != "") print (name != "" ? name : job) }' "$pr_f"
+	done | sort -u > "$tmpdir/pr_jobs"
+	comm -23 "$tmpdir/pr_jobs" "$tmpdir/pr_req" | while IFS= read -r pr_n; do
+		printf 'setup-check: protection FAIL contexts: %s is a job but not a required context\n' "$pr_n"; done > "$tmpdir/pr_out"
+	comm -13 "$tmpdir/pr_jobs" "$tmpdir/pr_req" | while IFS= read -r pr_n; do
+		printf 'setup-check: protection FAIL contexts: %s is a required context but not a job\n' "$pr_n"; done >> "$tmpdir/pr_out"
+	if [ -s "$tmpdir/pr_out" ]; then cat "$tmpdir/pr_out"; cur_fail=1; failed=1; fi
 }
 
 for check_name in $CHECKS; do

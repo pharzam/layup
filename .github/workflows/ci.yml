@@ -10,9 +10,9 @@
 # The PR-title and PR-link checks live in their own workflows (pr-title.yml,
 # pr-link.yml) because they run on pull-request events only.
 #
-# CI is the authority for the quality gate. To make these checks block a merge,
-# mark them required on `main` (Settings → Branches → branch protection) — a
-# repo-settings step, not a file here.
+# CI is the authority for the quality gate. Every job here is a required check on
+# `main`: the protection body is docs/setup/branch-protection.json (T-afa5), and
+# check `protection` in docs/setup/setup-check.sh keeps it equal to the job names.
 
 name: CI
 
@@ -248,8 +248,9 @@ jobs:
       # default branch (see the loop above). It was rewritten in #145 when
       # audit-record-lint was removed — main's prior copy hard-required that
       # now-deleted file — so CI runs this branch's version. The trade is that
-      # main's copy no longer guards it; accepted, since it is non-required and
-      # drives only the restored link-lint.sh.
+      # main's copy no longer guards it; accepted, because it drives only the
+      # restored link-lint.sh. It is a required check since T-afa5 (the protection
+      # body is docs/setup/branch-protection.json), so a failure blocks a merge.
       - run: sh docs/tests/nested-checkout-check.sh
 
   setup-check:
