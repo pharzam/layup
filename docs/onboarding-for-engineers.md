@@ -79,9 +79,11 @@ duration of a task (`F-0001#38`).
 ## 3. What the system actually does
 
 The PSB states the problem only. This repository holds the discipline system,
-the setup record, and the first code: the skeleton of the `layup` command
-([ADR-0011](adr/0011-structure-the-core-engine-as-a-go-cli-over-repository-files.md)),
-which so far prints its version.
+the setup record, and the first code: the `layup` command
+([ADR-0011](adr/0011-structure-the-core-engine-as-a-go-cli-over-repository-files.md)).
+So far it prints its version, and `layup psb check FILE` writes the gap questions
+of a problem statement as one batch (five deterministic rules, G1 to G5, in
+`internal/psb`).
 
 ## 4. Why it is hard
 

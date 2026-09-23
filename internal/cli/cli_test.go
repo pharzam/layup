@@ -44,3 +44,27 @@ func TestUnknownSubcommandExitsTwo(t *testing.T) {
 		t.Fatalf("stderr %q: want the unknown command named", errOut)
 	}
 }
+
+func TestPSBCheckExitCodes(t *testing.T) {
+	dir := t.TempDir()
+	clean := dir + "/clean.md"
+	gaps := dir + "/gaps.md"
+	writeFile(t, clean, "**Technology stack:** Go.\n")
+	writeFile(t, gaps, "No stack is named here.\n")
+
+	if code, out, _ := run("psb", "check", clean); code != 0 || !strings.HasPrefix(out, "id\trule\t") {
+		t.Fatalf("clean: exit %d, stdout %q; want 0 and the header", code, out)
+	}
+	if code, out, _ := run("psb", "check", gaps); code != 1 || !strings.Contains(out, "\tG1\t") {
+		t.Fatalf("gaps: exit %d, stdout %q; want 1 and a G1 row", code, out)
+	}
+	if code, _, errOut := run("psb", "check", dir+"/missing.md"); code != 2 || errOut == "" {
+		t.Fatalf("unreadable: exit %d, stderr %q; want 2 and a message", code, errOut)
+	}
+	if code, _, _ := run("psb", "check"); code != 2 {
+		t.Fatalf("no file: exit %d, want 2", code)
+	}
+	if code, _, _ := run("psb"); code != 2 {
+		t.Fatalf("no psb subcommand: exit %d, want 2", code)
+	}
+}
