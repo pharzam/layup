@@ -1,0 +1,58 @@
+{
+  "required_status_checks": {
+    "strict": true,
+    "checks": [
+      {
+        "context": "adr-lint (docs/adr discipline)",
+        "app_id": 15368
+      },
+      {
+        "context": "conventional-title",
+        "app_id": 15368
+      },
+      {
+        "context": "discipline-tests (linter fixtures)",
+        "app_id": 15368
+      },
+      {
+        "context": "link-lint (in-tree links and anchors)",
+        "app_id": 15368
+      },
+      {
+        "context": "nested-checkout-check (the linters skip a nested checkout)",
+        "app_id": 15368
+      },
+      {
+        "context": "pr-link (PR body links an issue)",
+        "app_id": 15368
+      },
+      {
+        "context": "prd-lint (docs/prd discipline)",
+        "app_id": 15368
+      },
+      {
+        "context": "review-record (the issue carries a parseable record)",
+        "app_id": 15368
+      },
+      {
+        "context": "setup-check (the Armature setup and its evidence)",
+        "app_id": 15368
+      }
+    ]
+  },
+  "enforce_admins": true,
+  "required_pull_request_reviews": {
+    "dismiss_stale_reviews": false,
+    "require_code_owner_reviews": false,
+    "require_last_push_approval": false,
+    "required_approving_review_count": 0
+  },
+  "restrictions": null,
+  "required_linear_history": false,
+  "allow_force_pushes": false,
+  "allow_deletions": false,
+  "block_creations": false,
+  "required_conversation_resolution": true,
+  "lock_branch": false,
+  "allow_fork_syncing": false
+}
