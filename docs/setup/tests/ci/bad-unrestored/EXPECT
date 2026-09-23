@@ -1,0 +1,4 @@
+exit=1
+line=setup-check: ci FAIL restore: .github/workflows/x.yml job a runs or needs docs/ci/pr-link-lint.sh but does not restore it
+line=setup-check: ci FAIL restore: .github/workflows/x.yml job b runs or needs docs/ci/pr-link-lint.sh but does not restore it
+line=setup-check: ci FAIL restore: .github/workflows/x.yml job b runs or needs docs/ci/review-record-lint.sh but does not restore it

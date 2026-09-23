@@ -5,5 +5,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Restore the checks from the default branch
+        run: |
+          for f in docs/setup/setup-check.sh docs/adr/adr-lint.sh docs/prd/prd-lint.sh \
+                   docs/links/link-lint.sh docs/tests/run-discipline-tests.sh \
+                   docs/ci/pr-link-lint.sh docs/ci/review-record-lint.sh; do
+            cp ".checks-from-default/$f" "$f"
+          done
+          cp -R .checks-from-default/docs/setup/tests docs/setup/tests
       - run: sh docs/setup/tests/run.sh
       - run: sh docs/setup/setup-check.sh
