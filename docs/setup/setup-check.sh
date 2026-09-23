@@ -169,7 +169,8 @@ check_facts() {
 		if [ -s "$tmpdir/repeats" ]; then cat "$tmpdir/repeats"; cur_fail=1; failed=1; fi
 	done
 	for fa_id in F-0001 F-0002 F-0003; do
-		grep -Eq "^\|.*$fa_id" "$ROOT/docs/facts/README.md" 2>/dev/null \
+		# The ID must open the row (plain or as a link), not only appear in a cell.
+		grep -Eq "^\|[[:space:]]*\[?$fa_id[^0-9]" "$ROOT/docs/facts/README.md" 2>/dev/null \
 			|| fail facts "index: docs/facts/README.md has no row for $fa_id"
 	done
 }

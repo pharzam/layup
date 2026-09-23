@@ -120,5 +120,6 @@
 ## Notes on capture (optional)
 
 - Two records now number the same file: `F-0001` (the invariants, the Human
-  Decision Points, the terms) and `F-0003` (the rest). Neither supersedes the
-  other.
+  Decision Points, the terms) and `F-0003` (§1, §3, §4, §5, the scope lists of
+  §6, and §7). Neither supersedes the other. The two bullets of §2 are numbered
+  by no record.
