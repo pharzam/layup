@@ -26,8 +26,8 @@ authority.
 | Level | Proves | Scope | Speed | Runs in |
 |-------|--------|-------|-------|---------|
 | 1. Unit | one component behaves | one function/class/module, dependencies stubbed | fastest | hook + CI |
-| 2. Integration | components work together | two or more units across a real seam | medium | hook (subset) + CI |
-| 3. End-to-end (E2E) | a whole user path works | the running system, front to back | slowest | CI (optionally a smoke subset in the hook) |
+| 2. Integration | components work together | two or more units across a real seam | medium | CI |
+| 3. End-to-end (E2E) | a whole user path works | the running system, front to back | slowest | CI |
 | Discipline | the process stays honest | repo files, no product toolchain | fast | hook + CI |
 
 The three numbered rungs — unit, integration, end-to-end — are the **product-test
@@ -56,7 +56,7 @@ collaborator (a real datastore, a real adapter) rather than a stand-in, so it is
 slower than a unit test and runs after it.
 
 - **Command:** `go test -tags=integration ./...`
-- **Where:** CI in full; a fast subset may run in the hook.
+- **Where:** CI only (job `tests`).
 - **Rule:** every interface or workflow has an integration test (see
   [`template-integration.md`](template-integration.md)).
 
@@ -70,7 +70,7 @@ may run locally to prove the wiring.
 - **Command:** `go test -tags=e2e ./...`
 - **Timeout:** `-timeout 10m` — an E2E test that hangs must fail, not stall the
   pipeline.
-- **Where:** CI (optionally a smoke subset in the hook).
+- **Where:** CI only (job `tests`).
 - **Rule:** every user-facing scenario has an E2E test (see
   [`template-e2e.md`](template-e2e.md)).
 
@@ -104,12 +104,13 @@ and it runs in the hook and CI. See
 
 ## Security tests sit alongside the ladder
 
-Security checks are not a fourth rung but a parallel track that runs at hook and
-CI time — a secret scan, a dependency scan, and static analysis at minimum. They
+Security checks are not a fourth rung but a parallel track — a secret scan, a
+dependency scan, and static analysis at minimum. In this project the hook runs
+the static analysis (`go vet`); CI runs all three. They
 have their own command placeholder and their own checklist:
 
-- **Command:** `go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./... && go vet ./... && gitleaks git --redact` runs the scans — a fast subset in the
-  [hook](../../.githooks/pre-commit), the full set in [CI](../ci/) — and
+- **Command:** `go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./... && go vet ./... && gitleaks git --redact` runs the scans in [CI](../ci/) (the
+  [hook](../../.githooks/pre-commit) runs `go vet` only) — and
   `govulncheck v1.8.0, go vet, and gitleaks` names the tool it drives.
 - **Checklist:** [`security-checklist.md`](security-checklist.md).
 

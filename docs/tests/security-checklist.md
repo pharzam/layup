@@ -36,9 +36,9 @@ security checks are wired into two layers, cheap-first:
 - The full set — all three checks, run in full — runs via `go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./... && go vet ./... && gitleaks git --redact`
   in [CI](../ci/), as the authority.
 
-`govulncheck v1.8.0, go vet, and gitleaks` names the tool both layers drive. The CI job
-`security` runs all three since `T-t8qp`; the hook does not run them (they need the
-network).
+`govulncheck v1.8.0, go vet, and gitleaks` names the three tools. The CI job
+`security` runs all three since `T-t8qp`. The hook runs `go vet` only; it does not
+run govulncheck or gitleaks, because they need the network.
 
 ## A pre-registered bar
 
