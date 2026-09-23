@@ -757,9 +757,9 @@ It pins `core.hooksPath` to the relative `.githooks`. Two hooks ship with the ki
   the three repo-file
   [discipline linters](#testing) — ADR, PRD and link —
   and their fixture self-tests,
-  then the `test -z "$(gofmt -l .)" && go vet ./...`, the fast [test levels](#testing) (`go test ./...`, then
-  `go test -tags=integration ./...`), and the `govulncheck v1.8.0, go vet, and gitleaks` step you fill in for
-  your stack. Keep it cheap-first; the full suite — the end-to-end level and the
+  then the Go lint (`gofmt -l` over the tracked Go files, and `go vet ./...`) and
+  the unit [test level](#testing) (`go test ./...`). The integration and
+  end-to-end levels and the security scans run in CI. Keep it cheap-first; the full suite — the end-to-end level and the
   full security scan — belongs in [CI](#continuous-integration-optional).
 
 [`.githooks/README.md`](../.githooks/README.md) has the details and the optional

@@ -118,9 +118,18 @@ fi
 
 # 2. Lint / format — gofmt (fails on any listed file) and go vet (ADR-0010).
 #    Active since T-t8qp, the first Go code.
+#    Only tracked Go files are formatted-checked, so a worktree under .worktree/
+#    or a nested checkout does not change the result.
 if [ -f go.mod ]; then
-	test -z "$(gofmt -l .)" || { echo "pre-commit: gofmt lists files; run gofmt -w" >&2; exit 1; }
+	go_files=$(git ls-files '*.go')
+	if [ -n "$go_files" ]; then
+		# shellcheck disable=SC2086 # one path per word; tracked Go paths hold no space
+		gofmt_out=$(gofmt -l $go_files) || { echo "pre-commit: gofmt failed" >&2; exit 1; }
+		[ -z "$gofmt_out" ] || { printf 'pre-commit: gofmt lists these files; run gofmt -w:\n%s\n' "$gofmt_out" >&2; exit 1; }
+	fi
 	go vet ./... || exit 1
+else
+	echo "pre-commit: no go.mod, so the Go lint and unit steps are skipped" >&2
 fi
 
 # 3. Tests, cheap → expensive — run the fast levels here; leave the slow ones to
