@@ -1,0 +1,6 @@
+exit=1
+line=setup-check: guardrails FAIL entry: Inv-2 appears 2 times, expected 1
+line=setup-check: guardrails FAIL entry: Inv-9 appears 0 times, expected 1
+line=setup-check: guardrails FAIL citation: Inv-8 does not cite F-0001#8
+line=setup-check: guardrails FAIL check: Inv-8 names docs/nothing.sh, which does not exist
+line=setup-check: guardrails FAIL check: Inv-3 gate "cron" is not hook or ci:<job>
