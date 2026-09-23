@@ -1,4 +1,4 @@
-# PR title check — Conventional Commits (ACTIVE workflow for the Armature repo).
+# PR title check — Conventional Commits (ACTIVE workflow for LAYUP).
 #
 # The activated copy of docs/ci/github-actions-pr-title.yml. It checks the PR title
 # follows Conventional Commits — the same <type>: <description> shape the

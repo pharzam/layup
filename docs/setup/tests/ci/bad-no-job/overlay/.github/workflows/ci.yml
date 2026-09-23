@@ -1,0 +1,5 @@
+# CI for LAYUP.
+jobs:
+  lint:
+    steps:
+      - run: sh docs/adr/adr-lint.sh

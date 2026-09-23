@@ -54,6 +54,8 @@ child task adds its own rows in the same PR that lands its work.
 | 23 | `T-7ndb` merged (PR #19), after 2 review rounds | 13:48:38 | GitHub API `mergedAt` |
 | 24 | `T-nfh8` worktree created | 13:48:41 | shell `date` |
 | 25 | Operator answered one batch of 8 setup questions (O-1 to O-8) | about 13:50 | comment on [#8](https://github.com/pharzam/layup/issues/8) |
+| 26 | `T-nfh8` merged (PR #20), after 3 review rounds | 14:40:05 | GitHub API `mergedAt` |
+| 27 | `T-q344` worktree created | 14:40:08 | shell `date` |
 
 ## Values
 
@@ -114,19 +116,19 @@ to an Armature rule.
 | ID | Finding | Where in the kit | Effect on this run |
 |----|---------|------------------|--------------------|
 | K-01 | The Operator gave the count "17 domain terms"; PSB Revision 6 §8 holds 25 rows (one row holds two names). | not a kit gap: a gap between the instruction and the fact | All 25 rows are merged into [`glossary.md`](../glossary.md) §1 (`T-xgz4`). |
-| K-02 | degit copies the kit's own active workflows under `.github/workflows/`; kit step 4 does not name them. | `engineering-discipline.md` How to adapt, step 4 | Handled by `T-q344`. |
+| K-02 | degit copies the kit's own active workflows under `.github/workflows/`; kit step 4 does not name them. | `engineering-discipline.md` How to adapt, step 4 | `T-q344` kept them (they restore the checks from the default branch) and replaced their headers. |
 | K-03 | `docs/tasks/backlog.md` holds the kit's own tasks and a pivot note that links the kit's issues. Kit step 1 says to fill `backlog.md` with your own tasks, but step 4, the removal list, names only `completed.md` entries and the `T-*.md` files, so the kit backlog lines are easy to miss. | How to adapt, step 4 | `T-vbwc` removed 31 kit files (3,133 lines: `docs/decisions/` 10, `docs/audit/` 2, `docs/tasks/T-*.md` 19), the kit entries of `completed.md`, and the 6 kit lines and the pivot note of `backlog.md`. |
 | K-04 | The CI template `docs/ci/github-actions-ci.yml` has no "restore the checks from the default branch" step, which `guardrails.md` §2 requires and the kit's own `ci.yml` has. | `docs/ci/github-actions-ci.yml` | `T-q344` keeps the kit's own workflows. |
 | K-05 | The first push to `main` must come before the `pre-push` hook is installed, because the hook refuses a direct push to `main`. | README step 1 and step 3 order | The root commit was pushed before `sh .githooks/install.sh`. |
 | K-06 | The adoption steps do not say to rewrite the "what this is" text of `README.md` and `AGENTS.md`, which name the kit. | README "Using it as a template" | Handled by `T-6rg3`. |
-| K-07 | The pin tree check needs the full history; `actions/checkout` is shallow by default. | not in the kit (LAYUP check) | `T-q344` sets `fetch-depth: 0`. |
+| K-07 | The pin tree check needs the full history; `actions/checkout` is shallow by default. | not in the kit (LAYUP check) | `T-q344` sets `fetch-depth: 0` in job `setup-check`. A check that a pull request adds runs in CI only after it merges, because the job restores the check from `main`. |
 
 ## Deviations
 
 | ID | Deviation | Reason | Ends |
 |----|-----------|--------|------|
 | D-01 | Worktrees were under `../layup-worktrees/`, outside the repository. | The worktree-directory value was not yet set. | Ended by `T-nfh8`: O-1 set `.worktree`, and the `T-nfh8` worktree moved there. |
-| D-02 | `setup-check.sh` and its self-test `tests/run.sh` are not yet run by the `pre-commit` hook or by CI. | CI wiring is `T-q344`; no child names the hook. | `T-q344` |
+| D-02 | `setup-check.sh` and its self-test `tests/run.sh` were not run by the `pre-commit` hook or by CI. | CI wiring was `T-q344`; no child names the hook. | CI part ended by `T-q344`: job `setup-check` runs both, restored from `main`. The hook part is open on [#21](https://github.com/pharzam/layup/issues/21). |
 | D-03 | The PSB was cited as `F-0001` before the facts document existed. | Facts were stored by a later child. | Ended by `T-fvwj` ([#4](https://github.com/pharzam/layup/issues/4)): [`F-0001`](../facts/F-0001-layup-problem-statement-brief.md). |
 | D-04 | PR #18 was merged while `gh pr checks` showed 3 of its 8 CI jobs pending; all 8 passed. | Human error: the merge did not wait. Lesson in `guardrails.md` §2. | `T-afa5` ([#12](https://github.com/pharzam/layup/issues/12)) makes the jobs required. |
 
