@@ -1,0 +1,5 @@
+exit=1
+line=setup-check: identity FAIL kit: README.md says the repository is the Armature kit ("This repository is a generic **template**")
+line=setup-check: identity FAIL kit: AGENTS.md says the repository is the Armature kit ("Agent context for **Armature**")
+line=setup-check: identity FAIL kit: AGENTS.md says the repository is the Armature kit ("A domain-free **template**, not a product")
+line=setup-check: identity FAIL pin: README.md has no link to docs/setup/armature.pin
