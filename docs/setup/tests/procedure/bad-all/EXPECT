@@ -1,0 +1,6 @@
+exit=1
+line=setup-check: procedure FAIL header: docs/setup/steps.tsv header is not id, input, action, output, evidence, human_decision
+line=setup-check: procedure FAIL columns: docs/setup/steps.tsv line 3 has 5 columns, expected 6
+line=setup-check: procedure FAIL step: S02 is in steps.tsv but has no "### S02" heading in docs/setup/README.md
+line=setup-check: procedure FAIL step: S03 has a heading in docs/setup/README.md but is not in steps.tsv
+line=setup-check: procedure FAIL kit: docs/engineering-discipline.md still holds the heading "How to adapt this kit"

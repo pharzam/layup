@@ -1,0 +1,2 @@
+exit=1
+line=setup-check: procedure FAIL missing: docs/setup/steps.tsv is absent
