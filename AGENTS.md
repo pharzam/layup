@@ -1,7 +1,7 @@
 # AGENTS.md
 
-Agent context for **Armature**, the engineering-discipline kit. Read this before
-you change anything in this repository.
+Agent context for **LAYUP**, an Armature project. Read this before you change
+anything in this repository.
 
 This file is a startup index and summary of how we work here. Where it disagrees
 with a document it points to or summarises, **the document wins** — and the
@@ -10,14 +10,19 @@ disagreement is a defect to fix in the same change
 
 ## What this repository is
 
-A domain-free **template**, not a product application. Armature ships the "how we
-work" — a quality gate, guardrails, decision records, a glossary, a
-facts-and-requirements convention, a test section and a task backlog — for an
-adopter to copy onto its own domain. It holds no product code and no product test
-suite, so there is nothing here to build, and no toolchain to install.
+LAYUP, a software product under construction; its problem statement is the PSB,
+fact [`F-0001`](docs/facts/F-0001-layup-problem-statement-brief.md). The discipline
+system is a one-time copy of the Armature kit, pinned in
+[`docs/setup/armature.pin`](docs/setup/armature.pin): a quality gate, guardrails,
+decision records, a glossary, a facts-and-requirements convention, a test section
+and a task backlog. The stack is Go
+([ADR-0010](docs/adr/0010-use-go-as-the-technology-stack.md)); no product code
+exists yet, so there is nothing to build.
 
-Two things catch agents out: the `‹…›` markers are deliberate, and the root
-[`tests/`](tests/) directory is empty on purpose — it is the adopter's drop-in.
+Two things catch agents out: a remaining `‹…›` marker is an open gap listed in
+[`docs/setup/open-gaps.tsv`](docs/setup/open-gaps.tsv), never a value to guess;
+and the root [`tests/`](tests/) directory holds cross-package end-to-end fixtures
+only.
 
 ## How these instructions rank
 
@@ -149,7 +154,7 @@ time, never directly. An architecturally significant decision becomes an
 | [`docs/issue-workflow.md`](docs/issue-workflow.md) | The numbered rules themselves, and the honest table of what a mechanism backs today. |
 | [`docs/guardrails.md`](docs/guardrails.md) | Known pitfalls, pre-registered pass and fail rules, and how a result is validated. |
 | [`docs/glossary.md`](docs/glossary.md) | The shared vocabulary, and the rule that every abbreviation earns an entry. |
-| [`docs/adr/`](docs/adr/) | Architecture decisions that constitute a project, with the context and the consequences of each one. This repository's own past governance decisions are archived under `docs/decisions/`, which an adopter deletes. |
+| [`docs/adr/`](docs/adr/) | Architecture decisions that constitute a project, with the context and the consequences of each one. Armature's own past governance decisions were archived under `docs/decisions/` in the kit; this repository deleted that directory (kit step 4). |
 | [`docs/tests/`](docs/tests/) | The test levels, a pattern for each, and the Definition-of-Done coverage checklist. |
 | [`docs/facts/`](docs/facts/) and [`docs/prd/`](docs/prd/) | Customer facts kept as evidence, and the requirements derived from them. |
 | [`.githooks/`](.githooks/) and [`docs/ci/`](docs/ci/) | What the gate enforces locally, and what CI enforces as the authority. |

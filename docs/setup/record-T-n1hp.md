@@ -61,6 +61,8 @@ child task adds its own rows in the same PR that lands its work.
 | 30 | `T-fvng` merged (PR #25), after 3 review rounds | 16:24:09 | GitHub API `mergedAt` |
 | 31 | `T-afa5` worktree created | 16:24:32 | shell `date` |
 | 32 | Branch protection applied to `main` (`PUT`), after review round 1 of #12 | 16:35:40 | shell `date -u` after the `PUT` |
+| 33 | `T-afa5` merged (PR #26), after 3 review rounds | 16:58:57 | GitHub API `mergedAt` |
+| 34 | `T-6rg3` worktree created | 16:59:12 | shell `date` |
 
 ## Values
 
@@ -147,7 +149,7 @@ to an Armature rule.
 | K-03 | `docs/tasks/backlog.md` holds the kit's own tasks and a pivot note that links the kit's issues. Kit step 1 says to fill `backlog.md` with your own tasks, but step 4, the removal list, names only `completed.md` entries and the `T-*.md` files, so the kit backlog lines are easy to miss. | How to adapt, step 4 | `T-vbwc` removed 31 kit files (3,133 lines: `docs/decisions/` 10, `docs/audit/` 2, `docs/tasks/T-*.md` 19), the kit entries of `completed.md`, and the 6 kit lines and the pivot note of `backlog.md`. |
 | K-04 | The CI template `docs/ci/github-actions-ci.yml` has no "restore the checks from the default branch" step, which `guardrails.md` §2 requires and the kit's own `ci.yml` has. | `docs/ci/github-actions-ci.yml` | `T-q344` keeps the kit's own workflows. |
 | K-05 | The first push to `main` must come before the `pre-push` hook is installed, because the hook refuses a direct push to `main`. | README step 1 and step 3 order | The root commit was pushed before `sh .githooks/install.sh`. |
-| K-06 | The adoption steps do not say to rewrite the "what this is" text of `README.md` and `AGENTS.md`, which name the kit. | README "Using it as a template" | Handled by `T-6rg3`. |
+| K-06 | The adoption steps do not say to rewrite the "what this is" text of `README.md` and `AGENTS.md`, which name the kit. | README "Using it as a template" | `T-6rg3` rewrote the README intro, replaced "Using it as a template" with "How this repository was set up", removed "About the name", and rewrote the AGENTS.md title line and "What this repository is"; check `identity` guards it. |
 | K-07 | The pin tree check needs the full history; `actions/checkout` is shallow by default. | not in the kit (LAYUP check) | `T-q344` sets `fetch-depth: 0` in job `setup-check`. A check that a pull request adds runs in CI only after it merges, because the job restores the check from `main`. |
 | K-08 | The kit's own `pr-link.yml` and `review-record.yml` run their lint script from the pull request's checkout, with no restore from the default branch, so a branch could gut its own required check. | `.github/workflows/` (kit's active copies) | `T-fvng` ([#23](https://github.com/pharzam/layup/issues/23)) added the restore step and cause `restore` to check `ci`. |
 

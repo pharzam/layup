@@ -1,14 +1,16 @@
-<h1><img src="assets/armature-logo.jpg" alt="Armature logo: a low-poly human figure rendered as a wireframe armature, ringed by the kit's icons — a shield, documents, a book, a person, and a checklist." width="48" align="middle"> Armature</h1>
+<h1><img src="assets/armature-logo.jpg" alt="Armature logo: a low-poly human figure rendered as a wireframe armature." width="48" align="middle"> LAYUP</h1>
 
-*The engineering-discipline kit.*
+*Evidence-based discipline setup and delivery governance for multi-agent software work.*
 
-> A domain-free scaffold for running a new software project with discipline — the
-> "how we work," ready to compose onto any domain.
-
-**What this is.** This repository is a generic **template**, not a product. It gives
-a new project a ready-made engineering-discipline system — a quality gate,
-guardrails, ADRs, a glossary, a customer-facts convention, and a task backlog — that
-you adapt to your domain and grow over time.
+**What this is.** LAYUP is a software product under construction. Its problem
+statement is the approved PSB, stored as the raw fact
+[`F-0001`](docs/facts/F-0001-layup-problem-statement-brief.md). LAYUP obeys the
+same discipline that it will set up for other projects: this repository is an
+Armature project, a one-time copy of the Armature kit pinned at commit `a959655`
+([`docs/setup/armature.pin`](docs/setup/armature.pin),
+[ADR-0009](docs/adr/0009-pin-armature-at-a-recorded-commit.md)), with no upstream
+link. No product code exists yet; the stack is Go
+([ADR-0010](docs/adr/0010-use-go-as-the-technology-stack.md)).
 
 ## Start here
 
@@ -35,66 +37,24 @@ you adapt to your domain and grow over time.
 | [`docs/issue-workflow.md`](docs/issue-workflow.md) | The issue-first workflow (R1–R13): the ticket policy the gate assumes. |
 | [`docs/glossary.md`](docs/glossary.md) | The shared vocabulary the other docs assume. |
 | [`docs/guardrails.md`](docs/guardrails.md) | Known pitfalls, pre-registered pass/fail rules, and validation. |
-| [`docs/adr/`](docs/adr/) | Architecture Decision Records that constitute a project — the *why* behind structural choices — plus [`adr-lint.sh`](docs/adr/adr-lint.sh), the discipline test that keeps them honest. This repository's own past governance decisions are archived under `docs/decisions/`, which an adopter deletes. |
-| [`docs/facts/`](docs/facts/) | Raw customer facts kept as immutable evidence, and the citation convention that derives requirements from them. |
+| [`docs/setup/`](docs/setup/) | The Armature pin, the setup record with the evidence for each setup value, the open gaps, the branch-protection body, and `setup-check.sh`, which proves the setup. |
+| [`docs/adr/`](docs/adr/) | Architecture Decision Records that constitute a project — the *why* behind structural choices — plus [`adr-lint.sh`](docs/adr/adr-lint.sh), the discipline test that keeps them honest. Armature's own past governance decisions were archived under `docs/decisions/` in the kit; this repository deleted that directory (kit step 4). |
+| [`docs/facts/`](docs/facts/) | Raw facts kept as immutable evidence — the PSB (`F-0001`) and the vision brief (`F-0002`, a solution document) — and the citation convention that derives requirements from them. |
 | [`docs/prd/`](docs/prd/) | Product Requirements Documents derived from the facts, plus [`prd-lint.sh`](docs/prd/prd-lint.sh), the discipline test that keeps them honest. |
 | [`docs/tests/`](docs/tests/) | The testing conventions — the test levels, a pattern per level, the security, scaling, and Definition-of-Done checklists, and test-to-requirement traceability — plus [`run-discipline-tests.sh`](docs/tests/run-discipline-tests.sh), which tests the kit's own linters against fixtures. |
-| [`tests/`](tests/) | The repo-root drop-in where an adopter's product tests live. Empty in the kit (it has no product), kept in git by a `.gitkeep`. |
+| [`tests/`](tests/) | Cross-package end-to-end fixtures; Go unit and integration tests sit beside the code. Empty until Go code exists, kept in git by a `.gitkeep`. |
 | [`docs/tasks/`](docs/tasks/) | The task index — [`backlog.md`](docs/tasks/backlog.md) and [`completed.md`](docs/tasks/completed.md). |
 | [`.githooks/`](.githooks/) | Git hooks that enforce the cheap gate locally — a commit-message check and a pre-commit runner. Install with `sh .githooks/install.sh`. |
 | [`.gitattributes`](.gitattributes) | **Copy this one.** It keeps the kit's scripts and hooks at line-feed endings, without which none of them runs on a Windows checkout, and pins the handful of fixtures whose Windows endings *are* the assertion. Leave it behind and the gate is either unrunnable or quietly testing nothing. |
 | [`docs/ci/`](docs/ci/) | Optional CI templates (GitHub Actions and GitLab CI) that run the same gate on every PR. Inert until you copy one into place. |
 | [`docs/templates/`](docs/templates/) | Optional, inert GitHub/GitLab issue and PR templates that embody the issue-first workflow. Inert until you copy them into place. |
 
-## Using it as a template
+## How this repository was set up
 
-This kit is a **scaffold to compose onto a new domain.** Every document is generic:
-it ships with `‹…›` markers for the values only you can supply, and a "How to adapt"
-note you delete once the real content is in. The kit itself stays domain-free, so the
-same discipline drops onto any project — you add the domain, not the process.
-
-To stand up a new project:
-
-1. **Start with a clean history.** Your project is a *new* repository, not a fork
-   of the kit — it must not keep Armature's git history or remote. Two paths give
-   you that for free: click **Use this template** on GitHub, or run
-   `npx degit pharzam/armature my-project`. If you already cloned, detach by hand —
-   deleting `.git` clears Armature's history and its remote in one move:
-
-   ```bash
-   rm -rf .git            # drop Armature's history and remote
-   git init && git add -A
-   git commit -m "chore: initialize from Armature kit"
-   git remote add origin git@github.com:you/my-project.git
-   ```
-
-   The scaffold is a one-time copy, not a dependency: your project keeps no link
-   back to Armature — no `upstream` remote, no fork relationship. Adopt any later
-   kit improvements by hand, if and when you want them.
-2. Follow **[How to adapt this kit](docs/engineering-discipline.md#how-to-adapt-this-kit)** —
-   set the project-wide values (test runner, evidence store, task-ID scheme, worktree
-   directory) and fill the sibling documents.
-3. **Turn on enforcement.** Install the git hooks by running
-   `sh .githooks/install.sh` (it pins `core.hooksPath` to the relative `.githooks`),
-   fill their `‹…›` steps, and — if you use
-   GitHub or GitLab — activate CI by copying a template from
-   [`docs/ci/`](docs/ci/) into place. This makes the quality gate self-enforcing;
-   the [ADR](docs/adr/adr-lint.sh) and [PRD](docs/prd/prd-lint.sh) linters and their
-   [fixture self-tests](docs/tests/run-discipline-tests.sh) run green out of the
-   box.
-4. Search for `‹` to find everything still unfilled; delete every "How to adapt" note
-   when the real content is in.
-5. Grow it — each new practice gets its own short section, with a fuller reference
-   document where one earns its place.
-
-## About the name
-
-**Armature** — say it *AR-mə-chər* (`/ˈɑːr.mə.tʃər/`), three syllables: *ar·ma·ture*.
-In sculpture, an armature is the internal wire-and-metal frame a figure is built
-around: the skeleton holds the shape, and the clay goes on top. This kit is that
-skeleton for a software project — it holds the engineering discipline, and your
-domain is the clay you add.
-
-The word traces to Latin *armatura*, "armor, equipment," from *armare* "to arm"
-(from *arma*, "weapons, tools") — the same root as *arm* and *armor*. An armature is
-the frame that gives a thing its strength.
+By hand, one time, on 2026-09-23, under parent issue
+[#1](https://github.com/pharzam/layup/issues/1). The kit's own adoption steps were
+followed; each filled value has its evidence in
+[`docs/setup/record-T-n1hp.md`](docs/setup/record-T-n1hp.md), and each value with
+no source is an open gap in [`docs/setup/open-gaps.tsv`](docs/setup/open-gaps.tsv).
+`sh docs/setup/setup-check.sh` proves the setup and runs in CI as a required
+check. This manual run is the baseline for LAYUP's own automated setup.
