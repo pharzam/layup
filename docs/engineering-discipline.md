@@ -229,8 +229,10 @@ the work is known to need a model; it never overturns the preference, and a
 deterministic check still outranks a model of any tier.
 
 Where a model is warranted, route by **tier**. Which concrete models fill each tier
-is the adopter's to set — `Claude Opus 5.5 and Claude Fable 5.1` and
-`Claude Sonnet 5 and Claude Haiku 4.5`; the kit names none.
+is the adopter's to set; the kit names none. In this project the reasoning tier is
+Claude Opus 5.5 and Claude Fable 5.1, and the execution tier is Claude Sonnet 5 and
+Claude Haiku 4.5 (Operator decision O-3 on
+[#8](https://github.com/pharzam/layup/issues/8)).
 
 | Tier | Class of model | Owns the gate steps that … |
 | ---- | -------------- | -------------------------- |
@@ -967,7 +969,9 @@ no expectation but are still summed, so the `Total` is a true total. The figures
 are **recorded, not budgeted** ([ADR-0007](adr/0007-record-task-resource-use.md)):
 they carry no approval number and no cap, and an overrun is not a finding.
 
-Copy this shape. Fill each cell from the harness task report (Claude Code gives the token count and the duration of each subagent run; it does not report the tokens of the author session, so that cell is `not reported`); write `not reported` where it cannot (never a guess),
+Copy this shape. Fill each cell from the harness's own reports (Claude Code: a subagent's task report gives its token
+count and duration; `/usage` gives the tokens of the current session; a cell that
+no report gives is `not reported`); write `not reported` where it cannot (never a guess),
 and `not applicable` in a human-worked part's model, effort and tokens columns.
 `Elapsed` is wall-clock, so model and human rows compare.
 

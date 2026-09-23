@@ -44,5 +44,5 @@ a selection already made and does not claim a panel's comparison.
   the hook lines stay commented and CI has no Go job. The task that lands the
   first Go code turns them on, in the same change.
 - govulncheck `v1.8.0` needs Go 1.26 or later. The machine measured `go1.25.3`
-  and later `go1.27.1` on 2026-09-23; `go.mod` must state a version of 1.26 or later.
+  and later `go1.27.1` on 2026-09-23; so the Go version that CI installs must be 1.26 or later.
 - The coverage threshold stays open (decision O-7) until a baseline exists.

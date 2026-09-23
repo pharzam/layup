@@ -1,6 +1,6 @@
 docs/issue-workflow.md	‹add a coverage gate›	Coverage threshold for CI. Operator decision O-7 (#8): none yet; set it after the first Go code exists and a baseline is measured.
-docs/issue-workflow.md	‹require a PR before merge›	Branch protection on main. Closed by T-afa5 (#12).
-docs/issue-workflow.md	‹require the check before merge›	Branch protection on main. Closed by T-afa5 (#12).
+docs/issue-workflow.md	‹require a PR before merge›	Branch protection on main. To be closed by T-afa5 (#12), which is open.
+docs/issue-workflow.md	‹require the check before merge›	Branch protection on main. To be closed by T-afa5 (#12), which is open.
 docs/tests/dod-checklist.md	‹a REQ/NFR row in the traceability table›	What is LAYUP's Definition of Done? No source gives it yet; the kit's example items are not LAYUP's (question for the idea owner).
 docs/tests/dod-checklist.md	‹a UAT row, human-checked›	What is LAYUP's Definition of Done? No source gives it yet; the kit's example items are not LAYUP's (question for the idea owner).
 docs/tests/dod-checklist.md	‹a bug fix has a test that fails on the old code›	What is LAYUP's Definition of Done? No source gives it yet; the kit's example items are not LAYUP's (question for the idea owner).

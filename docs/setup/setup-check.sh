@@ -257,9 +257,9 @@ check_guardrails() {
 # --- markers (Invariants 4 and 5) ----------------------------------------------
 # A marker is `‹` plus one or more characters other than `›`, then `›`; one that
 # does not close on its line runs to the line end (its key is that first line).
-# The literal `‹…›` names the convention and is not a marker, and neither is a
-# `‹` followed by a backtick (the character named in a code span, as in "search
-# for `‹`"). Each marker in a
+# The literal `‹…›` names the convention and is not a marker, and neither is
+# the exact code span `‹` (a backtick on each side: the character named, as in
+# "search for `‹`"). Only that one character is skipped. Each marker in a
 # git-tracked file must be exempt, allowed as a record-shape example, or listed in
 # docs/setup/open-gaps.tsv (`path<TAB>marker<TAB>question`); each listed marker
 # must still occur. Key: path plus exact marker text; equal markers in one file
@@ -299,13 +299,17 @@ check_markers() {
 	grep -Ev "$MK_EXEMPT" "$tmpdir/mk_files" | while IFS= read -r mk_f; do
 		[ -f "$ROOT/$mk_f" ] || continue
 		awk -v f="$mk_f" '{
-			line = $0
+			line = $0; prev = ""
 			while ((i = index(line, "‹")) > 0) {
+				before = (i > 1) ? substr(line, i - 1, 1) : substr(prev, length(prev), 1)
 				rest = substr(line, i)
+				after = substr(rest, length("‹") + 1, 1)
+				# A mention is exactly `‹` in a code span; skip that one character only.
+				if (before == "`" && after == "`") { prev = substr(line, 1, i + length("‹") - 1); line = substr(rest, length("‹") + 1); continue }
 				j = index(rest, "›")
-				if (j > 0) { m = substr(rest, 1, j + length("›") - 1); line = substr(rest, j + length("›")) }
+				if (j > 0) { m = substr(rest, 1, j + length("›") - 1); prev = ""; line = substr(rest, j + length("›")) }
 				else { m = rest; line = "" }
-				if (m != "‹…›" && substr(m, length("‹") + 1, 1) != "`") print f "\t" m
+				if (m != "‹…›") print f "\t" m
 			}
 		}' "$ROOT/$mk_f"
 	done | sort -u > "$tmpdir/mk_found"

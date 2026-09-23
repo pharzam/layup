@@ -147,7 +147,7 @@ touch. Read the setting back with
 the green run, is the evidence a close-out records.
 
 **Another forge.** GitLab: protect the default branch and turn on "Pipelines must
-succeed". Elsewhere: not applicable: this project uses GitHub.
+succeed". Elsewhere: not applicable, because this project uses GitHub.
 
 **Limits.** Writing or reading the setting needs an administration-scoped token,
 which `secrets.GITHUB_TOKEN` does not carry, so no text-only check in this kit
@@ -203,8 +203,8 @@ GitLab adopter deletes instead is the **job**, in `gitlab-ci.yml` itself, for an
 they did not install or will not fill: a job left unfilled fails the whole pipeline and
 blocks every merge, where GitHub would leave one check pending. That is the same trap
 with a louder failure, and the edit that avoids it is in the pipeline file rather than
-in a list of contexts. not applicable: this project uses GitHub is where an adopter on a third forge records what their
-own gate does.
+in a list of contexts. An adopter on a third forge records here what their own gate
+does; not applicable, because this project uses GitHub.
 
 **The same instruction, read the other way.**
 [`github-actions-ci.yml`](github-actions-ci.yml) ships three jobs the array names none

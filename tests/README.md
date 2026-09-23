@@ -1,10 +1,10 @@
 # tests/
 
-The home for this project's **product tests** — the tests of your code. It ships
-empty on purpose: Armature is a domain-free template with no product, so it has no
-product tests of its own. When you adopt the kit, your unit, integration, and
-end-to-end tests go here (or in whatever layout your stack expects — this
-directory is the default `*_test.go beside the code; root tests/ for end-to-end fixtures`).
+The home for this project's cross-package **end-to-end test fixtures**. LAYUP is
+written in Go, so unit and integration tests are `*_test.go` files beside the code
+they test, and only end-to-end fixtures that span packages live here (Operator
+decision O-5 on [#8](https://github.com/pharzam/layup/issues/8)). It is empty
+until the first Go code exists.
 
 ## In plain terms
 
