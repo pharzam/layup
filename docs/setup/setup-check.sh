@@ -26,7 +26,7 @@
 
 set -u
 
-CHECKS="pin kit-history facts onboarding glossary guardrails markers ci protection"
+CHECKS="pin kit-history facts onboarding glossary guardrails markers ci protection identity"
 
 if [ "${1:-}" = --only ]; then
 	[ $# -ge 2 ] && [ -n "$2" ] || { echo "setup-check: --only needs a list of checks" >&2; exit 2; }
@@ -449,6 +449,20 @@ check_protection() {
 	comm -13 "$tmpdir/pr_jobs" "$tmpdir/pr_req" | while IFS= read -r pr_n; do
 		printf 'setup-check: protection FAIL contexts: %s is a required context but not a job\n' "$pr_n"; done >> "$tmpdir/pr_out"
 	if [ -s "$tmpdir/pr_out" ]; then cat "$tmpdir/pr_out"; cur_fail=1; failed=1; fi
+}
+
+# --- identity (the repository is LAYUP, not the kit) ---------------------------
+# The two entry files must not say that this repository is the Armature kit, and
+# README.md links the pin that says which Armature version LAYUP was built from.
+check_identity() {
+	for id_f in README.md AGENTS.md; do
+		[ -f "$ROOT/$id_f" ] || continue
+		for id_p in 'Agent context for **Armature**' 'This repository is a generic **template**' 'A domain-free **template**, not a product'; do
+			grep -Fq -- "$id_p" "$ROOT/$id_f" && fail identity "kit: $id_f says the repository is the Armature kit (\"$id_p\")"
+		done
+	done
+	grep -Fq '](docs/setup/armature.pin)' "$ROOT/README.md" 2>/dev/null \
+		|| fail identity "pin: README.md has no link to docs/setup/armature.pin"
 }
 
 for check_name in $CHECKS; do
