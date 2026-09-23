@@ -1,0 +1,2 @@
+exit=1
+line=setup-check: facts FAIL hash: README.md does not match docs/setup/facts.sha256
