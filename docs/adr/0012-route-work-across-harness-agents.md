@@ -72,10 +72,9 @@ This record is `Proposed`. If a later task accepts it, it amends ADR-0005 as fol
   ADR-0007's "recorded, not budgeted" stands. A state comes only from a figure that the
   vendor reports for a quota pool: Normal, Constrained or Reserve exceeded, at thresholds
   the Operator sets. With no figure the state is **unknown**, never Normal (`F-0001#5`).
-  A binding takes the state of its pool; with more than one pool, the worst state counts.
-  The state sets the route: Normal, the table order; Constrained, the binding runs
-  reasoning-tier steps only; Reserve exceeded, it is not eligible; unknown, the route of
-  O-22. Each figure and each change of state is an append-only record in Git (ADR-0011, 2).
+  Each state allows a set of steps: Normal, every step in table order; Constrained,
+  reasoning-tier steps only; Reserve exceeded, no step; unknown, the steps that O-22
+  allows. A binding runs a step only if the state of each of its pools allows it. Each figure and each change of state is an append-only record in Git (ADR-0011, 2).
 - **D7.** (no clause) A plan review, a review round, a judge and a panel member take a binding that
   "Who may review" accepts. A blind reviewer may use the author's harness with a different
   model (O-18). Whether a different harness is required stays X1.
@@ -107,16 +106,18 @@ This record is `Proposed`. If a later task accepts it, it amends ADR-0005 as fol
   preference, or a measured one? Where does the table live: beside O-3, or in a file
   under `docs/setup/` with a check?
 - **O-20.** Which bindings join which tier: O-3 lists Claude models only. Options: keep
-  O-3; add named non-Claude models per tier (for example Opus 4.8, "latest Haiku", an AGY
-  or Devin model); or make O-3 bind the author's route only and let "Who may review" pick
+  O-3; add named models outside the current O-3 set, Claude or not, per tier (for example
+  Claude Opus 4.8, "latest Haiku", an AGY or a Devin model); or make O-3 bind the author's route only and let "Who may review" pick
   a reviewer's model. Is "Anthropic models exclusively" on Claude Code a rule or a
   description? Which model is "free tier", and does a paid fallback need authorization?
 - **O-21.** Which exact model and effort is "Astra 6.1" (and "Astra GPT / Astra 6")?
   Devin lists `gpt-6-astra-low` to `-max` and no 6.1; AGY and OpenCode list no Astra
   model. On AGY and OpenCode, is the fallback a change of harness to Devin?
-- **O-22.** Quota and time figures: the thresholds (F-0005 gives 70 % and 90 %), the
-  window, the source of each figure and how recent it must be, the route in the state
-  unknown, and the time limit of a dispatch other than a panel response.
+- **O-22.** Quota and time figures: the thresholds (F-0005 gives 70 % and 90 %); the
+  vendor's quota window, which can differ from the daily and weekly windows in which
+  F-0005 L40 reports tokens and cost; the source of each figure and how recent it must
+  be; the steps allowed in the state unknown; the time limit of a dispatch other than a
+  panel response.
 - **O-23.** "Panel arbitration": a reasoning-tier model that selects among a panel's
   options (Solution selection), or a panel that returns one verdict (ADR-0006 rejected it)?
 - **O-24.** Prompt preparation, task scoping, option answering and trade-off scoring on
@@ -134,7 +135,7 @@ This record is `Proposed`. If a later task accepts it, it amends ADR-0005 as fol
 - **X2.** The stall protocol (F-0005 L52–L79). Where it changes the trigger or the
   hand-off of `F-0001#14`, it needs a PSB revision by the idea owner (`F-0001#23`);
   `F-0003#49`, `#61` and `#73` bound it. X2 also owns the retention of stall-consultation
-  notes (F-0005 L84, the part of C24 that `F-0003#49` already covers).
+  notes (F-0005 L84); `F-0003#49` keeps only a stall's diagnosis and outcome in Git.
 
 ### The clause table
 
@@ -154,7 +155,7 @@ This record is `Proposed`. If a later task accepts it, it amends ADR-0005 as fol
 | C11 | L33 | conflicts | "Trade-off scoring" contradicts "considerations, not a scoring formula" (engineering-discipline.md). | O-24 |
 | C12 | L34 | no evidence | No AGY execution model or price is in Git (`F-0001#4`). | O-20 |
 | C13 | L35 | conflicts | The AGY fallback is outside O-3, and AGY lists no Astra model. | O-21 |
-| C14 | L39–L40 | no evidence | No harness reports a quota window or figure (`F-0001#4`). | O-22 |
+| C14 | L39–L40 | no evidence | Git holds tokens only per task part (ADR-0007), and no cost figure or daily or weekly rollup for any harness (`F-0001#4`). | O-22 |
 | C15 | L42–L43 | conflicts | Read as a budget, "Quota / Budget" contradicts ADR-0007 ("recorded, not budgeted"). | D6 |
 | C16 | L44–L46 | conflicts | Execution on Devin and AGY moves work to models outside O-3. | O-20 |
 | C17 | L47–L48 | conflicts | Failover moves reasoning-tier steps off the O-3 reasoning models. | O-20 |
@@ -164,7 +165,7 @@ This record is `Proposed`. If a later task accepts it, it amends ADR-0005 as fol
 | C21 | L61–L79 | conflicts | The package goes to the Operator after every poll; `F-0001#14` sends it only at the limit. | X2 |
 | C22 | L80, L82 | conflicts | "Must never" contradicts the ladder that stops and records a limit ("Who may review"); the label matches `F-0003#66`. | X1 |
 | C23 | L83 | extends | Makes the ADR-0005 preference a prohibition; ADR-0007 makes only the reverse mismatch a finding. | D8 |
-| C24 | L84 | extends | Only "all prompt packages must be committed" is new; `F-0003#49` keeps the stall diagnosis in Git. | O-25 |
+| C24 | L84 | extends | Prompt packages and consultation notes in Git are new; `F-0003#49` keeps only a stall's diagnosis and outcome. Packages are routing work; notes go to X2. | O-25 |
 
 ## Consequences
 

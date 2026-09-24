@@ -81,3 +81,7 @@ per provider; `claude` and `agy` ran under their one login (no status command wa
 Effort: where the model name carries it (gpt-6-astra-xhigh, gpt-6-sol-xhigh,
 gemini-3.1-pro-high), that is the effort. For claude-fable-5-1 in print mode, kimi-k3,
 qwen3.8-max and gemini-3.1-pro-preview, the harness default applied and was not read.
+
+AGY identity (added for review round 2 of #46, finding 5): `agy --version` printed "1.2.10"
+on 2026-09-24; neither `agy --version` nor `agy --help` contains the word "Antigravity" or
+"Google" (`grep -ci` counted 0 for each).
