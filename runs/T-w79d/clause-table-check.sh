@@ -5,9 +5,9 @@
 # the task's demo, run by hand, with its runs recorded in test-runs.txt beside it.
 #
 # It checks the PRESENCE and the SHAPE of ADR-0012's clause table and of the
-# parts of its Decision section, and that the cited source F-0005 matches its
-# hash. It does not check MEANING — whether a basis supports its relation, or a
-# decision is right. That is the review rounds' work.
+# parts of its Decision section, outside fenced code blocks, and that the cited
+# source F-0005 matches its hash. It does not check MEANING — whether a basis
+# supports its relation, or a decision is right. That is the review rounds' work.
 #
 # Usage:
 #   sh runs/T-w79d/clause-table-check.sh [ROOT]              check ROOT (default .)
@@ -35,13 +35,42 @@ check() {
 		fail P1 "expected exactly one docs/adr/0012-*.md"
 		return 1
 	fi
-	adr=$1
+	tmp=$(mktemp -d "${TMPDIR:-/tmp}/clause-table.XXXXXX")
+	# Every predicate reads the ADR without its fenced code blocks, because a code
+	# block is not Markdown structure (CommonMark): an opening line has at most three
+	# leading spaces and then at least three backticks or three tildes; the closing
+	# line has at most three leading spaces, the same character at least as many
+	# times, and then only spaces; an unclosed block runs to the end of the file.
+	awk '
+		function fence(s,   i, c, n) {
+			i = 1
+			while (i <= 4 && substr(s, i, 1) == " ") i++
+			if (i > 4) return ""
+			c = substr(s, i, 1)
+			if (c != "`" && c != "~") return ""
+			n = 0
+			while (substr(s, i + n, 1) == c) n++
+			if (n < 3) return ""
+			rest = substr(s, i + n)
+			return c n
+		}
+		{
+			f = fence($0)
+			if (!inside) {
+				if (f != "") { inside = 1; fc = substr(f, 1, 1); fn = substr(f, 2) + 0; next }
+				print
+				next
+			}
+			if (f != "" && substr(f, 1, 1) == fc && substr(f, 2) + 0 >= fn && rest ~ /^ *$/) inside = 0
+		}
+	' "$1" > "$tmp/adr"
+	adr=$tmp/adr
 	if ! grep -Fqx -- "$HEADER" "$adr"; then
 		fail P1 "no clause table header: $HEADER"
+		rm -rf "$tmp"
 		return 1
 	fi
 
-	tmp=$(mktemp -d "${TMPDIR:-/tmp}/clause-table.XXXXXX")
 	# The table: the rows after the header up to the first line that is not a row.
 	awk -v h="$HEADER" '
 		$0 == h { on = 1; next }
@@ -187,5 +216,7 @@ mutate 7a 'clause-table: FAIL P7 no entry under "### Deferred items" inside "## 
 mutate 7b 'clause-table: FAIL P7 no entry under "### Rejected options" inside "## Decision"' 'awk "/^### Rejected options\$/ { on = 1; print; next } /^#/ { on = 0 } on && /^- / { next } { print }" "$ADR" > x && mv x "$ADR"'
 mutate 7c 'clause-table: FAIL P7 D98 is defined but no clause goes to it' 'awk "{ print } /^### Proposed decisions\$/ { print \"\"; print \"- **D98.** unused\" }" "$ADR" > x && mv x "$ADR"'
 mutate 7d 'clause-table: FAIL P7 no entry under "### Proposed decisions" inside "## Decision"' 'awk "/^## Decision\$/ { print \"## Context continued\"; next } /^### The clause table\$/ { print \"## Decision\"; next } { print }" "$ADR" > x && mv x "$ADR"'
+mutate 1d 'clause-table: FAIL P1 no clause table header' 'f=$(printf "\140\140\140"); awk -v f="$f" "/^\\| Clause \\| F-0005 lines \\|/ { print f } { print } /^\\| C24 \\|/ { print f }" "$ADR" > x && mv x "$ADR"'
+mutate 7e 'clause-table: FAIL P7 no entry under "### Rejected options" inside "## Decision"' 'f=$(printf "\140\140\140"); awk -v f="$f" "/^### Rejected options\$/ { print; print \"\"; print f; print \"- fenced\"; print f; on = 1; next } /^#/ { on = 0 } on && /^(- |  )/ { next } { print }" "$ADR" > x && mv x "$ADR"'
 printf 'clause-table self-test: %s passed, %s failed\n' "$pass" "$bad"
 [ "$bad" = 0 ]
