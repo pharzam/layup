@@ -71,3 +71,5 @@ Bindings added on the day of use:
   UTC; the OpenCode log shows "cli starting" and no later line; no output; stopped by the
   author at 08:33 UTC. Substitute: `opencode run --standalone -m opencode-go/qwen3.8-max
   --auto` smoke-ran ("Qwen3.8 Max OK", 8 s), then gave no output within 300 s (exit 124).
+- 2026-09-24, review round 1 of #46: `devin -p --model gpt-6-sol-xhigh --permission-mode
+  dangerous` -> "GPT-6 Sol XHigh Thinking OK" (4 s).
