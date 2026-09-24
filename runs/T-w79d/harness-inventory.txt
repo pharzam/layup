@@ -102,3 +102,14 @@ and Claude Sonnet 5 on Claude Code as the backup.
   plan review of #53 then gave no output in 1,200 s (exit 124).
 - `claude -p --model claude-sonnet-5 --dangerously-skip-permissions`: smoke run
   "Sonnet 5. OK."; the backup under O-29.
+- 11:21-11:47 UTC, review round 1 of #53: Kimi K3 on OpenCode (standalone) gave no output
+  in about 10 min and was stopped (O-30 arrived); Grok 4.7 on OpenCode (O-30) with the brief
+  as the command argument showed "cli starting" and no later activity (stopped, O-31); a
+  short prompt that points to a file answered in 5 s (the long argument is the cause of the
+  OpenCode hangs of this day); Grok 4.7 with that short prompt ran 641 s, then showed no
+  database activity for 191 s and was stopped by a watchdog; Claude Sonnet 5 (backup) was
+  stopped after about 1.5 min when Devin worked again.
+- 11:41 UTC, Devin works again: `gpt-6-sol-xhigh`, `gpt-6-luna-high`, `swe-2`,
+  `gemini-3-8-flash-high` and `kimi-k3-high` each answered its smoke run.
+- 11:47 UTC, review round 1 of #53: `devin -p --model gpt-6-sol-xhigh` exited 0 after 517 s
+  with the review record (its heading followed status text on the same line).

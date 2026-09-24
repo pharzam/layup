@@ -36,11 +36,14 @@ check() {
 		return 1
 	fi
 	tmp=$(mktemp -d "${TMPDIR:-/tmp}/clause-table.XXXXXX")
-	# Every predicate reads the ADR without its fenced code blocks, because a code
-	# block is not Markdown structure (CommonMark): an opening line has at most three
-	# leading spaces and then at least three backticks or three tildes; the closing
-	# line has at most three leading spaces, the same character at least as many
-	# times, and then only spaces; an unclosed block runs to the end of the file.
+	# Every predicate reads the ADR without its fenced code blocks and its HTML
+	# comment blocks, because neither is Markdown structure (CommonMark). A fence
+	# opens on a line with at most three leading spaces and then at least three
+	# backticks or three tildes, and closes on a line with at most three leading
+	# spaces, the same character at least as many times, and then only spaces. A
+	# comment block opens on a line with at most three leading spaces and then
+	# `<!--`, and closes on the first line that holds `-->`. An unclosed block of
+	# either kind runs to the end of the file.
 	awk '
 		function fence(s,   i, c, n) {
 			i = 1
@@ -54,10 +57,18 @@ check() {
 			rest = substr(s, i + n)
 			return c n
 		}
+		function lead(s,   i) {
+			i = 1
+			while (i <= 4 && substr(s, i, 1) == " ") i++
+			return i > 4 ? "" : substr(s, i)
+		}
 		{
+			if (comment) { if (index($0, "-->")) comment = 0; next }
 			f = fence($0)
 			if (!inside) {
 				if (f != "") { inside = 1; fc = substr(f, 1, 1); fn = substr(f, 2) + 0; next }
+				l = lead($0)
+				if (substr(l, 1, 4) == "<!--") { if (!index(substr(l, 5), "-->")) comment = 1; next }
 				print
 				next
 			}
@@ -72,11 +83,14 @@ check() {
 	fi
 
 	# The table: the rows after the header up to the first line that is not a row.
+	# A row may start with up to three spaces (CommonMark), so they are removed.
 	awk -v h="$HEADER" '
 		$0 == h { on = 1; next }
-		on && /^\|[- |:]*$/ { next }
-		on && /^\|/ { print; next }
-		on { exit }
+		!on { next }
+		{ l = $0; k = 0; while (k < 3 && substr(l, 1, 1) == " ") { l = substr(l, 2); k++ } }
+		l ~ /^\|[- |:]*$/ { next }
+		l ~ /^\|/ { print l; next }
+		{ exit }
 	' "$adr" > "$tmp/rows"
 	# One tab-separated line per row: id, relation, basis, destination (cells trimmed, backticks dropped).
 	awk -F'|' '{
@@ -111,6 +125,10 @@ check() {
 
 	# P5 — each Destination is exactly one allowed value; D, O and X values are defined.
 	awk -F'\t' '{ print $1 "\t" $4 }' "$tmp/cells" | while IFS="$(printf '\t')" read -r id dest; do
+		if [ "$id" = C00 ] && [ "$dest" != "not policy" ]; then
+			printf 'clause-table: FAIL P5 C00 goes to "%s", but only "not policy" is allowed for C00\n' "$dest"
+			continue
+		fi
 		case $dest in
 			"not policy") [ "$id" = C00 ] || printf 'clause-table: FAIL P5 %s uses "not policy", which only C00 may use\n' "$id" ;;
 			rejected) : ;;
@@ -218,5 +236,9 @@ mutate 7c 'clause-table: FAIL P7 D98 is defined but no clause goes to it' 'awk "
 mutate 7d 'clause-table: FAIL P7 no entry under "### Proposed decisions" inside "## Decision"' 'awk "/^## Decision\$/ { print \"## Context continued\"; next } /^### The clause table\$/ { print \"## Decision\"; next } { print }" "$ADR" > x && mv x "$ADR"'
 mutate 1d 'clause-table: FAIL P1 no clause table header' 'f=$(printf "\140\140\140"); awk -v f="$f" "/^\\| Clause \\| F-0005 lines \\|/ { print f } { print } /^\\| C24 \\|/ { print f }" "$ADR" > x && mv x "$ADR"'
 mutate 7e 'clause-table: FAIL P7 no entry under "### Rejected options" inside "## Decision"' 'f=$(printf "\140\140\140"); awk -v f="$f" "/^### Rejected options\$/ { print; print \"\"; print f; print \"- fenced\"; print f; on = 1; next } /^#/ { on = 0 } on && /^(- |  )/ { next } { print }" "$ADR" > x && mv x "$ADR"'
+mutate 1e 'clause-table: FAIL P1 no clause table header' 'awk "/^\\| Clause \\| F-0005 lines \\|/ { print \"<!--\" } { print } /^\\| C24 \\|/ { print \"-->\" }" "$ADR" > x && mv x "$ADR"'
+mutate 2d 'clause-table: FAIL P2 a row opens with "C25"' 'awk "{ print } /^\\| C24 \\|/ { r = \$0; sub(/C24/, \"C25\", r); print \" \" r }" "$ADR" > x && mv x "$ADR"'
+mutate 5d 'clause-table: FAIL P5 C00 goes to "D1", but only "not policy" is allowed for C00' "set -- C00 6 D1; $row"
+mutate 7f 'clause-table: FAIL P7 no entry under "### Rejected options" inside "## Decision"' 'awk "/^### Rejected options\$/ { print; print \"<!--\"; on = 1; next } on && /^#/ { print \"-->\"; on = 0 } { print }" "$ADR" > x && mv x "$ADR"'
 printf 'clause-table self-test: %s passed, %s failed\n' "$pass" "$bad"
 [ "$bad" = 0 ]

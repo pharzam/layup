@@ -13,6 +13,7 @@ Issue: [#53](https://github.com/pharzam/layup/issues/53). Source: [#46](https://
 | Role | First binding | Result | Ran on |
 | -- | -- | -- | -- |
 | Plan review (revision 2) | Kimi K3 on OpenCode, standalone | no output in 1,200 s (exit 124) | Claude Sonnet 5 on Claude Code, 603 s — an execution-tier model on a reasoning-tier part |
+| Review round 1 | Kimi K3 on OpenCode, standalone; then Grok 4.7 on OpenCode (O-30) | no output; stopped (O-31) — see the inventory | GPT-6 Sol (xhigh) on Devin, 517 s (O-30; Devin worked again at 11:41 UTC) |
 
 The plan review of revision 1 ran on GPT-6 Sol (xhigh) on Devin, before Devin refused it. The review rounds are recorded on #53 and in the resource record at close-out.
 

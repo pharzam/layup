@@ -17,7 +17,9 @@ the tool that generated it). Its 25 clauses C00 to C24 were checked one by one a
 tree: 15 conflict, 3 have no evidence, 6 extend the tree, 1 is not policy, and none only
 restates it (`runs/T-w79d/clause-map.md`). The harnesses and models were measured on
 2026-09-24 (`runs/T-w79d/harness-inventory.txt`): a smoke run proves that a binding ran,
-not its price, quota or fitness, and no harness reported a quota.
+not its price, quota or fitness. No harness reported how much of a quota was used; one
+(OpenCode's Google provider) reported only that a free-tier quota with a limit of 0 was
+exceeded.
 
 The constraints: Git is the system of record (`F-0001#1`); no value without evidence
 (`F-0001#4`); a check that is not active does not pass (`F-0001#5`); a deterministic check
@@ -54,10 +56,11 @@ This record is `Proposed`. If a later task accepts it, it amends ADR-0005 as fol
   binding enters the table only with a dated inventory entry that names its harness,
   model, effort and account alias; a model with no entry is not routable (`F-0001#4`).
 - **D3.** The route is computed by a fixed rule, not chosen by a model: the first eligible
-  binding of the step's tier, in table order. Eligible means smoke-run on the day of use,
-  not failed in this task, and allowed for the step by its quota state (D6). The rule
-  prints the binding; a harness agent launches it; the resource record names the model and
-  the harness, for example "Claude Fable 5.1 on Claude Code".
+  binding of the step's tier, in table order, among the rows not marked `fallback` (D5).
+  Eligible means smoke-run on the day of use, not failed in this task, and allowed for the
+  step by its quota state (D6). The rule prints the binding; a harness agent launches it;
+  the resource record names the model and the harness, for example "Claude Fable 5.1 on
+  Claude Code".
 - **D4.** (no clause) A dispatch fails on a non-zero exit, an empty standard output, a
   standard output of only white space, a standard output without its required shape, or no
   answer within its time limit. Standard error is never the answer. An exit code alone is
@@ -75,10 +78,13 @@ This record is `Proposed`. If a later task accepts it, it amends ADR-0005 as fol
 - **D6.** "Quota" is the vendor's quota, an input to the route, never a budget:
   ADR-0007's "recorded, not budgeted" stands. A state comes only from a figure that the
   vendor reports for a quota pool: Normal, Constrained or Reserve exceeded, at thresholds
-  the Operator sets. With no figure the state is **unknown**, never Normal (`F-0001#5`).
-  Each state allows a set of steps: Normal, every step in table order; Constrained,
-  reasoning-tier steps only; Reserve exceeded, no step; unknown, the steps that O-22
-  allows. A binding runs a step only if the state of each of its pools allows it. Each figure and each change of state is an append-only record in Git (ADR-0011, 2).
+  the Operator sets. A vendor report that a pool's quota is exceeded puts the pool in
+  Reserve exceeded, with or without a used amount. With no figure, or with a report that
+  gives neither a used amount nor an exceeded quota, the state is **unknown**, never Normal
+  (`F-0001#5`). Each state allows a set of steps: Normal, every step in table order;
+  Constrained, reasoning-tier steps only; Reserve exceeded, no step; unknown, the steps
+  that O-22 allows. A binding runs a step only if the state of each of its pools allows
+  it. Each figure and each change of state is an append-only record in Git (ADR-0011, 2).
 - **D7.** (no clause) A plan review, a review round, a judge and a panel member take a binding that
   "Who may review" accepts. A blind reviewer may use the author's harness with a different
   model (O-18). Whether a different harness is required stays X1.
