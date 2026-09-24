@@ -85,3 +85,20 @@ qwen3.8-max and gemini-3.1-pro-preview, the harness default applied and was not 
 AGY identity (added for review round 2 of #46, finding 5): `agy --version` printed "1.2.10"
 on 2026-09-24; neither `agy --version` nor `agy --help` contains the word "Antigravity" or
 "Google" (`grep -ci` counted 0 for each).
+
+Bindings for task T-9tgn (#53), 2026-09-24. Operator decision O-27 excludes Claude Fable
+5.1, GPT-6 Astra and the AGY harness for this session; O-29 names Kimi K3 on OpenCode first
+and Claude Sonnet 5 on Claude Code as the backup.
+- `devin -p --model gpt-6-sol-xhigh` (the plan review of #53) and smoke runs of
+  `gpt-6-sol-high`, `gpt-6-sol-medium`, `gemini-3-8-flash-high` and `claude-sonnet-5-high`:
+  each "Error: Upgrade to Pro to access this model (https://devin.ai/pricing)", exit 1,
+  0 s. Earlier the same day `gpt-6-sol-xhigh` ran reviews of #46 (604 s, 578 s). So Devin's
+  access ended during the day; no quota figure was shown.
+- `opencode run --standalone -m google/gemini-3.1-pro-preview --auto`: no output in 240 s.
+  Through the OpenCode service: "Quota exceeded for metric:
+  generativelanguage.googleapis.com/generate_content_free_tier_input_token_count, limit: 0,
+  model: gemini-3.1-pro" (1 s) - the only quota figure a harness reported on this day.
+- `opencode run --standalone -m opencode-go/kimi-k3 --auto`: smoke run "Kimi K3 OK"; the
+  plan review of #53 then gave no output in 1,200 s (exit 124).
+- `claude -p --model claude-sonnet-5 --dangerously-skip-permissions`: smoke run
+  "Sonnet 5. OK."; the backup under O-29.

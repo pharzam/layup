@@ -58,3 +58,54 @@ clause-table: FAIL P7 no entry under "### Proposed decisions" inside "## Decisio
 $ sh runs/T-w79d/clause-table-check.sh --self-test .   (also under dash)
 exit=0
 clause-table self-test: 19 passed, 0 failed   (case 7d added: the move above)
+
+== Task T-9tgn (#53), 2026-09-24. Branch T-9tgn, cut from 9c989ef.
+
+-- Finding 1, red (a): the check of 9c989ef on the two new mutations
+$ sh <the check of 9c989ef> <a copy of the tree with mutation 1d>
+clause-table: OK
+exit=0
+$ sh <the check of 9c989ef> <a copy of the tree with mutation 7e>
+clause-table: OK
+exit=0
+
+-- Finding 1, red (b): the self-test with cases 1d and 7e, on the check of 9c989ef
+$ sh runs/T-w79d/clause-table-check.sh --self-test .
+exit=1
+FAIL  1d  want "clause-table: FAIL P1 no clause table header", got exit 0:
+FAIL  7e  want "clause-table: FAIL P7 no entry under "### Rejected options" inside "## Decision"", got exit 0:
+clause-table self-test: 19 passed, 2 failed
+
+-- Finding 1, green: the check strips fenced code blocks
+$ sh runs/T-w79d/clause-table-check.sh --self-test .   (also under dash)
+exit=0
+clause-table self-test: 21 passed, 0 failed
+
+-- Findings 2 to 4, before (9c989ef) and after
+== Before, finding 2: model names in D5
+$ D5 text | grep -c -E 'Fable|Astra'
+2
+== Before, finding 4
+$ grep -c 'empty output' docs/adr/0012-route-work-across-harness-agents.md
+1
+== Before, finding 3: D5 at 9c989ef
+- **D5.** When no binding of the step's tier is eligible, the route tries the fallback
+  models that O-18 names, Claude Fable 5.1 and then "Astra 6.1", each only through a
+  binding that the inventory holds and that meets D3 apart from the tier; "Astra 6.1" is
+  not tried until O-21 names its model. If none answers, the route stops, and the author
+  asks the Operator on the issue (R6). O-18 puts these fallbacks before any stall status;
+  what gives a task the stall status, and what follows, is X2.
+== After, finding 2: model names in D5
+0
+== After, finding 4: empty output
+0
+== After, finding 3: D5
+- **D5.** When no binding of the step's tier is eligible, the route tries the table's rows
+  marked `fallback`, in table order, each under D7, D6 and D3 except the tier. The model
+  names live in those rows, not here (D2); O-18 gives the Operator's proposed first values
+  (see the Context), and a name with no inventory binding is not routable (O-21). If no
+  fallback answers, the route runs the step on a binding of the other tier that D7, D6 and
+  D3 allow, and the resource record names the tier it could not reach (ADR-0005). Only
+  if no binding at all is eligible does the route stop, and the author asks the Operator
+  on the issue (R6). O-18 puts the fallbacks before any stall status; what gives that
+  status is X2.

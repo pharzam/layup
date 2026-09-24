@@ -282,13 +282,20 @@ failure modes worth keeping.
   every living mirror in the same change; the immutable ADR and archived decision copies
   stay as history.
 
-- ❌ **An agent command exits 0 with no answer, or never ends.** `agy -p --mode plan` was refused a
-  shell command and exited 0 with an empty output; an `opencode run` wrote nothing for
-  more than 20 minutes. It is silent because a script that trusts the exit code counts
-  the run as a review or a panel answer. **The check:** a run passes only with a
-  non-empty output that has its required heading, inside a time limit; record each run
-  with its exit code, time and output size (`runs/T-w79d/harness-inventory.txt`).
-  Learned in `T-q1x6` and `T-w79d`.
+- ❌ **An agent command exits 0 with no answer, or never ends.** `agy -p --mode plan`
+  was refused a shell command and exited 0 with an empty standard output; an `opencode
+  run` wrote nothing for more than 20 minutes. It is silent because a script that trusts
+  the exit code counts the run as a review or a panel answer. **The check:** a run passes
+  only with a non-empty standard output that has its required heading, inside a time
+  limit; record each run with its exit code, time and output size
+  (`runs/T-w79d/harness-inventory.txt`). Learned in `T-q1x6` and `T-w79d`.
+- ❌ **A Markdown shape check reads a code block as structure.** The clause-table check
+  of ADR-0012 found its table header, its rows and a `- ` entry inside a fenced code
+  block, and printed OK for an ADR with no table (review round 3 of #46). It is silent
+  because the text is all there; only its Markdown role is wrong. **The check:** strip
+  fenced code blocks by the CommonMark rule before a check reads headings, tables or
+  lists, and keep a self-test case that fences each structure (`runs/T-w79d/`, cases 1d
+  and 7e). Learned in `T-9tgn`.
 
 ## 3. Validation — how you check you are not fooling yourself
 
