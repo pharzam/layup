@@ -109,3 +109,19 @@ $ grep -c 'empty output' docs/adr/0012-route-work-across-harness-agents.md
   if no binding at all is eligible does the route stop, and the author asks the Operator
   on the issue (R6). O-18 puts the fallbacks before any stall status; what gives that
   status is X2.
+
+== Final verification before the first freeze of T-9tgn, at db505c5
+$ sh runs/T-w79d/clause-table-check.sh .
+clause-table: OK
+exit=0
+$ sh runs/T-w79d/clause-table-check.sh --self-test .
+clause-table self-test: 21 passed, 0 failed
+exit=0
+$ dash runs/T-w79d/clause-table-check.sh --self-test .
+clause-table self-test: 21 passed, 0 failed
+$ sh docs/adr/adr-lint.sh
+adr-lint: OK
+$ sh docs/setup/setup-check.sh
+exit=0 (15 OK lines, 0 FAIL lines)
+$ git diff --check 43a05c8 HEAD
+exit=0
