@@ -80,5 +80,6 @@ stays, so the history of what the customer said, and when, is never lost.
 | [F-0001](F-0001-layup-problem-statement-brief.md) | LAYUP Problem Statement Brief, Revision 6 (approved 2026-09-23) | 2026-09-23 | Raw |
 | [F-0002](F-0002-architectural-vision-brief.md) | Architectural Vision Brief (a solution document: input for ADRs, not requirements) | 2026-09-23 | Raw |
 | [F-0003](F-0003-layup-psb-numbered-facts-part-2.md) | LAYUP Problem Statement Brief, Revision 6 — numbered facts, part 2 (the same file as `F-0001`) | 2026-09-23 | Raw |
+| [F-0005](F-0005-operator-routing-policy.md) | Operator's harness and model routing policy (a solution proposal: input for ADRs, not requirements) | 2026-09-24 | Raw |
 
 <!-- Add one row per facts document as you collect them. Keep the newest at the bottom. -->
