@@ -52,3 +52,14 @@ proves that the account lists the model, not that a call to it succeeds (for
 example `anthropic/claude-opus-4-8` is listed by OpenCode and failed for credit).
 A later binding (a substitute or a judge) is smoke-run on the day of use and
 added below before it is used.
+
+Bindings added on the day of use:
+- 2026-09-24, panel member A: `claude -p --model claude-fable-5-1 --dangerously-skip-permissions`
+  (Claude Code 2.1.281, print mode) -> "Fable 5.1 OK" (5 s).
+- 2026-09-24, panel member B and the plan reviews of #46: `devin -p --model gpt-6-astra-xhigh`
+  ran three plan reviews of #46 (523 s, 605 s, 572 s; each exit 0 with a review).
+- 2026-09-24, panel member C and the judge of a checker–refuter dispute:
+  `agy -p --model gemini-3.1-pro-high --dangerously-skip-permissions` ran the plan review
+  and review round 2 of #47 (239 s, 391 s; each exit 0 with a review). The same model with
+  `--mode plan` and no skip flag exited 0 with NO output (a shell command was denied).
+- 2026-09-24, panel member D: `opencode run -m opencode-go/kimi-k3` -> "Kimi K3 OK" (item 5).
