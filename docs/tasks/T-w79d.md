@@ -25,7 +25,7 @@ One pass each, no vote; the full comments are on #46. Member D (portability and 
 | B1 | B, GPT-6 Astra on Devin | Recorded priority, no percentage routing | Rejected alone: O-16 keeps the quota states |
 | B2 | B | Quota states gated on vendor evidence; `unknown` never Normal | Selected: D6 (thresholds open, O-22) |
 | B3 | B | Bindings ordered by measured cost | Rejected now: no comparable cost exists |
-| C1 | C, Gemini 3.1 Pro on AGY | Failure detected on exit code and empty output; deterministic fallback | Selected: D4, with the order in the table, not in a script |
+| C1 | C, Gemini 3.1 Pro on AGY | Failure detected on a non-zero exit code or an empty standard output; deterministic fallback | Selected: D4, with the order in the table, not in a script |
 | C2 | C | A probe before each dispatch | Rejected: delay on every dispatch |
 | C3 | C | Hard stop while a quota is unknown | Rejected: all work stops today |
 

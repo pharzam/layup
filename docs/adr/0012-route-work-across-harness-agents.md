@@ -55,42 +55,43 @@ This record is `Proposed`. If a later task accepts it, it amends ADR-0005 as fol
   so a product change edits the table, not an ADR; where the table lives is O-19. A
   binding enters the table only with a dated inventory entry that names its harness,
   model, effort and account alias; a model with no entry is not routable (`F-0001#4`).
-- **D3.** The route is computed by a fixed rule, not chosen by a model: the first eligible
-  binding of the step's tier, in table order, among the rows not marked `fallback` (D5).
-  Eligible means smoke-run on the day of use, not failed in this task, and allowed for the
-  step by its quota state (D6). The rule prints the binding; a harness agent launches it;
-  the resource record names the model and the harness, for example "Claude Fable 5.1 on
-  Claude Code".
+- **D3.** The route is computed by a fixed rule, not chosen by a model. A row is
+  **eligible** when its binding had a smoke run in the 24 hours before the dispatch (by UTC
+  timestamps), has not failed in this task (D4), and the state of each of its quota pools
+  allows the step (D6). The route takes the first eligible row of the step's tier, in
+  table order, among the rows not marked `fallback`. The rule prints the binding; a
+  harness agent launches it; the resource record names the model and the harness, for
+  example "Claude Fable 5.1 on Claude Code".
 - **D4.** (no clause) A dispatch fails on a non-zero exit, an empty standard output, a
   standard output of only white space, a standard output without its required shape, or no
   answer within its time limit. Standard error is never the answer. An exit code alone is
-  not evidence: a print mode exited 0 with no output on 2026-09-24. On a failure the next
-  eligible binding of the same tier runs.
-- **D5.** When no binding of the step's tier is eligible, the route tries the table's rows
-  marked `fallback`, in table order, each under D7, D6 and D3 except the tier. The model
-  names live in those rows, not here (D2); O-18 gives the Operator's proposed first values
-  (see the Context), and a name with no inventory binding is not routable (O-21). If no
-  fallback answers, the route runs the step on a binding of the other tier that D7, D6 and
-  D3 allow, and the resource record names the tier it could not reach (ADR-0005). Only
-  if no binding at all is eligible does the route stop, and the author asks the Operator
-  on the issue (R6). O-18 puts the fallbacks before any stall status; what gives that
-  status is X2.
+  not evidence: a print mode exited 0 with no output on 2026-09-24. After a failure the
+  route runs D3, and then D5, again without the failed row.
+- **D5.** If D3 finds no row, the route takes the first eligible row marked `fallback`, of
+  any tier, in table order. If there is none, it takes the first eligible row of the other
+  tier, in table order, among the rows not marked `fallback`, and the resource record
+  names the tier it could not reach (ADR-0005). If there is none either, the route stops,
+  and the author asks the Operator on the issue (R6). For a review step, each row it takes
+  must also meet D7. The model names live in the rows, not here (D2); O-18 gives the
+  Operator's proposed first values for the `fallback` rows (see the Context), and a name
+  with no inventory binding is not routable (O-21). O-18 puts the fallbacks before any
+  stall status; what gives that status is X2.
 - **D6.** "Quota" is the vendor's quota, an input to the route, never a budget:
-  ADR-0007's "recorded, not budgeted" stands. A state comes only from a figure that the
-  vendor reports for a quota pool: Normal, Constrained or Reserve exceeded, at thresholds
-  the Operator sets. A vendor report that a pool's quota is exceeded puts the pool in
-  Reserve exceeded, with or without a used amount. With no figure, or with a report that
-  gives neither a used amount nor an exceeded quota, the state is **unknown**, never Normal
-  (`F-0001#5`). Each state allows a set of steps: Normal, every step in table order;
-  Constrained, reasoning-tier steps only; Reserve exceeded, no step; unknown, the steps
-  that O-22 allows. A binding runs a step only if the state of each of its pools allows
-  it. Each figure and each change of state is an append-only record in Git (ADR-0011, 2).
+  ADR-0007's "recorded, not budgeted" stands. Each quota pool has one state, set by the
+  last vendor report on it: a report that the quota is exceeded gives **Reserve
+  exceeded**, with or without figures; a report with both a used amount and a limit gives
+  **Normal**, **Constrained** or **Reserve exceeded** by the thresholds the Operator sets;
+  no report, or any other report, gives **unknown**, never Normal (`F-0001#5`). Each state
+  allows a set of steps: Normal, every step; Constrained, reasoning-tier steps only;
+  Reserve exceeded, no step; unknown, the steps that O-22 allows. Each report and each
+  change of state is an append-only record in Git (ADR-0011, 2).
 - **D7.** (no clause) A plan review, a review round, a judge and a panel member take a
   binding that "Who may review" accepts. A blind reviewer may use the author's harness
   with a different model (O-18). Whether a different harness is required stays X1.
-- **D8.** Least cost stays the ADR-0005 preference: execution-tier work goes to the
-  execution tier. A reasoning-tier model on an execution part is recorded in the resource
-  record, not a new finding.
+- **D8.** C23's prohibition is not adopted: ADR-0005's routing stands, and the execution
+  tier owns execution-tier work. When a reasoning-tier model runs an execution-tier part,
+  the resource record names it, and this record makes it no finding (ADR-0007 names only
+  the reverse mismatch as one).
 
 ### Rejected options
 
@@ -119,11 +120,14 @@ This record is `Proposed`. If a later task accepts it, it amends ADR-0005 as fol
   O-3; add named models outside the current O-3 set, Claude or not, per tier (for example
   Claude Opus 4.8, "latest Haiku", an AGY or a Devin model); or make O-3 bind the
   author's route only and let "Who may review" pick a reviewer's model. Is "Anthropic
-  models exclusively" on Claude Code a rule or a description? Which model is "free tier",
-  and does a paid fallback need authorization?
-- **O-21.** Which exact model and effort is "Astra 6.1" (and "Astra GPT / Astra 6")?
-  Devin lists `gpt-6-astra-low` to `-max` and no 6.1; AGY and OpenCode list no Astra
-  model. On AGY and OpenCode, is the fallback a change of harness to Devin?
+  models exclusively" on Claude Code a rule or a description? Which binding counts as
+  "free tier": only one whose vendor charges nothing per token, or also one whose rate a
+  prepaid allowance or a promotional credit covers? Does a paid fallback need
+  authorization?
+- **O-21.** Do "Astra 6.1" (O-18) and "Astra GPT / Astra 6" (F-0005 L29, L35) name one
+  model or two? For each, which exact model and effort? Devin lists `gpt-6-astra-low` to
+  `-max` and no 6.1; AGY and OpenCode list no Astra model. On AGY and OpenCode, is the
+  fallback a change of harness to Devin?
 - **O-22.** Quota and time figures: the thresholds (F-0005 gives 70 % and 90 %); the
   vendor's quota window, which can differ from the daily and weekly windows in which
   F-0005 L40 reports tokens and cost; the source of each figure and how recent it must
@@ -142,11 +146,13 @@ This record is `Proposed`. If a later task accepts it, it amends ADR-0005 as fol
 - **X1.** Review independence by harness product (F-0005 L80–L82). It would change "Who
   may review". Its decision must reconcile O-18 (same harness, different model) with
   `F-0003#66` (a harness agent that did not make the change) and with F-0005 L21, L27
-  and L82, which together put every review of Claude Code work on a non-Anthropic model.
+  and L82: L82 moves a review of Claude Code work to another harness, where L27 allows
+  only non-Anthropic models on Devin and OpenCoder, and AGY lists Claude models too.
 - **X2.** The stall protocol (F-0005 L52–L79). Where it changes the trigger or the
   hand-off of `F-0001#14`, it needs a PSB revision by the idea owner (`F-0001#23`);
   `F-0003#49`, `#61` and `#73` bound it. X2 also owns the retention of stall-consultation
-  notes (F-0005 L84); `F-0003#49` keeps only a stall's diagnosis and outcome in Git.
+  notes (F-0005 L84); `F-0003#49` requires at least a stall's diagnosis and outcome in
+  Git.
 
 ### The clause table
 
@@ -175,8 +181,8 @@ This record is `Proposed`. If a later task accepts it, it amends ADR-0005 as fol
 | C20 | L57–L60 | conflicts | A poll of four named products makes the procedure depend on them (`F-0001#9`) and uses direct agent queries (R6). | X2 |
 | C21 | L61–L79 | conflicts | The package goes to the Operator after every poll; `F-0001#14` sends it only at the limit. | X2 |
 | C22 | L80, L82 | conflicts | "Must never" contradicts the ladder that stops and records a limit ("Who may review"); the label matches `F-0003#66`. | X1 |
-| C23 | L83 | extends | Makes the ADR-0005 preference a prohibition; ADR-0007 makes only the reverse mismatch a finding. | D8 |
-| C24 | L84 | extends | Prompt packages and consultation notes in Git are new; `F-0003#49` keeps only a stall's diagnosis and outcome. Packages are routing work; notes go to X2. | O-25 |
+| C23 | L83 | extends | Makes a prohibition of ADR-0005's routing (the execution tier owns routine edits); ADR-0007 names only the reverse mismatch as a finding. | D8 |
+| C24 | L84 | extends | `F-0003#49` requires at least a stall's diagnosis and outcome in Git; prompt packages and the other consultation notes are new. Packages are routing work; notes go to X2. | O-25 |
 
 ## Consequences
 

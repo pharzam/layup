@@ -30,4 +30,5 @@ The plan review of revision 1 ran on GPT-6 Sol (xhigh) on Devin, before Devin re
 `git grep -n -E "empty output|Fable 5\.1|Astra|T-w79d" -- . ':!runs/' ':!docs/facts/'`, each hit classed:
 
 - **Stale, fixed:** the guardrails §2 lesson said "empty output" where ADR-0012 D4 now says standard output — aligned; the backlog line named `T-w79d` — now `T-9tgn`.
+- **Stale, fixed after review round 2 of #53:** `T-w79d.md`'s summary of panel option C1 said "empty output"; panel C wrote "an empty standard output" — corrected.
 - **Accurate history, kept:** ADR-0012's Context and clause rows (C07, C09, C13, O-21) and its D3 example describe `F-0005` and the inventory; O-3 in `engineering-discipline.md` and `setup/record-T-n1hp.md`; the resource records of earlier tasks; `T-w79d.md`, which is #46's record; the glossary rows; the `runs/T-w79d/` paths. Raw facts are not edited.
