@@ -282,6 +282,14 @@ failure modes worth keeping.
   every living mirror in the same change; the immutable ADR and archived decision copies
   stay as history.
 
+- ❌ **An agent command exits 0 with no answer, or never ends.** `agy -p --mode plan` was refused a
+  shell command and exited 0 with an empty output; an `opencode run` wrote nothing for
+  more than 20 minutes. It is silent because a script that trusts the exit code counts
+  the run as a review or a panel answer. **The check:** a run passes only with a
+  non-empty output that has its required heading, inside a time limit; record each run
+  with its exit code, time and output size (`runs/T-w79d/harness-inventory.txt`).
+  Learned in `T-q1x6` and `T-w79d`.
+
 ## 3. Validation — how you check you are not fooling yourself
 
 A result is **untrusted** until it passes the checks below, and the pass is a

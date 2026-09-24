@@ -12,3 +12,34 @@ FAIL  0012-route-work-across-harness-agents.md: no row for it in README.md's ind
 $ sh runs/T-w79d/clause-table-check.sh .
 exit=1
 clause-table: FAIL P1 no clause table header: | Clause | F-0005 lines | Relation | Basis | Destination |
+
+== Green (2026-09-24): ADR-0012 written, index row added; commit 272505f.
+$ sh runs/T-w79d/clause-table-check.sh .
+exit=0
+clause-table: OK
+$ sh docs/adr/adr-lint.sh
+exit=0
+adr-lint: OK (one WARN: nothing outside adr/ links ADR-0012; docs/tasks/T-w79d.md links it)
+
+== Self-test (2026-09-24), the same tree: the unmutated copy passed first.
+$ sh runs/T-w79d/clause-table-check.sh --self-test .
+exit=0
+ok    1a  clause-table: FAIL P1 expected exactly one docs/adr/0012-*.md
+ok    1b  clause-table: FAIL P1 expected exactly one docs/adr/0012-*.md
+ok    1c  clause-table: FAIL P1 no clause table header: | Clause | F-0005 lines | Relation | Basis | Destination |
+ok    2a  clause-table: FAIL P2 C07 opens 0 rows, expected 1
+ok    2b  clause-table: FAIL P2 C07 opens 2 rows, expected 1
+ok    2c  clause-table: FAIL P2 a row opens with "C25", not an ID C00..C24
+ok    3   clause-table: FAIL P3 C01 has relation "maybe"
+ok    4a  clause-table: FAIL P4 C01 has no citation in its basis
+ok    4b  clause-table: FAIL P4 C01 has no citation in its basis
+ok    5a  clause-table: FAIL P5 C01 has destination "D1 O-16", not one of D<n>, O-<n>, X<n>, rejected, not policy
+ok    5b  clause-table: FAIL P5 C01 goes to D99, which the ADR does not define
+ok    5c  clause-table: FAIL P5 C01 uses "not policy", which only C00 may use
+ok    6a  clause-table: FAIL P6 check facts fails: setup-check: facts FAIL hash: docs/facts/operator-routing-policy.md does not match docs/setup/facts.sha256
+ok    6b  clause-table: FAIL P6 check facts fails: setup-check: facts FAIL listed: docs/facts/operator-routing-policy.md is not in docs/setup/facts.sha256
+ok    6c  clause-table: FAIL P6 expected exactly one docs/facts/F-0005-*.md
+ok    7a  clause-table: FAIL P7 no entry under "### Deferred items"
+ok    7b  clause-table: FAIL P7 no entry under "### Rejected options"
+ok    7c  clause-table: FAIL P7 D98 is defined but no clause goes to it and it does not say (no clause)
+clause-table self-test: 18 passed, 0 failed

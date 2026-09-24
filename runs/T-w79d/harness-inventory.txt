@@ -67,3 +67,7 @@ Bindings added on the day of use:
   --dangerously-skip-permissions` run 1 exited 1 after 71 s with "Error: authentication
   timed out" and no output; a smoke run then answered "Gemini 3.1 Pro OK" (10 s); run 2
   exited 0 after 168 s with the verdicts.
+- 2026-09-24, panel member D: `opencode run -m opencode-go/kimi-k3 --auto`, started 08:10:15
+  UTC; the OpenCode log shows "cli starting" and no later line; no output; stopped by the
+  author at 08:33 UTC. Substitute: `opencode run --standalone -m opencode-go/qwen3.8-max
+  --auto` smoke-ran ("Qwen3.8 Max OK", 8 s), then gave no output within 300 s (exit 124).

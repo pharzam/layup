@@ -30,6 +30,8 @@ same summary, dated — rather than deleting it or checking it off.
 - **‹ID›** — ‹one-sentence summary› ([‹ADR or doc link›](...); [detail](‹id›.md))
 -->
 
+- **T-w79d** — ADR-0012 (Proposed): route work across harness agents, from the Operator's routing policy `F-0005` ([#46](https://github.com/pharzam/layup/issues/46); [ADR-0012](../adr/0012-route-work-across-harness-agents.md); [detail](T-w79d.md))
+
 ## Next
 
 <!-- Deliberately deferred tasks, same one-line shape. -->
