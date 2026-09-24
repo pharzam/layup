@@ -85,9 +85,9 @@ This record is `Proposed`. If a later task accepts it, it amends ADR-0005 as fol
   Constrained, reasoning-tier steps only; Reserve exceeded, no step; unknown, the steps
   that O-22 allows. A binding runs a step only if the state of each of its pools allows
   it. Each figure and each change of state is an append-only record in Git (ADR-0011, 2).
-- **D7.** (no clause) A plan review, a review round, a judge and a panel member take a binding that
-  "Who may review" accepts. A blind reviewer may use the author's harness with a different
-  model (O-18). Whether a different harness is required stays X1.
+- **D7.** (no clause) A plan review, a review round, a judge and a panel member take a
+  binding that "Who may review" accepts. A blind reviewer may use the author's harness
+  with a different model (O-18). Whether a different harness is required stays X1.
 - **D8.** Least cost stays the ADR-0005 preference: execution-tier work goes to the
   execution tier. A reasoning-tier model on an execution part is recorded in the resource
   record, not a new finding.
@@ -117,9 +117,10 @@ This record is `Proposed`. If a later task accepts it, it amends ADR-0005 as fol
   under `docs/setup/` with a check?
 - **O-20.** Which bindings join which tier: O-3 lists Claude models only. Options: keep
   O-3; add named models outside the current O-3 set, Claude or not, per tier (for example
-  Claude Opus 4.8, "latest Haiku", an AGY or a Devin model); or make O-3 bind the author's route only and let "Who may review" pick
-  a reviewer's model. Is "Anthropic models exclusively" on Claude Code a rule or a
-  description? Which model is "free tier", and does a paid fallback need authorization?
+  Claude Opus 4.8, "latest Haiku", an AGY or a Devin model); or make O-3 bind the
+  author's route only and let "Who may review" pick a reviewer's model. Is "Anthropic
+  models exclusively" on Claude Code a rule or a description? Which model is "free tier",
+  and does a paid fallback need authorization?
 - **O-21.** Which exact model and effort is "Astra 6.1" (and "Astra GPT / Astra 6")?
   Devin lists `gpt-6-astra-low` to `-max` and no 6.1; AGY and OpenCode list no Astra
   model. On AGY and OpenCode, is the fallback a change of harness to Devin?
