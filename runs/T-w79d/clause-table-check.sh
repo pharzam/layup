@@ -81,16 +81,38 @@ check() {
 		rm -rf "$tmp"
 		return 1
 	fi
+	# The line after the header must be a delimiter row (GitHub Flavored Markdown):
+	# without up to three leading spaces and an optional outer pipe on each side, it
+	# splits on "|" into five cells, each of the form :?-+:? with spaces around.
+	if ! awk -v h="$HEADER" '
+		$0 == h { getline d; found = 1
+			k = 0; while (k < 3 && substr(d, 1, 1) == " ") { d = substr(d, 2); k++ }
+			sub(/^\|/, "", d); sub(/\|[ \t]*$/, "", d)
+			n = split(d, c, "|"); if (n != 5) exit 1
+			for (i = 1; i <= n; i++) if (c[i] !~ /^[ \t]*:?-+:?[ \t]*$/) exit 1
+			exit 0 }
+		END { if (!found) exit 1 }' "$adr"; then
+		fail P1 "no delimiter row under the clause table header"
+		rm -rf "$tmp"
+		return 1
+	fi
 
-	# The table: the rows after the header up to the first line that is not a row.
-	# A row may start with up to three spaces (CommonMark), so they are removed.
+	# The table's rows (GitHub Flavored Markdown): the lines after the delimiter row
+	# up to the first line that is blank or starts another block — after up to three
+	# leading spaces: "#" (a heading), ">" (a block quote), "-", "*" or "+" and a
+	# space, or digits and "." or ")" and a space (a list item), a thematic break
+	# (only three or more of one of "-", "*", "_", spaces allowed), three or more
+	# backticks or tildes (a fence), or "<" (an HTML block). Every other line is a
+	# row, read as if it had a leading pipe.
 	awk -v h="$HEADER" '
-		$0 == h { on = 1; next }
+		$0 == h { on = 1; getline; next }
 		!on { next }
 		{ l = $0; k = 0; while (k < 3 && substr(l, 1, 1) == " ") { l = substr(l, 2); k++ } }
-		l ~ /^\|[- |:]*$/ { next }
-		l ~ /^\|/ { print l; next }
-		{ exit }
+		l ~ /^[ \t]*$/ { exit }
+		l ~ /^(#|>|[-*+] |[0-9]+[.)] |```|~~~|<)/ { exit }
+		{ t = l; gsub(/[ \t]/, "", t) }
+		length(t) >= 3 && (t ~ /^-+$/ || t ~ /^\*+$/ || t ~ /^_+$/) { exit }
+		{ if (substr(l, 1, 1) != "|") l = "|" l; print l }
 	' "$adr" > "$tmp/rows"
 	# One tab-separated line per row: id, relation, basis, destination (cells trimmed, backticks dropped).
 	awk -F'|' '{
@@ -180,7 +202,8 @@ if [ "$self_test" = 0 ]; then
 	if check "$ROOT"; then echo "clause-table: OK"; exit 0; else exit 1; fi
 fi
 
-# --- self-test: one mutation per predicate, each must fail with its own P<n> ---
+# --- self-test: mutations that must fail, each with its own P<n>, and valid
+# controls that must pass ---
 base=$(mktemp -d "${TMPDIR:-/tmp}/clause-table-self.XXXXXX")
 trap 'rm -rf "$base"' EXIT INT TERM
 # Copy the tracked files one by one (POSIX: no `xargs -0`, no `tar`). The list is
@@ -215,6 +238,22 @@ mutate() {
 # row <ID> <field 4|5|6> <value>: set one cell of a clause row (fields as awk -F'|' counts them)
 row='awk -F"|" -v OFS="|" -v id="$1" -v f="$2" -v v="$3" "\$2 ~ (\" \" id \" \") { \$f = \" \" v \" \" } { print }" "$ADR" > x && mv x "$ADR"'
 H='| Clause | F-0005 lines | Relation | Basis | Destination |'
+# control <case> <what> <shell code>: a valid change; the check must still pass, with no output
+control() {
+	case_id=$1 what=$2 code=$3
+	m=$(mktemp -d "${TMPDIR:-/tmp}/clause-table-mut.XXXXXX")
+	cp -R "$base/." "$m/"
+	(cd "$m" && ADR=$adr_rel sh -c "$code")
+	out=$(check "$m" 2>&1); rc=$?
+	if [ "$rc" = 0 ] && [ -z "$out" ]; then
+		printf 'ok    %-3s control: %s -> clause-table: OK\n' "$case_id" "$what"
+		pass=$((pass + 1))
+	else
+		printf 'FAIL  %-3s control: %s, want OK, got exit %s:\n%s\n' "$case_id" "$what" "$rc" "$out"
+		bad=$((bad + 1))
+	fi
+	rm -rf "$m"
+}
 mutate 1a 'clause-table: FAIL P1 expected exactly one' 'rm "$ADR"'
 mutate 1b 'clause-table: FAIL P1 expected exactly one' 'cp "$ADR" docs/adr/0012-copy.md'
 mutate 1c 'clause-table: FAIL P1 no clause table header' "grep -Fvx -- '$H' \"\$ADR\" > x && mv x \"\$ADR\""
@@ -240,5 +279,9 @@ mutate 1e 'clause-table: FAIL P1 no clause table header' 'awk "/^\\| Clause \\| 
 mutate 2d 'clause-table: FAIL P2 a row opens with "C25"' 'awk "{ print } /^\\| C24 \\|/ { r = \$0; sub(/C24/, \"C25\", r); print \" \" r }" "$ADR" > x && mv x "$ADR"'
 mutate 5d 'clause-table: FAIL P5 C00 goes to "D1", but only "not policy" is allowed for C00' "set -- C00 6 D1; $row"
 mutate 7f 'clause-table: FAIL P7 no entry under "### Rejected options" inside "## Decision"' 'awk "/^### Rejected options\$/ { print; print \"<!--\"; on = 1; next } on && /^#/ { print \"-->\"; on = 0 } { print }" "$ADR" > x && mv x "$ADR"'
+mutate 2e 'clause-table: FAIL P2 a row opens with "C25"' 'awk "{ print } /^\\| C24 \\|/ { print \"C25 | L84 | extends | R5 | D3\" }" "$ADR" > x && mv x "$ADR"'
+mutate 1f 'clause-table: FAIL P1 no delimiter row under the clause table header' 'awk "/^\\| -- \\| -- \\|/ && !d { d = 1; next } { print }" "$ADR" > x && mv x "$ADR"'
+control k1 'a thematic break right after C24' 'awk "{ print } /^\\| C24 \\|/ { print \"---\" }" "$ADR" > x && mv x "$ADR"'
+control k2 'every clause row without its outer pipes' 'awk "/^\\| C[0-9][0-9] \\|/ { sub(/^\\| /, \"\"); sub(/ \\|\$/, \"\") } { print }" "$ADR" > x && mv x "$ADR"'
 printf 'clause-table self-test: %s passed, %s failed\n' "$pass" "$bad"
 [ "$bad" = 0 ]

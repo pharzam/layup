@@ -171,3 +171,47 @@ $ sh docs/setup/setup-check.sh
 exit=0 (15 OK lines, 0 FAIL lines)
 $ git diff --check 43a05c8 HEAD
 exit=0
+
+== Task T-7wqc (#54), 2026-09-24. Branch T-7wqc, cut from 2592624.
+
+-- Finding 1 (#53 round 3), red (a): the check of 2592624 on the new mutations
+$ sh <the check of 2592624> <a copy with mutation 2e>
+clause-table: OK
+exit=0
+$ sh <the check of 2592624> <a copy with mutation 1f>
+clause-table: OK
+exit=0
+-- Finding 1, red (b): the self-test with 2e, 1f, k1 and k2, on the check of 2592624
+$ sh runs/T-w79d/clause-table-check.sh --self-test .
+exit=1
+FAIL  2e  want "clause-table: FAIL P2 a row opens with "C25"", got exit 0:
+FAIL  1f  want "clause-table: FAIL P1 no delimiter row under the clause table header", got exit 0:
+ok    k1  control: a thematic break right after C24 -> clause-table: OK
+FAIL  k2  control: every clause row without its outer pipes, want OK, got exit 1:
+clause-table self-test: 26 passed, 3 failed
+-- Finding 1, green: P1 needs a delimiter row; rows are read by the GFM rule
+$ sh runs/T-w79d/clause-table-check.sh --self-test .   (also under dash)
+exit=0
+ok    2e  clause-table: FAIL P2 a row opens with "C25", not an ID C00..C24
+ok    1f  clause-table: FAIL P1 no delimiter row under the clause table header
+ok    k1  control: a thematic break right after C24 -> clause-table: OK
+ok    k2  control: every clause row without its outer pipes -> clause-table: OK
+clause-table self-test: 29 passed, 0 failed
+
+-- Finding 2 (#53 round 3), before the edit: the scenario and the expected route
+Scenario: at 12:00 UTC a review step of the reasoning tier. Rows in table order:
+  R  reasoning, not fallback: failed at 11:55 by D4 (no required heading).
+  E  execution, fallback: smoke-run 11:00, pools Normal, meets D7.
+  F  reasoning, fallback: smoke-run 11:00, pools Normal, meets D7.
+Expected route: F (a fallback row of the step's tier, before any row of the other tier).
+What the text at 2592624 gives:
+  D1: "If no binding of the step's tier is eligible after these, D5 applies." F is an
+      eligible binding of the step's tier, so D5 is not reached; D3 excludes fallback
+      rows, so D3 finds no row: no route.
+  Read as "D3 found no row": D5 takes "the first eligible row marked fallback, of any
+      tier, in table order": E, an execution-tier row, before F.
+-- Finding 2, after the edit (D1: "If D3 finds no row, D5 applies."; D5: first the eligible
+   fallback rows of the step's tier, then any eligible row of the other tier):
+  D3 finds no row (R failed; E and F are fallback rows). D5 takes F, the first eligible
+  fallback row of the reasoning tier. E is reached only if no reasoning-tier fallback row
+  is eligible, and then the resource record names the reasoning tier as not reached.

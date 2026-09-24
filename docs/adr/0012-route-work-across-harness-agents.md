@@ -50,7 +50,7 @@ This record is `Proposed`. If a later task accepts it, it amends ADR-0005 as fol
 - **D1.** A route has two parts: the tier of ADR-0005, and a **binding** — a harness, an
   exact model, an effort setting and an account alias. Determinism still comes first.
   Then, in this order: the review levels (D7), the quota state (D6), the table order (D3).
-  If no binding of the step's tier is eligible after these, D5 applies.
+  If D3 finds no row, D5 applies.
 - **D2.** (no clause) The bindings are an adopter table in Git, not text in this record,
   so a product change edits the table, not an ADR; where the table lives is O-19. A
   binding enters the table only with a dated inventory entry that names its harness,
@@ -67,12 +67,12 @@ This record is `Proposed`. If a later task accepts it, it amends ADR-0005 as fol
   answer within its time limit. Standard error is never the answer. An exit code alone is
   not evidence: a print mode exited 0 with no output on 2026-09-24. After a failure the
   route runs D3, and then D5, again without the failed row.
-- **D5.** If D3 finds no row, the route takes the first eligible row marked `fallback`, of
-  any tier, in table order. If there is none, it takes the first eligible row of the other
-  tier, in table order, among the rows not marked `fallback`, and the resource record
-  names the tier it could not reach (ADR-0005). If there is none either, the route stops,
-  and the author asks the Operator on the issue (R6). For a review step, each row it takes
-  must also meet D7. The model names live in the rows, not here (D2); O-18 gives the
+- **D5.** If D3 finds no row, the route takes the first eligible row marked `fallback` of
+  the step's tier, in table order. If there is none, it takes the first eligible row of the
+  other tier, in table order, whether it is marked `fallback` or not, and the resource
+  record names the tier it could not reach (ADR-0005). If there is none either, the route
+  stops, and the author asks the Operator on the issue (R6). For a review step, each row it
+  takes must also meet D7. The model names live in the rows, not here (D2); O-18 gives the
   Operator's proposed first values for the `fallback` rows (see the Context), and a name
   with no inventory binding is not routable (O-21). O-18 puts the fallbacks before any
   stall status; what gives that status is X2.

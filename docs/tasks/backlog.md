@@ -30,7 +30,7 @@ same summary, dated — rather than deleting it or checking it off.
 - **‹ID›** — ‹one-sentence summary› ([‹ADR or doc link›](...); [detail](‹id›.md))
 -->
 
-- **T-9tgn** — ADR-0012 (Proposed): route work across harness agents; successor of `T-w79d` (#46) after the issue split ([#53](https://github.com/pharzam/layup/issues/53); [ADR-0012](../adr/0012-route-work-across-harness-agents.md); [detail](T-9tgn.md))
+- **T-7wqc** — ADR-0012 (Proposed): route work across harness agents; successor of `T-9tgn` (#53) and `T-w79d` (#46) after two issue splits ([#54](https://github.com/pharzam/layup/issues/54); [ADR-0012](../adr/0012-route-work-across-harness-agents.md); [detail](T-7wqc.md); [T-9tgn](T-9tgn.md); [T-w79d](T-w79d.md))
 
 ## Next
 

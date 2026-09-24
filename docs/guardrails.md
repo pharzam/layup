@@ -295,7 +295,10 @@ failure modes worth keeping.
   because the text is all there; only its Markdown role is wrong. **The check:** strip
   fenced code blocks by the CommonMark rule before a check reads headings, tables or
   lists, and keep a self-test case that fences each structure (`runs/T-w79d/`, cases 1d
-  and 7e). Learned in `T-9tgn`.
+  and 7e). A table is also wider than its pipes: a GitHub Flavored Markdown row may omit
+  its outer pipes, and the table ends only at a blank line or another block, so read rows
+  by that rule and keep a valid pipe-less control (cases 2e, 1f, k1, k2). Learned in
+  `T-9tgn` and `T-7wqc`.
 
 ## 3. Validation — how you check you are not fooling yourself
 
