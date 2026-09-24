@@ -48,7 +48,7 @@ This record is `Proposed`. If a later task accepts it, it amends ADR-0005 as fol
 - **D1.** A route has two parts: the tier of ADR-0005, and a **binding** — a harness, an
   exact model, an effort setting and an account alias. Determinism still comes first.
   Then, in this order: the review levels (D7), the quota state (D6), the table order (D3).
-  If the quota state removes every binding that the review levels accept, D5 applies.
+  If no binding of the step's tier is eligible after these, D5 applies.
 - **D2.** (no clause) The bindings are an adopter table in Git, not text in this record,
   so a product change edits the table, not an ADR; where the table lives is O-19. A
   binding enters the table only with a dated inventory entry that names its harness,
@@ -58,16 +58,20 @@ This record is `Proposed`. If a later task accepts it, it amends ADR-0005 as fol
   not failed in this task, and allowed for the step by its quota state (D6). The rule
   prints the binding; a harness agent launches it; the resource record names the model and
   the harness, for example "Claude Fable 5.1 on Claude Code".
-- **D4.** (no clause) A dispatch fails on a non-zero exit, an empty output, an output without its
-  required shape, or no answer within its time limit. An exit code alone is not evidence:
-  a print mode exited 0 with no output on 2026-09-24. On a failure the next eligible
-  binding of the same tier runs.
-- **D5.** When no binding of the step's tier is eligible, the route tries the fallback
-  models that O-18 names, Claude Fable 5.1 and then "Astra 6.1", each only through a
-  binding that the inventory holds and that meets D3 apart from the tier; "Astra 6.1" is
-  not tried until O-21 names its model. If none answers, the route stops, and the author
-  asks the Operator on the issue (R6). O-18 puts these fallbacks before any stall status;
-  what gives a task the stall status, and what follows, is X2.
+- **D4.** (no clause) A dispatch fails on a non-zero exit, an empty standard output, a
+  standard output of only white space, a standard output without its required shape, or no
+  answer within its time limit. Standard error is never the answer. An exit code alone is
+  not evidence: a print mode exited 0 with no output on 2026-09-24. On a failure the next
+  eligible binding of the same tier runs.
+- **D5.** When no binding of the step's tier is eligible, the route tries the table's rows
+  marked `fallback`, in table order, each under D7, D6 and D3 except the tier. The model
+  names live in those rows, not here (D2); O-18 gives the Operator's proposed first values
+  (see the Context), and a name with no inventory binding is not routable (O-21). If no
+  fallback answers, the route runs the step on a binding of the other tier that D7, D6 and
+  D3 allow, and the resource record names the tier it could not reach (ADR-0005). Only
+  if no binding at all is eligible does the route stop, and the author asks the Operator
+  on the issue (R6). O-18 puts the fallbacks before any stall status; what gives that
+  status is X2.
 - **D6.** "Quota" is the vendor's quota, an input to the route, never a budget:
   ADR-0007's "recorded, not budgeted" stands. A state comes only from a figure that the
   vendor reports for a quota pool: Normal, Constrained or Reserve exceeded, at thresholds
