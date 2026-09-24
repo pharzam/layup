@@ -1,0 +1,181 @@
+#!/bin/sh
+#
+# clause-table-check.sh — run evidence of task T-w79d (#46). NOT a gate: no hook
+# or CI job runs it, so it counts as no check (Invariant 5). It is the test of
+# the task's demo, run by hand, with its runs recorded in test-runs.txt beside it.
+#
+# It checks the PRESENCE and the SHAPE of ADR-0012's clause table and of the
+# parts of its Decision section, and that the cited source F-0005 matches its
+# hash. It does not check MEANING — whether a basis supports its relation, or a
+# decision is right. That is the review rounds' work.
+#
+# Usage:
+#   sh runs/T-w79d/clause-table-check.sh [ROOT]              check ROOT (default .)
+#   sh runs/T-w79d/clause-table-check.sh --self-test [ROOT]  make each predicate fail once
+#
+# Exit: 0 = every predicate holds; 1 = at least one fails, one line each:
+#   clause-table: FAIL P<n> <reason>
+
+set -u
+
+self_test=0
+if [ "${1:-}" = "--self-test" ]; then self_test=1; shift; fi
+ROOT=${1:-.}
+
+HEADER='| Clause | F-0005 lines | Relation | Basis | Destination |'
+
+check() {
+	root=$1
+	failed=0
+	fail() { printf 'clause-table: FAIL %s %s\n' "$1" "$2"; failed=1; }
+
+	# P1 — one ADR-0012 file, with the clause table header.
+	set -- "$root"/docs/adr/0012-*.md
+	if [ "$#" != 1 ] || [ ! -f "$1" ]; then
+		fail P1 "expected exactly one docs/adr/0012-*.md"
+		return 1
+	fi
+	adr=$1
+	if ! grep -Fqx -- "$HEADER" "$adr"; then
+		fail P1 "no clause table header: $HEADER"
+		return 1
+	fi
+
+	tmp=$(mktemp -d "${TMPDIR:-/tmp}/clause-table.XXXXXX")
+	# The table: the rows after the header up to the first line that is not a row.
+	awk -v h="$HEADER" '
+		$0 == h { on = 1; next }
+		on && /^\|[- |:]*$/ { next }
+		on && /^\|/ { print; next }
+		on { exit }
+	' "$adr" > "$tmp/rows"
+	# One tab-separated line per row: id, relation, basis, destination (cells trimmed, backticks dropped).
+	awk -F'|' '{
+		for (i = 2; i <= 6; i++) { c = $i; gsub(/`/, "", c); sub(/^[ \t]+/, "", c); sub(/[ \t]+$/, "", c); v[i] = c }
+		printf "%s\t%s\t%s\t%s\n", v[2], v[4], v[5], v[6]
+	}' "$tmp/rows" > "$tmp/cells"
+
+	# P2 — each ID C00..C24 opens exactly one row; no other ID does.
+	i=0
+	while [ "$i" -le 24 ]; do
+		id=$(printf 'C%02d' "$i")
+		n=$(awk -F'\t' -v id="$id" '$1 == id' "$tmp/cells" | grep -c .)
+		[ "$n" = 1 ] || fail P2 "$id opens $n rows, expected 1"
+		i=$((i + 1))
+	done
+	awk -F'\t' '$1 !~ /^C(0[0-9]|1[0-9]|2[0-4])$/ { print $1 }' "$tmp/cells" | while IFS= read -r x; do
+		printf 'clause-table: FAIL P2 a row opens with "%s", not an ID C00..C24\n' "$x"
+	done > "$tmp/p2"
+	[ -s "$tmp/p2" ] && { cat "$tmp/p2"; failed=1; }
+
+	# P3 — each Relation is one of the five values.
+	awk -F'\t' '$2 != "out of scope" && $2 != "conflicts" && $2 != "no evidence" && $2 != "extends" && $2 != "consistent" {
+		printf "clause-table: FAIL P3 %s has relation \"%s\"\n", $1, $2 }' "$tmp/cells" > "$tmp/p3"
+	[ -s "$tmp/p3" ] && { cat "$tmp/p3"; failed=1; }
+
+	# P4 — each Basis holds at least one citation.
+	cite='F-000[0-9]#[0-9]+|F-0005 L[0-9]+|[A-Za-z0-9_./-]+\.(md|sh)|ADR-[0-9][0-9][0-9][0-9]|(^|[^A-Za-z0-9-])R[0-9]+|O-[0-9]+|Inv-[0-9]'
+	awk -F'\t' '{ print $1 "\t" $3 }' "$tmp/cells" | while IFS="$(printf '\t')" read -r id basis; do
+		printf '%s\n' "$basis" | grep -Eq -- "$cite" || printf 'clause-table: FAIL P4 %s has no citation in its basis\n' "$id"
+	done > "$tmp/p4"
+	[ -s "$tmp/p4" ] && { cat "$tmp/p4"; failed=1; }
+
+	# P5 — each Destination is exactly one allowed value; D, O and X values are defined.
+	awk -F'\t' '{ print $1 "\t" $4 }' "$tmp/cells" | while IFS="$(printf '\t')" read -r id dest; do
+		case $dest in
+			"not policy") [ "$id" = C00 ] || printf 'clause-table: FAIL P5 %s uses "not policy", which only C00 may use\n' "$id" ;;
+			rejected) : ;;
+			*)
+				if printf '%s\n' "$dest" | grep -Eqx 'D[0-9]+|O-[0-9]+|X[0-9]+'; then
+					grep -Eq "^- \*\*$dest\.\*\*" "$adr" || printf 'clause-table: FAIL P5 %s goes to %s, which the ADR does not define\n' "$id" "$dest"
+				else
+					printf 'clause-table: FAIL P5 %s has destination "%s", not one of D<n>, O-<n>, X<n>, rejected, not policy\n' "$id" "$dest"
+				fi ;;
+		esac
+	done > "$tmp/p5"
+	[ -s "$tmp/p5" ] && { cat "$tmp/p5"; failed=1; }
+
+	# P6 — the cited source is present and matches its hash: one F-0005 record, a
+	# hash line for the source, and check facts green (which, since #47, fails on a
+	# changed byte, a removed hash line and a removed index row).
+	set -- "$root"/docs/facts/F-0005-*.md
+	if [ "$#" != 1 ] || [ ! -f "$1" ]; then fail P6 "expected exactly one docs/facts/F-0005-*.md"; fi
+	grep -Eq '^[0-9a-f]{64}  docs/facts/operator-routing-policy\.md$' "$root/docs/setup/facts.sha256" 2>/dev/null \
+		|| fail P6 "docs/setup/facts.sha256 has no line for docs/facts/operator-routing-policy.md"
+	if ! sh "$root/docs/setup/setup-check.sh" --only facts "$root" > "$tmp/p6" 2>&1; then
+		fail P6 "check facts fails: $(grep FAIL "$tmp/p6" | head -1)"
+	fi
+
+	# P7 — the four Decision subsections, each with an entry; each defined ID is used or says (no clause).
+	for sub in 'Proposed decisions' 'Rejected options' 'Open Operator decisions' 'Deferred items'; do
+		n=$(awk -v s="### $sub" '
+			$0 == s { on = 1; next }
+			on && /^#/ { exit }
+			on && /^- / { n++ }
+			END { print n + 0 }' "$adr")
+		[ "$n" -ge 1 ] || fail P7 "no entry under \"### $sub\""
+	done
+	grep -Eo '^- \*\*(D[0-9]+|O-[0-9]+|X[0-9]+)\.\*\*.*' "$adr" | while IFS= read -r line; do
+		def=$(printf '%s\n' "$line" | sed -E 's/^- \*\*([^.]+)\.\*\*.*/\1/')
+		awk -F'\t' -v d="$def" '$4 == d { f = 1 } END { exit !f }' "$tmp/cells" \
+			|| printf '%s\n' "$line" | grep -Fq '(no clause)' \
+			|| printf 'clause-table: FAIL P7 %s is defined but no clause goes to it and it does not say (no clause)\n' "$def"
+	done > "$tmp/p7"
+	[ -s "$tmp/p7" ] && { cat "$tmp/p7"; failed=1; }
+
+	rm -rf "$tmp"
+	return "$failed"
+}
+
+if [ "$self_test" = 0 ]; then
+	if check "$ROOT"; then echo "clause-table: OK"; exit 0; else exit 1; fi
+fi
+
+# --- self-test: one mutation per predicate, each must fail with its own P<n> ---
+base=$(mktemp -d "${TMPDIR:-/tmp}/clause-table-self.XXXXXX")
+trap 'rm -rf "$base"' EXIT INT TERM
+(cd "$ROOT" && git ls-files -z) | (cd "$ROOT" && xargs -0 tar -cf -) | (cd "$base" && tar -xf -)
+check "$base" > "$base.out" 2>&1 || { echo "clause-table self-test: FAIL the unmutated tree does not pass:"; cat "$base.out"; rm -f "$base.out"; exit 1; }
+rm -f "$base.out"
+adr_rel=$(cd "$base" && ls docs/adr/0012-*.md)
+
+pass=0 bad=0
+# mutate <case> <expected line prefix> <shell code run in a fresh copy of the valid tree>
+mutate() {
+	case_id=$1 want=$2 code=$3
+	m=$(mktemp -d "${TMPDIR:-/tmp}/clause-table-mut.XXXXXX")
+	cp -R "$base/." "$m/"
+	(cd "$m" && ADR=$adr_rel sh -c "$code")
+	out=$(check "$m" 2>&1); rc=$?
+	if [ "$rc" = 1 ] && printf '%s\n' "$out" | grep -Fq -- "$want"; then
+		printf 'ok    %-3s %s\n' "$case_id" "$(printf '%s\n' "$out" | grep -F -- "$want" | head -1)"
+		pass=$((pass + 1))
+	else
+		printf 'FAIL  %-3s want "%s", got exit %s:\n%s\n' "$case_id" "$want" "$rc" "$out"
+		bad=$((bad + 1))
+	fi
+	rm -rf "$m"
+}
+# row <ID> <field 4|5|6> <value>: set one cell of a clause row (fields as awk -F'|' counts them)
+row='awk -F"|" -v OFS="|" -v id="$1" -v f="$2" -v v="$3" "\$2 ~ (\" \" id \" \") { \$f = \" \" v \" \" } { print }" "$ADR" > x && mv x "$ADR"'
+H='| Clause | F-0005 lines | Relation | Basis | Destination |'
+mutate 1a 'clause-table: FAIL P1 expected exactly one' 'rm "$ADR"'
+mutate 1b 'clause-table: FAIL P1 expected exactly one' 'cp "$ADR" docs/adr/0012-copy.md'
+mutate 1c 'clause-table: FAIL P1 no clause table header' "grep -Fvx -- '$H' \"\$ADR\" > x && mv x \"\$ADR\""
+mutate 2a 'clause-table: FAIL P2 C07 opens 0 rows' 'grep -v "^| C07 |" "$ADR" > x && mv x "$ADR"'
+mutate 2b 'clause-table: FAIL P2 C07 opens 2 rows' 'awk "{ print } /^\\| C07 \\|/ { print }" "$ADR" > x && mv x "$ADR"'
+mutate 2c 'clause-table: FAIL P2 a row opens with "C25"' 'awk "{ print } /^\\| C24 \\|/ { r = \$0; sub(/C24/, \"C25\", r); print r }" "$ADR" > x && mv x "$ADR"'
+mutate 3  'clause-table: FAIL P3 C01 has relation "maybe"' "set -- C01 4 maybe; $row"
+mutate 4a 'clause-table: FAIL P4 C01 has no citation' "set -- C01 5 ''; $row"
+mutate 4b 'clause-table: FAIL P4 C01 has no citation' "set -- C01 5 'see above'; $row"
+mutate 5a 'clause-table: FAIL P5 C01 has destination "D1 O-16"' "set -- C01 6 'D1 O-16'; $row"
+mutate 5b 'clause-table: FAIL P5 C01 goes to D99, which the ADR does not define' "set -- C01 6 D99; $row"
+mutate 5c 'clause-table: FAIL P5 C01 uses "not policy"' "set -- C01 6 'not policy'; $row"
+mutate 6a 'clause-table: FAIL P6 check facts fails: setup-check: facts FAIL hash: docs/facts/operator-routing-policy.md' 'LC_ALL=C sed "84s/repository\\./repository!/" docs/facts/operator-routing-policy.md > x && mv x docs/facts/operator-routing-policy.md'
+mutate 6b 'clause-table: FAIL P6 check facts fails: setup-check: facts FAIL listed: docs/facts/operator-routing-policy.md' 'rm docs/facts/operator-routing-policy.md && grep -v operator-routing-policy docs/setup/facts.sha256 > x && mv x docs/setup/facts.sha256'
+mutate 6c 'clause-table: FAIL P6 expected exactly one docs/facts/F-0005-*.md' 'rm docs/facts/F-0005-*.md'
+mutate 7a 'clause-table: FAIL P7 no entry under "### Deferred items"' 'grep -vx "### Deferred items" "$ADR" > x && mv x "$ADR"'
+mutate 7b 'clause-table: FAIL P7 no entry under "### Rejected options"' 'awk "/^### Rejected options\$/ { on = 1; print; next } /^#/ { on = 0 } on && /^- / { next } { print }" "$ADR" > x && mv x "$ADR"'
+mutate 7c 'clause-table: FAIL P7 D98 is defined but no clause goes to it' 'awk "{ print } /^### Proposed decisions\$/ { print \"\"; print \"- **D98.** unused\" }" "$ADR" > x && mv x "$ADR"'
+printf 'clause-table self-test: %s passed, %s failed\n' "$pass" "$bad"
+[ "$bad" = 0 ]

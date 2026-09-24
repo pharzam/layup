@@ -1,0 +1,14 @@
+Test runs of task T-w79d (#46). Worktree .worktree/T-w79d, base 43a05c81dc536e19f5bc0172bba3baeaf0a683ea.
+Each entry: the state of the tree, the command, the exit code, and the output lines that matter.
+
+== Red 1 (2026-09-24): the ADR scaffold (title 0012, Date, Status Proposed, empty
+   Context, Decision and Consequences) with no index row.
+$ sh docs/adr/adr-lint.sh
+exit=1
+FAIL  0012-route-work-across-harness-agents.md: no row for it in README.md's index table
+(no other FAIL line)
+
+== Red 2 (2026-09-24): the same tree; runs/T-w79d/clause-table-check.sh present.
+$ sh runs/T-w79d/clause-table-check.sh .
+exit=1
+clause-table: FAIL P1 no clause table header: | Clause | F-0005 lines | Relation | Basis | Destination |
