@@ -215,3 +215,17 @@ What the text at 2592624 gives:
   D3 finds no row (R failed; E and F are fallback rows). D5 takes F, the first eligible
   fallback row of the reasoning tier. E is reached only if no reasoning-tier fallback row
   is eligible, and then the resource record names the reasoning tier as not reached.
+
+== Final verification before the first freeze of T-7wqc, at 14ea66b
+$ sh runs/T-w79d/clause-table-check.sh .
+clause-table: OK
+exit=0
+$ sh runs/T-w79d/clause-table-check.sh --self-test .   (also under dash)
+clause-table self-test: 29 passed, 0 failed
+clause-table self-test: 29 passed, 0 failed
+$ sh docs/adr/adr-lint.sh
+adr-lint: OK
+$ sh docs/setup/setup-check.sh
+exit=0 (15 OK lines, 0 FAIL lines)
+$ git diff --check 43a05c81dc536e19f5bc0172bba3baeaf0a683ea HEAD
+exit=0
