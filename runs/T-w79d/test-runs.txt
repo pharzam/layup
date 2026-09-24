@@ -253,3 +253,11 @@ $ sh docs/setup/setup-check.sh
 exit=0 (15 OK lines, 0 FAIL lines)
 $ git diff --check 43a05c8 HEAD
 exit=0
+
+== #54 round 2 fix (cycle 2). Red, the self-test with case 2f (C07 moved after a fence right
+after C24) on the check of 4f8f0d1: exit 1,
+FAIL  2f  want "clause-table: FAIL P2 C07 opens 0 rows", got exit 0:
+clause-table self-test: 31 passed, 1 failed
+Green: a removed fence or comment block leaves one blank line, so it ends the table.
+ok    2f  clause-table: FAIL P2 C07 opens 0 rows, expected 1
+clause-table self-test: 32 passed, 0 failed

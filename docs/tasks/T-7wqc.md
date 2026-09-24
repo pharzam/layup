@@ -19,6 +19,7 @@ Earlier decisions that bind this task are quoted in `T-w79d.md` (O-15 to O-18) a
 | -- | -- | -- |
 | Plan review | GPT-6 Sol (xhigh) on Devin — outside O-3; a reasoning-class model by its vendor's listing | 364 s, `approve-with-conditions` |
 | Review round 1 (cycle 0) | GPT-6 Sol (xhigh) on Devin | 685 s, `material` |
+| Review round 2 (cycle 1) | GPT-6 Sol (xhigh) on Devin | 571 s, `material` |
 
 ## Affected documents (step 5)
 

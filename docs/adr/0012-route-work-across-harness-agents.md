@@ -57,12 +57,12 @@ This record is `Proposed`. If a later task accepts it, it amends ADR-0005 as fol
   names its harness, model, effort and account alias; a model with no entry is not
   routable (`F-0001#4`).
 - **D3.** The route is computed by a fixed rule, not chosen by a model. A row is
-  **eligible** when its binding had a smoke run in the 24 hours before the dispatch (by UTC
-  timestamps), has not failed in this task (D4), and the state of each of its quota pools
-  allows the step (D6). The route takes the first eligible row of the step's tier, in
-  table order, among the rows not marked `fallback`. The rule prints the binding; a
-  harness agent launches it; the resource record names the model and the harness, for
-  example "Claude Fable 5.1 on Claude Code".
+  **eligible** when its binding had a smoke run within the window that O-22 sets before
+  the dispatch (by UTC timestamps), has not failed in this task (D4), and the state of
+  each of its quota pools allows the step (D6). The route takes the first eligible row of
+  the step's tier, in table order, among the rows not marked `fallback`. The rule prints
+  the binding; a harness agent launches it; the resource record names the model and the
+  harness, for example "Claude Fable 5.1 on Claude Code".
 - **D4.** (no clause) A dispatch fails on a non-zero exit, an empty standard output, a
   standard output of only white space, a standard output without the shape that the
   step's brief requires (for a review, its record heading), or no answer within its time
@@ -88,8 +88,9 @@ This record is `Proposed`. If a later task accepts it, it amends ADR-0005 as fol
   Reserve exceeded, no step; unknown, the steps that O-22 allows. Each report and each
   change of state is an append-only record in Git (ADR-0011, 2).
 - **D7.** (no clause) A plan review, a review round, a judge and a panel member take a
-  binding that "Who may review" accepts. A blind reviewer may use the author's harness
-  with a different model (O-18). Whether a different harness is required stays X1.
+  binding that "Who may review" accepts and whose model differs from the author's, for
+  every review, whatever its risk (O-18: "model shuold be different"); it may use the
+  author's harness. Whether a different harness is required stays X1.
 - **D8.** C23's prohibition is not adopted: ADR-0005's routing stands, and the execution
   tier owns execution-tier work. When a reasoning-tier model runs an execution-tier part,
   the resource record names it, and this record makes it no finding (ADR-0007 names only
@@ -106,8 +107,8 @@ This record is `Proposed`. If a later task accepts it, it amends ADR-0005 as fol
   no rule would ask for the verification that `F-0003#66` pre-registers.
 - Bindings ordered by measured cost: no comparable cost of accepted work exists; a model
   list gives unit prices only. Kept as a possible later order.
-- A probe before each dispatch: its delay falls on every dispatch; the smoke run on the day
-  of use and D4 detect the same failures.
+- A probe before each dispatch: its delay falls on every dispatch; D4 catches a binding
+  that fails later, but only when the dispatch runs, not before it.
 - A hard stop while a quota is unknown: every harness is unknown today, so all work stops.
 - The 70 % and 90 % bands read as a token or money budget: ADR-0007 has one budget, and
   its unit is not tokens.
@@ -128,13 +129,13 @@ This record is `Proposed`. If a later task accepts it, it amends ADR-0005 as fol
   authorization?
 - **O-21.** Do "Astra 6.1" (O-18) and "Astra GPT / Astra 6" (F-0005 L29, L35) name one
   model or two? For each, which exact model and effort? Devin lists `gpt-6-astra-low` to
-  `-max` and no 6.1; AGY and OpenCode list no Astra model. On AGY and OpenCode, is the
-  fallback a change of harness to Devin?
+  `-max` and no 6.1; AGY lists no Astra model; OpenCode's list was not read in full. On
+  AGY and OpenCode, is the fallback a change of harness to Devin?
 - **O-22.** Quota and time figures: the thresholds (F-0005 gives 70 % and 90 %); the
   vendor's quota window, which can differ from the daily and weekly windows in which
   F-0005 L40 reports tokens and cost; the source of each figure and how recent it must
-  be; the steps allowed in the state unknown; the time limit of a dispatch other than a
-  panel response.
+  be; the steps allowed in the state unknown; the smoke-run window of D3 (this task
+  smoke-ran on the day of use); the time limit of a dispatch other than a panel response.
 - **O-23.** "Panel arbitration": a reasoning-tier model that selects among a panel's
   options (Solution selection), or a panel that returns one verdict (ADR-0006 rejected it)?
 - **O-24.** Prompt preparation, task scoping, option answering and trade-off scoring on
@@ -169,7 +170,7 @@ This record is `Proposed`. If a later task accepts it, it amends ADR-0005 as fol
 | C06 | L23–L24 | conflicts | Opus 4.8 and "latest Haiku" in the execution tier contradict O-3 (Sonnet 5, Haiku 4.5). | O-20 |
 | C07 | L25 | extends | A fallback where the tree has none; Fable 5.1 is an O-3 model; O-18 keeps it. | D5 |
 | C08 | L27–L28 | conflicts | Non-Anthropic models on Devin and OpenCode are outside O-3; no model is shown free. | O-20 |
-| C09 | L29 | conflicts | "Astra GPT / Astra 6" is outside O-3; the inventory lists "GPT-6 Astra" on Devin only. | O-21 |
+| C09 | L29 | conflicts | "Astra GPT / Astra 6" is outside O-3; the inventory records "GPT-6 Astra" on Devin, none on AGY, and OpenCode's list only in part. | O-21 |
 | C10 | L31–L32 | conflicts | Pruning and formatting on a reasoning model contradict Determinism and the tiers (engineering-discipline.md). | O-24 |
 | C11 | L33 | conflicts | "Trade-off scoring" contradicts "considerations, not a scoring formula" (engineering-discipline.md). | O-24 |
 | C12 | L34 | no evidence | No AGY execution model or price is in Git (`F-0001#4`). | O-20 |
@@ -196,8 +197,8 @@ This record is `Proposed`. If a later task accepts it, it amends ADR-0005 as fol
 - Nothing is mechanized. Until a later task writes the route rule as a script or a
   `layup` command, the route has no check (`F-0001#5`), and even then no check can prove
   which harness ran: the resource record stays self-reported (ADR-0007).
-- Each harness costs upkeep: an inventory entry with its UTC time, a smoke run in the 24
-  hours before each use (D3), and route records in Git.
+- Each harness costs upkeep: an inventory entry with its UTC time, a smoke run within
+  D3's window before each use, and route records in Git.
 - Work sent to an external harness is sent to an external service (Safety limits). The
   Operator allowed it for the task of this decision; acceptance needs a standing rule.
 - X1 and X2 each need their own decision; review routing stays conditional until X1.

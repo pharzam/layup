@@ -116,5 +116,5 @@ and Claude Sonnet 5 on Claude Code as the backup.
 - 12:31 UTC, task T-7wqc (#54): `devin -p --model gpt-6-sol-xhigh` smoke run "GPT-6 Sol
   XHigh Thinking OK"; the plan review of #54 then ran on it (364 s, exit 0). Rounds 2 and 3
   of #53 ran on it too (505 s, 420 s).
-Note: "the day of use" above is this task's practice. ADR-0012 D3 (Proposed) instead
-counts a smoke run in the 24 hours before the dispatch, by UTC timestamps.
+Note: "the day of use" above is this task's practice. ADR-0012 D3 (Proposed) counts a
+smoke run within a window that the Operator sets (O-22), by UTC timestamps.

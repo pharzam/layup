@@ -43,7 +43,8 @@ check() {
 	# spaces, the same character at least as many times, and then only spaces. A
 	# comment block opens on a line with at most three leading spaces and then
 	# `<!--`, and closes on the first line that holds `-->`. An unclosed block of
-	# either kind runs to the end of the file.
+	# either kind runs to the end of the file. A removed block leaves one blank line,
+	# so it still ends a table (GitHub Flavored Markdown).
 	awk '
 		function fence(s,   i, c, n) {
 			i = 1
@@ -66,9 +67,9 @@ check() {
 			if (comment) { if (index($0, "-->")) comment = 0; next }
 			f = fence($0)
 			if (!inside) {
-				if (f != "") { inside = 1; fc = substr(f, 1, 1); fn = substr(f, 2) + 0; next }
+				if (f != "") { inside = 1; fc = substr(f, 1, 1); fn = substr(f, 2) + 0; print ""; next }
 				l = lead($0)
-				if (substr(l, 1, 4) == "<!--") { if (!index(substr(l, 5), "-->")) comment = 1; next }
+				if (substr(l, 1, 4) == "<!--") { if (!index(substr(l, 5), "-->")) comment = 1; print ""; next }
 				print
 				next
 			}
@@ -291,5 +292,6 @@ control k1 'a thematic break right after C24' 'awk "{ print } /^\\| C24 \\|/ { p
 control k2 'every clause row without its outer pipes' 'awk "/^\\| C[0-9][0-9] \\|/ { sub(/^\\| /, \"\"); sub(/ \\|\$/, \"\") } { print }" "$ADR" > x && mv x "$ADR"'
 mutate 5e 'clause-table: FAIL P5 C01 goes to D99, which the ADR does not define' 'R="| C01 | L5–L6 | conflicts | R5 \\| D3 | D99 |" awk "/^\\| C01 \\|/ { print ENVIRON[\"R\"]; next } { print }" "$ADR" > x && mv x "$ADR"'
 control k3 'an escaped pipe inside a basis' 'R="| C01 | L5–L6 | conflicts | R5 \\| D3 | D3 |" awk "/^\\| C01 \\|/ { print ENVIRON[\"R\"]; next } { print }" "$ADR" > x && mv x "$ADR"'
+mutate 2f 'clause-table: FAIL P2 C07 opens 0 rows' 'f=$(printf "\140\140\140"); awk -v f="$f" "/^\\| C07 \\|/ { r = \$0; next } { print } /^\\| C24 \\|/ { print f; print f; print r }" "$ADR" > x && mv x "$ADR"'
 printf 'clause-table self-test: %s passed, %s failed\n' "$pass" "$bad"
 [ "$bad" = 0 ]
