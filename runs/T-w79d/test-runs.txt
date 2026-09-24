@@ -157,3 +157,17 @@ $ sh docs/setup/setup-check.sh
 exit=0 (15 OK lines, 0 FAIL lines)
 $ git diff --check 43a05c8 HEAD
 exit=0
+
+== Final verification before the third freeze of T-9tgn, at 6310ac6
+$ sh runs/T-w79d/clause-table-check.sh .
+clause-table: OK
+exit=0
+$ sh runs/T-w79d/clause-table-check.sh --self-test .   (also under dash)
+clause-table self-test: 25 passed, 0 failed
+clause-table self-test: 25 passed, 0 failed
+$ sh docs/adr/adr-lint.sh
+adr-lint: OK
+$ sh docs/setup/setup-check.sh
+exit=0 (15 OK lines, 0 FAIL lines)
+$ git diff --check 43a05c8 HEAD
+exit=0
