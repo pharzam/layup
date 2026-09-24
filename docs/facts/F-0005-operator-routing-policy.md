@@ -31,4 +31,5 @@
   repository?" The Operator answered: "Input for ADRs (Recommended)" — the
   option whose text was "Like F-0002: a solution proposal. ADR-0012 assesses it
   clause by clause. No requirement cites it directly." Giving the text is not
-  approval of the policy; ADR-0012 assesses it.
+  approval of the policy; the ADR of task `T-w79d` (planned as ADR-0012)
+  will assess it.
