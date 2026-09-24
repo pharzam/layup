@@ -63,3 +63,7 @@ Bindings added on the day of use:
   and review round 2 of #47 (239 s, 391 s; each exit 0 with a review). The same model with
   `--mode plan` and no skip flag exited 0 with NO output (a shell command was denied).
 - 2026-09-24, panel member D: `opencode run -m opencode-go/kimi-k3` -> "Kimi K3 OK" (item 5).
+- 2026-09-24, the judge of the clause-map disputes: `agy -p --model gemini-3.1-pro-high
+  --dangerously-skip-permissions` run 1 exited 1 after 71 s with "Error: authentication
+  timed out" and no output; a smoke run then answered "Gemini 3.1 Pro OK" (10 s); run 2
+  exited 0 after 168 s with the verdicts.
