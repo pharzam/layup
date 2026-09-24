@@ -1,0 +1,54 @@
+Harness inventory, measured by the author (Claude Opus 5.5 on Claude Code) on 2026-09-24
+on the Operator's machine, for task T-w79d (#46). Commands and results:
+
+1. `command -v`: claude, devin, agy, opencode are installed under ~/.local/bin.
+   `davinci`, `opencoder`, `antigravity`, `codex`, `gemini` are not installed.
+   So "Davinci CLI (Devin)" is the `devin` command, "OpenCoder CLI" is the `opencode` command,
+   and "AGY CLI" is the `agy` command.
+
+2. `devin models list` (52 model families). Among them:
+   - "GPT-6 Astra (gpt-6-astra)": gpt-6-astra-{low,medium,high,xhigh,max}, $10 / 1M input, $50 / 1M output.
+   - "GPT-6 Sol (gpt-6-sol)": $2 / 1M input, $10 / 1M output.
+   - Claude Opus 5.5 ($4 / $20), Claude Fable 5.1 ($10 / $50), Claude Sonnet 5 ($2 / $10),
+     Gemini 3.8 Flash ($0.75 / $3.75).
+   The list shows no model with the word "free" and no quota figure.
+
+3. `agy models`: gemini-3.8-flash-{high,medium,low}, gemini-3.7-flash-*, gemini-3.6-flash-*,
+   gemini-3.1-pro-{high,low}, claude-sonnet-4-6, claude-opus-4-6-thinking, gpt-oss-120b-medium.
+   The list shows no price, no tier and no quota figure.
+
+4. `opencode models`: providers anthropic/, google/, openai/, opencode-go/, opencode/.
+   It lists anthropic/claude-opus-4-8, anthropic/claude-haiku-4-5, anthropic/claude-sonnet-5,
+   anthropic/claude-fable-5-1, opencode-go/kimi-k3, opencode-go/qwen3.8-max,
+   opencode-go/space-bunny-free, opencode/big-pickle, and others.
+   `opencode auth list`: OpenCode Go, Anthropic, GitHub Copilot, Google, OpenAI, OpenCode Console, xAI.
+
+5. Print-mode smoke runs (prompt: "Reply with one line only: the name of the model you are,
+   then the text OK. Do not use any tools."):
+   - devin -p --model gpt-6-astra-medium            -> "GPT-6 Astra Medium Thinking OK" (4 s)
+   - agy -p --model gemini-3.1-pro-high --mode plan  -> "Gemini 3.1 Pro High OK" (15 s)
+   - opencode run -m openai/gpt-5.5 --agent plan     -> error: "Incorrect API key provided"
+   - opencode run -m google/gemini-3.1-pro-preview   -> "Gemini 3.1 Pro Preview OK"
+   - opencode run -m anthropic/claude-opus-4-8       -> error: "Your credit balance is too low
+                                                        to access the Anthropic API."
+   - opencode run -m opencode-go/kimi-k3             -> "Kimi K3 OK"
+   - opencode run -m opencode-go/deepseek-v4-pro     -> error: "This Go model requires Global regions."
+   - opencode run -m opencode-go/qwen3.8-max         -> "Qwen3.8 Max OK"
+
+6. Claude Code: the session model is Claude Opus 5.5; subagents can run Claude Fable 5.1,
+   Claude Sonnet 5 and Claude Haiku 4.5.
+
+7. Usage reports: `opencode stats` gives totals for 2026 (95 sessions, 389 prompts,
+   141.1m tokens) and an activity chart; it gives no quota, no budget and no percentage.
+   `devin --help` and `agy help` name no usage, quota, credit or limit command.
+
+Not measured: any quota or budget percentage for any harness (Claude Code `/usage` is an
+interactive command and was not read); which models are "free tier" on any harness.
+
+What these measurements prove, and what they do not: a smoke run proves that the
+binding (harness, model, account) ran once on 2026-09-24 and returned text. It
+proves no price, no quota, no capability and no fitness for a role. A model list
+proves that the account lists the model, not that a call to it succeeds (for
+example `anthropic/claude-opus-4-8` is listed by OpenCode and failed for credit).
+A later binding (a substitute or a judge) is smoke-run on the day of use and
+added below before it is used.
