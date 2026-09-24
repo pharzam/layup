@@ -2,6 +2,8 @@
 
 Issue: [#46](https://github.com/pharzam/layup/issues/46). Child: [#47](https://github.com/pharzam/layup/issues/47) (`F-0005`). Record: [ADR-0012](../adr/0012-route-work-across-harness-agents.md). Evidence: `runs/T-w79d/` (inventory, clause map, check, test runs).
 
+Deferred items of ADR-0012, each a child issue: **X1** (review independence by harness product) is [#51](https://github.com/pharzam/layup/issues/51); **X2** (the stall protocol and stall-consultation notes) is [#52](https://github.com/pharzam/layup/issues/52).
+
 ## Operator decisions (word for word; given in the session on 2026-09-24)
 
 - **O-15** (the goal count of this task, after plan review 2). The Operator chose "One goal, keep the check": "Decision note: a decision record is one goal, as in #30, even with a check of its parts in the DoD. A later task makes the R11 text say so (R10). I fix the other conditions in revision 3." (#49 fixes the R11 text.)

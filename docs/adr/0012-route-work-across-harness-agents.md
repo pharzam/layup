@@ -46,29 +46,36 @@ This record is `Proposed`. If a later task accepts it, it amends ADR-0005 as fol
 ### Proposed decisions
 
 - **D1.** A route has two parts: the tier of ADR-0005, and a **binding** — a harness, an
-  exact model, an effort setting and an account alias. Determinism still comes first, and
-  the review levels and the quota state go before the table order (ADR-0005's bounds).
-- **D2.** (no clause) The bindings are an adopter table in Git beside O-3 in "Model tiers", not text
-  in this record, so a product change edits the table, not an ADR. A binding enters the
-  table only with a dated inventory entry; a model with no entry is not routable
-  (`F-0001#4`). It frames O-19 to O-21.
+  exact model, an effort setting and an account alias. Determinism still comes first.
+  Then, in this order: the review levels (D7), the quota state (D6), the table order (D3).
+  If the quota state removes every binding that the review levels accept, D5 applies.
+- **D2.** (no clause) The bindings are an adopter table in Git, not text in this record,
+  so a product change edits the table, not an ADR; where the table lives is O-19. A
+  binding enters the table only with a dated inventory entry that names its harness,
+  model, effort and account alias; a model with no entry is not routable (`F-0001#4`).
 - **D3.** The route is computed by a fixed rule, not chosen by a model: the first eligible
   binding of the step's tier, in table order. Eligible means smoke-run on the day of use,
-  not failed in this task, and not above the reserve where a quota figure exists. The rule
+  not failed in this task, and allowed for the step by its quota state (D6). The rule
   prints the binding; a harness agent launches it; the resource record names the model and
   the harness, for example "Claude Fable 5.1 on Claude Code".
 - **D4.** (no clause) A dispatch fails on a non-zero exit, an empty output, an output without its
   required shape, or no answer within its time limit. An exit code alone is not evidence:
   a print mode exited 0 with no output on 2026-09-24. On a failure the next eligible
   binding of the same tier runs.
-- **D5.** When no binding of the step's tier is eligible, Claude Fable 5.1 and then
-  "Astra 6.1" are tried before the task gets the stall status (O-18). After that, the
-  stall procedure applies (X2).
+- **D5.** When no binding of the step's tier is eligible, the route tries the fallback
+  models that O-18 names, Claude Fable 5.1 and then "Astra 6.1", each only through a
+  binding that the inventory holds and that meets D3 apart from the tier; "Astra 6.1" is
+  not tried until O-21 names its model. If none answers, the route stops, and the author
+  asks the Operator on the issue (R6). O-18 puts these fallbacks before any stall status;
+  what gives a task the stall status, and what follows, is X2.
 - **D6.** "Quota" is the vendor's quota, an input to the route, never a budget:
   ADR-0007's "recorded, not budgeted" stands. A state comes only from a figure that the
   vendor reports for a quota pool: Normal, Constrained or Reserve exceeded, at thresholds
   the Operator sets. With no figure the state is **unknown**, never Normal (`F-0001#5`).
-  Each figure and each change of state is an append-only record in Git (ADR-0011, 2).
+  A binding takes the state of its pool; with more than one pool, the worst state counts.
+  The state sets the route: Normal, the table order; Constrained, the binding runs
+  reasoning-tier steps only; Reserve exceeded, it is not eligible; unknown, the route of
+  O-22. Each figure and each change of state is an append-only record in Git (ADR-0011, 2).
 - **D7.** (no clause) A plan review, a review round, a judge and a panel member take a binding that
   "Who may review" accepts. A blind reviewer may use the author's harness with a different
   model (O-18). Whether a different harness is required stays X1.
@@ -126,7 +133,8 @@ This record is `Proposed`. If a later task accepts it, it amends ADR-0005 as fol
   and L82, which together put every review of Claude Code work on a non-Anthropic model.
 - **X2.** The stall protocol (F-0005 L52–L79). Where it changes the trigger or the
   hand-off of `F-0001#14`, it needs a PSB revision by the idea owner (`F-0001#23`);
-  `F-0003#49`, `#61` and `#73` bound it.
+  `F-0003#49`, `#61` and `#73` bound it. X2 also owns the retention of stall-consultation
+  notes (F-0005 L84, the part of C24 that `F-0003#49` already covers).
 
 ### The clause table
 
@@ -163,8 +171,8 @@ This record is `Proposed`. If a later task accepts it, it amends ADR-0005 as fol
 - While this record is `Proposed`, no rule changes: "Model tiers" and O-3, "Who may
   review", the Human Decision Points and ADR-0007 stand, and ADR-0005's Status stays.
 - On acceptance, a later task sets ADR-0005's Status to `Accepted. Amended by ADR-0007
-  and ADR-0012`, writes the binding table and the rule into "Model tiers", and updates
-  every summary of it. D1 to D8 wait for the answers to O-19 to O-25.
+  and ADR-0012`, writes the rule into "Model tiers" and the binding table where O-19
+  decides, and updates every summary of both. D1 to D8 wait for the answers to O-19 to O-25.
 - Nothing is mechanized. Until a later task writes the route rule as a script or a
   `layup` command, the route has no check (`F-0001#5`), and even then no check can prove
   which harness ran: the resource record stays self-reported (ADR-0007).

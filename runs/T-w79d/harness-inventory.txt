@@ -73,3 +73,11 @@ Bindings added on the day of use:
   --auto` smoke-ran ("Qwen3.8 Max OK", 8 s), then gave no output within 300 s (exit 124).
 - 2026-09-24, review round 1 of #46: `devin -p --model gpt-6-sol-xhigh --permission-mode
   dangerous` -> "GPT-6 Sol XHigh Thinking OK" (4 s).
+
+Accounts and effort (added for review round 1 of #46, finding 8). Each harness had one
+signed-in account on this machine on 2026-09-24; this record calls each one `operator`:
+`devin auth status` -> "Logged in (via Devin)"; `opencode auth list` shows one credential
+per provider; `claude` and `agy` ran under their one login (no status command was read).
+Effort: where the model name carries it (gpt-6-astra-xhigh, gpt-6-sol-xhigh,
+gemini-3.1-pro-high), that is the effort. For claude-fable-5-1 in print mode, kimi-k3,
+qwen3.8-max and gemini-3.1-pro-preview, the harness default applied and was not read.

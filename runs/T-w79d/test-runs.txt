@@ -43,3 +43,18 @@ ok    7a  clause-table: FAIL P7 no entry under "### Deferred items"
 ok    7b  clause-table: FAIL P7 no entry under "### Rejected options"
 ok    7c  clause-table: FAIL P7 D98 is defined but no clause goes to it and it does not say (no clause)
 clause-table self-test: 18 passed, 0 failed
+
+== Review round 1 fix (2026-09-24). Red: the check of the frozen head 6328f69 on a copy of
+   the tree where `## Decision` is renamed `## Context continued` and `### The clause
+   table` is renamed `## Decision` (the four subsections then lie outside Decision):
+$ sh old-check.sh <copy>
+exit=0
+clause-table: OK
+   Green, the fixed check on the same copy:
+$ sh runs/T-w79d/clause-table-check.sh <copy>
+exit=1
+clause-table: FAIL P7 no entry under "### Proposed decisions" inside "## Decision"
+(the same line for the other three subsections)
+$ sh runs/T-w79d/clause-table-check.sh --self-test .   (also under dash)
+exit=0
+clause-table self-test: 19 passed, 0 failed   (case 7d added: the move above)

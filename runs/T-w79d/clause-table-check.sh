@@ -106,16 +106,18 @@ check() {
 		fail P6 "check facts fails: $(grep FAIL "$tmp/p6" | head -1)"
 	fi
 
-	# P7 — the four Decision subsections, each with an entry; each defined ID is used or says (no clause).
+	# P7 — the four subsections inside "## Decision", each with an entry; each defined ID
+	# is used or says (no clause).
 	for sub in 'Proposed decisions' 'Rejected options' 'Open Operator decisions' 'Deferred items'; do
 		n=$(awk -v s="### $sub" '
-			$0 == s { on = 1; next }
+			/^## / { sec = $0 }
+			$0 == s && sec == "## Decision" { on = 1; next }
 			on && /^#/ { exit }
 			on && /^- / { n++ }
 			END { print n + 0 }' "$adr")
-		[ "$n" -ge 1 ] || fail P7 "no entry under \"### $sub\""
+		[ "$n" -ge 1 ] || fail P7 "no entry under \"### $sub\" inside \"## Decision\""
 	done
-	grep -Eo '^- \*\*(D[0-9]+|O-[0-9]+|X[0-9]+)\.\*\*.*' "$adr" | while IFS= read -r line; do
+	grep -E '^- \*\*(D[0-9]+|O-[0-9]+|X[0-9]+)\.\*\*' "$adr" | while IFS= read -r line; do
 		def=$(printf '%s\n' "$line" | sed -E 's/^- \*\*([^.]+)\.\*\*.*/\1/')
 		awk -F'\t' -v d="$def" '$4 == d { f = 1 } END { exit !f }' "$tmp/cells" \
 			|| printf '%s\n' "$line" | grep -Fq '(no clause)' \
@@ -134,7 +136,14 @@ fi
 # --- self-test: one mutation per predicate, each must fail with its own P<n> ---
 base=$(mktemp -d "${TMPDIR:-/tmp}/clause-table-self.XXXXXX")
 trap 'rm -rf "$base"' EXIT INT TERM
-(cd "$ROOT" && git ls-files -z) | (cd "$ROOT" && xargs -0 tar -cf -) | (cd "$base" && tar -xf -)
+# Copy the tracked files one by one (POSIX: no `xargs -0`, no `tar`). The list is
+# read from a file, not a pipe, so a failed copy stops the self-test here.
+(cd "$ROOT" && git -c core.quotePath=false ls-files) > "$base.list"
+while IFS= read -r f; do
+	mkdir -p "$base/$(dirname "$f")" && cp -p "$ROOT/$f" "$base/$f" \
+		|| { echo "clause-table self-test: FAIL cannot copy $f"; rm -f "$base.list"; exit 1; }
+done < "$base.list"
+rm -f "$base.list"
 check "$base" > "$base.out" 2>&1 || { echo "clause-table self-test: FAIL the unmutated tree does not pass:"; cat "$base.out"; rm -f "$base.out"; exit 1; }
 rm -f "$base.out"
 adr_rel=$(cd "$base" && ls docs/adr/0012-*.md)
@@ -174,8 +183,9 @@ mutate 5c 'clause-table: FAIL P5 C01 uses "not policy"' "set -- C01 6 'not polic
 mutate 6a 'clause-table: FAIL P6 check facts fails: setup-check: facts FAIL hash: docs/facts/operator-routing-policy.md' 'LC_ALL=C sed "84s/repository\\./repository!/" docs/facts/operator-routing-policy.md > x && mv x docs/facts/operator-routing-policy.md'
 mutate 6b 'clause-table: FAIL P6 check facts fails: setup-check: facts FAIL listed: docs/facts/operator-routing-policy.md' 'rm docs/facts/operator-routing-policy.md && grep -v operator-routing-policy docs/setup/facts.sha256 > x && mv x docs/setup/facts.sha256'
 mutate 6c 'clause-table: FAIL P6 expected exactly one docs/facts/F-0005-*.md' 'rm docs/facts/F-0005-*.md'
-mutate 7a 'clause-table: FAIL P7 no entry under "### Deferred items"' 'grep -vx "### Deferred items" "$ADR" > x && mv x "$ADR"'
-mutate 7b 'clause-table: FAIL P7 no entry under "### Rejected options"' 'awk "/^### Rejected options\$/ { on = 1; print; next } /^#/ { on = 0 } on && /^- / { next } { print }" "$ADR" > x && mv x "$ADR"'
+mutate 7a 'clause-table: FAIL P7 no entry under "### Deferred items" inside "## Decision"' 'grep -vx "### Deferred items" "$ADR" > x && mv x "$ADR"'
+mutate 7b 'clause-table: FAIL P7 no entry under "### Rejected options" inside "## Decision"' 'awk "/^### Rejected options\$/ { on = 1; print; next } /^#/ { on = 0 } on && /^- / { next } { print }" "$ADR" > x && mv x "$ADR"'
 mutate 7c 'clause-table: FAIL P7 D98 is defined but no clause goes to it' 'awk "{ print } /^### Proposed decisions\$/ { print \"\"; print \"- **D98.** unused\" }" "$ADR" > x && mv x "$ADR"'
+mutate 7d 'clause-table: FAIL P7 no entry under "### Proposed decisions" inside "## Decision"' 'awk "/^## Decision\$/ { print \"## Context continued\"; next } /^### The clause table\$/ { print \"## Decision\"; next } { print }" "$ADR" > x && mv x "$ADR"'
 printf 'clause-table self-test: %s passed, %s failed\n' "$pass" "$bad"
 [ "$bad" = 0 ]
