@@ -229,3 +229,13 @@ $ sh docs/setup/setup-check.sh
 exit=0 (15 OK lines, 0 FAIL lines)
 $ git diff --check 43a05c81dc536e19f5bc0172bba3baeaf0a683ea HEAD
 exit=0
+
+== #54 round 1 fix (cycle 1). Red, the self-test with 5e and k3 on the check of 116612d: exit 1,
+FAIL  5e  want "clause-table: FAIL P5 C01 goes to D99, which the ADR does not define", got exit 0:
+clause-table self-test: 30 passed, 1 failed
+Red, control k1 made a no-op (":"), on the control() of 116612d: "ok k1", 30 passed, 1 failed (5e).
+Green: the cell reader keeps "\|" inside a cell; control() fails a change that leaves the ADR unchanged.
+ok    5e  clause-table: FAIL P5 C01 goes to D99, which the ADR does not define
+ok    k3  control: an escaped pipe inside a basis -> clause-table: OK
+clause-table self-test: 31 passed, 0 failed
+The same no-op k1 on the fixed control(): "FAIL  k1 control: a thematic break right after C24, but the change left the ADR unchanged".

@@ -53,8 +53,9 @@ This record is `Proposed`. If a later task accepts it, it amends ADR-0005 as fol
   If D3 finds no row, D5 applies.
 - **D2.** (no clause) The bindings are an adopter table in Git, not text in this record,
   so a product change edits the table, not an ADR; where the table lives is O-19. A
-  binding enters the table only with a dated inventory entry that names its harness,
-  model, effort and account alias; a model with no entry is not routable (`F-0001#4`).
+  binding enters the table only with an inventory entry, with its UTC date and time, that
+  names its harness, model, effort and account alias; a model with no entry is not
+  routable (`F-0001#4`).
 - **D3.** The route is computed by a fixed rule, not chosen by a model. A row is
   **eligible** when its binding had a smoke run in the 24 hours before the dispatch (by UTC
   timestamps), has not failed in this task (D4), and the state of each of its quota pools
@@ -63,8 +64,9 @@ This record is `Proposed`. If a later task accepts it, it amends ADR-0005 as fol
   harness agent launches it; the resource record names the model and the harness, for
   example "Claude Fable 5.1 on Claude Code".
 - **D4.** (no clause) A dispatch fails on a non-zero exit, an empty standard output, a
-  standard output of only white space, a standard output without its required shape, or no
-  answer within its time limit. Standard error is never the answer. An exit code alone is
+  standard output of only white space, a standard output without the shape that the
+  step's brief requires (for a review, its record heading), or no answer within its time
+  limit. Standard error is never the answer. An exit code alone is
   not evidence: a print mode exited 0 with no output on 2026-09-24. After a failure the
   route runs D3, and then D5, again without the failed row.
 - **D5.** If D3 finds no row, the route takes the first eligible row marked `fallback` of
@@ -194,8 +196,8 @@ This record is `Proposed`. If a later task accepts it, it amends ADR-0005 as fol
 - Nothing is mechanized. Until a later task writes the route rule as a script or a
   `layup` command, the route has no check (`F-0001#5`), and even then no check can prove
   which harness ran: the resource record stays self-reported (ADR-0007).
-- Each harness costs upkeep: a dated inventory entry, a smoke run on the day of use, and
-  route records in Git.
+- Each harness costs upkeep: an inventory entry with its UTC time, a smoke run in the 24
+  hours before each use (D3), and route records in Git.
 - Work sent to an external harness is sent to an external service (Safety limits). The
   Operator allowed it for the task of this decision; acceptance needs a standing rule.
 - X1 and X2 each need their own decision; review routing stays conditional until X1.

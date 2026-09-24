@@ -105,8 +105,8 @@ and Claude Sonnet 5 on Claude Code as the backup.
 - 11:21-11:47 UTC, review round 1 of #53: Kimi K3 on OpenCode (standalone) gave no output
   in about 10 min and was stopped (O-30 arrived); Grok 4.7 on OpenCode (O-30) with the brief
   as the command argument showed "cli starting" and no later activity (stopped, O-31); a
-  short prompt that points to a file answered in 5 s (the long argument is the cause of the
-  OpenCode hangs of this day); Grok 4.7 with that short prompt ran 641 s, then showed no
+  short prompt that points to a file answered in 5 s (so the long argument is one cause of
+  a hang, not shown to be the only one); Grok 4.7 with that short prompt ran 641 s, then showed no
   database activity for 191 s and was stopped by a watchdog; Claude Sonnet 5 (backup) was
   stopped after about 1.5 min when Devin worked again.
 - 11:41 UTC, Devin works again: `gpt-6-sol-xhigh`, `gpt-6-luna-high`, `swe-2`,
@@ -116,3 +116,5 @@ and Claude Sonnet 5 on Claude Code as the backup.
 - 12:31 UTC, task T-7wqc (#54): `devin -p --model gpt-6-sol-xhigh` smoke run "GPT-6 Sol
   XHigh Thinking OK"; the plan review of #54 then ran on it (364 s, exit 0). Rounds 2 and 3
   of #53 ran on it too (505 s, 420 s).
+Note: "the day of use" above is this task's practice. ADR-0012 D3 (Proposed) instead
+counts a smoke run in the 24 hours before the dispatch, by UTC timestamps.

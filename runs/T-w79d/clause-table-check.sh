@@ -114,9 +114,11 @@ check() {
 		length(t) >= 3 && (t ~ /^-+$/ || t ~ /^\*+$/ || t ~ /^_+$/) { exit }
 		{ if (substr(l, 1, 1) != "|") l = "|" l; print l }
 	' "$adr" > "$tmp/rows"
-	# One tab-separated line per row: id, relation, basis, destination (cells trimmed, backticks dropped).
-	awk -F'|' '{
-		for (i = 2; i <= 6; i++) { c = $i; gsub(/`/, "", c); sub(/^[ \t]+/, "", c); sub(/[ \t]+$/, "", c); v[i] = c }
+	# One tab-separated line per row: id, relation, basis, destination (cells trimmed,
+	# backticks dropped). An escaped pipe "\|" is part of a cell, not a separator (GFM).
+	awk '{
+		l = $0; gsub(/\\\|/, "\001", l); split(l, f, "|")
+		for (i = 2; i <= 6; i++) { c = f[i]; gsub(/\001/, "|", c); gsub(/`/, "", c); sub(/^[ \t]+/, "", c); sub(/[ \t]+$/, "", c); v[i] = c }
 		printf "%s\t%s\t%s\t%s\n", v[2], v[4], v[5], v[6]
 	}' "$tmp/rows" > "$tmp/cells"
 
@@ -244,6 +246,10 @@ control() {
 	m=$(mktemp -d "${TMPDIR:-/tmp}/clause-table-mut.XXXXXX")
 	cp -R "$base/." "$m/"
 	(cd "$m" && ADR=$adr_rel sh -c "$code")
+	if cmp -s "$base/$adr_rel" "$m/$adr_rel"; then
+		printf 'FAIL  %-3s control: %s, but the change left the ADR unchanged\n' "$case_id" "$what"
+		bad=$((bad + 1)); rm -rf "$m"; return
+	fi
 	out=$(check "$m" 2>&1); rc=$?
 	if [ "$rc" = 0 ] && [ -z "$out" ]; then
 		printf 'ok    %-3s control: %s -> clause-table: OK\n' "$case_id" "$what"
@@ -283,5 +289,7 @@ mutate 2e 'clause-table: FAIL P2 a row opens with "C25"' 'awk "{ print } /^\\| C
 mutate 1f 'clause-table: FAIL P1 no delimiter row under the clause table header' 'awk "/^\\| -- \\| -- \\|/ && !d { d = 1; next } { print }" "$ADR" > x && mv x "$ADR"'
 control k1 'a thematic break right after C24' 'awk "{ print } /^\\| C24 \\|/ { print \"---\" }" "$ADR" > x && mv x "$ADR"'
 control k2 'every clause row without its outer pipes' 'awk "/^\\| C[0-9][0-9] \\|/ { sub(/^\\| /, \"\"); sub(/ \\|\$/, \"\") } { print }" "$ADR" > x && mv x "$ADR"'
+mutate 5e 'clause-table: FAIL P5 C01 goes to D99, which the ADR does not define' 'R="| C01 | L5–L6 | conflicts | R5 \\| D3 | D99 |" awk "/^\\| C01 \\|/ { print ENVIRON[\"R\"]; next } { print }" "$ADR" > x && mv x "$ADR"'
+control k3 'an escaped pipe inside a basis' 'R="| C01 | L5–L6 | conflicts | R5 \\| D3 | D3 |" awk "/^\\| C01 \\|/ { print ENVIRON[\"R\"]; next } { print }" "$ADR" > x && mv x "$ADR"'
 printf 'clause-table self-test: %s passed, %s failed\n' "$pass" "$bad"
 [ "$bad" = 0 ]
