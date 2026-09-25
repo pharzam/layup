@@ -204,8 +204,9 @@ hooks, branch protection and CI are untouched.
    pass is never enough" is suspended; the pilot measures what one pass misses.
 4. **Reviewer selection** is the whole routing rule: any model that differs from
    the author's, on `claude`, `devin` or `opencode`, the first that returns a
-   record within five minutes. A harness that fails or gives no answer is
-   skipped and named in the resource record; no decision is asked for it. The
+   record. A harness that fails, gives no output within five minutes, or gives
+   no record within fifteen, is skipped and named in the resource record; no
+   decision is asked for it. The
    [Model tiers](#model-tiers) name the models; the models not to use are in
    ADR-0012, part 3. No quota state is tracked.
 5. **A panel** ([ADR-0006](adr/0006-convene-a-panel-to-generate-options.md)) is

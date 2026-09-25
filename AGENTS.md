@@ -77,7 +77,8 @@ step 5 with the substitutions in
 [Bootstrap mode](docs/engineering-discipline.md#bootstrap-mode): a task is a PSB
 In-Scope item or what one needs; the plan review is one comment; the review is one
 round by a different model, a second only after a fix or for a change to a gate;
-the reviewer is the first harness that answers in five minutes; a panel sits only
+the reviewer is the first harness that returns a record (no output in five minutes
+or no record in fifteen: skipped); a panel sits only
 for a product-architecture ADR. That section is the gate while it is in force.
 
 ## The issue rules
