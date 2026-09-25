@@ -52,7 +52,7 @@
   of each draft is the agent's, not the idea owner's, and is not a fact.
 - **Open gaps.** None: every question has an answer. Facts 11 to 19 defer the
   numeric start values to the first pilot's baseline measurement, as the PSB
-  itself says (`F-0001 §7`); the pilot's PRD records the numbers when set.
+  itself says (`F-0001 §7`).
 - **Status.** Raw facts, the idea owner's words. A derived requirement may cite
   one by `F-0004#N`; which requirement cites which fact is decided where the
   requirements are written, not here.

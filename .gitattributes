@@ -187,3 +187,15 @@ docs/*/tests/**/*.sh               text eol=lf
 # above reaches it, so it is named the way the runner is. It is a thirteenth
 # executable: the count of twelve above was measured before it existed.
 docs/tests/nested-checkout-check.sh text eol=lf
+
+# --- a fixture whose trailing whitespace IS the test -------------------------
+#
+# facts/bad-answers-blank holds a numbered fact whose text is one tab, so that
+# check `facts` proves it rejects an all-whitespace answer (T-zmj6, round 1
+# finding 2). `git diff --check`, which AGENTS.md lists as a check to run by
+# hand, reports that tab as trailing whitespace and exits 2 over the whole
+# branch. The attribute below turns that report off for this one case; the
+# fixture keeps its tab, and `git diff --check` stays meaningful everywhere else.
+# It is a different attribute from the line-ending pins above, so the ordering
+# rule stated there does not touch it.
+docs/setup/tests/facts/bad-answers-blank/** -whitespace
