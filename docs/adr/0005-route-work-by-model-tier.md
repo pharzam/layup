@@ -4,7 +4,7 @@ Date: YYYY-MM-DD
 
 ## Status
 
-Accepted. Amended by ADR-0007
+Accepted. Amended by ADR-0007 and [ADR-0012](0012-build-layup-in-bootstrap-mode.md)
 
 ## Context
 
