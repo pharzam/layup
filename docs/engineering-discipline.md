@@ -215,10 +215,11 @@ hooks, branch protection and CI are untouched.
 4. **Reviewer selection** is the whole routing rule. The author is the model
    whose session wrote the change under review: Claude Opus 5.5 on Claude Code
    unless the task's issue names another model of the reasoning tier, and where
-   more than one model wrote the change, each is an author. The reviewer is any
-   model that differs from every author's, on `claude`, `devin` or `opencode`,
-   tried one at a time in the order the author names on the issue, until one
-   returns a record. A harness that fails, gives
+   more than one model wrote the change, each is an author whose model the
+   reviewer must differ from, and the session that freezes the head names the
+   reviewer order and answers the notes. The reviewer is any model that differs
+   from every author's, on `claude`, `devin` or `opencode`, tried one at a time
+   in that order, until one returns a record. A harness that fails, gives
    no output within five minutes, or gives no record within fifteen, is skipped
    and named in the resource record; no decision is asked for it. The
    [Model tiers](#model-tiers) name the models; the models not to use are in
