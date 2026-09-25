@@ -179,9 +179,11 @@ rejected alternatives and its consequences are recorded in
 ## Bootstrap mode
 
 [ADR-0012](adr/0012-build-layup-in-bootstrap-mode.md) puts this repository in
-**bootstrap mode** from 2026-09-25 until the first pilot: the day `layup` has set
-up one target repository from a problem statement and has run that target's gate
-from outside. In this mode the gate above is read with the substitutions below,
+**bootstrap mode** from 2026-09-25. The mode ends when the ADR that supersedes
+ADR-0012 is accepted, and not before; that ADR is opened by the task that closes
+the first pilot, the day `layup` has set up one target repository from a problem
+statement and has run that target's gate from outside. In this mode the gate
+above is read with the substitutions below,
 and nothing else changes: issue first, red then green, the frozen head, the record
 fields of [What a round records](#what-a-round-records), evidence under `runs/`,
 the close-out and the pull request stay as written, and `review-record-lint`, the
@@ -199,14 +201,17 @@ hooks, branch protection and CI are untouched.
    (a record, a decision, a document, a fact).
 3. **The review** is one round, lens correctness and acceptance criteria, by a
    fresh session whose model differs from the author's, with the record fields
-   as before. A second round runs only after a fix (cycle cap 1) or when the
-   change touches a gate: a check script, a hook, CI or branch protection. "One
-   pass is never enough" is suspended; the pilot measures what one pass misses.
-4. **Reviewer selection** is the whole routing rule: any model that differs from
-   the author's, on `claude`, `devin` or `opencode`, the first that returns a
-   record. A harness that fails, gives no output within five minutes, or gives
-   no record within fifteen, is skipped and named in the resource record; no
-   decision is asked for it. The
+   as before. A second round runs only after a fix: the cycle cap is 1, and 2
+   when the change touches a gate (a check script, a hook, CI or branch
+   protection). "One pass is never enough" is suspended; the pilot measures what
+   one pass misses.
+4. **Reviewer selection** is the whole routing rule. The author is Claude Opus
+   5.5 on Claude Code unless the task's issue names another model of the
+   reasoning tier. The reviewer is any model that differs from the author's, on
+   `claude`, `devin` or `opencode`, tried one at a time in the order the author
+   names on the issue, until one returns a record. A harness that fails, gives
+   no output within five minutes, or gives no record within fifteen, is skipped
+   and named in the resource record; no decision is asked for it. The
    [Model tiers](#model-tiers) name the models; the models not to use are in
    ADR-0012, part 3. No quota state is tracked.
 5. **A panel** ([ADR-0006](adr/0006-convene-a-panel-to-generate-options.md)) is
@@ -216,10 +221,9 @@ hooks, branch protection and CI are untouched.
    names the model, the effort and the elapsed time per gate part; a token count
    a harness does not give is `not reported`.
 
-The task that closes the first pilot opens the ADR that ends this mode; that ADR
-reads the pilot's defect and stall numbers before it restores or re-decides the
-full gate. While it is in force this section is the gate, and a nested
-instruction file may not weaken it either.
+The ADR that ends this mode reads the pilot's defect and stall numbers before it
+restores or re-decides the full gate. Until it is accepted this section is the
+gate, and a nested instruction file may not weaken it either.
 
 ## Issue-first workflow
 

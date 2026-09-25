@@ -1,6 +1,14 @@
 # Diagnosis: why LAYUP does not move, and the pivot
 
-Audit of 2026-09-25, read-only, over `main` at `43a05c8`, branch `T-7wqc`, all 55 issues and their 229 comments, and the three audit reports in this folder (`issues-audit.md`, `facts-audit.md`, `adr12-audit.md`).
+> **Status of this file.** This is the diagnosis as the author presented it to the
+> Operator on 2026-09-25, before the decision. §1–§3 are the findings. §4 is the
+> author's recommendation, which kept `F-0005`; §5 rejected the revert. The
+> Operator chose otherwise: "Bootstrap mode + revert F-0005" (O-41) and the
+> revised routing text as an evidence file (O-42). The decision is
+> [ADR-0012](../../docs/adr/0012-build-layup-in-bootstrap-mode.md); where §4 or
+> §5 differs from it, the ADR governs.
+
+Audit of 2026-09-25, read-only, over `main` at `43a05c8`, branch `T-7wqc`, all 55 issues and their 229 comments, and the three audit reports beside this file (`audit/issues.md`, `audit/facts.md`, `audit/adr-0012-branch.md`).
 
 ## 1. The numbers
 
