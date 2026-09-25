@@ -156,5 +156,5 @@ questions are listed in [`setup/open-gaps.tsv`](setup/open-gaps.tsv). Since
 [#45](https://github.com/pharzam/layup/issues/45) (the idea owner's answers),
 then [#42](https://github.com/pharzam/layup/issues/42) (the PRD), then the
 core-engine commands under #29, and the gate runs with one plan-review comment
-and one review round, one more after a fix, until the ADR that supersedes
+and one review round, one more after a fix (two for a change to a gate), until the ADR that supersedes
 ADR-0012 is accepted (a summary; the rule is the linked section).

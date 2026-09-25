@@ -19,7 +19,7 @@ Since 2026-09-25 the repository is in bootstrap mode
 is [Bootstrap mode](docs/engineering-discipline.md#bootstrap-mode)): until the ADR
 that supersedes ADR-0012 is accepted, work is limited to the PSB's In-Scope items
 and what they need, and the gate runs with one plan-review comment and one review
-round, one more after a fix.
+round, one more after a fix (two for a change to a gate).
 
 ## Start here
 

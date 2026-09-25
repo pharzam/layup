@@ -1,0 +1,84 @@
+# T-7sbn — run evidence (2026-09-25, worktree .worktree/T-7sbn)
+
+## Frozen head 7e4c6e3, before the freeze: adr-lint
+
+```
+adr-lint: OK
+```
+
+## Frozen head 7e4c6e3, before the freeze: prd-lint
+
+```
+prd-lint: OK
+```
+
+## Frozen head 7e4c6e3, before the freeze: link-lint
+
+```
+link-lint: OK  836 links resolved
+```
+
+## Frozen head 7e4c6e3, before the freeze: discipline
+
+```
+
+run-discipline-tests: 81 passed, 0 failed
+```
+
+## Frozen head 7e4c6e3, before the freeze: setup
+
+```
+setup-check: pin OK
+setup-check: kit-history FAIL orphan: docs/tasks/T-7sbn.md has no line with T-7sbn in backlog.md or completed.md
+setup-check: kit-history FAIL orphan: docs/tasks/T-8ywj.md has no line with T-8ywj in backlog.md or completed.md
+setup-check: facts OK
+setup-check: onboarding OK
+setup-check: glossary OK
+setup-check: guardrails OK
+setup-check: markers OK
+setup-check: ci OK
+setup-check: protection OK
+setup-check: identity OK
+setup-check: procedure OK
+
+run-discipline-tests: 81 passed, 0 failed
+adr-lint: OK
+prd-lint: OK
+link-lint: OK  836 links resolved
+setup-check: kit-linters OK
+```
+
+## Round 1 (cycle 0), first named harness
+
+```
+devin -p --prompt-file .review-brief/PROMPT.md --model gpt-6-sol-xhigh --permission-mode dangerous --respect-workspace-trust false  # in a disposable clone at 7e4c6e3, 900 s watchdog
+exit=0 elapsed=350s
+```
+
+## Fix head, before the fix commit: the five checks and setup-check
+
+```
+adr-lint: OK
+prd-lint: OK
+link-lint: OK  837 links resolved
+
+run-discipline-tests: 81 passed, 0 failed
+setup-check: pin OK
+setup-check: kit-history FAIL orphan: docs/tasks/T-7sbn.md has no line with T-7sbn in backlog.md or completed.md
+setup-check: kit-history FAIL orphan: docs/tasks/T-8ywj.md has no line with T-8ywj in backlog.md or completed.md
+setup-check: facts OK
+setup-check: onboarding OK
+setup-check: glossary OK
+setup-check: guardrails OK
+setup-check: markers OK
+setup-check: ci OK
+setup-check: protection OK
+setup-check: identity OK
+setup-check: procedure OK
+
+run-discipline-tests: 81 passed, 0 failed
+adr-lint: OK
+prd-lint: OK
+link-lint: OK  837 links resolved
+setup-check: kit-linters OK
+```

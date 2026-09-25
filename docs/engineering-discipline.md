@@ -212,11 +212,13 @@ hooks, branch protection and CI are untouched.
    applies it, or declines it with a reason, during close-out; a note does not
    cause another review round. A round with notes only is mergeable. The
    Operator settles disputed materiality.
-4. **Reviewer selection** is the whole routing rule. The author is Claude Opus
-   5.5 on Claude Code unless the task's issue names another model of the
-   reasoning tier. The reviewer is any model that differs from the author's, on
-   `claude`, `devin` or `opencode`, tried one at a time in the order the author
-   names on the issue, until one returns a record. A harness that fails, gives
+4. **Reviewer selection** is the whole routing rule. The author is the model
+   whose session wrote the change under review: Claude Opus 5.5 on Claude Code
+   unless the task's issue names another model of the reasoning tier, and where
+   more than one model wrote the change, each is an author. The reviewer is any
+   model that differs from every author's, on `claude`, `devin` or `opencode`,
+   tried one at a time in the order the author names on the issue, until one
+   returns a record. A harness that fails, gives
    no output within five minutes, or gives no record within fifteen, is skipped
    and named in the resource record; no decision is asked for it. The
    [Model tiers](#model-tiers) name the models; the models not to use are in
