@@ -67,9 +67,9 @@ existing_facts=$(ls "$facts_dir" 2>/dev/null \
 # The list is SPACE-separated on purpose. It was newline-separated, and macOS
 # awk rejects a newline inside a -v assignment ("newline in string"), so the
 # linter could not run at all on a tree with two or more facts and one PRD.
-# The kit's own fixtures hold one fact, and a fresh kit holds no PRD, which is
-# why every earlier run was green. docs/prd/tests/facts/ now holds two facts,
-# so the discipline suite covers this on every awk (T-wjq4).
+# The kit's own fixtures held one fact, and a fresh kit holds no PRD, which is
+# why every earlier run was green. docs/prd/tests/facts/ holds two facts since
+# T-wjq4, so the discipline suite covers this on every awk.
 
 for path do
 	awk -v fname="$(basename "$path")" -v facts="$existing_facts" '

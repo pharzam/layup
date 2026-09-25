@@ -80,13 +80,13 @@ machine-checkable.
 | REQ-005 | Information that passes between role agents is a record in the target that a machine validates against a schema based on Armature conventions. | Must | 2 | F-0003#45, F-0003#59 |
 | REQ-006 | A question that does not need a human decision gets an accepted answer from the responsible role agent, without a human, and the answer is recorded in the target. | Must | 3 | F-0003#46, F-0003#8, F-0003#9, F-0003#10 |
 | REQ-007 | Each change passes the gates for repository layout, interface boundaries and testing pyramids before it reaches human review or merges; a gate is deterministic where a rule can be checked mechanically. | Must | 1 | F-0003#47, F-0003#58, F-0001#6 |
-| REQ-008 | An escalation rule that a machine applies selects the business-forking decisions; the agent stops on one and the idea owner decides; every other human input to a task is counted as unplanned. | Must | 3 | F-0003#48, F-0003#57, F-0001#12, F-0001#13, F-0001#28 |
+| REQ-008 | An escalation rule that a machine applies selects the business-forking decisions; the agent stops on one and the idea owner decides; human input outside the Human Decision Points is counted as unplanned. | Must | 3 | F-0003#48, F-0003#57, F-0001#12, F-0001#13, F-0001#24, F-0001#28 |
 | REQ-009 | Every stall has a record in the target with its diagnosis and its outcome. | Must | 1 | F-0003#49, F-0003#61, F-0001#37 |
 | REQ-010 | A stall (a disagreement between role agents, or a step that repeats without progress) stops at a stated limit, gets a diagnosis from an independent examination with a fresh context, and reaches the Operator with the evidence. | Must | 3 | F-0003#49, F-0003#17, F-0003#18, F-0003#19, F-0001#14 |
 | REQ-011 | Every task has a record of its token count, its latency and its wall-clock duration in the target. | Must | 1 | F-0003#50, F-0003#20, F-0003#21, F-0003#22, F-0003#60, F-0001#38 |
 | REQ-012 | LAYUP derives identified requirements and technical specifications from an approved problem statement; each requirement has a trace to the text that states it and an acceptance criterion. | Must | 2 | F-0003#51, F-0003#23, F-0003#24, F-0003#25, F-0003#62, F-0001#39 |
 | REQ-013 | The rules, the context and the task state of a target stay in a form that belongs to no harness agent, so that a second harness agent can do the work and can check the work of the first. | Must | 4 | F-0003#52, F-0003#26, F-0003#27, F-0003#28, F-0003#66, F-0001#9 |
-| REQ-014 | LAYUP delivers at least two problem statements with different technology stacks. | Must | 4 | F-0003#67 |
+| REQ-014 | LAYUP shows its result on at least two problem statements with different technology stacks: from each brief it sets up a target and delivers the product. | Must | 4 | F-0003#67, F-0003#42 |
 | REQ-015 | LAYUP modifies base model weights or trains a foundation model. | Won't | — | F-0003#53 |
 | REQ-016 | LAYUP makes a decision that sets the intent of a project: which problem to solve, what counts as success, or the funding. | Won't | — | F-0003#54, F-0001#10 |
 | REQ-017 | LAYUP modifies a downstream cloud infrastructure provider or hosting platform. | Won't | — | F-0003#55 |
@@ -100,8 +100,8 @@ machine-checkable.
 | NFR-002 | A target repository is independent: it passes its gates without LAYUP, and a human or a different agent continues the work without the automation that created it. | Must | 1 | F-0001#2, F-0003#65 |
 | NFR-003 | No configuration value is set without evidence; a value that comes from a guess is a defect. | Must | 1 | F-0001#4, F-0003#63 |
 | NFR-004 | A check that is not active does not count as passed. | Must | 1 | F-0001#5 |
-| NFR-005 | A deterministic check is preferred to an LLM judgement wherever a rule can be checked mechanically; the engine itself makes no model call. | Must | 1 | F-0001#6 |
-| NFR-006 | Armature is used at a pinned, recorded version. | Must | 1 | F-0001#8 |
+| NFR-005 | A deterministic check is preferred to an LLM judgement wherever a rule can be checked mechanically; the engine itself makes no model call (the design decision of ADR-0011, decision 8, not a clause of the fact). | Must | 1 | F-0001#6 |
+| NFR-006 | LAYUP uses Armature at a pinned, recorded version. | Must | 1 | F-0001#8 |
 | NFR-007 | LAYUP is written in Go with the standard library only, and calls Git as the `git` program. | Must | 1 | F-0004#1 |
 
 ### 7.1 Acceptance criteria
@@ -122,7 +122,7 @@ The IDs are quoted so that this table adds no requirement rows.
 | `REQ-009` | In the pilot, the count of stalls with no diagnosis record is zero (`F-0003#61`); each record holds the diagnosis and the outcome. |
 | `REQ-010` | A seeded stall stops at the stated limit, a fresh-context session writes the diagnosis, and the Operator receives the evidence; the Stall Rate and Resolution (`F-0003#73`) are measured against their start values (`F-0004#17`). |
 | `REQ-011` | In the pilot, tasks with a complete telemetry record divided by all tasks equals 1 (`F-0003#60`); a token count a harness does not give is recorded as `not reported` and counts as incomplete. |
-| `REQ-012` | Every delivered requirement of the pilot has an identifier, a trace to the text of the problem statement and an acceptance criterion: requirements with a complete trace divided by all delivered requirements equals 1 (`F-0003#62`). This document is the first instance, for LAYUP itself. |
+| `REQ-012` | Every delivered requirement of the pilot has an identifier, a trace to the text of the problem statement and an acceptance criterion: requirements with a complete trace divided by all delivered requirements equals 1 (`F-0003#62`), and each delivered requirement has a technical specification in the target that names the requirement it implements (`F-0001#39`). This document and the architecture document of the PDR are the first instances, for LAYUP itself. |
 | `REQ-013` | The same project rules and gates run under at least two harness agents, and each change gets at least one verification from a harness agent that did not make the change (`F-0003#66`). |
 | `REQ-014` | The result is shown on at least two problem statements with different technology stacks (`F-0003#67`). |
 | `REQ-015` | No code path of LAYUP trains or modifies a model; a code review of each release records it. |
@@ -130,7 +130,7 @@ The IDs are quoted so that this table adds no requirement rows.
 | `REQ-017` | No code path of LAYUP calls a cloud provider or hosting platform to modify it; a code review of each release records it. |
 | `REQ-018` | A target's baseline rules are byte-identical to the pinned kit's after setup, except the adapted values the setup records with evidence (`F-0001#7`). |
 | `NFR-001` | Every decision cited on an issue of a pilot is also in the target's Git (an ADR, a task record or a decision note); an audit finds none kept only on the forge. |
-| `NFR-002` | A gate run on a pilot target with LAYUP removed passes (`F-0003#65`). |
+| `NFR-002` | A gate run on a pilot target with LAYUP removed passes (`F-0003#65`), and a fresh session of a different harness agent, with no LAYUP running, continues one open task of the target from the target's records alone and lands it under the target's gate (`F-0001#2`). |
 | `NFR-003` | The count of configuration values with no citation in a target is zero (`F-0003#63`). |
 | `NFR-004` | `layup gate` and `layup setup verify` report an inactive check as not passed, and a fixture proves that a check that does not run cannot produce `pass`. |
 | `NFR-005` | Each gate verdict is reproducible: two runs on the same input give the same output; the engine makes no network call to a model (ADR-0011 decision 8). |
@@ -165,7 +165,7 @@ statements with different stacks.
 | Clarification Turnaround | ≤ 120 seconds at the 95th percentile | the same | `F-0003#71`, `F-0004#15` |
 | Reversal Rate | < 5 % of audited agent answers overturned within 30 days | the same | `F-0003#72`, `F-0004#16` |
 | Stall Rate and Resolution | ≤ 5 % of tasks stall; ≥ 90 % of stalls close without human input | the same | `F-0003#73`, `F-0004#17` |
-| Cost per Requirement | the median token cost per requirement of the pilot baseline | the same | `F-0003#74`, `F-0004#18` |
+| Cost per Requirement | median cost per requirement ≤ the pilot baseline; the baseline's own median is the start value | the same | `F-0003#74`, `F-0004#18` |
 | Early Question Share | ≥ 80 % of all human questions asked before delivery starts | the same | `F-0003#75`, `F-0004#19` |
 
 ## 9. Rollout & phases

@@ -44,3 +44,27 @@ prd-lint: OK
 setup-check: kit-linters OK
 git diff --check: clean
 ```
+
+## The fixes of round 1, before the fix commit (the checks, run with the task file and the backlog line present)
+
+```
+prd-lint: OK
+adr-lint: OK
+link-lint: OK  853 links resolved
+run-discipline-tests: 81 passed, 0 failed
+setup-check: pin OK
+setup-check: kit-history OK
+setup-check: facts OK
+setup-check: onboarding OK
+setup-check: glossary OK
+setup-check: guardrails OK
+setup-check: markers OK
+setup-check: ci OK
+setup-check: protection OK
+setup-check: identity OK
+setup-check: procedure OK
+adr-lint: OK
+prd-lint: OK
+setup-check: kit-linters OK
+git diff --check: clean
+```
