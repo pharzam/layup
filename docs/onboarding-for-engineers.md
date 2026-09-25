@@ -149,4 +149,11 @@ The Armature setup of this repository is done
 progress under [#29](https://github.com/pharzam/layup/issues/29); that parent
 issue lists its children, and [`tasks/completed.md`](tasks/completed.md) lists the
 ones that are done, so this section does not repeat the list. The open setup
-questions are listed in [`setup/open-gaps.tsv`](setup/open-gaps.tsv).
+questions are listed in [`setup/open-gaps.tsv`](setup/open-gaps.tsv). Since
+2026-09-25 the repository is in
+[bootstrap mode](engineering-discipline.md#bootstrap-mode)
+([ADR-0012](adr/0012-build-layup-in-bootstrap-mode.md)): the product path is
+[#45](https://github.com/pharzam/layup/issues/45) (the idea owner's answers),
+then [#42](https://github.com/pharzam/layup/issues/42) (the PRD), then the
+core-engine commands under #29, and the gate runs with one plan-review comment
+and one review round until the first pilot.

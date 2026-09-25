@@ -146,9 +146,11 @@ deterministic check still outranks a model of any tier.
 
 Where a model is warranted, route by **tier**. Which concrete models fill each tier
 is the adopter's to set; the kit names none. In this project the reasoning tier is
-Claude Opus 5.5 and Claude Fable 5.1, and the execution tier is Claude Sonnet 5 and
-Claude Haiku 4.5 (Operator decision O-3 on
-[#8](https://github.com/pharzam/layup/issues/8)).
+Claude Opus 5.5, Claude Fable 5.1, GPT-6 Sol and Grok 4.7, and the execution tier is
+Claude Sonnet 5, SWE-2 and GPT-6 Luna (Operator decision O-3 on
+[#8](https://github.com/pharzam/layup/issues/8), amended by
+[ADR-0012](adr/0012-build-layup-in-bootstrap-mode.md), part 3, which also lists the
+models not to use).
 
 | Tier | Class of model | Owns the gate steps that … |
 | ---- | -------------- | -------------------------- |
@@ -173,6 +175,50 @@ A deterministic check still outranks any reviewer and any tier alike: tiering is
 what is left **after** Determinism, never a route around it. This decision, its
 rejected alternatives and its consequences are recorded in
 [ADR-0005](adr/0005-route-work-by-model-tier.md).
+
+## Bootstrap mode
+
+[ADR-0012](adr/0012-build-layup-in-bootstrap-mode.md) puts this repository in
+**bootstrap mode** from 2026-09-25 until the first pilot: the day `layup` has set
+up one target repository from a problem statement and has run that target's gate
+from outside. In this mode the gate above is read with the substitutions below,
+and nothing else changes: issue first, red then green, the frozen head, the record
+fields of [What a round records](#what-a-round-records), evidence under `runs/`,
+the close-out and the pull request stay as written, and `review-record-lint`, the
+hooks, branch protection and CI are untouched.
+
+1. **Scope.** A task is a PSB In-Scope item (`F-0003#41`–`#52`) or a child of
+   one, a defect that blocks such a task, or a documentation fix that a task
+   leaves stale. Its plan names the In-Scope fact it serves. No new process rule,
+   routing rule, check script or policy capture starts on its own.
+2. **The plan review** is one comment, by the Operator or by one fresh agent
+   session, with `Verdict`, `Budget maximum` and `Cycle cap` as before. A
+   `reject` on the goal count alone goes to the Operator, whose count is final;
+   the goal-class count of [R11](issue-workflow.md#r11--single-goal-issues) is
+   not applied to a task whose deliverable is one artifact and its registration
+   (a record, a decision, a document, a fact).
+3. **The review** is one round, lens correctness and acceptance criteria, by a
+   fresh session whose model differs from the author's, with the record fields
+   as before. A second round runs only after a fix (cycle cap 1) or when the
+   change touches a gate: a check script, a hook, CI or branch protection. "One
+   pass is never enough" is suspended; the pilot measures what one pass misses.
+4. **Reviewer selection** is the whole routing rule: any model that differs from
+   the author's, on `claude`, `devin` or `opencode`, the first that returns a
+   record within five minutes. A harness that fails or gives no answer is
+   skipped and named in the resource record; no decision is asked for it. The
+   [Model tiers](#model-tiers) name the models; the models not to use are in
+   ADR-0012, part 3. No quota state is tracked.
+5. **A panel** ([ADR-0006](adr/0006-convene-a-panel-to-generate-options.md)) is
+   convened only for an ADR that changes the product architecture, the subject
+   of [ADR-0011](adr/0011-structure-the-core-engine-as-a-go-cli-over-repository-files.md).
+6. **The resource record** ([ADR-0007](adr/0007-record-task-resource-use.md))
+   names the model, the effort and the elapsed time per gate part; a token count
+   a harness does not give is `not reported`.
+
+The task that closes the first pilot opens the ADR that ends this mode; that ADR
+reads the pilot's defect and stall numbers before it restores or re-decides the
+full gate. While it is in force this section is the gate, and a nested
+instruction file may not weaken it either.
 
 ## Issue-first workflow
 

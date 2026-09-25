@@ -71,6 +71,15 @@ routing. The rule and its tier-to-step map live in
 [Model tiers](docs/engineering-discipline.md#model-tiers), recorded in
 [ADR-0005](docs/adr/0005-route-work-by-model-tier.md).
 
+**Bootstrap mode.** From 2026-09-25 until the first pilot,
+[ADR-0012](docs/adr/0012-build-layup-in-bootstrap-mode.md) reads the plan review and
+step 5 with the substitutions in
+[Bootstrap mode](docs/engineering-discipline.md#bootstrap-mode): a task is a PSB
+In-Scope item or what one needs; the plan review is one comment; the review is one
+round by a different model, a second only after a fix or for a change to a gate;
+the reviewer is the first harness that answers in five minutes; a panel sits only
+for a product-architecture ADR. That section is the gate while it is in force.
+
 ## The issue rules
 
 The workflow defines **thirteen** numbered rules, R1–R13; cite one by number in a
