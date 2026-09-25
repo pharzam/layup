@@ -20,7 +20,8 @@ here directly, in the shape above.
 - **YYYY-MM-DD** — **‹ID›** — ‹one-sentence summary of what the task found or delivered› ([‹link›](...); [detail](‹id›.md))
 -->
 
-- **2026-09-24** — **T-q1x6** — Stored the Operator's routing policy as raw fact `F-0005` (84 lines, byte-identical, attested) and made check `facts` read its index row and its hash line ([#47](https://github.com/pharzam/layup/issues/47); [detail](T-q1x6.md))
+- **2026-09-25** — **T-7sbn** — Landed ADR-0012, "Build LAYUP in bootstrap mode" (Accepted; O-41 to O-44), as the successor of `T-8ywj`: the operative `## Bootstrap mode` section with the Operator's materiality test and one home per rule, the revert of PR #50 (`F-0005`), the Operator's revised routing text as evidence, and the product path #45 → #42 → #29 in the backlog ([#59](https://github.com/pharzam/layup/issues/59); [detail](T-7sbn.md))
+- **2026-09-25** — **T-8ywj** — Wrote ADR-0012 and the diagnosis of the routing-line stall, reverted `F-0005`, and ended at the cycle cap `not mergeable, findings recorded`; split to `T-7sbn` ([#56](https://github.com/pharzam/layup/issues/56); [detail](T-8ywj.md))
 - **2026-09-23** — **T-ertw** — Added `F-0003`, 75 numbered facts for the rest of the PSB, and extended check `facts` to it ([#43](https://github.com/pharzam/layup/issues/43); [detail](T-ertw.md))
 - **2026-09-23** — **T-bhsf** — Required the three Go CI jobs on `main` (12 required checks in all) and recorded the read-back ([#35](https://github.com/pharzam/layup/issues/35); [detail](T-bhsf.md))
 - **2026-09-23** — **T-dq05** — Added `layup psb check`, a deterministic gap check of a problem statement (rules G1–G5, one TSV batch); on LAYUP's own PSB it asks 19 questions ([#37](https://github.com/pharzam/layup/issues/37); [detail](T-dq05.md))

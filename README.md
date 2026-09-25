@@ -14,6 +14,12 @@ statement for gaps (`layup psb check FILE`); the stack is Go
 ([ADR-0010](docs/adr/0010-use-go-as-the-technology-stack.md)), and the core engine
 will be one Go command-line program over files in the repository
 ([ADR-0011](docs/adr/0011-structure-the-core-engine-as-a-go-cli-over-repository-files.md)).
+Since 2026-09-25 the repository is in bootstrap mode
+([ADR-0012](docs/adr/0012-build-layup-in-bootstrap-mode.md); a summary — the rule
+is [Bootstrap mode](docs/engineering-discipline.md#bootstrap-mode)): until the ADR
+that supersedes ADR-0012 is accepted, work is limited to the PSB's In-Scope items
+and what they need, and the gate runs with one plan-review comment and one review
+round, one more after a fix (two for a change to a gate).
 
 ## Start here
 
@@ -42,7 +48,7 @@ will be one Go command-line program over files in the repository
 | [`docs/guardrails.md`](docs/guardrails.md) | Known pitfalls, pre-registered pass/fail rules, and validation. |
 | [`docs/setup/`](docs/setup/) | The Armature pin, the setup record with the evidence for each setup value, the open gaps, the branch-protection body, and `setup-check.sh`, which proves the setup. |
 | [`docs/adr/`](docs/adr/) | Architecture Decision Records that constitute a project — the *why* behind structural choices — plus [`adr-lint.sh`](docs/adr/adr-lint.sh), the discipline test that keeps them honest. Armature's own past governance decisions were archived under `docs/decisions/` in the kit; this repository deleted that directory (kit step 4). |
-| [`docs/facts/`](docs/facts/) | Raw facts kept as immutable evidence — the PSB (`F-0001`, with more numbered facts in `F-0003`), the vision brief (`F-0002`, a solution document), and the Operator's routing policy (`F-0005`, a solution proposal) — and the citation convention that derives requirements from them. |
+| [`docs/facts/`](docs/facts/) | Raw facts kept as immutable evidence — the PSB (`F-0001`, with more numbered facts in `F-0003`) and the vision brief (`F-0002`, a solution document) — and the citation convention that derives requirements from them. |
 | [`docs/prd/`](docs/prd/) | Product Requirements Documents derived from the facts, plus [`prd-lint.sh`](docs/prd/prd-lint.sh), the discipline test that keeps them honest. |
 | [`docs/tests/`](docs/tests/) | The testing conventions — the test levels, a pattern per level, the security, scaling, and Definition-of-Done checklists, and test-to-requirement traceability — plus [`run-discipline-tests.sh`](docs/tests/run-discipline-tests.sh), which tests the kit's own linters against fixtures. |
 | [`tests/`](tests/) | Cross-package end-to-end fixtures; Go unit and integration tests sit beside the code. Empty so far (the first e2e test sits beside its package), kept in git by a `.gitkeep`. |

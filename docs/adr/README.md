@@ -20,6 +20,13 @@ are their enforcement:
    [`issue-workflow.md`](../issue-workflow.md), the [`glossary`](../glossary.md), a
    template. A forge number resolves to a different issue, or to nothing, in the
    adopter's repository; a link to a sibling document travels with the copy.
+   **This repository's own records are the exception.** Records from `0010` on
+   decide LAYUP itself — its stack, its engine, its bootstrap mode — and never
+   travel: [ADR-0011](0011-structure-the-core-engine-as-a-go-cli-over-repository-files.md)
+   decision 3 writes only the pinned Armature kit into a target, never LAYUP's
+   documents. So a record from `0010` on may cite this repository's issues, pull
+   requests, Operator decisions and evidence store (`runs/`); rule 1 binds the
+   constitutional records `0001`–`0009`, which an adopter copies.
 2. **A record here never links into `docs/decisions/`** (a bare textual mention is
    the most it may make). That directory held Armature's own past governance
    decisions — the records that shaped *the kit* rather than a project built with
@@ -31,7 +38,7 @@ are their enforcement:
    survives the deletion.)
 
 **Numbering.** `docs/adr/` is the single living ADR sequence, numbered
-contiguously from `0001`, and it grows — the next constitutional ADR is `0012`. A
+contiguously from `0001`, and it grows — the next constitutional ADR is `0013`. A
 bare "ADR-NNNN" means this directory's sequence. The archive that was under `docs/decisions/`
 has its **own namespace**: a prefixed, zero-based sequence `D-0000`–`D-0008` that
 shares no number with this one and is cited **by its `D-NNNN` identifier** — named
@@ -133,12 +140,13 @@ record by number here, and let the index table below do the linking.
 | [0003](0003-adopt-issue-first-workflow.md)      | Adopt an issue-first workflow | Accepted |
 | [0004](0004-ship-agent-entry-points.md)         | Ship agent entry points       | Accepted; amended |
 | [0005](0005-route-work-by-model-tier.md)        | Route work by model tier      | Accepted; amended |
-| [0006](0006-convene-a-panel-to-generate-options.md) | Convene a panel to generate options | Accepted |
+| [0006](0006-convene-a-panel-to-generate-options.md) | Convene a panel to generate options | Accepted; amended |
 | [0007](0007-record-task-resource-use.md)        | Record each task's resource use | Accepted |
 | [0008](0008-require-one-reading-in-decision-driving-text.md) | Require one reading in decision-driving text | Accepted |
 | [0009](0009-pin-armature-at-a-recorded-commit.md) | Pin Armature at a recorded commit | Accepted |
 | [0010](0010-use-go-as-the-technology-stack.md) | Use Go as the technology stack | Accepted |
 | [0011](0011-structure-the-core-engine-as-a-go-cli-over-repository-files.md) | Structure the core engine as a Go CLI over repository files | Accepted |
+| [0012](0012-build-layup-in-bootstrap-mode.md) | Build LAYUP in bootstrap mode | Accepted |
 
 <!-- Add one row per ADR as you write them. Keep the newest at the bottom. -->
 

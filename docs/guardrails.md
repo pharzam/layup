@@ -108,6 +108,18 @@ check that catches it.
   then commit the tests with the code; never bypass the hook (`--no-verify`).
   Learned in `T-dq05`.
 
+- ❌ **A rule for the builders looks like a product task.** A routing policy for
+  the agents that build LAYUP (which model reviews which comment) took a day, 9
+  plan reviews, 11 review rounds and 26 of the project's 40 Operator decision
+  numbers (19 decided, 7 open), and changed no product line; no PSB fact asked
+  for it. It is silent because every step passed the gate: each issue had a plan
+  and a plan review, and most rounds a record, so the process looked healthy
+  while the product stood still. **The check:** a plan names the PSB
+  In-Scope fact (`F-0003#41`–`#52`) it serves, or the task does not start
+  ([ADR-0012](adr/0012-build-layup-in-bootstrap-mode.md), part 1); and the
+  product-to-process ratio of [`tasks/completed.md`](tasks/completed.md) is read
+  at each pilot. Learned in `T-8ywj`.
+
 ### Writing a lesson back (kit-wide — keep this)
 
 A trap caught once should not be re-derived by the next task, so a lesson does not

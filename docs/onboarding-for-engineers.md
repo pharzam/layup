@@ -127,7 +127,7 @@ Consequences you will meet immediately, and which are not negotiable:
 | [`AGENTS.md`](../AGENTS.md) | The agent entry point — the gate in brief and a pointer to the R1–R13 rules, in one short file. [`CLAUDE.md`](../CLAUDE.md) imports it for Claude Code. |
 | [`engineering-discipline.md`](engineering-discipline.md) | **How we work**: the quality gate, solution selection, branches, worktrees, commits, tests, reviews, and ADRs. Read before your first commit. |
 | [`glossary.md`](glossary.md) | The shared vocabulary. Skim it; come back constantly. |
-| [`facts/`](facts/) | Facts stored as-is as immutable evidence: the PSB (`F-0001`, with more numbered facts in `F-0003`), the vision brief (`F-0002`, a solution document, not requirements), and the Operator's routing policy (`F-0005`, a solution proposal, not requirements). Derived requirements cite them by `F-NNNN` ID. |
+| [`facts/`](facts/) | Facts stored as-is as immutable evidence: the PSB (`F-0001`, with more numbered facts in `F-0003`) and the vision brief (`F-0002`, a solution document, not requirements). Derived requirements cite them by `F-NNNN` ID. |
 | [`prd/`](prd/) | Product Requirements Documents, derived from the facts; each `REQ`/`NFR` cites an `F-NNNN` fact. |
 | [`issue-workflow.md`](issue-workflow.md) | The issue-first rules (R1–R13): the ticket policy the gate assumes. |
 | [`tasks/backlog.md`](tasks/backlog.md) | What to work on next. |
@@ -149,4 +149,12 @@ The Armature setup of this repository is done
 progress under [#29](https://github.com/pharzam/layup/issues/29); that parent
 issue lists its children, and [`tasks/completed.md`](tasks/completed.md) lists the
 ones that are done, so this section does not repeat the list. The open setup
-questions are listed in [`setup/open-gaps.tsv`](setup/open-gaps.tsv).
+questions are listed in [`setup/open-gaps.tsv`](setup/open-gaps.tsv). Since
+2026-09-25 the repository is in
+[bootstrap mode](engineering-discipline.md#bootstrap-mode)
+([ADR-0012](adr/0012-build-layup-in-bootstrap-mode.md)): the product path is
+[#45](https://github.com/pharzam/layup/issues/45) (the idea owner's answers),
+then [#42](https://github.com/pharzam/layup/issues/42) (the PRD), then the
+core-engine commands under #29, and the gate runs with one plan-review comment
+and one review round, one more after a fix (two for a change to a gate), until the ADR that supersedes
+ADR-0012 is accepted (a summary; the rule is the linked section).
