@@ -79,3 +79,5 @@ run-discipline-tests: 81 passed, 0 failed
 setup-check: 14 OK lines, no FAIL
 git diff --check: clean
 ```
+
+Correction (T-84r5): the line "setup-check: 14 OK lines" above counted the three kit-linter pass-through lines with the 11 checks of the script; the setup checks proper were 11 OK lines and no FAIL (12 with check `facts` counted once per the script's own numbering, as the round-3 reviewer counted). The exit code, 0, is unchanged.

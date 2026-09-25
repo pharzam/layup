@@ -1,0 +1,12 @@
+# T-84r5 — run evidence (2026-09-25, worktree .worktree/T-84r5, base 9017d99, carried head ec57e91)
+
+## The eight fixes and the records present, before the commits
+
+```
+prd-lint: OK
+adr-lint: OK
+link-lint: OK  860 links resolved
+run-discipline-tests: 81 passed, 0 failed
+setup-check: 12 "setup-check: ... OK" lines, no FAIL, exit 0
+git diff --check: clean
+```

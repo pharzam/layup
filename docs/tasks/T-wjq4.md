@@ -20,3 +20,35 @@ Run in the worktree of this task on 2026-09-25, base `9017d99`.
 | 8 | The fixes of round 1 present: the backlog line, row 6 reworded, the four PRD sentences, the four notes | `sh docs/prd/prd-lint.sh`; `sh docs/tests/run-discipline-tests.sh`; `sh docs/setup/setup-check.sh`; `sh docs/links/link-lint.sh`; `git diff --check` | 0 each | `prd-lint: OK`; `81 passed, 0 failed`; every check `OK`; `853 links resolved`; nothing (in `runs/T-wjq4/test-runs.txt`) |
 | 9 | Fix head `9ce41cb`, round 2 (cycle 1 of cap 2), first named harness | the same `devin -p …` command, in a new disposable clone | 0 | the review record, 566 s: `material`, 13 findings and 3 notes (posted on #63): one class — an acceptance criterion that can pass while part of its requirement fails — plus two stale matrix fact cells and two statements narrower or wider than their facts (REQ-008's `F-0001#28` exception; REQ-015's boundary) |
 | 10 | The fixes of round 2 present: thirteen criteria or statements tightened, the two matrix cells, the glossary list, the §10 link | the five checks of row 8 | see `runs/T-wjq4/test-runs.txt` | recorded there at the fix commit; expected: every check `OK` |
+| 11 | Fix head `ec57e91`, round 3 (cycle 2, the cap), first named harness | the same `devin -p …` command, in a new disposable clone | 0 | the review record, 3,294 s: `not mergeable, findings recorded`, 8 findings and 2 notes (posted on #63). The 900 s watchdog (`perl -e 'alarm 900; exec …'`) did not stop the process; the record was accepted as returned, and rule 4's fifteen-minute limit was not applied — a limit of this run, recorded |
+
+## Verdict
+
+Ended at the cycle cap (2) with `not mergeable, findings recorded`; split to the
+successor [`T-84r5`](T-84r5.md) ([#64](https://github.com/pharzam/layup/issues/64)),
+which carries the branch at `ec57e91` with the eight findings and two notes of
+round 3 applied. The Operator ruled the findings material (O-49). Delivered on
+the branch: [`PRD-0001`](../prd/PRD-0001-layup.md) (Draft; 18 REQ, 7 NFR, a
+criterion each, four phases, the §12 matrix), the linter fix of
+`docs/prd/prd-lint.sh` with its fixture (O-48, test first), and the registration.
+Round 1 (GPT-6 Sol on Devin): `material`, 5 findings and 4 notes, fixed in
+`9ce41cb`. Round 2 (GPT-6 Sol): `material`, 13 findings and 3 notes, fixed in
+`ec57e91`. Round 3 (GPT-6 Sol): 8 findings and 2 notes, all of one class — a
+criterion that admits a narrower gap — fixed in the successor. Revealed: none
+beyond the linter defect fixed here.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). Token counts: `not reported` (Devin prints
+none; the author's session count was not read).
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The issue, the plan and its review | reasoning | Claude Fable 5.1 on Claude Code (author); the Operator (review) | not reported | — | about 15 min |
+| The linter fix (test first) and the PRD | execution | Claude Fable 5.1 — a reasoning-tier model on an execution part: the author's session did the edits | not reported | not reported | about 40 min |
+| Round 1 | reasoning | GPT-6 Sol on Devin | xhigh | not reported | 549 s |
+| The fixes of round 1 | execution | Claude Fable 5.1 | not reported | not reported | about 15 min |
+| Round 2 | reasoning | GPT-6 Sol on Devin | xhigh | not reported | 566 s |
+| The fixes of round 2 | execution | Claude Fable 5.1 | not reported | not reported | about 20 min |
+| Round 3 | reasoning | GPT-6 Sol on Devin | xhigh | not reported | 3,294 s |
+| **Total** | | | | not reported | about 2 h 45 min |
