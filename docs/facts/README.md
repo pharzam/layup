@@ -80,5 +80,6 @@ stays, so the history of what the customer said, and when, is never lost.
 | [F-0001](F-0001-layup-problem-statement-brief.md) | LAYUP Problem Statement Brief, Revision 6 (approved 2026-09-23) | 2026-09-23 | Raw |
 | [F-0002](F-0002-architectural-vision-brief.md) | Architectural Vision Brief (a solution document: input for ADRs, not requirements) | 2026-09-23 | Raw |
 | [F-0003](F-0003-layup-psb-numbered-facts-part-2.md) | LAYUP Problem Statement Brief, Revision 6 — numbered facts, part 2 (the same file as `F-0001`) | 2026-09-23 | Raw |
+| [F-0004](F-0004-psb-gap-answers.md) | The idea owner's answers to the 19 gap questions of the PSB (one fact per question of `internal/psb/testdata/psb.tsv`) | 2026-09-25 | Raw |
 
 <!-- Add one row per facts document as you collect them. Keep the newest at the bottom. -->

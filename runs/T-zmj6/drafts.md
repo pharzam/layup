@@ -1,0 +1,25 @@
+# Drafted answers to the 19 gap questions of the PSB (batch of internal/psb/testdata/psb.tsv)
+
+Each answer is a draft by the author (Claude Fable 5.1) for the idea owner's acceptance or edit in one batch (Decision Point 2, F-0001#11). The accepted words become F-0004, one numbered fact per question.
+
+| Q | Question (short) | Drafted answer | Rationale |
+|---|---|---|---|
+| Q-001 | Which technology stack does the product use? | Go, with the standard library only, and Git called as the `git` program. The PSB names no stack on purpose: LAYUP itself is built in Go (ADR-0010, ADR-0011), and each target project selects its own stack, which selects its stack-dependent gates (§6 In Scope, Invariant 7). | ADR-0010 decided Go for LAYUP; the PSB's §2 and §6 say the stack of a *target* is the target's. The question conflates the two, so the answer names both. |
+| Q-002 | What does "BRIEF" mean? | A short document that states one subject completely enough to act on. "Problem Statement Brief" is the document kind that §8 defines as PSB. | The term table defines PSB but not the word. |
+| Q-003 | What does "QA" mean? | Quality Assurance: the engineering function that verifies that a delivered result meets its requirements and its tests. In §2 it names the role "QA Engineer". | Standard meaning; §2 lists it as a role. |
+| Q-004 | What does "API" mean? | Application Programming Interface: the contract by which one software component calls another. In Problem 2 "API contracts" are interface contracts between components. | Standard meaning; the PSB uses it once. |
+| Q-005 | What does "PO" mean? | Product Owner: the role that owns the product's requirements and priorities. In §4 "PO/PM" names the idea-owner side of the table. | Standard meaning; §2 lists Product Owner as a role. |
+| Q-006 | What does "PM" mean? | Product Manager: the role that manages the product's scope and delivery from the business side. Together with PO it stands for the idea-owner side in §4. | Standard meaning. |
+| Q-007 | What does "COI" mean? | Cost of Inaction: what the organization loses if the problem stays unsolved. §5 is the list of those costs. | The heading itself expands it; the term table does not. |
+| Q-008 | What does "LLM" mean? | Large Language Model: the kind of model that a harness runs. LAYUP does not modify or train one (§6 Out of Scope). | Standard meaning; used in §6 and Invariant 6. |
+| Q-009 | What does "PR" mean? | Pull Request: the forge's unit of a proposed change to the project repository, through which every change lands (Armature R1). | Standard meaning; Armature's workflow uses it. |
+| Q-010 | What does "R5" mean? | Rule R5 of Armature's issue workflow, "Deterministic over LLM-based": prefer a script, linter, type check or CI gate to an LLM judgement wherever a rule can be checked by a machine. | Invariant 6 cites it as "(Armature R5)"; docs/issue-workflow.md defines it. |
+| Q-011 | §7 intro: which start value does the pilot use for this target, and who sets it? | The rule for all §7.2 targets: the value printed in the table is the working hypothesis. The first pilot measures the baseline with the current process; then the idea owner sets each start value in one batch, records it in the pilot's PRD, and the pilot's report compares the measured trend with it. | §7 says "A value marked (start value) is set after the pilot measures the baseline"; §6 Decision Point 1 and 3 make the idea owner the approver. |
+| Q-012 | Delivery Lead Time: start value, who sets it? | Start value: median ≤ 50 % of the pilot baseline, as printed. Set by the idea owner after the pilot's baseline measurement (the rule of Q-011). | The printed hypothesis stays until the baseline exists. |
+| Q-013 | First-Review Acceptance | Start value: ≥ 90 % of delivered requirements accepted at the first review, as printed. Set by the idea owner after the baseline (Q-011). | Same. |
+| Q-014 | Task Intervention Rate | Start value: ≤ 10 % of tasks with unplanned human input, as printed. Set by the idea owner after the baseline (Q-011). | Same. |
+| Q-015 | Clarification Turnaround | Start value: ≤ 120 seconds at the 95th percentile, as printed. Set by the idea owner after the baseline (Q-011). | Same. |
+| Q-016 | Reversal Rate | Start value: < 5 % of audited agent answers overturned within 30 days, as printed. Set by the idea owner after the baseline (Q-011). | Same. |
+| Q-017 | Stall Rate and Resolution | Start values: ≤ 5 % of tasks stall, and ≥ 90 % of stalls close without human input, as printed. Set by the idea owner after the baseline (Q-011). | Same. |
+| Q-018 | Cost per Requirement | Start value: the median token cost per requirement of the pilot baseline itself (the target is "≤ the baseline"). Set by the idea owner after the baseline (Q-011). | The table gives no number; the baseline is the number. |
+| Q-019 | Early Question Share | Start value: ≥ 80 % of all human questions asked before delivery starts, as printed. Set by the idea owner after the baseline (Q-011). | Same. |
