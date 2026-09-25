@@ -114,7 +114,12 @@ check_kit_history() {
 # collected. Each numbered fact of a record over the PSB file — F-0001 (facts 1
 # to 39) and F-0003 (facts 1 to 75) — must be a byte-exact substring of that file
 # (the list number `N. ` removed), and each record holds its facts each exactly
-# once. The index lists F-0001, F-0002 and F-0003.
+# once. F-0004 is the answers record over the gap batch
+# internal/psb/testdata/psb.tsv (the tool's output on the PSB, pinned by
+# TestGoldenRealPSB): it holds facts 1 to 19 each exactly once, one per question,
+# with no verbatim rule (the answers are the source), and the check fails when
+# the batch is absent or does not hold 19 data rows. The index lists F-0001,
+# F-0002, F-0003 and F-0004.
 sha256_of() {
 	if command -v sha256sum >/dev/null 2>&1; then sha256sum "$1" | cut -d' ' -f1
 	else shasum -a 256 "$1" | cut -d' ' -f1; fi
@@ -168,7 +173,33 @@ check_facts() {
 		done > "$tmpdir/repeats"
 		if [ -s "$tmpdir/repeats" ]; then cat "$tmpdir/repeats"; cur_fail=1; failed=1; fi
 	done
-	for fa_id in F-0001 F-0002 F-0003; do
+	# The answers record F-0004: one fact per question of the gap batch.
+	fa_batch="$ROOT/internal/psb/testdata/psb.tsv"
+	if [ ! -f "$fa_batch" ]; then
+		fail facts "batch: internal/psb/testdata/psb.tsv is absent"
+	else
+		fa_rows=$(tail -n +2 "$fa_batch" | grep -c .)
+		[ "$fa_rows" = 19 ] || fail facts "batch: internal/psb/testdata/psb.tsv has $fa_rows data rows, expected 19"
+		fa_rec=$(ls "$ROOT"/docs/facts/F-0004-*.md 2>/dev/null)
+		if [ -z "$fa_rec" ] || [ "$(printf '%s\n' "$fa_rec" | grep -c .)" != 1 ]; then
+			fail facts "record: expected one docs/facts/F-0004-*.md"
+		else
+			grep -E '^[0-9]+\. ' "$fa_rec" | sed -E 's/^0*([0-9])/\1/' > "$tmpdir/answers" || true
+			while IFS= read -r fa_line; do
+				fa_n=${fa_line%%. *}
+				fa_text=${fa_line#*. }
+				if [ -z "$(printf '%s' "$fa_text" | tr -d ' \t')" ]; then fail facts "verbatim: F-0004 fact $fa_n is empty"; fi
+				if [ "$fa_n" -lt 1 ] || [ "$fa_n" -gt 19 ]; then fail facts "numbering: F-0004 fact $fa_n is outside 1..19"; fi
+			done < "$tmpdir/answers"
+			fa_distinct=$(sed 's/\..*//' "$tmpdir/answers" | awk '$1 >= 1 && $1 <= 19' | sort -un | grep -c .)
+			[ "$fa_distinct" = 19 ] || fail facts "numbering: F-0004 holds $fa_distinct distinct fact numbers in 1..19, expected 19"
+			sed 's/\..*//' "$tmpdir/answers" | sort -n | uniq -c | while read -r fa_c fa_num; do
+				[ "$fa_c" = 1 ] || printf 'setup-check: facts FAIL numbering: F-0004 fact %s appears %s times\n' "$fa_num" "$fa_c"
+			done > "$tmpdir/repeats"
+			if [ -s "$tmpdir/repeats" ]; then cat "$tmpdir/repeats"; cur_fail=1; failed=1; fi
+		fi
+	fi
+	for fa_id in F-0001 F-0002 F-0003 F-0004; do
 		# The ID must open the row (plain or as a link), not only appear in a cell.
 		grep -Eq "^\|[[:space:]]*\[?$fa_id[^0-9]" "$ROOT/docs/facts/README.md" 2>/dev/null \
 			|| fail facts "index: docs/facts/README.md has no row for $fa_id"

@@ -1,0 +1,2 @@
+exit=1
+line=setup-check: facts FAIL numbering: F-0004 fact 5 appears 2 times

@@ -1,0 +1,2 @@
+exit=1
+line=setup-check: facts FAIL batch: internal/psb/testdata/psb.tsv has 18 data rows, expected 19
