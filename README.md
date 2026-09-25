@@ -15,9 +15,11 @@ statement for gaps (`layup psb check FILE`); the stack is Go
 will be one Go command-line program over files in the repository
 ([ADR-0011](docs/adr/0011-structure-the-core-engine-as-a-go-cli-over-repository-files.md)).
 Since 2026-09-25 the repository is in bootstrap mode
-([ADR-0012](docs/adr/0012-build-layup-in-bootstrap-mode.md)): until the first
-pilot, work is limited to the PSB's In-Scope items and what they need, and the
-gate runs with one plan-review comment and one review round.
+([ADR-0012](docs/adr/0012-build-layup-in-bootstrap-mode.md); a summary — the rule
+is [Bootstrap mode](docs/engineering-discipline.md#bootstrap-mode)): until the ADR
+that supersedes ADR-0012 is accepted, work is limited to the PSB's In-Scope items
+and what they need, and the gate runs with one plan-review comment and one review
+round, one more after a fix.
 
 ## Start here
 

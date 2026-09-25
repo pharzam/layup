@@ -204,7 +204,14 @@ hooks, branch protection and CI are untouched.
    as before. A second round runs only after a fix: the cycle cap is 1, and 2
    when the change touches a gate (a check script, a hook, CI or branch
    protection). "One pass is never enough" is suspended; the pilot measures what
-   one pass misses.
+   one pass misses. A finding is material when it identifies an operative
+   omission, ambiguity, contradiction, unauthorized change of scope or
+   authority, failed acceptance criterion, or command whose expected exit code
+   differs from the documented result. The finding must cite the exact command
+   or operative sentence involved. Every other finding is a note: the author
+   applies it, or declines it with a reason, during close-out; a note does not
+   cause another review round. A round with notes only is mergeable. The
+   Operator settles disputed materiality.
 4. **Reviewer selection** is the whole routing rule. The author is Claude Opus
    5.5 on Claude Code unless the task's issue names another model of the
    reasoning tier. The reviewer is any model that differs from the author's, on
@@ -220,6 +227,11 @@ hooks, branch protection and CI are untouched.
 6. **The resource record** ([ADR-0007](adr/0007-record-task-resource-use.md))
    names the model, the effort and the elapsed time per gate part; a token count
    a harness does not give is `not reported`.
+7. **One home per rule.** An operative rule has one canonical home. Another
+   document may link to it and may give a clearly marked non-operative summary,
+   but it must not restate the rule as an independent requirement. A conflicting
+   or unmarked restatement found in review is a note, and the normal fix is to
+   replace it with a link.
 
 The ADR that ends this mode reads the pilot's defect and stall numbers before it
 restores or re-decides the full gate. Until it is accepted this section is the
