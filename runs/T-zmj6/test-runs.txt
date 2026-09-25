@@ -1,0 +1,31 @@
+# T-zmj6 — run evidence (2026-09-25)
+
+## Before the freeze: the checks
+
+```
+adr-lint: OK
+prd-lint: OK
+link-lint: OK  847 links resolved
+
+run-discipline-tests: 81 passed, 0 failed
+setup-check: pin OK
+setup-check: kit-history OK
+setup-check: facts OK
+setup-check: onboarding OK
+setup-check: glossary OK
+setup-check: guardrails OK
+setup-check: markers OK
+setup-check: ci OK
+setup-check: protection OK
+setup-check: identity OK
+setup-check: procedure OK
+
+run-discipline-tests: 81 passed, 0 failed
+adr-lint: OK
+prd-lint: OK
+link-lint: OK  847 links resolved
+setup-check: kit-linters OK
+?   	github.com/pharzam/layup/cmd/layup	[no test files]
+ok  	github.com/pharzam/layup/internal/cli	0.371s
+ok  	github.com/pharzam/layup/internal/psb	0.374s
+```
