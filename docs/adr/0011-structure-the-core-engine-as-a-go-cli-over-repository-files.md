@@ -4,7 +4,7 @@ Date: 2026-09-23
 
 ## Status
 
-Accepted
+Accepted. Amended by [ADR-0013](0013-run-stack-gates-through-a-layup-github-app.md) (the runner its Consequences left open) and [ADR-0014](0014-protect-rule-paths-with-a-rule-guard-check.md) (the rule-protection control it named as missing)
 
 ## Context
 

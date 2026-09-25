@@ -38,7 +38,7 @@ are their enforcement:
    survives the deletion.)
 
 **Numbering.** `docs/adr/` is the single living ADR sequence, numbered
-contiguously from `0001`, and it grows — the next constitutional ADR is `0013`. A
+contiguously from `0001`, and it grows — the next constitutional ADR is `0018`. A
 bare "ADR-NNNN" means this directory's sequence. The archive that was under `docs/decisions/`
 has its **own namespace**: a prefixed, zero-based sequence `D-0000`–`D-0008` that
 shares no number with this one and is cited **by its `D-NNNN` identifier** — named
@@ -145,8 +145,13 @@ record by number here, and let the index table below do the linking.
 | [0008](0008-require-one-reading-in-decision-driving-text.md) | Require one reading in decision-driving text | Accepted |
 | [0009](0009-pin-armature-at-a-recorded-commit.md) | Pin Armature at a recorded commit | Accepted |
 | [0010](0010-use-go-as-the-technology-stack.md) | Use Go as the technology stack | Accepted |
-| [0011](0011-structure-the-core-engine-as-a-go-cli-over-repository-files.md) | Structure the core engine as a Go CLI over repository files | Accepted |
+| [0011](0011-structure-the-core-engine-as-a-go-cli-over-repository-files.md) | Structure the core engine as a Go CLI over repository files | Accepted; amended |
 | [0012](0012-build-layup-in-bootstrap-mode.md) | Build LAYUP in bootstrap mode | Accepted |
+| [0013](0013-run-stack-gates-through-a-layup-github-app.md) | Run stack gates through a LAYUP GitHub App that posts required check runs | Accepted |
+| [0014](0014-protect-rule-paths-with-a-rule-guard-check.md) | Protect rule paths with a rule-guard check that requires the Operator's approval | Accepted |
+| [0015](0015-roles-are-the-kit-gate-roles-and-a-handoff-is-a-tsv-row.md) | Roles are the kit's gate roles, and a handoff is a TSV row that points to a kit record | Accepted |
+| [0016](0016-escalate-by-a-deterministic-floor-and-a-declared-class.md) | Escalate by a deterministic floor over the approved intent and a declared class | Accepted |
+| [0017](0017-stop-a-stall-at-a-counted-limit-and-examine-it-fresh.md) | Stop a stall at a counted limit and examine it with a fresh context | Accepted |
 
 <!-- Add one row per ADR as you write them. Keep the newest at the bottom. -->
 
