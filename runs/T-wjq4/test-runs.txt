@@ -1,0 +1,46 @@
+# T-wjq4 — run evidence (2026-09-25, worktree .worktree/T-wjq4, base 9017d99)
+
+## Red 1: the bare template, and the linter itself (macOS awk 20200816)
+
+```
+awk: newline in string F-0001
+F-0002
+F-0003... at source line 1
+exit=1
+```
+
+## Red 2: the discipline suite with a second fixture fact and the old linter
+
+```
+FAIL  prd-lint/good-path with space (wanted exit 0, got exit 1)
+FAIL  prd-lint/good (wanted exit 0, got exit 1)
+run-discipline-tests: 79 passed, 2 failed
+```
+
+## Green: the fixed linter, the PRD, the mutations, the other checks
+
+```
+run-discipline-tests: 81 passed, 0 failed
+prd-lint: OK   (docs/prd/PRD-0001-layup.md present)
+mutation: REQ-014 renamed REQ-013   -> FAIL duplicate requirement id REQ-013; FAIL matrix lists REQ-014 which is not a requirement
+mutation: REQ-015 Won't with phase 1  -> FAIL REQ-015 is Won't but Phase is not —
+mutation: REQ-014 cites F-0099       -> FAIL REQ-014 cites no resolvable F-NNNN fact
+mutation: NFR-007 matrix row removed  -> FAIL requirement NFR-007 missing from traceability matrix
+adr-lint: OK
+link-lint: OK  852 links resolved
+setup-check: pin OK
+setup-check: kit-history OK
+setup-check: facts OK
+setup-check: onboarding OK
+setup-check: glossary OK
+setup-check: guardrails OK
+setup-check: markers OK
+setup-check: ci OK
+setup-check: protection OK
+setup-check: identity OK
+setup-check: procedure OK
+adr-lint: OK
+prd-lint: OK
+setup-check: kit-linters OK
+git diff --check: clean
+```
