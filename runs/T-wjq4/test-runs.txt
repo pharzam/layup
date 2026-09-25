@@ -68,3 +68,14 @@ prd-lint: OK
 setup-check: kit-linters OK
 git diff --check: clean
 ```
+
+## The fixes of round 2, before the fix commit
+
+```
+prd-lint: OK
+adr-lint: OK
+link-lint: OK  854 links resolved
+run-discipline-tests: 81 passed, 0 failed
+setup-check: 14 OK lines, no FAIL
+git diff --check: clean
+```
