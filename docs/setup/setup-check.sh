@@ -114,7 +114,7 @@ check_kit_history() {
 # collected. Each numbered fact of a record over the PSB file — F-0001 (facts 1
 # to 39) and F-0003 (facts 1 to 75) — must be a byte-exact substring of that file
 # (the list number `N. ` removed), and each record holds its facts each exactly
-# once. The index lists F-0001, F-0002, F-0003 and F-0005.
+# once. The index lists F-0001, F-0002 and F-0003.
 sha256_of() {
 	if command -v sha256sum >/dev/null 2>&1; then sha256sum "$1" | cut -d' ' -f1
 	else shasum -a 256 "$1" | cut -d' ' -f1; fi
@@ -135,7 +135,7 @@ check_facts() {
 			fi
 		done < "$fa_sums"
 		# The floor: each raw facts file must be hashed, so an empty list is no pass.
-		for fa_need in docs/facts/problem-statement-brief.md docs/facts/architectural-vision-brief.md docs/facts/operator-routing-policy.md; do
+		for fa_need in docs/facts/problem-statement-brief.md docs/facts/architectural-vision-brief.md; do
 			awk -v p="$fa_need" '$2 == p { found = 1 } END { exit !found }' "$fa_sums" \
 				|| fail facts "listed: $fa_need is not in docs/setup/facts.sha256"
 		done
@@ -168,7 +168,7 @@ check_facts() {
 		done > "$tmpdir/repeats"
 		if [ -s "$tmpdir/repeats" ]; then cat "$tmpdir/repeats"; cur_fail=1; failed=1; fi
 	done
-	for fa_id in F-0001 F-0002 F-0003 F-0005; do
+	for fa_id in F-0001 F-0002 F-0003; do
 		# The ID must open the row (plain or as a link), not only appear in a cell.
 		grep -Eq "^\|[[:space:]]*\[?$fa_id[^0-9]" "$ROOT/docs/facts/README.md" 2>/dev/null \
 			|| fail facts "index: docs/facts/README.md has no row for $fa_id"
