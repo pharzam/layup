@@ -134,7 +134,7 @@ check_facts() {
 				fail facts "hash: $fa_path does not match docs/setup/facts.sha256"
 			fi
 		done < "$fa_sums"
-		# The floor: both raw facts files must be hashed, so an empty list is no pass.
+		# The floor: each raw facts file must be hashed, so an empty list is no pass.
 		for fa_need in docs/facts/problem-statement-brief.md docs/facts/architectural-vision-brief.md; do
 			awk -v p="$fa_need" '$2 == p { found = 1 } END { exit !found }' "$fa_sums" \
 				|| fail facts "listed: $fa_need is not in docs/setup/facts.sha256"
