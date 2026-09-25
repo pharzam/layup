@@ -1,0 +1,2 @@
+exit=1
+line=setup-check: facts FAIL numbering: F-0004 holds 18 distinct fact numbers in 1..19, expected 19
