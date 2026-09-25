@@ -29,3 +29,17 @@ setup-check: kit-linters OK
 ok  	github.com/pharzam/layup/internal/cli	0.371s
 ok  	github.com/pharzam/layup/internal/psb	0.374s
 ```
+
+## The fixes of round 1, before the fix commit
+
+```
+setup-check tests: 35 passed, 0 failed
+adr-lint: OK
+prd-lint: OK
+link-lint: OK  847 links resolved
+
+run-discipline-tests: 81 passed, 0 failed
+prd-lint: OK
+link-lint: OK  847 links resolved
+setup-check: kit-linters OK
+```

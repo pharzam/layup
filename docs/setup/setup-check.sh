@@ -188,7 +188,7 @@ check_facts() {
 			while IFS= read -r fa_line; do
 				fa_n=${fa_line%%. *}
 				fa_text=${fa_line#*. }
-				if [ -z "$(printf '%s' "$fa_text" | tr -d ' ')" ]; then fail facts "verbatim: F-0004 fact $fa_n is empty"; fi
+				if [ -z "$(printf '%s' "$fa_text" | tr -d ' \t')" ]; then fail facts "verbatim: F-0004 fact $fa_n is empty"; fi
 				if [ "$fa_n" -lt 1 ] || [ "$fa_n" -gt 19 ]; then fail facts "numbering: F-0004 fact $fa_n is outside 1..19"; fi
 			done < "$tmpdir/answers"
 			fa_distinct=$(sed 's/\..*//' "$tmpdir/answers" | awk '$1 >= 1 && $1 <= 19' | sort -un | grep -c .)

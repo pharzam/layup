@@ -6,7 +6,7 @@
 | Source | The idea owner of LAYUP, who is the Operator (decision O-14 on [#42](https://github.com/pharzam/layup/issues/42)). Nineteen answers, one per question of the gap batch, accepted as one batch (Decision Point 2, `F-0001#11`). |
 | Collected by | Claude Fable 5.1 (agent), for the Operator, task `T-zmj6` |
 | Date collected | 2026-09-25 |
-| Origin | The gap batch is [`internal/psb/testdata/psb.tsv`](../../internal/psb/testdata/psb.tsv), the output of `layup psb check docs/facts/problem-statement-brief.md` on `F-0001` (19 questions, `Q-001` to `Q-019`), pinned byte for byte by `TestGoldenRealPSB`. Fact N below answers `Q-00N`. The answers were given in a Claude Code session on 2026-09-25: the agent drafted the nineteen answers with a rationale each and asked the idea owner to accept or edit them in one batch; the idea owner accepted all nineteen (see Notes on capture). |
+| Origin | The gap batch is [`internal/psb/testdata/psb.tsv`](../../internal/psb/testdata/psb.tsv), the output of `layup psb check docs/facts/problem-statement-brief.md` on `F-0001` (19 questions, `Q-001` to `Q-019`), pinned byte for byte by `TestGoldenRealPSB`. Fact N below answers the Nth question of the batch: the question IDs have three digits, so fact 1 answers `Q-001` and fact 19 answers `Q-019`. The answers were given in a Claude Code session on 2026-09-25: the agent drafted the nineteen answers with a rationale each and asked the idea owner to accept or edit them in one batch; the idea owner accepted all nineteen (see Notes on capture). |
 | Status | `Raw` |
 
 ## Facts as collected
@@ -53,6 +53,6 @@
 - **Open gaps.** None: every question has an answer. Facts 11 to 19 defer the
   numeric start values to the first pilot's baseline measurement, as the PSB
   itself says (`F-0001 §7`); the pilot's PRD records the numbers when set.
-- **Status.** Facts of the PSB's Layer 2: derived requirements may cite them by
-  `F-0004#N`; `PRD-0001` (#42) uses fact 1 for the stack and facts 11 to 19 for
-  the targets.
+- **Status.** Raw facts, the idea owner's words. A derived requirement may cite
+  one by `F-0004#N`; which requirement cites which fact is decided where the
+  requirements are written, not here.
