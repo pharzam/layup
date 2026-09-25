@@ -192,7 +192,7 @@ The four `Won't` rows (REQ-015 to REQ-018) hold in every phase.
 
 ## 11. Open questions & assumptions
 
-For the architecture task (`T-7qvc`, #42 child 4), which records each answer in an ADR after a panel where ADR-0006 requires one:
+Questions 1 to 5 were decided by task `T-7qvc` (#42 child 4) after a panel (ADR-0006): [ADR-0013](../adr/0013-run-stack-gates-through-a-layup-github-app.md) (the runner), [ADR-0014](../adr/0014-protect-rule-paths-with-a-rule-guard-check.md) (the rule-protection control), [ADR-0015](../adr/0015-roles-are-the-kit-gate-roles-and-a-handoff-is-a-tsv-row.md) (the roles and the handoff schema), [ADR-0016](../adr/0016-escalate-by-a-deterministic-floor-and-a-declared-class.md) (the escalation rule) and [ADR-0017](../adr/0017-stop-a-stall-at-a-counted-limit-and-examine-it-fresh.md) (the stall procedure); the design is [`docs/architecture.md`](../architecture.md). Question 6 stays open for the idea owner. The questions as they were put:
 
 1. **The runner for stack gates.** `layup gate` runs outside the target (ADR-0011 decision 4); which runner reports on a target's pull requests, and how a verdict reaches the forge, is open (ADR-0011, Consequences).
 2. **The rule-protection control** (REQ-003): a code-owners rule on the rule paths with an approval from an account the agents do not use, or another mechanism; Operator decision O-9 deferred it.
@@ -215,14 +215,14 @@ fills the Test column.
 | ------- | ------------------------------ | ----------- | -------- | -------- | ---- |
 | REQ-001 | F-0003#41, F-0003#14, F-0003#15, F-0001#11 | — | ADR-0011 | T-dq05, T-zmj6 | TestGoldenRealPSB; check facts (F-0004) |
 | REQ-002 | F-0003#42, F-0003#15, F-0003#37, F-0001#4, F-0001#8 | §1.1 Inv-4 | ADR-0011 | — | — |
-| REQ-003 | F-0003#43, F-0001#3, F-0003#64 | §1.1 Inv-3 | ADR-0011 | — | — |
-| REQ-004 | F-0003#44, F-0003#11, F-0003#12, F-0003#13, F-0001#7 | §1.1 Inv-7 | ADR-0011 | — | — |
-| REQ-005 | F-0003#45, F-0003#59            | —           | —        | — | — |
-| REQ-006 | F-0003#46, F-0003#8, F-0003#9, F-0003#10 | — | —      | — | — |
-| REQ-007 | F-0003#47, F-0003#58, F-0001#6  | §1.1 Inv-6  | ADR-0011 | — | — |
-| REQ-008 | F-0003#48, F-0003#57, F-0001#12, F-0001#13, F-0001#24, F-0001#28 | — | — | — | — |
-| REQ-009 | F-0003#49, F-0003#61, F-0001#37 | —           | ADR-0011 | — | — |
-| REQ-010 | F-0003#49, F-0003#17, F-0003#18, F-0003#19, F-0001#14 | — | — | — | — |
+| REQ-003 | F-0003#43, F-0001#3, F-0003#64 | §1.1 Inv-3 | ADR-0011, ADR-0014 | T-7qvc | — |
+| REQ-004 | F-0003#44, F-0003#11, F-0003#12, F-0003#13, F-0001#7 | §1.1 Inv-7 | ADR-0011, ADR-0013 | T-7qvc | — |
+| REQ-005 | F-0003#45, F-0003#59            | —           | ADR-0015 | T-7qvc | — |
+| REQ-006 | F-0003#46, F-0003#8, F-0003#9, F-0003#10 | — | ADR-0015 | — | — |
+| REQ-007 | F-0003#47, F-0003#58, F-0001#6  | §1.1 Inv-6  | ADR-0011, ADR-0013 | T-7qvc | — |
+| REQ-008 | F-0003#48, F-0003#57, F-0001#12, F-0001#13, F-0001#24, F-0001#28 | — | ADR-0016 | T-7qvc | — |
+| REQ-009 | F-0003#49, F-0003#61, F-0001#37 | —           | ADR-0011, ADR-0017 | T-7qvc | — |
+| REQ-010 | F-0003#49, F-0003#17, F-0003#18, F-0003#19, F-0001#14 | — | ADR-0017 | T-7qvc | — |
 | REQ-011 | F-0003#50, F-0003#20, F-0003#21, F-0003#22, F-0003#60, F-0001#38 | — | ADR-0007, ADR-0011 | — | — |
 | REQ-012 | F-0003#51, F-0003#23, F-0003#24, F-0003#25, F-0003#62, F-0001#39 | — | ADR-0002 | T-wjq4 | prd-lint (this document) |
 | REQ-013 | F-0003#52, F-0003#26, F-0003#27, F-0003#28, F-0003#66, F-0001#9 | §1.1 Inv-9 | ADR-0005, ADR-0012 | — | — |
@@ -244,3 +244,4 @@ fills the Test column.
 | Date       | Change                     | Requirement(s) affected |
 | ---------- | -------------------------- | ----------------------- |
 | 2026-09-25 | First draft: the full scope of the PSB with four phases (task `T-wjq4`, Operator decision O-15) | REQ-001 to REQ-018, NFR-001 to NFR-007 |
+| 2026-09-25 | §11 questions 1 to 5 decided by ADR-0013 to ADR-0017 after the panel of task `T-7qvc` (O-52 to O-62); the §12 matrix names the ADRs and the task; no requirement statement changed | REQ-003, REQ-004, REQ-005, REQ-006, REQ-007, REQ-008, REQ-009, REQ-010 |
