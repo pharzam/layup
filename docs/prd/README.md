@@ -7,14 +7,6 @@ it cites the fact it derives from. Layer 1 (the facts) is immutable evidence;
 Layer 2 (the PRD) is where interpretation is allowed — so a reader can always trace
 a requirement back to the customer's exact words.
 
-> **How to adapt this directory.** Keep [`template.md`](template.md), this README,
-> and [`prd-lint.sh`](prd-lint.sh) — they are the reusable scaffold. Write your
-> real PRDs beside them as `PRD-NNNN-‹slug›.md`. A project with no external
-> customer, or one too small to need requirement tracking, can delete this whole
-> directory (and the `prd-lint` steps in the [hooks](../../.githooks/pre-commit)
-> and [CI](../ci/)); nothing else depends on it. Delete this note once your first
-> PRD is in.
-
 ## Adding a new PRD
 
 1. Copy [`template.md`](template.md) to `PRD-NNNN-short-slug.md`, using the next
@@ -69,6 +61,7 @@ checks to its `go test`.
 
 | PRD | Title | Status |
 | --- | ----- | ------ |
+| [PRD-0001](PRD-0001-layup.md) | LAYUP, the orchestrator product: full scope with phases | Draft |
 
 <!-- Add one row per PRD as you write it (newest at the bottom), for example:
      | PRD-0001 | Short title | Accepted | -->

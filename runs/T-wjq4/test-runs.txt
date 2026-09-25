@@ -1,0 +1,83 @@
+# T-wjq4 — run evidence (2026-09-25, worktree .worktree/T-wjq4, base 9017d99)
+
+## Red 1: the bare template, and the linter itself (macOS awk 20200816)
+
+```
+awk: newline in string F-0001
+F-0002
+F-0003... at source line 1
+exit=1
+```
+
+## Red 2: the discipline suite with a second fixture fact and the old linter
+
+```
+FAIL  prd-lint/good-path with space (wanted exit 0, got exit 1)
+FAIL  prd-lint/good (wanted exit 0, got exit 1)
+run-discipline-tests: 79 passed, 2 failed
+```
+
+## Green: the fixed linter, the PRD, the mutations, the other checks
+
+```
+run-discipline-tests: 81 passed, 0 failed
+prd-lint: OK   (docs/prd/PRD-0001-layup.md present)
+mutation: REQ-014 renamed REQ-013   -> FAIL duplicate requirement id REQ-013; FAIL matrix lists REQ-014 which is not a requirement
+mutation: REQ-015 Won't with phase 1  -> FAIL REQ-015 is Won't but Phase is not —
+mutation: REQ-014 cites F-0099       -> FAIL REQ-014 cites no resolvable F-NNNN fact
+mutation: NFR-007 matrix row removed  -> FAIL requirement NFR-007 missing from traceability matrix
+adr-lint: OK
+link-lint: OK  852 links resolved
+setup-check: pin OK
+setup-check: kit-history OK
+setup-check: facts OK
+setup-check: onboarding OK
+setup-check: glossary OK
+setup-check: guardrails OK
+setup-check: markers OK
+setup-check: ci OK
+setup-check: protection OK
+setup-check: identity OK
+setup-check: procedure OK
+adr-lint: OK
+prd-lint: OK
+setup-check: kit-linters OK
+git diff --check: clean
+```
+
+## The fixes of round 1, before the fix commit (the checks, run with the task file and the backlog line present)
+
+```
+prd-lint: OK
+adr-lint: OK
+link-lint: OK  853 links resolved
+run-discipline-tests: 81 passed, 0 failed
+setup-check: pin OK
+setup-check: kit-history OK
+setup-check: facts OK
+setup-check: onboarding OK
+setup-check: glossary OK
+setup-check: guardrails OK
+setup-check: markers OK
+setup-check: ci OK
+setup-check: protection OK
+setup-check: identity OK
+setup-check: procedure OK
+adr-lint: OK
+prd-lint: OK
+setup-check: kit-linters OK
+git diff --check: clean
+```
+
+## The fixes of round 2, before the fix commit
+
+```
+prd-lint: OK
+adr-lint: OK
+link-lint: OK  854 links resolved
+run-discipline-tests: 81 passed, 0 failed
+setup-check: 14 OK lines, no FAIL
+git diff --check: clean
+```
+
+Correction (T-84r5): the line "setup-check: 14 OK lines" above counted the three kit-linter pass-through lines with the 11 checks of the script; the setup checks proper were 11 OK lines and no FAIL (12 with the `kit-linters` pass-through line, the twelfth `setup-check: ... OK` line, as the reviewers counted). The exit code, 0, is unchanged.

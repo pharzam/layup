@@ -63,7 +63,13 @@ if [ "$#" -eq 0 ]; then
 fi
 
 existing_facts=$(ls "$facts_dir" 2>/dev/null \
-	| sed -n 's/^\(F-[0-9]\{4\}\).*\.md$/\1/p' | sort -u)
+	| sed -n 's/^\(F-[0-9]\{4\}\).*\.md$/\1/p' | sort -u | tr '\n' ' ')
+# The list is SPACE-separated on purpose. It was newline-separated, and macOS
+# awk rejects a newline inside a -v assignment ("newline in string"), so the
+# linter could not run at all on a tree with two or more facts and one PRD.
+# The kit's own fixtures held one fact, and a fresh kit holds no PRD, which is
+# why every earlier run was green. docs/prd/tests/facts/ holds two facts since
+# T-wjq4, so the discipline suite covers this on every awk.
 
 for path do
 	awk -v fname="$(basename "$path")" -v facts="$existing_facts" '
@@ -89,7 +95,7 @@ for path do
 		for (t = 1; t <= k; t++) {
 			if (toks[t] ~ /^F-[0-9]{4}(#[0-9]+)?$/) {
 				base = substr(toks[t], 1, 6)
-				if (index("\n" facts "\n", "\n" base "\n")) return 1
+				if (index(" " facts " ", " " base " ")) return 1
 			}
 		}
 		return 0
