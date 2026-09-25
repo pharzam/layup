@@ -31,8 +31,6 @@ same summary, dated — rather than deleting it or checking it off.
 -->
 
 - **T-meh2** — The PDR: `PRD-0001` with one requirement per PSB In-Scope item, traced to `F-0003#41`–`#52`, then the architecture and the plan ([#42](https://github.com/pharzam/layup/issues/42))
-- **T-wjq4** — `PRD-0001`, the product requirements of LAYUP: full scope with four phases, an acceptance criterion per requirement, the traceability matrix ([#63](https://github.com/pharzam/layup/issues/63); child 3 of #42)
-- **T-84r5** — `PRD-0001`, the successor of `T-wjq4` after its cycle cap: the eight criteria of round 3 tightened, one round, close-out ([#64](https://github.com/pharzam/layup/issues/64); child 3 of #42)
 - **T-stfn** — Step 2, the core engine: `layup setup`, `layup gate`, the telemetry record and the stall record ([#29](https://github.com/pharzam/layup/issues/29); [ADR-0011](../adr/0011-structure-the-core-engine-as-a-go-cli-over-repository-files.md))
 
 ## Next

@@ -10,3 +10,20 @@ run-discipline-tests: 81 passed, 0 failed
 setup-check: 12 "setup-check: ... OK" lines, no FAIL, exit 0
 git diff --check: clean
 ```
+
+## Round 1 (cycle 0)
+
+```
+exit=0 killed=0 elapsed=401s
+```
+
+## The close-out: the checks
+
+```
+prd-lint: OK
+adr-lint: OK
+link-lint: OK  865 links resolved
+run-discipline-tests: 81 passed, 0 failed
+setup-check: 12 "setup-check: ... OK" lines, no FAIL, exit 0
+git diff --check: clean
+```
