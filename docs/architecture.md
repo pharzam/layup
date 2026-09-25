@@ -34,16 +34,19 @@ body without LAYUP (ADR-0013).
 
 ## 2. The engine's commands and interfaces
 
-Every command takes a repository root as an explicit argument, reads and writes
-files under it, prints one line per result in the form `layup: <command> OK|FAIL
-<cause>: <detail>`, and exits `0` (pass), `1` (fail) or `2` (usage error). No
+Every repository command takes a repository root as an explicit argument, reads
+and writes files under it, prints one line per result in the form `layup:
+<command> OK|FAIL <cause>: <detail>`, and exits `0` (pass), `1` (fail) or `2`
+(usage error, or a file it cannot read). The two commands that exist today are
+the exceptions of shape: `layup version` prints one line, and `layup psb check
+FILE` takes a file and prints the gap batch as TSV (`internal/cli/cli.go`). No
 command reads global state as project state (NFR-001).
 
 | Command | Phase | Reads | Writes | Requirement |
 | ------- | ----- | ----- | ------ | ----------- |
 | `layup version` | 1 (done) | — | stdout | — |
 | `layup psb check FILE` | 1 (done) | a problem statement | the gap batch as TSV; exit 1 with gaps | REQ-001 |
-| `layup setup TARGET` | 1 | `docs/setup/steps.tsv`, the pinned kit, the facts | the target: the kit copy, the facts, the setup record, `branch-protection.json`; stops at each `human_decision = yes` row and writes the answers before the next step | REQ-002 |
+| `layup setup TARGET` | 1 | `docs/setup/steps.tsv`, the pinned kit (`armature.pin`), the facts | the target: the kit copy at the pinned commit, the facts, the setup record, `branch-protection.json`, `stack.tsv`; stops at each `human_decision = yes` row and writes the answers before the next step | REQ-002, NFR-006 |
 | `layup setup verify TARGET` | 1 | the target, the live protection | a report; `not-active` for a check that does not run | REQ-002, NFR-003, NFR-004 |
 | `layup gate TARGET` | 1 | the target's recorded stack, its tree | one verdict per gate kind (`layout`, `interfaces`, `contracts`, `tests`): `pass`, `fail`, `not-active`; a row in `runs/<task>/gates.tsv` | REQ-004, REQ-007 |
 | `layup handoff check TARGET` | 2 | `runs/<task>/handoffs.tsv`, the records it names | a report | REQ-005 |
@@ -68,6 +71,7 @@ kit's shape. A deterministic check validates each table's header and columns
 | `docs/facts/F-*.md`, `docs/facts/*.md` | the facts, immutable, hashed in `docs/setup/facts.sha256` | the kit's facts record | `layup setup`, then the kit's rule | ADR-0011 |
 | `docs/prd/PRD-*.md` | the requirements | the kit's PRD template | the role agents (REQ-012) | ADR-0002 |
 | `docs/setup/steps.tsv`, `docs/setup/record-*.md`, `docs/setup/branch-protection.json`, `docs/setup/armature.pin` | the setup record and the mirrored forge setting | the kit's setup records | `layup setup` | ADR-0009, ADR-0011, ADR-0013 |
+| `docs/setup/stack.tsv` | the target's recorded stack and gate set | `gate, kind, command, active` | `layup setup`, from the answer to step S01 | ADR-0013 |
 | `docs/setup/budget.md` | the idea owner's limits: tokens and money per requirement and per task, committed dates | a Markdown record | the idea owner, before the pilot | ADR-0016 |
 | `docs/roles.tsv` | the target's specialists (content, not a rule) | `role, specialism, harness_allowed` | the target's Operator | ADR-0015 |
 | `runs/<task>/handoffs.tsv` | the handoff events | `ts, task, from_role, to_role, kind, artifact_path, artifact_sha, harness, model, verdict` | each role's session, validated by the engine | ADR-0015 |
@@ -83,26 +87,27 @@ in the target (O-54); the forge holds only the check runs and the protection
 setting, which `docs/setup/branch-protection.json` mirrors and `layup setup
 verify` compares (NFR-001 with its stated limit, ADR-0013).
 
-## 4. The runner: from a pull request to a verdict
+## 4. The runner: from a pull request to a verdict (ADR-0013, ADR-0014; REQ-004, REQ-007, NFR-004)
 
-1. A role agent, under the App's or the machine identity (ADR-0014), opens or updates a pull request on the target.
-2. The forge sends the event to the LAYUP App; the receiver starts a job that checks out the head with a read token and runs `layup gate` at a pinned LAYUP commit, with the gate set of the target's recorded stack.
-3. The job posts one check run per gate kind and the rule guard, escalation and stall checks, under the App's identity: `pass` → `success`; `fail` and `not-active` → `failure`; an open escalation or stall row → `failure`.
-4. The job appends the verdict rows to `runs/<task>/gates.tsv` on the pull request's branch as the App; that commit does not start a new run.
-5. The target's protection requires each check by name (the kit's setup step S13); a check with no report keeps the pull request at "expected", so a gate that did not run blocks the merge (NFR-004). Review assignment is the target's own rule; the pilot audits early reviews (REQ-007).
+1. A role agent, under the agents' App or the machine identity — never the LAYUP App (ADR-0014) — opens or updates a pull request on the target; its head is `X`.
+2. The forge sends the event to the LAYUP App; the receiver starts a job that checks out `X` with a read token and runs `layup gate` at a pinned LAYUP commit, with the gate set of `docs/setup/stack.tsv`.
+3. The job appends the verdict rows (`head_sha` = `X`) to `runs/<task>/gates.tsv` as a commit `Y` on the pull request's branch under the LAYUP App's identity, and asserts that `Y` differs from `X` only under `runs/*/gates.tsv`; `<task>` is the task ID of the branch name.
+4. The job posts, on `Y`, one check run per gate kind and the rule guard, escalation and stall checks, under the LAYUP App's identity: `pass` → `success`; `fail` and `not-active` → `failure`; an open escalation or stall row → `failure`. A commit by the LAYUP App that touches only `runs/*/gates.tsv` does not start a new run; any other commit does.
+5. The target's protection requires each `layup/*` check by name, pinned to the LAYUP App's identity (the kit's setup step S13 body, with that departure recorded); a check with no report keeps the pull request at "expected", so a gate that did not run blocks the merge (NFR-004), and a status of the same name from another identity does not count. Review assignment is the target's own rule; the pilot audits early reviews (REQ-007).
 
-## 5. The role model and the handoffs (ADR-0015)
+## 5. The role model and the handoffs (ADR-0015; REQ-005, REQ-013, NFR-002)
 
 Roles: `planner`, `implementer`, `reviewer`, `examiner`, `operator`, `idea
 owner`. A handoff is a row of `handoffs.tsv` that points at a kit record at a
-commit; `layup handoff check` validates the transition, the kind, the artifact's
-existence and the artifact's own kit linter. A second harness agent continues a
-task from the table and the records alone (REQ-013, NFR-002). The transition
-table and the kind list are rule paths; a target's `docs/roles.tsv` is content.
+commit; each kind has its transition (ADR-0015 decision 2), and `layup handoff
+check` validates the transition per kind, the artifact's existence and the
+artifact's own kit linter (REQ-005). A second harness agent continues a task
+from the table and the records alone (REQ-013, NFR-002). The transition table
+and the kind list are rule paths; a target's `docs/roles.tsv` is content.
 
-## 6. The escalation rule (ADR-0016)
+## 6. The escalation rule (ADR-0016; REQ-008)
 
-The intent set — the facts, the PRD, `docs/setup/budget.md` — and the trigger
+The intent set — the facts of the problem statement and its answers, the PRD, `docs/setup/budget.md` — and the trigger
 list of the target's PDR are the deterministic floor: a change to an intent
 path, a dropped or deferred `Must`, a moved phase or date, a licence class
 change, or a telemetry cost past a budget value selects an escalation. Every
@@ -111,7 +116,7 @@ agent. The row in `escalations.tsv` and the `layup/escalation` check hold the
 pull request until the idea owner's answer is in Git; a not-confirmed escalation
 is unplanned input (`F-0001#28`).
 
-## 7. The stall procedure (ADR-0017)
+## 7. The stall procedure (ADR-0017; REQ-009, REQ-010)
 
 `no-progress`: the same fingerprint fails a second time (N = 1 retry) or 15
 minutes pass without a progress event (T); `no-agreement`: the cycle cap is

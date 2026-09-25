@@ -75,7 +75,7 @@ machine-checkable.
 | --------- | -------------------------------------- | ------ | ----- | ----------------- |
 | REQ-001 | `layup psb check` finds the gaps of a problem statement before delivery starts and writes them as one batch of questions for the idea owner, whose answers are stored as a raw fact. | Must | 1 | F-0003#41, F-0003#14, F-0003#15, F-0001#11 |
 | REQ-002 | `layup setup` creates a target repository from the pinned Armature kit for the target's domain and stack, stops at each human decision, writes the answers to Git, and `layup setup verify` proves the setup with evidence for every value. | Must | 1 | F-0003#42, F-0003#15, F-0003#37, F-0001#4, F-0001#8 |
-| REQ-003 | The rules and the gates of a target are protected from the agents that they govern: an agent cannot change a rule path without a control that the agents cannot pass by themselves (which control is open question 2 of §11). | Must | 2 | F-0003#43, F-0001#3, F-0003#64 |
+| REQ-003 | The rules and the gates of a target are protected from the agents that they govern: an agent cannot change a rule path without a control that the agents cannot pass by themselves (the control is decided by ADR-0014). | Must | 2 | F-0003#43, F-0001#3, F-0003#64 |
 | REQ-004 | `layup gate` runs the stack-dependent gates of a target (repository layout, interface boundaries, contract checks, test quality) from outside the target and reports `pass`, `fail` or `not-active` per gate; the gates add rules and weaken none. | Must | 1 | F-0003#44, F-0003#11, F-0003#12, F-0003#13, F-0001#7 |
 | REQ-005 | Information that passes between role agents is a record in the target that a machine validates against a schema based on Armature conventions. | Must | 2 | F-0003#45, F-0003#59 |
 | REQ-006 | A question that does not need a human decision gets an accepted answer from the responsible role agent, without a human, and the answer is recorded in the target. | Must | 3 | F-0003#46, F-0003#8, F-0003#9, F-0003#10 |
@@ -218,7 +218,7 @@ fills the Test column.
 | REQ-003 | F-0003#43, F-0001#3, F-0003#64 | §1.1 Inv-3 | ADR-0011, ADR-0014 | T-7qvc | — |
 | REQ-004 | F-0003#44, F-0003#11, F-0003#12, F-0003#13, F-0001#7 | §1.1 Inv-7 | ADR-0011, ADR-0013 | T-7qvc | — |
 | REQ-005 | F-0003#45, F-0003#59            | —           | ADR-0015 | T-7qvc | — |
-| REQ-006 | F-0003#46, F-0003#8, F-0003#9, F-0003#10 | — | ADR-0015 | — | — |
+| REQ-006 | F-0003#46, F-0003#8, F-0003#9, F-0003#10 | — | — | — | — |
 | REQ-007 | F-0003#47, F-0003#58, F-0001#6  | §1.1 Inv-6  | ADR-0011, ADR-0013 | T-7qvc | — |
 | REQ-008 | F-0003#48, F-0003#57, F-0001#12, F-0001#13, F-0001#24, F-0001#28 | — | ADR-0016 | T-7qvc | — |
 | REQ-009 | F-0003#49, F-0003#61, F-0001#37 | —           | ADR-0011, ADR-0017 | T-7qvc | — |
@@ -244,4 +244,4 @@ fills the Test column.
 | Date       | Change                     | Requirement(s) affected |
 | ---------- | -------------------------- | ----------------------- |
 | 2026-09-25 | First draft: the full scope of the PSB with four phases (task `T-wjq4`, Operator decision O-15) | REQ-001 to REQ-018, NFR-001 to NFR-007 |
-| 2026-09-25 | §11 questions 1 to 5 decided by ADR-0013 to ADR-0017 after the panel of task `T-7qvc` (O-52 to O-62); the §12 matrix names the ADRs and the task; no requirement statement changed | REQ-003, REQ-004, REQ-005, REQ-006, REQ-007, REQ-008, REQ-009, REQ-010 |
+| 2026-09-25 | §11 questions 1 to 5 decided by ADR-0013 to ADR-0017 after the panel of task `T-7qvc` (O-52 to O-62); the §12 matrix names the ADRs and the task; REQ-003's parenthetical names ADR-0014 in place of the open question; no other statement changed | REQ-003, REQ-004, REQ-005, REQ-007, REQ-008, REQ-009, REQ-010 |

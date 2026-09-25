@@ -6,9 +6,10 @@ Panel members A (CLI and Go architecture; GPT-6 Sol on Devin), B (Git-native sta
 
 | Option (members) | Inv-1 record | Inv-2 independent | Inv-3 unforgeable | Inv-5 no-report blocks | Infrastructure | Selected |
 | --- | --- | --- | --- | --- | --- | --- |
-| A GitHub App that posts required check runs (B 1A, A G1, C 1-B) | ✓ with a row in the target's `runs/` (O-54) | ✗ until the required checks are removed from the protection body (a kit record the target's Operator edits) | ✓ the App identity | ✓ by the forge's own rule | a small receiver, outside the engine | **yes** (O-52) |
-| Actions in LAYUP's repository posting a commit status (B 1B, A G2, C 1-A) | ✓ with a row | ✗ same | ✗ any write token posts a status; O-53's identities reduce but do not remove it | ✓ | none | no |
+| A GitHub App that posts required check runs, event-driven (B 1A, A G1, C 1-B) | ✓ with a row in the target's `runs/` (O-54) | ✗ until the required checks are removed from the protection body (a kit record the target's Operator edits) | ✓ the App identity | ✓ by the forge's own rule | a small receiver, outside the engine | **yes** (O-52) |
+| Actions in LAYUP's repository posting a commit status (B 1B, C 1-A) | ✓ with a row | ✗ same | ✗ any write token posts a status; O-53's identities reduce but do not remove it | ✓ | none | no |
 | A local pre-merge step and `layup merge` (B 1C, C 1-C) | ✓ | ✓ | ✗ advisory: `gh pr merge` bypasses it | ✗ | none | no |
+| A polling external runner, the App posting the results (A G2) | ✓ with a row | ✗ same | ✓ the App identity | ✓ | a schedule and a target list | no: a delay with no gain once the App receives events; kept as the App's fallback when an event is lost |
 
 Rejected because: the status is forgeable and the local step is advisory (REQ-007 needs the forge to block). Accepted cost: the receiver is a network component; ADR-0011 decision 1 keeps the *engine* free of it, and ADR-0013 places the receiver outside the engine.
 
@@ -19,7 +20,7 @@ Rejected because: the status is forgeable and the local step is advisory (REQ-00
 | `CODEOWNERS` + required code-owner review (A P1, B 2A, C 2-A) | ✓ | ✓ | a `CODEOWNERS` file: excluded by O-60 | one approval per rule change | no (O-60) |
 | A rule-guard required check by the App, satisfied by the Operator's approving review or signed commit (B 2B, A P2) | ✓ | ✓ (the review comes from the human identity) | nothing | one approval per rule change, a planned approval point (O-61) | **yes** |
 | A push-time forge ruleset (C 2-B) | ✓ | ✓ | nothing | none; agents cannot propose a rule change | no: forge-plan dependent, not general across forges (`F-0003#67`) |
-| Detection only (A/B/C 2C) | ✗ | — | nothing | an audit | kept as the complement (the §7.1 measure), not as the control |
+| Detection only, a post-merge audit (B 2C, C 2-C; A names the audit as the measure, not as a control) | ✗ | — | nothing | an audit | kept as the complement (the §7.1 measure), not as the control |
 
 ## Q3 — the role model and the handoff schema → ADR-0015
 
@@ -30,8 +31,9 @@ Rejected because: the status is forgeable and the local step is advisory (REQ-00
 | Artifact owners (A H2) | — | ✓ | ✗ a hypothesis | no | no |
 | A Markdown record per handoff with a new kit linter (B 3B) | ✓ | ✓ | ✓ | a linter in the kit copy | no (O-10) |
 | The forge as carrier (B 3C) | ✗ | ✗ | — | no | no (Inv-1) |
+| PSB functional roles (specifier, architect, implementer, tester, reviewer, examiner) with a TSV event table (C 3-B) | — | ✓ | ✗ six roles with no evidence yet (C's own point) | no | no: the role list is a hypothesis; its TSV columns (harness, model, req_ids) are kept in ADR-0015's header |
 
-Member C's 3-C (the schema is a rule, the role names are content) is kept: a target's roles register is content under ADR-0015.
+Member C's 3-C (the schema is a rule, the role names are content) is kept: a target's roles register is content under ADR-0015. The `idea owner` role is added to O-55's five from C's 3-A and `F-0001#23` (the human of Decision Points 1, 2 and 4). ADR-0017's examiner rule, "a model different from every model that did the stalled work", is the author's rendering of O-59's "different model" (the models are read from `handoffs.tsv`).
 
 ## Q4 — the escalation rule → ADR-0016
 
