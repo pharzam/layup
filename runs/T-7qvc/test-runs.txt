@@ -1,0 +1,49 @@
+# T-7qvc — run evidence (2026-09-25, worktree .worktree/T-7qvc, base 9beff4c)
+
+## The panel (O-51; five minutes each, in parallel, disposable clones at 9beff4c)
+
+```
+A: devin -p --model gpt-6-sol-xhigh ... exit=0, 18409 bytes, within 300 s
+B: devin -p --model claude-opus-5-5-high ... exit=0, 16729 bytes, within 300 s
+C: opencode run --standalone --auto -m opencode-go/grok-4.7#high ... "Error: Transport: Unable to connect", 0 bytes, killed at 300 s
+C (rerun, the fallback of O-51): claude -p --model claude-opus-5-5 --dangerously-skip-permissions ... exit=0, 16163 bytes, within 300 s
+```
+
+## adr-lint: red (five ADRs, no index rows), then green (the rows, 0018 next, ADR-0011 amended)
+
+```
+FAIL  0013-run-stack-gates-through-a-layup-github-app.md: no row for it in README.md's index table
+WARN  0013-run-stack-gates-through-a-layup-github-app.md: nothing outside adr/ LINKS it — a mention of 0013-run-stack-gates-through-a-layup-github-app.md or ADR-0013 is not one; cross-link it from the plan/spec it supports
+FAIL  0014-protect-rule-paths-with-a-rule-guard-check.md: no row for it in README.md's index table
+WARN  0014-protect-rule-paths-with-a-rule-guard-check.md: nothing outside adr/ LINKS it — a mention of 0014-protect-rule-paths-with-a-rule-guard-check.md or ADR-0014 is not one; cross-link it from the plan/spec it supports
+FAIL  0015-roles-are-the-kit-gate-roles-and-a-handoff-is-a-tsv-row.md: no row for it in README.md's index table
+WARN  0015-roles-are-the-kit-gate-roles-and-a-handoff-is-a-tsv-row.md: nothing outside adr/ LINKS it — a mention of 0015-roles-are-the-kit-gate-roles-and-a-handoff-is-a-tsv-row.md or ADR-0015 is not one; cross-link it from the plan/spec it supports
+FAIL  0016-escalate-by-a-deterministic-floor-and-a-declared-class.md: no row for it in README.md's index table
+WARN  0016-escalate-by-a-deterministic-floor-and-a-declared-class.md: nothing outside adr/ LINKS it — a mention of 0016-escalate-by-a-deterministic-floor-and-a-declared-class.md or ADR-0016 is not one; cross-link it from the plan/spec it supports
+FAIL  0017-stop-a-stall-at-a-counted-limit-and-examine-it-fresh.md: no row for it in README.md's index table
+WARN  0017-stop-a-stall-at-a-counted-limit-and-examine-it-fresh.md: nothing outside adr/ LINKS it — a mention of 0017-stop-a-stall-at-a-counted-limit-and-examine-it-fresh.md or ADR-0017 is not one; cross-link it from the plan/spec it supports
+
+adr-lint: OK
+```
+
+## Before the freeze: the checks
+
+```
+adr-lint: OK
+prd-lint: OK
+link-lint: OK  902 links resolved
+run-discipline-tests: 81 passed, 0 failed
+setup-check: 12 "setup-check: ... OK" lines, no FAIL, exit 0
+git diff --check: clean
+```
+
+## The fixes of round 1, before the fix commit: the checks
+
+```
+adr-lint: OK
+prd-lint: OK
+link-lint: OK  905 links resolved
+run-discipline-tests: 81 passed, 0 failed
+setup-check: 12 "setup-check: ... OK" lines, no FAIL, exit 0
+git diff --check: clean
+```

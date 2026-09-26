@@ -129,6 +129,7 @@ Consequences you will meet immediately, and which are not negotiable:
 | [`glossary.md`](glossary.md) | The shared vocabulary. Skim it; come back constantly. |
 | [`facts/`](facts/) | Facts stored as-is as immutable evidence: the PSB (`F-0001`, with more numbered facts in `F-0003`), the vision brief (`F-0002`, a solution document, not requirements) and the idea owner's answers to the PSB's gap questions (`F-0004`). Derived requirements cite them by `F-NNNN` ID. |
 | [`prd/`](prd/) | Product Requirements Documents, derived from the facts; each `REQ`/`NFR` cites an `F-NNNN` fact. [`PRD-0001`](prd/PRD-0001-layup.md) is LAYUP's own: the full scope of the PSB in four phases (Draft until the PDR records the Operator's acceptance). |
+| [`architecture.md`](architecture.md) | The software architecture: one Go engine over repository files, one small App that reports gate verdicts to the forge, and the records under `runs/` that any harness agent can read and continue. Each section names its requirements and its ADR. |
 | [`issue-workflow.md`](issue-workflow.md) | The issue-first rules (R1–R13): the ticket policy the gate assumes. |
 | [`tasks/backlog.md`](tasks/backlog.md) | What to work on next. |
 

@@ -1,0 +1,46 @@
+# T-0kn4 — run evidence (2026-09-26, worktree .worktree/T-0kn4, base 9beff4c, carried head 2b7ed6a)
+
+## The fixes and the records present, before the commits: the checks
+
+```
+adr-lint: OK
+prd-lint: OK
+link-lint: OK  915 links resolved
+run-discipline-tests: 81 passed, 0 failed
+setup-check: 12 "setup-check: ... OK" lines, no FAIL, exit 0
+git diff --check: clean
+```
+
+## Round 1 (cycle 0)
+
+```
+exit=0 killed=0 elapsed=471s
+```
+
+## The fix of round 1, before the fix commit: the checks
+
+```
+adr-lint: OK
+prd-lint: OK
+link-lint: OK  914 links resolved
+run-discipline-tests: 81 passed, 0 failed
+setup-check: 12 "setup-check: ... OK" lines, no FAIL, exit 0
+git diff --check: clean
+```
+
+## Round 2 (cycle 1, the cap), frozen head 99c5c1e
+
+```
+exit=0 killed=0 elapsed=486s
+```
+
+## The note of round 2 (O-65) and the seven notes applied, the verdict, the resource record and the index lines present, before the close-out commit: the checks
+
+```
+adr-lint: OK
+prd-lint: OK
+link-lint: OK  920 links resolved
+run-discipline-tests: 81 passed, 0 failed
+setup-check: 12 "setup-check: ... OK" lines, no FAIL, exit 0
+git diff --check: clean
+```
