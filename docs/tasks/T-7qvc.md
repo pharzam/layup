@@ -49,4 +49,4 @@ Recorded, not budgeted (ADR-0007). Token counts: `not reported` (Devin and
 | Round 1 | reasoning | Devin `gpt-6-sol-xhigh` (skipped, 186 s, quota exhausted); Claude Opus 5.5 on Claude Code (the record) | xhigh; not reported | not reported | 186 s + 496 s |
 | The fixes of round 1 | execution | Claude Fable 5.1 | not reported | not reported | about 25 min |
 | Round 2 | reasoning | Claude Opus 5.5 on Claude Code | not reported | not reported | 447 s |
-| **Total** | | | | not reported | about 2 h 20 min |
+| **Total** | | | | not reported | about 2 h 20 min wall-clock (the parts sum to about 2 h 05 min; the rest is the Operator's decision time and the runs' setup) |
