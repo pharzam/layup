@@ -2,6 +2,8 @@
 
 Append-only log of finished tasks, backlog-listed or not, most recent first.
 
+- **2026-09-26** — **T-0kn4** — Landed the software architecture (`docs/architecture.md`) and ADR-0013 to ADR-0017 (the LAYUP App's check runs, the rule guard, the kit's roles and the handoff row, the escalation floor and class, the stall limits) after the panel of `T-7qvc` and the Operator's decisions O-52 to O-65 ([#67](https://github.com/pharzam/layup/issues/67); [detail](T-0kn4.md))
+- **2026-09-26** — **T-7qvc** — Ran the panel of three on the five open questions of `PRD-0001` §11, drafted ADR-0013 to ADR-0017 and `docs/architecture.md`, and ended at the cycle cap with `not mergeable, findings recorded`; split to `T-0kn4` (O-63) ([#66](https://github.com/pharzam/layup/issues/66); [detail](T-7qvc.md))
 ## How to keep this file readable
 
 **One line per task — keep it that way.** When a task in [backlog.md](backlog.md)

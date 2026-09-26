@@ -27,3 +27,20 @@ run-discipline-tests: 81 passed, 0 failed
 setup-check: 12 "setup-check: ... OK" lines, no FAIL, exit 0
 git diff --check: clean
 ```
+
+## Round 2 (cycle 1, the cap), frozen head 99c5c1e
+
+```
+exit=0 killed=0 elapsed=486s
+```
+
+## The note of round 2 (O-65) and the seven notes applied, the verdict, the resource record and the index lines present, before the close-out commit: the checks
+
+```
+adr-lint: OK
+prd-lint: OK
+link-lint: OK  920 links resolved
+run-discipline-tests: 81 passed, 0 failed
+setup-check: 12 "setup-check: ... OK" lines, no FAIL, exit 0
+git diff --check: clean
+```

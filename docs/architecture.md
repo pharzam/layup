@@ -21,7 +21,7 @@ O-52 to O-62 recorded there and under [`runs/T-7qvc/`](../runs/T-7qvc/selection.
 | Component | What it is | Requirements | Rests on |
 | --------- | ---------- | ------------ | -------- |
 | **The engine**, `layup` | One Go binary, standard library only, Git called as `git`; no daemon, no database, no network service, no model call | NFR-005, NFR-007 | ADR-0010, ADR-0011 |
-| **The runner**, the LAYUP App | A GitHub App installed on each target; a small receiver (or a workflow in LAYUP's repository) that runs the engine at a pinned commit on each pull-request event and posts required check runs under the App's identity | REQ-004, REQ-007, NFR-004 | ADR-0013 |
+| **The runner**, the LAYUP App | A GitHub App installed on each target; a small receiver (or a workflow in LAYUP's repository) that runs the engine at a pinned commit on each `pull_request` and `pull_request_review` event and posts required check runs under the App's identity | REQ-004, REQ-007, NFR-004 | ADR-0013 |
 | **The rule guard** | The check `layup/rule-guard` of the App: red on a rule-path change until the Operator's approval | REQ-003 | ADR-0014 |
 | **The target** | A project repository that LAYUP set up: the adapted Armature kit, the facts, the product the role agents deliver, and the records under `runs/` and `docs/`; never LAYUP's code | REQ-002, NFR-002 | ADR-0011 (O-10, O-11, O-13) |
 | **The role agents** | Sessions of harness agents in the kit's roles, orchestrated by the engine's records, never by a LAYUP model call | REQ-005, REQ-013 | ADR-0015, ADR-0012 |
@@ -63,7 +63,10 @@ incomplete (REQ-011, ADR-0007).
 
 All state is plain files in the target (ADR-0011 decision 2): tab-separated
 tables with a fixed header, rows only added, beside Markdown records in the
-kit's shape. A deterministic check validates each table's header and columns
+kit's shape. Two tables are **registers** in ADR-0011's sense — a row is edited
+in place and Git history is its log: `stalls.tsv` (the `examine` and `close`
+runs fill a row's later columns) and `escalations.tsv` (the answer fills the
+row). A deterministic check validates each table's header and columns
 (`layup setup verify`, and each command for its own table).
 
 | File | Kind | Header (or shape) | Written by | Record |
@@ -90,7 +93,7 @@ verify` compares (NFR-001 with its stated limit, ADR-0013).
 ## 4. The runner: from a pull request to a verdict (ADR-0013, ADR-0014; REQ-004, REQ-007, NFR-004)
 
 1. A role agent, under the agents' App or the machine identity — never the LAYUP App (ADR-0014) — opens or updates a pull request on the target; its head is `X`.
-2. The forge sends the event (a `pull_request` event, or a `pull_request_review` event: a review submitted, changed or dismissed, by any identity) to the LAYUP App; the receiver starts a job that checks out `X` with a read token and runs `layup gate` at a pinned LAYUP commit, with the gate set of `docs/setup/stack.tsv` as it stands on the target's base branch.
+2. The forge sends the event (a `pull_request` event, except the one the App's own row commit sends, or a `pull_request_review` event: a review submitted, changed or dismissed, by any identity) to the LAYUP App; the receiver starts a job that checks out `X` with a read token and runs `layup gate` at a pinned LAYUP commit, with the gate set of `docs/setup/stack.tsv` as it stands on the target's base branch.
 3. The job appends the verdict rows (`head_sha` = `X`) to `runs/<task>/gates.tsv` as a commit `Y` on the pull request's branch under the LAYUP App's identity, and asserts that `Y` differs from `X` only under `runs/*/gates.tsv`; `<task>` is the task ID of the branch name under the target's recorded scheme.
 4. The job posts, on `Y`, one check run per gate kind and the rule guard, escalation and stall checks, under the LAYUP App's identity: `pass` → `success`; `fail` and `not-active` → `failure`; an open escalation or stall row → `failure`; the rule guard reads the Operator's approval against `X`. A commit by the LAYUP App that touches only `runs/*/gates.tsv` neither starts a new run nor dismisses an approval; any other commit does both.
 5. The target's protection requires each `layup/*` check by name, pinned to the LAYUP App's identity (the kit's setup step S13 body, with that departure recorded); a check with no report keeps the pull request at "expected", so a gate that did not run blocks the merge (NFR-004), and a status of the same name from another identity does not count. Review assignment is the target's own rule; the pilot audits early reviews (REQ-007).
