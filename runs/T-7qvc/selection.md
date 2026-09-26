@@ -31,7 +31,7 @@ Rejected because: the status is forgeable and the local step is advisory (REQ-00
 | Artifact owners (A H2) | — | ✓ | ✗ a hypothesis | no | no |
 | A Markdown record per handoff with a new kit linter (B 3B) | ✓ | ✓ | ✓ | a linter in the kit copy | no (O-10) |
 | The forge as carrier (B 3C) | ✗ | ✗ | — | no | no (Inv-1) |
-| PSB functional roles (specifier, architect, implementer, tester, reviewer, examiner) with a TSV event table (C 3-B) | — | ✓ | ✗ six roles with no evidence yet (C's own point) | no | no: the role list is a hypothesis; its TSV columns (harness, model, req_ids) are kept in ADR-0015's header |
+| PSB functional roles (specifier, architect, implementer, tester, reviewer, examiner) with a TSV event table (C 3-B) | — | ✓ | ✗ six roles with no evidence yet (C's own point) | no | no: the role list is a hypothesis; its TSV columns `harness` and `model` are kept in ADR-0015's header (`req_ids` is not: a handoff points at a record, and the record carries its requirements) |
 
 Member C's 3-C (the schema is a rule, the role names are content) is kept: a target's roles register is content under ADR-0015. The `idea owner` role is added to O-55's five from C's 3-A and `F-0001#23` (the human of Decision Points 1, 2 and 4). ADR-0017's examiner rule, "a model different from every model that did the stalled work", is the author's rendering of O-59's "different model" (the models are read from `handoffs.tsv`).
 

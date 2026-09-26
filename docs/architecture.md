@@ -3,9 +3,9 @@
 The technical specification of LAYUP (`F-0003#51`): the components, their
 interfaces, the state data model, the runner, the role model, the escalation
 rule, the stall procedure and the telemetry record. It rests on
-[`PRD-0001`](prd/PRD-0001-layup.md) and on the decision records ADR-0010 to
-ADR-0017; each section names the requirements it designs and the record it rests
-on. Written by task `T-7qvc` (#66) after the panel and the Operator decisions
+[`PRD-0001`](prd/PRD-0001-layup.md) and on the decision records that each
+section names (ADR-0002, ADR-0007, ADR-0009, and ADR-0010 to ADR-0017); each
+section names the requirements it designs and the record it rests on. Written by task `T-7qvc` (#66) after the panel and the Operator decisions
 O-52 to O-62 recorded there and under [`runs/T-7qvc/`](../runs/T-7qvc/selection.md).
 
 ## In plain terms
@@ -51,7 +51,7 @@ command reads global state as project state (NFR-001).
 | `layup gate TARGET` | 1 | the target's recorded stack, its tree | one verdict per gate kind (`layout`, `interfaces`, `contracts`, `tests`): `pass`, `fail`, `not-active`; a row in `runs/<task>/gates.tsv` | REQ-004, REQ-007 |
 | `layup handoff check TARGET` | 2 | `runs/<task>/handoffs.tsv`, the records it names | a report | REQ-005 |
 | `layup escalation check TARGET CHANGE` | 3 | the intent set, the decision records, the telemetry | `runs/<task>/escalations.tsv` | REQ-008 |
-| `layup stall open|examine|close TARGET` | 1 (record), 3 (procedure) | `runs/<task>/`, `handoffs.tsv` | `runs/<task>/stalls.tsv`, `stall-<id>.md` | REQ-009, REQ-010 |
+| `layup stall open|examine|close TARGET` | 1 (record), 3 (procedure) | `runs/<task>/`, `handoffs.tsv` | `runs/<task>/stalls.tsv` (`open` the row; `examine` the examiner's harness, model and diagnosis path; `close` the outcome); the examiner, not the engine, writes `stall-<id>.md` | REQ-009, REQ-010 |
 | `layup telemetry record|check TARGET` | 1 | the values a harness or a person gives | `runs/<task>/telemetry.tsv`; the count of incomplete records | REQ-011 |
 | `layup audit rules TARGET` | 2 | the default branch's history | `runs/audit/rule-changes.tsv` | REQ-003 |
 
@@ -90,9 +90,9 @@ verify` compares (NFR-001 with its stated limit, ADR-0013).
 ## 4. The runner: from a pull request to a verdict (ADR-0013, ADR-0014; REQ-004, REQ-007, NFR-004)
 
 1. A role agent, under the agents' App or the machine identity — never the LAYUP App (ADR-0014) — opens or updates a pull request on the target; its head is `X`.
-2. The forge sends the event to the LAYUP App; the receiver starts a job that checks out `X` with a read token and runs `layup gate` at a pinned LAYUP commit, with the gate set of `docs/setup/stack.tsv`.
-3. The job appends the verdict rows (`head_sha` = `X`) to `runs/<task>/gates.tsv` as a commit `Y` on the pull request's branch under the LAYUP App's identity, and asserts that `Y` differs from `X` only under `runs/*/gates.tsv`; `<task>` is the task ID of the branch name.
-4. The job posts, on `Y`, one check run per gate kind and the rule guard, escalation and stall checks, under the LAYUP App's identity: `pass` → `success`; `fail` and `not-active` → `failure`; an open escalation or stall row → `failure`. A commit by the LAYUP App that touches only `runs/*/gates.tsv` does not start a new run; any other commit does.
+2. The forge sends the event (a pull-request event, or a review by the Operator's identity) to the LAYUP App; the receiver starts a job that checks out `X` with a read token and runs `layup gate` at a pinned LAYUP commit, with the gate set of `docs/setup/stack.tsv` as it stands on the target's base branch.
+3. The job appends the verdict rows (`head_sha` = `X`) to `runs/<task>/gates.tsv` as a commit `Y` on the pull request's branch under the LAYUP App's identity, and asserts that `Y` differs from `X` only under `runs/*/gates.tsv`; `<task>` is the task ID of the branch name under the target's recorded scheme.
+4. The job posts, on `Y`, one check run per gate kind and the rule guard, escalation and stall checks, under the LAYUP App's identity: `pass` → `success`; `fail` and `not-active` → `failure`; an open escalation or stall row → `failure`; the rule guard reads the Operator's approval against `X`. A commit by the LAYUP App that touches only `runs/*/gates.tsv` neither starts a new run nor dismisses an approval; any other commit does both.
 5. The target's protection requires each `layup/*` check by name, pinned to the LAYUP App's identity (the kit's setup step S13 body, with that departure recorded); a check with no report keeps the pull request at "expected", so a gate that did not run blocks the merge (NFR-004), and a status of the same name from another identity does not count. Review assignment is the target's own rule; the pilot audits early reviews (REQ-007).
 
 ## 5. The role model and the handoffs (ADR-0015; REQ-005, REQ-013, NFR-002)
@@ -151,6 +151,6 @@ tables until the command exists.
 ## 10. Open items for the implementation plan (#42 child 5)
 
 - The setup step for the identities of O-53 (the App installation or the machine account; the Operator's identity as the approver of Decision Point 3) in `docs/setup/steps.tsv` (ADR-0014).
-- The receiver of the App: a workflow in LAYUP's repository that the App's events reach, or a small hosted service; the choice is the implementation's, within ADR-0013 (the engine holds no service).
+- The receiver of the App: a workflow in LAYUP's repository that the App's events reach, or a small hosted service; the choice is the implementation's, within ADR-0013 (the engine holds no service). If the receiver is a workflow in LAYUP's own repository, that repository must keep the App's private key from its own agents (a secret the agents' identity cannot read); ADR-0013's key-custody consequence depends on it.
 - `docs/setup/budget.md` for this repository and for each target, written by the idea owner (ADR-0016, O-57).
 - The two pilot problem statements and their stacks: the idea owner's Decision Point 1 (`PRD-0001` §11 question 6), recorded as an Operator decision before the pilot.
