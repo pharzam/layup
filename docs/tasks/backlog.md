@@ -32,6 +32,7 @@ same summary, dated — rather than deleting it or checking it off.
 
 - **T-meh2** — The PDR: `PRD-0001` with one requirement per PSB In-Scope item, traced to `F-0003#41`–`#52`, then the architecture and the plan ([#42](https://github.com/pharzam/layup/issues/42))
 - **T-7qvc** — The software architecture of LAYUP (`docs/architecture.md`) and ADR-0013 to ADR-0017, one per open question of `PRD-0001` §11, after one panel of three ([#66](https://github.com/pharzam/layup/issues/66); child 4 of #42)
+- **T-0kn4** — The architecture and ADR-0013 to ADR-0017, the successor of `T-7qvc` after its cycle cap: the two findings of round 2 fixed, one round, close-out ([#67](https://github.com/pharzam/layup/issues/67); child 4 of #42)
 - **T-stfn** — Step 2, the core engine: `layup setup`, `layup gate`, the telemetry record and the stall record ([#29](https://github.com/pharzam/layup/issues/29); [ADR-0011](../adr/0011-structure-the-core-engine-as-a-go-cli-over-repository-files.md))
 
 ## Next

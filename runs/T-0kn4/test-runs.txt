@@ -1,0 +1,12 @@
+# T-0kn4 — run evidence (2026-09-26, worktree .worktree/T-0kn4, base 9beff4c, carried head 2b7ed6a)
+
+## The fixes and the records present, before the commits: the checks
+
+```
+adr-lint: OK
+prd-lint: OK
+link-lint: OK  915 links resolved
+run-discipline-tests: 81 passed, 0 failed
+setup-check: 12 "setup-check: ... OK" lines, no FAIL, exit 0
+git diff --check: clean
+```
