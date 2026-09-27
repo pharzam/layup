@@ -6,8 +6,8 @@ for the full rationale.
 
 ## What belongs in this directory
 
-`docs/adr/` is the **living constitution** an adopter copies: it holds only
-records that constitute *a project*, generic enough to carry onto any domain. Two
+`docs/adr/` is LAYUP's **living constitution**: it holds only records that
+constitute *a project*. Two
 rules keep it that way, and both are **written rules** — no linter enforces them
 (`link-lint` checks that a link resolves, not which way it points; `adr-lint`
 reads only this directory), so the [plan review](../issue-workflow.md#r12--slice-and-prioritize)
@@ -18,22 +18,23 @@ are their enforcement:
    cites only sibling constitutive documents — another ADR, an
    [`engineering-discipline.md`](../engineering-discipline.md) section,
    [`issue-workflow.md`](../issue-workflow.md), the [`glossary`](../glossary.md), a
-   template. A forge number resolves to a different issue, or to nothing, in the
-   adopter's repository; a link to a sibling document travels with the copy.
+   template. A forge number resolves to a different issue, or to nothing, in
+   Armature or in a target that holds the same record; a link to a sibling
+   document resolves in each.
    **This repository's own records are the exception.** Records from `0010` on
    decide LAYUP itself — its stack, its engine, its bootstrap mode — and never
    travel: [ADR-0011](0011-structure-the-core-engine-as-a-go-cli-over-repository-files.md)
-   decision 3 writes only the pinned Armature kit into a target, never LAYUP's
+   decision 3 writes only the pinned Armature into a target, never LAYUP's
    documents. So a record from `0010` on may cite this repository's issues, pull
    requests, Operator decisions and evidence store (`runs/`); rule 1 binds the
-   constitutional records `0001`–`0009`, which an adopter copies.
+   constitutional records `0001`–`0009`.
 2. **A record here never links into `docs/decisions/`** (a bare textual mention is
    the most it may make). That directory held Armature's own past governance
-   decisions — the records that shaped *the kit* rather than a project built with
-   it — kept as a **closed archive** an adopter deletes; this repository deleted it
-   (kit step 4, task `T-vbwc`), and the rule stays for any later copy. A constitutional record
-   that linked into it would turn an adopter's tree red the moment they removed the
-   archive; that is why this very rule names the directory without linking it. (A
+   decisions — the records that shaped *Armature* rather than a project built
+   with it — kept as a **closed archive** in Armature; this repository deleted it
+   (setup step S05, task `T-vbwc`), and the rule stays for any later copy. A
+   constitutional record that linked into it would turn a tree red the moment the
+   archive was removed; that is why this very rule names the directory without linking it. (A
    record inside `docs/decisions/` *may* link up to a record here — that direction
    survives the deletion.)
 
@@ -68,8 +69,9 @@ the conventions above — filename shape, contiguous numbering, the title line, 
 cross-link is a warning). It reads only Markdown, so `sh docs/adr/adr-lint.sh`
 runs anywhere, and it is wired into the
 [`pre-commit` hook](../engineering-discipline.md#git-hooks) and
-[CI](../engineering-discipline.md#continuous-integration). If you change
-this template's shape, change the linter in the same change — the two must agree.
+[CI](../engineering-discipline.md#continuous-integration). A change to the
+shape of [`template.md`](template.md) changes the linter in the same change — the
+two must agree.
 
 ### What counts as an inbound cross-link
 
@@ -78,7 +80,7 @@ filename — inline
 `[text](…/0001-….md)`, a reference definition `[label]: …/0001-….md`, or a raw
 `href` — carried by a Markdown file the check reads. It reads every `.md` under
 this directory's **parent** except this directory itself, plus the `README.md`
-beside that parent. In this kit those are [`docs/`](..) and the repository-root
+beside that parent. In LAYUP those are [`docs/`](..) and the repository-root
 [`README.md`](../../README.md), so a file elsewhere in the tree — the root
 `AGENTS.md` included — is outside its reach. Move the ADR directory and the reach
 moves with it, which is the last of the limits listed in the script.
@@ -151,7 +153,7 @@ record by number here, and let the index table below do the linking.
 <!-- Add one row per ADR as you write them. Keep the newest at the bottom. -->
 
 Armature's own past governance decisions — the `D-0000`–`D-0008` sequence — were
-archived under `docs/decisions/` in the kit. LAYUP deleted that directory (kit step
-4, task `T-vbwc`); the records stay readable in Armature at the pinned commit
+archived under `docs/decisions/` in Armature. LAYUP deleted that directory (setup
+step S05, task `T-vbwc`); the records stay readable in Armature at the pinned commit
 (see ADR-0009). They are not part of
 this project's constitution.
