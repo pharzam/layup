@@ -1,0 +1,217 @@
+Each <U+2039> and <U+203A> in this file is the character U+2039 or U+203A of the captured output, written by name so that no marker occurs in a record (#70 round 1, finding 1).
+
+## Step 2, red (fixtures before the check), 2026-09-27T15:21:00Z, base 9beff4c
+$ sh docs/setup/tests/run.sh
+FAIL  adapted/bad-rule-1: exit 2, want 1
+FAIL  adapted/bad-rule-1: no output line: setup-check: adapted FAIL rule-1 kit: docs/a.md:1
+FAIL  adapted/bad-rule-1: no output line: setup-check: adapted FAIL rule-1 kit: docs/a.md:3
+FAIL  adapted/bad-rule-1: no output line: setup-check: adapted FAIL rule-1 adopter: docs/a.md:5
+FAIL  adapted/bad-rule-1: no output line: setup-check: adapted FAIL rule-1 the template: docs/a.md:7
+FAIL  adapted/bad-rule-1: no output line: setup-check: adapted FAIL rule-1 kit: docs/adr/0013-new.md:1
+FAIL  adapted/bad-rule-1: no output line: setup-check: adapted FAIL rule-1 adopter: docs/tests/t.md:1
+FAIL  adapted/bad-rule-2: exit 2, want 1
+FAIL  adapted/bad-rule-2: no output line: setup-check: adapted FAIL rule-2 Armature: docs/b.md:3
+FAIL  adapted/bad-rule-3: exit 2, want 1
+FAIL  adapted/bad-rule-3: no output line: setup-check: adapted FAIL rule-3 optional: docs/c.md:1
+FAIL  adapted/bad-rule-3: no output line: setup-check: adapted FAIL rule-3 skip this section: docs/c.md:3
+FAIL  adapted/bad-rule-3: no output line: setup-check: adapted FAIL rule-3 fill <U+2039>: docs/c.md:6
+FAIL  adapted/bad-rule-3: no output line: setup-check: adapted FAIL rule-3 replace <U+2039>: docs/c.md:8
+FAIL  adapted/bad-rule-3: no output line: setup-check: adapted FAIL rule-3 adapt: docs/c.md:10
+FAIL  adapted/bad-rule-3: no output line: setup-check: adapted FAIL rule-3 your project: docs/c.md:12
+FAIL  adapted/bad-rule-3: no output line: setup-check: adapted FAIL rule-3 your forge: docs/c.md:14
+FAIL  adapted/bad-rule-3: no output line: setup-check: adapted FAIL rule-3 your stack: docs/c.md:16
+FAIL  adapted/bad-rule-3: no output line: setup-check: adapted FAIL rule-3 you use: docs/c.md:18
+FAIL  adapted/good-allowed: exit 2, want 0
+FAIL  adapted/good-allowed: no output line: setup-check: adapted OK
+FAIL  frame/good-passthrough: no output line: setup-check: adapted OK
+FAIL  markers/bad-record-shape: exit 0, want 1
+FAIL  markers/bad-record-shape: no output line: setup-check: markers FAIL unlisted: docs/engineering-discipline.md <U+2039>model<U+203A>
+setup-check tests: 34 passed, 6 failed
+exit 1 (the runner's exit; this line first said 0, the exit of the output filter, and was corrected in step 6)
+
+## Step 3, green (the check adapted; markers without mk_allowed), 2026-09-27T15:23:10Z
+$ sh docs/setup/tests/run.sh
+setup-check tests: 40 passed, 0 failed
+$ (ubuntu:24.04, awk = /usr/bin/mawk) sh docs/setup/tests/run.sh
+setup-check tests: 40 passed, 0 failed
+$ sh docs/setup/setup-check.sh --only adapted,markers . | wc -l
+274
+(the text pass of step 4 removes these findings)
+
+## Step 4 and 5, the hook refuses a document that speaks as the template, 2026-09-27T15:33Z, head 551c814
+$ printf 'This kit is optional.\n' > docs/zz-probe.md && git add docs/zz-probe.md && git commit -m "test: T-745n probe"
+setup-check: adapted FAIL rule-1 kit: docs/zz-probe.md:1
+setup-check: adapted FAIL rule-3 optional: docs/zz-probe.md:1
+setup-check: markers OK
+commit exit 1 (the probe was then removed from the index and the disk; no commit was made)
+
+## Step 6, all checks, 2026-09-27T15:36:45Z, head ecd5cc9
+$ sh docs/adr/adr-lint.sh
+adr-lint: OK
+exit 0
+$ sh docs/prd/prd-lint.sh
+prd-lint: OK
+exit 0
+$ sh docs/links/link-lint.sh
+link-lint: OK  880 links resolved
+exit 0
+$ sh docs/tests/run-discipline-tests.sh
+run-discipline-tests: 81 passed, 0 failed
+exit 0
+$ sh docs/tests/nested-checkout-check.sh
+nested-checkout-check: OK  10 cases behaved
+exit 0
+$ sh docs/setup/tests/run.sh
+setup-check tests: 40 passed, 0 failed
+exit 0
+$ sh docs/setup/setup-check.sh
+setup-check: pin OK
+setup-check: kit-history OK
+setup-check: facts OK
+setup-check: onboarding OK
+setup-check: glossary OK
+setup-check: guardrails OK
+setup-check: markers OK
+setup-check: adapted OK
+setup-check: ci OK
+setup-check: protection OK
+setup-check: identity OK
+setup-check: procedure OK
+run-discipline-tests: 81 passed, 0 failed
+adr-lint: OK
+prd-lint: OK
+link-lint: OK  880 links resolved
+setup-check: kit-linters OK
+exit 0
+$ go build ./...
+exit 0
+$ go vet ./...
+exit 0
+$ go test -count=1 ./...
+?   	github.com/pharzam/layup/cmd/layup	[no test files]
+ok  	github.com/pharzam/layup/internal/cli	0.289s
+ok  	github.com/pharzam/layup/internal/psb	0.289s
+exit 0
+$ git diff --check 9beff4c HEAD
+runs/T-745n/test-runs.txt:38: new blank line at EOF.
+exit 2
+
+## Step 6, the same checks on the CI awk, 2026-09-27T15:38Z, head ecd5cc9
+$ (ubuntu:24.04, awk = /usr/bin/mawk) sh docs/setup/tests/run.sh
+setup-check tests: 40 passed, 0 failed
+$ (ubuntu:24.04, awk = /usr/bin/mawk, in a clone of the branch) sh docs/setup/setup-check.sh --only adapted,markers .
+setup-check: adapted OK
+setup-check: markers OK
+exit 0
+
+## Round 1 fixes, red (the new fixture lines before the check), 2026-09-27T15:58:35Z (the time the output file was written; this line first said 16:03Z by mistake, round 2 note 5), head 7e08de7 plus the fixtures
+$ sh docs/setup/tests/run.sh
+FAIL  adapted/bad-rule-1: no output line: setup-check: adapted FAIL rule-1 kit: docs/a.md:11
+FAIL  adapted/bad-rule-1: no output line: setup-check: adapted FAIL rule-1 kit: docs/a.md:13
+FAIL  adapted/bad-rule-1: no output line: setup-check: adapted FAIL rule-1 the template: docs/a.md:17
+FAIL  adapted/bad-rule-3: no output line: setup-check: adapted FAIL rule-3 delete this: docs/c.md:28
+FAIL  adapted/bad-rule-3: no output line: setup-check: adapted FAIL rule-3 delete the one you do not use: docs/c.md:30
+FAIL  adapted/bad-rule-3: no output line: setup-check: adapted FAIL rule-3 fill in: docs/c.md:32
+setup-check tests: 38 passed, 2 failed
+exit 1
+
+## Round 1 fixes, all checks, 2026-09-27T16:00:32Z, head 42fe407
+$ sh docs/adr/adr-lint.sh
+adr-lint: OK
+exit 0
+$ sh docs/prd/prd-lint.sh
+prd-lint: OK
+exit 0
+$ sh docs/links/link-lint.sh
+link-lint: OK  887 links resolved
+exit 0
+$ sh docs/tests/run-discipline-tests.sh
+run-discipline-tests: 81 passed, 0 failed
+exit 0
+$ sh docs/tests/nested-checkout-check.sh
+nested-checkout-check: OK  10 cases behaved
+exit 0
+$ sh docs/setup/tests/run.sh
+setup-check tests: 40 passed, 0 failed
+exit 0
+$ sh docs/setup/setup-check.sh
+setup-check: pin OK
+setup-check: kit-history OK
+setup-check: facts OK
+setup-check: onboarding OK
+setup-check: glossary OK
+setup-check: guardrails OK
+setup-check: markers OK
+setup-check: adapted OK
+setup-check: ci OK
+setup-check: protection OK
+setup-check: identity OK
+setup-check: procedure OK
+run-discipline-tests: 81 passed, 0 failed
+adr-lint: OK
+prd-lint: OK
+link-lint: OK  887 links resolved
+setup-check: kit-linters OK
+exit 0
+$ go build ./...
+exit 0
+$ go vet ./...
+exit 0
+$ go test -count=1 ./...
+?   	github.com/pharzam/layup/cmd/layup	[no test files]
+ok  	github.com/pharzam/layup/internal/cli	0.381s
+ok  	github.com/pharzam/layup/internal/psb	0.380s
+exit 0
+$ git diff --check 9beff4c HEAD
+exit 0
+
+## Round 1 fixes, the pull request's CI simulated, head 42fe407
+The restore step of ci.yml done by hand in a clone: the seven scripts and docs/setup/tests/ copied from main (9beff4c).
+$ sh docs/setup/tests/run.sh -> exit 0, setup-check tests: 35 passed, 0 failed
+$ sh docs/setup/setup-check.sh -> exit 0
+$ sh docs/adr/adr-lint.sh; sh docs/prd/prd-lint.sh; sh docs/links/link-lint.sh; sh docs/tests/run-discipline-tests.sh -> exit 0 each
+
+## Round 1 fixes, the CI awk
+$ (ubuntu:24.04, awk = /usr/bin/mawk) sh docs/setup/tests/run.sh
+setup-check tests: 40 passed, 0 failed
+
+## Close-out, all checks, 2026-09-27T16:18:32Z, the round-2 notes applied, before the close-out commit
+$ sh docs/adr/adr-lint.sh
+adr-lint: OK
+exit 0
+$ sh docs/prd/prd-lint.sh
+prd-lint: OK
+exit 0
+$ sh docs/links/link-lint.sh
+link-lint: OK  887 links resolved
+exit 0
+$ sh docs/tests/run-discipline-tests.sh
+run-discipline-tests: 81 passed, 0 failed
+exit 0
+$ sh docs/tests/nested-checkout-check.sh
+nested-checkout-check: OK  10 cases behaved
+exit 0
+$ sh docs/setup/tests/run.sh
+setup-check tests: 40 passed, 0 failed
+exit 0
+$ sh docs/setup/setup-check.sh
+run-discipline-tests: 81 passed, 0 failed
+adr-lint: OK
+prd-lint: OK
+link-lint: OK  887 links resolved
+exit 0
+$ go build ./...
+exit 0
+$ go vet ./...
+exit 0
+$ go test -count=1 ./...
+?   	github.com/pharzam/layup/cmd/layup	[no test files]
+ok  	github.com/pharzam/layup/internal/cli	0.354s
+ok  	github.com/pharzam/layup/internal/psb	0.354s
+exit 0
+$ git diff --check 9beff4c
+exit 0
+(setup-check.sh: 13 OK lines)
+$ gh api repos/pharzam/layup/issues/70/comments | sh docs/ci/review-record-lint.sh
+review-record-lint: OK  7 comments; 2 round(s); cap 2
+exit 0

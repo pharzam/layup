@@ -1,0 +1,11 @@
+exit=1
+line=setup-check: adapted FAIL rule-1 kit: docs/a.md:1
+line=setup-check: adapted FAIL rule-1 kit: docs/a.md:3
+line=setup-check: adapted FAIL rule-1 adopter: docs/a.md:5
+line=setup-check: adapted FAIL rule-1 the template: docs/a.md:7
+line=setup-check: adapted FAIL rule-1 kit: docs/adr/0013-new.md:1
+line=setup-check: adapted FAIL rule-1 adopter: docs/tests/t.md:1
+line=setup-check: adapted FAIL rule-1 kit: docs/a.md:11
+line=setup-check: adapted FAIL rule-1 kit: docs/a.md:13
+line=setup-check: adapted FAIL rule-1 the template: docs/a.md:15
+line=setup-check: adapted FAIL rule-1 the template: docs/a.md:17

@@ -25,7 +25,7 @@ This directory holds end-to-end fixtures; the **conventions** for writing them l
 - [`docs/tests/traceability-template.md`](../docs/tests/traceability-template.md) —
   the row that ties each test back to the requirement it proves.
 
-The kit's own [discipline tests](../docs/tests/test-levels.md) — the ADR, PRD,
+The [discipline tests](../docs/tests/test-levels.md) — the ADR, PRD,
 link, PR-link and review-record linters — are not product tests and do
 **not** live here; they stay beside the conventions they enforce, under
 [`docs/`](../docs/).

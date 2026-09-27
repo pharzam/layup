@@ -3,7 +3,7 @@
 The fixed ladder of test kinds this project uses, from the cheapest and most
 local to the most expensive and most whole-system. It is the reference the rest
 of the [test section](README.md) points at: every template and checklist here
-names one of these levels. The level definitions are the kit's; the commands
+names one of these levels. The level definitions are the baseline's; the commands
 are this project's Go values, set by the Operator (decision O-5 on
 [#8](https://github.com/pharzam/layup/issues/8)) and recorded with their
 evidence in [`setup/record-T-n1hp.md`](../setup/record-T-n1hp.md).
@@ -20,7 +20,7 @@ evidence in [`setup/record-T-n1hp.md`](../setup/record-T-n1hp.md).
 The levels are ordered so a failure stops the expensive work early. A change runs
 the cheap levels in the [commit hook](../engineering-discipline.md#git-hooks) for
 fast local feedback, and the whole ladder in
-[CI](../engineering-discipline.md#continuous-integration-optional) as the
+[CI](../engineering-discipline.md#continuous-integration) as the
 authority.
 
 | Level | Proves | Scope | Speed | Runs in |
@@ -83,8 +83,7 @@ a person, not asserted by a command, so it is not a rung of the automated ladder
 ## Discipline tests
 
 A discipline test lints the **process rather than the product**: it checks the
-repo's own conventions and needs no product toolchain, so it can be the project's
-first test, before any product code exists. The kit ships five:
+repo's own conventions and needs no product toolchain. LAYUP has five:
 [`adr-lint.sh`](../adr/adr-lint.sh), [`prd-lint.sh`](../prd/prd-lint.sh) and
 [`link-lint.sh`](../links/link-lint.sh)
 read repo files and run in
@@ -114,16 +113,16 @@ have their own command placeholder and their own checklist:
   `govulncheck v1.8.0, go vet, and gitleaks` names the tool it drives.
 - **Checklist:** [`security-checklist.md`](security-checklist.md).
 
-## The placeholders this section uses
+## The commands this section uses
 
-Fill these once, in your own copy, and every template here inherits them:
+LAYUP's values, set once here; every template in this section uses them:
 
-| Placeholder | Meaning |
+| Value | Meaning |
 |-------------|---------|
 | `go test ./...` | Run the unit level. |
 | `go test -tags=integration ./...` | Run the integration level. |
 | `go test -tags=e2e ./...` | Run the E2E level. |
 | `go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./... && go vet ./... && gitleaks git --redact` | Run the security scan step. |
 | `-timeout 10m` | The per-test (or per-suite) time limit before a hang is a failure. |
-| `*_test.go beside the code; root tests/ for end-to-end fixtures` | Where product tests live — the root [`tests/`](../../tests/) drop-in, or your stack's convention. |
+| `*_test.go beside the code; root tests/ for end-to-end fixtures` | Where product tests live — beside the Go code, and the root [`tests/`](../../tests/) for cross-package end-to-end fixtures. |
 | `govulncheck v1.8.0, go vet, and gitleaks` | The tool that runs the security checks (secret scan, dependency scan, static analysis). |

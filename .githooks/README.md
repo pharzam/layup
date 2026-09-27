@@ -29,33 +29,30 @@ to run when the resolved path lies outside the tree being committed to; see
 
 ## What each hook does
 
-| Hook | Runs | Adapt? |
-|------|------|--------|
-| [`pre-commit`](pre-commit) | A provenance check on where the hooks came from, then the ADR, PRD and link linters and the discipline self-tests, then, when `go.mod` exists, `gofmt -l` over the tracked Go files, `go vet ./...`, and the unit level `go test ./...`. Integration, end-to-end and the security scans run in CI only. | Set for Go (`T-t8qp`). |
-| [`commit-msg`](commit-msg) | Conventional-Commits check on the subject line. | Ready as-is. |
-| [`pre-push`](pre-push) | Refuses a direct push to `main` — use a branch and a PR instead. | Change the branch name if your default is not `main`. |
+| Hook | Runs | Set for LAYUP |
+|------|------|---------------|
+| [`pre-commit`](pre-commit) | A provenance check on where the hooks came from, then the ADR, PRD and link linters, the discipline self-tests, and the setup checks `adapted` and `markers` (`sh docs/setup/setup-check.sh --only adapted,markers .`), then, when `go.mod` exists, `gofmt -l` over the tracked Go files, `go vet ./...`, and the unit level `go test ./...`. Integration, end-to-end and the security scans run in CI only. | Set for Go (`T-t8qp`). |
+| [`commit-msg`](commit-msg) | Conventional-Commits check on the subject line. | As shipped. |
+| [`pre-push`](pre-push) | Refuses a direct push to `main` — use a branch and a PR instead. | LAYUP's default branch is `main`. |
 
 ## Protecting `main`
 
 [`pre-push`](pre-push) blocks a direct push to `main` so changes go through a
 branch and a pull request. It is a **local, fast-feedback guardrail only** —
 advisory, bypassable with `git push --no-verify`, and absent on a fresh clone
-until `core.hooksPath` is set. The real, unbypassable lock is your host's
-**branch-protection rule** (require a pull request before merging), enforced
-server-side. Turn that on for every repo; this hook is its local twin, not a
-substitute.
+until `core.hooksPath` is set. The lock that cannot be bypassed is the
+**branch protection** of `main` on GitHub (a pull request before a merge, and the
+required checks), enforced on the server; see
+[Make the checks required](../docs/ci/README.md#make-the-checks-required). This
+hook is its local twin, not a substitute.
 
-## How to adapt
+## Changing a hook
 
 1. [`pre-commit`](pre-commit) is set for Go (`T-t8qp`): lint and the unit level.
-   Keep a new step cheap-first and fast — the full test suite belongs in CI.
-2. [`commit-msg`](commit-msg) is ready to use; widen its type list only if you
-   first agree the new type in
-   [§"Commit messages"](../docs/engineering-discipline.md#commit-messages).
+   A new step is cheap and fast; the full test suite runs in CI.
+2. [`commit-msg`](commit-msg) takes the types that
+   [§"Commit messages"](../docs/engineering-discipline.md#commit-messages) lists;
+   a new type is agreed there first.
 
-## Optional: the `pre-commit` framework
-
-For a richer setup — pinned, shared, auto-updating hooks across languages — adopt
-the [`pre-commit`](https://pre-commit.com) framework and drive it from a
-`.pre-commit-config.yaml`. It replaces these shell hooks; keep one approach, not
-both. The plain hooks here are the dependency-free default.
+LAYUP uses these plain shell hooks, which need no dependency, and not the
+[`pre-commit`](https://pre-commit.com) framework.

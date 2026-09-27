@@ -27,7 +27,7 @@ plan, and the decisions live; the code is the answer to it.
 | `Closes #N` (also `Fixes #N`, `Resolves #N`) | Auto-closes issue `N` when the PR merges — use it when the PR fully satisfies the issue. |
 | `Refs #N` (also `Part of #N`) | Links a parent, meta, or multi-part issue **without** closing it. |
 
-**Two namespaces, keep both.** The kit already puts a task ID (task-ID scheme (`T-` plus four random characters from `0-9 a-z` without `i l o u`))
+**Two namespaces, keep both.** The gate already puts a task ID (task-ID scheme (`T-` plus four random characters from `0-9 a-z` without `i l o u`))
 in the **commit subject** — see [Commit messages](engineering-discipline.md#commit-messages).
 The **issue reference** (`Closes`/`Refs #N`) lives in the **PR body**. The task ID
 tracks the unit of work locally; the issue number tracks it in the forge. They
@@ -105,7 +105,7 @@ whichever document was wrong.
 
 One issue is **one actionable, demoable goal at a limited scale.** Large work
 becomes a parent issue with child sub-issues, each independently completable. This
-mirrors the kit's [commit-granularity](engineering-discipline.md#commit-granularity)
+mirrors the [commit-granularity](engineering-discipline.md#commit-granularity)
 rule, one level up: a task you cannot demo in one step is really several tasks.
 
 **The tripwire.** "Limited scale" is unenforceable while it is only an adjective,
@@ -236,15 +236,16 @@ is [ADR-0008](adr/0008-require-one-reading-in-decision-driving-text.md).
 ## What is enforced where
 
 A rule is only as real as what enforces it. This table is honest about which rules
-a mechanism backs today and which are written-rule-only until you wire a gate. The
-kit already ships the green rows.
+a mechanism backs today and which are written-rule-only until a gate is wired.
+The green rows are wired.
 
 | Concern | Written rule | Local hook | CI | Branch protection | Status |
 | ------- | ------------ | ---------- | -- | ----------------- | ------ |
 | Land only via a PR (never a direct push to the default branch) | R1 | [`pre-push`](../.githooks/pre-push) | — | [branch protection](setup/branch-protection.json): PR required (`T-afa5`) | Enforced: branch protection on `main` since 2026-09-23 (`T-afa5`) |
-| Conventional Commits | [Commit messages](engineering-discipline.md#commit-messages) | [`commit-msg`](../.githooks/commit-msg) | [`pr-title`](ci/github-actions-pr-title.yml) | — | Enforced |
+| Conventional Commits | [Commit messages](engineering-discipline.md#commit-messages) | [`commit-msg`](../.githooks/commit-msg) | [`pr-title`](../.github/workflows/pr-title.yml) | — | Enforced |
 | ADR + PRD discipline | R5, [Testing](engineering-discipline.md#testing) | [`pre-commit`](../.githooks/pre-commit) | [`adr-lint`, `prd-lint`](ci/) | — | Enforced |
 | The linters reject bad input (fixtures) | [Testing](engineering-discipline.md#testing) | [`pre-commit`](../.githooks/pre-commit) | [`discipline-tests`](tests/run-discipline-tests.sh) | — | Enforced |
+| The documents speak about LAYUP, and each `‹…›` marker is in a template file or an open gap | [Check `adapted`](setup/README.md#check-adapted) | [`pre-commit`](../.githooks/pre-commit) (checks `adapted`, `markers`) | [`setup-check`](setup/setup-check.sh) | [required check](setup/branch-protection.json) | Enforced; the word lists and their known limit are in `setup-check.sh` and [Check `adapted`](setup/README.md#check-adapted) |
 | A PR links an issue (`Closes`/`Refs #N`) | R1 | — | [`pr-link-lint`](ci/pr-link-lint.sh) | [required check](setup/branch-protection.json) (`T-afa5`) | Enforced: branch protection on `main` since 2026-09-23 (`T-afa5`) |
 | Test coverage bar | R8 | — | ‹add a coverage gate› | — | Written rule until wired |
 | Slice + prioritize the plan before building (test-first), reviewed once on the issue | R12 | — | [`review-record-lint`](ci/review-record-lint.sh) | [required check](setup/branch-protection.json) (`T-afa5`) | The plan and its confirmation must exist and be in order; whether the slicing is *good* is the reviewer-s |

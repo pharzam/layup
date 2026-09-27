@@ -26,7 +26,7 @@
 
 set -u
 
-CHECKS="pin kit-history facts onboarding glossary guardrails markers ci protection identity procedure"
+CHECKS="pin kit-history facts onboarding glossary guardrails markers adapted ci protection identity procedure"
 
 if [ "${1:-}" = --only ]; then
 	[ $# -ge 2 ] && [ -n "$2" ] || { echo "setup-check: --only needs a list of checks" >&2; exit 2; }
@@ -297,40 +297,12 @@ check_guardrails() {
 # The literal `‹…›` names the convention and is not a marker, and neither is
 # the exact code span `‹` (a backtick on each side: the character named, as in
 # "search for `‹`"). Only that one character is skipped. Each marker in a
-# git-tracked file must be exempt, allowed as a record-shape example, or listed in
-# docs/setup/open-gaps.tsv (`path<TAB>marker<TAB>question`); each listed marker
+# git-tracked file must be exempt (a template file for a new record, a fixture,
+# an accepted ADR 0001 to 0008, or a script that defines the convention) or listed
+# in docs/setup/open-gaps.tsv (`path<TAB>marker<TAB>question`); each listed marker
 # must still occur. Key: path plus exact marker text; equal markers in one file
 # are one key.
-MK_EXEMPT='^(docs/(adr|ci|links|prd|setup)/tests/|\.githooks/tests/|docs/templates/)|^docs/ci/[^/]*\.yml$|^docs/[^/]+/template\.md$|^docs/tests/template-[^/]*\.md$|^docs/tests/traceability-template\.md$|^docs/adr/000[1-8]-[^/]*\.md$|^docs/links/link-lint\.sh$|^docs/prd/prd-lint\.sh$|^docs/setup/setup-check\.sh$|^docs/setup/open-gaps\.tsv$'
-# Record-shape examples: a marker that shows the shape of a record, not a value.
-mk_allowed() {
-	cat <<'MK_ALLOW'
-docs/engineering-discipline.md	‹the plan and its review›
-docs/engineering-discipline.md	‹the decay review rounds›
-docs/engineering-discipline.md	‹writing the tests and the code›
-docs/engineering-discipline.md	‹isolate, guardrails, docs, close-out›
-docs/engineering-discipline.md	‹model›
-docs/engineering-discipline.md	‹model / `not applicable`›
-docs/engineering-discipline.md	‹effort›
-docs/engineering-discipline.md	‹tokens›
-docs/engineering-discipline.md	‹wall-clock›
-docs/engineering-discipline.md	‹sum›
-docs/engineering-discipline.md	‹task-ID›
-docs/glossary.md	‹term›
-docs/glossary.md	‹abbr or —›
-docs/glossary.md	‹one or two sentences. State what it is and why it matters here.›
-docs/glossary.md	‹a concrete instance that makes it real›
-docs/tasks/backlog.md	‹ID›
-docs/tasks/backlog.md	‹one-sentence summary›
-docs/tasks/backlog.md	‹ADR or doc link›
-docs/tasks/backlog.md	‹id›
-docs/tasks/completed.md	‹ID›
-docs/tasks/completed.md	‹one-sentence summary of what the task found or delivered›
-docs/tasks/completed.md	‹link›
-docs/tasks/completed.md	‹id›
-docs/prd/README.md	‹slug›
-MK_ALLOW
-}
+MK_EXEMPT='^(docs/(adr|ci|links|prd|setup)/tests/|\.githooks/tests/|docs/templates/)|^docs/[^/]+/template\.md$|^docs/tests/template-[^/]*\.md$|^docs/tests/traceability-template\.md$|^docs/adr/000[1-8]-[^/]*\.md$|^docs/links/link-lint\.sh$|^docs/prd/prd-lint\.sh$|^docs/setup/setup-check\.sh$|^docs/setup/open-gaps\.tsv$'
 check_markers() {
 	git -C "$ROOT" -c core.quotePath=false ls-files > "$tmpdir/mk_files" || { fail markers "git: cannot list the tracked files"; return; }
 	grep -Ev "$MK_EXEMPT" "$tmpdir/mk_files" | while IFS= read -r mk_f; do
@@ -350,20 +322,116 @@ check_markers() {
 			}
 		}' "$ROOT/$mk_f"
 	done | sort -u > "$tmpdir/mk_found"
-	mk_allowed | sort -u > "$tmpdir/mk_allow"
 	mk_gaps="$ROOT/docs/setup/open-gaps.tsv"
 	if [ -f "$mk_gaps" ]; then cut -f1,2 "$mk_gaps" | grep . | sort -u > "$tmpdir/mk_listed"; else : > "$tmpdir/mk_listed"; fi
 	# Each open gap carries its question; a row without one asks nothing.
 	[ -f "$mk_gaps" ] && awk -F'\t' 'NF && $3 == "" { print "setup-check: markers FAIL question: docs/setup/open-gaps.tsv line " NR " has no question" }' "$mk_gaps" > "$tmpdir/mk_q"
 	if [ -s "$tmpdir/mk_q" ]; then cat "$tmpdir/mk_q"; cur_fail=1; failed=1; fi
-	sort -u "$tmpdir/mk_allow" "$tmpdir/mk_listed" > "$tmpdir/mk_known"
-	comm -23 "$tmpdir/mk_found" "$tmpdir/mk_known" | while IFS="$(printf '\t')" read -r mk_p mk_m; do
+	comm -23 "$tmpdir/mk_found" "$tmpdir/mk_listed" | while IFS="$(printf '\t')" read -r mk_p mk_m; do
 		printf 'setup-check: markers FAIL unlisted: %s %s\n' "$mk_p" "$mk_m"
 	done > "$tmpdir/mk_out"
 	comm -13 "$tmpdir/mk_found" "$tmpdir/mk_listed" | while IFS="$(printf '\t')" read -r mk_p mk_m; do
 		printf 'setup-check: markers FAIL stale: %s %s is listed in docs/setup/open-gaps.tsv but does not occur\n' "$mk_p" "$mk_m"
 	done >> "$tmpdir/mk_out"
 	if [ -s "$tmpdir/mk_out" ]; then cat "$tmpdir/mk_out"; cur_fail=1; failed=1; fi
+}
+
+# --- adapted (rules 1 to 3 of #70; rule 4 is check markers) --------------------
+# A document speaks about LAYUP: it does not speak as the Armature template.
+# Scope: each git-tracked *.md file, except the records and the fixtures that
+# AD_EXCLUDE names (facts, runs, task records and the completed log, the
+# accepted ADRs 0001 to 0012, the setup record, the fixture directories). A
+# file's lines are joined per paragraph (a blank line ends one), so a phrase
+# that breaks across a line end matches; the line reported is where it starts.
+#   rule-1  the word `kit` or `kits` (case ignored; the check names
+#           `kit-history` and `kit-linters` are the only exemption);
+#           `adopter`/`adopters`; `the template(s)` or `this template(s)` alone
+#   rule-2  the word `Armature` with a capital A (a lowercase path or URL such as
+#           `armature.pin` is not a match), except in a file of ad_allowed
+#   rule-3  `optional`; `skip this section`/`skips this section`; `fill` or
+#           `replace` with a marker later in the same sentence (a marker is one
+#           unit, so a word inside it is not a match, and neither is a word
+#           after `#` or `-`, as in the anchor `#fill-in-skeleton`; a `.` ends
+#           the sentence, so "e.g." between the two hides a match); `fill in`;
+#           `delete this`; `delete the one(s) you do not use`; the verb
+#           `adapt`/`adapts`; `your project`, `your forge`, `your stack`, `you use`
+# A false positive is fixed by a better sentence, not by a new list entry.
+AD_EXCLUDE='^(docs/facts/|runs/|docs/tasks/T-[^/]*\.md$|docs/tasks/completed\.md$|docs/adr/00(0[1-9]|1[0-2])-[^/]*\.md$|docs/setup/record-[^/]*\.md$|docs/(adr|ci|links|prd|setup)/tests/|\.githooks/tests/|internal/psb/testdata/)'
+# Rule 2: a file that states a fact about LAYUP that names Armature.
+ad_allowed() {
+	cat <<'AD_ALLOW'
+README.md	the pinned baseline (docs/setup/armature.pin, ADR-0009)
+AGENTS.md	the pinned baseline (docs/setup/armature.pin, ADR-0009)
+docs/setup/README.md	the setup of the pinned baseline and its record
+docs/glossary.md	the term Armature and the PSB terms that name it
+docs/prd/PRD-0001-layup.md	the product parts that work on Armature
+docs/adr/README.md	the index lists the title of ADR-0009
+docs/guardrails.md	Inv-8 restates F-0001#8 (check guardrails reads that entry)
+docs/onboarding-for-engineers.md	Armature is LAYUP's baseline (F-0001#19)
+docs/engineering-discipline.md	How this project was set up: the pinned baseline
+AD_ALLOW
+}
+check_adapted() {
+	git -C "$ROOT" -c core.quotePath=false ls-files '*.md' > "$tmpdir/ad_files" || { fail adapted "git: cannot list the tracked files"; return; }
+	ad_allowed | cut -f1 > "$tmpdir/ad_allow"
+	grep -Ev "$AD_EXCLUDE" "$tmpdir/ad_files" | while IFS= read -r ad_f; do
+		[ -f "$ROOT/$ad_f" ] || continue
+		ad_a=0; grep -Fqx -- "$ad_f" "$tmpdir/ad_allow" && ad_a=1
+		awk -v f="$ad_f" -v allow2="$ad_a" '
+			function hit(rule, name, re, text, fold,    off, pos, k, ln, c) {
+				off = 0
+				while (match(text, re)) {
+					pos = off + RSTART
+					c = substr(para, pos, 1)
+					if (c !~ /[A-Za-z]/) pos++
+					if (!(name == "kit" && (substr(low, pos, 11) == "kit-history" || substr(low, pos, 11) == "kit-linters"))) {
+						ln = lines[1]
+						for (k = 1; k <= n; k++) if (starts[k] <= pos) ln = lines[k]
+						print "setup-check: adapted FAIL " rule " " name ": " f ":" ln
+					}
+					off += RSTART; text = substr(text, RSTART + 1)
+				}
+			}
+			function flush() {
+				if (n == 0) return
+				low = tolower(para)
+				hit("rule-1", "kit", "(^|[^a-z0-9_])kits?([^a-z0-9_]|$)", low)
+				hit("rule-1", "adopter", "(^|[^a-z0-9_])adopters?([^a-z0-9_]|$)", low)
+				hit("rule-1", "the template", "(^|[^a-z0-9_])(the|this) templates?([^a-z0-9_-]|$)", low)
+				if (!allow2) hit("rule-2", "Armature", "(^|[^A-Za-z0-9_])Armature([^A-Za-z0-9_]|$)", para)
+				hit("rule-3", "optional", "(^|[^a-z0-9_])optional([^a-z0-9_]|$)", low)
+				hit("rule-3", "skip this section", "(^|[^a-z0-9_])skips? this section", low)
+				hit("rule-3", "fill ‹", "(^|[^a-z0-9_#-])fill[a-z]*[^.\001]*\001", low)
+				hit("rule-3", "replace ‹", "(^|[^a-z0-9_#-])replac[a-z]*[^.\001]*\001", low)
+				hit("rule-3", "fill in", "(^|[^a-z0-9_#-])fill in([^a-z0-9_-]|$)", low)
+				hit("rule-3", "delete this", "(^|[^a-z0-9_])delete this([^a-z0-9_]|$)", low)
+				hit("rule-3", "delete the one you do not use", "(^|[^a-z0-9_])delete the ones? you do not use", low)
+				hit("rule-3", "adapt", "(^|[^a-z0-9_])adapts?([^a-z0-9_]|$)", low)
+				hit("rule-3", "your project", "(^|[^a-z0-9_])your project", low)
+				hit("rule-3", "your forge", "(^|[^a-z0-9_])your forge", low)
+				hit("rule-3", "your stack", "(^|[^a-z0-9_])your stack", low)
+				hit("rule-3", "you use", "(^|[^a-z0-9_])you use([^a-z0-9_]|$)", low)
+				n = 0; para = ""
+			}
+			{
+				line = $0; sub(/\r$/, "", line); gsub(/[ \t]+/, " ", line); sub(/^ /, "", line); sub(/ $/, "", line)
+				if (line == "") { flush(); next }
+				# A marker is one unit, the byte \001: a word inside it is not a match.
+				mk = ""
+				while ((i = index(line, "‹")) > 0) {
+					rest = substr(line, i + length("‹")); j = index(rest, "›")
+					mk = mk substr(line, 1, i - 1) "\001"
+					line = (j > 0) ? substr(rest, j + length("›")) : ""
+				}
+				line = mk line
+				if (n > 0) para = para " "
+				n++; starts[n] = length(para) + 1; lines[n] = NR
+				para = para line
+			}
+			END { flush() }
+		' "$ROOT/$ad_f"
+	done | sort -u > "$tmpdir/ad_out"
+	if [ -s "$tmpdir/ad_out" ]; then cat "$tmpdir/ad_out"; cur_fail=1; failed=1; fi
 }
 
 # --- ci (the kit's own CI replaced; setup-check runs in CI) --------------------

@@ -1,10 +1,9 @@
 # Continuous integration for LAYUP.
 #
-# The kit's own activated workflow, kept because it restores each check script
-# from the default branch (the #84 guardrail) and the template in docs/ci/ does
-# not (setup record, finding K-04). It runs the kit discipline checks and the
-# LAYUP setup check, and the Go jobs lint / tests / security (ADR-0010, active
-# since T-t8qp). The Go jobs run the pull request's own Go code and tests: the
+# Each job restores its check scripts from the default branch before it runs
+# them (the #84 guardrail; setup record, finding K-04). It runs the discipline
+# checks, the LAYUP setup check, and the Go jobs lint / tests / security
+# (ADR-0010, active since T-t8qp). The Go jobs run the pull request's own Go code and tests: the
 # Restore step does not cover them (the Invariant 3 gap, ADR-0011, O-9).
 #
 # The PR-title and PR-link checks live in their own workflows (pr-title.yml,

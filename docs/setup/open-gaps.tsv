@@ -1,3 +1,4 @@
+docs/engineering-discipline.md	‹the domains of a panel›	Which domains sit on a LAYUP panel (ADR-0006)? No source gives them: ADR-0006 leaves them open, and the setup record gives only when a panel sits (V-12, O-4); question for the Operator.
 docs/issue-workflow.md	‹add a coverage gate›	Coverage threshold for CI. Operator decision O-7 (#8): none yet; set it after the first Go code exists and a baseline is measured.
 docs/tests/dod-checklist.md	‹a REQ/NFR row in the traceability table›	What is LAYUP's Definition of Done? No source gives it yet; the kit's example items are not LAYUP's (question for the idea owner).
 docs/tests/dod-checklist.md	‹a UAT row, human-checked›	What is LAYUP's Definition of Done? No source gives it yet; the kit's example items are not LAYUP's (question for the idea owner).

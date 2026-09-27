@@ -5,10 +5,9 @@ This document is the target of gate step 2, "Honor the guardrails", in
 task author must take into account **before** writing code, so the team does not
 re-derive a known trap every time.
 
-It is a generic template. It merges two kinds of guardrail that many projects keep
-in separate files — **decision gates** (pre-registered pass/fail rules) and
-**validation** (how you check you are not fooling yourself). Keep them together or
-split them; the rule is that both exist and both are read before work starts.
+It holds two kinds of guardrail in one file — **decision gates** (pre-registered
+pass/fail rules) and **validation** (how you check you are not fooling yourself).
+Both are read before work starts.
 
 ## In plain terms
 
@@ -59,8 +58,8 @@ Whether a named gate really runs the path is a review judgement.
   edit, nor the Go jobs `lint`, `tests` and `security`, which run the pull
   request's own Go code and tests; so this invariant has no check yet (O-9,
   ADR-0011). Check: no check yet
-- **Inv-4** — No configuration value without evidence (`F-0001#4`). Trap: a
-  kit example accepted as a project value. Check: no check yet
+- **Inv-4** — No configuration value without evidence (`F-0001#4`). Trap: an
+  Armature example value accepted as a project value. Check: no check yet
 - **Inv-5** — A check that is not active does not count as passed (`F-0001#5`).
   Trap: a script in the tree that no hook or CI job runs. Check: no check yet
 - **Inv-6** — A deterministic check is preferred to an LLM judgement where a rule
@@ -69,7 +68,7 @@ Whether a named gate really runs the path is a review judgement.
 - **Inv-7** — The project domain changes content, never rules; the technology
   stack can add stack-dependent gates but cannot remove or weaken a baseline
   rule (`F-0001#7`).
-  Trap: a kit rule edited during adaptation. Check: no check yet
+  Trap: a baseline rule edited during setup. Check: no check yet
 - **Inv-8** — Armature is used at a pinned, recorded version (`F-0001#8`). Trap:
   a copy with no record of the commit it came from. Check: docs/setup/setup-check.sh (ci:setup-check)
 - **Inv-9** — A harness agent is replaceable (`F-0001#9`). Trap: rules kept only
@@ -119,8 +118,19 @@ check that catches it.
   ([ADR-0012](adr/0012-build-layup-in-bootstrap-mode.md), part 1); and the
   product-to-process ratio of [`tasks/completed.md`](tasks/completed.md) is read
   at each pilot. Learned in `T-8ywj`.
+- ❌ **A copied template keeps its voice.** After the setup, the documents still
+  spoke as the Armature template to the person who copies it, left CI as a
+  choice that was already made, and `AGENTS.md` said that the project has no
+  product toolchain while the Go code built. It is
+  silent because every setup check read values, markers and links, and none read
+  the voice; a reader or an agent then acts on a choice that was already made.
+  **The check:** check `adapted` of [`setup/setup-check.sh`](setup/setup-check.sh)
+  in the `pre-commit` hook and in CI (see
+  [Check `adapted`](setup/README.md#check-adapted)); a false positive is fixed by
+  a better sentence, not by a list entry. Learned in `T-745n`
+  ([#70](https://github.com/pharzam/layup/issues/70)).
 
-### Writing a lesson back (kit-wide — keep this)
+### Writing a lesson back
 
 A trap caught once should not be re-derived by the next task, so a lesson does not
 stay on the issue that learned it. When a task ends, its author asks whether the task
@@ -129,7 +139,7 @@ new `❌` pitfall — the trap, why it is silent, and the check that catches it 
 same pull request. Gate step 7 asks the question, so the rule is applied rather than
 merely written (see [Keeping documentation current](engineering-discipline.md#keeping-documentation-current)).
 
-This is the one **cross-task** reach the kit adds on purpose.
+This is the one **cross-task** reach the gate adds on purpose.
 [R6](issue-workflow.md#r6--agent-to-agent-communication-through-the-issue) and
 [R7](issue-workflow.md#r7--decision-transparency-on-every-action) already keep the
 coordination and the reasoning on the issue, and
@@ -139,13 +149,13 @@ discoverable only by someone who reads #N; §2 is where it reaches issue #N+1.
 
 **The filter — or §2 grows until nobody reads it.** Write back only a trap that would
 **catch the next reader**: a silent failure mode, a check that looked green for the
-wrong reason, a footgun in the kit or the domain. Do **not** write back a one-off with
+wrong reason, a footgun in the discipline system or the domain. Do **not** write back a one-off with
 no general lesson, a restatement of a rule that already lives elsewhere, or the
 blow-by-blow of the task — those belong to the issue thread and the commit history.
 Volume is the failure mode here, not absence: a pitfall list nobody finishes reading
 guards nothing.
 
-### Gate pitfalls (kit-wide — keep these)
+### Gate pitfalls
 
 The gate is only as real as the thing that runs it. These traps let it report
 success without having done its job.
@@ -208,10 +218,9 @@ success without having done its job.
   steps. These checks are a control against forgetting, not against an operator
   who edits the check.
 
-### Testing pitfalls (kit-wide — keep these)
+### Testing pitfalls
 
-These traps are not domain-specific: they hurt every project's test suite, so the
-kit ships them filled. Keep them, and add your own above.
+These traps are not domain-specific: they hurt every project's test suite.
 
 - ❌ **Testing after the code.** A test written to fit code that already "works"
   tends to encode the code's bugs as expected behaviour. The check: write the test
@@ -236,7 +245,7 @@ kit ships them filled. Keep them, and add your own above.
   cheap levels fast and cheap-first, push slow ones to CI, and bound each with
   `-timeout 10m` — see [`tests/scaling-checklist.md`](tests/scaling-checklist.md).
 
-### Reference-sweep pitfalls (kit-wide — keep these)
+### Reference-sweep pitfalls
 
 A change that edits references or a rule's wording across the tree has three silent
 failure modes worth keeping.
@@ -263,7 +272,7 @@ failure modes worth keeping.
   strand a *different* reference that named the target only through it. A comment
   reading `section 6 says …` leaned on a nearby `D-0003 section 6` for its antecedent;
   repoint every `D-0003 section 6` and the bare `section 6` is left pointing at a
-  structure only the deleted record holds — wrong on the adopter's tree, and sharing
+  structure only the deleted record holds — wrong on this tree, and sharing
   **no token** with the thing you renamed. It is silent because a grep keyed on the
   obvious token (`D-000N`) cannot match a bare `section 6`, so the pre-registered
   check goes green over the survivor. **The check:** grep for the *shapes* a reference
@@ -288,7 +297,7 @@ failure modes worth keeping.
   can go stale, and a **removed** check leaves its name behind as a linter that no longer
   exists — a `link-lint` run stays green, because it resolves a *link*, not a claim. It is
   silent because the sentence still reads well and the count still looks deliberate: the
-  kit once said `three`, `four` and `five` at once, and named an `agent-entry` linter that
+  documents once said `three`, `four` and `five` at once, and named an `agent-entry` linter that
   had been cut. **The check:** when you add or remove a discipline check, grep the whole
   tree for the check-set enumeration — the old name and each spelled count — and reconcile
   every living mirror in the same change; the immutable ADR and archived decision copies
@@ -313,13 +322,13 @@ script can settle. The first two are cheap enough for the hook and CI; the
 rounds run once per change.
 
 **The automated gate is this validation layer, mechanized.** The cheap, always-on
-checks — the [discipline linters](engineering-discipline.md#testing) the kit
-ships (ADR, PRD and link) and their
+checks — the [discipline linters](engineering-discipline.md#testing) (ADR, PRD
+and link) and their
 [fixture self-tests](engineering-discipline.md#testing), the
 [test levels](engineering-discipline.md#testing), lint, a security
 scan, and the [commit-format](engineering-discipline.md#commit-messages)
 check — run in the [`pre-commit` hook](engineering-discipline.md#git-hooks) for
-fast local feedback and in [CI](engineering-discipline.md#continuous-integration-optional)
+fast local feedback and in [CI](engineering-discipline.md#continuous-integration)
 as the authority. Treat those checks as pre-registered pass/fail rules under
 section 1: they predate any single result and are not edited to make a change
 pass. Wire the "cheap enough to wire into CI" checks from the table above into
