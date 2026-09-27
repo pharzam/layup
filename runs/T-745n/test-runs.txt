@@ -1,0 +1,29 @@
+## Step 2, red (fixtures before the check), 2026-09-27T15:21:00Z, base 9beff4c
+$ sh docs/setup/tests/run.sh
+FAIL  adapted/bad-rule-1: exit 2, want 1
+FAIL  adapted/bad-rule-1: no output line: setup-check: adapted FAIL rule-1 kit: docs/a.md:1
+FAIL  adapted/bad-rule-1: no output line: setup-check: adapted FAIL rule-1 kit: docs/a.md:3
+FAIL  adapted/bad-rule-1: no output line: setup-check: adapted FAIL rule-1 adopter: docs/a.md:5
+FAIL  adapted/bad-rule-1: no output line: setup-check: adapted FAIL rule-1 the template: docs/a.md:7
+FAIL  adapted/bad-rule-1: no output line: setup-check: adapted FAIL rule-1 kit: docs/adr/0013-new.md:1
+FAIL  adapted/bad-rule-1: no output line: setup-check: adapted FAIL rule-1 adopter: docs/tests/t.md:1
+FAIL  adapted/bad-rule-2: exit 2, want 1
+FAIL  adapted/bad-rule-2: no output line: setup-check: adapted FAIL rule-2 Armature: docs/b.md:3
+FAIL  adapted/bad-rule-3: exit 2, want 1
+FAIL  adapted/bad-rule-3: no output line: setup-check: adapted FAIL rule-3 optional: docs/c.md:1
+FAIL  adapted/bad-rule-3: no output line: setup-check: adapted FAIL rule-3 skip this section: docs/c.md:3
+FAIL  adapted/bad-rule-3: no output line: setup-check: adapted FAIL rule-3 fill ‹: docs/c.md:6
+FAIL  adapted/bad-rule-3: no output line: setup-check: adapted FAIL rule-3 replace ‹: docs/c.md:8
+FAIL  adapted/bad-rule-3: no output line: setup-check: adapted FAIL rule-3 adapt: docs/c.md:10
+FAIL  adapted/bad-rule-3: no output line: setup-check: adapted FAIL rule-3 your project: docs/c.md:12
+FAIL  adapted/bad-rule-3: no output line: setup-check: adapted FAIL rule-3 your forge: docs/c.md:14
+FAIL  adapted/bad-rule-3: no output line: setup-check: adapted FAIL rule-3 your stack: docs/c.md:16
+FAIL  adapted/bad-rule-3: no output line: setup-check: adapted FAIL rule-3 you use: docs/c.md:18
+FAIL  adapted/good-allowed: exit 2, want 0
+FAIL  adapted/good-allowed: no output line: setup-check: adapted OK
+FAIL  frame/good-passthrough: no output line: setup-check: adapted OK
+FAIL  markers/bad-record-shape: exit 0, want 1
+FAIL  markers/bad-record-shape: no output line: setup-check: markers FAIL unlisted: docs/engineering-discipline.md ‹model›
+setup-check tests: 34 passed, 6 failed
+exit 0
+

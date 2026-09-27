@@ -1,0 +1,10 @@
+exit=1
+line=setup-check: adapted FAIL rule-3 optional: docs/c.md:1
+line=setup-check: adapted FAIL rule-3 skip this section: docs/c.md:3
+line=setup-check: adapted FAIL rule-3 fill ‹: docs/c.md:6
+line=setup-check: adapted FAIL rule-3 replace ‹: docs/c.md:8
+line=setup-check: adapted FAIL rule-3 adapt: docs/c.md:10
+line=setup-check: adapted FAIL rule-3 your project: docs/c.md:12
+line=setup-check: adapted FAIL rule-3 your forge: docs/c.md:14
+line=setup-check: adapted FAIL rule-3 your stack: docs/c.md:16
+line=setup-check: adapted FAIL rule-3 you use: docs/c.md:18

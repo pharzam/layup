@@ -30,7 +30,7 @@
 | T38 | — | Stand-in. Source: `F-0001#38`. | x |
 | T39 | — | Stand-in. Source: `F-0001#39`. | x |
 
-## Kit vocabulary
+## Discipline vocabulary
 
 | Term | Abbr. | Description | Example |
 |------|-------|-------------|---------|

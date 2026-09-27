@@ -1,0 +1,1 @@
+The adopters test it.
