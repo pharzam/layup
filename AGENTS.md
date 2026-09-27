@@ -98,8 +98,9 @@ file.
 
 These read only text, so they need no toolchain. Install the hooks once per clone
 by running `sh .githooks/install.sh` (it pins `core.hooksPath` to the relative
-`.githooks`); the first four then run before every
-commit, and in CI; `nested-checkout-check.sh` needs `git`, so it runs in CI only;
+`.githooks`); the first four, and the setup checks `adapted` and `markers`, then
+run before every commit, and in CI; `setup-check.sh` and
+`nested-checkout-check.sh` need `git`, and CI runs the full setup check;
 and `git diff --check` you run yourself. Keep
 [`.gitattributes`](.gitattributes): it holds these scripts at line-feed endings,
 without which none of them runs on a Windows checkout.
@@ -110,6 +111,7 @@ sh docs/prd/prd-lint.sh
 sh docs/links/link-lint.sh
 sh docs/tests/run-discipline-tests.sh
 sh docs/tests/nested-checkout-check.sh
+sh docs/setup/setup-check.sh
 git diff --check
 ```
 

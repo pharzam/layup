@@ -814,7 +814,9 @@ It pins `core.hooksPath` to the relative `.githooks`. Three hooks run:
   refuses when it cannot resolve either path, rather than guessing. Then it runs
   the three repo-file
   [discipline linters](#testing) — ADR, PRD and link —
-  and their fixture self-tests,
+  and their fixture self-tests, then the setup checks `adapted` (each document
+  speaks about LAYUP) and `markers` (each `‹…›` marker is in a template file or an
+  open gap) of [`setup/setup-check.sh`](setup/setup-check.sh),
   then the Go lint (`gofmt -l` over the tracked Go files, and `go vet ./...`) and
   the unit [test level](#testing) (`go test ./...`). The integration and
   end-to-end levels and the security scans run in CI. Keep it cheap-first; the full suite — the end-to-end level and the

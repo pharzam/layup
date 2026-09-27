@@ -31,7 +31,7 @@ to run when the resolved path lies outside the tree being committed to; see
 
 | Hook | Runs | Set for LAYUP |
 |------|------|---------------|
-| [`pre-commit`](pre-commit) | A provenance check on where the hooks came from, then the ADR, PRD and link linters and the discipline self-tests, then, when `go.mod` exists, `gofmt -l` over the tracked Go files, `go vet ./...`, and the unit level `go test ./...`. Integration, end-to-end and the security scans run in CI only. | Set for Go (`T-t8qp`). |
+| [`pre-commit`](pre-commit) | A provenance check on where the hooks came from, then the ADR, PRD and link linters, the discipline self-tests, and the setup checks `adapted` and `markers` (`sh docs/setup/setup-check.sh --only adapted,markers .`), then, when `go.mod` exists, `gofmt -l` over the tracked Go files, `go vet ./...`, and the unit level `go test ./...`. Integration, end-to-end and the security scans run in CI only. | Set for Go (`T-t8qp`). |
 | [`commit-msg`](commit-msg) | Conventional-Commits check on the subject line. | As shipped. |
 | [`pre-push`](pre-push) | Refuses a direct push to `main` — use a branch and a PR instead. | LAYUP's default branch is `main`. |
 

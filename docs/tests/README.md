@@ -97,12 +97,12 @@ Add a fixture when you add or tighten a linter rule.
 
 ## Enforcement (hook + CI)
 
-The test section is only as real as what runs it. The command placeholders are
-wired, cheap-first, into two layers:
+The test section is only as real as what runs it. The commands are wired,
+cheap-first, into two layers:
 
 - The [`pre-commit` hook](../../.githooks/pre-commit) runs the Go lint and the unit
   level before a commit is recorded.
-- CI ([`ci.yml`](../../.github/workflows/ci.yml), from the [templates](../ci/)) runs the whole ladder plus the long-running checks —
+- CI ([`ci.yml`](../../.github/workflows/ci.yml), described in [`docs/ci/`](../ci/)) runs the whole ladder plus the long-running checks —
   E2E and the full [security scan](security-checklist.md) behind `govulncheck v1.8.0, go vet, and gitleaks`.
 
 Both are active since `T-t8qp`: the hook runs the lint and the unit level, and CI

@@ -118,6 +118,17 @@ check that catches it.
   ([ADR-0012](adr/0012-build-layup-in-bootstrap-mode.md), part 1); and the
   product-to-process ratio of [`tasks/completed.md`](tasks/completed.md) is read
   at each pilot. Learned in `T-8ywj`.
+- ❌ **A copied template keeps its voice.** After the setup, the documents still
+  spoke as the Armature template to the person who copies it, left CI as a
+  choice that was already made, and `AGENTS.md` said that the project has no
+  product toolchain while the Go code built. It is
+  silent because every setup check read values, markers and links, and none read
+  the voice; a reader or an agent then acts on a choice that was already made.
+  **The check:** check `adapted` of [`setup/setup-check.sh`](setup/setup-check.sh)
+  in the `pre-commit` hook and in CI, and setup step
+  [S16](setup/README.md#s16--speak-about-the-project); a false positive is fixed by
+  a better sentence, not by a list entry. Learned in `T-745n`
+  ([#70](https://github.com/pharzam/layup/issues/70)).
 
 ### Writing a lesson back
 
