@@ -113,11 +113,11 @@ have their own command placeholder and their own checklist:
   `govulncheck v1.8.0, go vet, and gitleaks` names the tool it drives.
 - **Checklist:** [`security-checklist.md`](security-checklist.md).
 
-## The placeholders this section uses
+## The commands this section uses
 
-Fill these once, in your own copy, and every template here inherits them:
+LAYUP's values, set once here; every template in this section uses them:
 
-| Placeholder | Meaning |
+| Value | Meaning |
 |-------------|---------|
 | `go test ./...` | Run the unit level. |
 | `go test -tags=integration ./...` | Run the integration level. |
