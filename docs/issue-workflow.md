@@ -27,7 +27,7 @@ plan, and the decisions live; the code is the answer to it.
 | `Closes #N` (also `Fixes #N`, `Resolves #N`) | Auto-closes issue `N` when the PR merges — use it when the PR fully satisfies the issue. |
 | `Refs #N` (also `Part of #N`) | Links a parent, meta, or multi-part issue **without** closing it. |
 
-**Two namespaces, keep both.** The kit already puts a task ID (task-ID scheme (`T-` plus four random characters from `0-9 a-z` without `i l o u`))
+**Two namespaces, keep both.** The gate already puts a task ID (task-ID scheme (`T-` plus four random characters from `0-9 a-z` without `i l o u`))
 in the **commit subject** — see [Commit messages](engineering-discipline.md#commit-messages).
 The **issue reference** (`Closes`/`Refs #N`) lives in the **PR body**. The task ID
 tracks the unit of work locally; the issue number tracks it in the forge. They
@@ -105,7 +105,7 @@ whichever document was wrong.
 
 One issue is **one actionable, demoable goal at a limited scale.** Large work
 becomes a parent issue with child sub-issues, each independently completable. This
-mirrors the kit's [commit-granularity](engineering-discipline.md#commit-granularity)
+mirrors the [commit-granularity](engineering-discipline.md#commit-granularity)
 rule, one level up: a task you cannot demo in one step is really several tasks.
 
 **The tripwire.** "Limited scale" is unenforceable while it is only an adjective,
@@ -236,8 +236,8 @@ is [ADR-0008](adr/0008-require-one-reading-in-decision-driving-text.md).
 ## What is enforced where
 
 A rule is only as real as what enforces it. This table is honest about which rules
-a mechanism backs today and which are written-rule-only until you wire a gate. The
-kit already ships the green rows.
+a mechanism backs today and which are written-rule-only until a gate is wired.
+The green rows are wired.
 
 | Concern | Written rule | Local hook | CI | Branch protection | Status |
 | ------- | ------------ | ---------- | -- | ----------------- | ------ |

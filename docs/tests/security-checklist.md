@@ -55,9 +55,9 @@ in the guardrails.
 - [ ] Treat a scan finding at or above the frozen severity as a failed change,
       not a judgement call made after the fact.
 
-## Add your own
+## More weakness classes
 
-This is a minimum, not a ceiling. Add a row for any other weakness class your
-project needs checked — for example a licence scan, a container-image scan, or
-an infrastructure-as-code scan — as its own `‹…›` check, tool, and pass
+This is a minimum, not a ceiling. Any other weakness class that LAYUP needs
+checked — for example a licence scan, a container-image scan, or an
+infrastructure-as-code scan — gets its own row: its check, its tool, and its pass
 condition.

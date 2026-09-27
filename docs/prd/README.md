@@ -49,11 +49,11 @@ conventions above — filename shape, at least one requirement, unique `REQ`/`NF
 IDs, a resolvable cited fact per requirement, an allowed MoSCoW value, the
 `Won't ⇒ Phase —` rule, and a §12 matrix whose ID set equals the requirement set. It reads only Markdown, so
 `sh docs/prd/prd-lint.sh` runs anywhere with no toolchain, and it is green on a
-fresh kit (no PRDs yet). It is wired into the
+tree with no PRD. It is wired into the
 [`pre-commit` hook](../engineering-discipline.md#git-hooks) and
-[CI](../engineering-discipline.md#continuous-integration). **If you change
-this template's shape, change the linter in the same change** — the two must
-agree. Its self-tests live in [`tests/`](tests/) (sample good and bad PRDs, not
+[CI](../engineering-discipline.md#continuous-integration). **A change to the
+shape of [`template.md`](template.md) changes the linter in the same change** — the
+two must agree. Its self-tests live in [`tests/`](tests/) (sample good and bad PRDs, not
 example content to fill in). A project on a specific stack may instead port these
 checks to its `go test`.
 

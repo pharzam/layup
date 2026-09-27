@@ -27,7 +27,7 @@ same summary, dated — rather than deleting it or checking it off.
 ## Now
 
 <!-- One line per task. Example shape:
-- **‹ID›** — ‹one-sentence summary› ([‹ADR or doc link›](...); [detail](‹id›.md))
+- **<ID>** — <one-sentence summary> ([<ADR or doc link>](...); [detail](<id>.md))
 -->
 
 - **T-meh2** — The PDR: `PRD-0001` with one requirement per PSB In-Scope item, traced to `F-0003#41`–`#52`, then the architecture and the plan ([#42](https://github.com/pharzam/layup/issues/42))

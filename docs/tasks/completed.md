@@ -17,7 +17,7 @@ here directly, in the shape above.
 ## Log
 
 <!-- Most recent first. Example shape:
-- **YYYY-MM-DD** — **‹ID›** — ‹one-sentence summary of what the task found or delivered› ([‹link›](...); [detail](‹id›.md))
+- **YYYY-MM-DD** — **<ID>** — <one-sentence summary of what the task found or delivered> ([<link>](...); [detail](<id>.md))
 -->
 
 - **2026-09-25** — **T-84r5** — Landed `PRD-0001`, the product requirements of LAYUP (Draft; 18 REQ, 7 NFR, an acceptance criterion each, four phases, the §12 matrix) as the successor of `T-wjq4`, with the `prd-lint` fix for a fact list of two or more records ([#64](https://github.com/pharzam/layup/issues/64); [detail](T-84r5.md))
