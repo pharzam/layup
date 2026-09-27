@@ -10,9 +10,8 @@ review rounds, a pull request); the automation keeps that gate. The same steps a
 
 ## In plain terms
 
-> Sixteen steps turn a copy of the Armature template into a project whose every
-> setup value has a source and whose documents speak about the project. Four steps
-> need a person to decide; the other twelve
+> Fifteen steps turn a copy of the Armature template into a project whose every
+> setup value has a source. Four steps need a person to decide; the other eleven
 > can be done by a program. One script, `sh docs/setup/setup-check.sh`, proves the
 > result, and CI runs it on every change.
 
@@ -178,14 +177,15 @@ and waits. A value with no source is never filled; it becomes an open gap
 - **Human decision:** no
 - **Done in this run by:** `T-9mmm`
 
-### S16 — Speak about the project
+## Check `adapted`
 
-- **Input:** The documents of the copy, after S15
-- **Action:** Rewrite each sentence that speaks as the Armature template, so that it speaks about the project, names Armature only where it states a fact about the project, and states each choice as a result instead of an instruction that leaves it open (rules 1 to 3 of LAYUP issue #70; the word lists are in check adapted); keep each marker only in a template file for a new record or in docs/setup/open-gaps.tsv
-- **Output:** Documents that speak about the project; checks adapted and markers pass
-- **Evidence:** setup-check adapted OK; setup-check markers OK
-- **Human decision:** no
-- **Done in this run by:** `T-745n` ([#70](https://github.com/pharzam/layup/issues/70)); the rules are the four of that issue, and check `adapted` of [`setup-check.sh`](setup-check.sh) enforces rules 1 to 3, check `markers` rule 4
+Check `adapted` of [`setup-check.sh`](setup-check.sh) reads the documents of this
+repository for the rules 1 to 3 of [#70](https://github.com/pharzam/layup/issues/70):
+a document speaks about LAYUP, names Armature only where it states a fact about
+LAYUP, and states each choice as a result. Check `markers` enforces rule 4. Both
+run in the `pre-commit` hook and in CI. They are not a step of this procedure:
+whether `layup setup` runs them on a target is for `layup setup verify` to
+decide (#70 rule 5).
 
 **Known limit of check `adapted`.** It reads the tracked Markdown files only. A
 comment in a script, a row of `steps.tsv` or a line of a workflow can still speak

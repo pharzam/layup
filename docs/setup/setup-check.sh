@@ -298,12 +298,11 @@ check_guardrails() {
 # the exact code span `‹` (a backtick on each side: the character named, as in
 # "search for `‹`"). Only that one character is skipped. Each marker in a
 # git-tracked file must be exempt (a template file for a new record, a fixture,
-# an accepted ADR 0001 to 0008, a record under runs/ (evidence, never edited), or
-# a script that defines the convention) or listed
+# an accepted ADR 0001 to 0008, or a script that defines the convention) or listed
 # in docs/setup/open-gaps.tsv (`path<TAB>marker<TAB>question`); each listed marker
 # must still occur. Key: path plus exact marker text; equal markers in one file
 # are one key.
-MK_EXEMPT='^(docs/(adr|ci|links|prd|setup)/tests/|\.githooks/tests/|docs/templates/|runs/)|^docs/[^/]+/template\.md$|^docs/tests/template-[^/]*\.md$|^docs/tests/traceability-template\.md$|^docs/adr/000[1-8]-[^/]*\.md$|^docs/links/link-lint\.sh$|^docs/prd/prd-lint\.sh$|^docs/setup/setup-check\.sh$|^docs/setup/open-gaps\.tsv$'
+MK_EXEMPT='^(docs/(adr|ci|links|prd|setup)/tests/|\.githooks/tests/|docs/templates/)|^docs/[^/]+/template\.md$|^docs/tests/template-[^/]*\.md$|^docs/tests/traceability-template\.md$|^docs/adr/000[1-8]-[^/]*\.md$|^docs/links/link-lint\.sh$|^docs/prd/prd-lint\.sh$|^docs/setup/setup-check\.sh$|^docs/setup/open-gaps\.tsv$'
 check_markers() {
 	git -C "$ROOT" -c core.quotePath=false ls-files > "$tmpdir/mk_files" || { fail markers "git: cannot list the tracked files"; return; }
 	grep -Ev "$MK_EXEMPT" "$tmpdir/mk_files" | while IFS= read -r mk_f; do
@@ -344,15 +343,17 @@ check_markers() {
 # accepted ADRs 0001 to 0012, the setup record, the fixture directories). A
 # file's lines are joined per paragraph (a blank line ends one), so a phrase
 # that breaks across a line end matches; the line reported is where it starts.
-#   rule-1  the word `kit` (case ignored; not after a `-`, so `bad-kit` is not a
-#           match; the check names `kit-history` and `kit-linters` are exempt);
-#           `adopter`/`adopters`; `the template` or `this template` alone
+#   rule-1  the word `kit` or `kits` (case ignored; the check names
+#           `kit-history` and `kit-linters` are the only exemption);
+#           `adopter`/`adopters`; `the template(s)` or `this template(s)` alone
 #   rule-2  the word `Armature` with a capital A (a lowercase path or URL such as
 #           `armature.pin` is not a match), except in a file of ad_allowed
 #   rule-3  `optional`; `skip this section`/`skips this section`; `fill` or
 #           `replace` with a marker later in the same sentence (a marker is one
 #           unit, so a word inside it is not a match, and neither is a word
-#           after `#` or `-`, as in the anchor `#fill-in-skeleton`); the verb
+#           after `#` or `-`, as in the anchor `#fill-in-skeleton`; a `.` ends
+#           the sentence, so "e.g." between the two hides a match); `fill in`;
+#           `delete this`; `delete the one(s) you do not use`; the verb
 #           `adapt`/`adapts`; `your project`, `your forge`, `your stack`, `you use`
 # A false positive is fixed by a better sentence, not by a new list entry.
 AD_EXCLUDE='^(docs/facts/|runs/|docs/tasks/T-[^/]*\.md$|docs/tasks/completed\.md$|docs/adr/00(0[1-9]|1[0-2])-[^/]*\.md$|docs/setup/record-[^/]*\.md$|docs/(adr|ci|links|prd|setup)/tests/|\.githooks/tests/|internal/psb/testdata/)'
@@ -394,14 +395,17 @@ check_adapted() {
 			function flush() {
 				if (n == 0) return
 				low = tolower(para)
-				hit("rule-1", "kit", "(^|[^a-z0-9_-])kit([^a-z0-9_]|$)", low)
+				hit("rule-1", "kit", "(^|[^a-z0-9_])kits?([^a-z0-9_]|$)", low)
 				hit("rule-1", "adopter", "(^|[^a-z0-9_])adopters?([^a-z0-9_]|$)", low)
-				hit("rule-1", "the template", "(^|[^a-z0-9_])(the|this) template([^a-z0-9_-]|$)", low)
+				hit("rule-1", "the template", "(^|[^a-z0-9_])(the|this) templates?([^a-z0-9_-]|$)", low)
 				if (!allow2) hit("rule-2", "Armature", "(^|[^A-Za-z0-9_])Armature([^A-Za-z0-9_]|$)", para)
 				hit("rule-3", "optional", "(^|[^a-z0-9_])optional([^a-z0-9_]|$)", low)
 				hit("rule-3", "skip this section", "(^|[^a-z0-9_])skips? this section", low)
 				hit("rule-3", "fill ‹", "(^|[^a-z0-9_#-])fill[a-z]*[^.\001]*\001", low)
 				hit("rule-3", "replace ‹", "(^|[^a-z0-9_#-])replac[a-z]*[^.\001]*\001", low)
+				hit("rule-3", "fill in", "(^|[^a-z0-9_#-])fill in([^a-z0-9_-]|$)", low)
+				hit("rule-3", "delete this", "(^|[^a-z0-9_])delete this([^a-z0-9_]|$)", low)
+				hit("rule-3", "delete the one you do not use", "(^|[^a-z0-9_])delete the ones? you do not use", low)
 				hit("rule-3", "adapt", "(^|[^a-z0-9_])adapts?([^a-z0-9_]|$)", low)
 				hit("rule-3", "your project", "(^|[^a-z0-9_])your project", low)
 				hit("rule-3", "your forge", "(^|[^a-z0-9_])your forge", low)

@@ -1,3 +1,5 @@
+Each <U+2039> and <U+203A> in this file is the character U+2039 or U+203A of the captured output, written by name so that no marker occurs in a record (#70 round 1, finding 1).
+
 ## Step 2, red (fixtures before the check), 2026-09-27T15:21:00Z, base 9beff4c
 $ sh docs/setup/tests/run.sh
 FAIL  adapted/bad-rule-1: exit 2, want 1
@@ -12,8 +14,8 @@ FAIL  adapted/bad-rule-2: no output line: setup-check: adapted FAIL rule-2 Armat
 FAIL  adapted/bad-rule-3: exit 2, want 1
 FAIL  adapted/bad-rule-3: no output line: setup-check: adapted FAIL rule-3 optional: docs/c.md:1
 FAIL  adapted/bad-rule-3: no output line: setup-check: adapted FAIL rule-3 skip this section: docs/c.md:3
-FAIL  adapted/bad-rule-3: no output line: setup-check: adapted FAIL rule-3 fill ‹: docs/c.md:6
-FAIL  adapted/bad-rule-3: no output line: setup-check: adapted FAIL rule-3 replace ‹: docs/c.md:8
+FAIL  adapted/bad-rule-3: no output line: setup-check: adapted FAIL rule-3 fill <U+2039>: docs/c.md:6
+FAIL  adapted/bad-rule-3: no output line: setup-check: adapted FAIL rule-3 replace <U+2039>: docs/c.md:8
 FAIL  adapted/bad-rule-3: no output line: setup-check: adapted FAIL rule-3 adapt: docs/c.md:10
 FAIL  adapted/bad-rule-3: no output line: setup-check: adapted FAIL rule-3 your project: docs/c.md:12
 FAIL  adapted/bad-rule-3: no output line: setup-check: adapted FAIL rule-3 your forge: docs/c.md:14
@@ -23,7 +25,7 @@ FAIL  adapted/good-allowed: exit 2, want 0
 FAIL  adapted/good-allowed: no output line: setup-check: adapted OK
 FAIL  frame/good-passthrough: no output line: setup-check: adapted OK
 FAIL  markers/bad-record-shape: exit 0, want 1
-FAIL  markers/bad-record-shape: no output line: setup-check: markers FAIL unlisted: docs/engineering-discipline.md ‹model›
+FAIL  markers/bad-record-shape: no output line: setup-check: markers FAIL unlisted: docs/engineering-discipline.md <U+2039>model<U+203A>
 setup-check tests: 34 passed, 6 failed
 exit 1 (the runner's exit; this line first said 0, the exit of the output filter, and was corrected in step 6)
 

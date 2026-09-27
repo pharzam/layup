@@ -125,8 +125,8 @@ check that catches it.
   silent because every setup check read values, markers and links, and none read
   the voice; a reader or an agent then acts on a choice that was already made.
   **The check:** check `adapted` of [`setup/setup-check.sh`](setup/setup-check.sh)
-  in the `pre-commit` hook and in CI, and setup step
-  [S16](setup/README.md#s16--speak-about-the-project); a false positive is fixed by
+  in the `pre-commit` hook and in CI (see
+  [Check `adapted`](setup/README.md#check-adapted)); a false positive is fixed by
   a better sentence, not by a list entry. Learned in `T-745n`
   ([#70](https://github.com/pharzam/layup/issues/70)).
 

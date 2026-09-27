@@ -11,7 +11,7 @@ a requirement back to the customer's exact words.
 
 1. Copy [`template.md`](template.md) to `PRD-NNNN-short-slug.md`, using the next
    sequential number.
-2. Fill in every section. **Cite a fact** (`F-NNNN` or `F-NNNN#n`) for every
+2. Write every section. **Cite a fact** (`F-NNNN` or `F-NNNN#n`) for every
    requirement — see the convention below.
 3. Give each requirement a stable ID (`REQ-NNN` functional, `NFR-NNN`
    non-functional), assigned once and never reused or renumbered.
@@ -54,8 +54,8 @@ tree with no PRD. It is wired into the
 [CI](../engineering-discipline.md#continuous-integration). **A change to the
 shape of [`template.md`](template.md) changes the linter in the same change** — the
 two must agree. Its self-tests live in [`tests/`](tests/) (sample good and bad PRDs, not
-example content to fill in). A project on a specific stack may instead port these
-checks to its `go test`.
+example content for a new PRD). LAYUP runs these checks with the `sh` script, not
+in `go test`.
 
 ## Index
 

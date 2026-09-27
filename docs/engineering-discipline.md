@@ -127,7 +127,8 @@ does not average; where it does not converge, the disagreement is recorded and
 [When reviewers disagree](#when-reviewers-disagree) runs unchanged. A panel of
 identical agents is none — two agents given the same prompt, context and model are
 "one reviewer run twice, and they share every blind spot" — so a panel's members
-differ in domain, and which domains sit on one is a `‹…›` marker. A panel costs model
+differ in domain, and which domains sit on one is an open gap,
+`‹the domains of a panel›` (question in [`setup/open-gaps.tsv`](setup/open-gaps.tsv)). A panel costs model
 calls: convene one only where the challenge earns it, under an iteration bound, and
 required only for the architecturally-significant or novel decisions —
 in this project, each decision that becomes a new ADR — never on every task. This is recorded in

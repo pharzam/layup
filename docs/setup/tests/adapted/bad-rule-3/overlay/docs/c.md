@@ -20,3 +20,13 @@ Keep the ones you use.
 The text is adapted and it fills a gap.
 
 Filling the gap: see `‹a›`, then replace it with `‹b›`.
+
+A project skip this section.
+
+It adapts the list.
+
+Delete this section.
+
+Delete the one you do not use.
+
+Fill in the table below.

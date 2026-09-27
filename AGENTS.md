@@ -99,8 +99,8 @@ file.
 These read only text, so they need no toolchain. Install the hooks once per clone
 by running `sh .githooks/install.sh` (it pins `core.hooksPath` to the relative
 `.githooks`); the first four, and the setup checks `adapted` and `markers`, then
-run before every commit, and in CI; `setup-check.sh` and
-`nested-checkout-check.sh` need `git`, and CI runs the full setup check;
+run before every commit, and in CI; `nested-checkout-check.sh` needs `git`, so it
+runs in CI only; the full `setup-check.sh` needs `git` too, and runs in CI;
 and `git diff --check` you run yourself. Keep
 [`.gitattributes`](.gitattributes): it holds these scripts at line-feed endings,
 without which none of them runs on a Windows checkout.
@@ -143,9 +143,10 @@ from the backlog where the task had one.
 
 ## Placeholders
 
-A `‹…›` marker is one of two things. In a template file for a new record
-(`docs/adr/template.md`, `docs/prd/template.md`, `docs/tests/template-*.md`,
-`docs/templates/`) it is a field that the new record gets. Anywhere else it is an
+A `‹…›` marker is one of two things. In a template file for a new record (for
+example `docs/adr/template.md`, `docs/prd/template.md`, `docs/tests/template-*.md`,
+`docs/templates/`; the full list of exempt paths is `MK_EXEMPT` in
+`docs/setup/setup-check.sh`) it is a field that the new record gets. Anywhere else it is an
 open gap, listed with its question in
 [`docs/setup/open-gaps.tsv`](docs/setup/open-gaps.tsv). Never replace a gap with a
 guess, never invent a command, path or number, and never delete a marker to make

@@ -49,7 +49,7 @@ here without a link, since a constitutional record never links into the archive.
 
 1. Copy [`template.md`](template.md) to `NNNN-short-title.md`, using the next
    sequential number.
-2. Fill in Context, Decision, and Consequences. Set Status to `Proposed` if it
+2. Write the Context, Decision, and Consequences. Set Status to `Proposed` if it
    still needs sign-off, or `Accepted` if it is already decided.
 3. If this decision **replaces** an earlier one, set the old ADR's status to
    `Superseded by ADR-NNNN` and link to the new one.
