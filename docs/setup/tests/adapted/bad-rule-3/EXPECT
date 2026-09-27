@@ -8,3 +8,5 @@ line=setup-check: adapted FAIL rule-3 your project: docs/c.md:12
 line=setup-check: adapted FAIL rule-3 your forge: docs/c.md:14
 line=setup-check: adapted FAIL rule-3 your stack: docs/c.md:16
 line=setup-check: adapted FAIL rule-3 you use: docs/c.md:18
+line=setup-check: adapted FAIL rule-3 fill ‹: docs/c.md:22
+line=setup-check: adapted FAIL rule-3 replace ‹: docs/c.md:22

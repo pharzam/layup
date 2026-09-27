@@ -7,11 +7,10 @@ that the delivered behaviour is what a real person actually asked for; a human
 reads the plain-language steps and signs off, rather than a command asserting a
 result.
 
-> **How to adapt this file.** Copy the [skeleton](#fill-in-skeleton) for each
+> **How to use this file.** Copy the [skeleton](#fill-in-skeleton) for each
 > user-facing scenario that needs a human sign-off, usually the same scenario an
-> [E2E test](template-e2e.md) already automates. Replace every `‹…›`
-> placeholder. Delete this note from your own copy once the first real scenario
-> is in.
+> [E2E test](template-e2e.md) already automates; each `‹…›` in it is a field of
+> the new scenario.
 
 ## In plain terms
 

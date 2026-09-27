@@ -18,3 +18,5 @@ Name your stack.
 Keep the ones you use.
 
 The text is adapted and it fills a gap.
+
+Filling the gap: see `‹a›`, then replace it with `‹b›`.

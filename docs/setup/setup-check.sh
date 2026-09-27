@@ -350,7 +350,9 @@ check_markers() {
 #   rule-2  the word `Armature` with a capital A (a lowercase path or URL such as
 #           `armature.pin` is not a match), except in a file of ad_allowed
 #   rule-3  `optional`; `skip this section`/`skips this section`; `fill` or
-#           `replace` with `‹` later in the same sentence; the verb
+#           `replace` with a marker later in the same sentence (a marker is one
+#           unit, so a word inside it is not a match, and neither is a word
+#           after `#` or `-`, as in the anchor `#fill-in-skeleton`); the verb
 #           `adapt`/`adapts`; `your project`, `your forge`, `your stack`, `you use`
 # A false positive is fixed by a better sentence, not by a new list entry.
 AD_EXCLUDE='^(docs/facts/|runs/|docs/tasks/T-[^/]*\.md$|docs/tasks/completed\.md$|docs/adr/00(0[1-9]|1[0-2])-[^/]*\.md$|docs/setup/record-[^/]*\.md$|docs/(adr|ci|links|prd|setup)/tests/|\.githooks/tests/|internal/psb/testdata/)'
@@ -398,8 +400,8 @@ check_adapted() {
 				if (!allow2) hit("rule-2", "Armature", "(^|[^A-Za-z0-9_])Armature([^A-Za-z0-9_]|$)", para)
 				hit("rule-3", "optional", "(^|[^a-z0-9_])optional([^a-z0-9_]|$)", low)
 				hit("rule-3", "skip this section", "(^|[^a-z0-9_])skips? this section", low)
-				hit("rule-3", "fill ‹", "(^|[^a-z0-9_])fill[a-z]*[^.]*‹", low)
-				hit("rule-3", "replace ‹", "(^|[^a-z0-9_])replac[a-z]*[^.]*‹", low)
+				hit("rule-3", "fill ‹", "(^|[^a-z0-9_#-])fill[a-z]*[^.\001]*\001", low)
+				hit("rule-3", "replace ‹", "(^|[^a-z0-9_#-])replac[a-z]*[^.\001]*\001", low)
 				hit("rule-3", "adapt", "(^|[^a-z0-9_])adapts?([^a-z0-9_]|$)", low)
 				hit("rule-3", "your project", "(^|[^a-z0-9_])your project", low)
 				hit("rule-3", "your forge", "(^|[^a-z0-9_])your forge", low)
@@ -410,6 +412,14 @@ check_adapted() {
 			{
 				line = $0; sub(/\r$/, "", line); gsub(/[ \t]+/, " ", line); sub(/^ /, "", line); sub(/ $/, "", line)
 				if (line == "") { flush(); next }
+				# A marker is one unit, the byte \001: a word inside it is not a match.
+				mk = ""
+				while ((i = index(line, "‹")) > 0) {
+					rest = substr(line, i + length("‹")); j = index(rest, "›")
+					mk = mk substr(line, 1, i - 1) "\001"
+					line = (j > 0) ? substr(rest, j + length("›")) : ""
+				}
+				line = mk line
 				if (n > 0) para = para " "
 				n++; starts[n] = length(para) + 1; lines[n] = NR
 				para = para line
