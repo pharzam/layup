@@ -145,8 +145,9 @@ from the backlog where the task had one.
 
 A `‹…›` marker is one of two things. In a template file for a new record (for
 example `docs/adr/template.md`, `docs/prd/template.md`, `docs/tests/template-*.md`,
-`docs/templates/`; the full list of exempt paths is `MK_EXEMPT` in
-`docs/setup/setup-check.sh`) it is a field that the new record gets. Anywhere else it is an
+`docs/templates/`) it is a field that the new record gets. The fixtures, the
+older ADRs and the scripts that define the convention are exempt too; the full
+list is `MK_EXEMPT` in `docs/setup/setup-check.sh`. Anywhere else it is an
 open gap, listed with its question in
 [`docs/setup/open-gaps.tsv`](docs/setup/open-gaps.tsv). Never replace a gap with a
 guess, never invent a command, path or number, and never delete a marker to make

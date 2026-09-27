@@ -15,3 +15,4 @@ line=setup-check: adapted FAIL rule-3 adapt: docs/c.md:26
 line=setup-check: adapted FAIL rule-3 delete this: docs/c.md:28
 line=setup-check: adapted FAIL rule-3 delete the one you do not use: docs/c.md:30
 line=setup-check: adapted FAIL rule-3 fill in: docs/c.md:32
+line=setup-check: adapted FAIL rule-3 delete the one you do not use: docs/c.md:34

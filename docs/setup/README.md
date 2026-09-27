@@ -183,9 +183,9 @@ Check `adapted` of [`setup-check.sh`](setup-check.sh) reads the documents of thi
 repository for the rules 1 to 3 of [#70](https://github.com/pharzam/layup/issues/70):
 a document speaks about LAYUP, names Armature only where it states a fact about
 LAYUP, and states each choice as a result. Check `markers` enforces rule 4. Both
-run in the `pre-commit` hook and in CI. They are not a step of this procedure:
-whether `layup setup` runs them on a target is for `layup setup verify` to
-decide (#70 rule 5).
+run in the `pre-commit` hook and in CI. They are not a step of this procedure;
+the same checks become part of `layup setup verify` for a target later (#70
+rule 5).
 
 **Known limit of check `adapted`.** It reads the tracked Markdown files only. A
 comment in a script, a row of `steps.tsv` or a line of a workflow can still speak

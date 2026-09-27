@@ -20,6 +20,7 @@ here directly, in the shape above.
 - **YYYY-MM-DD** — **<ID>** — <one-sentence summary of what the task found or delivered> ([<link>](...); [detail](<id>.md))
 -->
 
+- **2026-09-27** — **T-745n** — The documents speak about LAYUP, not as the Armature template: a text pass over 25 documents, the five kit CI copies and the GitLab templates deleted, and the setup check `adapted` (rules 1 to 3 of #70) with a stricter `markers` (rule 4) in the `pre-commit` hook and CI; two review rounds, the last `nothing material in scope` ([#70](https://github.com/pharzam/layup/issues/70); [detail](T-745n.md))
 - **2026-09-25** — **T-84r5** — Landed `PRD-0001`, the product requirements of LAYUP (Draft; 18 REQ, 7 NFR, an acceptance criterion each, four phases, the §12 matrix) as the successor of `T-wjq4`, with the `prd-lint` fix for a fact list of two or more records ([#64](https://github.com/pharzam/layup/issues/64); [detail](T-84r5.md))
 - **2026-09-25** — **T-wjq4** — Wrote `PRD-0001` and fixed the PRD linter (test first), and ended at the cycle cap `not mergeable, findings recorded`; split to `T-84r5` ([#63](https://github.com/pharzam/layup/issues/63); [detail](T-wjq4.md))
 - **2026-09-25** — **T-zmj6** — Stored the idea owner's answers to the 19 gap questions of the PSB as raw fact `F-0004` (accepted in one batch, Decision Point 2) and made check `facts` hold the answers record to one fact per question; the first product task under bootstrap mode ([#45](https://github.com/pharzam/layup/issues/45); [detail](T-zmj6.md))

@@ -17,7 +17,7 @@ Name your stack.
 
 Keep the ones you use.
 
-The text is adapted and it fills a gap.
+This line holds no word of a list.
 
 Filling the gap: see `‹a›`, then replace it with `‹b›`.
 
@@ -30,3 +30,5 @@ Delete this section.
 Delete the one you do not use.
 
 Fill in the table below.
+
+Delete the ones you do not use.
