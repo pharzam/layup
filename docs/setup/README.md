@@ -10,8 +10,9 @@ review rounds, a pull request); the automation keeps that gate. The same steps a
 
 ## In plain terms
 
-> Fifteen steps turn a copy of the Armature template into a project whose every
-> setup value has a source. Four steps need a person to decide; the other eleven
+> Sixteen steps turn a copy of the Armature template into a project whose every
+> setup value has a source and whose documents speak about the project. Four steps
+> need a person to decide; the other twelve
 > can be done by a program. One script, `sh docs/setup/setup-check.sh`, proves the
 > result, and CI runs it on every change.
 
@@ -32,12 +33,12 @@ and waits. A value with no source is never filled; it becomes an open gap
   (PSB Invariant 1, Decision Point 2).
 - A `no` row is done when its evidence holds. In this run the evidence of most
   steps is one check of LAYUP's own `setup-check.sh` (`--only <check> <root>` runs
-  one check). The kit does not ship that script, and the Operator decided that
+  one check). Armature does not ship that script, and the Operator decided that
   nothing from LAYUP goes into a target repository (O-10 on
   [#30](https://github.com/pharzam/layup/issues/30)); how a target proves each
   step is for ADR-0011 to decide.
 - The manual run gives the baseline to compare against: the elapsed time of each
-  step, and each finding K-01 to K-08 where the kit left a decision open, in
+  step, and each finding K-01 to K-08 where Armature left a decision open, in
   [`record-T-n1hp.md`](record-T-n1hp.md).
 
 ## Steps
@@ -51,11 +52,11 @@ and waits. A value with no source is never filled; it becomes an open gap
 - **Human decision:** yes
 - **Done in this run by:** the session, after S02 and before S03 (in this run the copy came first; the decisions do not depend on it)
 
-### S02 — Copy the kit at one commit
+### S02 — Copy Armature at one commit
 
 - **Input:** Armature repository URL
 - **Action:** Read the current main commit with gh api repos/<owner>/armature/commits/main; copy that exact commit with npx degit <owner>/armature#<sha> <dir>
-- **Output:** A project directory with the kit files and no Git history
+- **Output:** A project directory with the Armature files and no Git history
 - **Evidence:** The gh api output (SHA); the degit command line
 - **Human decision:** no
 - **Done in this run by:** `T-n1hp` (timeline rows 2–3)
@@ -64,7 +65,7 @@ and waits. A value with no source is never filled; it becomes an open gap
 
 - **Input:** The copied directory
 - **Action:** git init; commit the unmodified copy as the root commit; create the remote under the name and visibility from S01 (the Operator authorizes the create); push main BEFORE the hooks are installed (the pre-push hook refuses a push to main)
-- **Output:** Root commit = the kit tree; remote main
+- **Output:** Root commit = the Armature tree; remote main
 - **Evidence:** git rev-parse <root>^{tree} equals the Armature commit tree (GitHub API)
 - **Human decision:** yes
 - **Done in this run by:** `T-n1hp` (rows 3–4; finding K-05)
@@ -78,11 +79,11 @@ and waits. A value with no source is never filled; it becomes an open gap
 - **Human decision:** no
 - **Done in this run by:** `T-n1hp` (the hooks install, record V-22) and `T-r7zg` (the pin)
 
-### S05 — Remove the kit's own history
+### S05 — Remove Armature's own history
 
-- **Input:** The kit's own history
-- **Action:** Delete docs/decisions/, docs/audit/, kit docs/tasks/T-*.md, kit completed-log entries, kit backlog lines and notes; fix the links
-- **Output:** No kit history; check kit-history passes
+- **Input:** Armature's own history
+- **Action:** Delete docs/decisions/, docs/audit/, Armature's docs/tasks/T-*.md, completed-log entries, backlog lines and notes; fix the links
+- **Output:** No Armature history; check kit-history passes
 - **Evidence:** setup-check kit-history OK; link-lint OK
 - **Human decision:** no
 - **Done in this run by:** `T-vbwc`
@@ -99,7 +100,7 @@ and waits. A value with no source is never filled; it becomes an open gap
 ### S07 — Bind the onboarding
 
 - **Input:** F-0001
-- **Action:** Rewrite docs/onboarding-for-engineers.md from the PSB, each claim cited as F-0001#n; keep the kit's process sections
+- **Action:** Rewrite docs/onboarding-for-engineers.md from the PSB, each claim cited as F-0001#n; keep the process sections
 - **Output:** Onboarding bound to the PSB; check onboarding passes
 - **Evidence:** Semantic-agreement review round; setup-check onboarding OK
 - **Human decision:** no
@@ -125,7 +126,7 @@ and waits. A value with no source is never filled; it becomes an open gap
 
 ### S10 — Ask the gap questions in one batch
 
-- **Input:** All remaining adopter markers
+- **Input:** All remaining markers
 - **Action:** List every marker; separate those a file or command answers from those that need a decision; ask the Operator every open question in ONE batch
 - **Output:** Operator decisions in Git; the questions that stay open
 - **Evidence:** The Operator's batch answers, copied into the setup record
@@ -143,8 +144,8 @@ and waits. A value with no source is never filled; it becomes an open gap
 
 ### S12 — Activate CI
 
-- **Input:** The kit's active workflows
-- **Action:** Keep the kit's workflows and replace their headers; add a Restore step to every workflow that runs a check script and lacks one (at the pin, pr-link.yml and review-record.yml lack it: finding K-08); add the setup-check job with fetch-depth 0 and a Restore step
+- **Input:** Armature's active workflows
+- **Action:** Keep Armature's workflows and replace their headers; add a Restore step to every workflow that runs a check script and lacks one (at the pin, pr-link.yml and review-record.yml lack it: finding K-08); add the setup-check job with fetch-depth 0 and a Restore step
 - **Output:** CI runs every check from the default branch; check ci passes
 - **Evidence:** CI run logs show each script restored from the default branch; setup-check ci OK (cause restore)
 - **Human decision:** no
@@ -171,8 +172,25 @@ and waits. A value with no source is never filled; it becomes an open gap
 ### S15 — Record the procedure
 
 - **Input:** The steps above
-- **Action:** Write this procedure and the measured record; replace the kit section How to adapt this kit with a link to it
+- **Action:** Write this procedure and the measured record; replace Armature's adoption section of docs/engineering-discipline.md with a link to it
 - **Output:** docs/setup/README.md and steps.tsv; check procedure passes
 - **Evidence:** setup-check procedure OK
 - **Human decision:** no
 - **Done in this run by:** `T-9mmm`
+
+### S16 — Speak about the project
+
+- **Input:** The documents of the copy, after S15
+- **Action:** Rewrite each sentence that speaks as the Armature template, so that it speaks about the project, names Armature only where it states a fact about the project, and states each choice as a result instead of an instruction that leaves it open (rules 1 to 3 of LAYUP issue #70; the word lists are in check adapted); keep each marker only in a template file for a new record or in docs/setup/open-gaps.tsv
+- **Output:** Documents that speak about the project; checks adapted and markers pass
+- **Evidence:** setup-check adapted OK; setup-check markers OK
+- **Human decision:** no
+- **Done in this run by:** `T-745n` ([#70](https://github.com/pharzam/layup/issues/70)); the rules are the four of that issue, and check `adapted` of [`setup-check.sh`](setup-check.sh) enforces rules 1 to 3, check `markers` rule 4
+
+**Known limit of check `adapted`.** It reads the tracked Markdown files only. A
+comment in a script, a row of `steps.tsv` or a line of a workflow can still speak
+as the Armature template; on `9beff4c` the plan review of #70 counted 27 such
+lines in `setup-check.sh`, 7 rows of `steps.tsv`, and lines in the three linters
+and `ci.yml`. The records (facts, `runs/`, task records, the completed log, the
+accepted ADRs 0001 to 0012, `record-T-n1hp.md`) are not read, because a record is
+not edited.
