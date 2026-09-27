@@ -1,11 +1,9 @@
 # Engineering Discipline
 
-This document lists the engineering practices required on a project. It is a
-domain-free starter kit. This folder is self-contained: the main document links
-to sibling documents in the same folder, and each sibling is itself a template
-you fill for your project. Adapt the kit, then grow it over time — each new
-practice gets its own short section below, with a link to the fuller reference
-where one exists.
+This document lists the engineering practices required on LAYUP. It links to
+the sibling documents under [`docs/`](.), each of which holds LAYUP's values.
+Each new practice gets its own short section below, with a link to the fuller
+reference where one exists.
 
 The practices come as one **quality gate**: a fixed, ordered sequence that every
 substantive task must pass. A gate works because it stores the team's hard-won
@@ -17,9 +15,9 @@ project solves — see the
 
 ## How this project was set up
 
-This repository was set up from the Armature kit once, by hand, and the kit's
-adaptation steps are done: the kit history is removed, the documents are filled,
-and each adopter value has its evidence or is an open gap. The procedure, as
+This repository was set up from Armature once, by hand, and the setup steps are
+done: Armature's own history is removed, the documents hold LAYUP's values, and
+each setup value has its evidence or is an open gap. The procedure, as
 ordered steps for later automation, is [`setup/README.md`](setup/README.md); the
 measured run is [`setup/record-T-n1hp.md`](setup/record-T-n1hp.md); and
 `sh docs/setup/setup-check.sh` proves the result.
@@ -144,8 +142,7 @@ repeats it. Model tiering begins only **after** that criterion has been applied 
 the work is known to need a model; it never overturns the preference, and a
 deterministic check still outranks a model of any tier.
 
-Where a model is warranted, route by **tier**. Which concrete models fill each tier
-is the adopter's to set; the kit names none. In this project the reasoning tier is
+Where a model is warranted, route by **tier**. In this project the reasoning tier is
 Claude Opus 5.5, Claude Fable 5.1, GPT-6 Sol and Grok 4.7, and the execution tier is
 Claude Sonnet 5, SWE-2 and GPT-6 Luna (Operator decision O-3 on
 [#8](https://github.com/pharzam/layup/issues/8), amended by
@@ -161,15 +158,15 @@ Two bounds keep the routing from weakening a rule that already holds:
 
 - **Independence wins where it meets routing.** Routing says which tier *executes* a
   step. The [Model independence level](#who-may-review) says a reviewer's model
-  *differs from the author's* — for high-risk work, where the adopter has a second
-  model. Where the two meet, independence wins: a reviewer never drops to the
+  *differs from the author's* — for high-risk work, where a second model is
+  available. Where the two meet, independence wins: a reviewer never drops to the
   author's model to satisfy routing. Routing extends model choice from review to the
   whole gate; it does not weaken the one place model choice already bit.
-- **An adopter with one tier records the limit.** A single model cannot route. That
-  is a limit of the adopter, not a failure of the gate: run the work on the tier you
-  have, and name the tier you could not reach — the same answer
-  [Who may review](#who-may-review) gives when an adopter runs out of independence
-  levels. A limit recorded can be judged; a limit implied cannot.
+- **A tier that cannot be reached is recorded.** A single model cannot route. That
+  is a limit of the models available, not a failure of the gate: run the work on
+  the tier that is available, and name the tier that could not be reached — the
+  same answer [Who may review](#who-may-review) gives when the independence levels
+  run out. A limit recorded can be judged; a limit implied cannot.
 
 A deterministic check still outranks any reviewer and any tier alike: tiering is
 what is left **after** Determinism, never a route around it. This decision, its
@@ -248,9 +245,9 @@ whose body links that issue (`Closes`/`Refs #N`), while the task ID stays in the
 commit subject, so the two namespaces coexist. The full rules — R1–R13, and the
 honest table of what is enforced where — live in
 [`issue-workflow.md`](issue-workflow.md); the decision is
-[ADR-0003](adr/0003-adopt-issue-first-workflow.md). The kit is forge-free, so an
-"issue" is a ticket in whatever forge you use, and forge-specific issue/PR
-templates ship inert under [`templates/`](templates/).
+[ADR-0003](adr/0003-adopt-issue-first-workflow.md). LAYUP's forge is GitHub, so
+an "issue" is a GitHub issue; the issue and pull-request templates are under
+[`templates/`](templates/), not active.
 
 ## Reviewing until findings decay
 
@@ -325,7 +322,7 @@ protocol that bounds the rounds is:
   successor does not take. Where it takes them all, it alone is the split. The
   stopped branch does not run a further cycle.
 - **Material has a test.** A finding is material when it changes an exit code,
-  an assertion, a behaviour on an adopter's tree, a claim in the tree, or a
+  an assertion, a behaviour on a target's tree, a claim in the tree, or a
   Definition-of-Done item. Wording, style and layout are not. A claim in the
   tree counts only when a reader could act on it and the change makes it false
   or leaves it false; a sentence that changed and still holds is wording. Each
@@ -377,7 +374,7 @@ Independence has four levels. A review claims only the ones it actually had:
 | **Context** | A fresh session whose brief is the issue's problem statement, the acceptance criteria, the source documents and the diff — and **not** the author's reasoning or any earlier round's verdict. | Every review |
 | **Method** | A different lens and a different prompt from the round before it. | Every round after the first |
 | **Execution** | A separate run with its own record on the issue. | Every review |
-| **Model** | A different model, or a different provider. | High-risk work — a governance change, a change to the checks themselves, or anything feeding a [costly or irreversible action](#review-before-a-costly-or-irreversible-action) — **where the adopter has a second model to reach for** |
+| **Model** | A different model, or a different provider. | High-risk work — a governance change, a change to the checks themselves, or anything feeding a [costly or irreversible action](#review-before-a-costly-or-irreversible-action) — **where a second model is available** |
 
 Two agents given the same prompt, the same context and the same model are not two
 reviewers. They are one reviewer run twice, and they share every blind spot. The
@@ -401,9 +398,9 @@ thread carries everything this is a discipline, not a mechanism: a reviewer can
 always scroll, and an honest record says what it was handed rather than what it
 was meant to avoid.
 
-**Where the adopter runs out of levels, the ladder stops and the record says so.**
+**Where the levels run out, the ladder stops and the record says so.**
 A one-person team with one model cannot reach model independence, and cannot put a
-second human operator on top of a tie. That is a limit of the adopter, not a
+second human operator on top of a tie. That is a limit of the team, not a
 failure of the review: claim the levels you had, name the ones you could not
 reach, and let a later reader weigh the distance. A limit recorded can be judged;
 a limit implied cannot.
@@ -462,8 +459,8 @@ alone: the reviewer that raised it agrees, or, where the author raised it, an
 independent reviewer does. Without that assent the classification is **recorded
 as disputed** on the issue.
 
-Where an adopter has no second operator to escalate to, the disagreement is
-**recorded unresolved** and carried into the adopter's own decision process. An
+Where there is no second operator to escalate to, the disagreement is
+**recorded unresolved** and carried to the Operator's decision on the issue. An
 unresolved disagreement written down is a known risk; one silently broken by the
 author is a false green. Either state is a finding still open: the last round on
 that branch returns `not mergeable, findings recorded`, and the issue a disputed
@@ -471,7 +468,7 @@ finding might owe is not owed until the dispute resolves.
 
 ## Reviewing for semantic agreement
 
-A check that passes proves what it measures, not what you meant. The kit's own
+A check that passes proves what it measures, not what you meant. The discipline
 linters are explicit about this: they prove presence, structure and coverage over
 the documents they read, and none of them proves that a compressed sentence means
 what its source paragraph means.
@@ -531,9 +528,9 @@ lightweight format described by Michael Nygard. Copy
 [`adr/template.md`](adr/template.md) for each new record; the process and the
 index live in [`adr/README.md`](adr/README.md), and
 [`adr/0001-record-architecture-decisions.md`](adr/0001-record-architecture-decisions.md)
-records the decision to use ADRs. `adr/` holds only records that constitute a
-project; this repository's own past governance decisions are archived under
-`docs/decisions/`, which an adopter deletes.
+records the decision to use ADRs. `adr/` holds only records that constitute
+LAYUP; Armature's own past governance decisions (`docs/decisions/`) were deleted
+at setup step S05.
 
 A decision is "architecturally significant" if it affects structure,
 non-functional characteristics, dependencies, interfaces, or construction
@@ -559,8 +556,8 @@ fact it came from by its `F-NNNN` ID. Layer 2 is where the
 and where interpretation is allowed. Layer 1 is where interpretation is forbidden.
 
 The mechanics — the ID scheme, how to add a document, how to correct one — are in
-[`facts/README.md`](facts/README.md). A project with no external customer skips
-this section and the [`facts/`](facts/) directory entirely.
+[`facts/README.md`](facts/README.md). LAYUP's facts are the PSB and its
+companions, `F-0001` to `F-0004`.
 
 ## Product requirements
 
@@ -572,16 +569,15 @@ carries a stable `REQ-NNN`/`NFR-NNN` ID, a MoSCoW priority, and a phase, and the
 convention is enforced by [`prd/prd-lint.sh`](prd/prd-lint.sh). Copy
 [`prd/template.md`](prd/template.md) for each new PRD; the mechanics and the ID
 scheme are in [`prd/README.md`](prd/README.md), and the decision is
-[ADR-0002](adr/0002-record-product-requirements.md). A project with no external
-customer, or one too small to track requirements, skips this section and the
-[`prd/`](prd/) directory.
+[ADR-0002](adr/0002-record-product-requirements.md). LAYUP's PRD is
+[`PRD-0001`](prd/PRD-0001-layup.md).
 
 ## Requirements traceability
 
-The kit's documents form one traceable line, from the customer's words to the test
+LAYUP's documents form one traceable line, from the customer's words to the test
 that proves them:
 
-    fact (F-NNNN#n) → requirement (REQ/NFR) → guardrail → ADR → task (‹task-ID›) → test
+    fact (F-NNNN#n) → requirement (REQ/NFR) → guardrail → ADR → task (T-xxxx) → test
 
 Each link already has a home — [`facts/`](facts/) holds the fact, [`prd/`](prd/)
 the requirement, [`guardrails.md`](guardrails.md) the pitfall, [`adr/`](adr/) the
@@ -613,7 +609,7 @@ exists to prevent.
 context, prompt, reply, or response must have an entry in [`glossary.md`](glossary.md).
 If an abbreviation is not yet defined there, the same turn that uses it adds it — the
 full row: Term, Abbr., Description, and Example. This rule binds **all LLMs and all
-human operators** working in this project; it is not optional, and "the reader will
+human operators** working in this project without exception, and "the reader will
 know what it means" is not a substitute for the entry. An abbreviation that is used
 but never defined is the exact gap the glossary exists to close, one turn at a time.
 
@@ -705,7 +701,7 @@ _why_ is not obvious from the summary line alone.
 When a commit implements or closes a [backlog](tasks/backlog.md) task, its ID goes
 immediately after the colon, before the rest of the description:
 `<type>: <ID> <description>`, for example `feat(store): <ID> add SQLite datastore`.
-Give each task a stable ID under your task-ID scheme (`T-` plus four random characters from `0-9 a-z` without `i l o u`). Commits with no task keep
+Give each task a stable ID under LAYUP's task-ID scheme (`T-` plus four random characters from `0-9 a-z` without `i l o u`). Commits with no task keep
 the plain `<type>: <description>` form.
 
 ## Testing
@@ -729,7 +725,7 @@ that ties a test to what it proves — live in their own section,
 **integration**, **end-to-end (E2E)** — plus the process-level **discipline**
 tests, defined in [`tests/test-levels.md`](tests/test-levels.md). The unit level
 runs in the [`pre-commit` hook](#git-hooks); the whole ladder runs in
-[CI](#continuous-integration-optional). Each level has its own command — `go test ./...`,
+[CI](#continuous-integration). Each level has its own command — `go test ./...`,
 `go test -tags=integration ./...`, `go test -tags=e2e ./...`, and
 `go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./... && go vet ./... && gitleaks git --redact`
 for the parallel security track — with `-timeout 10m` bounding a hanging test.
@@ -762,7 +758,7 @@ on stable interfaces — no brittle selectors or timing. The full list is
 [`tests/scaling-checklist.md`](tests/scaling-checklist.md).
 
 **Discipline tests keep the process itself honest.** Beyond tests of the product,
-the kit ships five tests of its own conventions:
+five tests check LAYUP's own conventions:
 [`adr/adr-lint.sh`](adr/adr-lint.sh) lints [`adr/`](adr/) against the
 [ADR](#architecture-decision-records) rules — filenames, sequential numbering,
 required sections, the index, and cross-links —
@@ -774,29 +770,26 @@ heading anchor, [`ci/pr-link-lint.sh`](ci/pr-link-lint.sh) checks that a pull
 request's body links its issue ([R1](issue-workflow.md#r1--issue-first)), and
 [`ci/review-record-lint.sh`](ci/review-record-lint.sh) checks that the linked issue
 carries a parseable review record. They read only text, so they
-need no toolchain and can be the project's first tests, before any product code
-exists. The three that lint repo files — ADR, PRD and link — run in the
+need no toolchain. The three that lint repo files — ADR, PRD and link — run in the
 [`pre-commit`](#git-hooks) hook and
-in [CI](#continuous-integration-optional); the two that read a forge artifact — the
+in [CI](#continuous-integration); the two that read a forge artifact — the
 PR-link and review-record checks — run in CI only. Add a discipline test
 whenever a convention is worth enforcing automatically rather than by review; wire
 each one into the hook and CI wherever its input is available.
 
-## Continuous integration (optional)
+## Continuous integration
 
 CI runs this whole gate automatically on every change, so it is enforced by the
 forge rather than by memory. It is the **authority**: its checks — the
-[discipline linters](#testing) the templates ship (ADR, PRD, link, PR-link and
-review-record), their [fixture self-tests](#testing), the
-[test levels](#testing), lint, a security scan, and
-the [commit-format](#commit-messages) check — are the ones you make *required*
+[discipline linters](#testing) (ADR, PRD, link, PR-link and review-record), their
+[fixture self-tests](#testing), the setup check, the [test levels](#testing), lint,
+a security scan, and the [commit-format](#commit-messages) check — are *required*
 before a merge. The [git hooks](#git-hooks) run the same rules locally for fast feedback.
 
-It is optional because the kit is forge-free. Ready-to-copy templates for GitHub
-Actions and GitLab CI live in [`docs/ci/`](ci/), inert until you copy one into
-place and fill its `‹…›` steps — see [`docs/ci/README.md`](ci/README.md). Turn CI
-on as part of [the setup](#how-this-project-was-set-up) (step S12 of
-[`setup/README.md`](setup/README.md)).
+LAYUP's CI is GitHub Actions, in [`.github/workflows/`](../.github/workflows/),
+turned on at setup step S12 ([`setup/README.md`](setup/README.md)).
+[`docs/ci/README.md`](ci/README.md) describes each job and the branch protection
+that makes the checks required.
 
 ## Git hooks
 
@@ -809,10 +802,10 @@ directory holds them, shared by the whole team (unlike the local, untracked
 sh .githooks/install.sh
 ```
 
-It pins `core.hooksPath` to the relative `.githooks`. Two hooks ship with the kit:
+It pins `core.hooksPath` to the relative `.githooks`. Three hooks run:
 
 - **`commit-msg`** — rejects a subject line that does not follow
-  [Conventional Commits](#commit-messages). Ready as-is.
+  [Conventional Commits](#commit-messages).
 - **`pre-commit`** — first refuses to run at all if the **resolved hooks
   directory** lies outside the working tree being committed to, whatever set it:
   `core.hooksPath` if it is set, and the shared common git directory if it is not —
@@ -825,10 +818,11 @@ It pins `core.hooksPath` to the relative `.githooks`. Two hooks ship with the ki
   then the Go lint (`gofmt -l` over the tracked Go files, and `go vet ./...`) and
   the unit [test level](#testing) (`go test ./...`). The integration and
   end-to-end levels and the security scans run in CI. Keep it cheap-first; the full suite — the end-to-end level and the
-  full security scan — belongs in [CI](#continuous-integration-optional).
+  full security scan — belongs in [CI](#continuous-integration).
+- **`pre-push`** — refuses a direct push to `main`, so a change goes through a
+  branch and a pull request.
 
-[`.githooks/README.md`](../.githooks/README.md) has the details and the optional
-[`pre-commit` framework](https://pre-commit.com) alternative.
+[`.githooks/README.md`](../.githooks/README.md) has the details.
 
 ## Progress indicators for long-running operations
 
@@ -866,7 +860,7 @@ constraint) — not as a default habit.
 A change lands with the documentation it affects already updated, in the same PR
 — never as a later follow-up task. This covers both the prose docs and the
 comments in the code. If the change leaves a statement, a number, an example, or
-a comment wrong, fixing it is part of the change, not optional tidy-up. Stale
+a comment wrong, fixing it is part of the change, not a later tidy-up. Stale
 documentation is a defect, and the [review rounds](#reviewing-until-findings-decay)
 treat it as one. The same-change rules for the [glossary](#glossary),
 [plain-language summaries](#plain-language-summaries), and
@@ -960,11 +954,11 @@ and `not applicable` in a human-worked part's model, effort and tokens columns.
 
 | Part | Expected tier | Model | Effort | Tokens | Elapsed |
 | ---- | ------------- | ----- | ------ | ------ | ------- |
-| ‹the plan and its review› | reasoning | ‹model› | ‹effort› | ‹tokens› | ‹wall-clock› |
-| ‹the decay review rounds› | reasoning | ‹model› | ‹effort› | ‹tokens› | ‹wall-clock› |
-| ‹writing the tests and the code› | execution | ‹model› | ‹effort› | ‹tokens› | ‹wall-clock› |
-| ‹isolate, guardrails, docs, close-out› | `—` | ‹model / `not applicable`› | ‹…› | ‹…› | ‹wall-clock› |
-| **Total** | | | | ‹sum› | ‹sum› |
+| The plan and its review | reasoning | `<model>` | `<effort>` | `<tokens>` | `<wall-clock>` |
+| The decay review rounds | reasoning | `<model>` | `<effort>` | `<tokens>` | `<wall-clock>` |
+| Writing the tests and the code | execution | `<model>` | `<effort>` | `<tokens>` | `<wall-clock>` |
+| Isolate, guardrails, docs, close-out | `—` | `<model>` or `not applicable` | `<effort>` | `<tokens>` | `<wall-clock>` |
+| **Total** | | | | `<sum>` | `<sum>` |
 
 ## Agent entry points
 

@@ -51,7 +51,7 @@ IDs, a resolvable cited fact per requirement, an allowed MoSCoW value, the
 `sh docs/prd/prd-lint.sh` runs anywhere with no toolchain, and it is green on a
 fresh kit (no PRDs yet). It is wired into the
 [`pre-commit` hook](../engineering-discipline.md#git-hooks) and
-[CI](../engineering-discipline.md#continuous-integration-optional). **If you change
+[CI](../engineering-discipline.md#continuous-integration). **If you change
 this template's shape, change the linter in the same change** — the two must
 agree. Its self-tests live in [`tests/`](tests/) (sample good and bad PRDs, not
 example content to fill in). A project on a specific stack may instead port these

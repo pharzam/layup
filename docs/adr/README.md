@@ -68,7 +68,7 @@ the conventions above — filename shape, contiguous numbering, the title line, 
 cross-link is a warning). It reads only Markdown, so `sh docs/adr/adr-lint.sh`
 runs anywhere, and it is wired into the
 [`pre-commit` hook](../engineering-discipline.md#git-hooks) and
-[CI](../engineering-discipline.md#continuous-integration-optional). If you change
+[CI](../engineering-discipline.md#continuous-integration). If you change
 this template's shape, change the linter in the same change — the two must agree.
 
 ### What counts as an inbound cross-link

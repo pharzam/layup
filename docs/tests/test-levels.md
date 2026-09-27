@@ -20,7 +20,7 @@ evidence in [`setup/record-T-n1hp.md`](../setup/record-T-n1hp.md).
 The levels are ordered so a failure stops the expensive work early. A change runs
 the cheap levels in the [commit hook](../engineering-discipline.md#git-hooks) for
 fast local feedback, and the whole ladder in
-[CI](../engineering-discipline.md#continuous-integration-optional) as the
+[CI](../engineering-discipline.md#continuous-integration) as the
 authority.
 
 | Level | Proves | Scope | Speed | Runs in |

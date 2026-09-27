@@ -319,7 +319,7 @@ ships (ADR, PRD and link) and their
 [test levels](engineering-discipline.md#testing), lint, a security
 scan, and the [commit-format](engineering-discipline.md#commit-messages)
 check — run in the [`pre-commit` hook](engineering-discipline.md#git-hooks) for
-fast local feedback and in [CI](engineering-discipline.md#continuous-integration-optional)
+fast local feedback and in [CI](engineering-discipline.md#continuous-integration)
 as the authority. Treat those checks as pre-registered pass/fail rules under
 section 1: they predate any single result and are not edited to make a change
 pass. Wire the "cheap enough to wire into CI" checks from the table above into
