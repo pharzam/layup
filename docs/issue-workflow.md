@@ -242,7 +242,7 @@ kit already ships the green rows.
 | Concern | Written rule | Local hook | CI | Branch protection | Status |
 | ------- | ------------ | ---------- | -- | ----------------- | ------ |
 | Land only via a PR (never a direct push to the default branch) | R1 | [`pre-push`](../.githooks/pre-push) | — | [branch protection](setup/branch-protection.json): PR required (`T-afa5`) | Enforced: branch protection on `main` since 2026-09-23 (`T-afa5`) |
-| Conventional Commits | [Commit messages](engineering-discipline.md#commit-messages) | [`commit-msg`](../.githooks/commit-msg) | [`pr-title`](ci/github-actions-pr-title.yml) | — | Enforced |
+| Conventional Commits | [Commit messages](engineering-discipline.md#commit-messages) | [`commit-msg`](../.githooks/commit-msg) | [`pr-title`](../.github/workflows/pr-title.yml) | — | Enforced |
 | ADR + PRD discipline | R5, [Testing](engineering-discipline.md#testing) | [`pre-commit`](../.githooks/pre-commit) | [`adr-lint`, `prd-lint`](ci/) | — | Enforced |
 | The linters reject bad input (fixtures) | [Testing](engineering-discipline.md#testing) | [`pre-commit`](../.githooks/pre-commit) | [`discipline-tests`](tests/run-discipline-tests.sh) | — | Enforced |
 | A PR links an issue (`Closes`/`Refs #N`) | R1 | — | [`pr-link-lint`](ci/pr-link-lint.sh) | [required check](setup/branch-protection.json) (`T-afa5`) | Enforced: branch protection on `main` since 2026-09-23 (`T-afa5`) |

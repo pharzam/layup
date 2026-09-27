@@ -1,6 +1,6 @@
 # PR links an issue — R1 (ACTIVE workflow for LAYUP).
 #
-# The activated copy of docs/ci/github-actions-pr-link.yml. It enforces
+# It enforces
 # docs/issue-workflow.md (R1) on the PR body: a pull request must link its issue
 # (Closes / Fixes / Resolves / Refs / Part of #N). It lives in its own workflow,
 # not in ci.yml, because the body exists only on a pull_request event.

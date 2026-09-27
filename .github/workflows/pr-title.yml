@@ -1,6 +1,6 @@
 # PR title check — Conventional Commits (ACTIVE workflow for LAYUP).
 #
-# The activated copy of docs/ci/github-actions-pr-title.yml. It checks the PR title
+# It checks that the PR title
 # follows Conventional Commits — the same <type>: <description> shape the
 # .githooks/commit-msg hook checks locally — with a lowercase subject and no
 # trailing period. The task ID stays in the commit subjects, and the PR links its
