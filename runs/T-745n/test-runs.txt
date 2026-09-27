@@ -103,3 +103,74 @@ $ (ubuntu:24.04, awk = /usr/bin/mawk, in a clone of the branch) sh docs/setup/se
 setup-check: adapted OK
 setup-check: markers OK
 exit 0
+
+## Round 1 fixes, red (the new fixture lines before the check), 2026-09-27T16:03Z, head 7e08de7 plus the fixtures
+$ sh docs/setup/tests/run.sh
+FAIL  adapted/bad-rule-1: no output line: setup-check: adapted FAIL rule-1 kit: docs/a.md:11
+FAIL  adapted/bad-rule-1: no output line: setup-check: adapted FAIL rule-1 kit: docs/a.md:13
+FAIL  adapted/bad-rule-1: no output line: setup-check: adapted FAIL rule-1 the template: docs/a.md:17
+FAIL  adapted/bad-rule-3: no output line: setup-check: adapted FAIL rule-3 delete this: docs/c.md:28
+FAIL  adapted/bad-rule-3: no output line: setup-check: adapted FAIL rule-3 delete the one you do not use: docs/c.md:30
+FAIL  adapted/bad-rule-3: no output line: setup-check: adapted FAIL rule-3 fill in: docs/c.md:32
+setup-check tests: 38 passed, 2 failed
+exit 1
+
+## Round 1 fixes, all checks, 2026-09-27T16:00:32Z, head 42fe407
+$ sh docs/adr/adr-lint.sh
+adr-lint: OK
+exit 0
+$ sh docs/prd/prd-lint.sh
+prd-lint: OK
+exit 0
+$ sh docs/links/link-lint.sh
+link-lint: OK  887 links resolved
+exit 0
+$ sh docs/tests/run-discipline-tests.sh
+run-discipline-tests: 81 passed, 0 failed
+exit 0
+$ sh docs/tests/nested-checkout-check.sh
+nested-checkout-check: OK  10 cases behaved
+exit 0
+$ sh docs/setup/tests/run.sh
+setup-check tests: 40 passed, 0 failed
+exit 0
+$ sh docs/setup/setup-check.sh
+setup-check: pin OK
+setup-check: kit-history OK
+setup-check: facts OK
+setup-check: onboarding OK
+setup-check: glossary OK
+setup-check: guardrails OK
+setup-check: markers OK
+setup-check: adapted OK
+setup-check: ci OK
+setup-check: protection OK
+setup-check: identity OK
+setup-check: procedure OK
+run-discipline-tests: 81 passed, 0 failed
+adr-lint: OK
+prd-lint: OK
+link-lint: OK  887 links resolved
+setup-check: kit-linters OK
+exit 0
+$ go build ./...
+exit 0
+$ go vet ./...
+exit 0
+$ go test -count=1 ./...
+?   	github.com/pharzam/layup/cmd/layup	[no test files]
+ok  	github.com/pharzam/layup/internal/cli	0.381s
+ok  	github.com/pharzam/layup/internal/psb	0.380s
+exit 0
+$ git diff --check 9beff4c HEAD
+exit 0
+
+## Round 1 fixes, the pull request's CI simulated, head 42fe407
+The restore step of ci.yml done by hand in a clone: the seven scripts and docs/setup/tests/ copied from main (9beff4c).
+$ sh docs/setup/tests/run.sh -> exit 0, setup-check tests: 35 passed, 0 failed
+$ sh docs/setup/setup-check.sh -> exit 0
+$ sh docs/adr/adr-lint.sh; sh docs/prd/prd-lint.sh; sh docs/links/link-lint.sh; sh docs/tests/run-discipline-tests.sh -> exit 0 each
+
+## Round 1 fixes, the CI awk
+$ (ubuntu:24.04, awk = /usr/bin/mawk) sh docs/setup/tests/run.sh
+setup-check tests: 40 passed, 0 failed
