@@ -298,11 +298,12 @@ check_guardrails() {
 # the exact code span `‹` (a backtick on each side: the character named, as in
 # "search for `‹`"). Only that one character is skipped. Each marker in a
 # git-tracked file must be exempt (a template file for a new record, a fixture,
-# an accepted ADR 0001 to 0008, or a script that defines the convention) or listed
+# an accepted ADR 0001 to 0008, a record under runs/ (evidence, never edited), or
+# a script that defines the convention) or listed
 # in docs/setup/open-gaps.tsv (`path<TAB>marker<TAB>question`); each listed marker
 # must still occur. Key: path plus exact marker text; equal markers in one file
 # are one key.
-MK_EXEMPT='^(docs/(adr|ci|links|prd|setup)/tests/|\.githooks/tests/|docs/templates/)|^docs/[^/]+/template\.md$|^docs/tests/template-[^/]*\.md$|^docs/tests/traceability-template\.md$|^docs/adr/000[1-8]-[^/]*\.md$|^docs/links/link-lint\.sh$|^docs/prd/prd-lint\.sh$|^docs/setup/setup-check\.sh$|^docs/setup/open-gaps\.tsv$'
+MK_EXEMPT='^(docs/(adr|ci|links|prd|setup)/tests/|\.githooks/tests/|docs/templates/|runs/)|^docs/[^/]+/template\.md$|^docs/tests/template-[^/]*\.md$|^docs/tests/traceability-template\.md$|^docs/adr/000[1-8]-[^/]*\.md$|^docs/links/link-lint\.sh$|^docs/prd/prd-lint\.sh$|^docs/setup/setup-check\.sh$|^docs/setup/open-gaps\.tsv$'
 check_markers() {
 	git -C "$ROOT" -c core.quotePath=false ls-files > "$tmpdir/mk_files" || { fail markers "git: cannot list the tracked files"; return; }
 	grep -Ev "$MK_EXEMPT" "$tmpdir/mk_files" | while IFS= read -r mk_f; do

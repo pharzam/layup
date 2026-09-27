@@ -12,7 +12,7 @@ disagreement is a defect to fix in the same change
 
 LAYUP, a software product under construction; its problem statement is the PSB,
 fact [`F-0001`](docs/facts/F-0001-layup-problem-statement-brief.md). The discipline
-system is a one-time copy of the Armature kit, pinned in
+system is a one-time copy of Armature, pinned in
 [`docs/setup/armature.pin`](docs/setup/armature.pin): a quality gate, guardrails,
 decision records, a glossary, a facts-and-requirements convention, a test section
 and a task backlog. The stack is Go
@@ -115,8 +115,10 @@ git diff --check
 
 [`docs/ci/pr-link-lint.sh`](docs/ci/pr-link-lint.sh) and
 [`docs/ci/review-record-lint.sh`](docs/ci/review-record-lint.sh) read forge
-artifacts, so they run in CI only and have no local run. Armature has no product test suite and no
-product toolchain: never invent a build, lint or test command for it.
+artifacts, so they run in CI only and have no local run. The Go code builds and
+tests with `go build ./...`, `go vet ./...` and `go test ./...`; the test levels
+are in [`docs/tests/test-levels.md`](docs/tests/test-levels.md). Never invent a
+command that no document names.
 
 ## Branches, worktrees, commits, and pull requests
 
@@ -137,12 +139,17 @@ ones. Any detail belongs in that task's own file, never in either index. The sam
 pull request that lands the work records the line in the completed log, moving it
 from the backlog where the task had one.
 
-## Placeholders and adopter values
+## Placeholders
 
-Every `‹…›` marker is a value only the adopter can supply — the test runner, the
-evidence store, the task-ID scheme, the worktree directory. Never replace one with
-a guess, never invent an adopter's command, path or number, and never delete a
-marker to make a check pass. Search for `‹` to find every one of them.
+A `‹…›` marker is one of two things. In a template file for a new record
+(`docs/adr/template.md`, `docs/prd/template.md`, `docs/tests/template-*.md`,
+`docs/templates/`) it is a field that the new record gets. Anywhere else it is an
+open gap, listed with its question in
+[`docs/setup/open-gaps.tsv`](docs/setup/open-gaps.tsv). Never replace a gap with a
+guess, never invent a command, path or number, and never delete a marker to make
+a check pass. The check `markers` of
+[`docs/setup/setup-check.sh`](docs/setup/setup-check.sh) enforces this. Search for
+`‹` to find every one of them.
 
 ## Safety limits
 
@@ -168,7 +175,7 @@ time, never directly. An architecturally significant decision becomes an
 | [`docs/issue-workflow.md`](docs/issue-workflow.md) | The numbered rules themselves, and the honest table of what a mechanism backs today. |
 | [`docs/guardrails.md`](docs/guardrails.md) | Known pitfalls, pre-registered pass and fail rules, and how a result is validated. |
 | [`docs/glossary.md`](docs/glossary.md) | The shared vocabulary, and the rule that every abbreviation earns an entry. |
-| [`docs/adr/`](docs/adr/) | Architecture decisions that constitute a project, with the context and the consequences of each one. Armature's own past governance decisions were archived under `docs/decisions/` in the kit; this repository deleted that directory (kit step 4). |
+| [`docs/adr/`](docs/adr/) | Architecture decisions that constitute a project, with the context and the consequences of each one. Armature's own past governance decisions are not LAYUP's: setup step S05 ([`docs/setup/steps.tsv`](docs/setup/steps.tsv)) deleted `docs/decisions/`. |
 | [`docs/tests/`](docs/tests/) | The test levels, a pattern for each, and the Definition-of-Done coverage checklist. |
 | [`docs/facts/`](docs/facts/) and [`docs/prd/`](docs/prd/) | Customer facts kept as evidence, and the requirements derived from them. |
 | [`.githooks/`](.githooks/) and [`docs/ci/`](docs/ci/) | What the gate enforces locally, and what CI enforces as the authority. |

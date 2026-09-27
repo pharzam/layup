@@ -1,4 +1,4 @@
-<h1><img src="assets/armature-logo.jpg" alt="Armature logo: a low-poly human figure rendered as a wireframe armature." width="48" align="middle"> LAYUP</h1>
+# LAYUP
 
 *Evidence-based discipline setup and delivery governance for multi-agent software work.*
 
@@ -6,7 +6,7 @@
 statement is the approved PSB, stored as the raw fact
 [`F-0001`](docs/facts/F-0001-layup-problem-statement-brief.md). LAYUP obeys the
 same discipline that it will set up for other projects: this repository is an
-Armature project, a one-time copy of the Armature kit pinned at commit `a959655`
+Armature project, a one-time copy of Armature pinned at commit `a959655`
 ([`docs/setup/armature.pin`](docs/setup/armature.pin),
 [ADR-0009](docs/adr/0009-pin-armature-at-a-recorded-commit.md)), with no upstream
 link. The `layup` command so far prints its version and checks a problem
@@ -47,22 +47,22 @@ round, one more after a fix (two for a change to a gate).
 | [`docs/glossary.md`](docs/glossary.md) | The shared vocabulary the other docs assume. |
 | [`docs/guardrails.md`](docs/guardrails.md) | Known pitfalls, pre-registered pass/fail rules, and validation. |
 | [`docs/setup/`](docs/setup/) | The Armature pin, the setup record with the evidence for each setup value, the open gaps, the branch-protection body, and `setup-check.sh`, which proves the setup. |
-| [`docs/adr/`](docs/adr/) | Architecture Decision Records that constitute a project — the *why* behind structural choices — plus [`adr-lint.sh`](docs/adr/adr-lint.sh), the discipline test that keeps them honest. Armature's own past governance decisions were archived under `docs/decisions/` in the kit; this repository deleted that directory (kit step 4). |
+| [`docs/adr/`](docs/adr/) | Architecture Decision Records that constitute a project — the *why* behind structural choices — plus [`adr-lint.sh`](docs/adr/adr-lint.sh), the discipline test that keeps them honest. Armature's own past governance decisions are not LAYUP's: setup step S05 deleted `docs/decisions/`. |
 | [`docs/facts/`](docs/facts/) | Raw facts kept as immutable evidence — the PSB (`F-0001`, with more numbered facts in `F-0003`), the vision brief (`F-0002`, a solution document) and the idea owner's answers to the PSB's gap questions (`F-0004`) — and the citation convention that derives requirements from them. |
 | [`docs/prd/`](docs/prd/) | Product Requirements Documents derived from the facts, plus [`prd-lint.sh`](docs/prd/prd-lint.sh), the discipline test that keeps them honest. |
-| [`docs/tests/`](docs/tests/) | The testing conventions — the test levels, a pattern per level, the security, scaling, and Definition-of-Done checklists, and test-to-requirement traceability — plus [`run-discipline-tests.sh`](docs/tests/run-discipline-tests.sh), which tests the kit's own linters against fixtures. |
+| [`docs/tests/`](docs/tests/) | The testing conventions — the test levels, a pattern per level, the security, scaling, and Definition-of-Done checklists, and test-to-requirement traceability — plus [`run-discipline-tests.sh`](docs/tests/run-discipline-tests.sh), which tests the discipline linters against fixtures. |
 | [`tests/`](tests/) | Cross-package end-to-end fixtures; Go unit and integration tests sit beside the code. Empty so far (the first e2e test sits beside its package), kept in git by a `.gitkeep`. |
 | [`docs/tasks/`](docs/tasks/) | The task index — [`backlog.md`](docs/tasks/backlog.md) and [`completed.md`](docs/tasks/completed.md). |
 | [`.githooks/`](.githooks/) | Git hooks that enforce the cheap gate locally — a commit-message check and a pre-commit runner. Install with `sh .githooks/install.sh`. |
-| [`.gitattributes`](.gitattributes) | **Copy this one.** It keeps the kit's scripts and hooks at line-feed endings, without which none of them runs on a Windows checkout, and pins the handful of fixtures whose Windows endings *are* the assertion. Leave it behind and the gate is either unrunnable or quietly testing nothing. |
-| [`docs/ci/`](docs/ci/) | Optional CI templates (GitHub Actions and GitLab CI) that run the same gate on every PR. Inert until you copy one into place. |
-| [`docs/templates/`](docs/templates/) | Optional, inert GitHub/GitLab issue and PR templates that embody the issue-first workflow. Inert until you copy them into place. |
+| [`.gitattributes`](.gitattributes) | It keeps the scripts and hooks at line-feed endings, without which none of them runs on a Windows checkout, and pins the few fixtures whose Windows endings *are* the assertion. Without it the gate is either unrunnable or quietly tests nothing. |
+| [`docs/ci/`](docs/ci/) | LAYUP's CI (the workflows in [`.github/workflows/`](.github/workflows/)) described job by job, the branch protection, and the two scripts that read forge artifacts. |
+| [`docs/templates/`](docs/templates/) | The GitHub issue and pull-request templates of the issue-first workflow; not active on the forge. |
 
 ## How this repository was set up
 
 By hand, one time, on 2026-09-23, under parent issue
-[#1](https://github.com/pharzam/layup/issues/1). The kit's own adoption steps were
-followed; each filled value has its evidence in
+[#1](https://github.com/pharzam/layup/issues/1). Armature's adoption steps were
+followed (the procedure is [`docs/setup/steps.tsv`](docs/setup/steps.tsv)); each filled value has its evidence in
 [`docs/setup/record-T-n1hp.md`](docs/setup/record-T-n1hp.md), and each value with
 no source is an open gap in [`docs/setup/open-gaps.tsv`](docs/setup/open-gaps.tsv).
 `sh docs/setup/setup-check.sh` proves the setup and runs in CI as a required
