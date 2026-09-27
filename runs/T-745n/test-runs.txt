@@ -25,7 +25,7 @@ FAIL  frame/good-passthrough: no output line: setup-check: adapted OK
 FAIL  markers/bad-record-shape: exit 0, want 1
 FAIL  markers/bad-record-shape: no output line: setup-check: markers FAIL unlisted: docs/engineering-discipline.md ‹model›
 setup-check tests: 34 passed, 6 failed
-exit 0
+exit 1 (the runner's exit; this line first said 0, the exit of the output filter, and was corrected in step 6)
 
 ## Step 3, green (the check adapted; markers without mk_allowed), 2026-09-27T15:23:10Z
 $ sh docs/setup/tests/run.sh
@@ -36,3 +36,68 @@ $ sh docs/setup/setup-check.sh --only adapted,markers . | wc -l
 274
 (the text pass of step 4 removes these findings)
 
+## Step 4 and 5, the hook refuses a document that speaks as the template, 2026-09-27T15:33Z, head 551c814
+$ printf 'This kit is optional.\n' > docs/zz-probe.md && git add docs/zz-probe.md && git commit -m "test: T-745n probe"
+setup-check: adapted FAIL rule-1 kit: docs/zz-probe.md:1
+setup-check: adapted FAIL rule-3 optional: docs/zz-probe.md:1
+setup-check: markers OK
+commit exit 1 (the probe was then removed from the index and the disk; no commit was made)
+
+## Step 6, all checks, 2026-09-27T15:36:45Z, head ecd5cc9
+$ sh docs/adr/adr-lint.sh
+adr-lint: OK
+exit 0
+$ sh docs/prd/prd-lint.sh
+prd-lint: OK
+exit 0
+$ sh docs/links/link-lint.sh
+link-lint: OK  880 links resolved
+exit 0
+$ sh docs/tests/run-discipline-tests.sh
+run-discipline-tests: 81 passed, 0 failed
+exit 0
+$ sh docs/tests/nested-checkout-check.sh
+nested-checkout-check: OK  10 cases behaved
+exit 0
+$ sh docs/setup/tests/run.sh
+setup-check tests: 40 passed, 0 failed
+exit 0
+$ sh docs/setup/setup-check.sh
+setup-check: pin OK
+setup-check: kit-history OK
+setup-check: facts OK
+setup-check: onboarding OK
+setup-check: glossary OK
+setup-check: guardrails OK
+setup-check: markers OK
+setup-check: adapted OK
+setup-check: ci OK
+setup-check: protection OK
+setup-check: identity OK
+setup-check: procedure OK
+run-discipline-tests: 81 passed, 0 failed
+adr-lint: OK
+prd-lint: OK
+link-lint: OK  880 links resolved
+setup-check: kit-linters OK
+exit 0
+$ go build ./...
+exit 0
+$ go vet ./...
+exit 0
+$ go test -count=1 ./...
+?   	github.com/pharzam/layup/cmd/layup	[no test files]
+ok  	github.com/pharzam/layup/internal/cli	0.289s
+ok  	github.com/pharzam/layup/internal/psb	0.289s
+exit 0
+$ git diff --check 9beff4c HEAD
+runs/T-745n/test-runs.txt:38: new blank line at EOF.
+exit 2
+
+## Step 6, the same checks on the CI awk, 2026-09-27T15:38Z, head ecd5cc9
+$ (ubuntu:24.04, awk = /usr/bin/mawk) sh docs/setup/tests/run.sh
+setup-check tests: 40 passed, 0 failed
+$ (ubuntu:24.04, awk = /usr/bin/mawk, in a clone of the branch) sh docs/setup/setup-check.sh --only adapted,markers .
+setup-check: adapted OK
+setup-check: markers OK
+exit 0
