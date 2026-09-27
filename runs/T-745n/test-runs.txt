@@ -27,3 +27,12 @@ FAIL  markers/bad-record-shape: no output line: setup-check: markers FAIL unlist
 setup-check tests: 34 passed, 6 failed
 exit 0
 
+## Step 3, green (the check adapted; markers without mk_allowed), 2026-09-27T15:23:10Z
+$ sh docs/setup/tests/run.sh
+setup-check tests: 40 passed, 0 failed
+$ (ubuntu:24.04, awk = /usr/bin/mawk) sh docs/setup/tests/run.sh
+setup-check tests: 40 passed, 0 failed
+$ sh docs/setup/setup-check.sh --only adapted,markers . | wc -l
+274
+(the text pass of step 4 removes these findings)
+
