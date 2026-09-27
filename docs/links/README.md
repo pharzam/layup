@@ -192,7 +192,7 @@ still look green there. [`tests/expect-check.sh`](tests/expect-check.sh) closes
 that for this suite, and fails if it finds no case to check.
 
 That is the pitfall
-[`guardrails.md`](../guardrails.md#gate-pitfalls-kit-wide--keep-these) names — a
+[`guardrails.md`](../guardrails.md#gate-pitfalls) names — a
 harness that compares only exit codes — which is why a close-out that turns on a
 specific assertion id pastes this script's output beside the runner's.
 
