@@ -23,4 +23,15 @@ Q-1Definitive decision: LAYUP exists for the target strictly as an external bina
 | O-82 | Q-7, stall values | T and N are parameters, editable per run. Defaults: T = 10 minutes (a maximum), N = 1. |
 | O-83 | Q-8, learning | The weight adjustments, their bounds and the trigger policy of the learning loop are parameters. |
 
-**One boundary the author reads into O-79 (to confirm on #72).** The PSB makes some rules invariant: a business-forking decision goes to the idea owner (`F-0001#13`, `#26`); a check that did not run is not a pass (`F-0001#5`); O-71 says a failed or below-threshold smart-if answer goes to a human, never to "pass". The parameters of O-78 and O-79 tune how and when these rules apply (thresholds, the screen frequency, the authority level); they do not switch the rules off. The architecture states this bound.
+**One boundary the author reads into O-79, confirmed by O-84.** The PSB makes some rules invariant: a business-forking decision goes to the idea owner (`F-0001#13`, `#26`); a check that did not run is not a pass (`F-0001#5`); O-71 says a failed or below-threshold smart-if answer goes to a human, never to "pass". The parameters of O-78 and O-79 tune how and when these rules apply (thresholds, the screen frequency, the authority level); they do not switch the rules off. The architecture states this bound.
+
+## O-84: the readings approved, and "smart-if"
+
+The author posted the readings above on #72 (comment 5859227091) and asked the Operator to confirm the boundary. The Operator's answer, word for word (pharzam, 2026-09-27T20:41:41Z, comment 5859648760):
+
+--- begin
+The text is accurate and approved. One clarification on smart-if: here, "if" simply means a conditional "if" (an if-condition).
+
+--- end
+
+Reading: the readings of O-76 to O-83 and the boundary are approved. The smart-if engine is a conditional branch point in the orchestrator's flow: at a named point, the flow takes one branch or another by the engine's answer, as an `if` statement does; it does not write text or plan work.
