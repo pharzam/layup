@@ -35,3 +35,18 @@ The text is accurate and approved. One clarification on smart-if: here, "if" sim
 --- end
 
 Reading: the readings of O-76 to O-83 and the boundary are approved. The smart-if engine is a conditional branch point in the orchestrator's flow: at a named point, the flow takes one branch or another by the engine's answer, as an `if` statement does; it does not write text or plan work.
+
+## O-85 and O-86: the budget overrun, and the full evaluation before the rewrite
+
+The Operator's answer to "Second public-solution search — result, and the revised question" on #72, word for word (pharzam, 2026-09-28T12:23:57Z, comment 5869765615):
+
+--- begin
+The budget overrun is approved.
+
+Regarding the final question, proceed with option (a). However, do not keep the hands-on evaluation time-bounded or limited—ensure it is a thorough, full evaluation of the reuse candidates before moving forward with the rewrite plan.
+--- end
+
+| No. | Decision | Reading |
+| --- | -------- | ------- |
+| O-85 | The budget overrun is approved | The branch past the Budget maximum of the plan review (3,200 lines over 36 files) is approved as it stands at `22e65b3` (37 files, +4,055 −32). The rewrite gets its own budget from the plan review of the new plan. |
+| O-86 | Option (a), with a full evaluation | LAYUP keeps its own Go orchestrator. Before the rewrite plan, each reuse candidate of `search-v2/summary.md` gets a thorough, hands-on evaluation, with no time bound: Gas Town and Beads first, then GNAP, Spec Kitty, AI-SDLC, Paperclip's budget and approval model, and the review and done-check components; each ends with use, borrow the pattern, or reject, with the evidence. Then the new plan for the rewrite, by the fixed method. |
