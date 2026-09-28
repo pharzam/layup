@@ -149,6 +149,14 @@ record by number here, and let the index table below do the linking.
 | [0010](0010-use-go-as-the-technology-stack.md) | Use Go as the technology stack | Accepted |
 | [0011](0011-structure-the-core-engine-as-a-go-cli-over-repository-files.md) | Structure the core engine as a Go CLI over repository files | Accepted |
 | [0012](0012-build-layup-in-bootstrap-mode.md) | Build LAYUP in bootstrap mode | Accepted |
+| [0013](0013-orchestrate-the-lifecycle-with-an-external-layup-run.md) | Orchestrate the lifecycle with an external `layup run` | Proposed |
+| [0014](0014-decide-at-named-points-with-a-pluggable-smart-if-provider.md) | Decide at named points with a pluggable smart-if provider | Proposed |
+| [0015](0015-route-role-sessions-over-registered-harnesses.md) | Route role sessions over registered harnesses | Proposed |
+| [0016](0016-keep-the-run-records-in-git-and-tell-agent-from-human.md) | Keep the run records in Git and tell agent from human | Proposed |
+| [0017](0017-put-native-stack-gates-in-the-target.md) | Put native stack gates in the target | Proposed |
+| [0018](0018-escalate-before-the-work-and-stop-cost-at-the-band.md) | Escalate before the work and stop cost at the band | Proposed |
+| [0019](0019-learn-routing-from-the-records-at-each-retrospective.md) | Learn routing from the records at each retrospective | Proposed |
+| [0020](0020-derive-the-specification-from-numbered-facts.md) | Derive the specification from numbered facts | Proposed |
 
 <!-- Add one row per ADR as you write them. Keep the newest at the bottom. -->
 
