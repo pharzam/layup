@@ -129,6 +129,24 @@ check that catches it.
   [Check `adapted`](setup/README.md#check-adapted)); a false positive is fixed by
   a better sentence, not by a list entry. Learned in `T-745n`
   ([#70](https://github.com/pharzam/layup/issues/70)).
+- ❌ **A public-solution search that confirms the design.** The first search of
+  `T-hbw8` ran after the solution shape was fixed, used the words of that
+  solution, and passed the one list that named the missed competitor (Paperclip,
+  line 163 of about 247) through a summarizer with a filter and a cap of 15. It is
+  silent because the selection record shows a search section with sources, so
+  the rule "search first" looks met. **The check:** the search runs before the
+  decision that fixes the solution shape; queries come from the problem
+  statement's own terms; each curated list is read in full, every relevant entry
+  with a keep or reject reason; two searchers on different models, blind to each
+  other ([`runs/T-hbw8/root-cause-missed-solution.md`](../runs/T-hbw8/root-cause-missed-solution.md)).
+  Learned in `T-hbw8` ([#72](https://github.com/pharzam/layup/issues/72)).
+- ❌ **Coverage by name.** A coverage table that maps each requirement to a
+  component name looks complete while the component cannot do the work: the
+  `T-hbw8` architecture passed its own tables and then got about 50 material
+  findings when two reviewers walked concrete cases. **The check:** each coverage
+  row points to a walkthrough of one concrete case, each step tagged `code`,
+  `model` or `human`, and an independent review of the walkthroughs runs before a
+  human is asked to approve. Learned in `T-hbw8`.
 
 ### Writing a lesson back
 
