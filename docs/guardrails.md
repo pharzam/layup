@@ -147,6 +147,30 @@ check that catches it.
   row points to a walkthrough of one concrete case, each step tagged `code`,
   `model` or `human`, and an independent review of the walkthroughs runs before a
   human is asked to approve. Learned in `T-hbw8`.
+- ❌ **A tool under test writes into the host's home directory.** In the `T-hbw8`
+  evaluation, three of eighteen agent tools wrote outside their work directory
+  on their first calls: one installed a Claude Code plugin and turned it on in
+  `~/.claude/settings.json`, one wrote 628 command and skill files for 13
+  harnesses into `$HOME`, one created `~/.gt` and `~/.dolt`; a fourth tried to set
+  branch protection on GitHub. A brief that said "do not change the global
+  configuration" did not stop them. It is silent because the tool's install step
+  runs by default and reports success; every later harness session on the host
+  then loads the added hooks and skills. **The check:** start each tool and each
+  harness it drives with `HOME` set to a directory under the work directory from
+  its first call, and with no `gh` login; after the runs, list the files in the
+  real home directory that changed in the run window
+  ([`runs/T-hbw8/evaluation/summary.md`](../runs/T-hbw8/evaluation/summary.md),
+  "Incidents during the evaluation"). Learned in `T-hbw8`.
+- ❌ **A model on the "not used" list, used inside a test run.** The `T-hbw8`
+  evaluation brief named Claude Haiku 4.5 as the cheap model inside the
+  candidates' test runs, and eleven candidates ran with it. ADR-0012 part 3 lists
+  Haiku as not used and has no exception for a test fixture; the plan review
+  found it, and it became a reported deviation. It is silent because nothing
+  checks a model name in a brief, and a short alias (`sonnet`, `opus`) hides which
+  version ran. **The check:** before a brief names a model, compare the full model
+  ID with the "not used" list of
+  [ADR-0012](adr/0012-build-layup-in-bootstrap-mode.md), and write full model IDs
+  in every evidence file. Learned in `T-hbw8`.
 
 ### Writing a lesson back
 

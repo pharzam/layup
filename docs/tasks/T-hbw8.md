@@ -79,6 +79,21 @@ author's answer to the plan review" on #72).
 - The start values of the thresholds, `H`, `cost.task_factor` and the reward
   terms are set with their evidence by the implementation plan and the pilot.
 
+## Lessons
+
+The lessons that the next reader could hit are in
+[`docs/guardrails.md`](../guardrails.md) §2, each learned in this task:
+
+- "A public-solution search that confirms the design" and "Coverage by name":
+  from the withdrawn first draft and its deep check
+  ([`runs/T-hbw8/root-cause-missed-solution.md`](../../runs/T-hbw8/root-cause-missed-solution.md)).
+- "A tool under test writes into the host's home directory": from the hands-on
+  evaluation, where three tools wrote into the Operator's home directory and one
+  tried to write to GitHub
+  ([`runs/T-hbw8/evaluation/summary.md`](../../runs/T-hbw8/evaluation/summary.md)).
+- "A model on the 'not used' list, used inside a test run": from the same
+  evaluation, found by the plan review of plan v2 (Q-10 on #72).
+
 ## Test runs
 
 The output is in [`runs/T-hbw8/test-runs.txt`](../../runs/T-hbw8/test-runs.txt).
