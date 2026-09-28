@@ -17,7 +17,8 @@ PRD (finding B4); the vision brief asks for a preliminary design review, a PRD
 and a phased plan (`F-0002` §2.1). LAYUP already numbers the facts of its own
 problem statement and checks each numbered fact as a byte-exact substring of
 the stored file (`docs/setup/setup-check.sh`, check `facts`), and `layup psb
-check` finds the gaps of a problem statement before delivery (`F-0003#41`). The
+check` finds, before delivery, the gaps that fixed text rules can find (rules
+G1–G5, `F-0003#41`); it does not find a gap of meaning. The
 smart-if provider does not generate text and is weak at counting
 ([`runs/T-hbw8/jev-sources.md`](../../runs/T-hbw8/jev-sources.md)). The options
 and the selection are in
