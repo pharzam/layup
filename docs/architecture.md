@@ -61,7 +61,7 @@ document rests on are [ADR-0010](adr/0010-use-go-as-the-technology-stack.md),
 
 | Command | Does | Model call |
 | ------- | ---- | ---------- |
-| `layup psb check FILE` | Finds the gaps of a problem statement as one batch of questions (delivered, REQ-001) | no |
+| `layup psb check FILE` | Finds the gaps that fixed text rules can find — no named stack, a metric with no measurement method, an undefined abbreviation, a vague word with no number, an open start value (rules G1–G5) — as one batch of questions (delivered, REQ-001). It does not find a gap of meaning; the Intake review session does (section 4) | no |
 | `layup setup TARGET` | Creates the target from the pinned baseline and the stack's gate recipe, per `setup/steps.tsv`; stops at each human decision | no |
 | `layup setup verify TARGET` | Proves the setup with evidence for every value | no |
 | `layup run TARGET` | The phase loop | only through the smart-if component |
@@ -74,7 +74,7 @@ document rests on are [ADR-0010](adr/0010-use-go-as-the-technology-stack.md),
 
 | Phase | What happens | Exit check | Human decision |
 | ----- | ------------ | ---------- | -------------- |
-| Intake | The problem statement and the vision brief are stored; `layup psb check` gives the gap batch; the idea owner's answers are stored; the facts are numbered; `approvers.tsv`, `budget.tsv` and the list of planned approval points are written | the facts check; every gap answered or listed | Decision Points 1 and 2 (planned) |
+| Intake | The problem statement and the vision brief are stored; `layup psb check` gives the rule-based gaps; a review session on a harness (a reasoning model in the Domain Expert or Product Owner role) reads the problem statement for gaps of meaning — contradictions, a success criterion that no requirement serves, a missing actor, a term with two meanings, unclear scope — and adds its questions to the same batch, each question naming its source (`G1`–`G5` or `review`); a session on a counterpart harness checks the batch for missing and false questions; the idea owner answers the whole batch once, and the answers are stored as a fact; the facts are numbered; `approvers.tsv`, `budget.tsv` and the list of planned approval points are written | the facts check; every gap answered or listed | Decision Points 1 and 2 (planned) |
 | Scaffold | `layup setup`: the baseline copy, the stack's native gates and CI job, the records branch, the App installed | `layup setup verify` | the setup questions of `steps.tsv` (planned) |
 | Design | `layup spec draft`; role sessions write the requirements, the preliminary design review; a panel where ADR-0006 requires one | `layup spec check` | — |
 | Architect | The architecture and its decisions | the trace check; the review | the architecture approval (planned) |
@@ -173,7 +173,7 @@ parameter tunes how and when a PSB rule applies; it cannot switch one off
 
 | In-Scope item | Component |
 | ------------- | --------- |
-| `F-0003#41` Problem Statement Quality | `layup psb check` in Intake (delivered) |
+| `F-0003#41` Problem Statement Quality | `layup psb check` (rule-based gaps, delivered) and the Intake review session (gaps of meaning), checked on a counterpart harness, in one batch |
 | `F-0003#42` Reproducible Discipline Setup | `layup setup`, `layup setup verify`, the stack's gate recipe (ADR-0017) |
 | `F-0003#43` Rule Protection | rule paths changed only in the retrospective batch; the orchestrator's merge rule; `layup audit` (ADR-0017, ADR-0016) |
 | `F-0003#44` Stack-Dependent Gates | the target's native stack gates and `layup gate` (ADR-0017) |
@@ -190,7 +190,7 @@ parameter tunes how and when a PSB rule applies; it cannot switch one off
 
 | Requirement | Phase | Component |
 | ----------- | ----- | --------- |
-| REQ-001 | 1 | `layup psb check` (delivered) |
+| REQ-001 | 1 | `layup psb check` (delivered) for the rule-based gaps; the Intake review session adds the gaps of meaning to the same batch |
 | REQ-002 | 1 | `layup setup`, `layup setup verify` |
 | REQ-003 | 2 | the retrospective batch, the merge rule, `layup audit`; with the limit of section 10 |
 | REQ-004 | 1 | `layup gate` runs the target's native gates from outside (ADR-0017) |

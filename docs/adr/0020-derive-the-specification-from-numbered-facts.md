@@ -25,8 +25,12 @@ and the selection are in
 
 ## Decision
 
-1. **Intake numbers the facts.** At Intake, after the gap batch and the idea
-   owner's answers (Decision Points 1 and 2), `layup` stores the problem
+1. **Intake numbers the facts.** The gap batch of Intake is the output of
+   `layup psb check` (the rule-based gaps G1–G5, with no model call) plus the
+   questions of a review session on a harness that reads the problem statement
+   for gaps of meaning, checked by a session on a counterpart harness; each
+   question names its source. After the batch and the idea owner's answers
+   (Decision Points 1 and 2), `layup` stores the problem
    statement byte-identical in the target's `docs/facts/`, with a record that
    numbers each clause as a fact (`F-NNNN#n`), as LAYUP's own facts are stored.
 2. **A generated skeleton.** In Design, `layup spec draft` writes one requirement
