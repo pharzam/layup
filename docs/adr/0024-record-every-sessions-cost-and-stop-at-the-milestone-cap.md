@@ -35,17 +35,25 @@ We will record every session's cost and stop at the milestone cap:
    billing type, start, latency, duration, tokens by class with a status
    (`observed`, `partial`, `unavailable`), and money with a status (`reported`,
    `computed` from a cited price, `unknown`). An unknown value is never zero.
-2. **The appetite and the band** (`B`, `U`) at Intake, from the idea owner, in
-   `budget.tsv`; no per-task budget.
+2. **The band** (`B`; `U`, the money appetite) and the wall-clock appetite at
+   Intake, from the idea owner, in `budget.tsv`; no per-task budget.
 3. **A cap per milestone,** in money and wall-clock, fixed by its bet; the caps
-   stay within `U`.
+   stay within `U` and the wall-clock appetite; a milestone's clock pauses while
+   it waits for a human.
 4. **Before each session start,** code sums the known spend and the spend caps of
    running sessions: past the milestone cap, the circuit breaker stops the
    milestone and kills the running sessions; between `B` and `U` with no unknown
-   part, smart-if P5 may continue; an unknown part never counts as below `B`, so
-   the idea owner decides; at `U`, a hard stop.
+      part, smart-if P5 may continue; an unknown part never counts as below `B`, so
+   the idea owner decides, unless a bound that the idea owner accepted covers it;
+   a session with no cap is an unknown part before it starts; at `U`, a hard
+   stop.
 5. **A session with no token report and no cap** runs under a wall-clock limit,
    and its task's telemetry is incomplete (O-80).
+6. **The measures** read the ledger and the records of ADR-0014: a source for
+   every human action, a planned or unplanned class by the Intake's list of
+   planned points, and an audit with a recorded seed over items merged at least 30
+   days before, at each retrospective and once after the last merge; an empty
+   sample is "not measured".
 
 We reject: per-task estimates at Intake; a cost that is zero because it is not
 known; a harness's own price estimate judged by the smart-if.
@@ -55,6 +63,7 @@ known; a harness's own price estimate judged by the smart-if.
 - Telemetry Completeness fails for each task that a harness without a token report
   runs; the pilot can avoid it only by routing (known limit L-G1 of
   [`architecture.md`](../architecture.md)).
-- Spend inside one session stops only where the harness enforces its cap; without
-  one, the wall-clock limit is the only stop.
+- Spend inside one session stops only where the harness enforces its cap, and a
+  cap checked between steps can be passed inside one step; without a cap, the
+  wall-clock limit is the only stop.
 - The measures of PSB §7 read the ledger with the records of ADR-0014.

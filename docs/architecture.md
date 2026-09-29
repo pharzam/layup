@@ -972,6 +972,7 @@ a PSB rule (O-84).
 | learning weights, bounds, trigger | §13 | O-83 |
 | allowed dependencies | set by the idea owner at Intake or by a decision | `F-0001#13` |
 | `lease.H`; the brief's line limit | set at Intake with evidence | Invariant 4 |
+| `harness.<id>.cap`, `harness.<id>.wall`; `audit.n` | set at Intake with evidence (the harness's documentation; the audit's sampling basis) | Invariant 4 |
 
 The band has one home, `budget.tsv` (§12); a bet or an escalation decision
 changes it as a rendered change, never a parameter row.
@@ -1114,7 +1115,10 @@ account or a subscription), the start, the first output (latency = first output 
 start), the end (duration), the tokens by class with a status (`observed`,
 `partial` or `unavailable`, with the reason), and the money with a status
 (`reported` by the harness; `computed` from the tokens and a row of `prices.tsv`
-that cites its source; or `unknown`). An unknown value is never zero (FT2, Sol-11).
+that cites its source; or `unknown`). A session on a subscription has its money
+`computed` from its tokens and the list price, marked as a subscription. An
+unknown value is never zero (FT2, Sol-11). The start row of each session records
+the spend cap and the wall-clock limit applied to it.
 The smart-if's calls carry their own cost in `decisions.tsv` (§10); the report adds
 both.
 
@@ -1127,51 +1131,60 @@ for the pilot, the Operator can route every task to harnesses that report tokens
 
 ### The budget
 
-**At Intake** (Decision Point 1, O-68), the idea owner answers the appetite of the
-delivery in money and wall-clock, the budget `B` and the upper edge `U` of the band.
-`budget.tsv` is their one home (§10). There is no per-task budget: tasks do not
+**At Intake** (Decision Point 1, O-68), the idea owner answers the band, `B` (go
+on without asking) and `U` (the upper edge, which is the money appetite of the
+delivery), and the delivery's wall-clock appetite. `budget.tsv` is their one home
+(§10). There is no per-task budget: tasks do not
 exist yet, and most are found during the work (Shape Up; Author-7, Fable-M11).
 
 **At each bet**, the brief proposes the milestone's cap in money and wall-clock;
-code checks that the caps of the bets so far are at most `U`; the bet fixes it.
+code checks that the money caps of the bets so far are at most `U` and their
+wall-clock caps at most the wall-clock appetite, and refuses a brief that does not
+fit (the idea owner can raise `U` or the appetite, or the brief is reshaped); the
+bet fixes the cap. A milestone's clock starts at its bet and pauses while it waits
+for a human, as in §11.
 
 **Before each session start**, code sums the milestone's spend: the known money
 (`reported` and `computed`), plus, for each running session, its spend cap when its
 harness enforces one. A session on a harness with neither a token report nor a cap
-has a wall-clock limit (`harness.<id>.wall`, a parameter), and its money is
-`unknown`. Then:
+has a wall-clock limit (`harness.<id>.wall`), and its money is `unknown`; such a
+session counts as an unknown part before it starts. The idea owner can accept a
+bound for it (for example "up to USD 3 per session on H3"), recorded in
+`budget.tsv`; with that bound, its part is known as that bound. Then:
 
 | The total | The action |
 | --------- | ---------- |
 | the known total plus the new session's cap would pass the milestone's cap, or its wall-clock cap is reached | the circuit breaker (§11): stop; running sessions are killed |
 | the project total is below `B`, and has no unknown part | go on |
 | the project total is between `B` and `U`, and has no unknown part | smart-if P5 (§10); its deterministic branch stops and escalates to the idea owner |
-| the project total has an unknown part and may reach `B` | escalate to the idea owner; an unknown amount never counts as below `B` |
+| the project total, or the new session, has an unknown part that no accepted bound covers | escalate to the idea owner; an unknown amount never counts as below `B` |
 | the project total reaches `U` | stop; the idea owner decides; no smart-if call |
 
 ### The records of the measures
 
 | Measure (`F-0003`) | Record | The rule in code |
 | ------------------ | ------ | ---------------- |
-| Task Intervention Rate (#70) | `human-inputs.tsv`: every human action on the target (each copied comment, each review, each push or merge by a human from the repository activity, each parameter change), with its time, actor, kind (answer, correction, restart, gate change, approval, review, parameter, stall answer, bet, acceptance, other), task, and its class | planned only when it is the answer at a planned point listed at Intake (Intake, a bet, an acceptance, a retrospective, a setup), a stall answer, or an escalation answer confirmed as business-forking; every other input is unplanned (`F-0001#28`); a parameter change counts for each open task it reaches (§10). Tasks with an unplanned input over all tasks |
-| Early Question Share (#75) | `questions.tsv`, one table for the project: each question with its phase ("before delivery" until the first task starts), its time, its asker, and whether a human was asked | human questions before delivery over all human questions |
-| Clarification Turnaround (#71) | the same rows: asked, answered, accepted, and the accepting actor (§8) | the 95th percentile of accepted minus asked, for questions resolved without a human |
+| Task Intervention Rate (#70) | `human-inputs.tsv`: every human action, from these sources: all issue and pull-request comments by a human (read at each step, copied whether a step acts on them or not), reviews and review comments, reactions, the issue and pull-request events (closed, reopened, ready for review), workflow runs whose `triggering_actor` is a human (a re-run is a restart), pushes and merges by a human from the repository activity, parameter changes, and each command given to `layup run` on the host; each with its time, actor, kind (answer, correction, restart, gate change, approval, review, parameter, stall answer, bet, acceptance, other), task, and its class | planned only when it is the answer at a planned point listed at Intake (Intake, a bet, an acceptance, a retrospective, a setup), a stall answer, or an escalation answer confirmed as business-forking (a budget escalation always is,
+`F-0001#26`); every other input is unplanned (`F-0001#28`); a parameter change counts for each open task it reaches (§10). Tasks with an unplanned input over all tasks |
+| Early Question Share (#75) | `questions.tsv`, one table for the project: each question with its phase ("before delivery" until the first task starts), its time, its asker, and whether a human was asked; each escalation to the idea owner is a row too | human questions before delivery over all human questions |
+| Clarification Turnaround (#71) | the same rows: asked, answered, accepted, and the accepting actor (§8) | the 95th percentile of answered minus asked, over the answers later accepted, for questions resolved without a human |
 | Reversal Rate (#72) | `audit.tsv` | overturned answers over audited answers |
-| Missed Escalations (#57) | `audit.tsv`, over the rows of `screens.tsv` and the agents' decisions | confirmed misses in the sample; it must be zero |
-| First-Review Acceptance (#69) | `acceptance.tsv`: one row per review of a requirement, with the set of merged tasks it reviews; the review number is counted from the rows before it | requirements accepted at review number 1 over delivered requirements |
+| Missed Escalations (#57) | `audit.tsv`, over the rows of `screens.tsv` and the agents' decisions | confirmed misses in the sample; it must be zero; an empty or missing sample is "not measured", never a pass |
+| First-Review Acceptance (#69) | `acceptance.tsv`: one row per review of a requirement, with the set of merged tasks it reviews; the review number is counted from the rows before it, on the original requirement ID even when a rejection's new need gets a new one | requirements accepted at review number 1 over delivered requirements |
 | Delivery Lead Time (#68) | `telemetry.tsv` and `acceptance.tsv` | the median of acceptance time minus the start of the requirement's first task |
-| Cost per Requirement (#74) | `telemetry.tsv` and `decisions.tsv` | a task's money split equally over its requirement IDs; `partial` when a part is unknown |
+| Cost per Requirement (#74) | `telemetry.tsv` and `decisions.tsv` (a decision row names its task) | per requirement, the sum of the money of all tasks of that requirement (a shared task counts in full for each, as `F-0003#74` says); the median over requirements; `partial` when a part is unknown |
 | Stall Rate and Resolution (#73) | the stall and outcome rows of §11 | tasks with a stall over all tasks; stalls closed without a human over all stalls |
 
-**The audit** (`F-0003#57`, `#72`). At each retrospective, code draws a sample
-with a recorded seed and a hash of its population: agent answers merged at least
-30 days before (the window of the Reversal Rate), and screen rows and agent
-decisions of the milestone. Its size is `audit.n` (a parameter set with evidence).
+**The audit** (`F-0003#57`, `#72`). At each retrospective, and once more 30 days
+after the last merge of the delivery (a planned point that Intake lists), code
+draws a sample with a recorded seed and a hash of its population: the agents'
+answers, screen rows and decisions whose task merged at least 30 days before and
+that no earlier audit sampled (the window of the Reversal Rate, for both
+measures). Its size is `audit.n` (a parameter set with evidence).
 An auditor session on the reasoning tier, on a harness outside each item's authors,
 judges each item: was the answer overturned; was a business-forking decision made
-without an escalation. The idea owner confirms each positive at the retrospective
-(a planned point). A later reversal writes its time and actor into
-`questions.tsv`.
+without an escalation. The idea owner confirms each positive at the retrospective (a planned point); a
+confirmed reversal writes its time and the auditor into `questions.tsv`.
 
 **Success criteria.** The PRD's success-criterion rows (§7: one per measure fact)
 are the one source. A criterion that the idea owner adds in the Intake form is a
@@ -1229,7 +1242,7 @@ rows. The evidence for each row is [`runs/T-hbw8/rewrite-checklist.md`](../runs/
 | #69 B2 (the time-limited stall), table C 3.2 (blind panel), 3.5 (circuit breaker, package, external answers) | W-09 | 11 | 0023 |
 | S10 Cost Visibility (`F-0003#50`), Telemetry Completeness (`#60`), `REQ-011`, O-68, O-80 | [W-10](walkthroughs/W-10-cost-visibility.md) | 12 | 0024 |
 | #69 B3 (requirement acceptance has no record), B7 (no stop before the spend), table C 3.4 (telemetry per action) | W-10; the table of measures in §12 | 12 | 0024, 0014 |
-| The PSB §7.2 measures and the audit (K53 to K57) | the table of measures in §12 | 12 | 0014 |
+| The PSB §7.2 measures and the audit (K53 to K57) | the table of measures in §12 | 12 | 0024, 0014 |
 | ADR-0012 part 6 (set up a target, run its gate from outside) | W-02; W-04 steps 5, 9 | 5, 6 | 0016 |
 
 ## 15. Known limits
@@ -1302,3 +1315,10 @@ Each limit is a finding that the design does not close, recorded here (O-66).
 - **L-G1. Telemetry Completeness with O-80.** A task that a harness without a token
   report runs has incomplete telemetry, so Telemetry Completeness (`F-0003#60`)
   fails for it; only routing every task to harnesses that report tokens avoids it.
+- **L-G2. Human actions the forge does not show.** A human action on the LAYUP
+  host outside `layup run` (for example killing a session) and an action on the
+  forge with no API event are not recorded, so the Task Intervention Rate can read
+  low.
+- **L-G3. A spend cap between steps.** A harness that checks its spend cap between
+  steps (as Claude Code's is) can pass it inside one step, so the known total plus
+  the caps is not a hard ceiling.
