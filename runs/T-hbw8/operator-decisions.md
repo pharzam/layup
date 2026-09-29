@@ -120,3 +120,16 @@ for Q-14 I answer  B
 | No. | Question | Reading |
 | --- | -------- | ------- |
 | O-97 | Q-14 b | Slice A gets a third review round (one more fresh session of Claude Fable 5.1) on its round-2 fixes. The earlier answer "a" (O-95) was for Q-15 only, so O-96 is withdrawn. The round also reads the change of O-95, which came after round 2. Slice B started under the withdrawn O-96; its own round-2 fixes wait for Q-16 on #72. |
+
+## O-98 and O-99: last-round fixes go to step 11; the new Budget maximum
+
+The Operator's answer to Q-16 and Q-17 (comment 5885991576 on #72) in the author's Claude Code session on 2026-09-29, word for word:
+
+--- begin
+Q-16 A , Q-17 A
+--- end
+
+| No. | Question | Reading |
+| --- | -------- | ------- |
+| O-98 | Q-16 a | For every slice, the fixes of a slice's last review round are a named item of the whole-design review (plan v2 step 11); a finding there comes back to the Operator before the approval brief. It covers the round-3 fixes of slice A (O-97) and the round-2 fixes of slice B. |
+| O-99 | Q-17 a | The Budget maximum of plan v2 becomes 8,500 lines added plus removed over 72 files, against `946edfc`, close-out inside. The review records keep each round word for word. |
