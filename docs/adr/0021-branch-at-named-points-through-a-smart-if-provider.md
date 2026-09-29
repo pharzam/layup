@@ -37,18 +37,24 @@ We will branch at named points through a provider interface:
    (P2), stall action (P3), routing fit (P4), over budget inside the band (P5).
    A call anywhere else is a defect.
 3. **Authority per point:** `off`, `shadow`, `cautious` (only toward the point's
-   safer branch; not for P4) or `delegate` (at or above a threshold). Each point
-   has a deterministic branch that decides under `off` and `shadow`. The Intake
-   form offers `shadow`; the Operator chooses. A threshold's evidence is the
-   Operator's comment or a calibration record from `shadow` rows.
-4. **Bounds:** an error, a time-out, a rate limit after backoff, or an answer
-   below the threshold at a `delegate` point goes to a human, never to a pass. No
-   parameter turns off a PSB rule.
+   safer branch; not for P4) or `delegate`. A yes-or-no answer decides yes at
+   p ≥ t and no at p ≤ 1 − t, and is undecided in between; a choice or a score
+   decides when its top option reaches t. P1 never removes a candidate. Each
+   point has a deterministic branch that decides under `off` and `shadow`. The
+   Intake form offers `shadow` and says what it leaves open; the Operator
+   chooses. A threshold's evidence is the Operator's comment, or a calibration
+   record against the point's named ground truth, never against the default.
+   The model version is pinned; a new version resets `delegate` to `shadow`.
+4. **Bounds:** under `off`, `shadow` and `cautious`, a failure takes the
+   deterministic branch and is recorded; at a `delegate` point, a failure or an
+   undecided answer goes to a human, never to a pass. No parameter turns off a
+   PSB rule.
 5. **One `decisions.tsv` row per call,** with the state hash, the model version,
-   the answers, the authority, the branch taken and who decided.
-6. **Parameters** are a register; the Operator changes a value by a comment in a
-   fixed form, applied at the next step boundary and recorded as project-level
-   input.
+   the answers, the tokens and price, the authority, the branch taken and who
+   decided.
+6. **Parameters** are a register; a value changes by a comment in a fixed form
+   on the target's control issue, by the role that its row allows, applied at the
+   next step boundary; a change that reaches an open task is input to that task.
 
 We reject: a mandatory `shadow` period (O-78); a generative model on the live
 path (it would be a model call that ADR-0015 does not name); a provider that

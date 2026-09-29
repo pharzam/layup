@@ -645,7 +645,7 @@ any task.
   tasks, whose `layup/rules` passes when the file equals what code renders from
   the new inventory version. **Merge order after a bet:** the specification, the
   facts record, the rule batches, then the build tasks. A requirement changes only
-  at a bet.
+  at a bet, or by an escalation decision (§10).
 - **Build.** A plan task splits the milestone into build tasks, each with the
   requirement IDs it serves, the tests that will show it done, and a size class;
   code checks that each `Must` requirement of the milestone has a task and each
@@ -800,7 +800,7 @@ weight of §13 ranks them; with no weight yet, or a tie, the smart-if's fit poin
 **The tier** of an implementing task starts from its plan, which has four fixed
 fields: `size` (`small` or `large`), `open questions`, `new interfaces`, and `new
 dependencies` (read by the escalation floor, §10). The
-reasoning tier when `size` is `large` or either list is not empty; the execution
+reasoning tier when `size` is `large` or any of the three lists is not empty; the execution
 tier otherwise. The computed progress position of §11
 can move it later (later: slice F).
 
@@ -828,45 +828,65 @@ branch or another by the provider's answer. It writes no text and plans no work.
 
 **The provider** (O-78) is chosen by the Operator per target at Intake: Jev
 (TypeSafe's System One API), Laya (an open-weight decision model with a
-Jev-compatible API, which needs its own calibration: its confidence is not Jev's,
-and its authors say it needs fine-tuning, [`selection-v2.md`](../runs/T-hbw8/selection-v2.md)
-§1.1), or `none`. A request carries the point, the literal questions of the
-point's fixed pack, the options, and a state text that code builds from named
-records; code keeps all arithmetic, dates and counts (the provider's documented
-weak points). The response carries each answer (a choice, a probability of yes,
-or a score), the provider and the model version.
+Jev-compatible API, run on the LAYUP host or at an endpoint that the harness
+register names; it needs its own calibration: its confidence is not Jev's, and its
+authors say it needs fine-tuning, [`selection-v2.md`](../runs/T-hbw8/selection-v2.md)
+§1.1), or `none`. The model version is pinned per target; a new version resets
+every `delegate` point to `shadow` until it is calibrated again. A request
+carries the point, the literal questions of the point's fixed pack, the options,
+and a state text that code builds from named records and checks against the
+provider's size limit (a state that does not fit is a failure); code keeps all
+arithmetic, dates and counts (the provider's documented weak points). The
+response carries each answer (a choice, a probability of yes, or a score), the
+provider, the model version, and the tokens and price that the provider reports.
 
 **The named points** are a closed list; a call at any other point is a defect
 (Fable-M13):
 
-| Point | The question | The deterministic branch | A safer branch |
-| ----- | ------------ | ------------------------ | -------------- |
-| P1 escalation | four questions, one per PSB axis (§ below) | the floor and the session's own `decision_needed` | escalate |
-| P2 question | the kind of a question (four kinds), and whether it needs a human | the asker's label; "needs a human" = no | "needs a human" = yes |
-| P3 stall action | retry, examiner, panel, or the Operator (§11) | the fixed ladder of §11 | the next rung up |
-| P4 fit | which admitted pair fits the task (§9) | the routing order | none |
-| P5 over budget | continue inside the band (§12) | stop and escalate | stop |
+| Point | The question | The deterministic branch | A safer branch | Ground truth for calibration |
+| ----- | ------------ | ------------------------ | -------------- | ---------------------------- |
+| P1 escalation | four questions, one per PSB axis | the floor and the session's own `decision_needed` | escalate | the idea owner's confirmations; the Missed Escalations sample (§12) |
+| P2 question | the kind of a question (four kinds); whether it needs a human | the asker's label; "needs a human" = no | "needs a human" = yes | the owner session's disposition; the Reversal sample (§12) |
+| P3 stall action | retry, examiner, panel, or the Operator (§11) | the fixed ladder of §11 | the next rung up | the stall's outcome (§11) |
+| P4 fit | which admitted pair fits the task (§9) | the routing order | none | the verification's first-round verdict |
+| P5 over budget | continue inside the band (§12) | stop and escalate | stop | the idea owner's decisions on budget escalations |
+
+**How an answer decides.** A yes-or-no question has a threshold `t` per point: yes
+when p ≥ t, no when p ≤ 1 − t, undecided in between. A choice or a score decides
+when its top option's probability is ≥ t, and is undecided otherwise. P1 only
+ever adds a candidate: no answer of P1 removes a floor candidate or a session's
+own declaration.
 
 **The authority** of each point (O-78, O-79) is set by the Operator per target:
 `off` (no call; the deterministic branch), `shadow` (the provider answers and is
-recorded; the deterministic branch decides), `cautious` (the answer may only move
-the flow to the safer branch; not for P4), or `delegate` (an answer at or above
-the point's threshold decides). The Intake form offers `shadow` for every point
-(Sol-6: an offer, not a rule); the Operator may choose another level and a
-threshold. The evidence of a threshold (Invariant 4) is the Operator's comment
-that set it, or a calibration record: the share of `shadow` rows where the
-provider's answer agreed with the branch that a check or a human took.
+recorded; the deterministic branch decides), `cautious` (a decided answer may only
+move the flow to the safer branch; not for P4), or `delegate` (a decided answer
+decides). The Intake form offers `shadow` for every point (Sol-6: an offer, not a
+rule), and says what `shadow` leaves open (below); the Operator may choose another
+level and a threshold.
 
-**The bounds** (O-71, O-84): an error, a time-out, a `429` after its backoff, or
-an answer below the threshold at a `delegate` point goes to a human (the idea
-owner for P1 and P5, the Operator for the others), never to a pass. No parameter
-turns off a PSB rule: the floor of P1 always runs, and a business-forking
-decision always goes to the idea owner.
+**The bounds** (O-71, O-84). Under `off`, `shadow` and `cautious`, a failure (an
+error, a time-out, a `429` after its backoff, a state too large) takes the
+deterministic branch and is recorded. At a `delegate` point, a failure or an
+undecided answer goes to a human (the idea owner for P1 and P5, the Operator for
+the others), never to a pass. No parameter turns off a PSB rule: the floor always
+runs, and a business-forking decision always goes to the idea owner.
+
+**Calibration** (Invariant 4). A threshold's evidence is the Operator's comment
+that set it, or a calibration record: over the rows of a point, the share where
+the provider's decided answer agreed with that point's ground truth (the table
+above), never with the deterministic default.
 
 **The record.** Each call writes one row to `decisions.tsv`: the point, the
 questions, the SHA-256 of the state text, the provider, the model version, each
-answer and probability, the authority, the threshold, the branch taken, and who
-decided (the provider, code, or a human).
+answer and probability, the tokens and price, the authority, the threshold, the
+branch taken, and who decided (the provider, code, or a human).
+
+**What `shadow` leaves open.** Under `off` or `shadow`, P1 adds no candidate and
+P2 follows the asker's label: a business-forking choice that a session does not
+declare, in prose, is not screened. Each selection row records whether P1 and P2
+were active. The PSB's escalation rule (`F-0003#48`) then rests on the floor and
+on the declarations (known limit L-E1).
 
 ### The escalation screen
 
@@ -878,49 +898,64 @@ Point 4, `F-0001#13`):
    intent, or that trades approved goals against each other (scope against date),
    stop with `decision_needed` and the options.
 2. **The floor** (code) reads fixed fields and proposed diffs, never prose: the
-   plan's fixed field `new dependencies` (name, licence, cost); a diff that adds a
-   dependency to the stack's manifest (for Go, a `require` in `go.mod`), or
-   touches a licence file, the PRD's requirement rows, their priorities or
-   criteria, or a path that the Intake answers named as intent.
-3. **The four questions** (P1), on prose: the plan, each handoff, each pull
-   request description, and each answer to a question. One literal question per
-   axis: does it change the budget; the legal or compliance position; the
+   plan's fixed field `new dependencies` (name, licence, cost, and the
+   alternatives the plan considered); a diff that adds a dependency to the stack's
+   manifest (for Go, a `require` in `go.mod`), or touches a licence file, the
+   PRD's requirement rows, their priorities or criteria, or a path that the Intake
+   answers named as intent. A dependency whose licence is on the Intake's allowed
+   list and whose cost is zero is not a candidate. Exempt: a diff that equals
+   code's rendering of an approved bet or decision, and the Shape specification
+   that a bet approves. The floor runs on every plan and every handoff diff,
+   whatever the frequency parameter says.
+3. **The four questions** (P1), on prose: each plan, each handoff and each answer
+   to a question, as the frequency parameter (O-79) says. One literal question
+   per axis: does it change the budget; the legal or compliance position; the
    approved intent; does it trade approved goals. Code combines the answers with
-   OR. At `cautious`, the provider can only add a candidate, never remove one (a
-   deterministic floor that a model may raise and never lower, as in Governed
-   APA, `selection-v2.md` §1.1).
+   OR (a deterministic floor that a model may raise and never lower, as in
+   Governed APA, `selection-v2.md` §1.1).
 
-**When** (O-79, the frequency is a parameter): on each task's plan, before the
-work starts; on each handoff; and on each answer to a question.
+**A question that needs a human.** When P2 decides "needs a human", or a session
+sends a question with that flag, the question becomes a candidate of this screen.
 
 **When one is selected**, the task stops in a wait state (§11 does not count the
-wait). `layup run` posts one escalation brief on the task's issue for the idea
-owner: the decision, the options, the evidence, the cost. The idea owner decides
-and confirms "business-forking: yes" or "no"; `layup run` copies the comment (§3).
-A decision confirmed as business-forking is planned input (Decision Point 4); one
-confirmed as not is unplanned input (`F-0001#28`, §12). The task starts its next
-attempt with the decision in its prompt file.
+wait), and the candidate goes to `candidates.tsv`. The options come from the
+declaration or the plan's `alternatives`; for a candidate that has none, a
+Product Owner session writes them. `layup run` posts one escalation brief on the
+task's issue for the idea owner: the decision, the numbered options, the
+evidence, the cost. The idea owner answers in a fixed form: `option <N>;
+business-forking: yes` or `no`, with free text after it. `layup run` copies the
+comment (§3) and writes `escalations.tsv`: the chosen option and each rejected
+option by name. A decision confirmed as business-forking is planned input
+(Decision Point 4); one confirmed as not is unplanned input (`F-0001#28`, §12). A
+decision that changes a requirement, its priority or the band is written at once,
+as a rendered task (§8), like a bet line. The task starts its next attempt with
+the decision in its prompt file. A later floor candidate whose name is an option
+that a decision rejected gives the task a finding, not a new brief; any other
+candidate is a new brief.
 
 ### The parameters
 
 Every value that the Operator or the idea owner can set is a row of
-`parameters.tsv` on the records branch: its name, value, default, bound, the
-evidence of the value, and the comment that set it (Fable-M22). The Operator
-changes one by a comment on the target's control issue, in the form `set <name>
-<value> because <reason>`; `layup run` copies it, checks the name, the value and
-the bound, and applies it at the next step boundary. A change is recorded as
-project-level Operator input (§12), not as input to a task. The bound of each row
-says what the value cannot do: no parameter removes a PSB rule (O-84).
+`parameters.tsv` on the records branch: its name, value, default, bound, the role
+that may change it, the evidence of the value, and the comment that set it
+(Fable-M22). `layup run` opens the target's control issue at Start. A change is a
+comment there, in the form `set <name> <value> because <reason>`, by an account
+whose role in `approvers.tsv` the row allows (the Operator for most rows, the idea
+owner for the band and the intent rows); `layup run` copies it, checks the
+author, the name, the value and the bound, and applies it at the next step
+boundary. A change that takes effect on an open task is input to that task
+(§12). The bound of each row says what the value cannot do: no parameter removes
+a PSB rule (O-84).
 
 | Parameter | Default | Source |
 | --------- | ------- | ------ |
-| provider; authority and threshold per point | set at Intake; `shadow` offered | O-78, O-79 |
-| escalation frequency | each plan, each handoff, each answer | O-79 |
+| provider; model version; authority and threshold per point | set at Intake; `shadow` offered | O-78, O-79 |
+| escalation frequency (P1 only) | each plan, each handoff, each answer | O-79 |
 | owner map; role matrix; step table; transition table | §8, §9 | O-81 |
 | harness paid work without tokens or a spend cap | allowed, with a wall-clock limit (§12) | O-80 |
 | `stall.T`, `stall.N` and the other stall limits | §11 | O-82 |
 | learning weights, bounds, trigger | §13 | O-83 |
-| `lease.H`; the brief's line limit | set at Intake with evidence | Invariant 4 |
+| `lease.H`; the brief's line limit; the allowed licences | set at Intake with evidence | Invariant 4 |
 
 ## 14. Coverage
 
@@ -1017,3 +1052,6 @@ Each limit is a finding that the design does not close, recorded here (O-66).
 - **L-E1. An undeclared decision.** A session that makes a business-forking
   choice without declaring it, in prose that the four questions miss and in no
   file that the floor reads, is found only by the Missed Escalations audit (§12).
+  Under `off` or `shadow` at P1 and P2, this is every undeclared choice made in
+  prose: the checklist rows K32 and K35 are answered only at `cautious` or
+  `delegate`.
