@@ -43,6 +43,23 @@ isitdone scanner as an advisory program.
 Loki Mode is the only candidate whose license blocks even the pattern:
 LAYUP takes the blind-review idea from AgentJury and no_human (MIT) instead.
 
+## Added on 2026-09-29: Shape Up (O-90)
+
+[Shape Up](19-shape-up.md) is Basecamp's method, a book, not software; the
+evaluator read all 24 pages in full. Verdict: **borrow the pattern**. It gives
+four mechanisms that no software candidate gave: an **appetite** set by the idea
+owner at Intake, so a budget exists before tasks do (Author-7, Fable-M11); the
+**circuit breaker**, an absolute cap per milestone that no new record resets, with
+the "all downhill" test before any extension (Sol-22, vision 3.5); a **hill
+position computed from records** (uphill while unknowns are open; the top when the
+acceptance tests are frozen; downhill as they pass), so a ping-pong round is not
+progress (Sol-22, Fable-M4, Author-1); and **one bet per milestone** on a
+one-screen brief in the pitch's five parts (HDP 1 and 3, Author-19, the approval
+load). Rejected: every time value of the book (six weeks, two weeks, three days:
+no evidence for agents, I4), "QA is not a gate" (S7, I5, I9) and "no backlogs"
+(I1). The book's default "cancel at the cap" becomes "stop, then reshape or
+escalate", because dropping a requirement is business-forking.
+
 ## What the rewrite takes, by concern
 
 Each row is a mechanism that ran or was read at the pinned commit. The last

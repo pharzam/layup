@@ -39,6 +39,7 @@ the first search (a list reduced before it was read) does not repeat.
 | 16 | Loki Mode | B §3.7 | completion gates and blind council |
 | 17 | isitdone | B §3.8 | deterministic done-check |
 | 18 | no_human | B §3.8 | second-model review |
+| 19 | Shape Up | the Operator, O-90 | a method for milestones, budgets and progress (a book, not software) |
 
 **Not evaluated hands-on:** the other entries that the searchers marked `keep`
 in their full-list passes (about 60, each with a one-line reason in the two
