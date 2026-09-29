@@ -202,5 +202,5 @@ All four material findings are fixed in the next commit; notes N1 to N7 are appl
 
 ## After round 2
 
-- O-96 (Q-14 a): no third round; the round-2 fixes are items of the whole-design review (step 11).
-- O-95 (Q-15 a): LAYUP acts as the App's bot with an installation token; §3, §15, ADR-0014 and ADR-0017 changed with it. This change is also an item of step 11.
+- O-97 (Q-14 b; O-96 withdrawn): a third round reads the round-2 fixes and the O-95 change.
+- O-95 (Q-15 a): LAYUP acts as the App's bot with an installation token; §3, §15, ADR-0014 and ADR-0017 changed with it. Round 3 reads it.

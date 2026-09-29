@@ -105,6 +105,18 @@ a
 | No. | Question | Reading |
 | --- | -------- | ------- |
 | O-95 | Q-15 a | LAYUP acts on a target as the LAYUP App's bot, with an installation token made from the App's private key; the App is the only bypass actor of the records branch. This replaces the user-token reading of O-77 and O-92 in slice A. |
-| O-96 | Q-14 a | Slice B starts now; the round-2 fixes of slice A, and the change of O-95, are named items of the whole-design review (step 11), and a finding there comes back to the Operator before the approval brief. |
+| O-96 | Q-14 a (withdrawn) | This reading was wrong: the Operator's "a" answered Q-15 only. See O-97. |
 
 The answer is one letter, and two questions were open, each with option a as its recommendation; the author reads it as "a" to both (R13: a second reading is "a" to Q-15 only). If that is wrong, the Operator says so on #72 and this record changes.
+
+## O-97: Q-14 is b — a third round for slice A
+
+The Operator's message in the author's Claude Code session on 2026-09-29, after slice B, word for word:
+
+--- begin
+for Q-14 I answer  B
+--- end
+
+| No. | Question | Reading |
+| --- | -------- | ------- |
+| O-97 | Q-14 b | Slice A gets a third review round (one more fresh session of Claude Fable 5.1) on its round-2 fixes. The earlier answer "a" (O-95) was for Q-15 only, so O-96 is withdrawn. The round also reads the change of O-95, which came after round 2. Slice B started under the withdrawn O-96; its own round-2 fixes wait for Q-16 on #72. |
