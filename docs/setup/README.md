@@ -32,11 +32,10 @@ and waits. A value with no source is never filled; it becomes an open gap
   (PSB Invariant 1, Decision Point 2).
 - A `no` row is done when its evidence holds. In this run the evidence of most
   steps is one check of LAYUP's own `setup-check.sh` (`--only <check> <root>` runs
-  one check). Armature does not ship that script, and no LAYUP code goes into a
-  target repository (O-10 on [#30](https://github.com/pharzam/layup/issues/30),
-  O-76); `layup setup verify` proves each step of a target from outside, and
-  the target's own stack gates are native tools written from a gate recipe
-  ([ADR-0017](../adr/0017-put-native-stack-gates-in-the-target.md)).
+  one check). Armature does not ship that script, and the Operator decided that
+  nothing from LAYUP goes into a target repository (O-10 on
+  [#30](https://github.com/pharzam/layup/issues/30)); how a target proves each
+  step is for ADR-0011 to decide.
 - The manual run gives the baseline to compare against: the elapsed time of each
   step, and each finding K-01 to K-08 where Armature left a decision open, in
   [`record-T-n1hp.md`](record-T-n1hp.md).

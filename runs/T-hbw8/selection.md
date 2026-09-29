@@ -1,5 +1,10 @@
 # T-hbw8 — the compared set and the selection
 
+**The selection for the withdrawn first draft.** This record selected for the
+first draft (ADR-0013 to ADR-0020 and `docs/architecture.md`), which plan v2
+removed in step 0. It predates O-76 to O-92 and the evaluation. The selection
+for the rewrite is `selection-v2.md`.
+
 The author (Claude Opus 5.5) selects from the options of the three panel members: `panel-A.md` (orchestration, Git state, the forge; GPT-6 Sol), `panel-B.md` (decisions, routing, learning; Grok 4.7) and `panel-C.md` (governance, invariants, human decision points; Claude Opus 5.5). An option is named by member and number, for example A-1A. The method is Solution selection (`docs/engineering-discipline.md`): first the search for a public solution, then the applicable considerations, which are not a scoring formula. The invariants `F-0001#1`–`#9` remove a candidate; they do not rank one. A choice that no fact and no O-decision settles is a question for the Operator (section 11); the selection names the option it depends on and does not decide it.
 
 Marks: ✓ serves, ✗ strains or fails, — neutral.

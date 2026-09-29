@@ -42,15 +42,14 @@ author's answer to the plan review" on #72).
    the role matrix, `T`, `N` and the learning policy are parameters with
    defaults (O-78 to O-83); the parameters cannot switch off a PSB invariant,
    and "smart-if" is a conditional branch (O-84).
-5. **ADR-0013 to ADR-0020** and [`docs/architecture.md`](../architecture.md),
-   with coverage tables for the In-Scope items, the requirements of `PRD-0001`,
-   the #69 findings and the vision brief's table C.
-6. **The documents it made stale:** the glossary (section 3 and the rows
-   "Orchestrator product" and "Target"), `PRD-0001` (NFR-005 and its criterion,
-   §9, §10, §11, §12, §13), `docs/setup/README.md`, `README.md`, the
-   onboarding.
+5. **The first draft, withdrawn:** ADR-0013 to ADR-0020 and
+   `docs/architecture.md`, with the lines they added to the glossary, `PRD-0001`,
+   `docs/setup/README.md`, `README.md`, the onboarding and the ADR index. The
+   deep check found about 50 material defects in it; plan v2 (O-92) removed it
+   in step 0 and rewrites it. Its text stays in the history of this branch.
+   This file is rewritten at the close-out of plan v2.
 
-## Decisions of the author
+## Decisions of the author (the withdrawn draft)
 
 - **ADR-0011 is amended, not superseded:** decision 2 (the records branch,
   ADR-0016), decisions 3, 4 and 7 (native stack gates, ADR-0017), and one
@@ -68,7 +67,7 @@ author's answer to the plan review" on #72).
 - **Eight ADRs,** the limit that the plan review set (note 9); the parameter
   register is in ADR-0013, not a ninth record.
 
-## Known limits
+## Known limits (the withdrawn draft)
 
 - GitHub is the only forge for the pilot.
 - With one GitHub account, the agent–human separation holds only while agent

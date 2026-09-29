@@ -14,9 +14,6 @@ statement for gaps (`layup psb check FILE`); the stack is Go
 ([ADR-0010](docs/adr/0010-use-go-as-the-technology-stack.md)), and the core engine
 will be one Go command-line program over files in the repository
 ([ADR-0011](docs/adr/0011-structure-the-core-engine-as-a-go-cli-over-repository-files.md)).
-The [architecture](docs/architecture.md) (ADR-0013 to ADR-0020) makes it an
-external orchestrator, `layup run`, that drives a target from its problem
-statement to accepted software.
 Since 2026-09-25 the repository is in bootstrap mode
 ([ADR-0012](docs/adr/0012-build-layup-in-bootstrap-mode.md); a summary — the rule
 is [Bootstrap mode](docs/engineering-discipline.md#bootstrap-mode)): until the ADR
