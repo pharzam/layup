@@ -38,7 +38,7 @@ We will derive the specification by sessions and check its links by code:
    When it fails or does not run, no Intake batch is posted.
 3. **A session drafts** a requirement for each need and a non-functional
    requirement for each constraint, with `covers` and a criterion and no
-   priority; a measure becomes a success criterion. **A session on another
+   priority; a measure becomes a success criterion that cites its ID. **A session on another
    harness** reviews the draft for a missed need or constraint; each gap is a
    question of the one Intake batch. With one harness, the review does not run
    and `layup run` stops.
@@ -46,13 +46,15 @@ We will derive the specification by sessions and check its links by code:
    carries the quote of the problem statement it asks about, so a trace through
    an answer reaches the problem statement's text.
 5. **The idea owner** sets each requirement's priority and milestone, and marks a
-   fact out of scope, by one comment at each bet. Code writes the PRD's MoSCoW and
-   Phase columns from the copied comment. The facts, classes and marks then form
-   the confirmed inventory on the records branch, and `docs/facts/` is a rule
-   path.
+   fact out of scope or gives it a new class, by one comment at each bet. Code
+   writes the PRD's MoSCoW and Phase columns from the copied comment, and a new
+   version of the confirmed inventory with its hash on the records branch; the
+   numbered facts record lands in `docs/facts/`, a rule path, through that bet's
+   rule batch.
 6. **`layup spec check`** posts the required status `layup/spec`. It checks the
    head against the confirmed inventory and the bet copy: every `covers`
-   resolves, every need and constraint is covered or out of scope, each
+   resolves, every need and constraint is covered, every measure has a success
+   criterion, or the fact is out of scope, each
    requirement has a criterion, the PRD's MoSCoW and Phase match the bet, each
    delivered requirement has a section in `docs/spec/` whose heading holds its
    ID, and each task names a requirement. A check that did not run fails.

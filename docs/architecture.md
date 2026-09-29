@@ -339,7 +339,8 @@ verify <check>` OK".
 2. A role session writes the prose rows (S07, S08, S09, S14), and code runs
    each row's check.
 3. The facts go into the target's `docs/facts/`: the problem statement byte for
-   byte, the numbered facts of §7, and the answers as a raw fact.
+   byte, and the answers as a raw fact; the numbered facts come with the first
+   bet (§7).
 4. The stack gates come from the catalog (§6). Step S12 adds no
    `setup-check` job, and the target's CI runs only the pinned baseline's own
    jobs and the gate jobs (K16).
@@ -514,20 +515,23 @@ checks what can be checked byte for byte. The vision brief is solution input
    given by its byte offsets: a **fact** has an ID and a class (`need`,
    `constraint`, `measure`, `context`); a **"not a fact"** span (a heading, a
    rule line) has a reason. A span may be part of a line, so one sentence of a
-   paragraph can be a fact.
+   paragraph can be a fact. Offsets count bytes from 0, and the end is
+   exclusive.
 2. **The span check** (code, `layup spec check --facts`). Every byte that is not
-   white space lies in exactly one span, and each span's text is the file's text
-   at its offsets. When the check fails or does not run, `layup run` posts no
+   white space (ASCII space, tab, CR, LF) lies in exactly one span, each span's
+   text is the file's text at its offsets, each fact ID is unique, and each class
+   is one of the four. When the check fails or does not run, `layup run` posts no
    batch and stops (FT1, Fable-M21, Author-5).
 3. **The draft** (a session). One or more requirements for each `need` fact, and
    one non-functional requirement for each `constraint` fact: an ID, a statement,
    `covers` (the fact IDs), and an acceptance criterion. It sets no priority.
    Each `measure` fact becomes a success criterion row of the target's PRD, which
    §12 reads; a `context` fact gets nothing.
-4. **The completeness review** (a session on a harness other than those of steps
-   1 and 3; with only one admitted harness it does not run, and `layup run`
+4. **The completeness review** (a session on a harness other than that of steps
+   1 and 3, which routing puts on one harness; with only one admitted harness it does not run, and `layup run`
    records "not run" and stops). It reads the problem statement and the draft,
-   and lists each need or constraint that no requirement covers, each requirement
+   and lists each need, constraint or measure that no requirement or success
+   criterion covers, each requirement
    that no fact supports, and each fact whose class it doubts (Sol-18). Each item
    becomes a question of the one Intake batch.
 
@@ -536,41 +540,57 @@ checks what can be checked byte for byte. The vision brief is solution input
 5. Code writes the answers as a raw fact of the target, one fact per question ID.
    Each question carries the byte-exact quote of the problem statement that it
    asks about (§5), so a requirement that covers an answer's fact also names that
-   quote's fact. **Reading of `F-0003#62`:** the trace reaches the problem
+   quote's fact, and code checks that it does. An answer that states a new need
+   is classed as a fact of the answers, and the rules below apply to it.
+   **Reading of `F-0003#62`:** the trace reaches the problem
    statement's text through the question's quote; a requirement that traces only
-   to a question with no quote (a setup question) traces to the answer alone, and
+   to a question with no quote (a setup question, or a review item "a
+   requirement that no fact supports") traces to the answer alone, and
    the approval brief asks the Operator to confirm this reading.
 6. A session revises the draft with the answers. A change of class must cite the
-   answer ID that causes it; code checks the citation. The session writes the
+   answer ID that causes it; code checks that the ID exists (not that it causes
+   the change). The session writes the
    target's PRD and, per requirement, a technical specification section: a
    heading that holds the requirement ID, in a file under `docs/spec/`. The PRD's
    MoSCoW and Phase columns stay empty; the pull request waits.
-7. **The first bet** (§8) shows the idea owner the needs, the constraints and the
-   facts classed `context`, with their text, and the requirements. The idea
-   owner answers one line per requirement ID: its priority (`Must`, `Should`,
-   `Could`, `Won't`) and its milestone, or "out of scope" for a fact. Priority is
+7. **The first bet** (§8) shows the idea owner every fact with its class and
+   text, and the requirements and success criteria. The idea owner answers one
+   line per requirement ID: its priority (`Must`, `Should`, `Could`, `Won't`) and
+   its milestone; one line per fact to change: "out of scope", or a new class
+   (for example `need`). A new class reopens the draft for that fact (step 6),
+   and its requirement waits for the next bet line. Priority is
    intent (`F-0003#54`), so code copies the comment (§3), writes the MoSCoW and
-   Phase columns and the out-of-scope marks into the PRD from that copy, and only
+   Phase columns from that copy, and lists the out-of-scope fact IDs under the
+   PRD's non-goals, and only
    then does the pull request pass the baseline's own `prd-lint`. A requirement
    added later gets its priority at the next bet. Inside a requirement, a session
    may mark a task nice-to-have; a cut that touches an acceptance criterion is
    business-forking (§10).
-8. With the first bet, the numbered facts, their classes and the out-of-scope
-   marks become the **confirmed inventory**, kept on the records branch with its
-   hash. `docs/facts/` is a rule path (§6), so a role session cannot edit it.
+8. **The confirmed inventory.** At each bet, code writes a new version of it
+   from that bet's copy: the numbered facts, their classes and the out-of-scope
+   marks, on the records branch, with the SHA-256 of the version. The numbered
+   facts record of the target, with the confirmed classes, lands in
+   `docs/facts/` through that bet's rule batch (§6); the Scaffold writes only the
+   problem statement and the answers there. `docs/facts/` is a rule path from the
+   setup, so a role session cannot edit it.
 
 **`layup spec check`** (code, no model call) posts its own required status,
-`layup/spec`. It reads the confirmed inventory and the bet copy (records), the
+`layup/spec`. It reads the latest confirmed inventory, whose hash it checks, and
+the bet copy (records), the
 PRD and `docs/spec/` (the head), the task register (§8) and the accepted and
 delivered requirements (§12). It fails when: a `covers` ID does not resolve to a
 fact of the confirmed inventory or of the answers; a need or constraint has no
-requirement and no out-of-scope mark; a requirement has no acceptance criterion;
+requirement, or a measure has no success-criterion row that cites its ID, and it
+has no out-of-scope mark; a requirement has no acceptance criterion;
 a MoSCoW or Phase value in the PRD differs from the bet copy; a delivered
 requirement has no non-empty section in `docs/spec/` whose heading holds its ID
 (Sol-20); a task names no requirement; or it did not run. It proves the links. It
 does not prove that the meaning agrees: the counterpart verification of each
 change judges that (§8), and the completeness review of step 4 is the check
 against a missed need.
+
+**Success criteria.** The measure rows and the success criteria of the Intake
+form are two sources; how §12 merges them is later: slice G.
 
 **Vision 2.1.** The preliminary design review is the specification of step 6 with
 the architecture that the first bet approves (§8); the phased plan is the
@@ -645,6 +665,6 @@ Each limit is a finding that the design does not close, recorded here (O-66).
   protected repository would close this, and needs an organisation.
 - **L-C1. A fact classed wrongly.** The numbering session can class a need as
   context. The completeness review on another harness and the idea owner's
-  confirmation at the first bet, which shows each `context` fact with its text,
-  are the two checks; a need that both miss has no requirement, and nothing
+  confirmation at each bet, which shows every fact with its class and text and
+  takes a new class by one line, are the two checks; a need that both miss has no requirement, and nothing
   after them finds it.
