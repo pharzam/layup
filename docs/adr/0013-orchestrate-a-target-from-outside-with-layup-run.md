@@ -31,11 +31,15 @@ We will orchestrate each target from outside it with one foreground process,
 
 1. **One process per target.** `layup run` runs on the LAYUP host in the
    foreground and drives the phase loop of one target. It holds a lease row on
-   the target's records branch; a second run that finds a live lease, or whose
-   push is refused, stops.
+   the target's records branch and renews its heartbeat every `lease.H` (a
+   parameter). A second run that finds a heartbeat younger than `3 × lease.H`,
+   or whose push is refused, stops; one that finds an older heartbeat takes the
+   lease over and records the takeover (the evaluated pattern of a lease with a
+   heartbeat and a reclaim, Paperclip and Beads).
 2. **The engine checks are pure.** `layup psb check`, `layup setup verify`,
-   `layup gate`, `layup spec check`, `layup audit` and `layup report` read files
-   and print a typed table. They write nothing else. `layup run` calls them in
+   `layup gate`, `layup spec check` and `layup report` read files, and
+   `layup audit` reads files and the forge's read-only API; each prints a typed
+   table. They write nothing else. `layup run` calls them in
    its own process and commits their results.
 3. **Only three things go into a target:** the setup output that O-76 and
    `F-0003#42` name; the work of the role sessions, through pull requests; and

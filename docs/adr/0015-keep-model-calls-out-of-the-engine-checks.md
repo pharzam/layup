@@ -36,13 +36,17 @@ with only what LAYUP gives it:
    `decisions.tsv` for each call.
 3. **A role session** is a harness process that `layup run` starts. Its model
    calls belong to the harness; the cost ledger records the session.
-4. **A session starts with** a work tree of the target at the base commit, an
-   empty home directory, a prompt file that code builds, and an environment
-   from a named list: the harness's own credential variable, and no forge
-   credential and no SSH agent. The command line comes from the harness's row in
-   the harness register. The session reads its rules only from the work tree.
+4. **A session starts with** its own clone of the target at the base commit (not
+   a linked work tree of LAYUP's clone), an empty home directory, a prompt file
+   that code builds, and an environment from a named list: the harness's own
+   credential variable, and no forge credential and no SSH agent. The command
+   line comes from the harness's row in the harness register. Before the start,
+   code refuses a rule file of that harness in any directory above the session,
+   and records each system-wide policy file that the row lists.
 5. **A session ends** when its process exits. `layup run` reads its typed result
-   file and its commits, and pushes its branch with the App's token.
+   file, fetches its branch by commit SHA into LAYUP's own clone with hooks
+   turned off, checks that it descends from the base commit, and pushes that SHA
+   with the App's token. A session is not resumed across attempts.
 
 This replaces ADR-0011 decision 8. The `NFR-005` criterion of `PRD-0001` changes
 with it: "the engine checks start no model process and open no connection to a

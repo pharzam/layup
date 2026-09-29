@@ -36,15 +36,17 @@ each actor from a credential:
    form of ADR-0011 decision 2). The target's README, written at setup, names
    the branch; each pull request body links the records commit its task started
    from.
-2. **One writer.** Only `layup run` commits to the records branch, with pushes
-   that are never forced. An engine check hands it a table; a role session hands
-   it a result file bound to the base commit and the records commit it started
-   from, and a result bound to an older one is refused; a human hands it an
-   issue comment.
-3. **Three kinds of actor.** The LAYUP App acts only through `layup run`, with
-   its installation token, as its bot; it has no administration permission.
-   Humans are the accounts that `approvers.tsv` names by numeric user ID. Role
-   sessions hold no forge credential
+2. **One writer.** Only `layup run` commits to the records branch, from its own
+   clone, with pushes that are never forced. An engine check hands it a table; a
+   role session hands it a result file, and the base commit and records commit
+   that bind it come from the session start row that `layup run` wrote; a result
+   whose commits are no longer current for its task is refused; a human hands it
+   an issue comment.
+3. **Three kinds of actor** (O-77). LAYUP acts under the Operator's account
+   through the LAYUP App's user access token, which only `layup run` holds; the
+   App has the permissions of O-92 plus commit statuses, and no workflows and no
+   administration permission. Humans are the accounts that `approvers.tsv`
+   names by numeric user ID. Role sessions hold no forge credential
    ([ADR-0015](0015-keep-model-calls-out-of-the-engine-checks.md)).
 4. **A human decision** is an issue comment whose author ID is in
    `approvers.tsv` and whose `performed_via_github_app` field is empty. A review,
@@ -53,27 +55,32 @@ each actor from a credential:
 5. **Copy before read.** Before any step acts on a comment, `layup run` copies
    it into the records with its author ID, comment ID, App field, time and
    SHA-256.
-6. **Fail closed.** `layup run` reads the effective rules of the default and the
-   records branch at setup and at each start, and stops when they are not the
-   expected ones. `layup audit` checks the actor of each update of both branches
-   from the forge's repository activity, never from a commit author.
+6. **Fail closed.** At setup and at each start, `layup run` reads the effective
+   rules of the default and the records branch and stops when a rule is missing;
+   it also pushes an empty probe commit to the default branch with the App's
+   token and stops unless the forge refuses it. `layup audit` checks the actor of
+   each update of both branches from the forge's repository activity, from the
+   setup commits onward, never from a commit author.
 
 This amends ADR-0011 decision 2 (records on a branch of the target, not in the
-tree of the default branch) and reads O-77 this way: the agents' GitHub writes
-go through the App, and a role session holds no GitHub credential at all, which
-is stronger than "only the App's token".
+tree of the default branch) and reads O-77 this way: every GitHub write of LAYUP
+goes through the App's user access token, and a role session holds no GitHub
+credential at all, which is stronger than "only the App's token".
 
 We reject: the records on the default branch (a commit for each event puts every
 open pull request out of date, and an agent's pull request could change a
 record); a protected ref per task (a default clone does not fetch it); the commit
 author as proof (FT3); a review of a pull request as a human decision (no App
-field).
+field); the App's installation token, which would make LAYUP a bot actor apart
+from the Operator (it contradicts O-77 and O-92, slice A review M7).
 
 ## Consequences
 
 - An agent session cannot write a record or a decision with any token it holds.
 - A clone of the target carries every record, and a human reads it with no tool.
-- The Operator installs the App on each target and adds a private key to it;
-  `layup run` keeps that key on the LAYUP host (known limit L-A1 of
+- The Operator installs the App on each target; `layup run` keeps its user
+  access token on the LAYUP host (known limit L-A1 of
   [`architecture.md`](../architecture.md)).
+- The forge cannot tell a push or merge by LAYUP from one by the Operator's own
+  login, and the App cannot read a ruleset's bypass list (known limit L-A4).
 - The rulesets that the setup applies are a precondition of every run.

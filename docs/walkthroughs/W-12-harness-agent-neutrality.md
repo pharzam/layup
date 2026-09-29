@@ -16,22 +16,22 @@ Sections are those of [`architecture.md`](../architecture.md).
 | # | Actor | Input | Mechanism | Record | Tag | Where |
 | - | ----- | ----- | --------- | ------ | --- | ----- |
 | 1 | `layup run` | the task list and the routing table | later: slice D | later: slice D | `code` | — |
-| 2 | `layup run` | the target at the base commit; the register row of H1 | makes the session directory: a work tree on `task/T-7/1`, an empty `home/`, the prompt file, an environment from the named list with H1's credential variable and no forge credential; starts H1 with the command line of its row | a session start row: session ID, task, attempt, harness, model, base commit, records commit | `code` | §4; ADR-0015 |
-| 3 | H1 session | `prompt.md` and `work/` | works; reads its rules from `AGENTS.md` in the work tree; commits in `work/`; writes its typed result | the result file in `result/`; commits in `work/` (not pushed by the session) | `model` | §4; ADR-0015 |
+| 2 | `layup run` | the target at the base commit; the register row of H1 | makes the session directory: a separate clone on `task/T-7/1`, an empty `home/`, the prompt file, an environment from the named list with H1's credential variable and no forge credential; checks that no rule file of H1 is in a directory above it; starts H1 with the command line of its row | a session start row: session ID, task, attempt, harness, model, base commit, records commit | `code` | §4; ADR-0015 |
+| 3 | H1 session | `prompt.md` and `repo/` | works; reads its rules from `AGENTS.md` in its clone; commits in `repo/`; writes its typed result | the result file in `result/`; commits in `repo/` (not pushed by the session) | `model` | §4; ADR-0015 |
 | 4 | `layup run` | the stalled attempt | later: slice F | later: slice F | `code` | — |
-| 5 | the Operator | the stall package on the task's issue | a comment "give `T-7` to H2" (Decision Point 5) | the comment on the forge | `human` | §3 |
+| 5 | the Operator | the stall package on the task's issue | a comment in the fixed form that the stall package gives (later: slice F), asking to give `T-7` to H2 (Decision Point 5) | the comment on the forge | `human` | §3 |
 | 6 | `layup run` | the comment, read by the forge API | copies it before acting: body, author ID, comment ID, `performed_via_github_app` (empty), time, SHA-256; the author ID is in `approvers.tsv` and the App field is empty, so it is a human decision | a row of the human-input table, a payload with the body | `code` | §3; ADR-0014 |
 | 7 | `layup run` | the parsed comment | later: slice F | later: slice F | `code` | — |
-| 8 | `layup run` | the target at the head of attempt 1, which `layup run` pushed with the App's token; the records; the register row of H2 | makes a new session directory on `task/T-7/2` from that head, with a prompt file built by code from the records (the task, its handoffs, the stall diagnosis) and the target's rule files; starts H2 as in step 2 | a session start row for attempt 2 | `code` | §4; ADR-0015 |
+| 8 | `layup run` | the target at the head of attempt 1, which `layup run` pushed with the App's token; the records; the register row of H2 | makes a new session directory with a separate clone on `task/T-7/2` from that head, with a prompt file built by code from the records (the task, its handoffs, the stall diagnosis) and the target's rule files; starts H2 as in step 2 | a session start row for attempt 2 | `code` | §4; ADR-0015 |
 | 9 | H2 session | the same kind of prompt file; no memory of H1 | works from the files alone; `AGENTS.md` is the same file that H1 read; H2's entry file in the target is a pointer to it | its result file and commits | `model` | §4; ADR-0015 |
-| 10 | `layup run` | the result of H2 | checks the result's schema and that its base commit and records commit are still current for `T-7` (a result bound to an older one is refused); commits it to the records branch with a push that is not forced; pushes `task/T-7/2` with the App's token | the result, the session end row, the commit SHAs bound to the session | `code` | §3; ADR-0014 |
+| 10 | `layup run` | the result of H2 | checks the result's schema; takes the base commit and records commit from its own session start row and checks that they are still current for `T-7` (else it refuses the result); fetches the branch by SHA into its own clone with hooks turned off; checks that it descends from the base commit; commits the result to the records branch with a push that is not forced; pushes that SHA to `task/T-7/2` with the App's token | the result, the session end row, the commit SHAs bound to the session | `code` | §3; ADR-0014 |
 | 11 | a verifier session | the change | later: slice D | later: slice D | `model` | — |
 
 ## Part 2 — a human continues without LAYUP
 
 | # | Actor | Input | Mechanism | Record | Tag | Where |
 | - | ----- | ----- | --------- | ------ | --- | ----- |
-| 12 | the Operator | — | stops `layup run` | the last lease row, with its end time | `human` | §2; ADR-0013 |
+| 12 | the Operator | — | stops `layup run`; the records stop growing | the last lease row, with its end time | `human` | §2; ADR-0013 |
 | 13 | the Operator | the target's rulesets | later: slice B | later: slice B | `human` | — |
 | 14 | a human | a fresh `git clone` of the target | reads the default branch (the product, the task files, `AGENTS.md`) and `origin/layup-records` (the tables and payloads, plain text), with no LAYUP tool; the README names the branch | — | `human` | §3; ADR-0014 |
 | 15 | the target's CI | a pull request of that human | later: slice B | later: slice B | `code` | — |
@@ -41,4 +41,4 @@ Sections are those of [`architecture.md`](../architecture.md).
 
 K01 to K07; P04, P09, P13, P21; S12; R07, R08, R11, R13; I1, I2, I9; C2, C6, C7;
 D05 to D08, D17; FT3, FT5, FT6. Known limits: L-A1 (the shared host), L-A2 (one
-forge), L-A3 (one host during delivery).
+forge), L-A3 (one host during delivery), L-A4 (the forge sees the Operator), L-A5 (a policy file of the host).

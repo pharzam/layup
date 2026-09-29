@@ -80,3 +80,16 @@ confirmed, Just I want to start it in fresh session and apply the Hanness-agent 
 | O-92 | Plan v2 confirmed, with two conditions | (1) Plan v2 as amended is confirmed; the rewrite starts at step 0. (2) The rewrite starts in a fresh session, not in the session that wrote the plan. (3) "The harness-agent badge" is the marker of O-77: from now, every GitHub write of an agent session (issue comments, pull requests, pushes) goes through the LAYUP GitHub App's user access token, so that GitHub shows the App's badge and the API field `performed_via_github_app` names the App. The App does not exist yet; the Operator creates and installs it. Until the author has its token, the author writes nothing more to GitHub except the record of this decision and the setup request; the fresh session starts only with the token. The O-77 condition stays: while an agent session can also reach the Operator's own `gh` login, the separation is by convention only, and each record says so. |
 
 **The setup of O-92, done on 2026-09-29.** The Operator created the GitHub App `layup-agent` (repository permissions: contents, issues and pull requests write, metadata read; no workflows, no administration), installed it on `pharzam/layup` only, and approved its device flow. The first agent comment through it, comment 5884821865 on #72, has `performed_via_github_app` = `layup-agent` (checked by the API). From this record on, the author's comments and pushes use only that App's user access token. The separation is by convention only, because the agent sessions run under the Operator's macOS user and can reach the Operator's own `gh` login (O-77).
+
+## O-93 and O-94: the workflows batch, and thirteen ADRs
+
+The Operator's message in the author's Claude Code session on 2026-09-29, during slice A, word for word:
+
+--- begin
+The approver merges any rule batch that changes, also thirteen is ok
+--- end
+
+| No. | Decision | Reading |
+| --- | -------- | ------- |
+| O-93 | The approver merges a rule batch that changes the CI workflows | The sentence repeats the author's words "the approver merges any rule batch that changes `.github/workflows/`" (the session's status text), so the author reads it as a confirmation: the LAYUP App has no workflows permission (O-92), and a batch that changes `.github/workflows/` is merged by its human approver; `layup run` merges the other batches. The sentence has no object, so a second reading exists (R13): the approver merges every rule batch. The author asked on #72; if the second reading is meant, this row changes. |
+| O-94 | Thirteen ADRs | The per-slice ADR list of plan v2 as amended (thirteen, ADR-0013 to ADR-0025) stands; the word "twelve" in the plan was a miscount. |
