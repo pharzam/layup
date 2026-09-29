@@ -39,7 +39,7 @@ We will orchestrate each target from outside it with one foreground process,
    after the records push that announces it, and any refused records push stops
    the run until it has re-read the lease and still holds it (fencing).
 2. **The engine checks are pure.** `layup psb check`, `layup setup verify`,
-   `layup gate`, `layup spec check` and `layup report` read files, and
+   `layup gate`, `layup spec check`, `layup report` and `layup learn` read files, and
    `layup audit` reads files and the forge's read-only API; each prints a typed
    table. They write nothing else. `layup run` calls them in
    its own process and commits their results.

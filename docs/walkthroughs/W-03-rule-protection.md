@@ -17,7 +17,7 @@ Sections are those of [`architecture.md`](../architecture.md).
 | 3 | `layup run` | the refused result | gives the task the finding "rule path changed"; the next attempt starts from the base commit | a finding row for `T-12` | `code` | §6 |
 | 4 | the forge | a push or a merge that does not come from `layup run` | a role session holds no credential; the default branch's ruleset requires a pull request and the `layup/rules` check from the App, which fails on a rule path outside an approved batch | — | `code` | §6; ADR-0017 |
 | 5 | `layup audit` | the repository activity; the default branch | lists each rule-path change with its merge actor and its approval; a change outside an approved batch counts against `F-0003#64` | an audit table, committed by `layup run` | `code` | §3, §6; ADR-0017 |
-| 6 | the retrospective | the proposal | later: slice H | later: slice H | `human` | — |
+| 6 | the approver, at the retrospective | the proposal in the retrospective brief | approves or drops it with the rule batch (W-13 step 5); an approved change lands in the batch, and only then (O-69) | the retrospective comment | `human` | §13; ADR-0025, ADR-0017 |
 
 ## Checklist rows
 

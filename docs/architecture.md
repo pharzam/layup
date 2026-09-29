@@ -51,7 +51,7 @@ designed (known limit L-A2).
 
 | Component | What it is | Where it runs | What it may write |
 | --------- | ---------- | ------------- | ----------------- |
-| The engine checks | `layup psb check`, `layup setup verify`, `layup gate`, `layup spec check`, `layup report` read files; `layup audit` reads files and the forge's read-only API; each prints a typed table | the LAYUP host | only standard output |
+| The engine checks | `layup psb check`, `layup setup verify`, `layup gate`, `layup spec check`, `layup report`, `layup learn` read files; `layup audit` reads files and the forge's read-only API; each prints a typed table | the LAYUP host | only standard output |
 | The orchestrator | `layup run TARGET`: the phase loop (section 8), in the foreground, one run per target | the LAYUP host | the records branch, the forge, the session clones |
 | The decision component | the smart-if: a package of `layup run` that asks a provider at named points (section 10) | inside `layup run` | a result that `layup run` records |
 | The squad manager | the harness register, admission and routing (section 9) | inside `layup run` | the same |
@@ -969,7 +969,7 @@ a PSB rule (O-84).
 | harness paid work without tokens or a spend cap | allowed, with a wall-clock limit (§12) | O-80 |
 | `stall.T`, `stall.N` | 10 minutes (a maximum), 1 | O-82 |
 | `stall.attempts`, `ci.T`, `panel.K` | set at Intake with evidence | O-82, Invariant 4 |
-| learning weights, bounds, trigger | §13 | O-83 |
+| the reward's term weights; `learn.step`, `learn.min_weight`, `learn.max_weight`, `learn.min`; the learning authority | set at Intake with evidence; the authority `propose` | O-83, Invariant 4 |
 | allowed dependencies | set by the idea owner at Intake or by a decision | `F-0001#13` |
 | `lease.H`; the brief's line limit | set at Intake with evidence | Invariant 4 |
 | `harness.<id>.cap`, `harness.<id>.wall`; `audit.n` | set at Intake; the evidence is the comment that set it (the harness's documentation shows only that a cap exists) | Invariant 4 |
@@ -1206,6 +1206,64 @@ rendered task (§8).
 and compares it with its start value only when both exist; otherwise it prints "not
 comparable", never a pass. A measure with an unknown input is `partial`.
 
+## 13. Retrospective and learning
+
+[ADR-0025](adr/0025-learn-routing-from-the-records-at-each-retrospective.md)
+decides this section. The learning loop changes LAYUP's routing and defaults from
+the records; it never changes a model's weights (PSB §6 Out of Scope, `REQ-015`).
+
+**When.** After the Accept phase of each milestone, and early when a stall's
+diagnosis names a gate (§11). Each retrospective is a planned approval point that
+Intake lists, with its approver (the Operator by default).
+
+**The reward** (vision 3.3, O-83). `layup learn`, a pure command (§2), reads the
+milestone's records and computes, per route (a role, a tier, a harness and a
+model), a reward from terms whose weights are parameters: plus a requirement
+accepted at its first review, plus a verification that passed in its first round;
+minus each material finding, each stall, each unplanned human input, each reversal
+that the audit confirmed (§12), and the cost per task (money, or wall-clock where
+the money is unknown), each against the milestone's median. The human decisions
+(acceptances, escalation and stall answers, audit confirmations) are the human
+feedback of vision 3.3. A term whose input is missing (incomplete telemetry, an
+unknown cost) is left out for that route, never counted as zero. The gates'
+first-attempt pass rate is not a term: the PSB keeps it for monitoring only, so
+that no one weakens a rule to raise it (`F-0003#58`, Author-12). A route with
+fewer than `learn.min` tasks in the records gets no change.
+
+**The update.** Code proposes, per route, a new weight: the old weight plus
+`learn.step` times the route's reward minus the mean, kept inside
+`[learn.min_weight, learn.max_weight]` (the evaluated pattern of bounded offsets
+and of weights that a human adopts, `selection-v2.md` §1.4). The learning
+authority is a parameter (O-83): `propose` (the default: the approver adopts the
+proposal at the retrospective) or `apply` (applied within the bounds and recorded).
+The weight ranks the admitted pairs in routing (§9), so learning acts on routing
+at every smart-if authority level; the smart-if's fit point is asked only on a tie
+or with no weight (Fable-M17).
+
+**The lessons.** A retrospective session reads the records of the milestone (the
+stalls and their diagnoses, the findings, the escalations, the audit) and writes
+each lesson with the records it rests on and its scope: `target` (a new pitfall of
+the target's `docs/guardrails.md` §2, or a rule change) or `layup` (a default, a
+routing prior, a catalog entry, a prompt of the step table).
+
+**The batch.** `layup run` builds one retrospective brief: the reward table and
+the routing proposal; the rule batch of §6, with the rule changes that tasks
+proposed during the milestone (§6) and those that the lessons propose; and the
+lessons. The approver answers by one comment: adopt the routing proposal or not,
+approve the rule batch (by its head and hash) or not, and each lesson kept or
+dropped (O-69). `layup run` copies the comment, writes the routing register, and
+merges the approved batch (the approver merges one that changes
+`.github/workflows/`, O-93). A §2 pitfall is added lines, so it lands without a
+rule batch (§6).
+
+**The next project** (PSB §5, Sol-25). For each kept `layup` lesson, `layup run`
+opens an issue on LAYUP's own repository with the lesson and the links to its
+records. A LAYUP task decides it under LAYUP's gate, and a change lands in LAYUP's
+defaults: the routing priors, a parameter default, a catalog entry or a prompt.
+A new target starts from the defaults of the LAYUP version that its Intake records;
+so a lesson reaches the next project through a reviewed LAYUP release, never
+directly.
+
 ## 14. Coverage
 
 Each row points to a walkthrough, or names the check or the known limit that
@@ -1248,6 +1306,7 @@ rows. The evidence for each row is [`runs/T-hbw8/rewrite-checklist.md`](../runs/
 | S10 Cost Visibility (`F-0003#50`), Telemetry Completeness (`#60`), `REQ-011`, O-68, O-80 | [W-10](walkthroughs/W-10-cost-visibility.md) | 12 | 0024 |
 | #69 B3 (requirement acceptance has no record), B7 (no stop before the spend), table C 3.4 (telemetry per action) | W-10; the table of measures in §12 | 12 | 0024, 0014 |
 | The PSB §7.2 measures and the audit (K53 to K57) | the table of measures in §12 | 12 | 0024, 0014 |
+| Vision 2.3 and 3.3; #69 A1 (by O-69), table C 2.3, 3.3; O-69, O-83 | [W-13](walkthroughs/W-13-retrospective-and-learning.md) | 13 | 0025 |
 | ADR-0012 part 6 (set up a target, run its gate from outside) | W-02; W-04 steps 5, 9 | 5, 6 | 0016 |
 
 ## 15. Known limits
