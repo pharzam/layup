@@ -34,7 +34,8 @@ We will put each target's stack gates in the target, as its own native tools,
 from a stack catalog that LAYUP keeps:
 
 1. **The catalog.** LAYUP's repository has one entry per stack. Per gate kind
-   (layout, interface boundary, contract, test quality), an entry names the tool
+      (layout, interface boundary, contract, test quality, and any further kind of
+   the stack, such as Go's static checks), an entry names the tool
    and its version, the command, the paths in scope, the configuration it writes,
    a known-bad fixture that must make the gate fail, and the tool's
    documentation as evidence. A new entry is a LAYUP change under LAYUP's gate,

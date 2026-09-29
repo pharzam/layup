@@ -219,3 +219,154 @@ All nineteen material findings and notes N1 to N18 are applied in one commit.
 | M18 | NFR-001's criterion names the records branch; §9 says REQ-001's review of meaning is not delivered. |
 | M19 | W-11 steps 11 and 12 (acceptance, lead time), W-02 step 8 (the pilot baseline); the coverage rows point to steps or to named checks. |
 | N1 to N18 | O-99 in the header; W-10's planned input; W-13 and ADR-0025 wording; ADR-0020 d6; `layup/rules` on each head; rules read only after Scaffold; `gofmt`/`go vet` are a fifth kind; setup README; `unavailable` = `not reported`; the host keeps each recorded version's binary; the diff passes only by a stall answer; §3's dead-man row; one harness for numbering and draft; forge objects and host values stated for FT5 and FT6; checklist statuses corrected; ADR-0015 matches §4, per-task events tables; the plan is the Operator's Start value; the setup push has no hooks. |
+
+## Round 2
+
+2026-09-29, head `552d68d`; 7 min 13 s; 34,026 output tokens; USD 4.90 at list price. Same reviewer and setup. Word for word:
+
+~~~~text
+# Whole-design review — round 2
+Reviewer: claude-fable-5-1. Head: 552d68d. Verdict: `material findings: 10`.
+
+## Case 1
+1. Start: `--new`, root commit, records branch, lease (§5 Start, §2, §3; ADR-0013, ADR-0014). `lease.H` now has a value. The plan value has no source: M10.
+2. Intake and probe sessions before the answers (§5 Start step 1, §12; ADR-0024). They run under a cap that §12 never applies: M5.
+3. The Intake batch and the answers (§5, §7 steps 1–5; ADR-0018). OK.
+4. Scaffold, `layup setup verify`, rulesets (§5, §6; ADR-0016, ADR-0017). The check list does not match the steps' evidence: M4.
+5. Shape: the specification (§7 step 6, §8 task loop step 5). Its PR fails the target's `prd-lint` in CI before the bet, so it never reaches the verifier: M1.
+6. Shape: the activation batch (§6, §8 step 5; ADR-0016). It fails `layup/rules`, and `layup/gates` for the pending kinds, before its approval: M2.
+7. The first bet and the rendered commit (§7 steps 7–8, §8 Bet). The mechanism is OK, but it depends on a verified spec head (M1). A reclass that "waits for a bet" fails `prd-lint`: M1.
+8. Merge order, then the milestone plan (§8). OK.
+9. A build task, first attempt: plan, test first, draft PR, gates, verifier, close-out, merge (§8; ADR-0019, ADR-0020). OK.
+10. A rework attempt with frozen tests (§8 Attempts, §11). This adds an author that §9 does not count: M7.
+11. The base merge into the next task (§8 Build). The scoped round fails the target's `review-record` check (RR8): M6.
+12. The budget check before each session in milestone 1 (§12; ADR-0024). OK.
+13. Acceptance, `acceptance.tsv`, lead time (§8 Accept, §12; W-11 steps 11–12). OK.
+14. The audit (§12). OK.
+15. `layup learn` and the routing update (§13; ADR-0025). OK. M16 is closed.
+16. The lesson and its rule batch (§13, §6). Replacing a stale patch is OK (M6 of round 1 closed). A batch fails step 5 (M2). A workflows batch has two contradictory paths: M3.
+
+## Case 2
+1. The developer session ends `needs_context` (§8; ADR-0019 d5). OK.
+2. `layup run` records the question, posts it and asks P2 (§8, §10). A question round is a wait, not a round (§11:1046-1048). OK.
+3. The owner-role session is routed (§9 owner map; ADR-0020). OK.
+4. The owner session hangs. Trigger 3 fires and the session is killed (§11; ADR-0023). OK.
+5. The package and the diagnosis (§11 steps 1–2). OK.
+6. The retry is a new owner session, and the asker waits (§11:1096-1097). OK.
+7. A second hang goes to the panel rung. It is not said which session the panel's path goes to: note N5.
+8. The Operator answers `answer:` (it closes the question as a human answer) or `reroute T <role> to H` (§11 step 5). OK.
+9. The outcome row and the question row. Early Question Share counts the human question, and Turnaround leaves it out (§12). OK.
+
+## The last-round fixes
+- A round 3 `b63e090`: closed.
+- O-95 `f32a732`: closed (round-1 N1 fixed).
+- B round 2 `ce87f71`: round-1 M19 closed; round-1 M7 still open: M4.
+- C round 2 `00a3f4d`: round-1 M4 closed; round-1 M2 closed for `layup/spec`, open for `prd-lint`: M1.
+- D round 2 `2b4953a`: round-1 M13 closed; round-1 M1 open (M1), M3 open (M2), M12 open (M6).
+- E round 2 `f17bfcd`: round-1 M14 closed (notes N3, N4).
+- F round 2 `8e3ba47`: round-1 M9, M10 and M15 closed; the M11 fix adds M7.
+- G round 2 `d3a348e`: closed.
+- H round 2 `098d565`: round-1 M3 (M2 here), M6 and M16 closed.
+- Step 10 `4ad186c`: round-1 M18 closed; round-1 M17 partly open: M8.
+- Round-1 fix `552d68d`: round-1 M5 open (M3); round-1 M8 open (M5); new: M9, M10.
+
+## Material findings
+### M1. The specification's PR fails the target's `prd-lint` before the bet, and so does a requirement that "waits for a bet"
+- Where: architecture.md:590-591 "The PRD's MoSCoW and Phase columns stay empty; the pull request waits." :602-603 "only then does the pull request pass the baseline's own `prd-lint`". :596-597 "its requirement is marked 'waits for a bet' and gets its line at the next bet". :717-719 "A failure goes back to the developer as a finding, in a new attempt." :720 "When they pass, a verifier session reviews the head". :599 "the verified specification's head".
+- Source: `prd-lint.sh:115-121` (an empty MoSCoW or Phase fails), run by `ci.yml`. Round-1 M1 and M2.
+- Why it matters: the spec PR's CI is red until the bet, so step 5 sends it back each attempt. It hits `stall.attempts` and never gets verified. The rendered commit has no verified head to go on. After bet 1, a reclassed need's new row has an empty MoSCoW, so `prd-lint` fails on that head until bet 2.
+- Fix: add a wait state in the task loop for a spec head that waits for a bet (red `prd-lint` only), with verification before the bet. Or keep a "waits for a bet" requirement out of the PRD table until its bet.
+
+### M2. A rule batch fails step 5 before its approval, so it never reaches its verifier
+- Where: :717-719 "`layup gate`, `layup spec check` and `layup/rules` report, on each new head … A failure goes back to the developer". :513-515 "`layup/rules` fails a pull request that changes a rule path unless it is an approved batch". :442 "`pending`, and the head changes such a path | failure". W-04:19 "runs its verification before the bet".
+- Source: ADR-0019 d2 (the bet approves verified batches); round-1 M3 and N5.
+- Why it matters: every batch changes rule paths, so `layup/rules` is red before the approval. The activation batch adds a layout test and contract tests as Go files, so the base manifest's pending kinds fail `layup/gates`. The batch loops through attempts, and the brief can never name a verified head.
+- Fix: before approval, exempt a batch's `layup/rules` and pending-kind results from step 5, and use the scratch run as its gate evidence. Say which statuses it must pass.
+
+### M3. A batch that changes workflows has two contradictory paths
+- Where: :244-248 "it refuses a branch whose diff from the base touches `.github/workflows/` … the result fails with that reason". :485-489 "its sessions write it, `layup run` posts its diff as a payload, and the Operator pushes the batch branch". :713-714 step 4 "the rule-path and workflow checks (§4, §6); then `layup run` pushes the branch". :250-251 "binds a commit SHA to the session only after the forge accepted the push".
+- Source: O-92, O-93; FT3.
+- Why it matters: under §4, the batch session's result fails and counts as an attempt. Under §6, it is accepted. Nothing checks that the head the Operator pushed equals the session's SHA before binding. W-13 step 5 walks W-03's CI-job change with no Operator push step.
+- Fix: add a batch exception to §4 and to step 4. Make code compare the pushed head with the recorded SHA before binding. Add the push step to W-13.
+
+### M4. `layup setup verify` leaves out checks that the steps cite
+- Where: :341-347 "(`pin`, `markers`, `adapted`, `links`, and `identity` and `facts` …) … The evidence of steps S04 to S14 becomes '`layup setup verify <check>` OK'".
+- Source: `setup-check.sh:29` (the checks are pin, kit-history, facts, onboarding, glossary, guardrails, markers, adapted, ci, protection, identity, procedure). `steps.tsv` evidence: S05 `kit-history`, S07 `onboarding`, S08 `glossary`, S09 `guardrails`, S12 `ci`.
+- Why it matters: five steps get no check or a check that "does not apply", so their evidence cannot be "OK". There is no check called `links`: it is `link-lint.sh`.
+- Fix: list every check with "applies" or "dropped, because", and name S12's new evidence.
+
+### M5. Milestone 0 has a cap, but no rule applies it
+- Where: :277-278 "the cap of Intake and Shape (milestone 0, §12)". §12:1197 "A milestone's clock starts at its bet". :1216-1217 (rows compare the project total with `B`). :1131-1133 "otherwise the open work goes to the next bet". ADR-0024 d3 "A cap per milestone … fixed by its bet".
+- Source: FT2; round-1 M8.
+- Why it matters: §12 never mentions milestone 0. Before the answers there is no `B`, so no row of the table can be evaluated. At the intake cap, the breaker sends the work "to the next bet", but no bet can exist before Shape ends. Nothing says who can raise the cap.
+- Fix: in §12 and ADR-0024, define milestone 0: when its clock starts, the table rows before `B` exists, and who raises its cap.
+
+### M6. The scoped base-merge round fails RR8 of the target's `review-record` check
+- Where: :692-694 "recorded as the next round in the target's form (a round after `nothing material in scope` is `material` only if it finds something)".
+- Source: `review-record-lint.sh:276-277` "round N is followed by another round, so its verdict must be `material`"; `review-record.yml` is a required job. Round-1 M12.
+- Why it matters: the earlier round's `nothing material in scope` becomes an intermediate round, and the check turns red. The PR cannot merge. The same happens after a conflict's new attempt.
+- Fix: record the scoped round in a form that RR8 accepts (for example a separate record kind), or say what the record holds after it.
+
+### M7. Frozen test files carried into a later attempt add an author that §9 does not count
+- Where: :788-789 "code applies the frozen test files to each new attempt's start". :836-839 "the authors are … every harness whose session is bound, in the ledger, to a commit in the diff from the base, and every harness whose diff went into an attempt's prompt".
+- Source: `F-0003#66`; Invariant 9; round-1 M13.
+- Why it matters: H1 writes the tests, and the list freezes. After a stall, `reroute T to H2`. Attempt 3 carries H1's tests in a commit by code, so H1 is not an author and may verify a change whose tests it wrote.
+- Fix: count the harness that wrote the frozen tests as an author of every later attempt.
+
+### M8. REQ-004 and REQ-007 still contradict `clear` for a pending kind
+- Where: PRD-0001:117 REQ-004 "a gate that did not run reports `not-active`, which never counts as `pass`". :120 REQ-007 "no PR … merges with a selected gate that did not run". architecture.md:440 "(the kind's own gate did not run …)".
+- Source: `F-0001#5`; round-1 M17. Only NFR-004 got the reading.
+- Fix: add the same reading to REQ-004 and REQ-007, for the Operator to confirm.
+
+### M9. The start values' rendered task cannot pass its handoff
+- Where: :1255-1256 "renders the start values into the pilot's PRD as a rendered task (§8)". W-02 step 8. :656-657 a rendered task is "a later bet's or an escalation decision's change". :759 "the change equals code's rendering of the named inventory version".
+- Why it matters: start values are no inventory version, so the handoff is never valid and the task never merges. §14's K11 row rests on this step.
+- Fix: add start values to the rendered kinds and to the transition row, with the copy they render from.
+
+### M10. Start reads a plan that the command does not give
+- Where: :289-291 "records … the plan that the Operator names in the command". :275-276, the command has no plan argument.
+- Fix: add the argument (for example `--plan`) or say where the value comes from.
+
+## Notes
+- N1. :757 "a known-bad patch per kind it activates" against :453-454 "per kind it touches".
+- N2. §10:1021-1022 says `lease.H` and `harness.<id>.cap`/`.wall` are "set at Intake". §5 sets them at Start.
+- N3. §7:609 says a band decision writes an inventory version. §10:988 says `budget.tsv`.
+- N4. :516 `layup/rules` passes only the rendering of "an inventory version that a bet approved". A decision's facts-record rendering (§7:609-613) fails it.
+- N5. For an owner-role stall, the panel's path "goes into the task's next attempt" (:1108-1109). The same gap applies to `external:`.
+- N6. §5 step 3 waits for "watch started" with no time limit. A dropped scheduled run (L-F1) holds up Start.
+- N7. :692 "Otherwise a verifier session runs one more round" also covers failed gates. Step 5-6 run the verifier only on green checks. Whether this round counts toward trigger 2's cycle cap is not said.
+- N8. The fifth kind "static checks" (:423) is not in the catalog list (:399) or ADR-0016. W-02:19 and W-04:17 still name `gofmt` and `go vet` as separate kinds.
+- N9. Formatting: stray indentation at :297-298, :369, :1054, :1113, :1406, :1462, :1484, and ADR-0019:60. W-12:25 repeats "with a prompt file". :1096 sits unindented inside item 3.
+
+## Coverage
+- `F-0003#41`–`#52`: each has a walkthrough (W-01 to W-12).
+- Phase 1: every row is covered. REQ-004 and REQ-007 fail as written (M8). The REQ-001 status is fixed.
+- #69: all rows are covered. B3 is now walked in W-11 steps 11–12.
+- Table C: 2.1 and 3.1 now name checks and steps. OK.
+- K11: W-02 step 8 cannot complete (M9).
+- §15: exhausting the milestone-0 cap (M5) and the workflows-batch binding (M3) have no known limit.
+
+## Existing solutions
+- GitHub merge queue (`merge_group`): the checks run on the merged commit. That would replace the scoped base-merge round and RR8 (M6).
+- SWE-bench FAIL_TO_PASS tests applied from outside, attributed to a separate author (M7).
+- Doorstop and sphinx-needs report trace gaps as warnings, not as a red CI. That fits a spec that waits for its bet (M1).
+- Healthchecks.io (push-based) would remove the wait for a first scheduled run (N6, L-F1).
+- LiteLLM budgets give a hard spend cap for Intake sessions on API keys (M5).~~~~
+
+### The author's answer to round 2
+
+All ten material findings and notes N1 to N8 are applied in the next commit; N9 (formatting) in part. This was the second round, the limit of plan v2 for step 11 (condition 5), so the author asks the Operator on #72 before the approval brief.
+
+| Finding | Fix |
+| ------- | --- |
+| M1 | A requirement that waits for a bet is written under its own PRD section, not as a table row; a specification that waits for its bet may be red only on `prd-lint`, and is verified anyway (§8 steps 5, 6). |
+| M2 | A rule batch before its approval may be red only on `layup/rules` and the pending kinds; the scratch run is its gate evidence (§8 step 5). |
+| M3 | A rule batch task's branch with a workflow change is not refused; the Operator pushes it, and code compares the pushed tree with the session's before binding; W-13 step 5 has the push. |
+| M4 | `layup setup verify` lists every check that applies to a target, the three that do not and why, and the evidence of S12 and S13. |
+| M5 | Milestone 0 (Intake and Shape) in §12 and ADR-0024: its clock starts at Start, its cap is the Start value, and at the cap the Operator raises it or stops. |
+| M6 | A task is verified only when it is next to merge and up to date with the base, so no base merge comes between its verdict and its merge; the scoped round is gone. |
+| M7 | The harness that wrote the frozen tests is an author of every later attempt. |
+| M8 | REQ-004 and REQ-007 carry the reading of `clear`. |
+| M9 | Rendered tasks include the start values; the transition row names the copy each renders from. |
+| M10 | `--plan` at Start. |
+| N1 to N8 | "per kind it touches"; the Start values in §10; a band decision writes `budget.tsv`; `layup/rules` passes a decision's rendering; a panel's path or `external:` goes to the owner's next session; `watch.T` bounds the wait; the scoped round is gone; the static-checks kind is named in the catalog and the walkthroughs. |

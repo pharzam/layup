@@ -241,11 +241,13 @@ with no valid result file has failed. `layup run` then fetches the session's
 branch into its own clone by commit SHA, with hooks turned off
 (`core.hooksPath` set to an empty directory) and no configuration read from the
 session's clone; it checks that the branch descends from the base commit; and it
-pushes that SHA to `task/<task>/<attempt>` with the App's token. Before the push,
-it refuses a branch whose diff from the base touches `.github/workflows/`: the
-App has no workflows permission (O-92), so LAYUP never delivers a workflow
-change; the result fails with that reason, and the change becomes a proposal for
-an approved batch, which its human approver pushes and merges (O-93). The diff of the
+pushes that SHA to `task/<task>/<attempt>` with the App's token. Before the push, it refuses a branch whose diff from the base touches
+`.github/workflows/`: the App has no workflows permission (O-92), so LAYUP never
+delivers a workflow change; the result fails with that reason, and the change
+becomes a proposal for a rule batch. A rule batch task's branch is the exception:
+it is not refused; `layup run` posts its diff, the Operator pushes it (O-93), and
+code checks that the pushed head's tree equals the session's recorded tree before
+it binds the SHA. The diff of the
 refused change goes to the records branch as a payload, where the approver finds
 it. The records bind a commit SHA to the session only after the forge accepted
 the push. The
@@ -273,7 +275,7 @@ and record the intake in it; they apply the forge settings later
 1. The Operator makes an empty repository on the forge, installs the LAYUP App
    on it and on the dead-man job's App (§11), adds the target to that job's list,
    and runs `layup run --new OWNER/NAME --psb FILE [--vision FILE] --operator
-   LOGIN --idea-owner LOGIN --intake-cap MONEY,HOURS --lease-h MINUTES`. The
+   LOGIN --idea-owner LOGIN --plan PLAN --intake-cap MONEY,HOURS --lease-h MINUTES`. The
    command's values are the evidence of the values that must exist before the
    Intake answers: the cap of Intake and Shape (milestone 0, §12), `lease.H`, and
    each harness's cap and wall-clock limit, which the harness register gives as
@@ -287,8 +289,7 @@ and record the intake in it; they apply the forge settings later
    root tree equals the pinned tree, as step S03 asks. The command pushes from a
    plain clone with no hooks installed.
 3. `layup run` reads back the repository's default branch, its root tree and its
-   visibility, records the LAYUP version and the plan that the Operator names in
-   the command, and stops when one differs, or when the plan does not enforce
+   visibility, records the LAYUP version and the plan that the Operator names with `--plan`, and stops when one differs, or when the plan does not enforce
    rulesets or offer draft pull requests on it (a private repository on GitHub
    Free has neither, and on GitHub Pro no drafts: the Operator makes it public or
    moves it to a plan that has both, K15); the probes of §3 at Scaffold prove it. It then pushes the records branch (an orphan, §3)
@@ -296,8 +297,9 @@ and record the intake in it; they apply the forge settings later
    byte, each with its SHA-256; `approvers.tsv` with the numeric IDs and roles of the two logins of step 1; and the lease row. From this commit on, only a comment by
    one of those IDs is an answer or a decision (§3); any other comment is
       recorded as input. It opens the Intake issue and the control issue (§10), and
-   waits for the dead-man job's first notice there ("watch started"), which
-   shows that its App and list work.
+   waits up to `watch.T` (a Start value) for the dead-man job's first notice there
+   ("watch started"), which shows that its App and list work; without it, it goes
+   on and records "watch not confirmed" (L-F1).
 
 **The gap check, in one batch** (Decision Points 1 and 2, `F-0001#10`, `#11`):
 
@@ -338,13 +340,15 @@ and record the intake in it; they apply the forge settings later
 
 **Scaffold** (`layup setup`, LAYUP's `setup/steps.tsv` with the changes named
 here). `setup/steps.tsv` and `setup/setup-check.sh` are LAYUP's own files, not
-the pinned baseline's: neither goes into a target (FT5). `layup setup verify` does the checks of `setup-check.sh` that apply to a target,
-from outside and for this target (`pin`, `markers`, `adapted`, `links`, and
-`identity` and `facts` with the target's name and facts); the checks `ci` and
-`procedure` read LAYUP's own CI and `steps.tsv`, so they do not apply to a target.
-The evidence of steps S04 to S14 becomes "`layup setup verify <check>` OK"; step
-S15 writes the setup record into the records branch, not `steps.tsv` into the
-target.
+the pinned baseline's: neither goes into a target (FT5). `layup setup verify` does, from outside and for this target, the checks of
+`setup-check.sh` that apply to one: `pin`, `kit-history`, `facts`, `onboarding`,
+`glossary`, `guardrails`, `markers`, `adapted` and `identity` (with the target's
+name and facts), and the pinned baseline's own `link-lint.sh`. Three do not
+apply: `ci` and `procedure` read LAYUP's own CI and `steps.tsv`, and `protection`
+reads the classic protection that the rulesets replace. The evidence of each step
+becomes "`layup setup verify <check>` OK", except S12 (the native gate jobs exist,
+one per kind) and S13 (the rulesets read back, §3); step S15 writes the setup
+record into the records branch, not `steps.tsv` into the target.
 
 1. On a branch from the root commit, code does each row that needs no judgement.
    A value comes only from an Intake answer (by question ID), a catalog entry
@@ -361,8 +365,7 @@ target.
    jobs and the gate jobs (K16).
 5. `layup setup verify` checks the result from outside: the pinned baseline's own
       discipline tests on a checkout of it; the checks that apply to a target (pin:
-   the root tree equals the pinned tree; markers; facts; adapted; links;
-   identity);
+      the root tree equals the pinned tree; and the others listed above);
    zero values without a source; each source resolving; and each active gate,
    which must pass on the clean tree and fail on its known-bad fixture (§6).
 6. The Operator pushes the setup commits on top of the root commit and applies
@@ -396,7 +399,8 @@ prints "not comparable", never a pass. The idea owner's batch of start values fo
 [ADR-0016](adr/0016-put-the-native-stack-gates-in-the-target.md) decides this.
 
 **The stack catalog** is in LAYUP's repository, one directory per stack. An entry
-lists, per gate kind (layout, interface boundary, contract, test quality): the
+lists, per gate kind (layout, interface boundary, contract, test quality, and any
+further kind of the stack, such as the Go entry's static checks): the
 tool and its version, the command, the paths in scope, the configuration it
 writes, a known-bad fixture that must make the gate fail, and the evidence for
 the tool (its documentation at the version). LAYUP's own CI runs every fixture.
@@ -513,8 +517,8 @@ pushes it, because the App has no workflows permission (O-93).
    `layup/rules` fails a pull request that changes a rule path unless it is an
    approved batch (the hash of the rule files that the batch itself changes, at
    its head, equals the hash recorded with its approval), or a rendered record
-   that equals code's rendering of an inventory version that a bet approved
-   (§7, §8).
+   that equals code's rendering of an inventory version that a bet or a decision
+   wrote (§7, §8).
    (`layup/verify` comes from the counterpart verification of §8.)
 
 **Reading of `F-0003#64`.** "0 agent writes to rule paths" counts the rule-path
@@ -593,8 +597,9 @@ checks what can be checked byte for byte. The vision brief is solution input
    text, and the requirements and success criteria. The idea owner answers one
    line per requirement ID: its priority (`Must`, `Should`, `Could`, `Won't`) and
    its milestone; one line per fact to change: "out of scope", or a new class
-   (for example `need`). A new class reopens the draft for that fact (step 6); its requirement is
-   marked "waits for a bet" and gets its line at the next bet. Priority is intent
+   (for example `need`). A new class reopens the draft for that fact (step 6); its requirement is written
+   under a PRD section "waits for a bet", not as a table row, so `prd-lint` does
+   not read it, and it gets its row and its line at the next bet. Priority is intent
    (`F-0003#54`), so code copies the comment (§3) and adds one **rendered commit**
    to the verified specification's head: the MoSCoW and Phase columns from that
    copy, the out-of-scope fact IDs under the PRD's non-goals, and the numbered
@@ -606,8 +611,8 @@ checks what can be checked byte for byte. The vision brief is solution input
    business-forking (§10).
 8. **The confirmed inventory.** At each bet, code writes a new version of it
    from that bet's copy: the numbered facts, their classes and the out-of-scope
-   marks, on the records branch, with the SHA-256 of the version. An escalation decision that changes a requirement, a priority or the band (§10)
-   also writes a version, from its own copy. The numbered facts record of the
+   marks, on the records branch, with the SHA-256 of the version. An escalation decision that changes a requirement or a priority (§10) also
+   writes a version, from its own copy. The numbered facts record of the
    target, with the confirmed classes, is rendered by code from the version: at
    the first bet on the specification's head (step 7), later as a rendered task
    (§8); `layup/rules` passes it when the file equals the rendering. The Scaffold
@@ -654,8 +659,8 @@ rendered record, the milestone plan and each build task are tasks, and each goes
 through the task loop below: its issue, its plan and plan review, its
 verification and its close-out. So each one gets the target's own records and
 `layup/verify` (Sol-27, Fable-M9). For a **rendered** task (a later bet's or an
-escalation decision's change to the PRD or the facts record, §7), code writes the
-plan ("render from inventory version N") and the change; a plan-review session and
+escalation decision's change to the PRD or the facts record, §7, or the pilot's
+start values, §12), code writes the plan ("render from copy N") and the change; a plan-review session and
 a verifier session check them as for any task.
 
 - **Shape.** Tasks write the specification (§7 step 6), the target's
@@ -686,13 +691,11 @@ a verifier session check them as for any task.
   code checks that each `Must` requirement of the milestone has a task and each
   task a requirement, and writes the task register. Tasks run in the plan's
   order, and merge one at a time (the branch rule is "up to date"): after a
-  merge, `layup run` merges the base into the next task's branch. When the merge
-  has no conflict, changes no file that the branch touches, and its gates pass, it
-  carries `layup/verify` to the merge commit with no new round, as the target's own
-  rule allows. Otherwise a verifier session runs one more round on the merge,
-  scoped to the files that both touch, recorded as the next round in the target's
-  form (a round after `nothing material in scope` is `material` only if it finds
-  something); a conflict is resolved by a new attempt first.
+  merge, `layup run` merges the base into the next task's branch; a conflict is
+  resolved by a new attempt. A task is verified only when it is next in the merge
+  order and up to date with the base (step 6), and merges before any other task,
+  so no base merge comes between its verdict and its merge, and the target's
+  review record never needs a round after `nothing material in scope`.
 - **Accept** (Decision Point 3). A requirement is **delivered** when every task
   that names it in the task register has merged. `layup run` then posts the
   requirement, its criterion, the merged changes and the gate and verification
@@ -715,9 +718,15 @@ a verifier session check them as for any task.
    the issue, with a title in the target's form (`<type>: <task ID>
    <description>`), and requests no review (Sol-2).
 5. The target's CI, `layup gate`, `layup spec check` and `layup/rules` report, on
-   each new head (the close-out's included). A failure goes
-   back to the developer as a finding, in a new attempt.
-6. When they pass, a verifier session reviews the head: on a harness that wrote
+   each new head (the close-out's included). A failure goes back to the developer
+   as a finding, in a new attempt. Two failures are expected and do not go back:
+   on a rule batch before its approval, `layup/rules` and the pending kinds of
+   `layup/gates` (the scratch run of §6 is its gate evidence instead); on a
+   specification that waits for its bet, `prd-lint` on the empty MoSCoW and Phase
+   columns.
+6. When they pass (apart from the expected failures of step 5), and the task is
+   next in the merge order and up to date with the base, a verifier session
+   reviews the head: on a harness that wrote
    no commit of the change (§9), fresh, one turn, read-only, told to refute
    "done", with a `file:line` checklist. `layup run` posts its review record on
    the task's **issue**, in the target's form and with the target's verdict
@@ -754,9 +763,9 @@ kinds (the plan, the plan review, the review record, the task file):
 | plan review | developer | a review in the target's form with the verdict `approve` or `approve-with-conditions` |
 | developer (build task) | verifier | commits; the task file; the plan's tests fail at the base and pass at the head (`layup gate` runs them) |
 | developer (specification) | verifier | commits; the task file; a section in `docs/spec/` for each requirement it names |
-| developer (rule batch) | verifier | commits; the task file; a known-bad patch per kind it activates; `layup gate` passes on its head and fails on each patch |
+| developer (rule batch) | verifier | commits; the task file; a known-bad patch per kind it touches; `layup gate` passes on its head and fails on each patch |
 | developer (milestone plan) | verifier | the task register rows; each `Must` requirement of the milestone has a task |
-| code (rendered task) | verifier | the change equals code's rendering of the named inventory version |
+| code (rendered task) | verifier | the change equals code's rendering of the named copy: an inventory version, a decision copy, or the start-values copy (§12) |
 | verifier | close-out | a review record with `nothing material in scope` at the head |
 | verifier | developer | a review record with each finding at a `file:line` |
 | specification | milestone plan | a section in `docs/spec/` whose heading holds each requirement ID of the milestone |
@@ -786,7 +795,8 @@ wait for the owner role, not a round without progress.
 **Attempts.** A new attempt starts from the base commit, with the last attempt's
 findings and any diagnosis in its prompt file, not its diff, so that its commits
 have one author harness. Once the task's test list is frozen (§11), code applies
-the frozen test files to each new attempt's start, so their hashes stay; a change
+the frozen test files to each new attempt's start, so their hashes stay; the
+harness that wrote them counts as an author of every later attempt (§9); a change
 to a frozen test needs an amended plan, which the plan session writes on the
 finding "test changed", and a new plan review, which freezes the list again.
 When the Operator passes the diff too, by a stall answer, the harness that wrote
@@ -835,8 +845,9 @@ passed the probe, its model is not on the target's "not used" list, and, for a
 plan review or a verification, its harness is not an author: for a plan review,
 the **authors** are the harnesses of the task's plan sessions; for a
 verification, every harness whose session is bound, in the ledger, to a commit in
-the diff from the base, and every harness whose diff went into an attempt's
-prompt (Invariant 9; never a field an agent writes). When no
+the diff from the base, every harness whose diff went into an attempt's prompt,
+and the harness that wrote the task's frozen tests (Invariant 9; never a field an
+agent writes). When no
 admitted harness is outside the authors, the verification is `not-active`, and
 the change does not merge (Invariant 5). Among the admitted pairs, the learned
 weight of §13 ranks them; with no weight yet, or a tie, the smart-if's fit point
@@ -985,7 +996,8 @@ option by name, and an option that is a dependency by its manifest identifier.
 An option that changes a requirement, a priority or the band carries lines in
 the bet's form (`REQ-7 Won't`; for the band, `band B <amount> U <amount>`), which
 the Product Owner session writes and code checks (the IDs exist, the values are
-valid); the decision's copy writes a new inventory version (§7) or `budget.tsv`. A decision confirmed as business-forking is planned input
+valid); the decision's copy writes a new inventory version (§7) for a requirement
+or a priority, and `budget.tsv` for the band. A decision confirmed as business-forking is planned input
 (Decision Point 4); one confirmed as not is unplanned input (`F-0001#28`, §12). A
 decision that changes a requirement, its priority or the band is written at once,
 as a rendered task (§8), like a bet line. The task starts its next attempt with
@@ -1018,8 +1030,8 @@ a PSB rule (O-84).
 | `stall.attempts`, `ci.T`, `panel.K` | set at Intake with evidence | O-82, Invariant 4 |
 | the reward's term weights; `learn.step`, `learn.min_weight`, `learn.max_weight`, `learn.min`, `learn.explore`; `learn.trigger`; the learning authority | set at Intake, the evidence is the Operator's comment; `learn.trigger` each end-of-milestone retrospective; the authority `propose` | O-83, Invariant 4 |
 | allowed dependencies | set by the idea owner at Intake or by a decision | `F-0001#13` |
-| `lease.H`; the brief's line limit | set at Intake with evidence | Invariant 4 |
-| `harness.<id>.cap`, `harness.<id>.wall`; `audit.n` | set at Intake; the evidence is the comment that set it (the harness's documentation shows only that a cap exists) | Invariant 4 |
+| `lease.H`, `watch.T`, the intake cap; the brief's line limit | `lease.H`, `watch.T` and the intake cap at Start (the command is the evidence); the line limit at Intake | Invariant 4 |
+| `harness.<id>.cap`, `harness.<id>.wall`; `audit.n` | the harness values in the harness register, which the Operator sets before Start (recorded at Start); `audit.n` at Intake; the evidence is the Operator's setting | Invariant 4 |
 
 The band has one home, `budget.tsv` (§12); a bet or an escalation decision
 changes it as a rendered change, never a parameter row.
@@ -1094,7 +1106,8 @@ task waits for a human: a bet, an escalation, an acceptance, a stall package.
    moves one rung up, with its own stall row, package and diagnosis. The panel rung is skipped when fewer than two admitted
    harnesses are free of the failure that the diagnosis names. A stall of the orchestrator (trigger 5) has only the diagnosis and the Operator.
 A stall of an owner-role session (§8, a question) is a stall of that step: the
-retry is a new owner session, and the asking role still waits.
+retry is a new owner session, and the asking role still waits; a panel's path or
+an `external:` answer goes into the owner's next session.
 4. **The panel** (vision 3.2; AgentJury's quorum). `panel.K` members, each a
    fresh session on the reasoning tier, from at least two harnesses, with the same
    sealed input (the package and the diagnosis), none seeing another's output, and
@@ -1189,6 +1202,13 @@ on without asking) and `U` (the upper edge, which is the money appetite of the
 delivery), and the delivery's wall-clock appetite. `budget.tsv` is their one home
 (§10). There is no per-task budget: tasks do not
 exist yet, and most are found during the work (Shape Up; Author-7, Fable-M11).
+
+**Milestone 0** is Intake and Shape, from Start to the first bet. Its clock starts
+at Start, and its cap is the Start command's `--intake-cap`. Before the Intake
+answers give `B` and `U`, its cap is the only rule: at the cap, the circuit
+breaker stops the work and the Operator raises the cap on the control issue, or
+stops the target. After the answers, its spend counts in the project total like
+any milestone's.
 
 **At each bet**, the brief proposes the milestone's cap in money and wall-clock;
 code checks that the money caps of the bets so far are at most `U` and their

@@ -50,9 +50,9 @@ We will run each target's lifecycle as a phase loop:
    request; the gates; a verifier on a harness that wrote no commit of the
    change, whose record goes on the issue and sets `layup/verify` at the head; a
    close-out commit that code limits to the task file and the completed log, and
-   that carries `layup/verify`; the merge by `layup run` at that head SHA, one
-   task at a time; a clean merge of the base carries the verification over with no
-   new round.
+      that carries `layup/verify`; the merge by `layup run` at that head SHA, one
+   task at a time; a task is verified only when it is next to merge and up to
+   date with the base.
 4. **Handoffs** are typed results checked by code against a transition table:
    schema, artifacts with their hashes, and state that code computes.
 5. **Questions** end the asking session's attempt; the owner role answers; the
