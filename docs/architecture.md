@@ -4,9 +4,9 @@ LAYUP takes a problem statement from an idea owner and drives the delivery of
 that product, from the first question to the last accepted requirement, in a new
 repository that it sets up with the discipline baseline, pinned at its latest
 state when the target is set up (§5; LAYUP's own pin is
-[`setup/armature.pin`](setup/armature.pin)). It carries the work from the accepted
-solution architecture, technical specifications and features all the way to
-working, verified software (O-101, O-104). It is a deterministic
+[`setup/armature.pin`](setup/armature.pin)). It carries the work from the accepted requirements to the produced solution
+architecture, technical specifications, and features—verified by a human at each
+bet (§8)—all the way to working, verified software (O-101, O-104, O-105). It is a deterministic
 orchestrator of the whole lifecycle (O-67): code runs the flow, harness sessions
 do the work that needs judgement, a smart-if provider picks a branch at named
 points, and humans decide only at the Human Decision Points of the PSB.
@@ -65,7 +65,7 @@ known limit of that target. No other adapter is designed (known limit L-A2).
 | --------- | ---------- | ------------- | ----------------- |
 | The engine checks | `layup psb check`, `layup setup verify`, `layup gate`, `layup spec check`, `layup report`, `layup learn` read files; `layup audit` reads files and the forge's read-only API; each prints a typed table | the LAYUP host | only standard output |
 | The orchestrator | `layup run TARGET`: the phase loop (section 8), in the foreground, one run per target | the LAYUP host | the records branch, the forge, the session clones |
-| The decision component | the smart-if: a package of `layup run` that asks a provider at named points (section 10) | inside `layup run` | a result that `layup run` records |
+| The decision component | the smart-if: a package of `layup run` that asks a registered provider at named points (section 10); the providers are declared in the provider register, as harnesses are (O-106) | inside `layup run` | a result that `layup run` records |
 | The squad manager | the harness register, admission and routing (section 9) | inside `layup run` | the same |
 | The learning loop | the reward and the routing update at each retrospective (section 13) | `layup run`, at the retrospective | the same |
 | The runner | the LAYUP GitHub App and the LAYUP host | the forge; the host | through `layup run` only |
@@ -905,12 +905,18 @@ meaning; a human only at a decision point.
 The smart-if is a conditional branch (O-84): at a named point, the flow takes one
 branch or another by the provider's answer. It writes no text and plans no work.
 
-**The provider** (O-78) is chosen by the Operator per target at Intake: Jev
-(TypeSafe's System One API), Laya (an open-weight decision model with a
-Jev-compatible API, run on the LAYUP host or at an endpoint that the harness
-register names; it needs its own calibration: its confidence is not Jev's, and its
-authors say it needs fine-tuning, [`selection-v2.md`](../runs/T-hbw8/selection-v2.md)
-§1.1), or `none`. The model version is pinned per target; a new version resets
+**The provider register** (O-106) is on the LAYUP host, in the same form as the
+harness register (§9): one row per provider, with its kind (Jev, TypeSafe's
+System One API; Laya, an open-weight decision model with a Jev-compatible API,
+run on the host or at an endpoint; or another provider behind the same
+interface), its endpoint, its credential route, its model versions, its size
+limit, and its price source. Before a provider is used, a fixed probe request
+checks that it answers, which model version answered, and its response form; the
+admitted providers and their probe results go to the records, as the harnesses'
+do. **The provider** of a target (O-78) is chosen by the Operator at Intake from
+the admitted providers, or `none`. Laya needs its own calibration: its confidence
+is not Jev's, and its authors say it needs fine-tuning
+([`selection-v2.md`](../runs/T-hbw8/selection-v2.md) §1.1). The model version is pinned per target; a new version resets
 every `delegate` point to `shadow` until it is calibrated again. A request
 carries the point, the literal questions of the point's fixed pack, the options,
 and a state text that code builds from named records and checks against the
@@ -1046,7 +1052,7 @@ a PSB rule (O-84).
 
 | Parameter | Default | Source |
 | --------- | ------- | ------ |
-| provider; model version; authority and threshold per point | set at Intake; `shadow` offered | O-78, O-79 |
+| provider (from the provider register); model version; authority and threshold per point | set at Intake; `shadow` offered | O-78, O-79, O-106 |
 | escalation frequency (P1 only) | each plan, each handoff, each answer | O-79 |
 | owner map; role matrix; step table; transition table | §8, §9 | O-81 |
 | harness paid work without tokens or a spend cap | allowed, with a wall-clock limit (§12) | O-80 |

@@ -30,7 +30,11 @@ Laya exists ([`runs/T-hbw8/selection-v2.md`](../../runs/T-hbw8/selection-v2.md)
 
 We will branch at named points through a provider interface:
 
-1. **The provider** is chosen per target at Intake: Jev, Laya, or none. A
+1. **The provider** is registered on the LAYUP host in a provider register, in
+   the harness register's form (kind, endpoint, credential route, model versions,
+   size limit, price source), and probed before use; the admitted providers go
+   to the records (O-106). The Operator chooses one per target at Intake: Jev,
+   Laya, another registered provider, or none. A
    request holds the point, its fixed literal questions, the options and a state
    text built by code; code does all arithmetic, dates and counts.
 2. **Five named points:** escalation (P1), question kind and need of a human

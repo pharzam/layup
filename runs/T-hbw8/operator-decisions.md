@@ -196,3 +196,34 @@ I am continuing my review of the remaining sections and will follow up with any 
 | O-104 | 4, what LAYUP does | The architecture's first paragraph states the end-to-end delivery: from the accepted solution architecture, technical specifications and features to working, verified software. |
 
 The Operator continues the review of the remaining sections; the approval is still open.
+
+## O-105 and O-106: the first paragraph, and a provider register
+
+The Operator's comment on #72 (pharzam, 2026-09-29T12:08:31Z, comment 5889972097, no App), word for word:
+
+--- begin
+Regarding the overall design, I have two specific suggestions/clarifications:
+
+1. Phrasing in the Overview Section
+In the opening paragraph:
+
+LAYUP takes a problem statement from an idea owner and drives the delivery of that product, from the first question to the last accepted requirement, in a new repository that it sets up with the discipline baseline, pinned at its latest state when the target is set up (§5; LAYUP's own pin is setup/armature.pin). It carries the work from the accepted solution architecture, technical specifications and features all the way to working, verified software (O-101, O-104)...
+
+For the sentence starting with "It carries the work from...", how about refining it along these lines:
+
+"It carries the work from the accepted requirements to the produced solution architecture, technical specifications, and features—verified by a human—all the way to working, verified software (O-101, O-104)."
+
+What do you think of this phrasing? It clearly highlights the full progression from requirements, through human-verified architecture and specifications, to the final verified software.
+
+2. Registration of the smart-if Component
+In Section 2 (The components) regarding:
+
+The decision component: the smart-if: a package of layup run that asks a provider at named points (section 10) | inside layup run | a result that layup run records
+
+The smart-if engine/provider should be registered and configured similarly to the other harness agents (Claude Code, Codex, etc.) during LAYUP's initialization/setup phase. It should follow the same registration pattern so that available providers are explicitly declared, configured, and tracked rather than treated as an opaque, hardcoded internal package.
+--- end
+
+| No. | Point | Reading |
+| --- | ----- | ------- |
+| O-105 | 1, phrasing | The first paragraph takes the Operator's sentence; "verified by a human" is the approval of the architecture, the specification and the priorities at each bet (§8). |
+| O-106 | 2, smart-if registration | Smart-if providers are declared in a provider register on the LAYUP host, in the harness register's form, probed before use, with the admitted providers in the records; the Operator chooses a target's provider from them at Intake. |
