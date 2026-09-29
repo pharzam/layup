@@ -2,7 +2,7 @@
 
 Each file follows one concrete case of one In-Scope item of the PSB
 (`F-0003#41`–`#52`) through LAYUP, step by step. It is the test of
-`docs/architecture.md`: a coverage row points to a walkthrough,
+[`architecture.md`](../architecture.md): a coverage row points to a walkthrough,
 and a walkthrough step points to the section and the ADR that give its
 mechanism.
 
