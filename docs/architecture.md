@@ -275,7 +275,7 @@ and record the intake in it; they apply the forge settings later
 1. The Operator makes an empty repository on the forge, installs the LAYUP App
    on it and on the dead-man job's App (§11), adds the target to that job's list,
    and runs `layup run --new OWNER/NAME --psb FILE [--vision FILE] --operator
-   LOGIN --idea-owner LOGIN --plan PLAN --intake-cap MONEY,HOURS --lease-h MINUTES`. The
+   LOGIN --idea-owner LOGIN --plan PLAN --intake-cap MONEY,HOURS --lease-h MINUTES --watch-t MINUTES`. The
    command's values are the evidence of the values that must exist before the
    Intake answers: the cap of Intake and Shape (milestone 0, §12), `lease.H`, and
    each harness's cap and wall-clock limit, which the harness register gives as
@@ -346,7 +346,7 @@ the pinned baseline's: neither goes into a target (FT5). `layup setup verify` do
 name and facts), and the pinned baseline's own `link-lint.sh`. Three do not
 apply: `ci` and `procedure` read LAYUP's own CI and `steps.tsv`, and `protection`
 reads the classic protection that the rulesets replace. The evidence of each step
-becomes "`layup setup verify <check>` OK", except S12 (the native gate jobs exist,
+of S04 to S14 becomes "`layup setup verify <check>` OK", except S12 (the native gate jobs exist,
 one per kind) and S13 (the rulesets read back, §3); step S15 writes the setup
 record into the records branch, not `steps.tsv` into the target.
 
@@ -494,8 +494,8 @@ on it as on any task. The approval request
 names the batch head's SHA and the tree hash of its rule files. The approver
 approves by an issue comment (§3); code refuses the approval when the batch head
 has moved since the request, and records the hash with the approval. The approved batch merges by
-`layup run`, or, when it changes `.github/workflows/`, by its approver, who also
-pushes it, because the App has no workflows permission (O-93).
+`layup run`, or, when it changes `.github/workflows/`, by its approver, after the Operator pushed its branch
+(below), because the App has no workflows permission (O-93).
 
 **Prevention, in three layers:**
 
@@ -523,7 +523,7 @@ pushes it, because the App has no workflows permission (O-93).
 
 **Reading of `F-0003#64`.** "0 agent writes to rule paths" counts the rule-path
 changes on the default branch that did not land in an approved batch or as a
-rendered record of an approved bet; the approval makes the change the human's
+rendered record of an approved bet or escalation decision; the approval makes the change the human's
 decision (the approval brief asks the
 Operator to confirm this reading).
 
@@ -597,8 +597,9 @@ checks what can be checked byte for byte. The vision brief is solution input
    text, and the requirements and success criteria. The idea owner answers one
    line per requirement ID: its priority (`Must`, `Should`, `Could`, `Won't`) and
    its milestone; one line per fact to change: "out of scope", or a new class
-   (for example `need`). A new class reopens the draft for that fact (step 6); its requirement is written
-   under a PRD section "waits for a bet", not as a table row, so `prd-lint` does
+   (for example `need`). A new class reopens the draft for that fact in a new specification task after this
+   one merges (step 6); its requirement is written under a PRD section "waits for
+   a bet", not as a table row, so `prd-lint` does
    not read it, and it gets its row and its line at the next bet. Priority is intent
    (`F-0003#54`), so code copies the comment (§3) and adds one **rendered commit**
    to the verified specification's head: the MoSCoW and Phase columns from that
@@ -692,10 +693,15 @@ a verifier session check them as for any task.
   task a requirement, and writes the task register. Tasks run in the plan's
   order, and merge one at a time (the branch rule is "up to date"): after a
   merge, `layup run` merges the base into the next task's branch; a conflict is
-  resolved by a new attempt. A task is verified only when it is next in the merge
-  order and up to date with the base (step 6), and merges before any other task,
-  so no base merge comes between its verdict and its merge, and the target's
-  review record never needs a round after `nothing material in scope`.
+  resolved by a new attempt. **A verdict and a moving base.** A build task is
+  verified when it is next in the merge order and up to date with the base (step
+  6); until then its `layup/verify` is posted `pending` with the reason "waits for
+  its turn", a wait state (§11). Shape tasks and rule batches are verified before
+  their bet, and rendered tasks when they are made. A verified task whose base
+  then moves carries its verdict over a clean merge of the base that changes no
+  file it touches, as the target's own rule allows; otherwise it is closed and
+  redone as a new task, with its own issue and records, so the target's review
+  record never needs a round after `nothing material in scope`.
 - **Accept** (Decision Point 3). A requirement is **delivered** when every task
   that names it in the task register has merged. `layup run` then posts the
   requirement, its criterion, the merged changes and the gate and verification
@@ -722,11 +728,12 @@ a verifier session check them as for any task.
    as a finding, in a new attempt. Two failures are expected and do not go back:
    on a rule batch before its approval, `layup/rules` and the pending kinds of
    `layup/gates` (the scratch run of §6 is its gate evidence instead); on a
-   specification that waits for its bet, `prd-lint` on the empty MoSCoW and Phase
-   columns.
-6. When they pass (apart from the expected failures of step 5), and the task is
-   next in the merge order and up to date with the base, a verifier session
-   reviews the head: on a harness that wrote
+      specification that waits for its bet, `prd-lint` on the empty MoSCoW and Phase
+   columns only: code runs the pinned `prd-lint` itself and accepts the head only
+   when each of its failure lines names an empty MoSCoW or Phase cell.
+6. When they pass (apart from the expected failures of step 5), and, for a build
+   task, it is next in the merge order and up to date with the base (§8 Build), a
+   verifier session reviews the head: on a harness that wrote
    no commit of the change (§9), fresh, one turn, read-only, told to refute
    "done", with a `file:line` checklist. `layup run` posts its review record on
    the task's **issue**, in the target's form and with the target's verdict
@@ -742,7 +749,8 @@ a verifier session check them as for any task.
    head, which differs from the verified one by that commit alone.
 8. When every required check is green at the head, `layup run` marks the pull
    request ready and merges it at that head SHA (a batch that changes
-   `.github/workflows/` is pushed and merged by its approver, §6). No human review is requested: a
+   `.github/workflows/`, which the Operator pushed, is merged by its approver,
+   §6). No human review is requested: a
    routine review of each pull request is not a planned point (PSB §6). A human
    who reviews anyway is recorded as human input (§12). **Reading of
    `F-0003#58`:** a pull request "reaches human review" when a review is requested
@@ -1073,7 +1081,8 @@ unknown; it is **downhill** otherwise (§9 uses this for the tier).
    gets no more. `layup run` kills it. A harness whose register row says it sends
    no hook events is judged by its output alone.
 4. **A check that does not report.** A required check with no result for `ci.T`
-   after the push.
+   after the push; a `layup/verify` posted `pending` with a wait reason is a wait,
+   not a missing result.
 5. **The orchestrator.** A takeover of the lease (§2) opens a stall for the time
    with no run; it counts per project, not per task.
 
@@ -1141,8 +1150,9 @@ an `external:` answer goes into the owner's next session.
 **The circuit breaker** (Shape Up; vision 3.5). At a milestone's cap, `layup run`
 stops the milestone, whatever records arrive. Code computes each open task's
 position (uphill or downhill); an examiner gives each uphill task's cause. When
-every open task is downhill and one more round fits inside the band, P5 (§10) may
-grant **one** extension; otherwise the open work goes to the next bet, and a
+every open task is downhill and one more round fits inside the band, P5 (§10) may grant **one** extension; otherwise the open work
+goes to the next bet (for milestone 0, the Operator raises its cap or stops,
+§12), and a
 change of the band goes to the idea owner. No requirement is dropped by the
 breaker: that is business-forking.
 
@@ -1204,11 +1214,11 @@ delivery), and the delivery's wall-clock appetite. `budget.tsv` is their one hom
 exist yet, and most are found during the work (Shape Up; Author-7, Fable-M11).
 
 **Milestone 0** is Intake and Shape, from Start to the first bet. Its clock starts
-at Start, and its cap is the Start command's `--intake-cap`. Before the Intake
-answers give `B` and `U`, its cap is the only rule: at the cap, the circuit
-breaker stops the work and the Operator raises the cap on the control issue, or
-stops the target. After the answers, its spend counts in the project total like
-any milestone's.
+at Start, and its cap is the Start command's `--intake-cap`. At its cap, at any time before the first bet, the circuit breaker stops the
+work, and the Operator raises the cap on the control issue or stops the target
+(there is no earlier bet to send the work to). After the answers, its spend also
+counts in the project total, and the bets' caps plus milestone 0's spend stay
+within `U`.
 
 **At each bet**, the brief proposes the milestone's cap in money and wall-clock;
 code checks that the money caps of the bets so far are at most `U` and their
@@ -1241,7 +1251,9 @@ bound for it (for example "up to USD 3 per session on H3"), recorded in
 
 | Measure (`F-0003`) | Record | The rule in code |
 | ------------------ | ------ | ---------------- |
-| Task Intervention Rate (#70) | `human-inputs.tsv`: every human action, from these sources: all issue and pull-request comments by a human (read at each step, copied whether a step acts on them or not) and their edits, reviews and review comments, reactions, the issue and pull-request events (closed, reopened, ready for review, labelled), workflow runs whose `triggering_actor` is a human, read per attempt (`…/runs/{run_id}/attempts/{n}`; a re-run is a restart), pushes and merges by a human from the repository activity, parameter changes, and each command given to `layup run` on the host; each with its time, actor, kind (answer, correction, restart, gate change, approval, review, parameter, stall answer, bet, acceptance, other), task, and its class; a reaction or a close is "other" and unplanned, so the rate reads high rather than low | planned only when it is the answer at a planned point listed at Intake (Intake, a bet, an acceptance, a retrospective, a setup), a stall answer, or an escalation answer confirmed as business-forking; every other input is unplanned (`F-0001#28`); a parameter change counts for each open task it reaches (§10). Tasks with an unplanned input over all tasks |
+| Task Intervention Rate (#70) | `human-inputs.tsv`: every human action, from these sources: all issue and pull-request comments by a human (read at each step, copied whether a step acts on them or not) and their edits, reviews and review comments, reactions, the issue and pull-request events (closed, reopened, ready for review, labelled), workflow runs whose `triggering_actor` is a human, read per attempt (`…/runs/{run_id}/attempts/{n}`; a re-run is a restart), pushes and merges by a human from the repository activity, parameter changes, and each command given to `layup run` on the host; each with its time, actor, kind (answer, correction, restart, gate change, approval, review, parameter, stall answer, bet, acceptance, other), task, and its class; a reaction or a close is "other" and unplanned, so the rate reads high rather than low | planned only when it is the answer at a planned point listed at Intake (Intake, a
+bet, an acceptance, a retrospective, a setup) or a push that such a point asks of
+the Operator (the setup, a workflows batch), a stall answer, or an escalation answer confirmed as business-forking; every other input is unplanned (`F-0001#28`); a parameter change counts for each open task it reaches (§10). Tasks with an unplanned input over all tasks |
 | Early Question Share (#75) | `questions.tsv`, one table for the project: each question with its phase ("before delivery" until the first task starts), its time, its asker, and whether a human was asked; each escalation to the idea owner is a row too | human questions before delivery over all human questions |
 | Clarification Turnaround (#71) | the same rows: asked, answered, accepted, and the accepting actor (§8) | the 95th percentile of answered minus asked, over the answers later accepted, for questions resolved without a human |
 | Reversal Rate (#72) | `audit.tsv` | overturned answers over audited answers |

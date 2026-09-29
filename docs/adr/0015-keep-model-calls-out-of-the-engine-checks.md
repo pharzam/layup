@@ -49,7 +49,9 @@ with only what LAYUP gives it:
    file, fetches its branch by commit SHA into LAYUP's own clone with hooks
    turned off, checks that it descends from the base commit and changes nothing
    under `.github/workflows/` (the App has no workflows permission, O-92), and
-   pushes that SHA with the App's token. A session is not resumed across
+   pushes that SHA with the App's token. A rule batch task's branch with a
+   workflow change is the exception: the Operator pushes it, and code checks that
+   the pushed tree equals the session's recorded tree before it binds the SHA. A session is not resumed across
    attempts.
 
 This replaces ADR-0011 decision 8. The `NFR-005` criterion of `PRD-0001` changes

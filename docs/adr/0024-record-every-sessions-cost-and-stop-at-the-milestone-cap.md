@@ -37,8 +37,9 @@ We will record every session's cost and stop at the milestone cap:
    `computed` from a cited price, `unknown`). An unknown value is never zero.
 2. **The band** (`B`; `U`, the money appetite) and the wall-clock appetite at
    Intake, from the idea owner, in `budget.tsv`; no per-task budget.
-3. **Milestone 0** (Intake and Shape) has the cap of the Start command; before
-   `B` exists, it is the only rule, and at it the Operator raises it or stops.
+3. **Milestone 0** (Intake and Shape, up to the first bet) has the cap of the
+   Start command; at that cap the Operator raises it or stops the target; after
+   the answers its spend also counts in the project total.
    **A cap per milestone,** in money and wall-clock, fixed by its bet; the caps
    stay within `U` and the wall-clock appetite; a milestone's clock pauses only
    while every open task waits for a human.

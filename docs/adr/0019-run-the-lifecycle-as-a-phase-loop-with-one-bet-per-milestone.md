@@ -51,8 +51,9 @@ We will run each target's lifecycle as a phase loop:
    change, whose record goes on the issue and sets `layup/verify` at the head; a
    close-out commit that code limits to the task file and the completed log, and
       that carries `layup/verify`; the merge by `layup run` at that head SHA, one
-   task at a time; a task is verified only when it is next to merge and up to
-   date with the base.
+      task at a time; a build task is verified when it is next to merge; Shape tasks
+   and batches before their bet; a verdict survives only a clean base merge that
+   changes no file of the task, else the task is redone as a new task.
 4. **Handoffs** are typed results checked by code against a transition table:
    schema, artifacts with their hashes, and state that code computes.
 5. **Questions** end the asking session's attempt; the owner role answers; the

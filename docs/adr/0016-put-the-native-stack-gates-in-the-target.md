@@ -59,7 +59,8 @@ from a stack catalog that LAYUP keeps:
    batch, and every later rule batch that changes a gate kind, carries one new
    known-bad patch per kind it touches, kept on the records branch; before it
    merges, every recorded patch of each touched kind and its new one must fail,
-   and a patch that no longer applies refuses the merge. A pending kind's fixture is not run, and never
+   and a patch that no longer applies refuses the merge unless the batch replaces
+   it. A pending kind's fixture is not run, and never
    counts as a detection.
 5. **No LAYUP check in the target.** LAYUP's `setup-check.sh` and its job stay
    out of the target; `layup setup verify` does those checks from outside.

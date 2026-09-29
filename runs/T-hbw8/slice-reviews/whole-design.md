@@ -370,3 +370,128 @@ All ten material findings and notes N1 to N8 are applied in the next commit; N9 
 | M9 | Rendered tasks include the start values; the transition row names the copy each renders from. |
 | M10 | `--plan` at Start. |
 | N1 to N8 | "per kind it touches"; the Start values in §10; a band decision writes `budget.tsv`; `layup/rules` passes a decision's rendering; a panel's path or `external:` goes to the owner's next session; `watch.T` bounds the wait; the scoped round is gone; the static-checks kind is named in the catalog and the walkthroughs. |
+
+## Round 3 (O-100)
+
+2026-09-29, head `b51a3b1` (round-2 fixes in `4495ffb`); 6 min 28 s; 28,757 output tokens; USD 3.62 at list price. Same reviewer and setup; scope: the round-2 fixes and their seams. Word for word:
+
+~~~~text
+# Whole-design review — round 3
+
+Reviewer: claude-fable-5-1. Head: b51a3b1 (fixes in 4495ffb). Verdict: `material findings: 6`.
+
+Scope: the round-2 fixes (`git diff 552d68d 4495ffb -- docs`) and where they meet the rest of the design. I did not re-review unchanged text.
+
+## Case 1 (only the steps the fixes touch)
+1. Start command (§5 steps 1–3). `--plan` is added. `watch.T` still has no argument: M2.
+2. Milestone 0 before the Intake answers (§12, ADR-0024 d3). OK.
+3. Scaffold, `layup setup verify` (§5). OK. Note N2.
+4. Shape: the specification waits for its bet (§7 step 6, §8 step 5). The expected `prd-lint` failure is OK. But step 6 cannot verify it before the bet: M1.
+5. Shape: the activation batch (§8 step 5, §6). The expected failures are OK. The same step-6 gate applies: M1.
+6. Milestone 0 reaches its cap after the answers, during Shape (§11, §12). No action applies: M6.
+7. First bet and rendered commit (§7 step 7, §8 Bet). This needs a verified spec and verified batches: M1.
+8. Merge after the bet: spec, then batches (§8:686). A batch verified before the bet gets a base merge after its verdict: M1.
+9. Build task, attempts with frozen tests (§8 Attempts, §9). OK in §8 and §9. ADR-0020 differs: M4.
+10. Queued build task waits for its turn to verify (§8 Build, step 6). Trigger 4 fires on `layup/verify`: M1.
+11. Retrospective batch with a workflow change (§4, §6, W-13 step 5). §4 and W-13 are OK. ADR-0015, §6 and §8 step 8 differ: M3.
+12. An escalation decision renders a facts record (§6 layer 3, §7 step 8). `layup/rules` passes it, but the #64 reading counts it as an agent write: M5.
+
+## Case 2
+1–9. The fixes changed only the owner-stall sentence (§11:1109-1110, "a panel's path or an `external:` answer goes into the owner's next session"). It closes round-2 N5. OK.
+
+## The last-round fixes (round 2 → 4495ffb)
+- M1 (spec red on `prd-lint`): closed. See note N1.
+- M2 (batch red before approval): closed in §8 step 5. The new step-6 condition adds M1.
+- M3 (workflows batch): closed in §4 and W-13. Still open in ADR-0015 d5, §6:497, §8:745 and ADR-0017 d4: M3.
+- M4 (setup verify check list): closed. Every `setup-check.sh` check is listed or dropped with a reason. See note N2.
+- M5 (milestone 0): closed before the answers. Still open after them: M6.
+- M6 (scoped round fails RR8): closed for build tasks. The replacement rule adds M1.
+- M7 (frozen-test author): closed in §8 and §9. ADR-0020 d4 does not have it: M4.
+- M8 (REQ-004, REQ-007): closed.
+- M9 (start values rendered task): closed (§8:661-663, transition row :768, §12).
+- M10 (`--plan`): closed in §5. W-01 step 1 is stale: note N3.
+- N1, N3, N6, N7, N8: closed. The N2 fix adds M2. The N4 fix adds M5. The N5 fix is closed.
+
+## Material findings
+
+### M1. "Verified only when next in the merge order" cannot verify the Shape work that a bet needs, and it brings back a stale verdict after the bet
+- Where: architecture.md:695-698 "A task is verified only when it is next in the merge order and up to date with the base (step 6), and merges before any other task, so no base merge comes between its verdict and its merge". :727-728 step 6 "When they pass …, and the task is next in the merge order and up to date with the base, a verifier session reviews the head". ADR-0019:54 says the same.
+- Against: :678 "the brief names the head SHA and the rule-file hash of each verified batch". :604 "adds one rendered commit to the verified specification's head". ADR-0019:42 "its verified batches". W-04:19 "runs its verification before the bet". :686 "Merge order after a bet: the specification (or the rendered task), the rule batches, then the build tasks." :1075 trigger 4 "A required check with no result for `ci.T` after the push."
+- Source: ADR-0019 d2 and d3 contradict each other. Round-2 M6's own aim is not met.
+- Why it matters:
+  - Before the first bet there is no merge order. Neither the spec nor the activation batch merges before the bet. So neither is "next to merge", and the brief cannot name a verified head.
+  - If the spec counts as next, the batch still is not. After the bet, the spec merges first. The batch, verified before the bet, then gets a base merge. It needs a new round after `nothing material in scope`, which is the RR8 failure that round-2 M6 was fixed to remove.
+  - The same applies to retrospective batches. Rendered tasks (a decision's change, the start values) have no place in any merge order.
+  - A queued build task has no `layup/verify` result until its turn, so trigger 4 opens a stall after `ci.T`.
+- Fix:
+  - Define when tasks outside the plan's order are verified: Shape tasks and batches before a bet, and rendered tasks.
+  - Say how a pre-bet verdict survives the post-bet merges. For example, merge batches before the spec's rendered commit changes the base, or add a record kind for a re-verification.
+  - Leave `layup/verify` out of trigger 4, or post it `pending` with a reason.
+
+### M2. `watch.T` is a Start value that the Start command does not give
+- Where: :300 "waits up to `watch.T` (a Start value)". :1033 "`lease.H`, `watch.T` and the intake cap at Start (the command is the evidence)". :277-278, the command has `--plan`, `--intake-cap` and `--lease-h`, but no watch argument.
+- Source: Invariant 4 (a value with evidence). This is the same defect as round-2 M10.
+- Why it matters: Start has no value to wait for, and no evidence for it.
+- Fix: add an argument (for example `--watch-t MINUTES`) to the command at :277-278.
+
+### M3. The workflow-batch exception is only in §4; the ADR still refuses it, and three places name another pusher
+- Where:
+  - ADR-0015:50-52 "checks that it descends from the base commit and changes nothing under `.github/workflows/` … and pushes that SHA with the App's token". This decision governs §4 and has no batch exception.
+  - architecture.md:247-250 "the Operator pushes it (O-93), and code checks that the pushed head's tree equals the session's recorded tree". :491 "the Operator pushes the batch branch".
+  - Against those: :497 "by its approver, who also pushes it". :745 "is pushed and merged by its approver". ADR-0017:56 "the approver pushes and merges one that changes `.github/workflows/`".
+- Source: round-2 M3. O-93. FT3 (the binding check is only in §4).
+- Why it matters: code built from ADR-0015 fails the batch session's result, so the W-13 step-5 batch never reaches its verifier. Two actors (the Operator before verification, the approver at merge) are named for one push. The tree-before-binding check has no home in any ADR.
+- Fix: add the exception and the tree check to ADR-0015 d5. Name one pusher in §6:497, §8:745 and ADR-0017 d4, for example: the Operator pushes the branch, and the approver merges.
+
+### M4. ADR-0020 does not count the frozen-test harness as an author
+- Where: ADR-0020:40-43 "for a verification, every harness bound, in the ledger, to a commit in the diff from the base, or whose diff went into an attempt's prompt". architecture.md:846-848 adds "and the harness that wrote the task's frozen tests". :798-799 says the same.
+- Source: `F-0003#66`, Invariant 9, round-2 M7. ADR-0020 decides §9.
+- Why it matters: routing code built from the ADR admits H1 to verify attempt 3. H1 wrote attempt 3's tests.
+- Fix: add the frozen-test author to ADR-0020 d4.
+
+### M5. A decision's rendered record passes `layup/rules`, but the #64 reading counts it as an agent write
+- Where: :519-521 "a rendered record that equals code's rendering of an inventory version that a bet or a decision wrote" (the round-2 N4 fix). :525-526 "counts the rule-path changes … that did not land in an approved batch or as a rendered record of an approved bet". ADR-0017:53-55 "an inventory version that a bet approved". ADR-0017:61 "not as a rendered record of an approved bet, as an agent write".
+- Source: `F-0003#64`, REQ-003 ("zero agent writes to a rule path").
+- Why it matters: an escalation decision that changes a requirement writes a version. Its rendered facts record (`docs/facts/`, a rule path) merges. Then `layup audit` counts it as an agent write, and REQ-003 fails. Code built from ADR-0017 also refuses its merge.
+- Fix: add "or an escalation decision" to the reading at :525-526 and to ADR-0017 d4 and d5.
+
+### M6. Milestone 0's cap after the Intake answers has no action
+- Where: :1207-1211 "Before the Intake answers give `B` and `U`, its cap is the only rule: at the cap, the circuit breaker stops the work and the Operator raises the cap …, or stops the target. After the answers, its spend counts in the project total like any milestone's." :1143-1145 (breaker) "otherwise the open work goes to the next bet".
+- Against: ADR-0024:40-41 "before `B` exists, it is the only rule, and at it the Operator raises it or stops". This can be read as holding for all of milestone 0.
+- Source: FT2, round-2 M5.
+- Why it matters: Shape runs after the answers and is most of milestone 0. At the intake cap during Shape, §11 sends the open spec and batch "to the next bet". That is the first bet, and it cannot be written without them. §12 and ADR-0024 give two different rules.
+- Fix: state one milestone-0 cap action for Start to the first bet in §11, §12 and ADR-0024. For example: the Operator raises the cap or stops the target, or P5 grants one extension.
+
+## Notes
+- N1. §8:725 "`prd-lint` on the empty MoSCoW and Phase columns". Nothing says how code tells this failure from any other `prd-lint` failure in the same CI job. A spec with a fact that does not resolve is then verified, and it stays red after the rendered commit. Code could run the pinned `prd-lint` itself and read its FAIL lines.
+- N2. §5:350 "The evidence of each step becomes …". S01, S02, S03 and S10 have no `setup-check` evidence. Say "S04 to S14".
+- N3. W-01:16 still shows `layup run --new … --idea-owner LOGIN` without `--plan`, `--intake-cap` and `--lease-h` (and the missing watch value, M2).
+- N4. §7:600-602. A reclass at the first bet reopens the draft, and its requirement goes under the "waits for a bet" section. It is not said whether this happens in the spec's pull request (after the rendered commit and `layup/verify`) or in a later task.
+- N5. §12:1213-1216. The bets' caps are checked against `U`, but milestone 0's spend is not. The project total can reach `U` inside the last milestone's cap.
+- N6. The Operator's push of a workflow batch is a human push. §12:1244 classes it as planned only as "the answer at a planned point". Say how the push is classed.
+- N7. ADR-0016:62 "a patch that no longer applies refuses the merge" against §6:486-487 "may replace a recorded patch … that no longer applies". The line is unchanged, but the ADR was touched in this fix.
+
+## Coverage
+- K11 (start values): W-02 step 8 can now complete (M9 closed).
+- REQ-004 and REQ-007 now match NFR-004's reading of `clear`.
+- §15 has no known limit for milestone 0's cap after the answers (M6), or for the verification order outside the milestone plan (M1).
+- The other rows are unchanged since round 2.
+
+## Existing solutions
+- GitHub merge queue (`merge_group`): it runs the required checks on the queued combined commit, in order. That fits M1's problem (verifying at the merge front after base merges) without a new review round.
+- Healthchecks.io-style push monitoring gives the watch confirmation without a Start-time wait value (M2, L-F1).
+- LiteLLM-style budgets give one hard spend ceiling across Intake and Shape (M6).~~~~
+
+### The author's answer to round 3
+
+All six material findings and notes N1 to N7 are applied in the next commit. Under O-100, the approval brief lists these six findings and their fixes as not read by a review round, for the Operator's answer.
+
+| Finding | Fix |
+| ------- | --- |
+| M1 | A build task is verified when it is next to merge; Shape tasks and batches before their bet; rendered tasks when made. A verdict survives only a clean base merge that changes no file of the task (the target's own rule); otherwise the task is redone as a new task. A queued build task's `layup/verify` is `pending` with a wait reason, which trigger 4 treats as a wait. |
+| M2 | `--watch-t` at Start. |
+| M3 | ADR-0015 d5 has the workflows-batch exception and the tree check; one pusher (the Operator) and one merger (the approver) in §6, §8 and ADR-0017 d4. |
+| M4 | ADR-0020 d4 counts the frozen-test author. |
+| M5 | The `F-0003#64` reading and ADR-0017 include a rendered record of an escalation decision. |
+| M6 | One milestone-0 cap action up to the first bet in §11, §12 and ADR-0024: the Operator raises the cap or stops; its spend counts toward `U`. |
+| N1 to N7 | Code runs the pinned `prd-lint` and accepts only empty-cell failures; "S04 to S14"; W-01's command; a reclass reopens the draft in a new task; milestone 0 counts toward `U`; the Operator's pushes at a planned point are planned; ADR-0016's replacement rule. |

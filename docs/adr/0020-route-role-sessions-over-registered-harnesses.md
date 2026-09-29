@@ -39,8 +39,8 @@ We will route role sessions over registered harnesses:
 4. **Admission in code:** a probed harness, a model not on the "not used" list,
    and for a plan review or a verification a harness that is not an author: for a
    plan review, the harnesses of the task's plan sessions; for a verification,
-   every harness bound, in the ledger, to a commit in the diff from the base, or
-   whose diff went into an attempt's prompt. With no admitted harness outside the authors, a
+   every harness bound, in the ledger, to a commit in the diff from the base, or whose diff went into an attempt's prompt, or that wrote
+   the task's frozen tests. With no admitted harness outside the authors, a
    verification is `not-active`. A harness whose version changed is probed again.
 5. **Choice among admitted pairs:** the learned weight first; with none or a tie,
    the smart-if's fit point or the table's order.
