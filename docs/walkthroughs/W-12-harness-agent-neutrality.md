@@ -32,9 +32,9 @@ Sections are those of [`architecture.md`](../architecture.md).
 | # | Actor | Input | Mechanism | Record | Tag | Where |
 | - | ----- | ----- | --------- | ------ | --- | ----- |
 | 12 | the Operator | — | stops `layup run`; the records stop growing | the last lease row, with its end time | `human` | §2; ADR-0013 |
-| 13 | the Operator | the target's rulesets | later: slice B | later: slice B | `human` | — |
+| 13 | the Operator | the target's rulesets; the setup record's instruction | removes the `layup/` checks from the default branch's ruleset; the native gate jobs stay required | the ruleset on the forge | `human` | §6; ADR-0017 |
 | 14 | a human | a fresh `git clone` of the target | reads the default branch (the product, the task files, `AGENTS.md`) and `origin/layup-records` (the tables and payloads, plain text), with no LAYUP tool; the README names the branch | — | `human` | §3; ADR-0014 |
-| 15 | the target's CI | a pull request of that human | later: slice B | later: slice B | `code` | — |
+| 15 | the target's CI | a pull request of that human | runs the native gate jobs, one per kind, with LAYUP absent; they pass or fail on their own (Invariant 2; FT4 then rests on the ruleset and review, L-B3) | the statuses | `code` | §6; ADR-0016 |
 | 16 | a human | the open task `T-7`: its issue, its branch `task/T-7/2`, its records | continues the work and lands it through a pull request under the target's own gates; LAYUP is not needed for any step | the target's own records of the task (its issue and pull request) | `human` | §1; ADR-0013 |
 
 ## Checklist rows

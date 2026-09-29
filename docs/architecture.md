@@ -599,7 +599,7 @@ against a missed need.
 
 **Vision 2.1.** The preliminary design review is the specification of step 6 with
 the architecture that the first bet approves (§8); the phased plan is the
-milestone plan of the bets (later: slice D, §8).
+milestone plan of the bets (§8).
 
 ## 8. The phase loop
 
