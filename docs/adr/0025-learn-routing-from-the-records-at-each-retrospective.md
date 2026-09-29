@@ -32,29 +32,31 @@ We will learn routing from the records at each retrospective:
 
 1. **The order:** the audit and the idea owner's confirmations, then `layup
    learn`, then the lessons, then one brief to the Operator; `learn.trigger` (a
-   parameter) says at which retrospectives `layup learn` runs, and each run reads
-   only records no earlier run read.
+   parameter) says at which retrospectives `layup learn` runs, and each run reads,
+   per route, the records since that route's last adopted update.
 2. **The reward** is computed in code per implementing route: per task, first-
    review acceptance and first-round verification add; material findings, stalls,
    unplanned human input, confirmed reversals and cost subtract; money and
    wall-clock each against their own median; the mean is taken within one role and
    tier. The term weights are parameters with the Operator's comment as evidence.
-   A route with any unknown money gets no upward step; the gates' first-attempt
-   pass rate is not a term.
+   A route with any unknown money gets no step and is left out of the mean;
+   the gates' first-attempt pass rate is not a term.
 3. **The update** moves each route's weight by a bounded step, only with enough
    tasks behind it; by default it is a proposal that the Operator adopts, and can
-   later revert; a parameter can let it apply within its bounds. A share
-   `learn.explore` of each role's tasks goes to the next admitted pair.
-4. **The weight ranks** the admitted pairs in routing; the smart-if's fit point is
-   asked only on a tie.
+   later revert; a parameter can let it apply within its bounds. A route's first
+   weight is LAYUP's prior, else the mean of its role and tier's weights. A share
+   `learn.explore` of the implementing role's tasks goes to the other pairs in
+   turn.
+4. **The weight ranks** the admitted pairs in routing; the smart-if's fit point
+   or the table's order decides only when no pair has a weight, or on a tie.
 5. **Lessons** come from a retrospective session on a harness outside the
    milestone's authors, with their evidence, scoped to the target or to LAYUP. Each
-   proposed rule change becomes a verified rule batch task before the brief; a
-   batch that changes a gate kind must fail on each known-bad patch before it
-   merges.
+   proposed rule change becomes a verified rule batch task before the brief; a batch that changes a gate kind must fail on every recorded known-bad patch of
+   that kind and its own before it merges.
 6. **A LAYUP lesson** becomes an issue on LAYUP's repository with no content of
    the target; a LAYUP task decides it under LAYUP's gate; a target starts from the
-   defaults of the LAYUP version that its Intake records.
+   defaults of the LAYUP version that its Intake records; `layup run` stops on a
+   version that differs, and a bet adopts a new one.
 
 We reject: a change of model weights; the smart-if proposing weights; a lesson
 that changes another project without a reviewed LAYUP release; a reward that
