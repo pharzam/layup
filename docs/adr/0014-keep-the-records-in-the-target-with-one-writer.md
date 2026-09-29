@@ -14,6 +14,9 @@ Operator's account through a GitHub App, so that the App's badge tells an agent
 from a human, and that agent sessions get only the App's token (O-77, O-92); that
 a person decides by an issue comment, which the orchestrator copies into Git
 (O-73).
+On 2026-09-29 the Operator moved the agents' writes to the App's installation
+token, for the bot's logo and a clear split of agent from human (comment
+5885656174 on #72), and chose the same for LAYUP itself (O-95).
 
 The deep check found four defects in the first draft: six producers wrote records
 that "only `layup run`" was said to write (Sol-3, Fable-M12); a commit author was
@@ -42,9 +45,10 @@ each actor from a credential:
    bind it come from the session start row that `layup run` wrote; a result
    whose attempt is no longer the task's open attempt is refused; a human hands it
    an issue comment.
-3. **Three kinds of actor** (O-77). LAYUP acts under the Operator's account
-   through the LAYUP App's user access token, which only `layup run` holds; the
-   App has the permissions of O-92 plus commit statuses, and no workflows and no
+3. **Three kinds of actor** (O-77, O-95). LAYUP acts as the LAYUP App's bot,
+   with an installation token made from the App's private key, which only
+   `layup run` holds; the App is the only bypass actor of the records branch; it
+   has the permissions of O-92 plus commit statuses, and no workflows and no
    administration permission. Humans are the accounts that `approvers.tsv`
    names by numeric user ID. Role sessions hold no forge credential
    ([ADR-0015](0015-keep-model-calls-out-of-the-engine-checks.md)).
@@ -64,24 +68,25 @@ each actor from a credential:
    setup commits onward, never from a commit author.
 
 This amends ADR-0011 decision 2 (records on a branch of the target, not in the
-tree of the default branch) and reads O-77 this way: every GitHub write of LAYUP
-goes through the App's user access token, and a role session holds no GitHub
+tree of the default branch) and follows O-95, which changes the token of O-92:
+every GitHub write of LAYUP is the App bot's, and a role session holds no GitHub
 credential at all, which is stronger than "only the App's token".
 
 We reject: the records on the default branch (a commit for each event puts every
 open pull request out of date, and an agent's pull request could change a
 record); a protected ref per task (a default clone does not fetch it); the commit
 author as proof (FT3); a review of a pull request as a human decision (no App
-field); the App's installation token, which would make LAYUP a bot actor apart
-from the Operator (it contradicts O-77 and O-92, slice A review M7).
+field); the App's user access token (slice A as written after review round 1):
+under it, pushes and merges show only the Operator's account, and the records
+branch must let the admin role through (Q-15 on #72; O-95).
 
 ## Consequences
 
 - An agent session cannot write a record or a decision with any token it holds.
 - A clone of the target carries every record, and a human reads it with no tool.
-- The Operator installs the App on each target; `layup run` keeps its user
-  access token on the LAYUP host (known limit L-A1 of
-  [`architecture.md`](../architecture.md)).
-- The forge cannot tell a push or merge by LAYUP from one by the Operator's own
-  login, and the App cannot read a ruleset's bypass list (known limit L-A4).
+- The Operator installs the App on each target; `layup run` keeps the App's
+  private key on the LAYUP host, and the key does not expire until the Operator
+  revokes it (known limit L-A1 of [`architecture.md`](../architecture.md)).
+- The forge shows every write of LAYUP as the bot's, apart from the Operator's
+  own; the App cannot read a ruleset's bypass list (known limit L-A4).
 - The rulesets that the setup applies are a precondition of every run.

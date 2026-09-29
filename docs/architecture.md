@@ -85,8 +85,8 @@ table only adds rows; a register is edited in place and Git history is its
 log), and Markdown payloads beside them (ADR-0011 decision 2 keeps its form).
 The target's README, written at setup, names the branch. A plain `git clone`
 carries it as `origin/layup-records`, and a human reads every file with no tool
-(Invariants 1, 2 and 9). When LAYUP stops for good, the records stop growing; the
-Operator can still add to them (the ruleset below lets the admin role through).
+(Invariants 1, 2 and 9). When LAYUP stops for good, the records stop growing; to add to
+them, the Operator first lifts the records ruleset, as an admin can.
 
 Records do not go on the default branch: a commit for each event would put every
 open pull request out of date, and an agent's pull request could change a
@@ -105,17 +105,18 @@ which `layup run` checks and commits:
 | A human | an issue comment | the copy rule below |
 | The dead-man job | nothing; it opens an issue (section 11) | — |
 
-**Identities.** O-77 decides them: no second GitHub account; LAYUP acts under the
-Operator's account through the LAYUP GitHub App's user access token, so GitHub
-shows the Operator's avatar with the App's badge, and the API field
-`performed_via_github_app` names the App.
+**Identities.** O-77 and O-95 decide them: no second GitHub account; LAYUP acts
+as the LAYUP GitHub App's bot, with an installation token, so the forge shows
+`<app>[bot]` with the App's logo, and the API field `performed_via_github_app`
+names the App. The Operator owns and installs the App and stays the responsible
+actor.
 
-- **LAYUP.** `layup run` alone holds the App's user access token and renews it.
-  The App's permissions are those of O-92 (contents, issues and pull requests:
-  write; metadata: read) plus commit statuses (write); no workflows and no
-  administration. For the pilot this is the App `layup-agent`, installed on each
-  target and given the commit-statuses permission; both changes are the
-  Operator's.
+- **LAYUP.** `layup run` alone holds the App's private key and makes an
+  installation token from it for each hour of work. The App's permissions are
+  those of O-92 (contents, issues and pull requests: write; metadata: read) plus
+  commit statuses (write); no workflows and no administration. For the pilot
+  this is the App `layup-agent`, installed on each target and given the
+  commit-statuses permission; both changes are the Operator's.
 - **Humans.** The Operator and the idea owner, each named at Intake in
   `approvers.tsv` by the forge's numeric user ID. They can be the same person.
 - **Role sessions.** They hold no forge credential (section 4). Each comment that
@@ -135,7 +136,7 @@ event; the first copy stays.
 
 **What the forge enforces, and what LAYUP checks.** Section 6 sets two rulesets:
 the default branch has no bypass actor, and the records branch restricts updates
-to the repository admin role, which is the Operator's. At the Scaffold phase and
+to the LAYUP App, its only bypass actor. At the Scaffold phase and
 at each start, `layup run`:
 
 1. reads the effective rules of both branches (`GET
@@ -154,14 +155,12 @@ change to it is not seen (known limit L-A4).
 
 **The actor on the forge.** `layup audit` reads the repository activity of both
 branches, from the setup commits that the records name onward. Each update of
-the records branch must be a push by the Operator's account. Each update of the
-default branch after the setup must be a pull-request merge (`pr_merge` or
-`merge_queue_merge`) by an account in `approvers.tsv`; a `push` there means a
-bypass, and an update with no actor fails (FT1). The setup commits are allowed by
-their SHA. Because LAYUP acts as the Operator, the forge cannot
-tell a push by `layup run` from a push by the Operator's own login; comments and
-pull requests carry the App field, pushes and merges do not (known limit L-A4).
-The audit never reads a commit author (FT3).
+the records branch must be a push by the App's bot. Each update of the default
+branch after the setup must be a pull-request merge (`pr_merge` or
+`merge_queue_merge`) by the App's bot or, for a batch that changes
+`.github/workflows/` (O-93), by an account in `approvers.tsv`; a `push` there
+means a bypass, and an update with no actor fails (FT1). The setup commits are
+allowed by their SHA. The audit never reads a commit author (FT3).
 
 **Communication through issues** (O-73, vision 3.4). Every question to a human,
 escalation, bet, acceptance, stall package and status is an issue comment that
@@ -239,7 +238,7 @@ thrown away, and the next attempt starts from the records (FT6).
 
 **The limit.** Sessions run under the Operator's operating-system user. LAYUP
 removes the credentials it knows, but a process can still read any file that the
-user can read: the App's token, and the Operator's own `gh` login, whose
+user can read: the App's private key, and the Operator's own `gh` login, whose
 comments have an empty App field and would pass as human decisions. The
 separation holds against a session that uses its prompt, its environment and its
 own clone; it does not hold against one that searches the host (O-77: "by
@@ -269,8 +268,8 @@ rows. The evidence for each row is [`runs/T-hbw8/rewrite-checklist.md`](../runs/
 Each limit is a finding that the design does not close, recorded here (O-66).
 
 - **L-A1. The host is shared.** Role sessions run under the Operator's user, so
-  a session that searches the host can reach the App's token and the Operator's
-  own `gh` login; a comment made with that login passes as a human decision.
+  a session that searches the host can reach the App's private key, which does
+  not expire until the Operator revokes it, and the Operator's own `gh` login; a comment made with that login passes as a human decision.
   Until sessions run in an isolated environment (a container or another
   operating-system user), the separation of O-77 is by convention for that case
   (K03, K04).
@@ -278,14 +277,10 @@ Each limit is a finding that the design does not close, recorded here (O-66).
   question).
 - **L-A3. One host during delivery.** `layup run` runs in the foreground on one
   host; while the host is down, nothing moves (section 11 says how the stall is
-  found). A takeover on another host needs its own user access token: a refresh
-  of the token on one host makes the old one unusable, so the Operator
-  authorizes the App once more there (the device flow).
-- **L-A4. The forge sees the Operator.** LAYUP acts as the Operator through the
-  App (O-77). Comments and pull requests carry the App field; pushes and merges
-  do not, so the audit cannot tell LAYUP's push from the Operator's own. The
-  bypass list of a ruleset is read only at setup, from the Operator's command. The
-  forge's rule-suites API, which reports a bypass after the fact, may narrow
+  found). A takeover on another host needs the App's private key on that host.
+- **L-A4. The bypass list is read once.** The App cannot read a ruleset's
+  bypass list, so it is read only at setup, from the Operator's command; a later
+  change to it is not seen. The forge's rule-suites API, which reports a bypass after the fact, may narrow
   this; the permission it needs is not yet checked.
 - **L-A5. A policy file of the host.** A harness that always loads a system-wide
   policy file gives its sessions rules that another harness does not get; code

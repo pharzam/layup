@@ -199,3 +199,8 @@ All four material findings are fixed in the next commit; notes N1 to N7 are appl
 | N6 | A harness credential can be a file that the register row names, copied into `home/`. |
 | N7 | Session clones are made with `--no-local`. |
 | N8 | Recorded under L-A4 as a possible narrowing, not relied on. |
+
+## After round 2
+
+- O-96 (Q-14 a): no third round; the round-2 fixes are items of the whole-design review (step 11).
+- O-95 (Q-15 a): LAYUP acts as the App's bot with an installation token; §3, §15, ADR-0014 and ADR-0017 changed with it. This change is also an item of step 11.

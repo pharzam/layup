@@ -93,3 +93,18 @@ The approver merges any rule batch that changes, also thirteen is ok
 | --- | -------- | ------- |
 | O-93 | The approver merges a rule batch that changes the CI workflows | The sentence repeats the author's words "the approver merges any rule batch that changes `.github/workflows/`" (the session's status text), so the author reads it as a confirmation: the LAYUP App has no workflows permission (O-92), and a batch that changes `.github/workflows/` is merged by its human approver; `layup run` merges the other batches. The sentence has no object, so a second reading exists (R13): the approver merges every rule batch. The author asked on #72; if the second reading is meant, this row changes. |
 | O-94 | Thirteen ADRs | The per-slice ADR list of plan v2 as amended (thirteen, ADR-0013 to ADR-0025) stands; the word "twelve" in the plan was a miscount. |
+
+## O-95 and O-96: LAYUP as the App's bot; slice B starts
+
+On 2026-09-29 a session of the Operator changed the token of this repository's agent writes to the App's installation token (comment 5885656174 on #72: "the Operator asked for the App badge and logo"). The author then asked Q-14 (how the round-2 fixes of slice A are reviewed) and Q-15 (whether LAYUP itself also acts as the App's bot) on #72 (comments 5885301967, 5885692521) and in the session. The Operator's answer in the author's Claude Code session, word for word:
+
+--- begin
+a
+--- end
+
+| No. | Question | Reading |
+| --- | -------- | ------- |
+| O-95 | Q-15 a | LAYUP acts on a target as the LAYUP App's bot, with an installation token made from the App's private key; the App is the only bypass actor of the records branch. This replaces the user-token reading of O-77 and O-92 in slice A. |
+| O-96 | Q-14 a | Slice B starts now; the round-2 fixes of slice A, and the change of O-95, are named items of the whole-design review (step 11), and a finding there comes back to the Operator before the approval brief. |
+
+The answer is one letter, and two questions were open, each with option a as its recommendation; the author reads it as "a" to both (R13: a second reading is "a" to Q-15 only). If that is wrong, the Operator says so on #72 and this record changes.

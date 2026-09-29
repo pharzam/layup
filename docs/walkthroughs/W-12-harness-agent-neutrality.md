@@ -41,4 +41,4 @@ Sections are those of [`architecture.md`](../architecture.md).
 
 K01 to K07; P04, P09, P13, P21; S12; R07, R08, R11, R13; I1, I2, I9; C2, C6, C7;
 D05 to D08, D17; FT3, FT5, FT6. Known limits: L-A1 (the shared host), L-A2 (one
-forge), L-A3 (one host during delivery), L-A4 (the forge sees the Operator), L-A5 (a policy file of the host).
+forge), L-A3 (one host during delivery), L-A4 (the bypass list is read once), L-A5 (a policy file of the host).
