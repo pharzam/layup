@@ -50,3 +50,19 @@ Regarding the final question, proceed with option (a). However, do not keep the 
 | --- | -------- | ------- |
 | O-85 | The budget overrun is approved | The branch past the Budget maximum of the plan review (3,200 lines over 36 files) is approved as it stands at `22e65b3` (37 files, +4,055 −32). The rewrite gets its own budget from the plan review of the new plan. |
 | O-86 | Option (a), with a full evaluation | LAYUP keeps its own Go orchestrator. Before the rewrite plan, each reuse candidate of `search-v2/summary.md` gets a thorough, hands-on evaluation, with no time bound: Gas Town and Beads first, then GNAP, Spec Kitty, AI-SDLC, Paperclip's budget and approval model, and the review and done-check components; each ends with use, borrow the pattern, or reject, with the evidence. Then the new plan for the rewrite, by the fixed method. |
+
+## O-87 to O-91: the answers to the batch of plan v2
+
+The Operator's answer to "Questions for the Operator — one batch (plan v2)" on #72 (comment 5871619023). The answer was given in the author's Claude Code session on 2026-09-29, not on #72; the author copied it to #72 word for word. Word for word:
+
+--- begin
+q-9 a , q-10 a , q-11 a, q-12 , i ment basecamp shapup method may be help us, JUST check I , Q-13 I'll reinstall it by myself
+--- end
+
+| No. | Question | Reading |
+| --- | -------- | ------- |
+| O-87 | Q-9, a review record and authorship | Option a: a review record in Git (for example `deep-check-fable.md`) does not make its writer an author under Bootstrap mode rule 4. Claude Fable 5.1 on `claude` may do the gate round of this task. |
+| O-88 | Q-10, Haiku in the evaluation | Option a: the evidence of the runs that used Claude Haiku 4.5 as the model inside the candidates stays valid. The use stays a reported deviation from ADR-0012 part 3; no later run of this task uses a model on its "not used" list. |
+| O-89 | Q-11, the budget growth of the evaluation | Option a: the growth `22e65b3..946edfc` (22 files, +2,897) is approved as it stands. The Budget maximum of plan v2 (7,200 lines over 64 files) counts from `946edfc`. |
+| O-90 | Q-12, "Shape Up" | "Shape Up" names Basecamp's Shape Up method (Ryan Singer, the book at `https://basecamp.com/shapeup`), not a tool. "JUST check it": evaluate the method, as one more candidate, for what it can give LAYUP; it is not a decision to adopt it. The result is `evaluation/19-shape-up.md`. |
+| O-91 | Q-13, `~/.local/bin/agy` | The Operator reinstalls `agy` personally. The author runs no `agy` session in this task until the Operator says on #72 that it is reinstalled. |
