@@ -22,4 +22,4 @@ Sections are those of [`architecture.md`](../architecture.md).
 
 ## Checklist rows
 
-S2, R02, R09, R12, I4, I8, K08, K15, K16, D07, D18; FT1, FT5. K11 (the baseline and the start values) is later: slice G.
+S2, R02, R09, R12, I4, I8, K08, K15, K16, D07, D18; FT1, FT5.
