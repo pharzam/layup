@@ -47,16 +47,18 @@ the complement:
 4. **A rule change lands** only in a batch, proposed at a planned point (the
    setup, the gate activation of the first bet, each retrospective) on a branch
    `batch/<point>` with its own pull request, so the approver sees it before
-   deciding. The approval request names the batch head and the tree hash of its
-   rule files; code refuses an approval when the head has moved since, and
-   records the hash with the approval; `layup/rules` passes a pull request that changes a rule path
-   only when its hash equals that one. `layup run` merges the approved batch;
+   deciding. The approval request names the batch head and the hash of the rule
+   files that the batch changes; code refuses an approval when the head has
+   moved since, and records the hash with the approval; `layup/rules` passes a
+   pull request that changes a rule path only when that hash still matches, or
+   when it is a record that code renders from an inventory version that a bet
+   approved. `layup run` merges the approved batch;
    the approver pushes and merges one that changes `.github/workflows/`,
    because the App has no workflows permission (O-92, O-93).
 5. **The audit.** `layup audit` lists each rule-path change on the default branch
    with its merge actor, from the forge's repository activity, and its approval.
-   `F-0003#64` counts a rule-path change that landed outside an approved batch
-   as an agent write. The merge actor of each change must be the App's bot, or
+   `F-0003#64` counts a rule-path change that landed outside an approved batch,
+   and not as a rendered record of an approved bet, as an agent write. The merge actor of each change must be the App's bot, or
    an account in `approvers.tsv` for a batch that changes
    `.github/workflows/` (O-95, O-93).
 

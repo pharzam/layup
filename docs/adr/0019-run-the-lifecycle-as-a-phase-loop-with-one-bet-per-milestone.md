@@ -49,16 +49,18 @@ We will run each target's lifecycle as a phase loop:
    parse; the developer's test first; a draft pull request with no review
    request; the gates; a verifier on a harness that wrote no commit of the
    change, whose record goes on the issue and sets `layup/verify` at the head; a
-   close-out commit that code limits to the task file and the completed log; the
-   merge by `layup run` at the verified head SHA, one task at a time.
+   close-out commit that code limits to the task file and the completed log, and
+   that carries `layup/verify`; the merge by `layup run` at that head SHA, one
+   task at a time; a clean merge of the base carries the verification over with no
+   new round.
 4. **Handoffs** are typed results checked by code against a transition table:
    schema, artifacts with their hashes, and state that code computes.
 5. **Questions** end the asking session's attempt; the owner role answers; the
    next attempt gets the answer; the answer is accepted when that attempt ends
    `completed`, cites the answer ID, and asks no question that cites it.
    A new attempt starts from the base commit.
-6. **Accept.** The idea owner accepts or rejects each delivered requirement by
-   one comment; a rejection is a need for the next bet.
+6. **Accept.** The approver of the point (the idea owner by default) accepts or
+   rejects each delivered requirement by one comment; a rejection is a need for the next bet.
 
 We reject: an architecture approval as its own step in each milestone (human
 load); a review request before the gates and the verification pass; handoff

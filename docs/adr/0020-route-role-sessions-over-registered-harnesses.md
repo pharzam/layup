@@ -37,9 +37,10 @@ We will route role sessions over registered harnesses:
 3. **The harness register** on the LAYUP host; a probe session per harness at
    Intake; the admitted harnesses in the records.
 4. **Admission in code:** a probed harness, a model not on the "not used" list,
-   and for a plan review or a verification a harness that wrote no commit of the
-   change: the authors are every harness bound, in the ledger, to a commit in the
-   diff from the base. With no admitted harness outside the authors, a
+   and for a plan review or a verification a harness that is not an author: for a
+   plan review, the harnesses of the task's plan sessions; for a verification,
+   every harness bound, in the ledger, to a commit in the diff from the base, or
+   whose diff went into an attempt's prompt. With no admitted harness outside the authors, a
    verification is `not-active`. A harness whose version changed is probed again.
 5. **Choice among admitted pairs:** the learned weight first; with none or a tie,
    the smart-if's fit point or the table's order.

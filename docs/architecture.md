@@ -480,13 +480,17 @@ pushes it, because the App has no workflows permission (O-93).
    LAYUP App; force
    pushes and deletion are blocked. The records branch has a ruleset that
    restricts updates and deletion to the LAYUP App, its only bypass actor (§3).
-   `layup/rules` fails a pull request that changes a rule path unless it is a
-   batch whose head's rule-file hash equals the hash recorded with its approval.
+   `layup/rules` fails a pull request that changes a rule path unless it is an
+   approved batch (the hash of the rule files that the batch itself changes, at
+   its head, equals the hash recorded with its approval), or a rendered record
+   that equals code's rendering of an inventory version that a bet approved
+   (§7, §8).
    (`layup/verify` comes from the counterpart verification of §8.)
 
 **Reading of `F-0003#64`.** "0 agent writes to rule paths" counts the rule-path
-changes on the default branch that did not land in an approved batch; the
-approval makes the change the human's decision (the approval brief asks the
+changes on the default branch that did not land in an approved batch or as a
+rendered record of an approved bet; the approval makes the change the human's
+decision (the approval brief asks the
 Operator to confirm this reading).
 
 **Detection, as the complement.** `layup audit` lists every change to a rule path
@@ -609,10 +613,14 @@ decides this section.
 requirement is accepted. A later milestone goes back to Shape only when its bet
 brief proposes a change of the architecture.
 
-**Every pull request is a task.** The specification, each rule batch, the facts
-record and each build task are tasks, and each goes through the task loop below:
-its issue, its plan and plan review, its verification and its close-out. So each
-one gets the target's own records and `layup/verify` (Sol-27, Fable-M9).
+**Every pull request is a task.** The specification, each rule batch, each
+rendered record, the milestone plan and each build task are tasks, and each goes
+through the task loop below: its issue, its plan and plan review, its
+verification and its close-out. So each one gets the target's own records and
+`layup/verify` (Sol-27, Fable-M9). For a **rendered** task (the MoSCoW and Phase
+columns, the facts record), code writes the plan ("render from inventory version
+N") and the change; a plan-review session and a verifier session check them as for
+any task.
 
 - **Shape.** Tasks write the specification (§7 step 6), the target's
   architecture (its document and decision records, by the target's own rules; a
@@ -623,8 +631,8 @@ one gets the target's own records and `layup/verify` (Sol-27, Fable-M9).
   the problem (the requirements of the milestone), the appetite (its cap of money
   and wall-clock, inside the band, §12), the solution (the architecture, or a
   proposed change of it, which sends the milestone back to Shape), the rabbit
-  holes and the no-gos; and, at the first bet, every fact with its class (§7 step
-  7). Code checks the five headings, a line limit (a parameter), and that each
+  holes and the no-gos, with the fixed line "architecture change: yes or no"; and,
+  at the first bet, every fact with its class (§7 step 7). Code checks the five headings, a line limit (a parameter), and that each
   link resolves; the brief names the head SHA and the rule-file hash of each
   verified batch that it asks to approve. `layup run` posts it on the milestone's
   issue. The approver of that planned point (the idea owner by default, from
@@ -642,9 +650,11 @@ one gets the target's own records and `layup/verify` (Sol-27, Fable-M9).
   requirement IDs it serves, the tests that will show it done, and a size class;
   code checks that each `Must` requirement of the milestone has a task and each
   task a requirement, and writes the task register. Tasks run in the plan's
-  order, and merge one at a time: after a merge, `layup run` merges the base into
-  the next task's branch, and the gates and the verification run again on its
-  new head (the branch rule is "up to date").
+  order, and merge one at a time (the branch rule is "up to date"): after a
+  merge, `layup run` merges the base into the next task's branch. A merge with no
+  conflict whose gates pass carries `layup/verify` to the merge commit, with no
+  new round, as the target's own rule lets a merge of the base land after a
+  review; a conflict or a failed gate starts a new attempt.
 - **Accept** (Decision Point 3). A requirement is **delivered** when every task
   that names it in the task register has merged. `layup run` then posts the
   requirement, its criterion, the merged changes and the gate and verification
@@ -663,7 +673,8 @@ one gets the target's own records and `layup/verify` (Sol-27, Fable-M9).
    with its typed result (§4).
 4. The handoff check (below), the rule-path and workflow checks (§4, §6); then
    `layup run` pushes the branch and opens a **draft** pull request that links
-   the issue, and requests no review (Sol-2).
+   the issue, with a title in the target's form (`<type>: <task ID>
+   <description>`), and requests no review (Sol-2).
 5. The target's CI, `layup gate` and `layup spec check` report. A failure goes
    back to the developer as a finding, in a new attempt.
 6. When they pass, a verifier session reviews the head: on a harness that wrote
@@ -681,7 +692,8 @@ one gets the target's own records and `layup/verify` (Sol-27, Fable-M9).
    file and the completed log; `layup run` then sets `layup/verify` on the new
    head, which differs from the verified one by that commit alone.
 8. When every required check is green at the head, `layup run` marks the pull
-   request ready and merges it at that head SHA. No human review is requested: a
+   request ready and merges it at that head SHA (a batch that changes
+   `.github/workflows/` is pushed and merged by its approver, §6). No human review is requested: a
    routine review of each pull request is not a planned point (PSB §6). A human
    who reviews anyway is recorded as human input (§12). **Reading of
    `F-0003#58`:** a pull request "reaches human review" when a review is requested
@@ -700,7 +712,11 @@ kinds (the plan, the plan review, the review record, the task file):
 | ---- | -- | ------------------------- |
 | task plan | plan review | a plan in the target's form that lists its tests by ID |
 | plan review | developer | a review in the target's form with the verdict `approve` or `approve-with-conditions` |
-| developer | verifier | commits; the task file; the plan's tests fail at the base and pass at the head (`layup gate` runs them) |
+| developer (build task) | verifier | commits; the task file; the plan's tests fail at the base and pass at the head (`layup gate` runs them) |
+| developer (specification) | verifier | commits; the task file; a section in `docs/spec/` for each requirement it names |
+| developer (rule batch) | verifier | commits; the task file; a known-bad patch per kind it activates; `layup gate` passes on its head and fails on each patch |
+| developer (milestone plan) | verifier | the task register rows; each `Must` requirement of the milestone has a task |
+| code (rendered task) | verifier | the change equals code's rendering of the named inventory version |
 | verifier | close-out | a review record with `nothing material in scope` at the head |
 | verifier | developer | a review record with each finding at a `file:line` |
 | specification | milestone plan | a section in `docs/spec/` whose heading holds each requirement ID of the milestone |
@@ -726,9 +742,10 @@ none of its questions cites the answer ID; the accepting actor is that session.
 An attempt that a question ends does not count toward the attempt limits of §11;
 §11 bounds the questions of a task.
 
-**Attempts.** A new attempt starts from the base commit by default, with the last
-attempt's diff and findings in its prompt file as payloads, so that its commits
-have one author harness.
+**Attempts.** A new attempt starts from the base commit, with the last attempt's
+findings and any diagnosis in its prompt file, not its diff, so that its commits
+have one author harness. When the Operator or a parameter passes the diff too,
+the harness that wrote it counts as an author of the new attempt (§9).
 
 ## 9. Squads and routing
 
@@ -747,7 +764,7 @@ table:
 | Shape: the architecture; the gate-activation batch | Systems Architect; Software Architect | reasoning |
 | Plan of a milestone; plan of a task | Software Engineer | reasoning |
 | Implement; close-out | Software Developer | by the task's class |
-| Plan review; verification | QA Engineer, on another harness | reasoning |
+| Plan review; verification | QA Engineer, on a harness outside the authors | reasoning |
 | Answer to a question | the owner of its kind | reasoning |
 
 **The owner map** (Problem 1, Sol-32). Default: domain or business → Domain
@@ -770,17 +787,20 @@ again before it runs.
 **Routing** is a register on the records branch: for each role and tier, an
 ordered list of harness and model pairs. Code admits a pair only when its harness
 passed the probe, its model is not on the target's "not used" list, and, for a
-plan review or a verification, its harness wrote no commit of the change: the
-**authors** are every harness whose session is bound, in the ledger, to a commit
-in the diff from the base (Invariant 9; never a field an agent writes). When no
+plan review or a verification, its harness is not an author: for a plan review,
+the **authors** are the harnesses of the task's plan sessions; for a
+verification, every harness whose session is bound, in the ledger, to a commit in
+the diff from the base, and every harness whose diff went into an attempt's
+prompt (Invariant 9; never a field an agent writes). When no
 admitted harness is outside the authors, the verification is `not-active`, and
 the change does not merge (Invariant 5). Among the admitted pairs, the learned
 weight of §13 ranks them; with no weight yet, or a tie, the smart-if's fit point
 (§10) or the table's order picks one.
 
-**The tier** of an implementing task starts from its plan: the reasoning tier
-when the plan's size class is `large`, or the plan lists an open question or a new
-interface; the execution tier otherwise. The computed progress position of §11
+**The tier** of an implementing task starts from its plan, which has three fixed
+fields: `size` (`small` or `large`), `open questions` and `new interfaces`. The
+reasoning tier when `size` is `large` or either list is not empty; the execution
+tier otherwise. The computed progress position of §11
 can move it later (later: slice F).
 
 **The context of a session** (vision 3.1). The step table names, per step, the
@@ -877,3 +897,7 @@ Each limit is a finding that the design does not close, recorded here (O-66).
   reach. The measure is still recorded (§12).
 - **L-D2. Context by link.** A session gets the records that the step table's
   links reach; a relevant record that no link reaches is not in its prompt.
+- **L-D3. Acceptance of an answer.** The accepted time is mechanical: an attempt
+  that asks the same question again in other words, without citing the answer
+  ID, still counts the answer as accepted; the Clarification Turnaround can read
+  too short.
