@@ -36,8 +36,9 @@ No file goes in that the target needs LAYUP to build, test or pass its gates. A
 target passes its own gates with LAYUP absent (Invariant 2).
 
 **The LAYUP host** holds, per target: LAYUP's own clone of the target, one
-separate clone per role session, the harness credentials, and the App's user
-access token. None of these is project state: each run rebuilds the clones from
+separate clone per role session, the harness credentials, and the App's private
+key, in a file only the Operator's user can read (mode 0600), from which
+`layup run` makes installation tokens. None of these is project state: each run rebuilds the clones from
 the forge and the records (Invariant 1).
 
 **The forge** is GitHub for the pilot. LAYUP talks to it through one package with
@@ -67,10 +68,13 @@ of its own time, it takes the lease over and records the takeover. The time with
 no run is a stall of the orchestrator (later: slice F).
 
 **Fencing.** Every write of `layup run` to the forge (a push of a task branch, a
-comment, a status, a merge) comes after the records push that announces it. Any
+comment, a status, a merge) comes after the records push that announces it. A
+run pushes its records only on top of its own last pushed records commit, never
+after a fetch and a rebase, so a takeover makes its next records push fail. Any
 refused push of the records branch stops the run: it re-reads the lease and goes
 on only while it still holds it. So a run whose lease was taken over, for example
-after the host slept, writes nothing more.
+after the host slept, writes nothing more, except the one forge write that it
+had already announced (L-A3).
 
 ## 3. Records and identities
 
@@ -101,7 +105,7 @@ which `layup run` checks and commits:
 | Producer | What it hands over | The check before the commit |
 | -------- | ------------------ | --------------------------- |
 | An engine check | its table on standard output | the header and the columns of that record kind |
-| A role session | a result file in its session directory, and commits in its own clone | the schema of the result; the attempt and the base commit come from the session start row that `layup run` wrote, never from the result; the result is refused unless that attempt is still the task's open attempt: no later row of the task's event table closes it, starts another attempt, or changes its base commit |
+| A role session | a result file in its session directory, and commits in its own clone | the schema of the result; the attempt and the base commit come from the session start row that `layup run` wrote, never from the result; the result is refused unless that attempt is still the task's open attempt: no later row of the task's event table (`tasks/<task>/events.tsv`) closes it, starts another attempt, or changes its base commit |
 | A human | an issue comment | the copy rule below |
 | The dead-man job | nothing; it opens an issue (section 11) | — |
 
@@ -143,10 +147,13 @@ at each start, `layup run`:
    /repos/{owner}/{repo}/rules/branches/{branch}`) and stops when a rule is
    missing (Invariant 5);
 2. pushes an empty probe commit to the ref `layup-probe`, which the same ruleset
-   as the default branch covers, with the App's token, and stops unless the
-   forge refuses it. A bypass is set per ruleset, so this proves that no bypass
+   as the default branch covers, with the App's token. Only a refusal for a rule
+   violation (GitHub's `GH013` "Repository rule violations found", naming the
+   ruleset) counts; any other failure (an expired token, a network or server
+   error) stops the run as "probe not run", never as a pass (FT1). A bypass is set per ruleset, so this proves that no bypass
    covers LAYUP's own actor on the default branch, and a probe that the forge
-   accepts lands on a ref that nothing uses;
+   accepts lands on a ref that nothing uses (the Operator then deletes the ref and
+   checks any workflow run that it started);
 3. reads the repository activity with the App's token, and stops when it cannot
    (the audit below needs it).
 
@@ -157,7 +164,8 @@ change to it is not seen (known limit L-A4).
 
 **The actor on the forge.** `layup audit` reads the repository activity of both
 branches, from the setup commits that the records name onward. Each update of
-the records branch must be a push by the App's bot. Each update of the default
+the records branch must be a `push` by the App's bot, apart from one
+`branch_creation` by the App's bot whose SHA is the records' first commit. Each update of the default
 branch after the setup must be a pull-request merge (`pr_merge` or
 `merge_queue_merge`) by the App's bot or, for a batch that changes
 `.github/workflows/` (O-93), by an account in `approvers.tsv`; a `push` there
@@ -233,8 +241,10 @@ pushes that SHA to `task/<task>/<attempt>` with the App's token. Before the push
 it refuses a branch whose diff from the base touches `.github/workflows/`: the
 App has no workflows permission (O-92), so LAYUP never delivers a workflow
 change; the result fails with that reason, and the change becomes a proposal for
-an approved batch, which its human approver pushes and merges (O-93). The records
-bind a commit SHA to the session only after the forge accepted the push. The
+an approved batch, which its human approver pushes and merges (O-93). The diff of the
+refused change goes to the records branch as a payload, where the approver finds
+it. The records bind a commit SHA to the session only after the forge accepted
+the push. The
 session never pushes. A session is not resumed across attempts: harness state in `home/` is
 thrown away, and the next attempt starts from the records (FT6).
 
@@ -521,7 +531,9 @@ Each limit is a finding that the design does not close, recorded here (O-66).
 
 - **L-A1. The host is shared.** Role sessions run under the Operator's user, so
   a session that searches the host can reach the App's private key, which does
-  not expire until the Operator revokes it, and the Operator's own `gh` login; a comment made with that login passes as a human decision.
+  not expire until the Operator revokes it, makes tokens for every target where
+  the App is installed, and passes the records rulesets; and the Operator's own
+  `gh` login; a comment made with that login passes as a human decision.
   Until sessions run in an isolated environment (a container or another
   operating-system user), the separation of O-77 is by convention for that case
   (K03, K04).
@@ -529,11 +541,14 @@ Each limit is a finding that the design does not close, recorded here (O-66).
   question).
 - **L-A3. One host during delivery.** `layup run` runs in the foreground on one
   host; while the host is down, nothing moves (section 11 says how the stall is
-  found). A takeover on another host needs the App's private key on that host.
+  found). A takeover on another host needs the App's private key on that host. A
+  run that paused between the records push that announces a forge write and the
+  write itself still makes that one write after a takeover.
 - **L-A4. The bypass list is read once.** The App cannot read a ruleset's
   bypass list, so it is read only at setup, from the Operator's command; a later
-  change to it is not seen. The forge's rule-suites API, which reports a bypass after the fact, may narrow
-  this; the permission it needs is not yet checked.
+  change to it is not seen. The forge's rule-suites API, which reports a bypass
+  after the fact, needs the administration permission, which the App does not
+  have.
 - **L-A5. A policy file of the host.** A harness that always loads a system-wide
   policy file gives its sessions rules that another harness does not get; code
   records the file, and does not remove it.

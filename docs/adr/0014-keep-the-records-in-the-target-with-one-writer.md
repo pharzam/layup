@@ -63,9 +63,11 @@ each actor from a credential:
    rules of the default and the records branch and stops when a rule is missing;
    it also pushes an empty probe commit to a probe ref that the default
    branch's ruleset covers, with the App's token, and stops unless the forge
-   refuses it. `layup audit` checks the actor of
+   refuses it for a rule violation (any other failure is "probe not run", never
+   a pass). `layup audit` checks the actor of
    each update of both branches from the forge's repository activity, from the
-   setup commits onward, never from a commit author.
+   setup commits and the records' first commit (a `branch_creation`) onward,
+   never from a commit author.
 
 This amends ADR-0011 decision 2 (records on a branch of the target, not in the
 tree of the default branch) and follows O-95, which changes the token of O-92:

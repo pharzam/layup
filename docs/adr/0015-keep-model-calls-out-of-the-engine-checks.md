@@ -39,10 +39,12 @@ with only what LAYUP gives it:
 4. **A session starts with** its own clone of the target at the base commit (not
    a linked work tree of LAYUP's clone), an empty home directory, a prompt file
    that code builds, and an environment from a named list: the harness's own
-   credential variable, and no forge credential and no SSH agent. The command
+   credential, as a variable or as a file that the register row names, copied
+   into the home directory; no forge credential and no SSH agent. The command
    line comes from the harness's row in the harness register. Before the start,
    code refuses a rule file of that harness in any directory above the session,
-   and records each system-wide policy file that the row lists.
+   and in the harness's configuration directory, and records each system-wide
+   policy file that the row lists.
 5. **A session ends** when its process exits. `layup run` reads its typed result
    file, fetches its branch by commit SHA into LAYUP's own clone with hooks
    turned off, checks that it descends from the base commit and changes nothing
@@ -63,8 +65,8 @@ the evaluation, Fable-M23).
 
 - A second harness gets the same rules as the first, from the same files
   (Invariant 9).
-- A harness whose login lives only in the home directory needs its credential as
-  an environment variable; the harness register names it.
+- A harness whose login is a file in its configuration directory gets a copy of
+  that file in the session's home directory; the harness register names it.
 - A process on the host can still read what the Operator's user can read; the
   separation holds against a session that uses its prompt and its environment
   (known limit L-A1 of [`architecture.md`](../architecture.md)).

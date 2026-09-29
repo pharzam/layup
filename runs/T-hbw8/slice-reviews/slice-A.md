@@ -204,3 +204,106 @@ All four material findings are fixed in the next commit; notes N1 to N7 are appl
 
 - O-97 (Q-14 b; O-96 withdrawn): a third round reads the round-2 fixes and the O-95 change.
 - O-95 (Q-15 a): LAYUP acts as the App's bot with an installation token; §3, §15, ADR-0014 and ADR-0017 changed with it. Round 3 reads it.
+
+## Round 3 (O-97)
+
+2026-09-29, head `3c4ed5b`; 3 min 43 s; 16,844 output tokens; USD 2.34 at list price. Same reviewer and setup. Word for word:
+
+~~~~text
+# Slice A review — round 3
+Reviewer: claude-fable-5-1. Head: `3c4ed5b`. Verdict: `material findings: 4`.
+
+Round 2 status:
+- **M1 (probe ref): closed.** The probe now goes to `layup-probe`. The docs confirm that "Get rules for a branch" works for a branch that does not exist. Required status checks apply on creation unless `do_not_enforce_on_create` is set, so without a bypass the forge refuses the probe. New defect: see M2.
+- **M2 (fencing): closed.** See N1 for the part that remains.
+- **M3 ("current" is defined by the open attempt): closed** (`architecture.md:104`, ADR-0014 d2, W-12 step 10).
+- **M4 (no workflow change is delivered): closed.** A branch that touches workflows is refused before the push, and a SHA is bound only after the forge accepts the push. See N2 for where the proposal lives.
+- **O-95** is carried into §3, §15 (L-A1, L-A3), ADR-0014 and W-12. It is not carried into §1 (M1), and the audit does not cover the records branch's first push (M3).
+
+## Material findings
+
+### M1. §1 still says the host holds a user access token
+- Where: `docs/architecture.md:38-40`: "The LAYUP host holds, per target: … the harness credentials, and the App's user access token."
+- Source: O-95 ("an installation token made from the App's private key"). The same file says the opposite at `:114`: "`layup run` alone holds the App's private key". ADR-0014 d3 and L-A1 and L-A3 say the same as `:114`.
+- Why it matters: §1 is the inventory of what the host keeps, and L-A1 and L-A3 rest on it. A long-lived private key is not the same risk as a short-lived user token. One reader will protect and move the wrong secret. The key also reaches every target where the App is installed.
+- Fix: "… the harness credentials, and the App's private key (from which `layup run` makes installation tokens)."
+
+### M2. Any refusal of the probe counts as proof (FT1)
+- Where: `architecture.md:145-147`: "pushes an empty probe commit to the ref `layup-probe` … and stops unless the forge refuses it". ADR-0014 d6 says the same. W-02 step 7 says "expects a refusal".
+- Source: FT1 ("no check that did not run counts as a pass"). Invariant 5.
+- Why it matters: the push can fail for other reasons: the installation token expired, the network failed, the App lost its contents permission, or the forge returned a 5xx. Each of these "refuses" the push. The check then records "no bypass" without having tested one. The case that matters is a new bypass actor added while the token is broken, and it passes the check.
+- Fix: count only a refusal that is a ruleset violation. That means the `GH013` "Repository rule violations found" rejection, naming the ruleset. Any other failure stops the run as "probe not run", not as a pass.
+
+### M3. `layup audit` fails the records branch's own first push
+- Where: `architecture.md:158-160`: "from the setup commits that the records name onward. Each update of the records branch must be a push by the App's bot."
+- Source: the activity API types are `push`, `force_push`, `branch_creation`, `branch_deletion`, `pr_merge` and `merge_queue_merge`, and `actor` is nullable (docs.github.com, "List repository activities"). §5 step 3 has the App create `layup-records` as an orphan branch. The setup commits that the records name are commits of the default branch. This is the same class of defect as round-1 M5.
+- Why it matters: on every correctly set-up target, the first activity entry of `layup-records` is a `branch_creation`, not a `push`. Read as written, `layup audit` fails on a clean target, so its real exit code differs from the documented result.
+- Fix: "Each update of the records branch must be a `push` by the App's bot, apart from one `branch_creation` by the App's bot whose SHA is the records' first commit." ADR-0014 d6 needs the same words.
+
+### M4. ADR-0015 forbids the credential file that §4 allows
+- Where: ADR-0015 d4: "an environment from a named list: the harness's own credential variable". Consequences (`:66-67`): "A harness whose login lives only in the home directory needs its credential as an environment variable". Against that, `architecture.md:206-210`: "the harness's own credential: a variable, or a file that the register row names and that `layup run` copies into `home/`".
+- Source: `architecture.md:177`: "ADR-0015 decides this section". Round-2 N6 was applied to §4 only.
+- Why it matters: take Codex with a ChatGPT login. Its `auth.json` lives under `CODEX_HOME`, so it can only be a file. The ADR says this harness cannot run, and §4 says it can. The decision record and the design disagree on which harnesses S12 admits.
+- Fix: in ADR-0015 d4 and in its consequence, say "a variable, or a file that the register row names, copied into `home/`". Also add the rule-file check for that harness's configuration directory.
+
+## Notes
+- N1. Fencing leaves two gaps. First, a run that pauses between the records push that announces a write and the write itself still makes that one write after a takeover. Record this as a residual under L-A3. Second, say that a run pushes its records only on top of its own last pushed commit, and never fetches and rebases first. If it fetched first, it would never see a refusal after a takeover.
+- N2. The refused workflow change "becomes a proposal" (`:235-236`), but its commits exist only in LAYUP's clone (FT6). Store the diff as a payload on the records branch, as §6 does for the known-bad patches. Say where the approver gets it.
+- N3. A session whose branch also touches a workflow loses all its work (the whole result fails). Consider splitting the workflow change off instead of failing the attempt.
+- N4. "The task's event table" (`:104`) is not a named record kind. Name the file.
+- N5. An accepted probe starts from the default branch's tree, so a `push` workflow with no branch filter runs on `layup-probe` with the repository's secrets. Say that the Operator deletes the ref and checks that run.
+- N6. L-A4: GitHub's permissions table lists the rule-suites API (`GET /rulesets/rule-suites`) under "Administration" (read). The App has no administration permission, so this API cannot narrow L-A4 as the App stands. Record that fact instead of "not yet checked".
+- N7. L-A1 is wider under O-95. The private key does not expire, it mints tokens for every installation (every target), and it bypasses the records ruleset. Say this in L-A1, and give the key file owner-only permissions (0600).
+- N8. The docs confirm the other facts the design relies on. The activity API needs Contents (read), which the App has. The rules API needs Metadata (read). Commit statuses need Commit statuses (write), which §3 adds.
+
+## Checklist rows
+- K01: answered (fencing, with N1).
+- K02: answered.
+- K03: answered, with L-A1 (see N7).
+- K04: answered, with L-A5, subject to M4.
+- K05, K06, K07: answered.
+- P04, P09, P21: answered.
+- P13: known limit L-A2 (acceptable).
+- S12: answered, subject to M4.
+- R07, R11: answered.
+- R08: answered (step 13 is later: slice B).
+- R13: answered by the `PRD-0001` build check.
+- I1, I2: answered.
+- I9 (in part): answered, subject to M4.
+- C2: answered.
+- C6, C7 (in part): answered.
+- D05, D06, D17: answered.
+- D07 (in part): answered, subject to M2 and M3.
+- D08: answered by O-95, subject to M1.
+- FT3: answered.
+- FT5: answered.
+- FT6: answered, with N2.
+- FT1 (probe): subject to M2.
+- L-A1: acceptable, but see N7.
+- L-A2, L-A3, L-A5: acceptable.
+- L-A4: acceptable; N6 corrects its narrowing.
+
+## Existing solutions
+- The Copilot coding agent, Dependabot and Renovate act as App bots with installation tokens, and Copilot's workflow runs wait for a human's approval. This is the O-95 model and M4's route.
+- Kubernetes Lease and client-go leader election time the lease with a locally observed clock. Kleppmann's fencing tokens assume the resource checks the token; GitHub does not, which is why N1 remains.
+- Spec Kitty's coordination branch (ev06) and git-appraise's data refs are precedents for `layup-records`.
+
+Sources: [List repository activities](https://docs.github.com/en/rest/repos/repos#list-repository-activities), [Repository rules API](https://docs.github.com/en/rest/repos/rules), [Permissions required for GitHub Apps](https://docs.github.com/en/rest/authentication/permissions-required-for-github-apps), [Creating rulesets](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/creating-rulesets-for-a-repository), [community discussion 193295](https://github.com/orgs/community/discussions/193295).~~~~
+
+### The author's answer to round 3
+
+Round 3 closed the four round-2 findings. Its four new material findings, and notes N1, N2, N4 to N7, are applied in the next commit; N8 needs no change.
+
+| Finding | Fix |
+| ------- | --- |
+| M1 | §1 names the App's private key (mode 0600) as what the host holds. |
+| M2 | Only a `GH013` rule-violation refusal of the probe counts; any other failure stops the run as "probe not run" (§3; ADR-0014 d6; W-02 step 7). |
+| M3 | The audit allows one `branch_creation` of the records branch by the App's bot at its first commit (§3; ADR-0014 d6). |
+| M4 | ADR-0015 d4 and its consequence allow the credential file, and the rule-file check covers the harness's configuration directory. |
+| N1 | Records push only on top of the run's own last records commit; the one announced write after a takeover is under L-A3. |
+| N2 | The diff of a refused workflow change goes to the records branch as a payload. |
+| N3 | Declined: the attempt fails with the finding, and the next attempt redoes the work without the workflow change; splitting a result would let a session deliver part of a change that it did not declare. |
+| N4 | The event table is named: `tasks/<task>/events.tsv`. |
+| N5 | After an accepted probe, the Operator deletes the ref and checks the run it started. |
+| N6 | L-A4: the rule-suites API needs administration; the App cannot use it. |
+| N7 | L-A1: the key makes tokens for every target and passes the records rulesets. |
