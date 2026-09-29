@@ -159,6 +159,7 @@ record by number here, and let the index table below do the linking.
 | [0020](0020-route-role-sessions-over-registered-harnesses.md) | Route role sessions over registered harnesses | Proposed |
 | [0021](0021-branch-at-named-points-through-a-smart-if-provider.md) | Branch at named points through a smart-if provider | Proposed |
 | [0022](0022-screen-for-business-forking-decisions-before-the-work.md) | Screen for business-forking decisions before the work | Proposed |
+| [0023](0023-stop-a-stall-at-a-limit-and-diagnose-it-with-a-fresh-context.md) | Stop a stall at a limit and diagnose it with a fresh context | Proposed |
 
 <!-- Add one row per ADR as you write them. Keep the newest at the bottom. -->
 

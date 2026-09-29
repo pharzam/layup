@@ -66,7 +66,7 @@ by its own clock from the moment it last saw the counter change, so the two
 hosts' clocks are never compared (the pattern of Kubernetes leader election). It
 stops while the counter moves; when the counter has not moved for `3 × lease.H`
 of its own time, it takes the lease over and records the takeover. The time with
-no run is a stall of the orchestrator (later: slice F).
+no run is a stall of the orchestrator (§11).
 
 **Fencing.** Every write of `layup run` to the forge (a push of a task branch, a
 comment, a status, a merge) comes after the records push that announces it. A
@@ -801,8 +801,7 @@ weight of §13 ranks them; with no weight yet, or a tie, the smart-if's fit poin
 fields: `size` (`small` or `large`), `open questions`, `new interfaces`, and `new
 dependencies` (read by the escalation floor, §10). The
 reasoning tier when `size` is `large` or any of the three lists is not empty; the execution
-tier otherwise. The computed progress position of §11
-can move it later (later: slice F).
+tier otherwise. The progress position of §11 moves it later: an uphill task (open unknowns) to the reasoning tier, a downhill one to the execution tier.
 
 **The context of a session** (vision 3.1). The step table names, per step, the
 record kinds that go into the prompt file: the task's issue and plan, the rows and
@@ -977,6 +976,100 @@ a PSB rule (O-84).
 The band has one home, `budget.tsv` (§12); a bet or an escalation decision
 changes it as a rendered change, never a parameter row.
 
+## 11. Stalls
+
+[ADR-0023](adr/0023-stop-a-stall-at-a-limit-and-diagnose-it-with-a-fresh-context.md)
+decides this section. A stall is "a task that does not reach its goal and does
+not fail cleanly, because role agents do not agree, or because a step repeats
+without progress" (PSB §8). The limits are parameters (O-82).
+
+**Progress is computed, never reported** (Shape Up's hill, computed; Sol-22,
+Fable-M4, Author-1). Code keeps, per task, two numbers from the records: the
+**unknowns** (its open questions, its open material findings, its open
+escalations) and the **passed tests** of the plan's frozen test list (§8). A
+round (an attempt, or a review round) makes progress only when the unknowns go
+down or the passed tests go up. A new commit, handoff or record alone is not
+progress. A finding has a fixed form (file, line, rule); the same finding in two
+rounds is the same unknown. A task whose unknowns are zero is **downhill**; any
+other task is **uphill** (§9 uses this for the tier).
+
+**The triggers** (all recorded with their evidence):
+
+1. **No progress.** `stall.N` rounds in a row without progress (default 1, O-82).
+   A disagreement between two roles is this case: each rejection of the same
+   finding is a round without progress. A question round counts the same way: an
+   answered question removes one unknown and a new one adds one.
+2. **A hang.** A running session writes no output and sends no hook event for
+   `stall.T` (default 10 minutes, a maximum, O-82). `layup run` kills it.
+3. **A check that does not report.** A required check with no result for
+   `ci.T` (a parameter) after the push.
+4. **The circuit breaker.** A milestone reaches its cap (§12).
+5. **The orchestrator.** A takeover of the lease (§2) opens a stall for the time
+   with no run.
+
+**Waits are not stalls** (Fable-M5). The clock and the round count stop while a
+task waits for a human (a bet, an escalation, an acceptance, a stall package) or
+for its first orientation session (Shape Up's "getting oriented": the first
+session of a task gets `stall.T` once more).
+
+**The procedure** (Decision Point 5, `F-0001#14`):
+
+1. **The package.** Code builds the evidence from the records: the task, its
+   plan, its findings and their history, its hill numbers per round, the diffs as
+   payloads, the gate outputs, the harness's exit and logs. It leaves out the
+   sessions' own reasoning.
+2. **The diagnosis.** An examiner session with a fresh context (any admitted
+   harness; never the session that stalled) reads the package and writes a
+   diagnosis in a fixed form: the cause (disagreement, missing information, a
+   wrong gate, a harness failure, a task too large, or other), each open unknown
+   with its evidence, and the rung it recommends. No stall goes on without a
+   diagnosis, the Operator's branch included (Fable-M6).
+3. **The action** (smart-if P3, §10). The ladder, which is the deterministic
+   branch: **retry** once with the diagnosis in the prompt; then a **panel**;
+   then the **Operator**. A new trigger in a retried task moves one rung up.
+4. **The panel** (vision 3.2; AgentJury's aggregator). `panel.K` members (a
+   parameter set at Intake), each a fresh session on the reasoning tier, from at
+   least two harnesses, with the same sealed input (the package and the
+   diagnosis), none seeing another's output, and a prompt that asks for
+   hypotheses and trade-offs from first principles, not a hunt for fault. Each
+   returns options, each with its evidence, and one recommendation. A synthesis
+   session that sees only the members' outputs merges them into numbered options
+   with one recommended path. Code checks the quorum: at least a majority of
+   members returned a valid output, from at least two harnesses; otherwise the
+   result is `insufficient panel`, and the next rung is the Operator. The
+   recommended path goes into the task's next attempt. The Shape phase uses the
+   same panel for a decision that the target's rules give to one (§8).
+5. **The Operator** gets one comment on the task's issue: the stall, the
+   diagnosis, the panel's result, the evidence, and the answer form, one line:
+   `answer: <text>`, `reroute <task> to <harness>`, `set <parameter> <value>`,
+   `stop <task>`, or `external: <text>` for a candidate solution from another
+   source (vision 3.5). `layup run` copies the reply (§3); it is planned input
+   (Decision Point 5). A reroute writes a harness override for the task, and the
+   next attempt starts from the base on that harness (§8).
+6. **The outcome.** Each stall ends with one outcome row: closed without a human
+   (by a retry or a panel), closed by the Operator, or the task stopped. Stall
+   Diagnosis (`F-0003#61`) counts the stalls with no diagnosis row, which must be
+   zero.
+
+**The circuit breaker** (Shape Up; vision 3.5). At a milestone's cap, `layup run`
+stops the milestone, whatever records arrive. An examiner diagnoses each open
+task as uphill or downhill. When every open task is downhill and one more round
+fits inside the band, P5 (§10) may grant **one** extension; otherwise the open
+work goes to the next bet, and a change of the band goes to the idea owner. No
+requirement is dropped by the breaker: that is business-forking.
+
+**A wrong gate** (Fable-M19). A stall whose diagnosis names a gate as its cause
+opens an **early retrospective**, a planned point that Intake lists, whose rule
+batch may fix the gate (§13).
+
+**The dead-man job** (Sol-4, Author-10). A scheduled workflow in a control
+repository that the Operator owns (never a target, FT5) reads the lease heartbeat
+of each target that its list names, with an installation token of the LAYUP App,
+and opens an issue on a target whose heartbeat is older than `3 × lease.H`. It
+writes nothing else. The next run of `layup run` takes the lease over, opens the
+orchestrator's stall, and builds its package. A scheduled workflow can start
+late, so the notice can be late too (known limit L-F1).
+
 ## 14. Coverage
 
 Each row points to a walkthrough, or names the check or the known limit that
@@ -1014,6 +1107,8 @@ rows. The evidence for each row is [`runs/T-hbw8/rewrite-checklist.md`](../runs/
 | #69 B8 (an escalation after the work) | W-08 steps 2 to 5 | 10 | 0022 |
 | O-78, O-79, O-84 (provider, authority, parameters, bounds) | W-08 steps 3, 4; W-06 step 3 | 10 | 0021 |
 | Table C 2.1, the phased plan | the bets and the Build plan of §8 | 8 | 0019 |
+| S9 Stall Resolution (`F-0003#49`), Stall Diagnosis (`#61`), `REQ-009`, `REQ-010`, Decision Point 5 | [W-09](walkthroughs/W-09-stall-resolution.md) | 11 | 0023 |
+| #69 B2 (the time-limited stall), table C 3.2 (blind panel), 3.5 (circuit breaker, package, external answers) | W-09 | 11 | 0023 |
 | ADR-0012 part 6 (set up a target, run its gate from outside) | W-02; W-04 steps 5, 9 | 5, 6 | 0016 |
 
 ## 15. Known limits
@@ -1078,3 +1173,6 @@ Each limit is a finding that the design does not close, recorded here (O-66).
 - **L-E2. Calibrating P3 and P4.** Under `shadow`, the branch that the provider
   picks at P3 or P4 is not run, so its outcome is unknown; a `delegate` threshold
   for these two points rests only on the Operator's comment.
+- **L-F1. A late dead-man notice.** A scheduled workflow can start late, so the
+  notice of a dead host can come later than `3 × lease.H`; the package is built
+  only at the next run.
