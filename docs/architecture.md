@@ -42,8 +42,9 @@ key, in a file only the Operator's user can read (mode 0600), from which
 the forge and the records (Invariant 1).
 
 **The forge** is GitHub for the pilot. LAYUP talks to it through one package with
-a named set of calls: issues and comments, pull requests, commit statuses, the
-effective rules of a branch, and the repository activity. A second forge is not
+a named set of calls: issues and comments, pull requests (and the GraphQL call
+that marks a draft ready), commit statuses, the effective rules of a branch, and
+the repository activity. A second forge is not
 designed (known limit L-A2).
 
 ## 2. The components
@@ -278,9 +279,10 @@ and record the intake in it; they apply the forge settings later
    root tree equals the pinned tree, as step S03 asks. The command pushes from a
    plain clone with no hooks installed.
 3. `layup run` reads back the repository's default branch, its root tree and its
-   visibility and plan, and stops when one differs or when the plan does not
-   enforce rulesets on it (on GitHub Free, a private repository: the Operator
-   makes it public or moves it to a plan that does, K15). It then pushes the records branch (an orphan, §3)
+   visibility and plan, and stops when one differs, or when the plan does not
+   enforce rulesets or offer draft pull requests on it (a private repository on
+   GitHub Free has neither, and on GitHub Pro no drafts: the Operator makes it
+   public or moves it to a plan that has both, K15). It then pushes the records branch (an orphan, §3)
    with its first commit: the problem statement and the vision brief byte for
    byte, each with its SHA-256; `approvers.tsv` with the numeric IDs of the two
    logins of step 1; and the lease row. From this commit on, only a comment by
@@ -569,8 +571,9 @@ checks what can be checked byte for byte. The vision brief is solution input
 8. **The confirmed inventory.** At each bet, code writes a new version of it
    from that bet's copy: the numbered facts, their classes and the out-of-scope
    marks, on the records branch, with the SHA-256 of the version. The numbered
-   facts record of the target, with the confirmed classes, lands in
-   `docs/facts/` through that bet's rule batch (§6); the Scaffold writes only the
+   facts record of the target, with the confirmed classes, is rendered by code
+   from that version and lands in `docs/facts/` as its own task (§8), whose
+   `layup/rules` passes when the file equals the rendering; the Scaffold writes only the
    problem statement and the answers there. `docs/facts/` is a rule path from the
    setup, so a role session cannot edit it.
 
@@ -606,75 +609,109 @@ decides this section.
 requirement is accepted. A later milestone goes back to Shape only when its bet
 brief proposes a change of the architecture.
 
-- **Shape.** Sessions write the specification (§7 step 6) and the architecture of
-  the target: its document and its decision records, by the target's own rules;
-  a decision that those rules give to a panel gets the blind panel of §11. The
-  architect session writes the gate-activation batch (§6).
-- **Bet** (Decision Points 1 and 3; Shape Up's betting table, one bet per
-  milestone). `layup run` posts one brief on the milestone's issue, one screen
-  long, in five parts: the problem (the requirements of the milestone), the
-  appetite (its cap of money and wall-clock, inside the band, §12), the solution
-  (the architecture, or its change), the rabbit holes, and the no-gos; and, for
-  the first bet, every fact with its class (§7 step 7). The idea owner answers by
-  one comment: a line per requirement, a line per fact to change, and "bet" or
-  "no bet". Each bet is a planned approval point, listed at Intake. It is also
-  the architecture's approval: there is no other approval inside the milestone,
-  apart from escalations (§10) and stalls (§11). Merge order after a bet: the
-  specification pull request (its MoSCoW and Phase written from the bet), then
-  the rule batch, then the tasks. A requirement changes only at a bet.
-- **Build.** A plan session splits the milestone into tasks, each with the
-  requirement IDs it serves and the tests that will show it done; code checks
-  that each `Must` requirement of the milestone has a task and each task a
-  requirement, and writes the task register. Then the task loop below runs, one
-  task at a time or in parallel as the plan's order allows.
-- **Accept** (Decision Point 3). For each delivered requirement, `layup run`
-  posts the requirement, its criterion, the merged changes and the gate and
-  verification results; the idea owner answers "accept" or "reject" with a
-  reason. A rejection becomes a new need for the next bet (Shape Up: a new bet,
-  not a patch). The record is in §12.
+**Every pull request is a task.** The specification, each rule batch, the facts
+record and each build task are tasks, and each goes through the task loop below:
+its issue, its plan and plan review, its verification and its close-out. So each
+one gets the target's own records and `layup/verify` (Sol-27, Fable-M9).
 
-**The task loop.** Each step of the target's own quality gate has an actor
-(Fable-M9):
+- **Shape.** Tasks write the specification (§7 step 6), the target's
+  architecture (its document and decision records, by the target's own rules; a
+  decision that those rules give to a panel gets the blind panel of §11), and the
+  gate-activation batch (§6).
+- **Bet** (Decision Points 1 and 3; Shape Up's betting table, one bet per
+  milestone). A session of the Product Owner role writes the brief in five parts:
+  the problem (the requirements of the milestone), the appetite (its cap of money
+  and wall-clock, inside the band, §12), the solution (the architecture, or a
+  proposed change of it, which sends the milestone back to Shape), the rabbit
+  holes and the no-gos; and, at the first bet, every fact with its class (§7 step
+  7). Code checks the five headings, a line limit (a parameter), and that each
+  link resolves; the brief names the head SHA and the rule-file hash of each
+  verified batch that it asks to approve. `layup run` posts it on the milestone's
+  issue. The approver of that planned point (the idea owner by default, from
+  Intake) answers by one comment: a line per requirement, a line per fact to
+  change, and "bet" or "no bet". The bet approves the milestone, the architecture
+  and its batches; there is no other approval inside the milestone, apart from
+  escalations (§10) and stalls (§11). A bet that changes a class or a priority
+  does not touch the approved batches: code then writes the specification's
+  MoSCoW and Phase and the facts record from the bet copy (§7) as their own
+  tasks, whose `layup/rules` passes when the file equals what code renders from
+  the new inventory version. **Merge order after a bet:** the specification, the
+  facts record, the rule batches, then the build tasks. A requirement changes only
+  at a bet.
+- **Build.** A plan task splits the milestone into build tasks, each with the
+  requirement IDs it serves, the tests that will show it done, and a size class;
+  code checks that each `Must` requirement of the milestone has a task and each
+  task a requirement, and writes the task register. Tasks run in the plan's
+  order, and merge one at a time: after a merge, `layup run` merges the base into
+  the next task's branch, and the gates and the verification run again on its
+  new head (the branch rule is "up to date").
+- **Accept** (Decision Point 3). A requirement is **delivered** when every task
+  that names it in the task register has merged. `layup run` then posts the
+  requirement, its criterion, the merged changes and the gate and verification
+  results; the approver answers "accept" or "reject" with a reason. A rejection
+  becomes a new need for the next bet (Shape Up: a new bet, not a patch). The
+  record is in §12.
+
+**The task loop.** Each step of the target's own quality gate has an actor:
 
 1. `layup run` opens the task's issue (its requirement IDs, its Definition of
    Done).
 2. A plan session writes the task's plan; a plan-review session on another
-   harness reviews it. `layup run` posts both as issue comments in the forms that
-   the target's own `review-record-lint` parses, and reads the review's verdict
-   from its fixed field.
-3. A developer session writes the failing test first, then the code, and the
-   task file and close-out that the target's rules ask for; it ends with its
-   typed result (§4).
-4. The handoff check (below); the rule-path and workflow checks (§4, §6); then
+   harness reviews it. `layup run` posts both on the issue, in the forms that the
+   target's own checks parse, and reads the verdict from its fixed field.
+3. A developer session writes the failing test first, then the change; it ends
+   with its typed result (§4).
+4. The handoff check (below), the rule-path and workflow checks (§4, §6); then
    `layup run` pushes the branch and opens a **draft** pull request that links
    the issue, and requests no review (Sol-2).
-5. The target's CI, `layup gate` and `layup spec check` report their statuses.
-   A failure goes back to the developer as a finding, in a new attempt.
-6. When they pass, a verifier session on a harness other than the author's
-   (§9) reviews the head: fresh, one turn, read-only, told to refute "done",
-   with a `file:line` checklist. `layup run` posts its record as a pull-request
-   comment in the target's review-record form, and sets `layup/verify` at that
-   head SHA: success only for the verdict `nothing material`. A material finding
-   is one more round, up to the target's cycle cap; past the cap the round limit
-   of §11 opens a stall.
-7. When every required check is green at the head, `layup run` marks the pull
+5. The target's CI, `layup gate` and `layup spec check` report. A failure goes
+   back to the developer as a finding, in a new attempt.
+6. When they pass, a verifier session reviews the head: on a harness that wrote
+   no commit of the change (§9), fresh, one turn, read-only, told to refute
+   "done", with a `file:line` checklist. `layup run` posts its review record on
+   the task's **issue**, in the target's form and with the target's verdict
+   values, then edits the pull request's body to add the link to it, which makes
+   the target's `review-record` check run again. It sets `layup/verify` at that
+   head SHA: success only for `nothing material in scope`. A material finding is
+   one more round, up to the target's cycle cap; past the cap the round limit of
+   §11 opens a stall.
+7. **Close-out.** A close-out session writes the target's close-out (the
+   verdict, the completed-log line, and the resource record from the ledger,
+   §12) as one last commit. Code checks that this commit changes only the task
+   file and the completed log; `layup run` then sets `layup/verify` on the new
+   head, which differs from the verified one by that commit alone.
+8. When every required check is green at the head, `layup run` marks the pull
    request ready and merges it at that head SHA. No human review is requested: a
    routine review of each pull request is not a planned point (PSB §6). A human
-   who reviews anyway is recorded as human input (§12).
+   who reviews anyway is recorded as human input (§12). **Reading of
+   `F-0003#58`:** a pull request "reaches human review" when a review is requested
+   or it is marked ready; a draft is only visible (the approval brief asks the
+   Operator to confirm this reading).
 
 **Handoffs** (`F-0003#45`, `#59`). A handoff is the typed result of one session
-to the next role: session ID, task, role, status (`completed`, `blocked`,
+for the next step: session ID, task, role, status (`completed`, `blocked`,
 `needs_context`, `decision_needed`, `failed`), reason, each artifact with its
-path and SHA-256, the questions, the proposed decisions, the lessons (the fields
-of Spec Kitty's handoff packet v1, as a pattern). The transition table, a
-register on the records branch that the Operator can replace (O-81), says for
-each pair of steps which artifact kinds are required and which state code must
-compute (for example: the plan's tests fail at the base and pass at the head, as
-`layup gate` runs them). A handoff is valid only when code finds the schema
-right, each named artifact in the commits with its hash, and the computed state
-true; a field that an agent writes never makes it valid (Sol-21, Fable-M14). The
-Inter-Role Communication Format is the valid handoffs over all handoffs, from the
-records.
+path and SHA-256, the questions, the proposed decisions, the lessons (Spec Kitty's
+handoff packet v1 as a pattern for the fields). The **transition table** is a
+register on the records branch; its default rows use the target's own record
+kinds (the plan, the plan review, the review record, the task file):
+
+| From | To | Required, checked by code |
+| ---- | -- | ------------------------- |
+| task plan | plan review | a plan in the target's form that lists its tests by ID |
+| plan review | developer | a review in the target's form with the verdict `approve` or `approve-with-conditions` |
+| developer | verifier | commits; the task file; the plan's tests fail at the base and pass at the head (`layup gate` runs them) |
+| verifier | close-out | a review record with `nothing material in scope` at the head |
+| verifier | developer | a review record with each finding at a `file:line` |
+| specification | milestone plan | a section in `docs/spec/` whose heading holds each requirement ID of the milestone |
+| asking role | owner role | a question row with the records it concerns |
+| owner role | asking role | an answer row that cites the records it rests on |
+
+A handoff is valid only when code finds the schema right, each named artifact in
+the commits with its hash, and each required item true; a pair with no row is not
+valid; a field that an agent writes never makes it valid (Sol-21, Fable-M14). The
+Operator can replace the table (a parameter, §10). The Inter-Role Communication
+Format is the valid handoffs over all handoffs, from the records.
 
 **A question during the work** (Problem 1). A session that meets a question ends
 with status `needs_context` and the question: its text, its own label for the
@@ -684,9 +721,14 @@ smart-if (§10). A question that needs no human goes to a session of the owner r
 of its kind (§9), which answers with the records it cites. The answer passes the
 escalation screen (§10), is recorded and posted, and the asking role starts its
 next attempt with the answer in its prompt file. The answer is **accepted** when
-that attempt ends with a result that cites the answer ID and does not ask the
-same question again; the accepting actor is that session. An attempt that a
-question ends does not count toward the attempt limits of §11.
+that attempt ends with the status `completed`, its result cites the answer ID, and
+none of its questions cites the answer ID; the accepting actor is that session.
+An attempt that a question ends does not count toward the attempt limits of §11;
+§11 bounds the questions of a task.
+
+**Attempts.** A new attempt starts from the base commit by default, with the last
+attempt's diff and findings in its prompt file as payloads, so that its commits
+have one author harness.
 
 ## 9. Squads and routing
 
@@ -701,9 +743,10 @@ table:
 | ---- | ---- | ---- |
 | Intake gap review; completeness review (§7 step 4) | Systems Architect; QA Engineer | reasoning |
 | Numbering, draft, specification (§7) | Product Owner | reasoning |
+| Bet brief | Product Owner | reasoning |
 | Shape: the architecture; the gate-activation batch | Systems Architect; Software Architect | reasoning |
 | Plan of a milestone; plan of a task | Software Engineer | reasoning |
-| Implement | Software Developer | by the task's class |
+| Implement; close-out | Software Developer | by the task's class |
 | Plan review; verification | QA Engineer, on another harness | reasoning |
 | Answer to a question | the owner of its kind | reasoning |
 
@@ -716,33 +759,38 @@ branch (Invariant 4).
 
 **The harness register** is on the LAYUP host, one row per harness: its command
 template, its credential route, its rule-file names and policy paths (§4),
-whether it reports tokens and whether it can enforce a spend cap (§12), and its
-models. At Intake, `layup run` runs a fixed probe session on each harness (its
-version, a result file, the instruction files it reports it loaded); the admitted
-harnesses and their probe results go to the records.
+whether it reports tokens and whether it can enforce a spend cap (§12), its
+models, and each model's context size with its source (the model's
+documentation). At Intake, `layup run` runs a fixed probe session on each harness
+(its version, a result file, the instruction files it reports it loaded); the
+admitted harnesses, their versions and their probe results go to the records.
+Before each session, code reads the harness version; a new version is probed
+again before it runs.
 
 **Routing** is a register on the records branch: for each role and tier, an
 ordered list of harness and model pairs. Code admits a pair only when its harness
 passed the probe, its model is not on the target's "not used" list, and, for a
-plan review or a verification, its harness differs from the author's harness as
-the session rows of the ledger record it (Invariant 9; never a field an agent
-writes). With fewer than two admitted harnesses, a verification is `not-active`,
-and the change does not merge (Invariant 5). Among the admitted pairs, the
-learned weight of §13 ranks them; with no weight yet, or a tie, the smart-if's
-fit point (§10) or the table's order picks one.
+plan review or a verification, its harness wrote no commit of the change: the
+**authors** are every harness whose session is bound, in the ledger, to a commit
+in the diff from the base (Invariant 9; never a field an agent writes). When no
+admitted harness is outside the authors, the verification is `not-active`, and
+the change does not merge (Invariant 5). Among the admitted pairs, the learned
+weight of §13 ranks them; with no weight yet, or a tie, the smart-if's fit point
+(§10) or the table's order picks one.
 
-**The tier** of an implementing task comes from its class: the plan session
-gives each task a size class, and the computed position of §11 (a task with open
-unknowns is uphill) sends an uphill task to the reasoning tier and a downhill one
-to the execution tier (vision 2.2, Sol-23).
+**The tier** of an implementing task starts from its plan: the reasoning tier
+when the plan's size class is `large`, or the plan lists an open question or a new
+interface; the execution tier otherwise. The computed progress position of §11
+can move it later (later: slice F).
 
 **The context of a session** (vision 3.1). The step table names, per step, the
 record kinds that go into the prompt file: the task's issue and plan, the rows and
 specification sections of its requirement IDs, the decision records those
 sections name, the task's handoffs and answers, and the target's rule files. Code
 selects them by these links, estimates the size (bytes divided by four) against
-the model's context size in the register, and refuses a start that does not fit:
-the step fails with "context too large", and the plan session splits the task.
+the model's context size, and writes both numbers in the session start row. A
+start that does not fit is refused: for a build task, the plan session splits the
+task; for any other step, the step fails, and §11 handles it.
 
 ## 14. Coverage
 

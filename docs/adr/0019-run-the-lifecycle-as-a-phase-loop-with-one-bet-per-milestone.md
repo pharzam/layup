@@ -37,21 +37,26 @@ We will run each target's lifecycle as a phase loop:
    the next Bet, until every `Must` requirement is accepted; back to Shape only
    when a bet proposes a change of the architecture.
 2. **One bet per milestone.** A one-screen brief (problem, appetite, solution,
-   rabbit holes, no-gos) and one comment by the idea owner. The bet approves the
-   architecture, the priorities and milestones of its requirements, and its rule
-   batch; no other approval runs inside the milestone except escalations and
-   stalls.
-3. **The task loop** gives each step of the target's own gate an actor: an issue
-   by `layup run`; a plan and a plan review on another harness, posted in the
-   forms the target's checks parse; the developer's test first; a draft pull
-   request with no review request; the gates; a verifier on another harness
-   whose record sets `layup/verify` at the head; the merge by `layup run` at that
-   head SHA.
+   rabbit holes, no-gos) that a Product Owner session writes and code checks, and
+   one comment by the approver of that point. The bet approves the architecture,
+   the priorities and milestones of its requirements, and its verified batches
+   by their head SHA; no other approval runs inside the milestone except
+   escalations and stalls. What the bet changes (priorities, classes) code writes
+   as its own tasks.
+3. **Every pull request is a task**, and the task loop gives each step of the
+   target's own gate an actor: an issue by `layup run`; a plan and a plan review
+   on another harness, posted on the issue in the forms the target's checks
+   parse; the developer's test first; a draft pull request with no review
+   request; the gates; a verifier on a harness that wrote no commit of the
+   change, whose record goes on the issue and sets `layup/verify` at the head; a
+   close-out commit that code limits to the task file and the completed log; the
+   merge by `layup run` at the verified head SHA, one task at a time.
 4. **Handoffs** are typed results checked by code against a transition table:
    schema, artifacts with their hashes, and state that code computes.
 5. **Questions** end the asking session's attempt; the owner role answers; the
-   next attempt gets the answer; the answer is accepted when that attempt cites
-   it and does not ask again.
+   next attempt gets the answer; the answer is accepted when that attempt ends
+   `completed`, cites the answer ID, and asks no question that cites it.
+   A new attempt starts from the base commit.
 6. **Accept.** The idea owner accepts or rejects each delivered requirement by
    one comment; a rejection is a need for the next bet.
 

@@ -48,9 +48,9 @@ We will derive the specification by sessions and check its links by code:
 5. **The idea owner** sets each requirement's priority and milestone, and marks a
    fact out of scope or gives it a new class, by one comment at each bet. Code
    writes the PRD's MoSCoW and Phase columns from the copied comment, and a new
-   version of the confirmed inventory with its hash on the records branch; the
-   numbered facts record lands in `docs/facts/`, a rule path, through that bet's
-   rule batch.
+   version of the confirmed inventory with its hash on the records branch; code
+   renders the numbered facts record from it, and the record lands in
+   `docs/facts/`, a rule path, as its own task.
 6. **`layup spec check`** posts the required status `layup/spec`. It checks the
    head against the confirmed inventory and the bet copy: every `covers`
    resolves, every need and constraint is covered, every measure has a success

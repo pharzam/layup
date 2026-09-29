@@ -14,14 +14,15 @@ Sections are those of [`architecture.md`](../architecture.md).
 | # | Actor | Input | Mechanism | Record | Tag | Where |
 | - | ----- | ----- | --------- | ------ | --- | ----- |
 | 1 | `layup run` | the task register | opens the issue of `T-9` with its requirement IDs and Definition of Done | the issue | `code` | §8; ADR-0019 |
-| 2 | a plan session; a plan-review session on another harness | the task | writes the plan; reviews it; `layup run` posts both in the forms the target's `review-record-lint` parses, and reads the verdict field | two issue comments | `model` | §8 |
+| 2 | a plan session; a plan-review session on another harness | the task | writes the plan; reviews it; `layup run` posts both in the forms the target's `review-record-lint` parses, and reads the verdict field | two issue comments | `model`, `code` | §8 |
 | 3 | `layup run` | the developer's result | the handoff check; the rule-path and workflow checks; pushes the branch; opens a draft pull request that links the issue; requests no review | the draft pull request | `code` | §8; ADR-0019 |
 | 4 | the target's CI, `layup gate` | the head | a failure (W-04 steps 8, 9) | the statuses | `code` | §6 |
 | 5 | `layup run` | the failed statuses | gives the developer a new attempt with the findings; the pull request stays a draft | an attempt row | `code` | §8 |
 | 6 | `layup run` | the second result | pushes; the native jobs, `layup/gates` and `layup/spec` pass | the statuses | `code` | §6, §7 |
-| 7 | a verifier session on Codex | the head; the checklist | admitted because its harness differs from the author's (Claude Code) by the ledger rows; fresh, one turn, read-only, told to refute "done"; verdict `nothing material` | its record | `model` | §8, §9; ADR-0020 |
-| 8 | `layup run` | the verdict | posts the record as a pull-request comment in the target's form; sets `layup/verify` at this head SHA | the comment; the status | `code` | §8 |
-| 9 | `layup run` | the green head | marks the pull request ready and merges it at that head SHA; requests no human review | the merge | `code` | §8; ADR-0019 |
+| 7 | a verifier session on Codex | the head; the checklist | admitted because no commit of the change is bound to Codex in the ledger (the author is Claude Code); fresh, one turn, read-only, told to refute "done"; verdict `nothing material` | its record | `model` | §8, §9; ADR-0020 |
+| 8 | `layup run` | the verdict | posts the record on the issue of `T-9` in the target's form (`nothing material in scope`); edits the pull request's body to link it, so the target's `review-record` check runs again; sets `layup/verify` at this head SHA | the comment; the statuses | `code` | §8 |
+| 9 | a close-out session | the verdict; the ledger | writes the task file's close-out, the completed-log line and the resource record as one commit; code checks that it changes only those files and sets `layup/verify` on the new head | the close-out commit | `model`, `code` | §8 |
+| 10 | `layup run` | the green head | marks the pull request ready and merges it at that head SHA; requests no human review | the merge | `code` | §8; ADR-0019 |
 
 ## Checklist rows
 

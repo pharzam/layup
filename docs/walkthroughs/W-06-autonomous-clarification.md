@@ -20,7 +20,7 @@ Sections are those of [`architecture.md`](../architecture.md).
 | 5 | the Software Architect session | the question; the records it concerns; the specification | answers "the total includes tax", citing the specification section | its result | `model` | §8 |
 | 6 | the escalation screen | the answer | later: slice E | later: slice E | `code`, `model` | — |
 | 7 | `layup run` | the answer | records it with its time; posts it on the issue; starts the developer's next attempt with the answer in its prompt file | the answer row; an attempt row that does not count toward §11's limits | `code` | §8 |
-| 8 | the developer session | the answer | ends with a result that cites the answer ID and does not ask again: the answer is accepted, by this session, at this time | the accepted time and actor in the question row | `model`, then `code` | §8; ADR-0019 |
+| 8 | the developer session | the answer | ends `completed`, its result cites the answer ID, and none of its questions cites it: the answer is accepted, by this session, at this time | the accepted time and actor in the question row | `model`, then `code` | §8; ADR-0019 |
 
 ## Checklist rows
 
