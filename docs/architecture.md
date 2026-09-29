@@ -797,8 +797,9 @@ the change does not merge (Invariant 5). Among the admitted pairs, the learned
 weight of §13 ranks them; with no weight yet, or a tie, the smart-if's fit point
 (§10) or the table's order picks one.
 
-**The tier** of an implementing task starts from its plan, which has three fixed
-fields: `size` (`small` or `large`), `open questions` and `new interfaces`. The
+**The tier** of an implementing task starts from its plan, which has four fixed
+fields: `size` (`small` or `large`), `open questions`, `new interfaces`, and `new
+dependencies` (read by the escalation floor, §10). The
 reasoning tier when `size` is `large` or either list is not empty; the execution
 tier otherwise. The computed progress position of §11
 can move it later (later: slice F).
@@ -811,6 +812,115 @@ selects them by these links, estimates the size (bytes divided by four) against
 the model's context size, and writes both numbers in the session start row. A
 start that does not fit is refused: for a build task, the plan session splits the
 task; for any other step, the step fails, and §11 handles it.
+
+## 10. Decisions: the smart-if, the escalation screen, the parameters
+
+[ADR-0021](adr/0021-branch-at-named-points-through-a-smart-if-provider.md) and
+[ADR-0022](adr/0022-screen-for-business-forking-decisions-before-the-work.md)
+decide this section. The order of decisions is fixed (Invariant 6, O-67): a
+deterministic check first; the smart-if only where the question is one of
+meaning; a human only at a decision point.
+
+### The smart-if
+
+The smart-if is a conditional branch (O-84): at a named point, the flow takes one
+branch or another by the provider's answer. It writes no text and plans no work.
+
+**The provider** (O-78) is chosen by the Operator per target at Intake: Jev
+(TypeSafe's System One API), Laya (an open-weight decision model with a
+Jev-compatible API, which needs its own calibration: its confidence is not Jev's,
+and its authors say it needs fine-tuning, [`selection-v2.md`](../runs/T-hbw8/selection-v2.md)
+§1.1), or `none`. A request carries the point, the literal questions of the
+point's fixed pack, the options, and a state text that code builds from named
+records; code keeps all arithmetic, dates and counts (the provider's documented
+weak points). The response carries each answer (a choice, a probability of yes,
+or a score), the provider and the model version.
+
+**The named points** are a closed list; a call at any other point is a defect
+(Fable-M13):
+
+| Point | The question | The deterministic branch | A safer branch |
+| ----- | ------------ | ------------------------ | -------------- |
+| P1 escalation | four questions, one per PSB axis (§ below) | the floor and the session's own `decision_needed` | escalate |
+| P2 question | the kind of a question (four kinds), and whether it needs a human | the asker's label; "needs a human" = no | "needs a human" = yes |
+| P3 stall action | retry, examiner, panel, or the Operator (§11) | the fixed ladder of §11 | the next rung up |
+| P4 fit | which admitted pair fits the task (§9) | the routing order | none |
+| P5 over budget | continue inside the band (§12) | stop and escalate | stop |
+
+**The authority** of each point (O-78, O-79) is set by the Operator per target:
+`off` (no call; the deterministic branch), `shadow` (the provider answers and is
+recorded; the deterministic branch decides), `cautious` (the answer may only move
+the flow to the safer branch; not for P4), or `delegate` (an answer at or above
+the point's threshold decides). The Intake form offers `shadow` for every point
+(Sol-6: an offer, not a rule); the Operator may choose another level and a
+threshold. The evidence of a threshold (Invariant 4) is the Operator's comment
+that set it, or a calibration record: the share of `shadow` rows where the
+provider's answer agreed with the branch that a check or a human took.
+
+**The bounds** (O-71, O-84): an error, a time-out, a `429` after its backoff, or
+an answer below the threshold at a `delegate` point goes to a human (the idea
+owner for P1 and P5, the Operator for the others), never to a pass. No parameter
+turns off a PSB rule: the floor of P1 always runs, and a business-forking
+decision always goes to the idea owner.
+
+**The record.** Each call writes one row to `decisions.tsv`: the point, the
+questions, the SHA-256 of the state text, the provider, the model version, each
+answer and probability, the authority, the threshold, the branch taken, and who
+decided (the provider, code, or a human).
+
+### The escalation screen
+
+A **candidate** business-forking decision comes from three sources (Decision
+Point 4, `F-0001#13`):
+
+1. **The session declares it.** Each session's prompt says: before a choice that
+   may change the budget, the legal or compliance position, or the approved
+   intent, or that trades approved goals against each other (scope against date),
+   stop with `decision_needed` and the options.
+2. **The floor** (code) reads fixed fields and proposed diffs, never prose: the
+   plan's fixed field `new dependencies` (name, licence, cost); a diff that adds a
+   dependency to the stack's manifest (for Go, a `require` in `go.mod`), or
+   touches a licence file, the PRD's requirement rows, their priorities or
+   criteria, or a path that the Intake answers named as intent.
+3. **The four questions** (P1), on prose: the plan, each handoff, each pull
+   request description, and each answer to a question. One literal question per
+   axis: does it change the budget; the legal or compliance position; the
+   approved intent; does it trade approved goals. Code combines the answers with
+   OR. At `cautious`, the provider can only add a candidate, never remove one (a
+   deterministic floor that a model may raise and never lower, as in Governed
+   APA, `selection-v2.md` §1.1).
+
+**When** (O-79, the frequency is a parameter): on each task's plan, before the
+work starts; on each handoff; and on each answer to a question.
+
+**When one is selected**, the task stops in a wait state (§11 does not count the
+wait). `layup run` posts one escalation brief on the task's issue for the idea
+owner: the decision, the options, the evidence, the cost. The idea owner decides
+and confirms "business-forking: yes" or "no"; `layup run` copies the comment (§3).
+A decision confirmed as business-forking is planned input (Decision Point 4); one
+confirmed as not is unplanned input (`F-0001#28`, §12). The task starts its next
+attempt with the decision in its prompt file.
+
+### The parameters
+
+Every value that the Operator or the idea owner can set is a row of
+`parameters.tsv` on the records branch: its name, value, default, bound, the
+evidence of the value, and the comment that set it (Fable-M22). The Operator
+changes one by a comment on the target's control issue, in the form `set <name>
+<value> because <reason>`; `layup run` copies it, checks the name, the value and
+the bound, and applies it at the next step boundary. A change is recorded as
+project-level Operator input (§12), not as input to a task. The bound of each row
+says what the value cannot do: no parameter removes a PSB rule (O-84).
+
+| Parameter | Default | Source |
+| --------- | ------- | ------ |
+| provider; authority and threshold per point | set at Intake; `shadow` offered | O-78, O-79 |
+| escalation frequency | each plan, each handoff, each answer | O-79 |
+| owner map; role matrix; step table; transition table | §8, §9 | O-81 |
+| harness paid work without tokens or a spend cap | allowed, with a wall-clock limit (§12) | O-80 |
+| `stall.T`, `stall.N` and the other stall limits | §11 | O-82 |
+| learning weights, bounds, trigger | §13 | O-83 |
+| `lease.H`; the brief's line limit | set at Intake with evidence | Invariant 4 |
 
 ## 14. Coverage
 
@@ -844,7 +954,10 @@ rows. The evidence for each row is [`runs/T-hbw8/rewrite-checklist.md`](../runs/
 | S7 Verification on Every Change (`#47`), Structural Conformance (`#58`), `REQ-007`, the independent verification of `#66` | [W-07](walkthroughs/W-07-verification-on-every-change.md) | 8, 9 | 0019, 0020 |
 | #69 A3 (every question goes to the Operator) | W-06 | 8, 9 | 0019, 0020 |
 | #69 B5, table C 2.2 (squads, counterpart harness) | W-07 step 7 | 9 | 0020 |
-| Table C 3.1 (model and context routing) | the routing and context rules of §9; the smart-if part is later: slice E | 9 | 0020 |
+| Table C 3.1 (model and context routing) | the routing and context rules of §9; the fit point of §10 | 9, 10 | 0020, 0021 |
+| S8 Human-on-the-Loop (`F-0003#48`), Missed Escalations (`#57`), `REQ-008`, Invariant 6 | [W-08](walkthroughs/W-08-human-on-the-loop.md) | 10 | 0021, 0022 |
+| #69 B8 (an escalation after the work) | W-08 steps 2 to 5 | 10 | 0022 |
+| O-78, O-79, O-84 (provider, authority, parameters, bounds) | W-08 steps 3, 4; W-06 step 3 | 10 | 0021 |
 | Table C 2.1, the phased plan | the bets and the Build plan of §8 | 8 | 0019 |
 | ADR-0012 part 6 (set up a target, run its gate from outside) | W-02; W-04 steps 5, 9 | 5, 6 | 0016 |
 
@@ -901,3 +1014,6 @@ Each limit is a finding that the design does not close, recorded here (O-66).
   that asks the same question again in other words, without citing the answer
   ID, still counts the answer as accepted; the Clarification Turnaround can read
   too short.
+- **L-E1. An undeclared decision.** A session that makes a business-forking
+  choice without declaring it, in prose that the four questions miss and in no
+  file that the floor reads, is found only by the Missed Escalations audit (§12).
