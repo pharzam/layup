@@ -105,3 +105,108 @@ All nine material findings and notes N1 to N8 are applied in one commit.
 | M8 | Code takes a value only from an Intake answer, a catalog entry or a fact source that the Operator accepted; a session proposes the source with a byte-exact quote (§5). |
 | M9 | A pending kind's fixture counts as `not-active`; the activation batch carries one known-bad commit per kind, and each must fail (§6; ADR-0016 d4). |
 | N1, N2, N4 to N7 | `repo/`; the stale user-token text removed; `layup/verify` comes from §8; a review session reads the answers; FT4 with LAYUP absent stated; the probe reads the activity API. |
+
+## Round 2
+
+2026-09-29, head `cedff56`; same reviewer and setup. Word for word:
+
+~~~~text
+# Slice B review — round 2
+Reviewer: claude-fable-5-1. Head: cedff56. Verdict: `material findings: 3`.
+
+**Round-1 closure.** Six findings are closed: M1, M2, M4, M5, M6 and M7. M8 is closed too, because code now only checks a quote, and the Operator accepts the source. M3 is closed for the order of the root commit, but the fix names a check that the baseline does not have (new M1 below). M9 is closed for the pending kinds, but the same hole remains for the kinds that are active at setup (new M2 below). Notes N1 to N8 are applied.
+
+## Material findings
+### M1. `docs/setup/` and `setup-check.sh` are LAYUP's files, not the pinned baseline's, so the target's setup evidence has no producer
+- **Where:**
+  - architecture.md:268-269: "its root tree equals the pinned tree, as step S03 and the baseline's check `pin` need".
+  - architecture.md:313: "`setup/steps.tsv` with the changes named here".
+  - architecture.md:324-325: "Step S12 no longer adds LAYUP's own `setup-check` job".
+  - W-02 step 5: "the pinned baseline's discipline tests, its check `pin` included".
+- **Source:** the pinned root commit `d2516fd` ("initialize from Armature kit at a959655") has no `docs/setup/` at all. `setup-check.sh` came from LAYUP's own task T-r7zg (`5d89181`), and `steps.tsv` came from T-9mmm. The script is LAYUP-specific:
+  - Check `identity` (setup-check.sh:559-561) says "the repository is LAYUP, not the kit".
+  - Check `facts` hard-codes LAYUP's F-0001, F-0003 and F-0004.
+  - Check `ci` (:448-449) fails unless `ci.yml` runs `sh docs/setup/setup-check.sh`.
+
+  Rows S04 to S15 of `steps.tsv` take "setup-check X OK" as their evidence. The rows that break are R02, R12, I8, K16 and FT5, and Setup Correctness (`F-0003#63`).
+- **Why it matters:** there are two cases, and both fail.
+  - If `setup-check.sh` is copied into the target, it is a LAYUP file (FT5). Once S12 has changed, `sh docs/setup/setup-check.sh` exits non-zero on check `ci` and on check `identity`.
+  - If it is not copied, nothing produces the evidence that S04 to S15 name, and "the baseline's check `pin`" does not exist.
+
+  W-01 step 6 also takes "the questions of setup steps S01 and S10 from the pinned commit", but those steps are not in the pinned commit.
+- **Fix:**
+  - Say that `layup setup verify` does each of the checks from outside, for this target: pin, markers, facts and the others.
+  - Say that the target gets neither `setup-check.sh` nor its job.
+  - Change the evidence column of S04 to S15 to match, and list that change with the S02, S12 and S13 changes.
+  - Correct "the baseline's check `pin`", and say that S01 and S10 come from LAYUP's `steps.tsv`.
+
+### M2. The Go gates that are active at setup do not give the result the design states, and setup has no clean run
+- **Where:**
+  - architecture.md:378: "`gofmt -l` and `go vet ./...` from the setup … test quality is `go test -count=1 ./...`".
+  - architecture.md:326-328 ("the known-bad fixtures of §6").
+  - W-02 step 5: "the known-bad fixture of each active kind (`gofmt`, `go vet`) makes it fail".
+  - ADR-0016 decision 4.
+- **Source:** FT1; `F-0003#64`; NFR-004 and I5; ADR-0016: "We reject … a gate that passes when it finds nothing to check without saying so".
+- **Why it matters:** there are four problems, and all come from standard Go behaviour.
+  - **`gofmt -l` exits 0** even when it lists badly formatted files. So its known-bad fixture does not fail, which is not the result W-02 step 5 states.
+  - **No `go.mod` at setup.** The setup writes no `go.mod`, and the pinned copy has none. So `go vet ./...` and `go test ./...` exit 1 on every commit. The `go vet` fixture then "fails" and proves nothing. The test-quality job is a required check with no bypass, so it fails every Intake and spec pull request, and nothing merges.
+  - **With a `go.mod` but no package,** both commands only warn that "./..." matched no packages, and exit 0. That is a silent pass on nothing.
+  - **No clean run.** Setup verify never runs an active gate on the clean setup tree to see it pass. Only the activation batch has that rule ("the head must pass").
+- **Fix:**
+  - Make the catalog command explicit, for example `test -z "$(gofmt -l .)"`.
+  - Give the active kinds the same rule as a pending kind: pass with the reason "no product path", and state how the job finds "no product path".
+  - Say whether the setup writes `go.mod`.
+  - Add to `layup setup verify`: each active gate must pass on the clean tree and fail on its fixture.
+
+### M3. The claimed row K11 has no step, and the start value has no source
+- **Where:**
+  - architecture.md:345-349: "the idea owner posts the baseline numbers … `layup report` compares a measure with its start value only when both exist".
+  - W-02 lists K11 under "Checklist rows", but none of its steps does it. §14 has no row for it.
+- **Source:** `F-0004#11`: "The first pilot measures the baseline with the current process; then the idea owner sets each start value in one batch, records it in the pilot's PRD". Checklist K11 covers both the baseline and "the idea owner's batch of start values". Lens 2 (a row answered by name only).
+- **Why it matters:**
+  - Nothing says who sets the start value, when, or where it is recorded.
+  - The report can never have "both", so every §7.2 measure prints "not comparable" for the whole pilot.
+  - The step "records it in the pilot's PRD" is missing.
+- **Fix:** add a `human` step, where the idea owner posts the start values in one batch after the baseline, and a `code` step, where `layup run` records them. The recording can go in the records and in the target's PRD through a pull request. If this belongs to slice G, mark it `later: slice G` in W-02 and in §14.
+
+## Notes
+- **N1. Binding the approval to a commit.** ADR-0017 d4 says "The approval comment records the tree hash". §6:427 says that `layup run` records it when the approval arrives. Pick one. Better: the approval request names the head SHA, and code refuses the approval when the head has moved since then.
+- **N2. Two meanings of `not-active`.** It means "an active kind that did not run" (§6 table) and also "a pending kind's fixture" (§6:458). ADR-0016 d3 lists only `pass`, `fail` and `not-active`, and has no value for "pending, no product path". Name that result.
+- **N3. Where the batch sets `active`.** Is `active` set in the approved batch head, or after the merge ("the manifest then says `active`")? It has to be in the head:
+  - A later edit breaks the hash.
+  - A pending native job fails a batch whose test files are in the product's scope.
+- **N4. Where the known-bad commits live.** The design does not say where the activation's known-bad commits are kept. They must not merge with the batch, and they must stay reproducible. FT6 applies.
+- **N5. Pinning a required check to an App.** docs.github.com, "Available rules for rulesets": to select an app as the source, the app "must have recently submitted a check run". Baseline S13 waits for each job to report once, and §5 step 6 drops that wait. Say how the `layup/` checks and the native jobs are pinned before they have reported. For example, the API with `integration_id`, or a first status on the setup head.
+- **N6. Approvers outside `approvers.tsv`.** The intent form names "the approver of each planned approval point". §3 lets only the Operator and the idea owner decide. Say whether a third login named there is added to `approvers.tsv`, or refused.
+- **N7. The pre-push hook.** If S04 installs the baseline hooks in LAYUP's clone, `.githooks/pre-push` refuses the Operator's push of the setup commits to `main` (§5 Scaffold step 6). Say which clone the printed command runs in.
+- **N8. Plan and visibility come late.**
+  - The repository's visibility and plan are fixed at Start step 1, but K15 is checked only at Scaffold step 7, after all of the Intake. Check it at Start.
+  - S01 still asks for "the name and visibility" of a repository that already exists.
+- **N9. FT4 with LAYUP absent.** When LAYUP is absent, the `layup/` checks are removed, so a pull request can edit `docs/gates.tsv` and the native CI runs it. §6:400-402 says this. Record it as a known limit in §15.
+- **N10. Check against docs.github.com: both are right.** `GET /repos/{owner}/{repo}/activity` needs Contents: read, and works with an installation token (`pr_merge` and `merge_queue_merge` are valid types). Commit statuses need Commit statuses: write.
+
+## Checklist rows
+- S1 answered. S2 not answered (M1). S3 answered (N1). S4 not answered (M2).
+- R01 answered. R02 not answered (M1). R03 answered (the Go command is M2). R09 answered. R10 not answered (M2). R12 not answered (M1).
+- I3 answered. I4 answered. I5 not answered (M2). I7 answered. I8 not answered (M1).
+- K08 answered. K09 answered. K10 answered. K11 not answered (M3). K12 answered. K13 answered. K14 answered. K15 answered (N8). K16 not answered (M1). K17 known limit L-B1 (acceptable). K18 answered (the Operator must still confirm the reading).
+- P02 answered. P12 answered. D03 (the batch) answered (N1). D07 answered. D18 answered.
+- FT1 not answered (M2). FT4 answered (N9). FT5 not answered (M1: whether a LAYUP check script goes into the target is not decided).
+- L-B1 known limit (acceptable). L-B2 known limit (acceptable).
+
+## Existing solutions
+- **Copier:** keeps the template commit and an answers file (`.copier-answers.yml`) in the generated repository. That is the pin-plus-values record of S2. Its update flow is prior art for a later baseline update.
+- **The `gofmt` idiom:** the common CI form is `test -z "$(gofmt -l .)"`. golangci-lint can run gofmt, vet and depguard in one versioned tool, with non-zero exits.
+- **Required workflows:** organisation rulesets can run a protected workflow from outside the pull request's head. That is FT4 with LAYUP absent, but it needs an organisation (N9).
+- **OpenSSF Allstar and Scorecard:** they watch branch-protection drift, which could narrow L-A4.~~~~
+
+### The author's answer to round 2
+
+All three material findings and notes N1 to N9 are applied in the next commit. This was the second round; the fixes go to the whole-design review if the Operator applies O-96's rule to this slice too (Q-16 on #72).
+
+| Finding | Fix |
+| ------- | --- |
+| M1 | `setup/steps.tsv` and `setup-check.sh` are named as LAYUP's files; neither goes into a target; `layup setup verify` does their checks from outside, and the evidence of S04 to S15 changes to it (§5; ADR-0016 d5). |
+| M2 | `test -z "$(gofmt -l .)"`; the setup writes `go.mod`; an active kind with no path in scope is `clear` with that reason; setup verify runs each active gate on the clean tree (pass) and on its fixture (fail) (§6; ADR-0016 d3, d4). |
+| M3 | The start values are later: slice G, in §5, W-02 and the checklist rows. |
+| N1 to N9 | The approval request names the head SHA and code refuses a moved head; `clear` names the result; `active` is set in the batch head; known-bad patches live on the records branch; checks pinned by `integration_id`; a third approver named by the idea owner joins `approvers.tsv`; the push runs from a clone with no hooks; visibility and plan are checked at Start; L-B3 records FT4 with LAYUP absent. |

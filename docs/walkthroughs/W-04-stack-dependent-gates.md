@@ -15,10 +15,10 @@ Sections are those of [`architecture.md`](../architecture.md).
 | # | Actor | Input | Mechanism | Record | Tag | Where |
 | - | ----- | ----- | --------- | ------ | --- | ----- |
 | 1 | the setup | the Go entry of the stack catalog | writes one CI job per gate kind; `gofmt` and `go vet` are active; layout, boundary and contract are `pending` in `docs/gates.tsv` | the target's CI jobs and manifest | `code` | §6; ADR-0016 |
-| 2 | an architect session | the architecture approved at the first bet | writes the `depguard` rule "`internal/store` is imported only by `internal/app`", a layout test, and one known-bad commit per kind it activates | the session result | `model` | §6; ADR-0016 |
+| 2 | an architect session | the architecture approved at the first bet | writes the `depguard` rule "`internal/store` is imported only by `internal/app`", a layout test, the manifest with those kinds `active`, and one known-bad patch per kind it activates | the session result | `model` | §6; ADR-0016 |
 | 3 | `layup run` | the result | pushes it to `batch/bet-1` and opens its pull request (a rule batch) | the batch pull request | `code` | §6; ADR-0017 |
 | 4 | the approver | the batch pull request | approves by an issue comment (the planned point of the first bet) | the comment, copied (§3) | `human` | §6, §8 |
-| 5 | `layup run`, `layup gate` | the approved batch | records the rule-file hash of the batch head with the approval; runs the batch's gate files on the head (must pass) and on each known-bad commit (each must fail); `layup/rules` passes; merges the batch; the manifest says `active` | the hash, the detection results, the merge | `code` | §6; ADR-0016, ADR-0017 |
+| 5 | `layup run`, `layup gate` | the approved batch | refuses the approval if the batch head moved since the request; records the rule-file hash with the approval and the known-bad patches on the records branch; runs the batch's gate files on the head (must pass) and on the head with each patch (each must fail); `layup/rules` passes; merges the batch | the hash, the detection results, the merge | `code` | §6; ADR-0016, ADR-0017 |
 | 6 | the developer session | its task | adds the import; commits | commits in `repo/` | `model` | §4 |
 | 7 | `layup run` | the result | later: slice D | later: slice D | `code` | — |
 | 8 | the target's CI | the pull request head | the boundary job (`depguard`) fails: `cmd/server` imports `internal/store` | the failed required check on the forge | `code` | §6; ADR-0016 |

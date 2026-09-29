@@ -49,13 +49,16 @@ from a stack catalog that LAYUP keeps:
 3. **From outside.** `layup gate` checks out the base branch's manifest and gate
    files, applies them to the head of a pull request, and reports `pass`, `fail`
    or `not-active` per kind. It never runs the head's gate files, except those
-   of an approved activation batch. The status `layup/gates` is a success only
-   when every active kind passed and every pending kind saw no path in the
-   product's scope; `not-active` is never a pass.
-4. **Detection.** The setup verification runs the known-bad fixture of each
-   active kind; the activation batch carries one known-bad commit per kind it
-   activates, and each must fail. A pending kind's fixture counts as
-   `not-active`, never as a detection.
+   of an approved activation batch. A kind whose tree or change has no path in
+   its scope is `clear`, with that reason. The status `layup/gates` is a success
+   only when every kind passed or is `clear`; `not-active` is never a pass.
+4. **Detection.** The setup verification runs each active kind on the clean tree
+   (it must pass) and on its known-bad fixture (it must fail); the activation
+   batch carries one known-bad patch per kind it activates, kept on the records
+   branch, and each must fail. A pending kind's fixture is not run, and never
+   counts as a detection.
+5. **No LAYUP check in the target.** LAYUP's `setup-check.sh` and its job stay
+   out of the target; `layup setup verify` does those checks from outside.
 
 This amends ADR-0011 decision 4 (the stack gates are the target's own and run
 inside it; `layup gate` runs the same commands from outside) and decision 7

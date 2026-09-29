@@ -47,8 +47,9 @@ the complement:
 4. **A rule change lands** only in a batch, proposed at a planned point (the
    setup, the gate activation of the first bet, each retrospective) on a branch
    `batch/<point>` with its own pull request, so the approver sees it before
-   deciding. The approval comment records the tree hash of the rule files at
-   the batch head; `layup/rules` passes a pull request that changes a rule path
+   deciding. The approval request names the batch head and the tree hash of its
+   rule files; code refuses an approval when the head has moved since, and
+   records the hash with the approval; `layup/rules` passes a pull request that changes a rule path
    only when its hash equals that one. `layup run` merges the approved batch;
    the approver pushes and merges one that changes `.github/workflows/`,
    because the App has no workflows permission (O-92, O-93).
