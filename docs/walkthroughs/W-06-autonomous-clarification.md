@@ -19,7 +19,7 @@ Sections are those of [`architecture.md`](../architecture.md).
 | 4 | `layup run` | the kind; the confirmed owner map | "interface contract" → Software Architect; routes a session of that role (§9) | a routing row | `code` | §9; ADR-0020 |
 | 5 | the Software Architect session | the question; the records it concerns; the specification | answers "the total includes tax", citing the specification section | its result | `model` | §8 |
 | 6 | the escalation screen | the answer | the floor finds nothing (no diff); P1's four questions answer no | a `decisions.tsv` row | `code`, `model` | §10; ADR-0022 |
-| 7 | `layup run` | the answer | records it with its time; posts it on the issue; starts the developer's next attempt with the answer in its prompt file | the answer row; an attempt row that does not count toward §11's limits | `code` | §8 |
+| 7 | `layup run` | the answer | records it with its time; posts it on the issue; starts the developer's next attempt with the answer in its prompt file | the answer row; an attempt row that counts toward `stall.attempts` (§11) | `code` | §8 |
 | 8 | the developer session | the answer | ends `completed`, its result cites the answer ID, and none of its questions cites it: the answer is accepted, by this session, at this time | the accepted time and actor in the question row | `model`, then `code` | §8; ADR-0019 |
 
 ## Checklist rows

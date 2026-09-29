@@ -57,8 +57,9 @@ We will run each target's lifecycle as a phase loop:
    schema, artifacts with their hashes, and state that code computes.
 5. **Questions** end the asking session's attempt; the owner role answers; the
    next attempt gets the answer; the answer is accepted when that attempt ends
-   `completed`, cites the answer ID, and asks no question that cites it.
-   A new attempt starts from the base commit.
+      `completed`, cites the answer ID, and asks no question that cites it; an
+   attempt that a question ends counts toward the attempt limit. A new attempt
+   starts from the base commit, with the frozen tests applied.
 6. **Accept.** The approver of the point (the idea owner by default) accepts or
    rejects each delivered requirement by one comment; a rejection is a need for the next bet.
 

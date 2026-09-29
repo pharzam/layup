@@ -39,12 +39,14 @@ We will learn routing from the records at each retrospective:
    unplanned human input, confirmed reversals and cost subtract; money and
    wall-clock each against their own median; the mean is taken within one role and
    tier. The term weights are parameters with the Operator's comment as evidence.
-   A route with any unknown money gets no step and is left out of the mean;
+   A task of unknown money is left out of the money term; a route with no known
+   money gets no upward step;
    the gates' first-attempt pass rate is not a term.
 3. **The update** moves each route's weight by a bounded step, only with enough
    tasks behind it; by default it is a proposal that the Operator adopts, and can
    later revert; a parameter can let it apply within its bounds. A route's first
-   weight is LAYUP's prior, else the mean of its role and tier's weights. A share
+   weight is LAYUP's prior, else the mean of its role and tier's weights, else the
+   middle of the bounds. A share
    `learn.explore` of the implementing role's tasks goes to the other pairs in
    turn.
 4. **The weight ranks** the admitted pairs in routing; the smart-if's fit point

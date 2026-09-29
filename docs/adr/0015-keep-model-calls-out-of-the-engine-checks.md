@@ -42,9 +42,9 @@ with only what LAYUP gives it:
    credential, as a variable or as a file that the register row names, copied
    into the home directory; no forge credential and no SSH agent. The command
    line comes from the harness's row in the harness register. Before the start,
-   code refuses a rule file of that harness in any directory above the session,
-   and in the harness's configuration directory, and records each system-wide
-   policy file that the row lists.
+   code refuses a rule file of that harness in any directory from the session
+   directory up to the root, and records each system-wide policy file that the
+   row lists; the session's configuration directory is in its empty home.
 5. **A session ends** when its process exits. `layup run` reads its typed result
    file, fetches its branch by commit SHA into LAYUP's own clone with hooks
    turned off, checks that it descends from the base commit and changes nothing

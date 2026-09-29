@@ -47,10 +47,10 @@ search in `selection-v2.md` decides it.
 | K17 | Author-17 (note) | `layup gate` from outside needs each target stack's toolchain on the LAYUP host | B | ev14 | known limit L-B1 |
 | K18 | Author-15 (note) | "0 agent writes to rule paths" against a retrospective batch that an agent writes | B | ev11 | answered (§5–6; W-01 to W-04) |
 | K19 | Sol-17, Fable-M21, Author-5 | Code cannot number the clauses of prose or find "In Scope" without a fixed form | C | ev07, ev06 | answered (§7; W-11) |
-| K20 | Sol-18 | A byte-exact trace proves links, not that no need was missed | C | ev07 | answered (§1–4; W-12) |
+| K20 | Sol-18 | A byte-exact trace proves links, not that no need was missed | C | ev07 | answered (§7; W-11) |
 | K21 | Sol-19, Author-18 | Code sets `Must` for each In-Scope fact; priority is the idea owner's intent | C | ev19 scope hammering | answered (§7; W-11) |
 | K22 | Sol-20 | No check that each delivered requirement has a specification | C | ev07, ev09 | answered (§7; W-11) |
-| K23 | Fable-N8 (note) | A requirement traced to an answers fact (like NFR-007 to `F-0004#1`) fails a check against the problem statement only | C | — | answered (§1–4; W-12) |
+| K23 | Fable-N8 (note) | A requirement traced to an answers fact (like NFR-007 to `F-0004#1`) fails a check against the problem statement only | C | — | answered (§7; W-11) |
 | K24 | Sol-21, Fable-M14, Author-8 | Handoff validity is a column an agent writes; no schema, transition table or check | D | ev11, ev12, ev09 | answered (§8–9; W-05 to W-07) |
 | K25 | Sol-9, Author-2, Fable-N15 | No path from a question to an accepted answer back in the asking session; no actor accepts | D | ev04, ev05, ev13 | answered (§8–9; W-05 to W-07) |
 | K26 | Sol-10 | Role questions do not use the issue thread (O-73, vision 3.4, R6) | D | ev04 | answered (§8–9; W-05 to W-07) |
@@ -69,12 +69,12 @@ search in `selection-v2.md` decides it.
 | K39 | Fable-N1 (note) | `F-0001#14` gives stalls to the Operator, not to the idea owner | E | — | answered (§10; W-08) |
 | K40 | Author-13 (note) | Vision 3.1 names Jev and Laya; Laya is never researched | E | none yet | answered (§10; W-08) |
 | K41 | Author-19 (note) | An architecture approval in each milestone adds human load | E | ev19 bet per milestone | answered (§10; W-08) |
-| K42 | Sol-22, Fable-M4, Author-1 | A new record resets the stall clock; a two-role disagreement is never a stall | F | ev03, ev01, ev19 hill | answered (§1–4; W-12) |
+| K42 | Sol-22, Fable-M4, Author-1 | A new record resets the stall clock; a two-role disagreement is never a stall | F | ev03, ev01, ev19 hill | answered (§11; W-09) |
 | K43 | Fable-M5 | The clock opens a stall at each wait for a human | F | ev04 wait states | answered (§11; W-09) |
 | K44 | Fable-M6 | The stall path can reach the Operator with no diagnosis; the examiner needs a third harness | F | ev18 | answered (§11; W-09) |
 | K45 | Sol-24, Fable-M18 | "A panel" has no convening, sealed input, isolation, synthesis or exit | F | ev15 | answered (§11; W-09) |
 | K46 | Sol-4, Author-10, Fable-N5 (note) | The dead-man job has no run list, no credential, no write path, no package | F | ev03 leases | answered (§11) with known limit L-F1 |
-| K47 | Fable-M19 | A wrong gate blocks the milestone, so the retrospective that could fix it never comes | F | ev19 circuit breaker | answered (§1–4; W-12) |
+| K47 | Fable-M19 | A wrong gate blocks the milestone, so the retrospective that could fix it never comes | F | ev19 circuit breaker | answered (§11; W-09) |
 | K48 | Author-16 (note) | No mechanism for the Operator to give a stalled task to another harness | F | ev04 | answered (§11; W-09) |
 | K49 | Fable-N6 (note) | `heartbeat.H` "with its reason", not "with its evidence" | F | — | answered (§11; W-09) |
 | K50 | Sol-11 | The money stop cannot sum a cost when a harness gives no tokens | G | ev03, ev11 | answered (§12; W-10) |
@@ -86,7 +86,7 @@ search in `selection-v2.md` decides it.
 | K56 | Sol-13, Fable-M15, Author-9 | Reversal has no record and no audit sample; Missed Escalations has no sample either | G | none yet | answered (§12; W-10) |
 | K57 | Sol-31 (note) | First-Review Acceptance has no review boundary | G | — | answered (§12; W-10) |
 | K58 | Fable-N3 (note) | "Action" has no definition, so latency and the cost stop have no unit | G | ev03 | answered (§12; W-10) |
-| K59 | Sol-25, Fable-N13 (note) | A lesson does not reach the next project | H | ev06, ev07 | answered (§1–4; W-12) |
+| K59 | Sol-25, Fable-N13 (note) | A lesson does not reach the next project | H | ev06, ev07 | answered (§13; W-13) |
 | K60 | Fable-M17 | Once a point is `delegate`, the learned weight acts only on a tie | H | none yet | answered (§13; W-13); known limit L-H1 when `learn.explore` is zero |
 | K61 | Author-12 (note) | The reward has no cost or verifier-finding term; "test pass rates" conflict with `F-0003#58` | H | none yet | answered (§13); known limit L-H2 for the other roles |
 
@@ -94,7 +94,7 @@ search in `selection-v2.md` decides it.
 
 | Row | Source | The item | Slice | Status |
 | --- | ------ | -------- | ----- | ------ |
-| P01 | #69-A1 | A rule-path approval counted as a planned point | H (O-69) | answered (§1–4; W-12) |
+| P01 | #69-A1 | A rule-path approval counted as a planned point | H (O-69) | answered (§6, §13; W-13) |
 | P02 | #69-A2 | The target cannot pass its stack gates without LAYUP | B (O-76) | answered (§5–6; W-01 to W-04) |
 | P03 | #69-A3 | Every question goes to the Operator | D, E | answered (§8–9; W-05 to W-07) |
 | P04 | #69-B1 | Nothing starts or moves the role agents | A | answered (§1–4; W-12) |
@@ -151,7 +151,7 @@ search in `selection-v2.md` decides it.
 | I2 | The project repository is independent | W-12 | A | answered (§1–4; W-12) |
 | I3 | Agents cannot change the rules or gates | W-03 | B | answered (§5–6; W-01 to W-04) |
 | I4 | No value without evidence | W-02, W-08 | B, E | answered (§5–6; W-01 to W-04) |
-| I5 | A check not active is not passed | W-04, W-07 | B, D | answered (§1–4; W-12) |
+| I5 | A check not active is not passed | W-04, W-07 | B, D | answered (§6, §8; W-04, W-07) |
 | I6 | Deterministic before a model | W-08 | E | answered (§10; W-08) |
 | I7 | The domain changes content, not rules | W-04 | B | answered (§5–6; W-01 to W-04) |
 | I8 | The pinned baseline | W-02 | B | answered (§5–6; W-01 to W-04) |
@@ -184,7 +184,7 @@ search in `selection-v2.md` decides it.
 | D06 | O-73 (design rule) | At each human decision point a person writes an issue comment; the orchestrator copies it into Git | A | answered (§1–4; W-12) |
 | D07 | O-76 | LAYUP strictly external; native stack gates in the target, written at setup; nothing the target needs from LAYUP | A, B | answered (§1–4; W-12) |
 | D08 | O-77 | Agents under the Operator's account through an App user token; the badge tells agent from human; agent sessions get only the App token | A | answered (§1–4; W-12) |
-| D09 | O-78 | A provider interface; the provider and the authority level per target and per point | E | answered (§1–4; W-12) |
+| D09 | O-78 | A provider interface; the provider and the authority level per target and per point | E | answered (§10; W-08) |
 | D10 | O-79 | Thresholds, escalation rules and check frequency are parameters set per run | E | answered (§10; W-08) |
 | D11 | O-80 | Default (b): a harness without tokens or a cap may do paid work under a wall-clock limit; telemetry incomplete; per-harness parameter | G | answered (§12; W-10) |
 | D12 | O-81 | Default: the seven PSB §2 functions, each ambiguity kind owned by one; the matrix replaceable per project | D | answered (§8–9; W-05 to W-07) |
@@ -202,6 +202,6 @@ search in `selection-v2.md` decides it.
 | FT1 | No check that did not run counts as a pass | answered: each slice review checked it; see the walkthroughs' checklist rows |
 | FT2 | Unknown cost is never zero | answered: each slice review checked it; see the walkthroughs' checklist rows |
 | FT3 | The actor never comes from text or a commit author | answered: each slice review checked it; see the walkthroughs' checklist rows |
-| FT4 | A gate never runs the copy under review | answered (§1–4; W-12) |
+| FT4 | A gate never runs the copy under review | answered (§6; W-04, W-07) |
 | FT5 | Only three things go into a target: the setup output that O-76 and `F-0003#42` name; the work of the role sessions, through pull requests; and LAYUP's records, at the place that slice A decides. No file goes in that the target needs LAYUP to build, test or pass its gates | answered: each slice review checked it; see the walkthroughs' checklist rows |
 | FT6 | No state lives where a Git clone does not carry it | answered: each slice review checked it; see the walkthroughs' checklist rows |

@@ -73,7 +73,8 @@ without a diagnosis; a panel of one harness; a job inside a target (FT5).
 ## Consequences
 
 - The Stall Rate and Stall Diagnosis come from the stall and outcome rows.
-- A question loop and a review loop stop after `stall.N` rounds without progress.
+- A review loop stops after `stall.N` rounds without progress; a question loop
+  stops at `stall.attempts`.
 - The panel needs two admitted harnesses free of the diagnosed failure; with
   fewer, its rung is skipped and the Operator gets the package.
 - A scheduled run can be late or dropped, so a dead host's notice can be late or

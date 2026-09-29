@@ -48,8 +48,9 @@ from a stack catalog that LAYUP keeps:
    reason. The jobs of all kinds exist from the setup.
 3. **From outside.** `layup gate` checks out the base branch's manifest and gate
    files, applies them to the head of a pull request, and reports `pass`, `fail`
-   or `not-active` per kind. It never runs the head's gate files, except those
-   of an approved activation batch. A kind whose tree or change has no path in
+   or `not-active` per kind. It never runs the head's gate files for a status,
+   except those of an approved rule batch; before its approval, a batch's own
+   gate files run only in a scratch tree, as evidence. A kind whose tree or change has no path in
    its scope is `clear`, with that reason. The status `layup/gates` is a success
    only when every kind passed or is `clear`; `not-active` is never a pass.
 4. **Detection.** The setup verification runs each active kind on the clean tree

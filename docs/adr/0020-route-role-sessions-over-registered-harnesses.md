@@ -46,7 +46,8 @@ We will route role sessions over registered harnesses:
    the smart-if's fit point or the table's order.
 6. **The tier** of an implementing task: at its start from its plan (the
    reasoning tier for a large task, an open question or a new interface; the
-   execution tier otherwise); later from its computed progress position.
+   execution tier otherwise; `new dependencies` counts as a list too); later from its
+   computed progress position.
 7. **Context:** the records that each step's row names, selected by their links,
    and a start refused when the estimated size exceeds the model's context.
 
