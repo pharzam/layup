@@ -31,11 +31,13 @@ We will orchestrate each target from outside it with one foreground process,
 
 1. **One process per target.** `layup run` runs on the LAYUP host in the
    foreground and drives the phase loop of one target. It holds a lease row on
-   the target's records branch and renews its heartbeat every `lease.H` (a
-   parameter). A second run that finds a heartbeat younger than `3 × lease.H`,
-   or whose push is refused, stops; one that finds an older heartbeat takes the
-   lease over and records the takeover (the evaluated pattern of a lease with a
-   heartbeat and a reclaim, Paperclip and Beads).
+   the target's records branch and increases a heartbeat counter every
+   `lease.H` (a parameter). Another run times the counter by its own clock and
+   takes the lease over only when it has not moved for `3 × lease.H` (the
+   evaluated pattern of a lease with a heartbeat and a reclaim, Paperclip and
+   Beads; Kubernetes leader election for the clock). Every forge write comes
+   after the records push that announces it, and any refused records push stops
+   the run until it has re-read the lease and still holds it (fencing).
 2. **The engine checks are pure.** `layup psb check`, `layup setup verify`,
    `layup gate`, `layup spec check` and `layup report` read files, and
    `layup audit` reads files and the forge's read-only API; each prints a typed

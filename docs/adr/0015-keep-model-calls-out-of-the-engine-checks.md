@@ -45,8 +45,10 @@ with only what LAYUP gives it:
    and records each system-wide policy file that the row lists.
 5. **A session ends** when its process exits. `layup run` reads its typed result
    file, fetches its branch by commit SHA into LAYUP's own clone with hooks
-   turned off, checks that it descends from the base commit, and pushes that SHA
-   with the App's token. A session is not resumed across attempts.
+   turned off, checks that it descends from the base commit and changes nothing
+   under `.github/workflows/` (the App has no workflows permission, O-92), and
+   pushes that SHA with the App's token. A session is not resumed across
+   attempts.
 
 This replaces ADR-0011 decision 8. The `NFR-005` criterion of `PRD-0001` changes
 with it: "the engine checks start no model process and open no connection to a

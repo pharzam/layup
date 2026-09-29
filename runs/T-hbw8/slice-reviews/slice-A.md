@@ -101,3 +101,101 @@ All eight material findings are accepted and fixed in one commit; seven of the e
 | N1, N2, N3, N5, N6, N8 | Applied (§2 audit reads the API; bases from the start row; no resume across attempts; the App changes listed; the records freeze; L-A1 names the `gh` route). |
 | N4 | The comment form is fixed by slice F; W-12 step 5 says so. |
 | N7 | Declined: the link is a convenience; the records branch itself is in every clone. |
+
+## Round 2
+
+2026-09-29, head `a72bf49`; 6 min 6 s; 26,952 output tokens; USD 2.90 at list price. Same reviewer and setup. Word for word:
+
+~~~~text
+# Slice A review — round 2
+Reviewer: claude-fable-5-1. Head: `a72bf49`. Verdict: `material findings: 4`.
+
+Round 1 status:
+- **Closed:** M1 (separate clones, fetch by SHA with hooks off), M3 (ancestor check plus L-A5), M5 (the audit counts from the setup SHAs), M7 (user access token, as O-77 and O-92 decide) and M8.
+- **Closed, with a new defect:**
+  - M2 is closed by the forge refusing workflow pushes, but the refusal path is missing (new M4).
+  - M4 is closed as L-A4, but the new probe writes to the default branch (new M1).
+  - M6 is closed for lease writes, but not for other records pushes (new M2).
+
+## Material findings
+
+### M1. A probe that the forge accepts puts a commit on the default branch
+- Where: `docs/architecture.md:135-137` "pushes an empty probe commit to the default branch with the App's token and stops unless the forge refuses it". Also ADR-0014 decision 6.
+- Source: FT5 and `architecture.md:27` "Only three things go into a target". An accepted probe is none of the three. It also breaks §3's own reason at `:82-84`: a commit on the default branch "would put every open pull request out of date". And it breaks the Safety limits: an irreversible write with no authorization.
+- Why it matters: the Operator adds the admin role as a bypass actor. At the next start, the probe lands on `main`. Push-triggered CI runs on it, and every open pull request goes out of date. It cannot be removed without a force-push. The check does its damage in exactly the case it exists to detect.
+- Fix: make the default-branch ruleset of section 6 also target a probe ref, for example `refs/heads/layup-probe`. Bypass is per ruleset, so pushing to that ref proves the same thing, and step 1 already reads that ref's effective rules. Otherwise, state what happens after an accepted probe: record it, and have the Operator revert it through a pull request.
+
+### M2. A run whose lease was taken over keeps writing
+- Where: `architecture.md:65-66` "Each lease write is a push that is not forced, so of two runs that write at the same time, one is refused and stops". ADR-0013 d1 has the same gap: "A second run that … or whose push is refused, stops".
+- Source: `architecture.md:60` "One run per target", FT6, and the lease pattern the design cites (Paperclip, Beads).
+- Why it matters: host A sleeps (laptop lid closed) for longer than `3 × lease.H`, and B takes over. A wakes in the middle of step 10. Its result push is refused, but that is not a lease write. The rule only covers the second run, and records are append-only tables, so a natural implementation fetches, rebases and pushes again. A and B then both push task branches, post comments and merge.
+- Fix: "Any refused push of the records branch stops the run; it may continue only after it re-reads the lease and still holds it." Also state that each forge write comes after the records push that announces it. Step 6 and step 10 already follow this order, so it acts as a fencing token.
+
+### M3. "No longer current for its task" is undefined, and the heartbeat makes one reading refuse every result
+- Where: `architecture.md:95` "when they are no longer the current ones for the task, the result is refused". Also ADR-0014 d2 "a result whose commits are no longer current for its task is refused", and W-12 step 10 "checks that they are still current for `T-7`".
+- Source: Bootstrap rule 3 (operative ambiguity). It interacts with `architecture.md:61`, the heartbeat renewed every `lease.H`, which is a records commit.
+- Why it matters: read as "the records commit is still the head of `layup-records`", the rule fails any session longer than `lease.H`. Heartbeats alone move the head, so every result is refused. Read loosely, it guards nothing. Two implementers will build two different rules.
+- Fix: define "current" by a record: "no row for this task after the session start row changes its assignment, attempt or base commit", and name the table that holds such rows. Or define it as "the attempt in the start row is still the task's open attempt".
+
+### M4. A task-branch push the forge refuses has no outcome, and the records already bind its SHA
+- Where: `architecture.md:214-215` "and it pushes that SHA to `task/<task>/<attempt>` with the App's token". W-12 step 10 commits the result and "the commit SHAs bound to the session" before the push. W-12 step 8 starts from "the head of attempt 1, which `layup run` pushed".
+- Source: the round-1 M2 fix, which relies on the forge refusing a push that "changes `.github/workflows/`" (the author's answer). GitHub docs: an App needs the Workflows permission to "edit Actions files in the `.github/workflows` directory". Also O-93 ("a batch that changes `.github/workflows/` is merged by its human approver") and FI1.
+- Why it matters: a session edits `ci.yml`. The records say the SHA is bound to the session, the push is refused, and nothing says what happens next. Step 8 (attempt 2) then starts from a head that is not on the forge. The same limit means neither the O-93 workflows batch nor the setup's CI job (§1 item 1) can reach the forge through `layup run`, and no route is named for either.
+- Fix: before the push, refuse a branch whose diff from the base touches `.github/workflows/`. Record that as a failed result with a reason, and push only after that check. Say in §3 that LAYUP never delivers a workflow change, and that the Operator pushes or opens such a branch (slice B names the step).
+
+## Notes
+- N1. The audit (`:146-148`) accepts "a push … by the Operator's account" on the default branch, but its ruleset allows no push. On that branch, accept only `pr_merge` and `merge_queue_merge` (plus the setup SHAs). A `push` there means a bypass, which closes part of L-A4. The docs say `actor` "can be null": fail on it (FT1).
+- N2. O-93 says "its human approver". If the idea owner is that approver, the audit's "by the Operator's account" fails a legitimate merge. Make the two agree (for example, "an account in `approvers.tsv`").
+- N3. The lease compares a heartbeat time from host A's clock with host B's clock. Kubernetes leader election avoids clock skew by timing locally from when it observes a change. Adopt that, or state a bound on the skew.
+- N4. A user access token refresh makes "that refresh token and the old user access token" unusable (GitHub docs). A takeover on another host needs a new device-flow authorization. Say so under L-A3.
+- N5. Say that `layup-records` is an orphan branch. If it forks from `main`, it carries `.github/workflows`, and every heartbeat push runs the target's push-triggered CI.
+- N6. "The one variable that carries the harness's own credential" does not fit Codex with a ChatGPT login. That login lives in `auth.json` under `CODEX_HOME`, which also loads a global `AGENTS.md`. The register row needs a file route, and the rule-file check must cover it.
+- N7. Make each session clone with `--no-local` (or `--no-hardlinks`). Otherwise its object files are hard links into LAYUP's clone (this belongs to the L-A1 class).
+- N8. The rule-suites API (`result` = `bypass`) could detect a later bypass after the fact under L-A4. Check which permission it needs before relying on it.
+
+## Checklist rows
+- K01: answered, subject to M2 and M3.
+- K02: answered.
+- K03: answered, with L-A1.
+- K04: answered, with L-A5.
+- K05, K06, K07: answered.
+- P04, P09, P21: answered.
+- P13: known limit L-A2 (acceptable).
+- S12: answered, subject to N6.
+- R07, R11: answered.
+- R08: answered (step 13 is later: slice B).
+- R13: answered by its `PRD-0001` build check.
+- I1, I2: answered.
+- I9 (in part): answered, subject to N6.
+- C2: answered, subject to M2.
+- C6, C7 (in part): answered.
+- D05, D06, D08, D17: answered.
+- D07 (in part): answered, subject to M1 and M4.
+- FT3: answered.
+- FT5: answered, subject to M1.
+- FT6: answered, subject to M2.
+- L-A1, L-A2, L-A3, L-A5: acceptable.
+- L-A4: acceptable, but N1 narrows it for free.
+
+## Existing solutions
+- Kubernetes Lease and client-go leader election use a renew time, a lease duration and locally observed time. Kleppmann's fencing tokens are the standard answer to M2.
+- The GitHub Copilot coding agent pushes only to its own branches, and workflow runs wait for a human's approval. This is a precedent for M4's route.
+- Spec Kitty's coordination branch (ev06) is a precedent for `layup-records`. GitHub's rule-suites API is an existing detector for bypasses (N8).~~~~
+
+### The author's answer to round 2
+
+All four material findings are fixed in the next commit; notes N1 to N7 are applied, N8 is recorded under L-A4. This was the second round, the limit of plan v2, so the fixes of round 2 are not reviewed in this slice; the author asks the Operator on #72 how to review them (plan v2: "A material finding that stays open comes to you before the next slice").
+
+| Finding | Fix |
+| ------- | --- |
+| M1 | The probe pushes to the ref `layup-probe`, which the default branch's ruleset also covers (§3; ADR-0014 d6; ADR-0017 d3). |
+| M2 | Fencing: every forge write comes after the records push that announces it; any refused records push stops the run until it re-reads the lease and still holds it (§2; ADR-0013 d1). |
+| M3 | "Current" is defined by a record: the attempt of the session start row is still the task's open attempt (§3; ADR-0014 d2; W-12 step 10). |
+| M4 | A branch that touches `.github/workflows/` is refused before the push; its change becomes a proposal for an approved batch that the human approver pushes and merges (O-93); a SHA is bound only after the forge accepted the push (§4; ADR-0015 d5). |
+| N1, N2 | The audit accepts only pull-request merges by an account in `approvers.tsv` on the default branch; a push or an empty actor fails. |
+| N3 | The lease is timed by the watcher's own clock from the last change it saw. |
+| N4 | L-A3: a takeover on another host needs a new authorization of the App. |
+| N5 | `layup-records` is an orphan branch. |
+| N6 | A harness credential can be a file that the register row names, copied into `home/`. |
+| N7 | Session clones are made with `--no-local`. |
+| N8 | Recorded under L-A4 as a possible narrowing, not relied on. |

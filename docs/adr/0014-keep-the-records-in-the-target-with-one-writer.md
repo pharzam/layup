@@ -31,16 +31,16 @@ row 0014.
 We will keep LAYUP's records in the target, commit them with one writer, and take
 each actor from a credential:
 
-1. **The records branch.** The records live on the branch `layup-records` of the
-   target, as tab-separated tables with a header row and Markdown payloads (the
+1. **The records branch.** The records live on the orphan branch
+   `layup-records` of the target, as tab-separated tables with a header row and Markdown payloads (the
    form of ADR-0011 decision 2). The target's README, written at setup, names
    the branch; each pull request body links the records commit its task started
    from.
 2. **One writer.** Only `layup run` commits to the records branch, from its own
    clone, with pushes that are never forced. An engine check hands it a table; a
-   role session hands it a result file, and the base commit and records commit
-   that bind it come from the session start row that `layup run` wrote; a result
-   whose commits are no longer current for its task is refused; a human hands it
+   role session hands it a result file, and the attempt and base commit that
+   bind it come from the session start row that `layup run` wrote; a result
+   whose attempt is no longer the task's open attempt is refused; a human hands it
    an issue comment.
 3. **Three kinds of actor** (O-77). LAYUP acts under the Operator's account
    through the LAYUP App's user access token, which only `layup run` holds; the
@@ -57,8 +57,9 @@ each actor from a credential:
    SHA-256.
 6. **Fail closed.** At setup and at each start, `layup run` reads the effective
    rules of the default and the records branch and stops when a rule is missing;
-   it also pushes an empty probe commit to the default branch with the App's
-   token and stops unless the forge refuses it. `layup audit` checks the actor of
+   it also pushes an empty probe commit to a probe ref that the default
+   branch's ruleset covers, with the App's token, and stops unless the forge
+   refuses it. `layup audit` checks the actor of
    each update of both branches from the forge's repository activity, from the
    setup commits onward, never from a commit author.
 
