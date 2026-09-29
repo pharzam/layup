@@ -20,10 +20,10 @@ Sections are those of [`architecture.md`](../architecture.md).
 | 4 | the approver | the batch pull request | approves by an issue comment (the planned point of the first bet) | the comment, copied (§3) | `human` | §6, §8 |
 | 5 | `layup run`, `layup gate` | the approved batch | refuses the approval if the batch head moved since the request; records the rule-file hash with the approval and the known-bad patches on the records branch; runs the batch's gate files on the head (must pass) and on the head with each patch (each must fail); `layup/rules` passes; merges the batch | the hash, the detection results, the merge | `code` | §6; ADR-0016, ADR-0017 |
 | 6 | the developer session | its task | adds the import; commits | commits in `repo/` | `model` | §4 |
-| 7 | `layup run` | the result | later: slice D | later: slice D | `code` | — |
+| 7 | `layup run` | the result | the handoff, rule-path and workflow checks; pushes the branch; opens a draft pull request | the draft pull request | `code` | §8; ADR-0019 |
 | 8 | the target's CI | the pull request head | the boundary job (`depguard`) fails: `cmd/server` imports `internal/store` | the failed required check on the forge | `code` | §6; ADR-0016 |
 | 9 | `layup gate` | the base branch's gate files; the head | runs the base branch's boundary rule on the head in a scratch work tree: `fail` | the status `layup/gates` = failure, and a result row | `code` | §6; ADR-0016 |
-| 10 | `layup run` | the two results | later: slice D | later: slice D | `code` | — |
+| 10 | `layup run` | the two results | gives the developer a new attempt with the findings; the pull request stays a draft; no verifier starts and no review is requested (W-07 step 5) | an attempt row | `code` | §8; ADR-0019 |
 
 ## Checklist rows
 

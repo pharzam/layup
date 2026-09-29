@@ -27,4 +27,4 @@ Sections are those of [`architecture.md`](../architecture.md).
 
 ## Checklist rows
 
-S1, R01, K08, K12, D06. The step table of §9 (the review session's role and harness) is later: slice D.
+S1, R01, K08, K12, D06. The review session's role and harness come from the step table of §9.

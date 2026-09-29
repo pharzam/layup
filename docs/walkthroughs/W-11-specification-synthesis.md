@@ -24,7 +24,7 @@ Sections are those of [`architecture.md`](../architecture.md).
 | 7 | the idea owner | the first bet, which shows every fact with its class and text | answers one line per requirement ID: its priority and milestone (had step 4 missed the sentence, a line "`need`" for its fact ID would reopen the draft) | the bet comment, copied (§3) | `human` | §7, §8 |
 | 8 | `layup run` | the copied bet comment; the span table; the reclasses of step 6 | writes the PRD's MoSCoW and Phase columns from it; writes the confirmed inventory and its SHA-256 on the records branch; the numbered facts record goes into the bet's rule batch | a commit on the pull request; the inventory version | `code` | §7; ADR-0018 |
 | 9 | `layup spec check` | the latest confirmed inventory, the answers fact and the bet copy (records); the PRD and `docs/spec/` (the head); the task register; the delivered requirements | every `covers` resolves; every need and constraint is covered; each requirement has a criterion; MoSCoW and Phase match the bet; each delivered requirement has a section whose heading holds its ID | a check table, committed by `layup run`, and the status `layup/spec` | `code` | §7; ADR-0018 |
-| 10 | a verifier session | a delivered requirement and its specification | later: slice D | later: slice D | `model` | — |
+| 10 | a verifier session on another harness | each change that delivers the requirement, with its specification section | judges that the change and the section agree with the requirement's text (W-07 step 7) | its record and `layup/verify` | `model` | §8, §9; ADR-0019, ADR-0020 |
 
 ## Checklist rows
 

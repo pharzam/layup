@@ -155,6 +155,8 @@ record by number here, and let the index table below do the linking.
 | [0016](0016-put-the-native-stack-gates-in-the-target.md) | Put the native stack gates in the target | Proposed |
 | [0017](0017-prevent-rule-changes-by-agents.md) | Prevent rule changes by agents | Proposed |
 | [0018](0018-derive-the-specification-from-numbered-source-lines.md) | Derive the specification from numbered source lines | Proposed |
+| [0019](0019-run-the-lifecycle-as-a-phase-loop-with-one-bet-per-milestone.md) | Run the lifecycle as a phase loop with one bet per milestone | Proposed |
+| [0020](0020-route-role-sessions-over-registered-harnesses.md) | Route role sessions over registered harnesses | Proposed |
 
 <!-- Add one row per ADR as you write them. Keep the newest at the bottom. -->
 

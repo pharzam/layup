@@ -15,7 +15,7 @@ Sections are those of [`architecture.md`](../architecture.md).
 
 | # | Actor | Input | Mechanism | Record | Tag | Where |
 | - | ----- | ----- | --------- | ------ | --- | ----- |
-| 1 | `layup run` | the task list and the routing table | later: slice D | later: slice D | `code` | — |
+| 1 | `layup run` | the task register; the routing register | picks `T-7`; admits H1 with its model for the developer role and the task's tier; the first admitted pair by weight or order (§9) | a routing row | `code` | §9; ADR-0020 |
 | 2 | `layup run` | the target at the base commit; the register row of H1 | makes the session directory: a separate clone on `task/T-7/1`, an empty `home/`, the prompt file, an environment from the named list with H1's credential variable and no forge credential; checks that no rule file of H1 is in a directory above it; starts H1 with the command line of its row | a session start row: session ID, task, attempt, harness, model, base commit, records commit | `code` | §4; ADR-0015 |
 | 3 | H1 session | `prompt.md` and `repo/` | works; reads its rules from `AGENTS.md` in its clone; commits in `repo/`; writes its typed result | the result file in `result/`; commits in `repo/` (not pushed by the session) | `model` | §4; ADR-0015 |
 | 4 | `layup run` | the stalled attempt | later: slice F | later: slice F | `code` | — |
@@ -25,7 +25,7 @@ Sections are those of [`architecture.md`](../architecture.md).
 | 8 | `layup run` | the target at the head of attempt 1, which `layup run` pushed with the App's token; the records; the register row of H2 | makes a new session directory with a separate clone on `task/T-7/2` from that head, with a prompt file built by code from the records (the task, its handoffs, the stall diagnosis) and the target's rule files; starts H2 as in step 2 | a session start row for attempt 2 | `code` | §4; ADR-0015 |
 | 9 | H2 session | the same kind of prompt file; no memory of H1 | works from the files alone; `AGENTS.md` is the same file that H1 read; H2's entry file in the target is a pointer to it | its result file and commits | `model` | §4; ADR-0015 |
 | 10 | `layup run` | the result of H2 | checks the result's schema; takes the attempt and base commit from its own session start row and checks that attempt 2 is still the open attempt of `T-7` (else it refuses the result); fetches the branch by SHA into its own clone with hooks turned off; checks that it descends from the base commit and touches nothing under `.github/workflows/`; commits the result to the records branch with a push that is not forced; pushes that SHA to `task/T-7/2` with the App's token; then records the SHA as bound to the session | the result, the session end row, the commit SHAs bound to the session | `code` | §3; ADR-0014 |
-| 11 | a verifier session | the change | later: slice D | later: slice D | `model` | — |
+| 11 | a verifier session | the change | on a harness other than H2 by the ledger rows (H1 is admitted again, because the author of attempt 2 is H2); refutes "done" (W-07 steps 7, 8) | its record and `layup/verify` | `model` | §8, §9; ADR-0020 |
 
 ## Part 2 — a human continues without LAYUP
 
