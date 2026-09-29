@@ -10,6 +10,8 @@
 | Elapsed | about 62 minutes |
 | Agent runs and cost | 4 runs of `claude -p` with `claude-sonnet-5` (the subagents used their pinned opus or sonnet models): 1.93 + 2.88 + 2.36 + 4.81 = 11.98 USD, 48 minutes of agent time |
 
+**Model IDs (plan-review note 8, added 2026-09-29).** Springer's subagents ran on the aliases `opus` and `sonnet` that its own files pin. The evaluator did not record the full model ID behind each alias, and the run logs are not kept, so this file does not name one (Invariant 4). No verdict of this file rests on the quality of that model: each rests on what the candidate's code did.
+
 ## Verdict
 
 Borrow the pattern. Springer is the best role-and-handoff design in this group: typed JSON artifacts that a script validates, a gap list batched at the first gate, an append-only cycle log, and bounded retries. But it is Claude Code only, it has no rule protection, its trace is free text, and it keeps telemetry outside Git. LAYUP cannot run it as a component.

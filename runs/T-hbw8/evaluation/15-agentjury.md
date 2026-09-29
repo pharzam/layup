@@ -10,6 +10,8 @@
 | Elapsed | about 20 minutes of the session (shared with three other candidates) |
 | Agent runs and cost | 4 panel runs: 1 with the Anthropic adapter and no key (no model call); 3 with 2 judges each through a Claude Code adapter (haiku and sonnet, print mode, cap USD 0.40 per call). Total model cost USD 0.057 (5 successful calls, 1 failed call). |
 
+**Model IDs (plan-review note 8, added 2026-09-29).** The judges ran on the Claude Code aliases `haiku` and `sonnet`. The evaluator did not record the full model ID behind each alias, and the run logs are not kept, so this file does not name one (Invariant 4). `haiku` names a model on ADR-0012's "not used" list in any reading: that use is part of the deviation that O-88 records. No verdict of this file rests on the quality of that model: each rests on what the candidate's code did.
+
 ## Verdict
 
 Borrow the pattern. The deterministic aggregator is small, readable and fails closed (a failed judge never becomes an approval), and the "blind" rule holds in the code. It is a public-alpha Python tool that calls provider APIs with keys, not harnesses, and the judges see only text, so LAYUP should port its rules to Go instead of running it.
