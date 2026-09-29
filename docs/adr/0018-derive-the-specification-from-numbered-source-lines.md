@@ -30,32 +30,46 @@ The options compared are in
 
 We will derive the specification by sessions and check its links by code:
 
-1. **A session numbers** the problem statement into byte-exact facts with an ID
-   and a class (`need`, `constraint`, `measure`, `context`), and lists the text
-   that is no fact with a reason.
-2. **Code checks the lines:** each fact is a substring, no two overlap, and every
-   non-blank line lies in a fact or in the "not a fact" list.
-3. **A session drafts** the requirements with `covers` and a criterion, and no
-   priority; **a session on another harness** reviews the draft for a missed
-   need; each gap it finds is a question of the one Intake batch.
-4. **The idea owner** confirms the needs and sets each requirement's priority at
-   the first bet.
-5. **`layup spec check`** fails on an unresolved `covers`, a quote that is not
-   byte-exact, an uncovered need that the idea owner did not mark out of scope, a
-   requirement with no criterion or no priority after the first bet, a delivered
-   requirement with no specification section that names it, and a task with no
-   requirement. A trace may point to the problem statement or to the answers.
+1. **A session numbers** the problem statement into spans given by byte offsets:
+   facts with an ID and a class (`need`, `constraint`, `measure`, `context`), and
+   "not a fact" spans with a reason.
+2. **Code checks the spans** (`layup spec check --facts`): every byte that is not
+   white space lies in exactly one span, and each span's text matches the file.
+   When it fails or does not run, no Intake batch is posted.
+3. **A session drafts** a requirement for each need and a non-functional
+   requirement for each constraint, with `covers` and a criterion and no
+   priority; a measure becomes a success criterion. **A session on another
+   harness** reviews the draft for a missed need or constraint; each gap is a
+   question of the one Intake batch. With one harness, the review does not run
+   and `layup run` stops.
+4. **The answers** become a raw fact with one ID per question ID; each question
+   carries the quote of the problem statement it asks about, so a trace through
+   an answer reaches the problem statement's text.
+5. **The idea owner** sets each requirement's priority and milestone, and marks a
+   fact out of scope, by one comment at each bet. Code writes the PRD's MoSCoW and
+   Phase columns from the copied comment. The facts, classes and marks then form
+   the confirmed inventory on the records branch, and `docs/facts/` is a rule
+   path.
+6. **`layup spec check`** posts the required status `layup/spec`. It checks the
+   head against the confirmed inventory and the bet copy: every `covers`
+   resolves, every need and constraint is covered or out of scope, each
+   requirement has a criterion, the PRD's MoSCoW and Phase match the bet, each
+   delivered requirement has a section in `docs/spec/` whose heading holds its
+   ID, and each task names a requirement. A check that did not run fails.
 
-We reject: code numbering the clauses of prose (it can only split lines); code
-setting a priority (intent); the smart-if provider extracting requirements (it
-writes no text); a trace check as the proof of completeness.
+We reject: code numbering the clauses of prose (it can only split lines); a
+session or code setting a priority (intent); the smart-if provider extracting
+requirements (it writes no text); a trace check as the proof of completeness;
+checking the head's own copy of the facts (FT4).
 
 ## Consequences
 
 - The problem statement needs no fixed form: the numbering session reads any.
 - The idea owner answers the completeness gaps in the Intake batch, before
-  delivery, and sets the priorities once, at the first bet.
+  delivery, and sets the priorities at each bet.
 - A session can still class a fact wrongly; the completeness review on another
   harness and the idea owner's confirmation are the two checks against it.
+- The reading of `F-0003#62` for a trace through an answer goes to the Operator
+  in the approval brief.
 - `PRD-0001` REQ-012 keeps its criterion; the meaning of a specification is judged
   by the counterpart verification of each change, not by `layup spec check`.

@@ -447,8 +447,8 @@ patch applied, which must fail its kind (`F-0003#64`).
 **The rule paths** of a target are a register on the records branch, written at
 setup from the catalog and the pinned baseline: `.github/`, `.githooks/`, the gate
 manifest, the tools' configuration, the gate tests, `AGENTS.md` and the harness
-entry files, the baseline's rule documents and check scripts, and
-`docs/setup/`. `docs/guardrails.md` is a rule path except added lines inside its
+entry files, the baseline's rule documents and check scripts, `docs/setup/`, and
+`docs/facts/` (§7). `docs/guardrails.md` is a rule path except added lines inside its
 section 2 (Known pitfalls): the baseline's step 7 writes a lesson there in the
 same pull request, and a line added to §2 cannot remove a rule (K13).
 
@@ -473,7 +473,8 @@ pushes it, because the App has no workflows permission (O-93).
 3. **The forge refuses.** The default branch and the probe ref `layup-probe`
    have one ruleset with an empty bypass list: a pull request is required; the
    required checks are the native gate jobs, pinned to GitHub Actions, and
-   `layup/gates`, `layup/verify` and `layup/rules`, pinned to the LAYUP App; force
+   `layup/gates`, `layup/spec`, `layup/verify` and `layup/rules`, pinned to the
+   LAYUP App; force
    pushes and deletion are blocked. The records branch has a ruleset that
    restricts updates and deletion to the LAYUP App, its only bypass actor (§3).
    `layup/rules` fails a pull request that changes a rule path unless it is a
@@ -504,48 +505,76 @@ credential that a role session holds.
 [ADR-0018](adr/0018-derive-the-specification-from-numbered-source-lines.md)
 decides this section. It serves `F-0003#51` and Problem 6. A problem statement
 is prose, so every step that reads its meaning is a session or a human; code
-checks what can be checked byte for byte.
+checks what can be checked byte for byte. The vision brief is solution input
+(`F-0002`), not a trace source.
 
 **During Intake, before the batch** (§5, gap check step 3):
 
-1. **Numbering** (a session). It splits the problem statement into facts. A fact
-   is a byte-exact substring; the session gives each one an ID (`F-0001#n` in the
-   target) and a class: `need`, `constraint`, `measure` or `context`. Text that
-   is no fact (a heading, a rule line) goes to a "not a fact" list with a reason.
-2. **The line check** (code). Each fact is a substring of the file, no two facts
-   overlap, and every non-blank line of the file lies in a fact or in the "not a
-   fact" list. So no text is dropped without a record (Fable-M21, Author-5).
-3. **The draft** (a session). One or more requirements for each `need` fact: an
-   ID, a statement, `covers` (the fact IDs), and an acceptance criterion. It sets
-   no priority.
-4. **The completeness review** (a session on another harness than steps 1 and
-   3). It reads the problem statement and the draft, and lists each need that no
-   requirement covers, each requirement that no need supports, and each fact
-   whose class it doubts (Sol-18). Each item becomes a question of the one Intake
-   batch.
+1. **Numbering** (a session). It splits the problem statement into spans, each
+   given by its byte offsets: a **fact** has an ID and a class (`need`,
+   `constraint`, `measure`, `context`); a **"not a fact"** span (a heading, a
+   rule line) has a reason. A span may be part of a line, so one sentence of a
+   paragraph can be a fact.
+2. **The span check** (code, `layup spec check --facts`). Every byte that is not
+   white space lies in exactly one span, and each span's text is the file's text
+   at its offsets. When the check fails or does not run, `layup run` posts no
+   batch and stops (FT1, Fable-M21, Author-5).
+3. **The draft** (a session). One or more requirements for each `need` fact, and
+   one non-functional requirement for each `constraint` fact: an ID, a statement,
+   `covers` (the fact IDs), and an acceptance criterion. It sets no priority.
+   Each `measure` fact becomes a success criterion row of the target's PRD, which
+   §12 reads; a `context` fact gets nothing.
+4. **The completeness review** (a session on a harness other than those of steps
+   1 and 3; with only one admitted harness it does not run, and `layup run`
+   records "not run" and stops). It reads the problem statement and the draft,
+   and lists each need or constraint that no requirement covers, each requirement
+   that no fact supports, and each fact whose class it doubts (Sol-18). Each item
+   becomes a question of the one Intake batch.
 
 **After the answers:**
 
-5. The answers become a raw fact of the target (§5), and a requirement may cover
-   an answer's fact ID as well as a problem statement's (Fable-N8).
-6. A session revises the draft with the answers and writes the specification: the
-   target's PRD and, for each requirement, a technical specification section that
-   names it.
-7. **The first bet** (§8) asks the idea owner to confirm the list of needs and to
-   set the priority of each requirement (`Must`, `Should`, `Could`, `Won't`).
-   Priority is intent (`F-0003#54`), so no code and no session sets it (Sol-19,
-   Author-18). Inside a requirement, a session may mark a task nice-to-have; a
-   cut that touches an acceptance criterion is business-forking (§10).
+5. Code writes the answers as a raw fact of the target, one fact per question ID.
+   Each question carries the byte-exact quote of the problem statement that it
+   asks about (§5), so a requirement that covers an answer's fact also names that
+   quote's fact. **Reading of `F-0003#62`:** the trace reaches the problem
+   statement's text through the question's quote; a requirement that traces only
+   to a question with no quote (a setup question) traces to the answer alone, and
+   the approval brief asks the Operator to confirm this reading.
+6. A session revises the draft with the answers. A change of class must cite the
+   answer ID that causes it; code checks the citation. The session writes the
+   target's PRD and, per requirement, a technical specification section: a
+   heading that holds the requirement ID, in a file under `docs/spec/`. The PRD's
+   MoSCoW and Phase columns stay empty; the pull request waits.
+7. **The first bet** (§8) shows the idea owner the needs, the constraints and the
+   facts classed `context`, with their text, and the requirements. The idea
+   owner answers one line per requirement ID: its priority (`Must`, `Should`,
+   `Could`, `Won't`) and its milestone, or "out of scope" for a fact. Priority is
+   intent (`F-0003#54`), so code copies the comment (§3), writes the MoSCoW and
+   Phase columns and the out-of-scope marks into the PRD from that copy, and only
+   then does the pull request pass the baseline's own `prd-lint`. A requirement
+   added later gets its priority at the next bet. Inside a requirement, a session
+   may mark a task nice-to-have; a cut that touches an acceptance criterion is
+   business-forking (§10).
+8. With the first bet, the numbered facts, their classes and the out-of-scope
+   marks become the **confirmed inventory**, kept on the records branch with its
+   hash. `docs/facts/` is a rule path (§6), so a role session cannot edit it.
 
-**`layup spec check`** (code, no model call) fails when: a `covers` ID does not
-resolve to a fact of the problem statement or of the answers; a fact is not a
-byte-exact substring of its file; a `need` fact has no requirement and the idea
-owner did not mark it out of scope; a requirement has no acceptance criterion; a
-requirement has no priority after the first bet; a delivered requirement has no
-non-empty specification section that names it (Sol-20); a task names no
-requirement. It proves the links. It does not prove that the meaning agrees: the
-counterpart verification of each change judges that (§8), and the completeness
-review of step 4 is the check against a missed need.
+**`layup spec check`** (code, no model call) posts its own required status,
+`layup/spec`. It reads the confirmed inventory and the bet copy (records), the
+PRD and `docs/spec/` (the head), the task register (§8) and the accepted and
+delivered requirements (§12). It fails when: a `covers` ID does not resolve to a
+fact of the confirmed inventory or of the answers; a need or constraint has no
+requirement and no out-of-scope mark; a requirement has no acceptance criterion;
+a MoSCoW or Phase value in the PRD differs from the bet copy; a delivered
+requirement has no non-empty section in `docs/spec/` whose heading holds its ID
+(Sol-20); a task names no requirement; or it did not run. It proves the links. It
+does not prove that the meaning agrees: the counterpart verification of each
+change judges that (§8), and the completeness review of step 4 is the check
+against a missed need.
+
+**Vision 2.1.** The preliminary design review is the specification of step 6 with
+the architecture that the first bet approves (§8); the phased plan is the
+milestone plan of the bets (later: slice D, §8).
 
 ## 14. Coverage
 
@@ -571,7 +600,8 @@ rows. The evidence for each row is [`runs/T-hbw8/rewrite-checklist.md`](../runs/
 | S4 Stack-Dependent Gates (`#44`), `REQ-004`, `NFR-004`, Invariants 5 and 7 | [W-04](walkthroughs/W-04-stack-dependent-gates.md) | 6 | 0016 |
 | #69 A2 (the target cannot pass its gates without LAYUP) | W-04 step 8; W-12 step 15 | 6 | 0016 |
 | #69 B9 (the source of the stack gates) | W-02 step 4 | 6 | 0016 |
-| S11 Specification Synthesis (`F-0003#51`), Specification Traceability (`#62`), `REQ-012`, table C 2.1 | [W-11](walkthroughs/W-11-specification-synthesis.md) | 7 | 0018 |
+| S11 Specification Synthesis (`F-0003#51`), Specification Traceability (`#62`), `REQ-012` | [W-11](walkthroughs/W-11-specification-synthesis.md) | 7 | 0018 |
+| Table C 2.1 (PDR, PRD, phased plan) | W-11 (the PDR and the PRD); the phased plan is later: slice D | 7 | 0018 |
 | #69 B4 (specification synthesis has no component) | W-11 | 7 | 0018 |
 | ADR-0012 part 6 (set up a target, run its gate from outside) | W-02; W-04 steps 5, 9 | 5, 6 | 0016 |
 
@@ -615,5 +645,6 @@ Each limit is a finding that the design does not close, recorded here (O-66).
   protected repository would close this, and needs an organisation.
 - **L-C1. A fact classed wrongly.** The numbering session can class a need as
   context. The completeness review on another harness and the idea owner's
-  confirmation at the first bet are the two checks; a need that both miss stays
-  unplanned until the idea owner's acceptance (§8) or the audit (§12) finds it.
+  confirmation at the first bet, which shows each `context` fact with its text,
+  are the two checks; a need that both miss has no requirement, and nothing
+  after them finds it.

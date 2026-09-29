@@ -38,7 +38,7 @@ the complement:
    section 2 of `docs/guardrails.md` are not a rule change.
 3. **The forge refuses.** The default branch and the probe ref `layup-probe` have one ruleset with no bypass actor:
    a pull request is required; the required checks are the native gate kinds and
-   `layup/gates`, `layup/verify` and `layup/rules`, each `layup/` check pinned to
+   `layup/gates`, `layup/spec`, `layup/verify` and `layup/rules`, each `layup/` check pinned to
    the LAYUP App as its source; force pushes and deletion are blocked. The records branch
    restricts updates and deletion to the LAYUP App, its only bypass actor
    (O-95). The Operator applies both at setup,

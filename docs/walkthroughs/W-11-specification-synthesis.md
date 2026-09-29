@@ -15,15 +15,16 @@ Sections are those of [`architecture.md`](../architecture.md).
 
 | # | Actor | Input | Mechanism | Record | Tag | Where |
 | - | ----- | ----- | --------- | ------ | --- | ----- |
-| 1 | a numbering session | `brief.md` | splits it into facts, each a byte-exact substring with an ID and a class; the sentence "invoices must be sent by e-mail on the first working day" is classed `context`; headings go to the "not a fact" list | a fact table and a "not a fact" list in the session result | `model` | §7; ADR-0018 |
-| 2 | `layup spec check` | the fact list; `brief.md` | each fact is a substring of the file; no two overlap; every non-blank line lies in a fact or in the "not a fact" list | a check table, committed by `layup run` | `code` | §7; ADR-0018 |
+| 1 | a numbering session | `brief.md` | splits it into spans given by byte offsets: facts with an ID and a class, and "not a fact" spans with a reason; the sentence "invoices must be sent by e-mail on the first working day" is classed `context`; headings are "not a fact" spans | a span table in the session result | `model` | §7; ADR-0018 |
+| 2 | `layup spec check --facts` | the span table; `brief.md` | every byte that is not white space lies in exactly one span, and each span's text matches the file; on a failure, no batch is posted | a check table, committed by `layup run` | `code` | §7; ADR-0018 |
 | 3 | a draft session | the facts | writes requirements for each `need` fact, with `covers`, a statement and a criterion, and no priority; the e-mail sentence gets none, because it is `context` | the draft in the session result | `model` | §7; ADR-0018 |
 | 4 | a review session on another harness | `brief.md`; the draft | lists "invoices by e-mail on the first working day" as a need that no requirement covers, and the fact whose class it doubts | a gap row in the session result; it joins the Intake batch (W-01 step 5) | `model` | §7; ADR-0018 |
 | 5 | the idea owner | the Intake batch | answers the question: yes, it is a need | the answer comment, copied (§3) | `human` | §5 |
-| 6 | a spec session | the draft; the answers | reclasses the fact as `need`, adds a requirement that covers it, and writes the PRD and one specification section per requirement | a pull request of the first bet | `model` | §7; ADR-0018 |
-| 7 | the idea owner | the first bet | confirms the needs and sets the priority of each requirement | the bet comment, copied (§3) | `human` | §7, §8 |
-| 8 | `layup spec check` | the target's facts and PRD | every `covers` resolves; every need is covered; every requirement has a criterion and a priority; each delivered requirement has a specification section that names it | a check table, committed by `layup run`, and the status `layup/gates` | `code` | §7; ADR-0018 |
-| 9 | a verifier session | a delivered requirement and its specification | later: slice D | later: slice D | `model` | — |
+| 6 | a spec session | the draft; the answers | reclasses the fact as `need`, citing the answer ID (code checks the citation); adds a requirement that covers it and the answer's fact; writes the PRD with its MoSCoW and Phase columns empty, and one section per requirement in `docs/spec/` | a pull request that waits for the first bet | `model` | §7; ADR-0018 |
+| 7 | the idea owner | the first bet, which shows the needs, the constraints and the `context` facts with their text | answers one line per requirement ID: its priority and milestone | the bet comment, copied (§3) | `human` | §7, §8 |
+| 8 | `layup run` | the copied bet comment | writes the PRD's MoSCoW and Phase columns from it; stores the confirmed inventory and its hash on the records branch | a commit on the pull request; the inventory | `code` | §7; ADR-0018 |
+| 9 | `layup spec check` | the confirmed inventory and the bet copy (records); the PRD and `docs/spec/` (the head); the task register; the delivered requirements | every `covers` resolves; every need and constraint is covered; each requirement has a criterion; MoSCoW and Phase match the bet; each delivered requirement has a section whose heading holds its ID | a check table, committed by `layup run`, and the status `layup/spec` | `code` | §7; ADR-0018 |
+| 10 | a verifier session | a delivered requirement and its specification | later: slice D | later: slice D | `model` | — |
 
 ## Checklist rows
 
