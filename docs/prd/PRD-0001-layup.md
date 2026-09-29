@@ -73,9 +73,9 @@ machine-checkable.
 
 | REQ       | Statement                              | MoSCoW | Phase | Facts             |
 | --------- | -------------------------------------- | ------ | ----- | ----------------- |
-| REQ-001 | `layup psb check` finds the gaps of a problem statement before delivery starts and writes them as one batch of questions for the idea owner, whose answers are stored as a raw fact. | Must | 1 | F-0003#41, F-0003#14, F-0003#15, F-0001#11 |
+| REQ-001 | Before delivery starts, `layup psb check` finds the rule gaps of a problem statement, a review session finds its gaps of meaning, and both go to the idea owner as one batch of questions, whose answers are stored as a raw fact. | Must | 1 | F-0003#41, F-0003#14, F-0003#15, F-0001#11 |
 | REQ-002 | `layup setup` creates a target repository from the pinned Armature for the target's domain and stack, stops at each human decision, writes the answers to Git, and `layup setup verify` proves the setup with evidence for every value. | Must | 1 | F-0003#42, F-0003#15, F-0003#37, F-0001#4, F-0001#8 |
-| REQ-003 | The rules and the gates of a target are protected from the agents that they govern: an agent cannot change a rule path without a control that the agents cannot pass by themselves (which control is open question 2 of §11). | Must | 2 | F-0003#43, F-0001#3, F-0003#64 |
+| REQ-003 | The rules and the gates of a target are protected from the agents that they govern: an agent cannot change a rule path without a control that the agents cannot pass by themselves (ADR-0017). | Must | 2 | F-0003#43, F-0001#3, F-0003#64 |
 | REQ-004 | `layup gate` runs the stack-dependent gates of a target (repository layout, interface boundaries, contract checks, test quality) from outside the target and reports `pass`, `fail` or `not-active` per gate; the gates add rules and weaken none. | Must | 1 | F-0003#44, F-0003#11, F-0003#12, F-0003#13, F-0001#7 |
 | REQ-005 | Information that passes between role agents is a record in the target that a machine validates against a schema based on Armature conventions. | Must | 2 | F-0003#45, F-0003#59 |
 | REQ-006 | A question that does not need a human decision gets an accepted answer from the responsible role agent, without a human, and the answer is recorded in the target. | Must | 3 | F-0003#46, F-0003#8, F-0003#9, F-0003#10 |
@@ -100,7 +100,7 @@ machine-checkable.
 | NFR-002 | A target repository is independent: it passes its gates without LAYUP, and a human or a different agent continues the work without the automation that created it. | Must | 1 | F-0001#2, F-0003#65 |
 | NFR-003 | No configuration value is set without evidence; a value that comes from a guess is a defect. | Must | 1 | F-0001#4, F-0003#63 |
 | NFR-004 | A check that is not active does not count as passed. | Must | 1 | F-0001#5 |
-| NFR-005 | A deterministic check is preferred to an LLM judgement wherever a rule can be checked mechanically; the engine itself makes no model call (the design decision of ADR-0011, decision 8, not a clause of the fact). | Must | 1 | F-0001#6 |
+| NFR-005 | A deterministic check is preferred to an LLM judgement wherever a rule can be checked mechanically; the engine checks make no model call, and the `layup` process calls a model only through the smart-if provider (the design decision of ADR-0015, which replaces ADR-0011 decision 8; not a clause of the fact). | Must | 1 | F-0001#6 |
 | NFR-006 | LAYUP uses Armature at a pinned, recorded version. | Must | 1 | F-0001#8 |
 | NFR-007 | LAYUP is written in Go with the standard library only, and calls Git as the `git` program. | Must | 1 | F-0004#1 |
 
@@ -111,7 +111,7 @@ The IDs are quoted so that this table adds no requirement rows.
 
 | Requirement | Acceptance criterion |
 | ----------- | -------------------- |
-| `REQ-001` | `layup psb check docs/facts/problem-statement-brief.md` writes the batch `internal/psb/testdata/psb.tsv` byte for byte (`TestGoldenRealPSB`), and the idea owner's answers to it are the raw fact `F-0004`, one fact per question (check `facts`). In the pilot, the Early Question Share (`F-0003#75`) is measured against its start value (`F-0004#19`). |
+| `REQ-001` | `layup psb check docs/facts/problem-statement-brief.md` writes the batch `internal/psb/testdata/psb.tsv` byte for byte (`TestGoldenRealPSB`), and the idea owner's answers to it are the raw fact `F-0004`, one fact per question (check `facts`). On a pilot problem statement, the one Intake batch holds both the rule gaps and the gaps of meaning that the review session found. In the pilot, the Early Question Share (`F-0003#75`) is measured against its start value (`F-0004#19`). |
 | `REQ-002` | `layup setup` on a pilot problem statement creates a target that passes Armature's discipline tests and `layup setup verify` with zero values without a citation, and an audit of every setup value finds that its cited source supports it (`F-0003#63`, `F-0001#4`); the steps follow `docs/setup/steps.tsv`, and each `human_decision` row's answers are in the target's Git before the next step. |
 | `REQ-003` | On a pilot target, an attempted rule change by an agent without the control is refused; an audit of the history shows zero agent writes to a rule path; and a set of known-bad commits against the gates is detected in full (`F-0003#64`). |
 | `REQ-004` | `layup gate` on a target of each pilot stack reports one verdict per gate; on each pilot stack, a seeded violation of each of the four gate kinds (layout, interface boundary, contract, test quality) reports `fail`; a gate that did not run reports `not-active`, which never counts as `pass`; the target's own baseline gates are unchanged (`F-0001#7`). |
@@ -133,7 +133,7 @@ The IDs are quoted so that this table adds no requirement rows.
 | `NFR-002` | A gate run on a pilot target with LAYUP removed passes (`F-0003#65`), and a fresh session of a different harness agent, with no LAYUP running, continues one open task of the target from the target's records alone and lands it under the target's gate (`F-0001#2`). |
 | `NFR-003` | The count of configuration values with no citation in a target is zero, and an audit of every value finds that its cited source supports it; a value whose citation does not support it is a defect (`F-0003#63`, `F-0001#4`). |
 | `NFR-004` | `layup gate` and `layup setup verify` report an inactive check as not passed, and a fixture proves that a check that does not run cannot produce `pass`. |
-| `NFR-005` | Each gate verdict is reproducible: two runs on the same input give the same output; the engine makes no model call, local or remote (ADR-0011 decision 8): its binary links no model runtime, a run starts no process whose executable is a model runtime, and a run opens no connection to a model service. |
+| `NFR-005` | Each gate verdict is reproducible: two runs on the same input give the same output. The engine checks start no model process and open no connection to a model service; the `layup` process opens a connection to a model service only from the smart-if client, and each such call writes one row to `decisions.tsv`; a call with no row, or at a point that is not named, fails the criterion (ADR-0015). Role sessions are harness processes and are not counted. |
 | `NFR-006` | `docs/setup/armature.pin` names the commit and the tree, and check `pin` passes. |
 | `NFR-007` | `go build ./...` succeeds with no module outside the standard library (`go list -deps ./...` names none), and Git is called only as the `git` program. |
 
@@ -171,7 +171,8 @@ statements with different stacks.
 ## 9. Rollout & phases
 
 The phase tags of §6 and §7. Each phase ships as tasks under the gate of this
-repository; phase 1 is the core engine that ADR-0011 structures.
+repository; phase 1 is the core engine that ADR-0011 structures, which
+[`architecture.md`](../architecture.md) extends into the orchestrator `layup run`.
 
 | Phase | Name | Ships |
 | ----- | ---- | ----- |
@@ -186,19 +187,19 @@ The four `Won't` rows (REQ-015 to REQ-018) hold in every phase.
 
 - **A value from a guess.** Every setup value needs evidence (NFR-003); the pre-registered rule is [`guardrails.md` §1.1, Inv-4](../guardrails.md#11-layup-system-invariants-psb-6).
 - **A check that is not active counted as passed.** NFR-004; [`guardrails.md` §1.1, Inv-5](../guardrails.md#11-layup-system-invariants-psb-6), and the pitfall of a check restored from `main` that runs a new rule only after the merge.
-- **The agents change the rules they are checked by.** REQ-003 has no control today (Operator decision O-9, ADR-0011); [`guardrails.md` §1.1, Inv-3](../guardrails.md#11-layup-system-invariants-psb-6) names the missing control.
+- **The agents change the rules they are checked by.** REQ-003's control is designed ([ADR-0017](../adr/0017-prevent-rule-changes-by-agents.md): no credential in a session, a check before the push, rulesets, rule batches) and not built; [`guardrails.md` §1.1, Inv-3](../guardrails.md#11-layup-system-invariants-psb-6) holds the invariant.
 - **Process about process.** A rule for the builders can crowd out the product; [`guardrails.md` §2](../guardrails.md#2-known-pitfalls--the-traps-specific-to-this-domain) records the lesson, and ADR-0012 bounds the work until the first pilot.
 - **Two checks that drift.** The setup check is `sh` and the engine is Go (ADR-0011); the engine's setup verification runs the same fixtures as `docs/setup/tests/run.sh`, the defence that [ADR-0011](../adr/0011-structure-the-core-engine-as-a-go-cli-over-repository-files.md)'s Consequences name; [`guardrails.md` §2](../guardrails.md#2-known-pitfalls--the-traps-specific-to-this-domain) holds the related reference-sweep pitfalls.
 
 ## 11. Open questions & assumptions
 
-For the architecture task (`T-7qvc`, #42 child 4), which records each answer in an ADR after a panel where ADR-0006 requires one:
+The architecture task (`T-hbw8`, #72) answered questions 1 to 5 in ADR-0013 to ADR-0025; question 6 stays open:
 
-1. **The runner for stack gates.** `layup gate` runs outside the target (ADR-0011 decision 4); which runner reports on a target's pull requests, and how a verdict reaches the forge, is open (ADR-0011, Consequences).
-2. **The rule-protection control** (REQ-003): a code-owners rule on the rule paths with an approval from an account the agents do not use, or another mechanism; Operator decision O-9 deferred it.
-3. **The list of roles.** The PSB does not set it (`F-0001#21`); the handoff schema (REQ-005) needs one.
-4. **The escalation rule's form** (REQ-008): the machine-applicable rule that selects a business-forking decision (`F-0001#26`).
-5. **The stall procedure's limits** (REQ-010): the retry count and the time after which a step "repeats without progress", and who the fresh-context examiner is.
+1. **The runner for stack gates.** Answered: the target's own native gates in its own CI, and `layup gate` runs the same commands from outside ([ADR-0016](../adr/0016-put-the-native-stack-gates-in-the-target.md)).
+2. **The rule-protection control** (REQ-003). Answered: [ADR-0017](../adr/0017-prevent-rule-changes-by-agents.md).
+3. **The list of roles.** Answered: the seven PSB §2 roles by default, a parameter per target (O-81, [ADR-0020](../adr/0020-route-role-sessions-over-registered-harnesses.md)).
+4. **The escalation rule's form** (REQ-008). Answered: [ADR-0022](../adr/0022-screen-for-business-forking-decisions-before-the-work.md).
+5. **The stall procedure's limits** (REQ-010). Answered: `stall.T`, `stall.N` (O-82) and the other limits of [ADR-0023](../adr/0023-stop-a-stall-at-a-limit-and-diagnose-it-with-a-fresh-context.md).
 6. **The pilot's problem statements** (REQ-014): which two, with which stacks; the idea owner selects them (Decision Point 1).
 
 Assumptions: the PSB, Revision 6, is approved and immutable (`F-0001`); the
@@ -214,28 +215,28 @@ fills the Test column.
 | REQ     | Facts                          | Guardrail   | ADR      | Task     | Test |
 | ------- | ------------------------------ | ----------- | -------- | -------- | ---- |
 | REQ-001 | F-0003#41, F-0003#14, F-0003#15, F-0001#11 | — | ADR-0011 | T-dq05, T-zmj6 | TestGoldenRealPSB; check facts (F-0004) |
-| REQ-002 | F-0003#42, F-0003#15, F-0003#37, F-0001#4, F-0001#8 | §1.1 Inv-4 | ADR-0011 | — | — |
-| REQ-003 | F-0003#43, F-0001#3, F-0003#64 | §1.1 Inv-3 | ADR-0011 | — | — |
-| REQ-004 | F-0003#44, F-0003#11, F-0003#12, F-0003#13, F-0001#7 | §1.1 Inv-7 | ADR-0011 | — | — |
-| REQ-005 | F-0003#45, F-0003#59            | —           | —        | — | — |
-| REQ-006 | F-0003#46, F-0003#8, F-0003#9, F-0003#10 | — | —      | — | — |
-| REQ-007 | F-0003#47, F-0003#58, F-0001#6  | §1.1 Inv-6  | ADR-0011 | — | — |
-| REQ-008 | F-0003#48, F-0003#57, F-0001#12, F-0001#13, F-0001#24, F-0001#28 | — | — | — | — |
-| REQ-009 | F-0003#49, F-0003#61, F-0001#37 | —           | ADR-0011 | — | — |
-| REQ-010 | F-0003#49, F-0003#17, F-0003#18, F-0003#19, F-0001#14 | — | — | — | — |
-| REQ-011 | F-0003#50, F-0003#20, F-0003#21, F-0003#22, F-0003#60, F-0001#38 | — | ADR-0007, ADR-0011 | — | — |
-| REQ-012 | F-0003#51, F-0003#23, F-0003#24, F-0003#25, F-0003#62, F-0001#39 | — | ADR-0002 | T-wjq4 | prd-lint (this document) |
-| REQ-013 | F-0003#52, F-0003#26, F-0003#27, F-0003#28, F-0003#66, F-0001#9 | §1.1 Inv-9 | ADR-0005, ADR-0012 | — | — |
+| REQ-002 | F-0003#42, F-0003#15, F-0003#37, F-0001#4, F-0001#8 | §1.1 Inv-4 | ADR-0011, ADR-0016 | — | — |
+| REQ-003 | F-0003#43, F-0001#3, F-0003#64 | §1.1 Inv-3 | ADR-0017 | — | — |
+| REQ-004 | F-0003#44, F-0003#11, F-0003#12, F-0003#13, F-0001#7 | §1.1 Inv-7 | ADR-0011, ADR-0016 | — | — |
+| REQ-005 | F-0003#45, F-0003#59            | —           | ADR-0019 | — | — |
+| REQ-006 | F-0003#46, F-0003#8, F-0003#9, F-0003#10 | — | ADR-0019, ADR-0020, ADR-0021 | — | — |
+| REQ-007 | F-0003#47, F-0003#58, F-0001#6  | §1.1 Inv-6  | ADR-0016, ADR-0019 | — | — |
+| REQ-008 | F-0003#48, F-0003#57, F-0001#12, F-0001#13, F-0001#24, F-0001#28 | — | ADR-0021, ADR-0022 | — | — |
+| REQ-009 | F-0003#49, F-0003#61, F-0001#37 | —           | ADR-0023 | — | — |
+| REQ-010 | F-0003#49, F-0003#17, F-0003#18, F-0003#19, F-0001#14 | — | ADR-0023 | — | — |
+| REQ-011 | F-0003#50, F-0003#20, F-0003#21, F-0003#22, F-0003#60, F-0001#38 | — | ADR-0007, ADR-0024 | — | — |
+| REQ-012 | F-0003#51, F-0003#23, F-0003#24, F-0003#25, F-0003#62, F-0001#39 | — | ADR-0002, ADR-0018 | T-wjq4 | prd-lint (this document) |
+| REQ-013 | F-0003#52, F-0003#26, F-0003#27, F-0003#28, F-0003#66, F-0001#9 | §1.1 Inv-9 | ADR-0005, ADR-0012, ADR-0015, ADR-0020 | — | — |
 | REQ-014 | F-0003#67, F-0003#42            | —           | —        | — | — |
 | REQ-015 | F-0003#53                       | —           | —        | — | — |
 | REQ-016 | F-0003#54, F-0001#10            | —           | —        | — | — |
 | REQ-017 | F-0003#55                       | —           | —        | — | — |
 | REQ-018 | F-0003#56, F-0001#7             | §1.1 Inv-7  | ADR-0011 | — | — |
-| NFR-001 | F-0001#1                        | §1.1 Inv-1  | ADR-0011 | — | — |
-| NFR-002 | F-0001#2, F-0003#65             | §1.1 Inv-2  | ADR-0011 | — | — |
+| NFR-001 | F-0001#1                        | §1.1 Inv-1  | ADR-0011, ADR-0014 | — | — |
+| NFR-002 | F-0001#2, F-0003#65             | §1.1 Inv-2  | ADR-0013, ADR-0016 | — | — |
 | NFR-003 | F-0001#4, F-0003#63             | §1.1 Inv-4  | —        | T-nfh8 | check markers |
 | NFR-004 | F-0001#5                        | §1.1 Inv-5  | ADR-0011 | — | — |
-| NFR-005 | F-0001#6                        | §1.1 Inv-6  | ADR-0011 | — | — |
+| NFR-005 | F-0001#6                        | §1.1 Inv-6  | ADR-0015 | — | — |
 | NFR-006 | F-0001#8                        | §1.1 Inv-8  | ADR-0009 | T-r7zg | check pin |
 | NFR-007 | F-0004#1                        | —           | ADR-0010 | T-mtb9 | CI job lint (gofmt, go vet) |
 
@@ -244,3 +245,4 @@ fills the Test column.
 | Date       | Change                     | Requirement(s) affected |
 | ---------- | -------------------------- | ----------------------- |
 | 2026-09-25 | First draft: the full scope of the PSB with four phases (task `T-wjq4`, Operator decision O-15) | REQ-001 to REQ-018, NFR-001 to NFR-007 |
+| 2026-09-29 | The architecture (task `T-hbw8`, #72): REQ-001 names the review of meaning; REQ-003 names ADR-0017; NFR-005 and its criterion follow ADR-0015; §9, §10, §11 and §12 name ADR-0013 to ADR-0025 | REQ-001, REQ-003, NFR-005; the ADR column |

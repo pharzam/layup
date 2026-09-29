@@ -57,7 +57,7 @@ Whether a named gate really runs the path is a review judgement.
   `working-directory:` is not seen). Neither covers the workflow file itself, which a branch can
   edit, nor the Go jobs `lint`, `tests` and `security`, which run the pull
   request's own Go code and tests; so this invariant has no check yet (O-9,
-  ADR-0011). Check: no check yet
+  ADR-0011; for a target, ADR-0017 designs a control, which is not built). Check: no check yet
 - **Inv-4** — No configuration value without evidence (`F-0001#4`). Trap: an
   Armature example value accepted as a project value. Check: no check yet
 - **Inv-5** — A check that is not active does not count as passed (`F-0001#5`).

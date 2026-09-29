@@ -83,7 +83,10 @@ the setup record, and the first code: the `layup` command
 ([ADR-0011](adr/0011-structure-the-core-engine-as-a-go-cli-over-repository-files.md)).
 So far it prints its version, and `layup psb check FILE` writes the gap questions
 of a problem statement as one batch (five deterministic rules, G1 to G5, in
-`internal/psb`).
+`internal/psb`). The [architecture](architecture.md) describes what it becomes:
+`layup run`, the orchestrator of a target's whole lifecycle, from outside the
+target; each part is followed through one concrete case in
+[`walkthroughs/`](walkthroughs/README.md).
 
 ## 4. Why it is hard
 
