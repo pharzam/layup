@@ -66,3 +66,15 @@ q-9 a , q-10 a , q-11 a, q-12 , i ment basecamp shapup method may be help us, JU
 | O-89 | Q-11, the budget growth of the evaluation | Option a: the growth `22e65b3..946edfc` (22 files, +2,897) is approved as it stands. The Budget maximum of plan v2 (7,200 lines over 64 files) counts from `946edfc`. |
 | O-90 | Q-12, "Shape Up" | "Shape Up" names Basecamp's Shape Up method (Ryan Singer, the book at `https://basecamp.com/shapeup`), not a tool. "JUST check it": evaluate the method, as one more candidate, for what it can give LAYUP; it is not a decision to adopt it. The result is `evaluation/19-shape-up.md`. |
 | O-91 | Q-13, `~/.local/bin/agy` | The Operator reinstalls `agy` personally. The author runs no `agy` session in this task until the Operator says on #72 that it is reinstalled. |
+
+## O-92: plan v2 confirmed; a fresh session; the agent badge from now
+
+The Operator's answer to "Plan v2 as amended — for the Operator's confirmation" on #72 (comment 5872132790), given in the author's Claude Code session on 2026-09-29 and copied to #72 word for word. Word for word:
+
+--- begin
+confirmed, Just I want to start it in fresh session and apply the Hanness-agent badge from NOW
+--- end
+
+| No. | Decision | Reading |
+| --- | -------- | ------- |
+| O-92 | Plan v2 confirmed, with two conditions | (1) Plan v2 as amended is confirmed; the rewrite starts at step 0. (2) The rewrite starts in a fresh session, not in the session that wrote the plan. (3) "The harness-agent badge" is the marker of O-77: from now, every GitHub write of an agent session (issue comments, pull requests, pushes) goes through the LAYUP GitHub App's user access token, so that GitHub shows the App's badge and the API field `performed_via_github_app` names the App. The App does not exist yet; the Operator creates and installs it. Until the author has its token, the author writes nothing more to GitHub except the record of this decision and the setup request; the fresh session starts only with the token. The O-77 condition stays: while an agent session can also reach the Operator's own `gh` login, the separation is by convention only, and each record says so. |
