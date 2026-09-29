@@ -154,6 +154,7 @@ record by number here, and let the index table below do the linking.
 | [0015](0015-keep-model-calls-out-of-the-engine-checks.md) | Keep model calls out of the engine checks | Proposed |
 | [0016](0016-put-the-native-stack-gates-in-the-target.md) | Put the native stack gates in the target | Proposed |
 | [0017](0017-prevent-rule-changes-by-agents.md) | Prevent rule changes by agents | Proposed |
+| [0018](0018-derive-the-specification-from-numbered-source-lines.md) | Derive the specification from numbered source lines | Proposed |
 
 <!-- Add one row per ADR as you write them. Keep the newest at the bottom. -->
 

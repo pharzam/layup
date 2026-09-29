@@ -301,7 +301,7 @@ and record the intake in it; they apply the forge settings later
    may not exist, a hard decision to settle before the work), and the question.
    Code checks each quote against the file.
 3. The specification sessions of §7 add the needs that the requirement draft
-   leaves open.
+   leaves open (§7 steps 1 to 4).
 4. The Operator's questions of setup steps S01 and S10 of LAYUP's
    `setup/steps.tsv` (the stack, and each marker of the pinned baseline; the
    name and the visibility are already fixed) come from LAYUP's steps and the
@@ -499,6 +499,54 @@ stay (Invariant 2).
 on the host can reach the App's key (L-A1). Prevention holds against every
 credential that a role session holds.
 
+## 7. The specification
+
+[ADR-0018](adr/0018-derive-the-specification-from-numbered-source-lines.md)
+decides this section. It serves `F-0003#51` and Problem 6. A problem statement
+is prose, so every step that reads its meaning is a session or a human; code
+checks what can be checked byte for byte.
+
+**During Intake, before the batch** (§5, gap check step 3):
+
+1. **Numbering** (a session). It splits the problem statement into facts. A fact
+   is a byte-exact substring; the session gives each one an ID (`F-0001#n` in the
+   target) and a class: `need`, `constraint`, `measure` or `context`. Text that
+   is no fact (a heading, a rule line) goes to a "not a fact" list with a reason.
+2. **The line check** (code). Each fact is a substring of the file, no two facts
+   overlap, and every non-blank line of the file lies in a fact or in the "not a
+   fact" list. So no text is dropped without a record (Fable-M21, Author-5).
+3. **The draft** (a session). One or more requirements for each `need` fact: an
+   ID, a statement, `covers` (the fact IDs), and an acceptance criterion. It sets
+   no priority.
+4. **The completeness review** (a session on another harness than steps 1 and
+   3). It reads the problem statement and the draft, and lists each need that no
+   requirement covers, each requirement that no need supports, and each fact
+   whose class it doubts (Sol-18). Each item becomes a question of the one Intake
+   batch.
+
+**After the answers:**
+
+5. The answers become a raw fact of the target (§5), and a requirement may cover
+   an answer's fact ID as well as a problem statement's (Fable-N8).
+6. A session revises the draft with the answers and writes the specification: the
+   target's PRD and, for each requirement, a technical specification section that
+   names it.
+7. **The first bet** (§8) asks the idea owner to confirm the list of needs and to
+   set the priority of each requirement (`Must`, `Should`, `Could`, `Won't`).
+   Priority is intent (`F-0003#54`), so no code and no session sets it (Sol-19,
+   Author-18). Inside a requirement, a session may mark a task nice-to-have; a
+   cut that touches an acceptance criterion is business-forking (§10).
+
+**`layup spec check`** (code, no model call) fails when: a `covers` ID does not
+resolve to a fact of the problem statement or of the answers; a fact is not a
+byte-exact substring of its file; a `need` fact has no requirement and the idea
+owner did not mark it out of scope; a requirement has no acceptance criterion; a
+requirement has no priority after the first bet; a delivered requirement has no
+non-empty specification section that names it (Sol-20); a task names no
+requirement. It proves the links. It does not prove that the meaning agrees: the
+counterpart verification of each change judges that (§8), and the completeness
+review of step 4 is the check against a missed need.
+
 ## 14. Coverage
 
 Each row points to a walkthrough, or names the check or the known limit that
@@ -523,6 +571,8 @@ rows. The evidence for each row is [`runs/T-hbw8/rewrite-checklist.md`](../runs/
 | S4 Stack-Dependent Gates (`#44`), `REQ-004`, `NFR-004`, Invariants 5 and 7 | [W-04](walkthroughs/W-04-stack-dependent-gates.md) | 6 | 0016 |
 | #69 A2 (the target cannot pass its gates without LAYUP) | W-04 step 8; W-12 step 15 | 6 | 0016 |
 | #69 B9 (the source of the stack gates) | W-02 step 4 | 6 | 0016 |
+| S11 Specification Synthesis (`F-0003#51`), Specification Traceability (`#62`), `REQ-012`, table C 2.1 | [W-11](walkthroughs/W-11-specification-synthesis.md) | 7 | 0018 |
+| #69 B4 (specification synthesis has no component) | W-11 | 7 | 0018 |
 | ADR-0012 part 6 (set up a target, run its gate from outside) | W-02; W-04 steps 5, 9 | 5, 6 | 0016 |
 
 ## 15. Known limits
@@ -563,3 +613,7 @@ Each limit is a finding that the design does not close, recorded here (O-66).
   head, so a pull request can weaken a gate that it is checked by; review is then
   the only guard (FT4). An organisation ruleset that requires a workflow from a
   protected repository would close this, and needs an organisation.
+- **L-C1. A fact classed wrongly.** The numbering session can class a need as
+  context. The completeness review on another harness and the idea owner's
+  confirmation at the first bet are the two checks; a need that both miss stays
+  unplanned until the idea owner's acceptance (§8) or the audit (§12) finds it.
