@@ -30,30 +30,41 @@ to projects in Git, and no public reward from delivery records
 
 We will learn routing from the records at each retrospective:
 
-1. **The reward** is computed in code by `layup learn`, per route, from terms whose
-   weights are parameters: first-review acceptance and first-round verification
-   add; material findings, stalls, unplanned human input, confirmed reversals and
-   cost subtract, each against the milestone's median. A missing input leaves its
-   term out; the gates' first-attempt pass rate is not a term.
-2. **The update** moves each route's weight by a bounded step, only with enough
-   tasks behind it; by default it is a proposal that the retrospective's approver
-   adopts, and a parameter can let it apply within its bounds.
-3. **The weight ranks** the admitted pairs in routing; the smart-if's fit point is
-   asked only on a tie or with no weight.
-4. **Lessons** come from a retrospective session with their evidence, scoped to
-   the target or to LAYUP; the approver keeps or drops each in the one
-   retrospective comment, together with the rule batch (O-69).
-5. **A LAYUP lesson** becomes an issue on LAYUP's repository; a LAYUP task decides
-   it under LAYUP's gate; a new target starts from the defaults of the LAYUP
-   version that its Intake records.
+1. **The order:** the audit and the idea owner's confirmations, then `layup
+   learn`, then the lessons, then one brief to the Operator; `learn.trigger` (a
+   parameter) says at which retrospectives `layup learn` runs, and each run reads
+   only records no earlier run read.
+2. **The reward** is computed in code per implementing route: per task, first-
+   review acceptance and first-round verification add; material findings, stalls,
+   unplanned human input, confirmed reversals and cost subtract; money and
+   wall-clock each against their own median; the mean is taken within one role and
+   tier. The term weights are parameters with the Operator's comment as evidence.
+   A route with any unknown money gets no upward step; the gates' first-attempt
+   pass rate is not a term.
+3. **The update** moves each route's weight by a bounded step, only with enough
+   tasks behind it; by default it is a proposal that the Operator adopts, and can
+   later revert; a parameter can let it apply within its bounds. A share
+   `learn.explore` of each role's tasks goes to the next admitted pair.
+4. **The weight ranks** the admitted pairs in routing; the smart-if's fit point is
+   asked only on a tie.
+5. **Lessons** come from a retrospective session on a harness outside the
+   milestone's authors, with their evidence, scoped to the target or to LAYUP. Each
+   proposed rule change becomes a verified rule batch task before the brief; a
+   batch that changes a gate kind must fail on each known-bad patch before it
+   merges.
+6. **A LAYUP lesson** becomes an issue on LAYUP's repository with no content of
+   the target; a LAYUP task decides it under LAYUP's gate; a target starts from the
+   defaults of the LAYUP version that its Intake records.
 
-We reject: a change of model weights; exploration trials before a baseline
-exists (they spend budget on weaker routes); the smart-if proposing weights; a
-lesson that changes another project without a reviewed LAYUP release.
+We reject: a change of model weights; the smart-if proposing weights; a lesson
+that changes another project without a reviewed LAYUP release; a reward that
+rewards a route for an unknown cost.
 
 ## Consequences
 
 - Routing changes only at a retrospective, and only within the bounds.
+- With `learn.explore` at zero, the weights stop moving once one route leads
+  (known limit L-H1); only implementing routes learn (L-H2).
 - A route with little evidence keeps its weight; a new target learns from LAYUP's
   priors, not from another target's records.
 - The next project gets a lesson only as fast as LAYUP's own gate lands it.

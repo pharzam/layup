@@ -54,8 +54,9 @@ from a stack catalog that LAYUP keeps:
    only when every kind passed or is `clear`; `not-active` is never a pass.
 4. **Detection.** The setup verification runs each active kind on the clean tree
    (it must pass) and on its known-bad fixture (it must fail); the activation
-   batch carries one known-bad patch per kind it activates, kept on the records
-   branch, and each must fail. A pending kind's fixture is not run, and never
+   batch, and every later rule batch that changes a gate kind, carries one
+   known-bad patch per kind it touches, kept on the records branch, and each must
+   fail before the batch merges. A pending kind's fixture is not run, and never
    counts as a detection.
 5. **No LAYUP check in the target.** LAYUP's `setup-check.sh` and its job stay
    out of the target; `layup setup verify` does those checks from outside.

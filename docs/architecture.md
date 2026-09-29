@@ -280,7 +280,7 @@ and record the intake in it; they apply the forge settings later
    root tree equals the pinned tree, as step S03 asks. The command pushes from a
    plain clone with no hooks installed.
 3. `layup run` reads back the repository's default branch, its root tree and its
-   visibility and plan, and stops when one differs, or when the plan does not
+      visibility and plan, records the LAYUP version, and stops when one differs, or when the plan does not
    enforce rulesets or offer draft pull requests on it (a private repository on
    GitHub Free has neither, and on GitHub Pro no drafts: the Operator makes it
    public or moves it to a plan that has both, K15). It then pushes the records branch (an orphan, §3)
@@ -433,7 +433,11 @@ rule files are the approved ones. The LAYUP host needs each stack's toolchain
 of the pull request's head; FT4 then rests on the rulesets and on review, not on
 LAYUP.
 
-**Activation.** At the first bet (§8), an architect session writes the
+**Activation.** Each rule batch that adds or changes a gate kind carries one
+known-bad patch per kind it touches; after its approval, `layup gate` runs the
+batch's own gate files on its head (which must pass) and on the head with each
+patch (each must fail), and a patch that passes refuses the merge (§13). At the
+first bet (§8), an architect session writes the
 boundary configuration, the layout test, the contract tests, the manifest with
 those kinds `active` (in the batch head itself), and, for each kind it
 activates, one known-bad patch. The patches go to the records branch as
@@ -766,6 +770,7 @@ table:
 | Implement; close-out | Software Developer | by the task's class |
 | Plan review; verification | QA Engineer, on a harness outside the authors | reasoning |
 | Answer to a question | the owner of its kind | reasoning |
+| Retrospective lessons | Systems Architect, on a harness outside the milestone's authors where one exists | reasoning |
 
 **The owner map** (Problem 1, Sol-32). Default: domain or business → Domain
 Expert; architecture boundary → Systems Architect; interface contract → Software
@@ -969,7 +974,7 @@ a PSB rule (O-84).
 | harness paid work without tokens or a spend cap | allowed, with a wall-clock limit (§12) | O-80 |
 | `stall.T`, `stall.N` | 10 minutes (a maximum), 1 | O-82 |
 | `stall.attempts`, `ci.T`, `panel.K` | set at Intake with evidence | O-82, Invariant 4 |
-| the reward's term weights; `learn.step`, `learn.min_weight`, `learn.max_weight`, `learn.min`; the learning authority | set at Intake with evidence; the authority `propose` | O-83, Invariant 4 |
+| the reward's term weights; `learn.step`, `learn.min_weight`, `learn.max_weight`, `learn.min`, `learn.explore`; `learn.trigger`; the learning authority | set at Intake, the evidence is the Operator's comment; `learn.trigger` each end-of-milestone retrospective; the authority `propose` | O-83, Invariant 4 |
 | allowed dependencies | set by the idea owner at Intake or by a decision | `F-0001#13` |
 | `lease.H`; the brief's line limit | set at Intake with evidence | Invariant 4 |
 | `harness.<id>.cap`, `harness.<id>.wall`; `audit.n` | set at Intake; the evidence is the comment that set it (the harness's documentation shows only that a cap exists) | Invariant 4 |
@@ -1213,56 +1218,79 @@ decides this section. The learning loop changes LAYUP's routing and defaults fro
 the records; it never changes a model's weights (PSB §6 Out of Scope, `REQ-015`).
 
 **When.** After the Accept phase of each milestone, and early when a stall's
-diagnosis names a gate (§11). Each retrospective is a planned approval point that
-Intake lists, with its approver (the Operator by default).
+diagnosis names a gate (§11). Each retrospective is a planned point that Intake
+lists, with two approvers: the idea owner confirms the audit's positives, and the
+Operator (by default) approves the batch. An early retrospective carries only a
+rule batch; `layup learn` runs only as `learn.trigger` says (a parameter, O-83:
+each end-of-milestone retrospective by default, or every N milestones, or never),
+and each run reads only records that no earlier run read.
 
-**The reward** (vision 3.3, O-83). `layup learn`, a pure command (§2), reads the
-milestone's records and computes, per route (a role, a tier, a harness and a
-model), a reward from terms whose weights are parameters: plus a requirement
-accepted at its first review, plus a verification that passed in its first round;
-minus each material finding, each stall, each unplanned human input, each reversal
-that the audit confirmed (§12), and the cost per task (money, or wall-clock where
-the money is unknown), each against the milestone's median. The human decisions
-(acceptances, escalation and stall answers, audit confirmations) are the human
-feedback of vision 3.3. A term whose input is missing (incomplete telemetry, an
-unknown cost) is left out for that route, never counted as zero. The gates'
-first-attempt pass rate is not a term: the PSB keeps it for monitoring only, so
-that no one weakens a rule to raise it (`F-0003#58`, Author-12). A route with
-fewer than `learn.min` tasks in the records gets no change.
+**The order.** First the audit of §12 and the idea owner's confirmations; then
+`layup learn`; then the lessons; then one brief to the Operator.
+
+**The reward** (vision 3.3, O-83). `layup learn`, a pure command (§2), computes a
+reward per **implementing route** (the role, tier, harness and model of a task's
+developer sessions); the terms of a task are charged to its implementing route.
+Per task: plus when each requirement it served was accepted at its first review;
+plus when its verification passed in the first round; minus its material
+findings, its stalls, its unplanned human inputs, and each reversal of its answers
+that an audit confirmed (charged at the retrospective where it is confirmed); minus
+its cost. The weights of the terms are parameters, whose evidence is the Operator's
+comment (no fact supports a reward weight). A route's reward is the mean of its
+tasks' values, compared with the mean over the routes of the same role and tier.
+Cost is compared by unit: money against the median of the tasks with known money,
+wall-clock against the median wall-clock. A route with any task of unknown money
+gets no upward step (FT2). The gates' first-attempt pass rate is not a term: the
+PSB keeps it for monitoring only (`F-0003#58`, Author-12). The routes of the other
+roles (plan, review, verification) get no update (known limit L-H2). A route with
+fewer than `learn.min` tasks since its last update gets no change.
 
 **The update.** Code proposes, per route, a new weight: the old weight plus
 `learn.step` times the route's reward minus the mean, kept inside
-`[learn.min_weight, learn.max_weight]` (the evaluated pattern of bounded offsets
-and of weights that a human adopts, `selection-v2.md` §1.4). The learning
-authority is a parameter (O-83): `propose` (the default: the approver adopts the
-proposal at the retrospective) or `apply` (applied within the bounds and recorded).
-The weight ranks the admitted pairs in routing (§9), so learning acts on routing
-at every smart-if authority level; the smart-if's fit point is asked only on a tie
-or with no weight (Fable-M17).
+`[learn.min_weight, learn.max_weight]`. The first weight of a route is LAYUP's
+prior for it, or none; among the admitted pairs, a pair with a weight ranks before
+one without, which keeps the table's order. The authority is a parameter (O-83):
+`propose` (the default: the Operator adopts the proposal at the retrospective, and
+can revert to the previous weights at a later one) or `apply` (applied within the
+bounds and recorded). The weight ranks the admitted pairs in routing (§9), so
+learning acts at every smart-if level; the fit point is asked only on a tie
+(Fable-M17). **Exploration** (vision 3.3): a share `learn.explore` of each role's
+tasks (a parameter set with evidence) goes to the next admitted pair in the
+table's order, so that more than one route keeps evidence; with a share of zero,
+the weights stop moving once one route leads (known limit L-H1).
 
-**The lessons.** A retrospective session reads the records of the milestone (the
-stalls and their diagnoses, the findings, the escalations, the audit) and writes
-each lesson with the records it rests on and its scope: `target` (a new pitfall of
-the target's `docs/guardrails.md` §2, or a rule change) or `layup` (a default, a
-routing prior, a catalog entry, a prompt of the step table).
+**The lessons.** A retrospective session (the step table's row: Systems Architect,
+reasoning tier, on a harness outside the milestone's authors where one exists, §9)
+reads the milestone's stalls, diagnoses, findings, escalations and audit, and
+writes each lesson with the records it rests on and its scope: `target` (a new
+pitfall of the target's `docs/guardrails.md` §2, or a rule change) or `layup` (a
+default, a routing prior, a catalog entry, a prompt of the step table).
 
-**The batch.** `layup run` builds one retrospective brief: the reward table and
-the routing proposal; the rule batch of §6, with the rule changes that tasks
-proposed during the milestone (§6) and those that the lessons propose; and the
-lessons. The approver answers by one comment: adopt the routing proposal or not,
-approve the rule batch (by its head and hash) or not, and each lesson kept or
-dropped (O-69). `layup run` copies the comment, writes the routing register, and
-merges the approved batch (the approver merges one that changes
-`.github/workflows/`, O-93). A §2 pitfall is added lines, so it lands without a
-rule batch (§6).
+**The batch.** Each proposed rule change (from a lesson, or a change that §6
+refused in a task, marked with its source) becomes a rule batch task (§6, §8): its
+sessions write, review and verify it before the brief. `layup run` builds one
+brief for the Operator: the reward table and the routing proposal; each rule batch
+by its head and hash, with its source; and the lessons. The Operator answers by one
+comment: adopt the routing proposal or not, approve each batch or not, keep each
+lesson or not (O-69). `layup run` copies the comment and writes the routing
+register. A batch that changes a gate kind is run, before its merge, on its head
+(which must pass) and on each known-bad patch of that kind (each must fail),
+with the batch's own gate files (§6); a patch that passes refuses the merge.
+`layup run` merges an approved batch; the Operator pushes and merges one that
+changes `.github/workflows/` (O-93). A §2 pitfall is added lines, so it lands as a
+normal task.
 
 **The next project** (PSB §5, Sol-25). For each kept `layup` lesson, `layup run`
-opens an issue on LAYUP's own repository with the lesson and the links to its
-records. A LAYUP task decides it under LAYUP's gate, and a change lands in LAYUP's
-defaults: the routing priors, a parameter default, a catalog entry or a prompt.
-A new target starts from the defaults of the LAYUP version that its Intake records;
-so a lesson reaches the next project through a reviewed LAYUP release, never
-directly.
+opens an issue on LAYUP's own repository with the lesson's text and links to its
+records, where the LAYUP App is installed there; otherwise it records the lesson
+for the Operator to file. The issue copies no content of the target. A LAYUP task
+decides it under LAYUP's gate, and a change lands in LAYUP's defaults: the routing
+priors, a parameter default, a catalog entry or a prompt. Intake records the LAYUP
+version (§5), and a target keeps it until a bet changes it; a new target starts
+from the defaults of its version. So a lesson reaches the next project through a
+reviewed LAYUP release, never directly. Reading of O-69 ("learned … as RL"):
+inside a target, lessons change rules only through a batch, and routing only
+through the reward.
 
 ## 14. Coverage
 
@@ -1386,3 +1414,9 @@ Each limit is a finding that the design does not close, recorded here (O-66).
 - **L-G3. A spend cap between steps.** A harness that checks its spend cap between
   steps (as Claude Code's is) can pass it inside one step, so the known total plus
   the caps is not a hard ceiling.
+- **L-H1. Learning without exploration.** With `learn.explore` at zero, every task
+  of a role goes to the leading route, so the other routes get no new evidence and
+  the weights stop moving; a route that became worse is not found by the reward.
+- **L-H2. Only implementing routes learn.** The routes of planning, review and
+  verification keep their weights; their quality reaches the reward only through
+  the implementing route's findings and acceptances.
