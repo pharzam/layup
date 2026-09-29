@@ -48,9 +48,15 @@ We will orchestrate each target from outside it with one foreground process,
    LAYUP's records, on the records branch
    ([ADR-0014](0014-keep-the-records-in-the-target-with-one-writer.md)). No file
    goes in that the target needs LAYUP to build, test or pass its gates.
-4. **The forge is GitHub for the pilot,** behind one package with a named set of
-   calls (issues and comments, pull requests, commit statuses, the effective
-   rules of a branch, the repository activity).
+4. **The forge is behind a forge interface** (O-102): the engine names
+   capabilities (issues and comments with their actor, draft pull requests,
+   commit statuses bound to a source, branch rules with bypass actors, the
+   repository activity, an App identity); GitHub is the default and first
+   adapter for the pilot; a capability that another forge lacks makes its checks
+   `not-active`.
+5. **One run per target** means one orchestrator process per target at a time
+   (O-103); the tasks inside it run in parallel as the plan allows, and the merges
+   are serial.
 
 This amends ADR-0011 decision 1 (`layup run` is a long-running foreground
 process; it is still not a daemon, and LAYUP still has no database and no network
@@ -68,5 +74,5 @@ code).
   moves, and the stall procedure finds it (a later slice of this task).
 - The target stays independent: it holds the setup output, its product and
   plain-text records.
-- A second forge needs a second implementation of the forge package; the pilot
-  does not have one (known limit L-A2 of [`architecture.md`](../architecture.md)).
+- A second forge needs its adapter; the pilot has only GitHub's (known limit L-A2
+  of [`architecture.md`](../architecture.md)).

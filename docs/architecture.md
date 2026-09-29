@@ -1,9 +1,12 @@
 # LAYUP architecture
 
 LAYUP takes a problem statement from an idea owner and drives the delivery of
-that product, from the first question to the last accepted requirement, in a
-new repository that it sets up with the pinned baseline
-([`setup/armature.pin`](setup/armature.pin)). It is a deterministic
+that product, from the first question to the last accepted requirement, in a new
+repository that it sets up with the discipline baseline, pinned at its latest
+state when the target is set up (§5; LAYUP's own pin is
+[`setup/armature.pin`](setup/armature.pin)). It carries the work from the accepted
+solution architecture, technical specifications and features all the way to
+working, verified software (O-101, O-104). It is a deterministic
 orchestrator of the whole lifecycle (O-67): code runs the flow, harness sessions
 do the work that needs judgement, a smart-if provider picks a branch at named
 points, and humans decide only at the Human Decision Points of the PSB.
@@ -13,7 +16,7 @@ This document is written in slices (plan v2 of task `T-hbw8`); sections 5 to
 protection, 7 the specification, 8 the phase loop, 9 squads and routing, 10
 decisions, 11 stalls, 12 cost and the measures, 13 learning. Each section
 names the ADR that decides it and the walkthrough that tests it. The walkthroughs
-are in [`walkthroughs/`](walkthroughs/README.md). The Operator's decisions O-66 to O-99 are quoted in [`runs/T-hbw8/operator-decisions.md`](../runs/T-hbw8/operator-decisions.md)
+are in [`walkthroughs/`](walkthroughs/README.md). The Operator's decisions O-66 to O-104 are quoted in [`runs/T-hbw8/operator-decisions.md`](../runs/T-hbw8/operator-decisions.md)
 and [`runs/T-hbw8/inputs-from-pr-69.md`](../runs/T-hbw8/inputs-from-pr-69.md).
 
 ## 1. LAYUP and a target
@@ -43,11 +46,18 @@ key, in a file only the Operator's user can read (mode 0600), from which
 `layup run` makes installation tokens. None of these is project state: each run rebuilds the clones from
 the forge and the records (Invariant 1).
 
-**The forge** is GitHub for the pilot. LAYUP talks to it through one package with
-a named set of calls: issues and comments, pull requests (and the GraphQL call
-that marks a draft ready), commit statuses, the effective rules of a branch, and
-the repository activity. A second forge is not
-designed (known limit L-A2).
+**The forge** is behind a forge interface (O-102): the core engine names
+capabilities, never one platform's API. The capabilities: issues and comments
+with the actor and whether an App made it; pull requests with a draft state;
+commit statuses bound to a source; branch rules with bypass actors, read back;
+the repository activity with its actors; an App identity for LAYUP with scoped
+permissions. GitHub is the default forge for the pilot and its only adapter so
+far (its calls: the REST API, and the GraphQL call that marks a draft ready); the
+GitHub terms in this document (rulesets, `performed_via_github_app`, the activity
+API) are that adapter's. An adapter for another forge (GitLab, Bitbucket, Forgejo)
+maps each capability; a capability that its forge lacks makes each check that
+needs it `not-active`, which never counts as a pass, and the setup names it as a
+known limit of that target. No other adapter is designed (known limit L-A2).
 
 ## 2. The components
 
@@ -62,7 +72,10 @@ designed (known limit L-A2).
 | The dead-man job | a scheduled workflow in the Operator's control repository, as the App `layup-watch` (section 11) | the forge | a notice on a target's control issue |
 | The target | the product repository | the forge | — |
 
-**One run per target.** `layup run` holds a lease row on the records branch: run
+**One run per target** (O-103) means one orchestrator process per target at a
+time: no two `layup run` instances drive the same target. Inside that run, the
+sessions of different tasks can run in parallel as the milestone plan's order
+allows (§8); only the merges are serial. `layup run` holds a lease row on the records branch: run
 ID, host, start time and a heartbeat counter that it increases every `lease.H`
 (a parameter, section 10). A second run watches the branch and times the lease
 by its own clock from the moment it last saw the counter change, so the two
@@ -280,8 +293,11 @@ and record the intake in it; they apply the forge settings later
    Intake answers: the cap of Intake and Shape (milestone 0, §12), `lease.H`, and
    each harness's cap and wall-clock limit, which the harness register gives as
    the Operator set them there.
-2. `layup run` copies the pinned baseline with `git clone` of the pinned commit
-   and removes `.git` (ADR-0011 decision 7; step S02 changes from `npx degit`).
+2. `layup run` resolves the latest commit of the baseline's default branch at
+   that moment (`git ls-remote`), clones that commit, removes `.git` (ADR-0011
+   decision 7; step S02 changes from `npx degit`), and records it as the target's
+   own pin: source, commit, tree and time, in the target's
+   `docs/setup/armature.pin` (O-101). LAYUP's own pin does not bind a target.
    The Operator pushes this unmodified copy as the root commit of the default
    branch, with the Operator's own login and one command that `layup run`
    prints: the copy holds CI files, and the App has no workflows permission
@@ -1399,7 +1415,7 @@ rows. The evidence for each row is [`runs/T-hbw8/rewrite-checklist.md`](../runs/
 | `NFR-007` (Go, standard library, `git`) | the check of its `PRD-0001` criterion: `go list -deps ./...` names no package outside the standard library and the `layup` module | 1 | 0013 |
 | #69 B1 (nothing starts the role agents) | W-12 steps 2, 8 | 2, 4 | 0013, 0015 |
 | #69 B6 (decisions on the forge) | W-12 step 6 | 3 | 0014 |
-| #69 forge question | known limit L-A2 | 1 | 0013 |
+| #69 forge question; O-102 | the forge interface of §1; known limit L-A2 | 1 | 0013 |
 | Table C, 3.4 (communication through issues) | W-12 step 6 | 3 | 0014 |
 | S1 Problem Statement Quality (`F-0003#41`), `REQ-001` | [W-01](walkthroughs/W-01-problem-statement-quality.md) | 5 | 0014, 0015 |
 | S2 Reproducible Discipline Setup (`#42`), `REQ-002`, `NFR-003`, `NFR-006`, Invariants 4 and 8 | [W-02](walkthroughs/W-02-reproducible-discipline-setup.md) | 5, 6 | 0016, 0017 |
@@ -1442,8 +1458,14 @@ Each limit is a finding that the design does not close, recorded here (O-66).
   Until sessions run in an isolated environment (a container or another
   operating-system user), the separation of O-77 is by convention for that case
   (K03, K04).
-- **L-A2. One forge.** GitHub is the only forge for the pilot (#69 forge
-  question).
+- **L-A2. One forge adapter.** The engine is forge-neutral (§1), but only the
+  GitHub adapter is designed; another forge needs its adapter, and each
+  capability that its forge lacks leaves its checks `not-active` (#69 forge
+  question, O-102).
+- **L-A6. A newer baseline.** A target pins the baseline's latest state (O-101);
+  LAYUP's setup steps and checks are written against the baseline's structure,
+  so a change there can break a step. `layup setup verify` then fails on that
+  step, and the setup stops until a LAYUP change follows the baseline.
 - **L-A3. One host during delivery.** `layup run` runs in the foreground on one
   host; while the host is down, nothing moves (section 11 says how the stall is
   found). A takeover on another host needs the App's private key on that host. A

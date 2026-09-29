@@ -145,3 +145,54 @@ Q-18 a
 | No. | Question | Reading |
 | --- | -------- | ------- |
 | O-100 | Q-18 a | One more whole-design round (a third), on the round-2 fixes of step 11 and their seams; then the approval brief, citing that round if it ends `nothing material`, or listing its open findings for the Operator's answer. |
+
+## O-101 to O-104: the Operator's review of sections 1 to 3
+
+The Operator's comment on #72 (pharzam, 2026-09-29T11:35:40Z, comment 5889438205, no App), word for word:
+
+--- begin
+I have reviewed the architecture up to [Section 3: Records and identities](https://github.com/pharzam/layup/blob/T-hbw8/docs/architecture.md#3-records-and-identities), and here is my feedback, clarifications, and questions:
+
+1. Pinned Baseline (setup/armature.pin)
+Regarding:
+
+sets up with the pinned baseline (setup/armature.pin). It is a deterministic orchestrator of the whole lifecycle (O-67)
+
+Keep in mind that whenever a target is created/scaffolded, it must pin the latest available state of Armature at the exact moment of scaffolding. The pin is established dynamically during target setup from Armature's latest state, not permanently locked to an outdated version carried over from earlier templates.
+
+2. Forge Independence
+Regarding:
+
+The runner: the LAYUP GitHub App and the LAYUP host
+
+GitHub is currently used strictly as the default forge for bootstrapping and the pilot. There must be zero hard architectural dependency on GitHub as a sole platform. The design should remain forge-agnostic so that other providers (GitLab, Bitbucket, Forgejo, etc.) can be supported down the road without rewriting the core engine.
+
+3. Clarification on "One run per target"
+Could you clarify what "One run per target" concretely means in practice?
+
+Does it mean that tasks/issues for a given target are executed strictly serially (one after another) rather than in parallel?
+
+Or does it mean that only a single LAYUP instance/process can run against a target at any given time (i.e., no horizontal scaling of multiple orchestrator instances against the same target)?
+
+Which interpretation is intended here?
+
+4. Definition of What LAYUP Does
+Regarding:
+
+What LAYUP does. layup run drives one target from outside it, from the problem statement to accepted requirements:
+
+I suggest expanding this to emphasize the end-to-end delivery of working software. How about adding a sentence along these lines:
+
+"From the accepted solution architecture, technical specifications, and features, all the way to working, verified software."
+
+I am continuing my review of the remaining sections and will follow up with any further notes.   
+--- end
+
+| No. | Point | Reading |
+| --- | ----- | ------- |
+| O-101 | 1, the pin | A target pins the baseline's latest state at the moment of its setup: `layup run` resolves the latest commit of the baseline's default branch then, and records it as the target's own pin. LAYUP's own pin (`docs/setup/armature.pin` of this repository) does not bind a target. Invariant 8 holds: the version is pinned and recorded, per target. |
+| O-102 | 2, forge independence | The engine has no hard dependency on GitHub: a forge interface names capabilities; GitHub is the default forge and the first adapter for the pilot; other forges get adapters later without a rewrite of the core. |
+| O-103 | 3, a question | Answered by the author on #72: "one run per target" means one orchestrator process per target at a time, not serial tasks. The architecture states it (§2, ADR-0013 d5). |
+| O-104 | 4, what LAYUP does | The architecture's first paragraph states the end-to-end delivery: from the accepted solution architecture, technical specifications and features to working, verified software. |
+
+The Operator continues the review of the remaining sections; the approval is still open.
