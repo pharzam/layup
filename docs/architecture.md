@@ -284,10 +284,9 @@ and record the intake in it; they apply the forge settings later
    GitHub Free has neither, and on GitHub Pro no drafts: the Operator makes it
    public or moves it to a plan that has both, K15). It then pushes the records branch (an orphan, §3)
    with its first commit: the problem statement and the vision brief byte for
-   byte, each with its SHA-256; `approvers.tsv` with the numeric IDs of the two
-   logins of step 1; and the lease row. From this commit on, only a comment by
+   byte, each with its SHA-256; `approvers.tsv` with the numeric IDs and roles of the two logins of step 1; and the lease row. From this commit on, only a comment by
    one of those IDs is an answer or a decision (§3); any other comment is
-   recorded as input. It opens the Intake issue.
+   recorded as input. It opens the Intake issue and the control issue (§10).
 
 **The gap check, in one batch** (Decision Points 1 and 2, `F-0001#10`, `#11`):
 
@@ -731,7 +730,8 @@ Format is the valid handoffs over all handoffs, from the records.
 
 **A question during the work** (Problem 1). A session that meets a question ends
 with status `needs_context` and the question: its text, its own label for the
-kind, and the records it concerns. `layup run` records it with its time, posts
+kind, its `needs_human` field, and the records it concerns. `layup run` records
+it with its time, posts
 it on the task's issue, and gets its kind and whether it needs a human from the
 smart-if (§10). A question that needs no human goes to a session of the owner role
 of its kind (§9), which answers with the records it cites. The answer passes the
@@ -838,7 +838,8 @@ and a state text that code builds from named records and checks against the
 provider's size limit (a state that does not fit is a failure); code keeps all
 arithmetic, dates and counts (the provider's documented weak points). The
 response carries each answer (a choice, a probability of yes, or a score), the
-provider, the model version, and the tokens and price that the provider reports.
+provider, the model version, and the tokens and price where the provider reports
+them, else `unknown`, never zero (FT2).
 
 **The named points** are a closed list; a call at any other point is a defect
 (Fable-M13):
@@ -846,7 +847,7 @@ provider, the model version, and the tokens and price that the provider reports.
 | Point | The question | The deterministic branch | A safer branch | Ground truth for calibration |
 | ----- | ------------ | ------------------------ | -------------- | ---------------------------- |
 | P1 escalation | four questions, one per PSB axis | the floor and the session's own `decision_needed` | escalate | the idea owner's confirmations; the Missed Escalations sample (§12) |
-| P2 question | the kind of a question (four kinds); whether it needs a human | the asker's label; "needs a human" = no | "needs a human" = yes | the owner session's disposition; the Reversal sample (§12) |
+| P2 question | the kind of a question (four kinds); whether it needs a human | the asker's label and its `needs_human` field | "needs a human" = yes | the owner session's disposition; the Reversal sample (§12) |
 | P3 stall action | retry, examiner, panel, or the Operator (§11) | the fixed ladder of §11 | the next rung up | the stall's outcome (§11) |
 | P4 fit | which admitted pair fits the task (§9) | the routing order | none | the verification's first-round verdict |
 | P5 over budget | continue inside the band (§12) | stop and escalate | stop | the idea owner's decisions on budget escalations |
@@ -898,14 +899,17 @@ Point 4, `F-0001#13`):
    intent, or that trades approved goals against each other (scope against date),
    stop with `decision_needed` and the options.
 2. **The floor** (code) reads fixed fields and proposed diffs, never prose: the
-   plan's fixed field `new dependencies` (name, licence, cost, and the
-   alternatives the plan considered); a diff that adds a dependency to the stack's
-   manifest (for Go, a `require` in `go.mod`), or touches a licence file, the
-   PRD's requirement rows, their priorities or criteria, or a path that the Intake
-   answers named as intent. A dependency whose licence is on the Intake's allowed
-   list and whose cost is zero is not a candidate. Exempt: a diff that equals
-   code's rendering of an approved bet or decision, and the Shape specification
-   that a bet approves. The floor runs on every plan and every handoff diff,
+   plan's fixed field `new dependencies` (each by its manifest identifier, with
+   its stated cost and the alternatives the plan considered); a diff that adds a
+   dependency to the stack's manifest (for Go, each `require` in `go.mod`,
+   indirect ones too), or touches a licence file, the PRD's requirement rows,
+   their priorities or criteria, or a path that the Intake answers named as
+   intent. Every new dependency is a candidate unless its identifier is on the
+   allowed-dependency list that the idea owner set (at Intake or in an earlier
+   decision); nothing that a session writes removes a candidate. For the brief,
+   code reads the licence from the module itself (the catalog names the tool).
+   Exempt: a diff that equals code's rendering of an approved bet or decision,
+   and a specification task of the Shape phase, which a bet approves. The floor runs on every plan and every handoff diff,
    whatever the frequency parameter says.
 3. **The four questions** (P1), on prose: each plan, each handoff and each answer
    to a question, as the frequency parameter (O-79) says. One literal question
@@ -915,7 +919,15 @@ Point 4, `F-0001#13`):
    Governed APA, `selection-v2.md` §1.1).
 
 **A question that needs a human.** When P2 decides "needs a human", or a session
-sends a question with that flag, the question becomes a candidate of this screen.
+sets the question's fixed field `needs_human` (§8), the question becomes a
+candidate of this screen. At a `delegate` P2 whose answer fails, the Operator
+classifies only the kind; a question that needs a human still goes to this
+screen.
+
+**One row per screen.** Each run of the screen (a plan, a handoff, an answer)
+writes one row to `screens.tsv`, selected or not: the input, the floor result,
+whether P1 and P2 were active, and their answers. The Missed Escalations audit
+samples these rows (§12).
 
 **When one is selected**, the task stops in a wait state (§11 does not count the
 wait), and the candidate goes to `candidates.tsv`. The options come from the
@@ -925,13 +937,16 @@ task's issue for the idea owner: the decision, the numbered options, the
 evidence, the cost. The idea owner answers in a fixed form: `option <N>;
 business-forking: yes` or `no`, with free text after it. `layup run` copies the
 comment (§3) and writes `escalations.tsv`: the chosen option and each rejected
-option by name. A decision confirmed as business-forking is planned input
+option by name, and an option that is a dependency by its manifest identifier.
+An option that changes a requirement, a priority or the band carries lines in
+the bet's form (`REQ-7 Won't`), which the Product Owner session writes and code
+checks (the IDs exist, the values are valid). A decision confirmed as business-forking is planned input
 (Decision Point 4); one confirmed as not is unplanned input (`F-0001#28`, §12). A
 decision that changes a requirement, its priority or the band is written at once,
 as a rendered task (§8), like a bet line. The task starts its next attempt with
-the decision in its prompt file. A later floor candidate whose name is an option
-that a decision rejected gives the task a finding, not a new brief; any other
-candidate is a new brief.
+the decision in its prompt file. A later floor candidate whose manifest identifier equals that of an option that a decision
+rejected, anywhere in the target, gives the task a finding, not a new brief; an
+option written in prose never matches; any other candidate is a new brief.
 
 ### The parameters
 
@@ -941,7 +956,8 @@ that may change it, the evidence of the value, and the comment that set it
 (Fable-M22). `layup run` opens the target's control issue at Start. A change is a
 comment there, in the form `set <name> <value> because <reason>`, by an account
 whose role in `approvers.tsv` the row allows (the Operator for most rows, the idea
-owner for the band and the intent rows); `layup run` copies it, checks the
+owner for the allowed dependencies and the intent rows; `approvers.tsv` holds a
+role per row); `layup run` copies it, checks the
 author, the name, the value and the bound, and applies it at the next step
 boundary. A change that takes effect on an open task is input to that task
 (§12). The bound of each row says what the value cannot do: no parameter removes
@@ -955,7 +971,11 @@ a PSB rule (O-84).
 | harness paid work without tokens or a spend cap | allowed, with a wall-clock limit (§12) | O-80 |
 | `stall.T`, `stall.N` and the other stall limits | §11 | O-82 |
 | learning weights, bounds, trigger | §13 | O-83 |
-| `lease.H`; the brief's line limit; the allowed licences | set at Intake with evidence | Invariant 4 |
+| allowed dependencies | set by the idea owner at Intake or by a decision | `F-0001#13` |
+| `lease.H`; the brief's line limit | set at Intake with evidence | Invariant 4 |
+
+The band has one home, `budget.tsv` (§12); a bet or an escalation decision
+changes it as a rendered change, never a parameter row.
 
 ## 14. Coverage
 
@@ -1055,3 +1075,6 @@ Each limit is a finding that the design does not close, recorded here (O-66).
   Under `off` or `shadow` at P1 and P2, this is every undeclared choice made in
   prose: the checklist rows K32 and K35 are answered only at `cautious` or
   `delegate`.
+- **L-E2. Calibrating P3 and P4.** Under `shadow`, the branch that the provider
+  picks at P3 or P4 is not run, so its outcome is unknown; a `delegate` threshold
+  for these two points rests only on the Operator's comment.

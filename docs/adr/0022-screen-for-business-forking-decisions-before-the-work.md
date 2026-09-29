@@ -33,9 +33,9 @@ screen them before the work goes on:
    `decision_needed` before a choice on the budget, the legal or compliance
    position, the approved intent, or a trade between approved goals.
 2. **The floor** (code) reads only fixed fields and proposed diffs: the plan's
-   `new dependencies` field (with its alternatives); a new dependency in the
-   stack's manifest, unless its licence is on the Intake's allowed list and its
-   cost is zero; a licence file; the PRD's requirement rows, priorities or
+   `new dependencies` field (by manifest identifier, with its alternatives); every
+   new dependency in the stack's manifest, unless the idea owner put its
+   identifier on the allowed-dependency list; a licence file; the PRD's requirement rows, priorities or
    criteria; a path that the Intake named as intent. It exempts a rendering of an
    approved bet or decision and the specification a bet approves. It runs on
    every plan and every handoff diff.
@@ -47,10 +47,11 @@ screen them before the work goes on:
    owner as one brief with numbered options (from the declaration or the plan's
    alternatives, or written by a Product Owner session). The idea owner answers
    `option <N>; business-forking: yes` or `no`; a "no" is counted as unplanned
-   input. The chosen and rejected options are recorded by name; a later
-   candidate that is a rejected option is a finding for the task, not a new
-   brief. A decision that changes a requirement, a priority or the band is
-   rendered at once.
+   input. The chosen and rejected options are recorded, a dependency by its
+   manifest identifier; a later candidate with the identifier of a rejected
+   option is a finding for the task, not a new brief. An option that changes a
+   requirement, a priority or the band carries bet-form lines that code checks,
+   and is rendered at once. Each screen writes one row, selected or not.
 
 We reject: the agent's own list as the only source; a floor that claims to read
 prose; a screen that runs only after the pull request exists.
@@ -59,7 +60,7 @@ prose; a screen that runs only after the pull request exists.
 
 - A decision that a session makes without declaring it, in prose that the four
   questions miss and in no file the floor reads, is found only by the Missed
-  Escalations audit; under `off` or `shadow` at P1, that is every undeclared
+  Escalations audit; under `off` or `shadow` at P1 and P2, that is every undeclared
   choice in prose (known limit L-E1 of [`architecture.md`](../architecture.md)).
 - Each false candidate costs the idea owner one answer, which is counted as
   unplanned input; the calibration of P1 is how that cost goes down.

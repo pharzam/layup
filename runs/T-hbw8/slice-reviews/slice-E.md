@@ -149,3 +149,102 @@ All thirteen material findings and notes N1 to N7 are applied in one commit (§1
 | M12 | `layup run` opens the control issue at Start; each parameter row names the role that may change it. |
 | M13 | "any of the three lists". |
 | N1 to N7 | Tokens and price in each decision row; the model version pinned, a new one resets `delegate`; the pull-request description dropped from the sources; the state size checked; `candidates.tsv` and `escalations.tsv` named with the answer form; Laya's endpoint in the register; the allowed-licence rule. The dependency-review API is a later option as a second floor after the push (public repositories). |
+
+## Round 2
+
+2026-09-29, head `5551fbe`; 4 min 49 s; 22,512 output tokens; USD 2.80 at list price. Same reviewer and setup. Word for word:
+
+~~~~text
+# Slice E review — round 2
+Reviewer: claude-fable-5-1. Head: 5551fbe. Verdict: `material findings: 5`.
+
+Round-1 status: M1, M2, M4, M6, M7, M10, M11, M12 and M13 are closed. M3 is closed in text, with a residual in N1. M5 is closed for P1, P2 and P5 only (see M5 below). M8 is closed in intent, but its rule has no key (M2). M9 is not closed (M3).
+
+## Material findings
+### M1. A model's own claim can now remove a floor candidate
+- Where: architecture.md:905-906, "A dependency whose licence is on the Intake's allowed list and whose cost is zero is not a candidate." ADR-0022:37 says the same.
+- Source: §10:914, "a deterministic floor that a model may raise and never lower". FT2 (unknown cost is never zero). I6. PSB root cause (`F-0001#13`).
+- Why it matters: the licence and cost of a plan dependency are text that the plan session writes. A `require` in `go.mod` carries no licence and no cost at all. Take W-08's case. The SendGrid Go SDK is MIT and free, and the paid part is the service. A session that writes "MIT, cost 0" for the SDK removes the only floor candidate. The indirect `require` lines that a new module adds have no stated cost, and the text does not say whether they are candidates.
+- Fix: code reads the licence from the module itself (as `go-licenses` does), not from the plan. A cost that no record states is unknown, and an unknown cost is a candidate. A manifest dependency that the plan's field does not list is always a candidate.
+
+### M2. The rejected-option match has no defined key
+- Where: architecture.md:932-934, "A later floor candidate whose name is an option that a decision rejected gives the task a finding". W-08:24 records the rejected option as "the paid service". W-08:26 (`code`) says "its module name is the option that the decision rejected".
+- Source: lens 1 (a `code` step names its input and its rule). `F-0001#13`.
+- Why it matters: the floor candidate at step 9 is a module path (`github.com/...`). The recorded option is prose. An exact match fails, so "any other candidate is a new brief" asks the idea owner again. A loose match would be reading meaning under a `code` tag.
+- Fix: `new dependencies` names each dependency by its manifest identifier. An option that is a dependency carries that identifier in `escalations.tsv`, and the match is exact equality on it. An option written in prose never matches, so it gets a new brief.
+
+### M3. A decision that changes a requirement or the band has no input that code can render
+- Where: architecture.md:930-931, "A decision that changes a requirement, its priority or the band is written at once, as a rendered task (§8), like a bet line". Against that: the answer form at :925-926 (`option <N>; business-forking: yes` or `no`, then free text) and :943-944 ("the idea owner for the band and the intent rows").
+- Source: §8:639 (a bet gives "a line per requirement", which code renders from). §8:648 ("A requirement changes only at a bet, or by an escalation decision"). K37, D02. "An operative rule has one home" (Bootstrap mode).
+- Why it matters: the idea owner answers "option 2: drop REQ-7 to keep the date". Nothing structured says that option 2 changes REQ-7, or to which priority. Code cannot render a new inventory version from that prose. The band now has three homes: the bet's appetite, an escalation decision, and a `parameters.tsv` row. The parameter table (:950-958) has no band row and no intent row.
+- Fix: an option that changes the inventory carries bet-form lines (`REQ-7 Won't`, `band ...`), written by the Product Owner session and checked by code. Then name one home for the band, and add its row to the table.
+
+### M4. The "needs a human" flag of a session is in no schema
+- Where: architecture.md:917-918, "or a session sends a question with that flag, the question becomes a candidate". Against that: :849 (P2's deterministic branch is "needs a human = no"), §8:733 (a question is "its text, its own label for the kind, and the records it concerns") and §8:723 (the transition row asks for no flag).
+- Source: K35. Lens 1.
+- Why it matters: under `shadow`, the default the Intake form offers, a session's flag is the only way a question can reach the idea owner. But the handoff schema has no field for it, and the P2 table says the deterministic branch ignores it. Code cannot read a field that does not exist.
+- Fix: add the flag to the question's fixed fields in §8. Make P2's deterministic branch "the asker's label and flag". Or state that the flag is the status `decision_needed`.
+
+### M5. Calibration against the ground truth is undefined for P3 and P4
+- Where: architecture.md:851, P4 ground truth "the verification's first-round verdict". :850, P3 "the stall's outcome". :876-878, "the share where the provider's decided answer agreed with that point's ground truth".
+- Source: K38 ("promotion has no ground truth"). Invariant 4.
+- Why it matters: under `shadow`, the routing order runs pair Y and the provider picked pair X. Y's verdict says nothing about X, and a pass/fail verdict cannot "agree" with a pair choice. P3 has the same problem for a rung that was not taken. So a `delegate` threshold for P3 or P4 has evidence only by name. K38 is not answered for these two points.
+- Fix: count only the rows where the provider's answer equals the branch taken, and record the bias this causes. Or record as a known limit that P3 and P4 thresholds rest only on the Operator's comment.
+
+## Notes
+- N1. A `candidates.tsv` row is written only "When one is selected" (:920-921). So "Each selection row records whether P1 and P2 were active" (:887) says nothing about a screen that selects nothing. Those are the screens where an inactive P1 matters, and the Missed Escalations audit needs them. Write one row per screen.
+- N2. At a `delegate` P2, a failure goes to the Operator (:871). A business-forking question can then reach the Operator, although :873 says it "always goes to the idea owner". Say the Operator only classifies it, and a "needs a human" question goes on to the screen.
+- N3. "the tokens and price that the provider reports" (:841). Jev's docs give a price per input token, but the sources do not say its response reports tokens. A self-hosted Laya has no price. Record "unknown", never zero (FT2).
+- N4. "the Shape specification that a bet approves" (:907-908). The spec's handoff comes before the bet. Say "a specification task of the Shape phase", so code can apply the exemption at the handoff.
+- N5. The control issue is opened "at Start" (:941), but §5's Start steps open only the Intake issue.
+- N6. §3:126 gives `approvers.tsv` no role column, but §10:943 now reads a role from it. Since the Operator and the idea owner can share one ID, the file needs a role per row.
+- N7. ADR-0022:62 says "under `off` or `shadow` at P1". §10:885 and L-E1 say P1 and P2. Align them.
+- N8. It is unclear whether a rejected option binds only its own task or the whole target. If it binds the target, a later task's real need gets a finding, not a brief, unless the session declares it.
+- N9. "A change that takes effect on an open task is input to that task" (:946) does not say whether that input is planned or unplanned. `F-0001#28` counts "a change to a gate" as unplanned. Leave the rest to §12.
+
+## Checklist rows
+- S8: answered, except M1 and M2.
+- I4 (in part): answered, except M5.
+- I6: answered, except M1.
+- K32: known limit (L-E1, acceptable).
+- K33: answered.
+- K34: answered.
+- K35: known limit (acceptable), except M4.
+- K36: answered.
+- K37: answered, except M3 (the band and intent rows).
+- K38: not answered for P3 and P4 (M5).
+- K39: answered.
+- K40: answered.
+- K41: answered (§8).
+- P11: answered.
+- P18 (the smart-if part): answered.
+- C3: answered.
+- C9: answered.
+- C10: answered.
+- D02 (in part): answered, except M3.
+- D04: answered.
+- D09: answered.
+- D10: answered.
+- D15: answered.
+- D16 (the bet): answered.
+- FT1: answered with L-E1; see N1.
+- FT3: answered; see N6.
+- L-E1: recorded, and now covers `off` and `shadow`.
+
+## Existing solutions
+- Repeated: Governed APA's "raise, never lower" floor; per-rule monitor and enforce modes; Jev's advice to pin a versioned model.
+- Ignored for M1: `actions/dependency-review-action` (`allow-licenses`) and Google's `go-licenses` read a dependency's licence from the module itself, not from an agent's claim.
+- Ignored for M5: off-policy evaluation (logged propensities, as in contextual bandits) is the standard answer when a shadow policy's pick was never run. Champion/challenger rollouts score only the traffic that the challenger actually served.~~~~
+
+### The author's answer to round 2
+
+The five new material findings and notes N1 to N8 are applied in the next commit; N9 is left to slice G, as the reviewer suggests. Under O-98, these fixes are a named item of the whole-design review.
+
+| Finding | Fix |
+| ------- | --- |
+| M1 | Every new dependency is a candidate unless the idea owner put its identifier on the allowed-dependency list; nothing a session writes removes a candidate; code reads the licence from the module for the brief. |
+| M2 | Dependencies and dependency options carry their manifest identifier; the match is exact; a prose option never matches. |
+| M3 | An option that changes the inventory carries bet-form lines that code checks; the band has one home, `budget.tsv` (§12). |
+| M4 | A question has the fixed field `needs_human`; P2's deterministic branch reads it. |
+| M5 | Known limit L-E2: thresholds for P3 and P4 rest only on the Operator's comment. |
+| N1 to N8 | One `screens.tsv` row per screen; the Operator only classifies the kind on a P2 failure; unknown prices are `unknown`; "a specification task of the Shape phase"; the Start opens the control issue; `approvers.tsv` has a role per row; ADR-0022 names P1 and P2; a rejected option binds the whole target. |

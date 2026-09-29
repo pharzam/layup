@@ -15,15 +15,15 @@ Sections are those of [`architecture.md`](../architecture.md).
 
 | # | Actor | Input | Mechanism | Record | Tag | Where |
 | - | ----- | ----- | --------- | ------ | --- | ----- |
-| 1 | the plan session | the task | writes the plan; its fixed field `new dependencies` names the paid e-mail service, with its licence, its monthly cost, and the alternative it considered (plain SMTP) | the plan | `model` | §8, §10 |
-| 2 | `layup run` | the plan's `new dependencies` field | the floor: a new dependency with a cost is a candidate | a candidate row | `code` | §10; ADR-0022 |
+| 1 | the plan session | the task | writes the plan; its fixed field `new dependencies` names the paid e-mail service's client module by its manifest identifier, with its monthly cost and the alternative it considered (plain SMTP, the standard library) | the plan | `model` | §8, §10 |
+| 2 | `layup run` | the plan's `new dependencies` field | the floor: the module is not on the allowed-dependency list, so it is a candidate | a candidate row | `code` | §10; ADR-0022 |
 | 3 | the smart-if (P1) | the plan's text | the four literal questions; "does it change the budget?" answers yes with a high probability | a `decisions.tsv` row | `model` | §10; ADR-0021 |
 | 4 | `layup run` | the floor and P1 | OR in code: selected (under `shadow`, the floor alone selects it; the P1 row is only recorded, and the selection row says that P1 was not active) | a `candidates.tsv` row; the task in a wait state | `code` | §10; ADR-0022 |
 | 5 | `layup run` | the selected decision | posts one escalation brief on the task's issue: the decision, the numbered options from the plan's field (1: the paid service; 2: plain SMTP), the evidence, the cost | the comment ID | `code` | §10 |
 | 6 | the idea owner | the escalation | answers `option 2; business-forking: yes` (Decision Point 4) | the comment | `human` | §10 |
-| 7 | `layup run` | the answer | copies it (§3); writes `escalations.tsv`: chosen "plain SMTP", rejected "the paid service"; records it as planned input; starts the task's next attempt with the decision in its prompt file | the decision row; an attempt row | `code` | §3, §10, §12 |
+| 7 | `layup run` | the answer | copies it (§3); writes `escalations.tsv`: chosen "plain SMTP", rejected the client module by its manifest identifier; records it as planned input; starts the task's next attempt with the decision in its prompt file | the decision row; an attempt row | `code` | §3, §10, §12 |
 | 8 | the developer session | its work | adds the paid service's client module anyway | commits | `model` | §4 |
-| 9 | `layup run` | the handoff diff | the floor: a new `require` in `go.mod` is a candidate; its module name is the option that the decision rejected, so code gives the task a finding (no new brief) and refuses the result before any push | a finding row for `T-14` | `code` | §10; ADR-0022 |
+| 9 | `layup run` | the handoff diff | the floor: a new `require` in `go.mod` is a candidate; its manifest identifier equals that of the rejected option, so code gives the task a finding (no new brief) and refuses the result before any push | a finding row for `T-14` | `code` | §10; ADR-0022 |
 
 ## Checklist rows
 

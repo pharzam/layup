@@ -43,7 +43,9 @@ We will branch at named points through a provider interface:
    point has a deterministic branch that decides under `off` and `shadow`. The
    Intake form offers `shadow` and says what it leaves open; the Operator
    chooses. A threshold's evidence is the Operator's comment, or a calibration
-   record against the point's named ground truth, never against the default.
+   record against the point's named ground truth, never against the default;
+   for P3 and P4, whose branches are not run under `shadow`, only the Operator's
+   comment.
    The model version is pinned; a new version resets `delegate` to `shadow`.
 4. **Bounds:** under `off`, `shadow` and `cautious`, a failure takes the
    deterministic branch and is recorded; at a `delegate` point, a failure or an
