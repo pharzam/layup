@@ -47,8 +47,7 @@ each actor from a credential:
    an issue comment.
 3. **Three kinds of actor** (O-77, O-95). LAYUP acts as the LAYUP App's bot,
    with an installation token made from the App's private key, which only
-   `layup run` holds (a second key, which only reads and opens an issue, is the
-   dead-man job's, ADR-0023); the App is the only bypass actor of the records branch; it
+   `layup run` holds; the App is the only bypass actor of the records branch; it
    has the permissions of O-92 plus commit statuses, and no workflows and no
    administration permission. Humans are the accounts that `approvers.tsv`
    names by numeric user ID. Role sessions hold no forge credential

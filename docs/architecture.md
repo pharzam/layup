@@ -56,7 +56,8 @@ designed (known limit L-A2).
 | The decision component | the smart-if: a package of `layup run` that asks a provider at named points (section 10) | inside `layup run` | a result that `layup run` records |
 | The squad manager | the harness register, admission and routing (section 9) | inside `layup run` | the same |
 | The learning loop | the reward and the routing update at each retrospective (section 13) | `layup run`, at the retrospective | the same |
-| The runner | the LAYUP GitHub App and the LAYUP host; the dead-man job (section 11) | the forge; the host | through `layup run` only |
+| The runner | the LAYUP GitHub App and the LAYUP host | the forge; the host | through `layup run` only |
+| The dead-man job | a scheduled workflow in the Operator's control repository, as the App `layup-watch` (section 11) | the forge | a notice on a target's control issue |
 | The target | the product repository | the forge | — |
 
 **One run per target.** `layup run` holds a lease row on the records branch: run
@@ -667,9 +668,8 @@ any task.
    Done).
 2. A plan session writes the task's plan; a plan-review session on another
       harness reviews it. `layup run` posts both on the issue, in the forms that the
-   target's own checks parse, and reads the verdict from its fixed field. The
-   approved plan freezes its test list: each test by ID and the SHA-256 of its
-   source (§11).
+   target's own checks parse, and reads the verdict from its fixed field. The plan lists its tests by ID; the list is frozen at the task's first valid
+   handoff to the verifier (§11).
 3. A developer session writes the failing test first, then the change; it ends
    with its typed result (§4).
 4. The handoff check (below), the rule-path and workflow checks (§4, §6); then
@@ -990,15 +990,16 @@ has no default here is set at Intake with its evidence (Invariant 4).
 Fable-M4, Author-1). Code keeps two sets per task from the records: the open
 **unknowns** (its open questions, open material findings and open escalations;
 a finding has a fixed form of file, line and rule, so the same finding in two
-rounds is the same unknown) and the **passed tests** of its frozen test list. The
-plan review freezes that list (§8): each test by its ID and the SHA-256 of its
-source at that moment; a test whose source changes is no longer on the list as
-passed, and the change is a finding. A round (an attempt, or a review round)
+rounds is the same unknown) and the **passed tests** of its frozen test list. The list is frozen at the task's first valid handoff to the verifier, when each
+listed test fails at the base and passes at the head (§8): each test by its ID and
+the SHA-256 of its source then. Later, a test whose source hash differs is no
+longer counted as passed, and the change is a finding; an amended plan with a new
+plan review freezes the list again and closes that finding. A round (an attempt, or a review round)
 makes **progress** when at least one unknown that was open at the end of the last
 round is closed, or a test of the list passes that did not pass before. The first
 review of a change sets the baseline and is never a round without progress. A new
-commit, handoff or record alone is not progress. A task with no open unknown is
-**downhill**; any other task is **uphill** (§9 uses this for the tier).
+commit, handoff or record alone is not progress. A task is **uphill** until its test list is frozen, and while it has an open
+unknown; it is **downhill** otherwise (§9 uses this for the tier).
 
 **The triggers** (all recorded with their evidence):
 
@@ -1006,18 +1007,21 @@ commit, handoff or record alone is not progress. A task with no open unknown is
    A disagreement between two roles is this case: a rejection of the same finding
    closes nothing. A question round counts the same way.
 2. **Too many rounds.** Review rounds past the target's own cycle cap, or
-   attempts past `stall.attempts`, even with progress.
+   attempts past `stall.attempts` (attempts that a question ended included), even
+   with progress.
 3. **A hang.** A running session writes no output and sends no hook event for
    `stall.T` (default 10 minutes, a maximum, O-82); the first session of a task
    gets no more. `layup run` kills it. A harness whose register row says it sends
    no hook events is judged by its output alone.
 4. **A check that does not report.** A required check with no result for `ci.T`
    after the push.
-5. **A step that fails cleanly but cannot go on**, for example a context that does
-   not fit (§9).
-6. **The circuit breaker.** A milestone reaches its cap (§12).
-7. **The orchestrator.** A takeover of the lease (§2) opens a stall for the time
-   with no run.
+5. **The orchestrator.** A takeover of the lease (§2) opens a stall for the time
+   with no run; it counts per project, not per task.
+
+**Not stalls.** A step that fails cleanly (for example a context that does not
+fit, §9) writes a "failed" row and a notice to the Operator on the task's issue;
+the circuit breaker (below) writes a "milestone stopped" row. Neither counts in the
+Stall Rate (`F-0003#73`).
 
 **Waits are not stalls** (Fable-M5). The clock and the round count stop while a
 task waits for a human: a bet, an escalation, an acceptance, a stall package.
@@ -1040,9 +1044,8 @@ task waits for a human: a bet, an escalation, an acceptance, a stall package.
 3. **The action** (smart-if P3, §10: `retry`, `panel` or `Operator`). The
    deterministic branch is the ladder: a **retry** with the diagnosis in the
    prompt, then a **panel**, then the **Operator**; a new trigger in the same task
-   moves one rung up. The panel rung is skipped when fewer than two admitted
-   harnesses are free of the failure that the diagnosis names. A stall of the
-   orchestrator (trigger 7) has only the diagnosis and the Operator.
+   moves one rung up, with its own stall row, package and diagnosis. The panel rung is skipped when fewer than two admitted
+   harnesses are free of the failure that the diagnosis names. A stall of the orchestrator (trigger 5) has only the diagnosis and the Operator.
 4. **The panel** (vision 3.2; AgentJury's quorum). `panel.K` members, each a
    fresh session on the reasoning tier, from at least two harnesses, with the same
    sealed input (the package and the diagnosis), none seeing another's output, and
@@ -1083,12 +1086,14 @@ opens an **early retrospective**, a planned point that Intake lists, whose rule
 batch may fix the gate (§13).
 
 **The dead-man job** (Sol-4, Author-10). A scheduled workflow in a control
-repository that the Operator owns (never a target, FT5) holds a second private key
-of the LAYUP App as a secret (the App allows more than one key; the Operator can
-revoke each). For each target on its list, it reads the forge's time of the last
+repository that the Operator owns (never a target, FT5) acts as a separate
+GitHub App, `layup-watch`, whose only permissions are metadata and contents
+(read, for the repository activity) and issues (write); its key is that
+repository's secret. A key of the LAYUP App cannot be limited in scope, so the job
+never holds one. For each target on its list, it reads the forge's time of the last
 update of the records branch from the repository activity, and when that time is
-older than `3 × lease.H` it adds a notice to one open issue on the target ("no
-LAYUP run"). It writes nothing else. The next run of `layup run` takes the lease
+older than `3 × lease.H` it adds a notice ("no LAYUP run") to the target's
+control issue. It writes nothing else on a target. The next run of `layup run` takes the lease
 over, opens the orchestrator's stall, and builds its package. The forge can start
 a scheduled workflow late, can drop a queued run, and disables the schedule of a
 public repository with no activity for 60 days; the job therefore also commits
@@ -1141,8 +1146,7 @@ rows. The evidence for each row is [`runs/T-hbw8/rewrite-checklist.md`](../runs/
 Each limit is a finding that the design does not close, recorded here (O-66).
 
 - **L-A1. The host is shared.** Role sessions run under the Operator's user, so
-    a session that searches the host can reach the App's private key (a second key
-  lives in the dead-man job's control repository, §11), which does
+      a session that searches the host can reach the App's private key, which does
   not expire until the Operator revokes it, makes tokens for every target where
   the App is installed, and passes the records rulesets; and the Operator's own
   `gh` login; a comment made with that login passes as a human decision.

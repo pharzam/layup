@@ -36,13 +36,15 @@ We will stop a stall at a limit and diagnose it with a fresh context:
 
 1. **Progress is computed** from the records, by sets: a round makes progress
    when it closes an unknown that the last round left open, or a test of the
-   frozen list (by ID and source hash) newly passes. The first review sets the
-   baseline.
-2. **Seven triggers:** `stall.N` rounds without progress (a repeated finding
+   frozen list (by ID and source hash, frozen at the first valid handoff to the
+   verifier) newly passes. The first review sets the baseline. A task is uphill
+   until its list is frozen and while it has an open unknown.
+2. **Five triggers:** `stall.N` rounds without progress (a repeated finding
    between two roles included); rounds past the target's cycle cap or attempts
-   past `stall.attempts`; no output for `stall.T` (the first session gets no
-   more); a required check with no result for `ci.T`; a step that cannot go on;
-   the milestone cap; a takeover of the lease. Waits for a human do not count.
+   past `stall.attempts`, questions included; no output for `stall.T` (the first
+   session gets no more); a required check with no result for `ci.T`; a takeover
+   of the lease. Waits for a human do not count; a clean failure and the circuit
+   breaker have their own rows and are not stalls.
 3. **A fresh diagnosis first:** code builds the evidence package without the
    sessions' reasoning, and an examiner session writes a diagnosis in a fixed
       form before any other action; an examiner that fails writes "diagnosis
@@ -61,8 +63,9 @@ We will stop a stall at a limit and diagnose it with a fresh context:
    every open task is downhill, as code computes it, and it fits the band; no
    requirement is dropped.
 8. **A wrong gate** opens an early retrospective. **The dead-man job** lives in a
-   control repository of the Operator, with a second App key, reads the forge's
-   time of the last records update, and only adds a notice to one issue.
+   control repository of the Operator, as a separate App with only read and issue
+   permissions, reads the forge's time of the last records update, and only adds
+   a notice to the target's control issue.
 
 We reject: a clock reset by any new record; a stall that reaches the Operator
 without a diagnosis; a panel of one harness; a job inside a target (FT5).
@@ -71,9 +74,8 @@ without a diagnosis; a panel of one harness; a job inside a target (FT5).
 
 - The Stall Rate and Stall Diagnosis come from the stall and outcome rows.
 - A question loop and a review loop stop after `stall.N` rounds without progress.
-- The panel needs two admitted harnesses; with one, its rung is skipped and the
-  Operator gets the package.
+- The panel needs two admitted harnesses free of the diagnosed failure; with
+  fewer, its rung is skipped and the Operator gets the package.
 - A scheduled run can be late or dropped, so a dead host's notice can be late or
   missing (known limit L-F1 of [`architecture.md`](../architecture.md)).
-- This amends ADR-0014 decision 3: a second App key exists, in the control
-  repository.
+- The Operator makes a second, narrow App for the dead-man job.

@@ -27,7 +27,7 @@ Sections are those of [`architecture.md`](../architecture.md).
 | 7 | the smart-if (P3) | the diagnosis | at `cautious`, the provider may move one rung up: it answers `panel`, the examiner's recommendation (under `shadow`, the ladder would retry first, and the panel would come one round later) | a `decisions.tsv` row | `model` | §10, §11; ADR-0021 |
 | 8 | three panel sessions, on two harnesses; a synthesis session | the sealed package and diagnosis | each writes hypotheses and options; the synthesis merges them: "correct the test to the specification, then the code" | the members' outputs; the synthesis | `model` | §11; ADR-0023 |
 | 9 | `layup run` | the panel's outputs | quorum: three valid outputs from two harnesses | the panel row | `code` | §11 |
-| 10 | `layup run` | the resolution | starts the next attempt with it; the verifier passes; the stall closes | the outcome row: "closed without a human" | `code` | §11 |
+| 10 | `layup run` | the resolution | starts the next attempt with it; its amended plan (the corrected test) gets a new plan review, which freezes the list again and closes the "test changed" finding; the verifier passes; the stall closes | the outcome row: "closed without a human" | `code` | §11 |
 
 ## Part 2 — a session that hangs
 
@@ -35,7 +35,7 @@ Sections are those of [`architecture.md`](../architecture.md).
 | - | ----- | ----- | --------- | ------ | --- | ----- |
 | 11 | `layup run` | the running session's output and hook events | none for `stall.T` = 10 minutes (not a wait state): kills it; a stall | a stall row: trigger "hang" | `code` | §11; ADR-0023 |
 | 12 | an examiner session | the package: the harness's exit, its log | cause "a harness failure"; recommends a retry | the diagnosis | `model` | §11 |
-| 13 | `layup run` | the retry, which hangs again | one rung up; only H2 is an admitted harness free of the diagnosed failure, so the panel rung is skipped, and the Operator | the ladder row | `code` | §11 |
+| 13 | `layup run` | the retry, which hangs again | one rung up, with a new stall row and a new diagnosis; only H2 is an admitted harness free of the diagnosed failure, so the panel rung is skipped, and the Operator | the ladder row | `code` | §11 |
 | 14 | the Operator | the stall package | answers `reroute T-11 to H2` (Decision Point 5) | the comment | `human` | §11 |
 | 15 | `layup run` | the Operator's answer | copies it (§3); writes the harness override; the next attempt starts from the base on H2 (W-12) | the outcome row: "closed by the Operator" | `code` | §3, §11 |
 
