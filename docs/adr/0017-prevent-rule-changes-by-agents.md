@@ -31,10 +31,10 @@ the complement:
 
 1. **No credential.** Role sessions hold no forge credential
    ([ADR-0015](0015-keep-model-calls-out-of-the-engine-checks.md)).
-2. **No rule change leaves the host.** The rule paths of a target are a register
-   on its records branch. Before `layup run` pushes a session's branch, it
-   refuses a change to a rule path that is not part of an approved batch; the
-   change becomes a proposal for the next retrospective. Lines added inside
+2. **No rule change leaves the host in a task.** The rule paths of a target are a
+   register on its records branch. Before `layup run` pushes a task branch, it
+   refuses a change to a rule path; the change becomes a proposal for the next
+   batch. Lines added inside
    section 2 of `docs/guardrails.md` are not a rule change.
 3. **The forge refuses.** The default branch and the probe ref `layup-probe` have one ruleset with no bypass actor:
    a pull request is required; the required checks are the native gate kinds and
@@ -44,19 +44,20 @@ the complement:
    (O-95). The Operator applies both at setup,
    and `layup run` reads them back and probes them before it goes on
    ([ADR-0014](0014-keep-the-records-in-the-target-with-one-writer.md)).
-4. **A rule change lands** only in a batch that a human approved at a planned
-   point: the setup, the gate activation of the first bet, and each
-   retrospective. The App has no workflows permission (O-92), so the approver
-   merges a batch that changes `.github/workflows/`; `layup run` merges the
-   others. `layup/rules` passes a pull request that changes a rule path
-   only when the tree hash of its rule files equals the hash recorded with the
-   approval comment.
+4. **A rule change lands** only in a batch, proposed at a planned point (the
+   setup, the gate activation of the first bet, each retrospective) on a branch
+   `batch/<point>` with its own pull request, so the approver sees it before
+   deciding. The approval comment records the tree hash of the rule files at
+   the batch head; `layup/rules` passes a pull request that changes a rule path
+   only when its hash equals that one. `layup run` merges the approved batch;
+   the approver pushes and merges one that changes `.github/workflows/`,
+   because the App has no workflows permission (O-92, O-93).
 5. **The audit.** `layup audit` lists each rule-path change on the default branch
    with its merge actor, from the forge's repository activity, and its approval.
    `F-0003#64` counts a rule-path change that landed outside an approved batch
-   as an agent write. The activity shows the Operator's account for LAYUP's
-   merges too, so the audit ties each merge to its pull request and its
-   approval, not to an actor name.
+   as an agent write. The merge actor of each change must be the App's bot, or
+   an account in `approvers.tsv` for a batch that changes
+   `.github/workflows/` (O-95, O-93).
 
 We reject: code owners whose approval comes from a second human account (O-77);
 detection by audit alone (Sol-1); a rule-path change at any time other than an

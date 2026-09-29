@@ -146,7 +146,9 @@ at each start, `layup run`:
    as the default branch covers, with the App's token, and stops unless the
    forge refuses it. A bypass is set per ruleset, so this proves that no bypass
    covers LAYUP's own actor on the default branch, and a probe that the forge
-   accepts lands on a ref that nothing uses.
+   accepts lands on a ref that nothing uses;
+3. reads the repository activity with the App's token, and stops when it cannot
+   (the audit below needs it).
 
 The list of bypass actors is not readable with the App's permissions (the API
 returns it only to a token with write access to the ruleset). The Operator's
@@ -252,13 +254,26 @@ rules; this section gives the order. The public tools make the repository first
 and record the intake in it; they apply the forge settings later
 ([`selection-v2.md`](../runs/T-hbw8/selection-v2.md) §1.5). LAYUP does the same.
 
-**Start.** The Operator makes an empty repository on the forge, installs the
-LAYUP App on it, and runs `layup run --new OWNER/NAME --psb FILE [--vision
-FILE]`. `layup run` checks by the API that the App can write to the repository,
-then makes the records branch with its first commit: the problem statement and
-the vision brief byte for byte, each with its SHA-256, and the lease row. It
-opens the Intake issue. No rule is on the forge yet, and no session holds a forge
-credential, so nothing else can write (§4).
+**Start.**
+
+1. The Operator makes an empty repository on the forge, installs the LAYUP App
+   on it, and runs `layup run --new OWNER/NAME --psb FILE [--vision FILE]
+   --operator LOGIN --idea-owner LOGIN`.
+2. `layup run` copies the pinned baseline with `git clone` of the pinned commit
+   and removes `.git` (ADR-0011 decision 7; step S02 changes from `npx degit`).
+   The Operator pushes this unmodified copy as the root commit of the default
+   branch, with the Operator's own login and one command that `layup run`
+   prints: the copy holds CI files, and the App has no workflows permission
+   (O-92). So the default branch is the first branch of the repository, and its
+   root tree equals the pinned tree, as step S03 and the baseline's check `pin`
+   need.
+3. `layup run` reads back the repository's default branch and its root tree, and
+   stops when either differs. It then pushes the records branch (an orphan, §3)
+   with its first commit: the problem statement and the vision brief byte for
+   byte, each with its SHA-256; `approvers.tsv` with the numeric IDs of the two
+   logins of step 1; and the lease row. From this commit on, only a comment by
+   one of those IDs is an answer or a decision (§3); any other comment is
+   recorded as input. It opens the Intake issue.
 
 **The gap check, in one batch** (Decision Points 1 and 2, `F-0001#10`, `#11`):
 
@@ -274,56 +289,58 @@ credential, so nothing else can write (§4).
    may not exist, a hard decision to settle before the work), and the question.
    Code checks each quote against the file.
 3. The specification sessions of §7 add the needs that the requirement draft
-   could not trace (later: slice C).
-4. The questions that the pinned baseline's setup asks the Operator (steps S01
-   and S10 of `setup/steps.tsv`: the stack, the name and visibility, each marker
-   that no file answers) are known from the pinned commit, so code adds them.
+   leaves open.
+4. The Operator's questions of setup steps S01 and S10 (the stack, the name and
+   visibility, and each marker of the pinned baseline) come from the pinned
+   commit. For a marker, a session proposes a source from the facts with a
+   byte-exact quote, and code checks the quote; a marker with no proposed source
+   becomes a question.
 5. Code merges the rows, removes a question whose quote and kind repeat, gives
    each an ID, and posts **one** comment on the Intake issue. It has two blocks:
    the questions and the intent form for the idea owner (the success criteria,
    the appetite and the band of §12, the approver of each planned approval
-   point), and the setup questions and the parameters for the Operator (the
-   owner map of §9, the smart-if provider and authority of §10).
+   point), and the setup questions, the proposed marker sources and the
+   parameters for the Operator (the owner map of §9, the smart-if provider and
+   authority of §10).
 6. The idea owner and the Operator answer, each in one comment, one line per
-   question ID. `layup run` copies each comment (§3), checks that every ID has an
-   answer and that each number and user parses, and asks again only for the
-   missing IDs. Each question, and each follow-up, is a row of the project
-   question table with the flag "before delivery" (Early Question Share, §12).
+   question ID. `layup run` copies each comment (§3) and checks that every ID has
+   an answer and that each number and login parses. A review session then reads
+   the answers and lists each one that leaves its gap open. `layup run` asks
+   again, in one comment, only for the missing and the open answers. Each
+   question and each follow-up is a row of the project question table with the
+   flag "before delivery" (Early Question Share, §12).
 
-**Scaffold** (`layup setup`, `setup/steps.tsv` with the changes below):
+**Scaffold** (`layup setup`, `setup/steps.tsv` with the changes named here):
 
-1. `layup run` copies the pinned baseline with `git clone` of the pinned commit
-   and removes `.git` (ADR-0011 decision 7). Step S02 changes from `npx degit`
-   to this; step S12 no longer adds LAYUP's own `setup-check` job, which O-76
-   keeps out of a target (K16).
-2. Code does every row that needs no judgement; a role session writes the prose
-   rows (S07, S08, S09, S14), and code runs each row's check. Every value comes
-   from a source: an Intake answer (by comment ID), a fact line, or a catalog
-   entry (§6). The target's setup record names the source of each value; a
-   value with no source keeps its marker and becomes an open gap of the target
-   (Invariant 4).
+1. On a branch from the root commit, code does each row that needs no judgement.
+   A value comes only from an Intake answer (by question ID), a catalog entry
+   (§6), or a fact source that the Operator accepted in the Intake answer. The
+   setup record names the source of each value; a value with no source keeps its
+   marker and becomes an open gap of the target (Invariant 4).
+2. A role session writes the prose rows (S07, S08, S09, S14), and code runs
+   each row's check.
 3. The facts go into the target's `docs/facts/`: the problem statement byte for
-   byte, and the answers as a raw fact.
-4. The stack gates come from the catalog (§6).
+   byte, the numbered facts of §7, and the answers as a raw fact.
+4. The stack gates come from the catalog (§6). Step S12 no longer adds LAYUP's
+   own `setup-check` job, which O-76 keeps out of a target (K16).
 5. `layup setup verify` checks the result from outside: the pinned baseline's own
    discipline tests on a checkout of it, zero values without a source, each
-   source resolving, and each known-bad fixture of the gates failing (§6).
-6. The Operator pushes the verified setup as the first commit of the default
-   branch and applies the rulesets of §6, with the Operator's own login and two
-   commands that `layup run` prints: the setup holds the CI job, and the App has
-   no workflows and no administration permission (O-92). This is the planned
-   approval point "setup", listed at Intake.
-7. `layup run` checks that the pushed tree equals the verified one.
-8. `layup run` reads the effective rules of both branches back and makes one
-   probe: a push of an empty commit to `layup-probe` with the App's token must
-   be refused (§3). It opens a probe pull request, posts the `layup/` statuses on
-   it with the App's token, and reads back that the forge counts them for the
-   pinned checks (the source of a status set with a user access token is a fact
-   this probe proves, not one the design assumes). When a rule is missing or a
-   probe gives the wrong result, it stops (§3).
-   On GitHub Free, a private repository has no enforced rulesets, so it stops
-   there too; the Operator makes the repository public or moves it to a plan
-   that enforces them (K15).
+   source resolving, and the known-bad fixtures of §6.
+6. The Operator pushes the setup commits on top of the root commit and applies
+   the two rulesets of §6 from a file that `layup run` writes, with the
+   Operator's own login and the commands it prints: the setup changes CI files,
+   and the App has neither the workflows nor the administration permission
+   (O-92). Step S13 still writes `docs/setup/branch-protection.json`; the
+   Operator applies the rulesets, which hold the same required checks and
+   LAYUP's, in place of the classic protection. This is the planned approval
+   point "setup", listed at Intake.
+7. `layup run` checks that the pushed tree equals the verified one, then reads
+   back the effective rules of both branches and makes the probes of §3: the push
+   to `layup-probe` must be refused; a read of the repository activity with the
+   App's token must work. When a rule is missing or a probe gives the wrong
+   result, it stops. On GitHub Free, a private repository has no enforced
+   rulesets, so it stops there too; the Operator makes the repository public or
+   moves it to a plan that enforces them (K15).
 
 **The pilot baseline** (`F-0004#11`). For a pilot target, the idea owner posts
 the baseline numbers measured with the current process, each with its evidence,
@@ -346,27 +363,50 @@ A new stack gets an entry through a LAYUP change under LAYUP's gate, by a person
 or a LAYUP task, never by a session that works on a target (#69 B9).
 
 **In the target**, the setup writes the tools' configuration, the gate manifest
-`docs/gates.tsv` (gate kind, command, scope, state), and one CI job with one
-step per gate kind, so each kind is its own required check. These are the
-target's own files; they run with LAYUP absent (Invariant 2, O-76). A gate kind
-whose rules depend on the architecture (the Go entry: layout, boundary and
-contract) has the state `pending` until the first bet (§8): its CI step then
-fails every pull request that changes a path in the product's scope, and passes
-one that changes none, with that reason in its output. So no product code merges
-before its gates exist, and a pending gate never passes code (Invariant 5).
+`docs/gates.tsv` (gate kind, command, scope, state), and **one CI job per gate
+kind**, each its own required check, pinned in the ruleset to GitHub Actions as
+its source (so a status of the same name from another source does not count).
+These are the target's own files; they run with LAYUP absent (Invariant 2,
+O-76). A gate kind whose rules depend on the architecture (in the Go entry:
+layout, boundary and contract) has the state `pending` until its activation
+(below). Its job then fails a pull request that changes a path in the product's
+scope, and passes one that changes none, with that reason in its output: no
+product code merges before its gates exist, and a pending gate never passes code
+(Invariant 5). The jobs of all kinds exist from the setup, so the activation
+changes no CI file.
 
-**The Go entry**: `gofmt -l` and `go vet ./...` from the setup; at the first bet,
-an architect session writes a layout test and an import-boundary test as Go tests
-in the target, from the package table of the approved architecture, and a
-contract test for each interface that it names; test quality is `go test
--count=1 ./...` with a coverage floor that stays an open gap until the idea owner
-or the Operator sets it with evidence.
+**The Go entry**: `gofmt -l` and `go vet ./...` from the setup; at activation, an
+import-rule tool (golangci-lint's `depguard`, configured from the package table
+of the approved architecture) for the boundary, a layout test as a Go test, and a
+contract test for each interface that the architecture names; test quality is
+`go test -count=1 ./...`, with a coverage floor that stays an open gap until the
+idea owner or the Operator sets it with evidence (L-B2).
 
 **`layup gate`** runs the same commands from outside: it checks out the base
-branch's manifest and gate files, applies them to the head of the pull request in
-a scratch work tree, and reports `pass`, `fail` or `not-active` per kind. It
-never runs the gate files of the head (FT4). `layup run` posts the result as the
-commit status `layup/gates`. The LAYUP host needs each stack's toolchain (K17).
+branch's manifest and gate files, applies them to the head of the pull request
+in a scratch work tree, and gives one result per kind. `layup run` posts the
+commit status `layup/gates` from those results:
+
+| Result of a kind | `layup/gates` |
+| ---------------- | ------------- |
+| active, and it passed | counts as a pass |
+| active, and it failed or did not run (`not-active`) | failure |
+| `pending`, and the head changes no path in the product's scope | counts as a pass, with the reason "pending: no product path" |
+| `pending`, and the head changes such a path | failure |
+
+The status is a success only when every kind counts as a pass. It never runs the
+head's gate files (FT4), with one exception: the activation batch below, whose
+rule files are the approved ones. The LAYUP host needs each stack's toolchain
+(L-B1). With LAYUP absent, the target's own CI runs the workflow and the manifest
+of the pull request's head; FT4 then rests on the rulesets and on review, not on
+LAYUP.
+
+**Activation.** At the first bet (§8), an architect session writes the
+boundary configuration, the layout test, the contract tests and, for each kind it
+activates, one known-bad commit. This is a rule batch (below). When its approval
+has recorded its rule-file hash, `layup gate` runs the batch's own gate files on
+the batch head and on each known-bad commit: each known-bad commit must fail its
+kind (`F-0003#64`), and the head must pass. The manifest then says `active`.
 
 ### Rule protection
 
@@ -380,38 +420,47 @@ entry files, the baseline's rule documents and check scripts, and
 section 2 (Known pitfalls): the baseline's step 7 writes a lesson there in the
 same pull request, and a line added to §2 cannot remove a rule (K13).
 
+**A rule batch** is the one way a rule changes. It is proposed at a planned
+point: the setup, the gate activation of the first bet, and each retrospective
+(O-69). `layup run` pushes it to a branch `batch/<point>` and opens its pull
+request, so the approver sees the change before deciding. The approver approves
+by an issue comment (§3); `layup run` then records the tree hash of the rule
+files at the batch head together with the approval. The approved batch merges by
+`layup run`, or, when it changes `.github/workflows/`, by its approver, who also
+pushes it, because the App has no workflows permission (O-93).
+
 **Prevention, in three layers:**
 
 1. **No credential.** A role session holds no forge credential (§4), so it
    cannot push, merge, approve or change a ruleset with a token.
-2. **No rule change leaves the host.** Before `layup run` pushes a session's
-   branch, it compares the changed paths with the rule-path register of the base
-   branch. A change to a rule path outside an approved batch refuses the result:
-   the task gets the finding, and the change becomes a proposal for the next
-   retrospective (O-69).
+2. **No rule change leaves the host in a task.** Before `layup run` pushes a
+   task branch, it compares the changed paths with the rule-path register of the
+   base branch. A change to a rule path refuses the result: the task gets the
+   finding, and the change becomes a proposal for the next batch.
 3. **The forge refuses.** The default branch and the probe ref `layup-probe`
-   have one ruleset with an empty bypass list: a pull request is required; the required checks are each native gate
-   kind and `layup/gates`, `layup/verify` and `layup/rules`, each `layup/` check
-   pinned to the LAYUP App as its only source; force pushes and deletion are
-   blocked. The records branch has a ruleset that restricts updates and deletion to
-   the LAYUP App, its only bypass actor (§3). `layup/rules` fails when a rule path
-   changed and the pull request is not an approved batch: a batch whose tree hash
-   of the rule files equals the hash recorded with the approval comment.
+   have one ruleset with an empty bypass list: a pull request is required; the
+   required checks are the native gate jobs, pinned to GitHub Actions, and
+   `layup/gates`, `layup/verify` and `layup/rules`, pinned to the LAYUP App; force
+   pushes and deletion are blocked. The records branch has a ruleset that
+   restricts updates and deletion to the LAYUP App, its only bypass actor (§3).
+   `layup/rules` fails a pull request that changes a rule path unless it is a
+   batch whose head's rule-file hash equals the hash recorded with its approval.
+   (`layup/verify` comes from the counterpart verification of §8.)
 
-**A rule change lands** only in a batch that a human approved at a planned
-point: the setup, the gate activation of the first bet, and each retrospective
-(O-69). Reading of `F-0003#64`: "0 agent writes to rule paths" counts rule-path
+**Reading of `F-0003#64`.** "0 agent writes to rule paths" counts the rule-path
 changes on the default branch that did not land in an approved batch; the
-approval makes the change the human's decision.
+approval makes the change the human's decision (the approval brief asks the
+Operator to confirm this reading).
 
 **Detection, as the complement.** `layup audit` lists every change to a rule path
-on the default branch with its merge and its approval, from the repository
-activity (§3), and `layup setup verify` runs each known-bad fixture against the
-target's gates (100 % detection, `F-0003#64`).
+on the default branch with its merge, its actor and its approval (§3). The
+known-bad fixtures run at setup for the active kinds, and at activation for the
+others; a `pending` kind's fixture is recorded as `not-active`, never as a
+detection.
 
 **When LAYUP is absent,** the `layup/` checks never report. The target's setup
-record tells the Operator to remove them from the ruleset; the native gate
-checks stay (Invariant 2).
+record tells the Operator to remove them from the ruleset; the native gate jobs
+stay (Invariant 2).
 
 **The limit.** The Operator's own account can change the rulesets, and a process
 on the host can reach the App's key (L-A1). Prevention holds against every
@@ -439,9 +488,9 @@ rows. The evidence for each row is [`runs/T-hbw8/rewrite-checklist.md`](../runs/
 | S2 Reproducible Discipline Setup (`#42`), `REQ-002`, `NFR-003`, `NFR-006`, Invariants 4 and 8 | [W-02](walkthroughs/W-02-reproducible-discipline-setup.md) | 5, 6 | 0016, 0017 |
 | S3 Rule Protection (`#43`), Gate Integrity (`#64`), Invariant 3 | [W-03](walkthroughs/W-03-rule-protection.md) | 6 | 0017 |
 | S4 Stack-Dependent Gates (`#44`), `REQ-004`, `NFR-004`, Invariants 5 and 7 | [W-04](walkthroughs/W-04-stack-dependent-gates.md) | 6 | 0016 |
-| #69 A2 (the target cannot pass its gates without LAYUP) | W-04 step 5; W-12 step 15 | 6 | 0016 |
+| #69 A2 (the target cannot pass its gates without LAYUP) | W-04 step 8; W-12 step 15 | 6 | 0016 |
 | #69 B9 (the source of the stack gates) | W-02 step 4 | 6 | 0016 |
-| ADR-0012 part 6 (set up a target, run its gate from outside) | W-02; W-04 step 6 | 5, 6 | 0016 |
+| ADR-0012 part 6 (set up a target, run its gate from outside) | W-02; W-04 steps 5, 9 | 5, 6 | 0016 |
 
 ## 15. Known limits
 

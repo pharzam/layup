@@ -40,21 +40,28 @@ from a stack catalog that LAYUP keeps:
    documentation as evidence. A new entry is a LAYUP change under LAYUP's gate,
    never the work of a session on a target.
 2. **In the target.** The setup writes the tools' configuration, the gate
-   manifest `docs/gates.tsv`, and one CI job with one step per gate kind, each
-   its own required check. A gate kind whose rules depend on the architecture is
-   `pending` until the first bet; while it is pending, its step fails a pull
-   request that changes a path in the product's scope.
+   manifest `docs/gates.tsv`, and one CI job per gate kind, each its own
+   required check, pinned to GitHub Actions as its source. A gate kind whose
+   rules depend on the architecture is `pending` until its activation at the
+   first bet; while it is pending, its job fails a pull request that changes a
+   path in the product's scope and passes one that changes none, with that
+   reason. The jobs of all kinds exist from the setup.
 3. **From outside.** `layup gate` checks out the base branch's manifest and gate
    files, applies them to the head of a pull request, and reports `pass`, `fail`
-   or `not-active` per kind. It never runs the head's gate files. A gate kind
-   that did not run is `not-active`, and `not-active` is never a pass.
-4. **The setup verification** runs each known-bad fixture against the target's
-   gates and fails unless each gate fails on its fixture.
+   or `not-active` per kind. It never runs the head's gate files, except those
+   of an approved activation batch. The status `layup/gates` is a success only
+   when every active kind passed and every pending kind saw no path in the
+   product's scope; `not-active` is never a pass.
+4. **Detection.** The setup verification runs the known-bad fixture of each
+   active kind; the activation batch carries one known-bad commit per kind it
+   activates, and each must fail. A pending kind's fixture counts as
+   `not-active`, never as a detection.
 
 This amends ADR-0011 decision 4 (the stack gates are the target's own and run
 inside it; `layup gate` runs the same commands from outside) and decision 7
 (setup step S12 no longer adds LAYUP's `setup-check` job to a target; step S02
-copies with `git clone`). ADR-0012 part 6 stays true: `layup` sets up the target
+copies with `git clone`; the Operator pushes the unmodified copy as the root
+commit, as step S03 asks, because the App has no workflows permission). ADR-0012 part 6 stays true: `layup` sets up the target
 and runs its gate from outside.
 
 We reject: the gates only outside the target (finding A2 of #69; O-76); the pull

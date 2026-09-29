@@ -14,13 +14,16 @@ Sections are those of [`architecture.md`](../architecture.md).
 
 | # | Actor | Input | Mechanism | Record | Tag | Where |
 | - | ----- | ----- | --------- | ------ | --- | ----- |
-| 1 | the setup | the Go entry of the stack catalog | writes `gofmt` and `go vet` steps; the layout, boundary and contract gates are `pending` in `docs/gates.tsv` | the target's CI job and manifest | `code` | §6; ADR-0016 |
-| 2 | an architect session | the architecture approved at the first bet | writes a layout test and an import-boundary test as Go tests, from its package table ("`internal/store` is imported only by `internal/app`"); the batch lands at that planned point; the gates become active | a batch pull request; the manifest states `active` | `model` | §6; ADR-0016, ADR-0017 |
-| 3 | the developer session | its task | adds the import; commits | commits in `work/` | `model` | §4 |
-| 4 | `layup run` | the result | later: slice D | later: slice D | `code` | — |
-| 5 | the target's CI | the pull request head | the boundary test fails: `cmd/server` imports `internal/store` | the failed required check on the forge | `code` | §6; ADR-0016 |
-| 6 | `layup gate` | the base branch's gate files; the head | runs the base branch's boundary test on the head in a scratch work tree: `fail` | the status `layup/gates` = failure, and a result row | `code` | §6; ADR-0016 |
-| 7 | `layup run` | the two results | later: slice D | later: slice D | `code` | — |
+| 1 | the setup | the Go entry of the stack catalog | writes one CI job per gate kind; `gofmt` and `go vet` are active; layout, boundary and contract are `pending` in `docs/gates.tsv` | the target's CI jobs and manifest | `code` | §6; ADR-0016 |
+| 2 | an architect session | the architecture approved at the first bet | writes the `depguard` rule "`internal/store` is imported only by `internal/app`", a layout test, and one known-bad commit per kind it activates | the session result | `model` | §6; ADR-0016 |
+| 3 | `layup run` | the result | pushes it to `batch/bet-1` and opens its pull request (a rule batch) | the batch pull request | `code` | §6; ADR-0017 |
+| 4 | the approver | the batch pull request | approves by an issue comment (the planned point of the first bet) | the comment, copied (§3) | `human` | §6, §8 |
+| 5 | `layup run`, `layup gate` | the approved batch | records the rule-file hash of the batch head with the approval; runs the batch's gate files on the head (must pass) and on each known-bad commit (each must fail); `layup/rules` passes; merges the batch; the manifest says `active` | the hash, the detection results, the merge | `code` | §6; ADR-0016, ADR-0017 |
+| 6 | the developer session | its task | adds the import; commits | commits in `repo/` | `model` | §4 |
+| 7 | `layup run` | the result | later: slice D | later: slice D | `code` | — |
+| 8 | the target's CI | the pull request head | the boundary job (`depguard`) fails: `cmd/server` imports `internal/store` | the failed required check on the forge | `code` | §6; ADR-0016 |
+| 9 | `layup gate` | the base branch's gate files; the head | runs the base branch's boundary rule on the head in a scratch work tree: `fail` | the status `layup/gates` = failure, and a result row | `code` | §6; ADR-0016 |
+| 10 | `layup run` | the two results | later: slice D | later: slice D | `code` | — |
 
 ## Checklist rows
 
