@@ -4,7 +4,7 @@ Date: 2026-09-23
 
 ## Status
 
-Accepted. Amended by ADR-0013 (decisions 1 and 3), ADR-0014 (decision 2) and ADR-0015 (decision 8, replaced).
+Accepted. Amended by ADR-0013 (decisions 1 and 3), ADR-0014 (decision 2), ADR-0015 (decision 8, replaced) and ADR-0016 (decisions 4 and 7).
 
 ## Context
 

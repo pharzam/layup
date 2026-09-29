@@ -152,6 +152,8 @@ record by number here, and let the index table below do the linking.
 | [0013](0013-orchestrate-a-target-from-outside-with-layup-run.md) | Orchestrate a target from outside with `layup run` | Proposed |
 | [0014](0014-keep-the-records-in-the-target-with-one-writer.md) | Keep the records in the target with one writer | Proposed |
 | [0015](0015-keep-model-calls-out-of-the-engine-checks.md) | Keep model calls out of the engine checks | Proposed |
+| [0016](0016-put-the-native-stack-gates-in-the-target.md) | Put the native stack gates in the target | Proposed |
+| [0017](0017-prevent-rule-changes-by-agents.md) | Prevent rule changes by agents | Proposed |
 
 <!-- Add one row per ADR as you write them. Keep the newest at the bottom. -->
 
