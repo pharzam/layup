@@ -972,7 +972,7 @@ a PSB rule (O-84).
 | learning weights, bounds, trigger | §13 | O-83 |
 | allowed dependencies | set by the idea owner at Intake or by a decision | `F-0001#13` |
 | `lease.H`; the brief's line limit | set at Intake with evidence | Invariant 4 |
-| `harness.<id>.cap`, `harness.<id>.wall`; `audit.n` | set at Intake with evidence (the harness's documentation; the audit's sampling basis) | Invariant 4 |
+| `harness.<id>.cap`, `harness.<id>.wall`; `audit.n` | set at Intake; the evidence is the comment that set it (the harness's documentation shows only that a cap exists) | Invariant 4 |
 
 The band has one home, `budget.tsv` (§12); a bet or an escalation decision
 changes it as a rendered change, never a parameter row.
@@ -1141,14 +1141,18 @@ exist yet, and most are found during the work (Shape Up; Author-7, Fable-M11).
 code checks that the money caps of the bets so far are at most `U` and their
 wall-clock caps at most the wall-clock appetite, and refuses a brief that does not
 fit (the idea owner can raise `U` or the appetite, or the brief is reshaped); the
-bet fixes the cap. A milestone's clock starts at its bet and pauses while it waits
-for a human, as in §11.
+bet fixes the cap. A milestone's clock starts at its bet; it runs while at least one
+of its open tasks has a running session or a step ready to run, and pauses only
+while every open task waits for a human. The **project total** is the sum over all
+milestones.
 
 **Before each session start**, code sums the milestone's spend: the known money
 (`reported` and `computed`), plus, for each running session, its spend cap when its
 harness enforces one. A session on a harness with neither a token report nor a cap
-has a wall-clock limit (`harness.<id>.wall`), and its money is `unknown`; such a
-session counts as an unknown part before it starts. The idea owner can accept a
+has a wall-clock limit (`harness.<id>.wall`), and so has any session whose harness
+enforces no spend cap, even one that reports tokens (O-80). Such a session counts
+as an unknown part before it starts and while it runs; its money is known only
+after it ends, if its harness reports tokens. The idea owner can accept a
 bound for it (for example "up to USD 3 per session on H3"), recorded in
 `budget.tsv`; with that bound, its part is known as that bound. Then:
 
@@ -1164,8 +1168,7 @@ bound for it (for example "up to USD 3 per session on H3"), recorded in
 
 | Measure (`F-0003`) | Record | The rule in code |
 | ------------------ | ------ | ---------------- |
-| Task Intervention Rate (#70) | `human-inputs.tsv`: every human action, from these sources: all issue and pull-request comments by a human (read at each step, copied whether a step acts on them or not), reviews and review comments, reactions, the issue and pull-request events (closed, reopened, ready for review), workflow runs whose `triggering_actor` is a human (a re-run is a restart), pushes and merges by a human from the repository activity, parameter changes, and each command given to `layup run` on the host; each with its time, actor, kind (answer, correction, restart, gate change, approval, review, parameter, stall answer, bet, acceptance, other), task, and its class | planned only when it is the answer at a planned point listed at Intake (Intake, a bet, an acceptance, a retrospective, a setup), a stall answer, or an escalation answer confirmed as business-forking (a budget escalation always is,
-`F-0001#26`); every other input is unplanned (`F-0001#28`); a parameter change counts for each open task it reaches (§10). Tasks with an unplanned input over all tasks |
+| Task Intervention Rate (#70) | `human-inputs.tsv`: every human action, from these sources: all issue and pull-request comments by a human (read at each step, copied whether a step acts on them or not) and their edits, reviews and review comments, reactions, the issue and pull-request events (closed, reopened, ready for review, labelled), workflow runs whose `triggering_actor` is a human, read per attempt (`…/runs/{run_id}/attempts/{n}`; a re-run is a restart), pushes and merges by a human from the repository activity, parameter changes, and each command given to `layup run` on the host; each with its time, actor, kind (answer, correction, restart, gate change, approval, review, parameter, stall answer, bet, acceptance, other), task, and its class; a reaction or a close is "other" and unplanned, so the rate reads high rather than low | planned only when it is the answer at a planned point listed at Intake (Intake, a bet, an acceptance, a retrospective, a setup), a stall answer, or an escalation answer confirmed as business-forking; every other input is unplanned (`F-0001#28`); a parameter change counts for each open task it reaches (§10). Tasks with an unplanned input over all tasks |
 | Early Question Share (#75) | `questions.tsv`, one table for the project: each question with its phase ("before delivery" until the first task starts), its time, its asker, and whether a human was asked; each escalation to the idea owner is a row too | human questions before delivery over all human questions |
 | Clarification Turnaround (#71) | the same rows: asked, answered, accepted, and the accepting actor (§8) | the 95th percentile of answered minus asked, over the answers later accepted, for questions resolved without a human |
 | Reversal Rate (#72) | `audit.tsv` | overturned answers over audited answers |
@@ -1176,7 +1179,9 @@ bound for it (for example "up to USD 3 per session on H3"), recorded in
 | Stall Rate and Resolution (#73) | the stall and outcome rows of §11 | tasks with a stall over all tasks; stalls closed without a human over all stalls |
 
 **The audit** (`F-0003#57`, `#72`). At each retrospective, and once more 30 days
-after the last merge of the delivery (a planned point that Intake lists), code
+after the last merge of the delivery (a planned point that Intake lists; the
+Operator starts `layup run` for it, and the idea owner confirms its positives
+there), code
 draws a sample with a recorded seed and a hash of its population: the agents'
 answers, screen rows and decisions whose task merged at least 30 days before and
 that no earlier audit sampled (the window of the Reversal Rate, for both

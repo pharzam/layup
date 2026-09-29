@@ -38,17 +38,18 @@ We will record every session's cost and stop at the milestone cap:
 2. **The band** (`B`; `U`, the money appetite) and the wall-clock appetite at
    Intake, from the idea owner, in `budget.tsv`; no per-task budget.
 3. **A cap per milestone,** in money and wall-clock, fixed by its bet; the caps
-   stay within `U` and the wall-clock appetite; a milestone's clock pauses while
-   it waits for a human.
+   stay within `U` and the wall-clock appetite; a milestone's clock pauses only
+   while every open task waits for a human.
 4. **Before each session start,** code sums the known spend and the spend caps of
    running sessions: past the milestone cap, the circuit breaker stops the
    milestone and kills the running sessions; between `B` and `U` with no unknown
-      part, smart-if P5 may continue; an unknown part never counts as below `B`, so
+   part, smart-if P5 may continue; an unknown part never counts as below `B`, so
    the idea owner decides, unless a bound that the idea owner accepted covers it;
    a session with no cap is an unknown part before it starts; at `U`, a hard
    stop.
-5. **A session with no token report and no cap** runs under a wall-clock limit,
-   and its task's telemetry is incomplete (O-80).
+5. **A session whose harness enforces no cap** runs under a wall-clock limit and
+   counts as an unknown part until it ends; a harness with no token report also
+   leaves its task's telemetry incomplete (O-80).
 6. **The measures** read the ledger and the records of ADR-0014: a source for
    every human action, a planned or unplanned class by the Intake's list of
    planned points, and an audit with a recorded seed over items merged at least 30
