@@ -133,3 +133,15 @@ Q-16 A , Q-17 A
 | --- | -------- | ------- |
 | O-98 | Q-16 a | For every slice, the fixes of a slice's last review round are a named item of the whole-design review (plan v2 step 11); a finding there comes back to the Operator before the approval brief. It covers the round-3 fixes of slice A (O-97) and the round-2 fixes of slice B. |
 | O-99 | Q-17 a | The Budget maximum of plan v2 becomes 8,500 lines added plus removed over 72 files, against `946edfc`, close-out inside. The review records keep each round word for word. |
+
+## O-100: a third whole-design round
+
+The Operator's answer to Q-18 (comment 5888333037 on #72), in the author's Claude Code session on 2026-09-29, word for word:
+
+--- begin
+Q-18 a
+--- end
+
+| No. | Question | Reading |
+| --- | -------- | ------- |
+| O-100 | Q-18 a | One more whole-design round (a third), on the round-2 fixes of step 11 and their seams; then the approval brief, citing that round if it ends `nothing material`, or listing its open findings for the Operator's answer. |
