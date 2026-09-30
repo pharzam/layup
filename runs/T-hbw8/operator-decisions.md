@@ -275,3 +275,15 @@ add the six uncovered items to §15, for example by adding P1 and P2 to L-E2. al
 | No. | Decision | Reading |
 | --- | -------- | ------- |
 | O-110 | The research review's six uncovered items go to §15 | The six recommendations of the Operator's research review (`slice-reviews/operator-codex-research.md`) that no limit stated become limits: L-A1, L-A3, L-D2, L-E2 and L-H1 get a sentence each, and L-B4 is new. The report is copied word for word to the review records and linked on #72. |
+
+## O-111: one more review round
+
+The Operator in the author's Claude Code session on 2026-09-30, word for word:
+
+--- begin
+do one round review more
+--- end
+
+| No. | Decision | Reading |
+| --- | -------- | ------- |
+| O-111 | One more review round | Round 7 (Claude Fable 5.1, the whole-design lens) on the O-110 limits (`6fba6a3`) and their seams. |
