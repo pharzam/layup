@@ -227,3 +227,15 @@ The smart-if engine/provider should be registered and configured similarly to th
 | --- | ----- | ------- |
 | O-105 | 1, phrasing | The first paragraph takes the Operator's sentence; "verified by a human" is the approval of the architecture, the specification and the priorities at each bet (§8). |
 | O-106 | 2, smart-if registration | Smart-if providers are declared in a provider register on the LAYUP host, in the harness register's form, probed before use, with the admitted providers in the records; the Operator chooses a target's provider from them at Intake. |
+
+## O-107: one review round on the changes after the approval brief
+
+The Operator in the author's Claude Code session on 2026-09-30, word for word:
+
+--- begin
+Do one round review
+--- end
+
+| No. | Decision | Reading |
+| --- | -------- | ------- |
+| O-107 | One review round | One review round (Claude Fable 5.1, the whole-design lens) on every change after the approval brief (`2ef9d84`): O-101 to O-106 and the fixes of the Operator's Codex review, with their seams. |
