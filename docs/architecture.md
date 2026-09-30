@@ -16,7 +16,7 @@ This document is written in slices (plan v2 of task `T-hbw8`); sections 5 to
 protection, 7 the specification, 8 the phase loop, 9 squads and routing, 10
 decisions, 11 stalls, 12 cost and the measures, 13 learning. Each section
 names the ADR that decides it and the walkthrough that tests it. The walkthroughs
-are in [`walkthroughs/`](walkthroughs/README.md). The Operator's decisions O-66 to O-109 are quoted in [`runs/T-hbw8/operator-decisions.md`](../runs/T-hbw8/operator-decisions.md)
+are in [`walkthroughs/`](walkthroughs/README.md). The Operator's decisions O-66 to O-110 are quoted in [`runs/T-hbw8/operator-decisions.md`](../runs/T-hbw8/operator-decisions.md)
 and [`runs/T-hbw8/inputs-from-pr-69.md`](../runs/T-hbw8/inputs-from-pr-69.md).
 
 ## 1. LAYUP and a target
@@ -1502,7 +1502,9 @@ Each limit is a finding that the design does not close, recorded here (O-66).
   `gh` login; a comment made with that login passes as a human decision.
   Until sessions run in an isolated environment (a container or another
   operating-system user), the separation of O-77 is by convention for that case
-  (K03, K04).
+  (K03, K04). The same is true for the target's own code: `layup gate` runs the
+  product's tests and build scripts in a scratch work tree on the host, under the
+  same user, with the same network access.
 - **L-A2. One forge adapter.** The engine is forge-neutral (§1), but only the
   GitHub adapter is designed; another forge needs its adapter, and a forge that
   lacks one of the six capabilities cannot hold a target (#69 forge question,
@@ -1515,7 +1517,10 @@ Each limit is a finding that the design does not close, recorded here (O-66).
   host; while the host is down, nothing moves (section 11 says how the stall is
   found). A takeover on another host needs the App's private key on that host. A
   run that paused between the records push that announces a forge write and the
-  write itself still makes that one write after a takeover.
+  write itself still makes that one write after a takeover. A forge write whose
+  result is not known (a time-out, or a stop after the write and before the next
+  records push) has no receipt, and no rule reads the forge before the write is
+  made again, so a retry can make it twice (for example a second comment).
 - **L-A4. The bypass list is read once.** The App cannot read a ruleset's
   bypass list, so it is read only at setup, from the Operator's command; a later
   change to it is not seen. The forge's rule-suites API, which reports a bypass
@@ -1535,6 +1540,10 @@ Each limit is a finding that the design does not close, recorded here (O-66).
   head, so a pull request can weaken a gate that it is checked by; review is then
   the only guard (FT4). An organisation ruleset that requires a workflow from a
   protected repository would close this, and needs an organisation.
+- **L-B4. Independence by harness.** A check that must run on another harness
+  than the author's is independent by harness only; two harnesses that run the
+  same model, or read the same inputs, can make the same error, and no record
+  measures how often a verifier misses what its author missed.
 - **L-C1. A fact classed wrongly.** The numbering session can class a need as
   context. The completeness review on another harness and the idea owner's
   confirmation at each bet, which shows every fact with its class and text and
@@ -1547,7 +1556,11 @@ Each limit is a finding that the design does not close, recorded here (O-66).
   still recorded (§12); a question with no accepted time is counted as open,
   never left out.
 - **L-D2. Context by link.** A session gets the records that the step table's
-  links reach; a relevant record that no link reaches is not in its prompt.
+  links reach; a relevant record that no link reaches is not in its prompt. The
+  size check of §9 (bytes divided by four) is an estimate that is not measured
+  against a tokenizer, and it counts only the prompt file, not the harness's own
+  instructions, its tool definitions or the space for the output, so a start
+  that passes the check can still not fit.
 - **L-D3. Acceptance of an answer.** The accepted time is mechanical: an attempt
   that asks the same question again in other words, without citing the answer
   ID, still counts the answer as accepted; the Clarification Turnaround can read
@@ -1558,7 +1571,10 @@ Each limit is a finding that the design does not close, recorded here (O-66).
   Under `off` or `shadow` at P1 and P2, this is every undeclared choice made in
   prose: the checklist rows K32 and K35 are answered only at `cautious` or
   `delegate`.
-- **L-E2. Calibrating P3 and P4.** Under `shadow`, the branch that the provider
+- **L-E2. Calibrating the thresholds.** A threshold's evidence can be only the
+  Operator's comment (§10), at every point; at P1 and P2 no held-out rows
+  measure how many business-forking decisions the provider misses before it
+  gets `delegate`. Under `shadow`, the branch that the provider
   picks at P3 or P4 is not run, so its outcome is unknown; a `delegate` threshold
     for these two points rests only on the Operator's comment. P4 is asked only when
   no weight decides (§13), so it gets few rows; that is accepted.
@@ -1581,6 +1597,9 @@ Each limit is a finding that the design does not close, recorded here (O-66).
 - **L-H1. Learning without exploration.** With `learn.explore` at zero, every task
   of a role goes to the leading route, so the other routes get no new evidence and
   the weights stop moving; a route that became worse is not found by the reward.
+  With exploration, the turns go by the table's order, not by chance, and the
+  reward does not take a task's difficulty into account, so a route that gets the
+  hard tasks can read worse than a weaker route that gets the easy ones.
 - **L-H2. Only some routes learn.** The routes of planning, review and
     verification keep their weights; their quality reaches the reward only through
   the implementing route's findings and acceptances. A route whose harness

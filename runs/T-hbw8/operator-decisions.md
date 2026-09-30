@@ -263,3 +263,15 @@ Do one round review more
 | No. | Decision | Reading |
 | --- | -------- | ------- |
 | O-109 | One more review round | Round 6 (Claude Fable 5.1, the whole-design lens) on the fixes of round 5 and their seams. |
+
+## O-110: the research review's uncovered items become known limits
+
+The Operator in the author's Claude Code session on 2026-09-30, word for word:
+
+--- begin
+add the six uncovered items to §15, for example by adding P1 and P2 to L-E2. also add the Codex review of the architecture to #72 or any where need
+--- end
+
+| No. | Decision | Reading |
+| --- | -------- | ------- |
+| O-110 | The research review's six uncovered items go to §15 | The six recommendations of the Operator's research review (`slice-reviews/operator-codex-research.md`) that no limit stated become limits: L-A1, L-A3, L-D2, L-E2 and L-H1 get a sentence each, and L-B4 is new. The report is copied word for word to the review records and linked on #72. |
