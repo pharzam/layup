@@ -239,3 +239,15 @@ Do one round review
 | No. | Decision | Reading |
 | --- | -------- | ------- |
 | O-107 | One review round | One review round (Claude Fable 5.1, the whole-design lens) on every change after the approval brief (`2ef9d84`): O-101 to O-106 and the fixes of the Operator's Codex review, with their seams. |
+
+## O-108: one more review round
+
+The Operator in the author's Claude Code session on 2026-09-30, word for word:
+
+--- begin
+Do one round review more
+--- end
+
+| No. | Decision | Reading |
+| --- | -------- | ------- |
+| O-108 | One more review round | Round 5 (Claude Fable 5.1, the whole-design lens) on the fixes of round 4 and their seams. |
