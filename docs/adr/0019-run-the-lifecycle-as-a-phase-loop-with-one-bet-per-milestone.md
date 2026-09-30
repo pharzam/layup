@@ -33,7 +33,9 @@ asking role's work (Agent Orchestrator), and the appetite, the pitch and the bet
 
 We will run each target's lifecycle as a phase loop:
 
-1. **Phases.** Intake, Scaffold, Shape, Bet, Build, Accept, Retrospective, then
+1. **Phases.** Intake, Scaffold, Shape (with solution routing: options with a
+   constraint table, dropped and ranked by code, a panel on a tie), Bet, Build,
+   Accept, Retrospective, then
    the next Bet, until every `Must` requirement is accepted; back to Shape only
    when a bet proposes a change of the architecture.
 2. **One bet per milestone.** A one-screen brief (problem, appetite, solution,
@@ -61,8 +63,8 @@ We will run each target's lifecycle as a phase loop:
       `completed`, cites the answer ID, and asks no question that cites it; an
    attempt that a question ends counts toward the attempt limit. A new attempt
    starts from the base commit, with the frozen tests applied.
-6. **Accept.** The approver of the point (the idea owner by default) accepts or
-   rejects each delivered requirement by one comment; a rejection is a need for the next bet.
+6. **Accept.** The idea owner, checked by role, accepts or rejects each
+   delivered requirement by one comment; a rejection is a need for the next bet.
 
 We reject: an architecture approval as its own step in each milestone (human
 load); a review request before the gates and the verification pass; handoff

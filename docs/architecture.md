@@ -681,9 +681,16 @@ start values, §12), code writes the plan ("render from copy N") and the change;
 a verifier session check them as for any task.
 
 - **Shape.** Tasks write the specification (§7 step 6), the target's
-  architecture (its document and decision records, by the target's own rules; a
-  decision that those rules give to a panel gets the blind panel of §11), and the
-  gate-activation batch (§6).
+  architecture (its document and decision records, by the target's own rules),
+  and the gate-activation batch (§6). **Solution routing** (vision 3.1): for each
+  architecture decision, an architect session writes at least two options, each
+  with a fixed table: every constraint that applies (the requirements' criteria,
+  the confirmed constraints, the PSB invariants, the accepted decision records),
+  and for each a pass or fail with its evidence. Code drops each option with a
+  failed or missing constraint row, and ranks the rest by the number of
+  constraints each meets with evidence; a tie at the top, or a decision that the
+  target's rules give to a panel, goes to the blind panel of §11, whose synthesis
+  recommends one. The bet brief shows the ranked options and the one chosen.
 - **Bet** (Decision Points 1 and 3; Shape Up's betting table, one bet per
   milestone). A session of the Product Owner role writes the brief in five parts:
   the problem (the requirements of the milestone), the appetite (its cap of money
@@ -721,7 +728,10 @@ a verifier session check them as for any task.
 - **Accept** (Decision Point 3). A requirement is **delivered** when every task
   that names it in the task register has merged. `layup run` then posts the
   requirement, its criterion, the merged changes and the gate and verification
-  results; the approver answers "accept" or "reject" with a reason. A rejection
+  results; the idea owner answers "accept" or "reject" with a reason. Code takes
+  the answer only from an account whose role in `approvers.tsv` is idea owner
+  (PSB §8: the idea owner accepts the delivered requirements); an approver of
+  another planned point cannot accept a requirement. A rejection
   becomes a new need for the next bet (Shape Up: a new bet, not a patch). The
   record is in §12.
 
@@ -1277,7 +1287,7 @@ bound for it (for example "up to USD 3 per session on H3"), recorded in
 bet, an acceptance, a retrospective, a setup) or a push that such a point asks of
 the Operator (the setup, a workflows batch), a stall answer, or an escalation answer confirmed as business-forking; every other input is unplanned (`F-0001#28`); a parameter change counts for each open task it reaches (§10). Tasks with an unplanned input over all tasks |
 | Early Question Share (#75) | `questions.tsv`, one table for the project: each question with its phase ("before delivery" until the first task starts), its time, its asker, and whether a human was asked; each escalation to the idea owner is a row too | human questions before delivery over all human questions |
-| Clarification Turnaround (#71) | the same rows: asked, answered, accepted, and the accepting actor (§8) | the 95th percentile of answered minus asked, over the answers later accepted, for questions resolved without a human |
+| Clarification Turnaround (#71) | the same rows: asked, answered, accepted, and the accepting actor (§8) | the 95th percentile of accepted minus asked, for questions resolved without a human (`F-0003#71`: "from the question to the accepted answer") |
 | Reversal Rate (#72) | `audit.tsv` | overturned answers over audited answers |
 | Missed Escalations (#57) | `audit.tsv`, over the rows of `screens.tsv` and the agents' decisions | confirmed misses in the sample; it must be zero; an empty or missing sample is "not measured", never a pass |
 | First-Review Acceptance (#69) | `acceptance.tsv`: one row per review of a requirement, with the set of merged tasks it reviews; the review number is counted from the rows before it, on the original requirement ID even when a rejection's new need gets a new one | requirements accepted at review number 1 over delivered requirements |
@@ -1437,7 +1447,7 @@ rows. The evidence for each row is [`runs/T-hbw8/rewrite-checklist.md`](../runs/
 | S7 Verification on Every Change (`#47`), Structural Conformance (`#58`), `REQ-007`, the independent verification of `#66` | [W-07](walkthroughs/W-07-verification-on-every-change.md) | 8, 9 | 0019, 0020 |
 | #69 A3 (every question goes to the Operator) | W-06 | 8, 9 | 0019, 0020 |
 | #69 B5, table C 2.2 (squads, counterpart harness) | W-07 step 7 | 9 | 0020 |
-| Table C 3.1 (model and context routing) | W-12 step 1 and W-06 step 4 (routing); W-13 step 10 (weights); for context, the named check of §9: `layup run` refuses a start whose estimated size passes the model's context | 9, 10 | 0020, 0021 |
+| Table C 3.1 (model, context and solution routing) | W-12 step 1 and W-06 step 4 (routing); W-13 step 10 (weights); for solution routing, the named check of §8 Shape (options with a constraint table, dropped and ranked by code); for context, the named check of §9: `layup run` refuses a start whose estimated size passes the model's context | 9, 10 | 0020, 0021 |
 | S8 Human-on-the-Loop (`F-0003#48`), Missed Escalations (`#57`), `REQ-008`, Invariant 6 | [W-08](walkthroughs/W-08-human-on-the-loop.md) | 10 | 0021, 0022 |
 | #69 B8 (an escalation after the work) | W-08 steps 2 to 5 | 10 | 0022 |
 | O-78, O-79, O-84 (provider, authority, parameters, bounds) | W-08 steps 3, 4; W-06 step 3 | 10 | 0021 |
