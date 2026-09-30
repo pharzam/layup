@@ -584,9 +584,11 @@ The research recommendations (report sections 4, 7 and 8) are not adopted as des
 | 4.5 admission of a decision point | L-E2, L-E1 | Added: the threshold can rest only on the Operator's comment at every point, and P1 and P2 have no held-out measure of missed business-forking decisions. DEC-01 to DEC-03. |
 | 4.6 fair comparison of routes | L-H1, L-H2 | Added to L-H1: exploration goes in turn, not by chance, and the reward ignores task difficulty. LEARN-01. |
 | 4.7 context accounting | L-D2 | Added: bytes divided by four is not measured, and it counts only the prompt file. CTX-01. |
-| 4.8 harness protocols, correlated errors | new L-B4 | Added: independence by harness does not stop two harnesses on one model from making the same error. |
+| 4.8 harness protocols, correlated errors | new L-D4 | Added: independence by harness does not stop two harnesses on one model from making the same error. |
 | 4.9 specifications and gates | L-C1, L-B3, L-A6 | Already stated. SPEC-01, GATE-01, IND-01. |
 | 4.10 stalls | L-F1, L-A3 | Already stated. STALL-01. |
 | 4.11 telemetry and budgets | L-G1, L-G2, L-G3 | Already stated. COST-01. |
 
 These are limits, not new tasks (the Operator's rule: a finding that is not fixed becomes a known limit, not an issue). Adding them changes no behaviour, so it is applied as notes after round 6 without another round (Bootstrap mode rule 3), as the round-6 notes were.
+
+Round 7 (O-111) moved the new limit from L-B4 to L-D4 (its note N3), because the B limits belong to §6; the comment on #72 of 2026-09-30 still says L-B4.

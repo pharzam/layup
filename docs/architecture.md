@@ -1476,7 +1476,7 @@ rows. The evidence for each row is [`runs/T-hbw8/rewrite-checklist.md`](../runs/
 | S7 Verification on Every Change (`#47`), Structural Conformance (`#58`), `REQ-007`, the independent verification of `#66` | [W-07](walkthroughs/W-07-verification-on-every-change.md) | 8, 9 | 0019, 0020 |
 | #69 A3 (every question goes to the Operator) | W-06 | 8, 9 | 0019, 0020 |
 | #69 B5, table C 2.2 (squads, counterpart harness) | W-07 step 7 | 9 | 0020 |
-| Table C 3.1 (model, context and solution routing) | W-12 step 1 and W-06 step 4 (routing); W-13 step 10 (weights); for solution routing, the named check of §8 Shape (options with a constraint table, filtered by code; the panel recommends among the survivors); for context, the named check of §9: `layup run` refuses a start whose estimated size passes the model's context | 9, 10 | 0020, 0021 |
+| Table C 3.1 (model, context and solution routing) | W-12 step 1 and W-06 step 4 (routing); W-13 step 10 (weights); for solution routing, the named check of §8 Shape (options with a constraint table, filtered by code; the panel recommends among the survivors); for context, the named check of §9: `layup run` refuses a start whose estimated size passes the model's context (the estimate: L-D2) | 9, 10 | 0020, 0021 |
 | S8 Human-on-the-Loop (`F-0003#48`), Missed Escalations (`#57`), `REQ-008`, Invariant 6 | [W-08](walkthroughs/W-08-human-on-the-loop.md) | 10 | 0021, 0022 |
 | #69 B8 (an escalation after the work) | W-08 steps 2 to 5 | 10 | 0022 |
 | O-78, O-79, O-84 (provider, authority, parameters, bounds) | W-08 steps 3, 4; W-06 step 3 | 10 | 0021 |
@@ -1503,8 +1503,9 @@ Each limit is a finding that the design does not close, recorded here (O-66).
   Until sessions run in an isolated environment (a container or another
   operating-system user), the separation of O-77 is by convention for that case
   (K03, K04). The same is true for the target's own code: `layup gate` runs the
-  product's tests and build scripts in a scratch work tree on the host, under the
-  same user, with the same network access.
+  product's tests and build scripts, and the gate files of a rule batch before its
+  approval, in a scratch work tree on the host, under the same user, with the same
+  network access; no section names the environment that a gate run gets.
 - **L-A2. One forge adapter.** The engine is forge-neutral (§1), but only the
   GitHub adapter is designed; another forge needs its adapter, and a forge that
   lacks one of the six capabilities cannot hold a target (#69 forge question,
@@ -1520,7 +1521,9 @@ Each limit is a finding that the design does not close, recorded here (O-66).
   write itself still makes that one write after a takeover. A forge write whose
   result is not known (a time-out, or a stop after the write and before the next
   records push) has no receipt, and no rule reads the forge before the write is
-  made again, so a retry can make it twice (for example a second comment).
+  made again, so a retry can make it twice (for example a second comment), and a
+  run that takes the write as done can leave it not made. A paid session start
+  whose acknowledgement is lost has the same gap.
 - **L-A4. The bypass list is read once.** The App cannot read a ruleset's
   bypass list, so it is read only at setup, from the Operator's command; a later
   change to it is not seen. The forge's rule-suites API, which reports a bypass
@@ -1540,10 +1543,6 @@ Each limit is a finding that the design does not close, recorded here (O-66).
   head, so a pull request can weaken a gate that it is checked by; review is then
   the only guard (FT4). An organisation ruleset that requires a workflow from a
   protected repository would close this, and needs an organisation.
-- **L-B4. Independence by harness.** A check that must run on another harness
-  than the author's is independent by harness only; two harnesses that run the
-  same model, or read the same inputs, can make the same error, and no record
-  measures how often a verifier misses what its author missed.
 - **L-C1. A fact classed wrongly.** The numbering session can class a need as
   context. The completeness review on another harness and the idea owner's
   confirmation at each bet, which shows every fact with its class and text and
@@ -1555,7 +1554,7 @@ Each limit is a finding that the design does not close, recorded here (O-66).
   reach; an accepted time is the end of the asker's next attempt. The measure is
   still recorded (§12); a question with no accepted time is counted as open,
   never left out.
-- **L-D2. Context by link.** A session gets the records that the step table's
+- **L-D2. Context by link, and its size.** A session gets the records that the step table's
   links reach; a relevant record that no link reaches is not in its prompt. The
   size check of §9 (bytes divided by four) is an estimate that is not measured
   against a tokenizer, and it counts only the prompt file, not the harness's own
@@ -1565,6 +1564,10 @@ Each limit is a finding that the design does not close, recorded here (O-66).
   that asks the same question again in other words, without citing the answer
   ID, still counts the answer as accepted; the Clarification Turnaround can read
   too short.
+- **L-D4. Independence by harness.** A check that must run on another harness
+  than the author's is independent by harness only; two harnesses that run the
+  same model, or read the same inputs, can make the same error, and no record
+  measures how often a verifier misses what its author missed.
 - **L-E1. An undeclared decision.** A session that makes a business-forking
   choice without declaring it, in prose that the four questions miss and in no
   file that the floor reads, is found only by the Missed Escalations audit (§12).
@@ -1572,9 +1575,10 @@ Each limit is a finding that the design does not close, recorded here (O-66).
   prose: the checklist rows K32 and K35 are answered only at `cautious` or
   `delegate`.
 - **L-E2. Calibrating the thresholds.** A threshold's evidence can be only the
-  Operator's comment (§10), at every point; at P1 and P2 no held-out rows
-  measure how many business-forking decisions the provider misses before it
-  gets `delegate`. Under `shadow`, the branch that the provider
+  Operator's comment (§10), at every point. A calibration record is not required; at
+  P1 it is one agreement share over the `screens.tsv` rows that the Missed
+  Escalations sample checks, which are not held out and do not show the misses
+  apart, and at P2 no record shows how often the provider misses "needs a human". Under `shadow`, the branch that the provider
   picks at P3 or P4 is not run, so its outcome is unknown; a `delegate` threshold
     for these two points rests only on the Operator's comment. P4 is asked only when
   no weight decides (§13), so it gets few rows; that is accepted.
@@ -1594,11 +1598,11 @@ Each limit is a finding that the design does not close, recorded here (O-66).
 - **L-G3. A spend cap between steps.** A harness that checks its spend cap between
   steps (as Claude Code's is) can pass it inside one step, so the known total plus
   the caps is not a hard ceiling.
-- **L-H1. Learning without exploration.** With `learn.explore` at zero, every task
+- **L-H1. Learning and exploration.** With `learn.explore` at zero, every task
   of a role goes to the leading route, so the other routes get no new evidence and
   the weights stop moving; a route that became worse is not found by the reward.
-  With exploration, the turns go by the table's order, not by chance, and the
-  reward does not take a task's difficulty into account, so a route that gets the
+  With exploration, the turns go by the table's order, not by chance, and
+  inside a tier the reward does not take a task's difficulty into account, so a route that gets the
   hard tasks can read worse than a weaker route that gets the easy ones.
 - **L-H2. Only some routes learn.** The routes of planning, review and
     verification keep their weights; their quality reaches the reward only through

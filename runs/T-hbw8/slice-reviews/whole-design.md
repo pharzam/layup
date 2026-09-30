@@ -778,3 +778,49 @@ None.
 ### The author's answer to round 6
 
 The verdict is `nothing material`. Notes N1 to N6 are applied in the next commit (notes cause no round, Bootstrap mode rule 3): a task is ready only while its current head has passed step 5; a redone task takes the old task's row and predecessor links; §5 names the role that a rule takes; a Shape panel that ends `insufficient panel` gives no recommendation and the bet decides; ADR-0014 d3 names the roles and ADR-0017 d5 the batch's approver; O-109 in the header.
+
+## Round 7 (O-111)
+
+2026-09-30, head `e5a22f1` (the O-110 limits in `6fba6a3`); 2 min 41 s; 15,563 output tokens; USD 2.48 at list price. Same reviewer and setup; scope: `git diff 94748c5 e5a22f1 -- docs` and its seams. Word for word:
+
+~~~~text
+# Whole-design review — round 7
+Reviewer: claude-fable-5-1. Head: e5a22f1. Verdict: `nothing material`.
+
+Scope: `git diff 94748c5 e5a22f1 -- docs` (one file, `docs/architecture.md`: the O-111 range in the introduction, and the six limits of §15) and its seams. Checks: `git diff --check 94748c5 e5a22f1` gives no output. I read each changed limit against the section it names, the ADRs and walkthroughs that cite these limits, the §14 table, the PSB measure rows, the research report sections 4.2 to 4.8, and O-110 and O-111. All other steps were reads.
+
+## Each limit (one line each: OK, or the finding/note ID)
+
+- **L-A1** (product code under `layup gate`): OK. §6 runs the gate commands in a scratch work tree on the host, and no section gives that run an isolated user or network. The limit is narrower than the gap: N1.
+- **L-A3** (a forge write with an unknown result): OK. §2 Fencing orders the announcement before the write, and no section records a receipt or reads the forge before a repeated write. The limit is narrower than the report: N2.
+- **L-B4** (independence by harness): OK. §9 excludes an author's harness, not its model, so two harnesses can run one model. PSB `F-0003#66` asks only for a harness agent that did not make the change, so the limit weakens no rule. The letter is a note: N3.
+- **L-D2** (the size check): OK. §9 estimates bytes divided by four over the records that go into the prompt file, and counts nothing else. ADR-0020 agrees. A seam note: N4.
+- **L-E2** (calibrating the thresholds): OK. §10 Calibration and ADR-0021 accept the Operator's comment alone as evidence, at every point. The second clause can be read wider than the gap: N5.
+- **L-H1** (exploration and the reward): OK, with N6. The order of the turns is true of §13 and ADR-0025. The difficulty clause is not exact.
+- **Introduction line** (O-66 to O-111): OK. `operator-decisions.md` holds O-110 and O-111.
+
+## Material findings
+
+None.
+
+## Notes
+
+- **N1. L-A1 names only the product's tests and build scripts.** §6 also runs the gate files of a rule batch that is not yet approved, in a scratch work tree on the host. A session wrote those commands, so they are in the same gap. §4 filters the environment of a session, but no section says which environment a gate run gets. Fix: add "and the gate files of a batch before its approval" to the sentence.
+- **N2. L-A3 states one of the two results that the report names.** Report 4.2 names the duplicate write, and also the opposite case: a run that assumes success can skip a write. The report also lists a paid session start whose acknowledgement is lost. The limit states only the duplicate. The sentence is true; it is narrower than the report item that the author's table maps to it.
+- **N3. L-B4 has the letter of the gates group.** The limits L-B1 to L-B3 belong to §6. L-B4 is about §9 routing, the §7 completeness review and the §12 auditor, and it sits between L-B3 and L-C1. No walkthrough lists it (W-07 and W-11 are its seams). A D letter, or one line in W-07, would make it easier to find.
+- **N4. The §14 row for table C 3.1 does not name L-D2.** The row gives the §9 size check as the named check for context routing. L-D2 now says that a start that passes this check can still not fit. This is not a contradiction, because the row says "estimated". A pointer to L-D2 in that row would show the reader the limit of the check.
+- **N5. L-E2, second clause.** "No held-out rows measure how many business-forking decisions the provider misses" is true as written, but the design has a related record. Under `shadow`, `screens.tsv` holds the P1 answers, and the Missed Escalations sample is P1's ground truth in the §10 table. A calibration record over those rows is one agreement share: it is optional, it is not held out, and it does not show the misses separately. The limit would be more exact if it said so. Also, at P2 the provider's miss is "needs a human", not a business-forking decision.
+- **N6. L-H1, the difficulty clause.** "The reward does not take a task's difficulty into account" is true of the per-task terms. But §13 compares a route only with routes of the same role and tier, and §9 sets the tier from the plan's size and open unknowns. The report's words are "grouping by role and tier does not necessarily equalize task difficulty". The conclusion of the sentence holds inside a tier, so I class this as a note and not as a false statement. This is the nearest item to material. Fix: "inside a tier, the reward does not take a task's difficulty into account".
+- **N7. Two titles no longer cover their text.** "L-D2. Context by link" now holds the size estimate. "L-H1. Learning without exploration" now holds a sentence that starts "With exploration". ADR-0020 and ADR-0025 cite these limits by their old subject, and both citations stay correct.
+
+## Coverage
+
+- **Read in full:** the diff; §2, §3, §4, §6 "The stack gates", §9, §10, §12, §13, §14 and §15 of `docs/architecture.md`; report sections 4.1 to 4.11 and the author's answer table; O-110 and O-111.
+- **Read by search only:** ADR-0013 to ADR-0025, the walkthroughs, the PSB and the facts files, for the limit IDs and for the terms of each limit (isolation, network, receipt, same model, tokenizer, exploration, calibration).
+- **Check 4:** no changed limit weakens a PSB rule, and none presents a limit as a pass.
+- **Not done:** I did not run the link lint or any other script. I did not read §5, §7, §8 or §11 in full; I searched them only for retry, takeover and recovery rules. I did not open the external sources of the report (no network).
+~~~~
+
+### The author's answer to round 7
+
+The verdict is `nothing material`. Notes N1 to N7 are applied in the next commit (notes cause no round, Bootstrap mode rule 3): L-A1 also names the gate files of a rule batch before its approval, and that no section names a gate run's environment; L-A3 also names a write taken as done that was not made, and a paid session start whose acknowledgement is lost; the new limit moves from L-B4 to L-D4; the §14 row of table C 3.1 points to L-D2; L-E2 says what a P1 calibration record is and names the P2 miss as "needs a human"; L-H1 says "inside a tier"; L-D2 and L-H1 get titles that cover their text.
