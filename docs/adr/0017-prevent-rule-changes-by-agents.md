@@ -59,9 +59,9 @@ the complement:
    with its merge actor, from the forge's repository activity, and its approval.
    `F-0003#64` counts a rule-path change that landed outside an approved batch,
    and not as a rendered record of an approved bet or escalation decision, as an
-   agent write. The merge actor of each change must be the App's bot, or
-   an account in `approvers.tsv` for a batch that changes
-   `.github/workflows/` (O-95, O-93).
+   agent write. The merge actor of each change must be the App's bot, or, for a
+   batch that changes `.github/workflows/`, the account in `approvers.tsv` whose
+   role is that batch's approver (O-95, O-93).
 
 We reject: code owners whose approval comes from a second human account (O-77);
 detection by audit alone (Sol-1); a rule-path change at any time other than an

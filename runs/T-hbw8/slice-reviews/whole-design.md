@@ -707,3 +707,74 @@ Both material findings and notes N1 to N6 are applied in the next commit; N7 sta
 | ------- | --- |
 | M1 | The merge order among build tasks is first ready (the first to pass step 5; ties by the register's order); a waiting task does not hold up a ready one; code checks that each predecessor is in the register and that there is no cycle (§8 Build, the transition row, §2). |
 | M2 | All six forge capabilities are required; an adapter that lacks one stops the setup, at Start or at the probes; §1, §5 step 3, L-A2 and ADR-0013 d4 agree. |
+
+## Round 6 (O-109)
+
+2026-09-30, head `adc0f87` (round-5 fixes in `f49f7b9`); 2 min 1 s; 9,881 output tokens; USD 1.43 at list price. Same reviewer and setup; scope: the round-5 fixes. Word for word:
+
+~~~~text
+# Whole-design review — round 6
+
+Reviewer: claude-fable-5-1. Head: adc0f87 (fixes in f49f7b9). Verdict: `nothing material`.
+
+Scope: only `git diff 5fa2e29 f49f7b9 -- docs` and its seams. I worked read-only. The only check I ran is `git diff --check 5fa2e29 f49f7b9`, which printed nothing.
+
+## Case 1 (only the steps a fix touches)
+
+- Forge capabilities at Start — §1, §5 Start step 3, §3 probes, ADR-0013 d4, L-A2: OK.
+- The pin and a run that stops before the first records commit — §5 Start step 2: OK.
+- Intake, the humans and their roles — §3 Humans, §5 gap check step 5, W-01 steps 2 and 9: OK; note N3.
+- Shape, solution routing — §8 Shape, §11 trigger 1 and step 4: OK; note N4.
+- Build, one task through the loop — §2, §8 Build, task loop step 6, the handoff row, ADR-0013 d5: OK; notes N1, N2.
+- Accept, audit and retrospective — not touched.
+
+## Case 2
+
+- Not touched by the fixes. The new sentence "a task that waits (a question, an escalation) does not hold up a ready one" fits the wait states of §11.
+
+## The round-5 findings (one line each)
+
+- M1, the merge order: closed. §8 Build says first ready, with ties by the register's row order, and a waiting task does not block a ready one. Code checks that each predecessor is in the register and that there is no cycle. §2 and the handoff row use the same words.
+- M2, forge capabilities: closed. All six are required in §1, §5 step 3, L-A2 and ADR-0013 d4. The stop in §3 step 3 now fits. No forge case of `not-active` is left in the documents under review.
+- N1 (the pin in W-01 step 2), N2 (start again with an empty repository), N3 (§11 step 4), N4 (no panel with fewer than two harnesses; "dropped twice" is trigger 1), N5 (roles in §3) and N6: applied.
+- N7: open, as the author says.
+
+## Material findings
+
+None.
+
+## Notes
+
+- **N1. A ready task that goes back to its developer.** This is the closest to material.
+  - Where: `docs/architecture.md:738-741`, "the first task to pass step 5 of the loop is next … a task that waits (a question, an escalation) does not hold up a ready one".
+  - The gap: the text does not say whether a task keeps its turn when it is next and then gets a verifier finding, or fails step 5 after the base merge.
+  - Why only a note: "first ready" gives the reading that a task whose current head has not passed step 5 is not ready, so the next ready task goes. Both readings are safe and differ only in speed.
+  - Fix: one sentence, for example "a task is ready only while its current head has passed step 5".
+- **N2. A redone task and its successors.**
+  - Where: `:748-750` closes a task and redoes it "as a new task".
+  - The gap: the successors name the old task as predecessor, and the old task never merges. The new check at `:736` runs only at the plan handoff.
+  - Fix: say that the new task takes the old one's row and its predecessor links in the register.
+  - This is older than the round-5 fix, and rare under first-ready order.
+- **N3. "Those IDs" in §5.**
+  - Where: `:326-327`, "only a comment by one of those IDs is an answer or a decision".
+  - The gap: it names the two Start logins. An approver added at `:359` also gives a decision, as §3 `:143-148` now says.
+  - Fix: "an ID in `approvers.tsv`, in the role the rule names".
+- **N4. Shape with a failed panel.** `:709` covers fewer than two harnesses. A panel that runs and ends `insufficient panel` has no sentence for Shape; §11 step 4 sends it to the Operator, which is a stall rung, not a bet. The same "no recommendation" wording would cover it.
+- **N5. Roles outside comments.** §3 says that each rule that takes a human's comment names its role. The workflow-batch merge (`:193`, ADR-0017 d5) is a merge, not a comment, and names only "an account in `approvers.tsv`". ADR-0014 d3 also does not mention the role column. Neither contradicts the text, but the role could be named.
+- **N6.** `docs/architecture.md:19` says "O-66 to O-108"; O-109 now exists.
+
+## Coverage
+
+- The §14 row "#69 forge question; O-102" still points to §1 and L-A2, and both now agree.
+- `build.parallel` keeps its parameter row (O-103).
+- No coverage row changed. The In-Scope items `F-0003#41` to `#52` and the phase-1 requirements keep their rows.
+
+## Existing solutions
+
+- The merge order now repeats GitHub's merge queue, Bors and Zuul: first ready, then serial. Zuul also says what happens to a queue item that fails (it leaves the queue), which is the point of N1.
+- The predecessor check repeats Make and Bazel: the graph is rejected before any work starts.
+- All capabilities required at start repeats go-scm's and Renovate's platform layers, in their strict form.~~~~
+
+### The author's answer to round 6
+
+The verdict is `nothing material`. Notes N1 to N6 are applied in the next commit (notes cause no round, Bootstrap mode rule 3): a task is ready only while its current head has passed step 5; a redone task takes the old task's row and predecessor links; §5 names the role that a rule takes; a Shape panel that ends `insufficient panel` gives no recommendation and the bet decides; ADR-0014 d3 names the roles and ADR-0017 d5 the batch's approver; O-109 in the header.

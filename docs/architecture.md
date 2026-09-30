@@ -323,9 +323,11 @@ and record the intake in it; they apply the forge settings later
    Free has neither, and on GitHub Pro no drafts: the Operator makes it public or
    moves it to a plan that has both, K15); the probes of §3 at Scaffold prove it. It then pushes the records branch (an orphan, §3)
    with its first commit: the target's pin (step 2); the problem statement and the
-   vision brief byte for byte, each with its SHA-256; `approvers.tsv` with the numeric IDs and roles of the two logins of step 1; and the lease row. From this commit on, only a comment by
-   one of those IDs is an answer or a decision (§3); any other comment is
-      recorded as input. It opens the Intake issue and the control issue (§10), and
+   vision brief byte for byte, each with its SHA-256; `approvers.tsv` with the
+   numeric IDs and roles of the two logins of step 1; and the lease row. From this
+   commit on, only a comment by an ID in `approvers.tsv`, in the role that the
+   rule names, is an answer or a decision (§3); any other comment is recorded as
+   input. It opens the Intake issue and the control issue (§10), and
    waits up to `watch.T` (a Start value) for the dead-man job's first notice there
    ("watch started"), which shows that its App and list work; without it, it goes
    on and records "watch not confirmed" (L-F1).
@@ -706,8 +708,9 @@ a verifier session check them as for any task.
   compares them (the trade-offs that the constraints do not decide) and its
   synthesis recommends one. When every option is dropped, the architect session writes new options once; if
   they are dropped too, the round made no progress, so trigger 1 of §11 opens a
-  stall. With fewer than two harnesses the panel does not run; the brief then
-  shows the survivors with no recommendation, and the bet decides. The bet
+  stall. With fewer than two harnesses the panel does not run, and a panel that ends
+  `insufficient panel` gives none; the brief then shows the survivors with no
+  recommendation, and the bet decides. The bet
   brief shows the survivors, the dropped options with the failed rows, and the
   recommendation; the bet decides.
 - **Bet** (Decision Points 1 and 3; Shape Up's betting table, one bet per
@@ -737,8 +740,9 @@ a verifier session check them as for any task.
   predecessors form no cycle. A task whose predecessors have merged may start; at
   most `build.parallel` tasks (a parameter) run at once. The **merge order** among
   build tasks is first ready: the first task to pass step 5 of the loop is next,
-  with ties by the register's row order; a task that waits (a question, an
-  escalation) does not hold up a ready one. Tasks merge one at a time (the branch rule is "up to date"): after a
+  with ties by the register's row order; a task is ready only while its current
+  head has passed step 5, and a task that waits (a question, an escalation) does
+  not hold up a ready one. Tasks merge one at a time (the branch rule is "up to date"): after a
   merge, `layup run` merges the base into the next task's branch; a conflict is
   resolved by a new attempt. **A verdict and a moving base.** A build task is
   verified when it is next in the merge order and up to date with the base (step
@@ -746,8 +750,8 @@ a verifier session check them as for any task.
   its turn", a wait state (§11). Shape tasks and rule batches are verified before
   their bet, and rendered tasks when they are made. A verified task whose base
   then moves carries its verdict over a clean merge of the base that changes no
-  file it touches, as the target's own rule allows; otherwise it is closed and
-  redone as a new task, with its own issue and records, so the target's review
+  file it touches, as the target's own rule allows; otherwise it is closed and redone as a new task, with its own issue and records,
+  which takes the old task's row and predecessor links in the register, so the target's review
   record never needs a round after `nothing material in scope`.
 - **Accept** (Decision Point 3). A requirement is **delivered** when every task
   that names it in the task register has merged. `layup run` then posts the

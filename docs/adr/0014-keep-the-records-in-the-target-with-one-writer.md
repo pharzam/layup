@@ -49,8 +49,8 @@ each actor from a credential:
    with an installation token made from the App's private key, which only
    `layup run` holds; the App is the only bypass actor of the records branch; it
    has the permissions of O-92 plus commit statuses, and no workflows and no
-   administration permission. Humans are the accounts that `approvers.tsv`
-   names by numeric user ID. Role sessions hold no forge credential
+   administration permission. Humans are the accounts that `approvers.tsv` names by numeric user ID, each
+   with a role (Operator, idea owner, approver); each rule names the role it takes. Role sessions hold no forge credential
    ([ADR-0015](0015-keep-model-calls-out-of-the-engine-checks.md)).
 4. **A human decision** is an issue comment whose author ID is in
    `approvers.tsv` and whose `performed_via_github_app` field is empty. A review,
