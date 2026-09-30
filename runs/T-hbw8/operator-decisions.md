@@ -251,3 +251,15 @@ Do one round review more
 | No. | Decision | Reading |
 | --- | -------- | ------- |
 | O-108 | One more review round | Round 5 (Claude Fable 5.1, the whole-design lens) on the fixes of round 4 and their seams. |
+
+## O-109: one more review round
+
+The Operator in the author's Claude Code session on 2026-09-30, word for word:
+
+--- begin
+Do one round review more
+--- end
+
+| No. | Decision | Reading |
+| --- | -------- | ------- |
+| O-109 | One more review round | Round 6 (Claude Fable 5.1, the whole-design lens) on the fixes of round 5 and their seams. |
