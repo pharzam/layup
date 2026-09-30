@@ -16,7 +16,7 @@ This document is written in slices (plan v2 of task `T-hbw8`); sections 5 to
 protection, 7 the specification, 8 the phase loop, 9 squads and routing, 10
 decisions, 11 stalls, 12 cost and the measures, 13 learning. Each section
 names the ADR that decides it and the walkthrough that tests it. The walkthroughs
-are in [`walkthroughs/`](walkthroughs/README.md). The Operator's decisions O-66 to O-107 are quoted in [`runs/T-hbw8/operator-decisions.md`](../runs/T-hbw8/operator-decisions.md)
+are in [`walkthroughs/`](walkthroughs/README.md). The Operator's decisions O-66 to O-108 are quoted in [`runs/T-hbw8/operator-decisions.md`](../runs/T-hbw8/operator-decisions.md)
 and [`runs/T-hbw8/inputs-from-pr-69.md`](../runs/T-hbw8/inputs-from-pr-69.md).
 
 ## 1. LAYUP and a target
@@ -55,11 +55,9 @@ permissions. GitHub is the default forge for the pilot and its only adapter so
 far (its calls: the REST API, and the GraphQL call that marks a draft ready); the
 GitHub terms in this document (rulesets, `performed_via_github_app`, the activity
 API) are that adapter's. An adapter for another forge (GitLab, Bitbucket, Forgejo)
-maps each capability. Four are required, and the setup stops without them (§5):
-the actor and App flag of a comment, enforced branch rules with bypass actors,
-the draft state, and statuses bound to a source. Any other capability that its
-forge lacks makes each check that needs it `not-active`, which never counts as a
-pass, and the setup names it as a known limit of that target. No other adapter is designed (known limit L-A2).
+maps each capability. All six are required: an adapter that cannot give one
+stops the setup at Start or at the probes of §3, and the stop names the
+capability. No part of LAYUP runs on a forge without them. No other adapter is designed (known limit L-A2).
 
 ## 2. The components
 
@@ -77,8 +75,8 @@ pass, and the setup names it as a known limit of that target. No other adapter i
 **One run per target** (O-103) means one orchestrator process per target at a
 time: no two `layup run` instances drive the same target. Inside that run, the
 sessions of different tasks can run in parallel as the milestone plan's order
-allows (§8: tasks with no open predecessor, up to `build.parallel`); only the
-merges are serial. `layup run` holds a lease row on the records branch: run
+allows (§8: tasks whose predecessors have merged, up to `build.parallel`); only
+the merges are serial, first ready first. `layup run` holds a lease row on the records branch: run
 ID, host, start time and a heartbeat counter that it increases every `lease.H`
 (a parameter, section 10). A second run watches the branch and times the lease
 by its own clock from the moment it last saw the counter change, so the two
@@ -142,8 +140,12 @@ actor.
   commit statuses (write); no workflows and no administration. For the pilot
   this is the App `layup-agent`, installed on each target and given the
   commit-statuses permission; both changes are the Operator's.
-- **Humans.** The Operator and the idea owner, each named at Intake in
-  `approvers.tsv` by the forge's numeric user ID. They can be the same person.
+- **Humans.** The accounts in `approvers.tsv`, each by the forge's numeric user
+  ID and a role: Operator, idea owner (both from Start; they can be the same
+  person), or approver (named by the idea owner at Intake for a planned point).
+  Each rule that takes a human's comment names the role it needs: the Intake
+  answers only from the Operator and the idea owner, an acceptance only from the
+  idea owner, a planned point's answer from its named approver.
 - **Role sessions.** They hold no forge credential (section 4). Each comment that
   LAYUP posts for a session starts with the session ID, and the records bind the
   session's commits to its harness and model.
@@ -302,8 +304,9 @@ and record the intake in it; they apply the forge settings later
       own pin (O-101): source, commit, tree and time go into the first records
    commit (step 3); step S04 of the Scaffold writes the target's
    `docs/setup/armature.pin` from that record, on the setup branch, so the root
-   commit stays unmodified. Once that record exists, no run resolves the commit
-   again. LAYUP's own pin does not bind a target. The printed push command shows
+   commit stays unmodified. Once that record exists, no run resolves the commit again; a run that stops
+   before it (for example at the plan check of step 3) leaves a root commit with no
+   record, and the Operator starts again with an empty repository. LAYUP's own pin does not bind a target. The printed push command shows
    the resolved commit and its difference from LAYUP's own pin, so the Operator
    sees what the push brings.
    The Operator pushes this unmodified copy as the root commit of the default
@@ -313,8 +316,10 @@ and record the intake in it; they apply the forge settings later
    root tree equals the pinned tree, as step S03 asks. The command pushes from a
    plain clone with no hooks installed.
 3. `layup run` reads back the repository's default branch, its root tree and its
-   visibility, records the LAYUP version and the plan that the Operator names with `--plan`, and stops when one differs, or when the plan does not enforce
-   rulesets or offer draft pull requests on it (a private repository on GitHub
+      visibility, records the LAYUP version and the plan that the Operator names with
+   `--plan`, and stops when one differs, when the forge adapter lacks one of the
+   six capabilities of §1, or when the plan does not enforce rulesets or offer
+   draft pull requests on it (a private repository on GitHub
    Free has neither, and on GitHub Pro no drafts: the Operator makes it public or
    moves it to a plan that has both, K15); the probes of §3 at Scaffold prove it. It then pushes the records branch (an orphan, §3)
    with its first commit: the target's pin (step 2); the problem statement and the
@@ -699,8 +704,10 @@ a verifier session check them as for any task.
   code: an option with a failed row, a missing row, or a pass without evidence is
   dropped. With one survivor, it is chosen. With more, the blind panel of §11
   compares them (the trade-offs that the constraints do not decide) and its
-  synthesis recommends one. When every option is dropped, the architect session
-  writes new options once; if they are dropped too, it is a stall (§11). The bet
+  synthesis recommends one. When every option is dropped, the architect session writes new options once; if
+  they are dropped too, the round made no progress, so trigger 1 of §11 opens a
+  stall. With fewer than two harnesses the panel does not run; the brief then
+  shows the survivors with no recommendation, and the bet decides. The bet
   brief shows the survivors, the dropped options with the failed rows, and the
   recommendation; the bet decides.
 - **Bet** (Decision Points 1 and 3; Shape Up's betting table, one bet per
@@ -726,8 +733,12 @@ a verifier session check them as for any task.
   requirement IDs it serves, the tests that will show it done, a size class, and
   its predecessors;
   code checks that each `Must` requirement of the milestone has a task and each
-  task a requirement, and writes the task register. A task whose predecessors have merged may start; at most `build.parallel` tasks
-  (a parameter) run at once; tasks merge one at a time (the branch rule is "up to date"): after a
+  task a requirement, and writes the task register. Code also checks that each predecessor is a task of the register and that the
+  predecessors form no cycle. A task whose predecessors have merged may start; at
+  most `build.parallel` tasks (a parameter) run at once. The **merge order** among
+  build tasks is first ready: the first task to pass step 5 of the loop is next,
+  with ties by the register's row order; a task that waits (a question, an
+  escalation) does not hold up a ready one. Tasks merge one at a time (the branch rule is "up to date"): after a
   merge, `layup run` merges the base into the next task's branch; a conflict is
   resolved by a new attempt. **A verdict and a moving base.** A build task is
   verified when it is next in the merge order and up to date with the base (step
@@ -811,7 +822,7 @@ kinds (the plan, the plan review, the review record, the task file):
 | developer (build task) | verifier | commits; the task file; the plan's tests fail at the base and pass at the head (`layup gate` runs them) |
 | developer (specification) | verifier | commits; the task file; a section in `docs/spec/` for each requirement it names |
 | developer (rule batch) | verifier | commits; the task file; a known-bad patch per kind it touches; `layup gate` passes on its head and fails on each patch |
-| developer (milestone plan) | verifier | the task register rows; each `Must` requirement of the milestone has a task |
+| developer (milestone plan) | verifier | the task register rows; each `Must` requirement of the milestone has a task; each predecessor is a task of the register; no cycle |
 | code (rendered task) | verifier | the change equals code's rendering of the named copy: an inventory version, a decision copy, or the start-values copy (§12) |
 | verifier | close-out | a review record with `nothing material in scope` at the head |
 | verifier | developer | a review record with each finding at a `file:line` |
@@ -1175,8 +1186,7 @@ an `external:` answer goes into the owner's next session.
    code, merges them. Code checks the quorum: a majority of members returned a
    valid output, from at least two harnesses; otherwise the result is
    `insufficient panel`, and the next rung is the Operator. The recommended path
-   goes into the task's next attempt. The Shape phase uses the same panel for a
-   decision that the target's rules give to one (§8).
+   goes into the task's next attempt. The Shape phase uses the same panel to recommend among surviving options (§8).
 5. **The Operator** (an account whose role in `approvers.tsv` is Operator) gets
    one comment on the task's issue: the stall, the diagnosis, the panel's result,
    the evidence, and the answer form, one line:    `answer: <text>` (for a stalled question, it is the question's answer, by a
@@ -1490,9 +1500,9 @@ Each limit is a finding that the design does not close, recorded here (O-66).
   operating-system user), the separation of O-77 is by convention for that case
   (K03, K04).
 - **L-A2. One forge adapter.** The engine is forge-neutral (§1), but only the
-  GitHub adapter is designed; another forge needs its adapter, and each
-  capability that its forge lacks leaves its checks `not-active` (#69 forge
-  question, O-102).
+  GitHub adapter is designed; another forge needs its adapter, and a forge that
+  lacks one of the six capabilities cannot hold a target (#69 forge question,
+  O-102).
 - **L-A6. A newer baseline.** A target pins the baseline's latest state (O-101);
   LAYUP's setup steps and checks are written against the baseline's structure,
   so a change there can break a step. `layup setup verify` then fails on that

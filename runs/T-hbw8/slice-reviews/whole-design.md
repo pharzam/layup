@@ -609,3 +609,101 @@ All five material findings and notes N1, N3, N4, N6, N7 and N8 (in part) are app
 | M3 | Each build task has predecessors; a task whose predecessors have merged may start; at most `build.parallel` run at once (a parameter); merges stay serial (§2, §8, §10, ADR-0013 d5). |
 | M4 | The Intake form names approvers for every planned point except the acceptance, which is always the idea owner's; an added login gets the role "approver", never "idea owner" (§5, W-01 step 9). |
 | M5 | Four forge capabilities are required and stop the setup when missing (a comment's actor and App flag, enforced branch rules, the draft state, statuses bound to a source); any other lacking one leaves its checks `not-active` (§1, ADR-0013 d4). |
+
+## Round 5 (O-108)
+
+2026-09-30, head `5fa2e29` (round-4 fixes in `ffd760d`); 2 min 17 s; 11,522 output tokens; USD 1.90 at list price. Same reviewer and setup; scope: the round-4 fixes. Word for word:
+
+~~~~text
+# Whole-design review — round 5
+
+Reviewer: claude-fable-5-1. Head: 5fa2e29 (fixes in ffd760d). Verdict: `material findings: 2`.
+
+Scope: only `git diff 090e684 ffd760d -- docs` and its seams. I worked read-only. The only check I ran is `git diff --check` on that range, which printed nothing.
+
+## Case 1 (only the steps a fix touches)
+
+- New target, the copy and the pin — §5 Start steps 2 and 3, W-02 step 1: OK; notes N1, N2.
+- Forge capabilities at Start — §1, ADR-0013 d4: **M2**.
+- Intake batch, approvers of the planned points — §5 gap check step 5, W-01 step 9: OK.
+- Shape, solution routing — §8 Shape, ADR-0019 d1, §14 row for table C 3.1: OK; notes N3, N4.
+- Build, one task through the loop — §2, §8 Build, §10 `build.parallel`, ADR-0013 d5: **M1**.
+- Accept — §8 Accept: OK. It now fits §5.
+- Audit and retrospective — not touched.
+
+## Case 2
+
+- Not touched by the fixes. L-D1 now fits §12 and W-06 step 8.
+
+## The round-4 findings (one line each)
+
+- M1, the pin's place in Git: closed. The pin is in the first records commit, S04 writes the file from it, and the root commit stays unmodified.
+- M2, the solution-routing rank: closed. The table is a filter, the panel recommends, the bet decides, and the three missing cases are stated.
+- M3, parallel tasks: the start rule is closed (predecessors, `build.parallel`, the parameter row). The fix removed the only sentence that gave the merge order: **M1**.
+- M4, the approver of the acceptance: closed in §5 and W-01 step 9.
+- M5, forge capabilities: closed for the draft state and the branch rules. The split is not complete: **M2**.
+- Notes N1, N3 (in part), N4, N6 and N7 are applied. N2, N5 and N8 are answered as the author says.
+
+## Material findings
+
+### M1. The merge order among build tasks is no longer defined
+
+- Where: `docs/architecture.md:729-733`. "A task whose predecessors have merged may start; at most `build.parallel` tasks (a parameter) run at once; tasks merge one at a time … A build task is verified when it is next in the merge order and up to date with the base". Also `:774` (step 6) and `:79` ("as the milestone plan's order allows").
+- Source: an operative ambiguity that the fix made. The old sentence "Tasks run in the plan's order" gave the order, and it is gone. The only "merge order" left (`:721`) orders the specification, the batches and "the build tasks" as one group.
+- Why it matters: tasks A and B have no predecessor and run at once. B passes its checks first, while A waits for an answer.
+  - If the order is the register's row order, B stays `pending` "waits for its turn" behind A. One stalled task then blocks every finished one.
+  - If the order is "first ready", B is verified now.
+  - The text allows both readings. The verifier start, the wait state and the base merge "into the next task's branch" all depend on the choice.
+- A second gap in the same rule: code does not check the predecessors. The check at `:728-729` and the handoff row at `:814` cover only requirements and tasks. A cycle, or a predecessor that is not in the register, means no task "may start", and no §11 trigger fires.
+- Fix:
+  - State the order in §8 Build. For example: among the tasks that passed step 5, the first to pass, with ties by register order.
+  - Add to the code check and to the handoff row that each predecessor is a task of the register and that the graph has no cycle.
+  - Use the same words in §2 line 79.
+
+### M2. The split of forge capabilities contradicts §3, §5 and L-A2
+
+- Where: `docs/architecture.md:58-62`. "Four are required, and the setup stops without them (§5) … Any other capability that its forge lacks makes each check that needs it `not-active`". This stands against three places:
+  - `:174-175`: "reads the repository activity with the App's token, and stops when it cannot".
+  - `:316-317`: §5 stops only for rulesets and draft pull requests.
+  - `:1493-1495` (L-A2): "each capability that its forge lacks leaves its checks `not-active`".
+- Source: a contradiction between operative sentences. It is the same class as round-4 M5. It also touches FT3, because the audit's actor comes from the activity.
+- Why it matters:
+  - A forge with no activity log: §1 goes on with the audit `not-active`, and §3 stops the run at the Scaffold and at every start.
+  - A forge with no App identity: there is no "check" to mark. The single writer of §3 does not exist, and §1 still says to go on.
+  - A forge with no App flag on comments, or no source-bound statuses: §1 points to §5 for the stop, and §5 has no such stop.
+  - L-A2 still says that every lacking capability is `not-active`.
+- Fix:
+  - Make all six capabilities required, or say in §3 step 3 that a forge without the activity leaves the audit `not-active`.
+  - In §5 step 3, or at the §3 probes, name the stop for each required capability.
+  - Bring L-A2 in line with §1.
+
+## Notes
+
+- N1. W-01 step 2 lists the first records commit without the pin (`brief.md`, `approvers.tsv`, the lease row). §5 step 3 and W-02 step 1 have it.
+- N2. "Once that record exists, no run resolves the commit again" leaves one window open. A run that stops in step 3 (the K15 plan case) has a root commit and no record. The next run resolves again, and if the baseline moved it stops on the root tree. That fails closed; the text could say that the Operator then starts again with an empty repository.
+- N3. §11 step 4 (`:1178-1179`) still says that Shape uses the panel "for a decision that the target's rules give to one". §8 now uses it for every decision with more than one survivor.
+- N4. Two Shape cases have no sentence. With one admitted harness the panel is `insufficient panel`, and the brief then has survivors and no recommendation. "All options dropped twice" is called a stall, but it is not one of the five triggers of §11, so its place in the Stall Rate is open.
+- N5. §3 (`:145-146`) still says that the humans in `approvers.tsv` are the Operator and the idea owner. The new role "approver" is a third kind. The Intake answer check (W-01 step 9) and the workflow-batch merge (`:191`) test only "in `approvers.tsv`", not the role.
+- N6. `docs/architecture.md:19` says "O-66 to O-107"; O-108 now exists.
+- N7. No walkthrough step shows the provider probe (round-4 N4, second half), and the glossary entries of round-4 N8 are still open, as the author says.
+
+## Coverage
+
+- The §14 row for table C 3.1 now says "filtered by code; the panel recommends among the survivors". It fits §8.
+- `build.parallel` has its parameter row (O-103) and no §14 row; none is required.
+- No other coverage row changed. The In-Scope items `F-0003#41` to `#52` and the phase-1 requirements keep their rows.
+
+## Existing solutions
+
+- Merge order of parallel work: GitHub's merge queue, Bors and Zuul all use "first ready, then serial". Make and Bazel reject a dependency cycle before any work starts. M1 lacks both.
+- Required against optional forge capabilities: go-scm and Renovate's platform layer declare per-platform capability flags and fail at start for a missing required one.
+- A filter first, then a judged choice: MADR's "decision drivers" with "considered options", and ATAM. The design now repeats this shape.~~~~
+
+### The author's answer to round 5
+
+Both material findings and notes N1 to N6 are applied in the next commit; N7 stays open as stated (the glossary entries at the close-out; no walkthrough step for the provider probe).
+
+| Finding | Fix |
+| ------- | --- |
+| M1 | The merge order among build tasks is first ready (the first to pass step 5; ties by the register's order); a waiting task does not hold up a ready one; code checks that each predecessor is in the register and that there is no cycle (§8 Build, the transition row, §2). |
+| M2 | All six forge capabilities are required; an adapter that lacks one stops the setup, at Start or at the probes; §1, §5 step 3, L-A2 and ADR-0013 d4 agree. |

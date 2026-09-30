@@ -52,10 +52,8 @@ We will orchestrate each target from outside it with one foreground process,
    capabilities (issues and comments with their actor, draft pull requests,
    commit statuses bound to a source, branch rules with bypass actors, the
    repository activity, an App identity); GitHub is the default and first
-   adapter for the pilot; without one of the four required capabilities (a
-   comment's actor and App flag, enforced branch rules, the draft state,
-   statuses bound to a source) the setup stops; any other that a forge lacks
-   makes its checks `not-active`.
+   adapter for the pilot; all six capabilities are required, and the setup
+   stops on a forge whose adapter lacks one.
 5. **One run per target** means one orchestrator process per target at a time
    (O-103); inside it, tasks whose predecessors have merged run in parallel, up to
    `build.parallel`, and the merges are serial.
