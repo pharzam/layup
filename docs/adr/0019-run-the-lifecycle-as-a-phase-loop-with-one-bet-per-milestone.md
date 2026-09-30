@@ -34,7 +34,8 @@ asking role's work (Agent Orchestrator), and the appetite, the pitch and the bet
 We will run each target's lifecycle as a phase loop:
 
 1. **Phases.** Intake, Scaffold, Shape (with solution routing: options with a
-   constraint table, dropped and ranked by code, a panel on a tie), Bet, Build,
+   constraint table, filtered by code, the panel recommending among the
+   survivors, the bet deciding), Bet, Build,
    Accept, Retrospective, then
    the next Bet, until every `Must` requirement is accepted; back to Shape only
    when a bet proposes a change of the architecture.

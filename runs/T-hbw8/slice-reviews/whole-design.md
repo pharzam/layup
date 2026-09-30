@@ -495,3 +495,117 @@ All six material findings and notes N1 to N7 are applied in the next commit. Und
 | M5 | The `F-0003#64` reading and ADR-0017 include a rendered record of an escalation decision. |
 | M6 | One milestone-0 cap action up to the first bet in §11, §12 and ADR-0024: the Operator raises the cap or stops; its spend counts toward `U`. |
 | N1 to N7 | Code runs the pinned `prd-lint` and accepts only empty-cell failures; "S04 to S14"; W-01's command; a reclass reopens the draft in a new task; milestone 0 counts toward `U`; the Operator's pushes at a planned point are planned; ADR-0016's replacement rule. |
+
+## Round 4 (O-107)
+
+2026-09-30, head `090e684`; 4 min 18 s; 23,989 output tokens; USD 2.94 at list price. Same reviewer and setup; scope: every change after the approval brief (`2ef9d84`), that is O-101 to O-106 and the fixes of the Operator's Codex review. Word for word:
+
+~~~~text
+# Whole-design review — round 4
+
+Reviewer: claude-fable-5-1. Head: 090e684. Verdict: `material findings: 5`.
+
+Scope: only `git diff 2ef9d84 090e684 -- docs` and its seams. I worked read-only and ran no checks.
+
+## Case 1 (only the steps a change touches)
+
+- New target, the copy and the pin — §5 Start steps 2 and 3, W-02 step 1 (O-101): **M1**.
+- Forge calls at Start — §1 forge interface, ADR-0013 d4 (O-102): OK on GitHub; **M5** for another forge.
+- Intake batch, provider choice — §5 gap check step 5, §10 provider register, ADR-0021 d1 (O-106): OK; notes N3, N4.
+- Intake batch, approvers of the planned points — §5 gap check step 5: **M4**.
+- Shape, the target's architecture — §8 Shape solution routing, ADR-0019 d1: **M2**.
+- Build, one task through the loop — §2 "One run per target", §8 Build, ADR-0013 d5 (O-103): **M3**.
+- Accept — §8 Accept, ADR-0019 d6, W-11 step 11: the role check is OK; its seam with Intake is **M4**.
+- Audit and retrospective — not touched.
+
+## Case 2 (only the steps a change touches)
+
+- The question row and its measure — §12 Clarification Turnaround, W-06 step 8: OK; note N1.
+- The owner session hangs, the stall procedure, the Operator's answer — not touched. The Operator's role check in W-12 step 7 fits the new Accept rule.
+
+## The changes of this round (one line per change)
+
+- O-101, a target's own pin: the decision is done; **M1** at the seam.
+- O-102, forge interface: done in §1, ADR-0013 d4, L-A2 and the §14 row; **M5** at the seam with §5.
+- O-103, one process per target: stated in §2 and ADR-0013 d5; **M3** at the seam with §8.
+- O-104 and O-105, first paragraph: closed; it carries the Operator's sentence. Note N6.
+- O-106, provider register: closed in §2, §10, ADR-0021 d1 and the parameter row. Notes N3, N4.
+- Codex 1, Clarification Turnaround: closed; the formula now matches `F-0003#71`. Note N1.
+- Codex 2, who accepts a requirement: closed in §8, ADR-0019 d6 and W-11; the lines that Codex cited in §5 are unchanged: **M4**.
+- Codex 3, solution routing: the step exists; its ranking rule does not work: **M2**.
+
+## Material findings
+
+### M1. The target's pin has no place in Git between Start and Scaffold, and step 2 contradicts itself
+
+- Where: `docs/architecture.md:296-306`. "`layup run` resolves the latest commit … and records it as the target's own pin: source, commit, tree and time, in the target's `docs/setup/armature.pin` (O-101). … The Operator pushes this unmodified copy as the root commit … its root tree equals the pinned tree". Also `:307-313`, where the first records commit lists the brief, `approvers.tsv` and the lease, but no pin.
+- Source: FT6; Invariant 8 (`F-0001#8`, "pinned, recorded"); `docs/setup/steps.tsv` S03 and S04, where the pin file is written after the root commit.
+- Why it matters: a copy that holds the new pin file is not unmodified, and its tree is not the pinned tree. If the file comes later (S04, at Scaffold), the resolved commit lives only on the host through the whole Intake. A restart or a takeover on another host runs `git ls-remote` again and gets a newer commit. Step 3 then "stops when one differs", or a wrong pin is recorded. Before O-101 the pin was a file in LAYUP's repository, so this seam is new.
+- Fix: write the pin (source, commit, tree, time) into the first records commit of step 3. Say that S04 writes `docs/setup/armature.pin` from that record on the setup branch. Say that a run which finds a root commit never resolves again. Update W-02 step 1 to match.
+
+### M2. The solution-routing rank cannot tell options apart
+
+- Where: `docs/architecture.md:689-693`. "Code drops each option with a failed or missing constraint row, and ranks the rest by the number of constraints each meets with evidence; a tie at the top … goes to the blind panel". Also ADR-0019 d1 and the §14 row for table C 3.1.
+- Source: vision brief 3.1 ("evaluate, score, and rank"); Codex finding 3; the §14 claim of a named check.
+- Why it matters: each table lists every constraint that applies. After the drop, every remaining option passes every row, so all counts are equal. Every decision with two surviving options is then a tie and goes to the panel, so code ranks nothing. Three cases have no rule: a pass row without evidence (dropped, or counted lower?), all options dropped, and who chooses when there is no tie.
+- Fix: choose one. Either state that the table is a filter and the panel (or the bet) chooses among the survivors; or add a score that can differ, for example the `Should` criteria met or a cost and risk row per option. Also state the three missing cases.
+
+### M3. "In parallel as the plan's order allows" has no rule in §8
+
+- Where: `docs/architecture.md:76-78`. "the sessions of different tasks can run in parallel as the milestone plan's order allows (§8); only the merges are serial." Against `:716-717`: "Tasks run in the plan's order, and merge one at a time". Also ADR-0013 d5.
+- Source: O-103, the Operator's question on serial or parallel tasks; an operative ambiguity.
+- Why it matters: the plan task gives each build task its requirement IDs, tests and size class. It gives no predecessor field and no limit on tasks running at once. §8 alone reads as serial starts. An implementer cannot tell whether tasks 2 and 3 may start while task 1 runs, or how many sessions one host and one harness cap may carry.
+- Fix: in §8 Build, give each build task its predecessors. Say that tasks with no open predecessor may run at once, up to a named parameter, and add that parameter to §10's table.
+
+### M4. Intake still lets the idea owner name an approver for the acceptance
+
+- Where: `docs/architecture.md:343-346`. "the approver of each planned approval point; a login named there is added to `approvers.tsv`". Against `:731-734`: "Code takes the answer only from an account whose role in `approvers.tsv` is idea owner". `:1286-1287` lists "an acceptance" as a planned approval point. W-01 step 9 repeats "the approvers of each planned point".
+- Source: Codex finding 2, which cited these §5 lines; PSB §8 (`F-0001#23`, `#31`).
+- Why it matters: the idea owner names X for the acceptance at Intake. §5 takes the name, §8 refuses X's comment, and the requirement waits until a stall. The role that an added login gets is also not stated; if it is "idea owner", the new check is empty.
+- Fix: in §5 step 5 and W-01 step 9, exclude the acceptance (the idea owner's, PSB §8). State the role of an added login, and that it is never "idea owner".
+
+### M5. A missing forge capability: §1 goes on, §5 stops
+
+- Where: `docs/architecture.md:57-60`. "a capability that its forge lacks makes each check that needs it `not-active`, which never counts as a pass, and the setup names it as a known limit of that target." Against `:308-310`: "stops when … the plan does not enforce rulesets or offer draft pull requests on it". Also ADR-0013 d4 and L-A2.
+- Source: a contradiction between two operative sentences; FT3 for the identity capabilities.
+- Why it matters: for the same lack (no draft state, no enforced branch rules), §1 continues with a known limit and §5 stops the run. For "comments with the actor and whether an App made it", no check is involved: the human-decision rule of §3 has no input, and `not-active` does not say what happens.
+- Fix: split the capabilities in §1. The required ones (actor and App flag, enforced branch rules, draft state, statuses bound to a source) stop the setup when missing, as §5 says. Only the others leave a check `not-active`.
+
+## Notes
+
+- N1. With "accepted minus asked", the accepted time is the end of the asker's next attempt (W-06 step 8). L-D1 still gives only the session start as the reason that 120 seconds is out of reach. The formula also does not say that a question with no accepted time is left out and counted.
+- N2. O-101 has no ADR home. §5 names ADR-0016 and ADR-0017, and neither holds the per-target pin. `NFR-006`'s criterion and its trace (ADR-0009, check `pin`) still read as LAYUP's own pin only.
+- N3. The provider register is missing from §1's list of what stays on the host (`:40`) and from the host's credentials (`:43-46`). §4 does not say that a provider's credential is removed from a session's environment.
+- N4. The provider probe is a paid call; no ledger row is named for it (FT2). No walkthrough step shows the probe or the choice, and W-01 has none.
+- N5. L-A6 says that `layup setup verify` fails when the baseline changes. That holds for a change of structure. A newer baseline that weakens a rule or adds a workflow passes, and the Operator pushes it unread. The printed push command could show the resolved commit and its difference from LAYUP's own pin.
+- N6. `docs/architecture.md:19` says "O-66 to O-104"; the text cites O-105 and O-106.
+- N7. §2's runner row still says "the LAYUP GitHub App", which is the line the Operator quoted for O-102. §1's adapter sentence covers it only by example.
+- N8. W-12's limit list names L-A2 "one forge"; the limit is now "One forge adapter". L-A6 sits between L-A2 and L-A3. The glossary has no entry for "provider register" or "forge adapter".
+
+## Coverage
+
+- The §14 row "#69 forge question; O-102" points to §1 and L-A2: OK.
+- The row for table C 3.1 now names solution routing as a named check of §8 Shape. The row exists; the check does not rank (M2).
+- L-A6 is new and has no §14 row; none is required.
+- The rows for S2 and `NFR-006` still point to W-02, which carries the new pin (M1, N2).
+- No other coverage row changed. In-Scope items `F-0003#41` to `#52` and the phase-1 requirements keep their rows.
+
+## Existing solutions
+
+- Pin at setup: Copier and Cruft record the template commit in the generated project and can update from it later. The design repeats the record and ignores the update path.
+- Forge neutrality: go-scm (Drone, Jenkins X) and Renovate's platform layer already map GitHub, GitLab, Bitbucket and Gitea behind one interface with capability flags.
+- Parallel tasks with serial merges: GitHub's merge queue, Bors and Zuul do this, and Zuul adds speculative testing. Task predecessors are the dependency graph of Make or Bazel.
+- Provider register: LiteLLM's model list and OpenRouter hold the endpoint, key route, model version and price per provider.
+- Solution routing: the Pugh matrix, ATAM's utility tree and MADR's "decision drivers and considered options" give a score that can differ between options, which M2 lacks.~~~~
+
+### The author's answer to round 4
+
+All five material findings and notes N1, N3, N4, N6, N7 and N8 (in part) are applied in the next commit; N2 and N5 are answered in the text (N5 by the push command that shows the resolved commit and its difference); the glossary entries of N8 are left for the close-out. O-107 asked for one round, so these fixes go to the Operator unreviewed.
+
+| Finding | Fix |
+| ------- | --- |
+| M1 | The target's pin goes into the first records commit; S04 writes the target's `docs/setup/armature.pin` from that record on the setup branch, so the root commit stays unmodified; no run resolves the commit again once the record exists (§5 steps 2, 3; W-02 step 1). |
+| M2 | The constraint table is a filter: an option with a failed or missing row, or a pass without evidence, is dropped; one survivor is chosen; with more, the panel recommends; all dropped twice is a stall; the bet decides (§8 Shape, ADR-0019 d1, §14). |
+| M3 | Each build task has predecessors; a task whose predecessors have merged may start; at most `build.parallel` run at once (a parameter); merges stay serial (§2, §8, §10, ADR-0013 d5). |
+| M4 | The Intake form names approvers for every planned point except the acceptance, which is always the idea owner's; an added login gets the role "approver", never "idea owner" (§5, W-01 step 9). |
+| M5 | Four forge capabilities are required and stop the setup when missing (a comment's actor and App flag, enforced branch rules, the draft state, statuses bound to a source); any other lacking one leaves its checks `not-active` (§1, ADR-0013 d4). |

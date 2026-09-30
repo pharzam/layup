@@ -16,7 +16,7 @@ This document is written in slices (plan v2 of task `T-hbw8`); sections 5 to
 protection, 7 the specification, 8 the phase loop, 9 squads and routing, 10
 decisions, 11 stalls, 12 cost and the measures, 13 learning. Each section
 names the ADR that decides it and the walkthrough that tests it. The walkthroughs
-are in [`walkthroughs/`](walkthroughs/README.md). The Operator's decisions O-66 to O-104 are quoted in [`runs/T-hbw8/operator-decisions.md`](../runs/T-hbw8/operator-decisions.md)
+are in [`walkthroughs/`](walkthroughs/README.md). The Operator's decisions O-66 to O-107 are quoted in [`runs/T-hbw8/operator-decisions.md`](../runs/T-hbw8/operator-decisions.md)
 and [`runs/T-hbw8/inputs-from-pr-69.md`](../runs/T-hbw8/inputs-from-pr-69.md).
 
 ## 1. LAYUP and a target
@@ -41,8 +41,8 @@ harness register and the price list stay on the LAYUP host; each value that a ru
 uses is copied into the records (the session start row, the ledger row).
 
 **The LAYUP host** holds, per target: LAYUP's own clone of the target, one
-separate clone per role session, the harness credentials, and the App's private
-key, in a file only the Operator's user can read (mode 0600), from which
+separate clone per role session, the harness and provider registers and their
+credentials, and the App's private key, in a file only the Operator's user can read (mode 0600), from which
 `layup run` makes installation tokens. None of these is project state: each run rebuilds the clones from
 the forge and the records (Invariant 1).
 
@@ -55,9 +55,11 @@ permissions. GitHub is the default forge for the pilot and its only adapter so
 far (its calls: the REST API, and the GraphQL call that marks a draft ready); the
 GitHub terms in this document (rulesets, `performed_via_github_app`, the activity
 API) are that adapter's. An adapter for another forge (GitLab, Bitbucket, Forgejo)
-maps each capability; a capability that its forge lacks makes each check that
-needs it `not-active`, which never counts as a pass, and the setup names it as a
-known limit of that target. No other adapter is designed (known limit L-A2).
+maps each capability. Four are required, and the setup stops without them (§5):
+the actor and App flag of a comment, enforced branch rules with bypass actors,
+the draft state, and statuses bound to a source. Any other capability that its
+forge lacks makes each check that needs it `not-active`, which never counts as a
+pass, and the setup names it as a known limit of that target. No other adapter is designed (known limit L-A2).
 
 ## 2. The components
 
@@ -68,14 +70,15 @@ known limit of that target. No other adapter is designed (known limit L-A2).
 | The decision component | the smart-if: a package of `layup run` that asks a registered provider at named points (section 10); the providers are declared in the provider register, as harnesses are (O-106) | inside `layup run` | a result that `layup run` records |
 | The squad manager | the harness register, admission and routing (section 9) | inside `layup run` | the same |
 | The learning loop | the reward and the routing update at each retrospective (section 13) | `layup run`, at the retrospective | the same |
-| The runner | the LAYUP GitHub App and the LAYUP host | the forge; the host | through `layup run` only |
+| The runner | the LAYUP App of the forge adapter (for the pilot, the GitHub App) and the LAYUP host | the forge; the host | through `layup run` only |
 | The dead-man job | a scheduled workflow in the Operator's control repository, as the App `layup-watch` (section 11) | the forge | a notice on a target's control issue |
 | The target | the product repository | the forge | — |
 
 **One run per target** (O-103) means one orchestrator process per target at a
 time: no two `layup run` instances drive the same target. Inside that run, the
 sessions of different tasks can run in parallel as the milestone plan's order
-allows (§8); only the merges are serial. `layup run` holds a lease row on the records branch: run
+allows (§8: tasks with no open predecessor, up to `build.parallel`); only the
+merges are serial. `layup run` holds a lease row on the records branch: run
 ID, host, start time and a heartbeat counter that it increases every `lease.H`
 (a parameter, section 10). A second run watches the branch and times the lease
 by its own clock from the moment it last saw the counter change, so the two
@@ -296,8 +299,13 @@ and record the intake in it; they apply the forge settings later
 2. `layup run` resolves the latest commit of the baseline's default branch at
    that moment (`git ls-remote`), clones that commit, removes `.git` (ADR-0011
    decision 7; step S02 changes from `npx degit`), and records it as the target's
-   own pin: source, commit, tree and time, in the target's
-   `docs/setup/armature.pin` (O-101). LAYUP's own pin does not bind a target.
+      own pin (O-101): source, commit, tree and time go into the first records
+   commit (step 3); step S04 of the Scaffold writes the target's
+   `docs/setup/armature.pin` from that record, on the setup branch, so the root
+   commit stays unmodified. Once that record exists, no run resolves the commit
+   again. LAYUP's own pin does not bind a target. The printed push command shows
+   the resolved commit and its difference from LAYUP's own pin, so the Operator
+   sees what the push brings.
    The Operator pushes this unmodified copy as the root commit of the default
    branch, with the Operator's own login and one command that `layup run`
    prints: the copy holds CI files, and the App has no workflows permission
@@ -309,8 +317,8 @@ and record the intake in it; they apply the forge settings later
    rulesets or offer draft pull requests on it (a private repository on GitHub
    Free has neither, and on GitHub Pro no drafts: the Operator makes it public or
    moves it to a plan that has both, K15); the probes of §3 at Scaffold prove it. It then pushes the records branch (an orphan, §3)
-   with its first commit: the problem statement and the vision brief byte for
-   byte, each with its SHA-256; `approvers.tsv` with the numeric IDs and roles of the two logins of step 1; and the lease row. From this commit on, only a comment by
+   with its first commit: the target's pin (step 2); the problem statement and the
+   vision brief byte for byte, each with its SHA-256; `approvers.tsv` with the numeric IDs and roles of the two logins of step 1; and the lease row. From this commit on, only a comment by
    one of those IDs is an answer or a decision (§3); any other comment is
       recorded as input. It opens the Intake issue and the control issue (§10), and
    waits up to `watch.T` (a Start value) for the dead-man job's first notice there
@@ -341,9 +349,10 @@ and record the intake in it; they apply the forge settings later
 5. Code merges the rows, removes a question whose quote and kind repeat, gives
    each an ID, and posts **one** comment on the Intake issue. It has two blocks:
    the questions and the intent form for the idea owner (the success criteria,
-   the appetite and the band of §12, the approver of each planned approval
-   point; a login named there is added to `approvers.tsv`, because the idea
-   owner named it), and the setup questions, the proposed marker sources and the
+   the appetite and the band of §12, the approver of each planned approval point
+   except the acceptance of a requirement, which is always the idea owner's (PSB
+   §8); a login named there is added to `approvers.tsv` with the role
+   "approver", never "idea owner"), and the setup questions, the proposed marker sources and the
    parameters for the Operator (the owner map of §9, the smart-if provider and
    authority of §10).
 6. The idea owner and the Operator answer, each in one comment, one line per
@@ -686,11 +695,14 @@ a verifier session check them as for any task.
   architecture decision, an architect session writes at least two options, each
   with a fixed table: every constraint that applies (the requirements' criteria,
   the confirmed constraints, the PSB invariants, the accepted decision records),
-  and for each a pass or fail with its evidence. Code drops each option with a
-  failed or missing constraint row, and ranks the rest by the number of
-  constraints each meets with evidence; a tie at the top, or a decision that the
-  target's rules give to a panel, goes to the blind panel of §11, whose synthesis
-  recommends one. The bet brief shows the ranked options and the one chosen.
+  and for each a pass or fail with its evidence. The table is a **filter**, applied by
+  code: an option with a failed row, a missing row, or a pass without evidence is
+  dropped. With one survivor, it is chosen. With more, the blind panel of §11
+  compares them (the trade-offs that the constraints do not decide) and its
+  synthesis recommends one. When every option is dropped, the architect session
+  writes new options once; if they are dropped too, it is a stall (§11). The bet
+  brief shows the survivors, the dropped options with the failed rows, and the
+  recommendation; the bet decides.
 - **Bet** (Decision Points 1 and 3; Shape Up's betting table, one bet per
   milestone). A session of the Product Owner role writes the brief in five parts:
   the problem (the requirements of the milestone), the appetite (its cap of money
@@ -711,10 +723,11 @@ a verifier session check them as for any task.
   the rendered task), the rule batches, then the build tasks. A requirement changes only
   at a bet, or by an escalation decision (§10).
 - **Build.** A plan task splits the milestone into build tasks, each with the
-  requirement IDs it serves, the tests that will show it done, and a size class;
+  requirement IDs it serves, the tests that will show it done, a size class, and
+  its predecessors;
   code checks that each `Must` requirement of the milestone has a task and each
-  task a requirement, and writes the task register. Tasks run in the plan's
-  order, and merge one at a time (the branch rule is "up to date"): after a
+  task a requirement, and writes the task register. A task whose predecessors have merged may start; at most `build.parallel` tasks
+  (a parameter) run at once; tasks merge one at a time (the branch rule is "up to date"): after a
   merge, `layup run` merges the base into the next task's branch; a conflict is
   resolved by a new attempt. **A verdict and a moving base.** A build task is
   verified when it is next in the merge order and up to date with the base (step
@@ -921,7 +934,8 @@ System One API; Laya, an open-weight decision model with a Jev-compatible API,
 run on the host or at an endpoint; or another provider behind the same
 interface), its endpoint, its credential route, its model versions, its size
 limit, and its price source. Before a provider is used, a fixed probe request
-checks that it answers, which model version answered, and its response form; the
+checks that it answers, which model version answered, and its response form (a
+paid call, with its ledger row); the
 admitted providers and their probe results go to the records, as the harnesses'
 do. **The provider** of a target (O-78) is chosen by the Operator at Intake from
 the admitted providers, or `none`. Laya needs its own calibration: its confidence
@@ -1070,6 +1084,7 @@ a PSB rule (O-84).
 | `stall.attempts`, `ci.T`, `panel.K` | set at Intake with evidence | O-82, Invariant 4 |
 | the reward's term weights; `learn.step`, `learn.min_weight`, `learn.max_weight`, `learn.min`, `learn.explore`; `learn.trigger`; the learning authority | set at Intake, the evidence is the Operator's comment; `learn.trigger` each end-of-milestone retrospective; the authority `propose` | O-83, Invariant 4 |
 | allowed dependencies | set by the idea owner at Intake or by a decision | `F-0001#13` |
+| `build.parallel` | set at Intake; the evidence is the Operator's setting (the host's and the harnesses' limits) | O-103, Invariant 4 |
 | `lease.H`, `watch.T`, the intake cap; the brief's line limit | `lease.H`, `watch.T` and the intake cap at Start (the command is the evidence); the line limit at Intake | Invariant 4 |
 | `harness.<id>.cap`, `harness.<id>.wall`; `audit.n` | the harness values in the harness register, which the Operator sets before Start (recorded at Start); `audit.n` at Intake; the evidence is the Operator's setting | Invariant 4 |
 
@@ -1447,7 +1462,7 @@ rows. The evidence for each row is [`runs/T-hbw8/rewrite-checklist.md`](../runs/
 | S7 Verification on Every Change (`#47`), Structural Conformance (`#58`), `REQ-007`, the independent verification of `#66` | [W-07](walkthroughs/W-07-verification-on-every-change.md) | 8, 9 | 0019, 0020 |
 | #69 A3 (every question goes to the Operator) | W-06 | 8, 9 | 0019, 0020 |
 | #69 B5, table C 2.2 (squads, counterpart harness) | W-07 step 7 | 9 | 0020 |
-| Table C 3.1 (model, context and solution routing) | W-12 step 1 and W-06 step 4 (routing); W-13 step 10 (weights); for solution routing, the named check of §8 Shape (options with a constraint table, dropped and ranked by code); for context, the named check of §9: `layup run` refuses a start whose estimated size passes the model's context | 9, 10 | 0020, 0021 |
+| Table C 3.1 (model, context and solution routing) | W-12 step 1 and W-06 step 4 (routing); W-13 step 10 (weights); for solution routing, the named check of §8 Shape (options with a constraint table, filtered by code; the panel recommends among the survivors); for context, the named check of §9: `layup run` refuses a start whose estimated size passes the model's context | 9, 10 | 0020, 0021 |
 | S8 Human-on-the-Loop (`F-0003#48`), Missed Escalations (`#57`), `REQ-008`, Invariant 6 | [W-08](walkthroughs/W-08-human-on-the-loop.md) | 10 | 0021, 0022 |
 | #69 B8 (an escalation after the work) | W-08 steps 2 to 5 | 10 | 0022 |
 | O-78, O-79, O-84 (provider, authority, parameters, bounds) | W-08 steps 3, 4; W-06 step 3 | 10 | 0021 |
@@ -1514,7 +1529,9 @@ Each limit is a finding that the design does not close, recorded here (O-66).
 - **L-D1. Clarification Turnaround.** A question costs a new session of the owner
   role and a new attempt of the asking role; while a session start takes minutes,
   the start value of 120 seconds at the 95th percentile (`F-0004#15`) is out of
-  reach. The measure is still recorded (§12).
+  reach; an accepted time is the end of the asker's next attempt. The measure is
+  still recorded (§12); a question with no accepted time is counted as open,
+  never left out.
 - **L-D2. Context by link.** A session gets the records that the step table's
   links reach; a relevant record that no link reaches is not in its prompt.
 - **L-D3. Acceptance of an answer.** The accepted time is mechanical: an attempt

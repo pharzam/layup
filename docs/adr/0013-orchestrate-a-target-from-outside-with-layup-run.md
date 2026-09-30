@@ -52,11 +52,13 @@ We will orchestrate each target from outside it with one foreground process,
    capabilities (issues and comments with their actor, draft pull requests,
    commit statuses bound to a source, branch rules with bypass actors, the
    repository activity, an App identity); GitHub is the default and first
-   adapter for the pilot; a capability that another forge lacks makes its checks
-   `not-active`.
+   adapter for the pilot; without one of the four required capabilities (a
+   comment's actor and App flag, enforced branch rules, the draft state,
+   statuses bound to a source) the setup stops; any other that a forge lacks
+   makes its checks `not-active`.
 5. **One run per target** means one orchestrator process per target at a time
-   (O-103); the tasks inside it run in parallel as the plan allows, and the merges
-   are serial.
+   (O-103); inside it, tasks whose predecessors have merged run in parallel, up to
+   `build.parallel`, and the merges are serial.
 
 This amends ADR-0011 decision 1 (`layup run` is a long-running foreground
 process; it is still not a daemon, and LAYUP still has no database and no network
