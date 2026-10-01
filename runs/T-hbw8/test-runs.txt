@@ -1,6 +1,6 @@
 # T-hbw8 — test runs
 
-## Step 14, all checks, 2026-10-01T07:43:57Z, after the Operator's approval (O-112)
+## Step 14, all checks, 2026-10-01T07:53:23Z, at `74626b9` (the close-out), after the Operator's approval (O-112)
 $ sh docs/adr/adr-lint.sh
 adr-lint: OK
 exit 0
@@ -8,7 +8,7 @@ $ sh docs/prd/prd-lint.sh
 prd-lint: OK
 exit 0
 $ sh docs/links/link-lint.sh
-link-lint: OK  1077 links resolved
+link-lint: OK  1080 links resolved
 exit 0
 $ sh docs/tests/run-discipline-tests.sh
 run-discipline-tests: 81 passed, 0 failed
@@ -23,7 +23,7 @@ $ sh docs/setup/setup-check.sh
 run-discipline-tests: 81 passed, 0 failed
 adr-lint: OK
 prd-lint: OK
-link-lint: OK  1077 links resolved
+link-lint: OK  1080 links resolved
 exit 0
 $ go build ./...
 exit 0
@@ -31,8 +31,8 @@ $ go vet ./...
 exit 0
 $ go test -count=1 ./...
 ?   	github.com/pharzam/layup/cmd/layup	[no test files]
-ok  	github.com/pharzam/layup/internal/cli	0.529s
-ok  	github.com/pharzam/layup/internal/psb	0.530s
+ok  	github.com/pharzam/layup/internal/cli	0.154s
+ok  	github.com/pharzam/layup/internal/psb	0.128s
 exit 0
 $ git diff --check e08f584
 exit 0
