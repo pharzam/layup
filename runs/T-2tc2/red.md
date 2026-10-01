@@ -99,3 +99,16 @@ $ go test -count=1 -run TestEachCallRunsItsVerb/version ./internal/git/   # run 
 $ go test -count=1 -tags=integration -run TestInitAddAndCommit ./internal/git/
     git_integration_test.go:116: LsFiles: ["a.txt" "café.txt" "docs/b.md" "run.sh" "été.md"], <nil>
 ```
+
+Run 10 (finding 2): `CheckoutDetach` and `SwitchCreate` passed
+`--end-of-options`, which `checkout` and `switch` may read as a revision
+before `git` 2.44. The tests fail because the arguments still hold it, and
+because a text that is not a full object ID starts `git`.
+
+```text
+$ go test -count=1 -run 'TestEachCallRunsItsVerb/(checkout|switch)|TestCheckoutAndSwitchTakeAFullObjectID' ./internal/git/   # run 10
+    --- FAIL: TestEachCallRunsItsVerb/checkout_--detach … --- FAIL: TestEachCallRunsItsVerb/switch_-c
+    git_test.go:164: "-x": <nil>; want a *FailedError with code -1
+    git_test.go:168: "-x": 2 starts of git, want none
+        … the same for "HEAD", 39 and 41 characters, and capital letters
+```

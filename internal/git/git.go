@@ -32,8 +32,8 @@ func (e *NotFoundError) Error() string { return "git not found: " + e.Err.Error(
 func (e *NotFoundError) Unwrap() error { return e.Err }
 
 // FailedError says that a call of git failed: git exited with a code that is
-// not 0, did not start or was stopped (Code -1), or exited 0 with an output
-// that the call cannot read (Code 0).
+// not 0, did not start (also when the call refused its input) or was stopped
+// (Code -1), or exited 0 with an output that the call cannot read (Code 0).
 type FailedError struct {
 	Args   []string // the arguments after the -c values
 	Code   int
@@ -139,9 +139,10 @@ func LsRemote(url, ref string) (string, error) {
 // Clone clones the repository at url into dir, and checks out no file.
 func Clone(url, dir string) error { return do("", "clone", "--no-checkout", "--", url, dir) }
 
-// CheckoutDetach checks out rev, on no branch.
-func CheckoutDetach(dir, rev string) error {
-	return do(dir, "checkout", "--detach", "--end-of-options", rev)
+// CheckoutDetach checks out commit, a full object ID such as LsRemote gives,
+// on no branch.
+func CheckoutDetach(dir, commit string) error {
+	return doAt(dir, commit, "checkout", "--detach", commit)
 }
 
 // Init makes an empty repository at dir, on the branch main.
@@ -163,9 +164,20 @@ func Commit(dir, message string, who Identity) error {
 	return err
 }
 
-// SwitchCreate makes the branch at start and puts the work tree on it.
-func SwitchCreate(dir, branch, start string) error {
-	return do(dir, "switch", "-c", branch, "--end-of-options", start)
+// SwitchCreate makes the branch at commit, a full object ID, and puts the
+// work tree on it.
+func SwitchCreate(dir, branch, commit string) error {
+	return doAt(dir, commit, "switch", "-c", branch, commit)
+}
+
+// doAt is do for checkout and switch. They get no --end-of-options, which
+// they may read as a revision before git 2.44, so commit must be a full
+// object ID: any other text, which could be an option, starts no git.
+func doAt(dir, commit string, args ...string) error {
+	if (len(commit) != 40 && len(commit) != 64) || strings.Trim(commit, "0123456789abcdef") != "" {
+		return &FailedError{Args: args, Code: -1, Err: errors.New("not a full object ID")}
+	}
+	return do(dir, args...)
 }
 
 // Branch makes the branch name at start, with no switch.

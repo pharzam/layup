@@ -111,11 +111,11 @@ that the steps, the checks and `layup gate` name.
 | `Version` | `git --version` | the minimum version (below) |
 | `LsRemote` | `git ls-remote --exit-code -- URL REF` | S02 |
 | `Clone` | `git clone --no-checkout -- URL DIR` | S02 |
-| `CheckoutDetach` | `git checkout --detach --end-of-options REV` | S02 |
+| `CheckoutDetach` | `git checkout --detach COMMIT` | S02 |
 | `Init` | `git init -b main -- DIR` | S03 |
 | `Add` | `git add --all -- PATH…`; no path is the whole tree | S03 to S15; a fixture run of `gate:<kind>` |
 | `Commit` | `git commit -m MESSAGE` | S03 to S15; a fixture run |
-| `SwitchCreate` | `git switch -c BRANCH --end-of-options START` | S04: the branch `layup-setup` |
+| `SwitchCreate` | `git switch -c BRANCH COMMIT` | S04: the branch `layup-setup` |
 | `Branch` | `git branch --end-of-options NAME START` | a branch at a commit, with no switch |
 | `SwitchOrphan` | `git switch --orphan BRANCH` | S15: the branch `layup-records` |
 | `RevParse` | `git rev-parse --verify --end-of-options REV` | S02, S03: the tree of a commit; `layup gate`: `--base`, `--head` |
@@ -129,7 +129,12 @@ that the steps, the checks and `layup gate` name.
 
 - `--end-of-options` or `--` comes before each revision, URL and path, so an
   input is never an option (`layup gate` takes revisions from its arguments).
-  `DiffNames` names a renamed path at both ends, so a renamed product path
+  `checkout` and `switch` may read `--end-of-options` as a revision before
+  `git` 2.44 (a reading of git's option parser; not measured, the LAYUP host
+  has 2.54.0 only). So `CheckoutDetach` and `SwitchCreate` get none: `COMMIT`
+  is a full object ID (40 or 64 hexadecimal characters), and the call refuses
+  any other text before `git` starts.
+- `DiffNames` names a renamed path at both ends, so a renamed product path
   counts as changed; `-z` gives each path unchanged.
 - The orphan commit of S15 (task `T-d6q5`, #92) needs a scratch work tree, or
   a new call: `switch --orphan` removes the tracked files from the work tree.
@@ -195,8 +200,9 @@ changes a plain `git` run.
 **Two kinds of error** (decided here, D4 of #79, with condition 2 of its plan
 review), as Go types for `errors.As`. `NotFoundError`: `git` is not on the
 `PATH`. `FailedError`: each other failure, with the arguments, the exit code
-and the standard error; the code is -1 when `git` did not start or was
-stopped, and 0 when `git` exited 0 with an output that the call cannot read.
+and the standard error; the code is -1 when `git` did not start (also when
+the call refused its input) or was stopped, and 0 when `git` exited 0 with an
+output that the call cannot read.
 The packages that may import `internal/git` (`internal/gate`, `internal/setup`,
 `internal/verify`) tell the kinds apart and give `internal/cli` a result;
 `internal/cli` maps results, never a `git` error, to exit codes. Reason: a
@@ -205,7 +211,8 @@ check that could not run is `not-active`, never `fail` (`NFR-004`).
 **The minimum version of `git` is 2.32.0** (decided here, D5 of #79): the
 first version with `GIT_CONFIG_GLOBAL` (the release notes of git 2.32.0, in
 [`Documentation/RelNotes`](https://github.com/git/git/tree/master/Documentation/RelNotes)).
-It also covers `switch` (2.23) and `init -b` (2.28). `internal/git` gives the
+It also covers `switch` (2.23), `init -b` (2.28) and `--end-of-options`
+(2.24; for `rev-parse`, 2.30). `internal/git` gives the
 version (`Version`) and its test (`Supported`); the packages that import it
 check it. The LAYUP host has 2.54.0; no test runs 2.32.0, so the minimum rests
 on the release notes.

@@ -15,6 +15,9 @@ var wantConfig = strings.Fields("-c core.hooksPath=/dev/null -c core.attributesF
 	"-c core.excludesFile=/dev/null -c core.autocrlf=false -c core.precomposeUnicode=false -c commit.gpgsign=false " +
 	"-c http.emptyAuth=false")
 
+// fullID is an object ID of SHA-1, 40 hexadecimal characters.
+const fullID = "0123456789abcdef0123456789abcdef01234567"
+
 // who is the identity of the test commits, at 2026-01-01T00:00:00Z.
 var who = Identity{Name: "LAYUP test", Email: "test@layup.invalid", Time: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)}
 
@@ -55,12 +58,12 @@ func TestEachCallRunsItsVerb(t *testing.T) {
 		{"version", "", "--version", func() { Version() }},
 		{"ls-remote", "", "ls-remote --exit-code -- " + url + " HEAD", func() { LsRemote(url, "HEAD") }},
 		{"clone", "", "clone --no-checkout -- " + url + " w/target", func() { Clone(url, "w/target") }},
-		{"checkout --detach", "r", "checkout --detach --end-of-options abc", func() { CheckoutDetach("r", "abc") }},
+		{"checkout --detach", "r", "checkout --detach " + fullID, func() { CheckoutDetach("r", fullID) }},
 		{"init -b main", "", "init -b main -- r", func() { Init("r") }},
 		{"add, the whole tree", "r", "add --all --", func() { Add("r") }},
 		{"add, two paths", "r", "add --all -- a.txt -b", func() { Add("r", "a.txt", "-b") }},
 		{"commit", "r", "commit -m chore:S04", func() { Commit("r", "chore:S04", who) }},
-		{"switch -c", "r", "switch -c layup-setup --end-of-options abc", func() { SwitchCreate("r", "layup-setup", "abc") }},
+		{"switch -c", "r", "switch -c layup-setup " + fullID, func() { SwitchCreate("r", "layup-setup", fullID) }},
 		{"branch", "r", "branch --end-of-options side abc", func() { Branch("r", "side", "abc") }},
 		{"switch --orphan", "r", "switch --orphan layup-records", func() { SwitchOrphan("r", "layup-records") }},
 		{"rev-parse", "r", "rev-parse --verify --end-of-options abc^{tree}", func() { RevParse("r", "abc^{tree}") }},
@@ -147,6 +150,27 @@ func TestTheOutputIsRead(t *testing.T) {
 	var failed *FailedError
 	if _, err := LsRemote("u", "HEAD"); !errors.As(err, &failed) || failed.Code != 0 {
 		t.Errorf("LsRemote with no line for HEAD: %v; want a *FailedError with code 0", err)
+	}
+}
+
+// CheckoutDetach and SwitchCreate take a full object ID and no
+// --end-of-options; any other text, which could be an option, starts no git.
+func TestCheckoutAndSwitchTakeAFullObjectID(t *testing.T) {
+	for _, rev := range []string{"-x", "HEAD", fullID[:39], fullID + "0", strings.ToUpper(fullID)} {
+		calls := stub(t, "", nil)
+		var failed *FailedError
+		for _, err := range []error{CheckoutDetach("r", rev), SwitchCreate("r", "b", rev)} {
+			if !errors.As(err, &failed) || failed.Code != -1 {
+				t.Errorf("%q: %v; want a *FailedError with code -1", rev, err)
+			}
+		}
+		if len(*calls) != 0 {
+			t.Errorf("%q: %d starts of git, want none", rev, len(*calls))
+		}
+	}
+	calls := stub(t, "", nil)
+	if err := CheckoutDetach("r", strings.Repeat("ab", 32)); err != nil || len(*calls) != 1 {
+		t.Errorf("an object ID of SHA-256: %v, %d starts of git; want no error and 1 start", err, len(*calls))
 	}
 }
 
