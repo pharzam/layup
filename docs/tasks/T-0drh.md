@@ -94,7 +94,10 @@ round 3 on `f83320e` (cycle 2, O-116), 1 material and 4 notes; round 4 on
 `runs/T-0drh/`. The last round ended `not mergeable, findings recorded`; its
 finding and both notes are fixed in `d3458f7`, which no round reviewed, by the
 Operator's decision O-119. Every finding of every round is fixed; none became an
-issue. All local checks pass on the landing head
+issue. **Budget:** 1,590 lines added plus removed, inside the maximum of 1,900;
+21 files, one over the maximum of 20. The extra files are the four review
+records under `runs/T-0drh/`, which the two rounds beyond the plan (O-116,
+O-117) added; they are kept as separate records, not joined to meet the count. All local checks pass on the landing head
 ([`test-runs.md`](../../runs/T-0drh/test-runs.md)). Next: `T-55n2`, the
 implementation plan (#42), then #29.
 
