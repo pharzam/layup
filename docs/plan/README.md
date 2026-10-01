@@ -87,15 +87,16 @@ ADR task as its first step.
 ## The tasks of phase 1
 
 "Demo" is the one thing that a reader is shown when the task is done, in one
-sentence ([R11](../issue-workflow.md#r11--single-goal-issues)). "Items" are the keys of the inventory. "Fact" is the In-Scope fact that the task
-serves (Bootstrap mode rule 1). "Cap" is the expected cycle cap; the plan review
-of each task sets it by [Bootstrap mode](../engineering-discipline.md#bootstrap-mode)
-rule 3.
+sentence ([R11](../issue-workflow.md#r11--single-goal-issues)). "Items" are the
+keys of the inventory. "Fact" is the In-Scope fact that the task serves
+(Bootstrap mode rule 1). "Cap" is the expected cycle cap; the plan review of
+each task sets it by [Bootstrap
+mode](../engineering-discipline.md#bootstrap-mode) rule 3.
 
 | # | Task ID | Issue | Task | Demo | Parent | Items | Requirements | Fact | Tests | Size | Lines | After | Cap |
 | - | ------- | ----- | ---- | ---- | ------ | ----- | ------------ | ---- | ----- | ---- | ----- | ----- | --- |
 | 1 | `T-18v6` | [#78](https://github.com/pharzam/layup/issues/78) | Records: `internal/tsv`, the field rule, and the test that reads every schema block of `docs/spec/` | `go test -tags=integration ./internal/tsv/` passes: the schema parser of the new record package reads every schema block of `docs/spec/`. | `T-vk3k` | `found-tsv`, `found-spec-schema-test` | NFR-001, NFR-002, NFR-003, NFR-005, NFR-007, REQ-001, REQ-002, REQ-004, REQ-007, REQ-009, REQ-011 | F-0003#44 | unit (the writer, the reader, the types); integration (each schema block against its Go schema) | large | 900 | — | 1 |
-| 2 | `T-2tc2` | [#79](https://github.com/pharzam/layup/issues/79) | `internal/git`, the one caller of `git`, and the test of the package rules | The integration tests prove that only `internal/git` starts `git`, under a hostile Git configuration of the host. | `T-vk3k` | `found-git`, `found-boundary-test`, `gate-nfr005-imports` | NFR-001, NFR-005, NFR-007 | F-0003#44 | unit; integration (real `git` on temporary repositories; `go list -deps` and the import rules) | large | 700 | — | 1 |
+| 2 | `T-2tc2` | [#79](https://github.com/pharzam/layup/issues/79) | `internal/git`, the one caller of `git`, and the test of the package rules | The test of the package rules proves, on the real module, that only `internal/git` starts `git`. | `T-vk3k` | `found-git`, `found-boundary-test`, `gate-nfr005-imports` | NFR-001, NFR-005, NFR-007 | F-0003#44 | unit; integration (real `git` on temporary repositories; `go list -deps` and the import rules) | large | 700 | — | 1 |
 | 3 | `T-2yw7` | [#80](https://github.com/pharzam/layup/issues/80) | The command frame (usage, arguments, exit codes, progress lines) and the end-to-end harness | Each usage error of the built `layup` binary gives exit code 2, by an end-to-end test. | `T-vk3k` | `found-cli`, `found-e2e-harness` | NFR-004, NFR-005, REQ-001, REQ-002, REQ-004 | F-0003#44 | unit; integration; e2e (the binary run as a user) | large | 400 | 2 | 1 |
 | 4 | `T-3jpx` | [#81](https://github.com/pharzam/layup/issues/81) | The stack catalog package: the embedded reader and a test entry | The embedded test entry of the catalog is read by its rules, with its `go.mod` and its `.github/` files. | `T-vk3k` | `gate-catalog-package`, `setup-catalog` | NFR-003, NFR-007, REQ-002, REQ-004 | F-0003#44 | unit; integration (the embedded tree read by its rules) | small | 350 | 1 | 1 |
 | 5 | `T-5sgt` | [#82](https://github.com/pharzam/layup/issues/82) | `layup gate REPO --base REV --head REV` | `layup gate` on a Go repository prints one verdict per gate kind, with exit code 0 only when each kind passes or is clear. | `T-vk3k` | `gate-manifest`, `gate-scratch-tree`, `gate-results`, `gate-run`, `gate-command` | NFR-004, NFR-005, REQ-004, REQ-007 | F-0003#44, F-0003#47 | unit (the result rules in their order); integration (a scratch tree with the base's gate files); e2e (the command, exit codes 0, 1, 2; the repeat rule) | large | 1100 | 1, 2, 3 | 1 |
