@@ -34,7 +34,6 @@ same summary, dated — rather than deleting it or checking it off.
 - **T-stfn** — Step 2, the core engine: `layup gate`, `layup setup` and `layup setup verify`, the telemetry and stall records, the release review and the first pilot ([#29](https://github.com/pharzam/layup/issues/29); [plan](../plan/README.md))
 - **T-b97r** — `layup setup` and `layup setup verify`, the parent of its child tasks ([#77](https://github.com/pharzam/layup/issues/77); [plan](../plan/README.md))
 - **T-vk3k** — `layup gate`, the parent of its child tasks ([#33](https://github.com/pharzam/layup/issues/33); [plan](../plan/README.md))
-- **T-18v6** — Row 1 of the plan: Records: `internal/tsv`, the field rule, and the test that reads every schema block of `docs/spec/` ([#78](https://github.com/pharzam/layup/issues/78); [plan](../plan/README.md#the-tasks-of-phase-1))
 - **T-2tc2** — Row 2 of the plan: `internal/git`, the one caller of `git`, and the test of the package rules ([#79](https://github.com/pharzam/layup/issues/79); [plan](../plan/README.md#the-tasks-of-phase-1))
 - **T-2yw7** — Row 3 of the plan: The command frame (usage, arguments, exit codes, progress lines) and the end-to-end harness ([#80](https://github.com/pharzam/layup/issues/80); [plan](../plan/README.md#the-tasks-of-phase-1))
 - **T-3jpx** — Row 4 of the plan: The stack catalog package: the embedded reader and a test entry ([#81](https://github.com/pharzam/layup/issues/81); [plan](../plan/README.md#the-tasks-of-phase-1))

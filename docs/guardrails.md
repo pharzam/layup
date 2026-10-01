@@ -309,6 +309,12 @@ These traps are not domain-specific: they hurt every project's test suite.
   **The check:** compare each edge of the source inventory, and each "settled by" and
   "read by" pair, with the transitive predecessors of the tasks, and list each edge
   that the plan drops on purpose with its reason.
+- ❌ **A glob that drops a read error.** Go's `fs.Glob` ignores an I/O error, so
+  a directory that is missing or cannot be read gives no match and no error, and
+  a test over "every file of the directory" passes with nothing read. Task
+  `T-18v6` (#78) found it in its block reader. **The check:** read the directory
+  with a call that returns its error (`fs.ReadDir`), and fail on zero matches
+  where the test needs at least one.
 - ❌ **A cycle cap raised after a last-round verdict.** `review-record-lint` reads
   the cap from a `## Plan review` comment, and a round that ended as the last
   round under the cap of its time carries a last-round verdict. When the Operator

@@ -20,6 +20,7 @@ here directly, in the shape above.
 - **YYYY-MM-DD** — **<ID>** — <one-sentence summary of what the task found or delivered> ([<link>](...); [detail](<id>.md))
 -->
 
+- **2026-10-01** — **T-18v6** — Row 1 of the plan: `internal/tsv`, the reader and the writer of a record by its schema, and the test that reads every schema block of `docs/spec/`; K32 settled (input that is not UTF-8 is an input error) ([#78](https://github.com/pharzam/layup/issues/78); [detail](T-18v6.md))
 - **2026-10-01** — **T-55n2** — The implementation plan of LAYUP: the milestones `M1` to `M4c`, the 20 tasks of phase 1 in their order (issues #77 to #97), the defect register, the `PRD-0001` §12 Task column and the traceability table ([#76](https://github.com/pharzam/layup/issues/76); [detail](T-55n2.md))
 - **2026-10-01** — **T-0drh** — The technical specification of LAYUP for phase 1 in `docs/spec/`: one section per phase-1 requirement, the package table, the records layout of phases 1 to 4, and the contracts of `layup psb check`, `layup setup`, `layup setup verify` and `layup gate` ([#74](https://github.com/pharzam/layup/issues/74); [detail](T-0drh.md))
 - **2026-10-01** — **T-hbw8** — The soft reset of the architecture: `docs/architecture.md`, ADR-0013 to ADR-0025 (Accepted, O-112) and 13 walkthroughs, LAYUP as a deterministic orchestrator `layup run` outside the target; 24 design rounds, the Operator's approval, and a gate round `nothing material in scope` ([#72](https://github.com/pharzam/layup/issues/72); [detail](T-hbw8.md))

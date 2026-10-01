@@ -24,7 +24,10 @@ layup psb check FILE
   lone carriage return in `excerpt` with a space (#29 does).
 - No flag.
 - Exit codes: 0 no gap; 1 at least one gap; 2 a usage error (not exactly the
-  two words `check FILE`) or a file that cannot be read.
+  two words `check FILE`), a file that cannot be read, or a `FILE` that is not
+  valid UTF-8 ([`README.md`](README.md#commands)). The present code does not
+  yet give 2 for a `FILE` that is not valid UTF-8: it reads the bytes as they
+  are, and can copy them into `excerpt` (task `T-5zmw` adds the check).
 
 ### The rules
 
