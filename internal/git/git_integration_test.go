@@ -219,7 +219,7 @@ func TestAHostileHostChangesNothing(t *testing.T) {
 	for _, dir := range []string{os.Getenv("XDG_CONFIG_HOME"), filepath.Join(home, ".config")} {
 		write(t, dir, map[string]string{"git/attributes": "* text=auto\n", "git/ignore": "*.md\n"}) // (a), (b)
 	}
-	write(t, home, map[string]string{".gitconfig": "[init]\n\tdefaultBranch = master\n"})
+	write(t, home, map[string]string{".gitconfig": "[init]\n\tdefaultBranch = master\n[core]\n\tautocrlf = true\n[commit]\n\tgpgsign = true\n"})
 	hostile := []string{"GIT_CONFIG_COUNT=1", "GIT_CONFIG_KEY_0=core.fileMode", "GIT_CONFIG_VALUE_0=false", // (c)
 		"GIT_AUTHOR_NAME=Hostile"} // (e)
 	hook := func(dir string) {

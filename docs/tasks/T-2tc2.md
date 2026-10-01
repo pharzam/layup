@@ -31,8 +31,11 @@ inside; Cycle cap 1. The author applied the six conditions and the twelve notes.
    it and 9 of the notes.
 
 **Two departures from the answer to the plan review**, posted on #79: D3 sets
-`HOME=/dev/null` and `GIT_ALLOW_PROTOCOL` (with `http.emptyAuth=false` and
-`core.precomposeUnicode=false`) in place of the host's home and an ssh option;
+`HOME=/dev/null` and `GIT_ALLOW_PROTOCOL=file:git:http:https` (with
+`http.emptyAuth=false` and `core.precomposeUnicode=false`) in place of the host's
+home and an ssh option (the status comment on #79 said "only `file` and `https`";
+the value of the code and the specification is the one here, review round 1,
+note 1);
 D1 drops the call `branch`, which no step names.
 
 **The requirements (condition 5):** `TestPackageRules` is the test of `NFR-005`
@@ -45,6 +48,10 @@ rules (it can drift from its one home); a new package for the test (it needs a
 row of its own); a default identity for commits (the identity of the setup's
 commits is the Operator's decision, for row 8); direct imports only for rule 5
 (a dependency through another package would pass).
+
+**The verification** is recorded in [`verification.md`](../../runs/T-2tc2/verification.md):
+twelve findings; the fixer did not apply finding 8 (the close-out edits, which
+the author made before the freeze) and finding 9 (the budget, the Operator's).
 
 ## The budget
 

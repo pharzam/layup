@@ -1530,7 +1530,10 @@ such as ISO-01 is a scenario of the [research review](../runs/T-hbw8/slice-revie
   baseline repository that needs a credential fails S02 at once, so the
   baseline's repository is public, and S02 reaches it with no credential, by
   `https` for example (K31 of the [plan](plan/README.md#the-defect-register)).
-  Close when: the Operator names the credential path of a private baseline.
+  The same holds for a host that needs a proxy or a private certificate
+  authority: `git` gets none of the host's proxy or certificate variables.
+  Close when: the Operator names the credential path of a private baseline, or
+  a LAYUP host needs a proxy or a private certificate authority.
 - **L-A3. One host during delivery.** `layup run` runs in the foreground on one
   host; while the host is down, nothing moves (section 11 says how the stall is
   found). A takeover on another host needs the App's private key on that host. A

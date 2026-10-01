@@ -1,7 +1,9 @@
 # T-2tc2: the red runs
 
-The red step of each test of `T-2tc2` (#79), on the final test files, before
-the code that makes it green (gate step 3). Outputs are cut to the relevant
+The red step of each test of `T-2tc2` (#79), before the code that makes it
+green (gate step 3). Runs 1 to 7 ran on the test files of head `9866f48`,
+before the code of each part; runs 8 to 12 ran on the test files of each fix of
+the verification, before that fix (review round 1, note 4). Outputs are cut to the relevant
 lines ("…"). Host: macOS, `go1.27.1`, `git` 2.54.0, 2026-10-01.
 
 Runs 1 and 2 are on a skeleton of `internal/git`: its exported names, and no

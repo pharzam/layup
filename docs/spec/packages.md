@@ -186,6 +186,16 @@ pass.
   `SSH_ASKPASS` of the host reaches `git`: `GIT_CONFIG_COUNT` set a value,
   `GIT_DIR` sent a commit to another repository, and `GIT_AUTHOR_NAME` changed
   the author. A call has no standard input.
+- `GIT_ALLOW_PROTOCOL` allows `file` (the stand-in baselines of the tests),
+  `https` (a public baseline), `http` (a baseline on a plain host, and the
+  loopback server of the test of the no-prompt rule) and `git` (the
+  unauthenticated `git` protocol). It refuses `ssh` and each remote helper.
+- The list also leaves out the host's proxy and certificate variables
+  (`http_proxy`, `https_proxy`, `no_proxy` and their upper-case forms,
+  `SSL_CERT_FILE`, `SSL_CERT_DIR`, `GIT_SSL_CAINFO`), because a proxy address can
+  carry a credential. So a host behind a proxy, or with a private certificate
+  authority, cannot clone the baseline: part of the known limit
+  [L-A7](../architecture.md#15-known-limits).
 - The `git(1)` manual names `/dev/null` for `GIT_CONFIG_GLOBAL`, and the
   `git-config(1)` manual names `core.hooksPath=/dev/null`; the plan gave
   `core.hooksPath` an empty value, which no manual names. `GIT_ATTR_NOSYSTEM`
