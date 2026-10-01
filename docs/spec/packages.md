@@ -158,7 +158,10 @@ condition 1 of its plan review). Reason: no file and no variable of the host
 may change a branch, a byte or a mode of a tree, a file list, a hook, an author
 or a signature. `TestAHostileHostChangesNothing` of `internal/git` seeds each
 input that the plan review measured with `git` 2.54.0, and first shows that it
-changes a plain `git` run.
+changes a plain `git` run. `Commit` sets its identity after the fixed list, so
+the host's `GIT_AUTHOR_NAME` cannot change a commit in that test: the unit test
+of the environment, `TestTheEnvironmentIsAFixedList`, proves that it does not
+pass.
 
 - Each call starts with `-c core.hooksPath=/dev/null`,
   `-c core.attributesFile=/dev/null`, `-c core.excludesFile=/dev/null`,

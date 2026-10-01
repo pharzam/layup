@@ -209,7 +209,9 @@ func TestAScratchTree(t *testing.T) {
 // Condition 1 of the plan review of #79: the inputs (a) to (e) of the host, a
 // global configuration and a hook change no byte or mode of a tree, no file,
 // no author, no branch and no repository. A control first shows that each of
-// (a) to (e) changes a plain git run, so the test can fail.
+// (a) to (e) changes a plain git run, so the test can fail. Commit sets its
+// identity after the fixed list, so (e) cannot change a commit here: the proof
+// of (e) is TestTheEnvironmentIsAFixedList.
 func TestAHostileHostChangesNothing(t *testing.T) {
 	home := isolate(t)
 	tree := map[string]string{"crlf.txt": "a\r\nb\r\n", "doc.md": "# doc\n", "run.sh": "#!/bin/sh\n"}
