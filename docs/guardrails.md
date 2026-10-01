@@ -161,6 +161,27 @@ check that catches it.
   real home directory that changed in the run window
   ([`runs/T-hbw8/evaluation/summary.md`](../runs/T-hbw8/evaluation/summary.md),
   "Incidents during the evaluation"). Learned in `T-hbw8`.
+- ❌ **A tool under test reads the host's home configuration.** The mirror of
+  the trap above. The plan of `T-2tc2` (#79) isolated `git` with
+  `GIT_CONFIG_NOSYSTEM=1` and an empty `GIT_CONFIG_GLOBAL`; its plan review
+  measured five inputs that still reached `git` (the per-user attributes and
+  ignore files, `GIT_CONFIG_COUNT`, `GIT_DIR`, `GIT_AUTHOR_NAME`), and the task
+  found a sixth (the system attributes file). Its verification found three
+  paths to a credential of the host, each through a program under `git`, that
+  a fixed list with the host's `HOME` left open: libcurl read `$HOME/.netrc`;
+  `ssh` reads the user's keys in the home of the password database, not of
+  `HOME`; and a URL can start a remote helper of the `PATH`. It is silent
+  because a test host has none of them, so each test passes while another host
+  gets another tree or sends a credential. **The check:** give the tool an
+  environment from a fixed list, with a home of its own that holds no file:
+  never the host's `HOME`, and never no `HOME`, as a library then reads the
+  home of the password database. Keep each program that finds the user's home
+  without `HOME` from starting. Close each file with a documented setting, or
+  with a measured one that the record names. Keep a test that seeds each
+  input, shows that it changes a plain run, and proves that it changes nothing
+  through the code (`TestAHostileHostChangesNothing` and
+  `TestNoCallUsesACredentialOfTheHost` in
+  [`internal/git`](../internal/git/git_integration_test.go)). Learned in `T-2tc2`.
 - ❌ **A model on the "not used" list, used inside a test run.** The `T-hbw8`
   evaluation brief named Claude Haiku 4.5 as the cheap model inside the
   candidates' test runs, and eleven candidates ran with it. ADR-0012 part 3 lists

@@ -20,6 +20,7 @@ here directly, in the shape above.
 - **YYYY-MM-DD** — **<ID>** — <one-sentence summary of what the task found or delivered> ([<link>](...); [detail](<id>.md))
 -->
 
+- **2026-10-01** — **T-2tc2** — Row 2 of the plan: `internal/git`, the one caller of `git` with no input from the host's configuration or credentials, and `TestPackageRules`, the test of the package rules of `docs/spec/packages.md`; K7, K8, K31 and K39 settled ([#79](https://github.com/pharzam/layup/issues/79); [detail](T-2tc2.md))
 - **2026-10-01** — **T-18v6** — Row 1 of the plan: `internal/tsv`, the reader and the writer of a record by its schema, and the test that reads every schema block of `docs/spec/`; K32 settled (input that is not UTF-8 is an input error) ([#78](https://github.com/pharzam/layup/issues/78); [detail](T-18v6.md))
 - **2026-10-01** — **T-55n2** — The implementation plan of LAYUP: the milestones `M1` to `M4c`, the 20 tasks of phase 1 in their order (issues #77 to #97), the defect register, the `PRD-0001` §12 Task column and the traceability table ([#76](https://github.com/pharzam/layup/issues/76); [detail](T-55n2.md))
 - **2026-10-01** — **T-0drh** — The technical specification of LAYUP for phase 1 in `docs/spec/`: one section per phase-1 requirement, the package table, the records layout of phases 1 to 4, and the contracts of `layup psb check`, `layup setup`, `layup setup verify` and `layup gate` ([#74](https://github.com/pharzam/layup/issues/74); [detail](T-0drh.md))
