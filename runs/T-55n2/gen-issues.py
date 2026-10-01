@@ -101,14 +101,16 @@ def body(n, r):
     s.append("## Goal\n")
     s.append(f"Task `{tid}`, row {n} of the [implementation plan]({BLOB}/docs/plan/README.md#the-tasks-of-phase-1) (#76). "
              f"Child of {pnum} (`{pname}`). The goal: {r['Task']}.\n")
+    s.append(f"**The demo** (R11): {r['Demo']}\n")
     s.append(starts + "\n")
     s.append("## Requirements\n")
     s.append(f"- {r['Requirements']} ([`PRD-0001`]({BLOB}/docs/prd/PRD-0001-layup.md)).")
     s.append("- In-Scope fact (Bootstrap mode rule 1): " + ", ".join(f"`{f}` ({FACT.get(f, '')})" for f in facts) + ".\n")
     s.append("## Scope\n")
     s.append(f"The inventory items of this task. Each one has its specification sections, its present state, its tests and its open questions in [`runs/T-55n2/inventory.md`]({BLOB}/runs/T-55n2/inventory.md); the open questions are inputs of this task's plan.\n")
+    ITEM_NOTE = {"setup-s06-facts": "by O-124, the record of the `S01-` and `Q-` answers moved to S04 (row 9); S06 keeps the briefs"}
     for k in keys:
-        s.append(f"- `{k}` — {titles.get(k, '')}")
+        s.append(f"- `{k}` — {titles.get(k, '')}" + (f" (note: {ITEM_NOTE[k]})" if k in ITEM_NOTE else ""))
     s.append("")
     st, rd = settles(n), [x for x in reads(n) if x not in settles(n)]
     if st:
@@ -120,12 +122,13 @@ def body(n, r):
     if rd:
         s.append("**The defects that this task reads**, settled before it:\n")
         for x in rd:
-            s.append(f"- **{x['K']}** (settled by {x['Settled by']}) — {x['Note']}")
+            s.append(f"- **{x['K']}** — settled by {x['Settled by']}. {x['Note']}")
         s.append("")
     s.append("**Out:** the parts that the plan gives to other rows, and the parts \"Not in phase 1\" of its specification sections.\n")
     s.append("## Duplicate check (R2)\n")
-    s.append("- [x] Searched the open and closed issues when the plan was written (#76): no duplicate. Related: #29, "
-             f"{pnum}, and the predecessors below.\n")
+    rel = "#29" if pnum == "#29" else f"#29, {pnum}"
+    s.append("- [x] Searched the open and closed issues when the plan was written (#76): no duplicate. Related: "
+             f"{rel}, and the predecessors below.\n")
     s.append("## Solution note (R3)\n")
     s.append("- **Chosen:** the contract of the specification sections of its items (`docs/spec/`); the design inside it is this task's own plan (R12).")
     s.append("- **Why:** the specification decides the commands, the records and the rules, and the plan decides the order.")
@@ -147,7 +150,7 @@ def body(n, r):
         s.append("- After: " + ", ".join(f"#{number[a]} (row {a})" for a in after) + ".")
     else:
         s.append("- After: no other task.")
-    s.append(f"- Refs #29, {pnum}.")
+    s.append(f"- Refs {rel}.")
     s.append("\n*Written by code from the plan ([`runs/T-55n2/gen-issues.py`]"
              f"({BLOB}/runs/T-55n2/gen-issues.py)), posted by the author (Claude Opus 5.5) through the `layup-agent` App.*")
     return "\n".join(s) + "\n"
@@ -168,6 +171,8 @@ for n in sorted(children):
 setup += ["",
           "## Duplicate check (R2)\n",
           "- [x] Searched when the plan was written (#76). `T-b97r` is the ID that #29's first children table gave to `layup setup`; this is its first issue.\n",
+          "## Solution note (R3)\n",
+          "- The selections are the children's: each child task records its own solution note.\n",
           "## Acceptance criteria\n",
           "- [ ] Each child task is closed with a merged pull request.",
           f"- [ ] The phase-1 parts of `REQ-002` hold, as the plan's table \"What phase 1 proves\" says ([plan]({BLOB}/docs/plan/README.md#what-phase-1-proves)).\n",
