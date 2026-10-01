@@ -116,7 +116,6 @@ that the steps, the checks and `layup gate` name.
 | `Add` | `git add --all -- PATH…`; no path is the whole tree | S03 to S15; a fixture run of `gate:<kind>` |
 | `Commit` | `git commit -m MESSAGE` | S03 to S15; a fixture run |
 | `SwitchCreate` | `git switch -c BRANCH COMMIT` | S04: the branch `layup-setup` |
-| `Branch` | `git branch --end-of-options NAME START` | a branch at a commit, with no switch |
 | `SwitchOrphan` | `git switch --orphan BRANCH` | S15: the branch `layup-records` |
 | `RevParse` | `git rev-parse --verify --end-of-options REV` | S02, S03: the tree of a commit; `layup gate`: `--base`, `--head` |
 | `RootCommits` | `git rev-list --max-parents=0 --end-of-options REV --` | check `pin` |

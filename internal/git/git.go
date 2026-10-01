@@ -180,11 +180,6 @@ func doAt(dir, commit string, args ...string) error {
 	return do(dir, args...)
 }
 
-// Branch makes the branch name at start, with no switch.
-func Branch(dir, name, start string) error {
-	return do(dir, "branch", "--end-of-options", name, start)
-}
-
 // SwitchOrphan puts the work tree on a new branch with no commit; git removes
 // the tracked files from the work tree.
 func SwitchOrphan(dir, branch string) error { return do(dir, "switch", "--orphan", branch) }

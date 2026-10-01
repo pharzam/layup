@@ -141,7 +141,7 @@ func TestCloneAndCheckout(t *testing.T) {
 	}
 }
 
-// S04 and S15: the setup branch, a branch at a commit, and an orphan branch.
+// S04 and S15: the setup branch and an orphan branch.
 func TestBranchesAndAnOrphan(t *testing.T) {
 	home := isolate(t)
 	dir := t.TempDir()
@@ -152,10 +152,6 @@ func TestBranchesAndAnOrphan(t *testing.T) {
 	must(t, Commit(dir, "chore: setup S04", who))
 	if head := gitOK(t, dir, plain(home), "symbolic-ref", "HEAD"); head != "refs/heads/layup-setup\n" {
 		t.Errorf("HEAD %q, want refs/heads/layup-setup", head)
-	}
-	must(t, Branch(dir, "side", root))
-	if got, err := RevParse(dir, "side"); err != nil || got != root {
-		t.Errorf("side: %q, %v; want %s", got, err, root)
 	}
 	must(t, SwitchOrphan(dir, "layup-records"))
 	if names, err := LsFiles(dir); err != nil || len(names) != 0 {
