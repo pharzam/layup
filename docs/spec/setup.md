@@ -93,7 +93,7 @@ the one home of the phase-1 steps of a target. A row that differs from
 | S08 | the same | `inputs/files/docs/glossary.md` | the same | the file | check `glossary` |
 | S09 | the same | `inputs/files/docs/guardrails.md` | the same | the file | check `guardrails` |
 | S10 | `layup setup`; stops for the Operator | the tree; `answers.tsv` | Lists every marker of the tree outside the exemptions of LAYUP's `MK_EXEMPT` ([`setup-check.sh`](../setup/setup-check.sh); the baseline has no setup check, §5), which the engine embeds at its version. A path of that pattern that a target does not have matches nothing. A marker with no answer row stops the run; the table lists all of them at once (§5 gap check, "one batch"). | — | every marker has an answer row |
-| S11 | `layup setup` | the answers of S10 | Replaces each marker whose answer has a value with that value, and writes its record row with the source. A marker whose answer is `gap` keeps its marker and gets a row in `docs/setup/open-gaps.tsv` with the answer's question (Invariant 4). Writes the `M-` answers as a second raw fact record, in the same form, with its own index row and its own line in `facts.sha256`; the record of S06 does not change (a raw facts record is immutable). | the tree; the second answers record; record rows `marker:<file>:<line>` | checks `markers`, `sources` and `facts` |
+| S11 | `layup setup` | the answers of S10 | Replaces each marker whose answer has a value with that value, and writes its record row with the source. A marker whose answer is `gap` keeps its marker and gets a row in `docs/setup/open-gaps.tsv` with the answer's question (Invariant 4). When S10 listed at least one marker, writes the answer of each marker that S10 listed as a second raw fact record, in the same form, with its own index row and its own line in `facts.sha256`; with no marker, it writes no second record; the record of S06 does not change (a raw facts record is immutable). | the tree; the second answers record; record rows `marker:<file>:<line>` | checks `markers`, `sources` and `facts` |
 | S12 | `layup setup` | the catalog entry of the stack | Writes the files of the entry (for Go: `go.mod` with the module path from `name`, the tools' configuration), `docs/gates.tsv`, and one CI job per gate kind, named as the kind. The baseline's own workflows stay byte for byte (`REQ-018`). Adds no `setup-check` job. Changes `steps.tsv` S12: ADR-0011 decision 7, ADR-0016, §5 Scaffold 4. | the gate files | checks `jobs` and `gates` |
 | S13 | `layup setup`; applied by the Operator | the job names | Writes `docs/setup/branch-protection.json` (in the form of LAYUP's own file of that name; the baseline has no `docs/setup/`) and `WORK/out/ruleset-default.json`: the default branch and the ref `layup-probe`; a pull request required; each gate job a required check, pinned to GitHub Actions; no force push, no deletion; an empty bypass list. In phase 1 it requires no `layup/` check, because no phase-1 command posts one ([`records.md`](records.md#nfr-002--a-target-is-independent-of-layup)). Writes to `commands.sh` the push of `layup-setup` onto the default branch (`git push origin layup-setup:main`, a fast-forward from the root commit; §5 Scaffold 6: "pushes the setup commits on top of the root commit") and, after it, the apply command of the ruleset. | the ruleset file; commands | the Operator's run of `commands.sh` |
 | S14 | `layup setup`; the text is an input | `inputs/files/README.md`, `inputs/files/AGENTS.md` | Copies the files; a missing file stops the run. | the files | check `identity` |
@@ -130,6 +130,14 @@ evidence  text                            -    the evidence line of the step tab
 ```
 
 ### The answers
+
+Each row of `answers.tsv` answers a question that a step of this run asked: an
+`S01-` question, a gap `Q-NNN` of S01, or a marker `M-<x8>` that S10 listed.
+Any other row (a stale marker of an earlier baseline, an `F-` or `O-` ID, whose
+answer is a file or a command) is an input error: the run stops with exit 2 and
+names the row, so no answer becomes a fact of the target without a question
+(**decided here**, Invariant 4). S01 checks the `S01-` and `Q-` rows; S10 checks
+the `M-` rows and the rest.
 
 ```tsv-schema setup-answers host:<work>/inputs/answers.tsv
 question  text                       key  the question ID, as the stop table gives it
@@ -235,7 +243,7 @@ of each such check passes and fails on the same fixtures as
 | `discipline-tests` | yes | the baseline's own `sh docs/tests/run-discipline-tests.sh` exits 0 |
 | `pin` | yes | `check_pin`; and the pin file's values equal the record's pin rows; `method` equals the text of [`NFR-006`](#nfr-006--the-baseline-at-a-pinned-recorded-version) with the source and the commit |
 | `kit-history` | yes | `check_kit_history` |
-| `facts` | yes, in a target's form | each brief is in `docs/facts/` and in `facts.sha256` with its hash; each question ID of `answers.tsv` is a fact in exactly one of the two answers records: the `S01-` and `Q-` IDs in the record of S06, the `M-` IDs in the record of S11; the index has a row per record. LAYUP's counts (39, 75, 19) are LAYUP's and do not apply. |
+| `facts` | yes, in a target's form | each brief is in `docs/facts/` and in `facts.sha256` with its hash; each question ID of `answers.tsv` is a fact in exactly one answers record: the `S01-` and `Q-` IDs in the record of S06, the `M-` IDs in the record of S11 (which exists only when S10 listed a marker); the index has a row per record. LAYUP's counts (39, 75, 19) are LAYUP's and do not apply. |
 | `onboarding` | yes, in a target's form | the file exists, holds no marker, links the problem statement; each `F-NNNN#n` it cites is a fact of a record in `docs/facts/` |
 | `glossary` | yes, in a target's form | each `F-NNNN#n` it cites resolves as above; LAYUP's heading and its count of 25 do not apply |
 | `guardrails` | yes, in a target's form | each entry's `Check:` value is `no check yet` or a file and a gate, as `check_guardrails`; each citation resolves; LAYUP's count of 9 does not apply |
