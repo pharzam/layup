@@ -16,6 +16,7 @@ The tables it reads in docs/plan/README.md, by their headings:
   ## The tasks of phase 1  | # | Task ID | Issue | Task | Parent | Items | Requirements | Fact | Tests | Size | Lines | After | Cap |
   ## The hosts of the other items  | Item | Host | Reason |
   ## The defect register   | K | Settled by | Read by | Note |
+  ## The parent tasks      | Task ID | Issue | Task | ... | (check 6 accepts their IDs)
 """
 import re
 import sys
@@ -106,7 +107,7 @@ conflicts = sorted({int(n) for n in re.findall(r"\*\*K(\d+)\.\*\*", inv)})
 inv_hosts = {}
 for l in inv.split("\n"):
     c = cells(l)
-    if c and len(c) == 6 and re.fullmatch(r"`[a-z0-9-]+`", c[0]):
+    if c and len(c) == 6 and re.fullmatch(r"`[a-z0-9-]+`", c[0]) and c[0].strip("`") in items:
         inv_hosts[c[0].strip("`")] = c[5]
 print(f"info  inventory: {len(items)} items, {len(conflicts)} conflicts")
 
@@ -227,6 +228,7 @@ report("each conflict has a host", probs)
 # 6. PRD-0001 section 12 Task cells
 probs = []
 tids = {r.get("Task ID", "").strip("`") for r in rows.values()}
+tids |= {r.get("Task ID", "").strip("`") for r in (table_after(plan, "## The parent tasks") or [])}
 prd = PRD.read_text().split("\n")
 in12 = False
 for l in prd:

@@ -2,7 +2,7 @@
 
 Evidence for the plan of [#76](https://github.com/pharzam/layup/issues/76). The workflow `t55n2-understand` (run `wf_051087d7-99c`, 2026-10-01, 58 min) ran 22 agents of Claude Opus 5.5, read-only, in a detached worktree at `7cdd346`. Seven areas each ran a reader, an adversarial critic and a reviser; one cross-area critic then checked all of them. This file is the result, transcribed by code with no change of content: the angle quotes of a marker are written as HTML entities, so that check `markers` reads no marker here.
 
-The column **Host** is empty in this commit (the red half of the plan). Step 3 of the plan gives each item one host: a task of `docs/plan/README.md`, an answer of the Operator, or `out` with a reason.
+The column **Host** was empty at plan step 1 (the red half). Plan step 4 filled it by code from [`docs/plan/README.md`](../../docs/plan/README.md) with [`fill-hosts.py`](fill-hosts.py): a row of the task table, a milestone, a task, a decision of the Operator, or `out`. The one home of the hosts is the plan; [`plan-check.py`](plan-check.py) checks that this column agrees with it.
 
 | Area | Items | Open questions | External inputs | Constraints | Risks |
 | ---- | ----- | -------------- | --------------- | ----------- | ----- |
@@ -20,16 +20,16 @@ The column **Host** is empty in this commit (the red half of the plan). Step 3 o
 
 | Key | Title | Requirements | Size | After | Host |
 | --- | ----- | ------------ | ---- | ----- | ---- |
-| `psb-field-rule-cr` | Replace a lone carriage return in excerpt with a space | REQ-001 | small | — |  |
-| `psb-tsv` | Write the gap table through internal/tsv, checked against its schema block | REQ-001, NFR-007 | small | psb-field-rule-cr, found-tsv (foundation area, best key name: the internal/tsv writer, the schema-block reader and the type checker for id(Q-NNN), enum, int and text) |  |
-| `psb-batch-api` | Hand the gap table from internal/psb to internal/setup through internal/cli for S01 and S06 | REQ-001, REQ-002 | small | psb-tsv, setup-runner (setup area, best key name: the internal/setup step runner that receives the table at S01; needed only when the chosen design converts the rows into a type of internal/setup) |  |
-| `psb-cli-contract` | The command `layup psb check FILE` end to end: exit codes, streams, determinism | REQ-001, NFR-004, NFR-005 | small | — |  |
-| `psb-rule-edges` | Add the unsettled edge cases of G1 to G5 to the rule table and to edge.md | REQ-001, NFR-005 | small | psb-field-rule-cr |  |
-| `psb-rule-values` | Pin each value of the rule table with a golden case | REQ-001, NFR-005 | small | psb-field-rule-cr |  |
-| `psb-utf8-input` | A rule and a test for a FILE that is not valid UTF-8 | REQ-001 | small | psb-field-rule-cr |  |
-| `later-psb-meaning-review` | The review of meaning: a session writes the gaps of meaning as typed rows | REQ-001 | large | — |  |
-| `later-psb-intake-batch` | One batch on the Intake issue, with the answers as a raw fact | REQ-001 | large | later-psb-meaning-review, psb-batch-api |  |
-| `later-psb-early-question-share` | The rows 'before delivery' in questions.tsv and the measure of the Early Question Share | REQ-001 | large | later-psb-intake-batch |  |
+| `psb-field-rule-cr` | Replace a lone carriage return in excerpt with a space | REQ-001 | small | — | row 6 |
+| `psb-tsv` | Write the gap table through internal/tsv, checked against its schema block | REQ-001, NFR-007 | small | psb-field-rule-cr, found-tsv (foundation area, best key name: the internal/tsv writer, the schema-block reader and the type checker for id(Q-NNN), enum, int and text) | row 6 |
+| `psb-batch-api` | Hand the gap table from internal/psb to internal/setup through internal/cli for S01 and S06 | REQ-001, REQ-002 | small | psb-tsv, setup-runner (setup area, best key name: the internal/setup step runner that receives the table at S01; needed only when the chosen design converts the rows into a type of internal/setup) | row 6 |
+| `psb-cli-contract` | The command `layup psb check FILE` end to end: exit codes, streams, determinism | REQ-001, NFR-004, NFR-005 | small | — | row 6 |
+| `psb-rule-edges` | Add the unsettled edge cases of G1 to G5 to the rule table and to edge.md | REQ-001, NFR-005 | small | psb-field-rule-cr | row 6 |
+| `psb-rule-values` | Pin each value of the rule table with a golden case | REQ-001, NFR-005 | small | psb-field-rule-cr | row 6 |
+| `psb-utf8-input` | A rule and a test for a FILE that is not valid UTF-8 | REQ-001 | small | psb-field-rule-cr | row 6 |
+| `later-psb-meaning-review` | The review of meaning: a session writes the gaps of meaning as typed rows | REQ-001 | large | — | `M2c` |
+| `later-psb-intake-batch` | One batch on the Intake issue, with the answers as a raw fact | REQ-001 | large | later-psb-meaning-review, psb-batch-api | `M2c` |
+| `later-psb-early-question-share` | The rows 'before delivery' in questions.tsv and the measure of the Early Question Share | REQ-001 | large | later-psb-intake-batch | `M4b` |
 
 ### `psb-field-rule-cr` — Replace a lone carriage return in excerpt with a space
 
@@ -207,18 +207,18 @@ The final gate inventory has eleven items. Nine are phase 1 and two are later-ph
 
 | Key | Title | Requirements | Size | After | Host |
 | --- | ----- | ------------ | ---- | ----- | ---- |
-| `gate-manifest` | Gate manifest reader and scope patterns | REQ-004, NFR-004 | small | found-tsv (other area: the internal/tsv reader with schema and type checks), found-schema-test (other area: the test that compares each tsv-schema block with the code) |  |
-| `gate-scratch-tree` | Scratch work tree of the head with the base's gate files | REQ-004, REQ-007, NFR-004 | small | found-git (other area: internal/git with worktree add/remove, show, rev-parse, diff --name-only), gate-manifest |  |
-| `gate-results` | The result rules, the command run and the stderr blocks | REQ-004, NFR-004 | small | gate-manifest, gate-scratch-tree |  |
-| `gate-run` | internal/gate entry point and the table gate-result | REQ-004, REQ-007, NFR-004, NFR-005 | small | gate-manifest, gate-scratch-tree, gate-results, found-tsv (other area: the writer that replaces tab and line feed and writes `—`), found-git (other area) |  |
-| `gate-command` | The command `layup gate REPO --base REV --head REV` | REQ-004, REQ-007, NFR-004, NFR-005 | small | gate-run, setup-steps (other area: a target set up by `layup setup` S01-S15, for the UAT only) |  |
-| `gate-nfr005-imports` | NFR-005 import rule: no network package in phase 1 | NFR-005, NFR-007 | small | found-import-rules (other area: the check of the package table of packages.md, rules 2 to 4; this item can merge into it) |  |
-| `gate-catalog-package` | internal/catalog: the embedded stack catalog | REQ-002, REQ-004, NFR-003 | small | found-tsv (other area), found-schema-test (other area) |  |
-| `gate-catalog-go-entry` | The Go entry: kinds.tsv, files, fixtures and the fixture test | REQ-004, REQ-007, REQ-002, NFR-003 | small | gate-catalog-package, gate-command, gate-manifest |  |
-| `gate-catalog-go-workflow` | The target's CI workflow: one job per gate kind | REQ-007, REQ-004, NFR-004, NFR-002 | large | gate-catalog-go-entry, gate-command, setup-s12 (other area: S12 writes the entry files and refuses to overwrite a baseline path) |  |
-| `gate-verify-kind` | The check gate:<kind> of `layup setup verify` | REQ-002, REQ-004, NFR-004 | small | gate-run, gate-catalog-package, gate-catalog-go-entry, verify-runner (other area: the check runner and the table setup-verify) |  |
-| `later-gate-status` | Phase 2: the status `layup/gates` and the ready/merge rule | REQ-004, REQ-007 | large | gate-run, later-run (other area: `layup run` and the forge adapter, phase 2) |  |
-| `later-gate-rule-batch` | Phase 2: activation and the rule batch's own gate files | REQ-003, REQ-004 | large | gate-run, later-gate-status, later-rules (other area: rule batches of REQ-003, phase 2) |  |
+| `gate-manifest` | Gate manifest reader and scope patterns | REQ-004, NFR-004 | small | found-tsv (other area: the internal/tsv reader with schema and type checks), found-schema-test (other area: the test that compares each tsv-schema block with the code) | row 5 |
+| `gate-scratch-tree` | Scratch work tree of the head with the base's gate files | REQ-004, REQ-007, NFR-004 | small | found-git (other area: internal/git with worktree add/remove, show, rev-parse, diff --name-only), gate-manifest | row 5 |
+| `gate-results` | The result rules, the command run and the stderr blocks | REQ-004, NFR-004 | small | gate-manifest, gate-scratch-tree | row 5 |
+| `gate-run` | internal/gate entry point and the table gate-result | REQ-004, REQ-007, NFR-004, NFR-005 | small | gate-manifest, gate-scratch-tree, gate-results, found-tsv (other area: the writer that replaces tab and line feed and writes `—`), found-git (other area) | row 5 |
+| `gate-command` | The command `layup gate REPO --base REV --head REV` | REQ-004, REQ-007, NFR-004, NFR-005 | small | gate-run, setup-steps (other area: a target set up by `layup setup` S01-S15, for the UAT only) | row 5 |
+| `gate-nfr005-imports` | NFR-005 import rule: no network package in phase 1 | NFR-005, NFR-007 | small | found-import-rules (other area: the check of the package table of packages.md, rules 2 to 4; this item can merge into it) | row 2 |
+| `gate-catalog-package` | internal/catalog: the embedded stack catalog | REQ-002, REQ-004, NFR-003 | small | found-tsv (other area), found-schema-test (other area) | row 4 |
+| `gate-catalog-go-entry` | The Go entry: kinds.tsv, files, fixtures and the fixture test | REQ-004, REQ-007, REQ-002, NFR-003 | small | gate-catalog-package, gate-command, gate-manifest | row 14 |
+| `gate-catalog-go-workflow` | The target's CI workflow: one job per gate kind | REQ-007, REQ-004, NFR-004, NFR-002 | large | gate-catalog-go-entry, gate-command, setup-s12 (other area: S12 writes the entry files and refuses to overwrite a baseline path) | row 14 |
+| `gate-verify-kind` | The check gate:<kind> of `layup setup verify` | REQ-002, REQ-004, NFR-004 | small | gate-run, gate-catalog-package, gate-catalog-go-entry, verify-runner (other area: the check runner and the table setup-verify) | row 15 |
+| `later-gate-status` | Phase 2: the status `layup/gates` and the ready/merge rule | REQ-004, REQ-007 | large | gate-run, later-run (other area: `layup run` and the forge adapter, phase 2) | `M2e` |
+| `later-gate-rule-batch` | Phase 2: activation and the rule batch's own gate files | REQ-003, REQ-004 | large | gate-run, later-gate-status, later-rules (other area: rule batches of REQ-003, phase 2) | `M2f` |
 
 ### `gate-manifest` — Gate manifest reader and scope patterns
 
@@ -459,24 +459,24 @@ Phase 1 makes `layup setup WORK` a step runner. It does S01 to S15 in one work a
 
 | Key | Title | Requirements | Size | After | Host |
 | --- | ----- | ------------ | ---- | ----- | ---- |
-| `setup-runner` | The `layup setup WORK` command and the resumable step runner | REQ-002, NFR-003, NFR-001 | large | found-tsv (foundation area: internal/tsv, the record reader and writer), found-git (foundation area: internal/git, with the verbs listed in setup-s15-records-commit and a fixed git configuration), found-cli-exit-codes (foundation area: command dispatch and the 0/1/2/3 mapping), found-schema-block-test (foundation area: the Go test that reads the tsv-schema blocks) |  |
-| `setup-answers` | answers.tsv: its schema and the rule for each row state | REQ-002, NFR-003 | small | setup-runner, found-tsv (foundation area) |  |
-| `setup-s01-questions` | S01: the Operator's answers and the gap questions in one stop table | REQ-002, REQ-001, NFR-003 | small | setup-runner, setup-answers, setup-catalog, psb-on-tsv (psb area: internal/psb moves to internal/tsv, packages.md:46-47) |  |
-| `setup-s02-s03-baseline` | S02 and S03: resolve the baseline once, copy it, make the root commit | REQ-002, NFR-006, NFR-003 | small | setup-runner, setup-s01-questions, setup-commands-file, found-git (foundation area) |  |
-| `setup-commands-file` | WORK/out/commands.sh in its fixed order | REQ-002, NFR-001 | small | setup-runner |  |
-| `setup-s04-pin` | S04: the target's pin file and the pin's decision record | NFR-006, REQ-002, NFR-003 | small | setup-s02-s03-baseline, verify-check-pin (verify area: check `pin` in the target's form) |  |
-| `setup-s05-history` | S05: delete the baseline's own history, with link fixes as input files | REQ-002 | large | setup-s04-pin, verify-check-kit-history (verify area), verify-check-link-lint (verify area: runs the baseline's link-lint.sh) |  |
-| `setup-s06-facts` | S06: the briefs and the first answers record as raw facts | REQ-002, NFR-001, NFR-003 | small | setup-s05-history, setup-s01-questions, verify-check-facts (verify area: check `facts` in a target's form) |  |
-| `setup-prose-inputs` | S07, S08, S09, S14: copy the prose input files and run their checks | REQ-002 | small | setup-s06-facts, verify-check-prose (verify area: onboarding, glossary, guardrails in a target's form, and identity) |  |
-| `setup-s10-markers` | S10: list every marker outside MK_EXEMPT, and stop for the missing answers | REQ-002, NFR-003 | small | setup-prose-inputs, setup-answers, found-git (foundation area: a verb that lists the tracked files) |  |
-| `setup-s11-fill` | S11: fill the markers, keep the gaps, write the second answers record | REQ-002, NFR-003, NFR-001 | small | setup-s10-markers, setup-s06-facts, verify-check-markers-sources (verify area: checks `markers` and `sources`) |  |
-| `setup-catalog` | internal/catalog: the embedded stack catalog and its reader | REQ-002, NFR-007 | small | found-tsv (foundation area) |  |
-| `setup-s12-stack-files` | S12: the stack's files, go.mod, the gate manifest and one CI job per kind | REQ-002, NFR-002, NFR-003 | small | setup-catalog, gate-catalog-go (gate area: the content of the Go entry, its kinds, tool versions, evidence URLs and known-bad fixtures; #29), setup-s11-fill, gate-manifest-reader (gate area: the gate-manifest schema), verify-check-jobs-gates (verify area: checks `jobs` and `gate:<kind>`) |  |
-| `setup-s13-rulesets` | S13: branch-protection.json, the default-branch ruleset and the push commands | REQ-002, NFR-002 | small | setup-s12-stack-files, setup-commands-file |  |
-| `setup-rule-paths` | The rule-path register from the catalog and the baseline | REQ-002, NFR-001 | small | setup-s12-stack-files |  |
-| `setup-s15-records-commit` | S15: the verify table, the last record rows and the orphan records commit | NFR-001, REQ-002, NFR-002 | small | setup-rule-paths, setup-s13-rulesets, setup-commands-file, verify-command (verify area: `layup setup verify WORK` and its table), found-git (foundation area: verbs for an orphan commit, add, branch and ls-files) |  |
-| `setup-e2e-offline` | End-to-end: a full setup with no network | REQ-002, NFR-001, NFR-003, NFR-006 | large | setup-s15-records-commit, setup-prose-inputs, setup-s05-history, gate-catalog-go (gate area: the only embedded entry is Go, so the e2e uses it), verify-command (verify area) |  |
-| `setup-pilot-acceptance` | REQ-002 acceptance on a pilot problem statement | REQ-002, NFR-003 | large | setup-e2e-offline |  |
+| `setup-runner` | The `layup setup WORK` command and the resumable step runner | REQ-002, NFR-003, NFR-001 | large | found-tsv (foundation area: internal/tsv, the record reader and writer), found-git (foundation area: internal/git, with the verbs listed in setup-s15-records-commit and a fixed git configuration), found-cli-exit-codes (foundation area: command dispatch and the 0/1/2/3 mapping), found-schema-block-test (foundation area: the Go test that reads the tsv-schema blocks) | row 8 |
+| `setup-answers` | answers.tsv: its schema and the rule for each row state | REQ-002, NFR-003 | small | setup-runner, found-tsv (foundation area) | row 8 |
+| `setup-s01-questions` | S01: the Operator's answers and the gap questions in one stop table | REQ-002, REQ-001, NFR-003 | small | setup-runner, setup-answers, setup-catalog, psb-on-tsv (psb area: internal/psb moves to internal/tsv, packages.md:46-47) | row 9 |
+| `setup-s02-s03-baseline` | S02 and S03: resolve the baseline once, copy it, make the root commit | REQ-002, NFR-006, NFR-003 | small | setup-runner, setup-s01-questions, setup-commands-file, found-git (foundation area) | row 9 |
+| `setup-commands-file` | WORK/out/commands.sh in its fixed order | REQ-002, NFR-001 | small | setup-runner | row 8 |
+| `setup-s04-pin` | S04: the target's pin file and the pin's decision record | NFR-006, REQ-002, NFR-003 | small | setup-s02-s03-baseline, verify-check-pin (verify area: check `pin` in the target's form) | row 9 |
+| `setup-s05-history` | S05: delete the baseline's own history, with link fixes as input files | REQ-002 | large | setup-s04-pin, verify-check-kit-history (verify area), verify-check-link-lint (verify area: runs the baseline's link-lint.sh) | row 13 |
+| `setup-s06-facts` | S06: the briefs and the first answers record as raw facts | REQ-002, NFR-001, NFR-003 | small | setup-s05-history, setup-s01-questions, verify-check-facts (verify area: check `facts` in a target's form) | row 13 |
+| `setup-prose-inputs` | S07, S08, S09, S14: copy the prose input files and run their checks | REQ-002 | small | setup-s06-facts, verify-check-prose (verify area: onboarding, glossary, guardrails in a target's form, and identity) | row 13 |
+| `setup-s10-markers` | S10: list every marker outside MK_EXEMPT, and stop for the missing answers | REQ-002, NFR-003 | small | setup-prose-inputs, setup-answers, found-git (foundation area: a verb that lists the tracked files) | row 13 |
+| `setup-s11-fill` | S11: fill the markers, keep the gaps, write the second answers record | REQ-002, NFR-003, NFR-001 | small | setup-s10-markers, setup-s06-facts, verify-check-markers-sources (verify area: checks `markers` and `sources`) | row 13 |
+| `setup-catalog` | internal/catalog: the embedded stack catalog and its reader | REQ-002, NFR-007 | small | found-tsv (foundation area) | row 4 |
+| `setup-s12-stack-files` | S12: the stack's files, go.mod, the gate manifest and one CI job per kind | REQ-002, NFR-002, NFR-003 | small | setup-catalog, gate-catalog-go (gate area: the content of the Go entry, its kinds, tool versions, evidence URLs and known-bad fixtures; #29), setup-s11-fill, gate-manifest-reader (gate area: the gate-manifest schema), verify-check-jobs-gates (verify area: checks `jobs` and `gate:<kind>`) | row 15 |
+| `setup-s13-rulesets` | S13: branch-protection.json, the default-branch ruleset and the push commands | REQ-002, NFR-002 | small | setup-s12-stack-files, setup-commands-file | row 15 |
+| `setup-rule-paths` | The rule-path register from the catalog and the baseline | REQ-002, NFR-001 | small | setup-s12-stack-files | row 15 |
+| `setup-s15-records-commit` | S15: the verify table, the last record rows and the orphan records commit | NFR-001, REQ-002, NFR-002 | small | setup-rule-paths, setup-s13-rulesets, setup-commands-file, verify-command (verify area: `layup setup verify WORK` and its table), found-git (foundation area: verbs for an orphan commit, add, branch and ls-files) | row 15 |
+| `setup-e2e-offline` | End-to-end: a full setup with no network | REQ-002, NFR-001, NFR-003, NFR-006 | large | setup-s15-records-commit, setup-prose-inputs, setup-s05-history, gate-catalog-go (gate area: the only embedded entry is Go, so the e2e uses it), verify-command (verify area) | row 16 |
+| `setup-pilot-acceptance` | REQ-002 acceptance on a pilot problem statement | REQ-002, NFR-003 | large | setup-e2e-offline | row 20 |
 
 ### `setup-runner` — The `layup setup WORK` command and the resumable step runner
 
@@ -835,22 +835,22 @@ This area has no Go code yet. At 7cdd346 there is only internal/cli (version and
 
 | Key | Title | Requirements | Size | After | Host |
 | --- | ----- | ------------ | ---- | ----- | ---- |
-| `verify-frame` | The command `layup setup verify WORK`: inputs, scratch tree, table, exit codes, one-check call | REQ-002, NFR-004, NFR-005 | large | verify-harness, found-tsv (foundation area), found-git (foundation area: worktree add --detach, worktree remove, rev-parse), found-cli (foundation area: dispatch and exit-code mapping), found-schema-test (foundation area: Go test that reads the tsv-schema blocks) |  |
-| `verify-harness` | The shared fixture harness: run docs/setup/tests through the Go check cores | REQ-002 | small | verify-kit-history (same pull request: the harness is not green with no check, run.sh:35-36, :96), found-git (foundation area: init, add, commit --allow-empty, clone --depth 1, with -c user.name/user.email/core.hooksPath/commit.gpgsign) |  |
-| `verify-pin` | Check `pin`: the check_pin core, and the target's record rows and method | REQ-002, NFR-006 | small | verify-frame, verify-harness, found-git (foundation area: rev-list --max-parents=0, rev-parse --is-shallow-repository, rev-parse <commit>^{tree}; packages.md:39 does not list rev-list) |  |
-| `verify-kit-history` | Check `kit-history`: the first check, landed with the harness | REQ-002 | small | found-git (foundation area) |  |
-| `verify-markers` | Check `markers`: the scanner with LAYUP's MK_EXEMPT, and open-gaps by its schema | REQ-002, NFR-003 | small | verify-frame, verify-harness, found-git (foundation area: ls-files -z or with core.quotePath=false; packages.md:39 does not list ls-files) |  |
-| `verify-adapted` | Check `adapted` (rules 1 to 3), with AD_EXCLUDE and ad_allowed | REQ-002 | large | verify-frame, verify-harness, found-git (foundation area: ls-files) |  |
-| `verify-identity` | Check `identity`, with the target's name | REQ-002 | small | verify-frame, verify-harness |  |
-| `verify-facts` | Check `facts` in a target's form, the answers-record reader, and the fact resolver | REQ-002, NFR-003 | large | verify-frame, verify-harness |  |
-| `verify-onboarding-glossary` | Checks `onboarding` and `glossary` in a target's form | REQ-002, NFR-003 | small | verify-facts |  |
-| `verify-guardrails` | Check `guardrails` in a target's form | REQ-002, NFR-003 | small | verify-facts |  |
-| `verify-baseline-scripts` | Checks `discipline-tests` and `link-lint`: the baseline's own scripts | REQ-002, NFR-004 | small | verify-frame, verify-test-baseline |  |
-| `verify-test-baseline` | A stand-in baseline for the integration and e2e tests, with no network | REQ-002 | small | found-git (foundation area) |  |
-| `verify-sources` | Check `sources`: every value of the setup record has a source that resolves | NFR-003, REQ-002 | small | verify-frame, verify-facts, verify-markers, setup-catalog (setup area: internal/catalog with the embedded Go entry) |  |
-| `verify-jobs` | Check `jobs`: one CI job per gate kind | REQ-002, REQ-007 | small | verify-frame, gate-manifest (gate area: the manifest schema reader), setup-catalog (setup area: the CI workflow file of the Go entry) |  |
-| `verify-gate-fixtures` | Rows `gate:<kind>`: the clean run and the known-bad fixture | REQ-002, REQ-004, REQ-007, NFR-004, NFR-005 | large | verify-frame, gate-run (gate area: an internal/gate call that runs a manifest on base and head and returns the rows), gate-manifest (gate area: the reader of docs/gates.tsv with kinds and states), found-git (foundation area: apply, commit on a detached scratch tree or commit-tree, rev-parse), setup-catalog (setup area: the Go entry's kinds.tsv and fixtures/<kind>.patch) |  |
-| `verify-acceptance` | End to end: `layup setup verify` on a WORK made by `layup setup` | REQ-002, NFR-003, NFR-004 | large | verify-frame, verify-pin, verify-kit-history, verify-facts, verify-onboarding-glossary, verify-guardrails, verify-markers, verify-adapted, verify-identity, verify-baseline-scripts, verify-sources, verify-jobs, verify-gate-fixtures, verify-test-baseline, setup-runner (setup area: `layup setup WORK` through S15) |  |
+| `verify-frame` | The command `layup setup verify WORK`: inputs, scratch tree, table, exit codes, one-check call | REQ-002, NFR-004, NFR-005 | large | verify-harness, found-tsv (foundation area), found-git (foundation area: worktree add --detach, worktree remove, rev-parse), found-cli (foundation area: dispatch and exit-code mapping), found-schema-test (foundation area: Go test that reads the tsv-schema blocks) | row 7 |
+| `verify-harness` | The shared fixture harness: run docs/setup/tests through the Go check cores | REQ-002 | small | verify-kit-history (same pull request: the harness is not green with no check, run.sh:35-36, :96), found-git (foundation area: init, add, commit --allow-empty, clone --depth 1, with -c user.name/user.email/core.hooksPath/commit.gpgsign) | row 7 |
+| `verify-pin` | Check `pin`: the check_pin core, and the target's record rows and method | REQ-002, NFR-006 | small | verify-frame, verify-harness, found-git (foundation area: rev-list --max-parents=0, rev-parse --is-shallow-repository, rev-parse <commit>^{tree}; packages.md:39 does not list rev-list) | row 7 |
+| `verify-kit-history` | Check `kit-history`: the first check, landed with the harness | REQ-002 | small | found-git (foundation area) | row 7 |
+| `verify-markers` | Check `markers`: the scanner with LAYUP's MK_EXEMPT, and open-gaps by its schema | REQ-002, NFR-003 | small | verify-frame, verify-harness, found-git (foundation area: ls-files -z or with core.quotePath=false; packages.md:39 does not list ls-files) | row 10 |
+| `verify-adapted` | Check `adapted` (rules 1 to 3), with AD_EXCLUDE and ad_allowed | REQ-002 | large | verify-frame, verify-harness, found-git (foundation area: ls-files) | row 11 |
+| `verify-identity` | Check `identity`, with the target's name | REQ-002 | small | verify-frame, verify-harness | row 7 |
+| `verify-facts` | Check `facts` in a target's form, the answers-record reader, and the fact resolver | REQ-002, NFR-003 | large | verify-frame, verify-harness | row 12 |
+| `verify-onboarding-glossary` | Checks `onboarding` and `glossary` in a target's form | REQ-002, NFR-003 | small | verify-facts | row 12 |
+| `verify-guardrails` | Check `guardrails` in a target's form | REQ-002, NFR-003 | small | verify-facts | row 12 |
+| `verify-baseline-scripts` | Checks `discipline-tests` and `link-lint`: the baseline's own scripts | REQ-002, NFR-004 | small | verify-frame, verify-test-baseline | row 10 |
+| `verify-test-baseline` | A stand-in baseline for the integration and e2e tests, with no network | REQ-002 | small | found-git (foundation area) | row 7 |
+| `verify-sources` | Check `sources`: every value of the setup record has a source that resolves | NFR-003, REQ-002 | small | verify-frame, verify-facts, verify-markers, setup-catalog (setup area: internal/catalog with the embedded Go entry) | row 10 |
+| `verify-jobs` | Check `jobs`: one CI job per gate kind | REQ-002, REQ-007 | small | verify-frame, gate-manifest (gate area: the manifest schema reader), setup-catalog (setup area: the CI workflow file of the Go entry) | row 15 |
+| `verify-gate-fixtures` | Rows `gate:<kind>`: the clean run and the known-bad fixture | REQ-002, REQ-004, REQ-007, NFR-004, NFR-005 | large | verify-frame, gate-run (gate area: an internal/gate call that runs a manifest on base and head and returns the rows), gate-manifest (gate area: the reader of docs/gates.tsv with kinds and states), found-git (foundation area: apply, commit on a detached scratch tree or commit-tree, rev-parse), setup-catalog (setup area: the Go entry's kinds.tsv and fixtures/<kind>.patch) | row 15 |
+| `verify-acceptance` | End to end: `layup setup verify` on a WORK made by `layup setup` | REQ-002, NFR-003, NFR-004 | large | verify-frame, verify-pin, verify-kit-history, verify-facts, verify-onboarding-glossary, verify-guardrails, verify-markers, verify-adapted, verify-identity, verify-baseline-scripts, verify-sources, verify-jobs, verify-gate-fixtures, verify-test-baseline, setup-runner (setup area: `layup setup WORK` through S15) | row 16 |
 
 ### `verify-frame` — The command `layup setup verify WORK`: inputs, scratch tree, table, exit codes, one-check call
 
@@ -1151,16 +1151,16 @@ At 7cdd346 the code is small. cmd/layup/main.go hands the arguments to internal/
 
 | Key | Title | Requirements | Size | After | Host |
 | --- | ----- | ------------ | ---- | ----- | ---- |
-| `found-tsv` | internal/tsv: read and write a record by its schema | NFR-005, NFR-007, NFR-001, NFR-002 | large | — |  |
-| `found-spec-schema-test` | The test that compares each tsv-schema block of docs/spec with its Go schema | REQ-001, REQ-002, REQ-004, REQ-007, REQ-009, REQ-011, NFR-003 | small | found-tsv |  |
-| `found-git` | internal/git: the one caller of the git program | NFR-007, NFR-005, NFR-001 | large | — |  |
-| `found-boundary-test` | The import-boundary and program-start test of the package table | NFR-007, NFR-005 | small | — |  |
-| `found-cli` | internal/cli: the frame of every command (usage, argument rules, exit-code mapping) | NFR-004, REQ-001, REQ-002, REQ-004 | small | found-e2e-harness |  |
-| `found-telemetry-schema` | The telemetry and price schemas in code (REQ-011, schema only) | REQ-011 | small | found-tsv, found-spec-schema-test |  |
-| `found-stalls-schema` | The stall schema in code (REQ-009, schema only) | REQ-009 | small | found-tsv, found-spec-schema-test |  |
-| `found-e2e-harness` | The e2e harness: build the binary once and run commands as a user | NFR-005, REQ-001 | small | — |  |
-| `found-nfr001-tests` | The tests of NFR-001 in phase 1: the records are in the target's Git | NFR-001 | small | found-e2e-harness, found-tsv, setup-s01-s14 (setup area: every step of a full run), setup-s13-ruleset (setup area: the order of commands.sh), setup-s15-records-branch (setup area), setup-baseline-fixture (setup area: a fixture baseline that passes its own discipline-tests and link-lint), verify-checks (verify area: every check, and the setup-verify schema) |  |
-| `found-nfr002-tests` | The tests of NFR-002 in phase 1: a target is independent of LAYUP | NFR-002 | small | found-e2e-harness, setup-s01-s14 (setup area: a full run), setup-s12-gates (setup area: catalog files, docs/gates.tsv, one CI job per kind), setup-s13-ruleset (setup area), setup-s15-records-branch (setup area), setup-catalog-go (setup area: the Go entry), setup-baseline-fixture (setup area), verify-checks (verify area) |  |
+| `found-tsv` | internal/tsv: read and write a record by its schema | NFR-005, NFR-007, NFR-001, NFR-002 | large | — | row 1 |
+| `found-spec-schema-test` | The test that compares each tsv-schema block of docs/spec with its Go schema | REQ-001, REQ-002, REQ-004, REQ-007, REQ-009, REQ-011, NFR-003 | small | found-tsv | row 1 |
+| `found-git` | internal/git: the one caller of the git program | NFR-007, NFR-005, NFR-001 | large | — | row 2 |
+| `found-boundary-test` | The import-boundary and program-start test of the package table | NFR-007, NFR-005 | small | — | row 2 |
+| `found-cli` | internal/cli: the frame of every command (usage, argument rules, exit-code mapping) | NFR-004, REQ-001, REQ-002, REQ-004 | small | found-e2e-harness | row 3 |
+| `found-telemetry-schema` | The telemetry and price schemas in code (REQ-011, schema only) | REQ-011 | small | found-tsv, found-spec-schema-test | row 17 |
+| `found-stalls-schema` | The stall schema in code (REQ-009, schema only) | REQ-009 | small | found-tsv, found-spec-schema-test | row 18 |
+| `found-e2e-harness` | The e2e harness: build the binary once and run commands as a user | NFR-005, REQ-001 | small | — | row 3 |
+| `found-nfr001-tests` | The tests of NFR-001 in phase 1: the records are in the target's Git | NFR-001 | small | found-e2e-harness, found-tsv, setup-s01-s14 (setup area: every step of a full run), setup-s13-ruleset (setup area: the order of commands.sh), setup-s15-records-branch (setup area), setup-baseline-fixture (setup area: a fixture baseline that passes its own discipline-tests and link-lint), verify-checks (verify area: every check, and the setup-verify schema) | row 16 |
+| `found-nfr002-tests` | The tests of NFR-002 in phase 1: a target is independent of LAYUP | NFR-002 | small | found-e2e-harness, setup-s01-s14 (setup area: a full run), setup-s12-gates (setup area: catalog files, docs/gates.tsv, one CI job per kind), setup-s13-ruleset (setup area), setup-s15-records-branch (setup area), setup-catalog-go (setup area: the Go entry), setup-baseline-fixture (setup area), verify-checks (verify area) | row 16 |
 
 ### `found-tsv` — internal/tsv: read and write a record by its schema
 
@@ -1389,28 +1389,28 @@ The gov area has no Go code. It holds the rules that set the shape of the plan, 
 
 | Key | Title | Requirements | Size | After | Host |
 | --- | ----- | ------------ | ---- | ----- | ---- |
-| `gov-prd-task-column` | Fill the Task column of the PRD-0001 section-12 matrix | REQ-012, REQ-001, REQ-002, REQ-004, REQ-007, REQ-009, REQ-011, NFR-001, NFR-002, NFR-003, NFR-004, NFR-005, NFR-006, NFR-007, REQ-015, REQ-016, REQ-017, REQ-018 | small | gov-rescope-29 |  |
-| `gov-test-traceability` | A test-side traceability table for LAYUP, and LAYUP's Definition of Done | REQ-012, REQ-001, REQ-002, REQ-004, REQ-007, REQ-009, REQ-011, NFR-001, NFR-002, NFR-003, NFR-004, NFR-005, NFR-006, NFR-007 | small | gov-prd-task-column, gov-rescope-29, found-stdlib-only-test (other area, packages: the test that runs go list -deps; best-guess key) |  |
-| `gov-rescope-29` | Re-scope #29's children table to the plan's phase-1 issues | REQ-002, REQ-004, REQ-007, REQ-009, REQ-011 | small | — |  |
-| `gov-rescope-33` | Close or rewrite #33 (T-vk3k), whose text predates ADR-0016 | REQ-004, REQ-007, NFR-004 | small | gov-rescope-29 |  |
-| `gov-pdr-approval` | T-4wrw: the PDR record and the Operator's approval | REQ-012 | small | gov-prd-task-column, gov-test-traceability, gov-rescope-29, gov-rescope-33 |  |
-| `gov-pilot-definition` | Decide which pilot ends bootstrap mode, and what phase 1 is accepted against | REQ-001, REQ-002, REQ-004, REQ-007, REQ-009, REQ-011, NFR-002 | small | — |  |
-| `gov-pilot-inputs` | Prepare the inputs of the first pilot | REQ-002, NFR-003, REQ-016 | large | gov-pilot-definition, setup-runner (other area; best-guess key: the step runner, whose stop table gives the M- and S05 questions) |  |
-| `gov-first-pilot` | Run the first pilot: set up one target and run its gate from outside | REQ-002, REQ-004, REQ-007, REQ-016, REQ-018, NFR-001, NFR-002, NFR-003, NFR-004, NFR-006 | large | gov-pilot-inputs, gov-pdr-approval, setup-runner, verify-setup-verify, gate-command, setup-catalog-go (other-area keys are best guesses) |  |
-| `gov-pilot-numbers` | Pre-register and record the pilot's defect and stall numbers | — | small | gov-pilot-definition, gov-first-pilot |  |
-| `gov-supersede-adr-0012` | The ADR that supersedes ADR-0012 and ends bootstrap mode | — | large | gov-first-pilot, gov-pilot-numbers |  |
-| `gov-release-review` | The code review of the phase-1 release for the Won't rows | REQ-015, REQ-017 | small | gov-first-pilot |  |
-| `gov-milestone-spec` | A specification task at the start of each later milestone | REQ-012 | large | gov-first-pilot |  |
-| `gov-operator-setup-o112` | The Operator's setup items from O-112 (T-hbw8 verdict) | REQ-010, REQ-007 | small | — |  |
-| `gov-operator-ci-protection` | The Operator applies branch protection if phase 1 adds a CI job | REQ-004 | small | setup-catalog-go (other area; best-guess key) |  |
-| `gov-issue-15` | #15: stale text about the deleted docs/decisions/ (batched; not a separate issue) | — | small | — |  |
-| `gov-issue-21` | #21: the markers check skips quoted file names; stale sentences (batched with the Go port of markers) | NFR-003 | small | verify-setup-verify (other area; best-guess key: the item that ports markers) |  |
-| `gov-issue-24` | #24: docs/ci/README.md and AGENTS.md (check and close) | — | small | — |  |
-| `gov-issue-34` | #34: ADR-0011 wording, a glossary row for 'rule path', the S04 wording (batched with the setup rule-path register) | REQ-002 | small | setup-rule-paths (other area; best-guess key: the item that writes rule-paths.tsv) |  |
-| `gov-issue-48` | #48: autocrlf breaks check facts and setup-check.sh (batched; not blocking on the macOS host) | — | small | — |  |
-| `gov-issue-61` | #61: check facts accepts a blank fact made of a tab (batched with the verify item that ports facts) | REQ-001 | small | verify-setup-verify (other area; best-guess key: the item that ports facts) |  |
-| `gov-issue-68` | #68: handoff artifacts that are issue comments (phase 2; not blocking phase 1) | REQ-005, NFR-001 | small | gov-milestone-spec |  |
-| `gov-issue-49` | #49: how R11 counts the goal classes of a decision record (waits for the end of bootstrap mode) | — | small | gov-supersede-adr-0012 |  |
+| `gov-prd-task-column` | Fill the Task column of the PRD-0001 section-12 matrix | REQ-012, REQ-001, REQ-002, REQ-004, REQ-007, REQ-009, REQ-011, NFR-001, NFR-002, NFR-003, NFR-004, NFR-005, NFR-006, NFR-007, REQ-015, REQ-016, REQ-017, REQ-018 | small | gov-rescope-29 | `T-55n2` |
+| `gov-test-traceability` | A test-side traceability table for LAYUP, and LAYUP's Definition of Done | REQ-012, REQ-001, REQ-002, REQ-004, REQ-007, REQ-009, REQ-011, NFR-001, NFR-002, NFR-003, NFR-004, NFR-005, NFR-006, NFR-007 | small | gov-prd-task-column, gov-rescope-29, found-stdlib-only-test (other area, packages: the test that runs go list -deps; best-guess key) | `T-55n2` |
+| `gov-rescope-29` | Re-scope #29's children table to the plan's phase-1 issues | REQ-002, REQ-004, REQ-007, REQ-009, REQ-011 | small | — | `T-55n2` |
+| `gov-rescope-33` | Close or rewrite #33 (T-vk3k), whose text predates ADR-0016 | REQ-004, REQ-007, NFR-004 | small | gov-rescope-29 | `T-55n2` |
+| `gov-pdr-approval` | T-4wrw: the PDR record and the Operator's approval | REQ-012 | small | gov-prd-task-column, gov-test-traceability, gov-rescope-29, gov-rescope-33 | `T-4wrw` |
+| `gov-pilot-definition` | Decide which pilot ends bootstrap mode, and what phase 1 is accepted against | REQ-001, REQ-002, REQ-004, REQ-007, REQ-009, REQ-011, NFR-002 | small | — | O-122 |
+| `gov-pilot-inputs` | Prepare the inputs of the first pilot | REQ-002, NFR-003, REQ-016 | large | gov-pilot-definition, setup-runner (other area; best-guess key: the step runner, whose stop table gives the M- and S05 questions) | row 20 |
+| `gov-first-pilot` | Run the first pilot: set up one target and run its gate from outside | REQ-002, REQ-004, REQ-007, REQ-016, REQ-018, NFR-001, NFR-002, NFR-003, NFR-004, NFR-006 | large | gov-pilot-inputs, gov-pdr-approval, setup-runner, verify-setup-verify, gate-command, setup-catalog-go (other-area keys are best guesses) | row 20 |
+| `gov-pilot-numbers` | Pre-register and record the pilot's defect and stall numbers | — | small | gov-pilot-definition, gov-first-pilot | the ADR that supersedes ADR-0012 |
+| `gov-supersede-adr-0012` | The ADR that supersedes ADR-0012 and ends bootstrap mode | — | large | gov-first-pilot, gov-pilot-numbers | the ADR that supersedes ADR-0012 |
+| `gov-release-review` | The code review of the phase-1 release for the Won't rows | REQ-015, REQ-017 | small | gov-first-pilot | row 19 |
+| `gov-milestone-spec` | A specification task at the start of each later milestone | REQ-012 | large | gov-first-pilot | `T-55n2` |
+| `gov-operator-setup-o112` | The Operator's setup items from O-112 (T-hbw8 verdict) | REQ-010, REQ-007 | small | — | `M2a` |
+| `gov-operator-ci-protection` | The Operator applies branch protection if phase 1 adds a CI job | REQ-004 | small | setup-catalog-go (other area; best-guess key) | out |
+| `gov-issue-15` | #15: stale text about the deleted docs/decisions/ (batched; not a separate issue) | — | small | — | `T-55n2` |
+| `gov-issue-21` | #21: the markers check skips quoted file names; stale sentences (batched with the Go port of markers) | NFR-003 | small | verify-setup-verify (other area; best-guess key: the item that ports markers) | row 10 |
+| `gov-issue-24` | #24: docs/ci/README.md and AGENTS.md (check and close) | — | small | — | `T-55n2` |
+| `gov-issue-34` | #34: ADR-0011 wording, a glossary row for 'rule path', the S04 wording (batched with the setup rule-path register) | REQ-002 | small | setup-rule-paths (other area; best-guess key: the item that writes rule-paths.tsv) | row 15 |
+| `gov-issue-48` | #48: autocrlf breaks check facts and setup-check.sh (batched; not blocking on the macOS host) | — | small | — | row 12 |
+| `gov-issue-61` | #61: check facts accepts a blank fact made of a tab (batched with the verify item that ports facts) | REQ-001 | small | verify-setup-verify (other area; best-guess key: the item that ports facts) | row 12 |
+| `gov-issue-68` | #68: handoff artifacts that are issue comments (phase 2; not blocking phase 1) | REQ-005, NFR-001 | small | gov-milestone-spec | `M2e` |
+| `gov-issue-49` | #49: how R11 counts the goal classes of a decision record (waits for the end of bootstrap mode) | — | small | gov-supersede-adr-0012 | out |
 
 ### `gov-prd-task-column` — Fill the Task column of the PRD-0001 section-12 matrix
 
@@ -1761,21 +1761,21 @@ Phases 2 to 4 have no code today. `go list ./...` at 7cdd346 names only cmd/layu
 
 | Key | Title | Requirements | Size | After | Host |
 | --- | ----- | ------------ | ---- | ----- | ---- |
-| `later-p2-run-start` | Phase 2: layup run Start and restart, the records writer, the lease and the forge adapter | NFR-001, NFR-002, NFR-006, REQ-002 | large | found-tsv, found-git, found-cli, found-record-schemas, setup-runner |  |
-| `later-p2-sessions-ledger` | Phase 2: role sessions, the harness probe and admission, the pre-push checks, and the ledger writer | REQ-011, REQ-005, REQ-003, REQ-013, NFR-005, NFR-001 | large | later-p2-run-start, found-record-schemas, setup-rule-path-register |  |
-| `later-p2-intake-spec` | Phase 2: the Intake gap check in one batch, and the fact spans | REQ-001, REQ-012, NFR-003 | large | later-p2-run-start, later-p2-sessions-ledger, psb-check |  |
-| `later-p2-scaffold` | Phase 2: layup run drives the setup, the rulesets and the forge checks (Scaffold) | REQ-002, NFR-001, NFR-002, NFR-003, NFR-006, REQ-003 | large | later-p2-run-start, later-p2-sessions-ledger, later-p2-intake-spec, setup-runner, setup-records-branch, verify-checks |  |
-| `later-p2-phase-loop-handoffs` | Phase 2: the task loop, typed handoffs, Shape and the first bet | REQ-005, REQ-007, REQ-012, REQ-003, NFR-004, NFR-001 | large | later-p2-scaffold, later-p2-sessions-ledger, later-p2-intake-spec, gate-command |  |
-| `later-p2-rule-protection` | Phase 2: rule batches, gate activation, batch approval and layup audit | REQ-003, REQ-004, NFR-001, NFR-004 | large | later-p2-phase-loop-handoffs, later-p2-scaffold, gate-command, setup-catalog-go |  |
-| `later-p2-build-accept` | Phase 2: the milestone plan, build tasks with merge order, and Accept | REQ-005, REQ-007, REQ-004, REQ-012, NFR-004 | large | later-p2-rule-protection, later-p2-phase-loop-handoffs, setup-catalog-go |  |
-| `later-p3-smartif` | Phase 3: the smart-if provider client and decisions.tsv | NFR-005, REQ-006, REQ-008 | large | later-p2-run-start, later-p2-phase-loop-handoffs |  |
-| `later-p3-escalation` | Phase 3: the escalation screen, human-input accounting and the audit | REQ-008, NFR-001 | large | later-p3-smartif, later-p2-build-accept, later-p2-intake-spec |  |
-| `later-p3-clarification` | Phase 3: autonomous clarification by the owner role | REQ-006 | large | later-p3-escalation, later-p3-smartif, later-p2-build-accept, later-p2-sessions-ledger |  |
-| `later-p3-stalls-budget` | Phase 3: stalls, the panel, the circuit breaker, the budget and the dead-man job | REQ-010, REQ-009, REQ-011 | large | later-p3-escalation, later-p3-smartif, later-p2-build-accept, later-p2-sessions-ledger, found-record-schemas |  |
-| `later-p4-neutrality` | Phase 4: a second harness agent does and checks the work, and a target continues without LAYUP | REQ-013, NFR-002 | large | later-p2-build-accept, later-p2-sessions-ledger, later-p3-stalls-budget |  |
-| `later-p4-measures` | Phase 4: layup report, the pilot baseline and the start values | REQ-011, REQ-005, REQ-008, REQ-006, REQ-009, REQ-010, REQ-001 | large | later-p3-escalation, later-p3-clarification, later-p3-stalls-budget, later-p2-build-accept |  |
-| `later-p4-learning` | Phase 4: the retrospective, layup learn and the lessons | — | large | later-p4-measures, later-p2-rule-protection, later-p3-stalls-budget |  |
-| `later-p4-pilot` | Phase 4: the pilot on two problem statements with different stacks | REQ-014, REQ-001, REQ-002, REQ-003, REQ-004, REQ-005, REQ-006, REQ-007, REQ-008, REQ-009, REQ-011, REQ-012, NFR-001, NFR-002, NFR-003, REQ-015, REQ-016, REQ-017, REQ-018 | large | later-p4-neutrality, later-p4-measures, later-p2-rule-protection, later-p3-escalation, setup-catalog-go |  |
+| `later-p2-run-start` | Phase 2: layup run Start and restart, the records writer, the lease and the forge adapter | NFR-001, NFR-002, NFR-006, REQ-002 | large | found-tsv, found-git, found-cli, found-record-schemas, setup-runner | `M2a` |
+| `later-p2-sessions-ledger` | Phase 2: role sessions, the harness probe and admission, the pre-push checks, and the ledger writer | REQ-011, REQ-005, REQ-003, REQ-013, NFR-005, NFR-001 | large | later-p2-run-start, found-record-schemas, setup-rule-path-register | `M2b` |
+| `later-p2-intake-spec` | Phase 2: the Intake gap check in one batch, and the fact spans | REQ-001, REQ-012, NFR-003 | large | later-p2-run-start, later-p2-sessions-ledger, psb-check | `M2c` |
+| `later-p2-scaffold` | Phase 2: layup run drives the setup, the rulesets and the forge checks (Scaffold) | REQ-002, NFR-001, NFR-002, NFR-003, NFR-006, REQ-003 | large | later-p2-run-start, later-p2-sessions-ledger, later-p2-intake-spec, setup-runner, setup-records-branch, verify-checks | `M2d` |
+| `later-p2-phase-loop-handoffs` | Phase 2: the task loop, typed handoffs, Shape and the first bet | REQ-005, REQ-007, REQ-012, REQ-003, NFR-004, NFR-001 | large | later-p2-scaffold, later-p2-sessions-ledger, later-p2-intake-spec, gate-command | `M2e` |
+| `later-p2-rule-protection` | Phase 2: rule batches, gate activation, batch approval and layup audit | REQ-003, REQ-004, NFR-001, NFR-004 | large | later-p2-phase-loop-handoffs, later-p2-scaffold, gate-command, setup-catalog-go | `M2f` |
+| `later-p2-build-accept` | Phase 2: the milestone plan, build tasks with merge order, and Accept | REQ-005, REQ-007, REQ-004, REQ-012, NFR-004 | large | later-p2-rule-protection, later-p2-phase-loop-handoffs, setup-catalog-go | `M2g` |
+| `later-p3-smartif` | Phase 3: the smart-if provider client and decisions.tsv | NFR-005, REQ-006, REQ-008 | large | later-p2-run-start, later-p2-phase-loop-handoffs | `M3a` |
+| `later-p3-escalation` | Phase 3: the escalation screen, human-input accounting and the audit | REQ-008, NFR-001 | large | later-p3-smartif, later-p2-build-accept, later-p2-intake-spec | `M3b` |
+| `later-p3-clarification` | Phase 3: autonomous clarification by the owner role | REQ-006 | large | later-p3-escalation, later-p3-smartif, later-p2-build-accept, later-p2-sessions-ledger | `M3c` |
+| `later-p3-stalls-budget` | Phase 3: stalls, the panel, the circuit breaker, the budget and the dead-man job | REQ-010, REQ-009, REQ-011 | large | later-p3-escalation, later-p3-smartif, later-p2-build-accept, later-p2-sessions-ledger, found-record-schemas | `M3d` |
+| `later-p4-neutrality` | Phase 4: a second harness agent does and checks the work, and a target continues without LAYUP | REQ-013, NFR-002 | large | later-p2-build-accept, later-p2-sessions-ledger, later-p3-stalls-budget | `M4a` |
+| `later-p4-measures` | Phase 4: layup report, the pilot baseline and the start values | REQ-011, REQ-005, REQ-008, REQ-006, REQ-009, REQ-010, REQ-001 | large | later-p3-escalation, later-p3-clarification, later-p3-stalls-budget, later-p2-build-accept | `M4b` |
+| `later-p4-learning` | Phase 4: the retrospective, layup learn and the lessons | — | large | later-p4-measures, later-p2-rule-protection, later-p3-stalls-budget | a decision of the Operator |
+| `later-p4-pilot` | Phase 4: the pilot on two problem statements with different stacks | REQ-014, REQ-001, REQ-002, REQ-003, REQ-004, REQ-005, REQ-006, REQ-007, REQ-008, REQ-009, REQ-011, REQ-012, NFR-001, NFR-002, NFR-003, REQ-015, REQ-016, REQ-017, REQ-018 | large | later-p4-neutrality, later-p4-measures, later-p2-rule-protection, later-p3-escalation, setup-catalog-go | `M4c` |
 
 ### `later-p2-run-start` — Phase 2: layup run Start and restart, the records writer, the lease and the forge adapter
 
