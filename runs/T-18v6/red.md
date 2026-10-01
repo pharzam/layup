@@ -72,3 +72,33 @@ FAIL	github.com/pharzam/layup/internal/tsv	0.746s
 `TestParseTypeTakesEachTypeOfTheClosedList` passed on the stub, because the stub
 takes every text. It guards the other failure, a parser that refuses a valid
 type.
+
+## Step 2: the block parser and the comparer
+
+2026-10-01T16:51:36Z. `go test -count=1 ./internal/tsv/` exits 1:
+
+```text
+--- FAIL: TestParseBlocksReadsTheFormOfTheREADME (0.00s)
+    block_test.go:38: got [], error <nil>
+        want [{Schema:{Name:psb-gaps Location:stdout NoHeader:false Columns:[...]} line:13} {Schema:{Name:open-gaps [...]} line:24}]
+--- FAIL: TestParseBlocksRefusesABlockThatDoesNotHaveTheForm (0.00s)
+    block_test.go:63: a tab in a column line: error <nil>; want "line 2: a tab" in it
+    block_test.go:63: an unknown type: error <nil>; want "line 2: column x: type \"float\"" in it
+    block_test.go:63: no closing fence: error <nil>; want "line 1: the block a has no closing fence" in it
+    block_test.go:63: another location prefix: error <nil>; want "has no prefix" in it
+[...] the same for the other 12 blocks
+--- FAIL: TestReadBlocksRefusesTwoBlocksWithOneName (0.00s)
+    block_test.go:79: got map[], error <nil>; want the blocks a and b
+--- FAIL: TestCompareNamesEachDifference (0.00s)
+    block_test.go:119: the name: error <nil>; want "the name: the block has \"psb-gaps\"; the Go schema has \"psb-gap\"" in it
+    block_test.go:119: the order: error <nil>; want "column 2 (rule): the name: the block has \"rule\"; the Go schema has \"line\"" in it
+[...] the same for the other 5 changes
+FAIL	github.com/pharzam/layup/internal/tsv	0.245s
+```
+
+| Test | Why it fails, and why that is the right reason |
+| ---- | ---------------------------------------------- |
+| `TestParseBlocksReadsTheFormOfTheREADME` | The stub parser finds no block, so the two blocks outside the fences of four backticks and of tildes do not come back. |
+| `TestParseBlocksRefusesABlockThatDoesNotHaveTheForm` | The stub parser refuses none of the 16 blocks that do not have the form. |
+| `TestReadBlocksRefusesTwoBlocksWithOneName` | The stub reads no file, so the blocks `a` and `b` do not come back; the test stops before its cases of a name that repeats. |
+| `TestCompareNamesEachDifference` | The stub comparer names none of the 7 changes. Its two checks of no difference (the same schema, and another rule) pass on the stub. |
