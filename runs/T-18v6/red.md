@@ -102,3 +102,33 @@ FAIL	github.com/pharzam/layup/internal/tsv	0.245s
 | `TestParseBlocksRefusesABlockThatDoesNotHaveTheForm` | The stub parser refuses none of the 16 blocks that do not have the form. |
 | `TestReadBlocksRefusesTwoBlocksWithOneName` | The stub reads no file, so the blocks `a` and `b` do not come back; the test stops before its cases of a name that repeats. |
 | `TestCompareNamesEachDifference` | The stub comparer names none of the 7 changes. Its two checks of no difference (the same schema, and another rule) pass on the stub. |
+
+## Step 3: the integration test of the blocks of `docs/spec/`
+
+The test came first with both lists empty. 2026-10-01T16:52:14Z.
+`go test -count=1 -tags=integration ./internal/tsv/` exits 1:
+
+```text
+--- FAIL: TestEverySchemaBlockIsBuiltOrNotYetBuilt (0.00s)
+    blocks_integration_test.go:40: the block catalog-kinds is listed 0 times in built and notYetBuilt; want 1
+[...] the same for gate-manifest, gate-result, open-gaps, prices, psb-gaps, rule-paths, setup-answers,
+      setup-record, setup-steps, setup-stop, setup-verify and stalls
+    blocks_integration_test.go:40: the block telemetry is listed 0 times in built and notYetBuilt; want 1
+FAIL	github.com/pharzam/layup/internal/tsv	0.263s
+```
+
+It fails for the right reason: `ReadBlocks` parsed each of the 14 blocks of
+`docs/spec/` with no error (the README's example of the form is not a block),
+and no block is on a list yet. Then a second run, at 16:52:22Z, had the 14 names
+with `prices` also in `built` and `psb-gaps` written as `psb-gap`:
+
+```text
+--- FAIL: TestEverySchemaBlockIsBuiltOrNotYetBuilt (0.00s)
+    blocks_integration_test.go:39: psb-gap is listed, but no block of docs/spec/ has that name
+    blocks_integration_test.go:44: the block prices is listed 2 times in built and notYetBuilt; want 1
+    blocks_integration_test.go:44: the block psb-gaps is listed 0 times in built and notYetBuilt; want 1
+FAIL	github.com/pharzam/layup/internal/tsv	0.318s
+```
+
+So each check of the test fails on its own case. With the 14 names in
+`notYetBuilt` once and `built` empty, the test passes.
