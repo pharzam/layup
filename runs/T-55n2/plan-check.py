@@ -287,4 +287,63 @@ for k, h in inv_hosts.items():
         probs.append(f"{k}: inventory says {h!r}, plan says {want!r}")
 report("inventory Host column agrees with the plan", probs)
 
+# 9 and 10 need the transitive predecessors of each row
+anc = {}
+
+
+def ancestors(n, seen=None):
+    if n in anc:
+        return anc[n]
+    out = set()
+    for d in graph.get(n, []):
+        if d in graph and d != n:
+            out |= {d} | ancestors(d)
+    anc[n] = out
+    return out
+
+
+def rowset(cell):
+    out = set()
+    for seg in re.findall(r"\brows? ([0-9][0-9 ,toand]*)", cell or ""):
+        nums = re.findall(r"\d+|to", seg)
+        i = 0
+        while i < len(nums):
+            if i + 2 < len(nums) and nums[i + 1] == "to":
+                out.update(range(int(nums[i]), int(nums[i + 2]) + 1))
+                i += 3
+            elif nums[i] != "to":
+                out.add(int(nums[i]))
+                i += 1
+            else:
+                i += 1
+    return out
+
+
+# 9. each edge of the inventory between items of two rows is kept, or listed as dropped
+deps = {}
+for l in inv.split("\n"):
+    c = cells(l)
+    if c and len(c) == 6 and re.fullmatch(r"`[a-z0-9-]+`", c[0]) and c[0].strip("`") in items:
+        deps[c[0].strip("`")] = [d for d in re.findall(r"[a-z0-9][a-z0-9-]+", c[4]) if d in items]
+rowof = {k: int(h[0].split()[1]) for k, h in host.items() if len(h) == 1 and h[0].startswith("row ")}
+dropped = {(r.get("From", "").strip("`"), r.get("To", "").strip("`")) for r in (table_after(plan, "## The edges of the inventory that the plan drops") or [])}
+probs = []
+for k, ds in deps.items():
+    if k not in rowof:
+        continue
+    for d in ds:
+        if d in rowof and rowof[d] != rowof[k] and rowof[d] not in ancestors(rowof[k]) and (k, d) not in dropped:
+            probs.append(f"{k} (row {rowof[k]}) needs {d} (row {rowof[d]}), but row {rowof[d]} is not before row {rowof[k]}")
+report("inventory edges are kept", probs)
+
+# 10. each register row: the settling rows come before each reading row
+probs = []
+for r in register:
+    S, R = rowset(r.get("Settled by")), rowset(r.get("Read by"))
+    for a_ in S:
+        for b_ in R:
+            if a_ != b_ and a_ not in ancestors(b_):
+                probs.append(f"{r.get('K')}: row {a_} settles, but row {b_} reads it and does not come after it")
+report("each defect is settled before it is read", probs)
+
 sys.exit(0 if all(not p for _, p in results) else 1)

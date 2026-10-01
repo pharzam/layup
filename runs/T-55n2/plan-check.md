@@ -47,3 +47,22 @@ PASS  traceability table
 PASS  inventory Host column agrees with the plan
 exit 0
 ```
+
+## Green again (plan step 6, after the self-check fixes and the two new checks 9 and 10)
+
+```text
+info  inventory: 103 items, 41 conflicts
+PASS  plan holds no marker
+info  plan: 15 milestones, 20 tasks, 35 other hosts, 42 register rows
+PASS  phase-1 requirements have a task
+PASS  each task names a requirement
+PASS  predecessors resolve with no cycle
+PASS  each inventory item has one host
+PASS  each conflict has a host
+PASS  PRD-0001 section 12 Task cells
+PASS  traceability table
+PASS  inventory Host column agrees with the plan
+PASS  inventory edges are kept
+PASS  each defect is settled before it is read
+exit 0
+```

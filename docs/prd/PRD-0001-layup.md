@@ -210,36 +210,37 @@ and is not LAYUP's to choose (`F-0004#1`).
 
 One row per requirement in §6 / §7. `—` marks a cell no record fills today; the
 implementation plan (`T-55n2`, [`docs/plan/README.md`](../plan/README.md)) fills the
-Task column with its tasks for phase 1 and its milestones (`M2a` to `M4c`) for
-the later phases, and each delivering task fills the Test column.
+Task column: in each row, the tasks and the milestones that its table "What
+phase 1 proves" names for that requirement, or its milestones (`M2a` to `M4c`)
+for a requirement of a later phase. Each delivering task fills the Test column.
 
 | REQ     | Facts                          | Guardrail   | ADR      | Task     | Test |
 | ------- | ------------------------------ | ----------- | -------- | -------- | ---- |
-| REQ-001 | F-0003#41, F-0003#14, F-0003#15, F-0001#11 | — | ADR-0011 | T-dq05, T-zmj6, T-5zmw | TestGoldenRealPSB; check facts (F-0004) |
-| REQ-002 | F-0003#42, F-0003#15, F-0003#37, F-0001#4, F-0001#8 | §1.1 Inv-4 | ADR-0011, ADR-0016 | T-b97r (its child tasks), T-evad | — |
+| REQ-001 | F-0003#41, F-0003#14, F-0003#15, F-0001#11 | — | ADR-0011 | T-dq05, T-zmj6, T-5zmw, T-evad; `M2c`, `M4b` | TestGoldenRealPSB; check facts (F-0004) |
+| REQ-002 | F-0003#42, F-0003#15, F-0003#37, F-0001#4, F-0001#8 | §1.1 Inv-4 | ADR-0011, ADR-0016 | T-b97r (its child tasks), T-evad; `M2d`, `M4c` | — |
 | REQ-003 | F-0003#43, F-0001#3, F-0003#64 | §1.1 Inv-3 | ADR-0017 | `M2b`, `M2d`, `M2e`, `M2f` | — |
-| REQ-004 | F-0003#44, F-0003#11, F-0003#12, F-0003#13, F-0001#7 | §1.1 Inv-7 | ADR-0011, ADR-0016 | T-vk3k (its child tasks), T-evad | — |
+| REQ-004 | F-0003#44, F-0003#11, F-0003#12, F-0003#13, F-0001#7 | §1.1 Inv-7 | ADR-0011, ADR-0016 | T-vk3k (its child tasks), T-d6q5, T-evad; `M2f`, `M4c` | — |
 | REQ-005 | F-0003#45, F-0003#59            | —           | ADR-0019 | `M2b`, `M2e`, `M2g`, `M4b` | — |
 | REQ-006 | F-0003#46, F-0003#8, F-0003#9, F-0003#10 | — | ADR-0019, ADR-0020, ADR-0021 | `M3a`, `M3c`, `M4b` | — |
-| REQ-007 | F-0003#47, F-0003#58, F-0001#6  | §1.1 Inv-6  | ADR-0016, ADR-0019 | T-vk3k, T-b97r, T-evad | — |
+| REQ-007 | F-0003#47, F-0003#58, F-0001#6  | §1.1 Inv-6  | ADR-0016, ADR-0019 | T-vk3k, T-b97r, T-evad; `M2e`, `M2g` | — |
 | REQ-008 | F-0003#48, F-0003#57, F-0001#12, F-0001#13, F-0001#24, F-0001#28 | — | ADR-0021, ADR-0022 | `M3a`, `M3b`, `M4b` | — |
-| REQ-009 | F-0003#49, F-0003#61, F-0001#37 | —           | ADR-0023 | T-dgy7; `M3d`, `M4b` | — |
+| REQ-009 | F-0003#49, F-0003#61, F-0001#37 | —           | ADR-0023 | T-dgy7; `M3d` | — |
 | REQ-010 | F-0003#49, F-0003#17, F-0003#18, F-0003#19, F-0001#14 | — | ADR-0023 | `M3d`, `M4b` | — |
-| REQ-011 | F-0003#50, F-0003#20, F-0003#21, F-0003#22, F-0003#60, F-0001#38 | — | ADR-0007, ADR-0024 | T-tmhw; `M2b`, `M3d`, `M4b` | — |
+| REQ-011 | F-0003#50, F-0003#20, F-0003#21, F-0003#22, F-0003#60, F-0001#38 | — | ADR-0007, ADR-0024 | T-tmhw; `M2b`, `M4b` | — |
 | REQ-012 | F-0003#51, F-0003#23, F-0003#24, F-0003#25, F-0003#62, F-0001#39 | — | ADR-0002, ADR-0018 | T-wjq4, T-0drh; `M2c`, `M2e`, `M2g` | prd-lint (this document); the review of `docs/spec/` (#74) |
-| REQ-013 | F-0003#52, F-0003#26, F-0003#27, F-0003#28, F-0003#66, F-0001#9 | §1.1 Inv-9 | ADR-0005, ADR-0012, ADR-0015, ADR-0020 | `M4a` | — |
+| REQ-013 | F-0003#52, F-0003#26, F-0003#27, F-0003#28, F-0003#66, F-0001#9 | §1.1 Inv-9 | ADR-0005, ADR-0012, ADR-0015, ADR-0020 | `M2b`, `M4a` | — |
 | REQ-014 | F-0003#67, F-0003#42            | —           | —        | `M4c` | — |
 | REQ-015 | F-0003#53                       | —           | —        | T-efmy | — |
-| REQ-016 | F-0003#54, F-0001#10            | —           | —        | T-evad | — |
+| REQ-016 | F-0003#54, F-0001#10            | —           | —        | T-evad; `M4c` | — |
 | REQ-017 | F-0003#55                       | —           | —        | T-efmy | — |
-| REQ-018 | F-0003#56, F-0001#7             | §1.1 Inv-7  | ADR-0011 | T-evad | — |
-| NFR-001 | F-0001#1                        | §1.1 Inv-1  | ADR-0011, ADR-0014 | T-18v6, T-b97r, T-evad; `M2a` | — |
+| REQ-018 | F-0003#56, F-0001#7             | §1.1 Inv-7  | ADR-0011 | T-evad; `M4c` | — |
+| NFR-001 | F-0001#1                        | §1.1 Inv-1  | ADR-0011, ADR-0014 | T-b97r, T-evad; `M2a`, `M4c` | — |
 | NFR-002 | F-0001#2, F-0003#65             | §1.1 Inv-2  | ADR-0013, ADR-0016 | T-b97r, T-evad; `M4a` | — |
-| NFR-003 | F-0001#4, F-0003#63             | §1.1 Inv-4  | —        | T-nfh8, T-b97r | check markers |
+| NFR-003 | F-0001#4, F-0003#63             | §1.1 Inv-4  | —        | T-nfh8, T-b97r, T-evad | check markers |
 | NFR-004 | F-0001#5                        | §1.1 Inv-5  | ADR-0011 | T-vk3k, T-b97r | — |
-| NFR-005 | F-0001#6                        | §1.1 Inv-6  | ADR-0015 | T-2tc2, T-5sgt; `M3a` | — |
+| NFR-005 | F-0001#6                        | §1.1 Inv-6  | ADR-0015 | T-2tc2, T-5sgt, T-b97r; `M3a` | — |
 | NFR-006 | F-0001#8                        | §1.1 Inv-8  | ADR-0009 | T-r7zg, T-b97r | check pin |
-| NFR-007 | F-0004#1                        | —           | ADR-0010 | T-mtb9, T-2tc2 | CI job lint (gofmt, go vet) |
+| NFR-007 | F-0004#1                        | —           | ADR-0010 | T-mtb9, T-2tc2 | planned: T-2tc2/integration/package-rules (the CI job lint, gofmt and go vet, does not test this criterion) |
 
 ## 13. Change log
 

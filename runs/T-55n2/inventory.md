@@ -22,7 +22,7 @@ The column **Host** was empty at plan step 1 (the red half). Plan step 4 filled 
 | --- | ----- | ------------ | ---- | ----- | ---- |
 | `psb-field-rule-cr` | Replace a lone carriage return in excerpt with a space | REQ-001 | small | — | row 6 |
 | `psb-tsv` | Write the gap table through internal/tsv, checked against its schema block | REQ-001, NFR-007 | small | psb-field-rule-cr, found-tsv (foundation area, best key name: the internal/tsv writer, the schema-block reader and the type checker for id(Q-NNN), enum, int and text) | row 6 |
-| `psb-batch-api` | Hand the gap table from internal/psb to internal/setup through internal/cli for S01 and S06 | REQ-001, REQ-002 | small | psb-tsv, setup-runner (setup area, best key name: the internal/setup step runner that receives the table at S01; needed only when the chosen design converts the rows into a type of internal/setup) | row 6 |
+| `psb-batch-api` | Hand the gap table from internal/psb to internal/setup through internal/cli for S01 and S06 | REQ-001, REQ-002 | small | psb-tsv, setup-runner (setup area, best key name: the internal/setup step runner that receives the table at S01; needed only when the chosen design converts the rows into a type of internal/setup) | row 9 |
 | `psb-cli-contract` | The command `layup psb check FILE` end to end: exit codes, streams, determinism | REQ-001, NFR-004, NFR-005 | small | — | row 6 |
 | `psb-rule-edges` | Add the unsettled edge cases of G1 to G5 to the rule table and to edge.md | REQ-001, NFR-005 | small | psb-field-rule-cr | row 6 |
 | `psb-rule-values` | Pin each value of the rule table with a golden case | REQ-001, NFR-005 | small | psb-field-rule-cr | row 6 |
