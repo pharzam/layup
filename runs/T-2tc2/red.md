@@ -40,3 +40,24 @@ $ go test -count=1 -tags=integration -run TestAHostileHostChangesNothing ./inter
          crlf.txt | 2 ++
          run.sh   | 1 +
 ```
+
+Runs 4 and 5 are on a skeleton of the checker that reads no row and gives no
+finding; run 6 is the real checker on the table of the base; run 7 is the real
+checker with rule 5 off. The skeleton refuses nothing and finds nothing (the
+case of a good module passes on it, so the breach cases prove that its pass is
+not empty); the test stops when it reads no row; the program cell of the base
+does not start with its code span; and the fixture breaks rule 5 only, so with
+rule 5 off the same checker and `go list` find nothing in it.
+
+```text
+$ go test -count=1 ./cmd/layup/                                      # run 4
+    rules_test.go:68: rows map[], <nil>                                (TestReadTable)
+    rules_test.go:93: zero rows: no error, 0 rows; want an error       … and the other 13 tables
+        rules_test.go:170: findings … want exactly rule 5: internal/psb depends on net/http   … and the other 17 breaches
+$ go test -count=1 -tags=integration -run TestPackageRules ./cmd/layup/
+    rules_integration_test.go:25: the table of phase 1: 0 rows, <nil>                                     # run 5
+    rules_integration_test.go:25: the table of phase 1: 0 rows, internal/gate: cannot read
+        Starts a program "the gate commands, with `sh -c`"                                                # run 6
+    rules_integration_test.go:36: the fixture that imports net/http gives … want the finding
+        rule 5: cmd/layup depends on net/http                                                             # run 7
+```
