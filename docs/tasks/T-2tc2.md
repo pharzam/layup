@@ -55,5 +55,64 @@ the author made before the freeze) and finding 9 (the budget, the Operator's).
 
 ## The budget
 
-The diff against `b48764f` is over the maximum of the plan review before the
-close-out (reported on #79). The Operator's answer goes here.
+The diff against `b48764f` went over the maximum of the plan review before the
+close-out: 2,043 lines over 22 files after the notes of review round 1. The
+author asked the Operator on #79 (comment "The budget, after the notes of review
+round 1"): "**The new maximum to approve:** 2,150 lines over 25 files, close-out
+inside. The alternative is a child issue for the growth. The Operator decides."
+
+**O-128.** The Operator answered "#78 a; #79 a" in the author's Claude Code
+session (2026-10-01), copied to
+[#79](https://github.com/pharzam/layup/issues/79#issuecomment-5938474670): option
+(a), the new maximum. The Budget maximum of this task is 2,150 lines added plus
+removed over 25 files against `b48764f`, close-out inside. The Cycle cap stays 1.
+
+## Verdict
+
+Delivered: `internal/git`, the one caller of `git` (17 calls in a closed list, a
+fixed environment with no input from the host's configuration or credentials,
+and two error kinds); `TestPackageRules` in `cmd/layup`, which reads the table
+of `docs/spec/packages.md` and holds each package to its rules, with a fixture
+module that imports `net/http`; the cell form and D1 to D9 in
+`docs/spec/packages.md`, which settle K7, K8, K31 and K39; the known limit L-A7
+in `docs/architecture.md` §15 and at S02; the `PRD-0001` §12 Test cells of
+`NFR-005` and `NFR-007`; the traceability row `green`; three glossary rows; one
+lesson in `docs/guardrails.md` §2.
+
+The plan review (Claude Fable 5.1) gave `approve-with-conditions`; the author
+applied its six conditions and twelve notes, with the two departures above. A
+fresh verification (Claude Opus 5.5) found 12 items, one material (the host's
+credentials could still reach the clone of S02); the fixer fixed it and 9 of the
+notes. Review round 1 (Claude Fable 5.1, `daa1ded`, cycle 0) gave `nothing
+material in scope`, with seven notes: notes 1 to 6 are applied (note 1 also by a
+correction comment on #79; note 3 by rows for the abbreviations APFS, GSS, NFC
+and NFD); note 7 is O-128. At the head, `go build`, `go vet` and `go test`
+(untagged, `integration` and `e2e`) pass, and so do all local checks, also
+after the merge of row 1 (`673e289`): the merge resolved two conflicts, in the
+package table and in the traceability table, and a probe showed that
+`TestPackageRules` now holds `internal/tsv` too. The diff of this task against
+`origin/main` after that merge is 2,100 lines over 24 files, inside the Budget
+maximum of O-128.
+
+Next: the PDR (`T-4wrw`, #99) waits for the Operator's approval; then the tasks
+of phase 1 continue in the order of the plan, from row 3 (`T-2yw7`, #80).
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). Times are 2026-10-01, UTC. Token counts are
+`not reported` where neither the harness nor `claude -p` in text mode gives them.
+The plan and the plan review of rows 1 and 2 ran side by side; each row records
+its own.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan (after O-126) | reasoning | Claude Opus 5.5 | max | not reported | within 13:43 to 14:02, shared with the plan of row 1 and the fixes of `T-55n2` |
+| The plan review | reasoning | Claude Fable 5.1 | not reported | not reported | 13 min, 14:25 to 14:37; a first run at 14:02 stopped at the usage limit, with no record |
+| The answer to the plan review | reasoning | Claude Opus 5.5 | max | not reported | 14:37 to 14:39 |
+| The implementation (a workflow agent) | execution | Claude Opus 5.5, a reasoning-tier model on an execution part | max | 810,254 (the workflow's count) | 156 min, 14:41 to 17:17; the first run stopped answering at 15:00, two restarts gave no answer, the fourth run stopped answering at 15:57, the fifth run went 16:13 to 17:17 |
+| The verification (a fresh workflow agent) | reasoning | Claude Opus 5.5 | max | 285,112 (the workflow's count) | 25 min, 17:17 to 17:43 |
+| The fixes of the verification (a workflow agent) | execution | Claude Opus 5.5 | max | 314,776 (the workflow's count) | 32 min, 17:43 to 18:14 |
+| The task record, the traceability row, the §12 Test cells and the freeze | execution | Claude Opus 5.5 | max | not reported | 18:14 to 18:18 |
+| Review round 1 | reasoning | Claude Fable 5.1 | not reported | not reported | 15 min, 18:19 to 18:34 |
+| The notes of round 1, the correction on #79 and the budget question | execution | Claude Opus 5.5 | max | not reported | 18:34 to 18:37 |
+| Close-out, with the merge of `origin/main` after row 1 | — | Claude Opus 5.5 | max | not reported | 19:00 to 19:12 |
