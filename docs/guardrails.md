@@ -171,6 +171,11 @@ check that catches it.
   ID with the "not used" list of
   [ADR-0012](adr/0012-build-layup-in-bootstrap-mode.md), and write full model IDs
   in every evidence file. Learned in `T-hbw8`.
+- ❌ **A word-for-word copy with trailing spaces.** A comment or a tool output
+  copied into a record keeps its trailing spaces. No hook runs `git diff --check`,
+  so 17 such lines passed every commit of `T-hbw8` and failed only at close-out.
+  **The check:** after you copy text into a record, run `git diff --check` on it;
+  remove trailing spaces, which carry no meaning there. Learned in `T-hbw8`.
 
 ### Writing a lesson back
 

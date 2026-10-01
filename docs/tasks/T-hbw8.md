@@ -47,7 +47,7 @@ author's answer to the plan review" on #72).
    `docs/setup/README.md`, `README.md`, the onboarding and the ADR index. The
    deep check found about 50 material defects in it; plan v2 (O-92) removed it
    in step 0 and rewrites it. Its text stays in the history of this branch.
-   This file is rewritten at the close-out of plan v2.
+   Plan v2 follows.
 
 ## Decisions of the author (the withdrawn draft)
 
@@ -78,6 +78,32 @@ author's answer to the plan review" on #72).
 - The start values of the thresholds, `H`, `cost.task_factor` and the reward
   terms are set with their evidence by the implementation plan and the pilot.
 
+## Plan v2 (O-92)
+
+The plan and its review are comments on #72 ("Plan v2 as amended"): steps 0 to
+14, Cycle cap 1, Budget maximum 7,200 lines over 64 files against `946edfc`,
+raised to 8,500 over 72 by O-99. Step 0 removed the first draft. Eight slices
+(A to H), each with its walkthroughs first, then `docs/architecture.md`
+sections 1 to 13 and ADR-0013 to ADR-0025. Step 11 updated the glossary,
+`PRD-0001`, the README, the onboarding and the guardrails. Step 14 accepted the
+ADRs (O-112) and added a "Close when" sentence to the ten accepted limits of §15
+(O-113). The Operator's decisions O-85 to O-113 are in
+[`operator-decisions.md`](../../runs/T-hbw8/operator-decisions.md).
+
+Reviews ([`slice-reviews/`](../../runs/T-hbw8/slice-reviews/)), each by Claude
+Fable 5.1 in a fresh, read-only `claude -p` session in a disposable clone:
+slice A three rounds and slices B to H two each (17); the whole design seven
+rounds (19, 10 and 6 material findings in rounds 1 to 3; rounds 4 and 5 after
+the Operator's review of sections 1 to 3 and the Operator's GPT-6 review on
+Codex; rounds 6 and 7 `nothing material`). The Operator's two GPT-6 reviews
+are copied there word for word; neither is a gate round.
+
+## Known limits
+
+[`docs/architecture.md` §15](../architecture.md#15-known-limits), 22 limits.
+The Operator accepted ten of them, each with a "Close when" trigger (O-112,
+O-113).
+
 ## Lessons
 
 The lessons that the next reader could hit are in
@@ -92,6 +118,8 @@ The lessons that the next reader could hit are in
   ([`runs/T-hbw8/evaluation/summary.md`](../../runs/T-hbw8/evaluation/summary.md)).
 - "A model on the 'not used' list, used inside a test run": from the same
   evaluation, found by the plan review of plan v2 (Q-10 on #72).
+- "A word-for-word copy with trailing spaces": from the step 14 checks, where
+  `git diff --check` failed on copied comments and search output.
 
 ## Test runs
 
