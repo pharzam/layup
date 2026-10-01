@@ -76,8 +76,9 @@ of `docs/spec/packages.md` and holds each package to its rules, with a fixture
 module that imports `net/http`; the cell form and D1 to D9 in
 `docs/spec/packages.md`, which settle K7, K8, K31 and K39; the known limit L-A7
 in `docs/architecture.md` §15 and at S02; the `PRD-0001` §12 Test cells of
-`NFR-005` and `NFR-007`; the traceability row `green`; three glossary rows; one
-lesson in `docs/guardrails.md` §2.
+`NFR-005` and `NFR-007`, with a row of its §13 change log (added at the
+close-out); the traceability row `green`; three glossary rows; one lesson in
+`docs/guardrails.md` §2.
 
 The plan review (Claude Fable 5.1) gave `approve-with-conditions`; the author
 applied its six conditions and twelve notes, with the two departures above. A
@@ -91,7 +92,7 @@ and NFD); note 7 is O-128. At the head, `go build`, `go vet` and `go test`
 after the merge of row 1 (`673e289`): the merge resolved two conflicts, in the
 package table and in the traceability table, and a probe showed that
 `TestPackageRules` now holds `internal/tsv` too. The diff of this task against
-`origin/main` after that merge is 2,104 lines over 24 files, inside the Budget
+`origin/main` after that merge is 2,106 lines over 24 files, inside the Budget
 maximum of O-128.
 
 Next: the PDR (`T-4wrw`, #99) waits for the Operator's approval; then the tasks
@@ -115,4 +116,4 @@ its own.
 | The task record, the traceability row, the §12 Test cells and the freeze | execution | Claude Opus 5.5 | max | not reported | 18:14 to 18:18 |
 | Review round 1 | reasoning | Claude Fable 5.1 | not reported | not reported | 15 min, 18:19 to 18:34 |
 | The notes of round 1, the correction on #79 and the budget question | execution | Claude Opus 5.5 | max | not reported | 18:34 to 18:37 |
-| Close-out, with the merge of `origin/main` after row 1 | — | Claude Opus 5.5 | max | not reported | 19:00 to 19:12 |
+| Close-out, with the merge of `origin/main` after row 1 | — | Claude Opus 5.5 | max | not reported | 19:00 to 19:15 |
