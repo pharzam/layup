@@ -238,9 +238,9 @@ for a requirement of a later phase. Each delivering task fills the Test column.
 | NFR-002 | F-0001#2, F-0003#65             | §1.1 Inv-2  | ADR-0013, ADR-0016 | T-b97r, T-evad; `M4a` | — |
 | NFR-003 | F-0001#4, F-0003#63             | §1.1 Inv-4  | —        | T-nfh8, T-b97r, T-evad | check markers |
 | NFR-004 | F-0001#5                        | §1.1 Inv-5  | ADR-0011 | T-vk3k, T-b97r | — |
-| NFR-005 | F-0001#6                        | §1.1 Inv-6  | ADR-0015 | T-2tc2, T-5sgt, T-b97r; `M3a` | — |
+| NFR-005 | F-0001#6                        | §1.1 Inv-6  | ADR-0015 | T-2tc2, T-5sgt, T-b97r; `M3a` | TestPackageRules (cmd/layup, integration: no network package) |
 | NFR-006 | F-0001#8                        | §1.1 Inv-8  | ADR-0009 | T-r7zg, T-b97r | check pin |
-| NFR-007 | F-0004#1                        | —           | ADR-0010 | T-mtb9, T-2tc2 | planned: T-2tc2/integration/package-rules (the CI job lint, gofmt and go vet, does not test this criterion) |
+| NFR-007 | F-0004#1                        | —           | ADR-0010 | T-mtb9, T-2tc2 | TestPackageRules (cmd/layup, integration) |
 
 ## 13. Change log
 
@@ -250,3 +250,4 @@ for a requirement of a later phase. Each delivering task fills the Test column.
 | 2026-09-29 | The architecture (task `T-hbw8`, #72): REQ-001 names the review of meaning; REQ-003 names ADR-0017; NFR-005 and its criterion follow ADR-0015; §9, §10, §11 and §12 name ADR-0013 to ADR-0025 | REQ-001, REQ-003, NFR-005; the ADR column |
 | 2026-10-01 | The technical specification of phase 1 (task `T-0drh`, #74, O-114): `REQ-012`'s criterion names `docs/spec/` as LAYUP's own specification; `REQ-002`'s criterion names the step table of `docs/spec/setup.md`; §9 phase 1 states the boundary of `layup setup` and that phase 1 gives the schemas of the telemetry and stall records | REQ-002, REQ-009, REQ-011, REQ-012 |
 | 2026-10-01 | The implementation plan (task `T-55n2`, #76, O-121 to O-124): the §12 Task column names the plan's tasks for phase 1 and its milestones for phases 2 to 4 | REQ-001 to REQ-018, NFR-001 to NFR-007 (the Task column), and the Test cell of NFR-007 |
+| 2026-10-01 | The test of the package rules (task `T-2tc2`, #79): the §12 Test cells of NFR-005 and NFR-007 name `TestPackageRules` | NFR-005, NFR-007 (the Test cells) |
