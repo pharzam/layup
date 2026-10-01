@@ -3,7 +3,7 @@
 
 Run by hand from the repository root:
 
-    python3 runs/T-55n2/gen-issues.py FIRST_NUMBER
+    python3 runs/T-55n2/gen-issues.py FIRST_NUMBER [OUT_DIR]
 
 FIRST_NUMBER is the forge number that the first new issue gets (the parent task
 `layup setup`); the rows follow in order. The script reads docs/plan/README.md and
@@ -15,7 +15,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-OUT = ROOT / "runs/T-55n2/issues"
+OUT = Path(sys.argv[2]) if len(sys.argv) > 2 else ROOT / "runs/T-55n2/issues"
 BLOB = "https://github.com/pharzam/layup/blob/main"
 first = int(sys.argv[1])
 
@@ -180,4 +180,4 @@ setup += ["",
 for n, r in sorted(tasks.items()):
     tid = r["Task ID"].strip("`")
     (OUT / f"{number[n]:03d}-{tid}.md").write_text(f"{tid}: {r['Task']}\n\n" + body(n, r))
-print(f"wrote {len(tasks) + 1} files in {OUT.relative_to(ROOT)}")
+print(f"wrote {len(tasks) + 1} files in {OUT}")
