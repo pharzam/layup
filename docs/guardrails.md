@@ -291,6 +291,15 @@ These traps are not domain-specific: they hurt every project's test suite.
   hook's patience gets skipped, and a skipped gate is no gate. The check: keep the
   cheap levels fast and cheap-first, push slow ones to CI, and bound each with
   `-timeout 10m` — see [`tests/scaling-checklist.md`](tests/scaling-checklist.md).
+- ❌ **A specification that fixes one input state at a time.** A step that reads
+  an input file a human writes (an answers file, a list of rows) meets rows in
+  states that the happy path never makes: rows given early, copied from an
+  earlier run, or for a question that no step asked. A review finds one such
+  state per round, and a fix per state gives one more round per state: task
+  `T-0drh` (#74) needed rounds 2 to 4 for the one answers file of `layup setup`.
+  The check: before the review, write one rule for every row of an input that
+  no step of the run asked for (refuse it, with its exit code, or ignore it), and
+  say which step writes each accepted row.
 
 ### Reference-sweep pitfalls
 

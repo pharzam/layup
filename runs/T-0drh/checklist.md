@@ -128,4 +128,4 @@ LAYUP host; `LAYUP` is LAYUP's own repository; `forge` is a forge object.
 | E3 | `PRD-0001`: `REQ-012` criterion names `docs/spec/`; §9 phase 1 per D1; the §7.1 words of `REQ-002` on `steps.tsv` (C6); §12; change log | 7, 9 | done: PRD-0001 §7.1, §9, §12, §13 |
 | E4 | Stale documents: one link in `docs/architecture.md` or none (N8); glossary "Phase" (N13); README; onboarding | 11 | done: architecture.md intro; glossary Phase; README; onboarding |
 | E5 | All local checks and `git diff --check` | 10 | done: `runs/T-0drh/test-runs.md` |
-| E6 | The review brief names the two reads of AC 8 (N14) | 8 | open: step 11 |
+| E6 | The review brief names the two reads of AC 8 (N14) | 8 | done: the review briefs of rounds 1 to 4 (`review-round-*.md`) |
