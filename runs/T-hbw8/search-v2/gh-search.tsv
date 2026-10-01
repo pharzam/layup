@@ -14,7 +14,7 @@ PSB Problem 5	agent token cost tracking budget	8	alphaparkinc/genpark-token-cost
 PSB Problem 5	agent token cost tracking budget	8	Alpha-Park/genpark-token-cost-rate-limit-quota-guard-skill	2026-09-06	GenPark AI Agent Skill - Multi-tenant token budget tracker, sliding-window rate limiter, and model pricing ledger.
 PSB Problem 5	agent token cost tracking budget	7	alphaparkinc/genpark-agent-budget-token-spend-circuit-breaker-skill	2026-09-28	Autonomous financial circuit breaker tracking real-time token burn and cost velocity with automated throttling and emerg
 PSB Problem 5	agent token cost tracking budget	7	Alpha-Park/genpark-agent-budget-token-spend-circuit-breaker-skill	2026-09-28	Autonomous financial circuit breaker tracking real-time token burn and cost velocity with automated throttling and emerg
-PSB Problem 5	agent token cost tracking budget	6	sshnaidm/spenda	2026-09-23	Spenda - Local usage and cost tracking for coding agents. It is a local, privacy-first tracker for AI coding agents. It 
+PSB Problem 5	agent token cost tracking budget	6	sshnaidm/spenda	2026-09-23	Spenda - Local usage and cost tracking for coding agents. It is a local, privacy-first tracker for AI coding agents. It
 PSB Problem 5	agent token cost tracking budget	1	LeelaKrishna-R/agent-budget	2026-04-18	Token budget and cost-tracking middleware for LLM-powered AI agents. Zero dependencies.
 PSB Problem 5	agent token cost tracking budget	1	Rumblingb/agent-cost-tracker-mcp	2026-07-13	MCP server that tracks AI agent token usage, API costs, and provides budget alerts
 PSB Problem 5	agent token cost tracking budget	1	othmaneachirorionech/token-governance-protocol	2026-06-07	A draft protocol for declaring, tracking, and enforcing token and cost budgets in AI agent systems.
@@ -37,17 +37,17 @@ PSB §1	autonomous software delivery agents	14	seanyao/roll	2026-08-18	Autonomou
 PSB §1	autonomous software delivery agents	13	synaptixs/spine	2026-09-28	Spine — governed, provenance-grounded autonomous software delivery (installs as agent-orchestrator).
 PSB §1	autonomous software delivery agents	9	debasisdwivedy/Coderama	2026-08-09	Reimagining Enterprise Software Delivery with Autonomous AI Agents
 PSB §1	autonomous software delivery agents	5	jonathanpopham/estate-agent	2026-07-16	Autonomous software estate steward for GitHub issues, production errors, and guarded agentic delivery.
-PSB §1	autonomous software delivery agents	4	feedback-loop-ai/brokkr	2026-09-28	Deterministic delivery engine for autonomous multi-agent software delivery: an event-sourced phase state machine at the 
+PSB §1	autonomous software delivery agents	4	feedback-loop-ai/brokkr	2026-09-28	Deterministic delivery engine for autonomous multi-agent software delivery: an event-sourced phase state machine at the
 PSB §1	autonomous software delivery agents	4	AntonioR199/Agentic-Scrum	2026-07-09	Agentic Scrum: The Developer as Product Owner, AI Agents as tAgentic Scrum is a human-in-the-loop, board-driven method f
 PSB §1	autonomous software delivery agents	3	eduardocerqueira/ai-alpha-squad	2026-08-30	Autonomous multi-agent software delivery squad
 PSB §1	autonomous software delivery agents	3	launchapp-dev/ao	2026-05-27	AO — Autonomous Agent Orchestrator for software delivery
 PSB §1	autonomous software delivery agents	3	ulpi-io/autonomous-engineering	2026-08-18	Autonomous software delivery for AI agents. 18 skills that turn the lifecycle into bounded, self-correcting, checkpoint-
 PSB §1	autonomous software delivery agents	3	marius-patrik/DarkFactory	2026-09-28	Framework for autonomous, governed software engineering ('Dark Factory'). Provider agnostic agent harness, branch protec
-PSB §1	autonomous software delivery agents	3	armelhbobdad/bmad-module-ultracode-goal	2026-09-28	Supercharge BMAD with Claude Code Goal Mode, Auto Mode, and Auto Memory. Transform Epics into autonomous run-until-done 
+PSB §1	autonomous software delivery agents	3	armelhbobdad/bmad-module-ultracode-goal	2026-09-28	Supercharge BMAD with Claude Code Goal Mode, Auto Mode, and Auto Memory. Transform Epics into autonomous run-until-done
 PSB §1	autonomous software delivery agents	2	mitchellsjohnson/agent0-pdlc	2026-02-24	The Agentic Product Development Lifecycle Framework - Scale software delivery 10x with AI-powered autonomous agent teams
 PSB §1	autonomous software delivery agents	2	the-vibey-project/vibey	2026-09-28	A queue-based, six-phase conductor for autonomous software delivery on top of the *loop runners — spec interview → desig
 PSB §1	autonomous software delivery agents	2	ZeeshanAmjad0495/Forge-Loop	2026-06-18	A human-supervised autonomous SDLC + STLC control plane. ForgeLoop orchestrates the full software delivery lifecycle — f
-PSB §1	autonomous software delivery agents	2	Aryia-Behroziuan/ai	2020-10-28	Artificial intelligence From Wikipedia, the free encyclopedia Jump to navigationJump to search "AI" redirects here. For 
+PSB §1	autonomous software delivery agents	2	Aryia-Behroziuan/ai	2020-10-28	Artificial intelligence From Wikipedia, the free encyclopedia Jump to navigationJump to search "AI" redirects here. For
 PSB §1	autonomous software delivery agents	1	Free-devloper/autonomous-software-delivery-organization	2026-09-25	"AI-powered autonomous software delivery platform — 7 specialized agents orchestrate requirements, code generation, test
 PSB §1	autonomous software delivery agents	1	certified84/autonomous-sdd	2026-08-12	Autonomous Software Delivery Agent using SDD
 PSB §1	coding agent orchestrator	39389	Yeachan-Heo/oh-my-claudecode	2026-09-28	Teams-first Multi-agent orchestration for Claude Code
@@ -78,7 +78,7 @@ PSB In Scope Role Handoffs	agent handoff structured state	1	DaosPath/handoffkit	
 PSB In Scope Role Handoffs	agent handoff structured state	1	luoyuejun9/dsh-workstate	2026-08-16	Structured work-state checkpoints and safe agent handoffs for DeepSeek Harness
 PSB In Scope Role Handoffs	agent handoff structured state	1	ycyopen/nasa-skill	2026-07-08	A stateful Agent Skill for structured network and system administration labs with durable state, verification, recovery,
 PSB In Scope Role Handoffs	agent handoff structured state	1	dotnetliverpool/MicrosoftAgentFramework.AgenticOrchestration	2026-05-06	Demonstrates production-ready patterns for agentic orchestration using Microsoft Agent Framework. Covers structured outp
-PSB In Scope Role Handoffs	agent handoff structured state	1	hoimanchi113-dev/diva	2026-07-20	DIVA CLIENT AGENT V2 — PRODUCTION EXECUTION ORDER  ÁP DỤNG BẮT BUỘC: DIVA MASTER DATA — EXECUTION & INTEGRITY PROTOCOL  
+PSB In Scope Role Handoffs	agent handoff structured state	1	hoimanchi113-dev/diva	2026-07-20	DIVA CLIENT AGENT V2 — PRODUCTION EXECUTION ORDER  ÁP DỤNG BẮT BUỘC: DIVA MASTER DATA — EXECUTION & INTEGRITY PROTOCOL
 PSB In Scope Role Handoffs	agent handoff structured state	0	HN-Tran/cross-agent-handoff	2026-06-03	Pass structured session state across AI coding tools without syncing full chat history
 PSB In Scope Role Handoffs	agent handoff structured state	0	vamshimittapally/student-state-analyzer	2026-04-05	Analytical state-engine skill for AI agents that evaluates student transcripts to extract subject mastery, establish ped
 PSB In Scope Role Handoffs	agent handoff structured state	0	cengebretson/orc	2026-08-20	CLI for orchestrating AI coding agents across feature workflows. Durable state, structured handoffs, no cold starts.
@@ -93,7 +93,7 @@ GitHub topic	topic:agent-orchestration	14698	superset-sh/superset	2026-09-28	Sup
 GitHub topic	topic:agent-orchestration	12459	Untrivial-ai/agent-orchestrator	2026-09-28	Run and supervise teams of coding agents from planning to merge. Any harness (Claude code, codex, +25 more). Desktop, we
 GitHub topic	topic:agent-orchestration	10316	omnigent-ai/omnigent	2026-09-28	Omnigent is an open-source AI agent framework and meta-harness: orchestrate Claude Code, Codex, Cursor, Pi, and custom a
 GitHub topic	topic:agent-orchestration	9805	GetBindu/Bindu	2026-09-06	Bindu: The identity, communication, and payments layer for AI agents.
-GitHub topic	topic:agent-orchestration	8092	chaitanyagiri/munder-difflin	2026-09-28	A local multi-agent harness that works with your existing Claude Code, Codex subscriptions, allows you to run an office 
+GitHub topic	topic:agent-orchestration	8092	chaitanyagiri/munder-difflin	2026-09-28	A local multi-agent harness that works with your existing Claude Code, Codex subscriptions, allows you to run an office
 GitHub topic	topic:agent-orchestration	8039	YaoApp/yao	2026-09-28	✨ All your agents and workspaces in one place, on every device you own. Track tasks on a board, accessible from desktop,
 GitHub topic	topic:agent-orchestration	6961	open-multi-agent/open-multi-agent	2026-09-28	Self-hosted TypeScript agent runtime with durable approvals and verifiable run records. Own it, approve it, audit it.
 GitHub topic	topic:agent-orchestration	6822	stagewise-io/stagewise	2026-09-23	The Open Source Agentic IDE. Create and orchestrate coding agents, show app previews and run git workflows. Use your fav
@@ -107,8 +107,8 @@ GitHub topic	topic:agent-orchestration	4259	wang2122/sprix-sage-router	2026-08-2
 GitHub topic	topic:agent-orchestration	3787	tutti-os/tutti	2026-09-05	Where people and agents build in tune.
 GitHub topic	topic:agent-orchestration	3626	nextlevelbuilder/goclaw	2026-09-28	GoClaw - GoClaw is OpenClaw rebuilt in Go — with multi-tenant isolation, 5-layer security, and native concurrency. Deplo
 GitHub topic	topic:agent-orchestration	3184	ascending-llc/jarvis-registry	2026-09-25	Connect any AI copilot or autonomous agent to your enterprise tools — through a single, secure MCP/Agent gateway with bu
-GitHub topic	topic:agent-orchestration	2886	rohitg00/pro-workflow	2026-09-28	Claude Code learns from your corrections: self-correcting memory that compounds over 50+ sessions. Context engineering, 
-GitHub topic	topic:agent-orchestration	2356	AgentsMesh/AgentsMesh	2026-09-23	The AI Agent Workforce Platform. Run a hundred AI coding agents across your own machines — schedule, isolate, and steer 
+GitHub topic	topic:agent-orchestration	2886	rohitg00/pro-workflow	2026-09-28	Claude Code learns from your corrections: self-correcting memory that compounds over 50+ sessions. Context engineering,
+GitHub topic	topic:agent-orchestration	2356	AgentsMesh/AgentsMesh	2026-09-23	The AI Agent Workforce Platform. Run a hundred AI coding agents across your own machines — schedule, isolate, and steer
 GitHub topic	topic:agent-orchestration	2306	jnMetaCode/agency-orchestrator	2026-09-25	🚀 One sentence → your one-person company of AI experts → complete deliverable in minutes. 276 CN + 184 EN + 5 more langu
 GitHub topic	topic:multi-agent-systems	73418	ruvnet/ruflo	2026-09-28	🌊 The original agent harness. Deploy intelligent multi-player swarms, coordinate autonomous workflows, and build convers
 GitHub topic	topic:multi-agent-systems	40402	HKUDS/DeepTutor	2026-09-27	DeepTutor: Lifelong Personalized Tutoring. https://deeptutor.info/.
@@ -122,11 +122,11 @@ GitHub topic	topic:multi-agent-systems	17786	camel-ai/camel	2026-09-20	🐫 CAME
 GitHub topic	topic:multi-agent-systems	15442	eigent-ai/eigent	2026-09-28	Eigent: The Open Source Cowork Desktop - Local and Free Alternative to Claude Cowork and Codex
 GitHub topic	topic:multi-agent-systems	8829	google/adk-go	2026-09-28	An open-source, code-first Go toolkit for building, evaluating, and deploying sophisticated AI agents with flexibility a
 GitHub topic	topic:multi-agent-systems	8574	TeamWiseFlow/xiaobei	2026-09-20	为OPC/中小微企业量身打造的自媒体获客智能体
-GitHub topic	topic:multi-agent-systems	8504	strands-agents/harness-sdk	2026-09-28	Build an agent harness and control it end-to-end. Open-source SDK for production AI agents in Python & TypeScript - any 
+GitHub topic	topic:multi-agent-systems	8504	strands-agents/harness-sdk	2026-09-28	Build an agent harness and control it end-to-end. Open-source SDK for production AI agents in Python & TypeScript - any
 GitHub topic	topic:multi-agent-systems	7215	kyegomez/swarms	2026-09-26	The Enterprise-Grade Multi-Agent Orchestration Framework. Website: https://swarms.ai
 GitHub topic	topic:multi-agent-systems	7205	WenyuChiou/awesome-agentic-ai-zh	2026-09-27	A trilingual (繁中 / English / 简中) learning roadmap for agentic AI: from LLM basics to multi-agent systems, with 240+ cura
 GitHub topic	topic:multi-agent-systems	6931	InternLM/MindSearch	2025-07-04	🔍 An LLM-based Multi-agent Framework of Web Search Engine (like Perplexity.ai Pro and SearchGPT)
-GitHub topic	topic:multi-agent-systems	5204	camel-ai/oasis	2026-09-20	🏝️ OASIS: Open Agent Social Interaction Simulations with One Million Agents. 
+GitHub topic	topic:multi-agent-systems	5204	camel-ai/oasis	2026-09-20	🏝️ OASIS: Open Agent Social Interaction Simulations with One Million Agents.
 GitHub topic	topic:multi-agent-systems	4923	SolaceLabs/solace-agent-mesh	2026-09-13	An event-driven framework designed to build and orchestrate multi-agent AI systems. It enables seamless integration of A
 GitHub topic	topic:multi-agent-systems	4597	JetBrains/koog	2026-09-24	Koog is a JVM (Java and Kotlin) framework for building predictable, fault-tolerant and enterprise-ready AI agents across
 GitHub topic	topic:multi-agent-systems	4526	0xNyk/council-of-high-intelligence	2026-09-28	Structured multi-perspective deliberation for hard decisions. Run full councils, focused triads, or duo debates across C
@@ -150,7 +150,7 @@ GitHub topic	topic:ai-software-engineer	1	BrightenDigital/kore	2025-12-16	Let Ko
 GitHub topic	topic:ai-software-engineer	0	felipejimenez-ai/mentoria	2025-08-05	🧙🏻‍♂️ AI-powered web application that transforms YouTube video content into personalized study materials (summaries, key
 GitHub topic	topic:ai-software-engineer	0	andiupn/codex-starter	2026-08-04	🧠 Organized OpenAI/Codex workspace starter featuring local seed memory systems, standardized research archiving, and str
 GitHub topic	topic:ai-software-engineer	0	p5Patricio/cv-patricio	2026-08-14	📄 Professional AI Software Engineer CV (LaTeX & Markdown) | Bilingual (ES/EN) | Optimized for AI Recruiters.
-GitHub topic	topic:ai-software-engineer	0	Bhavya-Dhoot/Cohort	2026-09-08	Cohort - an autonomous AI software-engineering organization for Claude Code + OpenCode. One objective in; a bespoke org 
+GitHub topic	topic:ai-software-engineer	0	Bhavya-Dhoot/Cohort	2026-09-08	Cohort - an autonomous AI software-engineering organization for Claude Code + OpenCode. One objective in; a bespoke org
 GitHub topic	topic:ai-software-engineer	0	cleicar/ai-software-engineering-program	2026-04-04	Projects to play with AI during my Postgraduate Program in Artificial Intelligence
 GitHub topic	topic:ai-software-engineer	0	devrahulbanjara/claude-code-built-from-scratch	2026-09-23	claude subscription is expensive! why not build my own ?
 GitHub topic	topic:ai-software-engineer	0	andiupn/claude-code-starter	2026-06-13	🤖 Clean Claude Code CLI starter template with 3 core agents and 6 essential workflows. Optimize your agentic software en
@@ -162,7 +162,7 @@ GitHub topic	topic:agentic-coding	66482	shanraisshan/claude-code-best-practice	2
 GitHub topic	topic:agentic-coding	54732	hesreallyhim/awesome-claude-code	2026-09-28	A hand-picked collection of the finest of resources for the most awesome of agents, Claude Code, the undisputed champion
 GitHub topic	topic:agentic-coding	39389	Yeachan-Heo/oh-my-claudecode	2026-09-28	Teams-first Multi-agent orchestration for Claude Code
 GitHub topic	topic:agentic-coding	16655	HKUDS/DeepCode	2026-09-28	"DeepCode: Open Agentic Coding (Agent Harness & Loop Engineering & Multi-Agent Orchestration)"
-GitHub topic	topic:agentic-coding	15196	travisvn/awesome-claude-skills	2026-04-28	A curated list of awesome Claude Skills, resources, and tools for customizing Claude AI workflows — particularly Claude 
+GitHub topic	topic:agentic-coding	15196	travisvn/awesome-claude-skills	2026-04-28	A curated list of awesome Claude Skills, resources, and tools for customizing Claude AI workflows — particularly Claude
 GitHub topic	topic:agentic-coding	14821	mindfold-ai/Trellis	2026-09-11	The best agent harness.
 GitHub topic	topic:agentic-coding	10153	ykdojo/claude-code-tips	2026-09-25	45+ tips for getting the most out of Claude Code, from basics to advanced - includes a custom status line script and Cla
 GitHub topic	topic:agentic-coding	8225	jnMetaCode/superpowers-zh	2026-09-17	🦸 AI 编程超能力 · 中文增强版 — superpowers（250k+ ⭐）完整汉化 + 4 个中国原创 skills，让 Claude Code / Copilot CLI / Hermes Agent / Cursor / Win
@@ -193,16 +193,16 @@ GitHub topic	topic:coding-agents	14698	superset-sh/superset	2026-09-28	Superset 
 GitHub topic	topic:coding-agents	11330	cobusgreyling/loop-engineering	2026-09-28	Practical patterns, starters & CLI tools for loop engineering with AI coding agents. Design systems that prompt and orch
 GitHub topic	topic:coding-agents	11223	EKKOLearnAI/ekko-studio	2026-09-28	Ekko Studio is a local-first AI workspace for multi-agent chat, coding, and visual workflows, available on desktop and t
 GitHub topic	topic:coding-agents	10316	omnigent-ai/omnigent	2026-09-28	Omnigent is an open-source AI agent framework and meta-harness: orchestrate Claude Code, Codex, Cursor, Pi, and custom a
-GitHub topic	topic:coding-agents	8967	nexu-io/html-anything	2026-09-15	✨ The agentic HTML editor — your local AI agent writes the HTML, you ship it. 🚀 75 Skills × 9 Surfaces (magazine · deck 
+GitHub topic	topic:coding-agents	8967	nexu-io/html-anything	2026-09-15	✨ The agentic HTML editor — your local AI agent writes the HTML, you ship it. 🚀 75 Skills × 9 Surfaces (magazine · deck
 GitHub topic	topic:coding-agents	8161	pacifio/atlas	2026-09-28	Source control for agents. Use multiple coding agents, track their changes and query them in one place
 GitHub topic	topic:coding-agents	7356	Gentleman-Programming/gentle-ai	2026-09-28	Gentle-AI configures the AI coding agents you already use: Claude Code, Cursor, OpenCode, Codex, Pi, and more. Choose pe
-GitHub topic	topic:coding-agents	6280	kucherenko/jscpd	2026-09-28	Copy/paste detector for source code. 220+ languages, Rust engine, SARIF/HTML/badge reporters, GitHub Action, MCP server 
+GitHub topic	topic:coding-agents	6280	kucherenko/jscpd	2026-09-28	Copy/paste detector for source code. 220+ languages, Rust engine, SARIF/HTML/badge reporters, GitHub Action, MCP server
 GitHub topic	topic:coding-agents	5857	generalaction/emdash	2026-09-27	Emdash is the Open-Source Agentic Development Environment (🧡 YC W26). Run multiple coding agents in parallel. Use any pr
 GitHub topic	topic:coding-agents	5218	kodu-ai/claude-coder	2025-04-30	Kodu is an autonomous coding agent that lives in your IDE. It is a VSCode extension that can help you build your dream p
 GitHub topic	topic:coding-agents	4040	Gaurav-Gosain/tuios	2026-09-28	A terminal window manager that knows what your agents are doing. Tiling panes, workspaces, sessions that survive restart
 GitHub topic	topic:coding-agents	3856	raullenchai/Rapid-MLX	2026-09-28	Rapid-MLX is an open-source (Apache 2.0) OpenAI- and Anthropic-compatible LLM inference server and Mac app for Apple Sil
 GitHub topic	topic:coding-agents	3464	NVIDIA/skills	2026-09-25	Agent Skills for NVIDIA products — install into Claude Code, Codex, and other coding agents to run Physical AI, robotics
-GitHub topic	topic:coding-agents	3364	Ataraxy-Labs/sem	2026-09-28	Semantic version control => entity-level diffs, blame, and impact analysis on top of git. 28 languages via tree-sitter. 
+GitHub topic	topic:coding-agents	3364	Ataraxy-Labs/sem	2026-09-28	Semantic version control => entity-level diffs, blame, and impact analysis on top of git. 28 languages via tree-sitter.
 GitHub topic	topic:coding-agents	3151	lackeyjb/playwright-skill	2026-08-14	General-purpose Playwright automation for coding agents
 GitHub topic	topic:coding-agents	3003	vercel-labs/opensrc	2026-09-16	Fetch source code for npm packages to give AI coding agents deeper context
 GitHub topic	topic:coding-agents	2873	omnara-ai/omnara	2026-09-28	The open-source alternative to Claude Managed Agents

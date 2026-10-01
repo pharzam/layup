@@ -185,7 +185,7 @@ I suggest expanding this to emphasize the end-to-end delivery of working softwar
 
 "From the accepted solution architecture, technical specifications, and features, all the way to working, verified software."
 
-I am continuing my review of the remaining sections and will follow up with any further notes.   
+I am continuing my review of the remaining sections and will follow up with any further notes.
 --- end
 
 | No. | Point | Reading |
