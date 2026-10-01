@@ -618,4 +618,3 @@ Result: 73 findings; 28 survive, 5 refuted, 40 unverified.
 - **Where:** docs/glossary.md:146
 - **Problem:** architecture.md §8 asks for a size class, but it gives no numbers. The numbers are the plan's (docs/plan/README.md:36-38). The row defines the term for every plan, and architecture.md §9 uses the `size` of a target's task to select its model tier. Thus a reader can apply LAYUP's line estimate to the routing of a target.
 - **Fix proposed:** Name the row "Size class (of LAYUP's plan)", say that the numbers are the plan's, with a link, and leave a target's `size` to architecture.md §8 and §9.
-
