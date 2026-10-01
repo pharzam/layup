@@ -15,9 +15,10 @@ import (
 // here from notYetBuilt in the same change as that test.
 var built = []string{}
 
-// notYetBuilt lists each block that no package writes or reads yet. It only
-// becomes shorter: a rule for the reviewer of each owner task, because a test
-// cannot read the list of its base (docs/spec/README.md, The schema block).
+// notYetBuilt lists each block whose owner does not yet compare it with a Go
+// schema (internal/psb writes psb-gaps today, by hand). It only becomes
+// shorter: a rule for the reviewer of each owner task, because a test cannot
+// read the list of its base (docs/spec/README.md, The schema block).
 var notYetBuilt = []string{
 	"catalog-kinds", "gate-manifest", "gate-result", "open-gaps", "prices",
 	"psb-gaps", "rule-paths", "setup-answers", "setup-record", "setup-steps",

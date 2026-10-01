@@ -1,6 +1,7 @@
 package tsv
 
 import (
+	"io/fs"
 	"reflect"
 	"strings"
 	"testing"
@@ -58,9 +59,52 @@ func TestParseBlocksRefusesABlockThatDoesNotHaveTheForm(t *testing.T) {
 		{"a location with no path", "```tsv-schema a records:\n" + col + "```\n", "not relative"},
 		{"a location with ..", "```tsv-schema a target:../x.tsv\n" + col + "```\n", "not relative"},
 		{"a location with a leading /", "```tsv-schema a host:/x.tsv\n" + col + "```\n", "not relative"},
+		{"a tab in the closing fence", open + col + "```\t\n", "line 3: a tab"},
+		{"a block in a blockquote", "> " + open + "> " + col + "> ```\n", "line 1: a tsv-schema fence after"},
+		{"a block after a list marker", "- " + open + "  " + col + "  ```\n", "line 1: a tsv-schema fence after"},
+		{"a block in a list item, four spaces in", "1. a\n\n    " + open + "    " + col + "    ```\n", "line 3: a tsv-schema fence after"},
 	} {
 		if _, err := parseBlocks(c.text); err == nil || !strings.Contains(err.Error(), c.want) {
 			t.Errorf("%s: error %v; want %q in it", c.name, err, c.want)
+		}
+	}
+}
+
+// The fence rules of Markdown that decide where a block is.
+func TestParseBlocksFollowsTheFenceRules(t *testing.T) {
+	const blk = "```tsv-schema a stdout\nx text - r\n```\n"
+	for _, c := range []struct {
+		name, text string
+		blocks     int
+	}{
+		{"a closing fence longer than the opening fence", strings.TrimSuffix(blk, "```\n") + "`````\n", 1},
+		{"a fence line with an info string closes no fence", "~~~text\n~~~ text\n" + blk + "~~~\n", 0},
+		{"a backtick in the info string of a backtick fence", "```a`b\n" + blk, 1},
+		{"four spaces before a fence", "    ```text\n" + blk, 1},
+	} {
+		if got, err := parseBlocks(c.text); err != nil || len(got) != c.blocks {
+			t.Errorf("%s: %d blocks, error %v; want %d blocks", c.name, len(got), err, c.blocks)
+		}
+	}
+}
+
+// failFS is a file system that cannot be read.
+type failFS struct{}
+
+func (failFS) Open(string) (fs.File, error) { return nil, fs.ErrPermission }
+
+// A wrong directory never gives an empty result.
+func TestReadBlocksRefusesADirectoryThatItCannotReadOrWithNoBlock(t *testing.T) {
+	for _, c := range []struct {
+		name string
+		fsys fs.FS
+		want string
+	}{
+		{"a directory that cannot be read", failFS{}, "permission denied"},
+		{"no block", fstest.MapFS{"a.md": {Data: []byte("# Text\n")}}, "no tsv-schema block"},
+	} {
+		if got, err := ReadBlocks(c.fsys); err == nil || !strings.Contains(err.Error(), c.want) {
+			t.Errorf("%s: %d blocks, error %v; want %q in it", c.name, len(got), err, c.want)
 		}
 	}
 }

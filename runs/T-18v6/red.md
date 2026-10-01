@@ -135,3 +135,37 @@ M1, Read checks the types of the schema, not the column names:
 M3, JoinList takes a carriage return:
     tsv_test.go:181: JoinList with "a\rb": no error; want one
 ```
+
+The block parser, 2026-10-01T17:33:17Z, `go test -count=1 ./internal/tsv/`,
+exit 1:
+
+```text
+--- FAIL: TestParseBlocksRefusesABlockThatDoesNotHaveTheForm (0.00s)
+    block_test.go:68: a tab in the closing fence: error <nil>; want "line 3: a tab" in it
+    block_test.go:68: a block in a blockquote: error <nil>; want "line 1: a tsv-schema fence after" in it
+    block_test.go:68: a block after a list marker: error <nil>; want "line 1: a tsv-schema fence after" in it
+    block_test.go:68: a block in a list item, four spaces in: error <nil>; want "line 3: a tsv-schema fence after" in it
+--- FAIL: TestReadBlocksRefusesADirectoryThatItCannotReadOrWithNoBlock (0.00s)
+    block_test.go:107: a directory that cannot be read: 0 blocks, error <nil>; want "permission denied" in it
+    block_test.go:107: no block: 0 blocks, error <nil>; want "no tsv-schema block" in it
+FAIL	github.com/pharzam/layup/internal/tsv	0.239s
+```
+
+Each test fails for the right reason: the parser takes a tab in a closing
+fence, and it does not see a block after a blockquote mark, a list marker or
+four spaces, so such a block escapes the test of the blocks; and `fs.Glob`
+drops the error of a directory that cannot be read, so a wrong directory gives
+no block and no error. `TestParseBlocksFollowsTheFenceRules` passes on that
+code; on a copy of the fixed code it fails on each fence mutant of the
+verification (`-run TestParseBlocksFollowsTheFenceRules`, exit 1):
+
+```text
+M4, a closing fence of the same length only:
+    block_test.go:86: a closing fence longer than the opening fence: 0 blocks, error line 3: "`````": a column line has a name, a type, key or -, and a rule; want 1 blocks
+M7, a fence line with an info string closes a fence:
+    block_test.go:86: a fence line with an info string closes no fence: 1 blocks, error <nil>; want 0 blocks
+M19, a backtick in the info string of a backtick fence is allowed:
+    block_test.go:86: a backtick in the info string of a backtick fence: 0 blocks, error <nil>; want 1 blocks
+M20, no limit on the spaces before a fence:
+    block_test.go:86: four spaces before a fence: 0 blocks, error <nil>; want 1 blocks
+```

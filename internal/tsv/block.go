@@ -11,12 +11,20 @@ import (
 // ReadBlocks returns the schema of each tsv-schema block of the Markdown files
 // at the root of fsys, by name; for example ReadBlocks(os.DirFS("docs/spec")).
 // It refuses a block that does not have the form of docs/spec/README.md (The
-// schema block), and two blocks with one name. An error names the file and the
-// line.
+// schema block), two blocks with one name, and a directory that it cannot read
+// or that holds no block, so a wrong directory never gives an empty result. An
+// error names the file and the line.
 func ReadBlocks(fsys fs.FS) (map[string]Schema, error) {
-	files, _ := fs.Glob(fsys, "*.md") // the pattern is valid
+	entries, err := fs.ReadDir(fsys, ".")
+	if err != nil {
+		return nil, err
+	}
 	schemas, at := map[string]Schema{}, map[string]string{}
-	for _, f := range files {
+	for _, e := range entries {
+		f := e.Name()
+		if e.IsDir() || !strings.HasSuffix(f, ".md") {
+			continue
+		}
 		text, err := fs.ReadFile(fsys, f)
 		if err != nil {
 			return nil, err
@@ -32,6 +40,9 @@ func ReadBlocks(fsys fs.FS) (map[string]Schema, error) {
 			}
 			schemas[b.Name], at[b.Name] = b.Schema, here
 		}
+	}
+	if len(schemas) == 0 {
+		return nil, errors.New("no tsv-schema block in the Markdown files")
 	}
 	return schemas, nil
 }
@@ -61,8 +72,12 @@ func parseBlocks(text string) ([]block, error) {
 				b = &block{line: n}
 				err = blockHead(&b.Schema, words, l)
 			}
+		case open == "" && misplaced(l):
+			err = errors.New("a tsv-schema fence after a blockquote mark, a list marker, or four spaces or more; a block starts a line, after at most three spaces")
 		case open != "" && run != "" && run[0] == open[0] && len(run) >= len(open) && strings.TrimSpace(rest) == "":
-			if b != nil && b.Columns == nil {
+			if b != nil && strings.Contains(l, "\t") {
+				err = errors.New("a tab; a block holds no tab")
+			} else if b != nil && b.Columns == nil {
 				err = fmt.Errorf("the block %s has no column", b.Name)
 			} else if b != nil {
 				blocks = append(blocks, *b)
@@ -93,6 +108,15 @@ func fence(l string) (run, rest string) {
 		return "", ""
 	}
 	return t[:len(t)-len(rest)], rest
+}
+
+// misplaced reports whether line l opens a tsv-schema fence after a blockquote
+// mark, a list marker, or four spaces or more. Markdown can show such a fence
+// as a block, but this parser does not read it, so it refuses it.
+func misplaced(l string) bool {
+	run, rest := fence(strings.TrimLeft(l, " \t>*+-.)0123456789"))
+	words := strings.Fields(rest)
+	return run != "" && len(words) > 0 && words[0] == "tsv-schema"
 }
 
 // blockHead reads the words of the opening line l of a block: tsv-schema, the
