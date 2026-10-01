@@ -22,8 +22,8 @@ The Operator's decisions O-121 to O-124 set its structure; they are quoted in
   the gate ([`engineering-discipline.md`](../engineering-discipline.md), and
   [Bootstrap mode](../engineering-discipline.md#bootstrap-mode) while ADR-0012 is
   in force).
-- **No task of phase 1 starts before #42 closes**: #42 holds the core engine
-  until the Operator approves the PDR (`T-4wrw`, O-14).
+- **No task of phase 1 starts before #42 closes**, except rows 1 and 2 (O-126):
+  #42 holds the core engine until the Operator approves the PDR (`T-4wrw`, O-14).
 - Each task settles the defects of the specification sections it implements, in
   its own pull request ([R10](../issue-workflow.md#r10--sync-with-governance)):
   the defect register below names them. A value that the task sets is marked
