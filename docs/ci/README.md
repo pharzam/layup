@@ -34,8 +34,11 @@ fixtures under [`tests/`](tests/).
 | `pr-link` | The pull-request body links an issue (R1), via [`pr-link-lint.sh`](pr-link-lint.sh). |
 | `review-record` | The linked issue carries a plan, a plan review with its budget and cycle cap, and a parseable review record per round whose chronology holds (see [What a round records](../engineering-discipline.md#what-a-round-records)), via [`review-record-lint.sh`](review-record-lint.sh). |
 
-**Every job restores its check scripts from the default branch before it runs
-them.** Without that, a pull request that replaces a linter with `exit 0` passes
+**Each discipline job restores its check scripts from the default branch before
+it runs them**, with one exception: the job `nested-checkout-check` runs the
+branch's own `nested-checkout-check.sh`, for the reason that a comment in
+[`ci.yml`](../../.github/workflows/ci.yml) gives. The Go jobs `lint`, `tests` and
+`security` run the pull request's own Go code and tests. Without the restore, a pull request that replaces a linter with `exit 0` passes
 that linter's own required check, and a pull request that also replaces
 `run-discipline-tests.sh` turns the whole required set green over a real defect.
 Both were measured. Thus a check that a pull request adds runs in CI only after

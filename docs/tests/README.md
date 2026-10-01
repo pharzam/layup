@@ -40,6 +40,7 @@ discipline linters — lives here, so their tests can too.
 | [`scaling-checklist.md`](scaling-checklist.md) | Rules that keep a test suite fast and stable as the project grows. |
 | [`dod-checklist.md`](dod-checklist.md) | How to verify every Definition of Done (DoD) item has test coverage. |
 | [`traceability-template.md`](traceability-template.md) | The format linking a test to a requirement, guardrail, or ADR. |
+| [`traceability.md`](traceability.md) | LAYUP's traceability table: one row per test, for every requirement of `PRD-0001`. |
 | [`example-fact-to-test.md`](example-fact-to-test.md) | A worked path: fact → requirement → guardrail → test, in LAYUP's conventions. |
 | [`run-discipline-tests.sh`](run-discipline-tests.sh) | One of the two executables here: runs each discipline linter against its good/bad fixtures and asserts the outcome. |
 | [`nested-checkout-check.sh`](nested-checkout-check.sh) | The other: builds a throwaway repository holding a nested checkout and proves `link-lint` never reads it. Needs `git`, so CI runs it and the hook does not. |

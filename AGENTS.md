@@ -182,4 +182,5 @@ time, never directly. An architecturally significant decision becomes an
 | [`docs/adr/`](docs/adr/) | Architecture decisions that constitute a project, with the context and the consequences of each one. Armature's own past governance decisions are not LAYUP's: setup step S05 ([`docs/setup/steps.tsv`](docs/setup/steps.tsv)) deleted `docs/decisions/`. |
 | [`docs/tests/`](docs/tests/) | The test levels, a pattern for each, and the Definition-of-Done coverage checklist. |
 | [`docs/facts/`](docs/facts/) and [`docs/prd/`](docs/prd/) | Customer facts kept as evidence, and the requirements derived from them. |
+| [`docs/spec/`](docs/spec/) and [`docs/plan/`](docs/plan/) | The technical specification, one milestone at a time, and the implementation plan: the milestones, the tasks of the current phase in their order, and the defect register. |
 | [`.githooks/`](.githooks/) and [`docs/ci/`](docs/ci/) | What the gate enforces locally, and what CI enforces as the authority. |

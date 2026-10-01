@@ -87,7 +87,8 @@ of a problem statement as one batch (five deterministic rules, G1 to G5, in
 `layup run`, the orchestrator of a target's whole lifecycle, from outside the
 target; each part is followed through one concrete case in
 [`walkthroughs/`](walkthroughs/README.md). The exact contracts that the code
-implements, phase by phase, are in [`spec/`](spec/README.md).
+implements, phase by phase, are in [`spec/`](spec/README.md), and the order of
+the work, task by task, is in [`plan/`](plan/README.md).
 
 ## 4. Why it is hard
 

@@ -300,6 +300,15 @@ These traps are not domain-specific: they hurt every project's test suite.
   The check: before the review, write one rule for every row of an input that
   no step of the run asked for (refuse it, with its exit code, or ignore it), and
   say which step writes each accepted row.
+- ❌ **A plan check that reads the form of a plan, not the edges of its sources.**
+  A check of a task plan can prove that each requirement has a task, that each
+  predecessor is a task, and that the predecessors make no cycle, and still pass
+  over a wrong order: an item whose source names a predecessor in another task, or
+  a defect that one task settles and an earlier task reads. Task `T-55n2` (#76) had
+  five such defects under a green check; an adversarial self-check found them.
+  **The check:** compare each edge of the source inventory, and each "settled by" and
+  "read by" pair, with the transitive predecessors of the tasks, and list each edge
+  that the plan drops on purpose with its reason.
 - ❌ **A cycle cap raised after a last-round verdict.** `review-record-lint` reads
   the cap from a `## Plan review` comment, and a round that ended as the last
   round under the cap of its time carries a last-round verdict. When the Operator
@@ -317,7 +326,8 @@ failure modes worth keeping.
   moves or a directory is renumbered, the same bare token can name *different*
   records in two places — a bare `ADR-0005` is the living `docs/adr/` record to one
   reader and the archived `docs/decisions/` one to another, because the two sequences
-  once shared numbers. A global replace of the token silently rewrites the citations
+  once shared numbers (setup step S05 deleted that archive from this repository;
+  the citations of ADR-0001 to ADR-0008 to it stay). A global replace of the token silently rewrites the citations
   you must **not** touch alongside the ones you must; and the reverse — a citation the
   sweep's pattern never matched (a compound like `ADR-0003/0005`, a token in a code
   span or a `.sh`/`.yml` comment, one split across a line break) — is silently *left*
@@ -344,7 +354,8 @@ failure modes worth keeping.
   citation you changed, not the citation alone.
 - ❌ **Editing a rule whose decision record is archived.** A rule lives in two places
   — its operative statement in a living doc, and the immutable decision record that
-  first set it under `docs/decisions/`. Change the living one and the archived one
+  first set it (in the baseline, under `docs/decisions/`, which setup step S05
+  deleted from this repository). Change the living one and the archived one
   still asserts the old, and **no check compares them** (`adr-lint` never reads
   `docs/decisions/`; `link-lint` checks resolution, not agreement). You cannot rewrite
   the immutable body to match; discharge the divergence with a `Status`-line

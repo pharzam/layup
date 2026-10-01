@@ -17,7 +17,8 @@ will be one Go command-line program over files in the repository
 The [architecture](docs/architecture.md) (ADR-0013 to ADR-0025, accepted) makes it
 a deterministic orchestrator, `layup run`, that drives a target from its problem
 statement to accepted software, from outside the target. Its technical
-specification, one milestone at a time, is in [`docs/spec/`](docs/spec/README.md).
+specification, one milestone at a time, is in [`docs/spec/`](docs/spec/README.md),
+and its implementation plan, task by task, in [`docs/plan/`](docs/plan/README.md).
 Since 2026-09-25 the repository is in bootstrap mode
 ([ADR-0012](docs/adr/0012-build-layup-in-bootstrap-mode.md); a summary — the rule
 is [Bootstrap mode](docs/engineering-discipline.md#bootstrap-mode)): until the ADR
@@ -54,6 +55,8 @@ round, one more after a fix (two for a change to a gate).
 | [`docs/adr/`](docs/adr/) | Architecture Decision Records that constitute a project — the *why* behind structural choices — plus [`adr-lint.sh`](docs/adr/adr-lint.sh), the discipline test that keeps them honest. Armature's own past governance decisions are not LAYUP's: setup step S05 deleted `docs/decisions/`. |
 | [`docs/facts/`](docs/facts/) | Raw facts kept as immutable evidence — the PSB (`F-0001`, with more numbered facts in `F-0003`), the vision brief (`F-0002`, a solution document) and the idea owner's answers to the PSB's gap questions (`F-0004`) — and the citation convention that derives requirements from them. |
 | [`docs/prd/`](docs/prd/) | Product Requirements Documents derived from the facts, plus [`prd-lint.sh`](docs/prd/prd-lint.sh), the discipline test that keeps them honest. |
+| [`docs/spec/`](docs/spec/README.md) | The technical specification of LAYUP, one milestone at a time: per requirement, the exact contract that the code implements. |
+| [`docs/plan/`](docs/plan/README.md) | The implementation plan: the milestones, the tasks of phase 1 in their order, and the defect register. |
 | [`docs/tests/`](docs/tests/) | The testing conventions — the test levels, a pattern per level, the security, scaling, and Definition-of-Done checklists, and test-to-requirement traceability — plus [`run-discipline-tests.sh`](docs/tests/run-discipline-tests.sh), which tests the discipline linters against fixtures. |
 | [`tests/`](tests/) | Cross-package end-to-end fixtures; Go unit and integration tests sit beside the code. Empty so far (the first e2e test sits beside its package), kept in git by a `.gitkeep`. |
 | [`docs/tasks/`](docs/tasks/) | The task index — [`backlog.md`](docs/tasks/backlog.md) and [`completed.md`](docs/tasks/completed.md). |

@@ -22,7 +22,7 @@ row in that table, so "done" means "proven", not "looked right".
 ## The rule
 
 Every requirement (`REQ`/`NFR`) and every DoD item maps to at least one
-[traceability](traceability-template.md) row whose status is `green` or
+[traceability](traceability.md) row whose status is `green` or
 `frozen`. `planned` and `red` rows show intent, not proof — they do not close
 the item. An item with no row at all is not covered, and the change is not
 done; see [Testing](../engineering-discipline.md#testing) for the fuller rule
@@ -71,7 +71,8 @@ being a review item and becomes a test — the residual only ever shrinks.
 Run this at task close, before the change is called done:
 
 - [ ] Every `REQ`/`NFR` this task touches has at least one `green`/`frozen` row
-  in the [traceability table](traceability-template.md).
+  in the [traceability table](traceability.md) (its form is
+  [`traceability-template.md`](traceability-template.md)).
 - [ ] Every item on this task's Definition of Done has a covering test, listed
   above or added as a new row.
 - [ ] No requirement change left a stale test — a test written against an old
