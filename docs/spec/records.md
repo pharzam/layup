@@ -45,6 +45,7 @@ or payload of one task is under `tasks/<task>/`.
 | `tasks/<task>/events.tsv` | the events of one task | 3, 8 | `layup run` | 2 | later |
 | `tasks/<task>/results/<session>.tsv` | the typed result (handoff) of one session, after its check | 4, 8 | `layup run` | 2 | later |
 | `tasks/<task>/tests.tsv` | the frozen test list | 11 | `layup run` | 3 | later |
+| `tasks/<task>/gates.tsv` | the table of `layup gate` for each head of the task | 6, 8 | `layup run` | 2 | [`gate.md`](gate.md#the-table), with the head as part of the key |
 | `acceptance.tsv` | one row per review of a requirement | 8, 12 | `layup run` | 2 | later |
 | `parameters.tsv` | every parameter | 10 | `layup run` | 2 | later |
 | `harnesses.tsv` | the admitted harnesses, their versions and probe results | 9 | `layup run` | 2 | later |
