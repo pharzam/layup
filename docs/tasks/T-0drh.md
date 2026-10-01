@@ -27,6 +27,8 @@ to the decision request after review round 2): option (B). The cycle cap of
 this task is 2. The author applies the fixes of round 2, and a fresh session
 reviews only those commits.
 
+**O-117** (2026-10-01, the Operator's answer "B" in the author's Claude Code session, copied to #74): option (B) of the request after review round 3. The cycle cap of this task is 3; a fresh session reviews only the fix of round 3.
+
 ## Plan and plan review
 
 The plan (R12) and its review are comments on #74. A second reading before the

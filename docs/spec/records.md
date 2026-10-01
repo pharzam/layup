@@ -102,7 +102,7 @@ ADR-0014 and ADR-0011 decision 2.
    the Operator pushes it with one printed command, as the Operator pushes the
    root commit ([`setup.md`](setup.md#where-the-records-go-in-phase-1)). So the
    setup record and the evidence of every value are in the target's Git.
-3. **The answers** of phase 1 are in the target's tree as a raw fact (S06), and
+3. **The answers** of phase 1 are in the target's tree as two raw fact records (S06, S11), and
    each answer row names the comment that holds it (`source`). The copy of the
    comments themselves is `layup run`'s (phase 2).
 4. **No other state.** The work area of `layup setup` on the host is rebuilt
