@@ -16,13 +16,27 @@ ADR-0011 decision 1 and ADR-0013.
 2. `go.mod` has no `require` line. `go list -deps ./...` names only packages
    of the standard library and of this module (the criterion of `NFR-007`).
 3. Only the package `internal/git` starts the `git` program, with
-   `os/exec`; no other package imports a Git library or starts `git`.
+   `os/exec`; no other package imports a Git library or starts `git`. Its
+   calls are [the calls of `internal/git`](#the-calls-of-internalgit).
 4. Only the packages that the table below marks "starts a program" import
    `os/exec`.
-5. No package of phase 1 imports `net`, `net/http` or `crypto/tls`: the engine
-   checks open no connection (`NFR-005`, [`gate.md`](gate.md#nfr-005--no-model-call-in-the-engine-checks)).
-   The one later exception is `internal/smartif` (phase 3), the smart-if
-   client, and the forge adapter (phase 2).
+5. No package of phase 1 depends on `net`, `net/http` or `crypto/tls`, by its
+   own imports or through another package: the engine checks open no
+   connection (`NFR-005`, [`gate.md`](gate.md#nfr-005--no-model-call-in-the-engine-checks)).
+   The specification task of milestone `M2a` gives the forge adapter (phase 2)
+   its rule, and that of `M3a` gives `internal/smartif` (phase 3) its rule
+   ([the milestones](../plan/README.md#milestones)).
+
+**Decided here** (D6 of #79, K8): the rules bind the non-test Go files only. A
+test file (`_test.go`) can import any package of the standard library and of
+this module, and can start any program. Reason: `go list -deps -test` names
+`os/exec` in each test binary, through `testing`, and the tests start `git` and
+`go`.
+
+**Decided here** (D8 of #79, K39): rule 5 counts each package that
+`go list -deps` names for a package, not only its own imports. Reason: a
+connection that a dependency opens is a connection of the package that imports
+it.
 
 ### The table of phase 1
 
@@ -31,17 +45,24 @@ package of the standard library is allowed, except as rules 3 to 5 say. An
 import that the table does not allow is a defect, and the boundary rule of the
 future Go gate of LAYUP reads this table.
 
+**The form of a cell** (decided here, D7 of #79): "Package" is one code span;
+"May import" is code spans with a comma between two, or `—` for none; "Starts
+a program" is the word `no`, or a code span at the start of the cell, whose
+first word is the program. Reason: the [test of the package
+rules](#the-test-of-the-package-rules) reads this table, and holds no copy of
+it, which could differ from it.
+
 | Package | Job | May import | Starts a program |
 | ------- | --- | ---------- | ---------------- |
 | `cmd/layup` | `main`: passes the arguments to `internal/cli` and exits with its code | `internal/cli` | no |
 | `internal/cli` | parses the arguments, runs one command, maps its result to an exit code ([`README.md`](README.md#commands)) | `internal/psb`, `internal/setup`, `internal/verify`, `internal/gate` | no |
 | `internal/tsv` | reads and writes a record: checks the header row against a schema, the field count of each row, and the types | — | no |
-| `internal/git` | the one caller of the `git` program: clone, `ls-remote`, `init`, commit, `rev-parse`, `worktree`, `show`, `diff --name-only`, `apply` | — | `git` |
+| `internal/git` | the one caller of the `git` program: [its calls](#the-calls-of-internalgit) | — | `git` |
 | `internal/psb` | the rules G1 to G5 and the gap table ([`psb-check.md`](psb-check.md)) | `internal/tsv` | no |
 | `internal/catalog` | the stack catalog, embedded with `embed` ([`setup.md`](setup.md#the-stack-catalog)) | `internal/tsv` | no |
-| `internal/gate` | runs the kinds of a gate manifest on a head ([`gate.md`](gate.md)) | `internal/tsv`, `internal/git` | the gate commands, with `sh -c` |
+| `internal/gate` | runs the kinds of a gate manifest on a head ([`gate.md`](gate.md)) | `internal/tsv`, `internal/git` | `sh -c`: the gate commands |
 | `internal/setup` | the step runner of `layup setup` ([`setup.md`](setup.md)) | `internal/tsv`, `internal/git`, `internal/catalog` | no |
-| `internal/verify` | the checks of `layup setup verify` ([`setup.md`](setup.md)) | `internal/tsv`, `internal/git`, `internal/catalog`, `internal/gate` | the baseline's own check scripts, with `sh` |
+| `internal/verify` | the checks of `layup setup verify` ([`setup.md`](setup.md)) | `internal/tsv`, `internal/git`, `internal/catalog`, `internal/gate` | `sh`: the baseline's own check scripts |
 
 `internal/psb` today imports no package of this module and writes its table
 itself; it moves to `internal/tsv` when that package exists (#29).
@@ -54,6 +75,119 @@ gates of a kind on a clean tree and on its known-bad fixture
 a tree and must not depend on the checks that judge it, so `internal/cli`
 runs the check of each step from `internal/verify` after `internal/setup` did
 the step.
+
+### The test of the package rules
+
+**Decided here** (D7 and D9 of #79):
+
+- The test is `TestPackageRules` in `cmd/layup/rules_integration_test.go`, an
+  integration test: it starts `go` and reads files. The checker and its unit
+  tests are untagged test files of package `main`: the binary holds no checker
+  code, and the hook runs the unit part.
+- It fails on a cell that it cannot read, on a missing heading or column, and
+  on a table with no row. A package that the table names and that does not
+  exist yet is not an error; a package that exists and has no row is.
+- Rules 1, 2, 4, 5 and "May import" come from `go mod edit -json` and
+  `go list -deps -json ./...` at the module root. Rule 3 and "Starts a program"
+  come from a `go/ast` scan of each non-test Go file: a program starts only
+  with `exec.Command` or `exec.CommandContext` and a string literal that is the
+  program of the row, and each use of `os.StartProcess` or `syscall.Exec` is a
+  defect.
+- The same checker must find the breach of rule 5, and no other, in the
+  fixture module `cmd/layup/testdata/netimport`, which imports `net/http`.
+
+Reason: `cmd/layup` is the entry of the module, and its tests already start
+programs; a new package for the test needs a row of its own, and the root
+`tests/` holds end-to-end fixtures only.
+
+### The calls of `internal/git`
+
+The calls of phase 1 as task `T-2tc2` (#79) leaves them; a later task adds
+each call that it needs here first. **Decided here** (D1 of #79, K7): the calls
+that the steps, the checks and `layup gate` name.
+
+| Call | The command, after the `-c` values below | Used by |
+| ---- | ---------------------------------------- | ------- |
+| `Version` | `git --version` | the minimum version (below) |
+| `LsRemote` | `git ls-remote --exit-code -- URL REF` | S02 |
+| `Clone` | `git clone --no-checkout -- URL DIR` | S02 |
+| `CheckoutDetach` | `git checkout --detach --end-of-options REV` | S02 |
+| `Init` | `git init -b main -- DIR` | S03 |
+| `Add` | `git add --all -- PATH…`; no path is the whole tree | S03 to S15; a fixture run of `gate:<kind>` |
+| `Commit` | `git commit -m MESSAGE` | S03 to S15; a fixture run |
+| `SwitchCreate` | `git switch -c BRANCH --end-of-options START` | S04: the branch `layup-setup` |
+| `Branch` | `git branch --end-of-options NAME START` | a branch at a commit, with no switch |
+| `SwitchOrphan` | `git switch --orphan BRANCH` | S15: the branch `layup-records` |
+| `RevParse` | `git rev-parse --verify --end-of-options REV` | S02, S03: the tree of a commit; `layup gate`: `--base`, `--head` |
+| `RootCommits` | `git rev-list --max-parents=0 --end-of-options REV --` | check `pin` |
+| `LsFiles` | `git ls-files -z` | S10; checks `markers` and `adapted` |
+| `WorktreeAdd` | `git worktree add --detach -- PATH REV` | `layup gate`, step 2 of the run; a fixture run |
+| `WorktreeRemove` | `git worktree remove --force -- PATH` | `layup gate`, step 4 of the run; a fixture run |
+| `Show` | `git show --end-of-options REV:PATH --` | `layup gate`, steps 1 and 2 of the run |
+| `DiffNames` | `git diff --name-only --no-renames -z --end-of-options BASE HEAD --` | `layup gate`: a `pending` kind |
+| `Apply` | `git apply -- PATCH` | check `gate:<kind>`: the known-bad fixture |
+
+- `--end-of-options` or `--` comes before each revision, URL and path, so an
+  input is never an option (`layup gate` takes revisions from its arguments).
+  `DiffNames` names a renamed path at both ends, so a renamed product path
+  counts as changed; `-z` gives each path unchanged.
+- The orphan commit of S15 (task `T-d6q5`, #92) needs a scratch work tree, or
+  a new call: `switch --orphan` removes the tracked files from the work tree.
+
+**No default identity** (decided here, D2 of #79). `Commit` takes a name, an
+e-mail address and a time: the author and the committer, and both dates
+(`GIT_AUTHOR_DATE`, `GIT_COMMITTER_DATE`). Reason: one input then gives one
+commit ID (`NFR-005`), and a CI runner has no `user.name`. The identity of the
+setup's commits is an external input, a decision of the Operator: the plan of
+the step runner (#85) asks the Operator for it, or writes a marker.
+
+**A call reads no configuration of the host** (decided here, D3 of #79, with
+condition 1 of its plan review). Reason: no file and no variable of the host
+may change a branch, a byte or a mode of a tree, a file list, a hook, an author
+or a signature. `TestAHostileHostChangesNothing` of `internal/git` seeds each
+input that the plan review measured with `git` 2.54.0, and first shows that it
+changes a plain `git` run.
+
+- Each call starts with `-c core.hooksPath=/dev/null`,
+  `-c core.attributesFile=/dev/null`, `-c core.excludesFile=/dev/null`,
+  `-c core.autocrlf=false` and `-c commit.gpgsign=false`. Without the second
+  and the third, the per-user attributes file changed the bytes of a staged
+  file, and the per-user ignore file dropped a file.
+- The environment of a call is a fixed list: `PATH`, `HOME` and `TMPDIR` of
+  the host when they are set; `LC_ALL=C`, `GIT_CONFIG_NOSYSTEM=1`,
+  `GIT_CONFIG_GLOBAL=/dev/null`, `GIT_ATTR_NOSYSTEM=1`, `GIT_TERMINAL_PROMPT=0`,
+  `GIT_SSH_COMMAND=ssh -o BatchMode=yes`; for a commit, the six variables of
+  its identity. No other `GIT_*` variable, no `GIT_ASKPASS` and no
+  `SSH_ASKPASS` of the host reaches `git`: `GIT_CONFIG_COUNT` set a value,
+  `GIT_DIR` sent a commit to another repository, and `GIT_AUTHOR_NAME` changed
+  the author. A call has no standard input.
+- The `git(1)` manual names `/dev/null` for `GIT_CONFIG_GLOBAL`, and the
+  `git-config(1)` manual names `core.hooksPath=/dev/null`; the plan gave
+  `core.hooksPath` an empty value, which no manual names. `GIT_ATTR_NOSYSTEM`
+  is not in the manual of 2.54.0. Measured on the LAYUP host: its `git` has a
+  system attributes file, which `GIT_CONFIG_NOSYSTEM=1` and
+  `core.attributesFile=/dev/null` do not skip, and `GIT_ATTR_NOSYSTEM=1` does.
+- So `git` reads no credential helper of the host and asks no question: a clone
+  that needs a password fails at once. The baseline's repository is public; a
+  private baseline is known limit [L-A7](../architecture.md#15-known-limits).
+
+**Two kinds of error** (decided here, D4 of #79, with condition 2 of its plan
+review), as Go types for `errors.As`. `NotFoundError`: `git` is not on the
+`PATH`. `FailedError`: each other failure, with the arguments, the exit code
+and the standard error; the code is -1 when `git` did not start or was
+stopped, and 0 when `git` exited 0 with an output that the call cannot read.
+The packages that may import `internal/git` (`internal/gate`, `internal/setup`,
+`internal/verify`) tell the kinds apart and give `internal/cli` a result;
+`internal/cli` maps results, never a `git` error, to exit codes. Reason: a
+check that could not run is `not-active`, never `fail` (`NFR-004`).
+
+**The minimum version of `git` is 2.32.0** (decided here, D5 of #79): the
+first version with `GIT_CONFIG_GLOBAL` (the release notes of git 2.32.0, in
+[`Documentation/RelNotes`](https://github.com/git/git/tree/master/Documentation/RelNotes)).
+It also covers `switch` (2.23) and `init -b` (2.28). `internal/git` gives the
+version (`Version`) and its test (`Supported`); the packages that import it
+check it. The LAYUP host has 2.54.0; no test runs 2.32.0, so the minimum rests
+on the release notes.
 
 ### The components of phase 1
 
