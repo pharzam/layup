@@ -1,24 +1,22 @@
 # T-18v6: the red runs
 
 The red evidence of the test-first steps of task `T-18v6` (#78), gate step 3.
-The `pre-commit` hook runs the unit level, so it refuses a commit with a red
-unit test (guardrails §2, "The hook refuses a red commit"). So each step ran its
-new tests before its code, and one commit holds the tests and the code of a
-step. In a red run of a unit step, a stub held the new functions with their
-signatures and empty bodies (a zero value and no error), so the tests compiled
-and failed on their assertions. Go 1.27.1 on darwin/arm64, base `b48764f`. The
-output is trimmed to the relevant lines; `[...]` marks a cut.
+The `pre-commit` hook refuses a commit with a red unit test (guardrails §2, "The
+hook refuses a red commit"), so each step ran its new tests before its code, and
+one commit holds the tests and the code of a step. In the red run of a unit
+step, a stub held the new functions with their signatures and empty bodies (a
+zero value and no error). Go 1.27.1 on darwin/arm64, base `b48764f`. The output
+is trimmed to the relevant lines; `[...]` marks where like lines are cut.
 
 ## Step 1: the types, the writer and the reader
 
-2026-10-01T16:50:24Z. `go test -count=1 ./internal/tsv/` exits 1:
+2026-10-01T16:50:24Z, `go test -count=1 ./internal/tsv/`, exit 1:
 
 ```text
 --- FAIL: TestWriteAppliesTheFieldRule (0.00s)
     tsv_test.go:59: got ""
         want "id\trule\tline\texcerpt\tquestion\nQ-001\tG1\t0\t—\tWhich stack?\nQ-002\tG4\t12\ta b c d  e\t—\n"
 --- FAIL: TestTheNoHeaderFormHasRowsOnly (0.00s)
-    tsv_test.go:70: got ""; want "docs/a.md\tm1\tWhich value?\ndocs/b.md\tm1\t—\n"
 --- FAIL: TestWriteRefusesARowThatReadWouldRefuse (0.00s)
     --- FAIL: TestWriteRefusesARowThatReadWouldRefuse/invalid_UTF-8_(D5) (0.00s)
         tsv_test.go:105: error <nil>; want an *Error at line 2
@@ -30,105 +28,67 @@ output is trimmed to the relevant lines; `[...]` marks a cut.
 --- FAIL: TestReadTakesAKeyOfTwoColumnsAsOneTuple (0.00s)
     tsv_test.go:156: rows [], error <nil>; want 4 rows
 --- FAIL: TestReadGivesTheEmptyMarkAsTheEmptyValue (0.00s)
-    tsv_test.go:170: rows [], error <nil>; want ["P-001" "" "" "" "" "" "" "" "" "" "" ""]
 --- FAIL: TestAListValueHoldsNoSpaceAndAnEmptyListIsTheEmptyMark (0.00s)
     tsv_test.go:178: JoinList with "docs/my file.md": no error; want one
-[...] the same for the other 3 values
-    tsv_test.go:185: got "", error <nil>; want "kind\tconfig\nstatic\t—\nlint\t.golangci.yml docs/gates.tsv\n"
 --- FAIL: TestWriteThenReadGivesTheSameRowsAndBytes (0.00s)
-    tsv_test.go:203: read back [], error <nil>; want [["Q-001" "G1" "0" "" "Which technology stack?"] [...]]
 --- FAIL: TestWriteAndReadRefuseASchemaThatIsNotValid (0.00s)
-    tsv_test.go:225: Write with columns []: no error; want one
-    tsv_test.go:228: Read with columns []: no error; want one
-[...] the same for the other 5 schemas
 --- FAIL: TestParseTypeRefusesATypeOffTheList (0.00s)
-    types_test.go:29: parseType(""): no error; want one
-[...] the same for the other 18 texts
+    types_test.go:29: parseType("float"): no error; want one
 --- FAIL: TestTypeCheckTakesTheValuesOfItsType (0.00s)
-    types_test.go:75: int: check("07"): no error; want one
     types_test.go:75: decimal: check("3"): no error; want one
-    types_test.go:75: time: check("2026-10-01T08:09:21.5Z"): no error; want one
-    types_test.go:75: path: check("./a"): no error; want one
     types_test.go:75: id(Q-NNN): check("Q-01"): no error; want one
-    types_test.go:75: list(text): check("a  b"): no error; want one
 [...] 71 lines "no error; want one" in this test
 FAIL	github.com/pharzam/layup/internal/tsv	0.746s
 ```
 
-| Test | Why it fails, and why that is the right reason |
-| ---- | ---------------------------------------------- |
-| `TestWriteAppliesTheFieldRule` | The stub writes no byte: no header row, no `—`, no spaces of the field rule, no line feeds. |
-| `TestTheNoHeaderFormHasRowsOnly` | The stub writes no row and reads no row. |
-| `TestWriteRefusesARowThatReadWouldRefuse` | The stub writer refuses none of the 10 rows that the reader refuses. |
-| `TestReadRefusesARecordThatDoesNotMatch` | The stub reader refuses none of the 18 inputs that do not match the schema. |
-| `TestReadTakesAKeyOfTwoColumnsAsOneTuple` | The stub reads no row, so the 4 rows, three of them for one stall, do not come back. |
-| `TestReadGivesTheEmptyMarkAsTheEmptyValue` | The stub reads no row, so `—` does not come back as the empty value of each type. |
-| `TestAListValueHoldsNoSpaceAndAnEmptyListIsTheEmptyMark` | The stub `JoinList` refuses no value with a space, and joins no value. |
-| `TestWriteThenReadGivesTheSameRowsAndBytes` | The stub reads no row back. |
-| `TestWriteAndReadRefuseASchemaThatIsNotValid` | The stub takes each schema that is not valid. |
-| `TestParseTypeRefusesATypeOffTheList` | The stub parser takes every text as a type. |
-| `TestTypeCheckTakesTheValuesOfItsType` | The stub `check` takes every value. |
-
-`TestParseTypeTakesEachTypeOfTheClosedList` passed on the stub, because the stub
-takes every text. It guards the other failure, a parser that refuses a valid
-type.
+Each test fails for the right reason: the stub writes no byte, reads no row,
+refuses no row, input, list value or schema, and takes every type and every
+value, so each assertion of a behaviour of the real code meets an empty result
+or a missing error. `TestParseTypeTakesEachTypeOfTheClosedList` passed on the
+stub; it guards the other failure, a parser that refuses a valid type.
 
 ## Step 2: the block parser and the comparer
 
-2026-10-01T16:51:36Z. `go test -count=1 ./internal/tsv/` exits 1:
+2026-10-01T16:51:36Z, `go test -count=1 ./internal/tsv/`, exit 1:
 
 ```text
 --- FAIL: TestParseBlocksReadsTheFormOfTheREADME (0.00s)
     block_test.go:38: got [], error <nil>
-        want [{Schema:{Name:psb-gaps Location:stdout NoHeader:false Columns:[...]} line:13} {Schema:{Name:open-gaps [...]} line:24}]
 --- FAIL: TestParseBlocksRefusesABlockThatDoesNotHaveTheForm (0.00s)
     block_test.go:63: a tab in a column line: error <nil>; want "line 2: a tab" in it
-    block_test.go:63: an unknown type: error <nil>; want "line 2: column x: type \"float\"" in it
-    block_test.go:63: no closing fence: error <nil>; want "line 1: the block a has no closing fence" in it
-    block_test.go:63: another location prefix: error <nil>; want "has no prefix" in it
-[...] the same for the other 12 blocks
+[...] the same for the other 15 blocks
 --- FAIL: TestReadBlocksRefusesTwoBlocksWithOneName (0.00s)
     block_test.go:79: got map[], error <nil>; want the blocks a and b
 --- FAIL: TestCompareNamesEachDifference (0.00s)
-    block_test.go:119: the name: error <nil>; want "the name: the block has \"psb-gaps\"; the Go schema has \"psb-gap\"" in it
     block_test.go:119: the order: error <nil>; want "column 2 (rule): the name: the block has \"rule\"; the Go schema has \"line\"" in it
-[...] the same for the other 5 changes
+[...] the same for the other 6 changes
 FAIL	github.com/pharzam/layup/internal/tsv	0.245s
 ```
 
-| Test | Why it fails, and why that is the right reason |
-| ---- | ---------------------------------------------- |
-| `TestParseBlocksReadsTheFormOfTheREADME` | The stub parser finds no block, so the two blocks outside the fences of four backticks and of tildes do not come back. |
-| `TestParseBlocksRefusesABlockThatDoesNotHaveTheForm` | The stub parser refuses none of the 16 blocks that do not have the form. |
-| `TestReadBlocksRefusesTwoBlocksWithOneName` | The stub reads no file, so the blocks `a` and `b` do not come back; the test stops before its cases of a name that repeats. |
-| `TestCompareNamesEachDifference` | The stub comparer names none of the 7 changes. Its two checks of no difference (the same schema, and another rule) pass on the stub. |
+Each test fails for the right reason: the stub parser finds no block and
+refuses none, so the two blocks outside the longer fences do not come back and
+none of the 16 blocks without the form is refused; the stub comparer names none
+of the 7 changes (its two checks of no difference pass on the stub).
 
 ## Step 3: the integration test of the blocks of `docs/spec/`
 
-The test came first with both lists empty. 2026-10-01T16:52:14Z.
-`go test -count=1 -tags=integration ./internal/tsv/` exits 1:
+2026-10-01T16:52:14Z, with both lists empty,
+`go test -count=1 -tags=integration ./internal/tsv/`, exit 1:
 
 ```text
 --- FAIL: TestEverySchemaBlockIsBuiltOrNotYetBuilt (0.00s)
     blocks_integration_test.go:40: the block catalog-kinds is listed 0 times in built and notYetBuilt; want 1
-[...] the same for gate-manifest, gate-result, open-gaps, prices, psb-gaps, rule-paths, setup-answers,
-      setup-record, setup-steps, setup-stop, setup-verify and stalls
-    blocks_integration_test.go:40: the block telemetry is listed 0 times in built and notYetBuilt; want 1
+[...] the same for the other 13 blocks of docs/spec/
 FAIL	github.com/pharzam/layup/internal/tsv	0.263s
 ```
 
-It fails for the right reason: `ReadBlocks` parsed each of the 14 blocks of
-`docs/spec/` with no error (the README's example of the form is not a block),
-and no block is on a list yet. Then a second run, at 16:52:22Z, had the 14 names
-with `prices` also in `built` and `psb-gaps` written as `psb-gap`:
+It fails for the right reason: `ReadBlocks` parsed the 14 blocks of
+`docs/spec/` with no error, and no block was on a list. At 16:52:22Z, with
+`prices` in both lists and `psb-gaps` written as `psb-gap`, each other check
+failed on its own case:
 
 ```text
---- FAIL: TestEverySchemaBlockIsBuiltOrNotYetBuilt (0.00s)
     blocks_integration_test.go:39: psb-gap is listed, but no block of docs/spec/ has that name
     blocks_integration_test.go:44: the block prices is listed 2 times in built and notYetBuilt; want 1
     blocks_integration_test.go:44: the block psb-gaps is listed 0 times in built and notYetBuilt; want 1
-FAIL	github.com/pharzam/layup/internal/tsv	0.318s
 ```
-
-So each check of the test fails on its own case. With the 14 names in
-`notYetBuilt` once and `built` empty, the test passes.
