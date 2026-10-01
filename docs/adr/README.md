@@ -149,6 +149,19 @@ record by number here, and let the index table below do the linking.
 | [0010](0010-use-go-as-the-technology-stack.md) | Use Go as the technology stack | Accepted |
 | [0011](0011-structure-the-core-engine-as-a-go-cli-over-repository-files.md) | Structure the core engine as a Go CLI over repository files | Accepted |
 | [0012](0012-build-layup-in-bootstrap-mode.md) | Build LAYUP in bootstrap mode | Accepted |
+| [0013](0013-orchestrate-a-target-from-outside-with-layup-run.md) | Orchestrate a target from outside with `layup run` | Accepted |
+| [0014](0014-keep-the-records-in-the-target-with-one-writer.md) | Keep the records in the target with one writer | Accepted |
+| [0015](0015-keep-model-calls-out-of-the-engine-checks.md) | Keep model calls out of the engine checks | Accepted |
+| [0016](0016-put-the-native-stack-gates-in-the-target.md) | Put the native stack gates in the target | Accepted |
+| [0017](0017-prevent-rule-changes-by-agents.md) | Prevent rule changes by agents | Accepted |
+| [0018](0018-derive-the-specification-from-numbered-source-lines.md) | Derive the specification from numbered source lines | Accepted |
+| [0019](0019-run-the-lifecycle-as-a-phase-loop-with-one-bet-per-milestone.md) | Run the lifecycle as a phase loop with one bet per milestone | Accepted |
+| [0020](0020-route-role-sessions-over-registered-harnesses.md) | Route role sessions over registered harnesses | Accepted |
+| [0021](0021-branch-at-named-points-through-a-smart-if-provider.md) | Branch at named points through a smart-if provider | Accepted |
+| [0022](0022-screen-for-business-forking-decisions-before-the-work.md) | Screen for business-forking decisions before the work | Accepted |
+| [0023](0023-stop-a-stall-at-a-limit-and-diagnose-it-with-a-fresh-context.md) | Stop a stall at a limit and diagnose it with a fresh context | Accepted |
+| [0024](0024-record-every-sessions-cost-and-stop-at-the-milestone-cap.md) | Record every session's cost and stop at the milestone cap | Accepted |
+| [0025](0025-learn-routing-from-the-records-at-each-retrospective.md) | Learn routing from the records at each retrospective | Accepted |
 
 <!-- Add one row per ADR as you write them. Keep the newest at the bottom. -->
 

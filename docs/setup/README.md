@@ -32,10 +32,13 @@ and waits. A value with no source is never filled; it becomes an open gap
   (PSB Invariant 1, Decision Point 2).
 - A `no` row is done when its evidence holds. In this run the evidence of most
   steps is one check of LAYUP's own `setup-check.sh` (`--only <check> <root>` runs
-  one check). Armature does not ship that script, and the Operator decided that
-  nothing from LAYUP goes into a target repository (O-10 on
-  [#30](https://github.com/pharzam/layup/issues/30)); how a target proves each
-  step is for ADR-0011 to decide.
+  one check). Armature does not ship that script, and nothing from LAYUP goes into a
+  target repository beyond the setup output (O-10 on
+  [#30](https://github.com/pharzam/layup/issues/30), O-76): for a target, `layup setup verify` does these checks from outside, the
+  Operator pushes the unmodified copy as the root commit (S03), S02 copies with
+  `git clone`, S12 adds no `setup-check` job, and S13's checks go into rulesets
+  ([architecture](../architecture.md) §5,
+  [ADR-0016](../adr/0016-put-the-native-stack-gates-in-the-target.md)).
 - The manual run gives the baseline to compare against: the elapsed time of each
   step, and each finding K-01 to K-08 where Armature left a decision open, in
   [`record-T-n1hp.md`](record-T-n1hp.md).

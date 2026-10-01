@@ -57,7 +57,7 @@ Whether a named gate really runs the path is a review judgement.
   `working-directory:` is not seen). Neither covers the workflow file itself, which a branch can
   edit, nor the Go jobs `lint`, `tests` and `security`, which run the pull
   request's own Go code and tests; so this invariant has no check yet (O-9,
-  ADR-0011). Check: no check yet
+  ADR-0011; for a target, ADR-0017 designs a control, which is not built). Check: no check yet
 - **Inv-4** — No configuration value without evidence (`F-0001#4`). Trap: an
   Armature example value accepted as a project value. Check: no check yet
 - **Inv-5** — A check that is not active does not count as passed (`F-0001#5`).
@@ -129,6 +129,53 @@ check that catches it.
   [Check `adapted`](setup/README.md#check-adapted)); a false positive is fixed by
   a better sentence, not by a list entry. Learned in `T-745n`
   ([#70](https://github.com/pharzam/layup/issues/70)).
+- ❌ **A public-solution search that confirms the design.** The first search of
+  `T-hbw8` ran after the solution shape was fixed, used the words of that
+  solution, and passed the one list that named the missed competitor (Paperclip,
+  line 163 of about 247) through a summarizer with a filter and a cap of 15. It is
+  silent because the selection record shows a search section with sources, so
+  the rule "search first" looks met. **The check:** the search runs before the
+  decision that fixes the solution shape; queries come from the problem
+  statement's own terms; each curated list is read in full, every relevant entry
+  with a keep or reject reason; two searchers on different models, blind to each
+  other ([`runs/T-hbw8/root-cause-missed-solution.md`](../runs/T-hbw8/root-cause-missed-solution.md)).
+  Learned in `T-hbw8` ([#72](https://github.com/pharzam/layup/issues/72)).
+- ❌ **Coverage by name.** A coverage table that maps each requirement to a
+  component name looks complete while the component cannot do the work: the
+  `T-hbw8` architecture passed its own tables and then got about 50 material
+  findings when two reviewers walked concrete cases. **The check:** each coverage
+  row points to a walkthrough of one concrete case, each step tagged `code`,
+  `model` or `human`, and an independent review of the walkthroughs runs before a
+  human is asked to approve. Learned in `T-hbw8`.
+- ❌ **A tool under test writes into the host's home directory.** In the `T-hbw8`
+  evaluation, three of eighteen agent tools wrote outside their work directory
+  on their first calls: one installed a Claude Code plugin and turned it on in
+  `~/.claude/settings.json`, one wrote 628 command and skill files for 13
+  harnesses into `$HOME`, one created `~/.gt` and `~/.dolt`; a fourth tried to set
+  branch protection on GitHub. A brief that said "do not change the global
+  configuration" did not stop them. It is silent because the tool's install step
+  runs by default and reports success; every later harness session on the host
+  then loads the added hooks and skills. **The check:** start each tool and each
+  harness it drives with `HOME` set to a directory under the work directory from
+  its first call, and with no `gh` login; after the runs, list the files in the
+  real home directory that changed in the run window
+  ([`runs/T-hbw8/evaluation/summary.md`](../runs/T-hbw8/evaluation/summary.md),
+  "Incidents during the evaluation"). Learned in `T-hbw8`.
+- ❌ **A model on the "not used" list, used inside a test run.** The `T-hbw8`
+  evaluation brief named Claude Haiku 4.5 as the cheap model inside the
+  candidates' test runs, and eleven candidates ran with it. ADR-0012 part 3 lists
+  Haiku as not used and has no exception for a test fixture; the plan review
+  found it, and it became a reported deviation. It is silent because nothing
+  checks a model name in a brief, and a short alias (`sonnet`, `opus`) hides which
+  version ran. **The check:** before a brief names a model, compare the full model
+  ID with the "not used" list of
+  [ADR-0012](adr/0012-build-layup-in-bootstrap-mode.md), and write full model IDs
+  in every evidence file. Learned in `T-hbw8`.
+- ❌ **A word-for-word copy with trailing spaces.** A comment or a tool output
+  copied into a record keeps its trailing spaces. No hook runs `git diff --check`,
+  so 17 such lines passed every commit of `T-hbw8` and failed only at close-out.
+  **The check:** after you copy text into a record, run `git diff --check` on it;
+  remove trailing spaces, which carry no meaning there. Learned in `T-hbw8`.
 
 ### Writing a lesson back
 
