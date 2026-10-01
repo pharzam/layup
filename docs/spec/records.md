@@ -77,7 +77,9 @@ of `stalls.tsv`, so the Stall Rate does not count it.
 | `target:docs/gates.tsv` | the gate manifest | 6 | `layup setup` | 1 | [`gate.md`](gate.md#the-gate-manifest) |
 | `target:docs/setup/armature.pin` | the target's pin file | 5 | `layup setup` | 1 | [`setup.md`](setup.md#nfr-006--the-baseline-at-a-pinned-recorded-version) |
 | `target:docs/facts/` | the problem statement and the answers as raw facts | 5, 7 | `layup setup` | 1 | the baseline's facts convention |
-| `layup:docs/setup/steps.tsv` | LAYUP's own setup steps | 5 | a LAYUP task | 1 (read) | its header |
+| `target:docs/setup/facts.sha256` | the hash of each raw facts file | 5 | `layup setup` | 1 | [`setup.md`](setup.md#the-files-of-docssetup-in-a-target) |
+| `target:docs/setup/open-gaps.tsv` | each kept marker with its question | 5 | `layup setup` | 1 | [`setup.md`](setup.md#the-files-of-docssetup-in-a-target) |
+| `layup:docs/setup/steps.tsv` | LAYUP's own setup steps; the engine does not read it, and the step table of `setup.md` derives from it | 5 | a LAYUP task | — | its header |
 | `layup:internal/catalog/<stack>/` | the stack catalog | 6 | a LAYUP task | 1 | [`setup.md`](setup.md#the-stack-catalog) |
 | `host:<work>/` | the work area of `layup setup` | 5 | `layup setup` | 1 | [`setup.md`](setup.md#the-command-layup-setup) |
 | `host:registers/harnesses.tsv` | the harness register | 9 | the Operator | 2 | later |
@@ -156,7 +158,7 @@ billing        enum(api|subscription)     -    the billing type of the harness's
 start          time                       -    when `layup run` started the harness process
 first_output   time                       -    the first output of the process; `—` when it gave none
 end            time                       -    when the process exited or was killed
-latency_s      int                        -    first_output − start, in seconds; `—` when first_output is `—`
+latency_s      int                        -    first_output − start, in seconds; `—` when first_output is `—`, which is its status column
 duration_s     int                        -    end − start, in seconds
 tokens_in      int                        -    input tokens; `—` when not reported
 tokens_out     int                        -    output tokens; `—` when not reported
@@ -204,7 +206,7 @@ kind      enum(stall|diagnosis|diagnosis-failed|outcome)  key  the row kind; eac
 time      time          -    when the row was written
 task      text          -    the task ID; `project` for a stall of the orchestrator (trigger 5)
 trigger   enum(no-progress|too-many-rounds|hang|no-report|orchestrator)  -  on a `stall` row; `—` on the others
-evidence  sha256        -    on a `stall` row: the payload of the package (`payloads/<sha256>`); `—` on the others
+evidence  sha256        -    on a `stall` row: the payload of the package; on a `diagnosis` row: the payload of the diagnosis in its fixed form, with each open unknown and its evidence (§11); `—` on the others (`payloads/<sha256>`)
 cause     enum(disagreement|missing-information|wrong-gate|harness-failure|task-too-large|other)  -  on a `diagnosis` row; `—` on the others
 rung      enum(retry|panel|operator)  -  on a `diagnosis` row: the rung it recommends; `—` on the others
 examiner  text          -    on a `diagnosis` or `diagnosis-failed` row: the examiner's session ID; `—` when there was none
@@ -215,7 +217,7 @@ note      text          -    one line: the reason of a `diagnosis-failed` row, o
 Stall Diagnosis (`F-0003#61`) counts the stalls whose second row is
 `diagnosis-failed` or missing; it must be zero (the criterion of `REQ-009`).
 
-**Decided here:** one file for the three row kinds, and the column names.
+**Decided here:** one file for the three row kinds, so that a stall's rows are read together and Stall Diagnosis is one count over one file; and the column names, which §11 does not give.
 
 **Not in phase 1:** the writer, the triggers, the examiner, the panel and the
 Operator's answer form (§11; `REQ-010`, phase 3).

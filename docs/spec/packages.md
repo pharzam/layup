@@ -51,7 +51,9 @@ itself; it moves to `internal/tsv` when that package exists (#29).
 access" as concerns and gives no names). Reason: `layup setup verify` runs the
 gates of a kind on a clean tree and on its known-bad fixture
 ([`setup.md`](setup.md)), so it imports `internal/gate`; `internal/setup` writes
-a tree and must not depend on the checks that judge it.
+a tree and must not depend on the checks that judge it, so `internal/cli`
+runs the check of each step from `internal/verify` after `internal/setup` did
+the step.
 
 ### The components of phase 1
 
@@ -84,7 +86,7 @@ requirement's section.
 | `internal/smartif` | the smart-if client: the only package that connects to a model service | 3 |
 | `internal/escalate` | the escalation screen | 3 |
 | `internal/stall` | progress, the stall triggers and the procedure | 3 |
-| `internal/route` | the harness register, admission and routing | 3 |
+| `internal/route` | the harness register, the probe, admission and routing | 2 |
 | `internal/report` | `layup report`: the measures | 4 |
 | `internal/learn` | `layup learn`: the reward and the routing update | 4 |
 

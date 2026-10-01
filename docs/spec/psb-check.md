@@ -19,7 +19,9 @@ layup psb check FILE
 ```
 
 - `FILE`: a problem statement in Markdown, UTF-8. A carriage return before a
-  line feed is ignored.
+  line feed is ignored. A field of the table follows the field rule of
+  [`README.md`](README.md#records); the present code does not yet replace a
+  lone carriage return in `excerpt` with a space (#29 does).
 - No flag.
 - Exit codes: 0 no gap; 1 at least one gap; 2 a usage error (not exactly the
   two words `check FILE`) or a file that cannot be read.
@@ -34,7 +36,7 @@ from 1.
 | G1 | no line holds `technology stack` (any case), then only spaces or `*`, then `:`, then only spaces or `*`, then a character that is not white space | 0 | `Which technology stack does the product use (languages, frameworks, tools)?` |
 | G2 | a row of a Markdown table whose header row has a column `Measurement` or `Verification` (any case) has, in that column, an empty cell or one of `—`, `-`, `tbd`, `not measured` (any case, one final `.` ignored) | the row | `How is this metric measured? The row gives no measurement method.` |
 | G3 | the text has a table under a heading that contains `Terms`, and a line holds an abbreviation (2 to 6 characters: a capital, then capitals or digits, with ASCII word boundaries) that no bold span of that table's first column defines; each abbreviation once, at its first line | the line | `What does "<ABBR>" mean? The terms table does not define it.` |
-| G4 | a line holds one of the words `fast`, `robust`, `soon`, `clean`, `better`, `handle` (whole word, any case) and no digit; the first such word of the line | the line | `Which number or threshold does "<word>" stand for here?` |
+| G4 | a line holds one of the words `fast`, `robust`, `soon`, `clean`, `better`, `handle` (whole word, any case) and no digit; the first such word of the line | the line | `Which number or threshold does "<word>" stand for here?`, the word in lowercase |
 | G5 | a line holds `(start value)` (any case) | the line | `Which start value does the pilot use for this target, and who sets it?` |
 
 With no terms table, G3 gives no gap. The present code is the reference for an
@@ -59,8 +61,10 @@ line. The header row is printed when there is no gap, too.
 - **The review of meaning** (§5 gap check step 2): a session; it needs `layup
   run` (phase 2).
 - **One batch on the Intake issue**, merged with the review's rows and the setup
-  questions, with a question ID per row (§5 step 5): `layup run` (phase 2). The
-  `id` above is the row's number in this table, not that question ID.
+  questions, with a question ID per row (§5 step 5): `layup run` (phase 2). In
+  phase 1 the `id` above is the question ID of the gap: `layup setup` asks it at
+  step S01 ([`setup.md`](setup.md#the-steps)); the problem statement does not
+  change during a setup, so the IDs stay.
 - **The answers as a raw fact.** For LAYUP itself, the answers are `F-0004`.
   For a target, phase 1 writes the answers as a raw fact at setup step S06
   ([`setup.md`](setup.md#the-steps)); the copy of the answer comments is

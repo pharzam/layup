@@ -39,6 +39,8 @@ records, which already name the later phases.
 
 Every command of LAYUP follows these rules. A section gives only what differs.
 
+- **`layup version`** is exempt: it prints one line, `layup <version>`, and
+  exits 0.
 - **Arguments.** A command takes its inputs as arguments and flags. It reads no
   environment variable for an input, and asks no question on the terminal.
 - **Output.** A command prints its result as one table on standard output, in
@@ -81,7 +83,9 @@ code, Bootstrap mode rule 1). The form:
 ```
 ````
 
-- `<name>` is the record's name, unique in `docs/spec/`.
+- `<name>` is the record's name, unique in `docs/spec/`. A third word
+  `no-header` marks a record whose form another check fixes with no header row
+  (for example `open-gaps.tsv`); the column lines still give the order.
 - `<location>` is where the record lives: `stdout` (a command's table),
   `records:<path>` (the target's records branch `layup-records`),
   `target:<path>` (the target's default branch), `layup:<path>` (LAYUP's own

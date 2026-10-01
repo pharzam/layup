@@ -59,7 +59,7 @@ layup setup WORK
   step, and the pin is resolved once (§5 Start 2: "no run resolves the commit
   again").
 
-**The work area** (decided here):
+**The work area** (decided here: §5 names the host's work area and no layout; one directory per target keeps a run resumable from files alone):
 
 | Path | What | Written by |
 | ---- | ---- | ---------- |
@@ -83,19 +83,19 @@ the one home of the phase-1 steps of a target. A row that differs from
 
 | Step | Actor in phase 1 | Inputs | What it does | Output | Evidence (the `done` row) |
 | ---- | ---------------- | ------ | ------------ | ------ | ------------------------- |
-| S01 | `layup setup`; stops for the Operator | `answers.tsv` | Reads the answers of the questions `S01-stack`, `S01-name`, `S01-visibility`, `S01-baseline` (the baseline's repository URL). A missing answer stops the run, with all missing ones in one table. In phase 1 the name and the visibility are answers, because Start is not in phase 1; §5 (gap check 4) asks the Operator only the stack at S01. No gate-mode question: **decided here**, as §5 names none, and the target runs its own full gate (§8). | record rows `stack`, `name`, `visibility`, `baseline` | every answer present; the stack has a catalog entry |
+| S01 | `layup setup`; stops for the Operator and the idea owner | `answers.tsv`; the problem statement | Reads the answers of the questions `S01-stack`, `S01-name`, `S01-visibility`, `S01-baseline` (the baseline's repository URL), and runs `layup psb check` on `inputs/briefs/problem-statement.md`: each gap is a question whose ID is the gap's `id` (`Q-NNN`; [`psb-check.md`](psb-check.md#the-table)), for the idea owner. A missing answer stops the run, with all missing ones, of both kinds, in one table (Decision Point 2). In phase 1 the name and the visibility are answers, because Start is not in phase 1; §5 (gap check 4) asks the Operator only the stack at S01. No gate-mode question: **decided here**, as §5 names none, and the target runs its own full gate (§8). | record rows `stack`, `name`, `visibility`, `baseline` | every answer present; the stack has a catalog entry |
 | S02 | `layup setup` | `S01-baseline` | `git ls-remote <url> HEAD` gives the commit; `git clone` and `git checkout` of it; `git rev-parse <commit>^{tree}` gives the tree; removes `.git`. Changes `steps.tsv` S02 (`npx degit`): ADR-0011 decision 7, §5 Start 2. | the copy; record rows `pin.source`, `pin.commit`, `pin.tree`, `pin.time` | the commit and the tree |
 | S03 | `layup setup`; the push by the Operator | the copy | `git init`, one commit of the unmodified copy on `main` (message `chore: the unmodified baseline at <commit>`), checks that its tree equals `pin.tree`, writes the push command to `commands.sh`. Creating the remote repository is the Operator's (Start 1). | the root commit; a command | root tree = `pin.tree` |
-| S04 | `layup setup` | the pin rows | On the branch `layup-setup` from the root commit: writes `docs/setup/armature.pin` from the pin rows ([`NFR-006`](#nfr-006--the-baseline-at-a-pinned-recorded-version)). Installing the hooks is a setting of a clone, not of the tree: not done. The decision record of the pin is the baseline's own ADR form, written from a fixed text with the pin values. | the pin file; the ADR | check `pin` of `layup setup verify` |
+| S04 | `layup setup` | the pin rows | On the branch `layup-setup` from the root commit: writes `docs/setup/armature.pin` from the pin rows ([`NFR-006`](#nfr-006--the-baseline-at-a-pinned-recorded-version)). Installing the hooks is a setting of a clone, not of the tree: not done (**decided here**, as §5 names no hook for a target; the Operator's clone has none, §5 Scaffold 6). The decision record of the pin is the baseline's own ADR form, written from a fixed text with the pin values. | the pin file; the ADR | check `pin` of `layup setup verify` |
 | S05 | `layup setup` | the copy | Deletes the baseline's own history: the paths that check `kit-history` reads (`docs/decisions/`, `docs/audit/`, each `docs/tasks/T-*.md`, their lines in `backlog.md` and `completed.md`). A link that the deletion breaks is a missing input: the run stops and lists each one, and the fixed text of that file comes as `inputs/files/<path>`. | the commit | checks `kit-history` and `link-lint` |
-| S06 | `layup setup` | the briefs; `answers.tsv` | Copies each brief byte for byte into `docs/facts/`; writes the answers as a raw fact record, one fact per question ID; writes `docs/setup/facts.sha256` and the index rows. The numbered facts of the problem statement come with the first bet (§7), not here. | the facts | check `facts` |
+| S06 | `layup setup` | the briefs; `answers.tsv` | Copies each brief byte for byte into `docs/facts/`; writes the answers as a raw fact record, one fact per question ID of `answers.tsv`, each with the question ID, the question text and the answer; writes `docs/setup/facts.sha256` and the index rows. The numbered facts of the problem statement come with the first bet (§7), not here. | the facts | check `facts` |
 | S07 | `layup setup`; the text is an input | `inputs/files/docs/onboarding-for-engineers.md` | Copies the file into the tree; a missing file stops the run. | the file | check `onboarding` |
 | S08 | the same | `inputs/files/docs/glossary.md` | the same | the file | check `glossary` |
 | S09 | the same | `inputs/files/docs/guardrails.md` | the same | the file | check `guardrails` |
-| S10 | `layup setup`; stops for the Operator | the tree; `answers.tsv` | Lists every marker of the tree outside the baseline's own exemptions (`MK_EXEMPT` of its setup check). A marker with no answer row stops the run; the table lists all of them at once (§5 gap check, "one batch"). | — | every marker has an answer row |
+| S10 | `layup setup`; stops for the Operator | the tree; `answers.tsv` | Lists every marker of the tree outside the exemptions of LAYUP's `MK_EXEMPT` ([`setup-check.sh`](../setup/setup-check.sh); the baseline has no setup check, §5), which the engine embeds at its version. A path of that pattern that a target does not have matches nothing. A marker with no answer row stops the run; the table lists all of them at once (§5 gap check, "one batch"). | — | every marker has an answer row |
 | S11 | `layup setup` | the answers of S10 | Replaces each marker whose answer has a value with that value, and writes its record row with the source. A marker whose answer is `gap` keeps its marker and gets a row in `docs/setup/open-gaps.tsv` with the answer's question (Invariant 4). | the tree; record rows `marker:<file>:<line>` | check `markers`; check `sources` |
 | S12 | `layup setup` | the catalog entry of the stack | Writes the files of the entry (for Go: `go.mod` with the module path from `name`, the tools' configuration), `docs/gates.tsv`, and one CI job per gate kind, named as the kind. The baseline's own workflows stay byte for byte (`REQ-018`). Adds no `setup-check` job. Changes `steps.tsv` S12: ADR-0011 decision 7, ADR-0016, §5 Scaffold 4. | the gate files | checks `jobs` and `gates` |
-| S13 | `layup setup`; applied by the Operator | the job names | Writes `docs/setup/branch-protection.json` (the baseline's file) and `WORK/out/ruleset-default.json`: the default branch and the ref `layup-probe`; a pull request required; each gate job a required check, pinned to GitHub Actions; no force push, no deletion; an empty bypass list. In phase 1 it requires no `layup/` check, because no phase-1 command posts one ([`records.md`](records.md#nfr-002--a-target-is-independent-of-layup)). Writes the push of `layup-setup` and the apply command to `commands.sh`. | the ruleset file; commands | the Operator's run of `commands.sh` |
+| S13 | `layup setup`; applied by the Operator | the job names | Writes `docs/setup/branch-protection.json` (in the form of LAYUP's own file of that name; the baseline has no `docs/setup/`) and `WORK/out/ruleset-default.json`: the default branch and the ref `layup-probe`; a pull request required; each gate job a required check, pinned to GitHub Actions; no force push, no deletion; an empty bypass list. In phase 1 it requires no `layup/` check, because no phase-1 command posts one ([`records.md`](records.md#nfr-002--a-target-is-independent-of-layup)). Writes to `commands.sh` the push of `layup-setup` onto the default branch (`git push origin layup-setup:main`, a fast-forward from the root commit; §5 Scaffold 6: "pushes the setup commits on top of the root commit") and, after it, the apply command of the ruleset. | the ruleset file; commands | the Operator's run of `commands.sh` |
 | S14 | `layup setup`; the text is an input | `inputs/files/README.md`, `inputs/files/AGENTS.md` | Copies the files; a missing file stops the run. | the files | check `identity` |
 | S15 | `layup setup`; the push by the Operator | the record; `out/verify.tsv` | Writes the record's last rows and the rule-path register, and the first commit of `layup-records` ([below](#where-the-records-go-in-phase-1), O-115). Not `steps.tsv` into the target (§5: LAYUP's own file). | `out/record.tsv`, `out/rule-paths.tsv`; the records commit; a command | every row of `verify.tsv` is `pass` or `clear` |
 
@@ -109,7 +109,7 @@ step, and nothing else:
 
 ```tsv-schema setup-stop stdout
 step      id(SNN)    -    the step that stopped
-question  text       key  the question ID: `S01-<name>`, `M-<x8>` for a marker, `F-<path>` for an input file
+question  text       key  the question ID: `S01-<name>`; `Q-NNN` for a gap of `layup psb check`; `M-<x8>` for a marker; `F-<path>` for an input file of the target; `O-<name>` for an output the Operator makes
 ask       text       -    the question in words
 where     text       -    for a marker, `<file>:<line> <marker>`; for a file, its path in the target; `—` otherwise
 ```
@@ -125,7 +125,7 @@ When a run does not stop, `layup setup` prints one row per step:
 ```tsv-schema setup-steps stdout
 step      id(SNN)                         key  S01 to S15
 actor     enum(layup-setup|operator|layup-run)  -  who does the step in phase 1; `layup-run` for a part of a later phase
-result    enum(done|fail|operator)        -    `done`: done and checked; `fail`: its check failed; `operator`: a command in `commands.sh` waits for the Operator
+result    enum(done|fail|not-active|operator)  -  `done`: done and checked; `fail`: its check failed; `not-active`: its check could not run (exit 1); `operator`: a command in `commands.sh` waits for the Operator
 evidence  text                            -    the evidence line of the step table above, or the failed check's reason
 ```
 
@@ -148,7 +148,7 @@ per finished step.
 step    id(SNN)                                   key  the step that set the value
 name    text                                      key  the value's name: `stack`, `pin.commit`, `marker:<file>:<line>`, …; `done` for a step's evidence row
 value   text                                      -    the value; for `done`, the evidence line
-source  enum(answer|catalog|fact|computed|gap|step)  -  `answer`: an answer row; `catalog`: a catalog file; `fact`: a fact citation the Operator accepted; `computed`: a `git` command's output; `gap`: kept as an open gap; `step`: a `done` row
+source  enum(answer|catalog|fact|computed|gap|step)  -  (`computed` is decided here: §5 names three sources, and the pin values come from `git`, not from a person) `answer`: an answer row; `catalog`: a catalog file; `fact`: a fact citation the Operator accepted; `computed`: a `git` command's output; `gap`: kept as an open gap; `step`: a `done` row
 ref     text                                      -    `answer`: the question ID; `catalog`: `<stack>/<path>`; `fact`: `F-NNNN#n`; `computed`: the command; `gap`: `docs/setup/open-gaps.tsv`; `step`: `—`
 ```
 
@@ -163,10 +163,29 @@ exception  text       -    the part that is not a rule path; for `docs/guardrail
 source     enum(baseline|catalog|architecture)  -  where the entry comes from
 ```
 
-The entries of phase 1: `.github/`, `.githooks/`, `docs/gates.tsv`, each `config`
-path of the manifest, `AGENTS.md`, the harness entry files of the baseline, the
-baseline's rule documents and check scripts, `docs/setup/`, `docs/facts/`, and
-`docs/guardrails.md` with its exception (§6).
+The entries of phase 1 (**decided here** from the baseline at LAYUP's pin, by §6's
+list): `.github/`, `.githooks/`, `.gitattributes`, `AGENTS.md`, `CLAUDE.md`,
+`docs/engineering-discipline.md`, `docs/issue-workflow.md`, `docs/ci/`,
+`docs/tests/`, each file of the tree whose name ends with `.sh`, `docs/gates.tsv`,
+each `config` path of the manifest, `docs/setup/`, `docs/facts/`, and
+`docs/guardrails.md` with its exception. A baseline whose rule files differ
+is known limit L-A6 of the architecture.
+
+### The files of `docs/setup/` in a target
+
+The baseline has no `docs/setup/`; S04, S06, S11 and S13 write it in the form of
+LAYUP's own files of the same names, so that the same check rules read them.
+
+```tsv-schema open-gaps target:docs/setup/open-gaps.tsv no-header
+file      path  key  the file that holds the marker
+marker    text  key  the marker, with its two angle quotes
+question  text  -    the question that its value needs; never `—`
+```
+
+`docs/setup/facts.sha256` is not a table: one line per raw facts file, in the
+form of `sha256sum`: the SHA-256, two spaces, and the path from the root, for
+example `<64 hex>  docs/facts/problem-statement-brief.md`. Check `facts` reads
+it as `check_facts` does.
 
 ### Where the records go in phase 1
 
@@ -177,7 +196,7 @@ root commit. The order of a setup in phase 1:
 1. `layup setup WORK` runs S01 to S14, with a stop (exit 3) at each step that
    needs an input, until S15.
 2. S15 needs `WORK/out/verify.tsv`. When it is missing, the run stops with the
-   question `F-out/verify.tsv`: run `layup setup verify WORK >
+   question `O-verify`: run `layup setup verify WORK >
    WORK/out/verify.tsv`.
 3. The next run of `layup setup WORK` does S15: it refuses a `verify.tsv` with a
    row that is not `pass` or `clear` (exit 1); otherwise it makes, in
@@ -185,9 +204,11 @@ root commit. The order of a setup in phase 1:
    `README.md` (a fixed text: what the branch is, that only `layup run` writes
    it from Start on), `setup/record.tsv`, `setup/verify.tsv` and
    `rule-paths.tsv`, and adds its push to `commands.sh`.
-4. The Operator runs `commands.sh`: the push of the root commit (S03), of
-   `layup-setup` (S13) and of `layup-records` (S15), and the apply of the
-   default branch's ruleset (S13), in that order, with the Operator's own login,
+4. The Operator runs `commands.sh`: the push of the root commit to `main`
+   (S03), the push of `layup-setup` onto `main` (S13), the push of
+   `layup-records` (S15), and the apply of the default branch's ruleset (S13),
+   in that order, so the setup commits are on the default branch before the
+   ruleset requires a pull request, with the Operator's own login,
    from a clone with no hooks installed.
 
 ### The checks of `layup setup verify`
@@ -196,7 +217,7 @@ root commit. The order of a setup in phase 1:
 layup setup verify WORK
 ```
 
-It reads `WORK/target` at the head of `layup-setup` and `WORK/out/record.tsv`,
+No flag. It reads `WORK/target` at the head of `layup-setup`, `WORK/out/record.tsv` and `WORK/inputs/answers.tsv`,
 in a scratch work tree, and changes neither. Exit codes as in
 [`README.md`](README.md#commands): 0 when each row is `pass` or `clear`.
 
@@ -209,19 +230,19 @@ of each such check passes and fails on the same fixtures as
 | Check | In phase 1 | The rule for a target |
 | ----- | ---------- | --------------------- |
 | `discipline-tests` | yes | the baseline's own `sh docs/tests/run-discipline-tests.sh` exits 0 |
-| `pin` | yes | `check_pin`; and the pin file's values equal the record's pin rows; `method` is `git clone` |
+| `pin` | yes | `check_pin`; and the pin file's values equal the record's pin rows; `method` equals the text of [`NFR-006`](#nfr-006--the-baseline-at-a-pinned-recorded-version) with the source and the commit |
 | `kit-history` | yes | `check_kit_history` |
 | `facts` | yes, in a target's form | each brief is in `docs/facts/` and in `facts.sha256` with its hash; the answers record has one fact per question ID of `answers.tsv`; the index has a row per record. LAYUP's counts (39, 75, 19) are LAYUP's and do not apply. |
 | `onboarding` | yes, in a target's form | the file exists, holds no marker, links the problem statement; each `F-NNNN#n` it cites is a fact of a record in `docs/facts/` |
 | `glossary` | yes, in a target's form | each `F-NNNN#n` it cites resolves as above; LAYUP's heading and its count of 25 do not apply |
 | `guardrails` | yes, in a target's form | each entry's `Check:` value is `no check yet` or a file and a gate, as `check_guardrails`; each citation resolves; LAYUP's count of 9 does not apply |
-| `markers` | yes | `check_markers`, with the baseline's `MK_EXEMPT` |
+| `markers` | yes | `check_markers`, with LAYUP's `MK_EXEMPT` (S10) |
 | `adapted` | yes | `check_adapted` |
 | `identity` | yes | `check_identity`, with the target's name |
 | `link-lint` | yes | the baseline's own `sh docs/links/link-lint.sh` exits 0 |
 | `sources` | yes | every value row of the record has a source; each `answer` ref is a row of `answers.tsv`; each `catalog` ref is a file of the catalog entry; each `fact` ref is a fact of `docs/facts/`; each `gap` row has its marker in the tree and its row in `open-gaps.tsv` |
 | `jobs` | yes | each kind of `docs/gates.tsv` has a CI job with the kind's name (the evidence of S12) |
-| `gate:<kind>`, one per kind | yes | an `active` kind: `layup gate` on the setup head gives `pass` or `clear`, and on the head with the kind's known-bad fixture applied (`git apply`) gives `fail`; then `pass`. A `pending` kind: `clear`, reason `pending: fixture not run` (§6: "recorded as not run, never as a detection"). |
+| `gate:<kind>`, one per kind | yes | an `active` kind: `layup gate` with `--base` and `--head` the setup head gives `pass` or `clear`, and with `--head` a commit of the kind's known-bad fixture applied (`git apply`) on the setup head gives `fail`; then `pass`. The clean run `fail` gives `fail`; either run `not-active` gives `not-active`; a fixture run that is not `fail` gives `fail`, reason `fixture not detected`. A `pending` kind: `clear`, reason `pending: fixture not run` (§6: "recorded as not run, never as a detection"). |
 | `ci`, `procedure`, `protection` | not a check for a target | they read LAYUP's own CI and `steps.tsv`, and the classic protection that the rulesets replace (§5) |
 | the rulesets read back (S13); the probes of §3 | no | `layup run`, phase 2: not in the list, so a correct setup exits 0 |
 
@@ -261,7 +282,7 @@ version   text                  -    the tool's version that the evidence docume
 command   text                  -    the command, as in the manifest
 scope     list(text)            -    the scope patterns, as in the manifest
 config    list(path)            -    the gate files of the kind in the target; `—` when none
-fixture   path                  -    `fixtures/<kind>.patch`; `—` for a `pending` kind until its activation
+fixture   text                  -    `fixtures/<kind>.patch`, relative to the entry's directory; `—` for a `pending` kind until its activation
 evidence  text                  -    the URL of the tool's documentation at that version
 ```
 
@@ -273,8 +294,10 @@ that test comes with the code (#29).
 
 - Each part of §3 and §5 that the boundary table gives to `layup run` or to a
   session.
-- The ruleset of the records branch (§6: updates only by the LAYUP App): it is
-  applied with Start, by `layup run`'s printed commands (phase 2).
+- The ruleset of the records branch (§6: updates only by the LAYUP App), and the
+  `layup/` required checks of the default branch (`layup/gates`, `layup/spec`,
+  `layup/verify`, `layup/rules`, §6): the Operator applies both with the
+  commands that `layup run` prints when it first starts on the target (phase 2).
 - The activation of the `pending` kinds at the first bet (§6): phase 2.
 
 ## NFR-003 — No value without evidence

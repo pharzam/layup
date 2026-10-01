@@ -61,15 +61,15 @@ layup gate REPO --base REV --head REV
    a path that the base does not have is removed from the scratch tree. So the
    head's own gate files never judge the head (FT4).
 3. For each row, in the order of the manifest, give one result by the table
-   below. A command runs with the scratch tree as its working directory.
+   below: the first line of the table that matches the row decides. A command runs with the scratch tree as its working directory.
 4. Remove the scratch work tree. Print the table.
 
 | The row | Result | Reason |
 | ------- | ------ | ------ |
 | `pending`, and `git diff --name-only <base> <head>` names no product path of the kind | `clear` | `pending: no product path` |
 | `pending`, and the diff names a product path of the kind | `fail` | `pending: product path changed: <first path>` |
-| `active`, and the scratch tree has no product path of the kind | `clear` | `no product path` |
 | `active`, and its `tool` is not found | `not-active` | `tool not found: <tool>` |
+| `active`, and the scratch tree has no product path of the kind | `clear` | `no product path` |
 | `active`, the command exits 0 | `pass` | `—` |
 | `active`, the command exits with another code, or is killed by a signal | `fail` | `exit <code>`, or `signal <name>` |
 
@@ -152,8 +152,9 @@ a rule can be checked mechanically; the engine checks make no model call, and
 the `layup` process calls a model only through the smart-if provider." Derives
 from `architecture.md` §4, ADR-0015.
 
-1. No command of phase 1 opens a network connection or starts a model
-   process. The import rule of [`packages.md`](packages.md#nfr-007--go-the-standard-library-only-and-git-as-the-git-program)
+1. No command of phase 1 opens a connection to a model service or starts a
+   model process. Its only network use is `git` to the baseline's repository
+   (S02) and the gate commands of a target. The import rule of [`packages.md`](packages.md#nfr-007--go-the-standard-library-only-and-git-as-the-git-program)
    (no `net`, `net/http` or `crypto/tls` in phase 1) is the mechanical check.
    A gate command of a target may use the network (for example `go` that
    fetches modules); that is the target's tool, not a model call of `layup`.
