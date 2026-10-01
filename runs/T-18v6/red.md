@@ -2,8 +2,11 @@
 
 The red evidence of the test-first steps of task `T-18v6` (#78), gate step 3.
 The `pre-commit` hook refuses a commit with a red unit test (guardrails §2, "The
-hook refuses a red commit"), so each step ran its new tests before its code, and
-one commit holds the tests and the code of a step. In the red run of a unit
+hook refuses a red commit"), so one commit holds the tests and the code of a step. For each red run, the
+code of the step was set aside and a stub held its functions: the run shows that
+each test fails on the stub for the right reason. It does not show that the
+tests were written before the code: the red runs came 16 to 49 seconds before
+the commits of their steps (review round 1, note 3). In the red run of a unit
 step, a stub held the new functions with their signatures and empty bodies (a
 zero value and no error). Go 1.27.1 on darwin/arm64, base `b48764f`. The output
 is trimmed to the relevant lines; `[...]` marks where like lines are cut.

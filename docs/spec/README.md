@@ -90,7 +90,7 @@ written as `—` (U+2014), never as an empty string, so that a human sees it.
   the one case where a read does not give back the value that the writer took.
   Reason: the types have no mark for "may be empty", and the rule of a column
   belongs to its owner.
-- **The reader** refuses a byte-order mark, a carriage return anywhere (a
+- **The reader** refuses a byte-order mark at its start, a carriage return anywhere (a
   carriage return before a line feed included), bytes that are not valid UTF-8,
   an empty line, no line feed after the last line, a header row that is not the
   column names, the column names as the first line of a record with no header
@@ -149,8 +149,8 @@ code, Bootstrap mode rule 1). The form:
   of the type `path`, a name that another block has, no column, or no closing
   fence. A fence inside a longer fence is text, not a block, as in the example
   above. A block starts a line, after at most three spaces. The parser refuses
-  a `tsv-schema` fence after a blockquote mark, a list marker, or four spaces or
-  more, and a directory that it cannot read or that holds no block, so that no
+  a `tsv-schema` fence with other text before it on its line (a blockquote mark,
+  a list marker, a tab, a date, or four spaces or more), and a directory that it cannot read or that holds no block, so that no
   block escapes the test. Reason: each block has one reading. Known limit: the
   parser reads a block in an HTML comment as a block.
 
@@ -162,7 +162,7 @@ schema of a record's owner.
   code writes and reads the record with that value, and its own test compares
   the value with the block (`tsv.Compare`).
 - One test of `internal/tsv`, with the tag `integration`, parses each block of
-  `docs/spec/` by the form above. It holds two lists of block names, `built` and
+  the Markdown files at the root of `docs/spec/` by the form above. It holds two lists of block names, `built` and
   `notYetBuilt`. It checks that each block is in exactly one list, and that each
   listed name is a block. An owner moves the name of its block from
   `notYetBuilt` to `built` in the same change as its own test.
