@@ -64,7 +64,9 @@ Every command of LAYUP follows these rules. A section gives only what differs.
   answers file, a Markdown file that a step checks) and finds bytes that are not
   valid UTF-8 gives exit 2, with a diagnostic that names the file. A file that a
   command only copies or hashes is not under this rule. Reason: a record is
-  UTF-8, and a repair would put a value into a record that no input holds.
+  UTF-8, and a repair would put a value into a record that no input holds. Task
+  `T-5zmw` (row 6 of the plan) applies it to `layup psb check`
+  ([`psb-check.md`](psb-check.md#the-command)).
 - **Determinism.** Two runs on the same input print the same bytes
   (`NFR-005`). So a result table holds no time, no duration and no path of a
   scratch directory, and its rows have a fixed order.
@@ -91,16 +93,23 @@ written as `—` (U+2014), never as an empty string, so that a human sees it.
 - **The reader** refuses a byte-order mark, a carriage return anywhere (a
   carriage return before a line feed included), bytes that are not valid UTF-8,
   an empty line, no line feed after the last line, a header row that is not the
-  column names, a row with too few or too many fields, a field that is an empty
-  string, a field that is not a value of its column's type, `—` in a key column,
-  and a key that an earlier row has. Each error names the line, and the column
-  when one field is wrong. The error for a carriage return also names the fix:
-  line-feed endings. A command gives exit 2 for such an input. Reason: code
-  writes each record with line feeds only, and a person who writes a record by
-  hand (`answers.tsv`) gets an error that says what to fix, not a silent repair.
+  column names, the column names as the first line of a record with no header
+  row, a row with too few or too many fields, a field that is an empty string, a
+  field that is not a value of its column's type, `—` in a key column, and a key
+  that an earlier row has. Each error names the line. The error for one field
+  also names its column: a carriage return or bytes that are not valid UTF-8 in
+  the field, an empty string, a value that is not of the column's type, `—` in
+  a key column, a wrong name in the header row, or a missing field. The error
+  for a carriage return also names the fix: line-feed endings. A command gives
+  exit 2 for such an input. Reason: code writes each record with line feeds
+  only, and a person who writes a record by hand (`answers.tsv`) gets an error
+  that says what to fix, not a silent repair.
 - **The writer** applies the field rule and writes `—` for an empty value. Then
   it makes each check of the reader, so it never writes a record that the reader
-  refuses. A value that is not valid UTF-8 is an error, not a repair.
+  refuses. A value that is not valid UTF-8 is an error, not a repair. The writer
+  cannot tell one list value that holds a space from two values, so code makes
+  the field of a `list(<type>)` column with `tsv.JoinList`, which refuses such a
+  value.
 
 ### The schema block
 
@@ -139,7 +148,11 @@ code, Bootstrap mode rule 1). The form:
   repeats, a location with another prefix or with a path that is not in the form
   of the type `path`, a name that another block has, no column, or no closing
   fence. A fence inside a longer fence is text, not a block, as in the example
-  above. Reason: each block has one reading.
+  above. A block starts a line, after at most three spaces. The parser refuses
+  a `tsv-schema` fence after a blockquote mark, a list marker, or four spaces or
+  more, and a directory that it cannot read or that holds no block, so that no
+  block escapes the test. Reason: each block has one reading. Known limit: the
+  parser reads a block in an HTML comment as a block.
 
 **Decided here:** how "the test comes with the code" is read. Reason:
 `internal/tsv` imports no package of this module, so its test cannot see the Go
@@ -171,17 +184,18 @@ The list is closed; a new type is added here first.
 | `time` | a time in UTC, RFC 3339, to the second: `2026-10-01T08:09:21Z` |
 | `sha1` | a Git object name: 40 lowercase hexadecimal characters |
 | `sha256` | 64 lowercase hexadecimal characters |
-| `path` | a path relative to a repository's root, with `/` and no `..`; no empty or `.` part, and no `/` at its start or end |
+| `path` | a path relative to a repository's root, with `/`; no empty, `.` or `..` part, and no `/` at its start or end |
 | `enum(a\|b\|c)` | one of the listed words |
-| `id(<pattern>)` | an identifier in the named form. In the pattern, a run of `N` is that many digits or more, so `id(Q-NNN)` takes `Q-001` and `Q-1000`; each `x` is one lowercase letter or digit; `<word>` is one or more lowercase letters or `-`; each other character stands for itself. A column's rule can name a smaller set for `x` (for example hexadecimal), which the owner of the record checks |
+| `id(<pattern>)` | an identifier in the named form. In the pattern, a run of `N` is that many digits, or more digits with no leading zero, so `id(Q-NNN)` takes `Q-001` and `Q-1000`, and not `Q-0001`; each `x` is one lowercase letter or digit; `<word>` is one or more lowercase letters or `-`; each other character stands for itself. A column's rule can name a smaller set for `x` (for example hexadecimal), which the owner of the record checks |
 | `list(<type>)` | values of that type, separated by one space, in a fixed order; a value holds no space, and an empty list is `—` |
 
 **Decided here:** the readings of `decimal`, `path`, `id` and `list` in the
-table. Reasons: `layup psb check` writes `Q-%03d`, which has no maximum, so a
-run of `N` is a minimum; a path has one form, so two rows that name one file
-have the same text; a decimal follows the rule of `int` before its point, so
-`.5`, `5.` and `05.5` are not values; one space separates the values of a list,
-so a value cannot hold one.
+table. Reasons: `layup psb check` writes `Q-%03d`, which has no maximum and one
+form for each number, so a run of `N` is a minimum, and a longer number has no
+leading zero; an ID and a path have one form each, so two rows that name one
+thing have the same text, and the key check finds them; a decimal follows the
+rule of `int` before its point, so `.5`, `5.` and `05.5` are not values; one
+space separates the values of a list, so a value cannot hold one.
 
 A column that may be unknown says so in its rule, and has a status column
 beside it; an unknown value is never written as 0 (FT2).

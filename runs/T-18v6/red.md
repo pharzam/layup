@@ -17,6 +17,7 @@ is trimmed to the relevant lines; `[...]` marks where like lines are cut.
     tsv_test.go:59: got ""
         want "id\trule\tline\texcerpt\tquestion\nQ-001\tG1\t0\t—\tWhich stack?\nQ-002\tG4\t12\ta b c d  e\t—\n"
 --- FAIL: TestTheNoHeaderFormHasRowsOnly (0.00s)
+    tsv_test.go:70: got ""; want "docs/a.md\tm1\tWhich value?\ndocs/b.md\tm1\t—\n"
 --- FAIL: TestWriteRefusesARowThatReadWouldRefuse (0.00s)
     --- FAIL: TestWriteRefusesARowThatReadWouldRefuse/invalid_UTF-8_(D5) (0.00s)
         tsv_test.go:105: error <nil>; want an *Error at line 2
@@ -28,14 +29,24 @@ is trimmed to the relevant lines; `[...]` marks where like lines are cut.
 --- FAIL: TestReadTakesAKeyOfTwoColumnsAsOneTuple (0.00s)
     tsv_test.go:156: rows [], error <nil>; want 4 rows
 --- FAIL: TestReadGivesTheEmptyMarkAsTheEmptyValue (0.00s)
+    tsv_test.go:170: rows [], error <nil>; want ["P-001" "" "" "" "" "" "" "" "" "" "" ""]
 --- FAIL: TestAListValueHoldsNoSpaceAndAnEmptyListIsTheEmptyMark (0.00s)
     tsv_test.go:178: JoinList with "docs/my file.md": no error; want one
+[...] the same for the other 3 values, and no record from the stub writer
 --- FAIL: TestWriteThenReadGivesTheSameRowsAndBytes (0.00s)
+    tsv_test.go:203: read back [], error <nil>; want [["Q-001" "G1" "0" "" "Which technology stack?"] [...]
 --- FAIL: TestWriteAndReadRefuseASchemaThatIsNotValid (0.00s)
+    tsv_test.go:225: Write with columns []: no error; want one
+[...] the same for Read, and for the other 5 schemas
 --- FAIL: TestParseTypeRefusesATypeOffTheList (0.00s)
+    types_test.go:29: parseType(""): no error; want one
     types_test.go:29: parseType("float"): no error; want one
+[...] the same for the other 17 types
 --- FAIL: TestTypeCheckTakesTheValuesOfItsType (0.00s)
+    types_test.go:75: text: check(""): no error; want one
+[...]
     types_test.go:75: decimal: check("3"): no error; want one
+[...]
     types_test.go:75: id(Q-NNN): check("Q-01"): no error; want one
 [...] 71 lines "no error; want one" in this test
 FAIL	github.com/pharzam/layup/internal/tsv	0.746s
@@ -54,12 +65,14 @@ stub; it guards the other failure, a parser that refuses a valid type.
 ```text
 --- FAIL: TestParseBlocksReadsTheFormOfTheREADME (0.00s)
     block_test.go:38: got [], error <nil>
+        want [{Schema:{Name:psb-gaps Location:stdout NoHeader:false [...]
 --- FAIL: TestParseBlocksRefusesABlockThatDoesNotHaveTheForm (0.00s)
     block_test.go:63: a tab in a column line: error <nil>; want "line 2: a tab" in it
 [...] the same for the other 15 blocks
 --- FAIL: TestReadBlocksRefusesTwoBlocksWithOneName (0.00s)
     block_test.go:79: got map[], error <nil>; want the blocks a and b
 --- FAIL: TestCompareNamesEachDifference (0.00s)
+[...]
     block_test.go:119: the order: error <nil>; want "column 2 (rule): the name: the block has \"rule\"; the Go schema has \"line\"" in it
 [...] the same for the other 6 changes
 FAIL	github.com/pharzam/layup/internal/tsv	0.245s
