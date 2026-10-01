@@ -150,10 +150,18 @@ changes a plain `git` run.
 
 - Each call starts with `-c core.hooksPath=/dev/null`,
   `-c core.attributesFile=/dev/null`, `-c core.excludesFile=/dev/null`,
-  `-c core.autocrlf=false`, `-c commit.gpgsign=false` and
-  `-c http.emptyAuth=false`. Without the second and the third, the per-user
-  attributes file changed the bytes of a staged file, and the per-user ignore
-  file dropped a file.
+  `-c core.autocrlf=false`, `-c core.precomposeUnicode=false`,
+  `-c commit.gpgsign=false` and `-c http.emptyAuth=false`. Without the second
+  and the third, the per-user attributes file changed the bytes of a staged
+  file, and the per-user ignore file dropped a file.
+- On macOS, `git init` writes `core.precomposeunicode = true` into the
+  repository; `Add` then stored a decomposed (NFD) file name composed (NFC),
+  so a tree with such a path differed on a macOS host only. With `false`,
+  "file names are handled fully transparent by Git" (`git-config(1)`), and on
+  APFS both forms kept their bytes (measured with `git` 2.54.0). A file system
+  that changes a name itself ("the unicode decomposition of filenames done by
+  Mac OS", the same manual; not measured) still changes the tree, and the S03
+  check `root tree = pin.tree` stops the setup.
 - The environment of a call is a fixed list: `PATH` and `TMPDIR` of the host
   when they are set; `LC_ALL=C`, `HOME=/dev/null`, `GIT_CONFIG_NOSYSTEM=1`,
   `GIT_CONFIG_GLOBAL=/dev/null`, `GIT_ATTR_NOSYSTEM=1`, `GIT_TERMINAL_PROMPT=0`,

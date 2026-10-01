@@ -53,7 +53,8 @@ func (e *FailedError) Unwrap() error { return e.Err }
 
 // config is the -c values that every call starts with.
 var config = strings.Fields("-c core.hooksPath=/dev/null -c core.attributesFile=/dev/null " +
-	"-c core.excludesFile=/dev/null -c core.autocrlf=false -c commit.gpgsign=false -c http.emptyAuth=false")
+	"-c core.excludesFile=/dev/null -c core.autocrlf=false -c core.precomposeUnicode=false -c commit.gpgsign=false " +
+	"-c http.emptyAuth=false")
 
 // environ is the environment of a call: fixed values, PATH and TMPDIR of the
 // host when they are set, and extra. No other variable of the host reaches

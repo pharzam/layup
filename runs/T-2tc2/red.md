@@ -88,3 +88,14 @@ $ go test -count=1 -tags=integration -run TestNoCallUsesACredentialOfTheHost ./i
     git_integration_test.go:315: the server got 2 requests, 1 with an Authorization header; want one or more, none with it
     git_integration_test.go:318: 2 programs of the PATH started, first git-remote-layuptest; want none
 ```
+
+Run 9 (finding 7): `git init` on macOS writes `core.precomposeunicode = true`,
+so the decomposed name `café.txt` came back composed. The unit test
+fails because the `-c` list has no `core.precomposeUnicode=false`.
+
+```text
+$ go test -count=1 -run TestEachCallRunsItsVerb/version ./internal/git/   # run 9
+        want dir "", args [… "-c" "core.autocrlf=false" "-c" "core.precomposeUnicode=false" "-c" "commit.gpgsign=false" …]
+$ go test -count=1 -tags=integration -run TestInitAddAndCommit ./internal/git/
+    git_integration_test.go:116: LsFiles: ["a.txt" "café.txt" "docs/b.md" "run.sh" "été.md"], <nil>
+```

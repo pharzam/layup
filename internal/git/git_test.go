@@ -12,7 +12,8 @@ import (
 
 // wantConfig is the -c values that every call starts with.
 var wantConfig = strings.Fields("-c core.hooksPath=/dev/null -c core.attributesFile=/dev/null " +
-	"-c core.excludesFile=/dev/null -c core.autocrlf=false -c commit.gpgsign=false -c http.emptyAuth=false")
+	"-c core.excludesFile=/dev/null -c core.autocrlf=false -c core.precomposeUnicode=false -c commit.gpgsign=false " +
+	"-c http.emptyAuth=false")
 
 // who is the identity of the test commits, at 2026-01-01T00:00:00Z.
 var who = Identity{Name: "LAYUP test", Email: "test@layup.invalid", Time: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)}

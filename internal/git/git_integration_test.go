@@ -94,10 +94,11 @@ func commitTree(t *testing.T, dir string, files map[string]string) string {
 	return id
 }
 
-// The root commit is on main, and one input gives one commit ID (NFR-005).
+// The root commit is on main, one input gives one commit ID (NFR-005), and
+// the tree keeps each file name byte for byte: decomposed (NFD) or composed.
 func TestInitAddAndCommit(t *testing.T) {
 	home := isolate(t)
-	tree := map[string]string{"a.txt": "a\n", "docs/b.md": "b\n", "run.sh": "#!/bin/sh\n"}
+	tree := map[string]string{"a.txt": "a\n", "docs/b.md": "b\n", "run.sh": "#!/bin/sh\n", "cafe\u0301.txt": "nfd\n", "\u00e9t\u00e9.md": "nfc\n"}
 	a := t.TempDir()
 	if idA, idB := commitTree(t, a, tree), commitTree(t, t.TempDir(), tree); idA != idB {
 		t.Fatalf("two commits of one input: %s and %s", idA, idB)
@@ -111,8 +112,8 @@ func TestInitAddAndCommit(t *testing.T) {
 			t.Errorf("the commit object has no line %q:\n%s", line, obj)
 		}
 	}
-	if names, err := LsFiles(a); err != nil || !reflect.DeepEqual(names, []string{"a.txt", "docs/b.md", "run.sh"}) {
-		t.Errorf("LsFiles: %q, %v", names, err)
+	if names, err := LsFiles(a); err != nil || !reflect.DeepEqual(names, []string{"a.txt", "cafe\u0301.txt", "docs/b.md", "run.sh", "\u00e9t\u00e9.md"}) {
+		t.Errorf("LsFiles: %+q, %v", names, err)
 	}
 }
 
