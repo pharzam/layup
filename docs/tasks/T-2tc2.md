@@ -91,7 +91,7 @@ and NFD); note 7 is O-128. At the head, `go build`, `go vet` and `go test`
 after the merge of row 1 (`673e289`): the merge resolved two conflicts, in the
 package table and in the traceability table, and a probe showed that
 `TestPackageRules` now holds `internal/tsv` too. The diff of this task against
-`origin/main` after that merge is 2,100 lines over 24 files, inside the Budget
+`origin/main` after that merge is 2,104 lines over 24 files, inside the Budget
 maximum of O-128.
 
 Next: the PDR (`T-4wrw`, #99) waits for the Operator's approval; then the tasks
