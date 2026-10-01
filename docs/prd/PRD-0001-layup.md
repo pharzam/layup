@@ -238,9 +238,9 @@ for a requirement of a later phase. Each delivering task fills the Test column.
 | NFR-002 | F-0001#2, F-0003#65             | §1.1 Inv-2  | ADR-0013, ADR-0016 | T-b97r, T-evad; `M4a` | — |
 | NFR-003 | F-0001#4, F-0003#63             | §1.1 Inv-4  | —        | T-nfh8, T-b97r, T-evad | check markers |
 | NFR-004 | F-0001#5                        | §1.1 Inv-5  | ADR-0011 | T-vk3k, T-b97r | — |
-| NFR-005 | F-0001#6                        | §1.1 Inv-6  | ADR-0015 | T-2tc2, T-5sgt, T-b97r; `M3a` | — |
+| NFR-005 | F-0001#6                        | §1.1 Inv-6  | ADR-0015 | T-2tc2, T-5sgt, T-b97r; `M3a` | TestPackageRules (cmd/layup, integration: no network package) |
 | NFR-006 | F-0001#8                        | §1.1 Inv-8  | ADR-0009 | T-r7zg, T-b97r | check pin |
-| NFR-007 | F-0004#1                        | —           | ADR-0010 | T-mtb9, T-2tc2 | planned: T-2tc2/integration/package-rules (the CI job lint, gofmt and go vet, does not test this criterion) |
+| NFR-007 | F-0004#1                        | —           | ADR-0010 | T-mtb9, T-2tc2 | TestPackageRules (cmd/layup, integration) |
 
 ## 13. Change log
 
