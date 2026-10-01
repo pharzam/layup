@@ -31,7 +31,6 @@ same summary, dated — rather than deleting it or checking it off.
 -->
 
 - **T-meh2** — The PDR: `PRD-0001` with one requirement per PSB In-Scope item, traced to `F-0003#41`–`#52`, then the architecture and the plan ([#42](https://github.com/pharzam/layup/issues/42))
-- **T-55n2** — The implementation plan of LAYUP: phases, milestones, the phase-1 issues and the traceability matrix ([#76](https://github.com/pharzam/layup/issues/76); [detail](T-55n2.md))
 - **T-stfn** — Step 2, the core engine: `layup gate`, `layup setup` and `layup setup verify`, the telemetry and stall records, the release review and the first pilot ([#29](https://github.com/pharzam/layup/issues/29); [plan](../plan/README.md))
 - **T-b97r** — `layup setup` and `layup setup verify`, the parent of its child tasks ([#77](https://github.com/pharzam/layup/issues/77); [plan](../plan/README.md))
 - **T-vk3k** — `layup gate`, the parent of its child tasks ([#33](https://github.com/pharzam/layup/issues/33); [plan](../plan/README.md))
