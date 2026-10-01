@@ -18,6 +18,8 @@ decisions, 11 stalls, 12 cost and the measures, 13 learning. Each section
 names the ADR that decides it and the walkthrough that tests it. The walkthroughs
 are in [`walkthroughs/`](walkthroughs/README.md). The Operator's decisions O-66 to O-113 are quoted in [`runs/T-hbw8/operator-decisions.md`](../runs/T-hbw8/operator-decisions.md)
 and [`runs/T-hbw8/inputs-from-pr-69.md`](../runs/T-hbw8/inputs-from-pr-69.md).
+LAYUP's own technical specification, in the form that §7 asks of a target, is
+[`spec/`](spec/README.md).
 
 ## 1. LAYUP and a target
 
@@ -187,7 +189,9 @@ change to it is not seen (known limit L-A4).
 **The actor on the forge.** `layup audit` reads the repository activity of both
 branches, from the setup commits that the records name onward. Each update of
 the records branch must be a `push` by the App's bot, apart from one
-`branch_creation` by the App's bot whose SHA is the records' first commit. Each update of the default
+`branch_creation` by the App's bot whose SHA is the records' first commit (for a
+target set up in phase 1, the Operator's push of that first commit, allowed by its
+SHA, O-115). Each update of the default
 branch after the setup must be a pull-request merge (`pr_merge` or
 `merge_queue_merge`) by the App's bot or, for a batch that changes
 `.github/workflows/` (O-93), by an account in `approvers.tsv`; a `push` there

@@ -1,0 +1,41 @@
+## Review record — round 4
+
+| Field | Value |
+| ----- | ----- |
+| Commit reviewed | `db960efc8c93c853f52a2e5f17fa303d1d2366ad` |
+| Reviewer | Claude Fable 5.1 on Claude Code |
+| Lens | correctness and acceptance criteria; the fixes of round 3 |
+| Briefed on | `.review-in/brief.md`; `.review-in/issue-74-body.md`; `.review-in/round-3.md`; `git diff f83320e HEAD -- docs/` in full (3 files: `docs/spec/records.md`, `docs/spec/setup.md`, `docs/tasks/T-0drh.md`; the commit's fourth file, `runs/T-0drh/review-round-3.md`, is out of scope and is byte-identical to `.review-in/round-3.md`); `docs/spec/setup.md` at HEAD in full; `docs/spec/records.md:85-125`; `docs/spec/README.md:36-66` (Commands, the exit codes); `docs/architecture.md` §1 and §5 in full; `docs/setup/setup-check.sh` (`check_facts`, `MK_EXEMPT`); `docs/setup/facts.sha256`; `docs/facts/README.md` in full, `docs/facts/template.md`, the header of `F-0004`; `docs/engineering-discipline.md` Bootstrap mode (rule 3, the test of `material`); `docs/glossary.md` rows `Material` and `Facts Document`; `docs/tasks/T-0drh.md`. The local checks (`adr-lint`, `prd-lint`, `link-lint`, `run-discipline-tests`, `setup-check`, `git diff --check 648b37f HEAD`), `go build`, `go vet` and `go test -count=1 ./...` were run at HEAD: each exits 0. The diff against `648b37f` is 19 files, 1,476 lines added plus removed; the fix commit alone is 4 files, 67 lines, of which 18 lines are under `docs/`. |
+| Barred from | the issue comments of #74 |
+| Independence claimed | A fresh session, read-only. The author is Claude Opus 5.5; this reviewer is Claude Fable 5.1. No issue comment was read, and `gh` was not used. No file of the repository was changed; this record is the only file written, in the untracked `.review-in/`. |
+| Cycle | 3 |
+| Verdict | `not mergeable, findings recorded` |
+
+### Round-3 findings
+
+1. closed — `setup.md:91` limits the record of S06 to the `S01-` and `Q-` answers; `setup.md:96` gives the `M-` answers to a second record of S11; `setup.md:238` asks for each ID in exactly one of the two. S06 writes no `M-` fact in any input state, so two facts per `M-` ID cannot occur. The new sentence of S11 leaves one other input state open: finding 1 below.
+2. closed — `setup.md:86`: the Output cell of S01 names `brief.sha256`.
+3. closed — `setup.md:151` widens `computed` to "a command's output, or a hash that the engine computes"; `setup.md:152` names the ref `sha256 <path>`.
+4. closed — `setup.md:55` adds "or an input that changed after a step read it" to exit 2; `setup.md:91` names the way out (restore the file, or a new work area). After a restore, the next run skips S01 (`setup.md:57-58`) and S06 compares the hash again, so the run goes on.
+5. closed — `setup.md:96`: the `M-` answers are a second raw fact record with its own index row and its own line in `facts.sha256`; the record of S06 does not change; the Evidence cell of S11 names check `facts`; `records.md:105` says "two raw fact records (S06, S11)". This agrees with `docs/facts/README.md:69-74`.
+
+### Raw findings
+
+Finding 1 is material. Findings 2 and 3 are notes.
+
+**1. `docs/spec/setup.md:96` (S11), with `:238` (check `facts`) — an `M-` row of `answers.tsv` for a marker that the tree does not have: the row of S11 gives two readings of what S11 writes, and one reading makes `layup setup verify` exit 1.** Cited sentences: `setup.md:96`, Inputs cell (not changed by the fix): "the answers of S10"; `setup.md:96`, What-it-does cell (changed): "Writes the `M-` answers as a second raw fact record, in the same form"; `setup.md:238` (changed): "each question ID of `answers.tsv` is a fact in exactly one of the two answers records: the `S01-` and `Q-` IDs in the record of S06, the `M-` IDs in the record of S11"; `setup.md:250`: "a correct setup exits 0". Basis: an `M-` ID is the hash of the file and the marker text (`setup.md:117-119`), so the ID changes when a newer baseline changes the marker. The answers file is the Operator's (`setup.md:66`), S10 stops only for a marker with no row (`setup.md:95`), and no sentence of `docs/spec/` refuses or ignores a row that no step of the run asked. So an Operator who starts again in a new work area (the way out that `setup.md:91` now names) with a copy of the earlier `answers.tsv`, or who copies the answers of an earlier target, has a row for the old `M-` ID beside the row for the new one when the baseline moved between the two runs (S02 resolves the latest commit each time, `setup.md:87`). Reading A: the Inputs cell says "the answers of S10", and S10 lists the markers of the tree; S11 writes the answers of those markers only, so the old row is a fact of no record, check `facts` fails at `:238`, `layup setup verify` exits 1, and S15 refuses `verify.tsv` (`setup.md:204-205`). Reading B: "the `M-` answers" are every `M-` row of `answers.tsv`, as S06 reads "the `S01-` and `Q-` answers of `answers.tsv`" (`:91`); the old row becomes a fact of the target, and the check passes. The version that round 3 reviewed held the clause "so the record holds every answer of `answers.tsv`" (S11 at `f83320e`), which gave reading B; the fix removed that clause, and `:238` now carries reading B alone, against the Inputs cell. Two readings of one operative row give two exit codes on the same input, and two different trees. One clause closes it, as at S06: "Writes each `M-` row of `answers.tsv` as a second raw fact record"; or the opposite rule, stated once: a row of `answers.tsv` whose question no step of the run asked is an input error (exit 2). `material` (an operative ambiguity; the exit code of a documented path differs between the two readings). The Operator settles disputed materiality (Bootstrap mode, rule 3).
+
+**2. `docs/spec/setup.md:238` — a row of `answers.tsv` whose question ID is not `S01-`, `Q-` or `M-`.** Cited sentence: "each question ID of `answers.tsv` is a fact in exactly one of the two answers records". Basis: the `question` column of `answers.tsv` is "the question ID, as the stop table gives it" (`setup.md:135`), and the stop table also gives `F-<path>` and `O-<name>` (`setup.md:112`). The answer to those is a file or a command, and no sentence says that a row for one is refused or ignored. Before the fix, S06 wrote every row; now S06 writes the `S01-` and `Q-` rows and S11 the `M-` rows, so such a row is a fact of no record, and check `facts` fails on it. Such a row is a misreading of the stop table, not a path that the specification names, so this is a note. The second clause of finding 1, at S01, closes it: "a row of `answers.tsv` whose question ID is not of the form `S01-`, `Q-` or `M-` is an input error (exit 2)". `note`.
+
+**3. `docs/spec/setup.md:96` — a tree with no marker outside `MK_EXEMPT`.** Cited sentence: "Writes the `M-` answers as a second raw fact record". Basis: when S10 lists no marker, the sentence does not say whether S11 writes a record with no fact (the facts convention has no such record: `docs/facts/README.md:57`, "one numbered fact per point") or no record at all; `:238` "exactly one of the two answers records" presupposes two. Under either reading the check passes as written (no `M-` ID to find; a row per record that exists). Add "when S10 listed at least one marker", or say that the second record is always written. `note`.
+
+### Acceptance criteria
+
+| AC | Result | Where |
+| -- | ------ | ----- |
+| 4 | met | not changed by the fix. |
+| 8 | not met while finding 1 stands | narrower than in round 3: only the S11 row (`setup.md:96`) and the `facts` row (`:238`); S06, the order of steps of `setup.md:199` and the check agree. |
+| 10 | met | run again at `db960ef`: `adr-lint`, `prd-lint`, `link-lint`, `run-discipline-tests` (81 passed), `setup-check`, `git diff --check 648b37f HEAD`, `go build`, `go vet` and `go test -count=1 ./...` each exit 0; the whole diff against `648b37f` is 19 files, 1,476 lines added plus removed, within the budget of 1,900 over 20. |
+| 11 | met | `T-0drh.md:30` records O-117; the round-3 record is in `runs/T-0drh/review-round-3.md`, byte-identical to `.review-in/round-3.md`; `records.md:105` follows the change of S11. |
+
+The other criteria stand as rounds 1 to 3 found them (1, 2, 3, 5, 6, 7, 9: met).

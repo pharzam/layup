@@ -16,7 +16,8 @@ will be one Go command-line program over files in the repository
 ([ADR-0011](docs/adr/0011-structure-the-core-engine-as-a-go-cli-over-repository-files.md)).
 The [architecture](docs/architecture.md) (ADR-0013 to ADR-0025, accepted) makes it
 a deterministic orchestrator, `layup run`, that drives a target from its problem
-statement to accepted software, from outside the target.
+statement to accepted software, from outside the target. Its technical
+specification, one milestone at a time, is in [`docs/spec/`](docs/spec/README.md).
 Since 2026-09-25 the repository is in bootstrap mode
 ([ADR-0012](docs/adr/0012-build-layup-in-bootstrap-mode.md); a summary — the rule
 is [Bootstrap mode](docs/engineering-discipline.md#bootstrap-mode)): until the ADR

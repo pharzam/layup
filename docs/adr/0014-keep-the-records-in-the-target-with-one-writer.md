@@ -92,3 +92,7 @@ branch must let the admin role through (Q-15 on #72; O-95).
 - The forge shows every write of LAYUP as the bot's, apart from the Operator's
   own; the App cannot read a ruleset's bypass list (known limit L-A4).
 - The rulesets that the setup applies are a precondition of every run.
+- `layup run` is the one writer of the records branch from Start on. Before it
+  exists (phase 1 of `PRD-0001`), `layup setup` makes the first records commit
+  and the Operator pushes it, as the Operator pushes the root commit (O-115,
+  [`spec/setup.md`](../spec/setup.md#where-the-records-go-in-phase-1)).
