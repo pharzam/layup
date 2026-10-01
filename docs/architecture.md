@@ -1448,7 +1448,7 @@ through the reward.
 
 Each row points to a walkthrough, or names the check or the known limit that
 stands in its place; a row with none of the three fails
-(`runs/T-hbw8/root-cause-missed-solution.md`, fix 5). Slices B to H add their
+(`runs/T-hbw8/root-cause-missed-solution.md`, fix 5). Slices B to H added their
 rows. The evidence for each row is [`runs/T-hbw8/rewrite-checklist.md`](../runs/T-hbw8/rewrite-checklist.md).
 
 | Item | Walkthrough, check or limit | Sections | ADRs |
@@ -1464,7 +1464,7 @@ rows. The evidence for each row is [`runs/T-hbw8/rewrite-checklist.md`](../runs/
 | Table C, 3.4 (communication through issues) | W-12 step 6 | 3 | 0014 |
 | S1 Problem Statement Quality (`F-0003#41`), `REQ-001` | [W-01](walkthroughs/W-01-problem-statement-quality.md) | 5 | 0014, 0015 |
 | S2 Reproducible Discipline Setup (`#42`), `REQ-002`, `NFR-003`, `NFR-006`, Invariants 4 and 8 | [W-02](walkthroughs/W-02-reproducible-discipline-setup.md) | 5, 6 | 0016, 0017 |
-| S3 Rule Protection (`#43`), Gate Integrity (`#64`), Invariant 3 | [W-03](walkthroughs/W-03-rule-protection.md) | 6 | 0017 |
+| S3 Rule Protection (`#43`), `REQ-003`, Gate Integrity (`#64`), Invariant 3 | [W-03](walkthroughs/W-03-rule-protection.md) | 6 | 0017 |
 | S4 Stack-Dependent Gates (`#44`), `REQ-004`, `NFR-004`, Invariants 5 and 7 | [W-04](walkthroughs/W-04-stack-dependent-gates.md) | 6 | 0016 |
 | #69 A2 (the target cannot pass its gates without LAYUP) | W-04 step 8; W-12 step 15 | 6 | 0016 |
 | #69 B9 (the source of the stack gates) | W-02 step 4 | 6 | 0016 |

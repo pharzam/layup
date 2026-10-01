@@ -127,8 +127,27 @@ The output is in [`runs/T-hbw8/test-runs.txt`](../../runs/T-hbw8/test-runs.txt).
 
 ## Verdict
 
-Written at the close-out, after the Operator's approval and the review round.
+Delivered: `docs/architecture.md` (sections 1 to 15), ADR-0013 to ADR-0025
+(`Accepted`, O-112), 13 walkthroughs, and the documents they made stale. The
+Operator approved the architecture at `11657ee` (O-73, O-112); the gate round
+(Claude Fable 5.1, cycle 0, head `155dd0d`,
+[record on #72](https://github.com/pharzam/layup/issues/72#issuecomment-5927181116))
+gave `nothing material in scope` with six notes: notes 1 to 6 applied at
+close-out (note 4 by one sentence under O-113, not by a copy of the tables). All
+local checks pass on the landing head. Open for the Operator: the setup work of
+O-112 (`layup-watch`, a private key and commit statuses for `layup-agent`) when
+LAYUP is built. Next: #42 (the implementation plan), then #29.
 
 ## Resource record
 
-Written at the close-out, after the review round.
+Recorded, not budgeted (ADR-0007). Times are UTC. The author's token count is
+`not reported`; the reviewer counts are output tokens from `claude -p`.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan, plan v2 and their reviews | reasoning | Claude Opus 5.5 (plans); Claude Fable 5.1 (reviews) | auto; not reported | not reported | 2026-09-27 to 2026-09-28, not measured |
+| Panel, searches, evaluation | reasoning | GPT-6 Sol, Grok 4.7, Claude Opus 5.5 (panel); Claude Opus 5.5 (searches, evaluation) | not reported | not reported | panel 16 min 2 s, plus 15 min skipped on OpenCode; the rest not measured |
+| Design review rounds (24) | reasoning | Claude Fable 5.1 | not reported | 552,827 output, 23 of 24 rounds | 1 h 59 min; USD 89.02 (slice B round 2 not recorded) |
+| Writing the design | execution | Claude Opus 5.5 — a reasoning-tier model on an execution part | auto | not reported | 2026-09-29 06:24 to 10:41 (slices), then to 2026-09-30 14:40 (O-101 to O-111) |
+| The gate round | reasoning | Claude Fable 5.1 | not reported | 17,194 output | 3 min 53 s; USD 2.80 |
+| Isolate, guardrails, docs, close-out | `—` | Claude Opus 5.5 | auto | not reported | 2026-10-01 07:35 to about 08:15 |

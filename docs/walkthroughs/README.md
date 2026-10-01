@@ -16,5 +16,5 @@ writes, and a **tag**:
 
 A step that reads meaning (a gap of meaning, a business fork written in prose, a
 clause of a problem statement) is never `code`. A step whose mechanism is not
-designed yet says `open`; one whose mechanism belongs to a later slice of task
-`T-hbw8` says `later: slice X`.
+designed yet says `open`; during the rewrite (task `T-hbw8`), a step of a later
+slice said `later: slice X`. No step carries either tag now.

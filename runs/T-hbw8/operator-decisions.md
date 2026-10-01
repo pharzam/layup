@@ -326,4 +326,4 @@ I choose  (a). I add one sentence "Close when: …" to each of the ten limits in
 | No. | Decision | Reading |
 | --- | -------- | ------- |
 | O-112 | The architecture is approved at `11657ee` (O-73) | ADR-0013 to ADR-0025 are `Accepted`; readings R1 to R7 are confirmed; the ten limits are accepted (L-B4 is L-D4 since round 7); the fixes of round 7 need no round; the next steps are the brief's. |
-| O-113 | Option (a): a "Close when" sentence for each of the ten limits | Added to §15 before the freeze, from the tables of the reply; a note, no round (Bootstrap mode rule 3). |
+| O-113 | Option (a): a "Close when" sentence for each of the ten limits | Added to §15 before the freeze, from the tables of the reply; a note, no round (Bootstrap mode rule 3). The reply's tables are on #72 only; §15 holds the final text. |
