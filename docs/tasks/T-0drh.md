@@ -33,6 +33,8 @@ reviews only those commits.
 
 **O-119** (2026-10-01, the Operator's answer "go ahead with the close-out" in the author's session, copied to #74): option (A) of the request after review round 4. The author commits the fix of round 4 and closes out with no fifth round.
 
+**O-120** (2026-10-01, the Operator's answer "A" in the author's session, to [comment 5929344405 on #74](https://github.com/pharzam/layup/issues/74#issuecomment-5929344405)): the comment `## Plan review — the cycle cap raised by the Operator` records `Cycle cap` 3 (O-116, O-117), and the `Verdict` cells of rounds 2 and 3 on #74 read `material`, with the reason; the copies in `runs/T-0drh/` keep the reviewer's text, with a note. `review-record-lint` then passes.
+
 ## Plan and plan review
 
 The plan (R12) and its review are comments on #74. A second reading before the
@@ -98,8 +100,8 @@ issue. **Budget:** about 1,600 lines added plus removed, inside the maximum of 1
 21 files, one over the maximum of 20. The extra files are the four review
 records under `runs/T-0drh/`, which the two rounds beyond the plan (O-116,
 O-117) added; they are kept as separate records, not joined to meet the count. All local checks pass on the landing head
-([`test-runs.md`](../../runs/T-0drh/test-runs.md)). Next: `T-55n2`, the
-implementation plan (#42), then #29.
+([`test-runs.md`](../../runs/T-0drh/test-runs.md)). `review-record-lint` passes after O-120.
+Next: `T-55n2`, the implementation plan (#42), then #29.
 
 ## Resource record
 

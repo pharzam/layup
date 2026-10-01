@@ -72,3 +72,5 @@ Finding 1 is material. Findings 2 to 9 are notes.
 | 11 | met | `glossary.md:96-99`, `architecture.md:192-194`, ADR-0014 Consequences; the round-1 record is in `runs/T-0drh/`. |
 
 The other criteria stand as round 1 found them (1, 2, 3, 5, 6, 7, 9: met).
+
+> **Note (the author, O-120).** This copy keeps the text that the reviewer wrote. On #74, the `Verdict` cell of this record was edited to `material`: a fix followed this round after the Operator raised the cycle cap (O-116, O-117), so it is an intermediate round. The cap is recorded in the comment `## Plan review — the cycle cap raised by the Operator`.

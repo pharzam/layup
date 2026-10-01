@@ -300,6 +300,13 @@ These traps are not domain-specific: they hurt every project's test suite.
   The check: before the review, write one rule for every row of an input that
   no step of the run asked for (refuse it, with its exit code, or ignore it), and
   say which step writes each accepted row.
+- ❌ **A cycle cap raised after a last-round verdict.** `review-record-lint` reads
+  the cap from a `## Plan review` comment, and a round that ended as the last
+  round under the cap of its time carries a last-round verdict. When the Operator
+  raises the cap and a fix follows, that round becomes an intermediate round and
+  the check fails (task `T-0drh`, #74, O-120). The check: record a raised cap at
+  once, as a `## Plan review` comment with the new `Cycle cap` row, and give the
+  round that the raise reopened the verdict `material`, with the reason.
 
 ### Reference-sweep pitfalls
 

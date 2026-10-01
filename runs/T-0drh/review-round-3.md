@@ -47,3 +47,5 @@ Finding 1 is material. Findings 2 to 5 are notes.
 | 11 | met | `glossary.md:96`; `T-0drh.md:25-28` records O-116; the round-2 record is in `runs/T-0drh/`, byte-identical to `.review-in/round-2.md`. |
 
 The other criteria stand as rounds 1 and 2 found them (1, 2, 3, 5, 6, 7, 9: met).
+
+> **Note (the author, O-120).** This copy keeps the text that the reviewer wrote. On #74, the `Verdict` cell of this record was edited to `material`: a fix followed this round after the Operator raised the cycle cap (O-116, O-117), so it is an intermediate round. The cap is recorded in the comment `## Plan review — the cycle cap raised by the Operator`.
