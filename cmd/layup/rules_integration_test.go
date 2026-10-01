@@ -8,13 +8,15 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
 
 // The package rules of docs/spec/packages.md hold on the real module, and the
-// same checker finds the seeded breach of rule 5 in a fixture module that
-// imports net/http (NFR-005, NFR-007).
+// same checker finds the seeded breaches of rule 5 in a fixture module: an
+// import of net/http, and one of net/smtp behind a build constraint (NFR-005,
+// NFR-007).
 func TestPackageRules(t *testing.T) {
 	text, err := os.ReadFile(filepath.Join("..", "..", "docs", "spec", "packages.md"))
 	if err != nil {
@@ -32,8 +34,10 @@ func TestPackageRules(t *testing.T) {
 		t.Errorf("the module breaks the package rules:\n%s", strings.Join(f, "\n"))
 	}
 	f := checkRules(rows, load(t, filepath.Join("testdata", "netimport")))
-	if !strings.Contains(strings.Join(f, "\n")+"\n", "rule 5: cmd/layup depends on net/http\n") {
-		t.Errorf("the fixture that imports net/http gives\n%s\nwant the finding rule 5: cmd/layup depends on net/http", strings.Join(f, "\n"))
+	for _, want := range []string{"rule 5: cmd/layup depends on net/http", "rule 5: internal/psb depends on net"} {
+		if !slices.Contains(f, want) {
+			t.Errorf("the fixture gives\n%s\nwant the finding %s", strings.Join(f, "\n"), want)
+		}
 	}
 	for _, s := range f {
 		if !strings.HasPrefix(s, "rule 5: ") {
@@ -44,7 +48,8 @@ func TestPackageRules(t *testing.T) {
 
 // load reads the module at root: go.mod by go mod edit -json, its packages
 // and their dependencies by go list -deps -json, and the non-test Go files of
-// its packages, also the ones that a build constraint leaves out.
+// its packages, also the ones that a build constraint leaves out. An import
+// that only such a file has is listed too, with its dependencies.
 func load(t *testing.T, root string) module {
 	t.Helper()
 	var mod struct {
@@ -58,12 +63,21 @@ func load(t *testing.T, root string) module {
 	for _, r := range mod.Require {
 		m.requires = append(m.requires, r.Path+" "+r.Version)
 	}
-	for dec := json.NewDecoder(bytes.NewReader(goCmd(t, root, "list", "-deps", "-json", "./..."))); dec.More(); {
-		var p goPackage
-		if err := dec.Decode(&p); err != nil {
-			t.Fatal(err)
+	listed := map[string]bool{"C": true} // C is the cgo pseudo-package
+	list := func(args ...string) {
+		for dec := json.NewDecoder(bytes.NewReader(goCmd(t, root, append([]string{"list", "-deps", "-json"}, args...)...))); dec.More(); {
+			var p goPackage
+			if err := dec.Decode(&p); err != nil {
+				t.Fatal(err)
+			}
+			if !listed[p.ImportPath] {
+				listed[p.ImportPath] = true
+				m.packages = append(m.packages, p)
+			}
 		}
-		m.packages = append(m.packages, p)
+	}
+	list("./...")
+	for _, p := range m.packages {
 		rel, ok := inModule(m.path, p.ImportPath)
 		if !ok {
 			continue
@@ -78,6 +92,17 @@ func load(t *testing.T, root string) module {
 				m.sources[rel][name] = string(src)
 			}
 		}
+	}
+	var more []string
+	for _, files := range m.sources {
+		for _, imp := range fileImports(files) {
+			if !listed[imp] && !slices.Contains(more, imp) {
+				more = append(more, imp)
+			}
+		}
+	}
+	if len(more) > 0 {
+		list(append([]string{"-e"}, more...)...) // -e: a package of no module is a finding of rule 2
 	}
 	return m
 }

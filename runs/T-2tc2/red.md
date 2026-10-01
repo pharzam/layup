@@ -112,3 +112,44 @@ $ go test -count=1 -run 'TestEachCallRunsItsVerb/(checkout|switch)|TestCheckoutA
     git_test.go:168: "-x": 2 starts of git, want none
         … the same for "HEAD", 39 and 41 characters, and capital letters
 ```
+
+Run 11 (findings 3 and 4): the scan did not know `syscall.ForkExec`,
+`syscall.StartProcess` or an `exec.Cmd` that the code makes itself, and the
+checker read no import of a file that `go list` leaves out (a build
+constraint). Each new case fails because the checker gives no finding, and
+the fixture's `internal/psb`, whose `net/smtp` import is behind a build
+constraint, gives none.
+
+```text
+$ go test -count=1 ./cmd/layup/                                      # run 11
+    --- FAIL: …/Starts_a_program,_syscall.ForkExec   … _syscall.StartProcess   … _an_exec.Cmd_made_in_place
+    --- FAIL: …/rule_4,_a_file_that_go_list_leaves_out   …/rule_5,_…   …/May_import,_…
+        rules_test.go:192: findings
+
+            want exactly
+            rule 4: internal/cli imports os/exec, and its row starts no program
+$ go test -count=1 -tags=integration -run TestPackageRules ./cmd/layup/
+    rules_integration_test.go:39: the fixture gives
+        rule 5: cmd/layup depends on crypto/tls
+        rule 5: cmd/layup depends on net
+        rule 5: cmd/layup depends on net/http
+        want the finding rule 5: internal/psb depends on net
+```
+
+Run 12 (finding 5) is a mutation run, as the new cases test branches that
+were already there: each line removes one branch of the checker in a scratch
+copy, and the named case kills it. The verifier's mutants of the module
+(`net/http` behind `_linux.go` and behind a tag, `syscall.ForkExec`,
+`syscall.StartProcess`, `&exec.Cmd{…}`) each fail `TestPackageRules` too.
+
+```text
+no-separator-check: killed by --- FAIL: TestReadTableRefusesWhatItCannotRead   # run 12
+no-heading-break: killed by --- FAIL: TestReadTableRefusesWhatItCannotRead
+no-parse-finding: killed by --- FAIL: TestEachRuleAndColumnFindsItsBreach/a_file_that_does_not_parse
+no-forkexec: killed by --- FAIL: TestEachRuleAndColumnFindsItsBreach/Starts_a_program,_syscall.ForkExec
+no-cmd: killed by --- FAIL: TestEachRuleAndColumnFindsItsBreach/Starts_a_program,_an_exec.Cmd_made_in_place
+no-deps-of-imports: killed by --- FAIL: TestEachRuleAndColumnFindsItsBreach/rule_5,_a_file_that_go_list_leaves_out
+net-linux: failed: rule 5: internal/psb depends on crypto/tls; rule 5: internal/psb depends on net; …
+forkexec: failed: Starts a program: internal/psb/fork.go:5 uses syscall.ForkExec
+cmd-literal: failed: Starts a program: internal/git/lit.go:5 starts a program that the scan cannot read
+```

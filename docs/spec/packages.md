@@ -45,12 +45,13 @@ package of the standard library is allowed, except as rules 3 to 5 say. An
 import that the table does not allow is a defect, and the boundary rule of the
 future Go gate of LAYUP reads this table.
 
-**The form of a cell** (decided here, D7 of #79): "Package" is one code span;
-"May import" is code spans with a comma between two, or `—` for none; "Starts
-a program" is the word `no`, or a code span at the start of the cell, whose
-first word is the program. Reason: the [test of the package
-rules](#the-test-of-the-package-rules) reads this table, and holds no copy of
-it, which could differ from it.
+**The form of a cell** (decided here, D7 of #79): "Package" is one code span.
+"May import" is one or more code spans with a comma between two; for none, the
+cell is the character — and no code span. "Starts a program" is exactly one
+code span at the start of the cell, whose first word is the program, and text
+with no code span after it; for none, the cell is the word no and no code
+span. Reason: the [test of the package rules](#the-test-of-the-package-rules)
+reads this table, and holds no copy of it, which could differ from it.
 
 | Package | Job | May import | Starts a program |
 | ------- | --- | ---------- | ---------------- |
@@ -88,13 +89,20 @@ the step.
   on a table with no row. A package that the table names and that does not
   exist yet is not an error; a package that exists and has no row is.
 - Rules 1, 2, 4, 5 and "May import" come from `go mod edit -json` and
-  `go list -deps -json ./...` at the module root. Rule 3 and "Starts a program"
-  come from a `go/ast` scan of each non-test Go file: a program starts only
-  with `exec.Command` or `exec.CommandContext` and a string literal that is the
-  program of the row, and each use of `os.StartProcess` or `syscall.Exec` is a
-  defect.
-- The same checker must find the breach of rule 5, and no other, in the
-  fixture module `cmd/layup/testdata/netimport`, which imports `net/http`.
+  `go list -deps -json ./...` at the module root, and from the imports of each
+  non-test Go file. `go list` gives no import of a file behind a build
+  constraint, so the test lists each import that only such a file has, with
+  `go list -e -deps -json`.
+- Rule 3 and "Starts a program" come from a `go/ast` scan of each non-test Go
+  file. A program starts with `exec.Command` or `exec.CommandContext` and a
+  string literal that is the program of the row. Each other start that the
+  scan finds is a defect: `os.StartProcess`, `syscall.Exec`,
+  `syscall.ForkExec`, `syscall.StartProcess`, and an `exec.Cmd` that the code
+  makes itself, whose program the scan cannot read. The scan does not read
+  cgo code or a raw system call.
+- The same checker must find the breaches of rule 5, and no other, in the
+  fixture module `cmd/layup/testdata/netimport`: an import of `net/http`, and
+  an import of `net/smtp` in a file behind a build constraint.
 
 Reason: `cmd/layup` is the entry of the module, and its tests already start
 programs; a new package for the test needs a row of its own, and the root

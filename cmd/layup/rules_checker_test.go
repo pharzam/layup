@@ -130,10 +130,16 @@ func spans(cell string) ([]string, string) {
 
 // checkRules gives the findings of the package rules in m, sorted; none means
 // that m keeps them. Rules 1, 2, 4 and 5 and the column May import come from
-// go list; rule 3 and the column Starts a program from a scan of the sources.
+// go list, and from the imports of the sources, which add the files behind a
+// build constraint; rule 3 and the column Starts a program from a scan of the
+// sources.
 func checkRules(rows map[string]row, m module) []string {
 	var f []string
 	add := func(format string, a ...any) { f = append(f, fmt.Sprintf(format, a...)) }
+	deps := map[string][]string{} // the dependencies of each package of the listing
+	for _, p := range m.packages {
+		deps[p.ImportPath] = p.Deps
+	}
 	if m.path != modulePath {
 		add("rule 1: the module is %s, want %s", m.path, modulePath)
 	}
@@ -157,8 +163,15 @@ func checkRules(rows map[string]row, m module) []string {
 		case !strings.HasPrefix(rel, "internal/"):
 			add("rule 1: %s is not under internal/", rel)
 		}
-		for _, d := range p.Deps {
-			if slices.Contains(network, d) {
+		imports := append(slices.Clone(p.Imports), fileImports(m.sources[rel])...)
+		slices.Sort(imports)
+		imports = slices.Compact(imports)
+		reach := slices.Clone(p.Deps)
+		for _, imp := range imports {
+			reach = append(append(reach, imp), deps[imp]...)
+		}
+		for _, d := range network {
+			if slices.Contains(reach, d) {
 				add("rule 5: %s depends on %s", rel, d)
 			}
 		}
@@ -166,7 +179,7 @@ func checkRules(rows map[string]row, m module) []string {
 		if !hasRow {
 			add("table: %s has no row", rel)
 		}
-		for _, imp := range p.Imports {
+		for _, imp := range imports {
 			if imp == "os/exec" && hasRow && r.program == "" {
 				add("rule 4: %s imports os/exec, and its row starts no program", rel)
 			}
@@ -176,7 +189,7 @@ func checkRules(rows map[string]row, m module) []string {
 		}
 		for _, s := range scan(rel, m.sources[rel]) {
 			switch {
-			case s.call != "exec.Command" && s.call != "exec.CommandContext":
+			case !strings.HasPrefix(s.call, "exec."):
 				add("Starts a program: %s %s", s.at, s.call)
 			case s.program == "git" && rel != "internal/git":
 				add("rule 3: %s starts git outside internal/git", s.at)
@@ -206,11 +219,13 @@ func inModule(path, pkg string) (string, bool) {
 
 // A start is a place in a source where a program can start: a call or another
 // use of exec.Command or exec.CommandContext, with its program when that is a
-// string literal (else ""), or the words of another finding.
+// string literal (else ""); an exec.Cmd that the code makes itself, whose
+// program the scan cannot read; or the words of another finding.
 type start struct{ at, call, program string }
 
-// starters is the functions that start a program, by import path.
-var starters = map[string][]string{"os/exec": {"Command", "CommandContext"}, "os": {"StartProcess"}, "syscall": {"Exec"}}
+// starters is the names that start a program, by import path.
+var starters = map[string][]string{"os/exec": {"Command", "CommandContext", "Cmd"}, "os": {"StartProcess"},
+	"syscall": {"Exec", "ForkExec", "StartProcess"}}
 
 // scan gives each start of a program in the files of one package.
 func scan(rel string, files map[string]string) []start {
@@ -236,15 +251,18 @@ func scan(rel string, files map[string]string) []start {
 				local[n] = path
 			}
 		}
-		called := map[ast.Node]bool{}
+		seen := map[ast.Node]bool{} // a name that an outer node already gave, or *exec.Cmd
 		ast.Inspect(file, func(n ast.Node) bool {
 			if c, ok := n.(*ast.CallExpr); ok {
 				if fn := starter(c.Fun, local); fn == "exec.Command" || fn == "exec.CommandContext" {
-					called[c.Fun] = true
+					seen[c.Fun] = true
 					out = append(out, start{at(c), fn, literal(c.Args, fn == "exec.CommandContext")})
 				}
 			}
-			if fn := starter(n, local); fn != "" && !called[n] {
+			if p, ok := n.(*ast.StarExpr); ok && starter(p.X, local) == "exec.Cmd" {
+				seen[p.X] = true // a pointer type starts nothing; exec.Command made its value
+			}
+			if fn := starter(n, local); fn != "" && !seen[n] {
 				if !strings.HasPrefix(fn, "exec.") {
 					fn = "uses " + fn
 				}
@@ -269,6 +287,21 @@ func starter(n ast.Node, local map[string]string) string {
 	}
 	path := local[id.Name]
 	return path[strings.LastIndex(path, "/")+1:] + "." + sel.Sel.Name
+}
+
+// fileImports gives the import paths of the files; a file that does not
+// parse gives none, and the scan reports it.
+func fileImports(files map[string]string) []string {
+	var out []string
+	for name, text := range files {
+		file, _ := parser.ParseFile(token.NewFileSet(), name, text, parser.ImportsOnly)
+		for _, imp := range file.Imports {
+			if path, err := strconv.Unquote(imp.Path.Value); err == nil {
+				out = append(out, path)
+			}
+		}
+	}
+	return out
 }
 
 // literal gives the program of a call when it is a string literal: the first
