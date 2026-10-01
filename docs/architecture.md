@@ -1523,12 +1523,13 @@ such as ISO-01 is a scenario of the [research review](../runs/T-hbw8/slice-revie
   LAYUP's setup steps and checks are written against the baseline's structure,
   so a change there can break a step. `layup setup verify` then fails on that
   step, and the setup stops until a LAYUP change follows the baseline.
-- **L-A7. A private baseline.** In phase 1, `internal/git` runs `git` with no
-  configuration of the host ([`spec/packages.md`](spec/packages.md#the-calls-of-internalgit)),
-  so no credential helper and no ssh agent of the host reach the clone of S02,
-  and `git` asks no question. A baseline repository that needs a credential
-  fails S02 at once, so the baseline's repository is public (K31 of the
-  [plan](plan/README.md#the-defect-register)).
+- **L-A7. A private baseline.** In phase 1, `internal/git` gives `git` no
+  credential of the host ([`spec/packages.md`](spec/packages.md#the-calls-of-internalgit)):
+  no configuration of the host, so no credential helper; a home of its own, so
+  no `.netrc`; and no `ssh` and no remote helper. `git` asks no question. A
+  baseline repository that needs a credential fails S02 at once, so the
+  baseline's repository is public, and S02 reaches it with no credential, by
+  `https` for example (K31 of the [plan](plan/README.md#the-defect-register)).
   Close when: the Operator names the credential path of a private baseline.
 - **L-A3. One host during delivery.** `layup run` runs in the foreground on one
   host; while the host is down, nothing moves (section 11 says how the stall is

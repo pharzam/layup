@@ -12,7 +12,7 @@ import (
 
 // wantConfig is the -c values that every call starts with.
 var wantConfig = strings.Fields("-c core.hooksPath=/dev/null -c core.attributesFile=/dev/null " +
-	"-c core.excludesFile=/dev/null -c core.autocrlf=false -c commit.gpgsign=false")
+	"-c core.excludesFile=/dev/null -c core.autocrlf=false -c commit.gpgsign=false -c http.emptyAuth=false")
 
 // who is the identity of the test commits, at 2026-01-01T00:00:00Z.
 var who = Identity{Name: "LAYUP test", Email: "test@layup.invalid", Time: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)}
@@ -84,19 +84,20 @@ func TestEachCallRunsItsVerb(t *testing.T) {
 }
 
 // The environment is a fixed list: no other variable of the host, above all
-// no GIT_* variable and no askpass program, reaches git.
+// no GIT_* variable, no askpass program and not its HOME, reaches git. This
+// test is the proof of input (e) of TestAHostileHostChangesNothing.
 func TestTheEnvironmentIsAFixedList(t *testing.T) {
 	for k, v := range map[string]string{"PATH": "/stub/bin", "HOME": "/stub/home", "TMPDIR": "/stub/tmp"} {
 		t.Setenv(k, v)
 	}
 	for _, k := range strings.Fields("GIT_DIR GIT_WORK_TREE GIT_AUTHOR_NAME GIT_CONFIG_COUNT GIT_CONFIG_KEY_0 GIT_CONFIG_VALUE_0 " +
-		"GIT_CONFIG_GLOBAL GIT_SSH_COMMAND GIT_ASKPASS SSH_ASKPASS XDG_CONFIG_HOME LANG") {
+		"GIT_CONFIG_GLOBAL GIT_SSH_COMMAND GIT_ALLOW_PROTOCOL GIT_ASKPASS SSH_ASKPASS SSH_AUTH_SOCK XDG_CONFIG_HOME LANG") {
 		t.Setenv(k, "hostile")
 	}
 	calls := stub(t, "", nil)
 	RevParse("r", "HEAD")
-	fixed := []string{"LC_ALL=C", "GIT_CONFIG_NOSYSTEM=1", "GIT_CONFIG_GLOBAL=/dev/null", "GIT_ATTR_NOSYSTEM=1", "GIT_TERMINAL_PROMPT=0",
-		"GIT_SSH_COMMAND=ssh -o BatchMode=yes", "PATH=/stub/bin", "HOME=/stub/home", "TMPDIR=/stub/tmp"}
+	fixed := []string{"LC_ALL=C", "HOME=/dev/null", "GIT_CONFIG_NOSYSTEM=1", "GIT_CONFIG_GLOBAL=/dev/null", "GIT_ATTR_NOSYSTEM=1",
+		"GIT_TERMINAL_PROMPT=0", "GIT_ALLOW_PROTOCOL=file:git:http:https", "PATH=/stub/bin", "TMPDIR=/stub/tmp"}
 	if env := only(t, calls).env; !reflect.DeepEqual(env, fixed) {
 		t.Fatalf("env\n got %q\nwant %q", env, fixed)
 	}

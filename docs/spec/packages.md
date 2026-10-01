@@ -150,13 +150,14 @@ changes a plain `git` run.
 
 - Each call starts with `-c core.hooksPath=/dev/null`,
   `-c core.attributesFile=/dev/null`, `-c core.excludesFile=/dev/null`,
-  `-c core.autocrlf=false` and `-c commit.gpgsign=false`. Without the second
-  and the third, the per-user attributes file changed the bytes of a staged
-  file, and the per-user ignore file dropped a file.
-- The environment of a call is a fixed list: `PATH`, `HOME` and `TMPDIR` of
-  the host when they are set; `LC_ALL=C`, `GIT_CONFIG_NOSYSTEM=1`,
+  `-c core.autocrlf=false`, `-c commit.gpgsign=false` and
+  `-c http.emptyAuth=false`. Without the second and the third, the per-user
+  attributes file changed the bytes of a staged file, and the per-user ignore
+  file dropped a file.
+- The environment of a call is a fixed list: `PATH` and `TMPDIR` of the host
+  when they are set; `LC_ALL=C`, `HOME=/dev/null`, `GIT_CONFIG_NOSYSTEM=1`,
   `GIT_CONFIG_GLOBAL=/dev/null`, `GIT_ATTR_NOSYSTEM=1`, `GIT_TERMINAL_PROMPT=0`,
-  `GIT_SSH_COMMAND=ssh -o BatchMode=yes`; for a commit, the six variables of
+  `GIT_ALLOW_PROTOCOL=file:git:http:https`; for a commit, the six variables of
   its identity. No other `GIT_*` variable, no `GIT_ASKPASS` and no
   `SSH_ASKPASS` of the host reaches `git`: `GIT_CONFIG_COUNT` set a value,
   `GIT_DIR` sent a commit to another repository, and `GIT_AUTHOR_NAME` changed
@@ -167,9 +168,21 @@ changes a plain `git` run.
   is not in the manual of 2.54.0. Measured on the LAYUP host: its `git` has a
   system attributes file, which `GIT_CONFIG_NOSYSTEM=1` and
   `core.attributesFile=/dev/null` do not skip, and `GIT_ATTR_NOSYSTEM=1` does.
-- So `git` reads no credential helper of the host and asks no question: a clone
-  that needs a password fails at once. The baseline's repository is public; a
-  private baseline is known limit [L-A7](../architecture.md#15-known-limits).
+- No credential of the host reaches `git` (K31). With no configuration, no
+  credential helper runs. libcurl, under `git`, reads `.netrc` in `HOME`, or in
+  the home of the password database when `HOME` is not set; under
+  `HOME=/dev/null` no file can be. `GIT_ALLOW_PROTOCOL` (`git(1)`) refuses
+  `ssh` and each remote helper, so neither starts: `ssh` finds the user's home
+  through the password database, not through `HOME`, and reads its keys there.
+  `http.emptyAuth=false` stops GSS-Negotiate with no user name
+  (`git-config(1)`; not measured, the LAYUP host has no Kerberos ticket).
+  `TestNoCallUsesACredentialOfTheHost` seeds a `.netrc`, an `ssh` and a remote
+  helper; under the host's `HOME` and with no `GIT_ALLOW_PROTOCOL`, the server
+  got an `Authorization` header and both programs started
+  ([`runs/T-2tc2/red.md`](../../runs/T-2tc2/red.md)).
+- So `git` asks no question and uses no credential: a clone that needs one
+  fails at once. The baseline's repository is public; a private baseline is
+  known limit [L-A7](../architecture.md#15-known-limits).
 
 **Two kinds of error** (decided here, D4 of #79, with condition 2 of its plan
 review), as Go types for `errors.As`. `NotFoundError`: `git` is not on the

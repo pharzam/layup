@@ -61,3 +61,30 @@ $ go test -count=1 -tags=integration -run TestPackageRules ./cmd/layup/
     rules_integration_test.go:36: the fixture that imports net/http gives … want the finding
         rule 5: cmd/layup depends on net/http                                                             # run 7
 ```
+
+## The fixes of the verification
+
+A fresh verifier checked the head `9866f48` and gave twelve findings. Each red
+run below is on the new test and the code of that head, before the fix.
+
+Run 8 (finding 1): the host's `HOME` passed to `git`, and `ssh` and a remote
+helper could start. The unit test fails because the list holds the host's
+`HOME` and `GIT_SSH_COMMAND`. The integration test fails because the server
+got an `Authorization` header from the seeded `.netrc`, and the fake `ssh` and
+the fake remote helper on the `PATH` both started.
+
+```text
+$ go test -count=1 ./internal/git/                                   # run 8
+    git_test.go:80: dir "", args [… "-c" "commit.gpgsign=false" "--version"]
+        want dir "", args [… "-c" "commit.gpgsign=false" "-c" "http.emptyAuth=false" "--version"]   … each call
+    git_test.go:102: env
+         got ["LC_ALL=C" "GIT_CONFIG_NOSYSTEM=1" … "GIT_SSH_COMMAND=ssh -o BatchMode=yes" "PATH=/stub/bin" "HOME=/stub/home" "TMPDIR=/stub/tmp"]
+        want ["LC_ALL=C" "HOME=/dev/null" "GIT_CONFIG_NOSYSTEM=1" … "GIT_ALLOW_PROTOCOL=file:git:http:https" "PATH=/stub/bin" "TMPDIR=/stub/tmp"]
+$ go test -count=1 -tags=integration -run TestNoCallUsesACredentialOfTheHost ./internal/git/
+    git_integration_test.go:308: clone of ssh://git@127.0.0.1/baseline.git: … fatal: Could not read from remote
+        repository. …; want a *FailedError that says transport 'ssh' not allowed
+    git_integration_test.go:308: clone of layuptest::baseline: … fatal: remote helper 'layuptest' aborted session;
+        want a *FailedError that says transport 'layuptest' not allowed
+    git_integration_test.go:315: the server got 2 requests, 1 with an Authorization header; want one or more, none with it
+    git_integration_test.go:318: 2 programs of the PATH started, first git-remote-layuptest; want none
+```

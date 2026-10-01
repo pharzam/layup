@@ -60,12 +60,13 @@ func must(t *testing.T, err error) {
 	}
 }
 
-// write writes each file under dir; a name that ends with ".sh" is executable.
+// write writes each file under dir; a file whose text starts with "#!" is
+// executable.
 func write(t *testing.T, dir string, files map[string]string) {
 	t.Helper()
 	for name, text := range files {
 		mode := os.FileMode(0o644)
-		if strings.HasSuffix(name, ".sh") {
+		if strings.HasPrefix(text, "#!") {
 			mode = 0o755
 		}
 		must(t, os.MkdirAll(filepath.Dir(filepath.Join(dir, name)), 0o755))
@@ -276,30 +277,45 @@ func TestAHostileHostChangesNothing(t *testing.T) {
 	}
 }
 
-// No call asks a question: a loopback server that wants a password gets no
-// answer, and the call fails at once.
-func TestNoCallAsksForAPassword(t *testing.T) {
-	isolate(t)
-	var asked atomic.Int32
+// No call uses a credential of the host or asks a question (K31). A loopback
+// server that wants a password gets no Authorization header, although the
+// host's .netrc has one for it; an ssh URL and a remote helper's URL start no
+// program of the PATH; and each clone fails at once.
+func TestNoCallUsesACredentialOfTheHost(t *testing.T) {
+	home, bin, ran := isolate(t), t.TempDir(), t.TempDir()
+	write(t, home, map[string]string{".netrc": "machine 127.0.0.1 login host password secret\n"})
+	for _, name := range []string{"ssh", "git-remote-layuptest"} {
+		write(t, bin, map[string]string{name: "#!/bin/sh\ntouch '" + filepath.Join(ran, name) + "'\nexit 1\n"})
+	}
+	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
+	var asked, sent atomic.Int32
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		asked.Add(1)
+		if asked.Add(1); r.Header.Get("Authorization") != "" {
+			sent.Add(1)
+		}
 		w.Header().Set("WWW-Authenticate", `Basic realm="layup-test"`)
 		w.WriteHeader(http.StatusUnauthorized)
 	}))
 	defer srv.Close()
-	done := make(chan error, 1)
-	go func() { done <- Clone(srv.URL+"/baseline.git", filepath.Join(t.TempDir(), "target")) }()
-	select {
-	case err := <-done:
-		var failed *FailedError
-		if !errors.As(err, &failed) || !strings.Contains(failed.Stderr, "terminal prompts disabled") {
-			t.Errorf("clone: %v; want a *FailedError that says terminal prompts disabled", err)
+	for url, want := range map[string]string{srv.URL + "/baseline.git": "terminal prompts disabled",
+		"ssh://git@127.0.0.1/baseline.git": "transport 'ssh' not allowed", "layuptest::baseline": "transport 'layuptest' not allowed"} {
+		done := make(chan error, 1)
+		go func() { done <- Clone(url, filepath.Join(t.TempDir(), "target")) }()
+		select {
+		case err := <-done:
+			var failed *FailedError
+			if !errors.As(err, &failed) || !strings.Contains(failed.Stderr, want) {
+				t.Errorf("clone of %s: %v; want a *FailedError that says %s", url, err, want)
+			}
+		case <-time.After(60 * time.Second):
+			t.Fatalf("the clone of %s did not end in 60 s: it waits for an answer", url)
 		}
-	case <-time.After(60 * time.Second):
-		t.Fatal("the clone did not end in 60 s: it waits for an answer")
 	}
-	if asked.Load() == 0 {
-		t.Error("git did not call the server, so the test proves nothing")
+	if asked.Load() == 0 || sent.Load() != 0 {
+		t.Errorf("the server got %d requests, %d with an Authorization header; want one or more, none with it", asked.Load(), sent.Load())
+	}
+	if started, _ := os.ReadDir(ran); len(started) != 0 {
+		t.Errorf("%d programs of the PATH started, first %s; want none", len(started), started[0].Name())
 	}
 }
 

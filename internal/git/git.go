@@ -53,15 +53,17 @@ func (e *FailedError) Unwrap() error { return e.Err }
 
 // config is the -c values that every call starts with.
 var config = strings.Fields("-c core.hooksPath=/dev/null -c core.attributesFile=/dev/null " +
-	"-c core.excludesFile=/dev/null -c core.autocrlf=false -c commit.gpgsign=false")
+	"-c core.excludesFile=/dev/null -c core.autocrlf=false -c commit.gpgsign=false -c http.emptyAuth=false")
 
-// environ is the environment of a call: fixed values, PATH, HOME and TMPDIR
-// of the host when they are set, and extra. No other variable of the host
-// reaches git.
+// environ is the environment of a call: fixed values, PATH and TMPDIR of the
+// host when they are set, and extra. No other variable of the host reaches
+// git. HOME is a path under which no file can be, so libcurl reads no .netrc;
+// git starts no ssh and no remote helper, which find the user's home without
+// HOME.
 func environ(extra ...string) []string {
-	env := []string{"LC_ALL=C", "GIT_CONFIG_NOSYSTEM=1", "GIT_CONFIG_GLOBAL=/dev/null", "GIT_ATTR_NOSYSTEM=1",
-		"GIT_TERMINAL_PROMPT=0", "GIT_SSH_COMMAND=ssh -o BatchMode=yes"}
-	for _, k := range []string{"PATH", "HOME", "TMPDIR"} {
+	env := []string{"LC_ALL=C", "HOME=/dev/null", "GIT_CONFIG_NOSYSTEM=1", "GIT_CONFIG_GLOBAL=/dev/null", "GIT_ATTR_NOSYSTEM=1",
+		"GIT_TERMINAL_PROMPT=0", "GIT_ALLOW_PROTOCOL=file:git:http:https"}
+	for _, k := range []string{"PATH", "TMPDIR"} {
 		if v, ok := os.LookupEnv(k); ok {
 			env = append(env, k+"="+v)
 		}
