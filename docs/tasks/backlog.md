@@ -31,6 +31,7 @@ same summary, dated — rather than deleting it or checking it off.
 -->
 
 - **T-meh2** — The PDR: `PRD-0001` with one requirement per PSB In-Scope item, traced to `F-0003#41`–`#52`, then the architecture and the plan ([#42](https://github.com/pharzam/layup/issues/42))
+- **T-55n2** — The implementation plan of LAYUP: phases, milestones, the phase-1 issues and the traceability matrix ([#76](https://github.com/pharzam/layup/issues/76); [detail](T-55n2.md))
 - **T-stfn** — Step 2, the core engine: `layup setup`, `layup gate`, the telemetry record and the stall record ([#29](https://github.com/pharzam/layup/issues/29); [ADR-0011](../adr/0011-structure-the-core-engine-as-a-go-cli-over-repository-files.md))
 
 ## Next
