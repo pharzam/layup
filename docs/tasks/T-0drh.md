@@ -6,13 +6,21 @@ Issue: [#74](https://github.com/pharzam/layup/issues/74). Parent
 `REQ-012`. Base `648b37f`. Author: Claude Opus 5.5 on Claude Code. Evidence:
 [`runs/T-0drh/`](../../runs/T-0drh/).
 
-## The Operator's decision
+## The Operator's decisions
 
 **O-114** (2026-10-01, [comment 5927429422 on #42](https://github.com/pharzam/layup/issues/42#issuecomment-5927429422),
 "I agree.", to the proposal of comment 5927351177): a new child of #42, this
 task, the technical specification of LAYUP for phase 1, in `docs/spec/`, one
 section per requirement ID, before `T-55n2`; the same pull request corrects
 `REQ-012`. The children table of #42 names it as row 4a.
+
+**O-115** (2026-10-01, [comment 5928163366 on #74](https://github.com/pharzam/layup/issues/74#issuecomment-5928163366),
+to the question of plan-review condition 2): option (a). In phase 1,
+`layup setup` writes the setup record and the rule-path register as files and
+prints one command; the Operator runs it to commit them to the target's
+`layup-records` branch, as for the root commit. ADR-0014 gets a Consequences
+line: `layup run` is the one writer from Start on. The §7.1 criteria of
+`PRD-0001` stay as they are.
 
 ## Plan and plan review
 

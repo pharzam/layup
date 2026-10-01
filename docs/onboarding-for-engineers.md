@@ -86,7 +86,8 @@ of a problem statement as one batch (five deterministic rules, G1 to G5, in
 `internal/psb`). The [architecture](architecture.md) describes what it becomes:
 `layup run`, the orchestrator of a target's whole lifecycle, from outside the
 target; each part is followed through one concrete case in
-[`walkthroughs/`](walkthroughs/README.md).
+[`walkthroughs/`](walkthroughs/README.md). The exact contracts that the code
+implements, phase by phase, are in [`spec/`](spec/README.md).
 
 ## 4. Why it is hard
 
