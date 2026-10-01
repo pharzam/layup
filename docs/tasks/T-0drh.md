@@ -22,6 +22,11 @@ prints one command; the Operator runs it to commit them to the target's
 line: `layup run` is the one writer from Start on. The §7.1 criteria of
 `PRD-0001` stay as they are.
 
+**O-116** (2026-10-01, [comment 5928828145 on #74](https://github.com/pharzam/layup/issues/74#issuecomment-5928828145),
+to the decision request after review round 2): option (B). The cycle cap of
+this task is 2. The author applies the fixes of round 2, and a fresh session
+reviews only those commits.
+
 ## Plan and plan review
 
 The plan (R12) and its review are comments on #74. A second reading before the
