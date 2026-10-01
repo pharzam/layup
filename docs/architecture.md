@@ -11,12 +11,12 @@ orchestrator of the whole lifecycle (O-67): code runs the flow, harness sessions
 do the work that needs judgement, a smart-if provider picks a branch at named
 points, and humans decide only at the Human Decision Points of the PSB.
 
-This document is written in slices (plan v2 of task `T-hbw8`); sections 5 to
-13 come with slices B to H: 5 Intake and setup, 6 native gates and rule
+This document was written in slices (plan v2 of task `T-hbw8`; approved, O-112);
+sections 5 to 13 are slices B to H: 5 Intake and setup, 6 native gates and rule
 protection, 7 the specification, 8 the phase loop, 9 squads and routing, 10
 decisions, 11 stalls, 12 cost and the measures, 13 learning. Each section
 names the ADR that decides it and the walkthrough that tests it. The walkthroughs
-are in [`walkthroughs/`](walkthroughs/README.md). The Operator's decisions O-66 to O-111 are quoted in [`runs/T-hbw8/operator-decisions.md`](../runs/T-hbw8/operator-decisions.md)
+are in [`walkthroughs/`](walkthroughs/README.md). The Operator's decisions O-66 to O-113 are quoted in [`runs/T-hbw8/operator-decisions.md`](../runs/T-hbw8/operator-decisions.md)
 and [`runs/T-hbw8/inputs-from-pr-69.md`](../runs/T-hbw8/inputs-from-pr-69.md).
 
 ## 1. LAYUP and a target
@@ -1494,6 +1494,8 @@ rows. The evidence for each row is [`runs/T-hbw8/rewrite-checklist.md`](../runs/
 ## 15. Known limits
 
 Each limit is a finding that the design does not close, recorded here (O-66).
+A "Close when" sentence names the event that closes the limit (O-113); an ID
+such as ISO-01 is a scenario of the [research review](../runs/T-hbw8/slice-reviews/operator-codex-research.md), §8.
 
 - **L-A1. The host is shared.** Role sessions run under the Operator's user, so
       a session that searches the host can reach the App's private key, which does
@@ -1506,10 +1508,13 @@ Each limit is a finding that the design does not close, recorded here (O-66).
   product's tests and build scripts, and the gate files of a rule batch before its
   approval, in a scratch work tree on the host, under the same user, with the same
   network access; no section names the environment that a gate run gets.
+  Close when: before LAYUP runs on a target that is not the Operator's; each
+  session and each gate run gets a container or another user (ISO-01, ISO-02).
 - **L-A2. One forge adapter.** The engine is forge-neutral (§1), but only the
   GitHub adapter is designed; another forge needs its adapter, and a forge that
   lacks one of the six capabilities cannot hold a target (#69 forge question,
   O-102).
+  Close when: a target needs a forge other than GitHub.
 - **L-A6. A newer baseline.** A target pins the baseline's latest state (O-101);
   LAYUP's setup steps and checks are written against the baseline's structure,
   so a change there can break a step. `layup setup verify` then fails on that
@@ -1524,6 +1529,8 @@ Each limit is a finding that the design does not close, recorded here (O-66).
   made again, so a retry can make it twice (for example a second comment), and a
   run that takes the write as done can leave it not made. A paid session start
   whose acknowledgement is lost has the same gap.
+  Close when: before LAYUP runs on a target that is not the Operator's; each
+  forge write gets an ID, and a retry reads the forge first (REC-01 to REC-04).
 - **L-A4. The bypass list is read once.** The App cannot read a ruleset's
   bypass list, so it is read only at setup, from the Operator's command; a later
   change to it is not seen. The forge's rule-suites API, which reports a bypass
@@ -1554,12 +1561,15 @@ Each limit is a finding that the design does not close, recorded here (O-66).
   reach; an accepted time is the end of the asker's next attempt. The measure is
   still recorded (§12); a question with no accepted time is counted as open,
   never left out.
+  Close when: a session start takes less than 120 seconds; until then, record.
 - **L-D2. Context by link, and its size.** A session gets the records that the step table's
   links reach; a relevant record that no link reaches is not in its prompt. The
   size check of §9 (bytes divided by four) is an estimate that is not measured
   against a tokenizer, and it counts only the prompt file, not the harness's own
   instructions, its tool definitions or the space for the output, so a start
   that passes the check can still not fit.
+  Close when: the size check is built; it keeps a margin, and is compared with
+  the token count that a harness reports (CTX-01).
 - **L-D3. Acceptance of an answer.** The accepted time is mechanical: an attempt
   that asks the same question again in other words, without citing the answer
   ID, still counts the answer as accepted; the Clarification Turnaround can read
@@ -1568,12 +1578,16 @@ Each limit is a finding that the design does not close, recorded here (O-66).
   than the author's is independent by harness only; two harnesses that run the
   same model, or read the same inputs, can make the same error, and no record
   measures how often a verifier misses what its author missed.
+  Close when: the records show how often a verifier misses a finding that a
+  later step finds; if often, a verifier needs another model family.
 - **L-E1. An undeclared decision.** A session that makes a business-forking
   choice without declaring it, in prose that the four questions miss and in no
   file that the floor reads, is found only by the Missed Escalations audit (§12).
   Under `off` or `shadow` at P1 and P2, this is every undeclared choice made in
   prose: the checklist rows K32 and K35 are answered only at `cautious` or
   `delegate`.
+  Close when: the Missed Escalations audit finds a missed decision; then P1 and
+  P2 go to `cautious`.
 - **L-E2. Calibrating the thresholds.** A threshold's evidence can be only the
   Operator's comment (§10), at every point. A calibration record is not required; at
   P1 it is one agreement share over the `screens.tsv` rows that the Missed
@@ -1582,6 +1596,8 @@ Each limit is a finding that the design does not close, recorded here (O-66).
   picks at P3 or P4 is not run, so its outcome is unknown; a `delegate` threshold
     for these two points rests only on the Operator's comment. P4 is asked only when
   no weight decides (§13), so it gets few rows; that is accepted.
+  Close when: `screens.tsv` holds enough rows for a held-out set; each
+  threshold then rests on a calibration record (DEC-01 to DEC-03).
 - **L-F1. The dead-man job can be late or silent.** `layup run` checks at Start
   that the job's App and list work (its first notice), but not later. A scheduled workflow can
   start late or be dropped, so the notice of a dead host can come later than
@@ -1591,6 +1607,8 @@ Each limit is a finding that the design does not close, recorded here (O-66).
 - **L-G1. Telemetry Completeness with O-80.** A task that a harness without a token
   report runs has incomplete telemetry, so Telemetry Completeness (`F-0003#60`)
   fails for it; only routing every task to harnesses that report tokens avoids it.
+  Close when: routing is built; a target that requires the measure routes only
+  to harnesses that report tokens.
 - **L-G2. Human actions the forge does not show.** A human action on the LAYUP
   host outside `layup run` (for example killing a session) and an action on the
   forge with no API event are not recorded, so the Task Intervention Rate can read
@@ -1604,6 +1622,8 @@ Each limit is a finding that the design does not close, recorded here (O-66).
   With exploration, the turns go by the table's order, not by chance, and
   inside a tier the reward does not take a task's difficulty into account, so a route that gets the
   hard tasks can read worse than a weaker route that gets the easy ones.
+  Close when: the reward has data from real tasks; `learn.explore` stays above
+  zero, and routes are compared only inside one tier (LEARN-01).
 - **L-H2. Only some routes learn.** The routes of planning, review and
     verification keep their weights; their quality reaches the reward only through
   the implementing route's findings and acceptances. A route whose harness

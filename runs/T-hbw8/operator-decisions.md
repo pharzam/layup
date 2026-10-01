@@ -287,3 +287,43 @@ do one round review more
 | No. | Decision | Reading |
 | --- | -------- | ------- |
 | O-111 | One more review round | Round 7 (Claude Fable 5.1, the whole-design lens) on the O-110 limits (`6fba6a3`) and their seams. |
+
+## O-112 and O-113: the architecture approved; a trigger for each limit
+
+The Operator on #72, 2026-10-01 07:30 UTC ([comment 5926827332](https://github.com/pharzam/layup/issues/72#issuecomment-5926827332)), word for word:
+
+--- begin
+## Decision on the approval brief (O-73): approved
+
+I approve the LAYUP architecture at head `11657ee`.
+
+**Accepted:**
+- ADR-0013 to ADR-0025 move from `Proposed` to `Accepted`.
+- `docs/architecture.md` and the 13 walkthroughs are the architecture of record.
+
+**Readings of the PSB, confirmed:** R1, R2, R3, R4, R5, R6, R7.
+
+**Known limits, accepted** (§15): L-A1, L-A2, L-A3, L-B4, L-D1, L-D2, L-E1, L-E2, L-G1, L-H1. JUST WHAT SHOULD We Do with THESE limitations
+
+**Fixes that no round has read:** I accept the fixes of round 7 (the O-110 limits and their notes) as they stand. No more review round is needed.
+
+**Next steps (as in the brief):**
+1. Move the ADRs to `Accepted`.
+2. Write the task record and run the checks.
+3. Freeze the head.
+4. Run the gate round (Claude Fable 5.1, O-87).
+5. Close out, open the pull request with `Closes #72`, and merge.
+
+**Setup work for me, later, when LAYUP is built:** the second GitHub App `layup-watch` (§11), and a private key plus the commit-statuses permission for `layup-agent`.
+--- end
+
+The author's reply ([comment 5926859420](https://github.com/pharzam/layup/issues/72#issuecomment-5926859420)) put the ten limits in four groups and asked where the triggers go. The Operator, 07:40 UTC ([comment 5926988615](https://github.com/pharzam/layup/issues/72#issuecomment-5926988615)), word for word:
+
+--- begin
+I choose  (a). I add one sentence "Close when: …" to each of the ten limits in docs/architecture.md §15, with the text of the tables above. Then the retrospective (§13) and the next reader see the trigger next to the limit. This changes no behaviour, so it is a note and needs no review round (Bootstrap mode rule 3); it goes in before I freeze the head.
+--- end
+
+| No. | Decision | Reading |
+| --- | -------- | ------- |
+| O-112 | The architecture is approved at `11657ee` (O-73) | ADR-0013 to ADR-0025 are `Accepted`; readings R1 to R7 are confirmed; the ten limits are accepted (L-B4 is L-D4 since round 7); the fixes of round 7 need no round; the next steps are the brief's. |
+| O-113 | Option (a): a "Close when" sentence for each of the ten limits | Added to §15 before the freeze, from the tables of the reply; a note, no round (Bootstrap mode rule 3). |
