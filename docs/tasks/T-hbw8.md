@@ -150,4 +150,4 @@ Recorded, not budgeted (ADR-0007). Times are UTC. The author's token count is
 | Design review rounds (24) | reasoning | Claude Fable 5.1 | not reported | 552,827 output, 23 of 24 rounds | 1 h 59 min; USD 89.02 (slice B round 2 not recorded) |
 | Writing the design | execution | Claude Opus 5.5 — a reasoning-tier model on an execution part | auto | not reported | 2026-09-29 06:24 to 10:41 (slices), then to 2026-09-30 14:40 (O-101 to O-111) |
 | The gate round | reasoning | Claude Fable 5.1 | not reported | 17,194 output | 3 min 53 s; USD 2.80 |
-| Isolate, guardrails, docs, close-out | `—` | Claude Opus 5.5 | auto | not reported | 2026-10-01 07:35 to about 08:15 |
+| Isolate, guardrails, docs, close-out | `—` | Claude Opus 5.5 | auto | not reported | 2026-10-01 07:35 to 07:57 |
