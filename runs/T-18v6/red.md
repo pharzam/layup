@@ -92,3 +92,46 @@ failed on its own case:
     blocks_integration_test.go:44: the block prices is listed 2 times in built and notYetBuilt; want 1
     blocks_integration_test.go:44: the block psb-gaps is listed 0 times in built and notYetBuilt; want 1
 ```
+
+## Step 4: the fixes of the verification of `0db1aa1`
+
+A fresh verifier found the findings below in the head `0db1aa1`. The first
+run is the new tests on that code. 2026-10-01T17:30:22Z,
+`go test -count=1 ./internal/tsv/`, exit 1:
+
+```text
+--- FAIL: TestWriteRefusesARowThatReadWouldRefuse (0.00s)
+    --- FAIL: TestWriteRefusesARowThatReadWouldRefuse/no_header_row:_the_column_names_as_the_first_row (0.00s)
+        tsv_test.go:106: error <nil>; want an *Error at line 1
+--- FAIL: TestReadRefusesARecordThatDoesNotMatch (0.00s)
+    --- FAIL: TestReadRefusesARecordThatDoesNotMatch/a_carriage_return_before_a_line_feed (0.00s)
+        tsv_test.go:150: error "line 2: a carriage return; save the file with line-feed endings only, and with no carriage return in a field" (line 2, column ""); want line 2, column "question", and "line-feed endings" in the text
+[...] the same for a lone carriage return, with the column "excerpt"
+    --- FAIL: TestReadRefusesARecordThatDoesNotMatch/no_header_row:_the_column_names_as_the_first_line (0.00s)
+        tsv_test.go:148: rows [["file" "marker" "question"] ["docs/a.md" "m" "q"]]; want none
+        tsv_test.go:150: error <nil>; want an *Error at line 1
+--- FAIL: TestTypeCheckTakesTheValuesOfItsType (0.00s)
+    types_test.go:76: id(Q-NNN): check("Q-0001"): no error; want one
+    types_test.go:76: id(Q-NNN): check("Q-01000"): no error; want one
+    types_test.go:76: id(SNN): check("S001"): no error; want one
+FAIL	github.com/pharzam/layup/internal/tsv	0.863s
+```
+
+Each test fails for the right reason: the writer writes the column names as the
+first row of a record with no header row, and the reader takes that line as a
+row; the error for a carriage return names no column; and a run of `N` takes a
+leading zero in a number that is longer than the run, so one number has two
+forms.
+
+Two changed tests pass on that code, because they guard against a mutant of the
+verification: the schema test now wants the error of the schema, and the list
+test also gives a carriage return to `JoinList`. On a copy of the fixed code,
+each fails on its mutant (`go test -count=1 -run <the test>`, exit 1):
+
+```text
+M1, Read checks the types of the schema, not the column names:
+    tsv_test.go:233: Read with columns []: error line 1: the header row has 1 fields; the schema has 0 columns; want the error of the schema
+[...] the same for the other 4 schemas with a bad column name
+M3, JoinList takes a carriage return:
+    tsv_test.go:181: JoinList with "a\rb": no error; want one
+```

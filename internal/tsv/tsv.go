@@ -58,20 +58,22 @@ var fieldRule = strings.NewReplacer("\t", " ", "\n", " ", "\r", " ")
 // field rule and writes an empty value as —. It refuses a value that is not
 // valid UTF-8 (an error, not a repair), and it makes each check that Read
 // makes, so it never writes a record that Read refuses. On an error it writes
-// nothing.
+// nothing. Make the field of a list(<type>) column with JoinList: Write cannot
+// tell one value that holds a space from two values.
 func Write(w io.Writer, s Schema, rows [][]string) error {
 	types, err := s.types()
 	if err != nil {
 		return err
 	}
+	names := make([]string, len(s.Columns))
+	for j, c := range s.Columns {
+		names[j] = c.Name
+	}
+	header := strings.Join(names, "\t") + "\n"
 	var b strings.Builder
 	n, keys := 0, map[string]int{} // n is the line of the row
 	if !s.NoHeader {
-		names := make([]string, len(s.Columns))
-		for j, c := range s.Columns {
-			names[j] = c.Name
-		}
-		b.WriteString(strings.Join(names, "\t") + "\n")
+		b.WriteString(header)
 		n = 1
 	}
 	for _, row := range rows {
@@ -87,8 +89,11 @@ func Write(w io.Writer, s Schema, rows [][]string) error {
 		}
 		b.WriteString(strings.Join(fields, "\t") + "\n")
 	}
-	if strings.HasPrefix(b.String(), bom) {
+	switch out := b.String(); {
+	case strings.HasPrefix(out, bom):
 		return &Error{Line: 1, Column: s.Columns[0].Name, Reason: "the record would start with a byte-order mark, which the reader refuses"}
+	case s.NoHeader && strings.HasPrefix(out, header):
+		return &Error{Line: 1, Reason: "the first row is the column names, which the reader refuses as a header row; a record of this schema has no header row"}
 	}
 	_, err = io.WriteString(w, b.String())
 	return err
@@ -97,8 +102,9 @@ func Write(w io.Writer, s Schema, rows [][]string) error {
 // Read reads a record of schema s and returns its rows, one value per column;
 // — gives the empty value. It refuses a byte-order mark, a carriage return
 // anywhere, an empty line, no line feed after the last line, a header row that
-// is not the column names, and each row that Write refuses. The error is an
-// *Error for the first line that does not match, so a command can give exit 2.
+// is not the column names (or, when s has no header row, a first line that is),
+// and each row that Write refuses. The error is an *Error for the first line
+// that does not match, so a command can give exit 2.
 func Read(data []byte, s Schema) ([][]string, error) {
 	types, err := s.types()
 	if err != nil {
@@ -120,11 +126,17 @@ func Read(data []byte, s Schema) ([][]string, error) {
 		n, fields := i+1, strings.Split(l, "\t")
 		switch {
 		case strings.Contains(l, "\r"):
-			err = &Error{Line: n, Reason: "a carriage return; save the file with line-feed endings only, and with no carriage return in a field"}
+			e := &Error{Line: n, Reason: "a carriage return; save the file with line-feed endings only, and with no carriage return in a field"}
+			if j := strings.Count(l[:strings.IndexByte(l, '\r')], "\t"); j < len(s.Columns) {
+				e.Column = s.Columns[j].Name // the column of the field that holds it
+			}
+			err = e
 		case l == "":
 			err = &Error{Line: n, Reason: "an empty line"}
 		case n == 1 && !s.NoHeader:
 			err = checkHeader(fields, s.Columns)
+		case n == 1 && checkHeader(fields, s.Columns) == nil:
+			err = &Error{Line: 1, Reason: "the column names, as a header row; a record of this schema has no header row"}
 		default:
 			if err = checkRow(n, fields, s.Columns, types, keys); err == nil {
 				for j := range fields {

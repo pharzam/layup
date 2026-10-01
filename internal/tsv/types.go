@@ -85,9 +85,9 @@ func parseType(expr string) (fieldType, error) {
 }
 
 // idPattern makes the pattern of id(<pattern>) a regular expression: a run of
-// N is that many digits or more, each x is one lowercase letter or digit,
-// <word> is one or more lowercase letters or '-', and each other character
-// stands for itself.
+// N is that many digits, or more digits with no leading zero, so that a number
+// has one form; each x is one lowercase letter or digit, <word> is one or more
+// lowercase letters or '-', and each other character stands for itself.
 func idPattern(p string) (*regexp.Regexp, error) {
 	if p == "" {
 		return nil, fmt.Errorf("the pattern is empty")
@@ -99,7 +99,7 @@ func idPattern(p string) (*regexp.Regexp, error) {
 			re, i = re+"[a-z-]+", i+len("<word>")-1
 		case c == 'N':
 			k := len(p[i:]) - len(strings.TrimLeft(p[i:], "N"))
-			re, i = re+fmt.Sprintf("[0-9]{%d,}", k), i+k-1
+			re, i = re+fmt.Sprintf("([0-9]{%d}|[1-9][0-9]{%d,})", k, k), i+k-1
 		case c == 'x':
 			re += "[a-z0-9]"
 		case c <= ' ' || c >= utf8.RuneSelf || strings.IndexByte("<>()|", c) >= 0:

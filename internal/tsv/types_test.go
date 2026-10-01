@@ -51,9 +51,10 @@ func TestTypeCheckTakesTheValuesOfItsType(t *testing.T) {
 		{"sha256", []string{strings.Repeat("ab", 32)}, []string{strings.Repeat("ab", 31) + "a", strings.Repeat("AB", 32)}},
 		{"path", []string{"docs/gates.tsv", "a", ".golangci.yml", "a..b/c"}, []string{"", "/docs", "../x", "a/../b", "a//b", "a/", ".", "./a", "a\tb"}},
 		{"enum(active|pending)", []string{"active", "pending"}, []string{"Active", "other", "active "}},
-		// D2, note 2: a run of N is a minimum count of digits; x is one character.
-		{"id(Q-NNN)", []string{"Q-001", "Q-999", "Q-1000"}, []string{"Q-01", "q-001", "Q001", "Q-00a", "Q-001 "}},
-		{"id(SNN)", []string{"S01", "S15"}, []string{"S1", "s01", "S-01"}},
+		// D2, note 2: a run of N is a minimum count of digits, and a longer run
+		// has no leading zero, so one number has one form; x is one character.
+		{"id(Q-NNN)", []string{"Q-001", "Q-999", "Q-1000"}, []string{"Q-01", "Q-0001", "Q-01000", "q-001", "Q001", "Q-00a", "Q-001 "}},
+		{"id(SNN)", []string{"S01", "S15", "S100"}, []string{"S1", "S001", "s01", "S-01"}},
 		{"id(T-xxxx)", []string{"T-18v6", "T-0drh"}, []string{"T-18V6", "T-18v", "T-18v66", "T-18-6"}},
 		{"id(<word>)", []string{"static", "not-active"}, []string{"Static", "a1", "a b", "a_b"}},
 		// D7: one space separates the values of a list.

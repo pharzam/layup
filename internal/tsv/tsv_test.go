@@ -98,6 +98,7 @@ func TestWriteRefusesARowThatReadWouldRefuse(t *testing.T) {
 		{"— as a key (note 1)", gaps, [][]string{{"—", "G1", "1", "x", "q"}}, 2, "id", "key"},
 		{"a key that repeats (D6)", stalls, [][]string{{"ST-001", "stall", "a"}, {"ST-001", "stall", "b"}}, 3, "", "line 2"},
 		{"no header row: a key that repeats", openGaps, [][]string{{"a.md", "m", "q"}, {"a.md", "m", "q2"}}, 2, "", "line 1"},
+		{"no header row: the column names as the first row", openGaps, [][]string{{"file", "marker", "question"}}, 1, "", "header row"},
 		{"a byte-order mark at the start", openGaps, [][]string{{"\uFEFFa.md", "m", "q"}}, 1, "file", "byte-order mark"},
 	} {
 		t.Run(c.name, func(t *testing.T) {
@@ -111,7 +112,7 @@ func TestWriteRefusesARowThatReadWouldRefuse(t *testing.T) {
 }
 
 // D4, D5, note 1, note 9, condition 5: each refusal names the line, and the
-// column where one field is wrong.
+// column of the field that holds the fault.
 func TestReadRefusesARecordThatDoesNotMatch(t *testing.T) {
 	row := "Q-001\tG1\t0\t—\tWhich stack?\n"
 	for _, c := range []struct {
@@ -120,8 +121,10 @@ func TestReadRefusesARecordThatDoesNotMatch(t *testing.T) {
 		line         int
 		column, part string
 	}{
-		{"a carriage return before a line feed", gapsHeader + strings.TrimSuffix(row, "\n") + "\r\n", gaps, 2, "", "line-feed endings"},
-		{"a lone carriage return", gapsHeader + "Q-001\tG1\t3\ta\rb\tq\n", gaps, 2, "", "carriage return"},
+		{"a carriage return before a line feed", gapsHeader + strings.TrimSuffix(row, "\n") + "\r\n", gaps, 2, "question", "line-feed endings"},
+		{"a lone carriage return", gapsHeader + "Q-001\tG1\t3\ta\rb\tq\n", gaps, 2, "excerpt", "carriage return"},
+		{"a carriage return in a field with no column", gapsHeader + "Q-001\tG1\t3\tx\tq\ta\rb\n", gaps, 2, "", "carriage return"},
+		{"no header row: the column names as the first line", "file\tmarker\tquestion\ndocs/a.md\tm\tq\n", openGaps, 1, "", "header row"},
 		{"a byte-order mark", "\uFEFF" + gapsHeader + row, gaps, 1, "", "byte-order mark"},
 		{"invalid UTF-8", gapsHeader + "Q-001\tG1\t3\t\xff\xfe fast\tq\n", gaps, 2, "excerpt", "UTF-8"},
 		{"an empty line", gapsHeader + "\n" + row, gaps, 2, "", "empty line"},
@@ -173,7 +176,7 @@ func TestReadGivesTheEmptyMarkAsTheEmptyValue(t *testing.T) {
 
 // D7, note 4: a list value holds no space, and an empty list is —.
 func TestAListValueHoldsNoSpaceAndAnEmptyListIsTheEmptyMark(t *testing.T) {
-	for _, v := range []string{"docs/my file.md", "", "a\tb", "a\nb"} {
+	for _, v := range []string{"docs/my file.md", "", "a\tb", "a\nb", "a\rb"} {
 		if _, err := JoinList([]string{"go.mod", v}); err == nil {
 			t.Errorf("JoinList with %q: no error; want one", v)
 		}
@@ -215,17 +218,19 @@ func TestWriteThenReadGivesTheSameRowsAndBytes(t *testing.T) {
 	}
 }
 
+// The error must be the error of the schema, which starts "schema x: ", and not
+// an error of the header row or of the field count.
 func TestWriteAndReadRefuseASchemaThatIsNotValid(t *testing.T) {
 	for _, cols := range [][]Column{
 		nil, {{Name: "a", Type: "float"}}, {{Name: "a", Type: "text"}, {Name: "a", Type: "int"}},
 		{{Name: "", Type: "text"}}, {{Name: "a\tb", Type: "text"}}, {{Name: "a\xff", Type: "text"}},
 	} {
 		s := Schema{Name: "x", Location: "stdout", Columns: cols}
-		if err := Write(&strings.Builder{}, s, nil); err == nil {
-			t.Errorf("Write with columns %v: no error; want one", cols)
+		if err := Write(&strings.Builder{}, s, nil); err == nil || !strings.HasPrefix(err.Error(), "schema x: ") {
+			t.Errorf("Write with columns %v: error %v; want the error of the schema", cols, err)
 		}
-		if _, err := Read([]byte("a\n"), s); err == nil {
-			t.Errorf("Read with columns %v: no error; want one", cols)
+		if _, err := Read([]byte("a\n"), s); err == nil || !strings.HasPrefix(err.Error(), "schema x: ") {
+			t.Errorf("Read with columns %v: error %v; want the error of the schema", cols, err)
 		}
 	}
 }
