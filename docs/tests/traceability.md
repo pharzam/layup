@@ -31,7 +31,7 @@ fact and the ADR of the first.
 | `TestPSBCheckExitCodes` (`internal/cli/cli_test.go`) | unit | REQ-001 | F-0003#41 | — | ADR-0011 | T-dq05 | green |
 | `TestGoldenRealPSB` (`internal/psb/check_integration_test.go`) | integration | REQ-001 | F-0003#41 | — | ADR-0011 | T-dq05 | green |
 | `T-5zmw/e2e/psb-check` | e2e | REQ-001 | F-0003#41 | — | ADR-0011 | T-5zmw | planned |
-| `T-18v6/integration/schema-blocks` | integration | NFR-001 | F-0001#1 | guardrails.md §1.1 Inv-1 | ADR-0014 | T-18v6 | planned |
+| `TestEverySchemaBlockIsBuiltOrNotYetBuilt` (`internal/tsv/blocks_integration_test.go`) | integration | NFR-001 | F-0001#1 | guardrails.md §1.1 Inv-1 | ADR-0014 | T-18v6 | green |
 | `TestPackageRules` (`cmd/layup/rules_integration_test.go`) | integration | NFR-005, NFR-007 | F-0001#6 | guardrails.md §1.1 Inv-6 | ADR-0015 | T-2tc2 | green |
 | `T-5sgt/e2e/gate-command` | e2e | REQ-004, REQ-007, NFR-004, NFR-005 | F-0003#44 | guardrails.md §1.1 Inv-5 | ADR-0016 | T-5sgt | planned |
 | `T-c06a/integration/go-fixtures` | integration | REQ-004, REQ-007 | F-0003#44 | guardrails.md §1.1 Inv-7 | ADR-0016 | T-c06a | planned |

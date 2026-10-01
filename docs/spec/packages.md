@@ -57,7 +57,7 @@ reads this table, and holds no copy of it, which could differ from it.
 | ------- | --- | ---------- | ---------------- |
 | `cmd/layup` | `main`: passes the arguments to `internal/cli` and exits with its code | `internal/cli` | no |
 | `internal/cli` | parses the arguments, runs one command, maps its result to an exit code ([`README.md`](README.md#commands)) | `internal/psb`, `internal/setup`, `internal/verify`, `internal/gate` | no |
-| `internal/tsv` | reads and writes a record: checks the header row against a schema, the field count of each row, and the types | — | no |
+| `internal/tsv` | reads and writes a record: checks the header row against a schema, the field count of each row, the types and the key; parses the `tsv-schema` blocks of `docs/spec/`, and compares a block with the Go schema of its record ([`README.md`](README.md#the-schema-block)) | — | no |
 | `internal/git` | the one caller of the `git` program: [its calls](#the-calls-of-internalgit) | — | `git` |
 | `internal/psb` | the rules G1 to G5 and the gap table ([`psb-check.md`](psb-check.md)) | `internal/tsv` | no |
 | `internal/catalog` | the stack catalog, embedded with `embed` ([`setup.md`](setup.md#the-stack-catalog)) | `internal/tsv` | no |
@@ -66,7 +66,8 @@ reads this table, and holds no copy of it, which could differ from it.
 | `internal/verify` | the checks of `layup setup verify` ([`setup.md`](setup.md)) | `internal/tsv`, `internal/git`, `internal/catalog`, `internal/gate` | `sh`: the baseline's own check scripts |
 
 `internal/psb` today imports no package of this module and writes its table
-itself; it moves to `internal/tsv` when that package exists (#29).
+itself; it moves to `internal/tsv` with task `T-5zmw`, row 6 of the
+[plan](../plan/README.md#the-tasks-of-phase-1).
 
 **Decided here:** the split of `internal/setup`, `internal/verify` and
 `internal/gate` (ADR-0011 decision 1 names "setup, gates, … state files, Git
