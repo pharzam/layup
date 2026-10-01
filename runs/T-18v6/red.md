@@ -108,9 +108,9 @@ failed on its own case:
 
 ## Step 4: the fixes of the verification of `0db1aa1`
 
-A fresh verifier found the findings below in the head `0db1aa1`. The first
-run is the new tests on that code. 2026-10-01T17:30:22Z,
-`go test -count=1 ./internal/tsv/`, exit 1:
+A fresh verifier checked the head `0db1aa1`. These are the red runs of the
+tests of its findings. The first run is the new tests on that code.
+2026-10-01T17:30:22Z, `go test -count=1 ./internal/tsv/`, exit 1:
 
 ```text
 --- FAIL: TestWriteRefusesARowThatReadWouldRefuse (0.00s)
