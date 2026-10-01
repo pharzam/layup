@@ -154,7 +154,8 @@ setup's commits is an external input, a decision of the Operator: the plan of
 the step runner (#85) asks the Operator for it, or writes a marker.
 
 **A call reads no configuration of the host** (decided here, D3 of #79, with
-condition 1 of its plan review). Reason: no file and no variable of the host
+condition 1 of its plan review and findings 1 and 7 of its verification).
+Reason: no file and no variable of the host
 may change a branch, a byte or a mode of a tree, a file list, a hook, an author
 or a signature. `TestAHostileHostChangesNothing` of `internal/git` seeds each
 input that the plan review measured with `git` 2.54.0, and first shows that it
