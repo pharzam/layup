@@ -2,7 +2,7 @@
 // rule 3 and "The calls of internal/git"). Each call runs git with a fixed
 // environment and fixed -c values, so no file and no variable of the host
 // changes a branch, a tree, a file list, a hook, an author or a signature,
-// and no call asks a question.
+// and no call asks a question or uses a credential of the host.
 package git
 
 import (
