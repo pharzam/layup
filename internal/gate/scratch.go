@@ -141,8 +141,15 @@ func (s *scratch) write(p string, data []byte, executable bool) error {
 }
 
 // removeAll removes the path from the tree; a path under a file of the tree
-// is absent already.
+// is absent already. A path that is the file .git of the tree, by any name (a
+// file system that folds case, a hard link), is never removed: the tree would
+// lose its record in the repository (review round 2, finding 1).
 func (s *scratch) removeAll(p string) error {
+	if git, err := s.root.Lstat(".git"); err == nil {
+		if info, err := s.root.Lstat(p); err == nil && os.SameFile(git, info) {
+			return fmt.Errorf("%s is the file .git of the scratch tree", p)
+		}
+	}
 	if err := s.root.RemoveAll(p); err != nil && !errors.Is(err, syscall.ENOTDIR) {
 		return err
 	}

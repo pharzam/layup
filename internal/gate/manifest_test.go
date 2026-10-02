@@ -36,9 +36,19 @@ func TestReadManifestRefusesEachMalformedForm(t *testing.T) {
 		"no scope pattern":       manifestHeader + strings.Replace(row, "./*.go", "—", 1),
 		"a config path .git":     manifestHeader + strings.Replace(row, "\t—\n", "\t.git\n", 1),
 		"a config path in .git":  manifestHeader + strings.Replace(row, "\t—\n", "\tlayout .git/hooks/x\n", 1),
+		"a config path .GIT":     manifestHeader + strings.Replace(row, "\t—\n", "\t.GIT\n", 1),
+		"a config path in .Git":  manifestHeader + strings.Replace(row, "\t—\n", "\t.Git/x\n", 1),
 	} {
 		if _, err := readManifest([]byte(text)); err == nil {
 			t.Errorf("%s: no error", name)
 		}
+	}
+}
+
+// A config path that only starts with .git is a path like any other.
+func TestReadManifestTakesAConfigPathThatOnlyStartsWithGit(t *testing.T) {
+	text := manifestHeader + "static\tactive\tgo\tgo vet ./...\t./*.go\t.gitignore .github/x.yml\n"
+	if kinds, err := readManifest([]byte(text)); err != nil || strings.Join(kinds[0].Config, " ") != ".gitignore .github/x.yml" {
+		t.Fatalf("%+v, %v", kinds, err)
 	}
 }

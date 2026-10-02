@@ -72,3 +72,23 @@ head at or above a `config` path, `exit -1` when `sh` does not start, and the
 form `--base=-x`; a kind with no scope pattern is an input error, because it
 could never run and would always be `clear`. Note 9 is a measurement and needs no
 change.
+
+## Review round 2, O-130 and the fix (cycle 2)
+
+Review round 2 (Claude Fable 5.1, `bab6759`, cycle 1) found findings 1 to 3 of
+round 1 fixed, and one new material finding: on a file system that folds case,
+the `config` path `.GIT` is the file `.git` of the scratch tree, so the overlay
+removed it and `REPO` kept a work-tree record. It gave `not mergeable, findings
+recorded` under the cap of 1.
+
+**O-130.** The Operator answered "#82 a" in the author's Claude Code session
+(2026-10-02), copied to #82: the Cycle cap of #82 is 2. A `## Plan review`
+comment on #82 records the new cap, and the verdict of round 2 is edited to
+`material`, with the reason, because a fix followed (the lesson of `T-0drh`,
+O-120).
+
+The fix: a `config` path in `.git` in any case is an input error, and the
+overlay never removes a path that is the same file as `.git`. Notes 2 and 3 of
+round 2 are applied with it: `gate.md` says that a removal follows a symbolic
+link that stays inside the tree, and that a kind with no scope pattern is a rule
+for the catalog entries too.

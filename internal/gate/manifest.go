@@ -43,8 +43,9 @@ func (k Kind) inScope(paths []string) (string, bool) {
 // readManifest reads the bytes of docs/gates.tsv. A manifest that does not
 // match its schema, that has no row, that holds a scope pattern of another
 // form or a kind with no scope pattern (it could never run, and would always
-// be clear), or a config path in .git (the overlay would remove the file .git
-// of the scratch tree) is an error.
+// be clear), or a config path in .git, in any case (the overlay would remove
+// the file .git of the scratch tree; a file system can fold case), is an
+// error.
 func readManifest(data []byte) ([]Kind, error) {
 	rows, err := tsv.Read(data, ManifestSchema)
 	if err != nil {
@@ -67,7 +68,7 @@ func readManifest(data []byte) ([]Kind, error) {
 			return nil, fmt.Errorf("line %d, column \"scope\": the kind %s has no scope pattern", i+2, k.Name)
 		}
 		for _, c := range k.Config {
-			if c == ".git" || strings.HasPrefix(c, ".git/") {
+			if first, _, _ := strings.Cut(c, "/"); strings.EqualFold(first, ".git") {
 				return nil, fmt.Errorf("line %d, column \"config\": %s is in .git", i+2, c)
 			}
 		}

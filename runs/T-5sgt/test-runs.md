@@ -127,9 +127,34 @@ the integration level (note 4, so the line numbers of `run_test.go` above and in
 run 3 are those of the untagged file), and `gate.md` says the cases of notes 5
 to 7.
 
+## The fix of review round 2 (cycle 2, O-130)
+
+Review round 2 (`bab6759`) found that a `config` path `.GIT` is the file `.git`
+of the scratch tree on a file system that folds case (macOS here). The tests of
+the fix ran red on `bab6759` first; the real-repository case reproduced the
+finding on this host:
+
+```text
+$ go test -count=1 -run TestReadManifest ./internal/gate/
+--- FAIL: TestReadManifestRefusesEachMalformedForm
+    manifest_test.go:43: a config path .GIT: no error
+    manifest_test.go:43: a config path in .Git: no error
+$ go test -count=1 -tags=integration -run 'TestTheOverlayNeverRemovesTheGitFileOfTheTree|TestTheRevisionsAndTheManifestOnARealRepository' ./internal/gate/
+--- FAIL: TestTheRevisionsAndTheManifestOnARealRepository
+    gate_integration_test.go:184: a config path .GIT: the scratch tree /var/folders/…/layup-gate-439017093 is not removed: git worktree remove --force -- …
+    gate_integration_test.go:187: a config path .GIT left a work tree:
+--- FAIL: TestTheOverlayNeverRemovesTheGitFileOfTheTree
+    run_test.go:381: [{Kind:pass State:active Result:pass Reason:}], <nil>; want not-active, scratch tree: overlay failed
+```
+
+The fix: a `config` path whose first part is `.git` in any case is an input
+error, and the overlay never removes a path that is the same file as `.git`
+(`os.SameFile`), which covers every other name of it; the test of the second
+part uses a hard link, which is such a name on every file system.
+
 ## The green runs
 
-On the tree of the commit that adds this file, and again on the head of cycle 1.
+On the tree of the commit that adds this file, and again on the heads of cycles 1 and 2.
 
 | Command | Result |
 | ------- | ------ |

@@ -48,8 +48,9 @@ the type `path`, and `E` is not empty and holds no `/` or `*`; any other form,
 for example `*.go`, `P/*`, `P/*/x.E`, `./internal`, `../x/*.go` or `/x/*.go`, is
 an input error of the manifest (exit 2), so a pattern never matches nothing in
 silence. A kind with no scope pattern (`—`) is an input error too: it could
-never run, and would always be `clear` (review round 1, note 8). Example for
-Go: `./*.go`. A **product path** of a kind is a path that
+never run, and would always be `clear` (review round 1, note 8); a rule for the
+catalog entries too (task `T-c06a`, row 14 of the plan). Example for Go:
+`./*.go`. A **product path** of a kind is a path that
 its scope matches.
 
 **The column `tool`** names the one program that `layup gate` can look up.
@@ -104,13 +105,15 @@ layup gate REPO --base REV --head REV
   each file under a directory, with its mode (`LsTree` of
   [`packages.md`](packages.md#the-calls-of-internalgit)); a `config` path that
   is a symbolic link or a submodule at the base, and a `config` path that is
-  `.git` or under it, is an input error. Each write goes through an `os.Root` of
-  the tree, so a symbolic link of the head cannot send a write out of the tree:
-  a symbolic link or a file of the head at or above a `config` path or `docs`
-  fails the overlay. The `config` paths go in their sorted order, and a path
+  `.git` or under it, in any case, is an input error. Each write goes through an
+  `os.Root` of the tree, so a symbolic link of the head cannot send a write out
+  of the tree: a symbolic link or a file of the head at or above a path that the
+  overlay writes fails the overlay, and a removal follows a symbolic link that
+  stays inside the tree. The `config` paths go in their sorted order, and a path
   under a file of the tree counts as absent, so two runs on one input give one
-  tree (review round 1, finding 1). The tree is removed on every exit path of a
-  run. **Known limit:** a run that a signal
+  tree (review round 1, finding 1). The overlay never removes the file `.git` of
+  the tree, by any name: a file system that folds case makes `.GIT` such a name
+  (review round 2, finding 1). The tree is removed on every exit path of a run. **Known limit:** a run that a signal
   kills leaves the tree; `git worktree prune` in `REPO` removes its record. The
   run does not prune at its start, because that could remove another stale
   record of `REPO`.

@@ -179,6 +179,13 @@ func TestTheRevisionsAndTheManifestOnARealRepository(t *testing.T) {
 			t.Errorf("the base %s: %v; want an *InputError", rev, err)
 		}
 	}
+	gitCase := repo(t, map[string]string{"docs/gates.tsv": "kind\tstate\ttool\tcommand\tscope\tconfig\nk\tactive\tsh\ttrue\t./*.go\t.GIT\n", "x.go": "package x\n"})
+	if _, err := Run(gitCase, "HEAD", "HEAD", (&recorder{}).step, &recorder{}); !errors.As(err, new(*InputError)) {
+		t.Errorf("a config path .GIT: %v; want an *InputError", err)
+	}
+	if list := plainGit(t, gitCase, "worktree", "list", "--porcelain"); strings.Count(list, "worktree ") != 1 {
+		t.Errorf("a config path .GIT left a work tree:\n%s", list)
+	}
 	empty := repo(t, map[string]string{"x.go": "package x\n"})
 	if _, err := Run(empty, "HEAD", "HEAD", (&recorder{}).step, &recorder{}); !errors.As(err, new(*InputError)) {
 		t.Errorf("a base with no manifest: %v; want an *InputError", err)

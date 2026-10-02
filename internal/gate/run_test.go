@@ -35,6 +35,8 @@ type fakeGit struct {
 	changed          []string
 	head             map[string]string
 	link, linkTarget string // a path of the head that is a symbolic link out of the tree, and its target
+	hardLink         string // a path of the head that is a hard link of the file .git of the tree
+	gitAtRemove      bool   // the file .git of the tree was there when the tree was removed
 	diffErr, addErr  error
 	removeErr        error
 	added, removed   []string
@@ -81,11 +83,19 @@ func (f *fakeGit) WorktreeAdd(dir, p, rev string) error {
 	if f.link != "" {
 		os.Symlink(f.linkTarget, filepath.Join(p, f.link))
 	}
-	return os.WriteFile(filepath.Join(p, ".git"), []byte("gitdir: elsewhere\n"), 0o644)
+	if err := os.WriteFile(filepath.Join(p, ".git"), []byte("gitdir: elsewhere\n"), 0o644); err != nil {
+		return err
+	}
+	if f.hardLink != "" {
+		return os.Link(filepath.Join(p, ".git"), filepath.Join(p, f.hardLink))
+	}
+	return nil
 }
 
 func (f *fakeGit) WorktreeRemove(dir, p string) error {
 	f.removed = append(f.removed, p)
+	_, err := os.Stat(filepath.Join(p, ".git"))
+	f.gitAtRemove = err == nil
 	if f.removeErr != nil {
 		return f.removeErr
 	}
@@ -355,5 +365,22 @@ func TestOverlappingConfigPathsGiveOneResult(t *testing.T) {
 		if err != nil || len(table.Rows) != 1 || table.Rows[0].Result != pass || a != "the base's a\n<nil>" {
 			t.Fatalf("run %d: %+v, %v, a = %q; want pass and the base's file a", run, table.Rows, err, a)
 		}
+	}
+}
+
+// Review round 2, finding 1: the overlay never removes the file .git of the
+// tree, by any name. A file system that folds case makes .GIT such a name; a
+// hard link is one on every file system, so the test can fail on each.
+func TestTheOverlayNeverRemovesTheGitFileOfTheTree(t *testing.T) {
+	f := newFake()
+	f.files[baseID+":docs/gates.tsv"] = manifestHeader + "pass\tactive\tgo\tok\t./*.go\tgitalias\n"
+	f.hardLink = "gitalias"
+	use(t, f, nil)
+	table, err := Run("repo", "main", "HEAD", (&events{}).step, &events{})
+	if err != nil || len(table.Rows) != 1 || table.Rows[0].Result != notActive || table.Rows[0].Reason != "scratch tree: overlay failed" {
+		t.Fatalf("%+v, %v; want not-active, scratch tree: overlay failed", table.Rows, err)
+	}
+	if !f.gitAtRemove {
+		t.Fatal("the file .git of the tree was gone when the tree was removed")
 	}
 }
