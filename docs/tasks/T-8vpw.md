@@ -25,8 +25,13 @@ and reads standard error; #21 closes only by the Operator's decision, asked on
 1. **#21:** `check_markers` lists the files with `git ls-files -z` and refuses
    a blank question or the empty mark, with the fixtures
    `markers/bad-quoted-name` (a DEL character in the name) and
-   `markers/bad-blank-question`; the record of the setup says "summarised";
-   a lesson in `guardrails.md` §2; the added scope of the comment on #21 is a
+   `markers/bad-blank-question` (items 1 and 5); of the stale sentences of
+   item 2, `T-t8qp`, `T-9mmm` and `T-745n` rewrote all but one, and this task
+   rewrites the last (`guardrails.md`, "In plain terms": a script fails on each
+   gap with no open question, not on each gap; the plan said that later tasks
+   rewrote all of them, and the check before the freeze found this one); the
+   record of the setup says "summarised" (item 3); a lesson in
+   `guardrails.md` §2 (item 4); the added scope of the comment on #21 is a
    known limit in `docs/setup/README.md`, and its decision waits on #21.
 2. **`internal/verify`:** one scanner of markers for check `markers` and S10;
    check `markers` with the open gaps read by tabs; check `sources` for each

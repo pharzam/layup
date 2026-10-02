@@ -13,8 +13,8 @@ Both are read before work starts.
 
 The worst mistake this project can make is to fill a setup value with a guess
 and then report the setup as done; the defense is a recorded source for each
-value, a script that fails on each gap, and an open question where no source
-exists (`F-0001#4`, `F-0001#5`).
+value, an open question where no source exists, and a script that fails on each
+gap with no open question (`F-0001#4`, `F-0001#5`).
 
 ## 1. Pre-registered decisions — or the goalposts move
 
