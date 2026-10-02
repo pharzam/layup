@@ -23,9 +23,11 @@ var (
 	built = map[string]func(fsys fs.FS, h history) []string{
 		"pin":         pinFindings,
 		"kit-history": func(fsys fs.FS, _ history) []string { return kitHistoryFindings(fsys, "github.com/pharzam/armature") },
+		"adapted":     adaptedFindings,
 		"identity":    func(fsys fs.FS, _ history) []string { return identityFindings(fsys) },
 	}
-	notYetBuilt    = []string{"facts", "onboarding", "glossary", "guardrails", "markers", "adapted"}
+	builtGroups    = []string{"pin", "kit-history", "adapted", "identity"} // the keys of built, in the order of the table
+	notYetBuilt    = []string{"facts", "onboarding", "glossary", "guardrails", "markers"}
 	notForATarget  = []string{"ci", "procedure", "protection"}
 	fixtureCommits = git.Identity{Name: "fixture", Email: "fixture@invalid", Time: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)}
 )
@@ -45,7 +47,7 @@ func TestTheFixturesOfSetupCheck(t *testing.T) {
 			groups = append(groups, e.Name())
 		}
 	}
-	listed := append(append(append([]string{"frame"}, notYetBuilt...), notForATarget...), "pin", "kit-history", "identity")
+	listed := append(append(append([]string{"frame"}, notYetBuilt...), notForATarget...), builtGroups...)
 	for _, g := range groups {
 		if n := len(slices.DeleteFunc(slices.Clone(listed), func(l string) bool { return l != g })); n != 1 {
 			t.Errorf("the group %s is in %d lists; want 1", g, n)
@@ -57,7 +59,7 @@ func TestTheFixturesOfSetupCheck(t *testing.T) {
 		}
 	}
 	cases := 0
-	for _, g := range append([]string{"frame"}, "pin", "kit-history", "identity") {
+	for _, g := range append([]string{"frame"}, builtGroups...) {
 		dirs, err := filepath.Glob(filepath.Join(root, g, "*", "EXPECT"))
 		if err != nil {
 			t.Fatal(err)
@@ -72,7 +74,7 @@ func TestTheFixturesOfSetupCheck(t *testing.T) {
 			if o := expect["only"]; len(o) > 0 {
 				run = strings.Split(o[0], ",")
 			} else if g == "frame" {
-				run = []string{"pin", "kit-history", "identity"}
+				run = builtGroups
 			}
 			found := false
 			for _, check := range run {
@@ -114,6 +116,60 @@ func TestTheFixturesOfSetupCheck(t *testing.T) {
 	}
 	if cases == 0 {
 		t.Fatal("no case found: a harness that tested nothing is not a pass")
+	}
+}
+
+// The lists of check adapted equal AD_EXCLUDE and ad_allowed of
+// setup-check.sh, read at test time (D1 of #88: the rule stays as it is).
+func TestTheListsOfAdaptedEqualTheSh(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "..", "docs", "setup", "setup-check.sh"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var exclude string
+	var allowed [][2]string
+	in := false
+	for _, l := range strings.Split(string(data), "\n") {
+		switch {
+		case strings.HasPrefix(l, "AD_EXCLUDE='") && strings.HasSuffix(l, "'"):
+			exclude = strings.TrimSuffix(strings.TrimPrefix(l, "AD_EXCLUDE='"), "'")
+		case strings.TrimSpace(l) == "cat <<'AD_ALLOW'":
+			in = true
+		case l == "AD_ALLOW":
+			in = false
+		case in:
+			p, reason, _ := strings.Cut(l, "\t")
+			allowed = append(allowed, [2]string{p, reason})
+		}
+	}
+	if exclude != adExclude {
+		t.Errorf("AD_EXCLUDE of setup-check.sh\n%q\nthe Go copy\n%q", exclude, adExclude)
+	}
+	if len(allowed) == 0 || !slices.Equal(allowed, adAllowed) {
+		t.Errorf("ad_allowed of setup-check.sh\n%q\nthe Go copy\n%q", allowed, adAllowed)
+	}
+}
+
+// Flagged gives the files of a work tree that check adapted flags, for the
+// prose step (O-123, K12): on the fixture repositories of the group adapted,
+// and an error where git cannot list the files.
+func TestFlagged(t *testing.T) {
+	for k, v := range map[string]string{"HOME": t.TempDir(), "XDG_CONFIG_HOME": t.TempDir(), "GIT_CONFIG_NOSYSTEM": "1"} {
+		t.Setenv(k, v)
+	}
+	root := filepath.Join("..", "..", "docs", "setup", "tests")
+	for c, want := range map[string][]string{
+		"bad-rule-1":   {"docs/a.md", "docs/adr/0013-new.md", "docs/tests/t.md"},
+		"bad-rule-2":   {"docs/b.md"},
+		"good-allowed": nil,
+	} {
+		repo := fixtureRepo(t, filepath.Join(root, "kit"), filepath.Join(root, "adapted", c, "overlay"), nil)
+		if got, err := Flagged(repo); err != nil || !slices.Equal(got, want) {
+			t.Errorf("%s: %q, %v; want %q", c, got, err, want)
+		}
+	}
+	if got, err := Flagged(t.TempDir()); err == nil {
+		t.Errorf("a directory that is not a repository: %q, no error", got)
 	}
 }
 
