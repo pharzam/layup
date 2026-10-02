@@ -173,6 +173,7 @@ type system struct {
 	checkoutDetach func(dir, commit string) error
 	revParse       func(dir, rev string) (string, error)
 	rootCommits    func(dir, rev string) ([]string, error)
+	message        func(dir, rev string) (string, error)
 	initRepo       func(dir string) error
 	lsTree         func(dir, rev, path string) ([]git.TreeEntry, error)
 	show           func(dir, rev, path string) ([]byte, error)
@@ -212,6 +213,7 @@ var sys = system{
 	checkoutDetach: git.CheckoutDetach,
 	revParse:       git.RevParse,
 	rootCommits:    git.RootCommits,
+	message:        git.Message,
 	initRepo:       git.Init,
 	lsTree:         git.LsTree,
 	show:           git.Show,

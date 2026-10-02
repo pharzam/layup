@@ -208,6 +208,13 @@ func RootCommits(dir, rev string) ([]string, error) {
 	return strings.Fields(string(out)), err
 }
 
+// Message gives the message of the commit rev, with no line feed at its end:
+// S03 takes only its own root commit of a run that stopped (D8 of #86).
+func Message(dir, rev string) (string, error) {
+	out, err := call(dir, environ(), "log", "-1", "--format=%B", "--end-of-options", rev, "--")
+	return strings.TrimRight(string(out), "\n"), err
+}
+
 // LsFiles gives the paths of the tracked files.
 func LsFiles(dir string) ([]string, error) {
 	out, err := call(dir, environ(), "ls-files", "-z")

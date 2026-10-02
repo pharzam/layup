@@ -250,8 +250,8 @@ func runS02(in Input) Outcome {
 
 // runS03 is S03 (D8 of #86): the root commit of the unmodified copy on main, by
 // the identity of the run at pin.time; its tree must be pin.tree. A target
-// whose main is one commit with the tree pin.tree is the commit of a run that
-// stopped, and S03 takes it.
+// whose main is one commit with the tree pin.tree and the message of S03 is
+// the commit of a run that stopped, and S03 takes it.
 func runS03(in Input) Outcome {
 	target := filepath.Join(in.Dir, work.TargetPath)
 	commit, _ := in.Record.Value("S02", "pin.commit")
@@ -261,11 +261,13 @@ func runS03(in Input) Outcome {
 	if err != nil {
 		return Outcome{Kind: Fail, Evidence: "the record has no pin.time of the form " + timeForm}
 	}
+	message := "chore: the unmodified baseline at " + commit
 	if sys.exists(filepath.Join(target, ".git")) {
 		head, err := sys.revParse(target, "refs/heads/main^{commit}")
 		roots, rerr := sys.rootCommits(target, "refs/heads/main")
 		got, terr := sys.revParse(target, head+"^{tree}")
-		if err != nil || rerr != nil || terr != nil || !slices.Equal(roots, []string{head}) || got != tree {
+		msg, merr := sys.message(target, head)
+		if err != nil || rerr != nil || terr != nil || merr != nil || !slices.Equal(roots, []string{head}) || got != tree || msg != message {
 			return Outcome{Kind: Invalid, Evidence: work.TargetPath + " of the work area has a history that S03 did not make: start again in a new work area"}
 		}
 		return Outcome{Kind: Done, Evidence: "root tree = pin.tree"}
@@ -275,7 +277,7 @@ func runS03(in Input) Outcome {
 	if err := sys.initRepo(target); err != nil {
 		return Outcome{Kind: Fail, Evidence: "git init: " + firstLine(err)}
 	}
-	if err := sys.commit(target, "chore: the unmodified baseline at "+commit, who); err != nil {
+	if err := sys.commit(target, message, who); err != nil {
 		return Outcome{Kind: Fail, Evidence: "git commit: " + firstLine(err)}
 	}
 	got, err := sys.revParse(target, "HEAD^{tree}")

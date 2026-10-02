@@ -339,6 +339,7 @@ type fakeRepo struct {
 	revs   map[string]string          // a revision and its object name
 	roots  []string                   // the root commits of main
 	branch string                     // the branch of the target
+	msg    string                     // the message of each commit
 	trees  map[string][]git.TreeEntry // a directory of the root commit and its files
 	shows  map[string]string          // a file of the root commit and its text
 	fail   string
@@ -377,6 +378,7 @@ func (f *fakeRepo) install(t *testing.T) {
 		revParse:       func(_, r string) (string, error) { return rev(r) },
 		head:           func(string) (string, error) { return rev("HEAD") },
 		rootCommits:    func(string, string) ([]string, error) { return f.roots, call("roots") },
+		message:        func(_, r string) (string, error) { return f.msg, call("message " + r) },
 		initRepo:       func(dir string) error { return call("init " + dir) },
 		commit: func(dir, msg string, who git.Identity) error {
 			return call(fmt.Sprintf("commit %s %q by %s at %s", dir, msg, who.Name, who.Time.UTC().Format(time.RFC3339)))
@@ -474,17 +476,19 @@ func TestS03(t *testing.T) {
 	if o := runS03(Input{Dir: "w", Record: pinRecord(), Who: Who}); o.Kind != Fail || o.Evidence != "the root tree 2222222222222222222222222222222222222222 is not pin.tree "+treeA {
 		t.Errorf("another tree: %s %q; want fail", o.Kind, o.Evidence)
 	}
+	own := "chore: the unmodified baseline at " + commitA
 	for _, c := range []struct {
-		name  string
-		roots []string
-		tree  string
-		kind  string
+		name      string
+		roots     []string
+		tree, msg string
+		kind      string
 	}{
-		{"its own commit", []string{rootA}, treeA, Done},
-		{"another tree", []string{rootA}, "2222222222222222222222222222222222222222", Invalid},
-		{"two root commits", []string{rootA, "3333333333333333333333333333333333333333"}, treeA, Invalid},
+		{"its own commit", []string{rootA}, treeA, own, Done},
+		{"another tree", []string{rootA}, "2222222222222222222222222222222222222222", own, Invalid},
+		{"two root commits", []string{rootA, "3333333333333333333333333333333333333333"}, treeA, own, Invalid},
+		{"another message", []string{rootA}, treeA, own + "\n\nby hand", Invalid},
 	} {
-		f := &fakeRepo{exists: map[string]bool{"w/target/.git": true}, roots: c.roots, revs: map[string]string{"refs/heads/main^{commit}": rootA, rootA + "^{tree}": c.tree}}
+		f := &fakeRepo{exists: map[string]bool{"w/target/.git": true}, roots: c.roots, msg: c.msg, revs: map[string]string{"refs/heads/main^{commit}": rootA, rootA + "^{tree}": c.tree}}
 		f.install(t)
 		o := runS03(Input{Dir: "w", Record: pinRecord(), Who: Who})
 		if o.Kind != c.kind || slices.ContainsFunc(f.calls, func(s string) bool { return strings.HasPrefix(s, "init") || strings.HasPrefix(s, "commit") }) {

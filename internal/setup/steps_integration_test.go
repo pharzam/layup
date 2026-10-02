@@ -4,6 +4,7 @@ package setup
 
 import (
 	"bytes"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -177,13 +178,18 @@ func TestAStepThatStoppedInItsMiddle(t *testing.T) {
 		t.Errorf("layup removed a file of the target: %v", err)
 	}
 
-	w3 := newWorkArea(t, filepath.Join(tmp, "3"), url)
-	if _, err := Run(w3, m, Who, noStep); err != nil {
-		t.Fatal(err)
-	}
-	gitOut(t, filepath.Join(w3, "target"), "-c", "user.name=t", "-c", "user.email=t@layup.invalid", "commit", "-q", "--allow-empty", "-m", "another commit")
-	if _, err := Run(w3, Steps(noGaps, nil), Who, noStep); err == nil || err.Error() != "target of the work area has a history that S03 did not make: start again in a new work area" {
-		t.Errorf("a target with another history: %v; want the input error", err)
+	for i, change := range [][]string{
+		{"commit", "-q", "--allow-empty", "-m", "another commit"},  // a second commit
+		{"commit", "-q", "--amend", "-m", "the baseline, by hand"}, // one commit with the tree pin.tree and another message
+	} {
+		w := newWorkArea(t, filepath.Join(tmp, fmt.Sprint(3+i)), url)
+		if _, err := Run(w, m, Who, noStep); err != nil {
+			t.Fatal(err)
+		}
+		gitOut(t, filepath.Join(w, "target"), append([]string{"-c", "user.name=t", "-c", "user.email=t@layup.invalid"}, change...)...)
+		if _, err := Run(w, Steps(noGaps, nil), Who, noStep); err == nil || err.Error() != "target of the work area has a history that S03 did not make: start again in a new work area" {
+			t.Errorf("a target with another history (%q): %v; want the input error", change, err)
+		}
 	}
 }
 
