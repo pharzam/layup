@@ -11,14 +11,15 @@ import (
 	"github.com/pharzam/layup/internal/tsv"
 )
 
-// The Go schemas of the two records equal their blocks of docs/spec/setup.md
-// (K9: this package is their one home).
+// The Go schemas of the two records, and of the open gaps of a target (#87),
+// equal their blocks of docs/spec/setup.md (K9: this package is their one
+// home).
 func TestTheSchemasEqualTheirBlocks(t *testing.T) {
 	blocks, err := tsv.ReadBlocks(os.DirFS(filepath.Join("..", "..", "docs", "spec")))
 	if err != nil {
 		t.Fatal(err)
 	}
-	for name, s := range map[string]tsv.Schema{"setup-answers": AnswersSchema, "setup-record": RecordSchema} {
+	for name, s := range map[string]tsv.Schema{"setup-answers": AnswersSchema, "setup-record": RecordSchema, "open-gaps": OpenGapsSchema} {
 		block, ok := blocks[name]
 		if !ok {
 			t.Errorf("docs/spec/ has no block %s", name)

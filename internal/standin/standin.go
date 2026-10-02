@@ -30,7 +30,8 @@ const (
 var who = git.Identity{Name: "stand-in", Email: "stand-in@layup.invalid", Time: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)}
 
 // baselineFiles gives the files of the stand-in baseline at url: the history
-// and the phrases of the kit, which a setup removes (S05, S14).
+// and the phrases of the kit, which a setup removes (S05, S14), and its two
+// check scripts.
 func baselineFiles(url string) map[string]string {
 	return map[string]string{
 		"README.md":                         "# The stand-in baseline\n\nThis repository is a generic **template** for a team that delivers a specified product.\n",
@@ -40,6 +41,10 @@ func baselineFiles(url string) map[string]string {
 		"docs/tasks/T-0001.md":              "# T-0001: a task of the baseline\n",
 		"docs/tasks/backlog.md":             "# Backlog\n\n- **T-0001**: a task of the baseline ([#1](" + url + "/issues/1))\n",
 		"docs/tasks/completed.md":           "# Completed\n\n- **2026-01-01**: **T-0000**, the first task of the baseline ([#0](" + url + "/issues/0))\n",
+		// The baseline's own check scripts, as stubs that pass: the checks
+		// discipline-tests and link-lint run them (#87).
+		"docs/tests/run-discipline-tests.sh": "#!/bin/sh\necho 'run-discipline-tests: the stand-in: 0 failed'\n",
+		"docs/links/link-lint.sh":            "#!/bin/sh\necho 'link-lint: OK  0 links resolved'\n",
 	}
 }
 

@@ -29,9 +29,10 @@ var (
 		"onboarding":  func(fsys fs.FS, _ history) []string { return onboardingFindings(fsys) },
 		"glossary":    func(fsys fs.FS, _ history) []string { return glossaryFindings(fsys) },
 		"guardrails":  func(fsys fs.FS, _ history) []string { return guardrailsFindings(fsys) },
+		"markers":     markersFindings,
 	}
-	builtGroups = []string{"pin", "kit-history", "facts", "onboarding", "glossary", "guardrails", "adapted", "identity"} // the keys of built, in the order of the table
-	notYetBuilt = []string{"markers"}
+	builtGroups = []string{"pin", "kit-history", "facts", "onboarding", "glossary", "guardrails", "markers", "adapted", "identity"} // the keys of built, in the order of the table
+	notYetBuilt = []string{}
 	// targetKinds names, for each check in a target's form, the kinds of the
 	// lines of its sh function that the target keeps with the same text (D9
 	// of #89); the other kinds are LAYUP's form, which the engine does not run.
@@ -152,6 +153,24 @@ func TestTheFixturesOfSetupCheck(t *testing.T) {
 	slices.Sort(skipped)
 	if want := slices.Sorted(slices.Values(layupOnly)); !slices.Equal(skipped, want) {
 		t.Errorf("the cases that the harness did not compare\n got %q\nwant %q (layupOnly)", skipped, want)
+	}
+}
+
+// The exemptions of check markers equal MK_EXEMPT of setup-check.sh, read at
+// test time (D1 of #87).
+func TestTheExemptionsOfMarkersEqualTheSh(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "..", "docs", "setup", "setup-check.sh"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var exempt string
+	for _, l := range strings.Split(string(data), "\n") {
+		if strings.HasPrefix(l, "MK_EXEMPT='") && strings.HasSuffix(l, "'") {
+			exempt = strings.TrimSuffix(strings.TrimPrefix(l, "MK_EXEMPT='"), "'")
+		}
+	}
+	if exempt == "" || exempt != mkExempt {
+		t.Errorf("MK_EXEMPT of setup-check.sh\n%q\nthe Go copy\n%q", exempt, mkExempt)
 	}
 }
 
