@@ -10,7 +10,11 @@ assertion. Outputs are cut to the relevant lines ("…"). Host: macOS, `go1.27.1
 `input_rule_test.go` and `input_rule_checker_test.go`. Their tests and the scan
 moved, with no change, into `cli_test.go`, `rules_test.go` and
 `rules_checker_test.go`, so that the diff stays inside the file count of the
-budget. The green runs are at the end.
+budget. Two more files changed after the red runs, so the line numbers of their
+lines below are those of the earlier state: `usage_e2e_test.go` (the case of
+`TestVersion` with an empty `PATH`, note 2 of the plan review) and
+`bytes_test.go` (the skeleton of `sameBytes` was shorter) (review round 1,
+note 6). The green runs are at the end.
 
 Tests that pass on the skeleton guard behaviour that the base already has:
 `TestAnInputErrorPrintsTheReasonAndNoUsage`, `TestTheUsageOfLayupListsItsCommands`,
