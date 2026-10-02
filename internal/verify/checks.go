@@ -16,11 +16,13 @@ import (
 // order of its sh function (D2 of #84). No finding is a pass. The harness runs
 // them on the fixtures of docs/setup/tests/.
 
-// history is the git part of a repository that check pin reads.
+// history is the git part of a repository that the checks read: check pin
+// its history, check adapted its tracked files.
 type history interface {
 	IsShallow() (bool, error)
 	RootCommits() ([]string, error) // of HEAD
 	Tree(commit string) (string, error)
+	Files() ([]string, error) // the tracked files, as git ls-files -z gives them
 }
 
 const pinPath = "docs/setup/armature.pin"
@@ -238,6 +240,10 @@ func checkKitHistory(in input) []string {
 	}
 	return out
 }
+
+// checkAdapted is check adapted of a target: the core alone (setup.md:
+// "check_adapted").
+func checkAdapted(in input) []string { return adaptedFindings(in.fsys, in.repo) }
 
 // checkIdentity is check identity of a target: the core, then the name.
 func checkIdentity(in input) []string {

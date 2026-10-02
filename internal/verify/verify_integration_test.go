@@ -74,7 +74,7 @@ func TestRunOnAStandInWorkArea(t *testing.T) {
 			got = append(got, r.Check+" "+r.Result+" "+r.Reason)
 		}
 	}
-	if want := []string{"pin pass ", "kit-history pass ", "identity pass "}; strings.Join(got, "|") != strings.Join(want, "|") || len(tbl.Rows) != 15 ||
+	if want := []string{"pin pass ", "kit-history pass ", "adapted pass ", "identity pass "}; strings.Join(got, "|") != strings.Join(want, "|") || len(tbl.Rows) != 15 ||
 		tbl.Rows[13].Check != "gate:static" || tbl.Rows[14].Check != "gate:layout" {
 		t.Errorf("the rows %q; want %q, the others not built yet, and gate:static and gate:layout last", tbl.Rows, want)
 	}

@@ -94,7 +94,7 @@ type check struct {
 }
 
 // checks is the table of setup.md, in its order (D4 of #84). Rows 10 to 15 of
-// the plan add the other checks.
+// the plan add the other checks; row 11 added adapted.
 var checks = []check{
 	{"discipline-tests", nil},
 	{"pin", checkPin},
@@ -104,7 +104,7 @@ var checks = []check{
 	{"glossary", nil},
 	{"guardrails", nil},
 	{"markers", nil},
-	{"adapted", nil},
+	{"adapted", checkAdapted},
 	{"identity", checkIdentity},
 	{"link-lint", nil},
 	{"sources", nil},
@@ -138,6 +138,7 @@ type gitHistory struct{ dir string }
 
 func (h gitHistory) IsShallow() (bool, error)       { return git.IsShallow(h.dir) }
 func (h gitHistory) RootCommits() ([]string, error) { return git.RootCommits(h.dir, "HEAD") }
+func (h gitHistory) Files() ([]string, error)       { return git.LsFiles(h.dir) }
 func (h gitHistory) Tree(commit string) (string, error) {
 	return git.RevParse(h.dir, commit+"^{tree}")
 }

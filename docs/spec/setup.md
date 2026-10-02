@@ -310,7 +310,7 @@ of each such check passes and fails on the same fixtures as
 | `glossary` | yes, in a target's form | each `F-NNNN#n` it cites resolves as above; LAYUP's heading and its count of 25 do not apply |
 | `guardrails` | yes, in a target's form | each entry's `Check:` value is `no check yet` or a file and a gate, as `check_guardrails`; each citation resolves; LAYUP's count of 9 does not apply |
 | `markers` | yes | `check_markers`, with LAYUP's `MK_EXEMPT` (S10) |
-| `adapted` | yes | `check_adapted` |
+| `adapted` | yes | `check_adapted`, with LAYUP's `AD_EXCLUDE` and `ad_allowed`, which the engine embeds at its version; a path that a target does not have matches nothing |
 | `identity` | yes | `check_identity`, with the target's name: `README.md` also holds the record row `name` of S01 |
 | `link-lint` | yes | the baseline's own `sh docs/links/link-lint.sh` exits 0 |
 | `sources` | yes | every value row of the record has a source; each `answer` ref is a row of `answers.tsv`; each `catalog` ref is a file of the catalog entry; each `fact` ref is a fact of `docs/facts/`; each `gap` row has its marker in the tree and its row in `open-gaps.tsv` |
@@ -346,7 +346,8 @@ reason  text                             -    the first failure, or the `clear` 
 - **A check that this version of `layup` does not have yet** is `not-active`,
   reason `not built yet`, so the command gives exit 1 until rows 10 to 15 of the
   [plan](../plan/README.md#the-tasks-of-phase-1) add each check (`NFR-004`
-  item 1). The present code has `pin`, `kit-history` and `identity`.
+  item 1). The present code has `pin`, `kit-history`, `adapted` (task `T-8ya0`)
+  and `identity`.
 - **The scratch tree** is `git worktree add --detach` of the head of
   `layup-setup`, in a new temporary directory outside `WORK`: a temporary
   directory (`TMPDIR`) in `WORK` is an input error. The run adds the tree in the
@@ -385,6 +386,46 @@ reason  text                             -    the first failure, or the `clear` 
   URL (a valid `S01-baseline` in a test: `git ls-remote` and `git clone` take
   it), and makes a work area from it with a setup by hand. No file of it is in
   Git; a marker in Go source is written as an escape.
+
+**Decided here** (task `T-8ya0`, #88), check `adapted`:
+
+- **The rule is `check_adapted` as it is** (O-123): a target's check reads
+  LAYUP's `AD_EXCLUDE` and `ad_allowed`, which the engine embeds at its version,
+  as S10 reads LAYUP's `MK_EXEMPT`; a path that a target does not have matches
+  nothing. `TestTheListsOfAdaptedEqualTheSh` compares the two lists with
+  `setup-check.sh`.
+- **The files** are the paths of `git ls-files -z` whose name ends in `.md` (in
+  that case, as the pathspec `'*.md'` of the sh function reads it), that
+  `AD_EXCLUDE` does not match, and that are regular files when links are
+  followed (`[ -f ]`). The sh function lists the paths without `-z`, so it skips
+  a path that git quotes (one with `"`, `\` or a control character in it); the
+  engine reads it, because a tracked file is read, not skipped. A failed list is
+  the finding `git: cannot list the tracked files`.
+- **The text is bytes,** as `awk` reads it in the C locale; a NUL byte is one
+  more byte, where macOS `awk` ends the line at it. A line loses a last
+  carriage return; each run of spaces and tabs becomes one space; a space at
+  the start or at the end of a line is removed; a line with no other character
+  ends the paragraph; a marker from `‹` to the first `›`
+  after it, or to the line end when it does not close, is one unit; the lines
+  of a paragraph are joined with one space. The lower-case text changes only
+  `A` to `Z`, so a position in it is the same position in the text.
+- **A hit** of one of the 16 patterns of the sh function is at the first letter
+  of its word, the end of the boundary before it, so a boundary of more than one
+  byte (for example `é`) does not move it; its line is the line where its word
+  starts. A hit of the first pattern of rule 1 whose eleven lower-case bytes
+  from its first letter are `kit-history` or `kit-linters` is not a finding.
+- **The findings** are `<rule> <name>: <path>:<line>`, each once, in byte order;
+  the first is the reason of the row. The sh function sorts in the locale of its
+  host; byte order makes the reason one value on every host (`NFR-005`).
+- **The list for the prose step** (K12, O-123): `Flagged` of `internal/verify`
+  gives the path of each file of a work tree that the check flags, once, in byte
+  order; the prose step (row 13) stops for each one, through `internal/cli`.
+- **Measured:** on the tree of LAYUP's root commit `d2516fd` (the unchanged
+  baseline), the engine and the sh function in the C locale give the same 441
+  lines in 38 files. **Known limit of the sh function:** macOS `awk` 20200816
+  in a UTF-8 locale stops on a hit whose word follows a character of more than
+  one byte ("towc: multibyte conversion failure"), and the sh check then passes
+  that file; the engine's check does not read the locale.
 
 ### The stack catalog
 
