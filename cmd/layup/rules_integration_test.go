@@ -123,3 +123,21 @@ func goCmd(t *testing.T, root string, args ...string) []byte {
 	}
 	return out
 }
+
+// No non-test Go file of the module reads an environment variable or the
+// standard input, except environ of internal/git; the same scan finds the
+// seeded read of a fixture module (docs/spec/README.md, Commands: Arguments;
+// NFR-005).
+func TestInputRule(t *testing.T) {
+	real := load(t, filepath.Join("..", ".."))
+	if len(real.sources["internal/git"]) == 0 || len(real.sources["internal/cli"]) == 0 {
+		t.Fatal("no source of internal/git or internal/cli was read, so the scan checks nothing")
+	}
+	if f := checkInputs(real); len(f) != 0 {
+		t.Errorf("the module breaks the input rule:\n%s", strings.Join(f, "\n"))
+	}
+	want := "input rule: internal/cli/cli.go:9 reads os.Getenv"
+	if f := checkInputs(load(t, filepath.Join("testdata", "envread"))); !slices.Equal(f, []string{want}) {
+		t.Errorf("the fixture gives\n%s\nwant only the finding %s", strings.Join(f, "\n"), want)
+	}
+}

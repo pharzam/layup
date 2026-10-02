@@ -216,7 +216,7 @@ for a requirement of a later phase. Each delivering task fills the Test column.
 
 | REQ     | Facts                          | Guardrail   | ADR      | Task     | Test |
 | ------- | ------------------------------ | ----------- | -------- | -------- | ---- |
-| REQ-001 | F-0003#41, F-0003#14, F-0003#15, F-0001#11 | — | ADR-0011 | T-dq05, T-zmj6, T-5zmw, T-evad; `M2c`, `M4b` | TestGoldenRealPSB; check facts (F-0004) |
+| REQ-001 | F-0003#41, F-0003#14, F-0003#15, F-0001#11 | — | ADR-0011 | T-dq05, T-zmj6, T-5zmw, T-evad; `M2c`, `M4b` | TestGoldenRealPSB; check facts (F-0004); TestUsageErrors (cmd/layup, e2e: the usage errors of `layup psb check`) |
 | REQ-002 | F-0003#42, F-0003#15, F-0003#37, F-0001#4, F-0001#8 | §1.1 Inv-4 | ADR-0011, ADR-0016 | T-b97r (its child tasks), T-evad; `M2d`, `M4c` | — |
 | REQ-003 | F-0003#43, F-0001#3, F-0003#64 | §1.1 Inv-3 | ADR-0017 | `M2b`, `M2d`, `M2e`, `M2f` | — |
 | REQ-004 | F-0003#44, F-0003#11, F-0003#12, F-0003#13, F-0001#7 | §1.1 Inv-7 | ADR-0011, ADR-0016 | T-vk3k (its child tasks), T-d6q5, T-evad; `M2f`, `M4c` | — |
@@ -237,8 +237,8 @@ for a requirement of a later phase. Each delivering task fills the Test column.
 | NFR-001 | F-0001#1                        | §1.1 Inv-1  | ADR-0011, ADR-0014 | T-b97r, T-evad; `M2a`, `M4c` | — |
 | NFR-002 | F-0001#2, F-0003#65             | §1.1 Inv-2  | ADR-0013, ADR-0016 | T-b97r, T-evad; `M4a` | — |
 | NFR-003 | F-0001#4, F-0003#63             | §1.1 Inv-4  | —        | T-nfh8, T-b97r, T-evad | check markers |
-| NFR-004 | F-0001#5                        | §1.1 Inv-5  | ADR-0011 | T-vk3k, T-b97r | — |
-| NFR-005 | F-0001#6                        | §1.1 Inv-6  | ADR-0015 | T-2tc2, T-5sgt, T-b97r; `M3a` | TestPackageRules (cmd/layup, integration: no network package) |
+| NFR-004 | F-0001#5                        | §1.1 Inv-5  | ADR-0011 | T-vk3k, T-b97r | TestExitCode (internal/cli, unit: a check that did not run never gives 0) |
+| NFR-005 | F-0001#6                        | §1.1 Inv-6  | ADR-0015 | T-2tc2, T-5sgt, T-b97r; `M3a` | TestPackageRules (cmd/layup, integration: no network package); TestInputRule (cmd/layup, integration: no input from the environment); TestVersion (cmd/layup, e2e: two runs give the same bytes) |
 | NFR-006 | F-0001#8                        | §1.1 Inv-8  | ADR-0009 | T-r7zg, T-b97r | check pin |
 | NFR-007 | F-0004#1                        | —           | ADR-0010 | T-mtb9, T-2tc2 | TestPackageRules (cmd/layup, integration) |
 
@@ -252,3 +252,4 @@ for a requirement of a later phase. Each delivering task fills the Test column.
 | 2026-10-01 | The implementation plan (task `T-55n2`, #76, O-121 to O-124): the §12 Task column names the plan's tasks for phase 1 and its milestones for phases 2 to 4 | REQ-001 to REQ-018, NFR-001 to NFR-007 (the Task column), and the Test cell of NFR-007 |
 | 2026-10-01 | The test of the package rules (task `T-2tc2`, #79): the §12 Test cells of NFR-005 and NFR-007 name `TestPackageRules` | NFR-005, NFR-007 (the Test cells) |
 | 2026-10-02 | The PDR (task `T-4wrw`, #99, decision O-129): the Operator approved this PRD at the commit `b48764f` ([`PDR-0001`](../pdr/PDR-0001.md)) | none (Status `Draft` to `Accepted`, PDR-0001) |
+| 2026-10-02 | The command frame (task `T-2yw7`, #80): the §12 Test cells of REQ-001, NFR-004 and NFR-005 name the tests of the frame | REQ-001, NFR-004, NFR-005 (the Test cells) |

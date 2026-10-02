@@ -17,13 +17,12 @@ milestone, whose specification task names the test.
 A discipline check (for example check `pin` of
 [`setup-check.sh`](../setup/setup-check.sh) for LAYUP's own pin) is not a row here,
 because a row's level is one of `unit`, `integration`, `e2e` and `uat`;
-`PRD-0001` §12 names such a check in its Test column. The tests of `layup version`
-and of the usage errors (`TestBinaryPrintsItsVersion`,
-`TestVersionPrintsTheVersionAndExitsZero`, `TestNoSubcommandPrintsUsageAndExitsTwo`,
-`TestUnknownSubcommandExitsTwo`) cover no requirement of `PRD-0001`: they test the
-command frame of [`spec/README.md`](../spec/README.md), and row 3 of the plan
-(`T-2yw7`) gives them rows. A row that covers more than one requirement gives the
-fact and the ADR of the first.
+`PRD-0001` §12 names such a check in its Test column. A test of the command
+frame of [`spec/README.md`](../spec/README.md), "Commands", that proves no
+requirement of `PRD-0001` (the version, the parser, the usage, the progress
+lines) has `—` in Covers and in Fact, and its row names the frame (task `T-2yw7`,
+#80). A row that covers more than one requirement gives the fact and the ADR of
+the first.
 
 | Test ID | Level | Covers (REQ/NFR) | Fact (F-NNNN#n) | Guardrail | ADR | Task | Status |
 |---------|-------|------------------|-----------------|-----------|-----|------|--------|
@@ -33,6 +32,13 @@ fact and the ADR of the first.
 | `T-5zmw/e2e/psb-check` | e2e | REQ-001 | F-0003#41 | — | ADR-0011 | T-5zmw | planned |
 | `TestEverySchemaBlockIsBuiltOrNotYetBuilt` (`internal/tsv/blocks_integration_test.go`) | integration | NFR-001 | F-0001#1 | guardrails.md §1.1 Inv-1 | ADR-0014 | T-18v6 | green |
 | `TestPackageRules` (`cmd/layup/rules_integration_test.go`) | integration | NFR-005, NFR-007 | F-0001#6 | guardrails.md §1.1 Inv-6 | ADR-0015 | T-2tc2 | green |
+| `TestExitCode` (`internal/cli/cli_test.go`) | unit | NFR-004 | F-0001#5 | guardrails.md §1.1 Inv-5 | ADR-0011 | T-2yw7 | green |
+| `TestUsageErrors` (`cmd/layup/usage_e2e_test.go`) | e2e | REQ-001 | F-0003#41 | — | ADR-0011 | T-2yw7 | green |
+| `TestVersion` (`cmd/layup/usage_e2e_test.go`) | e2e | NFR-005 | F-0001#6 | guardrails.md §1.1 Inv-6 | ADR-0015 | T-2yw7 | green |
+| `TestSameBytes` (`cmd/layup/bytes_test.go`) | unit | NFR-005 | F-0001#6 | guardrails.md §1.1 Inv-6 | ADR-0015 | T-2yw7 | green |
+| `TestInputRule` (`cmd/layup/rules_integration_test.go`) | integration | NFR-005 | F-0001#6 | guardrails.md §1.1 Inv-6 | ADR-0015 | T-2yw7 | green |
+| `TestCheckInputsFindsEachReadOfTheEnvironmentOrTheStandardInput`, `TestCheckInputsPassesAModuleThatReadsNoInput` (`cmd/layup/rules_test.go`) | unit | NFR-005 | F-0001#6 | guardrails.md §1.1 Inv-6 | ADR-0015 | T-2yw7 | green |
+| The frame of `spec/README.md`, "Commands": the four tests of `internal/cli/args_test.go`, the three of `internal/cli/progress_test.go`, and each test of `internal/cli/cli_test.go` other than `TestPSBCheckExitCodes` and `TestExitCode` | unit | — | — | — | ADR-0011 | T-t8qp, T-2yw7 | green |
 | `T-5sgt/e2e/gate-command` | e2e | REQ-004, REQ-007, NFR-004, NFR-005 | F-0003#44 | guardrails.md §1.1 Inv-5 | ADR-0016 | T-5sgt | planned |
 | `T-c06a/integration/go-fixtures` | integration | REQ-004, REQ-007 | F-0003#44 | guardrails.md §1.1 Inv-7 | ADR-0016 | T-c06a | planned |
 | `T-8vpw/e2e/verify-not-active` | e2e | NFR-004, REQ-002 | F-0001#5 | guardrails.md §1.1 Inv-5 | ADR-0011 | T-8vpw | planned |
