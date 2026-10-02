@@ -61,7 +61,7 @@ reads this table, and holds no copy of it, which could differ from it.
 | `internal/git` | the one caller of the `git` program: [its calls](#the-calls-of-internalgit) | — | `git` |
 | `internal/psb` | the rules G1 to G5 and the gap table ([`psb-check.md`](psb-check.md)) | `internal/tsv` | no |
 | `internal/catalog` | the stack catalog, embedded with `embed` ([`setup.md`](setup.md#the-stack-catalog)) | `internal/tsv` | no |
-| `internal/work` | the work area of a target: its paths, and the schemas and the readers of `answers.tsv` and `record.tsv` ([`setup.md`](setup.md#the-answers)), which `internal/setup` and `internal/verify` share (K9) | `internal/tsv` | no |
+| `internal/work` | the work area of a target: its paths, and the schemas and the readers of `answers.tsv` and `record.tsv` ([`setup.md`](setup.md#the-answers)), which `internal/setup` and `internal/verify` share (K9); the record row `answers.sha256`, which `internal/setup` writes and `internal/standin` gives its stand-in | `internal/tsv` | no |
 | `internal/gate` | runs the kinds of a gate manifest on a head ([`gate.md`](gate.md)) | `internal/tsv`, `internal/git` | `sh -c`: the gate commands |
 | `internal/setup` | the step runner of `layup setup` ([`setup.md`](setup.md)) | `internal/tsv`, `internal/git`, `internal/catalog`, `internal/work` | no |
 | `internal/verify` | the checks of `layup setup verify` ([`setup.md`](setup.md)) | `internal/tsv`, `internal/git`, `internal/catalog`, `internal/gate`, `internal/work` | `sh`: the baseline's own check scripts |
@@ -124,6 +124,7 @@ that the steps, the checks and `layup gate` name.
 | `Commit` | `git commit -m MESSAGE` | S03 to S15; a fixture run |
 | `SwitchCreate` | `git switch -c BRANCH COMMIT` | S04: the branch `layup-setup` |
 | `SwitchOrphan` | `git switch --orphan BRANCH` | S15: the branch `layup-records` |
+| `Branch` | `git symbolic-ref --quiet HEAD` | the step runner: a commit of S04 to S14 only on `layup-setup` (task `T-79y7`) |
 | `RevParse` | `git rev-parse --verify --end-of-options REV` | S02, S03: the tree of a commit; `layup gate`: `--base`, `--head` |
 | `RootCommits` | `git rev-list --max-parents=0 --end-of-options REV --` | check `pin` |
 | `IsShallow` | `git rev-parse --is-shallow-repository` | check `pin` (task `T-6x75`) |

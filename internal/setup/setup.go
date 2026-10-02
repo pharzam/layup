@@ -151,6 +151,7 @@ type system struct {
 	readAnswers   func(string) (work.Answers, error)
 	writeRecord   func(string, work.Record) error
 	writeCommands func(string, string) error
+	branch        func(dir string) (string, error)
 	commit        func(dir, message string, who git.Identity) error
 }
 
@@ -168,6 +169,7 @@ var sys = system{
 	writeCommands: func(dir, text string) error {
 		return writeFile(filepath.Join(dir, filepath.FromSlash(work.CommandsPath)), []byte(text))
 	},
+	branch: git.Branch,
 	commit: func(dir, message string, who git.Identity) error {
 		if err := git.Add(dir); err != nil {
 			return err
@@ -216,9 +218,17 @@ func Run(dir string, steps map[string]Step, who git.Identity, step func(i, n int
 		}
 	}
 	for _, id := range ids() { // the answers that a done step read do not change
-		if v, ok := record.Value(id, "answers.sha256"); ok && done[id] && v != digest(answers, steps[id].Reads) {
-			return Result{}, &InputError{fmt.Errorf("%s: the rows %s that %s read changed after it read them",
-				work.AnswersPath, strings.Join(steps[id].Reads, " "), id)}
+		reads := steps[id].Reads
+		if !done[id] || len(reads) == 0 {
+			continue
+		}
+		v, ok := record.Value(id, "answers.sha256")
+		if !ok {
+			return Result{}, &InputError{fmt.Errorf("%s: %s is done and has no row answers.sha256", work.RecordPath, id)}
+		}
+		if v != work.AnswersHash(id, answers, reads)[2] {
+			return Result{}, &InputError{fmt.Errorf("%s: an input that changed after a step read it: the rows %s that %s read",
+				work.AnswersPath, strings.Join(reads, " "), id)}
 		}
 	}
 	var todo []string
@@ -243,22 +253,28 @@ func Run(dir string, steps map[string]Step, who git.Identity, step func(i, n int
 			o := s.Run(Input{Dir: dir, Record: record, Answers: answers})
 			switch o.Kind {
 			case Done, Operator:
+				next := slices.Clone(record)
+				for _, v := range o.Values {
+					next = append(next, append([]string{id}, v...))
+				}
+				handOff := o.Kind == Operator || s.HandOff
+				if handOff && (s.Commands == nil || len(s.Commands(next)) == 0) { // the hand-off is its commands
+					ran[id], failed = StepRow{id, s.Actor, Fail, "a hand-off with no command for the Operator"}, id
+					break
+				}
 				if o.Commit && id >= "S04" && id <= "S14" { // S03 and S15 make their own commits
-					if err := commit(dir, id, who, record); err != nil {
-						ran[id], failed = StepRow{id, s.Actor, Fail, "the commit of the step failed"}, id
+					if reason := commit(dir, id, who, record); reason != "" {
+						ran[id], failed = StepRow{id, s.Actor, Fail, reason}, id
 						break
 					}
 				}
 				evidence := o.Evidence
-				if o.Kind == Operator || s.HandOff {
+				if handOff {
 					evidence = handedOff + o.Evidence
 				}
-				for _, v := range o.Values {
-					record = append(record, append([]string{id}, v...))
-				}
+				record = next
 				if len(s.Reads) > 0 {
-					record = append(record, []string{id, "answers.sha256", digest(answers, s.Reads), "computed",
-						"sha256 of the rows " + strings.Join(s.Reads, " ") + " of " + work.AnswersPath})
+					record = append(record, work.AnswersHash(id, answers, s.Reads))
 				}
 				record = append(record, []string{id, "done", evidence, "step", ""})
 				if err := sys.writeRecord(dir, record); err != nil {
@@ -305,29 +321,36 @@ func Run(dir string, steps map[string]Step, who git.Identity, step func(i, n int
 	return Result{Steps: rows}, nil
 }
 
-// commit commits the change of step id on the branch of the target, by who at
-// the time pin.time of the record.
-func commit(dir, id string, who git.Identity, record work.Record) error {
+// commit commits the change of step id on the branch layup-setup of the
+// target, by who at the time pin.time of the record. It gives the evidence of
+// a commit that failed, or "".
+func commit(dir, id string, who git.Identity, record work.Record) string {
+	const failed = "the commit of the step failed"
 	v, _ := record.Value("S02", "pin.time")
 	t, err := time.Parse("2006-01-02T15:04:05Z", v)
 	if err != nil {
-		return err
+		return failed
+	}
+	target := filepath.Join(dir, work.TargetPath)
+	if b, err := sys.branch(target); err != nil || b != "refs/heads/layup-setup" {
+		return failed + ": the target is not on the branch layup-setup"
 	}
 	who.Time = t
-	return sys.commit(filepath.Join(dir, work.TargetPath), "chore: setup "+id, who)
+	if sys.commit(target, "chore: setup "+id, who) != nil {
+		return failed
+	}
+	return ""
 }
 
 // writeCommands writes commands.sh again from the commands of the done steps,
-// in their fixed order, each with its comment line (D7 of #85).
+// in their fixed order, each with its comment line (D7 of #85); with no
+// command, the file is empty, so no command of an earlier record stays.
 func writeCommands(dir string, steps map[string]Step, record work.Record) error {
 	var cmds []Command
 	for _, id := range ids() {
 		if _, ok := record.Value(id, "done"); ok && steps[id].Commands != nil {
 			cmds = append(cmds, steps[id].Commands(record)...)
 		}
-	}
-	if len(cmds) == 0 {
-		return nil
 	}
 	sort.SliceStable(cmds, func(i, j int) bool { return cmds[i].Order < cmds[j].Order })
 	var b strings.Builder
@@ -351,7 +374,8 @@ func hasPrefix(q string, prefixes []string) bool {
 }
 
 // checkRows is the part of the answers rule that needs no step (D5 of #85): a
-// question that no step asks, and the answer gap, which keeps a marker.
+// question that no step asks, a question of S01 that is not one of its four,
+// and the answer gap, which keeps a marker.
 func checkRows(a work.Answers) error {
 	for i, r := range a {
 		at := fmt.Sprintf("%s: line %d, %s", work.AnswersPath, i+2, r[0])
@@ -360,6 +384,8 @@ func checkRows(a work.Answers) error {
 			return fmt.Errorf("%s: an F- or O- question is answered by a file or a command, not by a row", at)
 		case !hasPrefix(r[0], []string{"S01-", "Q-", "M-"}):
 			return fmt.Errorf("%s: no step asks a question of this form", at)
+		case strings.HasPrefix(r[0], "S01-") && !slices.Contains(s01, r[0]):
+			return fmt.Errorf("%s: S01 does not ask this question", at)
 		case r[1] == "gap" && !strings.HasPrefix(r[0], "M-"):
 			return fmt.Errorf("%s: the answer gap keeps a marker, and this question is not a marker", at)
 		case r[1] == "gap" && r[4] == "":
@@ -370,8 +396,9 @@ func checkRows(a work.Answers) error {
 }
 
 // CheckAsked gives an error for the first row of answers whose question has
-// one of the prefixes and is not one of asked: S01 checks the S01- and Q-
-// rows, and S10 the M- rows.
+// one of the prefixes and is not one of asked: S01 checks the Q- rows against
+// its gap table, and S10 the M- rows against its markers (checkRows checks the
+// S01- rows before any step).
 func CheckAsked(a work.Answers, prefixes, asked []string) error {
 	for i, r := range a {
 		if hasPrefix(r[0], prefixes) && !slices.Contains(asked, r[0]) {
@@ -379,19 +406,6 @@ func CheckAsked(a work.Answers, prefixes, asked []string) error {
 		}
 	}
 	return nil
-}
-
-// digest gives the SHA-256 of the rows of answers whose question has one of
-// the prefixes, sorted, each row its fields joined by tabs.
-func digest(a work.Answers, prefixes []string) string {
-	var rows []string
-	for _, r := range a {
-		if hasPrefix(r[0], prefixes) {
-			rows = append(rows, strings.Join(r, "\t"))
-		}
-	}
-	sort.Strings(rows)
-	return fmt.Sprintf("%x", sha256.Sum256([]byte(strings.Join(rows, "\n"))))
 }
 
 // MarkerID gives the question ID of a marker: M- and the first 8 hexadecimal

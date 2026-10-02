@@ -68,12 +68,14 @@ layup setup WORK
 - **The outcome of a step:** `done` (the runner writes its value rows and its
   `done` row with the evidence, and goes on), a stop (the run ends with the
   stop table, exit 3), `fail` or `not-active` (the run ends, exit 1), or a
-  hand-off (S13: its own part is done; its `done` row says `handed to the
-  Operator: …`, never that the Operator ran a command, and its result is
-  `operator`). After a step that did not pass, each later step is
-  `not-active`, evidence `not run: <step> did not pass`. A commit of a step
-  that fails makes the step `fail`, with no `done` row, so a rerun does it
-  again. The actor of each step of phase 1 is `layup-setup`.
+  hand-off (S13: its own part is done, and its commands are in `commands.sh`;
+  its `done` row says `handed to the Operator: …`, never that the Operator ran
+  a command, and its result is `operator`; a hand-off with no command is
+  `fail`). After a step that did not pass, each later step is `not-active`,
+  evidence `not run: <step> did not pass`. A commit of a step that fails, or
+  that the target's branch is not `layup-setup` stops before it starts, makes
+  the step `fail`, with no `done` row and no commit, so a rerun does it again.
+  The actor of each step of phase 1 is `layup-setup`.
 - **The inputs:** a `WORK` that is not a directory, or an `answers.tsv` or a
   `record.tsv` that does not match its schema, is an input error (exit 2). A
   missing `out/record.tsv` is a new work area, and a missing
@@ -82,8 +84,9 @@ layup setup WORK
 - **`commands.sh`** is written again at the end of each run from the commands
   of the done steps, each a function of the record, in the order of
   [Where the records go in phase 1](#where-the-records-go-in-phase-1), each
-  with a comment line before it; the texts of the commands, the apply of the
-  ruleset included, are the steps' (S03, S13, S15).
+  with a comment line before it, and empty when no done step has a command, so
+  no command of an earlier record stays; the texts of the commands, the apply
+  of the ruleset included, are the steps' (S03, S13, S15).
 - **The present code** (task `T-79y7`): each step is a stub, `not-active`,
   evidence `not built yet`, so `layup setup WORK` gives exit 1 until the rows 9,
   13 and 15 of the [plan](../plan/README.md#the-tasks-of-phase-1) build the
@@ -130,7 +133,8 @@ the one home of the phase-1 steps of a target. A row that differs from
 | S15 | `layup setup`; the push by the Operator | the record; `out/verify.tsv` | Writes the record's last rows and the rule-path register, and the first commit of `layup-records` ([below](#where-the-records-go-in-phase-1), O-115). Not `steps.tsv` into the target (§5: LAYUP's own file). | `out/record.tsv`, `out/rule-paths.tsv`; the records commit; a command | every row of `verify.tsv` is `pass` or `clear` |
 
 Each step from S04 to S14 that changes the tree is one commit on `layup-setup`,
-with the message `chore: setup <step>`, so the history shows each step; S03 makes
+with the message `chore: setup <step>`, so the history shows each step (the
+runner first checks that the target is on that branch); S03 makes
 the root commit on `main` and S15 the first commit of `layup-records`, each with
 its own message. **Decided by the Operator** (O-136, #85): the author and the
 committer of each setup commit and of the records commit is
@@ -176,18 +180,22 @@ Each row of `answers.tsv` answers a question that a step of this run asked: an
 Any other row (a stale marker of an earlier baseline, an `F-` or `O-` ID, whose
 answer is a file or a command) is an input error: the run stops with exit 2 and
 names the row, so no answer becomes a fact of the target without a question
-(**decided here**, Invariant 4). S01 checks the `S01-` and `Q-` rows; S10 checks
-the `M-` rows and the rest.
+(**decided here**, Invariant 4). The runner checks the prefixes and the `S01-`
+rows, whose four names are fixed, before any step; S01 checks the `Q-` rows
+against its gap table, and S10 the `M-` rows against its markers.
 
 **Decided here** (task `T-79y7`, #85): before any step, the runner refuses a
-row whose question no step asks (`F-`, `O-`, or another prefix), an answer
-`gap` to a question that is not a marker, and an answer `gap` with no
-`question_text`; a question twice is an error of the key. When a step that
-reads answers is done (S01 its `S01-` and `Q-` rows, S10 its `M-` rows), the
-runner writes the record row `<step> answers.sha256` (source `computed`), the
-SHA-256 of those rows as the step read them; each run first compares it with the
-rows as they are, so a row that changed, went or came is exit 2, "an input that
-changed after a step read it", before S04 or S06 writes an answer as a fact.
+row whose question no step asks (`F-`, `O-`, another prefix, or an `S01-`
+question that is not one of the four of S01), an answer `gap` to a question
+that is not a marker, and an answer `gap` with no `question_text`; a question
+twice is an error of the key. When a step that reads answers is done (S01 its
+`S01-` and `Q-` rows, S10 its `M-` rows), the runner writes the record row
+`<step> answers.sha256` (source `computed`, ref `sha256 inputs/answers.tsv
+<prefix>…`), the SHA-256 of those rows as the step read them; each run first
+compares it with the rows as they are, so a row that changed, went or came is
+exit 2, "an input that changed after a step read it", before S04 or S06 writes
+an answer as a fact. A done step that reads answers and has no such row is exit
+2 too.
 
 ```tsv-schema setup-answers host:<work>/inputs/answers.tsv
 question  text                       key  the question ID, as the stop table gives it
@@ -207,7 +215,7 @@ step    id(SNN)                                   key  the step that set the val
 name    text                                      key  the value's name: `stack`, `pin.commit`, `marker:<file>:<line>`, …; `done` for a step's evidence row
 value   text                                      -    the value; for `done`, the evidence line
 source  enum(answer|catalog|fact|computed|gap|step)  -  (`computed` is decided here: §5 names three sources, and the pin values come from `git`, not from a person) `answer`: an answer row; `catalog`: a catalog file; `fact`: a fact citation the Operator accepted; `computed`: a command's output, or a hash that the engine computes; `gap`: kept as an open gap; `step`: a `done` row
-ref     text                                      -    `answer`: the question ID; `catalog`: `<stack>/<path>`; `fact`: `F-NNNN#n`; `computed`: the command, or `sha256 <path>` for a hash; `gap`: `docs/setup/open-gaps.tsv`; `step`: `—`
+ref     text                                      -    `answer`: the question ID; `catalog`: `<stack>/<path>`; `fact`: `F-NNNN#n`; `computed`: the command, `sha256 <path>` for the hash of a file, or `sha256 <path> <prefix>…` for the hash of the rows of the file whose question has one of the prefixes (`answers.sha256`); `gap`: `docs/setup/open-gaps.tsv`; `step`: `—`
 ```
 
 ### The rule-path register

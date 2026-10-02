@@ -66,23 +66,7 @@ func TestARunOnARealWorkArea(t *testing.T) {
 	t.Setenv("HOME", home)
 	target := filepath.Join(w.Dir, work.TargetPath)
 	before := gitOut(t, target, "rev-parse", "layup-setup")
-	m := Stubs()
-	for _, id := range ids() {
-		s := m[id]
-		s.Run = func(Input) Outcome { return Outcome{Kind: Done, Evidence: "ok " + id} }
-		if id == "S05" {
-			s.Run = func(in Input) Outcome {
-				if err := os.WriteFile(filepath.Join(in.Dir, work.TargetPath, "x.md"), []byte("one\ntwo\n"), 0o644); err != nil {
-					return Outcome{Kind: Fail, Evidence: err.Error()}
-				}
-				return Outcome{Kind: Done, Evidence: "x.md", Commit: true}
-			}
-			s.Commands = func(work.Record) []Command {
-				return []Command{{Order: 1, Comment: "the push of the root commit", Text: "git -C target push origin main"}}
-			}
-		}
-		m[id] = s
-	}
+	m := doneSteps()
 	res, err := Run(w.Dir, m, testWho, noStep)
 	if err != nil {
 		t.Fatal(err)
@@ -106,5 +90,53 @@ func TestARunOnARealWorkArea(t *testing.T) {
 	cmds := filepath.Join(w.Dir, filepath.FromSlash(work.CommandsPath))
 	if out, err := exec.Command("sh", "-n", cmds).CombinedOutput(); err != nil {
 		t.Errorf("sh -n %s: %v\n%s", cmds, err, out)
+	}
+}
+
+// doneSteps gives the stubs, each done: S05 writes x.md and asks for a commit,
+// and S05 and S13 give a command for the Operator.
+func doneSteps() map[string]Step {
+	m := Stubs()
+	for _, id := range ids() {
+		s := m[id]
+		s.Run = func(Input) Outcome { return Outcome{Kind: Done, Evidence: "ok " + id} }
+		switch id {
+		case "S05":
+			s.Run = func(in Input) Outcome {
+				if err := os.WriteFile(filepath.Join(in.Dir, work.TargetPath, "x.md"), []byte("one\ntwo\n"), 0o644); err != nil {
+					return Outcome{Kind: Fail, Evidence: err.Error()}
+				}
+				return Outcome{Kind: Done, Evidence: "x.md", Commit: true}
+			}
+			s.Commands = func(work.Record) []Command {
+				return []Command{{Order: 1, Comment: "the push of the root commit", Text: "git -C target push origin main"}}
+			}
+		case "S13":
+			s.Commands = func(work.Record) []Command {
+				return []Command{{Order: 2, Comment: "the push of layup-setup", Text: "git -C target push origin layup-setup:main"}}
+			}
+		}
+		m[id] = s
+	}
+	return m
+}
+
+// A target that is not on the branch layup-setup gets no commit of a step: the
+// step fails, and no branch moves (finding 2 of round 1).
+func TestNoCommitOffTheSetupBranch(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	w, err := standin.Make(t.TempDir(), standin.Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	target := filepath.Join(w.Dir, work.TargetPath)
+	gitOut(t, target, "switch", "-q", "main")
+	before := gitOut(t, target, "rev-parse", "main", "layup-setup")
+	res, err := Run(w.Dir, doneSteps(), testWho, noStep)
+	if err != nil || len(res.Steps) != 15 || res.Steps[4] != (StepRow{"S05", "layup-setup", "fail", "the commit of the step failed: the target is not on the branch layup-setup"}) {
+		t.Errorf("a target on main: %v, the rows %q; want S05 fail", err, res.Steps)
+	}
+	if after := gitOut(t, target, "rev-parse", "main", "layup-setup"); after != before {
+		t.Errorf("the branches moved: %q, then %q", before, after)
 	}
 }

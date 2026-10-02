@@ -180,6 +180,13 @@ func doAt(dir, commit string, args ...string) error {
 	return do(dir, args...)
 }
 
+// Branch gives the branch of the work tree at dir, as refs/heads/<name>; a
+// detached HEAD is an error.
+func Branch(dir string) (string, error) {
+	out, err := call(dir, environ(), "symbolic-ref", "--quiet", "HEAD")
+	return strings.TrimSpace(string(out)), err
+}
+
 // SwitchOrphan puts the work tree on a new branch with no commit; git removes
 // the tracked files from the work tree.
 func SwitchOrphan(dir, branch string) error { return do(dir, "switch", "--orphan", branch) }

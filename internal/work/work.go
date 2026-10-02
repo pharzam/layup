@@ -6,9 +6,13 @@
 package work
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
+	"sort"
+	"strings"
 
 	"github.com/pharzam/layup/internal/tsv"
 )
@@ -89,4 +93,21 @@ func (r Record) Value(step, name string) (string, bool) {
 		}
 	}
 	return "", false
+}
+
+// AnswersHash gives the record row "<step> answers.sha256" of a step that read
+// the rows of a whose question has one of the prefixes (setup.md, The
+// answers): the SHA-256 of those rows, sorted, each its fields joined by tabs,
+// and the ref "sha256 <path> <prefix>…" of the record's rule.
+func AnswersHash(step string, a Answers, prefixes []string) []string {
+	var rows []string
+	for _, r := range a {
+		if slices.ContainsFunc(prefixes, func(p string) bool { return strings.HasPrefix(r[0], p) }) {
+			rows = append(rows, strings.Join(r, "\t"))
+		}
+	}
+	sort.Strings(rows)
+	sum := sha256.Sum256([]byte(strings.Join(rows, "\n")))
+	return []string{step, "answers.sha256", fmt.Sprintf("%x", sum), "computed",
+		"sha256 " + AnswersPath + " " + strings.Join(prefixes, " ")}
 }

@@ -3,6 +3,7 @@
 package main
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -14,6 +15,14 @@ import (
 // and 15 build the steps.
 func TestSetup(t *testing.T) {
 	missing := filepath.Join(t.TempDir(), "missing")
+	unasked := t.TempDir() // an answer to a question that S01 does not ask (finding 4 of round 1)
+	if err := os.MkdirAll(filepath.Join(unasked, "inputs"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(unasked, "inputs", "answers.tsv"),
+		[]byte("question\tanswer\tby\tsource\tquestion_text\nS01-wrong\tx\toperator\tu\t\u2014\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
 	for _, c := range []struct {
 		args          []string
 		reason, usage string
@@ -21,6 +30,7 @@ func TestSetup(t *testing.T) {
 		{[]string{"setup"}, "missing argument WORK", "\nusage: layup "},
 		{[]string{"setup", "--x", "y", "w"}, `unknown flag "--x"`, "\nusage: layup "},
 		{[]string{"setup", missing}, "the work area " + missing + " is not a directory", ""},
+		{[]string{"setup", unasked}, "inputs/answers.tsv: line 2, S01-wrong: S01 does not ask this question", ""},
 	} {
 		r := layup(t, c.args...)
 		if r.code != 2 || r.stdout != "" || !strings.HasPrefix(r.stderr, "layup: "+c.reason+"\n") || (c.usage == "") == strings.Contains(r.stderr, "usage:") {

@@ -2,11 +2,13 @@ package setup
 
 import (
 	"bytes"
+	"cmp"
 	"crypto/sha256"
 	"errors"
 	"fmt"
 	"io/fs"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -23,6 +25,7 @@ type fakeSys struct {
 	recordErr, ansErr  error
 	commits, calls     []string
 	commands           string
+	head               string // the branch of the target: "" is layup-setup, "detached" none
 	noDir, commitFails bool
 }
 
@@ -38,6 +41,12 @@ func (f *fakeSys) install(t *testing.T) {
 		writeCommands: func(_ string, text string) error {
 			f.commands = text
 			return nil
+		},
+		branch: func(string) (string, error) {
+			if f.head == "detached" {
+				return "", errors.New("fatal: ref HEAD is not a symbolic ref")
+			}
+			return cmp.Or(f.head, "refs/heads/layup-setup"), nil
 		},
 		commit: func(_, message string, who git.Identity) error {
 			f.commits = append(f.commits, fmt.Sprintf("%s by %s <%s> at %s", message, who.Name, who.Email, who.Time.UTC().Format(time.RFC3339)))
@@ -61,7 +70,7 @@ func steps(f *fakeSys, out map[string]Outcome) map[string]Step {
 			o = Outcome{Kind: Done, Evidence: "ok " + id}
 		}
 		id := id
-		m[id] = Step{ID: id, Actor: "layup-setup", HandOff: id == "S13", Reads: reads[id], Run: func(Input) Outcome {
+		m[id] = Step{ID: id, Actor: "layup-setup", HandOff: id == "S13", Reads: reads[id], Commands: commands[id], Run: func(Input) Outcome {
 			f.calls = append(f.calls, id)
 			return o
 		}}
@@ -71,12 +80,33 @@ func steps(f *fakeSys, out map[string]Outcome) map[string]Step {
 
 var reads = map[string][]string{"S01": {"S01-", "Q-"}, "S10": {"M-"}}
 
+// commands gives the hand-off, S13, its command for the Operator.
+var commands = map[string]func(work.Record) []Command{"S13": func(work.Record) []Command {
+	return []Command{{Order: 2, Comment: "the push of layup-setup", Text: "git push origin layup-setup:main"}}
+}}
+
+// doneRows gives a record whose steps are done through S<through>, with the
+// row answers.sha256 of each done step that reads answers (no answer yet).
 func doneRows(through int) work.Record {
 	var r work.Record
 	for i := 1; i <= through; i++ {
-		r = append(r, []string{fmt.Sprintf("S%02d", i), "done", "ok", "step", ""})
+		id := fmt.Sprintf("S%02d", i)
+		if reads[id] != nil {
+			r = append(r, work.AnswersHash(id, nil, reads[id]))
+		}
+		r = append(r, []string{id, "done", "ok", "step", ""})
 	}
 	return append(r, []string{"S02", "pin.time", "2026-10-02T09:30:00Z", "computed", "the clock"})
+}
+
+// rowOf gives the row of the record with the step and the name, or nil.
+func rowOf(r work.Record, step, name string) []string {
+	for _, row := range r {
+		if row[0] == step && row[1] == name {
+			return row
+		}
+	}
+	return nil
 }
 
 func noStep(i, n int, name string) func() { return func() {} }
@@ -164,6 +194,30 @@ func TestTheHandOff(t *testing.T) {
 	if err != nil || len(f.calls) != 0 || len(res.Steps) != 15 || res.Steps[12].Result != "operator" {
 		t.Errorf("a resumed run: %v, calls %q, the rows %q; want no call and S13 operator", err, f.calls, res.Steps)
 	}
+	// A hand-off with no command for the Operator fails, with no done row and
+	// no commit, so no row says that commands.sh holds a command that it does
+	// not hold (finding 3 of round 1).
+	for _, c := range []struct {
+		name, step string
+		out        Outcome
+		cmds       func(work.Record) []Command
+	}{
+		{"S13 with no command", "S13", Outcome{Kind: Done, Evidence: "the ruleset file", Commit: true}, nil},
+		{"an outcome operator with an empty list", "S12", Outcome{Kind: Operator, Evidence: "the gate files"}, func(work.Record) []Command { return nil }},
+	} {
+		f := &fakeSys{record: doneRows(4)}
+		f.install(t)
+		m := steps(f, map[string]Outcome{c.step: c.out})
+		s := m[c.step]
+		s.Commands = c.cmds
+		m[c.step] = s
+		res, err := Run("/w", m, testWho, noStep)
+		n, _ := strconv.Atoi(c.step[1:])
+		if _, done := f.record.Value(c.step, "done"); err != nil || done || len(f.commits) != 0 || len(res.Steps) != 15 ||
+			res.Steps[n-1] != (StepRow{c.step, "layup-setup", "fail", "a hand-off with no command for the Operator"}) {
+			t.Errorf("%s: %v, done %v, commits %q, the rows %q; want %s fail, no commit and no done row", c.name, err, done, f.commits, res.Steps, c.step)
+		}
+	}
 }
 
 // The prose step is one group: its missing inputs make one stop table, and a
@@ -249,6 +303,7 @@ func TestTheAnswersRule(t *testing.T) {
 		{"another prefix", "X-1|x|operator|u|", "X-1"},
 		{"gap for a question that is not a marker", "Q-002|gap|idea-owner|u|Why?", "Q-002"},
 		{"gap with no question text", "M-0000abcd|gap|operator|u|", "M-0000abcd"},
+		{"an S01- question that S01 does not ask (finding 4 of round 1)", "S01-wrong|x|operator|u|", "S01-wrong: S01 does not ask this question"},
 	} {
 		f := &fakeSys{answers: answers(append(good, c.row)...)}
 		f.install(t)
@@ -302,15 +357,40 @@ func TestTheAnswersOfADoneStep(t *testing.T) {
 			if _, err := Run("/w", steps(f, out), testWho, noStep); err != nil {
 				t.Fatal(err)
 			}
-			if _, ok := f.record.Value("S01", "answers.sha256"); !ok {
-				t.Fatalf("no row S01 answers.sha256")
+			// The ref of the row follows the record's rule for a hash
+			// (finding 5 of round 1).
+			if row := rowOf(f.record, "S01", "answers.sha256"); row == nil || row[3] != "computed" || row[4] != "sha256 inputs/answers.tsv S01- Q-" {
+				t.Fatalf("the row S01 answers.sha256 %q; want source computed and ref sha256 inputs/answers.tsv S01- Q-", row)
 			}
 			f.answers, f.calls = answers(c.rows...), nil
 			var in *InputError
 			_, err := Run("/w", steps(f, out), testWho, noStep)
-			if got := err == nil; got != ok || !ok && (!errors.As(err, &in) || len(f.calls) != 0) {
+			if got := err == nil; got != ok || !ok && (!errors.As(err, &in) || len(f.calls) != 0 || !strings.Contains(err.Error(), "an input that changed after a step read it")) {
 				t.Errorf("%s, steps done through S%02d: %v, calls %q; want ok %v", c.name, through, err, f.calls, ok)
 			}
+		}
+	}
+}
+
+// A done step that reads answers and has no row answers.sha256 is an input
+// error: a change of its answers would pass with no check (finding 1 of round
+// 1).
+func TestADoneStepWithNoAnswersHash(t *testing.T) {
+	for _, c := range []struct {
+		through int
+		step    string
+	}{{1, "S01"}, {15, "S10"}} {
+		var r work.Record
+		for _, row := range doneRows(c.through) {
+			if row[0] != c.step || row[1] != "answers.sha256" {
+				r = append(r, row)
+			}
+		}
+		f := &fakeSys{record: r}
+		f.install(t)
+		var in *InputError
+		if _, err := Run("/w", steps(f, nil), testWho, noStep); !errors.As(err, &in) || err.Error() != "out/record.tsv: "+c.step+" is done and has no row answers.sha256" || len(f.calls) != 0 {
+			t.Errorf("a done %s with no hash: %v, calls %q; want an input error before any step", c.step, err, f.calls)
 		}
 	}
 }
@@ -352,6 +432,13 @@ func TestTheCommandsFile(t *testing.T) {
 	if f.commands != want {
 		t.Errorf("commands.sh\n%s\nwant\n%s", f.commands, want)
 	}
+	// A run with no command writes commands.sh again, empty, so no command of
+	// an earlier record stays (finding 3 of round 1).
+	f = &fakeSys{commands: "echo stale\n"}
+	f.install(t)
+	if _, err := Run("/w", steps(f, map[string]Outcome{"S02": {Kind: Fail, Evidence: "no commit"}}), testWho, noStep); err != nil || f.commands != "" {
+		t.Errorf("a run with no command: %v, commands.sh %q; want it written again, empty", err, f.commands)
+	}
 }
 
 // A step from S04 to S14 that changed the tree makes one commit on
@@ -377,6 +464,17 @@ func TestTheCommitOfAStep(t *testing.T) {
 	res, err := Run("/w", steps(f, map[string]Outcome{"S05": {Kind: Done, Evidence: "history", Commit: true}}), testWho, noStep)
 	if _, done := f.record.Value("S05", "done"); err != nil || done || len(res.Steps) != 15 || res.Steps[4].Result != "fail" || res.Steps[4].Evidence != "the commit of the step failed" {
 		t.Errorf("a failed commit: %v, done %v, the rows %q; want S05 fail and no done row", err, done, res.Steps)
+	}
+	// A target that is not on the branch layup-setup gets no commit: the step
+	// fails, with no done row (finding 2 of round 1).
+	for _, head := range []string{"refs/heads/main", "detached"} {
+		f = &fakeSys{record: doneRows(4), head: head}
+		f.install(t)
+		res, err := Run("/w", steps(f, map[string]Outcome{"S05": {Kind: Done, Evidence: "history", Commit: true}}), testWho, noStep)
+		if _, done := f.record.Value("S05", "done"); err != nil || done || len(f.commits) != 0 || len(res.Steps) != 15 ||
+			res.Steps[4] != (StepRow{"S05", "layup-setup", "fail", "the commit of the step failed: the target is not on the branch layup-setup"}) {
+			t.Errorf("a target on %s: %v, done %v, commits %q, the rows %q; want S05 fail, no commit and no done row", head, err, done, f.commits, res.Steps)
+		}
 	}
 }
 

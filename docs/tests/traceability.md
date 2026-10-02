@@ -69,8 +69,9 @@ the first.
 | `TestSetupVerify` (`internal/cli/verify_test.go`) | unit | REQ-002, NFR-004 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-6x75 | green |
 | `TestSetupVerifyOnAStandInWorkArea`, `TestSetupVerifyInputErrors` (`cmd/layup/verify_e2e_test.go`) | e2e | REQ-002, NFR-004, NFR-005 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-6x75 | green |
 | `TestARunResumesAfterItsDoneSteps`, `TestTheOutcomes`, `TestTheHandOff`, `TestTheProseGroupStopsOnce`, `TestTheStopTableOrder`, `TestTheTables`, `TestTheCommandsFile`, `TestTheCommitOfAStep`, `TestTheInputs`, `TestTheStubs` (`internal/setup/setup_test.go`) | unit | REQ-002, NFR-001, NFR-004 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-79y7 | green |
-| `TestTheAnswersRule`, `TestCheckAsked`, `TestTheAnswersOfADoneStep`, `TestMarkerID` (`internal/setup/setup_test.go`) | unit | REQ-002, NFR-003 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-79y7 | green |
-| `TestTheSchemasEqualTheirBlocks`, `TestARunOnARealWorkArea` (`internal/setup/setup_integration_test.go`) | integration | REQ-002, NFR-005 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-79y7 | green |
+| `TestTheAnswersRule`, `TestCheckAsked`, `TestTheAnswersOfADoneStep`, `TestADoneStepWithNoAnswersHash`, `TestMarkerID` (`internal/setup/setup_test.go`) | unit | REQ-002, NFR-003 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-79y7 | green |
+| `TestTheSchemasEqualTheirBlocks`, `TestARunOnARealWorkArea`, `TestNoCommitOffTheSetupBranch` (`internal/setup/setup_integration_test.go`) | integration | REQ-002, NFR-005 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-79y7 | green |
+| `TestBranch` (`internal/git/git_integration_test.go`) | integration | REQ-002 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-79y7 | green |
 | `TestSetupCommand` (`internal/cli/setup_test.go`) | unit | REQ-002, NFR-004 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-79y7 | green |
 | `TestSetupExitCodesOnAWorkArea` (`internal/cli/setup_integration_test.go`) | integration | REQ-002, NFR-004 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-79y7 | green |
 | `TestSetup` (`cmd/layup/setup_e2e_test.go`) | e2e | REQ-002, NFR-005 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-79y7 | green |

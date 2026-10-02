@@ -155,13 +155,15 @@ func pinText(url, commit, tree string) string {
 		url, commit, tree, url, commit, PinTime[:10])
 }
 
-// recordRows gives the rows of S01 and S02 of the record, with the changes.
+// recordRows gives the rows of S01 and S02 of the record, with the changes;
+// the row answers.sha256 of S01 is of the answers of answerRows.
 func recordRows(url, commit, tree string, change map[string]string) [][]string {
 	rows := [][]string{
 		{"S01", "stack", "go", "answer", "S01-stack"},
 		{"S01", "name", Name, "answer", "S01-name"},
 		{"S01", "visibility", "public", "answer", "S01-visibility"},
 		{"S01", "baseline", url, "answer", "S01-baseline"},
+		work.AnswersHash("S01", answerRows(url), []string{"S01-", "Q-"}), // the rows that S01 reads (setup.Stubs)
 		{"S01", "done", "every answer present; the stack has a catalog entry", "step", ""},
 		{"S02", "pin.source", url, "answer", "S01-baseline"},
 		{"S02", "pin.commit", commit, "computed", "git ls-remote " + url + " HEAD"},

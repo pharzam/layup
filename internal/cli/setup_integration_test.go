@@ -26,6 +26,11 @@ func stubSteps(t *testing.T, out map[string]setup.Outcome) {
 				o = setup.Outcome{Kind: setup.Done, Evidence: "ok " + id}
 			}
 			s.Run = func(setup.Input) setup.Outcome { return o }
+			if id == "S13" {
+				s.Commands = func(work.Record) []setup.Command {
+					return []setup.Command{{Order: 2, Comment: "the push of layup-setup", Text: "git -C target push origin layup-setup:main"}}
+				}
+			}
 			m[id] = s
 		}
 		return m
@@ -63,5 +68,13 @@ func TestSetupExitCodesOnAWorkArea(t *testing.T) {
 	}
 	if code, out, errOut := run("setup", w2.Dir); code != 2 || out != "" || !strings.HasPrefix(errOut, "layup: out/record.tsv: line 1") {
 		t.Errorf("a record of another form: exit %d, stdout %q, stderr %q; want 2, nothing and the line", code, out, errOut)
+	}
+	// A done S01 with no row answers.sha256 is exit 2 (finding 1 of round 1).
+	w3, err := standin.Make(t.TempDir(), standin.Options{Record: map[string]string{"S01 answers.sha256": ""}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if code, out, errOut := run("setup", w3.Dir); code != 2 || out != "" || errOut != "layup: out/record.tsv: S01 is done and has no row answers.sha256\n" {
+		t.Errorf("a done S01 with no hash: exit %d, stdout %q, stderr %q; want 2 and the reason", code, out, errOut)
 	}
 }
