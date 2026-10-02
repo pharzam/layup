@@ -263,9 +263,9 @@ its plan, with the conditions of its plan review):
   check, and a later prose step can change it. No document outside `docs/adr/`
   links the new record, so the baseline's `adr-lint.sh` gives its warning (not
   an error) for it. A baseline whose `docs/setup/facts.sha256` has a line for a
-  file that S04 changes (an index file, which is not a raw facts file) fails the
-  evidence of S04 at each run, with the reason of check `facts` (notes 2 and 5
-  of review round 1 of #86).
+  file that S04 changes (an index file, which is not a raw facts file), or has
+  CRLF lines, fails the evidence of S04 at each run, with the reason of check
+  `facts` (notes 2 and 5 of review round 1 of #86, note 1 of round 2).
 
 The fixed text of the decision record of the pin, in the baseline's form of an
 ADR (the title line, `Date:`, `## Status`, the three sections), with no
