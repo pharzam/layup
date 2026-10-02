@@ -1,0 +1,3 @@
+mode=autocrlf
+exit=0
+line=setup-check: facts OK

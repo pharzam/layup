@@ -8,7 +8,7 @@
 #               exit=<code>        the exit code setup-check.sh must return
 #               line=<text>        a line the output must hold (exact match);
 #                                  repeat for more lines
-#               mode=root|self|shallow   how the case is run (default: root)
+#               mode=root|self|shallow|autocrlf   how the case is run (default: root)
 #               only=<check,check>  pass `--only <check,check>`, so the case runs
 #                                  only those checks (a fixture tree is not a full
 #                                  setup). Default: the case's directory name, so
@@ -31,6 +31,12 @@
 #                 (the runner writes a stub for each kit linter; each stub
 #                 prints `stub <path> OK` and exits 0 unless EXPECT says otherwise)
 #   mode=shallow  clone the temp repo with --depth 1, then run as mode=root
+#   mode=autocrlf clone the repository that holds this runner, at HEAD, with
+#                 core.autocrlf=true, and run the clone's setup-check.sh on the
+#                 clone (#48): its raw facts files and the script keep their bytes
+#                 only through the rules of its .gitattributes. It reads the
+#                 committed HEAD, so a change of .gitattributes counts when it is
+#                 committed; the kit tree and overlay/ are not used.
 #
 # Exit status: 0 when every case matches its EXPECT, 1 otherwise. A run that
 # found no case fails: a harness that tested nothing is not a pass.
@@ -68,6 +74,12 @@ for case in "$here"/*/*/; do
 	shallow)
 		g clone -q --depth 1 "file://$repo" "$tmp/$n/shallow" 2>/dev/null
 		out=$(sh "$check" "$@" "$tmp/$n/shallow" 2>&1); got=$? ;;
+	autocrlf)
+		top=$(git -C "$here" rev-parse --show-toplevel) && head=$(git -C "$top" rev-parse HEAD) \
+			&& g clone -q --no-hardlinks --no-checkout --config core.autocrlf=true "$top" "$tmp/$n/clone" \
+			&& g -C "$tmp/$n/clone" checkout -q --detach "$head" \
+			|| { echo "FAIL  $name: cannot clone the repository with core.autocrlf=true"; fail=$((fail + 1)); continue; }
+		out=$(sh "$tmp/$n/clone/docs/setup/setup-check.sh" "$@" "$tmp/$n/clone" 2>&1); got=$? ;;
 	self)
 		mkdir -p "$repo/docs/setup" && cp "$check" "$repo/docs/setup/setup-check.sh"
 		for f in docs/tests/run-discipline-tests.sh docs/adr/adr-lint.sh docs/prd/prd-lint.sh docs/links/link-lint.sh; do
