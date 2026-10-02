@@ -201,6 +201,7 @@ docs/tests/nested-checkout-check.sh text eol=lf
 # It is a different attribute from the line-ending pins above, so the ordering
 # rule stated there does not touch it.
 docs/setup/tests/facts/bad-answers-blank/** -whitespace
+docs/setup/tests/facts/bad-blank-tab/** -whitespace
 
 # --- the stack catalog: bytes that go into a target unchanged -----------------
 #

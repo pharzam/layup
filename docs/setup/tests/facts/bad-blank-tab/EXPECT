@@ -1,0 +1,2 @@
+exit=1
+line=setup-check: facts FAIL verbatim: F-0001 fact 2 is empty
