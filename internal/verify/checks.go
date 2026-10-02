@@ -107,8 +107,7 @@ func kitHistoryFindings(fsys fs.FS, repo string) []string {
 			out = append(out, fmt.Sprintf("orphan: docs/tasks/%s.md has no line with %s in backlog.md or completed.md", id, id))
 		}
 	}
-	const sep = `[^\p{L}\p{N}._-]`
-	link := regexp.MustCompile(`(?:^|` + sep + `)` + regexp.QuoteMeta(repo) + `(?:\.git|\.)?(?:$|` + sep + `)`)
+	link := kitLinkRule(repo)
 	for _, index := range []string{"backlog", "completed"} {
 		data, err := fs.ReadFile(fsys, "docs/tasks/"+index+".md")
 		if repo != "" && err == nil && link.Match(data) {
@@ -203,6 +202,20 @@ func validTime(t string) bool {
 	return err == nil && len(t) == len(timeForm)
 }
 
+// LinksBaseline reports whether text links the repository of the baseline at
+// source, by the rule of check kit-history: S05 removes each line of the task
+// indexes that does (K12, D1 of #90).
+func LinksBaseline(source, text string) bool {
+	repo := kitLink(source)
+	return repo != "" && kitLinkRule(repo).MatchString(text)
+}
+
+// kitLinkRule is the link rule of check kit-history for the repository repo.
+func kitLinkRule(repo string) *regexp.Regexp {
+	const sep = `[^\p{L}\p{N}._-]`
+	return regexp.MustCompile(`(?:^|` + sep + `)` + regexp.QuoteMeta(repo) + `(?:\.git|\.)?(?:$|` + sep + `)`)
+}
+
 // kitLink gives the repository of the kit-link rule for a baseline: its URL
 // with no scheme, and no "/" and no ".git" at its end. "" gives "".
 func kitLink(source string) string {
@@ -213,16 +226,22 @@ func kitLink(source string) string {
 }
 
 // identityTarget is the target's part of check identity: README.md holds the
-// name of the target, the record row name of S01.
+// name of the target, the record row name of S01, and names the branch
+// layup-records (architecture §3, note 4 of the plan review of #90).
 func identityTarget(fsys fs.FS, r work.Record) []string {
 	name, missing := value(r, "S01", "name")
 	if missing != "" {
 		return []string{missing}
 	}
-	if readme, err := fs.ReadFile(fsys, "README.md"); err != nil || !bytes.Contains(readme, []byte(name)) {
-		return []string{"name: README.md does not hold the name of the target, " + name}
+	readme, err := fs.ReadFile(fsys, "README.md")
+	var out []string
+	if err != nil || !bytes.Contains(readme, []byte(name)) {
+		out = append(out, "name: README.md does not hold the name of the target, "+name)
 	}
-	return nil
+	if err != nil || !bytes.Contains(readme, []byte("layup-records")) { // §3: the README names the branch (D5 of #90, note 4)
+		out = append(out, "branch: README.md does not name the branch layup-records")
+	}
+	return out
 }
 
 // checkPin is check pin of a target: the core, then the target's part.

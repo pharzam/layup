@@ -38,6 +38,12 @@ var (
 var (
 	verifyRun   = verify.Run
 	verifyCheck = verify.Check
+	// The lists of internal/verify that the steps read (D9 of #90); the unit
+	// tests replace them.
+	verifyMarkers       = verify.Markers
+	verifyBrokenLinks   = verify.BrokenLinks
+	verifyFlagged       = verify.Flagged
+	verifyLinksBaseline = verify.LinksBaseline
 )
 
 // setupRun runs layup setup, and setupSteps gives its steps from the gap table
@@ -212,7 +218,7 @@ func setupCommand(in call) int {
 		}
 	}
 	p := newProgress(in.stderr, "setup")
-	res, err := setupRun(in.args[0], setupSteps(brief, evidence(in.stderr)), setup.Who, func(i, n int, step string) func() {
+	res, err := setupRun(in.args[0], setupSteps(brief, calls(in.stderr)), setup.Who, func(i, n int, step string) func() {
 		p.step(i, n, step)
 		return p.end
 	})
@@ -243,14 +249,58 @@ func readBrief(dir string) (setup.Brief, error) {
 	case err != nil:
 		return setup.Brief{}, fmt.Errorf("%s: %v", setup.BriefPath, err)
 	}
-	if n := invalidLine(src); n > 0 {
-		return setup.Brief{}, fmt.Errorf("%s: line %d is not valid UTF-8", setup.BriefPath, n)
+	if err := checkBrief(setup.BriefPath, src); err != nil {
+		return setup.Brief{}, err
+	}
+	vision, err := readFile(filepath.Join(dir, filepath.FromSlash(setup.VisionPath)))
+	switch {
+	case errors.Is(err, fs.ErrNotExist): // the vision brief is optional
+	case err != nil:
+		return setup.Brief{}, fmt.Errorf("%s: %v", setup.VisionPath, err)
+	default:
+		if err := checkBrief(setup.VisionPath, vision); err != nil {
+			return setup.Brief{}, err
+		}
 	}
 	var table bytes.Buffer
 	if err := psb.WriteTSV(&table, psb.Check(string(src))); err != nil {
 		return setup.Brief{}, err
 	}
 	return setup.Brief{Gaps: table.Bytes(), Sum: fmt.Sprintf("%x", sha256.Sum256(src))}, nil
+}
+
+// checkBrief refuses a brief at path that is not valid UTF-8 (K32), or that
+// holds a marker by the scanner of internal/verify: a raw fact never changes,
+// and S11 would have to change it (D4 of #90).
+func checkBrief(path string, src []byte) error {
+	if n := invalidLine(src); n > 0 {
+		return fmt.Errorf("%s: line %d is not valid UTF-8", path, n)
+	}
+	if m := verify.TextMarkers(string(src)); len(m) > 0 {
+		return fmt.Errorf("%s: line %d holds the marker %s, and a brief holds no marker: write the quote another way", path, m[0].Line, m[0].Text)
+	}
+	return nil
+}
+
+// calls gives the calls of internal/verify that the steps of layup setup read
+// (D9 of #90): the one-check call, the markers of a tree with their columns,
+// the files whose links break, the files that check adapted flags, and the
+// link rule of the baseline.
+func calls(out io.Writer) setup.Calls {
+	return setup.Calls{
+		Checks: evidence(out),
+		Markers: func(tree string) ([]setup.Marker, error) {
+			marks, err := verifyMarkers(tree)
+			var out []setup.Marker
+			for _, m := range marks {
+				out = append(out, setup.Marker{File: m.File, Line: m.Line, Col: m.Col, Text: m.Text})
+			}
+			return out, err
+		},
+		BrokenLinks:   func(tree string) ([]string, error) { return verifyBrokenLinks(tree) },
+		Flagged:       func(tree string) ([]string, error) { return verifyFlagged(tree) },
+		LinksBaseline: func(source, line string) bool { return verifyLinksBaseline(source, line) },
+	}
 }
 
 // evidence gives the one-check call of a step of layup setup (D12 of #86):

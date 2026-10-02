@@ -29,6 +29,8 @@ type fakeSys struct {
 	noDir, commitFails bool
 	heads              []string // the commits of HEAD, one per call of head; the last one stays
 	resets             []string // the commits of each resetSoft
+	hards              []string // the work tree of each resetHard
+	hardFails          bool
 }
 
 func (f *fakeSys) install(t *testing.T) {
@@ -68,7 +70,14 @@ func (f *fakeSys) install(t *testing.T) {
 			return h, nil
 		},
 		resetSoft: func(_, commit string) error { f.resets = append(f.resets, commit); return nil },
-		now:       func() time.Time { return time.Date(2026, 10, 2, 9, 30, 0, 0, time.UTC) },
+		resetHard: func(dir string) error {
+			f.hards = append(f.hards, dir)
+			if f.hardFails {
+				return errors.New("fatal: reset failed\nmore")
+			}
+			return nil
+		},
+		now: func() time.Time { return time.Date(2026, 10, 2, 9, 30, 0, 0, time.UTC) },
 	}
 }
 

@@ -3,6 +3,7 @@ package verify
 import (
 	"errors"
 	"slices"
+	"strings"
 	"testing"
 	"testing/fstest"
 )
@@ -45,10 +46,27 @@ func TestScanMarkers(t *testing.T) {
 		"docs/dir.md/f":            {Data: []byte("\u2039in a dir\u203a\n")},
 	}
 	files := []string{"docs/a.md", "docs/\u00e9.md", "docs/q\x7fx.md", "docs/templates/t.md", "docs/adr/0003-x.md", "docs/setup/open-gaps.tsv", "docs/dir.md", "gone.md"}
-	want := []Marker{{"docs/a.md", 1, "\u2039x\u203a"}, {"docs/a.md", 3, "\u2039x\u203a"}, {"docs/a.md", 3, "\u2039y\u203a"},
-		{"docs/\u00e9.md", 1, "\u2039q\u203a"}, {"docs/q\x7fx.md", 1, "\u2039port\u203a"}}
+	want := []Marker{{"docs/a.md", 1, 4, "\u2039x\u203a"}, {"docs/a.md", 3, 4, "\u2039x\u203a"}, {"docs/a.md", 3, 16, "\u2039y\u203a"},
+		{"docs/\u00e9.md", 1, 0, "\u2039q\u203a"}, {"docs/q\x7fx.md", 1, 0, "\u2039port\u203a"}}
 	if got := scanMarkers(fsys, files); !slices.Equal(got, want) {
 		t.Errorf("the markers\n got %+v\nwant %+v", got, want)
+	}
+}
+
+// The markers of a text, each with its line and the byte column of its open
+// quote, so S11 replaces a marker at the place that the scanner found and a
+// mention in a code span stays (D4 and D7 of #90).
+func TestTheMarkersOfAText(t *testing.T) {
+	text := "a \u2039x\u203a\n`\u2039`\u2039y\u203a and `\u2039y\u203a`\n\u2039open to the end\n"
+	want := []Marker{{"", 1, 2, "\u2039x\u203a"}, {"", 2, 5, "\u2039y\u203a"}, {"", 2, 18, "\u2039y\u203a"}, {"", 3, 0, "\u2039open to the end"}}
+	if got := TextMarkers(text); !slices.Equal(got, want) {
+		t.Errorf("TextMarkers\n got %+v\nwant %+v", got, want)
+	}
+	for _, m := range want {
+		line := strings.Split(text, "\n")[m.Line-1]
+		if !strings.HasPrefix(line[m.Col:], m.Text) {
+			t.Errorf("%+v: the line %q holds no marker at its column", m, line)
+		}
 	}
 }
 

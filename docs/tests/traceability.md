@@ -59,7 +59,7 @@ the first.
 | `TestLsTree` (`internal/git/git_integration_test.go`) | integration | REQ-004 | F-0003#44 | guardrails.md §1.1 Inv-7 | ADR-0016 | T-5sgt | green |
 | `TestARecordValueByStepAndName`, `TestARecordOfAnotherFormIsAnError` (`internal/work/work_test.go`) | unit | REQ-002 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-6x75 | green |
 | `TestTheSchemasEqualTheirBlocks`, `TestReadTheTwoFilesOfAWorkArea` (`internal/work/work_integration_test.go`) | integration | REQ-002 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-6x75 | green |
-| `TestPinFindings`, `TestKitHistoryFindings`, `TestIdentityFindings`, `TestThePinOfATarget`, `TestTheKitLinkOfATarget`, `TestTheChecksOfATarget` (`internal/verify/checks_test.go`) | unit | REQ-002, NFR-006 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-6x75 | green |
+| `TestPinFindings`, `TestKitHistoryFindings`, `TestIdentityFindings`, `TestThePinOfATarget`, `TestTheKitLinkOfATarget`, `TestTheChecksOfATarget` (`internal/verify/checks_test.go`) | unit | REQ-002, NFR-006 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-6x75, T-b3r1 | green |
 | `TestRunGivesEachRowInTheOrderOfTheTable`, `TestCheckRunsTheNamedChecks`, `TestTheInputErrors`, `TestTheScratchTree`, `TestTheProgressLinesCoverTheScratchTree`, `TestTheTable`, `TestWithin` (`internal/verify/verify_test.go`) | unit | REQ-002, NFR-004 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-6x75 | green |
 | `TestTheFixturesOfSetupCheck` (`internal/verify/harness_integration_test.go`) | integration | REQ-002 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-6x75 | green |
 | `TestTheHitsOfAdapted`, `TestTheTextOfAdapted`, `TestTheFilesOfAdapted` (`internal/verify/adapted_test.go`) | unit | REQ-002 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-8ya0 | green |
@@ -89,9 +89,14 @@ the first.
 | `TestS02`, `TestS03`, `TestTheCommandsOfS03`, `TestS04`, `TestS04OnABranchThatExists`, `TestThePinText`, `TestTheDecisionRecordOfThePin`, `TestAddIndexRow`, `TestTheAnswersRecord` (`internal/setup/steps_test.go`) | unit | NFR-006, REQ-002, NFR-003 | F-0001#8 | guardrails.md §1.1 Inv-8 | ADR-0009 | T-7s0y | green |
 | `TestTheGapTable`, `TestS01StopsForEachMissingAnswer`, `TestS01RefusesAnAnswerToNoGap`, `TestS01ChecksTheAnswers`, `TestS01RowOfAFact`, `TestS01UnchangedBrief` (`internal/setup/steps_test.go`) | unit | REQ-002, REQ-001, NFR-003 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-7s0y | green |
 | `TestTheRunnerGivesTheInputErrorOfAStep`, `TestTheRunnerChecksTheInputsOfADoneStep`, `TestTheEvidenceOfAStep` (`internal/setup/steps_test.go`) | unit | REQ-002, NFR-004 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-7s0y | green |
-| `TestSetupReadsTheProblemStatement`, `TestTheEvidenceCall` (`internal/cli/setup_test.go`) | unit | REQ-002, REQ-001, NFR-004 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-7s0y | green |
+| `TestSetupReadsTheProblemStatement`, `TestTheEvidenceCall`, `TestTheCallsOfTheSteps` (`internal/cli/setup_test.go`) | unit | REQ-002, REQ-001, NFR-004 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-7s0y, T-b3r1 | green |
 | `TestSetupRunsS01ToS04`, `TestABrokenPinFailsTheEvidenceOfS04` (`internal/cli/setup_integration_test.go`) | integration | REQ-002, REQ-001, NFR-006, NFR-004 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-7s0y | green |
-| `TestSetupRunsS01ToS04` (`cmd/layup/setup_e2e_test.go`) | e2e | REQ-002, NFR-005 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-7s0y | green |
+| `TestSetupRunsS01ToS14` (`cmd/layup/setup_e2e_test.go`) | e2e | REQ-002, NFR-005 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-7s0y, T-b3r1 | green |
+| `TestS05`, `TestS05StopsForTheLinksThatBreak`, `TestS06`, `TestTheProseStep`, `TestS14`, `TestS10`, `TestS11`, `TestS11ChecksBeforeItWrites`, `TestTheRunnerResetsTheTargetBeforeAStep` (`internal/setup/scaffold_test.go`) | unit | REQ-002, NFR-003, NFR-001 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-b3r1 | green |
+| `TestTheMarkersOfAText` (`internal/verify/markers_test.go`); `TestLinksBaseline` (`internal/verify/checks_test.go`) | unit | REQ-002 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-b3r1 | green |
+| `TestStagedReadsTheExitCode` (`internal/git/git_test.go`) | unit | REQ-002 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-b3r1 | green |
+| `TestStagedAndResetHard` (`internal/git/git_integration_test.go`); `TestEachStepStartsFromTheHead` (`internal/setup/setup_integration_test.go`) | integration | REQ-002, NFR-005 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-b3r1 | green |
+| `TestSetupRunsS05ToS14` (`internal/cli/setup_integration_test.go`) | integration | REQ-002, NFR-003, NFR-001 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-b3r1 | green |
 | `T-dep6/e2e/whole-setup` | e2e | REQ-002, NFR-003 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-dep6 | planned |
 | `T-dep6/e2e/records-in-git` | e2e | NFR-001 | F-0001#1 | guardrails.md §1.1 Inv-1 | ADR-0014 | T-dep6 | planned |
 | `T-dep6/e2e/gate-without-layup` | e2e | NFR-002 | F-0001#2 | guardrails.md §1.1 Inv-2 | ADR-0013 | T-dep6 | planned |

@@ -17,8 +17,12 @@ import (
 )
 
 // BriefPath is the problem statement of a work area, from its root, which
-// internal/cli reads for the steps.
-const BriefPath = work.BriefPath
+// internal/cli reads for the steps, and VisionPath the vision brief, when
+// there is one (D4 of #90).
+const (
+	BriefPath  = work.BriefPath
+	VisionPath = "inputs/briefs/vision.md"
+)
 
 // A Brief is what internal/cli hands to the steps (D5 of #86): the gap table
 // of the problem statement, as internal/psb writes it, and the SHA-256 of the
@@ -33,27 +37,60 @@ type Brief struct {
 // one-check call of docs/spec/setup.md, which internal/cli makes.
 type Checks func(dir string, names []string) string
 
+// A Marker is one place of a marker in a tracked file of the target: its file,
+// its line, the byte column of its open quote on that line, and its text with
+// its angle quotes, as the scanner of internal/verify gives it (D7 of #90).
+type Marker struct {
+	File      string
+	Line, Col int
+	Text      string
+}
+
+// Calls are the calls of internal/verify that internal/cli gives the steps
+// (D9 of #90), as internal/setup does not import internal/verify: the
+// one-check call of the evidence (D12 of #86); the markers of a tree (S10,
+// S11); the files whose links break (S05); the files that check adapted flags
+// (S14); and the link rule of check kit-history (S05). A nil call gives a step
+// no evidence call, or makes the step that needs it fail.
+type Calls struct {
+	Checks        Checks
+	Markers       func(tree string) ([]Marker, error)
+	BrokenLinks   func(tree string) ([]string, error)
+	Flagged       func(tree string) ([]string, error)
+	LinksBaseline func(source, line string) bool
+}
+
 // Steps gives the steps of this version of layup: S01 to S04 (task T-7s0y,
-// #86), and a stub of each other step, not-active, not built yet, until rows
-// 13 and 15 of the plan build it. checks is the evidence call of S04; nil
-// gives S04 no evidence call (the unit tests).
-func Steps(b Brief, checks Checks) map[string]Step {
+// #86), S05 to S11 and S14 (task T-b3r1, #90), and a stub of each other step,
+// not-active, not built yet, until row 15 of the plan builds it.
+func Steps(b Brief, c Calls) map[string]Step {
 	m := Stubs()
-	s := m["S01"]
-	s.Run, s.Unchanged = func(in Input) Outcome { return runS01Step(b, in) }, func(r work.Record) error { return briefUnchanged(b, r) }
-	m["S01"] = s
-	s = m["S02"]
-	s.Run = runS02
-	m["S02"] = s
-	s = m["S03"]
-	s.Run, s.Commands = runS03, commandsS03
-	m["S03"] = s
-	s = m["S04"]
-	s.Run = func(in Input) Outcome { return runS04(b, in) }
-	if checks != nil {
-		s.Evidence = func(dir string) string { return checks(dir, []string{"pin", "facts"}) }
+	set := func(id string, run func(Input) Outcome, checks ...string) {
+		s := m[id]
+		s.Run = run
+		if c.Checks != nil && len(checks) > 0 {
+			s.Evidence = func(dir string) string { return c.Checks(dir, checks) }
+		}
+		m[id] = s
 	}
-	m["S04"] = s
+	set("S01", func(in Input) Outcome { return runS01Step(b, in) })
+	s := m["S01"]
+	s.Unchanged = func(r work.Record) error { return briefUnchanged(b, r) }
+	m["S01"] = s
+	set("S02", runS02)
+	set("S03", runS03)
+	s = m["S03"]
+	s.Commands = commandsS03
+	m["S03"] = s
+	set("S04", func(in Input) Outcome { return runS04(b, in) }, "pin", "facts")
+	set("S05", func(in Input) Outcome { return runS05(c, in) }, "kit-history", "link-lint")
+	set("S06", runS06, "facts")
+	set("S07", func(in Input) Outcome { return runProseStep("S07", c, in) }, "onboarding")
+	set("S08", func(in Input) Outcome { return runProseStep("S08", c, in) }, "glossary")
+	set("S09", func(in Input) Outcome { return runProseStep("S09", c, in) }, "guardrails")
+	set("S14", func(in Input) Outcome { return runProseStep("S14", c, in) }, "identity", "adapted")
+	set("S10", func(in Input) Outcome { return runS10(c, in) })
+	set("S11", func(in Input) Outcome { return runS11(c, in) }, "markers", "sources", "facts")
 	return m
 }
 
@@ -379,7 +416,7 @@ func runS04(b Brief, in Input) Outcome {
 	for _, g := range gaps {
 		asked = append(asked, work.Question{ID: g.ID, Text: g.Question})
 	}
-	record := answersRecord(id, date, asked, in.Answers)
+	record := answersRecord(id, date, setupRecord, asked, in.Answers)
 	recordPath := factsDir + "/" + id + "-setup-answers.md"
 	sum := fmt.Sprintf("%x", sha256.Sum256([]byte(record)))
 	sums, err := sys.show(target, root, factsSumsPath)
@@ -543,18 +580,28 @@ func addIndexRow(readme, row string) (string, error) {
 	return readme[:loc[1]] + strings.Join(lines, ""), nil
 }
 
-// answersRecord gives the answers record of S04 (K15, K17; condition 2 of the
-// plan review of #86): the header table, and one fact per answer of a question
-// of asked, in the order of asked, with each angle quote of a recorded text (the
-// answer, its source, the question) as an entity.
-func answersRecord(id, date string, asked []work.Question, a work.Answers) string {
+// A recordKind is one of the two answers records: its title, the text of its
+// Source, and the step that writes it (K15; condition 3 of the plan review of
+// #90).
+type recordKind struct{ title, source, step string }
+
+var (
+	setupRecord  = recordKind{"The answers to the questions of the setup", "The answers of `" + work.AnswersPath + "` to the questions of S01 and to the gaps of the problem statement", "S04"}
+	markerRecord = recordKind{"The answers to the markers of the setup", "The answers of `" + work.AnswersPath + "` to the markers that S10 listed", "S11"}
+)
+
+// answersRecord gives an answers record (K15, K17; condition 2 of the plan
+// review of #86, condition 3 of #90): the header table, and one fact per
+// answer of a question of asked, in the order of asked, with each angle quote
+// of a recorded text (the answer, its source, the question) as an entity.
+func answersRecord(id, date string, k recordKind, asked []work.Question, a work.Answers) string {
 	entity := strings.NewReplacer("\u2039", "&lsaquo;", "\u203a", "&rsaquo;")
 	var b strings.Builder
-	fmt.Fprintf(&b, "# %s. The answers to the questions of the setup\n\n| Field | Value |\n| ------------ | ----- |\n"+
+	fmt.Fprintf(&b, "# %s. %s\n\n| Field | Value |\n| ------------ | ----- |\n"+
 		"| Fact ID | `%s` |\n"+
-		"| Source | The answers of `%s` to the questions of S01 and to the gaps of the problem statement |\n"+
-		"| Collected by | `layup setup`, step S04 |\n| Date collected | %s |\n"+
-		"| Origin | `%s` of the work area |\n| Status | `Raw` |\n\n## Facts as collected\n\n", id, id, work.AnswersPath, date, work.AnswersPath)
+		"| Source | %s |\n"+
+		"| Collected by | `layup setup`, step %s |\n| Date collected | %s |\n"+
+		"| Origin | `%s` of the work area |\n| Status | `Raw` |\n\n## Facts as collected\n\n", id, k.title, id, k.source, k.step, date, work.AnswersPath)
 	n := 0
 	for _, q := range asked {
 		for _, r := range a {

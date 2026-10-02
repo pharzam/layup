@@ -113,6 +113,8 @@ func TestEachFindingOfATarget(t *testing.T) {
 		{"a record of another commit", standin.Options{Record: map[string]string{"S02 pin.commit": strings.Repeat("1", 40)}}, "pin", "commit: the pin names ", ""},
 		{"a README.md with no name", standin.Options{Files: map[string]string{"README.md": "# x\n\n[pin](docs/setup/armature.pin)\n"}}, "identity",
 			"name: README.md does not hold the name of the target, " + standin.Name, ""},
+		{"a README.md that names no records branch", standin.Options{Files: map[string]string{"README.md": "# " + standin.Name + "\n\n[pin](docs/setup/armature.pin)\n"}}, "identity",
+			"branch: README.md does not name the branch layup-records", ""},
 		{"the phrase of the kit", standin.Options{Files: map[string]string{"AGENTS.md": "Agent context for **Armature**\n"}}, "identity",
 			`kit: AGENTS.md says the repository is the Armature kit ("Agent context for **Armature**")`, ""},
 		// The four checks in a target's form (#89), on a record whose steps

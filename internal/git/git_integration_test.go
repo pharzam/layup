@@ -411,3 +411,28 @@ func TestIsShallow(t *testing.T) {
 		}
 	}
 }
+
+// The step runner (task T-b3r1): Staged sees a change only when the index
+// holds it, and ResetHard puts the index and the work tree back to HEAD,
+// with a file that only the index holds removed (D11, D12 of #90).
+func TestStagedAndResetHard(t *testing.T) {
+	isolate(t)
+	dir := t.TempDir()
+	commitTree(t, dir, map[string]string{"a.txt": "a\n"})
+	if staged, err := Staged(dir); err != nil || staged {
+		t.Fatalf("a clean tree: %v, %v; want no staged change", staged, err)
+	}
+	write(t, dir, map[string]string{"a.txt": "changed\n", "new.txt": "new\n"})
+	if staged, err := Staged(dir); err != nil || staged {
+		t.Errorf("a change that is not staged: %v, %v; want false", staged, err)
+	}
+	must(t, Add(dir))
+	if staged, err := Staged(dir); err != nil || !staged {
+		t.Errorf("a staged change: %v, %v; want true", staged, err)
+	}
+	must(t, ResetHard(dir))
+	data, err := os.ReadFile(filepath.Join(dir, "a.txt"))
+	if staged, serr := Staged(dir); err != nil || string(data) != "a\n" || exists(filepath.Join(dir, "new.txt")) || serr != nil || staged {
+		t.Errorf("after ResetHard: a.txt %q, new.txt there %v, staged %v; want the tree of HEAD", data, exists(filepath.Join(dir, "new.txt")), staged)
+	}
+}

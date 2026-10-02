@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -139,5 +140,49 @@ func TestNoCommitOffTheSetupBranch(t *testing.T) {
 	}
 	if after := gitOut(t, target, "rev-parse", "main", "layup-setup"); after != before {
 		t.Errorf("the branches moved: %q, then %q", before, after)
+	}
+}
+
+// Each step from S04 to S14 starts from the head of layup-setup: a leftover
+// in the work tree of the target never enters a commit (D11 of #90); and a
+// step that changes no file makes no commit (D12 of #90).
+func TestEachStepStartsFromTheHead(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	w, err := standin.Make(t.TempDir(), standin.Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	target := filepath.Join(w.Dir, work.TargetPath)
+	if err := os.WriteFile(filepath.Join(target, "README.md"), []byte("a leftover\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(target, "leftover.md"), []byte("an untracked leftover\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	gitOut(t, target, "add", "leftover.md")
+	before := gitOut(t, target, "rev-parse", "layup-setup")
+	m := Stubs()
+	for _, id := range ids() {
+		s := m[id]
+		s.Run = func(Input) Outcome { return Outcome{Kind: Done, Evidence: "ok " + id, Commit: true} } // a commit asked, no file changed
+		if id == "S13" {
+			s.Commands = func(work.Record) []Command {
+				return []Command{{Order: 2, Comment: "the push", Text: "git -C target push origin layup-setup:main"}}
+			}
+		}
+		m[id] = s
+	}
+	res, err := Run(w.Dir, m, testWho, noStep)
+	if err != nil || slices.Contains(res.Results(), Fail) {
+		t.Fatalf("the run: %v, %+v; want no step fail", err, res.Steps)
+	}
+	if after := gitOut(t, target, "rev-parse", "layup-setup"); after != before {
+		t.Errorf("layup-setup moved from %s to %s: a step with no change made a commit", before, after)
+	}
+	if data, err := os.ReadFile(filepath.Join(target, "README.md")); err != nil || strings.Contains(string(data), "leftover") {
+		t.Errorf("README.md after the run: %q, %v; want the file of the head", data, err)
+	}
+	if _, err := os.Stat(filepath.Join(target, "leftover.md")); err == nil {
+		t.Errorf("leftover.md, which only the index held, stayed")
 	}
 }

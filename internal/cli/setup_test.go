@@ -83,34 +83,42 @@ func TestSetupCommand(t *testing.T) {
 }
 
 // standInBrief puts stand-ins in place until the test ends: WORK is a
-// directory, readFile gives the problem statement src (nil: absent), and
-// setupSteps keeps the brief that the command hands to the steps.
-func standInBrief(t *testing.T, src []byte) *setup.Brief {
+// directory, readFile gives the problem statement src (nil: absent) and the
+// vision brief vision (nil: absent), and setupSteps keeps the brief that the
+// command hands to the steps.
+func standInBrief(t *testing.T, src, vision []byte) *setup.Brief {
 	t.Helper()
 	got := &setup.Brief{Sum: "not called"}
 	savedDir, savedRead, savedSteps := isDir, readFile, setupSteps
 	isDir = func(string) bool { return true }
 	readFile = func(name string) ([]byte, error) {
-		if name != filepath.Join("w", "inputs", "briefs", "problem-statement.md") && name != "brief.md" {
-			t.Errorf("readFile(%q); want the problem statement of w", name)
+		var data []byte
+		switch name {
+		case filepath.Join("w", "inputs", "briefs", "problem-statement.md"), "brief.md":
+			data = src
+		case filepath.Join("w", "inputs", "briefs", "vision.md"):
+			data = vision
+		default:
+			t.Errorf("readFile(%q); want a brief of w", name)
 		}
-		if src == nil {
+		if data == nil {
 			return nil, fs.ErrNotExist
 		}
-		return src, nil
+		return data, nil
 	}
-	setupSteps = func(b setup.Brief, _ setup.Checks) map[string]setup.Step { *got = b; return setup.Stubs() }
+	setupSteps = func(b setup.Brief, _ setup.Calls) map[string]setup.Step { *got = b; return setup.Stubs() }
 	t.Cleanup(func() { isDir, readFile, setupSteps = savedDir, savedRead, savedSteps })
 	return got
 }
 
 // The command reads the problem statement of WORK once and hands its gap
 // table, as layup psb check writes it, and its SHA-256 to the steps (D5 of
-// #86); a problem statement that is absent or not valid UTF-8 is exit 2.
+// #86); a problem statement that is absent or not valid UTF-8, and a brief
+// that holds a marker, are exit 2 (D4 of #90).
 func TestSetupReadsTheProblemStatement(t *testing.T) {
 	work := standInSetup(t, setup.Result{Steps: []setup.StepRow{{Step: "S01", Actor: "layup-setup", Result: "done", Evidence: "x"}}}, nil)
 	src := []byte("# A brief\n\nThe product must be fast.\n")
-	got := standInBrief(t, src)
+	got := standInBrief(t, src, []byte("A vision with the `\u2039` mention.\n"))
 	if code, _, errOut := run("setup", "w"); code != 0 || *work != "w" {
 		t.Fatalf("a problem statement: exit %d, stderr %q; want 0 and a run", code, errOut)
 	}
@@ -119,17 +127,56 @@ func TestSetupReadsTheProblemStatement(t *testing.T) {
 		t.Errorf("the brief: gaps %q, sum %q; want the table of layup psb check, %q, and the SHA-256 of the file", got.Gaps, got.Sum, table)
 	}
 	for _, c := range []struct {
-		src    []byte
-		reason string
+		src, vision []byte
+		reason      string
 	}{
-		{nil, "inputs/briefs/problem-statement.md: the problem statement is absent"},
-		{[]byte("# A brief\n\xff\n"), "inputs/briefs/problem-statement.md: line 2 is not valid UTF-8"},
+		{nil, nil, "inputs/briefs/problem-statement.md: the problem statement is absent"},
+		{[]byte("# A brief\n\xff\n"), nil, "inputs/briefs/problem-statement.md: line 2 is not valid UTF-8"},
+		{[]byte("# A brief\nIt runs on \u2039the host\u203a.\n"), nil,
+			"inputs/briefs/problem-statement.md: line 2 holds the marker \u2039the host\u203a, and a brief holds no marker: write the quote another way"},
+		{src, []byte("a\n\xfe\n"), "inputs/briefs/vision.md: line 2 is not valid UTF-8"},
+		{src, []byte("\u2039x\u203a\n"), "inputs/briefs/vision.md: line 1 holds the marker \u2039x\u203a, and a brief holds no marker: write the quote another way"},
 	} {
 		*work = ""
-		got := standInBrief(t, c.src)
+		got := standInBrief(t, c.src, c.vision)
 		if code, out, errOut := run("setup", "w"); code != 2 || out != "" || errOut != "layup: "+c.reason+"\n" || *work != "" || got.Sum != "not called" {
-			t.Errorf("%q: exit %d, stdout %q, stderr %q, run %q; want 2, nothing, %q and no run", c.src, code, out, errOut, *work, c.reason)
+			t.Errorf("%q, %q: exit %d, stdout %q, stderr %q, run %q; want 2, nothing, %q and no run", c.src, c.vision, code, out, errOut, *work, c.reason)
 		}
+	}
+}
+
+// The calls that the command hands to the steps are those of
+// internal/verify, each marker with its column (D7 and D9 of #90).
+func TestTheCallsOfTheSteps(t *testing.T) {
+	saved := []any{verifyMarkers, verifyBrokenLinks, verifyFlagged, verifyLinksBaseline}
+	t.Cleanup(func() {
+		verifyMarkers = saved[0].(func(string) ([]verify.Marker, error))
+		verifyBrokenLinks = saved[1].(func(string) ([]string, error))
+		verifyFlagged = saved[2].(func(string) ([]string, error))
+		verifyLinksBaseline = saved[3].(func(string, string) bool)
+	})
+	var trees []string
+	verifyMarkers = func(tree string) ([]verify.Marker, error) {
+		trees = append(trees, "markers "+tree)
+		return []verify.Marker{{File: "docs/a.md", Line: 3, Col: 2, Text: "\u2039x\u203a"}}, nil
+	}
+	verifyBrokenLinks = func(tree string) ([]string, error) {
+		trees = append(trees, "links "+tree)
+		return []string{"docs/b.md"}, nil
+	}
+	verifyFlagged = func(tree string) ([]string, error) {
+		trees = append(trees, "flagged "+tree)
+		return []string{"docs/c.md"}, nil
+	}
+	verifyLinksBaseline = func(source, line string) bool { return source == "s" && line == "l" }
+	c := calls(io.Discard)
+	marks, _ := c.Markers("t")
+	links, _ := c.BrokenLinks("t")
+	flagged, _ := c.Flagged("t")
+	if !slices.Equal(marks, []setup.Marker{{File: "docs/a.md", Line: 3, Col: 2, Text: "\u2039x\u203a"}}) || !slices.Equal(links, []string{"docs/b.md"}) ||
+		!slices.Equal(flagged, []string{"docs/c.md"}) || !c.LinksBaseline("s", "l") || c.LinksBaseline("s", "x") || c.Checks == nil ||
+		!slices.Equal(trees, []string{"markers t", "links t", "flagged t"}) {
+		t.Errorf("the calls: %+v, %q, %q, the trees %q", marks, links, flagged, trees)
 	}
 }
 

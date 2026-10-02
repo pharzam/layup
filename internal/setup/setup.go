@@ -166,7 +166,9 @@ type system struct {
 	commit        func(dir, message string, who git.Identity) error
 	head          func(dir string) (string, error) // the commit of HEAD
 	resetSoft     func(dir, commit string) error   // moves the branch of HEAD to commit (D12 of #86)
-	now           func() time.Time                 // the clock of the LAYUP host (pin.time, D7 of #86)
+	resetHard     func(dir string) error           // puts the index and the work tree back to HEAD (D11 of #90)
+	read          func(path string) ([]byte, error)
+	now           func() time.Time // the clock of the LAYUP host (pin.time, D7 of #86)
 	// The calls of the steps S02 to S04 (steps.go).
 	lsRemote       func(url, ref string) (string, error)
 	clone          func(url, dir string) error
@@ -203,10 +205,15 @@ var sys = system{
 		if err := git.Add(dir); err != nil {
 			return err
 		}
+		if staged, err := git.Staged(dir); err != nil || !staged { // a step that changes no file makes no commit (D12 of #90)
+			return err
+		}
 		return git.Commit(dir, message, who)
 	},
 	head:           func(dir string) (string, error) { return git.RevParse(dir, "HEAD^{commit}") },
 	resetSoft:      git.ResetSoft,
+	resetHard:      git.ResetHard,
+	read:           os.ReadFile,
 	now:            time.Now,
 	lsRemote:       git.LsRemote,
 	clone:          git.Clone,
@@ -303,6 +310,13 @@ func Run(dir string, steps map[string]Step, who git.Identity, step func(i, n int
 			i++
 			end := step(i, len(todo), id)
 			s := steps[id]
+			if id >= "S04" && id <= "S14" { // each step starts from the commit of the step before it (D11 of #90)
+				if err := sys.resetHard(filepath.Join(dir, work.TargetPath)); err != nil {
+					ran[id], failed = StepRow{id, s.Actor, Fail, "the reset of the target failed: " + firstLine(err)}, id
+					end()
+					break
+				}
+			}
 			o := s.Run(Input{Dir: dir, Record: record, Answers: answers, Who: who})
 			switch o.Kind {
 			case Invalid:
