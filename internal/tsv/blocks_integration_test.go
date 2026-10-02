@@ -13,7 +13,7 @@ import (
 // built lists each block of docs/spec/ whose owner package compares it with
 // its Go schema in the owner's own test (tsv.Compare). The owner moves the name
 // here from notYetBuilt in the same change as that test.
-var built = []string{"catalog-kinds", "gate-manifest", "gate-result", "open-gaps", "psb-gaps", "setup-answers", "setup-record", "setup-steps", "setup-stop", "setup-verify"}
+var built = []string{"catalog-gaps", "catalog-kinds", "gate-manifest", "gate-result", "open-gaps", "psb-gaps", "setup-answers", "setup-record", "setup-steps", "setup-stop", "setup-verify"}
 
 // notYetBuilt lists each block that no owner compares with a Go schema yet.
 // It only becomes shorter: a rule for the reviewer of each owner task; a test

@@ -1,0 +1,6 @@
+kind	state	tool	version	command	scope	config	fixture	evidence
+static	active	go	1.26	out=$(gofmt -l .) && test -z "$out" && go vet ./...	./*.go	—	fixtures/static.patch	https://pkg.go.dev/cmd/go@go1.26.0
+layout	pending	—	—	—	./*.go	—	—	—
+boundary	pending	—	—	—	./*.go	—	—	—
+contract	pending	—	—	—	./*.go	—	—	—
+test	active	go	1.26	go test -count=1 ./...	./*.go	docs/gates/coverage-floor.txt	fixtures/test.patch	https://pkg.go.dev/cmd/go@go1.26.0

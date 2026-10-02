@@ -1,0 +1,116 @@
+#!/bin/sh
+# The job of one gate kind of docs/gates.tsv (.github/workflows/gates.yml):
+#   sh .github/gates.sh KIND
+# with GATE_BASE and GATE_HEAD, the base and the head commits of the pull
+# request, in the environment. It gives the result of the kind by the rules of
+# the manifest, as `layup gate` gives it from outside, and starts no program
+# but sh, awk, tr, git and the kind's own tool. It prints the kind, the result
+# and the reason, and exits 0 for pass or clear, 1 otherwise.
+set -u
+set -f
+kind=${1:-}
+manifest=docs/gates.tsv
+
+result() {
+	printf '%s\t%s\t%s\n' "$kind" "$1" "$2"
+	case $1 in pass | clear) exit 0 ;; esac
+	exit 1
+}
+
+# The rules of a path and of a scope pattern (gate.md, A scope pattern), in
+# awk: valid(s) is a path with no empty, . or .. part; a pattern P/*.E matches
+# a file under P (any depth; ./*.E anywhere) whose name ends with .E; a
+# pattern with no * matches that path and each path under it.
+awklib='
+function valid(s,   n, i, part) {
+	if (s == "") return 0
+	n = split(s, part, "/")
+	for (i = 1; i <= n; i++) if (part[i] == "" || part[i] == "." || part[i] == "..") return 0
+	return 1
+}
+function form(p,   t, c, j, dir, ext) {
+	t = p
+	c = gsub(/\*/, "", t)
+	if (c == 0) return valid(p)
+	j = index(p, "/*.")
+	if (c != 1 || j == 0) return 0
+	dir = substr(p, 1, j - 1); ext = substr(p, j + 3)
+	if (ext == "" || index(ext, "/") || index(ext, "*")) return 0
+	return dir == "." || valid(dir)
+}
+function match_one(path, p,   j, dir, ext, name) {
+	if (index(p, "*") == 0) return path == p || index(path, p "/") == 1
+	j = index(p, "/*."); dir = substr(p, 1, j - 1); ext = substr(p, j + 2)
+	if (dir != "." && index(path, dir "/") != 1) return 0
+	name = path; sub(/.*\//, "", name)
+	return length(name) > length(ext) && substr(name, length(name) - length(ext) + 1) == ext
+}
+'
+
+[ -n "$kind" ] || result fail "usage: sh .github/gates.sh KIND"
+[ -f "$manifest" ] || result fail "no manifest: $manifest"
+
+# The form of the manifest: its header row, six fields in each row, a kind of
+# lowercase letters and -, once each, a state, a scope of one or more patterns
+# of the form of gate.md, and no config path in .git.
+problem=$(LC_ALL=C awk -F '\t' "$awklib"'
+NR == 1 {
+	if ($0 != "kind\tstate\ttool\tcommand\tscope\tconfig") { print "line 1 is not the header row"; bad = 1; exit }
+	next
+}
+{
+	if (NF != 6) { print "line " NR " has " NF " fields, not 6"; bad = 1; exit }
+	if ($1 !~ /^[a-z][a-z-]*$/) { print "line " NR ": the kind " $1 " is not a word"; bad = 1; exit }
+	if ($1 in seen) { print "line " NR ": the kind " $1 " is there twice"; bad = 1; exit }
+	seen[$1] = 1
+	if ($2 != "active" && $2 != "pending") { print "line " NR ": the state " $2; bad = 1; exit }
+	if ($5 == "" || $5 == "\342\200\224") { print "line " NR ": the kind " $1 " has no scope pattern"; bad = 1; exit }
+	n = split($5, pat, " ")
+	for (i = 1; i <= n; i++) if (!form(pat[i])) { print "line " NR ": the scope pattern " pat[i] " is not of the form of the manifest"; bad = 1; exit }
+	if ($6 != "\342\200\224") {
+		n = split($6, cfg, " ")
+		for (i = 1; i <= n; i++) { first = cfg[i]; sub(/\/.*/, "", first); if (tolower(first) == ".git") { print "line " NR ": the config path " cfg[i] " is in .git"; bad = 1; exit } }
+	}
+}
+END { if (!bad && NR < 2) print "the manifest has no row" }
+' "$manifest") || result not-active "awk failed"
+[ -z "$problem" ] || result fail "the manifest: $problem"
+
+field() {
+	GATE_KIND=$kind LC_ALL=C awk -F '\t' -v i="$1" '
+NR > 1 && $1 == ENVIRON["GATE_KIND"] { v = $i; if (v == "\342\200\224") v = ""; print v; found = 1; exit }
+END { if (!found) exit 1 }' "$manifest"
+}
+state=$(field 2) || result fail "no row for the kind $kind in $manifest"
+tool=$(field 3)
+command=$(field 4)
+scope=$(field 5)
+
+tmp=$(mktemp) || result not-active "mktemp failed"
+trap 'rm -f "$tmp"' EXIT
+
+# first gives the first path of standard input (one per line) that the scope
+# matches, and fails when none does.
+first() {
+	GATE_SCOPE=$scope LC_ALL=C awk "$awklib"'
+BEGIN { n = split(ENVIRON["GATE_SCOPE"], pat, " ") }
+{ for (i = 1; i <= n; i++) if (match_one($0, pat[i])) { print; found = 1; exit } }
+END { if (!found) exit 1 }'
+}
+
+if [ "$state" = pending ]; then
+	[ -n "${GATE_BASE:-}" ] && [ -n "${GATE_HEAD:-}" ] || result not-active "no base or head commit"
+	git diff --name-only --no-renames -z "$GATE_BASE" "$GATE_HEAD" > "$tmp" || result not-active "diff failed"
+	if path=$(tr '\0' '\n' < "$tmp" | first); then
+		result fail "pending: product path changed: $path"
+	fi
+	result clear "pending: no product path"
+fi
+
+command -v "$tool" > /dev/null 2>&1 || result not-active "tool not found: $tool"
+git ls-files -z > "$tmp" || result not-active "git ls-files failed"
+tr '\0' '\n' < "$tmp" | first > /dev/null || result clear "no product path"
+sh -c "$command"
+code=$?
+[ "$code" -eq 0 ] && result pass "—"
+result fail "exit $code"

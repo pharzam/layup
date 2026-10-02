@@ -1,3 +1,3 @@
 kind	state	tool	version	command	scope	config	fixture	evidence
-static	active	sh	—	test ! -e bad.txt	./*.txt	—	fixtures/static.patch	—
-layout	pending	sh	—	test -e layout.txt	./*.txt	layout.txt	—	—
+static	active	sh	1003.1-2024	test ! -e bad.txt	./*.txt	—	fixtures/static.patch	https://pubs.opengroup.org/onlinepubs/9799919799/utilities/sh.html
+layout	pending	—	—	—	./*.txt	—	—	—

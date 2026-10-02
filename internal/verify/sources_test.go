@@ -60,3 +60,27 @@ func TestTheSourcesOfARecord(t *testing.T) {
 	in := input{fsys: tree, area: area, answers: answers, record: work.Record{{"S12", "x", "x", "catalog", "go/files/go.mod"}}}
 	same(t, "a catalog row with no stack row", checkSources(in), []string{"source: S12 x: the catalog entry  has no file go/files/go.mod", "record: no value at S01 stack"})
 }
+
+// Check sources resolves a catalog ref in the entry of the binary (D10 of
+// #91): the seam of row 10 reads the embedded Go entry, and the binary has no
+// test entry.
+func TestACatalogRefOfTheBinary(t *testing.T) {
+	for _, c := range []struct {
+		stack, ref string
+		want       bool
+	}{
+		{"go", "go/kinds.tsv", true},
+		{"go", "go/files/go.mod.tmpl", true},
+		{"go", "go/files/.github/workflows/gates.yml.tmpl", true},
+		{"go", "go/gaps.tsv", true},
+		{"go", "go/fixtures/test.patch", true},
+		{"go", "go/files/none.tmpl", false},
+		{"go", "go/go.mod", false},
+		{"go", "test/kinds.tsv", false},
+		{"test", "test/kinds.tsv", false},
+	} {
+		if got := catalogHas(c.stack, c.ref); got != c.want {
+			t.Errorf("catalogHas(%q, %q) = %v, want %v", c.stack, c.ref, got, c.want)
+		}
+	}
+}

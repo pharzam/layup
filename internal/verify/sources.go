@@ -7,14 +7,17 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/pharzam/layup/internal/catalog"
 	"github.com/pharzam/layup/internal/work"
 )
 
-// catalogHas reports whether the catalog entry of stack has the file of ref
-// (<stack>/<path>, catalog.Entry.Has). This version embeds no catalog: row 14
-// of the plan embeds the Go entry and sets it, so until then a catalog ref
-// does not resolve.
-var catalogHas = func(stack, ref string) bool { return false }
+// catalogHas reports whether the catalog entry of stack in the binary has the
+// file of ref (<stack>/<path>, catalog.Entry.Has; D10 of #91). A stack with
+// no entry has no file.
+var catalogHas = func(stack, ref string) bool {
+	e, err := catalog.Read(catalog.Embedded(), stack)
+	return err == nil && e.Has(ref)
+}
 
 // checkSources is check sources of a target (D4 of #87, with note 4 of its
 // plan review): each value row of the setup record (each row but a done row)

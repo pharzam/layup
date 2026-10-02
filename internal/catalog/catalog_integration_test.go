@@ -61,15 +61,15 @@ func TestTheEmbeddedTestEntry(t *testing.T) {
 	}
 }
 
-// The Go schemas of kinds.tsv and of the manifest equal their blocks in
-// docs/spec/, and the manifest of the test entry reads back by the block of
-// gate-manifest.
+// The Go schemas of kinds.tsv, of gaps.tsv (D7 of #91) and of the manifest
+// equal their blocks in docs/spec/, and the manifest of the test entry reads
+// back by the block of gate-manifest.
 func TestTheSchemaBlocks(t *testing.T) {
 	blocks, err := tsv.ReadBlocks(os.DirFS(filepath.Join("..", "..", "docs", "spec")))
 	if err != nil {
 		t.Fatal(err)
 	}
-	for name, s := range map[string]tsv.Schema{"catalog-kinds": KindsSchema, "gate-manifest": ManifestSchema} {
+	for name, s := range map[string]tsv.Schema{"catalog-kinds": KindsSchema, "catalog-gaps": GapsSchema, "gate-manifest": ManifestSchema} {
 		block, ok := blocks[name]
 		if !ok {
 			t.Fatalf("docs/spec/ has no block %s", name)

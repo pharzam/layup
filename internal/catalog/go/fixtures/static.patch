@@ -1,0 +1,11 @@
+diff --git a/gatefixture/static.go b/gatefixture/static.go
+new file mode 100644
+index 0000000..da717f5
+--- /dev/null
++++ b/gatefixture/static.go
+@@ -0,0 +1,5 @@
++// Package gatefixture is the known-bad fixture of the static kind: gofmt
++// changes this file.
++package gatefixture
++
++func  Bad() {}

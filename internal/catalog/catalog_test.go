@@ -20,8 +20,11 @@ func entry(rows string, files map[string]string) fstest.MapFS {
 }
 
 const (
-	staticRow = "static\tactive\tgo\t1.26\ttest -z \"$(gofmt -l .)\"\t./*.go\t—\tfixtures/static.patch\thttps://go.dev/doc\n"
-	layoutRow = "layout\tpending\tgo\t1.26\tgo test ./layout/\t./*.go\tlayout/layout_test.go layout/rules.txt\t—\t—\n"
+	staticRow = "static\tactive\tgo\t1.26\ttest -z \"$(gofmt -l .)\"\t./*.go\t.golangci.yml docs/rules.txt\tfixtures/static.patch\thttps://go.dev/doc\n"
+	// A pending kind has — in each column but its kind, its state and its
+	// scope (D1 of #91, with note 1 of its plan review).
+	layoutRow = "layout\tpending\t—\t—\t—\t./*.go\t—\t—\t—\n"
+	gapsFile  = "path\tmarker\tquestion\ndocs/floor.txt\tthe floor\tWhich floor?\n"
 )
 
 // good is an entry that keeps every rule.
@@ -30,6 +33,8 @@ func good() fstest.MapFS {
 		"files/go.mod.tmpl":                      "module {{module}}\n\ngo 1.26\n",
 		"files/.github/workflows/gates.yml.tmpl": "name: gates\n",
 		"files/layout/rules.txt.tmpl":            "{{Module}} {module} {{ module }} {{module}}x\n",
+		"files/docs/floor.txt.tmpl":              "{{gap:the floor}}\n",
+		"gaps.tsv":                               gapsFile,
 		"fixtures/static.patch":                  "--- a\n+++ b\n",
 	})
 }
@@ -52,7 +57,7 @@ func TestReadGivesTheKindsInTheOrderOfTheFile(t *testing.T) {
 		t.Fatalf("the kinds %q, want static and layout", names)
 	}
 	k := read(t, good()).Kinds()[1]
-	if k.State != "pending" || k.Fixture != "" || !slices.Equal(k.Config, []string{"layout/layout_test.go", "layout/rules.txt"}) || !slices.Equal(k.Scope, []string{"./*.go"}) {
+	if k.State != "pending" || k.Tool != "" || k.Version != "" || k.Command != "" || len(k.Config) != 0 || k.Fixture != "" || k.Evidence != "" || !slices.Equal(k.Scope, []string{"./*.go"}) {
 		t.Fatalf("the layout kind %+v", k)
 	}
 }
@@ -62,6 +67,12 @@ func TestReadRefusesAnEntryThatBreaksARule(t *testing.T) {
 		fsys := good()
 		change(fsys)
 		return fsys
+	}
+	pending := func(row string) fstest.MapFS {
+		return broken(func(f fstest.MapFS) { f["go/kinds.tsv"] = &fstest.MapFile{Data: []byte(header + staticRow + row)} })
+	}
+	active := func(row string) fstest.MapFS {
+		return broken(func(f fstest.MapFS) { f["go/kinds.tsv"] = &fstest.MapFile{Data: []byte(header + row + layoutRow)} })
 	}
 	for _, c := range []struct {
 		name string
@@ -83,6 +94,37 @@ func TestReadRefusesAnEntryThatBreaksARule(t *testing.T) {
 		{"a fixture of no kind", broken(func(f fstest.MapFS) { f["go/fixtures/extra.patch"] = &fstest.MapFile{Data: []byte("x")} }), "go/fixtures/extra.patch: the file is the fixture of no active kind (no active kind extra)"},
 		{"a file of files/ without the suffix", broken(func(f fstest.MapFS) { f["go/files/go.mod"] = &fstest.MapFile{Data: []byte("x")} }), "go/files/go.mod: a file of files/ ends with .tmpl"},
 		{"a file of files/ that is only the suffix", broken(func(f fstest.MapFS) { f["go/files/.tmpl"] = &fstest.MapFile{Data: []byte("x")} }), "go/files/.tmpl: a file of files/ ends with .tmpl"},
+		// D1 of #91, with note 1 of its plan review: a pending kind has — in
+		// its tool, version, command, config and evidence; an active kind has
+		// a version, and an https URL as its evidence.
+		{"a pending kind with a tool", pending("layout\tpending\tgo\t—\t—\t./*.go\t—\t—\t—\n"), "the pending kind layout names the tool go; a pending kind has —"},
+		{"a pending kind with a version", pending("layout\tpending\t—\t1.26\t—\t./*.go\t—\t—\t—\n"), "the pending kind layout names the version 1.26; a pending kind has —"},
+		{"a pending kind with a command", pending("layout\tpending\t—\t—\tgo test ./...\t./*.go\t—\t—\t—\n"), "the pending kind layout names the command go test ./...; a pending kind has —"},
+		{"a pending kind with a config", pending("layout\tpending\t—\t—\t—\t./*.go\tlayout.txt\t—\t—\n"), "the pending kind layout names the config layout.txt; a pending kind has —"},
+		{"a pending kind with an evidence", pending("layout\tpending\t—\t—\t—\t./*.go\t—\t—\thttps://go.dev/doc\n"), "the pending kind layout names the evidence https://go.dev/doc; a pending kind has —"},
+		{"an active kind with no version", active(strings.Replace(staticRow, "\t1.26\t", "\t—\t", 1)), "the active kind static has no version"},
+		{"an active kind whose evidence is no URL", active(strings.Replace(staticRow, "https://go.dev/doc", "go.dev/doc", 1)), "the evidence of the active kind static is not an https URL: go.dev/doc"},
+		{"an active kind with no evidence", active(strings.Replace(staticRow, "https://go.dev/doc", "—", 1)), "the evidence of the active kind static is not an https URL: —"},
+		// D7 of #91: a gap of the entry is a token in a file of files/ with
+		// its row in gaps.tsv, and no file of the entry holds a marker.
+		{"a gap token with no row", broken(func(f fstest.MapFS) { delete(f, "go/gaps.tsv") }), "go/files/docs/floor.txt.tmpl: the gap token {{gap:the floor}} has no row in go/gaps.tsv"},
+		{"a gap row with no token", broken(func(f fstest.MapFS) { f["go/files/docs/floor.txt.tmpl"] = &fstest.MapFile{Data: []byte("80\n")} }), "go/gaps.tsv: line 2: the file docs/floor.txt holds the gap token {{gap:the floor}} 0 times; want 1"},
+		{"a gap token twice", broken(func(f fstest.MapFS) {
+			f["go/files/docs/floor.txt.tmpl"] = &fstest.MapFile{Data: []byte("{{gap:the floor}}\n{{gap:the floor}}\n")}
+		}), "go/gaps.tsv: line 2: the file docs/floor.txt holds the gap token {{gap:the floor}} 2 times; want 1"},
+		{"a gap row whose path is no file", broken(func(f fstest.MapFS) {
+			f["go/gaps.tsv"] = &fstest.MapFile{Data: []byte(gapsFile + "docs/none.txt\tnone\tWhich?\n")}
+		}), "go/gaps.tsv: line 3: docs/none.txt is not a file of files/"},
+		{"a gaps.tsv of another form", broken(func(f fstest.MapFS) {
+			f["go/gaps.tsv"] = &fstest.MapFile{Data: []byte("path\tmarker\ndocs/floor.txt\tthe floor\n")}
+		}), "go/gaps.tsv: line 1"},
+		{"a gap with an empty question", broken(func(f fstest.MapFS) {
+			f["go/gaps.tsv"] = &fstest.MapFile{Data: []byte("path\tmarker\tquestion\ndocs/floor.txt\tthe floor\t—\n")}
+		}), "go/gaps.tsv: line 2: the gap the floor has no question"},
+		{"a marker character in a file of files/", broken(func(f fstest.MapFS) {
+			f["go/files/README.md.tmpl"] = &fstest.MapFile{Data: []byte("a \u2039x\u203a b\n")}
+		}), "go/files/README.md.tmpl: a marker character; an entry writes a gap token in its place"},
+		{"a marker character in a fixture", broken(func(f fstest.MapFS) { f["go/fixtures/static.patch"] = &fstest.MapFile{Data: []byte("+\u203a\n")} }), "go/fixtures/static.patch: a marker character; an entry writes a gap token in its place"},
 	} {
 		_, err := Read(c.fsys, "go")
 		if err == nil || !strings.Contains(err.Error(), c.want) {
@@ -106,6 +148,7 @@ func TestFilesReplaceTheModuleAndNothingElse(t *testing.T) {
 	}
 	want := []File{
 		{".github/workflows/gates.yml", []byte("name: gates\n")},
+		{"docs/floor.txt", []byte("\u2039the floor\u203a\n")},
 		{"go.mod", []byte("module example.com/target\n\ngo 1.26\n")},
 		{"layout/rules.txt", []byte("{{Module}} {module} {{ module }} example.com/targetx\n")},
 	}
@@ -117,8 +160,10 @@ func TestFilesReplaceTheModuleAndNothingElse(t *testing.T) {
 			t.Errorf("file %d: %s %q, want %s %q", i, files[i].Path, files[i].Data, want[i].Path, want[i].Data)
 		}
 	}
-	if _, err := read(t, good()).Files(""); err == nil {
-		t.Error("an empty module path: no error")
+	for _, module := range []string{"", "a b", "a\nb", "a\tb"} {
+		if _, err := read(t, good()).Files(module); err == nil {
+			t.Errorf("the module path %q: no error", module)
+		}
 	}
 }
 
@@ -128,8 +173,8 @@ func TestManifestIsTheKindsWithoutVersionFixtureAndEvidence(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := "kind\tstate\ttool\tcommand\tscope\tconfig\n" +
-		"static\tactive\tgo\ttest -z \"$(gofmt -l .)\"\t./*.go\t—\n" +
-		"layout\tpending\tgo\tgo test ./layout/\t./*.go\tlayout/layout_test.go layout/rules.txt\n"
+		"static\tactive\tgo\ttest -z \"$(gofmt -l .)\"\t./*.go\t.golangci.yml docs/rules.txt\n" +
+		"layout\tpending\t—\t—\t./*.go\t—\n"
 	if string(m) != want {
 		t.Fatalf("the manifest:\n%s\nwant:\n%s", m, want)
 	}
@@ -143,11 +188,11 @@ func TestFixtureAndConfigOfAKind(t *testing.T) {
 	if _, err := e.Fixture("layout"); err == nil {
 		t.Error("Fixture(layout), a pending kind: no error")
 	}
-	if c, ok := e.Config("layout"); !ok || !slices.Equal(c, []string{"layout/layout_test.go", "layout/rules.txt"}) {
-		t.Errorf("Config(layout) = %q, %v", c, ok)
+	if c, ok := e.Config("static"); !ok || !slices.Equal(c, []string{".golangci.yml", "docs/rules.txt"}) {
+		t.Errorf("Config(static) = %q, %v", c, ok)
 	}
-	if c, ok := e.Config("static"); !ok || len(c) != 0 {
-		t.Errorf("Config(static) = %q, %v; want none", c, ok)
+	if c, ok := e.Config("layout"); !ok || len(c) != 0 {
+		t.Errorf("Config(layout) = %q, %v; want none", c, ok)
 	}
 	if _, ok := e.Config("test"); ok {
 		t.Error("Config(test): the entry has no such kind")
@@ -158,8 +203,8 @@ func TestHasNamesTheFilesOfTheEntryByTheirPathInIt(t *testing.T) {
 	e := read(t, good())
 	for ref, want := range map[string]bool{
 		"go/kinds.tsv": true, "go/files/go.mod.tmpl": true, "go/files/.github/workflows/gates.yml.tmpl": true,
-		"go/fixtures/static.patch": true,
-		"go/go.mod":                false, "go/files/go.mod": false, "go/files/": false, "go/fixtures/layout.patch": false,
+		"go/fixtures/static.patch": true, "go/gaps.tsv": true,
+		"go/go.mod": false, "go/files/go.mod": false, "go/files/": false, "go/fixtures/layout.patch": false,
 		"rust/kinds.tsv": false, "go": false, "kinds.tsv": false,
 	} {
 		if got := e.Has(ref); got != want {
@@ -177,5 +222,34 @@ func TestStacksListsTheDirectoriesWithAKindsFile(t *testing.T) {
 	}
 	if s, err := Stacks(fsys); err != nil || !slices.Equal(s, []string{"go", "rust"}) {
 		t.Fatalf("Stacks = %q, %v; want go and rust", s, err)
+	}
+}
+
+// Gaps gives each gap token of the files with its path in the target, its
+// line, its marker and its question, by path and line (D7 of #91).
+func TestGapsGiveEachGapAtItsLine(t *testing.T) {
+	fsys := good()
+	fsys["go/files/docs/a.txt.tmpl"] = &fstest.MapFile{Data: []byte("one\ntwo {{module}}\n{{gap:a}} and {{gap:b}}\n")}
+	fsys["go/gaps.tsv"] = &fstest.MapFile{Data: []byte(gapsFile + "docs/a.txt\tb\tQ b?\ndocs/a.txt\ta\tQ a?\n")}
+	got := read(t, fsys).Gaps()
+	want := []Gap{
+		{Path: "docs/a.txt", Line: 3, Marker: "\u2039a\u203a", Question: "Q a?"},
+		{Path: "docs/a.txt", Line: 3, Marker: "\u2039b\u203a", Question: "Q b?"},
+		{Path: "docs/floor.txt", Line: 1, Marker: "\u2039the floor\u203a", Question: "Which floor?"},
+	}
+	if !slices.Equal(got, want) {
+		t.Fatalf("Gaps =\n%+v\nwant\n%+v", got, want)
+	}
+	files, err := read(t, fsys).Files("example.com/target")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, f := range files {
+		if f.Path == "docs/a.txt" && string(f.Data) != "one\ntwo example.com/target\n\u2039a\u203a and \u2039b\u203a\n" {
+			t.Errorf("docs/a.txt: %q", f.Data)
+		}
+	}
+	if len(read(t, entry(staticRow, map[string]string{"fixtures/static.patch": "x"})).Gaps()) != 0 {
+		t.Error("an entry with no gaps.tsv has a gap")
 	}
 }
