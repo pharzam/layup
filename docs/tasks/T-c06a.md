@@ -61,3 +61,29 @@ copies of one rule); one job with a matrix (a static reader sees one job, and
 check `markers` would read it); fixtures that change a file of the baseline
 (they stop applying when the baseline changes); a test of the fixtures on the
 clean commit only (a command that fails on each tree would be `clear` there).
+
+## Review round 1 and its fix (cycle 1)
+
+Devin (its usage quota) and OpenCode ("Go usage limit exceeded") gave no
+record. Round 1 (Claude Fable 5.1, effort `xhigh`, on the Claude Code CLI, on
+`b00d5c9`; the record is on #91) gave `material`, with one finding and eleven
+notes. The fix has its red run ([`test-runs.md`](../../runs/T-c06a/test-runs.md)):
+
+1. **The job passed on a manifest that `layup gate` refuses.** With an empty
+   `command` or `config` field, a `config` value that is not a path, a carriage
+   return in a row, or no line feed at the end, the job passed where `layup
+   gate` gives exit 2; with an empty command, it passed on nothing. The job
+   script now refuses each input that `layup gate` refuses: each form that the
+   reader of `internal/tsv` refuses (with `iconv` for UTF-8 and `tail` for the
+   last line feed), and a base or a head that is not a commit (note 5). The
+   parity test has these cases, and it runs the script with each `sh` of the
+   host.
+
+The notes: note 2 (a builtin as the tool) is fixed, as the tool of an active
+kind is a program, found by its path; note 3 (the programs that the script
+starts) is fixed in its comment and in `setup.md`; note 4 (a tab in a reason)
+is fixed, as the reason writes a space; note 5 is fixed (above). Notes 6 to 12
+confirm the change. One more defect, found by the author during the fix: with
+`bash`, the trap on `EXIT` could remove the temporary file before `tr` read
+it (4 runs of 20 gave `clear`); the script removes the file in `result()`, and
+a lesson is in `guardrails.md` §2.

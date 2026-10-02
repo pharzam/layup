@@ -82,3 +82,32 @@ On the tree of the commit that adds this file.
 | `go test -count=1 -tags=e2e -timeout 10m ./...` | `ok` × 11 (`cmd/layup` 6.5 s; `TestGateOnEachEntryOfTheCatalog` about 2 s) |
 | `go test -race -count=1` on `internal/catalog`, `internal/verify`, `internal/work` and `internal/standin`, and on `internal/catalog` and `internal/verify` with `-tags=integration` | `ok` |
 | `sh docs/setup/tests/run.sh`; `sh docs/tests/run-discipline-tests.sh` | 44 passed, 0 failed; 81 passed, 0 failed |
+
+## The red runs of the fix of review round 1
+
+Round 1 (`b00d5c9`) gave one material finding (the job passed on forms of a
+manifest that `layup gate` refuses) and notes 2 to 5. The new cases of
+`TestTheJobScriptOfEachEntry`, in their final form, with each `sh` of the host,
+on the script of `b00d5c9`:
+
+```text
+$ go test -count=1 -tags=integration -run TestTheJobScriptOfEachEntry ./internal/catalog/
+    go: an empty field: the job "ok\tpass\t—\n" (passed true), layup gate …: line 2, column "command": an empty field …
+    go: an empty field of config: the job "ok\tpass\t—\n" (passed true), layup gate …: line 2, column "config": an empty field …
+    go: a config value that is not a path: the job "ok\tpass\t—\n" (passed true), layup gate …: "../x" is not a value of list(path)
+    go: a scope of two spaces: the job "ok\tpass\t—\n" (passed true), layup gate …: "./*.txt  ./*.md" is not a value of list(text)
+    go: a carriage return in a row: the job "ok\tpass\t—\n" (passed true), layup gate …: a carriage return …
+    go: an empty line: the job "ok\tfail\tthe manifest: line 3 has 0 fields, not 6\n" …; want a failed job that names "an empty line"
+    go: no line feed at the end: the job "ok\tpass\t—\n" (passed true), layup gate …: no line feed after the last line
+    go: a byte that is not UTF-8: the job with [bash --posix] gives "ok\tclear\tno product path\n"; with [sh] "ok\tpass\t—\n"
+    go: a builtin as the tool: the job "ok\tpass\t—\n" (passed true); layup gate not-active "tool not found: :"
+    go: a base that is a tree: the job "ok\tpass\t—\n" (passed true), layup gate the revision "49dabb5…" is not a commit …
+```
+
+A defect found during the fix: on a pending case, `bash` 5.3 gave `clear` in 4
+runs of 20, and `dash` gave `fail` in 20 of 20. The trap on `EXIT` ran in a
+subshell of the pipeline `tr < "$tmp" | first` and removed the file before
+`tr` read it. With the file removed in `result()` and no trap, `bash` gave
+`fail` in 30 of 30, and a run leaves no temporary file. After the fix, the
+three integration tests of the catalog pass with `sh`, `dash` and
+`bash --posix`.

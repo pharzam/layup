@@ -211,9 +211,10 @@ func TestTheActiveKindsOfTheGoEntryPassOnGoodCode(t *testing.T) {
 
 // The job script of each entry of the binary (D5 of #91) and layup gate, on the
 // same base and head, give the same pass or fail, with the same result and
-// reason for each line of the table of the run; a manifest that layup gate
-// refuses (exit 2) fails the job (note 4 of the plan review), and so does a
-// kind with no row.
+// reason for each line of the table of the run; each input that layup gate
+// refuses (exit 2) fails the job (note 4 of the plan review, finding 1 of round
+// 1), and so does a kind with no row. Each sh of the host runs the script, with
+// the same output.
 func TestTheJobScriptOfEachEntry(t *testing.T) {
 	goEnv(t)
 	const header = "kind\tstate\ttool\tcommand\tscope\tconfig\n"
@@ -224,6 +225,9 @@ func TestTheJobScriptOfEachEntry(t *testing.T) {
 		"none\tactive\tsh\ttrue\t./*.go\t—\n" +
 		"pend\tpending\t—\t—\tsrc/*.txt docs/rules.md\t—\n"
 	base := map[string]string{"docs/gates.tsv": manifest, "docs/rules.md": "the rules\n", "a.md": "a\n"}
+	withRow := func(row string) map[string]string {
+		return map[string]string{"docs/gates.tsv": strings.Replace(manifest, "ok\tactive\tsh\ttrue\t./*.txt\t—\n", row, 1)}
+	}
 	cases := []struct {
 		name, kind   string
 		base, head   map[string]string
@@ -231,23 +235,38 @@ func TestTheJobScriptOfEachEntry(t *testing.T) {
 		reason       string
 		gateRefuses  bool
 		scriptRefers string // a part of the reason of the job when layup gate refuses the manifest
+		tree         bool   // the base is the tree of the base commit, not the commit
 	}{
-		{"active, the command exits 0", "ok", base, map[string]string{"x.txt": "x\n"}, "pass", "—", false, ""},
-		{"active, the command exits 3", "bad", base, map[string]string{"x.txt": "x\n"}, "fail", "exit 3", false, ""},
-		{"active, its tool is not found", "notool", base, map[string]string{"x.txt": "x\n"}, "not-active", "tool not found: no-such-tool-of-91", false, ""},
-		{"active, no product path", "none", base, map[string]string{"x.txt": "x\n"}, "clear", "no product path", false, ""},
-		{"pending, no product path changed", "pend", base, map[string]string{"x.txt": "x\n", "docs/rules.md.bak": "b\n", "src/.txt": "e\n"}, "clear", "pending: no product path", false, ""},
-		{"pending, a file under the directory of a pattern", "pend", base, map[string]string{"src/a/b.txt": "b\n"}, "fail", "pending: product path changed: src/a/b.txt", false, ""},
-		{"pending, the path of a pattern changed", "pend", base, map[string]string{"docs/rules.md": "new rules\n"}, "fail", "pending: product path changed: docs/rules.md", false, ""},
-		{"pending, the path of a pattern removed", "pend", base, map[string]string{"docs/rules.md": ""}, "fail", "pending: product path changed: docs/rules.md", false, ""},
-		{"no manifest", "ok", map[string]string{"a.md": "a\n"}, map[string]string{"x.txt": "x\n"}, "", "", true, "no manifest"},
+		{"active, the command exits 0", "ok", base, map[string]string{"x.txt": "x\n"}, "pass", "—", false, "", false},
+		{"active, the command exits 3", "bad", base, map[string]string{"x.txt": "x\n"}, "fail", "exit 3", false, "", false},
+		{"active, its tool is not found", "notool", base, map[string]string{"x.txt": "x\n"}, "not-active", "tool not found: no-such-tool-of-91", false, "", false},
+		{"active, no product path", "none", base, map[string]string{"x.txt": "x\n"}, "clear", "no product path", false, "", false},
+		{"pending, no product path changed", "pend", base, map[string]string{"x.txt": "x\n", "docs/rules.md.bak": "b\n", "src/.txt": "e\n"}, "clear", "pending: no product path", false, "", false},
+		{"pending, a file under the directory of a pattern", "pend", base, map[string]string{"src/a/b.txt": "b\n"}, "fail", "pending: product path changed: src/a/b.txt", false, "", false},
+		{"pending, the path of a pattern changed", "pend", base, map[string]string{"docs/rules.md": "new rules\n"}, "fail", "pending: product path changed: docs/rules.md", false, "", false},
+		{"pending, the path of a pattern removed", "pend", base, map[string]string{"docs/rules.md": ""}, "fail", "pending: product path changed: docs/rules.md", false, "", false},
+		{"no manifest", "ok", map[string]string{"a.md": "a\n"}, map[string]string{"x.txt": "x\n"}, "", "", true, "no manifest", false},
 		{"a scope pattern of another form", "ok", map[string]string{"docs/gates.tsv": strings.Replace(manifest, "ok\tactive\tsh\ttrue\t./*.txt", "ok\tactive\tsh\ttrue\t*.txt", 1)},
-			map[string]string{"x.txt": "x\n"}, "", "", true, "the scope pattern *.txt"},
+			map[string]string{"x.txt": "x\n"}, "", "", true, "the scope pattern *.txt", false},
 		{"a scope pattern of another form in another row", "ok", map[string]string{"docs/gates.tsv": strings.Replace(manifest, "src/*.txt", "src/*/x.txt", 1)},
-			map[string]string{"x.txt": "x\n"}, "", "", true, "the scope pattern src/*/x.txt"},
+			map[string]string{"x.txt": "x\n"}, "", "", true, "the scope pattern src/*/x.txt", false},
 		{"a header of another form", "ok", map[string]string{"docs/gates.tsv": strings.Replace(manifest, "kind\tstate", "kind\tstatus", 1)},
-			map[string]string{"x.txt": "x\n"}, "", "", true, "line 1 is not the header row"},
-		{"a kind with no row", "nosuch", base, map[string]string{"x.txt": "x\n"}, "", "", false, "no row for the kind nosuch"},
+			map[string]string{"x.txt": "x\n"}, "", "", true, "line 1 is not the header row", false},
+		{"a kind with no row", "nosuch", base, map[string]string{"x.txt": "x\n"}, "", "", false, "no row for the kind nosuch", false},
+		// Each form that the reader of the manifest refuses (round 1 of #91,
+		// finding 1), a builtin as the tool (note 2), and a base that is no
+		// commit (note 5).
+		{"an empty field", "ok", withRow("ok\tactive\tsh\t\t./*.txt\t—\n"), map[string]string{"x.txt": "x\n"}, "", "", true, "an empty field", false},
+		{"an empty field of config", "ok", withRow("ok\tactive\tsh\ttrue\t./*.txt\t\n"), map[string]string{"x.txt": "x\n"}, "", "", true, "an empty field", false},
+		{"a config value that is not a path", "ok", withRow("ok\tactive\tsh\ttrue\t./*.txt\t../x\n"), map[string]string{"x.txt": "x\n"}, "", "", true, "the config path ../x", false},
+		{"a scope of two spaces", "ok", withRow("ok\tactive\tsh\ttrue\t./*.txt  ./*.md\t—\n"), map[string]string{"x.txt": "x\n"}, "", "", true, "the scope", false},
+		{"a carriage return in a row", "ok", withRow("ok\tactive\tsh\ttrue\t./*.txt\t—\r\n"), map[string]string{"x.txt": "x\n"}, "", "", true, "a carriage return", false},
+		{"an empty line", "ok", withRow("ok\tactive\tsh\ttrue\t./*.txt\t—\n\n"), map[string]string{"x.txt": "x\n"}, "", "", true, "an empty line", false},
+		{"no line feed at the end", "ok", map[string]string{"docs/gates.tsv": strings.TrimSuffix(manifest, "\n")}, map[string]string{"x.txt": "x\n"}, "", "", true, "no line feed", false},
+		{"a byte that is not UTF-8", "ok", withRow("ok\tactive\tsh\ttrue \xff\t./*.txt\t—\n"), map[string]string{"x.txt": "x\n"}, "", "", true, "not UTF-8", false},
+		{"a kind twice", "ok", map[string]string{"docs/gates.tsv": manifest + "ok\tactive\tsh\ttrue\t./*.txt\t—\n"}, map[string]string{"x.txt": "x\n"}, "", "", true, "the kind ok is there twice", false},
+		{"a builtin as the tool", "ok", withRow("ok\tactive\t:\ttrue\t./*.txt\t—\n"), map[string]string{"x.txt": "x\n"}, "not-active", "tool not found: :", false, "", false},
+		{"a base that is a tree", "ok", base, map[string]string{"x.txt": "x\n"}, "", "", true, "not a commit", true},
 	}
 	stacks, err := Stacks(Embedded())
 	if err != nil || len(stacks) == 0 {
@@ -270,8 +289,18 @@ func TestTheJobScriptOfEachEntry(t *testing.T) {
 				}
 			}
 		}
-		if out, err := exec.Command("sh", "-n", script).CombinedOutput(); err != nil {
-			t.Fatalf("%s: sh -n .github/gates.sh: %v\n%s", s, err, out)
+		// Each shell of the host that is a POSIX sh: CI runs the job with the
+		// sh of ubuntu-latest, dash (round 1 of #91, note 9).
+		var shells [][]string
+		for _, sh := range [][]string{{"sh"}, {"dash"}, {"bash", "--posix"}} {
+			if _, err := exec.LookPath(sh[0]); err == nil {
+				shells = append(shells, sh)
+			}
+		}
+		for _, sh := range shells {
+			if out, err := exec.Command(sh[0], append(sh[1:], "-n", script)...).CombinedOutput(); err != nil {
+				t.Fatalf("%s: %s -n .github/gates.sh: %v\n%s", s, sh, err, out)
+			}
 		}
 		for _, c := range cases {
 			repo := filepath.Join(t.TempDir(), "target")
@@ -280,15 +309,28 @@ func TestTheJobScriptOfEachEntry(t *testing.T) {
 			}
 			b := commitFiles(t, repo, c.base, "the base")
 			h := commitFiles(t, repo, c.head, "the head")
-			cmd := exec.Command("sh", script, c.kind)
-			cmd.Dir, cmd.Env = repo, append(os.Environ(), "GATE_BASE="+b, "GATE_HEAD="+h)
-			out, err := cmd.Output()
-			var exit *exec.ExitError
-			if err != nil && !errors.As(err, &exit) {
-				t.Fatalf("%s: %s: the script: %v", s, c.name, err)
+			if c.tree {
+				var err error
+				if b, err = git.RevParse(repo, b+"^{tree}"); err != nil {
+					t.Fatal(err)
+				}
+			}
+			var out []byte
+			var passed bool
+			for i, sh := range shells {
+				cmd := exec.Command(sh[0], append(sh[1:], script, c.kind)...)
+				cmd.Dir, cmd.Env = repo, append(os.Environ(), "GATE_BASE="+b, "GATE_HEAD="+h)
+				o, err := cmd.Output()
+				var exit *exec.ExitError
+				if err != nil && !errors.As(err, &exit) {
+					t.Fatalf("%s: %s: the script with %s: %v", s, c.name, sh, err)
+				}
+				if i > 0 && (string(o) != string(out) || passed != (err == nil)) {
+					t.Errorf("%s: %s: the job with %s gives %q (passed %v); with %s %q (passed %v)", s, c.name, sh, o, err == nil, shells[0], out, passed)
+				}
+				out, passed = o, err == nil
 			}
 			got := strings.Split(strings.TrimSuffix(string(out), "\n"), "\t")
-			passed := err == nil
 			tab, gerr := gate.Run(repo, b, h, nop, io.Discard)
 			switch {
 			case c.result != "":

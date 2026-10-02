@@ -711,13 +711,22 @@ task `T-3jpx`, #81):
   versions that LAYUP's own CI runs.
 - **The job script,** `.github/gates.sh` in the target, holds the rules of the
   run of [`layup gate`](gate.md#the-command) for one kind, in POSIX `sh`, `awk`
-  and `git`. It reads the kind's row of the head's `docs/gates.tsv` (known
-  limit L-B3), prints the kind, the result and the reason of `gate.md`, and
-  exits 0 for `pass` and `clear`, 1 otherwise. A manifest that `layup gate`
-  refuses with exit 2 (none, no row for the kind, a form of another kind, a
-  scope pattern of another form) is `fail` in the job: a job has no third
-  state, and each of the two is not a pass. **Known limit:** a file name with a
-  line feed is split by `tr`.
+  and `git`, with `tail`, `iconv`, `tr`, `mktemp` and `rm`. It reads the kind's
+  row of the head's `docs/gates.tsv` (known limit L-B3) on a checkout of the
+  head, prints the kind, the result and the reason of `gate.md` (a tab of a
+  path is a space, as in the table), and exits 0 for `pass` and `clear`, 1
+  otherwise. Each input that `layup gate` refuses with exit 2 is `fail` in the
+  job, because a job has no third state and each of the two is not a pass: a
+  base or a head that is not a commit, and a checkout that is not the head; no
+  manifest; a manifest that the reader of `internal/tsv` refuses (a byte that
+  is not UTF-8, no line feed after the last line, a carriage return, an empty
+  line or field, a header row of another form, a row of another field count, a
+  kind that is not a word or is there twice, a state, a list with an empty
+  value, a `config` value that is not a path); a scope pattern of another form,
+  no scope pattern, or a `config` path in `.git` (round 1 of #91, finding 1).
+  The tool of an active kind is a program, as `exec.LookPath` finds it, never
+  a builtin of `sh`. **Known limit:** a file name with a line feed is split by
+  `tr`.
 - **The coverage floor** (K24, L-B2): the file `docs/gates/coverage-floor.txt`
   of the target, the `config` of `test`, has one line, the marker of the floor,
   and `gaps.tsv` gives its question. S12 (row 15 of the plan) writes, for each
@@ -735,8 +744,9 @@ task `T-3jpx`, #81):
   (K28): `TestTheFixturesOfEachEntry` of `internal/catalog` (integration:
   `gate.Run` on a target rendered from each entry of the binary, on its clean
   commit and on each fixture), `TestTheJobScriptOfEachEntry` (integration: the
-  job script and `gate.Run` on the same base and head, for each line of the
-  table of the run and for the input errors, give the same pass or fail), and
+  job script, with each `sh` of the host, `dash` and `bash` in its POSIX mode
+  among them, and `gate.Run` on the same base and head, for each line of the
+  table of the run and for each input error, give the same pass or fail), and
   `TestGateOnEachEntryOfTheCatalog` of `cmd/layup` (e2e: the built binary).
 
 ### Not in phase 1
