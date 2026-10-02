@@ -213,8 +213,10 @@ docs/setup/tests/facts/bad-blank-tab/** -whitespace
 # `facts` compares them. On a checkout with `core.autocrlf=true` (git's default on
 # Windows) a text file gains a carriage return per line, so every hash fails.
 # `-text` turns the conversion off in both directions for the whole directory,
-# so a later raw facts file there keeps its bytes too.
-docs/facts/** -text
+# so a later raw facts file there keeps its bytes too. The list of hashes is a
+# text file that the check parses: with carriage returns its paths do not match.
+docs/facts/**           -text
+docs/setup/facts.sha256 text eol=lf
 
 # --- the stack catalog: bytes that go into a target unchanged -----------------
 #
