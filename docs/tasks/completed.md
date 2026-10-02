@@ -20,6 +20,7 @@ here directly, in the shape above.
 - **YYYY-MM-DD** — **<ID>** — <one-sentence summary of what the task found or delivered> ([<link>](...); [detail](<id>.md))
 -->
 
+- **2026-10-02** — **T-6x75** — Row 7 of the plan: `layup setup verify WORK` with the checks `pin`, `kit-history` and `identity`, the fixture harness of `setup-check.sh` through the Go checks, `internal/work` (K9) and the stand-in work area of the tests (K11); K13 settled; O-132 to O-135 ([#84](https://github.com/pharzam/layup/issues/84); [detail](T-6x75.md))
 - **2026-10-02** — **T-5zmw** — Row 6 of the plan: `layup psb check` to its specification: the gap table through `internal/tsv` by the Go schema of `psb-gaps`, exit 2 for a `FILE` that is not valid UTF-8 (K32) and for a table that it cannot write, G1 by O-131, the values and the edge cases pinned ([#83](https://github.com/pharzam/layup/issues/83); [detail](T-5zmw.md))
 - **2026-10-02** — **T-5sgt** — Row 5 of the plan: `layup gate REPO --base REV --head REV`, one verdict per kind of the base's manifest on the head, run from outside in a scratch work tree with the base's gate files; K19 settled ([#82](https://github.com/pharzam/layup/issues/82); [detail](T-5sgt.md))
 - **2026-10-02** — **T-3jpx** — Row 4 of the plan: `internal/catalog`, the reader of a stack's catalog entry by its rules, with the `.tmpl` form of `files/` and the embedded test entry; K35 settled ([#81](https://github.com/pharzam/layup/issues/81); [detail](T-3jpx.md))

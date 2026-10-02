@@ -369,3 +369,24 @@ func TestLsTree(t *testing.T) {
 		}
 	}
 }
+
+// Check pin: a repository with its whole history is not shallow, and a clone
+// of depth 1 is, also in a work tree of it (layup setup verify reads a
+// scratch work tree).
+func TestIsShallow(t *testing.T) {
+	home := isolate(t)
+	full := t.TempDir()
+	commitTree(t, full, map[string]string{"a.txt": "a\n"})
+	shallow := filepath.Join(t.TempDir(), "shallow")
+	gitOK(t, "", plain(home), "clone", "-q", "--depth", "1", "file://"+full, shallow)
+	tree := filepath.Join(t.TempDir(), "tree")
+	must(t, WorktreeAdd(shallow, tree, "HEAD"))
+	for _, c := range []struct {
+		dir  string
+		want bool
+	}{{full, false}, {shallow, true}, {tree, true}} {
+		if got, err := IsShallow(c.dir); err != nil || got != c.want {
+			t.Errorf("IsShallow(%s): %v, %v; want %v", c.dir, got, err, c.want)
+		}
+	}
+}

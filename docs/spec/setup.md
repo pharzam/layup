@@ -94,7 +94,7 @@ the one home of the phase-1 steps of a target. A row that differs from
 | S09 | the same | `inputs/files/docs/guardrails.md` | the same | the file | check `guardrails` |
 | S10 | `layup setup`; stops for the Operator | the tree; `answers.tsv` | Lists every marker of the tree outside the exemptions of LAYUP's `MK_EXEMPT` ([`setup-check.sh`](../setup/setup-check.sh); the baseline has no setup check, §5), which the engine embeds at its version. A path of that pattern that a target does not have matches nothing. A marker with no answer row stops the run; the table lists all of them at once (§5 gap check, "one batch"). | — | every marker has an answer row |
 | S11 | `layup setup` | the answers of S10 | Replaces each marker whose answer has a value with that value, and writes its record row with the source. A marker whose answer is `gap` keeps its marker and gets a row in `docs/setup/open-gaps.tsv` with the answer's question (Invariant 4). When S10 listed at least one marker, writes the answer of each marker that S10 listed as a second raw fact record, in the same form, with its own index row and its own line in `facts.sha256`; with no marker, it writes no second record; the record of S06 does not change (a raw facts record is immutable). | the tree; the second answers record; record rows `marker:<file>:<line>` | checks `markers`, `sources` and `facts` |
-| S12 | `layup setup` | the catalog entry of the stack | Writes the files of the entry (for Go: `go.mod` with the module path from `name`, the tools' configuration), `docs/gates.tsv`, and one CI job per gate kind, named as the kind. The baseline's own workflows stay byte for byte (`REQ-018`). Adds no `setup-check` job. Changes `steps.tsv` S12: ADR-0011 decision 7, ADR-0016, §5 Scaffold 4. | the gate files | checks `jobs` and `gates` |
+| S12 | `layup setup` | the catalog entry of the stack | Writes the files of the entry (for Go: `go.mod` with the module path from `name`, the tools' configuration), `docs/gates.tsv`, and one CI job per gate kind, named as the kind. The baseline's own workflows stay byte for byte (`REQ-018`). Adds no `setup-check` job. Changes `steps.tsv` S12: ADR-0011 decision 7, ADR-0016, §5 Scaffold 4. | the gate files | checks `jobs` and `gates` (each row `gate:<kind>`) |
 | S13 | `layup setup`; applied by the Operator | the job names | Writes `docs/setup/branch-protection.json` (in the form of LAYUP's own file of that name; the baseline has no `docs/setup/`) and `WORK/out/ruleset-default.json`: the default branch and the ref `layup-probe`; a pull request required; each gate job a required check, pinned to GitHub Actions; no force push, no deletion; an empty bypass list. In phase 1 it requires no `layup/` check, because no phase-1 command posts one ([`records.md`](records.md#nfr-002--a-target-is-independent-of-layup)). Writes to `commands.sh` the push of `layup-setup` onto the default branch (`git push origin layup-setup:main`, a fast-forward from the root commit; §5 Scaffold 6: "pushes the setup commits on top of the root commit") and, after it, the apply command of the ruleset. | the ruleset file; commands | the Operator's run of `commands.sh` |
 | S14 | `layup setup`; the text is an input | `inputs/files/README.md`, `inputs/files/AGENTS.md` | Copies the files; a missing file stops the run. | the files | check `identity` |
 | S15 | `layup setup`; the push by the Operator | the record; `out/verify.tsv` | Writes the record's last rows and the rule-path register, and the first commit of `layup-records` ([below](#where-the-records-go-in-phase-1), O-115). Not `steps.tsv` into the target (§5: LAYUP's own file). | `out/record.tsv`, `out/rule-paths.tsv`; the records commit; a command | every row of `verify.tsv` is `pass` or `clear` |
@@ -241,15 +241,15 @@ of each such check passes and fails on the same fixtures as
 | Check | In phase 1 | The rule for a target |
 | ----- | ---------- | --------------------- |
 | `discipline-tests` | yes | the baseline's own `sh docs/tests/run-discipline-tests.sh` exits 0 |
-| `pin` | yes | `check_pin`; and the pin file's values equal the record's pin rows; `method` equals the text of [`NFR-006`](#nfr-006--the-baseline-at-a-pinned-recorded-version) with the source and the commit |
-| `kit-history` | yes | `check_kit_history` |
+| `pin` | yes | `check_pin`; and the pin file's `source`, `commit` and `tree` equal the record rows `pin.source`, `pin.commit` and `pin.tree` of S02, its `date` is the date of `pin.time`, and `method` equals the text of [`NFR-006`](#nfr-006--the-baseline-at-a-pinned-recorded-version) with the source and the commit |
+| `kit-history` | yes | `check_kit_history`, whose repository is the record row `pin.source` with no scheme and no `/` or `.git` at its end (for LAYUP's baseline, `github.com/pharzam/armature`); a task index links it when it holds that text with the start of the file or a separator before it, and after it, with or without `.git` or `.` in between, the end of the file or a separator; a separator is a character that is not a letter or a digit of any script, `.`, `-` or `_` (review rounds 1 to 4 of #84) |
 | `facts` | yes, in a target's form | each brief is in `docs/facts/` and in `facts.sha256` with its hash; each question ID of `answers.tsv` is a fact in exactly one answers record: the `S01-` and `Q-` IDs in the record of S06, the `M-` IDs in the record of S11 (which exists only when S10 listed a marker); the index has a row per record. LAYUP's counts (39, 75, 19) are LAYUP's and do not apply. |
 | `onboarding` | yes, in a target's form | the file exists, holds no marker, links the problem statement; each `F-NNNN#n` it cites is a fact of a record in `docs/facts/` |
 | `glossary` | yes, in a target's form | each `F-NNNN#n` it cites resolves as above; LAYUP's heading and its count of 25 do not apply |
 | `guardrails` | yes, in a target's form | each entry's `Check:` value is `no check yet` or a file and a gate, as `check_guardrails`; each citation resolves; LAYUP's count of 9 does not apply |
 | `markers` | yes | `check_markers`, with LAYUP's `MK_EXEMPT` (S10) |
 | `adapted` | yes | `check_adapted` |
-| `identity` | yes | `check_identity`, with the target's name |
+| `identity` | yes | `check_identity`, with the target's name: `README.md` also holds the record row `name` of S01 |
 | `link-lint` | yes | the baseline's own `sh docs/links/link-lint.sh` exits 0 |
 | `sources` | yes | every value row of the record has a source; each `answer` ref is a row of `answers.tsv`; each `catalog` ref is a file of the catalog entry; each `fact` ref is a fact of `docs/facts/`; each `gap` row has its marker in the tree and its row in `open-gaps.tsv` |
 | `jobs` | yes | each kind of `docs/gates.tsv` has a CI job with the kind's name (the evidence of S12) |
@@ -270,6 +270,59 @@ check   text                             key  the check name of the table above
 result  enum(pass|fail|not-active|clear)  -   `not-active` when the check could not run (for example a missing tool or script)
 reason  text                             -    the first failure, or the `clear` reason; `—` for `pass`
 ```
+
+**Decided here** (task `T-6x75`, #84):
+
+- **The rows** are in the order of the table above, then one row
+  `gate:<kind>` per kind of `docs/gates.tsv` at the head of `layup-setup`, in
+  the order of the manifest. A missing or malformed manifest, or one with no
+  row, is an input error (exit 2), as for `layup gate`
+  ([`gate.md`](gate.md#nfr-004--a-check-that-is-not-active-is-not-passed) item
+  4); so are `git` older than 2.32, an `answers.tsv` or a `record.tsv` that is
+  missing or does not match its schema, and no commit at the branch
+  `layup-setup`. Reason: the run cannot name its rows, or cannot read its input.
+- **A check that this version of `layup` does not have yet** is `not-active`,
+  reason `not built yet`, so the command gives exit 1 until rows 10 to 15 of the
+  [plan](../plan/README.md#the-tasks-of-phase-1) add each check (`NFR-004`
+  item 1). The present code has `pin`, `kit-history` and `identity`.
+- **The scratch tree** is `git worktree add --detach` of the head of
+  `layup-setup`, in a new temporary directory outside `WORK`: a temporary
+  directory (`TMPDIR`) in `WORK` is an input error. The run adds the tree in the
+  step of the first built check, and removes it in the step of the last row, so
+  the progress lines cover both; a call with no built check makes no tree. A
+  tree that the run cannot add makes each row of a built check `not-active`,
+  reason `scratch tree: add failed`; a tree or a directory that it cannot remove
+  gives the whole table, the path on standard error and exit 2, as for
+  `layup gate` (review round 1 of #84, findings 2, 3 and 5).
+- **A row** is `fail` with the first finding of its check as its reason. A
+  check reads the scratch tree, and the record as it stands: a record row that
+  it needs and does not find, or finds with no value, is the finding
+  `record: no value at <step> <name>`.
+- **The one-check call** that `internal/cli` makes as the evidence of a step
+  (S04 to S14) runs the named checks in the order of the table; a name that is
+  not a check is an error, never a row. The name `gates` gives each row
+  `gate:<kind>`, and is the only name that reads the manifest (K13: the evidence
+  "checks `jobs` and `gates`" of S12). `layup setup verify` takes no check name:
+  "`layup setup verify <check>` OK" of `architecture.md` §5 names a check, not
+  a form of the command.
+- **The fixtures.** The core of a check is the rule of its sh function on a
+  repository root; it gives each finding as the text after `FAIL ` of the sh
+  line, in the order of the function. `TestTheFixturesOfSetupCheck` of
+  `internal/verify` builds each case of `docs/setup/tests/` as `run.sh` does;
+  for each built check that `EXPECT` has lines of, the lines of the core are
+  those lines, as a set; in a case of `frame`, a built check that `EXPECT` has
+  no line of gives `OK`, because each overlay of `frame` holds a good setup for
+  the checks that it runs (finding 4). Each group of `docs/setup/tests/` is in
+  one list: built, not built yet, not a check for a target (`ci`, `procedure`,
+  `protection`), or `frame`. **Known limit:** CI gives the sh runner the
+  fixtures of the default branch and the Go test those of the pull request, so a
+  change of a fixture reaches the sh runner only after the merge.
+- **The tests build their baseline at test time** (K11): `internal/standin`,
+  which only test files import, writes a stand-in baseline with its own task
+  history and the phrases that check `identity` refuses, gives its `file://`
+  URL (a valid `S01-baseline` in a test: `git ls-remote` and `git clone` take
+  it), and makes a work area from it with a setup by hand. No file of it is in
+  Git; a marker in Go source is written as an escape.
 
 ### The stack catalog
 
@@ -392,4 +445,7 @@ date=<the date of pin.time, YYYY-MM-DD>
 ```
 
    The keys and their order are those of LAYUP's own pin file, so the same
-   check `pin` reads both. Each key appears once.
+   check `pin` reads both. Each key appears once. **Decided here** (task
+   `T-6x75`, #84): S02 writes `pin.time` in UTC, in the form
+   `YYYY-MM-DDTHH:MM:SSZ`, and the `date` of the pin is its first ten
+   characters.

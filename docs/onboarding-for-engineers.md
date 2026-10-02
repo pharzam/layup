@@ -83,8 +83,10 @@ the setup record, and the first code: the `layup` command
 ([ADR-0011](adr/0011-structure-the-core-engine-as-a-go-cli-over-repository-files.md)).
 So far it prints its version, `layup psb check FILE` writes the gap questions
 of a problem statement as one batch (five deterministic rules, G1 to G5, in
-`internal/psb`), and `layup gate REPO --base REV --head REV` runs the gate kinds
-of a target's manifest on a change, from outside the target (`internal/gate`). The [architecture](architecture.md) describes what it becomes:
+`internal/psb`), `layup gate REPO --base REV --head REV` runs the gate kinds
+of a target's manifest on a change, from outside the target (`internal/gate`),
+and `layup setup verify WORK` checks the setup of a target from outside, so far
+with the checks `pin`, `kit-history` and `identity` (`internal/verify`). The [architecture](architecture.md) describes what it becomes:
 `layup run`, the orchestrator of a target's whole lifecycle, from outside the
 target; each part is followed through one concrete case in
 [`walkthroughs/`](walkthroughs/README.md). The exact contracts that the code

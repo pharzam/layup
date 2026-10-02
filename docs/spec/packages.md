@@ -61,9 +61,11 @@ reads this table, and holds no copy of it, which could differ from it.
 | `internal/git` | the one caller of the `git` program: [its calls](#the-calls-of-internalgit) | — | `git` |
 | `internal/psb` | the rules G1 to G5 and the gap table ([`psb-check.md`](psb-check.md)) | `internal/tsv` | no |
 | `internal/catalog` | the stack catalog, embedded with `embed` ([`setup.md`](setup.md#the-stack-catalog)) | `internal/tsv` | no |
+| `internal/work` | the work area of a target: its paths, and the schemas and the readers of `answers.tsv` and `record.tsv` ([`setup.md`](setup.md#the-answers)), which `internal/setup` and `internal/verify` share (K9) | `internal/tsv` | no |
 | `internal/gate` | runs the kinds of a gate manifest on a head ([`gate.md`](gate.md)) | `internal/tsv`, `internal/git` | `sh -c`: the gate commands |
-| `internal/setup` | the step runner of `layup setup` ([`setup.md`](setup.md)) | `internal/tsv`, `internal/git`, `internal/catalog` | no |
-| `internal/verify` | the checks of `layup setup verify` ([`setup.md`](setup.md)) | `internal/tsv`, `internal/git`, `internal/catalog`, `internal/gate` | `sh`: the baseline's own check scripts |
+| `internal/setup` | the step runner of `layup setup` ([`setup.md`](setup.md)) | `internal/tsv`, `internal/git`, `internal/catalog`, `internal/work` | no |
+| `internal/verify` | the checks of `layup setup verify` ([`setup.md`](setup.md)) | `internal/tsv`, `internal/git`, `internal/catalog`, `internal/gate`, `internal/work` | `sh`: the baseline's own check scripts |
+| `internal/standin` | for the tests only: a stand-in of the pinned baseline, and a work area set up from it, built at test time (K11; [`setup.md`](setup.md#the-checks-of-layup-setup-verify)); only test files import it | `internal/tsv`, `internal/git`, `internal/work` | no |
 
 **Decided here:** the split of `internal/setup`, `internal/verify` and
 `internal/gate` (ADR-0011 decision 1 names "setup, gates, … state files, Git
@@ -124,10 +126,11 @@ that the steps, the checks and `layup gate` name.
 | `SwitchOrphan` | `git switch --orphan BRANCH` | S15: the branch `layup-records` |
 | `RevParse` | `git rev-parse --verify --end-of-options REV` | S02, S03: the tree of a commit; `layup gate`: `--base`, `--head` |
 | `RootCommits` | `git rev-list --max-parents=0 --end-of-options REV --` | check `pin` |
+| `IsShallow` | `git rev-parse --is-shallow-repository` | check `pin` (task `T-6x75`) |
 | `LsFiles` | `git ls-files -z` | S10; checks `markers` and `adapted` |
-| `WorktreeAdd` | `git worktree add --detach -- PATH REV` | `layup gate`, step 2 of the run; a fixture run |
-| `WorktreeRemove` | `git worktree remove --force -- PATH` | `layup gate`, step 4 of the run; a fixture run |
-| `Show` | `git show --end-of-options REV:PATH --` | `layup gate`, steps 1 and 2 of the run |
+| `WorktreeAdd` | `git worktree add --detach -- PATH REV` | `layup gate`, step 2 of the run; `layup setup verify`: the scratch tree; a fixture run |
+| `WorktreeRemove` | `git worktree remove --force -- PATH` | `layup gate`, step 4 of the run; `layup setup verify`; a fixture run |
+| `Show` | `git show --end-of-options REV:PATH --` | `layup gate`, steps 1 and 2 of the run; `layup setup verify`: the manifest at the head of `layup-setup` |
 | `DiffNames` | `git diff --name-only --no-renames -z --end-of-options BASE HEAD --` | `layup gate`: a `pending` kind |
 | `Apply` | `git apply -- PATCH` | check `gate:<kind>`: the known-bad fixture |
 | `LsTree` | `git ls-tree -r -z --full-tree --end-of-options REV -- PATH` | `layup gate`, step 2 of the run: the files of a `config` path at the base, with their modes (task `T-5sgt`) |
