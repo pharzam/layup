@@ -55,6 +55,8 @@ func TestTheBrokenLinks(t *testing.T) {
 				"FAIL  L4: docs/b.md:7 links ../x.md, which escapes the repository root\n", []string{"docs/a.md", "docs/b.md"}, false},
 		{"a line that names no file", 1, "FAIL  L5: no in-tree link was resolved \u2014 this run checked nothing\n", nil, true},
 		{"no root", 1, "FAIL  link-lint: root not found: x\n", nil, true},
+		{"a line that names no file beside one that does", 1,
+			"FAIL  L2: docs/a.md:3 links x.md, but that file has no heading with that anchor\nFAIL  L5: no in-tree link was resolved \u2014 this run checked nothing\n", nil, true},
 		{"a failure with no line", 2, "sh: syntax error\n", nil, true},
 	} {
 		got, err := brokenLinks(c.code, []byte(c.stderr))
