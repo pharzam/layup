@@ -175,10 +175,24 @@ $ go test -count=1 -tags=integration -run TestTheInputErrorsOfAWorkArea ./intern
     verify_integration_test.go:184: TMPDIR in WORK/out, WORK given as the relative path ../../…/work: <nil>; want an input error
 ```
 
+## Review round 2: the fixes (cycle 2, O-133)
+
+Review round 2 (`ff76d69`) found the link rule too wide, and two tests with no
+traceability row. The red run of the new cases, on the code of `ff76d69` (the
+cases of `.git` and of the end of a sentence pass there too: they pin what the
+fix keeps):
+
+```text
+$ go test -count=1 -run TestKitHistoryFindings ./internal/verify/
+    checks_test.go:131: other repositories (round 2, finding 1):
+         got ["kit-link: docs/tasks/backlog.md links github.com/pharzam/armature/ (a kit task or note)"]
+        want []
+```
+
 ## The green runs
 
-On the tree of the commit that adds this file, and again on the head of
-cycle 1.
+On the tree of the commit that adds this file, and again on the heads of
+cycles 1 and 2.
 
 | Command | Result |
 | ------- | ------ |

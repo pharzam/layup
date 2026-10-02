@@ -120,6 +120,12 @@ func TestKitHistoryFindings(t *testing.T) {
 			[]string{"kit-link: docs/tasks/backlog.md links " + link + "/ (a kit task or note)"}},
 		{"a repository whose name only starts with the same text", with(map[string]string{
 			"docs/tasks/backlog.md": "- **T-0001** (https://" + link + "2/issues/1, https://" + link + "-docs/x)\n"}), link, nil},
+		{"other repositories (round 2, finding 1)", with(map[string]string{"docs/tasks/backlog.md": "- **T-0001** (https://" + link +
+			".testing/issues/1, https://" + link + ".gitlab/x, https://other" + link + "/issues/1)\n"}), link, nil},
+		{"a link with .git", with(map[string]string{"docs/tasks/backlog.md": "- **T-0001** (https://" + link + ".git)\n"}), link,
+			[]string{"kit-link: docs/tasks/backlog.md links " + link + "/ (a kit task or note)"}},
+		{"a link at the end of a sentence", with(map[string]string{"docs/tasks/backlog.md": "- **T-0001**: see " + link + ".\n"}), link,
+			[]string{"kit-link: docs/tasks/backlog.md links " + link + "/ (a kit task or note)"}},
 		{"no link text reads no link", with(map[string]string{"docs/tasks/backlog.md": linked}), "", nil},
 	} {
 		same(t, c.name, kitHistoryFindings(c.fsys, c.link), c.want)
