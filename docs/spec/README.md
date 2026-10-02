@@ -39,12 +39,60 @@ records, which already name the later phases.
 
 Every command of LAYUP follows these rules. A section gives only what differs.
 
-- **`layup version`** is exempt: it prints one line, `layup <version>`, and
-  exits 0.
+- **`layup version`** is exempt from the table: it prints one line,
+  `layup <version>`, and exits 0. **Decided here** (K34 of the
+  [defect register](../plan/README.md#the-defect-register)): it takes no
+  argument, so `layup version extra` is a usage error (exit 2). Reason: one
+  argument rule for every command; an extra word that a command ignores hides a
+  typing error.
 - **Arguments.** A command takes its inputs as arguments and flags. It reads no
-  environment variable for an input, and asks no question on the terminal.
+  environment variable for an input, does not read the standard input, and asks
+  no question on the terminal. **Decided here** (task `T-2yw7`, #80):
+  - `internal/cli` holds one command table: the words of each command, its
+    positional arguments, its flags and its line of the usage. The dispatch, the
+    check of the arguments and the usage come from it. The longest match of the
+    words decides the command: `layup setup verify WORK` is `setup verify`, and
+    `layup setup verify` with no `WORK` is a usage error, not a setup of a
+    directory named `verify` (such a directory is given as `./verify`).
+  - A flag is `--name VALUE` or `--name=VALUE`, before or after the positional
+    arguments. Each flag of phase 1 is required and is given once. There is no
+    short flag and no `--`; a positional argument that starts with `-` is given
+    as `./-name`.
+  - A usage error is: no command, an unknown command, an unknown flag, a flag
+    with no value (also `--name=` and `--name` before a word that starts with
+    `-`), a missing or repeated flag, and a missing or extra positional
+    argument.
+  - The test `TestInputRule` reads the non-test Go files of the module and finds
+    no read of an environment variable or of the standard input, except in the
+    function `environ` of `internal/git`, which gives `PATH` and `TMPDIR` of the
+    host to `git` ([`packages.md`](packages.md#the-calls-of-internalgit), D3 of
+    #79). A program that `layup` starts gets its environment from `layup`; that
+    is not an input of `layup`, so the test does not cover it.
+
+  Reason: a value that a command reads from its environment has no record, and
+  two runs on the same arguments and files could differ (Determinism, below).
 - **Output.** A command prints its result as one table on standard output, in
   the form of a record (below). It prints a diagnostic only on standard error.
+  **Decided here** (task `T-2yw7`): a usage error prints `layup: <reason>`, an
+  empty line and the usage on standard error, and nothing on standard output;
+  an input error prints only `layup: <reason>` on standard error. The usage
+  lists each command with its arguments and its line, then the exit codes.
+- **Progress** (decided here, K29): a command whose run can take more than ten
+  seconds (`layup gate`, `layup setup`, `layup setup verify`) prints its
+  progress on standard error, never on standard output: before each step, one
+  line `layup <command>: [<i>/<n>] <step>`, and while that step runs, one more
+  line every ten seconds, `layup <command>: [<i>/<n>] <step>: <s> s`. A step is
+  a row of the command's own table: a kind, a step, a check. `layup version` and
+  `layup psb check` print none. `internal/cli` prints the lines; the package
+  that runs the steps gets a function that it calls at the start of each step,
+  and the command stops the lines of its last step before it prints its table,
+  so no progress line comes after the table. A line can come between the lines
+  of a gate command's own output on standard error; task `T-5sgt` (row 5 of the
+  plan) decides whether that output is held until its step ends. Reason: the
+  [progress rule](../engineering-discipline.md#progress-indicators-for-long-running-operations)
+  asks which step runs, how much remains, and that the work is alive; a line
+  per step and a line every ten seconds answer the three in a terminal and in a
+  CI log, where a status line that redraws itself would not.
 - **Exit codes** (decided here; they extend the codes of the present
   `layup psb check`):
 
@@ -59,6 +107,17 @@ Every command of LAYUP follows these rules. A section gives only what differs.
   not a usage error: a later `layup run` reads it as "wait for the answers", so
   it gets its own code.
 
+  **Decided here** (task `T-2yw7`): one map in `internal/cli` gives the code of
+  a table from its result column: 0 only when the table has at least one row
+  and each row is `pass`, `clear`, `done` or `operator`; each other word, and a
+  table with no row, give 1. It takes the result words of the three tables
+  (`gate-result`, `setup-verify`, `setup-steps`); a word that a table's schema
+  refuses (for example `done` in a `gate-result` row) cannot reach it, because
+  the writer of the record refuses it first. Codes 2 and 3 do not come from a
+  table. The rule for a table with no row is the default of the frame; task
+  `T-5sgt` (row 5 of the plan) decides whether a well-formed manifest with no
+  row is an input error (exit 2) or a table that gives 1.
+
   **Decided here** (K32 of the [defect register](../plan/README.md#the-defect-register)):
   a command that parses an input as text (a record, a problem statement, an
   answers file, a Markdown file that a step checks) and finds bytes that are not
@@ -69,7 +128,11 @@ Every command of LAYUP follows these rules. A section gives only what differs.
   ([`psb-check.md`](psb-check.md#the-command)).
 - **Determinism.** Two runs on the same input print the same bytes
   (`NFR-005`). So a result table holds no time, no duration and no path of a
-  scratch directory, and its rows have a fixed order.
+  scratch directory, and its rows have a fixed order. **Decided here** (task
+  `T-2yw7`): the same bytes means the same exit code and the same standard
+  output. Standard error is not compared: its diagnostics and progress lines can
+  hold a time. The end-to-end harness of `cmd/layup` compares the two in its
+  repeat helper, which each command's scenarios use.
 
 ## Records
 

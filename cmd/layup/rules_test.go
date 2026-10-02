@@ -5,6 +5,7 @@ import (
 	"go/parser"
 	"go/token"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -193,5 +194,40 @@ func TestEachRuleAndColumnFindsItsBreach(t *testing.T) {
 				t.Errorf("findings\n%s\nwant exactly\n%s", strings.Join(f, "\n"), c.want)
 			}
 		})
+	}
+}
+
+func TestCheckInputsFindsEachReadOfTheEnvironmentOrTheStandardInput(t *testing.T) {
+	m := module{sources: map[string]map[string]string{
+		"internal/cli": {
+			"a.go": "package cli\n\nimport \"os\"\n\nfunc f() string { return os.Getenv(\"X\") }\n",
+			"b.go": "package cli\n\nimport o \"os\"\n\nfunc g() { _, _ = o.LookupEnv(\"Y\"); _ = o.Stdin }\n",
+		},
+		"internal/psb":  {"c.go": "package psb\n\nimport \"syscall\"\n\nvar v, _ = syscall.Getenv(\"Z\")\n"},
+		"internal/gate": {"d.go": "package gate\n\nimport . \"os\"\n\nfunc h() []string { return Environ() }\n"},
+		"internal/git": {"git.go": "package git\n\nimport \"os\"\n\nfunc environ() { os.LookupEnv(\"PATH\") }\n\n" +
+			"func other() string { return os.Getenv(\"HOME\") }\n"},
+		"internal/tsv": {"e.go": "package tsv\n\nimport \"os\"\n\nfunc environ() []string { return os.Environ() }\n"},
+	}}
+	want := []string{
+		"input rule: internal/cli/a.go:5 reads os.Getenv",
+		"input rule: internal/cli/b.go:5 reads os.LookupEnv",
+		"input rule: internal/cli/b.go:5 reads os.Stdin",
+		"input rule: internal/gate/d.go:3 imports os with a dot, so the scan cannot read its uses",
+		"input rule: internal/git/git.go:7 reads os.Getenv",
+		"input rule: internal/psb/c.go:5 reads syscall.Getenv",
+		"input rule: internal/tsv/e.go:5 reads os.Environ",
+	}
+	if got := checkInputs(m); !slices.Equal(got, want) {
+		t.Fatalf("the findings:\n%s\nwant:\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
+	}
+}
+
+func TestCheckInputsPassesAModuleThatReadsNoInput(t *testing.T) {
+	m := module{sources: map[string]map[string]string{
+		"cmd/layup": {"main.go": "package main\n\nimport \"os\"\n\nfunc main() { os.Exit(len(os.Args)) }\n"},
+	}}
+	if got := checkInputs(m); len(got) != 0 {
+		t.Fatalf("the findings %q, want none", got)
 	}
 }

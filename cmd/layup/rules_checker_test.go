@@ -1,7 +1,8 @@
 package main
 
 // The checker of the package rules of docs/spec/packages.md ("The test of the
-// package rules"). It is test code, so the binary holds none of it.
+// package rules"), and the scan of the input rule of docs/spec/README.md
+// (Commands: Arguments). It is test code, so the binary holds none of it.
 
 import (
 	"cmp"
@@ -318,4 +319,62 @@ func literal(args []ast.Expr, afterContext bool) string {
 		}
 	}
 	return ""
+}
+
+// readers is the names that read an environment variable or the standard
+// input, by import path.
+var readers = map[string][]string{"os": {"Environ", "ExpandEnv", "Getenv", "LookupEnv", "Stdin"},
+	"syscall": {"Environ", "Getenv"}}
+
+// allowedReader is the one function, by package, whose reads the rule
+// allows: environ of internal/git gives PATH and TMPDIR of the host to git
+// (docs/spec/packages.md, D3 of #79). That is not an input of a command.
+var allowedReader = map[string]string{"internal/git": "environ"}
+
+// checkInputs gives each read of an environment variable or of the standard
+// input in the non-test Go files of m, except in allowedReader. A file that
+// does not parse, and an import of os or syscall with a dot, are findings,
+// so the scan never passes with a file that it could not read.
+func checkInputs(m module) []string {
+	var out []string
+	for _, rel := range slices.Sorted(maps.Keys(m.sources)) {
+		files := m.sources[rel]
+		for _, name := range slices.Sorted(maps.Keys(files)) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, name, files[name], parser.SkipObjectResolution)
+			if err != nil {
+				out = append(out, fmt.Sprintf("input rule: %s/%s does not parse: %v", rel, name, err))
+				continue
+			}
+			at := func(n ast.Node) string { return fmt.Sprintf("%s/%s:%d", rel, name, fset.Position(n.Pos()).Line) }
+			local := map[string]string{} // the import path of a reader, by its name in the file
+			for _, imp := range file.Imports {
+				if path, _ := strconv.Unquote(imp.Path.Value); readers[path] != nil {
+					n := path
+					if imp.Name != nil {
+						n = imp.Name.Name
+					}
+					if n == "." {
+						out = append(out, fmt.Sprintf("input rule: %s imports %s with a dot, so the scan cannot read its uses", at(imp), path))
+					}
+					local[n] = path
+				}
+			}
+			for _, d := range file.Decls {
+				fn, _ := d.(*ast.FuncDecl)
+				if fn != nil && fn.Recv == nil && fn.Name.Name == allowedReader[rel] {
+					continue
+				}
+				ast.Inspect(d, func(n ast.Node) bool {
+					if sel, ok := n.(*ast.SelectorExpr); ok {
+						if id, ok := sel.X.(*ast.Ident); ok && slices.Contains(readers[local[id.Name]], sel.Sel.Name) {
+							out = append(out, fmt.Sprintf("input rule: %s reads %s.%s", at(sel), local[id.Name], sel.Sel.Name))
+						}
+					}
+					return true
+				})
+			}
+		}
+	}
+	return out
 }
