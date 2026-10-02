@@ -126,10 +126,11 @@ that the steps, the checks and `layup gate` name.
 | `SwitchOrphan` | `git switch --orphan BRANCH` | S15: the branch `layup-records` |
 | `RevParse` | `git rev-parse --verify --end-of-options REV` | S02, S03: the tree of a commit; `layup gate`: `--base`, `--head` |
 | `RootCommits` | `git rev-list --max-parents=0 --end-of-options REV --` | check `pin` |
+| `IsShallow` | `git rev-parse --is-shallow-repository` | check `pin` (task `T-6x75`) |
 | `LsFiles` | `git ls-files -z` | S10; checks `markers` and `adapted` |
-| `WorktreeAdd` | `git worktree add --detach -- PATH REV` | `layup gate`, step 2 of the run; a fixture run |
-| `WorktreeRemove` | `git worktree remove --force -- PATH` | `layup gate`, step 4 of the run; a fixture run |
-| `Show` | `git show --end-of-options REV:PATH --` | `layup gate`, steps 1 and 2 of the run |
+| `WorktreeAdd` | `git worktree add --detach -- PATH REV` | `layup gate`, step 2 of the run; `layup setup verify`: the scratch tree; a fixture run |
+| `WorktreeRemove` | `git worktree remove --force -- PATH` | `layup gate`, step 4 of the run; `layup setup verify`; a fixture run |
+| `Show` | `git show --end-of-options REV:PATH --` | `layup gate`, steps 1 and 2 of the run; `layup setup verify`: the manifest at the head of `layup-setup` |
 | `DiffNames` | `git diff --name-only --no-renames -z --end-of-options BASE HEAD --` | `layup gate`: a `pending` kind |
 | `Apply` | `git apply -- PATCH` | check `gate:<kind>`: the known-bad fixture |
 | `LsTree` | `git ls-tree -r -z --full-tree --end-of-options REV -- PATH` | `layup gate`, step 2 of the run: the files of a `config` path at the base, with their modes (task `T-5sgt`) |
