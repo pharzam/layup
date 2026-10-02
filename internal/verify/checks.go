@@ -81,12 +81,10 @@ func pinFindings(fsys fs.FS, h history) []string {
 // kitHistoryFindings is check_kit_history: the kit's own history is gone, each
 // task file has a line in a task index, and no task index links the baseline,
 // whose repository is repo ("" reads no link). A link is repo with the start
-// of the text or a character that is not a letter, a digit, ".", "-" or "_"
-// before it, and after it the end of the text, ".git", a "." at the end of a
-// sentence, or a character that is not a letter, a digit, "-", "_" or ".".
-// So a link to the repository itself counts, and a link to another repository
-// whose name or host holds repo does not, a subdomain such as www. included
-// (review rounds 1 to 3 of #84); the sh function reads only a link under repo.
+// of the text or a separator before it, and after it, with or without ".git"
+// or "." in between, the end of the text or a separator; a separator is a
+// character that is not a letter or a digit of any script, ".", "-" or "_"
+// (review rounds 1 to 4 of #84). The sh function reads only a link under repo.
 func kitHistoryFindings(fsys fs.FS, repo string) []string {
 	var out []string
 	for _, dir := range []string{"decisions", "audit"} {
@@ -107,7 +105,8 @@ func kitHistoryFindings(fsys fs.FS, repo string) []string {
 			out = append(out, fmt.Sprintf("orphan: docs/tasks/%s.md has no line with %s in backlog.md or completed.md", id, id))
 		}
 	}
-	link := regexp.MustCompile(`(?:^|[^A-Za-z0-9_.-])` + regexp.QuoteMeta(repo) + `(?:$|\.git(?:$|[^A-Za-z0-9_.-])|\.(?:$|\s)|[^A-Za-z0-9_.-])`)
+	const sep = `[^\p{L}\p{N}._-]`
+	link := regexp.MustCompile(`(?:^|` + sep + `)` + regexp.QuoteMeta(repo) + `(?:\.git|\.)?(?:$|` + sep + `)`)
 	for _, index := range []string{"backlog", "completed"} {
 		data, err := fs.ReadFile(fsys, "docs/tasks/"+index+".md")
 		if repo != "" && err == nil && link.Match(data) {

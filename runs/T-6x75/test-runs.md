@@ -206,10 +206,29 @@ A probe of the final expression (a small Go program outside the repository,
 recorded once, not a test) gives the wanted result on 22 links to the baseline
 and to its neighbours, and on 4 `file://` links.
 
+## Review round 4: the fix (cycle 4, O-135)
+
+Review round 4 (`f570575`) found the classes of the boundaries ASCII only, so
+a letter of another script next to the text counted as a boundary. The rule is
+now one class of separators, with the letters and digits of any script, and
+the sentence of `setup.md` states the rule only. The red run of the new case
+(`é` before and after the text, and an Arabic-Indic digit after it), on the
+code of `f570575`:
+
+```text
+$ go test -count=1 -run TestKitHistoryFindings ./internal/verify/
+    checks_test.go:135: a letter of another script next to the text (round 4, finding 1):
+         got ["kit-link: docs/tasks/backlog.md links github.com/pharzam/armature/ (a kit task or note)"]
+        want []
+```
+
+The probe of the final rule gives the wanted result on 28 links (the
+neighbours of rounds 1 to 4) and on 4 `file://` links.
+
 ## The green runs
 
 On the tree of the commit that adds this file, and again on the heads of
-cycles 1, 2 and 3.
+cycles 1 to 4.
 
 | Command | Result |
 | ------- | ------ |
