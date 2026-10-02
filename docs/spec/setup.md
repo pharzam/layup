@@ -70,23 +70,27 @@ layup setup WORK
   stop table, exit 3), `fail` or `not-active` (the run ends, exit 1), or a
   hand-off (S13: its own part is done, and its commands are in `commands.sh`;
   its `done` row says `handed to the Operator: …`, never that the Operator ran
-  a command, and its result is `operator`; a hand-off with no command is
-  `fail`). After a step that did not pass, each later step is `not-active`,
-  evidence `not run: <step> did not pass`. A commit of a step that fails, or
-  that the target's branch is not `layup-setup` stops before it starts, makes
-  the step `fail`, with no `done` row and no commit, so a rerun does it again.
-  The actor of each step of phase 1 is `layup-setup`.
+  a command, and its result is `operator`). A hand-off with no command is
+  `fail`: the runner asks the step for its commands with the record and the
+  step's value rows, before its `done` row. After a step that did not pass,
+  each later step is `not-active`, evidence `not run: <step> did not pass`.
+  When the commit of a step fails, the step is `fail`, with no `done` row, so
+  a rerun does it again. Before the commit, the runner checks that the target
+  is on the branch `layup-setup`; when it is not, the runner makes no commit,
+  and the step is `fail`. The actor of each step of phase 1 is `layup-setup`.
 - **The inputs:** a `WORK` that is not a directory, or an `answers.tsv` or a
   `record.tsv` that does not match its schema, is an input error (exit 2). A
   missing `out/record.tsv` is a new work area, and a missing
   `inputs/answers.tsv` is no answer; what a step does with no answer is the
   step's rule (S01 stops for its questions).
-- **`commands.sh`** is written again at the end of each run from the commands
-  of the done steps, each a function of the record, in the order of
+- **`commands.sh`** is written again at the end of each run that gives a table
+  (exit 0, 1 or 3), from the commands of the done steps, each a function of the
+  record, in the order of
   [Where the records go in phase 1](#where-the-records-go-in-phase-1), each
   with a comment line before it, and empty when no done step has a command, so
-  no command of an earlier record stays; the texts of the commands, the apply
-  of the ruleset included, are the steps' (S03, S13, S15).
+  no command of an earlier record stays; a run that ends with exit 2 does not
+  write it. The texts of the commands, the apply of the ruleset included, are
+  the steps' (S03, S13, S15).
 - **The present code** (task `T-79y7`): each step is a stub, `not-active`,
   evidence `not built yet`, so `layup setup WORK` gives exit 1 until the rows 9,
   13 and 15 of the [plan](../plan/README.md#the-tasks-of-phase-1) build the
