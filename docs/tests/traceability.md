@@ -44,7 +44,14 @@ the first.
 | `TestFilesReplaceTheModuleAndNothingElse` (`internal/catalog/catalog_test.go`) | unit | REQ-002 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-3jpx | green |
 | `TestHasNamesTheFilesOfTheEntryByTheirPathInIt` (`internal/catalog/catalog_test.go`) | unit | NFR-003 | F-0001#4 | guardrails.md §1.1 Inv-4 | — | T-3jpx | green |
 | The frame of `spec/README.md`, "Commands": the four tests of `internal/cli/args_test.go`, the three of `internal/cli/progress_test.go`, and each test of `internal/cli/cli_test.go` other than `TestPSBCheckExitCodes` and `TestExitCode` | unit | — | — | — | ADR-0011 | T-t8qp, T-2yw7 | green |
-| `T-5sgt/e2e/gate-command` | e2e | REQ-004, REQ-007, NFR-004, NFR-005 | F-0003#44 | guardrails.md §1.1 Inv-5 | ADR-0016 | T-5sgt | planned |
+| `TestGateOnAGoRepository` (`cmd/layup/gate_e2e_test.go`) | e2e | REQ-004, REQ-007, NFR-005 | F-0003#44 | guardrails.md §1.1 Inv-7 | ADR-0016 | T-5sgt | green |
+| `TestGateNeverPassesACheckThatDidNotRun` (`cmd/layup/gate_e2e_test.go`) | e2e | NFR-004 | F-0001#5 | guardrails.md §1.1 Inv-5 | ADR-0011 | T-5sgt | green |
+| `TestRunOnARealRepository`, `TestAHookOfTheRepositoryDoesNotRun`, `TestTheRevisionsAndTheManifestOnARealRepository`, `TestARenameAndADeleteChangeAProductPath`, `TestAFailedScratchTreeGivesAReasonWithNoPath`, `TestTheSchemaBlocks` (`internal/gate/gate_integration_test.go`) | integration | REQ-004, REQ-007 | F-0003#44 | guardrails.md §1.1 Inv-7 | ADR-0016 | T-5sgt | green |
+| `TestACheckThatDidNotRunNeverPasses` (`internal/gate/result_test.go`) | unit | NFR-004 | F-0001#5 | guardrails.md §1.1 Inv-5 | ADR-0011 | T-5sgt | green |
+| The other unit tests of `internal/gate` (`scope_test.go`, `manifest_test.go`, `result_test.go`, `run_test.go`) | unit | REQ-004 | F-0003#44 | guardrails.md §1.1 Inv-7 | ADR-0016 | T-5sgt | green |
+| `TestGateUsageErrors`, `TestGatePrintsTheTableAndGivesItsExitCode`, `TestGateGivesTwoOnAnInputErrorOrALeftoverScratchTree`, `TestTheUsageListsGate` (`internal/cli/gate_test.go`) | unit | REQ-004, NFR-004 | F-0003#44 | guardrails.md §1.1 Inv-7 | ADR-0016 | T-5sgt | green |
+| `TestLsTreeReadsEachEntry` (`internal/git/git_test.go`) | unit | REQ-004 | F-0003#44 | guardrails.md §1.1 Inv-7 | ADR-0016 | T-5sgt | green |
+| `TestLsTree` (`internal/git/git_integration_test.go`) | integration | REQ-004 | F-0003#44 | guardrails.md §1.1 Inv-7 | ADR-0016 | T-5sgt | green |
 | `T-c06a/integration/go-fixtures` | integration | REQ-004, REQ-007 | F-0003#44 | guardrails.md §1.1 Inv-7 | ADR-0016 | T-c06a | planned |
 | `T-8vpw/e2e/verify-not-active` | e2e | NFR-004, REQ-002 | F-0001#5 | guardrails.md §1.1 Inv-5 | ADR-0011 | T-8vpw | planned |
 | `T-7s0y/integration/target-pin` | integration | NFR-006, REQ-002 | F-0001#8 | guardrails.md §1.1 Inv-8 | ADR-0009 | T-7s0y | planned |

@@ -339,3 +339,33 @@ func TestTheErrorKindsAndTheVersion(t *testing.T) {
 		t.Errorf("an empty PATH: %v; want a *NotFoundError", err)
 	}
 }
+
+// LsTree gives each file at or under a path, with its mode: a file, an
+// executable, a directory with its files, a symbolic link; and no entry for a
+// path that the commit does not have.
+func TestLsTree(t *testing.T) {
+	isolate(t)
+	dir := t.TempDir()
+	write(t, dir, map[string]string{"layout/a_test.go": "package a\n", "layout/b/c.txt": "c\n", "run.sh": "#!/bin/sh\n"})
+	must(t, os.Symlink("run.sh", filepath.Join(dir, "link.sh")))
+	head := commitTree(t, dir, nil)
+	for path, want := range map[string][]string{
+		"layout":           {"100644 blob layout/a_test.go", "100644 blob layout/b/c.txt"},
+		"run.sh":           {"100755 blob run.sh"},
+		"link.sh":          {"120000 blob link.sh"},
+		"layout/a_test.go": {"100644 blob layout/a_test.go"},
+		"missing":          nil,
+	} {
+		entries, err := LsTree(dir, head, path)
+		var got []string
+		for _, e := range entries {
+			got = append(got, e.Mode+" "+e.Type+" "+e.Path)
+			if len(e.Object) != 40 {
+				t.Errorf("%s: the object %q is not 40 characters", path, e.Object)
+			}
+		}
+		if err != nil || !reflect.DeepEqual(got, want) {
+			t.Errorf("LsTree(%q) = %q, %v; want %q", path, got, err, want)
+		}
+	}
+}

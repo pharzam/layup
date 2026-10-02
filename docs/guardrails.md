@@ -285,6 +285,15 @@ success without having done its job.
   a change that *improves* a check is judged by the older copy, so it lands in two
   steps. These checks are a control against forgetting, not against an operator
   who edits the check.
+- ❌ **A reason that copies an error into a result table.** A row's reason that
+  holds the text of an error of `git` (for example `fatal: '<path>' already
+  exists`) puts the path of a temporary directory into the table, so two runs
+  on the same input print other bytes and the repeat rule of `REQ-007` breaks;
+  it is silent because each single run looks right. Task `T-5sgt` (#82) planned
+  such reasons, and its plan review found it before the code. **The check:** a
+  reason in a table is a fixed text that names the failed part (for example
+  `scratch tree: add failed`); the error goes to standard error; and a test of
+  the failure asserts that the reason holds no path.
 
 ### Testing pitfalls
 

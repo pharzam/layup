@@ -82,7 +82,13 @@ func layupWith(t *testing.T, env []string, args ...string) result {
 // two exit codes or the two standard outputs differ by one byte (NFR-005).
 func repeat(t *testing.T, args ...string) result {
 	t.Helper()
-	first, second := layup(t, args...), layup(t, args...)
+	return repeatWith(t, nil, args...)
+}
+
+// repeatWith is repeat with the entries of layupWith.
+func repeatWith(t *testing.T, env []string, args ...string) result {
+	t.Helper()
+	first, second := layupWith(t, env, args...), layupWith(t, env, args...)
 	if err := sameBytes([]byte(first.stdout), []byte(second.stdout)); err != nil || first.code != second.code {
 		t.Fatalf("layup %q twice: exit %d and %d; standard output: %v", args, first.code, second.code, err)
 	}

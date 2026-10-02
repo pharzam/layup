@@ -321,7 +321,11 @@ task `T-3jpx`, #81):
   each file of `files/` ends with `.tmpl`. Reason: an entry that breaks one of
   them sets up a target whose gate cannot be proven (a fixture that no kind
   runs, or a kind with no fixture), so the error comes when LAYUP reads its own
-  catalog, not at a target's setup.
+  catalog, not at a target's setup. A rule for the authors of an entry, which
+  no reader checks (task `T-5sgt`, #82): a fixture does not change a `config`
+  path of its own kind, because `layup gate` puts the base's gate files back
+  in its scratch tree ([`gate.md`](gate.md#the-command)), so such a fixture
+  would test nothing.
 - **The manifest** is written by `internal/catalog` through `internal/tsv`,
   by the block `gate-manifest` of [`gate.md`](gate.md#the-gate-manifest).
 - **A `catalog` ref** of the setup record (`<stack>/<path>`) names a file by
