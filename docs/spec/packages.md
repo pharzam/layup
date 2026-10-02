@@ -79,7 +79,13 @@ that `internal/verify` gives from a tree: the flagged files of the prose step
 (task `T-8ya0`), the markers of S10 and the files whose links break at S05
 (K10, task `T-8vpw`; [`setup.md`](setup.md#the-checks-of-layup-setup-verify)),
 and the evidence call of a step: a function that runs the one-check call of
-`internal/verify` on the work area (D12 of #86, task `T-7s0y`). In the same way
+`internal/verify` on the work area (D12 of #86, task `T-7s0y`). Since task
+`T-b3r1` (D9 of #90) these are one value, `setup.Calls`, which `internal/cli`
+fills from `internal/verify`: the one-check call, the markers of a tree (each
+with the byte column of its open quote, so S11 fills a marker where the scanner
+found it, D7), the files whose links break (S05), the files that check
+`adapted` flags (S14), and the link rule of check `kit-history` (S05).
+`internal/cli` also refuses a brief that holds a marker, by the same scanner. In the same way
 `internal/cli` reads the problem statement once per run, runs `internal/psb`,
 and hands `internal/setup` the gap table, as `layup psb check` writes it, and
 the SHA-256 of the file; `internal/setup` reads the table by its own Go value
@@ -138,16 +144,18 @@ that the steps, the checks and `layup gate` name.
 | `Branch` | `git symbolic-ref --quiet HEAD` | the step runner: a commit of S04 to S14 only on `layup-setup` (task `T-79y7`) |
 | `RevParse` | `git rev-parse --verify --end-of-options REV` | S02, S03: the tree of a commit; S04: the root commit and the branch `layup-setup`; the step runner: the head of `layup-setup` (task `T-7s0y`); `layup gate`: `--base`, `--head` |
 | `ResetSoft` | `git reset --soft COMMIT` | the step runner: the undo of a step whose evidence fails (task `T-7s0y`, D12 of #86) |
+| `ResetHard` | `git reset --hard --quiet HEAD` | the step runner: before each step from S04 to S14, the target back to its head (task `T-b3r1`, D11 of #90) |
+| `Staged` | `git diff --cached --quiet --exit-code`; exit 1 is a staged change | the step runner: a commit only of a staged change (task `T-b3r1`, D12 of #90) |
 | `RootCommits` | `git rev-list --max-parents=0 --end-of-options REV --` | check `pin`; S03: the root commit of a run that stopped (task `T-7s0y`) |
 | `Message` | `git log -1 --format=%B --end-of-options REV --` | S03: the message of the root commit of a run that stopped (task `T-7s0y`) |
 | `IsShallow` | `git rev-parse --is-shallow-repository` | check `pin` (task `T-6x75`) |
 | `LsFiles` | `git ls-files -z` | S10; checks `markers` and `adapted` |
 | `WorktreeAdd` | `git worktree add --detach -- PATH REV` | `layup gate`, step 2 of the run; `layup setup verify`: the scratch tree; a fixture run |
 | `WorktreeRemove` | `git worktree remove --force -- PATH` | `layup gate`, step 4 of the run; `layup setup verify`; a fixture run |
-| `Show` | `git show --end-of-options REV:PATH --` | `layup gate`, steps 1 and 2 of the run; `layup setup verify`: the manifest at the head of `layup-setup`; S04: the two index files and `docs/setup/facts.sha256` of the root commit (task `T-7s0y`) |
+| `Show` | `git show --end-of-options REV:PATH --` | `layup gate`, steps 1 and 2 of the run; `layup setup verify`: the manifest at the head of `layup-setup`; S04: the two index files and `docs/setup/facts.sha256` of the root commit (task `T-7s0y`); S05, S06 and S11: the task indexes, the facts index, `facts.sha256` and `open-gaps.tsv` of the head (task `T-b3r1`) |
 | `DiffNames` | `git diff --name-only --no-renames -z --end-of-options BASE HEAD --` | `layup gate`: a `pending` kind |
 | `Apply` | `git apply -- PATCH` | check `gate:<kind>`: the known-bad fixture |
-| `LsTree` | `git ls-tree -r -z --full-tree --end-of-options REV -- PATH` | `layup gate`, step 2 of the run: the files of a `config` path at the base, with their modes (task `T-5sgt`); S04: the records of `docs/adr/` and `docs/facts/` at the root commit (task `T-7s0y`) |
+| `LsTree` | `git ls-tree -r -z --full-tree --end-of-options REV -- PATH` | `layup gate`, step 2 of the run: the files of a `config` path at the base, with their modes (task `T-5sgt`); S04: the records of `docs/adr/` and `docs/facts/` at the root commit (task `T-7s0y`); S05: the history at the head; S11: the records of `docs/facts/` at the head (task `T-b3r1`) |
 
 - `--end-of-options` or `--` comes before each revision, URL and path, so an
   input is never an option (`layup gate` takes revisions from its arguments).

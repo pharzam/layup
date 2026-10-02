@@ -454,6 +454,15 @@ These traps are not domain-specific: they hurt every project's test suite.
   restores so; task `T-7s0y` (#86) found it in its copy before the first run,
   on files that were not committed. **The check:** keep the text of the file
   before the change and write that text back, or commit first.
+- ❌ **An escape that arrives as the character.** The input of an agent's tool
+  call that holds the escape `\u2039` (in a heredoc of a shell command, in a
+  script, or in a file that the tool writes) can reach the file as the angle
+  quote itself, so a Go file gets a real marker, which LAYUP's own check
+  `markers` refuses at the commit; tasks `T-8ya0`, `T-8vpw` and `T-b3r1` met
+  it, and a `grep` with the escape in the shell of the host found nothing.
+  **The check:** build the escape from its parts (`chr(92) + "u2039"` in
+  Python), and search the changed files for the two characters by their bytes
+  before the commit.
 
 ### Reference-sweep pitfalls
 

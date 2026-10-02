@@ -96,13 +96,31 @@ layup setup WORK
   rerun are one rule. Reason: `layup setup verify` reads the head of
   `layup-setup`, so the call comes after the commit and before the `done`
   row.
+- **Each step starts from the head** (task `T-b3r1`, D11 of #90, condition 1
+  of its plan review): before each step from S04 to S14, the runner puts the
+  index and the work tree of the target back to its `HEAD` (`git reset
+  --hard`), so a leftover of a stop (the deletion of S05 before its inputs) or
+  of an undo (the files of a step whose evidence failed) never enters a
+  commit, and a rerun gives the same files and rows. The work tree of
+  `WORK/target` is `layup`'s own; each text comes as `inputs/files/<path>`,
+  never by an edit there. A reset that fails is `fail` of the step.
+- **No commit with no change** (D12 of #90): the runner stages the tree and
+  commits a step only when a change is staged, so a step that changes no file
+  (an input equal to the baseline's file, a baseline with no history to
+  delete) makes no commit, and its evidence reads the head as it is.
 - **The inputs:** a `WORK` that is not a directory, or an `answers.tsv` or a
   `record.tsv` that does not match its schema, is an input error (exit 2). A
   missing `out/record.tsv` is a new work area, and a missing
   `inputs/answers.tsv` is no answer; what a step does with no answer is the
   step's rule (S01 stops for its questions). A `WORK/inputs/briefs/problem-statement.md`
   that is absent, or that is not valid UTF-8, is an input error too (task
-  `T-7s0y`, D5 of #86; K32). Before any step, the runner checks the inputs
+  `T-7s0y`, D5 of #86; K32). So is a `WORK/inputs/briefs/vision.md` that is
+  not valid UTF-8, and a brief that holds a marker by the scanner of check
+  `markers`: a raw fact never changes, and S11 would have to change it (task
+  `T-b3r1`, D4 of #90). `internal/cli` reads the vision brief, when it exists,
+  with the problem statement. **Known limit:** a brief that uses the single
+  angle quotation marks as quotes is refused, and the idea owner writes them
+  another way. Before any step, the runner checks the inputs
   that each done step read, in this order: once S01 is done, the SHA-256 of
   the problem statement against the row `S01 brief.sha256` (D6 of #86); then
   the rows of `answers.tsv` that each done step read ([below](#the-answers)).
@@ -115,10 +133,11 @@ layup setup WORK
   no command of an earlier record stays; a run that ends with exit 2 does not
   write it. The texts of the commands, the apply of the ruleset included, are
   the steps' (S03, S13, S15).
-- **The present code**: S01 to S04 are built (task `T-7s0y`, #86); each other
-  step is a stub, `not-active`, evidence `not built yet`, so `layup setup WORK`
-  gives exit 1 at S05 until the rows 13 and 15 of the
-  [plan](../plan/README.md#the-tasks-of-phase-1) build the steps (`NFR-004`).
+- **The present code**: S01 to S04 are built (task `T-7s0y`, #86), and S05 to
+  S11 and S14 (task `T-b3r1`, #90); S12, S13 and S15 are stubs, `not-active`,
+  evidence `not built yet`, so `layup setup WORK` gives exit 1 at S12 until row
+  15 of the [plan](../plan/README.md#the-tasks-of-phase-1) builds them
+  (`NFR-004`).
 
 **The work area** (decided here: §1 names the work area on the host, and no section gives its layout; one directory per target keeps a run resumable from files alone):
 
@@ -148,16 +167,16 @@ the one home of the phase-1 steps of a target. A row that differs from
 | S02 | `layup setup` | `S01-baseline` | `git ls-remote <url> HEAD` gives the commit; `git clone` into `WORK/target.part` and `git checkout` of it; `git rev-parse <commit>^{tree}` gives the tree; removes `.git`, and renames the directory to `WORK/target` at its end. The clone reads no credential of the host and starts no `ssh`, so the baseline's repository is public (known limit [L-A7](../architecture.md#15-known-limits)). Changes `steps.tsv` S02 (`npx degit`): ADR-0011 decision 7, §5 Start 2. | the copy; record rows `pin.source`, `pin.commit`, `pin.tree`, `pin.time` | the commit and the tree |
 | S03 | `layup setup`; the push by the Operator | the copy | `git init`, one commit of the unmodified copy on `main` (message `chore: the unmodified baseline at <commit>`), checks that its tree equals `pin.tree`, writes the remote `origin` and the push command to `commands.sh`. Creating the remote repository is the Operator's (Start 1). | the root commit; two commands | root tree = `pin.tree` |
 | S04 | `layup setup` | the pin rows; the answers of S01 | On the branch `layup-setup` from the root commit: writes `docs/setup/armature.pin` from the pin rows ([`NFR-006`](#nfr-006--the-baseline-at-a-pinned-recorded-version)). Installing the hooks is a setting of a clone, not of the tree: not done (**decided here**, as §5 names no hook for a target; the Operator's clone has none, §5 Scaffold 6). The decision record of the pin is the baseline's own ADR form, written from a fixed text with the pin values, with its index row. It also writes the raw fact record of the `S01-` and `Q-` answers, with its line in `facts.sha256` and its index row, in this first commit on the setup branch (O-124: the answers become facts before the next step that writes a value from them into the tree). | the pin file; the ADR; the answers record; record rows `pin.adr`, `answers.record`, `answers.record.sha256` | checks `pin` and `facts` (the one-check call) |
-| S05 | `layup setup` | the copy | Deletes the baseline's own history: the paths that check `kit-history` reads (`docs/decisions/`, `docs/audit/`, each `docs/tasks/T-*.md`, their lines in `backlog.md` and `completed.md`). A link that the deletion breaks is a missing input: the run stops and lists each one, and the fixed text of that file comes as `inputs/files/<path>`. | the commit | checks `kit-history` and `link-lint` |
-| S06 | `layup setup` | the briefs | Copies each brief byte for byte into `docs/facts/`, with its line in `docs/setup/facts.sha256` and its index row. S06 keeps the briefs; the raw fact record of the `S01-` and `Q-` answers is S04's (O-124). A problem statement whose SHA-256 differs from the row `brief.sha256` of S01 is refused before any step (exit 2, the runner's rule above), so the `Q-NNN` IDs stay true; the Operator restores the file, or starts again in a new work area. The numbered facts of the problem statement come with the first bet (§7), not here. | the briefs | check `facts` |
-| S07 | `layup setup`; the text is an input | `inputs/files/docs/onboarding-for-engineers.md` | Copies the file into the tree; a missing file stops the run. | the file | check `onboarding` |
+| S05 | `layup setup` | the copy | Deletes the baseline's own history: the paths that check `kit-history` reads (`docs/decisions/`, `docs/audit/`, each `docs/tasks/T-*.md`, and each line of `backlog.md` and `completed.md` that names a deleted task or links the baseline's repository, with each blockquote that holds one; K12, below). A link that the deletion breaks is a missing input: the run stops and lists each one, and the fixed text of that file comes as `inputs/files/<path>`. | the commit; a record row `file:<path>` per input file | checks `kit-history` and `link-lint` |
+| S06 | `layup setup` | the briefs | Copies each brief byte for byte into `docs/facts/`, with its line in `docs/setup/facts.sha256`, its index row and its record rows `brief.copy` and `brief.copy.sha256` (`vision.copy` and `vision.copy.sha256` for the vision brief). S06 keeps the briefs; the raw fact record of the `S01-` and `Q-` answers is S04's (O-124). A problem statement whose SHA-256 differs from the row `brief.sha256` of S01 is refused before any step (exit 2, the runner's rule above), so the `Q-NNN` IDs stay true; the Operator restores the file, or starts again in a new work area. The numbered facts of the problem statement come with the first bet (§7), not here. | the briefs | check `facts` |
+| S07 | `layup setup`; the text is an input | `inputs/files/docs/onboarding-for-engineers.md` | Copies the file into the tree, with its record row `file:<path>` (K42); a missing file stops the run, in the one table of the prose step (O-123). | the file | check `onboarding` |
 | S08 | the same | `inputs/files/docs/glossary.md` | the same | the file | check `glossary` |
 | S09 | the same | `inputs/files/docs/guardrails.md` | the same | the file | check `guardrails` |
-| S10 | `layup setup`; stops for the Operator | the tree; `answers.tsv` | Lists every marker of the tree outside the exemptions of LAYUP's `MK_EXEMPT` ([`setup-check.sh`](../setup/setup-check.sh); the baseline has no setup check, §5), which the engine embeds at its version. A path of that pattern that a target does not have matches nothing. A marker with no answer row stops the run; the table lists all of them at once (§5 gap check, "one batch"). | — | every marker has an answer row |
+| S10 | `layup setup`; stops for the Operator | the tree; `answers.tsv` | Lists every marker of the tree outside the exemptions of LAYUP's `MK_EXEMPT` ([`setup-check.sh`](../setup/setup-check.sh); the baseline has no setup check, §5), which the engine embeds at its version. A path of that pattern that a target does not have matches nothing. A marker with no answer row stops the run; the table lists all of them at once (§5 gap check, "one batch"), each by its first line. It changes no file. | — | every marker has an answer row |
 | S11 | `layup setup` | the answers of S10 | Replaces each marker whose answer has a value with that value, and writes its record row with the source. A marker whose answer is `gap` keeps its marker and gets a row in `docs/setup/open-gaps.tsv` with the answer's question (Invariant 4). When S10 listed at least one marker, writes the answer of each marker that S10 listed as a second raw fact record, in the same form, with its own index row and its own line in `facts.sha256`; with no marker, it writes no second record; the record of S06 does not change (a raw facts record is immutable). | the tree; the second answers record; record rows `marker:<file>:<line>` | checks `markers`, `sources` and `facts` |
 | S12 | `layup setup` | the catalog entry of the stack | Writes the files of the entry (for Go: `go.mod` with the module path from `name`, the tools' configuration), `docs/gates.tsv`, and one CI job per gate kind, whose id and name are the kind (K30). For each gap of the entry (the coverage floor of Go, K24), writes its row of `docs/setup/open-gaps.tsv` and its record row. The baseline's own workflows stay byte for byte (`REQ-018`). Adds no `setup-check` job. Changes `steps.tsv` S12: ADR-0011 decision 7, ADR-0016, §5 Scaffold 4. | the gate files; the gap rows of the entry | checks `jobs` and `gates` (each row `gate:<kind>`) |
 | S13 | `layup setup`; applied by the Operator | the job names | Writes `docs/setup/branch-protection.json` (in the form of LAYUP's own file of that name; the baseline has no `docs/setup/`) and `WORK/out/ruleset-default.json`: the default branch and the ref `layup-probe`; a pull request required; each gate job a required check, pinned to GitHub Actions; no force push, no deletion; an empty bypass list. In phase 1 it requires no `layup/` check, because no phase-1 command posts one ([`records.md`](records.md#nfr-002--a-target-is-independent-of-layup)). Writes to `commands.sh` the push of `layup-setup` onto the default branch (`git push origin layup-setup:main`, a fast-forward from the root commit; §5 Scaffold 6: "pushes the setup commits on top of the root commit") and, after it, the apply command of the ruleset. | the ruleset file; commands | the ruleset file, and its commands in `commands.sh` for the Operator (a hand-off: phase 1 does not see the Operator's run) |
-| S14 | `layup setup`; the text is an input | `inputs/files/README.md`, `inputs/files/AGENTS.md` | Copies the files; a missing file stops the run. | the files | check `identity` |
+| S14 | `layup setup`; the text is an input | `inputs/files/README.md`, `inputs/files/AGENTS.md`, and `inputs/files/<path>` of each other file that check `adapted` flags | Copies the files, with a record row `file:<path>` each (K42); a missing file stops the run, in the one table of the prose step (O-123). | the files | checks `identity` and `adapted` |
 | S15 | `layup setup`; the push by the Operator | the record; `out/verify.tsv` | Writes the record's last rows and the rule-path register, and the first commit of `layup-records` ([below](#where-the-records-go-in-phase-1), O-115). Not `steps.tsv` into the target (§5: LAYUP's own file). | `out/record.tsv`, `out/rule-paths.tsv`; the records commit; a command | every row of `verify.tsv` is `pass` or `clear` |
 
 Each step from S04 to S14 that changes the tree is one commit on `layup-setup`,
@@ -324,6 +343,88 @@ written as `&lsaquo;` or `&rsaquo;`, and S04 writes each one so: of the answer,
 of its `source` and of the question (finding 1 of review round 1 of #86); `by`
 is a word of its enum.
 
+**Decided here** (task `T-b3r1`, #90), the rules of S05 to S11 and S14 (D1 to
+D10 of its plan, with the conditions of its plan review):
+
+- **The lines that S05 removes** (K12, D1). From the head of `layup-setup`,
+  S05 deletes `docs/decisions/`, `docs/audit/` and each `docs/tasks/T-*.md`,
+  and removes from `docs/tasks/backlog.md` and `docs/tasks/completed.md` each
+  line that names a deleted task (its ID as a word: no letter, digit, `-` or
+  `_` just before or after it) or that links the baseline's repository (the
+  link rule of check `kit-history`, from the row `pin.source`), and each
+  blockquote (a run of lines that start with `>`) that holds such a line.
+  Reason: check `kit-history`, the evidence of S05, fails on each such line,
+  and on LAYUP's root commit `d2516fd` the 7 lines of `backlog.md` that link
+  the repository name no deleted task, nor do 32 of the 56 such lines of
+  `completed.md`; LAYUP's own S05 removed the pivot note of its baseline
+  whole (task `T-vbwc`), and a part of a blockquote is a sentence with no
+  start.
+- **The links that the deletion breaks** (K10, D2). After the deletion, and
+  before its commit, S05 asks for the files whose links break (the call of
+  row 10, on `WORK/target`). Each file with an input file `inputs/files/<path>`
+  gets it; each file with none is one stop row `F-<path>` (`where` its path),
+  all in one table, and S05 copies nothing then. With each input copied, S05
+  asks again: a file that still breaks is `fail`, with the reason.
+- **A record row for each copied file** (K42, D3): each input file that a step
+  copies has the row `file:<path>`, value the SHA-256 of its bytes, source
+  `computed`, ref `sha256 inputs/files/<path>`. Reason: `NFR-003` item 1, and
+  `REQ-018` ("except the adapted values the setup records with evidence"). One
+  input can serve S05 and the prose step; each step that copies it writes its
+  own row, as the step is a part of the key.
+- **S06** (D4, O-124): it copies `inputs/briefs/problem-statement.md` and
+  `inputs/briefs/vision.md`, when it exists, to the two names of row 12; the
+  index row of each is
+  `| [<file>](<file>) | The problem statement of the idea owner, from the work area | <date> | Raw |`
+  (for the vision brief, "The vision brief of the idea owner, from the work
+  area"), `<date>` the date of `pin.time`; its record rows are `brief.copy`
+  (the path, ref `the raw file name of a brief`) and `brief.copy.sha256` (the
+  hash, ref `sha256 <path>`), and `vision.copy` with `vision.copy.sha256`.
+- **The prose step** (O-123, K16, D5): S07, S08 and S09 copy their named file,
+  and S14 copies `README.md`, `AGENTS.md` and each file that check `adapted`
+  flags on the head (the list of row 11), less the five named files, so no
+  question is twice in the group's one table. A step of the group whose inputs
+  exist is done and committed in the run that stops for another step of the
+  group. The evidence of S14 is checks `identity` and `adapted`: `adapted` is
+  the check that flags the files that S14 replaces.
+- **S10** (D6): one question `M-<x8>` per file and marker text, in the order of
+  the list of the scanner, with the ask "What is the value of `<marker>` in
+  `<file>`? Answer gap to keep it as an open gap, with its question as
+  question_text." and `where` `<file>:<line> <marker>` of its first line; an
+  `M-` answer to a marker that the tree does not hold is exit 2.
+- **The column of a marker** (D7): the scanner gives each marker with the byte
+  column of its open quote on its line, so S11 replaces it at the place that
+  the scanner found; a mention in a code span is never replaced, and the rule
+  of a marker keeps its one home.
+- **S11** (D8): it first checks each answer and each marker (an answer for
+  each; no angle quote in a value, which would be a new marker; no `gap` in a
+  file whose name holds a tab, the known limit of row 10) and changes no file
+  when one check fails. A value replaces the marker at each of its places, with
+  the row `marker:<file>:<line>` per place (the source of D3 of #86); a `gap`
+  keeps the marker, with a row per place (source `gap`, ref
+  `docs/setup/open-gaps.tsv`) and one row of `open-gaps.tsv` per file and
+  marker, with the answer's `question_text`. A marker that does not close on
+  its line is the text from its open quote to the line end. With at least one
+  marker, S11 writes the second answers record
+  `docs/facts/F-NNNN-marker-answers.md` (the next free ID) in the form of S04's
+  record: the title `# F-NNNN. The answers to the markers of the setup`,
+  `Source` "The answers of `inputs/answers.tsv` to the markers that S10
+  listed", `Collected by` "`layup setup`, step S11", `Date collected` the date
+  of `pin.time`, `Origin` and `Status` as S04's; its index row
+  `| [F-NNNN](F-NNNN-marker-answers.md) | The answers to the markers of the setup | <date> | Raw |`,
+  its line in `facts.sha256`, and the rows `marker.record` and
+  `marker.record.sha256`. With no marker, it writes nothing.
+- **The hand-off** (D9): `internal/cli` gives the steps the calls of
+  `internal/verify` (`packages.md`): the one-check call, the markers of a tree,
+  the files whose links break, the files that check `adapted` flags, and the
+  link rule of the baseline.
+- **Known limit:** on LAYUP's pin, check `adapted` flags 26 files (O-123), and
+  the deletion of S05 breaks links in `AGENTS.md`, `README.md`,
+  `docs/adr/0004-ship-agent-entry-points.md`, `docs/adr/README.md`,
+  `docs/engineering-discipline.md`, `docs/glossary.md` and
+  `docs/guardrails.md` (round 1 of the plan review measured it), so a real
+  setup needs the union of those files and the five named ones as input files;
+  the first pilot (row 20 of the plan) meets them.
+
 ### The stop table
 
 When a step stops (exit 3), `layup setup` prints every missing input of that
@@ -489,7 +590,7 @@ of each such check passes and fails on the same fixtures as
 | `guardrails` | yes, in a target's form | each entry (a bullet `- **Inv-N**`) has a `Check:` value that is `no check yet` or a file and a gate, as `check_guardrails`; each citation resolves; LAYUP's heading and its count of 9 do not apply |
 | `markers` | yes | `check_markers`, with LAYUP's `MK_EXEMPT` (S10) |
 | `adapted` | yes | `check_adapted`, with LAYUP's `AD_EXCLUDE` and `ad_allowed`, which the engine embeds at its version; a path that a target does not have matches nothing |
-| `identity` | yes | `check_identity`, with the target's name: `README.md` also holds the record row `name` of S01, the whole `OWNER/NAME` (task `T-7s0y`) |
+| `identity` | yes | `check_identity`, with the target's name: `README.md` also holds the record row `name` of S01, the whole `OWNER/NAME` (task `T-7s0y`), and names the branch `layup-records`, as §3 says that the target's README, written at setup, names it (task `T-b3r1`) |
 | `link-lint` | yes | the baseline's own `sh docs/links/link-lint.sh` exits 0, run as a gate command (below, task `T-8vpw`) |
 | `sources` | yes | every value row of the record has a source; each `answer` ref is a row of `answers.tsv`; each `catalog` ref is a file of the catalog entry; each `fact` ref is a fact of `docs/facts/`; each `gap` row has its marker in the tree and its row in `open-gaps.tsv`; each `computed` ref is not empty, and a hash names a file (below, task `T-8vpw`) |
 | `jobs` | yes | each kind of `docs/gates.tsv` has a CI job with the kind's name (the evidence of S12) |
