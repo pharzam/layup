@@ -78,11 +78,35 @@ layup setup WORK
   a rerun does it again. Before the commit, the runner checks that the target
   is on the branch `layup-setup`; when it is not, the runner makes no commit,
   and the step is `fail`. The actor of each step of phase 1 is `layup-setup`.
+- **An input error of a step** (task `T-7s0y`, D11 of #86): a step can end
+  with an input error (S01, S02, S03 and S04 below); the run then gives exit 2,
+  no table and no row, as for the runner's own input errors.
+- **The evidence call of a step, and its undo** (task `T-7s0y`, D12 of #86,
+  condition 1 of its plan review): the evidence of a step from S04 to S14 that
+  names checks is the one-check call of
+  [`layup setup verify`](#the-checks-of-layup-setup-verify), which
+  `internal/cli` gives the runner. After the step's commit, the runner calls it
+  on the work area; when each row is `pass` or `clear`, the runner writes the
+  `done` row; else the step is `fail`, with the reason
+  `<check>: <result>: <reason>` of the first other row and no `done` row, and
+  the runner moves `layup-setup` back to the step's parent (`git reset
+  --soft`), but only when the head of `layup-setup` is the commit that the
+  step made in this run. The tree and the index keep the step's files, and a
+  rerun does the step again from that parent. So the commit, the undo and the
+  rerun are one rule. Reason: `layup setup verify` reads the head of
+  `layup-setup`, so the call comes after the commit and before the `done`
+  row.
 - **The inputs:** a `WORK` that is not a directory, or an `answers.tsv` or a
   `record.tsv` that does not match its schema, is an input error (exit 2). A
   missing `out/record.tsv` is a new work area, and a missing
   `inputs/answers.tsv` is no answer; what a step does with no answer is the
-  step's rule (S01 stops for its questions).
+  step's rule (S01 stops for its questions). A `WORK/inputs/briefs/problem-statement.md`
+  that is absent, or that is not valid UTF-8, is an input error too (task
+  `T-7s0y`, D5 of #86; K32). Before any step, the runner checks the inputs
+  that each done step read: the rows of `answers.tsv` ([below](#the-answers)),
+  and, once S01 is done, the SHA-256 of the problem statement against the row
+  `S01 brief.sha256` (D6 of #86): a difference is exit 2, "an input that
+  changed after a step read it".
 - **`commands.sh`** is written again at the end of each run that gives a table
   (exit 0, 1 or 3), from the commands of the done steps, each a function of the
   record, in the order of
@@ -91,10 +115,10 @@ layup setup WORK
   no command of an earlier record stays; a run that ends with exit 2 does not
   write it. The texts of the commands, the apply of the ruleset included, are
   the steps' (S03, S13, S15).
-- **The present code** (task `T-79y7`): each step is a stub, `not-active`,
-  evidence `not built yet`, so `layup setup WORK` gives exit 1 until the rows 9,
-  13 and 15 of the [plan](../plan/README.md#the-tasks-of-phase-1) build the
-  steps (`NFR-004`).
+- **The present code**: S01 to S04 are built (task `T-7s0y`, #86); each other
+  step is a stub, `not-active`, evidence `not built yet`, so `layup setup WORK`
+  gives exit 1 at S05 until the rows 13 and 15 of the
+  [plan](../plan/README.md#the-tasks-of-phase-1) build the steps (`NFR-004`).
 
 **The work area** (decided here: §1 names the work area on the host, and no section gives its layout; one directory per target keeps a run resumable from files alone):
 
@@ -120,12 +144,12 @@ the one home of the phase-1 steps of a target. A row that differs from
 
 | Step | Actor in phase 1 | Inputs | What it does | Output | Evidence (the `done` row) |
 | ---- | ---------------- | ------ | ------------ | ------ | ------------------------- |
-| S01 | `layup setup`; stops for the Operator and the idea owner | `answers.tsv`; the problem statement | Reads the answers of the questions `S01-stack`, `S01-name`, `S01-visibility`, `S01-baseline` (the baseline's repository URL), and runs `layup psb check` on `inputs/briefs/problem-statement.md`: each gap is a question whose ID is the gap's `id` (`Q-NNN`; [`psb-check.md`](psb-check.md#the-table)), for the idea owner. A missing answer stops the run, with all missing ones, of both kinds, in one table (Decision Point 2). `internal/cli` runs the rules of `internal/psb` and hands the gap table to `internal/setup`, as it does for the step checks. A record row `brief.sha256` (`computed`) holds the SHA-256 of the problem statement that the rules read. In phase 1 the name and the visibility are answers, because Start is not in phase 1; §5 (gap check 4) asks the Operator only the stack at S01. No gate-mode question: **decided here**, as §5 names none, and the target runs its own full gate (§8). | record rows `stack`, `name`, `visibility`, `baseline`, `brief.sha256` | every answer present; the stack has a catalog entry |
-| S02 | `layup setup` | `S01-baseline` | `git ls-remote <url> HEAD` gives the commit; `git clone` and `git checkout` of it; `git rev-parse <commit>^{tree}` gives the tree; removes `.git`. The clone reads no credential of the host and starts no `ssh`, so the baseline's repository is public (known limit [L-A7](../architecture.md#15-known-limits)). Changes `steps.tsv` S02 (`npx degit`): ADR-0011 decision 7, §5 Start 2. | the copy; record rows `pin.source`, `pin.commit`, `pin.tree`, `pin.time` | the commit and the tree |
-| S03 | `layup setup`; the push by the Operator | the copy | `git init`, one commit of the unmodified copy on `main` (message `chore: the unmodified baseline at <commit>`), checks that its tree equals `pin.tree`, writes the push command to `commands.sh`. Creating the remote repository is the Operator's (Start 1). | the root commit; a command | root tree = `pin.tree` |
-| S04 | `layup setup` | the pin rows | On the branch `layup-setup` from the root commit: writes `docs/setup/armature.pin` from the pin rows ([`NFR-006`](#nfr-006--the-baseline-at-a-pinned-recorded-version)). Installing the hooks is a setting of a clone, not of the tree: not done (**decided here**, as §5 names no hook for a target; the Operator's clone has none, §5 Scaffold 6). The decision record of the pin is the baseline's own ADR form, written from a fixed text with the pin values. | the pin file; the ADR | check `pin` of `layup setup verify` |
+| S01 | `layup setup`; stops for the Operator and the idea owner | `answers.tsv`; the problem statement | Reads the answers of the questions `S01-stack`, `S01-name` (the repository of the target on GitHub, `OWNER/NAME`), `S01-visibility` (`public` or `private`), `S01-baseline` (the baseline's repository URL), and runs `layup psb check` on `inputs/briefs/problem-statement.md`: each gap is a question whose ID is the gap's `id` (`Q-NNN`; [`psb-check.md`](psb-check.md#the-table)), for the idea owner. A missing answer stops the run, with all missing ones, of both kinds, in one table (Decision Point 2). `internal/cli` runs the rules of `internal/psb` and hands the gap table to `internal/setup`, as it does for the step checks. A record row `brief.sha256` (`computed`) holds the SHA-256 of the problem statement that the rules read; each later run compares it before any step. The forms, the texts and the checks of the answers are below (task `T-7s0y`). In phase 1 the name and the visibility are answers, because Start is not in phase 1; §5 (gap check 4) asks the Operator only the stack at S01. No gate-mode question: **decided here**, as §5 names none, and the target runs its own full gate (§8). | record rows `stack`, `name`, `visibility`, `baseline`, `brief.sha256` | every answer present; the stack has a catalog entry |
+| S02 | `layup setup` | `S01-baseline` | `git ls-remote <url> HEAD` gives the commit; `git clone` into `WORK/target.part` and `git checkout` of it; `git rev-parse <commit>^{tree}` gives the tree; removes `.git`, and renames the directory to `WORK/target` at its end. The clone reads no credential of the host and starts no `ssh`, so the baseline's repository is public (known limit [L-A7](../architecture.md#15-known-limits)). Changes `steps.tsv` S02 (`npx degit`): ADR-0011 decision 7, §5 Start 2. | the copy; record rows `pin.source`, `pin.commit`, `pin.tree`, `pin.time` | the commit and the tree |
+| S03 | `layup setup`; the push by the Operator | the copy | `git init`, one commit of the unmodified copy on `main` (message `chore: the unmodified baseline at <commit>`), checks that its tree equals `pin.tree`, writes the remote `origin` and the push command to `commands.sh`. Creating the remote repository is the Operator's (Start 1). | the root commit; two commands | root tree = `pin.tree` |
+| S04 | `layup setup` | the pin rows; the answers of S01 | On the branch `layup-setup` from the root commit: writes `docs/setup/armature.pin` from the pin rows ([`NFR-006`](#nfr-006--the-baseline-at-a-pinned-recorded-version)). Installing the hooks is a setting of a clone, not of the tree: not done (**decided here**, as §5 names no hook for a target; the Operator's clone has none, §5 Scaffold 6). The decision record of the pin is the baseline's own ADR form, written from a fixed text with the pin values, with its index row. It also writes the raw fact record of the `S01-` and `Q-` answers, with its line in `facts.sha256` and its index row, in this first commit on the setup branch (O-124: the answers become facts before the next step that writes a value from them into the tree). | the pin file; the ADR; the answers record; record rows `pin.adr`, `answers.record`, `answers.record.sha256` | checks `pin` and `facts` (the one-check call) |
 | S05 | `layup setup` | the copy | Deletes the baseline's own history: the paths that check `kit-history` reads (`docs/decisions/`, `docs/audit/`, each `docs/tasks/T-*.md`, their lines in `backlog.md` and `completed.md`). A link that the deletion breaks is a missing input: the run stops and lists each one, and the fixed text of that file comes as `inputs/files/<path>`. | the commit | checks `kit-history` and `link-lint` |
-| S06 | `layup setup` | the briefs; `answers.tsv` | Refuses a problem statement whose SHA-256 differs from the row `brief.sha256` of S01 (exit 2), so the `Q-NNN` IDs stay true; the Operator restores the file, or starts again in a new work area. Copies each brief byte for byte into `docs/facts/`; writes the `S01-` and `Q-` answers of `answers.tsv` as a raw fact record, one fact per question ID, each with the question ID, the question text and the answer; writes `docs/setup/facts.sha256` and the index rows. The numbered facts of the problem statement come with the first bet (§7), not here. | the facts | check `facts` |
+| S06 | `layup setup` | the briefs | Copies each brief byte for byte into `docs/facts/`, with its line in `docs/setup/facts.sha256` and its index row. S06 keeps the briefs; the raw fact record of the `S01-` and `Q-` answers is S04's (O-124). A problem statement whose SHA-256 differs from the row `brief.sha256` of S01 is refused before any step (exit 2, the runner's rule above), so the `Q-NNN` IDs stay true; the Operator restores the file, or starts again in a new work area. The numbered facts of the problem statement come with the first bet (§7), not here. | the briefs | check `facts` |
 | S07 | `layup setup`; the text is an input | `inputs/files/docs/onboarding-for-engineers.md` | Copies the file into the tree; a missing file stops the run. | the file | check `onboarding` |
 | S08 | the same | `inputs/files/docs/glossary.md` | the same | the file | check `glossary` |
 | S09 | the same | `inputs/files/docs/guardrails.md` | the same | the file | check `guardrails` |
@@ -145,6 +169,151 @@ committer of each setup commit and of the records commit is
 `layup-agent[bot] <335371832+layup-agent[bot]@users.noreply.github.com>`, the
 LAYUP App's bot, and the date of each is `pin.time` of S02, so one input gives
 one commit ID (`NFR-005`).
+
+**Decided here** (task `T-7s0y`, #86), the rules of S01 to S04 (D1 to D10 of
+its plan, with the conditions of its plan review):
+
+- **The answers of S01** (D1, D2, D4). `S01-name` is `OWNER/NAME`, the
+  repository of the target on GitHub: `OWNER` of letters, digits and single
+  `-`, not at an end, at most 39 characters; `NAME` of letters, digits, `.`,
+  `_` and `-`, at most 100 characters, not `.` or `..` (the forms of GitHub).
+  Reason: §5 Start 1 names the repository `OWNER/NAME`, and S01 has four fixed
+  questions, so one answer holds both parts; S03, S12 (the module path
+  `github.com/OWNER/NAME`) and S13 take them from it. `S01-visibility` is
+  `public` or `private`; phase 1 only records it (Start 3, phase 2, reads it
+  back). `S01-baseline` is a URL with the scheme `https`, `http`, `git` or
+  `file`, the protocols that `internal/git` allows (no `ssh`, K31). A stack
+  with no entry in the catalog of the binary, or another form of an answer,
+  makes S01 `fail` with the first reason. An answer `—` is no answer.
+- **The questions of S01** are fixed texts of `internal/work`, which the stop
+  table and the answers record of S04 use:
+
+  | Question | The question in words |
+  | -------- | --------------------- |
+  | `S01-stack` | Which technology stack does the target use? Give a stack of the catalog of LAYUP, for example go. |
+  | `S01-name` | What is the repository of the target on GitHub, as OWNER/NAME? |
+  | `S01-visibility` | Is the repository of the target public or private? |
+  | `S01-baseline` | What is the URL of the repository of the baseline? |
+
+  The stop table of S01 holds each missing answer: the `S01-` rows, then one
+  row per gap with no answer, with the question of the gap. An answer to a
+  `Q-` question that the gap table does not hold is exit 2.
+- **The source of a record row of an answer** (D3): `fact`, with the ref
+  `F-NNNN#n`, when the answer's `source` is a fact citation of that form;
+  else `answer`, with the question ID as the ref. The row `pin.source` of S02
+  has the source and the ref of the row `baseline`.
+- **The hand-off of the gap table** (D5, `psb-batch-api`): `internal/cli`
+  reads `inputs/briefs/problem-statement.md` once per run, runs the rules of
+  `internal/psb`, writes the gap table as `layup psb check` writes it, and
+  hands the bytes of the table and the SHA-256 of the file to
+  `internal/setup`. `internal/setup` reads the table by its own Go value of
+  the block `psb-gaps`, which its block test compares with the block. Reason:
+  the IDs `Q-NNN` keep one home, and `internal/setup` imports no
+  `internal/psb` ([`packages.md`](packages.md)).
+- **A changed problem statement** (D6): each run computes the gap table again,
+  and the runner refuses a problem statement that changed after S01 (above),
+  so S04 writes the questions of the table that S01 read. **Known limit:** a
+  version of `layup` with other rules of `layup psb check` gives another table
+  for the same problem statement.
+- **The pin rows of S02** (D7): `pin.source` (D3); `pin.commit` (`computed`,
+  ref `git ls-remote <url> HEAD`); `pin.tree` (`computed`, ref
+  `git rev-parse <commit>^{tree}`); `pin.time` (`computed`, ref
+  `the clock of the LAYUP host`), the time of the resolve. A later run reads
+  them and resolves nothing (O-136).
+- **A step that stopped in its middle** (D8, condition 1): S02 first removes a
+  `WORK/target.part` (the leftover of its own run), and renames the copy to
+  `WORK/target` only at its end; a `WORK/target` that exists while S02 is not
+  done is exit 2, and `layup` removes nothing of it. S03 takes a
+  `WORK/target` whose `main` is one commit with the tree `pin.tree` and the
+  message of S03 as its own commit of a run that stopped, with no second
+  commit; another history is exit 2. S04 makes the branch `layup-setup` at the root commit, or takes the
+  branch when it is at the root commit (a stop before its commit, or the undo
+  of its evidence); a branch at another commit, or a target on another
+  branch, is exit 2.
+- **The forge of phase 1 is GitHub** (the App, the rulesets and GitHub
+  Actions, §3 and §6). The commands of S03 (D9), order 1 in `commands.sh`, run
+  from the work area: `git -C target remote add origin
+  'https://github.com/OWNER/NAME.git'`, with the comment "the remote of the
+  target: its empty repository on GitHub"; then `git -C target push origin
+  main`, with the comment "the push of the root commit: the unmodified
+  baseline at `<commit>`, the commit of LAYUP's own pin a959655" (or "not the
+  commit of LAYUP's own pin a959655"), so the Operator sees the resolved
+  commit against LAYUP's pin (§5 Start 2). S13's push uses the same remote.
+- **S04** (D10, O-124, conditions 1 and 2) writes each file from the files of
+  the root commit, so a rerun writes the same files: the pin file; the
+  decision record of the pin, `docs/adr/NNNN-pin-the-baseline.md`, `NNNN` the
+  next number after the highest record `NNNN-*.md` of `docs/adr/` (`0009` at
+  LAYUP's pin), with the row
+  `| [NNNN](NNNN-pin-the-baseline.md) | Pin the baseline | Accepted |` after
+  the last row of the table under `## Index` of `docs/adr/README.md`; the
+  answers record `docs/facts/F-NNNN-setup-answers.md`, `F-NNNN` the next ID
+  after the highest `F-NNNN-*.md` of `docs/facts/`, with the row
+  `| [F-NNNN](F-NNNN-setup-answers.md) | The answers to the questions of the setup | <date> | Raw |`
+  in the table of `docs/facts/README.md` (in place of its row `_none yet_`),
+  and its line after the lines of `docs/setup/facts.sha256` of the root
+  commit, if any. Its value rows: `pin.adr` (`computed`, ref
+  `the next free number of docs/adr/`), `answers.record` (`computed`, ref
+  `the next free ID of docs/facts/`), `answers.record.sha256` (`computed`, ref
+  `sha256 docs/facts/F-NNNN-setup-answers.md`). Each `<date>` is the date of
+  `pin.time`, so one input gives one commit ID. **Known limit:** the prose of
+  the baseline's `docs/adr/README.md` ("the next constitutional ADR is `0009`"
+  at LAYUP's pin) does not change, so it is stale in the target; it fails no
+  check, and a later prose step can change it.
+
+The fixed text of the decision record of the pin, in the baseline's form of an
+ADR (the title line, `Date:`, `## Status`, the three sections), with no
+reference to an issue; `<date>`, `<source>`, `<commit>` and `<tree>` are the
+date of `pin.time` and the pin rows:
+
+```markdown
+# NNNN. Pin the baseline
+
+Date: <date>
+
+## Status
+
+Accepted
+
+## Context
+
+This repository started as a copy of a baseline, the repository at
+`<source>`. A copy that names no version of its source cannot be compared
+with that source later, and a later change of the source would change what
+"the baseline" means.
+
+## Decision
+
+We will pin the baseline at the commit `<commit>`, whose tree is
+`<tree>`: the latest commit of its default branch when this repository was
+set up. The pin file `docs/setup/armature.pin` holds the source, the commit, the tree,
+the method and the date. The root commit of the default branch is the unchanged
+copy, and its tree is the pinned tree.
+
+We reject a copy with no recorded version, which no one can compare with its
+source.
+
+## Consequences
+
+- A later version of the baseline comes into this repository only by a change
+  that names the new commit.
+- The pin file and the root commit show the version that this repository
+  started from.
+```
+
+The answers record has the header table of the baseline's
+`docs/facts/template.md` (K15): `Fact ID` `` `F-NNNN` ``; `Source` "The answers
+of `inputs/answers.tsv` to the questions of S01 and to the gaps of the problem
+statement"; `Collected by` "`layup setup`, step S04"; `Date collected` the
+date of `pin.time`; `Origin` "`inputs/answers.tsv` of the work area"; `Status`
+`` `Raw` ``. Under `## Facts as collected` it has one fact per answer, in the
+order of the stop table, in this form (K15, K17):
+
+```text
+<n>. `<question ID>` <answer> — by <by>; source <source>; the question: <the question in words>
+```
+
+Under `## Notes on capture` it says that each angle quote of a recorded text is
+written as `&lsaquo;` or `&rsaquo;`, and S04 writes each one so.
 
 ### The stop table
 
@@ -311,7 +480,7 @@ of each such check passes and fails on the same fixtures as
 | `guardrails` | yes, in a target's form | each entry (a bullet `- **Inv-N**`) has a `Check:` value that is `no check yet` or a file and a gate, as `check_guardrails`; each citation resolves; LAYUP's heading and its count of 9 do not apply |
 | `markers` | yes | `check_markers`, with LAYUP's `MK_EXEMPT` (S10) |
 | `adapted` | yes | `check_adapted`, with LAYUP's `AD_EXCLUDE` and `ad_allowed`, which the engine embeds at its version; a path that a target does not have matches nothing |
-| `identity` | yes | `check_identity`, with the target's name: `README.md` also holds the record row `name` of S01 |
+| `identity` | yes | `check_identity`, with the target's name: `README.md` also holds the record row `name` of S01, the whole `OWNER/NAME` (task `T-7s0y`) |
 | `link-lint` | yes | the baseline's own `sh docs/links/link-lint.sh` exits 0, run as a gate command (below, task `T-8vpw`) |
 | `sources` | yes | every value row of the record has a source; each `answer` ref is a row of `answers.tsv`; each `catalog` ref is a file of the catalog entry; each `fact` ref is a fact of `docs/facts/`; each `gap` row has its marker in the tree and its row in `open-gaps.tsv`; each `computed` ref is not empty, and a hash names a file (below, task `T-8vpw`) |
 | `jobs` | yes | each kind of `docs/gates.tsv` has a CI job with the kind's name (the evidence of S12) |

@@ -440,6 +440,20 @@ These traps are not domain-specific: they hurt every project's test suite.
   **The check:** for each row that a later run compares, test a record that
   does not have it, and make its absence an error where the writer always
   writes it.
+- ❌ **A commit identity with no time.** `git.Commit` gives the time of its
+  `Identity` as both dates, `@<seconds> +0000`; the zero `time.Time` is
+  `@-62135596800`, which `git` refuses (`fatal: invalid date format`). A test
+  helper that commits with an `Identity{Name, Email}` literal fails only when
+  it runs. Task `T-7s0y` (#86) met it in an integration test. **The check:**
+  give each `Identity` a time (`time.Unix(0, 0)`, or `pin.time` for a setup
+  commit).
+- ❌ **A mutation run that restores a file with `git checkout`.** A script that
+  changes a file, runs the tests, and restores the file with
+  `git checkout -- <file>` puts back the committed version, so a change that is
+  not committed yet is lost. The mutation script of task `T-c06a` (#91)
+  restores so; task `T-7s0y` (#86) found it in its copy before the first run,
+  on files that were not committed. **The check:** keep the text of the file
+  before the change and write that text back, or commit first.
 
 ### Reference-sweep pitfalls
 
