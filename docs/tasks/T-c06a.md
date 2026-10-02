@@ -102,3 +102,71 @@ line feed (its note 2); the text of `setup.md` names a manifest with no row,
 and the checkout rule apart (its note 5). The lesson of `guardrails.md` §2 is
 now "A failed check that reads as a pass". Round 2 then ran on the new head,
 with a fresh session.
+
+## Review round 2
+
+Devin (its usage quota) and OpenCode ("Go usage limit exceeded") gave no record
+again. Round 2 (Claude Fable 5.1, effort `xhigh`, on the Claude Code CLI, a
+fresh session with another prompt, on `7b14e95`, its record at 9 min 10 s; the
+record is on #91) gave `nothing material in scope`, with five notes. It ran the
+script with five shells on 27 manifests against the binary, 800 runs of a
+pending and an active kind (each right), and failures of `awk` and `tr` (each
+`not-active` or `fail`, never a pass). Notes 1 to 3 are applied as text at the
+close-out, as known limits in `setup.md`: a `tr` that fails in the check of the
+last line gives `fail` with no reason; a NUL byte in another row ends the line
+for the `awk` of a host, so the job fails where `layup gate` runs; a relative
+directory of `PATH` before the tool's absolute one. Notes 4 and 5 confirm the
+change.
+
+## Verdict
+
+Delivered: the Go entry of the stack catalog, embedded in the binary: five
+kinds (`static` and `test` active, with the version and the documentation of
+`go`; `layout`, `boundary` and `contract` pending, K20); `go.mod`; the workflow
+of one job per kind, whose id and name are the kind (K30); the job script with
+the rules of the run of `layup gate`, which fails on each input that `layup
+gate` refuses and never reads a failed check as a pass; the coverage floor as
+a gap token with its question (K24); two fixtures; and LAYUP's CI run of each
+fixture at the integration and the e2e levels, with no change of `ci.yml`.
+Check `sources` resolves a `catalog` ref in the entry of the binary. O-137 put
+this row before row 9, and O-138 closed #21.
+
+The plan review (Claude Fable 5.1) gave `approve-with-conditions`, with two
+conditions, applied; round 1 (`b00d5c9`) gave `material`, one finding, fixed
+in cycle 1 with notes 2 to 5; a first run of round 2 on `b9e1b05` came after
+fifteen minutes and is skipped, and the defect that its text reported is fixed
+in the same cycle (`7b14e95`); round 2 (`7b14e95`) gave `nothing material in
+scope`. The records are on #91. At `7b14e95`, `go build`, `go vet` with each
+tag, `gofmt`, the three test levels, `go test -race` on `internal/catalog`,
+`internal/verify`, `internal/work` and `internal/standin`, `run.sh` and the
+discipline tests pass; at the head, all local checks pass, and
+`review-record-lint` passes on the comments of #91 (2 rounds, cap 1). The diff
+against `origin/main` is 1,785 lines over 32 files with the close-out,
+inside the Budget maximum of 2,400 lines over 40 files.
+
+Next: row 9 of the plan (`T-7s0y`, #86), which O-137 put after this row.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). Times are 2026-10-02, UTC. A token count is
+the `result` event of the Claude Code CLI (input, output, cache creation and
+cache read tokens, and its cost) where that harness gave one; `not reported`
+where the harness or the author's session gives none.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The records of O-137 and O-138 on #86 and #21, and #21 closed | reasoning | Claude Opus 5.5 | max | not reported | 18:47 to 18:49 |
+| The plan, with the two inventory items, the specification, the evidence URLs and the measurements of D2 and D9 | reasoning | Claude Opus 5.5 | max | not reported | 18:49 to 18:59 |
+| The plan review, first and second harness: skipped (Devin's usage quota; OpenCode "Go usage limit exceeded" during its run) | reasoning | GPT-6 Sol on the Devin CLI; Grok 4.7 on the OpenCode CLI | `xhigh`; `xhigh` | not reported | 19:00:04 to 19:11:22 |
+| The plan review | reasoning | Claude Fable 5.1 on the Claude Code CLI | `xhigh` | 1,069,741 (USD 5.17) | 8 min 43 s, 19:11:31 to 19:20:14 |
+| Drafts of the job script, the workflow and the fixtures, while the plan review ran | execution | Claude Opus 5.5 | max | not reported | 19:02 to 19:11 |
+| The answer to the plan review | reasoning | Claude Opus 5.5 | max | not reported | 19:20 to 19:23 |
+| The tests first, the entry, the code, the integration and e2e tests, the mutations, the documents and the evidence; the freeze | execution | Claude Opus 5.5, a reasoning-tier model on an execution part | max | not reported | 19:23 to 19:43 |
+| Review round 1, first and second harness: skipped (the same) | reasoning | GPT-6 Sol on the Devin CLI; Grok 4.7 on the OpenCode CLI | `xhigh`; `low` | not reported | 72 s, 19:43:38 to 19:44:50 |
+| Review round 1 | reasoning | Claude Fable 5.1 on the Claude Code CLI | `xhigh` | 2,123,257 (USD 6.18) | 9 min 20 s, 19:44:56 to 19:54:16 |
+| The fix of round 1, test first, and the freeze | execution | Claude Opus 5.5 | max | not reported | 19:54 to 20:04 |
+| Review round 2, first try: Devin and OpenCode skipped; a Fable run skipped (its record at 15 min 9 s, rule 4) | reasoning | GPT-6 Sol; Grok 4.7; Claude Fable 5.1 on the Claude Code CLI | `xhigh`; `low`; `xhigh` | 1,174,711 (USD 5.61) for the Fable run | 20:04:16 to 20:20:58 |
+| The fix of the defect that the skipped run reported, test first, and the freeze | execution | Claude Opus 5.5 | max | not reported | 20:21 to 20:30 |
+| Review round 2, first and second harness: skipped (the same) | reasoning | GPT-6 Sol on the Devin CLI; Grok 4.7 on the OpenCode CLI | `xhigh`; `low` | not reported | 72 s, 20:29:39 to 20:30:51 |
+| Review round 2 | reasoning | Claude Fable 5.1 on the Claude Code CLI | `xhigh` | 1,852,105 (USD 4.44) | 9 min 21 s, 20:30:58 to 20:40:19 |
+| The close-out, with notes 1 to 3 of round 2 | execution | Claude Opus 5.5 | max | not reported | 20:40 to 20:43 |

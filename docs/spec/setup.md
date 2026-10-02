@@ -729,7 +729,13 @@ task `T-3jpx`, #81):
   `not-active`, never a pass. The tool of an active kind is a program, as
   `exec.LookPath` finds it: a name with `/` is that file, and another name a
   file of an absolute directory of `PATH`, never a builtin of `sh`. **Known
-  limit:** a file name with a line feed is split by `tr`.
+  limits** (notes 1 to 3 of round 2 of #91): a file name with a line feed is
+  split by `tr`; a `tr` that fails in the check of the last line gives `fail`
+  with no reason, not `not-active` (neither is a pass); a NUL byte in a field,
+  which `layup gate` reads, can end the line for the `awk` of a host, so the
+  job fails where `layup gate` runs the kind; and with a relative directory of
+  `PATH` before the absolute one that holds the tool, `exec.LookPath` gives
+  `not-active` where the job finds the tool.
 - **The coverage floor** (K24, L-B2): the file `docs/gates/coverage-floor.txt`
   of the target, the `config` of `test`, has one line, the marker of the floor,
   and `gaps.tsv` gives its question. S12 (row 15 of the plan) writes, for each
