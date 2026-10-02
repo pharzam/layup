@@ -109,3 +109,58 @@ Review round 1 (GPT-6 Sol, effort `xhigh`, on the Devin CLI; `edbeb60`, cycle
 
 Note 4: the evidence no longer counts the record test of the goldens among the
 tests that pass on the base.
+
+## Review round 2 (cycle 1)
+
+Review round 2 (GPT-6 Sol, effort `xhigh`, on the Devin CLI; `b6b52d5`, cycle
+1, the last round under the cap of 1) found findings 1 to 3 of round 1 fixed
+and note 4 applied, with no new finding and no note: `nothing material in
+scope`. It ran 30 boundary inputs of G1 on the binary, and repeated the
+measurement of the classes of the new expression.
+
+## Verdict
+
+Delivered: `layup psb check` to its specification. `internal/psb` writes the
+gap table through `internal/tsv` by `GapsSchema`, which its integration test
+compares with the block `psb-gaps`, and the same test reads each golden table,
+`psb.tsv` included, by the block; G1 follows O-131, with white space read as the
+Unicode property `White_Space`; the goldens `values` and `edge`, with
+`TestG1ReadsTheValueOfAStack` and `TestEdgeCases`, pin the values and the edge
+cases of the rule table. `internal/cli` gives exit 2 for a `FILE` that is not
+valid UTF-8, with the line of its first byte that is not valid (K32), and for a
+table that it cannot write. The end-to-end scenarios run the binary on the real
+problem statement (`psb.tsv` byte for byte, twice, and with no environment
+variable), on a statement with no gap, on the input errors, and with a
+read-only standard output. `psb.tsv` and `F-0004` do not change.
+
+The plan review (GPT-6 Sol on the Devin CLI) gave `approve-with-conditions`;
+condition 1 went to the Operator (O-131), and the author applied conditions 2
+to 4 and the five notes. Review round 1 (`edbeb60`, cycle 0) gave `material`
+(three findings, fixed in `b6b52d5`); round 2 (`b6b52d5`, cycle 1, the last
+round) gave `nothing material in scope`. The records are on #83 and in
+[`review-rounds.md`](../../runs/T-5zmw/review-rounds.md). At `b6b52d5`,
+`go build`, `go vet` with each tag, `gofmt`, the three test levels and
+`go test -race` on `internal/psb` and `internal/cli` pass; at the head, all
+local checks pass, and `review-record-lint` passes on the comments of #83 (2
+rounds, cap 1). The diff against `origin/main` is 1,178 lines over 26 files
+with the close-out, inside the Budget maximum of 1,250 lines over 28 files.
+
+Next: row 7 of the plan (`T-6x75`, #84), the frame of `layup setup verify`.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). Times are 2026-10-02, UTC. Token counts are
+`not reported` where the harness does not give them: the Devin CLI gives no
+count, and the author's session gives none.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan, with the inventory items of the row | reasoning | Claude Opus 5.5 | max | not reported | notes within 08:24 to 08:26 (beside the review of row 5); 09:01 to 09:02 |
+| The plan review | reasoning | GPT-6 Sol on the Devin CLI | `xhigh` | not reported | 3 min 54 s, 09:03:08 to 09:07:02 |
+| The answer to the plan review, and the question of G1 to the Operator | reasoning | Claude Opus 5.5 | max | not reported | 09:07 to 09:08 |
+| The wait for the Operator's answer (O-131) | — | — | — | — | 09:08 to 09:57 (drafts of the code within 09:04 to 09:08) |
+| The tests, the code, the specification and the records; the freeze | execution | Claude Opus 5.5, a reasoning-tier model on an execution part | max | not reported | 09:58 to 10:14 |
+| Review round 1 | reasoning | GPT-6 Sol on the Devin CLI | `xhigh` | not reported | 6 min 25 s, 10:15:57 to 10:22:22 |
+| The fixes of round 1 (cycle 1) | execution | Claude Opus 5.5 | max | not reported | 10:22 to 10:31 |
+| Review round 2 | reasoning | GPT-6 Sol on the Devin CLI | `xhigh` | not reported | 4 min 38 s, 10:31:46 to 10:36:24 |
+| The close-out | execution | Claude Opus 5.5 | max | not reported | 10:36 to 10:37 |
