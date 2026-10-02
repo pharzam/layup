@@ -59,6 +59,36 @@ layup setup WORK
   step, and the pin is resolved once (§5 Start 2: "no run resolves the commit
   again").
 
+**Decided here** (task `T-79y7`, #85), the rules of the step runner:
+
+- **The run order** (K16, O-123): S01 to S06; then the prose step, S07, S08,
+  S09 and S14, as one group whose missing inputs make one stop table; then S10,
+  S11, S12, S13 and S15. The step table lists S01 to S15 in their order; the
+  progress lines (`layup setup: [<i>/<n>] <step>`) follow the run order.
+- **The outcome of a step:** `done` (the runner writes its value rows and its
+  `done` row with the evidence, and goes on), a stop (the run ends with the
+  stop table, exit 3), `fail` or `not-active` (the run ends, exit 1), or a
+  hand-off (S13: its own part is done; its `done` row says `handed to the
+  Operator: …`, never that the Operator ran a command, and its result is
+  `operator`). After a step that did not pass, each later step is
+  `not-active`, evidence `not run: <step> did not pass`. A commit of a step
+  that fails makes the step `fail`, with no `done` row, so a rerun does it
+  again. The actor of each step of phase 1 is `layup-setup`.
+- **The inputs:** a `WORK` that is not a directory, or an `answers.tsv` or a
+  `record.tsv` that does not match its schema, is an input error (exit 2). A
+  missing `out/record.tsv` is a new work area, and a missing
+  `inputs/answers.tsv` is no answer; what a step does with no answer is the
+  step's rule (S01 stops for its questions).
+- **`commands.sh`** is written again at the end of each run from the commands
+  of the done steps, each a function of the record, in the order of
+  [Where the records go in phase 1](#where-the-records-go-in-phase-1), each
+  with a comment line before it; the texts of the commands, the apply of the
+  ruleset included, are the steps' (S03, S13, S15).
+- **The present code** (task `T-79y7`): each step is a stub, `not-active`,
+  evidence `not built yet`, so `layup setup WORK` gives exit 1 until the rows 9,
+  13 and 15 of the [plan](../plan/README.md#the-tasks-of-phase-1) build the
+  steps (`NFR-004`).
+
 **The work area** (decided here: §1 names the work area on the host, and no section gives its layout; one directory per target keeps a run resumable from files alone):
 
 | Path | What | Written by |
@@ -95,12 +125,18 @@ the one home of the phase-1 steps of a target. A row that differs from
 | S10 | `layup setup`; stops for the Operator | the tree; `answers.tsv` | Lists every marker of the tree outside the exemptions of LAYUP's `MK_EXEMPT` ([`setup-check.sh`](../setup/setup-check.sh); the baseline has no setup check, §5), which the engine embeds at its version. A path of that pattern that a target does not have matches nothing. A marker with no answer row stops the run; the table lists all of them at once (§5 gap check, "one batch"). | — | every marker has an answer row |
 | S11 | `layup setup` | the answers of S10 | Replaces each marker whose answer has a value with that value, and writes its record row with the source. A marker whose answer is `gap` keeps its marker and gets a row in `docs/setup/open-gaps.tsv` with the answer's question (Invariant 4). When S10 listed at least one marker, writes the answer of each marker that S10 listed as a second raw fact record, in the same form, with its own index row and its own line in `facts.sha256`; with no marker, it writes no second record; the record of S06 does not change (a raw facts record is immutable). | the tree; the second answers record; record rows `marker:<file>:<line>` | checks `markers`, `sources` and `facts` |
 | S12 | `layup setup` | the catalog entry of the stack | Writes the files of the entry (for Go: `go.mod` with the module path from `name`, the tools' configuration), `docs/gates.tsv`, and one CI job per gate kind, named as the kind. The baseline's own workflows stay byte for byte (`REQ-018`). Adds no `setup-check` job. Changes `steps.tsv` S12: ADR-0011 decision 7, ADR-0016, §5 Scaffold 4. | the gate files | checks `jobs` and `gates` (each row `gate:<kind>`) |
-| S13 | `layup setup`; applied by the Operator | the job names | Writes `docs/setup/branch-protection.json` (in the form of LAYUP's own file of that name; the baseline has no `docs/setup/`) and `WORK/out/ruleset-default.json`: the default branch and the ref `layup-probe`; a pull request required; each gate job a required check, pinned to GitHub Actions; no force push, no deletion; an empty bypass list. In phase 1 it requires no `layup/` check, because no phase-1 command posts one ([`records.md`](records.md#nfr-002--a-target-is-independent-of-layup)). Writes to `commands.sh` the push of `layup-setup` onto the default branch (`git push origin layup-setup:main`, a fast-forward from the root commit; §5 Scaffold 6: "pushes the setup commits on top of the root commit") and, after it, the apply command of the ruleset. | the ruleset file; commands | the Operator's run of `commands.sh` |
+| S13 | `layup setup`; applied by the Operator | the job names | Writes `docs/setup/branch-protection.json` (in the form of LAYUP's own file of that name; the baseline has no `docs/setup/`) and `WORK/out/ruleset-default.json`: the default branch and the ref `layup-probe`; a pull request required; each gate job a required check, pinned to GitHub Actions; no force push, no deletion; an empty bypass list. In phase 1 it requires no `layup/` check, because no phase-1 command posts one ([`records.md`](records.md#nfr-002--a-target-is-independent-of-layup)). Writes to `commands.sh` the push of `layup-setup` onto the default branch (`git push origin layup-setup:main`, a fast-forward from the root commit; §5 Scaffold 6: "pushes the setup commits on top of the root commit") and, after it, the apply command of the ruleset. | the ruleset file; commands | the ruleset file, and its commands in `commands.sh` for the Operator (a hand-off: phase 1 does not see the Operator's run) |
 | S14 | `layup setup`; the text is an input | `inputs/files/README.md`, `inputs/files/AGENTS.md` | Copies the files; a missing file stops the run. | the files | check `identity` |
 | S15 | `layup setup`; the push by the Operator | the record; `out/verify.tsv` | Writes the record's last rows and the rule-path register, and the first commit of `layup-records` ([below](#where-the-records-go-in-phase-1), O-115). Not `steps.tsv` into the target (§5: LAYUP's own file). | `out/record.tsv`, `out/rule-paths.tsv`; the records commit; a command | every row of `verify.tsv` is `pass` or `clear` |
 
-Each step that changes the tree is one commit on `layup-setup`, with the message
-`chore: setup <step>`, so the history shows each step.
+Each step from S04 to S14 that changes the tree is one commit on `layup-setup`,
+with the message `chore: setup <step>`, so the history shows each step; S03 makes
+the root commit on `main` and S15 the first commit of `layup-records`, each with
+its own message. **Decided by the Operator** (O-136, #85): the author and the
+committer of each setup commit and of the records commit is
+`layup-agent[bot] <335371832+layup-agent[bot]@users.noreply.github.com>`, the
+LAYUP App's bot, and the date of each is `pin.time` of S02, so one input gives
+one commit ID (`NFR-005`).
 
 ### The stop table
 
@@ -111,12 +147,16 @@ step, and nothing else:
 step      id(SNN)    -    the step that stopped
 question  text       key  the question ID: `S01-<name>`; `Q-NNN` for a gap of `layup psb check`; `M-<x8>` for a marker; `F-<path>` for an input file of the target; `O-<name>` for an output the Operator makes
 ask       text       -    the question in words
-where     text       -    for a marker, `<file>:<line> <marker>`; for a file, its path in the target; `—` otherwise
+where     text       -    for a marker, `<file>:<line> <marker>`; for a file, its path in the target; for a gap `Q-NNN`, `inputs/briefs/problem-statement.md:<line>`, `—` for line 0 (K33); `—` otherwise
 ```
 
 **Decided here:** the ID of a marker's question is `M-` and the first 8
 hexadecimal characters of the SHA-256 of `<file>`, a tab, and the marker text,
-so it stays the same while the marker stays.
+so it stays the same while the marker stays. **Decided here** (task `T-79y7`,
+#85): the rows are in a fixed order: the `S01-` rows in the order of S01 (stack,
+name, visibility, baseline), the `Q-` rows by the number of their ID (`Q-999`
+before `Q-1000`), the `F-` rows by path, the `M-` rows by file and line, and the
+other rows last.
 
 ### The step table
 
@@ -138,6 +178,16 @@ answer is a file or a command) is an input error: the run stops with exit 2 and
 names the row, so no answer becomes a fact of the target without a question
 (**decided here**, Invariant 4). S01 checks the `S01-` and `Q-` rows; S10 checks
 the `M-` rows and the rest.
+
+**Decided here** (task `T-79y7`, #85): before any step, the runner refuses a
+row whose question no step asks (`F-`, `O-`, or another prefix), an answer
+`gap` to a question that is not a marker, and an answer `gap` with no
+`question_text`; a question twice is an error of the key. When a step that
+reads answers is done (S01 its `S01-` and `Q-` rows, S10 its `M-` rows), the
+runner writes the record row `<step> answers.sha256` (source `computed`), the
+SHA-256 of those rows as the step read them; each run first compares it with the
+rows as they are, so a row that changed, went or came is exit 2, "an input that
+changed after a step read it", before S04 or S06 writes an answer as a fact.
 
 ```tsv-schema setup-answers host:<work>/inputs/answers.tsv
 question  text                       key  the question ID, as the stop table gives it

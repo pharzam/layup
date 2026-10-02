@@ -151,8 +151,8 @@ that the steps, the checks and `layup gate` name.
 e-mail address and a time: the author and the committer, and both dates
 (`GIT_AUTHOR_DATE`, `GIT_COMMITTER_DATE`). Reason: one input then gives one
 commit ID (`NFR-005`), and a CI runner has no `user.name`. The identity of the
-setup's commits is an external input, a decision of the Operator: the plan of
-the step runner (#85) asks the Operator for it, or writes a marker.
+setup's commits is a decision of the Operator: O-136 (#85) makes it the LAYUP
+App's bot, at the date `pin.time` ([`setup.md`](setup.md#the-steps)).
 
 **A call reads no configuration of the host** (decided here, D3 of #79, with
 condition 1 of its plan review and findings 1 and 7 of its verification).

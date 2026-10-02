@@ -68,6 +68,12 @@ the first.
 | `TestIsShallow` (`internal/git/git_integration_test.go`) | integration | NFR-006 | F-0001#8 | guardrails.md §1.1 Inv-8 | ADR-0009 | T-6x75 | green |
 | `TestSetupVerify` (`internal/cli/verify_test.go`) | unit | REQ-002, NFR-004 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-6x75 | green |
 | `TestSetupVerifyOnAStandInWorkArea`, `TestSetupVerifyInputErrors` (`cmd/layup/verify_e2e_test.go`) | e2e | REQ-002, NFR-004, NFR-005 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-6x75 | green |
+| `TestARunResumesAfterItsDoneSteps`, `TestTheOutcomes`, `TestTheHandOff`, `TestTheProseGroupStopsOnce`, `TestTheStopTableOrder`, `TestTheTables`, `TestTheCommandsFile`, `TestTheCommitOfAStep`, `TestTheInputs`, `TestTheStubs` (`internal/setup/setup_test.go`) | unit | REQ-002, NFR-001, NFR-004 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-79y7 | green |
+| `TestTheAnswersRule`, `TestCheckAsked`, `TestTheAnswersOfADoneStep`, `TestMarkerID` (`internal/setup/setup_test.go`) | unit | REQ-002, NFR-003 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-79y7 | green |
+| `TestTheSchemasEqualTheirBlocks`, `TestARunOnARealWorkArea` (`internal/setup/setup_integration_test.go`) | integration | REQ-002, NFR-005 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-79y7 | green |
+| `TestSetupCommand` (`internal/cli/setup_test.go`) | unit | REQ-002, NFR-004 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-79y7 | green |
+| `TestSetupExitCodesOnAWorkArea` (`internal/cli/setup_integration_test.go`) | integration | REQ-002, NFR-004 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-79y7 | green |
+| `TestSetup` (`cmd/layup/setup_e2e_test.go`) | e2e | REQ-002, NFR-005 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-79y7 | green |
 | `T-c06a/integration/go-fixtures` | integration | REQ-004, REQ-007 | F-0003#44 | guardrails.md §1.1 Inv-7 | ADR-0016 | T-c06a | planned |
 | `T-8vpw/e2e/verify-not-active` | e2e | NFR-004, REQ-002 | F-0001#5 | guardrails.md §1.1 Inv-5 | ADR-0011 | T-8vpw | planned |
 | `T-7s0y/integration/target-pin` | integration | NFR-006, REQ-002 | F-0001#8 | guardrails.md §1.1 Inv-8 | ADR-0009 | T-7s0y | planned |

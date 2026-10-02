@@ -11,9 +11,10 @@ Armature project, a one-time copy of Armature pinned at commit `a959655`
 [ADR-0009](docs/adr/0009-pin-armature-at-a-recorded-commit.md)), with no upstream
 link. The `layup` command so far prints its version, checks a problem
 statement for gaps (`layup psb check FILE`), runs a target's gates from
-outside (`layup gate REPO --base REV --head REV`), and checks the setup of a
-target from outside (`layup setup verify WORK`, its first three checks); the
-stack is Go
+outside (`layup gate REPO --base REV --head REV`), runs the steps of a
+target's setup (`layup setup WORK`, the step runner with its steps not built
+yet), and checks the setup of a target from outside (`layup setup verify WORK`,
+its first three checks); the stack is Go
 ([ADR-0010](docs/adr/0010-use-go-as-the-technology-stack.md)), and the core engine
 will be one Go command-line program over files in the repository
 ([ADR-0011](docs/adr/0011-structure-the-core-engine-as-a-go-cli-over-repository-files.md)).
