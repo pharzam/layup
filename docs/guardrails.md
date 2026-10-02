@@ -316,13 +316,15 @@ success without having done its job.
   is not found. **Known limit:** LAYUP's own job `lint` keeps the form
   `test -z "$(gofmt -l .)"`; on its runner `setup-go` installs `gofmt` with
   `go`, and a change of `ci.yml` is K28 (note 7 of the plan review of #91).
-- ❌ **A trap on EXIT beside a pipeline.** `bash` can run the trap of the shell
-  in a subshell of a pipeline, so `trap 'rm -f "$tmp"' EXIT` can remove a file
-  that `tr < "$tmp" | f` has not yet opened. The job script of the Go entry gave
-  a wrong `clear` in 4 runs of 20 with `bash`, and none with `dash` (round 1 of
-  #91). **The check:** remove a temporary file where the main shell exits, not
-  in a trap, and run a script's tests with each `sh` of the host, `bash` among
-  them.
+- ❌ **A failed check that reads as a pass.** A script that maps the failure of
+  a check to its pass, as `scan || result clear`, passes when the check does
+  not run to its end. The job script of the Go entry gave `clear`, with its
+  command not run, in about 5 runs of 100 with `bash` 5.3 on macOS, where a
+  subshell of the script crashed (a segmentation fault; its cause is not
+  known), and in none with `dash` (measured, task `T-c06a`, #91). **The
+  check:** give a check three answers (a match, no match, a failure) and make
+  a failure `not-active`; check the status of each read; run a script's tests
+  many times with each `sh` of the host.
 - ❌ **A hashed file that git may convert.** A list of hashes, such as
   `docs/setup/facts.sha256`, holds the bytes of each file it names; on a
   checkout with `core.autocrlf=true` (git's default on Windows) git gives a

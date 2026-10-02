@@ -267,6 +267,13 @@ func TestTheJobScriptOfEachEntry(t *testing.T) {
 		{"a kind twice", "ok", map[string]string{"docs/gates.tsv": manifest + "ok\tactive\tsh\ttrue\t./*.txt\t—\n"}, map[string]string{"x.txt": "x\n"}, "", "", true, "the kind ok is there twice", false},
 		{"a builtin as the tool", "ok", withRow("ok\tactive\t:\ttrue\t./*.txt\t—\n"), map[string]string{"x.txt": "x\n"}, "not-active", "tool not found: :", false, "", false},
 		{"a base that is a tree", "ok", base, map[string]string{"x.txt": "x\n"}, "", "", true, "not a commit", true},
+		// The cases of a run of round 2 that came after fifteen minutes and
+		// is skipped (Bootstrap mode rule 4): a program that is also a
+		// builtin of dash, a last byte NUL with no line feed, a header row
+		// with no row.
+		{"a program that is a builtin of dash", "ok", withRow("ok\tactive\ttrue\ttrue\t./*.txt\t—\n"), map[string]string{"x.txt": "x\n"}, "pass", "—", false, "", false},
+		{"a last byte NUL", "ok", map[string]string{"docs/gates.tsv": manifest + "\x00"}, map[string]string{"x.txt": "x\n"}, "", "", true, "no line feed", false},
+		{"a header row and no row", "ok", map[string]string{"docs/gates.tsv": header}, map[string]string{"x.txt": "x\n"}, "", "", true, "no row", false},
 	}
 	stacks, err := Stacks(Embedded())
 	if err != nil || len(stacks) == 0 {

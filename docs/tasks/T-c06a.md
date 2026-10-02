@@ -84,6 +84,21 @@ kind is a program, found by its path; note 3 (the programs that the script
 starts) is fixed in its comment and in `setup.md`; note 4 (a tab in a reason)
 is fixed, as the reason writes a space; note 5 is fixed (above). Notes 6 to 12
 confirm the change. One more defect, found by the author during the fix: with
-`bash`, the trap on `EXIT` could remove the temporary file before `tr` read
-it (4 runs of 20 gave `clear`); the script removes the file in `result()`, and
-a lesson is in `guardrails.md` §2.
+`bash` 5.3, a pending case gave `clear` in 4 runs of 20. The author took the
+trap on `EXIT` for its cause; that was wrong (below).
+
+## The late run of round 2, skipped, and the rest of the fix of cycle 1
+
+The first run of round 2 (Claude Fable 5.1, effort `xhigh`, on `b9e1b05`)
+wrote its record at 15 min 9 s, after the fifteen minutes of Bootstrap mode
+rule 4, so it is skipped and is not a round. Its text gave `not mergeable,
+findings recorded`: a subshell of the script crashed under `bash` 5.3 (5 runs
+of 100, measured by the author), and the script read each failure of its
+scope check as `clear`, a pass with the command not run. A known defect is
+not set aside, so the fix of cycle 1 holds it too: the scope check gives three
+answers and a failure is `not-active`; each read checks its status; the tool
+is found as `exec.LookPath` finds it (its notes 3 and 4); a last byte NUL is no
+line feed (its note 2); the text of `setup.md` names a manifest with no row,
+and the checkout rule apart (its note 5). The lesson of `guardrails.md` §2 is
+now "A failed check that reads as a pass". Round 2 then ran on the new head,
+with a fresh session.

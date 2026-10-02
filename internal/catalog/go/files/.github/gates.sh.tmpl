@@ -13,12 +13,10 @@ set -f
 kind=${1:-}
 manifest=docs/gates.tsv
 
-# result prints the row of the kind and exits; only the main shell calls it,
-# so it removes the temporary file (a trap on EXIT could run in a subshell of
-# a pipeline and remove the file before tr reads it, round 1 of #91).
+# result prints the row of the kind, removes the temporary files, and exits.
 result() {
 	printf '%s\t%s\t%s\n' "$kind" "$1" "$(printf '%s' "$2" | tr '\t' ' ')"
-	[ -z "${tmp:-}" ] || rm -f "$tmp"
+	rm -f ${tmp:+"$tmp"} ${lines:+"$lines"}
 	case $1 in pass | clear) exit 0 ;; esac
 	exit 1
 }
@@ -71,7 +69,7 @@ done
 # between two; and config paths, none in .git (— is the empty value).
 [ -f "$manifest" ] || result fail "no manifest: $manifest"
 [ -s "$manifest" ] || result fail "the manifest: no header row"
-[ -z "$(tail -c 1 "$manifest")" ] || result fail "the manifest: no line feed after the last line"
+[ "$(tail -c 1 "$manifest" | tr '\n' L)" = L ] || result fail "the manifest: no line feed after the last line"
 iconv -f UTF-8 -t UTF-8 "$manifest" > /dev/null 2>&1 || result fail "the manifest: a byte that is not UTF-8"
 problem=$(LC_ALL=C awk -F '\t' "$awklib"'
 NR == 1 {
@@ -111,37 +109,64 @@ field() {
 NR > 1 && $1 == ENVIRON["GATE_KIND"] { v = $i; if (v == "\342\200\224") v = ""; print v; found = 1; exit }
 END { if (!found) exit 1 }' "$manifest"
 }
+# Each read checks its status: a failed read is never a value (with bash 5.3 on
+# macOS, a subshell of the script crashed in about 5 runs of 100, round 1 of
+# #91), and a failed check is never a pass.
 state=$(field 2) || result fail "no row for the kind $kind in $manifest"
-tool=$(field 3)
-command=$(field 4)
-scope=$(field 5)
+tool=$(field 3) || result not-active "the manifest could not be read"
+command=$(field 4) || result not-active "the manifest could not be read"
+scope=$(field 5) || result not-active "the manifest could not be read"
 
 tmp=$(mktemp) || result not-active "mktemp failed"
+lines=$(mktemp) || result not-active "mktemp failed"
 
-# first gives the first path of standard input (one per line) that the scope
-# matches, and fails when none does.
-first() {
-	GATE_SCOPE=$scope LC_ALL=C awk "$awklib"'
+# scan reads the list of paths that git wrote with -z into $tmp, and gives the
+# first path that the scope matches as "path <path>", or "none". A failure of
+# tr or awk, or an answer of another form, is not-active: never a pass.
+scan() {
+	tr '\0' '\n' < "$tmp" > "$lines" || result not-active "the scope check failed"
+	answer=$(GATE_SCOPE=$scope LC_ALL=C awk "$awklib"'
 BEGIN { n = split(ENVIRON["GATE_SCOPE"], pat, "[ ]") }
-{ for (i = 1; i <= n; i++) if (match_one($0, pat[i])) { print; found = 1; exit } }
-END { if (!found) exit 1 }'
+{ for (i = 1; i <= n; i++) if (match_one($0, pat[i])) { print "path " $0; found = 1; exit } }
+END { if (!found) print "none" }' "$lines") || result not-active "the scope check failed"
+	case $answer in
+	none | "path "?*) ;;
+	*) result not-active "the scope check failed" ;;
+	esac
 }
 
 if [ "$state" = pending ]; then
 	git diff --name-only --no-renames -z "$GATE_BASE" "$GATE_HEAD" > "$tmp" || result not-active "diff failed"
-	if path=$(tr '\0' '\n' < "$tmp" | first); then
-		result fail "pending: product path changed: $path"
-	fi
+	scan
+	[ "$answer" = none ] || result fail "pending: product path changed: ${answer#path }"
 	result clear "pending: no product path"
 fi
 
-# The tool is a program, as exec.LookPath finds it: not a builtin of sh.
-case $(command -v "$tool" 2> /dev/null) in
-/*) ;;
-*) result not-active "tool not found: $tool" ;;
-esac
+# found reports whether the tool is a program, as exec.LookPath finds it: a
+# name with / is that file; another name is a file of a directory of PATH
+# that is absolute (exec.LookPath refuses one in the current directory), not
+# a builtin of sh.
+found() {
+	case $1 in
+	'') return 1 ;;
+	*/*) [ -f "$1" ] && [ -x "$1" ]; return ;;
+	esac
+	save=$IFS
+	IFS=:
+	for d in $PATH; do
+		case $d in /*) ;; *) continue ;; esac
+		if [ -f "$d/$1" ] && [ -x "$d/$1" ]; then
+			IFS=$save
+			return 0
+		fi
+	done
+	IFS=$save
+	return 1
+}
+found "$tool" || result not-active "tool not found: $tool"
 git ls-files -z > "$tmp" || result not-active "git ls-files failed"
-tr '\0' '\n' < "$tmp" | first > /dev/null || result clear "no product path"
+scan
+[ "$answer" != none ] || result clear "no product path"
 sh -c "$command"
 code=$?
 [ "$code" -eq 0 ] && result pass "—"

@@ -105,9 +105,33 @@ $ go test -count=1 -tags=integration -run TestTheJobScriptOfEachEntry ./internal
 ```
 
 A defect found during the fix: on a pending case, `bash` 5.3 gave `clear` in 4
-runs of 20, and `dash` gave `fail` in 20 of 20. The trap on `EXIT` ran in a
-subshell of the pipeline `tr < "$tmp" | first` and removed the file before
-`tr` read it. With the file removed in `result()` and no trap, `bash` gave
-`fail` in 30 of 30, and a run leaves no temporary file. After the fix, the
-three integration tests of the catalog pass with `sh`, `dash` and
-`bash --posix`.
+runs of 20, and `dash` gave `fail` in 20 of 20. The author took the trap on
+`EXIT` for its cause, removed the trap, and measured 30 of 30 right; that
+reading was wrong (below).
+
+## The late run of round 2, and the fix of its defect
+
+The first run of round 2 (Claude Fable 5.1, on `b9e1b05`) wrote its record at
+15 min 9 s, so it is skipped (Bootstrap mode rule 4). Its text reported a
+defect, which the author measured on this host before the round that counts:
+
+```text
+$ for i in $(seq 1 100); do … bash --posix .github/gates.sh pend; done | sort | uniq -c    (the script of b9e1b05, bash 5.3.9)
+      5 pend clear pending: no product path
+     95 pend fail pending: product path changed: src/a/b.txt
+```
+
+A subshell of the script crashed (the late record names a segmentation fault
+of the pipeline segment `first`); its cause is not known. The script mapped
+each failure of that segment to `clear`, a pass with the command not run. The
+fix: the scope check reads a file, not a pipeline, and gives three answers
+(`path <path>`, `none`, or a failure, which is `not-active`); each read of a
+field checks its status; the tool is found as `exec.LookPath` finds it (a
+`dash` builtin that is also a program, such as `true`, is found again); a last
+byte NUL is no line feed. With the new script, each of three cases (a pending
+kind, two active kinds) gave the right row in 100 of 100 runs with `sh`,
+`dash` and `bash` 5.3 (900 runs). The new cases of the parity test, on the
+script of `b9e1b05`: "a program that is a builtin of dash: the job ok
+not-active tool not found: true; layup gate pass" and "a last byte NUL: the
+job … line 7 is an empty line". Then `go test -count=3 -tags=integration` of
+the three integration tests of the catalog: `ok`.

@@ -717,16 +717,19 @@ task `T-3jpx`, #81):
   path is a space, as in the table), and exits 0 for `pass` and `clear`, 1
   otherwise. Each input that `layup gate` refuses with exit 2 is `fail` in the
   job, because a job has no third state and each of the two is not a pass: a
-  base or a head that is not a commit, and a checkout that is not the head; no
-  manifest; a manifest that the reader of `internal/tsv` refuses (a byte that
-  is not UTF-8, no line feed after the last line, a carriage return, an empty
-  line or field, a header row of another form, a row of another field count, a
-  kind that is not a word or is there twice, a state, a list with an empty
-  value, a `config` value that is not a path); a scope pattern of another form,
-  no scope pattern, or a `config` path in `.git` (round 1 of #91, finding 1).
-  The tool of an active kind is a program, as `exec.LookPath` finds it, never
-  a builtin of `sh`. **Known limit:** a file name with a line feed is split by
-  `tr`.
+  base or a head that is not a commit; no manifest; a manifest that the reader
+  of `internal/tsv` refuses (a byte that is not UTF-8, no line feed after the
+  last line, a carriage return, an empty line or field, a header row of
+  another form, a row of another field count, a kind that is not a word or is
+  there twice, a state, a list with an empty value, a `config` value that is
+  not a path); a manifest with no row; a scope pattern of another form, no
+  scope pattern, or a `config` path in `.git` (round 1 of #91, finding 1). The
+  job also fails when its checkout is not the head commit. A check of the
+  script that does not run to its end (`awk` or `tr` that fails) is
+  `not-active`, never a pass. The tool of an active kind is a program, as
+  `exec.LookPath` finds it: a name with `/` is that file, and another name a
+  file of an absolute directory of `PATH`, never a builtin of `sh`. **Known
+  limit:** a file name with a line feed is split by `tr`.
 - **The coverage floor** (K24, L-B2): the file `docs/gates/coverage-floor.txt`
   of the target, the `config` of `test`, has one line, the marker of the floor,
   and `gaps.tsv` gives its question. S12 (row 15 of the plan) writes, for each
