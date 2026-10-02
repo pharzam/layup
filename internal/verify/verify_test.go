@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 
@@ -68,10 +69,11 @@ var standInRecord = work.Record{{"S01", "name", "acme", "answer", "S01-name"}}
 // each check got.
 func standIn(t *testing.T, g *standInGit, answersErr, recordErr error, findings map[string][]string) (*[]string, map[string]work.Record) {
 	t.Helper()
-	savedAPI, savedAnswers, savedRecord, savedTemp, savedRemove, savedChecks := repoAPI, readAnswers, readRecord, tempDir, removeAll, checks
+	savedAPI, savedAnswers, savedRecord, savedTemp, savedRoot, savedRemove, savedChecks := repoAPI, readAnswers, readRecord, tempDir, tempRoot, removeAll, checks
 	t.Cleanup(func() {
-		repoAPI, readAnswers, readRecord, tempDir, removeAll, checks = savedAPI, savedAnswers, savedRecord, savedTemp, savedRemove, savedChecks
+		repoAPI, readAnswers, readRecord, tempDir, tempRoot, removeAll, checks = savedAPI, savedAnswers, savedRecord, savedTemp, savedRoot, savedRemove, savedChecks
 	})
+	tempRoot = func() string { return "/stand-in" }
 	repoAPI = g
 	readAnswers = func(dir string) (work.Answers, error) { return work.Answers{}, answersErr }
 	readRecord = func(dir string) (work.Record, error) { return standInRecord, recordErr }
@@ -254,6 +256,56 @@ func TestTheScratchTree(t *testing.T) {
 	var cleanup *CleanupError
 	if !errors.As(err, &cleanup) || cleanup.Path != "/stand-in/scratch" || len(tbl.Rows) != 15 {
 		t.Errorf("a tree that cannot be removed: %v, %d rows; want a *CleanupError for /stand-in/scratch and the whole table", err, len(tbl.Rows))
+	}
+
+	// Round 1, finding 3: a failed add whose directory cannot be removed
+	// leaves a scratch directory, so it is a *CleanupError too.
+	g = goodGit()
+	g.addErr = errors.New("fatal: cannot add")
+	standIn(t, g, nil, nil, nil)
+	removeAll = func(string) error { return errors.New("permission denied") }
+	tbl, err = Run("/w", steps(new([]string)), io.Discard)
+	if !errors.As(err, &cleanup) || cleanup.Path != "/stand-in/scratch" || len(tbl.Rows) != 15 {
+		t.Errorf("a failed add that leaves its directory: %v, %d rows; want a *CleanupError and the whole table", err, len(tbl.Rows))
+	}
+
+	// Round 1, finding 2: a temporary directory in the work area is an input
+	// error, before any scratch tree.
+	g = goodGit()
+	standIn(t, g, nil, nil, nil)
+	tempRoot = func() string { return "/w/out" }
+	var in *InputError
+	if _, err := Run("/w", steps(new([]string)), io.Discard); !errors.As(err, &in) || !strings.Contains(err.Error(), "/w/out") ||
+		strings.Contains(strings.Join(g.calls, "\n"), "worktree") {
+		t.Errorf("TMPDIR in the work area: %v, calls %q; want an input error before any scratch tree", err, g.calls)
+	}
+	if _, err := Check("/w", []string{"jobs", "gates"}, steps(new([]string)), io.Discard); err != nil {
+		t.Errorf("TMPDIR in the work area, no built check: %v; want no error, because no scratch tree is needed", err)
+	}
+}
+
+// Round 1, finding 5: the scratch tree is added in the step of the first
+// built check and removed in the step of the last row, so the progress lines
+// cover both; a call with no built check makes no scratch tree.
+func TestTheProgressLinesCoverTheScratchTree(t *testing.T) {
+	g := goodGit()
+	standIn(t, g, nil, nil, nil)
+	if _, err := Run("/w", steps(&g.calls), io.Discard); err != nil {
+		t.Fatal(err)
+	}
+	at := func(prefix string) int {
+		return slices.IndexFunc(g.calls, func(c string) bool { return strings.HasPrefix(c, prefix) })
+	}
+	if add, pin := at("worktree add"), at("2/15 pin"); add < pin || add > at("3/15 kit-history") {
+		t.Errorf("the calls %q; want the worktree add inside the step of pin", g.calls)
+	}
+	if remove, last := at("worktree remove"), at("15/15 gate:layout"); remove < last || g.calls[len(g.calls)-1] != "end" {
+		t.Errorf("the calls %q; want the worktree remove inside the step of the last row", g.calls)
+	}
+	g = goodGit()
+	standIn(t, g, nil, nil, nil)
+	if _, err := Check("/w", []string{"jobs", "gates"}, steps(new([]string)), io.Discard); err != nil || strings.Contains(strings.Join(g.calls, "\n"), "worktree") {
+		t.Errorf("Check(jobs, gates): %v, calls %q; want no scratch tree", err, g.calls)
 	}
 }
 

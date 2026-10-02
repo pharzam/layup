@@ -80,8 +80,12 @@ func pinFindings(fsys fs.FS, h history) []string {
 
 // kitHistoryFindings is check_kit_history: the kit's own history is gone, each
 // task file has a line in a task index, and no task index links the baseline,
-// whose link text is link ("" reads no link).
-func kitHistoryFindings(fsys fs.FS, link string) []string {
+// whose repository is repo ("" reads no link). A link is repo followed by the
+// end of the text or by a character that is not a letter, a digit, "-" or
+// "_", so a link to the repository itself counts, and a link to a repository
+// whose name only starts with repo does not (round 1 of #84, finding 1); the
+// sh function reads only a link under repo.
+func kitHistoryFindings(fsys fs.FS, repo string) []string {
 	var out []string
 	for _, dir := range []string{"decisions", "audit"} {
 		if _, err := fs.Stat(fsys, "docs/"+dir); err == nil {
@@ -101,10 +105,11 @@ func kitHistoryFindings(fsys fs.FS, link string) []string {
 			out = append(out, fmt.Sprintf("orphan: docs/tasks/%s.md has no line with %s in backlog.md or completed.md", id, id))
 		}
 	}
+	link := regexp.MustCompile(regexp.QuoteMeta(repo) + `($|[^A-Za-z0-9_-])`)
 	for _, index := range []string{"backlog", "completed"} {
 		data, err := fs.ReadFile(fsys, "docs/tasks/"+index+".md")
-		if link != "" && err == nil && bytes.Contains(data, []byte(link)) {
-			out = append(out, fmt.Sprintf("kit-link: docs/tasks/%s.md links %s (a kit task or note)", index, link))
+		if repo != "" && err == nil && link.Match(data) {
+			out = append(out, fmt.Sprintf("kit-link: docs/tasks/%s.md links %s/ (a kit task or note)", index, repo))
 		}
 	}
 	return out
@@ -195,18 +200,13 @@ func validTime(t string) bool {
 	return err == nil && len(t) == len(timeForm)
 }
 
-// kitLink gives the link text of the kit-link rule for a baseline: its URL
-// with no scheme, no "/" and no ".git" at its end, and one "/" after it, so
-// that a task index that links the baseline's issues holds it. "" gives "".
+// kitLink gives the repository of the kit-link rule for a baseline: its URL
+// with no scheme, and no "/" and no ".git" at its end. "" gives "".
 func kitLink(source string) string {
-	if source == "" {
-		return ""
-	}
 	if _, rest, ok := strings.Cut(source, "://"); ok {
 		source = rest
 	}
-	source = strings.TrimSuffix(strings.TrimRight(source, "/"), ".git")
-	return strings.TrimRight(source, "/") + "/"
+	return strings.TrimRight(strings.TrimSuffix(strings.TrimRight(source, "/"), ".git"), "/")
 }
 
 // identityTarget is the target's part of check identity: README.md holds the

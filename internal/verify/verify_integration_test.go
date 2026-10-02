@@ -105,6 +105,8 @@ func TestEachFindingOfATarget(t *testing.T) {
 			"decisions: docs/decisions/ exists (kit step 4 deletes it)"},
 		{"a link to the baseline of the target", standin.Options{Files: map[string]string{"docs/tasks/backlog.md": "- [#1](file://" + link + "issues/1)\n"}}, "kit-history",
 			"kit-link: docs/tasks/backlog.md links " + link + " (a kit task or note)"},
+		{"a link to the repository of the baseline (round 1, finding 1)", standin.Options{Files: map[string]string{"docs/tasks/backlog.md": "- [the baseline](file://" + strings.TrimSuffix(link, "/") + ")\n"}},
+			"kit-history", "kit-link: docs/tasks/backlog.md links " + link + " (a kit task or note)"},
 		{"no pin", standin.Options{Files: map[string]string{"docs/setup/armature.pin": ""}}, "pin", "missing: docs/setup/armature.pin is absent"},
 		{"a record of another commit", standin.Options{Record: map[string]string{"S02 pin.commit": strings.Repeat("1", 40)}}, "pin", "commit: the pin names "},
 		{"a README.md with no name", standin.Options{Files: map[string]string{"README.md": "# x\n\n[pin](docs/setup/armature.pin)\n"}}, "identity",
@@ -156,6 +158,21 @@ func TestTheInputErrorsOfAWorkArea(t *testing.T) {
 	var in *InputError
 	if _, err := Run(w.Dir, noSteps, io.Discard); !errors.As(err, &in) || !strings.HasPrefix(err.Error(), "docs/gates.tsv at the head of layup-setup: ") {
 		t.Errorf("no manifest: %v; want an input error", err)
+	}
+
+	// Round 1, finding 2: a TMPDIR in the work area is an input error, and the
+	// run leaves the work area as it was.
+	w, err = standin.Make(t.TempDir(), standin.Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("TMPDIR", filepath.Join(w.Dir, "out"))
+	before := state(t, w.Dir)
+	if _, err := Run(w.Dir, noSteps, io.Discard); !errors.As(err, &in) || !strings.Contains(err.Error(), "set TMPDIR to a directory outside it") {
+		t.Errorf("TMPDIR in WORK/out: %v; want an input error", err)
+	}
+	if after := state(t, w.Dir); after != before {
+		t.Errorf("the run changed the work area:\n%s\nto\n%s", before, after)
 	}
 }
 

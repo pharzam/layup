@@ -81,7 +81,7 @@ func TestPinFindings(t *testing.T) {
 
 // Each finding of check_kit_history, in the order of the sh function.
 func TestKitHistoryFindings(t *testing.T) {
-	const link = "github.com/pharzam/armature/"
+	const link = "github.com/pharzam/armature"
 	good := fstest.MapFS{
 		"docs/tasks/T-0001.md":    {Data: []byte("# T-0001\n")},
 		"docs/tasks/T-0002.md":    {Data: []byte("# T-0002\n")},
@@ -98,8 +98,8 @@ func TestKitHistoryFindings(t *testing.T) {
 		}
 		return m
 	}
-	linked := "- **T-0001** — a task (https://" + link + "issues/1)\n"
-	linkedDone := "- **2026-01-01** — **T-0002** — a task (https://" + link + "issues/2)\n"
+	linked := "- **T-0001** — a task (https://" + link + "/issues/1)\n"
+	linkedDone := "- **2026-01-01** — **T-0002** — a task (https://" + link + "/issues/2)\n"
 	for _, c := range []struct {
 		name string
 		fsys fstest.MapFS
@@ -114,8 +114,12 @@ func TestKitHistoryFindings(t *testing.T) {
 				"orphan: docs/tasks/T-zzzz.md has no line with T-zzzz in backlog.md or completed.md"}},
 		{"a directory with the name of a task file", with(map[string]string{"docs/tasks/T-dir.md/x": "x"}), link, nil},
 		{"both indexes link the baseline", with(map[string]string{"docs/tasks/backlog.md": linked, "docs/tasks/completed.md": linkedDone}), link,
-			[]string{"kit-link: docs/tasks/backlog.md links " + link + " (a kit task or note)",
-				"kit-link: docs/tasks/completed.md links " + link + " (a kit task or note)"}},
+			[]string{"kit-link: docs/tasks/backlog.md links " + link + "/ (a kit task or note)",
+				"kit-link: docs/tasks/completed.md links " + link + "/ (a kit task or note)"}},
+		{"a link to the repository itself (round 1, finding 1)", with(map[string]string{"docs/tasks/backlog.md": "- **T-0001** ([the baseline](https://" + link + "))\n"}), link,
+			[]string{"kit-link: docs/tasks/backlog.md links " + link + "/ (a kit task or note)"}},
+		{"a repository whose name only starts with the same text", with(map[string]string{
+			"docs/tasks/backlog.md": "- **T-0001** (https://" + link + "2/issues/1, https://" + link + "-docs/x)\n"}), link, nil},
 		{"no link text reads no link", with(map[string]string{"docs/tasks/backlog.md": linked}), "", nil},
 	} {
 		same(t, c.name, kitHistoryFindings(c.fsys, c.link), c.want)
@@ -207,10 +211,10 @@ func replaced(lines []string, i int, line string) []string {
 // The link text of the kit-link rule is the target's own baseline (D3).
 func TestTheKitLinkOfATarget(t *testing.T) {
 	for in, want := range map[string]string{
-		"https://github.com/pharzam/armature":     "github.com/pharzam/armature/",
-		"https://github.com/pharzam/armature.git": "github.com/pharzam/armature/",
-		"https://github.com/pharzam/armature/":    "github.com/pharzam/armature/",
-		"file:///tmp/w/baseline":                  "/tmp/w/baseline/",
+		"https://github.com/pharzam/armature":     "github.com/pharzam/armature",
+		"https://github.com/pharzam/armature.git": "github.com/pharzam/armature",
+		"https://github.com/pharzam/armature/":    "github.com/pharzam/armature",
+		"file:///tmp/w/baseline":                  "/tmp/w/baseline",
 		"":                                        "",
 	} {
 		if got := kitLink(in); got != want {

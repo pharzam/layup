@@ -120,7 +120,10 @@ layup gate REPO --base REV --head REV
   on every exit path of a run. **Known limit:** a run that a signal
   kills leaves the tree; `git worktree prune` in `REPO` removes its record. The
   run does not prune at its start, because that could remove another stale
-  record of `REPO`.
+  record of `REPO`. **Known limit:** the run adds the tree before the step line
+  of its first kind, so a large checkout can be silent for more than ten
+  seconds; `layup setup verify` adds its tree inside a step (task `T-6x75`,
+  #84).
 - **The product paths of an `active` kind** are the files of the scratch tree
   after the overlay, without `.git`; a `pending` kind reads
   `git diff --name-only --no-renames -z`, so a renamed path counts at both ends,

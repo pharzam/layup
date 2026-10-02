@@ -147,7 +147,8 @@ var (
 	repoAPI     gitAPI = realGit{}
 	readAnswers        = work.ReadAnswers
 	readRecord         = work.ReadRecord
-	tempDir            = func() (string, error) { return os.MkdirTemp("", "layup-verify-") }
+	tempRoot           = os.TempDir
+	tempDir            = func() (string, error) { return os.MkdirTemp(tempRoot(), "layup-verify-") }
 	removeAll          = os.RemoveAll
 )
 
@@ -213,16 +214,29 @@ func Check(dir string, names []string, step func(i, n int, check string) func(),
 		}
 	}
 
-	in := input{record: record, answers: answers}
-	scratch, tree, addErr := add(target, head)
-	if addErr != nil {
-		fmt.Fprintf(out, "layup setup verify: the scratch tree: %v\n", addErr)
-	} else {
-		in.fsys, in.repo = os.DirFS(tree), repoAPI.history(tree)
+	// The scratch tree is outside the work area, so the run changes no file
+	// of it (round 1 of #84, finding 2).
+	if slices.ContainsFunc(rows, func(c check) bool { return c.run != nil }) && within(tempRoot(), dir) {
+		return Table{}, &InputError{fmt.Errorf("the temporary directory %s is in the work area %s: set TMPDIR to a directory outside it", tempRoot(), dir)}
 	}
+	// The scratch tree is added in the step of the first built check, and
+	// removed in the step of the last row, so the progress lines cover both
+	// (finding 5).
+	in := input{record: record, answers: answers}
+	var scratch, tree string
+	var added bool
+	var addErr, left error
 	var t Table
 	for i, c := range rows {
 		done := step(i+1, len(rows), c.name)
+		if c.run != nil && !added {
+			added = true
+			if scratch, tree, addErr, left = add(target, head); addErr != nil {
+				fmt.Fprintf(out, "layup setup verify: the scratch tree: %v\n", addErr)
+			} else {
+				in.fsys, in.repo = os.DirFS(tree), repoAPI.history(tree)
+			}
+		}
 		row := Row{Check: c.name, Result: "not-active", Reason: notBuilt}
 		switch {
 		case c.run == nil:
@@ -234,19 +248,35 @@ func Check(dir string, names []string, step func(i, n int, check string) func(),
 				row.Result, row.Reason = "fail", f[0]
 			}
 		}
+		if i == len(rows)-1 && added && addErr == nil {
+			if left = repoAPI.WorktreeRemove(target, tree); left == nil {
+				left = removeAll(scratch)
+			}
+		}
 		done()
 		t.Rows = append(t.Rows, row)
 	}
-	if addErr == nil {
-		err := repoAPI.WorktreeRemove(target, tree)
-		if err == nil {
-			err = removeAll(scratch)
-		}
-		if err != nil {
-			return t, &CleanupError{Path: scratch, Err: err}
-		}
+	if left != nil {
+		return t, &CleanupError{Path: scratch, Err: left}
 	}
 	return t, nil
+}
+
+// within reports whether path is dir or a path under it, each with its
+// symbolic links resolved where it exists.
+func within(path, dir string) bool {
+	rel, err := filepath.Rel(resolve(dir), resolve(path))
+	return err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
+}
+
+func resolve(p string) string {
+	if r, err := filepath.EvalSymlinks(p); err == nil {
+		return r
+	}
+	if a, err := filepath.Abs(p); err == nil {
+		return a
+	}
+	return p
 }
 
 // manifest reads docs/gates.tsv at head. A missing or malformed manifest, or
@@ -264,19 +294,19 @@ func manifest(target, head string) ([]gate.Kind, error) {
 	return kinds, nil
 }
 
-// add makes the scratch work tree of head in a new temporary directory outside
-// the work area, and gives the directory and the tree. On an error it leaves
-// nothing.
-func add(target, head string) (scratch, tree string, err error) {
+// add makes the scratch work tree of head in a new temporary directory, and
+// gives the directory and the tree. When the add fails, it removes the
+// directory, and gives the error of that removal too: a directory that stays
+// is a scratch tree that the run could not remove (finding 3).
+func add(target, head string) (scratch, tree string, err, left error) {
 	if scratch, err = tempDir(); err != nil {
-		return "", "", err
+		return "", "", err, nil
 	}
 	tree = filepath.Join(scratch, "tree")
 	if err = repoAPI.WorktreeAdd(target, tree, head); err != nil {
-		removeAll(scratch)
-		return "", "", err
+		return scratch, "", err, removeAll(scratch)
 	}
-	return scratch, tree, nil
+	return scratch, tree, nil, nil
 }
 
 // firstLine gives the first line of the text of err: the rest of an error of

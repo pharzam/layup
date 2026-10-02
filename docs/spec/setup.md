@@ -242,7 +242,7 @@ of each such check passes and fails on the same fixtures as
 | ----- | ---------- | --------------------- |
 | `discipline-tests` | yes | the baseline's own `sh docs/tests/run-discipline-tests.sh` exits 0 |
 | `pin` | yes | `check_pin`; and the pin file's `source`, `commit` and `tree` equal the record rows `pin.source`, `pin.commit` and `pin.tree` of S02, its `date` is the date of `pin.time`, and `method` equals the text of [`NFR-006`](#nfr-006--the-baseline-at-a-pinned-recorded-version) with the source and the commit |
-| `kit-history` | yes | `check_kit_history`, whose link text is the record row `pin.source` with no scheme, no `/` and no `.git` at its end, and one `/` after it (for LAYUP's baseline, `github.com/pharzam/armature/`) |
+| `kit-history` | yes | `check_kit_history`, whose repository is the record row `pin.source` with no scheme and no `/` or `.git` at its end (for LAYUP's baseline, `github.com/pharzam/armature`); a task index links it when it holds that text and then the end of the text or a character that is not a letter, a digit, `-` or `_`, so a link to the repository itself counts (review round 1 of #84, finding 1) |
 | `facts` | yes, in a target's form | each brief is in `docs/facts/` and in `facts.sha256` with its hash; each question ID of `answers.tsv` is a fact in exactly one answers record: the `S01-` and `Q-` IDs in the record of S06, the `M-` IDs in the record of S11 (which exists only when S10 listed a marker); the index has a row per record. LAYUP's counts (39, 75, 19) are LAYUP's and do not apply. |
 | `onboarding` | yes, in a target's form | the file exists, holds no marker, links the problem statement; each `F-NNNN#n` it cites is a fact of a record in `docs/facts/` |
 | `glossary` | yes, in a target's form | each `F-NNNN#n` it cites resolves as above; LAYUP's heading and its count of 25 do not apply |
@@ -286,11 +286,14 @@ reason  text                             -    the first failure, or the `clear` 
   [plan](../plan/README.md#the-tasks-of-phase-1) add each check (`NFR-004`
   item 1). The present code has `pin`, `kit-history` and `identity`.
 - **The scratch tree** is `git worktree add --detach` of the head of
-  `layup-setup`, in a new temporary directory outside `WORK`, removed at the
-  end of the run. A tree that the run cannot add makes each row of a built check
-  `not-active`, reason `scratch tree: add failed`; a tree that it cannot remove
+  `layup-setup`, in a new temporary directory outside `WORK`: a temporary
+  directory (`TMPDIR`) in `WORK` is an input error. The run adds the tree in the
+  step of the first built check, and removes it in the step of the last row, so
+  the progress lines cover both; a call with no built check makes no tree. A
+  tree that the run cannot add makes each row of a built check `not-active`,
+  reason `scratch tree: add failed`; a tree or a directory that it cannot remove
   gives the whole table, the path on standard error and exit 2, as for
-  `layup gate`.
+  `layup gate` (review round 1 of #84, findings 2, 3 and 5).
 - **A row** is `fail` with the first finding of its check as its reason. A
   check reads the scratch tree, and the record as it stands: a record row that
   it needs and does not find, or finds with no value, is the finding
@@ -307,8 +310,10 @@ reason  text                             -    the first failure, or the `clear` 
   line, in the order of the function. `TestTheFixturesOfSetupCheck` of
   `internal/verify` builds each case of `docs/setup/tests/` as `run.sh` does;
   for each built check that `EXPECT` has lines of, the lines of the core are
-  those lines, as a set. Each group of `docs/setup/tests/` is in one list:
-  built, not built yet, not a check for a target (`ci`, `procedure`,
+  those lines, as a set; in a case of `frame`, a built check that `EXPECT` has
+  no line of gives `OK`, because each overlay of `frame` holds a good setup for
+  the checks that it runs (finding 4). Each group of `docs/setup/tests/` is in
+  one list: built, not built yet, not a check for a target (`ci`, `procedure`,
   `protection`), or `frame`. **Known limit:** CI gives the sh runner the
   fixtures of the default branch and the Go test those of the pull request, so a
   change of a fixture reaches the sh runner only after the merge.

@@ -22,7 +22,7 @@ import (
 var (
 	built = map[string]func(fsys fs.FS, h history) []string{
 		"pin":         pinFindings,
-		"kit-history": func(fsys fs.FS, _ history) []string { return kitHistoryFindings(fsys, "github.com/pharzam/armature/") },
+		"kit-history": func(fsys fs.FS, _ history) []string { return kitHistoryFindings(fsys, "github.com/pharzam/armature") },
 		"identity":    func(fsys fs.FS, _ history) []string { return identityFindings(fsys) },
 	}
 	notYetBuilt    = []string{"facts", "onboarding", "glossary", "guardrails", "markers", "adapted"}
@@ -88,8 +88,11 @@ func TestTheFixturesOfSetupCheck(t *testing.T) {
 				}
 				findings := core(os.DirFS(repo), gitHistory{repo})
 				found = found || len(findings) > 0
-				if len(want) == 0 {
+				if len(want) == 0 && g != "frame" {
 					continue
+				}
+				if len(want) == 0 { // a frame overlay holds a good setup for each check that it runs (round 1, finding 4)
+					want = []string{"setup-check: " + check + " OK"}
 				}
 				got := []string{"setup-check: " + check + " OK"}
 				if len(findings) > 0 {

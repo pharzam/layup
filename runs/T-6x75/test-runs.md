@@ -94,7 +94,7 @@ is a skeleton.
             got ["setup-check: pin OK"]
            want ["setup-check: pin FAIL commit: not 40 hexadecimal characters: a959655" "setup-check: pin FAIL key: commit appears 2 times, expected 1"]
        harness_integration_test.go:108: pin/bad-commit: exit 0; want ["1"]
-       … the same for the other 9 bad cases of pin, kit-history and identity
+       … the same for the other 8 bad cases of pin, kit-history and identity
    (the second copy)
        harness_integration_test.go:51: the group facts is in 0 lists; want 1
        harness_integration_test.go:56: the listed group jobs has no directory under docs/setup/tests/
@@ -136,9 +136,39 @@ is a skeleton.
        … the same for the other two usage errors
    ```
 
+## Review round 1: the fixes (cycle 1)
+
+Review round 1 (`b31cc70`) gave `material` with five findings. The red runs of
+the fixes, each on the code of `b31cc70`:
+
+```text
+$ go test -count=1 ./internal/verify/
+    checks_test.go:125: a repository whose name only starts with the same text: got ["kit-link: docs/tasks/backlog.md links github.com/pharzam/armature (a kit task or note)"]; want []
+    checks_test.go:221: kitLink("https://github.com/pharzam/armature") = "github.com/pharzam/armature/", want "github.com/pharzam/armature"
+    … (and each case of the core whose message names the repository: the old core prints the text that it gets, with no "/" added)
+    verify_test.go:269: a failed add that leaves its directory: <nil>, 15 rows; want a *CleanupError and the whole table
+    verify_test.go:280: TMPDIR in the work area: <nil>, calls ["rev-parse …" "show …" "worktree add …"]; want an input error before any scratch tree
+    verify_test.go:300: the calls […]; want the worktree add inside the step of pin
+    verify_test.go:308: Check(jobs, gates): <nil>, calls […"worktree add …"]; want no scratch tree
+$ go test -count=1 -tags=integration -run 'TestEachFindingOfATarget|TestTheInputErrorsOfAWorkArea' ./internal/verify/
+    verify_integration_test.go:126: a link to the repository of the baseline (round 1, finding 1): [{"kit-history" "pass" ""}], <nil>; want kit-history fail, …
+    verify_integration_test.go:172: TMPDIR in WORK/out: <nil>; want an input error
+```
+
+Finding 4: in a copy of the branch, the pin of the overlay of
+`frame/bad-missing-linter` names the tree `0000…`. The harness of `b31cc70`
+passes on it (the reviewer's run); the fixed harness fails:
+
+```text
+    harness_integration_test.go:107: frame/bad-missing-linter: the lines of pin
+         got ["setup-check: pin FAIL tree: pin names 0000000000000000000000000000000000000000, root commit has cb89dd90fb277f5d5767688e3e56bb2872814180"]
+        want ["setup-check: pin OK"]
+```
+
 ## The green runs
 
-On the tree of the commit that adds this file.
+On the tree of the commit that adds this file, and again on the head of
+cycle 1.
 
 | Command | Result |
 | ------- | ------ |
