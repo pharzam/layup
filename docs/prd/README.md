@@ -61,7 +61,7 @@ in `go test`.
 
 | PRD | Title | Status |
 | --- | ----- | ------ |
-| [PRD-0001](PRD-0001-layup.md) | LAYUP, the orchestrator product: full scope with phases | Draft |
+| [PRD-0001](PRD-0001-layup.md) | LAYUP, the orchestrator product: full scope with phases | Accepted ([PDR-0001](../pdr/PDR-0001.md)) |
 
 <!-- Add one row per PRD as you write it (newest at the bottom), for example:
      | PRD-0001 | Short title | Accepted | -->

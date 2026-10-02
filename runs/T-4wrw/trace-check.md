@@ -41,3 +41,20 @@ FAIL  PRD-0001 has the Status `Accepted`
       Status is Draft
 exit 1
 ```
+
+## Green: the real tree after the approval (plan step 4)
+
+Run on 2026-10-02 on the tree of the commit that adds this section: the record
+holds the approval (O-129), and `PRD-0001` has the Status `Accepted`.
+`origin/main` was `3fb44d3` (the merge of row 2, #101).
+
+```text
+info  numbered facts: F-0001 39, F-0002 0, F-0003 75, F-0004 19
+PASS  each requirement of §6 and §7 cites a fact (25 rows)
+PASS  each fact token resolves (99 distinct tokens)
+PASS  each §12 Facts cell equals its §6 or §7 cell
+PASS  the record names each document by a commit of main that holds it
+PASS  the record holds the approval
+PASS  PRD-0001 has the Status `Accepted`
+exit 0
+```

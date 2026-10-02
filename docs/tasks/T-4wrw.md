@@ -18,5 +18,9 @@ plan review" on #99).
 
 ## The Operator's decisions
 
-The Operator's approval of the PDR goes here, with its link and its decision
-number, when the comment exists.
+**O-129.** The Operator approved the PDR on 2026-10-02 at 06:37:30 UTC, in
+[a comment on #99](https://github.com/pharzam/layup/issues/99#issuecomment-5946822016)
+from the Operator's own account, with no App: "The PDR (#99): approved". The
+approval covers the four documents at `b48764f`, asks for no change, and answers
+none of the open items of the record. The number was taken at copy time (note 8
+of the plan review): O-127 and O-128 went to rows 1 and 2.

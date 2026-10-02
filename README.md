@@ -57,6 +57,7 @@ round, one more after a fix (two for a change to a gate).
 | [`docs/prd/`](docs/prd/) | Product Requirements Documents derived from the facts, plus [`prd-lint.sh`](docs/prd/prd-lint.sh), the discipline test that keeps them honest. |
 | [`docs/spec/`](docs/spec/README.md) | The technical specification of LAYUP, one milestone at a time: per requirement, the exact contract that the code implements. |
 | [`docs/plan/`](docs/plan/README.md) | The implementation plan: the milestones, the tasks of phase 1 in their order, and the defect register. |
+| [`docs/pdr/`](docs/pdr/) | The record of the Preliminary Design Review: [`PDR-0001`](docs/pdr/PDR-0001.md) names the PRD, the architecture, the specification and the plan that the Operator approved, by the commit that holds each, and copies the approval. |
 | [`docs/tests/`](docs/tests/) | The testing conventions — the test levels, a pattern per level, the security, scaling, and Definition-of-Done checklists, and test-to-requirement traceability — plus [`run-discipline-tests.sh`](docs/tests/run-discipline-tests.sh), which tests the discipline linters against fixtures. |
 | [`tests/`](tests/) | Cross-package end-to-end fixtures; Go unit and integration tests sit beside the code. Empty so far (the first e2e test sits beside its package), kept in git by a `.gitkeep`. |
 | [`docs/tasks/`](docs/tasks/) | The task index — [`backlog.md`](docs/tasks/backlog.md) and [`completed.md`](docs/tasks/completed.md). |
