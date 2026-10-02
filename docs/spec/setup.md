@@ -419,7 +419,10 @@ reason  text                             -    the first failure, or the `clear` 
   `TestTheShAndTheGoFormOfMarkersAgree` runs the two forms on a scratch
   repository in two locales, as no fixture can hold a name with `\` (a Windows
   checkout refuses it). **Known limit of the sh function:** a name with a line
-  feed is still split by `tr`.
+  feed is still split by `tr`. **Known limit of both forms** (note 1 of round 2
+  of #87): a marker in a file whose name holds a tab cannot be listed in
+  `open-gaps.tsv`, as a cell of a TSV file holds no tab, so it stays
+  `unlisted:`.
 - **Check `sources`:** each row of the setup record but a `done` row, by its
   source: `answer`, the ref is a row of `answers.tsv`; `catalog`, the entry of
   the row `S01 stack` has the file of the ref (this version embeds no catalog,
