@@ -182,3 +182,10 @@ that the fix replaced, so M28, M29 and M33 take their place, and a new case of
 | M33 S14 does not ask for a flagged file | `TestTheProseStepIsOneUnit`; `TestSetupRunsS05ToS14` |
 | M12 a step copies its inputs before it knows that one is missing | `TestS05StopsForTheLinksThatBreak` (the new case) |
 | M11 a copied file gets no record row | `TestS05`, `TestTheProseStepIsOneUnit`; `TestSetupRunsS05ToS14` |
+
+The green runs of the fix, on its commit `7f2e2ed`, 23:24:40Z to 23:26:33Z:
+the local checks of `AGENTS.md` with `git diff --check b812943 HEAD`; `go
+build`; `go vet` with each tag; `gofmt -l .` (no file); the three test levels
+(`ok` x 11 each); the race tests of the six packages, and of four with
+`-tags=integration`; `run.sh` (44 passed) and the discipline tests (81
+passed): each of the 18 steps exit 0.

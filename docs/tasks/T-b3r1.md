@@ -107,3 +107,68 @@ for a marker with a tab or a carriage return is `fail`, a known limit of
 7 confirm the change. The author also fixed the stale words "the record of
 S06" in the row S11 of `setup.md`, and the count of the known limit (38 files,
 row 11's measurement).
+
+## Review round 2
+
+Devin (its usage quota) and OpenCode (no output in five minutes) gave no
+record again. Round 2 (Claude Fable 5.1, effort `xhigh`, on the Claude Code
+CLI, a fresh session with another prompt, on `7f2e2ed`, its record at 4 min
+13 s; the record is on #90) gave `nothing material in scope`, with six notes.
+It read the group loop of the runner against the one unit of the prose step
+(no input with which each step of the group waits and none gives a row; S10
+does not run while a step of the group is not done), the list of S14, and the
+carriage return of note 2; each note confirms the fix. Its note 3 names an
+edge of the scanner of row 10 (an unclosed marker before a closed one on one
+line is one span to the first close quote), which `check_markers` reads the
+same way.
+
+## Verdict
+
+Delivered: steps S05 to S11 and S14 of `layup setup`. S05 removes the history
+of the baseline (K12) and copies the input file of each file whose links then
+break; S06 copies the briefs; the prose step (S07 to S09 and S14) is one unit
+of input with one stop table, and copies the named files and each file that
+check `adapted` flags, with a record row for each (K42); S10 asks one question
+per marker in one table; S11 fills each marker at the place that the scanner
+found, keeps each gap with its row of `open-gaps.tsv`, and writes the second
+answers record (O-124). The runner starts each step from the head and makes
+no commit when nothing changes; `internal/cli` hands the steps the calls of
+`internal/verify` and refuses a brief that holds a marker; check `identity`
+reads that `README.md` names the branch `layup-records`.
+
+The plan review (Claude Fable 5.1) gave `approve-with-conditions`, with three
+conditions, applied; round 1 (`1df7566`) gave `material`, one finding, fixed in
+cycle 1 with note 2, note 3 and the stale words of the row S11 (`7f2e2ed`);
+round 2 (`7f2e2ed`) gave `nothing material in scope`. The records are on #90.
+At `7f2e2ed`, `go build`, `go vet` with each tag, `gofmt`, the three test
+levels, `go test -race` on six packages (and on four with
+`-tags=integration`), `run.sh` and the discipline tests pass; 33 mutations
+are detected; at the head, all local checks pass, and `review-record-lint`
+passes on the comments of #90 (2 rounds, cap 1). The diff against
+`origin/main` is 2,320 lines added plus removed over 32 files with the close-out, inside the Budget maximum of
+3,600 lines over 40 files.
+
+Next: row 15 of the plan (`T-d6q5`, #92), whose After cell (rows 13 and 14) is
+then merged.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). Times are 2026-10-02, UTC. A token count is
+the `result` event of the Claude Code CLI (input, output, cache creation and
+cache read tokens, and its cost) where that harness gave one; `not reported`
+where the harness or the author's session gives none.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan (D1 to D10), with the measurements on `d2516fd` | reasoning | Claude Opus 5.5 | max | not reported | 22:15 to 22:22 |
+| The plan review, first and second harness: skipped (Devin's usage quota; OpenCode no output in five minutes) | reasoning | GPT-6 Sol on the Devin CLI; Grok 4.7 on the OpenCode CLI | `xhigh`; `xhigh` | not reported | 22:22:30 to 22:28:50 |
+| The plan review | reasoning | Claude Fable 5.1 on the Claude Code CLI | `xhigh` | 784,795 (USD 3.34) | 5 min 45 s, from 22:28:57 |
+| The answer to the plan review, with D11 and D12 | reasoning | Claude Opus 5.5 | max | not reported | 22:35 to 22:37 |
+| The tests first, the code, the integration and e2e tests, the mutations, the documents and the evidence; the freeze | execution | Claude Opus 5.5, a reasoning-tier model on an execution part | max | not reported | 22:37 to 23:06 |
+| Review round 1, first and second harness: skipped (the same) | reasoning | GPT-6 Sol on the Devin CLI; Grok 4.7 on the OpenCode CLI | `xhigh`; `xhigh` | not reported | 23:06:46 to 23:13:07 |
+| Review round 1 | reasoning | Claude Fable 5.1 on the Claude Code CLI | `xhigh` | 665,612 (USD 3.46) | 4 min 45 s, 23:13:13 to 23:17:58 |
+| The author's self-review while round 1 ran (the stale words of the row S11) | execution | Claude Opus 5.5 | max | not reported | 23:13 to 23:18 |
+| The fix of round 1, test first, and the freeze | execution | Claude Opus 5.5 | max | not reported | 23:18 to 23:27 |
+| Review round 2, first and second harness: skipped (the same) | reasoning | GPT-6 Sol on the Devin CLI; Grok 4.7 on the OpenCode CLI | `xhigh`; `xhigh` | not reported | 23:27:03 to 23:33:21 |
+| Review round 2 | reasoning | Claude Fable 5.1 on the Claude Code CLI | `xhigh` | 1,018,846 (USD 2.58) | 4 min 24 s, 23:33:26 to 23:37:50 |
+| The close-out | execution | Claude Opus 5.5 | max | not reported | 23:38 to 23:42 |
