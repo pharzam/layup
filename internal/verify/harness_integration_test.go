@@ -25,9 +25,26 @@ var (
 		"kit-history": func(fsys fs.FS, _ history) []string { return kitHistoryFindings(fsys, "github.com/pharzam/armature") },
 		"adapted":     adaptedFindings,
 		"identity":    func(fsys fs.FS, _ history) []string { return identityFindings(fsys) },
+		"facts":       func(fsys fs.FS, _ history) []string { return factsHashFindings(fsys) },
+		"onboarding":  func(fsys fs.FS, _ history) []string { return onboardingFindings(fsys) },
+		"glossary":    func(fsys fs.FS, _ history) []string { return glossaryFindings(fsys) },
+		"guardrails":  func(fsys fs.FS, _ history) []string { return guardrailsFindings(fsys) },
 	}
-	builtGroups    = []string{"pin", "kit-history", "adapted", "identity"} // the keys of built, in the order of the table
-	notYetBuilt    = []string{"facts", "onboarding", "glossary", "guardrails", "markers"}
+	builtGroups = []string{"pin", "kit-history", "facts", "onboarding", "glossary", "guardrails", "adapted", "identity"} // the keys of built, in the order of the table
+	notYetBuilt = []string{"markers"}
+	// targetKinds names, for each check in a target's form, the kinds of the
+	// lines of its sh function that the target keeps with the same text (D9
+	// of #89); the other kinds are LAYUP's form, which the engine does not run.
+	targetKinds = map[string][]string{"facts": {"hash"}, "onboarding": {"missing", "marker", "link", "fact"},
+		"glossary": {}, "guardrails": {"check"}}
+	// layupOnly names each case whose EXPECT has no line of a kind that the
+	// target keeps: the harness does not compare it (condition 1 of the plan
+	// review of #89). The facts cases fail in the engine only because their
+	// overlays have no docs/setup/facts.sha256; facts/good-autocrlf is a test
+	// of LAYUP's own .gitattributes (#48), not of a rule.
+	layupOnly = []string{"facts/bad-answers-blank", "facts/bad-answers-missing", "facts/bad-answers-repeat",
+		"facts/bad-batch-absent", "facts/bad-batch-rows", "facts/bad-blank-tab", "facts/good-autocrlf",
+		"glossary/bad-no-section", "glossary/bad-rows", "guardrails/bad-no-section"}
 	notForATarget  = []string{"ci", "procedure", "protection"}
 	fixtureCommits = git.Identity{Name: "fixture", Email: "fixture@invalid", Time: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)}
 )
@@ -48,6 +65,7 @@ func TestTheFixturesOfSetupCheck(t *testing.T) {
 		}
 	}
 	listed := append(append(append([]string{"frame"}, notYetBuilt...), notForATarget...), builtGroups...)
+	var skipped []string
 	for _, g := range groups {
 		if n := len(slices.DeleteFunc(slices.Clone(listed), func(l string) bool { return l != g })); n != 1 {
 			t.Errorf("the group %s is in %d lists; want 1", g, n)
@@ -82,13 +100,27 @@ func TestTheFixturesOfSetupCheck(t *testing.T) {
 				if !ok {
 					continue
 				}
+				kinds, target := targetKinds[check]
+				keep := func(l string) bool { // a line of a kind that the target keeps, or the OK line
+					kind, _, _ := strings.Cut(strings.TrimPrefix(l, "setup-check: "+check+" FAIL "), ":")
+					return !target || l == "setup-check: "+check+" OK" || slices.Contains(kinds, kind)
+				}
 				var want []string
 				for _, l := range expect["line"] {
-					if strings.HasPrefix(l, "setup-check: "+check+" ") {
+					if strings.HasPrefix(l, "setup-check: "+check+" ") && keep(l) {
 						want = append(want, l)
 					}
 				}
-				findings := core(os.DirFS(repo), gitHistory{repo})
+				if target && g != "frame" && (len(want) == 0 || expect["mode"] != nil && expect["mode"][0] == "autocrlf") {
+					skipped = append(skipped, name)
+					continue
+				}
+				var findings []string
+				for _, f := range core(os.DirFS(repo), gitHistory{repo}) {
+					if keep("setup-check: " + check + " FAIL " + f) {
+						findings = append(findings, f)
+					}
+				}
 				found = found || len(findings) > 0
 				if len(want) == 0 && g != "frame" {
 					continue
@@ -109,13 +141,17 @@ func TestTheFixturesOfSetupCheck(t *testing.T) {
 					t.Errorf("%s: the lines of %s\n got %q\nwant %q", name, check, got, want)
 				}
 			}
-			if exit := map[bool]string{false: "0", true: "1"}[found]; g != "frame" && (len(expect["exit"]) != 1 || expect["exit"][0] != exit) {
+			if exit := map[bool]string{false: "0", true: "1"}[found]; g != "frame" && !slices.Contains(skipped, name) && (len(expect["exit"]) != 1 || expect["exit"][0] != exit) {
 				t.Errorf("%s: exit %s; want %q", name, exit, expect["exit"])
 			}
 		}
 	}
 	if cases == 0 {
 		t.Fatal("no case found: a harness that tested nothing is not a pass")
+	}
+	slices.Sort(skipped)
+	if want := slices.Sorted(slices.Values(layupOnly)); !slices.Equal(skipped, want) {
+		t.Errorf("the cases that the harness did not compare\n got %q\nwant %q (layupOnly)", skipped, want)
 	}
 }
 
