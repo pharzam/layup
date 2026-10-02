@@ -260,3 +260,165 @@ func TestABrokenPinFailsTheEvidenceOfS04(t *testing.T) {
 		t.Errorf("the run with the record put right: exit %d\n%s\nwant S04 done with one commit", code, out)
 	}
 }
+
+// scaffoldBaseline makes a stand-in baseline at dir for S05 to S14: the
+// baseline's own link-lint.sh (LAYUP keeps it as its root commit has it), a
+// note of the kit in a blockquote of the backlog, a guide whose link the
+// deletion of the history breaks, two markers (one on two lines), and a file
+// that check adapted flags. It gives the file:// URL.
+func scaffoldBaseline(t *testing.T, dir string) string {
+	t.Helper()
+	url, _, err := standin.Baseline(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	lint, err := os.ReadFile(filepath.Join("..", "..", "docs", "links", "link-lint.sh"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for p, text := range map[string]string{
+		"docs/links/link-lint.sh": string(lint),
+		"docs/tasks/backlog.md":   "# Backlog\n\n- **T-0001**: a task of the baseline ([#1](" + url + "/issues/1))\n\n> a note of the kit\n> with a link ([#2](" + url + "/issues/2))\n\nKeep this line.\n",
+		"docs/guide.md":           "# Guide\n\nSee [the decision](decisions/D-0001-stand-in.md).\n",
+		"docs/ops.md":             "# Ops\n\nThe port is \u2039port\u203a.\nAgain \u2039port\u203a.\nThe owner is \u2039owner\u203a.\n",
+		"docs/how-to.md":          "# How to\n\nAdapt this to your project.\n",
+	} {
+		writeFile(t, filepath.Join(dir, filepath.FromSlash(p)), text)
+	}
+	if err := git.Add(dir); err != nil {
+		t.Fatal(err)
+	}
+	if err := git.Commit(dir, "the scaffold of the baseline", git.Identity{Name: "t", Email: "t@layup.invalid", Time: time.Unix(0, 0)}); err != nil {
+		t.Fatal(err)
+	}
+	return url
+}
+
+// writeInputs writes input files of the work area at w, under inputs/files/.
+func writeInputs(t *testing.T, w string, files map[string]string) {
+	t.Helper()
+	for p, text := range files {
+		path := filepath.Join(w, "inputs", "files", filepath.FromSlash(p))
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		writeFile(t, path, text)
+	}
+}
+
+// The demo of #90: after S04, S05 stops for the file whose links the deletion
+// of the history breaks; the prose step stops once, with one row for each of
+// its inputs, the flagged file too; S10 stops with one row per marker; with
+// the inputs and the answers, each step is done with its checks as the
+// evidence, and S12 is not built yet. A README.md that names no records
+// branch fails the evidence of S14, and the run after the fix gives the same
+// rows (condition 1 of the plan review).
+func TestSetupRunsS05ToS14(t *testing.T) {
+	tmp := t.TempDir()
+	url := scaffoldBaseline(t, filepath.Join(tmp, "baseline"))
+	w := filepath.Join(tmp, "work")
+	if err := os.MkdirAll(filepath.Join(w, "inputs", "briefs"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeFile(t, filepath.Join(w, "inputs", "briefs", "problem-statement.md"), standin.Brief)
+	const at = "https://github.invalid/stand-in/issues/1#issuecomment-1"
+	answers := [][]string{{"S01-stack", "go", "operator", at, ""}, {"S01-name", standin.Name, "operator", at, ""},
+		{"S01-visibility", "public", "operator", at, ""}, {"S01-baseline", url, "operator", at, ""}}
+	writeAnswers := func() {
+		var b bytes.Buffer
+		if err := tsv.Write(&b, work.AnswersSchema, answers); err != nil {
+			t.Fatal(err)
+		}
+		writeFile(t, filepath.Join(w, "inputs", "answers.tsv"), b.String())
+	}
+	writeAnswers()
+	if code, out, _ := run("setup", w); code != 3 || out != "step\tquestion\task\twhere\n"+
+		"S05\tF-docs/guide.md\tFix the links of docs/guide.md that the deletion of the baseline's history breaks, and give the file as inputs/files/docs/guide.md.\tdocs/guide.md\n" {
+		t.Fatalf("the stop of S05: exit %d\n%s", code, out)
+	}
+	writeInputs(t, w, map[string]string{"docs/guide.md": "# Guide\n\nThe decisions of the target are in its records.\n"})
+	code, out, errOut := run("setup", w)
+	want := "step\tquestion\task\twhere\n"
+	for _, r := range [][]string{{"S14", "AGENTS.md", "Write the text of"}, {"S14", "README.md", "Write the text of"}, {"S08", "docs/glossary.md", "Write the text of"},
+		{"S09", "docs/guardrails.md", "Write the text of"}, {"S14", "docs/how-to.md", "Adapt"}, {"S07", "docs/onboarding-for-engineers.md", "Write the text of"}} { // by path
+		ask := r[2] + " " + r[1] + " for the target, and give it as inputs/files/" + r[1] + "."
+		if r[2] == "Adapt" {
+			ask = "Adapt " + r[1] + ", which check adapted flags, to the target, and give it as inputs/files/" + r[1] + "."
+		}
+		want += r[0] + "\tF-" + r[1] + "\t" + ask + "\t" + r[1] + "\n"
+	}
+	if code != 3 || out != want {
+		t.Fatalf("the stop of the prose step: exit %d, stderr %q\n%s\nwant 3 and\n%s", code, errOut, out, want)
+	}
+	inputs := map[string]string{
+		"docs/onboarding-for-engineers.md": "# Onboarding\n\nThe work starts from [the problem statement](facts/problem-statement-brief.md).\n",
+		"docs/glossary.md":                 "# Glossary\n\n| Term | Meaning |\n| ---- | ------- |\n| Target | the product repository |\n",
+		"docs/guardrails.md":               "# Guardrails\n\n## 1. Rules\n\n- **Inv-1** — the setup keeps its record. Check: no check yet\n",
+		"README.md":                        "# " + standin.Name + "\n\nThe product repository, set up from its pinned baseline ([the pin](docs/setup/armature.pin)).\n",
+		"AGENTS.md":                        "# AGENTS.md\n\nAgent context for **" + standin.Name + "**.\n",
+		"docs/how-to.md":                   "# How to\n\nRun the tests of the product.\n",
+	}
+	writeInputs(t, w, inputs)
+	if code, out, _ := run("setup", w); code != 1 || !strings.Contains(out, "\nS14\tlayup-setup\tfail\tidentity: fail: branch: README.md does not name the branch layup-records\n") {
+		t.Fatalf("a README.md that names no records branch: exit %d\n%s", code, out)
+	}
+	target := filepath.Join(w, "target")
+	head := gitIn(t, target, "rev-parse", "layup-setup")
+	inputs["README.md"] = strings.TrimSuffix(inputs["README.md"], "\n") + " Its records are on the branch `layup-records`.\n"
+	writeInputs(t, w, inputs)
+	code, out, _ = run("setup", w)
+	ask := func(file, m string) string {
+		return "What is the value of " + m + " in " + file + "? Answer gap to keep it as an open gap, with its question as question_text."
+	}
+	port, owner := "\u2039port\u203a", "\u2039owner\u203a"
+	idPort, idOwner := setup.MarkerID("docs/ops.md", port), setup.MarkerID("docs/ops.md", owner)
+	if code != 3 || out != "step\tquestion\task\twhere\n"+"S10\t"+idPort+"\t"+ask("docs/ops.md", port)+"\tdocs/ops.md:3 "+port+"\n"+
+		"S10\t"+idOwner+"\t"+ask("docs/ops.md", owner)+"\tdocs/ops.md:5 "+owner+"\n" {
+		t.Fatalf("the stop of S10: exit %d\n%s", code, out)
+	}
+	answers = append(answers, []string{idPort, "8080", "operator", at, ""}, []string{idOwner, "gap", "operator", at, "Who owns the operations?"})
+	writeAnswers()
+	if code, out, errOut := run("setup", w); code != 1 || !strings.Contains(out, "\nS11\tlayup-setup\tdone\tchecks markers, sources and facts\n") ||
+		!strings.Contains(out, "\nS12\tlayup-setup\tnot-active\tnot built yet\n") {
+		t.Fatalf("the run with the answers: exit %d, stderr %q\n%s", code, errOut, out)
+	}
+	if got := gitIn(t, target, "log", "--format=%s", head+"..layup-setup"); got != "chore: setup S11\nchore: setup S14" {
+		t.Errorf("the commits after the undo of S14: %q; want S14 once, then S11", got)
+	}
+	if got := gitIn(t, target, "log", "--reverse", "--format=%s", "main..layup-setup"); got != "chore: setup S04\nchore: setup S05\nchore: setup S06\n"+
+		"chore: setup S07\nchore: setup S08\nchore: setup S09\nchore: setup S14\nchore: setup S11" {
+		t.Errorf("the setup commits: %q", got)
+	}
+	for p, want := range map[string]string{
+		"docs/ops.md":              "# Ops\n\nThe port is 8080.\nAgain 8080.\nThe owner is " + owner + ".\n",
+		"docs/setup/open-gaps.tsv": "docs/ops.md\t" + owner + "\tWho owns the operations?\n",
+		"docs/guide.md":            "# Guide\n\nThe decisions of the target are in its records.\n",
+		"docs/tasks/backlog.md":    "# Backlog\n\n\n\nKeep this line.\n",
+	} {
+		if got := gitIn(t, target, "show", "layup-setup:"+p) + "\n"; got != want {
+			t.Errorf("%s on layup-setup:\n%q\nwant\n%q", p, got, want)
+		}
+	}
+	for _, p := range []string{"docs/decisions", "docs/audit", "docs/tasks/T-0001.md"} {
+		if out, err := exec.Command("git", "-C", target, "cat-file", "-e", "layup-setup:"+p).CombinedOutput(); err == nil {
+			t.Errorf("%s is on layup-setup: %s", p, out)
+		}
+	}
+	record, _ := work.ReadRecord(w)
+	for _, r := range [][]string{
+		{"S05", "file:docs/guide.md"}, {"S06", "brief.copy"}, {"S06", "brief.copy.sha256"}, {"S07", "file:docs/onboarding-for-engineers.md"},
+		{"S14", "file:README.md"}, {"S14", "file:docs/how-to.md"}, {"S11", "marker:docs/ops.md:3"}, {"S11", "marker:docs/ops.md:4"},
+		{"S11", "marker:docs/ops.md:5"}, {"S11", "marker.record"}, {"S10", "answers.sha256"},
+	} {
+		if v, ok := record.Value(r[0], r[1]); !ok || v == "" {
+			t.Errorf("the record has no row %s %s", r[0], r[1])
+		}
+	}
+	tab, err := verify.Check(w, []string{"kit-history", "link-lint", "facts", "onboarding", "glossary", "guardrails", "markers", "adapted", "identity", "sources"},
+		func(int, int, string) func() { return func() {} }, io.Discard)
+	for _, r := range tab.Rows {
+		if err != nil || r.Result != "pass" {
+			t.Errorf("check %s after S11: %s %q, %v; want pass", r.Check, r.Result, r.Reason, err)
+		}
+	}
+}
