@@ -216,7 +216,7 @@ for a requirement of a later phase. Each delivering task fills the Test column.
 
 | REQ     | Facts                          | Guardrail   | ADR      | Task     | Test |
 | ------- | ------------------------------ | ----------- | -------- | -------- | ---- |
-| REQ-001 | F-0003#41, F-0003#14, F-0003#15, F-0001#11 | — | ADR-0011 | T-dq05, T-zmj6, T-5zmw, T-evad; `M2c`, `M4b` | TestGoldenRealPSB; check facts (F-0004); TestUsageErrors (cmd/layup, e2e: the usage errors of `layup psb check`) |
+| REQ-001 | F-0003#41, F-0003#14, F-0003#15, F-0001#11 | — | ADR-0011 | T-dq05, T-zmj6, T-5zmw, T-evad; `M2c`, `M4b` | TestGoldenRealPSB; check facts (F-0004); TestUsageErrors (cmd/layup, e2e: the usage errors of `layup psb check`); TestPSBCheckOnTheRealProblemStatement (cmd/layup, e2e: the binary gives `psb.tsv`); TestEveryGoldenIsARecordOfTheBlock (internal/psb, integration: each golden is a `psb-gaps` record); TestG1ReadsTheValueOfAStack, TestEdgeCases (internal/psb, unit: O-131 and the edge cases) |
 | REQ-002 | F-0003#42, F-0003#15, F-0003#37, F-0001#4, F-0001#8 | §1.1 Inv-4 | ADR-0011, ADR-0016 | T-b97r (its child tasks), T-evad; `M2d`, `M4c` | TestTheEmbeddedTestEntry (internal/catalog, integration: the form of a catalog entry, its files with the module path) |
 | REQ-003 | F-0003#43, F-0001#3, F-0003#64 | §1.1 Inv-3 | ADR-0017 | `M2b`, `M2d`, `M2e`, `M2f` | — |
 | REQ-004 | F-0003#44, F-0003#11, F-0003#12, F-0003#13, F-0001#7 | §1.1 Inv-7 | ADR-0011, ADR-0016 | T-vk3k (its child tasks), T-d6q5, T-evad; `M2f`, `M4c` | TestTheEmbeddedTestEntry, TestTheSchemaBlocks (internal/catalog, integration: the form of a catalog entry, its kinds and its manifest); TestGateOnAGoRepository (cmd/layup, e2e: one verdict per kind of a Go repository, exit 0 only when each kind passes or is clear) |
@@ -237,10 +237,10 @@ for a requirement of a later phase. Each delivering task fills the Test column.
 | NFR-001 | F-0001#1                        | §1.1 Inv-1  | ADR-0011, ADR-0014 | T-b97r, T-evad; `M2a`, `M4c` | — |
 | NFR-002 | F-0001#2, F-0003#65             | §1.1 Inv-2  | ADR-0013, ADR-0016 | T-b97r, T-evad; `M4a` | — |
 | NFR-003 | F-0001#4, F-0003#63             | §1.1 Inv-4  | —        | T-nfh8, T-b97r, T-evad | check markers; TestHasNamesTheFilesOfTheEntryByTheirPathInIt (internal/catalog, unit: a `catalog` ref resolves to a file of the entry) |
-| NFR-004 | F-0001#5                        | §1.1 Inv-5  | ADR-0011 | T-vk3k, T-b97r | TestExitCode (internal/cli, unit: a check that did not run never gives 0); TestGateNeverPassesACheckThatDidNotRun (cmd/layup, e2e: the fixture of item 5 of its section); TestACheckThatDidNotRunNeverPasses (internal/gate, unit) |
-| NFR-005 | F-0001#6                        | §1.1 Inv-6  | ADR-0015 | T-2tc2, T-5sgt, T-b97r; `M3a` | TestPackageRules (cmd/layup, integration: no network package); TestInputRule (cmd/layup, integration: no input from the environment); TestVersion (cmd/layup, e2e: two runs give the same bytes); TestGateOnAGoRepository (cmd/layup, e2e: two runs of layup gate give the same bytes) |
+| NFR-004 | F-0001#5                        | §1.1 Inv-5  | ADR-0011 | T-vk3k, T-b97r | TestExitCode (internal/cli, unit: a check that did not run never gives 0); TestGateNeverPassesACheckThatDidNotRun (cmd/layup, e2e: the fixture of item 5 of its section); TestACheckThatDidNotRunNeverPasses (internal/gate, unit); TestPSBCheckGivesTwoWhenItCannotWriteTheTable (internal/cli, unit) and TestPSBCheckWithAReadOnlyStandardOutput (cmd/layup, e2e): a gap table that is not written never gives 0 |
+| NFR-005 | F-0001#6                        | §1.1 Inv-6  | ADR-0015 | T-2tc2, T-5sgt, T-b97r; `M3a` | TestPackageRules (cmd/layup, integration: no network package); TestInputRule (cmd/layup, integration: no input from the environment); TestVersion (cmd/layup, e2e: two runs give the same bytes); TestGateOnAGoRepository (cmd/layup, e2e: two runs of layup gate give the same bytes); TestPSBCheckOnTheRealProblemStatement (cmd/layup, e2e: two runs of layup psb check give the same bytes, and a run with no environment variable gives them too) |
 | NFR-006 | F-0001#8                        | §1.1 Inv-8  | ADR-0009 | T-r7zg, T-b97r | check pin |
-| NFR-007 | F-0004#1                        | —           | ADR-0010 | T-mtb9, T-2tc2 | TestPackageRules (cmd/layup, integration) |
+| NFR-007 | F-0004#1                        | —           | ADR-0010 | T-mtb9, T-2tc2 | TestPackageRules (cmd/layup, integration; it holds `internal/psb` to its one import, `internal/tsv`, task `T-5zmw`) |
 
 ## 13. Change log
 
@@ -255,3 +255,4 @@ for a requirement of a later phase. Each delivering task fills the Test column.
 | 2026-10-02 | The command frame (task `T-2yw7`, #80): the §12 Test cells of REQ-001, NFR-004 and NFR-005 name the tests of the frame | REQ-001, NFR-004, NFR-005 (the Test cells) |
 | 2026-10-02 | The stack catalog package (task `T-3jpx`, #81): the §12 Test cells of REQ-002, REQ-004 and NFR-003 name the tests of the catalog | REQ-002, REQ-004, NFR-003 (the Test cells) |
 | 2026-10-02 | `layup gate` (task `T-5sgt`, #82): the §12 Test cells of REQ-004, REQ-007, NFR-004 and NFR-005 name its tests | REQ-004, REQ-007, NFR-004, NFR-005 (the Test cells) |
+| 2026-10-02 | `layup psb check` to its specification (task `T-5zmw`, #83, O-131): the §12 Test cells of REQ-001, NFR-004, NFR-005 and NFR-007 name its tests | REQ-001, NFR-004, NFR-005, NFR-007 (the Test cells) |

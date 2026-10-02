@@ -90,8 +90,9 @@ func TestEdgeCases(t *testing.T) {
 		{"G3: a byte-order mark before a first-line # Terms stops the heading", "\uFEFF# Terms\n| **API** | x |\n\n" + stack + "The SLA holds.\n", header},
 		{"G3: an abbreviation inside the terms table", stack + "## Terms\n| **API** | the SLA |\n",
 			header + "Q-001\tG3\t3\t| **API** | the SLA |\tWhat does \"SLA\" mean? The terms table does not define it.\n"},
-		{"a # line inside a code fence is a heading, and G4 applies there", stack + "```\n# Terms\nthe cache is fast\n```\n",
-			header + "Q-001\tG4\t4\tthe cache is fast\tWhich number or threshold does \"fast\" stand for here?\n"},
+		{"a # line inside a code fence is a heading, and G4 applies there", stack + "```\n# Terms\n| **API** | x |\nthe cache is fast\n```\nThe SLA holds.\n",
+			header + "Q-001\tG4\t5\tthe cache is fast\tWhich number or threshold does \"fast\" stand for here?\n" +
+				"Q-002\tG3\t7\tThe SLA holds.\tWhat does \"SLA\" mean? The terms table does not define it.\n"},
 	} {
 		golden(t, c.name, []byte(c.input), []byte(c.want))
 	}

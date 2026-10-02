@@ -65,10 +65,6 @@ reads this table, and holds no copy of it, which could differ from it.
 | `internal/setup` | the step runner of `layup setup` ([`setup.md`](setup.md)) | `internal/tsv`, `internal/git`, `internal/catalog` | no |
 | `internal/verify` | the checks of `layup setup verify` ([`setup.md`](setup.md)) | `internal/tsv`, `internal/git`, `internal/catalog`, `internal/gate` | `sh`: the baseline's own check scripts |
 
-`internal/psb` today imports no package of this module and writes its table
-itself; it moves to `internal/tsv` with task `T-5zmw`, row 6 of the
-[plan](../plan/README.md#the-tasks-of-phase-1).
-
 **Decided here:** the split of `internal/setup`, `internal/verify` and
 `internal/gate` (ADR-0011 decision 1 names "setup, gates, … state files, Git
 access" as concerns and gives no names). Reason: `layup setup verify` runs the

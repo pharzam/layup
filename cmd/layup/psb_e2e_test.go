@@ -3,7 +3,10 @@
 package main
 
 import (
+	"bytes"
+	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -63,5 +66,30 @@ func TestPSBCheckInputErrors(t *testing.T) {
 		if r.code != 2 || r.stdout != "" || !strings.HasPrefix(r.stderr, "layup: ") || !strings.Contains(r.stderr, c.reason) || strings.Contains(r.stderr, "usage:") {
 			t.Errorf("%s: exit %d, stdout %q, stderr %q; want 2, nothing, and the reason %q with no usage", c.name, r.code, r.stdout, r.stderr, c.reason)
 		}
+	}
+}
+
+// A table that the binary cannot write gives exit 2 and the error on standard
+// error: here its standard output is a file that is open for reading only, so
+// each write fails. (A closed pipe stops a Go program with SIGPIPE instead.)
+func TestPSBCheckWithAReadOnlyStandardOutput(t *testing.T) {
+	dir := t.TempDir()
+	in, out := filepath.Join(dir, "in.md"), filepath.Join(dir, "out")
+	for _, f := range []string{in, out} {
+		if err := os.WriteFile(f, []byte("No stack is named here.\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	readOnly, err := os.Open(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer readOnly.Close()
+	var stderr bytes.Buffer
+	cmd := exec.Command(binary, "psb", "check", in)
+	cmd.Dir, cmd.Env, cmd.Stdout, cmd.Stderr = dir, []string{}, readOnly, &stderr
+	var exit *exec.ExitError
+	if err := cmd.Run(); !errors.As(err, &exit) || exit.ExitCode() != 2 || !strings.HasPrefix(stderr.String(), "layup: write /dev/stdout: ") {
+		t.Fatalf("%v, stderr %q; want exit 2 and the error of the write", err, stderr.String())
 	}
 }
