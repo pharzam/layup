@@ -8,7 +8,7 @@ Date: 2026-09-25
 | ------------ | ----------------------------------------------------------------- |
 | PRD ID       | `PRD-0001`                                                        |
 | Title        | LAYUP: an orchestrator that sets up a target's discipline and drives its delivery |
-| Status       | `Draft`                                                           |
+| Status       | `Accepted`                                                        |
 | Date         | 2026-09-25                                                        |
 | Author       | Claude Fable 5.1 (agent), for the Operator, task `T-wjq4`         |
 | Derives from | `F-0001` and `F-0003` (the PSB, Revision 6), `F-0004` (the idea owner's answers to the PSB's gap questions). `F-0002` (the vision brief) is input for ADRs, not a source of requirements. |
@@ -251,3 +251,4 @@ for a requirement of a later phase. Each delivering task fills the Test column.
 | 2026-10-01 | The technical specification of phase 1 (task `T-0drh`, #74, O-114): `REQ-012`'s criterion names `docs/spec/` as LAYUP's own specification; `REQ-002`'s criterion names the step table of `docs/spec/setup.md`; §9 phase 1 states the boundary of `layup setup` and that phase 1 gives the schemas of the telemetry and stall records | REQ-002, REQ-009, REQ-011, REQ-012 |
 | 2026-10-01 | The implementation plan (task `T-55n2`, #76, O-121 to O-124): the §12 Task column names the plan's tasks for phase 1 and its milestones for phases 2 to 4 | REQ-001 to REQ-018, NFR-001 to NFR-007 (the Task column), and the Test cell of NFR-007 |
 | 2026-10-01 | The test of the package rules (task `T-2tc2`, #79): the §12 Test cells of NFR-005 and NFR-007 name `TestPackageRules` | NFR-005, NFR-007 (the Test cells) |
+| 2026-10-02 | The PDR (task `T-4wrw`, #99, decision O-129): the Operator approved this PRD at the commit `b48764f` ([`PDR-0001`](../pdr/PDR-0001.md)) | none (Status `Draft` to `Accepted`, PDR-0001) |

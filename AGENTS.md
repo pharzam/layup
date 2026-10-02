@@ -183,4 +183,5 @@ time, never directly. An architecturally significant decision becomes an
 | [`docs/tests/`](docs/tests/) | The test levels, a pattern for each, and the Definition-of-Done coverage checklist. |
 | [`docs/facts/`](docs/facts/) and [`docs/prd/`](docs/prd/) | Customer facts kept as evidence, and the requirements derived from them. |
 | [`docs/spec/`](docs/spec/) and [`docs/plan/`](docs/plan/) | The technical specification, one milestone at a time, and the implementation plan: the milestones, the tasks of the current phase in their order, and the defect register. |
+| [`docs/pdr/`](docs/pdr/) | What the Operator approved at the Preliminary Design Review, by the commit that holds each approved document. |
 | [`.githooks/`](.githooks/) and [`docs/ci/`](docs/ci/) | What the gate enforces locally, and what CI enforces as the authority. |
