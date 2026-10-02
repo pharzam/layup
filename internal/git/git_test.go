@@ -73,6 +73,7 @@ func TestEachCallRunsItsVerb(t *testing.T) {
 		{"show", "r", "show --end-of-options abc:docs/gates.tsv --", func() { Show("r", "abc", "docs/gates.tsv") }},
 		{"diff --name-only", "r", "diff --name-only --no-renames -z --end-of-options abc def --", func() { DiffNames("r", "abc", "def") }},
 		{"apply", "r", "apply -- /s/static.patch", func() { Apply("r", "/s/static.patch") }},
+		{"ls-tree", "r", "ls-tree -r -z --full-tree --end-of-options abc -- layout", func() { LsTree("r", "abc", "layout") }},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -195,5 +196,26 @@ func TestTheTwoErrorKinds(t *testing.T) {
 	}
 	if failed.Code != -1 || failed.Stderr != "fatal: stub\n" || strings.Join(failed.Args, " ") != "rev-parse --verify --end-of-options HEAD" {
 		t.Errorf("FailedError %+v: want code -1, the standard error, and the arguments after the -c values", failed)
+	}
+}
+
+// LsTree reads each record of git ls-tree -z: the mode, the type, the object
+// and the path, with a tab before the path; a record of another form is an
+// error of the call, code 0.
+func TestLsTreeReadsEachEntry(t *testing.T) {
+	stub(t, "100644 blob "+fullID+"\tlayout/a test.go\x00100755 blob "+fullID+"\trun.sh\x00", nil)
+	got, err := LsTree("r", "abc", "layout")
+	want := []TreeEntry{{"100644", "blob", fullID, "layout/a test.go"}, {"100755", "blob", fullID, "run.sh"}}
+	if err != nil || !reflect.DeepEqual(got, want) {
+		t.Fatalf("LsTree = %q, %v; want %q", got, err, want)
+	}
+	stub(t, "", nil)
+	if got, err := LsTree("r", "abc", "missing"); err != nil || len(got) != 0 {
+		t.Fatalf("LsTree of no entry = %q, %v; want none", got, err)
+	}
+	stub(t, "100644 blob\tx\x00", nil)
+	var failed *FailedError
+	if _, err := LsTree("r", "abc", "x"); !errors.As(err, &failed) || failed.Code != 0 {
+		t.Fatalf("LsTree of a record of another form: %v; want a *FailedError with code 0", err)
 	}
 }

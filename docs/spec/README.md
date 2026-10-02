@@ -86,9 +86,10 @@ Every command of LAYUP follows these rules. A section gives only what differs.
   `layup psb check` print none. `internal/cli` prints the lines; the package
   that runs the steps gets a function that it calls at the start of each step,
   and the command stops the lines of its last step before it prints its table,
-  so no progress line comes after the table. A line can come between the lines
-  of a gate command's own output on standard error; task `T-5sgt` (row 5 of the
-  plan) decides whether that output is held until its step ends. Reason: the
+  so no progress line comes after the table. The output of a command that a
+  step runs (a gate command, a baseline script) is held and printed after its
+  step ends, so no progress line comes inside it (decided here, task `T-5sgt`,
+  #82). Reason: the
   [progress rule](../engineering-discipline.md#progress-indicators-for-long-running-operations)
   asks which step runs, how much remains, and that the work is alive; a line
   per step and a line every ten seconds answer the three in a terminal and in a
@@ -100,7 +101,7 @@ Every command of LAYUP follows these rules. A section gives only what differs.
   | ---- | ------- |
   | 0 | Every row of the table passed: `pass`, or `clear` where the section allows it. For `layup psb check`: no gap. |
   | 1 | At least one row is `fail` or `not-active`, or (for `layup psb check`) at least one gap. |
-  | 2 | A usage or input error: an unknown flag, a missing or unreadable file, an input that does not match its schema, an input that the command parses as text and that is not valid UTF-8 (below). The table can be empty or incomplete. |
+  | 2 | A usage or input error: an unknown flag, a missing or unreadable file, an input that does not match its schema, an input that the command parses as text and that is not valid UTF-8 (below). For `layup gate` also `git` or `sh` not found, `git` older than 2.32, and a scratch work tree that it could not remove ([`gate.md`](gate.md#the-command)). The table can be empty or incomplete. |
   | 3 | Only `layup setup`: the run stopped at a step that needs a human input; the table lists every missing input of that step. |
 
   A check that did not run is never 0 (`NFR-004`). Code 3 is not a failure and
@@ -114,9 +115,9 @@ Every command of LAYUP follows these rules. A section gives only what differs.
   (`gate-result`, `setup-verify`, `setup-steps`); a word that a table's schema
   refuses (for example `done` in a `gate-result` row) cannot reach it, because
   the writer of the record refuses it first. Codes 2 and 3 do not come from a
-  table. The rule for a table with no row is the default of the frame; task
-  `T-5sgt` (row 5 of the plan) decides whether a well-formed manifest with no
-  row is an input error (exit 2) or a table that gives 1.
+  table. The rule for a table with no row is the default of the frame; for
+  `layup gate`, a manifest with no row is an input error (exit 2,
+  [`gate.md`](gate.md#the-command)).
 
   **Decided here** (K32 of the [defect register](../plan/README.md#the-defect-register)):
   a command that parses an input as text (a record, a problem statement, an

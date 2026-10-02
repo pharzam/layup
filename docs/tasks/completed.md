@@ -20,6 +20,7 @@ here directly, in the shape above.
 - **YYYY-MM-DD** — **<ID>** — <one-sentence summary of what the task found or delivered> ([<link>](...); [detail](<id>.md))
 -->
 
+- **2026-10-02** — **T-5sgt** — Row 5 of the plan: `layup gate REPO --base REV --head REV`, one verdict per kind of the base's manifest on the head, run from outside in a scratch work tree with the base's gate files; K19 settled ([#82](https://github.com/pharzam/layup/issues/82); [detail](T-5sgt.md))
 - **2026-10-02** — **T-3jpx** — Row 4 of the plan: `internal/catalog`, the reader of a stack's catalog entry by its rules, with the `.tmpl` form of `files/` and the embedded test entry; K35 settled ([#81](https://github.com/pharzam/layup/issues/81); [detail](T-3jpx.md))
 - **2026-10-02** — **T-2yw7** — Row 3 of the plan: the frame of every command in `internal/cli` (one command table, the argument rules, the exit map, the progress lines) and the end-to-end harness of `cmd/layup`, with the test of the input rule; K29 and K34 settled ([#80](https://github.com/pharzam/layup/issues/80); [detail](T-2yw7.md))
 - **2026-10-02** — **T-4wrw** — The PDR record `PDR-0001`: the Operator's approval (O-129) of `PRD-0001`, the architecture, the specification of phase 1 and the implementation plan at `b48764f`, with the trace check of the 25 requirements; `PRD-0001` `Accepted` ([#99](https://github.com/pharzam/layup/issues/99); [detail](T-4wrw.md))

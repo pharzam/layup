@@ -5,12 +5,17 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
 
+	"github.com/pharzam/layup/internal/gate"
 	"github.com/pharzam/layup/internal/psb"
 )
+
+// gateRun runs layup gate; the unit tests replace it.
+var gateRun = gate.Run
 
 // Version is the version that `layup version` prints.
 const Version = "0.1.0-dev"
@@ -48,6 +53,8 @@ var commands = []command{
 	{words: []string{"version"}, help: "print the version of layup", run: version},
 	{words: []string{"psb", "check"}, args: []string{"FILE"},
 		help: "print the gap questions of a problem statement as a table", run: psbCheck},
+	{words: []string{"gate"}, args: []string{"REPO"}, flags: []flag{{"base", "REV"}, {"head", "REV"}},
+		help: "run the gate kinds of the manifest at --base on --head", run: gateCommand},
 }
 
 // Run executes one layup command and returns its exit code.
@@ -85,4 +92,29 @@ func psbCheck(in call) int {
 		return exitFail
 	}
 	return exitPass
+}
+
+// gateCommand runs layup gate (docs/spec/gate.md): the table on standard
+// output; the progress lines and the block of each kind on standard error.
+// The beats of a kind stop before its block, and before the table.
+func gateCommand(in call) int {
+	p := newProgress(in.stderr, "gate")
+	t, err := gateRun(in.args[0], in.flags["base"], in.flags["head"], func(i, n int, kind string) func() {
+		p.step(i, n, kind)
+		return p.end
+	}, in.stderr)
+	p.end()
+	if errors.As(err, new(*gate.InputError)) {
+		fmt.Fprintf(in.stderr, "layup: %v\n", err)
+		return exitUsage
+	}
+	if werr := t.Write(in.stdout); werr != nil {
+		fmt.Fprintf(in.stderr, "layup: %v\n", werr)
+		return exitUsage
+	}
+	if err != nil { // the scratch tree is left in REPO; the table is complete
+		fmt.Fprintf(in.stderr, "layup: %v\n", err)
+		return exitUsage
+	}
+	return exitCode(t.Results())
 }

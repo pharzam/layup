@@ -234,3 +234,28 @@ func names(out []byte) []string {
 	}
 	return nil
 }
+
+// TreeEntry is one entry of LsTree: the mode (for example 100644, 100755,
+// 120000 for a symbolic link), the type (blob, or commit for a submodule), the
+// object and the path from the root of the tree.
+type TreeEntry struct{ Mode, Type, Object, Path string }
+
+// LsTree gives each entry at or under path in rev, recursively, in the order
+// of git; a path that rev does not have gives none.
+func LsTree(dir, rev, path string) ([]TreeEntry, error) {
+	args := []string{"ls-tree", "-r", "-z", "--full-tree", "--end-of-options", rev, "--", path}
+	out, err := call(dir, environ(), args...)
+	if err != nil {
+		return nil, err
+	}
+	var entries []TreeEntry
+	for _, record := range names(out) {
+		meta, p, ok := strings.Cut(record, "\t")
+		f := strings.Fields(meta)
+		if !ok || len(f) != 3 {
+			return nil, &FailedError{Args: args, Err: fmt.Errorf("a record of another form: %q", record)}
+		}
+		entries = append(entries, TreeEntry{Mode: f[0], Type: f[1], Object: f[2], Path: p})
+	}
+	return entries, nil
+}

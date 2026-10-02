@@ -81,9 +81,10 @@ duration of a task (`F-0001#38`).
 The PSB states the problem only. This repository holds the discipline system,
 the setup record, and the first code: the `layup` command
 ([ADR-0011](adr/0011-structure-the-core-engine-as-a-go-cli-over-repository-files.md)).
-So far it prints its version, and `layup psb check FILE` writes the gap questions
+So far it prints its version, `layup psb check FILE` writes the gap questions
 of a problem statement as one batch (five deterministic rules, G1 to G5, in
-`internal/psb`). The [architecture](architecture.md) describes what it becomes:
+`internal/psb`), and `layup gate REPO --base REV --head REV` runs the gate kinds
+of a target's manifest on a change, from outside the target (`internal/gate`). The [architecture](architecture.md) describes what it becomes:
 `layup run`, the orchestrator of a target's whole lifecycle, from outside the
 target; each part is followed through one concrete case in
 [`walkthroughs/`](walkthroughs/README.md). The exact contracts that the code
