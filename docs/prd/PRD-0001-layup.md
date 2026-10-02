@@ -238,7 +238,7 @@ for a requirement of a later phase. Each delivering task fills the Test column.
 | NFR-002 | F-0001#2, F-0003#65             | §1.1 Inv-2  | ADR-0013, ADR-0016 | T-b97r, T-evad; `M4a` | — |
 | NFR-003 | F-0001#4, F-0003#63             | §1.1 Inv-4  | —        | T-nfh8, T-b97r, T-evad | check markers; TestHasNamesTheFilesOfTheEntryByTheirPathInIt (internal/catalog, unit: a `catalog` ref resolves to a file of the entry) |
 | NFR-004 | F-0001#5                        | §1.1 Inv-5  | ADR-0011 | T-vk3k, T-b97r | TestExitCode (internal/cli, unit: a check that did not run never gives 0); TestGateNeverPassesACheckThatDidNotRun (cmd/layup, e2e: the fixture of item 5 of its section); TestACheckThatDidNotRunNeverPasses (internal/gate, unit) |
-| NFR-005 | F-0001#6                        | §1.1 Inv-6  | ADR-0015 | T-2tc2, T-5sgt, T-b97r; `M3a` | TestPackageRules (cmd/layup, integration: no network package); TestInputRule (cmd/layup, integration: no input from the environment); TestVersion (cmd/layup, e2e: two runs give the same bytes) |
+| NFR-005 | F-0001#6                        | §1.1 Inv-6  | ADR-0015 | T-2tc2, T-5sgt, T-b97r; `M3a` | TestPackageRules (cmd/layup, integration: no network package); TestInputRule (cmd/layup, integration: no input from the environment); TestVersion (cmd/layup, e2e: two runs give the same bytes); TestGateOnAGoRepository (cmd/layup, e2e: two runs of layup gate give the same bytes) |
 | NFR-006 | F-0001#8                        | §1.1 Inv-8  | ADR-0009 | T-r7zg, T-b97r | check pin |
 | NFR-007 | F-0004#1                        | —           | ADR-0010 | T-mtb9, T-2tc2 | TestPackageRules (cmd/layup, integration) |
 
@@ -254,4 +254,4 @@ for a requirement of a later phase. Each delivering task fills the Test column.
 | 2026-10-02 | The PDR (task `T-4wrw`, #99, decision O-129): the Operator approved this PRD at the commit `b48764f` ([`PDR-0001`](../pdr/PDR-0001.md)) | none (Status `Draft` to `Accepted`, PDR-0001) |
 | 2026-10-02 | The command frame (task `T-2yw7`, #80): the §12 Test cells of REQ-001, NFR-004 and NFR-005 name the tests of the frame | REQ-001, NFR-004, NFR-005 (the Test cells) |
 | 2026-10-02 | The stack catalog package (task `T-3jpx`, #81): the §12 Test cells of REQ-002, REQ-004 and NFR-003 name the tests of the catalog | REQ-002, REQ-004, NFR-003 (the Test cells) |
-| 2026-10-02 | `layup gate` (task `T-5sgt`, #82): the §12 Test cells of REQ-004, REQ-007 and NFR-004 name its tests | REQ-004, REQ-007, NFR-004 (the Test cells) |
+| 2026-10-02 | `layup gate` (task `T-5sgt`, #82): the §12 Test cells of REQ-004, REQ-007, NFR-004 and NFR-005 name its tests | REQ-004, REQ-007, NFR-004, NFR-005 (the Test cells) |

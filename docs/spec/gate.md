@@ -47,7 +47,9 @@ under it as a directory: `internal` matches `internal/x.go`, not
 the type `path`, and `E` is not empty and holds no `/` or `*`; any other form,
 for example `*.go`, `P/*`, `P/*/x.E`, `./internal`, `../x/*.go` or `/x/*.go`, is
 an input error of the manifest (exit 2), so a pattern never matches nothing in
-silence. Example for Go: `./*.go`. A **product path** of a kind is a path that
+silence. A kind with no scope pattern (`—`) is an input error too: it could
+never run, and would always be `clear` (review round 1, note 8). Example for
+Go: `./*.go`. A **product path** of a kind is a path that
 its scope matches.
 
 **The column `tool`** names the one program that `layup gate` can look up.
@@ -68,7 +70,9 @@ layup gate REPO --base REV --head REV
   commit). `--head REV`: the head to judge. Each is any revision that `git
   rev-parse` resolves in `REPO` to a commit (decided here, task `T-5sgt`: each
   is peeled with `^{commit}`, so a tag gives its commit, and a tree or a blob is
-  an input error).
+  an input error). A revision that starts with `-` is given in the form
+  `--base=-x`, because the frame reads `--base -x` as a flag with no value
+  ([`README.md`](README.md#commands)).
 - Exit codes: 0 when each row is `pass` or `clear`; 1 when a row is `fail` or
   `not-active`; 2 on a usage error, a revision that does not resolve to a
   commit, or a manifest at the base that is missing, does not match its schema
@@ -99,10 +103,14 @@ layup gate REPO --base REV --head REV
   hook of `REPO` runs. A `config` path is put as the base has it: a file, or
   each file under a directory, with its mode (`LsTree` of
   [`packages.md`](packages.md#the-calls-of-internalgit)); a `config` path that
-  is a symbolic link or a submodule at the base is an input error. Each write
-  goes through an `os.Root` of the tree, so a symbolic link of the head cannot
-  send a write out of the tree; such a write fails the overlay. The tree is
-  removed on every exit path of a run. **Known limit:** a run that a signal
+  is a symbolic link or a submodule at the base, and a `config` path that is
+  `.git` or under it, is an input error. Each write goes through an `os.Root` of
+  the tree, so a symbolic link of the head cannot send a write out of the tree:
+  a symbolic link or a file of the head at or above a `config` path or `docs`
+  fails the overlay. The `config` paths go in their sorted order, and a path
+  under a file of the tree counts as absent, so two runs on one input give one
+  tree (review round 1, finding 1). The tree is removed on every exit path of a
+  run. **Known limit:** a run that a signal
   kills leaves the tree; `git worktree prune` in `REPO` removes its record. The
   run does not prune at its start, because that could remove another stale
   record of `REPO`.
@@ -115,7 +123,8 @@ layup gate REPO --base REV --head REV
   example `GOFLAGS`, can change a verdict: a case of known limit L-A1
   ([`architecture.md`](../architecture.md#15-known-limits)); the target's own
   CI job runs the same command on a clean runner. `<name>` of a signal is the
-  name that Go gives it (`syscall.Signal.String()`, for example `terminated`).
+  name that Go gives it (`syscall.Signal.String()`, for example `terminated`);
+  `sh` that is found and then does not start gives `exit -1`.
   **Known limit:** no timeout in phase 1; a command that hangs blocks the run,
   its progress lines show that it is alive
   ([`README.md`](README.md#commands), Progress), and the target's CI job has its

@@ -1,3 +1,9 @@
+//go:build integration
+
+// The run with a fake of internal/git. The fake writes the head into a real
+// temporary directory, so these tests are at the integration level (review
+// round 1, note 4; docs/tests/test-levels.md: a unit test touches no file).
+
 package gate
 
 import (
@@ -328,5 +334,26 @@ func TestTheOverlayDoesNotWriteOutOfTheTree(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(f.linkTarget, "gates.tsv")); err == nil {
 		t.Error("the overlay wrote gates.tsv out of the tree, through the link")
+	}
+}
+
+// Review round 1, finding 1: two config paths that overlap give one result on
+// each run, whatever the order of a map: the base's file a, and no a/b.
+func TestOverlappingConfigPathsGiveOneResult(t *testing.T) {
+	for run := 0; run < 20; run++ {
+		f := newFake()
+		f.files[baseID+":docs/gates.tsv"] = manifestHeader + "pass\tactive\tgo\tok\t./*.go\ta a/b\n"
+		f.files[baseID+":a"] = "the base's a\n"
+		f.trees = map[string][]git.TreeEntry{baseID + ":a": {{Mode: "100644", Type: "blob", Path: "a"}}}
+		f.head = map[string]string{"x.go": "package x\n", "a/b": "the head's a/b\n"}
+		var a string
+		use(t, f, func(tree string) {
+			b, err := os.ReadFile(filepath.Join(tree, "a"))
+			a = fmt.Sprint(string(b), err)
+		})
+		table, err := Run("repo", "main", "HEAD", (&events{}).step, &events{})
+		if err != nil || len(table.Rows) != 1 || table.Rows[0].Result != pass || a != "the base's a\n<nil>" {
+			t.Fatalf("run %d: %+v, %v, a = %q; want pass and the base's file a", run, table.Rows, err, a)
+		}
 	}
 }

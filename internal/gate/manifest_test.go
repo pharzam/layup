@@ -33,6 +33,9 @@ func TestReadManifestRefusesEachMalformedForm(t *testing.T) {
 		"no row":                 manifestHeader,
 		"a pattern of no form":   manifestHeader + strings.Replace(row, "./*.go", "*.go", 1),
 		"a pattern that is ./ a": manifestHeader + strings.Replace(row, "./*.go", "./internal", 1),
+		"no scope pattern":       manifestHeader + strings.Replace(row, "./*.go", "—", 1),
+		"a config path .git":     manifestHeader + strings.Replace(row, "\t—\n", "\t.git\n", 1),
+		"a config path in .git":  manifestHeader + strings.Replace(row, "\t—\n", "\tlayout .git/hooks/x\n", 1),
 	} {
 		if _, err := readManifest([]byte(text)); err == nil {
 			t.Errorf("%s: no error", name)

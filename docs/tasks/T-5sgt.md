@@ -55,3 +55,20 @@ prune` at the start (it could remove another stale record of `REPO`); a clean
 environment for a gate command (a target's tool needs `HOME` and its caches);
 `git show` alone for the overlay (it gives no mode, and a directory gives a
 listing, not files).
+
+## Review round 1 and its fixes (cycle 1)
+
+Review round 1 (Claude Fable 5.1, `a0435a6`, cycle 0) gave `material`, with
+three material findings, all fixed: the overlay took the `config` paths in the
+order of a Go map, so two overlapping paths could give two verdicts on one
+input (now the sorted order, and a path under a file of the tree counts as
+absent); a `config` path `.git` removed the `.git` file of the scratch tree and
+left a work-tree record in `REPO` (now an input error); the `PRD-0001` §12 Test
+cell of `NFR-005` was planned and not filled (now filled, with the §13 row).
+Notes 4, 5, 6, 7 and 8 are applied with the fixes, so round 2 reads them: the
+tests of the run with a fake of `internal/git` are at the integration level
+(they write temporary files); `gate.md` names a symbolic link or a file of the
+head at or above a `config` path, `exit -1` when `sh` does not start, and the
+form `--base=-x`; a kind with no scope pattern is an input error, because it
+could never run and would always be `clear`. Note 9 is a measurement and needs no
+change.

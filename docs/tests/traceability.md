@@ -48,7 +48,8 @@ the first.
 | `TestGateNeverPassesACheckThatDidNotRun` (`cmd/layup/gate_e2e_test.go`) | e2e | NFR-004 | F-0001#5 | guardrails.md §1.1 Inv-5 | ADR-0011 | T-5sgt | green |
 | `TestRunOnARealRepository`, `TestAHookOfTheRepositoryDoesNotRun`, `TestTheRevisionsAndTheManifestOnARealRepository`, `TestARenameAndADeleteChangeAProductPath`, `TestAFailedScratchTreeGivesAReasonWithNoPath`, `TestTheSchemaBlocks` (`internal/gate/gate_integration_test.go`) | integration | REQ-004, REQ-007 | F-0003#44 | guardrails.md §1.1 Inv-7 | ADR-0016 | T-5sgt | green |
 | `TestACheckThatDidNotRunNeverPasses` (`internal/gate/result_test.go`) | unit | NFR-004 | F-0001#5 | guardrails.md §1.1 Inv-5 | ADR-0011 | T-5sgt | green |
-| The other unit tests of `internal/gate` (`scope_test.go`, `manifest_test.go`, `result_test.go`, `run_test.go`) | unit | REQ-004 | F-0003#44 | guardrails.md §1.1 Inv-7 | ADR-0016 | T-5sgt | green |
+| The other unit tests of `internal/gate` (`scope_test.go`, `manifest_test.go`, `result_test.go`) | unit | REQ-004 | F-0003#44 | guardrails.md §1.1 Inv-7 | ADR-0016 | T-5sgt | green |
+| The tests of the run with a fake of `internal/git` (`internal/gate/run_test.go`; it writes temporary files) | integration | REQ-004, NFR-004 | F-0003#44 | guardrails.md §1.1 Inv-7 | ADR-0016 | T-5sgt | green |
 | `TestGateUsageErrors`, `TestGatePrintsTheTableAndGivesItsExitCode`, `TestGateGivesTwoOnAnInputErrorOrALeftoverScratchTree`, `TestTheUsageListsGate` (`internal/cli/gate_test.go`) | unit | REQ-004, NFR-004 | F-0003#44 | guardrails.md §1.1 Inv-7 | ADR-0016 | T-5sgt | green |
 | `TestLsTreeReadsEachEntry` (`internal/git/git_test.go`) | unit | REQ-004 | F-0003#44 | guardrails.md §1.1 Inv-7 | ADR-0016 | T-5sgt | green |
 | `TestLsTree` (`internal/git/git_integration_test.go`) | integration | REQ-004 | F-0003#44 | guardrails.md §1.1 Inv-7 | ADR-0016 | T-5sgt | green |

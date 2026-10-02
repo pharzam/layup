@@ -102,16 +102,41 @@ reason `pending: product path changed: y.go`; `git`'s order names
 `layout/a_test.go` first, which the scope `./*.go` also matches. The test now
 wants that path; the code did not change.
 
+## The fixes of review round 1 (cycle 1)
+
+Review round 1 (`a0435a6`) gave three material findings. The tests of the two
+code findings ran red on `a0435a6` before the fixes; the run of the overlap
+test failed on its second run of 20, because the order of a Go map is random:
+
+```text
+$ go test -count=1 -run 'TestReadManifestRefusesEachMalformedForm|TestOverlappingConfigPathsGiveOneResult' ./internal/gate/
+--- FAIL: TestReadManifestRefusesEachMalformedForm
+    manifest_test.go:41: a config path .git: no error
+    manifest_test.go:41: no scope pattern: no error
+    manifest_test.go:41: a config path in .git: no error
+--- FAIL: TestOverlappingConfigPathsGiveOneResult
+    run_test.go:350: run 1: [{Kind:pass State:active Result:not-active Reason:scratch tree: overlay failed}], <nil>, a = ""; want pass and the base's file a
+```
+
+The fixes: the overlay takes the `config` paths in their sorted order, and a path
+under a file of the tree counts as absent (finding 1); a `config` path `.git`
+or under it is an input error (finding 2); the `PRD-0001` §12 Test cell of
+`NFR-005` names `TestGateOnAGoRepository` (finding 3). With the notes: a kind
+with no scope pattern is an input error (note 8), the tests of the run move to
+the integration level (note 4, so the line numbers of `run_test.go` above and in
+run 3 are those of the untagged file), and `gate.md` says the cases of notes 5
+to 7.
+
 ## The green runs
 
-On the tree of the commit that adds this file.
+On the tree of the commit that adds this file, and again on the head of cycle 1.
 
 | Command | Result |
 | ------- | ------ |
 | `go build ./...` | exit 0 |
 | `go vet ./...`; `go vet -tags=integration ./...`; `go vet -tags=e2e ./...` | exit 0 each |
 | `gofmt -l .` | no file |
-| `go test -count=1 ./...` | `ok` × 7 packages |
+| `go test -count=1 ./...` | `ok` × 7 packages (the tests of the run are at the integration level since cycle 1) |
 | `go test -count=1 -tags=integration ./...` | `ok` × 7; the integration tests of `internal/gate` and `TestLsTree`; `TestPackageRules` holds `internal/gate` and its `sh -c`; `TestInputRule` passes |
 | `go test -count=1 -tags=e2e -timeout 10m ./...` | `ok` × 7; `TestGateOnAGoRepository` and `TestGateNeverPassesACheckThatDidNotRun` pass in about 3 s with the host's `GOCACHE` |
 | `go test -race -count=1 ./internal/gate/ ./internal/cli/` (also with `-tags=integration` for `internal/gate`) | `ok` |

@@ -4,10 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"maps"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
+	"slices"
 	"syscall"
 
 	"github.com/pharzam/layup/internal/git"
@@ -96,16 +98,18 @@ func newScratch(repo, head string) (*scratch, error) {
 }
 
 // overlay writes the manifest of the base into the tree, and puts each config
-// path as the base has it: its files with their modes, and no other file.
+// path as the base has it: its files with their modes, and no other file. The
+// paths go in their sorted order, and a path under a file of the tree is
+// absent, so two runs on one input give one tree (review round 1, finding 1).
 func (s *scratch) overlay(base string, manifest []byte, files map[string][]baseFile) error {
 	if err := s.write("docs/gates.tsv", manifest, false); err != nil {
 		return err
 	}
-	for c, under := range files {
-		if err := s.root.RemoveAll(c); err != nil {
+	for _, c := range slices.Sorted(maps.Keys(files)) {
+		if err := s.removeAll(c); err != nil {
 			return err
 		}
-		for _, f := range under {
+		for _, f := range files[c] {
 			data, err := repoAPI.Show(s.repo, base, f.path)
 			if err != nil {
 				return err
@@ -127,13 +131,22 @@ func (s *scratch) write(p string, data []byte, executable bool) error {
 	if err := s.root.MkdirAll(path.Dir(p), 0o755); err != nil {
 		return err
 	}
-	if err := s.root.RemoveAll(p); err != nil {
+	if err := s.removeAll(p); err != nil {
 		return err
 	}
 	if err := s.root.WriteFile(p, data, mode); err != nil {
 		return err
 	}
 	return s.root.Chmod(p, mode)
+}
+
+// removeAll removes the path from the tree; a path under a file of the tree
+// is absent already.
+func (s *scratch) removeAll(p string) error {
+	if err := s.root.RemoveAll(p); err != nil && !errors.Is(err, syscall.ENOTDIR) {
+		return err
+	}
+	return nil
 }
 
 // files gives the path of each file of the tree, without .git.
