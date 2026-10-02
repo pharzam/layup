@@ -294,6 +294,13 @@ success without having done its job.
   reason in a table is a fixed text that names the failed part (for example
   `scratch tree: add failed`); the error goes to standard error; and a test of
   the failure asserts that the reason holds no path.
+- ❌ **A file list without `-z`.** `git ls-files` quotes a name with `"`, `\` or
+  a control character in its plain list, even with `core.quotePath=false`, so a
+  script that reads the list as paths skips that file in silence: check
+  `markers` did so until #21. **The check:** list the files with
+  `git ls-files -z` (in sh, `| tr '\0' '\n'`, which still splits a name with a
+  line feed), and give the fixture a name that git quotes (`markers/bad-quoted-name`
+  has a DEL character, which a Windows checkout accepts).
 - ❌ **A hashed file that git may convert.** A list of hashes, such as
   `docs/setup/facts.sha256`, holds the bytes of each file it names; on a
   checkout with `core.autocrlf=true` (git's default on Windows) git gives a

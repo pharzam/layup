@@ -150,8 +150,8 @@ The decision behind V-01 to V-05 is
 
 The Operator answered these setup questions in one batch on 2026-09-23, in the
 session, and they were first written on
-[#8](https://github.com/pharzam/layup/issues/8). They are copied here so the
-decisions live in Git (PSB Invariant 1).
+[#8](https://github.com/pharzam/layup/issues/8). They are summarised here so the
+decisions live in Git (PSB Invariant 1); the Operator's own words are on #8.
 
 | ID | Question | Decision |
 |----|----------|----------|

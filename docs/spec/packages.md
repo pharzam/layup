@@ -74,7 +74,10 @@ gates of a kind on a clean tree and on its known-bad fixture
 ([`setup.md`](setup.md)), so it imports `internal/gate`; `internal/setup` writes
 a tree and must not depend on the checks that judge it, so `internal/cli`
 runs the check of each step from `internal/verify` after `internal/setup` did
-the step.
+the step. For the same reason `internal/cli` hands `internal/setup` the lists
+that `internal/verify` gives from a tree: the flagged files of the prose step
+(task `T-8ya0`), the markers of S10 and the files whose links break at S05
+(K10, task `T-8vpw`; [`setup.md`](setup.md#the-checks-of-layup-setup-verify)).
 
 ### The test of the package rules
 

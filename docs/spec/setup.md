@@ -302,7 +302,7 @@ of each such check passes and fails on the same fixtures as
 
 | Check | In phase 1 | The rule for a target |
 | ----- | ---------- | --------------------- |
-| `discipline-tests` | yes | the baseline's own `sh docs/tests/run-discipline-tests.sh` exits 0 |
+| `discipline-tests` | yes | the baseline's own `sh docs/tests/run-discipline-tests.sh` exits 0, run as a gate command (below, task `T-8vpw`) |
 | `pin` | yes | `check_pin`; and the pin file's `source`, `commit` and `tree` equal the record rows `pin.source`, `pin.commit` and `pin.tree` of S02, its `date` is the date of `pin.time`, and `method` equals the text of [`NFR-006`](#nfr-006--the-baseline-at-a-pinned-recorded-version) with the source and the commit |
 | `kit-history` | yes | `check_kit_history`, whose repository is the record row `pin.source` with no scheme and no `/` or `.git` at its end (for LAYUP's baseline, `github.com/pharzam/armature`); a task index links it when it holds that text with the start of the file or a separator before it, and after it, with or without `.git` or `.` in between, the end of the file or a separator; a separator is a character that is not a letter or a digit of any script, `.`, `-` or `_` (review rounds 1 to 4 of #84) |
 | `facts` | yes, in a target's form | each brief is in `docs/facts/` and in `facts.sha256` with its hash; each question ID of `answers.tsv` is a fact in exactly one answers record: the `S01-` and `Q-` IDs in the record of S04 (O-124), the `M-` IDs in the record of S11 (which exists only when S10 listed a marker); the index has a row per record; what exists is read, and the `done` rows decide what must exist (below, task `T-9t1q`). LAYUP's counts (39, 75, 19) are LAYUP's and do not apply. |
@@ -312,8 +312,8 @@ of each such check passes and fails on the same fixtures as
 | `markers` | yes | `check_markers`, with LAYUP's `MK_EXEMPT` (S10) |
 | `adapted` | yes | `check_adapted`, with LAYUP's `AD_EXCLUDE` and `ad_allowed`, which the engine embeds at its version; a path that a target does not have matches nothing |
 | `identity` | yes | `check_identity`, with the target's name: `README.md` also holds the record row `name` of S01 |
-| `link-lint` | yes | the baseline's own `sh docs/links/link-lint.sh` exits 0 |
-| `sources` | yes | every value row of the record has a source; each `answer` ref is a row of `answers.tsv`; each `catalog` ref is a file of the catalog entry; each `fact` ref is a fact of `docs/facts/`; each `gap` row has its marker in the tree and its row in `open-gaps.tsv` |
+| `link-lint` | yes | the baseline's own `sh docs/links/link-lint.sh` exits 0, run as a gate command (below, task `T-8vpw`) |
+| `sources` | yes | every value row of the record has a source; each `answer` ref is a row of `answers.tsv`; each `catalog` ref is a file of the catalog entry; each `fact` ref is a fact of `docs/facts/`; each `gap` row has its marker in the tree and its row in `open-gaps.tsv`; each `computed` ref is not empty, and a hash names a file (below, task `T-8vpw`) |
 | `jobs` | yes | each kind of `docs/gates.tsv` has a CI job with the kind's name (the evidence of S12) |
 | `gate:<kind>`, one per kind | yes | an `active` kind: `layup gate` with `--base` and `--head` the setup head gives `pass` or `clear`, and with `--head` a commit of the kind's known-bad fixture applied (`git apply`) on the setup head gives `fail`; then `pass`. The first rule that matches decides: the clean run `fail` gives `fail`; either run `not-active` gives `not-active`; a fixture run that is not `fail` gives `fail`, reason `fixture not detected`. A `pending` kind: `clear`, reason `pending: fixture not run` (§6: "recorded as not run, never as a detection"). |
 | `ci`, `procedure`, `protection` | not a check for a target | they read LAYUP's own CI and `steps.tsv`, and the classic protection that the rulesets replace (§5) |
@@ -346,7 +346,8 @@ reason  text                             -    the first failure, or the `clear` 
 - **A check that this version of `layup` does not have yet** is `not-active`,
   reason `not built yet`, so the command gives exit 1 until rows 10 to 15 of the
   [plan](../plan/README.md#the-tasks-of-phase-1) add each check (`NFR-004`
-  item 1). The present code has `pin`, `kit-history`, `facts`, `onboarding`,
+  item 1). The present code has `discipline-tests`, `link-lint`, `markers` and
+  `sources` (task `T-8vpw`), `pin`, `kit-history`, `facts`, `onboarding`,
   `glossary` and `guardrails` (task `T-9t1q`), `adapted` (task `T-8ya0`) and
   `identity`.
 - **The scratch tree** is `git worktree add --detach` of the head of
@@ -387,6 +388,68 @@ reason  text                             -    the first failure, or the `clear` 
   URL (a valid `S01-baseline` in a test: `git ls-remote` and `git clone` take
   it), and makes a work area from it with a setup by hand. No file of it is in
   Git; a marker in Go source is written as an escape.
+
+**Decided here** (task `T-8vpw`, #87), the checks `markers`, `sources`,
+`discipline-tests` and `link-lint`, and the calls that S05 and S10 read:
+
+- **One scanner of markers** for check `markers` and for S10: the files of
+  `git ls-files -z` outside LAYUP's `MK_EXEMPT` (embedded at the engine's
+  version; `TestTheExemptionsOfMarkersEqualTheSh` compares it with
+  `setup-check.sh`), each a regular file; on a line, each open angle quote
+  starts a marker to the first close quote after it, or to the line end; an
+  open quote between two backticks is the mention and is skipped; the text of
+  the convention (the two quotes around an ellipsis) is not a marker. The
+  scanner gives each occurrence with its file, its line and its text; check
+  `markers` keys it by file and text, as `check_markers` does, and check
+  `sources` reads the line. S10 (row 13) gets the list through `internal/cli`.
+- **The open gaps:** `docs/setup/open-gaps.tsv` is read by tabs, by the columns
+  of its block, as `check_markers` reads it: a missing column is empty, and an
+  absent file is no rows. Each marker needs its row (`unlisted:`), each row its
+  marker (`stale:`), and each row a question that is not empty, the empty mark
+  or only blanks (`question:`), with the lines of `check_markers`. The Go schema
+  of the block is in `internal/work`, for the block test and the writer of S11.
+- **#21 in `check_markers`:** it lists the files with `git ls-files -z` (a name
+  with `"`, `\` or a control character is no longer skipped; the fixture
+  `markers/bad-quoted-name` has a DEL character in its name, which git quotes
+  and a Windows checkout accepts), and it refuses a blank question or the empty
+  mark (`markers/bad-blank-question`). **Known limit of the sh function:** a
+  name with a line feed is still split by `tr`.
+- **Check `sources`:** each row of the setup record but a `done` row, by its
+  source: `answer`, the ref is a row of `answers.tsv`; `catalog`, the entry of
+  the row `S01 stack` has the file of the ref (this version embeds no catalog,
+  so a catalog ref does not resolve until row 14); `fact`, the ref resolves;
+  `gap`, the row `marker:<file>:<line>` names a line that holds the marker of
+  its value, and `open-gaps.tsv` has the row; `computed`, the ref is not empty,
+  and a ref `sha256 <path>` (with or without prefixes) names a file of the
+  tree or of the work area (the step that wrote a hash checks its value);
+  `step`, a value row with it fails. Each finding is
+  `source: <step> <name>: <reason>`.
+- **The two scripts:** `sh docs/tests/run-discipline-tests.sh` and
+  `sh docs/links/link-lint.sh` of the target run in the scratch tree, with no
+  argument and with the environment of `layup`, by the rule of a gate command
+  (`gate.md`): exit 0 is `pass`; another exit is `fail`, reason `exit <code>`;
+  a signal is `fail`, reason `signal <name>`; a script that is not a file of the
+  tree is `not-active`, reason `missing: <path>`; an `sh` that is not found is
+  `not-active`, reason `tool not found: sh`. The output of a script goes to
+  standard error, never into the table, and the row's progress line shows which
+  script runs. The scratch checkout keeps the target's `.gitattributes`, and
+  every call of `internal/git` sets `core.autocrlf=false` (K7), so the
+  `eol=crlf` fixtures keep their bytes. **Known limit:** no timeout in phase 1.
+- **The call of S05** (K10): `internal/verify` gives the files whose links
+  break. It takes the directory of a checked-out tree (S05 gives
+  `WORK/target` after the deletion and before its commit), runs
+  `sh docs/links/link-lint.sh` of that tree as above, and reads the script's
+  standard error: each line `FAIL  L<n>: <path>:<line> …` names a file; the
+  files, once each, in byte order. A line `FAIL` that names no file (for
+  example `L5`, no in-tree link resolved, or a root not found), or an exit
+  other than 0 with no file, is an error, and S05 fails. S05 (row 13) gets the
+  list through `internal/cli`, and stops with one `F-<path>` row per file.
+- **The shared fixtures:** check `markers` passes and fails on the cases of
+  `docs/setup/tests/markers/` with the lines of `check_markers`. The two script
+  checks have no fixture group of their own: `setup-check.sh` runs the scripts
+  inside `kit-linters`, a check of LAYUP's own form with four linters, whose
+  frame cases the harness does not compare; their tests run stub scripts and
+  LAYUP's own scripts on a clone of its `HEAD`.
 
 **Decided here** (task `T-9t1q`, #89), the checks `facts`, `onboarding`,
 `glossary` and `guardrails` in a target's form, and the records that they read:
