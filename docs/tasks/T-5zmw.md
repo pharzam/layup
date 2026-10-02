@@ -46,8 +46,9 @@ level; `TestGoldenRealPSB` stays at the integration level.
    through `tsv.Write`, so a tab, a line feed or a lone carriage return of a field
    is one space and the empty excerpt of line 0 is `—`, and it gives the error of
    its output (D1); G1 by O-131. The goldens are embedded, so the unit tests read
-   no file (D5); the golden `values` (D4) and the cases of `TestEdgeCases` (D3)
-   pin the present behaviour. `psb-gaps` moves to `built` in
+   no file (D5); the goldens `values` (D4) and `edge` (D3), with the cases that
+   need a file of their own in `TestG1ReadsTheValueOfAStack` and
+   `TestEdgeCases`, pin the present behaviour. `psb-gaps` moves to `built` in
    `internal/tsv/blocks_integration_test.go`.
 3. **`internal/cli`:** a `FILE` that is not valid UTF-8 gives exit 2 and
    `layup: FILE: line <n> is not valid UTF-8`, with the line of the first byte
@@ -71,10 +72,10 @@ level; `TestGoldenRealPSB` stays at the integration level.
    integration level); the `PRD-0001` §12 Test cells of `REQ-001`, `NFR-004`,
    `NFR-005` and `NFR-007`, with a §13 row.
 
-**Two changes from the plan, both inside its decisions:** the edge cases of D3
-are cases of `TestEdgeCases`, each with a file of its own, and not lines of
-`edge.md`, because three of them need the whole file (a byte-order mark at its
-start, the first heading that holds `Terms`, the value of G1); and the unit
+**Two details inside the decisions of the plan:** the edge cases of D3 that
+need a file of their own (a case of G1 or G3, which read the whole file) are
+cases of `TestG1ReadsTheValueOfAStack` and `TestEdgeCases`, and the others are
+rows of `edge.md` and `edge.tsv` (review round 1, finding 2); and the unit
 tests of `internal/cli` read `FILE` through the seam `readFile`, so that the
 failing output of condition 2 has a unit test there.
 
@@ -83,3 +84,28 @@ record would hold a value that the file does not hold); a closed pipe as the
 end-to-end case of the write error (Go stops the program with `SIGPIPE`, so the
 case gives no exit code); the write error as exit 1 (it is not a gap, and the
 table is not complete).
+
+## Review round 1 and its fixes (cycle 1)
+
+Review round 1 (GPT-6 Sol, effort `xhigh`, on the Devin CLI; `edbeb60`, cycle
+0) gave `material`, with three material findings and one note, all applied:
+
+1. **G1 and white space.** A value of only U+00A0, U+2003 or a vertical tab
+   named a stack, because Go's `\s` in the expression of O-131 has no such
+   character, and the words of O-131 say "white space". The fix follows the
+   words: white space is the Unicode property `White_Space`, and after the `:`
+   the white space other than a tab, a form feed or a carriage return counts as
+   a space, so a stack after U+00A0 is still named. A comparison on 465,010
+   lines shows that a result of the base changes only where the base read `*`
+   or a white space character as the value. The reading is in
+   `psb-check.md`, as "decided here", with O-131; a lesson is in
+   `docs/guardrails.md` §2.
+2. **The edge golden.** The cases of D3 that a shared file can hold (the three
+   cases of G2, and G4 inside a fence) are now rows of `edge.md` and
+   `edge.tsv`; the cases of G1 and G3 stay in Go tests, each with a file of its
+   own, and `psb-check.md` says where a later case goes.
+3. **`Fast` in mixed case.** `values.md` holds `Fast`, so each word of G4 is in
+   mixed case, as D4 says.
+
+Note 4: the evidence no longer counts the record test of the goldens among the
+tests that pass on the base.

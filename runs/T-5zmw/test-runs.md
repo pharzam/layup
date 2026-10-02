@@ -7,10 +7,13 @@ temporary directory shows as `<tmp>/`, and a raw carriage return as `<CR>`;
 ## What is red, and what is not
 
 Note 2 of the plan review: the goldens `edge` and `values`, `TestEdgeCases`,
-`TestCRLFGivesTheSameTable`, `TestGoldenRealPSB`, the record check of each golden,
-and the end-to-end runs on the real problem statement, on a statement with no
-gap, on a missing file and on a directory pin the behaviour of the base. They
-pass on the base, and this file claims no red run for them. The red runs below
+`TestCRLFGivesTheSameTable`, `TestGoldenRealPSB`, and the end-to-end runs on the
+real problem statement, on a statement with no gap, on a missing file and on a
+directory pin the behaviour of the base. They pass on the base, and this file
+claims no red run for them. The contents of the golden tables are records of
+the block on the base too, but the test that reads them so,
+`TestEveryGoldenIsARecordOfTheBlock`, cannot run there: it needs `GapsSchema`
+(red run 2; note 4 of review round 1). The red runs below
 are of the behaviours that change: the lone carriage return, G1 (O-131), the
 error of the output (through `WriteTSV`, `internal/cli` and the binary), the
 UTF-8 check (K32), and the Go schema of `psb-gaps`.
@@ -104,9 +107,58 @@ broken pipe on standard output, and gives no code; the end-to-end scenario uses
 a standard output that is open for reading only, where each write fails, and
 `docs/spec/psb-check.md` says both.
 
+## Review round 1: the fixes (cycle 1)
+
+Review round 1 (`edbeb60`) gave `material` with three findings. The runs of the
+fixes:
+
+1. **Finding 1, G1 and white space.** The six new cases of
+   `TestG1ReadsTheValueOfAStack` on the code of `edbeb60`: the run stops at the
+   first failure, because `golden` calls `t.Fatalf`.
+
+   ```text
+   $ go test -count=1 -run TestG1ReadsTheValueOfAStack ./internal/psb/
+   --- FAIL: TestG1ReadsTheValueOfAStack (0.00s)
+       check_test.go:82: "Technology stack: \u00a0\n": the table differs
+           --- got ---
+           id	rule	line	excerpt	question
+           --- want ---
+           id	rule	line	excerpt	question
+           Q-001	G1	0	—	Which technology stack does the product use (languages, frameworks, tools)?
+   FAIL
+   ```
+
+   The binary of `edbeb60` on the three values that are only white space (a
+   file each, `Technology stack: ` and then the character):
+
+   ```text
+   U+00A0: 0 gap rows, exit 0
+   U+2003: 0 gap rows, exit 0
+   vertical tab: 0 gap rows, exit 0
+   ```
+
+   The three other new cases (`Technology stack:` with U+00A0 or a vertical tab
+   and then `Go`, no gap; with a tab and then `Go`, a gap) pass on `edbeb60`:
+   they pin results that the fix keeps. After the fix, two checks of the new
+   expression, each a small Go program outside the repository (recorded once,
+   not a test): its two classes equal the Unicode property `White_Space` (by
+   `unicode.IsSpace`) for each rune, with 0 differences; and on 465,010 lines
+   (`Technology stack`, then one of 7 prefixes, then `:`, then each string of
+   up to 5 characters from a space, `*`, a tab, a vertical tab, a form feed, a
+   carriage return, U+00A0, U+2003 and `G`) it names a stack on no line where
+   the expression of the base names none, and each of the 129,420 lines where
+   the two differ is a line where the base read `*` or a white space character
+   as the value.
+
+2. **Finding 2, the edge golden**, and **finding 3, `Fast` in mixed case:** the
+   new rows of `edge.md` and `edge.tsv` and the changed line of `values.md` pass
+   at once. They pin the behaviour of the base (note 2): the code had it, and
+   the goldens did not hold it.
+
 ## The green runs
 
-On the tree of the commit that adds this table.
+On the tree of the commit that adds this table, and again on the head of
+cycle 1.
 
 | Command | Result |
 | ------- | ------ |

@@ -49,22 +49,34 @@ from 1.
 
 | Rule | A gap when | Line | Question |
 | ---- | ---------- | ---- | -------- |
-| G1 | no line holds `technology stack` (any case), then only spaces or `*`, then `:`, then only spaces or `*`, then a character that is neither white space nor `*` (O-131) | 0 | `Which technology stack does the product use (languages, frameworks, tools)?` |
+| G1 | no line holds `technology stack` (any case), then only spaces or `*`, then `:`, then only spaces or `*`, then a character that is neither white space nor `*` (O-131); after the `:`, white space other than a tab, a form feed or a carriage return counts as a space | 0 | `Which technology stack does the product use (languages, frameworks, tools)?` |
 | G2 | a row of a Markdown table whose header row has a column `Measurement` or `Verification` (any case) has, in that column, an empty cell or one of `—`, `-`, `tbd`, `not measured` (any case, one final `.` ignored) | the row | `How is this metric measured? The row gives no measurement method.` |
 | G3 | the text has a table under a heading that contains `Terms`, and a line holds an abbreviation (2 to 6 characters: a capital, then capitals or digits, with ASCII word boundaries) that no bold span of that table's first column defines; each abbreviation once, at its first line | the line | `What does "<ABBR>" mean? The terms table does not define it.` |
 | G4 | a line holds one of the words `fast`, `robust`, `soon`, `clean`, `better`, `handle` (whole word, any case) and no digit; the first such word of the line | the line | `Which number or threshold does "<word>" stand for here?`, the word in lowercase |
 | G5 | a line holds `(start value)` (any case) | the line | `Which start value does the pilot use for this target, and who sets it?` |
 
-With no terms table, G3 gives no gap. **Decided by the Operator** (O-131, #83):
-`**Technology stack:**` with no value is a G1 gap, because the value of a named
-stack is a character that is neither white space nor `*`; so an empty label of
-a template asks for the stack.
+With no terms table, G3 gives no gap. In the table, a space is U+0020, and
+white space is a character of the Unicode property `White_Space` (for example a
+tab, a vertical tab, U+00A0 or U+2003).
+
+**Decided by the Operator** (O-131, #83): `**Technology stack:**` with no value
+is a G1 gap, because the value of a named stack is a character that is neither
+white space nor `*`; so an empty label of a template asks for the stack.
+**Decided here** (review round 1 of #83), as the reading of O-131: a value that
+is only white space (for example U+00A0) is no value, and after the `:` the
+white space other than a tab, a form feed or a carriage return counts as a
+space, so `Technology stack:` with U+00A0 and then `Go` still names a stack.
+Reason: the words of O-131 say "white space", and Go's `\s` in its example
+expression is only a tab, a line feed, a form feed, a carriage return and a
+space; with the second part, a result of the code before O-131 changes only
+where that code read `*` or a white space character as the value.
 
 The present code is the reference for an edge case that this table does not
-settle; such a case found later is added here and to the edge cases of
-`internal/psb` (`testdata/edge.md`, or a case of `TestEdgeCases` when it needs a
-file of its own). **Decided here** (task `T-5zmw`, D3 of #83), as the code reads
-them:
+settle; such a case found later is added here and to
+`internal/psb/testdata/edge.md`, or to a Go test when it needs a file of its
+own: a case of G1 to `TestG1ReadsTheValueOfAStack`, and a case of G3 to
+`TestEdgeCases`, because these two rules read the whole file.
+**Decided here** (task `T-5zmw`, D3 of #83), as the code reads them:
 
 - G1: a tab before the `:` is not a named stack (a gap).
 - G2: a bold header (`**Measurement**`) is not a measurement column; when a
@@ -80,7 +92,7 @@ them:
 
 The golden `internal/psb/testdata/values.md` pins the values of this table that
 the other goldens do not: the column name `Verification`; `—`, `-`, `tbd` and
-`not measured` in mixed case, one with a final `.`; the words of G4 in mixed
+`not measured` in mixed case, one with a final `.`; each word of G4 in mixed
 case, two of them on one line, and one on a line with a digit; `(start value)`
 in mixed case; and `technology stack` in capitals.
 

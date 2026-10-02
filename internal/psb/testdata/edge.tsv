@@ -1,2 +1,4 @@
 id	rule	line	excerpt	question
 Q-001	G2	12	| Lead time |	How is this metric measured? The row gives no measurement method.
+Q-002	G2	21	| First column | tbd | x |	How is this metric measured? The row gives no measurement method.
+Q-003	G4	28	The cache is fast here.	Which number or threshold does "fast" stand for here?

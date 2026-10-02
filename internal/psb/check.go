@@ -34,10 +34,12 @@ type Gap struct {
 }
 
 var (
-	// G1: "technology stack", then only spaces or '*', then ':' and a value: a
-	// character that is not a space or '*' (O-131: "**Technology stack:**" with
-	// no value is a gap).
-	namedStack = regexp.MustCompile(`(?i)technology stack[ *]*:[ *]*[^\s*]`)
+	// G1: "technology stack", then only spaces or '*', then ':', then only
+	// spaces or '*', then a value: a character that is neither white space
+	// (Unicode White_Space: \s, \v, U+0085 and \pZ) nor '*' (O-131). After the
+	// colon, white space other than a tab, a form feed or a carriage return
+	// counts as a space (review round 1 of #83).
+	namedStack = regexp.MustCompile(`(?i)technology stack[ *]*:[ *\v\x{85}\pZ]*[^\s\v\x{85}\pZ*]`)
 	// G3: 2 to 6 capitals (digits after the first), with ASCII word boundaries.
 	abbrev = regexp.MustCompile(`(^|[^A-Za-z0-9_])([A-Z][A-Z0-9]{1,5})($|[^A-Za-z0-9_])`)
 	bold   = regexp.MustCompile(`\*\*([^*]+)\*\*`)

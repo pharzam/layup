@@ -362,6 +362,14 @@ These traps are not domain-specific: they hurt every project's test suite.
   scenario. **The check:** give a write test an output that refuses each write
   (a file open for reading only, or a `Writer` that returns an error), and give
   an empty environment as an empty slice.
+- ❌ **"White space" in the words, `\s` in the expression.** Go's `\s` is only a
+  tab, a line feed, a form feed, a carriage return and a space: no vertical tab,
+  no U+00A0, no U+2003. A rule that says "white space" and an expression with
+  `\s` disagree on these characters, and tests with ASCII input do not show it.
+  Review round 1 of task `T-5zmw` (#83) found it in G1, where a value of only
+  U+00A0 named a stack. **The check:** write the class that the words name (the
+  Unicode `White_Space` is `[\s\v\x{85}\pZ]`), or define the words by the
+  class, and give the test a character outside ASCII.
 
 ### Reference-sweep pitfalls
 

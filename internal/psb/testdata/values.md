@@ -16,6 +16,6 @@ The release comes SOON.
 The code is Clean.
 This is Better.
 We Handle it.
-The cache is fast and robust.
+The cache is Fast and robust.
 The cache is fast at 50 ms.
 The target is set (Start Value).

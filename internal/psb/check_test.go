@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"embed"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -59,31 +60,36 @@ func TestALoneCarriageReturnBecomesASpace(t *testing.T) {
 const g1 = "Q-001\tG1\t0\t—\tWhich technology stack does the product use (languages, frameworks, tools)?\n"
 
 // O-131: the value of a named stack is a character that is neither white
-// space nor *, so an empty label of a template is a G1 gap.
+// space (Unicode White_Space) nor *, so an empty label of a template is a G1
+// gap. After the colon, white space other than a tab, a form feed or a
+// carriage return counts as a space (review round 1 of #83).
 func TestG1ReadsTheValueOfAStack(t *testing.T) {
 	for _, c := range []struct{ input, want string }{
 		{"**Technology stack:**\n", header + g1},
 		{"Technology stack: *\n", header + g1},
 		{"Technology stack:\n", header + g1},
 		{"Technology stack\t: Go\n", header + g1},
+		{"Technology stack: \u00a0\n", header + g1},
+		{"Technology stack: \u2003\n", header + g1},
+		{"Technology stack: \v\n", header + g1},
+		{"Technology stack:\tGo\n", header + g1},
 		{"**Technology stack:** Go\n", header},
 		{"TECHNOLOGY STACK: Go\n", header},
 		{"Technology stack: *Go*\n", header},
+		{"Technology stack:\u00a0Go\n", header},
+		{"Technology stack:\vGo\n", header},
 	} {
-		golden(t, strings.TrimSpace(c.input), []byte(c.input), []byte(c.want))
+		golden(t, fmt.Sprintf("%q", c.input), []byte(c.input), []byte(c.want))
 	}
 }
 
-// The edge cases that the rule table does not settle, with the present code
-// as their reference (docs/spec/psb-check.md, The rules). Each case is a whole
-// file, because a rule can read the whole file (the terms table, G1).
+// The edge cases that the rule table does not settle and that need a file of
+// their own, with the present code as their reference (docs/spec/psb-check.md,
+// The rules): G3 reads the terms table of the whole file. The other edge cases
+// are in testdata/edge.md.
 func TestEdgeCases(t *testing.T) {
 	const stack = "Technology stack: Go\n"
 	for _, c := range []struct{ name, input, want string }{
-		{"G2: a bold header is not a measure column", stack + "| Metric | **Measurement** |\n| - | - |\n| a | tbd |\n", header},
-		{"G2: the first of Measurement and Verification is the column", stack + "| Metric | Verification | Measurement |\n| - | - | - |\n| a | x | tbd |\n| b | tbd | x |\n",
-			header + "Q-001\tG2\t5\t| b | tbd | x |\tHow is this metric measured? The row gives no measurement method.\n"},
-		{"G2: an escaped pipe splits a cell", stack + "| Metric | Measurement |\n| - | - |\n| a \\| b | tbd |\n", header},
 		{"G3: a heading terms in lower case is not a terms heading", stack + "## terms\n| **API** | x |\nThe SLA holds.\n", header},
 		{"G3: the first heading that holds Terms makes the terms table", stack + "## Payment Terms\n| **SLA** | x |\n\n## Terms\n| **API** | y |\nThe API holds.\n",
 			header + "Q-001\tG3\t6\t| **API** | y |\tWhat does \"API\" mean? The terms table does not define it.\n"},
