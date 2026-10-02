@@ -27,6 +27,11 @@ scope    list(text)           -    the paths in scope, each a pattern (below)
 config   list(path)           -    the gate files of this kind: its configuration and its tests; `—` when none
 ```
 
+Two packages hold this schema as a Go value, and each one's test compares it
+with this block (task `T-3jpx`, #81): `internal/catalog`, which writes the
+manifest of a stack's entry, and `internal/gate`, which reads it (task `T-5sgt`,
+row 5 of the plan). The block is the one home of the form.
+
 **Decided here:** the columns `tool` and `config`. §6 names "gate kind, command,
 scope, state". `layup gate` must know which program a kind needs, to tell "did
 not run" from "failed" (`NFR-004`), and which files are the kind's gate files,

@@ -33,7 +33,6 @@ same summary, dated — rather than deleting it or checking it off.
 - **T-stfn** — Step 2, the core engine: `layup gate`, `layup setup` and `layup setup verify`, the telemetry and stall records, the release review and the first pilot ([#29](https://github.com/pharzam/layup/issues/29); [plan](../plan/README.md))
 - **T-b97r** — `layup setup` and `layup setup verify`, the parent of its child tasks ([#77](https://github.com/pharzam/layup/issues/77); [plan](../plan/README.md))
 - **T-vk3k** — `layup gate`, the parent of its child tasks ([#33](https://github.com/pharzam/layup/issues/33); [plan](../plan/README.md))
-- **T-3jpx** — Row 4 of the plan: The stack catalog package: the embedded reader and a test entry ([#81](https://github.com/pharzam/layup/issues/81); [plan](../plan/README.md#the-tasks-of-phase-1))
 - **T-5sgt** — Row 5 of the plan: `layup gate REPO --base REV --head REV` ([#82](https://github.com/pharzam/layup/issues/82); [plan](../plan/README.md#the-tasks-of-phase-1))
 - **T-5zmw** — Row 6 of the plan: `layup psb check` to its specification: the table of S01 ([#83](https://github.com/pharzam/layup/issues/83); [plan](../plan/README.md#the-tasks-of-phase-1))
 - **T-6x75** — Row 7 of the plan: The frame of `layup setup verify`, the fixture harness, and the checks `kit-history`, `pin` and `identity` ([#84](https://github.com/pharzam/layup/issues/84); [plan](../plan/README.md#the-tasks-of-phase-1))

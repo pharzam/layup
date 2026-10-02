@@ -1,0 +1,8 @@
+# The gate jobs of the test entry: one job per kind, named as the kind.
+name: gates
+on: [pull_request]
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    steps:
+      - run: test ! -e bad.txt
