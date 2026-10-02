@@ -168,6 +168,27 @@ func TestBranchesAndAnOrphan(t *testing.T) {
 	}
 }
 
+// The step runner (task T-79y7): the branch of the work tree, and an error
+// for a detached HEAD, so a setup commit lands only on layup-setup.
+func TestBranch(t *testing.T) {
+	isolate(t)
+	dir := t.TempDir()
+	root := commitTree(t, dir, map[string]string{"a.txt": "a\n"})
+	for _, c := range []struct {
+		name, want string
+		move       func() error
+	}{
+		{"after init", "refs/heads/main", func() error { return nil }},
+		{"after switch -c", "refs/heads/layup-setup", func() error { return SwitchCreate(dir, "layup-setup", root) }},
+		{"detached", "", func() error { return CheckoutDetach(dir, root) }},
+	} {
+		must(t, c.move())
+		if got, err := Branch(dir); got != c.want || (err == nil) != (c.want != "") {
+			t.Errorf("%s: Branch %q, %v; want %q", c.name, got, err, c.want)
+		}
+	}
+}
+
 // layup gate and the fixture run of layup setup verify: a scratch work tree,
 // a patch, a commit on no ref, the changed paths, a file at a revision, and
 // the scratch tree removed.

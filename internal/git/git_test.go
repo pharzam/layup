@@ -65,6 +65,7 @@ func TestEachCallRunsItsVerb(t *testing.T) {
 		{"commit", "r", "commit -m chore:S04", func() { Commit("r", "chore:S04", who) }},
 		{"switch -c", "r", "switch -c layup-setup " + fullID, func() { SwitchCreate("r", "layup-setup", fullID) }},
 		{"switch --orphan", "r", "switch --orphan layup-records", func() { SwitchOrphan("r", "layup-records") }},
+		{"symbolic-ref --quiet", "r", "symbolic-ref --quiet HEAD", func() { Branch("r") }},
 		{"rev-parse", "r", "rev-parse --verify --end-of-options abc^{tree}", func() { RevParse("r", "abc^{tree}") }},
 		{"rev-list --max-parents=0", "r", "rev-list --max-parents=0 --end-of-options main --", func() { RootCommits("r", "main") }},
 		{"rev-parse --is-shallow-repository", "r", "rev-parse --is-shallow-repository", func() { IsShallow("r") }},

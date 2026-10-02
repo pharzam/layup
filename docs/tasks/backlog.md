@@ -33,7 +33,6 @@ same summary, dated — rather than deleting it or checking it off.
 - **T-stfn** — Step 2, the core engine: `layup gate`, `layup setup` and `layup setup verify`, the telemetry and stall records, the release review and the first pilot ([#29](https://github.com/pharzam/layup/issues/29); [plan](../plan/README.md))
 - **T-b97r** — `layup setup` and `layup setup verify`, the parent of its child tasks ([#77](https://github.com/pharzam/layup/issues/77); [plan](../plan/README.md))
 - **T-vk3k** — `layup gate`, the parent of its child tasks ([#33](https://github.com/pharzam/layup/issues/33); [plan](../plan/README.md))
-- **T-79y7** — Row 8 of the plan: The step runner: the work area, the answers rule, the stop and step tables, `commands.sh` ([#85](https://github.com/pharzam/layup/issues/85); [plan](../plan/README.md#the-tasks-of-phase-1))
 - **T-7s0y** — Row 9 of the plan: Steps S01 to S04, with the gap table of S01 and the record of the `S01-` and `Q-` answers at S04 (O-124) ([#86](https://github.com/pharzam/layup/issues/86); [plan](../plan/README.md#the-tasks-of-phase-1))
 - **T-8vpw** — Row 10 of the plan: The checks `markers`, `sources`, `discipline-tests` and `link-lint` ([#87](https://github.com/pharzam/layup/issues/87); [plan](../plan/README.md#the-tasks-of-phase-1))
 - **T-8ya0** — Row 11 of the plan: The check `adapted` ([#88](https://github.com/pharzam/layup/issues/88); [plan](../plan/README.md#the-tasks-of-phase-1))

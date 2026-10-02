@@ -377,6 +377,14 @@ These traps are not domain-specific: they hurt every project's test suite.
   **The check:** state the exact rule (the classes of characters before and
   after the text), and let the examples follow it; test a neighbour of each
   side, and a character of another script.
+- ❌ **A check that runs only when its row is there.** A resume check such as
+  "compare the hash row of a done step with its inputs now" that runs *if* the
+  row exists passes a record with no such row: a record made by hand, or by
+  an older version, skips the check, and each test that seeds the row stays
+  green. Review round 1 of task `T-79y7` (#85) found it in `answers.sha256`.
+  **The check:** for each row that a later run compares, test a record that
+  does not have it, and make its absence an error where the writer always
+  writes it.
 
 ### Reference-sweep pitfalls
 
