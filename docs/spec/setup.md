@@ -300,8 +300,8 @@ reason  text                             -    the first failure, or the `clear` 
   not a check is an error, never a row. The name `gates` gives each row
   `gate:<kind>`, and is the only name that reads the manifest (K13: the evidence
   "checks `jobs` and `gates`" of S12). `layup setup verify` takes no check name:
-  "`layup setup verify <check>` OK" of `architecture.md` §5 names a check, not a
-  form of the command.
+  "`layup setup verify <check>` OK" of `architecture.md` §5 names a check, not
+  a form of the command.
 - **The fixtures.** The core of a check is the rule of its sh function on a
   repository root; it gives each finding as the text after `FAIL ` of the sh
   line, in the order of the function. `TestTheFixturesOfSetupCheck` of
