@@ -235,9 +235,29 @@ func TestTheKitLinkOfATarget(t *testing.T) {
 	}
 }
 
+// S05 removes each line of the task indexes that links the baseline's
+// repository, by the rule of check kit-history (K12, D1 of #90).
+func TestLinksBaseline(t *testing.T) {
+	for _, c := range []struct {
+		source, line string
+		want         bool
+	}{
+		{"https://github.com/pharzam/armature", "- **T-1** ([#1](https://github.com/pharzam/armature/issues/1))", true},
+		{"https://github.com/pharzam/armature.git", "see github.com/pharzam/armature.", true},
+		{"https://github.com/pharzam/armature", "see github.com/pharzam/armature-x and my.github.com/pharzam/armature", false},
+		{"file:///tmp/w/baseline", "- [#0](file:///tmp/w/baseline/issues/0)", true},
+		{"", "github.com/pharzam/armature", false},
+		{"https://github.com/pharzam/armature", "no link", false},
+	} {
+		if got := LinksBaseline(c.source, c.line); got != c.want {
+			t.Errorf("LinksBaseline(%q, %q) = %v, want %v", c.source, c.line, got, c.want)
+		}
+	}
+}
+
 // The three checks of a target: the core, then the target's part (D3).
 func TestTheChecksOfATarget(t *testing.T) {
-	readme := "# acme\n\nThe [pin](docs/setup/armature.pin).\n"
+	readme := "# acme\n\nThe [pin](docs/setup/armature.pin). The records are on the branch `layup-records`.\n"
 	tree := fstest.MapFS{
 		"README.md":             {Data: []byte(readme)},
 		"docs/tasks/backlog.md": {Data: []byte("- **T-0001** — a task (https://github.com/pharzam/armature/issues/1)\n")},
@@ -253,4 +273,7 @@ func TestTheChecksOfATarget(t *testing.T) {
 	same(t, "identity with another name", checkIdentity(in), []string{"name: README.md does not hold the name of the target, acme-billing"})
 	in.record = targetRecord(t, "name", nil)
 	same(t, "identity with no name", checkIdentity(in), []string{"record: no value at S01 name"})
+	in.record = targetRecord(t, "", nil)
+	in.fsys = fstest.MapFS{"README.md": {Data: []byte("# acme\n\nThe [pin](docs/setup/armature.pin).\n")}}
+	same(t, "identity with no records branch", checkIdentity(in), []string{"branch: README.md does not name the branch layup-records"})
 }

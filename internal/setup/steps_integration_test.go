@@ -23,6 +23,18 @@ import (
 // noGaps is what internal/cli hands over for a problem statement with no gap.
 var noGaps = Brief{Gaps: []byte("id\trule\tline\texcerpt\tquestion\n"), Sum: "0123"}
 
+// firstSteps gives the steps S01 to S04 of this version, and a stub of each
+// later step, so a test of S01 to S04 ends at S05.
+func firstSteps(b Brief, c Calls) map[string]Step {
+	m, stubs := Steps(b, c), Stubs()
+	for id := range m {
+		if id > "S04" {
+			m[id] = stubs[id]
+		}
+	}
+	return m
+}
+
 // newWorkArea makes a work area at dir/work whose answers name the baseline at
 // url, with no record.
 func newWorkArea(t *testing.T, dir, url string) string {
@@ -66,7 +78,7 @@ func TestS01ToS04OnABaseline(t *testing.T) {
 		t.Fatal(err)
 	}
 	w := newWorkArea(t, tmp, url)
-	res, err := Run(w, Steps(noGaps, nil), Who, noStep)
+	res, err := Run(w, firstSteps(noGaps, Calls{}), Who, noStep)
 	if err != nil || !slices.Equal(res.Results()[:5], []string{Done, Done, Done, Done, NotActive}) || res.Steps[4].Evidence != "not built yet" {
 		t.Fatalf("the run: %v, %+v; want S01 to S04 done and S05 not built yet", err, res.Steps)
 	}
@@ -94,7 +106,7 @@ func TestS01ToS04OnABaseline(t *testing.T) {
 	}
 	gitOut(t, base, "add", "new.md")
 	gitOut(t, base, "-c", "user.name=t", "-c", "user.email=t@layup.invalid", "commit", "-q", "-m", "a new commit")
-	again, err := Run(w, Steps(noGaps, nil), Who, noStep)
+	again, err := Run(w, firstSteps(noGaps, Calls{}), Who, noStep)
 	if err != nil || !slices.Equal(again.Steps, res.Steps) || value(t, w, "S02", "pin.commit") != commit || gitOut(t, target, "rev-parse", "layup-setup") != head {
 		t.Errorf("a second run: %v, %+v; want the same table, the same pin and no commit", err, again.Steps)
 	}
@@ -116,7 +128,7 @@ func TestALoginURLFailsWithNoPrompt(t *testing.T) {
 		err error
 	}
 	done := make(chan ran, 1)
-	go func() { r, err := Run(w, Steps(noGaps, nil), Who, noStep); done <- ran{r, err} }()
+	go func() { r, err := Run(w, firstSteps(noGaps, Calls{}), Who, noStep); done <- ran{r, err} }()
 	select {
 	case r := <-done:
 		if r.err != nil || r.res.Steps[1].Result != Fail || !strings.HasPrefix(r.res.Steps[1].Evidence, "git ls-remote "+srv.URL+"/target.git HEAD: ") ||
@@ -145,7 +157,7 @@ func TestAStepThatStoppedInItsMiddle(t *testing.T) {
 	if err := writeFile(filepath.Join(w, "target.part", "left.md"), []byte("x\n")); err != nil {
 		t.Fatal(err)
 	}
-	m := Steps(noGaps, nil)
+	m := firstSteps(noGaps, Calls{})
 	s := m["S03"]
 	s.Run = func(in Input) Outcome { // the run stops after the commit of S03
 		if o := runS03(in); o.Kind != Done {
@@ -162,7 +174,7 @@ func TestAStepThatStoppedInItsMiddle(t *testing.T) {
 		t.Errorf("the file of target.part is in the copy")
 	}
 	root := gitOut(t, target, "rev-parse", "main")
-	res, err := Run(w, Steps(noGaps, nil), Who, noStep)
+	res, err := Run(w, firstSteps(noGaps, Calls{}), Who, noStep)
 	if err != nil || res.Steps[2].Result != Done || res.Steps[3].Result != Done || gitOut(t, target, "rev-list", "--count", "main") != "1" || gitOut(t, target, "rev-parse", "main") != root {
 		t.Errorf("the next run: %v, %+v; want S03 done with its own commit, and no second root commit", err, res.Steps)
 	}
@@ -171,7 +183,7 @@ func TestAStepThatStoppedInItsMiddle(t *testing.T) {
 	if err := writeFile(filepath.Join(w2, "target", "mine.md"), []byte("mine\n")); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := Run(w2, Steps(noGaps, nil), Who, noStep); err == nil || err.Error() != "target of the work area exists, and S02 is not done: remove it, or start again in a new work area" {
+	if _, err := Run(w2, firstSteps(noGaps, Calls{}), Who, noStep); err == nil || err.Error() != "target of the work area exists, and S02 is not done: remove it, or start again in a new work area" {
 		t.Errorf("a target before S02: %v; want the input error", err)
 	}
 	if _, err := os.Stat(filepath.Join(w2, "target", "mine.md")); err != nil {
@@ -187,7 +199,7 @@ func TestAStepThatStoppedInItsMiddle(t *testing.T) {
 			t.Fatal(err)
 		}
 		gitOut(t, filepath.Join(w, "target"), append([]string{"-c", "user.name=t", "-c", "user.email=t@layup.invalid"}, change...)...)
-		if _, err := Run(w, Steps(noGaps, nil), Who, noStep); err == nil || err.Error() != "target of the work area has a history that S03 did not make: start again in a new work area" {
+		if _, err := Run(w, firstSteps(noGaps, Calls{}), Who, noStep); err == nil || err.Error() != "target of the work area has a history that S03 did not make: start again in a new work area" {
 			t.Errorf("a target with another history (%q): %v; want the input error", change, err)
 		}
 	}
@@ -206,7 +218,7 @@ func TestTheUndoOfAnEvidenceThatFails(t *testing.T) {
 	reason := "pin: fail: a broken pin"
 	var names []string
 	checks := func(dir string, n []string) string { names = n; return reason }
-	res, err := Run(w, Steps(noGaps, checks), Who, noStep)
+	res, err := Run(w, firstSteps(noGaps, Calls{Checks: checks}), Who, noStep)
 	target := filepath.Join(w, work.TargetPath)
 	if err != nil || res.Steps[3] != (StepRow{"S04", "layup-setup", Fail, reason}) || !slices.Equal(names, []string{"pin", "facts"}) {
 		t.Fatalf("an evidence that fails: %v, %+v, the checks %q", err, res.Steps, names)
@@ -215,7 +227,7 @@ func TestTheUndoOfAnEvidenceThatFails(t *testing.T) {
 		t.Errorf("after the undo: layup-setup is not at the root commit, or S04 has a done row")
 	}
 	reason = ""
-	if res, err := Run(w, Steps(noGaps, checks), Who, noStep); err != nil || res.Steps[3].Result != Done ||
+	if res, err := Run(w, firstSteps(noGaps, Calls{Checks: checks}), Who, noStep); err != nil || res.Steps[3].Result != Done ||
 		gitOut(t, target, "log", "--format=%s", "main..layup-setup") != "chore: setup S04" {
 		t.Errorf("the next run: %v, %+v; want S04 done with one commit on layup-setup", err, res.Steps)
 	}

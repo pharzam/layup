@@ -192,6 +192,22 @@ func Branch(dir string) (string, error) {
 // whose evidence did not pass (D12 of #86).
 func ResetSoft(dir, commit string) error { return doAt(dir, commit, "reset", "--soft", commit) }
 
+// ResetHard puts the index and the work tree of dir back to HEAD: the runner
+// of layup setup starts each step from the commit of the step before it (D11
+// of #90).
+func ResetHard(dir string) error { return do(dir, "reset", "--hard", "--quiet", "HEAD") }
+
+// Staged reports whether the index of dir holds a change against HEAD: the
+// runner of layup setup commits a step only then (D12 of #90).
+func Staged(dir string) (bool, error) {
+	_, err := call(dir, environ(), "diff", "--cached", "--quiet", "--exit-code")
+	var failed *FailedError
+	if errors.As(err, &failed) && failed.Code == 1 {
+		return true, nil
+	}
+	return false, err
+}
+
 // SwitchOrphan puts the work tree on a new branch with no commit; git removes
 // the tracked files from the work tree.
 func SwitchOrphan(dir, branch string) error { return do(dir, "switch", "--orphan", branch) }

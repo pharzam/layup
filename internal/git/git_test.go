@@ -2,6 +2,7 @@ package git
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"reflect"
@@ -66,6 +67,8 @@ func TestEachCallRunsItsVerb(t *testing.T) {
 		{"switch -c", "r", "switch -c layup-setup " + fullID, func() { SwitchCreate("r", "layup-setup", fullID) }},
 		{"switch --orphan", "r", "switch --orphan layup-records", func() { SwitchOrphan("r", "layup-records") }},
 		{"reset --soft", "r", "reset --soft " + fullID, func() { ResetSoft("r", fullID) }},
+		{"reset --hard", "r", "reset --hard --quiet HEAD", func() { ResetHard("r") }},
+		{"diff --cached --quiet", "r", "diff --cached --quiet --exit-code", func() { Staged("r") }},
 		{"symbolic-ref --quiet", "r", "symbolic-ref --quiet HEAD", func() { Branch("r") }},
 		{"rev-parse", "r", "rev-parse --verify --end-of-options abc^{tree}", func() { RevParse("r", "abc^{tree}") }},
 		{"rev-list --max-parents=0", "r", "rev-list --max-parents=0 --end-of-options main --", func() { RootCommits("r", "main") }},
@@ -161,6 +164,26 @@ func TestTheOutputIsRead(t *testing.T) {
 	stub(t, "yes\n", nil)
 	if shallow, err := IsShallow("r"); !errors.As(err, &failed) || failed.Code != 0 || shallow {
 		t.Errorf("IsShallow with the output yes: %v, %v; want false and a *FailedError with code 0", shallow, err)
+	}
+}
+
+// Staged reads the exit code of git diff --cached --quiet: 0 is no staged
+// change, 1 a staged change, another code an error (D12 of #90).
+func TestStagedReadsTheExitCode(t *testing.T) {
+	for _, c := range []struct {
+		code   int
+		staged bool
+		failed bool
+	}{{0, false, false}, {1, true, false}, {128, false, true}} {
+		var err error
+		if c.code != 0 {
+			err = exec.Command("sh", "-c", fmt.Sprintf("exit %d", c.code)).Run()
+		}
+		stub(t, "", err)
+		staged, got := Staged("r")
+		if staged != c.staged || (got != nil) != c.failed {
+			t.Errorf("exit %d: %v, %v; want %v and an error %v", c.code, staged, got, c.staged, c.failed)
+		}
 	}
 }
 

@@ -56,7 +56,7 @@ const (
 	gates = "kind\tstate\ttool\tcommand\tscope\tconfig\n" +
 		"static\tactive\tgo\tgo vet ./...\t./*.go\t\u2014\n" +
 		"layout\tpending\tgo\tgo test ./layout/\t./*.go\t\u2014\n"
-	readme = "# " + Name + "\n\nThe product repository of " + Name + ", set up from its pinned baseline ([the pin](docs/setup/armature.pin)).\n"
+	readme = "# " + Name + "\n\nThe product repository of " + Name + ", set up from its pinned baseline ([the pin](docs/setup/armature.pin)). Its records are on the branch `layup-records`.\n"
 	agents = "# AGENTS.md\n\nAgent context for **" + Name + "**.\n"
 	// The facts of S04 and S06, and the files of S07 to S09, in the forms of
 	// setup.md (D2, D5 and D8 of #89).

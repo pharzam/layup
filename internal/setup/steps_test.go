@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	"io/fs"
 	"reflect"
 	"slices"
 	"strings"
@@ -66,7 +67,7 @@ func ans(change map[string]string) work.Answers {
 
 func runS01(t *testing.T, a work.Answers) Outcome {
 	t.Helper()
-	return Steps(Brief{Gaps: []byte(table), Sum: "abc"}, nil)["S01"].Run(Input{Dir: t.TempDir(), Answers: a})
+	return Steps(Brief{Gaps: []byte(table), Sum: "abc"}, Calls{})["S01"].Run(Input{Dir: t.TempDir(), Answers: a})
 }
 
 // S01 stops once for each missing answer, of both kinds, in the order of the
@@ -163,7 +164,7 @@ func TestS01RowOfAFact(t *testing.T) {
 // Once S01 is done, a problem statement whose SHA-256 differs from the row
 // brief.sha256 is an input error of the run (D6 of #86).
 func TestS01UnchangedBrief(t *testing.T) {
-	u := Steps(Brief{Gaps: []byte(table), Sum: "abc"}, nil)["S01"].Unchanged
+	u := Steps(Brief{Gaps: []byte(table), Sum: "abc"}, Calls{})["S01"].Unchanged
 	if u == nil {
 		t.Fatal("S01 has no check of its inputs")
 	}
@@ -317,7 +318,7 @@ func TestTheAnswersRecord(t *testing.T) {
 		{"S01-visibility", "public", "operator", "https://github.invalid/c/1", ""},
 		{"S01-baseline", "https://github.com/pharzam/armature", "operator", "F-0003#5", ""},
 	}
-	text := answersRecord("F-0001", "2026-10-02", asked, a)
+	text := answersRecord("F-0001", "2026-10-02", setupRecord, asked, a)
 	want := "# F-0001. The answers to the questions of the setup\n\n| Field | Value |\n| ------------ | ----- |\n" +
 		"| Fact ID | `F-0001` |\n" +
 		"| Source | The answers of `inputs/answers.tsv` to the questions of S01 and to the gaps of the problem statement |\n" +
@@ -347,6 +348,7 @@ type fakeRepo struct {
 	msg    string                     // the message of each commit
 	trees  map[string][]git.TreeEntry // a directory of the root commit and its files
 	shows  map[string]string          // a file of the root commit and its text
+	disk   map[string]string          // the files of the work area that read reads
 	fail   string
 }
 
@@ -402,6 +404,15 @@ func (f *fakeRepo) install(t *testing.T) {
 			return nil, errors.New("no file " + p)
 		},
 		write: func(p string, data []byte) error { f.files[p] = string(data); return call("write " + p) },
+		read: func(p string) ([]byte, error) {
+			if v, ok := f.files[p]; ok {
+				return []byte(v), nil
+			}
+			if v, ok := f.disk[p]; ok {
+				return []byte(v), nil
+			}
+			return nil, fs.ErrNotExist
+		},
 	}
 }
 
@@ -550,7 +561,7 @@ func TestS04(t *testing.T) {
 	f.install(t)
 	gaps := Brief{Gaps: []byte(table)}
 	o := runS04(gaps, Input{Dir: "w", Record: pinRecord(), Answers: ans(nil)})
-	record := answersRecord("F-0001", "2026-09-30", append(slices.Clone(work.S01Questions),
+	record := answersRecord("F-0001", "2026-09-30", setupRecord, append(slices.Clone(work.S01Questions),
 		work.Question{ID: "Q-001", Text: "Which technology stack does the product use?"}, work.Question{ID: "Q-002", Text: "What does fast mean here, as a number?"}), ans(nil))
 	sum := fmt.Sprintf("%x", sha256.Sum256([]byte(record)))
 	files := map[string]string{

@@ -25,7 +25,23 @@ var mkExemptRE = regexp.MustCompile(mkExempt)
 type Marker struct {
 	File string
 	Line int
+	Col  int // the byte column of its open quote on its line (D7 of #90)
 	Text string
+}
+
+// TextMarkers gives each marker of text with its line and column, and no
+// file: internal/cli refuses a brief that holds one (D4 of #90).
+func TextMarkers(text string) []Marker { return textMarkers("", text) }
+
+// textMarkers gives the markers of the text of file, line by line.
+func textMarkers(file, text string) []Marker {
+	var out []Marker
+	for i, line := range strings.Split(strings.TrimSuffix(text, "\n"), "\n") {
+		for _, s := range lineSpans(line) {
+			out = append(out, Marker{file, i + 1, s.col, s.text})
+		}
+	}
+	return out
 }
 
 // Markers gives each marker of the work tree at tree, in the order of the
@@ -51,11 +67,7 @@ func scanMarkers(fsys fs.FS, files []string) []Marker {
 		if err != nil {
 			continue
 		}
-		for i, line := range strings.Split(strings.TrimSuffix(string(data), "\n"), "\n") {
-			for _, m := range lineMarkers(line) {
-				out = append(out, Marker{p, i + 1, m})
-			}
-		}
+		out = append(out, textMarkers(p, string(data))...)
 	}
 	return out
 }
@@ -72,6 +84,23 @@ const (
 // the mention and is skipped; the text of the convention is not a marker.
 func lineMarkers(line string) []string {
 	var out []string
+	for _, s := range lineSpans(line) {
+		out = append(out, s.text)
+	}
+	return out
+}
+
+// A span is one marker of a line: the byte column of its open quote and its
+// text.
+type span struct {
+	col  int
+	text string
+}
+
+// lineSpans gives the markers of one line by the rule of lineMarkers, each
+// with its column, so S11 replaces it where the scanner found it (D7 of #90).
+func lineSpans(line string) []span {
+	var out []span
 	for i := 0; ; {
 		j := strings.Index(line[i:], mkOpen)
 		if j < 0 {
@@ -88,7 +117,7 @@ func lineMarkers(line string) []string {
 			m = line[at : after+k+len(mkClose)]
 		}
 		if m != mkForm {
-			out = append(out, m)
+			out = append(out, span{at, m})
 		}
 		i = at + len(m)
 	}

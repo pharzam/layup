@@ -26,7 +26,7 @@ import (
 func stubSteps(t *testing.T, out map[string]setup.Outcome) {
 	t.Helper()
 	saved := setupSteps
-	setupSteps = func(setup.Brief, setup.Checks) map[string]setup.Step {
+	setupSteps = func(setup.Brief, setup.Calls) map[string]setup.Step {
 		m := setup.Stubs()
 		for id, s := range m {
 			o, ok := out[id]
@@ -171,17 +171,16 @@ func TestSetupRunsS01ToS04(t *testing.T) {
 		t.Fatal(err)
 	}
 	writeFile(t, filepath.Join(w, "inputs", "answers.tsv"), b.String())
-	code, out, errOut := run("setup", w)
-	if code != 1 || !strings.HasPrefix(out, "step\tactor\tresult\tevidence\n"+
-		"S01\tlayup-setup\tdone\tevery answer present; the stack has a catalog entry\n"+
-		"S02\tlayup-setup\tdone\tthe commit and the tree\n"+
-		"S03\tlayup-setup\tdone\troot tree = pin.tree\n"+
-		"S04\tlayup-setup\tdone\tchecks pin and facts\n"+
-		"S05\tlayup-setup\tnot-active\tnot built yet\n") {
-		t.Fatalf("the next run: exit %d, stderr %q, stdout\n%s\nwant 1, S01 to S04 done and S05 not built yet", code, errOut, out)
+	code, out, errOut := run("setup", w) // S01 to S06, then the prose step stops for its inputs (task T-b3r1)
+	record, _ := work.ReadRecord(w)
+	for _, id := range []string{"S01", "S02", "S03", "S04", "S05", "S06"} {
+		if v, _ := record.Value(id, "done"); code != 3 || v == "" || !strings.HasPrefix(out, "step\tquestion\task\twhere\nS14\tF-AGENTS.md\t") {
+			t.Fatalf("the next run: exit %d, stderr %q, stdout\n%s\nwant 3, %s done and the stop of the prose step", code, errOut, out, id)
+		}
 	}
 	target := filepath.Join(w, "target")
-	if got := gitIn(t, target, "diff", "--name-only", "main", "layup-setup"); got != "docs/adr/0009-pin-the-baseline.md\ndocs/adr/README.md\n"+
+	s04 := gitIn(t, target, "rev-list", "--grep=^chore: setup S04$", "layup-setup")
+	if got := gitIn(t, target, "diff", "--name-only", "main", s04); got != "docs/adr/0009-pin-the-baseline.md\ndocs/adr/README.md\n"+
 		"docs/facts/F-0001-setup-answers.md\ndocs/facts/README.md\ndocs/setup/armature.pin\ndocs/setup/facts.sha256" {
 		t.Errorf("the files of S04: %q", got)
 	}
@@ -227,7 +226,7 @@ func TestABrokenPinFailsTheEvidenceOfS04(t *testing.T) {
 	writeFile(t, filepath.Join(w, "inputs", "answers.tsv"), b.String())
 	stubSteps(t, map[string]setup.Outcome{"S04": {Kind: setup.Fail, Evidence: "a stop before S04"}})
 	saved := setupSteps
-	setupSteps = func(br setup.Brief, c setup.Checks) map[string]setup.Step { // S01 to S03 of this version, then a stop
+	setupSteps = func(br setup.Brief, c setup.Calls) map[string]setup.Step { // S01 to S03 of this version, then a stop
 		m, real := saved(br, c), setup.Steps(br, c)
 		for _, id := range []string{"S01", "S02", "S03"} {
 			m[id] = real[id]
@@ -254,8 +253,10 @@ func TestABrokenPinFailsTheEvidenceOfS04(t *testing.T) {
 		t.Errorf("layup-setup is not at the root commit after the undo")
 	}
 	writeFile(t, record, string(good))
-	if code, out, _ := run("setup", w); code != 1 || !strings.Contains(out, "\nS04\tlayup-setup\tdone\tchecks pin and facts\n") ||
-		gitIn(t, target, "log", "--format=%s", "main..layup-setup") != "chore: setup S04" {
+	code, out, _ = run("setup", w) // S04 again, then S05 and S06, and the prose step stops (task T-b3r1)
+	if done, _ := os.ReadFile(record); code != 3 || !strings.Contains(string(done), "\nS04\tdone\tchecks pin and facts\t") ||
+		strings.SplitN(gitIn(t, target, "log", "--reverse", "--format=%s", "main..layup-setup"), "\n", 2)[0] != "chore: setup S04" ||
+		gitIn(t, target, "rev-list", "--count", "--grep=^chore: setup S04$", "layup-setup") != "1" {
 		t.Errorf("the run with the record put right: exit %d\n%s\nwant S04 done with one commit", code, out)
 	}
 }
