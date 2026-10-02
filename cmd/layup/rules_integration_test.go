@@ -141,3 +141,32 @@ func TestInputRule(t *testing.T) {
 		t.Errorf("the fixture gives\n%s\nwant only the finding %s", strings.Join(f, "\n"), want)
 	}
 }
+
+// #48: a checkout with core.autocrlf=true (git's default on Windows) keeps the
+// bytes of the raw facts files and of setup-check.sh, so check facts passes on
+// it. The test clones the commit HEAD of this repository; a change of
+// .gitattributes counts when it is committed.
+func TestAnAutocrlfCheckoutKeepsTheFacts(t *testing.T) {
+	home := t.TempDir()
+	env := append(os.Environ(), "HOME="+home, "XDG_CONFIG_HOME="+home, "GIT_CONFIG_NOSYSTEM=1")
+	run := func(dir string, name string, args ...string) string {
+		t.Helper()
+		cmd := exec.Command(name, args...)
+		cmd.Dir, cmd.Env = dir, env
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			t.Fatalf("%s %s: %v\n%s", name, strings.Join(args, " "), err, out)
+		}
+		return strings.TrimSpace(string(out))
+	}
+	root, _ := filepath.Abs(filepath.Join("..", ".."))
+	head := run(root, "git", "rev-parse", "HEAD")
+	clone := filepath.Join(t.TempDir(), "clone")
+	run("", "git", "-c", "core.hooksPath=/dev/null", "clone", "-q", "--no-hardlinks", "--no-checkout", "--config", "core.autocrlf=true", root, clone)
+	run(clone, "git", "-c", "core.hooksPath=/dev/null", "checkout", "-q", "--detach", head)
+	cmd := exec.Command("sh", filepath.Join(clone, "docs", "setup", "setup-check.sh"), "--only", "facts", clone)
+	cmd.Env = env
+	if out, err := cmd.CombinedOutput(); err != nil || !strings.Contains(string(out), "setup-check: facts OK") {
+		t.Errorf("check facts on an autocrlf checkout: %v\n%s", err, out)
+	}
+}
