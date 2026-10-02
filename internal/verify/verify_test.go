@@ -121,7 +121,7 @@ func TestRunGivesEachRowInTheOrderOfTheTable(t *testing.T) {
 	}
 	want := []Row{notBuiltRow("discipline-tests"), {"pin", "pass", ""}, {"kit-history", "fail", "orphan: x"},
 		notBuiltRow("facts"), notBuiltRow("onboarding"), notBuiltRow("glossary"), notBuiltRow("guardrails"),
-		notBuiltRow("markers"), notBuiltRow("adapted"), {"identity", "pass", ""}, notBuiltRow("link-lint"),
+		notBuiltRow("markers"), {"adapted", "pass", ""}, {"identity", "pass", ""}, notBuiltRow("link-lint"),
 		notBuiltRow("sources"), notBuiltRow("jobs"), notBuiltRow("gate:static"), notBuiltRow("gate:layout")}
 	if !reflect.DeepEqual(tbl.Rows, want) {
 		t.Errorf("the rows\n got %q\nwant %q", tbl.Rows, want)
@@ -237,7 +237,7 @@ func TestTheScratchTree(t *testing.T) {
 	}
 	for _, r := range tbl.Rows {
 		want := "not built yet"
-		if r.Check == "pin" || r.Check == "kit-history" || r.Check == "identity" {
+		if r.Check == "pin" || r.Check == "kit-history" || r.Check == "adapted" || r.Check == "identity" {
 			want = "scratch tree: add failed"
 		}
 		if r.Result != "not-active" || r.Reason != want {

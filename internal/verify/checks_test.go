@@ -22,11 +22,13 @@ type stubHistory struct {
 	shallow bool
 	roots   []string
 	trees   map[string]string
+	files   []string
 	err     error
 }
 
 func (h stubHistory) IsShallow() (bool, error)       { return h.shallow, h.err }
 func (h stubHistory) RootCommits() ([]string, error) { return h.roots, h.err }
+func (h stubHistory) Files() ([]string, error)       { return h.files, h.err }
 func (h stubHistory) Tree(c string) (string, error) {
 	if h.err != nil {
 		return "", h.err
