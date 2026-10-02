@@ -401,7 +401,8 @@ reason  text                             -    the first failure, or the `clear` 
   a path that git quotes (one with `"`, `\` or a control character in it); the
   engine reads it, because a tracked file is read, not skipped. A failed list is
   the finding `git: cannot list the tracked files`.
-- **The text is bytes,** as `awk` reads it in the C locale. A line loses a last
+- **The text is bytes,** as `awk` reads it in the C locale; a NUL byte is one
+  more byte, where macOS `awk` ends the line at it. A line loses a last
   carriage return; each run of spaces and tabs becomes one space; a space at
   the start or at the end of a line is removed; a line with no other character
   ends the paragraph; a marker from `‹` to the first `›`
@@ -411,8 +412,8 @@ reason  text                             -    the first failure, or the `clear` 
 - **A hit** of one of the 16 patterns of the sh function is at the first letter
   of its word, the end of the boundary before it, so a boundary of more than one
   byte (for example `é`) does not move it; its line is the line where its word
-  starts. A hit of rule 1 whose eleven lower-case bytes from its first letter
-  are `kit-history` or `kit-linters` is not a finding.
+  starts. A hit of the first pattern of rule 1 whose eleven lower-case bytes
+  from its first letter are `kit-history` or `kit-linters` is not a finding.
 - **The findings** are `<rule> <name>: <path>:<line>`, each once, in byte order;
   the first is the reason of the row. The sh function sorts in the locale of its
   host; byte order makes the reason one value on every host (`NFR-005`).

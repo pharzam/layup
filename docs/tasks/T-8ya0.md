@@ -48,3 +48,60 @@ function's word position (one byte after the match), which a boundary of more
 than one byte moves; `strings.ToLower`, which changes the length of a text that
 is not ASCII; a plain find-all of the matches, which loses a hit that shares a
 boundary with the one before it.
+
+## Review round 1
+
+Devin and OpenCode failed at once (Devin's usage quota; "Go usage limit
+exceeded") and are skipped. Claude Fable 5.1 on the Claude Code CLI (effort
+`xhigh`) reviewed `c6118e0` and gave `nothing material in scope`, with five
+notes. It compared the core with the sh function on 46 tracked paths of edge
+cases: the lines are the same, except the NUL bytes (note 1) and the paths that
+git quotes (D2). Notes 1 and 2 are applied as text in `setup.md` at the
+close-out, with no change of code: a NUL byte is one more byte for the engine,
+where macOS `awk` ends the line; the exemption is of the first pattern of rule 1
+only, as the code has it. Note 3 (`TestFlagged` has no case `bad-rule-3`) is not
+applied: the harness runs the core on that case and `Flagged` reads the same
+files, so the reviewed code stays as it is. Notes 4 and 5 need no change.
+
+## Verdict
+
+Delivered: check `adapted` of `layup setup verify`. `internal/verify` ports
+`check_adapted` on the bytes of the tracked `.md` files, with LAYUP's
+`AD_EXCLUDE` and `ad_allowed` as they are (O-123): the 16 patterns on every
+start position, a hit at the first letter of its word, the lower case of `A` to
+`Z` only, a marker as one unit, the findings once each in byte order.
+`Flagged` gives the list of the flagged files for the prose step of row 13
+(K12). On LAYUP's unchanged baseline the engine and the sh function give the
+same 441 lines; the sh function's fault in a UTF-8 locale of macOS `awk` is a
+known limit in `setup.md`.
+
+The plan review (Claude Fable 5.1) gave `approve-with-conditions`, with one
+condition, applied; round 1 (`c6118e0`, Claude Fable 5.1) gave `nothing
+material in scope`. The records are on #88. At `c6118e0`, `go build`, `go vet`
+with each tag, `gofmt`, the three test levels and `go test -race` on
+`internal/verify` pass; at the head, all local checks pass, and
+`review-record-lint` passes on the comments of #88 (1 round, cap 1). The diff
+against `origin/main` is 712 lines over 17 files with the
+close-out, inside the Budget maximum of 1,500 lines over 20 files.
+
+Next: row 12 of the plan (`T-9t1q`, #89), the lowest row whose predecessors
+have merged; rows 9 and 10 wait for it.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). Times are 2026-10-02, UTC. A token count is
+the `result` event of the Claude Code CLI (input, output, cache creation and
+cache read tokens, and its cost) where that harness gave one; `not reported`
+where the harness or the author's session gives none.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan, with the inventory item and the shell function | reasoning | Claude Opus 5.5 | max | not reported | 13:43 to 13:48 |
+| The plan review, first harness: skipped ("Unknown model", with no model in its list) | reasoning | GPT-6 Sol on the Devin CLI | `xhigh` | not reported | 5 s, 13:48:26 to 13:48:31 |
+| The plan review, second harness: skipped ("Go usage limit exceeded") | reasoning | Grok 4.7 on the OpenCode CLI | `xhigh` | not reported | 6 min 11 s, 13:48:38 to 13:54:49 |
+| The plan review | reasoning | Claude Fable 5.1 on the Claude Code CLI | `xhigh` | 943,608 (USD 4.38) | 8 min 1 s, 13:55:24 to 14:03:25 |
+| The answer to the plan review | reasoning | Claude Opus 5.5 | max | not reported | 14:03 to 14:04 |
+| The core, the tests, the comparisons with the sh function, the specification and the records; the freeze | execution | Claude Opus 5.5, a reasoning-tier model on an execution part | max | not reported | 13:50 to 14:11; the core drafted 13:50 to 13:55, while the plan review ran |
+| Review round 1, first and second harness: skipped (Devin's usage quota; "Go usage limit exceeded") | reasoning | GPT-6 Sol on the Devin CLI; Grok 4.7 on the OpenCode CLI | `xhigh`; `low` | not reported | 7 s, 14:11:36 to 14:11:43 |
+| Review round 1 | reasoning | Claude Fable 5.1 on the Claude Code CLI | `xhigh` | 796,558 (USD 3.54) | 7 min 19 s, 14:12:07 to 14:19:26 |
+| The close-out, with notes 1 and 2 of round 1 | execution | Claude Opus 5.5 | max | not reported | 14:20 to 14:20 |
