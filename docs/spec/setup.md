@@ -308,11 +308,12 @@ task `T-3jpx`, #81):
   path in the target is its path without `.tmpl`: `files/go.mod.tmpl` is the
   target's `go.mod`. The `embed` pattern of an entry has the prefix `all:`
   (`//go:embed all:<stack>`), so that `embed` keeps `.github/`. Reason: `embed`
-  refuses a directory that holds a `go.mod`, the root of another module, and
-  leaves out `.github/` without `all:` (measured, `runs/T-3jpx/`); a `.go` file
-  under `files/` would be a package of LAYUP's module for `go vet`, `go test`
-  and `go list`, and `gofmt` reads it. One suffix for every file is one rule
-  with no exception.
+  skips a directory that holds a `go.mod`, the root of another module, with
+  every file in it and with no error, and leaves out `.github/` without `all:`
+  (measured, `runs/T-3jpx/`); a `.go` file under `files/` would be a package of
+  LAYUP's module for `go vet`, `go test` and `go list`, and `gofmt` reads it.
+  One suffix for every file is one rule with no exception. Because the skip is
+  silent, the test of each entry checks the list of its files.
 - **The rules of an entry**, which `internal/catalog` checks when it reads one:
   `kinds.tsv` matches its schema and has at least one row; an `active` kind
   names `fixtures/<kind>.patch`, and that file exists; a `pending` kind has `—`

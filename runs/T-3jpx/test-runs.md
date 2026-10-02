@@ -14,17 +14,25 @@ go version go1.27.1 darwin/arm64
 # testdata/a/files/ holds go.mod.tmpl and .github/workflows/g.yml
 //go:embed testdata/a        -> [testdata/a/files/go.mod.tmpl]
 //go:embed all:testdata/a    -> [testdata/a/files/.github/workflows/g.yml testdata/a/files/go.mod.tmpl]
-# testdata/b/files/ holds a plain go.mod
+# testdata/b/files/ holds a plain go.mod, and nothing else
 //go:embed testdata/b
 cat/d_test.go:5:12: pattern testdata/b: cannot embed directory testdata/b: contains no embeddable files
+# testdata/c holds kinds.tsv, files/go.mod, files/other.txt and fixtures/k.patch
+//go:embed all:testdata/c   -> [testdata/c/fixtures/k.patch testdata/c/kinds.tsv]
 ```
 
-So `embed` leaves out `.github/` without the prefix `all:`, and refuses a
-directory that holds a `go.mod`.
+So `embed` leaves out `.github/` without the prefix `all:`, and skips a
+directory that holds a `go.mod`, with every file in it: with no error when the
+pattern still matches other files (`testdata/c`: `files/other.txt` is lost
+too), and with the error above only when nothing else is left (`testdata/b`).
+The third measurement came from review round 1, note 1; the first conclusion
+said "refuses", which was one case wide.
 
 ## The red runs
 
-The tests ran on a skeleton of `internal/catalog`: its names, with no behaviour
+The texts of three errors changed after review round 1 (note 5): an empty
+fixture now shows as `—`, and a fixture path shows with no quotes; the runs below
+show the texts of that time. The tests ran on a skeleton of `internal/catalog`: its names, with no behaviour
 (each function gives its zero value), and the empty Go schemas. So each test
 fails on its own assertion. The first red run showed that `TestTheSchemaBlocks`
 looked a block up by the Go schema's own name, so an empty schema compared

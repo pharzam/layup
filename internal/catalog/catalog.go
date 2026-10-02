@@ -7,6 +7,7 @@ package catalog
 
 import (
 	"bytes"
+	"cmp"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -116,9 +117,9 @@ func Read(fsys fs.FS, stack string) (*Entry, error) {
 		want := "fixtures/" + k.Name + ".patch"
 		switch {
 		case k.State == "pending" && k.Fixture != "":
-			errs = append(errs, fmt.Errorf("catalog: %s: the pending kind %s names the fixture %q; a pending kind has —", at("kinds.tsv"), k.Name, k.Fixture))
+			errs = append(errs, fmt.Errorf("catalog: %s: the pending kind %s names the fixture %s; a pending kind has —", at("kinds.tsv"), k.Name, k.Fixture))
 		case k.State == "active" && k.Fixture != want:
-			errs = append(errs, fmt.Errorf("catalog: %s: the active kind %s names the fixture %q; want %s", at("kinds.tsv"), k.Name, k.Fixture, want))
+			errs = append(errs, fmt.Errorf("catalog: %s: the active kind %s names the fixture %s; want %s", at("kinds.tsv"), k.Name, cmp.Or(k.Fixture, "—"), want))
 		case k.State == "active" && !slices.Contains(e.fixtures, k.Name+".patch"):
 			errs = append(errs, fmt.Errorf("catalog: %s: the fixture of the active kind %s does not exist", at(want), k.Name))
 		case k.State == "active":

@@ -1,6 +1,8 @@
 # Line endings are CONTENT in this tree, not formatting. Two rule blocks,
 # opposite directions, each the fix for a measured defect. They are ordered
-# fixtures-first for a reason the second block states.
+# fixtures-first for a reason the second block states. A third line-ending
+# block, for the stack catalog, comes last: it turns the conversion off, and no
+# pattern of it overlaps a pattern above, so the order rule does not touch it.
 #
 # ADOPTERS: copy this file. Without it the kit's scripts do not run on a Windows
 # checkout, and the fixtures whose Windows endings ARE the assertion quietly

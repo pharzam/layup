@@ -72,14 +72,14 @@ func TestReadRefusesAnEntryThatBreaksARule(t *testing.T) {
 		{"a bad state", entry(strings.Replace(staticRow, "active", "on", 1), map[string]string{"fixtures/static.patch": "x"}), `go/kinds.tsv: line 2, column "state"`},
 		{"a missing column", entry("static\tactive\n", nil), `go/kinds.tsv: line 2`},
 		{"no kind", entry("", nil), "go/kinds.tsv: no kind"},
-		{"an active kind with no fixture", entry(strings.Replace(staticRow, "fixtures/static.patch", "—", 1), nil), `the active kind static names the fixture ""`},
+		{"an active kind with no fixture", entry(strings.Replace(staticRow, "fixtures/static.patch", "—", 1), nil), "the active kind static names the fixture —"},
 		{"an active kind with another fixture path", broken(func(f fstest.MapFS) {
 			f["go/kinds.tsv"] = &fstest.MapFile{Data: []byte(header + strings.Replace(staticRow, "fixtures/static.patch", "fixtures/other.patch", 1) + layoutRow)}
-		}), `the active kind static names the fixture "fixtures/other.patch"`},
+		}), "the active kind static names the fixture fixtures/other.patch"},
 		{"a missing fixture file", broken(func(f fstest.MapFS) { delete(f, "go/fixtures/static.patch") }), "go/fixtures/static.patch: the fixture of the active kind static does not exist"},
 		{"a pending kind with a fixture", broken(func(f fstest.MapFS) {
 			f["go/kinds.tsv"] = &fstest.MapFile{Data: []byte(header + staticRow + strings.Replace(layoutRow, "\t—\t—\n", "\tfixtures/layout.patch\t—\n", 1))}
-		}), `the pending kind layout names the fixture "fixtures/layout.patch"`},
+		}), "the pending kind layout names the fixture fixtures/layout.patch"},
 		{"a fixture of no kind", broken(func(f fstest.MapFS) { f["go/fixtures/extra.patch"] = &fstest.MapFile{Data: []byte("x")} }), "go/fixtures/extra.patch: the file is the fixture of no active kind (no active kind extra)"},
 		{"a file of files/ without the suffix", broken(func(f fstest.MapFS) { f["go/files/go.mod"] = &fstest.MapFile{Data: []byte("x")} }), "go/files/go.mod: a file of files/ ends with .tmpl"},
 		{"a file of files/ that is only the suffix", broken(func(f fstest.MapFS) { f["go/files/.tmpl"] = &fstest.MapFile{Data: []byte("x")} }), "go/files/.tmpl: a file of files/ ends with .tmpl"},
