@@ -103,3 +103,18 @@ So a closed pipe stops the binary with `SIGPIPE`, as Go does for a write to a
 broken pipe on standard output, and gives no code; the end-to-end scenario uses
 a standard output that is open for reading only, where each write fails, and
 `docs/spec/psb-check.md` says both.
+
+## The green runs
+
+On the tree of the commit that adds this table.
+
+| Command | Result |
+| ------- | ------ |
+| `go build ./...` | exit 0 |
+| `go vet ./...`; `go vet -tags=integration ./...`; `go vet -tags=e2e ./...` | exit 0 each |
+| `gofmt -l .` | no file |
+| `go test -count=1 ./...` | `ok` × 7 packages |
+| `go test -count=1 -tags=integration ./...` | `ok` × 7; `TestGoldenRealPSB`, `TestEveryGoldenIsARecordOfTheBlock`, `TestPSBCheckExitCodes`, `TestEverySchemaBlockIsBuiltOrNotYetBuilt` (with `psb-gaps` in `built`), `TestPackageRules` (with the import of `internal/tsv` by `internal/psb`) and `TestInputRule` pass |
+| `go test -count=1 -tags=e2e -timeout 10m ./...` | `ok` × 7; the four scenarios of `cmd/layup/psb_e2e_test.go` pass |
+| `go test -race -count=1 ./internal/psb/ ./internal/cli/`, also with `-tags=integration` | `ok` |
+| `git diff 4b47982 HEAD -- internal/psb/testdata/psb.tsv docs/facts/` | empty: the golden of the real problem statement and `F-0004` do not change |
