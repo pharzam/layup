@@ -94,15 +94,16 @@ type check struct {
 }
 
 // checks is the table of setup.md, in its order (D4 of #84). Rows 10 to 15 of
-// the plan add the other checks; row 11 added adapted.
+// the plan add the other checks; row 11 added adapted, row 12 facts,
+// onboarding, glossary and guardrails in a target's form.
 var checks = []check{
 	{"discipline-tests", nil},
 	{"pin", checkPin},
 	{"kit-history", checkKitHistory},
-	{"facts", nil},
-	{"onboarding", nil},
-	{"glossary", nil},
-	{"guardrails", nil},
+	{"facts", checkFacts},
+	{"onboarding", checkOnboarding},
+	{"glossary", checkGlossary},
+	{"guardrails", checkGuardrails},
 	{"markers", nil},
 	{"adapted", checkAdapted},
 	{"identity", checkIdentity},

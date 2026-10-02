@@ -161,7 +161,7 @@ check_facts() {
 		while IFS= read -r fa_line; do
 			fa_n=${fa_line%%. *}
 			fa_text=${fa_line#*. }
-			if [ -z "$(printf '%s' "$fa_text" | tr -d ' ')" ]; then fail facts "verbatim: $fa_id fact $fa_n is empty"; continue; fi
+			if [ -z "$(printf '%s' "$fa_text" | tr -d ' \t')" ]; then fail facts "verbatim: $fa_id fact $fa_n is empty"; continue; fi
 			if [ "$fa_n" -lt 1 ] || [ "$fa_n" -gt "$fa_max" ]; then fail facts "numbering: $fa_id fact $fa_n is outside 1..$fa_max"; fi
 			grep -Fq -- "$fa_text" "$fa_src" \
 				|| fail facts "verbatim: $fa_id fact $fa_n is not a byte-exact substring of docs/facts/problem-statement-brief.md"

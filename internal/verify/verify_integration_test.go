@@ -74,7 +74,7 @@ func TestRunOnAStandInWorkArea(t *testing.T) {
 			got = append(got, r.Check+" "+r.Result+" "+r.Reason)
 		}
 	}
-	if want := []string{"pin pass ", "kit-history pass ", "adapted pass ", "identity pass "}; strings.Join(got, "|") != strings.Join(want, "|") || len(tbl.Rows) != 15 ||
+	if want := []string{"pin pass ", "kit-history pass ", "facts pass ", "onboarding pass ", "glossary pass ", "guardrails pass ", "adapted pass ", "identity pass "}; strings.Join(got, "|") != strings.Join(want, "|") || len(tbl.Rows) != 15 ||
 		tbl.Rows[13].Check != "gate:static" || tbl.Rows[14].Check != "gate:layout" {
 		t.Errorf("the rows %q; want %q, the others not built yet, and gate:static and gate:layout last", tbl.Rows, want)
 	}
@@ -96,23 +96,40 @@ func TestEachFindingOfATarget(t *testing.T) {
 	dir := t.TempDir()
 	link := filepath.ToSlash(filepath.Join(dir, "baseline")) + "/"
 	for _, c := range []struct {
-		name   string
-		o      standin.Options
-		check  string
-		reason string
+		name    string
+		o       standin.Options
+		check   string
+		reason  string
+		answers string // rows added to inputs/answers.tsv
 	}{
 		{"a decision of the kit", standin.Options{Files: map[string]string{"docs/decisions/D-0002.md": "x\n"}}, "kit-history",
-			"decisions: docs/decisions/ exists (kit step 4 deletes it)"},
+			"decisions: docs/decisions/ exists (kit step 4 deletes it)", ""},
 		{"a link to the baseline of the target", standin.Options{Files: map[string]string{"docs/tasks/backlog.md": "- [#1](file://" + link + "issues/1)\n"}}, "kit-history",
-			"kit-link: docs/tasks/backlog.md links " + link + " (a kit task or note)"},
+			"kit-link: docs/tasks/backlog.md links " + link + " (a kit task or note)", ""},
 		{"a link to the repository of the baseline (round 1, finding 1)", standin.Options{Files: map[string]string{"docs/tasks/backlog.md": "- [the baseline](file://" + strings.TrimSuffix(link, "/") + ")\n"}},
-			"kit-history", "kit-link: docs/tasks/backlog.md links " + link + " (a kit task or note)"},
-		{"no pin", standin.Options{Files: map[string]string{"docs/setup/armature.pin": ""}}, "pin", "missing: docs/setup/armature.pin is absent"},
-		{"a record of another commit", standin.Options{Record: map[string]string{"S02 pin.commit": strings.Repeat("1", 40)}}, "pin", "commit: the pin names "},
+			"kit-history", "kit-link: docs/tasks/backlog.md links " + link + " (a kit task or note)", ""},
+		{"no pin", standin.Options{Files: map[string]string{"docs/setup/armature.pin": ""}}, "pin", "missing: docs/setup/armature.pin is absent", ""},
+		{"a record of another commit", standin.Options{Record: map[string]string{"S02 pin.commit": strings.Repeat("1", 40)}}, "pin", "commit: the pin names ", ""},
 		{"a README.md with no name", standin.Options{Files: map[string]string{"README.md": "# x\n\n[pin](docs/setup/armature.pin)\n"}}, "identity",
-			"name: README.md does not hold the name of the target, " + standin.Name},
+			"name: README.md does not hold the name of the target, " + standin.Name, ""},
 		{"the phrase of the kit", standin.Options{Files: map[string]string{"AGENTS.md": "Agent context for **Armature**\n"}}, "identity",
-			`kit: AGENTS.md says the repository is the Armature kit ("Agent context for **Armature**")`},
+			`kit: AGENTS.md says the repository is the Armature kit ("Agent context for **Armature**")`, ""},
+		// The four checks in a target's form (#89), on a record whose steps
+		// are done through S14 (D10).
+		{"a brief that does not match its hash", standin.Options{Done: true, Files: map[string]string{standin.BriefPath: "another text\n"}}, "facts",
+			"hash: docs/facts/problem-statement-brief.md does not match docs/setup/facts.sha256", ""},
+		{"an answer with no fact in the record of S04", standin.Options{Done: true}, "facts",
+			"answers: Q-001 of inputs/answers.tsv is not a fact of F-0001", "Q-001\tten\tidea-owner\tu\t\u2014\n"},
+		{"an M- answer after S11 and no record of S11", standin.Options{Done: true}, "facts",
+			"record: expected one docs/facts/F-NNNN-marker-answers.md", "M-0123abcd\t8080\toperator\tu\t\u2014\n"},
+		{"no onboarding file", standin.Options{Done: true, Files: map[string]string{"docs/onboarding-for-engineers.md": ""}}, "onboarding",
+			"missing: docs/onboarding-for-engineers.md is absent", ""},
+		{"an onboarding file with no link", standin.Options{Done: true, Files: map[string]string{"docs/onboarding-for-engineers.md": "# Onboarding\n"}}, "onboarding",
+			"link: docs/onboarding-for-engineers.md has no link to facts/problem-statement-brief.md", ""},
+		{"a glossary citation that does not resolve", standin.Options{Done: true, Files: map[string]string{"docs/glossary.md": "| A | a (`F-0001#9`) |\n"}}, "glossary",
+			"fact: F-0001#9 is not a fact of the F-0001 record", ""},
+		{"a guardrails entry with no valid check", standin.Options{Done: true, Files: map[string]string{"docs/guardrails.md": "- **Inv-1** a rule. Check: later\n"}}, "guardrails",
+			`check: Inv-1 has no valid Check: value ("later")`, ""},
 	} {
 		if err := os.RemoveAll(dir); err != nil {
 			t.Fatal(err)
@@ -120,6 +137,15 @@ func TestEachFindingOfATarget(t *testing.T) {
 		w, err := standin.Make(dir, c.o)
 		if err != nil {
 			t.Fatal(err)
+		}
+		if c.answers != "" {
+			f, err := os.OpenFile(filepath.Join(w.Dir, filepath.FromSlash(work.AnswersPath)), os.O_APPEND|os.O_WRONLY, 0)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := f.WriteString(c.answers); err != nil || f.Close() != nil {
+				t.Fatal(err)
+			}
 		}
 		tbl, err := Check(w.Dir, []string{c.check}, noSteps, io.Discard)
 		if err != nil || len(tbl.Rows) != 1 || tbl.Rows[0].Result != "fail" || !strings.HasPrefix(tbl.Rows[0].Reason, c.reason) {

@@ -26,13 +26,15 @@ func standInWork(t *testing.T) string {
 }
 
 // The demo of #84: the built binary on a stand-in work area prints the rows of
-// the checks kit-history, pin, adapted (#88) and identity, each pass, and a
-// not-active row for each check that it does not have yet, so it exits 1
-// (NFR-004); two runs give the same bytes (NFR-005).
+// the checks kit-history, pin, facts, onboarding, glossary and guardrails
+// (#89), adapted (#88) and identity, each pass, and a not-active row for each
+// check that it does not have yet, so it exits 1 (NFR-004); two runs give the
+// same bytes (NFR-005).
 func TestSetupVerifyOnAStandInWorkArea(t *testing.T) {
 	w := standInWork(t)
 	r := repeat(t, "setup", "verify", w)
 	if r.code != 1 || !strings.HasPrefix(r.stdout, "check\tresult\treason\ndiscipline-tests\tnot-active\tnot built yet\npin\tpass\t—\nkit-history\tpass\t—\n") ||
+		!strings.Contains(r.stdout, "\nkit-history\tpass\t—\nfacts\tpass\t—\nonboarding\tpass\t—\nglossary\tpass\t—\nguardrails\tpass\t—\n") ||
 		!strings.Contains(r.stdout, "\nadapted\tpass\t—\nidentity\tpass\t—\n") || !strings.HasSuffix(r.stdout, "\ngate:static\tnot-active\tnot built yet\ngate:layout\tnot-active\tnot built yet\n") ||
 		strings.Count(r.stdout, "\n") != 16 {
 		t.Fatalf("exit %d, stdout:\n%s", r.code, r.stdout)

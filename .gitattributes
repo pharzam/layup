@@ -189,6 +189,10 @@ docs/*/tests/**/*.sh               text eol=lf
 # above reaches it, so it is named the way the runner is. It is a thirteenth
 # executable: the count of twelve above was measured before it existed.
 docs/tests/nested-checkout-check.sh text eol=lf
+# LAYUP's setup check sits in docs/setup/, where none of the forms above reaches
+# it, so it is named the same way (#48): a fourteenth executable, and on a
+# checkout with `core.autocrlf=true` it does not run without this line.
+docs/setup/setup-check.sh          text eol=lf
 
 # --- a fixture whose trailing whitespace IS the test -------------------------
 #
@@ -201,6 +205,18 @@ docs/tests/nested-checkout-check.sh text eol=lf
 # It is a different attribute from the line-ending pins above, so the ordering
 # rule stated there does not touch it.
 docs/setup/tests/facts/bad-answers-blank/** -whitespace
+docs/setup/tests/facts/bad-blank-tab/** -whitespace
+
+# --- the raw facts files: bytes that their hashes hold (#48) -------------------
+#
+# docs/setup/facts.sha256 holds the SHA-256 of each raw facts file, and check
+# `facts` compares them. On a checkout with `core.autocrlf=true` (git's default on
+# Windows) a text file gains a carriage return per line, so every hash fails.
+# `-text` turns the conversion off in both directions for the whole directory,
+# so a later raw facts file there keeps its bytes too. The list of hashes is a
+# text file that the check parses: with carriage returns its paths do not match.
+docs/facts/**           -text
+docs/setup/facts.sha256 text eol=lf
 
 # --- the stack catalog: bytes that go into a target unchanged -----------------
 #

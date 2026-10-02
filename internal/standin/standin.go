@@ -7,9 +7,11 @@ package standin
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/pharzam/layup/internal/git"
@@ -44,11 +46,45 @@ func baselineFiles(url string) map[string]string {
 // The files that the setup by hand writes on layup-setup, by step.
 const (
 	gates = "kind\tstate\ttool\tcommand\tscope\tconfig\n" +
-		"static\tactive\tgo\tgo vet ./...\t./*.go\t—\n" +
-		"layout\tpending\tgo\tgo test ./layout/\t./*.go\t—\n"
+		"static\tactive\tgo\tgo vet ./...\t./*.go\t\u2014\n" +
+		"layout\tpending\tgo\tgo test ./layout/\t./*.go\t\u2014\n"
 	readme = "# " + Name + "\n\nThe product repository of " + Name + ", set up from its pinned baseline ([the pin](docs/setup/armature.pin)).\n"
 	agents = "# AGENTS.md\n\nAgent context for **" + Name + "**.\n"
+	// The facts of S04 and S06, and the files of S07 to S09, in the forms of
+	// setup.md (D2, D5 and D8 of #89).
+	RecordPath = "docs/facts/F-0001-setup-answers.md"
+	BriefPath  = "docs/facts/problem-statement-brief.md"
+	factsIndex = "# Customer facts\n\n## Index\n\n| Fact doc | Source | Collected | Status |\n| -------- | ------ | --------- | ------ |\n" +
+		"| [F-0001](F-0001-setup-answers.md) | The answers to the questions of the setup | 2026-10-02 | Raw |\n"
+	brief      = "# The problem statement of " + Name + "\n\nThe stand-in target needs one product.\n"
+	onboarding = "# Onboarding\n\nThe work of " + Name + " starts from [the problem statement](facts/problem-statement-brief.md) (`F-0001#1`).\n"
+	glossary   = "# Glossary\n\n| Term | Meaning |\n| ---- | ------- |\n| Target | the repository that the setup makes (`F-0001#2`) |\n"
+	guardrails = "# Guardrails\n\n## 1. Rules\n\n- **Inv-1** \u2014 the setup keeps its record (`F-0001#1`). Check: no check yet\n"
 )
+
+// asks gives the question of each answer of S01, for the record of S04.
+var asks = map[string]string{"S01-stack": "Which stack does the target use?", "S01-name": "What is the name of the target?",
+	"S01-visibility": "Is the repository of the target public?", "S01-baseline": "Where is the repository of the baseline?"}
+
+// AnswersRecord gives the record of the S01- answers that S04 writes, in the
+// form of setup.md (D2 of #89): one fact per answer, in the order of S01.
+func AnswersRecord(url string) string {
+	var b strings.Builder
+	b.WriteString("# F-0001. The answers to the questions of the setup\n\n| Field | Value |\n| ------------ | ----- |\n" +
+		"| Fact ID | `F-0001` |\n| Source | The answers of `inputs/answers.tsv` to the questions of S01 |\n" +
+		"| Collected by | the setup by hand of the stand-in |\n| Date collected | 2026-10-02 |\n" +
+		"| Origin | `inputs/answers.tsv` of the work area |\n| Status | `Raw` |\n\n## Facts as collected\n\n")
+	for i, r := range answerRows(url) {
+		fmt.Fprintf(&b, "%d. `%s` %s \u2014 by %s; source %s; the question: %s\n", i+1, r[0], r[1], r[2], r[3], asks[r[0]])
+	}
+	b.WriteString("\n## Notes on capture\n\nEach angle quote of a recorded text is written as `&lsaquo;` or `&rsaquo;`.\n")
+	return b.String()
+}
+
+// sumLine gives the line of a file in docs/setup/facts.sha256.
+func sumLine(text, path string) string {
+	return fmt.Sprintf("%x  %s\n", sha256.Sum256([]byte(text)), path)
+}
 
 // Baseline writes the stand-in baseline into a new repository at dir, with
 // one commit on main, and gives its file:// URL and the commit.
@@ -79,12 +115,17 @@ type Options struct {
 	// Record changes the record: "<step> <name>" and the new value; ""
 	// removes the row.
 	Record map[string]string
+	// Done adds the done rows of S03 to S14, the steps of the setup by hand,
+	// to the record (D10 of #89). The record of the step runner's tests keeps
+	// the rows of S01 and S02 only.
+	Done bool
 }
 
 // Make makes a new stand-in baseline at dir/baseline and, from it, a work
 // area at dir/work: the unchanged baseline as the root commit on main (S03),
-// a setup by hand on layup-setup, one commit per step (the pin of S04, the
-// history removed as S05 does, the manifest of S12, README.md and AGENTS.md of
+// a setup by hand on layup-setup, one commit per step (the pin and the
+// answers record of S04, the history removed as S05 does, the brief of S06,
+// the files of S07 to S09, the manifest of S12, README.md and AGENTS.md of
 // S14), out/record.tsv with the rows of S01 and S02, and inputs/answers.tsv.
 func Make(dir string, o Options) (Work, error) {
 	dir, err := filepath.Abs(dir)
@@ -122,9 +163,14 @@ func Make(dir string, o Options) (Work, error) {
 		step  string
 		files map[string]string
 	}{
-		{"S04", map[string]string{"docs/setup/armature.pin": pinText(url, commit, tree)}},
+		{"S04", map[string]string{"docs/setup/armature.pin": pinText(url, commit, tree), RecordPath: AnswersRecord(url),
+			"docs/facts/README.md": factsIndex, "docs/setup/facts.sha256": sumLine(AnswersRecord(url), RecordPath)}},
 		{"S05", map[string]string{"docs/decisions": "", "docs/audit": "", "docs/tasks/T-0001.md": "",
 			"docs/tasks/backlog.md": "# Backlog\n", "docs/tasks/completed.md": "# Completed\n"}},
+		{"S06", map[string]string{BriefPath: brief, "docs/setup/facts.sha256": sumLine(AnswersRecord(url), RecordPath) + sumLine(brief, BriefPath)}},
+		{"S07", map[string]string{"docs/onboarding-for-engineers.md": onboarding}},
+		{"S08", map[string]string{"docs/glossary.md": glossary}},
+		{"S09", map[string]string{"docs/guardrails.md": guardrails}},
 		{"S12", map[string]string{"docs/gates.tsv": gates}},
 		{"S14", map[string]string{"README.md": readme, "AGENTS.md": agents}},
 	}
@@ -139,7 +185,11 @@ func Make(dir string, o Options) (Work, error) {
 		}
 	}
 	var record, answers bytes.Buffer
-	if err := tsv.Write(&record, work.RecordSchema, recordRows(url, commit, tree, o.Record)); err != nil {
+	rows := recordRows(url, commit, tree, o.Record)
+	for i := 3; o.Done && i <= 14; i++ {
+		rows = append(rows, []string{fmt.Sprintf("S%02d", i), "done", "the setup by hand", "step", ""})
+	}
+	if err := tsv.Write(&record, work.RecordSchema, rows); err != nil {
 		return Work{}, err
 	}
 	if err := tsv.Write(&answers, work.AnswersSchema, answerRows(url)); err != nil {
