@@ -20,10 +20,25 @@ import (
 // The paths of a work area, from its root.
 const (
 	AnswersPath  = "inputs/answers.tsv"
+	BriefPath    = "inputs/briefs/problem-statement.md"
 	RecordPath   = "out/record.tsv"
 	CommandsPath = "out/commands.sh"
 	TargetPath   = "target"
 )
+
+// A Question is a question that a step asks: its ID, and its text, which is the
+// ask of the stop table and the question text of an answers record.
+type Question struct{ ID, Text string }
+
+// S01Questions are the four questions of S01, in its order (docs/spec/setup.md,
+// The steps; D1, D2 and D4 of #86): S01 asks them, and S04 and the stand-in
+// write their texts into the answers record.
+var S01Questions = []Question{
+	{"S01-stack", "Which technology stack does the target use? Give a stack of the catalog of LAYUP, for example go."},
+	{"S01-name", "What is the repository of the target on GitHub, as OWNER/NAME?"},
+	{"S01-visibility", "Is the repository of the target public or private?"},
+	{"S01-baseline", "What is the URL of the repository of the baseline?"},
+}
 
 // AnswersSchema is the form of inputs/answers.tsv: the block setup-answers of
 // docs/spec/setup.md.

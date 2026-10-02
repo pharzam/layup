@@ -27,6 +27,8 @@ type fakeSys struct {
 	commands           string
 	head               string // the branch of the target: "" is layup-setup, "detached" none
 	noDir, commitFails bool
+	heads              []string // the commits of HEAD, one per call of head; the last one stays
+	resets             []string // the commits of each resetSoft
 }
 
 func (f *fakeSys) install(t *testing.T) {
@@ -55,6 +57,18 @@ func (f *fakeSys) install(t *testing.T) {
 			}
 			return nil
 		},
+		head: func(string) (string, error) {
+			if len(f.heads) == 0 {
+				return "", errors.New("no HEAD")
+			}
+			h := f.heads[0]
+			if len(f.heads) > 1 {
+				f.heads = f.heads[1:]
+			}
+			return h, nil
+		},
+		resetSoft: func(_, commit string) error { f.resets = append(f.resets, commit); return nil },
+		now:       func() time.Time { return time.Date(2026, 10, 2, 9, 30, 0, 0, time.UTC) },
 	}
 }
 

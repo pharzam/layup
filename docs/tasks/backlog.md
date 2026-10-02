@@ -33,7 +33,6 @@ same summary, dated — rather than deleting it or checking it off.
 - **T-stfn** — Step 2, the core engine: `layup gate`, `layup setup` and `layup setup verify`, the telemetry and stall records, the release review and the first pilot ([#29](https://github.com/pharzam/layup/issues/29); [plan](../plan/README.md))
 - **T-b97r** — `layup setup` and `layup setup verify`, the parent of its child tasks ([#77](https://github.com/pharzam/layup/issues/77); [plan](../plan/README.md))
 - **T-vk3k** — `layup gate`, the parent of its child tasks ([#33](https://github.com/pharzam/layup/issues/33); [plan](../plan/README.md))
-- **T-7s0y** — Row 9 of the plan: Steps S01 to S04, with the gap table of S01 and the record of the `S01-` and `Q-` answers at S04 (O-124) ([#86](https://github.com/pharzam/layup/issues/86); [plan](../plan/README.md#the-tasks-of-phase-1))
 - **T-b3r1** — Row 13 of the plan: Steps S05 to S11 and S14: the prose step (S07 to S09 and S14) before S10 (O-123), and the record of the `M-` answers at S11 (O-124) ([#90](https://github.com/pharzam/layup/issues/90); [plan](../plan/README.md#the-tasks-of-phase-1))
 - **T-d6q5** — Row 15 of the plan: Steps S12, S13 and S15, and the checks `jobs` and `gate:<kind>` ([#92](https://github.com/pharzam/layup/issues/92); [plan](../plan/README.md#the-tasks-of-phase-1))
 - **T-dep6** — Row 16 of the plan: A whole setup, end to end, with no network ([#93](https://github.com/pharzam/layup/issues/93); [plan](../plan/README.md#the-tasks-of-phase-1))

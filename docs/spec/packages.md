@@ -61,7 +61,7 @@ reads this table, and holds no copy of it, which could differ from it.
 | `internal/git` | the one caller of the `git` program: [its calls](#the-calls-of-internalgit) | — | `git` |
 | `internal/psb` | the rules G1 to G5 and the gap table ([`psb-check.md`](psb-check.md)) | `internal/tsv` | no |
 | `internal/catalog` | the stack catalog, embedded with `embed` ([`setup.md`](setup.md#the-stack-catalog)) | `internal/tsv` | no |
-| `internal/work` | the work area of a target: its paths, and the schemas and the readers of `answers.tsv` and `record.tsv` ([`setup.md`](setup.md#the-answers)), which `internal/setup` and `internal/verify` share (K9); the record row `answers.sha256`, which `internal/setup` writes and `internal/standin` gives its stand-in | `internal/tsv` | no |
+| `internal/work` | the work area of a target: its paths, and the schemas and the readers of `answers.tsv` and `record.tsv` ([`setup.md`](setup.md#the-answers)), which `internal/setup` and `internal/verify` share (K9); the record row `answers.sha256`, which `internal/setup` writes and `internal/standin` gives its stand-in; the texts of the four questions of S01, which the stop table, the answers record of S04 and the stand-in use (task `T-7s0y`) | `internal/tsv` | no |
 | `internal/gate` | runs the kinds of a gate manifest on a head ([`gate.md`](gate.md)) | `internal/tsv`, `internal/git` | `sh -c`: the gate commands |
 | `internal/setup` | the step runner of `layup setup` ([`setup.md`](setup.md)) | `internal/tsv`, `internal/git`, `internal/catalog`, `internal/work` | no |
 | `internal/verify` | the checks of `layup setup verify` ([`setup.md`](setup.md)) | `internal/tsv`, `internal/git`, `internal/catalog`, `internal/gate`, `internal/work` | `sh`: the baseline's own check scripts |
@@ -77,7 +77,15 @@ runs the check of each step from `internal/verify` after `internal/setup` did
 the step. For the same reason `internal/cli` hands `internal/setup` the lists
 that `internal/verify` gives from a tree: the flagged files of the prose step
 (task `T-8ya0`), the markers of S10 and the files whose links break at S05
-(K10, task `T-8vpw`; [`setup.md`](setup.md#the-checks-of-layup-setup-verify)).
+(K10, task `T-8vpw`; [`setup.md`](setup.md#the-checks-of-layup-setup-verify)),
+and the evidence call of a step: a function that runs the one-check call of
+`internal/verify` on the work area (D12 of #86, task `T-7s0y`). In the same way
+`internal/cli` reads the problem statement once per run, runs `internal/psb`,
+and hands `internal/setup` the gap table, as `layup psb check` writes it, and
+the SHA-256 of the file; `internal/setup` reads the table by its own Go value
+of the block `psb-gaps`, which its block test compares with the block (D5 of
+#86), so the IDs `Q-NNN` keep one home and `internal/setup` imports no
+`internal/psb`.
 
 ### The test of the package rules
 
@@ -128,24 +136,26 @@ that the steps, the checks and `layup gate` name.
 | `SwitchCreate` | `git switch -c BRANCH COMMIT` | S04: the branch `layup-setup` |
 | `SwitchOrphan` | `git switch --orphan BRANCH` | S15: the branch `layup-records` |
 | `Branch` | `git symbolic-ref --quiet HEAD` | the step runner: a commit of S04 to S14 only on `layup-setup` (task `T-79y7`) |
-| `RevParse` | `git rev-parse --verify --end-of-options REV` | S02, S03: the tree of a commit; `layup gate`: `--base`, `--head` |
-| `RootCommits` | `git rev-list --max-parents=0 --end-of-options REV --` | check `pin` |
+| `RevParse` | `git rev-parse --verify --end-of-options REV` | S02, S03: the tree of a commit; S04: the root commit and the branch `layup-setup`; the step runner: the head of `layup-setup` (task `T-7s0y`); `layup gate`: `--base`, `--head` |
+| `ResetSoft` | `git reset --soft COMMIT` | the step runner: the undo of a step whose evidence fails (task `T-7s0y`, D12 of #86) |
+| `RootCommits` | `git rev-list --max-parents=0 --end-of-options REV --` | check `pin`; S03: the root commit of a run that stopped (task `T-7s0y`) |
+| `Message` | `git log -1 --format=%B --end-of-options REV --` | S03: the message of the root commit of a run that stopped (task `T-7s0y`) |
 | `IsShallow` | `git rev-parse --is-shallow-repository` | check `pin` (task `T-6x75`) |
 | `LsFiles` | `git ls-files -z` | S10; checks `markers` and `adapted` |
 | `WorktreeAdd` | `git worktree add --detach -- PATH REV` | `layup gate`, step 2 of the run; `layup setup verify`: the scratch tree; a fixture run |
 | `WorktreeRemove` | `git worktree remove --force -- PATH` | `layup gate`, step 4 of the run; `layup setup verify`; a fixture run |
-| `Show` | `git show --end-of-options REV:PATH --` | `layup gate`, steps 1 and 2 of the run; `layup setup verify`: the manifest at the head of `layup-setup` |
+| `Show` | `git show --end-of-options REV:PATH --` | `layup gate`, steps 1 and 2 of the run; `layup setup verify`: the manifest at the head of `layup-setup`; S04: the two index files and `docs/setup/facts.sha256` of the root commit (task `T-7s0y`) |
 | `DiffNames` | `git diff --name-only --no-renames -z --end-of-options BASE HEAD --` | `layup gate`: a `pending` kind |
 | `Apply` | `git apply -- PATCH` | check `gate:<kind>`: the known-bad fixture |
-| `LsTree` | `git ls-tree -r -z --full-tree --end-of-options REV -- PATH` | `layup gate`, step 2 of the run: the files of a `config` path at the base, with their modes (task `T-5sgt`) |
+| `LsTree` | `git ls-tree -r -z --full-tree --end-of-options REV -- PATH` | `layup gate`, step 2 of the run: the files of a `config` path at the base, with their modes (task `T-5sgt`); S04: the records of `docs/adr/` and `docs/facts/` at the root commit (task `T-7s0y`) |
 
 - `--end-of-options` or `--` comes before each revision, URL and path, so an
   input is never an option (`layup gate` takes revisions from its arguments).
   `checkout` and `switch` may read `--end-of-options` as a revision before
   `git` 2.44 (a reading of git's option parser; not measured, the LAYUP host
-  has 2.54.0 only). So `CheckoutDetach` and `SwitchCreate` get none: `COMMIT`
-  is a full object ID (40 or 64 hexadecimal characters), and the call refuses
-  any other text before `git` starts.
+  has 2.54.0 only). So `CheckoutDetach`, `SwitchCreate` and `ResetSoft` get
+  none: `COMMIT` is a full object ID (40 or 64 hexadecimal characters), and the
+  call refuses any other text before `git` starts.
 - `DiffNames` names a renamed path at both ends, so a renamed product path
   counts as changed; `-z` gives each path unchanged.
 - The orphan commit of S15 (task `T-d6q5`, #92) needs a scratch work tree, or
