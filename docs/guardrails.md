@@ -294,6 +294,14 @@ success without having done its job.
   reason in a table is a fixed text that names the failed part (for example
   `scratch tree: add failed`); the error goes to standard error; and a test of
   the failure asserts that the reason holds no path.
+- ❌ **An `awk` check that reads the locale.** `awk` reads characters in a UTF-8
+  locale and bytes in the C locale, so one sh check can give other lines on
+  another host. macOS `awk` 20200816 in a UTF-8 locale stops ("towc: multibyte
+  conversion failure") when `check_adapted` meets a word after a character of
+  more than one byte, and the check then passes that file (task `T-8ya0`, #88);
+  it is silent because the run prints `adapted OK`. **The check:** run an sh
+  check with `LC_ALL=C` and in the host's locale on a case that is not ASCII;
+  the Go port states the byte rule of its check.
 
 ### Testing pitfalls
 
@@ -311,7 +319,11 @@ These traps are not domain-specific: they hurt every project's test suite.
 - ❌ **Tests that pass for the wrong reason.** A test that asserts nothing, asserts
   the wrong thing, or never actually exercises the path reports a safety that is not
   there — worse than no test. The check: confirm the test fails when the behaviour
-  is broken; the red step is the proof.
+  is broken; the red step is the proof. A red run on a skeleton proves only that a
+  test needs some code, not each rule of it: in task `T-8ya0` (#88) two cases
+  passed with a wrong lower-case rule and a wrong word position, because the test
+  text was shorter in lower case and the extra finding had the text of a real one.
+  For each rule, break that rule alone (a mutation) and watch its case fail.
 - ❌ **Stale tests after a requirement changes.** When a requirement changes but its
   test does not, the suite now guards the old behaviour and blocks the new. The
   check: the [old-tests conflict rule](engineering-discipline.md#testing) — fix the
