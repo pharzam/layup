@@ -292,6 +292,10 @@ func TestAddIndexRow(t *testing.T) {
 	if err != nil || got != strings.Replace(facts, "| _none yet_ | | | |\n", "| [F-0001](F-0001-setup-answers.md) | The answers | 2026-10-02 | Raw |\n", 1) {
 		t.Errorf("the facts index:\n%s\n%v", got, err)
 	}
+	end := "# ADRs\n\n## Index\n\n| ADR | Title | Status |\n| --- | ----- | ------ |\n| [0001](0001-a.md) | A | Accepted |"
+	if got, err := addIndexRow(end, "| [0002](0002-b.md) | B | Accepted |"); err != nil || got != end+"\n| [0002](0002-b.md) | B | Accepted |\n" {
+		t.Errorf("a table at the end of a file with no line feed:\n%q\n%v", got, err)
+	}
 	for _, bad := range []string{"# Facts\n\nno index\n", "# Facts\n\n## Index\n\nno table\n"} {
 		if _, err := addIndexRow(bad, "| x |"); err == nil {
 			t.Errorf("addIndexRow(%q): no error", bad)
@@ -302,11 +306,12 @@ func TestAddIndexRow(t *testing.T) {
 // The answers record of S04, in the form of K15 and K17 (D10 of #86, with
 // condition 2 of its plan review): the header table with each value, the date
 // of pin.time, one fact per answer in the order of the stop table, and each
-// angle quote of a recorded text written as an entity.
+// angle quote of a recorded text written as an entity: of the answer, of its
+// source and of the question (finding 1 of review round 1).
 func TestTheAnswersRecord(t *testing.T) {
 	asked := append(slices.Clone(work.S01Questions), work.Question{ID: "Q-001", Text: "Which stack? \u2039x\u203a"})
 	a := work.Answers{
-		{"Q-001", "Go \u20391.26\u203a", "idea-owner", "https://github.invalid/c/2", ""},
+		{"Q-001", "Go \u20391.26\u203a", "idea-owner", "said \u2039here\u203a", ""},
 		{"S01-stack", "go", "operator", "https://github.invalid/c/1", ""},
 		{"S01-name", "acme/widget", "operator", "https://github.invalid/c/1", ""},
 		{"S01-visibility", "public", "operator", "https://github.invalid/c/1", ""},
@@ -322,7 +327,7 @@ func TestTheAnswersRecord(t *testing.T) {
 		"2. `S01-name` acme/widget \u2014 by operator; source https://github.invalid/c/1; the question: " + work.S01Questions[1].Text + "\n" +
 		"3. `S01-visibility` public \u2014 by operator; source https://github.invalid/c/1; the question: " + work.S01Questions[2].Text + "\n" +
 		"4. `S01-baseline` https://github.com/pharzam/armature \u2014 by operator; source F-0003#5; the question: " + work.S01Questions[3].Text + "\n" +
-		"5. `Q-001` Go &lsaquo;1.26&rsaquo; \u2014 by idea-owner; source https://github.invalid/c/2; the question: Which stack? &lsaquo;x&rsaquo;\n" +
+		"5. `Q-001` Go &lsaquo;1.26&rsaquo; \u2014 by idea-owner; source said &lsaquo;here&rsaquo;; the question: Which stack? &lsaquo;x&rsaquo;\n" +
 		"\n## Notes on capture\n\nEach angle quote of a recorded text is written as `&lsaquo;` or `&rsaquo;`.\n"
 	if text != want {
 		t.Errorf("answersRecord =\n%s\nwant\n%s", text, want)
@@ -572,12 +577,15 @@ func TestS04(t *testing.T) {
 		}
 		t.Errorf("S04 wrote %d files; want %d", len(f.files), len(files))
 	}
-	// A facts.sha256 of the root commit keeps its lines.
-	f = s04Repo("refs/heads/main", rootA)
-	f.shows["docs/setup/facts.sha256"] = "abc  docs/facts/x.md\n"
-	f.install(t)
-	if o := runS04(gaps, Input{Dir: "w", Record: pinRecord(), Answers: ans(nil)}); o.Kind != Done || f.files["w/target/docs/setup/facts.sha256"] != "abc  docs/facts/x.md\n"+sum+"  docs/facts/F-0001-setup-answers.md\n" {
-		t.Errorf("a list of hashes in the root commit: %s %q", o.Kind, f.files["w/target/docs/setup/facts.sha256"])
+	// A facts.sha256 of the root commit keeps its lines, also a last line with
+	// no line feed.
+	for _, list := range []string{"abc  docs/facts/x.md\n", "abc  docs/facts/x.md"} {
+		f = s04Repo("refs/heads/main", rootA)
+		f.shows["docs/setup/facts.sha256"] = list
+		f.install(t)
+		if o := runS04(gaps, Input{Dir: "w", Record: pinRecord(), Answers: ans(nil)}); o.Kind != Done || f.files["w/target/docs/setup/facts.sha256"] != "abc  docs/facts/x.md\n"+sum+"  docs/facts/F-0001-setup-answers.md\n" {
+			t.Errorf("a list of hashes in the root commit, %q: %s %q", list, o.Kind, f.files["w/target/docs/setup/facts.sha256"])
+		}
 	}
 }
 
@@ -602,7 +610,8 @@ func TestS04OnABranchThatExists(t *testing.T) {
 		}
 		f.install(t)
 		o := runS04(Brief{Gaps: []byte(table)}, Input{Dir: "w", Record: pinRecord(), Answers: ans(nil)})
-		if o.Kind != c.kind || slices.ContainsFunc(f.calls, func(s string) bool { return strings.HasPrefix(s, "switch") }) || (c.kind != Done && len(f.files) != 0) {
+		if o.Kind != c.kind || slices.ContainsFunc(f.calls, func(s string) bool { return strings.HasPrefix(s, "switch") }) || (c.kind != Done && len(f.files) != 0) ||
+			(c.branch == "refs/heads/main" && o.Evidence != "target of the work area is on main, and its branch layup-setup exists: put it on layup-setup, or start again in a new work area") {
 			t.Errorf("%s: %s %q, calls %q, %d files; want %s, no new branch", c.name, o.Kind, o.Evidence, f.calls, len(f.files), c.kind)
 		}
 	}

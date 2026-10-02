@@ -78,4 +78,36 @@ commit's date (the plan's D7 and §5 Start 2: the time of the resolve).
 **Known limits** (in `setup.md`): a version of `layup` with other rules of
 `layup psb check` gives another gap table for the same problem statement; the
 prose of the baseline's ADR index ("the next constitutional ADR is `0009`")
-is stale in the target after S04.
+is stale in the target after S04; and, from round 1, the warning of
+`adr-lint.sh` for the new record, and a baseline whose `facts.sha256` lists a
+file that S04 changes.
+
+## Review round 1 and its fix (cycle 1)
+
+Devin (its usage quota) and OpenCode ("Go usage limit exceeded") gave no
+record. Round 1 (Claude Fable 5.1, effort `xhigh`, on the Claude Code CLI, a
+fresh session, on `5dadab0`, its record at 7 min 44 s; the record is on #86)
+gave `material`, with one finding and eight notes. Its runs used the built
+binary on a clone of LAYUP at its root commit `d2516fd` as the baseline (the
+record `0009-pin-the-baseline.md`, `F-0001-setup-answers.md`, the two index
+rows, `adr-lint.sh` exit 0). The fix has its red runs
+([`test-runs.md`](../../runs/T-7s0y/test-runs.md)):
+
+1. **The `source` of an answer kept its angle quotes** in the answers record,
+   against `setup.md` ("each angle quote of a recorded text is written as
+   `&lsaquo;` or `&rsaquo;`"), so check `markers` of the target would read a
+   marker there. S04 now writes them as entities, as for the answer and the
+   question.
+
+Three defects that the author found in a self-review while the round ran are
+in the same fix: a table of an index file at the end of the file with no line
+feed got the new row on its last line; a list of hashes of the root commit
+with no line feed at its end got the new line on its last line (note 2 (b));
+a target on `main` whose branch `layup-setup` exists got a reason that named
+`main` as a branch it is not on. The notes: 2 (a) (a baseline whose
+`facts.sha256` lists an index file that S04 changes) and 5 (the warning of
+`adr-lint.sh` for the new record, which no document links) are known limits
+in `setup.md`; 3 is text (`setup.md` gives the order of the checks of a done
+step's inputs, as the runner does them); 4 (`layup setup verify` on a setup
+that is not finished gives exit 2, by its own rule) and 6 to 9 confirm the
+change.

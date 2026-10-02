@@ -128,3 +128,43 @@ commit adds only text), 21:35:57Z to 21:37:49Z:
 | `go test -race -count=1` on `internal/catalog`, `internal/verify`, `internal/work`, `internal/standin`, `internal/setup` and `internal/cli`, and on `internal/catalog`, `internal/verify`, `internal/setup` and `internal/cli` with `-tags=integration` | `ok` |
 | `sh docs/setup/tests/run.sh`; `sh docs/tests/run-discipline-tests.sh` | 44 passed, 0 failed; 81 passed, 0 failed |
 | The first commit (`1ec7e7e`) alone, in a scratch work tree: `go vet` with each tag; the integration tests of `internal/cli` and `internal/setup`; `TestSetup` (e2e) | `ok` |
+
+## The fix of review round 1 (cycle 1)
+
+Round 1 (Claude Fable 5.1, on `5dadab0`; the record is on #86) gave
+`material`: finding 1, the `source` of an answer kept its angle quotes in the
+answers record, against `setup.md`. Note 2 (b) is one of the three defects
+that the author found in a self-review before the record came; the fix holds
+the three. Notes 2 (a) and 5 are known limits in `setup.md`, note 3 is text
+(the order of the checks of a done step's inputs), and notes 4 and 6 to 9
+confirm the change. The red runs, on the
+code of `5dadab0` with the new cases (`\u2039` and `\u203a` are the two angle
+quotes, written as escapes so that check `markers` reads no marker in this file):
+
+```text
+$ go test -count=1 -run TestTheAnswersRecord ./internal/setup/          (finding 1)
+    answersRecord = … 5. `Q-001` Go &lsaquo;1.26&rsaquo; — by idea-owner; source said \u2039here\u203a; the question: …
+    want            … 5. `Q-001` Go &lsaquo;1.26&rsaquo; — by idea-owner; source said &lsaquo;here&rsaquo;; the question: …
+$ go test -count=1 -run 'TestAddIndexRow|TestS04$' ./internal/setup/     (a file that ends with no line feed; note 2 (b))
+    a table at the end of a file with no line feed:
+        "… | [0001](0001-a.md) | A | Accepted || [0002](0002-b.md) | B | Accepted |\n"
+    a list of hashes in the root commit, "abc  docs/facts/x.md": done "abc  docs/facts/x.md7fb3702e…  docs/facts/F-0001-setup-answers.md\n"
+$ go test -count=1 -run TestS04OnABranchThatExists ./internal/setup/      (a target on main whose layup-setup exists)
+    main, and layup-setup exists: input "target of the work area is on refs/heads/main, not on main or layup-setup" …
+```
+
+The mutations of the fix, each detected:
+
+| Mutation | Detected by |
+| -------- | ----------- |
+| M27 the answers record keeps the angle quotes of a source | `TestTheAnswersRecord` |
+| M28 a table at the end of a file joins the new row | `TestAddIndexRow` |
+| M29 a list of hashes with no last line feed joins the new line | `TestS04` |
+| M30 a target on main with the branch `layup-setup` gets the old reason | `TestS04OnABranchThatExists` |
+
+The green runs, on the tree of the fix (the code and the tests of the fix
+commit), 21:52:07Z to 21:53:58Z: the local checks of `AGENTS.md`; `go build`;
+`go vet` with each tag; `gofmt -l .` (no file); the three test levels (`ok` ×
+11 each); the race tests of the six packages, and of four with
+`-tags=integration`; `run.sh` (44 passed) and the discipline tests (81
+passed): each exit 0.

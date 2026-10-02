@@ -386,6 +386,9 @@ func runS04(b Brief, in Input) Outcome {
 	if err != nil {
 		sums = nil // the baseline at LAYUP's pin has no docs/setup/
 	}
+	if len(sums) > 0 && sums[len(sums)-1] != '\n' {
+		sums = append(sums, '\n') // a last line with no line feed stays a line
+	}
 	files := map[string]string{
 		pinPath:                   pinText(pinned["pin.source"], pinned["pin.commit"], pinned["pin.tree"], date),
 		adrDir + "/" + adrFile(n): adrText(n, date, pinned["pin.source"], pinned["pin.commit"], pinned["pin.tree"]),
@@ -415,16 +418,18 @@ func onSetupBranch(target, root string) (Outcome, bool) {
 	if err != nil {
 		return Outcome{Kind: Invalid, Evidence: work.TargetPath + " of the work area is on no branch"}, false
 	}
-	_, exists := sys.revParse(target, "refs/heads/layup-setup^{commit}")
+	_, noBranch := sys.revParse(target, "refs/heads/layup-setup^{commit}")
 	switch {
 	case branch == "refs/heads/layup-setup":
 		if head, err := sys.head(target); err != nil || head != root {
 			return Outcome{Kind: Invalid, Evidence: "the branch layup-setup of " + work.TargetPath + " is not at the root commit, and S04 is not done: start again in a new work area"}, false
 		}
-	case branch == "refs/heads/main" && exists != nil:
+	case branch == "refs/heads/main" && noBranch != nil:
 		if err := sys.switchCreate(target, "layup-setup", root); err != nil {
 			return Outcome{Kind: Fail, Evidence: "git switch -c layup-setup: " + firstLine(err)}, false
 		}
+	case branch == "refs/heads/main":
+		return Outcome{Kind: Invalid, Evidence: work.TargetPath + " of the work area is on main, and its branch layup-setup exists: put it on layup-setup, or start again in a new work area"}, false
 	default:
 		return Outcome{Kind: Invalid, Evidence: work.TargetPath + " of the work area is on " + branch + ", not on main or layup-setup"}, false
 	}
@@ -530,6 +535,9 @@ func addIndexRow(readme, row string) (string, error) {
 	if last == first+2 && placeholder.MatchString(strings.TrimRight(lines[last], "\n")) {
 		lines[last] = row + "\n"
 	} else {
+		if !strings.HasSuffix(lines[last], "\n") { // a table at the end of a file with no line feed
+			lines[last] += "\n"
+		}
 		lines = slices.Insert(lines, last+1, row+"\n")
 	}
 	return readme[:loc[1]] + strings.Join(lines, ""), nil
@@ -537,8 +545,8 @@ func addIndexRow(readme, row string) (string, error) {
 
 // answersRecord gives the answers record of S04 (K15, K17; condition 2 of the
 // plan review of #86): the header table, and one fact per answer of a question
-// of asked, in the order of asked, with each angle quote of a recorded text as
-// an entity.
+// of asked, in the order of asked, with each angle quote of a recorded text (the
+// answer, its source, the question) as an entity.
 func answersRecord(id, date string, asked []work.Question, a work.Answers) string {
 	entity := strings.NewReplacer("\u2039", "&lsaquo;", "\u203a", "&rsaquo;")
 	var b strings.Builder
@@ -552,7 +560,7 @@ func answersRecord(id, date string, asked []work.Question, a work.Answers) strin
 		for _, r := range a {
 			if r[0] == q.ID {
 				n++
-				fmt.Fprintf(&b, "%d. `%s` %s — by %s; source %s; the question: %s\n", n, q.ID, entity.Replace(r[1]), r[2], r[3], entity.Replace(q.Text))
+				fmt.Fprintf(&b, "%d. `%s` %s — by %s; source %s; the question: %s\n", n, q.ID, entity.Replace(r[1]), r[2], entity.Replace(r[3]), entity.Replace(q.Text))
 			}
 		}
 	}

@@ -103,10 +103,10 @@ layup setup WORK
   step's rule (S01 stops for its questions). A `WORK/inputs/briefs/problem-statement.md`
   that is absent, or that is not valid UTF-8, is an input error too (task
   `T-7s0y`, D5 of #86; K32). Before any step, the runner checks the inputs
-  that each done step read: the rows of `answers.tsv` ([below](#the-answers)),
-  and, once S01 is done, the SHA-256 of the problem statement against the row
-  `S01 brief.sha256` (D6 of #86): a difference is exit 2, "an input that
-  changed after a step read it".
+  that each done step read, in this order: once S01 is done, the SHA-256 of
+  the problem statement against the row `S01 brief.sha256` (D6 of #86); then
+  the rows of `answers.tsv` that each done step read ([below](#the-answers)).
+  A difference is exit 2, "an input that changed after a step read it".
 - **`commands.sh`** is written again at the end of each run that gives a table
   (exit 0, 1 or 3), from the commands of the done steps, each a function of the
   record, in the order of
@@ -251,14 +251,21 @@ its plan, with the conditions of its plan review):
   `| [F-NNNN](F-NNNN-setup-answers.md) | The answers to the questions of the setup | <date> | Raw |`
   in the table of `docs/facts/README.md` (in place of its row `_none yet_`),
   and its line after the lines of `docs/setup/facts.sha256` of the root
-  commit, if any. Its value rows: `pin.adr` (`computed`, ref
+  commit, if any. A table, or a list of hashes, that ends its file with no
+  line feed gets one before the new line, so the new line is a line of its
+  own. Its value rows: `pin.adr` (`computed`, ref
   `the next free number of docs/adr/`), `answers.record` (`computed`, ref
   `the next free ID of docs/facts/`), `answers.record.sha256` (`computed`, ref
   `sha256 docs/facts/F-NNNN-setup-answers.md`). Each `<date>` is the date of
-  `pin.time`, so one input gives one commit ID. **Known limit:** the prose of
+  `pin.time`, so one input gives one commit ID. **Known limits:** the prose of
   the baseline's `docs/adr/README.md` ("the next constitutional ADR is `0009`"
   at LAYUP's pin) does not change, so it is stale in the target; it fails no
-  check, and a later prose step can change it.
+  check, and a later prose step can change it. No document outside `docs/adr/`
+  links the new record, so the baseline's `adr-lint.sh` gives its warning (not
+  an error) for it. A baseline whose `docs/setup/facts.sha256` has a line for a
+  file that S04 changes (an index file, which is not a raw facts file) fails the
+  evidence of S04 at each run, with the reason of check `facts` (notes 2 and 5
+  of review round 1 of #86).
 
 The fixed text of the decision record of the pin, in the baseline's form of an
 ADR (the title line, `Date:`, `## Status`, the three sections), with no
@@ -313,7 +320,9 @@ order of the stop table, in this form (K15, K17):
 ```
 
 Under `## Notes on capture` it says that each angle quote of a recorded text is
-written as `&lsaquo;` or `&rsaquo;`, and S04 writes each one so.
+written as `&lsaquo;` or `&rsaquo;`, and S04 writes each one so: of the answer,
+of its `source` and of the question (finding 1 of review round 1 of #86); `by`
+is a word of its enum.
 
 ### The stop table
 
