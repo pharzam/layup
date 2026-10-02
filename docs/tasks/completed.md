@@ -20,6 +20,7 @@ here directly, in the shape above.
 - **YYYY-MM-DD** — **<ID>** — <one-sentence summary of what the task found or delivered> ([<link>](...); [detail](<id>.md))
 -->
 
+- **2026-10-02** — **T-2yw7** — Row 3 of the plan: the frame of every command in `internal/cli` (one command table, the argument rules, the exit map, the progress lines) and the end-to-end harness of `cmd/layup`, with the test of the input rule; K29 and K34 settled ([#80](https://github.com/pharzam/layup/issues/80); [detail](T-2yw7.md))
 - **2026-10-02** — **T-4wrw** — The PDR record `PDR-0001`: the Operator's approval (O-129) of `PRD-0001`, the architecture, the specification of phase 1 and the implementation plan at `b48764f`, with the trace check of the 25 requirements; `PRD-0001` `Accepted` ([#99](https://github.com/pharzam/layup/issues/99); [detail](T-4wrw.md))
 - **2026-10-02** — **T-meh2** — The PDR: the idea owner's answers, the numbered facts, `PRD-0001`, the architecture with ADR-0013 to ADR-0025, the specification of phase 1 and the implementation plan, each by its own task, approved by the Operator in [`PDR-0001`](../pdr/PDR-0001.md) ([#42](https://github.com/pharzam/layup/issues/42))
 - **2026-10-01** — **T-2tc2** — Row 2 of the plan: `internal/git`, the one caller of `git` with no input from the host's configuration or credentials, and `TestPackageRules`, the test of the package rules of `docs/spec/packages.md`; K7, K8, K31 and K39 settled ([#79](https://github.com/pharzam/layup/issues/79); [detail](T-2tc2.md))
