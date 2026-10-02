@@ -145,6 +145,8 @@ func TestTheFactsOfATarget(t *testing.T) {
 			[]string{"record: expected one docs/facts/F-NNNN-marker-answers.md"}},
 		{"S11 is done and no M- row: no record of S11 is needed", nil, setupRows, allSteps, nil},
 		{"a record of S11 is read in full before S11 is done", map[string]string{markerPath: answersRecord("F-0002", "M-0123abcd"), indexPath: index("F-0001", "F-0002")}, withM, []string{"S04", "S06"}, nil},
+		{"a record of S11 that exists is read before S11 is done", map[string]string{markerPath: answersRecord("F-0002", "M-0123abcd", "S01-stack"), indexPath: index("F-0001", "F-0002")}, withM, []string{"S04", "S06"},
+			[]string{"answers: F-0002 fact 2 names S01-stack, a question of the record of S04"}},
 		{"an S01- question in the record of S11", map[string]string{markerPath: answersRecord("F-0002", "M-0123abcd", "S01-stack"), indexPath: index("F-0001", "F-0002")}, withM, allSteps,
 			[]string{"answers: F-0002 fact 2 names S01-stack, a question of the record of S04"}},
 	} {
