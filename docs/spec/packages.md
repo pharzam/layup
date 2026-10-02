@@ -61,9 +61,11 @@ reads this table, and holds no copy of it, which could differ from it.
 | `internal/git` | the one caller of the `git` program: [its calls](#the-calls-of-internalgit) | — | `git` |
 | `internal/psb` | the rules G1 to G5 and the gap table ([`psb-check.md`](psb-check.md)) | `internal/tsv` | no |
 | `internal/catalog` | the stack catalog, embedded with `embed` ([`setup.md`](setup.md#the-stack-catalog)) | `internal/tsv` | no |
+| `internal/work` | the work area of a target: its paths, and the schemas and the readers of `answers.tsv` and `record.tsv` ([`setup.md`](setup.md#the-answers)), which `internal/setup` and `internal/verify` share (K9) | `internal/tsv` | no |
 | `internal/gate` | runs the kinds of a gate manifest on a head ([`gate.md`](gate.md)) | `internal/tsv`, `internal/git` | `sh -c`: the gate commands |
-| `internal/setup` | the step runner of `layup setup` ([`setup.md`](setup.md)) | `internal/tsv`, `internal/git`, `internal/catalog` | no |
-| `internal/verify` | the checks of `layup setup verify` ([`setup.md`](setup.md)) | `internal/tsv`, `internal/git`, `internal/catalog`, `internal/gate` | `sh`: the baseline's own check scripts |
+| `internal/setup` | the step runner of `layup setup` ([`setup.md`](setup.md)) | `internal/tsv`, `internal/git`, `internal/catalog`, `internal/work` | no |
+| `internal/verify` | the checks of `layup setup verify` ([`setup.md`](setup.md)) | `internal/tsv`, `internal/git`, `internal/catalog`, `internal/gate`, `internal/work` | `sh`: the baseline's own check scripts |
+| `internal/standin` | for the tests only: a stand-in of the pinned baseline, and a work area set up from it, built at test time (K11; [`setup.md`](setup.md#the-checks-of-layup-setup-verify)); only test files import it | `internal/git`, `internal/work` | no |
 
 **Decided here:** the split of `internal/setup`, `internal/verify` and
 `internal/gate` (ADR-0011 decision 1 names "setup, gates, … state files, Git

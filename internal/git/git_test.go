@@ -67,6 +67,7 @@ func TestEachCallRunsItsVerb(t *testing.T) {
 		{"switch --orphan", "r", "switch --orphan layup-records", func() { SwitchOrphan("r", "layup-records") }},
 		{"rev-parse", "r", "rev-parse --verify --end-of-options abc^{tree}", func() { RevParse("r", "abc^{tree}") }},
 		{"rev-list --max-parents=0", "r", "rev-list --max-parents=0 --end-of-options main --", func() { RootCommits("r", "main") }},
+		{"rev-parse --is-shallow-repository", "r", "rev-parse --is-shallow-repository", func() { IsShallow("r") }},
 		{"ls-files", "r", "ls-files -z", func() { LsFiles("r") }},
 		{"worktree add --detach", "r", "worktree add --detach -- /s/scratch abc", func() { WorktreeAdd("r", "/s/scratch", "abc") }},
 		{"worktree remove", "r", "worktree remove --force -- /s/scratch", func() { WorktreeRemove("r", "/s/scratch") }},
@@ -140,6 +141,8 @@ func TestTheOutputIsRead(t *testing.T) {
 		{"diff: no change", "", func() (any, error) { return DiffNames("r", "a", "b") }, []string(nil)},
 		{"show: the bytes unchanged", "a\r\nb", func() (any, error) { return Show("r", "HEAD", "a.txt") }, []byte("a\r\nb")},
 		{"version", "git version 2.54.0 (Apple Git-157)\n", func() (any, error) { return Version() }, "2.54.0 (Apple Git-157)"},
+		{"is-shallow: a shallow clone", "true\n", func() (any, error) { return IsShallow("r") }, true},
+		{"is-shallow: a full history", "false\n", func() (any, error) { return IsShallow("r") }, false},
 	} {
 		stub(t, c.stdout, nil)
 		if got, err := c.call(); err != nil || !reflect.DeepEqual(got, c.want) {
@@ -150,6 +153,10 @@ func TestTheOutputIsRead(t *testing.T) {
 	var failed *FailedError
 	if _, err := LsRemote("u", "HEAD"); !errors.As(err, &failed) || failed.Code != 0 {
 		t.Errorf("LsRemote with no line for HEAD: %v; want a *FailedError with code 0", err)
+	}
+	stub(t, "yes\n", nil)
+	if shallow, err := IsShallow("r"); !errors.As(err, &failed) || failed.Code != 0 || shallow {
+		t.Errorf("IsShallow with the output yes: %v, %v; want false and a *FailedError with code 0", shallow, err)
 	}
 }
 

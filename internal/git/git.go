@@ -259,3 +259,18 @@ func LsTree(dir, rev, path string) ([]TreeEntry, error) {
 	}
 	return entries, nil
 }
+
+// IsShallow reports whether the repository at dir is a shallow clone.
+func IsShallow(dir string) (bool, error) {
+	args := []string{"rev-parse", "--is-shallow-repository"}
+	out, err := call(dir, environ(), args...)
+	if err != nil {
+		return false, err
+	}
+	switch s := strings.TrimSpace(string(out)); s {
+	case "true", "false":
+		return s == "true", nil
+	default:
+		return false, &FailedError{Args: args, Err: fmt.Errorf("an output of another form: %q", s)}
+	}
+}
