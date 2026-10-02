@@ -2,6 +2,8 @@
 
 The check is [`trace-check.py`](trace-check.py), run by hand from the repository root. No hook and no CI job runs it (Bootstrap mode rule 1). Its header says what it proves and what it cannot prove.
 
+In the red runs, the line `docs/pdr/PDR-0001.md is missing` is shortened: the script prints the absolute path of the record, which is a path of the host (review round 1, note 1).
+
 ## Red 1: a copy of PRD-0001 with one seeded defect per part (plan-review condition 3)
 
 The copy is `PRD-seeded.md` in a temporary directory: the Facts cell of `REQ-001` (§6) is empty, and the Facts cell of `REQ-002` (§6) also cites `F-0003#76`, `F-0002#1` and `F-0099#1`. `docs/prd/` does not change.
