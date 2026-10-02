@@ -107,13 +107,17 @@ layup gate REPO --base REV --head REV
   is a symbolic link or a submodule at the base, and a `config` path that is
   `.git` or under it, in any case, is an input error. Each write goes through an
   `os.Root` of the tree, so a symbolic link of the head cannot send a write out
-  of the tree: a symbolic link or a file of the head at or above a path that the
-  overlay writes fails the overlay, and a removal follows a symbolic link that
-  stays inside the tree. The `config` paths go in their sorted order, and a path
-  under a file of the tree counts as absent, so two runs on one input give one
-  tree (review round 1, finding 1). The overlay never removes the file `.git` of
-  the tree, by any name: a file system that folds case makes `.GIT` such a name
-  (review round 2, finding 1). The tree is removed on every exit path of a run. **Known limit:** a run that a signal
+  of the tree: a symbolic link of the head that points out of the tree or to no
+  file, or a file of the head, at or above a path that the overlay writes fails
+  the overlay; a symbolic link that points to a directory inside the tree is
+  followed by a removal and by a write (review round 3, note 1). The `config`
+  paths go in their sorted order, and a path under a file of the tree counts as
+  absent, so two runs on one input give one tree (review round 1, finding 1). The
+  overlay never removes the file `.git` of the tree, by any name: a file system
+  that folds case makes `.GIT` such a name (review round 2, finding 1). On such a
+  file system a `config` path is also the head's file of that name in any case,
+  so the overlay removes that file (review round 3, note 2). The tree is removed
+  on every exit path of a run. **Known limit:** a run that a signal
   kills leaves the tree; `git worktree prune` in `REPO` removes its record. The
   run does not prune at its start, because that could remove another stale
   record of `REPO`.
