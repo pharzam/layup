@@ -370,6 +370,13 @@ These traps are not domain-specific: they hurt every project's test suite.
   U+00A0 named a stack. **The check:** write the class that the words name (the
   Unicode `White_Space` is `[\s\v\x{85}\pZ]`), or define the words by the
   class, and give the test a character outside ASCII.
+- ❌ **A rule stated as a general claim.** A sentence such as "a link to
+  another repository does not count" is a claim about every input, and a
+  reviewer meets it with one counter-example per round: task `T-6x75` (#84)
+  spent rounds 2 to 4, and three raises of the cycle cap, on one link rule.
+  **The check:** state the exact rule (the classes of characters before and
+  after the text), and let the examples follow it; test a neighbour of each
+  side, and a character of another script.
 
 ### Reference-sweep pitfalls
 
