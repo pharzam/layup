@@ -301,6 +301,12 @@ success without having done its job.
   `git ls-files -z` (in sh, `| tr '\0' '\n'`, which still splits a name with a
   line feed), and give the fixture a name that git quotes (`markers/bad-quoted-name`
   has a DEL character, which a Windows checkout accepts).
+- ❌ **A path in `awk -v`.** `awk -v f=<value>` reads escape sequences in the
+  value, so a name with `\` reaches the program changed: `check_markers`
+  printed `docs/bx.md` for `docs/b\x.md` until round 1 of #87, and failed a
+  correct setup. **The check:** hand a value that holds a path to `awk` through
+  the environment (`ENVIRON`), and test a name with `\` on a scratch repository
+  at test time (no fixture can hold it: a Windows checkout refuses the name).
 - ❌ **A hashed file that git may convert.** A list of hashes, such as
   `docs/setup/facts.sha256`, holds the bytes of each file it names; on a
   checkout with `core.autocrlf=true` (git's default on Windows) git gives a
@@ -318,7 +324,9 @@ success without having done its job.
   more than one byte, and the check then passes that file (task `T-8ya0`, #88);
   it is silent because the run prints `adapted OK`. **The check:** run an sh
   check with `LC_ALL=C` and in the host's locale on a case that is not ASCII;
-  the Go port states the byte rule of its check.
+  the Go port states the byte rule of its check. The same `awk` in a UTF-8
+  locale missed a marker at the end of a line in `check_markers`, which runs its
+  `awk` with `LC_ALL=C` since round 1 of #87.
 
 ### Testing pitfalls
 

@@ -310,7 +310,10 @@ check_markers() {
 	tr '\0' '\n' < "$tmpdir/mk_z" > "$tmpdir/mk_files"
 	grep -Ev "$MK_EXEMPT" "$tmpdir/mk_files" | while IFS= read -r mk_f; do
 		[ -f "$ROOT/$mk_f" ] || continue
-		awk -v f="$mk_f" '{
+		# The name comes from the environment, as -v reads a `\` in it as an escape;
+		# the C locale reads bytes on every host (macOS awk in a UTF-8 locale misses
+		# a marker at the end of a line; round 1 of #87).
+		mk_f="$mk_f" LC_ALL=C awk 'BEGIN { f = ENVIRON["mk_f"] } {
 			line = $0; prev = ""
 			while ((i = index(line, "‹")) > 0) {
 				before = (i > 1) ? substr(line, i - 1, 1) : substr(prev, length(prev), 1)

@@ -56,3 +56,31 @@ checker for S05 (the baseline's own `link-lint.sh` is the rule of check
 `link-lint`); a hash of a `computed` ref by the check (the step that wrote the
 hash checks it); closing #21 with its added scope undone (the Operator's
 decision).
+
+## Review round 1 and its fix (cycle 1)
+
+Devin (its usage quota) and OpenCode ("Go usage limit exceeded") gave no
+record. Round 1 (Claude Fable 5.1, effort `xhigh`, on the Claude Code CLI, on
+`44a0766`; the record is on #87) gave `material`, with one finding and ten
+notes. The fix has its red run ([`test-runs.md`](../../runs/T-8vpw/test-runs.md)):
+
+1. **A name with `\` in `check_markers`:** `awk -v` read the `\` as an escape,
+   so the sh function gave `unlisted: docs/bx.md …` and
+   `stale: docs/b\x.md …` for a listed marker of `docs/b\x.md`, where the
+   engine passes. The `awk` now gets the name through `ENVIRON`. No fixture can
+   hold the name (a Windows checkout refuses it), so
+   `TestTheShAndTheGoFormOfMarkersAgree` makes a scratch repository at test time
+   and runs both forms.
+
+The notes: note 3 (macOS `awk` in a UTF-8 locale misses a marker at the end of
+a line) is on the path of D3, the same lines from the two forms, and is fixed
+in the same line: the `awk` of `check_markers` runs with `LC_ALL=C`, and the
+same test runs the sh function in two UTF-8 locales. Notes 4 and 5 are fixed as
+text in `setup.md` (the progress line names the check; an `sh` that does not
+start is `fail`, reason `exit -1`, as for a gate command). Note 2 needs no
+change: the field rule of `tsv.Write` makes a tab or a line feed of a cell a
+space. Notes 6 to 11 confirm the change. One more gap, found by the author
+during the fix: the planned row `T-8vpw/e2e/verify-not-active` of
+`traceability.md` was still `planned`; it now names
+`TestSetupVerifyWithNoBaselineScript`, `green`, and the second row of that test
+is gone. A lesson in `guardrails.md` §2: "A path in `awk -v`".

@@ -412,8 +412,14 @@ reason  text                             -    the first failure, or the `clear` 
   with `"`, `\` or a control character is no longer skipped; the fixture
   `markers/bad-quoted-name` has a DEL character in its name, which git quotes
   and a Windows checkout accepts), and it refuses a blank question or the empty
-  mark (`markers/bad-blank-question`). **Known limit of the sh function:** a
-  name with a line feed is still split by `tr`.
+  mark (`markers/bad-blank-question`). Its `awk` gets each name through the
+  environment, as `-v` reads a `\` in it as an escape, and runs in the C
+  locale, which reads bytes as the engine does (macOS `awk` in a UTF-8 locale
+  misses a marker at the end of a line). Round 1 of #87 found both;
+  `TestTheShAndTheGoFormOfMarkersAgree` runs the two forms on a scratch
+  repository in two locales, as no fixture can hold a name with `\` (a Windows
+  checkout refuses it). **Known limit of the sh function:** a name with a line
+  feed is still split by `tr`.
 - **Check `sources`:** each row of the setup record but a `done` row, by its
   source: `answer`, the ref is a row of `answers.tsv`; `catalog`, the entry of
   the row `S01 stack` has the file of the ref (this version embeds no catalog,
@@ -430,11 +436,13 @@ reason  text                             -    the first failure, or the `clear` 
   (`gate.md`): exit 0 is `pass`; another exit is `fail`, reason `exit <code>`;
   a signal is `fail`, reason `signal <name>`; a script that is not a file of the
   tree is `not-active`, reason `missing: <path>`; an `sh` that is not found is
-  `not-active`, reason `tool not found: sh`. The output of a script goes to
-  standard error, never into the table, and the row's progress line shows which
-  script runs. The scratch checkout keeps the target's `.gitattributes`, and
-  every call of `internal/git` sets `core.autocrlf=false` (K7), so the
-  `eol=crlf` fixtures keep their bytes. **Known limit:** no timeout in phase 1.
+  `not-active`, reason `tool not found: sh`, and one that is found and then
+  does not start is `fail`, reason `exit -1`, as for a gate command. The output
+  of a script goes to standard error, never into the table; the progress line
+  of the row names its check, which runs the one script named here. The scratch
+  checkout keeps the target's `.gitattributes`, and every call of
+  `internal/git` sets `core.autocrlf=false` (K7), so the `eol=crlf` fixtures
+  keep their bytes. **Known limit:** no timeout in phase 1.
 - **The call of S05** (K10): `internal/verify` gives the files whose links
   break. It takes the directory of a checked-out tree (S05 gives
   `WORK/target` after the deletion and before its commit), runs

@@ -70,3 +70,28 @@ On the tree of the commit that adds this file.
 | `go test -count=1 -tags=e2e -timeout 10m ./...` | `ok` × 11 |
 | `go test -race -count=1 ./internal/verify/ ./internal/work/ ./internal/standin/`, and `./internal/verify/` with `-tags=integration` | `ok` |
 | `sh docs/setup/tests/run.sh`; `sh docs/tests/run-discipline-tests.sh` | 44 passed, 0 failed; 81 passed, 0 failed |
+
+## The red runs of the fix of review round 1
+
+Round 1 (`44a0766`) gave one material finding (a name with `\` through
+`awk -v`) and note 3 (macOS `awk` in a UTF-8 locale). The new test
+`TestTheShAndTheGoFormOfMarkersAgree`, in its final form, on the script of
+`44a0766`:
+
+```text
+$ go test -count=1 -tags=integration -run TestTheShAndTheGoFormOfMarkersAgree ./internal/verify/
+    harness_integration_test.go:220: LC_ALL=C sh setup-check.sh --only markers: exit status 1
+        setup-check: markers FAIL unlisted: docs/bx.md \u2039bs\u203a
+        setup-check: markers FAIL stale: docs/b\x.md \u2039bs\u203a is listed in docs/setup/open-gaps.tsv but does not occur
+    harness_integration_test.go:220: LC_ALL=en_US.UTF-8 sh setup-check.sh --only markers: exit status 1
+        … the same two lines, and
+        setup-check: markers FAIL stale: docs/end.md \u2039 is listed in docs/setup/open-gaps.tsv but does not occur
+    harness_integration_test.go:220: LC_ALL=C.UTF-8 sh setup-check.sh --only markers: exit status 1
+        … the same two lines as with LC_ALL=C
+```
+
+The Go form gives no finding on the same repository. With the name through
+`ENVIRON` alone, only the line of `docs/end.md` in `en_US.UTF-8` stays; with
+`LC_ALL=C` on that `awk` too, the test passes. On LAYUP's root commit
+`d2516fd`, the fixed script gives the same 154 lines in the C locale and in
+`en_US.UTF-8`; the script of `44a0766` gives 153 lines in `en_US.UTF-8`.
