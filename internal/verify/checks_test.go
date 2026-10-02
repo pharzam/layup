@@ -122,6 +122,8 @@ func TestKitHistoryFindings(t *testing.T) {
 			"docs/tasks/backlog.md": "- **T-0001** (https://" + link + "2/issues/1, https://" + link + "-docs/x)\n"}), link, nil},
 		{"other repositories (round 2, finding 1)", with(map[string]string{"docs/tasks/backlog.md": "- **T-0001** (https://" + link +
 			".testing/issues/1, https://" + link + ".gitlab/x, https://other" + link + "/issues/1)\n"}), link, nil},
+		{"another host that ends with the host of the baseline (round 3, finding 1)", with(map[string]string{
+			"docs/tasks/backlog.md": "- **T-0001** (https://my." + link + "/issues/1, https://www." + link + ")\n"}), link, nil},
 		{"a link with .git", with(map[string]string{"docs/tasks/backlog.md": "- **T-0001** (https://" + link + ".git)\n"}), link,
 			[]string{"kit-link: docs/tasks/backlog.md links " + link + "/ (a kit task or note)"}},
 		{"a link at the end of a sentence", with(map[string]string{"docs/tasks/backlog.md": "- **T-0001**: see " + link + ".\n"}), link,

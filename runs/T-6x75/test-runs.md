@@ -189,10 +189,27 @@ $ go test -count=1 -run TestKitHistoryFindings ./internal/verify/
         want []
 ```
 
+## Review round 3: the fix (cycle 3, O-134)
+
+Review round 3 (`ff06ff1`) found that a `.` before the repository text still
+counted as a boundary, so another host that ends with the baseline's host
+gave a link. The red run of the new case, on the code of `ff06ff1`:
+
+```text
+$ go test -count=1 -run TestKitHistoryFindings ./internal/verify/
+    checks_test.go:133: another host that ends with the host of the baseline (round 3, finding 1):
+         got ["kit-link: docs/tasks/backlog.md links github.com/pharzam/armature/ (a kit task or note)"]
+        want []
+```
+
+A probe of the final expression (a small Go program outside the repository,
+recorded once, not a test) gives the wanted result on 22 links to the baseline
+and to its neighbours, and on 4 `file://` links.
+
 ## The green runs
 
 On the tree of the commit that adds this file, and again on the heads of
-cycles 1 and 2.
+cycles 1, 2 and 3.
 
 | Command | Result |
 | ------- | ------ |
