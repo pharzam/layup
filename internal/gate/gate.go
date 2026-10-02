@@ -106,7 +106,7 @@ func Run(repo, base, head string, step func(i, n int, kind string) func(), out i
 	if err != nil {
 		return Table{}, &InputError{fmt.Errorf("docs/gates.tsv at the base %s: %v", t.Base, firstLine(err))}
 	}
-	kinds, err := readManifest(data)
+	kinds, err := ReadManifest(data)
 	if err != nil {
 		return Table{}, &InputError{fmt.Errorf("docs/gates.tsv at the base %s: %w", t.Base, err)}
 	}

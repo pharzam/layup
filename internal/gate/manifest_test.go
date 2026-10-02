@@ -8,7 +8,7 @@ import (
 const manifestHeader = "kind\tstate\ttool\tcommand\tscope\tconfig\n"
 
 func TestReadManifestGivesTheKindsInTheirOrder(t *testing.T) {
-	kinds, err := readManifest([]byte(manifestHeader +
+	kinds, err := ReadManifest([]byte(manifestHeader +
 		"static\tactive\tgo\ttest -z \"$(gofmt -l .)\"\t./*.go\t—\n" +
 		"layout\tpending\tgo\tgo test ./layout/\t./*.go internal\tlayout layout/rules.txt\n"))
 	if err != nil {
@@ -39,7 +39,7 @@ func TestReadManifestRefusesEachMalformedForm(t *testing.T) {
 		"a config path .GIT":     manifestHeader + strings.Replace(row, "\t—\n", "\t.GIT\n", 1),
 		"a config path in .Git":  manifestHeader + strings.Replace(row, "\t—\n", "\t.Git/x\n", 1),
 	} {
-		if _, err := readManifest([]byte(text)); err == nil {
+		if _, err := ReadManifest([]byte(text)); err == nil {
 			t.Errorf("%s: no error", name)
 		}
 	}
@@ -48,7 +48,7 @@ func TestReadManifestRefusesEachMalformedForm(t *testing.T) {
 // A config path that only starts with .git is a path like any other.
 func TestReadManifestTakesAConfigPathThatOnlyStartsWithGit(t *testing.T) {
 	text := manifestHeader + "static\tactive\tgo\tgo vet ./...\t./*.go\t.gitignore .github/x.yml\n"
-	if kinds, err := readManifest([]byte(text)); err != nil || strings.Join(kinds[0].Config, " ") != ".gitignore .github/x.yml" {
+	if kinds, err := ReadManifest([]byte(text)); err != nil || strings.Join(kinds[0].Config, " ") != ".gitignore .github/x.yml" {
 		t.Fatalf("%+v, %v", kinds, err)
 	}
 }

@@ -40,13 +40,14 @@ func (k Kind) inScope(paths []string) (string, bool) {
 	return "", false
 }
 
-// readManifest reads the bytes of docs/gates.tsv. A manifest that does not
-// match its schema, that has no row, that holds a scope pattern of another
-// form or a kind with no scope pattern (it could never run, and would always
-// be clear), or a config path in .git, in any case (the overlay would remove
-// the file .git of the scratch tree; a file system can fold case), is an
-// error.
-func readManifest(data []byte) ([]Kind, error) {
+// ReadManifest reads the bytes of docs/gates.tsv: layup gate reads the
+// manifest of the base, and layup setup verify that of the setup head. A
+// manifest that does not match its schema, that has no row, that holds a
+// scope pattern of another form or a kind with no scope pattern (it could
+// never run, and would always be clear), or a config path in .git, in any case
+// (the overlay would remove the file .git of the scratch tree; a file system
+// can fold case), is an error.
+func ReadManifest(data []byte) ([]Kind, error) {
 	rows, err := tsv.Read(data, ManifestSchema)
 	if err != nil {
 		return nil, err
