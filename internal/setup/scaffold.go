@@ -32,8 +32,6 @@ const (
 	inputsDir      = "inputs/files"
 )
 
-var named = []string{onboardingPath, glossaryPath, guardrailsPath, "README.md", "AGENTS.md"}
-
 // targetFile and inputFile give a file of the target and an input file of the
 // work area at dir.
 func targetFile(dir, p string) string {
@@ -268,50 +266,94 @@ func runS06(in Input) Outcome {
 	return Outcome{Kind: Done, Evidence: "check facts", Commit: true, Values: values}
 }
 
-var proseCheck = map[string]string{"S07": "onboarding", "S08": "glossary", "S09": "guardrails"}
+// proseFiles gives the named file of each of S07, S08 and S09.
+var proseFiles = map[string]string{"S07": onboardingPath, "S08": glossaryPath, "S09": guardrailsPath}
 
-// runProse is S07, S08 or S09 (D5 of #90): it copies its named file from its
-// input file, with its record row (K42).
-func runProse(step string, in Input, paths []string) Outcome {
-	var want []wanted
-	for _, p := range paths {
-		want = append(want, writeAsk(p))
-	}
-	rows, stops, err := copyInputs(step, in.Dir, want)
-	switch {
-	case err != nil:
-		return Outcome{Kind: Fail, Evidence: step + ": " + err.Error()}
-	case stops != nil:
-		return Outcome{Kind: Stop, Stops: stops}
-	}
-	return Outcome{Kind: Done, Evidence: "check " + proseCheck[step], Commit: true, Values: rows}
-}
+var proseEvidence = map[string]string{"S07": "check onboarding", "S08": "check glossary", "S09": "check guardrails", "S14": "checks identity and adapted"}
 
-// runS14 is S14 (D5 of #90, condition 2 of its plan review): it copies
-// README.md, AGENTS.md, and each other file that check adapted flags on the
-// head, less the files of S07 to S09, from their input files.
-func runS14(c Calls, in Input) Outcome {
+// proseWanted gives the files of each step of the prose step that is not done
+// (O-123, D5 of #90 with condition 2 of its plan review and finding 1 of its
+// review round 1): S07, S08 and S09 their named file; S14 README.md,
+// AGENTS.md and each other file that check adapted flags on the head, less
+// the named file of a step of S07 to S09 that is not done, so no question is
+// twice in the group's table, and a named file that check adapted still flags
+// after its step is S14's too.
+func proseWanted(c Calls, in Input) (map[string][]wanted, error) {
 	if c.Flagged == nil {
-		return Outcome{Kind: Fail, Evidence: "S14 has no call of the files that check adapted flags"}
+		return nil, errors.New("the prose step has no call of the files that check adapted flags")
 	}
 	flagged, err := c.Flagged(filepath.Join(in.Dir, work.TargetPath))
 	if err != nil {
-		return Outcome{Kind: Fail, Evidence: "the files that check adapted flags: " + firstLine(err)}
+		return nil, errors.New("the files that check adapted flags: " + firstLine(err))
 	}
-	want := []wanted{writeAsk("README.md"), writeAsk("AGENTS.md")}
-	for _, p := range flagged {
-		if !slices.Contains(named, p) && !slices.ContainsFunc(want, func(w wanted) bool { return w.path == p }) {
-			want = append(want, adaptAsk(p))
+	done := func(id string) bool { _, ok := in.Record.Value(id, "done"); return ok }
+	out := map[string][]wanted{}
+	for _, id := range []string{"S07", "S08", "S09"} {
+		if !done(id) {
+			out[id] = []wanted{writeAsk(proseFiles[id])}
 		}
 	}
-	rows, stops, err := copyInputs("S14", in.Dir, want)
-	switch {
-	case err != nil:
-		return Outcome{Kind: Fail, Evidence: "S14: " + err.Error()}
-	case stops != nil:
-		return Outcome{Kind: Stop, Stops: stops}
+	if !done("S14") {
+		list := []wanted{writeAsk("README.md"), writeAsk("AGENTS.md")}
+		for _, p := range flagged {
+			if slices.ContainsFunc(list, func(w wanted) bool { return w.path == p }) {
+				continue
+			}
+			if id := stepOf(p); id != "" && !done(id) {
+				continue // the step of S07 to S09 asks for it
+			}
+			list = append(list, adaptAsk(p))
+		}
+		out["S14"] = list
 	}
-	return Outcome{Kind: Done, Evidence: "checks identity and adapted", Commit: true, Values: rows}
+	return out, nil
+}
+
+// stepOf gives the step of S07 to S09 whose named file is p, or "".
+func stepOf(p string) string {
+	for id, f := range proseFiles {
+		if f == p {
+			return id
+		}
+	}
+	return ""
+}
+
+// runProseStep is S07, S08, S09 or S14, the prose step (D5 of #90): the four
+// steps are one unit of input. While an input of a step of the group that is
+// not done is missing, no step copies a file: each gives the stop rows of its
+// own missing inputs, and a step whose own inputs exist waits, with no row, so
+// the run gives one table (O-123). Else the step copies its files, each with
+// its record row (K42).
+func runProseStep(step string, c Calls, in Input) Outcome {
+	want, err := proseWanted(c, in)
+	if err != nil {
+		return Outcome{Kind: Fail, Evidence: err.Error()}
+	}
+	missing := false
+	var mine []StopRow
+	for _, id := range []string{"S07", "S08", "S09", "S14"} {
+		for _, f := range want[id] {
+			_, err := sys.read(inputFile(in.Dir, f.path))
+			switch {
+			case errors.Is(err, fs.ErrNotExist):
+				missing = true
+				if id == step {
+					mine = append(mine, StopRow{step, "F-" + f.path, f.ask, f.path})
+				}
+			case err != nil:
+				return Outcome{Kind: Fail, Evidence: fmt.Sprintf("%s/%s: %s", inputsDir, f.path, firstLine(err))}
+			}
+		}
+	}
+	if missing {
+		return Outcome{Kind: Stop, Stops: mine}
+	}
+	rows, _, err := copyInputs(step, in.Dir, want[step])
+	if err != nil {
+		return Outcome{Kind: Fail, Evidence: step + ": " + err.Error()}
+	}
+	return Outcome{Kind: Done, Evidence: proseEvidence[step], Commit: true, Values: rows}
 }
 
 // A question of S10 is one file and marker text, with the first line where
@@ -332,6 +374,12 @@ func markerQuestions(marks []Marker) []question {
 	}
 	return out
 }
+
+// shown gives the text of a marker for a table or a record: with no carriage
+// return at its end, which a marker that does not close on a line of a CRLF
+// file holds, and which no cell of a TSV file can hold (note 2 of review round
+// 1 of #90).
+func shown(marker string) string { return strings.TrimSuffix(marker, "\r") }
 
 // markerAsk gives the question of a marker of a file (D6 of #90).
 func markerAsk(file, marker string) string {
@@ -361,7 +409,7 @@ func runS10(c Calls, in Input) Outcome {
 	var stops []StopRow
 	for _, q := range qs {
 		if answerOf(in.Answers, q.id) == nil {
-			stops = append(stops, StopRow{"S10", q.id, markerAsk(q.file, q.text), fmt.Sprintf("%s:%d %s", q.file, q.line, q.text)})
+			stops = append(stops, StopRow{"S10", q.id, markerAsk(q.file, shown(q.text)), fmt.Sprintf("%s:%d %s", q.file, q.line, shown(q.text))})
 		}
 	}
 	if stops != nil {
@@ -406,6 +454,8 @@ func runS11(c Calls, in Input) Outcome {
 			return Outcome{Kind: Fail, Evidence: q.id + ": no answer"}
 		case r[1] == "gap" && strings.Contains(q.file, "\t"):
 			return Outcome{Kind: Fail, Evidence: q.file + ": a file whose name holds a tab cannot have a row in " + work.OpenGapsPath}
+		case r[1] == "gap" && strings.ContainsAny(q.text, "\t\r"):
+			return Outcome{Kind: Fail, Evidence: q.file + ": the marker " + shown(q.text) + " holds a tab or a carriage return, so it cannot have a row in " + work.OpenGapsPath}
 		case r[1] != "gap" && strings.ContainsAny(r[1], "\u2039\u203a"):
 			return Outcome{Kind: Fail, Evidence: q.id + ": the value holds an angle quote, so it would be a marker"}
 		}
@@ -441,11 +491,11 @@ func runS11(c Calls, in Input) Outcome {
 			if r[1] == "gap" {
 				continue
 			}
-			line := lines[m.Line-1]
-			if m.Col+len(m.Text) > len(line) || line[m.Col:m.Col+len(m.Text)] != m.Text {
-				return Outcome{Kind: Fail, Evidence: fmt.Sprintf("%s:%d: the marker %s is not at its column %d", m.File, m.Line, m.Text, m.Col)}
+			line, body := lines[m.Line-1], shown(m.Text) // the line keeps its line end
+			if m.Col+len(body) > len(line) || line[m.Col:m.Col+len(body)] != body {
+				return Outcome{Kind: Fail, Evidence: fmt.Sprintf("%s:%d: the marker %s is not at its column %d", m.File, m.Line, body, m.Col)}
 			}
-			lines[m.Line-1] = line[:m.Col] + r[1] + line[m.Col+len(m.Text):]
+			lines[m.Line-1] = line[:m.Col] + r[1] + line[m.Col+len(body):]
 		}
 	}
 	out := map[string][]byte{}
@@ -472,7 +522,7 @@ func runS11(c Calls, in Input) Outcome {
 	id := fmt.Sprintf("F-%04d", n)
 	var asked []work.Question
 	for _, q := range qs {
-		asked = append(asked, work.Question{ID: q.id, Text: markerAsk(q.file, q.text)})
+		asked = append(asked, work.Question{ID: q.id, Text: markerAsk(q.file, shown(q.text))})
 	}
 	record := answersRecord(id, date, markerRecord, asked, in.Answers)
 	recordPath := factsDir + "/" + id + "-marker-answers.md"

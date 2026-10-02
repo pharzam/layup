@@ -282,6 +282,7 @@ func scaffoldBaseline(t *testing.T, dir string) string {
 		"docs/guide.md":           "# Guide\n\nSee [the decision](decisions/D-0001-stand-in.md).\n",
 		"docs/ops.md":             "# Ops\n\nThe port is \u2039port\u203a.\nAgain \u2039port\u203a.\nThe owner is \u2039owner\u203a.\n",
 		"docs/how-to.md":          "# How to\n\nAdapt this to your project.\n",
+		"docs/glossary.md":        "# Glossary\n\nThe words of the kit.\n", // a named file that check adapted flags, as at LAYUP's pin
 	} {
 		writeFile(t, filepath.Join(dir, filepath.FromSlash(p)), text)
 	}
@@ -310,9 +311,11 @@ func writeInputs(t *testing.T, w string, files map[string]string) {
 // of the history breaks; the prose step stops once, with one row for each of
 // its inputs, the flagged file too; S10 stops with one row per marker; with
 // the inputs and the answers, each step is done with its checks as the
-// evidence, and S12 is not built yet. A README.md that names no records
-// branch fails the evidence of S14, and the run after the fix gives the same
-// rows (condition 1 of the plan review).
+// evidence, and S12 is not built yet. While one input of the prose step is
+// missing, no step of it commits, though the glossary of the baseline is a
+// file that check adapted flags (finding 1 of review round 1). A README.md
+// that names no records branch fails the evidence of S14, and the run after
+// the fix gives the same rows (condition 1 of the plan review).
 func TestSetupRunsS05ToS14(t *testing.T) {
 	tmp := t.TempDir()
 	url := scaffoldBaseline(t, filepath.Join(tmp, "baseline"))
@@ -352,17 +355,24 @@ func TestSetupRunsS05ToS14(t *testing.T) {
 	}
 	inputs := map[string]string{
 		"docs/onboarding-for-engineers.md": "# Onboarding\n\nThe work starts from [the problem statement](facts/problem-statement-brief.md).\n",
-		"docs/glossary.md":                 "# Glossary\n\n| Term | Meaning |\n| ---- | ------- |\n| Target | the product repository |\n",
 		"docs/guardrails.md":               "# Guardrails\n\n## 1. Rules\n\n- **Inv-1** — the setup keeps its record. Check: no check yet\n",
 		"README.md":                        "# " + standin.Name + "\n\nThe product repository, set up from its pinned baseline ([the pin](docs/setup/armature.pin)).\n",
 		"AGENTS.md":                        "# AGENTS.md\n\nAgent context for **" + standin.Name + "**.\n",
 		"docs/how-to.md":                   "# How to\n\nRun the tests of the product.\n",
 	}
 	writeInputs(t, w, inputs)
+	target := filepath.Join(w, "target")
+	before := gitIn(t, target, "rev-parse", "layup-setup")
+	if code, out, _ := run("setup", w); code != 3 || out != "step\tquestion\task\twhere\n"+
+		"S08\tF-docs/glossary.md\tWrite the text of docs/glossary.md for the target, and give it as inputs/files/docs/glossary.md.\tdocs/glossary.md\n" ||
+		gitIn(t, target, "rev-parse", "layup-setup") != before {
+		t.Fatalf("each input but the one of S08: exit %d\n%s\nwant 3, the one row of S08 and no commit of the prose step (finding 1 of round 1)", code, out)
+	}
+	inputs["docs/glossary.md"] = "# Glossary\n\n| Term | Meaning |\n| ---- | ------- |\n| Target | the product repository |\n"
+	writeInputs(t, w, inputs)
 	if code, out, _ := run("setup", w); code != 1 || !strings.Contains(out, "\nS14\tlayup-setup\tfail\tidentity: fail: branch: README.md does not name the branch layup-records\n") {
 		t.Fatalf("a README.md that names no records branch: exit %d\n%s", code, out)
 	}
-	target := filepath.Join(w, "target")
 	head := gitIn(t, target, "rev-parse", "layup-setup")
 	inputs["README.md"] = strings.TrimSuffix(inputs["README.md"], "\n") + " Its records are on the branch `layup-records`.\n"
 	writeInputs(t, w, inputs)

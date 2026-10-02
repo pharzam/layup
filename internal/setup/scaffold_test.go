@@ -95,6 +95,12 @@ func TestS05StopsForTheLinksThatBreak(t *testing.T) {
 	if o.Kind != Stop || !reflect.DeepEqual(o.Stops, want) || f.files["w/target/docs/x.md"] != "" {
 		t.Errorf("no input: %s %+v; want a stop with %+v and no copy", o.Kind, o.Stops, want)
 	}
+	f = s05Repo(map[string]string{"w/inputs/files/docs/x.md": "fixed\n"})
+	f.install(t)
+	o = runS05(s05Calls([]string{"docs/x.md", "docs/y.md"}), Input{Dir: "w", Record: pinRecord()})
+	if _, copied := f.files["w/target/docs/x.md"]; o.Kind != Stop || !reflect.DeepEqual(o.Stops, want[1:]) || copied {
+		t.Errorf("one input of two: %s %+v, x.md copied %v; want a stop with %+v and no copy", o.Kind, o.Stops, copied, want[1:])
+	}
 	f = s05Repo(map[string]string{"w/inputs/files/docs/x.md": "still broken\n"})
 	f.install(t)
 	if o := runS05(s05Calls([]string{"docs/x.md"}, []string{"docs/x.md"}), Input{Dir: "w", Record: pinRecord()}); o.Kind != Fail ||
@@ -147,52 +153,83 @@ func TestS06(t *testing.T) {
 	}
 }
 
-// Each step of the prose step copies its named files from inputs/files/, with
-// a record row for each (K42); a missing input is one stop row F-<path> of the
-// step (D5 of #90).
-func TestTheProseStep(t *testing.T) {
-	f := &fakeRepo{disk: map[string]string{"w/inputs/files/docs/glossary.md": "# Glossary\n"}}
-	f.install(t)
-	o := runProse("S08", Input{Dir: "w"}, []string{glossaryPath})
-	want := [][]string{{"file:docs/glossary.md", sum("# Glossary\n"), "computed", "sha256 inputs/files/docs/glossary.md"}}
-	if o.Kind != Done || o.Evidence != "check glossary" || !o.Commit || !reflect.DeepEqual(o.Values, want) || f.files["w/target/docs/glossary.md"] != "# Glossary\n" {
-		t.Errorf("S08: %s %q %q, files %q", o.Kind, o.Evidence, o.Values, f.files)
-	}
-	f = &fakeRepo{}
-	f.install(t)
-	o = runProse("S07", Input{Dir: "w"}, []string{onboardingPath})
-	stop := []StopRow{{"S07", "F-docs/onboarding-for-engineers.md", "Write the text of docs/onboarding-for-engineers.md for the target, and give it as inputs/files/docs/onboarding-for-engineers.md.", "docs/onboarding-for-engineers.md"}}
-	if o.Kind != Stop || !reflect.DeepEqual(o.Stops, stop) || len(f.files) != 0 {
-		t.Errorf("S07 with no input: %s %+v, files %q; want %+v", o.Kind, o.Stops, f.files, stop)
-	}
+// proseCalls gives the call of the files that check adapted flags, as on the
+// baseline at LAYUP's pin: the named files of S07 to S09 too.
+func proseCalls() Calls {
+	flagged := []string{"AGENTS.md", "README.md", "docs/engineering-discipline.md", glossaryPath, onboardingPath}
+	return Calls{Flagged: func(string) ([]string, error) { return flagged, nil }}
 }
 
-// S14 copies README.md, AGENTS.md and each other file that check adapted
-// flags, less the files of S07 to S09, so no question is in the group's table
-// twice (D5 of #90, condition 2 of its plan review).
-func TestS14(t *testing.T) {
-	flagged := []string{"AGENTS.md", "README.md", "docs/engineering-discipline.md", glossaryPath, guardrailsPath, onboardingPath}
-	c := Calls{Flagged: func(string) ([]string, error) { return flagged, nil }}
-	f := &fakeRepo{disk: map[string]string{"w/inputs/files/README.md": "r\n", "w/inputs/files/AGENTS.md": "a\n"}}
+// proseInputs gives the input files of the prose step, less those of omit.
+func proseInputs(omit ...string) map[string]string {
+	in := map[string]string{}
+	for _, p := range []string{onboardingPath, glossaryPath, guardrailsPath, "README.md", "AGENTS.md", "docs/engineering-discipline.md"} {
+		if !slices.Contains(omit, p) {
+			in["w/inputs/files/"+p] = "text of " + p + "\n"
+		}
+	}
+	return in
+}
+
+func fileRows(paths ...string) [][]string {
+	var rows [][]string
+	for _, p := range paths {
+		rows = append(rows, []string{"file:" + p, sum("text of " + p + "\n"), "computed", "sha256 inputs/files/" + p})
+	}
+	return rows
+}
+
+// The prose step is one unit of input (O-123, finding 1 of review round 1 of
+// #90): while an input of the group is missing, no step of the group copies a
+// file, and each step gives the stop rows of its own missing inputs, so the
+// run gives one table; a step whose own inputs exist waits, with no row. S14
+// asks for README.md, AGENTS.md and each other file that check adapted flags,
+// less the named file of a step of S07 to S09 that is not done, so no
+// question is twice in the table (condition 2 of the plan review).
+func TestTheProseStepIsOneUnit(t *testing.T) {
+	stop := func(step, p string) StopRow {
+		return StopRow{step, "F-" + p, "Write the text of " + p + " for the target, and give it as inputs/files/" + p + ".", p}
+	}
+	adapt := StopRow{"S14", "F-docs/engineering-discipline.md", "Adapt docs/engineering-discipline.md, which check adapted flags, to the target, and give it as inputs/files/docs/engineering-discipline.md.", "docs/engineering-discipline.md"}
+	for _, c := range []struct {
+		name  string
+		omit  []string
+		stops map[string][]StopRow
+	}{
+		{"no input", []string{onboardingPath, glossaryPath, guardrailsPath, "README.md", "AGENTS.md", "docs/engineering-discipline.md"}, map[string][]StopRow{
+			"S07": {stop("S07", onboardingPath)}, "S08": {stop("S08", glossaryPath)}, "S09": {stop("S09", guardrailsPath)},
+			"S14": {stop("S14", "README.md"), stop("S14", "AGENTS.md"), adapt}}},
+		{"each input but one of S07", []string{onboardingPath}, map[string][]StopRow{"S07": {stop("S07", onboardingPath)}, "S08": nil, "S09": nil, "S14": nil}},
+		{"each input but one of S14", []string{"docs/engineering-discipline.md"}, map[string][]StopRow{"S07": nil, "S08": nil, "S09": nil, "S14": {adapt}}},
+	} {
+		for step, want := range c.stops {
+			f := &fakeRepo{disk: proseInputs(c.omit...)}
+			f.install(t)
+			o := runProseStep(step, proseCalls(), Input{Dir: "w"})
+			if o.Kind != Stop || !reflect.DeepEqual(o.Stops, want) || len(f.files) != 0 {
+				t.Errorf("%s, %s: %s %+v, %d files; want a stop with %+v and no file", c.name, step, o.Kind, o.Stops, len(f.files), want)
+			}
+		}
+	}
+	f := &fakeRepo{disk: proseInputs()}
 	f.install(t)
-	o := runS14(c, Input{Dir: "w"})
-	stop := []StopRow{{"S14", "F-docs/engineering-discipline.md", "Adapt docs/engineering-discipline.md, which check adapted flags, to the target, and give it as inputs/files/docs/engineering-discipline.md.", "docs/engineering-discipline.md"}}
-	if o.Kind != Stop || !reflect.DeepEqual(o.Stops, stop) || len(f.files) != 0 {
-		t.Errorf("S14 with no input for a flagged file: %s %+v, files %q; want %+v", o.Kind, o.Stops, f.files, stop)
+	for step, want := range map[string][][]string{"S07": fileRows(onboardingPath), "S08": fileRows(glossaryPath), "S09": fileRows(guardrailsPath),
+		"S14": fileRows("README.md", "AGENTS.md", "docs/engineering-discipline.md")} {
+		o := runProseStep(step, proseCalls(), Input{Dir: "w"})
+		if o.Kind != Done || !reflect.DeepEqual(o.Values, want) || o.Evidence != map[string]string{"S07": "check onboarding", "S08": "check glossary", "S09": "check guardrails", "S14": "checks identity and adapted"}[step] {
+			t.Errorf("each input, %s: %s %q %q; want done and %q", step, o.Kind, o.Evidence, o.Values, want)
+		}
 	}
-	f.disk["w/inputs/files/docs/engineering-discipline.md"] = "e\n"
-	f.install(t)
-	o = runS14(c, Input{Dir: "w"})
-	values := [][]string{
-		{"file:README.md", sum("r\n"), "computed", "sha256 inputs/files/README.md"},
-		{"file:AGENTS.md", sum("a\n"), "computed", "sha256 inputs/files/AGENTS.md"},
-		{"file:docs/engineering-discipline.md", sum("e\n"), "computed", "sha256 inputs/files/docs/engineering-discipline.md"},
+	// After S07 to S09, a named file that check adapted still flags is S14's
+	// too, so a new input for it reaches the tree.
+	done := work.Record{{"S07", "done", "x", "step", ""}, {"S08", "done", "x", "step", ""}, {"S09", "done", "x", "step", ""}}
+	if o := runProseStep("S14", proseCalls(), Input{Dir: "w", Record: done}); o.Kind != Done ||
+		!reflect.DeepEqual(o.Values, fileRows("README.md", "AGENTS.md", "docs/engineering-discipline.md", glossaryPath, onboardingPath)) {
+		t.Errorf("S14 after S07 to S09: %s %q", o.Kind, o.Values)
 	}
-	if o.Kind != Done || o.Evidence != "checks identity and adapted" || !reflect.DeepEqual(o.Values, values) || len(f.files) != 3 {
-		t.Errorf("S14: %s %q %q, files %q; want done and %q", o.Kind, o.Evidence, o.Values, f.files, values)
-	}
+	c := proseCalls()
 	c.Flagged = func(string) ([]string, error) { return nil, errors.New("git: cannot list the tracked files") }
-	if o := runS14(c, Input{Dir: "w"}); o.Kind != Fail || o.Evidence != "the files that check adapted flags: git: cannot list the tracked files" {
+	if o := runProseStep("S08", c, Input{Dir: "w"}); o.Kind != Fail || o.Evidence != "the files that check adapted flags: git: cannot list the tracked files" {
 		t.Errorf("a failed list: %s %q", o.Kind, o.Evidence)
 	}
 }
@@ -243,6 +280,12 @@ func TestS10(t *testing.T) {
 	}
 	if o := runS10(markersOf(), Input{Dir: "w"}); o.Kind != Done {
 		t.Errorf("no marker: %s %q; want done", o.Kind, o.Evidence)
+	}
+	open := "\u2039open\r" // a marker that does not close, on a line of a CRLF file
+	o = runS10(markersOf(Marker{"docs/c.md", 2, 0, open}), Input{Dir: "w"})
+	if o.Kind != Stop || len(o.Stops) != 1 || o.Stops[0].Question != MarkerID("docs/c.md", open) ||
+		o.Stops[0].Where != "docs/c.md:2 \u2039open" || o.Stops[0].Ask != ask("docs/c.md", "\u2039open") {
+		t.Errorf("a marker with a carriage return: %s %+v; want the where and the ask with no carriage return", o.Kind, o.Stops)
 	}
 	c.Markers = func(string) ([]Marker, error) { return nil, errors.New("git: cannot list") }
 	if o := runS10(c, Input{Dir: "w"}); o.Kind != Fail || o.Evidence != "the markers of the tree: git: cannot list" {
@@ -302,6 +345,14 @@ func TestS11(t *testing.T) {
 	if len(f.files) != len(files) {
 		t.Errorf("S11 wrote %d files; want %d", len(f.files), len(files))
 	}
+	open := "\u2039open\r"
+	f2 := &fakeRepo{trees: f.trees, shows: f.shows, disk: map[string]string{"w/target/docs/c.md": "one\r\n" + open + "\n"}}
+	f2.install(t)
+	idOpen := MarkerID("docs/c.md", open)
+	if o := runS11(markersOf(Marker{"docs/c.md", 2, 0, open}), Input{Dir: "w", Record: pinRecord(), Answers: mAnswers([]string{idOpen, "8080", "u", ""})}); o.Kind != Done ||
+		f2.files["w/target/docs/c.md"] != "one\r\n8080\r\n" || o.Values[0][1] != "8080" {
+		t.Errorf("a marker of a CRLF line: %s %q, %q; want the line end kept", o.Kind, f2.files["w/target/docs/c.md"], o.Values)
+	}
 	if !strings.Contains(record, "| Collected by | `layup setup`, step S11 |") || !strings.Contains(record, "# F-0002. The answers to the markers of the setup") ||
 		!strings.Contains(record, "| Source | The answers of `inputs/answers.tsv` to the markers that S10 listed |") || strings.Contains(record, "\u2039") {
 		t.Errorf("the second answers record:\n%s", record)
@@ -325,6 +376,8 @@ func TestS11ChecksBeforeItWrites(t *testing.T) {
 		{"a gap in a file whose name holds a tab", []Marker{{"docs/a.md", 3, 0, mx}, {tab, 1, 0, mx}},
 			mAnswers([]string{ida, "8080", "u", ""}, []string{MarkerID(tab, mx), "gap", "u", "Which?"}), "docs/t\tb.md: a file whose name holds a tab cannot have a row in docs/setup/open-gaps.tsv"},
 		{"a marker with no answer", []Marker{{"docs/a.md", 3, 0, mx}}, nil, ida + ": no answer"},
+		{"a gap marker with a carriage return", []Marker{{"docs/a.md", 3, 0, "\u2039x\r"}}, mAnswers([]string{MarkerID("docs/a.md", "\u2039x\r"), "gap", "u", "Which?"}),
+			"docs/a.md: the marker \u2039x holds a tab or a carriage return, so it cannot have a row in docs/setup/open-gaps.tsv"},
 	} {
 		f := s11Repo()
 		f.install(t)

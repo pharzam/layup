@@ -139,3 +139,46 @@ commit adds only text), 23:02:19Z to 23:04:13Z:
 | `go test -race -count=1` on `internal/catalog`, `internal/verify`, `internal/work`, `internal/standin`, `internal/setup` and `internal/cli`, and on `internal/catalog`, `internal/verify`, `internal/setup` and `internal/cli` with `-tags=integration` | `ok` |
 | `sh docs/setup/tests/run.sh`; `sh docs/tests/run-discipline-tests.sh` | 44 passed, 0 failed; 81 passed, 0 failed |
 | The first commit (`344ecce`) alone, in a scratch work tree: `go vet` with each tag; the unit tests; the integration tests of `internal/cli`, `internal/setup`, `internal/verify` and `internal/git`; the e2e tests of `cmd/layup` | `ok` |
+
+## The fix of review round 1 (cycle 1)
+
+Round 1 (Claude Fable 5.1, on `1df7566`; the record is on #90) gave
+`material`: finding 1, at LAYUP's pin check `adapted` flags the baseline's own
+onboarding, glossary and guardrails files, so with the input of S07, S08 or S09
+missing and each input of S14 present, S14 committed and failed its evidence
+`adapted` (exit 1), and the one table of the prose step did not come. Note 2
+(an unclosed marker of a CRLF line holds the carriage return) is fixed too,
+note 3 (the code spans of the ask in `setup.md`) is text, and notes 4 to 7
+confirm the change. The author also found the stale words "the record of S06"
+in the row S11 of `setup.md` (by O-124 the first answers record is S04's).
+
+The red runs, with the new cases, on the code of `1df7566`:
+
+```text
+$ go test -count=1 -run TestTheProseStepIsOneUnit ./internal/setup/       (finding 1)
+    each input but one of S07, S14: done [], 3 files; want a stop with [] and no file
+    each input but one of S07, S08: done [], 1 files; want a stop with [] and no file
+    S14 after S07 to S09: done … (no row of docs/glossary.md and docs/onboarding-for-engineers.md)
+$ go test -count=1 -tags=integration -run TestSetupRunsS05ToS14 ./internal/cli/   (finding 1, the baseline's glossary flagged)
+    each input but the one of S08: exit 1
+        S07 layup-setup done check onboarding / S08 not-active not run: S14 did not pass / S09 done … / S14 fail …
+$ go test -count=1 -run 'TestS10|TestS11' ./internal/setup/                (note 2)
+    a marker with a carriage return: … Ask: What is the value of \u2039open<CR> in docs/c.md? …
+    a marker of a CRLF line: done "one\r\n8080\n" …; want the line end kept
+    a gap marker with a carriage return: done …; want fail "docs/a.md: the marker \u2039x holds a tab or a carriage return, …"
+```
+
+The mutations of the fix, each detected; M9 and M10 above mutated the code
+that the fix replaced, so M28, M29 and M33 take their place, and a new case of
+`TestS05StopsForTheLinksThatBreak` (one input of two) detects M12 again:
+
+| Mutation | Detected by |
+| -------- | ----------- |
+| M28 a step of the prose step copies while an input of the group is missing | `TestTheProseStepIsOneUnit`; `TestSetupRunsS05ToS14` |
+| M29 S14 never asks again for a named file of a done step | `TestTheProseStepIsOneUnit` |
+| M30 S10 shows the carriage return of a marker | `TestS10` |
+| M31 S11 drops the carriage return of a line it fills | `TestS11` |
+| M32 S11 takes a gap for a marker with a carriage return | `TestS11ChecksBeforeItWrites` |
+| M33 S14 does not ask for a flagged file | `TestTheProseStepIsOneUnit`; `TestSetupRunsS05ToS14` |
+| M12 a step copies its inputs before it knows that one is missing | `TestS05StopsForTheLinksThatBreak` (the new case) |
+| M11 a copied file gets no record row | `TestS05`, `TestTheProseStepIsOneUnit`; `TestSetupRunsS05ToS14` |

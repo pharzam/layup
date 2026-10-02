@@ -173,7 +173,7 @@ the one home of the phase-1 steps of a target. A row that differs from
 | S08 | the same | `inputs/files/docs/glossary.md` | the same | the file | check `glossary` |
 | S09 | the same | `inputs/files/docs/guardrails.md` | the same | the file | check `guardrails` |
 | S10 | `layup setup`; stops for the Operator | the tree; `answers.tsv` | Lists every marker of the tree outside the exemptions of LAYUP's `MK_EXEMPT` ([`setup-check.sh`](../setup/setup-check.sh); the baseline has no setup check, §5), which the engine embeds at its version. A path of that pattern that a target does not have matches nothing. A marker with no answer row stops the run; the table lists all of them at once (§5 gap check, "one batch"), each by its first line. It changes no file. | — | every marker has an answer row |
-| S11 | `layup setup` | the answers of S10 | Replaces each marker whose answer has a value with that value, and writes its record row with the source. A marker whose answer is `gap` keeps its marker and gets a row in `docs/setup/open-gaps.tsv` with the answer's question (Invariant 4). When S10 listed at least one marker, writes the answer of each marker that S10 listed as a second raw fact record, in the same form, with its own index row and its own line in `facts.sha256`; with no marker, it writes no second record; the record of S06 does not change (a raw facts record is immutable). | the tree; the second answers record; record rows `marker:<file>:<line>` | checks `markers`, `sources` and `facts` |
+| S11 | `layup setup` | the answers of S10 | Replaces each marker whose answer has a value with that value, and writes its record row with the source. A marker whose answer is `gap` keeps its marker and gets a row in `docs/setup/open-gaps.tsv` with the answer's question (Invariant 4). When S10 listed at least one marker, writes the answer of each marker that S10 listed as a second raw fact record, in the same form, with its own index row and its own line in `facts.sha256`; with no marker, it writes no second record; the record of S04 does not change (a raw facts record is immutable; O-124). | the tree; the second answers record; record rows `marker:<file>:<line>` | checks `markers`, `sources` and `facts` |
 | S12 | `layup setup` | the catalog entry of the stack | Writes the files of the entry (for Go: `go.mod` with the module path from `name`, the tools' configuration), `docs/gates.tsv`, and one CI job per gate kind, whose id and name are the kind (K30). For each gap of the entry (the coverage floor of Go, K24), writes its row of `docs/setup/open-gaps.tsv` and its record row. The baseline's own workflows stay byte for byte (`REQ-018`). Adds no `setup-check` job. Changes `steps.tsv` S12: ADR-0011 decision 7, ADR-0016, §5 Scaffold 4. | the gate files; the gap rows of the entry | checks `jobs` and `gates` (each row `gate:<kind>`) |
 | S13 | `layup setup`; applied by the Operator | the job names | Writes `docs/setup/branch-protection.json` (in the form of LAYUP's own file of that name; the baseline has no `docs/setup/`) and `WORK/out/ruleset-default.json`: the default branch and the ref `layup-probe`; a pull request required; each gate job a required check, pinned to GitHub Actions; no force push, no deletion; an empty bypass list. In phase 1 it requires no `layup/` check, because no phase-1 command posts one ([`records.md`](records.md#nfr-002--a-target-is-independent-of-layup)). Writes to `commands.sh` the push of `layup-setup` onto the default branch (`git push origin layup-setup:main`, a fast-forward from the root commit; §5 Scaffold 6: "pushes the setup commits on top of the root commit") and, after it, the apply command of the ruleset. | the ruleset file; commands | the ruleset file, and its commands in `commands.sh` for the Operator (a hand-off: phase 1 does not see the Operator's run) |
 | S14 | `layup setup`; the text is an input | `inputs/files/README.md`, `inputs/files/AGENTS.md`, and `inputs/files/<path>` of each other file that check `adapted` flags | Copies the files, with a record row `file:<path>` each (K42); a missing file stops the run, in the one table of the prose step (O-123). | the files | checks `identity` and `adapted` |
@@ -379,18 +379,29 @@ D10 of its plan, with the conditions of its plan review):
   area"), `<date>` the date of `pin.time`; its record rows are `brief.copy`
   (the path, ref `the raw file name of a brief`) and `brief.copy.sha256` (the
   hash, ref `sha256 <path>`), and `vision.copy` with `vision.copy.sha256`.
-- **The prose step** (O-123, K16, D5): S07, S08 and S09 copy their named file,
-  and S14 copies `README.md`, `AGENTS.md` and each file that check `adapted`
-  flags on the head (the list of row 11), less the five named files, so no
-  question is twice in the group's one table. A step of the group whose inputs
-  exist is done and committed in the run that stops for another step of the
-  group. The evidence of S14 is checks `identity` and `adapted`: `adapted` is
+- **The prose step** (O-123, K16, D5, and finding 1 of review round 1 of #90):
+  S07, S08 and S09 copy their named file, and S14 copies `README.md`,
+  `AGENTS.md` and each other file that check `adapted` flags on the head (the
+  list of row 11), less the named file of a step of S07 to S09 that is not
+  done, so no question is twice in the group's one table; a named file that
+  check `adapted` still flags after its step is S14's too, so a new input for
+  it reaches the tree. The four steps are one unit of input: while an input of
+  a step of the group that is not done is missing, no step of the group copies
+  a file; each gives the stop rows of its own missing inputs, and a step whose
+  own inputs exist waits, with no row, so the run gives one table. Reason: at
+  LAYUP's pin check `adapted` flags the baseline's own onboarding, glossary and
+  guardrails files, so S14 can pass its evidence only after S07 to S09 replace
+  them. The evidence of S14 is checks `identity` and `adapted`: `adapted` is
   the check that flags the files that S14 replaces.
 - **S10** (D6): one question `M-<x8>` per file and marker text, in the order of
-  the list of the scanner, with the ask "What is the value of `<marker>` in
-  `<file>`? Answer gap to keep it as an open gap, with its question as
-  question_text." and `where` `<file>:<line> <marker>` of its first line; an
-  `M-` answer to a marker that the tree does not hold is exit 2.
+  the list of the scanner, with the ask "What is the value of <marker> in
+  <file>? Answer gap to keep it as an open gap, with its question as
+  question_text." (the marker and the file as they are, with no code span) and
+  `where` `<file>:<line> <marker>` of its first line; an `M-` answer to a
+  marker that the tree does not hold is exit 2. A marker that does not close on
+  a line of a CRLF file holds the carriage return of its line, as the scanner
+  reads it; the ask, `where` and the answers record show it with no carriage
+  return, which no cell of a TSV file can hold (note 2 of review round 1).
 - **The column of a marker** (D7): the scanner gives each marker with the byte
   column of its open quote on its line, so S11 replaces it at the place that
   the scanner found; a mention in a code span is never replaced, and the rule
@@ -403,7 +414,9 @@ D10 of its plan, with the conditions of its plan review):
   keeps the marker, with a row per place (source `gap`, ref
   `docs/setup/open-gaps.tsv`) and one row of `open-gaps.tsv` per file and
   marker, with the answer's `question_text`. A marker that does not close on
-  its line is the text from its open quote to the line end. With at least one
+  its line is the text from its open quote to the line end; a fill keeps the
+  carriage return of its line, and a `gap` for a marker that holds a tab or a
+  carriage return is `fail`, as a cell of `open-gaps.tsv` cannot hold it. With at least one
   marker, S11 writes the second answers record
   `docs/facts/F-NNNN-marker-answers.md` (the next free ID) in the form of S04's
   record: the title `# F-NNNN. The answers to the markers of the setup`,
@@ -417,7 +430,8 @@ D10 of its plan, with the conditions of its plan review):
   `internal/verify` (`packages.md`): the one-check call, the markers of a tree,
   the files whose links break, the files that check `adapted` flags, and the
   link rule of the baseline.
-- **Known limit:** on LAYUP's pin, check `adapted` flags 26 files (O-123), and
+- **Known limit:** on LAYUP's root commit `d2516fd`, check `adapted` flags 38
+  files (row 11, task `T-8ya0`; O-123 counted 26 at its time), and
   the deletion of S05 breaks links in `AGENTS.md`, `README.md`,
   `docs/adr/0004-ship-agent-entry-points.md`, `docs/adr/README.md`,
   `docs/engineering-discipline.md`, `docs/glossary.md` and

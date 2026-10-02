@@ -75,3 +75,35 @@ reads it later).
 marks as quotes is refused; a real setup at LAYUP's pin needs the union of the
 files that check `adapted` flags, the files whose links S05 breaks, and the
 five named files as input files.
+
+## Review round 1 and its fix (cycle 1)
+
+Devin (its usage quota) and OpenCode (no output in five minutes) gave no
+record. Round 1 (Claude Fable 5.1, effort `xhigh`, on the Claude Code CLI, a
+fresh session, on `1df7566`, its record at 4 min 31 s; the record is on #90)
+gave `material`, with one finding and six notes. It measured `verify.Flagged`
+on a clone of LAYUP at `d2516fd`: 38 files, with the baseline's own
+onboarding, glossary and guardrails files. The fix has its red runs
+([`test-runs.md`](../../runs/T-b3r1/test-runs.md)):
+
+1. **The prose step did not give its one table on the real baseline.** With
+   the input of S07, S08 or S09 missing and each input of S14 present, S14
+   committed and failed its evidence `adapted` on the baseline's file that the
+   other step had not replaced (exit 1). The prose step is now one unit of
+   input: while an input of a step of the group that is not done is missing, no
+   step of the group copies a file, each step gives the rows of its own missing
+   inputs, and a step whose own inputs exist waits, with no row. This changes
+   the author's answer to condition 2 of the plan review ("A step of the group
+   whose inputs exist is done and committed in the run that stops for another
+   step"), as the finding asks. S14's list is README.md, AGENTS.md and each
+   other flagged file less the named file of a step of S07 to S09 that is not
+   done, so a named file that check `adapted` still flags after its step is
+   S14's too, and a new input for it reaches the tree.
+
+The notes: note 2 is fixed (the stop table and the answers record show a
+marker with no carriage return at its end; a fill keeps the line end; a `gap`
+for a marker with a tab or a carriage return is `fail`, a known limit of
+`open-gaps.tsv`); note 3 is text (the ask of S10 has no code span); notes 4 to
+7 confirm the change. The author also fixed the stale words "the record of
+S06" in the row S11 of `setup.md`, and the count of the known limit (38 files,
+row 11's measurement).
