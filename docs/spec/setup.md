@@ -131,7 +131,7 @@ the one home of the phase-1 steps of a target. A row that differs from
 | S09 | the same | `inputs/files/docs/guardrails.md` | the same | the file | check `guardrails` |
 | S10 | `layup setup`; stops for the Operator | the tree; `answers.tsv` | Lists every marker of the tree outside the exemptions of LAYUP's `MK_EXEMPT` ([`setup-check.sh`](../setup/setup-check.sh); the baseline has no setup check, §5), which the engine embeds at its version. A path of that pattern that a target does not have matches nothing. A marker with no answer row stops the run; the table lists all of them at once (§5 gap check, "one batch"). | — | every marker has an answer row |
 | S11 | `layup setup` | the answers of S10 | Replaces each marker whose answer has a value with that value, and writes its record row with the source. A marker whose answer is `gap` keeps its marker and gets a row in `docs/setup/open-gaps.tsv` with the answer's question (Invariant 4). When S10 listed at least one marker, writes the answer of each marker that S10 listed as a second raw fact record, in the same form, with its own index row and its own line in `facts.sha256`; with no marker, it writes no second record; the record of S06 does not change (a raw facts record is immutable). | the tree; the second answers record; record rows `marker:<file>:<line>` | checks `markers`, `sources` and `facts` |
-| S12 | `layup setup` | the catalog entry of the stack | Writes the files of the entry (for Go: `go.mod` with the module path from `name`, the tools' configuration), `docs/gates.tsv`, and one CI job per gate kind, named as the kind. The baseline's own workflows stay byte for byte (`REQ-018`). Adds no `setup-check` job. Changes `steps.tsv` S12: ADR-0011 decision 7, ADR-0016, §5 Scaffold 4. | the gate files | checks `jobs` and `gates` (each row `gate:<kind>`) |
+| S12 | `layup setup` | the catalog entry of the stack | Writes the files of the entry (for Go: `go.mod` with the module path from `name`, the tools' configuration), `docs/gates.tsv`, and one CI job per gate kind, whose id and name are the kind (K30). For each gap of the entry (the coverage floor of Go, K24), writes its row of `docs/setup/open-gaps.tsv` and its record row. The baseline's own workflows stay byte for byte (`REQ-018`). Adds no `setup-check` job. Changes `steps.tsv` S12: ADR-0011 decision 7, ADR-0016, §5 Scaffold 4. | the gate files; the gap rows of the entry | checks `jobs` and `gates` (each row `gate:<kind>`) |
 | S13 | `layup setup`; applied by the Operator | the job names | Writes `docs/setup/branch-protection.json` (in the form of LAYUP's own file of that name; the baseline has no `docs/setup/`) and `WORK/out/ruleset-default.json`: the default branch and the ref `layup-probe`; a pull request required; each gate job a required check, pinned to GitHub Actions; no force push, no deletion; an empty bypass list. In phase 1 it requires no `layup/` check, because no phase-1 command posts one ([`records.md`](records.md#nfr-002--a-target-is-independent-of-layup)). Writes to `commands.sh` the push of `layup-setup` onto the default branch (`git push origin layup-setup:main`, a fast-forward from the root commit; §5 Scaffold 6: "pushes the setup commits on top of the root commit") and, after it, the apply command of the ruleset. | the ruleset file; commands | the ruleset file, and its commands in `commands.sh` for the Operator (a hand-off: phase 1 does not see the Operator's run) |
 | S14 | `layup setup`; the text is an input | `inputs/files/README.md`, `inputs/files/AGENTS.md` | Copies the files; a missing file stops the run. | the files | check `identity` |
 | S15 | `layup setup`; the push by the Operator | the record; `out/verify.tsv` | Writes the record's last rows and the rule-path register, and the first commit of `layup-records` ([below](#where-the-records-go-in-phase-1), O-115). Not `steps.tsv` into the target (§5: LAYUP's own file). | `out/record.tsv`, `out/rule-paths.tsv`; the records commit; a command | every row of `verify.tsv` is `pass` or `clear` |
@@ -425,8 +425,8 @@ reason  text                             -    the first failure, or the `clear` 
   `unlisted:`.
 - **Check `sources`:** each row of the setup record but a `done` row, by its
   source: `answer`, the ref is a row of `answers.tsv`; `catalog`, the entry of
-  the row `S01 stack` has the file of the ref (this version embeds no catalog,
-  so a catalog ref does not resolve until row 14); `fact`, the ref resolves;
+  the row `S01 stack` has the file of the ref (in the entry of the binary,
+  task `T-c06a`); `fact`, the ref resolves;
   `gap`, the row `marker:<file>:<line>` names a line that holds the marker of
   its value, and `open-gaps.tsv` has the row; `computed`, the ref is not empty,
   and a ref `sha256 <path>` (with or without prefixes) names a file of the
@@ -580,29 +580,36 @@ One directory per stack in LAYUP's repository, `internal/catalog/<stack>/`,
 embedded in the binary with `embed`. **Decided here:** the path, because `embed`
 reads only files under the package's own directory; and the embedding, because
 a target starts from the defaults of the LAYUP version that sets it up (§13).
-The Go entry itself is the work of #29; this is its form.
+This is the form of an entry; the Go entry is below (task `T-c06a`, #91).
 
 | Path | What |
 | ---- | ---- |
 | `internal/catalog/<stack>/kinds.tsv` | one row per gate kind (the schema below) |
-| `internal/catalog/<stack>/files/<path>.tmpl` | each file that the setup writes into the target at `<path>`: the tools' configuration, the CI workflow of the gate jobs; `{{module}}` in a file is replaced with the module path from `name` |
+| `internal/catalog/<stack>/files/<path>.tmpl` | each file that the setup writes into the target at `<path>`: the tools' configuration, the CI workflow of the gate jobs; `{{module}}` in a file is replaced with the module path from `name`, and a gap token `{{gap:<text>}}` with the marker of that text |
 | `internal/catalog/<stack>/fixtures/<kind>.patch` | the known-bad fixture of a kind: a patch that `git apply` applies to the setup head and that must make the kind fail |
+| `internal/catalog/<stack>/gaps.tsv` | the gaps of the entry, when it has one: for each gap token, its file and its question (the block below; task `T-c06a`, #91) |
 
 ```tsv-schema catalog-kinds layup:internal/catalog/<stack>/kinds.tsv
 kind      id(<word>)            key  the gate kind, as in the manifest
 state     enum(active|pending)  -    the state at setup; `pending` for a kind whose rules depend on the architecture (§6)
-tool      text                  -    the program, as in the manifest
-version   text                  -    the tool's version that the evidence documents
-command   text                  -    the command, as in the manifest
+tool      text                  -    the program, as in the manifest; `—` for a `pending` kind until its activation
+version   text                  -    the tool's version that the evidence documents; `—` for a `pending` kind until its activation
+command   text                  -    the command, as in the manifest; `—` for a `pending` kind until its activation
 scope     list(text)            -    the scope patterns, as in the manifest
-config    list(path)            -    the gate files of the kind in the target; `—` when none
+config    list(path)            -    the gate files of the kind in the target; `—` when none, and for a `pending` kind until its activation
 fixture   text                  -    `fixtures/<kind>.patch`, relative to the entry's directory; `—` for a `pending` kind until its activation
-evidence  text                  -    the URL of the tool's documentation at that version
+evidence  text                  -    the URL of the tool's documentation at that version, `https`; `—` for a `pending` kind until its activation
+```
+
+```tsv-schema catalog-gaps layup:internal/catalog/<stack>/gaps.tsv
+path      path  key  the file of the target that holds the gap token: a file of `files/`, without `.tmpl`
+marker    text  key  the text of the marker, as the gap token `{{gap:<text>}}` holds it
+question  text  -    the question of the gap, for the row of `docs/setup/open-gaps.tsv` in the target
 ```
 
 The manifest that S12 writes is this table without the columns `version`,
-`fixture` and `evidence`. LAYUP's own CI runs each fixture of each entry (§6);
-that test comes with the code (#29).
+`fixture` and `evidence`. LAYUP's own CI runs each fixture of each entry (§6),
+in its job `tests` (task `T-c06a`, below).
 
 **Decided here** (K35 of the [defect register](../plan/README.md#the-defect-register),
 task `T-3jpx`, #81):
@@ -621,7 +628,14 @@ task `T-3jpx`, #81):
   `kinds.tsv` matches its schema and has at least one row; an `active` kind
   names `fixtures/<kind>.patch`, and that file exists; a `pending` kind has `—`
   as its fixture; each file of `fixtures/` is the fixture of an `active` kind;
-  each file of `files/` ends with `.tmpl`. Reason: an entry that breaks one of
+  each file of `files/` ends with `.tmpl`. Task `T-c06a` (#91) adds: an
+  `active` kind has a version, and an `https` URL as its evidence; a `pending`
+  kind has `—` in each column but its kind, its state and its scope; `gaps.tsv`,
+  when there is one, matches its schema, and each of its rows names a file of
+  `files/` that holds its gap token once, with a question; each gap token of a
+  file has its row; no file of the entry holds a marker character (LAYUP's own
+  check `markers` would read it, so an entry writes a gap token in its place).
+  Reason: an entry that breaks one of
   them sets up a target whose gate cannot be proven (a fixture that no kind
   runs, or a kind with no fixture), so the error comes when LAYUP reads its own
   catalog, not at a target's setup. A rule for the authors of an entry, which
@@ -639,13 +653,110 @@ task `T-3jpx`, #81):
   catalog.
 - **The test entry** of the package's tests is
   `internal/catalog/testdata/test/`, embedded only by those tests, with the same
-  pattern form (`all:`). The binary embeds no entry until the Go entry (task
-  `T-c06a`, row 14 of the plan) adds its directive, so S01 never accepts a
-  stack named `test`.
+  pattern form (`all:`). The binary embeds the Go entry (task `T-c06a`, #91),
+  and never the test entry, so S01 never accepts a stack named `test`.
 - **No conversion of the bytes:** `.gitattributes` holds
   `internal/catalog/*/** -text`, so a checkout never changes the line endings
   of a file of an entry or of the test entry. Reason: a fixture is a patch that
   `git apply` reads, and each file goes into a target byte for byte.
+
+**Decided here** (task `T-c06a`, #91), the Go entry, `internal/catalog/go/`:
+
+- **The kinds** (K20 of the [defect register](../plan/README.md#the-defect-register)):
+  `static`, `layout`, `boundary`, `contract` and `test`, in the order of the
+  kind list of [`gate.md`](gate.md#the-gate-manifest). `static` and `test` are
+  `active`; `layout`, `boundary` and `contract` are `pending`, because §6 makes
+  `pending` only a kind whose rules depend on the architecture, and the tests
+  of `test` need none. A `pending` kind has `—` in each column but its kind,
+  its state and its scope: its command never runs and its tool is never looked
+  up ([`gate.md`](gate.md#the-command)), and the activation batch writes its
+  tool, version, command, configuration and evidence (§6, Activation); a value
+  with no source is not written (Invariant 4). So ADR-0016 decision 1 ("an
+  entry names the tool and its version, the command") holds for each `active`
+  kind. Each kind has the scope `./*.go`.
+- **The commands:** `static` is `out=$(gofmt -l .) && test -z "$out" && go vet
+  ./...`, and `test` is `go test -count=1 ./...`, each with the tool `go`.
+  Reason: one row has one command, and §6 names the two static checks as one
+  kind. In the form `test -z "$(gofmt -l .)"` the shell loses the exit status
+  of `gofmt`, so a `gofmt` that is not found, or that cannot parse a file,
+  gives no output, and the kind passes on nothing; the assignment keeps the
+  status (measured: 127 when `gofmt` is not found, 2 on a file that does not
+  parse; `fail`, `NFR-004`). `gofmt` comes with `go` in a Go distribution.
+- **The version and the evidence** of each `active` kind: `1.26`, the `go`
+  line of LAYUP's own `go.mod`, and `https://pkg.go.dev/cmd/go@go1.26.0`, the
+  documentation of the `go` command at the first release of that line (it
+  documents `go vet`, `go test -count=1`, and `go fmt`, which runs `gofmt`),
+  read on 2026-10-02. The target's `go.mod` has `go 1.26`. Reason: LAYUP's CI
+  installs Go from its own `go.mod`, so the fixture test runs on that toolchain
+  and downloads none.
+- **The tool of a kind** of the Go entry is `go` or a program of the runner,
+  because its workflow installs only Go and the activation changes no CI file
+  (§6); a kind that the activation makes active fetches any other tool in its
+  command, for example `go run <module>@<version>`.
+- **The workflow** (K30) is `.github/workflows/gates.yml` in the target, a name
+  that no workflow of the baseline at LAYUP's pin has. It runs on
+  `pull_request`, with `permissions: contents: read`, and has one job per kind,
+  in the order of `kinds.tsv`. The id and the `name:` of each job are the kind,
+  so a reader that takes the name, and a ruleset that takes the context of a
+  check from the name, both get the kind. Each job checks out the head commit
+  of the pull request with its history (`actions/checkout@v4`, `fetch-depth:
+  0`), installs Go from `go.mod` (`actions/setup-go@v5`, `go-version-file`), and
+  runs `sh .github/gates.sh <kind>` with the base and the head commits in
+  `GATE_BASE` and `GATE_HEAD`. No job has `paths:` or a job-level `if:`, because
+  a skipped required check counts as passed; no job starts `layup`, fetches a
+  LAYUP file or runs `setup-check.sh` (`NFR-002`, ADR-0016 decision 5). Each
+  `uses:` line ends with its evidence, the action's repository at that version
+  (`https://github.com/actions/checkout/tree/v4`,
+  `https://github.com/actions/setup-go/tree/v5`, read on 2026-10-02): the
+  versions that LAYUP's own CI runs.
+- **The job script,** `.github/gates.sh` in the target, holds the rules of the
+  run of [`layup gate`](gate.md#the-command) for one kind, in POSIX `sh`, `awk`
+  and `git`, with `tail`, `iconv`, `tr`, `mktemp` and `rm`. It reads the kind's
+  row of the head's `docs/gates.tsv` (known limit L-B3) on a checkout of the
+  head, prints the kind, the result and the reason of `gate.md` (a tab of a
+  path is a space, as in the table), and exits 0 for `pass` and `clear`, 1
+  otherwise. Each input that `layup gate` refuses with exit 2 is `fail` in the
+  job, because a job has no third state and each of the two is not a pass: a
+  base or a head that is not a commit; no manifest; a manifest that the reader
+  of `internal/tsv` refuses (a byte that is not UTF-8, no line feed after the
+  last line, a carriage return, an empty line or field, a header row of
+  another form, a row of another field count, a kind that is not a word or is
+  there twice, a state, a list with an empty value, a `config` value that is
+  not a path); a manifest with no row; a scope pattern of another form, no
+  scope pattern, or a `config` path in `.git` (round 1 of #91, finding 1). The
+  job also fails when its checkout is not the head commit. A check of the
+  script that does not run to its end (`awk` or `tr` that fails) is
+  `not-active`, never a pass. The tool of an active kind is a program, as
+  `exec.LookPath` finds it: a name with `/` is that file, and another name a
+  file of an absolute directory of `PATH`, never a builtin of `sh`. **Known
+  limits** (notes 1 to 3 of round 2 of #91): a file name with a line feed is
+  split by `tr`; a `tr` that fails in the check of the last line gives `fail`
+  with no reason, not `not-active` (neither is a pass); a NUL byte in a field,
+  which `layup gate` reads, can end the line for the `awk` of a host, so the
+  job fails where `layup gate` runs the kind; and with a relative directory of
+  `PATH` before the absolute one that holds the tool, `exec.LookPath` gives
+  `not-active` where the job finds the tool.
+- **The coverage floor** (K24, L-B2): the file `docs/gates/coverage-floor.txt`
+  of the target, the `config` of `test`, has one line, the marker of the floor,
+  and `gaps.tsv` gives its question. S12 (row 15 of the plan) writes, for each
+  gap of the entry (`Entry.Gaps`), its row of `docs/setup/open-gaps.tsv` and
+  its record row `marker:<path>:<line>` (source `gap`). The command checks no
+  floor until the idea owner or the Operator sets it with evidence.
+- **The fixtures** add only new files, under `gatefixture/` (no baseline at
+  LAYUP's pin has that directory), and change no `config` path of their kind:
+  `static.patch` adds a file that `gofmt` changes, and `test.patch` a test that
+  fails. Reason: a patch that changes a file of the baseline stops applying
+  when a later baseline changes that file (O-101). A target rendered from the
+  entry has no `.go` file, so on its clean commit `static` and `test` are
+  `clear` (`no product path`), and each fixture adds the first `.go` file.
+- **The tests in LAYUP's CI**, in the job `tests`, with no change of `ci.yml`
+  (K28): `TestTheFixturesOfEachEntry` of `internal/catalog` (integration:
+  `gate.Run` on a target rendered from each entry of the binary, on its clean
+  commit and on each fixture), `TestTheJobScriptOfEachEntry` (integration: the
+  job script, with each `sh` of the host, `dash` and `bash` in its POSIX mode
+  among them, and `gate.Run` on the same base and head, for each line of the
+  table of the run and for each input error, give the same pass or fail), and
+  `TestGateOnEachEntryOfTheCatalog` of `cmd/layup` (e2e: the built binary).
 
 ### Not in phase 1
 
@@ -655,7 +766,9 @@ task `T-3jpx`, #81):
   `layup/` required checks of the default branch (`layup/gates`, `layup/spec`,
   `layup/verify`, `layup/rules`, §6): the Operator applies both with the
   commands that `layup run` prints when it first starts on the target (phase 2).
-- The activation of the `pending` kinds at the first bet (§6): phase 2.
+- The activation of the `pending` kinds at the first bet (§6): phase 2. The
+  tool of a kind of the Go entry is `go` or a program of the runner (The stack
+  catalog, task `T-c06a`).
 
 ## NFR-003 — No value without evidence
 

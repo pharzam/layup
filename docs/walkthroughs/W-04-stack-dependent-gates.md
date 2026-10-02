@@ -14,7 +14,7 @@ Sections are those of [`architecture.md`](../architecture.md).
 
 | # | Actor | Input | Mechanism | Record | Tag | Where |
 | - | ----- | ----- | --------- | ------ | --- | ----- |
-| 1 | the setup | the Go entry of the stack catalog | writes one CI job per gate kind; `gofmt` and `go vet` (the static-checks kind) are active; layout, boundary and contract are `pending` in `docs/gates.tsv` | the target's CI jobs and manifest | `code` | §6; ADR-0016 |
+| 1 | the setup | the Go entry of the stack catalog | writes one CI job per gate kind; `gofmt` and `go vet` (the static-checks kind) and `go test` (the test kind) are active; layout, boundary and contract are `pending` in `docs/gates.tsv` | the target's CI jobs and manifest | `code` | §6; ADR-0016 |
 | 2 | an architect session | the architecture approved at the first bet | writes the `depguard` rule "`internal/store` is imported only by `internal/app`", a layout test, the manifest with those kinds `active`, and one known-bad patch per kind it activates | the session result | `model` | §6; ADR-0016 |
 | 3 | `layup run` | the result | the batch is a task (§8): its issue, plan and plan review, then pushes it to `batch/bet-1`, opens its pull request, and runs its verification before the bet | the batch's task records and pull request | `code` | §6, §8; ADR-0017, ADR-0019 |
 | 4 | the approver | the bet brief, which names the verified batch head and its rule hash | bets by one comment, which approves the batch (the planned point of the first bet) | the comment, copied (§3) | `human` | §6, §8 |

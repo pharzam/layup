@@ -454,14 +454,17 @@ layout, boundary and contract) has the state `pending` until its activation
 scope, and passes one that changes none, with that reason in its output: no
 product code merges before its gates exist, and a pending gate never passes code
 (Invariant 5). An active kind treats a tree with no path in its scope the same
-way (for Go, `./...` that matches no package), so it never passes silently on
+way (for Go, no `.go` file in the kind's scope; a `.go` file with no package
+fails, [`gate.md`](spec/gate.md#the-command)), so it never passes silently on
 nothing. The jobs of all kinds exist from the setup, so the activation changes no
 CI file.
 
 **The Go entry**: the setup writes `go.mod` (the module path from the repository
-name); `test -z "$(gofmt -l .)"` (bare `gofmt -l` exits 0 on a bad file) and `go vet
-./...` are a fifth kind, "static checks", active from the setup (a stack gate
-adds rules, Invariant 7); at activation, an
+name); `gofmt -l` with no output (bare `gofmt -l` exits 0 on a bad file; the
+command of the entry, which keeps the exit status of `gofmt`, is in
+[`setup.md`](spec/setup.md#the-stack-catalog)) and `go vet ./...` are a fifth
+kind, "static checks", active from the setup (a stack gate adds rules, Invariant
+7); at activation, an
 import-rule tool (golangci-lint's `depguard`, configured from the package table
 of the approved architecture) for the boundary, a layout test as a Go test, and a
 contract test for each interface that the architecture names; test quality is
@@ -478,7 +481,7 @@ commit status `layup/gates` from those results:
 | active, and it passed | counts as a pass |
 | active, and it failed or did not run (`not-active`) | failure |
 | `pending`, and the head changes no path in the product's scope | `clear`: counts as a pass, with the reason "pending: no product path" (the kind's own gate did not run; the rule that ran is "no product path may change while this kind is pending") |
-| active, and the tree has no path in its scope (for Go: no package) | `clear`: counts as a pass, with the reason "no product path" |
+| active, and the tree has no path in its scope (for Go: no `.go` file in its scope) | `clear`: counts as a pass, with the reason "no product path" |
 | `pending`, and the head changes such a path | failure |
 
 The status is a success only when every kind counts as a pass. It never runs the

@@ -1,0 +1,2 @@
+path	marker	question
+docs/gates/coverage-floor.txt	the coverage floor of the test kind	Which coverage floor, in percent of the statements, must the tests of the test kind reach, and what is its evidence?

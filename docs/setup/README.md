@@ -43,7 +43,8 @@ and waits. A value with no source is never filled; it becomes an open gap
   step, and each finding K-01 to K-08 where Armature left a decision open, in
   [`record-T-n1hp.md`](record-T-n1hp.md).
 - **Known limit** (the added scope of [#21](https://github.com/pharzam/layup/issues/21),
-  open until the Operator decides there): `check_ci` of `setup-check.sh` types the
+  kept as a known limit by the Operator's decision O-138 there; the task that
+  next changes `check_ci` fixes it): `check_ci` of `setup-check.sh` types the
   list of the pass-through linters and the two `docs/ci` suites of the runner by
   hand, and four of its rule branches have no fixture that can fail (the
   expansion of the four linters, the exemption of the nested checkout, the
