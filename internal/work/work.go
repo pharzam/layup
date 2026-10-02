@@ -15,9 +15,10 @@ import (
 
 // The paths of a work area, from its root.
 const (
-	AnswersPath = "inputs/answers.tsv"
-	RecordPath  = "out/record.tsv"
-	TargetPath  = "target"
+	AnswersPath  = "inputs/answers.tsv"
+	RecordPath   = "out/record.tsv"
+	CommandsPath = "out/commands.sh"
+	TargetPath   = "target"
 )
 
 // AnswersSchema is the form of inputs/answers.tsv: the block setup-answers of
