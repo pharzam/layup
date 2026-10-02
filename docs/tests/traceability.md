@@ -26,10 +26,14 @@ the first.
 
 | Test ID | Level | Covers (REQ/NFR) | Fact (F-NNNN#n) | Guardrail | ADR | Task | Status |
 |---------|-------|------------------|-----------------|-----------|-----|------|--------|
-| `TestGolden` (`internal/psb/check_test.go`) | unit | REQ-001 | F-0003#41 | — | ADR-0011 | T-dq05 | green |
-| `TestPSBCheckExitCodes` (`internal/cli/cli_test.go`) | unit | REQ-001 | F-0003#41 | — | ADR-0011 | T-dq05 | green |
+| `TestGolden` (`internal/psb/check_test.go`) | unit | REQ-001 | F-0003#41 | — | ADR-0011 | T-dq05, T-5zmw | green |
+| `TestCRLFGivesTheSameTable`, `TestALoneCarriageReturnBecomesASpace`, `TestG1ReadsTheValueOfAStack`, `TestEdgeCases`, `TestWriteTSVGivesTheErrorOfItsOutput` (`internal/psb/check_test.go`) | unit | REQ-001 | F-0003#41 | — | ADR-0011 | T-5zmw | green |
+| `TestPSBCheckRefusesAFileThatIsNotUTF8`, `TestPSBCheckGivesTwoWhenItCannotWriteTheTable` (`internal/cli/psb_test.go`) | unit | REQ-001, NFR-004 | F-0003#41 | — | ADR-0011 | T-5zmw | green |
+| `TestPSBCheckExitCodes` (`internal/cli/psb_integration_test.go`) | integration | REQ-001 | F-0003#41 | — | ADR-0011 | T-dq05, T-5zmw | green |
 | `TestGoldenRealPSB` (`internal/psb/check_integration_test.go`) | integration | REQ-001 | F-0003#41 | — | ADR-0011 | T-dq05 | green |
-| `T-5zmw/e2e/psb-check` | e2e | REQ-001 | F-0003#41 | — | ADR-0011 | T-5zmw | planned |
+| `TestEveryGoldenIsARecordOfTheBlock` (`internal/psb/check_integration_test.go`) | integration | REQ-001 | F-0003#41 | — | ADR-0011 | T-5zmw | green |
+| `TestPSBCheckOnTheRealProblemStatement`, `TestPSBCheckOnAStatementWithNoGap`, `TestPSBCheckInputErrors` (`cmd/layup/psb_e2e_test.go`) | e2e | REQ-001, NFR-005 | F-0003#41 | — | ADR-0011 | T-5zmw | green |
+| `TestPSBCheckWithAReadOnlyStandardOutput` (`cmd/layup/psb_e2e_test.go`) | e2e | REQ-001, NFR-004 | F-0003#41 | — | ADR-0011 | T-5zmw | green |
 | `TestEverySchemaBlockIsBuiltOrNotYetBuilt` (`internal/tsv/blocks_integration_test.go`) | integration | NFR-001 | F-0001#1 | guardrails.md §1.1 Inv-1 | ADR-0014 | T-18v6 | green |
 | `TestPackageRules` (`cmd/layup/rules_integration_test.go`) | integration | NFR-005, NFR-007 | F-0001#6 | guardrails.md §1.1 Inv-6 | ADR-0015 | T-2tc2 | green |
 | `TestExitCode` (`internal/cli/cli_test.go`) | unit | NFR-004 | F-0001#5 | guardrails.md §1.1 Inv-5 | ADR-0011 | T-2yw7 | green |
@@ -43,7 +47,7 @@ the first.
 | `TestReadGivesTheKindsInTheOrderOfTheFile`, `TestReadRefusesAnEntryThatBreaksARule`, `TestReadRefusesANameThatIsNotAnEntry`, `TestManifestIsTheKindsWithoutVersionFixtureAndEvidence`, `TestFixtureAndConfigOfAKind`, `TestStacksListsTheDirectoriesWithAKindsFile` (`internal/catalog/catalog_test.go`) | unit | REQ-004, REQ-002 | F-0003#44 | guardrails.md §1.1 Inv-7 | ADR-0016 | T-3jpx | green |
 | `TestFilesReplaceTheModuleAndNothingElse` (`internal/catalog/catalog_test.go`) | unit | REQ-002 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-3jpx | green |
 | `TestHasNamesTheFilesOfTheEntryByTheirPathInIt` (`internal/catalog/catalog_test.go`) | unit | NFR-003 | F-0001#4 | guardrails.md §1.1 Inv-4 | — | T-3jpx | green |
-| The frame of `spec/README.md`, "Commands": the four tests of `internal/cli/args_test.go`, the three of `internal/cli/progress_test.go`, and each test of `internal/cli/cli_test.go` other than `TestPSBCheckExitCodes` and `TestExitCode` | unit | — | — | — | ADR-0011 | T-t8qp, T-2yw7 | green |
+| The frame of `spec/README.md`, "Commands": the four tests of `internal/cli/args_test.go`, the three of `internal/cli/progress_test.go`, and each test of `internal/cli/cli_test.go` other than `TestExitCode` | unit | — | — | — | ADR-0011 | T-t8qp, T-2yw7 | green |
 | `TestGateOnAGoRepository` (`cmd/layup/gate_e2e_test.go`) | e2e | REQ-004, REQ-007, NFR-005 | F-0003#44 | guardrails.md §1.1 Inv-7 | ADR-0016 | T-5sgt | green |
 | `TestGateNeverPassesACheckThatDidNotRun` (`cmd/layup/gate_e2e_test.go`) | e2e | NFR-004 | F-0001#5 | guardrails.md §1.1 Inv-5 | ADR-0011 | T-5sgt | green |
 | `TestRunOnARealRepository`, `TestAHookOfTheRepositoryDoesNotRun`, `TestTheRevisionsAndTheManifestOnARealRepository`, `TestARenameAndADeleteChangeAProductPath`, `TestAFailedScratchTreeGivesAReasonWithNoPath`, `TestTheSchemaBlocks` (`internal/gate/gate_integration_test.go`) | integration | REQ-004, REQ-007 | F-0003#44 | guardrails.md §1.1 Inv-7 | ADR-0016 | T-5sgt | green |

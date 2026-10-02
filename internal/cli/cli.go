@@ -5,10 +5,12 @@
 package cli
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
 	"os"
+	"unicode/utf8"
 
 	"github.com/pharzam/layup/internal/gate"
 	"github.com/pharzam/layup/internal/psb"
@@ -16,6 +18,9 @@ import (
 
 // gateRun runs layup gate; the unit tests replace it.
 var gateRun = gate.Run
+
+// readFile reads the FILE of layup psb check; the unit tests replace it.
+var readFile = os.ReadFile
 
 // Version is the version that `layup version` prints.
 const Version = "0.1.0-dev"
@@ -79,19 +84,41 @@ func version(in call) int {
 	return exitPass
 }
 
-// psbCheck keeps the rule of its own section: 0 no gap, 1 a gap.
+// psbCheck keeps the rule of its own section: 0 no gap, 1 a gap; 2 for a FILE
+// that it cannot read or that is not valid UTF-8 (K32), and for a table that it
+// cannot write.
 func psbCheck(in call) int {
-	src, err := os.ReadFile(in.args[0])
+	src, err := readFile(in.args[0])
 	if err != nil {
 		fmt.Fprintf(in.stderr, "layup: %v\n", err)
 		return exitUsage
 	}
+	if n := invalidLine(src); n > 0 {
+		fmt.Fprintf(in.stderr, "layup: %s: line %d is not valid UTF-8\n", in.args[0], n)
+		return exitUsage
+	}
 	gaps := psb.Check(string(src))
-	psb.WriteTSV(in.stdout, gaps)
+	if err := psb.WriteTSV(in.stdout, gaps); err != nil {
+		fmt.Fprintf(in.stderr, "layup: %v\n", err)
+		return exitUsage
+	}
 	if len(gaps) > 0 {
 		return exitFail
 	}
 	return exitPass
+}
+
+// invalidLine gives the line, from 1, of the first byte of src that is not
+// valid UTF-8, or 0 when src is valid.
+func invalidLine(src []byte) int {
+	for i := 0; i < len(src); {
+		r, size := utf8.DecodeRune(src[i:])
+		if r == utf8.RuneError && size == 1 {
+			return 1 + bytes.Count(src[:i], []byte{'\n'})
+		}
+		i += size
+	}
+	return 0
 }
 
 // gateCommand runs layup gate (docs/spec/gate.md): the table on standard

@@ -1,0 +1,13 @@
+id	rule	line	excerpt	question
+Q-001	G2	7	| a | — |	How is this metric measured? The row gives no measurement method.
+Q-002	G2	8	| b | - |	How is this metric measured? The row gives no measurement method.
+Q-003	G2	9	| c | tbd |	How is this metric measured? The row gives no measurement method.
+Q-004	G2	10	| d | TBD. |	How is this metric measured? The row gives no measurement method.
+Q-005	G2	11	| e | NOT MEASURED |	How is this metric measured? The row gives no measurement method.
+Q-006	G4	14	The service is Robust.	Which number or threshold does "robust" stand for here?
+Q-007	G4	15	The release comes SOON.	Which number or threshold does "soon" stand for here?
+Q-008	G4	16	The code is Clean.	Which number or threshold does "clean" stand for here?
+Q-009	G4	17	This is Better.	Which number or threshold does "better" stand for here?
+Q-010	G4	18	We Handle it.	Which number or threshold does "handle" stand for here?
+Q-011	G4	19	The cache is Fast and robust.	Which number or threshold does "fast" stand for here?
+Q-012	G5	21	The target is set (Start Value).	Which start value does the pilot use for this target, and who sets it?

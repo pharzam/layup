@@ -101,7 +101,7 @@ Every command of LAYUP follows these rules. A section gives only what differs.
   | ---- | ------- |
   | 0 | Every row of the table passed: `pass`, or `clear` where the section allows it. For `layup psb check`: no gap. |
   | 1 | At least one row is `fail` or `not-active`, or (for `layup psb check`) at least one gap. |
-  | 2 | A usage or input error: an unknown flag, a missing or unreadable file, an input that does not match its schema, an input that the command parses as text and that is not valid UTF-8 (below). For `layup gate` also `git` or `sh` not found, `git` older than 2.32, and a scratch work tree that it could not remove ([`gate.md`](gate.md#the-command)). The table can be empty or incomplete. |
+  | 2 | A usage or input error: an unknown flag, a missing or unreadable file, an input that does not match its schema, an input that the command parses as text and that is not valid UTF-8 (below). For `layup gate` also `git` or `sh` not found, `git` older than 2.32, and a scratch work tree that it could not remove ([`gate.md`](gate.md#the-command)). For `layup psb check` also a table that it cannot write to standard output ([`psb-check.md`](psb-check.md#the-command)). The table can be empty or incomplete. |
   | 3 | Only `layup setup`: the run stopped at a step that needs a human input; the table lists every missing input of that step. |
 
   A check that did not run is never 0 (`NFR-004`). Code 3 is not a failure and
@@ -124,8 +124,9 @@ Every command of LAYUP follows these rules. A section gives only what differs.
   answers file, a Markdown file that a step checks) and finds bytes that are not
   valid UTF-8 gives exit 2, with a diagnostic that names the file. A file that a
   command only copies or hashes is not under this rule. Reason: a record is
-  UTF-8, and a repair would put a value into a record that no input holds. Task
-  `T-5zmw` (row 6 of the plan) applies it to `layup psb check`
+  UTF-8, and a repair would put a value into a record that no input holds.
+  `layup psb check` applies it (task `T-5zmw`, row 6 of the plan), with the
+  line of the first byte that is not valid
   ([`psb-check.md`](psb-check.md#the-command)).
 - **Determinism.** Two runs on the same input print the same bytes
   (`NFR-005`). So a result table holds no time, no duration and no path of a
