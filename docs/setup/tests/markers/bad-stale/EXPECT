@@ -1,3 +1,4 @@
 exit=1
 line=setup-check: markers FAIL stale: docs/y.md ‹bar› is listed in docs/setup/open-gaps.tsv but does not occur
 line=setup-check: markers FAIL question: docs/setup/open-gaps.tsv line 2 has no question
+line=setup-check: markers FAIL stale: docs/y.md ‹baz› is listed in docs/setup/open-gaps.tsv but does not occur

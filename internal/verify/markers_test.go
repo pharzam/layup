@@ -1,0 +1,93 @@
+package verify
+
+import (
+	"errors"
+	"slices"
+	"testing"
+	"testing/fstest"
+)
+
+// The marker scanner and check markers (D1 and D2 of #87, with the answer to
+// its plan review): the rule of check_markers on each line of a tracked file.
+func TestTheMarkersOfALine(t *testing.T) {
+	for _, c := range []struct {
+		line string
+		want []string
+	}{
+		{"a \u2039x\u203a b", []string{"\u2039x\u203a"}},
+		{"a \u2039x b", []string{"\u2039x b"}},
+		{"the `\u2039` mention", nil},
+		{"the convention `\u2039\u2026\u203a`", nil},
+		{"\u2039a\u203a and \u2039b\u203a", []string{"\u2039a\u203a", "\u2039b\u203a"}},
+		{"`\u2039`\u2039x\u203a", []string{"\u2039x\u203a"}},
+		{"\u2039`x`\u203a", []string{"\u2039`x`\u203a"}},
+		{"two lines: `\u2039State one", []string{"\u2039State one"}},
+		{"a \u2039x\r", []string{"\u2039x\r"}},
+		{"\u2039\u2039x\u203a", []string{"\u2039\u2039x\u203a"}},
+		{"no marker", nil},
+	} {
+		if got := lineMarkers(c.line); !slices.Equal(got, c.want) {
+			t.Errorf("%q: %q, want %q", c.line, got, c.want)
+		}
+	}
+}
+
+// The scanner reads each tracked file outside MK_EXEMPT and gives each
+// occurrence with its file and line, so S10 and check sources read one list.
+func TestScanMarkers(t *testing.T) {
+	fsys := fstest.MapFS{
+		"docs/a.md":                {Data: []byte("one \u2039x\u203a\n\ntwo \u2039x\u203a and \u2039y\u203a\n")},
+		"docs/\u00e9.md":           {Data: []byte("\u2039q\u203a\n")},
+		"docs/q\x7fx.md":           {Data: []byte("\u2039port\u203a\n")},
+		"docs/templates/t.md":      {Data: []byte("\u2039t\u203a\n")},
+		"docs/adr/0003-x.md":       {Data: []byte("\u2039adr\u203a\n")},
+		"docs/setup/open-gaps.tsv": {Data: []byte("docs/a.md\t\u2039x\u203a\tq\n")},
+		"docs/dir.md/f":            {Data: []byte("\u2039in a dir\u203a\n")},
+	}
+	files := []string{"docs/a.md", "docs/\u00e9.md", "docs/q\x7fx.md", "docs/templates/t.md", "docs/adr/0003-x.md", "docs/setup/open-gaps.tsv", "docs/dir.md", "gone.md"}
+	want := []Marker{{"docs/a.md", 1, "\u2039x\u203a"}, {"docs/a.md", 3, "\u2039x\u203a"}, {"docs/a.md", 3, "\u2039y\u203a"},
+		{"docs/\u00e9.md", 1, "\u2039q\u203a"}, {"docs/q\x7fx.md", 1, "\u2039port\u203a"}}
+	if got := scanMarkers(fsys, files); !slices.Equal(got, want) {
+		t.Errorf("the markers\n got %+v\nwant %+v", got, want)
+	}
+}
+
+// Check markers: each marker needs its row in docs/setup/open-gaps.tsv, each
+// row its marker, and each row a question; the file is read by tabs, as
+// check_markers reads it, and an absent file is no rows.
+func TestTheOpenGaps(t *testing.T) {
+	const gaps = "docs/setup/open-gaps.tsv"
+	marked := "\u2039x\u203a here\nand \u2039x\u203a again\n"
+	for _, c := range []struct {
+		name  string
+		files map[string]string
+		want  []string
+	}{
+		{"each marker listed", map[string]string{"docs/a.md": marked, gaps: "docs/a.md\t\u2039x\u203a\tWhich x?\n"}, nil},
+		{"no marker and no file", map[string]string{"docs/a.md": "none\n"}, nil},
+		{"an unlisted marker, once", map[string]string{"docs/a.md": marked}, []string{"unlisted: docs/a.md \u2039x\u203a"}},
+		{"a stale row", map[string]string{"docs/a.md": "none\n", gaps: "docs/y.md\t\u2039bar\u203a\tWho?\n"},
+			[]string{"stale: docs/y.md \u2039bar\u203a is listed in docs/setup/open-gaps.tsv but does not occur"}},
+		{"a row with no question", map[string]string{"docs/a.md": marked, gaps: "docs/a.md\t\u2039x\u203a\n"},
+			[]string{"question: docs/setup/open-gaps.tsv line 1 has no question"}},
+		{"blank questions and the empty mark", map[string]string{"docs/a.md": marked + "\u2039b\u203a \u2039c\u203a \u2039d\u203a\n",
+			gaps: "docs/a.md\t\u2039x\u203a\t \n\ndocs/a.md\t\u2039b\u203a\t\t\ndocs/a.md\t\u2039c\u203a\t\u2014\ndocs/a.md\t\u2039d\u203a\t\r\n"},
+			[]string{"question: docs/setup/open-gaps.tsv line 1 has no question", "question: docs/setup/open-gaps.tsv line 3 has no question",
+				"question: docs/setup/open-gaps.tsv line 4 has no question", "question: docs/setup/open-gaps.tsv line 5 has no question"}},
+		{"the order: questions, unlisted, stale", map[string]string{"docs/b.md": "\u2039b\u203a\n", "docs/a.md": "\u2039a\u203a\n",
+			gaps: "docs/z.md\t\u2039z\u203a\tq\ndocs/y.md\t\u2039y\u203a\n"},
+			[]string{"question: docs/setup/open-gaps.tsv line 2 has no question", "unlisted: docs/a.md \u2039a\u203a", "unlisted: docs/b.md \u2039b\u203a",
+				"stale: docs/y.md \u2039y\u203a is listed in docs/setup/open-gaps.tsv but does not occur",
+				"stale: docs/z.md \u2039z\u203a is listed in docs/setup/open-gaps.tsv but does not occur"}},
+	} {
+		fsys := fstest.MapFS{}
+		var paths []string
+		for p, s := range c.files {
+			fsys[p] = &fstest.MapFile{Data: []byte(s)}
+			paths = append(paths, p)
+		}
+		slices.Sort(paths)
+		same(t, c.name, markersFindings(fsys, stubHistory{files: paths}), c.want)
+	}
+	same(t, "a failed list", markersFindings(fstest.MapFS{}, stubHistory{err: errors.New("fatal")}), []string{"git: cannot list the tracked files"})
+}

@@ -33,7 +33,8 @@ func standInWork(t *testing.T) string {
 func TestSetupVerifyOnAStandInWorkArea(t *testing.T) {
 	w := standInWork(t)
 	r := repeat(t, "setup", "verify", w)
-	if r.code != 1 || !strings.HasPrefix(r.stdout, "check\tresult\treason\ndiscipline-tests\tnot-active\tnot built yet\npin\tpass\t—\nkit-history\tpass\t—\n") ||
+	if r.code != 1 || !strings.HasPrefix(r.stdout, "check\tresult\treason\ndiscipline-tests\tpass\t—\npin\tpass\t—\nkit-history\tpass\t—\n") ||
+		!strings.Contains(r.stdout, "\nguardrails\tpass\t—\nmarkers\tpass\t—\n") || !strings.Contains(r.stdout, "\nidentity\tpass\t—\nlink-lint\tpass\t—\nsources\tpass\t—\n") ||
 		!strings.Contains(r.stdout, "\nkit-history\tpass\t—\nfacts\tpass\t—\nonboarding\tpass\t—\nglossary\tpass\t—\nguardrails\tpass\t—\n") ||
 		!strings.Contains(r.stdout, "\nadapted\tpass\t—\nidentity\tpass\t—\n") || !strings.HasSuffix(r.stdout, "\ngate:static\tnot-active\tnot built yet\ngate:layout\tnot-active\tnot built yet\n") ||
 		strings.Count(r.stdout, "\n") != 16 {
@@ -59,5 +60,21 @@ func TestSetupVerifyInputErrors(t *testing.T) {
 		if r := layup(t, args...); r.code != 2 || r.stdout != "" || !strings.HasPrefix(r.stderr, "layup: "+reason+"\n\nusage: layup ") {
 			t.Errorf("layup %q: exit %d, stdout %q, stderr %q; want 2, nothing and %q with the usage", args, r.code, r.stdout, r.stderr, reason)
 		}
+	}
+}
+
+// A baseline script that is not there gives its row not-active and exit 1
+// (#87, NFR-004): a check that does not run cannot pass.
+func TestSetupVerifyWithNoBaselineScript(t *testing.T) {
+	for k, v := range map[string]string{"HOME": t.TempDir(), "XDG_CONFIG_HOME": t.TempDir(), "GIT_CONFIG_NOSYSTEM": "1"} {
+		t.Setenv(k, v)
+	}
+	w, err := standin.Make(t.TempDir(), standin.Options{Files: map[string]string{"docs/tests/run-discipline-tests.sh": ""}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	r := layup(t, "setup", "verify", w.Dir)
+	if r.code != 1 || !strings.HasPrefix(r.stdout, "check\tresult\treason\ndiscipline-tests\tnot-active\tmissing: docs/tests/run-discipline-tests.sh\n") {
+		t.Errorf("exit %d, stdout:\n%s", r.code, r.stdout)
 	}
 }

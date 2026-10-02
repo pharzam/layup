@@ -74,7 +74,8 @@ func TestRunOnAStandInWorkArea(t *testing.T) {
 			got = append(got, r.Check+" "+r.Result+" "+r.Reason)
 		}
 	}
-	if want := []string{"pin pass ", "kit-history pass ", "facts pass ", "onboarding pass ", "glossary pass ", "guardrails pass ", "adapted pass ", "identity pass "}; strings.Join(got, "|") != strings.Join(want, "|") || len(tbl.Rows) != 15 ||
+	if want := []string{"discipline-tests pass ", "pin pass ", "kit-history pass ", "facts pass ", "onboarding pass ", "glossary pass ", "guardrails pass ",
+		"markers pass ", "adapted pass ", "identity pass ", "link-lint pass ", "sources pass "}; strings.Join(got, "|") != strings.Join(want, "|") || len(tbl.Rows) != 15 ||
 		tbl.Rows[13].Check != "gate:static" || tbl.Rows[14].Check != "gate:layout" {
 		t.Errorf("the rows %q; want %q, the others not built yet, and gate:static and gate:layout last", tbl.Rows, want)
 	}
@@ -100,7 +101,7 @@ func TestEachFindingOfATarget(t *testing.T) {
 		o       standin.Options
 		check   string
 		reason  string
-		answers string // rows added to inputs/answers.tsv
+		answers string // rows added to inputs/answers.tsv; "=" and a text replaces the file
 	}{
 		{"a decision of the kit", standin.Options{Files: map[string]string{"docs/decisions/D-0002.md": "x\n"}}, "kit-history",
 			"decisions: docs/decisions/ exists (kit step 4 deletes it)", ""},
@@ -128,6 +129,14 @@ func TestEachFindingOfATarget(t *testing.T) {
 			"link: docs/onboarding-for-engineers.md has no link to facts/problem-statement-brief.md", ""},
 		{"a glossary citation that does not resolve", standin.Options{Done: true, Files: map[string]string{"docs/glossary.md": "| A | a (`F-0001#9`) |\n"}}, "glossary",
 			"fact: F-0001#9 is not a fact of the F-0001 record", ""},
+		// The four checks of #87.
+		{"an unlisted marker", standin.Options{Files: map[string]string{"docs/m.md": "a \u2039x\u203a marker\n"}}, "markers",
+			"unlisted: docs/m.md \u2039x\u203a", ""},
+		{"an answer row that the record names and the answers do not have", standin.Options{}, "sources",
+			"source: S01 stack: the answer S01-stack is not a row of inputs/answers.tsv",
+			"=question\tanswer\tby\tsource\tquestion_text\nS01-name\tstand-in-target\toperator\tu\t\u2014\nS01-visibility\tpublic\toperator\tu\t\u2014\nS01-baseline\tx\toperator\tu\t\u2014\n"},
+		{"discipline tests that fail", standin.Options{Files: map[string]string{"docs/tests/run-discipline-tests.sh": "exit 1\n"}}, "discipline-tests",
+			"exit 1", ""},
 		{"a guardrails entry with no valid check", standin.Options{Done: true, Files: map[string]string{"docs/guardrails.md": "- **Inv-1** a rule. Check: later\n"}}, "guardrails",
 			`check: Inv-1 has no valid Check: value ("later")`, ""},
 	} {
@@ -138,7 +147,11 @@ func TestEachFindingOfATarget(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if c.answers != "" {
+		if text, ok := strings.CutPrefix(c.answers, "="); ok {
+			if err := os.WriteFile(filepath.Join(w.Dir, filepath.FromSlash(work.AnswersPath)), []byte(text), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		} else if c.answers != "" {
 			f, err := os.OpenFile(filepath.Join(w.Dir, filepath.FromSlash(work.AnswersPath)), os.O_APPEND|os.O_WRONLY, 0)
 			if err != nil {
 				t.Fatal(err)
@@ -151,6 +164,18 @@ func TestEachFindingOfATarget(t *testing.T) {
 		if err != nil || len(tbl.Rows) != 1 || tbl.Rows[0].Result != "fail" || !strings.HasPrefix(tbl.Rows[0].Reason, c.reason) {
 			t.Errorf("%s: %q, %v; want %s fail, %s", c.name, tbl.Rows, err, c.check, c.reason)
 		}
+	}
+	// A baseline script that is not there is not-active, never pass (D5 of
+	// #87, NFR-004).
+	if err := os.RemoveAll(dir); err != nil {
+		t.Fatal(err)
+	}
+	w, err := standin.Make(dir, standin.Options{Files: map[string]string{"docs/links/link-lint.sh": ""}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if tbl, err := Check(w.Dir, []string{"link-lint"}, noSteps, io.Discard); err != nil || len(tbl.Rows) != 1 || tbl.Rows[0] != (Row{"link-lint", "not-active", "missing: docs/links/link-lint.sh"}) {
+		t.Errorf("no link-lint.sh: %q, %v; want link-lint not-active, missing: docs/links/link-lint.sh", tbl.Rows, err)
 	}
 }
 

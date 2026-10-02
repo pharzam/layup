@@ -206,6 +206,7 @@ docs/setup/setup-check.sh          text eol=lf
 # rule stated there does not touch it.
 docs/setup/tests/facts/bad-answers-blank/** -whitespace
 docs/setup/tests/facts/bad-blank-tab/** -whitespace
+docs/setup/tests/markers/bad-blank-question/** -whitespace
 
 # --- the raw facts files: bytes that their hashes hold (#48) -------------------
 #

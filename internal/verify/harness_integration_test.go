@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strings"
 	"testing"
@@ -29,9 +30,10 @@ var (
 		"onboarding":  func(fsys fs.FS, _ history) []string { return onboardingFindings(fsys) },
 		"glossary":    func(fsys fs.FS, _ history) []string { return glossaryFindings(fsys) },
 		"guardrails":  func(fsys fs.FS, _ history) []string { return guardrailsFindings(fsys) },
+		"markers":     markersFindings,
 	}
-	builtGroups = []string{"pin", "kit-history", "facts", "onboarding", "glossary", "guardrails", "adapted", "identity"} // the keys of built, in the order of the table
-	notYetBuilt = []string{"markers"}
+	builtGroups = []string{"pin", "kit-history", "facts", "onboarding", "glossary", "guardrails", "markers", "adapted", "identity"} // the keys of built, in the order of the table
+	notYetBuilt = []string{}
 	// targetKinds names, for each check in a target's form, the kinds of the
 	// lines of its sh function that the target keeps with the same text (D9
 	// of #89); the other kinds are LAYUP's form, which the engine does not run.
@@ -152,6 +154,71 @@ func TestTheFixturesOfSetupCheck(t *testing.T) {
 	slices.Sort(skipped)
 	if want := slices.Sorted(slices.Values(layupOnly)); !slices.Equal(skipped, want) {
 		t.Errorf("the cases that the harness did not compare\n got %q\nwant %q (layupOnly)", skipped, want)
+	}
+}
+
+// The exemptions of check markers equal MK_EXEMPT of setup-check.sh, read at
+// test time (D1 of #87).
+func TestTheExemptionsOfMarkersEqualTheSh(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "..", "docs", "setup", "setup-check.sh"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var exempt string
+	for _, l := range strings.Split(string(data), "\n") {
+		if strings.HasPrefix(l, "MK_EXEMPT='") && strings.HasSuffix(l, "'") {
+			exempt = strings.TrimSuffix(strings.TrimPrefix(l, "MK_EXEMPT='"), "'")
+		}
+	}
+	if exempt == "" || exempt != mkExempt {
+		t.Errorf("MK_EXEMPT of setup-check.sh\n%q\nthe Go copy\n%q", exempt, mkExempt)
+	}
+}
+
+// The sh function and the Go form of check markers give the same lines on
+// what no fixture can hold (round 1 of #87): a name with a backslash, which a
+// Windows checkout refuses, and a marker at the end of a line, in the C locale
+// and in a UTF-8 locale.
+func TestTheShAndTheGoFormOfMarkersAgree(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("a backslash is not a character of a file name on Windows")
+	}
+	for k, v := range map[string]string{"HOME": t.TempDir(), "XDG_CONFIG_HOME": t.TempDir(), "GIT_CONFIG_NOSYSTEM": "1"} {
+		t.Setenv(k, v)
+	}
+	repo := filepath.Join(t.TempDir(), "repo")
+	if err := git.Init(repo); err != nil {
+		t.Fatal(err)
+	}
+	for name, text := range map[string]string{
+		`docs/b\x.md`:              "A \u2039bs\u203a marker.\n",
+		"docs/end.md":              "The end \u2039\n",
+		"docs/setup/open-gaps.tsv": "docs/b\\x.md\t\u2039bs\u203a\tWhich value?\ndocs/end.md\t\u2039\tWhich value?\n",
+	} {
+		p := filepath.Join(repo, filepath.FromSlash(name))
+		if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(p, []byte(text), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := git.Add(repo); err != nil {
+		t.Fatal(err)
+	}
+	if f := markersFindings(os.DirFS(repo), gitHistory{repo}); len(f) > 0 {
+		t.Errorf("the Go form: %q; want no finding", f)
+	}
+	script, err := filepath.Abs(filepath.Join("..", "..", "docs", "setup", "setup-check.sh"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, locale := range []string{"C", "en_US.UTF-8", "C.UTF-8"} {
+		cmd := exec.Command("sh", script, "--only", "markers", repo)
+		cmd.Env = append(os.Environ(), "LC_ALL="+locale)
+		if out, err := cmd.CombinedOutput(); err != nil || !strings.Contains(string(out), "setup-check: markers OK") {
+			t.Errorf("LC_ALL=%s sh setup-check.sh --only markers: %v\n%s", locale, err, out)
+		}
 	}
 }
 

@@ -1,0 +1,2 @@
+exit=1
+line=setup-check: markers FAIL question: docs/setup/open-gaps.tsv line 1 has no question

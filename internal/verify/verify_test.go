@@ -83,9 +83,9 @@ func standIn(t *testing.T, g *standInGit, answersErr, recordErr error, findings 
 	got := map[string]work.Record{}
 	var table []check
 	for _, c := range savedChecks {
-		if c.run != nil {
+		if c.built() {
 			name, f := c.name, findings[c.name]
-			c.run = func(in input) []string { got[name] = in.record; return f }
+			c.run, c.script = func(in input) []string { got[name] = in.record; return f }, ""
 		}
 		table = append(table, c)
 	}
@@ -119,10 +119,10 @@ func TestRunGivesEachRowInTheOrderOfTheTable(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := []Row{notBuiltRow("discipline-tests"), {"pin", "pass", ""}, {"kit-history", "fail", "orphan: x"},
+	want := []Row{{"discipline-tests", "pass", ""}, {"pin", "pass", ""}, {"kit-history", "fail", "orphan: x"},
 		{"facts", "pass", ""}, {"onboarding", "pass", ""}, {"glossary", "pass", ""}, {"guardrails", "pass", ""},
-		notBuiltRow("markers"), {"adapted", "pass", ""}, {"identity", "pass", ""}, notBuiltRow("link-lint"),
-		notBuiltRow("sources"), notBuiltRow("jobs"), notBuiltRow("gate:static"), notBuiltRow("gate:layout")}
+		{"markers", "pass", ""}, {"adapted", "pass", ""}, {"identity", "pass", ""}, {"link-lint", "pass", ""},
+		{"sources", "pass", ""}, notBuiltRow("jobs"), notBuiltRow("gate:static"), notBuiltRow("gate:layout")}
 	if !reflect.DeepEqual(tbl.Rows, want) {
 		t.Errorf("the rows\n got %q\nwant %q", tbl.Rows, want)
 	}
@@ -237,7 +237,7 @@ func TestTheScratchTree(t *testing.T) {
 	}
 	built := map[string]bool{}
 	for _, c := range checks {
-		built[c.name] = c.run != nil
+		built[c.name] = c.built()
 	}
 	for _, r := range tbl.Rows {
 		want := "not built yet"
@@ -300,8 +300,8 @@ func TestTheProgressLinesCoverTheScratchTree(t *testing.T) {
 	at := func(prefix string) int {
 		return slices.IndexFunc(g.calls, func(c string) bool { return strings.HasPrefix(c, prefix) })
 	}
-	if add, pin := at("worktree add"), at("2/15 pin"); add < pin || add > at("3/15 kit-history") {
-		t.Errorf("the calls %q; want the worktree add inside the step of pin", g.calls)
+	if add, first := at("worktree add"), at("1/15 discipline-tests"); add < first || add > at("2/15 pin") {
+		t.Errorf("the calls %q; want the worktree add inside the step of the first built check, discipline-tests", g.calls)
 	}
 	if remove, last := at("worktree remove"), at("15/15 gate:layout"); remove < last || g.calls[len(g.calls)-1] != "end" {
 		t.Errorf("the calls %q; want the worktree remove inside the step of the last row", g.calls)

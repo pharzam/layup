@@ -44,6 +44,18 @@ var RecordSchema = tsv.Schema{Name: "setup-record", Location: "records:setup/rec
 	{Name: "ref", Type: "text"},
 }}
 
+// OpenGapsPath is the file of the open gaps of a target, from its root.
+const OpenGapsPath = "docs/setup/open-gaps.tsv"
+
+// OpenGapsSchema is the form of docs/setup/open-gaps.tsv of a target: the
+// block open-gaps of docs/spec/setup.md, which S11 writes and the checks
+// markers and sources read (#87).
+var OpenGapsSchema = tsv.Schema{Name: "open-gaps", Location: "target:docs/setup/open-gaps.tsv", NoHeader: true, Columns: []tsv.Column{
+	{Name: "file", Type: "path", Key: true},
+	{Name: "marker", Type: "text", Key: true},
+	{Name: "question", Type: "text"},
+}}
+
 // Answers is the rows of answers.tsv, one value per column.
 type Answers [][]string
 

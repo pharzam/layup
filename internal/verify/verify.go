@@ -81,35 +81,42 @@ func (e *CleanupError) Unwrap() error { return e.Err }
 // An input is what a check reads: the scratch tree and the two records.
 type input struct {
 	fsys    fs.FS   // the files of the scratch tree
+	area    fs.FS   // the files of the work area
 	repo    history // its git history
 	record  work.Record
 	answers work.Answers
 }
 
-// A check is one row of the table of setup.md; a nil run is a check that this
-// version of layup does not have yet.
+// A check is one row of the table of setup.md: run gives its findings, or
+// script names the baseline's own script that it runs (D5 of #87); a check
+// with neither is one that this version of layup does not have yet.
 type check struct {
-	name string
-	run  func(in input) []string
+	name   string
+	run    func(in input) []string
+	script string
 }
+
+// built reports whether this version of layup has the check.
+func (c check) built() bool { return c.run != nil || c.script != "" }
 
 // checks is the table of setup.md, in its order (D4 of #84). Rows 10 to 15 of
 // the plan add the other checks; row 11 added adapted, row 12 facts,
-// onboarding, glossary and guardrails in a target's form.
+// onboarding, glossary and guardrails in a target's form, row 10 markers,
+// sources and the two scripts.
 var checks = []check{
-	{"discipline-tests", nil},
-	{"pin", checkPin},
-	{"kit-history", checkKitHistory},
-	{"facts", checkFacts},
-	{"onboarding", checkOnboarding},
-	{"glossary", checkGlossary},
-	{"guardrails", checkGuardrails},
-	{"markers", nil},
-	{"adapted", checkAdapted},
-	{"identity", checkIdentity},
-	{"link-lint", nil},
-	{"sources", nil},
-	{"jobs", nil},
+	{name: "discipline-tests", script: discTests},
+	{name: "pin", run: checkPin},
+	{name: "kit-history", run: checkKitHistory},
+	{name: "facts", run: checkFacts},
+	{name: "onboarding", run: checkOnboarding},
+	{name: "glossary", run: checkGlossary},
+	{name: "guardrails", run: checkGuardrails},
+	{name: "markers", run: checkMarkers},
+	{name: "adapted", run: checkAdapted},
+	{name: "identity", run: checkIdentity},
+	{name: "link-lint", script: linkLint},
+	{name: "sources", run: checkSources},
+	{name: "jobs"},
 }
 
 // gates is the name, in the one-check call, of each row gate:<kind> (K13).
@@ -218,20 +225,20 @@ func Check(dir string, names []string, step func(i, n int, check string) func(),
 
 	// The scratch tree is outside the work area, so the run changes no file
 	// of it (round 1 of #84, finding 2).
-	if slices.ContainsFunc(rows, func(c check) bool { return c.run != nil }) && within(tempRoot(), dir) {
+	if slices.ContainsFunc(rows, check.built) && within(tempRoot(), dir) {
 		return Table{}, &InputError{fmt.Errorf("the temporary directory %s is in the work area %s: set TMPDIR to a directory outside it", tempRoot(), dir)}
 	}
 	// The scratch tree is added in the step of the first built check, and
 	// removed in the step of the last row, so the progress lines cover both
 	// (finding 5).
-	in := input{record: record, answers: answers}
+	in := input{record: record, answers: answers, area: os.DirFS(dir)}
 	var scratch, tree string
 	var added bool
 	var addErr, left error
 	var t Table
 	for i, c := range rows {
 		done := step(i+1, len(rows), c.name)
-		if c.run != nil && !added {
+		if c.built() && !added {
 			added = true
 			if scratch, tree, addErr, left = add(target, head); addErr != nil {
 				fmt.Fprintf(out, "layup setup verify: the scratch tree: %v\n", addErr)
@@ -241,9 +248,11 @@ func Check(dir string, names []string, step func(i, n int, check string) func(),
 		}
 		row := Row{Check: c.name, Result: "not-active", Reason: notBuilt}
 		switch {
-		case c.run == nil:
+		case !c.built():
 		case addErr != nil:
 			row.Reason = scratchFail
+		case c.script != "":
+			row = scriptRow(tree, c.name, c.script, out)
 		default:
 			row = Row{Check: c.name, Result: "pass"}
 			if f := c.run(in); len(f) > 0 {
