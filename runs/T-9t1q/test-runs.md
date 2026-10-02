@@ -28,11 +28,11 @@ on a mutation of the code that breaks one rule.
    commits that hold the new runner and case:
 
    ```text
-   # on e5d4727 (no line of #48 in .gitattributes)
+   # a scratch commit on e5d4727 (no line of #48 in .gitattributes)
    FAIL  facts/good-autocrlf: exit 2, want 0
          | <tmp>/clone/docs/setup/setup-check.sh: line 26: : command not found
          | <tmp>/clone/docs/setup/setup-check.sh: line 27: set: -: invalid option
-   # on 81d7a35 (the script and docs/facts/ pinned, the list not yet)
+   # a scratch commit on 81d7a35 (the script and docs/facts/ pinned, the list not yet)
    FAIL  facts/good-autocrlf: exit 1, want 0
          | setup-check: facts FAIL hash: docs/facts/problem-statement-brief.md does not match docs/setup/facts.sha256
          | setup-check: facts FAIL listed: docs/facts/problem-statement-brief.md is not in docs/setup/facts.sha256

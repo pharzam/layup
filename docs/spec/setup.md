@@ -407,7 +407,7 @@ reason  text                             -    the first failure, or the `clear` 
   `docs/facts/F-NNNN-marker-answers.md` (S11), `F-NNNN` the next free ID
   (`F-0001` and `F-0002` on the baseline at its pin, whose index has no row),
   with its index row and its line in `facts.sha256`. Check `facts` reads the
-  question ID of a fact: the first code span after its number.
+  question ID of a fact: the code span that opens the text after `N. `.
 - **No marker in an answers record** (K17): the writer writes each left and
   right angle quote of a recorded text as `&lsaquo;` and `&rsaquo;`, which
   render the same, and the record's "Notes on capture" says so. Check
@@ -445,8 +445,9 @@ reason  text                             -    the first failure, or the `clear` 
   that starts with `- **Inv-N**`, up to the next entry, a heading or the end of
   the file; a file with no entry has no finding; an entry's `Check:` value is
   read as `check_guardrails` reads it (after the last `Check: ` of the first
-  line that has one), with its `check:` lines; each citation of the file
-  resolves.
+  line that has one), with its `check:` lines, and its path must be a file of
+  the tree (`check_guardrails` also takes a path outside it, such as `../x`);
+  each citation of the file resolves.
 - **The shared fixtures:** for these four checks, the engine passes and fails
   on the same fixtures as `docs/setup/tests/run.sh` in the lines of the kinds
   that a target keeps with the same text: `hash` (facts); `missing`, `marker`,
@@ -454,9 +455,10 @@ reason  text                             -    the first failure, or the `clear` 
   harness compares a case, its lines of those kinds and its exit, only when its
   `EXPECT` has such a line; the cases with none are LAYUP's form and are not
   compared: `facts/bad-answers-blank`, `bad-answers-missing`,
-  `bad-answers-repeat`, `bad-batch-absent`, `bad-batch-rows`, `bad-blank-tab`
-  and `good-autocrlf`, `glossary/bad-no-section` and `bad-rows`, and
-  `guardrails/bad-no-section`.
+  `bad-answers-repeat`, `bad-batch-absent`, `bad-batch-rows` and
+  `bad-blank-tab`, `glossary/bad-no-section` and `bad-rows`, and
+  `guardrails/bad-no-section`; nor is `facts/good-autocrlf`, whose mode clones
+  LAYUP's own repository (#48).
 
 **Decided here** (task `T-8ya0`, #88), check `adapted`:
 

@@ -54,3 +54,68 @@ a Go test for #48 (the acceptance criterion names the discipline level, and
 quotes a marker in a code span (check `markers` skips only the mention
 `` `‹` ``); every line with `Check:` as an entry of guardrails (a `Check:` of
 another paragraph would count).
+
+## Review round 1
+
+Devin (its usage quota) and OpenCode ("Go usage limit exceeded") gave no record.
+A first run of Claude Fable 5.1 stopped on API errors (`api_retry`, with no
+status) and gave no record in fifteen minutes; its process did not stop on the
+signal of `timeout`, so the harness stopped it at about 15:58. Both are skipped
+(Bootstrap mode rule 4). The order was tried again: Devin and OpenCode failed
+again, and a second Fable run (effort `xhigh`, on the Claude Code CLI) reviewed
+`7d03a87` and gave `nothing material in scope`, with six notes. It compared the
+engine with the sh functions on a scratch repository of edge cases: the lines
+are the same, except where `setup.md` names a difference. Notes 1 to 4 are
+applied as text at the close-out, with no change of code: the reason of
+`facts/good-autocrlf` in the list of the cases that the harness does not
+compare; "the code span that opens the text after `N. `"; the path of a
+`Check:` value is a file of the tree; the labels of the scratch commits in the
+evidence. Notes 5 and 6 need no change.
+
+## Verdict
+
+Delivered: the checks `facts`, `onboarding`, `glossary` and `guardrails` of
+`layup setup verify` in a target's form, with the fact resolver. The form of an
+answers record is fixed for its writers (rows 9 and 13): K15 (the question ID,
+the answer, `by`, `source` and the question text), K17 (no marker in a record)
+and K18 (what exists is read; the `done` rows decide what must exist). The
+fixes of #48 (`docs/facts/**` keeps its bytes; `setup-check.sh` and the list of
+hashes keep their line feeds; a case of `run.sh` clones `HEAD` with
+`core.autocrlf=true`) and #61 (a blank fact of one tab). **Known limit:** CI
+restores `setup-check.sh` and `docs/setup/tests/` from the default branch, so
+the fix of #61 and the case `facts/good-autocrlf` run in CI only after the
+merge (note 6).
+
+The plan review (Claude Fable 5.1) gave `approve-with-conditions`, with three
+conditions, applied; round 1 (`7d03a87`, Claude Fable 5.1) gave `nothing
+material in scope`. The records are on #89. At `7d03a87`, `go build`, `go vet`
+with each tag, `gofmt`, the three test levels, `go test -race` on
+`internal/verify` and `internal/standin`, `run.sh` and the discipline tests
+pass; at the head, all local checks pass, and `review-record-lint` passes on
+the comments of #89 (1 round, cap 2). The diff against `origin/main` is
+1,130 lines over 24 files with the close-out, inside the Budget
+maximum of 2,600 lines over 40 files.
+
+Next: row 10 of the plan (`T-8vpw`, #87), the lowest row whose predecessors
+have merged; row 9 waits for it.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). Times are 2026-10-02, UTC. A token count is
+the `result` event of the Claude Code CLI (input, output, cache creation and
+cache read tokens, and its cost) where that harness gave one; `not reported`
+where the harness or the author's session gives none.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan, with the five inventory items, the four sh functions and their fixtures | reasoning | Claude Opus 5.5 | max | not reported | 14:24 to 14:30 |
+| The plan review, first and second harness: skipped ("Unknown model"; "Go usage limit exceeded") | reasoning | GPT-6 Sol on the Devin CLI; Grok 4.7 on the OpenCode CLI | `xhigh`; `low` | not reported | 7 s, 14:30:25 to 14:30:32 |
+| The plan review | reasoning | Claude Fable 5.1 on the Claude Code CLI | `xhigh` | 1,015,012 (USD 5.42) | 8 min 43 s, 14:30:55 to 14:39:38 |
+| The fixes of #61 and #48, test first, while the plan review ran | execution | Claude Opus 5.5 | max | not reported | 14:31 to 14:34 |
+| The answer to the plan review | reasoning | Claude Opus 5.5 | max | not reported | 14:39 to 14:41 |
+| The test of #48 at the discipline level, the four checks, the stand-in, the harness, the specification and the records; the freeze | execution | Claude Opus 5.5, a reasoning-tier model on an execution part | max | not reported | 14:42 to 14:59 |
+| Review round 1, first and second harness: skipped (Devin's usage quota; "Go usage limit exceeded") | reasoning | GPT-6 Sol on the Devin CLI; Grok 4.7 on the OpenCode CLI | `xhigh`; `low` | not reported | 12 s, 14:59:38 to 14:59:50 |
+| Review round 1, a first Fable run: skipped (API errors, no record in fifteen minutes) | reasoning | Claude Fable 5.1 on the Claude Code CLI | `xhigh` | not reported | 15:00:19 to about 15:58 |
+| Review round 1, the order tried again: Devin and OpenCode skipped | reasoning | GPT-6 Sol on the Devin CLI; Grok 4.7 on the OpenCode CLI | `xhigh`; `low` | not reported | 15:59:27 to 16:00:36 |
+| Review round 1 | reasoning | Claude Fable 5.1 on the Claude Code CLI | `xhigh` | 1,564,356 (USD 5.46) | 9 min 21 s, 16:00:56 to 16:10:17 |
+| The close-out, with notes 1 to 4 of round 1 | execution | Claude Opus 5.5 | max | not reported | 16:10 to 16:11 |
