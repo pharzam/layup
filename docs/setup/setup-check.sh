@@ -304,7 +304,10 @@ check_guardrails() {
 # are one key.
 MK_EXEMPT='^(docs/(adr|ci|links|prd|setup)/tests/|\.githooks/tests/|docs/templates/)|^docs/[^/]+/template\.md$|^docs/tests/template-[^/]*\.md$|^docs/tests/traceability-template\.md$|^docs/adr/000[1-8]-[^/]*\.md$|^docs/links/link-lint\.sh$|^docs/prd/prd-lint\.sh$|^docs/setup/setup-check\.sh$|^docs/setup/open-gaps\.tsv$'
 check_markers() {
-	git -C "$ROOT" -c core.quotePath=false ls-files > "$tmpdir/mk_files" || { fail markers "git: cannot list the tracked files"; return; }
+	# -z: git quotes a name with `"`, `\` or a control character in its plain list,
+	# and the quoted name is no path (#21); a name with a line feed still splits.
+	git -C "$ROOT" -c core.quotePath=false ls-files -z > "$tmpdir/mk_z" || { fail markers "git: cannot list the tracked files"; return; }
+	tr '\0' '\n' < "$tmpdir/mk_z" > "$tmpdir/mk_files"
 	grep -Ev "$MK_EXEMPT" "$tmpdir/mk_files" | while IFS= read -r mk_f; do
 		[ -f "$ROOT/$mk_f" ] || continue
 		awk -v f="$mk_f" '{
@@ -325,7 +328,8 @@ check_markers() {
 	mk_gaps="$ROOT/docs/setup/open-gaps.tsv"
 	if [ -f "$mk_gaps" ]; then cut -f1,2 "$mk_gaps" | grep . | sort -u > "$tmpdir/mk_listed"; else : > "$tmpdir/mk_listed"; fi
 	# Each open gap carries its question; a row without one asks nothing.
-	[ -f "$mk_gaps" ] && awk -F'\t' 'NF && $3 == "" { print "setup-check: markers FAIL question: docs/setup/open-gaps.tsv line " NR " has no question" }' "$mk_gaps" > "$tmpdir/mk_q"
+	# A question of only blanks, or the empty mark `—`, asks nothing either (#21).
+	[ -f "$mk_gaps" ] && awk -F'\t' '{ q = $3; gsub(/[ \t\r]/, "", q) } NF && (q == "" || q == "—") { print "setup-check: markers FAIL question: docs/setup/open-gaps.tsv line " NR " has no question" }' "$mk_gaps" > "$tmpdir/mk_q"
 	if [ -s "$tmpdir/mk_q" ]; then cat "$tmpdir/mk_q"; cur_fail=1; failed=1; fi
 	comm -23 "$tmpdir/mk_found" "$tmpdir/mk_listed" | while IFS="$(printf '\t')" read -r mk_p mk_m; do
 		printf 'setup-check: markers FAIL unlisted: %s %s\n' "$mk_p" "$mk_m"
