@@ -127,7 +127,13 @@ and ADR-0016.
 2. The setup writes no file that the target needs LAYUP to build, test or pass
    its gates: no `layup` binary, no LAYUP script, no LAYUP CI job
    ([`setup.md`](setup.md#the-steps), S12). The gate jobs run the commands of
-   the target's own `docs/gates.tsv`.
+   the target's own `docs/gates.tsv`. **Decided here** (task `T-c06a`, #91,
+   condition 1 of its plan review): the workflow of the gate jobs and their job
+   script, which the setup writes from the stack catalog
+   ([`setup.md`](setup.md#the-stack-catalog)), are the target's own files: they
+   start no LAYUP program, fetch no LAYUP file, and run with LAYUP absent.
+   "LAYUP script" and "LAYUP CI job" name LAYUP's own `setup-check.sh` and its
+   job (ADR-0016 decision 5).
 3. In phase 1, the default branch's ruleset requires only the target's own
    jobs, not the `layup/` checks, which no phase-1 command posts
    ([`setup.md`](setup.md#the-steps), S13). So a target set up in phase 1 merges

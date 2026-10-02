@@ -80,7 +80,10 @@ the first.
 | `TestSetupCommand` (`internal/cli/setup_test.go`) | unit | REQ-002, NFR-004 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-79y7 | green |
 | `TestSetupExitCodesOnAWorkArea` (`internal/cli/setup_integration_test.go`) | integration | REQ-002, NFR-004 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-79y7 | green |
 | `TestSetup` (`cmd/layup/setup_e2e_test.go`) | e2e | REQ-002, NFR-005 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-79y7 | green |
-| `T-c06a/integration/go-fixtures` | integration | REQ-004, REQ-007 | F-0003#44 | guardrails.md §1.1 Inv-7 | ADR-0016 | T-c06a | planned |
+| `TestTheFixturesOfEachEntry`, `TestTheActiveKindsOfTheGoEntryPassOnGoodCode`, `TestTheJobScriptOfEachEntry` (`internal/catalog/entries_integration_test.go`) | integration | REQ-004, REQ-007, NFR-004 | F-0003#44 | guardrails.md §1.1 Inv-7 | ADR-0016 | T-c06a | green |
+| `TestTheEntriesOfTheBinary`, `TestTheKindsOfTheGoEntry`, `TestTheFilesOfTheGoEntry`, `TestTheWorkflowOfTheGoEntry`, `TestTheJobScriptOfTheGoEntry` (`internal/catalog/goentry_test.go`); `TestGapsGiveEachGapAtItsLine` (`internal/catalog/catalog_test.go`) | unit | REQ-004, REQ-007, NFR-002, NFR-003 | F-0003#44 | guardrails.md §1.1 Inv-7 | ADR-0016 | T-c06a | green |
+| `TestACatalogRefOfTheBinary` (`internal/verify/sources_test.go`) | unit | NFR-003 | F-0001#4 | guardrails.md §1.1 Inv-4 | — | T-c06a | green |
+| `TestGateOnEachEntryOfTheCatalog` (`cmd/layup/catalog_e2e_test.go`) | e2e | REQ-004, NFR-004 | F-0003#44 | guardrails.md §1.1 Inv-7 | ADR-0016 | T-c06a | green |
 | `TestSetupVerifyWithNoBaselineScript` (`cmd/layup/verify_e2e_test.go`) | e2e | NFR-004, REQ-002 | F-0001#5 | guardrails.md §1.1 Inv-5 | ADR-0011 | T-8vpw | green |
 | `T-7s0y/integration/target-pin` | integration | NFR-006, REQ-002 | F-0001#8 | guardrails.md §1.1 Inv-8 | ADR-0009 | T-7s0y | planned |
 | `T-dep6/e2e/whole-setup` | e2e | REQ-002, NFR-003 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-dep6 | planned |

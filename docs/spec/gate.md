@@ -16,7 +16,8 @@ gates), ADR-0016 and ADR-0011 decision 4.
 
 The setup writes it into the target ([`setup.md`](setup.md#the-steps), step
 S12), from the stack catalog. One row per gate kind; the target's CI has one
-job per row, with the kind as the job's name.
+job per row, whose id and name are the kind (K30, task `T-c06a`,
+[`setup.md`](setup.md#the-stack-catalog)).
 
 ```tsv-schema gate-manifest target:docs/gates.tsv
 kind     id(<word>)           key  the gate kind: `static`, `layout`, `boundary`, `contract`, `test`, or a further kind of the stack's catalog entry; lowercase letters and `-`
@@ -164,6 +165,14 @@ layup gate REPO --base REV --head REV
 A `pending` kind's command never runs: `clear` is the pass of the rule "no
 product path may change while this kind is pending", not of the kind's gate
 (the reading of `REQ-004` in `PRD-0001` §7.1).
+
+**Known limit** (task `T-c06a`, #91): a product path is a file that a scope
+pattern matches, not a package. So on a head whose only `.go` files are
+outside the packages of `./...` (for example under `testdata/`), the kinds
+`static` and `test` of the Go entry run their commands, which exit 1 (`no
+packages to vet`, `no packages to test`), and give `fail`, never a pass on
+nothing. Before the activation, the `pending` kinds refuse each `.go` path, so
+a target meets this case only after its first bet.
 
 ### The table
 
