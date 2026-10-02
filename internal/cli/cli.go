@@ -14,6 +14,7 @@ import (
 
 	"github.com/pharzam/layup/internal/gate"
 	"github.com/pharzam/layup/internal/psb"
+	"github.com/pharzam/layup/internal/setup"
 	"github.com/pharzam/layup/internal/verify"
 )
 
@@ -25,6 +26,13 @@ var readFile = os.ReadFile
 
 // verifyRun runs layup setup verify; the unit tests replace it.
 var verifyRun = verify.Run
+
+// setupRun runs layup setup, and setupSteps gives its steps; the tests replace
+// them.
+var (
+	setupRun   = setup.Run
+	setupSteps = setup.Stubs
+)
 
 // Version is the version that `layup version` prints.
 const Version = "0.1.0-dev"
@@ -64,6 +72,8 @@ var commands = []command{
 		help: "print the gap questions of a problem statement as a table", run: psbCheck},
 	{words: []string{"gate"}, args: []string{"REPO"}, flags: []flag{{"base", "REV"}, {"head", "REV"}},
 		help: "run the gate kinds of the manifest at --base on --head", run: gateCommand},
+	{words: []string{"setup"}, args: []string{"WORK"},
+		help: "run the steps of the setup of the target of the work area WORK", run: setupCommand},
 	{words: []string{"setup", "verify"}, args: []string{"WORK"},
 		help: "check the setup of the target of the work area WORK, from outside", run: setupVerify},
 }
@@ -174,4 +184,28 @@ func setupVerify(in call) int {
 		return exitUsage
 	}
 	return exitCode(t.Results())
+}
+
+// setupCommand runs layup setup (docs/spec/setup.md): the step table, or the
+// stop table of a stop, on standard output; the progress lines and the
+// diagnostics on standard error.
+func setupCommand(in call) int {
+	p := newProgress(in.stderr, "setup")
+	res, err := setupRun(in.args[0], setupSteps(), setup.Who, func(i, n int, step string) func() {
+		p.step(i, n, step)
+		return p.end
+	})
+	p.end()
+	if err != nil {
+		fmt.Fprintf(in.stderr, "layup: %v\n", err)
+		return exitUsage
+	}
+	if werr := res.Write(in.stdout); werr != nil {
+		fmt.Fprintf(in.stderr, "layup: %v\n", werr)
+		return exitUsage
+	}
+	if res.Stops != nil {
+		return exitStop
+	}
+	return exitCode(res.Results())
 }
