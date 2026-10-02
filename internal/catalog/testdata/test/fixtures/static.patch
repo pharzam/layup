@@ -1,0 +1,7 @@
+diff --git a/bad.txt b/bad.txt
+new file mode 100644
+index 0000000..f0b8e3a
+--- /dev/null
++++ b/bad.txt
+@@ -0,0 +1 @@
++the known-bad file of the kind static

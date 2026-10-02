@@ -282,7 +282,7 @@ The Go entry itself is the work of #29; this is its form.
 | Path | What |
 | ---- | ---- |
 | `internal/catalog/<stack>/kinds.tsv` | one row per gate kind (the schema below) |
-| `internal/catalog/<stack>/files/<path>` | each file that the setup writes into the target at `<path>`: the tools' configuration, the CI workflow of the gate jobs; `{{module}}` in a file is replaced with the module path from `name` |
+| `internal/catalog/<stack>/files/<path>.tmpl` | each file that the setup writes into the target at `<path>`: the tools' configuration, the CI workflow of the gate jobs; `{{module}}` in a file is replaced with the module path from `name` |
 | `internal/catalog/<stack>/fixtures/<kind>.patch` | the known-bad fixture of a kind: a patch that `git apply` applies to the setup head and that must make the kind fail |
 
 ```tsv-schema catalog-kinds layup:internal/catalog/<stack>/kinds.tsv
@@ -300,6 +300,44 @@ evidence  text                  -    the URL of the tool's documentation at that
 The manifest that S12 writes is this table without the columns `version`,
 `fixture` and `evidence`. LAYUP's own CI runs each fixture of each entry (§6);
 that test comes with the code (#29).
+
+**Decided here** (K35 of the [defect register](../plan/README.md#the-defect-register),
+task `T-3jpx`, #81):
+
+- **The suffix `.tmpl`.** Each file of `files/` ends with `.tmpl`, and its
+  path in the target is its path without `.tmpl`: `files/go.mod.tmpl` is the
+  target's `go.mod`. The `embed` pattern of an entry has the prefix `all:`
+  (`//go:embed all:<stack>`), so that `embed` keeps `.github/`. Reason: `embed`
+  refuses a directory that holds a `go.mod`, the root of another module, and
+  leaves out `.github/` without `all:` (measured, `runs/T-3jpx/`); a `.go` file
+  under `files/` would be a package of LAYUP's module for `go vet`, `go test`
+  and `go list`, and `gofmt` reads it. One suffix for every file is one rule
+  with no exception.
+- **The rules of an entry**, which `internal/catalog` checks when it reads one:
+  `kinds.tsv` matches its schema and has at least one row; an `active` kind
+  names `fixtures/<kind>.patch`, and that file exists; a `pending` kind has `—`
+  as its fixture; each file of `fixtures/` is the fixture of an `active` kind;
+  each file of `files/` ends with `.tmpl`. Reason: an entry that breaks one of
+  them sets up a target whose gate cannot be proven (a fixture that no kind
+  runs, or a kind with no fixture), so the error comes when LAYUP reads its own
+  catalog, not at a target's setup.
+- **The manifest** is written by `internal/catalog` through `internal/tsv`,
+  by the block `gate-manifest` of [`gate.md`](gate.md#the-gate-manifest).
+- **A `catalog` ref** of the setup record (`<stack>/<path>`) names a file by
+  its path in the entry's directory, for example `go/kinds.tsv` or
+  `go/files/go.mod.tmpl`, so a reader finds it at `internal/catalog/<ref>` in
+  LAYUP's repository; check `sources` resolves it there. Reason: the record
+  says "a catalog file", and the file that holds the value is the file of the
+  catalog.
+- **The test entry** of the package's tests is
+  `internal/catalog/testdata/test/`, embedded only by those tests, with the same
+  pattern form (`all:`). The binary embeds no entry until the Go entry (task
+  `T-c06a`, row 14 of the plan) adds its directive, so S01 never accepts a
+  stack named `test`.
+- **No conversion of the bytes:** `.gitattributes` holds
+  `internal/catalog/*/** -text`, so a checkout never changes the line endings
+  of a file of an entry or of the test entry. Reason: a fixture is a patch that
+  `git apply` reads, and each file goes into a target byte for byte.
 
 ### Not in phase 1
 
