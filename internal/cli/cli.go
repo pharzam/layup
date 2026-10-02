@@ -14,6 +14,7 @@ import (
 
 	"github.com/pharzam/layup/internal/gate"
 	"github.com/pharzam/layup/internal/psb"
+	"github.com/pharzam/layup/internal/verify"
 )
 
 // gateRun runs layup gate; the unit tests replace it.
@@ -21,6 +22,9 @@ var gateRun = gate.Run
 
 // readFile reads the FILE of layup psb check; the unit tests replace it.
 var readFile = os.ReadFile
+
+// verifyRun runs layup setup verify; the unit tests replace it.
+var verifyRun = verify.Run
 
 // Version is the version that `layup version` prints.
 const Version = "0.1.0-dev"
@@ -60,6 +64,8 @@ var commands = []command{
 		help: "print the gap questions of a problem statement as a table", run: psbCheck},
 	{words: []string{"gate"}, args: []string{"REPO"}, flags: []flag{{"base", "REV"}, {"head", "REV"}},
 		help: "run the gate kinds of the manifest at --base on --head", run: gateCommand},
+	{words: []string{"setup", "verify"}, args: []string{"WORK"},
+		help: "check the setup of the target of the work area WORK, from outside", run: setupVerify},
 }
 
 // Run executes one layup command and returns its exit code.
@@ -140,6 +146,30 @@ func gateCommand(in call) int {
 		return exitUsage
 	}
 	if err != nil { // the scratch tree is left in REPO; the table is complete
+		fmt.Fprintf(in.stderr, "layup: %v\n", err)
+		return exitUsage
+	}
+	return exitCode(t.Results())
+}
+
+// setupVerify runs layup setup verify (docs/spec/setup.md): the table on
+// standard output; the progress lines and the diagnostics on standard error.
+func setupVerify(in call) int {
+	p := newProgress(in.stderr, "setup verify")
+	t, err := verifyRun(in.args[0], func(i, n int, check string) func() {
+		p.step(i, n, check)
+		return p.end
+	}, in.stderr)
+	p.end()
+	if errors.As(err, new(*verify.InputError)) {
+		fmt.Fprintf(in.stderr, "layup: %v\n", err)
+		return exitUsage
+	}
+	if werr := t.Write(in.stdout); werr != nil {
+		fmt.Fprintf(in.stderr, "layup: %v\n", werr)
+		return exitUsage
+	}
+	if err != nil { // the scratch tree is left; the table is complete
 		fmt.Fprintf(in.stderr, "layup: %v\n", err)
 		return exitUsage
 	}
