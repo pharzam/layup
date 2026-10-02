@@ -187,6 +187,11 @@ func Branch(dir string) (string, error) {
 	return strings.TrimSpace(string(out)), err
 }
 
+// ResetSoft moves the branch of HEAD in dir to commit, and keeps the index and
+// the work tree: the runner of layup setup takes back the commit of a step
+// whose evidence did not pass (D12 of #86).
+func ResetSoft(dir, commit string) error { return doAt(dir, commit, "reset", "--soft", commit) }
+
 // SwitchOrphan puts the work tree on a new branch with no commit; git removes
 // the tracked files from the work tree.
 func SwitchOrphan(dir, branch string) error { return do(dir, "switch", "--orphan", branch) }

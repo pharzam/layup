@@ -49,6 +49,7 @@ const (
 	Fail      = "fail"       // its check failed: the run ends
 	NotActive = "not-active" // its check could not run: the run ends
 	Operator  = "operator"   // a hand-off: a command in commands.sh waits for the Operator
+	Invalid   = "input"      // an input error: exit 2, no table and no row (D11 of #86)
 )
 
 // handedOff starts the evidence of a hand-off: what layup setup did, never
@@ -70,11 +71,13 @@ type Outcome struct {
 	Commit   bool       // Done: the step changed the tree of the target
 }
 
-// An Input is what a step reads: the work area and its two records.
+// An Input is what a step reads: the work area and its two records, and the
+// identity of the commits that the step makes (O-136).
 type Input struct {
 	Dir     string
 	Record  work.Record
 	Answers work.Answers
+	Who     git.Identity
 }
 
 // A Command is a command for the Operator in commands.sh. Order is its place
@@ -94,6 +97,14 @@ type Step struct {
 	HandOff  bool                          // its done result is operator (S13)
 	Run      func(in Input) Outcome        // the step
 	Commands func(r work.Record) []Command // its commands for the Operator, once it is done
+	// Unchanged checks, when the step is done, that the inputs that it read
+	// did not change (S01: the problem statement, D6 of #86); an error is an
+	// input error of the run.
+	Unchanged func(r work.Record) error
+	// Evidence runs the checks of the step's evidence on the work area at dir,
+	// after its commit, and gives the reason of the first that does not pass,
+	// or "" (S04 to S14, D12 of #86).
+	Evidence func(dir string) string
 }
 
 // Order is the run order (D1 of #85, O-123): the prose step, S07, S08, S09 and
@@ -153,6 +164,23 @@ type system struct {
 	writeCommands func(string, string) error
 	branch        func(dir string) (string, error)
 	commit        func(dir, message string, who git.Identity) error
+	head          func(dir string) (string, error) // the commit of HEAD
+	resetSoft     func(dir, commit string) error   // moves the branch of HEAD to commit (D12 of #86)
+	now           func() time.Time                 // the clock of the LAYUP host (pin.time, D7 of #86)
+	// The calls of the steps S02 to S04 (steps.go).
+	lsRemote       func(url, ref string) (string, error)
+	clone          func(url, dir string) error
+	checkoutDetach func(dir, commit string) error
+	revParse       func(dir, rev string) (string, error)
+	rootCommits    func(dir, rev string) ([]string, error)
+	initRepo       func(dir string) error
+	lsTree         func(dir, rev, path string) ([]git.TreeEntry, error)
+	show           func(dir, rev, path string) ([]byte, error)
+	switchCreate   func(dir, branch, commit string) error
+	exists         func(path string) bool
+	removeAll      func(path string) error
+	rename         func(from, to string) error
+	write          func(path string, data []byte) error
 }
 
 var sys = system{
@@ -176,6 +204,22 @@ var sys = system{
 		}
 		return git.Commit(dir, message, who)
 	},
+	head:           func(dir string) (string, error) { return git.RevParse(dir, "HEAD^{commit}") },
+	resetSoft:      git.ResetSoft,
+	now:            time.Now,
+	lsRemote:       git.LsRemote,
+	clone:          git.Clone,
+	checkoutDetach: git.CheckoutDetach,
+	revParse:       git.RevParse,
+	rootCommits:    git.RootCommits,
+	initRepo:       git.Init,
+	lsTree:         git.LsTree,
+	show:           git.Show,
+	switchCreate:   git.SwitchCreate,
+	exists:         func(p string) bool { _, err := os.Lstat(p); return err == nil },
+	removeAll:      os.RemoveAll,
+	rename:         os.Rename,
+	write:          writeFile,
 }
 
 func writeFile(path string, data []byte) error {
@@ -217,6 +261,13 @@ func Run(dir string, steps map[string]Step, who git.Identity, step func(i, n int
 			done[r[0]] = true
 		}
 	}
+	for _, id := range ids() { // the other inputs that a done step read do not change (D6 of #86)
+		if done[id] && steps[id].Unchanged != nil {
+			if err := steps[id].Unchanged(record); err != nil {
+				return Result{}, &InputError{err}
+			}
+		}
+	}
 	for _, id := range ids() { // the answers that a done step read do not change
 		reads := steps[id].Reads
 		if !done[id] || len(reads) == 0 {
@@ -250,8 +301,11 @@ func Run(dir string, steps map[string]Step, who git.Identity, step func(i, n int
 			i++
 			end := step(i, len(todo), id)
 			s := steps[id]
-			o := s.Run(Input{Dir: dir, Record: record, Answers: answers})
+			o := s.Run(Input{Dir: dir, Record: record, Answers: answers, Who: who})
 			switch o.Kind {
+			case Invalid:
+				end()
+				return Result{}, &InputError{errors.New(o.Evidence)}
 			case Done, Operator:
 				next := slices.Clone(record)
 				for _, v := range o.Values {
@@ -262,8 +316,23 @@ func Run(dir string, steps map[string]Step, who git.Identity, step func(i, n int
 					ran[id], failed = StepRow{id, s.Actor, Fail, "a hand-off with no command for the Operator"}, id
 					break
 				}
+				target := filepath.Join(dir, work.TargetPath)
+				var parent, made string
 				if o.Commit && id >= "S04" && id <= "S14" { // S03 and S15 make their own commits
+					parent, _ = sys.head(target)
 					if reason := commit(dir, id, who, record); reason != "" {
+						ran[id], failed = StepRow{id, s.Actor, Fail, reason}, id
+						break
+					}
+					made, _ = sys.head(target)
+				}
+				if s.Evidence != nil { // the one-check call, after the commit (D12 of #86)
+					if reason := s.Evidence(dir); reason != "" {
+						// The undo moves layup-setup back only from the commit that
+						// this run made (condition 1 of the plan review of #86).
+						if cur, err := sys.head(target); err == nil && made != "" && cur == made && parent != "" && parent != made {
+							_ = sys.resetSoft(target, parent)
+						}
 						ran[id], failed = StepRow{id, s.Actor, Fail, reason}, id
 						break
 					}

@@ -18,7 +18,7 @@ import (
 func stubSteps(t *testing.T, out map[string]setup.Outcome) {
 	t.Helper()
 	saved := setupSteps
-	setupSteps = func() map[string]setup.Step {
+	setupSteps = func(setup.Brief, setup.Checks) map[string]setup.Step {
 		m := setup.Stubs()
 		for id, s := range m {
 			o, ok := out[id]

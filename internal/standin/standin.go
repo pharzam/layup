@@ -21,7 +21,7 @@ import (
 
 // Name is the name of the target of a work area, and PinTime its pin.time.
 const (
-	Name    = "stand-in-target"
+	Name    = "stand-in-owner/stand-in-target" // OWNER/NAME (D1 of #86)
 	PinTime = "2026-10-02T09:30:00Z"
 )
 
@@ -45,6 +45,9 @@ func baselineFiles(url string) map[string]string {
 		// discipline-tests and link-lint run them (#87).
 		"docs/tests/run-discipline-tests.sh": "#!/bin/sh\necho 'run-discipline-tests: the stand-in: 0 failed'\n",
 		"docs/links/link-lint.sh":            "#!/bin/sh\necho 'link-lint: OK  0 links resolved'\n",
+		// The two index files that S04 adds a row to (#86).
+		"docs/adr/README.md":   "# Architecture decision records\n\n## Index\n\n| ADR | Title | Status |\n| --- | ----- | ------ |\n| _none yet_ | | |\n",
+		"docs/facts/README.md": "# Customer facts\n\n## Index\n\n| Fact doc | Source | Collected | Status |\n| -------- | ------ | --------- | ------ |\n| _none yet_ | | | |\n",
 	}
 }
 
@@ -61,15 +64,13 @@ const (
 	BriefPath  = "docs/facts/problem-statement-brief.md"
 	factsIndex = "# Customer facts\n\n## Index\n\n| Fact doc | Source | Collected | Status |\n| -------- | ------ | --------- | ------ |\n" +
 		"| [F-0001](F-0001-setup-answers.md) | The answers to the questions of the setup | 2026-10-02 | Raw |\n"
-	brief      = "# The problem statement of " + Name + "\n\nThe stand-in target needs one product.\n"
+	// Brief is the problem statement of the work area, with no gap of layup
+	// psb check, so S01 asks only its own four questions.
+	Brief      = "# The problem statement of " + Name + "\n\nTechnology stack: Go\n\nThe stand-in target needs one product.\n"
 	onboarding = "# Onboarding\n\nThe work of " + Name + " starts from [the problem statement](facts/problem-statement-brief.md) (`F-0001#1`).\n"
 	glossary   = "# Glossary\n\n| Term | Meaning |\n| ---- | ------- |\n| Target | the repository that the setup makes (`F-0001#2`) |\n"
 	guardrails = "# Guardrails\n\n## 1. Rules\n\n- **Inv-1** \u2014 the setup keeps its record (`F-0001#1`). Check: no check yet\n"
 )
-
-// asks gives the question of each answer of S01, for the record of S04.
-var asks = map[string]string{"S01-stack": "Which stack does the target use?", "S01-name": "What is the name of the target?",
-	"S01-visibility": "Is the repository of the target public?", "S01-baseline": "Where is the repository of the baseline?"}
 
 // AnswersRecord gives the record of the S01- answers that S04 writes, in the
 // form of setup.md (D2 of #89): one fact per answer, in the order of S01.
@@ -80,7 +81,7 @@ func AnswersRecord(url string) string {
 		"| Collected by | the setup by hand of the stand-in |\n| Date collected | 2026-10-02 |\n" +
 		"| Origin | `inputs/answers.tsv` of the work area |\n| Status | `Raw` |\n\n## Facts as collected\n\n")
 	for i, r := range answerRows(url) {
-		fmt.Fprintf(&b, "%d. `%s` %s \u2014 by %s; source %s; the question: %s\n", i+1, r[0], r[1], r[2], r[3], asks[r[0]])
+		fmt.Fprintf(&b, "%d. `%s` %s \u2014 by %s; source %s; the question: %s\n", i+1, r[0], r[1], r[2], r[3], work.S01Questions[i].Text)
 	}
 	b.WriteString("\n## Notes on capture\n\nEach angle quote of a recorded text is written as `&lsaquo;` or `&rsaquo;`.\n")
 	return b.String()
@@ -172,7 +173,7 @@ func Make(dir string, o Options) (Work, error) {
 			"docs/facts/README.md": factsIndex, "docs/setup/facts.sha256": sumLine(AnswersRecord(url), RecordPath)}},
 		{"S05", map[string]string{"docs/decisions": "", "docs/audit": "", "docs/tasks/T-0001.md": "",
 			"docs/tasks/backlog.md": "# Backlog\n", "docs/tasks/completed.md": "# Completed\n"}},
-		{"S06", map[string]string{BriefPath: brief, "docs/setup/facts.sha256": sumLine(AnswersRecord(url), RecordPath) + sumLine(brief, BriefPath)}},
+		{"S06", map[string]string{BriefPath: Brief, "docs/setup/facts.sha256": sumLine(AnswersRecord(url), RecordPath) + sumLine(Brief, BriefPath)}},
 		{"S07", map[string]string{"docs/onboarding-for-engineers.md": onboarding}},
 		{"S08", map[string]string{"docs/glossary.md": glossary}},
 		{"S09", map[string]string{"docs/guardrails.md": guardrails}},
@@ -200,7 +201,7 @@ func Make(dir string, o Options) (Work, error) {
 	if err := tsv.Write(&answers, work.AnswersSchema, answerRows(url)); err != nil {
 		return Work{}, err
 	}
-	return w, write(w.Dir, map[string]string{work.RecordPath: record.String(), work.AnswersPath: answers.String()})
+	return w, write(w.Dir, map[string]string{work.RecordPath: record.String(), work.AnswersPath: answers.String(), work.BriefPath: Brief})
 }
 
 // pinText gives the pin file that S04 writes from the pin rows, in the form
@@ -218,7 +219,8 @@ func recordRows(url, commit, tree string, change map[string]string) [][]string {
 		{"S01", "name", Name, "answer", "S01-name"},
 		{"S01", "visibility", "public", "answer", "S01-visibility"},
 		{"S01", "baseline", url, "answer", "S01-baseline"},
-		work.AnswersHash("S01", answerRows(url), []string{"S01-", "Q-"}), // the rows that S01 reads (setup.Stubs)
+		{"S01", "brief.sha256", fmt.Sprintf("%x", sha256.Sum256([]byte(Brief))), "computed", "sha256 " + work.BriefPath},
+		work.AnswersHash("S01", answerRows(url), []string{"S01-", "Q-"}), // the rows that S01 reads
 		{"S01", "done", "every answer present; the stack has a catalog entry", "step", ""},
 		{"S02", "pin.source", url, "answer", "S01-baseline"},
 		{"S02", "pin.commit", commit, "computed", "git ls-remote " + url + " HEAD"},

@@ -6,10 +6,14 @@ package cli
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
+	"path/filepath"
+	"strings"
 	"unicode/utf8"
 
 	"github.com/pharzam/layup/internal/gate"
@@ -21,17 +25,26 @@ import (
 // gateRun runs layup gate; the unit tests replace it.
 var gateRun = gate.Run
 
-// readFile reads the FILE of layup psb check; the unit tests replace it.
-var readFile = os.ReadFile
+// readFile reads the FILE of layup psb check and the problem statement of
+// layup setup, and isDir reports whether WORK is a directory; the unit tests
+// replace them.
+var (
+	readFile = os.ReadFile
+	isDir    = func(p string) bool { fi, err := os.Stat(p); return err == nil && fi.IsDir() }
+)
 
-// verifyRun runs layup setup verify; the unit tests replace it.
-var verifyRun = verify.Run
+// verifyRun runs layup setup verify, and verifyCheck the one-check call of a
+// step of layup setup; the unit tests replace them.
+var (
+	verifyRun   = verify.Run
+	verifyCheck = verify.Check
+)
 
-// setupRun runs layup setup, and setupSteps gives its steps; the tests replace
-// them.
+// setupRun runs layup setup, and setupSteps gives its steps from the gap table
+// of the problem statement and the evidence call; the tests replace them.
 var (
 	setupRun   = setup.Run
-	setupSteps = setup.Stubs
+	setupSteps = setup.Steps
 )
 
 // Version is the version that `layup version` prints.
@@ -190,8 +203,16 @@ func setupVerify(in call) int {
 // stop table of a stop, on standard output; the progress lines and the
 // diagnostics on standard error.
 func setupCommand(in call) int {
+	var brief setup.Brief
+	if isDir(in.args[0]) { // else setup.Run names the work area
+		var err error
+		if brief, err = readBrief(in.args[0]); err != nil {
+			fmt.Fprintf(in.stderr, "layup: %v\n", err)
+			return exitUsage
+		}
+	}
 	p := newProgress(in.stderr, "setup")
-	res, err := setupRun(in.args[0], setupSteps(), setup.Who, func(i, n int, step string) func() {
+	res, err := setupRun(in.args[0], setupSteps(brief, evidence(in.stderr)), setup.Who, func(i, n int, step string) func() {
 		p.step(i, n, step)
 		return p.end
 	})
@@ -208,4 +229,45 @@ func setupCommand(in call) int {
 		return exitStop
 	}
 	return exitCode(res.Results())
+}
+
+// readBrief reads the problem statement of the work area at dir once, runs the
+// rules of layup psb check on it, and gives the gap table, as layup psb check
+// writes it, and the SHA-256 of the bytes that the rules read (D5 of #86). A
+// file that is absent or that is not valid UTF-8 is an input error (K32).
+func readBrief(dir string) (setup.Brief, error) {
+	src, err := readFile(filepath.Join(dir, filepath.FromSlash(setup.BriefPath)))
+	switch {
+	case errors.Is(err, fs.ErrNotExist):
+		return setup.Brief{}, fmt.Errorf("%s: the problem statement is absent", setup.BriefPath)
+	case err != nil:
+		return setup.Brief{}, fmt.Errorf("%s: %v", setup.BriefPath, err)
+	}
+	if n := invalidLine(src); n > 0 {
+		return setup.Brief{}, fmt.Errorf("%s: line %d is not valid UTF-8", setup.BriefPath, n)
+	}
+	var table bytes.Buffer
+	if err := psb.WriteTSV(&table, psb.Check(string(src))); err != nil {
+		return setup.Brief{}, err
+	}
+	return setup.Brief{Gaps: table.Bytes(), Sum: fmt.Sprintf("%x", sha256.Sum256(src))}, nil
+}
+
+// evidence gives the one-check call of a step of layup setup (D12 of #86):
+// verify.Check of the named checks on the work area, with its diagnostics on
+// out; the reason of the first row that is not pass or clear, or "".
+func evidence(out io.Writer) setup.Checks {
+	return func(dir string, names []string) string {
+		t, err := verifyCheck(dir, names, func(int, int, string) func() { return func() {} }, out)
+		if err != nil {
+			s, _, _ := strings.Cut(err.Error(), "\n")
+			return "the evidence call: " + s
+		}
+		for _, r := range t.Rows {
+			if r.Result != "pass" && r.Result != "clear" {
+				return r.Check + ": " + r.Result + ": " + r.Reason
+			}
+		}
+		return ""
+	}
 }

@@ -1,12 +1,19 @@
 package cli
 
 import (
+	"crypto/sha256"
 	"errors"
+	"fmt"
+	"io"
+	"io/fs"
+	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
 	"github.com/pharzam/layup/internal/git"
 	"github.com/pharzam/layup/internal/setup"
+	"github.com/pharzam/layup/internal/verify"
 )
 
 // standInSetup puts a stand-in for setup.Run in place until the test ends: it
@@ -72,5 +79,83 @@ func TestSetupCommand(t *testing.T) {
 	}
 	if _, _, errOut := run(); !strings.Contains(errOut, "\n  setup WORK ") || !strings.Contains(errOut, "\n  setup verify WORK ") {
 		t.Errorf("the usage has no setup WORK beside setup verify WORK:\n%s", errOut)
+	}
+}
+
+// standInBrief puts stand-ins in place until the test ends: WORK is a
+// directory, readFile gives the problem statement src (nil: absent), and
+// setupSteps keeps the brief that the command hands to the steps.
+func standInBrief(t *testing.T, src []byte) *setup.Brief {
+	t.Helper()
+	got := &setup.Brief{Sum: "not called"}
+	savedDir, savedRead, savedSteps := isDir, readFile, setupSteps
+	isDir = func(string) bool { return true }
+	readFile = func(name string) ([]byte, error) {
+		if name != filepath.Join("w", "inputs", "briefs", "problem-statement.md") && name != "brief.md" {
+			t.Errorf("readFile(%q); want the problem statement of w", name)
+		}
+		if src == nil {
+			return nil, fs.ErrNotExist
+		}
+		return src, nil
+	}
+	setupSteps = func(b setup.Brief, _ setup.Checks) map[string]setup.Step { *got = b; return setup.Stubs() }
+	t.Cleanup(func() { isDir, readFile, setupSteps = savedDir, savedRead, savedSteps })
+	return got
+}
+
+// The command reads the problem statement of WORK once and hands its gap
+// table, as layup psb check writes it, and its SHA-256 to the steps (D5 of
+// #86); a problem statement that is absent or not valid UTF-8 is exit 2.
+func TestSetupReadsTheProblemStatement(t *testing.T) {
+	work := standInSetup(t, setup.Result{Steps: []setup.StepRow{{Step: "S01", Actor: "layup-setup", Result: "done", Evidence: "x"}}}, nil)
+	src := []byte("# A brief\n\nThe product must be fast.\n")
+	got := standInBrief(t, src)
+	if code, _, errOut := run("setup", "w"); code != 0 || *work != "w" {
+		t.Fatalf("a problem statement: exit %d, stderr %q; want 0 and a run", code, errOut)
+	}
+	_, table, _ := run("psb", "check", "brief.md")
+	if string(got.Gaps) != table || !strings.Contains(table, "\nQ-") || got.Sum != fmt.Sprintf("%x", sha256.Sum256(src)) {
+		t.Errorf("the brief: gaps %q, sum %q; want the table of layup psb check, %q, and the SHA-256 of the file", got.Gaps, got.Sum, table)
+	}
+	for _, c := range []struct {
+		src    []byte
+		reason string
+	}{
+		{nil, "inputs/briefs/problem-statement.md: the problem statement is absent"},
+		{[]byte("# A brief\n\xff\n"), "inputs/briefs/problem-statement.md: line 2 is not valid UTF-8"},
+	} {
+		*work = ""
+		got := standInBrief(t, c.src)
+		if code, out, errOut := run("setup", "w"); code != 2 || out != "" || errOut != "layup: "+c.reason+"\n" || *work != "" || got.Sum != "not called" {
+			t.Errorf("%q: exit %d, stdout %q, stderr %q, run %q; want 2, nothing, %q and no run", c.src, code, out, errOut, *work, c.reason)
+		}
+	}
+}
+
+// The evidence call gives the reason of the first row that is not pass or
+// clear, or "" (D12 of #86).
+func TestTheEvidenceCall(t *testing.T) {
+	saved := verifyCheck
+	t.Cleanup(func() { verifyCheck = saved })
+	var dir string
+	var names []string
+	for _, c := range []struct {
+		rows []verify.Row
+		err  error
+		want string
+	}{
+		{[]verify.Row{{Check: "pin", Result: "pass", Reason: ""}, {Check: "facts", Result: "clear", Reason: ""}}, nil, ""},
+		{[]verify.Row{{Check: "pin", Result: "pass", Reason: ""}, {Check: "facts", Result: "fail", Reason: "hash: x does not match"}, {Check: "x", Result: "not-active", Reason: "y"}}, nil, "facts: fail: hash: x does not match"},
+		{[]verify.Row{{Check: "pin", Result: "not-active", Reason: "no layup-setup"}}, nil, "pin: not-active: no layup-setup"},
+		{nil, &verify.InputError{Err: errors.New("the work area w has no target\nmore")}, "the evidence call: the work area w has no target"},
+	} {
+		verifyCheck = func(d string, n []string, _ func(i, n int, check string) func(), _ io.Writer) (verify.Table, error) {
+			dir, names = d, n
+			return verify.Table{Rows: c.rows}, c.err
+		}
+		if got := evidence(io.Discard)("w", []string{"pin", "facts"}); got != c.want || dir != "w" || !slices.Equal(names, []string{"pin", "facts"}) {
+			t.Errorf("%v %v: %q on %q %q; want %q on w, pin and facts", c.rows, c.err, got, dir, names, c.want)
+		}
 	}
 }
