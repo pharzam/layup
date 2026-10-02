@@ -51,20 +51,35 @@ func layup(t *testing.T, args ...string) result {
 	return layupWith(t, nil, args...)
 }
 
-// layupWith runs the binary in a new temporary directory, with no standard
-// input, and with a fixed environment: HOME and TMPDIR in temporary
-// directories, the PATH of the host, and LC_ALL=C. An entry NAME=value of env
-// replaces the entry of the same name, or adds one. No other variable of the
-// host reaches the binary.
+// layupWith runs the binary as execute does, with a fixed environment: HOME
+// and TMPDIR in temporary directories, the PATH of the host, and LC_ALL=C. An
+// entry NAME=value of env replaces the entry of the same name, or adds one. No
+// other variable of the host reaches the binary.
 func layupWith(t *testing.T, env []string, args ...string) result {
+	t.Helper()
+	fixed := []string{"HOME=" + t.TempDir(), "TMPDIR=" + t.TempDir(), "PATH=" + os.Getenv("PATH"), "LC_ALL=C"}
+	for _, e := range env {
+		name, _, _ := strings.Cut(e, "=")
+		fixed = append(slices.DeleteFunc(fixed, func(f string) bool { return strings.HasPrefix(f, name+"=") }), e)
+	}
+	return execute(t, fixed, args...)
+}
+
+// layupBare runs the binary as execute does, with no environment variable at
+// all.
+func layupBare(t *testing.T, args ...string) result {
+	t.Helper()
+	return execute(t, []string{}, args...)
+}
+
+// execute runs the binary in a new temporary directory, with no standard input
+// (the null device), and with the environment env. A nil env would give the
+// binary the environment of the test, so the callers give a slice.
+func execute(t *testing.T, env []string, args ...string) result {
 	t.Helper()
 	cmd := exec.Command(binary, args...)
 	cmd.Dir = t.TempDir()
-	cmd.Env = []string{"HOME=" + t.TempDir(), "TMPDIR=" + t.TempDir(), "PATH=" + os.Getenv("PATH"), "LC_ALL=C"}
-	for _, e := range env {
-		name, _, _ := strings.Cut(e, "=")
-		cmd.Env = append(slices.DeleteFunc(cmd.Env, func(f string) bool { return strings.HasPrefix(f, name+"=") }), e)
-	}
+	cmd.Env = env
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &stdout, &stderr
 	code := 0

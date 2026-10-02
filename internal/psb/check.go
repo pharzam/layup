@@ -8,21 +8,36 @@ import (
 	"io"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/pharzam/layup/internal/tsv"
 )
+
+// GapsSchema is the form of the gap table: the block psb-gaps of
+// docs/spec/psb-check.md.
+var GapsSchema = tsv.Schema{Name: "psb-gaps", Location: "stdout", Columns: []tsv.Column{
+	{Name: "id", Type: "id(Q-NNN)", Key: true},
+	{Name: "rule", Type: "enum(G1|G2|G3|G4|G5)"},
+	{Name: "line", Type: "int"},
+	{Name: "excerpt", Type: "text"},
+	{Name: "question", Type: "text"},
+}}
 
 // Gap is one question for the idea owner.
 type Gap struct {
 	Rule     string // G1 … G5
 	Line     int    // 1-based line; 0 when the gap is an absence
-	Excerpt  string // the trimmed line, TABs as spaces, at most 80 runes
+	Excerpt  string // the trimmed line, at most 80 runes; "" for line 0
 	Question string
 }
 
 var (
-	// G1: "technology stack", then only spaces or '*', then ':' and a value.
-	namedStack = regexp.MustCompile(`(?i)technology stack[ *]*:[ *]*\S`)
+	// G1: "technology stack", then only spaces or '*', then ':' and a value: a
+	// character that is not a space or '*' (O-131: "**Technology stack:**" with
+	// no value is a gap).
+	namedStack = regexp.MustCompile(`(?i)technology stack[ *]*:[ *]*[^\s*]`)
 	// G3: 2 to 6 capitals (digits after the first), with ASCII word boundaries.
 	abbrev = regexp.MustCompile(`(^|[^A-Za-z0-9_])([A-Z][A-Z0-9]{1,5})($|[^A-Za-z0-9_])`)
 	bold   = regexp.MustCompile(`\*\*([^*]+)\*\*`)
@@ -41,7 +56,7 @@ func Check(text string) []Gap {
 	lines := strings.Split(strings.ReplaceAll(text, "\r\n", "\n"), "\n")
 	var gaps []Gap
 	add := func(rule string, n int, q string) {
-		ex := "—"
+		ex := ""
 		if n > 0 {
 			ex = excerpt(lines[n-1])
 		}
@@ -98,17 +113,23 @@ func Check(text string) []Gap {
 	return gaps
 }
 
-// WriteTSV writes the batch: a header row, then one row per gap with ids
-// Q-001, Q-002, … in the order of gaps.
-func WriteTSV(w io.Writer, gaps []Gap) {
-	fmt.Fprint(w, "id\trule\tline\texcerpt\tquestion\n")
+// WriteTSV writes the batch through internal/tsv by GapsSchema: a header row,
+// then one row per gap with ids Q-001, Q-002, … in the order of gaps. The
+// writer applies the field rule of the records: each tab, line feed and
+// carriage return of a field becomes one space, and an empty value is written
+// as —.
+func WriteTSV(w io.Writer, gaps []Gap) error {
+	rows := make([][]string, len(gaps))
 	for i, g := range gaps {
-		fmt.Fprintf(w, "Q-%03d\t%s\t%d\t%s\t%s\n", i+1, g.Rule, g.Line, g.Excerpt, g.Question)
+		rows[i] = []string{fmt.Sprintf("Q-%03d", i+1), g.Rule, strconv.Itoa(g.Line), g.Excerpt, g.Question}
 	}
+	return tsv.Write(w, GapsSchema, rows)
 }
 
+// excerpt gives the line, trimmed, at most 80 runes. The field rule of
+// WriteTSV makes a tab or a carriage return inside it one space.
 func excerpt(l string) string {
-	s := strings.TrimSpace(strings.ReplaceAll(l, "\t", " "))
+	s := strings.TrimSpace(l)
 	if utf8.RuneCountInString(s) > 80 {
 		s = string([]rune(s)[:80])
 	}
