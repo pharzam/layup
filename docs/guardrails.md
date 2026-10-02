@@ -294,6 +294,16 @@ success without having done its job.
   reason in a table is a fixed text that names the failed part (for example
   `scratch tree: add failed`); the error goes to standard error; and a test of
   the failure asserts that the reason holds no path.
+- ❌ **A hashed file that git may convert.** A list of hashes, such as
+  `docs/setup/facts.sha256`, holds the bytes of each file it names; on a
+  checkout with `core.autocrlf=true` (git's default on Windows) git gives a
+  text file a carriage return per line, so each hash fails and a script does
+  not run (#48). It is silent on the host that wrote the files. **The check:**
+  each path of a hash list, the list itself and each script of a check have a
+  rule in `.gitattributes` (`-text` for a file whose bytes count, `text
+  eol=lf` for a script or a list that a script reads); the case
+  `facts/good-autocrlf` of `docs/setup/tests/run.sh` clones `HEAD` with
+  `core.autocrlf=true` and runs check `facts`.
 - ❌ **An `awk` check that reads the locale.** `awk` reads characters in a UTF-8
   locale and bytes in the C locale, so one sh check can give other lines on
   another host. macOS `awk` 20200816 in a UTF-8 locale stops ("towc: multibyte

@@ -305,10 +305,10 @@ of each such check passes and fails on the same fixtures as
 | `discipline-tests` | yes | the baseline's own `sh docs/tests/run-discipline-tests.sh` exits 0 |
 | `pin` | yes | `check_pin`; and the pin file's `source`, `commit` and `tree` equal the record rows `pin.source`, `pin.commit` and `pin.tree` of S02, its `date` is the date of `pin.time`, and `method` equals the text of [`NFR-006`](#nfr-006--the-baseline-at-a-pinned-recorded-version) with the source and the commit |
 | `kit-history` | yes | `check_kit_history`, whose repository is the record row `pin.source` with no scheme and no `/` or `.git` at its end (for LAYUP's baseline, `github.com/pharzam/armature`); a task index links it when it holds that text with the start of the file or a separator before it, and after it, with or without `.git` or `.` in between, the end of the file or a separator; a separator is a character that is not a letter or a digit of any script, `.`, `-` or `_` (review rounds 1 to 4 of #84) |
-| `facts` | yes, in a target's form | each brief is in `docs/facts/` and in `facts.sha256` with its hash; each question ID of `answers.tsv` is a fact in exactly one answers record: the `S01-` and `Q-` IDs in the record of S06, the `M-` IDs in the record of S11 (which exists only when S10 listed a marker); the index has a row per record. LAYUP's counts (39, 75, 19) are LAYUP's and do not apply. |
-| `onboarding` | yes, in a target's form | the file exists, holds no marker, links the problem statement; each `F-NNNN#n` it cites is a fact of a record in `docs/facts/` |
+| `facts` | yes, in a target's form | each brief is in `docs/facts/` and in `facts.sha256` with its hash; each question ID of `answers.tsv` is a fact in exactly one answers record: the `S01-` and `Q-` IDs in the record of S04 (O-124), the `M-` IDs in the record of S11 (which exists only when S10 listed a marker); the index has a row per record; what exists is read, and the `done` rows decide what must exist (below, task `T-9t1q`). LAYUP's counts (39, 75, 19) are LAYUP's and do not apply. |
+| `onboarding` | yes, in a target's form | the file exists, holds no marker, links the problem statement (`](facts/problem-statement-brief.md)`); each `F-NNNN#n` it cites is a fact of the one record `F-NNNN-*.md` in `docs/facts/` |
 | `glossary` | yes, in a target's form | each `F-NNNN#n` it cites resolves as above; LAYUP's heading and its count of 25 do not apply |
-| `guardrails` | yes, in a target's form | each entry's `Check:` value is `no check yet` or a file and a gate, as `check_guardrails`; each citation resolves; LAYUP's count of 9 does not apply |
+| `guardrails` | yes, in a target's form | each entry (a bullet `- **Inv-N**`) has a `Check:` value that is `no check yet` or a file and a gate, as `check_guardrails`; each citation resolves; LAYUP's heading and its count of 9 do not apply |
 | `markers` | yes | `check_markers`, with LAYUP's `MK_EXEMPT` (S10) |
 | `adapted` | yes | `check_adapted`, with LAYUP's `AD_EXCLUDE` and `ad_allowed`, which the engine embeds at its version; a path that a target does not have matches nothing |
 | `identity` | yes | `check_identity`, with the target's name: `README.md` also holds the record row `name` of S01 |
@@ -346,8 +346,9 @@ reason  text                             -    the first failure, or the `clear` 
 - **A check that this version of `layup` does not have yet** is `not-active`,
   reason `not built yet`, so the command gives exit 1 until rows 10 to 15 of the
   [plan](../plan/README.md#the-tasks-of-phase-1) add each check (`NFR-004`
-  item 1). The present code has `pin`, `kit-history`, `adapted` (task `T-8ya0`)
-  and `identity`.
+  item 1). The present code has `pin`, `kit-history`, `facts`, `onboarding`,
+  `glossary` and `guardrails` (task `T-9t1q`), `adapted` (task `T-8ya0`) and
+  `identity`.
 - **The scratch tree** is `git worktree add --detach` of the head of
   `layup-setup`, in a new temporary directory outside `WORK`: a temporary
   directory (`TMPDIR`) in `WORK` is an input error. The run adds the tree in the
@@ -386,6 +387,76 @@ reason  text                             -    the first failure, or the `clear` 
   URL (a valid `S01-baseline` in a test: `git ls-remote` and `git clone` take
   it), and makes a work area from it with a setup by hand. No file of it is in
   Git; a marker in Go source is written as an escape.
+
+**Decided here** (task `T-9t1q`, #89), the checks `facts`, `onboarding`,
+`glossary` and `guardrails` in a target's form, and the records that they read:
+
+- **The two answers records** (K14, O-124): the record of the `S01-` and `Q-`
+  answers is S04's, and the record of the `M-` answers is S11's. The rows S04
+  and S06 of the step table say it in row 9 of the
+  [plan](../plan/README.md#the-tasks-of-phase-1) (K14).
+- **The form of an answers record** (K15): the form of the baseline's
+  `docs/facts/template.md`: its header table, and under `## Facts as collected`
+  one numbered fact per row of `answers.tsv` that its step reads, in the order
+  of the stop table, each ``N. `<question ID>` <answer> — by <by>; source
+  <source>; the question: <question text>``, with the question text of the stop
+  table's `ask` (for a `Q-` question, the writer of S04 computes the gap table
+  again from the brief that `brief.sha256` holds). The answer and the question
+  text are never in a code span. Its path is
+  `docs/facts/F-NNNN-setup-answers.md` (S04) or
+  `docs/facts/F-NNNN-marker-answers.md` (S11), `F-NNNN` the next free ID
+  (`F-0001` and `F-0002` on the baseline at its pin, whose index has no row),
+  with its index row and its line in `facts.sha256`. Check `facts` reads the
+  question ID of a fact: the first code span after its number.
+- **No marker in an answers record** (K17): the writer writes each left and
+  right angle quote of a recorded text as `&lsaquo;` and `&rsaquo;`, which
+  render the same, and the record's "Notes on capture" says so. Check
+  `markers` reads `docs/facts/` (it is not in `MK_EXEMPT`), so it finds no
+  marker in a record; a marker that stays (the answer `gap`) is only in its own
+  file and in `open-gaps.tsv`. The answer `gap` is the word `gap`, with the
+  question text.
+- **What check `facts` reads** (K18): a record or a brief that exists is read
+  in full whenever it exists: its question IDs (each one of its kind, a row of
+  `answers.tsv`, once; and each row of its kind has a fact in it), its line in
+  `facts.sha256`, its index row. The `done` rows of the setup record decide
+  only what must exist: `facts.sha256` and the record of S04 once S04 is done;
+  the problem statement once S06 is done; the record of S11 once S11 is done
+  and `answers.tsv` has an `M-` row. So the evidence call of a step, which
+  comes before its `done` row, reads what the step wrote, and an `M-` row given
+  early is no finding until S11 is done.
+- **The briefs:** S06 copies the problem statement to
+  `docs/facts/problem-statement-brief.md` and the vision brief to
+  `docs/facts/architectural-vision-brief.md`, the names of LAYUP's own raw
+  files, so check `facts` and check `onboarding` read the paths of their sh
+  functions. The vision brief is listed when its file exists.
+- **The lines of check `facts`:** the hash loop of `check_facts` with its
+  lines (`hash:`), which hashes the file of the scratch tree; the engine's git
+  calls set `core.autocrlf=false` (K7), so a host's setting does not change the
+  bytes. Then `brief:`, `listed:`, `record:`, `answers:` and `index:`, as the
+  tests of `internal/verify` name them.
+- **The fact resolver:** `F-NNNN#n` resolves when `docs/facts/` holds exactly
+  one `F-NNNN-*.md` with a numbered fact `n` (a line `^0*n\. `); the finding is
+  `fact: F-NNNN#n is not a fact of the F-NNNN record`. `check_onboarding` reads
+  the first `F-0001-*.md`; the engine wants exactly one record per ID.
+- **Onboarding, glossary and guardrails:** each file must exist (`missing:`).
+  Onboarding: the marker and link rules of `check_onboarding`, and the
+  resolver. Glossary: the resolver for each citation; LAYUP's heading, its 25
+  rows and `F-0001#15` to `#39` do not apply. Guardrails: an entry is a bullet
+  that starts with `- **Inv-N**`, up to the next entry, a heading or the end of
+  the file; a file with no entry has no finding; an entry's `Check:` value is
+  read as `check_guardrails` reads it (after the last `Check: ` of the first
+  line that has one), with its `check:` lines; each citation of the file
+  resolves.
+- **The shared fixtures:** for these four checks, the engine passes and fails
+  on the same fixtures as `docs/setup/tests/run.sh` in the lines of the kinds
+  that a target keeps with the same text: `hash` (facts); `missing`, `marker`,
+  `link` and `fact` (onboarding); none (glossary); `check` (guardrails). The
+  harness compares a case, its lines of those kinds and its exit, only when its
+  `EXPECT` has such a line; the cases with none are LAYUP's form and are not
+  compared: `facts/bad-answers-blank`, `bad-answers-missing`,
+  `bad-answers-repeat`, `bad-batch-absent`, `bad-batch-rows`, `bad-blank-tab`
+  and `good-autocrlf`, `glossary/bad-no-section` and `bad-rows`, and
+  `guardrails/bad-no-section`.
 
 **Decided here** (task `T-8ya0`, #88), check `adapted`:
 
