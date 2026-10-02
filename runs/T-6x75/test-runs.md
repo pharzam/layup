@@ -165,6 +165,16 @@ passes on it (the reviewer's run); the fixed harness fails:
         want ["setup-check: pin OK"]
 ```
 
+The first run of round 2, on `dba5ff0`, was stopped by the author after 30 s,
+before it wrote a record: the fix of finding 2 failed for a `WORK` given as a
+relative path, because `filepath.EvalSymlinks` keeps a relative path relative.
+The red run of the new case on the code of `dba5ff0`:
+
+```text
+$ go test -count=1 -tags=integration -run TestTheInputErrorsOfAWorkArea ./internal/verify/
+    verify_integration_test.go:184: TMPDIR in WORK/out, WORK given as the relative path ../../…/work: <nil>; want an input error
+```
+
 ## The green runs
 
 On the tree of the commit that adds this file, and again on the head of

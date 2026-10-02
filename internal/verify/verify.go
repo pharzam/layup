@@ -262,19 +262,21 @@ func Check(dir string, names []string, step func(i, n int, check string) func(),
 	return t, nil
 }
 
-// within reports whether path is dir or a path under it, each with its
-// symbolic links resolved where it exists.
+// within reports whether path is dir or a path under it, each made absolute
+// and with its symbolic links resolved where it exists.
 func within(path, dir string) bool {
 	rel, err := filepath.Rel(resolve(dir), resolve(path))
 	return err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
 }
 
+// resolve makes p absolute first: filepath.EvalSymlinks keeps a relative path
+// relative, which filepath.Rel cannot compare with an absolute one.
 func resolve(p string) string {
+	if a, err := filepath.Abs(p); err == nil {
+		p = a
+	}
 	if r, err := filepath.EvalSymlinks(p); err == nil {
 		return r
-	}
-	if a, err := filepath.Abs(p); err == nil {
-		return a
 	}
 	return p
 }

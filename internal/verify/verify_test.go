@@ -325,3 +325,23 @@ func TestTheTable(t *testing.T) {
 		t.Errorf("Results() = %q", got)
 	}
 }
+
+// within compares the two paths as absolute paths; the case of a relative
+// work area that exists is the integration test's (found by the author in
+// the fix of round 1, finding 2).
+func TestWithin(t *testing.T) {
+	for _, c := range []struct {
+		path, dir string
+		want      bool
+	}{
+		{"/w/out", "/w", true},
+		{"/w", "/w", true},
+		{"w/out", "w", true},
+		{"/w2", "/w", false},
+		{"/", "/w", false},
+	} {
+		if got := within(c.path, c.dir); got != c.want {
+			t.Errorf("within(%q, %q) = %v, want %v", c.path, c.dir, got, c.want)
+		}
+	}
+}

@@ -174,6 +174,15 @@ func TestTheInputErrorsOfAWorkArea(t *testing.T) {
 	if after := state(t, w.Dir); after != before {
 		t.Errorf("the run changed the work area:\n%s\nto\n%s", before, after)
 	}
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rel, err := filepath.Rel(wd, w.Dir); err != nil {
+		t.Fatal(err)
+	} else if _, err := Run(rel, noSteps, io.Discard); !errors.As(err, &in) {
+		t.Errorf("TMPDIR in WORK/out, WORK given as the relative path %s: %v; want an input error", rel, err)
+	}
 }
 
 // The Go schema of the table equals its block.
