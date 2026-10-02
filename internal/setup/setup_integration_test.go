@@ -14,13 +14,14 @@ import (
 	"github.com/pharzam/layup/internal/work"
 )
 
-// The Go schemas of the two tables equal their blocks.
+// The Go schemas of the two tables, and of the gap table that S01 reads (D5
+// of #86), equal their blocks.
 func TestTheSchemasEqualTheirBlocks(t *testing.T) {
 	blocks, err := tsv.ReadBlocks(os.DirFS(filepath.Join("..", "..", "docs", "spec")))
 	if err != nil {
 		t.Fatal(err)
 	}
-	for name, s := range map[string]tsv.Schema{"setup-steps": StepsSchema, "setup-stop": StopSchema} {
+	for name, s := range map[string]tsv.Schema{"setup-steps": StepsSchema, "setup-stop": StopSchema, "psb-gaps": GapsSchema} {
 		block, ok := blocks[name]
 		if !ok {
 			t.Errorf("docs/spec/ has no block %s", name)
