@@ -463,6 +463,19 @@ These traps are not domain-specific: they hurt every project's test suite.
   **The check:** build the escape from its parts (`chr(92) + "u2039"` in
   Python), and search the changed files for the two characters by their bytes
   before the commit.
+- ❌ **A known-bad fixture that fails for another reason.** A fixture run that
+  gives `fail` proves the gate only when the kind's command fails on the
+  fixture itself. The stand-in manifest of `internal/standin` ran `go vet ./...`
+  on a tree with no `go.mod`, so the static fixture of the Go entry (a file that
+  `gofmt` changes) would fail with "go.mod file not found", and the row
+  `gate:static` would pass for that reason. Task `T-d6q5` (#92) found it before
+  the first run and gave the stand-in a `go.mod` and the command of the entry.
+  **The check:** give a test target each file that the command of the kind
+  needs, and read the output of the fixture run once.
+- ❌ **A git date format that changed.** `git log --format=%aI` gives a UTC
+  date as `Z` in git 2.54 and as `+00:00` in older versions, so a test that
+  compares the text passes on one host only. Task `T-d6q5` (#92) met it.
+  **The check:** compare `%at` and `%ct`, the seconds since the epoch.
 
 ### Reference-sweep pitfalls
 
