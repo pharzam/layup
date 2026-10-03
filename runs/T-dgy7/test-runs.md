@@ -61,3 +61,12 @@ red first, then each rule test.
 rows before the order rules, so a row that breaks both gives the error of the
 row ("an orchestrator stall of a task" gives line 3, column `task`, from
 `CheckStall`).
+
+## The freeze
+
+On the frozen head `6e3fa70`, 03:45:06Z to 03:47:29Z, the 18 steps of the
+ladder, each exit 0: the eight local checks of `AGENTS.md` (with `git diff
+--check` against `origin/main`), `go build`, `go vet` with each tag, `gofmt
+-l` (no file), the three test levels, the two runs with `-race` (with
+`./internal/records/`), and the harness of the fixtures of `setup-check.sh`
+(44 passed). CI of PR #118 passed its job `tests` on it before review round 1.
