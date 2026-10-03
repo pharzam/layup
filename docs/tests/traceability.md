@@ -103,9 +103,9 @@ the first.
 | `TestAWholeSetupOnAStandInBaseline`, `TestLayupSetupVerifyOnAWholeSetup` (`cmd/layup/whole_e2e_test.go`) | e2e | REQ-002, NFR-003, NFR-004, NFR-005, NFR-006 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-dep6 | green |
 | `TestTheRecordsAreInTheTargetsGit`, `TestThePushesOfCommandsSh` (`cmd/layup/whole_e2e_test.go`) | e2e | NFR-001 | F-0001#1 | guardrails.md §1.1 Inv-1 | ADR-0014 | T-dep6 | green |
 | `TestTheTargetPassesItsGateWithLAYUPAbsent` (`cmd/layup/whole_e2e_test.go`) | e2e | NFR-002 | F-0001#2 | guardrails.md §1.1 Inv-2 | ADR-0013 | T-dep6 | green |
-| `TestTheSchemasEqualTheirBlocks` (`internal/records/records_integration_test.go`) | integration | REQ-011 | F-0003#50 | — | ADR-0024 | T-tmhw | green |
+| `TestTheSchemasEqualTheirBlocks` (`internal/records/records_integration_test.go`) | integration | REQ-011, REQ-009 | F-0003#50 | — | ADR-0024 | T-tmhw, T-dgy7 | green |
 | `TestTelemetryRowsThatPass`, `TestTelemetryRowsThatBreakARule`, `TestPriceRows` (`internal/records/records_test.go`) | unit | REQ-011 | F-0003#50 | — | ADR-0024 | T-tmhw | green |
-| `T-dgy7/integration/stalls-schema` | integration | REQ-009 | F-0003#49 | — | ADR-0023 | T-dgy7 | planned |
+| `TestStallRowsThatPass`, `TestStallRowsThatBreakARule` (`internal/records/stalls_test.go`) | unit | REQ-009 | F-0003#49 | — | ADR-0023 | T-dgy7 | green |
 | `T-efmy/uat/release-review` | uat | REQ-015, REQ-017 | F-0003#53 | — | — | T-efmy | planned |
 | `T-evad/uat/first-pilot` | uat | REQ-001, REQ-002, REQ-004, REQ-007, REQ-016, REQ-018, NFR-001, NFR-002, NFR-003 | F-0003#42 | guardrails.md §1.1 Inv-7 | ADR-0012 | T-evad | planned |
 | `M2f/uat/rule-protection` | uat | REQ-003 | F-0003#43 | guardrails.md §1.1 Inv-3 | ADR-0017 | M2f | planned |

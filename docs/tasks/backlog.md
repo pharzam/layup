@@ -33,7 +33,6 @@ same summary, dated — rather than deleting it or checking it off.
 - **T-stfn** — Step 2 (the name that the title of its issue #29 gives it), the core engine: `layup gate`, `layup setup` and `layup setup verify`, the telemetry and stall records, the release review and the first pilot ([#29](https://github.com/pharzam/layup/issues/29); [plan](../plan/README.md))
 - **T-b97r** — `layup setup` and `layup setup verify`, the parent of its child tasks ([#77](https://github.com/pharzam/layup/issues/77); [plan](../plan/README.md))
 - **T-vk3k** — `layup gate`, the parent of its child tasks ([#33](https://github.com/pharzam/layup/issues/33); [plan](../plan/README.md))
-- **T-dgy7** — Row 18 of the plan: The stall record: the schema of `stalls.tsv` in code ([#95](https://github.com/pharzam/layup/issues/95); [plan](../plan/README.md#the-tasks-of-phase-1))
 - **T-efmy** — Row 19 of the plan: The release review of phase 1 for the `Won't` rows ([#96](https://github.com/pharzam/layup/issues/96); [plan](../plan/README.md#the-tasks-of-phase-1))
 - **T-evad** — Row 20 of the plan: The first pilot (O-122): set up one target from a Go problem statement, and run its gate from outside ([#97](https://github.com/pharzam/layup/issues/97); [plan](../plan/README.md#the-tasks-of-phase-1))
 

@@ -262,29 +262,75 @@ Requirement: "Every stall has a record in the target with its diagnosis and its
 outcome." Derives from `architecture.md` §11, ADR-0023.
 
 **Schema only.** A stall is found and handled by `layup run` (the triggers and
-the procedure of §11, phase 3), so no phase-1 command writes a row. Each stall
-has three rows, in this order: a `stall` row; a `diagnosis` or a
-`diagnosis-failed` row; an `outcome` row (§11 procedure steps 2 and 6). A new
-trigger in the same task is a new stall, with its own ID and rows.
+the procedure of §11, phase 3), so no phase-1 command writes a row. A closed
+stall has three rows, in this order: a `stall` row; a `diagnosis` or a
+`diagnosis-failed` row; an `outcome` row (§11 procedure steps 2 and 6). An
+open stall has the rows of the steps that ended. A new trigger in the same
+task is a new stall, with its own ID and rows.
 
 ```tsv-schema stalls records:stalls.tsv
 stall     id(ST-NNN)    key  the stall ID, from ST-001, in order
-kind      enum(stall|diagnosis|diagnosis-failed|outcome)  key  the row kind; each stall has one row of each of its three steps
+kind      enum(stall|diagnosis|diagnosis-failed|outcome)  key  the row kind; a stall has at most one row of each of its three steps
 time      time          -    when the row was written
 task      text          -    the task ID; `project` for a stall of the orchestrator (trigger 5)
 trigger   enum(no-progress|too-many-rounds|hang|no-report|orchestrator)  -  on a `stall` row; `—` on the others
 evidence  sha256        -    on a `stall` row: the payload of the package; on a `diagnosis` row: the payload of the diagnosis in its fixed form, with each open unknown and its evidence (§11); `—` on the others (`payloads/<sha256>`)
 cause     enum(disagreement|missing-information|wrong-gate|harness-failure|task-too-large|other)  -  on a `diagnosis` row; `—` on the others
 rung      enum(retry|panel|operator)  -  on a `diagnosis` row: the rung it recommends; `—` on the others
-examiner  text          -    on a `diagnosis` or `diagnosis-failed` row: the examiner's session ID; `—` when there was none
+examiner  text          -    on a `diagnosis` row: the examiner's session ID; on a `diagnosis-failed` row: the examiner's session ID, or `—` when there was none; `—` on the others
 outcome   enum(closed-without-human|closed-by-operator|task-stopped)  -  on an `outcome` row; `—` on the others
-note      text          -    one line: the reason of a `diagnosis-failed` row, or of the outcome
+note      text          -    one line; on a `diagnosis-failed` row: its reason; on an `outcome` row: the reason of the outcome; `—` on the others
 ```
 
 Stall Diagnosis (`F-0003#61`) counts the stalls whose second row is
 `diagnosis-failed` or missing; it must be zero (the criterion of `REQ-009`).
 
 **Decided here:** one file for the three row kinds, so that a stall's rows are read together and Stall Diagnosis is one count over one file; and the column names, which §11 does not give.
+
+**Decided here** (task `T-dgy7`, #95, D2 and D3 of its plan, with the
+conditions and the notes of its plan review), the rules that the block gives
+in words, which `internal/records` checks after the types: `CheckStall` on
+each row, so that a writer checks a row before it writes it, and `CheckStalls`
+on the order of the rows; `ReadStalls` reads a file with both. An error names
+the line and the column.
+
+- `time` and `task` never hold `—`, as their block rules have no clause for
+  it (the lesson of row 17, `guardrails.md` §2).
+- Each kind has the columns that the block names for it, and `—` in the
+  others: a `stall` row has `trigger` and `evidence`; a `diagnosis` row has
+  `evidence`, `cause`, `rung` and `examiner`; a `diagnosis-failed` row has
+  `note`, and `examiner` or `—`; an `outcome` row has `outcome` and `note`.
+  Reason for `examiner`: an examiner session writes the diagnosis (§11
+  procedure step 2), so "`—` when there was none" is a `diagnosis-failed` row,
+  for example with no admitted harness.
+- `examiner`, when it is not `—`, is a session ID: `S-` and 8 lowercase
+  hexadecimal characters, the form of `session` in `telemetry.tsv`.
+- On a `stall` row, `task` is `project` exactly when `trigger` is
+  `orchestrator` (trigger 5); each other row of a stall names the `task` of its
+  `stall` row, so all the rows of an orchestrator stall name `project`.
+- The `stall` rows have the IDs `ST-001`, `ST-002`, … in the order of the
+  file, with no gap ("from ST-001, in order"). Each other row comes after the
+  `stall` row of its ID; a stall has one `diagnosis` or `diagnosis-failed` row,
+  not both; its `outcome` row comes after that row (§11: step 6 follows step
+  2); and each row is at or after the time of the row before it of the same
+  stall. The time order is per stall, as the block gives no rule across
+  stalls. The key `(stall, kind)` already refuses two rows of one kind for one
+  stall (`internal/tsv`), so the order check adds only what the key does not
+  hold: both second kinds, the order, the IDs with no gap, the task and the
+  time.
+- A stall with only its `stall` row, or with no `outcome` row, is valid in the
+  file: it is open, as the writer appends a row when its step ends (§11). That
+  a second row is missing is what Stall Diagnosis counts, a measure of the
+  report and not a rule of the file.
+
+**Known limits:** the writer (phase 3) holds the rules of §11 that no block
+sentence gives: after a `diagnosis-failed` row the package goes to the
+Operator at once, so that outcome is never `closed-without-human`; and a stall
+of the orchestrator has only the diagnosis and the Operator, so its outcome is
+never `closed-without-human` and its `rung` is never `retry` or `panel`.
+`task` is `project` or the target's own task ID, whose scheme the validator
+leaves open. That an `evidence` hash names a file of `payloads/` is a check of
+two places, which the writer makes.
 
 **Not in phase 1:** the writer, the triggers, the examiner, the panel and the
 Operator's answer form (§11; `REQ-010`, phase 3).

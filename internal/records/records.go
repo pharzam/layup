@@ -1,7 +1,8 @@
 // Package records holds the schemas and the row rules of the record kinds that
 // phase 1 defines and later phases write (docs/spec/records.md): the
-// telemetry record and the price table of REQ-011 (task T-tmhw, #94). The one
-// writer of the records branch is phase 2's.
+// telemetry record and the price table of REQ-011 (task T-tmhw, #94), and the
+// stall record of REQ-009 (task T-dgy7, #95). The one writer of the records
+// branch is phase 2's.
 package records
 
 import (
@@ -9,6 +10,7 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+	"slices"
 	"strconv"
 	"time"
 
@@ -52,6 +54,120 @@ var PricesSchema = tsv.Schema{Name: "prices", Location: "host:prices.tsv", Colum
 	{Name: "source", Type: "text"},
 	{Name: "date", Type: "time"},
 }}
+
+// StallsSchema is the form of stalls.tsv: the block stalls of
+// docs/spec/records.md (task T-dgy7, #95).
+var StallsSchema = tsv.Schema{Name: "stalls", Location: "records:stalls.tsv", Columns: []tsv.Column{
+	{Name: "stall", Type: "id(ST-NNN)", Key: true},
+	{Name: "kind", Type: "enum(stall|diagnosis|diagnosis-failed|outcome)", Key: true},
+	{Name: "time", Type: "time"},
+	{Name: "task", Type: "text"},
+	{Name: "trigger", Type: "enum(no-progress|too-many-rounds|hang|no-report|orchestrator)"},
+	{Name: "evidence", Type: "sha256"},
+	{Name: "cause", Type: "enum(disagreement|missing-information|wrong-gate|harness-failure|task-too-large|other)"},
+	{Name: "rung", Type: "enum(retry|panel|operator)"},
+	{Name: "examiner", Type: "text"},
+	{Name: "outcome", Type: "enum(closed-without-human|closed-by-operator|task-stopped)"},
+	{Name: "note", Type: "text"},
+}}
+
+// The columns of each kind of stalls.tsv (D2 of #95): a kind has the columns
+// that the block names for it, and the empty value in the others; examiner is
+// a session ID or the empty value on a diagnosis-failed row ("— when there
+// was none"), and is required on a diagnosis row, which an examiner writes.
+var (
+	stallKinds = map[string][]string{
+		"stall":            {"trigger", "evidence"},
+		"diagnosis":        {"evidence", "cause", "rung", "examiner"},
+		"diagnosis-failed": {"note"},
+		"outcome":          {"outcome", "note"},
+	}
+	stallKindColumns = []string{"trigger", "evidence", "cause", "rung", "examiner", "outcome", "note"}
+)
+
+// CheckStall checks the rules of the block stalls on one row, as tsv.Read
+// gives it (D2 of #95): time and task on each row, the columns of each kind,
+// the form of an examiner, and the task project of a stall of the
+// orchestrator. A broken rule is a *RowError.
+func CheckStall(r []string) error {
+	f := fields(StallsSchema, r)
+	bad := func(column, reason string) error { return &RowError{column, reason} }
+	if c := missing(f, []string{"time", "task"}); c != "" {
+		return bad(c, "this column never holds the empty value")
+	}
+	kind, need := f["kind"], stallKinds[f["kind"]]
+	for _, c := range stallKindColumns {
+		switch {
+		case slices.Contains(need, c) && f[c] == "":
+			return bad(c, "a row of the kind "+kind+" holds a value in this column")
+		case !slices.Contains(need, c) && f[c] != "" && (c != "examiner" || kind != "diagnosis-failed"):
+			return bad(c, "a row of the kind "+kind+" holds the empty value in this column")
+		}
+	}
+	switch {
+	case f["examiner"] != "" && !sessionForm.MatchString(f["examiner"]):
+		return bad("examiner", "an examiner is a session ID: S- and 8 lowercase hexadecimal characters")
+	case kind == "stall" && (f["task"] == "project") != (f["trigger"] == "orchestrator"):
+		return bad("task", "the task is project exactly when the trigger is orchestrator")
+	}
+	return nil
+}
+
+// CheckStalls checks the order of the rows of stalls.tsv, as tsv.Read gives
+// them (D3 of #95), past what the key (stall, kind) holds: the stall rows
+// have the IDs ST-001, ST-002, ... in the order of the file; each other row
+// comes after the stall row of its ID, names its task, and is at or after the
+// time of the row before it of that stall; a stall has one diagnosis or
+// diagnosis-failed row, and its outcome comes after it. A stall with no
+// second row or no outcome is open. A broken rule is a *tsv.Error.
+func CheckStalls(rows [][]string) error {
+	type stall struct {
+		task, last string // the task of its stall row; the time of its last row
+		second     bool   // a diagnosis or diagnosis-failed row came
+	}
+	stalls, next := map[string]*stall{}, 1
+	for i, r := range rows {
+		f := fields(StallsSchema, r)
+		at := func(column, reason string) error { return &tsv.Error{Line: i + 2, Column: column, Reason: reason} }
+		id, kind := f["stall"], f["kind"]
+		if kind == "stall" {
+			if want := fmt.Sprintf("ST-%03d", next); id != want {
+				return at("stall", "the next stall ID is "+want)
+			}
+			next++
+			stalls[id] = &stall{task: f["task"], last: f["time"]}
+			continue
+		}
+		s := stalls[id]
+		switch {
+		case s == nil:
+			return at("stall", "a row of "+id+" before its stall row")
+		case f["task"] != s.task:
+			return at("task", "the rows of a stall name its task, "+s.task)
+		case f["time"] < s.last: // the form of the type time sorts as the time
+			return at("time", "a row of a stall is at or after the row before it, "+s.last)
+		case kind != "outcome" && s.second:
+			return at("kind", "a stall has one diagnosis or diagnosis-failed row")
+		case kind == "outcome" && !s.second:
+			return at("kind", "an outcome row comes after the diagnosis or diagnosis-failed row")
+		}
+		s.second, s.last = true, f["time"]
+	}
+	return nil
+}
+
+// ReadStalls reads stalls.tsv by its schema, the rules of each row and the
+// rules of the order.
+func ReadStalls(data []byte) ([][]string, error) {
+	rows, err := read(data, StallsSchema, CheckStall)
+	if err != nil {
+		return nil, err
+	}
+	if err := CheckStalls(rows); err != nil {
+		return nil, err
+	}
+	return rows, nil
+}
 
 // A RowError is a row that breaks a rule of its block: the column and why.
 type RowError struct{ Column, Reason string }
