@@ -1,7 +1,7 @@
 == (1) The commit and the tree
 HEAD 621af09bce4e3ef897a9fa655cabb59229f700ba
 == (2) TestPackageRules (cmd/layup, integration)
-ok  	github.com/pharzam/layup/cmd/layup	0.779s
+ok  	github.com/pharzam/layup/cmd/layup	0.734s
 The packages of go list -deps ./... that are not in the standard library:
   github.com/pharzam/layup/internal/git
   github.com/pharzam/layup/internal/tsv

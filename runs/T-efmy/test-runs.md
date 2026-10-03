@@ -78,3 +78,36 @@ Its heading, `## Release review — phase 1`, is not one that
 `review-record-lint` reads. The lint reads only the round records of this
 task's pull request, and those meet the inventory's test "The review record
 passes review-record-lint in CI" (note 6 of the plan review).
+
+## The freeze
+
+On the frozen head `5eb1794`, 04:38:54Z to 04:41:16Z, the 18 steps of the
+ladder, each exit 0: the eight local checks of `AGENTS.md` (with `git diff
+--check` against `origin/main`), `go build`, `go vet` with each tag, `gofmt
+-l` (no file), the three test levels, the two runs with `-race`, and the
+harness of the fixtures of `setup-check.sh` (44 passed). CI of PR #119 passed
+its job `tests` on it before review round 1.
+
+## The notes of round 1 (close-out)
+
+- **Note 1, a raw string literal.** Round 1 ran `` do(dir, `push`) `` in
+  `internal/git` through the check: exit 0, as check (4) matched only the form
+  `"push"`. The pattern of check (4) now takes a raw string literal too. The
+  same mutation, on its own commit of a scratch clone of `621af09`, at
+  16:12:22Z:
+
+  ```text
+    internal/git/zz_mutation.go:4:func Push(dir string) error { return do(dir, `push`) }
+  FAIL: a git verb that reaches a remote
+  == FAIL
+  ```
+
+  The changed check at `621af09`, in a fresh clone, 16:12:35Z to 16:12:37Z:
+  exit 0 and `== PASS`, with the same lines as the run of 04:25:16Z except the
+  time of the test; [`release-check.txt`](release-check.txt) is the output of
+  this run.
+- **Note 3, the copy of the release review.** The body of comment 5965588985 on
+  #96 and [`release-review.md`](release-review.md) are the same text, 10,782
+  characters (a comparison of the body that the API gives, at 16:11:50Z).
+- **Note 5, the argument `HEAD`.** The header of the check and the sentence of
+  D1 in `docs/plan/README.md` name the full commit ID.

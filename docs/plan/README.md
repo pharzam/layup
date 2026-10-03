@@ -129,7 +129,8 @@ binary embeds), at the commit that the release review reads; it is not a build,
 as phase 1 ships no binary (task `T-efmy`, #96). A task of phase 1 that changes
 that code after the release review checks its own diff for `REQ-015` and
 `REQ-017` in its review round, and runs
-[`release-check.sh`](../../runs/T-efmy/release-check.sh) on its head.
+[`release-check.sh`](../../runs/T-efmy/release-check.sh) with the full commit ID
+of its head.
 
 **Decided by this plan, where the order needs it** (each task's plan review can
 change it):

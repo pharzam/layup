@@ -7,6 +7,9 @@
 #
 #   sh /path/to/release-check.sh COMMIT
 #
+# COMMIT is the full ID of the commit of the release; a name such as HEAD
+# passes check (1) on any commit.
+#
 # It prints the facts of the code that REQ-015 and REQ-017 read, and gives
 # exit 1 when one of its checks fails:
 #   (1) HEAD is not COMMIT, or the tree has a change;
@@ -15,10 +18,10 @@
 #       package depends on net, net/http or crypto/tls) and the program of each
 #       exec.Command (git in internal/git, sh in internal/gate and
 #       internal/verify);
-#   (4) a non-test Go file of internal/git holds a string literal that equals
-#       a git verb that reaches a remote, other than ls-remote and clone of
-#       S02: "push", "send-pack", "fetch", "pull" or "remote". A call of git
-#       names its verb so, as in do(dir, "clone", ...).
+#   (4) a non-test Go file of internal/git holds a string literal, interpreted
+#       ("push") or raw (`push`), that equals a git verb that reaches a remote,
+#       other than ls-remote and clone of S02: push, send-pack, fetch, pull or
+#       remote. A call of git names its verb so, as in do(dir, "clone", ...).
 # The lists of (3) and (5) are for the reviewer, who judges them.
 
 commit=${1:?usage: sh release-check.sh COMMIT}
@@ -49,7 +52,7 @@ echo "== (3) The calls that start a program, in the non-test Go files"
 git grep -n -E 'exec\.Command|os\.StartProcess|syscall\.(Exec|ForkExec|StartProcess)' -- 'cmd/*.go' 'internal/*.go' ':!*_test.go' | sed 's/^/  /'
 
 echo "== (4) The git verbs that reach a remote, in the non-test Go files of internal/git"
-if hits=$(git grep -n -E '"(push|send-pack|fetch|pull|remote)"' -- 'internal/git/*.go' ':!*_test.go'); then
+if hits=$(git grep -n -E '["`](push|send-pack|fetch|pull|remote)["`]' -- 'internal/git/*.go' ':!*_test.go'); then
 	echo "$hits" | sed 's/^/  /'
 	bad "a git verb that reaches a remote"
 else
