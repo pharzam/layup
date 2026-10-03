@@ -123,6 +123,14 @@ fail rule is written in its own plan-review comment before the pilot runs
 stack and an empty public repository of the Operator's account, come at its start
 (O-122).
 
+The phase-1 release is the code of `main` that the first pilot runs (the
+non-test Go files of `cmd/` and `internal/`, `go.mod`, and the files that the
+binary embeds), at the commit that the release review reads; it is not a build,
+as phase 1 ships no binary (task `T-efmy`, #96). A task of phase 1 that changes
+that code after the release review checks its own diff for `REQ-015` and
+`REQ-017` in its review round, and runs
+[`release-check.sh`](../../runs/T-efmy/release-check.sh) on its head.
+
 **Decided by this plan, where the order needs it** (each task's plan review can
 change it):
 

@@ -106,7 +106,7 @@ the first.
 | `TestTheSchemasEqualTheirBlocks` (`internal/records/records_integration_test.go`) | integration | REQ-011, REQ-009 | F-0003#50 | — | ADR-0024 | T-tmhw, T-dgy7 | green |
 | `TestTelemetryRowsThatPass`, `TestTelemetryRowsThatBreakARule`, `TestPriceRows` (`internal/records/records_test.go`) | unit | REQ-011 | F-0003#50 | — | ADR-0024 | T-tmhw | green |
 | `TestStallRowsThatPass`, `TestStallRowsThatBreakARule` (`internal/records/stalls_test.go`) | unit | REQ-009 | F-0003#49 | — | ADR-0023 | T-dgy7 | green |
-| `T-efmy/uat/release-review` | uat | REQ-015, REQ-017 | F-0003#53 | — | — | T-efmy | planned |
+| The release review of phase 1 (`runs/T-efmy/release-review.md`), with its check `runs/T-efmy/release-check.sh` | uat | REQ-015, REQ-017 | F-0003#53 | — | — | T-efmy | green |
 | `T-evad/uat/first-pilot` | uat | REQ-001, REQ-002, REQ-004, REQ-007, REQ-016, REQ-018, NFR-001, NFR-002, NFR-003 | F-0003#42 | guardrails.md §1.1 Inv-7 | ADR-0012 | T-evad | planned |
 | `M2f/uat/rule-protection` | uat | REQ-003 | F-0003#43 | guardrails.md §1.1 Inv-3 | ADR-0017 | M2f | planned |
 | `M2e/uat/role-handoffs` | uat | REQ-005 | F-0003#45 | — | ADR-0019 | M2e | planned |
