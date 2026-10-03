@@ -77,11 +77,33 @@ func fields(s tsv.Schema, r []string) map[string]string {
 	return m
 }
 
-// seconds gives to - from in whole seconds, and whether both are times.
+// timeForm is the form of the type time of internal/tsv: UTC, to the second.
+const timeForm = "2006-01-02T15:04:05Z"
+
+// seconds gives to - from in whole seconds, and whether both are times of the
+// form of the type time.
 func seconds(from, to string) (int, bool) {
-	a, err := time.Parse(time.RFC3339, from)
-	b, err2 := time.Parse(time.RFC3339, to)
-	return int(b.Sub(a) / time.Second), err == nil && err2 == nil
+	a, err := time.Parse(timeForm, from)
+	b, err2 := time.Parse(timeForm, to)
+	return int(b.Sub(a) / time.Second), err == nil && err2 == nil && a.Format(timeForm) == from && b.Format(timeForm) == to
+}
+
+// The columns whose block rule has no clause for the empty value, so they
+// never hold it (round 1 of #94; docs/spec/README.md: the owner package checks
+// a column whose rule forbids it). requirements may be empty: an empty list.
+var (
+	telemetryRequired = []string{"task", "role", "harness", "model", "billing", "start", "end", "duration_s", "tokens_status", "money_status"}
+	pricesRequired    = []string{"harness", "model", "class", "price", "currency", "source", "date"}
+)
+
+// missing gives the first column of names whose value is the empty value.
+func missing(f map[string]string, names []string) string {
+	for _, n := range names {
+		if f[n] == "" {
+			return n
+		}
+	}
+	return ""
 }
 
 // CheckTelemetry checks the row rules of the block telemetry on one row, as
@@ -96,10 +118,17 @@ func CheckTelemetry(r []string) error {
 			tokens++
 		}
 	}
-	duration, _ := seconds(f["start"], f["end"])
-	latency, _ := seconds(f["start"], f["first_output"])
+	if c := missing(f, telemetryRequired); c != "" {
+		return bad(c, "this column never holds the empty value")
+	}
+	duration, times := seconds(f["start"], f["end"])
+	latency, firstOutput := seconds(f["start"], f["first_output"])
 	afterEnd, _ := seconds(f["first_output"], f["end"])
 	switch {
+	case !times:
+		return bad("start", "start and end are times of the form "+timeForm)
+	case f["first_output"] != "" && !firstOutput:
+		return bad("first_output", "first_output is a time of the form "+timeForm)
 	case !sessionForm.MatchString(f["session"]):
 		return bad("session", "a session ID is S- and 8 lowercase hexadecimal characters")
 	case (f["first_output"] == "") != (f["latency_s"] == ""):
@@ -140,6 +169,9 @@ func CheckTelemetry(r []string) error {
 // types do not hold: the currency, and a source that is an http or https URL.
 func CheckPrice(r []string) error {
 	f := fields(PricesSchema, r)
+	if c := missing(f, pricesRequired); c != "" {
+		return &RowError{c, "no column of prices.tsv holds the empty value"}
+	}
 	if !currencyForm.MatchString(f["currency"]) {
 		return &RowError{"currency", "a currency is three capital letters, the form of ISO 4217"}
 	}

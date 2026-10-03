@@ -50,3 +50,33 @@ first, then each rule test.
 (`cmd/layup`, integration) passes with the new row of `internal/records`;
 `net/url`, which the check of a source uses, depends on none of `net`,
 `net/http` and `crypto/tls` (`go list -deps net/url`).
+
+## The fix of review round 1 (cycle 1)
+
+Round 1 (Claude Fable 5.1, on `9beb171`; the record is on #94) gave
+`material`: (1) `seconds` gave whether both values were times, and each caller
+dropped it, so a row with no `start` and no `end` and `duration_s` 0 passed;
+(2) a column whose block rule has no clause for `—` could hold `—` (a row with
+no `tokens_status`, no `money_status`, no `billing`, or a price row with no
+price), which `docs/spec/README.md` gives the owner of a record to check. The
+fix: a column with no such clause never holds `—` (checked first), `seconds`
+reads the form of the type `time` and its result is used, and the clause of a
+subscription in `records.md` is written as an explanation (note 4).
+
+The red runs, with the new cases, on the code of `9beb171`:
+
+```text
+$ go test -count=1 ./internal/records/
+    records_test.go:119: no start and no end: <nil>; want an error of line 3, column "start"
+    records_test.go:119: the empty value of task: <nil>; want an error of line 3, column "task"
+    … (role, harness, model, billing, tokens_status, money_status)
+    records_test.go:142: CheckTelemetry of a start with an offset: <nil>; want a *RowError of the column start
+    records_test.go:191: the empty value of harness: <nil>; want an error of line 3, column "harness"
+    … (model, class, price, date)
+```
+
+14 cases fail on the missing rule; four more (an empty `end`, `duration_s`,
+`currency` or `source`) gave their column already, through another rule, and
+now through the new one. The green runs of the fix: `go test -count=1
+./internal/records/`, and with `-tags=integration` `./internal/records/
+./internal/tsv/`: `ok`.

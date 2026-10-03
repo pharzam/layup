@@ -2,6 +2,7 @@ package records
 
 import (
 	"errors"
+	"slices"
 	"strings"
 	"testing"
 
@@ -95,6 +96,18 @@ func TestTelemetryRowsThatBreakARule(t *testing.T) {
 		{"a price row of a reported cost", map[string]string{"price": "P-001"}, "price"},
 		{"a price that is not a row ID", map[string]string{"money_status": "computed", "price": "the list price"}, "price"},
 		{"a subscription that is reported", map[string]string{"billing": "subscription"}, "money_status"},
+		// Round 1 of #94: a row with no start and no end, and each column whose
+		// block rule has no clause for the empty value.
+		{"no start and no end", map[string]string{"start": "", "end": "", "first_output": "", "latency_s": "", "duration_s": "0"}, "start"},
+		{"the empty value of task", map[string]string{"task": ""}, "task"},
+		{"the empty value of role", map[string]string{"role": ""}, "role"},
+		{"the empty value of harness", map[string]string{"harness": ""}, "harness"},
+		{"the empty value of model", map[string]string{"model": ""}, "model"},
+		{"the empty value of billing", map[string]string{"billing": ""}, "billing"},
+		{"the empty value of end", map[string]string{"end": ""}, "end"},
+		{"the empty value of duration_s", map[string]string{"duration_s": ""}, "duration_s"},
+		{"the empty value of tokens_status", map[string]string{"tokens_status": "", "tokens_reason": "a reason"}, "tokens_status"},
+		{"the empty value of money_status", map[string]string{"money_status": ""}, "money_status"},
 	} {
 		broken := session(map[string]string{"session": "S-89abcdef"})
 		for k, v := range c.change {
@@ -120,6 +133,13 @@ func TestTelemetryRowsThatBreakARule(t *testing.T) {
 	var re *RowError
 	if err := CheckTelemetry(rows[0]); err != nil {
 		t.Errorf("CheckTelemetry of a good row: %v", err)
+	}
+	// A time with an offset, which the type time refuses, is not a time of a
+	// row either (note 3 of round 1).
+	offset := slices.Clone(rows[0])
+	offset[slices.IndexFunc(TelemetrySchema.Columns, func(c tsv.Column) bool { return c.Name == "start" })] = "2026-10-03T01:00:00+01:00"
+	if err := CheckTelemetry(offset); !errors.As(err, &re) || re.Column != "start" {
+		t.Errorf("CheckTelemetry of a start with an offset: %v; want a *RowError of the column start", err)
 	}
 	if err := CheckTelemetry(rows[1]); !errors.As(err, &re) || re.Column != "price" {
 		t.Errorf("CheckTelemetry of a computed row with no price: %v; want a *RowError of the column price", err)
@@ -156,6 +176,14 @@ func TestPriceRows(t *testing.T) {
 		{"a currency in lower case", map[string]string{"currency": "usd"}, "currency"},
 		{"a source of another scheme", map[string]string{"source": "ftp://example.invalid/pricing"}, "source"},
 		{"a source that is not a URL", map[string]string{"source": "the pricing page"}, "source"},
+		// Round 1 of #94: no column of prices.tsv holds the empty value.
+		{"the empty value of harness", map[string]string{"harness": ""}, "harness"},
+		{"the empty value of model", map[string]string{"model": ""}, "model"},
+		{"the empty value of class", map[string]string{"class": ""}, "class"},
+		{"the empty value of price", map[string]string{"price": ""}, "price"},
+		{"the empty value of currency", map[string]string{"currency": ""}, "currency"},
+		{"the empty value of source", map[string]string{"source": ""}, "source"},
+		{"the empty value of date", map[string]string{"date": ""}, "date"},
 	} {
 		_, err := ReadPrices([]byte(fileOf(PricesSchema, price(map[string]string{"id": "P-009"}), price(c.change))))
 		var e *tsv.Error

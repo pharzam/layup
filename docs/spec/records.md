@@ -223,6 +223,12 @@ that the two blocks give in words, which `internal/records` checks after the
 types, on each row (`CheckTelemetry`, `CheckPrice`, so a writer checks a row
 before it writes it), an error naming the line and the column:
 
+- A column whose block rule has no clause for `—` never holds `—`, as
+  [`README.md`](README.md#the-schema-block) gives that check to the owner of a
+  record (round 1 of #94): in `telemetry.tsv`, `task`, `role`, `harness`,
+  `model`, `billing`, `start`, `end`, `duration_s`, `tokens_status` and
+  `money_status`; in `prices.tsv`, each column. `requirements` may be `—`, an
+  empty list.
 - `session` is `S-` and 8 lowercase hexadecimal characters (the type gives
   letters and digits).
 - `latency_s` is `—` exactly when `first_output` is `—`; `start ≤ first_output
@@ -236,8 +242,9 @@ before it writes it), an error naming the line and the column:
 - `money` and `currency` are `—` exactly when `money_status` is `unknown`, so
   an unknown cost is never 0 (FT2, ADR-0024); a `currency` is three capital
   letters, the form of ISO 4217; `price` is a row ID `P-NNN` exactly when
-  `money_status` is `computed`; a `subscription` session is never `reported`
-  ("computed from the list price"; `unknown` when it has no tokens).
+  `money_status` is `computed`; a `subscription` session is never `reported`:
+  it is `computed` from the list price, or `unknown`, for example when it has
+  no tokens.
 - In `prices.tsv`, `currency` has the same form, and `source` is an `http` or
   `https` URL ("the URL of the price list").
 

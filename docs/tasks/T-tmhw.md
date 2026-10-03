@@ -55,3 +55,31 @@ check (phase 2); and the start row of a session records no spend cap and no
 wall-clock limit, which architecture §12 names, as the block has no such
 columns: the specification task of `M2b` gives them their columns (note 7 of
 the plan review).
+
+## Review round 1 and its fix (cycle 1)
+
+Devin (its usage quota) and OpenCode (no output in five minutes) gave no
+record. CI of PR #117 on `9beb171` passed its job `tests` first. Round 1
+(Claude Fable 5.1, effort `xhigh`, on the Claude Code CLI, a fresh read-only
+session in a clone at `9beb171`, its record at 6 min 24 s; the record is on
+#94) gave `material`, with two findings and eight notes. It ran 34 rows of its
+own through a scratch copy of the package.
+
+1. **A row with no start and no end passed.** `seconds` gave whether both
+   values were times, and each caller dropped it, so `duration_s` 0 passed
+   with no `start` and no `end`. Fixed: the result is used, and `seconds`
+   reads the form of the type `time` (note 3: an offset passed a direct call of
+   `CheckTelemetry`).
+2. **A column whose rule forbids the empty value held it.** `docs/spec/README.md`
+   gives the owner of a record the check of a column whose rule forbids `—`,
+   and the rules named none. Fixed: in `telemetry.tsv` the ten columns with no
+   clause for `—`, and in `prices.tsv` each column, never hold `—`, with a test
+   row for each, as a "decided here" of `records.md`; `requirements` may be an
+   empty list. The lesson is in `guardrails.md` §2, for row 18's stall record.
+
+The notes: note 4 (the clause of a subscription read as a rule or as an
+explanation) is applied as text, as an explanation; notes 3 and 5 to 10 need
+no change (note 5: a source with a space or a scheme in capitals passes, a
+lenient reading of "the URL"; note 6: the case of a session ID that is not
+hexadecimal is the stronger one; note 7: the red runs are consistent; note 9:
+a row of another length does not panic).
