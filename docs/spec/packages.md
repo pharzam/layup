@@ -65,6 +65,7 @@ reads this table, and holds no copy of it, which could differ from it.
 | `internal/gate` | runs the kinds of a gate manifest on a head ([`gate.md`](gate.md)) | `internal/tsv`, `internal/git` | `sh -c`: the gate commands |
 | `internal/setup` | the step runner of `layup setup` ([`setup.md`](setup.md)) | `internal/tsv`, `internal/git`, `internal/catalog`, `internal/work` | no |
 | `internal/verify` | the checks of `layup setup verify` ([`setup.md`](setup.md)) | `internal/tsv`, `internal/git`, `internal/catalog`, `internal/gate`, `internal/work` | `sh`: the baseline's own check scripts |
+| `internal/records` | the schemas and the row rules of the record kinds that phase 1 defines and later phases write: `telemetry.tsv` and `prices.tsv` of `REQ-011` ([`records.md`](records.md#req-011--the-telemetry-record), task `T-tmhw`); the one writer of the records branch is phase 2's | `internal/tsv` | no |
 | `internal/standin` | for the tests only: a stand-in of the pinned baseline, and a work area set up from it, built at test time (K11; [`setup.md`](setup.md#the-checks-of-layup-setup-verify)); only test files import it | `internal/tsv`, `internal/git`, `internal/work` | no |
 
 **Decided here:** the split of `internal/setup`, `internal/verify` and
@@ -287,7 +288,7 @@ requirement's section.
 
 | Package | Job | Phase |
 | ------- | --- | ----- |
-| `internal/records` | the records branch: one writer, the schemas of every record kind ([`records.md`](records.md)) | 2 |
+| `internal/records` | the one writer of the records branch ([`records.md`](records.md)); the package has its row in the table of phase 1 since task `T-tmhw` (K23), with the schemas of the record kinds that phase 1 defines | 2 |
 | `internal/forge` | the forge interface: the six capabilities of `architecture.md` §1 | 2 |
 | `internal/forge/github` | the GitHub adapter of the forge interface | 2 |
 | `internal/run` | `layup run`: Start, the phase loop, the lease, fencing | 2 |
@@ -303,6 +304,13 @@ requirement's section.
 | `internal/route` | the harness register, the probe, admission and routing | 2 |
 | `internal/report` | `layup report`: the measures | 4 |
 | `internal/learn` | `layup learn`: the reward and the routing update | 4 |
+
+**Decided here** (task `T-tmhw`, #94, K23): `internal/records` has its row in
+the table of phase 1, as the section of `REQ-011` is in phase 1 and this table
+gives the package "the schemas of every record kind"; one home serves the
+telemetry record and its price table (row 17) and the stall record (row 18),
+and `internal/ledger` and `internal/stall` import the schemas from it in their
+phases.
 
 **Decided here:** the names and the phases. The phase of a package is the
 earliest `PRD-0001` phase whose requirement needs it: `layup run` and the
