@@ -489,6 +489,9 @@ func finalSteps(t *testing.T, w string, record work.Record) {
 	if got := gitIn(t, target, "for-each-ref", "--format=%(refname)"); got != "refs/heads/layup-records\nrefs/heads/layup-setup\nrefs/heads/main" {
 		t.Errorf("the refs %q; want main, layup-setup and layup-records only", got)
 	}
+	if got := gitIn(t, target, "worktree", "list", "--porcelain"); strings.Count(got, "worktree ") != 1 {
+		t.Errorf("git worktree list:\n%s\nwant the work tree of the target only: S15 and the fixture runs remove their scratch trees", got)
+	}
 	at, _ := record.Value("S02", "pin.time")
 	when, _ := time.Parse("2006-01-02T15:04:05Z", at)
 	unix := fmt.Sprint(when.Unix())
