@@ -403,7 +403,11 @@ func (f *fakeRepo) install(t *testing.T) {
 			}
 			return nil, errors.New("no file " + p)
 		},
-		write: func(p string, data []byte) error { f.files[p] = string(data); return call("write " + p) },
+		write:          func(p string, data []byte) error { f.files[p] = string(data); return call("write " + p) },
+		tempDir:        func() (string, error) { return "/tmp/s", call("tempdir") },
+		worktreeAdd:    func(_, p, rev string) error { return call("worktree add " + p + " " + rev) },
+		worktreeRemove: func(_, p string) error { return call("worktree remove " + p) },
+		switchOrphan:   func(_, b string) error { return call("switch --orphan " + b) },
 		read: func(p string) ([]byte, error) {
 			if v, ok := f.files[p]; ok {
 				return []byte(v), nil

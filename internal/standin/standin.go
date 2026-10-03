@@ -53,9 +53,15 @@ func baselineFiles(url string) map[string]string {
 
 // The files that the setup by hand writes on layup-setup, by step.
 const (
+	// The manifest, go.mod and the workflow of S12: a kind static with the
+	// command of the Go entry of the catalog, whose fixture the rows
+	// gate:<kind> apply, and a pending kind (#92).
 	gates = "kind\tstate\ttool\tcommand\tscope\tconfig\n" +
-		"static\tactive\tgo\tgo vet ./...\t./*.go\t\u2014\n" +
+		"static\tactive\tgo\tout=$(gofmt -l .) && test -z \"$out\" && go vet ./...\t./*.go\t\u2014\n" +
 		"layout\tpending\tgo\tgo test ./layout/\t./*.go\t\u2014\n"
+	goMod    = "module github.com/" + Name + "\n\ngo 1.26\n"
+	workflow = "name: gates\n\non:\n  pull_request:\n\njobs:\n  static:\n    runs-on: ubuntu-latest\n    steps:\n      - run: sh .github/gates.sh static\n" +
+		"  layout:\n    runs-on: ubuntu-latest\n    steps:\n      - run: sh .github/gates.sh layout\n"
 	readme = "# " + Name + "\n\nThe product repository of " + Name + ", set up from its pinned baseline ([the pin](docs/setup/armature.pin)). Its records are on the branch `layup-records`.\n"
 	agents = "# AGENTS.md\n\nAgent context for **" + Name + "**.\n"
 	// The facts of S04 and S06, and the files of S07 to S09, in the forms of
@@ -177,7 +183,7 @@ func Make(dir string, o Options) (Work, error) {
 		{"S07", map[string]string{"docs/onboarding-for-engineers.md": onboarding}},
 		{"S08", map[string]string{"docs/glossary.md": glossary}},
 		{"S09", map[string]string{"docs/guardrails.md": guardrails}},
-		{"S12", map[string]string{"docs/gates.tsv": gates}},
+		{"S12", map[string]string{"docs/gates.tsv": gates, "go.mod": goMod, ".github/workflows/gates.yml": workflow}},
 		{"S14", map[string]string{"README.md": readme, "AGENTS.md": agents}},
 	}
 	for _, s := range steps {

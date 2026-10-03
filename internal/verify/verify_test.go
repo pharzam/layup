@@ -5,11 +5,15 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"reflect"
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/pharzam/layup/internal/gate"
+	"github.com/pharzam/layup/internal/git"
 	"github.com/pharzam/layup/internal/work"
 )
 
@@ -19,11 +23,11 @@ const twoKinds = "kind\tstate\ttool\tcommand\tscope\tconfig\n" +
 
 // standInGit answers the calls of a run, and records them.
 type standInGit struct {
-	version           string // "" is no git
-	head              string // the commit of layup-setup; "" is no such branch
-	manifest          []byte // nil is no docs/gates.tsv at the head
-	addErr, removeErr error
-	calls             []string
+	version                     string // "" is no git
+	head                        string // the commit of layup-setup; "" is no such branch
+	manifest                    []byte // nil is no docs/gates.tsv at the head
+	addErr, removeErr, applyErr error
+	calls                       []string
 }
 
 func (g *standInGit) Version() (string, error) {
@@ -35,6 +39,9 @@ func (g *standInGit) Version() (string, error) {
 
 func (g *standInGit) RevParse(dir, rev string) (string, error) {
 	g.calls = append(g.calls, "rev-parse "+dir+" "+rev)
+	if rev == "HEAD^{commit}" { // the fixture commit of a row gate:<kind>
+		return fixtureCommit, nil
+	}
 	if g.head == "" {
 		return "", errors.New("fatal: Needed a single revision\nmore text")
 	}
@@ -59,9 +66,19 @@ func (g *standInGit) WorktreeRemove(dir, path string) error {
 	return g.removeErr
 }
 
+func (g *standInGit) Apply(dir, patch string) error {
+	g.calls = append(g.calls, "apply "+dir+" "+patch)
+	return g.applyErr
+}
+
+func (g *standInGit) CommitAll(dir, message string, who git.Identity) error {
+	g.calls = append(g.calls, fmt.Sprintf("commit %s %q by %s <%s> at %s", dir, message, who.Name, who.Email, who.Time.UTC().Format(time.RFC3339)))
+	return nil
+}
+
 func (g *standInGit) history(dir string) history { return oneRoot }
 
-var standInRecord = work.Record{{"S01", "name", "acme", "answer", "S01-name"}}
+var standInRecord = append(work.Record{{"S01", "name", "acme", "answer", "S01-name"}}, gateRecord...)
 
 // standIn puts stand-ins for git, the records, the scratch directory and the
 // built checks in place until the test ends. The built checks keep their
@@ -70,14 +87,39 @@ var standInRecord = work.Record{{"S01", "name", "acme", "answer", "S01-name"}}
 func standIn(t *testing.T, g *standInGit, answersErr, recordErr error, findings map[string][]string) (*[]string, map[string]work.Record) {
 	t.Helper()
 	savedAPI, savedAnswers, savedRecord, savedTemp, savedRoot, savedRemove, savedChecks := repoAPI, readAnswers, readRecord, tempDir, tempRoot, removeAll, checks
+	savedGate, savedFixture, savedWrite := gateRun, fixtureOf, writeFile
 	t.Cleanup(func() {
 		repoAPI, readAnswers, readRecord, tempDir, tempRoot, removeAll, checks = savedAPI, savedAnswers, savedRecord, savedTemp, savedRoot, savedRemove, savedChecks
+		gateRun, fixtureOf, writeFile = savedGate, savedFixture, savedWrite
 	})
+	// The gate gives each active kind clear on the setup head and fail on the
+	// fixture commit, and each pending kind clear.
+	gateRun = func(_, base, head string, _ func(int, int, string) func(), _ io.Writer) (gate.Table, error) {
+		g.calls = append(g.calls, "gate "+base+" "+head)
+		kinds, _ := gate.ReadManifest(g.manifest)
+		var tbl gate.Table
+		for _, k := range kinds {
+			r := gate.Row{Kind: k.Name, State: k.State, Result: "clear", Reason: "no product path"}
+			if head == fixtureCommit && k.State == "active" {
+				r.Result, r.Reason = "fail", "exit 1"
+			}
+			tbl.Rows = append(tbl.Rows, r)
+		}
+		return tbl, nil
+	}
+	fixtureOf = func(string, string) ([]byte, error) { return []byte("the patch"), nil }
+	writeFile = func(string, []byte, fs.FileMode) error { return nil }
 	tempRoot = func() string { return "/stand-in" }
 	repoAPI = g
 	readAnswers = func(dir string) (work.Answers, error) { return work.Answers{}, answersErr }
 	readRecord = func(dir string) (work.Record, error) { return standInRecord, recordErr }
-	tempDir = func() (string, error) { return "/stand-in/scratch", nil }
+	made := 0
+	tempDir = func() (string, error) { // the scratch tree of the run, then one per fixture commit
+		if made++; made > 1 {
+			return fmt.Sprintf("/stand-in/scratch-%d", made), nil
+		}
+		return "/stand-in/scratch", nil
+	}
 	removed := &[]string{}
 	removeAll = func(path string) error { *removed = append(*removed, path); return nil }
 	got := map[string]work.Record{}
@@ -108,9 +150,9 @@ func steps(log *[]string) func(i, n int, check string) func() {
 func notBuiltRow(check string) Row { return Row{check, "not-active", "not built yet"} }
 
 // The rows of layup setup verify are the table of setup.md in its order, then
-// one row gate:<kind> per kind of the manifest at the setup head (D4 of #84).
-// A check that this version does not have is not-active, so the command does
-// not give exit 0 (NFR-004); a failed check gives its first finding.
+// one row gate:<kind> per kind of the manifest at the setup head (D4 of #84);
+// a failed check gives its first finding. Since row 15 of the plan (#92) each
+// check of the table is built.
 func TestRunGivesEachRowInTheOrderOfTheTable(t *testing.T) {
 	g := goodGit()
 	removed, got := standIn(t, g, nil, nil, map[string][]string{"kit-history": {"orphan: x", "kit-link: y"}})
@@ -122,7 +164,7 @@ func TestRunGivesEachRowInTheOrderOfTheTable(t *testing.T) {
 	want := []Row{{"discipline-tests", "pass", ""}, {"pin", "pass", ""}, {"kit-history", "fail", "orphan: x"},
 		{"facts", "pass", ""}, {"onboarding", "pass", ""}, {"glossary", "pass", ""}, {"guardrails", "pass", ""},
 		{"markers", "pass", ""}, {"adapted", "pass", ""}, {"identity", "pass", ""}, {"link-lint", "pass", ""},
-		{"sources", "pass", ""}, notBuiltRow("jobs"), notBuiltRow("gate:static"), notBuiltRow("gate:layout")}
+		{"sources", "pass", ""}, {"jobs", "pass", ""}, {"gate:static", "pass", ""}, {"gate:layout", "clear", "pending: fixture not run"}}
 	if !reflect.DeepEqual(tbl.Rows, want) {
 		t.Errorf("the rows\n got %q\nwant %q", tbl.Rows, want)
 	}
@@ -130,17 +172,27 @@ func TestRunGivesEachRowInTheOrderOfTheTable(t *testing.T) {
 		t.Errorf("the progress calls %q; want a start and an end for each of the 15 rows", log)
 	}
 	wantCalls := []string{"rev-parse /w/target refs/heads/layup-setup^{commit}", "show /w/target " + commitA + ":docs/gates.tsv",
-		"worktree add /w/target /stand-in/scratch/tree " + commitA, "worktree remove /w/target /stand-in/scratch/tree"}
+		"worktree add /w/target /stand-in/scratch/tree " + commitA, "gate " + commitA + " " + commitA,
+		"worktree add /w/target /stand-in/scratch-2/tree " + commitA, "apply /stand-in/scratch-2/tree /stand-in/scratch-2/fixture.patch",
+		"commit /stand-in/scratch-2/tree \"test: the known-bad fixture of the kind static\" by layup setup verify <verify@layup.invalid> at 2026-09-30T08:00:00Z",
+		"rev-parse /stand-in/scratch-2/tree HEAD^{commit}", "worktree remove /w/target /stand-in/scratch-2/tree", "gate " + commitA + " " + fixtureCommit,
+		"worktree remove /w/target /stand-in/scratch/tree"}
 	if !reflect.DeepEqual(g.calls, wantCalls) {
 		t.Errorf("the calls of git\n got %q\nwant %q", g.calls, wantCalls)
 	}
-	if !reflect.DeepEqual(*removed, []string{"/stand-in/scratch"}) {
-		t.Errorf("removed %q; want the scratch directory", *removed)
+	if !reflect.DeepEqual(*removed, []string{"/stand-in/scratch-2", "/stand-in/scratch"}) {
+		t.Errorf("removed %q; want the scratch directory of the fixture commit, then the one of the run", *removed)
 	}
 	for _, name := range []string{"pin", "kit-history", "identity"} {
 		if !reflect.DeepEqual(got[name], standInRecord) {
 			t.Errorf("the check %s got the record %q; want the record of the work area", name, got[name])
 		}
+	}
+	// A check that a later version adds is not-active until it is built, so
+	// the command does not give exit 0 (NFR-004).
+	checks = append(checks, check{name: "later"})
+	if tbl, err := Run("/w", steps(new([]string)), io.Discard); err != nil || len(tbl.Rows) != 16 || tbl.Rows[13] != notBuiltRow("later") {
+		t.Errorf("a check that is not built: %v, %q; want the row not-active, not built yet, before the rows gate:<kind>", err, tbl.Rows)
 	}
 }
 
@@ -241,7 +293,7 @@ func TestTheScratchTree(t *testing.T) {
 	}
 	for _, r := range tbl.Rows {
 		want := "not built yet"
-		if built[r.Check] {
+		if built[r.Check] || strings.HasPrefix(r.Check, "gate:") {
 			want = "scratch tree: add failed"
 		}
 		if r.Result != "not-active" || r.Reason != want {
@@ -283,14 +335,11 @@ func TestTheScratchTree(t *testing.T) {
 		strings.Contains(strings.Join(g.calls, "\n"), "worktree") {
 		t.Errorf("TMPDIR in the work area: %v, calls %q; want an input error before any scratch tree", err, g.calls)
 	}
-	if _, err := Check("/w", []string{"jobs", "gates"}, steps(new([]string)), io.Discard); err != nil {
-		t.Errorf("TMPDIR in the work area, no built check: %v; want no error, because no scratch tree is needed", err)
-	}
 }
 
 // Round 1, finding 5: the scratch tree is added in the step of the first
 // built check and removed in the step of the last row, so the progress lines
-// cover both; a call with no built check makes no scratch tree.
+// cover both.
 func TestTheProgressLinesCoverTheScratchTree(t *testing.T) {
 	g := goodGit()
 	standIn(t, g, nil, nil, nil)
@@ -303,29 +352,25 @@ func TestTheProgressLinesCoverTheScratchTree(t *testing.T) {
 	if add, first := at("worktree add"), at("1/15 discipline-tests"); add < first || add > at("2/15 pin") {
 		t.Errorf("the calls %q; want the worktree add inside the step of the first built check, discipline-tests", g.calls)
 	}
-	if remove, last := at("worktree remove"), at("15/15 gate:layout"); remove < last || g.calls[len(g.calls)-1] != "end" {
+	if remove, last := slices.Index(g.calls, "worktree remove /w/target /stand-in/scratch/tree"), at("15/15 gate:layout"); remove < last || g.calls[len(g.calls)-1] != "end" {
 		t.Errorf("the calls %q; want the worktree remove inside the step of the last row", g.calls)
-	}
-	g = goodGit()
-	standIn(t, g, nil, nil, nil)
-	if _, err := Check("/w", []string{"jobs", "gates"}, steps(new([]string)), io.Discard); err != nil || strings.Contains(strings.Join(g.calls, "\n"), "worktree") {
-		t.Errorf("Check(jobs, gates): %v, calls %q; want no scratch tree", err, g.calls)
 	}
 }
 
 // The table is a record of the block setup-verify: — for the reason of a
 // pass.
 func TestTheTable(t *testing.T) {
-	tbl := Table{Rows: []Row{{"pin", "pass", ""}, {"kit-history", "fail", "orphan: docs/tasks/T-1.md has no line"}, notBuiltRow("jobs")}}
+	tbl := Table{Rows: []Row{{"pin", "pass", ""}, {"kit-history", "fail", "orphan: docs/tasks/T-1.md has no line"}, notBuiltRow("jobs"), {"gate:layout", "clear", "pending: fixture not run"}}}
 	var b bytes.Buffer
 	if err := tbl.Write(&b); err != nil {
 		t.Fatal(err)
 	}
-	want := "check\tresult\treason\npin\tpass\t—\nkit-history\tfail\torphan: docs/tasks/T-1.md has no line\njobs\tnot-active\tnot built yet\n"
+	want := "check\tresult\treason\npin\tpass\t—\nkit-history\tfail\torphan: docs/tasks/T-1.md has no line\njobs\tnot-active\tnot built yet\n" +
+		"gate:layout\tclear\tpending: fixture not run\n"
 	if b.String() != want {
 		t.Errorf("the table\n%s\nwant\n%s", b.String(), want)
 	}
-	if got := tbl.Results(); !reflect.DeepEqual(got, []string{"pass", "fail", "not-active"}) {
+	if got := tbl.Results(); !reflect.DeepEqual(got, []string{"pass", "fail", "not-active", "clear"}) {
 		t.Errorf("Results() = %q", got)
 	}
 }

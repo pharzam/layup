@@ -15,13 +15,20 @@ import (
 	"testing"
 
 	"github.com/pharzam/layup/internal/standin"
-	"github.com/pharzam/layup/internal/tsv"
 	"github.com/pharzam/layup/internal/work"
 )
 
+// isolate gives the test a home of its own; the gate commands run on the
+// toolchain of the host, with its build cache, with no download and with no
+// setting of the host (as the catalog tests do, #91).
 func isolate(t *testing.T) {
 	t.Helper()
-	for k, v := range map[string]string{"HOME": t.TempDir(), "XDG_CONFIG_HOME": t.TempDir(), "GIT_CONFIG_NOSYSTEM": "1"} {
+	cache, err := exec.Command("go", "env", "GOCACHE").Output()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for k, v := range map[string]string{"HOME": t.TempDir(), "XDG_CONFIG_HOME": t.TempDir(), "GIT_CONFIG_NOSYSTEM": "1",
+		"GOCACHE": strings.TrimSpace(string(cache)), "GOENV": "off", "GOFLAGS": "", "GOTOOLCHAIN": "local", "GOPROXY": "off"} {
 		t.Setenv(k, v)
 	}
 }
@@ -49,10 +56,11 @@ func state(t *testing.T, w string) string {
 	return s
 }
 
-// The demo of #84: on a stand-in work area the three built checks pass, each
-// other check is not-active, and each kind of the manifest has its row. The
-// run changes no ref and no file of the work area, and removes its scratch
-// tree.
+// The demo of #84 and #92: on a stand-in work area each check passes, and
+// each kind of the manifest has its row: gate:static passes, as the gate gives
+// clear on the setup head and fail on the commit of the fixture of the Go
+// entry, and gate:layout is pending. The run changes no ref and no file of the
+// work area, and removes its scratch trees.
 func TestRunOnAStandInWorkArea(t *testing.T) {
 	isolate(t)
 	w, err := standin.Make(t.TempDir(), standin.Options{})
@@ -60,9 +68,9 @@ func TestRunOnAStandInWorkArea(t *testing.T) {
 		t.Fatal(err)
 	}
 	before := state(t, w.Dir)
-	var scratch string
+	var scratch []string
 	saved := tempDir
-	tempDir = func() (string, error) { d, err := saved(); scratch = d; return d, err }
+	tempDir = func() (string, error) { d, err := saved(); scratch = append(scratch, d); return d, err }
 	t.Cleanup(func() { tempDir = saved })
 	tbl, err := Run(w.Dir, noSteps, io.Discard)
 	if err != nil {
@@ -70,20 +78,23 @@ func TestRunOnAStandInWorkArea(t *testing.T) {
 	}
 	var got []string
 	for _, r := range tbl.Rows {
-		if r.Result != "not-active" || r.Reason != "not built yet" {
-			got = append(got, r.Check+" "+r.Result+" "+r.Reason)
-		}
+		got = append(got, r.Check+" "+r.Result+" "+r.Reason)
 	}
 	if want := []string{"discipline-tests pass ", "pin pass ", "kit-history pass ", "facts pass ", "onboarding pass ", "glossary pass ", "guardrails pass ",
-		"markers pass ", "adapted pass ", "identity pass ", "link-lint pass ", "sources pass "}; strings.Join(got, "|") != strings.Join(want, "|") || len(tbl.Rows) != 15 ||
-		tbl.Rows[13].Check != "gate:static" || tbl.Rows[14].Check != "gate:layout" {
-		t.Errorf("the rows %q; want %q, the others not built yet, and gate:static and gate:layout last", tbl.Rows, want)
+		"markers pass ", "adapted pass ", "identity pass ", "link-lint pass ", "sources pass ", "jobs pass ", "gate:static pass ",
+		"gate:layout clear pending: fixture not run"}; strings.Join(got, "|") != strings.Join(want, "|") {
+		t.Errorf("the rows\n%q\nwant\n%q", got, want)
 	}
 	if after := state(t, w.Dir); after != before {
 		t.Errorf("the run changed the work area:\n%s\nto\n%s", before, after)
 	}
-	if _, err := os.Stat(scratch); scratch == "" || !errors.Is(err, fs.ErrNotExist) {
-		t.Errorf("the scratch directory %q is still there (%v)", scratch, err)
+	for _, d := range scratch {
+		if _, err := os.Stat(d); !errors.Is(err, fs.ErrNotExist) {
+			t.Errorf("the scratch directory %q is still there (%v)", d, err)
+		}
+	}
+	if len(scratch) != 2 {
+		t.Errorf("the scratch directories %q; want the one of the run and the one of the fixture commit", scratch)
 	}
 	if out, _ := exec.Command("git", "-C", filepath.Join(w.Dir, work.TargetPath), "worktree", "list").Output(); strings.Count(string(out), "\n") != 1 {
 		t.Errorf("git worktree list:\n%s\nwant the main work tree only", out)
@@ -238,17 +249,49 @@ func TestTheInputErrorsOfAWorkArea(t *testing.T) {
 	}
 }
 
-// The Go schema of the table equals its block.
-func TestTheTableSchemaEqualsItsBlock(t *testing.T) {
-	blocks, err := tsv.ReadBlocks(os.DirFS(filepath.Join("..", "..", "docs", "spec")))
+// The rows gate:<kind> on a real target (D3 of #92): the fixture commit is an
+// object that no ref names; a fixture that does not apply is not-active; a
+// tool that the host does not have is not-active (NFR-004); a command that does
+// not see the fixture is fixture not detected.
+func TestTheGateRowsOnARealTarget(t *testing.T) {
+	isolate(t)
+	w, err := standin.Make(t.TempDir(), standin.Options{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	block, ok := blocks["setup-verify"]
-	if !ok {
-		t.Fatal("docs/spec/ has no block setup-verify")
+	target := filepath.Join(w.Dir, work.TargetPath)
+	refs := state(t, w.Dir)
+	var out strings.Builder
+	tbl, err := Check(w.Dir, []string{"gates"}, noSteps, &out)
+	if err != nil || len(tbl.Rows) != 2 || tbl.Rows[0] != (Row{"gate:static", "pass", ""}) {
+		t.Fatalf("Check(gates): %v, %q; want gate:static pass", err, tbl.Rows)
 	}
-	if err := tsv.Compare(block, TableSchema); err != nil {
-		t.Error(err)
+	_, after, ok := strings.Cut(out.String(), "the fixture run of static on ")
+	commit, _, _ := strings.Cut(after, "\n")
+	if typ, err := exec.Command("git", "-C", target, "cat-file", "-t", commit).Output(); !ok || err != nil || string(typ) != "commit\n" {
+		t.Errorf("the fixture commit %q: %q, %v; want a commit object", commit, typ, err)
+	}
+	if names, _ := exec.Command("git", "-C", target, "for-each-ref", "--contains", commit).Output(); len(names) != 0 || state(t, w.Dir) != refs {
+		t.Errorf("the refs that hold the fixture commit: %q; want none, and no ref changed", names)
+	}
+	for _, c := range []struct {
+		name  string
+		files map[string]string
+		want  Row
+	}{
+		{"a fixture that does not apply", map[string]string{"gatefixture/static.go": "package gatefixture\n"},
+			Row{"gate:static", "not-active", "fixture does not apply: error: gatefixture/static.go: already exists in working directory"}},
+		{"a tool that the host does not have", map[string]string{"docs/gates.tsv": "kind\tstate\ttool\tcommand\tscope\tconfig\nstatic\tactive\tno-such-tool\ttrue\t./*.go\t\u2014\n", "a.go": "package a\n"},
+			Row{"gate:static", "not-active", "the clean run: tool not found: no-such-tool"}},
+		{"a command that does not see the fixture", map[string]string{"docs/gates.tsv": "kind\tstate\ttool\tcommand\tscope\tconfig\nstatic\tactive\tgo\ttrue\t./*.go\t\u2014\n"},
+			Row{"gate:static", "fail", "fixture not detected"}},
+	} {
+		w, err := standin.Make(t.TempDir(), standin.Options{Files: c.files})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if tbl, err := Check(w.Dir, []string{"gates"}, noSteps, io.Discard); err != nil || len(tbl.Rows) == 0 || tbl.Rows[0] != c.want {
+			t.Errorf("%s: %v, %q; want %q", c.name, err, tbl.Rows, c.want)
+		}
 	}
 }

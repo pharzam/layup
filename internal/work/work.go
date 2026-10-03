@@ -1,8 +1,8 @@
 // Package work is the work area of one target on the LAYUP host
 // (docs/spec/setup.md, The command layup setup): its paths, and the two records
-// that layup setup and layup setup verify both read, each by its schema. It is
-// the one home of the schemas that internal/setup and internal/verify share
-// (K9 of the plan).
+// that layup setup and layup setup verify both read, each by its schema, and
+// the table that verify writes and S15 reads. It is the one home of the
+// schemas that internal/setup and internal/verify share (K9 of the plan).
 package work
 
 import (
@@ -69,6 +69,19 @@ var OpenGapsSchema = tsv.Schema{Name: "open-gaps", Location: "target:docs/setup/
 	{Name: "file", Type: "path", Key: true},
 	{Name: "marker", Type: "text", Key: true},
 	{Name: "question", Type: "text"},
+}}
+
+// VerifyPath is the table of layup setup verify in a work area, from its root:
+// the Operator writes it, and S15 reads it (task T-d6q5, D6 of #92).
+const VerifyPath = "out/verify.tsv"
+
+// VerifySchema is the form of the table of layup setup verify: the block
+// setup-verify of docs/spec/setup.md, which internal/verify writes and S15
+// reads (D7 of #92).
+var VerifySchema = tsv.Schema{Name: "setup-verify", Location: "stdout", Columns: []tsv.Column{
+	{Name: "check", Type: "text", Key: true},
+	{Name: "result", Type: "enum(pass|fail|not-active|clear)"},
+	{Name: "reason", Type: "text"},
 }}
 
 // Answers is the rows of answers.tsv, one value per column.
