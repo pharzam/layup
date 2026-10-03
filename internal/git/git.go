@@ -52,8 +52,9 @@ func (e *FailedError) Error() string {
 func (e *FailedError) Unwrap() error { return e.Err }
 
 // config is the -c values that every call starts with. maintenance.auto=false
-// keeps a commit from starting the maintenance of git, which since git 2.54
-// repacks in the background after the call ends (task T-d6q5).
+// keeps a commit from starting the maintenance of git, whose tasks go on in
+// the background after the call ends: in CI of the pull request #115, on git
+// 2.55.0, one repacked (task T-d6q5).
 var config = strings.Fields("-c core.hooksPath=/dev/null -c core.attributesFile=/dev/null " +
 	"-c core.excludesFile=/dev/null -c core.autocrlf=false -c core.precomposeUnicode=false -c commit.gpgsign=false " +
 	"-c http.emptyAuth=false -c maintenance.auto=false")

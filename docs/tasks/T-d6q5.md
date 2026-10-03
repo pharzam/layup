@@ -130,16 +130,17 @@ CI of PR #115 failed in the job `tests` on `8a3a565` (the close-out of round
 1; Linux, `go1.26.8`, `git` 2.55.0): `TestEachFindingOfATarget` could not
 remove a work area (`unlinkat …/.git/objects: directory not empty`), as a
 maintenance of `git` that a commit had started in the background (a repack,
-the default since `git` 2.54) wrote into it. The same test passed on the LAYUP
-host and in round 1. A bug is material, so by the rule of O-120 (the pitfall
+on `git` 2.55.0) wrote into it. The same test passed on the LAYUP host
+(`git` 2.54.0) and in round 1. A bug is material, so by the rule of O-120 (the pitfall
 "A cycle cap raised after a last-round verdict" of `guardrails.md` §2) the
 verdict cell of round 1 is edited to `material`, with the reason, and the fix
 is cycle 1, inside the cap of 1:
 
 1. Each call of `internal/git` starts with `-c maintenance.auto=false`
    (`packages.md`), so no call of `layup` leaves a process of `git` in a
-   repository after it ends; the four test helpers that commit with a plain
-   `git` do the same.
+   repository after it ends; the two test helpers that commit with a plain
+   `git` (`gitOut`, `fixtureGit`) and the control of
+   `TestAHostileHostChangesNothing` do the same.
 2. `TestNoCallStartsTheMaintenance` (integration): a repository whose own
    configuration asks for the loose-objects task at once, in the foreground,
    keeps its loose objects after a `Commit`; its control, a plain
@@ -147,3 +148,91 @@ is cycle 1, inside the cap of 1:
 3. The lesson "A background maintenance of git" in `guardrails.md` §2.
 
 The red and the green runs are in the evidence. Round 2 reviews the fix.
+
+## Review round 2
+
+Devin (its usage quota) and OpenCode (no output in five minutes) gave no
+record again. Round 2 (Claude Fable 5.1, effort `xhigh`, on the Claude Code
+CLI, a fresh read-only session with another lens, cleanup, determinism and
+leftovers, on `cd3daa8`, its record at 6 min 22 s; the record is on #92) gave
+`nothing material in scope`, with seven notes. It read each automatic start
+of `git maintenance` against the fix, and ran the three test levels, the race
+tests and hand runs of `git` 2.54.0. The notes:
+
+1. The version of the automatic repack: on `git` 2.54.0 a commit's automatic
+   maintenance did not repack in its hand run, so "since 2.54" was not shown;
+   applied: the documents and the two comments name the CI run on 2.55.0 and
+   say that the first version is not shown.
+2. Two helpers and one control, not "four test helpers": applied.
+3. "CI of #92" and "CI of #115" named one run: applied ("CI of the pull
+   request #115").
+4. When the removal of the scratch work tree of S15 fails, the entry of the
+   work tree stays in the target until `git worktree prune`; the step fails
+   and says it: a known limit in `setup.md`.
+5. LAYUP's own `nested-checkout-check.sh` commits with a plain `git` in a
+   temporary directory, under the thresholds of the maintenance; it is off the
+   path of this task, and `layup` does not run it.
+6. The budget: 2,802 lines over 37 files before the close-out.
+7. The limit of the round: the work tree and the refs of a stand-in after a
+   run rest on the assertions of the tests.
+
+## Verdict
+
+Delivered: steps S12, S13 and S15 of `layup setup`, and the checks `jobs` and
+`gate:<kind>` of `layup setup verify`. S12 writes the files of the catalog
+entry of the stack with the module path of the target, the manifest and the
+gap of the coverage floor, with a record row of each; S13 writes the
+protection file and the ruleset of the default branch, each required check a
+gate job pinned to GitHub Actions, and hands their commands to the Operator;
+S15 stops for the table of `layup setup verify`, writes the rule-path register,
+and makes the first commit of the orphan branch `layup-records` through a new
+hook of the runner, so the committed record is the record of the run. Check
+`jobs` reads the job names as `check_protection` does; each row
+`gate:<kind>` runs the gate on the setup head and on a commit of the kind's
+fixture, on no ref. So a correct setup of phase 1 runs from S01 to S15 and
+`layup setup verify` exits 0. No call of `internal/git` starts the maintenance
+of `git` any more. The wording of #34 is done, with its ADR-0011 parts as
+known limits.
+
+The plan review (Claude Fable 5.1) gave `approve-with-conditions`, with three
+conditions, applied. Round 1 (`a7a64c9`) named no material finding, with six
+notes (note 1 applied, notes 2 and 3 known limits); CI of PR #115 then failed
+on a background maintenance of `git`, so by O-120 the verdict of round 1 reads
+`material`, and the fix is cycle 1 (`5eb2a76`, `cd3daa8`). Round 2 (`cd3daa8`)
+gave `nothing material in scope`, with seven notes: notes 1 to 4 applied as
+text, notes 5 to 7 recorded. The records are on #92. At `cd3daa8`, the local
+checks, `go build`, `go vet` with each tag, `gofmt`, the three test levels,
+`go test -race` on six packages (and on four with `-tags=integration`),
+`run.sh` and the discipline tests pass, and the job `tests` of CI passes on
+Linux with `git` 2.55.0; 33 mutations of the code of row 15 are detected;
+`review-record-lint` passes on the comments of #92 (2 rounds, cap 1). The
+close-out commit changes the text of documents and two comments of Go files,
+and no code. The diff against `origin/main` is 2,908 lines added plus removed
+over 37 files with the close-out, inside the Budget maximum of 3,600 lines
+over 40 files.
+
+Next: row 16 of the plan (`T-dep6`, #93), whose After cell (row 15) is then
+merged.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). Times are UTC, 2026-10-02 to 2026-10-03. A
+token count is the `result` event of the Claude Code CLI (input, output, cache
+creation and cache read tokens, and its cost) where that harness gave one;
+`not reported` where the harness or the author's session gives none. The
+author's session was summarized once in the code part; that changes no part.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan (D1 to D10) | reasoning | Claude Opus 5.5 | max | not reported | 23:42 to 23:46 |
+| The plan review, first and second harness: skipped (Devin's usage quota; OpenCode no output in five minutes) | reasoning | GPT-6 Sol on the Devin CLI; Grok 4.7 on the OpenCode CLI | `xhigh`; `xhigh` | not reported | 23:46:28 to 23:52:46 |
+| The plan review | reasoning | Claude Fable 5.1 on the Claude Code CLI | `xhigh` | 758,232 (USD 3.79) | 5 min 34 s, from 23:52:52 |
+| The answer to the plan review | reasoning | Claude Opus 5.5 | max | not reported | 23:58 to 23:59 |
+| The tests first, the code, the integration and e2e tests, the mutations, the documents and the evidence; the freeze | execution | Claude Opus 5.5, a reasoning-tier model on an execution part | max | not reported | 23:59 to 00:50 |
+| Review round 1, first and second harness: skipped (the same) | reasoning | GPT-6 Sol on the Devin CLI; Grok 4.7 on the OpenCode CLI | `xhigh`; `xhigh` | not reported | 00:50:35 to 00:56:53 |
+| Review round 1 | reasoning | Claude Fable 5.1 on the Claude Code CLI | `xhigh` | 1,150,935 (USD 3.53) | 5 min 0 s, 00:57:01 to 01:02:01 |
+| The close-out of round 1, and the pull request | execution | Claude Opus 5.5 | max | not reported | 01:02 to 01:06 |
+| The CI failure: its cause, the fix test first, the freeze | execution | Claude Opus 5.5 | max | not reported | 01:07 to 01:17 |
+| Review round 2, first and second harness: skipped (the same) | reasoning | GPT-6 Sol on the Devin CLI; Grok 4.7 on the OpenCode CLI | `xhigh`; `xhigh` | not reported | 01:17:06 to 01:23:25 |
+| Review round 2 | reasoning | Claude Fable 5.1 on the Claude Code CLI | `xhigh` | 738,533 (USD 3.52) | 6 min 39 s, 01:23:30 to 01:30:09 |
+| The close-out | execution | Claude Opus 5.5 | max | not reported | 01:30 to 01:40 |

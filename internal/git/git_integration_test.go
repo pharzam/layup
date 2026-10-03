@@ -227,10 +227,10 @@ func TestAScratchTree(t *testing.T) {
 	}
 }
 
-// No call starts the automatic maintenance of git: since git 2.29 a commit
-// starts git maintenance run --auto, since 2.47 in the background, and since
-// 2.54 it repacks by default; in CI of #92 (git 2.55.0) a background repack
-// wrote into .git/objects while a test removed the directory. A repository
+// No call starts the automatic maintenance of git: a commit runs git
+// maintenance run --auto (git 2.29), whose tasks go to the background (2.47);
+// in CI of the pull request #115, on git 2.55.0, a background repack wrote
+// into .git/objects while a test removed the directory. A repository
 // whose own configuration asks for the loose-objects task at once, in the
 // foreground, keeps its loose objects after a Commit; a control shows that a
 // plain git commit packs them, so the test can fail.

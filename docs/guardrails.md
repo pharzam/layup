@@ -472,12 +472,13 @@ These traps are not domain-specific: they hurt every project's test suite.
   the first run and gave the stand-in a `go.mod` and the command of the entry.
   **The check:** give a test target each file that the command of the kind
   needs, and read the output of the fixture run once.
-- ❌ **A background maintenance of git.** Since `git` 2.29 a commit starts
-  `git maintenance run --auto`, since 2.47 in the background, and since 2.54 it
-  repacks by default, so a process of `git` can write into `.git/objects` after
-  the call ends. In CI of #115 (`git` 2.55.0) such a repack wrote into a work
-  area while a test removed it (`unlinkat …/.git/objects: directory not
-  empty`); the same test passed on the LAYUP host. Task `T-d6q5` (#92) met it.
+- ❌ **A background maintenance of git.** A commit runs `git maintenance run
+  --auto` (since `git` 2.29), whose tasks go to the background (since 2.47), so
+  a process of `git` can write into `.git/objects` after the call ends. In CI of
+  the pull request #115 (`git` 2.55.0) such a task repacked into a work area
+  while a test removed it (`unlinkat …/.git/objects: directory not empty`); the
+  same test passed on the LAYUP host (`git` 2.54.0, where a hand run of review
+  round 2 of #92 saw no repack after a commit). Task `T-d6q5` (#92) met it.
   **The check:** start each `git` of the product and of a test helper that
   commits with `-c maintenance.auto=false`, and test it with a repository whose
   own configuration asks for the maintenance at once, in the foreground.

@@ -193,12 +193,14 @@ pass.
   `-c commit.gpgsign=false`, `-c http.emptyAuth=false` and
   `-c maintenance.auto=false`. Without the second and the third, the per-user
   attributes file changed the bytes of a staged file, and the per-user ignore
-  file dropped a file. Without the last, a commit starts `git maintenance run
-  --auto`, which since `git` 2.54 repacks by default ("starts using the
-  'geometric' strategy by default", its release notes) and goes on in the
-  background after the call ends; in CI of #92 (`git` 2.55.0) such a repack
-  wrote into `.git/objects` of a work area while a test removed it (task
-  `T-d6q5`). So no call leaves a process of `git` in a repository of LAYUP.
+  file dropped a file. Without the last, a commit runs `git maintenance run
+  --auto`, whose tasks go on in the background after the call ends (since
+  `git` 2.47); in CI of the pull request #115 (`git` 2.55.0) such a task
+  repacked into `.git/objects` of a work area while a test removed it (task
+  `T-d6q5`). Which version first repacks after a commit is not shown: `git`
+  2.54 made the "geometric" strategy the default of manual maintenance, and a
+  hand run on 2.54.0 saw no repack after a commit (review round 2 of #92). So
+  no call leaves a process of `git` in a repository of LAYUP.
 - On macOS, `git init` writes `core.precomposeunicode = true` into the
   repository; `Add` then stored a decomposed (NFD) file name composed (NFC),
   so a tree with such a path differed on a macOS host only. With `false`,

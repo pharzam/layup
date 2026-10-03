@@ -552,7 +552,10 @@ and the notes of its plan review):
   the text after it (a false `fail`, as a kind holds no space); and S15 does
   not refuse a `TMPDIR` in the work area, as `layup setup verify` does: its
   scratch tree is removed after the records commit, and the commit is the
-  same.
+  same. When the removal of the scratch work tree of S15 fails, S15 removes
+  its directory anyway, so the entry of the work tree stays in the target
+  until `git worktree prune`; the step fails and says it (note 4 of review
+  round 2).
 - **Known limits of `verify.tsv`** (note 4): the table names no head and no
   work area, so S15 commits it as the Operator made it, and it judged the
   record before the rows of S15. In phase 2, `layup run` writes the table

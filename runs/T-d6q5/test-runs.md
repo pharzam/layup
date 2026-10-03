@@ -170,7 +170,9 @@ default; `git maintenance` came with 2.29). The release notes of `git` say:
 maintenance" runs them.`; 2.54, `"git maintenance" starts using the
 "geometric" strategy by default.`; 2.55, that a maintenance that goes to the
 background did not use its lock file. So a commit of the stand-in left a
-repack that ran after `git commit` ended.
+repack that ran after `git commit` ended. Review round 2 measured on `git`
+2.54.0: a plain commit of 122 loose objects made no pack, so the first
+version that repacks after a commit is not shown; 2.55.0 in CI did.
 
 The red runs, before the change of `internal/git`:
 
@@ -186,5 +188,13 @@ $ go test -count=1 -tags=integration -run TestNoCallStartsTheMaintenance ./inter
 The control of the new test, a plain `git commit` in a repository whose own
 configuration sets `maintenance.loose-objects.auto` 1 and no detach, packs its
 loose objects, so the test can fail. With `-c maintenance.auto=false` in each
-call, a `Commit` of `internal/git` leaves them loose, and the four test
-helpers that commit with a plain `git` get the same value.
+call, a `Commit` of `internal/git` leaves them loose, and the two test
+helpers that commit with a plain `git` and the control of
+`TestAHostileHostChangesNothing` get the same value.
+
+The green runs of the fix: on `cd3daa8`, 01:14:21Z to 01:16:23Z, the 18 steps
+of the ladder, each exit 0 (`run.sh` 44 passed, the discipline tests 81
+passed); CI of PR #115 on `cd3daa8` (Linux, `git` 2.55.0): the job `tests`
+passes. Review round 2 ran the three test levels and the race tests on it
+again, with the same results, and found no process of `git` and no `layup-*`
+directory after its runs.
