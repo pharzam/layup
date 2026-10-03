@@ -51,13 +51,15 @@ func TestSetup(t *testing.T) {
 	}
 }
 
-// The demos of #86 and #90: on a new work area, S01 stops with one table of
-// its four questions (exit 3), the same on each run; with the answers, the
+// The demos of #86, #90 and #92: on a new work area, S01 stops with one table
+// of its four questions (exit 3), the same on each run; with the answers, the
 // next run does S01 to S06 on the stand-in baseline by its file:// URL and the
 // prose step stops with one table of its inputs; with the inputs, the next
-// run does S07 to S11 and S14, and S12 is not built yet (exit 1); a last run
-// gives the same table and starts at S12.
-func TestSetupRunsS01ToS14(t *testing.T) {
+// run does S07 to S14, S12 with the gates of the Go entry, and S15 stops for
+// out/verify.tsv (exit 3); a last run gives the same table and starts at S15.
+// The whole setup, with S15 done, is the e2e of row 16 of the plan.
+func TestSetupRunsS01ToS15(t *testing.T) {
+	env := goEnv(t)
 	tmp := t.TempDir()
 	url, _, err := standin.Baseline(filepath.Join(tmp, "baseline"))
 	if err != nil {
@@ -95,19 +97,20 @@ func TestSetupRunsS01ToS14(t *testing.T) {
 	} {
 		write(t, filepath.Join(w, "inputs", "files", filepath.FromSlash(p)), text)
 	}
-	r := layup(t, "setup", w)
-	var want string
-	for _, row := range [][]string{{"S01", "every answer present; the stack has a catalog entry"}, {"S02", "the commit and the tree"}, {"S03", "root tree = pin.tree"},
-		{"S04", "checks pin and facts"}, {"S05", "checks kit-history and link-lint"}, {"S06", "check facts"}, {"S07", "check onboarding"}, {"S08", "check glossary"},
-		{"S09", "check guardrails"}, {"S10", "every marker has an answer row"}, {"S11", "checks markers, sources and facts"}} {
-		want += row[0] + "\tlayup-setup\tdone\t" + row[1] + "\n"
+	r := layupWith(t, env, "setup", w)
+	verify := "Run layup setup verify '" + w + "' > '" + filepath.Join(w, "out", "verify.tsv") + "', then run layup setup '" + w + "' again."
+	if want := "step\tquestion\task\twhere\nS15\tO-verify\t" + verify + "\t\u2014\n"; r.code != 3 || r.stdout != want ||
+		!strings.Contains(r.stderr, "layup setup: [7/9] S12\n") || !strings.Contains(r.stderr, "layup setup: [8/9] S13\n") {
+		t.Fatalf("the run with the inputs: exit %d, stdout %q, stderr %q; want 3, S07 to S14 done and the stop of S15\n%s", r.code, r.stdout, r.stderr, want)
 	}
-	if r.code != 1 || !strings.HasPrefix(r.stdout, "step\tactor\tresult\tevidence\n"+want+"S12\tlayup-setup\tnot-active\tnot built yet\n") ||
-		!strings.Contains(r.stdout, "\nS14\tlayup-setup\tdone\tchecks identity and adapted\n") {
-		t.Fatalf("the run with the inputs: exit %d, stdout %q, stderr %q; want 1, S01 to S11 and S14 done and S12 not built yet", r.code, r.stdout, r.stderr)
+	record, err := work.ReadRecord(w)
+	for _, id := range []string{"S07", "S08", "S09", "S10", "S11", "S12", "S13", "S14"} {
+		if _, ok := record.Value(id, "done"); err != nil || !ok {
+			t.Errorf("the record has no done row of %s: %v", id, err)
+		}
 	}
-	again := layup(t, "setup", w)
-	if again.code != 1 || again.stdout != r.stdout || !strings.HasPrefix(again.stderr, "layup setup: [1/3] S12\n") {
-		t.Errorf("a last run: exit %d, stdout %q, stderr %q; want the same table, from S12", again.code, again.stdout, again.stderr)
+	again := layupWith(t, env, "setup", w)
+	if again.code != 3 || again.stdout != r.stdout || again.stderr != "layup setup: [1/1] S15\n" {
+		t.Errorf("a last run: exit %d, stdout %q, stderr %q; want the same table, from S15", again.code, again.stdout, again.stderr)
 	}
 }

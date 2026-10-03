@@ -25,23 +25,25 @@ func standInWork(t *testing.T) string {
 	return w.Dir
 }
 
-// The demo of #84: the built binary on a stand-in work area prints the rows of
-// the checks kit-history, pin, facts, onboarding, glossary and guardrails
-// (#89), adapted (#88) and identity, each pass, and a not-active row for each
-// check that it does not have yet, so it exits 1 (NFR-004); two runs give the
-// same bytes (NFR-005).
+// The demos of #84 and #92: the built binary on a stand-in work area prints
+// a row of each check, each pass, then a row of each kind of the manifest:
+// gate:static passes, as the gate gives clear on the setup head and fail on
+// the commit of its fixture, and gate:layout is pending. So a correct setup
+// exits 0 (NFR-004), and two runs give the same bytes (NFR-005).
 func TestSetupVerifyOnAStandInWorkArea(t *testing.T) {
 	w := standInWork(t)
-	r := repeat(t, "setup", "verify", w)
-	if r.code != 1 || !strings.HasPrefix(r.stdout, "check\tresult\treason\ndiscipline-tests\tpass\t—\npin\tpass\t—\nkit-history\tpass\t—\n") ||
-		!strings.Contains(r.stdout, "\nguardrails\tpass\t—\nmarkers\tpass\t—\n") || !strings.Contains(r.stdout, "\nidentity\tpass\t—\nlink-lint\tpass\t—\nsources\tpass\t—\n") ||
-		!strings.Contains(r.stdout, "\nkit-history\tpass\t—\nfacts\tpass\t—\nonboarding\tpass\t—\nglossary\tpass\t—\nguardrails\tpass\t—\n") ||
-		!strings.Contains(r.stdout, "\nadapted\tpass\t—\nidentity\tpass\t—\n") || !strings.HasSuffix(r.stdout, "\ngate:static\tnot-active\tnot built yet\ngate:layout\tnot-active\tnot built yet\n") ||
-		strings.Count(r.stdout, "\n") != 16 {
-		t.Fatalf("exit %d, stdout:\n%s", r.code, r.stdout)
+	r := repeatWith(t, goEnv(t), "setup", "verify", w)
+	want := "check\tresult\treason\n"
+	for _, c := range []string{"discipline-tests", "pin", "kit-history", "facts", "onboarding", "glossary", "guardrails", "markers", "adapted", "identity",
+		"link-lint", "sources", "jobs", "gate:static"} {
+		want += c + "\tpass\t\u2014\n"
 	}
-	if !strings.Contains(r.stderr, "layup setup verify: [1/15] discipline-tests\n") || !strings.Contains(r.stderr, "layup setup verify: [15/15] gate:layout\n") {
-		t.Errorf("stderr %q; want the progress line of each row", r.stderr)
+	if want += "gate:layout\tclear\tpending: fixture not run\n"; r.code != 0 || r.stdout != want {
+		t.Fatalf("exit %d, stdout:\n%s\nwant 0 and\n%s", r.code, r.stdout, want)
+	}
+	if !strings.Contains(r.stderr, "layup setup verify: [1/15] discipline-tests\n") || !strings.Contains(r.stderr, "layup setup verify: [15/15] gate:layout\n") ||
+		!strings.Contains(r.stderr, "layup setup verify: the fixture run of static on ") {
+		t.Errorf("stderr %q; want the progress line of each row, and the line of each run of the gate", r.stderr)
 	}
 }
 

@@ -307,16 +307,34 @@ func writeInputs(t *testing.T, w string, files map[string]string) {
 	}
 }
 
-// The demo of #90: after S04, S05 stops for the file whose links the deletion
-// of the history breaks; the prose step stops once, with one row for each of
-// its inputs, the flagged file too; S10 stops with one row per marker; with
-// the inputs and the answers, each step is done with its checks as the
-// evidence, and S12 is not built yet. While one input of the prose step is
-// missing, no step of it commits, though the glossary of the baseline is a
-// file that check adapted flags (finding 1 of review round 1). A README.md
-// that names no records branch fails the evidence of S14, and the run after
-// the fix gives the same rows (condition 1 of the plan review).
-func TestSetupRunsS05ToS14(t *testing.T) {
+// goEnv makes the gate commands run on the toolchain of the host, with its
+// build cache, with no download and with no setting of the host (as the
+// catalog tests do, #91).
+func goEnv(t *testing.T) {
+	t.Helper()
+	cache, err := exec.Command("go", "env", "GOCACHE").Output()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for k, v := range map[string]string{"GOCACHE": strings.TrimSpace(string(cache)), "GOENV": "off", "GOFLAGS": "", "GOTOOLCHAIN": "local", "GOPROXY": "off"} {
+		t.Setenv(k, v)
+	}
+}
+
+// The demo of #90 and #92: after S04, S05 stops for the file whose links the
+// deletion of the history breaks; the prose step stops once, with one row for
+// each of its inputs, the flagged file too; S10 stops with one row per marker;
+// with the inputs and the answers, each step is done with its checks as the
+// evidence, S12 with checks jobs and gates on the files of the Go entry, and
+// S13 is handed to the Operator; S15 stops for out/verify.tsv. While one input
+// of the prose step is missing, no step of it commits, though the glossary of
+// the baseline is a file that check adapted flags (finding 1 of review round
+// 1). A README.md that names no records branch fails the evidence of S14, and
+// the run after the fix gives the same rows (condition 1 of the plan review).
+// With the table of layup setup verify, S15 makes the records commit, and a
+// rerun makes no second one.
+func TestSetupRunsS05ToS15(t *testing.T) {
+	goEnv(t)
 	tmp := t.TempDir()
 	url := scaffoldBaseline(t, filepath.Join(tmp, "baseline"))
 	w := filepath.Join(tmp, "work")
@@ -388,22 +406,23 @@ func TestSetupRunsS05ToS14(t *testing.T) {
 	}
 	answers = append(answers, []string{idPort, "8080", "operator", at, ""}, []string{idOwner, "gap", "operator", at, "Who owns the operations?"})
 	writeAnswers()
-	if code, out, errOut := run("setup", w); code != 1 || !strings.Contains(out, "\nS11\tlayup-setup\tdone\tchecks markers, sources and facts\n") ||
-		!strings.Contains(out, "\nS12\tlayup-setup\tnot-active\tnot built yet\n") {
-		t.Fatalf("the run with the answers: exit %d, stderr %q\n%s", code, errOut, out)
+	verifyAsk := "Run layup setup verify '" + w + "' > '" + filepath.Join(w, "out", "verify.tsv") + "', then run layup setup '" + w + "' again."
+	if code, out, errOut := run("setup", w); code != 3 || out != "step\tquestion\task\twhere\nS15\tO-verify\t"+verifyAsk+"\t\u2014\n" {
+		t.Fatalf("the run with the answers: exit %d, stderr %q\n%s\nwant 3 and the stop O-verify of S15", code, errOut, out)
 	}
-	if got := gitIn(t, target, "log", "--format=%s", head+"..layup-setup"); got != "chore: setup S11\nchore: setup S14" {
-		t.Errorf("the commits after the undo of S14: %q; want S14 once, then S11", got)
+	if got := gitIn(t, target, "log", "--format=%s", head+"..layup-setup"); got != "chore: setup S13\nchore: setup S12\nchore: setup S11\nchore: setup S14" {
+		t.Errorf("the commits after the undo of S14: %q; want S14 once, then S11, S12 and S13", got)
 	}
 	if got := gitIn(t, target, "log", "--reverse", "--format=%s", "main..layup-setup"); got != "chore: setup S04\nchore: setup S05\nchore: setup S06\n"+
-		"chore: setup S07\nchore: setup S08\nchore: setup S09\nchore: setup S14\nchore: setup S11" {
+		"chore: setup S07\nchore: setup S08\nchore: setup S09\nchore: setup S14\nchore: setup S11\nchore: setup S12\nchore: setup S13" {
 		t.Errorf("the setup commits: %q", got)
 	}
 	for p, want := range map[string]string{
-		"docs/ops.md":              "# Ops\n\nThe port is 8080.\nAgain 8080.\nThe owner is " + owner + ".\n",
-		"docs/setup/open-gaps.tsv": "docs/ops.md\t" + owner + "\tWho owns the operations?\n",
-		"docs/guide.md":            "# Guide\n\nThe decisions of the target are in its records.\n",
-		"docs/tasks/backlog.md":    "# Backlog\n\n\n\nKeep this line.\n",
+		"docs/ops.md": "# Ops\n\nThe port is 8080.\nAgain 8080.\nThe owner is " + owner + ".\n",
+		"docs/setup/open-gaps.tsv": "docs/ops.md\t" + owner + "\tWho owns the operations?\n" + // S11, then the gap of the Go entry (S12)
+			"docs/gates/coverage-floor.txt\t\u2039the coverage floor of the test kind\u203a\tWhich coverage floor, in percent of the statements, must the tests of the test kind reach, and what is its evidence?\n",
+		"docs/guide.md":         "# Guide\n\nThe decisions of the target are in its records.\n",
+		"docs/tasks/backlog.md": "# Backlog\n\n\n\nKeep this line.\n",
 	} {
 		if got := gitIn(t, target, "show", "layup-setup:"+p) + "\n"; got != want {
 			t.Errorf("%s on layup-setup:\n%q\nwant\n%q", p, got, want)
@@ -424,11 +443,93 @@ func TestSetupRunsS05ToS14(t *testing.T) {
 			t.Errorf("the record has no row %s %s", r[0], r[1])
 		}
 	}
-	tab, err := verify.Check(w, []string{"kit-history", "link-lint", "facts", "onboarding", "glossary", "guardrails", "markers", "adapted", "identity", "sources"},
-		func(int, int, string) func() { return func() {} }, io.Discard)
-	for _, r := range tab.Rows {
-		if err != nil || r.Result != "pass" {
-			t.Errorf("check %s after S11: %s %q, %v; want pass", r.Check, r.Result, r.Reason, err)
+	finalSteps(t, w, record)
+}
+
+// finalSteps checks S12 and S13 on the work area w of TestSetupRunsS05ToS15,
+// then writes out/verify.tsv with layup setup verify and runs S15 (#92).
+func finalSteps(t *testing.T, w string, record work.Record) {
+	t.Helper()
+	target := filepath.Join(w, "target")
+	floor := "docs/gates/coverage-floor.txt"
+	for _, r := range [][]string{{"S12", "module"}, {"S12", "catalog:go.mod"}, {"S12", "catalog:.github/workflows/gates.yml"}, {"S12", "catalog:docs/gates.tsv"},
+		{"S12", "marker:" + floor + ":1"}, {"S13", "branch-protection.sha256"}, {"S13", "ruleset.sha256"}} {
+		if v, ok := record.Value(r[0], r[1]); !ok || v == "" {
+			t.Errorf("the record has no row %s %s", r[0], r[1])
 		}
+	}
+	if got := gitIn(t, target, "show", "layup-setup:go.mod"); got != "module github.com/"+standin.Name+"\n\ngo 1.26" {
+		t.Errorf("go.mod on layup-setup: %q", got)
+	}
+	protection := gitIn(t, target, "show", "layup-setup:docs/setup/branch-protection.json")
+	for _, kind := range []string{"static", "layout", "boundary", "contract", "test"} {
+		if !strings.Contains(protection, "\"context\": \""+kind+"\",") {
+			t.Errorf("branch-protection.json has no check %s:\n%s", kind, protection)
+		}
+	}
+	if _, err := os.Stat(filepath.Join(w, "out", "ruleset-default.json")); err != nil {
+		t.Errorf("out/ruleset-default.json: %v", err)
+	}
+	code, table, errOut := run("setup", "verify", w)
+	if code != 0 || !strings.HasSuffix(table, "\njobs\tpass\t\u2014\ngate:static\tpass\t\u2014\ngate:layout\tclear\tpending: fixture not run\n"+
+		"gate:boundary\tclear\tpending: fixture not run\ngate:contract\tclear\tpending: fixture not run\ngate:test\tpass\t\u2014\n") {
+		t.Fatalf("layup setup verify: exit %d, stderr %q\n%s\nwant 0, each row pass or clear", code, errOut, table)
+	}
+	writeFile(t, filepath.Join(w, "out", "verify.tsv"), table)
+	before := gitIn(t, target, "for-each-ref", "--format=%(refname) %(objectname)", "refs/heads/main", "refs/heads/layup-setup")
+	code, out, errOut := run("setup", w)
+	if code != 0 || !strings.Contains(out, "\nS13\tlayup-setup\toperator\thanded to the Operator: the ruleset file, and its commands in commands.sh\n") ||
+		!strings.HasSuffix(out, "\nS15\tlayup-setup\tdone\tevery row of verify.tsv is pass or clear\n") {
+		t.Fatalf("the run with verify.tsv: exit %d, stderr %q\n%s\nwant 0, S13 operator and S15 done", code, errOut, out)
+	}
+	records := gitIn(t, target, "rev-parse", "layup-records")
+	if got := gitIn(t, target, "for-each-ref", "--format=%(refname) %(objectname)", "refs/heads/main", "refs/heads/layup-setup"); got != before {
+		t.Errorf("main and layup-setup moved: %q; want %q", got, before)
+	}
+	if got := gitIn(t, target, "for-each-ref", "--format=%(refname)"); got != "refs/heads/layup-records\nrefs/heads/layup-setup\nrefs/heads/main" {
+		t.Errorf("the refs %q; want main, layup-setup and layup-records only", got)
+	}
+	if got := gitIn(t, target, "worktree", "list", "--porcelain"); strings.Count(got, "worktree ") != 1 {
+		t.Errorf("git worktree list:\n%s\nwant the work tree of the target only: S15 and the fixture runs remove their scratch trees", got)
+	}
+	at, _ := record.Value("S02", "pin.time")
+	when, _ := time.Parse("2006-01-02T15:04:05Z", at)
+	unix := fmt.Sprint(when.Unix())
+	if got, want := gitIn(t, target, "log", "--format=%P|%s|%an <%ae>|%at|%cn <%ce>|%ct", "layup-records"), "|chore: the records of the setup|"+setup.Who.Name+
+		" <"+setup.Who.Email+">|"+unix+"|"+setup.Who.Name+" <"+setup.Who.Email+">|"+unix; got != want {
+		t.Errorf("the records commit: %q; want %q: one commit with no parent, by the App's bot at pin.time", got, want)
+	}
+	if got := gitIn(t, target, "ls-tree", "-r", "--name-only", "layup-records"); got != "README.md\nrule-paths.tsv\nsetup/record.tsv\nsetup/verify.tsv" {
+		t.Errorf("the files of layup-records: %q", got)
+	}
+	recordFile, _ := os.ReadFile(filepath.Join(w, "out", "record.tsv"))
+	if got := gitIn(t, target, "show", "layup-records:setup/record.tsv"); got+"\n" != string(recordFile) || got+"\n" == "" {
+		t.Errorf("setup/record.tsv of layup-records differs from out/record.tsv")
+	}
+	if got := gitIn(t, target, "show", "layup-records:setup/verify.tsv"); got+"\n" != table {
+		t.Errorf("setup/verify.tsv of layup-records differs from out/verify.tsv")
+	}
+	reg, err := os.ReadFile(filepath.Join(w, "out", "rule-paths.tsv"))
+	rows, rerr := tsv.Read(reg, setup.RulePathsSchema)
+	if err != nil || rerr != nil || len(rows) == 0 || rows[0][0] != ".github/" || gitIn(t, target, "show", "layup-records:rule-paths.tsv")+"\n" != string(reg) {
+		t.Fatalf("rule-paths.tsv: %v, %v; want the register by its schema, on layup-records", err, rerr)
+	}
+	for _, r := range [][]string{{".github/gates.sh", "\u2014", "catalog"}, {"docs/links/link-lint.sh", "\u2014", "baseline"}, {"docs/gates.tsv", "\u2014", "catalog"},
+		{floor, "\u2014", "catalog"}, {"docs/guardrails.md", "added lines in section 2", "baseline"}} {
+		if !strings.Contains(string(reg), "\n"+strings.Join(r, "\t")+"\n") {
+			t.Errorf("rule-paths.tsv has no row %q:\n%s", r, reg)
+		}
+	}
+	cmds, err := os.ReadFile(filepath.Join(w, "out", "commands.sh"))
+	if want := "\ngit -C target push origin main\n# the push of the setup commits onto the default branch, a fast-forward from the root commit\n" +
+		"git -C target push origin layup-setup:main\n# the push of the first records commit, the branch layup-records\ngit -C target push origin layup-records\n" +
+		"# the apply of the ruleset of the default branch, with the Operator's login\ngh api --method POST 'repos/" + standin.Name + "/rulesets' --input out/ruleset-default.json\n"; err != nil || !strings.HasSuffix(string(cmds), want) {
+		t.Errorf("commands.sh: %v\n%s\nwant the end\n%s", err, cmds, want)
+	}
+	if out, err := exec.Command("sh", "-n", filepath.Join(w, "out", "commands.sh")).CombinedOutput(); err != nil {
+		t.Errorf("sh -n commands.sh: %v\n%s", err, out)
+	}
+	if code, again, _ := run("setup", w); code != 0 || again != out || gitIn(t, target, "rev-parse", "layup-records") != records {
+		t.Errorf("a rerun: exit %d, the same table %v, layup-records %s; want 0, the same table and no second records commit", code, again == out, records)
 	}
 }

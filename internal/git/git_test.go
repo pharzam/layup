@@ -14,7 +14,7 @@ import (
 // wantConfig is the -c values that every call starts with.
 var wantConfig = strings.Fields("-c core.hooksPath=/dev/null -c core.attributesFile=/dev/null " +
 	"-c core.excludesFile=/dev/null -c core.autocrlf=false -c core.precomposeUnicode=false -c commit.gpgsign=false " +
-	"-c http.emptyAuth=false")
+	"-c http.emptyAuth=false -c maintenance.auto=false")
 
 // fullID is an object ID of SHA-1, 40 hexadecimal characters.
 const fullID = "0123456789abcdef0123456789abcdef01234567"

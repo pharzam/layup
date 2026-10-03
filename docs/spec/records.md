@@ -22,7 +22,7 @@ or payload of one task is under `tasks/<task>/`.
 
 | Path | Record | § | Writer | Phase | Schema |
 | ---- | ------ | - | ------ | ----- | ------ |
-| `README.md` | what the branch is, and how to read it with no tool | 3 | `layup setup` (O-115) | 1 | — |
+| `README.md` | what the branch is, and how to read it with no tool | 3 | `layup setup` (O-115) | 1 | a fixed text: [`setup.md`](setup.md#the-readme-of-the-records-branch) |
 | `start/problem-statement.md`, `start/vision.md` | the two briefs, byte for byte | 5 | `layup run` | 2 | — |
 | `start/start.tsv` | each brief's SHA-256, the LAYUP version, the forge plan, the values of the Start command | 5, 13 | `layup run` | 2 | later |
 | `setup/record.tsv` | the setup record: each value with its source, the pin rows included | 5 | `layup setup` | 1 | [`setup.md`](setup.md#the-setup-record) |

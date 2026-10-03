@@ -30,10 +30,9 @@ same summary, dated — rather than deleting it or checking it off.
 - **<ID>** — <one-sentence summary> ([<ADR or doc link>](...); [detail](<id>.md))
 -->
 
-- **T-stfn** — Step 2, the core engine: `layup gate`, `layup setup` and `layup setup verify`, the telemetry and stall records, the release review and the first pilot ([#29](https://github.com/pharzam/layup/issues/29); [plan](../plan/README.md))
+- **T-stfn** — Step 2 (the name that the title of its issue #29 gives it), the core engine: `layup gate`, `layup setup` and `layup setup verify`, the telemetry and stall records, the release review and the first pilot ([#29](https://github.com/pharzam/layup/issues/29); [plan](../plan/README.md))
 - **T-b97r** — `layup setup` and `layup setup verify`, the parent of its child tasks ([#77](https://github.com/pharzam/layup/issues/77); [plan](../plan/README.md))
 - **T-vk3k** — `layup gate`, the parent of its child tasks ([#33](https://github.com/pharzam/layup/issues/33); [plan](../plan/README.md))
-- **T-d6q5** — Row 15 of the plan: Steps S12, S13 and S15, and the checks `jobs` and `gate:<kind>` ([#92](https://github.com/pharzam/layup/issues/92); [plan](../plan/README.md#the-tasks-of-phase-1))
 - **T-dep6** — Row 16 of the plan: A whole setup, end to end, with no network ([#93](https://github.com/pharzam/layup/issues/93); [plan](../plan/README.md#the-tasks-of-phase-1))
 - **T-tmhw** — Row 17 of the plan: The telemetry record: the schemas of `telemetry.tsv` and `prices.tsv` in code ([#94](https://github.com/pharzam/layup/issues/94); [plan](../plan/README.md#the-tasks-of-phase-1))
 - **T-dgy7** — Row 18 of the plan: The stall record: the schema of `stalls.tsv` in code ([#95](https://github.com/pharzam/layup/issues/95); [plan](../plan/README.md#the-tasks-of-phase-1))

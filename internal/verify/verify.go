@@ -2,7 +2,7 @@
 // checks of layup setup verify (docs/spec/setup.md, The checks of layup setup
 // verify). It reads the work area of the target, runs each check on a scratch
 // work tree of the head of the branch layup-setup, and gives the table
-// setup-verify.
+// setup-verify, whose schema is in internal/work.
 package verify
 
 import (
@@ -20,14 +20,6 @@ import (
 	"github.com/pharzam/layup/internal/tsv"
 	"github.com/pharzam/layup/internal/work"
 )
-
-// TableSchema is the form of the table of layup setup verify: the block
-// setup-verify of docs/spec/setup.md.
-var TableSchema = tsv.Schema{Name: "setup-verify", Location: "stdout", Columns: []tsv.Column{
-	{Name: "check", Type: "text", Key: true},
-	{Name: "result", Type: "enum(pass|fail|not-active|clear)"},
-	{Name: "reason", Type: "text"},
-}}
 
 // The fixed reasons of a row that did not run.
 const (
@@ -50,13 +42,13 @@ func (t Table) Results() []string {
 	return out
 }
 
-// Write writes the table by TableSchema.
+// Write writes the table by the schema of internal/work (D7 of #92).
 func (t Table) Write(w io.Writer) error {
 	var rows [][]string
 	for _, r := range t.Rows {
 		rows = append(rows, []string{r.Check, r.Result, r.Reason})
 	}
-	return tsv.Write(w, TableSchema, rows)
+	return tsv.Write(w, work.VerifySchema, rows)
 }
 
 // An InputError is an error that the user fixes in the work area or on the
@@ -87,22 +79,24 @@ type input struct {
 	answers work.Answers
 }
 
-// A check is one row of the table of setup.md: run gives its findings, or
-// script names the baseline's own script that it runs (D5 of #87); a check
-// with neither is one that this version of layup does not have yet.
+// A check is one row of the table of setup.md: run gives its findings, script
+// names the baseline's own script that it runs (D5 of #87), or kind is the
+// kind of a row gate:<kind> (D3 of #92); a check with none is one that this
+// version of layup does not have yet.
 type check struct {
 	name   string
 	run    func(in input) []string
 	script string
+	kind   *gate.Kind
 }
 
 // built reports whether this version of layup has the check.
-func (c check) built() bool { return c.run != nil || c.script != "" }
+func (c check) built() bool { return c.run != nil || c.script != "" || c.kind != nil }
 
 // checks is the table of setup.md, in its order (D4 of #84). Rows 10 to 15 of
-// the plan add the other checks; row 11 added adapted, row 12 facts,
-// onboarding, glossary and guardrails in a target's form, row 10 markers,
-// sources and the two scripts.
+// the plan added the checks: row 11 adapted, row 12 facts, onboarding,
+// glossary and guardrails in a target's form, row 10 markers, sources and the
+// two scripts, and row 15 jobs and the rows gate:<kind>.
 var checks = []check{
 	{name: "discipline-tests", script: discTests},
 	{name: "pin", run: checkPin},
@@ -116,7 +110,7 @@ var checks = []check{
 	{name: "identity", run: checkIdentity},
 	{name: "link-lint", script: linkLint},
 	{name: "sources", run: checkSources},
-	{name: "jobs"},
+	{name: "jobs", run: checkJobs},
 }
 
 // gates is the name, in the one-check call, of each row gate:<kind> (K13).
@@ -129,6 +123,8 @@ type gitAPI interface {
 	Show(dir, rev, path string) ([]byte, error)
 	WorktreeAdd(dir, path, rev string) error
 	WorktreeRemove(dir, path string) error
+	Apply(dir, patch string) error
+	CommitAll(dir, message string, who git.Identity) error
 	history(dir string) history
 }
 
@@ -139,7 +135,16 @@ func (realGit) RevParse(dir, rev string) (string, error) { return git.RevParse(d
 func (realGit) Show(dir, rev, p string) ([]byte, error)  { return git.Show(dir, rev, p) }
 func (realGit) WorktreeAdd(dir, p, rev string) error     { return git.WorktreeAdd(dir, p, rev) }
 func (realGit) WorktreeRemove(dir, p string) error       { return git.WorktreeRemove(dir, p) }
+func (realGit) Apply(dir, patch string) error            { return git.Apply(dir, patch) }
 func (realGit) history(dir string) history               { return gitHistory{dir} }
+
+// CommitAll stages each change of the work tree at dir and commits it.
+func (realGit) CommitAll(dir, message string, who git.Identity) error {
+	if err := git.Add(dir); err != nil {
+		return err
+	}
+	return git.Commit(dir, message, who)
+}
 
 // gitHistory is the history of the repository at dir, through internal/git.
 type gitHistory struct{ dir string }
@@ -159,6 +164,7 @@ var (
 	tempRoot           = os.TempDir
 	tempDir            = func() (string, error) { return os.MkdirTemp(tempRoot(), "layup-verify-") }
 	removeAll          = os.RemoveAll
+	writeFile          = os.WriteFile
 )
 
 // Run runs each check of the table, and each row gate:<kind>, on the work
@@ -219,7 +225,7 @@ func Check(dir string, names []string, step func(i, n int, check string) func(),
 			return Table{}, err
 		}
 		for _, k := range kinds {
-			rows = append(rows, check{name: "gate:" + k.Name}) // row 15 builds the check
+			rows = append(rows, check{name: "gate:" + k.Name, kind: &k})
 		}
 	}
 
@@ -232,6 +238,7 @@ func Check(dir string, names []string, step func(i, n int, check string) func(),
 	// removed in the step of the last row, so the progress lines cover both
 	// (finding 5).
 	in := input{record: record, answers: answers, area: os.DirFS(dir)}
+	g := &gateRows{target: target, head: head, record: record, out: out}
 	var scratch, tree string
 	var added bool
 	var addErr, left error
@@ -253,6 +260,8 @@ func Check(dir string, names []string, step func(i, n int, check string) func(),
 			row.Reason = scratchFail
 		case c.script != "":
 			row = scriptRow(tree, c.name, c.script, out)
+		case c.kind != nil:
+			row = g.row(*c.kind)
 		default:
 			row = Row{Check: c.name, Result: "pass"}
 			if f := c.run(in); len(f) > 0 {
@@ -270,7 +279,7 @@ func Check(dir string, names []string, step func(i, n int, check string) func(),
 	if left != nil {
 		return t, &CleanupError{Path: scratch, Err: left}
 	}
-	return t, nil
+	return t, g.left
 }
 
 // within reports whether path is dir or a path under it, each made absolute

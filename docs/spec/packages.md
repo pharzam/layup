@@ -61,7 +61,7 @@ reads this table, and holds no copy of it, which could differ from it.
 | `internal/git` | the one caller of the `git` program: [its calls](#the-calls-of-internalgit) | — | `git` |
 | `internal/psb` | the rules G1 to G5 and the gap table ([`psb-check.md`](psb-check.md)) | `internal/tsv` | no |
 | `internal/catalog` | the stack catalog, embedded with `embed` ([`setup.md`](setup.md#the-stack-catalog)) | `internal/tsv` | no |
-| `internal/work` | the work area of a target: its paths, and the schemas and the readers of `answers.tsv` and `record.tsv` ([`setup.md`](setup.md#the-answers)), which `internal/setup` and `internal/verify` share (K9); the record row `answers.sha256`, which `internal/setup` writes and `internal/standin` gives its stand-in; the texts of the four questions of S01, which the stop table, the answers record of S04 and the stand-in use (task `T-7s0y`) | `internal/tsv` | no |
+| `internal/work` | the work area of a target: its paths, and the schemas and the readers of `answers.tsv` and `record.tsv` ([`setup.md`](setup.md#the-answers)), which `internal/setup` and `internal/verify` share (K9); the record row `answers.sha256`, which `internal/setup` writes and `internal/standin` gives its stand-in; the texts of the four questions of S01, which the stop table, the answers record of S04 and the stand-in use (task `T-7s0y`); the schema of the table of `layup setup verify`, which `internal/verify` writes and S15 reads (task `T-d6q5`) | `internal/tsv` | no |
 | `internal/gate` | runs the kinds of a gate manifest on a head ([`gate.md`](gate.md)) | `internal/tsv`, `internal/git` | `sh -c`: the gate commands |
 | `internal/setup` | the step runner of `layup setup` ([`setup.md`](setup.md)) | `internal/tsv`, `internal/git`, `internal/catalog`, `internal/work` | no |
 | `internal/verify` | the checks of `layup setup verify` ([`setup.md`](setup.md)) | `internal/tsv`, `internal/git`, `internal/catalog`, `internal/gate`, `internal/work` | `sh`: the baseline's own check scripts |
@@ -142,20 +142,20 @@ that the steps, the checks and `layup gate` name.
 | `SwitchCreate` | `git switch -c BRANCH COMMIT` | S04: the branch `layup-setup` |
 | `SwitchOrphan` | `git switch --orphan BRANCH` | S15: the branch `layup-records` |
 | `Branch` | `git symbolic-ref --quiet HEAD` | the step runner: a commit of S04 to S14 only on `layup-setup` (task `T-79y7`) |
-| `RevParse` | `git rev-parse --verify --end-of-options REV` | S02, S03: the tree of a commit; S04: the root commit and the branch `layup-setup`; the step runner: the head of `layup-setup` (task `T-7s0y`); `layup gate`: `--base`, `--head` |
+| `RevParse` | `git rev-parse --verify --end-of-options REV` | S02, S03: the tree of a commit; S04: the root commit and the branch `layup-setup`; the step runner: the head of `layup-setup` (task `T-7s0y`); `layup gate`: `--base`, `--head`; S15: the heads of `layup-setup` and `layup-records`; a fixture run: its commit (task `T-d6q5`) |
 | `ResetSoft` | `git reset --soft COMMIT` | the step runner: the undo of a step whose evidence fails (task `T-7s0y`, D12 of #86) |
 | `ResetHard` | `git reset --hard --quiet HEAD` | the step runner: before each step from S04 to S14, the target back to its head (task `T-b3r1`, D11 of #90) |
 | `Staged` | `git diff --cached --quiet --exit-code`; exit 1 is a staged change | the step runner: a commit only of a staged change (task `T-b3r1`, D12 of #90) |
-| `RootCommits` | `git rev-list --max-parents=0 --end-of-options REV --` | check `pin`; S03: the root commit of a run that stopped (task `T-7s0y`) |
-| `Message` | `git log -1 --format=%B --end-of-options REV --` | S03: the message of the root commit of a run that stopped (task `T-7s0y`) |
+| `RootCommits` | `git rev-list --max-parents=0 --end-of-options REV --` | check `pin`; S03: the root commit of a run that stopped (task `T-7s0y`); S15: the records commit of a run that stopped (task `T-d6q5`) |
+| `Message` | `git log -1 --format=%B --end-of-options REV --` | S03: the message of the root commit of a run that stopped (task `T-7s0y`); S15: the same for the records commit (task `T-d6q5`) |
 | `IsShallow` | `git rev-parse --is-shallow-repository` | check `pin` (task `T-6x75`) |
 | `LsFiles` | `git ls-files -z` | S10; checks `markers` and `adapted` |
-| `WorktreeAdd` | `git worktree add --detach -- PATH REV` | `layup gate`, step 2 of the run; `layup setup verify`: the scratch tree; a fixture run |
-| `WorktreeRemove` | `git worktree remove --force -- PATH` | `layup gate`, step 4 of the run; `layup setup verify`; a fixture run |
-| `Show` | `git show --end-of-options REV:PATH --` | `layup gate`, steps 1 and 2 of the run; `layup setup verify`: the manifest at the head of `layup-setup`; S04: the two index files and `docs/setup/facts.sha256` of the root commit (task `T-7s0y`); S05, S06 and S11: the task indexes, the facts index, `facts.sha256` and `open-gaps.tsv` of the head (task `T-b3r1`) |
+| `WorktreeAdd` | `git worktree add --detach -- PATH REV` | `layup gate`, step 2 of the run; `layup setup verify`: the scratch tree; a fixture run; S15: the scratch tree of the records commit (task `T-d6q5`) |
+| `WorktreeRemove` | `git worktree remove --force -- PATH` | `layup gate`, step 4 of the run; `layup setup verify`; a fixture run; S15 |
+| `Show` | `git show --end-of-options REV:PATH --` | `layup gate`, steps 1 and 2 of the run; `layup setup verify`: the manifest at the head of `layup-setup`; S04: the two index files and `docs/setup/facts.sha256` of the root commit (task `T-7s0y`); S05, S06 and S11: the task indexes, the facts index, `facts.sha256` and `open-gaps.tsv` of the head (task `T-b3r1`); S12: the paths of the entry and `open-gaps.tsv` of the head; S13 and S15: the manifest of the head; S15: the files of the records commit of a run that stopped (task `T-d6q5`) |
 | `DiffNames` | `git diff --name-only --no-renames -z --end-of-options BASE HEAD --` | `layup gate`: a `pending` kind |
 | `Apply` | `git apply -- PATCH` | check `gate:<kind>`: the known-bad fixture |
-| `LsTree` | `git ls-tree -r -z --full-tree --end-of-options REV -- PATH` | `layup gate`, step 2 of the run: the files of a `config` path at the base, with their modes (task `T-5sgt`); S04: the records of `docs/adr/` and `docs/facts/` at the root commit (task `T-7s0y`); S05: the history at the head; S11: the records of `docs/facts/` at the head (task `T-b3r1`) |
+| `LsTree` | `git ls-tree -r -z --full-tree --end-of-options REV -- PATH` | `layup gate`, step 2 of the run: the files of a `config` path at the base, with their modes (task `T-5sgt`); S04: the records of `docs/adr/` and `docs/facts/` at the root commit (task `T-7s0y`); S05: the history at the head; S11: the records of `docs/facts/` at the head (task `T-b3r1`); S12: the tree of the head; S15: the `.sh` files of `layup-setup`, and the tree of the records commit of a run that stopped (task `T-d6q5`) |
 
 - `--end-of-options` or `--` comes before each revision, URL and path, so an
   input is never an option (`layup gate` takes revisions from its arguments).
@@ -166,8 +166,8 @@ that the steps, the checks and `layup gate` name.
   call refuses any other text before `git` starts.
 - `DiffNames` names a renamed path at both ends, so a renamed product path
   counts as changed; `-z` gives each path unchanged.
-- The orphan commit of S15 (task `T-d6q5`, #92) needs a scratch work tree, or
-  a new call: `switch --orphan` removes the tracked files from the work tree.
+- S15 makes the orphan commit in a scratch work tree (task `T-d6q5`, #92), as
+  `switch --orphan` removes the tracked files from the work tree.
 
 **No default identity** (decided here, D2 of #79). `Commit` takes a name, an
 e-mail address and a time: the author and the committer, and both dates
@@ -190,9 +190,17 @@ pass.
 - Each call starts with `-c core.hooksPath=/dev/null`,
   `-c core.attributesFile=/dev/null`, `-c core.excludesFile=/dev/null`,
   `-c core.autocrlf=false`, `-c core.precomposeUnicode=false`,
-  `-c commit.gpgsign=false` and `-c http.emptyAuth=false`. Without the second
-  and the third, the per-user attributes file changed the bytes of a staged
-  file, and the per-user ignore file dropped a file.
+  `-c commit.gpgsign=false`, `-c http.emptyAuth=false` and
+  `-c maintenance.auto=false`. Without the second and the third, the per-user
+  attributes file changed the bytes of a staged file, and the per-user ignore
+  file dropped a file. Without the last, a commit runs `git maintenance run
+  --auto`, whose tasks go on in the background after the call ends (since
+  `git` 2.47); in CI of the pull request #115 (`git` 2.55.0) such a task
+  repacked into `.git/objects` of a work area while a test removed it (task
+  `T-d6q5`). Which version first repacks after a commit is not shown: `git`
+  2.54 made the "geometric" strategy the default of manual maintenance, and a
+  hand run on 2.54.0 saw no repack after a commit (review round 2 of #92). So
+  no call leaves a process of `git` in a repository of LAYUP.
 - On macOS, `git init` writes `core.precomposeunicode = true` into the
   repository; `Add` then stored a decomposed (NFD) file name composed (NFC),
   so a tree with such a path differed on a macOS host only. With `false`,

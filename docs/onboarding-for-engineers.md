@@ -86,11 +86,11 @@ of a problem statement as one batch (five deterministic rules, G1 to G5, in
 `internal/psb`), `layup gate REPO --base REV --head REV` runs the gate kinds
 of a target's manifest on a change, from outside the target (`internal/gate`),
 `layup setup WORK` runs the steps of a target's setup and resumes from its
-record (`internal/setup`; so far the steps S01 to S11 and S14, from the
-answers and the problem statement to the pin, the prose files and the markers),
-and
-`layup setup verify WORK` checks the setup of a target from outside, so far
-with each check but `jobs` and `gate:<kind>` (`internal/verify`). The [architecture](architecture.md) describes what it becomes:
+record (`internal/setup`; the steps S01 to S15, from the answers and the
+problem statement to the pin, the prose files, the markers, the gate files,
+the ruleset and the first records commit), and
+`layup setup verify WORK` checks the setup of a target from outside, with the
+gates of each kind on a known-bad fixture (`internal/verify`). The [architecture](architecture.md) describes what it becomes:
 `layup run`, the orchestrator of a target's whole lifecycle, from outside the
 target; each part is followed through one concrete case in
 [`walkthroughs/`](walkthroughs/README.md). The exact contracts that the code

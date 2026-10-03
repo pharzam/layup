@@ -3,6 +3,8 @@
 package setup
 
 import (
+	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -15,14 +17,14 @@ import (
 	"github.com/pharzam/layup/internal/work"
 )
 
-// The Go schemas of the two tables, and of the gap table that S01 reads (D5
-// of #86), equal their blocks.
+// The Go schemas of the two tables, of the gap table that S01 reads (D5 of
+// #86) and of the rule-path register (#92) equal their blocks.
 func TestTheSchemasEqualTheirBlocks(t *testing.T) {
 	blocks, err := tsv.ReadBlocks(os.DirFS(filepath.Join("..", "..", "docs", "spec")))
 	if err != nil {
 		t.Fatal(err)
 	}
-	for name, s := range map[string]tsv.Schema{"setup-steps": StepsSchema, "setup-stop": StopSchema, "psb-gaps": GapsSchema} {
+	for name, s := range map[string]tsv.Schema{"setup-steps": StepsSchema, "setup-stop": StopSchema, "psb-gaps": GapsSchema, "rule-paths": RulePathsSchema} {
 		block, ok := blocks[name]
 		if !ok {
 			t.Errorf("docs/spec/ has no block %s", name)
@@ -34,9 +36,70 @@ func TestTheSchemasEqualTheirBlocks(t *testing.T) {
 	}
 }
 
+// The README.md of the records branch is the fixed text of setup.md, byte for
+// byte (note 2 of the plan review of #92).
+func TestTheRecordsReadmeIsTheTextOfSetupMd(t *testing.T) {
+	spec, err := os.ReadFile(filepath.Join("..", "..", "docs", "spec", "setup.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, text, ok := strings.Cut(string(spec), "\n```text records-readme\n")
+	text, _, closed := strings.Cut(text, "\n```\n")
+	if !ok || !closed || text+"\n" != recordsReadme {
+		t.Errorf("the block records-readme of setup.md:\n%s\nwant\n%s", text, recordsReadme)
+	}
+}
+
+// shape gives the keys of a JSON value, with the shape of each value: an
+// object its keys, a list the shape of its first item, and another value its
+// kind.
+func shape(v any) string {
+	switch v := v.(type) {
+	case map[string]any:
+		var keys []string
+		for k, x := range v {
+			keys = append(keys, k+":"+shape(x))
+		}
+		slices.Sort(keys)
+		return "{" + strings.Join(keys, ",") + "}"
+	case []any:
+		if len(v) == 0 {
+			return "[]"
+		}
+		return "[" + shape(v[0]) + "]"
+	case nil:
+		return "null"
+	}
+	return fmt.Sprintf("%T", v)
+}
+
+// The protection file of S13 has the keys of LAYUP's own
+// docs/setup/branch-protection.json, so the same check rules read it (D4 of
+// #92).
+func TestTheProtectionFileHasTheKeysOfLayups(t *testing.T) {
+	own, err := os.ReadFile(filepath.Join("..", "..", "docs", "setup", "branch-protection.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, err := protectionBody([]string{"static"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var a, b any
+	if err := json.Unmarshal(own, &a); err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(body, &b); err != nil {
+		t.Fatal(err)
+	}
+	if shape(a) != shape(b) {
+		t.Errorf("the keys of the protection file:\n%s\nwant the keys of LAYUP's own:\n%s", shape(b), shape(a))
+	}
+}
+
 func gitOut(t *testing.T, dir string, args ...string) string {
 	t.Helper()
-	out, err := exec.Command("git", append([]string{"-C", dir}, args...)...).Output()
+	out, err := exec.Command("git", append([]string{"-C", dir, "-c", "maintenance.auto=false"}, args...)...).Output() // no background repack (#92)
 	if err != nil {
 		t.Fatalf("git %s: %v", strings.Join(args, " "), err)
 	}

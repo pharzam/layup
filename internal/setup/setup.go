@@ -1,8 +1,8 @@
 // Package setup is the step runner of layup setup (docs/spec/setup.md, The
 // command layup setup): it runs the steps of a target's setup in their order,
 // resumes from the setup record, and gives the step table, or the stop table
-// of a stop. The steps themselves are rows 9, 13 and 15 of the plan; until
-// then they are stubs (Stubs).
+// of a stop. The steps themselves are rows 9, 13 and 15 of the plan (Steps);
+// Stubs gives a stub of each.
 package setup
 
 import (
@@ -105,6 +105,11 @@ type Step struct {
 	// after its commit, and gives the reason of the first that does not pass,
 	// or "" (S04 to S14, D12 of #86).
 	Evidence func(dir string) string
+	// Records gets the record that the runner then writes, with the step's
+	// value rows and its done row, and the identity of the commits: S15 makes
+	// the records commit of it (note 3 of the plan review of #92). An error
+	// is a fail of the step, with no done row; an *InputError is exit 2.
+	Records func(dir string, r work.Record, who git.Identity) error
 }
 
 // Order is the run order (D1 of #85, O-123): the prose step, S07, S08, S09 and
@@ -184,6 +189,11 @@ type system struct {
 	removeAll      func(path string) error
 	rename         func(from, to string) error
 	write          func(path string, data []byte) error
+	// The calls of the records commit of S15 (final.go).
+	tempDir        func() (string, error)
+	worktreeAdd    func(dir, path, rev string) error
+	worktreeRemove func(dir, path string) error
+	switchOrphan   func(dir, branch string) error
 }
 
 var sys = system{
@@ -229,6 +239,10 @@ var sys = system{
 	removeAll:      os.RemoveAll,
 	rename:         os.Rename,
 	write:          writeFile,
+	tempDir:        tempDir,
+	worktreeAdd:    git.WorktreeAdd,
+	worktreeRemove: git.WorktreeRemove,
+	switchOrphan:   git.SwitchOrphan,
 }
 
 func writeFile(path string, data []byte) error {
@@ -357,11 +371,22 @@ func Run(dir string, steps map[string]Step, who git.Identity, step func(i, n int
 				if handOff {
 					evidence = handedOff + o.Evidence
 				}
-				record = next
 				if len(s.Reads) > 0 {
-					record = append(record, work.AnswersHash(id, answers, s.Reads))
+					next = append(next, work.AnswersHash(id, answers, s.Reads))
 				}
-				record = append(record, []string{id, "done", evidence, "step", ""})
+				next = append(next, []string{id, "done", evidence, "step", ""})
+				if s.Records != nil { // the records commit holds the record that the run then writes
+					if err := s.Records(dir, next, who); err != nil {
+						var input *InputError
+						if errors.As(err, &input) {
+							end()
+							return Result{}, err
+						}
+						ran[id], failed = StepRow{id, s.Actor, Fail, "the records commit failed: " + firstLine(err)}, id
+						break
+					}
+				}
+				record = next
 				if err := sys.writeRecord(dir, record); err != nil {
 					end()
 					return Result{}, err

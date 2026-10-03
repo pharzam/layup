@@ -133,11 +133,16 @@ layup setup WORK
   no command of an earlier record stays; a run that ends with exit 2 does not
   write it. The texts of the commands, the apply of the ruleset included, are
   the steps' (S03, S13, S15).
-- **The present code**: S01 to S04 are built (task `T-7s0y`, #86), and S05 to
-  S11 and S14 (task `T-b3r1`, #90); S12, S13 and S15 are stubs, `not-active`,
-  evidence `not built yet`, so `layup setup WORK` gives exit 1 at S12 until row
-  15 of the [plan](../plan/README.md#the-tasks-of-phase-1) builds them
-  (`NFR-004`).
+- **The present code**: S01 to S04 are built (task `T-7s0y`, #86), S05 to
+  S11 and S14 (task `T-b3r1`, #90), and S12, S13 and S15 (task `T-d6q5`,
+  #92), so `layup setup WORK` does each step of phase 1.
+- **The hook of a step** (task `T-d6q5`, note 3 of the plan review of #92):
+  when a step with a hook is done, the runner gives the hook the record that
+  it then writes, with the step's value rows and its `done` row, and the
+  identity of the commits; S15 makes the records commit there, so the
+  committed `setup/record.tsv` equals `out/record.tsv` after the run. An error
+  of the hook is `fail` of the step, reason `the records commit failed:
+  <reason>`, with no `done` row; an input error of the hook is exit 2.
 
 **The work area** (decided here: §1 names the work area on the host, and no section gives its layout; one directory per target keeps a run resumable from files alone):
 
@@ -175,7 +180,7 @@ the one home of the phase-1 steps of a target. A row that differs from
 | S10 | `layup setup`; stops for the Operator | the tree; `answers.tsv` | Lists every marker of the tree outside the exemptions of LAYUP's `MK_EXEMPT` ([`setup-check.sh`](../setup/setup-check.sh); the baseline has no setup check, §5), which the engine embeds at its version. A path of that pattern that a target does not have matches nothing. A marker with no answer row stops the run; the table lists all of them at once (§5 gap check, "one batch"), each by its first line. It changes no file. | — | every marker has an answer row |
 | S11 | `layup setup` | the answers of S10 | Replaces each marker whose answer has a value with that value, and writes its record row with the source. A marker whose answer is `gap` keeps its marker and gets a row in `docs/setup/open-gaps.tsv` with the answer's question (Invariant 4). When S10 listed at least one marker, writes the answer of each marker that S10 listed as a second raw fact record, in the same form, with its own index row and its own line in `facts.sha256`; with no marker, it writes no second record; the record of S04 does not change (a raw facts record is immutable; O-124). | the tree; the second answers record; record rows `marker:<file>:<line>` | checks `markers`, `sources` and `facts` |
 | S12 | `layup setup` | the catalog entry of the stack | Writes the files of the entry (for Go: `go.mod` with the module path from `name`, the tools' configuration), `docs/gates.tsv`, and one CI job per gate kind, whose id and name are the kind (K30). For each gap of the entry (the coverage floor of Go, K24), writes its row of `docs/setup/open-gaps.tsv` and its record row. The baseline's own workflows stay byte for byte (`REQ-018`). Adds no `setup-check` job. Changes `steps.tsv` S12: ADR-0011 decision 7, ADR-0016, §5 Scaffold 4. | the gate files; the gap rows of the entry | checks `jobs` and `gates` (each row `gate:<kind>`) |
-| S13 | `layup setup`; applied by the Operator | the job names | Writes `docs/setup/branch-protection.json` (in the form of LAYUP's own file of that name; the baseline has no `docs/setup/`) and `WORK/out/ruleset-default.json`: the default branch and the ref `layup-probe`; a pull request required; each gate job a required check, pinned to GitHub Actions; no force push, no deletion; an empty bypass list. In phase 1 it requires no `layup/` check, because no phase-1 command posts one ([`records.md`](records.md#nfr-002--a-target-is-independent-of-layup)). Writes to `commands.sh` the push of `layup-setup` onto the default branch (`git push origin layup-setup:main`, a fast-forward from the root commit; §5 Scaffold 6: "pushes the setup commits on top of the root commit") and, after it, the apply command of the ruleset. | the ruleset file; commands | the ruleset file, and its commands in `commands.sh` for the Operator (a hand-off: phase 1 does not see the Operator's run) |
+| S13 | `layup setup`; applied by the Operator | the job names | Writes `docs/setup/branch-protection.json` (in the form of LAYUP's own file of that name; the baseline has no `docs/setup/`) and `WORK/out/ruleset-default.json`: the default branch and the ref `layup-probe`; a pull request required; each gate job a required check, pinned to GitHub Actions; no force push, no deletion; an empty bypass list. Changes `steps.tsv` S13 ("one required check per job"): the required checks are the gate jobs only (**decided here**, task `T-d6q5`, condition 2 of the plan review of #92), as §6 names the native gate jobs as the required checks, this table is the one home of a target's steps, and a required check of a baseline job that a later baseline renames or removes would block each merge of the target. So the baseline's own CI jobs run on each pull request of the target and block no merge. In phase 1 it requires no `layup/` check, because no phase-1 command posts one ([`records.md`](records.md#nfr-002--a-target-is-independent-of-layup)). Writes to `commands.sh` the push of `layup-setup` onto the default branch (`git push origin layup-setup:main`, a fast-forward from the root commit; §5 Scaffold 6: "pushes the setup commits on top of the root commit") and, after it, the apply command of the ruleset. | the ruleset file; commands | the ruleset file, and its commands in `commands.sh` for the Operator (a hand-off: phase 1 does not see the Operator's run) |
 | S14 | `layup setup`; the text is an input | `inputs/files/README.md`, `inputs/files/AGENTS.md`, and `inputs/files/<path>` of each other file that check `adapted` flags | Copies the files, with a record row `file:<path>` each (K42); a missing file stops the run, in the one table of the prose step (O-123). | the files | checks `identity` and `adapted` |
 | S15 | `layup setup`; the push by the Operator | the record; `out/verify.tsv` | Writes the record's last rows and the rule-path register, and the first commit of `layup-records` ([below](#where-the-records-go-in-phase-1), O-115). Not `steps.tsv` into the target (§5: LAYUP's own file). | `out/record.tsv`, `out/rule-paths.tsv`; the records commit; a command | every row of `verify.tsv` is `pass` or `clear` |
 
@@ -439,6 +444,150 @@ D10 of its plan, with the conditions of its plan review):
   setup needs the union of those files and the five named ones as input files;
   the first pilot (row 20 of the plan) meets them.
 
+**Decided here** (task `T-d6q5`, #92), the rules of S12, S13 and S15 and of
+the checks `jobs` and `gate:<kind>` (D1 to D7 of its plan, with the conditions
+and the notes of its plan review):
+
+- **S12** (D1). S12 reads the entry of the stack of the row `S01 stack` from
+  the catalog of the binary, and writes each file of the entry with the module
+  path `github.com/OWNER/NAME` of the row `S01 name` (the rule of S01 above),
+  and `docs/gates.tsv`, the manifest of the entry. For each gap of the entry it
+  writes the row of `docs/setup/open-gaps.tsv` after the rows that the head
+  has, and the record row `marker:<path>:<line>` (value the marker, source
+  `gap`). Its other value rows: `module` (source `answer`, ref `S01-name`) and
+  one row `catalog:<path>` per file (the SHA-256 of its bytes; source
+  `catalog`; ref `<stack>/files/<path>.tmpl`, or `<stack>/kinds.tsv` for the
+  manifest), which check `sources` resolves. A path of the entry that the head
+  holds with other bytes, or as a directory, is `fail`: the baseline's own
+  files stay byte for byte (`REQ-018`). The same bytes are the commit of a run
+  that stopped, so a rerun gives the same tree.
+- **Check `jobs`** (D2): for each kind of `docs/gates.tsv`, a workflow
+  `.github/workflows/*.yml` or `*.yaml` has a job whose check name is the kind:
+  its `name:`, else its id, as `check_protection` reads a job and as a ruleset
+  names a required check (K30). The reader is the one of `check_protection`,
+  with no YAML library (`NFR-007`): under the key `jobs:` at the start of a
+  line, a line at the indent of the first line is a job, and a `name:` at the
+  indent of the job's first child line is its name; a blank line and a
+  comment are skipped; a carriage return at a line end, a comment after a name
+  and the quotes around a name or an id are not part of it. A kind with no job
+  is `fail`, reason `no CI job for the kind <kind>`. Whether a job runs the
+  target's own manifest is the rule of the job script (task `T-c06a`), not of
+  this check. **Known limit** (note 6): a workflow in another form of YAML (flow
+  style, an anchor, a tab as indent, a name on two lines) gives a false
+  `fail`, never a false pass.
+- **The rows `gate:<kind>`** (D3, condition 1). `internal/verify` runs
+  `internal/gate` on `WORK/target` once with `--base` and `--head` the head of
+  `layup-setup` (the clean run, at the first active row), and, for each active
+  kind whose clean row is `pass` or `clear`, once with `--head` a commit of
+  the kind's fixture from the catalog entry of the stack of the record: in a
+  scratch work tree outside the work area, detached at the setup head,
+  `git apply` of the patch, then a commit of each change by
+  `layup setup verify <verify@layup.invalid>` at the date `pin.time`, on no
+  ref; the run removes that tree before the gate runs. The first rule that
+  matches decides, as the table says, and each reason names its run
+  (`the clean run: <reason>`, `the fixture run: <reason>`). A fixture that
+  does not apply is `not-active`, reason `fixture does not apply: <the first
+  line of git apply>` (`NFR-004` item 1: the fixture run did not run); a row
+  with no fixture, no stack or no `pin.time` is `not-active` with its reason.
+  Standard error gets a line for each run (`layup setup verify: the clean run
+  of the gate on <commit>`, `layup setup verify: the fixture run of <kind> on
+  <commit>`) and the output of each kind that the gate ran.
+- **S13** (D4, conditions 2 and 3, note 1). S13 reads the kinds of
+  `docs/gates.tsv` at the head, which are the names of the gate jobs (K30),
+  and writes two files with one required check per kind, pinned to the GitHub
+  Actions app 15368 (its evidence is V-21 of
+  [`record-T-n1hp.md`](../setup/record-T-n1hp.md): GitHub read back LAYUP's
+  own body with that ID). `docs/setup/branch-protection.json` has the keys of
+  LAYUP's own file: `strict` true, `enforce_admins` true, a pull request with
+  0 required approvals and no other review setting, `restrictions` null, no
+  linear history, no force push, no deletion, and conversation resolution.
+  `WORK/out/ruleset-default.json` is the body of
+  `POST /repos/{owner}/{repo}/rulesets`: the name `layup: the default branch`
+  (it names the tool that wrote it and the branch, for the Operator who reads
+  the rulesets of the repository), target `branch`, enforcement `active`, the
+  refs `~DEFAULT_BRANCH` and `refs/heads/layup-probe`, the rules
+  `pull_request` (0 approvals, as an approval is an issue comment, §3, and the
+  App merges; review threads resolved), `required_status_checks` (strict),
+  `non_fast_forward` and `deletion`, and no bypass actor. Its value rows:
+  `branch-protection.sha256` and `ruleset.sha256` (source `computed`, ref
+  `sha256 <path>`). Its commands, run from the work area: order 2
+  `git -C target push origin layup-setup:main`, and order 4
+  `gh api --method POST 'repos/<OWNER/NAME>/rulesets' --input out/ruleset-default.json`.
+  **Known limit** (`NFR-003` item 1): the record has no source kind for a
+  fixed value of this specification, so the app ID, `strict` and the review
+  settings have no row of their own; the two hash rows hold the files.
+- **S15** (D5, D6, notes 2 and 3). With no `WORK/out/verify.tsv`, S15 stops
+  with one row `O-verify`, ask `Run layup setup verify '<WORK>' >
+  '<WORK>/out/verify.tsv', then run layup setup '<WORK>' again.` and `where`
+  `—`. A `verify.tsv` that the block `setup-verify` refuses is exit 2; a row
+  that is not `pass` or `clear` is `fail`, reason `out/verify.tsv: the row
+  <check> is <result>: <reason>`. Else S15 writes the rule-path register
+  ([above](#the-rule-path-register)) to `WORK/out/rule-paths.tsv`, with the
+  value rows `setup.head` (the commit of `layup-setup`; ref
+  `git rev-parse layup-setup`), `verify.sha256` and `rule-paths.sha256` (ref
+  `sha256 <path>`). Its hook makes the first commit of the orphan branch
+  `layup-records` in a scratch work tree outside the work area
+  (`git worktree add --detach` of the setup head, `git switch --orphan
+  layup-records`, the four files, and a commit by the identity of the run at
+  `pin.time`, O-136, with the message `chore: the records of the setup`), so
+  `main` and `layup-setup` do not move. The commit holds `README.md` (the text
+  [below](#the-readme-of-the-records-branch)), `setup/record.tsv`, `setup/verify.tsv` (the bytes of
+  `out/verify.tsv`) and `rule-paths.tsv`; a file whose hash is not its row is
+  a fail of the hook. A branch `layup-records` that exists while S15 is not
+  done is taken when it is one commit with no parent, the message of S15 and a
+  tree of the four files with their bytes, as S03 takes its root commit; else
+  it is exit 2. Its command: order 3, `git -C target push origin
+  layup-records`.
+- **The schema of `verify.tsv`** (D7, K9): the Go schema of the block
+  `setup-verify` is in `internal/work`; `internal/verify` writes the table by
+  it, and S15 reads the file by it.
+- **The tests of a whole setup** (D8, K6; note 1 of review round 1): the
+  integration tests of S12, S13 and S15 run the real steps S01 to S15 through
+  `internal/cli` on a stand-in baseline, so no test of `layup setup` makes a
+  work area through S12 by hand; the stand-in work area of `internal/standin`,
+  set up by hand, serves the tests of `layup setup verify` only. The e2e test of
+  a whole setup with no network is row 16's.
+- **Known limits** (notes 2 and 3 of review round 1): the job reader takes a
+  comment off a name before its quotes, so a quoted name that holds ` #` loses
+  the text after it (a false `fail`, as a kind holds no space); and S15 does
+  not refuse a `TMPDIR` in the work area, as `layup setup verify` does: its
+  scratch tree is removed after the records commit, and the commit is the
+  same. When the removal of the scratch work tree of S15 fails, S15 removes
+  its directory anyway, so the entry of the work tree stays in the target
+  until `git worktree prune`; the step fails and says it (note 4 of review
+  round 2).
+- **Known limits of `verify.tsv`** (note 4): the table names no head and no
+  work area, so S15 commits it as the Operator made it, and it judged the
+  record before the rows of S15. In phase 2, `layup run` writes the table
+  itself.
+
+### The README of the records branch
+
+The text of `README.md` of `layup-records`, which S15 writes (**decided here**,
+task `T-d6q5`, note 2 of the plan review of #92):
+
+```text records-readme
+# The records of this repository
+
+This branch, `layup-records`, holds the records that LAYUP keeps for this
+repository. It is an orphan branch: it shares no commit with the default
+branch.
+
+Only `layup run` writes this branch from Start on. Its first commit holds the
+records of the setup.
+
+Each file is a table of tab-separated values with a header row, or Markdown,
+so a person reads it with no tool. A plain `git clone` carries the branch as
+`origin/layup-records`.
+
+- `setup/record.tsv`: each value of the setup, with its source, and one done
+  row per step.
+- `setup/verify.tsv`: the table of `layup setup verify` before the records
+  commit.
+- `rule-paths.tsv`: the rule-path register: the paths whose change is a change
+  of the rules.
+```
+
 ### The stop table
 
 When a step stops (exit 3), `layup setup` prints every missing input of that
@@ -531,7 +680,14 @@ list): `.github/`, `.githooks/`, `.gitattributes`, `AGENTS.md`, `CLAUDE.md`,
 `docs/engineering-discipline.md`, `docs/issue-workflow.md`, `docs/ci/`,
 `docs/tests/`, each file of the tree whose name ends with `.sh`, `docs/gates.tsv`,
 each `config` path of the manifest, `docs/setup/`, `docs/facts/`, and
-`docs/guardrails.md` with its exception. A baseline whose rule files differ
+`docs/guardrails.md` with its exception. **Decided here** (task `T-d6q5`, D5 and
+note 9 of the plan review of #92), the source of each entry: `catalog` for
+`docs/gates.tsv`, each `config` path of the manifest at the head of
+`layup-setup` and each `.sh` file that S12 wrote (the record's rows
+`catalog:<path>`); `architecture` for `docs/setup/` and `docs/facts/` (§6 lists
+them, and the baseline has neither); `baseline` for each other entry, the
+baseline's own `.sh` files too. A path that the list gives twice has one row,
+with the source `catalog`. A baseline whose rule files differ
 is known limit L-A6 of the architecture. **Known limit of phase 1:** a new rule
 document that a newer baseline adds, and that this list does not name, breaks
 no step and fails no check, so it is not in the register; a LAYUP change that
@@ -568,8 +724,9 @@ root commit. The order of a setup in phase 1:
    row that is not `pass` or `clear` (exit 1); otherwise it makes, in
    `WORK/target`, the first commit of the orphan branch `layup-records` with
    `README.md` (a fixed text: what the branch is, that only `layup run` writes
-   it from Start on), `setup/record.tsv`, `setup/verify.tsv` and
-   `rule-paths.tsv`, and adds its push to `commands.sh`.
+   it from Start on; [the text](#the-readme-of-the-records-branch)), `setup/record.tsv`,
+   `setup/verify.tsv` and `rule-paths.tsv`, and adds its push to
+   `commands.sh`.
 4. The Operator runs `commands.sh`: the push of the root commit to `main`
    (S03), the push of `layup-setup` onto `main` (S13), the push of
    `layup-records` (S15), and the apply of the default branch's ruleset (S13),
@@ -637,12 +794,12 @@ reason  text                             -    the first failure, or the `clear` 
   missing or does not match its schema, and no commit at the branch
   `layup-setup`. Reason: the run cannot name its rows, or cannot read its input.
 - **A check that this version of `layup` does not have yet** is `not-active`,
-  reason `not built yet`, so the command gives exit 1 until rows 10 to 15 of the
-  [plan](../plan/README.md#the-tasks-of-phase-1) add each check (`NFR-004`
-  item 1). The present code has `discipline-tests`, `link-lint`, `markers` and
-  `sources` (task `T-8vpw`), `pin`, `kit-history`, `facts`, `onboarding`,
-  `glossary` and `guardrails` (task `T-9t1q`), `adapted` (task `T-8ya0`) and
-  `identity`.
+  reason `not built yet` (`NFR-004` item 1). Rows 10 to 15 of the
+  [plan](../plan/README.md#the-tasks-of-phase-1) added each check:
+  `discipline-tests`, `link-lint`, `markers` and `sources` (task `T-8vpw`),
+  `pin`, `kit-history`, `facts`, `onboarding`, `glossary` and `guardrails`
+  (task `T-9t1q`), `adapted` (task `T-8ya0`), `identity`, and `jobs` and the
+  rows `gate:<kind>` (task `T-d6q5`), so a correct setup exits 0.
 - **The scratch tree** is `git worktree add --detach` of the head of
   `layup-setup`, in a new temporary directory outside `WORK`: a temporary
   directory (`TMPDIR`) in `WORK` is an input error. The run adds the tree in the
@@ -1031,7 +1188,7 @@ task `T-3jpx`, #81):
   `not-active` where the job finds the tool.
 - **The coverage floor** (K24, L-B2): the file `docs/gates/coverage-floor.txt`
   of the target, the `config` of `test`, has one line, the marker of the floor,
-  and `gaps.tsv` gives its question. S12 (row 15 of the plan) writes, for each
+  and `gaps.tsv` gives its question. S12 (task `T-d6q5`) writes, for each
   gap of the entry (`Entry.Gaps`), its row of `docs/setup/open-gaps.tsv` and
   its record row `marker:<path>:<line>` (source `gap`). The command checks no
   floor until the idea owner or the Operator sets it with evidence.

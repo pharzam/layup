@@ -61,8 +61,8 @@ type Calls struct {
 }
 
 // Steps gives the steps of this version of layup: S01 to S04 (task T-7s0y,
-// #86), S05 to S11 and S14 (task T-b3r1, #90), and a stub of each other step,
-// not-active, not built yet, until row 15 of the plan builds it.
+// #86), S05 to S11 and S14 (task T-b3r1, #90), and S12, S13 and S15 (task
+// T-d6q5, #92).
 func Steps(b Brief, c Calls) map[string]Step {
 	m := Stubs()
 	set := func(id string, run func(Input) Outcome, checks ...string) {
@@ -91,6 +91,15 @@ func Steps(b Brief, c Calls) map[string]Step {
 	set("S14", func(in Input) Outcome { return runProseStep("S14", c, in) }, "identity", "adapted")
 	set("S10", func(in Input) Outcome { return runS10(c, in) })
 	set("S11", func(in Input) Outcome { return runS11(c, in) }, "markers", "sources", "facts")
+	set("S12", runS12, "jobs", "gates")
+	set("S13", runS13)
+	s = m["S13"]
+	s.Commands = commandsS13
+	m["S13"] = s
+	set("S15", runS15)
+	s = m["S15"]
+	s.Commands, s.Records = commandsS15, recordsS15
+	m["S15"] = s
 	return m
 }
 

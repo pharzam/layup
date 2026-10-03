@@ -51,10 +51,13 @@ func (e *FailedError) Error() string {
 
 func (e *FailedError) Unwrap() error { return e.Err }
 
-// config is the -c values that every call starts with.
+// config is the -c values that every call starts with. maintenance.auto=false
+// keeps a commit from starting the maintenance of git, whose tasks go on in
+// the background after the call ends: in CI of the pull request #115, on git
+// 2.55.0, one repacked (task T-d6q5).
 var config = strings.Fields("-c core.hooksPath=/dev/null -c core.attributesFile=/dev/null " +
 	"-c core.excludesFile=/dev/null -c core.autocrlf=false -c core.precomposeUnicode=false -c commit.gpgsign=false " +
-	"-c http.emptyAuth=false")
+	"-c http.emptyAuth=false -c maintenance.auto=false")
 
 // environ is the environment of a call: fixed values, PATH and TMPDIR of the
 // host when they are set, and extra. No other variable of the host reaches
