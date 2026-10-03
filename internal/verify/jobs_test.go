@@ -19,6 +19,7 @@ func TestJobNames(t *testing.T) {
 		{"quotes and comments", "jobs:\n  # the gates\n  \"a\": # x\n    name: 'static' # the kind\n\n  b:\n    name: \"test\"\n", []string{"static", "test"}},
 		{"CR line ends", "jobs:\r\n  static:\r\n    name: static  \r\n    steps:\r\n      - name: other\r\n", []string{"static"}},
 		{"a deeper name", "jobs:\n  a:\n    steps:\n      - name: static\n    name: b\n", []string{"b"}},
+		{"a name of a deeper map", "jobs:\n  a:\n    with:\n      name: static\n    runs-on: x\n", []string{"a"}},
 		{"four spaces", "jobs:\n    static:\n        name: x\n    test:\n        runs-on: y\n", []string{"x", "test"}},
 		{"a key after jobs", "jobs:\n  a:\n    runs-on: x\nenv:\n  b:\n    name: c\n", []string{"a"}},
 		{"no jobs", "name: gates\non: push\n", nil},
