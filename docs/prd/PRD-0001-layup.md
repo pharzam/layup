@@ -226,7 +226,7 @@ for a requirement of a later phase. Each delivering task fills the Test column.
 | REQ-008 | F-0003#48, F-0003#57, F-0001#12, F-0001#13, F-0001#24, F-0001#28 | — | ADR-0021, ADR-0022 | `M3a`, `M3b`, `M4b` | — |
 | REQ-009 | F-0003#49, F-0003#61, F-0001#37 | —           | ADR-0023 | T-dgy7; `M3d` | — |
 | REQ-010 | F-0003#49, F-0003#17, F-0003#18, F-0003#19, F-0001#14 | — | ADR-0023 | `M3d`, `M4b` | — |
-| REQ-011 | F-0003#50, F-0003#20, F-0003#21, F-0003#22, F-0003#60, F-0001#38 | — | ADR-0007, ADR-0024 | T-tmhw; `M2b`, `M4b` | — |
+| REQ-011 | F-0003#50, F-0003#20, F-0003#21, F-0003#22, F-0003#60, F-0001#38 | — | ADR-0007, ADR-0024 | T-tmhw; `M2b`, `M4b` | TestTheSchemasEqualTheirBlocks (internal/records, integration: the Go schemas of telemetry.tsv and prices.tsv equal their blocks, task T-tmhw); TestTelemetryRowsThatPass, TestTelemetryRowsThatBreakARule, TestPriceRows (internal/records, unit: a row of each status passes, and each row rule that the blocks give in words fails with its line and its column, task T-tmhw) |
 | REQ-012 | F-0003#51, F-0003#23, F-0003#24, F-0003#25, F-0003#62, F-0001#39 | — | ADR-0002, ADR-0018 | T-wjq4, T-0drh; `M2c`, `M2e`, `M2g` | prd-lint (this document); the review of `docs/spec/` (#74) |
 | REQ-013 | F-0003#52, F-0003#26, F-0003#27, F-0003#28, F-0003#66, F-0001#9 | §1.1 Inv-9 | ADR-0005, ADR-0012, ADR-0015, ADR-0020 | `M2b`, `M4a` | — |
 | REQ-014 | F-0003#67, F-0003#42            | —           | —        | `M4c` | — |
@@ -266,3 +266,4 @@ for a requirement of a later phase. Each delivering task fills the Test column.
 | 2026-10-02 | Steps S05 to S11 and S14 of `layup setup` (task `T-b3r1`, #90, O-123, O-124): the §12 Test cells of REQ-002, NFR-001 and NFR-003 name its tests | REQ-002, NFR-001, NFR-003 (the Test cells) |
 | 2026-10-03 | Steps S12, S13 and S15 of `layup setup`, and the checks `jobs` and `gate:<kind>` (task `T-d6q5`, #92): the §12 Test cells of REQ-002, REQ-004, REQ-007, NFR-001, NFR-002, NFR-003, NFR-004 and NFR-005 name its tests | REQ-002, REQ-004, REQ-007, NFR-001, NFR-002, NFR-003, NFR-004, NFR-005 (the Test cells) |
 | 2026-10-03 | A whole setup, end to end, with no network (task `T-dep6`, #93): the §12 Test cells of REQ-002, NFR-001, NFR-002, NFR-003, NFR-004, NFR-005 and NFR-006 name its tests | REQ-002, NFR-001, NFR-002, NFR-003, NFR-004, NFR-005, NFR-006 (the Test cells) |
+| 2026-10-03 | The telemetry record: the schemas of `telemetry.tsv` and `prices.tsv` in code (task `T-tmhw`, #94): the §12 Test cell of REQ-011 names its tests | REQ-011 (the Test cell) |

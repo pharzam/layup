@@ -218,6 +218,41 @@ date      time       -    when the source was read
 classes (the harness reports differ; a fourth class is a new column, added
 here first). The architecture gives the content (§12) and not the names.
 
+**Decided here** (task `T-tmhw`, #94, D2 and D3 of its plan), the row rules
+that the two blocks give in words, which `internal/records` checks after the
+types, on each row (`CheckTelemetry`, `CheckPrice`, so a writer checks a row
+before it writes it), an error naming the line and the column:
+
+- A column whose block rule or type has no clause for `—` never holds `—`, as
+  [`README.md`](README.md#the-schema-block) gives that check to the owner of a
+  record (round 1 of #94): in `telemetry.tsv`, `task`, `role`, `harness`,
+  `model`, `billing`, `start`, `end`, `duration_s`, `tokens_status` and
+  `money_status`; in `prices.tsv`, each column that is not the key (a key is
+  never `—` by `internal/tsv`). `requirements` may be `—`, as its type `list`
+  writes an empty list so.
+- `session` is `S-` and 8 lowercase hexadecimal characters (the type gives
+  letters and digits).
+- `latency_s` is `—` exactly when `first_output` is `—`; `start ≤ first_output
+  ≤ end`; `latency_s` is `first_output − start` and `duration_s` is `end −
+  start`, in whole seconds, as the times are to the second. Reason: a reader
+  of a later phase sums these columns, and a sum that the times contradict is
+  a false record.
+- `tokens_reason` is `—` exactly when `tokens_status` is `observed`;
+  `observed` has the three token columns, `unavailable` none of them, and
+  `partial` at least one and not all three (a report with a part missing).
+- `money` and `currency` are `—` exactly when `money_status` is `unknown`, so
+  an unknown cost is never 0 (FT2, ADR-0024); a `currency` is three capital
+  letters, the form of ISO 4217; `price` is a row ID `P-NNN` exactly when
+  `money_status` is `computed`; a `subscription` session is never `reported`:
+  it is `computed` from the list price, or `unknown`, for example when it has
+  no tokens.
+- In `prices.tsv`, `currency` has the same form, and `source` is an `http` or
+  `https` URL ("the URL of the price list").
+
+**Known limits:** the list of the codes of ISO 4217 is not checked, only
+their form; that a `price` ID is a row of the host's `prices.tsv` is a check
+of two files, which the writer makes (phase 2).
+
 **Not in phase 1:** the writer, the budget check before each session start, and
 the Telemetry Completeness report (`layup report`, phase 4).
 

@@ -496,6 +496,14 @@ These traps are not domain-specific: they hurt every project's test suite.
   setup in the directory of `TestMain`, and its maker gives an error, which each
   scenario then reports. **The check:** put a shared fixture where no test
   removes it, and give no `*testing.T` to the code that makes it.
+- ❌ **A column that may hold the empty value.** `internal/tsv` takes `—` in
+  each column that is not a key, whatever its type, and gives the check of a
+  column whose rule forbids it to the package that owns the record
+  (`docs/spec/README.md`, the schema block). A validator that checks only the
+  rules in words passes a row with no status or no time. Round 1 of #94 found
+  it in the telemetry record. **The check:** for each new schema, list the
+  columns whose block rule has no clause for `—`, refuse `—` in each, and test
+  one row per column.
 - ❌ **A git date format that changed.** `git log --format=%aI` gives a UTC
   date as `Z` in git 2.54 and as `+00:00` in older versions, so a test that
   compares the text passes on one host only. Task `T-d6q5` (#92) met it.
