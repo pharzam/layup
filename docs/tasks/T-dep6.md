@@ -118,7 +118,7 @@ known limits of the test. The record is on #93. At `8647291`, the local checks,
 tests, `run.sh` and the discipline tests pass, and CI passed its job `tests`;
 11 mutations are detected; `review-record-lint` passes on the comments of #93
 (1 round, cap 1). The close-out commit changes text only. The diff against
-`origin/main` is 1,223 lines added plus removed over 10 files with the
+`origin/main` is 1,224 lines added plus removed over 10 files with the
 close-out, inside the Budget maximum of 2,600 lines over 24 files.
 
 Next: rows 17 (`T-tmhw`, #94) and 18 (`T-dgy7`, #95), whose After cell (row 1)
