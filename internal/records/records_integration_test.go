@@ -10,14 +10,14 @@ import (
 	"github.com/pharzam/layup/internal/tsv"
 )
 
-// The Go schemas of telemetry.tsv and prices.tsv equal their blocks of
-// docs/spec/records.md (the demo of #94).
+// The Go schemas of telemetry.tsv, prices.tsv (the demo of #94) and stalls.tsv
+// (the demo of #95) equal their blocks of docs/spec/records.md.
 func TestTheSchemasEqualTheirBlocks(t *testing.T) {
 	blocks, err := tsv.ReadBlocks(os.DirFS(filepath.Join("..", "..", "docs", "spec")))
 	if err != nil {
 		t.Fatal(err)
 	}
-	for name, s := range map[string]tsv.Schema{"telemetry": TelemetrySchema, "prices": PricesSchema} {
+	for name, s := range map[string]tsv.Schema{"telemetry": TelemetrySchema, "prices": PricesSchema, "stalls": StallsSchema} {
 		block, ok := blocks[name]
 		if !ok {
 			t.Errorf("docs/spec/ has no block %s", name)
