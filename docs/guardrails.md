@@ -472,6 +472,15 @@ These traps are not domain-specific: they hurt every project's test suite.
   the first run and gave the stand-in a `go.mod` and the command of the entry.
   **The check:** give a test target each file that the command of the kind
   needs, and read the output of the fixture run once.
+- ❌ **A background maintenance of git.** Since `git` 2.29 a commit starts
+  `git maintenance run --auto`, since 2.47 in the background, and since 2.54 it
+  repacks by default, so a process of `git` can write into `.git/objects` after
+  the call ends. In CI of #115 (`git` 2.55.0) such a repack wrote into a work
+  area while a test removed it (`unlinkat …/.git/objects: directory not
+  empty`); the same test passed on the LAYUP host. Task `T-d6q5` (#92) met it.
+  **The check:** start each `git` of the product and of a test helper that
+  commits with `-c maintenance.auto=false`, and test it with a repository whose
+  own configuration asks for the maintenance at once, in the foreground.
 - ❌ **A git date format that changed.** `git log --format=%aI` gives a UTC
   date as `Z` in git 2.54 and as `+00:00` in older versions, so a test that
   compares the text passes on one host only. Task `T-d6q5` (#92) met it.

@@ -150,3 +150,41 @@ parent, the four files, `setup/record.tsv` equal to `out/record.tsv`), `main`
 and `layup-setup` do not move, no ref and no work tree stays, `commands.sh`
 holds the four commands in the order of `setup.md`, and a rerun gives the
 same table with no second records commit.
+
+## The fix of the CI failure (cycle 1)
+
+CI of PR #115, on the close-out head `8a3a565` (Linux, `go1.26.8`, `git`
+2.55.0), failed in the job `tests`, the other 11 checks passing:
+
+```text
+--- FAIL: TestEachFindingOfATarget (0.24s)
+    verify_integration_test.go:157: unlinkat /tmp/TestEachFindingOfATarget3399425235/003/work/target/.git/objects: directory not empty
+FAIL	github.com/pharzam/layup/internal/verify	8.971s
+```
+
+The test removes the work area of a case before it makes the next one, so a
+process wrote into `.git/objects` after the calls of the case had returned.
+A commit runs `git maintenance run --auto` (`maintenance.auto`, true by
+default; `git maintenance` came with 2.29). The release notes of `git` say:
+2.47, `Maintenance tasks other than "gc" now properly go background when "git
+maintenance" runs them.`; 2.54, `"git maintenance" starts using the
+"geometric" strategy by default.`; 2.55, that a maintenance that goes to the
+background did not use its lock file. So a commit of the stand-in left a
+repack that ran after `git commit` ended.
+
+The red runs, before the change of `internal/git`:
+
+```text
+$ go test -count=1 -run TestEachCallRunsItsVerb ./internal/git/
+--- FAIL: TestEachCallRunsItsVerb/version   (args [-c core.hooksPath=/dev/null … -c http.emptyAuth=false --version]
+                                             want [… -c http.emptyAuth=false -c maintenance.auto=false --version])
+… (each call)
+$ go test -count=1 -tags=integration -run TestNoCallStartsTheMaintenance ./internal/git/
+--- FAIL: TestNoCallStartsTheMaintenance   (a Commit started the maintenance of git: the packs [".../r/.git/objects/pack/loose-7de49afc….pack"])
+```
+
+The control of the new test, a plain `git commit` in a repository whose own
+configuration sets `maintenance.loose-objects.auto` 1 and no detach, packs its
+loose objects, so the test can fail. With `-c maintenance.auto=false` in each
+call, a `Commit` of `internal/git` leaves them loose, and the four test
+helpers that commit with a plain `git` get the same value.

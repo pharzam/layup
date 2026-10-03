@@ -96,6 +96,7 @@ the first.
 | `TestTheMarkersOfAText` (`internal/verify/markers_test.go`); `TestLinksBaseline` (`internal/verify/checks_test.go`) | unit | REQ-002 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-b3r1 | green |
 | `TestStagedReadsTheExitCode` (`internal/git/git_test.go`) | unit | REQ-002 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-b3r1 | green |
 | `TestStagedAndResetHard` (`internal/git/git_integration_test.go`); `TestEachStepStartsFromTheHead` (`internal/setup/setup_integration_test.go`) | integration | REQ-002, NFR-005 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-b3r1 | green |
+| `TestNoCallStartsTheMaintenance` (`internal/git/git_integration_test.go`) | integration | REQ-002, NFR-005 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-d6q5 | green |
 | `TestSetupRunsS05ToS15` (`internal/cli/setup_integration_test.go`) | integration | REQ-002, REQ-007, NFR-003, NFR-001 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-b3r1, T-d6q5 | green |
 | `TestS12`, `TestS13`, `TestTheRulePathRegister`, `TestS15`, `TestTheRecordsCommit`, `TestTheRecordsHook`, `TestTheLastSteps` (`internal/setup/final_test.go`) | unit | REQ-002, NFR-001, NFR-003 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-d6q5 | green |
 | `TestJobNames`, `TestCheckJobs` (`internal/verify/jobs_test.go`); `TestTheGateRows` (`internal/verify/gates_test.go`) | unit | REQ-002, REQ-007, NFR-004 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-d6q5 | green |
