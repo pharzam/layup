@@ -734,6 +734,25 @@ root commit. The order of a setup in phase 1:
    ruleset requires a pull request, with the Operator's own login,
    from a clone with no hooks installed.
 
+**Decided here** (task `T-dep6`, #93), the end-to-end test of a whole setup:
+
+- **One shared whole-setup run** (K27): the e2e tests of a whole setup are one
+  run of the built binary from S01 to S15 on a stand-in baseline with no
+  network, which the first scenario makes, in the directory of the test
+  binary, and which each scenario reads, or copies before it changes it;
+  the run and its scenarios stay inside the time limit of the
+  [e2e level](../tests/test-levels.md#3-end-to-end-e2e-tests). Reason: one run
+  serves the stops, the records, the pushes and the independence of the
+  target, and each verify run runs the gate of each active kind twice.
+- **No CI change** (K28): the tests run in the job `tests` with no change of
+  `ci.yml`, as the tests of the stack catalog do; a change of it is a change
+  of a gate ([Bootstrap mode](../engineering-discipline.md#bootstrap-mode)
+  rule 3).
+- **The pushes:** the test runs `commands.sh` with a local bare repository in
+  the place of GitHub (through `url.<bare>.insteadOf` in the environment of the
+  test, so the target's own `origin` stays the URL of GitHub) and a stub of
+  `gh`; the apply of a ruleset on GitHub is the first pilot's.
+
 ### The checks of `layup setup verify`
 
 ```text

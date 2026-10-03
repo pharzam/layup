@@ -482,6 +482,20 @@ These traps are not domain-specific: they hurt every project's test suite.
   **The check:** start each `git` of the product and of a test helper that
   commits with `-c maintenance.auto=false`, and test it with a repository whose
   own configuration asks for the maintenance at once, in the foreground.
+- ❌ **A bare repository with no default branch.** `git init --bare` with no
+  `-b` names `master` as its `HEAD` when no setting of the host gives another
+  name, so after a push of `main` a clone of it has no checkout ("remote HEAD
+  refers to nonexistent ref"), and a test that reads its files fails for a
+  reason that is not its own. Task `T-dep6` (#93) met it. **The check:** make a
+  bare repository that stands in for GitHub with `-b main`, the default branch
+  of the target.
+- ❌ **A shared fixture made in one test.** A run that several scenarios share
+  (`sync.Once`) and that the first scenario makes in its own `t.TempDir()` is
+  removed when that scenario ends; a `t.Fatal` inside `Once.Do` marks the
+  once as done with a fixture made in part. Task `T-dep6` (#93) kept its whole
+  setup in the directory of `TestMain`, and its maker gives an error, which each
+  scenario then reports. **The check:** put a shared fixture where no test
+  removes it, and give no `*testing.T` to the code that makes it.
 - ❌ **A git date format that changed.** `git log --format=%aI` gives a UTC
   date as `Z` in git 2.54 and as `+00:00` in older versions, so a test that
   compares the text passes on one host only. Task `T-d6q5` (#92) met it.
