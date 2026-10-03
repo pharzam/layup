@@ -26,7 +26,7 @@ func goEnv(t *testing.T) []string {
 // host, a fixed identity and fixed dates, so a commit has one ID.
 func fixtureGit(t *testing.T, dir string, args ...string) string {
 	t.Helper()
-	cmd := exec.Command("git", args...)
+	cmd := exec.Command("git", append([]string{"-c", "maintenance.auto=false"}, args...)...) // no background repack (#92)
 	cmd.Dir = dir
 	date := "2026-01-01T00:00:00Z"
 	cmd.Env = []string{"PATH=" + os.Getenv("PATH"), "HOME=" + t.TempDir(), "GIT_CONFIG_NOSYSTEM=1", "GIT_CONFIG_GLOBAL=/dev/null",

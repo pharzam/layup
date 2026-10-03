@@ -190,9 +190,15 @@ pass.
 - Each call starts with `-c core.hooksPath=/dev/null`,
   `-c core.attributesFile=/dev/null`, `-c core.excludesFile=/dev/null`,
   `-c core.autocrlf=false`, `-c core.precomposeUnicode=false`,
-  `-c commit.gpgsign=false` and `-c http.emptyAuth=false`. Without the second
-  and the third, the per-user attributes file changed the bytes of a staged
-  file, and the per-user ignore file dropped a file.
+  `-c commit.gpgsign=false`, `-c http.emptyAuth=false` and
+  `-c maintenance.auto=false`. Without the second and the third, the per-user
+  attributes file changed the bytes of a staged file, and the per-user ignore
+  file dropped a file. Without the last, a commit starts `git maintenance run
+  --auto`, which since `git` 2.54 repacks by default ("starts using the
+  'geometric' strategy by default", its release notes) and goes on in the
+  background after the call ends; in CI of #92 (`git` 2.55.0) such a repack
+  wrote into `.git/objects` of a work area while a test removed it (task
+  `T-d6q5`). So no call leaves a process of `git` in a repository of LAYUP.
 - On macOS, `git init` writes `core.precomposeunicode = true` into the
   repository; `Add` then stored a decomposed (NFD) file name composed (NFC),
   so a tree with such a path differed on a macOS host only. With `false`,

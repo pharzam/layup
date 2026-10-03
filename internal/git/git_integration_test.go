@@ -227,6 +227,42 @@ func TestAScratchTree(t *testing.T) {
 	}
 }
 
+// No call starts the automatic maintenance of git: since git 2.29 a commit
+// starts git maintenance run --auto, since 2.47 in the background, and since
+// 2.54 it repacks by default; in CI of #92 (git 2.55.0) a background repack
+// wrote into .git/objects while a test removed the directory. A repository
+// whose own configuration asks for the loose-objects task at once, in the
+// foreground, keeps its loose objects after a Commit; a control shows that a
+// plain git commit packs them, so the test can fail.
+func TestNoCallStartsTheMaintenance(t *testing.T) {
+	home := isolate(t)
+	setUp := func() string {
+		dir := filepath.Join(t.TempDir(), "r")
+		gitOK(t, "", plain(home), "init", "-q", "-b", "main", dir)
+		for _, kv := range [][2]string{{"maintenance.auto", "true"}, {"maintenance.autoDetach", "false"}, {"gc.autoDetach", "false"},
+			{"maintenance.loose-objects.enabled", "true"}, {"maintenance.loose-objects.auto", "1"}} {
+			gitOK(t, dir, plain(home), "config", kv[0], kv[1])
+		}
+		write(t, dir, map[string]string{"a.txt": "a\n"})
+		gitOK(t, dir, plain(home), "add", "-A")
+		return dir
+	}
+	packs := func(dir string) []string {
+		m, _ := filepath.Glob(filepath.Join(dir, ".git", "objects", "pack", "*.pack"))
+		return m
+	}
+	ctl := setUp()
+	gitOK(t, ctl, plain(home, "GIT_AUTHOR_DATE=@0 +0000", "GIT_COMMITTER_DATE=@0 +0000"), "commit", "-q", "-m", "control")
+	if len(packs(ctl)) == 0 {
+		t.Fatal("control: a plain git commit started no maintenance, so this test cannot fail")
+	}
+	dir := setUp()
+	must(t, Commit(dir, "chore: one", who))
+	if p := packs(dir); len(p) != 0 {
+		t.Errorf("a Commit started the maintenance of git: the packs %q", p)
+	}
+}
+
 // Condition 1 of the plan review of #79: the inputs (a) to (e) of the host, a
 // global configuration and a hook change no byte or mode of a tree, no file,
 // no author, no branch and no repository. A control first shows that each of
@@ -248,7 +284,7 @@ func TestAHostileHostChangesNothing(t *testing.T) {
 	}
 
 	t.Run("control: each of (a) to (e) changes a plain git run", func(t *testing.T) {
-		first := strings.Fields("-c core.hooksPath=/dev/null -c core.autocrlf=false -c commit.gpgsign=false") // D3 before the review
+		first := strings.Fields("-c core.hooksPath=/dev/null -c core.autocrlf=false -c commit.gpgsign=false -c maintenance.auto=false") // D3 before the review, and no background repack (#92)
 		ctl, decoy, other := t.TempDir(), t.TempDir(), t.TempDir()
 		gitOK(t, "", plain(home), "init", "-q", "-b", "main", ctl)
 		write(t, ctl, tree)

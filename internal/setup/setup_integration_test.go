@@ -99,7 +99,7 @@ func TestTheProtectionFileHasTheKeysOfLayups(t *testing.T) {
 
 func gitOut(t *testing.T, dir string, args ...string) string {
 	t.Helper()
-	out, err := exec.Command("git", append([]string{"-C", dir}, args...)...).Output()
+	out, err := exec.Command("git", append([]string{"-C", dir, "-c", "maintenance.auto=false"}, args...)...).Output() // no background repack (#92)
 	if err != nil {
 		t.Fatalf("git %s: %v", strings.Join(args, " "), err)
 	}
