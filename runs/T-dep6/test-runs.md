@@ -53,6 +53,13 @@ and the five scenarios pass in 19 s (`TestAWholeSetupOnAStandInBaseline` 5.9 s,
 0.5 s, `TestThePushesOfCommandsSh` 1.1 s,
 `TestTheTargetPassesItsGateWithLAYUPAbsent` 2.6 s).
 
+On the freeze head `8647291`, 02:08:05Z to 02:10:26Z, the ladder: the local
+checks of `AGENTS.md`, `go build`, `go vet` with each tag, `gofmt -l .`, the
+three test levels (the e2e package of `cmd/layup` in 28 s), the race tests and
+`run.sh` (44 passed): each of the 18 steps exit 0. CI of PR #116 on
+`8647291` (Linux, `git` 2.55.0) passed its job `tests` before review round 1,
+which ran the e2e level twice on it with the same result.
+
 The demo, in the shared run: on a stand-in baseline by its `file://` URL, with
 a problem statement with one gap, `layup setup` stops at S01 (the four
 questions of S01 and `Q-001`), at S05 (the link that the deletion breaks), at

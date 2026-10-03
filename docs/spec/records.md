@@ -116,7 +116,8 @@ ADR-0014 and ADR-0011 decision 2.
    their schemas and equal the files of `WORK/out/`; each answer of
    `answers.tsv` is a fact of a raw answers record on `layup-setup`, with its
    `by` and its `source`; and `commands.sh` holds the four commands in the
-   order of item 2. The audit of a pilot task (`PRD-0001` §7.1) is a measure of
+   order of [Where the records go in phase 1](setup.md#where-the-records-go-in-phase-1),
+   item 4. The audit of a pilot task (`PRD-0001` §7.1) is a measure of
    a later phase.
 
 **Not in phase 1:** the one-writer rule as a ruleset (only the LAYUP App
