@@ -100,9 +100,9 @@ the first.
 | `TestSetupRunsS05ToS15` (`internal/cli/setup_integration_test.go`) | integration | REQ-002, REQ-007, NFR-003, NFR-001 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-b3r1, T-d6q5 | green |
 | `TestS12`, `TestS13`, `TestTheRulePathRegister`, `TestS15`, `TestTheRecordsCommit`, `TestTheRecordsHook`, `TestTheLastSteps` (`internal/setup/final_test.go`) | unit | REQ-002, NFR-001, NFR-003 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-d6q5 | green |
 | `TestJobNames`, `TestCheckJobs` (`internal/verify/jobs_test.go`); `TestTheGateRows` (`internal/verify/gates_test.go`) | unit | REQ-002, REQ-007, NFR-004 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-d6q5 | green |
-| `T-dep6/e2e/whole-setup` | e2e | REQ-002, NFR-003 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-dep6 | planned |
-| `T-dep6/e2e/records-in-git` | e2e | NFR-001 | F-0001#1 | guardrails.md §1.1 Inv-1 | ADR-0014 | T-dep6 | planned |
-| `T-dep6/e2e/gate-without-layup` | e2e | NFR-002 | F-0001#2 | guardrails.md §1.1 Inv-2 | ADR-0013 | T-dep6 | planned |
+| `TestAWholeSetupOnAStandInBaseline`, `TestLayupSetupVerifyOnAWholeSetup` (`cmd/layup/whole_e2e_test.go`) | e2e | REQ-002, NFR-003, NFR-004, NFR-005, NFR-006 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-dep6 | green |
+| `TestTheRecordsAreInTheTargetsGit`, `TestThePushesOfCommandsSh` (`cmd/layup/whole_e2e_test.go`) | e2e | NFR-001 | F-0001#1 | guardrails.md §1.1 Inv-1 | ADR-0014 | T-dep6 | green |
+| `TestTheTargetPassesItsGateWithLAYUPAbsent` (`cmd/layup/whole_e2e_test.go`) | e2e | NFR-002 | F-0001#2 | guardrails.md §1.1 Inv-2 | ADR-0013 | T-dep6 | green |
 | `T-tmhw/integration/telemetry-schema` | integration | REQ-011 | F-0003#50 | — | ADR-0024 | T-tmhw | planned |
 | `T-dgy7/integration/stalls-schema` | integration | REQ-009 | F-0003#49 | — | ADR-0023 | T-dgy7 | planned |
 | `T-efmy/uat/release-review` | uat | REQ-015, REQ-017 | F-0003#53 | — | — | T-efmy | planned |

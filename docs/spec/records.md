@@ -108,6 +108,17 @@ ADR-0014 and ADR-0011 decision 2.
 4. **No other state.** The work area of `layup setup` on the host is rebuilt
    from the inputs and the records; nothing in it is the only copy of a value
    once the Operator ran `commands.sh`.
+5. **The test of phase 1** (task `T-dep6`, #93, D5 of its plan): on a work
+   area that `layup setup` made, `layup-records` has no common commit with
+   `main`; its `README.md` is the fixed text of
+   [`setup.md`](setup.md#the-readme-of-the-records-branch); its
+   `setup/record.tsv`, `setup/verify.tsv` and `rule-paths.tsv` are valid by
+   their schemas and equal the files of `WORK/out/`; each answer of
+   `answers.tsv` is a fact of a raw answers record on `layup-setup`, with its
+   `by` and its `source`; and `commands.sh` holds the four commands in the
+   order of [Where the records go in phase 1](setup.md#where-the-records-go-in-phase-1),
+   item 4. The audit of a pilot task (`PRD-0001` §7.1) is a measure of
+   a later phase.
 
 **Not in phase 1:** the one-writer rule as a ruleset (only the LAYUP App
 updates `layup-records`), applied at Start (phase 2); and `layup audit`, which
@@ -133,7 +144,22 @@ and ADR-0016.
    ([`setup.md`](setup.md#the-stack-catalog)), are the target's own files: they
    start no LAYUP program, fetch no LAYUP file, and run with LAYUP absent.
    "LAYUP script" and "LAYUP CI job" name LAYUP's own `setup-check.sh` and its
-   job (ADR-0016 decision 5).
+   job (ADR-0016 decision 5). **Decided here** (task `T-dep6`, #93, D6 of its
+   plan with condition 1 of its plan review), the mechanical test of this item
+   on the head of `layup-setup`: no tracked file is named `layup` or
+   `setup-check.sh`, or starts with the magic bytes of an ELF, Mach-O or PE
+   program; in each tracked file under `.github/`, on each line with the text
+   from its first `#` removed, neither of the words `layup` and `setup-check`
+   appears, where a word is delimited by the start or the end of the line or a
+   character that is not a letter, a digit, `-` or `_`, so `./layup gate` and a
+   URL of LAYUP's repository are refused, and `layup-records` is not; and the
+   two JSON files of S13 name no context that starts with `layup/`. In a plain
+   clone, with no `layup` on `PATH`, the job script of each kind (the run line
+   of its job) gives `pass` or `clear` on the setup head; on a commit of a Go
+   file, each active kind gives `pass`, and each pending kind `fail`, `pending:
+   product path changed` (§6: a pending kind waits for the first bet). The other
+   half of the requirement, another harness that continues a task
+   (`PRD-0001` §7.1), is a measure of a later phase.
 3. In phase 1, the default branch's ruleset requires only the target's own
    jobs, not the `layup/` checks, which no phase-1 command posts
    ([`setup.md`](setup.md#the-steps), S13). So a target set up in phase 1 merges
