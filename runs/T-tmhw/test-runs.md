@@ -79,4 +79,7 @@ $ go test -count=1 ./internal/records/
 `currency` or `source`) gave their column already, through another rule, and
 now through the new one. The green runs of the fix: `go test -count=1
 ./internal/records/`, and with `-tags=integration` `./internal/records/
-./internal/tsv/`: `ok`.
+./internal/tsv/`: `ok`. On the fix head `ed8ac6b`, 03:06:38Z to 03:08:56Z,
+the 18 steps of the ladder, each exit 0; CI of PR #117 passed its job `tests`
+on it before review round 2, which reproduced the 14 red cases on the code of
+`9beb171`.

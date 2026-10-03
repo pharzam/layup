@@ -223,12 +223,13 @@ that the two blocks give in words, which `internal/records` checks after the
 types, on each row (`CheckTelemetry`, `CheckPrice`, so a writer checks a row
 before it writes it), an error naming the line and the column:
 
-- A column whose block rule has no clause for `—` never holds `—`, as
+- A column whose block rule or type has no clause for `—` never holds `—`, as
   [`README.md`](README.md#the-schema-block) gives that check to the owner of a
   record (round 1 of #94): in `telemetry.tsv`, `task`, `role`, `harness`,
   `model`, `billing`, `start`, `end`, `duration_s`, `tokens_status` and
-  `money_status`; in `prices.tsv`, each column. `requirements` may be `—`, an
-  empty list.
+  `money_status`; in `prices.tsv`, each column that is not the key (a key is
+  never `—` by `internal/tsv`). `requirements` may be `—`, as its type `list`
+  writes an empty list so.
 - `session` is `S-` and 8 lowercase hexadecimal characters (the type gives
   letters and digits).
 - `latency_s` is `—` exactly when `first_output` is `—`; `start ≤ first_output

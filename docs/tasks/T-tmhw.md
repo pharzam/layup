@@ -83,3 +83,49 @@ no change (note 5: a source with a space or a scheme in capitals passes, a
 lenient reading of "the URL"; note 6: the case of a session ID that is not
 hexadecimal is the stronger one; note 7: the red runs are consistent; note 9:
 a row of another length does not panic).
+
+## Review round 2
+
+Devin and OpenCode gave no record again. Round 2 (Claude Fable 5.1, a fresh
+read-only session with another lens, the rule against the blocks and the edges
+of each row rule, on `ed8ac6b`, its record at 5 min 5 s) gave `nothing
+material in scope`. It checked each column of the two blocks against the code
+and the "decided here", ran 44 rows of its own, and reproduced the 14 red cases
+of the fix on the code of `9beb171`. Its notes 2 (`requirements` is `—` by its
+type, not its rule) and 5 (the key of `prices.tsv`) are applied as text; note 3
+(an error of the form of `end` names the column `start`, on a direct call
+only) needs no change, as a writer's row passes the type first.
+
+## Verdict
+
+Delivered: the schemas of `telemetry.tsv` and `prices.tsv` in `internal/records`,
+a new row of the table of phase 1 (K23), with the readers and the row rules
+that the blocks give in words, and the rule that a column whose block rule or
+type has no clause for `—` never holds it. The plan review (Claude Fable 5.1)
+gave `approve-with-conditions`, with one condition, applied; round 1
+(`9beb171`) gave `material`, two findings, fixed in cycle 1 (`ed8ac6b`); round
+2 (`ed8ac6b`) gave `nothing material in scope`. The records are on #94;
+`review-record-lint` passes (2 rounds, cap 1). At `ed8ac6b` the ladder passes
+and CI passed its job `tests`. The close-out commit changes text only. The diff
+against `origin/main` is 716 lines over 13 files, inside 800 over 16.
+
+Next: row 18 (`T-dgy7`, #95), the stall record, the last ready row of phase 1
+before row 19.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). Times are UTC, 2026-10-03; the token count
+is the `result` event of the Claude Code CLI; `not reported` otherwise.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan (D1 to D6) | reasoning | Claude Opus 5.5 | max | not reported | 02:29 to 02:31 |
+| The plan review, first and second harness: skipped | reasoning | GPT-6 Sol on the Devin CLI; Grok 4.7 on the OpenCode CLI | `xhigh`; `xhigh` | not reported | 02:31:17 to 02:37:36 |
+| The plan review | reasoning | Claude Fable 5.1 on the Claude Code CLI | `xhigh` | 455,726 (USD 2.75) | 4 min 19 s, from 02:37:41 |
+| The answer, the tests first, the code, the documents; the freeze, the ladder and the pull request | execution | Claude Opus 5.5, a reasoning-tier model on an execution part | max | not reported | 02:42 to 02:50 |
+| Review round 1, first and second harness: skipped | reasoning | the same | `xhigh` | not reported | 02:50:55 to 02:57:15 |
+| Review round 1 | reasoning | Claude Fable 5.1 on the Claude Code CLI | `xhigh` | 792,046 (USD 3.37) | 6 min 40 s, 02:57:22 to 03:04:02 |
+| The fix of round 1, test first; the freeze and the ladder | execution | Claude Opus 5.5 | max | not reported | 03:04 to 03:09 |
+| Review round 2, first and second harness: skipped | reasoning | the same | `xhigh` | not reported | 03:09:21 to 03:15:39 |
+| Review round 2 | reasoning | Claude Fable 5.1 on the Claude Code CLI | `xhigh` | 447,936 (USD 2.97) | 5 min 16 s, 03:15:47 to 03:21:03 |
+| The close-out | execution | Claude Opus 5.5 | max | not reported | 03:21 to 03:25 |
