@@ -134,6 +134,11 @@ the scratch trees to `TestSetupRunsS05ToS15` and text:
 | `go test -race -count=1` on `internal/catalog`, `internal/verify`, `internal/work`, `internal/standin`, `internal/setup` and `internal/cli`, and on `internal/catalog`, `internal/verify`, `internal/setup` and `internal/cli` with `-tags=integration` | exit 0 |
 | `sh docs/setup/tests/run.sh`; `sh docs/tests/run-discipline-tests.sh` | 44 passed, 0 failed; 81 passed, 0 failed |
 
+On the freeze head `a7a64c9`, 00:47:41Z to 00:49:44Z, the same 18 steps, each
+exit 0 (`run.sh` 44 passed, the discipline tests 81 passed); review round 1
+ran the three test levels, the race tests and the local checks on it again,
+with the same results.
+
 The demo of the plan, in `TestSetupRunsS05ToS15` through `internal/cli`: on a
 stand-in baseline, S12 writes the files of the Go entry and passes checks
 `jobs` and `gates` (the gate gives `clear` on the setup head, and `fail` on the

@@ -541,6 +541,18 @@ and the notes of its plan review):
 - **The schema of `verify.tsv`** (D7, K9): the Go schema of the block
   `setup-verify` is in `internal/work`; `internal/verify` writes the table by
   it, and S15 reads the file by it.
+- **The tests of a whole setup** (D8, K6; note 1 of review round 1): the
+  integration tests of S12, S13 and S15 run the real steps S01 to S15 through
+  `internal/cli` on a stand-in baseline, so no test of `layup setup` makes a
+  work area through S12 by hand; the stand-in work area of `internal/standin`,
+  set up by hand, serves the tests of `layup setup verify` only. The e2e test of
+  a whole setup with no network is row 16's.
+- **Known limits** (notes 2 and 3 of review round 1): the job reader takes a
+  comment off a name before its quotes, so a quoted name that holds ` #` loses
+  the text after it (a false `fail`, as a kind holds no space); and S15 does
+  not refuse a `TMPDIR` in the work area, as `layup setup verify` does: its
+  scratch tree is removed after the records commit, and the commit is the
+  same.
 - **Known limits of `verify.tsv`** (note 4): the table names no head and no
   work area, so S15 commits it as the Operator made it, and it judged the
   record before the rows of S15. In phase 2, `layup run` writes the table

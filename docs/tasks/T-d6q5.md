@@ -97,3 +97,77 @@ of S13 have no record row of their own (`NFR-003` item 1; the two hash rows
 hold the files); a workflow in another form of YAML gives a false `fail` of
 check `jobs`; `verify.tsv` names no head and no work area, and judged the
 record before the rows of S15.
+
+## Review round 1
+
+Devin (its usage quota) and OpenCode (no output in five minutes) gave no
+record. Round 1 (Claude Fable 5.1, effort `xhigh`, on the Claude Code CLI, a
+fresh read-only session in a clone at `a7a64c9`, its record at 4 min 51 s;
+the record is on #92) gave `nothing material in scope`, with six notes. It
+ran the three test levels, the race tests and the local checks on the head,
+and read the brief's other inputs against the code and the unit cases. The
+notes:
+
+1. K6 had no sentence in `docs/spec/`: applied, as a "decided here" of D8 in
+   `setup.md`.
+2. The job reader takes a comment off a quoted name before its quotes, so a
+   quoted name that holds ` #` loses the text after it: a known limit in
+   `setup.md` (a false `fail`, never a false pass; a kind holds no space).
+3. S15 does not refuse a `TMPDIR` in the work area, as `layup setup verify`
+   does: a known limit in `setup.md` (the scratch tree is removed after the
+   commit, and the commit is the same).
+4. The green runs of the evidence are on `dde2e66`: the evidence now has the
+   ladder on the freeze head `a7a64c9` too.
+5. The budget: 2,623 lines over 32 files before the close-out.
+6. The limit of the round: the inputs of the brief that it read and did not
+   run by hand.
+
+## Verdict
+
+Delivered: steps S12, S13 and S15 of `layup setup`, and the checks `jobs` and
+`gate:<kind>` of `layup setup verify`. S12 writes the files of the catalog
+entry of the stack with the module path of the target, the manifest and the
+gap of the coverage floor, with a record row of each; S13 writes the
+protection file and the ruleset of the default branch, each required check a
+gate job pinned to GitHub Actions, and hands their commands to the Operator;
+S15 stops for the table of `layup setup verify`, writes the rule-path register,
+and makes the first commit of the orphan branch `layup-records` through a new
+hook of the runner, so the committed record is the record of the run. Check
+`jobs` reads the job names as `check_protection` does; each row
+`gate:<kind>` runs the gate on the setup head and on a commit of the kind's
+fixture, on no ref. So a correct setup of phase 1 runs from S01 to S15 and
+`layup setup verify` exits 0. The wording of #34 is done, with its ADR-0011
+parts as known limits.
+
+The plan review (Claude Fable 5.1) gave `approve-with-conditions`, with three
+conditions, applied; round 1 (`a7a64c9`) gave `nothing material in scope`, with
+six notes: note 1 applied, notes 2 and 3 known limits, notes 4 to 6 recorded.
+The records are on #92. At `a7a64c9`, the local checks, `go build`, `go vet`
+with each tag, `gofmt`, the three test levels, `go test -race` on six packages
+(and on four with `-tags=integration`), `run.sh` and the discipline tests
+pass; 33 mutations are detected; `review-record-lint` passes on the comments
+of #92 (1 round, cap 1). The close-out commit changes text only. The diff
+against `origin/main` is 2,716 lines added plus removed over 33 files with
+the close-out, inside the Budget maximum of 3,600 lines over 40 files.
+
+Next: row 16 of the plan (`T-dep6`, #93), whose After cell (row 15) is then
+merged.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). Times are UTC, 2026-10-02 to 2026-10-03. A
+token count is the `result` event of the Claude Code CLI (input, output, cache
+creation and cache read tokens, and its cost) where that harness gave one;
+`not reported` where the harness or the author's session gives none. The
+author's session was summarized once in the code part; that changes no part.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan (D1 to D10) | reasoning | Claude Opus 5.5 | max | not reported | 23:42 to 23:46 |
+| The plan review, first and second harness: skipped (Devin's usage quota; OpenCode no output in five minutes) | reasoning | GPT-6 Sol on the Devin CLI; Grok 4.7 on the OpenCode CLI | `xhigh`; `xhigh` | not reported | 23:46:28 to 23:52:46 |
+| The plan review | reasoning | Claude Fable 5.1 on the Claude Code CLI | `xhigh` | 758,232 (USD 3.79) | 5 min 34 s, from 23:52:52 |
+| The answer to the plan review | reasoning | Claude Opus 5.5 | max | not reported | 23:58 to 23:59 |
+| The tests first, the code, the integration and e2e tests, the mutations, the documents and the evidence; the freeze | execution | Claude Opus 5.5, a reasoning-tier model on an execution part | max | not reported | 23:59 to 00:50 |
+| Review round 1, first and second harness: skipped (the same) | reasoning | GPT-6 Sol on the Devin CLI; Grok 4.7 on the OpenCode CLI | `xhigh`; `xhigh` | not reported | 00:50:35 to 00:56:53 |
+| Review round 1 | reasoning | Claude Fable 5.1 on the Claude Code CLI | `xhigh` | 1,150,935 (USD 3.53) | 5 min 0 s, 00:57:01 to 01:02:01 |
+| The close-out | execution | Claude Opus 5.5 | max | not reported | 01:02 to 01:10 |
