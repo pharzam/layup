@@ -72,7 +72,7 @@ if grep -q 'cannot list' "$tmp/adapted.txt"; then bad "check adapted could not r
 sed -n 's/^setup-check: adapted FAIL [^ ]* .*: \(.*\):\([0-9][0-9]*\)$/\1	\2/p' "$tmp/adapted.txt" | sort -u > "$tmp/flagged.tsv"
 
 # 3. The record: the rows of the files that the prose step copied, and of the markers that S11 filled.
-awk -F'\t' '$2 ~ /^file:/ { print substr($2, 6) "\t" $3 }' "$REC" > "$tmp/filerows.tsv"
+awk -F'\t' '$2 ~ /^file:/ { print substr($2, 6) "\t" $3 "\t" $1 }' "$REC" > "$tmp/filerows.tsv"
 awk -F'\t' '$2 ~ /^marker:/ { n = $2; sub(/^marker:/, "", n); sub(/(:[0-9]+)+$/, "", n); print n "\t" $3 }' "$REC" > "$tmp/markerrows.tsv"
 
 # 4. The paths of the union, by status.
@@ -98,49 +98,53 @@ while IFS='	' read -r st p; do
 	M)
 		n_mod=$((n_mod + 1))
 		gt show "$root:$p" > "$tmp/base" 2>/dev/null; gt show "$HEADREV:$p" > "$tmp/new" 2>/dev/null
-		diff "$tmp/base" "$tmp/new" > "$tmp/d"
-		if in_list "$p" "$S05INDEX"; then
-			if grep -E -q '^[0-9]+(,[0-9]+)?[ac][0-9]+(,[0-9]+)?$' "$tmp/d"; then
-				bad "task index changed other than by removing lines: $p"
-			else
-				n_s05=$((n_s05 + 1)); echo "S05INDEX $p: $(grep -c '^<' "$tmp/d") lines removed"
-			fi
-			continue
-		fi
-		P=$p IDXAPP=0 W=0; in_list "$p" "$INDEXAPP" && IDXAPP=1; in_list "$p" "$WRITTEN" && W=1
-		export P IDXAPP W
+		# the hunks, one line "OP FIRST LAST" for each, of the baseline lines that are changed (c), removed (d) or only
+		# followed by added lines (a); git diff -U0 keeps an unchanged line between two changes out of both
+		gt diff -U0 --minimal --no-renames --no-color "$root" "$HEADREV" -- "$p" | awk '
+			/^@@ / {
+				l = $2; r = $3; sub(/^-/, "", l); sub(/^\+/, "", r)
+				split(l, a, ","); split(r, b, ",")
+				ln = (a[2] == "" ? 1 : a[2] + 0); rn = (b[2] == "" ? 1 : b[2] + 0)
+				op = (ln == 0 ? "a" : (rn == 0 ? "d" : "c"))
+				print op, a[1] + 0, a[1] + (ln > 0 ? ln - 1 : 0), ln, rn
+				nrem += ln; nadd += rn
+			}
+			END { print "TOTAL", nrem + 0, nadd + 0 }' > "$tmp/d"
+		nremoved=$(awk '$1 == "TOTAL" { print $2 }' "$tmp/d"); nnew=$(awk '$1 == "TOTAL" { print $3 }' "$tmp/d")
+		P=$p IDXAPP=0 W=0 S05=0; in_list "$p" "$INDEXAPP" && IDXAPP=1; in_list "$p" "$WRITTEN" && W=1; in_list "$p" "$S05INDEX" && S05=1
+		export P IDXAPP W S05
 		LC_ALL=C awk -v BASE="$tmp/base" -v FL="$tmp/flagged.tsv" -v MK="$tmp/markerrows.tsv" -v DIFF="$tmp/d" '
 			function lvl(s) { if (match(s, /^#+ /)) return RLENGTH - 1; return 0 }
 			function secend(a,   l, e) { l = lvl(B[a]); e = a; while (e < N && !(lvl(B[e + 1]) > 0 && lvl(B[e + 1]) <= l)) e++; return e }
 			BEGIN {
-				P = ENVIRON["P"]; LQ = ENVIRON["LQ"]; idxapp = ENVIRON["IDXAPP"] + 0; w = ENVIRON["W"] + 0
+				P = ENVIRON["P"]; LQ = ENVIRON["LQ"]; idxapp = ENVIRON["IDXAPP"] + 0; w = ENVIRON["W"] + 0; s05 = ENVIRON["S05"] + 0
 				while ((getline line < BASE) > 0) B[++N] = line
 				while ((getline line < FL) > 0) { split(line, a, "\t"); if (a[1] == P) F[a[2] + 0] = 1 }
 				while ((getline line < MK) > 0) { split(line, a, "\t"); if (a[1] == P) nmk++ }
 				# the baseline lines that the diff changes or removes
 				while ((getline line < DIFF) > 0) {
-					if (line !~ /^[0-9]+(,[0-9]+)?[acd][0-9]+(,[0-9]+)?$/) continue
-					o = line; sub(/^[0-9,]+/, "", o); o = substr(o, 1, 1)
-					lt = line; sub(/[acd].*$/, "", lt); split(lt, rr, ","); a1 = rr[1] + 0; a2 = (rr[2] == "" ? a1 : rr[2] + 0)
-					if (o != "a") for (n = a1; n <= a2; n++) C[n] = 1
+					split(line, h, " ")
+					if (h[1] == "c" || h[1] == "d") for (n = h[2] + 0; n <= h[3] + 0; n++) C[n] = 1
 				}
 				# a flagged heading whose whole section (each line that is not blank) is changed or removed is a
-				# section replaced as a unit, however diff splits it into hunks; a heading that is only renamed is not
-				for (h in F) {
-					h += 0
-					if (lvl(B[h]) == 0 || !C[h]) continue
-					e = secend(h); ok = 1
-					for (n = h; n <= e; n++) if (B[n] != "" && !C[n]) ok = 0
-					if (ok) { for (n = h; n <= e; n++) SEC[n] = 1; sections = sections " " h "-" e }
+				# section replaced as a unit, however the diff splits it into hunks; a heading that is only renamed is not
+				for (hd in F) {
+					hd += 0
+					if (lvl(B[hd]) == 0 || !C[hd]) continue
+					e = secend(hd); ok = 1
+					for (n = hd; n <= e; n++) if (B[n] != "" && !C[n]) ok = 0
+					if (ok) { for (n = hd; n <= e; n++) SEC[n] = 1; sections = sections " " hd "-" e }
 				}
 			}
-			/^[0-9]+(,[0-9]+)?[acd][0-9]+(,[0-9]+)?$/ {
-				op = $0; sub(/^[0-9,]+/, "", op); op = substr(op, 1, 1)
-				left = $0; sub(/[acd].*$/, "", left)
-				split(left, r, ","); l1 = r[1] + 0; l2 = (r[2] == "" ? l1 : r[2] + 0)
+			$1 == "TOTAL" { next }
+			{
+				op = $1; l1 = $2 + 0; l2 = $3 + 0; ln = $4 + 0; rn = $5 + 0
+				# a task index (S05) loses lines, or has a marker line replaced by one line: nothing else
+				if (s05 && (op == "a" || (op == "c" && rn != ln))) { print "FAIL: task index changed other than by removing lines: " P; bads++; next }
 				if (op == "a") { added++; if (!idxapp && !w && !said_a) { print "FAIL: lines added to a baseline rule file: " P; said_a = 1; bads++ } ; next }
 				for (n = l1; n <= l2; n++) {
-					if (F[n]) { nflag++ }
+					if (s05 && op == "d") { nrem++ }
+					else if (F[n]) { nflag++ }
 					else if (SEC[n]) { nsec++ }
 					else if (idxapp && B[n] ~ /^\| _none yet_/) { nidx++ }
 					else if (index(B[n], LQ) > 0 && nmk > 0) { nmark++ }
@@ -148,12 +152,12 @@ while IFS='	' read -r st p; do
 					else { print "FAIL: unflagged baseline line changed: " P ":" n ": " substr(B[n], 1, 90); bads++ ; nother++ }
 				}
 			}
-			END { print "RESULT placeholder=" nidx + 0 " flagged=" nflag + 0 " section=" nsec + 0 " marker=" nmark + 0 " unflagged=" nother + 0 " added=" added + 0 " bads=" bads + 0 " sections=" sections }
+			END { print "RESULT placeholder=" nidx + 0 " flagged=" nflag + 0 " section=" nsec + 0 " marker=" nmark + 0 " removed=" nrem + 0 " unflagged=" nother + 0 " added=" added + 0 " bads=" bads + 0 " sections=" sections }
 		' "$tmp/d" > "$tmp/awk.out"
 		grep '^FAIL:' "$tmp/awk.out" && fail=$((fail + $(grep -c '^FAIL:' "$tmp/awk.out")))
 		res=$(grep '^RESULT' "$tmp/awk.out")
-		nfl=$(printf '%s' "$res" | sed -n 's/.* flagged=\([0-9]*\).*/\1/p'); nsec=$(printf '%s' "$res" | sed -n 's/.* section=\([0-9]*\).*/\1/p')
-		nmk=$(printf '%s' "$res" | sed -n 's/.* marker=\([0-9]*\).*/\1/p'); nph=$(printf '%s' "$res" | sed -n 's/^RESULT placeholder=\([0-9]*\).*/\1/p'); nadd=$(printf '%s' "$res" | sed -n 's/.* added=\([0-9]*\).*/\1/p')
+		field() { printf '%s' "$res" | sed -n "s/.* $1=\([0-9]*\).*/\1/p; s/^RESULT $1=\([0-9]*\).*/\1/p" | head -1; }
+		nfl=$(field flagged); nsec=$(field section); nmk=$(field marker); nph=$(field placeholder); nadd=$(field added); nrm=$(field removed)
 		secs=$(printf '%s' "$res" | sed -n 's/.* sections=\(.*\)$/\1/p')
 		# the markers that the record fills: each recorded value is in the file
 		if [ "$nmk" -gt 0 ]; then
@@ -164,25 +168,31 @@ while IFS='	' read -r st p; do
 			grep '^FAIL:' "$tmp/mk.out" && fail=$((fail + $(grep -c '^FAIL:' "$tmp/mk.out")))
 			echo "MARKERS $p: $nmk marker lines filled; each recorded value is in the file"
 		fi
-		if in_list "$p" "$WRITTEN"; then
-			n_written=$((n_written + 1))
-			echo "WRITTEN $p: written for the target by the prose step; $(grep -c '^<' "$tmp/d") baseline lines changed or removed, $(grep -c '^>' "$tmp/d") lines new (listed for the audit)"
-			need_row=1
+		need_row=0
+		if [ "$S05" = 1 ]; then
+			n_s05=$((n_s05 + 1)); echo "S05INDEX $p: $nrm lines removed"
+		elif [ "$W" = 1 ]; then
+			n_written=$((n_written + 1)); need_row=1
+			echo "WRITTEN $p: written for the target by the prose step; $nremoved baseline lines changed or removed, $nnew lines new (listed for the audit)"
 		elif [ "$nfl" -gt 0 ] || [ "$nsec" -gt 0 ]; then
 			n_adapted=$((n_adapted + 1)); need_row=1
 			echo "ADAPTED $p: $nfl flagged lines changed${secs:+, whole sections$secs replaced or removed}${nadd:+, $nadd line groups added}"
 		elif [ "$nadd" -gt 0 ] || [ "$nph" -gt 0 ]; then
-			need_row=0; n_index=$((n_index + 1))
+			n_index=$((n_index + 1))
 			echo "INDEX $p: ${nadd:-0} line groups added and $nph placeholder rows replaced by the steps; no other baseline line changed"
-		else
-			need_row=0
 		fi
+		# a file that the prose step copied has a record row whose value is the SHA-256 of the file at the commit of the
+		# step of the row (S11 fills the markers of the file later, and the markers are checked above)
 		if [ "$need_row" = 1 ]; then
-			row=$(awk -F'\t' -v p="$p" '$1 == p { print $2; exit }' "$tmp/filerows.tsv")
-			if [ -z "$row" ]; then
+			rowline=$(awk -F'\t' -v p="$p" '$1 == p { print $2 "\t" $3; exit }' "$tmp/filerows.tsv")
+			if [ -z "$rowline" ]; then
 				bad "no record row for $p"
-			elif [ "$row" != "$(sha256 "$tmp/new")" ]; then
-				bad "record row differs from the file at the head: $p"
+			else
+				rhash=${rowline%%	*}; rstep=${rowline#*	}
+				sc=$(gt log --format=%H --grep="^chore: setup $rstep\$" "$root..$HEADREV" | tail -1)
+				if [ -z "$sc" ] || ! gt show "$sc:$p" > "$tmp/atstep" 2>/dev/null || [ "$rhash" != "$(sha256 "$tmp/atstep")" ]; then
+					bad "record row differs from the file at its step: $p"
+				fi
 			fi
 		fi ;;
 	*) bad "a status that this check does not read: $st $p" ;;

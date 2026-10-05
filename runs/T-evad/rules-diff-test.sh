@@ -30,20 +30,20 @@ build() {
 	repo=$T/$1; v=$2; rec=$T/$1.record.tsv
 	mkdir -p "$repo/docs/decisions" "$repo/docs/tasks" "$repo/docs/facts"
 	git init -q -b main "$repo"
-	printf '# A\nThis kit is for adopters.\nA rule line.\n' > "$repo/docs/a.md"
+	printf '# A\nThis kit is for adopters.\nA rule line.\nPort: %sport%s\n' "$LQ" "$RQ" > "$repo/docs/a.md"
 	printf '# B\nRule B.\n' > "$repo/docs/b.md"
 	printf '# C\nTest runner: %stest runner%s\n' "$LQ" "$RQ" > "$repo/docs/c.md"
 	printf '# D\n## How to adapt this kit\n\nFour things need doing.\n\nSecond paragraph.\n## Next section\nKeep this rule.\n' > "$repo/docs/d.md"
 	printf '# kit readme\ntext\n' > "$repo/README.md"
 	printf 'history\n' > "$repo/docs/decisions/D1.md"
-	printf -- '- T-aaaa the task\n- keep this line\n' > "$repo/docs/tasks/backlog.md"
+	printf -- '- T-aaaa the task\n- keep this line\nScheme: %sscheme%s\n' "$LQ" "$RQ" > "$repo/docs/tasks/backlog.md"
 	printf '# facts\n| index |\n| _none yet_ | | | |\n' > "$repo/docs/facts/README.md"
 	g add -A && g commit -q -m "chore: the unmodified baseline at fixture"
 	printf 'step\tname\tvalue\tsource\tref\n' > "$rec"
 
 	# S05: the history goes (a deleted rule file when the variant says so)
 	git -C "$repo" rm -q docs/decisions/D1.md
-	printf -- '- keep this line\n' > "$repo/docs/tasks/backlog.md"
+	printf -- '- keep this line\nScheme: %sscheme%s\n' "$LQ" "$RQ" > "$repo/docs/tasks/backlog.md"
 	[ "$v" = deleted-rule ] && git -C "$repo" rm -q docs/b.md
 	[ "$v" = index-grows ] && printf -- '- a new line\n' >> "$repo/docs/tasks/backlog.md"
 	step S05
@@ -58,14 +58,6 @@ build() {
 	printf '# my project\nnew text\n' > "$repo/README.md"
 	[ "$v" != no-row-written ] && filerow S07 README.md
 	step S07
-	# S11: a marker is filled
-	case "$v" in
-	marker-missing) printf '# C\nTest runner: make\n' > "$repo/docs/c.md" ;;
-	*) printf '# C\nTest runner: go test\n' > "$repo/docs/c.md" ;;
-	esac
-	# the row of a marker: marker:<file>:<line>, or marker:<file>:<line>:<column> when the line holds more markers than one
-	if [ "$v" = marker-column ]; then row S11 "marker:docs/c.md:2:13" "go test"; else row S11 "marker:docs/c.md:2" "go test"; fi
-	step S11
 	# S14: the flagged lines are adapted; the section "How to adapt" is replaced whole (the new text shares the blank line
 	# after the heading with the old, so that diff gives the heading and the body as two hunks)
 	case "$v" in
@@ -76,7 +68,7 @@ build() {
 	*)
 		printf '# D\n## How this project was set up\n\nSee the pin.\n## Next section\nKeep this rule.\n' > "$repo/docs/d.md" ;;
 	esac
-	printf '# A\nThis repository is for projects.\nA rule line.\n' > "$repo/docs/a.md"
+	printf '# A\nThis repository is for projects.\nA rule line.\nPort: %sport%s\n' "$LQ" "$RQ" > "$repo/docs/a.md"
 	case "$v" in
 	rule-changed|rule-changed-with-row) printf '# B\nRule B changed.\n' > "$repo/docs/b.md" ;;
 	esac
@@ -88,6 +80,24 @@ build() {
 		awk -F'\t' 'BEGIN{OFS="\t"} $2=="file:docs/a.md" && $3!~/^0+$/ {next} {print}' "$rec" > "$rec.new" && mv "$rec.new" "$rec"
 	fi
 	step S14
+	# S11: a marker is filled
+	case "$v" in
+	marker-missing) printf '# C\nTest runner: make\n' > "$repo/docs/c.md" ;;
+	*) printf '# C\nTest runner: go test\n' > "$repo/docs/c.md" ;;
+	esac
+	# the row of a marker: marker:<file>:<line>, or marker:<file>:<line>:<column> when the line holds more markers than one
+	if [ "$v" = marker-column ]; then row S11 "marker:docs/c.md:2:13" "go test"; else row S11 "marker:docs/c.md:2" "go test"; fi
+	# S11 fills the markers of the files that S07 to S14 wrote, so the hash of a file row is the hash at its own step
+	printf '# A\nThis repository is for projects.\nA rule line.\nPort: 8080\n' > "$repo/docs/a.md"
+	row S11 "marker:docs/a.md:4" "8080"
+	printf -- '- keep this line\nScheme: T-xxxx\n' > "$repo/docs/tasks/backlog.md"
+	[ "$v" = index-grows ] && printf -- '- a new line\n' >> "$repo/docs/tasks/backlog.md"
+	row S11 "marker:docs/tasks/backlog.md:2" "T-xxxx"
+	if [ "$v" = row-at-head ]; then
+		h=$(sha256 "$repo/docs/a.md")
+		awk -F'\t' -v h="$h" 'BEGIN{OFS="\t"} $2=="file:docs/a.md" {$3=h} {print}' "$rec" > "$rec.new" && mv "$rec.new" "$rec"
+	fi
+	step S11
 	[ "$v" = foreign-commit ] && { printf 'x\n' >> "$repo/docs/a.md"; g add -A; g commit -q -m "fix: a change that no step made"; }
 	return 0
 }
@@ -110,12 +120,13 @@ run() {
 
 run clean               clean               0 'rules-diff: PASS'
 run marker-column       marker-column       0 'rules-diff: PASS'
+run row-at-head         row-at-head         1 'record row differs from the file at its step: docs/a.md'
 run rule-changed        rule-changed        1 'unflagged baseline line changed: docs/b.md:2' 'rules-diff: PASS'
 run rule-changed-row    rule-changed-with-row 1 'unflagged baseline line changed: docs/b.md:2' 'no record row for docs/b.md'
 run deleted-rule        deleted-rule        1 'deleted baseline path: docs/b.md'
 run no-row-adapted      no-row-adapted      1 'no record row for docs/a.md' 'unflagged baseline line changed'
 run no-row-written      no-row-written      1 'no record row for README.md'
-run row-hash-differs    row-hash-differs    1 'record row differs from the file at the head: docs/a.md'
+run row-hash-differs    row-hash-differs    1 'record row differs from the file at its step: docs/a.md'
 run foreign-commit      foreign-commit      1 'a commit that no step made'
 run index-grows         index-grows         1 'task index changed other than by removing lines: docs/tasks/backlog.md'
 run insert-in-rule      insert-in-rule      1 'lines added to a baseline rule file: docs/b.md'
