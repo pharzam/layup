@@ -168,10 +168,16 @@ func TestLostMarkers(t *testing.T) {
 			[]string{"docs/e.md:7: the input loses the marker \u2039model, effort, tokens and elapsed time\u203a"}},
 		{"a marker of a line that check adapted does not flag", strings.Replace(kept, "\u2039x\u203a", "8080", 1), nil},
 		{"a marker kept on another line", "Name the models.\n\n`\u2039name your reasoning-tier models\u203a` and \u2039x\u203a, `\u2039model, effort,\ntokens and elapsed time\u203a`.\n", nil},
+		// a place of a marker is lost when the input has fewer places of it (the first pilot: issue-workflow.md:243 lost a marker that lines 245 to 247 keep)
+		{"a place of a marker lost, another place kept", "# The project\n\nName the models: the reasoning-tier models.\n\nThe value \u2039x\u203a stays.\n\nReport `\u2039model, effort,\ntokens and elapsed time\u203a` here, and `\u2039name your reasoning-tier models\u203a`.\n",
+			nil},
 		// the input keeps each marker byte for byte, with its line ends (point 3 of the Operator's comment 6002406785)
 		{"a marker kept with other line ends", strings.Replace(kept, "\u2039model, effort,\ntokens and elapsed time\u203a", "\u2039model, effort, tokens\nand elapsed time\u203a", 1),
 			[]string{"docs/e.md:7: the input loses the marker \u2039model, effort, tokens and elapsed time\u203a"}},
 	} {
 		same(t, c.name, LostMarkers("docs/e.md", []byte(before), []byte(c.after)), c.want)
 	}
+	two := strings.Replace(before, "for your project.", "for your project, as `\u2039name your reasoning-tier models\u203a` says.", 1)
+	same(t, "two places of a flagged line, one kept", LostMarkers("docs/e.md", []byte(two), []byte(kept)),
+		[]string{"docs/e.md:3: the input loses 1 of the 2 places of the marker \u2039name your reasoning-tier models\u203a"})
 }

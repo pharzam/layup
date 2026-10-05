@@ -401,12 +401,13 @@ D10 of its plan, with the conditions of its plan review):
   of the first pilot, task `T-evad`, #97, and point 3 of the Operator's
   comment 6002406785): before it copies an adapted file (not a written one),
   S14 compares the input with the file of the head, by the rule
-  of check `adapted` (`internal/verify`): each marker of the file that touches
-  a line that check `adapted` flags must be in the input byte for byte, with
-  its line ends. Else S14 is `fail`, with the first lost marker, its line and
-  the count, and copies no file; the marker then goes to S10 like any other.
-  Reason: the prose step of the first pilot removed seven markers of flagged
-  lines, so S10 never asked them.
+  of check `adapted` (`internal/verify`): for each marker of the file that
+  touches a line that check `adapted` flags, the input must hold as many
+  places of it, byte for byte, with its line ends. Else S14 is `fail`, with
+  the first lost marker, its line and the count, and copies no file; the
+  marker then goes to S10 like any other. Reason: the prose step of the first
+  pilot removed ten places of markers of flagged lines, so S10 never asked
+  them.
 - **S10** (D6): one question `M-<x8>` per file and marker key, in the order of
   the list of the scanner, with the ask "What is the value of <marker> in
   <file>? Answer gap to keep it as an open gap, with its question as
