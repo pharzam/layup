@@ -292,39 +292,60 @@ check_guardrails() {
 }
 
 # --- markers (Invariants 4 and 5) ----------------------------------------------
-# A marker is `‹` plus one or more characters other than `›`, then `›`; one that
-# does not close on its line runs to the line end (its key is that first line).
-# The literal `‹…›` names the convention and is not a marker, and neither is
-# the exact code span `‹` (a backtick on each side: the character named, as in
-# "search for `‹`"). Only that one character is skipped. Each marker in a
-# git-tracked file must be exempt (a template file for a new record, a fixture,
-# an accepted ADR 0001 to 0008, or a script that defines the convention) or listed
-# in docs/setup/open-gaps.tsv (`path<TAB>marker<TAB>question`); each listed marker
-# must still occur. Key: path plus exact marker text; equal markers in one file
-# are one key.
+# A marker runs from `‹` to the first `›` after it, also across lines (fix 1 of
+# the first pilot, T-evad, #97); its key is its text with each line end as one
+# space. The literal `‹…›` names the convention and is not a marker, and
+# neither is the exact code span `‹` or `›` (a backtick on each side: the
+# character named, as in "search for `‹`"). A `‹` with no `›` after it, or a
+# `›` that no `‹` takes, has no pair: a finding (fix 3 of the same pilot). Each
+# marker in a git-tracked file must be exempt (a template file for a new
+# record, a fixture, an accepted ADR 0001 to 0008, or a script that defines the
+# convention) or listed in docs/setup/open-gaps.tsv
+# (`path<TAB>marker<TAB>question`); each listed marker must still occur. Key:
+# path plus marker key; equal markers in one file are one key.
 MK_EXEMPT='^(docs/(adr|ci|links|prd|setup)/tests/|\.githooks/tests/|docs/templates/)|^docs/[^/]+/template\.md$|^docs/tests/template-[^/]*\.md$|^docs/tests/traceability-template\.md$|^docs/adr/000[1-8]-[^/]*\.md$|^docs/links/link-lint\.sh$|^docs/prd/prd-lint\.sh$|^docs/setup/setup-check\.sh$|^docs/setup/open-gaps\.tsv$'
 check_markers() {
 	# -z: git quotes a name with `"`, `\` or a control character in its plain list,
 	# and the quoted name is no path (#21); a name with a line feed still splits.
 	git -C "$ROOT" -c core.quotePath=false ls-files -z > "$tmpdir/mk_z" || { fail markers "git: cannot list the tracked files"; return; }
 	tr '\0' '\n' < "$tmpdir/mk_z" > "$tmpdir/mk_files"
+	: > "$tmpdir/mk_up"
 	grep -Ev "$MK_EXEMPT" "$tmpdir/mk_files" | while IFS= read -r mk_f; do
 		[ -f "$ROOT/$mk_f" ] || continue
 		# The name comes from the environment, as -v reads a `\` in it as an escape;
 		# the C locale reads bytes on every host (macOS awk in a UTF-8 locale misses
-		# a marker at the end of a line; round 1 of #87).
-		mk_f="$mk_f" LC_ALL=C awk 'BEGIN { f = ENVIRON["mk_f"] } {
-			line = $0; prev = ""
-			while ((i = index(line, "‹")) > 0) {
-				before = (i > 1) ? substr(line, i - 1, 1) : substr(prev, length(prev), 1)
-				rest = substr(line, i)
-				after = substr(rest, length("‹") + 1, 1)
-				# A mention is exactly `‹` in a code span; skip that one character only.
-				if (before == "`" && after == "`") { prev = substr(line, 1, i + length("‹") - 1); line = substr(rest, length("‹") + 1); continue }
-				j = index(rest, "›")
-				if (j > 0) { m = substr(rest, 1, j + length("›") - 1); prev = ""; line = substr(rest, j + length("›")) }
-				else { m = rest; line = "" }
-				if (m != "‹…›") print f "\t" m
+		# a marker at the end of a line; round 1 of #87). The file is read whole, as
+		# a marker may close on a later line.
+		mk_f="$mk_f" mk_up="$tmpdir/mk_up" LC_ALL=C awk '{ L[NR] = $0 } END {
+			f = ENVIRON["mk_f"]; up = ENVIRON["mk_up"]; last = 0; inmk = 0
+			for (n = 1; n <= NR; n++) if (index(L[n], "›") > 0) last = n
+			for (n = 1; n <= NR; n++) {
+				line = L[n]; p = 1
+				if (inmk) {
+					j = index(line, "›")
+					if (j == 0) { t = line; sub(/\r$/, "", t); buf = buf " " t; continue }
+					buf = buf " " substr(line, 1, j + length("›") - 1); inmk = 0
+					print f "\t" buf
+					p = j + length("›")
+				}
+				while (p <= length(line)) {
+					rest = substr(line, p); i = index(rest, "‹"); k = index(rest, "›")
+					if (i == 0 && k == 0) break
+					if (k > 0 && (i == 0 || k < i)) {
+						a = p + k - 1
+						# A mention is exactly `›` in a code span; any other lone `›` has no pair.
+						if (!(a > 1 && substr(line, a - 1, 1) == "`" && substr(line, a + length("›"), 1) == "`")) print f ":" n " ›" >> up
+						p = a + length("›"); continue
+					}
+					a = p + i - 1
+					# A mention is exactly `‹` in a code span; skip that one character only.
+					if (a > 1 && substr(line, a - 1, 1) == "`" && substr(line, a + length("‹"), 1) == "`") { p = a + length("‹"); continue }
+					r = substr(line, a); j = index(r, "›")
+					if (j > 0) { m = substr(r, 1, j + length("›") - 1); if (m != "‹…›") print f "\t" m; p = a + length(m); continue }
+					if (last > n) { buf = r; sub(/\r$/, "", buf); inmk = 1; break }
+					print f ":" n " ‹" >> up
+					p = a + length("‹")
+				}
 			}
 		}' "$ROOT/$mk_f"
 	done | sort -u > "$tmpdir/mk_found"
@@ -340,6 +361,7 @@ check_markers() {
 	comm -13 "$tmpdir/mk_found" "$tmpdir/mk_listed" | while IFS="$(printf '\t')" read -r mk_p mk_m; do
 		printf 'setup-check: markers FAIL stale: %s %s is listed in docs/setup/open-gaps.tsv but does not occur\n' "$mk_p" "$mk_m"
 	done >> "$tmpdir/mk_out"
+	sed 's/^/setup-check: markers FAIL unpaired: /' "$tmpdir/mk_up" >> "$tmpdir/mk_out"
 	if [ -s "$tmpdir/mk_out" ]; then cat "$tmpdir/mk_out"; cur_fail=1; failed=1; fi
 }
 
@@ -420,22 +442,43 @@ check_adapted() {
 				hit("rule-3", "you use", "(^|[^a-z0-9_])you use([^a-z0-9_]|$)", low)
 				n = 0; para = ""
 			}
-			{
-				line = $0; sub(/\r$/, "", line); gsub(/[ \t]+/, " ", line); sub(/^ /, "", line); sub(/ $/, "", line)
-				if (line == "") { flush(); next }
-				# A marker is one unit, the byte \001: a word inside it is not a match.
-				mk = ""
-				while ((i = index(line, "‹")) > 0) {
-					rest = substr(line, i + length("‹")); j = index(rest, "›")
-					mk = mk substr(line, 1, i - 1) "\001"
-					line = (j > 0) ? substr(rest, j + length("›")) : ""
+			{ L[NR] = $0 }
+			END {
+				# A marker, from `‹` to the first `›` after it, also across lines, is one
+				# unit, the byte \001, and the part of a further line that it covers is the
+				# byte \002: a word inside it is not a match. The text `‹…›` is one unit; a
+				# `‹` in a code span, or with no `›` after it, is a unit of its own, so it
+				# hides no word (fix 1 of the first pilot, T-evad, #97).
+				last = 0; inmk = 0
+				for (r = 1; r <= NR; r++) if (index(L[r], "›") > 0) last = r
+				for (r = 1; r <= NR; r++) {
+					line = L[r]; u = ""; p = 1
+					if (inmk) {
+						j = index(line, "›")
+						if (j == 0) { U[r] = "\002"; continue }
+						u = "\002"; p = j + length("›"); inmk = 0
+					}
+					while (p <= length(line)) {
+						i = index(substr(line, p), "‹")
+						if (i == 0) break
+						a = p + i - 1; u = u substr(line, p, a - p) "\001"
+						if (a > 1 && substr(line, a - 1, 1) == "`" && substr(line, a + length("‹"), 1) == "`") { p = a + length("‹"); continue }
+						j = index(substr(line, a), "›")
+						if (j > 0) { p = a + j + length("›") - 1; continue }
+						if (last > r) { inmk = 1; p = length(line) + 1; break }
+						p = a + length("‹")
+					}
+					U[r] = u substr(line, p)
 				}
-				line = mk line
-				if (n > 0) para = para " "
-				n++; starts[n] = length(para) + 1; lines[n] = NR
-				para = para line
+				for (r = 1; r <= NR; r++) {
+					line = U[r]; sub(/\r$/, "", line); gsub(/[ \t]+/, " ", line); sub(/^ /, "", line); sub(/ $/, "", line)
+					if (line == "") { flush(); continue }
+					if (n > 0) para = para " "
+					n++; starts[n] = length(para) + 1; lines[n] = r
+					para = para line
+				}
+				flush()
 			}
-			END { flush() }
 		' "$ROOT/$ad_f"
 	done | sort -u > "$tmpdir/ad_out"
 	if [ -s "$tmpdir/ad_out" ]; then cat "$tmpdir/ad_out"; cur_fail=1; failed=1; fi

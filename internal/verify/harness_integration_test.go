@@ -192,8 +192,8 @@ func TestTheShAndTheGoFormOfMarkersAgree(t *testing.T) {
 	}
 	for name, text := range map[string]string{
 		`docs/b\x.md`:              "A \u2039bs\u203a marker.\n",
-		"docs/end.md":              "The end \u2039\n",
-		"docs/setup/open-gaps.tsv": "docs/b\\x.md\t\u2039bs\u203a\tWhich value?\ndocs/end.md\t\u2039\tWhich value?\n",
+		"docs/end.md":              "The end \u2039\nx\u203a\n", // an open quote at the end of a line, closed on the next (fix 1 of the first pilot, #97)
+		"docs/setup/open-gaps.tsv": "docs/b\\x.md\t\u2039bs\u203a\tWhich value?\ndocs/end.md\t\u2039 x\u203a\tWhich value?\n",
 	} {
 		p := filepath.Join(repo, filepath.FromSlash(name))
 		if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {

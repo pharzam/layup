@@ -52,16 +52,19 @@ func fileRow(p string, data []byte) []string {
 
 // A wanted file is a file of the target that a step copies from its input
 // file, with the question of its stop row.
-type wanted struct{ path, ask string }
+type wanted struct {
+	path, ask string
+	adapt     bool // S14 adapts the file: its input keeps each marker of a flagged line (fix 2 of the first pilot, #97)
+}
 
 func writeAsk(p string) wanted {
-	return wanted{p, "Write the text of " + p + " for the target, and give it as " + inputsDir + "/" + p + "."}
+	return wanted{p, "Write the text of " + p + " for the target, and give it as " + inputsDir + "/" + p + ".", false}
 }
 func adaptAsk(p string) wanted {
-	return wanted{p, "Adapt " + p + ", which check adapted flags, to the target, and give it as " + inputsDir + "/" + p + "."}
+	return wanted{p, "Adapt " + p + ", which check adapted flags, to the target, and give it as " + inputsDir + "/" + p + ".", true}
 }
 func linkAsk(p string) wanted {
-	return wanted{p, "Fix the links of " + p + " that the deletion of the baseline's history breaks, and give the file as " + inputsDir + "/" + p + "."}
+	return wanted{p, "Fix the links of " + p + " that the deletion of the baseline's history breaks, and give the file as " + inputsDir + "/" + p + ".", false}
 }
 
 // copyInputs copies each file from its input file into the target, with its
@@ -349,6 +352,18 @@ func runProseStep(step string, c Calls, in Input) Outcome {
 	if missing {
 		return Outcome{Kind: Stop, Stops: mine}
 	}
+	if lost, err := lostMarkers(c, in, want[step]); err != nil || len(lost) > 0 {
+		reason := ""
+		switch {
+		case err != nil:
+			reason = err.Error()
+		case len(lost) == 1:
+			reason = lost[0]
+		default:
+			reason = fmt.Sprintf("%s (%d lost markers in all)", lost[0], len(lost))
+		}
+		return Outcome{Kind: Fail, Evidence: reason}
+	}
 	rows, _, err := copyInputs(step, in.Dir, want[step])
 	if err != nil {
 		return Outcome{Kind: Fail, Evidence: step + ": " + err.Error()}
@@ -356,8 +371,33 @@ func runProseStep(step string, c Calls, in Input) Outcome {
 	return Outcome{Kind: Done, Evidence: proseEvidence[step], Commit: true, Values: rows}
 }
 
-// A question of S10 is one file and marker text, with the first line where
-// it occurs.
+// lostMarkers gives each marker that an input of an adapted file loses from a
+// flagged line of the file before it, by the call of check adapted (fix 2 of
+// the first pilot, #97); a file that the step writes is not asked.
+func lostMarkers(c Calls, in Input, files []wanted) ([]string, error) {
+	var lost []string
+	for _, f := range files {
+		if !f.adapt {
+			continue
+		}
+		if c.LostMarkers == nil {
+			return nil, errors.New("the prose step has no call of the markers that an input loses")
+		}
+		before, err := sys.read(targetFile(in.Dir, f.path))
+		if err != nil {
+			return nil, fmt.Errorf("%s: %s", f.path, firstLine(err))
+		}
+		after, err := sys.read(inputFile(in.Dir, f.path))
+		if err != nil {
+			return nil, fmt.Errorf("%s/%s: %s", inputsDir, f.path, firstLine(err))
+		}
+		lost = append(lost, c.LostMarkers(f.path, before, after)...)
+	}
+	return lost, nil
+}
+
+// A question of S10 is one file and marker key (work.MarkerKey), with the
+// first line where it occurs.
 type question struct {
 	id, file, text string
 	line           int
@@ -368,26 +408,21 @@ type question struct {
 func markerQuestions(marks []Marker) []question {
 	var out []question
 	for _, m := range marks {
-		if !slices.ContainsFunc(out, func(q question) bool { return q.file == m.File && q.text == m.Text }) {
-			out = append(out, question{MarkerID(m.File, m.Text), m.File, m.Text, m.Line})
+		key := work.MarkerKey(m.Text)
+		if !slices.ContainsFunc(out, func(q question) bool { return q.file == m.File && q.text == key }) {
+			out = append(out, question{MarkerID(m.File, key), m.File, key, m.Line})
 		}
 	}
 	return out
 }
-
-// shown gives the text of a marker for a table or a record: with no carriage
-// return at its end, which a marker that does not close on a line of a CRLF
-// file holds, and which no cell of a TSV file can hold (note 2 of review round
-// 1 of #90).
-func shown(marker string) string { return strings.TrimSuffix(marker, "\r") }
 
 // markerAsk gives the question of a marker of a file (D6 of #90).
 func markerAsk(file, marker string) string {
 	return "What is the value of " + marker + " in " + file + "? Answer gap to keep it as an open gap, with its question as question_text."
 }
 
-// runS10 is S10 (D6 of #90): one question M-<x8> per file and marker of the
-// tree, with the first line of the marker, and one stop table for the markers
+// runS10 is S10 (D6 of #90): one question M-<x8> per file and marker key of
+// the tree, at the line of its open quote, and one stop table for the markers
 // with no answer; an M- answer to a marker that the tree does not hold is an
 // input error.
 func runS10(c Calls, in Input) Outcome {
@@ -409,13 +444,57 @@ func runS10(c Calls, in Input) Outcome {
 	var stops []StopRow
 	for _, q := range qs {
 		if answerOf(in.Answers, q.id) == nil {
-			stops = append(stops, StopRow{"S10", q.id, markerAsk(q.file, shown(q.text)), fmt.Sprintf("%s:%d %s", q.file, q.line, shown(q.text))})
+			stops = append(stops, StopRow{"S10", q.id, markerAsk(q.file, q.text), fmt.Sprintf("%s:%d %s", q.file, q.line, q.text)})
 		}
 	}
 	if stops != nil {
 		return Outcome{Kind: Stop, Stops: stops}
 	}
 	return Outcome{Kind: Done, Evidence: "every marker has an answer row"}
+}
+
+// fileOrder gives the file of each place, in the order of the places.
+func fileOrder(marks []Marker) []string {
+	var out []string
+	for _, m := range marks {
+		out = append(out, m.File)
+	}
+	return out
+}
+
+// fill replaces each place of file in text whose answer is a value with that
+// value, the whole marker, also over more lines (fix 1 of the first pilot,
+// #97), and gives the filled text and, for each place of file in marks (by
+// its index), its byte offset in the filled text. A marker that is not at its
+// line and column is an error.
+func fill(text, file string, marks []Marker, answer func(Marker) []string) (string, map[int]int, error) {
+	starts := []int{0} // the byte offset of each line
+	for i := 0; i < len(text); i++ {
+		if text[i] == '\n' {
+			starts = append(starts, i+1)
+		}
+	}
+	var b strings.Builder
+	at := map[int]int{}
+	last, delta := 0, 0
+	for i, m := range marks {
+		if m.File != file {
+			continue
+		}
+		if m.Line < 1 || m.Line > len(starts) || starts[m.Line-1]+m.Col+len(m.Text) > len(text) || text[starts[m.Line-1]+m.Col:starts[m.Line-1]+m.Col+len(m.Text)] != m.Text {
+			return "", nil, fmt.Errorf("%s:%d: the marker %s is not at its column %d", m.File, m.Line, work.MarkerKey(m.Text), m.Col)
+		}
+		off := starts[m.Line-1] + m.Col
+		at[i] = off + delta
+		if r := answer(m); r[1] != "gap" {
+			b.WriteString(text[last:off])
+			b.WriteString(r[1])
+			last = off + len(m.Text)
+			delta += len(r[1]) - len(m.Text)
+		}
+	}
+	b.WriteString(text[last:])
+	return b.String(), at, nil
 }
 
 // answerOf gives the row of answers.tsv for the question id with a value, or
@@ -430,9 +509,11 @@ func answerOf(a work.Answers, id string) []string {
 }
 
 // runS11 is S11 (D8 of #90): it checks each answer and each marker, then fills
-// each marker with a value at each of its places, keeps each gap with its row
-// of open-gaps.tsv, writes one record row per place, and writes the second
-// answers record with its index row and its line of facts.sha256.
+// each marker with a value at each of its places, the whole marker, also over
+// more lines (fix 1 of the first pilot, #97), keeps each gap with its row of
+// open-gaps.tsv by its key, writes one record row per place at its line in the
+// tree that S11 writes, and writes the second answers record with its index
+// row and its line of facts.sha256.
 func runS11(c Calls, in Input) Outcome {
 	const evidence = "checks markers, sources and facts"
 	if c.Markers == nil {
@@ -454,60 +535,56 @@ func runS11(c Calls, in Input) Outcome {
 			return Outcome{Kind: Fail, Evidence: q.id + ": no answer"}
 		case r[1] == "gap" && strings.Contains(q.file, "\t"):
 			return Outcome{Kind: Fail, Evidence: q.file + ": a file whose name holds a tab cannot have a row in " + work.OpenGapsPath}
-		case r[1] == "gap" && strings.ContainsAny(q.text, "\t\r"):
-			return Outcome{Kind: Fail, Evidence: q.file + ": the marker " + shown(q.text) + " holds a tab or a carriage return, so it cannot have a row in " + work.OpenGapsPath}
+		case r[1] == "gap" && slices.ContainsFunc(marks, func(m Marker) bool {
+			return m.File == q.file && work.MarkerKey(m.Text) == q.text && strings.ContainsAny(m.Text, "\t\r")
+		}):
+			return Outcome{Kind: Fail, Evidence: q.file + ": the marker " + q.text + " holds a tab or a carriage return, so it cannot have a row in " + work.OpenGapsPath}
 		case r[1] != "gap" && strings.ContainsAny(r[1], "\u2039\u203a"):
 			return Outcome{Kind: Fail, Evidence: q.id + ": the value holds an angle quote, so it would be a marker"}
 		}
 	}
-	texts := map[string][]string{} // the lines of each file with a value to fill
-	var values, gaps [][]string
-	onLine := map[string]int{} // the markers of each line: a line with more than one gives each row the column too, so each key of the record is unique
-	for _, m := range marks {
-		onLine[fmt.Sprintf("%s:%d", m.File, m.Line)]++
+	answer := func(m Marker) []string { return answerOf(in.Answers, MarkerID(m.File, work.MarkerKey(m.Text))) }
+	out := map[string][]byte{}
+	line := make([]int, len(marks)) // the line of each place in the tree that S11 writes
+	for i, m := range marks {
+		line[i] = m.Line
 	}
-	for _, m := range marks {
-		r := answerOf(in.Answers, MarkerID(m.File, m.Text))
-		name := fmt.Sprintf("marker:%s:%d", m.File, m.Line)
-		if onLine[fmt.Sprintf("%s:%d", m.File, m.Line)] > 1 {
+	for _, file := range slices.Compact(fileOrder(marks)) {
+		if !slices.ContainsFunc(marks, func(m Marker) bool { return m.File == file && answer(m)[1] != "gap" }) {
+			continue // a file with gaps only: S11 changes no line of it
+		}
+		data, err := sys.read(targetFile(in.Dir, file))
+		if err != nil {
+			return Outcome{Kind: Fail, Evidence: file + ": " + firstLine(err)}
+		}
+		filled, at, err := fill(string(data), file, marks, answer)
+		if err != nil {
+			return Outcome{Kind: Fail, Evidence: err.Error()}
+		}
+		for i, off := range at {
+			line[i] = 1 + strings.Count(filled[:off], "\n")
+		}
+		out[file] = []byte(filled)
+	}
+	var values, gaps [][]string
+	onLine := map[string]int{} // the places of each line of the tree that S11 writes: a line with more than one gives each row the column too, so each key of the record is unique
+	for i, m := range marks {
+		onLine[fmt.Sprintf("%s:%d", m.File, line[i])]++
+	}
+	for i, m := range marks {
+		r, key := answer(m), work.MarkerKey(m.Text)
+		name := fmt.Sprintf("marker:%s:%d", m.File, line[i])
+		if onLine[fmt.Sprintf("%s:%d", m.File, line[i])] > 1 {
 			name += fmt.Sprintf(":%d", m.Col)
 		}
 		if r[1] == "gap" {
-			values = append(values, []string{name, m.Text, "gap", work.OpenGapsPath})
-			if !slices.ContainsFunc(gaps, func(g []string) bool { return g[0] == m.File && g[1] == m.Text }) {
-				gaps = append(gaps, []string{m.File, m.Text, r[4]})
+			values = append(values, []string{name, key, "gap", work.OpenGapsPath})
+			if !slices.ContainsFunc(gaps, func(g []string) bool { return g[0] == m.File && g[1] == key }) {
+				gaps = append(gaps, []string{m.File, key, r[4]})
 			}
 			continue
 		}
 		values = append(values, append([]string{name, r[1]}, sourceOf(r)...))
-		if texts[m.File] == nil {
-			data, err := sys.read(targetFile(in.Dir, m.File))
-			if err != nil {
-				return Outcome{Kind: Fail, Evidence: m.File + ": " + firstLine(err)}
-			}
-			texts[m.File] = strings.Split(string(data), "\n")
-		}
-	}
-	for file, lines := range texts { // from the last place of a line to the first, so each column stays true
-		for i := len(marks) - 1; i >= 0; i-- {
-			m := marks[i]
-			if m.File != file {
-				continue
-			}
-			r := answerOf(in.Answers, MarkerID(m.File, m.Text))
-			if r[1] == "gap" {
-				continue
-			}
-			line, body := lines[m.Line-1], shown(m.Text) // the line keeps its line end
-			if m.Col+len(body) > len(line) || line[m.Col:m.Col+len(body)] != body {
-				return Outcome{Kind: Fail, Evidence: fmt.Sprintf("%s:%d: the marker %s is not at its column %d", m.File, m.Line, body, m.Col)}
-			}
-			lines[m.Line-1] = line[:m.Col] + r[1] + line[m.Col+len(body):]
-		}
-	}
-	out := map[string][]byte{}
-	for file, lines := range texts {
-		out[file] = []byte(strings.Join(lines, "\n"))
 	}
 	if len(gaps) > 0 {
 		list, _ := sys.show(target, "HEAD", work.OpenGapsPath)
@@ -529,7 +606,7 @@ func runS11(c Calls, in Input) Outcome {
 	id := fmt.Sprintf("F-%04d", n)
 	var asked []work.Question
 	for _, q := range qs {
-		asked = append(asked, work.Question{ID: q.id, Text: markerAsk(q.file, shown(q.text))})
+		asked = append(asked, work.Question{ID: q.id, Text: markerAsk(q.file, q.text)})
 	}
 	record := answersRecord(id, date, markerRecord, asked, in.Answers)
 	recordPath := factsDir + "/" + id + "-marker-answers.md"

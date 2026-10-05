@@ -136,6 +136,10 @@ func TestSetupReadsTheProblemStatement(t *testing.T) {
 			"inputs/briefs/problem-statement.md: line 2 holds the marker \u2039the host\u203a, and a brief holds no marker: write the quote another way"},
 		{src, []byte("a\n\xfe\n"), "inputs/briefs/vision.md: line 2 is not valid UTF-8"},
 		{src, []byte("\u2039x\u203a\n"), "inputs/briefs/vision.md: line 1 holds the marker \u2039x\u203a, and a brief holds no marker: write the quote another way"},
+		// an angle quote with no pair (fix 3 of the first pilot, #97)
+		{[]byte("# A brief\nIt runs on \u2039the host.\n"), nil,
+			"inputs/briefs/problem-statement.md: line 2 holds the angle quote \u2039 with no pair, and a brief holds no marker: write the quote another way"},
+		{src, []byte("a\nb \u203a c\n"), "inputs/briefs/vision.md: line 2 holds the angle quote \u203a with no pair, and a brief holds no marker: write the quote another way"},
 	} {
 		*work = ""
 		got := standInBrief(t, c.src, c.vision)

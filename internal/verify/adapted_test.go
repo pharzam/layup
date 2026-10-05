@@ -3,6 +3,7 @@ package verify
 import (
 	"errors"
 	"slices"
+	"strings"
 	"testing"
 	"testing/fstest"
 )
@@ -58,7 +59,10 @@ func TestTheHitsOfAdapted(t *testing.T) {
 		{"Use what your project, your forge and your stack need.", []string{"rule-3 your forge", "rule-3 your project", "rule-3 your stack"}},
 		{"Keep the ones you use.", []string{"rule-3 you use"}},
 		{"The ones you used.", nil},
-		{"See `\u2039the kit\u203a` and `\u2039an adopter`.", nil},
+		{"See `\u2039the kit\u203a` and `\u2039an adopter\u203a`.", nil},
+		// an open quote with no close quote after it is no marker, so the words after it are read (fix 1 of the first pilot, #97)
+		{"See `\u2039the kit\u203a` and `\u2039an adopter`.", []string{"rule-1 adopter"}},
+		{"Fill the `\u2039scheme\nhere\u203a` value.", []string{"rule-3 fill \u2039"}},
 	} {
 		var want []string
 		for _, w := range c.want {
@@ -74,8 +78,10 @@ func TestTheHitsOfAdapted(t *testing.T) {
 // A paragraph is one text: a hit is at the line where its word starts; a
 // line of spaces ends the paragraph; spaces and tabs are one space, and a
 // line loses the space at its start and at its end (condition 1 of the plan
-// review), and its carriage return; a marker that does not close takes the
-// rest of its line (D3 of #88).
+// review), and its carriage return (D3 of #88). A marker runs to the first
+// close quote after it, also across lines, and is one unit; an open quote
+// with no close quote after it, or between two backticks, starts no unit (fix 1
+// of the first pilot, #97).
 func TestTheTextOfAdapted(t *testing.T) {
 	for _, c := range []struct {
 		name, text string
@@ -89,7 +95,9 @@ func TestTheTextOfAdapted(t *testing.T) {
 		{"spaces and tabs", "the \t  template\n", []string{"rule-1 the template: docs/a.md:1"}},
 		{"CRLF", "a\r\nkit\r\n", []string{"rule-1 kit: docs/a.md:2"}},
 		{"no last line end", "the kit", []string{"rule-1 kit: docs/a.md:1"}},
-		{"a marker that does not close", "see \u2039the kit and more\nkit\n", []string{"rule-1 kit: docs/a.md:2"}},
+		{"an open quote that does not close", "see \u2039the kit and more\nkit\n", []string{"rule-1 kit: docs/a.md:1", "rule-1 kit: docs/a.md:2"}},
+		{"a marker over two lines is one unit", "see \u2039the kit and\nmore kit\u203a here\nkit\n", []string{"rule-1 kit: docs/a.md:3"}},
+		{"the mention starts no unit", "the `\u2039` kit\n", []string{"rule-1 kit: docs/a.md:1"}},
 		{"a hit twice on one line is one finding", "kit and kit\n", []string{"rule-1 kit: docs/a.md:1"}},
 		{"a space at the end of a line inside a phrase", "Fill \nin the table.\n", []string{"rule-3 fill in: docs/a.md:1"}},
 		{"a tab at the end of a line inside a phrase", "Fill\t\nin the table.\n", []string{"rule-3 fill in: docs/a.md:1"}},
@@ -137,5 +145,33 @@ func TestTheFilesOfAdapted(t *testing.T) {
 	}
 	if got := adaptedFindings(fstest.MapFS{}, stubHistory{err: errors.New("fatal: not a git repository")}); !slices.Equal(got, []string{"git: cannot list the tracked files"}) {
 		t.Errorf("a failed list: %q", got)
+	}
+}
+
+// S14 refuses an adapted input that loses a marker that the file before it
+// has on a line that check adapted flags (fix 2 of the first pilot, #97: the
+// prose step lost seven of them, so S10 never asked them). A marker over more
+// lines counts when one of its lines is flagged; the finding names the line of
+// its open quote and its key. A marker that the input keeps somewhere byte for
+// byte, or a marker of a line that check adapted does not flag, is no finding.
+func TestLostMarkers(t *testing.T) {
+	const before = "# The kit\n\nName the models: `\u2039name your reasoning-tier models\u203a` for your project.\n\nThe value \u2039x\u203a stays.\n\nReport `\u2039model, effort,\ntokens and elapsed time\u203a` as your project does.\n"
+	const kept = "# The project\n\nName the models: `\u2039name your reasoning-tier models\u203a`.\n\nThe value \u2039x\u203a stays.\n\nReport `\u2039model, effort,\ntokens and elapsed time\u203a` here.\n"
+	for _, c := range []struct {
+		name, after string
+		want        []string
+	}{
+		{"each marker kept", kept, nil},
+		{"a marker of a flagged line lost", strings.Replace(kept, "`\u2039name your reasoning-tier models\u203a`", "the reasoning-tier models", 1),
+			[]string{"docs/e.md:3: the input loses the marker \u2039name your reasoning-tier models\u203a"}},
+		{"a marker over two lines that lost its open quote", strings.Replace(kept, "`\u2039model, effort,", "`model, effort,", 1),
+			[]string{"docs/e.md:7: the input loses the marker \u2039model, effort, tokens and elapsed time\u203a"}},
+		{"a marker of a line that check adapted does not flag", strings.Replace(kept, "\u2039x\u203a", "8080", 1), nil},
+		{"a marker kept on another line", "Name the models.\n\n`\u2039name your reasoning-tier models\u203a` and \u2039x\u203a, `\u2039model, effort,\ntokens and elapsed time\u203a`.\n", nil},
+		// the input keeps each marker byte for byte, with its line ends (point 3 of the Operator's comment 6002406785)
+		{"a marker kept with other line ends", strings.Replace(kept, "\u2039model, effort,\ntokens and elapsed time\u203a", "\u2039model, effort, tokens\nand elapsed time\u203a", 1),
+			[]string{"docs/e.md:7: the input loses the marker \u2039model, effort, tokens and elapsed time\u203a"}},
+	} {
+		same(t, c.name, LostMarkers("docs/e.md", []byte(before), []byte(c.after)), c.want)
 	}
 }

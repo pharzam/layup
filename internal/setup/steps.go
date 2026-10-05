@@ -58,6 +58,7 @@ type Calls struct {
 	BrokenLinks   func(tree string) ([]string, error)
 	Flagged       func(tree string) ([]string, error)
 	LinksBaseline func(source, line string) bool
+	LostMarkers   func(path string, before, after []byte) []string
 }
 
 // Steps gives the steps of this version of layup: S01 to S04 (task T-7s0y,

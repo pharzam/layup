@@ -16,7 +16,8 @@ func TestTheSourcesOfARecord(t *testing.T) {
 	tree := fstest.MapFS{
 		"docs/facts/F-0001-setup-answers.md": {Data: []byte("1. `S01-stack` go\n")},
 		"docs/a.md":                          {Data: []byte("one\nthe \u2039port\u203a here\n")},
-		"docs/setup/open-gaps.tsv":           {Data: []byte("docs/a.md\t\u2039port\u203a\tWhich port?\n")},
+		"docs/m.md":                          {Data: []byte("a `\u2039State one\nthing\u203a` b\n")},
+		"docs/setup/open-gaps.tsv":           {Data: []byte("docs/a.md\t\u2039port\u203a\tWhich port?\ndocs/m.md\t\u2039State one thing\u203a\tWhat?\n")},
 		"docs/x.txt":                         {Data: []byte("x")},
 	}
 	area := fstest.MapFS{"inputs/answers.tsv": {Data: []byte("x")}}
@@ -45,6 +46,10 @@ func TestTheSourcesOfARecord(t *testing.T) {
 		{"a gap with no row of open gaps", []string{"S11", "marker:docs/a.md:2", "\u2039other\u203a", "gap", "docs/setup/open-gaps.tsv"},
 			[]string{"source: S11 marker:docs/a.md:2: line 2 of docs/a.md does not hold \u2039other\u203a",
 				"source: S11 marker:docs/a.md:2: docs/setup/open-gaps.tsv has no row for docs/a.md \u2039other\u203a"}},
+		// a gap of a marker over two lines: its value is the key of the marker, and its line is the line of its open quote (fix 1 of the first pilot, #97)
+		{"a gap of a marker over two lines", []string{"S11", "marker:docs/m.md:1", "\u2039State one thing\u203a", "gap", "docs/setup/open-gaps.tsv"}, nil},
+		{"a gap of a marker over two lines, at its second line", []string{"S11", "marker:docs/m.md:2", "\u2039State one thing\u203a", "gap", "docs/setup/open-gaps.tsv"},
+			[]string{"source: S11 marker:docs/m.md:2: line 2 of docs/m.md does not hold \u2039State one thing\u203a"}},
 		{"a gap row of another name", []string{"S11", "x", "\u2039port\u203a", "gap", "docs/setup/open-gaps.tsv"},
 			[]string{"source: S11 x: a gap row is not named marker:<file>:<line>"}},
 		{"a command", []string{"S02", "pin.commit", "abc", "computed", "git ls-remote x HEAD"}, nil},

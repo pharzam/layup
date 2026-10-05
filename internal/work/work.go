@@ -71,6 +71,15 @@ var OpenGapsSchema = tsv.Schema{Name: "open-gaps", Location: "target:docs/setup/
 	{Name: "question", Type: "text"},
 }}
 
+// MarkerKey gives the text of a marker as a question of S10, a row of the
+// setup record and a row of open-gaps.tsv show it, and as check markers keys
+// it (fix 1 of the first pilot, #97): each line end of a marker over more
+// lines, a line feed with the carriage return before it, is one space. A
+// marker on one line is its own key, so its question ID stays.
+func MarkerKey(text string) string {
+	return strings.ReplaceAll(strings.ReplaceAll(text, "\r\n", " "), "\n", " ")
+}
+
 // VerifyPath is the table of layup setup verify in a work area, from its root:
 // the Operator writes it, and S15 reads it (task T-d6q5, D6 of #92).
 const VerifyPath = "out/verify.tsv"
