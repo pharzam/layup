@@ -40,6 +40,8 @@ build() {
 	printf 'history\n' > "$repo/docs/decisions/D1.md"
 	printf -- '- T-aaaa the task\n- keep this line\nScheme: %sscheme%s\n' "$LQ" "$RQ" > "$repo/docs/tasks/backlog.md"
 	printf '# facts\n| index |\n| _none yet_ | | | |\n' > "$repo/docs/facts/README.md"
+	# (a marker over two lines that S11 fills, and one that it keeps as a gap: fix 1 of the first pilot)
+	[ "$v" = markers-over-lines ] && printf '# M\nScheme: `%sState one\nthing%s` now.\nZone: %szone\nname%s.\nKeep this rule.\n' "$LQ" "$RQ" "$LQ" "$RQ" > "$repo/docs/m.md"
 	g add -A && g commit -q -m "chore: the unmodified baseline at fixture"
 	printf 'step\tname\tvalue\tsource\tref\n' > "$rec"
 
@@ -97,6 +99,11 @@ build() {
 	printf -- '- keep this line\nScheme: T-xxxx\n' > "$repo/docs/tasks/backlog.md"
 	[ "$v" = index-grows ] && printf -- '- a new line\n' >> "$repo/docs/tasks/backlog.md"
 	row S11 "marker:docs/tasks/backlog.md:2" "T-xxxx"
+	if [ "$v" = markers-over-lines ]; then
+		printf '# M\nScheme: `T-xxxx` now.\nZone: %szone\nname%s.\nKeep this rule.\n' "$LQ" "$RQ" > "$repo/docs/m.md"
+		row S11 "marker:docs/m.md:2" "T-xxxx"
+		printf 'S11\tmarker:docs/m.md:3\t%szone name%s\tgap\tdocs/setup/open-gaps.tsv\n' "$LQ" "$RQ" >> "$rec"
+	fi
 	[ "$v" = written-markers ] && printf 'S11\tmarker:README.md:3\t%stimeout%s\tgap\tdocs/setup/open-gaps.tsv\n' "$LQ" "$RQ" >> "$rec"
 	if [ "$v" = row-at-head ]; then
 		h=$(sha256 "$repo/docs/a.md")
@@ -141,6 +148,8 @@ run heading-renamed     heading-renamed-body-changed 1 'unflagged baseline line 
 run index-line-changed  index-line-changed  1 'unflagged baseline line changed: docs/facts/README.md:1'
 # the report counts the marker rows of S11, not the baseline marker lines that a written file replaced (finding F-18)
 run written-markers     written-markers     0 'MARKERS README.md: S11 marker rows 1 (filled 0, gaps 1); each recorded value is in the file' 'marker lines filled'
+# a marker over two lines: S11 fills all its lines, or keeps them as a gap with the key of its row (fix 1 of the first pilot)
+run markers-over-lines  markers-over-lines  0 'MARKERS docs/m.md: S11 marker rows 2 (filled 1, gaps 1); each recorded value is in the file' 'FAIL'
 
 echo "rules-diff-test: $((n - bad)) of $n cases behave as written"
 [ "$bad" = 0 ]

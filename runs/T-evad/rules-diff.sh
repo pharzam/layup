@@ -23,8 +23,10 @@
 #     docs/glossary.md, docs/guardrails.md) has a record row, and is listed for the audit;
 #   - in each other changed file, each changed or removed baseline line is a line that check `adapted`
 #     flagged at the root (the kit voice that S14 replaces), or is inside a whole section whose heading is
-#     flagged, or holds a marker that the record fills (with its value in the file); lines added to a file
-#     are allowed only in an index file (docs/adr/README.md, docs/facts/README.md);
+#     flagged, or holds a marker that the record fills (a marker runs from its open quote to the first close
+#     quote after it, also across lines; a quote alone in a code span is a mention), with each recorded
+#     value in the file; lines added to a file are allowed only in an index file (docs/adr/README.md,
+#     docs/facts/README.md);
 #   - a file with a changed baseline line that is not a filled marker has a record row `file:<path>` whose
 #     value is the SHA-256 of the file at HEAD. A record row never makes a changed line allowed.
 # Exit 0 and `rules-diff: PASS` only when all hold. The output lists each class for the audit.
@@ -40,7 +42,8 @@ SC=${4:-$here/../../docs/setup/setup-check.sh}
 tmp=$(mktemp -d) || exit 2
 trap 'rm -rf "$tmp"' EXIT INT TERM
 LQ=$(printf '\342\200\271')   # the marker characters, never typed in this file
-export LQ
+RQ=$(printf '\342\200\272')
+export LQ RQ
 fail=0
 bad() { echo "FAIL: $*"; fail=$((fail + 1)); }
 gt() { git -C "$T" -c core.quotepath=off -c core.hooksPath=/dev/null -c maintenance.auto=false "$@"; }
@@ -117,8 +120,22 @@ while IFS='	' read -r st p; do
 			function lvl(s) { if (match(s, /^#+ /)) return RLENGTH - 1; return 0 }
 			function secend(a,   l, e) { l = lvl(B[a]); e = a; while (e < N && !(lvl(B[e + 1]) > 0 && lvl(B[e + 1]) <= l)) e++; return e }
 			BEGIN {
-				P = ENVIRON["P"]; LQ = ENVIRON["LQ"]; idxapp = ENVIRON["IDXAPP"] + 0; w = ENVIRON["W"] + 0; s05 = ENVIRON["S05"] + 0
+				P = ENVIRON["P"]; LQ = ENVIRON["LQ"]; RQ = ENVIRON["RQ"]; idxapp = ENVIRON["IDXAPP"] + 0; w = ENVIRON["W"] + 0; s05 = ENVIRON["S05"] + 0
 				while ((getline line < BASE) > 0) B[++N] = line
+				# the lines that a marker of the baseline touches: from its open quote to the first close quote
+				# after it, also across lines; a quote alone in a code span is a mention, and an open quote with
+				# no close quote after it is no marker (fix 1 of the first pilot)
+				for (n = 1; n <= N; n++) {
+					ms = B[n]; mp = 1
+					while ((mi = index(substr(ms, mp), LQ)) > 0) {
+						mat = mp + mi - 1
+						if (mat > 1 && substr(ms, mat - 1, 1) == "`" && substr(ms, mat + length(LQ), 1) == "`") { mp = mat + length(LQ); continue }
+						if ((mj = index(substr(ms, mat), RQ)) > 0) { ML[n] = 1; mp = mat + mj - 1 + length(RQ); continue }
+						for (me = n + 1; me <= N && index(B[me], RQ) == 0; me++) ;
+						if (me <= N) { for (mk2 = n; mk2 <= me; mk2++) ML[mk2] = 1 }
+						break
+					}
+				}
 				while ((getline line < FL) > 0) { split(line, a, "\t"); if (a[1] == P) F[a[2] + 0] = 1 }
 				while ((getline line < MK) > 0) { split(line, a, "\t"); if (a[1] == P) nmk++ }
 				# the baseline lines that the diff changes or removes
@@ -148,7 +165,7 @@ while IFS='	' read -r st p; do
 					else if (SEC[n]) { nsec++ }
 					else if (idxapp && B[n] ~ /^\| _none yet_/) { nidx++ }
 					else if (w) { nwr++ }
-					else if (index(B[n], LQ) > 0 && nmk > 0) { nmark++ }
+					else if (ML[n] && nmk > 0) { nmark++ }
 					else { print "FAIL: unflagged baseline line changed: " P ":" n ": " substr(B[n], 1, 90); bads++ ; nother++ }
 				}
 			}
@@ -165,11 +182,18 @@ while IFS='	' read -r st p; do
 		if [ "$nrows" -gt 0 ]; then
 			n_marker=$((n_marker + 1))
 			ngap=$(awk -F'\t' -v p="$p" '$1 == p && $3 == "gap"' "$tmp/markerrows.tsv" | grep -c .)
-			awk -F'\t' -v p="$p" '$1 == p { print $2 }' "$tmp/markerrows.tsv" | while IFS= read -r v; do
-				grep -F -q -- "$v" "$tmp/new" || echo "FAIL: recorded marker value is not in the file: $p ($v)"
+			# a gap keeps its marker, whose value is its key: each line end as one space
+			awk '{ sub(/\r$/, ""); printf "%s ", $0 }' "$tmp/new" > "$tmp/joined"
+			awk -F'\t' -v p="$p" '$1 == p { print $3 "\t" $2 }' "$tmp/markerrows.tsv" | while IFS="$(printf '\t')" read -r src v; do
+				f="$tmp/new"; [ "$src" = gap ] && f="$tmp/joined"
+				grep -F -q -- "$v" "$f" || echo "FAIL: recorded marker value is not in the file: $p ($v)"
 			done > "$tmp/mk.out"
-			grep '^FAIL:' "$tmp/mk.out" && fail=$((fail + $(grep -c '^FAIL:' "$tmp/mk.out")))
-			echo "MARKERS $p: S11 marker rows $nrows (filled $((nrows - ngap)), gaps $ngap); each recorded value is in the file"
+			if grep '^FAIL:' "$tmp/mk.out"; then
+				fail=$((fail + $(grep -c '^FAIL:' "$tmp/mk.out")))
+				echo "MARKERS $p: S11 marker rows $nrows (filled $((nrows - ngap)), gaps $ngap); a recorded value is not in the file"
+			else
+				echo "MARKERS $p: S11 marker rows $nrows (filled $((nrows - ngap)), gaps $ngap); each recorded value is in the file"
+			fi
 		fi
 		need_row=0
 		if [ "$S05" = 1 ]; then
