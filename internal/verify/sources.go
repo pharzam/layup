@@ -60,9 +60,8 @@ func checkSources(in input) []string {
 
 // gapFindings checks a gap row of S11: its name is marker:<file>:<line>, or
 // marker:<file>:<line>:<column> when the line holds more than one marker, the
-// line of the file holds the marker of its value (at that byte column when the
-// name has one), and docs/setup/open-gaps.tsv has the row of the file and the
-// marker.
+// line of the file holds the marker of its value, and docs/setup/open-gaps.tsv
+// has the row of the file and the marker.
 func gapFindings(in input, at, name, marker string) []string {
 	rest, ok := strings.CutPrefix(name, "marker:")
 	i := strings.LastIndex(rest, ":")
@@ -70,20 +69,17 @@ func gapFindings(in input, at, name, marker string) []string {
 	if !ok || i < 0 || err != nil {
 		return []string{at + "a gap row is not named marker:<file>:<line>"}
 	}
-	file, col := rest[:i], -1
+	file := rest[:i]
 	if j := strings.LastIndex(file, ":"); j >= 0 { // a name with a column: the number before it is the line
 		if line, err := strconv.Atoi(file[j+1:]); err == nil {
-			file, col, n = file[:j], n, line
+			file, n = file[:j], line // the column is the place at the scan of S11, which fills the other markers of the line first: a key, not checked here
 		}
 	}
 	var out []string
 	data, _ := fs.ReadFile(in.fsys, file)
 	lines := bytes.Split(data, []byte("\n"))
-	switch {
-	case n < 1 || n > len(lines) || !bytes.Contains(lines[n-1], []byte(marker)):
+	if n < 1 || n > len(lines) || !bytes.Contains(lines[n-1], []byte(marker)) {
 		out = append(out, at+"line "+strconv.Itoa(n)+" of "+file+" does not hold "+marker)
-	case col >= 0 && !bytes.HasPrefix(lines[n-1][min(col, len(lines[n-1])):], []byte(marker)):
-		out = append(out, at+"line "+strconv.Itoa(n)+" of "+file+" does not hold "+marker+" at column "+strconv.Itoa(col))
 	}
 	gaps, _ := fs.ReadFile(in.fsys, work.OpenGapsPath)
 	if !slices.ContainsFunc(openGapsRows(gaps), func(r []string) bool { return r != nil && r[0] == file && r[1] == marker }) {

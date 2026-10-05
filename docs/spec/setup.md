@@ -900,8 +900,9 @@ reason  text                             -    the first failure, or the `clear` 
   the row `S01 stack` has the file of the ref (in the entry of the binary,
   task `T-c06a`); `fact`, the ref resolves;
   `gap`, the row `marker:<file>:<line>` (or `marker:<file>:<line>:<column>`)
-  names a line that holds the marker of its value, at that byte column when the
-  name has one, and `open-gaps.tsv` has the row; `computed`, the ref is not empty,
+  names a line that holds the marker of its value (the column is the place at
+  the scan, before S11 fills the other markers of the line, so it is a key and
+  is not checked), and `open-gaps.tsv` has the row; `computed`, the ref is not empty,
   and a ref `sha256 <path>` (with or without prefixes) names a file of the
   tree or of the work area (the step that wrote a hash checks its value);
   `step`, a value row with it fails. Each finding is
