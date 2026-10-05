@@ -462,9 +462,16 @@ func runS11(c Calls, in Input) Outcome {
 	}
 	texts := map[string][]string{} // the lines of each file with a value to fill
 	var values, gaps [][]string
+	onLine := map[string]int{} // the markers of each line: a line with more than one gives each row the column too, so each key of the record is unique
+	for _, m := range marks {
+		onLine[fmt.Sprintf("%s:%d", m.File, m.Line)]++
+	}
 	for _, m := range marks {
 		r := answerOf(in.Answers, MarkerID(m.File, m.Text))
 		name := fmt.Sprintf("marker:%s:%d", m.File, m.Line)
+		if onLine[fmt.Sprintf("%s:%d", m.File, m.Line)] > 1 {
+			name += fmt.Sprintf(":%d", m.Col)
+		}
 		if r[1] == "gap" {
 			values = append(values, []string{name, m.Text, "gap", work.OpenGapsPath})
 			if !slices.ContainsFunc(gaps, func(g []string) bool { return g[0] == m.File && g[1] == m.Text }) {

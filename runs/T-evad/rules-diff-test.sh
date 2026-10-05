@@ -63,7 +63,8 @@ build() {
 	marker-missing) printf '# C\nTest runner: make\n' > "$repo/docs/c.md" ;;
 	*) printf '# C\nTest runner: go test\n' > "$repo/docs/c.md" ;;
 	esac
-	row S11 "marker:docs/c.md:2" "go test"
+	# the row of a marker: marker:<file>:<line>, or marker:<file>:<line>:<column> when the line holds more markers than one
+	if [ "$v" = marker-column ]; then row S11 "marker:docs/c.md:2:13" "go test"; else row S11 "marker:docs/c.md:2" "go test"; fi
 	step S11
 	# S14: the flagged lines are adapted; the section "How to adapt" is replaced whole (the new text shares the blank line
 	# after the heading with the old, so that diff gives the heading and the body as two hunks)
@@ -108,6 +109,7 @@ run() {
 }
 
 run clean               clean               0 'rules-diff: PASS'
+run marker-column       marker-column       0 'rules-diff: PASS'
 run rule-changed        rule-changed        1 'unflagged baseline line changed: docs/b.md:2' 'rules-diff: PASS'
 run rule-changed-row    rule-changed-with-row 1 'unflagged baseline line changed: docs/b.md:2' 'no record row for docs/b.md'
 run deleted-rule        deleted-rule        1 'deleted baseline path: docs/b.md'

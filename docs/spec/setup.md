@@ -415,7 +415,10 @@ D10 of its plan, with the conditions of its plan review):
   each; no angle quote in a value, which would be a new marker; no `gap` in a
   file whose name holds a tab, the known limit of row 10) and changes no file
   when one check fails. A value replaces the marker at each of its places, with
-  the row `marker:<file>:<line>` per place (the source of D3 of #86); a `gap`
+  the row `marker:<file>:<line>` per place (the source of D3 of #86), and
+  `marker:<file>:<line>:<column>` (the byte column of its open quote) when the
+  line holds more than one marker, so that each key of the record is unique
+  (task `T-evad`, #97: one line of the baseline holds three markers); a `gap`
   keeps the marker, with a row per place (source `gap`, ref
   `docs/setup/open-gaps.tsv`) and one row of `open-gaps.tsv` per file and
   marker, with the answer's `question_text`. A marker that does not close on
@@ -658,7 +661,7 @@ per finished step.
 
 ```tsv-schema setup-record records:setup/record.tsv
 step    id(SNN)                                   key  the step that set the value
-name    text                                      key  the value's name: `stack`, `pin.commit`, `marker:<file>:<line>`, …; `done` for a step's evidence row
+name    text                                      key  the value's name: `stack`, `pin.commit`, `marker:<file>:<line>[:<column>]`, …; `done` for a step's evidence row
 value   text                                      -    the value; for `done`, the evidence line
 source  enum(answer|catalog|fact|computed|gap|step)  -  (`computed` is decided here: §5 names three sources, and the pin values come from `git`, not from a person) `answer`: an answer row; `catalog`: a catalog file; `fact`: a fact citation the Operator accepted; `computed`: a command's output, or a hash that the engine computes; `gap`: kept as an open gap; `step`: a `done` row
 ref     text                                      -    `answer`: the question ID; `catalog`: `<stack>/<path>`; `fact`: `F-NNNN#n`; `computed`: the command, `sha256 <path>` for the hash of a file, or `sha256 <path> <prefix>…` for the hash of the rows of the file whose question has one of the prefixes (`answers.sha256`); `gap`: `docs/setup/open-gaps.tsv`; `step`: `—`
@@ -896,8 +899,9 @@ reason  text                             -    the first failure, or the `clear` 
   source: `answer`, the ref is a row of `answers.tsv`; `catalog`, the entry of
   the row `S01 stack` has the file of the ref (in the entry of the binary,
   task `T-c06a`); `fact`, the ref resolves;
-  `gap`, the row `marker:<file>:<line>` names a line that holds the marker of
-  its value, and `open-gaps.tsv` has the row; `computed`, the ref is not empty,
+  `gap`, the row `marker:<file>:<line>` (or `marker:<file>:<line>:<column>`)
+  names a line that holds the marker of its value, at that byte column when the
+  name has one, and `open-gaps.tsv` has the row; `computed`, the ref is not empty,
   and a ref `sha256 <path>` (with or without prefixes) names a file of the
   tree or of the work area (the step that wrote a hash checks its value);
   `step`, a value row with it fails. Each finding is

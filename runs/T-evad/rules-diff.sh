@@ -73,7 +73,7 @@ sed -n 's/^setup-check: adapted FAIL [^ ]* .*: \(.*\):\([0-9][0-9]*\)$/\1	\2/p' 
 
 # 3. The record: the rows of the files that the prose step copied, and of the markers that S11 filled.
 awk -F'\t' '$2 ~ /^file:/ { print substr($2, 6) "\t" $3 }' "$REC" > "$tmp/filerows.tsv"
-awk -F'\t' '$2 ~ /^marker:/ { n = $2; sub(/^marker:/, "", n); sub(/:[0-9]+$/, "", n); print n "\t" $3 }' "$REC" > "$tmp/markerrows.tsv"
+awk -F'\t' '$2 ~ /^marker:/ { n = $2; sub(/^marker:/, "", n); sub(/(:[0-9]+)+$/, "", n); print n "\t" $3 }' "$REC" > "$tmp/markerrows.tsv"
 
 # 4. The paths of the union, by status.
 gt diff --name-status --no-renames "$root" "$HEADREV" > "$tmp/ns"

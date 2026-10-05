@@ -4,12 +4,15 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	"io"
 	"reflect"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/pharzam/layup/internal/git"
+	"github.com/pharzam/layup/internal/tsv"
 	"github.com/pharzam/layup/internal/work"
 )
 
@@ -356,6 +359,46 @@ func TestS11(t *testing.T) {
 	if !strings.Contains(record, "| Collected by | `layup setup`, step S11 |") || !strings.Contains(record, "# F-0002. The answers to the markers of the setup") ||
 		!strings.Contains(record, "| Source | The answers of `inputs/answers.tsv` to the markers that S10 listed |") || strings.Contains(record, "\u2039") {
 		t.Errorf("the second answers record:\n%s", record)
+	}
+}
+
+// A line that holds more than one marker gives each place its own record row:
+// the name of a row has the byte column of its marker after the line, so that
+// the key (step, name) of the record is unique (the defect that the first
+// pilot found, #97: one line of the baseline holds three markers). A line with
+// one marker keeps the name marker:<file>:<line>.
+func TestS11TwoMarkersOnOneLine(t *testing.T) {
+	line := mx + " and " + my + " and " + mx
+	colY, colX2 := len(mx)+len(" and "), len(mx)+len(" and ")+len(my)+len(" and ")
+	c := markersOf(Marker{"docs/a.md", 2, 0, mx}, Marker{"docs/a.md", 2, colY, my}, Marker{"docs/a.md", 2, colX2, mx}, Marker{"docs/a.md", 3, 0, my})
+	idx, idy := MarkerID("docs/a.md", mx), MarkerID("docs/a.md", my)
+	a := mAnswers([]string{idx, "8080", "F-0003#5", ""}, []string{idy, "gap", "https://github.invalid/c/1", "Which y?"})
+	f := &fakeRepo{
+		trees: map[string][]git.TreeEntry{factsDir: {{Path: "docs/facts/F-0001-setup-answers.md"}, {Path: "docs/facts/README.md"}, {Path: "docs/facts/problem-statement-brief.md"}}},
+		shows: map[string]string{factsSumsPath: "abc  docs/facts/F-0001-setup-answers.md\n", factsDir + "/README.md": factsIndexS04},
+		disk:  map[string]string{"w/target/docs/a.md": "one\n" + line + "\n" + my + "\n"},
+	}
+	f.install(t)
+	o := runS11(c, Input{Dir: "w", Record: pinRecord(), Answers: a})
+	names := []string{"marker:docs/a.md:2:0", "marker:docs/a.md:2:" + strconv.Itoa(colY), "marker:docs/a.md:2:" + strconv.Itoa(colX2), "marker:docs/a.md:3"}
+	if o.Kind != Done || len(o.Values) < 4 {
+		t.Fatalf("S11: %s %q %q; want done with a row for each place", o.Kind, o.Evidence, o.Values)
+	}
+	for i, n := range names {
+		if o.Values[i][0] != n {
+			t.Errorf("row %d is named %q; want %q", i, o.Values[i][0], n)
+		}
+	}
+	if got, want := f.files["w/target/docs/a.md"], "one\n8080 and "+my+" and 8080\n"+my+"\n"; got != want {
+		t.Errorf("S11 wrote %q; want %q", got, want)
+	}
+	// the rows go into the record, whose key is (step, name): no key repeats
+	var rows [][]string
+	for _, v := range o.Values {
+		rows = append(rows, append([]string{"S11"}, v...))
+	}
+	if err := tsv.Write(io.Discard, work.RecordSchema, rows); err != nil {
+		t.Errorf("the record of the rows: %v; want no error", err)
 	}
 }
 
