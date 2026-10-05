@@ -39,6 +39,7 @@ build() {
 	else printf '# kit readme\ntext\n' > "$repo/README.md"; fi
 	printf 'history\n' > "$repo/docs/decisions/D1.md"
 	printf -- '- T-aaaa the task\n- keep this line\nScheme: %sscheme%s\n' "$LQ" "$RQ" > "$repo/docs/tasks/backlog.md"
+	[ "$v" = index-marker-over-lines ] && printf -- '- T-aaaa the task\n- keep this line\nScheme: `%sscheme\nover two lines%s` now.\n' "$LQ" "$RQ" > "$repo/docs/tasks/backlog.md"
 	printf '# facts\n| index |\n| _none yet_ | | | |\n' > "$repo/docs/facts/README.md"
 	# (a marker over two lines that S11 fills, and one that it keeps as a gap: fix 1 of the first pilot)
 	[ "$v" = markers-over-lines ] && printf '# M\nScheme: `%sState one\nthing%s` now.\nZone: %szone\nname%s.\nKeep this rule.\n' "$LQ" "$RQ" "$LQ" "$RQ" > "$repo/docs/m.md"
@@ -48,6 +49,8 @@ build() {
 	# S05: the history goes (a deleted rule file when the variant says so)
 	git -C "$repo" rm -q docs/decisions/D1.md
 	printf -- '- keep this line\nScheme: %sscheme%s\n' "$LQ" "$RQ" > "$repo/docs/tasks/backlog.md"
+	[ "$v" = index-marker-over-lines ] && printf -- '- keep this line\nScheme: `%sscheme\nover two lines%s` now.\n' "$LQ" "$RQ" > "$repo/docs/tasks/backlog.md"
+	[ "$v" = index-lines-joined ] && printf -- '- keep this line Scheme: %sscheme%s\n' "$LQ" "$RQ" > "$repo/docs/tasks/backlog.md"
 	[ "$v" = deleted-rule ] && git -C "$repo" rm -q docs/b.md
 	[ "$v" = index-grows ] && printf -- '- a new line\n' >> "$repo/docs/tasks/backlog.md"
 	step S05
@@ -97,6 +100,8 @@ build() {
 	printf '# A\nThis repository is for projects.\nA rule line.\nPort: 8080\n' > "$repo/docs/a.md"
 	row S11 "marker:docs/a.md:4" "8080"
 	printf -- '- keep this line\nScheme: T-xxxx\n' > "$repo/docs/tasks/backlog.md"
+	[ "$v" = index-marker-over-lines ] && printf -- '- keep this line\nScheme: `T-xxxx` now.\n' > "$repo/docs/tasks/backlog.md"
+	[ "$v" = index-lines-joined ] && printf -- '- keep this line Scheme: T-xxxx\n' > "$repo/docs/tasks/backlog.md"
 	[ "$v" = index-grows ] && printf -- '- a new line\n' >> "$repo/docs/tasks/backlog.md"
 	row S11 "marker:docs/tasks/backlog.md:2" "T-xxxx"
 	if [ "$v" = markers-over-lines ]; then
@@ -150,6 +155,9 @@ run index-line-changed  index-line-changed  1 'unflagged baseline line changed: 
 run written-markers     written-markers     0 'MARKERS README.md: S11 marker rows 1 (filled 0, gaps 1); each recorded value is in the file' 'marker lines filled'
 # a marker over two lines: S11 fills all its lines, or keeps them as a gap with the key of its row (fix 1 of the first pilot)
 run markers-over-lines  markers-over-lines  0 'MARKERS docs/m.md: S11 marker rows 2 (filled 1, gaps 1); each recorded value is in the file' 'FAIL'
+# a task index whose marker over two lines S11 fills: its lines become one (docs/tasks/backlog.md of the second run)
+run index-marker-over-lines index-marker-over-lines 0 'rules-diff: PASS' 'task index changed'
+run index-lines-joined  index-lines-joined  1 'task index changed other than by removing lines: docs/tasks/backlog.md'
 
 echo "rules-diff-test: $((n - bad)) of $n cases behave as written"
 [ "$bad" = 0 ]

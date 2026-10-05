@@ -119,6 +119,8 @@ while IFS='	' read -r st p; do
 		LC_ALL=C awk -v BASE="$tmp/base" -v FL="$tmp/flagged.tsv" -v MK="$tmp/markerrows.tsv" -v DIFF="$tmp/d" '
 			function lvl(s) { if (match(s, /^#+ /)) return RLENGTH - 1; return 0 }
 			function secend(a,   l, e) { l = lvl(B[a]); e = a; while (e < N && !(lvl(B[e + 1]) > 0 && lvl(B[e + 1]) <= l)) e++; return e }
+			# each baseline line from a to b belongs to a marker, and the record fills a marker of the file
+			function allmk(a, b,   k) { if (!nmk) return 0; for (k = a; k <= b; k++) if (!ML[k]) return 0; return 1 }
 			BEGIN {
 				P = ENVIRON["P"]; LQ = ENVIRON["LQ"]; RQ = ENVIRON["RQ"]; idxapp = ENVIRON["IDXAPP"] + 0; w = ENVIRON["W"] + 0; s05 = ENVIRON["S05"] + 0
 				while ((getline line < BASE) > 0) B[++N] = line
@@ -156,8 +158,9 @@ while IFS='	' read -r st p; do
 			$1 == "TOTAL" { next }
 			{
 				op = $1; l1 = $2 + 0; l2 = $3 + 0; ln = $4 + 0; rn = $5 + 0
-				# a task index (S05) loses lines, or has a marker line replaced by one line: nothing else
-				if (s05 && (op == "a" || (op == "c" && rn != ln))) { print "FAIL: task index changed other than by removing lines: " P; bads++; next }
+				# a task index (S05) loses lines, or has the lines of a marker that the record fills replaced by
+				# fewer lines (a marker over more lines becomes one): nothing else
+				if (s05 && (op == "a" || (op == "c" && rn != ln && !(rn < ln && allmk(l1, l2))))) { print "FAIL: task index changed other than by removing lines: " P; bads++; next }
 				if (op == "a") { added++; if (!idxapp && !w && !said_a) { print "FAIL: lines added to a baseline rule file: " P; said_a = 1; bads++ } ; next }
 				for (n = l1; n <= l2; n++) {
 					if (s05 && op == "d") { nrem++ }
