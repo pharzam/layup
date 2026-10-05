@@ -73,7 +73,7 @@ sed -n 's/^setup-check: adapted FAIL [^ ]* .*: \(.*\):\([0-9][0-9]*\)$/\1	\2/p' 
 
 # 3. The record: the rows of the files that the prose step copied, and of the markers that S11 filled.
 awk -F'\t' '$2 ~ /^file:/ { print substr($2, 6) "\t" $3 "\t" $1 }' "$REC" > "$tmp/filerows.tsv"
-awk -F'\t' '$2 ~ /^marker:/ { n = $2; sub(/^marker:/, "", n); sub(/(:[0-9]+)+$/, "", n); print n "\t" $3 }' "$REC" > "$tmp/markerrows.tsv"
+awk -F'\t' '$2 ~ /^marker:/ { n = $2; sub(/^marker:/, "", n); sub(/(:[0-9]+)+$/, "", n); print n "\t" $3 "\t" $4 }' "$REC" > "$tmp/markerrows.tsv"
 
 # 4. The paths of the union, by status.
 gt diff --name-status --no-renames "$root" "$HEADREV" > "$tmp/ns"
@@ -147,8 +147,8 @@ while IFS='	' read -r st p; do
 					else if (F[n]) { nflag++ }
 					else if (SEC[n]) { nsec++ }
 					else if (idxapp && B[n] ~ /^\| _none yet_/) { nidx++ }
-					else if (index(B[n], LQ) > 0 && nmk > 0) { nmark++ }
 					else if (w) { nwr++ }
+					else if (index(B[n], LQ) > 0 && nmk > 0) { nmark++ }
 					else { print "FAIL: unflagged baseline line changed: " P ":" n ": " substr(B[n], 1, 90); bads++ ; nother++ }
 				}
 			}
@@ -157,16 +157,19 @@ while IFS='	' read -r st p; do
 		grep '^FAIL:' "$tmp/awk.out" && fail=$((fail + $(grep -c '^FAIL:' "$tmp/awk.out")))
 		res=$(grep '^RESULT' "$tmp/awk.out")
 		field() { printf '%s' "$res" | sed -n "s/.* $1=\([0-9]*\).*/\1/p; s/^RESULT $1=\([0-9]*\).*/\1/p" | head -1; }
-		nfl=$(field flagged); nsec=$(field section); nmk=$(field marker); nph=$(field placeholder); nadd=$(field added); nrm=$(field removed)
+		nfl=$(field flagged); nsec=$(field section); nph=$(field placeholder); nadd=$(field added); nrm=$(field removed)
 		secs=$(printf '%s' "$res" | sed -n 's/.* sections=\(.*\)$/\1/p')
-		# the markers that the record fills: each recorded value is in the file
-		if [ "$nmk" -gt 0 ]; then
+		# the marker rows of S11 for the file (a value, or a gap that keeps its marker): each recorded value is in the
+		# file; the report counts the rows, not the baseline marker lines (a written file replaces those)
+		nrows=$(awk -F'\t' -v p="$p" '$1 == p' "$tmp/markerrows.tsv" | grep -c .)
+		if [ "$nrows" -gt 0 ]; then
 			n_marker=$((n_marker + 1))
+			ngap=$(awk -F'\t' -v p="$p" '$1 == p && $3 == "gap"' "$tmp/markerrows.tsv" | grep -c .)
 			awk -F'\t' -v p="$p" '$1 == p { print $2 }' "$tmp/markerrows.tsv" | while IFS= read -r v; do
 				grep -F -q -- "$v" "$tmp/new" || echo "FAIL: recorded marker value is not in the file: $p ($v)"
 			done > "$tmp/mk.out"
 			grep '^FAIL:' "$tmp/mk.out" && fail=$((fail + $(grep -c '^FAIL:' "$tmp/mk.out")))
-			echo "MARKERS $p: $nmk marker lines filled; each recorded value is in the file"
+			echo "MARKERS $p: S11 marker rows $nrows (filled $((nrows - ngap)), gaps $ngap); each recorded value is in the file"
 		fi
 		need_row=0
 		if [ "$S05" = 1 ]; then
@@ -200,7 +203,7 @@ while IFS='	' read -r st p; do
 done < "$tmp/ns"
 
 same=$((total - n_del - n_mod))
-echo "rules-diff: $total baseline paths: $same byte-identical, $n_mod changed ($n_adapted adapted, $n_written written, $n_marker with filled markers, $n_s05 task indexes, $n_index index files with added rows), $n_del deleted, $n_add added; $steps setup commits"
+echo "rules-diff: $total baseline paths: $same byte-identical, $n_mod changed ($n_adapted adapted, $n_written written, $n_marker with marker rows of S11, $n_s05 task indexes, $n_index index files with added rows), $n_del deleted, $n_add added; $steps setup commits"
 if [ "$fail" -eq 0 ]; then echo "rules-diff: PASS"; exit 0; fi
 echo "rules-diff: FAIL ($fail problems)"
 exit 1

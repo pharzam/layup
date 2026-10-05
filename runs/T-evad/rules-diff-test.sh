@@ -34,7 +34,9 @@ build() {
 	printf '# B\nRule B.\n' > "$repo/docs/b.md"
 	printf '# C\nTest runner: %stest runner%s\n' "$LQ" "$RQ" > "$repo/docs/c.md"
 	printf '# D\n## How to adapt this kit\n\nFour things need doing.\n\nSecond paragraph.\n## Next section\nKeep this rule.\n' > "$repo/docs/d.md"
-	printf '# kit readme\ntext\n' > "$repo/README.md"
+	# (two marker lines that check `adapted` does not flag, as in the guardrails of the first pilot)
+	if [ "$v" = written-markers ]; then printf '# Project readme\nName: %sname%s\nOwner: %sowner%s\n' "$LQ" "$RQ" "$LQ" "$RQ" > "$repo/README.md"
+	else printf '# kit readme\ntext\n' > "$repo/README.md"; fi
 	printf 'history\n' > "$repo/docs/decisions/D1.md"
 	printf -- '- T-aaaa the task\n- keep this line\nScheme: %sscheme%s\n' "$LQ" "$RQ" > "$repo/docs/tasks/backlog.md"
 	printf '# facts\n| index |\n| _none yet_ | | | |\n' > "$repo/docs/facts/README.md"
@@ -55,7 +57,9 @@ build() {
 	[ "$v" = insert-in-rule ] && printf 'An inserted rule.\n' >> "$repo/docs/b.md"
 	step S06
 	# S07: a file that is written for the target
-	printf '# my project\nnew text\n' > "$repo/README.md"
+	# (the written text replaces two baseline marker lines, and keeps one marker of its own, which S11 records as a gap)
+	if [ "$v" = written-markers ]; then printf '# my project\nnew text\nTimeout: %stimeout%s\n' "$LQ" "$RQ" > "$repo/README.md"
+	else printf '# my project\nnew text\n' > "$repo/README.md"; fi
 	[ "$v" != no-row-written ] && filerow S07 README.md
 	step S07
 	# S14: the flagged lines are adapted; the section "How to adapt" is replaced whole (the new text shares the blank line
@@ -93,6 +97,7 @@ build() {
 	printf -- '- keep this line\nScheme: T-xxxx\n' > "$repo/docs/tasks/backlog.md"
 	[ "$v" = index-grows ] && printf -- '- a new line\n' >> "$repo/docs/tasks/backlog.md"
 	row S11 "marker:docs/tasks/backlog.md:2" "T-xxxx"
+	[ "$v" = written-markers ] && printf 'S11\tmarker:README.md:3\t%stimeout%s\tgap\tdocs/setup/open-gaps.tsv\n' "$LQ" "$RQ" >> "$rec"
 	if [ "$v" = row-at-head ]; then
 		h=$(sha256 "$repo/docs/a.md")
 		awk -F'\t' -v h="$h" 'BEGIN{OFS="\t"} $2=="file:docs/a.md" {$3=h} {print}' "$rec" > "$rec.new" && mv "$rec.new" "$rec"
@@ -134,6 +139,8 @@ run marker-missing      marker-missing      1 'recorded marker value is not in t
 run section-too-big     section-too-big     1 'unflagged baseline line changed: docs/d.md:7'
 run heading-renamed     heading-renamed-body-changed 1 'unflagged baseline line changed: docs/d.md:6'
 run index-line-changed  index-line-changed  1 'unflagged baseline line changed: docs/facts/README.md:1'
+# the report counts the marker rows of S11, not the baseline marker lines that a written file replaced (finding F-18)
+run written-markers     written-markers     0 'MARKERS README.md: S11 marker rows 1 (filled 0, gaps 1); each recorded value is in the file' 'marker lines filled'
 
 echo "rules-diff-test: $((n - bad)) of $n cases behave as written"
 [ "$bad" = 0 ]
