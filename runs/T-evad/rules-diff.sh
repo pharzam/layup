@@ -109,7 +109,7 @@ while IFS='	' read -r st p; do
 		fi
 		P=$p IDXAPP=0 W=0; in_list "$p" "$INDEXAPP" && IDXAPP=1; in_list "$p" "$WRITTEN" && W=1
 		export P IDXAPP W
-		LC_ALL=C awk -v BASE="$tmp/base" -v FL="$tmp/flagged.tsv" -v MK="$tmp/markerrows.tsv" '
+		LC_ALL=C awk -v BASE="$tmp/base" -v FL="$tmp/flagged.tsv" -v MK="$tmp/markerrows.tsv" -v DIFF="$tmp/d" '
 			function lvl(s) { if (match(s, /^#+ /)) return RLENGTH - 1; return 0 }
 			function secend(a,   l, e) { l = lvl(B[a]); e = a; while (e < N && !(lvl(B[e + 1]) > 0 && lvl(B[e + 1]) <= l)) e++; return e }
 			BEGIN {
@@ -117,30 +117,43 @@ while IFS='	' read -r st p; do
 				while ((getline line < BASE) > 0) B[++N] = line
 				while ((getline line < FL) > 0) { split(line, a, "\t"); if (a[1] == P) F[a[2] + 0] = 1 }
 				while ((getline line < MK) > 0) { split(line, a, "\t"); if (a[1] == P) nmk++ }
-				secmax = 0
+				# the baseline lines that the diff changes or removes
+				while ((getline line < DIFF) > 0) {
+					if (line !~ /^[0-9]+(,[0-9]+)?[acd][0-9]+(,[0-9]+)?$/) continue
+					o = line; sub(/^[0-9,]+/, "", o); o = substr(o, 1, 1)
+					lt = line; sub(/[acd].*$/, "", lt); split(lt, rr, ","); a1 = rr[1] + 0; a2 = (rr[2] == "" ? a1 : rr[2] + 0)
+					if (o != "a") for (n = a1; n <= a2; n++) C[n] = 1
+				}
+				# a flagged heading whose whole section (each line that is not blank) is changed or removed is a
+				# section replaced as a unit, however diff splits it into hunks; a heading that is only renamed is not
+				for (h in F) {
+					h += 0
+					if (lvl(B[h]) == 0 || !C[h]) continue
+					e = secend(h); ok = 1
+					for (n = h; n <= e; n++) if (B[n] != "" && !C[n]) ok = 0
+					if (ok) { for (n = h; n <= e; n++) SEC[n] = 1; sections = sections " " h "-" e }
+				}
 			}
 			/^[0-9]+(,[0-9]+)?[acd][0-9]+(,[0-9]+)?$/ {
 				op = $0; sub(/^[0-9,]+/, "", op); op = substr(op, 1, 1)
 				left = $0; sub(/[acd].*$/, "", left)
 				split(left, r, ","); l1 = r[1] + 0; l2 = (r[2] == "" ? l1 : r[2] + 0)
 				if (op == "a") { added++; if (!idxapp && !w && !said_a) { print "FAIL: lines added to a baseline rule file: " P; said_a = 1; bads++ } ; next }
-				# a hunk that starts at a flagged heading allows the whole section, up to the next heading of its
-				# level or higher, also in the later hunks that diff splits the section into
-				if (F[l1] && lvl(B[l1]) > 0 && l2 > l1 && l1 > secmax) { secmax = secend(l1); sections = sections " " l1 "-" secmax }
 				for (n = l1; n <= l2; n++) {
 					if (F[n]) { nflag++ }
-					else if (n <= secmax) { nsec++ }
+					else if (SEC[n]) { nsec++ }
+					else if (idxapp && B[n] ~ /^\| _none yet_/) { nidx++ }
 					else if (index(B[n], LQ) > 0 && nmk > 0) { nmark++ }
 					else if (w) { nwr++ }
 					else { print "FAIL: unflagged baseline line changed: " P ":" n ": " substr(B[n], 1, 90); bads++ ; nother++ }
 				}
 			}
-			END { print "RESULT flagged=" nflag + 0 " section=" nsec + 0 " marker=" nmark + 0 " unflagged=" nother + 0 " added=" added + 0 " bads=" bads + 0 " sections=" sections }
+			END { print "RESULT placeholder=" nidx + 0 " flagged=" nflag + 0 " section=" nsec + 0 " marker=" nmark + 0 " unflagged=" nother + 0 " added=" added + 0 " bads=" bads + 0 " sections=" sections }
 		' "$tmp/d" > "$tmp/awk.out"
 		grep '^FAIL:' "$tmp/awk.out" && fail=$((fail + $(grep -c '^FAIL:' "$tmp/awk.out")))
 		res=$(grep '^RESULT' "$tmp/awk.out")
-		nfl=$(printf '%s' "$res" | sed -n 's/^RESULT flagged=\([0-9]*\).*/\1/p'); nsec=$(printf '%s' "$res" | sed -n 's/.* section=\([0-9]*\).*/\1/p')
-		nmk=$(printf '%s' "$res" | sed -n 's/.* marker=\([0-9]*\).*/\1/p'); nadd=$(printf '%s' "$res" | sed -n 's/.* added=\([0-9]*\).*/\1/p')
+		nfl=$(printf '%s' "$res" | sed -n 's/.* flagged=\([0-9]*\).*/\1/p'); nsec=$(printf '%s' "$res" | sed -n 's/.* section=\([0-9]*\).*/\1/p')
+		nmk=$(printf '%s' "$res" | sed -n 's/.* marker=\([0-9]*\).*/\1/p'); nph=$(printf '%s' "$res" | sed -n 's/^RESULT placeholder=\([0-9]*\).*/\1/p'); nadd=$(printf '%s' "$res" | sed -n 's/.* added=\([0-9]*\).*/\1/p')
 		secs=$(printf '%s' "$res" | sed -n 's/.* sections=\(.*\)$/\1/p')
 		# the markers that the record fills: each recorded value is in the file
 		if [ "$nmk" -gt 0 ]; then
@@ -158,9 +171,9 @@ while IFS='	' read -r st p; do
 		elif [ "$nfl" -gt 0 ] || [ "$nsec" -gt 0 ]; then
 			n_adapted=$((n_adapted + 1)); need_row=1
 			echo "ADAPTED $p: $nfl flagged lines changed${secs:+, whole sections$secs replaced or removed}${nadd:+, $nadd line groups added}"
-		elif [ "$nadd" -gt 0 ]; then
+		elif [ "$nadd" -gt 0 ] || [ "$nph" -gt 0 ]; then
 			need_row=0; n_index=$((n_index + 1))
-			echo "INDEX $p: $nadd line groups added by the steps; no baseline line changed"
+			echo "INDEX $p: ${nadd:-0} line groups added and $nph placeholder rows replaced by the steps; no other baseline line changed"
 		else
 			need_row=0
 		fi

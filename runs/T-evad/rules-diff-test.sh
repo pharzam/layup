@@ -33,11 +33,11 @@ build() {
 	printf '# A\nThis kit is for adopters.\nA rule line.\n' > "$repo/docs/a.md"
 	printf '# B\nRule B.\n' > "$repo/docs/b.md"
 	printf '# C\nTest runner: %stest runner%s\n' "$LQ" "$RQ" > "$repo/docs/c.md"
-	printf '# D\n## How to adapt this kit\nFour things need doing.\n\nSecond paragraph.\n## Next section\nKeep this rule.\n' > "$repo/docs/d.md"
+	printf '# D\n## How to adapt this kit\n\nFour things need doing.\n\nSecond paragraph.\n## Next section\nKeep this rule.\n' > "$repo/docs/d.md"
 	printf '# kit readme\ntext\n' > "$repo/README.md"
 	printf 'history\n' > "$repo/docs/decisions/D1.md"
 	printf -- '- T-aaaa the task\n- keep this line\n' > "$repo/docs/tasks/backlog.md"
-	printf '# facts\n| index |\n' > "$repo/docs/facts/README.md"
+	printf '# facts\n| index |\n| _none yet_ | | | |\n' > "$repo/docs/facts/README.md"
 	g add -A && g commit -q -m "chore: the unmodified baseline at fixture"
 	printf 'step\tname\tvalue\tsource\tref\n' > "$rec"
 
@@ -49,7 +49,9 @@ build() {
 	step S05
 	# S06: the brief and its index row (a row in a rule file when the variant says so)
 	printf 'brief\n' > "$repo/docs/facts/brief.md"
-	printf '| row |\n' >> "$repo/docs/facts/README.md"
+	# the placeholder row of the index is replaced by the first row (a line of the index changed in another way when the variant says so)
+	if [ "$v" = index-line-changed ]; then printf '# facts changed\n| index |\n| row |\n' > "$repo/docs/facts/README.md"
+	else printf '# facts\n| index |\n| row |\n' > "$repo/docs/facts/README.md"; fi
 	[ "$v" = insert-in-rule ] && printf 'An inserted rule.\n' >> "$repo/docs/b.md"
 	step S06
 	# S07: a file that is written for the target
@@ -63,11 +65,11 @@ build() {
 	esac
 	row S11 "marker:docs/c.md:2" "go test"
 	step S11
-	# S14: the flagged lines are adapted; the section "How to adapt" is replaced whole (the new text shares a blank
-	# line with the old, so that diff gives two hunks for the one section)
+	# S14: the flagged lines are adapted; the section "How to adapt" is replaced whole (the new text shares the blank line
+	# after the heading with the old, so that diff gives the heading and the body as two hunks)
 	case "$v" in
 	heading-renamed-body-changed)
-		printf '# D\n## How this project was set up\nFour things need doing.\n\nSecond paragraph changed.\n## Next section\nKeep this rule.\n' > "$repo/docs/d.md" ;;
+		printf '# D\n## How this project was set up\n\nFour things need doing.\n\nSecond paragraph changed.\n## Next section\nKeep this rule.\n' > "$repo/docs/d.md" ;;
 	section-too-big)
 		printf '# D\n## How this project was set up\n\nSee the pin.\n' > "$repo/docs/d.md" ;;
 	*)
@@ -116,8 +118,9 @@ run foreign-commit      foreign-commit      1 'a commit that no step made'
 run index-grows         index-grows         1 'task index changed other than by removing lines: docs/tasks/backlog.md'
 run insert-in-rule      insert-in-rule      1 'lines added to a baseline rule file: docs/b.md'
 run marker-missing      marker-missing      1 'recorded marker value is not in the file: docs/c.md'
-run section-too-big     section-too-big     1 'unflagged baseline line changed: docs/d.md:6'
-run heading-renamed     heading-renamed-body-changed 1 'unflagged baseline line changed: docs/d.md:5'
+run section-too-big     section-too-big     1 'unflagged baseline line changed: docs/d.md:7'
+run heading-renamed     heading-renamed-body-changed 1 'unflagged baseline line changed: docs/d.md:6'
+run index-line-changed  index-line-changed  1 'unflagged baseline line changed: docs/facts/README.md:1'
 
 echo "rules-diff-test: $((n - bad)) of $n cases behave as written"
 [ "$bad" = 0 ]
