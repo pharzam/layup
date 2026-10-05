@@ -240,42 +240,32 @@ func paragraphHits(para string, starts, lines []int, allowed bool) []adFound {
 	return out
 }
 
-// LostMarkers gives each marker of before, the file before S14, that touches
-// a line that check adapted flags and of which after, the input of S14, holds
-// fewer places, byte for byte, with their line ends (fix 2 of the first pilot,
-// #97: the prose step lost ten places of markers, so S10 never asked them;
-// point 3 of the Operator's comment 6002406785). S14 refuses such an input, so
-// the marker goes to S10 like any other. A marker over more lines counts when
-// one of its lines is flagged; the finding names the line of its first place
-// on a flagged line, its key, and how many of its places the input lost.
+// LostMarkers gives each marker of before, the file before S14, of which
+// after, the input of S14, holds fewer places, byte for byte, with their line
+// ends (fix 2 of the first pilot, #97, and point 3 of the Operator's comment
+// 6002406785). S14 refuses such an input, so each marker goes to S10 like any
+// other. Each place counts, not only those of a line that check adapted flags:
+// the prose step of the first pilot replaced whole sections, whose other lines
+// held markers too. The finding names the line of the first place of the
+// marker, its key, and how many of its places the input lost.
 func LostMarkers(path string, before, after []byte) []string {
-	allowed := slices.ContainsFunc(adAllowed, func(a [2]string) bool { return a[0] == path })
-	flagged := map[int]bool{}
-	for _, h := range hitsOf(before, allowed) {
-		flagged[h.line] = true
-	}
 	kept := map[string]int{}
 	for _, m := range textMarkers(path, string(after)) {
 		kept[m.Text]++
 	}
-	places, first := map[string]int{}, map[string]int{} // the places of each marker, and its first place on a flagged line
+	places, first := map[string]int{}, map[string]int{}
 	var order []string
 	for _, m := range textMarkers(path, string(before)) {
 		if places[m.Text] == 0 {
-			order = append(order, m.Text)
+			order, first[m.Text] = append(order, m.Text), m.Line
 		}
 		places[m.Text]++
-		for l := m.Line; l <= m.Line+strings.Count(m.Text, "\n"); l++ {
-			if flagged[l] && first[m.Text] == 0 {
-				first[m.Text] = m.Line
-			}
-		}
 	}
 	var out []string
 	for _, text := range order {
 		n, k, key := places[text], kept[text], work.MarkerKey(text)
 		switch {
-		case first[text] == 0 || k >= n:
+		case k >= n:
 		case k == 0:
 			out = append(out, fmt.Sprintf("%s:%d: the input loses the marker %s", path, first[text], key))
 		default:

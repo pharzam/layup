@@ -148,12 +148,12 @@ func TestTheFilesOfAdapted(t *testing.T) {
 	}
 }
 
-// S14 refuses an adapted input that loses a marker that the file before it
-// has on a line that check adapted flags (fix 2 of the first pilot, #97: the
-// prose step lost seven of them, so S10 never asked them). A marker over more
-// lines counts when one of its lines is flagged; the finding names the line of
-// its open quote and its key. A marker that the input keeps somewhere byte for
-// byte, or a marker of a line that check adapted does not flag, is no finding.
+// S14 refuses an adapted input that holds fewer places of a marker than the
+// file before it, byte for byte, with its line ends (fix 2 of the first pilot,
+// #97: the prose step lost 27 places of markers, some in a section that it
+// replaced as a whole, so S10 never asked them). The finding names the line of
+// the first place of the marker, its key, and the count. A place that the
+// input moves to another line is no finding.
 func TestLostMarkers(t *testing.T) {
 	const before = "# The kit\n\nName the models: `\u2039name your reasoning-tier models\u203a` for your project.\n\nThe value \u2039x\u203a stays.\n\nReport `\u2039model, effort,\ntokens and elapsed time\u203a` as your project does.\n"
 	const kept = "# The project\n\nName the models: `\u2039name your reasoning-tier models\u203a`.\n\nThe value \u2039x\u203a stays.\n\nReport `\u2039model, effort,\ntokens and elapsed time\u203a` here.\n"
@@ -166,7 +166,8 @@ func TestLostMarkers(t *testing.T) {
 			[]string{"docs/e.md:3: the input loses the marker \u2039name your reasoning-tier models\u203a"}},
 		{"a marker over two lines that lost its open quote", strings.Replace(kept, "`\u2039model, effort,", "`model, effort,", 1),
 			[]string{"docs/e.md:7: the input loses the marker \u2039model, effort, tokens and elapsed time\u203a"}},
-		{"a marker of a line that check adapted does not flag", strings.Replace(kept, "\u2039x\u203a", "8080", 1), nil},
+		{"a marker of a line that check adapted does not flag", strings.Replace(kept, "\u2039x\u203a", "8080", 1),
+			[]string{"docs/e.md:5: the input loses the marker \u2039x\u203a"}},
 		{"a marker kept on another line", "Name the models.\n\n`\u2039name your reasoning-tier models\u203a` and \u2039x\u203a, `\u2039model, effort,\ntokens and elapsed time\u203a`.\n", nil},
 		// a place of a marker is lost when the input has fewer places of it (the first pilot: issue-workflow.md:243 lost a marker that lines 245 to 247 keep)
 		{"a place of a marker lost, another place kept", "# The project\n\nName the models: the reasoning-tier models.\n\nThe value \u2039x\u203a stays.\n\nReport `\u2039model, effort,\ntokens and elapsed time\u203a` here, and `\u2039name your reasoning-tier models\u203a`.\n",
