@@ -77,7 +77,7 @@ task indexes, 1 index with added rows), 31 deleted, 13 new; 10 setup commits.
 
 | File | What |
 | ---- | ---- |
-| [`findings.md`](findings.md), [`numbers.md`](numbers.md) | The findings F-1 to F-33, and the numbers of D10 |
+| [`findings.md`](findings.md), [`numbers.md`](numbers.md) | The findings F-1 to F-35, and the numbers of D10 |
 | [`test-runs.md`](test-runs.md) | The red and green runs, and the ladder |
 | [`value-audit.md`](value-audit.md), [`acceptance.md`](acceptance.md) | D8 (a) of both runs, and T5 |
 | [`rules-diff.sh`](rules-diff.sh), [`rules-diff-test.sh`](rules-diff-test.sh) | The check of D8 (b), and its 20 fixture cases |

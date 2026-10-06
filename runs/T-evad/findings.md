@@ -4,7 +4,7 @@ Task `T-evad` ([#97](https://github.com/pharzam/layup/issues/97)), row 20 of the
 [implementation plan](../../docs/plan/README.md). The target is
 [`pharzam/chat-orchestrator`](https://github.com/pharzam/chat-orchestrator), set up at
 `cec749a` from the brief `PSB-CHAT-001`, and again at `e2b402b` after the fix. The IDs
-F-1 to F-33 are the ones that the comments on #97 use. The numbers of the pilot are in [`numbers.md`](numbers.md).
+F-1 to F-35 are the ones that the comments on #97 use. The numbers of the pilot are in [`numbers.md`](numbers.md).
 
 The class of each finding follows D10 of the plan, as the answer to the plan review
 amends it (comment 5979731752, item 6). A defect on the pilot's path (a step of the
@@ -119,6 +119,12 @@ result, in [`acceptance.md`](acceptance.md).
   LAYUP has no rule for a second run on a target whose `main` holds the first. The plan
   review of `T-vu2j` found it. By O-148 (a), the copy writes them as the second run did,
   with a decision note, and the versions of the first run stay in the history of `main`.
+- **F-35: the text of the setup names the branches of its work area.** `docs/engineering-discipline.md:20`
+  and `README.md:62` of the target name `layup-setup` and `layup-records`. T6 pushed the second run as
+  `layup-setup-2` and `layup-records-2`, so after the copy into `main` both sentences named the record of the
+  first run. A second run has no rule for its branch names on the target. The source pass of `T-vu2j` found it;
+  by O-152 (a), `t7-3.sh` gives the second run those names after the merge (`layup-records-1` keeps the first
+  record), and no text changes.
 
 ## Found off the path of the pilot
 
@@ -176,6 +182,9 @@ Each is counted in [`numbers.md`](numbers.md). None is a defect of LAYUP.
   Definition of Done. The plan review of `T-vu2j` found it (`reject`). `tree-equal.sh`
   now compares those paths with the base (`--base`), test first: 40 cases, 27 of them
   red on a skeleton, and 7 mutations caught (`b0293d3`).
+- **F-34: the gate run of D7 used a binary with local changes.** `layup4` was built from `6206335` with
+  `vcs.modified=true`, so the commit of the code that gave the verdict of D7 is not exact. The code of the gate
+  did not change in this task. The gate run of `T-vu2j` uses `layup`, built from `c961652` with no local change.
 
 ## Notes
 
