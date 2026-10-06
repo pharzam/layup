@@ -9,7 +9,8 @@
 #     (O-150 = a). A named file is a file of mode 100644 in HEAD, and in neither layup-setup-2 nor BASE.
 # The line of the target task, when the log has it, has the form of the log with a real calendar date, and is its first entry (an example in
 # an HTML comment is not an entry): - **YYYY-MM-DD** — **T-xxxx** — summary
-# ([#N](https://github.com/OWNER/NAME/issues/N); [detail](T-xxxx.md)), with the repository and the number of --issue.
+# ([#N](https://github.com/OWNER/NAME/issues/N); [detail](T-xxxx.md)), with the repository and the number of --issue. The summary must
+# start with a character that is not a space; whether it is a good summary, only a reader can say.
 # One mechanism and one test: HEAD must equal the tree that these rules make from layup-setup-2 and BASE.
 #
 # Usage: sh tree-equal.sh REPO HEAD SETUP2 --base BASE [--task-file docs/tasks/T-xxxx.md
@@ -121,7 +122,7 @@ else
 			# The form of the log, and the first entry outside an HTML comment (most recent first).
 			nre=${INUM:-[0-9]+} rre='[^/ ]+/[^/ ]+'
 			[ -z "$IREPO" ] || rre=$(printf '%s' "$IREPO" | sed 's/\./\\./g')
-			pat='^- \*\*[0-9]{4}-[0-9]{2}-[0-9]{2}\*\* — \*\*'"$ID"'\*\* — .+ \(\[#'"$nre"'\]\(https://github\.com/'"$rre"'/issues/'"$nre"'\); \[detail\]\('"$ID"'\.md\)\)$'
+			pat='^- \*\*[0-9]{4}-[0-9]{2}-[0-9]{2}\*\* — \*\*'"$ID"'\*\* — [^[:space:]].* \(\[#'"$nre"'\]\(https://github\.com/'"$rre"'/issues/'"$nre"'\); \[detail\]\('"$ID"'\.md\)\)$'
 			first=$(LC_ALL=C awk '/<!--/ { c = 1 } !c && /^- \*\*/ { print NR; exit } /-->/ { c = 0 }' "$TMP/head")
 			if ! sed -n "${k}p" "$TMP/head" | LC_ALL=C grep -Eq -- "$pat"; then
 				F "T-a0rt: $LOG: the line of $ID does not have the form of the log: - **YYYY-MM-DD** — **$ID** — a summary ([#${INUM:-N}](https://github.com/${IREPO:-OWNER/NAME}/issues/${INUM:-N}); [detail]($ID.md))"

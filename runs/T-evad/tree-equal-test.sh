@@ -80,6 +80,8 @@ build() {
 	evidence-exec) task; evidence; chmod +x "$repo/runs/T-vu2j/evidence.md"; log "$TASKLINE" "$A0RTLINE" ;;
 	line-no-date) task; log '- **T-vu2j** — the tree of the second setup run ([#7](https://github.com/x/y/issues/7); [detail](T-vu2j.md))' "$A0RTLINE" ;;
 	line-no-link) task; log '- **2026-10-06** — **T-vu2j** — the tree of the second setup run' "$A0RTLINE" ;;
+	line-blank-summary) task; log '- **2026-10-06** — **T-vu2j** —   ([#7](https://github.com/x/y/issues/7); [detail](T-vu2j.md))' "$A0RTLINE" ;;
+	line-tab-summary) task; log "- **2026-10-06** — **T-vu2j** — $(printf '\t') ([#7](https://github.com/x/y/issues/7); [detail](T-vu2j.md))" "$A0RTLINE" ;;
 	line-other-issue) task; log '- **2026-10-06** — **T-vu2j** — the tree of the second setup run ([#8](https://github.com/x/y/issues/8); [detail](T-vu2j.md))' "$A0RTLINE" ;;
 	line-below) task; log "$A0RTLINE" "$TASKLINE" ;;
 	line-real-repo) task; log '- **2026-10-06** — **T-vu2j** — the tree of the second setup run ([#7](https://github.com/pharzam/chat-orchestrator/issues/7); [detail](T-vu2j.md))' "$A0RTLINE" ;;
@@ -142,6 +144,9 @@ for d in 2026-99-99 2026-13-01 2026-02-30 2026-02-29 2026-00-10 2026-04-31; do
 done
 run date-leap      date-2024-02-29 0 'tree-equal: PASS' --base base $TF --log-line --issue x/y#7
 run date-ok        date-2026-12-31 0 'tree-equal: PASS' --base base $TF --log-line --issue x/y#7
+# Finding 1 of round 4 of the target task: the summary must start with a character that is not a space
+run line-blank-summary line-blank-summary 1 "FAIL: T-a0rt: docs/tasks/completed.md: the line of T-vu2j does not have the form of the log" --base base $TF --log-line --issue x/y#7
+run line-tab-summary   line-tab-summary   1 "FAIL: T-a0rt: docs/tasks/completed.md: the line of T-vu2j does not have the form of the log" --base base $TF --log-line --issue x/y#7
 # Finding 4 of round 2 of the target task: a named file of the task must be a file of mode 100644
 run task-symlink   task-symlink  1 'FAIL: docs/tasks/T-vu2j.md: the task file is 120000 blob, not a file of mode 100644' --base base $TF $EF --log-line --issue x/y#7
 run evidence-exec  evidence-exec 1 'FAIL: runs/T-vu2j/evidence.md: the evidence file is 100755 blob, not a file of mode 100644' --base base $TF $EF --log-line --issue x/y#7
