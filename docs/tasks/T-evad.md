@@ -137,9 +137,9 @@ the ruleset's read-back are the evidence of phase 1 (condition 2 of the plan
 review). `rules-diff.sh` reads the setup head; the later commits of `main` are the
 project's own (F-18). O-158: `t7-3.sh` can stop between the merge and the branch
 moves; it did not stop. The binary of the second run, `layup5`, was built from
-`006fbee` with `vcs.modified=true` (O-154): if the review of this task changes fixes
-1 to 3, a setup run with the merged binary must give the tree of `layup-setup-2`,
-except the values of `pin.time`, or `T-vu2j` opens again. The issue of the ADR that
+`006fbee` with `vcs.modified=true` (O-154). Round 1 of this task changed fix 1, so the
+setup ran again with a clean build of `c285d45`, from the inputs of the second run: its
+setup head has the tree of `layup-setup-2`, byte for byte (O-154). The issue of the ADR that
 ends bootstrap mode, #120 (`T-gd8q`), lists the findings that are not fixed.
 
 **Lessons:** five pitfalls in `guardrails.md` §2: a one-line form that loses a
