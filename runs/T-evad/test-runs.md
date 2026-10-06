@@ -63,6 +63,7 @@ and no line that the diff of the two setup heads adds without a row
 | `t6.sh` (T6) | `tools/t6-test.sh`, a stand-in `gh` and local remotes | 7 of 7 (`evidence/108-t6-test.txt`); its check mode passed on the second run (`evidence/116-t6-check.txt`) |
 | `t7-1.sh` (the target task) | `tools/t7-1-test.sh`, a stand-in `gh` | 6 of 6 |
 | [`tree-equal.sh`](tree-equal.sh) (condition 2 of O-146) | [`tree-equal-test.sh`](tree-equal-test.sh), 5 cases | Red against a skeleton that passed each case, then 5 of 5 (`9226a7b`) |
+| [`tree-equal.sh`](tree-equal.sh) with `--base` (O-148 to O-150, the plan review of the target task) | [`tree-equal-test.sh`](tree-equal-test.sh), 40 cases | Red against a skeleton that took the new options and did nothing with them: 27 of 40 failed. Each case that loses or changes a path of `T-a0rt`, or its line of the log, exited 0 where 1 is wanted (`evidence/124-tree-equal-base-red.txt`). Then 40 of 40 (`evidence/124-tree-equal-base-green.txt`), and 5 runs each under `dash` and bash 5.3 (`evidence/126-tree-equal-base-shells.txt`). 7 of 7 mutations caught, each by the case of its rule (`evidence/125-tree-equal-base-mutations.txt`) |
 
 ## The fixes of the markers (fixes 1 to 3), red first
 
