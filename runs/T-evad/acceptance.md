@@ -1,4 +1,4 @@
-# T5: the idea owner's acceptance of the first pilot
+# T5: the idea owner's acceptance of the first pilot, and of the result after the fix
 
 Task `T-evad` ([#97](https://github.com/pharzam/layup/issues/97)). The idea owner's
 answers, copied from their comments on #97 (the pilot rule of the plan review,
@@ -77,6 +77,64 @@ result, below.
 >
 > **Budget:** approved: 3,200 lines over 42 files, for fixes 1 to 3, the second run and the target task. The template of the catalog (F-22) stays with M2e.
 
+## The second answer (2026-10-06, comment 6023071943)
+
+The answer to the second T5 (comment 6019305811), which asked for the check of the 67 values of the second run
+and the acceptance of each requirement for the result after the fix.
+
+> ## D8 (a) and T5: my answers
+>
+> ### D8 (a): checked, no row rejected
+>
+> I checked the table row by row against the target at `e2b402b`, the records at
+> `layup-records` (`8bc105c`), the two source comments (5995217834, 6010563347),
+> `open-gaps.tsv`, `facts.sha256` and `pin.time` — each value at its place, and
+> each source in the column Reference. 67 of 67 hold; no row rejected.
+>
+> - **The eight whole-file digests (W-036 … W-043).** The record's ref is
+>   `sha256 inputs/files/<path>`: the digest of the input prose, which lives on
+>   the pilot host. I reconstructed that prose from the target itself —
+>   reverting each recorded `S11` substitution (for `tests/README.md`,
+>   restoring its two-line marker `&lsaquo;test` … `> directory&rsaquo;`, which the F-0002
+>   question shows on one line) — and all eight digests reproduce byte for
+>   byte. The prose is approved in comment 6010634567: "Approved: 33 changed
+>   lines over 8 files, each of the 27 places back."
+>
+> - **W-044 (`answers.sha256`).** The value sits at `record.tsv:52`;
+>   recomputing it needs `inputs/answers.tsv` on the pilot host, which the
+>   target does not hold. I checked it at its sources instead: the routine is
+>   written into `setup.md:656-663`, pass 2 reproduced the digest from
+>   `sources/answers.tsv`, and its 115 `M-` rows match the 115 facts of
+>   `F-0002`.
+>
+> - **Spec citations.** Every `docs/spec/setup.md` line cited in Reference
+>   resolves with the claimed text on this branch (`T-evad` amends it — the
+>   routine at 656-663 was written in this task); the citations land on `main`
+>   with this pull request.
+>
+> ### T5
+>
+> | Requirement | Answer | Reason |
+> | --- | --- | --- |
+> | REQ-001 | accept | as before: the finding on G1 stands; the second run used the same brief and the same answers of S01 |
+> | REQ-002 | accept | My two reject reasons are gone: the fix is landed, test first (`c68b390`, `cc31402`, `006fbee`); second run: `verify` exit 0, 15 `pass` and 3 `clear`; the seven places corrected; D8 (a): 67 of 67, no row rejected; on `main` by the target's own process (`T-vu2j`) |
+> | REQ-004 | accept | as before (the finding on F-1 stands), plus a second gate run from outside, on `T-vu2j`: exit 0, one verdict for each of the five kinds; the change has no Go file |
+> | REQ-007 | accept | as before (the finding on the gate jobs stands); on pharzam/chat-orchestrator#7 the five gate jobs ran and passed with the 8 other checks, `c3.sh ci` judged all 13, and the ruleset is unchanged (read back today) |
+> | NFR-001 | accept | the records of the second run are on `layup-records` (`8bc105c`) since O-152; the first run's are on `layup-records-1` |
+> | NFR-002 | accept | as before, plus: the commits of `T-vu2j` passed the target's own hooks; pharzam/chat-orchestrator#7 passed its 13 checks, and CI of `main` passed after the merge; the target's CI does not call LAYUP |
+> | NFR-003 | accept | as REQ-002: D8 (a) of this run is 67 of 67 supported, none missing; check `sources`: `pass`; my check (1) completes this row |
+> | NFR-004 | accept | as before |
+> | NFR-006 | accept | the second run pinned the same commit `a959655` (O-146, condition 1); check `pin`: `pass` |
+> | REQ-016 | accept | as before, plus O-145 to O-158 recorded on this issue as I gave them, the two approvals of R4 on chat-orchestrator#6, and my runs of `t6.sh`, `t7-1.sh`, `t7-2.sh` and `t7-3.sh` |
+> | REQ-018 | accept | `rules-diff.sh` on `e2b402b`: PASS |
+> | REQ-009, REQ-011, NFR-005 | accept | as before |
+> | NFR-007, REQ-015, REQ-017 | accept, only if the two checks pass at the freeze | as before: the fix changed Go code, so `TestPackageRules` and `runs/T-efmy/release-check.sh` run on the head of this task's pull request at its freeze |
+
 ## The result after the fix
 
-Recorded at the close-out, with the idea owner's second answer.
+The idea owner checked the 67 values of the second run with no row rejected, and accepted each of the 17
+requirements. So the result after the fix holds pass items (1) to (7) of the pre-registered rule. Pass item (8),
+the end-to-end tests of the issue, and the two checks on which the acceptance of `NFR-007`, `REQ-015` and `REQ-017`
+depends (`TestPackageRules` and `runs/T-efmy/release-check.sh`) run at the freeze of the pull request of this task;
+their result is in [`docs/tasks/T-evad.md`](../../docs/tasks/T-evad.md). The verdict of the first pilot stays a
+Fail (O-145).

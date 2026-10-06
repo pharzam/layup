@@ -229,6 +229,16 @@ check that catches it.
   line has a row or only moved; check that each marker of the baseline is kept or has
   a record row; and let the auditor check the completeness against the diff
   ([`runs/T-evad/findings.md`](../runs/T-evad/findings.md)). Learned in `T-evad`.
+- ❌ **A claim of a later state in the present tense.** The task file of the first
+  pilot's target task said that a commit "copies the tree into `main`", and that the
+  runs after the merge "are in" a record, while the branch was not merged yet. A
+  reader takes such a claim for done work, and can skip the step. It is silent
+  because the claim becomes true after the merge. **The check:** before the freeze,
+  read each claim about the merge or a later run, and give it the future tense or its
+  condition ("the merge will take it into `main`"); the line of the completed log
+  says what the task delivers (round 4 of `T-vu2j`,
+  [`pharzam/chat-orchestrator#6`](https://github.com/pharzam/chat-orchestrator/issues/6)).
+  Learned in `T-evad`.
 
 ### Writing a lesson back
 
