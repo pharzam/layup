@@ -140,7 +140,7 @@ moves; it did not stop. The binary of the second run, `layup5`, was built from
 `006fbee` with `vcs.modified=true` (O-154): if the review of this task changes fixes
 1 to 3, a setup run with the merged binary must give the tree of `layup-setup-2`,
 except the values of `pin.time`, or `T-vu2j` opens again. The issue of the ADR that
-ends bootstrap mode lists the findings that are not fixed.
+ends bootstrap mode, #120 (`T-gd8q`), lists the findings that are not fixed.
 
 **Lessons:** five pitfalls in `guardrails.md` §2: a one-line form that loses a
 failure (F-9), a claim of a check that nothing runs (F-5, F-12), a command file
