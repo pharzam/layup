@@ -436,6 +436,42 @@ func TestS11TwoMarkersOnOneLine(t *testing.T) {
 // only, and the rest of the placeholder stayed). The row of each place names
 // its line in the tree that S11 writes, and a gap over more lines gets its key
 // in its record row and in its row of open-gaps.tsv.
+// Finding 1 of review round 1 of T-evad: a filled marker over more lines joins scan lines, so a place of a later scan
+// line can be on the same line of the written tree, at the same column of its own scan line; its name counts the
+// column from the first scan line of the written line, so each key of the record stays unique.
+func TestS11JoinedLinesTwoPlacesAtOneColumn(t *testing.T) {
+	const file = "docs/a.md"
+	ab, c3 := "\u2039a\nb\u203a", "\u2039c\u203a"
+	c := markersOf(Marker{file, 2, 4, ab}, Marker{file, 3, 4, c3})
+	idAB, idC := MarkerID(file, work.MarkerKey(ab)), MarkerID(file, work.MarkerKey(c3))
+	a := mAnswers([]string{idAB, "8080", "F-0003#5", ""}, []string{idC, "9090", "F-0003#5", ""})
+	f := &fakeRepo{
+		trees: map[string][]git.TreeEntry{factsDir: {{Path: "docs/facts/F-0001-setup-answers.md"}, {Path: "docs/facts/README.md"}, {Path: "docs/facts/problem-statement-brief.md"}}},
+		shows: map[string]string{factsSumsPath: "abc  docs/facts/F-0001-setup-answers.md\n", factsDir + "/README.md": factsIndexS04},
+		disk:  map[string]string{"w/target/" + file: "one\nxxxx" + ab + c3 + "\n"},
+	}
+	f.install(t)
+	o := runS11(c, Input{Dir: "w", Record: pinRecord(), Answers: a})
+	if o.Kind != Done || len(o.Values) < 2 {
+		t.Fatalf("S11: %s %q %q; want done with a row for each place", o.Kind, o.Evidence, o.Values)
+	}
+	if got, w := f.files["w/target/"+file], "one\nxxxx80809090\n"; got != w {
+		t.Errorf("S11 wrote %q; want %q", got, w)
+	}
+	second := 4 + len("xxxx\u2039a\n") // the column of the second place, from the first scan line of its line
+	for i, n := range []string{"marker:" + file + ":2:4", "marker:" + file + ":2:" + strconv.Itoa(second)} {
+		if o.Values[i][0] != n {
+			t.Errorf("row %d is named %q; want %q", i, o.Values[i][0], n)
+		}
+	}
+	var rows [][]string
+	for _, v := range o.Values {
+		rows = append(rows, append([]string{"S11"}, v...))
+	}
+	if err := tsv.Write(io.Discard, work.RecordSchema, rows); err != nil {
+		t.Errorf("the record of the rows: %v; want no error", err)
+	}
+}
 func TestS11AMarkerOverMoreLines(t *testing.T) {
 	const file = "docs/tasks/backlog.md"
 	scheme := "\u2039State your exact scheme\nhere \u2014 for example\nexist.\"\u203a"

@@ -183,8 +183,8 @@ Each is counted in [`numbers.md`](numbers.md). None is a defect of LAYUP.
 - **F-32: one approval for a workaround.** O-143 resolved the conflict of F-15 for
   `T-a0rt` by a decision note with one approval, the Operator's. R4 of the target asks
   for the written approval of two different operators, and for a removal issue. The plan
-  review of `T-vu2j` found it. For `T-vu2j`, O-149 (a) has two operators approve the
-  workaround on the target issue before round 1; `pharzam/chat-orchestrator#4` is its
+  review of `T-vu2j` found it. For `T-vu2j`, O-149 (a) has two logins approve the
+  workaround on the target issue before round 1 (O-155: a login identifies an approver); `pharzam/chat-orchestrator#4` is its
   removal issue.
 - **F-33: the first plan of `T-vu2j` had no test that `T-a0rt` stays.** `tree-equal.sh`
   excused the four paths of `T-a0rt` and did not read their text, so it passed a head

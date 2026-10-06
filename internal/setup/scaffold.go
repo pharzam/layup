@@ -54,7 +54,7 @@ func fileRow(p string, data []byte) []string {
 // file, with the question of its stop row.
 type wanted struct {
 	path, ask string
-	adapt     bool // S14 adapts the file: its input keeps each marker of a flagged line (fix 2 of the first pilot, #97)
+	adapt     bool // S14 adapts the file: its input keeps each place of each marker of the file (fix 2 of the first pilot, #97)
 }
 
 func writeAsk(p string) wanted {
@@ -371,9 +371,9 @@ func runProseStep(step string, c Calls, in Input) Outcome {
 	return Outcome{Kind: Done, Evidence: proseEvidence[step], Commit: true, Values: rows}
 }
 
-// lostMarkers gives each marker that an input of an adapted file loses from a
-// flagged line of the file before it, by the call of check adapted (fix 2 of
-// the first pilot, #97); a file that the step writes is not asked.
+// lostMarkers gives each marker that an input of an adapted file loses, place by
+// place, from the file before it, by the call of check adapted (fix 2 of the first
+// pilot, #97); a file that the step writes is not asked.
 func lostMarkers(c Calls, in Input, files []wanted) ([]string, error) {
 	var lost []string
 	for _, f := range files {
@@ -462,18 +462,24 @@ func fileOrder(marks []Marker) []string {
 	return out
 }
 
+// lineStarts gives the byte offset of each line of s; index 0 is line 1.
+func lineStarts(s string) []int {
+	at := []int{0}
+	for i := 0; i < len(s); i++ {
+		if s[i] == '\n' {
+			at = append(at, i+1)
+		}
+	}
+	return at
+}
+
 // fill replaces each place of file in text whose answer is a value with that
 // value, the whole marker, also over more lines (fix 1 of the first pilot,
 // #97), and gives the filled text and, for each place of file in marks (by
 // its index), its byte offset in the filled text. A marker that is not at its
 // line and column is an error.
 func fill(text, file string, marks []Marker, answer func(Marker) []string) (string, map[int]int, error) {
-	starts := []int{0} // the byte offset of each line
-	for i := 0; i < len(text); i++ {
-		if text[i] == '\n' {
-			starts = append(starts, i+1)
-		}
-	}
+	starts := lineStarts(text)
 	var b strings.Builder
 	at := map[int]int{}
 	last, delta := 0, 0
@@ -546,6 +552,7 @@ func runS11(c Calls, in Input) Outcome {
 	answer := func(m Marker) []string { return answerOf(in.Answers, MarkerID(m.File, work.MarkerKey(m.Text))) }
 	out := map[string][]byte{}
 	line := make([]int, len(marks)) // the line of each place in the tree that S11 writes
+	starts := map[string][]int{}    // the byte offset of each line of a filled file at the scan; index 0 is line 1
 	for i, m := range marks {
 		line[i] = m.Line
 	}
@@ -557,6 +564,7 @@ func runS11(c Calls, in Input) Outcome {
 		if err != nil {
 			return Outcome{Kind: Fail, Evidence: file + ": " + firstLine(err)}
 		}
+		starts[file] = lineStarts(string(data))
 		filled, at, err := fill(string(data), file, marks, answer)
 		if err != nil {
 			return Outcome{Kind: Fail, Evidence: err.Error()}
@@ -568,14 +576,24 @@ func runS11(c Calls, in Input) Outcome {
 	}
 	var values, gaps [][]string
 	onLine := map[string]int{} // the places of each line of the tree that S11 writes: a line with more than one gives each row the column too, so each key of the record is unique
+	first := map[string]int{}  // the first scan line of each such line: a filled marker over more lines joins scan lines
 	for i, m := range marks {
-		onLine[fmt.Sprintf("%s:%d", m.File, line[i])]++
+		k := fmt.Sprintf("%s:%d", m.File, line[i])
+		onLine[k]++
+		if f, ok := first[k]; !ok || m.Line < f {
+			first[k] = m.Line
+		}
 	}
 	for i, m := range marks {
 		r, key := answer(m), work.MarkerKey(m.Text)
-		name := fmt.Sprintf("marker:%s:%d", m.File, line[i])
-		if onLine[fmt.Sprintf("%s:%d", m.File, line[i])] > 1 {
-			name += fmt.Sprintf(":%d", m.Col)
+		k := fmt.Sprintf("%s:%d", m.File, line[i])
+		name := "marker:" + k
+		if onLine[k] > 1 {
+			col := m.Col // the byte column of the open quote at the scan, counted from the first scan line of its line
+			if f := first[k]; m.Line > f {
+				col += starts[m.File][m.Line-1] - starts[m.File][f-1]
+			}
+			name += fmt.Sprintf(":%d", col)
 		}
 		if r[1] == "gap" {
 			values = append(values, []string{name, key, "gap", work.OpenGapsPath})

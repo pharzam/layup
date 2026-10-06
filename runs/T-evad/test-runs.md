@@ -110,6 +110,9 @@ The idea owner's fix of T5 (comment 6002034171), with the design points of O-146
 - **`rules-diff.sh`:** a marker over more lines, read by its key (18 cases, 11
   mutations caught, `d11ef9c`); a task index whose filled marker over more lines
   becomes one line (20 cases, 12 mutations caught, `beecf92`).
+- **The name of a place on a joined line, 2026-10-06 (finding 1 of review round 1).**
+  `TestS11JoinedLinesTwoPlacesAtOneColumn` failed first, as two places got one name;
+  then it passed, and a mutation of the column was caught (`evidence/186-evad-fix1-red.txt`).
 
 ## The rehearsals and the second run
 

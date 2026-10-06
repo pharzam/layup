@@ -433,9 +433,9 @@ D10 of its plan, with the conditions of its plan review):
   four lines only), with the row `marker:<file>:<line>` per place, `<line>` the
   line of its open quote in the tree that S11 writes (the source of D3 of
   #86), and `marker:<file>:<line>:<column>` (the byte column of its open quote
-  at the scan) when that line holds more than one marker, so that each key of
-  the record is unique (the same task: one line of the baseline holds three
-  markers); a `gap` keeps the marker, with a row per place whose value is its
+  at the scan, from the first scan line of its line) when that line holds more
+  than one marker, so that each key is unique (one line of the baseline holds
+  three markers); a `gap` keeps the marker, with a row per place whose value is its
   key (source `gap`, ref `docs/setup/open-gaps.tsv`) and one row of
   `open-gaps.tsv` per file and key, with the answer's `question_text`. A fill
   keeps the line end after the marker, and a `gap` for a marker that holds a

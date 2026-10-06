@@ -3,7 +3,9 @@
 Task `T-evad` ([#97](https://github.com/pharzam/layup/issues/97)). The idea owner's
 answers, copied from their comments on #97 (the pilot rule of the plan review,
 pass item 7, and condition 5). This copy writes each marker character as
-`&lsaquo;` or `&rsaquo;`, as a marker in this repository is an open gap.
+`&lsaquo;` or `&rsaquo;`, as a marker in this repository is an open gap. The first
+answer comes from the login `yaltunbicak`, and the second from the login `pharzam`;
+this record does not say whether the two logins are one person.
 
 ## The verdict of the first pilot: Fail
 
@@ -136,5 +138,5 @@ The idea owner checked the 67 values of the second run with no row rejected, and
 requirements. So the result after the fix holds pass items (1) to (7) of the pre-registered rule. Pass item (8),
 the end-to-end tests of the issue, and the two checks on which the acceptance of `NFR-007`, `REQ-015` and `REQ-017`
 depends (`TestPackageRules` and `runs/T-efmy/release-check.sh`) run at the freeze of the pull request of this task;
-their result is in [`docs/tasks/T-evad.md`](../../docs/tasks/T-evad.md). The verdict of the first pilot stays a
-Fail (O-145).
+the verdict of [`docs/tasks/T-evad.md`](../../docs/tasks/T-evad.md), which the close-out writes, gives their result.
+The verdict of the first pilot stays a Fail (O-145).

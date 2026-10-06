@@ -47,7 +47,7 @@ over 42 files (6002406785). O-147 (a), the target task closes out in its own pul
 request (6011287620). The three plan reviews of the target task gave O-148 to O-151:
 the copy writes the records of the second run, an exception to their immutability
 that the Operator scoped (O-148, O-151); one round with the four lenses on each
-frozen head, a workaround that two operators approve (O-149); the task's two files
+frozen head, a workaround that two logins approve (O-149, O-155); the task's two files
 (O-150). O-152, the branch names follow the text by a forced update after the merge
 (6013939366). O-154 and O-155, the conditions of the second approval, and the
 logins as the identity of the approvers. O-156 and O-157, the cycle cap of the
