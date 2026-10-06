@@ -4,7 +4,7 @@ Task `T-evad` ([#97](https://github.com/pharzam/layup/issues/97)), row 20 of the
 [implementation plan](../../docs/plan/README.md). The target is
 [`pharzam/chat-orchestrator`](https://github.com/pharzam/chat-orchestrator), set up at
 `cec749a` from the brief `PSB-CHAT-001`, and again at `e2b402b` after the fix. The IDs
-F-1 to F-30 are the ones that the comments on #97 use. The numbers of the pilot are in [`numbers.md`](numbers.md).
+F-1 to F-33 are the ones that the comments on #97 use. The numbers of the pilot are in [`numbers.md`](numbers.md).
 
 The class of each finding follows D10 of the plan, as the answer to the plan review
 amends it (comment 5979731752, item 6). A defect on the pilot's path (a step of the
@@ -112,6 +112,13 @@ result, in [`acceptance.md`](acceptance.md).
   `require_extra_approval_for_unattributed_changes`. The first permits a squash,
   which the target's own rules forbid. The second did not block the pull request of
   D7.
+- **F-31: a second setup run edits records that the target makes immutable.** `layup
+  setup` writes `F-0001`, `F-0002` and `ADR-0009` of the target, and the target's rules
+  make them immutable after their commit. The second run wrote them again, so the copy
+  of its tree into `main` (the target task `T-vu2j`) edits three immutable records.
+  LAYUP has no rule for a second run on a target whose `main` holds the first. The plan
+  review of `T-vu2j` found it. By O-148 (a), the copy writes them as the second run did,
+  with a decision note, and the versions of the first run stay in the history of `main`.
 
 ## Found off the path of the pilot
 
@@ -157,6 +164,18 @@ Each is counted in [`numbers.md`](numbers.md). None is a defect of LAYUP.
   `F-0002`. The completeness check of the audit found it (pass 1). The inventory of
   pass 2 reads the new places from the diff of the two setup heads, and its own check
   finds no added line without a row.
+- **F-32: one approval for a workaround.** O-143 resolved the conflict of F-15 for
+  `T-a0rt` by a decision note with one approval, the Operator's. R4 of the target asks
+  for the written approval of two different operators, and for a removal issue. The plan
+  review of `T-vu2j` found it. For `T-vu2j`, O-149 (a) has two operators approve the
+  workaround on the target issue before round 1; `pharzam/chat-orchestrator#4` is its
+  removal issue.
+- **F-33: the first plan of `T-vu2j` had no test that `T-a0rt` stays.** `tree-equal.sh`
+  excused the four paths of `T-a0rt` and did not read their text, so it passed a head
+  that lost them. The red step of the plan was a known mismatch, not a test of the whole
+  Definition of Done. The plan review of `T-vu2j` found it (`reject`). `tree-equal.sh`
+  now compares those paths with the base (`--base`), test first: 40 cases, 27 of them
+  red on a skeleton, and 7 mutations caught (`b0293d3`).
 
 ## Notes
 
