@@ -4,7 +4,7 @@ Task `T-evad` ([#97](https://github.com/pharzam/layup/issues/97)), row 20 of the
 [implementation plan](../../docs/plan/README.md). The target is
 [`pharzam/chat-orchestrator`](https://github.com/pharzam/chat-orchestrator), set up at
 `cec749a` from the brief `PSB-CHAT-001`, and again at `e2b402b` after the fix. The IDs
-F-1 to F-35 are the ones that the comments on #97 use. The numbers of the pilot are in [`numbers.md`](numbers.md).
+F-1 to F-36 are the ones that the comments on #97 use. The numbers of the pilot are in [`numbers.md`](numbers.md).
 
 The class of each finding follows D10 of the plan, as the answer to the plan review
 amends it (comment 5979731752, item 6). A defect on the pilot's path (a step of the
@@ -185,6 +185,10 @@ Each is counted in [`numbers.md`](numbers.md). None is a defect of LAYUP.
 - **F-34: the gate run of D7 used a binary with local changes.** `layup4` was built from `6206335` with
   `vcs.modified=true`, so the commit of the code that gave the verdict of D7 is not exact. The code of the gate
   did not change in this task. The gate run of `T-vu2j` uses `layup`, built from `c961652` with no local change.
+- **F-36: the boxes of the target task of D7 were not ticked.** The rule of the target ("Completing a task") ticks
+  the acceptance boxes of the issue before the pull request lands. All five boxes of
+  `pharzam/chat-orchestrator#2` (`T-a0rt`) stayed unticked after its merge, the same miss as #74 and #76 of LAYUP.
+  The author saw it while preparing the close-out of `T-vu2j`, whose boxes are ticked before its merge.
 
 ## Notes
 
