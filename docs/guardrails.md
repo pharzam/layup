@@ -197,6 +197,38 @@ check that catches it.
   so 17 such lines passed every commit of `T-hbw8` and failed only at close-out.
   **The check:** after you copy text into a record, run `git diff --check` on it;
   remove trailing spaces, which carry no meaning there. Learned in `T-hbw8`.
+- ❌ **A one-line form that loses a failure.** The first lint command of the first
+  pilot put the gate script of the brief into one pipe. When `git ls-files` failed
+  (an invalid index), the pipe took the status of its last command, and the check
+  passed with no file read. It is silent because the form gives the script's
+  output in each case that works. **The check:** before a short form replaces a
+  script, run both on a failure of each step, and keep the cases (13 cases in
+  `T-evad`: F-9 of [`runs/T-evad/findings.md`](../runs/T-evad/findings.md)). Learned
+  in `T-evad`.
+- ❌ **A claim of a check that nothing runs.** In the first pilot, a setup answer
+  filled a command into a comment of the hook, and the prose called the gate jobs
+  required while the ruleset was only prepared. A reader takes both for checks
+  that run. It is silent because each value is correct and in its place. **The
+  check:** for each "X runs" or "X blocks a merge", name the line that runs X or
+  the read-back that shows it, and test the claims (F-5, F-10 and F-12 of
+  [`runs/T-evad/findings.md`](../runs/T-evad/findings.md)). Learned in `T-evad`.
+- ❌ **A command file that goes on after a failure.** The `commands.sh` of S13 has
+  no stop on an error: after a refused push it pushed `layup-records`, applied the
+  ruleset and exited 0. It is silent because the last command passes. **The
+  check:** run the commands one at a time, check each before the next, and read
+  back the pushes before the ruleset
+  ([`runs/T-evad/t3.sh`](../runs/T-evad/t3.sh), finding F-13). Learned in
+  `T-evad`.
+- ❌ **A value audit that reads only the values it is given.** In the first pilot,
+  two passes of a model audit and the author's own check found each value at its
+  place. They missed a marker that S11 filled in part, and the markers that the prose
+  step removed (F-28). In the second run, an inventory that matched the places of
+  two runs by their values put 15 new places on old lines, and it left out the values
+  that no record row names (F-29). It is silent because each listed value is right.
+  **The check:** make the inventory from the diff of the two trees, so that each added
+  line has a row or only moved; check that each marker of the baseline is kept or has
+  a record row; and let the auditor check the completeness against the diff
+  ([`runs/T-evad/findings.md`](../runs/T-evad/findings.md)). Learned in `T-evad`.
 
 ### Writing a lesson back
 

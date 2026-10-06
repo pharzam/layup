@@ -3,8 +3,8 @@
 Task `T-evad` ([#97](https://github.com/pharzam/layup/issues/97)), row 20 of the
 [implementation plan](../../docs/plan/README.md). The target is
 [`pharzam/chat-orchestrator`](https://github.com/pharzam/chat-orchestrator), set up at
-`cec749a` from the brief `PSB-CHAT-001`. The IDs F-1 to F-20 are the ones that the
-comments on #97 use. The numbers of the pilot are in [`numbers.md`](numbers.md).
+`cec749a` from the brief `PSB-CHAT-001`, and again at `e2b402b` after the fix. The IDs
+F-1 to F-30 are the ones that the comments on #97 use. The numbers of the pilot are in [`numbers.md`](numbers.md).
 
 The class of each finding follows D10 of the plan, as the answer to the plan review
 amends it (comment 5979731752, item 6). A defect on the pilot's path (a step of the
@@ -46,6 +46,13 @@ result, in [`acceptance.md`](acceptance.md).
   was right; the report was wrong. Fixed in `f9fcc9d`: the report counts the marker
   rows of S11 (filled and gaps). Case 17 failed first, then passed; the 9 mutations
   are still caught; the setup head passes.
+- **F-30: the specification did not say how `answers.sha256` is computed.** It said
+  "the SHA-256 of those rows as the step read them", so the auditor of the second run
+  could not compute the recorded value from `answers.tsv` (pass 1, W-044). The
+  specification now gives the routine of the code: each row its fields joined by a
+  tab, the empty mark read as an empty field, the rows sorted in byte order and joined
+  by a line feed, with no line feed at the end (`c64f9df`). The routine gives the
+  recorded value, and pass 2 of the audit computed the same value.
 
 ## Known limitations: the Operator's rulings
 
@@ -143,6 +150,13 @@ Each is counted in [`numbers.md`](numbers.md). None is a defect of LAYUP.
   and the author's own check, read each value at its place. None checked that a filled
   marker was gone whole, or that each marker of the baseline was kept. The Operator's
   row-by-row check found both. The checks of fixes 2 and 3 now cover both cases.
+- **F-29: the first inventory of the second run was not complete.** It matched the
+  places of the two runs by their values, so it put 15 new places on old lines, where
+  the same value stood in the first run. It also did not list the values that no row
+  of S11 names: the 7 date places, 2 lines of `facts.sha256` and the 14 new facts of
+  `F-0002`. The completeness check of the audit found it (pass 1). The inventory of
+  pass 2 reads the new places from the diff of the two setup heads, and its own check
+  finds no added line without a row.
 
 ## Notes
 
