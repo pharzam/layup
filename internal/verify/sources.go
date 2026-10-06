@@ -1,7 +1,6 @@
 package verify
 
 import (
-	"bytes"
 	"io/fs"
 	"slices"
 	"strconv"
@@ -58,9 +57,11 @@ func checkSources(in input) []string {
 	return out
 }
 
-// gapFindings checks a gap row of S11: its name is marker:<file>:<line>, the
-// line of the file holds the marker of its value, and docs/setup/open-gaps.tsv
-// has the row of the file and the marker.
+// gapFindings checks a gap row of S11: its name is marker:<file>:<line>, or
+// marker:<file>:<line>:<column> when the line holds more than one marker, a
+// marker whose key is its value starts on that line of the file (also a
+// marker over more lines; fix 1 of the first pilot, #97), and
+// docs/setup/open-gaps.tsv has the row of the file and the marker.
 func gapFindings(in input, at, name, marker string) []string {
 	rest, ok := strings.CutPrefix(name, "marker:")
 	i := strings.LastIndex(rest, ":")
@@ -69,10 +70,14 @@ func gapFindings(in input, at, name, marker string) []string {
 		return []string{at + "a gap row is not named marker:<file>:<line>"}
 	}
 	file := rest[:i]
+	if j := strings.LastIndex(file, ":"); j >= 0 { // a name with a column: the number before it is the line
+		if line, err := strconv.Atoi(file[j+1:]); err == nil {
+			file, n = file[:j], line // the column is the place at the scan of S11, which fills the other markers of the line first: a key, not checked here
+		}
+	}
 	var out []string
 	data, _ := fs.ReadFile(in.fsys, file)
-	lines := bytes.Split(data, []byte("\n"))
-	if n < 1 || n > len(lines) || !bytes.Contains(lines[n-1], []byte(marker)) {
+	if !slices.ContainsFunc(textMarkers(file, string(data)), func(m Marker) bool { return m.Line == n && work.MarkerKey(m.Text) == marker }) {
 		out = append(out, at+"line "+strconv.Itoa(n)+" of "+file+" does not hold "+marker)
 	}
 	gaps, _ := fs.ReadFile(in.fsys, work.OpenGapsPath)

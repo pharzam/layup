@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/pharzam/layup/internal/git"
+	"github.com/pharzam/layup/internal/work"
 )
 
 // adExclude is AD_EXCLUDE of setup-check.sh: the paths that check adapted
@@ -129,37 +130,38 @@ func adaptedFiles(fsys fs.FS, files []string) []flaggedFile {
 // characters.
 func fileHits(path string, data []byte, allowed bool) []string {
 	var out []string
+	for _, h := range hitsOf(data, allowed) {
+		out = append(out, fmt.Sprintf("%s %s: %s:%d", h.rule, h.name, path, h.line))
+	}
+	return out
+}
+
+// An adFound is one hit of a pattern: its rule, its name and the line where
+// its word starts.
+type adFound struct {
+	rule, name string
+	line       int
+}
+
+// hitsOf gives the hits of the 16 patterns in a file, paragraph by paragraph.
+func hitsOf(data []byte, allowed bool) []adFound {
+	var out []adFound
 	var para []byte
 	var starts, lines []int // the start of each line in para, and its number
 	flush := func() {
 		if len(starts) == 0 {
 			return
 		}
-		out = append(out, paragraphHits(path, string(para), starts, lines, allowed)...)
+		out = append(out, paragraphHits(string(para), starts, lines, allowed)...)
 		para, starts, lines = nil, nil, nil
 	}
-	for i, line := range strings.Split(string(data), "\n") {
+	for i, line := range strings.Split(unitText(string(data)), "\n") {
 		line = strings.TrimSuffix(line, "\r")
 		line = strings.Trim(blanks.ReplaceAllString(line, " "), " ")
 		if line == "" {
 			flush()
 			continue
 		}
-		var mk strings.Builder // a marker is one unit, the byte 0x01
-		for {
-			j := strings.Index(line, "\u2039")
-			if j < 0 {
-				break
-			}
-			rest := line[j+len("\u2039"):]
-			mk.WriteString(line[:j])
-			mk.WriteByte(1)
-			line = ""
-			if k := strings.Index(rest, "\u203a"); k >= 0 {
-				line = rest[k+len("\u203a"):]
-			}
-		}
-		line = mk.String() + line
 		if len(starts) > 0 {
 			para = append(para, ' ')
 		}
@@ -170,18 +172,45 @@ func fileHits(path string, data []byte, allowed bool) []string {
 	return out
 }
 
+// unitText gives text with each marker as one unit (fix 1 of the first pilot,
+// #97): the byte 0x01 in place of a marker or of the text of the convention,
+// and the byte 0x02 in place of the part of each further line that a marker
+// over more lines covers, so no word inside a marker is a match, and the lines
+// and the paragraphs of the file stay. An open quote between two backticks or
+// with no pair is a unit of its own, so it hides no word.
+func unitText(text string) string {
+	var b strings.Builder
+	last := 0
+	for _, it := range scanText(text) {
+		switch {
+		case it.kind == aMarker || it.kind == aForm:
+		case (it.kind == aMention || it.kind == aLoneOpen) && text[it.at:it.end] == mkOpen:
+		default:
+			continue
+		}
+		b.WriteString(text[last:it.at])
+		b.WriteByte(1)
+		for range strings.Count(text[it.at:it.end], "\n") {
+			b.WriteString("\n\x02")
+		}
+		last = it.end
+	}
+	b.WriteString(text[last:])
+	return b.String()
+}
+
 var blanks = regexp.MustCompile(`[ \t]+`)
 
 // paragraphHits gives the hits of the 16 patterns in one paragraph, each at
 // the line where its word starts (D4 of #88).
-func paragraphHits(path, para string, starts, lines []int, allowed bool) []string {
+func paragraphHits(para string, starts, lines []int, allowed bool) []adFound {
 	low := []byte(para) // the lower case changes only A to Z, so a position stays
 	for i, b := range low {
 		if 'A' <= b && b <= 'Z' {
 			low[i] = b + 'a' - 'A'
 		}
 	}
-	var out []string
+	var out []adFound
 	for _, h := range adHits {
 		text := string(low)
 		if h.cased {
@@ -203,9 +232,44 @@ func paragraphHits(path, para string, starts, lines []int, allowed bool) []strin
 						line = lines[k]
 					}
 				}
-				out = append(out, fmt.Sprintf("%s %s: %s:%d", h.rule, h.name, path, line))
+				out = append(out, adFound{h.rule, h.name, line})
 			}
 			off += loc[0] + 1
+		}
+	}
+	return out
+}
+
+// LostMarkers gives each marker of before, the file before S14, of which
+// after, the input of S14, holds fewer places, byte for byte, with their line
+// ends (fix 2 of the first pilot, #97, and point 3 of the Operator's comment
+// 6002406785). S14 refuses such an input, so each marker goes to S10 like any
+// other. Each place counts, not only those of a line that check adapted flags:
+// the prose step of the first pilot replaced whole sections, whose other lines
+// held markers too. The finding names the line of the first place of the
+// marker, its key, and how many of its places the input lost.
+func LostMarkers(path string, before, after []byte) []string {
+	kept := map[string]int{}
+	for _, m := range textMarkers(path, string(after)) {
+		kept[m.Text]++
+	}
+	places, first := map[string]int{}, map[string]int{}
+	var order []string
+	for _, m := range textMarkers(path, string(before)) {
+		if places[m.Text] == 0 {
+			order, first[m.Text] = append(order, m.Text), m.Line
+		}
+		places[m.Text]++
+	}
+	var out []string
+	for _, text := range order {
+		n, k, key := places[text], kept[text], work.MarkerKey(text)
+		switch {
+		case k >= n:
+		case k == 0:
+			out = append(out, fmt.Sprintf("%s:%d: the input loses the marker %s", path, first[text], key))
+		default:
+			out = append(out, fmt.Sprintf("%s:%d: the input loses %d of the %d places of the marker %s", path, first[text], n-k, n, key))
 		}
 	}
 	return out

@@ -148,11 +148,11 @@ func commitIn(dir, message string) error {
 	return git.Commit(dir, message, testWho)
 }
 
-// opsText is the file of the markers: one marker twice, one that does not
-// close on its line, and one that the Operator keeps as a gap.
+// opsText is the file of the markers: one marker twice, one over two lines
+// (fix 1 of the first pilot, #97), and one that the Operator keeps as a gap.
 func opsText() string {
 	return "# Ops\n\nThe port is " + mOpen + "port" + mClose + ".\nAgain " + mOpen + "port" + mClose + ".\nThe owner is " +
-		mOpen + "owner" + mClose + ".\nThe zone " + mOpen + "zone\n"
+		mOpen + "owner" + mClose + ".\nThe zone " + mOpen + "zone\nname" + mClose + ".\n"
 }
 
 // scaffold adds the cases of a whole run to the baseline at dir (D2 of #93):
@@ -285,7 +285,7 @@ func makeWhole() (*whole, error) {
 		return nil, err
 	}
 	for _, m := range []struct{ text, answer, question string }{
-		{mOpen + "port" + mClose, "8080", ""}, {mOpen + "owner" + mClose, "gap", "Who owns the operations?"}, {mOpen + "zone", "eu-west", ""},
+		{mOpen + "port" + mClose, "8080", ""}, {mOpen + "owner" + mClose, "gap", "Who owns the operations?"}, {mOpen + "zone name" + mClose, "eu-west", ""},
 	} {
 		if err := give([]string{setup.MarkerID("docs/ops.md", m.text), m.answer, "operator", at, m.question}); err != nil {
 			return nil, err
@@ -401,7 +401,7 @@ func TestAWholeSetupOnAStandInBaseline(t *testing.T) {
 	write := func(p string) []string {
 		return []string{stepOfInput(p), "F-" + p, "Write the text of " + p + " for the target, and give it as inputs/files/" + p + ".", p}
 	}
-	port, owner, zone := mOpen+"port"+mClose, mOpen+"owner"+mClose, mOpen+"zone"
+	port, owner, zone := mOpen+"port"+mClose, mOpen+"owner"+mClose, mOpen+"zone name"+mClose
 	area := w.done
 	verifyAsk := "Run layup setup verify '" + area + "' > '" + filepath.Join(area, "out", "verify.tsv") + "', then run layup setup '" + area + "' again."
 	want := []struct{ name, stdout string }{

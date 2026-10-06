@@ -271,7 +271,8 @@ func readBrief(dir string) (setup.Brief, error) {
 
 // checkBrief refuses a brief at path that is not valid UTF-8 (K32), or that
 // holds a marker by the scanner of internal/verify: a raw fact never changes,
-// and S11 would have to change it (D4 of #90).
+// and S11 would have to change it (D4 of #90); or that holds an angle quote
+// with no pair, which check markers refuses (fix 3 of the first pilot, #97).
 func checkBrief(path string, src []byte) error {
 	if n := invalidLine(src); n > 0 {
 		return fmt.Errorf("%s: line %d is not valid UTF-8", path, n)
@@ -279,13 +280,17 @@ func checkBrief(path string, src []byte) error {
 	if m := verify.TextMarkers(string(src)); len(m) > 0 {
 		return fmt.Errorf("%s: line %d holds the marker %s, and a brief holds no marker: write the quote another way", path, m[0].Line, m[0].Text)
 	}
+	if n, q := verify.FirstUnpaired(string(src)); n > 0 {
+		return fmt.Errorf("%s: line %d holds the angle quote %s with no pair, and a brief holds no marker: write the quote another way", path, n, q)
+	}
 	return nil
 }
 
 // calls gives the calls of internal/verify that the steps of layup setup read
 // (D9 of #90): the one-check call, the markers of a tree with their columns,
-// the files whose links break, the files that check adapted flags, and the
-// link rule of the baseline.
+// the files whose links break, the files that check adapted flags, the link
+// rule of the baseline, and the markers that an input of S14 loses (fix 2 of
+// the first pilot, #97).
 func calls(out io.Writer) setup.Calls {
 	return setup.Calls{
 		Checks: evidence(out),
@@ -300,6 +305,7 @@ func calls(out io.Writer) setup.Calls {
 		BrokenLinks:   func(tree string) ([]string, error) { return verifyBrokenLinks(tree) },
 		Flagged:       func(tree string) ([]string, error) { return verifyFlagged(tree) },
 		LinksBaseline: func(source, line string) bool { return verifyLinksBaseline(source, line) },
+		LostMarkers:   verify.LostMarkers,
 	}
 }
 

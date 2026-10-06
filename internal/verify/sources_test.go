@@ -16,7 +16,8 @@ func TestTheSourcesOfARecord(t *testing.T) {
 	tree := fstest.MapFS{
 		"docs/facts/F-0001-setup-answers.md": {Data: []byte("1. `S01-stack` go\n")},
 		"docs/a.md":                          {Data: []byte("one\nthe \u2039port\u203a here\n")},
-		"docs/setup/open-gaps.tsv":           {Data: []byte("docs/a.md\t\u2039port\u203a\tWhich port?\n")},
+		"docs/m.md":                          {Data: []byte("a `\u2039State one\nthing\u203a` b\n")},
+		"docs/setup/open-gaps.tsv":           {Data: []byte("docs/a.md\t\u2039port\u203a\tWhich port?\ndocs/m.md\t\u2039State one thing\u203a\tWhat?\n")},
 		"docs/x.txt":                         {Data: []byte("x")},
 	}
 	area := fstest.MapFS{"inputs/answers.tsv": {Data: []byte("x")}}
@@ -37,11 +38,18 @@ func TestTheSourcesOfARecord(t *testing.T) {
 		{"a fact that does not resolve", []string{"S05", "x", "x", "fact", "F-0001#9"},
 			[]string{"source: S05 x: fact: F-0001#9 is not a fact of the F-0001 record"}},
 		{"a gap", []string{"S11", "marker:docs/a.md:2", "\u2039port\u203a", "gap", "docs/setup/open-gaps.tsv"}, nil},
+		{"a gap of a line that holds more markers than one, with the column of its place", []string{"S11", "marker:docs/a.md:2:4", "\u2039port\u203a", "gap", "docs/setup/open-gaps.tsv"}, nil},
+		// S11 fills the other markers of the line first, so the column is the place at the scan, not at the final tree: it is a key, not checked
+		{"a gap whose column is not the place of its marker in the final tree", []string{"S11", "marker:docs/a.md:2:9", "\u2039port\u203a", "gap", "docs/setup/open-gaps.tsv"}, nil},
 		{"a gap whose line has no marker", []string{"S11", "marker:docs/a.md:1", "\u2039port\u203a", "gap", "docs/setup/open-gaps.tsv"},
 			[]string{"source: S11 marker:docs/a.md:1: line 1 of docs/a.md does not hold \u2039port\u203a"}},
 		{"a gap with no row of open gaps", []string{"S11", "marker:docs/a.md:2", "\u2039other\u203a", "gap", "docs/setup/open-gaps.tsv"},
 			[]string{"source: S11 marker:docs/a.md:2: line 2 of docs/a.md does not hold \u2039other\u203a",
 				"source: S11 marker:docs/a.md:2: docs/setup/open-gaps.tsv has no row for docs/a.md \u2039other\u203a"}},
+		// a gap of a marker over two lines: its value is the key of the marker, and its line is the line of its open quote (fix 1 of the first pilot, #97)
+		{"a gap of a marker over two lines", []string{"S11", "marker:docs/m.md:1", "\u2039State one thing\u203a", "gap", "docs/setup/open-gaps.tsv"}, nil},
+		{"a gap of a marker over two lines, at its second line", []string{"S11", "marker:docs/m.md:2", "\u2039State one thing\u203a", "gap", "docs/setup/open-gaps.tsv"},
+			[]string{"source: S11 marker:docs/m.md:2: line 2 of docs/m.md does not hold \u2039State one thing\u203a"}},
 		{"a gap row of another name", []string{"S11", "x", "\u2039port\u203a", "gap", "docs/setup/open-gaps.tsv"},
 			[]string{"source: S11 x: a gap row is not named marker:<file>:<line>"}},
 		{"a command", []string{"S02", "pin.commit", "abc", "computed", "git ls-remote x HEAD"}, nil},

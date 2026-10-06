@@ -4,12 +4,15 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	"io"
 	"reflect"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/pharzam/layup/internal/git"
+	"github.com/pharzam/layup/internal/tsv"
 	"github.com/pharzam/layup/internal/work"
 )
 
@@ -157,7 +160,8 @@ func TestS06(t *testing.T) {
 // baseline at LAYUP's pin: the named files of S07 to S09 too.
 func proseCalls() Calls {
 	flagged := []string{"AGENTS.md", "README.md", "docs/engineering-discipline.md", glossaryPath, onboardingPath}
-	return Calls{Flagged: func(string) ([]string, error) { return flagged, nil }}
+	return Calls{Flagged: func(string) ([]string, error) { return flagged, nil },
+		LostMarkers: func(string, []byte, []byte) []string { return nil }}
 }
 
 // proseInputs gives the input files of the prose step, less those of omit.
@@ -167,6 +171,7 @@ func proseInputs(omit ...string) map[string]string {
 		if !slices.Contains(omit, p) {
 			in["w/inputs/files/"+p] = "text of " + p + "\n"
 		}
+		in["w/target/"+p] = "the file of the head, " + p + "\n"
 	}
 	return in
 }
@@ -234,6 +239,32 @@ func TestTheProseStepIsOneUnit(t *testing.T) {
 	}
 }
 
+// S14 refuses an adapted input that loses a marker of a flagged line of the
+// file before it, and copies no file (fix 2 of the first pilot, #97). It asks
+// the call for each file that it adapts, not for a file that it writes; the
+// evidence names the first lost marker and the count.
+func TestS14RefusesAnInputThatLosesAMarker(t *testing.T) {
+	f := &fakeRepo{disk: proseInputs()}
+	f.install(t)
+	c := proseCalls()
+	var asked []string
+	c.LostMarkers = func(path string, before, after []byte) []string {
+		asked = append(asked, path+" | "+string(before)+" | "+string(after))
+		return []string{path + ":3: the input loses the marker \u2039a\u203a", path + ":9: the input loses the marker \u2039b\u203a"}
+	}
+	o := runProseStep("S14", c, Input{Dir: "w"})
+	if want := "docs/engineering-discipline.md:3: the input loses the marker \u2039a\u203a (2 lost markers in all)"; o.Kind != Fail || o.Evidence != want || len(f.files) != 0 {
+		t.Errorf("S14: %s %q, %d files; want fail %q and no file", o.Kind, o.Evidence, len(f.files), want)
+	}
+	if want := []string{"docs/engineering-discipline.md | the file of the head, docs/engineering-discipline.md\n | text of docs/engineering-discipline.md\n"}; !reflect.DeepEqual(asked, want) {
+		t.Errorf("the calls: %q; want %q", asked, want)
+	}
+	c.LostMarkers = nil
+	if o := runProseStep("S14", c, Input{Dir: "w"}); o.Kind != Fail || o.Evidence != "the prose step has no call of the markers that an input loses" {
+		t.Errorf("no call: %s %q", o.Kind, o.Evidence)
+	}
+}
+
 var (
 	mx = "\u2039x\u203a"
 	my = "\u2039y\u203a"
@@ -281,11 +312,12 @@ func TestS10(t *testing.T) {
 	if o := runS10(markersOf(), Input{Dir: "w"}); o.Kind != Done {
 		t.Errorf("no marker: %s %q; want done", o.Kind, o.Evidence)
 	}
-	open := "\u2039open\r" // a marker that does not close, on a line of a CRLF file
+	// a marker over two lines of a CRLF file: its question, its where and its ask show its key, each line end as one space (fix 1 of the first pilot, #97)
+	open := "\u2039open\r\nend\u203a"
 	o = runS10(markersOf(Marker{"docs/c.md", 2, 0, open}), Input{Dir: "w"})
-	if o.Kind != Stop || len(o.Stops) != 1 || o.Stops[0].Question != MarkerID("docs/c.md", open) ||
-		o.Stops[0].Where != "docs/c.md:2 \u2039open" || o.Stops[0].Ask != ask("docs/c.md", "\u2039open") {
-		t.Errorf("a marker with a carriage return: %s %+v; want the where and the ask with no carriage return", o.Kind, o.Stops)
+	if o.Kind != Stop || len(o.Stops) != 1 || o.Stops[0].Question != MarkerID("docs/c.md", "\u2039open end\u203a") ||
+		o.Stops[0].Where != "docs/c.md:2 \u2039open end\u203a" || o.Stops[0].Ask != ask("docs/c.md", "\u2039open end\u203a") {
+		t.Errorf("a marker over two lines of a CRLF file: %s %+v; want its key, each line end as one space", o.Kind, o.Stops)
 	}
 	c.Markers = func(string) ([]Marker, error) { return nil, errors.New("git: cannot list") }
 	if o := runS10(c, Input{Dir: "w"}); o.Kind != Fail || o.Evidence != "the markers of the tree: git: cannot list" {
@@ -345,17 +377,130 @@ func TestS11(t *testing.T) {
 	if len(f.files) != len(files) {
 		t.Errorf("S11 wrote %d files; want %d", len(f.files), len(files))
 	}
-	open := "\u2039open\r"
-	f2 := &fakeRepo{trees: f.trees, shows: f.shows, disk: map[string]string{"w/target/docs/c.md": "one\r\n" + open + "\n"}}
+	open := "\u2039open\r\nend\u203a"
+	f2 := &fakeRepo{trees: f.trees, shows: f.shows, disk: map[string]string{"w/target/docs/c.md": "one\r\n" + open + "\r\n"}}
 	f2.install(t)
-	idOpen := MarkerID("docs/c.md", open)
+	idOpen := MarkerID("docs/c.md", "\u2039open end\u203a")
 	if o := runS11(markersOf(Marker{"docs/c.md", 2, 0, open}), Input{Dir: "w", Record: pinRecord(), Answers: mAnswers([]string{idOpen, "8080", "u", ""})}); o.Kind != Done ||
 		f2.files["w/target/docs/c.md"] != "one\r\n8080\r\n" || o.Values[0][1] != "8080" {
-		t.Errorf("a marker of a CRLF line: %s %q, %q; want the line end kept", o.Kind, f2.files["w/target/docs/c.md"], o.Values)
+		t.Errorf("a marker over two lines of a CRLF file: %s %q, %q; want the whole marker filled and the line end after it kept", o.Kind, f2.files["w/target/docs/c.md"], o.Values)
 	}
 	if !strings.Contains(record, "| Collected by | `layup setup`, step S11 |") || !strings.Contains(record, "# F-0002. The answers to the markers of the setup") ||
 		!strings.Contains(record, "| Source | The answers of `inputs/answers.tsv` to the markers that S10 listed |") || strings.Contains(record, "\u2039") {
 		t.Errorf("the second answers record:\n%s", record)
+	}
+}
+
+// A line that holds more than one marker gives each place its own record row:
+// the name of a row has the byte column of its marker after the line, so that
+// the key (step, name) of the record is unique (the defect that the first
+// pilot found, #97: one line of the baseline holds three markers). A line with
+// one marker keeps the name marker:<file>:<line>.
+func TestS11TwoMarkersOnOneLine(t *testing.T) {
+	line := mx + " and " + my + " and " + mx
+	colY, colX2 := len(mx)+len(" and "), len(mx)+len(" and ")+len(my)+len(" and ")
+	c := markersOf(Marker{"docs/a.md", 2, 0, mx}, Marker{"docs/a.md", 2, colY, my}, Marker{"docs/a.md", 2, colX2, mx}, Marker{"docs/a.md", 3, 0, my})
+	idx, idy := MarkerID("docs/a.md", mx), MarkerID("docs/a.md", my)
+	a := mAnswers([]string{idx, "8080", "F-0003#5", ""}, []string{idy, "gap", "https://github.invalid/c/1", "Which y?"})
+	f := &fakeRepo{
+		trees: map[string][]git.TreeEntry{factsDir: {{Path: "docs/facts/F-0001-setup-answers.md"}, {Path: "docs/facts/README.md"}, {Path: "docs/facts/problem-statement-brief.md"}}},
+		shows: map[string]string{factsSumsPath: "abc  docs/facts/F-0001-setup-answers.md\n", factsDir + "/README.md": factsIndexS04},
+		disk:  map[string]string{"w/target/docs/a.md": "one\n" + line + "\n" + my + "\n"},
+	}
+	f.install(t)
+	o := runS11(c, Input{Dir: "w", Record: pinRecord(), Answers: a})
+	names := []string{"marker:docs/a.md:2:0", "marker:docs/a.md:2:" + strconv.Itoa(colY), "marker:docs/a.md:2:" + strconv.Itoa(colX2), "marker:docs/a.md:3"}
+	if o.Kind != Done || len(o.Values) < 4 {
+		t.Fatalf("S11: %s %q %q; want done with a row for each place", o.Kind, o.Evidence, o.Values)
+	}
+	for i, n := range names {
+		if o.Values[i][0] != n {
+			t.Errorf("row %d is named %q; want %q", i, o.Values[i][0], n)
+		}
+	}
+	if got, want := f.files["w/target/docs/a.md"], "one\n8080 and "+my+" and 8080\n"+my+"\n"; got != want {
+		t.Errorf("S11 wrote %q; want %q", got, want)
+	}
+	// the rows go into the record, whose key is (step, name): no key repeats
+	var rows [][]string
+	for _, v := range o.Values {
+		rows = append(rows, append([]string{"S11"}, v...))
+	}
+	if err := tsv.Write(io.Discard, work.RecordSchema, rows); err != nil {
+		t.Errorf("the record of the rows: %v; want no error", err)
+	}
+}
+
+// S11 replaces the whole of a marker over more lines (fix 1 of the first
+// pilot, #97: S11 filled the first line of a marker of docs/tasks/backlog.md
+// only, and the rest of the placeholder stayed). The row of each place names
+// its line in the tree that S11 writes, and a gap over more lines gets its key
+// in its record row and in its row of open-gaps.tsv.
+// Finding 1 of review round 1 of T-evad: a filled marker over more lines joins scan lines, so a place of a later scan
+// line can be on the same line of the written tree, at the same column of its own scan line; its name counts the
+// column from the first scan line of the written line, so each key of the record stays unique.
+func TestS11JoinedLinesTwoPlacesAtOneColumn(t *testing.T) {
+	const file = "docs/a.md"
+	ab, c3 := "\u2039a\nb\u203a", "\u2039c\u203a"
+	c := markersOf(Marker{file, 2, 4, ab}, Marker{file, 3, 4, c3})
+	idAB, idC := MarkerID(file, work.MarkerKey(ab)), MarkerID(file, work.MarkerKey(c3))
+	a := mAnswers([]string{idAB, "8080", "F-0003#5", ""}, []string{idC, "9090", "F-0003#5", ""})
+	f := &fakeRepo{
+		trees: map[string][]git.TreeEntry{factsDir: {{Path: "docs/facts/F-0001-setup-answers.md"}, {Path: "docs/facts/README.md"}, {Path: "docs/facts/problem-statement-brief.md"}}},
+		shows: map[string]string{factsSumsPath: "abc  docs/facts/F-0001-setup-answers.md\n", factsDir + "/README.md": factsIndexS04},
+		disk:  map[string]string{"w/target/" + file: "one\nxxxx" + ab + c3 + "\n"},
+	}
+	f.install(t)
+	o := runS11(c, Input{Dir: "w", Record: pinRecord(), Answers: a})
+	if o.Kind != Done || len(o.Values) < 2 {
+		t.Fatalf("S11: %s %q %q; want done with a row for each place", o.Kind, o.Evidence, o.Values)
+	}
+	if got, w := f.files["w/target/"+file], "one\nxxxx80809090\n"; got != w {
+		t.Errorf("S11 wrote %q; want %q", got, w)
+	}
+	second := 4 + len("xxxx\u2039a\n") // the column of the second place, from the first scan line of its line
+	for i, n := range []string{"marker:" + file + ":2:4", "marker:" + file + ":2:" + strconv.Itoa(second)} {
+		if o.Values[i][0] != n {
+			t.Errorf("row %d is named %q; want %q", i, o.Values[i][0], n)
+		}
+	}
+	var rows [][]string
+	for _, v := range o.Values {
+		rows = append(rows, append([]string{"S11"}, v...))
+	}
+	if err := tsv.Write(io.Discard, work.RecordSchema, rows); err != nil {
+		t.Errorf("the record of the rows: %v; want no error", err)
+	}
+}
+func TestS11AMarkerOverMoreLines(t *testing.T) {
+	const file = "docs/tasks/backlog.md"
+	scheme := "\u2039State your exact scheme\nhere \u2014 for example\nexist.\"\u203a"
+	two := "\u2039State one\nthing\u203a"
+	lead, col2 := "A suffix. `", 5+len(mx)+len(" and ")
+	c := markersOf(Marker{file, 2, len(lead), scheme}, Marker{file, 5, 5, mx}, Marker{file, 5, col2, two})
+	idS, idx, id2 := MarkerID(file, work.MarkerKey(scheme)), MarkerID(file, mx), MarkerID(file, work.MarkerKey(two))
+	a := mAnswers([]string{idS, "T- plus four random lowercase letters or digits", "https://github.invalid/c/2", ""},
+		[]string{idx, "gap", "https://github.invalid/c/2", "Which x?"}, []string{id2, "gap", "https://github.invalid/c/2", "What is the one thing?"})
+	f := &fakeRepo{
+		trees: map[string][]git.TreeEntry{factsDir: {{Path: "docs/facts/F-0001-setup-answers.md"}, {Path: "docs/facts/README.md"}, {Path: "docs/facts/problem-statement-brief.md"}}},
+		shows: map[string]string{factsSumsPath: "abc  docs/facts/F-0001-setup-answers.md\n", factsDir + "/README.md": factsIndexS04},
+		disk:  map[string]string{"w/target/" + file: "intro\n" + lead + scheme + "`\nnext " + mx + " and " + two + " end\n"},
+	}
+	f.install(t)
+	o := runS11(c, Input{Dir: "w", Record: pinRecord(), Answers: a})
+	if o.Kind != Done || len(o.Values) < 3 {
+		t.Fatalf("S11: %s %q %q; want done with a row for each place", o.Kind, o.Evidence, o.Values)
+	}
+	want := [][]string{{"marker:" + file + ":2", "T- plus four random lowercase letters or digits", "answer", idS},
+		{"marker:" + file + ":3:5", mx, "gap", work.OpenGapsPath}, {"marker:" + file + ":3:" + strconv.Itoa(col2), "\u2039State one thing\u203a", "gap", work.OpenGapsPath}}
+	if !reflect.DeepEqual(o.Values[:3], want) {
+		t.Errorf("the rows of the places:\n%q\nwant\n%q", o.Values[:3], want)
+	}
+	if got, w := f.files["w/target/"+file], "intro\n"+lead+"T- plus four random lowercase letters or digits`\nnext "+mx+" and "+two+" end\n"; got != w {
+		t.Errorf("S11 wrote %q; want %q", got, w)
+	}
+	if got, w := f.files["w/target/"+work.OpenGapsPath], file+"\t"+mx+"\tWhich x?\n"+file+"\t\u2039State one thing\u203a\tWhat is the one thing?\n"; got != w {
+		t.Errorf("S11 wrote the open gaps %q; want %q", got, w)
 	}
 }
 
@@ -376,8 +521,8 @@ func TestS11ChecksBeforeItWrites(t *testing.T) {
 		{"a gap in a file whose name holds a tab", []Marker{{"docs/a.md", 3, 0, mx}, {tab, 1, 0, mx}},
 			mAnswers([]string{ida, "8080", "u", ""}, []string{MarkerID(tab, mx), "gap", "u", "Which?"}), "docs/t\tb.md: a file whose name holds a tab cannot have a row in docs/setup/open-gaps.tsv"},
 		{"a marker with no answer", []Marker{{"docs/a.md", 3, 0, mx}}, nil, ida + ": no answer"},
-		{"a gap marker with a carriage return", []Marker{{"docs/a.md", 3, 0, "\u2039x\r"}}, mAnswers([]string{MarkerID("docs/a.md", "\u2039x\r"), "gap", "u", "Which?"}),
-			"docs/a.md: the marker \u2039x holds a tab or a carriage return, so it cannot have a row in docs/setup/open-gaps.tsv"},
+		{"a gap marker with a carriage return", []Marker{{"docs/a.md", 3, 0, "\u2039x\r\ny\u203a"}}, mAnswers([]string{MarkerID("docs/a.md", "\u2039x y\u203a"), "gap", "u", "Which?"}),
+			"docs/a.md: the marker \u2039x y\u203a holds a tab or a carriage return, so it cannot have a row in docs/setup/open-gaps.tsv"},
 	} {
 		f := s11Repo()
 		f.install(t)

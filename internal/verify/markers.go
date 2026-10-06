@@ -19,9 +19,10 @@ const mkExempt = `^(docs/(adr|ci|links|prd|setup)/tests/|\.githooks/tests/|docs/
 
 var mkExemptRE = regexp.MustCompile(mkExempt)
 
-// A Marker is one occurrence of a marker in a tracked file: its file, its
-// line and its text with the two angle quotes. S10 asks one question per file
-// and text, and check sources reads the line (D1 of #87).
+// A Marker is one occurrence of a marker in a tracked file: its file, the
+// line of its open quote, and its text with the two angle quotes and each line
+// end between them. S10 asks one question per file and key (work.MarkerKey),
+// and check sources reads the line (D1 of #87; fix 1 of the first pilot, #97).
 type Marker struct {
 	File string
 	Line int
@@ -33,12 +34,24 @@ type Marker struct {
 // file: internal/cli refuses a brief that holds one (D4 of #90).
 func TextMarkers(text string) []Marker { return textMarkers("", text) }
 
-// textMarkers gives the markers of the text of file, line by line.
+// FirstUnpaired gives the line and the quote of the first angle quote of text
+// with no pair, or 0: internal/cli refuses a brief that holds one, as it
+// refuses a marker (fix 3 of the first pilot, #97).
+func FirstUnpaired(text string) (int, string) {
+	for _, it := range scanText(text) {
+		if it.kind == aLoneOpen || it.kind == aLoneClose {
+			return it.line, text[it.at:it.end]
+		}
+	}
+	return 0, ""
+}
+
+// textMarkers gives the markers of the text of file.
 func textMarkers(file, text string) []Marker {
 	var out []Marker
-	for i, line := range strings.Split(strings.TrimSuffix(text, "\n"), "\n") {
-		for _, s := range lineSpans(line) {
-			out = append(out, Marker{file, i + 1, s.col, s.text})
+	for _, it := range scanText(text) {
+		if it.kind == aMarker {
+			out = append(out, Marker{file, it.line, it.col, text[it.at:it.end]})
 		}
 	}
 	return out
@@ -56,9 +69,17 @@ func Markers(tree string) ([]Marker, error) {
 }
 
 // scanMarkers reads each tracked file outside MK_EXEMPT that is a regular
-// file, line by line, as check_markers does.
+// file, as check_markers does.
 func scanMarkers(fsys fs.FS, files []string) []Marker {
-	var out []Marker
+	marks, _ := scanFiles(fsys, files)
+	return marks
+}
+
+// scanFiles gives the markers of the files that scanMarkers reads, and the
+// finding of each angle quote of them with no pair.
+func scanFiles(fsys fs.FS, files []string) ([]Marker, []string) {
+	var marks []Marker
+	var lone []string
 	for _, p := range files {
 		if mkExemptRE.MatchString(p) || !isRegular(fsys, p) {
 			continue
@@ -67,9 +88,16 @@ func scanMarkers(fsys fs.FS, files []string) []Marker {
 		if err != nil {
 			continue
 		}
-		out = append(out, textMarkers(p, string(data))...)
+		for _, it := range scanText(string(data)) {
+			switch it.kind {
+			case aMarker:
+				marks = append(marks, Marker{p, it.line, it.col, string(data[it.at:it.end])})
+			case aLoneOpen, aLoneClose:
+				lone = append(lone, fmt.Sprintf("unpaired: %s:%d %s", p, it.line, data[it.at:it.end]))
+			}
+		}
 	}
-	return out
+	return marks, lone
 }
 
 const (
@@ -78,54 +106,82 @@ const (
 	mkForm  = mkOpen + "\u2026" + mkClose // the convention's own text, not a marker
 )
 
-// lineMarkers gives the markers of one line, as the awk program of
-// check_markers reads it: each open quote starts a marker to the first close
-// quote after it, or to the line end; an open quote between two backticks is
-// the mention and is skipped; the text of the convention is not a marker.
-func lineMarkers(line string) []string {
-	var out []string
-	for _, s := range lineSpans(line) {
-		out = append(out, s.text)
+// An item is one place of an angle quote in a text, by the scan of scanText:
+// the byte offsets of its first byte and of the byte after it, the line and
+// the byte column of its first byte, and its kind.
+type item struct {
+	at, end, line, col int
+	kind               itemKind
+}
+
+type itemKind int
+
+const (
+	aMarker    itemKind = iota // a marker: an open quote to the first close quote after it
+	aForm                      // the text of the convention, the two quotes around an ellipsis: no marker
+	aMention                   // an open or a close quote between two backticks
+	aLoneOpen                  // an open quote with no close quote after it: no pair
+	aLoneClose                 // a close quote that no open quote takes: no pair
+)
+
+// scanText gives each item of a text, in the order of the text (fix 1 and
+// fix 3 of the first pilot, #97): an open quote starts a marker to the first
+// close quote after it, also across lines; an open quote with no close quote
+// after it starts none, and has no pair; a quote between two backticks is the
+// mention; the text of the convention is no marker; a close quote that no
+// open quote takes has no pair.
+func scanText(text string) []item {
+	var out []item
+	line, from, start := 1, 0, 0 // the line of the byte at from, and the start of that line
+	add := func(at, end int, kind itemKind) {
+		for ; from < at; from++ {
+			if text[from] == '\n' {
+				line, start = line+1, from+1
+			}
+		}
+		out = append(out, item{at, end, line, at - start, kind})
+	}
+	mention := func(at, n int) bool { return at > 0 && text[at-1] == '`' && at+n < len(text) && text[at+n] == '`' }
+	for i := 0; i < len(text); {
+		o, c := strings.Index(text[i:], mkOpen), strings.Index(text[i:], mkClose)
+		if o < 0 && c < 0 {
+			break
+		}
+		if c >= 0 && (o < 0 || c < o) { // a close quote that no open quote takes
+			at := i + c
+			if mention(at, len(mkClose)) {
+				add(at, at+len(mkClose), aMention)
+			} else {
+				add(at, at+len(mkClose), aLoneClose)
+			}
+			i = at + len(mkClose)
+			continue
+		}
+		at := i + o
+		after := at + len(mkOpen)
+		k := strings.Index(text[after:], mkClose)
+		switch {
+		case mention(at, len(mkOpen)):
+			add(at, after, aMention)
+			i = after
+		case k < 0:
+			add(at, after, aLoneOpen)
+			i = after
+		case text[at:after+k+len(mkClose)] == mkForm:
+			add(at, after+k+len(mkClose), aForm)
+			i = after + k + len(mkClose)
+		default:
+			add(at, after+k+len(mkClose), aMarker)
+			i = after + k + len(mkClose)
+		}
 	}
 	return out
 }
 
-// A span is one marker of a line: the byte column of its open quote and its
-// text.
-type span struct {
-	col  int
-	text string
-}
-
-// lineSpans gives the markers of one line by the rule of lineMarkers, each
-// with its column, so S11 replaces it where the scanner found it (D7 of #90).
-func lineSpans(line string) []span {
-	var out []span
-	for i := 0; ; {
-		j := strings.Index(line[i:], mkOpen)
-		if j < 0 {
-			return out
-		}
-		at := i + j
-		after := at + len(mkOpen)
-		if at > 0 && line[at-1] == '`' && after < len(line) && line[after] == '`' {
-			i = after
-			continue
-		}
-		m := line[at:]
-		if k := strings.Index(line[after:], mkClose); k >= 0 {
-			m = line[at : after+k+len(mkClose)]
-		}
-		if m != mkForm {
-			out = append(out, span{at, m})
-		}
-		i = at + len(m)
-	}
-}
-
 // markersFindings is check_markers (D2 of #87): each marker of the tree needs
-// a row in docs/setup/open-gaps.tsv, each row needs its marker in the tree,
-// and each row needs a question that is not blank or the empty mark. The file
+// a row in docs/setup/open-gaps.tsv by its key, each row needs its marker in
+// the tree, each row needs a question that is not blank or the empty mark, and
+// no angle quote is without its pair (fix 3 of the first pilot, #97). The file
 // is read by tabs, by the columns of its block, as check_markers reads it; an
 // absent file is no rows.
 func markersFindings(fsys fs.FS, h history) []string {
@@ -134,8 +190,9 @@ func markersFindings(fsys fs.FS, h history) []string {
 		return []string{"git: cannot list the tracked files"}
 	}
 	found := map[string]bool{}
-	for _, m := range scanMarkers(fsys, files) {
-		found[m.File+"\t"+m.Text] = true
+	marks, lone := scanFiles(fsys, files)
+	for _, m := range marks {
+		found[m.File+"\t"+work.MarkerKey(m.Text)] = true
 	}
 	var out []string
 	listed := map[string]bool{}
@@ -161,7 +218,7 @@ func markersFindings(fsys fs.FS, h history) []string {
 			out = append(out, "stale: "+f+" "+m+" is listed in "+work.OpenGapsPath+" but does not occur")
 		}
 	}
-	return out
+	return append(out, lone...)
 }
 
 // openGapsRows gives each line of the file as its three columns (file,

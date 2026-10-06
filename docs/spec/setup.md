@@ -177,8 +177,8 @@ the one home of the phase-1 steps of a target. A row that differs from
 | S07 | `layup setup`; the text is an input | `inputs/files/docs/onboarding-for-engineers.md` | Copies the file into the tree, with its record row `file:<path>` (K42); a missing file stops the run, in the one table of the prose step (O-123). | the file | check `onboarding` |
 | S08 | the same | `inputs/files/docs/glossary.md` | the same | the file | check `glossary` |
 | S09 | the same | `inputs/files/docs/guardrails.md` | the same | the file | check `guardrails` |
-| S10 | `layup setup`; stops for the Operator | the tree; `answers.tsv` | Lists every marker of the tree outside the exemptions of LAYUP's `MK_EXEMPT` ([`setup-check.sh`](../setup/setup-check.sh); the baseline has no setup check, §5), which the engine embeds at its version. A path of that pattern that a target does not have matches nothing. A marker with no answer row stops the run; the table lists all of them at once (§5 gap check, "one batch"), each by its first line. It changes no file. | — | every marker has an answer row |
-| S11 | `layup setup` | the answers of S10 | Replaces each marker whose answer has a value with that value, and writes its record row with the source. A marker whose answer is `gap` keeps its marker and gets a row in `docs/setup/open-gaps.tsv` with the answer's question (Invariant 4). When S10 listed at least one marker, writes the answer of each marker that S10 listed as a second raw fact record, in the same form, with its own index row and its own line in `facts.sha256`; with no marker, it writes no second record; the record of S04 does not change (a raw facts record is immutable; O-124). | the tree; the second answers record; record rows `marker:<file>:<line>` | checks `markers`, `sources` and `facts` |
+| S10 | `layup setup`; stops for the Operator | the tree; `answers.tsv` | Lists every marker of the tree outside the exemptions of LAYUP's `MK_EXEMPT` ([`setup-check.sh`](../setup/setup-check.sh); the baseline has no setup check, §5), which the engine embeds at its version. A path of that pattern that a target does not have matches nothing. A marker with no answer row stops the run; the table lists all of them at once (§5 gap check, "one batch"), each by its key at the line of its open quote. It changes no file. | — | every marker has an answer row |
+| S11 | `layup setup` | the answers of S10 | Replaces each marker whose answer has a value with that value, the whole marker, also over more lines, and writes its record row with the source. A marker whose answer is `gap` keeps its marker and gets a row in `docs/setup/open-gaps.tsv` with the answer's question (Invariant 4). When S10 listed at least one marker, writes the answer of each marker that S10 listed as a second raw fact record, in the same form, with its own index row and its own line in `facts.sha256`; with no marker, it writes no second record; the record of S04 does not change (a raw facts record is immutable; O-124). | the tree; the second answers record; record rows `marker:<file>:<line>` | checks `markers`, `sources` and `facts` |
 | S12 | `layup setup` | the catalog entry of the stack | Writes the files of the entry (for Go: `go.mod` with the module path from `name`, the tools' configuration), `docs/gates.tsv`, and one CI job per gate kind, whose id and name are the kind (K30). For each gap of the entry (the coverage floor of Go, K24), writes its row of `docs/setup/open-gaps.tsv` and its record row. The baseline's own workflows stay byte for byte (`REQ-018`). Adds no `setup-check` job. Changes `steps.tsv` S12: ADR-0011 decision 7, ADR-0016, §5 Scaffold 4. | the gate files; the gap rows of the entry | checks `jobs` and `gates` (each row `gate:<kind>`) |
 | S13 | `layup setup`; applied by the Operator | the job names | Writes `docs/setup/branch-protection.json` (in the form of LAYUP's own file of that name; the baseline has no `docs/setup/`) and `WORK/out/ruleset-default.json`: the default branch and the ref `layup-probe`; a pull request required; each gate job a required check, pinned to GitHub Actions; no force push, no deletion; an empty bypass list. Changes `steps.tsv` S13 ("one required check per job"): the required checks are the gate jobs only (**decided here**, task `T-d6q5`, condition 2 of the plan review of #92), as §6 names the native gate jobs as the required checks, this table is the one home of a target's steps, and a required check of a baseline job that a later baseline renames or removes would block each merge of the target. So the baseline's own CI jobs run on each pull request of the target and block no merge. In phase 1 it requires no `layup/` check, because no phase-1 command posts one ([`records.md`](records.md#nfr-002--a-target-is-independent-of-layup)). Writes to `commands.sh` the push of `layup-setup` onto the default branch (`git push origin layup-setup:main`, a fast-forward from the root commit; §5 Scaffold 6: "pushes the setup commits on top of the root commit") and, after it, the apply command of the ruleset. | the ruleset file; commands | the ruleset file, and its commands in `commands.sh` for the Operator (a hand-off: phase 1 does not see the Operator's run) |
 | S14 | `layup setup`; the text is an input | `inputs/files/README.md`, `inputs/files/AGENTS.md`, and `inputs/files/<path>` of each other file that check `adapted` flags | Copies the files, with a record row `file:<path>` each (K42); a missing file stops the run, in the one table of the prose step (O-123). | the files | checks `identity` and `adapted` |
@@ -397,31 +397,50 @@ D10 of its plan, with the conditions of its plan review):
   LAYUP's pin check `adapted` flags the baseline's own onboarding, glossary and
   guardrails files, so S14 can pass its evidence only after S07 to S09 replace
   them. The evidence of S14 is checks `identity` and `adapted`: `adapted` is
-  the check that flags the files that S14 replaces.
-- **S10** (D6): one question `M-<x8>` per file and marker text, in the order of
+  the check that flags the files that S14 replaces. **Decided here** (fix 2
+  of the first pilot, task `T-evad`, #97, and point 3 of the Operator's
+  comment 6002406785): before it copies an adapted file (not a written one),
+  S14 compares the input with the file of the head
+  (`internal/verify`, the package of check `adapted`): for each marker of the
+  file, the input must hold as many places of it, byte for byte, with its line
+  ends. Each place counts, not only one on a line that check `adapted` flags,
+  as a section replaced as a whole changes its other lines too. Else S14 is
+  `fail`, with the first lost marker, its line and the count, and copies no
+  file; the marker then goes to S10 like any other. Reason: the prose step of
+  the first pilot removed 27 places of markers, so S10 never asked them.
+- **S10** (D6): one question `M-<x8>` per file and marker key, in the order of
   the list of the scanner, with the ask "What is the value of <marker> in
   <file>? Answer gap to keep it as an open gap, with its question as
-  question_text." (the marker and the file as they are, with no code span) and
-  `where` `<file>:<line> <marker>` of its first line; an `M-` answer to a
-  marker that the tree does not hold is exit 2. A marker that does not close on
-  a line of a CRLF file holds the carriage return of its line, as the scanner
-  reads it; the ask, `where` and the answers record show it with no carriage
-  return, which no cell of a TSV file can hold (note 2 of review round 1).
-- **The column of a marker** (D7): the scanner gives each marker with the byte
-  column of its open quote on its line, so S11 replaces it at the place that
+  question_text." (the key of the marker and the file as they are, with no
+  code span) and `where` `<file>:<line> <marker>` of the line of its open
+  quote; an `M-` answer to a marker that the tree does not hold is exit 2. The
+  key of a marker is its text with each line end of a marker over more lines,
+  a line feed with the carriage return before it, as one space
+  (`work.MarkerKey`; fix 1 of the first pilot, task `T-evad`, #97): a question,
+  a row of the record and a row of `open-gaps.tsv` show the key, as no cell of
+  a TSV file holds a line end. The question ID is the hash of the file and the
+  key, so the ID of a marker on one line does not change.
+- **The column of a marker** (D7): the scanner gives each marker with the line
+  and the byte column of its open quote, so S11 replaces it at the place that
   the scanner found; a mention in a code span is never replaced, and the rule
   of a marker keeps its one home.
 - **S11** (D8): it first checks each answer and each marker (an answer for
   each; no angle quote in a value, which would be a new marker; no `gap` in a
   file whose name holds a tab, the known limit of row 10) and changes no file
-  when one check fails. A value replaces the marker at each of its places, with
-  the row `marker:<file>:<line>` per place (the source of D3 of #86); a `gap`
-  keeps the marker, with a row per place (source `gap`, ref
-  `docs/setup/open-gaps.tsv`) and one row of `open-gaps.tsv` per file and
-  marker, with the answer's `question_text`. A marker that does not close on
-  its line is the text from its open quote to the line end; a fill keeps the
-  carriage return of its line, and a `gap` for a marker that holds a tab or a
-  carriage return is `fail`, as a cell of `open-gaps.tsv` cannot hold it. With at least one
+  when one check fails. A value replaces the whole marker at each of its
+  places, also a marker over more lines, whose lines become one (fix 1 of the
+  first pilot, task `T-evad`, #97: S11 filled the first line of a marker of
+  four lines only), with the row `marker:<file>:<line>` per place, `<line>` the
+  line of its open quote in the tree that S11 writes (the source of D3 of
+  #86), and `marker:<file>:<line>:<column>` (the byte column of its open quote
+  at the scan, from the first scan line of its line) when that line holds more
+  than one marker, so that each key is unique (one line of the baseline holds
+  three markers); a `gap` keeps the marker, with a row per place whose value is its
+  key (source `gap`, ref `docs/setup/open-gaps.tsv`) and one row of
+  `open-gaps.tsv` per file and key, with the answer's `question_text`. A fill
+  keeps the line end after the marker, and a `gap` for a marker that holds a
+  tab or a carriage return is `fail`, as a cell of `open-gaps.tsv` cannot hold
+  it. With at least one
   marker, S11 writes the second answers record
   `docs/facts/F-NNNN-marker-answers.md` (the next free ID) in the form of S04's
   record: the title `# F-NNNN. The answers to the markers of the setup`,
@@ -637,7 +656,11 @@ that is not a marker, and an answer `gap` with no `question_text`; a question
 twice is an error of the key. When a step that reads answers is done (S01 its
 `S01-` and `Q-` rows, S10 its `M-` rows), the runner writes the record row
 `<step> answers.sha256` (source `computed`, ref `sha256 inputs/answers.tsv
-<prefix>…`), the SHA-256 of those rows as the step read them; each run first
+<prefix>…`), the SHA-256 of those rows as the step read them (each row its fields
+joined by a tab, with the empty mark `—` read as an empty field; the rows sorted
+in byte order and joined by a line feed, with no line feed at the end; written
+here in task `T-evad`, #97, after the audit of its second run could not
+reproduce the value); each run first
 compares it with the rows as they are, so a row that changed, went or came is
 exit 2, "an input that changed after a step read it", before S04 or S06 writes
 an answer as a fact. A done step that reads answers and has no such row is exit
@@ -658,7 +681,7 @@ per finished step.
 
 ```tsv-schema setup-record records:setup/record.tsv
 step    id(SNN)                                   key  the step that set the value
-name    text                                      key  the value's name: `stack`, `pin.commit`, `marker:<file>:<line>`, …; `done` for a step's evidence row
+name    text                                      key  the value's name: `stack`, `pin.commit`, `marker:<file>:<line>[:<column>]`, …; `done` for a step's evidence row
 value   text                                      -    the value; for `done`, the evidence line
 source  enum(answer|catalog|fact|computed|gap|step)  -  (`computed` is decided here: §5 names three sources, and the pin values come from `git`, not from a person) `answer`: an answer row; `catalog`: a catalog file; `fact`: a fact citation the Operator accepted; `computed`: a command's output, or a hash that the engine computes; `gap`: kept as an open gap; `step`: a `done` row
 ref     text                                      -    `answer`: the question ID; `catalog`: `<stack>/<path>`; `fact`: `F-NNNN#n`; `computed`: the command, `sha256 <path>` for the hash of a file, or `sha256 <path> <prefix>…` for the hash of the rows of the file whose question has one of the prefixes (`answers.sha256`); `gap`: `docs/setup/open-gaps.tsv`; `step`: `—`
@@ -778,7 +801,7 @@ of each such check passes and fails on the same fixtures as
 | `onboarding` | yes, in a target's form | the file exists, holds no marker, links the problem statement (`](facts/problem-statement-brief.md)`); each `F-NNNN#n` it cites is a fact of the one record `F-NNNN-*.md` in `docs/facts/` |
 | `glossary` | yes, in a target's form | each `F-NNNN#n` it cites resolves as above; LAYUP's heading and its count of 25 do not apply |
 | `guardrails` | yes, in a target's form | each entry (a bullet `- **Inv-N**`) has a `Check:` value that is `no check yet` or a file and a gate, as `check_guardrails`; each citation resolves; LAYUP's heading and its count of 9 do not apply |
-| `markers` | yes | `check_markers`, with LAYUP's `MK_EXEMPT` (S10) |
+| `markers` | yes | `check_markers`, with LAYUP's `MK_EXEMPT` (S10): a marker also over more lines, keyed by its key, and each angle quote with no pair (task `T-evad`, #97) |
 | `adapted` | yes | `check_adapted`, with LAYUP's `AD_EXCLUDE` and `ad_allowed`, which the engine embeds at its version; a path that a target does not have matches nothing |
 | `identity` | yes | `check_identity`, with the target's name: `README.md` also holds the record row `name` of S01, the whole `OWNER/NAME` (task `T-7s0y`), and names the branch `layup-records`, as §3 says that the target's README, written at setup, names it (task `T-b3r1`) |
 | `link-lint` | yes | the baseline's own `sh docs/links/link-lint.sh` exits 0, run as a gate command (below, task `T-8vpw`) |
@@ -864,13 +887,23 @@ reason  text                             -    the first failure, or the `clear` 
 - **One scanner of markers** for check `markers` and for S10: the files of
   `git ls-files -z` outside LAYUP's `MK_EXEMPT` (embedded at the engine's
   version; `TestTheExemptionsOfMarkersEqualTheSh` compares it with
-  `setup-check.sh`), each a regular file; on a line, each open angle quote
-  starts a marker to the first close quote after it, or to the line end; an
-  open quote between two backticks is the mention and is skipped; the text of
-  the convention (the two quotes around an ellipsis) is not a marker. The
-  scanner gives each occurrence with its file, its line and its text; check
-  `markers` keys it by file and text, as `check_markers` does, and check
-  `sources` reads the line. S10 (row 13) gets the list through `internal/cli`.
+  `setup-check.sh`), each a regular file, each read whole. Each open angle
+  quote starts a marker to the first close quote after it, also across lines
+  (fix 1 of the first pilot, task `T-evad`, #97); a code span whose whole
+  content is the open quote, the close quote or the text of the convention is
+  the mention, and a marker with text inside a code span is a marker, also
+  when the span runs over more than one line (point 1 of the Operator's
+  comment 6002406785); the text of the convention (the two quotes around an
+  ellipsis) is not a marker. An open quote with no close quote after it, and a
+  close quote that no open quote takes and that is no mention, have no pair:
+  check `markers` names each, `unpaired: <file>:<line> <quote>`, after its
+  other findings (fix 3, point 2 of the same comment), and `internal/cli`
+  refuses a brief that holds one. The scanner gives each occurrence with its
+  file, the line and the column of its open quote, and its text; check
+  `markers` keys it by file and key, as `check_markers` does, and check
+  `sources` reads a gap at its line: a marker whose key is the value of the
+  row starts on that line. S10 (row 13) gets the list through
+  `internal/cli`.
 - **The open gaps:** `docs/setup/open-gaps.tsv` is read by tabs, by the columns
   of its block, as `check_markers` reads it: a missing column is empty, and an
   absent file is no rows. Each marker needs its row (`unlisted:`), each row its
@@ -896,8 +929,10 @@ reason  text                             -    the first failure, or the `clear` 
   source: `answer`, the ref is a row of `answers.tsv`; `catalog`, the entry of
   the row `S01 stack` has the file of the ref (in the entry of the binary,
   task `T-c06a`); `fact`, the ref resolves;
-  `gap`, the row `marker:<file>:<line>` names a line that holds the marker of
-  its value, and `open-gaps.tsv` has the row; `computed`, the ref is not empty,
+  `gap`, the row `marker:<file>:<line>` (or `marker:<file>:<line>:<column>`)
+  names a line that holds the marker of its value (the column is the place at
+  the scan, before S11 fills the other markers of the line, so it is a key and
+  is not checked), and `open-gaps.tsv` has the row; `computed`, the ref is not empty,
   and a ref `sha256 <path>` (with or without prefixes) names a file of the
   tree or of the work area (the step that wrote a hash checks its value);
   `step`, a value row with it fails. Each finding is
@@ -1021,9 +1056,12 @@ reason  text                             -    the first failure, or the `clear` 
   more byte, where macOS `awk` ends the line at it. A line loses a last
   carriage return; each run of spaces and tabs becomes one space; a space at
   the start or at the end of a line is removed; a line with no other character
-  ends the paragraph; a marker from `‹` to the first `›`
-  after it, or to the line end when it does not close, is one unit; the lines
-  of a paragraph are joined with one space. The lower-case text changes only
+  ends the paragraph; a marker, by the rule of the scanner (also over more
+  lines), or the text of the convention is one unit, and the part of a further
+  line that a marker covers is a unit of its own, so a word inside a marker is
+  no match and the lines stay; an open quote of a mention, or with no pair, is
+  one unit of its own, so it hides no word (fix 1 of the first pilot, task
+  `T-evad`, #97); the lines of a paragraph are joined with one space. The lower-case text changes only
   `A` to `Z`, so a position in it is the same position in the text.
 - **A hit** of one of the 16 patterns of the sh function is at the first letter
   of its word, the end of the boundary before it, so a boundary of more than one
