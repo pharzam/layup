@@ -1,6 +1,6 @@
 # The runs of tree-equal.sh for the target task T-vu2j (pharzam/chat-orchestrator#6), with the full argument set of
 # its criterion 2: on the frozen head, after the close-out, and on the merge commit. A commit cannot hold the result of
-# a check on itself, so the runs are kept here. The run on the merge commit will be added after the merge.
+# a check on itself, so the runs are kept here.
 
 ## 1. The frozen head 003fa2a (cycle 4; review round 5 read it)
 
@@ -22,6 +22,21 @@ exit 0
 # tree-equal.sh of pharzam/layup at 4a67289 (sha256 f255d35efb7a9e45ddf1a1f289f3c6fe4b00567b6a31a9089a468eb4961edb0d); 2026-10-06T14:47:19Z
 $ sh tree-equal.sh CLONE 696a89bb8a59e64ce7158a713dafc61b0076658c e2b402b9e01804ac3c337148be8701034580c8ab --base 7d7b3878606c536073bea15a8fbd39ca9d4196c0 --task-file docs/tasks/T-vu2j.md --evidence-file runs/T-vu2j/evidence.md --log-line --issue pharzam/chat-orchestrator#6
 tree-equal: head 696a89bb8a59e64ce7158a713dafc61b0076658c against layup-setup-2 e2b402b9e01804ac3c337148be8701034580c8ab, base 7d7b3878606c536073bea15a8fbd39ca9d4196c0
+tree-equal: the files of the task: docs/tasks/T-vu2j.md and runs/T-vu2j/evidence.md
+T-a0rt: docs/onboarding-for-engineers.md as in the base
+T-a0rt: docs/tasks/T-a0rt.md as in the base
+T-a0rt: runs/T-a0rt/evidence.md as in the base
+T-a0rt: docs/tasks/completed.md as in the base, with the line of T-vu2j
+task file: docs/tasks/T-vu2j.md (new)
+evidence file: runs/T-vu2j/evidence.md (new)
+tree-equal: PASS (the head equals layup-setup-2, except the four paths of T-a0rt, which keep the text of the base, and the new files of T-vu2j)
+exit 0
+
+## 3. The merge commit 907019f of pull request 7 (parents 7d7b387 and 696a89b; its tree equals that of 696a89b)
+
+# tree-equal.sh of pharzam/layup at 4a67289 (sha256 f255d35efb7a9e45ddf1a1f289f3c6fe4b00567b6a31a9089a468eb4961edb0d); 2026-10-06T15:01:54Z
+$ sh tree-equal.sh CLONE 907019f3c967a6bfc8d5e43544bc8e59569637e5 e2b402b9e01804ac3c337148be8701034580c8ab --base 7d7b3878606c536073bea15a8fbd39ca9d4196c0 --task-file docs/tasks/T-vu2j.md --evidence-file runs/T-vu2j/evidence.md --log-line --issue pharzam/chat-orchestrator#6
+tree-equal: head 907019f3c967a6bfc8d5e43544bc8e59569637e5 against layup-setup-2 e2b402b9e01804ac3c337148be8701034580c8ab, base 7d7b3878606c536073bea15a8fbd39ca9d4196c0
 tree-equal: the files of the task: docs/tasks/T-vu2j.md and runs/T-vu2j/evidence.md
 T-a0rt: docs/onboarding-for-engineers.md as in the base
 T-a0rt: docs/tasks/T-a0rt.md as in the base

@@ -83,7 +83,7 @@ task indexes, 1 index with added rows), 31 deleted, 13 new; 10 setup commits.
 | [`rules-diff.sh`](rules-diff.sh), [`rules-diff-test.sh`](rules-diff-test.sh) | The check of D8 (b), and its 20 fixture cases |
 | [`t3.sh`](t3.sh) | The fail-fast procedure of T3 (F-13) |
 | [`tree-equal.sh`](tree-equal.sh), [`tree-equal-test.sh`](tree-equal-test.sh) | The check of condition 2 of O-146, with the base of O-148 to O-150, and its 64 cases |
-| [`tree-equal.txt`](tree-equal.txt) | The runs of that check for the target task `T-vu2j`: on its frozen head and on its close-out head; the run on the merge commit will be added after the merge |
+| [`tree-equal.txt`](tree-equal.txt) | The runs of that check for the target task `T-vu2j`: on its frozen head, on its close-out head and on the merge commit `907019f` of pull request 7 |
 
 The evidence of the runs is outside this repository: the target's Git (the prose,
 the diffs, the answer records `F-0001` and `F-0002`, `layup-records` and
