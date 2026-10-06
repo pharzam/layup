@@ -19,11 +19,13 @@ g() { git -C "$repo" -c user.name=fixture -c user.email=fixture@example.invalid 
 
 LOGHEAD='# completed
 
-<!-- Most recent first. -->
+<!-- Most recent first. Example shape:
+- **YYYY-MM-DD** — **ID** — a summary ([link](https://example.invalid); [detail](id.md))
+-->
 
 '
 A0RTLINE='- **2026-10-05** — **T-a0rt** — the ruleset is applied'
-TASKLINE='- **2026-10-06** — **T-vu2j** — the tree of the second setup run'
+TASKLINE='- **2026-10-06** — **T-vu2j** — the tree of the second setup run ([#7](https://github.com/x/y/issues/7); [detail](T-vu2j.md))'
 OTHERLINE='- **2026-10-06** — **T-zz99** — another task'
 
 # log LINE...: the completed log with these lines, most recent first
@@ -73,6 +75,10 @@ build() {
 	task-line-edited) task; log "$TASKLINE" '- **2026-10-05** — **T-a0rt** — the ruleset is not applied' ;;
 	task-in-setup) printf '# T-vu2j\n' > "$repo/docs/tasks/T-vu2j.md" ;;
 	task-evidence) task; evidence; log "$TASKLINE" "$A0RTLINE" ;;
+	line-no-date) task; log '- **T-vu2j** — the tree of the second setup run ([#7](https://github.com/x/y/issues/7); [detail](T-vu2j.md))' "$A0RTLINE" ;;
+	line-no-link) task; log '- **2026-10-06** — **T-vu2j** — the tree of the second setup run' "$A0RTLINE" ;;
+	line-other-issue) task; log '- **2026-10-06** — **T-vu2j** — the tree of the second setup run ([#8](https://github.com/x/y/issues/8); [detail](T-vu2j.md))' "$A0RTLINE" ;;
+	line-below) task; log "$A0RTLINE" "$TASKLINE" ;;
 	esac
 	g add -A && g commit -q -m "chore: T-vu2j main"
 }
@@ -111,19 +117,26 @@ run log-other      log-other     1 'FAIL: T-a0rt: docs/tasks/completed.md differ
 # The files of the task, and its line in the completed log.
 run task           task          0 'task file: docs/tasks/T-vu2j.md (new)' --base base $TF
 run task-no-line   task          0 'T-a0rt: docs/tasks/completed.md as in the base' --base base $TF
-run task-log-line  task          1 'FAIL: T-a0rt: docs/tasks/completed.md has no line of T-vu2j' --base base $TF --log-line
-run task-line      task-line     0 'T-a0rt: docs/tasks/completed.md as in the base, with the line of T-vu2j' --base base $TF --log-line
-run task-line-pass task-line     0 'tree-equal: PASS'                  --base base $TF --log-line
+run task-log-line  task          1 'FAIL: T-a0rt: docs/tasks/completed.md has no line of T-vu2j' --base base $TF --log-line --issue 7
+run task-line      task-line     0 'T-a0rt: docs/tasks/completed.md as in the base, with the line of T-vu2j' --base base $TF --log-line --issue 7
+run task-line-pass task-line     0 'tree-equal: PASS'                  --base base $TF --log-line --issue 7
 run task-two-lines task-two-lines 1 'FAIL: T-a0rt: docs/tasks/completed.md has 2 lines of T-vu2j' --base base $TF
 run task-edited    task-line-edited 1 'FAIL: T-a0rt: docs/tasks/completed.md differs from the base in more than the line of T-vu2j' --base base $TF
 run task-unnamed   task          1 'FAIL: docs/tasks/T-vu2j.md (A)'    --base base
 run task-absent    none          1 'FAIL: docs/tasks/T-vu2j.md: the task file is not in the head' --base base $TF
 run task-in-setup  task-in-setup 1 'FAIL: docs/tasks/T-vu2j.md: the task file is in layup-setup-2, so it is not a new file' --base base $TF
 run task-in-base   task-in-base  1 'FAIL: docs/tasks/T-vu2j.md: the task file is in the base, so it is not a new file' --base base $TF
-run evidence       task-evidence 0 'evidence file: runs/T-vu2j/evidence.md (new)' --base base $TF $EF --log-line
-run evidence-pass  task-evidence 0 'tree-equal: PASS'                  --base base $TF $EF --log-line
-run evid-unnamed   task-evidence 1 'FAIL: runs/T-vu2j/evidence.md (A)' --base base $TF --log-line
+run evidence       task-evidence 0 'evidence file: runs/T-vu2j/evidence.md (new)' --base base $TF $EF --log-line --issue 7
+run evidence-pass  task-evidence 0 'tree-equal: PASS'                  --base base $TF $EF --log-line --issue 7
+run evid-unnamed   task-evidence 1 'FAIL: runs/T-vu2j/evidence.md (A)' --base base $TF --log-line --issue 7
 run evid-absent    task-line     1 'FAIL: runs/T-vu2j/evidence.md: the evidence file is not in the head' --base base $TF $EF
+# The form and the place of the line of the task (the second plan review of T-vu2j).
+FORM='does not have the form of the log'
+run line-no-date   line-no-date  1 "FAIL: T-a0rt: docs/tasks/completed.md: the line of T-vu2j $FORM" --base base $TF --log-line --issue 7
+run line-no-link   line-no-link  1 "FAIL: T-a0rt: docs/tasks/completed.md: the line of T-vu2j $FORM" --base base $TF --log-line --issue 7
+run line-other-iss line-other-issue 1 "FAIL: T-a0rt: docs/tasks/completed.md: the line of T-vu2j $FORM" --base base $TF --log-line --issue 7
+run line-below     line-below    1 'FAIL: T-a0rt: docs/tasks/completed.md: the line of T-vu2j is not the first entry of the log' --base base $TF --log-line --issue 7
+run line-no-flag   line-no-link  1 "FAIL: T-a0rt: docs/tasks/completed.md: the line of T-vu2j $FORM" --base base $TF
 # Input errors.
 run no-base        none          2 'input error: --base is required'
 run base-no-a0rt   none          2 'input error: the base has no docs/tasks/T-a0rt.md' --base first-setup
@@ -133,6 +146,8 @@ run task-noval     none          2 'input error: --task-file needs a path' --bas
 run evid-other     none          2 'input error: the evidence file must be runs/T-vu2j/evidence.md' --base base $TF --evidence-file runs/T-zz99/evidence.md
 run evid-no-task   none          2 'input error: --evidence-file needs --task-file' --base base $EF
 run line-no-task   none          2 'input error: --log-line needs --task-file' --base base --log-line
+run line-no-issue  none          2 'input error: --log-line needs --issue' --base base $TF --log-line
+run issue-form     none          2 'input error: --issue needs the number of the issue: 7a' --base base $TF --log-line --issue 7a
 run unknown        none          2 'input error: an unknown argument: --other' --base base --other
 HEADREF=no-such-ref
 run head-unknown   none          2 'input error: no-such-ref, layup-setup-2 or base is not a commit' --base base
