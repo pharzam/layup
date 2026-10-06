@@ -82,7 +82,7 @@ task indexes, 1 index with added rows), 31 deleted, 13 new; 10 setup commits.
 | [`value-audit.md`](value-audit.md), [`acceptance.md`](acceptance.md) | D8 (a) of both runs, and T5 |
 | [`rules-diff.sh`](rules-diff.sh), [`rules-diff-test.sh`](rules-diff-test.sh) | The check of D8 (b), and its 20 fixture cases |
 | [`t3.sh`](t3.sh) | The fail-fast procedure of T3 (F-13) |
-| [`tree-equal.sh`](tree-equal.sh), [`tree-equal-test.sh`](tree-equal-test.sh) | The check of condition 2 of O-146, with the base of O-148 to O-150, and its 47 cases |
+| [`tree-equal.sh`](tree-equal.sh), [`tree-equal-test.sh`](tree-equal-test.sh) | The check of condition 2 of O-146, with the base of O-148 to O-150, and its 52 cases |
 
 The evidence of the runs is outside this repository: the target's Git (the prose,
 the diffs, the answer records `F-0001` and `F-0002`, `layup-records` and

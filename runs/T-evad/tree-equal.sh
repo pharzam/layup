@@ -8,11 +8,12 @@
 #   - the target task's own new files, when they are named: its task file (O-147 = a) and its evidence file
 #     (O-150 = a). A named file is in HEAD, and in neither layup-setup-2 nor BASE.
 # The line of the target task, when the log has it, has the form of the log and is its first entry (an example in
-# an HTML comment is not an entry): - **YYYY-MM-DD** — **T-xxxx** — summary ([#N](.../issues/N); [detail](T-xxxx.md)).
+# an HTML comment is not an entry): - **YYYY-MM-DD** — **T-xxxx** — summary
+# ([#N](https://github.com/OWNER/NAME/issues/N); [detail](T-xxxx.md)), with the repository and the number of --issue.
 # One mechanism and one test: HEAD must equal the tree that these rules make from layup-setup-2 and BASE.
 #
 # Usage: sh tree-equal.sh REPO HEAD SETUP2 --base BASE [--task-file docs/tasks/T-xxxx.md
-#        [--evidence-file runs/T-xxxx/evidence.md]] [--log-line --issue N]
+#        [--evidence-file runs/T-xxxx/evidence.md]] [--log-line --issue OWNER/NAME#N]
 #   REPO             a clone of the target
 #   HEAD             the head of the target task, or main after its merge
 #   SETUP2           the head of layup-setup-2
@@ -20,11 +21,11 @@
 #   --task-file      the file of the target task (gate step 8 of the target)
 #   --evidence-file  the evidence file of the same task (gate step 6 of the target)
 #   --log-line       the completed log must hold the line of the task
-#   --issue          the number of the task's issue, which its line links (required with --log-line)
+#   --issue          the task's issue, OWNER/NAME#N, which its line links (required with --log-line)
 # Exit 0 and `tree-equal: PASS` when HEAD keeps each rule; else exit 1, with one `FAIL:` line for each finding.
 # Exit 2 on an input error.
 set -u
-usage='usage: sh tree-equal.sh REPO HEAD SETUP2 --base BASE [--task-file docs/tasks/T-xxxx.md [--evidence-file runs/T-xxxx/evidence.md]] [--log-line --issue N]'
+usage='usage: sh tree-equal.sh REPO HEAD SETUP2 --base BASE [--task-file docs/tasks/T-xxxx.md [--evidence-file runs/T-xxxx/evidence.md]] [--log-line --issue OWNER/NAME#N]'
 R=${1:?$usage}
 H=${2:?$usage}
 S=${3:?$usage}
@@ -40,7 +41,7 @@ while [ $# -gt 0 ]; do
 	--task-file) [ $# -ge 2 ] || inerr "--task-file needs a path"; TASK=$2; shift 2 ;;
 	--evidence-file) [ $# -ge 2 ] || inerr "--evidence-file needs a path"; EVID=$2; shift 2 ;;
 	--log-line) NEEDLINE=1; shift ;;
-	--issue) [ $# -ge 2 ] || inerr "--issue needs the number of the issue"; ISSUE=$2; shift 2 ;;
+	--issue) [ $# -ge 2 ] || inerr "--issue needs OWNER/NAME#N"; ISSUE=$2; shift 2 ;;
 	*) inerr "an unknown argument: $1" ;;
 	esac
 done
@@ -59,9 +60,13 @@ if [ -n "$EVID" ]; then
 fi
 [ "$NEEDLINE" = 0 ] || [ -n "$ID" ] || inerr "--log-line needs --task-file"
 [ "$NEEDLINE" = 0 ] || [ -n "$ISSUE" ] || inerr "--log-line needs --issue"
+IREPO= INUM=
 if [ -n "$ISSUE" ]; then
 	[ -n "$ID" ] || inerr "--issue needs --task-file"
-	case $ISSUE in *[!0-9]*) inerr "--issue needs the number of the issue: $ISSUE" ;; esac
+	IREPO=${ISSUE%#*} INUM=${ISSUE##*#}
+	case $INUM in ''|*[!0-9]*) inerr "--issue needs OWNER/NAME#N: $ISSUE" ;; esac
+	case $IREPO in [A-Za-z0-9]*/[A-Za-z0-9._-]*) ;; *) inerr "--issue needs OWNER/NAME#N: $ISSUE" ;; esac
+	case $IREPO in */*/*|*[!A-Za-z0-9._/-]*) inerr "--issue needs OWNER/NAME#N: $ISSUE" ;; esac
 fi
 
 gt() { git -C "$R" -c core.quotepath=off "$@"; }
@@ -114,11 +119,12 @@ else
 		sed "${k}d" "$TMP/head" > "$TMP/rest"
 		if cmp -s "$TMP/base" "$TMP/rest"; then
 			# The form of the log, and the first entry outside an HTML comment (most recent first).
-			nre=${ISSUE:-[0-9]+}
-			pat='^- \*\*[0-9]{4}-[0-9]{2}-[0-9]{2}\*\* — \*\*'"$ID"'\*\* — .+ \(\[#'"$nre"'\]\(https://github\.com/[^/ ]+/[^/ ]+/issues/'"$nre"'\); \[detail\]\('"$ID"'\.md\)\)$'
+			nre=${INUM:-[0-9]+} rre='[^/ ]+/[^/ ]+'
+			[ -z "$IREPO" ] || rre=$(printf '%s' "$IREPO" | sed 's/\./\\./g')
+			pat='^- \*\*[0-9]{4}-[0-9]{2}-[0-9]{2}\*\* — \*\*'"$ID"'\*\* — .+ \(\[#'"$nre"'\]\(https://github\.com/'"$rre"'/issues/'"$nre"'\); \[detail\]\('"$ID"'\.md\)\)$'
 			first=$(LC_ALL=C awk '/<!--/ { c = 1 } !c && /^- \*\*/ { print NR; exit } /-->/ { c = 0 }' "$TMP/head")
 			if ! sed -n "${k}p" "$TMP/head" | LC_ALL=C grep -Eq -- "$pat"; then
-				F "T-a0rt: $LOG: the line of $ID does not have the form of the log: - **YYYY-MM-DD** — **$ID** — a summary ([#${ISSUE:-N}](https://github.com/OWNER/NAME/issues/${ISSUE:-N}); [detail]($ID.md))"
+				F "T-a0rt: $LOG: the line of $ID does not have the form of the log: - **YYYY-MM-DD** — **$ID** — a summary ([#${INUM:-N}](https://github.com/${IREPO:-OWNER/NAME}/issues/${INUM:-N}); [detail]($ID.md))"
 			elif [ "$first" != "$k" ]; then F "T-a0rt: $LOG: the line of $ID is not the first entry of the log"
 			else echo "T-a0rt: $LOG as in the base, with the line of $ID"; fi
 		else F "T-a0rt: $LOG differs from the base in more than the line of $ID"; fi
