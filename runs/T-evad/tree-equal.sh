@@ -61,5 +61,5 @@ if [ "$fail" -eq 0 ]; then
 	else echo "tree-equal: PASS (only the paths of T-a0rt differ)"; fi
 	exit 0
 fi
-echo "tree-equal: FAIL ($fail findings: a path that is not one of the four of T-a0rt or the task file, or a task file that main does not add)"
+echo "tree-equal: FAIL (findings: $fail; a finding is a path that is not one of the four of T-a0rt or the task file, or a task file that main does not add)"
 exit 1
