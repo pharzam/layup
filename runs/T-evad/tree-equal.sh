@@ -7,7 +7,7 @@
 #     most one more line, the line of the target task (with --log-line, exactly one);
 #   - the target task's own new files, when they are named: its task file (O-147 = a) and its evidence file
 #     (O-150 = a). A named file is a file of mode 100644 in HEAD, and in neither layup-setup-2 nor BASE.
-# The line of the target task, when the log has it, has the form of the log and is its first entry (an example in
+# The line of the target task, when the log has it, has the form of the log with a real calendar date, and is its first entry (an example in
 # an HTML comment is not an entry): - **YYYY-MM-DD** — **T-xxxx** — summary
 # ([#N](https://github.com/OWNER/NAME/issues/N); [detail](T-xxxx.md)), with the repository and the number of --issue.
 # One mechanism and one test: HEAD must equal the tree that these rules make from layup-setup-2 and BASE.
@@ -125,6 +125,12 @@ else
 			first=$(LC_ALL=C awk '/<!--/ { c = 1 } !c && /^- \*\*/ { print NR; exit } /-->/ { c = 0 }' "$TMP/head")
 			if ! sed -n "${k}p" "$TMP/head" | LC_ALL=C grep -Eq -- "$pat"; then
 				F "T-a0rt: $LOG: the line of $ID does not have the form of the log: - **YYYY-MM-DD** — **$ID** — a summary ([#${INUM:-N}](https://github.com/${IREPO:-OWNER/NAME}/issues/${INUM:-N}); [detail]($ID.md))"
+			elif ! dt=$(sed -n "${k}p" "$TMP/head" | sed -n 's/^- \*\*\([0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}\)\*\*.*/\1/p') \
+				|| ! printf '%s\n' "$dt" | awk -F- '{ y = $1 + 0; m = $2 + 0; d = $3 + 0
+					if (m < 1 || m > 12 || d < 1) exit 1
+					n = 31; if (m == 4 || m == 6 || m == 9 || m == 11) n = 30
+					if (m == 2) n = ((y % 4 == 0 && y % 100 != 0) || y % 400 == 0) ? 29 : 28
+					exit (d > n) }'; then F "T-a0rt: $LOG: the line of $ID has no real date: $dt"
 			elif [ "$first" != "$k" ]; then F "T-a0rt: $LOG: the line of $ID is not the first entry of the log"
 			else echo "T-a0rt: $LOG as in the base, with the line of $ID"; fi
 		else F "T-a0rt: $LOG differs from the base in more than the line of $ID"; fi
