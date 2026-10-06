@@ -4,7 +4,7 @@ Task `T-evad` ([#97](https://github.com/pharzam/layup/issues/97)), row 20 of the
 [implementation plan](../../docs/plan/README.md). The target is
 [`pharzam/chat-orchestrator`](https://github.com/pharzam/chat-orchestrator), set up at
 `cec749a` from the brief `PSB-CHAT-001`, and again at `e2b402b` after the fix. The IDs
-F-1 to F-36 are the ones that the comments on #97 use. The numbers of the pilot are in [`numbers.md`](numbers.md).
+F-1 to F-39 are the ones that the comments on #97 use. The numbers of the pilot are in [`numbers.md`](numbers.md).
 
 The class of each finding follows D10 of the plan, as the answer to the plan review
 amends it (comment 5979731752, item 6). A defect on the pilot's path (a step of the
@@ -125,6 +125,16 @@ result, in [`acceptance.md`](acceptance.md).
   first run. A second run has no rule for its branch names on the target. The source pass of `T-vu2j` found it;
   by O-152 (a), `t7-3.sh` gives the second run those names after the merge (`layup-records-1` keeps the first
   record), and no text changes.
+- **F-37: the scripts that land a target task are most of its review surface.** The five review rounds of
+  `T-vu2j` found 18 material defects: 15 in the pilot's scripts that act on GitHub (`port.sh`, `tree-equal.sh`,
+  `c3.sh`, `t7-2.sh`, `t7-3.sh`), 3 in the wording of the task's files, and none in the copied tree. LAYUP has no
+  tested tool for these steps (copy a setup run into a target, post the records, judge the checks, merge, move
+  branches), so each pilot writes its own scripts, and each review reads them again.
+- **F-38: the review of `T-vu2j` ended by the Operator's decision, not by decay.** Each fresh, blind round on a
+  new frozen head found at least one material defect (4, 8, 3, 2 and 1 in rounds 1 to 5). The Operator raised the
+  cycle cap from 2 to 3 (O-156) and to 4 (O-157), and settled the last finding as a known limit (O-158): GitHub
+  cannot make a merge and a branch move one step, so `t7-3.sh` can stop between them. The rule "review until
+  findings decay" gives no end other than a decision at the cap.
 
 ## Found off the path of the pilot
 
@@ -188,7 +198,9 @@ Each is counted in [`numbers.md`](numbers.md). None is a defect of LAYUP.
 - **F-36: the boxes of the target task of D7 were not ticked.** The rule of the target ("Completing a task") ticks
   the acceptance boxes of the issue before the pull request lands. All five boxes of
   `pharzam/chat-orchestrator#2` (`T-a0rt`) stayed unticked after its merge, the same miss as #74 and #76 of LAYUP.
-  The author saw it while preparing the close-out of `T-vu2j`, whose boxes are ticked before its merge.
+  The author saw it while preparing the close-out of `T-vu2j`. Its criterion 1 is about the tree of `main` after
+  the merge, so only the check on the merge commit can show it: the Operator ticked the four boxes of
+  `pharzam/chat-orchestrator#6` after that check, not before the merge as the rule says.
 
 ## Notes
 
@@ -198,3 +210,6 @@ Each is counted in [`numbers.md`](numbers.md). None is a defect of LAYUP.
 - **F-17:** the Devin CLI with a new isolated home failed in 12 s ("Model not
   found"); a home that had run before worked.
 - **F-20:** the touch points of the Operator; [`numbers.md`](numbers.md) counts them.
+- **F-39:** the App of the agent is installed only on pharzam/layup, so the agent cannot post on the target. Each
+  text on the target went with the Operator's login: the plans and their reviews (`t7-1.sh`), the review records
+  and the reports of the checks (`t7-2.sh`), the report on the merge commit, and the edit that ticks the boxes.
