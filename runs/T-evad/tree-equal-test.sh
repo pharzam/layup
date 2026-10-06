@@ -75,6 +75,8 @@ build() {
 	task-line-edited) task; log "$TASKLINE" '- **2026-10-05** — **T-a0rt** — the ruleset is not applied' ;;
 	task-in-setup) printf '# T-vu2j\n' > "$repo/docs/tasks/T-vu2j.md" ;;
 	task-evidence) task; evidence; log "$TASKLINE" "$A0RTLINE" ;;
+	task-symlink) ln -s ../guardrails.md "$repo/docs/tasks/T-vu2j.md"; evidence; log "$TASKLINE" "$A0RTLINE" ;;
+	evidence-exec) task; evidence; chmod +x "$repo/runs/T-vu2j/evidence.md"; log "$TASKLINE" "$A0RTLINE" ;;
 	line-no-date) task; log '- **T-vu2j** — the tree of the second setup run ([#7](https://github.com/x/y/issues/7); [detail](T-vu2j.md))' "$A0RTLINE" ;;
 	line-no-link) task; log '- **2026-10-06** — **T-vu2j** — the tree of the second setup run' "$A0RTLINE" ;;
 	line-other-issue) task; log '- **2026-10-06** — **T-vu2j** — the tree of the second setup run ([#8](https://github.com/x/y/issues/8); [detail](T-vu2j.md))' "$A0RTLINE" ;;
@@ -133,6 +135,9 @@ run task-in-base   task-in-base  1 'FAIL: docs/tasks/T-vu2j.md: the task file is
 run evidence       task-evidence 0 'evidence file: runs/T-vu2j/evidence.md (new)' --base base $TF $EF --log-line --issue x/y#7
 run evidence-pass  task-evidence 0 'tree-equal: PASS'                  --base base $TF $EF --log-line --issue x/y#7
 run evid-unnamed   task-evidence 1 'FAIL: runs/T-vu2j/evidence.md (A)' --base base $TF --log-line --issue x/y#7
+# Finding 4 of round 2 of the target task: a named file of the task must be a file of mode 100644
+run task-symlink   task-symlink  1 'FAIL: docs/tasks/T-vu2j.md: the task file is 120000 blob, not a file of mode 100644' --base base $TF $EF --log-line --issue x/y#7
+run evidence-exec  evidence-exec 1 'FAIL: runs/T-vu2j/evidence.md: the evidence file is 100755 blob, not a file of mode 100644' --base base $TF $EF --log-line --issue x/y#7
 run evid-absent    task-line     1 'FAIL: runs/T-vu2j/evidence.md: the evidence file is not in the head' --base base $TF $EF
 # The form and the place of the line of the task (the second plan review of T-vu2j).
 FORM='does not have the form of the log'

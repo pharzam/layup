@@ -6,7 +6,7 @@
 #     target task). The three files keep their object and mode. The completed log keeps the text of BASE, with at
 #     most one more line, the line of the target task (with --log-line, exactly one);
 #   - the target task's own new files, when they are named: its task file (O-147 = a) and its evidence file
-#     (O-150 = a). A named file is in HEAD, and in neither layup-setup-2 nor BASE.
+#     (O-150 = a). A named file is a file of mode 100644 in HEAD, and in neither layup-setup-2 nor BASE.
 # The line of the target task, when the log has it, has the form of the log and is its first entry (an example in
 # an HTML comment is not an entry): - **YYYY-MM-DD** — **T-xxxx** — summary
 # ([#N](https://github.com/OWNER/NAME/issues/N); [detail](T-xxxx.md)), with the repository and the number of --issue.
@@ -131,10 +131,12 @@ else
 	fi
 fi
 
-# 3. The named files of the task are new: in the head, and in neither layup-setup-2 nor the base.
+# 3. The named files of the task are new files of mode 100644: in the head, and in neither layup-setup-2 nor the base.
 for f in $TASK $EVID; do
 	if [ "$f" = "$TASK" ]; then kind=task; else kind=evidence; fi
-	if ! gt cat-file -e "$h:$f" 2>/dev/null; then F "$f: the $kind file is not in the head"
+	e=$(gt ls-tree "$h" -- "$f"); mt=$(printf '%s' "$e" | cut -d' ' -f1-2)
+	if [ -z "$e" ]; then F "$f: the $kind file is not in the head"
+	elif [ "$mt" != "100644 blob" ]; then F "$f: the $kind file is $mt, not a file of mode 100644"
 	elif gt cat-file -e "$s:$f" 2>/dev/null; then F "$f: the $kind file is in layup-setup-2, so it is not a new file"
 	elif gt cat-file -e "$b:$f" 2>/dev/null; then F "$f: the $kind file is in the base, so it is not a new file"
 	else echo "$kind file: $f (new)"; fi
