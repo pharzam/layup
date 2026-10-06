@@ -71,7 +71,7 @@ deleted by S05; 13 paths are new; 10 setup commits.
 | D8 (a) | 67 of 67 changed values supported, after a second inventory (F-29) ([`value-audit.md`](value-audit.md)) | GPT-6 Sol |
 | T6 | `t6.sh` pushed `layup-setup-2` and `layup-records-2`, fail-fast, and read them back | the Operator |
 | The target task `T-vu2j` (condition 2 of O-146) | by the target's own process (`pharzam/chat-orchestrator#6`): three plan reviews, five review rounds and O-147 to O-158; pull request 7 merged as `907019f`. [`tree-equal.sh`](tree-equal.sh): PASS on the frozen head, the close-out head and the merge commit ([`tree-equal.txt`](tree-equal.txt)); `layup gate` from outside on `7d7b387` and `696a89b`: exit 0, five kinds `clear`; the 13 checks of the pull request passed | the author; the Operator ran `t7-1.sh` to `t7-3.sh`, and two logins approved the workaround of O-149 (O-155) |
-| The second T5 | the idea owner checked the 67 values of the second run with no row rejected, and accepted each of the 17 requirements ([`acceptance.md`](acceptance.md)) | the Operator |
+| The second T5 | from the login `pharzam`: the 67 values of the second run checked with no row rejected, and each of the 17 requirements accepted, three of them if two checks pass at the freeze, which they do ([`acceptance.md`](acceptance.md)) | the Operator |
 
 `rules-diff.sh` on the second setup head: of the 231 baseline paths, 171 are
 byte-identical, 29 changed (20 adapted, 5 written, 17 with marker rows of S11, 2

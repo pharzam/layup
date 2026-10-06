@@ -11,7 +11,7 @@ the numbers of the pilot only. The findings are in [`findings.md`](findings.md).
 | Class | Count | Findings |
 | ----- | ----- | -------- |
 | A defect of LAYUP's phase-1 code that blocked the pilot; fixed here, test first (one Investigate each) | 2 | F-8: S11 (row 13), check `sources` (row 10) |
-| A defect or limit of LAYUP's phase-1 code that did not block; not fixed | 6 | F-1 (row 14, a known limitation), F-3 (row 13), F-6 (row 15), F-13 (row 15), F-16 (row 13), F-19 (row 15) |
+| A defect or limit of LAYUP's phase-1 code that did not block; not fixed | 6 | F-1 (row 14, a known limitation), F-3 (row 13; fixed later, with F-24), F-6 (row 15), F-13 (row 15), F-16 (row 13), F-19 (row 15) |
 | A defect of this task's own check; fixed here, test first | 1 | F-18 |
 | A defect of the baseline that LAYUP copies | 1 | F-15 (bootstrap mode suspends the rule in LAYUP) |
 | An error in the author's inputs, found by the Operator | 9 | F-5 (4), F-9, F-10, F-12 (3) |
@@ -118,7 +118,7 @@ and about 45 h 25 min was a wait for the Operator, with two nights.
 | ----- | ----- | ----- |
 | Decisions asked of the Operator | 14 | O-145 to O-158 |
 | The Operator's comments on #97 | 6 | 6002034171 (T5), 6002406785 (O-145, O-146), 6011287620 (O-147), 6012438840 (O-151), 6013939366 (O-152), 6023071943 (the second T5) |
-| Decisions given in the session | 7 | O-148, O-149 and O-150 (one answer), O-155, O-156, O-157, O-158 |
+| Decisions given in the session | 9 | O-148, O-149 and O-150 (one answer), O-155, O-156, O-157, O-158; the rule of fix 2 and the prose approval of the second run (recorded in 6010634567) |
 | Posts on the target | 6 | The 14 answers of S10 of the second run (two comments on `pharzam/chat-orchestrator#1`); the two approvals of O-149, from two logins; the report on the merge commit; the edit that ticked the four boxes of `pharzam/chat-orchestrator#6` |
 | Scripts that the Operator ran | 4 | `t6.sh`, `t7-1.sh`, `t7-2.sh`, `t7-3.sh`; each passed its checks and exited 0 |
 
@@ -141,7 +141,7 @@ run (06:24 to 06:50), the plan of `T-vu2j` (from 06:45), and its scripts and fil
 | ---- | -- | ---- | ------- | ---- |
 | 10-05 18:31 | 10-05 20:05 | wait | 1 h 34 min | T5 and D8 (a) |
 | 10-05 20:05 | 10-05 20:18 | work | 13 min | the T5 answer recorded; the fix designed; O-145 and O-146 asked |
-| 10-05 20:18 | 10-05 20:33 | wait | 15 min | O-145, O-146 and the budget |
+| 10-05 20:18 | 10-05 20:33 | wait | 15 min | O-145, O-146 and the budget; the red runs of the fix began at 20:24 |
 | 10-05 20:33 | 10-05 21:19 | work | 46 min | fixes 1 to 3, test first; rehearsals A and B; the request for the two inputs |
 | 10-05 21:19 | 10-06 06:17 | wait | 8 h 58 min | the night; the prose approval and the 14 answers of S10 |
 | 10-06 06:17 | 10-06 06:22 | work | 5 min | the second run, S01 to S15; the T6 request; O-147 asked |

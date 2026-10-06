@@ -49,7 +49,7 @@ the copy writes the records of the second run, an exception to their immutabilit
 that the Operator scoped (O-148, O-151); one round with the four lenses on each
 frozen head, a workaround that two logins approve (O-149, O-155); the task's two files
 (O-150). O-152, the branch names follow the text by a forced update after the merge
-(6013939366). O-154 and O-155, the conditions of the second approval, and the
+(6013939366). O-153, the second approval of R4; O-154 and O-155, its conditions, and the
 logins as the identity of the approvers. O-156 and O-157, the cycle cap of the
 target task rose from 2 to 3, then to 4. O-158, the last finding of its review is a
 known limit.
@@ -114,8 +114,9 @@ known limit.
     verdicts; the 13 checks of the pull request passed. The other scripts of that
     task stay on the pilot's host; [`test-runs.md`](../../runs/T-evad/test-runs.md)
     names them, with their SHA-256 and their tests.
-11. **The second T5:** the idea owner checked the 67 values of the second run with no
-    row rejected, and accepted each of the 17 requirements (6023071943).
+11. **The second T5,** from the login `pharzam` (6023071943): the 67 values of the second
+    run checked with no row rejected, and each of the 17 requirements accepted; three of
+    them (`NFR-007`, `REQ-015`, `REQ-017`) if two checks pass at the freeze, and they pass.
 12. **D11:** the traceability row of the pilot, the §12 Test cells of `PRD-0001` for
     the nine requirements that the plan's table "What phase 1 proves" gives to row
     20 (`NFR-004` and `NFR-006` keep the tests of rows 5, 7, 9, 10 and 15), a §13 row,
@@ -137,21 +138,46 @@ the ruleset's read-back are the evidence of phase 1 (condition 2 of the plan
 review). `rules-diff.sh` reads the setup head; the later commits of `main` are the
 project's own (F-18). O-158: `t7-3.sh` can stop between the merge and the branch
 moves; it did not stop. The binary of the second run, `layup5`, was built from
-`006fbee` with `vcs.modified=true` (O-154). Round 1 of this task changed fix 1, so the
-setup ran again with a clean build of `c285d45`, from the inputs of the second run: its
-setup head has the tree of `layup-setup-2`, byte for byte (O-154). The issue of the ADR that
+`006fbee` with `vcs.modified=true`. O-154: if the review of this task changes fixes 1 to
+3, a setup run with the merged binary must give the tree of `layup-setup-2`, except the
+values of `pin.time`, or `T-vu2j` opens again. Round 1 changed fix 1; a setup run with a
+clean build of `c285d45`, whose Go code the merge keeps, gave that tree byte for byte
+(`evidence/187-run3-setup.txt` on the pilot's host). The issue of the ADR that
 ends bootstrap mode, #120 (`T-gd8q`), lists the findings that are not fixed.
 
 **Lessons:** five pitfalls in `guardrails.md` §2: a one-line form that loses a
-failure (F-9), a claim of a check that nothing runs (F-5, F-12), a command file
+failure (F-9), a claim of a check that nothing runs (F-5, F-10, F-12), a command file
 that goes on after a failure (F-13), a value audit that reads only the values it is
 given (F-28, F-29), and a claim of a later state in the present tense (round 4 of
 `T-vu2j`).
 
 ## Verdict
 
-Written after the freeze checks and the review round of this pull request.
+The first pilot is a Fail (O-145). The result after the fix, which O-145 records as its
+own result, holds pass items (1) to (7) by the second T5 (6023071943), and item (8) at the
+freezes `6dcd530` and `25c6567`, with `TestPackageRules` and `release-check.sh`, on which
+the acceptance of `NFR-007`, `REQ-015` and `REQ-017` depends. Review: round 1 (`6dcd530`,
+cycle 0) was `material`: S11 could give two places of a joined line one name; fixed test
+first in `c285d45`, and the setup ran again with the fix (O-154). Round 2 (`25c6567`,
+cycle 1) gave `nothing material in scope`, with 15 notes; the reply 6024285307 on #97
+applies nine and declines five with their reasons. The diff is 3,188 lines over 40 files,
+inside 3,200 over 42 (O-146).
 
 ## Resource record (ADR-0007: recorded, not budgeted)
 
-Written after the review round of this pull request.
+Recorded, not budgeted. Times are UTC; a token count that a harness does not give is
+`not reported`.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan and its review | reasoning | Claude Opus 5.5; GPT-6 Sol on the Devin CLI | max; `xhigh` | not reported | 34 min 45 s on 10-04; the review 5 min 29 s |
+| The first run: the inputs, the setup, T3, D7 and D8 | execution; the reviews and audits reasoning | Claude Sonnet 5.5 (to T2 revision 2, with four helper sessions), then Claude Opus 5.5; GPT-6 Sol on the Devin CLI | not recorded, then max; `xhigh` | not reported | about 4 h 15 min of work on 10-05 ([`numbers.md`](../../runs/T-evad/numbers.md)) |
+| The fix, the second run and its audit | execution; the audit reasoning | Claude Opus 5.5; GPT-6 Sol on the Devin CLI | max; `xhigh` | not reported | about 1 h 50 min on 10-05 and 10-06; the audit 6 min 15 s and 6 min 8 s |
+| The target task `T-vu2j` | execution; the reviews reasoning | Claude Opus 5.5; GPT-6 Sol on the Devin CLI | max; `xhigh` | not reported | about 7 h 45 min on 10-06; three plan reviews 24 min 57 s, five rounds 62 min 54 s |
+| The close-out and the freeze | execution | Claude Opus 5.5 | max | not reported | 18:45 to 19:02 on 10-06 |
+| Review round 1, first try: each harness skipped | reasoning | GPT-6 Sol on the Devin CLI (no output in 300 s); Grok 4.7 on the OpenCode CLI ("Go usage limit exceeded"); Claude Fable 5.1 on Claude Code (no record in 900 s) | `xhigh` | not reported | 19:02:55 to 19:23:33 |
+| Review round 1 | reasoning | Claude Fable 5.1 on Claude Code | `xhigh` | 1,893,437 (USD 5.87) | 6 min 36 s, from 19:24:54 |
+| The fix of round 1, and the setup run of O-154 | execution | Claude Opus 5.5 | max | not reported | 19:32 to 19:42 |
+| Review round 2 | reasoning | Claude Fable 5.1 on Claude Code, with two helper sessions | `xhigh` | 3,377,391 (USD 11.39) | 8 min 56 s, from 19:42:44 |
+| The close-out | execution | Claude Opus 5.5 | max | not reported | from 19:52 |
+| **Total** | | | | not reported in full | 10-03 16:15 to 10-06 about 20:05: about 75 h 50 min; about 15 h 30 min of it was work, the rest waits for the Operator, with three nights |
