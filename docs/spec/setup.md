@@ -656,7 +656,11 @@ that is not a marker, and an answer `gap` with no `question_text`; a question
 twice is an error of the key. When a step that reads answers is done (S01 its
 `S01-` and `Q-` rows, S10 its `M-` rows), the runner writes the record row
 `<step> answers.sha256` (source `computed`, ref `sha256 inputs/answers.tsv
-<prefix>…`), the SHA-256 of those rows as the step read them; each run first
+<prefix>…`), the SHA-256 of those rows as the step read them (each row its fields
+joined by a tab, with the empty mark `—` read as an empty field; the rows sorted
+in byte order and joined by a line feed, with no line feed at the end; written
+here in task `T-evad`, #97, after the audit of its second run could not
+reproduce the value); each run first
 compares it with the rows as they are, so a row that changed, went or came is
 exit 2, "an input that changed after a step read it", before S04 or S06 writes
 an answer as a fact. A done step that reads answers and has no such row is exit
