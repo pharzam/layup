@@ -1,0 +1,116 @@
+docs/engineering-discipline.md:319:   material still in scope, the verdict is `not mergeable, findings recorded`.
+docs/guardrails.md:21: A decision rule chosen **after** seeing the result is a fitted parameter, not a
+docs/plan/README.md:96: | # | Task ID | Issue | Task | Demo | Parent | Items | Requirements | Fact | Tests | Size | Lines | After | Cap |
+docs/tasks/T-0drh.md:26: to the decision request after review round 2): option (B). The cycle cap of
+docs/tasks/T-0drh.md:30: **O-117** (2026-10-01, the Operator's answer "B" in the author's Claude Code session, copied to #74): option (B) of the request after review round 3. The cycle cap of this task is 3; a fresh session reviews only the fix of round 3.
+docs/tasks/T-0drh.md:34: **O-119** (2026-10-01, the Operator's answer "go ahead with the close-out" in the author's session, copied to #74): option (A) of the request after review round 4. The author commits the fix of round 4 and closes out with no fifth round.
+docs/tasks/T-0drh.md:43: records with no phase-1 writer. The plan review (Claude Fable 5.1 on Claude
+docs/tasks/T-0drh.md:91: section per phase-1 requirement, and its registration. Four review rounds
+docs/tasks/T-18v6.md:13: review (Claude Fable 5.1, a fresh session) gave `approve-with-conditions`: Budget
+docs/tasks/T-18v6.md:55: author asked the Operator on #78 (comment "The budget, after the notes of review
+docs/tasks/T-18v6.md:81: Review round 1 (Claude Fable 5.1, `6e0b4c2`, cycle 0) gave `nothing material in
+docs/tasks/T-2tc2.md:13: review (Claude Fable 5.1, a fresh session) gave `approve-with-conditions`: Budget
+docs/tasks/T-2tc2.md:58: The diff against `b48764f` went over the maximum of the plan review before the
+docs/tasks/T-2tc2.md:87: notes. Review round 1 (Claude Fable 5.1, `daa1ded`, cycle 0) gave `nothing
+docs/tasks/T-2yw7.md:11: review (Claude Fable 5.1 on Claude Code, a fresh session) gave
+docs/tasks/T-2yw7.md:70: applied its condition and its eight notes. Review round 1 (Claude Fable 5.1,
+docs/tasks/T-3jpx.md:11: review (Claude Fable 5.1 on Claude Code, a fresh session) gave
+docs/tasks/T-3jpx.md:66: applied its condition and its eight notes. Review round 1 (Claude Fable 5.1,
+docs/tasks/T-4wrw.md:12: The plan (R12) and its review are comments on #99. The plan review (Claude Fable
+docs/tasks/T-4wrw.md:67: applied its three conditions and its thirteen notes. Review round 1 (Claude Fable
+docs/tasks/T-55n2.md:16: ([`inventory.md`](../../runs/T-55n2/inventory.md)). The plan review (Claude Fable
+docs/tasks/T-55n2.md:109: Review round 1 (Claude Fable 5.1, `a88f99f`, cycle 0) was `material`: AC 2 had
+docs/tasks/T-5sgt.md:11: review (Claude Fable 5.1 on Claude Code, a fresh session) gave
+docs/tasks/T-5sgt.md:61: Review round 1 (Claude Fable 5.1, `a0435a6`, cycle 0) gave `material`, with
+docs/tasks/T-5sgt.md:78: Review round 2 (Claude Fable 5.1, `bab6759`, cycle 1) found findings 1 to 3 of
+docs/tasks/T-5sgt.md:84: **O-130.** The Operator answered "#82 a" in the author's Claude Code session
+docs/tasks/T-5sgt.md:114: `51755cd`; round 3 (`51755cd`, cycle 2, the last round) gave `nothing material
+docs/tasks/T-5zmw.md:10: The plan (R12), its review and the author's answer are comments on #83. The plan
+docs/tasks/T-5zmw.md:16: 1. **The G1 case `**Technology stack:**` with no value** is the Operator's
+docs/tasks/T-5zmw.md:90: Review round 1 (GPT-6 Sol, effort `xhigh`, on the Devin CLI; `edbeb60`, cycle
+docs/tasks/T-5zmw.md:115: Review round 2 (GPT-6 Sol, effort `xhigh`, on the Devin CLI; `b6b52d5`, cycle
+docs/tasks/T-6x75.md:11: and the record of O-132 are comments on #84. The plan review (GPT-6 Sol, effort
+docs/tasks/T-6x75.md:64: Review round 1 (GPT-6 Sol, effort `xhigh`, on the Devin CLI; `b31cc70`, cycle
+docs/tasks/T-6x75.md:89: Review round 2 (GPT-6 Sol on the Devin CLI; `ff76d69`, cycle 1) found
+docs/tasks/T-6x75.md:103: Review round 3 (GPT-6 Sol on the Devin CLI; `ff06ff1`, cycle 2) found finding
+docs/tasks/T-6x75.md:115: Review round 4 (GPT-6 Sol on the Devin CLI; `f570575`, cycle 3) found the fix
+docs/tasks/T-6x75.md:129: Review round 5 (GPT-6 Sol on the Devin CLI; `15c5106`, cycle 4) found the
+docs/tasks/T-745n.md:11: The plan (R12) and the plan review are comments on #70. The plan review (Claude
+docs/tasks/T-745n.md:130: | 1 | `7e08de7` | Claude Fable 5.1 on Claude Code, a fresh session | 0 | 4 material, 10 notes | `material` |
+docs/tasks/T-79y7.md:11: identity and the record of O-136 are comments on #85. The plan review (GPT-6
+docs/tasks/T-79y7.md:18: of the commit rule) and the five notes. **O-136:** the Operator answered "a"
+docs/tasks/T-79y7.md:56: Round 1 (GPT-6 Sol on the Devin CLI, effort `xhigh`, on `53b3a99`; the record is
+docs/tasks/T-79y7.md:83: (Bootstrap mode rule 4). Claude Fable 5.1 on the Claude Code CLI (effort
+docs/tasks/T-7s0y.md:11: The author's question of the order (row 14 before row 9), the Operator's
+docs/tasks/T-7s0y.md:15: exceeded") gave no record. The plan review (Claude Fable 5.1, effort `xhigh`,
+docs/tasks/T-7s0y.md:88: record. Round 1 (Claude Fable 5.1, effort `xhigh`, on the Claude Code CLI, a
+docs/tasks/T-7s0y.md:119: (Bootstrap mode rule 4). Round 2 (Claude Fable 5.1, effort `xhigh`, on the
+docs/tasks/T-7sbn.md:21: | 5 | Frozen head `7e4c6e3`, round 1 (cycle 0), first named harness | `devin -p --prompt-file .review-brief/PROMPT.md --model gpt-6-sol-xhigh --permission-mode dangerous --respect-workspace-trust false`, in a disposable clone | 0 | the review record: `material`, 3 material findings and 4 notes (post
+docs/tasks/T-7sbn.md:23: | 7 | Frozen head `0393289`, round 2 (cycle 1, the cap), first named harness | the same `devin -p …` command, in a new disposable clone | 0 | the review record, 385 s: `not mergeable, findings recorded`, 2 findings and 2 notes (posted on #59); the Operator ruled both findings notes (O-44) |
+docs/tasks/T-84r5.md:18: | 2 | Frozen head `009daa7`, round 1 (cycle 0, cap 1), first named harness | `devin -p --prompt-file .review-brief/PROMPT.md --model gpt-6-sol-xhigh --permission-mode dangerous --respect-workspace-trust false`, in a disposable clone, a polling watchdog of 900 s | 0 | the review record, 401 s: `nothi
+docs/tasks/T-84r5.md:42: | The issue, the plan and its review | reasoning | Claude Fable 5.1 on Claude Code (author); the Operator (review) | not reported | — | about 10 min |
+docs/tasks/T-8vpw.md:15: limit exceeded") gave no record and are skipped. The plan review (Claude Fable
+docs/tasks/T-8vpw.md:20: and reads standard error; #21 closes only by the Operator's decision, asked on
+docs/tasks/T-8vpw.md:63: record. Round 1 (Claude Fable 5.1, effort `xhigh`, on the Claude Code CLI, on
+docs/tasks/T-8vpw.md:91: again. Round 2 (Claude Fable 5.1, effort `xhigh`, on the Claude Code CLI, a
+docs/tasks/T-8ya0.md:14: limit exceeded"; both are skipped (Bootstrap mode rule 4). The plan review
+docs/tasks/T-8ya0.md:55: exceeded") and are skipped. Claude Fable 5.1 on the Claude Code CLI (effort
+docs/tasks/T-8ywj.md:20: | 8 | The same head, round 1, second harness | `devin -p --prompt-file .review-brief/PROMPT.md --model gpt-6-sol-xhigh --permission-mode dangerous --respect-workspace-trust false`, in the same clone | 0 | the review record, 406 s: `material`, 13 findings (posted on #56) |
+docs/tasks/T-8ywj.md:22: | 10 | Fix head `1771c38`, round 2 (cycle 1, the cap), first named harness | `devin -p … --model gpt-6-sol-xhigh …`, in a new disposable clone | 0 | the review record, 730 s: `not mergeable, findings recorded`, 5 findings (posted on #56) |
+docs/tasks/T-8ywj.md:26: Ended at the cycle cap (1) with `not mergeable, findings recorded`; split to the
+docs/tasks/T-9t1q.md:16: record and are skipped. The plan review (Claude Fable 5.1, effort `xhigh`, on
+docs/tasks/T-9t1q.md:65: again, and a second Fable run (effort `xhigh`, on the Claude Code CLI) reviewed
+docs/tasks/T-b3r1.md:13: record. The plan review (Claude Fable 5.1, effort `xhigh`, on the Claude Code
+docs/tasks/T-b3r1.md:82: record. Round 1 (Claude Fable 5.1, effort `xhigh`, on the Claude Code CLI, a
+docs/tasks/T-b3r1.md:114: record again. Round 2 (Claude Fable 5.1, effort `xhigh`, on the Claude Code
+docs/tasks/T-c06a.md:15: gave no record. The plan review (Claude Fable 5.1, effort `xhigh`, on the
+docs/tasks/T-c06a.md:68: record. Round 1 (Claude Fable 5.1, effort `xhigh`, on the Claude Code CLI, on
+docs/tasks/T-c06a.md:109: again. Round 2 (Claude Fable 5.1, effort `xhigh`, on the Claude Code CLI, a
+docs/tasks/T-d6q5.md:14: record. The plan review (Claude Fable 5.1, effort `xhigh`, on the Claude Code
+docs/tasks/T-d6q5.md:104: record. Round 1 (Claude Fable 5.1, effort `xhigh`, on the Claude Code CLI, a
+docs/tasks/T-d6q5.md:129: CI of PR #115 failed in the job `tests` on `8a3a565` (the close-out of round
+docs/tasks/T-d6q5.md:155: record again. Round 2 (Claude Fable 5.1, effort `xhigh`, on the Claude Code
+docs/tasks/T-dep6.md:13: record. The plan review (Claude Fable 5.1, effort `xhigh`, on the Claude Code
+docs/tasks/T-dep6.md:81: Round 1 (Claude Fable 5.1, effort `xhigh`, on the Claude Code CLI, a fresh
+docs/tasks/T-dgy7.md:13: record. The plan review (Claude Fable 5.1, effort `xhigh`, on the Claude Code
+docs/tasks/T-dgy7.md:75: (Claude Fable 5.1, effort `xhigh`, on the Claude Code CLI, a fresh read-only
+docs/tasks/T-efmy.md:14: record. The plan review (Claude Fable 5.1, effort `xhigh`, on the Claude Code
+docs/tasks/T-efmy.md:91: until the run was stopped (Bootstrap mode rule 4). In a second try, Devin and
+docs/tasks/T-evad.md:14: The question of the inputs (comment 5970993385) got the Operator's answers O-139 and
+docs/tasks/T-evad.md:22: The plan (5979571232) and its review by GPT-6 Sol (`xhigh`, on the Devin CLI, a
+docs/tasks/T-evad.md:49: that the Operator scoped (O-148, O-151); one round with the four lenses on each
+docs/tasks/T-evad.md:159: the acceptance of `NFR-007`, `REQ-015` and `REQ-017` depends. Review: round 1 (`6dcd530`,
+docs/tasks/T-evad.md:161: first in `c285d45`, and the setup ran again with the fix (O-154). Round 2 (`25c6567`,
+docs/tasks/T-hbw8.md:12: The plan (R12) and its review are comments on #72. The plan review (Claude
+docs/tasks/T-hbw8.md:132: Operator approved the architecture at `11657ee` (O-73, O-112); the gate round
+docs/tasks/T-hbw8.md:150: | Design review rounds (24) | reasoning | Claude Fable 5.1 | not reported | 552,827 output, 23 of 24 rounds | 1 h 59 min; USD 89.02 (slice B round 2 not recorded) |
+docs/tasks/T-tmhw.md:13: record. The plan review (Claude Fable 5.1, effort `xhigh`, on the Claude Code
+docs/tasks/T-tmhw.md:63: (Claude Fable 5.1, effort `xhigh`, on the Claude Code CLI, a fresh read-only
+docs/tasks/T-tmhw.md:89: Devin and OpenCode gave no record again. Round 2 (Claude Fable 5.1, a fresh
+docs/tasks/T-wjq4.md:19: | 7 | Frozen head `5badccb`, round 1 (cycle 0), first named harness | `devin -p --prompt-file .review-brief/PROMPT.md --model gpt-6-sol-xhigh --permission-mode dangerous --respect-workspace-trust false`, in a disposable clone | 0 | the review record, 549 s: `material`, 5 findings and 4 notes (posted
+docs/tasks/T-wjq4.md:23: | 11 | Fix head `ec57e91`, round 3 (cycle 2, the cap), first named harness | the same `devin -p …` command, in a new disposable clone | 0 | the review record, 3,294 s: `not mergeable, findings recorded`, 8 findings and 2 notes (posted on #63). The 900 s watchdog (`perl -e 'alarm 900; exec …'`) d
+docs/tasks/T-wjq4.md:27: Ended at the cycle cap (2) with `not mergeable, findings recorded`; split to the
+docs/tasks/T-zmj6.md:20: | 5 | Frozen head `d93330d`, round 1 (cycle 0), first named harness | `devin -p --prompt-file .review-brief/PROMPT.md --model gpt-6-sol-xhigh --permission-mode dangerous --respect-workspace-trust false`, in a disposable clone | 0 | the review record, 493 s: `material`, 4 findings, 0 notes (posted on
+docs/tasks/T-zmj6.md:22: | 7 | Fix head `457fe71`, round 2 (cycle 1, the cap), first named harness | the same `devin -p …` command, in a new disposable clone | 0 | the review record, 538 s: `not mergeable, findings recorded`, 2 findings and 1 note (posted on #45); the Operator ruled both findings notes (O-46) |
+docs/tasks/completed.md:24: - **2026-10-06** — **T-stfn** — Step 2 (the name that the title of its issue #29 gives it), the core engine: `layup gate`, `layup setup` and `layup setup verify`, the telemetry and stall records, the release review and the first pilot ([#29](https://github.com/pharzam/layup/issues/29); [plan](..
+docs/tasks/completed.md:26: - **2026-10-06** — **T-vk3k** — `layup gate`, the parent of its child tasks ([#33](https://github.com/pharzam/layup/issues/33); [plan](../plan/README.md))
+docs/tasks/completed.md:45: - **2026-10-02** — **T-meh2** — The PDR: the idea owner's answers, the numbered facts, `PRD-0001`, the architecture with ADR-0013 to ADR-0025, the specification of phase 1 and the implementation plan, each by its own task, approved by the Operator in [`PDR-0001`](../pdr/PDR-0001.md) ([#42](https
+runs/T-55n2/inventory.md:1544: - **What:** Before the pilot runs, the plan of the pilot task writes down the rule by which the ADR that ends bootstrap mode reads the numbers: what counts as a defect or a stall, and which values restore or re-decide the full gate. At the pilot, the task counts three things: the defects that the pi
+runs/T-evad/findings.md:25:   found them, and each is one Investigate of the pilot rule. (a) S11 gave two markers
+runs/T-evad/findings.md:27:   key gets the column). (b) Check `sources` compared the column of a gap row with the
+runs/T-evad/findings.md:30: - **F-24 and F-25: the markers that the setup lost** (V-040 and V-061, which the
+runs/T-evad/findings.md:33:   rest of the placeholder stayed in `docs/tasks/backlog.md` (F-3 with its effect). (F-25)
+runs/T-evad/findings.md:49: - **F-30: the specification did not say how `answers.sha256` is computed.** It said
+runs/T-evad/findings.md:59: - **F-1: the catalog gates are not the gate script of R-TEST-05.** The Go catalog's
+runs/T-evad/findings.md:77: - **F-2:** LAYUP refuses a changed input of a done step (exit 2), by its
+runs/T-evad/findings.md:80: - **F-6:** `layup setup verify` before S12 exits 2, as `docs/gates.tsv` is missing.
+runs/T-evad/findings.md:81: - **F-13:** `commands.sh` of S13 is not fail-fast. Run with `sh`, after a refused push
+runs/T-evad/findings.md:86: - **F-16:** a status cell of the baseline's enforcement table ("branch protection is
+runs/T-evad/findings.md:91: - **F-21:** the one gap of S01 is a false positive (the Operator, T5): rule G1 reads
+runs/T-evad/findings.md:93: - **F-22: a pull request can weaken its own gate and merge** (the Operator, T5). Each gate
+runs/T-evad/findings.md:103: - **F-23: F-1 for the first product task of the target** (the Operator, T5). The three
+runs/T-evad/findings.md:110: - **F-19:** GitHub adds two ruleset parameters that S13 does not set:
+runs/T-evad/findings.md:115: - **F-31: a second setup run edits records that the target makes immutable.** `layup
+runs/T-evad/findings.md:133: - **F-38: the review of `T-vu2j` ended by the Operator's decision, not by decay.** Each fresh, blind round on a
+runs/T-evad/numbers.md:13: | A defect of LAYUP's phase-1 code that blocked the pilot; fixed here, test first (one Investigate each) | 2 | F-8: S11 (row 13), check `sources` (row 10) |
+runs/T-evad/numbers.md:131: | The plan reviews 1 to 3 of `T-vu2j` | GPT-6 Sol on the Devin CLI | `reject`; `reject`; `approve-with-conditions` (480 lines over 19 files, cap 2) |

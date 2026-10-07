@@ -55,7 +55,7 @@ plan review is architecture and scope, never implementation approval.
 2. **Honor the guardrails.** Before you write code, read the acceptance criteria, [`docs/guardrails.md`](docs/guardrails.md), and the [ADRs](docs/adr/) the ticket references.
 3. **Test first.** Write the failing test, watch it fail for the right reason, then write the code.
 4. **Make long tasks visible.** Anything that can run over ten seconds shows which step runs and that it lives.
-5. **Review until findings decay.** Freeze the head, then run independent blind rounds on it, a different lens each round. A fix re-freezes; at most two fix-and-review cycles follow the first freeze, and the last round ends `nothing material in scope` or `not mergeable, findings recorded` — see [Reviewing until findings decay](docs/engineering-discipline.md#reviewing-until-findings-decay). A defect the change *revealed*, off the path its Definition of Done names, opens an issue instead of entering the branch. A reviewer is a person or a fresh agent session — the requirement is [independence](docs/engineering-discipline.md#who-may-review), not reviewer type — and summarised text gets a clause-by-clause semantic pass.
+5. **Review until findings decay.** Freeze the head, then run one independent blind round on it, by a model that differs from the author's. A fix re-freezes and one more round reads it; the cycle cap is 1, or 2 for a change to a gate, the Operator chooses the end at the cap, and the last round ends `nothing material in scope` or `not mergeable, findings recorded` — see [Reviewing until findings decay](docs/engineering-discipline.md#reviewing-until-findings-decay). A defect the change *revealed*, off the path its Definition of Done names, opens an issue instead of entering the branch. A reviewer is a person or a fresh agent session — the requirement is [independence](docs/engineering-discipline.md#who-may-review), not reviewer type — and summarised text gets a clause-by-clause semantic pass.
 6. **Be honest, keep evidence.** Report a failure as a failure, and review the producing code before a costly action.
 7. **Keep the documentation current.** Every document the change leaves stale is fixed in the same pull request — and any lesson the task taught that the next reader could hit is written back into `guardrails.md` §2 (Known pitfalls).
 8. **Close out in the same PR.** Tick the boxes, write the verdict, record the task line in the completed log, and — for a task started under ADR-0007 — write the task's resource record (model, effort, tokens and elapsed time per gate part, recorded not budgeted).
@@ -71,18 +71,15 @@ routing. The rule and its tier-to-step map live in
 [Model tiers](docs/engineering-discipline.md#model-tiers), recorded in
 [ADR-0005](docs/adr/0005-route-work-by-model-tier.md).
 
-**Bootstrap mode** (a non-operative summary; the rule is
-[Bootstrap mode](docs/engineering-discipline.md#bootstrap-mode)). From 2026-09-25
-until the ADR that supersedes
-[ADR-0012](docs/adr/0012-build-layup-in-bootstrap-mode.md) is accepted, the plan
-review and step 5 are read with that section's substitutions: a task is a PSB
-In-Scope item or what one needs; the plan review is one comment; the review is one
-round by a different model, one more after a fix (cycle cap 1; 2 for a change to a
-gate); a finding is material only by that section's test, and a note causes no
-round; the reviewer is tried one harness at a time until one returns a record (no
-output in five minutes or no record in fifteen: skipped); a panel sits only for a
-product-architecture ADR; an operative rule has one home. That section is the gate
-while it is in force.
+**Bootstrap mode** (history; a non-operative summary). From 2026-09-25 until
+[ADR-0026](docs/adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md)
+was accepted, [ADR-0012](docs/adr/0012-build-layup-in-bootstrap-mode.md) read the
+gate with seven substitutions. They are now the standing gate, each in one home
+that [Bootstrap mode](docs/engineering-discipline.md#bootstrap-mode) lists: a task
+serves a PSB In-Scope item; the plan review is one comment; a finding is material
+only by its stated test, and a note causes no round; the reviewer is tried one
+harness at a time; a panel sits only for a product-architecture ADR; an operative
+rule has one home.
 
 ## The issue rules
 

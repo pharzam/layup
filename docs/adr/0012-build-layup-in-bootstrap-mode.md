@@ -4,7 +4,7 @@ Date: 2026-09-25
 
 ## Status
 
-Accepted
+Superseded by [ADR-0026](0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md)
 
 ## Context
 

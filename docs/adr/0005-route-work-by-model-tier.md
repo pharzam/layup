@@ -4,7 +4,7 @@ Date: YYYY-MM-DD
 
 ## Status
 
-Accepted. Amended by ADR-0007 and [ADR-0012](0012-build-layup-in-bootstrap-mode.md)
+Accepted. Amended by ADR-0007, [ADR-0012](0012-build-layup-in-bootstrap-mode.md) and [ADR-0026](0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md)
 
 ## Context
 

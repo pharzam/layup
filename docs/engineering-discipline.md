@@ -34,6 +34,12 @@ on the issue
 [solution-selection standard](#solution-selection) when you select the approach,
 the plan, the tests, or another technical part of the task.
 
+**Scope.** A task is a PSB In-Scope item (`F-0003#41`–`#52`) or a child of
+one, a defect that blocks such a task, or a documentation fix that a task
+leaves stale. Its plan names the In-Scope fact it serves. No new process rule,
+routing rule, check script or policy capture starts on its own
+([ADR-0026](adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md)).
+
 1. **Isolate.** Do the work in a per-task git worktree under `.worktree/<task>`,
    branched off `origin/main` — see [Starting a task](#starting-a-task). Never
    work on the operator's main worktree.
@@ -53,10 +59,10 @@ the plan, the tests, or another technical part of the task.
    Never leave the operator in the dark.
 
 5. **Review until findings decay.** After the code works, freeze the head and
-   run rounds of independent blind reviews on it — see
+   run one independent blind review round on it — see
    [Reviewing until findings decay](#reviewing-until-findings-decay). A fix
-   re-freezes; at most two fix-and-review cycles follow the first freeze, and
-   the last round ends `nothing material in scope` or
+   re-freezes, and one more round reads it; the cycle cap is 1, or 2 when the
+   change touches a gate, and the last round ends `nothing material in scope` or
    `not mergeable, findings recorded`. A defect the change *revealed*, off the
    path its Definition of Done names, opens an issue instead of entering the
    branch. A reviewer is a person **or** a fresh agent session; what the round
@@ -131,8 +137,12 @@ differ in domain, and which domains sit on one is an open gap,
 `‹the domains of a panel›` (question in [`setup/open-gaps.tsv`](setup/open-gaps.tsv)). A panel costs model
 calls: convene one only where the challenge earns it, under an iteration bound, and
 required only for the architecturally-significant or novel decisions —
-in this project, each decision that becomes a new ADR — never on every task. This is recorded in
-[ADR-0006](adr/0006-convene-a-panel-to-generate-options.md).
+in this project, a panel is convened only for an ADR that changes the product
+architecture, the subject of
+[ADR-0011](adr/0011-structure-the-core-engine-as-a-go-cli-over-repository-files.md)
+— never on every task. This is recorded in
+[ADR-0006](adr/0006-convene-a-panel-to-generate-options.md), as amended by
+[ADR-0026](adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md).
 
 ## Model tiers
 
@@ -147,8 +157,17 @@ Where a model is warranted, route by **tier**. In this project the reasoning tie
 Claude Opus 5.5, Claude Fable 5.1, GPT-6 Sol and Grok 4.7, and the execution tier is
 Claude Sonnet 5, SWE-2 and GPT-6 Luna (Operator decision O-3 on
 [#8](https://github.com/pharzam/layup/issues/8), amended by
-[ADR-0012](adr/0012-build-layup-in-bootstrap-mode.md), part 3, which also lists the
-models not to use).
+[ADR-0012](adr/0012-build-layup-in-bootstrap-mode.md), part 3, and kept by
+[ADR-0026](adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md)).
+
+**The models not to use** (the Operator's list, the evidence file
+[`runs/T-8ywj/operator-routing-answer.md`](../runs/T-8ywj/operator-routing-answer.md),
+§14): GPT-4.1, GPT-5.1, 5.2, 5.4; Opus 4.5 to 4.8; Opus 5 — the same text names
+`claude-opus-5-5` in every Claude row, so this rule reads "Opus 5" as the model of
+that name and not as Opus 5.5; Sonnet 4.5 and 4.6; Haiku; deprecated models;
+`-fast` and `-priority` variants; `adaptive`; paid Zen models while that account
+has no funds; DeepSeek on OpenCode Go while its region restriction blocks it. No
+quota state is tracked.
 
 | Tier | Class of model | Owns the gate steps that … |
 | ---- | -------------- | -------------------------- |
@@ -176,67 +195,24 @@ rejected alternatives and its consequences are recorded in
 
 ## Bootstrap mode
 
-[ADR-0012](adr/0012-build-layup-in-bootstrap-mode.md) puts this repository in
-**bootstrap mode** from 2026-09-25. The mode ends when the ADR that supersedes
-ADR-0012 is accepted, and not before; that ADR is opened by the task that closes
-the first pilot, the day `layup` has set up one target repository from a problem
-statement and has run that target's gate from outside. In this mode the gate
-above is read with the substitutions below,
-and nothing else changes: issue first, red then green, the frozen head, the record
-fields of [What a round records](#what-a-round-records), evidence under `runs/`,
-the close-out and the pull request stay as written, and `review-record-lint`, the
-hooks, branch protection and CI are untouched.
+History, not a rule. [ADR-0012](adr/0012-build-layup-in-bootstrap-mode.md) put
+this repository in **bootstrap mode** from 2026-09-25: this section then read the
+gate with seven substitutions, until the first pilot. The mode ended when
+[ADR-0026](adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md) was
+accepted, after the pilot's numbers
+([`runs/T-gd8q/numbers.md`](../runs/T-gd8q/numbers.md)). Rules 2 to 7 of the
+mode, and rule 1 without its end date, are now the standing gate, each in one home:
 
-1. **Scope.** A task is a PSB In-Scope item (`F-0003#41`–`#52`) or a child of
-   one, a defect that blocks such a task, or a documentation fix that a task
-   leaves stale. Its plan names the In-Scope fact it serves. No new process rule,
-   routing rule, check script or policy capture starts on its own.
-2. **The plan review** is one comment, by the Operator or by one fresh agent
-   session, with `Verdict`, `Budget maximum` and `Cycle cap` as before. A
-   `reject` on the goal count alone goes to the Operator, whose count is final;
-   the goal-class count of [R11](issue-workflow.md#r11--single-goal-issues) is
-   not applied to a task whose deliverable is one artifact and its registration
-   (a record, a decision, a document, a fact).
-3. **The review** is one round, lens correctness and acceptance criteria, by a
-   fresh session whose model differs from the author's, with the record fields
-   as before. A second round runs only after a fix: the cycle cap is 1, and 2
-   when the change touches a gate (a check script, a hook, CI or branch
-   protection). "One pass is never enough" is suspended; the pilot measures what
-   one pass misses. A finding is material when it identifies an operative
-   omission, ambiguity, contradiction, unauthorized change of scope or
-   authority, failed acceptance criterion, or command whose expected exit code
-   differs from the documented result. The finding must cite the exact command
-   or operative sentence involved. Every other finding is a note: the author
-   applies it, or declines it with a reason, during close-out; a note does not
-   cause another review round. A round with notes only is mergeable. The
-   Operator settles disputed materiality.
-4. **Reviewer selection** is the whole routing rule. The author is the model
-   whose session wrote the change under review: Claude Opus 5.5 on Claude Code
-   unless the task's issue names another model of the reasoning tier, and where
-   more than one model wrote the change, each is an author whose model the
-   reviewer must differ from, and the session that freezes the head names the
-   reviewer order and answers the notes. The reviewer is any model that differs
-   from every author's, on `claude`, `devin` or `opencode`, tried one at a time
-   in that order, until one returns a record. A harness that fails, gives
-   no output within five minutes, or gives no record within fifteen, is skipped
-   and named in the resource record; no decision is asked for it. The
-   [Model tiers](#model-tiers) name the models; the models not to use are in
-   ADR-0012, part 3. No quota state is tracked.
-5. **A panel** ([ADR-0006](adr/0006-convene-a-panel-to-generate-options.md)) is
-   convened only for an ADR that changes the product architecture, the subject
-   of [ADR-0011](adr/0011-structure-the-core-engine-as-a-go-cli-over-repository-files.md).
-6. **The resource record** ([ADR-0007](adr/0007-record-task-resource-use.md))
-   names the model, the effort and the elapsed time per gate part; a token count
-   a harness does not give is `not reported`.
-7. **One home per rule.** An operative rule has one canonical home. Another
-   document may link to it and may give a clearly marked non-operative summary,
-   but it must not restate the rule as an independent requirement. A conflicting
-   or unmarked restatement found in review is a note, and the normal fix is to
-   replace it with a link.
-
-The ADR that ends this mode reads the pilot's defect and stall numbers before it
-restores or re-decides the full gate. Until it is accepted this section is the
-gate, and a nested instruction file may not weaken it either.
+1. The scope of a task: [Working a task under the quality gate](#working-a-task-under-the-quality-gate).
+2. The plan review: [R12](issue-workflow.md#r12--slice-and-prioritize), and the
+   count of a task of one artifact in [R11](issue-workflow.md#r11--single-goal-issues).
+3. The review, the cycle cap, the end at the cap and the material test:
+   [Reviewing until findings decay](#reviewing-until-findings-decay).
+4. Reviewer selection: [Who may review](#who-may-review); the tier names and the
+   models not to use: [Model tiers](#model-tiers).
+5. The panel: [Solution selection](#solution-selection).
+6. The resource record: [Completing a task](#completing-a-task).
+7. One home per rule: [One reading, not two](#one-reading-not-two).
 
 ## Issue-first workflow
 
@@ -253,9 +229,12 @@ an "issue" is a GitHub issue; the issue and pull-request templates are under
 ## Reviewing until findings decay
 
 After the code works, **freeze the head**: name the commit, and land nothing on
-the branch after it except a fix to a finding. Then run rounds of independent
-blind reviews on that commit. Each reviewer is fresh — it does not see your
-reasoning — and each round applies a different lens:
+the branch after it except a fix to a finding. Then run **one** independent
+blind review round on that commit, with the lens correctness and acceptance
+criteria. The reviewer is fresh — it does not see your reasoning — and a second
+round runs only after a fix, on the new frozen head
+([ADR-0026](adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md)).
+The lenses below are what a round may read, as the change needs them:
 
 - correctness and failure modes — for this project: a value that comes from a guess, a check that is not active or cannot fail, a claim in a document that the tree makes false, and shell portability (see `guardrails.md` §1.1 and §2),
 - guardrails and acceptance criteria,
@@ -283,8 +262,10 @@ the preacher's. The standard buys a **vocabulary for a dispute, not a check**: n
 mechanism reads a finding and judges its basis, and claiming one did would be the same
 overstatement [Who may review](#who-may-review) exists to catch.
 
-One pass is never enough. Each round catches a different class of error. The
-protocol that bounds the rounds is:
+One round reads each frozen head; what one pass misses is measured by a pilot,
+not by more rounds on the same diff (the first pilot's numbers,
+[`runs/T-gd8q/numbers.md`](../runs/T-gd8q/numbers.md)). The protocol that bounds
+the rounds is:
 
 - **A fix re-freezes.** Any fix after a round lands as a new frozen head, and
   the next round names it. The **close-out bookkeeping** lands as a head no round
@@ -313,23 +294,38 @@ protocol that bounds the rounds is:
   consumes no cycle, and needs no new round while it is clean and changes no file
   the branch touched; where it does touch one, a round runs on the new head,
   scoped to those files, and it consumes no cycle either.
-- **The cycles are capped.** After the first freeze, at most two fix-and-review
-  cycles follow; the plan-review confirmation declares the cap, and two is both
-  the maximum and the default where it is silent. On the cap, with something
-  material still in scope, the verdict is `not mergeable, findings recorded`.
-  That is a legitimate outcome, and its successor state is an issue split: one
-  successor issue carrying the branch's work as it stands, on a branch of its own
-  with a first freeze of its own, plus a child issue for each open finding the
-  successor does not take. Where it takes them all, it alone is the split. The
-  stopped branch does not run a further cycle.
-- **Material has a test.** A finding is material when it changes an exit code,
-  an assertion, a behaviour on a target's tree, a claim in the tree, or a
-  Definition-of-Done item. Wording, style and layout are not. A claim in the
-  tree counts only when a reader could act on it and the change makes it false
-  or leaves it false; a sentence that changed and still holds is wording. Each
-  finding records its basis in one line — an observation, a test, or a cited clause
-  that could have come out the other way, as the objective-scientist standard above
-  requires, never a bare preference.
+- **The cycles are capped.** After the first freeze, one fix-and-review cycle
+  follows: the cycle cap is 1, and 2 when the change touches a gate (a check
+  script, a hook, CI or branch protection). The plan-review confirmation declares
+  the cap; where it is silent, the cap is 1. On the cap, with something material
+  still in scope, the verdict is `not mergeable, findings recorded`.
+- **The Operator ends the work at the cap.** The author posts the open findings
+  on the issue, and the Operator chooses one of four ends. The verdict of the
+  last round stays `not mergeable, findings recorded` until the Operator
+  chooses.
+  1. *One more cycle.* A `## Plan review` comment records the new `Cycle cap`,
+     and the verdict of the last round is edited to `material`, with the reason,
+     so that [`review-record-lint`](ci/review-record-lint.sh) reads the next
+     round as the next cycle. The next round reads the fix.
+  2. *A known limit, or a finding ruled a note.* The last verdict stays
+     `not mergeable, findings recorded`. The Operator's comment that names each
+     open finding and its ruling permits the merge; the task's documents write
+     each known limit.
+  3. *A fix with no further round.* The fix of the last round lands, and the
+     task record names it as a fix that no round read. The last verdict stays
+     `not mergeable, findings recorded`; the Operator's comment permits the merge.
+  4. *A split.* One successor issue carries the branch's work as it stands, on a
+     branch of its own with a first freeze of its own, plus a child issue for
+     each open finding the successor does not take. Where it takes them all, it
+     alone is the split. The stopped branch does not run a further cycle.
+- **Material has a test.** A finding is material when it identifies an
+  operative omission, ambiguity, contradiction, unauthorized change of scope or
+  authority, failed acceptance criterion, or command whose expected exit code
+  differs from the documented result. The finding must cite the exact command or
+  operative sentence involved. Every other finding is a note: the author applies
+  it, or declines it with a reason, during close-out; a note does not cause
+  another review round. A round with notes only is mergeable. The Operator
+  settles disputed materiality.
 - **A finding is classified before it is fixed.** *In the change* — introduced
   by this branch, or pre-existing on the path the Definition of Done names — is
   fixed here inside the budget, else it becomes a child issue. *Revealed* —
@@ -360,7 +356,7 @@ protocol that bounds the rounds is:
   no kind of growth an approval covers in advance. Three review rounds wrote three
   such reaches and a later round falsified each, so the reach does not
   exist. Growth past the figure is absorbed, routed to a child issue where the
-  finding is non-material, or ends at the cap in a split.
+  finding is non-material, or ends at the cap.
 
 ### Who may review
 
@@ -373,14 +369,27 @@ Independence has four levels. A review claims only the ones it actually had:
 | Level | What it means | Required for |
 | ----- | ------------- | ------------ |
 | **Context** | A fresh session whose brief is the issue's problem statement, the acceptance criteria, the source documents and the diff — and **not** the author's reasoning or any earlier round's verdict. | Every review |
-| **Method** | A different lens and a different prompt from the round before it. | Every round after the first |
+| **Method** | A brief that names the round's lens and, for a round after a fix, the fix it reads. | Every review |
 | **Execution** | A separate run with its own record on the issue. | Every review |
-| **Model** | A different model, or a different provider. | High-risk work — a governance change, a change to the checks themselves, or anything feeding a [costly or irreversible action](#review-before-a-costly-or-irreversible-action) — **where a second model is available** |
+| **Model** | A model that differs from every author's model. | Every review |
 
 Two agents given the same prompt, the same context and the same model are not two
 reviewers. They are one reviewer run twice, and they share every blind spot. The
 levels turn "a fresh context reviewed it" into a specific claim instead of a
 comfortable one.
+
+**Reviewer selection** is the whole routing rule
+([ADR-0026](adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md)).
+The author is the model whose session wrote the change under review: Claude Opus
+5.5 on Claude Code unless the task's issue names another model of the reasoning
+tier, and where more than one model wrote the change, each is an author whose
+model the reviewer must differ from, and the session that freezes the head names
+the reviewer order and answers the notes. The reviewer is any model that differs
+from every author's, on `claude`, `devin` or `opencode`, tried one at a time in
+that order, until one returns a record. A harness that fails, gives no output
+within five minutes, or gives no record within fifteen, is skipped and named in
+the resource record; no decision is asked for it. The [Model tiers](#model-tiers)
+name the models and the models not to use.
 
 Be exact about what that buys. **No mechanism verifies any of it.** Nothing reads
 a review record, and nothing can prove a reviewer truly did not see the author's
@@ -690,6 +699,14 @@ reviewer [independence](#who-may-review) and a finding's
 would be a check that cannot fail rather than a check that catches the defect. The
 decision, its rejected alternatives and this limit are recorded in
 [ADR-0008](adr/0008-require-one-reading-in-decision-driving-text.md).
+
+### One home per rule
+
+An operative rule has one canonical home. Another document may link to it and
+may give a clearly marked non-operative summary, but it must not restate the rule
+as an independent requirement. A conflicting or unmarked restatement found in
+review is a note, and the normal fix is to replace it with a link
+([ADR-0026](adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md)).
 
 ## Commit messages
 

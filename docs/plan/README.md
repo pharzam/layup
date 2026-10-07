@@ -19,9 +19,9 @@ The Operator's decisions O-121 to O-124 set its structure; they are quoted in
 
 - The plan fixes the order and the scope of each task, not its design. Each task
   still writes its own plan and gets its own plan review and review round under
-  the gate ([`engineering-discipline.md`](../engineering-discipline.md), and
-  [Bootstrap mode](../engineering-discipline.md#bootstrap-mode) while ADR-0012 is
-  in force).
+  the gate ([`engineering-discipline.md`](../engineering-discipline.md), as
+  [ADR-0026](../adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md) sets it; phase 1 ran under
+  [Bootstrap mode](../engineering-discipline.md#bootstrap-mode)).
 - **No task of phase 1 starts before #42 closes**, except rows 1 and 2 (O-126):
   #42 holds the core engine until the Operator approves the PDR (`T-4wrw`, O-14).
 - Each task settles the defects of the specification sections it implements, in
@@ -36,7 +36,8 @@ The Operator's decisions O-121 to O-124 set its structure; they are quoted in
 - A size class is `small` (one package or one step group: about one day of agent
   work and a diff under about 400 lines) or `large`. The expected lines of a task
   are an estimate for its plan review, not a budget; each task's plan review sets
-  its budget and its cycle cap (Bootstrap mode rules 2 and 3).
+  its budget and its cycle cap ([R12](../issue-workflow.md#r12--slice-and-prioritize)
+  and [the cycle cap](../engineering-discipline.md#reviewing-until-findings-decay)).
 - The column "After" gives the order of the tasks; the row number is only a
   handle. A task starts when the tasks in its "After" cell have merged.
 - `T-55n2` opens the issue of `T-b97r` and of each row; the numbers are in the
@@ -89,9 +90,9 @@ ADR task as its first step.
 "Demo" is the one thing that a reader is shown when the task is done, in one
 sentence ([R11](../issue-workflow.md#r11--single-goal-issues)). "Items" are the
 keys of the inventory. "Fact" is the In-Scope fact that the task serves
-(Bootstrap mode rule 1). "Cap" is the expected cycle cap; the plan review of
-each task sets it by [Bootstrap
-mode](../engineering-discipline.md#bootstrap-mode) rule 3.
+([the scope of a task](../engineering-discipline.md#working-a-task-under-the-quality-gate)).
+"Cap" is the expected cycle cap; the plan review of each task sets it by
+[the cycle cap rule](../engineering-discipline.md#reviewing-until-findings-decay).
 
 | # | Task ID | Issue | Task | Demo | Parent | Items | Requirements | Fact | Tests | Size | Lines | After | Cap |
 | - | ------- | ----- | ---- | ---- | ------ | ----- | ------------ | ---- | ----- | ---- | ----- | ----- | --- |
@@ -200,7 +201,7 @@ Each inventory item that is not in a row of the task table has one host here.
 | `gov-operator-setup-o112` | `M2a` | The App, key and status permissions of O-112 are needed when `layup run` starts. |
 | `gov-operator-ci-protection` | out | Phase 1 adds no CI job; a task that changes `ci.yml` names the Operator's step in its own plan (K28). |
 | `gov-issue-68` | `M2e` | The handoff records of the task loop. |
-| `gov-issue-49` | out | It waits for the end of bootstrap mode (ADR-0012 part 4). |
+| `gov-issue-49` | out | [R11](../issue-workflow.md#r11--single-goal-issues) now holds the answer ("A task of one artifact", [ADR-0026](../adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md)); the Operator closes #49 or keeps it open. |
 | `later-psb-meaning-review` | `M2c` | The review of meaning needs a role session. |
 | `later-psb-intake-batch` | `M2c` | The one Intake batch needs `layup run`. |
 | `later-psb-early-question-share` | `M4b` | A measure of `layup report`. |
@@ -275,6 +276,26 @@ task that settles it and the tasks that read the settled text. "Row *n*" is a ro
 Each task also takes the open questions and the duplicate resolutions of its own
 items in the inventory as inputs of its plan.
 
+### The findings of the first pilot that are not fixed
+
+The first pilot (row 20) left these findings of
+[`runs/T-evad/findings.md`](../../runs/T-evad/findings.md) on its path, not fixed.
+The ADR that ended bootstrap mode
+([ADR-0026](../adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md),
+task `T-gd8q`) gives each one host. F-15 is settled by that ADR, and F-1 and F-11
+are known limits by the Operator's rulings.
+
+| Finding | Host | Note |
+| ------- | ---- | ---- |
+| F-2, F-31, F-35 | the specification task of `M2a` | A second setup run on a target: a changed input of a done step, the immutable records, the names of the branches. |
+| F-6 | the specification task of `M2a` | `layup setup verify` before S12. |
+| F-13, F-19 | the specification task of `M2a` | S13: `commands.sh` is not fail-fast; the ruleset parameters that S13 does not set. |
+| F-16 | the specification task of `M2a` | A stale line that the setup does not flag. |
+| F-21 | the specification task of `M2a` | Rule G1 of `layup psb check` reads only `technology stack:`. |
+| F-22 | `M2e` | The gate jobs read the base's gate files (the Operator's direction). |
+| F-23 | `M2f` | The catalog gates aligned with the target's own gate script. |
+| F-37 | the specification task of `M2a` | A tested tool for the steps that land a target task. |
+
 ## The open issues
 
 | Issue | Disposition |
@@ -284,7 +305,7 @@ items in the inventory as inputs of its plan.
 | [#24](https://github.com/pharzam/layup/issues/24) | Checked and closed by `T-55n2`, which also fixes its one open sentence in `docs/ci/README.md`. |
 | [#34](https://github.com/pharzam/layup/issues/34) | Row 15 (`T-d6q5`), with the rule-path register. |
 | [#48](https://github.com/pharzam/layup/issues/48) | Row 12 (`T-9t1q`), with check `facts`; cap 2. |
-| [#49](https://github.com/pharzam/layup/issues/49) | Waits for the end of bootstrap mode (ADR-0012 part 4). |
+| [#49](https://github.com/pharzam/layup/issues/49) | Answered by [R11](../issue-workflow.md#r11--single-goal-issues) ("A task of one artifact", [ADR-0026](../adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md)); the Operator closes it or keeps it open. |
 | [#61](https://github.com/pharzam/layup/issues/61) | Row 12 (`T-9t1q`), with check `facts`; cap 2. |
 | [#68](https://github.com/pharzam/layup/issues/68) | Milestone `M2e`, with the handoff records. |
 

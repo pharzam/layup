@@ -162,14 +162,15 @@ The Armature setup of this repository is done
 progress under [#29](https://github.com/pharzam/layup/issues/29); that parent
 issue lists its children, and [`tasks/completed.md`](tasks/completed.md) lists the
 ones that are done, so this section does not repeat the list. The open setup
-questions are listed in [`setup/open-gaps.tsv`](setup/open-gaps.tsv). Since
-2026-09-25 the repository is in
+questions are listed in [`setup/open-gaps.tsv`](setup/open-gaps.tsv). From
+2026-09-25 the repository was in
 [bootstrap mode](engineering-discipline.md#bootstrap-mode)
-([ADR-0012](adr/0012-build-layup-in-bootstrap-mode.md)): the product path is
+([ADR-0012](adr/0012-build-layup-in-bootstrap-mode.md)), and its rules are now the
+standing gate ([ADR-0026](adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md)): the product path is
 [#45](https://github.com/pharzam/layup/issues/45) (the idea owner's answers),
 then [#42](https://github.com/pharzam/layup/issues/42) (the PRD, the
 architecture, the specification and the plan; closed by the PDR,
 [`PDR-0001`](pdr/PDR-0001.md)), then the core-engine commands under #29 in the
 order of the [plan](plan/README.md), and the gate runs with one plan-review comment
-and one review round, one more after a fix (two for a change to a gate), until the ADR that supersedes
-ADR-0012 is accepted (a summary; the rule is the linked section).
+and one review round, one more after a fix (two for a change to a gate) (a summary;
+the rule is in [Reviewing until findings decay](engineering-discipline.md#reviewing-until-findings-decay)).
