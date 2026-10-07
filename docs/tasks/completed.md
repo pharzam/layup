@@ -20,6 +20,7 @@ here directly, in the shape above.
 - **YYYY-MM-DD** — **<ID>** — <one-sentence summary of what the task found or delivered> ([<link>](...); [detail](<id>.md))
 -->
 
+- **2026-10-07** — **T-w73g** — The survey of five public repositories that the Operator named, recorded as an input of the specification tasks of `M2b`, `M2f`, `M2g`, `M3a` and `M3d` and of the decision on the learning loop; no code ([#133](https://github.com/pharzam/layup/issues/133); [detail](T-w73g.md))
 - **2026-10-07** — **T-zck8** — The technical specification of milestone `M2a`, the Start of `layup run`: `run.md`, `forge.md`, the records of Start and the table of `M2a`, with K38, K40 and K41 settled (O-163) and the nine pilot findings moved to their milestones ([#123](https://github.com/pharzam/layup/issues/123); [detail](T-zck8.md))
 - **2026-10-07** — **T-gd8q** — ADR-0026 keeps the bootstrap review rules as the standing gate and ends bootstrap mode, with the end at the cap that the Operator chooses, from the count of the first pilot's numbers ([#120](https://github.com/pharzam/layup/issues/120); [detail](T-gd8q.md))
 - **2026-10-06** — **T-evad** — Row 20 of the plan: the first pilot. `layup` set up `pharzam/chat-orchestrator` from the Go brief `PSB-CHAT-001` and ran its gate from outside; the first pilot is a Fail (O-145), and the second run, after three fixes of LAYUP and taken into the target's `main` by its own process, has the idea owner's acceptance ([#97](https://github.com/pharzam/layup/issues/97); [detail](T-evad.md))

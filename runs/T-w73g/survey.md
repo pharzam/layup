@@ -41,7 +41,7 @@ is the first column of the table below. A directory ends with `/`.
 ## The repositories
 
 None gives a component that LAYUP can use as it is. Each is mainly Node or
-TypeScript (`ruflo` also has 39 Rust files under `ruflo:v3/crates/`), LAYUP is Go
+TypeScript (`ruflo` also has 39 Rust files, 21 of them under `ruflo:v3/crates/`), LAYUP is Go
 ([ADR-0010](../../docs/adr/0010-use-go-as-the-technology-stack.md)), and each
 keeps the runtime state of its agents (sessions, memory, locks, routing counts,
 lessons) outside Git, where LAYUP keeps every record in Git (Invariant 1). So
@@ -74,15 +74,15 @@ telemetry row.
 | ------- | ------ | --------- | ----------------- |
 | A process runner: one JSON event per line with a size cap on each line, the end of stderr kept with tokens removed, the process group stopped with SIGINT, then SIGTERM, then SIGKILL; a run counts as done only when the harness sends its final result event | `cc-multi-cli-plugin:plugins/multi-core/src/gateway/harness-process.ts` | The done rule and the stop sequence | It has no wall-clock deadline and no idle timeout; a hung harness runs until someone stops it. LAYUP needs both |
 | Failure classes: "fails the same way again" (no binary, policy, busy) against "uncertain" (stream ended early, crash) | `cc-multi-cli-plugin:plugins/multi-core/src/gateway/harness-failure.ts` | A retry only for the uncertain class | — |
-| The environment cleaned: the API keys of other providers removed, and one key that would switch the billing | `cc-multi-cli-plugin:plugins/multi-core/src/gateway/harness-process.ts`, `ruvnet-brain:tri-smart-skill/tri-smart/scripts/review.mjs` | The credential of a session comes only from its register row (K40, open for `M2b`) | Neither gives a session its own HOME; LAYUP's evaluation found tools that write into the home directory (`guardrails.md` §2) |
+| The environment cleaned: the API keys of other providers removed, and one key that would switch the billing | `cc-multi-cli-plugin:plugins/multi-core/src/gateway/harness-process.ts`, `cc-multi-cli-plugin:plugins/multi-grok/src/cli.ts`, `ruvnet-brain:tri-smart-skill/tri-smart/scripts/review.mjs` | The credential of a session comes only from its register row (K40, open for `M2b`) | Neither gives a session its own HOME; LAYUP's evaluation found tools that write into the home directory (`guardrails.md` §2) |
 | The tool policy checked after launch: the tool list that the harness announces is compared with the policy, and a forbidden tool stops the run with `policy` | `cc-multi-cli-plugin:plugins/multi-grok/src/cli.ts`, `cc-multi-cli-plugin:plugins/multi-grok/src/permissions.ts` | A harness that ignores an unknown tool name fails closed | — |
 | The session ID chosen before launch and recorded as `interrupted` at the first event; a resume after a crash is then deterministic | `cc-multi-cli-plugin:plugins/multi-grok/src/harness.ts` | Restart of a session | — |
 | The launch of `claude -p` and `codex exec`, one worktree for each writer, a timeout and an output cap; `codex exec` waits for the end of stdin, so stdin is closed at launch (checked by hand) | `ruflo:v3/@claude-flow/codex/src/dual-mode/orchestrator.ts` | The flags and the stdin rule for two harnesses | — |
 | The argument lists of `claude`, `codex` and `grok` in a read-only mode with JSON output, with process-group timeouts | `ruvnet-brain:tri-smart-skill/tri-smart/scripts/review.mjs` | A third source for the same flags | Its acceptance is a model's text matched by a pattern |
 | The headless flags of `grok` and `agy` (Antigravity): the table in the report | [`report-cc-multi-cli-plugin.md`](report-cc-multi-cli-plugin.md) | The flags, the events and the resume of two more harnesses | `agy` runs with its own permissions switched off and depends on a global hook |
 | A token ledger from the Claude and Codex transcripts: Claude duplicates removed by message and request ID; Codex gives running totals, so the ledger takes their differences and reads a drop as a reset; cache reads apart from cache writes | `ruflo:plugins/ruflo-cost-tracker/scripts/_ledger.mjs` | The telemetry row of a session from the harness's own transcript | — |
-| A price table of one row per model, each with the URL of its source | `ruflo:plugins/ruflo-cost-tracker/data/prices.json` | The form of `prices.tsv` (Invariant 4: a value with its evidence) | — |
-| Receipts of one line per run with no prompt text, written atomically | `cc-multi-cli-plugin:plugins/multi-core/src/gateway/receipts.ts`, `cc-multi-cli-plugin:plugins/multi-core/src/gateway/atomic-write.ts` | The content of a telemetry row | LAYUP already has one writer of the records in Git; its lock file is not needed |
+| A price table of one row per model, each with its source: a URL, or an estimate marked as one | `ruflo:plugins/ruflo-cost-tracker/data/prices.json` | The form of `prices.tsv` (Invariant 4: a value with its evidence) | — |
+| Receipts of one line per run with no prompt text, appended to a file; state files written by fsync, rename, then an fsync of the directory | `cc-multi-cli-plugin:plugins/multi-core/src/gateway/receipts.ts`, `cc-multi-cli-plugin:plugins/multi-core/src/gateway/atomic-write.ts` | The content of a telemetry row | LAYUP already has one writer of the records in Git; its lock file is not needed |
 
 ### `M2f` — rule protection
 
@@ -118,7 +118,7 @@ Concern: [ADR-0021](../../docs/adr/0021-branch-at-named-points-through-a-smart-i
 | Pattern | Source | What fits | What does not fit |
 | ------- | ------ | --------- | ----------------- |
 | A measured result of Jev: over 407 options the top-1 recall was 5 % and top-3 8 %; over the 22 options that were ever correct it was 18 % and 42 % (checked by hand) | `agnostic-ai:labs/claude-mods/experiments/jev/FINDINGS.md` | The option set of a decision point: its size is a parameter with this evidence | One experiment on one machine, on a different question |
-| Five named yes/no questions to a judge (contradicts, vague, unsupported, unsafe, unrelated) with a probability threshold | `self-improvement-loop:packages/curriculum/src/prompts.ts`, `self-improvement-loop:packages/providers/src/index.ts` | A decision point, never an engine check. Idea only (license) | — |
+| Five named yes/no questions to a judge (contradicts, vague, unsupported, unsafe, unrelated) with a probability threshold | `self-improvement-loop:packages/curriculum/src/prompts.ts`, `self-improvement-loop:packages/providers/src/index.ts`, `self-improvement-loop:packages/curriculum/src/run.ts` | A decision point, never an engine check. Idea only (license) | — |
 
 ### `M3d` — stalls and the budget cap
 
@@ -127,10 +127,10 @@ Concerns: [ADR-0023](../../docs/adr/0023-stop-a-stall-at-a-limit-and-diagnose-it
 
 | Pattern | Source | What fits | What does not fit |
 | ------- | ------ | --------- | ----------------- |
-| Numeric stop checks: a step limit, the ratio of repeated steps, the slope of the cost over the last 10 steps, forced checkpoints; the outcomes continue, checkpoint, pause (a human looks) or stop | `ruflo:v3/@claude-flow/guidance/src/continue-gate.ts` | The limit of the stall procedure | Two of its inputs come from a model; drop them |
+| Numeric stop checks: a step limit, the ratio of repeated steps, the slope of the cost over the last 10 steps, forced checkpoints; the outcomes continue, checkpoint, throttle, pause (a human looks) or stop | `ruflo:v3/@claude-flow/guidance/src/continue-gate.ts` | The limit of the stall procedure | Two of its inputs come from a model; drop them |
 | The same tool call, hashed, counted while it repeats; the limits 3, 5 and 8 are logged so that they can be tuned | `agnostic-ai:engine/hooks/repeat-tool-guard.cjs` | Raw data for "a step that repeats without progress" | Advisory only |
 | A stop after the third machine wake-up with no human turn | `agnostic-ai:engine/hooks/wakeup-guard.cjs` | — | — |
-| Reserve the budget before the spend, not after: the race of check, spend, record | `ruflo:v3/docs/adr/ADR-164.1-budget-tracker-atomicity.md` | The milestone cap | Its own code only warns (`ruflo:plugins/ruflo-cost-tracker/scripts/budget.mjs`) |
+| Reserve the budget before the spend, not after: the race of check, spend, record | `ruflo:v3/docs/adr/ADR-164.1-budget-tracker-atomicity.md` | The milestone cap | Its own script exits 1 at 100 %, but nothing in the repository stops a session on that exit (`ruflo:plugins/ruflo-cost-tracker/scripts/budget.mjs`) |
 | Escalate when rewording does not help: after a set number of revisions, if the rate since the last revision is still near the rate since promotion, a human decides | `self-improvement-loop:packages/curriculum/src/plan.ts` | A limit with no model. Idea only (license) | — |
 
 ### The learning loop — waits for the Operator's decision
@@ -157,7 +157,7 @@ Operator's decision and for the task that follows it.
 | ---- | ------ | --- |
 | Agent memory in SQLite and vectors | `ruflo:v3/@claude-flow/memory/` | State outside Git (Invariant 1) |
 | "Consensus" between agents | `ruflo:v3/@claude-flow/swarm/src/consensus/` | In one process; one node approves its own proposal; it is not an independent review |
-| Hooks that pass when they fail | `ruflo:plugin/hooks/hooks.json` | Most end in `\|\| true`, and one approves the plugin's own tools; the opposite of ADR-0017 |
+| Hooks that pass when they fail | `ruflo:plugin/hooks/hooks.json` | Half of the hook commands end in `\|\| true`, and one approves the plugin's own tools; the opposite of ADR-0017 |
 | The path to OpenAI through a private backend | `cc-multi-cli-plugin:plugins/multi-openai/src/auth.ts` | It reads the Codex login and calls a private endpoint |
 | A global hook written into the user's home | `cc-multi-cli-plugin:plugins/multi-antigravity/src/hooks.ts` | Outside the target; the policy depends on it |
 | A spend summary from transcripts with prices in the code | `agnostic-ai:tools/spend/spend.cjs` | Prices with no source |
@@ -171,7 +171,7 @@ evidence.
   (`agnostic-ai:engine/hooks/forced-verify-stop-gate.cjs`); the pre-commit hook
   that the README describes is not in the repository.
 - `ruflo`: the "89 % routing accuracy" comes from a hand-written table
-  (`ruflo:.claude/helpers/router.cjs`); the budget warns and never stops; the
+  (`ruflo:.claude/helpers/router.cjs`); the budget script exits 1 at 100 %, but nothing in the repository stops a session on that exit; the
   README counts 314 tools and its own baseline file lists 285.
 - `cc-multi-cli-plugin`: no timeout on a harness run; the README says each run
   isolates its identity, but the harnesses use the real home directory.

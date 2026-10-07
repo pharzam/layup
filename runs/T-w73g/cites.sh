@@ -20,7 +20,9 @@ dir=$(dirname "$0")
 survey=${1:-$dir/survey.md}
 clones=$2
 
-# repo name, directory name, GitHub path, commit
+# repo name, directory name, GitHub path, commit. A copy of the commit column
+# of the survey's table, by hand: the script does not read that table, so an
+# edit of one must be made in the other (round 1, note 8).
 repos='agnostic-ai Agnostic-AI ucsandman/Agnostic-AI aab09ff0d9533967045e7f2b04e478ec4e05528e
 ruflo ruflo ruvnet/ruflo 9fa701a466159242dfec06379ce1278c849a3e34
 cc-multi-cli-plugin cc-multi-cli-plugin greenpolo/cc-multi-cli-plugin 3dcb057c10b16d3ed911e8ce509e91398712c906

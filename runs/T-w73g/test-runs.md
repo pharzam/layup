@@ -53,3 +53,14 @@ exit 0
 ```
 
 The 66 `ok` lines are left out above.
+
+## 4. Green after the notes of round 1
+
+Note 4 of round 1 added two cited files; one of them was already cited, so the
+count goes from 66 to 67. On the five local clones:
+
+```text
+$ sh runs/T-w73g/cites.sh runs/T-w73g/survey.md <directory of the clones>
+cites: 67 source path(s), each present at its commit
+exit 0
+```
