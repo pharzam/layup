@@ -180,7 +180,7 @@ written as `—` (U+2014), never as an empty string, so that a human sees it.
 
 Each record has one schema block. A Go test of the code reads these blocks and
 compares them with what the code writes and reads (the test comes with the
-code, Bootstrap mode rule 1). The form:
+code, [the scope of a task](../engineering-discipline.md#working-a-task-under-the-quality-gate)). The form:
 
 ````text
 ```tsv-schema <name> <location>

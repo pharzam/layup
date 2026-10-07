@@ -140,12 +140,12 @@ one clean demo over a Definition of Done of six precondition classes, so the dem
 passed the tripwire while the goal count did not — the gap the size gate closed only
 downstream, at cost.
 
-**Bootstrap mode** (a summary; the rule is
-[Bootstrap mode](engineering-discipline.md#bootstrap-mode)). While
-[ADR-0012](adr/0012-build-layup-in-bootstrap-mode.md) is in force, the goal-class
-count is not applied to a task whose deliverable is one artifact and its
-registration, and a `reject` on the count alone is decided by the Operator, whose
-count is final.
+**A task of one artifact.** The goal-class count is not applied to a task whose
+deliverable is one artifact and its registration (a record, a decision, a
+document, a fact): a decision record is one goal, even with a check of its parts
+in the DoD (O-15). A `reject` on the goal count alone goes to the Operator, whose
+count is final
+([ADR-0026](adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md)).
 
 ## R12 — Slice and prioritize
 
@@ -205,11 +205,9 @@ its own.
   reading the prose around them. The unit and the base are set out in
   [Reviewing until findings decay](engineering-discipline.md#reviewing-until-findings-decay).
 
-**Bootstrap mode** (a summary; the rule is
-[Bootstrap mode](engineering-discipline.md#bootstrap-mode)). While
-[ADR-0012](adr/0012-build-layup-in-bootstrap-mode.md) is in force, the one round of
-plan review is one comment by the Operator or by one fresh agent session, with the
-same three named fields.
+**One comment.** The plan review is one comment, by the Operator or by one fresh
+agent session, with `Verdict`, `Budget maximum` and `Cycle cap` by those names
+([ADR-0026](adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md)).
 
 R12 makes [R8](#r8--test-driven-strict-red-then-green)'s "plan first" concrete: R8
 says a plan goes on the issue before the first test; R12 says what that plan is — an

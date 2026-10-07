@@ -39,7 +39,7 @@ are their enforcement:
    survives the deletion.)
 
 **Numbering.** `docs/adr/` is the single living ADR sequence, numbered
-contiguously from `0001`, and it grows — the next constitutional ADR is `0013`. A
+contiguously from `0001`, and it grows — the next constitutional ADR takes the next free number. A
 bare "ADR-NNNN" means this directory's sequence. The archive that was under `docs/decisions/`
 has its **own namespace**: a prefixed, zero-based sequence `D-0000`–`D-0008` that
 shares no number with this one and is cited **by its `D-NNNN` identifier** — named
@@ -148,7 +148,7 @@ record by number here, and let the index table below do the linking.
 | [0009](0009-pin-armature-at-a-recorded-commit.md) | Pin Armature at a recorded commit | Accepted |
 | [0010](0010-use-go-as-the-technology-stack.md) | Use Go as the technology stack | Accepted |
 | [0011](0011-structure-the-core-engine-as-a-go-cli-over-repository-files.md) | Structure the core engine as a Go CLI over repository files | Accepted |
-| [0012](0012-build-layup-in-bootstrap-mode.md) | Build LAYUP in bootstrap mode | Accepted |
+| [0012](0012-build-layup-in-bootstrap-mode.md) | Build LAYUP in bootstrap mode | Superseded by ADR-0026 |
 | [0013](0013-orchestrate-a-target-from-outside-with-layup-run.md) | Orchestrate a target from outside with `layup run` | Accepted |
 | [0014](0014-keep-the-records-in-the-target-with-one-writer.md) | Keep the records in the target with one writer | Accepted |
 | [0015](0015-keep-model-calls-out-of-the-engine-checks.md) | Keep model calls out of the engine checks | Accepted |
@@ -162,6 +162,7 @@ record by number here, and let the index table below do the linking.
 | [0023](0023-stop-a-stall-at-a-limit-and-diagnose-it-with-a-fresh-context.md) | Stop a stall at a limit and diagnose it with a fresh context | Accepted |
 | [0024](0024-record-every-sessions-cost-and-stop-at-the-milestone-cap.md) | Record every session's cost and stop at the milestone cap | Accepted |
 | [0025](0025-learn-routing-from-the-records-at-each-retrospective.md) | Learn routing from the records at each retrospective | Accepted |
+| [0026](0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md) | Keep the bootstrap review rules as the standing gate | Accepted |
 
 <!-- Add one row per ADR as you write them. Keep the newest at the bottom. -->
 

@@ -769,8 +769,7 @@ root commit. The order of a setup in phase 1:
   target, and each verify run runs the gate of each active kind twice.
 - **No CI change** (K28): the tests run in the job `tests` with no change of
   `ci.yml`, as the tests of the stack catalog do; a change of it is a change
-  of a gate ([Bootstrap mode](../engineering-discipline.md#bootstrap-mode)
-  rule 3).
+  of a gate ([the cycle cap](../engineering-discipline.md#reviewing-until-findings-decay)).
 - **The pushes:** the test runs `commands.sh` with a local bare repository in
   the place of GitHub (through `url.<bare>.insteadOf` in the environment of the
   test, so the target's own `origin` stays the URL of GitHub) and a stub of

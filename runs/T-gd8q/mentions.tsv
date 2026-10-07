@@ -1,0 +1,48 @@
+path	line	class	reason
+docs/adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md	*	link	the new rule itself; its file name holds the word
+runs/	*	history	evidence of past tasks; outside the grep of the criterion
+docs/tasks/T-*.md	*	history	the records of past tasks; outside the grep of the criterion
+docs/adr/0012-build-layup-in-bootstrap-mode.md	*	history	the superseded record; only its Status may change
+docs/tasks/completed.md	*	history	dated lines of finished tasks
+docs/tasks/backlog.md	*	history	the line of this task, which the close-out moves to the completed log
+internal/catalog/entries_integration_test.go	*	history	a Go comment that cites rule 4 of the mode, now in Who may review; code is out of scope
+.gitattributes	*	other-meaning	scripts/bootstrap.sh, a file name of the kit
+docs/facts/problem-statement-brief.md	*	other-meaning	the PSB: "Manual Bootstrap"; a hashed fact
+docs/facts/F-0003-layup-psb-numbered-facts-part-2.md	*	other-meaning	the PSB: "Manual Bootstrap"; a hashed fact
+AGENTS.md	74	history	says what bootstrap mode was, or links its history section or ADR-0012
+AGENTS.md	75	link	a link to ADR-0026 (its file name holds the word)
+AGENTS.md	76	history	says what bootstrap mode was, or links its history section or ADR-0012
+AGENTS.md	78	history	says what bootstrap mode was, or links its history section or ADR-0012
+README.md	31	link	a link to ADR-0026 (its file name holds the word)
+README.md	36	history	says what bootstrap mode was, or links its history section or ADR-0012
+README.md	37	history	says what bootstrap mode was, or links its history section or ADR-0012
+docs/adr/0005-route-work-by-model-tier.md	7	link	a link to ADR-0026 (its file name holds the word)
+docs/adr/0006-convene-a-panel-to-generate-options.md	7	link	a link to ADR-0026 (its file name holds the word)
+docs/adr/README.md	25	history	says what bootstrap mode was, or links its history section or ADR-0012
+docs/adr/README.md	151	history	says what bootstrap mode was, or links its history section or ADR-0012
+docs/adr/README.md	165	link	a link to ADR-0026 (its file name holds the word)
+docs/engineering-discipline.md	41	link	a link to ADR-0026 (its file name holds the word)
+docs/engineering-discipline.md	145	link	a link to ADR-0026 (its file name holds the word)
+docs/engineering-discipline.md	160	history	says what bootstrap mode was, or links its history section or ADR-0012
+docs/engineering-discipline.md	161	link	a link to ADR-0026 (its file name holds the word)
+docs/engineering-discipline.md	195	history	says what bootstrap mode was, or links its history section or ADR-0012
+docs/engineering-discipline.md	197	history	says what bootstrap mode was, or links its history section or ADR-0012
+docs/engineering-discipline.md	198	history	says what bootstrap mode was, or links its history section or ADR-0012
+docs/engineering-discipline.md	200	link	a link to ADR-0026 (its file name holds the word)
+docs/engineering-discipline.md	235	link	a link to ADR-0026 (its file name holds the word)
+docs/engineering-discipline.md	387	link	a link to ADR-0026 (its file name holds the word)
+docs/engineering-discipline.md	714	link	a link to ADR-0026 (its file name holds the word)
+docs/glossary.md	150	link	a link to ADR-0026 (its file name holds the word)
+docs/glossary.md	152	link	a link to ADR-0026 (its file name holds the word)
+docs/guardrails.md	119	history	says what bootstrap mode was, or links its history section or ADR-0012
+docs/issue-workflow.md	148	link	a link to ADR-0026 (its file name holds the word)
+docs/issue-workflow.md	210	link	a link to ADR-0026 (its file name holds the word)
+docs/onboarding-for-engineers.md	167	history	says what bootstrap mode was, or links its history section or ADR-0012
+docs/onboarding-for-engineers.md	168	history	says what bootstrap mode was, or links its history section or ADR-0012
+docs/onboarding-for-engineers.md	169	link	a link to ADR-0026 (its file name holds the word)
+docs/plan/README.md	23	link	a link to ADR-0026 (its file name holds the word)
+docs/plan/README.md	24	history	says what bootstrap mode was, or links its history section or ADR-0012
+docs/plan/README.md	204	link	a link to ADR-0026 (its file name holds the word)
+docs/plan/README.md	283	history	says what bootstrap mode was, or links its history section or ADR-0012
+docs/plan/README.md	284	link	a link to ADR-0026 (its file name holds the word)
+docs/plan/README.md	308	link	a link to ADR-0026 (its file name holds the word)

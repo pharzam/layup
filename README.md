@@ -28,12 +28,13 @@ a deterministic orchestrator, `layup run`, that drives a target from its problem
 statement to accepted software, from outside the target. Its technical
 specification, one milestone at a time, is in [`docs/spec/`](docs/spec/README.md),
 and its implementation plan, task by task, in [`docs/plan/`](docs/plan/README.md).
-Since 2026-09-25 the repository is in bootstrap mode
-([ADR-0012](docs/adr/0012-build-layup-in-bootstrap-mode.md); a summary — the rule
-is [Bootstrap mode](docs/engineering-discipline.md#bootstrap-mode)): until the ADR
-that supersedes ADR-0012 is accepted, work is limited to the PSB's In-Scope items
-and what they need, and the gate runs with one plan-review comment and one review
-round, one more after a fix (two for a change to a gate).
+The gate ([ADR-0026](docs/adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md);
+a summary — the rule is in
+[`docs/engineering-discipline.md`](docs/engineering-discipline.md#working-a-task-under-the-quality-gate))
+limits work to the PSB's In-Scope items and what they need, and runs with one
+plan-review comment and one review round, one more after a fix (two for a change
+to a gate). It keeps the rules of bootstrap mode (2026-09-25 to the end of the
+first pilot, [ADR-0012](docs/adr/0012-build-layup-in-bootstrap-mode.md)).
 
 ## Start here
 

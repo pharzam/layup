@@ -115,7 +115,8 @@ check that catches it.
   and a plan review, and most rounds a record, so the process looked healthy
   while the product stood still. **The check:** a plan names the PSB
   In-Scope fact (`F-0003#41`–`#52`) it serves, or the task does not start
-  ([ADR-0012](adr/0012-build-layup-in-bootstrap-mode.md), part 1); and the
+  ([the scope of a task](engineering-discipline.md#working-a-task-under-the-quality-gate),
+  first [ADR-0012](adr/0012-build-layup-in-bootstrap-mode.md), part 1); and the
   product-to-process ratio of [`tasks/completed.md`](tasks/completed.md) is read
   at each pilot. Learned in `T-8ywj`.
 - ❌ **A copied template keeps its voice.** After the setup, the documents still
@@ -189,14 +190,29 @@ check that catches it.
   found it, and it became a reported deviation. It is silent because nothing
   checks a model name in a brief, and a short alias (`sonnet`, `opus`) hides which
   version ran. **The check:** before a brief names a model, compare the full model
-  ID with the "not used" list of
-  [ADR-0012](adr/0012-build-layup-in-bootstrap-mode.md), and write full model IDs
+  ID with the models not to use in
+  [Model tiers](engineering-discipline.md#model-tiers) (first ADR-0012 part 3), and write full model IDs
   in every evidence file. Learned in `T-hbw8`.
 - ❌ **A word-for-word copy with trailing spaces.** A comment or a tool output
   copied into a record keeps its trailing spaces. No hook runs `git diff --check`,
   so 17 such lines passed every commit of `T-hbw8` and failed only at close-out.
   **The check:** after you copy text into a record, run `git diff --check` on it;
   remove trailing spaces, which carry no meaning there. Learned in `T-hbw8`.
+- ❌ **A mutation undone with `git checkout` undoes the work too.** To show that a
+  check can fail, the author added a line to a file and then ran
+  `git checkout <file>` to remove it. The file also held the task's own edits, not
+  yet staged, and they were lost with the test line. It is silent because the
+  checks pass on the old text. **The check:** commit or stage the work before a
+  mutation, or run the mutation on a copy of the tree. Learned in `T-gd8q`.
+- ❌ **A headless reviewer whose commands are denied.** Two review rounds of
+  Claude Fable 5.1 (`claude -p --permission-mode dontAsk`) gave no record in
+  fifteen minutes. The cause was the run, not the model: the RTK hook rewrote
+  `git diff`, `ls`, `wc` and `diff` to `rtk …`, which the allow rules did not
+  match, so they were denied; and text output is written only at the end, so the
+  timeout lost the work. **The check:** allow `Bash(rtk git:*)`, `Bash(rtk ls:*)`,
+  `Bash(rtk wc:*)` and `Bash(rtk diff:*)` (never `Bash(rtk:*)`: `rtk proxy` runs
+  any command), use `--output-format stream-json --verbose`, and read
+  `permission_denials` of the result. Learned in `T-gd8q`.
 - ❌ **A one-line form that loses a failure.** The first lint command of the first
   pilot put the gate script of the brief into one pipe. When `git ls-files` failed
   (an invalid index), the pipe took the status of its last command, and the check
