@@ -17,9 +17,10 @@ var built = []string{"catalog-gaps", "catalog-kinds", "gate-manifest", "gate-res
 	"setup-steps", "setup-stop", "setup-verify", "stalls", "telemetry"}
 
 // notYetBuilt lists each block that no owner compares with a Go schema yet.
-// It only becomes shorter: a rule for the reviewer of each owner task; a test
-// cannot read the list of its base (docs/spec/README.md, The schema block).
-var notYetBuilt = []string{}
+// A later section adds the names of its new blocks; otherwise it only becomes
+// shorter: a rule for the reviewer of each owner task; a test cannot read the
+// list of its base (docs/spec/README.md, The schema block).
+var notYetBuilt = []string{"approvers", "copies", "forge-register", "harness-register", "lease", "run-steps", "start"}
 
 // Each block of docs/spec/ has the form of the README, and is in exactly one
 // of the two lists; each listed name is a block. A block that a later section

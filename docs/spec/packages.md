@@ -23,8 +23,9 @@ ADR-0011 decision 1 and ADR-0013.
 5. No package of phase 1 depends on `net`, `net/http` or `crypto/tls`, by its
    own imports or through another package: the engine checks open no
    connection (`NFR-005`, [`gate.md`](gate.md#nfr-005--no-model-call-in-the-engine-checks)).
-   The specification task of milestone `M2a` gives the forge adapter (phase 2)
-   its rule, and that of `M3a` gives `internal/smartif` (phase 3) its rule
+   From milestone `M2a`, only `internal/forge/github` depends on them: the
+   column "Connects" of [the table of M2a](#the-table-of-m2a) says so, and
+   `M3a` gives `internal/smartif` (phase 3) its rule
    ([the milestones](../plan/README.md#milestones)).
 
 **Decided here** (D6 of #79, K8): the rules bind the non-test Go files only. A
@@ -94,6 +95,32 @@ of the block `psb-gaps`, which its block test compares with the block (D5 of
 #86), so the IDs `Q-NNN` keep one home and `internal/setup` imports no
 `internal/psb`.
 
+### The table of M2a
+
+Milestone `M2a` (task `T-zck8`, #123; [`run.md`](run.md), [`forge.md`](forge.md)).
+The columns of the table of phase 1, and one more: **"Connects"** is the
+character — for a package that opens no connection, or one code span per
+package of the standard library of rule 5 that it may depend on. **Decided
+here:** the build task that makes the first package of this table makes
+`TestPackageRules` read this table too, and rule 5 from this column, so the test
+holds no list of its own (D7 of #79), in the same change.
+
+| Package | Job | May import | Starts a program | Connects |
+| ------- | --- | ---------- | ---------------- | -------- |
+| `internal/run` | `layup run`: the steps of Start, the restart, the lease and fencing, the copy of a comment and the rule of a decision ([`run.md`](run.md)) | `internal/tsv`, `internal/git`, `internal/records`, `internal/forge`, `internal/route` | no | — |
+| `internal/forge` | the forge interface: the six capabilities and their types ([`forge.md`](forge.md)) | — | no | — |
+| `internal/forge/github` | the GitHub adapter: the JWT, the installation token, the calls of [`forge.md`](forge.md#the-calls-of-m2a) | `internal/forge` | no | `net`, `net/http`, `crypto/tls` |
+| `internal/route` | in `M2a`, only the reader of the harness register (`host:registers/harnesses.tsv`); the probe, admission and routing come in `M2b` | `internal/tsv` | no | — |
+
+In `M2a` two rows of the table of phase 1 change, in the build task that needs
+each: `internal/cli` may also import `internal/run`, `internal/forge/github` and
+`internal/route` (it builds the adapter from the register and hands it to
+`internal/run`); `internal/records` also holds the schemas of the records of
+Start ([`records.md`](records.md#nfr-001--the-records-of-start)), and still
+imports `internal/tsv` only. `internal/run` commits and pushes the records with
+`internal/git`; `internal/records` gives the rows. The later table below keeps
+`internal/route` for its jobs of `M2b`.
+
 ### The test of the package rules
 
 **Decided here** (D7 and D9 of #79):
@@ -157,6 +184,18 @@ that the steps, the checks and `layup gate` name.
 | `DiffNames` | `git diff --name-only --no-renames -z --end-of-options BASE HEAD --` | `layup gate`: a `pending` kind |
 | `Apply` | `git apply -- PATCH` | check `gate:<kind>`: the known-bad fixture |
 | `LsTree` | `git ls-tree -r -z --full-tree --end-of-options REV -- PATH` | `layup gate`, step 2 of the run: the files of a `config` path at the base, with their modes (task `T-5sgt`); S04: the records of `docs/adr/` and `docs/facts/` at the root commit (task `T-7s0y`); S05: the history at the head; S11: the records of `docs/facts/` at the head (task `T-b3r1`); S12: the tree of the head; S15: the `.sh` files of `layup-setup`, and the tree of the records commit of a run that stopped (task `T-d6q5`) |
+
+**The calls of `M2a`** (task `T-zck8`; [`run.md`](run.md)). Each takes the
+token of [`forge.md`](forge.md#the-app-identity) in its environment when the
+remote needs it; no other value enters the fixed list.
+
+| Call | The command, after the `-c` values below | Used by |
+| ---- | ---------------------------------------- | ------- |
+| `Fetch` | `git fetch --no-tags -- URL REF:REF` | `layup run`: the read-back of the root commit (Start 4); the restart: the records branch |
+| `Push` | `git push --porcelain -- URL COMMIT:refs/heads/BRANCH`; never `--force` | `layup run`: each records commit (fencing: a push that is not a fast-forward is refused) |
+
+The restart's fresh clone uses `Clone`; the records commits use `WorktreeAdd`,
+`Add`, `Commit`, `RevParse` and `WorktreeRemove`, as S15 does.
 
 - `--end-of-options` or `--` comes before each revision, URL and path, so an
   input is never an option (`layup gate` takes revisions from its arguments).

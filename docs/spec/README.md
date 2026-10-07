@@ -7,9 +7,10 @@ implements. It has the form that [`architecture.md`](../architecture.md) §7 ask
 of a target, so `layup spec check` can later read it.
 
 It is written one milestone at a time (task `T-0drh`, #74; decision O-114).
-This version covers **phase 1** of `PRD-0001` §9 only. A later milestone adds
-its own sections; it does not rewrite the package table or the layout of the
-records, which already name the later phases.
+This version covers **phase 1** of `PRD-0001` §9 and milestone **`M2a`** of
+phase 2 (task `T-zck8`, #123). A later milestone adds its own sections; it does
+not rewrite the package table or the layout of the records, which already name
+the later phases.
 
 ## The files
 
@@ -20,6 +21,8 @@ records, which already name the later phases.
 | [`psb-check.md`](psb-check.md) | `REQ-001` | `layup psb check` |
 | [`setup.md`](setup.md) | `REQ-002`, `NFR-003`, `NFR-006` | `layup setup`, `layup setup verify`, the stack catalog |
 | [`gate.md`](gate.md) | `REQ-004`, `REQ-007`, `NFR-004`, `NFR-005` | `layup gate`, the gate manifest |
+| [`run.md`](run.md) | `NFR-001`, `NFR-002`, `NFR-006`, `REQ-002` | `layup run`: the Start of a target and the restart (`M2a`) |
+| [`forge.md`](forge.md) | `NFR-001`, `NFR-007` | the forge interface and the GitHub adapter (`M2a`) |
 
 ## How a section is written
 
@@ -231,8 +234,9 @@ schema of a record's owner.
   `notYetBuilt`. It checks that each block is in exactly one list, and that each
   listed name is a block. An owner moves the name of its block from
   `notYetBuilt` to `built` in the same change as its own test.
-- `notYetBuilt` only becomes shorter. This is a rule for the reviewer of each
-  owner task, not a check: a test cannot read the list of its base.
+- A later section adds the names of its new blocks to `notYetBuilt`;
+  otherwise `notYetBuilt` only becomes shorter. This is a rule for the reviewer
+  of each owner task, not a check: a test cannot read the list of its base.
 - A block that a later section adds makes that test fail until its name is in
   one of the two lists.
 
@@ -272,4 +276,6 @@ no role session, runs no phase loop, and makes no forge call. The orchestrator
 `layup run`, which is the one writer of a target's records branch (ADR-0014),
 comes in a later phase. So a section of phase 1 that needs `layup run` gives the
 schema and names `layup run` as the writer, and each part that waits for it is
-under **Not in phase 1**.
+under **Not in phase 1**. Milestone `M2a` specifies the Start of `layup run`
+([`run.md`](run.md), [`forge.md`](forge.md)); a part that a later milestone
+delivers is under **Not in M2a**, with that milestone.

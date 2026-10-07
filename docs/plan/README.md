@@ -198,7 +198,7 @@ Each inventory item that is not in a row of the task table has one host here.
 | `gov-pilot-definition` | O-122 | The Operator's reading of the first pilot. |
 | `gov-pilot-numbers` | the ADR that supersedes ADR-0012 | The count is the first step of the ADR task, by this plan's choice. Row 20's plan review did not pre-register its rule; task `T-gd8q` wrote the rule after the numbers, and the Operator accepted it (O-159, [`runs/T-gd8q/numbers.md`](../../runs/T-gd8q/numbers.md)). |
 | `gov-supersede-adr-0012` | the ADR that supersedes ADR-0012 | A separate issue that row 20 opens (O-121). |
-| `gov-operator-setup-o112` | `M2a` | The App, key and status permissions of O-112 are needed when `layup run` starts. |
+| `gov-operator-setup-o112` | `M2a`, `M2e`, `M3d` | The App's private key on the host (mode 0600) and the App installed on the target: Start of `M2a`. The commit-statuses permission: `M2e` (`later-gate-status`, the four `layup/` checks). `layup-watch`: `M3d`; until then Start records `watch` as `not-confirmed`. |
 | `gov-operator-ci-protection` | out | Phase 1 adds no CI job; a task that changes `ci.yml` names the Operator's step in its own plan (K28). |
 | `gov-issue-68` | `M2e` | The handoff records of the task loop. |
 | `gov-issue-49` | out | [R11](../issue-workflow.md#r11--single-goal-issues) now holds the answer ("A task of one artifact", [ADR-0026](../adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md)); the Operator closes #49 or keeps it open. |
@@ -267,10 +267,10 @@ task that settles it and the tasks that read the settled text. "Row *n*" is a ro
 | K35 | row 4 | rows 14, 15 | The catalog's rename rule for `go.mod` and `.github/` under `embed`. |
 | K36 | `T-55n2` | — | #24 closed with its evidence; #15 settled with this task's lesson. |
 | K37 | `T-55n2` | — | Those items are out of phase 1 (the hosts table). |
-| K38 | `M2a` | — | An input of the specification task of phase 2. |
+| K38 | `T-zck8` (`M2a`) | `M2b`, `M2c`, `M2e`, `M3d` | Settled by one rule: a record is specified in the milestone whose code first writes it ([`records.md`](../spec/records.md#the-layout-of-the-records-branch)). `questions.tsv` and `budget.tsv` go to `M2c` (Intake writes them; the cap of milestone 0 is `intake.cap` of `start.tsv`), `routing.tsv` and the second admitted harness to `M2b`, the frozen test list to `M2e` (frozen at the task's first valid handoff to the verifier, `architecture.md` §8; read by `M2g`), the dead-man job and its record to `M3d`; `M2a` only reads its first notice. |
 | K39 | row 2 | `M2a`, `M3a` | Phase 1: no package imports a network package; `M2a` names the forge adapter and `M3a` names `internal/smartif`. |
-| K40 | `M2a` | — | An input of the specification task of phase 2. |
-| K41 | `M2a` | — | An input of the specification task of phase 2. |
+| K40 | `T-zck8` (`M2a`): the App key; `M2b`: the harness credential | `M2b` | The App ID, the key file and the URLs are the forge register that `--host DIR` names (decided in [`run.md`](../spec/run.md), [`records.md`](../spec/records.md#nfr-001--the-records-of-start)). Still open for `M2b`: the architecture gives a session its harness credential as "a variable, or a file that the register row names" (§4), and `spec/README.md` reads no environment variable as an input of `layup`. |
+| K41 | O-163 (#123) | `M2d` | `M2a` specifies an empty repository only (`--new`); the adoption of a target that phase 1 set up goes to `M2d`, where `layup run` drives the Scaffold. |
 | K42 | row 13 | rows 16, 20 | Found by the self-check: the setup record names a source for each value, but no row for a kept file that the prose step replaces (O-123). The prose step writes one record row for each replaced file, so `REQ-018` has its evidence. |
 
 Each task also takes the open questions and the duplicate resolutions of its own
@@ -280,21 +280,22 @@ items in the inventory as inputs of its plan.
 
 The first pilot (row 20) left these findings of
 [`runs/T-evad/findings.md`](../../runs/T-evad/findings.md) on its path, not fixed.
-The ADR that ended bootstrap mode
+The specification task of `M2a` (`T-zck8`, #123) moved the nine that it hosted to
+the milestone whose code each one changes. The ADR that ended bootstrap mode
 ([ADR-0026](../adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md),
 task `T-gd8q`) gives each one host. F-15 is settled by that ADR, and F-1 and F-11
 are known limits by the Operator's rulings.
 
 | Finding | Host | Note |
 | ------- | ---- | ---- |
-| F-2, F-31, F-35 | the specification task of `M2a` | A second setup run on a target: a changed input of a done step, the immutable records, the names of the branches. |
-| F-6 | the specification task of `M2a` | `layup setup verify` before S12. |
-| F-13, F-19 | the specification task of `M2a` | S13: `commands.sh` is not fail-fast; the ruleset parameters that S13 does not set. |
-| F-16 | the specification task of `M2a` | A stale line that the setup does not flag. |
-| F-21 | the specification task of `M2a` | Rule G1 of `layup psb check` reads only `technology stack:`. |
+| F-2, F-31, F-35 | `M2d` | A second setup run on a target: a changed input of a done step, the immutable records, the names of the branches. `layup run` drives the setup in the Scaffold, and adopts a phase-1 target there (K41, O-163). |
+| F-6 | `M2d` | `layup setup verify` before S12; the Scaffold reads the verify table. |
+| F-13, F-19 | `M2d` | S13: `commands.sh` is not fail-fast; the ruleset parameters that S13 does not set. The Scaffold re-specifies the files and the printed commands of S13 (the Operator still applies the rulesets with the Operator's own login, `architecture.md` §6); the fail-fast rule and the two parameters belong to that rewrite. |
+| F-16 | `M2d` | A stale line that the setup does not flag; the adaptation step of the Scaffold. |
+| F-21 | `M2c` | Rule G1 of `layup psb check` reads only `technology stack:`; the gap check of Intake. |
 | F-22 | `M2e` | The gate jobs read the base's gate files (the Operator's direction). |
 | F-23 | `M2f` | The catalog gates aligned with the target's own gate script. |
-| F-37 | the specification task of `M2a` | A tested tool for the steps that land a target task. |
+| F-37 | `M2e`, `M2g` | A tested tool for the steps that land a target task: the merge at the head SHA and the close-out commit (`M2e`), and the merge order of the build tasks (`M2g`). |
 
 ## The open issues
 

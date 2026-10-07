@@ -25,3 +25,35 @@ FAIL docs/spec/records.md: ## NFR-001 — The records of Start (the one-writer s
 FAIL docs/spec/packages.md: ### The table of M2a (the packages of `M2a` and rule 5 for the forge adapter)
 exit 1
 ```
+
+## D3: the schema blocks of the records of Start (2026-10-07T09:05Z)
+
+Red, with the six blocks in `docs/spec/records.md` and no name in either list: `go test -tags=integration -run TestEverySchemaBlockIsBuiltOrNotYetBuilt ./internal/tsv/` failed with six lines `the block <name> is listed 0 times in built and notYetBuilt; want 1` (approvers, copies, forge-register, harness-register, lease, start), `FAIL`.
+
+Green, with the six names in `notYetBuilt`: `ok  github.com/pharzam/layup/internal/tsv`.
+
+## Green, on the head before the freeze (2026-10-07T09:09Z)
+
+```
+ok   docs/spec/run.md: ## The command
+ok   docs/spec/run.md: ### The steps of `layup run --new`
+ok   docs/spec/run.md: ### The restart
+ok   docs/spec/run.md: ### The lease and fencing
+ok   docs/spec/run.md: ### A human decision
+ok   docs/spec/run.md: ### Copy before read
+ok   docs/spec/run.md: ### The Intake and control issues
+ok   docs/spec/run.md: ### Input states
+ok   docs/spec/run.md: ## NFR-006 — The target's pin at Start
+ok   docs/spec/run.md: ## The acceptance tests of M2a
+ok   docs/spec/run.md: ## The findings of the first pilot
+ok   docs/spec/forge.md: ## The six capabilities
+ok   docs/spec/forge.md: ## The App identity
+ok   docs/spec/forge.md: ## The calls of M2a
+ok   docs/spec/forge.md: ## Forge errors
+ok   docs/spec/forge.md: ## The test of the adapter
+ok   docs/spec/records.md: ## NFR-001 — The records of Start
+ok   docs/spec/packages.md: ### The table of M2a
+exit 0
+ok  	github.com/pharzam/layup/internal/tsv	0.217s
+ok  	github.com/pharzam/layup/cmd/layup	0.829s
+```

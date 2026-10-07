@@ -10,8 +10,10 @@ of a target are on its branch `layup-records`, an orphan branch that only
 One row per record kind of the whole architecture (§1 to §15), so that a later
 milestone adds schemas and does not move a file. The inventory that this table
 was checked against is [`runs/T-0drh/checklist.md`](../../runs/T-0drh/checklist.md),
-part C. "Phase" is the earliest `PRD-0001` phase whose requirement needs the
-record; a schema is in this directory only for a record of phase 1.
+part C. "Phase" is the phase of the milestone whose code first writes the
+record (K38, task `T-zck8`); a schema is in this directory for a record of
+phase 1 and for a record of each milestone whose specification task has run
+(`M2a`: [the records of Start](#nfr-001--the-records-of-start)).
 
 **Decided here:** every path that the architecture does not name (it names 18
 files, most without a directory), and the phase of each record. The paths
@@ -24,17 +26,17 @@ or payload of one task is under `tasks/<task>/`.
 | ---- | ------ | - | ------ | ----- | ------ |
 | `README.md` | what the branch is, and how to read it with no tool | 3 | `layup setup` (O-115) | 1 | a fixed text: [`setup.md`](setup.md#the-readme-of-the-records-branch) |
 | `start/problem-statement.md`, `start/vision.md` | the two briefs, byte for byte | 5 | `layup run` | 2 | — |
-| `start/start.tsv` | each brief's SHA-256, the LAYUP version, the forge plan, the values of the Start command | 5, 13 | `layup run` | 2 | later |
+| `start/start.tsv` | each brief's SHA-256, the LAYUP version, the forge plan, the values of the Start command | 5, 13 | `layup run` | 2 | [below](#nfr-001--the-records-of-start) |
 | `setup/record.tsv` | the setup record: each value with its source, the pin rows included | 5 | `layup setup` | 1 | [`setup.md`](setup.md#the-setup-record) |
 | `setup/verify.tsv` | the table of `layup setup verify` | 5 | `layup setup verify`, committed by `layup setup` (O-115) | 1 | [`setup.md`](setup.md#the-checks-of-layup-setup-verify) |
 | `setup/rulesets.txt` | the output of the Operator's ruleset command (the bypass list) | 3 | `layup run` | 2 | — |
 | `setup/forge-check.tsv` | the effective rules read back, and the probe results | 3, 5 | `layup run` | 2 | later |
 | `rule-paths.tsv` | the rule-path register | 6 | `layup setup` | 1 | [`setup.md`](setup.md#the-rule-path-register) |
-| `approvers.tsv` | each human account by its numeric ID, with its role | 3 | `layup run` | 2 | later |
-| `lease.tsv` | the lease row: run ID, host, start, heartbeat counter | 2 | `layup run` | 2 | later |
-| `copies.tsv`, `copies/<comment-id>.md` | each copied comment: the row (author ID and login, comment ID, App field, time, SHA-256) and the body | 3 | `layup run` | 2 | later |
+| `approvers.tsv` | each human account by its numeric ID, with its role | 3 | `layup run` | 2 | [below](#nfr-001--the-records-of-start) |
+| `lease.tsv` | the lease row: run ID, host, start, heartbeat counter | 2 | `layup run` | 2 | [below](#nfr-001--the-records-of-start) |
+| `copies.tsv`, `copies/<comment-id>-<seen>.md` | each copied comment: the row (author ID and login, comment ID, App field, time, SHA-256) and the body | 3 | `layup run` | 2 | [below](#nfr-001--the-records-of-start) |
 | `intake/meaning.tsv` | the rows of the review of meaning | 5 | `layup run` | 2 | later |
-| `questions.tsv` | every question and its answer, with the phase, the asker and the times | 5, 8, 12 | `layup run` | 3 | later |
+| `questions.tsv` | every question and its answer, with the phase, the asker and the times | 5, 8, 12 | `layup run` | 2 (`M2c`, K38) | later |
 | `spec/spans.tsv` | the fact spans of the problem statement | 7 | `layup run` | 2 | later |
 | `spec/inventory-<n>.tsv` | a version of the confirmed inventory, with its SHA-256 in `spec/inventory.tsv` | 7 | `layup run` | 2 | later |
 | `batches.tsv` | each rule batch: head SHA, rule-file hash, approval | 6 | `layup run` | 2 | later |
@@ -44,20 +46,20 @@ or payload of one task is under `tasks/<task>/`.
 | `sessions.tsv` | the session start rows | 4, 9, 12 | `layup run` | 2 | later |
 | `tasks/<task>/events.tsv` | the events of one task | 3, 8 | `layup run` | 2 | later |
 | `tasks/<task>/results/<session>.tsv` | the typed result (handoff) of one session, after its check | 4, 8 | `layup run` | 2 | later |
-| `tasks/<task>/tests.tsv` | the frozen test list | 11 | `layup run` | 3 | later |
+| `tasks/<task>/tests.tsv` | the frozen test list | 11 | `layup run` | 2 (`M2e`, K38) | later |
 | `tasks/<task>/gates.tsv` | the table of `layup gate` for each head of the task | 6, 8 | `layup run` | 2 | [`gate.md`](gate.md#the-table), with the head as part of the key |
 | `acceptance.tsv` | one row per review of a requirement | 8, 12 | `layup run` | 2 | later |
 | `parameters.tsv` | every parameter | 10 | `layup run` | 2 | later |
 | `harnesses.tsv` | the admitted harnesses, their versions and probe results | 9 | `layup run` | 2 | later |
 | `owners.tsv` | the confirmed owner map | 9 | `layup run` | 3 | later |
-| `routing.tsv` | the routing register and its weights | 9, 13 | `layup run` | 3 | later |
+| `routing.tsv` | the routing register and its weights | 9, 13 | `layup run` | 2 (`M2b`, K38) | later |
 | `overrides.tsv` | a harness override of a task (a reroute) | 11 | `layup run` | 3 | later |
 | `providers.tsv` | the admitted smart-if providers and their probe results | 10 | `layup run` | 3 | later |
 | `decisions.tsv` | one row per smart-if call | 4, 10 | `layup run` | 3 | later |
 | `screens.tsv` | one row per run of the escalation screen | 10 | `layup run` | 3 | later |
 | `candidates.tsv` | the selected candidates | 10 | `layup run` | 3 | later |
 | `escalations.tsv` | the idea owner's escalation decisions | 10 | `layup run` | 3 | later |
-| `budget.tsv` | the band `B`, `U`, the appetite, accepted bounds | 10, 12 | `layup run` | 3 | later |
+| `budget.tsv` | the band `B`, `U`, the appetite, accepted bounds | 10, 12 | `layup run` | 2 (`M2c`, K38) | later |
 | `milestones.tsv` | each milestone: its bet, cap, clock, and a "milestone stopped" row | 11, 12 | `layup run` | 3 | later |
 | `telemetry.tsv` | one row per session | 12 | `layup run` | 1, schema only | [below](#req-011--the-telemetry-record) |
 | `stalls.tsv` | the stall, diagnosis and outcome rows | 11 | `layup run` | 1, schema only | [below](#req-009--the-stall-record) |
@@ -82,7 +84,8 @@ of `stalls.tsv`, so the Stall Rate does not count it.
 | `layup:docs/setup/steps.tsv` | LAYUP's own setup steps; the engine does not read it, and the step table of `setup.md` derives from it | 5 | a LAYUP task | — | its header |
 | `layup:internal/catalog/<stack>/` | the stack catalog | 6 | a LAYUP task | 1 | [`setup.md`](setup.md#the-stack-catalog) |
 | `host:<work>/` | the work area of `layup setup` | 5 | `layup setup` | 1 | [`setup.md`](setup.md#the-command-layup-setup) |
-| `host:registers/harnesses.tsv` | the harness register | 9 | the Operator | 2 | later |
+| `host:registers/harnesses.tsv` | the harness register: the columns that Start reads; `M2b` adds the credential route, the rule files and the models (K40) | 9 | the Operator | 2 | [below](#nfr-001--the-records-of-start) |
+| `host:registers/forge.tsv` | the forge register: the App, its key file, the API (K40) | 1, 3 | the Operator | 2 | [below](#nfr-001--the-records-of-start) |
 | `host:registers/providers.tsv` | the provider register | 10 | the Operator | 3 | later |
 | `host:prices.tsv` | the price list | 12 | the Operator | 1, schema only | [below](#req-011--the-telemetry-record) |
 | the control repository | the dead-man job's last run time | 11 | the dead-man job | 3 | later |
@@ -95,7 +98,8 @@ ADR-0014 and ADR-0011 decision 2.
 
 1. **From Start on**, `layup run` is the one writer of the records branch
    (ADR-0014), and each producer hands it a typed result (§3). That is phase 2
-   and later.
+   and later; [the records of Start](#nfr-001--the-records-of-start) and
+   [`run.md`](run.md) give the part of milestone `M2a`.
 2. **In phase 1** (O-115, comment 5928163366 on #74): `layup setup` writes the
    setup record, the rule-path register and the records branch's `README.md`
    as files, and makes the first commit of `layup-records` in its work area;
@@ -166,6 +170,87 @@ and ADR-0016.
    with LAYUP absent from the start.
 4. Every record is a table or a Markdown file that a human reads with no tool;
    a plain `git clone` carries `origin/layup-records`.
+
+## NFR-001 — The records of Start
+
+Milestone `M2a` (task `T-zck8`, #123): the records that `layup run` writes at
+Start, and the two host registers that it reads. The steps that write them are
+in [`run.md`](run.md). `internal/records` holds the Go schema of each block
+([`packages.md`](packages.md#the-table-of-m2a)).
+
+**`start/start.tsv`** holds one row per value of the Start (**decided here**: a
+table of names, not one wide row, so that a value of a later milestone is a new
+name, not a new column). The names are `layup.version`, `psb.sha256`,
+`vision.sha256`, `forge.plan`, `forge.visibility`, `app.permissions`,
+`operator.id`, `idea-owner.id`, `intake.cap`, `lease.H`, `watch.T`,
+`harness.<id>.cap` and `harness.<id>.wall` for each row of the harness
+register, `pin.source`, `pin.commit`, `pin.tree`, `pin.time`, `issue.intake`,
+`issue.control` and `watch`. The rows are in this order, and the harness rows
+in the order of the register.
+
+```tsv-schema start records:start/start.tsv
+name text key one of the names above, and no other
+value text - the value as text: a time in the form of the type `time`, a SHA in the form of `sha1` or `sha256`, a number in the form of `int` or `decimal`; `—` only for `vision.sha256` with no vision brief and for `harness.<id>.cap` of a harness with no spend cap
+source enum(command|register|forge|run) - a flag of the Start command, the harness register, a read-back from the forge, or the run itself
+```
+
+```tsv-schema approvers records:approvers.tsv
+id int key the forge's numeric user ID; a login is never a key, as a login can change
+role enum(operator|idea-owner|approver) key the role; the Operator and the idea owner can be one account, with one row per role
+login text - the login when the row was written
+since time - when the row was written
+source text - `start` for the rows of the Start command; else the ID of the comment that named the approver (`M2c`)
+```
+
+```tsv-schema lease records:lease.tsv
+run text key the run ID: 16 lowercase hexadecimal characters, random, made when the run starts
+host text - the host name of the run
+version text - the LAYUP version of the run
+started time - when the run took the lease
+heartbeat int - the counter; the run adds 1 every `lease.H`
+state enum(held|released) - `released` when the run ended and gave the lease back
+```
+
+The lease table has exactly one row; Git history is its log of takeovers.
+
+```tsv-schema copies records:copies.tsv
+comment int key the forge's comment ID
+seen int key 1 for the first copy; each later read that finds an edit adds a row with the next number, and the first copy stays
+issue int - the issue number of the comment
+author_id int - the author's numeric ID
+author_login text - the author's login at the copy
+app text - the App field: the slug of the App that made the comment, or `—` when no App made it
+created time - the time of the comment, or of its last edit, as the forge gives it
+copied time - when `layup run` copied it
+sha256 sha256 - the SHA-256 of the body
+body path - the file of the body on the records branch: `copies/<comment>-<seen>.md`
+```
+
+```tsv-schema harness-register host:registers/harnesses.tsv
+harness id(<word>) key the harness ID, for example `claude`
+cap decimal - the spend cap of one session in US dollars; `—` for a harness with no token count or no spend cap
+wall int - the wall-clock limit of one session in minutes, 1 or more; never `—`
+```
+
+```tsv-schema forge-register host:registers/forge.tsv
+forge enum(github) key the forge; GitHub is the only adapter (L-A2)
+app_id int - the numeric ID of the LAYUP App
+app_slug text - the App's slug, for example `layup-agent`; its bot is `<slug>[bot]`
+key_file text - the absolute path of the App's private key (PEM) on the host; mode 0600, owned by the user that runs `layup run`
+watch_slug text - the slug of the dead-man job's App, for example `layup-watch`; `—` when there is none
+api text - the base URL of the API: `https://api.github.com`; a test names its loopback server
+web text - the base URL of the Git remotes: `https://github.com`; a test names a local directory URL
+```
+
+**Decided here** (K40, task `T-zck8`): the App ID, the key file and the URLs are
+a register of the host, which `--host DIR` names, not flags and not an
+environment variable. Reason: `README.md` reads no environment variable for an
+input, and a restart reads the same row, so two runs on one target cannot take
+different values. The API and Git URLs are columns so that the end-to-end test
+runs against a local fake forge with no secret. The harness credential is not
+in `M2a`: the architecture gives a session "a variable, or a file that the
+register row names" (§4), and `README.md` forbids a variable as an input of
+`layup`; `M2b` settles it, with the columns it adds to the harness register.
 
 ## REQ-011 — The telemetry record
 
