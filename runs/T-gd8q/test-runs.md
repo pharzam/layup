@@ -61,3 +61,16 @@ ok   C5 docs/links/link-lint.sh exits 0
 ok   C5 docs/setup/setup-check.sh exits 0
 exit 0
 ```
+
+## Green, on the fix of round 3 (2026-10-07T07:33Z)
+
+```
+ok   C1 ADR-0026 is Accepted (docs/adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md)
+ok   C2 the Status of ADR-0012 is Superseded by ADR-0026
+ok   C3 'One pass is never enough' is gone
+ok   C4 each live mention of 'bootstrap' is classed in runs/T-gd8q/mentions.tsv
+ok   C5 docs/adr/adr-lint.sh exits 0
+ok   C5 docs/links/link-lint.sh exits 0
+ok   C5 docs/setup/setup-check.sh exits 0
+exit 0
+```

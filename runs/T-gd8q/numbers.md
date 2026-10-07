@@ -96,12 +96,12 @@ part 1, [#120](https://github.com/pharzam/layup/issues/120)).
 | `T-zmj6` | product (fact `F-0004`; also check `facts`) | not recorded | 1 | 2: material (4), not mergeable (2) | decision: ruled notes (O-46) | 1 `not mergeable`; 1 ruling | `docs/tasks/T-zmj6.md:20`, `:22` |
 | `T-745n` | process | awc | 2 | 2: material (4), nothing (0) | decay | — | `docs/tasks/T-745n.md:11`, `:130` |
 | `T-7sbn` | process (ADR-0012) | by the Operator | 1 | 2: material (3), not mergeable (2) | decision: ruled notes (O-44) | 1 `not mergeable`; 1 ruling | `docs/tasks/T-7sbn.md:21`, `:23` |
-| `T-8ywj` | process (ADR-0012, the revert of `F-0005`) | by the Operator | 1 | 2: material (13), not mergeable (5 findings the record does not class) | decision: split | 1 `not mergeable`; 1 split | `docs/tasks/T-8ywj.md:20`, `:22`, `:26` |
+| `T-8ywj` | process (ADR-0012, the revert of `F-0005`) | by the Operator | 1 | 2: material (13 findings the record does not class), not mergeable (5 findings the record does not class) | decision: split | 1 `not mergeable`; 1 split | `docs/tasks/T-8ywj.md:20`, `:22`, `:26` |
 
 | Measure | P2 (the 10 tasks with a task file) |
 | ------- | ---------------------------------- |
 | Rounds | 20 (`T-hbw8` also had 24 design rounds, not counted) |
-| Material findings | 63 by the rule; the 5 findings of `T-8ywj` round 2 are not counted, as its record does not class them |
+| Material findings | 50 by the rule; the 18 findings of `T-8ywj` (13 in round 1, 5 in round 2) are not counted, as its record does not class them |
 | Ends | 5 by decay; 5 by decision: 2 splits, 2 ruled notes, 1 fix with no round |
 | Stall tasks | 5 on the gate path (`T-0drh`, `T-wjq4`, `T-zmj6`, `T-7sbn`, `T-8ywj`); `T-hbw8` on its design path |
 | Stall events, the gate path | 7 `not mergeable` verdicts, 2 raises, 2 ruled notes, 1 fix with no round, 2 splits, 0 `reject` |

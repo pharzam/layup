@@ -293,8 +293,8 @@ the rounds is:
   consumes no cycle, and needs no new round while it is clean and changes no file
   the branch touched; where it does touch one, a round runs on the new head,
   scoped to those files, and it consumes no cycle either.
-- **The cycles are capped.** After the first freeze, one fix-and-review cycle
-  follows: the cycle cap is 1, and 2 when the change touches a gate (a check
+- **The cycles are capped.** After the first freeze, fix-and-review cycles follow
+  only up to the cap: the cycle cap is 1, and 2 when the change touches a gate (a check
   script, a hook, CI or branch protection). The plan-review confirmation declares
   the cap; where it is silent, the cap is 1. On the cap, with something material
   still in scope, the verdict is `not mergeable, findings recorded`.
@@ -302,10 +302,11 @@ the rounds is:
   on the issue, and the Operator chooses one of four ends. The verdict of the
   last round stays `not mergeable, findings recorded` until the Operator
   chooses.
-  1. *One more cycle.* A `## Plan review` comment records the new `Cycle cap`,
-     and the verdict of the last round is edited to `material`, with the reason,
-     so that [`review-record-lint`](ci/review-record-lint.sh) reads the next
-     round as the next cycle. The next round reads the fix.
+  1. *One more cycle.* A `## Plan review` comment records the new `Cycle cap`
+     as a table row (`| Cycle cap | N |`), and the verdict of the last round is
+     edited to `material`, with the reason, so that
+     [`review-record-lint`](ci/review-record-lint.sh) reads the next round as
+     the next cycle. The next round reads the fix.
   2. *A known limit, or a finding ruled a note.* The last verdict stays
      `not mergeable, findings recorded`. The Operator's comment that names each
      open finding and its ruling permits the merge; the task's documents write

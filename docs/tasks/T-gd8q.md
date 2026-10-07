@@ -26,7 +26,7 @@ knowing that it was written after the numbers; part 2 (a), ADR-0026 sets option 
    and two populations (the 20 rows of phase 1, and the other 10 tasks with a record
    under bootstrap mode), each value with a `file:line`;
    [`cites.sh`](../../runs/T-gd8q/cites.sh) prints each cited line at `34dd858`
-   (116 lines, none missing, exit 0). One claim of
+   (117 lines, none missing, exit 0). One claim of
    the plan was wrong and the count corrects it: row 11, with one round, shares two
    pilot findings (F-16, F-25) with row 13.
 2. **ADR-0026** (D2): [Keep the bootstrap review rules as the standing
