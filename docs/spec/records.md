@@ -24,7 +24,7 @@ or payload of one task is under `tasks/<task>/`.
 
 | Path | Record | § | Writer | Phase | Schema |
 | ---- | ------ | - | ------ | ----- | ------ |
-| `README.md` | what the branch is, and how to read it with no tool | 3 | `layup setup` (O-115) | 1 | a fixed text: [`setup.md`](setup.md#the-readme-of-the-records-branch) |
+| `README.md` | what the branch is, and how to read it with no tool | 3 | `layup setup` (O-115); `layup run` for a target that Start makes (`M2a`) | 1 | a fixed text: [`setup.md`](setup.md#the-readme-of-the-records-branch) |
 | `start/problem-statement.md`, `start/vision.md` | the two briefs, byte for byte | 5 | `layup run` | 2 | — |
 | `start/start.tsv` | each brief's SHA-256, the LAYUP version, the forge plan, the values of the Start command | 5, 13 | `layup run` | 2 | [below](#nfr-001--the-records-of-start) |
 | `setup/record.tsv` | the setup record: each value with its source, the pin rows included | 5 | `layup setup` | 1 | [`setup.md`](setup.md#the-setup-record) |
@@ -190,7 +190,7 @@ in the order of the register.
 
 ```tsv-schema start records:start/start.tsv
 name text key one of the names above, and no other
-value text - the value as text: a time in the form of the type `time`, a SHA in the form of `sha1` or `sha256`, a number in the form of `int` or `decimal`; `—` only for `vision.sha256` with no vision brief and for `harness.<id>.cap` of a harness with no spend cap
+value text - the value as text: a flag's value as given (`forge.plan`, `intake.cap` as `MONEY,HOURS`); a time in the form of the type `time`; a SHA in the form of `sha1` or `sha256`; a number in the form of `int` or `decimal`; `app.permissions` as `name:level` pairs in the form of `list(text)`; `issue.*` an `int` or `opening`; `watch` `confirmed` or `not-confirmed`; `—` only for `vision.sha256` with no vision brief, `harness.<id>.cap` of a harness with no spend cap, and `issue.*` and `watch` before their steps
 source enum(command|register|forge|run) - a flag of the Start command, the harness register, a read-back from the forge, or the run itself
 ```
 

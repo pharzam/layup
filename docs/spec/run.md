@@ -24,6 +24,15 @@ layup run --new OWNER/NAME --host DIR --psb FILE [--vision FILE]
 layup run TARGET --host DIR
 ```
 
+- **Two rows of the command table** (decided here). The command table of
+  `internal/cli` ([`README.md`](README.md#commands)) holds two rows with the word
+  `run`: Start, which has the flag `--new`, and the restart, which has one
+  positional argument. **Decided here:** a row may name one selecting flag; when
+  two rows have the same words, the row whose selecting flag is given is the
+  command, else the row with none. So `layup run --new …` is Start, and
+  `layup run TARGET` is the restart; a restart with a flag of Start, or Start with
+  a positional argument, is a usage error (exit 2). Reason: the architecture
+  names both forms (§5), and the one-table rule of `README.md` stays.
 - `OWNER/NAME` and `TARGET` name a repository on the forge, in the form
   `OWNER/NAME`. `--new` takes it as its value; the restart takes it as its one
   positional argument.
@@ -53,17 +62,21 @@ one progress line every ten seconds. Reason: a Start ends; the phase loop of lat
 milestones adds its own rows, so the one-table rule holds.
 
 ```tsv-schema run-steps stdout
-step enum(forge|baseline|root-push|read-back|plan|records|issues|watch|clone|version|lease|phase) key the step, in the order of the two lists below
+step enum(forge|plan|baseline|root-push|read-back|records|issues|watch|clone|version|lease|phase) key the step, in the order of the two lists below
 result enum(done|fail) - `done`, or `fail` with its reason in `detail`
 detail text - one line: what the step found, with no time and no path of the host
 ```
 
-**Exit codes:** 0 when each row is `done`; 1 when a row is `fail` (the run stops
-at that row); 2 for a usage or input error, before any forge call: a flag, a
-brief that is not a readable UTF-8 file, a register that its reader refuses, a
-key file whose mode is not 0600 or whose owner is another user, and `--new` on a
-repository that is not empty (O-163). Code 3 is not used: the wait for the root
-push is in the foreground.
+**Exit codes** (decided here): 0 when each row is `done`; 1 when a row is `fail`
+(the run stops at that row, and prints the table of the rows it reached); 2 for a
+usage or input error that the run finds before its first step, with no table: a
+flag, a brief that is not a readable UTF-8 file, a register that its reader
+refuses, and a key file that is missing, not PEM, not mode 0600 or owned by
+another user. Each state that a step finds on the forge or in the records is
+`fail` on that step, with exit 1: a repository that does not exist, `--new` on a
+repository that is not empty (O-163), and a record of the records branch that its
+reader refuses. Code 3 is not used: the wait for the root push is in the
+foreground.
 
 ## NFR-001 — The Start of a target
 
@@ -74,19 +87,24 @@ session uses.
 
 ### The steps of `layup run --new`
 
-1. **`forge`.** It reads `registers/forge.tsv`, makes an installation token for
-   `OWNER/NAME` ([`forge.md`](forge.md#the-app-identity)), checks that the adapter
-   gives the six capabilities and that the installation has the permissions that
-   `M2a` uses (contents, issues: write; metadata: read), and records each
-   permission of the installation in `app.permissions`. A missing permission of a
-   later milestone (commit statuses, `M2e`) is recorded, not a `fail`. The
-   repository must exist and have no commit; else exit 2 (O-163). It reads the
-   numeric IDs of `--operator` and `--idea-owner`; an unknown login is `fail`.
-2. **`baseline`** (Start 2, S02 of [`setup.md`](setup.md#the-steps)): it resolves
+1. **`forge`.** It makes an installation token for `OWNER/NAME`
+   ([`forge.md`](forge.md#the-app-identity)), checks that the adapter gives the
+   six capabilities and that the installation has the permissions that `M2a`
+   uses (contents, issues: write; metadata: read), and records each permission of
+   the installation in `app.permissions`. A missing permission of a later
+   milestone (commit statuses, `M2e`) is recorded, not a `fail`. The repository
+   must exist and have no commit (O-163). It reads the numeric IDs of
+   `--operator` and `--idea-owner`; an unknown login is `fail`.
+2. **`plan`**: the plan check of §5 (K15), on the visibility that step 1 read.
+   `public` passes on each plan; a private repository passes on `team` and
+   `enterprise` only (GitHub Free has no rulesets and no draft pull requests on
+   it, and GitHub Pro no drafts). A failed check names the plan and the
+   visibility.
+3. **`baseline`** (Start 2, S02 of [`setup.md`](setup.md#the-steps)): it resolves
    the latest commit of the baseline's default branch (`LsRemote`), clones that
    commit, and removes `.git`. The pin (source, commit, tree, time) is held in
    the run's memory until step 6 writes it.
-3. **`root-push`** (Start 2, S03): it makes the root commit as S03 does, and
+4. **`root-push`** (Start 2, S03): it makes the root commit as S03 does, and
    prints on standard error the one command that pushes it, with the resolved
    commit and its difference from LAYUP's own pin. The Operator runs it with the
    Operator's own login (the copy holds CI files, and the App has no workflows
@@ -95,64 +113,70 @@ session uses.
    a wait for a human is not a stall (ADR-0023); a run stopped here leaves a root
    commit with no records, and the Operator starts again with an empty
    repository (§5).
-4. **`read-back`**: the default branch is the repository's only branch, its head
-   is one commit with no parent, its root tree equals `pin.tree`, and the
-   visibility is read. Any difference is `fail`.
-5. **`plan`**: the plan check of §5 (K15). `public` passes on each plan; a
-   private repository passes on `team` and `enterprise` only (GitHub Free has no
-   rulesets and no draft pull requests on it, and GitHub Pro no drafts). A
-   failed check names the plan and the visibility.
-6. **`records`**: the first records commit, on the orphan branch
-   `layup-records`, pushed with the installation token: `start/start.tsv`,
-   `start/problem-statement.md` and `start/vision.md` byte for byte,
-   `approvers.tsv` (the two rows of the Start command), `lease.tsv` (this run,
-   `held`), and the README of the records branch
-   ([`setup.md`](setup.md#the-readme-of-the-records-branch)). The author and the
-   committer are the App's bot (`<slug>[bot]`, the e-mail
-   `<bot-id>+<slug>[bot]@users.noreply.github.com`), at the time of the commit.
-   From this commit on, only a comment by an ID in `approvers.tsv`, in the role
-   that a rule names, is an answer or a decision.
-7. **`issues`**: it opens the Intake issue and the control issue, announced first
-   by a records commit that adds their numbers to `start.tsv` (`issue.intake`,
-   `issue.control`), so a restart finds them with no search.
+5. **`read-back`**: `DIR/targets/OWNER/NAME/` is made with `Init` and the
+   default branch fetched into it (`Fetch`). The default branch is the
+   repository's only branch, its head is one commit with no parent, its root tree
+   equals `pin.tree`, and the visibility equals that of step 1. Any difference is
+   `fail`.
+6. **`records`**: the first records commit, an orphan commit made in a scratch
+   work tree as S15 makes it (`SwitchOrphan`), pushed to `layup-records` with the
+   installation token: `start/start.tsv`, `start/problem-statement.md` and
+   `start/vision.md` byte for byte, `approvers.tsv` (the two rows of the Start
+   command), `lease.tsv` (this run, `held`), and the README of the records branch
+   ([`setup.md`](setup.md#the-readme-of-the-records-branch)). In `start.tsv`,
+   `issue.intake`, `issue.control` and `watch` are `—` until their steps write
+   them. The author and the committer are the App's bot (`<slug>[bot]`, the
+   e-mail `<bot-id>+<slug>[bot]@users.noreply.github.com`), at the time of the
+   commit. From this commit on, only a comment by an ID in `approvers.tsv`, in the
+   role that a rule names, is an answer or a decision.
+7. **`issues`**: for the Intake issue, then the control issue: a records commit
+   sets its row (`issue.intake`, `issue.control`) to `opening`, which announces
+   the write; the run opens the issue; a records commit sets the row to the
+   issue's number, so a restart finds it with no search.
 8. **`watch`**: it reads the comments of the control issue for up to `watch.T`
-   for a notice from the App `watch_slug` (the dead-man job, §11). It copies each
-   comment first ([copy before read](#copy-before-read)). `watch` is
-   `confirmed` when such a comment came, else `not-confirmed` (L-F1); with no
-   `watch_slug`, `not-confirmed` at once. Both are `done`.
+   for a notice from the App `watch_slug` (the dead-man job, §11). Before it acts
+   on a comment, it pushes the copy ([copy before read](#copy-before-read)); then a
+   records commit writes `watch`: `confirmed` when such a comment came, else
+   `not-confirmed` (L-F1); with no `watch_slug`, `not-confirmed` at once. Both
+   are `done`.
 9. **`lease`**: the last records commit sets the lease row to `released`, and the
    run exits.
 
-**Decided here:** the order of steps 1 to 5 puts every check that needs no root
-commit before the root push, so the Operator pushes only to a target that can be
-held; the architecture gives the checks of step 3 after the push, and a check
-that can run earlier is not changed by the push. In `M2a`, a Start ends after
-step 9; the Intake of `M2c` adds its rows after `watch`.
+**Decided here:** steps 1 and 2 put every check that needs no root commit before
+the root push, so the Operator pushes only to a target that can be held; the
+architecture gives the plan check after the push (§5, Start 3), and the push does
+not change the plan or the visibility, which step 5 reads again. In `M2a`, a
+Start ends after step 9; the Intake of `M2c` adds its rows after `watch`.
 
 ### The restart
 
 `layup run TARGET --host DIR`:
 
-1. **`forge`**, as step 1 above, for an existing target.
+1. **`forge`**: the installation token, the six capabilities and the permissions,
+   as step 1 above. The repository must exist and hold `layup-records`. No login
+   is looked up: the approvers are read from `approvers.tsv`.
 2. **`clone`**: it rebuilds `DIR/targets/OWNER/NAME/` from the forge (a fresh
-   clone of the default branch and `layup-records`); nothing in the old clone is
-   read.
+   `Clone` of the default branch and `layup-records`); nothing in the old clone is
+   read. It reads `start.tsv`, `approvers.tsv` and `lease.tsv`.
 3. **`version`**: the LAYUP version of the run equals `layup.version` of
    `start.tsv`; else `fail` (the inventory: "stops when its own version differs").
 4. **`lease`**: [the lease](#the-lease-and-fencing) is taken: at once when it is
    `released`; else after the takeover rule. A records commit sets this run as
    the holder.
-5. **`phase`**: the first step that is not done. In `M2a` it is "Intake, `M2c`";
-   the row is `done`, and the run releases the lease and exits. `M2c` replaces
-   this row with its steps.
+5. **`phase`**: the first step of Start that is not done, run again. A row
+   `opening` means that a run stopped between the announcement and the record
+   of an issue: the restart runs step 7 for that issue again (a duplicate issue
+   is possible, known limit below). When each step of Start is done, the next
+   phase is Intake (`M2c`): the row is `done`, and the run releases the lease and
+   exits. `M2c` replaces this row with its steps.
 
 ### The lease and fencing
 
 As `architecture.md` §2, with these values decided here:
 
 - The heartbeat is a records commit that adds 1 to `heartbeat`, every `lease.H`,
-  while the run holds the lease (the waits of steps 3 and 8 included, once the
-  lease exists).
+  while the run holds the lease, the wait of step 8 included. Before step 6 no
+  lease exists, so nothing beats during the wait of step 4.
 - A second run reads the lease row every ten seconds and times it by its own
   clock from the moment it last saw `heartbeat` change. When `heartbeat` has not
   changed for `3 × lease.H`, it takes the lease over: a records commit that
@@ -199,11 +223,16 @@ check of `M2c` posts there.
 | A register with two rows for one key, an unknown or missing column, or a field that its type refuses | exit 2: the reader of `internal/tsv` refuses it and names the line |
 | A harness row with `wall` empty | exit 2 |
 | A key file that is missing, not PEM, or not mode 0600, or owned by another user | exit 2, naming the file and its mode |
-| `--new` on a repository with a commit, or with the branch `layup-records` | exit 2 (O-163) |
-| A restart on a repository with no `layup-records`, or a `start.tsv` or `lease.tsv` that its reader refuses | exit 2 |
-| A lease row from another LAYUP version | the `version` step fails first (exit 1) |
-| A lease table with no row, or two rows | exit 2 |
+| `--new` on a repository with a commit, or with the branch `layup-records` | `forge`: `fail` (O-163) |
+| A restart on a repository with no `layup-records`, or a `start.tsv`, `approvers.tsv` or `lease.tsv` that its reader refuses | `forge` or `clone`: `fail` |
+| A lease row from another LAYUP version | the `version` step fails first |
+| A lease table with no row, or two rows | `clone`: `fail` |
 | A forge error during a step | `fail` on that step, with the error ([`forge.md`](forge.md#forge-errors)) |
+
+**Known limit:** a run that stops after it opens an issue and before the records
+commit of its number leaves an issue that the records do not name; the restart
+opens a second one. The Operator closes the first, which the App's bot opened
+with the same title.
 
 ### Not in M2a
 

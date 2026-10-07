@@ -20,12 +20,12 @@ fail, naming it.
 
 | Capability (§1) | Interface method | First used in |
 | --------------- | ---------------- | ------------- |
-| issues and comments, with the actor and whether an App made it | `OpenIssue`, `Comments(issue)`, `Comment(issue, body)` | `M2a` (Start 7 and 8) |
+| issues and comments, with the actor and whether an App made it | `OpenIssue`, `Comments(issue)`, `Comment(issue, body)` | `M2a` (steps 7 and 8 of [`run.md`](run.md#the-steps-of-layup-run---new)) |
 | pull requests with a draft state | `OpenDraft`, `MarkReady`, `Merge` | `M2e` |
 | commit statuses bound to a source | `SetStatus` | `M2e` |
 | branch rules with bypass actors, read back | `EffectiveRules(branch)` | `M2d` |
 | the repository activity with its actors | `Activity(ref)` | `M2f` |
-| an App identity for LAYUP with scoped permissions | `Token`, `Installation`, `UserID(login)`, `Repository` | `M2a` (Start 1) |
+| an App identity for LAYUP with scoped permissions | `Token`, `Installation`, `UserID(login)`, `Repository` | `M2a` (step 1 of `run.md`) |
 
 `M2a` specifies the calls of the rows it uses; each later milestone gives the
 calls of its rows here.

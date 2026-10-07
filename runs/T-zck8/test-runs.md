@@ -57,3 +57,7 @@ exit 0
 ok  	github.com/pharzam/layup/internal/tsv	0.217s
 ok  	github.com/pharzam/layup/cmd/layup	0.829s
 ```
+
+## Green, on the fix of round 1 (2026-10-07T09:25Z)
+
+`sh runs/T-zck8/sections.sh`: 18 `ok`, exit 0. `go test -tags=integration ./internal/tsv/ ./cmd/layup/`: `ok`, `ok`. `sh docs/setup/setup-check.sh`: exit 0 (finding 5 of round 1: the backlog line of `T-zck8`).

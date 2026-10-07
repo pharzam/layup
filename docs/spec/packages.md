@@ -194,8 +194,11 @@ remote needs it; no other value enters the fixed list.
 | `Fetch` | `git fetch --no-tags -- URL REF:REF` | `layup run`: the read-back of the root commit (Start 4); the restart: the records branch |
 | `Push` | `git push --porcelain -- URL COMMIT:refs/heads/BRANCH`; never `--force` | `layup run`: each records commit (fencing: a push that is not a fast-forward is refused) |
 
-The restart's fresh clone uses `Clone`; the records commits use `WorktreeAdd`,
-`Add`, `Commit`, `RevParse` and `WorktreeRemove`, as S15 does.
+Start makes its clone with `Init` and `Fetch`, and the restart with `Clone`. The
+first records commit is an orphan commit in a scratch work tree, as S15 makes it
+(`WorktreeAdd`, `SwitchOrphan`, `Add`, `Commit`, `RevParse`, `WorktreeRemove`);
+each later one uses the same calls on the last records commit, with no
+`SwitchOrphan`.
 
 - `--end-of-options` or `--` comes before each revision, URL and path, so an
   input is never an option (`layup gate` takes revisions from its arguments).

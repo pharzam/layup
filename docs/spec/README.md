@@ -17,7 +17,7 @@ the later phases.
 | File | Requirements | What it gives |
 | ---- | ------------ | ------------- |
 | [`packages.md`](packages.md) | `NFR-007` | the Go packages, their jobs, and the import rules that the boundary gate reads |
-| [`records.md`](records.md) | `NFR-001`, `NFR-002`, `REQ-009`, `REQ-011` | where each record lives, who writes it, and the schemas of the phase-1 records |
+| [`records.md`](records.md) | `NFR-001`, `NFR-002`, `REQ-009`, `REQ-011` | where each record lives, who writes it, and the schemas of the records of phase 1 and of Start (`M2a`) |
 | [`psb-check.md`](psb-check.md) | `REQ-001` | `layup psb check` |
 | [`setup.md`](setup.md) | `REQ-002`, `NFR-003`, `NFR-006` | `layup setup`, `layup setup verify`, the stack catalog |
 | [`gate.md`](gate.md) | `REQ-004`, `REQ-007`, `NFR-004`, `NFR-005` | `layup gate`, the gate manifest |
@@ -36,7 +36,8 @@ the later phases.
   decision of the Operator or the idea owner is never set here: it stays a
   marker with a row in [`open-gaps.tsv`](../setup/open-gaps.tsv) (Invariant 4).
 - A part of a requirement that a later phase delivers is named, with that
-  phase, under **Not in phase 1**.
+  phase, under **Not in phase 1**; in a section of a later milestone, under
+  **Not in** that milestone (for example **Not in M2a**).
 
 ## Commands
 
@@ -81,7 +82,7 @@ Every command of LAYUP follows these rules. A section gives only what differs.
   an input error prints only `layup: <reason>` on standard error. The usage
   lists each command with its arguments and its line, then the exit codes.
 - **Progress** (decided here, K29): a command whose run can take more than ten
-  seconds (`layup gate`, `layup setup`, `layup setup verify`) prints its
+  seconds (`layup gate`, `layup setup`, `layup setup verify`, `layup run`) prints its
   progress on standard error, never on standard output: before each step, one
   line `layup <command>: [<i>/<n>] <step>`, and while that step runs, one more
   line every ten seconds, `layup <command>: [<i>/<n>] <step>: <s> s`. A step is
