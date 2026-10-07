@@ -316,7 +316,8 @@ the rounds is:
      This end is the one exception to "A fix re-freezes" and "The last round
      carries the verdict" above, and to the `Verdict` field of
      [What a round records](#what-a-round-records): only the Operator's comment
-     makes it, and the fix is the only thing that lands after that round.
+     makes it. No further fix and no further round follow that round; the
+     close-out bookkeeping and a merge of `main` land as before.
   4. *A split.* One successor issue carries the branch's work as it stands, on a
      branch of its own with a first freeze of its own, plus a child issue for
      each open finding the successor does not take. Where it takes them all, it

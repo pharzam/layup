@@ -204,6 +204,15 @@ check that catches it.
   yet staged, and they were lost with the test line. It is silent because the
   checks pass on the old text. **The check:** commit or stage the work before a
   mutation, or run the mutation on a copy of the tree. Learned in `T-gd8q`.
+- ❌ **A headless reviewer whose commands are denied.** Two review rounds of
+  Claude Fable 5.1 (`claude -p --permission-mode dontAsk`) gave no record in
+  fifteen minutes. The cause was the run, not the model: the RTK hook rewrote
+  `git diff`, `ls`, `wc` and `diff` to `rtk …`, which the allow rules did not
+  match, so they were denied; and text output is written only at the end, so the
+  timeout lost the work. **The check:** allow `Bash(rtk git:*)`, `Bash(rtk ls:*)`,
+  `Bash(rtk wc:*)` and `Bash(rtk diff:*)` (never `Bash(rtk:*)`: `rtk proxy` runs
+  any command), use `--output-format stream-json --verbose`, and read
+  `permission_denials` of the result. Learned in `T-gd8q`.
 - ❌ **A one-line form that loses a failure.** The first lint command of the first
   pilot put the gate script of the brief into one pipe. When `git ls-files` failed
   (an invalid index), the pipe took the status of its last command, and the check

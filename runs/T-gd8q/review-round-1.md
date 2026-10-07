@@ -1,2 +1,0 @@
-
-*Posted for a reviewer session (GPT-6 Sol, effort `xhigh`, on the Devin CLI, `devin -p --prompt-file`, a fresh read-only session in a clone at `220d857`, from 06:07 UTC, 5 min 8 s) through the `layup-agent` App. The text is the record part of the session's output; the local file links are shown as paths. Before it, Claude Fable 5.1 on Claude Code (from 05:50 UTC) gave no record in fifteen minutes and was skipped (rule 4).*

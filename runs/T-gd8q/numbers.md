@@ -92,7 +92,7 @@ part 1, [#120](https://github.com/pharzam/layup/issues/120)).
 | `T-0drh` | product (specification) | awc | 1 → 2 → 3 | 4: material (5), not mergeable (1), not mergeable (1), not mergeable (1) | decision: fix with no round (O-119) | 3 `not mergeable`; raise O-116, O-117; fix with no round O-119 | `docs/tasks/T-0drh.md:43`, `:26`, `:30`, `:34`, `:91` |
 | `T-hbw8` | product (architecture) | awc | 1 | 1: nothing (0) | decay (the gate; its design path ended by O-112) | the design path only: 6 raises, 1 known limit (O-110), 1 fix with no round (O-112) | `docs/tasks/T-hbw8.md:12`, `:132`, `:150` |
 | `T-84r5` | product (PRD) | by the Operator | 1 | 1: nothing (0) | decay | — | `docs/tasks/T-84r5.md:18`, `:42` |
-| `T-wjq4` | product (PRD; also a linter fix) | by the Operator | 2 | 3: material (5), material (13), not mergeable (8) | decision: split (O-49) | 1 `not mergeable`; 1 split | `docs/tasks/T-wjq4.md:19`, `:23`, `:27` |
+| `T-wjq4` | product (PRD; also a linter fix) | by the Operator | 2 | 3: material (5), material (13), not mergeable (8) | decision: split (O-49) | 1 `not mergeable`; 1 split | `docs/tasks/T-wjq4.md:19`, `:21`, `:23`, `:27` |
 | `T-zmj6` | product (fact `F-0004`; also check `facts`) | not recorded | 1 | 2: material (4), not mergeable (2) | decision: ruled notes (O-46) | 1 `not mergeable`; 1 ruling | `docs/tasks/T-zmj6.md:20`, `:22` |
 | `T-745n` | process | awc | 2 | 2: material (4), nothing (0) | decay | — | `docs/tasks/T-745n.md:11`, `:130` |
 | `T-7sbn` | process (ADR-0012) | by the Operator | 1 | 2: material (3), not mergeable (2) | decision: ruled notes (O-44) | 1 `not mergeable`; 1 ruling | `docs/tasks/T-7sbn.md:21`, `:23` |
