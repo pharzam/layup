@@ -113,7 +113,9 @@ Task `{task}`: row {row} of the [implementation plan](https://github.com/pharzam
 def post():
     token = subprocess.run([os.path.expanduser("~/.config/layup-agent/app-token.sh")],
                            capture_output=True, text=True, check=True).stdout.strip()
-    env = dict(os.environ, GH_TOKEN=token, GH_PROMPT_DISABLED="1")
+    env = dict(os.environ)
+    env["GH_TOKEN"] = token
+    env["GH_PROMPT_DISABLED"] = "1"
     lines = ["row\ttask\tissue"]
     for r in ROWS:
         with tempfile.NamedTemporaryFile("w", suffix=".md", delete=False) as f:
