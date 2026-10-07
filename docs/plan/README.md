@@ -196,7 +196,7 @@ Each inventory item that is not in a row of the task table has one host here.
 | `gov-issue-24` | `T-55n2` | Checked and closed with its evidence; this task also fixes the sentence of `docs/ci/README.md` on the restore of the check scripts, its one open part. |
 | `gov-pdr-approval` | `T-4wrw` | The PDR record and the Operator's approval (#42, child 6). |
 | `gov-pilot-definition` | O-122 | The Operator's reading of the first pilot. |
-| `gov-pilot-numbers` | the ADR that supersedes ADR-0012 | Its rule is written in row 20's plan review before the pilot (guardrails §1); the count is the first step of the ADR task, by this plan's choice. |
+| `gov-pilot-numbers` | the ADR that supersedes ADR-0012 | The count is the first step of the ADR task, by this plan's choice. Row 20's plan review did not pre-register its rule; task `T-gd8q` wrote the rule after the numbers, and the Operator accepted it (O-159, [`runs/T-gd8q/numbers.md`](../../runs/T-gd8q/numbers.md)). |
 | `gov-supersede-adr-0012` | the ADR that supersedes ADR-0012 | A separate issue that row 20 opens (O-121). |
 | `gov-operator-setup-o112` | `M2a` | The App, key and status permissions of O-112 are needed when `layup run` starts. |
 | `gov-operator-ci-protection` | out | Phase 1 adds no CI job; a task that changes `ci.yml` names the Operator's step in its own plan (K28). |

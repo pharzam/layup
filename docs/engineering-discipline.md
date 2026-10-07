@@ -178,8 +178,7 @@ Two bounds keep the routing from weakening a rule that already holds:
 
 - **Independence wins where it meets routing.** Routing says which tier *executes* a
   step. The [Model independence level](#who-may-review) says a reviewer's model
-  *differs from the author's* — for high-risk work, where a second model is
-  available. Where the two meet, independence wins: a reviewer never drops to the
+  *differs from every author's* — for every review. Where the two meet, independence wins: a reviewer never drops to the
   author's model to satisfy routing. Routing extends model choice from review to the
   whole gate; it does not weaken the one place model choice already bit.
 - **A tier that cannot be reached is recorded.** A single model cannot route. That
@@ -314,6 +313,10 @@ the rounds is:
   3. *A fix with no further round.* The fix of the last round lands, and the
      task record names it as a fix that no round read. The last verdict stays
      `not mergeable, findings recorded`; the Operator's comment permits the merge.
+     This end is the one exception to "A fix re-freezes" and "The last round
+     carries the verdict" above, and to the `Verdict` field of
+     [What a round records](#what-a-round-records): only the Operator's comment
+     makes it, and the fix is the only thing that lands after that round.
   4. *A split.* One successor issue carries the branch's work as it stands, on a
      branch of its own with a first freeze of its own, plus a child issue for
      each open finding the successor does not take. Where it takes them all, it
