@@ -2,7 +2,7 @@
 
 This is LAYUP's implementation plan: the phases of
 [`PRD-0001`](../prd/PRD-0001-layup.md) §9 with their milestones, the tasks of
-phase 1 in their order, and where each part of the work goes. It is written for
+phase 1 and of milestone `M2a` in their order, and where each part of the work goes. It is written for
 LAYUP itself in the form that [`architecture.md`](../architecture.md) §8 asks of a
 target's milestone plan: each task with the requirement IDs it serves, the tests
 that will show it done, a size class, and its predecessors.
@@ -31,8 +31,10 @@ The Operator's decisions O-121 to O-124 set its structure; they are quoted in
   owner stays a marker with a row in
   [`open-gaps.tsv`](../setup/open-gaps.tsv), as
   [`spec/README.md`](../spec/README.md) says.
-- Phases 2 to 4 are at milestone level only. Each milestone starts with its own
-  specification task (O-114) and opens its own issues then.
+- Phases 2 to 4 are at milestone level only, except `M2a`, whose tasks are
+  [below](#the-tasks-of-m2a). Each milestone starts with its own specification
+  task (O-114), and a slicing task then writes its rows and opens their issues
+  (O-164: `T-zwke` for `M2a`).
 - A size class is `small` (one package or one step group: about one day of agent
   work and a diff under about 400 lines) or `large`. The expected lines of a task
   are an estimate for its plan review, not a budget; each task's plan review sets
@@ -40,8 +42,8 @@ The Operator's decisions O-121 to O-124 set its structure; they are quoted in
   and [the cycle cap](../engineering-discipline.md#reviewing-until-findings-decay)).
 - The column "After" gives the order of the tasks; the row number is only a
   handle. A task starts when the tasks in its "After" cell have merged.
-- `T-55n2` opens the issue of `T-b97r` and of each row; the numbers are in the
-  column "Issue". Each task, in its own pull request, puts its real test names and
+- `T-55n2` opens the issue of `T-b97r` and of each row of phase 1, and `T-zwke`
+  of each row of `M2a`; the numbers are in the column "Issue". Each task, in its own pull request, puts its real test names and
   their status in [`tests/traceability.md`](../tests/traceability.md) and in the
   Test column of `PRD-0001` §12.
 
@@ -50,7 +52,7 @@ The Operator's decisions O-121 to O-124 set its structure; they are quoted in
 | Milestone | Phase | Requirements | First demo | After | Starts with |
 | --------- | ----- | ------------ | ---------- | ----- | ----------- |
 | `M1` | 1 | REQ-001, REQ-002, REQ-004, REQ-007, REQ-009, REQ-011, NFR-001 to NFR-007; the `Won't` rows REQ-015 to REQ-018 hold in every phase | The first pilot (O-122): `layup` sets up one target repository from a problem statement with a Go stack, and runs that target's gate from outside (ADR-0012 part 6). | the PDR (`T-4wrw`) | the specification of phase 1 (`T-0drh`, merged) |
-| `M2a` | 2 | NFR-001, NFR-002, NFR-006, REQ-002 | On an empty repository, after the Operator's root push, the records branch shows the first commit by the LAYUP App, and the Intake and control issues exist. | `M1` | its specification task |
+| `M2a` | 2 | NFR-001, NFR-002, NFR-006, REQ-002 | On an empty repository, after the Operator's root push, the records branch shows the first commit by the LAYUP App, and the Intake and control issues exist. | `M1` | its specification task (`T-zck8`); its tasks: [rows 21 to 27](#the-tasks-of-m2a) |
 | `M2b` | 2 | REQ-011, REQ-005, REQ-003, REQ-013, NFR-005, NFR-001 | A probe session on each registered harness, then one developer session whose commit lands on its task branch, with one complete telemetry row. | `M2a` | its specification task |
 | `M2c` | 2 | REQ-001, REQ-012, NFR-003 | On a pilot problem statement, one Intake comment holds the rule gaps and the gaps of meaning, and `layup spec check --facts` passes on the numbered spans. | `M2a`, `M2b` | its specification task |
 | `M2d` | 2 | REQ-002, NFR-001, NFR-002, NFR-003, NFR-006, REQ-003 | After the Operator's pushes and ruleset apply, the push to `layup-probe` is refused, and `setup/forge-check.tsv` shows each rule and probe as passed. | `M2a`, `M2b`, `M2c` | its specification task |
@@ -156,6 +158,33 @@ change it):
   scenarios of `layup psb check` are row 6's. No test keeps a stand-in baseline in
   Git (K11).
 
+## The tasks of M2a
+
+The build tasks of milestone `M2a`, the Start of `layup run` (task `T-zwke`, #124;
+O-164 of #123). Its specification is [`spec/run.md`](../spec/run.md),
+[`spec/forge.md`](../spec/forge.md), [the records of
+Start](../spec/records.md#nfr-001--the-records-of-start) and [the table of
+M2a](../spec/packages.md#the-table-of-m2a). The rule of the slicing: one task per
+package boundary of the table of `M2a`, in the order of its imports; each part of
+the specification is in one row ([`runs/T-zwke/parts.tsv`](../../runs/T-zwke/parts.tsv)),
+and each acceptance test of `run.md` in the row that delivers its part. The
+columns are those of the tasks of phase 1 without Parent, which is `—` for each
+row; "Task" also names the parts of the specification; each issue says `Refs #123` and `Refs #29`. Rows
+21, 22 and 23 can start at once; rows 21 and 22 both change the lists of the
+block test, so the second to merge takes the first's change by a merge of `origin/main`.
+
+| # | Task ID | Issue | Task | Demo | Items | Requirements | Fact | Tests | Size | Lines | After | Cap |
+| - | ------- | ----- | ---- | ---- | ----- | ------------ | ---- | ----- | ---- | ----- | ----- | --- |
+| 21 | `T-8kqn` | [#126](https://github.com/pharzam/layup/issues/126) | The records of Start: `records.md`: the blocks `start`, `approvers`, `lease`, `copies`, and the row rules that they give in words; `packages.md`: the Job cell of `internal/records` in the table of phase 1 | The Go schemas of `start`, `approvers`, `lease` and `copies` equal their blocks. | `later-p2-run-start` | NFR-001 | F-0003#42 | unit; the block test (the four names to `built`) | large | 500 | — | 1 |
+| 22 | `T-esfe` | [#127](https://github.com/pharzam/layup/issues/127) | The forge interface, the two host registers, and the package rules of M2a: `forge.md`: "The six capabilities" (the interface; the set of permissions of `M2a` and its check), the key-file checks of "The App identity"; `records.md`: the blocks `forge-register`, `harness-register`; `run.md`: rows 1 to 5 of "Input states"; `packages.md`: "The table of M2a", rule 5 by "Connects", read by `TestPackageRules` (the checker, its unit tests, the fixture `testdata/netimport`) | A forge register or a harness register that breaks its schema is refused with its line, by its owner package. | `later-p2-run-start` | NFR-001, NFR-007 | F-0003#42 | unit; integration (the package rules); the block test (the two names to `built`) | large | 600 | — | 1 (2 if its plan review reads the test as a gate) |
+| 23 | `T-xhgz` | [#128](https://github.com/pharzam/layup/issues/128) | The calls Fetch and Push of internal/git: `packages.md`: "The calls of `M2a`"; `forge.md`: the token to `git` in one call's environment | `Push` refuses a push to a local bare repository that is not a fast-forward. | `later-p2-run-start` | NFR-001 | F-0003#42 | unit; integration (real `git`; the fixed list of the environment) | small | 300 | — | 1 |
+| 24 | `T-6bq5` | [#129](https://github.com/pharzam/layup/issues/129) | The GitHub adapter: `forge.md`: "The App identity" (the JWT and the installation token), "The calls of M2a", "Forge errors" (with a progress function that the adapter takes for the rate-limit wait), "The test of the adapter" | Against a loopback server, the adapter plays each call of `M2a` with an installation token that it made from a JWT. | `later-p2-run-start` | NFR-001, NFR-007 | F-0003#42 | unit; integration (`httptest`) | large | 800 | 22 | 1 |
+| 25 | `T-trej` | [#130](https://github.com/pharzam/layup/issues/130) | internal/run: Start and the restart: `run.md`: "The steps of `layup run --new`", "The README of a target that Start makes", "The restart", "The lease and fencing", "A human decision", "Copy before read", "The Intake and control issues", rows 6 to 11 of "Input states", the table `run-steps`, NFR-006, NFR-002, REQ-002 | Against the `httptest` forge and a local bare repository, Start makes the first records commit with the pin, the briefs, `approvers.tsv`, `start.tsv` and the lease row. | `later-p2-run-start` | NFR-001, NFR-002, NFR-006, REQ-002 | F-0003#42 | unit (the lease with a stand-in clock and `git`; the two rules; the input states); integration (Start, and a restart with another LAYUP version); the block test (`run-steps` to `built`) | large | 1200 | 21, 22, 23, 24 | 1 |
+| 26 | `T-mqty` | [#131](https://github.com/pharzam/layup/issues/131) | The command layup run: `run.md`: "The command" (two rows, the selecting flag, the one flag that may be left out, each flag and its value rule, the printing of the table and the progress lines, the exit codes); `README.md`: the rules of the selecting flag and of a flag that may be left out; `packages.md`: the May import cell of `internal/cli` | `layup run --new` then `layup run TARGET`, as the built binary against a local fake forge, give their tables, the same bytes on a repeat. | `later-p2-run-start` | NFR-001, NFR-002 | F-0003#42 | unit; e2e (the binary, no secret) | large | 600 | 25 | 1 |
+| 27 | `T-fnsr` | [#132](https://github.com/pharzam/layup/issues/132) | The demo of M2a (uat): `run.md`: the uat row of "The acceptance tests of M2a" | On a real GitHub test target, the Operator reads with a plain `git clone` the records branch that Start wrote as the App's bot. | `later-p2-run-start`, `gov-operator-setup-o112` | NFR-001, NFR-002, NFR-006, REQ-002 | F-0003#42 | uat, with its evidence under `runs/` | small | 150 | 26 | 1 |
+
+Row 27 needs the Operator's inputs, which its issue lists (O-112).
+
 ## The edges of the inventory that the plan drops
 
 | From | To | Reason |
@@ -191,7 +220,7 @@ says which part phase 1 proves, and where.
 
 ## The hosts of the other items
 
-Each inventory item that is not in a row of the task table has one host here.
+Each inventory item that is not in a row of a task table has one host here; `later-p2-run-start` and `gov-operator-setup-o112` keep a row, which points to their rows and gives their other hosts.
 
 | Item | Host | Reason |
 | ---- | ---- | ------ |
@@ -206,7 +235,7 @@ Each inventory item that is not in a row of the task table has one host here.
 | `gov-pilot-definition` | O-122 | The Operator's reading of the first pilot. |
 | `gov-pilot-numbers` | the ADR that supersedes ADR-0012 | The count is the first step of the ADR task, by this plan's choice. Row 20's plan review did not pre-register its rule; task `T-gd8q` wrote the rule after the numbers, and the Operator accepted it (O-159, [`runs/T-gd8q/numbers.md`](../../runs/T-gd8q/numbers.md)). |
 | `gov-supersede-adr-0012` | the ADR that supersedes ADR-0012 | A separate issue that row 20 opens (O-121). |
-| `gov-operator-setup-o112` | `M2a`, `M2e`, `M3d` | The App's private key on the host (mode 0600) and the App installed on the target: Start of `M2a`. The commit-statuses permission: `M2e` (`later-gate-status`, the four `layup/` checks). `layup-watch`: `M3d`; until then Start records `watch` as `not-confirmed`. |
+| `gov-operator-setup-o112` | row 27 (`M2a`), `M2e`, `M3d` | The App's private key on the host (mode 0600) and the App installed on the target: Start of `M2a`, asked in the issue of row 27. The commit-statuses permission: `M2e` (`later-gate-status`, the four `layup/` checks). `layup-watch`: `M3d`; until then Start records `watch` as `not-confirmed`. |
 | `gov-operator-ci-protection` | out | Phase 1 adds no CI job; a task that changes `ci.yml` names the Operator's step in its own plan (K28). |
 | `gov-issue-68` | `M2e` | The handoff records of the task loop. |
 | `gov-issue-49` | out | [R11](../issue-workflow.md#r11--single-goal-issues) now holds the answer ("A task of one artifact", [ADR-0026](../adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md)); the Operator closes #49 or keeps it open. |
@@ -215,7 +244,7 @@ Each inventory item that is not in a row of the task table has one host here.
 | `later-psb-early-question-share` | `M4b` | A measure of `layup report`. |
 | `later-gate-status` | `M2e` | The status `layup/gates` needs `layup run` and the forge. |
 | `later-gate-rule-batch` | `M2f` | Rule batches and activation. |
-| `later-p2-run-start` | `M2a` | The milestone itself. |
+| `later-p2-run-start` | rows 21 to 27 | [The tasks of M2a](#the-tasks-of-m2a). |
 | `later-p2-sessions-ledger` | `M2b` | The milestone itself. |
 | `later-p2-intake-spec` | `M2c` | The milestone itself. |
 | `later-p2-scaffold` | `M2d` | The milestone itself. |

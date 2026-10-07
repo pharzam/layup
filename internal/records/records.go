@@ -1,8 +1,8 @@
 // Package records holds the schemas and the row rules of the record kinds that
 // phase 1 defines and later phases write (docs/spec/records.md): the
 // telemetry record and the price table of REQ-011 (task T-tmhw, #94), and the
-// stall record of REQ-009 (task T-dgy7, #95). The one writer of the records
-// branch is phase 2's.
+// stall record of REQ-009 (task T-dgy7, #95); and the records of Start of
+// milestone M2a (start.go; task T-8kqn, #126), which internal/run writes.
 package records
 
 import (
