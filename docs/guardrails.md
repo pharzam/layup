@@ -213,6 +213,16 @@ check that catches it.
   `Bash(rtk wc:*)` and `Bash(rtk diff:*)` (never `Bash(rtk:*)`: `rtk proxy` runs
   any command), use `--output-format stream-json --verbose`, and read
   `permission_denials` of the result. Learned in `T-gd8q`.
+- ❌ **A variable name that reads as a secret to `gitleaks`.** A script of
+  `runs/T-zwke/` held `env = dict(os.environ, GH_TOKEN=token, …)`; no secret was in
+  it, but the rule `generic-api-key` matched it, and the CI job `security` failed.
+  `gitleaks git` scans each commit, so a later edit does not clear a finding, and
+  a published branch is never rewritten. The way out is one line of
+  `.gitleaksignore` with the finding's fingerprint, a change to the input of a
+  gate (O-166). **The check:** before the first push, run `go run
+  github.com/zricethezav/gitleaks/v8@v8.30.1 git --redact --log-opts="origin/main..HEAD"`,
+  and write a credential into an environment as `env["NAME"] = value`. Learned in
+  `T-zwke`.
 - ❌ **A one-line form that loses a failure.** The first lint command of the first
   pilot put the gate script of the brief into one pipe. When `git ls-files` failed
   (an invalid index), the pipe took the status of its last command, and the check
