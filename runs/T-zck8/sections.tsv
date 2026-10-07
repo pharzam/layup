@@ -1,0 +1,19 @@
+part	file	heading
+the command `layup run --new OWNER/NAME` and the restart `layup run TARGET`: arguments, the host directory, exit codes, output, progress	docs/spec/run.md	## The command
+Start 1 to 3: the baseline, the root push, the read-back, the plan check, the six capabilities, the first records commit	docs/spec/run.md	### The steps of `layup run --new`
+the restart: rebuild the clones, take the lease, stop on another LAYUP version	docs/spec/run.md	### The restart
+the lease with heartbeat and fencing	docs/spec/run.md	### The lease and fencing
+a human decision: an author ID in `approvers.tsv`, an empty App field, the role of the rule	docs/spec/run.md	### A human decision
+copy before read: each comment copied before a step acts on it; an edit is a new input event	docs/spec/run.md	### Copy before read
+the Intake issue and the control issue, and the first notice of the dead-man job	docs/spec/run.md	### The Intake and control issues
+the input states that the happy path never makes	docs/spec/run.md	### Input states
+the target's pin at Start (`NFR-006`)	docs/spec/run.md	## NFR-006 — The target's pin at Start
+the acceptance test of each part: unit, integration, e2e, uat	docs/spec/run.md	## The acceptance tests of M2a
+the findings of the first pilot that `M2a` does not change	docs/spec/run.md	## The findings of the first pilot
+the six capabilities of the forge interface	docs/spec/forge.md	## The six capabilities
+the App identity: the JWT, the installation token, the host register of the forge	docs/spec/forge.md	## The App identity
+the GitHub calls of `M2a`	docs/spec/forge.md	## The calls of M2a
+a forge error stops a step, never a pass	docs/spec/forge.md	## Forge errors
+the test of the adapter against a loopback server	docs/spec/forge.md	## The test of the adapter
+the one-writer section of `NFR-001` for `layup run`, and the schemas of the records of Start	docs/spec/records.md	## NFR-001 — The records of Start
+the packages of `M2a` and rule 5 for the forge adapter	docs/spec/packages.md	### The table of M2a
