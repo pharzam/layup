@@ -64,7 +64,7 @@ milestones adds its own rows, so the one-table rule holds.
 ```tsv-schema run-steps stdout
 step enum(forge|plan|baseline|root-push|read-back|records|issues|watch|clone|version|lease|phase) key the step, in the order of the two lists below
 result enum(done|fail) - `done`, or `fail` with its reason in `detail`
-detail text - one line: what the step found, with no time and no path of the host
+detail text - one line: what the step found, with no time, no path of the host and no SHA of a records commit (a records commit holds its time, so its SHA differs on a repeat)
 ```
 
 **Exit codes** (decided here): 0 when each row is `done`; 1 when a row is `fail`
@@ -108,8 +108,8 @@ session uses.
    prints on standard error the one command that pushes it, with the resolved
    commit and its difference from LAYUP's own pin. The Operator runs it with the
    Operator's own login (the copy holds CI files, and the App has no workflows
-   permission, O-92). `layup run` reads the default branch every ten seconds
-   until it exists. **Decided here:** the wait has no limit (Ctrl-C stops it), as
+   permission, O-92). `layup run` reads the list of branches every ten seconds
+   (`Repository`, [`forge.md`](forge.md#the-calls-of-m2a)) until the default branch exists. **Decided here:** the wait has no limit (Ctrl-C stops it), as
    a wait for a human is not a stall (ADR-0023); a run stopped here leaves a root
    commit with no records, and the Operator starts again with an empty
    repository (§5).

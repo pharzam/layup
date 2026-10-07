@@ -13,7 +13,7 @@ was checked against is [`runs/T-0drh/checklist.md`](../../runs/T-0drh/checklist.
 part C. "Phase" is the phase of the milestone whose code first writes the
 record, or first reads it for a record that a human writes (K38, task
 `T-zck8`); "1, schema only" marks a record whose schema phase 1 gives and whose
-writer comes later; a schema is in this directory for a record of
+writer or first reader comes later; a schema is in this directory for a record of
 phase 1 and for a record of each milestone whose specification task has run
 (`M2a`: [the records of Start](#nfr-001--the-records-of-start)).
 
@@ -26,7 +26,7 @@ or payload of one task is under `tasks/<task>/`.
 
 | Path | Record | § | Writer | Phase | Schema |
 | ---- | ------ | - | ------ | ----- | ------ |
-| `README.md` | what the branch is, and how to read it with no tool | 3 | `layup setup` (O-115); `layup run` for a target that Start makes (`M2a`) | 1 | a fixed text: [`setup.md`](setup.md#the-readme-of-the-records-branch) |
+| `README.md` | what the branch is, and how to read it with no tool | 3 | `layup setup` (O-115); `layup run` for a target that Start makes (`M2a`) | 1 | a fixed text per writer: [`setup.md`](setup.md#the-readme-of-the-records-branch); [`run.md`](run.md#the-readme-of-a-target-that-start-makes) |
 | `start/problem-statement.md`, `start/vision.md` | the two briefs, byte for byte | 5 | `layup run` | 2 | — |
 | `start/start.tsv` | each brief's SHA-256, the LAYUP version, the forge plan, the values of the Start command | 5, 13 | `layup run` | 2 | [below](#nfr-001--the-records-of-start) |
 | `setup/record.tsv` | the setup record: each value with its source, the pin rows included | 5 | `layup setup` | 1 | [`setup.md`](setup.md#the-setup-record) |

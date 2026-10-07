@@ -58,7 +58,53 @@ the six new blocks of D3 until they were listed
 goal, condition 1 of the plan review); a new column in the table of phase 1,
 which would change the checker in this task.
 
-**Known limits:** the harness credential stays open for `M2b` (K40). The token
+**Known limits:** the harness credential stays open for `M2b` (K40). A run that
+stops between the open of an issue and the record of its number leaves a second
+issue on a restart ([`run.md`](../spec/run.md#input-states)). The token
 reaches `git` in the environment of one call, which the same user of the host can
 read. The GitHub calls are read from the architecture; the build task reads the
 documentation of each at its date.
+
+## Review rounds
+
+The records, the Fixes replies and the decision at the cap are comments on #123.
+Round 1 (Claude Fable 5.1; `832a3f2`, cycle 0): `material`, five findings (the two
+forms of `run`, the exit code of a forge state, the issue rows and fencing, the
+plan check after the root push, the backlog line), fixed. Round 2 (Fable;
+`2ebf22a`, cycle 1): three material findings at the cap of 1 (rule 5 through the
+adapter, the readers of the registers, the README of a Start target); **O-165**
+(a): one more cycle, cap 2. Round 3 (Fable; `5706440`, cycle 2): `nothing
+material in scope`, nine notes; notes 1 to 6 and 9 are applied in the close-out,
+note 7 is declined (`NFR-005` is a requirement of `M2b`, whose specification task
+names the check that replaces the phase-1 import rule), note 8 needs no change.
+`review-record-lint` on the comments of #123 gives `OK  11 comments; 3 round(s);
+cap 2`.
+
+## Verdict
+
+Delivered: the technical specification of `M2a` in `docs/spec/` (`run.md`,
+`forge.md`, the records of Start, the table of `M2a`), with K38, K40 and K41
+settled and the nine pilot findings moved to their milestones. The review ended
+by decay at cycle 2 of a cap that the Operator raised once (O-165). The diff
+against `9e980b9` is inside 1,300 lines over 18 files.
+
+Next: `T-zwke` ([#124](https://github.com/pharzam/layup/issues/124)), the build
+tasks of `M2a` sliced in the plan (O-164 (b)). Before the demo of `M2a`, the
+Operator puts the App's private key on the host and installs the App on a test
+target (O-112).
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). Times are UTC, 2026-10-07; tokens are the
+`result` event of the Claude Code CLI (stream runs); `not reported` otherwise.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The issue, the sources, the plan | reasoning | Claude Opus 5.5 | max | not reported | 08:15 to 08:32 |
+| The plan review | reasoning | Claude Fable 5.1, Claude Code CLI | `xhigh` | not reported | 10 min 47 s, from 08:32 |
+| The decision brief (English and Persian, for O-163 and O-164) | — | Claude Opus 5.5 | max | not reported | 08:45 to 09:00 |
+| The answer; the work, test first; the fixes of rounds 1 and 2 | execution | Claude Opus 5.5, a reasoning-tier model on an execution part | max | not reported | 09:01 to 09:11, 09:24 to 09:26, 09:53 to 09:56 |
+| Round 1 | reasoning | Claude Fable 5.1, Claude Code CLI | `xhigh` | 1,533,646 (USD 7.01) | 11 min 51 s, from 09:11 |
+| Round 2 | reasoning | the same | `xhigh` | 1,083,759 (USD 6.90) | 12 min 27 s, from 09:26 |
+| Round 3 | reasoning | the same | `xhigh` | 1,474,687 (USD 7.01) | 10 min 31 s, from 09:56 |
+| The close-out, with the notes of round 3; the issue of `T-zwke` | execution | Claude Opus 5.5 | max | not reported | 10:07 to 10:15 |

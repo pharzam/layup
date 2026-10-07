@@ -167,10 +167,10 @@ that the steps, the checks and `layup gate` name.
 | Call | The command, after the `-c` values below | Used by |
 | ---- | ---------------------------------------- | ------- |
 | `Version` | `git --version` | the minimum version (below) |
-| `LsRemote` | `git ls-remote --exit-code -- URL REF` | S02 |
-| `Clone` | `git clone --no-checkout -- URL DIR` | S02 |
+| `LsRemote` | `git ls-remote --exit-code -- URL REF` | S02; `layup run`, step 3 |
+| `Clone` | `git clone --no-checkout -- URL DIR` | S02; `layup run`, step 3 and the restart |
 | `CheckoutDetach` | `git checkout --detach COMMIT` | S02 |
-| `Init` | `git init -b main -- DIR` | S03 |
+| `Init` | `git init -b main -- DIR` | S03; `layup run`, step 5 |
 | `Add` | `git add --all -- PATH…`; no path is the whole tree | S03 to S15; a fixture run of `gate:<kind>` |
 | `Commit` | `git commit -m MESSAGE` | S03 to S15; a fixture run |
 | `SwitchCreate` | `git switch -c BRANCH COMMIT` | S04: the branch `layup-setup` |
@@ -336,10 +336,10 @@ requirement's section.
 
 | Package | Job | Phase |
 | ------- | --- | ----- |
-| `internal/records` | the one writer of the records branch ([`records.md`](records.md)); the package has its row in the table of phase 1 since task `T-tmhw` (K23), with the schemas of the record kinds that phase 1 defines | 2 |
-| `internal/forge` | the forge interface: the six capabilities of `architecture.md` §1 | 2 |
-| `internal/forge/github` | the GitHub adapter of the forge interface | 2 |
-| `internal/run` | `layup run`: Start, the phase loop, the lease, fencing | 2 |
+| `internal/records` | the schemas and rows of the records ([`records.md`](records.md)); the package has its row in the table of phase 1 since task `T-tmhw` (K23); `internal/run` commits the records ([the table of M2a](#the-table-of-m2a)) | 2 |
+| `internal/forge` | the forge interface: the six capabilities of `architecture.md` §1; its row is in [the table of M2a](#the-table-of-m2a) | 2 |
+| `internal/forge/github` | the GitHub adapter of the forge interface; its row is in [the table of M2a](#the-table-of-m2a) | 2 |
+| `internal/run` | `layup run`: Start, the phase loop, the lease, fencing; its row is in [the table of M2a](#the-table-of-m2a) | 2 |
 | `internal/session` | a role session: its directory, its start, its result | 2 |
 | `internal/handoff` | the transition table and the check of a handoff | 2 |
 | `internal/spec` | `layup spec check` | 2 |
