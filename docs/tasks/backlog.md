@@ -30,7 +30,6 @@ same summary, dated — rather than deleting it or checking it off.
 - **<ID>** — <one-sentence summary> ([<ADR or doc link>](...); [detail](<id>.md))
 -->
 
-- **T-gd8q** — The ADR that supersedes ADR-0012 and ends bootstrap mode, with the count of the first pilot's numbers as its first step ([#120](https://github.com/pharzam/layup/issues/120); [plan](../plan/README.md))
 
 ## Next
 

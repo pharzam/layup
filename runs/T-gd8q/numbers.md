@@ -110,7 +110,7 @@ part 1, [#120](https://github.com/pharzam/layup/issues/120)).
 four kinds: raise the cap (rows 5 and 7, `T-0drh`), rule the findings notes
 (`T-7sbn`, `T-zmj6`), close out a fix with no further round (`T-0drh`), or split
 (`T-8ywj`, `T-wjq4`). The text of the gate named only the split
-(`docs/engineering-discipline.md:319`).
+(`docs/engineering-discipline.md:320`).
 
 ## Product and process
 

@@ -58,6 +58,52 @@ to 7 as they are; add a review for integration defects; a panel.
 
 **Known limits:** the count rule was written after the numbers, so the count is not
 a blind test (O-159 part 1). Four tasks of P2 have no task file (`T-stfn`,
-`T-b97r`, `T-vk3k`, `T-meh2`), and the record of `T-8ywj` round 2 does not class
-its five findings. The Go comment of `internal/catalog/entries_integration_test.go`
+`T-b97r`, `T-vk3k`, `T-meh2`), and the record of `T-8ywj` does not class the 18
+findings of its two rounds. The Go comment of `internal/catalog/entries_integration_test.go`
 still cites "Bootstrap mode rule 4" (code is out of scope).
+
+## Review rounds
+
+The records, the Fixes replies and the decisions at the cap are comments on #120.
+Round 1 (GPT-6 Sol, Devin CLI; `220d857`, cycle 0): `material`, 4 findings, fixed.
+Round 2 (Claude Fable 5.1; `56fe5e6`, cycle 1): 1 material finding at the cap of 1,
+which the fix of round 1 brought in; **O-160** (a): one more cycle, cap 2, budget 950
+over 27. Round 3 (Fable; `02988d3`, cycle 2): 1 material finding at the cap of 2
+(end 1 and the form of a later cap); **O-161** (b): one more cycle, cap 3. Round 4
+(Fable; `c2d3249`, cycle 3): `nothing material in scope`, nine notes; notes 6, 8 and
+9 are applied in the close-out. The plan-review fields were bold lines, which
+`review-record-lint` does not read (note 8 of round 3); comment 6032805340 gives
+them as table rows, and the check on the comments of #120 gives
+`OK  17 comments; 4 round(s); cap 3`. The first post of round 1 lost its record;
+comment 6032401872 holds it. Two Fable runs gave no record in fifteen minutes: the
+run setup denied their commands (the new pitfall of `docs/guardrails.md` §2).
+
+## Verdict
+
+Delivered: ADR-0026, with the count of the first pilot's numbers; bootstrap mode
+ends when the Operator accepts ADR-0026 on #120. The review ended by decay at cycle
+3 of a cap that the Operator raised twice (O-160, O-161), the end at the cap that
+ADR-0026 writes. The diff against `34dd858` is inside 950 lines over 27 files.
+
+Next: the specification task of `M2a`, the first milestone of phase 2 (O-114), with
+the findings of the pilot that the plan hosts there.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). Times are UTC; tokens are the `result` event of
+the Claude Code CLI (stream runs only); `not reported` otherwise.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The count (two helper agents), the plan, the answer | reasoning | Claude Opus 5.5 | max | not reported | 10-06 20:15 to 21:20 |
+| The plan review | reasoning | Claude Fable 5.1, Claude Code CLI | `xhigh` | not reported (text mode) | 8 min 20 s, from 21:10 |
+| The work, test first; the fixes of rounds 1 to 3 | execution | Claude Opus 5.5, a reasoning-tier model on an execution part | max | not reported | 10-07 05:34 to 05:50, 06:12 to 06:15, 06:49 to 06:50, 07:05 to 07:34 |
+| Rounds 1 and 2, Claude Fable 5.1: skipped (the run setup) | reasoning | Claude Fable 5.1, Claude Code CLI | `xhigh`; `high` | not reported | 05:50 to 06:06; 06:15 to 06:31; 06:33 to 06:34 (stopped) |
+| Round 1 | reasoning | GPT-6 Sol, Devin CLI | `xhigh` | not reported | 5 min 8 s, from 06:07 |
+| Round 2, Devin and OpenCode: skipped (quota) | reasoning | GPT-6 Sol; Grok 4.7 | `xhigh` | not reported | 06:31 to 06:33 |
+| Round 2 | reasoning | Claude Fable 5.1, Claude Code CLI | `xhigh` | 903,892 (USD 6.26) | 9 min 4 s, from 06:35 |
+| Round 3 | reasoning | the same | `xhigh` | 2,059,469 (USD 8.17) | 13 min 19 s, from 06:50 |
+| Round 4 | reasoning | the same | `xhigh` | 1,379,641 (USD 6.85) | 8 min 22 s, from 07:35 |
+| The close-out, with notes 6, 8 and 9 of round 4 | execution | Claude Opus 5.5 | max | not reported | 07:44 to 07:55 |
+
+From 10-06 21:20 to 10-07 05:34 the task waited for O-159.

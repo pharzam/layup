@@ -20,6 +20,7 @@ here directly, in the shape above.
 - **YYYY-MM-DD** — **<ID>** — <one-sentence summary of what the task found or delivered> ([<link>](...); [detail](<id>.md))
 -->
 
+- **2026-10-07** — **T-gd8q** — ADR-0026 keeps the bootstrap review rules as the standing gate and ends bootstrap mode, with the end at the cap that the Operator chooses, from the count of the first pilot's numbers ([#120](https://github.com/pharzam/layup/issues/120); [detail](T-gd8q.md))
 - **2026-10-06** — **T-evad** — Row 20 of the plan: the first pilot. `layup` set up `pharzam/chat-orchestrator` from the Go brief `PSB-CHAT-001` and ran its gate from outside; the first pilot is a Fail (O-145), and the second run, after three fixes of LAYUP and taken into the target's `main` by its own process, has the idea owner's acceptance ([#97](https://github.com/pharzam/layup/issues/97); [detail](T-evad.md))
 - **2026-10-06** — **T-stfn** — Step 2 (the name that the title of its issue #29 gives it), the core engine: `layup gate`, `layup setup` and `layup setup verify`, the telemetry and stall records, the release review and the first pilot ([#29](https://github.com/pharzam/layup/issues/29); [plan](../plan/README.md))
 - **2026-10-06** — **T-b97r** — `layup setup` and `layup setup verify`, the parent of its child tasks ([#77](https://github.com/pharzam/layup/issues/77); [plan](../plan/README.md))
