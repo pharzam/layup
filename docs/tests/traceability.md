@@ -103,7 +103,8 @@ the first.
 | `TestAWholeSetupOnAStandInBaseline`, `TestLayupSetupVerifyOnAWholeSetup` (`cmd/layup/whole_e2e_test.go`) | e2e | REQ-002, NFR-003, NFR-004, NFR-005, NFR-006 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-dep6 | green |
 | `TestTheRecordsAreInTheTargetsGit`, `TestThePushesOfCommandsSh` (`cmd/layup/whole_e2e_test.go`) | e2e | NFR-001 | F-0001#1 | guardrails.md §1.1 Inv-1 | ADR-0014 | T-dep6 | green |
 | `TestTheTargetPassesItsGateWithLAYUPAbsent` (`cmd/layup/whole_e2e_test.go`) | e2e | NFR-002 | F-0001#2 | guardrails.md §1.1 Inv-2 | ADR-0013 | T-dep6 | green |
-| `TestTheSchemasEqualTheirBlocks` (`internal/records/records_integration_test.go`) | integration | REQ-011, REQ-009 | F-0003#50 | — | ADR-0024 | T-tmhw, T-dgy7 | green |
+| `TestTheSchemasEqualTheirBlocks` (`internal/records/records_integration_test.go`) | integration | REQ-011, REQ-009, NFR-001 | F-0003#50 | — | ADR-0024 | T-tmhw, T-dgy7, T-8kqn | green |
+| `TestAValidStartIsRead`, `TestStartRefusesEachBrokenRule`, `TestApproversRefusesEachBrokenRule`, `TestLeaseRefusesEachBrokenRule`, `TestCopiesRefusesEachBrokenRule` (`internal/records/start_test.go`) | unit | NFR-001 | F-0001#1 | — | ADR-0014 | T-8kqn | green |
 | `TestTelemetryRowsThatPass`, `TestTelemetryRowsThatBreakARule`, `TestPriceRows` (`internal/records/records_test.go`) | unit | REQ-011 | F-0003#50 | — | ADR-0024 | T-tmhw | green |
 | `TestStallRowsThatPass`, `TestStallRowsThatBreakARule` (`internal/records/stalls_test.go`) | unit | REQ-009 | F-0003#49 | — | ADR-0023 | T-dgy7 | green |
 | The release review of phase 1 (`runs/T-efmy/release-review.md`), with its check `runs/T-efmy/release-check.sh` | uat | REQ-015, REQ-017 | F-0003#53 | — | — | T-efmy | green |

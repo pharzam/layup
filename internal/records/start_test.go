@@ -1,0 +1,189 @@
+package records
+
+import (
+	"strings"
+	"testing"
+)
+
+// table writes a record of the schema's header and the rows, a field per tab;
+// "—" is the empty value.
+func table(header string, rows ...string) []byte {
+	return []byte(strings.Join(append([]string{header}, rows...), "\n") + "\n")
+}
+
+const (
+	sha1A   = "0123456789abcdef0123456789abcdef01234567"
+	sha256A = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+)
+
+// startRows is a valid start.tsv for the harness register claude, devin.
+func startRows() []string {
+	return []string{
+		"layup.version\tv0.1.0\trun",
+		"psb.sha256\t" + sha256A + "\tcommand",
+		"vision.sha256\t—\tcommand",
+		"forge.plan\tfree\tcommand",
+		"forge.visibility\tpublic\tforge",
+		"app.permissions\tcontents:write issues:write metadata:read\tforge",
+		"operator.id\t123\tforge",
+		"idea-owner.id\t123\tforge",
+		"intake.cap\t50.0,8.0\tcommand",
+		"lease.H\t5\tcommand",
+		"watch.T\t10\tcommand",
+		"harness.claude.cap\t10.0\tregister",
+		"harness.claude.wall\t60\tregister",
+		"harness.devin.cap\t—\tregister",
+		"harness.devin.wall\t30\tregister",
+		"pin.source\thttps://github.com/pharzam/armature\trun",
+		"pin.commit\t" + sha1A + "\trun",
+		"pin.tree\t" + sha1A + "\trun",
+		"pin.time\t2026-10-07T12:00:00Z\trun",
+		"issue.intake\t1\tforge",
+		"issue.control\topening\tforge",
+		"watch\t—\trun",
+	}
+}
+
+const startHeader = "name\tvalue\tsource"
+
+// set gives startRows with the row of name replaced by line.
+func set(name, line string) []string {
+	rows := startRows()
+	for i, r := range rows {
+		if strings.HasPrefix(r, name+"\t") {
+			rows[i] = line
+		}
+	}
+	return rows
+}
+
+// without gives startRows without the row of name.
+func without(name string) []string {
+	var rows []string
+	for _, r := range startRows() {
+		if !strings.HasPrefix(r, name+"\t") {
+			rows = append(rows, r)
+		}
+	}
+	return rows
+}
+
+func TestAValidStartIsRead(t *testing.T) {
+	if _, err := ReadStart(table(startHeader, startRows()...), []string{"claude", "devin"}); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestStartRefusesEachBrokenRule(t *testing.T) {
+	harnesses := []string{"claude", "devin"}
+	order := startRows()
+	order[0], order[1] = order[1], order[0]
+	swapped := startRows()
+	swapped[11], swapped[12], swapped[13], swapped[14] = swapped[13], swapped[14], swapped[11], swapped[12]
+	wallFirst := startRows()
+	wallFirst[11], wallFirst[12] = wallFirst[12], wallFirst[11]
+	noHarness := append(append([]string{}, startRows()[:11]...), startRows()[15:]...)
+	for _, c := range []struct {
+		name      string
+		rows      []string
+		harnesses []string
+	}{
+		{"an unknown name", append(startRows(), "colour\tblue\trun"), harnesses},
+		{"a missing name", without("pin.tree"), harnesses},
+		{"the rows out of order", order, harnesses},
+		{"a harness of the register with no rows", without("harness.devin.cap"), harnesses},
+		{"the harnesses not in the order of the register", swapped, harnesses},
+		{"wall before cap", wallFirst, harnesses},
+		{"a harness row with an empty register", startRows(), nil},
+		{"a harness ID that is not of the form <word>", set("harness.claude.cap", "harness.Claude.cap\t10.0\tregister"), harnesses},
+		{"the empty value where the block does not allow it", set("layup.version", "layup.version\t—\trun"), harnesses},
+		{"a SHA-256 that is not one", set("psb.sha256", "psb.sha256\tabc\tcommand"), harnesses},
+		{"a SHA-1 that is not one", set("pin.commit", "pin.commit\t"+sha256A+"\trun"), harnesses},
+		{"a time that is not one", set("pin.time", "pin.time\t2026-10-07 12:00\trun"), harnesses},
+		{"an ID that is not an int", set("operator.id", "operator.id\tpharzam\tforge"), harnesses},
+		{"lease.H that is not an int", set("lease.H", "lease.H\t5.0\tcommand"), harnesses},
+		{"a wall that is not an int", set("harness.claude.wall", "harness.claude.wall\tan hour\tregister"), harnesses},
+		{"a cap that is not a decimal", set("harness.claude.cap", "harness.claude.cap\t10\tregister"), harnesses},
+		{"an intake cap that is not two decimals", set("intake.cap", "intake.cap\t50.0\tcommand"), harnesses},
+		{"a permission that is not name:level", set("app.permissions", "app.permissions\tcontents issues:write\tforge"), harnesses},
+		{"an issue that is neither an int nor opening", set("issue.intake", "issue.intake\tsoon\tforge"), harnesses},
+		{"a watch that is neither confirmed nor not-confirmed", set("watch", "watch\tyes\trun"), harnesses},
+		{"the wrong source", set("pin.source", "pin.source\thttps://x\tcommand"), harnesses},
+	} {
+		if _, err := ReadStart(table(startHeader, c.rows...), c.harnesses); err == nil {
+			t.Errorf("%s: read, want an error", c.name)
+		}
+	}
+	if _, err := ReadStart(table(startHeader, noHarness...), nil); err != nil {
+		t.Errorf("an empty register and no harness row: %v", err)
+	}
+}
+
+const approversHeader = "id\trole\tlogin\tsince\tsource"
+
+func TestApproversRefusesEachBrokenRule(t *testing.T) {
+	ok := []string{"123\toperator\tpharzam\t2026-10-07T12:00:00Z\tstart", "123\tidea-owner\tpharzam\t2026-10-07T12:00:00Z\tstart", "456\tapprover\tbob\t2026-10-08T09:00:00Z\t6040085862"}
+	if _, err := ReadApprovers(table(approversHeader, ok...)); err != nil {
+		t.Fatal(err)
+	}
+	for name, row := range map[string]string{
+		"an empty login":                      "123\toperator\t—\t2026-10-07T12:00:00Z\tstart",
+		"an empty since":                      "123\toperator\tpharzam\t—\tstart",
+		"a source that is not start or an ID": "123\toperator\tpharzam\t2026-10-07T12:00:00Z\tthe Operator",
+		"an empty source":                     "123\toperator\tpharzam\t2026-10-07T12:00:00Z\t—",
+	} {
+		if _, err := ReadApprovers(table(approversHeader, row)); err == nil {
+			t.Errorf("%s: read, want an error", name)
+		}
+	}
+}
+
+const leaseHeader = "run\thost\tversion\tstarted\theartbeat\tstate"
+
+func TestLeaseRefusesEachBrokenRule(t *testing.T) {
+	ok := "0123456789abcdef\thost-1\tv0.1.0\t2026-10-07T12:00:00Z\t0\theld"
+	if _, err := ReadLease(table(leaseHeader, ok)); err != nil {
+		t.Fatal(err)
+	}
+	for name, rows := range map[string][]string{
+		"no row":                    nil,
+		"two rows":                  {ok, "fedcba9876543210\thost-2\tv0.1.0\t2026-10-07T13:00:00Z\t0\theld"},
+		"a run ID of 15 characters": {"0123456789abcde\thost-1\tv0.1.0\t2026-10-07T12:00:00Z\t0\theld"},
+		"a run ID in capitals":      {"0123456789ABCDEF\thost-1\tv0.1.0\t2026-10-07T12:00:00Z\t0\theld"},
+		"an empty host":             {"0123456789abcdef\t—\tv0.1.0\t2026-10-07T12:00:00Z\t0\theld"},
+		"an empty version":          {"0123456789abcdef\thost-1\t—\t2026-10-07T12:00:00Z\t0\theld"},
+		"an empty started":          {"0123456789abcdef\thost-1\tv0.1.0\t—\t0\theld"},
+		"an empty heartbeat":        {"0123456789abcdef\thost-1\tv0.1.0\t2026-10-07T12:00:00Z\t—\theld"},
+		"an empty state":            {"0123456789abcdef\thost-1\tv0.1.0\t2026-10-07T12:00:00Z\t0\t—"},
+	} {
+		if _, err := ReadLease(table(leaseHeader, rows...)); err == nil {
+			t.Errorf("%s: read, want an error", name)
+		}
+	}
+}
+
+const copiesHeader = "comment\tseen\tissue\tauthor_id\tauthor_login\tapp\tcreated\tcopied\tsha256\tbody"
+
+// copyRow is a valid row of copies.tsv for one comment and one seen.
+func copyRow(comment, seen, app string) string {
+	return comment + "\t" + seen + "\t2\t123\tpharzam\t" + app + "\t2026-10-07T12:00:00Z\t2026-10-07T12:00:05Z\t" + sha256A + "\tcopies/" + comment + "-" + seen + ".md"
+}
+
+func TestCopiesRefusesEachBrokenRule(t *testing.T) {
+	ok := []string{copyRow("901", "1", "—"), copyRow("901", "2", "—"), copyRow("902", "1", "layup-watch")}
+	if _, err := ReadCopies(table(copiesHeader, ok...)); err != nil {
+		t.Fatal(err)
+	}
+	for name, rows := range map[string][]string{
+		"seen does not start at 1": {copyRow("901", "2", "—")},
+		"a gap in seen":            {copyRow("901", "1", "—"), copyRow("901", "3", "—")},
+		"seen 0":                   {copyRow("901", "0", "—")},
+		"a body at another path":   {strings.Replace(copyRow("901", "1", "—"), "copies/901-1.md", "copies/901.md", 1)},
+		"an empty author login":    {strings.Replace(copyRow("901", "1", "—"), "\tpharzam\t", "\t—\t", 1)},
+		"an empty sha256":          {strings.Replace(copyRow("901", "1", "—"), sha256A, "—", 1)},
+	} {
+		if _, err := ReadCopies(table(copiesHeader, rows...)); err == nil {
+			t.Errorf("%s: read, want an error", name)
+		}
+	}
+}
