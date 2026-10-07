@@ -30,6 +30,8 @@ same summary, dated — rather than deleting it or checking it off.
 - **<ID>** — <one-sentence summary> ([<ADR or doc link>](...); [detail](<id>.md))
 -->
 
+- **T-zwke** — The build tasks of milestone `M2a`, sliced in the implementation plan, each with its issue ([#124](https://github.com/pharzam/layup/issues/124); [plan](../plan/README.md))
+
 
 ## Next
 

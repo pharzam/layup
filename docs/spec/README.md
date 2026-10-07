@@ -7,19 +7,22 @@ implements. It has the form that [`architecture.md`](../architecture.md) §7 ask
 of a target, so `layup spec check` can later read it.
 
 It is written one milestone at a time (task `T-0drh`, #74; decision O-114).
-This version covers **phase 1** of `PRD-0001` §9 only. A later milestone adds
-its own sections; it does not rewrite the package table or the layout of the
-records, which already name the later phases.
+This version covers **phase 1** of `PRD-0001` §9 and milestone **`M2a`** of
+phase 2 (task `T-zck8`, #123). A later milestone adds its own sections; it does
+not rewrite the package table or the layout of the records, which already name
+the later phases.
 
 ## The files
 
 | File | Requirements | What it gives |
 | ---- | ------------ | ------------- |
 | [`packages.md`](packages.md) | `NFR-007` | the Go packages, their jobs, and the import rules that the boundary gate reads |
-| [`records.md`](records.md) | `NFR-001`, `NFR-002`, `REQ-009`, `REQ-011` | where each record lives, who writes it, and the schemas of the phase-1 records |
+| [`records.md`](records.md) | `NFR-001`, `NFR-002`, `REQ-009`, `REQ-011` | where each record lives, who writes it, and the schemas of the records of phase 1 and of Start (`M2a`) |
 | [`psb-check.md`](psb-check.md) | `REQ-001` | `layup psb check` |
 | [`setup.md`](setup.md) | `REQ-002`, `NFR-003`, `NFR-006` | `layup setup`, `layup setup verify`, the stack catalog |
 | [`gate.md`](gate.md) | `REQ-004`, `REQ-007`, `NFR-004`, `NFR-005` | `layup gate`, the gate manifest |
+| [`run.md`](run.md) | `NFR-001`, `NFR-002`, `NFR-006`, `REQ-002` | `layup run`: the Start of a target and the restart (`M2a`) |
+| [`forge.md`](forge.md) | `NFR-001`, `NFR-007` | the forge interface and the GitHub adapter (`M2a`) |
 
 ## How a section is written
 
@@ -33,7 +36,8 @@ records, which already name the later phases.
   decision of the Operator or the idea owner is never set here: it stays a
   marker with a row in [`open-gaps.tsv`](../setup/open-gaps.tsv) (Invariant 4).
 - A part of a requirement that a later phase delivers is named, with that
-  phase, under **Not in phase 1**.
+  phase, under **Not in phase 1**; in a section of a later milestone, under
+  **Not in** that milestone (for example **Not in M2a**).
 
 ## Commands
 
@@ -78,7 +82,7 @@ Every command of LAYUP follows these rules. A section gives only what differs.
   an input error prints only `layup: <reason>` on standard error. The usage
   lists each command with its arguments and its line, then the exit codes.
 - **Progress** (decided here, K29): a command whose run can take more than ten
-  seconds (`layup gate`, `layup setup`, `layup setup verify`) prints its
+  seconds (`layup gate`, `layup setup`, `layup setup verify`, `layup run`) prints its
   progress on standard error, never on standard output: before each step, one
   line `layup <command>: [<i>/<n>] <step>`, and while that step runs, one more
   line every ten seconds, `layup <command>: [<i>/<n>] <step>: <s> s`. A step is
@@ -111,8 +115,8 @@ Every command of LAYUP follows these rules. A section gives only what differs.
   **Decided here** (task `T-2yw7`): one map in `internal/cli` gives the code of
   a table from its result column: 0 only when the table has at least one row
   and each row is `pass`, `clear`, `done` or `operator`; each other word, and a
-  table with no row, give 1. It takes the result words of the three tables
-  (`gate-result`, `setup-verify`, `setup-steps`); a word that a table's schema
+  table with no row, give 1. It takes the result words of the four tables
+  (`gate-result`, `setup-verify`, `setup-steps`, `run-steps`); a word that a table's schema
   refuses (for example `done` in a `gate-result` row) cannot reach it, because
   the writer of the record refuses it first. Codes 2 and 3 do not come from a
   table. The rule for a table with no row is the default of the frame; for
@@ -231,8 +235,9 @@ schema of a record's owner.
   `notYetBuilt`. It checks that each block is in exactly one list, and that each
   listed name is a block. An owner moves the name of its block from
   `notYetBuilt` to `built` in the same change as its own test.
-- `notYetBuilt` only becomes shorter. This is a rule for the reviewer of each
-  owner task, not a check: a test cannot read the list of its base.
+- A later section adds the names of its new blocks to `notYetBuilt`;
+  otherwise `notYetBuilt` only becomes shorter. This is a rule for the reviewer
+  of each owner task, not a check: a test cannot read the list of its base.
 - A block that a later section adds makes that test fail until its name is in
   one of the two lists.
 
@@ -272,4 +277,6 @@ no role session, runs no phase loop, and makes no forge call. The orchestrator
 `layup run`, which is the one writer of a target's records branch (ADR-0014),
 comes in a later phase. So a section of phase 1 that needs `layup run` gives the
 schema and names `layup run` as the writer, and each part that waits for it is
-under **Not in phase 1**.
+under **Not in phase 1**. Milestone `M2a` specifies the Start of `layup run`
+([`run.md`](run.md), [`forge.md`](forge.md)); a part that a later milestone
+delivers is under **Not in M2a**, with that milestone.

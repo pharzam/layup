@@ -23,8 +23,10 @@ ADR-0011 decision 1 and ADR-0013.
 5. No package of phase 1 depends on `net`, `net/http` or `crypto/tls`, by its
    own imports or through another package: the engine checks open no
    connection (`NFR-005`, [`gate.md`](gate.md#nfr-005--no-model-call-in-the-engine-checks)).
-   The specification task of milestone `M2a` gives the forge adapter (phase 2)
-   its rule, and that of `M3a` gives `internal/smartif` (phase 3) its rule
+   From milestone `M2a`, only `internal/forge/github` imports them, and only the
+   packages that the column "Connects" of [the table of M2a](#the-table-of-m2a)
+   names depend on them (by D8 below, through the adapter too); and
+   `M3a` gives `internal/smartif` (phase 3) its rule
    ([the milestones](../plan/README.md#milestones)).
 
 **Decided here** (D6 of #79, K8): the rules bind the non-test Go files only. A
@@ -94,6 +96,37 @@ of the block `psb-gaps`, which its block test compares with the block (D5 of
 #86), so the IDs `Q-NNN` keep one home and `internal/setup` imports no
 `internal/psb`.
 
+### The table of M2a
+
+Milestone `M2a` (task `T-zck8`, #123; [`run.md`](run.md), [`forge.md`](forge.md)).
+The columns of the table of phase 1, and one more: **"Connects"** is the
+character — for a package that may not depend on a package of rule 5, or one
+code span per package of rule 5 that it may depend on, by its own imports or
+through another package (D8). `cmd/layup` and `internal/cli` depend on them
+through the adapter, so they have a row here too, with only their "Connects"
+cell; their other cells stay in the table of phase 1. **Decided
+here:** the build task that makes the first package of this table makes
+`TestPackageRules` read this table too, and rule 5 from this column, so the test
+holds no list of its own (D7 of #79), in the same change.
+
+| Package | Job | May import | Starts a program | Connects |
+| ------- | --- | ---------- | ---------------- | -------- |
+| `internal/run` | `layup run`: the steps of Start, the restart, the lease and fencing, the copy of a comment and the rule of a decision ([`run.md`](run.md)); the Go schema of the table `run-steps` | `internal/tsv`, `internal/git`, `internal/records`, `internal/forge`, `internal/route` | no | — |
+| `internal/forge` | the forge interface: the six capabilities and their types ([`forge.md`](forge.md)); the reader of the forge register (`host:registers/forge.tsv`), with the Go schema of its block | `internal/tsv` | no | — |
+| `internal/forge/github` | the GitHub adapter: the JWT, the installation token, the calls of [`forge.md`](forge.md#the-calls-of-m2a) | `internal/forge` | no | `net`, `net/http`, `crypto/tls` |
+| `internal/route` | in `M2a`, only the reader of the harness register (`host:registers/harnesses.tsv`), with the Go schema of its block; the probe, admission and routing come in `M2b` | `internal/tsv` | no | — |
+| `cmd/layup` | (the row of phase 1) | (the row of phase 1) | (the row of phase 1) | `net`, `net/http`, `crypto/tls` |
+| `internal/cli` | (the row of phase 1, with the change below) | (the row of phase 1, with the change below) | (the row of phase 1) | `net`, `net/http`, `crypto/tls` |
+
+In `M2a` two rows of the table of phase 1 change, in the build task that needs
+each: `internal/cli` may also import `internal/run`, `internal/forge`, `internal/forge/github` and
+`internal/route` (it reads the forge register through `internal/forge`, builds
+the adapter from it, and hands it to `internal/run`); `internal/records` also holds the schemas of the records of
+Start ([`records.md`](records.md#nfr-001--the-records-of-start)), and still
+imports `internal/tsv` only. `internal/run` commits and pushes the records with
+`internal/git`; `internal/records` gives the rows. The later table below keeps
+`internal/route` for its jobs of `M2b`.
+
 ### The test of the package rules
 
 **Decided here** (D7 and D9 of #79):
@@ -134,10 +167,10 @@ that the steps, the checks and `layup gate` name.
 | Call | The command, after the `-c` values below | Used by |
 | ---- | ---------------------------------------- | ------- |
 | `Version` | `git --version` | the minimum version (below) |
-| `LsRemote` | `git ls-remote --exit-code -- URL REF` | S02 |
-| `Clone` | `git clone --no-checkout -- URL DIR` | S02 |
+| `LsRemote` | `git ls-remote --exit-code -- URL REF` | S02; `layup run`, step 3 |
+| `Clone` | `git clone --no-checkout -- URL DIR` | S02; `layup run`, step 3 and the restart |
 | `CheckoutDetach` | `git checkout --detach COMMIT` | S02 |
-| `Init` | `git init -b main -- DIR` | S03 |
+| `Init` | `git init -b main -- DIR` | S03; `layup run`, step 5 |
 | `Add` | `git add --all -- PATH…`; no path is the whole tree | S03 to S15; a fixture run of `gate:<kind>` |
 | `Commit` | `git commit -m MESSAGE` | S03 to S15; a fixture run |
 | `SwitchCreate` | `git switch -c BRANCH COMMIT` | S04: the branch `layup-setup` |
@@ -157,6 +190,21 @@ that the steps, the checks and `layup gate` name.
 | `DiffNames` | `git diff --name-only --no-renames -z --end-of-options BASE HEAD --` | `layup gate`: a `pending` kind |
 | `Apply` | `git apply -- PATCH` | check `gate:<kind>`: the known-bad fixture |
 | `LsTree` | `git ls-tree -r -z --full-tree --end-of-options REV -- PATH` | `layup gate`, step 2 of the run: the files of a `config` path at the base, with their modes (task `T-5sgt`); S04: the records of `docs/adr/` and `docs/facts/` at the root commit (task `T-7s0y`); S05: the history at the head; S11: the records of `docs/facts/` at the head (task `T-b3r1`); S12: the tree of the head; S15: the `.sh` files of `layup-setup`, and the tree of the records commit of a run that stopped (task `T-d6q5`) |
+
+**The calls of `M2a`** (task `T-zck8`; [`run.md`](run.md)). Each takes the
+token of [`forge.md`](forge.md#the-app-identity) in its environment when the
+remote needs it; no other value enters the fixed list.
+
+| Call | The command, after the `-c` values below | Used by |
+| ---- | ---------------------------------------- | ------- |
+| `Fetch` | `git fetch --no-tags -- URL REF:REF` | `layup run`: the read-back of the root commit (step 5 of [`run.md`](run.md#the-steps-of-layup-run---new)) |
+| `Push` | `git push --porcelain -- URL COMMIT:refs/heads/BRANCH`; never `--force` | `layup run`: each records commit (fencing: a push that is not a fast-forward is refused) |
+
+Start makes its clone with `Init` and `Fetch`, and the restart with `Clone`. The
+first records commit is an orphan commit in a scratch work tree, as S15 makes it
+(`WorktreeAdd`, `SwitchOrphan`, `Add`, `Commit`, `RevParse`, `WorktreeRemove`);
+each later one uses the same calls on the last records commit, with no
+`SwitchOrphan`.
 
 - `--end-of-options` or `--` comes before each revision, URL and path, so an
   input is never an option (`layup gate` takes revisions from its arguments).
@@ -288,10 +336,10 @@ requirement's section.
 
 | Package | Job | Phase |
 | ------- | --- | ----- |
-| `internal/records` | the one writer of the records branch ([`records.md`](records.md)); the package has its row in the table of phase 1 since task `T-tmhw` (K23), with the schemas of the record kinds that phase 1 defines | 2 |
-| `internal/forge` | the forge interface: the six capabilities of `architecture.md` §1 | 2 |
-| `internal/forge/github` | the GitHub adapter of the forge interface | 2 |
-| `internal/run` | `layup run`: Start, the phase loop, the lease, fencing | 2 |
+| `internal/records` | the schemas and rows of the records ([`records.md`](records.md)); the package has its row in the table of phase 1 since task `T-tmhw` (K23); `internal/run` commits the records ([the table of M2a](#the-table-of-m2a)) | 2 |
+| `internal/forge` | the forge interface: the six capabilities of `architecture.md` §1; its row is in [the table of M2a](#the-table-of-m2a) | 2 |
+| `internal/forge/github` | the GitHub adapter of the forge interface; its row is in [the table of M2a](#the-table-of-m2a) | 2 |
+| `internal/run` | `layup run`: Start, the phase loop, the lease, fencing; its row is in [the table of M2a](#the-table-of-m2a) | 2 |
 | `internal/session` | a role session: its directory, its start, its result | 2 |
 | `internal/handoff` | the transition table and the check of a handoff | 2 |
 | `internal/spec` | `layup spec check` | 2 |

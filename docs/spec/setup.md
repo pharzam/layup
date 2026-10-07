@@ -26,9 +26,9 @@ Operator.
 | Start 1: the empty repository on the forge, the App installed | no | the Operator, by hand, as today |
 | Start 2: resolve the baseline's latest commit, clone it, remove `.git`, record the pin | **yes** (S02) | — |
 | Start 2: the push of the root commit | **yes**, as a printed command (S03) | the Operator runs it |
-| Start 3: read back the default branch, its root tree and visibility; the plan check; the six capabilities | no | `layup run`, phase 2 |
-| Start 3: the first records commit, `approvers.tsv`, the lease row | no | `layup run`, phase 2 |
-| Start 3: the Intake issue, the control issue, the dead-man job's first notice | no | `layup run`, phase 2 |
+| Start 3: read back the default branch, its root tree and visibility; the plan check; the six capabilities | no | `layup run`, `M2a` ([`run.md`](run.md#the-steps-of-layup-run---new)) |
+| Start 3: the first records commit, `approvers.tsv`, the lease row | no | `layup run`, `M2a` ([`run.md`](run.md#the-steps-of-layup-run---new)) |
+| Start 3: the Intake issue, the control issue, the dead-man job's first notice | no | `layup run`, `M2a`, which reads the notice; the dead-man job itself is `M3d` (K38) |
 | Gap check 1: `layup psb check` | **yes** ([`psb-check.md`](psb-check.md)) | — |
 | Gap check 2 to 4: the review of meaning, the specification sessions, the proposed marker sources | no | sessions of `layup run`, phase 2 |
 | Gap check 5 and 6: one comment on the Intake issue; the answers copied; the follow-up | no; the answers are the input file `answers.tsv` | `layup run`, phase 2 |
