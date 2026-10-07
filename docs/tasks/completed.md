@@ -20,6 +20,7 @@ here directly, in the shape above.
 - **YYYY-MM-DD** — **<ID>** — <one-sentence summary of what the task found or delivered> ([<link>](...); [detail](<id>.md))
 -->
 
+- **2026-10-07** — **T-8kqn** — Row 21 of the plan: the records of Start, the Go schemas of `start`, `approvers`, `lease` and `copies` in `internal/records`, with the rules of their blocks and the readers that run them ([#126](https://github.com/pharzam/layup/issues/126); [detail](T-8kqn.md))
 - **2026-10-07** — **T-zwke** — The build tasks of milestone `M2a`: rows 21 to 27 of the plan, one per package boundary of the table of `M2a`, each with its issue (#126 to #132) ([#124](https://github.com/pharzam/layup/issues/124); [detail](T-zwke.md))
 - **2026-10-07** — **T-zck8** — The technical specification of milestone `M2a`, the Start of `layup run`: `run.md`, `forge.md`, the records of Start and the table of `M2a`, with K38, K40 and K41 settled (O-163) and the nine pilot findings moved to their milestones ([#123](https://github.com/pharzam/layup/issues/123); [detail](T-zck8.md))
 - **2026-10-07** — **T-gd8q** — ADR-0026 keeps the bootstrap review rules as the standing gate and ends bootstrap mode, with the end at the cap that the Operator chooses, from the count of the first pilot's numbers ([#120](https://github.com/pharzam/layup/issues/120); [detail](T-gd8q.md))

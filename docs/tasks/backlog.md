@@ -30,7 +30,6 @@ same summary, dated — rather than deleting it or checking it off.
 - **<ID>** — <one-sentence summary> ([<ADR or doc link>](...); [detail](<id>.md))
 -->
 
-- **T-8kqn** — Row 21 of the plan: the records of Start, the Go schemas of `start`, `approvers`, `lease` and `copies` ([#126](https://github.com/pharzam/layup/issues/126); [plan](../plan/README.md#the-tasks-of-m2a))
 - **T-esfe** — Row 22 of the plan: the forge interface, the two host registers, and the package rules of `M2a` ([#127](https://github.com/pharzam/layup/issues/127); [plan](../plan/README.md#the-tasks-of-m2a))
 - **T-xhgz** — Row 23 of the plan: the calls `Fetch` and `Push` of `internal/git`, with the token of one call ([#128](https://github.com/pharzam/layup/issues/128); [plan](../plan/README.md#the-tasks-of-m2a))
 - **T-6bq5** — Row 24 of the plan: the GitHub adapter ([#129](https://github.com/pharzam/layup/issues/129); [plan](../plan/README.md#the-tasks-of-m2a))

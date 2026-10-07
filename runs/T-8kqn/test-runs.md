@@ -68,3 +68,7 @@ With `start.go` and the four names in `built`: `ok` for both packages; `go build
 ## D3 and D4 green (2026-10-07T14:30Z)
 
 `sh runs/T-8kqn/docs.sh`: the eight rules `ok`, exit 0.
+
+## The notes of round 1, in the close-out (2026-10-07T14:40Z)
+
+Two cases added (note 1: a harness of the register with no rows; note 2: a register ID that is not of the form `<word>`). With the `<word>` check of `ReadStart` turned off on a backup copy of `start.go`, the second fails with `a register ID that is not of the form <word>: read, want an error`; the file was put back, and `go test ./internal/records/` passes.

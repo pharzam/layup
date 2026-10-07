@@ -119,7 +119,7 @@ func permissions(v string) bool {
 	return true
 }
 
-// intakeCap: MONEY,HOURS, two decimals.
+// intakeCap: MONEY,HOURS, two values of the type decimal joined by a comma.
 func intakeCap(v string) bool {
 	money, hours, ok := strings.Cut(v, ",")
 	return ok && decimalForm.MatchString(money) && decimalForm.MatchString(hours)

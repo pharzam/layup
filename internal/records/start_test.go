@@ -91,7 +91,8 @@ func TestStartRefusesEachBrokenRule(t *testing.T) {
 		{"an unknown name", append(startRows(), "colour\tblue\trun"), harnesses},
 		{"a missing name", without("pin.tree"), harnesses},
 		{"the rows out of order", order, harnesses},
-		{"a harness of the register with no rows", without("harness.devin.cap"), harnesses},
+		{"a harness of the register with no cap row", without("harness.devin.cap"), harnesses},
+		{"a harness of the register with no rows", append(append([]string{}, startRows()[:13]...), startRows()[15:]...), harnesses},
 		{"the harnesses not in the order of the register", swapped, harnesses},
 		{"wall before cap", wallFirst, harnesses},
 		{"a harness row with an empty register", startRows(), nil},
@@ -116,6 +117,9 @@ func TestStartRefusesEachBrokenRule(t *testing.T) {
 	}
 	if _, err := ReadStart(table(startHeader, noHarness...), nil); err != nil {
 		t.Errorf("an empty register and no harness row: %v", err)
+	}
+	if _, err := ReadStart(table(startHeader, append(append(append([]string{}, startRows()[:11]...), "harness.Claude.cap\t10.0\tregister", "harness.Claude.wall\t60\tregister"), startRows()[13:]...)...), []string{"Claude", "devin"}); err == nil {
+		t.Error("a register ID that is not of the form <word>: read, want an error")
 	}
 }
 
