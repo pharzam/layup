@@ -24,7 +24,7 @@ ROWS = [
     ("21", "T-8kqn", "The records of Start",
      "The Go schemas of `start`, `approvers`, `lease` and `copies` equal their blocks.",
      "`records.md`: the blocks `start`, `approvers`, `lease`, `copies`, and the row rules that they give in words",
-     "`internal/records`", "NFR-001", "`later-p2-run-start`",
+     "`internal/records` (and its Job cell in the table of phase 1 of `packages.md`)", "NFR-001", "`later-p2-run-start`",
      "unit; the block test (the four names to `built`)", "large", "500", "—", "1"),
     ("22", "T-esfe", "The forge interface, the two host registers, and the package rules of M2a",
      "A forge register or a harness register that breaks its schema is refused with its line, by its owner package.",
@@ -47,13 +47,13 @@ ROWS = [
     ("25", "T-trej", "internal/run: Start and the restart",
      "Against the `httptest` forge and a local bare repository, Start makes the first records commit with the pin, the briefs, `approvers.tsv`, `start.tsv` and the lease row.",
      "`run.md`: \"The steps of `layup run --new`\", \"The README of a target that Start makes\", \"The restart\", \"The lease and fencing\", \"A human decision\", \"Copy before read\", "
-     "\"The Intake and control issues\", rows 6 to 10 of \"Input states\", the table `run-steps`, NFR-006, NFR-002, REQ-002",
+     "\"The Intake and control issues\", rows 6 to 11 of \"Input states\", the table `run-steps`, NFR-006, NFR-002, REQ-002",
      "`internal/run`", "NFR-001, NFR-002, NFR-006, REQ-002", "`later-p2-run-start`",
      "unit (the lease with a stand-in clock and `git`; the two rules; the input states); integration (Start, and a restart with another LAYUP version); the block test (`run-steps` to `built`)",
      "large", "1200", "21, 22, 23, 24", "1"),
     ("26", "T-mqty", "The command layup run",
      "`layup run --new` then `layup run TARGET`, as the built binary against a local fake forge, give their tables, the same bytes on a repeat.",
-     "`run.md`: \"The command\" (two rows, the selecting flag, the one flag that may be left out, the exit codes); `README.md`: the rules of the selecting flag and of a flag that may be left out",
+     "`run.md`: \"The command\" (two rows, the selecting flag, the one flag that may be left out, the printing of the table and the progress lines, the exit codes); `README.md`: the rules of the selecting flag and of a flag that may be left out; `packages.md`: the May import cell of `internal/cli`",
      "`internal/cli`", "NFR-001, NFR-002", "`later-p2-run-start`",
      "unit; e2e (the binary, no secret)", "large", "600", "25", "1"),
     ("27", "T-fnsr", "The demo of M2a (uat)",
@@ -72,6 +72,15 @@ OPERATOR_INPUTS = """## The Operator's inputs (R6: severity normal; needed when 
 - The App's private key on the host, mode 0600 (O-112).
 - The values of the command: the two logins, the plan, the intake cap, `lease.H` and `watch.T` ([`run.md`]({spec}run.md#the-command)).
 """.format(spec=SPEC)
+
+
+UAT_FROM = """- [ ] The demo above holds, by the tests of the Tests cell, written red first.
+- [ ] Each part above is built as the specification says; a difference is a defect of the specification, fixed in the same pull request (R10).
+- [ ] `go build ./...`, `go vet ./...`, `go test ./...` and `go test -tags=integration ./...` pass; `adr-lint`, `prd-lint`, `link-lint`, `setup-check` and `run-discipline-tests` exit 0.
+"""
+UAT_TO = """- [ ] The demo above holds on a real GitHub test target, with its evidence under `runs/` (the command, the table, the records branch read with a plain `git clone`).
+- [ ] Each write of LAYUP on the target shows the App's bot as its author.
+"""
 
 
 def body(r):
@@ -97,7 +106,7 @@ Task `{task}`: row {row} of the [implementation plan](https://github.com/pharzam
 - [ ] Docs updated in the same PR (`docs/tests/traceability.md`, the Test cells of `PRD-0001` §12).
 """
     if row == "27":
-        b += "\n" + OPERATOR_INPUTS
+        b = b.replace(UAT_FROM, UAT_TO) + "\n" + OPERATOR_INPUTS
     return b + "\n*Written by Claude Opus 5.5, the author of T-zwke (#124).*\n"
 
 

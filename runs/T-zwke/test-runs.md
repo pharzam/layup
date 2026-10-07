@@ -33,3 +33,18 @@ ok   row 27: #132 (T-fnsr) by layup-agent[bot]
 ```
 
 Both exit 0.
+
+## Green, on the fix of round 1 (2026-10-07T10:45Z)
+
+```
+ok   each part is in one row of The tasks of M2a, or named with its reason
+ok   row 21: #126 (T-8kqn) by layup-agent[bot]
+ok   row 22: #127 (T-esfe) by layup-agent[bot]
+ok   row 23: #128 (T-xhgz) by layup-agent[bot]
+ok   row 24: #129 (T-6bq5) by layup-agent[bot]
+ok   row 25: #130 (T-trej) by layup-agent[bot]
+ok   row 26: #131 (T-mqty) by layup-agent[bot]
+ok   row 27: #132 (T-fnsr) by layup-agent[bot]
+```
+
+Both exit 0. The bodies of #126, #130, #131 and #132 were edited by the App to match the generator; the body of #132 equals the output of `gen-issues.py` for row 27.

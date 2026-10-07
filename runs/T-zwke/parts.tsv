@@ -1,5 +1,6 @@
 file	heading	sub	row
-docs/spec/run.md	## The command	the two rows, the selecting flag, the flag that may be left out, the output, the exit codes	26
+docs/spec/run.md	## The command	the two rows, the selecting flag, the flag that may be left out, the printing of the table and the progress lines, the exit codes	26
+docs/spec/run.md	## The command	the schema block run-steps	25
 docs/spec/run.md	## NFR-001 — The Start of a target	the one writer from Start on	25
 docs/spec/run.md	### The steps of `layup run --new`	—	25
 docs/spec/run.md	### The README of a target that Start makes	—	25
@@ -9,12 +10,13 @@ docs/spec/run.md	### A human decision	—	25
 docs/spec/run.md	### Copy before read	—	25
 docs/spec/run.md	### The Intake and control issues	—	25
 docs/spec/run.md	### Input states	rows 1 to 5: the registers and the key file	22
-docs/spec/run.md	### Input states	rows 6 to 10 and the known limit: the forge and the records	25
+docs/spec/run.md	### Input states	rows 6 to 11 and the known limit: the forge and the records	25
 docs/spec/run.md	### Not in M2a	—	none: the parts of later milestones
 docs/spec/run.md	## NFR-006 — The target's pin at Start	—	25
 docs/spec/run.md	## NFR-002 — The records with no tool	—	25
 docs/spec/run.md	## REQ-002 — The Start before the Scaffold	—	25
-docs/spec/run.md	## The acceptance tests of M2a	—	none: the source of the Tests cell of each row
+docs/spec/run.md	## The acceptance tests of M2a	the unit, integration and e2e rows	none: the source of the Tests cell of each row
+docs/spec/run.md	## The acceptance tests of M2a	the uat row	27
 docs/spec/run.md	## The findings of the first pilot	—	none: M2a changes none of them
 docs/spec/forge.md	## The six capabilities	the interface, and the set of permissions of M2a with its check	22
 docs/spec/forge.md	## The App identity	the key-file checks	22
