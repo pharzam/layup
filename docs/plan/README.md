@@ -163,7 +163,7 @@ and each acceptance test of `run.md` in the row that delivers its part. The
 columns are those of the tasks of phase 1 without Parent, which is `—` for each
 row; "Task" also names the parts of the specification; each issue says `Refs #123` and `Refs #29`. Rows
 21, 22 and 23 can start at once; rows 21 and 22 both change the lists of the
-block test, so the second to merge rebases.
+block test, so the second to merge takes the first's change by a merge of `origin/main`.
 
 | # | Task ID | Issue | Task | Demo | Items | Requirements | Fact | Tests | Size | Lines | After | Cap |
 | - | ------- | ----- | ---- | ---- | ----- | ------------ | ---- | ----- | ---- | ----- | ----- | --- |
