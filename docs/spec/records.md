@@ -11,7 +11,9 @@ One row per record kind of the whole architecture (§1 to §15), so that a later
 milestone adds schemas and does not move a file. The inventory that this table
 was checked against is [`runs/T-0drh/checklist.md`](../../runs/T-0drh/checklist.md),
 part C. "Phase" is the phase of the milestone whose code first writes the
-record (K38, task `T-zck8`); a schema is in this directory for a record of
+record, or first reads it for a record that a human writes (K38, task
+`T-zck8`); "1, schema only" marks a record whose schema phase 1 gives and whose
+writer comes later; a schema is in this directory for a record of
 phase 1 and for a record of each milestone whose specification task has run
 (`M2a`: [the records of Start](#nfr-001--the-records-of-start)).
 
@@ -175,8 +177,11 @@ and ADR-0016.
 
 Milestone `M2a` (task `T-zck8`, #123): the records that `layup run` writes at
 Start, and the two host registers that it reads. The steps that write them are
-in [`run.md`](run.md). `internal/records` holds the Go schema of each block
-([`packages.md`](packages.md#the-table-of-m2a)).
+in [`run.md`](run.md). Each block has one owner, which holds its Go schema and reads or writes the
+record with it ([`packages.md`](packages.md#the-table-of-m2a)):
+`internal/records` owns `start`, `approvers`, `lease` and `copies`;
+`internal/route` owns `harness-register`; `internal/forge` owns
+`forge-register`; `internal/run` owns `run-steps` ([`run.md`](run.md#the-command)).
 
 **`start/start.tsv`** holds one row per value of the Start (**decided here**: a
 table of names, not one wide row, so that a value of a later milestone is a new
@@ -191,7 +196,7 @@ in the order of the register.
 ```tsv-schema start records:start/start.tsv
 name text key one of the names above, and no other
 value text - the value as text: a flag's value as given (`forge.plan`, `intake.cap` as `MONEY,HOURS`); a time in the form of the type `time`; a SHA in the form of `sha1` or `sha256`; a number in the form of `int` or `decimal`; `app.permissions` as `name:level` pairs in the form of `list(text)`; `issue.*` an `int` or `opening`; `watch` `confirmed` or `not-confirmed`; `—` only for `vision.sha256` with no vision brief, `harness.<id>.cap` of a harness with no spend cap, and `issue.*` and `watch` before their steps
-source enum(command|register|forge|run) - a flag of the Start command, the harness register, a read-back from the forge, or the run itself
+source enum(command|register|forge|run) - `command` for a flag's value and for `psb.sha256` and `vision.sha256` (the hash of a flag's file); `register` for `harness.<id>.*`; `forge` for `forge.visibility`, `app.permissions`, `operator.id`, `idea-owner.id` and `issue.*`; `run` for `layup.version`, `pin.*` and `watch`
 ```
 
 ```tsv-schema approvers records:approvers.tsv

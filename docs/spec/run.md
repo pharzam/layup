@@ -123,7 +123,7 @@ session uses.
    installation token: `start/start.tsv`, `start/problem-statement.md` and
    `start/vision.md` byte for byte, `approvers.tsv` (the two rows of the Start
    command), `lease.tsv` (this run, `held`), and the README of the records branch
-   ([`setup.md`](setup.md#the-readme-of-the-records-branch)). In `start.tsv`,
+   in [the text of Start](#the-readme-of-a-target-that-start-makes). In `start.tsv`,
    `issue.intake`, `issue.control` and `watch` are `—` until their steps write
    them. The author and the committer are the App's bot (`<slug>[bot]`, the
    e-mail `<bot-id>+<slug>[bot]@users.noreply.github.com`), at the time of the
@@ -148,6 +148,34 @@ architecture gives the plan check after the push (§5, Start 3), and the push do
 not change the plan or the visibility, which step 5 reads again. In `M2a`, a
 Start ends after step 9; the Intake of `M2c` adds its rows after `watch`.
 
+### The README of a target that Start makes
+
+The text of `README.md` of `layup-records` that step 6 writes (**decided here**:
+the text of [`setup.md`](setup.md#the-readme-of-the-records-branch) names the
+files of the setup, which a target that Start makes has only after the Scaffold;
+the Scaffold of `M2d` replaces this text with that one when it adds them):
+
+```text start-readme
+# The records of this repository
+
+This branch, `layup-records`, holds the records that LAYUP keeps for this
+repository. It is an orphan branch: it shares no commit with the default
+branch.
+
+Only `layup run` writes this branch from Start on. Its first commit holds the
+records of the Start.
+
+Each file is a table of tab-separated values with a header row, or Markdown,
+so a person reads it with no tool. A plain `git clone` carries the branch as
+`origin/layup-records`.
+
+- `start/start.tsv`: each value of the Start, with its source.
+- `start/problem-statement.md`, `start/vision.md`: the two briefs, byte for byte.
+- `approvers.tsv`: each account whose comment can decide, by its numeric ID and
+  role.
+- `lease.tsv`: the run that holds this target.
+```
+
 ### The restart
 
 `layup run TARGET --host DIR`:
@@ -168,7 +196,9 @@ Start ends after step 9; the Intake of `M2c` adds its rows after `watch`.
    of an issue: the restart runs step 7 for that issue again (a duplicate issue
    is possible, known limit below). When each step of Start is done, the next
    phase is Intake (`M2c`): the row is `done`, and the run releases the lease and
-   exits. `M2c` replaces this row with its steps.
+   exits. `M2c` replaces this row with its steps. **Decided here:** `phase` is one
+   row of the restart's table, whatever steps of Start it runs again; its
+   `detail` names them, so the key `step` holds no second `lease`.
 
 ### The lease and fencing
 
@@ -221,10 +251,13 @@ check of `M2c` posts there.
 | State | Result |
 | ----- | ------ |
 | A register with two rows for one key, an unknown or missing column, or a field that its type refuses | exit 2: the reader of `internal/tsv` refuses it and names the line |
+| A forge register with no row | exit 2 |
+| A harness register with no row | allowed: `start.tsv` has no `harness.<id>.*` row; `M2b` admits no session until it has one |
 | A harness row with `wall` empty | exit 2 |
 | A key file that is missing, not PEM, or not mode 0600, or owned by another user | exit 2, naming the file and its mode |
 | `--new` on a repository with a commit, or with the branch `layup-records` | `forge`: `fail` (O-163) |
-| A restart on a repository with no `layup-records`, or a `start.tsv`, `approvers.tsv` or `lease.tsv` that its reader refuses | `forge` or `clone`: `fail` |
+| A restart on a repository with no `layup-records` | `forge`: `fail` |
+| A restart whose `start.tsv`, `approvers.tsv` or `lease.tsv` its reader refuses | `clone`: `fail` |
 | A lease row from another LAYUP version | the `version` step fails first |
 | A lease table with no row, or two rows | `clone`: `fail` |
 | A forge error during a step | `fail` on that step, with the error ([`forge.md`](forge.md#forge-errors)) |
@@ -244,7 +277,7 @@ job itself (`M3d`; `M2a` only reads its notice).
 
 ## NFR-006 — The target's pin at Start
 
-The baseline commit that step 2 resolves is the target's own pin (O-101): its
+The baseline commit that step 3 resolves is the target's own pin (O-101): its
 source, commit, tree and time go into the first records commit (`pin.*` of
 `start.tsv`). Once that commit exists, no run resolves the commit again; the
 Scaffold (`M2d`, step S04) writes `docs/setup/armature.pin` of the target from

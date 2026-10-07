@@ -115,8 +115,8 @@ Every command of LAYUP follows these rules. A section gives only what differs.
   **Decided here** (task `T-2yw7`): one map in `internal/cli` gives the code of
   a table from its result column: 0 only when the table has at least one row
   and each row is `pass`, `clear`, `done` or `operator`; each other word, and a
-  table with no row, give 1. It takes the result words of the three tables
-  (`gate-result`, `setup-verify`, `setup-steps`); a word that a table's schema
+  table with no row, give 1. It takes the result words of the four tables
+  (`gate-result`, `setup-verify`, `setup-steps`, `run-steps`); a word that a table's schema
   refuses (for example `done` in a `gate-result` row) cannot reach it, because
   the writer of the record refuses it first. Codes 2 and 3 do not come from a
   table. The rule for a table with no row is the default of the frame; for

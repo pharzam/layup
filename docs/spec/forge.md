@@ -61,7 +61,7 @@ date of the build task; a difference from this table is a defect of this table.
 | ------ | ---- | ------------------------- |
 | `Installation` | `GET /repos/{owner}/{repo}/installation` (JWT) | the installation ID and its permissions |
 | `Token` | `POST /app/installations/{id}/access_tokens` (JWT) | the installation token and its end time |
-| `Repository` | `GET /repos/{owner}/{repo}` | the default branch, the visibility, whether the repository has a commit |
+| `Repository` | `GET /repos/{owner}/{repo}`, then `GET /repos/{owner}/{repo}/branches` | the default branch and the visibility; the repository has a commit when the list of branches is not empty |
 | `UserID` | `GET /users/{login}` | the numeric ID of a login; the bot's ID for `<slug>[bot]` |
 | `OpenIssue` | `POST /repos/{owner}/{repo}/issues` | the issue number |
 | `Comments` | `GET /repos/{owner}/{repo}/issues/{n}/comments`, every page | each comment: its ID, the author's ID and login, `performed_via_github_app` (the App's slug, or none), the times, the body |

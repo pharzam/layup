@@ -32,6 +32,8 @@ Red, with the six blocks in `docs/spec/records.md` and no name in either list: `
 
 Green, with the six names in `notYetBuilt`: `ok  github.com/pharzam/layup/internal/tsv`.
 
+The seventh block, `run-steps` of `docs/spec/run.md`, came with D1 in the same commit as its name in `notYetBuilt`; its red run was not recorded (note 14 of round 2). The run below shows it: with the name taken out of the list, the test fails with `the block run-steps is listed 0 times`.
+
 ## Green, on the head before the freeze (2026-10-07T09:09Z)
 
 ```
@@ -61,3 +63,7 @@ ok  	github.com/pharzam/layup/cmd/layup	0.829s
 ## Green, on the fix of round 1 (2026-10-07T09:25Z)
 
 `sh runs/T-zck8/sections.sh`: 18 `ok`, exit 0. `go test -tags=integration ./internal/tsv/ ./cmd/layup/`: `ok`, `ok`. `sh docs/setup/setup-check.sh`: exit 0 (finding 5 of round 1: the backlog line of `T-zck8`).
+
+## Green, on the fix of round 2 (2026-10-07T09:55Z)
+
+`sh runs/T-zck8/sections.sh`: exit 0. `go test -tags=integration ./internal/tsv/ ./cmd/layup/`: `ok`, `ok`. `setup-check`, `link-lint`, `prd-lint`, `adr-lint`, `run-discipline-tests`: exit 0. The mutation of `notYetBuilt` ran on a copy of the test file, which was then put back.

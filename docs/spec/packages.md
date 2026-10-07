@@ -23,8 +23,9 @@ ADR-0011 decision 1 and ADR-0013.
 5. No package of phase 1 depends on `net`, `net/http` or `crypto/tls`, by its
    own imports or through another package: the engine checks open no
    connection (`NFR-005`, [`gate.md`](gate.md#nfr-005--no-model-call-in-the-engine-checks)).
-   From milestone `M2a`, only `internal/forge/github` depends on them: the
-   column "Connects" of [the table of M2a](#the-table-of-m2a) says so, and
+   From milestone `M2a`, only `internal/forge/github` imports them, and only the
+   packages that the column "Connects" of [the table of M2a](#the-table-of-m2a)
+   names depend on them (by D8 below, through the adapter too); and
    `M3a` gives `internal/smartif` (phase 3) its rule
    ([the milestones](../plan/README.md#milestones)).
 
@@ -99,23 +100,28 @@ of the block `psb-gaps`, which its block test compares with the block (D5 of
 
 Milestone `M2a` (task `T-zck8`, #123; [`run.md`](run.md), [`forge.md`](forge.md)).
 The columns of the table of phase 1, and one more: **"Connects"** is the
-character — for a package that opens no connection, or one code span per
-package of the standard library of rule 5 that it may depend on. **Decided
+character — for a package that may not depend on a package of rule 5, or one
+code span per package of rule 5 that it may depend on, by its own imports or
+through another package (D8). `cmd/layup` and `internal/cli` depend on them
+through the adapter, so they have a row here too, with only their "Connects"
+cell; their other cells stay in the table of phase 1. **Decided
 here:** the build task that makes the first package of this table makes
 `TestPackageRules` read this table too, and rule 5 from this column, so the test
 holds no list of its own (D7 of #79), in the same change.
 
 | Package | Job | May import | Starts a program | Connects |
 | ------- | --- | ---------- | ---------------- | -------- |
-| `internal/run` | `layup run`: the steps of Start, the restart, the lease and fencing, the copy of a comment and the rule of a decision ([`run.md`](run.md)) | `internal/tsv`, `internal/git`, `internal/records`, `internal/forge`, `internal/route` | no | — |
-| `internal/forge` | the forge interface: the six capabilities and their types ([`forge.md`](forge.md)) | — | no | — |
+| `internal/run` | `layup run`: the steps of Start, the restart, the lease and fencing, the copy of a comment and the rule of a decision ([`run.md`](run.md)); the Go schema of the table `run-steps` | `internal/tsv`, `internal/git`, `internal/records`, `internal/forge`, `internal/route` | no | — |
+| `internal/forge` | the forge interface: the six capabilities and their types ([`forge.md`](forge.md)); the reader of the forge register (`host:registers/forge.tsv`), with the Go schema of its block | `internal/tsv` | no | — |
 | `internal/forge/github` | the GitHub adapter: the JWT, the installation token, the calls of [`forge.md`](forge.md#the-calls-of-m2a) | `internal/forge` | no | `net`, `net/http`, `crypto/tls` |
-| `internal/route` | in `M2a`, only the reader of the harness register (`host:registers/harnesses.tsv`); the probe, admission and routing come in `M2b` | `internal/tsv` | no | — |
+| `internal/route` | in `M2a`, only the reader of the harness register (`host:registers/harnesses.tsv`), with the Go schema of its block; the probe, admission and routing come in `M2b` | `internal/tsv` | no | — |
+| `cmd/layup` | (the row of phase 1) | (the row of phase 1) | (the row of phase 1) | `net`, `net/http`, `crypto/tls` |
+| `internal/cli` | (the row of phase 1, with the change below) | (the row of phase 1, with the change below) | (the row of phase 1) | `net`, `net/http`, `crypto/tls` |
 
 In `M2a` two rows of the table of phase 1 change, in the build task that needs
-each: `internal/cli` may also import `internal/run`, `internal/forge/github` and
-`internal/route` (it builds the adapter from the register and hands it to
-`internal/run`); `internal/records` also holds the schemas of the records of
+each: `internal/cli` may also import `internal/run`, `internal/forge`, `internal/forge/github` and
+`internal/route` (it reads the forge register through `internal/forge`, builds
+the adapter from it, and hands it to `internal/run`); `internal/records` also holds the schemas of the records of
 Start ([`records.md`](records.md#nfr-001--the-records-of-start)), and still
 imports `internal/tsv` only. `internal/run` commits and pushes the records with
 `internal/git`; `internal/records` gives the rows. The later table below keeps
@@ -191,7 +197,7 @@ remote needs it; no other value enters the fixed list.
 
 | Call | The command, after the `-c` values below | Used by |
 | ---- | ---------------------------------------- | ------- |
-| `Fetch` | `git fetch --no-tags -- URL REF:REF` | `layup run`: the read-back of the root commit (Start 4); the restart: the records branch |
+| `Fetch` | `git fetch --no-tags -- URL REF:REF` | `layup run`: the read-back of the root commit (step 5 of [`run.md`](run.md#the-steps-of-layup-run---new)) |
 | `Push` | `git push --porcelain -- URL COMMIT:refs/heads/BRANCH`; never `--force` | `layup run`: each records commit (fencing: a push that is not a fast-forward is refused) |
 
 Start makes its clone with `Init` and `Fetch`, and the restart with `Clone`. The

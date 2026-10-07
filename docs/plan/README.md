@@ -290,7 +290,7 @@ are known limits by the Operator's rulings.
 | ------- | ---- | ---- |
 | F-2, F-31, F-35 | `M2d` | A second setup run on a target: a changed input of a done step, the immutable records, the names of the branches. `layup run` drives the setup in the Scaffold, and adopts a phase-1 target there (K41, O-163). |
 | F-6 | `M2d` | `layup setup verify` before S12; the Scaffold reads the verify table. |
-| F-13, F-19 | `M2d` | S13: `commands.sh` is not fail-fast; the ruleset parameters that S13 does not set. The Scaffold re-specifies the files and the printed commands of S13 (the Operator still applies the rulesets with the Operator's own login, `architecture.md` §6); the fail-fast rule and the two parameters belong to that rewrite. |
+| F-13, F-19 | `M2d` | S13: `commands.sh` is not fail-fast; the ruleset parameters that S13 does not set. The Scaffold re-specifies the files and the printed commands of S13 (the Operator still applies the rulesets with the Operator's own login, `architecture.md` §5, Scaffold 6); the fail-fast rule and the two parameters belong to that rewrite. |
 | F-16 | `M2d` | A stale line that the setup does not flag; the adaptation step of the Scaffold. |
 | F-21 | `M2c` | Rule G1 of `layup psb check` reads only `technology stack:`; the gap check of Intake. |
 | F-22 | `M2e` | The gate jobs read the base's gate files (the Operator's direction). |

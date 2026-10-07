@@ -103,6 +103,9 @@ domain terms are in the sections below.
 | Rivest–Shamir–Adleman | `RSA` | A public-key method of signing and encryption; the App's private key is an RSA key. | The adapter signs a JWT with the App's RSA key. |
 | RSA signature with SHA-256 | `RS256` | The signing method of a JWT that uses an RSA key and SHA-256, which GitHub asks of an App's JWT. | The header of the adapter's JWT names `RS256`. |
 | Representational state transfer | `REST` | The style of a web API in which each resource has a URL and the HTTP methods act on it; GitHub's REST API is the one that the adapter calls ([`spec/forge.md`](spec/forge.md#the-calls-of-m2a)). | `GET /repos/{owner}/{repo}` gives a repository. |
+| JavaScript Object Notation | `JSON` | A text form of structured data. GitHub's API sends and takes JSON, and a JWT carries its claims as JSON. LAYUP's own records are tables of tab-separated values, never JSON. | The body of `GET /repos/{owner}/{repo}`. |
+| Hypertext Transfer Protocol | `HTTP` | The protocol of the web, on which the forge's API and a Git remote over `https` run. | The adapter sends the installation token in an HTTP header. |
+| Uniform Resource Locator | `URL` | The address of a resource on the web, for example the base URL of the forge's API in the forge register. | `https://api.github.com`. |
 | Unicode Transformation Format, 8-bit | `UTF-8` | The byte encoding of Unicode text that every LAYUP record and Markdown file uses. | The `—` of an empty field is three bytes in UTF-8. |
 | Request for Comments 3339 | `RFC 3339` | The Internet standard form of a date and time; LAYUP writes a time in UTC to the second ([`spec/README.md`](spec/README.md#the-types)). | `2026-10-01T08:09:21Z`. |
 | International Organization for Standardization standard 4217 | `ISO 4217` | The three-letter codes of currencies; the `currency` column of a cost record uses them. | `USD`. |
