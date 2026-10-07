@@ -71,6 +71,14 @@ questions of the `later` items. The learning loop (`later-p4-learning`: the
 retrospective, `layup learn` and the lessons) serves no requirement of
 `PRD-0001`, so it is not a milestone: it waits for the Operator's decision.
 
+The specification tasks of `M2b`, `M2f`, `M2g`, `M3a` and `M3d`, and the
+Operator's decision on the learning loop, also read
+[`runs/T-w73g/survey.md`](../../runs/T-w73g/survey.md) (`T-w73g`,
+[#133](https://github.com/pharzam/layup/issues/133)): the patterns of five public
+repositories that the Operator named, each with its source path and the
+milestone that reads it. The survey decides nothing: each task takes a pattern
+or rejects it, and still runs its own public-solution search.
+
 ## The parent tasks
 
 | Task ID | Issue | Task | Parent | Holds |
