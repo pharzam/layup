@@ -3,8 +3,8 @@
 Task `T-gd8q` ([#120](https://github.com/pharzam/layup/issues/120)), the first step
 of the ADR that ends bootstrap mode (`gov-pilot-numbers`,
 [`runs/T-55n2/inventory.md`](../T-55n2/inventory.md)). Read at `34dd858`. Each value
-cites a `file:line`; [`cites.sh`](cites.sh) prints the text of each cited line into
-[`cites.txt`](cites.txt), so a reader can check that the line holds the value.
+cites a `file:line`; [`cites.sh`](cites.sh) prints the text of each cited line at the base
+(`sh runs/T-gd8q/cites.sh`), so a reader can check that the line holds the value.
 
 **The rule was written after the numbers were known.** The inventory asked the plan
 of the pilot to pre-register the thresholds (`runs/T-55n2/inventory.md:1544`); the
