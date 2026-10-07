@@ -51,4 +51,4 @@ Both exit 0. The bodies of #126, #130, #131 and #132 were edited by the App to m
 
 ## The fix of O-166 (2026-10-07T11:11Z)
 
-`go run github.com/zricethezav/gitleaks/v8@v8.30.1 git --redact`: 477 commits, `no leaks found`. The same on `add60ef..HEAD`. With an empty ignore file (`--gitleaks-ignore-path` to an empty file), the run on `add60ef..HEAD` finds the one leak of `592c398` (`generic-api-key`, fingerprint `592c398b4de5690bb344450486102a5f7e0e9e99:runs/T-zwke/gen-issues.py:generic-api-key:107`), so the line of `.gitleaksignore` is what clears it, and no other finding is hidden.
+`go run github.com/zricethezav/gitleaks/v8@v8.30.1 git --redact`: 477 commits, `no leaks found`. The same on `add60ef..HEAD`. A first try with `--gitleaks-ignore-path` set to an empty file gave `no leaks found`: the option did not stop the read of the repository's own `.gitleaksignore`, so that run proved nothing. The test that does: in a clone of `b29bfea` with `.gitleaksignore` removed, the run on `add60ef..HEAD` gives `leaks found: 1`, the finding of `592c398` that CI reported. So the line of `.gitleaksignore` is what clears it, and no other finding is hidden.
