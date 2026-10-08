@@ -141,6 +141,17 @@ check that catches it.
   with a keep or reject reason; two searchers on different models, blind to each
   other ([`runs/T-hbw8/root-cause-missed-solution.md`](../runs/T-hbw8/root-cause-missed-solution.md)).
   Learned in `T-hbw8` ([#72](https://github.com/pharzam/layup/issues/72)).
+- ❌ **A citation check that proves the path, not the claim.** In `T-w73g`,
+  `cites.sh` was green on each of 66 source paths of the survey, and the review
+  then found seven rows whose cited file said something else: a count, an outcome
+  left out, a script said to "only warn" that exits 1, a second file that held
+  the claim. The rows came from read-only agents' reports, which round a detail
+  or name the nearest file. It is silent because a green path check reads as "the
+  survey is true to its sources". **The check:** a path check proves only that a
+  file exists; before an agent's report of a file becomes a record, a reviewer
+  reads a sample of its rows against the files (a semantic pass of at least 15
+  rows, as round 1 of `T-w73g` did), and the record says which claims were
+  checked by hand. Learned in `T-w73g` ([#133](https://github.com/pharzam/layup/issues/133)).
 - ❌ **Coverage by name.** A coverage table that maps each requirement to a
   component name looks complete while the component cannot do the work: the
   `T-hbw8` architecture passed its own tables and then got about 50 material
