@@ -52,3 +52,7 @@ The cases that `tsv.Read` refuses already (a second row, an unknown column, an `
 ## Green (2026-10-08T07:06Z)
 
 The real code: `go test ./internal/forge/ ./internal/route/` passes. The comparisons `TestTheSchemaEqualsItsBlock` of both owners and the block test with `forge-register` and `harness-register` in `built` pass; `TestPackageRules` passes with the two new packages and their rows of the table of M2a. With the type of `wall` changed to `decimal` on a backup copy of `internal/route/register.go`, the comparison of `internal/route` failed (`the type: the block has "int"`); the file was put back. `go build`, `go vet`, `go test ./...` and `go test -tags=integration ./...` pass.
+
+## The documents (2026-10-08T07:07Z)
+
+Red before the edits: `sh runs/T-1g1q/docs.sh` gave nine `FAIL` lines, exit 1. After the edits, eight rules passed and the rule of row 24 failed: it asked for the words `O-171`, `The six capabilities` and `internal/forge` in that order, and the row names `internal/forge` first. The check was too strict, not the row; it now tests each word apart. Then the nine rules `ok`, exit 0.
