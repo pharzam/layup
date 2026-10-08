@@ -292,6 +292,16 @@ check that catches it.
   ([`packages.md`](spec/packages.md#the-calls-of-internalgit)), and its
   integration test fetches `main` into a repository that `Init` made. Learned in
   `T-xhgz`.
+- ❌ **A plan row sliced by package, with no goal count.** The slicing of `M2a`
+  (`T-zwke`, #124) cut one row per package and did not count the goal classes of
+  each row, so the count of R11 came only at the build plan of rows 22 and 25,
+  and each needed a split by the Operator (O-170 of #127, O-173 of #130). It is
+  silent because a row per package reads as one task, and the build plan comes
+  after the issue is open. **The check:** before the issue of a row opens, apply
+  the test of R11 ("either can fail while the other passes") to the goal classes
+  of each row, and bring a row with more than one to the Operator then; a split
+  that a slicing review offers is weighed by the goal count, not by a shared
+  test. Learned in `T-trej`.
 
 ### Writing a lesson back
 

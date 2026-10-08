@@ -212,18 +212,27 @@ As `architecture.md` §2, with these values decided here:
   changed for `3 × lease.H`, it takes the lease over: a records commit that
   writes its own row, with the old run ID in the commit message. While
   `heartbeat` moves, it does not take the lease; after `3 × lease.H` with a
-  moving counter it exits 1, `lease`: `fail`, naming the run that holds it.
+  moving counter it exits 1, `lease`: `fail`, naming the run that holds it. At
+  each read the takeover rule comes first: no change for `3 × lease.H` since
+  the last change it saw takes the lease over; else `3 × lease.H` since the
+  start of its wait exits 1. So a counter that moves once and then stops gives
+  exit 1, and the next run takes the lease over (task `T-trej`). A refused takeover
+  push means that another run took the lease first: `fail`, naming it.
 - **Fencing.** A run pushes the records branch only on top of its own last pushed
   records commit, never after a fetch and a rebase, and never with force. Each
   forge write (an issue, a comment) comes after the records push that announces
   it. A refused records push stops the run: it reads the lease again, goes on
-  only while it still holds it, and else exits 1 with `fail` on the step.
+  only while it still holds it, and else exits 1 with `fail` on the step. To go
+  on is to try the same push once more; a second refusal is `fail` (task
+  `T-trej`). The heartbeat and the release go through this rule.
 
 ### A human decision
 
 A comment is a human decision only when its author ID is in `approvers.tsv`, in
 the role that the rule names, and its App field is empty (§3, O-77). A review, a
-review comment, a commit, a reaction or an edit is never a decision. The rules
+review comment, a commit, a reaction or an edit is never a decision. The
+decision is the first copy of the comment (`seen` 1 of `copies.tsv`), so a
+comment edited before its first copy is a decision as copied (task `T-trej`). The rules
 of `M2a` name no decision; the function and its test come with `M2a`, so that
 `M2c` uses them: the Intake answers take the roles `operator` and `idea-owner`,
 an acceptance the role `idea-owner` only.
@@ -301,7 +310,7 @@ resolved pin and the root commit come from the same calls as S02 and S03 of
 
 | Part | Level | Test |
 | ---- | ----- | ---- |
-| The lease and fencing | unit | With a stand-in clock and a stand-in `git`, a second run takes the lease only after `heartbeat` has not moved for `3 × lease.H` by its own clock; with a moving counter it exits 1; a refused records push stops the run until it reads the lease again. |
+| The lease and fencing | unit | With a stand-in clock and a stand-in records store, a second run takes the lease only after `heartbeat` has not moved for `3 × lease.H` by its own clock; with a moving counter it exits 1; a refused records push stops the run until it reads the lease again. |
 | A human decision | unit | An author ID in `approvers.tsv` with an empty App field, in the rule's role, is a decision; an App comment, a review, a review comment, a commit, a reaction and an edit are not; Intake takes `operator` and `idea-owner`, an acceptance `idea-owner` only. |
 | Copy before read | unit | A copy writes the body, the author ID and login, the comment ID, the App field, the times and the SHA-256; an edit adds a row with the next `seen`, and the first copy stays; an unchanged comment adds none. |
 | The records of Start | unit | Each new record kind is refused with a wrong header; its Go schema equals its block (`tsv.Compare`), and the owner moves its name from `notYetBuilt` to `built`. |
