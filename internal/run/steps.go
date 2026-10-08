@@ -57,7 +57,8 @@ type Config struct {
 	Harnesses           [][]string // the rows of harnesses.tsv
 	Forge               forge.Forge
 	Clock               Clock
-	Progress            func(string)
+	Progress            func(string)                // a line of a wait
+	Step                func(i, n int, name string) // the start of each step, or nil
 	RunID, HostName     string
 	Version             string
 	Baseline            string // the source of LAYUP's own pin
@@ -116,7 +117,10 @@ func (r *state) run(ctx context.Context, cancel context.CancelFunc, steps []func
 	var rows []Step
 	r.cancel = cancel
 	defer r.endBeat()
-	for _, step := range steps {
+	for i, step := range steps {
+		if r.cfg.Step != nil {
+			r.cfg.Step(i+1, len(steps), stepNames(len(steps))[i])
+		}
 		s := step(ctx)
 		if lost := r.lost(); s.Result == "fail" && lost != nil {
 			s.Detail = lost.Error()
@@ -134,6 +138,14 @@ func (r *state) lost() error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	return r.lostBeat
+}
+
+// stepNames gives the names of the steps of Start (nine) or of the restart.
+func stepNames(n int) []string {
+	if n == 9 {
+		return []string{"forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease"}
+	}
+	return []string{"forge", "clone", "version", "lease", "phase"}
 }
 
 func done(name, detail string) Step { return Step{name, "done", detail} }

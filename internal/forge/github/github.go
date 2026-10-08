@@ -49,8 +49,18 @@ type Adapter struct {
 
 var _ forge.Forge = (*Adapter)(nil)
 
-// New gives an adapter of cfg; an empty Now or Sleep is the real one.
+// New gives an adapter of cfg; an empty Now or Sleep is the real one. With no
+// Client, it makes one that follows no redirect, so a token goes to the api
+// of the forge register only, and whose transport reads no proxy of the
+// environment (forge.md, The App identity; task T-mqty).
 func New(cfg Config) *Adapter {
+	if cfg.Client == nil {
+		tr := http.DefaultTransport.(*http.Transport).Clone()
+		tr.Proxy = nil
+		cfg.Client = &http.Client{Transport: tr, CheckRedirect: func(*http.Request, []*http.Request) error {
+			return http.ErrUseLastResponse
+		}}
+	}
 	if cfg.Now == nil {
 		cfg.Now = time.Now
 	}

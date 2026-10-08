@@ -426,3 +426,28 @@ func TestALinkToAnotherHostIsRefused(t *testing.T) {
 		t.Errorf("a next page on another host: %v; want a forge.Error of Comments", err)
 	}
 }
+
+// The adapter's own client (forge.md, The App identity; task T-mqty): with no
+// Client of its caller, it follows no redirect, so a token goes to the api
+// only, and its transport reads no proxy of the environment.
+func TestTheOwnClientFollowsNoRedirectAndNoProxy(t *testing.T) {
+	other := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Errorf("the adapter followed a redirect to another server, with %q", r.Header.Get("Authorization"))
+	}))
+	defer other.Close()
+	moved := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, other.URL+r.URL.Path, http.StatusFound)
+	}))
+	defer moved.Close()
+	c := &clock{t: time.Date(2026, 10, 8, 12, 0, 0, 0, time.UTC)}
+	a := New(Config{API: moved.URL, AppID: appID, Key: key(t), Owner: owner, Name: repoName, Progress: func(string) {}, Now: c.now, Sleep: c.sleep})
+	_, err := a.Installation(context.Background())
+	var fe *forge.Error
+	if !errors.As(err, &fe) || fe.Status != http.StatusFound || fe.Call != "Installation" {
+		t.Errorf("a redirect: %v; want a forge.Error of Installation, 302", err)
+	}
+	tr, ok := a.cfg.Client.Transport.(*http.Transport)
+	if !ok || tr.Proxy != nil {
+		t.Errorf("the transport of the own client is %T with a proxy function; want an *http.Transport with none", a.cfg.Client.Transport)
+	}
+}
