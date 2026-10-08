@@ -19,11 +19,11 @@ var (
 // Decision says whether a row of copies.tsv is a human decision for a rule
 // that names roles: the first copy of the comment (seen 1; an edit is never a
 // decision, and a comment edited before its first copy is that copy), made by
-// no App (app —), by an author ID that approvers.tsv holds in one of the roles.
+// no App (app empty, which copies.tsv writes as —), by an author ID that approvers.tsv holds in one of the roles.
 // A review, a review comment, a commit and a reaction are never rows of
 // copies.tsv.
 func Decision(copy []string, approvers [][]string, roles ...string) bool {
-	if copy[1] != "1" || copy[5] != "—" {
+	if copy[1] != "1" || copy[5] != "" {
 		return false
 	}
 	for _, a := range approvers {
@@ -57,10 +57,7 @@ func Copy(copies [][]string, c forge.Comment, issue int, now time.Time) ([]strin
 	if last != nil && last[8] == digest {
 		return nil, nil, false
 	}
-	app, created := "—", c.Updated
-	if c.App != "" {
-		app = c.App
-	}
+	app, created := c.App, c.Updated
 	if created.IsZero() {
 		created = c.Created
 	}

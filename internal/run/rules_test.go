@@ -11,6 +11,9 @@ import (
 	"github.com/pharzam/layup/internal/records"
 )
 
+// The rows are in the form that tsv.Read gives: the empty value is "", which
+// tsv.Write writes as —.
+
 // approvers is approvers.tsv of a Start: one account in two roles, and an
 // approver.
 var approvers = [][]string{
@@ -33,14 +36,14 @@ func TestADecisionIsAFirstCopyByAnApproverInTheRole(t *testing.T) {
 		roles []string
 		want  bool
 	}{
-		{"the operator in Intake", copyRow("901", "1", "101", "—"), IntakeRoles, true},
-		{"the idea owner in an acceptance", copyRow("901", "1", "303", "—"), AcceptanceRoles, true},
-		{"the operator's account in an acceptance, as idea owner too", copyRow("901", "1", "101", "—"), AcceptanceRoles, true},
-		{"an approver in Intake", copyRow("901", "1", "202", "—"), IntakeRoles, false},
-		{"an ID not in approvers.tsv", copyRow("901", "1", "404", "—"), IntakeRoles, false},
+		{"the operator in Intake", copyRow("901", "1", "101", ""), IntakeRoles, true},
+		{"the idea owner in an acceptance", copyRow("901", "1", "303", ""), AcceptanceRoles, true},
+		{"the operator's account in an acceptance, as idea owner too", copyRow("901", "1", "101", ""), AcceptanceRoles, true},
+		{"an approver in Intake", copyRow("901", "1", "202", ""), IntakeRoles, false},
+		{"an ID not in approvers.tsv", copyRow("901", "1", "404", ""), IntakeRoles, false},
 		{"a comment that an App made", copyRow("901", "1", "101", "layup-watch"), IntakeRoles, false},
-		{"an edit (seen 2)", copyRow("901", "2", "101", "—"), IntakeRoles, false},
-		{"a comment edited before its first copy is its first copy", append(copyRow("901", "1", "101", "—")[:6:6], "2026-10-08T12:30:00Z", "2026-10-08T12:30:05Z", sha256Hex("b"), "copies/901-1.md"), IntakeRoles, true},
+		{"an edit (seen 2)", copyRow("901", "2", "101", ""), IntakeRoles, false},
+		{"a comment edited before its first copy is its first copy", append(copyRow("901", "1", "101", "")[:6:6], "2026-10-08T12:30:00Z", "2026-10-08T12:30:05Z", sha256Hex("b"), "copies/901-1.md"), IntakeRoles, true},
 	} {
 		if got := Decision(c.row, approvers, c.roles...); got != c.want {
 			t.Errorf("%s: Decision = %v, want %v", c.name, got, c.want)
@@ -60,7 +63,7 @@ func TestCopyBeforeRead(t *testing.T) {
 	now := time.Date(2026, 10, 8, 12, 0, 5, 0, time.UTC)
 	first := comment("the answer\n", time.Time{}) // a stand-in forge that leaves Updated zero
 	row, body, ok := Copy(nil, first, 2, now)
-	want := []string{"901", "1", "2", "101", "pharzam", "—", "2026-10-08T12:00:00Z", "2026-10-08T12:00:05Z", sha256Hex("the answer\n"), "copies/901-1.md"}
+	want := []string{"901", "1", "2", "101", "pharzam", "", "2026-10-08T12:00:00Z", "2026-10-08T12:00:05Z", sha256Hex("the answer\n"), "copies/901-1.md"}
 	if !ok || !reflect.DeepEqual(row, want) || string(body) != "the answer\n" {
 		t.Fatalf("the first copy = %q, %q, %v\nwant %q", row, body, ok, want)
 	}
