@@ -191,3 +191,18 @@ func TestCopiesRefusesEachBrokenRule(t *testing.T) {
 		}
 	}
 }
+
+func TestCheckValueGivesTheFormOfAName(t *testing.T) {
+	for _, c := range []struct {
+		name, value string
+		ok          bool
+	}{
+		{"intake.cap", "50.0,8.0", true}, {"intake.cap", "50,8", false}, {"intake.cap", "50.0", false},
+		{"lease.H", "5", true}, {"lease.H", "5.0", false}, {"watch.T", "10", true}, {"watch.T", "-1", false},
+		{"pin.commit", sha1A, true}, {"no.such.name", "x", false},
+	} {
+		if err := CheckValue(c.name, c.value); (err == nil) != c.ok {
+			t.Errorf("CheckValue(%s, %q) = %v; want ok %v", c.name, c.value, err, c.ok)
+		}
+	}
+}

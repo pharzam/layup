@@ -86,3 +86,47 @@ func TestTheUsageListsEachCommandWithItsArgumentsAndTheExitCodes(t *testing.T) {
 		}
 	}
 }
+
+// runTable has the two rows of layup run: Start, whose selecting flag is
+// --new, and the restart, with one positional argument (docs/spec/run.md, The
+// command); --vision of Start may be left out.
+var runTable = append(slices.Clone(testTable),
+	command{words: []string{"run"}, selector: "new", optional: []string{"vision"},
+		flags: []flag{{"new", "OWNER/NAME"}, {"host", "DIR"}, {"psb", "FILE"}, {"vision", "FILE"}}},
+	command{words: []string{"run"}, args: []string{"TARGET"}, flags: []flag{{"host", "DIR"}}})
+
+func TestTheSelectingFlagAndTheOptionalFlag(t *testing.T) {
+	for _, c := range []struct {
+		args     []string
+		selector string
+		pos      []string
+	}{
+		{[]string{"run", "--new", "a/b", "--host", "d", "--psb", "p"}, "new", nil},
+		{[]string{"run", "--host=d", "--psb=p", "--vision=v", "--new=a/b"}, "new", nil},
+		{[]string{"run", "a/b", "--host", "d"}, "", []string{"a/b"}},
+	} {
+		cmd, in, err := parse(runTable, c.args)
+		if err != nil || cmd.selector != c.selector || !slices.Equal(in.args, c.pos) {
+			t.Errorf("%q: the row of selector %q, arguments %q, error %v; want %q, %q", c.args, cmd.selector, in.args, err, c.selector, c.pos)
+		}
+	}
+	for _, c := range []struct {
+		args   []string
+		reason string
+	}{
+		{[]string{"run", "a/b", "--host", "d", "--psb", "p"}, `unknown flag "--psb"`},
+		{[]string{"run", "--new", "a/b", "--host", "d", "--psb", "p", "x"}, `extra argument "x"`},
+		{[]string{"run", "--new", "a/b", "--host", "d"}, "missing flag --psb"},
+		{[]string{"run", "--host", "d"}, "missing argument TARGET"},
+	} {
+		if _, _, err := parse(runTable, c.args); err == nil || err.Error() != c.reason {
+			t.Errorf("%q: error %v, want %q", c.args, err, c.reason)
+		}
+	}
+	u := usage(runTable)
+	for _, want := range []string{"\n  run --new OWNER/NAME --host DIR --psb FILE [--vision FILE] ", "\n  run TARGET --host DIR "} {
+		if !strings.Contains(u, want) {
+			t.Errorf("the usage has no %q:\n%s", want, u)
+		}
+	}
+}

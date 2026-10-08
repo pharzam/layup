@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"io"
+	"sync"
 	"time"
 )
 
@@ -19,6 +20,11 @@ type progress struct {
 	ticker  func(time.Duration) (<-chan time.Time, func())
 
 	stop, done chan struct{} // of the beats of the running step
+	i, n       int           // the running step
+	name       string
+	mu         sync.Mutex // over the lines, and noted
+	noted      bool       // a line of a wait came since the last beat
+	afterBeat  func()     // nil; a test waits on it for each beat to end
 }
 
 // newProgress gives the progress of command, with a beat every ten seconds.
@@ -33,7 +39,29 @@ func newProgress(w io.Writer, command string) *progress {
 // and starts the beats of this step.
 func (p *progress) step(i, n int, name string) {
 	p.end()
+	p.i, p.n, p.name, p.noted = i, n, name, false
 	fmt.Fprintf(p.w, "layup %s: [%d/%d] %s\n", p.command, i, n, name)
+	p.beats()
+}
+
+// note prints a line of a wait of the running step (docs/spec/run.md, The
+// command), and the next beat prints nothing, so a wait that prints a line
+// every ten seconds shows one line every ten seconds; with no running step it
+// prints the line alone.
+func (p *progress) note(line string) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if p.stop == nil {
+		fmt.Fprintf(p.w, "layup %s: %s\n", p.command, line)
+		return
+	}
+	p.noted = true
+	fmt.Fprintf(p.w, "layup %s: [%d/%d] %s: %s\n", p.command, p.i, p.n, p.name, line)
+}
+
+// beats starts the beats of the running step; a beat counts from the start of
+// the step.
+func (p *progress) beats() {
 	tick, stopTicker := p.ticker(p.every)
 	p.stop, p.done = make(chan struct{}), make(chan struct{})
 	go func(stop, done chan struct{}) {
@@ -44,7 +72,15 @@ func (p *progress) step(i, n int, name string) {
 			case <-stop:
 				return
 			case <-tick:
-				fmt.Fprintf(p.w, "layup %s: [%d/%d] %s: %d s\n", p.command, i, n, name, int64(beat)*int64(p.every/time.Second))
+				p.mu.Lock()
+				if !p.noted {
+					fmt.Fprintf(p.w, "layup %s: [%d/%d] %s: %d s\n", p.command, p.i, p.n, p.name, int64(beat)*int64(p.every/time.Second))
+				}
+				p.noted = false
+				p.mu.Unlock()
+				if p.afterBeat != nil {
+					p.afterBeat()
+				}
 			}
 		}
 	}(p.stop, p.done)
@@ -52,7 +88,9 @@ func (p *progress) step(i, n int, name string) {
 
 // end stops the beats of the running step, and returns when no beat can
 // print any more.
-func (p *progress) end() {
+func (p *progress) end() { p.stopBeats() }
+
+func (p *progress) stopBeats() {
 	if p.stop != nil {
 		close(p.stop)
 		<-p.done

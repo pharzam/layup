@@ -12,9 +12,14 @@ import (
 type command struct {
 	words []string // the words that name it, for example psb check
 	args  []string // the names of its positional arguments, in their order
-	flags []flag   // its flags: each one is required and given once
+	flags []flag   // its flags: each one is given once, and required unless optional names it
 	help  string   // its line in the usage
 	run   func(call) int
+	// selector is the flag that selects this row of two rows with the same
+	// words, or empty: the row whose selecting flag is given is the command,
+	// else the row with none (docs/spec/run.md, The command).
+	selector string
+	optional []string // the flags that may be left out
 }
 
 // A flag is a flag of a command: --name VALUE or --name=VALUE.
@@ -65,7 +70,7 @@ func parse(table []command, args []string) (command, call, error) {
 		in.flags[name] = value
 	}
 	for _, f := range c.flags {
-		if _, ok := in.flags[f.name]; !ok {
+		if _, ok := in.flags[f.name]; !ok && !slices.Contains(c.optional, f.name) {
 			return command{}, call{}, fmt.Errorf("missing flag --%s", f.name)
 		}
 	}
@@ -78,7 +83,9 @@ func parse(table []command, args []string) (command, call, error) {
 	return c, in, nil
 }
 
-// match gives the command whose words are the longest start of args.
+// match gives the command whose words are the longest start of args; of two
+// rows with those words, the row whose selecting flag args give, else the row
+// with none.
 func match(table []command, args []string) (command, bool) {
 	var best command
 	found := false
@@ -87,7 +94,28 @@ func match(table []command, args []string) (command, bool) {
 			best, found = c, true
 		}
 	}
-	return best, found
+	if !found {
+		return best, false
+	}
+	var plain *command
+	for _, c := range table {
+		if !slices.Equal(c.words, best.words) {
+			continue
+		}
+		if c.selector == "" {
+			plain = &c
+			continue
+		}
+		for _, a := range args[len(c.words):] {
+			if a == "--"+c.selector || strings.HasPrefix(a, "--"+c.selector+"=") {
+				return c, true
+			}
+		}
+	}
+	if plain != nil {
+		return *plain, true
+	}
+	return best, true
 }
 
 // unknown gives the reason when no command matches: the first word, with the
@@ -113,7 +141,11 @@ func usage(table []command) string {
 	for i, c := range table {
 		parts := append(slices.Clone(c.words), c.args...)
 		for _, f := range c.flags {
-			parts = append(parts, "--"+f.name+" "+f.value)
+			if slices.Contains(c.optional, f.name) {
+				parts = append(parts, "[--"+f.name+" "+f.value+"]")
+			} else {
+				parts = append(parts, "--"+f.name+" "+f.value)
+			}
 		}
 		lines[i] = strings.Join(parts, " ")
 		width = max(width, len(lines[i]))

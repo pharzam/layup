@@ -278,3 +278,17 @@ func ReadCopies(data []byte) ([][]string, error) {
 	}
 	return rows, nil
 }
+
+// CheckValue checks a value of a fixed name of start.tsv by the form that the
+// block gives it, so a command can check a flag's value before a run makes
+// the row (task T-mqty). The empty value is checked by CheckStart.
+func CheckValue(name, value string) error {
+	rule, ok := startNames[name]
+	if !ok {
+		return fmt.Errorf("%s is not a name of start.tsv", name)
+	}
+	if !rule.value(value) {
+		return fmt.Errorf("%q is not a value of the form that the block start gives %s", value, name)
+	}
+	return nil
+}

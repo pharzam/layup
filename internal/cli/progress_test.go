@@ -69,3 +69,36 @@ func TestNewProgressBeatsEveryTenSeconds(t *testing.T) {
 		t.Fatalf("every %v, command %q; want 10s and setup", p.every, p.command)
 	}
 }
+
+// A line of a wait (docs/spec/run.md, The command) is printed with its step,
+// and the next beat prints nothing, so a wait that prints a line every ten
+// seconds shows one line every ten seconds; the beat after it counts from
+// the start of the step.
+func TestANoteOfAWaitTakesThePlaceOfTheNextBeat(t *testing.T) {
+	var out bytes.Buffer
+	clock := &stoppedClock{}
+	beaten := make(chan struct{})
+	p := &progress{w: &out, command: "run", every: 10 * time.Second, ticker: clock.ticker, afterBeat: func() { beaten <- struct{}{} }}
+	beat := func() { tick(t, clock, 0); <-beaten } // the beat has ended before the next call
+	p.step(4, 9, "root-push")
+	beat()
+	p.note("waiting for the push of the root commit")
+	beat() // the wait's own ten seconds end: this beat prints nothing
+	p.note("waiting for the push of the root commit")
+	beat()
+	beat()
+	p.end()
+	p.note("after the end: printed with no step")
+	want := "layup run: [4/9] root-push\n" +
+		"layup run: [4/9] root-push: 10 s\n" +
+		"layup run: [4/9] root-push: waiting for the push of the root commit\n" +
+		"layup run: [4/9] root-push: waiting for the push of the root commit\n" +
+		"layup run: [4/9] root-push: 40 s\n" +
+		"layup run: after the end: printed with no step\n"
+	if out.String() != want {
+		t.Fatalf("the lines:\n%s\nwant:\n%s", out.String(), want)
+	}
+	if len(clock.ticks) != 1 || clock.stopped != 1 {
+		t.Fatalf("%d tickers started, %d stopped; want one ticker for the step", len(clock.ticks), clock.stopped)
+	}
+}

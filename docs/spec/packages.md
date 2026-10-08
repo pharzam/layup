@@ -66,7 +66,7 @@ reads this table, and holds no copy of it, which could differ from it.
 | Package | Job | May import | Starts a program |
 | ------- | --- | ---------- | ---------------- |
 | `cmd/layup` | `main`: passes the arguments to `internal/cli` and exits with its code | `internal/cli` | no |
-| `internal/cli` | parses the arguments, runs one command, maps its result to an exit code ([`README.md`](README.md#commands)) | `internal/psb`, `internal/setup`, `internal/verify`, `internal/gate` | no |
+| `internal/cli` | parses the arguments, runs one command, maps its result to an exit code ([`README.md`](README.md#commands)); for `layup run`, reads the two host registers and the key file, builds the adapter and hands it to `internal/run` (task `T-mqty`) | `internal/psb`, `internal/setup`, `internal/verify`, `internal/gate`, `internal/run`, `internal/forge`, `internal/forge/github`, `internal/route` | no |
 | `internal/tsv` | reads and writes a record: checks the header row against a schema, the field count of each row, the types and the key; parses the `tsv-schema` blocks of `docs/spec/`, and compares a block with the Go schema of its record ([`README.md`](README.md#the-schema-block)) | — | no |
 | `internal/git` | the one caller of the `git` program: [its calls](#the-calls-of-internalgit) | — | `git` |
 | `internal/psb` | the rules G1 to G5 and the gap table ([`psb-check.md`](psb-check.md)) | `internal/tsv` | no |
@@ -122,7 +122,7 @@ each start so adds only its cell Connects to that row of phase 1.
 
 | Package | Job | May import | Starts a program | Connects |
 | ------- | --- | ---------- | ---------------- | -------- |
-| `internal/run` | `layup run`: the steps of Start, the restart, the lease and fencing, the copy of a comment and the rule of a decision ([`run.md`](run.md)); the Go schema of the table `run-steps` | `internal/tsv`, `internal/git`, `internal/records`, `internal/forge`, `internal/route` | no | — |
+| `internal/run` | `layup run`: the steps of Start, the restart, the lease and fencing, the copy of a comment and the rule of a decision ([`run.md`](run.md)); the Go schema of the table `run-steps`; the checks of `git` and of the values of the flags, which `internal/cli` calls before the first step (task `T-mqty`) | `internal/tsv`, `internal/git`, `internal/records`, `internal/forge`, `internal/route` | no | — |
 | `internal/forge` | the forge interface: the six capabilities and their types ([`forge.md`](forge.md)), `Missing` and `CheckPermissions` (task `T-6bq5`); the reader of the forge register (`host:registers/forge.tsv`), with the Go schema of its block; the check of the key file (task `T-1g1q`) | `internal/tsv` | no | — |
 | `internal/forge/github` | the GitHub adapter: the JWT, the installation token, the calls of [`forge.md`](forge.md#the-calls-of-m2a) | `internal/forge` | no | `net`, `net/http`, `crypto/tls` |
 | `internal/route` | in `M2a`, only the reader of the harness register (`host:registers/harnesses.tsv`), with the Go schema of its block; the probe, admission and routing come in `M2b` | `internal/tsv` | no | — |

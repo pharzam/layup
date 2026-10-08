@@ -60,10 +60,15 @@ step 1) are contents `write`, issues `write` and metadata `read`; a level
   of the old one remain: `Token` gives the token it holds while five minutes or
   more remain, else a new one, so `layup run` calls it before each `git` call that
   needs the token. A token is never written to a file, a record or a log.
-  **Decided here** (task `T-ax3r`): the adapter takes from its caller an HTTP
-  client that follows no redirect, so a token goes to the `api` of the forge
-  register only, and the progress function of the wait of a rate limit;
-  `internal/cli` builds both (row 26 of the plan, with their test).
+  **Decided here** (task `T-ax3r`; changed by task `T-mqty`, as rule 5 lets no
+  package but the adapter import `net/http`): when its caller gives no HTTP
+  client, the adapter makes one that follows no redirect, so a token goes to
+  the `api` of the forge register only, and whose transport reads no proxy of
+  the environment; `internal/cli` gives none, and gives the progress function
+  of the wait of a rate limit. **Known limit:** the system certificate roots of
+  `crypto/x509` read `SSL_CERT_FILE` and `SSL_CERT_DIR` on Linux, so a host
+  with a private certificate authority sets them, as for `git`
+  ([L-A7](../architecture.md#15-known-limits)).
 - `git` gets the token for one call only, from `internal/git`, as an HTTP
   header in `GIT_CONFIG_COUNT`, `GIT_CONFIG_KEY_0` and `GIT_CONFIG_VALUE_0` of
   that call's environment (`http.<web>/.extraHeader`), not on its command line,
