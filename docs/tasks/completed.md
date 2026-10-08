@@ -20,6 +20,7 @@ here directly, in the shape above.
 - **YYYY-MM-DD** — **<ID>** — <one-sentence summary of what the task found or delivered> ([<link>](...); [detail](<id>.md))
 -->
 
+- **2026-10-08** — **T-1g1q** — Row 22b of the plan: the two host registers and the key file; `internal/forge` reads the forge register and checks the App key file (each refusal names the file and its mode, no package of rule 5), `internal/route` reads the harness register; O-171 moved the forge interface to row 24 ([#137](https://github.com/pharzam/layup/issues/137); [detail](T-1g1q.md))
 - **2026-10-07** — **T-w73g** — The survey of five public repositories that the Operator named, recorded as an input of the specification tasks of `M2b`, `M2f`, `M2g`, `M3a` and `M3d` and of the decision on the learning loop; no code ([#133](https://github.com/pharzam/layup/issues/133); [detail](T-w73g.md))
 - **2026-10-08** — **T-esfe** — Row 22a of the plan (O-170 split row 22): `TestPackageRules` reads the table of `M2a` and rule 5 by its line and Connects, before any package of that table exists; rows 22a and 22b in the plan, and the issue of 22b (#137) ([#127](https://github.com/pharzam/layup/issues/127); [detail](T-esfe.md))
 - **2026-10-07** — **T-8kqn** — Row 21 of the plan: the records of Start, the Go schemas of `start`, `approvers`, `lease` and `copies` in `internal/records`, with the rules of their blocks and the readers that run them ([#126](https://github.com/pharzam/layup/issues/126); [detail](T-8kqn.md))
