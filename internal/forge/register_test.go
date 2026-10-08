@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/fs"
 	"math/big"
+	"os"
 	"strings"
 	"sync"
 	"testing"
@@ -142,6 +143,7 @@ func TestCheckKeyRefusesEachBrokenRule(t *testing.T) {
 		{"a PEM block of another type", 0o600, runner, pemOf("EC PRIVATE KEY", der), "EC PRIVATE KEY"},
 		{"two PEM blocks", 0o600, runner, append(append([]byte{}, good...), good...), "one PEM block"},
 		{"text before the PEM block", 0o600, runner, append([]byte("a note\n"), good...), "one PEM block"},
+		{"a first block that pem.Decode skips", 0o600, runner, append([]byte("-----BEGIN NOTE\n"), good...), "one PEM block"},
 		{"a malformed DER", 0o600, runner, pemOf("RSA PRIVATE KEY", broken), "cannot be read"},
 		{"a PKCS #1 key of version 1", 0o600, runner, pemOf("RSA PRIVATE KEY", pkcs1With(k, 1, k.Primes[0])), "version"},
 		{"a key whose numbers fail Validate", 0o600, runner, pemOf("RSA PRIVATE KEY", pkcs1With(k, 0, new(big.Int).Add(k.Primes[0], big.NewInt(2)))), "RSA"},
@@ -163,5 +165,18 @@ func TestCheckKeyFileRefusesAMissingFile(t *testing.T) {
 	path := t.TempDir() + "/missing.pem"
 	if _, err := CheckKeyFile(path); err == nil || !strings.Contains(err.Error(), path) {
 		t.Fatalf("CheckKeyFile(%s) = %v; want an error that names the file", path, err)
+	}
+}
+
+func TestCheckKeyFileNamesTheModeOfAFileItCannotRead(t *testing.T) {
+	if os.Getuid() == 0 {
+		t.Skip("root reads a file of mode 0000")
+	}
+	path := t.TempDir() + "/k.pem"
+	if err := os.WriteFile(path, []byte("not read"), 0o000); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := CheckKeyFile(path); err == nil || !strings.Contains(err.Error(), path) || !strings.Contains(err.Error(), "mode 0000") {
+		t.Fatalf("CheckKeyFile(%s) = %v; want an error that names the file and its mode", path, err)
 	}
 }

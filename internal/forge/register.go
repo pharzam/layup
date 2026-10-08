@@ -87,11 +87,31 @@ func CheckKeyFile(path string) (*rsa.PrivateKey, error) {
 	if !ok {
 		return nil, fmt.Errorf("the key file %s: its owner cannot be read on this host", path)
 	}
+	if err := checkFile(path, info.Mode(), int(st.Uid), os.Getuid()); err != nil {
+		return nil, err
+	}
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("the key file %s: %w", path, err)
+		return nil, fmt.Errorf("the key file %s, mode %04o: %w", path, info.Mode().Perm(), err)
 	}
 	return checkKey(path, info.Mode(), int(st.Uid), os.Getuid(), data)
+}
+
+// keyError gives an error that names the key file and its mode.
+func keyError(path string, mode fs.FileMode, format string, a ...any) error {
+	return fmt.Errorf("the key file %s, mode %04o: %s", path, mode.Perm(), fmt.Sprintf(format, a...))
+}
+
+// checkFile checks the mode and the owner of the key file, before its bytes
+// are read, so a file that the run cannot read is refused with its mode.
+func checkFile(path string, mode fs.FileMode, owner, runner int) error {
+	if mode.Perm() != 0o600 || !mode.IsRegular() {
+		return keyError(path, mode, "want a regular file of mode 0600")
+	}
+	if owner != runner {
+		return keyError(path, mode, "its owner is the user %d, not the user of the run, %d", owner, runner)
+	}
+	return nil
 }
 
 // rsaOID is the algorithm of an RSA key in PKCS #8 (RFC 8017).
@@ -100,20 +120,15 @@ var rsaOID = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 1, 1}
 // checkKey is the check of CheckKeyFile on the mode, the owner, the ID of the
 // user of the run and the bytes of the file, so each case runs on each host.
 func checkKey(path string, mode fs.FileMode, owner, runner int, data []byte) (*rsa.PrivateKey, error) {
-	bad := func(format string, a ...any) error {
-		return fmt.Errorf("the key file %s, mode %04o: %s", path, mode.Perm(), fmt.Sprintf(format, a...))
-	}
-	if mode.Perm() != 0o600 || !mode.IsRegular() {
-		return nil, bad("want a regular file of mode 0600")
-	}
-	if owner != runner {
-		return nil, bad("its owner is the user %d, not the user of the run, %d", owner, runner)
+	bad := func(format string, a ...any) error { return keyError(path, mode, format, a...) }
+	if err := checkFile(path, mode, owner, runner); err != nil {
+		return nil, err
 	}
 	block, rest := pem.Decode(data)
 	if block == nil {
 		return nil, bad("it holds no PEM block")
 	}
-	if !bytes.HasPrefix(bytes.TrimSpace(data), []byte("-----BEGIN ")) || len(bytes.TrimSpace(rest)) != 0 {
+	if bytes.Count(data, []byte("-----BEGIN ")) != 1 || !bytes.HasPrefix(bytes.TrimSpace(data), []byte("-----BEGIN ")) || len(bytes.TrimSpace(rest)) != 0 {
 		return nil, bad("it holds more than one PEM block, or text before or after it")
 	}
 	der := block.Bytes

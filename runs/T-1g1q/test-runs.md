@@ -60,3 +60,9 @@ Red before the edits: `sh runs/T-1g1q/docs.sh` gave nine `FAIL` lines, exit 1. A
 ## Fixes of round 1 (2026-10-08T07:40Z)
 
 Red first: the cases of `TestCheckKeyRefusesEachBrokenRule` now ask that each error names the file and its mode (finding 2, reading A), add text before the PEM block (note 3), and flip the first byte of the DER so the parse fails, not `Validate` (note 5). `go test ./internal/forge/` failed: ten errors did not name the mode, and the text before the block gave no error. Then `checkKey` names the mode in each error and refuses text before the block; the package passes.
+
+## Fixes of round 2 (2026-10-08, O-172 a, cap 2)
+
+Red first: `TestCheckKeyFileNamesTheModeOfAFileItCannotRead` writes a file of mode `0000` (skipped for root) and asks that `CheckKeyFile` names the file and `mode 0000` (finding 1); it failed with `open <path>: permission denied` and no mode. The new case "a first block that pem.Decode skips" (a line `-----BEGIN NOTE` before the key, note 3) failed with no error. Then `CheckKeyFile` checks the mode and the owner (`checkFile`) before it reads the bytes, its read error names the mode, and `checkKey` asks for exactly one `-----BEGIN ` line; the package passes.
+
+Note 5 of round 2: on the code before round 1, the malformed-DER case (byte `len/2` flipped) failed at the mode assertion first, so its own red is not recorded; its green shows the parse branch, the only one that says "cannot be read".
