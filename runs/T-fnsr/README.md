@@ -7,7 +7,10 @@ printed root push, and read the records branch with a plain `git clone`;
 [`run.md`](../../docs/spec/run.md), "The acceptance tests of M2a".
 
 **What this file holds.** The table and the progress lines of the run, the
-Operator's read, and the test runs. The home directory is written as `~` (the
+Operator's read, and the test runs. The files that the author's answer and
+comment 6065525521 name (`run-steps.tsv`, `test-runs.md`) and the files of the
+Operator's commands (`run-stderr.txt`, `read.txt`) are folded here, inside the
+budget; `<worktree>` is the absolute path of the worktree. The home directory is written as `~` (the
 Operator's choice on #132, comment 6061142551); the 55 wait lines of step 4
 are shortened to one line, and in the read the text of the README and of the
 brief, which `check.sh` compared byte for byte; each shortening is marked. Published on the public target and here,
@@ -225,7 +228,7 @@ the same 5 USD and 1 hour. `check.sh` and `check-test.sh` expect `5.0,1.0`;
 ### 4. `check.sh` on the target after the run (green)
 
 `sh runs/T-fnsr/check.sh https://github.com https://api.github.com pharzam/layup-uat`,
-2026-10-08, after the run: exit 0, 33 lines `ok`, `all checks pass`. The lines
+2026-10-08, after the run: exit 0, 32 lines `ok`, `all checks pass`. The lines
 that carry the values of the run:
 
 ```text
