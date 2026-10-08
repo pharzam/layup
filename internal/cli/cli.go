@@ -95,6 +95,13 @@ var commands = []command{
 		help: "run the steps of the setup of the target of the work area WORK", run: setupCommand},
 	{words: []string{"setup", "verify"}, args: []string{"WORK"},
 		help: "check the setup of the target of the work area WORK, from outside", run: setupVerify},
+	{words: []string{"run"}, selector: "new", optional: []string{"vision"},
+		flags: []flag{{"new", "OWNER/NAME"}, {"host", "DIR"}, {"psb", "FILE"}, {"vision", "FILE"},
+			{"operator", "LOGIN"}, {"idea-owner", "LOGIN"}, {"plan", "PLAN"}, {"intake-cap", "MONEY,HOURS"},
+			{"lease-h", "MINUTES"}, {"watch-t", "MINUTES"}},
+		help: "start a run on the empty repository OWNER/NAME of the forge", run: runNew},
+	{words: []string{"run"}, args: []string{"TARGET"}, flags: []flag{{"host", "DIR"}},
+		help: "restart the run on the repository TARGET (OWNER/NAME)", run: runAgain},
 }
 
 // Run executes one layup command and returns its exit code.

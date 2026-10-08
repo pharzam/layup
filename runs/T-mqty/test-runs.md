@@ -9,3 +9,12 @@ Evidence for row 26 (#131): each test red first, for the right reason, then gree
 ## The adapter's own client: red, then green (2026-10-08T12:02Z)
 
 `TestTheOwnClientFollowsNoRedirectAndNoProxy` (a server that answers `302` to another server; the transport's `Proxy`) on the adapter of `075624f`: `panic: runtime error: invalid memory address or nil pointer dereference` (no client). Then `New` makes a client with no redirect and a transport with no proxy: `go test -tags=integration ./internal/forge/github/` passes. A proxy of the environment is not shown by a request, as Go's proxy rule never takes a proxy for a loopback address; the test reads the transport.
+
+## `internal/cli`: red, then green, and three mutations (2026-10-08T12:15Z)
+
+`TestTheSelectingFlagAndTheOptionalFlag`, `TestANoteOfAWaitStartsTheBeatAgain`, and the tests of `run_test.go` (each input check gives exit 2 before any step, the `Config`, the table and its exit codes, a relative `--host`, Ctrl-C, the pin variables against `armature.pin`) before the code: `go vet ./internal/cli` did not compile (`unknown field selector in struct literal of type command`, `undefined: runStart`). Then the code: the unit tests passed at once, so each was shown to fail on a mutation of a backup copy, put back after (`cmp` equal):
+- the selecting flag never read → `the row of selector "", arguments [], error unknown flag "--new"` (a first form of this mutation did not compile, an unused variable, and proved nothing; it was redone);
+- `--host` not made absolute → `a relative --host: exit 0, Dir "001"`;
+- `note` that does not start the beat again → `1 tickers started, want a ticker for step 2`.
+
+`TestPackageRules` (`cmd/layup`) then failed for the right reason: `internal/cli imports internal/forge, …, internal/run, which its row does not allow`. The row of `internal/cli` in the table of phase 1 of `packages.md` gets the four packages (the change that the table of M2a gives to "the build task that needs" it), and it passes.

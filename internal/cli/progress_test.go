@@ -69,3 +69,28 @@ func TestNewProgressBeatsEveryTenSeconds(t *testing.T) {
 		t.Fatalf("every %v, command %q; want 10s and setup", p.every, p.command)
 	}
 }
+
+// A line of a wait (docs/spec/run.md, The command) is printed with the step,
+// and the beat starts again, so a wait shows one line every ten seconds.
+func TestANoteOfAWaitStartsTheBeatAgain(t *testing.T) {
+	var out bytes.Buffer
+	clock := &stoppedClock{}
+	p := &progress{w: &out, command: "run", every: 10 * time.Second, ticker: clock.ticker}
+	p.step(4, 9, "root-push")
+	tick(t, clock, 0)
+	p.note("waiting for the push of the root commit")
+	tick(t, clock, 1)
+	p.end()
+	p.note("after the end: printed with no step")
+	want := "layup run: [4/9] root-push\n" +
+		"layup run: [4/9] root-push: 10 s\n" +
+		"layup run: [4/9] root-push: waiting for the push of the root commit\n" +
+		"layup run: [4/9] root-push: 20 s\n" +
+		"layup run: after the end: printed with no step\n"
+	if out.String() != want {
+		t.Fatalf("the lines:\n%s\nwant:\n%s", out.String(), want)
+	}
+	if clock.stopped != 2 {
+		t.Fatalf("%d tickers stopped, want 2", clock.stopped)
+	}
+}
