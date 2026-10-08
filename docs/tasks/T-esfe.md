@@ -65,3 +65,50 @@ review).
 
 **The rejected alternatives:** a list of the adapter in the checker (D7 of #79);
 a new form of the cell Connects (condition 6 of the review of comment 6045278041).
+
+## Review rounds
+
+Round 1 (Claude Fable 5.1, effort `xhigh`, on the Claude Code CLI with stream
+output, a fresh read-only session in a clone at `637c2be`, 7 min 54 s; comment
+6053992309): `nothing material in scope`, seven notes. A first run of the round
+(from 06:20 UTC) stopped with no result when the Operator restarted Claude Code.
+In the close-out: note 3, the traceability row of the unit tests of the checker
+names `NFR-007` only, as condition 4 asked; note 5, the verdicts of `T-zwke` and
+`T-8kqn` were written before O-170, which split row 22 into 22a and 22b (comment
+6053495230 of #127). Declined: note 1 (the answer comment named the other case as
+the guard; `test-runs.md` names the right one); note 2 (the answer said "in the
+section of `NFR-007`"; the specification and the checker read the whole file, and
+no result differs); note 4 (row 22a is `small` with 500 lines; the budget of the
+plan review bounds it). Note 6: #137 lists the three goal classes (checked by the
+author). Note 7: no change. `review-record-lint` on the comments of #127 gives
+`OK  9 comments; 1 round(s); cap 1`.
+
+## Verdict
+
+Delivered: `TestPackageRules` reads the table of `M2a` and rule 5 by its line and
+"Connects", and refuses a direct import of a network package outside the package
+that rule 5 names. The review ended by decay at cycle 0. The diff against
+`2c40ac2` is inside 700 lines over 14 files.
+
+Next: row 22b (`T-1g1q`, #137), whose After cell is 22a; then row 23 (`T-xhgz`,
+#128).
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). Times are UTC; tokens are the `result` event of
+the Claude Code CLI (stream runs); `not reported` otherwise.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The first plan (row 22) | reasoning | Claude Opus 5.5 | max | not reported | 10-07 15:10 to 15:14 |
+| Its plan review, first harness: skipped (a network error of the host) | reasoning | Claude Fable 5.1, Claude Code CLI | `xhigh` | 1,069,120 (USD 5.08), no record | 10-07 15:14 to 15:22 |
+| Its plan review | reasoning | GPT-6 Sol, Devin CLI | `xhigh` | not reported | 5 min 24 s, from 10-07 19:23 |
+| The answer; O-170; the revised plan of 22a | reasoning | Claude Opus 5.5 | max | not reported | 10-07 19:29 to 19:35; 10-08 06:00 to 06:05 |
+| The plan review of 22a | reasoning | Claude Fable 5.1, Claude Code CLI | `xhigh` | 1,005,708 (USD 4.89) | 8 min 6 s, from 06:05 |
+| The answer; the work, test first; issue #137 | execution | Claude Opus 5.5, a reasoning-tier model on an execution part | max | not reported | 06:14 to 06:20 |
+| Round 1, first run: stopped by the restart of Claude Code | reasoning | Claude Fable 5.1, Claude Code CLI | `xhigh` | not reported | 06:20 to the restart |
+| Round 1 | reasoning | Claude Fable 5.1, Claude Code CLI | `xhigh` | 1,295,487 (USD 5.42) | 7 min 54 s, from 06:28 |
+| The close-out, with notes 3 and 5 | execution | Claude Opus 5.5 | max | not reported | 06:37 to 06:45 |
+
+From 10-07 15:22 to 19:22 the host's network was down; from 10-07 19:35 to 10-08
+06:00 the task waited for O-170.

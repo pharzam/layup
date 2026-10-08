@@ -36,7 +36,7 @@ the first.
 | `TestPSBCheckWithAReadOnlyStandardOutput` (`cmd/layup/psb_e2e_test.go`) | e2e | REQ-001, NFR-004 | F-0003#41 | — | ADR-0011 | T-5zmw | green |
 | `TestEverySchemaBlockIsBuiltOrNotYetBuilt` (`internal/tsv/blocks_integration_test.go`) | integration | NFR-001 | F-0001#1 | guardrails.md §1.1 Inv-1 | ADR-0014 | T-18v6, T-d6q5 | green |
 | `TestPackageRules` (`cmd/layup/rules_integration_test.go`) | integration | NFR-005, NFR-007 | F-0001#6 | guardrails.md §1.1 Inv-6 | ADR-0015 | T-2tc2, T-esfe | green |
-| `TestReadTable`, `TestReadTableRefusesWhatItCannotRead`, `TestReadAdapter`, `TestAGoodModuleKeepsTheRules`, `TestEachRuleAndColumnFindsItsBreach` (`cmd/layup/rules_test.go`) | unit | NFR-007, NFR-005 | F-0004#1 | guardrails.md §1.1 Inv-6 | ADR-0010 | T-2tc2, T-esfe | green |
+| `TestReadTable`, `TestReadTableRefusesWhatItCannotRead`, `TestReadAdapter`, `TestAGoodModuleKeepsTheRules`, `TestEachRuleAndColumnFindsItsBreach` (`cmd/layup/rules_test.go`) | unit | NFR-007 | F-0004#1 | guardrails.md §1.1 Inv-6 | ADR-0010 | T-2tc2, T-esfe | green |
 | `TestExitCode` (`internal/cli/cli_test.go`) | unit | NFR-004 | F-0001#5 | guardrails.md §1.1 Inv-5 | ADR-0011 | T-2yw7 | green |
 | `TestUsageErrors` (`cmd/layup/usage_e2e_test.go`) | e2e | REQ-001 | F-0003#41 | — | ADR-0011 | T-2yw7 | green |
 | `TestVersion` (`cmd/layup/usage_e2e_test.go`) | e2e | NFR-005 | F-0001#6 | guardrails.md §1.1 Inv-6 | ADR-0015 | T-2yw7 | green |

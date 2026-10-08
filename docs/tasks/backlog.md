@@ -30,7 +30,6 @@ same summary, dated — rather than deleting it or checking it off.
 - **<ID>** — <one-sentence summary> ([<ADR or doc link>](...); [detail](<id>.md))
 -->
 
-- **T-esfe** — Row 22a of the plan: the package rules of `M2a`, `TestPackageRules` reads the table of `M2a` and rule 5 by Connects ([#127](https://github.com/pharzam/layup/issues/127); [plan](../plan/README.md#the-tasks-of-m2a))
 - **T-1g1q** — Row 22b of the plan: the forge interface and the two host registers ([#137](https://github.com/pharzam/layup/issues/137); [plan](../plan/README.md#the-tasks-of-m2a))
 - **T-xhgz** — Row 23 of the plan: the calls `Fetch` and `Push` of `internal/git`, with the token of one call ([#128](https://github.com/pharzam/layup/issues/128); [plan](../plan/README.md#the-tasks-of-m2a))
 - **T-6bq5** — Row 24 of the plan: the GitHub adapter ([#129](https://github.com/pharzam/layup/issues/129); [plan](../plan/README.md#the-tasks-of-m2a))
