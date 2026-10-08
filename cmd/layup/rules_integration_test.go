@@ -13,10 +13,11 @@ import (
 	"testing"
 )
 
-// The package rules of docs/spec/packages.md hold on the real module, and the
-// same checker finds the seeded breaches of rule 5 in a fixture module: an
-// import of net/http, and one of net/smtp behind a build constraint (NFR-005,
-// NFR-007).
+// The package rules of docs/spec/packages.md hold on the real module, with the
+// table of phase 1, the table of M2a and the line of rule 5, and the same
+// checker finds the seeded breaches of rule 5 in a fixture module: an import
+// of net/http outside the adapter, and one of net/smtp behind a build
+// constraint (NFR-005, NFR-007).
 func TestPackageRules(t *testing.T) {
 	text, err := os.ReadFile(filepath.Join("..", "..", "docs", "spec", "packages.md"))
 	if err != nil {
@@ -24,17 +25,21 @@ func TestPackageRules(t *testing.T) {
 	}
 	rows, err := readTable(string(text))
 	if err != nil || len(rows) == 0 {
-		t.Fatalf("the table of phase 1: %d rows, %v", len(rows), err)
+		t.Fatalf("the tables of phase 1 and of M2a: %d rows, %v", len(rows), err)
+	}
+	adapter, err := readAdapter(string(text))
+	if err != nil {
+		t.Fatal(err)
 	}
 	real := load(t, filepath.Join("..", ".."))
 	if len(real.sources["internal/git"]) == 0 || len(real.sources["cmd/layup"]) == 0 {
 		t.Fatal("no source of internal/git or cmd/layup was read, so the scan checks nothing")
 	}
-	if f := checkRules(rows, real); len(f) != 0 {
+	if f := checkRules(rows, adapter, real); len(f) != 0 {
 		t.Errorf("the module breaks the package rules:\n%s", strings.Join(f, "\n"))
 	}
-	f := checkRules(rows, load(t, filepath.Join("testdata", "netimport")))
-	for _, want := range []string{"rule 5: cmd/layup depends on net/http", "rule 5: internal/psb depends on net"} {
+	f := checkRules(rows, adapter, load(t, filepath.Join("testdata", "netimport")))
+	for _, want := range []string{"rule 5: cmd/layup imports net/http; only " + adapter + " imports them", "rule 5: internal/psb depends on net"} {
 		if !slices.Contains(f, want) {
 			t.Errorf("the fixture gives\n%s\nwant the finding %s", strings.Join(f, "\n"), want)
 		}
