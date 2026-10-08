@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"encoding/asn1"
 	"encoding/pem"
+	"fmt"
 	"io/fs"
 	"math/big"
 	"strings"
@@ -121,7 +122,7 @@ func TestCheckKeyRefusesEachBrokenRule(t *testing.T) {
 	good := pemOf("RSA PRIVATE KEY", x509.MarshalPKCS1PrivateKey(k))
 	der := x509.MarshalPKCS1PrivateKey(k)
 	broken := append([]byte{}, der...)
-	broken[len(broken)/2] ^= 0xff
+	broken[0] ^= 0xff // not an ASN.1 SEQUENCE: the parse fails, not Validate
 	otherAlgo, _ := asn1.Marshal(struct {
 		Version int
 		Algo    struct{ Algorithm asn1.ObjectIdentifier }
@@ -140,7 +141,8 @@ func TestCheckKeyRefusesEachBrokenRule(t *testing.T) {
 		{"no PEM block", 0o600, runner, []byte("not a key\n"), "PEM"},
 		{"a PEM block of another type", 0o600, runner, pemOf("EC PRIVATE KEY", der), "EC PRIVATE KEY"},
 		{"two PEM blocks", 0o600, runner, append(append([]byte{}, good...), good...), "one PEM block"},
-		{"a malformed DER", 0o600, runner, pemOf("RSA PRIVATE KEY", broken), "RSA"},
+		{"text before the PEM block", 0o600, runner, append([]byte("a note\n"), good...), "one PEM block"},
+		{"a malformed DER", 0o600, runner, pemOf("RSA PRIVATE KEY", broken), "cannot be read"},
 		{"a PKCS #1 key of version 1", 0o600, runner, pemOf("RSA PRIVATE KEY", pkcs1With(k, 1, k.Primes[0])), "version"},
 		{"a key whose numbers fail Validate", 0o600, runner, pemOf("RSA PRIVATE KEY", pkcs1With(k, 0, new(big.Int).Add(k.Primes[0], big.NewInt(2)))), "RSA"},
 		{"a PKCS #8 key of another algorithm", 0o600, runner, pemOf("PRIVATE KEY", otherAlgo), "algorithm"},
@@ -149,8 +151,8 @@ func TestCheckKeyRefusesEachBrokenRule(t *testing.T) {
 		switch {
 		case err == nil:
 			t.Errorf("%s: no error", c.name)
-		case !strings.Contains(err.Error(), "/k.pem"):
-			t.Errorf("%s: the error %q does not name the file", c.name, err)
+		case !strings.Contains(err.Error(), "/k.pem") || !strings.Contains(err.Error(), fmt.Sprintf("mode %04o", c.mode.Perm())):
+			t.Errorf("%s: the error %q does not name the file and its mode (docs/spec/run.md, Input states)", c.name, err)
 		case !strings.Contains(err.Error(), c.wantInReason):
 			t.Errorf("%s: the error %q does not say %q", c.name, err, c.wantInReason)
 		}

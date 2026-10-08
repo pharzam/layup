@@ -74,7 +74,8 @@ func ReadForgeRegister(data []byte) (Register, error) {
 // CheckKeyFile checks the App's key file before any forge call
 // (docs/spec/forge.md, The App identity) and gives its key: the file exists,
 // its mode is exactly 0600, its owner is the user of the run, and it holds one
-// PEM block of an RSA private key. Each error names the file. The owner is
+// PEM block of an RSA private key. Each error names the file, and its mode
+// when the file exists (docs/spec/run.md, Input states). The owner is
 // read from syscall.Stat_t, so the check runs on Unix hosts (macOS, the
 // Linux of CI).
 func CheckKeyFile(path string) (*rsa.PrivateKey, error) {
@@ -100,10 +101,10 @@ var rsaOID = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 1, 1}
 // user of the run and the bytes of the file, so each case runs on each host.
 func checkKey(path string, mode fs.FileMode, owner, runner int, data []byte) (*rsa.PrivateKey, error) {
 	bad := func(format string, a ...any) error {
-		return fmt.Errorf("the key file %s: %s", path, fmt.Sprintf(format, a...))
+		return fmt.Errorf("the key file %s, mode %04o: %s", path, mode.Perm(), fmt.Sprintf(format, a...))
 	}
-	if perm := mode.Perm(); perm != 0o600 || !mode.IsRegular() {
-		return nil, bad("its mode is %04o, want 0600", perm)
+	if mode.Perm() != 0o600 || !mode.IsRegular() {
+		return nil, bad("want a regular file of mode 0600")
 	}
 	if owner != runner {
 		return nil, bad("its owner is the user %d, not the user of the run, %d", owner, runner)
@@ -112,8 +113,8 @@ func checkKey(path string, mode fs.FileMode, owner, runner int, data []byte) (*r
 	if block == nil {
 		return nil, bad("it holds no PEM block")
 	}
-	if len(bytes.TrimSpace(rest)) != 0 {
-		return nil, bad("it holds more than one PEM block")
+	if !bytes.HasPrefix(bytes.TrimSpace(data), []byte("-----BEGIN ")) || len(bytes.TrimSpace(rest)) != 0 {
+		return nil, bad("it holds more than one PEM block, or text before or after it")
 	}
 	der := block.Bytes
 	switch block.Type {

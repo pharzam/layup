@@ -36,7 +36,7 @@ vet: internal/forge/register_test.go:25:12: undefined: ReadForgeRegister
     register_test.go:151: a key whose numbers fail Validate: no error
     register_test.go:151: a PKCS #8 key of another algorithm: no error
 --- FAIL: TestCheckKeyFileRefusesAMissingFile (0.00s)
-    register_test.go:163: CheckKeyFile(/var/folders/g0/01frkxc50mv04tktlr5qx9wc0000gn/T/TestCheckKeyFileRefusesAMissingFile953768034/001/missing.pem) 
+    register_test.go:163: CheckKeyFile(/var/folders/g0/01frkxc50mv04tktlr5qx9wc0000gn/T/TestCheckKeyFileRefusesAMissingFile953768034/001/missing.pem)
 FAIL
 FAIL	github.com/pharzam/layup/internal/forge	0.149s
 --- FAIL: TestHarnessRegisterRefusesEachBrokenRule (0.00s)
@@ -56,3 +56,7 @@ The real code: `go test ./internal/forge/ ./internal/route/` passes. The compari
 ## The documents (2026-10-08T07:07Z)
 
 Red before the edits: `sh runs/T-1g1q/docs.sh` gave nine `FAIL` lines, exit 1. After the edits, eight rules passed and the rule of row 24 failed: it asked for the words `O-171`, `The six capabilities` and `internal/forge` in that order, and the row names `internal/forge` first. The check was too strict, not the row; it now tests each word apart. Then the nine rules `ok`, exit 0.
+
+## Fixes of round 1 (2026-10-08T07:40Z)
+
+Red first: the cases of `TestCheckKeyRefusesEachBrokenRule` now ask that each error names the file and its mode (finding 2, reading A), add text before the PEM block (note 3), and flip the first byte of the DER so the parse fails, not `Validate` (note 5). `go test ./internal/forge/` failed: ten errors did not name the mode, and the text before the block gave no error. Then `checkKey` names the mode in each error and refuses text before the block; the package passes.
