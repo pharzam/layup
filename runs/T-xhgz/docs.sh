@@ -12,6 +12,8 @@ grep '^| `Fetch` |' docs/spec/packages.md | grep -q -- '--update-head-ok' && ok 
 # 2. packages.md: the input rules and the one reading of a refused push (condition 1).
 has docs/spec/packages.md 'is a `FailedError` with `Code` 1' "a refused push is Code 1"
 has docs/spec/packages.md 'starts with `refs/` and holds no `:`' "the input rules of Fetch and Push"
+# 2b. packages.md: the rule of web with a token (finding 1 of round 1).
+has docs/spec/packages.md 'unless `web` is not empty and has no final slash' "the rule of web with a token"
 # 3. packages.md: the fixed list names the three values of a token.
 has docs/spec/packages.md '`Fetch` and `Push` add `GIT_CONFIG_COUNT`' "the fixed list and the token"
 # 4. forge.md: the value of the header.

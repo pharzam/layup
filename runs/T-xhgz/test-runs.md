@@ -24,3 +24,7 @@ With stubs that start no `git` and give no error: the four rows `0 starts of git
 ## The documents (2026-10-08T09:28Z)
 
 Red before the edits: `sh runs/T-xhgz/docs.sh` gave ten `FAIL` lines, exit 1. After the edits of `packages.md`, `forge.md`, `guardrails.md`, the traceability and the PRD: ten `ok`, exit 0.
+
+## Fixes of round 1 (2026-10-08T09:33Z)
+
+Finding 1: a new rule of `docs.sh` ("the rule of web with a token") failed on the `packages.md` of the frozen head (put in place from `git show HEAD:` and then put back), and passed after the clause; the code and its unit test rows ("a token with no web", "a web that ends in a slash") were already there, so no Go test changed. `docs.sh`: eleven `ok`, exit 0.

@@ -65,8 +65,8 @@ step 1) are contents `write`, issues `write` and metadata `read`; a level
   that call's environment (`http.<web>/.extraHeader`), not on its command line,
   where another user of the host could read it. The value is
   `Authorization: Basic` and the Base64 of `x-access-token:<token>`, the form
-  in which GitHub reads an installation token over HTTPS (task `T-xhgz`). This adds to the fixed list of
-  the environment ([`packages.md`](packages.md#the-calls-of-internalgit)); no
+  in which GitHub reads an installation token over HTTPS (task `T-xhgz`). This
+  adds to the fixed list of the environment ([`packages.md`](packages.md#the-calls-of-internalgit)); no
   value of the host is passed.
 
 ## The calls of M2a
