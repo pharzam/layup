@@ -17,3 +17,7 @@ The real code: one failure, `heartbeat 4 with 4 commits after 3 × H; want 3`: t
 Mutations on backup copies, each put back (`cmp` equal):
 - the "held" check before the takeover check → `the lease is held by the run aaaa…` in the demo test, and the refused-takeover case;
 - `Decision` with no check of `seen` → `an edit (seen 2): Decision = true, want false`.
+
+## The documents (2026-10-08T10:12Z)
+
+Red before the edits: `sh runs/T-trej/docs.sh` gave sixteen `FAIL` lines, exit 1. After the edits, two rules of the check were wrong, not the documents: the rule of row 25b asked for an After cell of `25a` alone (the row's After is `22b, 23, 25a`, as 25b uses `internal/git` and the registers), and the rule of the pitfall asked for a phrase that the text wraps over two lines. Each now tests what the row and the pitfall hold. Then sixteen `ok`, exit 0.
