@@ -472,3 +472,82 @@ func TestStagedAndResetHard(t *testing.T) {
 		t.Errorf("after ResetHard: a.txt %q, new.txt there %v, staged %v; want the tree of HEAD", data, exists(filepath.Join(dir, "new.txt")), staged)
 	}
 }
+
+// The demo of row 23 (#128): a push to a local bare repository passes, a
+// fast-forward passes, and a push that is not a fast-forward is refused with
+// code 1, the branch of the bare repository unchanged (fencing; packages.md,
+// The calls of M2a). Then Init and Fetch read the branch back, as step 5 of
+// layup run does.
+func TestPushAndFetchOfABareRepository(t *testing.T) {
+	home := isolate(t)
+	bare := filepath.Join(t.TempDir(), "target.git")
+	gitOK(t, "", plain(home), "init", "--bare", "-q", bare)
+	url := "file://" + bare
+
+	work := t.TempDir()
+	first := commitTree(t, work, map[string]string{"a.txt": "a\n"})
+	must(t, Push(work, url, first, "main", Auth{}))
+	write(t, work, map[string]string{"b.txt": "b\n"})
+	must(t, Add(work))
+	must(t, Commit(work, "chore: two", who))
+	second, err := RevParse(work, "HEAD")
+	must(t, err)
+	must(t, Push(work, url, second, "main", Auth{}))
+
+	// A commit that does not descend from the branch: an orphan of work.
+	write(t, work, map[string]string{"c.txt": "c\n"})
+	gitOK(t, work, plain(home), "checkout", "-q", "--orphan", "side")
+	must(t, Add(work))
+	must(t, Commit(work, "chore: side", who))
+	side, err := RevParse(work, "HEAD")
+	must(t, err)
+	err = Push(work, url, side, "main", Auth{})
+	var failed *FailedError
+	if !errors.As(err, &failed) || failed.Code != 1 {
+		t.Fatalf("a push that is not a fast-forward: %v; want a *FailedError of code 1", err)
+	}
+	if head := strings.TrimSpace(gitOK(t, bare, plain(home), "rev-parse", "refs/heads/main")); head != second {
+		t.Errorf("the branch of the bare repository is %s after the refused push, want %s", head, second)
+	}
+
+	clone := filepath.Join(t.TempDir(), "clone")
+	must(t, Init(clone))
+	must(t, Fetch(clone, url, "refs/heads/main", Auth{}))
+	if got, err := RevParse(clone, "refs/heads/main"); err != nil || got != second {
+		t.Errorf("Init, then Fetch of refs/heads/main: %s, %v; want %s", got, err, second)
+	}
+
+	err = Push(work, "file://"+filepath.Join(t.TempDir(), "none.git"), side, "main", Auth{})
+	if !errors.As(err, &failed) || failed.Code == 1 {
+		t.Errorf("a push to a remote that does not exist: %v; want a *FailedError of a code other than 1", err)
+	}
+}
+
+// With a token, the request of git carries the header of forge.md (The App
+// identity) to the web of the register; with none, it carries no header.
+func TestTheTokenReachesTheServerAsAHeaderOnly(t *testing.T) {
+	isolate(t)
+	var got atomic.Value
+	got.Store("")
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if h := r.Header.Get("Authorization"); h != "" {
+			got.Store(h)
+		}
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer srv.Close()
+	dir := filepath.Join(t.TempDir(), "clone")
+	must(t, Init(dir))
+	err := Fetch(dir, srv.URL+"/acme/target.git", "refs/heads/main", Auth{Web: srv.URL, Token: "ghs_testtoken"})
+	if err == nil || strings.Contains(err.Error(), "ghs_testtoken") {
+		t.Errorf("the fetch from a server that has no repository: %v; want an error with no token", err)
+	}
+	if h := got.Load().(string); h != "Basic eC1hY2Nlc3MtdG9rZW46Z2hzX3Rlc3R0b2tlbg==" {
+		t.Errorf("the server got Authorization %q, want Basic of x-access-token and the token", h)
+	}
+	got.Store("")
+	Fetch(dir, srv.URL+"/acme/target.git", "refs/heads/main", Auth{})
+	if h := got.Load().(string); h != "" {
+		t.Errorf("with no token the server got Authorization %q, want none", h)
+	}
+}

@@ -7,6 +7,7 @@ package git
 
 import (
 	"bytes"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"os"
@@ -311,4 +312,57 @@ func IsShallow(dir string) (bool, error) {
 	default:
 		return false, &FailedError{Args: args, Err: fmt.Errorf("an output of another form: %q", s)}
 	}
+}
+
+// Auth is the web of the forge register and the installation token of
+// docs/spec/forge.md (The App identity). The zero Auth sends no header.
+type Auth struct{ Web, Token string }
+
+// env gives what a call with auth adds to the fixed list: the header of the
+// token for http.<web>/, in the call's environment and never in its
+// arguments, where another user of the host could read it.
+func (a Auth) env() ([]string, error) {
+	if a.Token == "" {
+		return nil, nil
+	}
+	if a.Web == "" || strings.HasSuffix(a.Web, "/") {
+		return nil, errors.New("a token needs the web of the forge register, with no final slash")
+	}
+	basic := base64.StdEncoding.EncodeToString([]byte("x-access-token:" + a.Token))
+	return []string{"GIT_CONFIG_COUNT=1", "GIT_CONFIG_KEY_0=http." + a.Web + "/.extraHeader",
+		"GIT_CONFIG_VALUE_0=Authorization: Basic " + basic}, nil
+}
+
+// Fetch fetches ref of url into the same ref of dir, with no tags. ref starts
+// with refs/ and holds no ':', so no '+' forces it. --update-head-ok lets it
+// set the branch of a repository that Init made, which git otherwise refuses
+// as the branch that is checked out (packages.md, The calls of M2a).
+func Fetch(dir, url, ref string, auth Auth) error {
+	args := []string{"fetch", "--no-tags", "--update-head-ok", "--", url, ref + ":" + ref}
+	if !strings.HasPrefix(ref, "refs/") || strings.Contains(ref, ":") {
+		return &FailedError{Args: args, Code: -1, Err: errors.New("not a ref under refs/ with no ':'")}
+	}
+	return doAuth(dir, auth, args)
+}
+
+// Push pushes commit, a full object ID, to the branch of url, never with
+// --force. A push that is not a fast-forward, or that the remote refuses, is a
+// *FailedError of Code 1; a remote that cannot be reached gives another code.
+func Push(dir, url, commit, branch string, auth Auth) error {
+	args := []string{"push", "--porcelain", "--", url, commit + ":refs/heads/" + branch}
+	if (len(commit) != 40 && len(commit) != 64) || strings.Trim(commit, "0123456789abcdef") != "" ||
+		branch == "" || strings.Contains(branch, ":") {
+		return &FailedError{Args: args, Code: -1, Err: errors.New("not a full object ID, or not a branch")}
+	}
+	return doAuth(dir, auth, args)
+}
+
+// doAuth runs git in dir with the environment of auth.
+func doAuth(dir string, auth Auth, args []string) error {
+	extra, err := auth.env()
+	if err != nil {
+		return &FailedError{Args: args, Code: -1, Err: err}
+	}
+	_, err = call(dir, environ(extra...), args...)
+	return err
 }
