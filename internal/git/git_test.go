@@ -55,32 +55,43 @@ func TestEachCallRunsItsVerb(t *testing.T) {
 	tests := []struct {
 		name, dir, args string // args: after the -c values, split at spaces
 		call            func()
+		env             []string // after the fixed list
 	}{
-		{"version", "", "--version", func() { Version() }},
-		{"ls-remote", "", "ls-remote --exit-code -- " + url + " HEAD", func() { LsRemote(url, "HEAD") }},
-		{"clone", "", "clone --no-checkout -- " + url + " w/target", func() { Clone(url, "w/target") }},
-		{"checkout --detach", "r", "checkout --detach " + fullID, func() { CheckoutDetach("r", fullID) }},
-		{"init -b main", "", "init -b main -- r", func() { Init("r") }},
-		{"add, the whole tree", "r", "add --all --", func() { Add("r") }},
-		{"add, two paths", "r", "add --all -- a.txt -b", func() { Add("r", "a.txt", "-b") }},
-		{"commit", "r", "commit -m chore:S04", func() { Commit("r", "chore:S04", who) }},
-		{"switch -c", "r", "switch -c layup-setup " + fullID, func() { SwitchCreate("r", "layup-setup", fullID) }},
-		{"switch --orphan", "r", "switch --orphan layup-records", func() { SwitchOrphan("r", "layup-records") }},
-		{"reset --soft", "r", "reset --soft " + fullID, func() { ResetSoft("r", fullID) }},
-		{"reset --hard", "r", "reset --hard --quiet HEAD", func() { ResetHard("r") }},
-		{"diff --cached --quiet", "r", "diff --cached --quiet --exit-code", func() { Staged("r") }},
-		{"symbolic-ref --quiet", "r", "symbolic-ref --quiet HEAD", func() { Branch("r") }},
-		{"rev-parse", "r", "rev-parse --verify --end-of-options abc^{tree}", func() { RevParse("r", "abc^{tree}") }},
-		{"rev-list --max-parents=0", "r", "rev-list --max-parents=0 --end-of-options main --", func() { RootCommits("r", "main") }},
-		{"log -1 --format=%B", "r", "log -1 --format=%B --end-of-options main --", func() { Message("r", "main") }},
-		{"rev-parse --is-shallow-repository", "r", "rev-parse --is-shallow-repository", func() { IsShallow("r") }},
-		{"ls-files", "r", "ls-files -z", func() { LsFiles("r") }},
-		{"worktree add --detach", "r", "worktree add --detach -- /s/scratch abc", func() { WorktreeAdd("r", "/s/scratch", "abc") }},
-		{"worktree remove", "r", "worktree remove --force -- /s/scratch", func() { WorktreeRemove("r", "/s/scratch") }},
-		{"show", "r", "show --end-of-options abc:docs/gates.tsv --", func() { Show("r", "abc", "docs/gates.tsv") }},
-		{"diff --name-only", "r", "diff --name-only --no-renames -z --end-of-options abc def --", func() { DiffNames("r", "abc", "def") }},
-		{"apply", "r", "apply -- /s/static.patch", func() { Apply("r", "/s/static.patch") }},
-		{"ls-tree", "r", "ls-tree -r -z --full-tree --end-of-options abc -- layout", func() { LsTree("r", "abc", "layout") }},
+		{"version", "", "--version", func() { Version() }, nil},
+		{"ls-remote", "", "ls-remote --exit-code -- " + url + " HEAD", func() { LsRemote(url, "HEAD") }, nil},
+		{"clone", "", "clone --no-checkout -- " + url + " w/target", func() { Clone(url, "w/target") }, nil},
+		{"checkout --detach", "r", "checkout --detach " + fullID, func() { CheckoutDetach("r", fullID) }, nil},
+		{"init -b main", "", "init -b main -- r", func() { Init("r") }, nil},
+		{"add, the whole tree", "r", "add --all --", func() { Add("r") }, nil},
+		{"add, two paths", "r", "add --all -- a.txt -b", func() { Add("r", "a.txt", "-b") }, nil},
+		{"commit", "r", "commit -m chore:S04", func() { Commit("r", "chore:S04", who) }, []string{"GIT_AUTHOR_NAME=LAYUP test",
+			"GIT_AUTHOR_EMAIL=test@layup.invalid", "GIT_AUTHOR_DATE=@1767225600 +0000", "GIT_COMMITTER_NAME=LAYUP test",
+			"GIT_COMMITTER_EMAIL=test@layup.invalid", "GIT_COMMITTER_DATE=@1767225600 +0000"}},
+		{"switch -c", "r", "switch -c layup-setup " + fullID, func() { SwitchCreate("r", "layup-setup", fullID) }, nil},
+		{"switch --orphan", "r", "switch --orphan layup-records", func() { SwitchOrphan("r", "layup-records") }, nil},
+		{"reset --soft", "r", "reset --soft " + fullID, func() { ResetSoft("r", fullID) }, nil},
+		{"reset --hard", "r", "reset --hard --quiet HEAD", func() { ResetHard("r") }, nil},
+		{"diff --cached --quiet", "r", "diff --cached --quiet --exit-code", func() { Staged("r") }, nil},
+		{"symbolic-ref --quiet", "r", "symbolic-ref --quiet HEAD", func() { Branch("r") }, nil},
+		{"rev-parse", "r", "rev-parse --verify --end-of-options abc^{tree}", func() { RevParse("r", "abc^{tree}") }, nil},
+		{"rev-list --max-parents=0", "r", "rev-list --max-parents=0 --end-of-options main --", func() { RootCommits("r", "main") }, nil},
+		{"log -1 --format=%B", "r", "log -1 --format=%B --end-of-options main --", func() { Message("r", "main") }, nil},
+		{"rev-parse --is-shallow-repository", "r", "rev-parse --is-shallow-repository", func() { IsShallow("r") }, nil},
+		{"ls-files", "r", "ls-files -z", func() { LsFiles("r") }, nil},
+		{"worktree add --detach", "r", "worktree add --detach -- /s/scratch abc", func() { WorktreeAdd("r", "/s/scratch", "abc") }, nil},
+		{"worktree remove", "r", "worktree remove --force -- /s/scratch", func() { WorktreeRemove("r", "/s/scratch") }, nil},
+		{"show", "r", "show --end-of-options abc:docs/gates.tsv --", func() { Show("r", "abc", "docs/gates.tsv") }, nil},
+		{"diff --name-only", "r", "diff --name-only --no-renames -z --end-of-options abc def --", func() { DiffNames("r", "abc", "def") }, nil},
+		{"apply", "r", "apply -- /s/static.patch", func() { Apply("r", "/s/static.patch") }, nil},
+		{"ls-tree", "r", "ls-tree -r -z --full-tree --end-of-options abc -- layout", func() { LsTree("r", "abc", "layout") }, nil},
+		{"fetch", "r", "fetch --no-tags --update-head-ok -- " + url + " refs/heads/main:refs/heads/main",
+			func() { Fetch("r", url, "refs/heads/main", Auth{}) }, nil},
+		{"fetch with a token", "r", "fetch --no-tags --update-head-ok -- " + url + " refs/heads/main:refs/heads/main",
+			func() { Fetch("r", url, "refs/heads/main", testAuth) }, tokenEnv},
+		{"push", "r", "push --porcelain -- " + url + " " + fullID + ":refs/heads/layup-records",
+			func() { Push("r", url, fullID, "layup-records", Auth{}) }, nil},
+		{"push with a token", "r", "push --porcelain -- " + url + " " + fullID + ":refs/heads/layup-records",
+			func() { Push("r", url, fullID, "layup-records", testAuth) }, tokenEnv},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -89,6 +100,9 @@ func TestEachCallRunsItsVerb(t *testing.T) {
 			c := only(t, calls)
 			if want := append(append([]string{}, wantConfig...), strings.Fields(tt.args)...); c.dir != tt.dir || !reflect.DeepEqual(c.args, want) {
 				t.Errorf("dir %q, args %q\nwant dir %q, args %q", c.dir, c.args, tt.dir, want)
+			}
+			if want := environ(tt.env...); !reflect.DeepEqual(c.env, want) {
+				t.Errorf("env %q\nwant the fixed list, then %q", c.env, tt.env)
 			}
 		})
 	}
@@ -251,5 +265,47 @@ func TestLsTreeReadsEachEntry(t *testing.T) {
 	var failed *FailedError
 	if _, err := LsTree("r", "abc", "x"); !errors.As(err, &failed) || failed.Code != 0 {
 		t.Fatalf("LsTree of a record of another form: %v; want a *FailedError with code 0", err)
+	}
+}
+
+// testAuth is the web of a forge register and a token of the tests; tokenEnv
+// is what a call with it adds to the fixed list (docs/spec/forge.md, The App
+// identity): the header of x-access-token and the token, in Basic.
+var (
+	testAuth = Auth{Web: "https://github.com", Token: "ghs_testtoken"}
+	tokenEnv = []string{"GIT_CONFIG_COUNT=1", "GIT_CONFIG_KEY_0=http.https://github.com/.extraHeader",
+		"GIT_CONFIG_VALUE_0=Authorization: Basic eC1hY2Nlc3MtdG9rZW46Z2hzX3Rlc3R0b2tlbg=="}
+)
+
+func TestFetchAndPushRefuseTheirInputBeforeGitStarts(t *testing.T) {
+	url := "https://example.invalid/b.git"
+	for name, call := range map[string]func() error{
+		"a ref that forces":              func() error { return Fetch("r", url, "+refs/heads/main", Auth{}) },
+		"a ref with a colon":             func() error { return Fetch("r", url, "refs/heads/a:refs/heads/b", Auth{}) },
+		"a ref not under refs/":          func() error { return Fetch("r", url, "main", Auth{}) },
+		"a commit that is not a full ID": func() error { return Push("r", url, "+abc", "main", Auth{}) },
+		"a branch with a colon":          func() error { return Push("r", url, fullID, "a:b", Auth{}) },
+		"an empty branch":                func() error { return Push("r", url, fullID, "", Auth{}) },
+		"a token with no web":            func() error { return Fetch("r", url, "refs/heads/main", Auth{Token: "ghs_x"}) },
+		"a web that ends in a slash": func() error {
+			return Fetch("r", url, "refs/heads/main", Auth{Web: "https://github.com/", Token: "ghs_x"})
+		},
+	} {
+		calls := stub(t, "", nil)
+		err := call()
+		var failed *FailedError
+		if !errors.As(err, &failed) || failed.Code != -1 || len(*calls) != 0 {
+			t.Errorf("%s: %v, %d starts of git; want a *FailedError of code -1 and none", name, err, len(*calls))
+		}
+	}
+}
+
+func TestNoErrorHoldsTheToken(t *testing.T) {
+	stub(t, "", errors.New("exit status 128"))
+	for _, err := range []error{Fetch("r", "https://github.com/a/b.git", "refs/heads/main", testAuth),
+		Push("r", "https://github.com/a/b.git", fullID, "main", testAuth)} {
+		if err == nil || strings.Contains(err.Error(), "ghs_testtoken") || strings.Contains(err.Error(), "eC1hY2Nlc3MtdG9rZW46") {
+			t.Errorf("the error %v is nil or holds the token", err)
+		}
 	}
 }

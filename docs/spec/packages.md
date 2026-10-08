@@ -217,8 +217,23 @@ remote needs it; no other value enters the fixed list.
 
 | Call | The command, after the `-c` values below | Used by |
 | ---- | ---------------------------------------- | ------- |
-| `Fetch` | `git fetch --no-tags -- URL REF:REF` | `layup run`: the read-back of the root commit (step 5 of [`run.md`](run.md#the-steps-of-layup-run---new)) |
+| `Fetch` | `git fetch --no-tags --update-head-ok -- URL REF:REF` | `layup run`: the read-back of the root commit (step 5 of [`run.md`](run.md#the-steps-of-layup-run---new)) |
 | `Push` | `git push --porcelain -- URL COMMIT:refs/heads/BRANCH`; never `--force` | `layup run`: each records commit (fencing: a push that is not a fast-forward is refused) |
+
+- `Fetch` and `Push` refuse their input before `git` starts unless `REF`
+  starts with `refs/` and holds no `:`, `COMMIT` is a full object ID and
+  `BRANCH` is not empty and holds no `:`, so no `+` forces an update, and,
+  with a token, unless `web` is not empty and has no final slash, as the key
+  `http.<web>/.extraHeader` of [`forge.md`](forge.md#the-app-identity) needs
+  (task `T-xhgz`). `--update-head-ok` lets `Fetch` set the branch of a repository that
+  `Init` made: without it, `git` 2.54.0 refuses to fetch into the branch that is
+  checked out (exit 128); the result is the state that `Clone --no-checkout`
+  gives. A push that `git` refuses (not a fast-forward, or refused by the remote)
+  is a `FailedError` with `Code` 1; its line `!` is on the standard output of
+  `--porcelain`, which the error does not keep. A remote that cannot be reached
+  gives another code (128, measured with `git` 2.54.0). `Code` 1 is also a
+  commit that is not in the local repository, which a records commit that the
+  run has just made never is.
 
 Start makes its clone with `Init` and `Fetch`, and the restart with `Clone`. The
 first records commit is an orphan commit in a scratch work tree, as S15 makes it
@@ -282,8 +297,11 @@ pass.
   when they are set; `LC_ALL=C`, `HOME=/dev/null`, `GIT_CONFIG_NOSYSTEM=1`,
   `GIT_CONFIG_GLOBAL=/dev/null`, `GIT_ATTR_NOSYSTEM=1`, `GIT_TERMINAL_PROMPT=0`,
   `GIT_ALLOW_PROTOCOL=file:git:http:https`; for a commit, the six variables of
-  its identity. No other `GIT_*` variable, no `GIT_ASKPASS` and no
-  `SSH_ASKPASS` of the host reaches `git`: `GIT_CONFIG_COUNT` set a value,
+  its identity; with a token, `Fetch` and `Push` add `GIT_CONFIG_COUNT`,
+  `GIT_CONFIG_KEY_0` and `GIT_CONFIG_VALUE_0` of
+  [`forge.md`](forge.md#the-app-identity), with LAYUP's values. No other
+  `GIT_*` variable, no `GIT_ASKPASS` and no `SSH_ASKPASS` of the host reaches
+  `git`: `GIT_CONFIG_COUNT` set a value,
   `GIT_DIR` sent a commit to another repository, and `GIT_AUTHOR_NAME` changed
   the author. A call has no standard input.
 - `GIT_ALLOW_PROTOCOL` allows `file` (the stand-in baselines of the tests),
