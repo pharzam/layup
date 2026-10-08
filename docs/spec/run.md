@@ -93,8 +93,10 @@ session uses.
    uses (contents, issues: write; metadata: read), and records each permission of
    the installation in `app.permissions`. A missing permission of a later
    milestone (commit statuses, `M2e`) is recorded, not a `fail`. The repository
-   must exist and have no commit (O-163). It reads the numeric IDs of
-   `--operator` and `--idea-owner`; an unknown login is `fail`.
+   must exist and have no branch (O-163; `Repository` gives the names of the
+   branches). It reads the numeric IDs of `--operator` and `--idea-owner`; an
+   unknown login is `fail`. It reads the ID of the App's bot (`<slug>[bot]`),
+   the author of each records commit (task `T-ax3r`).
 2. **`plan`**: the plan check of §5 (K15), on the visibility that step 1 read.
    `public` passes on each plan; a private repository passes on `team` and
    `enterprise` only (GitHub Free has no rulesets and no draft pull requests on
@@ -103,10 +105,18 @@ session uses.
 3. **`baseline`** (Start 2, S02 of [`setup.md`](setup.md#the-steps)): it resolves
    the latest commit of the baseline's default branch (`LsRemote`), clones that
    commit, and removes `.git`. The pin (source, commit, tree, time) is held in
-   the run's memory until step 6 writes it.
+   the run's memory until step 6 writes it. **Decided here** (task `T-ax3r`):
+   the baseline is the source of LAYUP's own pin, which `internal/cli` gives the
+   run, and it is cloned into `DIR/roots/OWNER/NAME/`. A Start holds no records
+   before step 6, so it first removes `DIR/roots/OWNER/NAME/` and
+   `DIR/targets/OWNER/NAME/` of an earlier Start.
 4. **`root-push`** (Start 2, S03): it makes the root commit as S03 does, and
    prints on standard error the one command that pushes it, with the resolved
-   commit and its difference from LAYUP's own pin. The Operator runs it with the
+   commit and its difference from LAYUP's own pin. The root commit is made in
+   `DIR/roots/OWNER/NAME/`, not in the clone of step 5, so the read-back reads
+   only what the forge holds; its author and committer are the App's bot at
+   `pin.time`, as S03 makes it (O-136); the command is
+   `git -C DIR/roots/OWNER/NAME push -- <web>/OWNER/NAME.git main` (task `T-ax3r`). The Operator runs it with the
    Operator's own login (the copy holds CI files, and the App has no workflows
    permission, O-92). `layup run` reads the list of branches every ten seconds
    (`Repository`, [`forge.md`](forge.md#the-calls-of-m2a)) until the default branch exists. **Decided here:** the wait has no limit (Ctrl-C stops it), as
@@ -133,8 +143,9 @@ session uses.
    sets its row (`issue.intake`, `issue.control`) to `opening`, which announces
    the write; the run opens the issue; a records commit sets the row to the
    issue's number, so a restart finds it with no search.
-8. **`watch`**: it reads the comments of the control issue for up to `watch.T`
-   for a notice from the App `watch_slug` (the dead-man job, §11). Before it acts
+8. **`watch`**: it reads the comments of the control issue every ten seconds,
+   with a progress line, for up to `watch.T` (task `T-ax3r`), for a notice from
+   the App `watch_slug` (the dead-man job, §11). Before it acts
    on a comment, it pushes the copy ([copy before read](#copy-before-read)); then a
    records commit writes `watch`: `confirmed` when such a comment came, else
    `not-confirmed` (L-F1); with no `watch_slug`, `not-confirmed` at once. Both
@@ -181,8 +192,9 @@ so a person reads it with no tool. A plain `git clone` carries the branch as
 `layup run TARGET --host DIR`:
 
 1. **`forge`**: the installation token, the six capabilities and the permissions,
-   as step 1 above. The repository must exist and hold `layup-records`. No login
-   is looked up: the approvers are read from `approvers.tsv`.
+   as step 1 above. The repository must exist and hold `layup-records`. No
+   approver login is looked up: the approvers are read from `approvers.tsv`; the
+   ID of the App's bot is read, as in step 1 above (task `T-ax3r`).
 2. **`clone`**: it rebuilds `DIR/targets/OWNER/NAME/` from the forge (a fresh
    `Clone` of the default branch and `layup-records`); nothing in the old clone is
    read. It reads `start.tsv`, `approvers.tsv` and `lease.tsv`.
@@ -224,7 +236,15 @@ As `architecture.md` §2, with these values decided here:
   it. A refused records push stops the run: it reads the lease again, goes on
   only while it still holds it, and else exits 1 with `fail` on the step. To go
   on is to try the same push once more; a second refusal is `fail` (task
-  `T-trej`). The heartbeat and the release go through this rule.
+  `T-trej`). The heartbeat and the release go through this rule. **Decided
+  here** (task `T-ax3r`): the run keeps the ID of its own last pushed records
+  commit and makes each records commit on it in a scratch work tree; a run that
+  has pushed none yet (a restart) makes its first one on the commit of its last
+  read of the lease. A read fetches `layup-records` into the run's clone, on
+  which the run never builds, so no read moves the base of a commit. The
+  heartbeat beats from step 6 on, in its own task; the run ends it before the
+  release and before any exit, and a lost beat stops the step that runs, which
+  is `fail` with the loss.
 
 ### A human decision
 
@@ -249,8 +269,26 @@ row. In `M2a`, the comments of the control issue at step 8 are copied.
 
 **Decided here:** the titles are `LAYUP Intake` and `LAYUP control`. Each body
 names the records branch and says that a comment there is recorded before LAYUP
-acts on it, and that only the accounts of `approvers.tsv` decide. The App's bot
-opens both. In `M2a` the Intake issue receives no comment from LAYUP; the gap
+acts on it, and that only the accounts of `approvers.tsv` decide (the text,
+task `T-ax3r`):
+
+```text intake-issue
+This is the Intake issue of LAYUP for this repository.
+
+LAYUP records each comment here on its records branch, `layup-records`,
+before it acts on the comment. Only the accounts of `approvers.tsv` on that
+branch decide.
+```
+
+```text control-issue
+This is the control issue of LAYUP for this repository.
+
+LAYUP records each comment here on its records branch, `layup-records`,
+before it acts on the comment. Only the accounts of `approvers.tsv` on that
+branch decide.
+```
+
+The App's bot opens both. In `M2a` the Intake issue receives no comment from LAYUP; the gap
 check of `M2c` posts there.
 
 ### Input states
@@ -270,6 +308,11 @@ check of `M2c` posts there.
 | A lease row from another LAYUP version | the `version` step fails first |
 | A lease table with no row, or two rows | `clone`: `fail` |
 | A forge error during a step | `fail` on that step, with the error ([`forge.md`](forge.md#forge-errors)) |
+| `--new` after an earlier Start that stopped before step 6, on the same host | the run removes `DIR/roots/OWNER/NAME/` and `DIR/targets/OWNER/NAME/` and starts again (step 3) |
+
+**Known limit:** a step that fails after step 6 for a reason other than a lost
+lease leaves the lease `held`, so the next restart waits `3 × lease.H` before it
+takes the lease over (task `T-ax3r`).
 
 **Known limit:** a run that stops after it opens an issue and before the records
 commit of its number leaves an issue that the records do not name; the restart

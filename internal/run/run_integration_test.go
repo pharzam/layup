@@ -383,16 +383,23 @@ func TestTheTextBlocksOfRunMd(t *testing.T) {
 
 // pushRecords commits files on the head of layup-records of the bare target,
 // as another run would, and pushes it.
+// A beat of the run can come between its clone and its push, so it tries
+// again on a refusal, as another run would.
 func pushRecords(t *testing.T, bare string, files map[string]string, message string) {
 	t.Helper()
-	work := t.TempDir()
-	gitOut(t, work, "clone", "-q", "-b", "layup-records", bare, ".")
-	for p, text := range files {
-		os.WriteFile(filepath.Join(work, p), []byte(text), 0o644)
+	for try := 0; try < 5; try++ {
+		work := t.TempDir()
+		gitOut(t, work, "clone", "-q", "-b", "layup-records", bare, ".")
+		for p, text := range files {
+			os.WriteFile(filepath.Join(work, p), []byte(text), 0o644)
+		}
+		gitOut(t, work, "add", "-A")
+		gitOut(t, work, "commit", "-q", "-m", message)
+		if exec.Command("git", "-C", work, "push", "-q", "origin", "layup-records").Run() == nil {
+			return
+		}
 	}
-	gitOut(t, work, "add", "-A")
-	gitOut(t, work, "commit", "-q", "-m", message)
-	gitOut(t, work, "push", "-q", "origin", "layup-records")
+	t.Fatalf("five pushes of %q were refused", message)
 }
 
 // Condition 1 of the plan review: the old run made one more records commit,

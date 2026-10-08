@@ -24,3 +24,11 @@ Then the demo, the restart with another version, the restart after a stop at `op
 `TestATakeoverAfterACommitThatTheCloneDidNotSee` and `TestALostBeatEndsTheWatch` passed at once on the code, so each was shown to fail on a mutation of a backup copy, put back after (`cmp` equal):
 - `ReadLease` keeps no commit of its read → `the restart: the step lease is fail: the records push was refused; the lease names the run 0123456789abcdef`;
 - a lost beat does not end the run's context → `the watch read 316 times after the beat was lost; want it ended at the loss` (the check of the number of reads was added first, as the detail of a failed write names the other run too).
+
+## One flaky test, fixed (2026-10-08T11:15Z)
+
+In six runs of `go test -race -count=1 -tags=integration ./internal/run/`, one failed: `TestALostBeatEndsTheWatch`, `git push -q origin layup-records: exit status 1`. The cause is the test's helper that plays the other run: a beat of the run under test came between the helper's clone and its push, so git refused the helper's push. A real other run reads again and tries again, so the helper now tries up to five times. Then eight runs in a row passed.
+
+## The documents (2026-10-08T11:12Z)
+
+Red: `runs/T-ax3r/docs.sh` on a work tree of the code commit `a949c65` gave 21 `FAIL` lines of 21. After the edits of `run.md`, `forge.md`, `packages.md`, the traceability and the PRD (two rules of the check were fixed on the way: a phrase that the text wraps, and the PRD rows that a guard of the edit skipped), 21 `ok`, exit 0.
