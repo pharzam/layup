@@ -127,7 +127,7 @@ func TestCloneAndCheckout(t *testing.T) {
 	if got, err := LsRemote("file://"+bare, "HEAD"); err != nil || got != id {
 		t.Fatalf("LsRemote: %q, %v; want %s", got, err, id)
 	}
-	must(t, Clone("file://"+bare, dst))
+	must(t, Clone("file://"+bare, dst, Auth{}))
 	if exists(filepath.Join(dst, "a.txt")) {
 		t.Fatal("the clone checked out a.txt; want no file before the checkout")
 	}
@@ -356,7 +356,7 @@ func TestNoCallUsesACredentialOfTheHost(t *testing.T) {
 	for url, want := range map[string]string{srv.URL + "/baseline.git": "terminal prompts disabled",
 		"ssh://git@127.0.0.1/baseline.git": "transport 'ssh' not allowed", "layuptest::baseline": "transport 'layuptest' not allowed"} {
 		done := make(chan error, 1)
-		go func() { done <- Clone(url, filepath.Join(t.TempDir(), "target")) }()
+		go func() { done <- Clone(url, filepath.Join(t.TempDir(), "target"), Auth{}) }()
 		select {
 		case err := <-done:
 			var failed *FailedError

@@ -95,9 +95,24 @@ func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
 	case call == "GET /repos/acme/target":
 		json.NewEncoder(w).Encode(map[string]any{"default_branch": "main", "visibility": "public"})
 	case call == "GET /repos/acme/target/branches":
+		if r.URL.Query().Get("per_page") != "100" {
+			http.Error(w, `{"message":"per_page is not 100"}`, 400)
+			return
+		}
+		page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+		if page == 0 {
+			page = 1
+		}
 		list := []map[string]any{}
-		for i := 0; i < f.branches; i++ {
-			list = append(list, map[string]any{"name": "main"})
+		for i := (page - 1) * 100; i < f.branches && i < page*100; i++ {
+			name := "main"
+			if i > 0 {
+				name = fmt.Sprintf("b%03d", i)
+			}
+			list = append(list, map[string]any{"name": name})
+		}
+		if page*100 < f.branches {
+			w.Header().Set("Link", fmt.Sprintf(`<http://%s/repos/acme/target/branches?per_page=100&page=%d>; rel="next"`, r.Host, page+1))
 		}
 		json.NewEncoder(w).Encode(list)
 	case call == "GET /users/acme-layup[bot]":
@@ -190,11 +205,15 @@ func TestTheAdapterPlaysEachCallOfM2a(t *testing.T) {
 		t.Fatalf("Token = %v, %v", tok.Expires, err)
 	}
 	repo, err := a.Repository(ctx)
-	if err != nil || repo != (forge.Repository{DefaultBranch: "main", Visibility: "public", HasCommit: true}) {
+	if err != nil || !reflect.DeepEqual(repo, forge.Repository{DefaultBranch: "main", Visibility: "public", HasCommit: true, Branches: []string{"main"}}) {
 		t.Errorf("Repository = %+v, %v", repo, err)
 	}
+	f.branches = 101 // two pages
+	if repo, err := a.Repository(ctx); err != nil || len(repo.Branches) != 101 || repo.Branches[0] != "main" || repo.Branches[100] != "b100" {
+		t.Errorf("Repository with 101 branches: %d branches, %v; want each page", len(repo.Branches), err)
+	}
 	f.branches = 0
-	if repo, err := a.Repository(ctx); err != nil || repo.HasCommit {
+	if repo, err := a.Repository(ctx); err != nil || repo.HasCommit || len(repo.Branches) != 0 {
 		t.Errorf("Repository with no branch = %+v, %v; want no commit", repo, err)
 	}
 	if id, err := a.UserID(ctx, "acme-layup[bot]"); err != nil || id != 9001 {

@@ -59,7 +59,8 @@ func TestEachCallRunsItsVerb(t *testing.T) {
 	}{
 		{"version", "", "--version", func() { Version() }, nil},
 		{"ls-remote", "", "ls-remote --exit-code -- " + url + " HEAD", func() { LsRemote(url, "HEAD") }, nil},
-		{"clone", "", "clone --no-checkout -- " + url + " w/target", func() { Clone(url, "w/target") }, nil},
+		{"clone", "", "clone --no-checkout -- " + url + " w/target", func() { Clone(url, "w/target", Auth{}) }, nil},
+		{"clone with a token", "", "clone --no-checkout -- " + url + " w/target", func() { Clone(url, "w/target", testAuth) }, tokenEnv},
 		{"checkout --detach", "r", "checkout --detach " + fullID, func() { CheckoutDetach("r", fullID) }, nil},
 		{"init -b main", "", "init -b main -- r", func() { Init("r") }, nil},
 		{"add, the whole tree", "r", "add --all --", func() { Add("r") }, nil},
