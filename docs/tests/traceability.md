@@ -126,6 +126,7 @@ the first.
 | `TestStallRowsThatPass`, `TestStallRowsThatBreakARule` (`internal/records/stalls_test.go`) | unit | REQ-009 | F-0003#49 | — | ADR-0023 | T-dgy7 | green |
 | The release review of phase 1 (`runs/T-efmy/release-review.md`), with its check `runs/T-efmy/release-check.sh` | uat | REQ-015, REQ-017 | F-0003#53 | — | — | T-efmy | green |
 | The first pilot (`runs/T-evad/`): the setup of `pharzam/chat-orchestrator` from the brief `PSB-CHAT-001`, `layup setup verify`, `layup gate` from outside, the value audit, `rules-diff.sh`, `tree-equal.sh`, and the idea owner's acceptance after the fix (`runs/T-evad/acceptance.md`) | uat | REQ-001, REQ-002, REQ-004, REQ-007, REQ-016, REQ-018, NFR-001, NFR-002, NFR-003 | F-0003#42 | guardrails.md §1.1 Inv-7 | ADR-0012 | T-evad | green |
+| The demo of `M2a` (`runs/T-fnsr/`): the Operator's Start of `pharzam/layup-uat` and its root push, the Operator's read of `layup-records` with a plain `git clone`, and `check.sh` with its offline test `check-test.sh` | uat | NFR-001, NFR-002, NFR-006, REQ-002 | F-0003#42 | — | ADR-0014 | T-fnsr | green |
 | `M2f/uat/rule-protection` | uat | REQ-003 | F-0003#43 | guardrails.md §1.1 Inv-3 | ADR-0017 | M2f | planned |
 | `M2e/uat/role-handoffs` | uat | REQ-005 | F-0003#45 | — | ADR-0019 | M2e | planned |
 | `M3c/uat/clarification` | uat | REQ-006 | F-0003#46 | — | ADR-0019 | M3c | planned |
