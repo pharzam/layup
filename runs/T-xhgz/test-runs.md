@@ -20,3 +20,7 @@ With stubs that start no `git` and give no error: the four rows `0 starts of git
 `Auth`, `Fetch`, `Push`: `go test ./internal/git/` and `go test -tags=integration ./internal/git/` pass. Mutations on a backup copy of `git.go`, each put back (`cmp` equal):
 - `Fetch` with no `--update-head-ok` → `git fetch --no-tags -- file://…/target.git refs/heads/main:refs/heads/main: exit status 128` in `TestPushAndFetchOfABareRepository`;
 - `Push` with `--force` → `a push that is not a fast-forward: <nil>; want a *FailedError of code 1`.
+
+## The documents (2026-10-08T09:28Z)
+
+Red before the edits: `sh runs/T-xhgz/docs.sh` gave ten `FAIL` lines, exit 1. After the edits of `packages.md`, `forge.md`, `guardrails.md`, the traceability and the PRD: ten `ok`, exit 0.

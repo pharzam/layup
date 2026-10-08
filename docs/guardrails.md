@@ -284,6 +284,14 @@ check that catches it.
   `x-ratelimit-remaining` is `0` ([`forge.md`](spec/forge.md#forge-errors)); keep
   the case of a `403` with requests left, which must fail with no wait
   (`internal/forge/github`). Learned in `T-6bq5`.
+- ❌ **`git fetch` into the branch of a new repository.** `git init -b main`, then
+  `git fetch -- URL refs/heads/main:refs/heads/main`, exits 128 with
+  `fatal: refusing to fetch into branch 'refs/heads/main' checked out`, because
+  `main` is the branch of `HEAD` even with no commit. It is silent in a test that
+  fetches any other branch. **The check:** `Fetch` passes `--update-head-ok`
+  ([`packages.md`](spec/packages.md#the-calls-of-internalgit)), and its
+  integration test fetches `main` into a repository that `Init` made. Learned in
+  `T-xhgz`.
 
 ### Writing a lesson back
 
