@@ -327,8 +327,24 @@ func TestARestartAfterARunThatStoppedAtOpening(t *testing.T) {
 	}
 	cfg := w.config("0.1.0-dev")
 	cfg.RunID = "fedcba9876543210"
+	cfg.WatchT, cfg.LeaseH = 0, 0 // a restart has no --watch-t and no --lease-h: start.tsv gives them
+	notice := w.fake.comments[2]
+	w.fake.mu.Lock()
+	w.fake.comments = map[int][]map[string]any{} // the notice comes after the first read
+	w.fake.mu.Unlock()
+	var once sync.Once
+	w.mu.Lock()
+	w.hook = func(l string) {
+		if strings.HasPrefix(l, "watch: waiting") {
+			once.Do(func() { w.fake.mu.Lock(); w.fake.comments[2] = notice; w.fake.mu.Unlock() })
+		}
+	}
+	w.mu.Unlock()
 	rows = Restart(context.Background(), cfg)
 	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "phase")
+	if got := show(t, w.bare, "refs/heads/layup-records", "start/start.tsv"); !strings.Contains(got, "watch\tconfirmed\trun\n") {
+		t.Errorf("the restart's watch, for up to watch.T of start.tsv, did not see the notice:\n%s", got)
+	}
 	if phase := rows[len(rows)-1].Detail; !strings.Contains(phase, "issues") || !strings.Contains(phase, "watch") {
 		t.Errorf("the detail of phase %q; want the steps it ran again", phase)
 	}

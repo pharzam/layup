@@ -32,3 +32,7 @@ In six runs of `go test -race -count=1 -tags=integration ./internal/run/`, one f
 ## The documents (2026-10-08T11:12Z)
 
 Red: `runs/T-ax3r/docs.sh` on a work tree of the code commit `a949c65` gave 21 `FAIL` lines of 21. After the edits of `run.md`, `forge.md`, `packages.md`, the traceability and the PRD (two rules of the check were fixed on the way: a phrase that the text wraps, and the PRD rows that a guard of the edit skipped), 21 `ok`, exit 0.
+
+## Fixes of round 1 (2026-10-08T11:10Z)
+
+Finding 1: `TestARestartAfterARunThatStoppedAtOpening` now gives the restart a config with `WatchT` and `LeaseH` of 0 (a restart has neither flag) and posts the notice only after the first read of step 8. Red: `the restart's watch, for up to watch.T of start.tsv, did not see the notice` (one read, then `not-confirmed`). Then `clone` takes `lease.H` and `watch.T` from `start.tsv`, and the test passes; four more runs with `-race` pass. `docs.sh` gets the rule of the sentence (22 `ok`).

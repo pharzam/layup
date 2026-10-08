@@ -661,6 +661,14 @@ func (r *state) cloneStep(ctx context.Context) Step {
 			return fail(name, err)
 		}
 	}
+	// A restart has no --lease-h and no --watch-t: the Start values are in
+	// start.tsv.
+	if r.cfg.LeaseH, err = strconv.Atoi(r.value("lease.H")); err != nil {
+		return fail(name, err)
+	}
+	if r.cfg.WatchT, err = strconv.Atoi(r.value("watch.T")); err != nil {
+		return fail(name, err)
+	}
 	r.newStore(head)
 	return done(name, "start.tsv, approvers.tsv and lease.tsv read")
 }
@@ -676,12 +684,9 @@ func (r *state) versionStep(context.Context) Step {
 // takeStep is step 4 of the restart: the lease, at once when it is released,
 // else by the takeover rule; the heartbeat starts.
 func (r *state) takeStep(ctx context.Context) Step {
-	h, err := strconv.Atoi(r.value("lease.H"))
-	if err != nil {
-		return fail("lease", err)
-	}
 	me := LeaseRow{Run: r.cfg.RunID, Host: r.cfg.HostName, Version: r.cfg.Version}
-	if r.lease, err = Take(ctx, r.store, r.cfg.Clock, me, time.Duration(h)*time.Minute, r.cfg.Progress); err != nil {
+	var err error
+	if r.lease, err = Take(ctx, r.store, r.cfg.Clock, me, time.Duration(r.cfg.LeaseH)*time.Minute, r.cfg.Progress); err != nil {
 		var held *HeldError
 		var lost *LostError
 		if errors.As(err, &held) || errors.As(err, &lost) {
@@ -689,7 +694,6 @@ func (r *state) takeStep(ctx context.Context) Step {
 		}
 		return fail("lease", err)
 	}
-	r.cfg.LeaseH = h
 	r.beat()
 	return done("lease", "held by this run")
 }

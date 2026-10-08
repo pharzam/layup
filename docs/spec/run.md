@@ -197,7 +197,8 @@ so a person reads it with no tool. A plain `git clone` carries the branch as
    ID of the App's bot is read, as in step 1 above (task `T-ax3r`).
 2. **`clone`**: it rebuilds `DIR/targets/OWNER/NAME/` from the forge (a fresh
    `Clone` of the default branch and `layup-records`); nothing in the old clone is
-   read. It reads `start.tsv`, `approvers.tsv` and `lease.tsv`.
+   read. It reads `start.tsv`, `approvers.tsv` and `lease.tsv`; `lease.H` and
+   `watch.T` of the restart are those of `start.tsv` (task `T-ax3r`).
 3. **`version`**: the LAYUP version of the run equals `layup.version` of
    `start.tsv`; else `fail` (the inventory: "stops when its own version differs").
 4. **`lease`**: [the lease](#the-lease-and-fencing) is taken: at once when it is
@@ -205,8 +206,9 @@ so a person reads it with no tool. A plain `git clone` carries the branch as
    the holder.
 5. **`phase`**: the first step of Start that is not done, run again. A row
    `opening` means that a run stopped between the announcement and the record
-   of an issue: the restart runs step 7 for that issue again (a duplicate issue
-   is possible, known limit below). When each step of Start is done, the next
+   of an issue: the restart runs step 7 for that issue again, with no second
+   announcement, as the row already says `opening` (a duplicate issue is
+   possible, known limit below). When each step of Start is done, the next
    phase is Intake (`M2c`): the row is `done`, and the run releases the lease and
    exits. `M2c` replaces this row with its steps. **Decided here:** `phase` is one
    row of the restart's table, whatever steps of Start it runs again; its
@@ -240,8 +242,9 @@ As `architecture.md` §2, with these values decided here:
   here** (task `T-ax3r`): the run keeps the ID of its own last pushed records
   commit and makes each records commit on it in a scratch work tree; a run that
   has pushed none yet (a restart) makes its first one on the commit of its last
-  read of the lease. A read fetches `layup-records` into the run's clone, on
-  which the run never builds, so no read moves the base of a commit. The
+  read of the lease. A read fetches into the branch `layup-records` of the run's
+  clone; the run never builds on that branch, so no read moves the base of a
+  commit. The
   heartbeat beats from step 6 on, in its own task; the run ends it before the
   release and before any exit, and a lost beat stops the step that runs, which
   is `fail` with the loss.
