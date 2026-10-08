@@ -30,7 +30,6 @@ same summary, dated — rather than deleting it or checking it off.
 - **<ID>** — <one-sentence summary> ([<ADR or doc link>](...); [detail](<id>.md))
 -->
 
-- **T-fnsr** — Row 27 of the plan: the demo of `M2a` (uat), with the Operator's inputs ([#132](https://github.com/pharzam/layup/issues/132); [plan](../plan/README.md#the-tasks-of-m2a))
 
 
 ## Next
