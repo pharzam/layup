@@ -57,3 +57,7 @@ The cases "rule 5, a dependency that Connects does not name" and the fixture are
 ## Green: the checker, then `packages.md` (2026-10-08T06:16Z)
 
 With the real checker, the unit tests of the checker pass; `TestPackageRules` then failed with `0 lines start with "The one package that imports them:", want 1` until `packages.md` held the line of rule 5; with it, `go test -tags=integration -run TestPackageRules ./cmd/layup/` passes, and the fixture gives `rule 5: cmd/layup imports net/http; only internal/forge/github imports them` and `rule 5: internal/psb depends on net`.
+
+## The documents (2026-10-08T06:19Z)
+
+Red before the edits of the plan, traceability and the PRD: `sh runs/T-esfe/docs.sh` gave nine `FAIL` lines and exit 1 (rule 1, the sentence of `packages.md`, was green already: step 2 changed it before the check existed). Green after: the ten rules `ok`, exit 0.
