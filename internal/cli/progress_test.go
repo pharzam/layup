@@ -70,27 +70,35 @@ func TestNewProgressBeatsEveryTenSeconds(t *testing.T) {
 	}
 }
 
-// A line of a wait (docs/spec/run.md, The command) is printed with the step,
-// and the beat starts again, so a wait shows one line every ten seconds.
-func TestANoteOfAWaitStartsTheBeatAgain(t *testing.T) {
+// A line of a wait (docs/spec/run.md, The command) is printed with its step,
+// and the next beat prints nothing, so a wait that prints a line every ten
+// seconds shows one line every ten seconds; the beat after it counts from
+// the start of the step.
+func TestANoteOfAWaitTakesThePlaceOfTheNextBeat(t *testing.T) {
 	var out bytes.Buffer
 	clock := &stoppedClock{}
-	p := &progress{w: &out, command: "run", every: 10 * time.Second, ticker: clock.ticker}
+	beaten := make(chan struct{})
+	p := &progress{w: &out, command: "run", every: 10 * time.Second, ticker: clock.ticker, afterBeat: func() { beaten <- struct{}{} }}
+	beat := func() { tick(t, clock, 0); <-beaten } // the beat has ended before the next call
 	p.step(4, 9, "root-push")
-	tick(t, clock, 0)
+	beat()
 	p.note("waiting for the push of the root commit")
-	tick(t, clock, 1)
+	beat() // the wait's own ten seconds end: this beat prints nothing
+	p.note("waiting for the push of the root commit")
+	beat()
+	beat()
 	p.end()
 	p.note("after the end: printed with no step")
 	want := "layup run: [4/9] root-push\n" +
 		"layup run: [4/9] root-push: 10 s\n" +
 		"layup run: [4/9] root-push: waiting for the push of the root commit\n" +
-		"layup run: [4/9] root-push: 20 s\n" +
+		"layup run: [4/9] root-push: waiting for the push of the root commit\n" +
+		"layup run: [4/9] root-push: 40 s\n" +
 		"layup run: after the end: printed with no step\n"
 	if out.String() != want {
 		t.Fatalf("the lines:\n%s\nwant:\n%s", out.String(), want)
 	}
-	if clock.stopped != 2 {
-		t.Fatalf("%d tickers stopped, want 2", clock.stopped)
+	if len(clock.ticks) != 1 || clock.stopped != 1 {
+		t.Fatalf("%d tickers started, %d stopped; want one ticker for the step", len(clock.ticks), clock.stopped)
 	}
 }

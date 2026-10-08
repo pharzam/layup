@@ -30,8 +30,10 @@ import (
 
 var (
 	runOnce    sync.Once
+	runDir     string // the directory of the binary and the baseline; TestMain removes it
 	runBinary  string // the binary whose pin is the local baseline
 	runBase    string // the bare baseline, shared by each world
+	runCommit  string // its commit
 	runOnceErr error
 )
 
@@ -57,6 +59,7 @@ func buildRunBinary(t *testing.T) (string, string) {
 			runOnceErr = err
 			return
 		}
+		runDir = dir
 		src := filepath.Join(dir, "src")
 		os.MkdirAll(src, 0o755)
 		os.WriteFile(filepath.Join(src, "README.md"), []byte("# Armature\n"), 0o644)
@@ -67,6 +70,7 @@ func buildRunBinary(t *testing.T) (string, string) {
 			}
 		}
 		commit, _ := gitRun(src, "rev-parse", "HEAD")
+		runCommit = strings.TrimSpace(commit)
 		runBase = filepath.Join(dir, "armature.git")
 		if out, err := gitRun(dir, "clone", "-q", "--bare", src, runBase); err != nil {
 			runOnceErr = errors.New(out)
@@ -249,7 +253,10 @@ func TestRunNewThenRestart(t *testing.T) {
 	if strings.Contains(first.stdout, w.dir) || strings.Contains(first.stdout+first.stderr, "ghs_") {
 		t.Errorf("the table holds a path of the host, or an output holds a token:\n%s", first.stdout)
 	}
-	if out, err := gitRun(w.bare, "show", "refs/heads/layup-records:start/start.tsv"); err != nil || !strings.Contains(out, "watch\tconfirmed\trun\n") {
+	// The pin of the binary is the local baseline (-ldflags -X): a name that
+	// the linker did not find would leave the real baseline of armature.pin.
+	if out, err := gitRun(w.bare, "show", "refs/heads/layup-records:start/start.tsv"); err != nil || !strings.Contains(out, "watch\tconfirmed\trun\n") ||
+		!strings.Contains(out, "pin.source\tfile://"+runBase+"\trun\n") || !strings.Contains(out, "pin.commit\t"+runCommit+"\trun\n") {
 		t.Errorf("start.tsv of the records branch: %v\n%s", err, out)
 	}
 	_, second := startWorld(t, binary)

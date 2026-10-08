@@ -26,3 +26,9 @@ Evidence for row 26 (#131): each test red first, for the right reason, then gree
 ## The documents (2026-10-08T12:40Z)
 
 Red: `runs/T-mqty/docs.sh` on a work tree of the e2e commit `dd259bc` gave 19 `FAIL` lines of 20; the rule of the May import cell of `internal/cli` passed there, as the code commit `c6d3354` changed that cell for `TestPackageRules`. The check `adapted` of `setup-check.sh` refused the word "optional" in `README.md` and the glossary (its rule 3); the text says "a flag that may be left out", the words of `run.md`. Then 20 `ok`, exit 0.
+
+## Fixes of round 1 (2026-10-08T12:45Z)
+
+Finding 1: `TestANoteOfAWaitTakesThePlaceOfTheNextBeat` (a beat, a note, the wait's own ten seconds, a second note, two beats; one ticker for the step) on the code of `09a0377`: `panic: test timed out after 10s` at `progress_test.go:84`, a tick on the ticker that the old `note` had stopped (the old `note` started a new ticker, so the beat came just before each wait line). Then `note` marks the line and the next beat prints nothing, with no new ticker, and a beat counts from the start of the step (note 7 too). The first green run failed once on the test's own timing (a tick hands over before its beat has printed); the test now waits for each beat through a hook that is nil in the product, and three runs with `-race` pass.
+
+Notes 3, 5, 6 and 9: a brief with a marker is read (unit); the e2e checks `pin.source` and `pin.commit` of `start.tsv`, so a name that `-X` did not find fails it; `TestMain` removes the build of the scenarios of `layup run`; the unit test of `Step` checks each step name of Start and of the restart. Note 4: one sentence of `README.md`. Then `go test`, `-tags=integration` and `-tags=e2e` pass.

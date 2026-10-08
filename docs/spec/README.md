@@ -142,7 +142,9 @@ Every command of LAYUP follows these rules. A section gives only what differs.
   `T-2yw7`): the same bytes means the same exit code and the same standard
   output. Standard error is not compared: its diagnostics and progress lines can
   hold a time. The end-to-end harness of `cmd/layup` compares the two in its
-  repeat helper, which each command's scenarios use. A command whose first run
+  repeat helper, which each command's scenarios use; a command whose scenarios
+  run in a world of their own (`layup run`) makes the same comparison in its
+  own helper. A command whose first run
   changes its forge (`layup run --new`: a second Start on the same target is
   `forge`: `fail`, O-163) repeats in a new world with the same arguments and
   the same state, and its scenario compares the two (task `T-mqty`).

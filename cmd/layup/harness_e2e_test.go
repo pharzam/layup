@@ -35,6 +35,9 @@ func TestMain(m *testing.M) {
 	}
 	code := m.Run()
 	os.RemoveAll(dir)
+	if runDir != "" { // the build of the scenarios of layup run
+		os.RemoveAll(runDir)
+	}
 	os.Exit(code)
 }
 

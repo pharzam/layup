@@ -109,6 +109,13 @@ func TestRunNewBuildsTheConfigAndPrintsTheTable(t *testing.T) {
 	if code, _, errOut := runLayup(noVision...); code != 0 || got.Vision != nil {
 		t.Errorf("no --vision: exit %d, vision %q, stderr %q", code, got.Vision, errOut)
 	}
+	// A brief with a marker is read: run.md refuses only a brief that is not a
+	// readable UTF-8 file (condition 5 of the plan review).
+	marked := []byte("# The problem\n\n\u2039an open gap\u203a\n")
+	os.WriteFile(filepath.Join(dir, "psb.md"), marked, 0o644)
+	if code, _, errOut := runLayup(args...); code != 0 || !bytes.Equal(got.PSB, marked) {
+		t.Errorf("a brief with a marker: exit %d, stderr %q", code, errOut)
+	}
 	// A fail row gives exit 1, with the table.
 	stubRun(t, []lrun.Step{{Name: "forge", Result: "fail", Detail: "no"}}, nil)
 	if code, out, _ := runLayup(args...); code != 1 || !strings.HasSuffix(out, "forge\tfail\tno\n") {

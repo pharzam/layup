@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"io"
+	"sync"
 	"time"
 )
 
@@ -21,7 +22,9 @@ type progress struct {
 	stop, done chan struct{} // of the beats of the running step
 	i, n       int           // the running step
 	name       string
-	beat       int // the beats of the running step so far
+	mu         sync.Mutex // over the lines, and noted
+	noted      bool       // a line of a wait came since the last beat
+	afterBeat  func()     // nil; a test waits on it for each beat to end
 }
 
 // newProgress gives the progress of command, with a beat every ten seconds.
@@ -36,38 +39,48 @@ func newProgress(w io.Writer, command string) *progress {
 // and starts the beats of this step.
 func (p *progress) step(i, n int, name string) {
 	p.end()
-	p.i, p.n, p.name, p.beat = i, n, name, 0
+	p.i, p.n, p.name, p.noted = i, n, name, false
 	fmt.Fprintf(p.w, "layup %s: [%d/%d] %s\n", p.command, i, n, name)
 	p.beats()
 }
 
 // note prints a line of a wait of the running step (docs/spec/run.md, The
-// command) and starts its beat again, so a wait shows one line every ten
-// seconds; with no running step it prints the line alone.
+// command), and the next beat prints nothing, so a wait that prints a line
+// every ten seconds shows one line every ten seconds; with no running step it
+// prints the line alone.
 func (p *progress) note(line string) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
 	if p.stop == nil {
 		fmt.Fprintf(p.w, "layup %s: %s\n", p.command, line)
 		return
 	}
-	p.stopBeats()
+	p.noted = true
 	fmt.Fprintf(p.w, "layup %s: [%d/%d] %s: %s\n", p.command, p.i, p.n, p.name, line)
-	p.beats()
 }
 
-// beats starts the beats of the running step.
+// beats starts the beats of the running step; a beat counts from the start of
+// the step.
 func (p *progress) beats() {
 	tick, stopTicker := p.ticker(p.every)
 	p.stop, p.done = make(chan struct{}), make(chan struct{})
 	go func(stop, done chan struct{}) {
 		defer close(done)
 		defer stopTicker()
-		for {
+		for beat := 1; ; beat++ {
 			select {
 			case <-stop:
 				return
 			case <-tick:
-				p.beat++
-				fmt.Fprintf(p.w, "layup %s: [%d/%d] %s: %d s\n", p.command, p.i, p.n, p.name, int64(p.beat)*int64(p.every/time.Second))
+				p.mu.Lock()
+				if !p.noted {
+					fmt.Fprintf(p.w, "layup %s: [%d/%d] %s: %d s\n", p.command, p.i, p.n, p.name, int64(beat)*int64(p.every/time.Second))
+				}
+				p.noted = false
+				p.mu.Unlock()
+				if p.afterBeat != nil {
+					p.afterBeat()
+				}
 			}
 		}
 	}(p.stop, p.done)
