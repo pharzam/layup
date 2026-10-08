@@ -14,6 +14,7 @@ has docs/spec/README.md 'repeats in a new world with the same arguments' "condit
 has docs/spec/README.md 'For `layup run` also `git` not found' "decision 1, git"
 # 2. run.md: the form of a line of a wait (condition 4), the two rows of the input states.
 has docs/spec/run.md 'layup run: \[<i>/<n>\] <step>: <line>' "condition 4, a line of a wait"
+has docs/spec/run.md 'next ten-second beat' "finding 1 of round 2, the beat after a line of a wait"
 has docs/spec/run.md '^| `git` not found, or older than 2.32 |' "the input state of git"
 has docs/spec/run.md '^| A host directory with no `registers/harnesses.tsv` |' "the input state of a missing harness register"
 # 3. forge.md: the adapter's own client (decision 4, condition 3).
@@ -26,7 +27,7 @@ grep '^| `internal/run` |' docs/spec/packages.md | grep -q 'the checks of `git`'
 has docs/glossary.md '^| Selecting flag |' "the glossary: selecting flag"
 has docs/glossary.md '^| Flag that may be left out |' "the glossary: flag that may be left out"
 # 6. The traceability and the Test cells.
-for t in TestRunNewThenRestart TestTheSelectingFlagAndTheOptionalFlag TestRunNewChecksEachInputBeforeTheFirstStep TestTheOwnClientFollowsNoRedirectAndNoProxy TestCheckGit; do
+for t in TestRunNewThenRestart TestTheSelectingFlagAndTheOptionalFlag TestANoteOfAWaitTakesThePlaceOfTheNextBeat TestRunNewChecksEachInputBeforeTheFirstStep TestTheOwnClientFollowsNoRedirectAndNoProxy TestCheckGit; do
 	grep "\`$t\`" docs/tests/traceability.md | grep -q 'T-mqty' && ok "traceability: $t" || no "traceability has no row of $t with T-mqty"
 done
 for r in 'NFR-001 | F-0001#1 ' 'NFR-002 | F-0001#2'; do

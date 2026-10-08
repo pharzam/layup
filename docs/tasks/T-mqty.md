@@ -32,7 +32,7 @@ panel.
    with its own client and the run's progress; a run ID, the host name, a real
    clock, Ctrl-C; the table on standard output, exit 0 or 1; LAYUP's pin as two
    variables held to `armature.pin` by a test. The progress prints a line of a
-   wait with its step and starts the beat again.
+   wait with its step, and the next beat prints nothing.
 2. **`internal/run`:** `Config.Step` at the start of each step (a defect
    against `README.md`, found by round 2 of #142); `CheckGit`; `CheckValues`
    with `records.CheckValue` (one home of the value forms).

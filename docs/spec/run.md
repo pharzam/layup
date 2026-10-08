@@ -60,9 +60,12 @@ and its progress on standard error, by the progress rule of `README.md`, with
 `[<i>/<n>]` over the rows of the table. A wait for a human (the root push) prints
 one progress line every ten seconds. **Decided here** (task `T-mqty`): a line of
 a wait (the root push, the lease, the watch, a rate limit of the forge) is
-printed as `layup run: [<i>/<n>] <step>: <line>`, and the ten-second beat of
-the step starts again after it, so a wait shows one line every ten seconds. Reason: a Start ends; the phase loop of later
-milestones adds its own rows, so the one-table rule holds.
+printed as `layup run: [<i>/<n>] <step>: <line>`, and the next ten-second beat
+of the step prints nothing, so a wait that prints a line every ten seconds
+shows one line every ten seconds; a beat counts from the start of the step. A
+wait that prints one line only (a rate limit with less than ten seconds left)
+can leave up to twenty seconds with no line. Reason: a Start ends; the phase
+loop of later milestones adds its own rows, so the one-table rule holds.
 
 ```tsv-schema run-steps stdout
 step enum(forge|plan|baseline|root-push|read-back|records|issues|watch|clone|version|lease|phase) key the step, in the order of the two lists below
