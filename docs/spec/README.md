@@ -61,7 +61,11 @@ Every command of LAYUP follows these rules. A section gives only what differs.
   - A flag is `--name VALUE` or `--name=VALUE`, before or after the positional
     arguments. Each flag of phase 1 is required and is given once. There is no
     short flag and no `--`; a positional argument that starts with `-` is given
-    as `./-name`.
+    as `./-name`. From `M2a` (task `T-mqty`, [`run.md`](run.md#the-command)):
+    a row may name one *selecting flag*: of two rows with the same words, the
+    row whose selecting flag is given is the command, else the row with none;
+    and a row may name a *flag that may be left out*, which the usage shows in
+    brackets.
   - A usage error is: no command, an unknown command, an unknown flag, a flag
     with no value (also `--name=` and `--name` before a word that starts with
     `-`), a missing or repeated flag, and a missing or extra positional
@@ -105,7 +109,7 @@ Every command of LAYUP follows these rules. A section gives only what differs.
   | ---- | ------- |
   | 0 | Every row of the table passed: `pass`, or `clear` where the section allows it. For `layup psb check`: no gap. |
   | 1 | At least one row is `fail` or `not-active`, or (for `layup psb check`) at least one gap. |
-  | 2 | A usage or input error: an unknown flag, a missing or unreadable file, an input that does not match its schema, an input that the command parses as text and that is not valid UTF-8 (below). For `layup gate` also `git` or `sh` not found, `git` older than 2.32, and a scratch work tree that it could not remove ([`gate.md`](gate.md#the-command)). For `layup psb check` also a table that it cannot write to standard output ([`psb-check.md`](psb-check.md#the-command)). For `layup setup verify` also `git` older than 2.32, a `docs/gates.tsv` at the head of `layup-setup` that is missing or malformed, a temporary directory in `WORK`, and a scratch work tree that it could not remove ([`setup.md`](setup.md#the-checks-of-layup-setup-verify)). The table can be empty or incomplete. |
+  | 2 | A usage or input error: an unknown flag, a missing or unreadable file, an input that does not match its schema, an input that the command parses as text and that is not valid UTF-8 (below). For `layup gate` also `git` or `sh` not found, `git` older than 2.32, and a scratch work tree that it could not remove ([`gate.md`](gate.md#the-command)). For `layup psb check` also a table that it cannot write to standard output ([`psb-check.md`](psb-check.md#the-command)). For `layup run` also `git` not found or older than 2.32, checked before its first step (task `T-mqty`). For `layup setup verify` also `git` older than 2.32, a `docs/gates.tsv` at the head of `layup-setup` that is missing or malformed, a temporary directory in `WORK`, and a scratch work tree that it could not remove ([`setup.md`](setup.md#the-checks-of-layup-setup-verify)). The table can be empty or incomplete. |
   | 3 | Only `layup setup`: the run stopped at a step that needs a human input; the table lists every missing input of that step. |
 
   A check that did not run is never 0 (`NFR-004`). Code 3 is not a failure and
@@ -138,7 +142,10 @@ Every command of LAYUP follows these rules. A section gives only what differs.
   `T-2yw7`): the same bytes means the same exit code and the same standard
   output. Standard error is not compared: its diagnostics and progress lines can
   hold a time. The end-to-end harness of `cmd/layup` compares the two in its
-  repeat helper, which each command's scenarios use.
+  repeat helper, which each command's scenarios use. A command whose first run
+  changes its forge (`layup run --new`: a second Start on the same target is
+  `forge`: `fail`, O-163) repeats in a new world with the same arguments and
+  the same state, and its scenario compares the two (task `T-mqty`).
 
 ## Records
 

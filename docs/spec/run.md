@@ -58,7 +58,10 @@ layup run TARGET --host DIR
 output at its exit, one row per step that it reached, in the order of the steps;
 and its progress on standard error, by the progress rule of `README.md`, with
 `[<i>/<n>]` over the rows of the table. A wait for a human (the root push) prints
-one progress line every ten seconds. Reason: a Start ends; the phase loop of later
+one progress line every ten seconds. **Decided here** (task `T-mqty`): a line of
+a wait (the root push, the lease, the watch, a rate limit of the forge) is
+printed as `layup run: [<i>/<n>] <step>: <line>`, and the ten-second beat of
+the step starts again after it, so a wait shows one line every ten seconds. Reason: a Start ends; the phase loop of later
 milestones adds its own rows, so the one-table rule holds.
 
 ```tsv-schema run-steps stdout
@@ -311,6 +314,8 @@ check of `M2c` posts there.
 | A lease row from another LAYUP version | the `version` step fails first |
 | A lease table with no row, or two rows | `clone`: `fail` |
 | A forge error during a step | `fail` on that step, with the error ([`forge.md`](forge.md#forge-errors)) |
+| `git` not found, or older than 2.32 | exit 2, before the first step (task `T-mqty`) |
+| A host directory with no `registers/harnesses.tsv` | exit 2, "a missing or unreadable file" ([`README.md`](README.md#commands)) |
 | `--new` after an earlier Start that stopped before step 6, on the same host | the run removes `DIR/roots/OWNER/NAME/` and `DIR/targets/OWNER/NAME/` and starts again (step 3) |
 
 **Known limit:** a step that fails after step 6 for a reason other than a lost

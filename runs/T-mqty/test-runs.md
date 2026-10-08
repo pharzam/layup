@@ -22,3 +22,7 @@ Evidence for row 26 (#131): each test red first, for the right reason, then gree
 ## The e2e test (2026-10-08T12:30Z)
 
 `cmd/layup/run_e2e_test.go` was written after the command, so its red is shown on the commit before the command, `de455c8`, with the file copied into a work tree of it: `layup run --new: exit 2` and `stderr "layup: unknown command \"run\"…"` (both tests). On the head: `TestRunNewThenRestart` (Start in a world, the same arguments in a second world give the same standard output and exit code, the restart twice in the first world) and `TestRunUsageAndInputErrors` pass, in 26 s, the wait of step 4 being real (ten seconds a Start). Then `go test ./...`, `go test -tags=integration ./...` and `go test -tags=e2e ./...` pass.
+
+## The documents (2026-10-08T12:40Z)
+
+Red: `runs/T-mqty/docs.sh` on a work tree of the e2e commit `dd259bc` gave 19 `FAIL` lines of 20; the rule of the May import cell of `internal/cli` passed there, as the code commit `c6d3354` changed that cell for `TestPackageRules`. The check `adapted` of `setup-check.sh` refused the word "optional" in `README.md` and the glossary (its rule 3); the text says "a flag that may be left out", the words of `run.md`. Then 20 `ok`, exit 0.
