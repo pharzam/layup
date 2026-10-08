@@ -123,7 +123,7 @@ each start so adds only its cell Connects to that row of phase 1.
 | Package | Job | May import | Starts a program | Connects |
 | ------- | --- | ---------- | ---------------- | -------- |
 | `internal/run` | `layup run`: the steps of Start, the restart, the lease and fencing, the copy of a comment and the rule of a decision ([`run.md`](run.md)); the Go schema of the table `run-steps` | `internal/tsv`, `internal/git`, `internal/records`, `internal/forge`, `internal/route` | no | — |
-| `internal/forge` | the forge interface: the six capabilities and their types ([`forge.md`](forge.md)); the reader of the forge register (`host:registers/forge.tsv`), with the Go schema of its block; the check of the key file (task `T-1g1q`) | `internal/tsv` | no | — |
+| `internal/forge` | the forge interface: the six capabilities and their types ([`forge.md`](forge.md)), `Missing` and `CheckPermissions` (task `T-6bq5`); the reader of the forge register (`host:registers/forge.tsv`), with the Go schema of its block; the check of the key file (task `T-1g1q`) | `internal/tsv` | no | — |
 | `internal/forge/github` | the GitHub adapter: the JWT, the installation token, the calls of [`forge.md`](forge.md#the-calls-of-m2a) | `internal/forge` | no | `net`, `net/http`, `crypto/tls` |
 | `internal/route` | in `M2a`, only the reader of the harness register (`host:registers/harnesses.tsv`), with the Go schema of its block; the probe, admission and routing come in `M2b` | `internal/tsv` | no | — |
 | `cmd/layup` | (the row of phase 1) | (the row of phase 1) | (the row of phase 1) | `net`, `net/http`, `crypto/tls` |
