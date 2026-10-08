@@ -36,8 +36,13 @@ calls of its rows here.
 
 - The key file and the App ID come from the forge register
   ([`records.md`](records.md#nfr-001--the-records-of-start), K40). The run
-  checks the file before any call: mode 0600, owned by its user, a PEM block of
-  an RSA private key. Any other state is exit 2.
+  checks the file before any call: mode 0600, owned by its user,
+  one PEM block of an RSA private key, with nothing before or after it but
+  space (`RSA PRIVATE KEY`, PKCS #1, or `PRIVATE KEY`, PKCS #8 of the RSA
+  algorithm; in both, the RSA key is of version 0, two primes; decided here,
+  task `T-1g1q`). Any other state is exit 2, and its message names the file
+  and, in each state but a missing file, its mode (the key-file row of
+  [Input states](run.md#input-states)).
 - The adapter makes a JSON Web Token (`JWT`) signed with that key (RS256): issued
   60 seconds in the past, to absorb a clock skew, valid for 9 minutes (GitHub's
   maximum is 10), with the App ID as issuer. It finds the installation of the App
