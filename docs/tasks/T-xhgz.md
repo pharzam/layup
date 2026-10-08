@@ -55,3 +55,49 @@ on another branch or bare, or a second ref, for the read-back.
 
 **Off this task's path** (note 3 of the plan review): a private target needs
 the token for the `Clone` of the restart; written on #130 (row 25).
+
+## Review rounds
+
+Round 1 (Claude Fable 5.1, effort `xhigh`, on the Claude Code CLI with stream
+output, a fresh read-only session in a clone at `e7ede10`, 7 min 28 s; comment
+6056857046): `material`. Finding 1: `Auth` refused a token whose `web` is empty
+or ends in `/`, a rule that no sentence gave. Fixed in `4c28d28` (comment
+6056883592): the bullet of `packages.md` gives it, and a rule of `docs.sh`
+failed on the old text, then passed; notes 2, 3 and 4 applied (the error keeps
+no line `!`; `Code` 1 of a missing commit; two lines wrapped).
+
+Round 2 (the same set-up, at `4c28d28`, 9 min 28 s; comment 6057044577):
+`nothing material in scope`, three notes, kept as known limits so the reviewed
+text is the text that lands: note 1, the sentence on `Code` 1 of a missing
+commit rests on a reading of `git`'s source, not a measurement; note 2,
+"refused by the remote" means a `[rejected]` or `[remote rejected]` line, while
+an HTTP `403` of the forge exits 128 (row 25 fails the step on both); note 3,
+`Clone` also writes the remote `origin`, which `Init` and `Fetch` do not; no
+step reads it.
+
+## Verdict
+
+Delivered: `Push` refuses a push to a local bare repository that is not a
+fast-forward (`Code` 1, the branch unchanged); `Fetch` reads the branch back
+into a repository that `Init` made; with a token, both carry it as a header in
+the call's environment only. The review ended by decay at cycle 1. The diff
+against `b7c9e90` is inside 500 lines over 14 files.
+
+Next: row 25 (`T-trej`, #130), whose After cell holds rows 21, 22b, 23 and 24,
+all merged with this one.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). Times are UTC on 2026-10-08; tokens are the
+`result` event of the Claude Code CLI (stream runs); `not reported` otherwise.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan | reasoning | Claude Opus 5.5 | max | not reported | 08:58 to 09:03 |
+| Its plan review | reasoning | Claude Fable 5.1, Claude Code CLI | `xhigh` | 620,999 (USD 4.48) | 8 min 40 s, from 09:03 |
+| The two measurements; the answer | reasoning | Claude Opus 5.5 | max | not reported | 09:12 to 09:13 |
+| The work, test first; the documents | execution | Claude Opus 5.5, a reasoning-tier model on an execution part | max | not reported | 09:13 to 09:18 |
+| Round 1 | reasoning | Claude Fable 5.1, Claude Code CLI | `xhigh` | 582,730 (USD 3.58) | 7 min 28 s, from 09:18 |
+| The fix of round 1 | execution | Claude Opus 5.5 | max | not reported | 09:26 to 09:28 |
+| Round 2 | reasoning | Claude Fable 5.1, Claude Code CLI | `xhigh` | 698,099 (USD 4.43) | 9 min 28 s, from 09:28 |
+| The close-out | execution | Claude Opus 5.5 | max | not reported | 09:38 to 09:42 |
