@@ -55,7 +55,28 @@ lines). `check.sh` reads the issues with no token, so it needs a public target.
 
 ## Review rounds
 
+Each round: Claude Fable 5.1, effort `xhigh`, on the Claude Code CLI with
+stream output, a fresh read-only session in a clone of the head.
+
+1. At `2bbf0e5` (10 min 5 s; comment 6066009637): `material`, one count of the
+   evidence (33 `ok` lines; the green run prints 32). Fixed in `82d2d03`
+   (6066025994), with notes 2 and 3; notes 5 and 7 not applied, for the budget.
+2. At `82d2d03` (11 min 39 s; 6066233108): `not mergeable, findings recorded`,
+   two counts of the shortening marks (19 and 16; both files have 18).
+   **O-177 (a)** (the Operator's answer in the session to 6066237658, recorded
+   in 6066272279 and 6066462881): one more cycle, cap 3; the verdict of round 2
+   edited to `material`. Fixed in `f1d5abc`.
+3. At `f1d5abc` (9 min 49 s; 6066457912): `nothing material in scope`, three
+   notes, not applied to the reviewed head (note 1: under the rule of the
+   `Cycle` field, cap 2 already allowed round 3).
+
 ## Verdict
+
+Delivered: on the real target `pharzam/layup-uat`, the Operator ran Start and
+the root push and read the records with a plain `git clone`; each write of
+LAYUP is by `layup-agent[bot]`. The review ended by decay at cycle 2 (cap 3 by
+O-177 a), inside 600 lines over 12 files. The Operator ran and read the demo; no
+separate acceptance of the result is recorded. `M2a` is complete.
 
 ## Resource record
 
@@ -68,3 +89,7 @@ Recorded, not budgeted (ADR-0007). Times are UTC on 2026-10-08; tokens are the
 | Its plan review | reasoning | Claude Fable 5.1, Claude Code CLI | `xhigh` | 784,545 (USD 5.75) | 8 min 44 s, from 13:24 |
 | The answer; the checks, test first | execution | Claude Opus 5.5, a reasoning-tier model on an execution part | max | not reported | 13:34 to 13:47 (`cd45a1a`) |
 | The correction of the intake cap; the Operator's runs (the root commit 17:34:57, the records 17:44:51) and read; the evidence; the documents | execution | Claude Opus 5.5 | max | not reported | 17:30 to 17:55 |
+| Round 1 | reasoning | Claude Fable 5.1, Claude Code CLI | `xhigh` | 976,654 (USD 5.12) | 10 min 5 s, from 17:52 |
+| The fix of round 1; round 2 | execution; reasoning | Claude Opus 5.5; Claude Fable 5.1 | max; `xhigh` | not reported; 893,154 (USD 5.11) | 18:02 to 18:04; 11 min 39 s, from 18:04 |
+| O-177; the fix of round 2; round 3 | execution; reasoning | Claude Opus 5.5; Claude Fable 5.1 | max; `xhigh` | not reported; 1,137,495 (USD 5.46) | 18:16 to 18:19; 9 min 49 s, from 18:19 |
+| The close-out | execution | Claude Opus 5.5 | max | not reported | 18:29 to 18:40 |
