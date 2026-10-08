@@ -18,3 +18,7 @@ Evidence for row 26 (#131): each test red first, for the right reason, then gree
 - `note` that does not start the beat again → `1 tickers started, want a ticker for step 2`.
 
 `TestPackageRules` (`cmd/layup`) then failed for the right reason: `internal/cli imports internal/forge, …, internal/run, which its row does not allow`. The row of `internal/cli` in the table of phase 1 of `packages.md` gets the four packages (the change that the table of M2a gives to "the build task that needs" it), and it passes.
+
+## The e2e test (2026-10-08T12:30Z)
+
+`cmd/layup/run_e2e_test.go` was written after the command, so its red is shown on the commit before the command, `de455c8`, with the file copied into a work tree of it: `layup run --new: exit 2` and `stderr "layup: unknown command \"run\"…"` (both tests). On the head: `TestRunNewThenRestart` (Start in a world, the same arguments in a second world give the same standard output and exit code, the restart twice in the first world) and `TestRunUsageAndInputErrors` pass, in 26 s, the wait of step 4 being real (ten seconds a Start). Then `go test ./...`, `go test -tags=integration ./...` and `go test -tags=e2e ./...` pass.
