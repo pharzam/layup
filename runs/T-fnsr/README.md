@@ -111,7 +111,7 @@ start
 problem-statement.md
 start.tsv
 == README.md
-[19 lines: the block start-readme of docs/spec/run.md, byte for byte (check.sh); shortened here]
+[18 lines: the block start-readme of docs/spec/run.md, byte for byte (check.sh); shortened here]
 == start/start.tsv
 name	value	source
 layup.version	0.1.0-dev	run
@@ -133,7 +133,7 @@ issue.intake	1	forge
 issue.control	2	forge
 watch	not-confirmed	run
 == start/problem-statement.md
-[16 lines: brief.md, byte for byte (check.sh); shortened here]
+[18 lines: brief.md, byte for byte (check.sh); shortened here]
 == approvers.tsv
 id	role	login	since	source
 1675602	operator	pharzam	2026-10-08T17:44:51Z	start
