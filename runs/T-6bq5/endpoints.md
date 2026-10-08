@@ -13,3 +13,8 @@ read at the date of the build task. Read on 2026-10-08 (REST API version
 | `OpenIssue` | [Issues](https://docs.github.com/en/rest/issues/issues?apiVersion=2022-11-28), "Create an issue" | `201`; `title` required; `number`; `410` when issues are off | as the table |
 | `Comments` | [Issue comments](https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28), "List issue comments" | `200`; `per_page` up to 100; `user` may be `null`; `performed_via_github_app.slug`; `created_at`, `updated_at` | a gap: `user` may be `null`; `forge.md` now gives the rule |
 | (each) | [Rate limits for the REST API](https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2022-11-28) | `403` or `429`; `retry-after`, else `x-ratelimit-reset` when `x-ratelimit-remaining` is `0` | `forge.md` "Forge errors" now gives this reading (condition 1 of the plan review) |
+
+One difference is chosen, not missed (note 4 of round 1): for a secondary rate
+limit with neither `retry-after` nor `x-ratelimit-remaining: 0`, the page says to
+wait at least one minute; `forge.md` makes such a `403` or `429` a `fail` at once,
+under FT1 ("never a retry that hides it").

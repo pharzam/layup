@@ -54,3 +54,49 @@ key per test binary, made at run time: no key file enters the tree.
 **The rejected alternatives:** the interface in `internal/forge/github` (O-171);
 a JWT or GitHub library (`NFR-007`); a retry of any other status (FT1);
 `Comment` in the interface of `M2a`.
+
+## Review rounds
+
+Round 1 (Claude Fable 5.1, effort `xhigh`, on the Claude Code CLI with stream
+output, a fresh read-only session in a clone at `e762c77`, 10 min 7 s; comment
+6056403036): `nothing material in scope`, seven notes. The reviewer could not
+run the mutations (its permission mode refused a copy outside the clone) and
+checked them by reading. No note is applied to the code after the last round,
+so the reviewed code is the code that lands. The notes stay as known limits:
+
+- Note 1: a `401` of a JWT call has no test; the code retries only a token call.
+- Note 2: the reset time of the `403` case equals the fake clock, so its sleep
+  check cannot bite; the case catches the mutation by its error.
+- Note 3: `UserID` accepts the ID `0` from a body with no `id`.
+- Note 4: for a `403` or `429` with neither header, GitHub's page says to wait
+  one minute; `forge.md` makes it a `fail` at once (FT1). `endpoints.md` says so.
+- Notes 5 and 6, for the caller of rows 25 and 26: `Client` and `Progress` are
+  required (no default); the client that the caller passes should refuse
+  redirects, so the token stays at the `api`.
+- Note 7: one `t.Fatal` runs in a server handler of a test.
+
+## Verdict
+
+Delivered: against a loopback server, the adapter plays each call of `M2a` with
+an installation token that it made from a JWT; the forge interface of `M2a`, its
+types, the declaration of the six capabilities, `Missing` and
+`CheckPermissions` are in `internal/forge`, with no network package. Conditions
+4 to 6 and note 5 of the review of #137 are met. The review ended by decay at
+cycle 0. The diff against `fc3e0d4` is inside 1,400 lines over 18 files.
+
+Next: row 23 (`T-xhgz`, #128), then row 25 (`T-trej`, #130), whose After cell
+holds rows 21, 22b, 23 and 24.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). Times are UTC on 2026-10-08; tokens are the
+`result` event of the Claude Code CLI (stream runs); `not reported` otherwise.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan | reasoning | Claude Opus 5.5 | max | not reported | 08:28 to 08:32 |
+| Its plan review | reasoning | Claude Fable 5.1, Claude Code CLI | `xhigh` | 589,465 (USD 3.94) | 7 min 18 s, from 08:32 |
+| The endpoint reading; the answer | reasoning | Claude Opus 5.5 | max | not reported | 08:33 to 08:40 |
+| The work, test first; the documents | execution | Claude Opus 5.5, a reasoning-tier model on an execution part | max | not reported | 08:40 to 08:48 |
+| Round 1 | reasoning | Claude Fable 5.1, Claude Code CLI | `xhigh` | 893,350 (USD 4.80) | 10 min 7 s, from 08:48 |
+| The close-out | execution | Claude Opus 5.5 | max | not reported | 08:59 to 09:05 |
