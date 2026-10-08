@@ -21,6 +21,7 @@ here directly, in the shape above.
 -->
 
 - **2026-10-07** — **T-w73g** — The survey of five public repositories that the Operator named, recorded as an input of the specification tasks of `M2b`, `M2f`, `M2g`, `M3a` and `M3d` and of the decision on the learning loop; no code ([#133](https://github.com/pharzam/layup/issues/133); [detail](T-w73g.md))
+- **2026-10-08** — **T-esfe** — Row 22a of the plan (O-170 split row 22): `TestPackageRules` reads the table of `M2a` and rule 5 by its line and Connects, before any package of that table exists; rows 22a and 22b in the plan, and the issue of 22b (#137) ([#127](https://github.com/pharzam/layup/issues/127); [detail](T-esfe.md))
 - **2026-10-07** — **T-8kqn** — Row 21 of the plan: the records of Start, the Go schemas of `start`, `approvers`, `lease` and `copies` in `internal/records`, with the rules of their blocks and the readers that run them ([#126](https://github.com/pharzam/layup/issues/126); [detail](T-8kqn.md))
 - **2026-10-07** — **T-zwke** — The build tasks of milestone `M2a`: rows 21 to 27 of the plan, one per package boundary of the table of `M2a`, each with its issue (#126 to #132) ([#124](https://github.com/pharzam/layup/issues/124); [detail](T-zwke.md))
 - **2026-10-07** — **T-zck8** — The technical specification of milestone `M2a`, the Start of `layup run`: `run.md`, `forge.md`, the records of Start and the table of `M2a`, with K38, K40 and K41 settled (O-163) and the nine pilot findings moved to their milestones ([#123](https://github.com/pharzam/layup/issues/123); [detail](T-zck8.md))

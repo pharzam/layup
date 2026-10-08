@@ -20,6 +20,9 @@ import (
 const (
 	modulePath   = "github.com/pharzam/layup" // the module of rule 1
 	tableHeading = "### The table of phase 1"
+	m2aHeading   = "### The table of M2a"
+	adapterLine  = "The one package that imports them:" // the line of rule 5
+	phase1Cell   = "(the row of phase 1"                // a cell of the table of M2a that stands for the cell of phase 1
 )
 
 var (
@@ -27,11 +30,13 @@ var (
 	span    = regexp.MustCompile("`([^`]*)`")           // a code span of a cell
 )
 
-// A row is one row of the table: the packages of the module that a package
-// may import, and the program that it starts ("" for no).
+// A row is one row of the tables: the packages of the module that a package
+// may import, the program that it starts ("" for no), and the packages of rule
+// 5 that it may depend on (its cell Connects of the table of M2a).
 type row struct {
-	imports []string
-	program string
+	imports  []string
+	program  string
+	connects []string
 }
 
 // A goPackage is one package, as go list -json gives it.
@@ -52,14 +57,14 @@ type module struct {
 	sources  map[string]map[string]string
 }
 
-// readTable reads the first table under tableHeading. A cell that it cannot
-// read, a missing heading or column, and a table with no row are errors, so
-// the test never passes with nothing checked.
-func readTable(text string) (map[string]row, error) {
+// cellsUnder gives the rows of cells of the first table under heading, with
+// its header first and no separator row. A missing heading, header or
+// separator, or a table with no row, is an error.
+func cellsUnder(text, heading string) ([][]string, error) {
 	lines := strings.Split(text, "\n")
-	start := slices.IndexFunc(lines, func(l string) bool { return strings.TrimSpace(l) == tableHeading })
+	start := slices.IndexFunc(lines, func(l string) bool { return strings.TrimSpace(l) == heading })
 	if start < 0 {
-		return nil, fmt.Errorf("no heading %q", tableHeading)
+		return nil, fmt.Errorf("no heading %q", heading)
 	}
 	var table [][]string
 	for _, l := range lines[start+1:] {
@@ -76,47 +81,151 @@ func readTable(text string) (map[string]row, error) {
 		}
 	}
 	if len(table) < 3 || strings.Trim(strings.Join(table[1], ""), "-:") != "" {
-		return nil, fmt.Errorf("no header, separator and row under %q", tableHeading)
+		return nil, fmt.Errorf("no header, separator and row under %q", heading)
 	}
-	col := map[string]int{}
-	for i, c := range table[0] {
-		col[c] = i
-	}
-	for _, name := range []string{"Package", "May import", "Starts a program"} {
-		if _, ok := col[name]; !ok {
-			return nil, fmt.Errorf("no column %q", name)
-		}
-	}
-	rows := map[string]row{}
 	for _, cells := range table[2:] {
 		if len(cells) != len(table[0]) {
 			return nil, fmt.Errorf("the row %q has %d cells, want %d", cells, len(cells), len(table[0]))
 		}
+	}
+	return append(table[:1], table[2:]...), nil
+}
+
+// columns gives the index of each named column of a header, and an error for
+// a missing one.
+func columns(header []string, heading string, names ...string) (map[string]int, error) {
+	col := map[string]int{}
+	for i, c := range header {
+		col[c] = i
+	}
+	for _, name := range names {
+		if _, ok := col[name]; !ok {
+			return nil, fmt.Errorf("%s: no column %q", heading, name)
+		}
+	}
+	return col, nil
+}
+
+// readRow reads the cells Package, May import and Starts a program.
+func readRow(cells []string, col map[string]int) (string, row, error) {
+	pkg, rest := spans(cells[col["Package"]])
+	if len(pkg) != 1 || rest != "" {
+		return "", row{}, fmt.Errorf("cannot read the package %q", cells[col["Package"]])
+	}
+	var r row
+	if imp := cells[col["May import"]]; imp != "—" {
+		list, rest := spans(imp)
+		if len(list) == 0 || rest != strings.Repeat(",", len(list)-1) {
+			return "", row{}, fmt.Errorf("%s: cannot read May import %q", pkg[0], imp)
+		}
+		r.imports = list
+	}
+	if prog := cells[col["Starts a program"]]; prog != "no" {
+		list, _ := spans(prog)
+		if len(list) != 1 || !strings.HasPrefix(prog, "`") || len(strings.Fields(list[0])) == 0 {
+			return "", row{}, fmt.Errorf("%s: cannot read Starts a program %q", pkg[0], prog)
+		}
+		r.program = strings.Fields(list[0])[0]
+	}
+	return pkg[0], r, nil
+}
+
+// readTable reads the table of phase 1 and the table of M2a (docs/spec/
+// packages.md, The test of the package rules). A row of M2a whose cells Job,
+// May import and Starts a program each start with "(the row of phase 1" adds
+// its cell Connects to the package's row of phase 1; any other row of M2a is
+// a package of its own. A cell that it cannot read, a missing heading or
+// column, a table with no row, a row of M2a that mixes the two kinds of cell,
+// a row of phase 1 that phase 1 lacks, and a package in two rows are errors,
+// so the test never passes with nothing checked.
+func readTable(text string) (map[string]row, error) {
+	rows := map[string]row{}
+	phase1, err := cellsUnder(text, tableHeading)
+	if err != nil {
+		return nil, err
+	}
+	col, err := columns(phase1[0], tableHeading, "Package", "May import", "Starts a program")
+	if err != nil {
+		return nil, err
+	}
+	for _, cells := range phase1[1:] {
+		pkg, r, err := readRow(cells, col)
+		if err != nil {
+			return nil, err
+		}
+		if _, ok := rows[pkg]; ok {
+			return nil, fmt.Errorf("%s has a second row", pkg)
+		}
+		rows[pkg] = r
+	}
+	m2a, err := cellsUnder(text, m2aHeading)
+	if err != nil {
+		return nil, err
+	}
+	col, err = columns(m2a[0], m2aHeading, "Package", "Job", "May import", "Starts a program", "Connects")
+	if err != nil {
+		return nil, err
+	}
+	for _, cells := range m2a[1:] {
 		pkg, rest := spans(cells[col["Package"]])
 		if len(pkg) != 1 || rest != "" {
 			return nil, fmt.Errorf("cannot read the package %q", cells[col["Package"]])
 		}
-		var r row
-		if imp := cells[col["May import"]]; imp != "—" {
-			list, rest := spans(imp)
+		var connects []string
+		if c := cells[col["Connects"]]; c != "—" {
+			list, rest := spans(c)
 			if len(list) == 0 || rest != strings.Repeat(",", len(list)-1) {
-				return nil, fmt.Errorf("%s: cannot read May import %q", pkg[0], imp)
+				return nil, fmt.Errorf("%s: cannot read Connects %q", pkg[0], c)
 			}
-			r.imports = list
+			connects = list
 		}
-		if prog := cells[col["Starts a program"]]; prog != "no" {
-			list, _ := spans(prog)
-			if len(list) != 1 || !strings.HasPrefix(prog, "`") || len(strings.Fields(list[0])) == 0 {
-				return nil, fmt.Errorf("%s: cannot read Starts a program %q", pkg[0], prog)
+		of1 := 0
+		for _, name := range []string{"Job", "May import", "Starts a program"} {
+			if strings.HasPrefix(cells[col[name]], phase1Cell) {
+				of1++
 			}
-			r.program = strings.Fields(list[0])[0]
 		}
-		if _, ok := rows[pkg[0]]; ok {
+		r, has := rows[pkg[0]]
+		switch {
+		case of1 == 3 && !has:
+			return nil, fmt.Errorf("%s: a row of M2a stands for its row of phase 1, and phase 1 has none", pkg[0])
+		case of1 == 3:
+			r.connects = connects
+			rows[pkg[0]] = r
+		case of1 != 0:
+			return nil, fmt.Errorf("%s: a row of M2a mixes cells of phase 1 and cells of its own", pkg[0])
+		case has:
 			return nil, fmt.Errorf("%s has a second row", pkg[0])
+		default:
+			_, r, err := readRow(cells, col)
+			if err != nil {
+				return nil, err
+			}
+			r.connects = connects
+			rows[pkg[0]] = r
 		}
-		rows[pkg[0]] = r
 	}
 	return rows, nil
+}
+
+// readAdapter reads the one package that rule 5 lets import a network package:
+// the one code span of the one line that starts with adapterLine. No such
+// line, two such lines, or a line with no code span or with two is an error.
+func readAdapter(text string) (string, error) {
+	var found []string
+	for _, l := range strings.Split(text, "\n") {
+		if strings.HasPrefix(strings.TrimSpace(l), adapterLine) {
+			found = append(found, l)
+		}
+	}
+	if len(found) != 1 {
+		return "", fmt.Errorf("%d lines start with %q, want 1", len(found), adapterLine)
+	}
+	list, _ := spans(found[0])
+	if len(list) != 1 {
+		return "", fmt.Errorf("the line %q has %d code spans, want 1", strings.TrimSpace(found[0]), len(list))
+	}
+	return list[0], nil
 }
 
 // spans gives the code spans of a cell, and the rest of the cell with no
@@ -134,7 +243,7 @@ func spans(cell string) ([]string, string) {
 // go list, and from the imports of the sources, which add the files behind a
 // build constraint; rule 3 and the column Starts a program from a scan of the
 // sources.
-func checkRules(rows map[string]row, m module) []string {
+func checkRules(rows map[string]row, adapter string, m module) []string {
 	var f []string
 	add := func(format string, a ...any) { f = append(f, fmt.Sprintf(format, a...)) }
 	deps := map[string][]string{} // the dependencies of each package of the listing
@@ -171,12 +280,15 @@ func checkRules(rows map[string]row, m module) []string {
 		for _, imp := range imports {
 			reach = append(append(reach, imp), deps[imp]...)
 		}
+		r, hasRow := rows[rel]
 		for _, d := range network {
-			if slices.Contains(reach, d) {
+			switch {
+			case slices.Contains(imports, d) && rel != adapter:
+				add("rule 5: %s imports %s; only %s imports them", rel, d, adapter)
+			case slices.Contains(reach, d) && !slices.Contains(r.connects, d):
 				add("rule 5: %s depends on %s", rel, d)
 			}
 		}
-		r, hasRow := rows[rel]
 		if !hasRow {
 			add("table: %s has no row", rel)
 		}

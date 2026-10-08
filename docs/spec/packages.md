@@ -23,11 +23,19 @@ ADR-0011 decision 1 and ADR-0013.
 5. No package of phase 1 depends on `net`, `net/http` or `crypto/tls`, by its
    own imports or through another package: the engine checks open no
    connection (`NFR-005`, [`gate.md`](gate.md#nfr-005--no-model-call-in-the-engine-checks)).
-   From milestone `M2a`, only `internal/forge/github` imports them, and only the
-   packages that the column "Connects" of [the table of M2a](#the-table-of-m2a)
-   names depend on them (by D8 below, through the adapter too); and
-   `M3a` gives `internal/smartif` (phase 3) its rule
+   From milestone `M2a`, only the packages that the column "Connects" of
+   [the table of M2a](#the-table-of-m2a) names depend on them (by D8 below,
+   through the adapter too), and one package alone imports them itself; `M3a`
+   gives `internal/smartif` (phase 3) its rule
    ([the milestones](../plan/README.md#milestones)).
+   The one package that imports them: `internal/forge/github`.
+
+**Decided here** (task `T-esfe`, #127, row 22a of the plan): the test of the
+package rules reads the one package of rule 5 from the line that starts with
+"The one package that imports them:", its one code span, so the test holds no
+list of its own (D7 of #79); no such line, two such lines, or a line with no
+code span or with two, is an error. The three packages of rule 5 (`net`,
+`net/http`, `crypto/tls`) stay a constant of the checker, as before.
 
 **Decided here** (D6 of #79, K8): the rules bind the non-test Go files only. A
 test file (`_test.go`) can import any package of the standard library and of
@@ -105,9 +113,12 @@ code span per package of rule 5 that it may depend on, by its own imports or
 through another package (D8). `cmd/layup` and `internal/cli` depend on them
 through the adapter, so they have a row here too, with only their "Connects"
 cell; their other cells stay in the table of phase 1. **Decided
-here:** the build task that makes the first package of this table makes
-`TestPackageRules` read this table too, and rule 5 from this column, so the test
-holds no list of its own (D7 of #79), in the same change.
+here** (O-170 of #127; task `T-esfe`, row 22a of the plan): `TestPackageRules`
+reads this table too, and rule 5 from this column, before any package of this
+table exists, so the test holds no list of its own (D7 of #79). A cell of this
+table that starts with "(the row of phase 1" stands for that package's cell of
+the table of phase 1; a row whose cells Job, May import and Starts a program
+each start so adds only its cell Connects to that row of phase 1.
 
 | Package | Job | May import | Starts a program | Connects |
 | ------- | --- | ---------- | ---------------- | -------- |
@@ -135,9 +146,16 @@ imports `internal/tsv` only. `internal/run` commits and pushes the records with
   integration test: it starts `go` and reads files. The checker and its unit
   tests are untagged test files of package `main`: the binary holds no checker
   code, and the hook runs the unit part.
-- It fails on a cell that it cannot read, on a missing heading or column, and
-  on a table with no row. A package that the table names and that does not
-  exist yet is not an error; a package that exists and has no row is.
+- It reads the table of phase 1, [the table of M2a](#the-table-of-m2a) and the
+  line of rule 5 (task `T-esfe`). It fails on a cell that it cannot read, on a
+  missing heading or column, on a table with no row, on a row of the table of
+  `M2a` that mixes cells of phase 1 and cells of its own, on such a row of
+  phase 1 that the table of phase 1 lacks, and on a package in two rows. A
+  package that a table names and that does not exist yet is not an error; a
+  package that exists and has no row is.
+- Rule 5 holds two checks: an own import of a package of rule 5 in a package
+  other than the one of its line, and a dependency on one that the cell
+  Connects of the package does not name.
 - Rules 1, 2, 4, 5 and "May import" come from `go mod edit -json` and
   `go list -deps -json ./...` at the module root, and from the imports of each
   non-test Go file. `go list` gives no import of a file behind a build
@@ -151,8 +169,10 @@ imports `internal/tsv` only. `internal/run` commits and pushes the records with
   makes itself, whose program the scan cannot read. The scan does not read
   cgo code or a raw system call.
 - The same checker must find the breaches of rule 5, and no other, in the
-  fixture module `cmd/layup/testdata/netimport`: an import of `net/http`, and
-  an import of `net/smtp` in a file behind a build constraint.
+  fixture module `cmd/layup/testdata/netimport`: an import of `net/http` in
+  `cmd/layup`, outside the one package of rule 5, and an import of `net/smtp`
+  in a file behind a build constraint, whose dependency on `net` no cell
+  Connects of `internal/psb` names.
 
 Reason: `cmd/layup` is the entry of the module, and its tests already start
 programs; a new package for the test needs a row of its own, and the root
