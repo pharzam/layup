@@ -30,7 +30,6 @@ same summary, dated — rather than deleting it or checking it off.
 - **<ID>** — <one-sentence summary> ([<ADR or doc link>](...); [detail](<id>.md))
 -->
 
-- **T-trej** — Row 25a of the plan: the rules of a run in `internal/run` ([#130](https://github.com/pharzam/layup/issues/130); [plan](../plan/README.md#the-tasks-of-m2a))
 - **T-ax3r** — Row 25b of the plan: `internal/run`, Start and the restart ([#142](https://github.com/pharzam/layup/issues/142); [plan](../plan/README.md#the-tasks-of-m2a))
 - **T-mqty** — Row 26 of the plan: the command `layup run` ([#131](https://github.com/pharzam/layup/issues/131); [plan](../plan/README.md#the-tasks-of-m2a))
 - **T-fnsr** — Row 27 of the plan: the demo of `M2a` (uat), with the Operator's inputs ([#132](https://github.com/pharzam/layup/issues/132); [plan](../plan/README.md#the-tasks-of-m2a))

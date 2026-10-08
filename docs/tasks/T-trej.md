@@ -62,6 +62,46 @@ green after one fix of the stand-in clock, two mutations, each caught;
 `git`); a lock file or a forge lock for the lease (§2 keeps it in the records);
 a decision over a forge comment rather than its copy.
 
+## Review rounds
+
+Round 1 (Claude Fable 5.1, effort `xhigh`, on the Claude Code CLI with stream
+output, a fresh read-only session in a clone at `6926ca6`, 8 min 18 s; comment
+6057687327): `nothing material in scope`, five notes. Note 3 is applied on the
+issue only: the After of #142 now says 22b, 23, 25a, as the plan row. The other
+notes are kept as known limits, so the reviewed text is the text that lands:
+note 1, the acceptance row "A human decision" names a review, a review comment,
+a commit and a reaction, which are never rows of `copies.tsv` and so are not
+in the test; note 2, two lines of `run.md` run past the wrap; note 4, the doc
+comment of `Take` says a line at each read (the first read and the last give
+none), and that of `Heartbeat` says nil when the context ends (a context that
+ends inside a write gives that write's error); note 5, the reviewer could not
+run mutations and read the record.
+
+## Verdict
+
+Delivered: with a stand-in clock and a stand-in records store, a second run
+takes the lease only after the heartbeat has not moved for `3 × lease.H` by its
+own clock; fencing, a human decision and copy before read are in
+`internal/run` for row 25b. Row 25 is split into 25a and 25b (O-173 a), and the
+issue of 25b is #142. The review ended by decay at cycle 0. The diff against
+`db99f4c` is inside 1,000 lines over 16 files.
+
+Next: row 25b (`T-ax3r`, #142), whose After cell holds 22b, 23 and 25a.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). Times are UTC on 2026-10-08; tokens are the
+`result` event of the Claude Code CLI (stream runs); `not reported` otherwise.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The reading of row 25; O-173 | reasoning | Claude Opus 5.5 | max | not reported | 09:42 to 09:45 |
+| The answer to O-173; the plan | reasoning | Claude Opus 5.5 | max | not reported | 09:45 to 09:48 |
+| Its plan review | reasoning | Claude Fable 5.1, Claude Code CLI | `xhigh` | 1,155,533 (USD 6.06) | 11 min 44 s, from 09:48 |
+| The answer; the work, test first; the issue of 25b; the documents | execution | Claude Opus 5.5, a reasoning-tier model on an execution part | max | not reported | 10:00 to 10:08 |
+| Round 1 | reasoning | Claude Fable 5.1, Claude Code CLI | `xhigh` | 940,739 (USD 4.13) | 8 min 18 s, from 10:08 |
+| The close-out | execution | Claude Opus 5.5 | max | not reported | 10:17 to 10:20 |
+
 ## The body of #130 before the split
 
 > ## Goal
