@@ -1,8 +1,8 @@
 // Package forge holds what LAYUP knows of the forge with no connection to it
 // (docs/spec/forge.md; the table of M2a of docs/spec/packages.md): in row 22b
 // of the plan (task T-1g1q, #137), the forge register of the host and the
-// check of the App's key file. Row 24 adds the interface, its types, the
-// capabilities and the permission check (O-171 of #137). It imports no
+// check of the App's key file; in row 24 (task T-6bq5, #129, by O-171 of #137),
+// the interface, its types, the capabilities and the permission check. It imports no
 // network package (rule 5): the key is parsed with encoding/pem,
 // encoding/asn1 and crypto/rsa, not crypto/x509, which depends on net.
 package forge
