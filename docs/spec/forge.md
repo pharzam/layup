@@ -28,7 +28,16 @@ fail, naming it.
 | an App identity for LAYUP with scoped permissions | `Token`, `Installation`, `UserID(login)`, `Repository` | `M2a` (step 1 of `run.md`) |
 
 `M2a` specifies the calls of the rows it uses; each later milestone gives the
-calls of its rows here.
+calls of its rows here. The interface of `M2a` holds the method by which an
+adapter declares its capabilities and the six methods of
+[The calls of M2a](#the-calls-of-m2a); the cell "First used in" of the first row
+names the use of `OpenIssue` and `Comments`, and `M2c` specifies the call of `Comment`
+(task `T-6bq5`).
+
+The permissions that `M2a` uses ([`run.md`](run.md#the-steps-of-layup-run---new),
+step 1) are contents `write`, issues `write` and metadata `read`; a level
+`write` holds `read`, and any other level of a permission gives neither (task
+`T-6bq5`).
 
 ## The App identity
 
@@ -45,10 +54,12 @@ calls of its rows here.
   [Input states](run.md#input-states)).
 - The adapter makes a JSON Web Token (`JWT`) signed with that key (RS256): issued
   60 seconds in the past, to absorb a clock skew, valid for 9 minutes (GitHub's
-  maximum is 10), with the App ID as issuer. It finds the installation of the App
+  maximum is 10): `exp` is `iat` plus 9 minutes, with the App ID as issuer. It finds the installation of the App
   on `OWNER/NAME` and makes an **installation token** from it, which GitHub keeps
   valid for one hour. The adapter makes a new token when less than five minutes
-  of the old one remain. A token is never written to a file, a record or a log.
+  of the old one remain: `Token` gives the token it holds while five minutes or
+  more remain, else a new one, so `layup run` calls it before each `git` call that
+  needs the token. A token is never written to a file, a record or a log.
 - `git` gets the token for one call only, from `internal/git`, as an HTTP
   header in `GIT_CONFIG_COUNT`, `GIT_CONFIG_KEY_0` and `GIT_CONFIG_VALUE_0` of
   that call's environment (`http.<web>/.extraHeader`), not on its command line,
@@ -71,6 +82,12 @@ date of the build task; a difference from this table is a defect of this table.
 | `OpenIssue` | `POST /repos/{owner}/{repo}/issues` | the issue number |
 | `Comments` | `GET /repos/{owner}/{repo}/issues/{n}/comments`, every page | each comment: its ID, the author's ID and login, `performed_via_github_app` (the App's slug, or none), the times, the body |
 
+`Comments` asks 100 a page and follows the `Link` header's `rel="next"` while it
+names a page at the `api` of the forge register; a next page elsewhere is a
+forge error. A comment whose `user` is `null` (a deleted account) has the author
+ID `0` and the login `ghost`; no approver has the ID `0`, so it is never a
+decision (task `T-6bq5`).
+
 The read-back of the root commit and the push of the records branch are `git`
 calls, not API calls ([`run.md`](run.md#the-steps-of-layup-run---new)).
 
@@ -82,7 +99,11 @@ its step, with the call, the status and the first line of the message; never a
 pass and never a retry that hides it. A `401` of an installation token makes one
 new token and one retry; a second `401` is `fail`. A rate limit (`403` or `429`
 with a reset time) waits until the reset time and prints one progress line every
-ten seconds; it is not a stall.
+ten seconds; it is not a stall. The reset time is `retry-after` (seconds), or
+`x-ratelimit-reset` (UTC epoch seconds) when `x-ratelimit-remaining` is `0`;
+GitHub sends `x-ratelimit-reset` on each response, so a `403` or `429` with
+neither is a `fail` at once (GitHub, "Rate limits for the REST API", read on
+2026-10-08, task `T-6bq5`).
 
 ## The test of the adapter
 
@@ -90,5 +111,8 @@ An integration test of `internal/forge/github` starts an `httptest` server on
 loopback that plays the calls above. It checks the JWT (its header, its claims,
 its signature with the public key of a test key), the token request, the paging
 of `Comments`, and each error rule above. A server that lacks a permission or a
-capability makes `forge` fail and name it. The test needs no secret and no
+capability makes `forge` fail and name it: the permission, which `CheckPermissions`
+names from the installation; or the endpoint of a call, and then that call fails with the call and the status. A
+capability that an adapter does not declare is the test of `Missing`, with a
+stand-in adapter (task `T-6bq5`). The test needs no secret and no
 network.

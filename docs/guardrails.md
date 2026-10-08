@@ -276,6 +276,14 @@ check that catches it.
   says what the task delivers (round 4 of `T-vu2j`,
   [`pharzam/chat-orchestrator#6`](https://github.com/pharzam/chat-orchestrator/issues/6)).
   Learned in `T-evad`.
+- ❌ **Every GitHub response carries `x-ratelimit-reset`.** A `403` for a missing
+  permission carries a reset time too, so a reader that takes "a `403` with a
+  reset time" for a rate limit waits up to an hour, then fails the same way. It
+  is silent because the wait prints progress lines like a real limit. **The
+  check:** a rate limit is `retry-after`, or `x-ratelimit-reset` when
+  `x-ratelimit-remaining` is `0` ([`forge.md`](spec/forge.md#forge-errors)); keep
+  the case of a `403` with requests left, which must fail with no wait
+  (`internal/forge/github`). Learned in `T-6bq5`.
 
 ### Writing a lesson back
 

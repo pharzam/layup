@@ -20,3 +20,7 @@ The real adapter: `go test -tags=integration ./internal/forge/...` passes. Mutat
 - a `403` with `x-ratelimit-reset` is a rate limit whatever `x-ratelimit-remaining` says → `a 403 with a reset time but requests left: <nil>; want a forge.Error`;
 - the token kept while 3 minutes remain → `Token with four minutes left: <nil>; want a new one`;
 - a `401` retried with no limit → first not caught (the fake gave two `401`s); the test then gives three and counts the requests → `4 requests after two 401, want 2 (one retry)`.
+
+## The documents (2026-10-08T09:15Z)
+
+Red before the edits: `sh runs/T-6bq5/docs.sh` gave sixteen `FAIL` lines, exit 1. After the edits of `forge.md`, `run.md`, `guardrails.md`, `packages.md`, the traceability, the PRD and `endpoints.md`: sixteen `ok`, exit 0.
