@@ -56,3 +56,18 @@ all cases pass
 The response of `GET /users/layup-agent[bot]` is saved in
 [`fixtures/users-bot.json`](fixtures/users-bot.json) (2026-10-08); the two
 issue responses are written by the test.
+
+## 3. The first Start: exit 2 before the first step
+
+The Operator's first run, with `--intake-cap 5,1` (the author's proposal in
+comment 6060791998), 2026-10-08: exit 2, no table, nothing written to the
+target (`git ls-remote` gives no ref):
+
+```text
+layup: --intake-cap: "5,1" is not a value of the form that the block start gives intake.cap (MONEY,HOURS, two decimals)
+```
+
+This is the documented result (`run.md`, exit code 2 for a flag). The type
+`decimal` needs a point (`internal/tsv/types.go`), so the value is `5.0,1.0`:
+the same 5 USD and 1 hour. `check.sh` and `check-test.sh` expect `5.0,1.0`;
+`check-test.sh` passes again (36 cases).

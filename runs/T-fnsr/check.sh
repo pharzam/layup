@@ -86,7 +86,7 @@ forge.plan|free
 forge.visibility|public
 operator.id|$OPERATOR_ID
 idea-owner.id|$OPERATOR_ID
-intake.cap|5,1
+intake.cap|5.0,1.0
 lease.H|60
 watch.T|1
 pin.source|$src

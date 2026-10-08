@@ -26,7 +26,7 @@ good() {
 	printf 'run\thost\tversion\tstarted\theartbeat\tstate\n0123456789abcdef\tantarctica.local\t0.1.0-dev\t2026-10-08T14:00:00Z\t0\treleased\n' >"$F/lease.tsv"
 	printf '%s\n' "name|value|source" "layup.version|0.1.0-dev|run" "psb.sha256|$PSB|command" "vision.sha256|—|command" \
 		"forge.plan|free|command" "forge.visibility|public|forge" "app.permissions|contents:write,issues:write,metadata:read|forge" \
-		"operator.id|1675602|forge" "idea-owner.id|1675602|forge" "intake.cap|5,1|command" "lease.H|60|command" "watch.T|1|command" \
+		"operator.id|1675602|forge" "idea-owner.id|1675602|forge" "intake.cap|5.0,1.0|command" "lease.H|60|command" "watch.T|1|command" \
 		"pin.source|$SRC|run" "pin.commit|$PIN|run" "pin.tree|TREE|run" "pin.time|2026-09-23T00:00:00Z|run" \
 		"issue.intake|1|forge" "issue.control|2|forge" "watch|not-confirmed|run" | tr '|' '\t' >"$F/start/start.tsv"
 	cp "$HERE/fixtures/users-bot.json" "$W/api/users/$BOT"
