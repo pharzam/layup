@@ -13,13 +13,13 @@ import (
 // built lists each block of docs/spec/ whose owner package compares it with
 // its Go schema in the owner's own test (tsv.Compare). The owner moves the name
 // here from notYetBuilt in the same change as that test.
-var built = []string{"approvers", "catalog-gaps", "catalog-kinds", "copies", "forge-register", "gate-manifest", "gate-result", "harness-register", "lease", "open-gaps", "prices", "psb-gaps", "rule-paths", "setup-answers", "setup-record", "setup-steps", "setup-stop", "setup-verify", "stalls", "start", "telemetry"}
+var built = []string{"approvers", "catalog-gaps", "catalog-kinds", "copies", "forge-register", "gate-manifest", "gate-result", "harness-register", "lease", "open-gaps", "prices", "psb-gaps", "rule-paths", "run-steps", "setup-answers", "setup-record", "setup-steps", "setup-stop", "setup-verify", "stalls", "start", "telemetry"}
 
 // notYetBuilt lists each block that no owner compares with a Go schema yet.
 // A later section adds the names of its new blocks; otherwise it only becomes
 // shorter: a rule for the reviewer of each owner task; a test cannot read the
 // list of its base (docs/spec/README.md, The schema block).
-var notYetBuilt = []string{"run-steps"}
+var notYetBuilt = []string{}
 
 // Each block of docs/spec/ has the form of the README, and is in exactly one
 // of the two lists; each listed name is a block. A block that a later section

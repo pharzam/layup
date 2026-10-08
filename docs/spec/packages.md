@@ -188,7 +188,7 @@ that the steps, the checks and `layup gate` name.
 | ---- | ---------------------------------------- | ------- |
 | `Version` | `git --version` | the minimum version (below) |
 | `LsRemote` | `git ls-remote --exit-code -- URL REF` | S02; `layup run`, step 3 |
-| `Clone` | `git clone --no-checkout -- URL DIR` | S02; `layup run`, step 3 and the restart |
+| `Clone` | `git clone --no-checkout -- URL DIR`; with a token, as `Fetch` and `Push` (task `T-ax3r`) | S02; `layup run`, step 3 and the restart (a private target needs the token) |
 | `CheckoutDetach` | `git checkout --detach COMMIT` | S02 |
 | `Init` | `git init -b main -- DIR` | S03; `layup run`, step 5 |
 | `Add` | `git add --all -- PATH…`; no path is the whole tree | S03 to S15; a fixture run of `gate:<kind>` |

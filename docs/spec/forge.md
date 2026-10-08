@@ -60,6 +60,10 @@ step 1) are contents `write`, issues `write` and metadata `read`; a level
   of the old one remain: `Token` gives the token it holds while five minutes or
   more remain, else a new one, so `layup run` calls it before each `git` call that
   needs the token. A token is never written to a file, a record or a log.
+  **Decided here** (task `T-ax3r`): the adapter takes from its caller an HTTP
+  client that follows no redirect, so a token goes to the `api` of the forge
+  register only, and the progress function of the wait of a rate limit;
+  `internal/cli` builds both (row 26 of the plan, with their test).
 - `git` gets the token for one call only, from `internal/git`, as an HTTP
   header in `GIT_CONFIG_COUNT`, `GIT_CONFIG_KEY_0` and `GIT_CONFIG_VALUE_0` of
   that call's environment (`http.<web>/.extraHeader`), not on its command line,
@@ -79,7 +83,7 @@ date of the build task; a difference from this table is a defect of this table.
 | ------ | ---- | ------------------------- |
 | `Installation` | `GET /repos/{owner}/{repo}/installation` (JWT) | the installation ID and its permissions |
 | `Token` | `POST /app/installations/{id}/access_tokens` (JWT) | the installation token and its end time |
-| `Repository` | `GET /repos/{owner}/{repo}`, then `GET /repos/{owner}/{repo}/branches` | the default branch and the visibility; the repository has a commit when the list of branches is not empty |
+| `Repository` | `GET /repos/{owner}/{repo}`, then `GET /repos/{owner}/{repo}/branches`, every page | the default branch, the visibility and the names of the branches; the repository has a commit when the list is not empty (task `T-ax3r`) |
 | `UserID` | `GET /users/{login}` | the numeric ID of a login; the bot's ID for `<slug>[bot]` |
 | `OpenIssue` | `POST /repos/{owner}/{repo}/issues` | the issue number |
 | `Comments` | `GET /repos/{owner}/{repo}/issues/{n}/comments`, every page | each comment: its ID, the author's ID and login, `performed_via_github_app` (the App's slug, or none), the times, the body |

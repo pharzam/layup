@@ -141,7 +141,10 @@ func LsRemote(url, ref string) (string, error) {
 }
 
 // Clone clones the repository at url into dir, and checks out no file.
-func Clone(url, dir string) error { return do("", "clone", "--no-checkout", "--", url, dir) }
+// With a token, auth gives git the header of the token, as Fetch and Push do.
+func Clone(url, dir string, auth Auth) error {
+	return doAuth("", auth, []string{"clone", "--no-checkout", "--", url, dir})
+}
 
 // CheckoutDetach checks out commit, a full object ID such as LsRemote gives,
 // on no branch.

@@ -60,7 +60,8 @@ type Token struct {
 type Repository struct {
 	DefaultBranch string
 	Visibility    string
-	HasCommit     bool // the list of branches is not empty
+	HasCommit     bool     // the list of branches is not empty
+	Branches      []string // the names of the branches, each page
 }
 
 // Comment is a comment of an issue.

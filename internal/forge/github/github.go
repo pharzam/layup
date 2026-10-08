@@ -116,8 +116,9 @@ func (a *Adapter) Token(ctx context.Context) (forge.Token, error) {
 	return a.tok, nil
 }
 
-// Repository gives the default branch, the visibility, and whether the list
-// of branches is not empty.
+// Repository gives the default branch, the visibility, and the names of the
+// branches, every page; the repository has a commit when the list is not
+// empty.
 func (a *Adapter) Repository(ctx context.Context) (forge.Repository, error) {
 	var repo struct {
 		DefaultBranch string `json:"default_branch"`
@@ -126,13 +127,23 @@ func (a *Adapter) Repository(ctx context.Context) (forge.Repository, error) {
 	if _, err := a.do(ctx, "Repository", "GET", a.cfg.API+a.repo(), byToken, nil, 200, &repo); err != nil {
 		return forge.Repository{}, err
 	}
-	var branches []struct {
-		Name string `json:"name"`
+	var names []string
+	for next := a.cfg.API + a.repo() + "/branches?per_page=100"; next != ""; {
+		var page []struct {
+			Name string `json:"name"`
+		}
+		h, err := a.do(ctx, "Repository", "GET", next, byToken, nil, 200, &page)
+		if err != nil {
+			return forge.Repository{}, err
+		}
+		for _, b := range page {
+			names = append(names, b.Name)
+		}
+		if next = nextPage(h.Get("Link")); next != "" && !strings.HasPrefix(next, a.cfg.API+"/") {
+			return forge.Repository{}, &forge.Error{Call: "Repository", Status: 200, Message: "the next page is not at the api of the forge register"}
+		}
 	}
-	if _, err := a.do(ctx, "Repository", "GET", a.cfg.API+a.repo()+"/branches?per_page=1", byToken, nil, 200, &branches); err != nil {
-		return forge.Repository{}, err
-	}
-	return forge.Repository{DefaultBranch: repo.DefaultBranch, Visibility: repo.Visibility, HasCommit: len(branches) > 0}, nil
+	return forge.Repository{DefaultBranch: repo.DefaultBranch, Visibility: repo.Visibility, HasCommit: len(names) > 0, Branches: names}, nil
 }
 
 // UserID gives the numeric ID of a login.

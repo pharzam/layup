@@ -226,7 +226,7 @@ var sys = system{
 	read:           os.ReadFile,
 	now:            time.Now,
 	lsRemote:       git.LsRemote,
-	clone:          git.Clone,
+	clone:          func(url, dir string) error { return git.Clone(url, dir, git.Auth{}) },
 	checkoutDetach: git.CheckoutDetach,
 	revParse:       git.RevParse,
 	rootCommits:    git.RootCommits,
