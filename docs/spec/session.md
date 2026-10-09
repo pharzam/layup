@@ -152,15 +152,28 @@ the harness which files it loaded.
 attempt of a task, a records commit with the event `attempt`, its number and its
 base. The task loop of `M2e` calls it; in `M2b` the uat test calls it for the
 task of the demo's developer session. A session's start needs the event of its
-attempt ([Input states](#input-states)).
+attempt ([Input states](#input-states)). **Decided here** (task `T-d8t9`,
+condition 2 of the plan review of #164): the number is one more than the
+largest attempt of an event `attempt` of the task, 1 for none, as an event of
+another kind names an attempt that one of `attempt` started; a records table
+that the records branch does not hold yet (`events.tsv` of a new task,
+`sessions.tsv`) is an empty table.
 
 1. **The ID**: `S-` and 8 random lowercase hexadecimal characters, new for each
    session ([`records.md`](records.md#req-011--the-telemetry-record)), drawn
-   first, so that each refusal below names its session. Then the attempt
+   first, so that each refusal below names its session. **Decided here**
+   (task `T-d8t9`, condition 1 of the plan review of #164): before the ID,
+   `layup run` sweeps the directories that a stopped run of the target left;
+   right after it, it makes the session directory, so that each check runs on
+   the session's own files; a start that is refused, or that stops on an error
+   before the process, removes its directory at once, so a copied credential
+   does not wait for the next sweep. Then the attempt
    check: a task session whose attempt has no event `attempt` is refused
    (`attempt`).
 2. **The version.** Code runs the row's `version` command, with the
-   environment above and no credential, and takes the first line of its
+   environment above and no credential (**decided here**, task `T-d8t9`: no
+   credential variable, and `HOME` the session's `tmp/`, as `home/` holds a
+   credential of `file:` once the directory is made), in `repo/`, and takes the first line of its
    standard output, with no white space at either end (**decided here**, task
    `T-5pxd`: a tab or a carriage return is no part of a version), as the version. A version whose
    last probe passed ([Admission](#admission)) goes on; any other runs
@@ -177,7 +190,8 @@ attempt ([Input states](#input-states)).
 4. **The start row**: a row of `sessions.tsv`, and for a task session the event
    `session` of the task, committed and pushed before the process starts
    (**decided here**, survey row 5: a crash leaves a start row with no end,
-   which the next run finds).
+   which the next run finds), in one records commit (**decided here**, task
+   `T-d8t9`: a crash leaves both or neither).
 5. **The process**: the row's `command`, its words split at each space, with
    `{model}`, `{cap}` and `{prompt}` replaced in one pass (**decided here**,
    task `T-5pxd`: a prompt that holds `{model}` stays as it was written), started in `repo/`, in a process

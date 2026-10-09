@@ -81,6 +81,33 @@ func (s *recordsStore) WriteLease(ctx context.Context, row LeaseRow, message str
 	return s.commit(ctx, map[string][]byte{"lease.tsv": data}, message, "")
 }
 
+// ReadFile gives the file at path of the run's records base, the commit it
+// pushed last or else of its last read, or nil when that commit has none.
+func (s *recordsStore) ReadFile(ctx context.Context, path string) ([]byte, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	base := s.pushed
+	if base == "" {
+		base = s.read
+	}
+	if base == "" {
+		return nil, errors.New("no records commit to read")
+	}
+	entries, err := git.LsTree(s.dir, base, path)
+	if err != nil {
+		return nil, err
+	}
+	if len(entries) == 0 {
+		return nil, nil
+	}
+	return git.Show(s.dir, base, path)
+}
+
+// Commit makes a records commit of files on the base and pushes it.
+func (s *recordsStore) Commit(ctx context.Context, files map[string][]byte, message string) error {
+	return s.commit(ctx, files, message, "")
+}
+
 // commit makes a records commit of files on the base and pushes it; orphan is
 // the default branch of the first records commit, which has no parent.
 // git's refusal of the push is ErrRefused.
