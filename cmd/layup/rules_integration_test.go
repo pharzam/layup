@@ -149,7 +149,7 @@ func goCmd(t *testing.T, root string, args ...string) []byte {
 }
 
 // No non-test Go file of the module reads an environment variable or the
-// standard input, except environ of internal/git; the same scan finds the
+// standard input, except environ of internal/git and environ of internal/session; the same scan finds the
 // seeded read of a fixture module (docs/spec/README.md, Commands: Arguments;
 // NFR-005).
 func TestInputRule(t *testing.T) {

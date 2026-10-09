@@ -44,16 +44,20 @@ checks before a push, the push and the bind ([REQ-003](#req-003--before-a-push))
 `DIR/sessions/<session>/`, under the host directory of `--host`
 ([`run.md`](run.md#the-command)), named by the session ID, never reused:
 
-- `repo/`: the session's clone of the target, made with `CloneLocal` from
-  `layup run`'s own clone, then the branch `task/<task>/<attempt>` at the base
-  commit (`SwitchCreate`), then its remote removed ([the calls of
+- `target`: the target's `OWNER/NAME`, written first (**decided here**, task
+  `T-vxdg`: it lets a run tell its own leftover directories from another
+  target's, below).
+- `repo/`: the session's clone of the target, made from `layup run`'s own
+  clone with `CloneLocal`, which removes its remote before it returns, then the
+  branch `task/<task>/<attempt>` at the base commit (`SwitchCreate`), with the
+  files of the base in its work tree ([the calls of
   `M2b`](packages.md#the-calls-of-internalgit)). **Decided here:** the clone
   takes only the default branch, so it holds no records branch, and it has no
   remote, so no command of the session reaches a remote through it.
-- `home/`: empty at the start; the session's `HOME`. It holds `home/.gitconfig`
+- `home/`: the session's `HOME`; at the start it holds `home/.gitconfig`
   (the author `layup session <session>`, the e-mail
   `<session>@sessions.layup.invalid`; `.invalid` is reserved, RFC 2606, so no
-  mail goes anywhere) and a credential of the route `file:`.
+  mail goes anywhere) and a credential of the route `file:`, and no other file.
 - `tmp/`: empty at the start; the session's `TMPDIR`.
 - `prompt.md`: the prompt, the caller's text (the fixed text of [the
   probe](#the-probe), or the task of a session).
@@ -64,6 +68,14 @@ checks before a push, the push and the bind ([REQ-003](#req-003--before-a-push))
 are pushed, so the clone, the home and a copied credential are thrown away (a
 session is not resumed across attempts: ADR-0015 decision 5, FT6); a directory
 left by a run that stopped is removed before the next session starts.
+**Decided here** (task `T-vxdg`, condition 1 of the plan review of #159): a run
+removes only the directories of its own target (its file `target`), which the
+target's lease guards, and a directory with no file `target`, which only a start
+that stopped before its first write leaves; a directory of another target on the
+same host is kept, as its own run may be live, and an entry that is not a
+directory is skipped. **Known limit:** a start of another target that is between
+its first two writes (its directory, then its file `target`) is removed, and
+fails at once at its next write.
 
 ### The environment and the harness credential
 
@@ -525,7 +537,7 @@ Gemini CLI and OpenCode, added when a registered harness needs one.
 
 | Part | Level | Test |
 | ---- | ----- | ---- |
-| The session directory | integration | With the real `git`: `repo/` is a `--no-local` clone of the default branch only, with no remote and no records branch, on `task/<task>/<attempt>` at the base; `home/` and `tmp/` start empty; the directory is removed after the session's records are pushed, and one that a stopped run left is removed before the next session. |
+| The session directory | integration | With the real `git`: `repo/` is a `--no-local` clone of the default branch only, with no remote and no records branch, on `task/<task>/<attempt>` at the base; `home/` holds only `.gitconfig` and a credential of `file:`, and `tmp/` and `result/` start empty; the directory is removed after the session's records are pushed, and one that a stopped run left is removed before the next session. |
 | The environment | unit | The environment holds the named list only (no `GH_TOKEN`, no SSH agent socket, no variable of the host but `PATH`), the credential by `var:` and by `file:`, and the fixed variables; a `vars` name of the named list, the credential's or the list of forge credentials and agent sockets is refused (exit 2). |
 | Rules only from the target | integration | In a real temporary tree, a rule-file name of the row above the session directory refuses the start; a policy path that exists is recorded. |
 | The start, the limit and the end | integration | With a fake harness program: the start row is pushed before the process starts; a fake that waits for the end of its input ends; a fake that runs past `wall` is stopped (`SIGINT`, `SIGTERM`, `SIGKILL`) with the class `wall`; the output cap; each class of the end. |

@@ -517,8 +517,10 @@ var readers = map[string][]string{"os": {"Environ", "ExpandEnv", "Getenv", "Look
 
 // allowedReader is the one function, by package, whose reads the rule
 // allows: environ of internal/git gives PATH and TMPDIR of the host to git
-// (docs/spec/packages.md, D3 of #79). That is not an input of a command.
-var allowedReader = map[string]string{"internal/git": "environ"}
+// (docs/spec/packages.md, D3 of #79); environ of internal/session builds a
+// session's environment and reads the host's PATH only (task T-vxdg). That is
+// not an input of a command.
+var allowedReader = map[string]string{"internal/git": "environ", "internal/session": "environ"}
 
 // checkInputs gives each read of an environment variable or of the standard
 // input in the non-test Go files of m, except in allowedReader. A file that

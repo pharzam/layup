@@ -313,6 +313,8 @@ func TestCheckInputsFindsEachReadOfTheEnvironmentOrTheStandardInput(t *testing.T
 		"internal/git": {"git.go": "package git\n\nimport \"os\"\n\nfunc environ() { os.LookupEnv(\"PATH\") }\n\n" +
 			"func other() string { return os.Getenv(\"HOME\") }\n"},
 		"internal/tsv": {"e.go": "package tsv\n\nimport \"os\"\n\nfunc environ() []string { return os.Environ() }\n"},
+		"internal/session": {"session.go": "package session\n\nimport \"os\"\n\nfunc environ() string { return os.Getenv(\"PATH\") }\n\n" +
+			"func Make() string { return os.Getenv(\"HOME\") }\n"},
 	}}
 	want := []string{
 		"input rule: internal/cli/a.go:5 reads os.Getenv",
@@ -321,6 +323,7 @@ func TestCheckInputsFindsEachReadOfTheEnvironmentOrTheStandardInput(t *testing.T
 		"input rule: internal/gate/d.go:3 imports os with a dot, so the scan cannot read its uses",
 		"input rule: internal/git/git.go:7 reads os.Getenv",
 		"input rule: internal/psb/c.go:5 reads syscall.Getenv",
+		"input rule: internal/session/session.go:7 reads os.Getenv",
 		"input rule: internal/tsv/e.go:5 reads os.Environ",
 	}
 	if got := checkInputs(m); !slices.Equal(got, want) {
