@@ -26,7 +26,9 @@ import (
 // Process gave ErrStart; wall or output, a stop that layup run sent, whatever
 // the exit and the result; crash, a non-zero exit or a signal that layup run
 // did not send; no-result, exit 0 with no valid result file (resultErr); and
-// done. Another error of Process is layup run's own, not a class: it gives "".
+// done. Every other error of Process, at the start or after it (an output
+// file it cannot open, a write of an output that fails), is layup run's own,
+// not a class: it gives "".
 func Class(r Run, startErr, resultErr error) string {
 	switch {
 	case errors.Is(startErr, ErrStart):
@@ -180,12 +182,12 @@ func usageOf(format string, stdout io.Reader) (Usage, error) {
 		for _, m := range u.Models {
 			var missing []string
 			for _, f := range fields {
-				var v int64
-				if json.Unmarshal(last.ModelUsage[m][f], &v) != nil {
+				var v *int64 // a null leaves it nil: no integer
+				if json.Unmarshal(last.ModelUsage[m][f], &v) != nil || v == nil {
 					missing = append(missing, f)
 					continue
 				}
-				total += v
+				total += *v
 			}
 			if len(missing) > 0 {
 				ok = false

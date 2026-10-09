@@ -36,6 +36,13 @@ cache; the subagent event, 34 + 2 = 36 in, 157 + 4 = 161 out,
 vet: internal/session/end_test.go:76:13: undefined: Usage
 ```
 
+`go vet -tags=integration ./internal/session/` gave the same line: the build
+of the integration files, with `TestEachEndGetsItsClass`, `TestResultOf`,
+`TestUsageOfAFile` and the block test, stops at the unit file of the same
+package, so neither file built before the functions. The demo test's own
+rules are each shown failing below: the `class-*` mutations at unit, the
+`result-*` mutations at integration.
+
 ## Two cases made to fail on their own rule (2026-10-09T18:17Z to 18:19Z)
 
 The first green came with no red of the cases of `TestResultOf`: the file over
@@ -146,7 +153,29 @@ of the signal is gone. `ReadProbeResult` refused an empty value, which
 `tsv.Read` already refuses in a key column, so that check is gone. The
 mutation of the sort did not build, and is now a call that keeps the order.
 
-## Green (2026-10-09T18:23Z)
+## The fix of round 1 (2026-10-09T18:33Z to 18:36Z)
+
+Finding 1: a token field given as `null` was summed as 0. The case "a field
+that is null" failed on the code of `be96597`:
+
+```
+end_test.go:76: a field that is null: [0 2 7 observed    [a]], <nil>; want [<nil> 2 7 partial a has no inputTokens   [a]]
+```
+
+The field is now read into a pointer, which a `null` leaves nil. Its
+mutation (a nil read as an integer) is caught by a panic of the test, at the
+dereference, in full:
+
+```
+== usage-null: usageOf: a null summed as 0 (exit 1)
+/home/layup/projects/layup/.worktree/T-bpxg/internal/session/end_test.go:74 +0x75f
+```
+
+Finding 2 is a sentence of `session.md`, widened to the code: every other
+error of the process call is `layup run`'s own, and its case is the unit case
+"an error of layup run's own".
+
+## Green (2026-10-09T18:23Z, again at 18:36Z after the fix of round 1)
 
 Each with exit 0: `go build ./...`, `go vet ./...`, `gofmt -l internal cmd`
 (empty), `go test ./...`, `go test -tags=integration ./...` (with

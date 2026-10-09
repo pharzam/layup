@@ -36,7 +36,7 @@ anything of it was kept. The goal count is 2, final by O-187 of #152.
 
 **Tests:** [`test-runs.md`](../../runs/T-bpxg/test-runs.md): the recorded
 events and their sums by hand; red before the functions; a mutation of each of
-the twenty-four rules, each caught; green after.
+the twenty-five rules, each caught, one added by the fix of round 1; green after.
 
 **The rejected alternatives:** a class from the exit alone; a result file read
 through a link; a float for the cost.

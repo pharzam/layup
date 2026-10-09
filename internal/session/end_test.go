@@ -65,6 +65,9 @@ func TestUsageOfClaudeResult(t *testing.T) {
 		{"a result with an empty modelUsage", "{\"type\":\"result\",\"modelUsage\":{}}\n", Usage{Status: "unavailable", Reason: "the report names no model"}},
 		{"a model that lacks a field", "{\"type\":\"result\",\"modelUsage\":{\"b\":{\"inputTokens\":1,\"outputTokens\":2,\"cacheReadInputTokens\":3},\"a\":{\"inputTokens\":4,\"outputTokens\":5,\"cacheReadInputTokens\":6,\"cacheCreationInputTokens\":7}}}\n",
 			Usage{In: n(5), Out: n(7), Status: "partial", Reason: "b has no cacheCreationInputTokens", Models: []string{"a", "b"}}},
+		// A null is no integer: the class is not summed, never 0.
+		{"a field that is null", "{\"type\":\"result\",\"modelUsage\":{\"a\":{\"inputTokens\":null,\"outputTokens\":2,\"cacheReadInputTokens\":3,\"cacheCreationInputTokens\":4}}}\n",
+			Usage{Out: n(2), Cache: n(7), Status: "partial", Reason: "a has no inputTokens", Models: []string{"a"}}},
 		{"each class lacked", "{\"type\":\"result\",\"modelUsage\":{\"a\":{\"inputTokens\":\"x\",\"webSearchRequests\":0}}}\n",
 			Usage{Status: "unavailable", Reason: "a has no inputTokens, outputTokens, cacheReadInputTokens, cacheCreationInputTokens", Models: []string{"a"}}},
 	} {
