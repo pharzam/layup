@@ -915,7 +915,7 @@ stepping on each other's working-tree state.
 **Claim the task by pushing its branch.** Before you take a task, run
 `sh docs/tasks/task-state.sh`. If it prints the task, take the task only when its
 state is `ready`; a task it does not print (one with no row in the current task
-table and no line in the backlog yet) is not refused by this rule. Right after
+table and no line under `## Now` of the backlog) is not refused by this rule. Right after
 the worktree is created, push its branch, named exactly the task ID, to the forge
 (`git push -u origin <slug>`), before any work; a branch of another name, such as
 `T-xxxx-notes`, claims nothing. The branch on the forge is the one mark that every
