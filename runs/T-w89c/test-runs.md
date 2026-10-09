@@ -1,0 +1,28 @@
+# The test runs of T-w89c
+
+The host: the LAYUP host of 2026-10-09, Linux on amd64, `go version go1.26.9
+linux/amd64`. Each run downloads the named toolchain and govulncheck's
+vulnerability database, so it needs the network.
+
+## Red, at the base `ad3c400`
+
+`GOTOOLCHAIN=go1.26.8 go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./...`:
+govulncheck exits 3 (`go run` reports `exit status 3` and exits 1), with the
+ten advisories of #150:
+
+```
+GO-2026-6603 GO-2026-6604 GO-2026-6605 GO-2026-6607 GO-2026-6608 GO-2026-6610 GO-2026-6611 GO-2026-6612 GO-2026-6613 GO-2026-6617
+Your code is affected by 10 vulnerabilities from the Go standard library.
+This scan also found 1 vulnerability in packages you import and 2
+vulnerabilities in modules you require, but your code doesn't appear to call
+these vulnerabilities.
+Use '-show verbose' for more details.
+exit status 3
+```
+
+## Green, with `go 1.26.9` in `go.mod`
+
+`GOTOOLCHAIN=go1.26.9 go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./...`:
+exit 0, `No vulnerabilities found.` With `GOTOOLCHAIN=go1.26.9`: `go build ./...`,
+`go vet ./...`, `go test ./...`, `go test -tags=integration ./...` and
+`go test -tags=e2e ./...` pass.

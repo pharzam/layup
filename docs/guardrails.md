@@ -302,6 +302,18 @@ check that catches it.
   of each row, and bring a row with more than one to the Operator then; a split
   that a slicing review offers is weighed by the goal count, not by a shared
   test. Learned in `T-trej`.
+- ❌ **A Go version that CI resolves at its own time.** `go.mod` said `go 1.26`,
+  and `actions/setup-go` with `go-version-file: go.mod` installs the newest
+  release of that line it knows. The job `security` passed on `main` at
+  `ad3c400` and failed on #149, which changed no Go code: ten advisories of the
+  standard library, found in `go1.26.8` and fixed in `go1.26.9`, were published
+  between the two runs. It is silent until a release day, as each run of the
+  same tree can resolve another toolchain. **The check:** the `go` directive
+  names the full patch version (`go 1.26.9`), so CI builds what the commit
+  names, and govulncheck's "Fixed in" names the version to move to; a host
+  below it then downloads that toolchain under `GOTOOLCHAIN=auto`, or refuses
+  to build under `GOTOOLCHAIN=local`. Learned in `T-w89c`
+  ([#150](https://github.com/pharzam/layup/issues/150)).
 
 ### Writing a lesson back
 
