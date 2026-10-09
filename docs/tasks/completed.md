@@ -20,6 +20,7 @@ here directly, in the shape above.
 - **YYYY-MM-DD** — **<ID>** — <one-sentence summary of what the task found or delivered> ([<link>](...); [detail](<id>.md))
 -->
 
+- **2026-10-09** — **T-qhpf** — The three notes of round 2 of `T-eep8`: a backlog task of an earlier task table keeps its `After`, the claim comes before the plan, and `task-state.sh` reads the backlog, the completed log and the plan from the forge's `main`; serves `F-0003#52` ([#182](https://github.com/pharzam/layup/issues/182); [detail](T-qhpf.md))
 - **2026-10-09** — **T-vxdg** — Row 33a of `M2b`: the directory and the environment of a session, `Make`, `Sweep` and `Environ` in `internal/session` ([#159](https://github.com/pharzam/layup/issues/159); [detail](T-vxdg.md))
 - **2026-10-09** — **T-6sbe** — Row 33b of `M2b`: the checks before the start of a session, `NewID`, `CheckContext`, `CheckPromptSize`, `CheckRuleFiles` and `HeadOf` in `internal/session` ([#160](https://github.com/pharzam/layup/issues/160); [detail](T-6sbe.md))
 - **2026-10-09** — **T-5pxd** — Row 34a of `M2b`: the process of a session and its stop, `Version`, `Words`, `NewSpec`, `Process` and `Call` in `internal/session` ([#161](https://github.com/pharzam/layup/issues/161); [detail](T-5pxd.md))

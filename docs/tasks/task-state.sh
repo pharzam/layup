@@ -51,9 +51,10 @@ die() { printf 'task-state: %s\n' "$1" >&2; exit 1; }
 tmp=$(mktemp -d) || die "cannot make a temporary directory"
 trap 'rm -rf "$tmp"' EXIT
 
-# fetch DIR — copy the three files of this repository into DIR and read the
-# forge into DIR/forge. One progress line per step: each call to the forge can
-# take seconds (docs/engineering-discipline.md, progress indicators).
+# fetch DIR — read the three files of the forge's main into DIR, and the
+# branches and pull requests of the forge into DIR/forge. One progress line
+# per step: each call to the forge can take seconds
+# (docs/engineering-discipline.md, progress indicators).
 fetch() {
 	_in=$1
 	root=$(git rev-parse --show-toplevel 2>/dev/null) || die "not inside a git checkout"

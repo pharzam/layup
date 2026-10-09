@@ -24,8 +24,8 @@ At 19:54 UTC, after the lookup of the row's `After` in any task table:
 ## Note 3: the files of main, not of the checkout
 
 At 19:55 UTC, with `main` at `c15e2c8` on the forge (`gh api repos/pharzam/layup/commits/main`, the same
-before and after the runs). A clone at `b1ff841` (the merge of `T-eep8`, eight merges
-behind) ran both scripts:
+before and after the runs). A clone at `b1ff841` (the merge of `T-eep8`, seven merges
+behind: #181, #183, #184, #187, #188, #190, #191; round 1, note 3) ran both scripts:
 
 - the new script there printed the same bytes as the new script in this worktree
   (`cmp`: equal), the state of `main`;
