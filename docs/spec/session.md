@@ -484,7 +484,7 @@ format here first, with its source, as the types are added
 
 | Format | What `layup run` reads |
 | ------ | ---------------------- |
-| `claude-result` | The last JSON object of `stdout` whose `type` is `result` (Claude Code's `--output-format stream-json`, [headless mode](https://code.claude.com/docs/en/headless)). The tokens are the sums over `modelUsage`: `inputTokens` to `tokens_in`, `outputTokens` to `tokens_out`, `cacheReadInputTokens` plus `cacheCreationInputTokens` to `tokens_cache`; `observed` when each model has the four, `partial` when one lacks a field, `unavailable` with no `result` object. The money is `total_cost_usd`, in USD, Claude Code's own estimate. The models are the keys of `modelUsage`, sorted (**decided here**, task `T-bpxg`). |
+| `claude-result` | The last JSON object of `stdout` whose `type` is `result` (Claude Code's `--output-format stream-json`, [headless mode](https://code.claude.com/docs/en/headless)). The tokens are the sums over `modelUsage`: `inputTokens` to `tokens_in`, `outputTokens` to `tokens_out`, `cacheReadInputTokens` plus `cacheCreationInputTokens` to `tokens_cache`; `observed` when each model has the four, `partial` when one lacks a field and a class is still summed (below), `unavailable` with no `result` object. The money is `total_cost_usd`, in USD, Claude Code's own estimate. The models are the keys of `modelUsage`, sorted (**decided here**, task `T-bpxg`). |
 | `none` | Nothing: tokens `unavailable` ("the harness reports none"), money `unknown`; the model is the start row's. |
 
 **Decided here** (task `T-bpxg`, condition 1 of the plan review of #162): a

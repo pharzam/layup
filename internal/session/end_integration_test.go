@@ -99,6 +99,10 @@ func TestUsageOfAFile(t *testing.T) {
 	if _, err := UsageOf("claude-result", filepath.Join(t.TempDir(), "none")); err == nil {
 		t.Error("a missing stdout: no error")
 	}
+	// none reads nothing: a stdout that cannot be opened is no error.
+	if u, err := UsageOf("none", filepath.Join(t.TempDir(), "none")); err != nil || u.Reason != "the harness reports none" {
+		t.Errorf("none with no stdout: %+v, %v", show(u), err)
+	}
 }
 
 func TestTheSchemaOfProbeResultEqualsItsBlock(t *testing.T) {

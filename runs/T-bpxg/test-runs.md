@@ -175,7 +175,17 @@ Finding 2 is a sentence of `session.md`, widened to the code: every other
 error of the process call is `layup run`'s own, and its case is the unit case
 "an error of layup run's own".
 
-## Green (2026-10-09T18:23Z, again at 18:36Z after the fix of round 1)
+## The close-out: round 2's note 2 (2026-10-09T18:46Z)
+
+`UsageOf` now reads the format before it opens `stdout`, so `none` reads
+nothing. The case "none with no stdout" of `TestUsageOfAFile`; the mutation
+that removes the early return fails it, in full:
+
+```
+end_integration_test.go:104: none with no stdout: [<nil> <nil> <nil>     []], open /tmp/TestUsageOfAFile2483148885/003/none: no such file or directory
+```
+
+## Green (2026-10-09T18:23Z, again at 18:36Z after the fix of round 1, and at 18:47Z after the close-out)
 
 Each with exit 0: `go build ./...`, `go vet ./...`, `gofmt -l internal cmd`
 (empty), `go test ./...`, `go test -tags=integration ./...` (with

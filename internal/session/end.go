@@ -116,6 +116,9 @@ type Usage struct {
 // UsageOf reads the usage report in the file stdout, of the format of the
 // harness register row's usage.
 func UsageOf(format, stdout string) (Usage, error) {
+	if format != "claude-result" {
+		return usageOf(format, nil) // none reads nothing, and another format is refused by its name
+	}
 	f, err := os.Open(stdout)
 	if err != nil {
 		return Usage{}, err
