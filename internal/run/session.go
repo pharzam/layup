@@ -81,7 +81,7 @@ type Pair struct {
 // the probe in it), else Refusal{probe}; End and Push are the end of the
 // session and the checks before a push, the push and the bind (rows 36b, 37a
 // and 37b), End nil for the end of a task session (endTask, row 36b), Push
-// nil for none.
+// nil for the checks before a push (pushTask, row 37a).
 type TaskSpec struct {
 	Task          string
 	Attempt       int
@@ -274,6 +274,7 @@ func (s *Sessions) TaskSession(ctx context.Context, spec TaskSpec) (string, erro
 			return spec.End(id, d, r, err)
 		},
 	}
+	steps.Push = func(id string, r session.Run) error { return s.pushTask(ctx, id) }
 	if spec.Push != nil {
 		steps.Push = func(id string, r session.Run) error { return spec.Push(id, d, r) }
 	}
