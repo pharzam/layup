@@ -336,7 +336,7 @@ attempt int - the attempt that the event concerns, 1 or more
 session id(S-xxxxxxxx) - the session; `—` for `attempt`, `closed` and `rebased`, and for a `refused` whose reason is `pair`, which comes before a session
 base sha1 - the base commit, for `attempt` and `rebased`; `—` otherwise
 sha sha1 - the commit, for `push` and `bound`; `—` otherwise
-detail text - one line: for `result`, the class of the end; for `refused`, the reason, and after one space its value where it has one: the path of a rule file, the two numbers of the context, the size of the prompt, or the payload of a refused diff; for `push` and `bound`, the branch; `—` for `attempt` and `session`; for `closed` and `rebased`, as `M2e` sets
+detail text - one line: for `result`, the class of the end; for `refused`, the reason, and after one space its value where it has one: the path of a rule file, the two numbers of the context, the size of the prompt, or the payload of a refused diff; for `push` and `bound`, the branch `task/<task>/<attempt>`, with the row's attempt; `—` for `attempt` and `session`; for `closed` and `rebased`, as `M2e` sets
 time time - when `layup run` recorded the event
 ```
 
