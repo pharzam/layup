@@ -137,8 +137,8 @@ the Operator's error, which no reader can see. Example: Claude Code's `WebFetch`
 ### Rules only from the target
 
 Before the start (ADR-0015 decision 4), code looks in each directory from the
-session directory up to `/` for each rule-file name of the row's `rules`; a
-file found refuses the start (event `refused`, `rules` and the path), as the harness
+session directory up to `/` for each rule-file name of the row's `rules`; an
+entry of that name found (a file, a directory or a link) refuses the start (event `refused`, `rules` and the path), as the harness
 would load it. Each path of the row's `policy` that exists is recorded in the
 start row (`policy`), and the start goes on (L-A5). The rule files inside
 `repo/` are the target's own: `AGENTS.md` and the harness's entry file that
@@ -199,7 +199,7 @@ telemetry row.
 As §9: the bytes of `prompt.md`, over four and rounded up (**decided here**),
 are the estimate; `context` of the model's row in `models.tsv` is the size. An
 estimate over the size refuses the start (event `refused`, `context` and both
-numbers); a
+numbers, the estimate then the size: **decided here**, task `T-6sbe`); a
 session that starts has both numbers in its start row.
 
 ### The limit of a session
@@ -257,8 +257,11 @@ is `M2d`'s and `M2f`'s. For a task session whose end is `done`:
 (§4): no command of `layup` runs in `repo/` after the session starts. Code reads
 the head SHA of `refs/heads/task/<task>/<attempt>` from the files of
 `repo/.git`: the loose ref, a regular file of 40 lowercase hexadecimal
-characters and a line feed, else the line of `packed-refs` that names the ref.
-A `repo/.git` that is not a directory; a loose ref that is a link, a symbolic
+characters and a line feed, else the line of `packed-refs` whose ref field,
+the text after the first space, is the ref, and whose first field is 40
+lowercase hexadecimal characters (**decided here**, task `T-6sbe`; a line that
+names the ref in another form refuses).
+A `repo/.git` that is not a directory (a link to one is refused too); a loose ref that is a link, a symbolic
 ref or a file of any other content (`packed-refs` is then not read); no such
 ref; or a SHA that names no commit of the session's objects, which
 `FetchSession` checks before it sets a ref: each refuses the result (`branch`).
@@ -544,7 +547,7 @@ Gemini CLI and OpenCode, added when a registered harness needs one.
 | The context of a start | unit | An estimate over the model's context size refuses the start with both numbers. |
 | The result of a session | integration | A result file of the block `result` is committed byte for byte with the event `result`; an artifact whose SHA-256 differs at the head adds the event `refused` (`artifact`); the session ID, the task, the role, the attempt and the base come from the start row. |
 | The open attempt | unit | With a stand-in events table, a result whose attempt was closed, replaced or rebased is refused (`closed-attempt`); the attempt and the base come from the start row; a session with no event `attempt` of its attempt is refused at its start. |
-| Before a push | integration | With the real `git` and a local bare repository: the head read from the files of `repo/.git` (a loose ref, a packed ref; a link, a symbolic ref, a malformed loose ref, no ref and a SHA of no commit refused); the fetch through the scratch repository with hooks off; a session configuration that holds each key of git's documentation that starts a program runs none of them; a head that does not descend from the base is refused; a change of `.github/workflows/` and of a rule path is refused before any push, its diff a payload; added lines in §2 of `docs/guardrails.md` pass; the SHA is bound only after the push is accepted. |
+| Before a push | integration | With the real `git` and a local bare repository: the head read from the files of `repo/.git` (a loose ref, a packed ref with `git pack-refs`; with a stand-in reader of the files, at unit: a link, a symbolic ref, a malformed loose ref, a packed line of another form and no ref refused; a SHA of no commit refused by `FetchSession`); the fetch through the scratch repository with hooks off; a session configuration that holds each key of git's documentation that starts a program runs none of them; a head that does not descend from the base is refused; a change of `.github/workflows/` and of a rule path is refused before any push, its diff a payload; added lines in §2 of `docs/guardrails.md` pass; the SHA is bound only after the push is accepted. |
 | The probe and admission | unit | With a fake harness: the version check; a probe that passes, one that reports a `policy` path and passes, and one that fails for each reason; admission by the probe and `use`; a harness with no model of `use` `yes` is skipped. |
 | A refused start | unit | A refused start of a task session is an event `refused` with its session ID, its reason (`attempt`, `version`, `probe`, `context`, `prompt`, `rules`) and no row of `sessions.tsv` or `telemetry.tsv`; the refusal `pair` has `—` for the session; a probe's refused start is its row of `harnesses.tsv`, `failed`, with `version` `—` when the version check refused it. |
 | The routing register | unit | `host:registers/routing.tsv` is copied into `records:routing.tsv` at the step `probe` when the two differ, and not when they are equal; the session's pair is the first admitted pair of the role's list for the task's tier; with none, the start is refused (`pair`). |

@@ -30,7 +30,6 @@ same summary, dated — rather than deleting it or checking it off.
 - **<ID>** — <one-sentence summary> ([<ADR or doc link>](...); [detail](<id>.md))
 -->
 
-- **T-6sbe** — Row 33b of `M2b`: the checks before the start of a session ([#160](https://github.com/pharzam/layup/issues/160); [the plan](../plan/README.md#the-tasks-of-m2b))
 - **T-5pxd** — Row 34a of `M2b`: the process of a session and its stop ([#161](https://github.com/pharzam/layup/issues/161); [the plan](../plan/README.md#the-tasks-of-m2b))
 - **T-bpxg** — Row 34b of `M2b`: the end of a session ([#162](https://github.com/pharzam/layup/issues/162); [the plan](../plan/README.md#the-tasks-of-m2b))
 - **T-d8t9** — Row 36a of `M2b`: the start of a task session and its refusals ([#164](https://github.com/pharzam/layup/issues/164); [the plan](../plan/README.md#the-tasks-of-m2b))
