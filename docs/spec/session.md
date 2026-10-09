@@ -372,7 +372,7 @@ T-ab12, attempt 1: done, refused artifact`. It is posted after every record of
 the session, those of the checks before a push and of the push too, from what
 the events hold, so it names the refusals of the end and of those checks
 (**decided here**, round 1 of #165); a session whose end recorded nothing has no
-comment. The call is the forge's `Comment`
+comment, and a lost lease stops the run before it (round 2 of #165). The call is the forge's `Comment`
 ([`forge.md`](forge.md#the-calls-of-m2b), O-189). The task loop of `M2e` moves
 a task's comments to the task's issue.
 

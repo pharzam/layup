@@ -59,8 +59,8 @@ const (
 // of repo/.git, fetched into the run's clone with FetchSession, so no command
 // of layup runs in repo/) and each artifact's SHA-256 there; it makes one
 // records commit of the result file, the events result and refused, and the
-// telemetry row, through Fenced; then it posts the comment on the control
-// issue. An error of the process that is no class is the run's own.
+// telemetry row, through Fenced. TaskSession posts the comment after the
+// whole call. An error of the process that is no class is the run's own.
 func (s *Sessions) endTask(ctx context.Context, spec TaskSpec, id string, d session.Dir, r session.Run, err error) error {
 	data, rows, resultErr := session.ResultFile(d, false)
 	class := session.Class(r, err, resultErr)
@@ -196,8 +196,10 @@ func (s *Sessions) artifacts(d session.Dir, task string, attempt int, id string,
 	if err != nil {
 		return false, err
 	}
-	if err := git.FetchSession(s.Clone, filepath.Join(d.Repo, ".git"), head, "refs/layup/sessions/"+id); err != nil {
+	if err := git.FetchSession(s.Clone, filepath.Join(d.Repo, ".git"), head, "refs/layup/sessions/"+id); errors.Is(err, git.ErrNotACommit) {
 		return false, session.Refusal{Reason: "branch", Value: err.Error()}
+	} else if err != nil {
+		return false, err // a failure of the run's own clone is no refusal of the session
 	}
 	for _, r := range rows {
 		if r[0] != "artifact" {

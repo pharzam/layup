@@ -264,3 +264,17 @@ func TestAUsageFormatOfNoListIsAnError(t *testing.T) {
 		t.Errorf("%v; want the error of the format", err)
 	}
 }
+
+// A stdout that cannot be read gives tokens unavailable, with its reason.
+func TestAStdoutThatCannotBeReadIsUnavailable(t *testing.T) {
+	w, r, _, base := sessionWorld(t)
+	spec := harness(t, base, work(helloSum)+" && rm ../stdout")
+	spec.Pair.Usage = "claude-result"
+	id, err := r.TaskSession(context.Background(), spec)
+	if err != nil {
+		t.Fatalf("TaskSession: %q, %v", id, err)
+	}
+	if tel := show(t, w.bare, "layup-records", "telemetry.tsv"); !strings.Contains(tel, "\tunavailable\tstdout cannot be read\t") {
+		t.Errorf("telemetry.tsv:\n%s", tel)
+	}
+}

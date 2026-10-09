@@ -288,8 +288,11 @@ func (s *Sessions) TaskSession(ctx context.Context, spec TaskSpec) (string, erro
 		}
 		// The comment comes after every record of the session, the push
 		// hook's too (decided here, task T-fsjp, round 1 of #165).
-		if cErr := s.comment(ctx, id); cErr != nil {
-			err = errors.Join(err, cErr)
+		// A lost lease stops the run before any other write (run.md).
+		if !errors.As(err, new(*LostError)) {
+			if cErr := s.comment(ctx, id); cErr != nil {
+				err = errors.Join(err, cErr)
+			}
 		}
 		return id, err
 	}

@@ -133,7 +133,22 @@ end_integration_test.go:264: <nil>; want the error of the format
 end_integration_test.go:192: TaskSession: "S-a44b00c9", git show --end-of-options 44986ca3735c5fdb39dcf86f397c20e6975acd49:none.txt --: exit status 128: fatal: bad revision '44986ca3735c5fdb39dcf86f397c20e6975acd49:none.txt'
 ```
 
-## Green (2026-10-09T19:51Z, again at 20:08Z after the fix of round 1)
+## The close-out: round 2's note 7 (2026-10-09T20:21Z)
+
+`TestAStdoutThatCannotBeReadIsUnavailable`: the fake harness removes
+`stdout` under the usage format `claude-result`. The mutation that gives
+that case the run's own error fails it, in full (the line cut at 300
+characters):
+
+```
+end_integration_test.go:275: TaskSession: "S-50e3de5d", open /tmp/TestAStdoutThatCannotBeReadIsUnavailable922376092/007/sessions/S-50e3de5d/stdout: no such file or directory
+```
+
+Notes 1 and 6 of round 2 (no comment after a lost lease; an error of
+`FetchSession` other than `ErrNotACommit` is the run's own) are guards of
+an error path, with no case of their own here.
+
+## Green (2026-10-09T19:51Z, again at 20:08Z after the fix of round 1, at 20:21Z after the close-out)
 
 Each with exit 0: `go build ./...`, `go vet ./...`, `gofmt -l internal cmd`
 (empty), `go test ./...`, `go test -tags=integration ./...` (with
