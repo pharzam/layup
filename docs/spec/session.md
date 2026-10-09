@@ -35,8 +35,8 @@ A session is started only by `layup run` (ADR-0015 decision 3), through one
 call of `internal/session`, which takes the target, the task and its attempt,
 the role, the base commit, the records commit that the prompt was built from,
 the prompt's text and the admitted pair. In this order: the session ID; the
-attempt check, the version check, the context check and the rule-file check
-(each can refuse the start); the start row, pushed; the process, under its limits; its end; and for a task session the
+attempt check, the version check, the context check, the size check of the
+prompt and the rule-file check (each can refuse the start); the start row, pushed; the process, under its limits; its end; and for a task session the
 checks before a push, the push and the bind ([REQ-003](#req-003--before-a-push)).
 
 ### The session directory
@@ -151,8 +151,10 @@ attempt ([Input states](#input-states)).
    no probe. A
    version command that exits non-zero or prints nothing refuses it
    (`version`). No model is called (NEEDLE, mco: the search).
-3. **[The context check](#the-context-of-a-start)** and **[the rule-file
-   check](#rules-only-from-the-target)**.
+3. **[The context check](#the-context-of-a-start)**; the size check of the
+   prompt: for a row whose `prompt` is `arg`, a `prompt.md` over 131,072 bytes
+   (Linux's limit of one argument) refuses the start (`prompt` and its size);
+   and **[the rule-file check](#rules-only-from-the-target)**.
 4. **The start row**: a row of `sessions.tsv`, and for a task session the event
    `session` of the task, committed and pushed before the process starts
    (**decided here**, survey row 5: a crash leaves a start row with no end,
@@ -161,8 +163,8 @@ attempt ([Input states](#input-states)).
    `{model}`, `{cap}` and `{prompt}` replaced, started in `repo/`, in a process
    group of its own (**decided here**, so that the stop reaches each child). The
    row's `prompt` says how the prompt goes: `file`, `{prompt}` is the path of
-   `prompt.md`; `arg`, `{prompt}` is its text as one word, and a text over
-   131,072 bytes refuses the start (Linux's limit of one argument); `stdin`,
+   `prompt.md`; `arg`, `{prompt}` is its text as one word (its size was checked at
+   step 3); `stdin`,
    the file is the standard input. With `file` and `arg` the standard input is
    empty (survey row 6: `codex exec` waits for its end). `stdout` and `stderr`
    receive the two outputs.
@@ -307,7 +309,7 @@ and the transition table, are `M2e`'s.
 
 ### The open attempt
 
-A result is refused (the event `refused`, `attempt`) unless the attempt of its
+A result is refused (the event `refused`, `closed-attempt`) unless the attempt of its
 start row is still the
 task's open attempt: no row of `tasks/<task>/events.tsv` after the session's
 event `session` is `closed` or `rebased` for that attempt, or `attempt` for
@@ -350,11 +352,12 @@ push; its records are a row of `records:harnesses.tsv`, its start row and its
 telemetry row, or the row of `harnesses.tsv` alone when its start was refused.
 
 It runs at the step `probe` of `layup run`, in the restart after `lease` and
-before `phase` ([`run.md`](run.md#the-restart)), for each harness of the
-register whose version has no passed probe, and before any session whose version
-check finds none. **Decided here:** a harness with no model of `use` `yes` is
-not probed and gets no row, as a probe needs a model; the step counts it as
-skipped. The step is `done` when each such harness was probed, passed or
+before `phase` ([`run.md`](run.md#the-restart)), and before any session whose
+version check finds no passed probe. **Decided here:** the step first skips each
+harness of the register with no model of `use` `yes`, whatever its version, and
+runs no command of it, as a probe needs a model; it gets no row, and the step
+counts it as skipped. Then it probes each other harness whose version has no
+passed probe. The step is `done` when each such harness was probed, passed or
 failed, or skipped, with the three counts in `detail`; it is `fail` when a probe could not run
 its records. **Decided here:** the block `run-steps` is built, so the build task
 of the probe adds `probe` to its enum, with its Go schema, in one change
@@ -442,6 +445,7 @@ gives no usage report (3000.11.3), so its rows use `none`.
 | A `probe.tsv` with no token, another token, or no `AGENTS.md` row | the probe fails, with the reason |
 | `stdout` with no `result` object, or with lines that are not JSON | tokens `unavailable` (the lines that are not JSON are skipped) |
 | A task with no event `attempt` for the session's attempt | the start is refused (`attempt`) |
+| A `prompt.md` over 131,072 bytes for a row whose `prompt` is `arg` | the start is refused (`prompt`), before the start row |
 | A ref of `repo/.git` that is malformed, or whose SHA names no commit of the session's objects | the result is refused (`branch`) |
 | A records push that is refused | the run stops, as [`run.md`](run.md#the-lease-and-fencing) |
 
@@ -503,10 +507,10 @@ Gemini CLI and OpenCode, added when a registered harness needs one.
 | The start, the limit and the end | integration | With a fake harness program: the start row is pushed before the process starts; a fake that waits for the end of its input ends; a fake that runs past `wall` is stopped (`SIGINT`, `SIGTERM`, `SIGKILL`) with the class `wall`; the output cap; each class of the end. |
 | The context of a start | unit | An estimate over the model's context size refuses the start with both numbers. |
 | The result of a session | integration | A result file of the block `result` is committed byte for byte with the event `result`; an artifact whose SHA-256 differs at the head adds the event `refused` (`artifact`); the session ID, the task, the role, the attempt and the base come from the start row. |
-| The open attempt | unit | With a stand-in events table, a result whose attempt was closed, replaced or rebased is refused; the attempt and the base come from the start row; a session with no event `attempt` of its attempt is refused at its start. |
+| The open attempt | unit | With a stand-in events table, a result whose attempt was closed, replaced or rebased is refused (`closed-attempt`); the attempt and the base come from the start row; a session with no event `attempt` of its attempt is refused at its start. |
 | Before a push | integration | With the real `git` and a local bare repository: the head read from the files of `repo/.git` (a loose ref, a packed ref; a link, a symbolic ref, a malformed loose ref, no ref and a SHA of no commit refused); the fetch through the scratch repository with hooks off; a session configuration that holds each key of git's documentation that starts a program runs none of them; a head that does not descend from the base is refused; a change of `.github/workflows/` and of a rule path is refused before any push, its diff a payload; added lines in §2 of `docs/guardrails.md` pass; the SHA is bound only after the push is accepted. |
 | The probe and admission | unit | With a fake harness: the version check; a probe that passes, one that reports a `policy` path and passes, and one that fails for each reason; admission by the probe and `use`; a harness with no model of `use` `yes` is skipped. |
-| A refused start | unit | A refused start of a task session is an event `refused` with its session ID, its reason (`attempt`, `version`, `probe`, `context`, `rules`) and no row of `sessions.tsv` or `telemetry.tsv`; the refusal `pair` has `—` for the session; a probe's refused start is its row of `harnesses.tsv`, `failed`, with `version` `—` when the version check refused it. |
+| A refused start | unit | A refused start of a task session is an event `refused` with its session ID, its reason (`attempt`, `version`, `probe`, `context`, `prompt`, `rules`) and no row of `sessions.tsv` or `telemetry.tsv`; the refusal `pair` has `—` for the session; a probe's refused start is its row of `harnesses.tsv`, `failed`, with `version` `—` when the version check refused it. |
 | The routing register | unit | `host:registers/routing.tsv` is copied into `records:routing.tsv` at the step `probe` when the two differ, and not when they are equal; the session's pair is the first admitted pair of the role's list for the task's tier; with none, the start is refused (`pair`). |
 | The usage report | unit | `claude-result` on two recorded `result` events of Claude Code 2.1.295 (one with subagents and a second model) sums `modelUsage`; `none` gives `unavailable` and `unknown`. |
 | The writer | unit | One row per session that `CheckTelemetry` passes; money `reported`, `computed` or `unknown` by the billing, the prices and the models. |
