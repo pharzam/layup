@@ -440,7 +440,8 @@ started, the probe's included, in the records commit of the session's end, check
   the task's requirement IDs from the task register (`M2e`); `—` before it.
 - `billing`: the row's `billing`.
 - `start`, `first_output`, `end`: `layup run`'s own times: the start of the
-  process, the first byte of `stdout`, the exit or the kill.
+  process, the first byte of `stdout`, and its end, as the column `end` of
+  [`telemetry.tsv`](records.md#req-011--the-telemetry-record) says.
 - the tokens: from [the usage report](#the-usage-report-of-a-harness).
 - the money: `reported` when the harness reports a cost and the billing is
   `api`; else `computed` from the tokens and `host:prices.tsv`: the rows of the

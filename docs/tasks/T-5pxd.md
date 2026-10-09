@@ -47,3 +47,47 @@ starts a program, so its acceptance clause moved to the row at integration.
 
 **The rejected alternatives:** `exec.CommandContext` for the stop (`SIGKILL`
 to one process); a shell to start the command; the waits as constants.
+
+**Linux only.** `exitedUnreaped` calls `waitid` with `WNOWAIT` through
+`syscall.Syscall6`, with Linux's constants and a `siginfo_t` of 128 bytes: the
+module's first `unsafe` (one `unsafe.Pointer`, to that buffer), for the release
+review of row 39a to weigh. With it, and `TestProcessEndsWhenAProgramLeftTheGroup`
+reading `/proc`, this row runs on Linux only; the module was Unix-only before
+(`Setpgid`, `syscall.Stat_t`), and CI runs on `ubuntu-latest`.
+
+## Review rounds
+
+The records are comments on #161. Round 1 (Claude Fable 5.1, effort `xhigh`, a
+fresh read-only session in a clone at `179646f`, cycle 0): `material`. Finding
+1, material: the close of the outputs after `SIGKILL` had no case. Fixed in
+`a7e1bf0` with `TestProcessEndsWhenAProgramLeftTheGroup`, with notes 2 to 5:
+the leader reaped only at the end (`waitid` with `WNOWAIT`), the comment of
+`Version`, the **decided here** markers and row 9, the column `end` of
+`records.md`. Round 2 (the same model and effort, a fresh session at
+`a7e1bf0`, cycle 1, the cap): `nothing material in scope`, four notes. Applied
+in the close-out: note 1 (the `end` of `session.md` points to `records.md`, its
+one home) and note 4 (the paragraph Linux only above). Notes 2 (the tail of an
+output at the kill) and 3 (a limit of the version check) are for the rows that
+call `internal/session`: #189.
+
+## Verdict
+
+Delivered: the process of a session and its stop in `internal/session`:
+`Version`, `Words`, `Prompt`, `NewSpec`, `Process` and `Call`. The review ended
+by decay at cycle 1 of cap 1. The diff against `db4651a`, the branch's base, is
+inside 1,050 lines over 15 files. Next: row 34b.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). UTC, 2026-10-09; reviewers' tokens are
+`modelUsage`; the author's are not reported.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan | reasoning | Claude Opus 5.5 | not reported | not reported | to 14:07 |
+| The plan review | reasoning | Claude Fable 5.1 | `xhigh` | 703,040 (USD 4.75) | 6 min 40 s |
+| The code, test first | execution | Claude Opus 5.5 | not reported | not reported | 17:25 to 17:41 |
+| Round 1 | reasoning | Claude Fable 5.1 | `xhigh` | 1,317,183 (USD 6.19) | 13 min 34 s |
+| The fix of round 1 | execution | Claude Opus 5.5 | not reported | not reported | 17:55 to 18:00 |
+| Round 2 | reasoning | Claude Fable 5.1 | `xhigh` | 900,900 (USD 4.83) | 9 min 30 s |
+| The close-out, with notes 1 and 4 | execution | Claude Opus 5.5 | not reported | not reported | 18:11 to 18:14 |
