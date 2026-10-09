@@ -161,13 +161,13 @@ attempt ([Input states](#input-states)).
    (`attempt`).
 2. **The version.** Code runs the row's `version` command, with the
    environment above and no credential, and takes the first line of its
-   standard output, with no space at either end, as the version. A version whose
+   standard output, with no white space at either end, as the version. A version whose
    last probe passed ([Admission](#admission)) goes on; any other runs
    [the probe](#the-probe) first, and a probe that fails refuses the start
    (`probe`). A probe session's own version check takes the version and runs
    no probe. A
-   version command that exits non-zero or prints nothing refuses it
-   (`version`). No model is called (NEEDLE, mco: the search).
+   version command that exits non-zero, or whose first line is empty or white
+   space only, refuses it (`version`). No model is called (NEEDLE, mco: the search).
 3. **[The context check](#the-context-of-a-start)**; the size check of the
    prompt: for a row whose `prompt` is `arg`, a `prompt.md` over 131,071 bytes
    (Linux's limit of one argument is 131,072 bytes with its final zero byte) refuses the start (`prompt` and its size);
@@ -177,14 +177,19 @@ attempt ([Input states](#input-states)).
    (**decided here**, survey row 5: a crash leaves a start row with no end,
    which the next run finds).
 5. **The process**: the row's `command`, its words split at each space, with
-   `{model}`, `{cap}` and `{prompt}` replaced, started in `repo/`, in a process
+   `{model}`, `{cap}` and `{prompt}` replaced in one pass, so a value that
+   holds a placeholder stays as it is, started in `repo/`, in a process
    group of its own (**decided here**, so that the stop reaches each child). The
    row's `prompt` says how the prompt goes: `file`, `{prompt}` is the path of
    `prompt.md`; `arg`, `{prompt}` is its text as one word (its size was checked at
    step 3); `stdin`,
-   the file is the standard input. With `file` and `arg` the standard input is
+   the file is the standard input, and `{prompt}`, where the command holds
+   it, is the path of `prompt.md` (**decided here**, task `T-5pxd`, condition
+   3 of the plan review of #161; a `file` or `arg` command with no `{prompt}`
+   is #186). With `file` and `arg` the standard input is
    empty (survey row 6: `codex exec` waits for its end). `stdout` and `stderr`
-   receive the two outputs.
+   receive the two outputs. A program that is missing or cannot run starts
+   nothing (the class `start`).
 
 **A refused start** (**decided here**): a refusal of a task session's start is
 an event `refused` of its task, with its session ID and its reason, and no row
@@ -213,13 +218,20 @@ session that starts has both numbers in its start row.
   runs under its wall-clock limit only, and its spend is an unknown part until
   the session ends (§12, ADR-0024 decision 5).
 - **Output cap** (**decided here**): `stdout` and `stderr` are each cut at
-  64 MiB, and a line of `stdout` at 8 MiB; at either cap comes the stop. Reason:
+  64 MiB, and a line of `stdout` (its bytes before its line feed) at 8 MiB;
+  at either cap comes the stop, and the rest of the output is read and
+  dropped. Reason:
   the two longest Claude Code sessions of `T-ywk7` printed 1.2 MB and 6.1 MB,
   with no line over 134 KB ([`test-runs.md`](../../runs/T-ywk7/test-runs.md),
   Measurements), so a cap is far above a real session and still keeps a harness
   that prints with no end from filling the host.
 - **The stop** (survey row 1): `SIGINT` to the process group, `SIGTERM` 10 s
-  later, `SIGKILL` 10 s after that (**decided here**: the two waits).
+  later, `SIGKILL` 10 s after that (**decided here**: the two waits), each
+  only while the process has not ended. **Decided here** (task `T-5pxd`): the
+  process has ended when its first program has exited and both outputs are
+  closed, so a child that holds an output runs under the same limits; after
+  `SIGKILL` and the exit of the first program, the outputs are closed, so a
+  program that left the group cannot hold the end.
 
 ### The end of a session
 
@@ -543,12 +555,12 @@ Gemini CLI and OpenCode, added when a registered harness needs one.
 | The session directory | integration | With the real `git`: `repo/` is a `--no-local` clone of the default branch only, with no remote and no records branch, on `task/<task>/<attempt>` at the base; `home/` holds only `.gitconfig` and a credential of `file:`, and `tmp/` and `result/` start empty; the directory is removed after the session's records are pushed, and one that a stopped run left is removed before the next session. |
 | The environment | unit | The environment holds the named list only (no `GH_TOKEN`, no SSH agent socket, no variable of the host but `PATH`), the credential by `var:` and by `file:`, and the fixed variables; a `vars` name of the named list, the credential's or the list of forge credentials and agent sockets is refused (exit 2). |
 | Rules only from the target | integration | In a real temporary tree, a rule-file name of the row above the session directory refuses the start; a policy path that exists is recorded. |
-| The start, the limit and the end | integration | With a fake harness program: the start row is pushed before the process starts; a fake that waits for the end of its input ends; a fake that runs past `wall` is stopped (`SIGINT`, `SIGTERM`, `SIGKILL`) with the class `wall`; the output cap; each class of the end. |
+| The start, the limit and the end | integration | With a fake harness program: the version check; the start row is pushed before the process starts; a fake that waits for the end of its input ends; a fake that runs past `wall` is stopped (`SIGINT`, `SIGTERM`, `SIGKILL`) with the class `wall`; the output cap; each class of the end. |
 | The context of a start | unit | An estimate over the model's context size refuses the start with both numbers. |
 | The result of a session | integration | A result file of the block `result` is committed byte for byte with the event `result`; an artifact whose SHA-256 differs at the head adds the event `refused` (`artifact`); the session ID, the task, the role, the attempt and the base come from the start row. |
 | The open attempt | unit | With a stand-in events table, a result whose attempt was closed, replaced or rebased is refused (`closed-attempt`); the attempt and the base come from the start row; a session with no event `attempt` of its attempt is refused at its start. |
 | Before a push | integration | With the real `git` and a local bare repository: the head read from the files of `repo/.git` (a loose ref, a packed ref with `git pack-refs`; with a stand-in reader of the files, at unit: a link, a symbolic ref, a malformed loose ref, a packed line of another form and no ref refused; a SHA of no commit refused by `FetchSession`); the fetch through the scratch repository with hooks off; a session configuration that holds each key of git's documentation that starts a program runs none of them; a head that does not descend from the base is refused; a change of `.github/workflows/` and of a rule path is refused before any push, its diff a payload; added lines in §2 of `docs/guardrails.md` pass; the SHA is bound only after the push is accepted. |
-| The probe and admission | unit | With a fake harness: the version check; a probe that passes, one that reports a `policy` path and passes, and one that fails for each reason; admission by the probe and `use`; a harness with no model of `use` `yes` is skipped. |
+| The probe and admission | unit | With a fake harness: a probe that passes, one that reports a `policy` path and passes, and one that fails for each reason; admission by the probe and `use`; a harness with no model of `use` `yes` is skipped. |
 | A refused start | unit | A refused start of a task session is an event `refused` with its session ID, its reason (`attempt`, `version`, `probe`, `context`, `prompt`, `rules`) and no row of `sessions.tsv` or `telemetry.tsv`; the refusal `pair` has `—` for the session; a probe's refused start is its row of `harnesses.tsv`, `failed`, with `version` `—` when the version check refused it. |
 | The routing register | unit | `host:registers/routing.tsv` is copied into `records:routing.tsv` at the step `probe` when the two differ, and not when they are equal; the session's pair is the first admitted pair of the role's list for the task's tier; with none, the start is refused (`pair`). |
 | The usage report | unit | `claude-result` on two recorded `result` events of Claude Code 2.1.295 (one with subagents and a second model) sums `modelUsage`; `none` gives `unavailable` and `unknown`. |

@@ -681,6 +681,13 @@ These traps are not domain-specific: they hurt every project's test suite.
   its inputs, its runner strips them from `EXPECT`, and the suite has a case
   named `*crlf*`, CRLF throughout and pinned `eol=crlf` in `.gitattributes`,
   so `run-discipline-tests.sh` checks that it keeps them.
+- ❌ **A fake whose child cannot see `SIGINT`.** A shell script that starts a
+  child with `&` gives it `SIGINT` and `SIGQUIT` ignored (POSIX, with job
+  control off), and a shell cannot trap a signal ignored at its entry; `trap ''`
+  also passes the ignore to each program it starts. So a test of a stop that
+  signals a whole process group sees no `SIGINT` in the child, and reads it as a
+  defect of the code. Task `T-5pxd` (#161) met it. **The check:** run the child
+  in the foreground, under a parent whose trap is `:`, not `''`.
 
 ### Reference-sweep pitfalls
 
