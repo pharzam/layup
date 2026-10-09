@@ -302,6 +302,18 @@ check that catches it.
   of each row, and bring a row with more than one to the Operator then; a split
   that a slicing review offers is weighed by the goal count, not by a shared
   test. Learned in `T-trej`.
+- ❌ **A harness's own tool runs a model not to use.** In `T-ywk7`, searcher B
+  ran on Claude Opus 5.5 (`claude -p`), and the `modelUsage` of its result event
+  also named `claude-haiku-5-5`, with 4,759,374 input tokens (USD 1.25): Claude
+  Code's `WebFetch` reads each page with that model, which is on the list of
+  models not to use ([Model tiers](engineering-discipline.md#model-tiers)). No
+  message of the session names it, and the top-level `usage` counts the main
+  loop only (53,309 output tokens against 911,458 in `modelUsage`). It is
+  silent because the session ends with success. **The check:** give each
+  `claude -p` run `ANTHROPIC_DEFAULT_HAIKU_MODEL` set to an allowed model (a test
+  run with it used no Haiku), read `modelUsage` after each run, name every model
+  of it in the record, and take the tokens of a resource record from it. Learned
+  in `T-ywk7` ([#147](https://github.com/pharzam/layup/issues/147)).
 
 ### Writing a lesson back
 
