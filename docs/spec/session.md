@@ -67,7 +67,9 @@ checks before a push, the push and the bind ([REQ-003](#req-003--before-a-push))
 - `stdout`, `stderr`: the two outputs of the process.
 
 **Decided here:** `layup run` removes the directory after the session's records
-are pushed, so the clone, the home and a copied credential are thrown away (a
+are pushed (**decided here**, task `T-fsjp`: once its process has started, after
+the session's call ends, whether its end and its push succeed or fail, so a
+copied credential never waits for the next sweep), so the clone, the home and a copied credential are thrown away (a
 session is not resumed across attempts: ADR-0015 decision 5, FT6); a directory
 left by a run that stopped is removed before the next session starts.
 **Decided here** (task `T-vxdg`, condition 1 of the plan review of #159): a run
@@ -362,8 +364,13 @@ event `bound`. A refused push binds nothing: an event `refused` with the detail
 **Decided here:** after its records, each probe and each task session posts one
 comment on the control issue (`issue.control` of `start.tsv`), whose first line
 starts with the session ID and gives its result, for example
-`S-1a2b3c4d: probe of claude 2.1.295: passed`. The task loop of `M2e` moves a
-task's comments to the task's issue.
+`S-1a2b3c4d: probe of claude 2.1.295: passed`. **Decided here** (task
+`T-fsjp`): the first line of a task session's comment is `<session>: <role>
+session of <task>, attempt <n>: <class>`, with `, refused <reason>` after it for
+each refusal of its result, for example `S-1a2b3c4d: developer session of
+T-ab12, attempt 1: done, refused artifact`. The call is the forge's `Comment`
+([`forge.md`](forge.md#the-calls-of-m2b), O-189). The task loop of `M2e` moves
+a task's comments to the task's issue.
 
 ## REQ-005 — The result of a session
 
@@ -379,6 +386,24 @@ the task, the role, the attempt and the base come from the start row, never
 from the file (§3). The questions, the decisions and the lessons of a handoff,
 and the transition table, are `M2e`'s.
 
+**Decided here** (task `T-fsjp`, condition 2 of the plan review of #165): the
+result file is read, checked and committed for the class `done` only, as only a
+session that ends `done` hands its work over; for another class the events and
+the telemetry row are committed, and no `results/` file. The file is read once,
+and the bytes committed are the bytes checked. A link as the last part of its
+path is refused (no file of the host is followed); a link above it, `result/`
+itself, is followed, and the file still has to pass its block, so it is one the
+session could have written. **Decided here** (condition 1 of the plan review
+of #165): the head of the session is read from the files of `repo/.git`
+([The fetch by SHA](#the-fetch-by-sha)) and fetched into `layup run`'s clone
+with `FetchSession` at the end of the session, and each artifact is read there,
+so no command of `layup` runs in `repo/`; a head that cannot be read or fetched
+adds the event `refused`, `branch`, and the result is not committed. An
+artifact whose SHA-256 differs from its file at the head, or whose path the
+head lacks, adds the event `refused`, `artifact`, and the result is still
+committed (**decided here**: "adds"). The result file, the events `result` and
+`refused`, and the telemetry row are one records commit.
+
 ### The open attempt
 
 A result is refused (the event `refused`, `closed-attempt`) unless the attempt of its
@@ -386,7 +411,10 @@ start row is still the
 task's open attempt: no row of `tasks/<task>/events.tsv` after the session's
 event `session` is `closed` or `rebased` for that attempt, or `attempt` for
 another one (§3). **Decided here:** the check reads the events at the run's own
-last pushed records commit, as the run is the one writer.
+last pushed records commit, as the run is the one writer. **Decided here**
+(task `T-fsjp`): a refused result is not committed as `results/<session>.tsv`;
+the event `result` with the class, the event `refused` and the telemetry row
+are.
 
 ## REQ-013 — The probe, admission and routing
 
@@ -541,6 +569,7 @@ gives no usage report (3000.11.3), so its rows use `none`.
 | A task with no event `attempt` for the session's attempt | the start is refused (`attempt`) |
 | A `prompt.md` over 131,071 bytes for a row whose `prompt` is `arg` | the start is refused (`prompt`), before the start row |
 | A ref of `repo/.git` that is malformed, or whose SHA names no commit of the session's objects | the result is refused (`branch`) |
+| A `host:prices.tsv` that is missing | an empty table (**decided here**, task `T-fsjp`): no money is `computed`, so a money that is not `reported` is `unknown` |
 | A records push that is refused | the run stops, as [`run.md`](run.md#the-lease-and-fencing) |
 
 ## NFR-005 — No harness in the engine checks

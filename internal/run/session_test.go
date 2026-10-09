@@ -156,7 +156,7 @@ func TestTheStartRowBeforeTheProcess(t *testing.T) {
 	r, spec := task(store, &calls)
 	store.refuse = 1 // one refused push: Fenced reads the lease and tries once more
 	id, err := r.TaskSession(context.Background(), spec)
-	want := []string{"sweep", "make", "version in /h/sessions/S-1a2b3c4d/repo with /h/sessions/S-1a2b3c4d/tmp", "admit 2.1.295 (Claude Code)", "rules", "process with secret", "end"}
+	want := []string{"sweep", "make", "version in /h/sessions/S-1a2b3c4d/repo with /h/sessions/S-1a2b3c4d/tmp", "admit 2.1.295 (Claude Code)", "rules", "process with secret", "end", "remove /h/sessions/S-1a2b3c4d"}
 	if err != nil || id != "S-1a2b3c4d" || !slices.Equal(calls, want) {
 		t.Fatalf("%q, %v, the calls %q; want %q", id, err, calls, want)
 	}

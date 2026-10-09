@@ -18,7 +18,8 @@ docs/spec/session.md	### The limit of a session	—	34a
 docs/spec/session.md	### The end of a session	—	34b
 docs/spec/session.md	## REQ-003 — Before a push	the checks of a task session whose end is done	37a
 docs/spec/session.md	### The fetch by SHA	the head read from the files of repo/.git	33b
-docs/spec/session.md	### The fetch by SHA	the fetch through FetchSession and the check of the base	37a
+docs/spec/session.md	### The fetch by SHA	the fetch through FetchSession	36b
+docs/spec/session.md	### The fetch by SHA	the check of the base	37a
 docs/spec/session.md	### A workflow or rule-path change	the reader of rule-paths.tsv, the match, the exception of docs/guardrails.md, the refusal of .github/workflows/	32
 docs/spec/session.md	### A workflow or rule-path change	the call before a push, the refused diff as a payload, the proposal	37a
 docs/spec/session.md	### The push and the bind	—	37b
