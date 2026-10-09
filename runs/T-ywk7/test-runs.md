@@ -57,3 +57,17 @@ the eight names in `notYetBuilt` of `internal/tsv/blocks_integration_test.go`:
 `ok  github.com/pharzam/layup/internal/tsv`. `go test -count=1 -tags=integration ./cmd/layup/ ./internal/route/ ./internal/records/`
 passes with the rows of `internal/route`, `internal/run` and `internal/records`
 changed in place.
+
+## Green, on the head before the freeze (2026-10-09)
+
+- `sh runs/T-ywk7/sections.sh`: 28 `ok`, exit 0.
+- `sh runs/T-ywk7/survey.sh`: 11 `ok` (7 `take` with their heading, 4 `reject`), exit 0.
+- `go test -count=1 -tags=integration ./...`: each package `ok`; `go build ./...` and `go vet ./...` clean.
+- `adr-lint`, `prd-lint`, `link-lint`, `run-discipline-tests` (81 passed),
+  `nested-checkout-check`, `setup-check`: exit 0; `git diff --check`: clean.
+- The order of S1: `git log --reverse --format='%h %s' origin/main..HEAD -- runs/T-ywk7/search docs/spec`
+
+```
+0a01743 docs: T-ywk7 the public-solution search of M2b: two blind searchers, the sources and the summary
+8fd76b0 docs: T-ywk7 the specification of M2b: role sessions, the records of a session, the table of M2b
+```
