@@ -302,6 +302,15 @@ check that catches it.
   of each row, and bring a row with more than one to the Operator then; a split
   that a slicing review offers is weighed by the goal count, not by a shared
   test. Learned in `T-trej`.
+- ❌ **A question whose summary its own table contradicts.** The plan of
+  `T-fdaq` (#152) counted the goal classes of each row in a table, then
+  proposed a split "which gives 16 rows of one or two classes each"; by that
+  table, three rows kept three classes. The Operator answered on the summary
+  (O-186), and the plan review found it, so the question was asked again
+  (O-187). It is silent because the table is right and only the sentence over
+  it is wrong. **The check:** before a question goes to the Operator, derive
+  each number of its summary from the table it summarises, row by row, and put
+  the per-row result in the question. Learned in `T-fdaq`.
 - ❌ **A harness's own tool runs a model not to use.** In `T-ywk7`, searcher B
   ran on Claude Opus 5.5 (`claude -p`), and the `modelUsage` of its result event
   also named `claude-haiku-5-5`, with 4,759,374 input tokens (USD 1.25): Claude

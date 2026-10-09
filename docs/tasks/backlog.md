@@ -30,7 +30,24 @@ same summary, dated — rather than deleting it or checking it off.
 - **<ID>** — <one-sentence summary> ([<ADR or doc link>](...); [detail](<id>.md))
 -->
 
-
+- **T-3py1** — Row 28 of `M2b`: the records of a session ([#153](https://github.com/pharzam/layup/issues/153); [the plan](../plan/README.md#the-tasks-of-m2b))
+- **T-y10b** — Row 29 of `M2b`: the package rules of M2b ([#154](https://github.com/pharzam/layup/issues/154); [the plan](../plan/README.md#the-tasks-of-m2b))
+- **T-ysph** — Row 30a of `M2b`: the host registers of M2b ([#155](https://github.com/pharzam/layup/issues/155); [the plan](../plan/README.md#the-tasks-of-m2b))
+- **T-cht1** — Row 30b of `M2b`: admission and the routing order ([#156](https://github.com/pharzam/layup/issues/156); [the plan](../plan/README.md#the-tasks-of-m2b))
+- **T-z5dj** — Row 31 of `M2b`: the calls of M2b of internal/git ([#157](https://github.com/pharzam/layup/issues/157); [the plan](../plan/README.md#the-tasks-of-m2b))
+- **T-m1dx** — Row 32 of `M2b`: the rule-path check before a push ([#158](https://github.com/pharzam/layup/issues/158); [the plan](../plan/README.md#the-tasks-of-m2b))
+- **T-vxdg** — Row 33a of `M2b`: the directory and the environment of a session ([#159](https://github.com/pharzam/layup/issues/159); [the plan](../plan/README.md#the-tasks-of-m2b))
+- **T-6sbe** — Row 33b of `M2b`: the checks before the start of a session ([#160](https://github.com/pharzam/layup/issues/160); [the plan](../plan/README.md#the-tasks-of-m2b))
+- **T-5pxd** — Row 34a of `M2b`: the process of a session and its stop ([#161](https://github.com/pharzam/layup/issues/161); [the plan](../plan/README.md#the-tasks-of-m2b))
+- **T-bpxg** — Row 34b of `M2b`: the end of a session ([#162](https://github.com/pharzam/layup/issues/162); [the plan](../plan/README.md#the-tasks-of-m2b))
+- **T-4c3q** — Row 35 of `M2b`: the writer of the telemetry record ([#163](https://github.com/pharzam/layup/issues/163); [the plan](../plan/README.md#the-tasks-of-m2b))
+- **T-d8t9** — Row 36a of `M2b`: the start of a task session and its refusals ([#164](https://github.com/pharzam/layup/issues/164); [the plan](../plan/README.md#the-tasks-of-m2b))
+- **T-fsjp** — Row 36b of `M2b`: the result and the end of a task session ([#165](https://github.com/pharzam/layup/issues/165); [the plan](../plan/README.md#the-tasks-of-m2b))
+- **T-z027** — Row 37a of `M2b`: the checks before a push ([#166](https://github.com/pharzam/layup/issues/166); [the plan](../plan/README.md#the-tasks-of-m2b))
+- **T-e3sy** — Row 37b of `M2b`: the push and the bind ([#167](https://github.com/pharzam/layup/issues/167); [the plan](../plan/README.md#the-tasks-of-m2b))
+- **T-nxe4** — Row 38 of `M2b`: the step probe ([#168](https://github.com/pharzam/layup/issues/168); [the plan](../plan/README.md#the-tasks-of-m2b))
+- **T-4tjy** — Row 39a of `M2b`: the review of the release of M2b ([#169](https://github.com/pharzam/layup/issues/169); [the plan](../plan/README.md#the-tasks-of-m2b))
+- **T-x7cs** — Row 39b of `M2b`: the demo of M2b (uat) ([#170](https://github.com/pharzam/layup/issues/170); [the plan](../plan/README.md#the-tasks-of-m2b))
 
 ## Next
 
