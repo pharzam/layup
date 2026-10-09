@@ -457,8 +457,8 @@ Requirement: "A deterministic check is preferred to an LLM judgement wherever a
 rule can be checked mechanically; the engine checks make no model call, and the
 `layup` process calls a model only through the smart-if provider." From `M2b`,
 `internal/session` starts a harness: the one model process that `layup` starts
-(ADR-0015 decision 3). **Decided here**, the check that replaces the phase-1
-import rule ([`gate.md`](gate.md#nfr-005--no-model-call-in-the-engine-checks)):
+(ADR-0015 decision 3). **Decided here**, the check that is added beside the
+phase-1 import rule, which stays ([`gate.md`](gate.md#nfr-005--no-model-call-in-the-engine-checks)):
 `TestPackageRules` reads a line of `packages.md`, "The packages of the engine
 checks:", with one code span per package (`internal/psb`, `internal/verify`,
 `internal/gate`; a later engine check adds its own), and checks that no package

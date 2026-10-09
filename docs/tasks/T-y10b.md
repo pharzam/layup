@@ -49,3 +49,40 @@ engine rule inside "May import" (it is on each dependency); the engine breach in
 a package of `netimport` off the engine line (the plan review's first choice;
 the chosen form also shows that the rule reads a file behind a build
 constraint).
+
+## Review rounds
+
+The record is a comment on #154. Round 1 (Claude Fable 5.1, effort `xhigh`, a
+fresh read-only session in a clone at `651a804`, cycle 0): `nothing material in
+scope`, seven notes. Applied in the close-out: notes 1 and 2 (`packages.md`: the
+two general sentences point to the register row's form; the refusals of the
+engine line); note 3 (`TestPackageRules` fails when a span of the engine line
+names no package of the module); note 4 (the tolerance of `internal/psb` is
+`netimport`'s only); note 5 (the comments of `netimport`); note 6 (`session.md`:
+the engine rule is added beside the phase-1 import rule, which stays). Declined:
+note 7 (the Task cell of `NFR-005` keeps `M2b`, as the cell of `NFR-001` keeps
+`M2a`, the convention of §12). The branch took `origin/main` (the merge of #172)
+by a merge, so the reviewed head stays.
+
+## Verdict
+
+Delivered: `TestPackageRules` reads the table of `M2b` and the line of the
+engine checks, refuses a package of the engine checks that depends on
+`internal/session` or a package of rule 5, and reads the form of a register row.
+The review ended by decay at cycle 0 of cap 1. The diff against `8d2fa2e` is
+inside 700 lines over 17 files. Next: rows 32, 33a, 33b, 34a, 34b and 35 build
+the packages of the table of `M2b` under this check.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). Times are UTC, 2026-10-09; the reviewers'
+tokens are `modelUsage` of the CLI's `result` event; the author's are not
+reported.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan | reasoning | Claude Opus 5.5 | not reported | not reported | 11:48 to 11:52 |
+| The plan review | reasoning | Claude Fable 5.1, Claude Code CLI | `xhigh` | 875,673 (USD 5.92) | 7 min 31 s, from 11:52 |
+| The answer; the tests, red; the checker; the documents | execution | Claude Opus 5.5, a reasoning-tier model on an execution part | not reported | not reported | 12:00 to 12:08 |
+| Round 1 | reasoning | Claude Fable 5.1, Claude Code CLI | `xhigh` | 970,402 (USD 4.71) | 8 min 28 s, from 12:08 |
+| The close-out, with notes 1 to 6 | execution | Claude Opus 5.5 | not reported | not reported | 12:30 to 12:34 |

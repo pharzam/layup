@@ -41,6 +41,11 @@ func TestPackageRules(t *testing.T) {
 	if len(real.sources["internal/git"]) == 0 || len(real.sources["cmd/layup"]) == 0 {
 		t.Fatal("no source of internal/git or cmd/layup was read, so the scan checks nothing")
 	}
+	for _, p := range engine {
+		if _, ok := real.sources[p]; !ok {
+			t.Errorf("the line of the engine checks names %s, which is no package of the module", p)
+		}
+	}
 	if f := checkRules(rows, adapter, engine, real); len(f) != 0 {
 		t.Errorf("the module breaks the package rules:\n%s", strings.Join(f, "\n"))
 	}
@@ -57,7 +62,8 @@ func TestPackageRules(t *testing.T) {
 			}
 		}
 		for _, s := range f {
-			if !slices.Contains(want, s) && !strings.HasPrefix(s, "rule 5: internal/psb depends on ") && !strings.HasPrefix(s, "engine checks: internal/psb depends on ") {
+			psb := fixture == "netimport" && (strings.HasPrefix(s, "rule 5: internal/psb depends on ") || strings.HasPrefix(s, "engine checks: internal/psb depends on "))
+			if !slices.Contains(want, s) && !psb {
 				t.Errorf("%s breaks another rule too: %s", fixture, s)
 			}
 		}

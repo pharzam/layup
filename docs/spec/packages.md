@@ -59,7 +59,7 @@ future Go gate of LAYUP reads this table.
 "May import" is one or more code spans with a comma between two; for none, the
 cell is the character — and no code span. "Starts a program" is exactly one
 code span at the start of the cell, whose first word is the program, and text
-with no code span after it; for none, the cell is the word no and no code
+with no code span after it (a register row's cell is its own form, [below](#the-table-of-m2b)); for none, the cell is the word no and no code
 span. Reason: the [test of the package rules](#the-test-of-the-package-rules)
 reads this table, and holds no copy of it, which could differ from it.
 
@@ -161,7 +161,9 @@ The packages of the engine checks: `internal/psb`, `internal/verify`, `internal/
 **The rule of the engine checks** (NFR-005, task `T-y10b`): no package of that
 line depends on `internal/session` or on a package of rule 5, by any path; the
 rule reads no cell, so a cell Connects cannot lift it. A later engine check adds
-its package to the line.
+its package to the line. No such line, two such lines, a line with no code span,
+or a span that names no package of the module is an error of the test, so the
+rule never passes with a package left out.
 
 **A register row.** A cell "Starts a program" that is exactly one code span, one
 space and the words "(the command of a harness register row)" makes the row a
@@ -202,8 +204,9 @@ in that package.
   `go list -e -deps -json`.
 - Rule 3 and "Starts a program" come from a `go/ast` scan of each non-test Go
   file. A program starts with `exec.Command` or `exec.CommandContext` and a
-  string literal that is the program of the row. Each other start that the
-  scan finds is a defect: `os.StartProcess`, `syscall.Exec`,
+  string literal that is the program of the row, or, in a register row, a
+  program that is not a string literal ([the table of M2b](#the-table-of-m2b)).
+  Each other start that the scan finds is a defect: `os.StartProcess`, `syscall.Exec`,
   `syscall.ForkExec`, `syscall.StartProcess`, and an `exec.Cmd` that the code
   makes itself, whose program the scan cannot read. The scan does not read
   cgo code or a raw system call.
