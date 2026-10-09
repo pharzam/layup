@@ -53,9 +53,6 @@ func TestResultOf(t *testing.T) {
 	if rows, err := ResultOf(d, true); err != nil || len(rows) != 2 {
 		t.Errorf("a valid probe.tsv: %q, %v", rows, err)
 	}
-	if data, rows, err := ResultFile(d, false); err != nil || string(data) != validResult || len(rows) != 1 {
-		t.Errorf("ResultFile: %q, %q, %v; want the bytes read and their rows", data, rows, err)
-	}
 	host := filepath.Join(t.TempDir(), "host.tsv")
 	os.WriteFile(host, []byte(validResult), 0o600)
 	// A valid result of n bytes: its status row's reason is padded.

@@ -21,6 +21,10 @@ and `internal/run`'s tests), which each gained `Comment`.
 vet: internal/run/end_test.go:37:13: undefined: openAttempt
 ```
 
+The test was then moved into `internal/run/session_test.go`, the unit tests
+of the same package, to keep the change inside the plan review's count of
+files; the four mutations of `openAttempt` below were run again with it there.
+
 ## The integration tests of the end
 
 They were written after `end.go` (a deviation, as in row 36a), so their red is
@@ -38,16 +42,16 @@ where a line is longer:
 
 ```
 == open-closed: openAttempt: a closed or rebased of its attempt does not close it (exit 1)
-end_test.go:38: a closed of its attempt after: true, want false
-end_test.go:38: a rebased of its attempt after: true, want false
+session_test.go:301: a closed of its attempt after: true, want false
+session_test.go:301: a rebased of its attempt after: true, want false
 == open-other: openAttempt: an attempt of another does not close it (exit 1)
-end_test.go:38: an attempt of another after: true, want false
+session_test.go:301: an attempt of another after: true, want false
 == open-before: openAttempt: an event before the session's counts (exit 1)
-end_test.go:38: a closed of another attempt after: false, want true
-end_test.go:38: a closed of its attempt before: false, want true
-end_test.go:38: no event session: true, want false
+session_test.go:301: a closed of another attempt after: false, want true
+session_test.go:301: a closed of its attempt before: false, want true
+session_test.go:301: no event session: true, want false
 == open-none: openAttempt: no event session is open (exit 1)
-end_test.go:38: no event session: true, want false
+session_test.go:301: no event session: true, want false
 == end-open: endTask: no open-attempt check (exit 1)
 end_integration_test.go:177: the events:
 end_integration_test.go:180: a results/ file of a closed attempt
