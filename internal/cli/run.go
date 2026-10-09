@@ -86,8 +86,8 @@ func startInputs(in call) (lrun.Config, *rsa.PrivateKey, error) {
 	return cfg, key, nil
 }
 
-// hostInputs checks OWNER/NAME, the host directory, its two registers, the
-// key file and git, and builds the Config that Start and the restart share.
+// hostInputs checks OWNER/NAME, the host directory, its four registers, the
+// key file, each harness credential and git, and builds the Config that Start and the restart share.
 func hostInputs(in call, target string) (lrun.Config, *rsa.PrivateKey, error) {
 	owner, name, ok := strings.Cut(target, "/")
 	if !ok || owner == "" || name == "" || strings.ContainsAny(name, "/ ") || strings.Contains(owner, " ") {
@@ -108,9 +108,12 @@ func hostInputs(in call, target string) (lrun.Config, *rsa.PrivateKey, error) {
 	if data, err = os.ReadFile(filepath.Join(dir, "registers", "harnesses.tsv")); err != nil {
 		return lrun.Config{}, nil, err
 	}
-	harnesses, _, err := route.ReadHarnesses(data)
+	harnesses, ids, err := route.ReadHarnesses(data)
 	if err != nil {
 		return lrun.Config{}, nil, fmt.Errorf("%s: %w", filepath.Join(dir, "registers", "harnesses.tsv"), err)
+	}
+	if err := checkRegistersOfM2b(dir, harnesses, ids); err != nil {
+		return lrun.Config{}, nil, err
 	}
 	key, err := forge.CheckKeyFile(reg.KeyFile)
 	if err != nil {
@@ -129,6 +132,45 @@ func hostInputs(in call, target string) (lrun.Config, *rsa.PrivateKey, error) {
 	}
 	return lrun.Config{Owner: owner, Name: name, Dir: dir, Register: reg, Harnesses: harnesses, Clock: realClock{},
 		RunID: hex.EncodeToString(id), HostName: host, Version: Version, Baseline: pinSource, LayupPin: pinCommit}, key, nil
+}
+
+// checkRegistersOfM2b reads registers/models.tsv and registers/routing.tsv,
+// checks the three registers across their files, and checks the credential
+// file of each harness row that names one (docs/spec/session.md, Input
+// states, rows 1 to 7). Config keeps no field for them yet: the row that
+// consumes them adds it (task T-ysph, #155). Each error names its file.
+func checkRegistersOfM2b(dir string, harnesses [][]string, ids []string) error {
+	read := func(name string, reader func([]byte) ([][]string, error)) ([][]string, error) {
+		path := filepath.Join(dir, "registers", name)
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return nil, err
+		}
+		rows, err := reader(data)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", path, err)
+		}
+		return rows, nil
+	}
+	models, err := read("models.tsv", route.ReadModels)
+	if err != nil {
+		return err
+	}
+	routing, err := read("routing.tsv", route.ReadRoutingRegister)
+	if err != nil {
+		return err
+	}
+	if err := route.CheckRegisters(ids, models, routing); err != nil {
+		return fmt.Errorf("%s: %w", filepath.Join(dir, "registers"), err)
+	}
+	for _, r := range harnesses {
+		if credential := r[6]; credential != "" {
+			if err := route.CheckCredential(credential); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 // readBriefFile reads a brief: a readable file of valid UTF-8 (docs/spec/run.md,

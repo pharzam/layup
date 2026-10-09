@@ -505,7 +505,14 @@ These traps are not domain-specific: they hurt every project's test suite.
   test needs some code, not each rule of it: in task `T-8ya0` (#88) two cases
   passed with a wrong lower-case rule and a wrong word position, because the test
   text was shorter in lower case and the extra finding had the text of a real one.
-  For each rule, break that rule alone (a mutation) and watch its case fail.
+  For each rule, break that rule alone (a mutation) and watch its case fail. And
+  give each case a fixture that breaks no second rule at the same column: in task
+  `T-ysph` (#155) an empty `command` on a row with a cap was refused by the rule
+  of `{cap}` too, so dropping the rule of the empty value left the case green,
+  and a lone position `0` was refused by the rule of a gap as well as by the rule
+  it named; move the case to a fixture where only its rule can refuse it, or
+  assert the line as well as the column. When a mutation record is cut to a few
+  lines, say so, or it reads as fewer failing cases than ran.
 - ❌ **Stale tests after a requirement changes.** When a requirement changes but its
   test does not, the suite now guards the old behaviour and blocks the new. The
   check: the [old-tests conflict rule](engineering-discipline.md#testing) — fix the
