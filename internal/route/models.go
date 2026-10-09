@@ -82,6 +82,9 @@ func ReadRoutingRegister(data []byte) ([][]string, error) {
 			lists = append(lists, k)
 		}
 		p, _ := strconv.Atoi(f["position"])
+		if p < 1 {
+			return nil, &tsv.Error{Line: i + 2, Column: "position", Reason: "a position is 1 or more"}
+		}
 		count[k]++
 		if p > most[k] {
 			most[k], line[k] = p, i+2

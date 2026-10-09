@@ -66,6 +66,10 @@ func TestRoutingRegisterRefusesEachBrokenRule(t *testing.T) {
 	}
 	_, err := ReadRoutingRegister(table(routingHeader, row, "developer\texecution\t3\tdevin\tswe-2-high"))
 	refusedAt(t, "a gap in the positions", err, "position")
+	_, err = ReadRoutingRegister(table(routingHeader, "developer\texecution\t0\tclaude\tclaude-opus-5-5", "developer\texecution\t2\tdevin\tswe-2-high"))
+	refusedAt(t, "a position 0 beside a position 2", err, "position")
+	_, err = ReadRoutingRegister(table(routingHeader, "developer\texecution\t0\tclaude\tclaude-opus-5-5"))
+	refusedAt(t, "a lone position 0", err, "position")
 }
 
 // The checks across the three registers (session.md, Input states, row 7; the
@@ -123,11 +127,5 @@ func TestCheckCredentialFile(t *testing.T) {
 		if err := checkCredentialFile(path, c.mode, c.owner, c.runner); err == nil || !strings.Contains(err.Error(), path) {
 			t.Errorf("%s: %v; want an error that names the file", name, err)
 		}
-	}
-	if err := CheckCredential("claude.key"); err == nil || !strings.Contains(err.Error(), "claude.key") {
-		t.Errorf("a relative path: %v; want an error that names it", err)
-	}
-	if err := CheckCredential("/nonexistent/claude.key"); err == nil || !strings.Contains(err.Error(), "/nonexistent/claude.key") {
-		t.Errorf("a missing file: %v; want an error that names it", err)
 	}
 }

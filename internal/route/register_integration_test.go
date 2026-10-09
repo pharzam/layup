@@ -5,6 +5,7 @@ package route
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/pharzam/layup/internal/tsv"
@@ -46,5 +47,12 @@ func TestCheckCredentialOnARealFile(t *testing.T) {
 	}
 	if err := CheckCredential(path); err == nil {
 		t.Error("a file of mode 0644: no error")
+	}
+	if err := CheckCredential("claude.key"); err == nil || !strings.Contains(err.Error(), "claude.key") {
+		t.Errorf("a relative path: %v; want an error that names it", err)
+	}
+	missing := filepath.Join(t.TempDir(), "none.key")
+	if err := CheckCredential(missing); err == nil || !strings.Contains(err.Error(), missing) {
+		t.Errorf("a missing file: %v; want an error that names it", err)
 	}
 }

@@ -80,8 +80,10 @@ func TestHarnessRegisterRefusesEachBrokenRule(t *testing.T) {
 			t.Errorf("%s: %v; want an error that names its line", name, err)
 		}
 	}
+	// On plainRow, which has no cap, so the rule of {cap} cannot refuse an
+	// empty command for it (round 1 of #155, finding 2).
 	for _, c := range []string{"wall", "command", "prompt", "version", "rules", "usage", "billing"} {
-		_, _, err := ReadHarnesses(harnesses(field(harnessHeader, claudeRow, c, "—")))
+		_, _, err := ReadHarnesses(harnesses(field(harnessHeader, plainRow, c, "—")))
 		refusedAt(t, "the empty value in "+c, err, c)
 	}
 	for _, c := range []struct{ name, row, column string }{

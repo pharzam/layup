@@ -86,8 +86,8 @@ func startInputs(in call) (lrun.Config, *rsa.PrivateKey, error) {
 	return cfg, key, nil
 }
 
-// hostInputs checks OWNER/NAME, the host directory, its two registers, the
-// key file and git, and builds the Config that Start and the restart share.
+// hostInputs checks OWNER/NAME, the host directory, its four registers, the
+// key file, each harness credential and git, and builds the Config that Start and the restart share.
 func hostInputs(in call, target string) (lrun.Config, *rsa.PrivateKey, error) {
 	owner, name, ok := strings.Cut(target, "/")
 	if !ok || owner == "" || name == "" || strings.ContainsAny(name, "/ ") || strings.Contains(owner, " ") {
