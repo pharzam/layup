@@ -653,7 +653,6 @@ func TestTheReadsOfM2b(t *testing.T) {
 	if err != nil || !strings.Contains(string(patch), "GIT binary patch") {
 		t.Fatalf("DiffBinary: %v\n%s", err, patch)
 	}
-	must(t, os.WriteFile(filepath.Join(t.TempDir(), "x"), nil, 0o644))
 	back := t.TempDir()
 	gitOK(t, "", plain(home), "clone", "-q", runClone, back)
 	gitOK(t, back, plain(home), "checkout", "-q", base)
@@ -665,19 +664,32 @@ func TestTheReadsOfM2b(t *testing.T) {
 	}
 }
 
-// hostileKeys are the keys of git-config(1) of the host's git (2.47.3 on the
-// LAYUP host of T-z5dj) that name a program or a shell command, with a marker
-// program each; each driver key has a driver of its own, so one key does not
-// hide another. live are the ones that a plain read in the clone fires on this
-// host (the control shows each); the others no plain read fires, so their
-// absence after FetchSession is asserted, not shown live.
+// hostileKeys are the keys that `git help --config` of the host's git lists
+// (2.47.3 on the host of task T-z5dj; the Operator's host has 2.54.0) and that
+// name a program or a shell command, each with a marker program of its own
+// name; each driver key has a driver of its own, so one key does not hide
+// another. A key that only picks a tool (help.browser, web.browser,
+// instaweb.browser, diff.tool, merge.tool) reaches a program only through a key
+// of the list. live are the ones that a plain read in the clone fires on this
+// host (the control shows each); notLive are the ones that no plain read fires,
+// so their absence after FetchSession is asserted, not shown live.
+// remote.v.vcs names a helper git-remote-<vcs> of the PATH, not a path, so it
+// has no marker.
 var (
 	hostileKeys = []string{"core.fsmonitor", "core.hooksPath", "core.sshCommand", "core.askPass", "core.editor", "core.pager",
 		"credential.helper", "diff.external", "diff.x.command", "diff.t.textconv", "filter.y.clean", "filter.y.smudge",
 		"filter.p.process", "merge.x.driver", "uploadpack.packObjectsHook", "sequence.editor", "gpg.program",
-		"remote.origin.uploadpack", "remote.origin.receivepack", "remote.ext.url", "core.alternateRefsCommand", "include.path"}
+		"remote.origin.uploadpack", "remote.origin.receivepack", "remote.ext.url", "core.alternateRefsCommand", "include.path",
+		"includeIf.path", "alias.y", "core.gitProxy", "browser.x.cmd", "browser.x.path", "difftool.x.cmd", "mergetool.x.cmd",
+		"man.x.cmd", "man.x.path", "guitool.x.cmd", "gc.recentObjectsHook", "gpg.ssh.program", "gpg.ssh.defaultKeyCommand",
+		"imap.tunnel", "instaweb.httpd", "interactive.diffFilter", "pager.status", "sendemail.ccCmd", "sendemail.headerCmd",
+		"sendemail.toCmd", "sendemail.smtpServer", "submodule.x.update", "remote.v.vcs"}
 	notLive = []string{"core.sshCommand", "core.askPass", "core.editor", "core.pager", "credential.helper",
-		"uploadpack.packObjectsHook", "sequence.editor", "gpg.program", "remote.origin.receivepack", "merge.x.driver"}
+		"uploadpack.packObjectsHook", "sequence.editor", "gpg.program", "remote.origin.receivepack", "merge.x.driver",
+		"browser.x.cmd", "browser.x.path", "difftool.x.cmd", "mergetool.x.cmd", "man.x.cmd", "man.x.path", "guitool.x.cmd",
+		"gc.recentObjectsHook", "gpg.ssh.program", "gpg.ssh.defaultKeyCommand", "imap.tunnel", "instaweb.httpd",
+		"interactive.diffFilter", "pager.status", "sendemail.ccCmd", "sendemail.headerCmd", "sendemail.toCmd",
+		"sendemail.smtpServer", "submodule.x.update", "remote.v.vcs"}
 )
 
 // arm writes into the clone at dir a configuration that holds each hostile
@@ -701,6 +713,8 @@ func arm(t *testing.T, dir, marks, up string) {
 	}
 	include := filepath.Join(t.TempDir(), "included")
 	write(t, "/", map[string]string{strings.TrimPrefix(include, "/"): "[alias]\n\tx = !" + prog("include.path") + "\n"})
+	includeIf := filepath.Join(t.TempDir(), "includedIf")
+	write(t, "/", map[string]string{strings.TrimPrefix(includeIf, "/"): "[alias]\n\tz = !" + prog("includeIf.path") + "\n"})
 	cfg := "[core]\n\tfsmonitor = " + prog("core.fsmonitor") + "\n\thooksPath = " + hooks + "\n\tsshCommand = " + prog("core.sshCommand") +
 		"\n\taskPass = " + prog("core.askPass") + "\n\teditor = " + prog("core.editor") + "\n\tpager = " + prog("core.pager") +
 		"\n\talternateRefsCommand = " + prog("core.alternateRefsCommand") +
@@ -716,7 +730,20 @@ func arm(t *testing.T, dir, marks, up string) {
 		"\n[remote \"origin\"]\n\turl = " + up + "\n\tuploadpack = " + prog("remote.origin.uploadpack") + "\n\treceivepack = " + prog("remote.origin.receivepack") +
 		"\n[remote \"up\"]\n\turl = " + up +
 		"\n[remote \"ext\"]\n\turl = ext::" + prog("remote.ext.url") +
-		"\n[protocol \"ext\"]\n\tallow = always\n[include]\n\tpath = " + include + "\n"
+		"\n[protocol \"ext\"]\n\tallow = always\n[include]\n\tpath = " + include +
+		"\n[includeIf \"gitdir:" + dir + "/\"]\n\tpath = " + includeIf +
+		"\n[alias]\n\ty = !" + prog("alias.y") +
+		"\n[core]\n\tgitProxy = " + prog("core.gitProxy") + "\n[remote \"gp\"]\n\turl = git://layup.invalid/x" +
+		"\n[browser \"x\"]\n\tcmd = " + prog("browser.x.cmd") + "\n\tpath = " + prog("browser.x.path") +
+		"\n[difftool \"x\"]\n\tcmd = " + prog("difftool.x.cmd") + "\n[mergetool \"x\"]\n\tcmd = " + prog("mergetool.x.cmd") +
+		"\n[man \"x\"]\n\tcmd = " + prog("man.x.cmd") + "\n\tpath = " + prog("man.x.path") +
+		"\n[guitool \"x\"]\n\tcmd = " + prog("guitool.x.cmd") + "\n[gc]\n\trecentObjectsHook = " + prog("gc.recentObjectsHook") +
+		"\n[gpg \"ssh\"]\n\tprogram = " + prog("gpg.ssh.program") + "\n\tdefaultKeyCommand = " + prog("gpg.ssh.defaultKeyCommand") +
+		"\n[imap]\n\ttunnel = " + prog("imap.tunnel") + "\n[instaweb]\n\thttpd = " + prog("instaweb.httpd") +
+		"\n[interactive]\n\tdiffFilter = " + prog("interactive.diffFilter") + "\n[pager]\n\tstatus = " + prog("pager.status") +
+		"\n[sendemail]\n\tccCmd = " + prog("sendemail.ccCmd") + "\n\theaderCmd = " + prog("sendemail.headerCmd") +
+		"\n\ttoCmd = " + prog("sendemail.toCmd") + "\n\tsmtpServer = " + prog("sendemail.smtpServer") +
+		"\n[submodule \"x\"]\n\tupdate = !" + prog("submodule.x.update") + "\n[remote \"v\"]\n\tvcs = layup-hostile\n"
 	f, err := os.OpenFile(filepath.Join(dir, ".git", "config"), os.O_APPEND|os.O_WRONLY, 0)
 	must(t, err)
 	_, err = f.WriteString(cfg)
@@ -762,7 +789,7 @@ func TestAHostileSessionRunsNothing(t *testing.T) {
 			"a.txt": "changed\n", "t.txt": "t\n", "z.txt": "z\n", "b.y": "y\n", "c.p": "p\n"})
 		gitIn(dir, env, "add", "-N", "t.txt", "z.txt")
 		for _, read := range [][]string{{"status"}, {"diff", "--", "a.txt"}, {"diff", "--no-ext-diff", "--", "t.txt"}, {"diff", "--", "z.txt"}, {"add", "b.y"}, {"add", "c.p"}, {"commit", "-q", "-m", "x", "--", "a.txt"},
-			{"x"}, {"fetch", "origin"}, {"fetch", "ext"}, {"fetch", "up"}} {
+			{"x"}, {"z"}, {"y"}, {"fetch", "origin"}, {"fetch", "ext"}, {"fetch", "up"}, {"fetch", "gp"}} {
 			gitIn(dir, env, read...) // a read may fail: the marker is the evidence
 		}
 		must(t, os.Remove(filepath.Join(dir, "b.y")))

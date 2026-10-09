@@ -26,10 +26,10 @@ of #152.
 2. **D2:** `FetchSession` and `ErrNotACommit`: a scratch bare repository whose
    alternate is the session's object directory, `cat-file -t`, `update-ref`, and
    the fetch with an empty hooks directory; no `git` runs in the session's clone.
-   `TestAHostileSessionRunsNothing` writes 22 program-starting keys of
-   `git-config(1)` (git 2.47.3) into the session's configuration, each with a
-   marker named for it; a control shows, by plain reads in a copy, that twelve of
-   them fire on this host, and `FetchSession` fires none.
+   `TestAHostileSessionRunsNothing` writes the 45 program-starting keys that
+   `git help --config` of git 2.47.3 lists into the session's configuration,
+   each with a marker named for it; a control shows, by plain reads in a copy,
+   that 15 of them fire on this host, and `FetchSession` fires none.
 3. **D3:** `packages.md` ("The calls of `M2b`": `ErrNotACommit`, the scratch
    directories, the directories of the commands, the refusal of a branch, the
    known limit of `--update-head-ok`); `traceability.md`; the Test cells of
@@ -40,11 +40,10 @@ calls (no compile); the control red three times until each key had its own
 driver; red with a `FetchSession` that ran `git` in the session (the hostile
 test found `core.fsmonitor` and `filter.y.clean`); green after.
 
-**Known limits.** The list of keys is that of `git-config(1)` of 2.47.3; a key
-that a later `git` adds is not in it. Ten keys (`core.sshCommand`,
-`core.askPass`, `core.editor`, `core.pager`, `credential.helper`,
-`uploadpack.packObjectsHook`, `sequence.editor`, `gpg.program`,
-`remote.origin.receivepack`, `merge.x.driver`) are asserted, not shown live. A
+**Known limits.** The list of keys is that of `git help --config` of 2.47.3; a
+key that a later `git` adds is not in it. Thirty keys are asserted, not shown
+live (the test's `notLive`), and `remote.<name>.vcs` names a helper of the
+`PATH`, so it has no marker. A
 `DST` that is the branch of `HEAD` of `dir` is refused by `git`.
 
 **The rejected alternatives:** a fetch from the session's clone (its

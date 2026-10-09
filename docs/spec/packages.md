@@ -265,8 +265,8 @@ takes a token.
 
 | Call | The command, after the `-c` values below | Used by |
 | ---- | ---------------------------------------- | ------- |
-| `CloneLocal` | `git clone --no-local --no-checkout --single-branch --no-tags --branch BRANCH -- SRC DIR`, then `git -C DIR remote remove origin` | the clone of a session, `repo/` |
-| `FetchSession` | `git init --bare -- TMP`; the object directory of the session's `.git` as the one line of `TMP/objects/info/alternates`; `git -C TMP cat-file -t SHA`, which must print `commit`, else the result is refused (`branch`); `git -C TMP update-ref refs/heads/session SHA`; `git -c core.hooksPath=EMPTY fetch --no-tags --no-write-fetch-head -- TMP refs/heads/session:DST`, where `EMPTY` is an empty directory; `TMP` removed | the fetch of a session's head into `layup run`'s clone, with no command in the session's clone |
+| `CloneLocal` | `git clone --no-local --no-checkout --single-branch --no-tags --branch BRANCH -- SRC DIR`, then, in `DIR`, `git remote remove origin` | the clone of a session, `repo/` |
+| `FetchSession` | `git init --bare -- TMP`; the object directory of the session's `.git` as the one line of `TMP/objects/info/alternates`; in `TMP`, `git cat-file -t SHA`, which must print `commit`, else the result is refused (`branch`); in `TMP`, `git update-ref refs/heads/session SHA`; `git -c core.hooksPath=EMPTY fetch --no-tags --no-write-fetch-head -- TMP refs/heads/session:DST`, where `EMPTY` is an empty directory; `TMP` removed | the fetch of a session's head into `layup run`'s clone, with no command in the session's clone |
 | `IsAncestor` | `git merge-base --is-ancestor BASE HEAD`; exit 1 is "no", not an error | the check that a session's head descends from its base |
 | `DiffFile` | `git diff -U0 --no-color --no-renames --end-of-options BASE HEAD -- PATH` | the exception of `docs/guardrails.md` before a push |
 | `DiffBinary` | `git diff --binary --no-renames --end-of-options BASE HEAD --` | the payload of a refused diff |
@@ -281,8 +281,7 @@ takes a token.
 - A SHA that names no commit, whether `cat-file -t` prints another type or exits
   non-zero (an absent object), is `ErrNotACommit` in the `Err` of a
   `*FailedError` (task `T-z5dj`); `TMP` and `EMPTY` are removed on each return,
-  a refusal included. Each command of `TMP` runs with `TMP` as its directory,
-  and `remote remove` with `DIR` as its, not with `-C`. `CloneLocal` refuses an
+  a refusal included. `CloneLocal` refuses an
   empty `BRANCH` or one that starts with `-` before `git` starts. **Known
   limit:** `FetchSession` has no `--update-head-ok`, so a `DST` that is the
   branch of `HEAD` of `dir` is refused by `git`; `layup run`'s clone is on
@@ -406,7 +405,7 @@ first version with `GIT_CONFIG_GLOBAL` (the release notes of git 2.32.0, in
 It also covers `switch` (2.23), `init -b` (2.28) and `--end-of-options`
 (2.24; for `rev-parse`, 2.30). `internal/git` gives the
 version (`Version`) and its test (`Supported`); the packages that import it
-check it. The LAYUP host has 2.54.0; no test runs 2.32.0, so the minimum rests
+check it. The Operator's LAYUP host has 2.54.0, and the host of the build tasks of `M2b` has 2.47.3 (task `T-z5dj`); no test runs 2.32.0, so the minimum rests
 on the release notes.
 
 ### The components of phase 1

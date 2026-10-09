@@ -26,3 +26,29 @@ On a copy of `git.go` (put back after), `FetchSession` ran `git status` in the s
 ## Green (2026-10-09T12:20Z)
 
 Each with exit 0 on the tree of the commit `feat: T-z5dj …`: `go build ./...`, `go vet ./...`, `gofmt -l internal cmd` (empty), `go test ./...`, `go test -tags=integration ./...`; `adr-lint`, `prd-lint`, `link-lint`, `setup-check`, `run-discipline-tests`, `git diff --check`.
+
+## The fix of round 1 (2026-10-09T12:38Z)
+
+Finding 1: the list of keys is now the keys that `git help --config` of git 2.47.3 lists and that name a program or a shell command, 45 in all (a key that only picks a tool reaches a program through a key of the list); the control fires 15 of them on this host (with `git y`, `git z` for `includeIf.path`, and `git fetch gp` for `core.gitProxy`), and `FetchSession` fires none. `includeIf` needed the pattern `gitdir:<work tree>/`; `gitdir:<work tree>/.git/` did not match on 2.47.3, tried by hand.
+
+Note 3, a mutation red for each other call (on a copy of `git.go`, put back after):
+
+```
+== noremove
+--- FAIL: TestCloneLocal (0.04s)
+--- FAIL: TestCloneLocalRemovesItsRemote (0.00s)
+== local
+--- FAIL: TestCloneLocalRemovesItsRemote (0.00s)
+== context
+--- FAIL: TestEachCallRunsItsVerb (0.00s)
+    --- FAIL: TestEachCallRunsItsVerb/diff_-U0_of_one_file (0.00s)
+== binary
+--- FAIL: TestEachCallRunsItsVerb (0.00s)
+    --- FAIL: TestEachCallRunsItsVerb/diff_--binary (0.00s)
+--- FAIL: TestTheReadsOfM2b (0.07s)
+== isancestor (exit 1 read as an error)
+--- FAIL: TestIsAncestorReadsTheExitCode (0.00s)
+--- FAIL: TestTheReadsOfM2b (0.11s)
+```
+
+The mutation `local` (no `--no-local`) is caught by the unit test only: a local clone hard-links its objects, so `TestCloneLocal` reads the log after the source is gone either way.
