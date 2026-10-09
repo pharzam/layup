@@ -17,9 +17,13 @@ import (
 	lrun "github.com/pharzam/layup/internal/run"
 )
 
-// runHost makes a host directory with a forge register, a harness register,
-// a key file of mode 0600 made at run time, and a brief; it gives the
-// directory and the arguments of a good layup run --new.
+// harnessHeader is the header of the harness register with the columns of M2b.
+const harnessHeader = "harness\tcap\twall\tcommand\tprompt\tversion\tcredential\tcredential_to\trules\tpolicy\tusage\tbilling\tvars"
+
+// runHost makes a host directory with the four registers (forge, harnesses,
+// models, routing), a key file and a harness credential of mode 0600 made at
+// run time, and a brief; it gives the directory and the arguments of a good
+// layup run --new.
 func runHost(t *testing.T) (string, []string) {
 	t.Helper()
 	dir := t.TempDir()
@@ -37,7 +41,15 @@ func runHost(t *testing.T) (string, []string) {
 	write(keyFile, pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(k)}), 0o600)
 	write(filepath.Join(dir, "registers", "forge.tsv"), []byte("forge\tapp_id\tapp_slug\tkey_file\twatch_slug\tapi\tweb\n"+
 		"github\t42\tlayup-agent\t"+keyFile+"\tlayup-watch\thttps://api.github.com\thttps://github.com\n"), 0o644)
-	write(filepath.Join(dir, "registers", "harnesses.tsv"), []byte("harness\tcap\twall\nclaude\t10.0\t60\n"), 0o644)
+	credential := filepath.Join(dir, "claude.key")
+	write(credential, []byte("sk-test\n"), 0o600)
+	write(filepath.Join(dir, "registers", "harnesses.tsv"), []byte(harnessHeader+"\n"+
+		"claude\t10.0\t60\tclaude -p --model {model} --max-budget-usd {cap} {prompt}\targ\tclaude --version\t"+credential+
+		"\tvar:ANTHROPIC_API_KEY\tCLAUDE.md\t—\tclaude-result\tapi\t—\n"), 0o644)
+	write(filepath.Join(dir, "registers", "models.tsv"), []byte("harness\tmodel\tcontext\tsource\tdate\tuse\treason\n"+
+		"claude\tclaude-opus-5-5\t1000000\thttps://docs.claude.com/models\t2026-10-09T12:00:00Z\tyes\t—\n"), 0o644)
+	write(filepath.Join(dir, "registers", "routing.tsv"), []byte("role\ttier\tposition\tharness\tmodel\n"+
+		"developer\texecution\t1\tclaude\tclaude-opus-5-5\n"), 0o644)
 	write(filepath.Join(dir, "psb.md"), []byte("# The problem\n"), 0o644)
 	write(filepath.Join(dir, "vision.md"), []byte("# The vision\n"), 0o644)
 	return dir, []string{"run", "--new", "acme/target", "--host", dir, "--psb", filepath.Join(dir, "psb.md"),
@@ -160,10 +172,17 @@ func TestRunNewChecksEachInputBeforeTheFirstStep(t *testing.T) {
 			os.Remove(filepath.Join(d, "registers", "harnesses.tsv"))
 			return a
 		}, nil, "harnesses.tsv"},
-		{"a harness row with wall empty", func(d string, a []string) []string {
-			os.WriteFile(filepath.Join(d, "registers", "harnesses.tsv"), []byte("harness\tcap\twall\nclaude\t10.0\t—\n"), 0o644)
+		{"a harness register of the columns of M2a", func(d string, a []string) []string {
+			os.WriteFile(filepath.Join(d, "registers", "harnesses.tsv"), []byte("harness\tcap\twall\nclaude\t10.0\t60\n"), 0o644)
 			return a
 		}, nil, "harnesses.tsv"},
+		{"no models.tsv", func(d string, a []string) []string { os.Remove(filepath.Join(d, "registers", "models.tsv")); return a }, nil, "models.tsv"},
+		{"no routing.tsv", func(d string, a []string) []string { os.Remove(filepath.Join(d, "registers", "routing.tsv")); return a }, nil, "routing.tsv"},
+		{"a routing row of a harness that the register lacks", func(d string, a []string) []string {
+			os.WriteFile(filepath.Join(d, "registers", "routing.tsv"), []byte("role\ttier\tposition\tharness\tmodel\ndeveloper\texecution\t1\tdevin\tswe-2-high\n"), 0o644)
+			return a
+		}, nil, "routing.tsv"},
+		{"a credential of mode 0644", func(d string, a []string) []string { os.Chmod(filepath.Join(d, "claude.key"), 0o644); return a }, nil, "claude.key"},
 		{"a key file of mode 0644", func(d string, a []string) []string { os.Chmod(filepath.Join(d, "app.pem"), 0o644); return a }, nil, "mode 0644"},
 		{"git older than 2.32", func(_ string, a []string) []string { return a }, errors.New("git 2.32.0 or newer is needed: version 2.31.0"), "2.32.0"},
 	} {
