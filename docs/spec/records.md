@@ -359,7 +359,7 @@ reason text - for `status`: one line; `—` for `artifact`
 ```
 
 ```tsv-schema probe-result host:sessions/<session>/result/probe.tsv
-kind enum(token|file) key `token` once; `file` for each instruction file
+kind enum(token|file) key `token` at most once; `file` for each instruction file
 value text key the token, or the path of the file as the harness wrote it
 ```
 
@@ -373,7 +373,10 @@ session that `layup run` refuses (a probe's refused start is its row of
 `harnesses.tsv`); `push` and `bound`, the push of a session's SHA; `closed` and
 `rebased`, the task loop of `M2e`; each row is one event, and no row is changed
 (§3); a result holds one `status` row, with `n` 1, and an
-`artifact` value of the type `path`; `harnesses.tsv` holds one row per probe,
+`artifact` value of the type `path`; a `probe-result` holds at most one
+`token` row (**decided here**, task `T-bpxg`, condition 2 of the plan review of
+#162: a `probe.tsv` with none passes the block, and the probe fails with
+`token`, [`session.md`](session.md#the-probe)); `harnesses.tsv` holds one row per probe,
 and a harness is admitted by its last row at the version that the version check
 reads ([`session.md`](session.md#admission)).
 
