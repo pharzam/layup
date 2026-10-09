@@ -34,9 +34,9 @@ is `M4a`'s.
 A session is started only by `layup run` (ADR-0015 decision 3), through one
 call of `internal/session`, which takes the target, the task and its attempt,
 the role, the base commit, the records commit that the prompt was built from,
-the prompt's text and the admitted pair. In this order: the version check, the
-context check and the rule-file check (each can refuse the start); the start
-row, pushed; the process, under its limits; its end; and for a task session the
+the prompt's text and the admitted pair. In this order: the session ID; the
+version check, the context check and the rule-file check (each can refuse the
+start); the start row, pushed; the process, under its limits; its end; and for a task session the
 checks before a push, the push and the bind ([REQ-003](#req-003--before-a-push)).
 
 ### The session directory
@@ -137,15 +137,16 @@ base. The task loop of `M2e` calls it; in `M2b` the uat test calls it for the
 task of the demo's developer session. A session's start needs the event of its
 attempt ([Input states](#input-states)).
 
-1. **The version.** Code runs the row's `version` command, with the
+1. **The ID**: `S-` and 8 random lowercase hexadecimal characters, new for each
+   session ([`records.md`](records.md#req-011--the-telemetry-record)), drawn
+   first, so that each refusal below names its session.
+2. **The version.** Code runs the row's `version` command, with the
    environment above and no credential, and takes the first line of its
    standard output, with no space at either end, as the version. A version that
    `records:harnesses.tsv` holds with a passed probe goes on; any other runs
    [the probe](#the-probe) first, and a probe that fails refuses the start. A
    version command that exits non-zero or prints nothing refuses it
    (`version`). No model is called (NEEDLE, mco: the search).
-2. **The ID**: `S-` and 8 random lowercase hexadecimal characters, new for each
-   session ([`records.md`](records.md#req-011--the-telemetry-record)).
 3. **[The context check](#the-context-of-a-start)** and **[the rule-file
    check](#rules-only-from-the-target)**.
 4. **The start row**: a row of `sessions.tsv`, and for a task session the event
@@ -161,6 +162,14 @@ attempt ([Input states](#input-states)).
    the file is the standard input. With `file` and `arg` the standard input is
    empty (survey row 6: `codex exec` waits for its end). `stdout` and `stderr`
    receive the two outputs.
+
+**A refused start** (**decided here**): a refusal of a task session's start is
+an event `refused` of its task, with its session ID and its reason, and no row
+of `sessions.tsv`; a refusal of a probe's start is the probe's row of
+`harnesses.tsv`, `failed`, with its reason, as a probe has no events. The
+refusal `pair` comes before the call of `internal/session`, so its event has
+`—` for the session. A start that is refused runs no process, so it has no
+telemetry row.
 
 ### The context of a start
 
@@ -225,8 +234,11 @@ is `M2d`'s and `M2f`'s. For a task session whose end is `done`:
 the head SHA of `refs/heads/task/<task>/<attempt>` from the files of
 `repo/.git`: the loose ref, a regular file of 40 lowercase hexadecimal
 characters and a line feed, else the line of `packed-refs` that names the ref.
-A `repo/.git` that is not a directory, a ref that is a link or a symbolic ref,
-or no such ref, refuses the result (`branch`). `FetchSession` then makes a
+A `repo/.git` that is not a directory; a loose ref that is a link, a symbolic
+ref or a file of any other content (`packed-refs` is then not read); no such
+ref; or a SHA that names no commit of the session's objects, which
+`FetchSession` checks before it sets a ref: each refuses the result (`branch`).
+`FetchSession` then makes a
 scratch bare repository whose one alternate is the object directory of
 `repo/.git`, sets a ref there to that SHA, fetches it into `layup run`'s own
 clone with `core.hooksPath` set to an empty directory, and removes the scratch
@@ -330,7 +342,7 @@ whose `models.tsv` row has `use` `no` (else `not-used`). **Known limit:** the
 specification reads lists the files it loaded; a model that leaves out a file
 passes. A probe makes no commit and no
 push; its records are a row of `records:harnesses.tsv`, its start row and its
-telemetry row.
+telemetry row, or the row of `harnesses.tsv` alone when its start was refused.
 
 It runs at the step `probe` of `layup run`, in the restart after `lease` and
 before `phase` ([`run.md`](run.md#the-restart)), for each harness of the
@@ -364,8 +376,8 @@ pair; with none, the start is refused (`pair`).
 
 Requirement: "Every task has a record of its token count, its latency and its
 wall-clock duration in the target." The writer is `internal/ledger`: one row of
-[`telemetry.tsv`](records.md#req-011--the-telemetry-record) per session, the
-probe's included, in the records commit of the session's end, checked by
+[`telemetry.tsv`](records.md#req-011--the-telemetry-record) per session that
+started, the probe's included, in the records commit of the session's end, checked by
 `CheckTelemetry` before it is written. **Decided here**, the columns:
 
 - `session`, `task`, `role`, `harness`, `model`: the start row's. `requirements`:
@@ -423,6 +435,7 @@ gives no usage report (3000.11.3), so its rows use `none`.
 | A `probe.tsv` with no token, another token, or no `AGENTS.md` row | the probe fails, with the reason |
 | `stdout` with no `result` object, or with lines that are not JSON | tokens `unavailable` (the lines that are not JSON are skipped) |
 | A task with no event `attempt` for the session's attempt | the start is refused (`attempt`) |
+| A ref of `repo/.git` that is malformed, or whose SHA names no commit of the session's objects | the result is refused (`branch`) |
 | A records push that is refused | the run stops, as [`run.md`](run.md#the-lease-and-fencing) |
 
 ## NFR-005 — No harness in the engine checks
@@ -482,9 +495,9 @@ Gemini CLI and OpenCode, added when a registered harness needs one.
 | Rules only from the target | integration | In a real temporary tree, a rule-file name of the row above the session directory refuses the start; a policy path that exists is recorded. |
 | The start, the limit and the end | integration | With a fake harness program: the start row is pushed before the process starts; a fake that waits for the end of its input ends; a fake that runs past `wall` is stopped (`SIGINT`, `SIGTERM`, `SIGKILL`) with the class `wall`; the output cap; each class of the end. |
 | The context of a start | unit | An estimate over the model's context size refuses the start with both numbers. |
-| The result of a session | unit | A result file of the block `result` is committed byte for byte with the event `result`; an artifact whose SHA-256 differs at the head adds the event `refused` (`artifact`); the session ID, the task, the role, the attempt and the base come from the start row. |
+| The result of a session | integration | A result file of the block `result` is committed byte for byte with the event `result`; an artifact whose SHA-256 differs at the head adds the event `refused` (`artifact`); the session ID, the task, the role, the attempt and the base come from the start row. |
 | The open attempt | unit | With a stand-in events table, a result whose attempt was closed, replaced or rebased is refused; the attempt and the base come from the start row; a session with no event `attempt` of its attempt is refused at its start. |
-| Before a push | integration | With the real `git` and a local bare repository: the head read from the files of `repo/.git` (a loose ref, a packed ref; a link, a symbolic ref and no ref refused); the fetch through the scratch repository with hooks off; a session configuration that holds each key of git's documentation that starts a program runs none of them; a head that does not descend from the base is refused; a change of `.github/workflows/` and of a rule path is refused before any push, its diff a payload; added lines in §2 of `docs/guardrails.md` pass; the SHA is bound only after the push is accepted. |
+| Before a push | integration | With the real `git` and a local bare repository: the head read from the files of `repo/.git` (a loose ref, a packed ref; a link, a symbolic ref, a malformed loose ref, no ref and a SHA of no commit refused); the fetch through the scratch repository with hooks off; a session configuration that holds each key of git's documentation that starts a program runs none of them; a head that does not descend from the base is refused; a change of `.github/workflows/` and of a rule path is refused before any push, its diff a payload; added lines in §2 of `docs/guardrails.md` pass; the SHA is bound only after the push is accepted. |
 | The probe and admission | unit | With a fake harness: the version check; a probe that passes, one that reports a `policy` path and passes, and one that fails for each reason; admission by the probe and `use`. |
 | The routing register | unit | `host:registers/routing.tsv` is copied into `records:routing.tsv` at the step `probe` when the two differ, and not when they are equal; the session's pair is the first admitted pair of the role's list for the task's tier; with none, the start is refused (`pair`). |
 | The usage report | unit | `claude-result` on two recorded `result` events of Claude Code 2.1.295 (one with subagents and a second model) sums `modelUsage`; `none` gives `unavailable` and `unknown`. |

@@ -294,10 +294,10 @@ policy list(text) - each policy path of the register row that exists, absolute; 
 ```tsv-schema harnesses records:harnesses.tsv
 session id(S-xxxxxxxx) key the probe's session ID
 harness id(<word>) - the harness ID of the register
-version text - the version that the probe ran
+version text - the version that the probe ran; `—` when the version check refused its start
 model text - the model of the probe
 result enum(passed|failed) - the probe's result
-reason text - why it failed: the class of its end, `outside`, `not-used`, `token` or `files`; `—` when `passed`
+reason text - why it failed: the reason of a refused start (`version`, `rules`, `context`), the class of its end, `outside`, `not-used`, `token` or `files`; `—` when `passed`
 files list(text) - each instruction file that the harness reported, as it wrote it; `—` for none
 models list(text) - each model of its usage report; `—` when the report names none
 end time - when the probe ended
@@ -333,10 +333,10 @@ reason text - why `no`, with its source; `—` when `yes`
 n int key the event's number, from 1, in the order of the events
 kind enum(attempt|session|refused|result|push|bound|closed|rebased) - the event
 attempt int - the attempt that the event concerns, 1 or more
-session id(S-xxxxxxxx) - the session; `—` for `attempt`, `closed` and `rebased`
+session id(S-xxxxxxxx) - the session; `—` for `attempt`, `closed` and `rebased`, and for a `refused` whose reason is `pair`, which comes before a session
 base sha1 - the base commit, for `attempt` and `rebased`; `—` otherwise
 sha sha1 - the commit, for `push` and `bound`; `—` otherwise
-detail text - one line: for `result`, the class of the end; for `refused`, the reason, and after one space the payload of a refused diff; for `push` and `bound`, the branch; `—` for `attempt` and `session`; for `closed` and `rebased`, as `M2e` sets
+detail text - one line: for `result`, the class of the end; for `refused`, the reason, and after one space its value where it has one: the path of a rule file, the two numbers of the context, or the payload of a refused diff; for `push` and `bound`, the branch; `—` for `attempt` and `session`; for `closed` and `rebased`, as `M2e` sets
 time time - when `layup run` recorded the event
 ```
 
@@ -358,8 +358,9 @@ checks after the types, an error naming the line and the column (task `T-tmhw`'s
 form): a column whose rule has no clause for `—` never holds `—`; the kinds
 of `events`, each with its writer: `attempt`, the call that starts an attempt
 (the uat test of `M2b`, the task loop of `M2e`); `session`, the start of a
-session; `result`, its end; `refused`, a start, a result or a push that `layup
-run` refuses; `push` and `bound`, the push of a session's SHA; `closed` and
+session; `result`, its end; `refused`, a start, a result or a push of a task
+session that `layup run` refuses (a probe's refused start is its row of
+`harnesses.tsv`); `push` and `bound`, the push of a session's SHA; `closed` and
 `rebased`, the task loop of `M2e`; each row is one event, and no row is changed
 (§3); a result holds one `status` row, with `n` 1, and an
 `artifact` value of the type `path`; `harnesses.tsv` holds one row per probe,
