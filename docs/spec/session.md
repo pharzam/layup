@@ -410,13 +410,22 @@ started, the probe's included, in the records commit of the session's end, check
 - the tokens: from [the usage report](#the-usage-report-of-a-harness).
 - the money: `reported` when the harness reports a cost and the billing is
   `api`; else `computed` from the tokens and `host:prices.tsv`: the rows of the
-  session's model, one per class, of one `date` (the newest), with `price`
-  naming the row of the class `in`; else `unknown`, when a class lacks a row,
-  when one class has two rows of that date, when the rows differ in currency,
-  or when the usage report names more than one model. Reason: the block holds one price ID (task `T-tmhw`), and the
+  session's harness and model, one per class, of one `date`, the newest `date`
+  among those rows, with `price` naming the row of the class `in`; else
+  `unknown`, when a class lacks a row, when one class has two rows of that
+  date, when the rows differ in currency, when the usage report names more
+  than one model, or (**decided here**, task `T-4c3q`) when it names one model
+  that is not the start row's (the price would be of a model the session did
+  not run), or when the tokens are not `observed` (a class with no count would
+  sum as zero, the cost that FT2 forbids). Reason: the block holds one price ID (task `T-tmhw`), and the
   three rows of one read share the harness, the model and the date; a list of
   IDs would change a built block. A model priced only in a unit that is no
   currency (survey row 10: credits) has no row, so its money is `unknown`.
+  **Decided here** (task `T-4c3q`): a
+  computed money is the exact decimal of the sum, with no trailing zero and one
+  decimal digit at least, computed with no float, so two writers give the same
+  bytes; a reported cost is the text of the JSON number of the report, written
+  in that form (`6` as `6.0`, `1e-7` as `0.0000001`).
 
 No row holds the prompt's text (survey row 11).
 
