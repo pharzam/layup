@@ -91,4 +91,4 @@ Recorded, not budgeted (ADR-0007). UTC, 2026-10-09; reviewers' tokens are
 | Round 1 | reasoning | Claude Fable 5.1 | `xhigh` | 821,281 (USD 4.97) | 9 min 4 s |
 | The fix of round 1, and the merge of `origin/main` | execution | Claude Opus 5.5 | not reported | not reported | 18:52 to 19:00 |
 | Round 2 | reasoning | Claude Fable 5.1 | `xhigh` | 886,959 (USD 5.67) | 10 min 27 s |
-| The close-out, with notes 1 to 4 | execution | Claude Opus 5.5 | not reported | not reported | 19:12 to 19:15 |
+| The close-out, with notes 1 to 4 | execution | Claude Opus 5.5 | not reported | not reported | 19:35 to 19:37 |
