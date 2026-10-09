@@ -26,3 +26,10 @@ exit status 3
 exit 0, `No vulnerabilities found.` With `GOTOOLCHAIN=go1.26.9`: `go build ./...`,
 `go vet ./...`, `go test ./...`, `go test -tags=integration ./...` and
 `go test -tags=e2e ./...` pass.
+
+## Green in CI
+
+Run 37912054398 of #151 at `b595c34`: the job `security` passes; its setup-go
+step logs `Setup go version spec 1.26.9`, then `go version go1.26.9
+linux/amd64` and `GOVERSION='go1.26.9'`. Each other job passes except
+`review-record`, which waits for the review round.
