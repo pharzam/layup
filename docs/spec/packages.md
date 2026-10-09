@@ -281,7 +281,9 @@ takes a token.
 - A SHA that names no commit, whether `cat-file -t` prints another type or exits
   non-zero (an absent object), is `ErrNotACommit` in the `Err` of a
   `*FailedError` (task `T-z5dj`); `TMP` and `EMPTY` are removed on each return,
-  a refusal included. `CloneLocal` refuses an
+  a refusal included. `FetchSession` refuses, before `git` starts, a `SHA` that is
+  not a full object ID and a `DST` that does not start with `refs/` or holds a `:`,
+  as `Fetch` does. `CloneLocal` refuses an
   empty `BRANCH` or one that starts with `-` before `git` starts. **Known
   limit:** `FetchSession` has no `--update-head-ok`, so a `DST` that is the
   branch of `HEAD` of `dir` is refused by `git`; `layup run`'s clone is on

@@ -26,7 +26,7 @@ of #152.
 2. **D2:** `FetchSession` and `ErrNotACommit`: a scratch bare repository whose
    alternate is the session's object directory, `cat-file -t`, `update-ref`, and
    the fetch with an empty hooks directory; no `git` runs in the session's clone.
-   `TestAHostileSessionRunsNothing` writes the 45 program-starting keys that
+   `TestAHostileSessionRunsNothing` writes the 47 program-starting keys that
    `git help --config` of git 2.47.3 lists into the session's configuration,
    each with a marker named for it; a control shows, by plain reads in a copy,
    that 15 of them fire on this host, and `FetchSession` fires none.
@@ -41,7 +41,7 @@ driver; red with a `FetchSession` that ran `git` in the session (the hostile
 test found `core.fsmonitor` and `filter.y.clean`); green after.
 
 **Known limits.** The list of keys is that of `git help --config` of 2.47.3; a
-key that a later `git` adds is not in it. Thirty keys are asserted, not shown
+key that a later `git` adds is not in it. Thirty-two keys are asserted, not shown
 live (the test's `notLive`), and `remote.<name>.vcs` names a helper of the
 `PATH`, so it has no marker. A
 `DST` that is the branch of `HEAD` of `dir` is refused by `git`.

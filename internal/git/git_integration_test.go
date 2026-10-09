@@ -669,8 +669,10 @@ func TestTheReadsOfM2b(t *testing.T) {
 // name a program or a shell command, each with a marker program of its own
 // name; each driver key has a driver of its own, so one key does not hide
 // another. A key that only picks a tool (help.browser, web.browser,
-// instaweb.browser, diff.tool, merge.tool) reaches a program only through a key
-// of the list. live are the ones that a plain read in the clone fires on this
+// instaweb.browser, man.viewer, diff.tool, merge.tool, diff.guitool,
+// merge.guitool) reaches a program through a key of the list or by its name on
+// the PATH, so it has no marker. tar.<format>.command, trailer.<keyAlias>.cmd
+// and .command, and sendemail.sendmailCmd are not listed by 2.47.3. live are the ones that a plain read in the clone fires on this
 // host (the control shows each); notLive are the ones that no plain read fires,
 // so their absence after FetchSession is asserted, not shown live.
 // remote.v.vcs names a helper git-remote-<vcs> of the PATH, not a path, so it
@@ -683,13 +685,13 @@ var (
 		"includeIf.path", "alias.y", "core.gitProxy", "browser.x.cmd", "browser.x.path", "difftool.x.cmd", "mergetool.x.cmd",
 		"man.x.cmd", "man.x.path", "guitool.x.cmd", "gc.recentObjectsHook", "gpg.ssh.program", "gpg.ssh.defaultKeyCommand",
 		"imap.tunnel", "instaweb.httpd", "interactive.diffFilter", "pager.status", "sendemail.ccCmd", "sendemail.headerCmd",
-		"sendemail.toCmd", "sendemail.smtpServer", "submodule.x.update", "remote.v.vcs"}
+		"sendemail.toCmd", "sendemail.smtpServer", "submodule.x.update", "remote.v.vcs", "difftool.x.path", "mergetool.x.path"}
 	notLive = []string{"core.sshCommand", "core.askPass", "core.editor", "core.pager", "credential.helper",
 		"uploadpack.packObjectsHook", "sequence.editor", "gpg.program", "remote.origin.receivepack", "merge.x.driver",
 		"browser.x.cmd", "browser.x.path", "difftool.x.cmd", "mergetool.x.cmd", "man.x.cmd", "man.x.path", "guitool.x.cmd",
 		"gc.recentObjectsHook", "gpg.ssh.program", "gpg.ssh.defaultKeyCommand", "imap.tunnel", "instaweb.httpd",
 		"interactive.diffFilter", "pager.status", "sendemail.ccCmd", "sendemail.headerCmd", "sendemail.toCmd",
-		"sendemail.smtpServer", "submodule.x.update", "remote.v.vcs"}
+		"sendemail.smtpServer", "submodule.x.update", "remote.v.vcs", "difftool.x.path", "mergetool.x.path"}
 )
 
 // arm writes into the clone at dir a configuration that holds each hostile
@@ -735,7 +737,8 @@ func arm(t *testing.T, dir, marks, up string) {
 		"\n[alias]\n\ty = !" + prog("alias.y") +
 		"\n[core]\n\tgitProxy = " + prog("core.gitProxy") + "\n[remote \"gp\"]\n\turl = git://layup.invalid/x" +
 		"\n[browser \"x\"]\n\tcmd = " + prog("browser.x.cmd") + "\n\tpath = " + prog("browser.x.path") +
-		"\n[difftool \"x\"]\n\tcmd = " + prog("difftool.x.cmd") + "\n[mergetool \"x\"]\n\tcmd = " + prog("mergetool.x.cmd") +
+		"\n[difftool \"x\"]\n\tcmd = " + prog("difftool.x.cmd") + "\n\tpath = " + prog("difftool.x.path") +
+		"\n[mergetool \"x\"]\n\tcmd = " + prog("mergetool.x.cmd") + "\n\tpath = " + prog("mergetool.x.path") +
 		"\n[man \"x\"]\n\tcmd = " + prog("man.x.cmd") + "\n\tpath = " + prog("man.x.path") +
 		"\n[guitool \"x\"]\n\tcmd = " + prog("guitool.x.cmd") + "\n[gc]\n\trecentObjectsHook = " + prog("gc.recentObjectsHook") +
 		"\n[gpg \"ssh\"]\n\tprogram = " + prog("gpg.ssh.program") + "\n\tdefaultKeyCommand = " + prog("gpg.ssh.defaultKeyCommand") +

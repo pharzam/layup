@@ -52,3 +52,7 @@ Note 3, a mutation red for each other call (on a copy of `git.go`, put back afte
 ```
 
 The mutation `local` (no `--no-local`) is caught by the unit test only: a local clone hard-links its objects, so `TestCloneLocal` reads the log after the source is gone either way.
+
+## The fix of round 2, under O-188 (2026-10-09T13:01Z)
+
+`git help --config` of 2.47.3 (903 keys) lists `difftool.<tool>.path` and `mergetool.<tool>.path`, which the list of 45 lacked; they join it (47, of which 32 are asserted and 15 shown live by the control). It does not list `tar.<format>.command`, `trailer.<keyAlias>.cmd` or `.command`, or `sendemail.sendmailCmd`, which round 2 named from the manual of a later version; the test's comment says so. `TestAHostileSessionRunsNothing` passes: the control fires the same 15, and `FetchSession` fires none of the 47.
