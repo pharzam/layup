@@ -62,7 +62,9 @@ func ReadRegister(data []byte) ([]Entry, error) {
 // that ends with / matches each path under it, another pattern the path
 // itself. Any path whose name ends with .sh matches, as the register's entry
 // "each file of the tree whose name ends with .sh" names a kind of file; with
-// no entry of its own, it gives the entry {*.sh}.
+// no entry of its own, it gives the entry {*.sh}. The exception that Check reads
+// is the one of the row that Match gives first: with the register of S15 no
+// directory row covers docs/guardrails.md, so its own row is that row.
 func Match(reg []Entry, path string) (Entry, bool) {
 	for _, e := range reg {
 		if (strings.HasSuffix(e.Pattern, "/") && strings.HasPrefix(path, e.Pattern)) || e.Pattern == path {
@@ -106,7 +108,7 @@ func GuardrailsAdditions(diff, head []byte) bool {
 			}
 			added, next = added+1, next+1
 		case inHunk && strings.HasPrefix(line, `\ `): // "\ No newline at end of file"
-		default: // a removed line, a context line, a mode change, a binary body, or other text
+		default: // a removed line, a context line, a mode change (old mode, new mode), a binary body, or other text
 			return false
 		}
 	}
@@ -125,7 +127,7 @@ func section2(head []byte) (start, end int) {
 			return start, i + 1
 		}
 	}
-	return start, strings.Count(string(head), "\n") + 2
+	return start, len(strings.Split(strings.TrimSuffix(string(head), "\n"), "\n")) + 1
 }
 
 // hunkStart reads the first line of the new side of a hunk header

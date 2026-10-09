@@ -38,3 +38,36 @@ own cases; green after.
 **The rejected alternatives:** moving the schema to `internal/records` (two
 rows of phase 1 would change); a reader that takes the rows from the caller; a
 `.sh` match only when the register holds a `.sh` entry.
+
+## Review rounds
+
+The record is a comment on #158. Round 1 (Claude Fable 5.1, effort `xhigh`, a
+fresh read-only session in a clone at `e87e10f`, cycle 0): `nothing material in
+scope`, five notes, each applied in the close-out: the comment of `Match` says
+that the exception is of the row it gives first (note 1); the Test cell of
+`REQ-003` names the block test (note 2); a case and the words "a mode change"
+(note 3); the case of a removed line sits beside an addition, so its own rule
+refuses it (note 4); the end of §2 is one past the last line (note 5). The
+branch took `origin/main` (the merges of #176) by a merge, so the reviewed head
+stays.
+
+## Verdict
+
+Delivered: `internal/rules`, the reader of the rule-path register and the check
+of a session's diff before a push, with the exception of `docs/guardrails.md`.
+The review ended by decay at cycle 0 of cap 1. The diff against `ad8774d` is
+inside 700 lines over 14 files. Next: row 37a calls `Check` before a push.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). Times are UTC, 2026-10-09; the reviewers'
+tokens are `modelUsage` of the CLI's `result` event; the author's are not
+reported.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan | reasoning | Claude Opus 5.5 | not reported | not reported | 12:36 to 12:39 |
+| The plan review | reasoning | Claude Fable 5.1, Claude Code CLI | `xhigh` | 838,120 (USD 5.94) | 6 min 36 s, from 12:40 |
+| The answer; the tests, red; the code; the documents | execution | Claude Opus 5.5, a reasoning-tier model on an execution part | not reported | not reported | 12:55 to 13:00 |
+| Round 1 | reasoning | Claude Fable 5.1, Claude Code CLI | `xhigh` | 575,346 (USD 4.04) | 9 min 58 s, from 13:01 |
+| The close-out, with notes 1 to 5 | execution | Claude Opus 5.5 | not reported | not reported | 13:14 to 13:18 |

@@ -272,8 +272,8 @@ matches, as the register's entry "each file of the tree whose name ends with
 `docs/guardrails.md`: its diff (`DiffFile`) removes no line, and each added line
 lies at the head between the line that starts `## 2.` and the next line that
 starts `## `. **Decided here** (task `T-m1dx`): the exception holds only for a
-diff read as hunks with at least one added line; a diff with no hunk, a binary
-diff, or other text is a rule-path change; "between" excludes both boundary
+diff read as hunks with at least one added line; a diff with no hunk, a mode
+change, a binary diff, or other text is a rule-path change; "between" excludes both boundary
 lines, so an added line that starts `## ` is refused and one under a `### `
 sub-heading passes; the exception is that one file's, as the register's block
 allows no other (`internal/rules` refuses another). A refused diff (`git diff --binary`) goes to the records as

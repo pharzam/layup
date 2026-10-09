@@ -53,3 +53,7 @@ rules_test.go:141: the guardrails with no exception in the register: "", want ru
 ## Green (2026-10-09T13:00Z)
 
 Each with exit 0 on the tree of the commit `feat: T-m1dx …`: `go build ./...`, `go vet ./...`, `gofmt -l internal` (empty), `go test ./...`, `go test -tags=integration ./...` (with `TestPackageRules` and the new package); `adr-lint`, `prd-lint`, `link-lint`, `setup-check`, `run-discipline-tests`, `git diff --check`.
+
+## The notes of round 1 (2026-10-09T13:12Z)
+
+Note 4: the case "a removed line" had no added line, so the rule of an addition refused it whichever rule stood; it is now a removed line beside an addition, and with the rule of a removed line broken alone (a copy, put back after) it fails: `rules_test.go:108: a removed line beside an addition: true, want false`, with "a changed line". Note 3: a case of a mode change with an addition in §2, refused. Note 5: `section2` ends one past the last line of a head that ends with a line feed. `go test ./internal/rules/` passes.
