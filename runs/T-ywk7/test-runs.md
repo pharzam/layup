@@ -27,3 +27,33 @@ FAIL row 10 (A price table of): take, but docs/spec/session.md has no line "## R
 FAIL row 11 (Receipts of one line): take, but docs/spec/session.md has no line "## REQ-011 — The writer of the telemetry record"
 exit 1
 ```
+
+## S4: the map of the parts to their headings
+
+Red, before `docs/spec/session.md` existed (2026-10-09, after the S3 comment
+6075865294): `sh runs/T-ywk7/sections.sh` printed `FAIL` for each of the 28
+headings of [`sections.tsv`](sections.tsv), and exited 1.
+
+## S6: the schema blocks of the records of a session
+
+Red (06:58Z), with the eight new blocks in `docs/spec/records.md` and no name in
+either list: `go test -count=1 -tags=integration -run TestEverySchemaBlockIsBuiltOrNotYetBuilt ./internal/tsv/`
+
+```
+--- FAIL: TestEverySchemaBlockIsBuiltOrNotYetBuilt (0.00s)
+    blocks_integration_test.go:41: the block events is listed 0 times in built and notYetBuilt; want 1
+    blocks_integration_test.go:41: the block harnesses is listed 0 times in built and notYetBuilt; want 1
+    blocks_integration_test.go:41: the block models is listed 0 times in built and notYetBuilt; want 1
+    blocks_integration_test.go:41: the block probe-result is listed 0 times in built and notYetBuilt; want 1
+    blocks_integration_test.go:41: the block result is listed 0 times in built and notYetBuilt; want 1
+    blocks_integration_test.go:41: the block routing is listed 0 times in built and notYetBuilt; want 1
+    blocks_integration_test.go:41: the block routing-register is listed 0 times in built and notYetBuilt; want 1
+    blocks_integration_test.go:41: the block sessions is listed 0 times in built and notYetBuilt; want 1
+FAIL
+```
+
+Each block parses, so the parser of `internal/tsv` takes its form. Green, with
+the eight names in `notYetBuilt` of `internal/tsv/blocks_integration_test.go`:
+`ok  github.com/pharzam/layup/internal/tsv`. `go test -count=1 -tags=integration ./cmd/layup/ ./internal/route/ ./internal/records/`
+passes with the rows of `internal/route`, `internal/run` and `internal/records`
+changed in place.

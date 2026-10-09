@@ -216,7 +216,8 @@ so a person reads it with no tool. A plain `git clone` carries the branch as
    announcement, as the row already says `opening` (a duplicate issue is
    possible, known limit below). When each step of Start is done, the next
    phase is Intake (`M2c`): the row is `done`, and the run releases the lease and
-   exits. `M2c` replaces this row with its steps. **Decided here:** `phase` is one
+   exits. `M2c` replaces this row with its steps; `M2b` puts its step `probe`
+   before it ([`session.md`](session.md#the-probe)). **Decided here:** `phase` is one
    row of the restart's table, whatever steps of Start it runs again; its
    `detail` names them, so the key `step` holds no second `lease`.
 
@@ -335,7 +336,7 @@ with the same title.
 The adoption of a phase-1 target (`M2d`, O-163); the Scaffold, the rulesets, the
 probes and the forge read-back of the rules (`M2d`); the gap check and the
 answers (`M2c`); role sessions, the harness probe, admission and the harness
-credential (`M2b`, K40); the commit status `layup/gates` (`M2e`); the dead-man
+credential (`M2b`, K40: [`session.md`](session.md)); the commit status `layup/gates` (`M2e`); the dead-man
 job itself (`M3d`; `M2a` only reads its notice).
 
 ## NFR-006 — The target's pin at Start

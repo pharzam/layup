@@ -7,8 +7,8 @@ implements. It has the form that [`architecture.md`](../architecture.md) §7 ask
 of a target, so `layup spec check` can later read it.
 
 It is written one milestone at a time (task `T-0drh`, #74; decision O-114).
-This version covers **phase 1** of `PRD-0001` §9 and milestone **`M2a`** of
-phase 2 (task `T-zck8`, #123). A later milestone adds its own sections; it does
+This version covers **phase 1** of `PRD-0001` §9 and the milestones **`M2a`**
+(task `T-zck8`, #123) and **`M2b`** (task `T-ywk7`, #147) of phase 2. A later milestone adds its own sections; it does
 not rewrite the package table or the layout of the records, which already name
 the later phases.
 
@@ -17,12 +17,13 @@ the later phases.
 | File | Requirements | What it gives |
 | ---- | ------------ | ------------- |
 | [`packages.md`](packages.md) | `NFR-007` | the Go packages, their jobs, and the import rules that the boundary gate reads |
-| [`records.md`](records.md) | `NFR-001`, `NFR-002`, `REQ-009`, `REQ-011` | where each record lives, who writes it, and the schemas of the records of phase 1 and of Start (`M2a`) |
+| [`records.md`](records.md) | `NFR-001`, `NFR-002`, `REQ-009`, `REQ-011` | where each record lives, who writes it, and the schemas of the records of phase 1, of Start (`M2a`) and of a session (`M2b`) |
 | [`psb-check.md`](psb-check.md) | `REQ-001` | `layup psb check` |
 | [`setup.md`](setup.md) | `REQ-002`, `NFR-003`, `NFR-006` | `layup setup`, `layup setup verify`, the stack catalog |
 | [`gate.md`](gate.md) | `REQ-004`, `REQ-007`, `NFR-004`, `NFR-005` | `layup gate`, the gate manifest |
 | [`run.md`](run.md) | `NFR-001`, `NFR-002`, `NFR-006`, `REQ-002` | `layup run`: the Start of a target and the restart (`M2a`) |
 | [`forge.md`](forge.md) | `NFR-001`, `NFR-007` | the forge interface and the GitHub adapter (`M2a`) |
+| [`session.md`](session.md) | `REQ-013`, `REQ-003`, `REQ-005`, `REQ-011`, `NFR-005` | `layup run`: role sessions on registered harnesses, the probe, the checks before a push and the writer of the ledger (`M2b`) |
 
 ## How a section is written
 
@@ -74,7 +75,9 @@ Every command of LAYUP follows these rules. A section gives only what differs.
     no read of an environment variable or of the standard input, except in the
     function `environ` of `internal/git`, which gives `PATH` and `TMPDIR` of the
     host to `git` ([`packages.md`](packages.md#the-calls-of-internalgit), D3 of
-    #79). A program that `layup` starts gets its environment from `layup`; that
+    #79), and, from `M2b`, in the function of `internal/session` that builds a
+    session's environment, which reads only the host's `PATH` (task `T-ywk7`,
+    [`session.md`](session.md#the-environment-and-the-harness-credential)). A program that `layup` starts gets its environment from `layup`; that
     is not an input of `layup`, so the test does not cover it.
 
   Reason: a value that a command reads from its environment has no record, and
@@ -288,4 +291,6 @@ comes in a later phase. So a section of phase 1 that needs `layup run` gives the
 schema and names `layup run` as the writer, and each part that waits for it is
 under **Not in phase 1**. Milestone `M2a` specifies the Start of `layup run`
 ([`run.md`](run.md), [`forge.md`](forge.md)); a part that a later milestone
-delivers is under **Not in M2a**, with that milestone.
+delivers is under **Not in M2a**, with that milestone. Milestone `M2b` specifies
+role sessions on registered harnesses ([`session.md`](session.md)), with its
+own **Not in M2b**.
