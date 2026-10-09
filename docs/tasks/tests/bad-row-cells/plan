@@ -1,0 +1,23 @@
+# A stand-in plan
+
+## The tasks of M1
+
+| # | Task ID | Issue | Task | Demo | Parent | Items | Requirements | Fact | Tests | Size | Lines | After | Cap |
+| - | ------- | ----- | ---- | ---- | ------ | ----- | ------------ | ---- | ----- | ---- | ----- | ----- | --- |
+| 1 | `T-aaa1` | [#1](https://example.invalid/1) | The first | one | — | — | — | — | unit | small | 100 | — | 1 |
+| 2 | `T-aaa2` | [#2](https://example.invalid/2) | The second | two | — | — | — | — | unit | small | 100 | 1 | 1 |
+
+## The tasks of M2
+
+| # | Task ID | Issue | Task | Demo | Items | Requirements | Fact | Tests | Size | Lines | After | Cap |
+| - | ------- | ----- | ---- | ---- | ----- | ------------ | ---- | ----- | ---- | ----- | ----- | --- |
+| 3a | `T-bbb1` | [#3](https://example.invalid/3) | The third | three | — | — | — | unit | small | 100 | — | 1 |
+| 3b | `T-bbb2` | [#4](https://example.invalid/4) | The fourth | four | — | — | — | unit | small | 100 | 2 | 1 |
+| 4 | `T-bbb3` | [#5](https://example.invalid/5) | The fifth | five | — | — | — | unit | small | 100 | 3a, 3b | 1 |
+| 5 | `T-bbb4` | [#6](https://example.invalid/6) | The | sixth | six | — | — | — | unit | small | 100 | 2, 4 | 1 |
+
+Prose after the tables, with a | pipe in it.
+
+| Other | Table |
+| ----- | ----- |
+| x | y |
