@@ -20,6 +20,7 @@ here directly, in the shape above.
 - **YYYY-MM-DD** — **<ID>** — <one-sentence summary of what the task found or delivered> ([<link>](...); [detail](<id>.md))
 -->
 
+- **2026-10-09** — **T-3py1** — Row 28 of `M2b`: the records of a session, the schemas, rules and readers of `sessions`, `harnesses`, `routing`, `events` and `result` in `internal/records` ([#153](https://github.com/pharzam/layup/issues/153); [detail](T-3py1.md))
 - **2026-10-09** — **T-fdaq** — The build tasks of milestone `M2b`: rows 28 to 39b of the plan, one per package boundary of the specification of `M2b`, split by their goal classes (O-186, O-187), each with its issue (#153 to #170); the package rules move to row 29 and the review of the release to row 39a ([#152](https://github.com/pharzam/layup/issues/152); [detail](T-fdaq.md))
 - **2026-10-09** — **T-ywk7** — The technical specification of milestone `M2b`, role sessions on registered harnesses: `session.md` (the session, the checks before a push, the probe, admission and routing, the writer of the telemetry record), eight schema blocks and the table of `M2b`, after a public-solution search by two blind searchers and the survey of `T-w73g`; K40 settled ([#147](https://github.com/pharzam/layup/issues/147); [detail](T-ywk7.md))
 - **2026-10-09** — **T-w89c** — `go 1.26.9` in `go.mod`, so CI builds on the toolchain that fixes the ten standard-library advisories that failed the required job `security` ([#150](https://github.com/pharzam/layup/issues/150); [detail](T-w89c.md))

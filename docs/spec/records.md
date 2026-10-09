@@ -287,7 +287,7 @@ prompt_tokens int - the estimate: `prompt_bytes` over four, rounded up
 context int - the model's context size from `models.tsv`; never below `prompt_tokens`
 cap decimal - the spend cap of the session in US dollars; `—` for a harness with none
 wall int - the wall-clock limit of the session in minutes, 1 or more
-vars list(text) - each fixed variable given to the session, `NAME=VALUE`; `—` for none
+vars list(text) - each fixed variable given to the session, `NAME=VALUE`, `NAME` a letter or `_` and then letters, digits and `_`; `—` for none
 policy list(text) - each policy path of the register row that exists, absolute; `—` for none
 ```
 

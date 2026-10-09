@@ -56,3 +56,36 @@ words.
 **The rejected alternatives:** the rules in `internal/run` (the specification
 gives the schemas and the row rules to `internal/records`); a closed list of
 the reasons of `refused` (its block gives none); one file per record.
+
+## Review rounds
+
+The records and the Fixes reply are comments on #153. Round 1 (Claude Fable
+5.1; `c454cd8`, cycle 0): `material`, one finding (`CheckResult` held the rows
+of a kind in the order of the file, which the block does not give), fixed in
+`27edfc5` with notes 2 to 6. Round 2 (Fable; `27edfc5`, cycle 1): `nothing
+material in scope`, two notes, applied in the close-out: the form of `NAME` of
+`vars` in the block `sessions`, and `T-3py1` in the row of `internal/records`
+of `packages.md`.
+
+## Verdict
+
+Delivered: the schemas, the rules and the readers of `sessions`, `harnesses`,
+`routing`, `events` and `result` in `internal/records`, with their tests. The
+review ended by decay at cycle 1, the cap. The diff against `8d2fa2e` is inside
+1,000 lines over 13 files. Next: rows 30b, 34b, 36a and 36b read these records.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). Times are UTC, 2026-10-09; the reviewers'
+tokens are `modelUsage` of the CLI's `result` event; the author's are not
+reported.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan | reasoning | Claude Opus 5.5 | not reported | not reported | 11:35 to 11:36 |
+| The plan review | reasoning | Claude Fable 5.1, Claude Code CLI | `xhigh` | 1,121,548 (USD 5.48) | 7 min 51 s, from 11:36 |
+| The answer; the tests, red; the code | execution | Claude Opus 5.5, a reasoning-tier model on an execution part | not reported | not reported | 11:44 to 11:50 |
+| Round 1 | reasoning | Claude Fable 5.1, Claude Code CLI | `xhigh` | 1,057,444 (USD 4.81) | 8 min 52 s, from 11:51 |
+| The fix of round 1 | execution | Claude Opus 5.5 | not reported | not reported | 12:00 to 12:02 |
+| Round 2 | reasoning | Claude Fable 5.1, Claude Code CLI | `xhigh` | 1,181,317 (USD 4.91) | 8 min 32 s, from 12:02 |
+| The close-out | execution | Claude Opus 5.5 | not reported | not reported | 12:24 to 12:26 |
