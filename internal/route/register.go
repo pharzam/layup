@@ -3,7 +3,8 @@
 // register of Start (row 22b of the plan, task T-1g1q, #137) with the columns
 // that M2b adds, the models and the Operator's routing register, the checks
 // across the three, and the check of a harness's credential file (row 30a,
-// task T-ysph, #155). Admission and the routing order come in row 30b.
+// task T-ysph, #155); admission and the order of the routing register (row
+// 30b, task T-cht1, #156).
 package route
 
 import (
