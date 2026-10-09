@@ -122,6 +122,7 @@ func task(store *standinStore, calls *[]string) (*Sessions, TaskSpec) {
 		return session.Run{}, nil
 	}
 	r.newID = func() (string, error) { return "S-1a2b3c4d", nil }
+	r.exists = func(string) bool { return false } // a unit test touches no file
 	return r, TaskSpec{Task: "T-ab12", Attempt: 1, Role: "developer", Base: aSHA, Records: aSHA, Prompt: []byte("the task\n"),
 		Pair: Pair{Harness: "claude", Model: "claude-fable-5-1", VersionCommand: "claude --version", Command: "claude -p {prompt}",
 			PromptMode: "arg", Cap: "5.0", Wall: 30, Rules: []string{"CLAUDE.md"}, Policy: []string{"/etc/claude/policy.json"},

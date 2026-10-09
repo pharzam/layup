@@ -168,7 +168,7 @@ that the records branch does not hold yet (`events.tsv` of a new task,
    `layup run` sweeps the directories that a stopped run of the target left;
    right after it, it makes the session directory, so that each check runs on
    the session's own files; a start that is refused, or that stops on an error
-   before the process, removes its directory at once, so a copied credential
+   before its start row is pushed, removes its directory at once, so a copied credential
    does not wait for the next sweep; a directory that the start made in part
    before it failed is removed too, and one of the ID that was there before
    the start is another session's and is kept. Then the attempt

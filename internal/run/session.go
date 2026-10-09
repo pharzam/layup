@@ -143,6 +143,7 @@ func (s *Sessions) appendEvent(ctx context.Context, task string, kind string, at
 // none (decided here, task T-d8t9), in one records commit with its push,
 // through Fenced. It gives the attempt.
 func (s *Sessions) StartAttempt(ctx context.Context, task, base string) (int, error) {
+	s.fns()
 	rows, err := s.readTable(ctx, eventsPath(task), records.ReadEvents)
 	if err != nil {
 		return 0, err

@@ -51,3 +51,44 @@ records store.
 **The rejected alternatives:** two commits for the start row and the event;
 the refusal written from inside `internal/session` (one writer: the records
 store is `internal/run`'s, which `internal/session` cannot import).
+
+## Review rounds
+
+The records are comments on #164. Round 1 (Claude Fable 5.1, effort `xhigh`,
+a fresh read-only session in a clone at `3db56c2`, cycle 0): `material`.
+Finding 1: a start whose `Make` failed after it made the directory kept it,
+with a copied credential. Fixed in `2e13918`: the start removes a root that it
+made, and keeps one that was there before (`TestAFailedMakeRemovesItsDirectory`);
+with notes 2 to 4 (`tmp/` as the version check's `HOME`, the deviation above,
+the defaults of `Now` and `End`); note 5 was a lesson already in §2. The
+branch then merged `origin/main` at `91e41b5` (row 34b) as `3dc94f4`, its
+conflicts the Test cell of `REQ-013`, the §13 lines and two rows of
+`traceability.md`, each kept with both additions. Round 2 (the same model and
+effort, a fresh session at `3dc94f4`, cycle 1, the cap): `nothing material in
+scope`, four notes, all applied in the close-out: `StartAttempt` sets the
+defaults too; the new test in `traceability.md` and the Test cell of
+`REQ-013`; the unit tests' `exists` touches no file; the sentence of step 1
+says "before its start row is pushed".
+
+## Verdict
+
+Delivered: the start of a task session in `internal/run`: `StartAttempt`,
+`TaskSession` with the start row before the process and the refused start, and
+the records store's `ReadFile` and `Commit`. The review ended by decay at
+cycle 1 of cap 1. The task's own change, against `origin/main`, is inside
+1,200 lines over 16 files. Next: row 36b.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). UTC, 2026-10-09; reviewers' tokens are
+`modelUsage`; the author's are not reported.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan | reasoning | Claude Opus 5.5 | not reported | not reported | to 18:24 |
+| The plan review | reasoning | Claude Fable 5.1 | `xhigh` | 878,038 (USD 6.66) | 6 min 39 s |
+| The code, test first | execution | Claude Opus 5.5 | not reported | not reported | 18:33 to 18:44 |
+| Round 1 | reasoning | Claude Fable 5.1 | `xhigh` | 821,281 (USD 4.97) | 9 min 4 s |
+| The fix of round 1, and the merge of `origin/main` | execution | Claude Opus 5.5 | not reported | not reported | 18:52 to 19:00 |
+| Round 2 | reasoning | Claude Fable 5.1 | `xhigh` | 886,959 (USD 5.67) | 10 min 27 s |
+| The close-out, with notes 1 to 4 | execution | Claude Opus 5.5 | not reported | not reported | 19:12 to 19:15 |
