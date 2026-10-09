@@ -459,7 +459,9 @@ rule can be checked mechanically; the engine checks make no model call, and the
 `internal/session` starts a harness: the one model process that `layup` starts
 (ADR-0015 decision 3). **Decided here**, the check that will replace the
 phase-1 import rule ([`gate.md`](gate.md#nfr-005--no-model-call-in-the-engine-checks)):
-the build task of `internal/session` adds to `TestPackageRules` a line of
+the build task of the package rules of `M2b`, [row 29 of the
+plan](../plan/README.md#the-tasks-of-m2b) (the plan of #152), before any package
+of the table of `M2b` exists, adds to `TestPackageRules` a line of
 `packages.md`, "The packages of the engine checks:", with one code span per
 package (`internal/psb`, `internal/verify`, `internal/gate`; a later engine
 check adds its own), and the rule that no package of that line depends on
@@ -472,12 +474,13 @@ phase-1 import rule stays the check of the phase-1 commands.
 Their criteria: "No code path of LAYUP modifies base LLM weights or trains a
 custom foundation model; a code review of each release records it", and "No
 code path of LAYUP calls a cloud provider or hosting platform to modify it; a
-code review of each release records it". **Decided here:** the demo task
-of `M2b` records a code review of its release (the non-test Go files of `cmd/`
-and `internal/`, `go.mod` and the files that the binary embeds, at the commit
-that the demo runs) by a reviewer of a model that wrote none of it, as task
-`T-efmy` did for phase 1, with `runs/T-efmy/release-check.sh` adapted in that
-task: its check 4 allows the verbs of `Fetch`, `Push` and `FetchSession`, and a
+code review of each release records it". **Decided here:** a task of
+its own, before the demo (row 39a of [the plan](../plan/README.md#the-tasks-of-m2b),
+O-187 of #152), records a code review of the release of `M2b` (the non-test Go
+files of `cmd/` and `internal/`, `go.mod` and the files that the binary embeds,
+the code that the demo runs) by a reviewer of a model that wrote none of it, as
+task `T-efmy` did for phase 1, with `runs/T-efmy/release-check.sh` adapted in
+that task: its check 4 allows the verbs of `Fetch`, `Push` and `FetchSession`, and a
 new list names each program that the code starts (`git`, `sh`, the command of a
 harness register row). The review reads the whole release, so it covers the
 code of `M2a` too (#148). A session runs under the Operator's user and can reach
