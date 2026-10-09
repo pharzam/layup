@@ -1188,8 +1188,9 @@ task `T-3jpx`, #81):
   gives no output, and the kind passes on nothing; the assignment keeps the
   status (measured: 127 when `gofmt` is not found, 2 on a file that does not
   parse; `fail`, `NFR-004`). `gofmt` comes with `go` in a Go distribution.
-- **The version and the evidence** of each `active` kind: `1.26`, the `go`
-  line of LAYUP's own `go.mod`, and `https://pkg.go.dev/cmd/go@go1.26.0`, the
+- **The version and the evidence** of each `active` kind: `1.26`, the minor
+  line of the `go` directive of LAYUP's own `go.mod` (`go 1.26.9` since task
+  `T-w89c`), and `https://pkg.go.dev/cmd/go@go1.26.0`, the
   documentation of the `go` command at the first release of that line (it
   documents `go vet`, `go test -count=1`, and `go fmt`, which runs `gofmt`),
   read on 2026-10-02. The target's `go.mod` has `go 1.26`. Reason: LAYUP's CI
