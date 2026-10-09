@@ -213,3 +213,54 @@ func TestAProgramThatCannotStartHasItsRow(t *testing.T) {
 		t.Errorf("no telemetry row of %s:\n%s", id, tel)
 	}
 }
+
+// The comment comes after every record of the session, the push hook's too:
+// a refusal that the push hook records (row 37a's base, here a stand-in) is
+// named in its first line.
+func TestTheCommentNamesARefusalOfThePushHook(t *testing.T) {
+	_, r, f, base := sessionWorld(t)
+	spec := harness(t, base, work(helloSum))
+	ctx := context.Background()
+	spec.Push = func(id string, d session.Dir, run session.Run) error {
+		data, err := r.appendEvents(ctx, "T-ab12", 1, id, []string{"refused base"})
+		if err != nil {
+			return err
+		}
+		return r.commit(ctx, map[string][]byte{"tasks/T-ab12/events.tsv": data}, "refused by the test")
+	}
+	id, err := r.TaskSession(ctx, spec)
+	if err != nil {
+		t.Fatalf("TaskSession: %q, %v", id, err)
+	}
+	if got := f.posted[2]; len(got) != 1 || got[0] != id+": developer session of T-ab12, attempt 1: done, refused base\n" {
+		t.Errorf("the comment %q; want it after the push hook's refusal", got)
+	}
+}
+
+// A second session of the attempt: its comment names its own result only,
+// not the refusal of the first.
+func TestTheCommentOfASecondSessionIsItsOwn(t *testing.T) {
+	_, r, f, base := sessionWorld(t)
+	ctx := context.Background()
+	if _, err := r.TaskSession(ctx, harness(t, base, work(strings.Repeat("0", 64)))); err != nil {
+		t.Fatal(err)
+	}
+	id, err := r.TaskSession(ctx, harness(t, base, work(helloSum)))
+	if err != nil {
+		t.Fatalf("the second session: %v", err)
+	}
+	if got := f.posted[2]; len(got) != 2 || got[1] != id+": developer session of T-ab12, attempt 1: done\n" {
+		t.Errorf("the comments %q; want the second one its own", got)
+	}
+}
+
+// A usage format that is not of the list is the run's own error, not a row
+// with a false reason.
+func TestAUsageFormatOfNoListIsAnError(t *testing.T) {
+	_, r, _, base := sessionWorld(t)
+	spec := harness(t, base, work(helloSum))
+	spec.Pair.Usage = "other"
+	if _, err := r.TaskSession(context.Background(), spec); err == nil || !strings.Contains(err.Error(), "not one of the list") {
+		t.Errorf("%v; want the error of the format", err)
+	}
+}

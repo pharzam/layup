@@ -12,6 +12,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io/fs"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -106,14 +107,39 @@ func (s *Sessions) endTask(ctx context.Context, spec TaskSpec, id string, d sess
 		return err
 	}
 	files["telemetry.tsv"] = tel
-	if err := s.commit(ctx, files, fmt.Sprintf("layup run: the end of %s, %s", id, class)); err != nil {
+	return s.commit(ctx, files, fmt.Sprintf("layup run: the end of %s, %s", id, class))
+}
+
+// comment posts the comment of the task session id on the control issue,
+// after every record of the session (the end's and the push hook's): its
+// first line names the class of its event result and each of its refusals,
+// as the events hold them. A session with no event result has no records of
+// its end, and no comment.
+func (s *Sessions) comment(ctx context.Context, id string) error {
+	start, err := s.startRowOf(ctx, id)
+	if err != nil {
 		return err
 	}
-	line := fmt.Sprintf("%s: %s session of %s, attempt %d: %s", id, start[sessionRole], task, attempt, class)
-	for _, why := range refused {
-		line += ", refused " + why
+	events, err := s.readTable(ctx, eventsPath(start[sessionTask]), records.ReadEvents)
+	if err != nil {
+		return err
 	}
-	_, err = s.Forge.Comment(ctx, s.Control, line+"\n")
+	class, refused := "", ""
+	for _, e := range events {
+		reason, _, _ := strings.Cut(e[6], " ")
+		switch {
+		case e[3] != id:
+		case e[1] == "result":
+			class = e[6]
+		case e[1] == "refused":
+			refused += ", refused " + reason
+		}
+	}
+	if class == "" {
+		return nil
+	}
+	line := fmt.Sprintf("%s: %s session of %s, attempt %s: %s%s\n", id, start[sessionRole], start[sessionTask], start[sessionAttempt], class, refused)
+	_, err = s.Forge.Comment(ctx, s.Control, line)
 	return err
 }
 
@@ -177,9 +203,16 @@ func (s *Sessions) artifacts(d session.Dir, task string, attempt int, id string,
 		if r[0] != "artifact" {
 			continue
 		}
+		entries, err := git.LsTree(s.Clone, head, r[2])
+		if err != nil {
+			return false, err
+		}
+		if len(entries) != 1 || entries[0].Path != r[2] || entries[0].Type != "blob" {
+			return true, nil // the head lacks it
+		}
 		blob, err := git.Show(s.Clone, head, r[2])
 		if err != nil {
-			return true, nil // the head lacks it
+			return false, err
 		}
 		sum := sha256.Sum256(blob)
 		if hex.EncodeToString(sum[:]) != r[3] {
@@ -198,8 +231,10 @@ func (s *Sessions) telemetry(ctx context.Context, spec TaskSpec, start []string,
 		return nil, err
 	}
 	u, err := session.UsageOf(spec.Pair.Usage, filepath.Join(d.Root, "stdout"))
-	if err != nil {
+	if errors.As(err, new(*fs.PathError)) {
 		u = session.Usage{Status: "unavailable", Reason: "stdout cannot be read"}
+	} else if err != nil {
+		return nil, err // a format that is not of the list is the run's own error
 	}
 	end := r.End
 	if end.IsZero() {

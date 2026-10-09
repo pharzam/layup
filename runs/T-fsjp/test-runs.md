@@ -93,7 +93,47 @@ end_integration_test.go:207: TaskSession: "S-6670eed1", the telemetry row of S-6
 end_integration_test.go:94: the session directory after the call: <nil>; want it removed
 ```
 
-## Green (2026-10-09T19:51Z)
+## The fix of round 1 (2026-10-09T20:05Z to 20:08Z)
+
+Finding 1: the comment was posted inside the end, before the push hook could
+record a refusal of the result. `TestTheCommentNamesARefusalOfThePushHook`
+gives a push hook that records `refused`, `base`, as row 37a's will; on the
+code of `a7d4ff4` it failed:
+
+```
+end_integration_test.go:236: the comment ["S-d4868240: developer session of T-ab12, attempt 1: done\n"]; want it after the push hook's refusal
+```
+
+The comment is now posted by `TaskSession` after the call, from the events.
+Notes 4 and 5 made two more rules (a usage format of no list is the run's own
+error; a path that the head lacks is looked for with `LsTree`, and another
+error of `Show` is the run's own). Two first mutations were not caught, so two
+cases were added (`TestTheCommentOfASecondSessionIsItsOwn`,
+`TestAUsageFormatOfNoListIsAnError`); the old mutations `comment` and
+`comment-refused` above named the code that moved, and are replaced by these,
+each in full:
+
+```
+== comment: TaskSession: no comment (exit 1)
+end_integration_test.go:91: the comments on the control issue []
+end_integration_test.go:112: the comment []
+end_integration_test.go:150: the comment []
+end_integration_test.go:183: the comment []
+end_integration_test.go:236: the comment []; want it after the push hook's refusal
+== comment-refused: comment: the refusals not named (exit 1)
+end_integration_test.go:112: the comment ["S-0eb06498: developer session of T-ab12, attempt 1: done\n"]
+end_integration_test.go:150: the comment ["S-30241b33: developer session of T-ab12, attempt 1: done\n"]
+end_integration_test.go:183: the comment ["S-7d616221: developer session of T-ab12, attempt 1: done\n"]
+end_integration_test.go:236: the comment ["S-e83e8de9: developer session of T-ab12, attempt 1: done\n"]; want it after the push hook's refusal
+== comment-other: comment: the events of other sessions read as this one's (exit 1)
+end_integration_test.go:253: the comments ["S-b2e5a452: developer session of T-ab12, attempt 1: done, refused artifact\n" "S-dfbd4ecb: developer session of T-ab12, attempt 1: done, refused artifact\n"]; want the second one its own
+== usage-format: telemetry: a format that is not of the list read as no stdout (exit 1)
+end_integration_test.go:264: <nil>; want the error of the format
+== artifact-lstree: artifacts: a path that the head lacks not looked for (exit 1)
+end_integration_test.go:192: TaskSession: "S-a44b00c9", git show --end-of-options 44986ca3735c5fdb39dcf86f397c20e6975acd49:none.txt --: exit status 128: fatal: bad revision '44986ca3735c5fdb39dcf86f397c20e6975acd49:none.txt'
+```
+
+## Green (2026-10-09T19:51Z, again at 20:08Z after the fix of round 1)
 
 Each with exit 0: `go build ./...`, `go vet ./...`, `gofmt -l internal cmd`
 (empty), `go test ./...`, `go test -tags=integration ./...` (with

@@ -37,8 +37,9 @@ goal count is 2, final by O-187 of #152.
    Test cells of `REQ-005`, `REQ-011` and `NFR-001` and a §13 line.
 
 **Tests:** [`test-runs.md`](../../runs/T-fsjp/test-runs.md): red before the
-forge call and before the open attempt; a mutation of each of the seventeen
-rules of the end, each caught; green after.
+forge call and before the open attempt; a mutation of each of the twenty
+rules of the end, each caught, three of them added by the fix of round 1;
+green after.
 
 **A deviation:** the integration tests of the end were written after
 `end.go`, so they were not red before the code; their red is the mutations.

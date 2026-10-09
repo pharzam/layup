@@ -284,7 +284,12 @@ func (s *Sessions) TaskSession(ctx context.Context, spec TaskSpec) (string, erro
 		// credential never waits for the next sweep (decided here, task
 		// T-fsjp).
 		if rmErr := s.remove(d.Root); rmErr != nil {
-			return id, errors.Join(err, rmErr)
+			err = errors.Join(err, rmErr)
+		}
+		// The comment comes after every record of the session, the push
+		// hook's too (decided here, task T-fsjp, round 1 of #165).
+		if cErr := s.comment(ctx, id); cErr != nil {
+			err = errors.Join(err, cErr)
 		}
 		return id, err
 	}

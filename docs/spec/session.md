@@ -368,7 +368,11 @@ starts with the session ID and gives its result, for example
 `T-fsjp`): the first line of a task session's comment is `<session>: <role>
 session of <task>, attempt <n>: <class>`, with `, refused <reason>` after it for
 each refusal of its result, for example `S-1a2b3c4d: developer session of
-T-ab12, attempt 1: done, refused artifact`. The call is the forge's `Comment`
+T-ab12, attempt 1: done, refused artifact`. It is posted after every record of
+the session, those of the checks before a push and of the push too, from what
+the events hold, so it names the refusals of the end and of those checks
+(**decided here**, round 1 of #165); a session whose end recorded nothing has no
+comment. The call is the forge's `Comment`
 ([`forge.md`](forge.md#the-calls-of-m2b), O-189). The task loop of `M2e` moves
 a task's comments to the task's issue.
 
@@ -387,7 +391,8 @@ from the file (§3). The questions, the decisions and the lessons of a handoff,
 and the transition table, are `M2e`'s.
 
 **Decided here** (task `T-fsjp`, condition 2 of the plan review of #165): the
-result file is read, checked and committed for the class `done` only, as only a
+result file is read for every exit, to tell `done` from `no-result`, and is
+checked against the head and committed for the class `done` only, as only a
 session that ends `done` hands its work over; for another class the events and
 the telemetry row are committed, and no `results/` file. The file is read once,
 and the bytes committed are the bytes checked. A link as the last part of its
@@ -498,7 +503,9 @@ started, the probe's included, in the records commit of the session's end, check
   the task's requirement IDs from the task register (`M2e`); `—` before it.
 - `billing`: the row's `billing`.
 - `start`, `first_output`, `end`: `layup run`'s own times: the start of the
-  process, the first byte of `stdout`, and its end, as the column `end` of
+  process, the first byte of `stdout`, and its end (**decided here**, task
+  `T-fsjp`: a program that cannot start has no end of its own, so its `end`
+  is its `start`), as the column `end` of
   [`telemetry.tsv`](records.md#req-011--the-telemetry-record) says.
 - the tokens: from [the usage report](#the-usage-report-of-a-harness).
 - the money: `reported` when the harness reports a cost and the billing is
@@ -565,6 +572,7 @@ gives no usage report (3000.11.3), so its rows use `none`.
 | A version command that fails, or whose first line is empty or white space only | the start is refused (`version`) |
 | A result file that is missing, a link or not a regular file, over 1 MiB, malformed, or has two `status` rows | `no-result`; the result is refused |
 | A `probe.tsv` with no token, another token, or no `AGENTS.md` row | the probe fails, with the reason |
+| A `stdout` that cannot be read | tokens `unavailable`, "stdout cannot be read" (**decided here**, task `T-fsjp`); a usage format of no list is the run's own error |
 | `stdout` with no `result` object, or with lines that are not JSON | tokens `unavailable` (the lines that are not JSON, or not of the form of an object of the report, are skipped) |
 | A task with no event `attempt` for the session's attempt | the start is refused (`attempt`) |
 | A `prompt.md` over 131,071 bytes for a row whose `prompt` is `arg` | the start is refused (`prompt`), before the start row |
