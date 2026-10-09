@@ -1,14 +1,16 @@
 # The test runs of T-w89c
 
 The host: the LAYUP host of 2026-10-09, Linux on amd64, `go version go1.26.9
-linux/amd64`. Each run downloads the named toolchain and govulncheck's
-vulnerability database, so it needs the network.
+linux/amd64`. The red downloads `go1.26.8`; each run fetches govulncheck and
+its vulnerability database, so it needs the network.
 
 ## Red, at the base `ad3c400`
 
 `GOTOOLCHAIN=go1.26.8 go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./...`:
 govulncheck exits 3 (`go run` reports `exit status 3` and exits 1), with the
-ten advisories of #150:
+ten advisories of #150. The block is cut: its first line lists the IDs of
+the ten entries that govulncheck prints, each with its "Found in: …@go1.26.8"
+and "Fixed in: …@go1.26.9" lines, and its last lines are govulncheck's own:
 
 ```
 GO-2026-6603 GO-2026-6604 GO-2026-6605 GO-2026-6607 GO-2026-6608 GO-2026-6610 GO-2026-6611 GO-2026-6612 GO-2026-6613 GO-2026-6617
