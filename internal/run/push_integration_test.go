@@ -48,9 +48,9 @@ func TestARulePathChangeIsRefusedWithItsDiff(t *testing.T) {
 	sum := strings.TrimPrefix(got[0], "rule-path ")
 	payload := show(t, w.bare, "layup-records", "payloads/"+sum)
 	head := strings.TrimSpace(gitOut(t, r.Clone, "rev-parse", "refs/layup/sessions/"+id))
-	diff, err := exec.Command("git", "-C", r.Clone, "diff", "--binary", a.base, head).Output()
-	if err != nil || payload != string(diff) {
-		t.Errorf("the payload:\n%q\nwant git diff --binary from the base to the head:\n%q (%v)", payload, diff, err)
+	// gitOut reads no configuration of the host, as internal/git does not.
+	if diff := gitOut(t, r.Clone, "diff", "--binary", "--no-renames", a.base, head); payload != diff {
+		t.Errorf("the payload:\n%q\nwant git diff --binary from the base to the head:\n%q", payload, diff)
 	}
 	if s := sha256.Sum256([]byte(payload)); hex.EncodeToString(s[:]) != sum {
 		t.Errorf("the payload's name %s is not the SHA-256 of its bytes", sum)
@@ -109,6 +109,26 @@ printf '` + strings.ReplaceAll(resultHead, "\t", `\t`) + `' > ../result/result.t
 	}
 	if got := refusals(t, w, id); len(got) != 0 {
 		t.Errorf("the refusals %q; want none", got)
+	}
+}
+
+// A head that deletes docs/guardrails.md changes a rule path: the exception
+// holds only for added lines, so the result is refused (rule-path).
+func TestAHeadThatDeletesTheGuardrailsIsRefused(t *testing.T) {
+	w, r, _, a := sessionWorld(t)
+	gitOut(t, r.Clone, "checkout", "-q", "main")
+	writeFile(t, filepath.Join(r.Clone, "docs", "guardrails.md"), "# G\n\n## 2. Known pitfalls\n\n- one\n")
+	gitOut(t, r.Clone, "add", "-A")
+	gitOut(t, r.Clone, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "guardrails")
+	a.base = strings.TrimSpace(gitOut(t, r.Clone, "rev-parse", "HEAD"))
+	body := `git rm -q docs/guardrails.md && git commit -qm gone &&
+printf '` + strings.ReplaceAll(resultHead, "\t", `\t`) + `' > ../result/result.tsv`
+	id, err := r.TaskSession(context.Background(), harness(t, a, body))
+	if err != nil {
+		t.Fatalf("TaskSession: %q, %v", id, err)
+	}
+	if got := refusals(t, w, id); len(got) != 1 || !strings.HasPrefix(got[0], "rule-path ") {
+		t.Errorf("the refusals %q; want one rule-path with its payload", got)
 	}
 }
 

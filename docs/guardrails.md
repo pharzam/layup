@@ -527,7 +527,11 @@ These traps are not domain-specific: they hurt every project's test suite.
   of `{cap}` too, so dropping the rule of the empty value left the case green,
   and a lone position `0` was refused by the rule of a gap as well as by the rule
   it named; move the case to a fixture where only its rule can refuse it, or
-  assert the line as well as the column. When a mutation record is cut to a few
+  assert the line as well as the column. A fixture can also be too small to tell
+  two rules apart: in task `T-z027` (#166) the payload of a refused head was
+  the diff of the head, and a demo that changed one file could not tell it from
+  the diff of that file alone; give the fixture a second change that the wrong
+  rule would leave out. When a mutation record is cut to a few
   lines, say so, or it reads as fewer failing cases than ran.
 - ❌ **Stale tests after a requirement changes.** When a requirement changes but its
   test does not, the suite now guards the old behaviour and blocks the new. The

@@ -67,7 +67,40 @@ push_integration_test.go:53: the payload:
 push_integration_test.go:59: the commit of the payload changed ["payloads/5a404c9f0ae0e24afc3be7ac0caca46c226a0668380e8b79ca666871a3a94458"]; want the payload and the events
 ```
 
-## Green (2026-10-09T20:34Z)
+## The fix of round 1 (2026-10-09T20:46Z to 20:50Z)
+
+Finding 1: a head that deletes `docs/guardrails.md` stopped the hook with the
+run's own error. `TestAHeadThatDeletesTheGuardrailsIsRefused`, on the code of
+`9d53a8b`:
+
+```
+push_integration_test.go:128: TaskSession: "S-6ba9470d", git show --end-of-options d2a0de92975ed7dcf9f3f27c4329b5ecabafde79:docs/guardrails.md --: exit status 128: fatal: bad revision 'd2a0de92975ed7dcf9f3f27c4329b5ecabafde79:docs/guardrails.md'
+```
+
+The head's file is now looked for with `LsTree`, and a head that lacks it
+keeps an empty `Head`, which no added line passes. Note 2: a records commit
+with no register refuses, and a commit or a `git` that cannot be read is the
+run's own error. Note 6: `TestPassed`, the unit test of `passed`. Note 4: the
+demo's own diff runs through `gitOut`, with no configuration of the host. Note
+5: the assertion "nothing is pushed" cannot fail until row 37b pushes. The
+mutations of the fix, with `TestPassed` among the tests, each in full (cut at
+400 characters):
+
+```
+== passed-refused: passed: a session refused at its end is checked (exit 1)
+end_integration_test.go:150: TaskSession: "S-04c09b13", git rev-parse --verify --end-of-options refs/layup/sessions/S-04c09b13: exit status 128: fatal: Needed a single revision
+push_integration_test.go:165: the refusals ["artifact" "rule-path 72f90d80b29c172552a5af5602d90fed8af2e131ec5e5969d5d679758b883788"]; want artifact only
+session_test.go:323: done, then refused: true, want false
+== passed-done: passed: a result of any class is checked (exit 1)
+end_integration_test.go:130: TaskSession: "S-b2cbf609", git rev-parse --verify --end-of-options refs/layup/sessions/S-b2cbf609: exit status 128: fatal: Needed a single revision
+session_test.go:323: another class: true, want false
+== register-missing: pushTask: a records commit with no register is the run's own error (exit 1)
+push_integration_test.go:147: TaskSession: "S-6bf2535a", no register
+== guardrails-deleted: pushTask: a head that lacks docs/guardrails.md is read with Show (exit 1)
+push_integration_test.go:128: TaskSession: "S-62021a55", git show --end-of-options 107db12a99a2ad32f1939dce169698a6b1febe78:docs/guardrails.md --: exit status 128: fatal: bad revision '107db12a99a2ad32f1939dce169698a6b1febe78:docs/guardrails.md'
+```
+
+## Green (2026-10-09T20:34Z, again at 20:50Z after the fix of round 1)
 
 Each with exit 0: `go build ./...`, `go vet ./...`, `gofmt -l internal cmd`
 (empty), `go test ./...`, `go test -tags=integration ./...`; `adr-lint`,

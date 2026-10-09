@@ -359,7 +359,8 @@ event is the reason, one space, and the payload's SHA-256, for example
 `rule-path 3f2a…` (**decided here**, condition 3 of the plan review of #166).
 **Decided here** (condition 2): a records commit of the session with no
 `rule-paths.tsv`, or one that its reader refuses, refuses the result
-(`rule-paths`), fail closed, as ADR-0017 decision 2 makes the register the
+(`rule-paths`), fail closed (a records commit or a `git` that cannot be read
+is the run's own error; round 1 of #166), as ADR-0017 decision 2 makes the register the
 guard of layer 2; a target that Start made has no register until `layup
 setup` writes it. **Known limit:** a target whose product holds
 shell scripts changes them only in a rule batch.

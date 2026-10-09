@@ -302,3 +302,25 @@ func TestTheOpenAttempt(t *testing.T) {
 		}
 	}
 }
+
+func TestPassed(t *testing.T) {
+	const id = "S-1a2b3c4d"
+	row := func(n, kind, session, detail string) []string {
+		return []string{n, kind, "1", session, "", "", detail, "2026-10-09T12:00:00Z"}
+	}
+	for _, c := range []struct {
+		name   string
+		events [][]string
+		want   bool
+	}{
+		{"done", [][]string{row("1", "result", id, "done")}, true},
+		{"another class", [][]string{row("1", "result", id, "crash")}, false},
+		{"done, then refused", [][]string{row("1", "result", id, "done"), row("2", "refused", id, "artifact")}, false},
+		{"done; another session refused", [][]string{row("1", "result", id, "done"), row("2", "refused", "S-99999999", "artifact")}, true},
+		{"no result", [][]string{row("1", "session", id, "")}, false},
+	} {
+		if got := passed(c.events, id); got != c.want {
+			t.Errorf("%s: %v, want %v", c.name, got, c.want)
+		}
+	}
+}

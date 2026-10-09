@@ -69,9 +69,18 @@ func (s *Sessions) pushTask(ctx context.Context, id string) error {
 	} else if !ok {
 		return s.refuse(ctx, start, id, "base", nil)
 	}
+	// No register in the records commit refuses; a commit or a git that
+	// cannot be read is the run's own error.
+	entries, err := git.LsTree(s.Clone, start[sessionRecords], "rule-paths.tsv")
+	if err != nil {
+		return err
+	}
+	if len(entries) != 1 || entries[0].Path != "rule-paths.tsv" {
+		return s.refuse(ctx, start, id, "rule-paths", nil)
+	}
 	data, err := git.Show(s.Clone, start[sessionRecords], "rule-paths.tsv")
 	if err != nil {
-		return s.refuse(ctx, start, id, "rule-paths", nil)
+		return err
 	}
 	reg, err := rules.ReadRegister(data)
 	if err != nil {
@@ -86,8 +95,14 @@ func (s *Sessions) pushTask(ctx context.Context, id string) error {
 		if change.Diff, err = git.DiffFile(s.Clone, base, head, rules.GuardrailsPath); err != nil {
 			return err
 		}
-		if change.Head, err = git.Show(s.Clone, head, rules.GuardrailsPath); err != nil {
+		// A head that lacks the file keeps an empty Head, which no added
+		// line passes: a deletion is a rule-path change.
+		if entries, err := git.LsTree(s.Clone, head, rules.GuardrailsPath); err != nil {
 			return err
+		} else if len(entries) == 1 && entries[0].Path == rules.GuardrailsPath {
+			if change.Head, err = git.Show(s.Clone, head, rules.GuardrailsPath); err != nil {
+				return err
+			}
 		}
 	}
 	reason, _ := rules.Check(names, reg, change)
