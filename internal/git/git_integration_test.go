@@ -672,7 +672,7 @@ func TestTheReadsOfM2b(t *testing.T) {
 // instaweb.browser, man.viewer, diff.tool, merge.tool, diff.guitool,
 // merge.guitool) reaches a program through a key of the list or by its name on
 // the PATH, so it has no marker. tar.<format>.command, trailer.<keyAlias>.cmd
-// and .command, and sendemail.sendmailCmd are not listed by 2.47.3. live are the ones that a plain read in the clone fires on this
+// and .command, and sendemail.sendmailCmd are not listed by `git help --config` of 2.47.3. live are the ones that a plain read in the clone fires on this
 // host (the control shows each); notLive are the ones that no plain read fires,
 // so their absence after FetchSession is asserted, not shown live.
 // remote.v.vcs names a helper git-remote-<vcs> of the PATH, not a path, so it
@@ -809,6 +809,9 @@ func TestAHostileSessionRunsNothing(t *testing.T) {
 	marks := t.TempDir()
 	arm(t, dir, marks, up)
 	must(t, FetchSession(runClone, filepath.Join(dir, ".git"), head, "refs/heads/task/T-ab12/1"))
+	if got := gitOK(t, runClone, plain(home), "rev-parse", "refs/heads/task/T-ab12/1"); got != head+"\n" {
+		t.Errorf("the head in the run's clone after the armed fetch: %q; want %s", got, head)
+	}
 	if got := marked(t, marks); len(got) != 0 {
 		t.Errorf("FetchSession ran the session's programs: %v", got)
 	}

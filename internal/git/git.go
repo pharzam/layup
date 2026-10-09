@@ -182,7 +182,7 @@ func SwitchCreate(dir, branch, commit string) error {
 // they may read as a revision before git 2.44, so commit must be a full
 // object ID: any other text, which could be an option, starts no git.
 func doAt(dir, commit string, args ...string) error {
-	if (len(commit) != 40 && len(commit) != 64) || strings.Trim(commit, "0123456789abcdef") != "" {
+	if !fullObjectID(commit) {
 		return &FailedError{Args: args, Code: -1, Err: errors.New("not a full object ID")}
 	}
 	return do(dir, args...)
@@ -354,8 +354,7 @@ func Fetch(dir, url, ref string, auth Auth) error {
 // *FailedError of Code 1; a remote that cannot be reached gives another code.
 func Push(dir, url, commit, branch string, auth Auth) error {
 	args := []string{"push", "--porcelain", "--", url, commit + ":refs/heads/" + branch}
-	if (len(commit) != 40 && len(commit) != 64) || strings.Trim(commit, "0123456789abcdef") != "" ||
-		branch == "" || strings.Contains(branch, ":") {
+	if !fullObjectID(commit) || branch == "" || strings.Contains(branch, ":") {
 		return &FailedError{Args: args, Code: -1, Err: errors.New("not a full object ID, or not a branch")}
 	}
 	return doAuth(dir, auth, args)

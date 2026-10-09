@@ -282,8 +282,8 @@ takes a token.
   non-zero (an absent object), is `ErrNotACommit` in the `Err` of a
   `*FailedError` (task `T-z5dj`); `TMP` and `EMPTY` are removed on each return,
   a refusal included. `FetchSession` refuses, before `git` starts, a `SHA` that is
-  not a full object ID and a `DST` that does not start with `refs/` or holds a `:`,
-  as `Fetch` does. `CloneLocal` refuses an
+  not a full object ID, as `Push` does, and a `DST` that does not start with
+  `refs/` or holds a `:`, as `Fetch` does. `CloneLocal` refuses an
   empty `BRANCH` or one that starts with `-` before `git` starts. **Known
   limit:** `FetchSession` has no `--update-head-ok`, so a `DST` that is the
   branch of `HEAD` of `dir` is refused by `git`; `layup run`'s clone is on
@@ -298,8 +298,8 @@ each later one uses the same calls on the last records commit, with no
 - `--end-of-options` or `--` comes before each revision, URL and path, so an
   input is never an option (`layup gate` takes revisions from its arguments).
   `checkout` and `switch` may read `--end-of-options` as a revision before
-  `git` 2.44 (a reading of git's option parser; not measured, the LAYUP host
-  has 2.54.0 only). So `CheckoutDetach`, `SwitchCreate` and `ResetSoft` get
+  `git` 2.44 (a reading of git's option parser; not measured, the Operator's
+  host has 2.54.0). So `CheckoutDetach`, `SwitchCreate` and `ResetSoft` get
   none: `COMMIT` is a full object ID (40 or 64 hexadecimal characters), and the
   call refuses any other text before `git` starts.
 - `DiffNames` names a renamed path at both ends, so a renamed product path

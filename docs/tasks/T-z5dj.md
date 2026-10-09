@@ -49,3 +49,35 @@ live (the test's `notLive`), and `remote.<name>.vcs` names a helper of the
 **The rejected alternatives:** a fetch from the session's clone (its
 `upload-pack` reads the session's configuration); `git bundle` (it runs `git` in
 the session's clone); copying the objects by hand.
+
+## Review rounds and verdict
+
+The records, the Fixes replies and O-188 are comments on #157. Round 1
+(`6958da4`, cycle 0): `material`, the list of keys was not each key of git's
+documentation; fixed in `9e8e201` (45 keys, a mutation red for each call, the
+lesson). Round 2 (`9e8e201`, cycle 1): two keys of `git help --config` still
+missing; **O-188** (a) raised the cap to 2; fixed in `812aeb1` (47 keys).
+Round 3 (`812aeb1`, cycle 2): `nothing material in scope`; notes 1 to 4 applied
+in the close-out (the source of the list in `session.md`, the head checked
+after the armed fetch, one helper for a full object ID, the Operator's host in
+`packages.md`); note 5, revealed, went to #159. All rounds by Claude Fable 5.1.
+
+Delivered: the five calls of `M2b` of `internal/git`. The review ended by decay
+at cycle 2 of the cap that O-188 raised. Next: rows 33a and 37a use them.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). UTC, 2026-10-09; reviewers' tokens are
+`modelUsage`; the author's are not reported.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan | reasoning | Claude Opus 5.5 | not reported | not reported | 11:51 to 11:53 |
+| The plan review | reasoning | Claude Fable 5.1 | `xhigh` | 960,079 (USD 8.18) | 12 min 27 s |
+| The code, test first | execution | Claude Opus 5.5 | not reported | not reported | 12:10 to 12:21 |
+| Round 1 | reasoning | Claude Fable 5.1 | `xhigh` | 1,078,662 (USD 5.73) | 12 min 8 s |
+| The fix of round 1 | execution | Claude Opus 5.5 | not reported | not reported | 12:34 to 12:39 |
+| Round 2 | reasoning | Claude Fable 5.1 | `xhigh` | 941,598 (USD 6.13) | 13 min 8 s |
+| O-188; the fix of round 2 | execution | Claude Opus 5.5 | not reported | not reported | 12:53 to 13:02 |
+| Round 3 | reasoning | Claude Fable 5.1 | `xhigh` | 746,298 (USD 5.93) | 15 min 1 s |
+| The close-out | execution | Claude Opus 5.5 | not reported | not reported | 13:25 to 13:30 |
