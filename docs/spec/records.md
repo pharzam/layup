@@ -388,7 +388,7 @@ types, an error naming the line and the column: in `harness-register`,
 the rules of `credential_to` and `vars` are those of
 [`session.md`](session.md#the-environment-and-the-harness-credential) (a
 `NAME` of the form `[A-Za-z_][A-Za-z0-9_]*`, not of the named list, not of a
-forge credential or an agent socket; a `PATH` relative with no part `..`); in
+forge credential or an agent socket; a `PATH` not empty, relative, with no part `..`); in
 `models`, no column but `reason` holds `—`, `reason` is `—` exactly when `use`
 is `yes`, and `source` is an `http` or `https` URL; in `routing-register`, no
 column holds `—`, and the positions of each role and tier are 1 to k, each

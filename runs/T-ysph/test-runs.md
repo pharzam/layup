@@ -99,3 +99,28 @@ models_test.go:42: a source of another scheme: read, want an error in column sou
 ```
 
 Note 4: `go test -tags=e2e ./...` exits 0 on this tree (the e2e of `layup run` writes the four registers of `M2b`); the green record above no longer says that the integration run held it.
+
+## The notes of round 2 (2026-10-09T13:08Z)
+
+Note 1: the record of the fix cut each group of output to four lines (\`head -4\`), so two groups showed four of seven failing cases; here they are in full. The empty source (\`models_test.go\`) is also refused by the rule of the URL at the same column, so the mutation of the required columns of `models` does not reach it; the lone position `0` now asserts its line too, and with the rule of a position below 1 broken alone it fails at line 0, where the rule of a gap refuses it:
+
+```
+== required (in full)
+register_test.go:87: the empty value in wall: read, want an error in column wall
+register_test.go:87: the empty value in command: read, want an error in column command
+register_test.go:87: the empty value in prompt: read, want an error in column prompt
+register_test.go:87: the empty value in version: read, want an error in column version
+register_test.go:87: the empty value in rules: read, want an error in column rules
+register_test.go:87: the empty value in usage: read, want an error in column usage
+register_test.go:87: the empty value in billing: read, want an error in column billing
+== refused (in full)
+register_test.go:118: a fixed variable of the named list: read, want an error in column vars
+register_test.go:118: a fixed variable that is the credential's: read, want an error in column vars
+register_test.go:118: a fixed variable GH_TOKEN: read, want an error in column vars
+register_test.go:118: a fixed variable GITHUB_TOKEN: read, want an error in column vars
+register_test.go:118: a fixed variable GH_ENTERPRISE_TOKEN: read, want an error in column vars
+register_test.go:118: a fixed variable GITHUB_ENTERPRISE_TOKEN: read, want an error in column vars
+register_test.go:118: a fixed variable SSH_AUTH_SOCK: read, want an error in column vars
+== a position 1 or more (the lone 0, with its line)
+models_test.go:76: a lone position 0: line 0, column "position": the positions of developer execution run 1 to 1 wit
+```

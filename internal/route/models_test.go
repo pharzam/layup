@@ -70,6 +70,11 @@ func TestRoutingRegisterRefusesEachBrokenRule(t *testing.T) {
 	refusedAt(t, "a position 0 beside a position 2", err, "position")
 	_, err = ReadRoutingRegister(table(routingHeader, "developer\texecution\t0\tclaude\tclaude-opus-5-5"))
 	refusedAt(t, "a lone position 0", err, "position")
+	// At its own line, 2: the rule of a position below 1, not the rule of a gap
+	// (round 2 of #155, note 1).
+	if err == nil || !strings.Contains(err.Error(), "line 2") {
+		t.Errorf("a lone position 0: %v, want the error at line 2", err)
+	}
 }
 
 // The checks across the three registers (session.md, Input states, row 7; the
