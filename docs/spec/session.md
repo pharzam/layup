@@ -149,8 +149,8 @@ attempt ([Input states](#input-states)).
    (`attempt`).
 2. **The version.** Code runs the row's `version` command, with the
    environment above and no credential, and takes the first line of its
-   standard output, with no space at either end, as the version. A version that
-   `records:harnesses.tsv` holds with a passed probe goes on; any other runs
+   standard output, with no space at either end, as the version. A version whose
+   last probe passed ([Admission](#admission)) goes on; any other runs
    [the probe](#the-probe) first, and a probe that fails refuses the start
    (`probe`). A probe session's own version check takes the version and runs
    no probe. A
@@ -363,14 +363,14 @@ telemetry row, or the row of `harnesses.tsv` alone when its start was refused.
 
 It runs at the step `probe` of `layup run`, in the restart after `lease` and
 before `phase` ([`run.md`](run.md#the-restart)), and before any session whose
-version check finds no passed probe. **Decided here:** the step first skips each
+version's last probe did not pass ([Admission](#admission)). **Decided here:** the step first skips each
 harness of the register with no model of `use` `yes`, whatever its version, and
 runs no command of it, as a probe needs a model; it gets no row, and the step
-counts it as skipped. Then it probes each other harness whose version has no
-passed probe. The step is `done` when each harness that needs a probe was probed, and each
+counts it as skipped. Then it probes each other harness whose last probe at
+its version did not pass. The step is `done` when each harness that needs a probe was probed, and each
 with no model skipped, with
 three counts in `detail`: probed and passed, probed and failed, skipped; a
-harness whose version already has a passed probe is in none; it is `fail` when a probe could not run
+harness whose last probe at its version passed is in none; it is `fail` when a probe could not run
 its records. **Decided here:** the block `run-steps` is built, so the build task
 of the probe adds `probe` to its enum, with its Go schema, in one change
 (condition 1 of the plan review of #147).
@@ -378,7 +378,9 @@ of the probe adds `probe` to its enum, with its Go schema, in one change
 ### Admission
 
 A pair of a harness and a model is admitted when the harness's last probe, at
-the version that the version check reads, passed; and the model's row in
+the version that the version check reads, passed (its last row of
+`records:harnesses.tsv` at that version, in the order of the file, the one
+home of this rule: task `T-cht1`); and the model's row in
 `models.tsv` has `use` `yes`. A model with `use` `no` is on the "not used"
 list (§9), which admission reads at each start, so a change of the list takes
 effect at the next start, and each start row records the model that it
