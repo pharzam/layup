@@ -911,6 +911,17 @@ abandoned. This keeps the main worktree clean and available at all times, and
 lets many tasks (including ones run by agents) proceed at the same time without
 stepping on each other's working-tree state.
 
+**Claim the task by pushing its branch.** Before you take a task, run
+`sh docs/tasks/task-state.sh` and take only one that it prints as `ready`. Right
+after the worktree is created, push its branch to the forge (`git push -u origin
+<slug>`), before any work. The branch on the forge is the one mark that every
+session, on every host and harness, can see, and the command reads it as
+`running`; a worktree on one host is invisible to the others. When a task is
+abandoned, delete its branch from the forge, or the task reads `running` until it
+is. The command ([`task-state.sh`](tasks/task-state.sh), #175) prints each task's
+state, derived from the backlog, the completed log, the plan's task tables and the
+forge; it needs `gh` and the network, and it enforces nothing.
+
 ## Commit granularity
 
 Commit at each logical step, not in one large batch at the end of a task. Each
@@ -922,20 +933,28 @@ task is already scoped to be its own trackable, independently-completable unit.
 
 ## Integrating branches
 
-Prefer rebasing over merging to keep a branch current: rebase your feature branch
-onto the latest `main` rather than merge `main` back into it, so history stays
-linear and free of incidental merge commits.
+While a branch is still only local, prefer rebasing over merging to keep it
+current: rebase it onto the latest `main` rather than merge `main` back into it,
+so history stays linear and free of incidental merge commits.
 
 Do not squash when you land a branch. The per-commit granularity described above
 is deliberate, and a squash-merge discards it — it collapses a task's reviewable,
 bisectable steps into a single opaque commit. Land branches so each commit is
-preserved on `main`: rebase onto the latest `origin/main` first, then do a
-plain merge (not a squash-merge).
+preserved on `main`: bring the branch up to the latest `origin/main` (by the
+rule above, or by an exception below), then do a plain merge (not a
+squash-merge).
 
-One exception, and it runs the other way: a branch already carrying a
-[frozen-head verdict](#reviewing-until-findings-decay) merges `origin/main` into
-itself instead of rebasing, because a rebase rewrites the frozen head the verdict
-names and leaves the review pointing at a commit that no longer exists.
+Two exceptions run the other way, and each merges `origin/main` into the branch
+instead of rebasing it:
+
+- A branch already carrying a
+  [frozen-head verdict](#reviewing-until-findings-decay), because a rebase rewrites
+  the frozen head the verdict names and leaves the review pointing at a commit
+  that no longer exists.
+- A branch already on the forge, which every task branch is from its claim
+  ([Starting a task](#starting-a-task)), because a rebased branch lands on the
+  forge only by a force-push, which the [safety limits](#safety-limits) forbid.
+  Rebasing is for a branch that is still only local.
 
 ## Completing a task
 

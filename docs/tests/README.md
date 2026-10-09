@@ -73,10 +73,16 @@ the exit code by a simple naming convention:
   linters' "one or more violations" code, so a crashed linter is caught, not
   mistaken for a rejection).
 
+One suite is not a linter's: `task-state` runs the command
+[`task-state.sh`](../tasks/task-state.sh) through
+[`tasks/tests/run.sh`](../tasks/tests/run.sh), which compares its output with an
+`EXPECT` file and gives it the same exit contract. It is the fixture suite of a
+command, not a sixth discipline linter.
+
 The linters already self-lint the *real* repo green in the hook and CI; the runner
 does the complementary job — it proves each linter correctly *rejects* bad input,
 not just that it passes the repository's own clean files. It dispatches per suite
-(`adr-lint`, `prd-lint` and `link-lint` take a fixture
+(`adr-lint`, `prd-lint`, `link-lint` and `task-state` take a fixture
 directory, `pr-link-lint`, `review-record-lint` and `commit-msg` take a file), skips entries that are neither
 `good*` nor `bad*` (the shared `prd/tests/facts/`
 directory, a suite `README.md`), and **fails** a suite named here whose linter or

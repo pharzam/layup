@@ -98,7 +98,9 @@ These linters are themselves tested. [`run-discipline-tests.sh`](run-discipline-
 runs each one — the five above **and** the [`commit-msg`](../../.githooks/commit-msg)
 hook — against a fixture suite, asserting that a `good` fixture is accepted and a
 `bad-*` fixture rejected. It is a *harness over* the linters, not a sixth linter,
-and it runs in the hook and CI. See
+and it runs in the hook and CI. It also runs the fixture suite of the command
+[`task-state.sh`](../tasks/task-state.sh), which prints the state of each task and
+is not a linter. See
 [The discipline self-tests](README.md#the-discipline-self-tests).
 
 ## Security tests sit alongside the ladder
