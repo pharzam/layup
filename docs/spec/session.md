@@ -67,8 +67,9 @@ left by a run that stopped is removed before the next session starts.
 
 ### The environment and the harness credential
 
-The process gets these variables and no other (the named list of §4; **decided
-here** the values):
+The process gets these variables and no other (the named list of §4, with
+`TMPDIR` and the fixed variables added; **decided here** the added names and the
+values):
 
 | Variable | Value |
 | -------- | ----- |
@@ -105,7 +106,12 @@ rotates can be spent by the session, so that the host's own copy stops working
 (found while `T-ywk7` set up a searcher; not tested).
 
 **The fixed variables.** A row's `vars` give the session settings of the
-harness itself. Example: Claude Code's `WebFetch` reads a page with
+harness itself, never a credential. **Decided here:** the prohibitions above
+hold for `vars` too: the reader of the register refuses a `vars` name of the
+named list, the credential's name, and each name of a forge credential or an
+agent socket that `layup` knows (`GH_TOKEN`, `GITHUB_TOKEN`, `GH_ENTERPRISE_TOKEN`,
+`GITHUB_ENTERPRISE_TOKEN`, `SSH_AUTH_SOCK`); a credential under another name is
+the Operator's error, which no reader can see. Example: Claude Code's `WebFetch` reads a page with
 `claude-haiku-5-5`, a model not to use, unless
 `ANTHROPIC_DEFAULT_HAIKU_MODEL` names another; a row of Claude Code holds
 `ANTHROPIC_DEFAULT_HAIKU_MODEL=<its model>` (seen in the runs of `T-ywk7`,
@@ -124,6 +130,12 @@ place that neither list names is not seen here; [the probe](#the-probe) asks
 the harness which files it loaded.
 
 ### The start of a session
+
+**The attempt** (**decided here**): `internal/run` gives the call that starts an
+attempt of a task, a records commit with the event `attempt`, its number and its
+base. The task loop of `M2e` calls it; in `M2b` the uat test calls it for the
+task of the demo's developer session. A session's start needs the event of its
+attempt ([Input states](#input-states)).
 
 1. **The version.** Code runs the row's `version` command, with the
    environment above and no credential, and takes the first line of its
@@ -170,8 +182,9 @@ session that starts has both numbers in its start row.
 - **Output cap** (**decided here**): `stdout` and `stderr` are each cut at
   64 MiB, and a line of `stdout` at 8 MiB; at either cap comes the stop. Reason:
   the two longest Claude Code sessions of `T-ywk7` printed 1.2 MB and 6.1 MB,
-  with no line over 134 KB, so a cap is far above a real session and still keeps
-  a harness that prints with no end from filling the host.
+  with no line over 134 KB ([`test-runs.md`](../../runs/T-ywk7/test-runs.md),
+  Measurements), so a cap is far above a real session and still keeps a harness
+  that prints with no end from filling the host.
 - **The stop** (survey row 1): `SIGINT` to the process group, `SIGTERM` 10 s
   later, `SIGKILL` 10 s after that (**decided here**: the two waits).
 
@@ -207,18 +220,24 @@ is `M2d`'s and `M2f`'s. For a task session whose end is `done`:
 
 ### The fetch by SHA
 
-`layup run` fetches `refs/heads/task/<task>/<attempt>` of `repo/` into its own
-clone with `FetchLocal`, with `core.hooksPath` set to an empty directory, and
-reads only the head SHA of that fetch: a later change in `repo/` cannot change
-what is checked and pushed. The head must descend from the base
-(`IsAncestor`), else the result is refused (`base`). **Known limit:** the fetch
-runs `git upload-pack` in `repo/`, which reads that clone's configuration, a file
-that the session can write. git honors `uploadpack.packObjectsHook` only in
-protected configuration (git-config(1)); **decided here**, the integration test
-of `FetchLocal` writes each key of git's documentation that starts a program
-into the session's configuration, and shows that none runs during the fetch, as
-the test of `internal/git` does for the host's configuration
-(`TestAHostileHostChangesNothing`).
+**Decided here**, so that no configuration of the session's clone is read
+(§4): no command of `layup` runs in `repo/` after the session starts. Code reads
+the head SHA of `refs/heads/task/<task>/<attempt>` from the files of
+`repo/.git`: the loose ref, a regular file of 40 lowercase hexadecimal
+characters and a line feed, else the line of `packed-refs` that names the ref.
+A `repo/.git` that is not a directory, a ref that is a link or a symbolic ref,
+or no such ref, refuses the result (`branch`). `FetchSession` then makes a
+scratch bare repository whose one alternate is the object directory of
+`repo/.git`, sets a ref there to that SHA, fetches it into `layup run`'s own
+clone with `core.hooksPath` set to an empty directory, and removes the scratch
+repository: `git upload-pack` runs in the scratch repository, whose
+configuration is `layup`'s, and reads the session's objects as data. The head
+must descend from the base (`IsAncestor`), else the result is refused (`base`).
+Each later check reads only that SHA in `layup run`'s clone, so a later change in
+`repo/` cannot change what is checked and pushed. The integration test of
+`FetchSession` writes into `repo/.git/config` each key of git's documentation
+that starts a program, and fails when one runs, as the test of `internal/git`
+does for the host's configuration (`TestAHostileHostChangesNothing`).
 
 ### A workflow or rule-path change
 
@@ -244,7 +263,7 @@ For a result that passes: a records commit adds the event `push` (the SHA and th
 branch), which announces the forge write (fencing, [`run.md`](run.md#the-lease-and-fencing));
 then `Push` of the SHA to `task/<task>/<attempt>` with the installation token,
 never with force; then, after the forge accepts it, a records commit adds the
-event `bound`. A refused push binds nothing: the event `result` says
+event `bound`. A refused push binds nothing: an event `refused` with the detail
 `push-refused`. The session never pushes.
 
 ### A comment for a session
@@ -262,7 +281,8 @@ target that a machine validates against a schema based on [the baseline]
 conventions." A session writes `result/result.tsv` in the form of the block
 [`result`](records.md#nfr-001--the-records-of-a-session); `layup run` reads it
 by the block and its rules, checks each artifact's SHA-256 against the file at
-the head (a mismatch refuses it: `artifact`), and commits it byte for byte as
+the head (a mismatch adds the event `refused`, `artifact`), and commits it byte
+for byte as
 `tasks/<task>/results/<session>.tsv`, with the event `result`. The session ID,
 the task, the role, the attempt and the base come from the start row, never
 from the file (§3). The questions, the decisions and the lessons of a handoff,
@@ -270,7 +290,8 @@ and the transition table, are `M2e`'s.
 
 ### The open attempt
 
-A result is refused (`attempt`) unless the attempt of its start row is still the
+A result is refused (the event `refused`, `attempt`) unless the attempt of its
+start row is still the
 task's open attempt: no row of `tasks/<task>/events.tsv` after the session's
 event `session` is `closed` or `rebased` for that attempt, or `attempt` for
 another one (§3). **Decided here:** the check reads the events at the run's own
@@ -282,7 +303,8 @@ last pushed records commit, as the run is the one writer.
 
 **Decided here** (§9, ADR-0020 decision 3): a probe is a session of the role
 `probe`, with a task ID of its own in the target's form (`T-` and four random
-characters), attempt 1, the head of the default branch as its base, and the
+characters, drawn again until no row of `sessions.tsv` holds it; the task
+register of `M2e` draws its IDs by the same rule), attempt 1, the head of the default branch as its base, and the
 first model of the harness, in the order of `models.tsv`, whose row has `use`
 `yes`. Its prompt,
 with `{result}` the absolute path of `result/probe.tsv` and `{token}` 16 random
@@ -301,9 +323,12 @@ Then end.
 It passes when its end is `done`, `probe.tsv` passes the block
 [`probe-result`](records.md#nfr-001--the-records-of-a-session), its token is
 the prompt's (else `token`), a `file` row has the value `AGENTS.md` (else
-`files`), no `file` row names a path outside the session directory (else
-`outside`), and its usage report names no model whose `models.tsv` row has
-`use` `no` (else `not-used`). A probe makes no commit and no
+`files`), no `file` row names a path outside the session directory other than
+a `policy` path of the row (else `outside`), and its usage report names no model
+whose `models.tsv` row has `use` `no` (else `not-used`). **Known limit:** the
+`file` rows are the model's answer, as no output of a harness that this
+specification reads lists the files it loaded; a model that leaves out a file
+passes. A probe makes no commit and no
 push; its records are a row of `records:harnesses.tsv`, its start row and its
 telemetry row.
 
@@ -353,8 +378,8 @@ probe's included, in the records commit of the session's end, checked by
   `api`; else `computed` from the tokens and `host:prices.tsv`: the rows of the
   session's model, one per class, of one `date` (the newest), with `price`
   naming the row of the class `in`; else `unknown`, when a class lacks a row,
-  when the rows differ in currency, or when the usage report names more than
-  one model. Reason: the block holds one price ID (task `T-tmhw`), and the
+  when one class has two rows of that date, when the rows differ in currency,
+  or when the usage report names more than one model. Reason: the block holds one price ID (task `T-tmhw`), and the
   three rows of one read share the harness, the model and the date; a list of
   IDs would change a built block. A model priced only in a unit that is no
   currency (survey row 10: credits) has no row, so its money is `unknown`.
@@ -389,7 +414,8 @@ gives no usage report (3000.11.3), so its rows use `none`.
 | A harness row with `cap` and no `{cap}` in `command`, or `{cap}` and `cap` `—` | exit 2 |
 | A `credential` that is not absolute, is missing, is not mode 0600 or has another owner | exit 2, naming the file |
 | A `credential_to` that is not `var:NAME`, `file:PATH` or `—`, or a `PATH` that is absolute or holds `..` | exit 2 |
-| A `vars` name that is a name of the named list, or the credential's | exit 2 |
+| A `vars` name of the named list, the credential's, or a name of a forge credential or an agent socket of [the list above](#the-environment-and-the-harness-credential) | exit 2 |
+| A host directory with no `registers/models.tsv` or no `registers/routing.tsv` | exit 2, "a missing or unreadable file" ([`README.md`](README.md#commands)) |
 | A `models.tsv` or `routing.tsv` row of a harness that the register lacks | exit 2 |
 | A harness with no model of `use` `yes` | not an error: no pair of it is admitted |
 | A version command that fails, or prints nothing | the start is refused (`version`) |
@@ -425,7 +451,7 @@ of `M2b` records a code review of its release (the non-test Go files of `cmd/`
 and `internal/`, `go.mod` and the files that the binary embeds, at the commit
 that the demo runs) by a reviewer of a model that wrote none of it, as task
 `T-efmy` did for phase 1, with `runs/T-efmy/release-check.sh` adapted in that
-task: its check 4 allows the verbs of `Fetch`, `Push` and `FetchLocal`, and a
+task: its check 4 allows the verbs of `Fetch`, `Push` and `FetchSession`, and a
 new list names each program that the code starts (`git`, `sh`, the command of a
 harness register row). The review reads the whole release, so it covers the
 code of `M2a` too (#148). A session runs under the Operator's user and can reach
@@ -439,7 +465,10 @@ lessons of a handoff (`M2e`). The tier of a task from its plan, and the authors
 of a change for a plan review or a verification (`M2e`). The budget check
 before each start and `budget.tsv` (`M2c`), and the circuit breaker (`M3d`).
 The branch of a rule batch, `layup/rules` and the known-bad patches (`M2f`).
-The learned weights of routing (the learning loop). A harness's hook events and
+The context of a session by its links, the record kinds of each step's row
+(§9, ADR-0020 decision 7): in `M2b` the prompt is the caller's text, and the step
+table's record kinds come with the task loop (`M2e`). The learned weights of
+routing (the learning loop). A harness's hook events and
 the stall triggers (`M3d`). A second harness on one task (`M4a`). Telemetry
 Completeness and Cost per Requirement (`M4b`). The usage formats of Codex,
 Gemini CLI and OpenCode, added when a registered harness needs one.
@@ -448,15 +477,18 @@ Gemini CLI and OpenCode, added when a registered harness needs one.
 
 | Part | Level | Test |
 | ---- | ----- | ---- |
-| The environment | unit | The environment holds the named list only (no `GH_TOKEN`, no SSH agent socket, no variable of the host but `PATH`), the credential by `var:` and by `file:`, and the fixed variables. |
+| The session directory | integration | With the real `git`: `repo/` is a `--no-local` clone of the default branch only, with no remote and no records branch, on `task/<task>/<attempt>` at the base; `home/` and `tmp/` start empty; the directory is removed after the session's records are pushed, and one that a stopped run left is removed before the next session. |
+| The environment | unit | The environment holds the named list only (no `GH_TOKEN`, no SSH agent socket, no variable of the host but `PATH`), the credential by `var:` and by `file:`, and the fixed variables; a `vars` name of the named list, the credential's or the list of forge credentials and agent sockets is refused (exit 2). |
 | Rules only from the target | integration | In a real temporary tree, a rule-file name of the row above the session directory refuses the start; a policy path that exists is recorded. |
 | The start, the limit and the end | integration | With a fake harness program: the start row is pushed before the process starts; a fake that waits for the end of its input ends; a fake that runs past `wall` is stopped (`SIGINT`, `SIGTERM`, `SIGKILL`) with the class `wall`; the output cap; each class of the end. |
 | The context of a start | unit | An estimate over the model's context size refuses the start with both numbers. |
-| The open attempt | unit | With a stand-in events table, a result whose attempt was closed, replaced or rebased is refused; the attempt and the base come from the start row. |
-| Before a push | integration | With the real `git` and a local bare repository: the fetch by SHA with hooks off; a session configuration that holds each key of git's documentation that starts a program runs none of them; a head that does not descend from the base is refused; a change of `.github/workflows/` and of a rule path is refused before any push, its diff a payload; added lines in §2 of `docs/guardrails.md` pass; the SHA is bound only after the push is accepted. |
-| The probe and admission | unit | With a fake harness: the version check; a probe that passes, and one that fails for each reason; admission by the probe and `use`. |
+| The result of a session | unit | A result file of the block `result` is committed byte for byte with the event `result`; an artifact whose SHA-256 differs at the head adds the event `refused` (`artifact`); the session ID, the task, the role, the attempt and the base come from the start row. |
+| The open attempt | unit | With a stand-in events table, a result whose attempt was closed, replaced or rebased is refused; the attempt and the base come from the start row; a session with no event `attempt` of its attempt is refused at its start. |
+| Before a push | integration | With the real `git` and a local bare repository: the head read from the files of `repo/.git` (a loose ref, a packed ref; a link, a symbolic ref and no ref refused); the fetch through the scratch repository with hooks off; a session configuration that holds each key of git's documentation that starts a program runs none of them; a head that does not descend from the base is refused; a change of `.github/workflows/` and of a rule path is refused before any push, its diff a payload; added lines in §2 of `docs/guardrails.md` pass; the SHA is bound only after the push is accepted. |
+| The probe and admission | unit | With a fake harness: the version check; a probe that passes, one that reports a `policy` path and passes, and one that fails for each reason; admission by the probe and `use`. |
+| The routing register | unit | `host:registers/routing.tsv` is copied into `records:routing.tsv` at the step `probe` when the two differ, and not when they are equal; the session's pair is the first admitted pair of the role's list for the task's tier; with none, the start is refused (`pair`). |
 | The usage report | unit | `claude-result` on two recorded `result` events of Claude Code 2.1.295 (one with subagents and a second model) sums `modelUsage`; `none` gives `unavailable` and `unknown`. |
 | The writer | unit | One row per session that `CheckTelemetry` passes; money `reported`, `computed` or `unknown` by the billing, the prices and the models. |
-| The records of a session | unit | Each new record kind is refused with a wrong header; its Go schema equals its block (`tsv.Compare`), and the owner moves its name from `notYetBuilt` to `built`. |
-| The step `probe` | e2e | In CI with no secret: the binary, a local fake forge and a scripted harness: Start, then a restart whose step `probe` probes the harness and writes its rows; the same bytes on a repeat in a new world, as the first run changes the records ([`README.md`](README.md#commands), Determinism). |
+| The records of a session | integration | Each new record kind is refused with a wrong header; its Go schema equals its block (`tsv.Compare`), and the owner moves its name from `notYetBuilt` to `built`. |
+| The step `probe` | e2e | In CI with no secret: the binary, a local fake forge and a scripted harness: Start, then a restart whose step `probe` probes the harness, writes its rows, and posts one comment on the control issue whose first line starts with the probe's session ID; the same bytes on a repeat in a new world, as the first run changes the records ([`README.md`](README.md#commands), Determinism). |
 | The demo | uat | With the Operator's credentials: the probe of each registered harness (at least two), then one developer session from the uat test whose commit lands on `task/<task>/1`, with its telemetry row; and the review of the release (`REQ-015`, `REQ-017`). |

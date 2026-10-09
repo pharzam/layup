@@ -71,3 +71,16 @@ changed in place.
 0a01743 docs: T-ywk7 the public-solution search of M2b: two blind searchers, the sources and the summary
 8fd76b0 docs: T-ywk7 the specification of M2b: role sessions, the records of a session, the table of M2b
 ```
+
+## Measurements
+
+The output of the two longest Claude Code 2.1.295 sessions of this task, the
+reasons of the output cap of `docs/spec/session.md` (note 14 of round 1):
+
+| Session | `stdout` (`--output-format stream-json`) | Longest line |
+| ------- | ---------------------------------------- | ------------ |
+| the plan review (Claude Fable 5.1, 8 min 5 s) | 1,150,975 bytes | 133,782 bytes |
+| searcher B (Claude Opus 5.5, five subagents, 21 min 50 s) | 6,069,735 bytes | 102,033 bytes |
+
+Measured with `ls -l` and `awk '{ if (length($0) > m) m = length($0) } END { print m }'`
+on each stream file.

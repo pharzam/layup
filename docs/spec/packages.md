@@ -214,7 +214,7 @@ that the steps, the checks and `layup gate` name.
 | `Init` | `git init -b main -- DIR` | S03; `layup run`, step 5 |
 | `Add` | `git add --all -- PATH…`; no path is the whole tree | S03 to S15; a fixture run of `gate:<kind>` |
 | `Commit` | `git commit -m MESSAGE` | S03 to S15; a fixture run |
-| `SwitchCreate` | `git switch -c BRANCH COMMIT` | S04: the branch `layup-setup` |
+| `SwitchCreate` | `git switch -c BRANCH COMMIT` | S04: the branch `layup-setup`; `M2b`: the branch of a session's clone ([`session.md`](session.md#the-session-directory)) |
 | `SwitchOrphan` | `git switch --orphan BRANCH` | S15: the branch `layup-records` |
 | `Branch` | `git symbolic-ref --quiet HEAD` | the step runner: a commit of S04 to S14 only on `layup-setup` (task `T-79y7`) |
 | `RevParse` | `git rev-parse --verify --end-of-options REV` | S02, S03: the tree of a commit; S04: the root commit and the branch `layup-setup`; the step runner: the head of `layup-setup` (task `T-7s0y`); `layup gate`: `--base`, `--head`; S15: the heads of `layup-setup` and `layup-records`; a fixture run: its commit (task `T-d6q5`) |
@@ -228,7 +228,7 @@ that the steps, the checks and `layup gate` name.
 | `WorktreeAdd` | `git worktree add --detach -- PATH REV` | `layup gate`, step 2 of the run; `layup setup verify`: the scratch tree; a fixture run; S15: the scratch tree of the records commit (task `T-d6q5`) |
 | `WorktreeRemove` | `git worktree remove --force -- PATH` | `layup gate`, step 4 of the run; `layup setup verify`; a fixture run; S15 |
 | `Show` | `git show --end-of-options REV:PATH --` | `layup gate`, steps 1 and 2 of the run; `layup setup verify`: the manifest at the head of `layup-setup`; S04: the two index files and `docs/setup/facts.sha256` of the root commit (task `T-7s0y`); S05, S06 and S11: the task indexes, the facts index, `facts.sha256` and `open-gaps.tsv` of the head (task `T-b3r1`); S12: the paths of the entry and `open-gaps.tsv` of the head; S13 and S15: the manifest of the head; S15: the files of the records commit of a run that stopped (task `T-d6q5`) |
-| `DiffNames` | `git diff --name-only --no-renames -z --end-of-options BASE HEAD --` | `layup gate`: a `pending` kind |
+| `DiffNames` | `git diff --name-only --no-renames -z --end-of-options BASE HEAD --` | `layup gate`: a `pending` kind; `M2b`: the check before a push ([`session.md`](session.md#a-workflow-or-rule-path-change)) |
 | `Apply` | `git apply -- PATCH` | check `gate:<kind>`: the known-bad fixture |
 | `LsTree` | `git ls-tree -r -z --full-tree --end-of-options REV -- PATH` | `layup gate`, step 2 of the run: the files of a `config` path at the base, with their modes (task `T-5sgt`); S04: the records of `docs/adr/` and `docs/facts/` at the root commit (task `T-7s0y`); S05: the history at the head; S11: the records of `docs/facts/` at the head (task `T-b3r1`); S12: the tree of the head; S15: the `.sh` files of `layup-setup`, and the tree of the records commit of a run that stopped (task `T-d6q5`) |
 
@@ -239,7 +239,7 @@ remote needs it; no other value enters the fixed list.
 | Call | The command, after the `-c` values below | Used by |
 | ---- | ---------------------------------------- | ------- |
 | `Fetch` | `git fetch --no-tags --update-head-ok -- URL REF:REF` | `layup run`: the read-back of the root commit (step 5 of [`run.md`](run.md#the-steps-of-layup-run---new)) |
-| `Push` | `git push --porcelain -- URL COMMIT:refs/heads/BRANCH`; never `--force` | `layup run`: each records commit (fencing: a push that is not a fast-forward is refused) |
+| `Push` | `git push --porcelain -- URL COMMIT:refs/heads/BRANCH`; never `--force` | `layup run`: each records commit (fencing: a push that is not a fast-forward is refused); `M2b`: the push of a session's SHA ([`session.md`](session.md#the-push-and-the-bind)) |
 
 - `Fetch` and `Push` refuse their input before `git` starts unless `REF`
   starts with `refs/` and holds no `:`, `COMMIT` is a full object ID and
@@ -263,7 +263,7 @@ takes a token.
 | Call | The command, after the `-c` values below | Used by |
 | ---- | ---------------------------------------- | ------- |
 | `CloneLocal` | `git clone --no-local --no-checkout --single-branch --no-tags --branch BRANCH -- SRC DIR`, then `git -C DIR remote remove origin` | the clone of a session, `repo/` |
-| `FetchLocal` | `git -c core.hooksPath=EMPTY fetch --no-tags --no-write-fetch-head -- DIR REF:DST`, where `EMPTY` is an empty directory | the fetch of a session's branch into `layup run`'s clone |
+| `FetchSession` | `git init --bare -- TMP`; the object directory of the session's `.git` as the one line of `TMP/objects/info/alternates`; `git -C TMP update-ref refs/heads/session SHA`; `git -c core.hooksPath=EMPTY fetch --no-tags --no-write-fetch-head -- TMP refs/heads/session:DST`, where `EMPTY` is an empty directory; `TMP` removed | the fetch of a session's head into `layup run`'s clone, with no command in the session's clone |
 | `IsAncestor` | `git merge-base --is-ancestor BASE HEAD`; exit 1 is "no", not an error | the check that a session's head descends from its base |
 | `DiffFile` | `git diff -U0 --no-color --no-renames --end-of-options BASE HEAD -- PATH` | the exception of `docs/guardrails.md` before a push |
 | `DiffBinary` | `git diff --binary --no-renames --end-of-options BASE HEAD --` | the payload of a refused diff |
@@ -271,9 +271,10 @@ takes a token.
 - `CloneLocal` copies the objects and shares no ref, configuration or hook with
   `SRC` (`--no-local`, §4); `IsAncestor` takes full object IDs only, as
   `CheckoutDetach` does, and refuses any other text before `git` starts.
-- `FetchLocal` runs `git upload-pack` in `DIR`, which reads `DIR`'s own
-  configuration: a known limit, with its test in
-  [`session.md`](session.md#the-fetch-by-sha).
+- `FetchSession` takes the SHA that `internal/session` read from the files of
+  the session's `.git`, a full object ID; `git upload-pack` runs in `TMP`, whose
+  configuration is `layup`'s, so no configuration of the session's clone is read
+  ([`session.md`](session.md#the-fetch-by-sha)).
 
 Start makes its clone with `Init` and `Fetch`, and the restart with `Clone`. The
 first records commit is an orphan commit in a scratch work tree, as S15 makes it

@@ -336,7 +336,7 @@ attempt int - the attempt that the event concerns, 1 or more
 session id(S-xxxxxxxx) - the session; `—` for `attempt`, `closed` and `rebased`
 base sha1 - the base commit, for `attempt` and `rebased`; `—` otherwise
 sha sha1 - the commit, for `push` and `bound`; `—` otherwise
-detail text - one line: the class of an end, the reason of a refusal, the branch of a push, or the payload of a refused diff
+detail text - one line: for `result`, the class of the end; for `refused`, the reason, and after one space the payload of a refused diff; for `push` and `bound`, the branch; `—` for `attempt` and `session`; for `closed` and `rebased`, as `M2e` sets
 time time - when `layup run` recorded the event
 ```
 
@@ -355,10 +355,13 @@ value text key the token, or the path of the file as the harness wrote it
 
 **Decided here**, the row rules that the blocks give in words, which each owner
 checks after the types, an error naming the line and the column (task `T-tmhw`'s
-form): a column whose rule has no clause for `—` never holds `—`; `M2b` writes
-the kinds `attempt`, `session`, `refused`, `result`, `push` and `bound` of
-`events`, and the task loop of `M2e` the kinds `closed` and `rebased` and each
-later `attempt`; a result holds one `status` row, with `n` 1, and an
+form): a column whose rule has no clause for `—` never holds `—`; the kinds
+of `events`, each with its writer: `attempt`, the call that starts an attempt
+(the uat test of `M2b`, the task loop of `M2e`); `session`, the start of a
+session; `result`, its end; `refused`, a start, a result or a push that `layup
+run` refuses; `push` and `bound`, the push of a session's SHA; `closed` and
+`rebased`, the task loop of `M2e`; each row is one event, and no row is changed
+(§3); a result holds one `status` row, with `n` 1, and an
 `artifact` value of the type `path`; `harnesses.tsv` holds one row per probe,
 and a harness is admitted by its last row at the version that the version check
 reads ([`session.md`](session.md#admission)).
