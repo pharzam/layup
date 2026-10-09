@@ -115,7 +115,31 @@ removed) was not caught: the wait before it checks the end too. The check
 before each signal was dropped as a duplicate, and the mutation above removes
 the check in the wait.
 
-## Green (2026-10-09T17:40Z)
+## The fix of round 1 (2026-10-09T17:55Z to 17:58Z)
+
+Round 1's finding 1: the close of the outputs after `SIGKILL` had no case.
+`TestProcessEndsWhenAProgramLeftTheGroup` starts a program that leaves the
+group with `setsid` and holds `stdout`, and a leader that exits 0. Its second
+assertion is note 2 of round 1: at 0.6 s, inside the stop, the program that
+left looks for the leader in `/proc`. On the code of `179646f`, which reaped
+the leader at its exit, it failed:
+
+```
+process_integration_test.go:189: the leader was reaped before the stop, so its group's ID was free: stat /tmp/TestProcessEndsWhenAProgramLeftTheGroup3707326542/002/held: no such file or directory
+```
+
+`Process` now waits for the leader's exit with `waitid` and `WNOWAIT`, and
+reaps it only at the end; the test passes. The two new rules' mutations, each
+line in full:
+
+```
+== process-close: Process: the outputs not closed after SIGKILL (exit 1)
+process_integration_test.go:186: {Start:2026-10-09 17:57:22.754709454 +0000 UTC m=+5.278635980 First:0001-01-01 00:00:00 +0000 UTC End:2026-10-09 17:57:53.366985344 +0000 UTC m=+35.890911787 Exit:0 Signal:signal 0 StoppedBy:wall Sent:[interrupt terminated killed]}, <nil>, after 30.612894443s; want stopped at wall by [interrupt terminated killed], exit 0, at once
+== process-reap: Process: the leader reaped at its exit, before the stop (exit 1)
+process_integration_test.go:189: the leader was reaped before the stop, so its group's ID was free: stat /tmp/TestProcessEndsWhenAProgramLeftTheGroup751069979/002/held: no such file or directory
+```
+
+## Green (2026-10-09T17:40Z, again at 18:00Z after the fix of round 1)
 
 Each with exit 0: `go build ./...`, `go vet ./...`, `gofmt -l internal cmd`
 (empty), `go test ./...`, `go test -tags=integration ./...` (with

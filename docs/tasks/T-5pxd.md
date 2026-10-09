@@ -37,8 +37,8 @@ for each rule of the limit. The goal count is 2, final by O-187 of #152.
    line, a lesson in `guardrails.md` §2.
 
 **Tests:** [`test-runs.md`](../../runs/T-5pxd/test-runs.md): red before the
-functions; a mutation of each of the twenty-three rules, each caught; green
-after.
+functions; a mutation of each of the twenty-five rules, each caught, two of them
+added by the fix of round 1; green after.
 
 **Not as planned:** `Process` takes no context: a cancel of `layup run` is no
 stop that the specification names, so the caller's only stop is `wall`.

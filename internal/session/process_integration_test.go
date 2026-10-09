@@ -163,3 +163,29 @@ func TestProcessOfAMissingProgram(t *testing.T) {
 		t.Errorf("%v, want ErrStart", err)
 	}
 }
+
+// A program that leaves the group and holds stdout cannot hold the end: after
+// SIGKILL the outputs are closed, and the leader, unreaped until then, keeps
+// the group's ID from another process.
+func TestProcessEndsWhenAProgramLeftTheGroup(t *testing.T) {
+	pid := filepath.Join(t.TempDir(), "pid")
+	held := filepath.Join(t.TempDir(), "held")
+	begin := time.Now()
+	// At 0.6 s, between SIGINT (0.3 s) and SIGTERM (0.7 s), the program that
+	// left the group looks for the leader, which exited at 0.1 s.
+	r, err := Process(spec(t, fake(t, `leader=$$
+setsid sh -c 'echo $$ > `+pid+`; sleep 0.6; test -e /proc/'$leader' && echo held > "$M"; exec sleep 30' &
+sleep 0.1; exit 0`), held, 300*time.Millisecond))
+	took := time.Since(begin)
+	if p, _ := os.ReadFile(pid); len(p) > 0 {
+		n, _ := strconv.Atoi(strings.TrimSpace(string(p)))
+		syscall.Kill(n, syscall.SIGKILL)
+	}
+	sent := []syscall.Signal{syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL}
+	if err != nil || r.StoppedBy != "wall" || r.Exit != 0 || !slices.Equal(r.Sent, sent) || took > 5*time.Second {
+		t.Errorf("%+v, %v, after %v; want stopped at wall by %v, exit 0, at once", r, err, took, sent)
+	}
+	if _, err := os.Stat(held); err != nil {
+		t.Errorf("the leader was reaped before the stop, so its group's ID was free: %v", err)
+	}
+}

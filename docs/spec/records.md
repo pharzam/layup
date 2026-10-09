@@ -428,7 +428,7 @@ model          text                       -    the model ID as the harness names
 billing        enum(api|subscription)     -    the billing type of the harness's account
 start          time                       -    when `layup run` started the harness process
 first_output   time                       -    the first output of the process; `—` when it gave none
-end            time                       -    when the process exited or was killed
+end            time                       -    when the process exited or was killed; when a child holds an output after that, when the outputs closed (task `T-5pxd`)
 latency_s      int                        -    first_output − start, in seconds; `—` when first_output is `—`, which is its status column
 duration_s     int                        -    end − start, in seconds
 tokens_in      int                        -    input tokens; `—` when not reported

@@ -161,13 +161,15 @@ attempt ([Input states](#input-states)).
    (`attempt`).
 2. **The version.** Code runs the row's `version` command, with the
    environment above and no credential, and takes the first line of its
-   standard output, with no white space at either end, as the version. A version whose
+   standard output, with no white space at either end (**decided here**, task
+   `T-5pxd`: a tab or a carriage return is no part of a version), as the version. A version whose
    last probe passed ([Admission](#admission)) goes on; any other runs
    [the probe](#the-probe) first, and a probe that fails refuses the start
    (`probe`). A probe session's own version check takes the version and runs
    no probe. A
    version command that exits non-zero, or whose first line is empty or white
-   space only, refuses it (`version`). No model is called (NEEDLE, mco: the search).
+   space only (**decided here**, task `T-5pxd`: such a line names no version),
+   refuses it (`version`). No model is called (NEEDLE, mco: the search).
 3. **[The context check](#the-context-of-a-start)**; the size check of the
    prompt: for a row whose `prompt` is `arg`, a `prompt.md` over 131,071 bytes
    (Linux's limit of one argument is 131,072 bytes with its final zero byte) refuses the start (`prompt` and its size);
@@ -177,8 +179,8 @@ attempt ([Input states](#input-states)).
    (**decided here**, survey row 5: a crash leaves a start row with no end,
    which the next run finds).
 5. **The process**: the row's `command`, its words split at each space, with
-   `{model}`, `{cap}` and `{prompt}` replaced in one pass, so a value that
-   holds a placeholder stays as it is, started in `repo/`, in a process
+   `{model}`, `{cap}` and `{prompt}` replaced in one pass (**decided here**,
+   task `T-5pxd`: a prompt that holds `{model}` stays as it was written), started in `repo/`, in a process
    group of its own (**decided here**, so that the stop reaches each child). The
    row's `prompt` says how the prompt goes: `file`, `{prompt}` is the path of
    `prompt.md`; `arg`, `{prompt}` is its text as one word (its size was checked at
@@ -220,7 +222,8 @@ session that starts has both numbers in its start row.
 - **Output cap** (**decided here**): `stdout` and `stderr` are each cut at
   64 MiB, and a line of `stdout` (its bytes before its line feed) at 8 MiB;
   at either cap comes the stop, and the rest of the output is read and
-  dropped. Reason:
+  dropped (**decided here**, task `T-5pxd`: a reader that stops reading would
+  let the program block on a full pipe before the stop reaches it). Reason:
   the two longest Claude Code sessions of `T-ywk7` printed 1.2 MB and 6.1 MB,
   with no line over 134 KB ([`test-runs.md`](../../runs/T-ywk7/test-runs.md),
   Measurements), so a cap is far above a real session and still keeps a harness
@@ -231,7 +234,9 @@ session that starts has both numbers in its start row.
   process has ended when its first program has exited and both outputs are
   closed, so a child that holds an output runs under the same limits; after
   `SIGKILL` and the exit of the first program, the outputs are closed, so a
-  program that left the group cannot hold the end.
+  program that left the group cannot hold the end. The first program is
+  reaped only at the end, so the group's ID, its process ID, is taken by no
+  other process while a signal can reach it.
 
 ### The end of a session
 
@@ -490,7 +495,7 @@ gives no usage report (3000.11.3), so its rows use `none`.
 | A host directory with no `registers/models.tsv` or no `registers/routing.tsv` | exit 2, "a missing or unreadable file" ([`README.md`](README.md#commands)) |
 | A `models.tsv` or `routing.tsv` row of a harness that the register lacks | exit 2 |
 | A harness with no model of `use` `yes`, or with no row of `models.tsv` | not an error: the step `probe` skips it, and no pair of it is admitted |
-| A version command that fails, or prints nothing | the start is refused (`version`) |
+| A version command that fails, or whose first line is empty or white space only | the start is refused (`version`) |
 | A result file that is missing, over 1 MiB, malformed, or has two `status` rows | `no-result`; the result is refused |
 | A `probe.tsv` with no token, another token, or no `AGENTS.md` row | the probe fails, with the reason |
 | `stdout` with no `result` object, or with lines that are not JSON | tokens `unavailable` (the lines that are not JSON are skipped) |

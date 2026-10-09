@@ -19,12 +19,15 @@ import (
 	"sync"
 	"syscall"
 	"time"
+	"unsafe"
 )
 
 // Version runs the version command of a harness register row, its words split
 // at each space, with env in dir, and gives the first line of its standard
 // output with no white space at either end. A command that exits non-zero or
-// whose first line is empty is Refusal{version}.
+// whose first line is empty is Refusal{version}. env is the caller's: the
+// session's environment with no credential (step 2), which rows 36a and 38
+// build, as a credential of file: is already in home/ once Make has run.
 func Version(ctx context.Context, command string, env []string, dir string) (string, error) {
 	words := strings.Split(command, " ")
 	cmd := exec.CommandContext(ctx, words[0], words[1:]...)
@@ -186,7 +189,7 @@ func Process(s Spec) (Run, error) {
 	}()
 	exited := make(chan struct{})
 	go func() {
-		cmd.Wait() // its exit is read below, from cmd.ProcessState
+		exitedUnreaped(cmd.Process.Pid)
 		close(exited)
 	}()
 	ended := make(chan struct{})
@@ -212,11 +215,26 @@ func Process(s Spec) (Run, error) {
 	mu.Lock()
 	defer mu.Unlock()
 	r.End = time.Now()
+	cmd.Wait() // reaps the leader only now; its exit is read from cmd.ProcessState
 	r.Exit = cmd.ProcessState.ExitCode()
 	if ws, ok := cmd.ProcessState.Sys().(syscall.WaitStatus); ok && ws.Signaled() {
 		r.Signal = ws.Signal()
 	}
 	return r, writeErr
+}
+
+// exitedUnreaped waits until the process pid has exited and leaves it
+// unreaped (waitid with WNOWAIT), so its PID, the ID of its group, stays taken
+// and a signal to the group reaches no other process until Process reaps it.
+func exitedUnreaped(pid int) {
+	const pPID, wExited, wNoWait = 1, 4, 0x1000000 // P_PID, WEXITED, WNOWAIT of Linux
+	var info [128]byte                             // a siginfo_t, which the call fills and the code does not read
+	for {
+		_, _, e := syscall.Syscall6(syscall.SYS_WAITID, pPID, uintptr(pid), uintptr(unsafe.Pointer(&info[0])), wExited|wNoWait, 0, 0)
+		if e != syscall.EINTR {
+			return
+		}
+	}
 }
 
 // stop sends SIGINT, SIGTERM and SIGKILL to the group pgid, each after its
