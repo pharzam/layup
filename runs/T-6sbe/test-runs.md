@@ -78,6 +78,6 @@ cut at 110 characters:
 checks_integration_test.go:31: a rule file at /tmp/TestCheckRuleFiles2033462972/001/a/host/sessions/S-1a2b
 ```
 
-## Green (2026-10-09T17:05Z, again at 17:26Z after the close-out)
+## Green (2026-10-09T17:05Z, again at 17:23Z after the close-out)
 
 Each with exit 0 on the tree of the commit `feat: T-6sbe …`, and again on the close-out's: `go build ./...`, `go vet ./...`, `gofmt -l internal` (empty), `go test ./...`, `go test -tags=integration ./...` (with `TestPackageRules` and `TestInputRule`); `adr-lint`, `prd-lint`, `link-lint`, `setup-check`, `run-discipline-tests`, `git diff --check`.

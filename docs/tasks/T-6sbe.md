@@ -69,4 +69,4 @@ Recorded, not budgeted (ADR-0007). UTC, 2026-10-09; reviewers' tokens are
 | The plan review | reasoning | Claude Fable 5.1 | `xhigh` | 1,228,587 (USD 5.52) | 8 min 2 s |
 | The code, test first | execution | Claude Opus 5.5 | not reported | not reported | 17:01 to 17:06 |
 | Round 1 | reasoning | Claude Fable 5.1 | `xhigh` | 960,813 (USD 5.06) | 10 min 4 s |
-| The close-out, with notes 1 to 7 | execution | Claude Opus 5.5 | not reported | not reported | 17:19 to 17:30 |
+| The close-out, with notes 1 to 7 | execution | Claude Opus 5.5 | not reported | not reported | 17:19 to 17:24 |
