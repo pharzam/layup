@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -31,7 +32,8 @@ type SessionStore interface {
 
 // Sessions starts the attempts and the task sessions of one run of one
 // target: its records store, its run ID, the host directory, the target
-// OWNER/NAME, the run's clone and its default branch, and its clock. The
+// OWNER/NAME, the run's clone and its default branch, and its clock
+// (time.Now when nil). The
 // function fields are the session's own, which a unit test replaces.
 type Sessions struct {
 	Store         SessionStore
@@ -47,6 +49,7 @@ type Sessions struct {
 	rules         func(d session.Dir, rules, policy []string) ([]string, error)
 	process       func(s session.Spec) (session.Run, error)
 	environ       func(d session.Dir, h session.Harness) ([]string, error)
+	exists        func(path string) bool
 }
 
 // Pair is the admitted pair of a session, as internal/route reads the harness
@@ -69,7 +72,7 @@ type Pair struct {
 // and the pair; Admit gives nil when the version read may start (row 38 runs
 // the probe in it), else Refusal{probe}; End and Push are the end of the
 // session and the checks before a push, the push and the bind (rows 36b, 37a
-// and 37b), Push nil for none.
+// and 37b), End nil for none yet, Push nil for none.
 type TaskSpec struct {
 	Task          string
 	Attempt       int
@@ -92,6 +95,12 @@ func (s *Sessions) fns() {
 	}
 	if s.environ == nil {
 		s.environ = session.Environ
+	}
+	if s.exists == nil {
+		s.exists = func(path string) bool { _, err := os.Lstat(path); return err == nil }
+	}
+	if s.Now == nil {
+		s.Now = time.Now
 	}
 }
 
@@ -183,7 +192,17 @@ func (s *Sessions) TaskSession(ctx context.Context, spec TaskSpec) (string, erro
 			if err != nil {
 				return "", err
 			}
+			// A directory of this ID that was there before is another
+			// session's; one that Make made before it failed is this start's.
+			root := filepath.Join(s.Host, "sessions", id)
+			if abs, err := filepath.Abs(root); err == nil {
+				root = abs
+			}
+			existed := s.exists(root)
 			if d, err = s.make(id, spec); err != nil {
+				if !existed && s.exists(root) {
+					d, made = session.Dir{Root: root}, true
+				}
 				return id, err
 			}
 			made = true
@@ -238,7 +257,12 @@ func (s *Sessions) TaskSession(ctx context.Context, spec TaskSpec) (string, erro
 			words := session.Words(spec.Pair.Command, spec.Pair.Model, spec.Pair.Cap, session.Prompt(spec.Pair.PromptMode, d, spec.Prompt))
 			return s.process(session.NewSpec(d, words, env, spec.Pair.PromptMode, time.Duration(spec.Pair.Wall)*time.Minute))
 		},
-		End: func(id string, r session.Run, err error) error { return spec.End(id, d, r, err) },
+		End: func(id string, r session.Run, err error) error {
+			if spec.End == nil {
+				return err
+			}
+			return spec.End(id, d, r, err)
+		},
 	}
 	if spec.Push != nil {
 		steps.Push = func(id string, r session.Run) error { return spec.Push(id, d, r) }

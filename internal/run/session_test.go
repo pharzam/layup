@@ -246,3 +246,26 @@ func TestALostLeaseStopsTheStart(t *testing.T) {
 }
 
 func isProcess(call string) bool { return strings.HasPrefix(call, "process") }
+
+// A start whose directory-making fails part-way removes what it made: a
+// copied credential does not wait for the next sweep. A directory that was
+// there before is another session's, and is kept.
+func TestAFailedMakeRemovesItsDirectory(t *testing.T) {
+	for _, existed := range []bool{false, true} {
+		store := withAttempt()
+		var calls []string
+		r, spec := task(store, &calls)
+		r.make = func(id string, spec TaskSpec) (session.Dir, error) {
+			calls = append(calls, "make")
+			return session.Dir{}, errors.New("the clone failed")
+		}
+		// The root exists before Make when another session holds it, and
+		// after a Make that made it and then failed.
+		r.exists = func(path string) bool { return existed || slices.Contains(calls, "make") }
+		_, err := r.TaskSession(context.Background(), spec)
+		removed := slices.Contains(calls, "remove /h/sessions/S-1a2b3c4d")
+		if err == nil || removed == existed || len(store.commits) != 0 {
+			t.Errorf("a directory there before %v: %v, the calls %q, %d commits; want an error, removed %v, no commit", existed, err, calls, len(store.commits), !existed)
+		}
+	}
+}

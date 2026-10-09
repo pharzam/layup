@@ -58,7 +58,9 @@ checks before a push, the push and the bind ([REQ-003](#req-003--before-a-push))
   (the author `layup session <session>`, the e-mail
   `<session>@sessions.layup.invalid`; `.invalid` is reserved, RFC 2606, so no
   mail goes anywhere) and a credential of the route `file:`, and no other file.
-- `tmp/`: empty at the start; the session's `TMPDIR`.
+- `tmp/`: empty when the directory is made; the session's `TMPDIR`, and the
+  `HOME` of the version check (step 2), so it may hold what the version
+  command wrote when the process starts.
 - `prompt.md`: the prompt, the caller's text (the fixed text of [the
   probe](#the-probe), or the task of a session).
 - `result/`: where the session writes its result file.
@@ -167,7 +169,9 @@ that the records branch does not hold yet (`events.tsv` of a new task,
    right after it, it makes the session directory, so that each check runs on
    the session's own files; a start that is refused, or that stops on an error
    before the process, removes its directory at once, so a copied credential
-   does not wait for the next sweep. Then the attempt
+   does not wait for the next sweep; a directory that the start made in part
+   before it failed is removed too, and one of the ID that was there before
+   the start is another session's and is kept. Then the attempt
    check: a task session whose attempt has no event `attempt` is refused
    (`attempt`).
 2. **The version.** Code runs the row's `version` command, with the

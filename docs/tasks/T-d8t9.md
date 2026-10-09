@@ -34,8 +34,12 @@ row and the refusal through `Fenced`, with one refusal retried and two a
    `REQ-013` and `NFR-001` and a §13 line.
 
 **Tests:** [`test-runs.md`](../../runs/T-d8t9/test-runs.md): red before the
-functions; a mutation of each of the eighteen rules, each caught; green
-after.
+functions; a mutation of each of the twenty rules, each caught, two of them
+added by the fix of round 1; green after.
+
+**A deviation** (note 3 of round 1): the integration test of the demo was
+written after `session.go`, so it was not red before the code; its red is the
+mutation `startrow-order`, which shows that it fails on its own rule.
 
 **For the first caller** (note 5 of the plan review): `TaskSession` takes the
 pair as an input. The read of each harness's version for `route.Pair`

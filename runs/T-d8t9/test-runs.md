@@ -107,7 +107,22 @@ session_test.go:237: the calls ["sweep" "make" "version in /h/sessions/S-1a2b3c4
 The first form of `refused-event` did not build, and proved nothing; the one
 above commits the event to another file.
 
-## Green (2026-10-09T18:44Z)
+## The fix of round 1 (2026-10-09T18:52Z to 18:56Z)
+
+Finding 1: a start whose `Make` failed after it made the directory kept the
+directory. `TestAFailedMakeRemovesItsDirectory` gives a `Make` that fails, with
+the root there before it (another session's: kept) and made by it (this
+start's: removed). The test names the new seam `exists`, so it does not build
+on `3db56c2`; the red of each of its two rules is its mutation, in full:
+
+```
+== make-partial: TaskSession: a Make that failed part-way keeps what it made (exit 1)
+session_test.go:268: a directory there before false: the clone failed, the calls ["sweep" "make"], 0 commits; want an error, removed true, no commit
+== make-existed: TaskSession: a directory that was there before removed (exit 1)
+session_test.go:268: a directory there before true: the clone failed, the calls ["sweep" "make" "remove /h/sessions/S-1a2b3c4d"], 0 commits; want an error, removed false, no commit
+```
+
+## Green (2026-10-09T18:44Z, again at 18:57Z after the fix of round 1)
 
 Each with exit 0: `go build ./...`, `go vet ./...`, `gofmt -l internal cmd`
 (empty), `go test ./...`, `go test -tags=integration ./...` (with
