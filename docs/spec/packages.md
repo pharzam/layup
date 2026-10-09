@@ -75,7 +75,7 @@ reads this table, and holds no copy of it, which could differ from it.
 | `internal/gate` | runs the kinds of a gate manifest on a head ([`gate.md`](gate.md)) | `internal/tsv`, `internal/git` | `sh -c`: the gate commands |
 | `internal/setup` | the step runner of `layup setup` ([`setup.md`](setup.md)) | `internal/tsv`, `internal/git`, `internal/catalog`, `internal/work` | no |
 | `internal/verify` | the checks of `layup setup verify` ([`setup.md`](setup.md)) | `internal/tsv`, `internal/git`, `internal/catalog`, `internal/gate`, `internal/work` | `sh`: the baseline's own check scripts |
-| `internal/records` | the schemas and the row rules of the record kinds that phase 1 defines and later phases write: `telemetry.tsv` and `prices.tsv` of `REQ-011` ([`records.md`](records.md#req-011--the-telemetry-record), task `T-tmhw`), and `stalls.tsv` of `REQ-009` ([`records.md`](records.md#req-009--the-stall-record), task `T-dgy7`); and the records of Start of `M2a`, `start.tsv`, `approvers.tsv`, `lease.tsv` and `copies.tsv` ([`records.md`](records.md#nfr-001--the-records-of-start), task `T-8kqn`), which `internal/run` writes | `internal/tsv` | no |
+| `internal/records` | the schemas and the row rules of the record kinds that phase 1 defines and later phases write: `telemetry.tsv` and `prices.tsv` of `REQ-011` ([`records.md`](records.md#req-011--the-telemetry-record), task `T-tmhw`), and `stalls.tsv` of `REQ-009` ([`records.md`](records.md#req-009--the-stall-record), task `T-dgy7`); and the records of Start of `M2a`, `start.tsv`, `approvers.tsv`, `lease.tsv` and `copies.tsv` ([`records.md`](records.md#nfr-001--the-records-of-start), task `T-8kqn`), which `internal/run` writes; and the records of a session of `M2b`, `sessions.tsv`, `harnesses.tsv`, `routing.tsv`, the events and the result of a task ([`records.md`](records.md#nfr-001--the-records-of-a-session), task `T-ywk7`) | `internal/tsv` | no |
 | `internal/standin` | for the tests only: a stand-in of the pinned baseline, and a work area set up from it, built at test time (K11; [`setup.md`](setup.md#the-checks-of-layup-setup-verify)); only test files import it | `internal/tsv`, `internal/git`, `internal/work` | no |
 
 **Decided here:** the split of `internal/setup`, `internal/verify` and
@@ -122,10 +122,10 @@ each start so adds only its cell Connects to that row of phase 1.
 
 | Package | Job | May import | Starts a program | Connects |
 | ------- | --- | ---------- | ---------------- | -------- |
-| `internal/run` | `layup run`: the steps of Start, the restart, the lease and fencing, the copy of a comment and the rule of a decision ([`run.md`](run.md)); the Go schema of the table `run-steps`; the checks of `git` and of the values of the flags, which `internal/cli` calls before the first step (task `T-mqty`) | `internal/tsv`, `internal/git`, `internal/records`, `internal/forge`, `internal/route` | no | — |
+| `internal/run` | `layup run`: the steps of Start, the restart, the lease and fencing, the copy of a comment and the rule of a decision ([`run.md`](run.md)); the Go schema of the table `run-steps`; the checks of `git` and of the values of the flags, which `internal/cli` calls before the first step (task `T-mqty`); in `M2b`, the step `probe`, the call that starts an attempt (the event `attempt`), the records of a session, the checks before a push, the push and the bind ([`session.md`](session.md)) | `internal/tsv`, `internal/git`, `internal/records`, `internal/forge`, `internal/route`, `internal/session`, `internal/ledger`, `internal/rules` | no | — |
 | `internal/forge` | the forge interface: the six capabilities and their types ([`forge.md`](forge.md)), `Missing` and `CheckPermissions` (task `T-6bq5`); the reader of the forge register (`host:registers/forge.tsv`), with the Go schema of its block; the check of the key file (task `T-1g1q`) | `internal/tsv` | no | — |
 | `internal/forge/github` | the GitHub adapter: the JWT, the installation token, the calls of [`forge.md`](forge.md#the-calls-of-m2a) | `internal/forge` | no | `net`, `net/http`, `crypto/tls` |
-| `internal/route` | in `M2a`, only the reader of the harness register (`host:registers/harnesses.tsv`), with the Go schema of its block; the probe, admission and routing come in `M2b` | `internal/tsv` | no | — |
+| `internal/route` | the reader of the harness register (`host:registers/harnesses.tsv`), with the Go schema of its block; in `M2b`, the readers of `models.tsv` and `routing.tsv`, the version that needs a probe, admission and the order of the routing register ([`session.md`](session.md#req-013--the-probe-admission-and-routing)) | `internal/tsv`, `internal/records` | no | — |
 | `cmd/layup` | (the row of phase 1) | (the row of phase 1) | (the row of phase 1) | `net`, `net/http`, `crypto/tls` |
 | `internal/cli` | (the row of phase 1, with the change below) | (the row of phase 1, with the change below) | (the row of phase 1) | `net`, `net/http`, `crypto/tls` |
 
@@ -137,6 +137,27 @@ Start ([`records.md`](records.md#nfr-001--the-records-of-start)), and still
 imports `internal/tsv` only. `internal/run` commits and pushes the records with
 `internal/git`; `internal/records` gives the rows. The later table below keeps
 `internal/route` for its jobs of `M2b`.
+
+### The table of M2b
+
+Milestone `M2b` (task `T-ywk7`, #147; [`session.md`](session.md)). The columns
+of [the table of M2a](#the-table-of-m2a). **Decided here** (condition 2 of the
+plan review of #147): a package that a table already has keeps its one row,
+changed in place (`internal/route` and `internal/run` in the table of `M2a`,
+`internal/records` in the table of phase 1, and the calls of `internal/git`
+[below](#the-calls-of-internalgit)); this table holds only the packages that no
+table has. **`TestPackageRules` does not read this table yet:** the build task
+of `internal/session` extends the checker to it, as row 22a (task `T-esfe`) did
+for the table of `M2a`, together with the line of the engine checks and a form
+of the cell "Starts a program" for the program that a register row names
+([`session.md`](session.md#nfr-005--no-harness-in-the-engine-checks)). Until
+then this table is a specification, not a check.
+
+| Package | Job | May import | Starts a program | Connects |
+| ------- | --- | ---------- | ---------------- | -------- |
+| `internal/session` | a role session: its directory, its environment and credential, the rule-file check, the start, the limits and the stop, its end, the result file and the usage report ([`session.md`](session.md#req-013--a-role-session)) | `internal/tsv`, `internal/git`, `internal/records` | `harness` (the command of a harness register row) | — |
+| `internal/ledger` | the writer of `telemetry.tsv`: one row per session, from the usage report and `host:prices.tsv` ([`session.md`](session.md#req-011--the-writer-of-the-telemetry-record)) | `internal/tsv`, `internal/records` | no | — |
+| `internal/rules` | in `M2b`, the reader of the rule-path register and the check of a diff before a push ([`session.md`](session.md#a-workflow-or-rule-path-change)); the check `layup/rules` and rule batches come in `M2f` | `internal/tsv`, `internal/records` | no | — |
 
 ### The test of the package rules
 
@@ -193,7 +214,7 @@ that the steps, the checks and `layup gate` name.
 | `Init` | `git init -b main -- DIR` | S03; `layup run`, step 5 |
 | `Add` | `git add --all -- PATH…`; no path is the whole tree | S03 to S15; a fixture run of `gate:<kind>` |
 | `Commit` | `git commit -m MESSAGE` | S03 to S15; a fixture run |
-| `SwitchCreate` | `git switch -c BRANCH COMMIT` | S04: the branch `layup-setup` |
+| `SwitchCreate` | `git switch -c BRANCH COMMIT` | S04: the branch `layup-setup`; `M2b`: the branch of a session's clone ([`session.md`](session.md#the-session-directory)) |
 | `SwitchOrphan` | `git switch --orphan BRANCH` | S15: the branch `layup-records` |
 | `Branch` | `git symbolic-ref --quiet HEAD` | the step runner: a commit of S04 to S14 only on `layup-setup` (task `T-79y7`) |
 | `RevParse` | `git rev-parse --verify --end-of-options REV` | S02, S03: the tree of a commit; S04: the root commit and the branch `layup-setup`; the step runner: the head of `layup-setup` (task `T-7s0y`); `layup gate`: `--base`, `--head`; S15: the heads of `layup-setup` and `layup-records`; a fixture run: its commit (task `T-d6q5`) |
@@ -207,7 +228,7 @@ that the steps, the checks and `layup gate` name.
 | `WorktreeAdd` | `git worktree add --detach -- PATH REV` | `layup gate`, step 2 of the run; `layup setup verify`: the scratch tree; a fixture run; S15: the scratch tree of the records commit (task `T-d6q5`) |
 | `WorktreeRemove` | `git worktree remove --force -- PATH` | `layup gate`, step 4 of the run; `layup setup verify`; a fixture run; S15 |
 | `Show` | `git show --end-of-options REV:PATH --` | `layup gate`, steps 1 and 2 of the run; `layup setup verify`: the manifest at the head of `layup-setup`; S04: the two index files and `docs/setup/facts.sha256` of the root commit (task `T-7s0y`); S05, S06 and S11: the task indexes, the facts index, `facts.sha256` and `open-gaps.tsv` of the head (task `T-b3r1`); S12: the paths of the entry and `open-gaps.tsv` of the head; S13 and S15: the manifest of the head; S15: the files of the records commit of a run that stopped (task `T-d6q5`) |
-| `DiffNames` | `git diff --name-only --no-renames -z --end-of-options BASE HEAD --` | `layup gate`: a `pending` kind |
+| `DiffNames` | `git diff --name-only --no-renames -z --end-of-options BASE HEAD --` | `layup gate`: a `pending` kind; `M2b`: the check before a push ([`session.md`](session.md#a-workflow-or-rule-path-change)) |
 | `Apply` | `git apply -- PATCH` | check `gate:<kind>`: the known-bad fixture |
 | `LsTree` | `git ls-tree -r -z --full-tree --end-of-options REV -- PATH` | `layup gate`, step 2 of the run: the files of a `config` path at the base, with their modes (task `T-5sgt`); S04: the records of `docs/adr/` and `docs/facts/` at the root commit (task `T-7s0y`); S05: the history at the head; S11: the records of `docs/facts/` at the head (task `T-b3r1`); S12: the tree of the head; S15: the `.sh` files of `layup-setup`, and the tree of the records commit of a run that stopped (task `T-d6q5`) |
 
@@ -218,7 +239,7 @@ remote needs it; no other value enters the fixed list.
 | Call | The command, after the `-c` values below | Used by |
 | ---- | ---------------------------------------- | ------- |
 | `Fetch` | `git fetch --no-tags --update-head-ok -- URL REF:REF` | `layup run`: the read-back of the root commit (step 5 of [`run.md`](run.md#the-steps-of-layup-run---new)) |
-| `Push` | `git push --porcelain -- URL COMMIT:refs/heads/BRANCH`; never `--force` | `layup run`: each records commit (fencing: a push that is not a fast-forward is refused) |
+| `Push` | `git push --porcelain -- URL COMMIT:refs/heads/BRANCH`; never `--force` | `layup run`: each records commit (fencing: a push that is not a fast-forward is refused); `M2b`: the push of a session's SHA ([`session.md`](session.md#the-push-and-the-bind)) |
 
 - `Fetch` and `Push` refuse their input before `git` starts unless `REF`
   starts with `refs/` and holds no `:`, `COMMIT` is a full object ID and
@@ -234,6 +255,26 @@ remote needs it; no other value enters the fixed list.
   gives another code (128, measured with `git` 2.54.0). `Code` 1 is also a
   commit that is not in the local repository, which a records commit that the
   run has just made never is.
+
+**The calls of `M2b`** (task `T-ywk7`; [`session.md`](session.md)). A session's
+clone and `layup run`'s clone are both local directories, so no call of `M2b`
+takes a token.
+
+| Call | The command, after the `-c` values below | Used by |
+| ---- | ---------------------------------------- | ------- |
+| `CloneLocal` | `git clone --no-local --no-checkout --single-branch --no-tags --branch BRANCH -- SRC DIR`, then `git -C DIR remote remove origin` | the clone of a session, `repo/` |
+| `FetchSession` | `git init --bare -- TMP`; the object directory of the session's `.git` as the one line of `TMP/objects/info/alternates`; `git -C TMP cat-file -t SHA`, which must print `commit`, else the result is refused (`branch`); `git -C TMP update-ref refs/heads/session SHA`; `git -c core.hooksPath=EMPTY fetch --no-tags --no-write-fetch-head -- TMP refs/heads/session:DST`, where `EMPTY` is an empty directory; `TMP` removed | the fetch of a session's head into `layup run`'s clone, with no command in the session's clone |
+| `IsAncestor` | `git merge-base --is-ancestor BASE HEAD`; exit 1 is "no", not an error | the check that a session's head descends from its base |
+| `DiffFile` | `git diff -U0 --no-color --no-renames --end-of-options BASE HEAD -- PATH` | the exception of `docs/guardrails.md` before a push |
+| `DiffBinary` | `git diff --binary --no-renames --end-of-options BASE HEAD --` | the payload of a refused diff |
+
+- `CloneLocal` copies the objects and shares no ref, configuration or hook with
+  `SRC` (`--no-local`, §4); `IsAncestor` takes full object IDs only, as
+  `CheckoutDetach` does, and refuses any other text before `git` starts.
+- `FetchSession` takes the SHA that `internal/session` read from the files of
+  the session's `.git`, a full object ID; `git upload-pack` runs in `TMP`, whose
+  configuration is `layup`'s, so no configuration of the session's clone is read
+  ([`session.md`](session.md#the-fetch-by-sha)).
 
 Start makes its clone with `Init` and `Fetch`, and the restart with `Clone`. The
 first records commit is an orphan commit in a scratch work tree, as S15 makes it
@@ -378,16 +419,16 @@ requirement's section.
 | `internal/forge` | the forge interface: the six capabilities of `architecture.md` §1; its row is in [the table of M2a](#the-table-of-m2a) | 2 |
 | `internal/forge/github` | the GitHub adapter of the forge interface; its row is in [the table of M2a](#the-table-of-m2a) | 2 |
 | `internal/run` | `layup run`: Start, the phase loop, the lease, fencing; its row is in [the table of M2a](#the-table-of-m2a) | 2 |
-| `internal/session` | a role session: its directory, its start, its result | 2 |
+| `internal/session` | a role session: its directory, its start, its result; its row is in [the table of M2b](#the-table-of-m2b) | 2 |
 | `internal/handoff` | the transition table and the check of a handoff | 2 |
 | `internal/spec` | `layup spec check` | 2 |
-| `internal/rules` | the rule-path register, the check `layup/rules`, rule batches | 2 |
+| `internal/rules` | the rule-path register, the check `layup/rules`, rule batches; its part before a push is in [the table of M2b](#the-table-of-m2b) | 2 |
 | `internal/audit` | `layup audit` | 2 |
-| `internal/ledger` | the cost ledger (`telemetry.tsv`) and the budget | 2 |
+| `internal/ledger` | the cost ledger (`telemetry.tsv`) and the budget; the writer is in [the table of M2b](#the-table-of-m2b), the budget comes later | 2 |
 | `internal/smartif` | the smart-if client: the only package that connects to a model service | 3 |
 | `internal/escalate` | the escalation screen | 3 |
 | `internal/stall` | progress, the stall triggers and the procedure | 3 |
-| `internal/route` | the harness register, the probe, admission and routing | 2 |
+| `internal/route` | the harness register, the probe, admission and routing; its row is in [the table of M2a](#the-table-of-m2a), with its jobs of `M2b` | 2 |
 | `internal/report` | `layup report`: the measures | 4 |
 | `internal/learn` | `layup learn`: the reward and the routing update | 4 |
 

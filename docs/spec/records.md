@@ -15,7 +15,8 @@ record, or first reads it for a record that a human writes (K38, task
 `T-zck8`); "1, schema only" marks a record whose schema phase 1 gives and whose
 writer or first reader comes later; a schema is in this directory for a record of
 phase 1 and for a record of each milestone whose specification task has run
-(`M2a`: [the records of Start](#nfr-001--the-records-of-start)).
+(`M2a`: [the records of Start](#nfr-001--the-records-of-start); `M2b`: [the
+records of a session](#nfr-001--the-records-of-a-session)).
 
 **Decided here:** every path that the architecture does not name (it names 18
 files, most without a directory), and the phase of each record. The paths
@@ -42,19 +43,19 @@ or payload of one task is under `tasks/<task>/`.
 | `spec/spans.tsv` | the fact spans of the problem statement | 7 | `layup run` | 2 | later |
 | `spec/inventory-<n>.tsv` | a version of the confirmed inventory, with its SHA-256 in `spec/inventory.tsv` | 7 | `layup run` | 2 | later |
 | `batches.tsv` | each rule batch: head SHA, rule-file hash, approval | 6 | `layup run` | 2 | later |
-| `payloads/<sha256>` | a payload by its SHA-256: a known-bad patch, a refused diff, a stall package | 4, 6, 11 | `layup run` | 2 | — |
+| `payloads/<sha256>` | a payload by its SHA-256: a known-bad patch, a refused diff, a stall package | 4, 6, 11 | `layup run` | 2 | a rule, no block: [below](#nfr-001--the-records-of-a-session) |
 | `tasks.tsv` | the task register | 8 | `layup run` | 2 | later |
 | `transitions.tsv` | the transition table | 8 | `layup run` | 2 | later |
-| `sessions.tsv` | the session start rows | 4, 9, 12 | `layup run` | 2 | later |
-| `tasks/<task>/events.tsv` | the events of one task | 3, 8 | `layup run` | 2 | later |
-| `tasks/<task>/results/<session>.tsv` | the typed result (handoff) of one session, after its check | 4, 8 | `layup run` | 2 | later |
+| `sessions.tsv` | the session start rows | 4, 9, 12 | `layup run` | 2 (`M2b`) | [below](#nfr-001--the-records-of-a-session) |
+| `tasks/<task>/events.tsv` | the events of one task | 3, 8 | `layup run` | 2 (`M2b`, K38) | [below](#nfr-001--the-records-of-a-session) |
+| `tasks/<task>/results/<session>.tsv` | the typed result (handoff) of one session, after its check | 4, 8 | `layup run` | 2 (`M2b`) | [below](#nfr-001--the-records-of-a-session) |
 | `tasks/<task>/tests.tsv` | the frozen test list | 11 | `layup run` | 2 (`M2e`, K38) | later |
 | `tasks/<task>/gates.tsv` | the table of `layup gate` for each head of the task | 6, 8 | `layup run` | 2 | [`gate.md`](gate.md#the-table), with the head as part of the key |
 | `acceptance.tsv` | one row per review of a requirement | 8, 12 | `layup run` | 2 | later |
 | `parameters.tsv` | every parameter | 10 | `layup run` | 2 | later |
-| `harnesses.tsv` | the admitted harnesses, their versions and probe results | 9 | `layup run` | 2 | later |
+| `harnesses.tsv` | the admitted harnesses, their versions and probe results | 9 | `layup run` | 2 (`M2b`) | [below](#nfr-001--the-records-of-a-session) |
 | `owners.tsv` | the confirmed owner map | 9 | `layup run` | 3 | later |
-| `routing.tsv` | the routing register and its weights | 9, 13 | `layup run` | 2 (`M2b`, K38) | later |
+| `routing.tsv` | the routing register and its weights | 9, 13 | `layup run` | 2 (`M2b`, K38) | [below](#nfr-001--the-records-of-a-session), the order only |
 | `overrides.tsv` | a harness override of a task (a reroute) | 11 | `layup run` | 3 | later |
 | `providers.tsv` | the admitted smart-if providers and their probe results | 10 | `layup run` | 3 | later |
 | `decisions.tsv` | one row per smart-if call | 4, 10 | `layup run` | 3 | later |
@@ -86,7 +87,9 @@ of `stalls.tsv`, so the Stall Rate does not count it.
 | `layup:docs/setup/steps.tsv` | LAYUP's own setup steps; the engine does not read it, and the step table of `setup.md` derives from it | 5 | a LAYUP task | — | its header |
 | `layup:internal/catalog/<stack>/` | the stack catalog | 6 | a LAYUP task | 1 | [`setup.md`](setup.md#the-stack-catalog) |
 | `host:<work>/` | the work area of `layup setup` | 5 | `layup setup` | 1 | [`setup.md`](setup.md#the-command-layup-setup) |
-| `host:registers/harnesses.tsv` | the harness register: the columns that Start reads; `M2b` adds the credential route, the rule files and the models (K40) | 9 | the Operator | 2 | [below](#nfr-001--the-records-of-start) |
+| `host:registers/harnesses.tsv` | the harness register: the columns that Start reads, and those that `M2b` adds (K40) | 9 | the Operator | 2 | [below](#nfr-001--the-records-of-start); the columns of `M2b` [below](#nfr-001--the-records-of-a-session) |
+| `host:registers/models.tsv` | each model of a harness, with its context size and its source, and the "not used" list | 9 | the Operator | 2 (`M2b`) | [below](#nfr-001--the-records-of-a-session) |
+| `host:registers/routing.tsv` | the Operator's routing register, which `layup run` copies into `records:routing.tsv` | 9 | the Operator | 2 (`M2b`) | [below](#nfr-001--the-records-of-a-session) |
 | `host:registers/forge.tsv` | the forge register: the App, its key file, the API (K40) | 1, 3 | the Operator | 2 | [below](#nfr-001--the-records-of-start) |
 | `host:registers/providers.tsv` | the provider register | 10 | the Operator | 3 | later |
 | `host:prices.tsv` | the price list | 12 | the Operator | 1, schema only | [below](#req-011--the-telemetry-record) |
@@ -255,7 +258,143 @@ different values. The API and Git URLs are columns so that the end-to-end test
 runs against a local fake forge with no secret. The harness credential is not
 in `M2a`: the architecture gives a session "a variable, or a file that the
 register row names" (§4), and `README.md` forbids a variable as an input of
-`layup`; `M2b` settles it, with the columns it adds to the harness register.
+`layup`; `M2b` settles it, with the columns it adds to the harness register
+(task `T-ywk7`: [the credential](session.md#the-environment-and-the-harness-credential)).
+
+## NFR-001 — The records of a session
+
+Milestone `M2b` (task `T-ywk7`, #147): the records that `layup run` writes for a
+session and a probe, and the host registers that it reads. The steps that write
+them are in [`session.md`](session.md). Each block has one owner, which holds its
+Go schema ([`packages.md`](packages.md#the-table-of-m2b)): `internal/records`
+owns `sessions`, `harnesses`, `routing`, `events` and `result`;
+`internal/route` owns `models` and `routing-register`; `internal/session` owns
+`probe-result`. One writer (§3): a session hands over its result file and its
+commits, and only `layup run` commits a record of it, from its own clone.
+
+```tsv-schema sessions records:sessions.tsv
+session id(S-xxxxxxxx) key the session ID, as in `telemetry.tsv`
+task id(T-xxxx) - the task; for a probe, the probe's own task ID
+attempt int - the attempt, 1 or more; 1 for a probe
+role text - the role of the step table (§9), or `probe`
+harness id(<word>) - the harness ID of the register
+version text - the version that the harness's version command printed before the start
+model text - the model ID as the harness names it
+base sha1 - the commit that the session's clone starts at
+records sha1 - the records commit that the prompt was built from
+prompt_bytes int - the size of `prompt.md` in bytes
+prompt_tokens int - the estimate: `prompt_bytes` over four, rounded up
+context int - the model's context size from `models.tsv`; never below `prompt_tokens`
+cap decimal - the spend cap of the session in US dollars; `—` for a harness with none
+wall int - the wall-clock limit of the session in minutes, 1 or more
+vars list(text) - each fixed variable given to the session, `NAME=VALUE`; `—` for none
+policy list(text) - each policy path of the register row that exists, absolute; `—` for none
+```
+
+```tsv-schema harnesses records:harnesses.tsv
+session id(S-xxxxxxxx) key the probe's session ID
+harness id(<word>) - the harness ID of the register
+version text - the version that the probe ran; `—` when the version check refused its start
+model text - the model of the probe
+result enum(passed|failed) - the probe's result
+reason text - why it failed: the reason of a refused start (`version`, `rules`, `context`, `prompt`), and after one space its value where it has one (the path of a rule file, the two numbers of the context, the size of the prompt); the class of its end; `outside`, `not-used`, `token` or `files`; `—` when `passed`
+files list(text) - each instruction file that the harness reported, as it wrote it; `—` for none
+models list(text) - each model of its usage report; `—` when the report names none
+end time - when the probe ended, or when its start was refused
+```
+
+```tsv-schema routing-register host:registers/routing.tsv
+role text key the role of the step table (§9)
+tier enum(reasoning|execution) key the tier of a task (§9)
+position int key the place of the pair in the role's list, from 1
+harness id(<word>) - the harness ID of the register
+model text - a model of that harness in `models.tsv`
+```
+
+```tsv-schema routing records:routing.tsv
+role text key the role of the step table (§9)
+tier enum(reasoning|execution) key the tier of a task (§9)
+position int key the place of the pair in the role's list, from 1
+harness id(<word>) - the harness ID of the register
+model text - a model of that harness in `models.tsv`
+```
+
+```tsv-schema models host:registers/models.tsv
+harness id(<word>) key the harness ID of the register
+model text key the model ID as the harness names it
+context int - the model's context size in tokens
+source text - the `http` or `https` URL that states the size
+date time - when the source was read
+use enum(yes|no) - `no` puts the model on the host's "not used" list
+reason text - why `no`, with its source; `—` when `yes`
+```
+
+```tsv-schema events records:tasks/<task>/events.tsv
+n int key the event's number, from 1, in the order of the events
+kind enum(attempt|session|refused|result|push|bound|closed|rebased) - the event
+attempt int - the attempt that the event concerns, 1 or more
+session id(S-xxxxxxxx) - the session; `—` for `attempt`, `closed` and `rebased`, and for a `refused` whose reason is `pair`, which comes before a session
+base sha1 - the base commit, for `attempt` and `rebased`; `—` otherwise
+sha sha1 - the commit, for `push` and `bound`; `—` otherwise
+detail text - one line: for `result`, the class of the end; for `refused`, the reason, and after one space its value where it has one: the path of a rule file, the two numbers of the context, the size of the prompt, or the payload of a refused diff; for `push` and `bound`, the branch; `—` for `attempt` and `session`; for `closed` and `rebased`, as `M2e` sets
+time time - when `layup run` recorded the event
+```
+
+```tsv-schema result records:tasks/<task>/results/<session>.tsv
+kind enum(status|artifact) key the kind of the row; `M2e` adds the kinds of a handoff
+n int key the row's number within its kind, from 1
+value text - for `status`: `completed`, `blocked`, `needs_context`, `decision_needed` or `failed`; for `artifact`: its path in the target
+sha256 sha256 - for `artifact`: the SHA-256 of the file at the session's head; `—` for `status`
+reason text - for `status`: one line; `—` for `artifact`
+```
+
+```tsv-schema probe-result host:sessions/<session>/result/probe.tsv
+kind enum(token|file) key `token` once; `file` for each instruction file
+value text key the token, or the path of the file as the harness wrote it
+```
+
+**Decided here**, the row rules that the blocks give in words, which each owner
+checks after the types, an error naming the line and the column (task `T-tmhw`'s
+form): a column whose rule has no clause for `—` never holds `—`; the kinds
+of `events`, each with its writer: `attempt`, the call that starts an attempt
+(the uat test of `M2b`, the task loop of `M2e`); `session`, the start of a
+session; `result`, its end; `refused`, a start, a result or a push of a task
+session that `layup run` refuses (a probe's refused start is its row of
+`harnesses.tsv`); `push` and `bound`, the push of a session's SHA; `closed` and
+`rebased`, the task loop of `M2e`; each row is one event, and no row is changed
+(§3); a result holds one `status` row, with `n` 1, and an
+`artifact` value of the type `path`; `harnesses.tsv` holds one row per probe,
+and a harness is admitted by its last row at the version that the version check
+reads ([`session.md`](session.md#admission)).
+
+**The columns that `M2b` adds to `host:registers/harnesses.tsv`** (K40), in
+words: the block `harness-register` is built, so the build task that gives
+`internal/route` the probe moves them into the block, in the same change as its
+Go schema, its test and the fixtures that write the register (condition 1 of the
+plan review of #147); until then the block keeps the three columns that Start
+reads.
+
+| Column | Type | Rule |
+| ------ | ---- | ---- |
+| `command` | `text` | the command line, words separated by one space; `{model}`, `{cap}` and `{prompt}` stand for the model, the cap and the prompt; `{cap}` exactly when `cap` is not `—` |
+| `prompt` | `enum(file\|arg\|stdin)` | how the prompt reaches the harness ([`session.md`](session.md#the-start-of-a-session)) |
+| `version` | `text` | the command that prints the harness's version on the first line of its standard output |
+| `credential` | `text` | the absolute path of the credential file, mode 0600; `—` for none |
+| `credential_to` | `text` | `var:NAME` or `file:PATH`; `—` exactly when `credential` is `—` |
+| `rules` | `list(text)` | each rule-file name that the harness loads, for example `CLAUDE.md` |
+| `policy` | `list(text)` | each absolute path of a system-wide policy file of the harness; `—` for none |
+| `usage` | `enum(claude-result\|none)` | the format of its usage report ([`session.md`](session.md#the-usage-report-of-a-harness)) |
+| `billing` | `enum(api\|subscription)` | the billing type of its account |
+| `vars` | `list(text)` | each fixed variable of its sessions, `NAME=VALUE`; `—` for none |
+
+**`payloads/<sha256>`** has a rule, not a block, as a payload is not a table:
+its name is the SHA-256 of its bytes, in lowercase hexadecimal; `M2b` writes one
+kind, the refused diff of a session (`git diff --binary` from the base to the
+head), which an event `refused` names in its `detail`.
+
+**The session directory** (`host:sessions/<session>/`) is not a record: it is
+thrown away after the session's records are pushed
+([`session.md`](session.md#the-session-directory)).
 
 ## REQ-011 — The telemetry record
 
@@ -343,8 +482,10 @@ before it writes it), an error naming the line and the column:
 their form; that a `price` ID is a row of the host's `prices.tsv` is a check
 of two files, which the writer makes (phase 2).
 
-**Not in phase 1:** the writer, the budget check before each session start, and
-the Telemetry Completeness report (`layup report`, phase 4).
+**Not in phase 1:** the writer (`M2b`:
+[`session.md`](session.md#req-011--the-writer-of-the-telemetry-record)), the
+budget check before each session start (`M2c` and `M3d`), and the Telemetry
+Completeness report (`layup report`, phase 4).
 
 ## REQ-009 — The stall record
 

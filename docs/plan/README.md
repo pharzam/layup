@@ -53,7 +53,7 @@ The Operator's decisions O-121 to O-124 set its structure; they are quoted in
 | --------- | ----- | ------------ | ---------- | ----- | ----------- |
 | `M1` | 1 | REQ-001, REQ-002, REQ-004, REQ-007, REQ-009, REQ-011, NFR-001 to NFR-007; the `Won't` rows REQ-015 to REQ-018 hold in every phase | The first pilot (O-122): `layup` sets up one target repository from a problem statement with a Go stack, and runs that target's gate from outside (ADR-0012 part 6). | the PDR (`T-4wrw`) | the specification of phase 1 (`T-0drh`, merged) |
 | `M2a` | 2 | NFR-001, NFR-002, NFR-006, REQ-002 | On an empty repository, after the Operator's root push, the records branch shows the first commit by the LAYUP App, and the Intake and control issues exist. | `M1` | its specification task (`T-zck8`); its tasks: [rows 21 to 27](#the-tasks-of-m2a) |
-| `M2b` | 2 | REQ-011, REQ-005, REQ-003, REQ-013, NFR-005, NFR-001 | A probe session on each registered harness, then one developer session whose commit lands on its task branch, with one complete telemetry row. | `M2a` | its specification task |
+| `M2b` | 2 | REQ-011, REQ-005, REQ-003, REQ-013, NFR-005, NFR-001 | A probe session on each registered harness, then one developer session whose commit lands on its task branch, with one complete telemetry row. | `M2a` | its specification task (`T-ywk7`, #147) |
 | `M2c` | 2 | REQ-001, REQ-012, NFR-003 | On a pilot problem statement, one Intake comment holds the rule gaps and the gaps of meaning, and `layup spec check --facts` passes on the numbered spans. | `M2a`, `M2b` | its specification task |
 | `M2d` | 2 | REQ-002, NFR-001, NFR-002, NFR-003, NFR-006, REQ-003 | After the Operator's pushes and ruleset apply, the push to `layup-probe` is refused, and `setup/forge-check.tsv` shows each rule and probe as passed. | `M2a`, `M2b`, `M2c` | its specification task |
 | `M2e` | 2 | REQ-005, REQ-007, REQ-012, REQ-003, NFR-004, NFR-001 | The specification task of a target merges after its first bet: each handoff is valid, the rendered commit holds the MoSCoW and Phase columns, and the four `layup/` checks are green. | `M2b`, `M2c`, `M2d` | its specification task |
@@ -215,7 +215,7 @@ says which part phase 1 proves, and where.
 | NFR-002 | a target set up in phase 1 passes its own gate with LAYUP absent (rows 16 and 20) | a fresh session of another harness continues a task (`M4a`) |
 | NFR-003 | zero values without a source, by check `sources` (rows 10 and 16); the audit of the pilot's values (row 20) | — |
 | NFR-004 | `layup gate` and `layup setup verify` report a check that did not run as not passed, and a fixture proves it (rows 5, 10 and 15) | — |
-| NFR-005 | each verdict reproducible (rows 5 and 7); the engine checks start no model process and open no network package (row 2) | the smart-if client and `decisions.tsv` (`M3a`) |
+| NFR-005 | each verdict reproducible (rows 5 and 7); the engine checks start no model process and open no network package (row 2) | no package of an engine check depends on the package that starts a harness (`M2b`); the smart-if client and `decisions.tsv` (`M3a`) |
 | NFR-006 | LAYUP's own pin and check `pin` (already green); the target's pin written once and checked (rows 7 and 9) | — |
 | NFR-007 | the standard library only, by `go list -deps`, and `git` only as a program (row 2) | — |
 | REQ-015, REQ-017 | the recorded code review of the phase-1 release (row 19) | the review of each later release, by the specification task of each milestone |
@@ -310,7 +310,7 @@ task that settles it and the tasks that read the settled text. "Row *n*" is a ro
 | K37 | `T-55n2` | — | Those items are out of phase 1 (the hosts table). |
 | K38 | `T-zck8` (`M2a`) | `M2b`, `M2c`, `M2e`, `M2g`, `M3d` | Settled by one rule: a record is specified in the milestone whose code first writes it ([`records.md`](../spec/records.md#the-layout-of-the-records-branch)). `questions.tsv` and `budget.tsv` go to `M2c` (Intake writes them; the cap of milestone 0 is `intake.cap` of `start.tsv`), `routing.tsv` and the second admitted harness to `M2b`, the frozen test list to `M2e` (frozen at the task's first valid handoff to the verifier, `architecture.md` §8; read by `M2g`), the dead-man job and its record to `M3d`; `M2a` only reads its first notice. |
 | K39 | row 2 | `M2a`, `M3a` | Phase 1: no package imports a network package; `M2a` names the forge adapter and `M3a` names `internal/smartif`. |
-| K40 | `T-zck8` (`M2a`): the App key; `M2b`: the harness credential | `M2b` | The App ID, the key file and the URLs are the forge register that `--host DIR` names (decided in [`run.md`](../spec/run.md), [`records.md`](../spec/records.md#nfr-001--the-records-of-start)). Still open for `M2b`: the architecture gives a session its harness credential as "a variable, or a file that the register row names" (§4), and `spec/README.md` reads no environment variable as an input of `layup`. |
+| K40 | `T-zck8` (`M2a`): the App key; `T-ywk7` (`M2b`): the harness credential | `M2b` | The App ID, the key file and the URLs are the forge register that `--host DIR` names (decided in [`run.md`](../spec/run.md), [`records.md`](../spec/records.md#nfr-001--the-records-of-start)). The harness credential is a file that the harness register's row names, given to the session as a variable or a copied file, so `layup` reads no environment variable for it ([`session.md`](../spec/session.md#the-environment-and-the-harness-credential)). |
 | K41 | O-163 (#123) | `M2d` | `M2a` specifies an empty repository only (`--new`); the adoption of a target that phase 1 set up goes to `M2d`, where `layup run` drives the Scaffold. |
 | K42 | row 13 | rows 16, 20 | Found by the self-check: the setup record names a source for each value, but no row for a kept file that the prose step replaces (O-123). The prose step writes one record row for each replaced file, so `REQ-018` has its evidence. |
 
@@ -350,6 +350,7 @@ are known limits by the Operator's rulings.
 | [#49](https://github.com/pharzam/layup/issues/49) | Answered by [R11](../issue-workflow.md#r11--single-goal-issues) ("A task of one artifact", [ADR-0026](../adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md)); the Operator closes it or keeps it open. |
 | [#61](https://github.com/pharzam/layup/issues/61) | Row 12 (`T-9t1q`), with check `facts`; cap 2. |
 | [#68](https://github.com/pharzam/layup/issues/68) | Milestone `M2e`, with the handoff records. |
+| [#148](https://github.com/pharzam/layup/issues/148) | The review of the `M2b` release, by the demo task of `M2b`, reads the whole release, the code of `M2a` included ([`session.md`](../spec/session.md#req-015-and-req-017--the-review-of-the-release-of-m2b)); or a task of its own, as the task that takes #148 decides. |
 
 ## Known limits of this plan
 

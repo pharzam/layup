@@ -1,0 +1,29 @@
+part	file	heading
+a role session on a registered harness: what M2b adds to layup run, and the parts below	docs/spec/session.md	## REQ-013 — A role session
+the session directory: a --no-local clone at the base commit on task/<task>/<attempt>, an empty home, the prompt file, the result directory	docs/spec/session.md	### The session directory
+the environment from a named list with no forge credential; the harness credential (K40); the fixed variables of a register row	docs/spec/session.md	### The environment and the harness credential
+rules only from the target: the rule-file names above the session directory, the policy paths	docs/spec/session.md	### Rules only from the target
+the start of a session: the version check, the session ID and the start row before the process, the command line of the register row, the closed standard input	docs/spec/session.md	### The start of a session
+the context of a start: the bytes of the prompt over four against the model's context size, both in the start row	docs/spec/session.md	### The context of a start
+the wall-clock limit, the spend cap, the output cap and the stop of the process group	docs/spec/session.md	### The limit of a session
+the end of a session: the result file, the usage output, the classes of a failed end	docs/spec/session.md	### The end of a session
+the checks before a push (REQ-003, prevention layer 2)	docs/spec/session.md	## REQ-003 — Before a push
+the fetch by SHA with hooks off and no configuration of the session's clone, and the check that the branch descends from the base	docs/spec/session.md	### The fetch by SHA
+the refusal of a workflow change and of a rule-path change before any push, and the refused diff as a payload	docs/spec/session.md	### A workflow or rule-path change
+the push with the App token after the records commit that announces it, and the SHA bound after the forge accepts it	docs/spec/session.md	### The push and the bind
+a comment for a session starts with the session ID	docs/spec/session.md	### A comment for a session
+the typed result of a session (REQ-005)	docs/spec/session.md	## REQ-005 — The result of a session
+the open-attempt check against the task's events	docs/spec/session.md	### The open attempt
+the probe, admission and the routing register (REQ-013)	docs/spec/session.md	## REQ-013 — The probe, admission and routing
+the harness probe: the version, the result file, the instruction files and the models that the harness reports	docs/spec/session.md	### The probe
+admission: a probed harness, a model that is not on the not-used list	docs/spec/session.md	### Admission
+the routing register, the order only (K38)	docs/spec/session.md	### The routing register
+the writer of telemetry.tsv (REQ-011): one row per session, from the usage report and prices.tsv	docs/spec/session.md	## REQ-011 — The writer of the telemetry record
+the usage report of a harness: the closed list of formats	docs/spec/session.md	### The usage report of a harness
+the input states of the registers, the result file and the usage output	docs/spec/session.md	## Input states
+the check that replaces the phase-1 import rule of NFR-005	docs/spec/session.md	## NFR-005 — No harness in the engine checks
+the review of the M2b release for REQ-015 and REQ-017	docs/spec/session.md	## REQ-015 and REQ-017 — The review of the release of M2b
+what M2b does not do, and the milestone of each	docs/spec/session.md	## Not in M2b
+the acceptance test of each part: unit, integration, e2e, uat	docs/spec/session.md	## The acceptance tests of M2b
+the one-writer section of NFR-001 for a session, and the schema blocks of the records of a session	docs/spec/records.md	## NFR-001 — The records of a session
+the packages of M2b: internal/session, internal/ledger, the part of internal/rules before a push	docs/spec/packages.md	### The table of M2b
