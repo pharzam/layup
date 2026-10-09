@@ -10,8 +10,9 @@ import (
 	"testing"
 )
 
-// goodTable is a table of phase 1 and a table of M2a in the cell form of
-// docs/spec/packages.md, with the line of rule 5; ' stands for a backtick.
+// goodTable is a table of phase 1, a table of M2a and a table of M2b in the
+// cell form of docs/spec/packages.md, with the line of rule 5 and the line of
+// the engine checks; ' stands for a backtick.
 var goodTable = strings.ReplaceAll(`# The packages
 
 5. No package depends on 'net', 'net/http' or 'crypto/tls' unless its row says so.
@@ -41,10 +42,21 @@ The text after the table.
 | 'internal/cli' | (the row of phase 1) | (the row of phase 1, with the change below) | (the row of phase 1) | 'net/http' |
 
 The text after the table of M2a.
+
+### The table of M2b
+
+| Package | Job | May import | Starts a program | Connects |
+| ------- | --- | ---------- | ---------------- | -------- |
+| 'internal/session' | a role session | 'internal/git' | 'harness' (the command of a harness register row) | — |
+
+The packages of the engine checks: 'internal/psb', 'internal/gate'.
 `, "'", "`")
 
 // The packages of goodModule, by their index.
-const iCmd, iCLI, iPSB = 0, 1, 2
+const iCmd, iCLI, iPSB, iGate = 0, 1, 2, 4
+
+// engine is the line of the engine checks of goodTable.
+var engine = []string{"internal/psb", "internal/gate"}
 
 // goodModule is a module that keeps every rule of goodTable.
 func goodModule() module {
@@ -59,6 +71,7 @@ func goodModule() module {
 			pkg("internal/psb", "psb", "strings"),
 			pkg("internal/git", "git", "os/exec"),
 			pkg("internal/gate", "gate", modulePath+"/internal/git", "os/exec"),
+			pkg("internal/session", "session", modulePath+"/internal/git", "os/exec"),
 			{ImportPath: "fmt", Standard: true}, {ImportPath: "os", Standard: true},
 			{ImportPath: "os/exec", Standard: true}, {ImportPath: "strings", Standard: true},
 		},
@@ -67,6 +80,7 @@ func goodModule() module {
 			"internal/git": {"git.go": "package git\n\nimport \"os/exec\"\n\nvar c = exec.Command(\"git\", \"--version\")\n"},
 			"internal/gate": {"gate.go": "package gate\n\nimport x \"os/exec\"\n\nvar c = x.CommandContext(nil, \"sh\", \"-c\", \"go vet\")\n\n" +
 				"func run(c *x.Cmd) error { return c.Run() }\n"},
+			"internal/session": {"session.go": "package session\n\nimport \"os/exec\"\n\nfunc start(command []string) *exec.Cmd { return exec.Command(command[0], command[1:]...) }\n"},
 		},
 	}
 }
@@ -81,6 +95,7 @@ func TestReadTable(t *testing.T) {
 		"internal/gate":         {imports: []string{"internal/git"}, program: "sh"},
 		"internal/setup":        {imports: []string{"internal/git"}},
 		"internal/forge/github": {connects: []string{"net", "net/http", "crypto/tls"}},
+		"internal/session":      {imports: []string{"internal/git"}, register: true},
 	}
 	if err != nil || !reflect.DeepEqual(rows, want) {
 		t.Fatalf("rows %+v, %v\nwant %+v", rows, err, want)
@@ -92,26 +107,32 @@ func TestReadTableRefusesWhatItCannotRead(t *testing.T) {
 	under := "### The table of phase 1\n\n| Package | Job | May import | Starts a program |\n"
 	head := under + "| - | - | - | - |\n"
 	for name, text := range map[string]string{
-		"no heading":                                 strings.Replace(goodTable, "### The table of phase 1", "### The table", 1),
-		"no table in its section":                    "### The table of phase 1\n\nText.\n\n## Next\n\n" + strings.TrimPrefix(head, "### The table of phase 1\n\n") + "| `cmd/layup` | main | — | no |\n",
-		"zero rows":                                  head + "\nText.\n",
-		"no separator row":                           under + "| `cmd/layup` | main | — | no |\n| `internal/psb` | rules | — | no |\n",
-		"a missing column":                           "### The table of phase 1\n\n| Package | Job | May import |\n| - | - | - |\n| `cmd/layup` | main | — |\n",
-		"a short row":                                head + "| `cmd/layup` | main | — |\n",
-		"a package with no span":                     head + "| cmd/layup | main | — | no |\n",
-		"two packages in a cell":                     head + "| `cmd/layup`, `cmd/x` | main | — | no |\n",
-		"an import list in prose":                    head + "| `cmd/layup` | main | `internal/cli` and `internal/psb` | no |\n",
-		"an empty import cell":                       head + "| `cmd/layup` | main |  | no |\n",
-		"a program cell in prose":                    head + "| `internal/gate` | gates | — | the gate commands, with `sh -c` |\n",
-		"a program cell with no span":                head + "| `internal/gate` | gates | — | yes |\n",
-		"two programs in a cell":                     head + "| `internal/gate` | gates | — | `sh`, or `bash` |\n",
-		"a package in two rows":                      head + "| `cmd/layup` | main | — | no |\n| `cmd/layup` | main | — | no |\n",
-		"no table of M2a":                            strings.Replace(goodTable, "### The table of M2a", "### The other table", 1),
-		"no column Connects":                         strings.Replace(goodTable, "| Starts a program | Connects |", "| Starts a program | Other |", 1),
-		"a Connects cell in prose":                   strings.Replace(goodTable, "| no | `net`, `net/http`, `crypto/tls` |", "| no | `net` and `net/http` |", 1),
-		"a row of phase 1 that phase 1 lacks":        strings.Replace(goodTable, "| `cmd/layup` | (the row of phase 1) |", "| `internal/none` | (the row of phase 1) |", 1),
-		"a row that mixes the two kinds of cell":     strings.Replace(goodTable, "| `cmd/layup` | (the row of phase 1) | (the row of phase 1) |", "| `cmd/layup` | main | (the row of phase 1) |", 1),
-		"a full row of M2a for a package of phase 1": strings.Replace(goodTable, "| `cmd/layup` | (the row of phase 1) | (the row of phase 1) | (the row of phase 1) |", "| `cmd/layup` | main | `internal/cli` | no |", 1),
+		"no heading":                                    strings.Replace(goodTable, "### The table of phase 1", "### The table", 1),
+		"no table in its section":                       "### The table of phase 1\n\nText.\n\n## Next\n\n" + strings.TrimPrefix(head, "### The table of phase 1\n\n") + "| `cmd/layup` | main | — | no |\n",
+		"zero rows":                                     head + "\nText.\n",
+		"no separator row":                              under + "| `cmd/layup` | main | — | no |\n| `internal/psb` | rules | — | no |\n",
+		"a missing column":                              "### The table of phase 1\n\n| Package | Job | May import |\n| - | - | - |\n| `cmd/layup` | main | — |\n",
+		"a short row":                                   head + "| `cmd/layup` | main | — |\n",
+		"a package with no span":                        head + "| cmd/layup | main | — | no |\n",
+		"two packages in a cell":                        head + "| `cmd/layup`, `cmd/x` | main | — | no |\n",
+		"an import list in prose":                       head + "| `cmd/layup` | main | `internal/cli` and `internal/psb` | no |\n",
+		"an empty import cell":                          head + "| `cmd/layup` | main |  | no |\n",
+		"a program cell in prose":                       head + "| `internal/gate` | gates | — | the gate commands, with `sh -c` |\n",
+		"a program cell with no span":                   head + "| `internal/gate` | gates | — | yes |\n",
+		"two programs in a cell":                        head + "| `internal/gate` | gates | — | `sh`, or `bash` |\n",
+		"a package in two rows":                         head + "| `cmd/layup` | main | — | no |\n| `cmd/layup` | main | — | no |\n",
+		"no table of M2a":                               strings.Replace(goodTable, "### The table of M2a", "### The other table", 1),
+		"no column Connects":                            strings.Replace(goodTable, "| Starts a program | Connects |", "| Starts a program | Other |", 1),
+		"a Connects cell in prose":                      strings.Replace(goodTable, "| no | `net`, `net/http`, `crypto/tls` |", "| no | `net` and `net/http` |", 1),
+		"a row of phase 1 that phase 1 lacks":           strings.Replace(goodTable, "| `cmd/layup` | (the row of phase 1) |", "| `internal/none` | (the row of phase 1) |", 1),
+		"a row that mixes the two kinds of cell":        strings.Replace(goodTable, "| `cmd/layup` | (the row of phase 1) | (the row of phase 1) |", "| `cmd/layup` | main | (the row of phase 1) |", 1),
+		"a full row of M2a for a package of phase 1":    strings.Replace(goodTable, "| `cmd/layup` | (the row of phase 1) | (the row of phase 1) | (the row of phase 1) |", "| `cmd/layup` | main | `internal/cli` | no |", 1),
+		"no table of M2b":                               strings.Replace(goodTable, "### The table of M2b", "### The table of M2c", 1),
+		"no column Connects in the table of M2b":        strings.Replace(goodTable, "| Package | Job | May import | Starts a program | Connects |\n| ------- | --- | ---------- | ---------------- | -------- |\n| `internal/session`", "| Package | Job | May import | Starts a program | Other |\n| ------- | --- | ---------- | ---------------- | -------- |\n| `internal/session`", 1),
+		"a row of M2b that stands for a row of phase 1": strings.Replace(goodTable, "| `internal/session` | a role session |", "| `internal/session` | (the row of phase 1) |", 1),
+		"a row of M2b for a package of another table":   strings.Replace(goodTable, "| `internal/session` | a role session |", "| `internal/psb` | a role session |", 1),
+		"a register cell and a second span":             strings.Replace(goodTable, "(the command of a harness register row) |", "(the command of a harness register row), or `sh` |", 1),
+		"a register cell with more text":                strings.Replace(goodTable, "(the command of a harness register row) |", "(the command of a harness register row) and more |", 1),
 	} {
 		if rows, err := readTable(text); err == nil {
 			t.Errorf("%s: no error, %d rows; want an error", name, len(rows))
@@ -138,12 +159,30 @@ func TestReadAdapter(t *testing.T) {
 	}
 }
 
+// The line of the engine checks names their packages (docs/spec/packages.md,
+// The test of the package rules; docs/spec/session.md, NFR-005).
+func TestReadEngine(t *testing.T) {
+	if e, err := readEngine(goodTable); err != nil || !slices.Equal(e, []string{"internal/psb", "internal/gate"}) {
+		t.Fatalf("readEngine = %q, %v; want internal/psb, internal/gate", e, err)
+	}
+	line := "The packages of the engine checks: `internal/psb`, `internal/gate`."
+	for name, text := range map[string]string{
+		"no line":      strings.Replace(goodTable, line, "No line here.", 1),
+		"two lines":    strings.Replace(goodTable, line, line+"\n"+line, 1),
+		"no code span": strings.Replace(goodTable, line, "The packages of the engine checks: internal/psb.", 1),
+	} {
+		if e, err := readEngine(text); err == nil {
+			t.Errorf("%s: %q, no error; want an error", name, e)
+		}
+	}
+}
+
 func TestAGoodModuleKeepsTheRules(t *testing.T) {
 	rows, err := readTable(goodTable)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if f := checkRules(rows, "internal/forge/github", goodModule()); len(f) != 0 {
+	if f := checkRules(rows, "internal/forge/github", engine, goodModule()); len(f) != 0 {
 		t.Fatalf("findings on a good module:\n%s", strings.Join(f, "\n"))
 	}
 }
@@ -185,7 +224,7 @@ func TestEachRuleAndColumnFindsItsBreach(t *testing.T) {
 		{"rule 5, a dependency that Connects does not name", goodTable, func(m *module) { m.packages[iCmd].Deps = append(m.packages[iCmd].Deps, "net") },
 			"rule 5: cmd/layup depends on net"},
 		{"rule 5, a dependency with no Connects", goodTable, func(m *module) { m.packages[iPSB].Deps = append(m.packages[iPSB].Deps, "net/http") },
-			"rule 5: internal/psb depends on net/http"},
+			"engine checks: internal/psb depends on net/http\nrule 5: internal/psb depends on net/http"},
 		{"rule 5, a dependency that Connects names", goodTable, func(m *module) { m.packages[iCmd].Deps = append(m.packages[iCmd].Deps, "net/http") }, ""},
 		{"rule 5, an own import outside the adapter", goodTable, func(m *module) {
 			m.packages[iCLI].Imports = append(m.packages[iCLI].Imports, "net/http")
@@ -227,9 +266,27 @@ func TestEachRuleAndColumnFindsItsBreach(t *testing.T) {
 		{"rule 5, a file that go list leaves out", goodTable, func(m *module) {
 			source("internal/psb", `"expvar"`, `var _ = expvar.NewInt`)(m)
 			m.packages = append(m.packages, goPackage{ImportPath: "expvar", Standard: true, Deps: []string{"net/http"}})
-		}, "rule 5: internal/psb depends on net/http"},
+		}, "engine checks: internal/psb depends on net/http\nrule 5: internal/psb depends on net/http"},
 		{"May import, a file that go list leaves out", goodTable, source("internal/psb", `"`+modulePath+`/internal/git"`, `var _ = git.Version`),
 			"May import: internal/psb imports internal/git, which its row does not allow"},
+		// The rule of the engine checks reads each dependency, and no cell.
+		{"engine checks, a dependency on internal/session", goodTable, func(m *module) {
+			m.packages[iGate].Deps = append(m.packages[iGate].Deps, modulePath+"/internal/session")
+		}, "engine checks: internal/gate depends on internal/session"},
+		{"engine checks, a dependency on a package of rule 5", goodTable, func(m *module) { m.packages[iPSB].Deps = append(m.packages[iPSB].Deps, "net") },
+			"engine checks: internal/psb depends on net\nrule 5: internal/cli depends on net\nrule 5: internal/psb depends on net"},
+		{"engine checks, a Connects cell does not lift the rule", strings.Replace(goodTable, "| `cmd/layup` | (the row of phase 1) |", "| `internal/psb` | (the row of phase 1) | (the row of phase 1) | (the row of phase 1) | `net` |\n| `cmd/layup` | (the row of phase 1) |", 1),
+			func(m *module) { m.packages[iPSB].Deps = append(m.packages[iPSB].Deps, "net") }, "engine checks: internal/psb depends on net\nrule 5: internal/cli depends on net"},
+		{"engine checks, a package off the line", goodTable, func(m *module) {
+			m.packages[iCLI].Deps = append(m.packages[iCLI].Deps, modulePath+"/internal/session")
+		}, ""},
+		// A register row starts the command that a register row names.
+		{"a register row, a start by a string literal", goodTable, source("internal/session", `"os/exec"`, `var c = exec.Command("claude")`),
+			"Starts a program: internal/session/x.go:5 starts claude; a register row starts only the command of its register"},
+		{"a register row, exec.Command as a value", goodTable, source("internal/session", `"os/exec"`, `var start = exec.Command`),
+			"Starts a program: internal/session/x.go:5 starts a program that the scan cannot read"},
+		{"a register row, os.StartProcess", goodTable, source("internal/session", `"os"`, `var _, _ = os.StartProcess("/usr/bin/claude", nil, nil)`),
+			"Starts a program: internal/session/x.go:5 uses os.StartProcess"},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			rows, err := readTable(c.table)
@@ -238,7 +295,7 @@ func TestEachRuleAndColumnFindsItsBreach(t *testing.T) {
 			}
 			m := goodModule()
 			c.breach(&m)
-			if f := checkRules(rows, "internal/forge/github", m); strings.Join(f, "\n") != c.want {
+			if f := checkRules(rows, "internal/forge/github", engine, m); strings.Join(f, "\n") != c.want {
 				t.Errorf("findings\n%s\nwant exactly\n%s", strings.Join(f, "\n"), c.want)
 			}
 		})
