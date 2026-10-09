@@ -20,7 +20,7 @@ fail, naming it.
 
 | Capability (§1) | Interface method | First used in |
 | --------------- | ---------------- | ------------- |
-| issues and comments, with the actor and whether an App made it | `OpenIssue`, `Comments(issue)`, `Comment(issue, body)` | `M2a` (steps 7 and 8 of [`run.md`](run.md#the-steps-of-layup-run---new)) |
+| issues and comments, with the actor and whether an App made it | `OpenIssue`, `Comments(issue)`, `Comment(issue, body)` | `M2a` (steps 7 and 8 of [`run.md`](run.md#the-steps-of-layup-run---new)); `Comment` in `M2b` (the comment of a session) |
 | pull requests with a draft state | `OpenDraft`, `MarkReady`, `Merge` | `M2e` |
 | commit statuses bound to a source | `SetStatus` | `M2e` |
 | branch rules with bypass actors, read back | `EffectiveRules(branch)` | `M2d` |
@@ -31,8 +31,10 @@ fail, naming it.
 calls of its rows here. The interface of `M2a` holds the method by which an
 adapter declares its capabilities and the six methods of
 [The calls of M2a](#the-calls-of-m2a); the cell "First used in" of the first row
-names the use of `OpenIssue` and `Comments`, and `M2c` specifies the call of `Comment`
-(task `T-6bq5`).
+names the use of `OpenIssue` and `Comments`, and `M2b` specifies the call of
+`Comment` ([The calls of M2b](#the-calls-of-m2b); task `T-fsjp`, the Operator's
+O-189 of #165: `session.md` has each session of `M2b` post a comment, which
+first named `M2c` here, task `T-6bq5`).
 
 The permissions that `M2a` uses ([`run.md`](run.md#the-steps-of-layup-run---new),
 step 1) are contents `write`, issues `write` and metadata `read`; a level
@@ -101,6 +103,18 @@ decision (task `T-6bq5`).
 
 The read-back of the root commit and the push of the records branch are `git`
 calls, not API calls ([`run.md`](run.md#the-steps-of-layup-run---new)).
+
+## The calls of M2b
+
+The same API and version header as [The calls of M2a](#the-calls-of-m2a)
+(task `T-fsjp`, O-189).
+
+| Method | Call | What it gives `layup run` |
+| ------ | ---- | ------------------------- |
+| `Comment` | `POST /repos/{owner}/{repo}/issues/{n}/comments`, the body `{"body": …}` | the comment's ID; a status other than 201 is a forge error naming `Comment` |
+
+`M2b` posts the comment of a probe and of a task session on the control issue
+([`session.md`](session.md#a-comment-for-a-session)).
 
 ## Forge errors
 

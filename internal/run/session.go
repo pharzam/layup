@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pharzam/layup/internal/forge"
 	"github.com/pharzam/layup/internal/records"
 	"github.com/pharzam/layup/internal/session"
 	"github.com/pharzam/layup/internal/tsv"
@@ -33,14 +34,20 @@ type SessionStore interface {
 // Sessions starts the attempts and the task sessions of one run of one
 // target: its records store, its run ID, the host directory, the target
 // OWNER/NAME, the run's clone and its default branch, and its clock
-// (time.Now when nil). The
-// function fields are the session's own, which a unit test replaces.
+// (time.Now when nil); for the end of a task session (row 36b), the forge,
+// the control issue (issue.control of start.tsv) and the rows of
+// host:prices.tsv as records.ReadPrices gives them (none for a missing file:
+// an empty table, decided here, task T-fsjp). The function fields are the
+// session's own, which a unit test replaces.
 type Sessions struct {
 	Store         SessionStore
 	RunID         string
 	Host, Target  string
 	Clone, Branch string
 	Now           func() time.Time
+	Forge         forge.Forge
+	Control       int
+	Prices        [][]string
 	newID         func() (string, error)
 	sweep         func(host, target string) error
 	make          func(id string, spec TaskSpec) (session.Dir, error)
@@ -65,6 +72,7 @@ type Pair struct {
 	Rules, Policy                       []string
 	Context                             int
 	Session                             session.Harness
+	Billing, Usage                      string // the row's billing and usage format (row 36b)
 }
 
 // TaskSpec is one task session to start: the task, its attempt and role, the
@@ -72,7 +80,8 @@ type Pair struct {
 // and the pair; Admit gives nil when the version read may start (row 38 runs
 // the probe in it), else Refusal{probe}; End and Push are the end of the
 // session and the checks before a push, the push and the bind (rows 36b, 37a
-// and 37b), End nil for none yet, Push nil for none.
+// and 37b), End nil for the end of a task session (endTask, row 36b), Push
+// nil for none.
 type TaskSpec struct {
 	Task          string
 	Attempt       int
@@ -260,7 +269,7 @@ func (s *Sessions) TaskSession(ctx context.Context, spec TaskSpec) (string, erro
 		},
 		End: func(id string, r session.Run, err error) error {
 			if spec.End == nil {
-				return err
+				return s.endTask(ctx, spec, id, d, r, err)
 			}
 			return spec.End(id, d, r, err)
 		},
@@ -269,8 +278,26 @@ func (s *Sessions) TaskSession(ctx context.Context, spec TaskSpec) (string, erro
 		steps.Push = func(id string, r session.Run) error { return spec.Push(id, d, r) }
 	}
 	id, err := session.Call(steps)
-	if err == nil || started {
+	if started {
+		// Once the process started, the directory is removed after the call,
+		// whether the end and the push hooks succeed or fail, so a copied
+		// credential never waits for the next sweep (decided here, task
+		// T-fsjp).
+		if rmErr := s.remove(d.Root); rmErr != nil {
+			err = errors.Join(err, rmErr)
+		}
+		// The comment comes after every record of the session, the push
+		// hook's too (decided here, task T-fsjp, round 1 of #165).
+		// A lost lease stops the run before any other write (run.md).
+		if !errors.As(err, new(*LostError)) {
+			if cErr := s.comment(ctx, id); cErr != nil {
+				err = errors.Join(err, cErr)
+			}
+		}
 		return id, err
+	}
+	if err == nil {
+		return id, nil
 	}
 	if made {
 		if rmErr := s.remove(d.Root); rmErr != nil {

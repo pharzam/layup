@@ -156,7 +156,7 @@ func TestTheStartRowBeforeTheProcess(t *testing.T) {
 	r, spec := task(store, &calls)
 	store.refuse = 1 // one refused push: Fenced reads the lease and tries once more
 	id, err := r.TaskSession(context.Background(), spec)
-	want := []string{"sweep", "make", "version in /h/sessions/S-1a2b3c4d/repo with /h/sessions/S-1a2b3c4d/tmp", "admit 2.1.295 (Claude Code)", "rules", "process with secret", "end"}
+	want := []string{"sweep", "make", "version in /h/sessions/S-1a2b3c4d/repo with /h/sessions/S-1a2b3c4d/tmp", "admit 2.1.295 (Claude Code)", "rules", "process with secret", "end", "remove /h/sessions/S-1a2b3c4d"}
 	if err != nil || id != "S-1a2b3c4d" || !slices.Equal(calls, want) {
 		t.Fatalf("%q, %v, the calls %q; want %q", id, err, calls, want)
 	}
@@ -267,6 +267,38 @@ func TestAFailedMakeRemovesItsDirectory(t *testing.T) {
 		removed := slices.Contains(calls, "remove /h/sessions/S-1a2b3c4d")
 		if err == nil || removed == existed || len(store.commits) != 0 {
 			t.Errorf("a directory there before %v: %v, the calls %q, %d commits; want an error, removed %v, no commit", existed, err, calls, len(store.commits), !existed)
+		}
+	}
+}
+
+// ev gives an events table of rows "kind attempt session".
+func ev(rows ...string) [][]string {
+	var t [][]string
+	for i, r := range rows {
+		f := strings.Fields(r)
+		t = append(t, []string{strconv.Itoa(i + 1), f[0], f[1], strings.ReplaceAll(f[2], "—", ""), "", "", "", "2026-10-09T12:00:00Z"})
+	}
+	return t
+}
+
+func TestTheOpenAttempt(t *testing.T) {
+	const id = "S-1a2b3c4d"
+	for _, c := range []struct {
+		name   string
+		events [][]string
+		open   bool
+	}{
+		{"no later event", ev("attempt 1 —", "session 1 "+id), true},
+		{"a closed of its attempt after", ev("attempt 1 —", "session 1 "+id, "closed 1 —"), false},
+		{"a rebased of its attempt after", ev("attempt 1 —", "session 1 "+id, "rebased 1 —"), false},
+		{"an attempt of another after", ev("attempt 1 —", "session 1 "+id, "attempt 2 —"), false},
+		{"a closed of another attempt after", ev("attempt 1 —", "attempt 2 —", "session 1 "+id, "closed 2 —"), true},
+		{"a closed of its attempt before", ev("attempt 1 —", "closed 1 —", "session 1 "+id), true},
+		{"a session of another after", ev("attempt 1 —", "session 1 "+id, "session 1 S-99999999"), true},
+		{"no event session", ev("attempt 1 —"), false},
+	} {
+		if got := openAttempt(c.events, id, 1); got != c.open {
+			t.Errorf("%s: %v, want %v", c.name, got, c.open)
 		}
 	}
 }

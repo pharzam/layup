@@ -26,7 +26,8 @@ var Capabilities = []Capability{IssuesAndComments, PullRequests, CommitStatuses,
 // Forge is the interface of the calls of M2a (forge.md, The calls of M2a). An
 // adapter declares its capabilities with Capabilities, so the step forge of
 // layup run checks a stand-in adapter the same way. Comment, a method of the
-// capability of issues and comments, comes with M2c, which specifies its call.
+// capability of issues and comments, comes with M2b (forge.md, The calls of
+// M2b; task T-fsjp, O-189).
 type Forge interface {
 	Capabilities() []Capability
 	// Installation gives the installation of the App on the repository.
@@ -41,6 +42,9 @@ type Forge interface {
 	OpenIssue(ctx context.Context, title, body string) (int, error)
 	// Comments gives each comment of an issue, every page.
 	Comments(ctx context.Context, issue int) ([]Comment, error)
+	// Comment posts a comment on an issue and gives its ID (M2b: the comment
+	// of a session, task T-fsjp, O-189).
+	Comment(ctx context.Context, issue int, body string) (int64, error)
 }
 
 // Installation is the installation of the App on the repository.

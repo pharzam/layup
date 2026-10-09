@@ -53,26 +53,39 @@ const maxResult = 1 << 20
 // a regular file (a link is not followed, so no file of the host reaches a
 // record), is over 1 MiB, or that its reader refuses is an error.
 func ResultOf(d Dir, probe bool) ([][]string, error) {
+	_, rows, err := ResultFile(d, probe)
+	return rows, err
+}
+
+// ResultFile is ResultOf with the bytes that it read, from the one read, so
+// the bytes that a writer commits are the bytes that were checked (row 36b,
+// task T-fsjp). A link as the last part of the path is refused; a link above
+// it (result/ itself) is followed, so the file must still pass its block.
+func ResultFile(d Dir, probe bool) ([]byte, [][]string, error) {
 	path, read := filepath.Join(d.Result, "result.tsv"), records.ReadResult
 	if probe {
 		path, read = filepath.Join(d.Result, "probe.tsv"), ReadProbeResult
 	}
 	f, err := os.OpenFile(path, os.O_RDONLY|syscall.O_NOFOLLOW|syscall.O_NONBLOCK, 0)
 	if err != nil {
-		return nil, fmt.Errorf("the result file: %w", err)
+		return nil, nil, fmt.Errorf("the result file: %w", err)
 	}
 	defer f.Close()
 	if info, err := f.Stat(); err != nil || !info.Mode().IsRegular() {
-		return nil, fmt.Errorf("the result file %s is not a regular file", path)
+		return nil, nil, fmt.Errorf("the result file %s is not a regular file", path)
 	}
 	data, err := io.ReadAll(io.LimitReader(f, maxResult+1))
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if len(data) > maxResult {
-		return nil, fmt.Errorf("the result file %s is over 1 MiB", path)
+		return nil, nil, fmt.Errorf("the result file %s is over 1 MiB", path)
 	}
-	return read(data)
+	rows, err := read(data)
+	if err != nil {
+		return nil, nil, err
+	}
+	return data, rows, nil
 }
 
 // ProbeResultSchema is the form of result/probe.tsv: the block probe-result
