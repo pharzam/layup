@@ -20,6 +20,7 @@ here directly, in the shape above.
 - **YYYY-MM-DD** — **<ID>** — <one-sentence summary of what the task found or delivered> ([<link>](...); [detail](<id>.md))
 -->
 
+- **2026-10-09** — **T-m1dx** — Row 32 of `M2b`: the rule-path check before a push, `internal/rules`, the register, the match and the exception of `docs/guardrails.md` ([#158](https://github.com/pharzam/layup/issues/158); [detail](T-m1dx.md))
 - **2026-10-09** — **T-ysph** — Row 30a of `M2b`: the host registers of `M2b`, the ten columns of the harness register, `models.tsv`, `routing.tsv`, the checks across them and of a credential, read by `layup run` ([#155](https://github.com/pharzam/layup/issues/155); [detail](T-ysph.md))
 - **2026-10-09** — **T-y10b** — Row 29 of `M2b`: the package rules of `M2b`, `TestPackageRules` reads the table of `M2b`, the rule of the engine checks and the form of a register row ([#154](https://github.com/pharzam/layup/issues/154); [detail](T-y10b.md))
 - **2026-10-09** — **T-3py1** — Row 28 of `M2b`: the records of a session, the schemas, rules and readers of `sessions`, `harnesses`, `routing`, `events` and `result` in `internal/records` ([#153](https://github.com/pharzam/layup/issues/153); [detail](T-3py1.md))

@@ -154,7 +154,7 @@ below it ([`session.md`](session.md#nfr-005--no-harness-in-the-engine-checks)).
 | ------- | --- | ---------- | ---------------- | -------- |
 | `internal/session` | a role session: its directory, its environment and credential, the rule-file check, the start, the limits and the stop, its end, the result file and the usage report ([`session.md`](session.md#req-013--a-role-session)) | `internal/tsv`, `internal/git`, `internal/records` | `harness` (the command of a harness register row) | — |
 | `internal/ledger` | the writer of `telemetry.tsv`: one row per session, from the usage report and `host:prices.tsv` ([`session.md`](session.md#req-011--the-writer-of-the-telemetry-record)) | `internal/tsv`, `internal/records` | no | — |
-| `internal/rules` | in `M2b`, the reader of the rule-path register and the check of a diff before a push ([`session.md`](session.md#a-workflow-or-rule-path-change)); the check `layup/rules` and rule batches come in `M2f` | `internal/tsv`, `internal/records` | no | — |
+| `internal/rules` | in `M2b`, the reader of the rule-path register and the check of a diff before a push ([`session.md`](session.md#a-workflow-or-rule-path-change)), with a second Go value of the block `rule-paths`, whose owner is `internal/setup`, compared with the block by its own test (task `T-m1dx`); the check `layup/rules` and rule batches come in `M2f` | `internal/tsv`, `internal/records` | no | — |
 
 The packages of the engine checks: `internal/psb`, `internal/verify`, `internal/gate`.
 

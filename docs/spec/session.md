@@ -276,7 +276,12 @@ matches, as the register's entry "each file of the tree whose name ends with
 `.sh`" names a kind of file, not the files of one tree. The exception of
 `docs/guardrails.md`: its diff (`DiffFile`) removes no line, and each added line
 lies at the head between the line that starts `## 2.` and the next line that
-starts `## `. A refused diff (`git diff --binary`) goes to the records as
+starts `## `. **Decided here** (task `T-m1dx`): the exception holds only for a
+diff read as hunks with at least one added line; a diff with no hunk, a mode
+change, a binary diff, or other text is a rule-path change; "between" excludes both boundary
+lines, so an added line that starts `## ` is refused and one under a `### `
+sub-heading passes; the exception is that one file's, as the register's block
+allows no other (`internal/rules` refuses another). A refused diff (`git diff --binary`) goes to the records as
 `payloads/<sha256>` with the event `refused`, and the change becomes a proposal
 for the next rule batch (`M2f`). **Known limit:** a target whose product holds
 shell scripts changes them only in a rule batch.
