@@ -18,6 +18,9 @@ import (
 // word of docs/spec/session.md (rules, context, prompt, branch, and the
 // reasons of later rows), and its value, what the event refused writes after
 // one space (row 36a writes it), or "" for none (row 33b, task T-6sbe, #160).
+// A branch refusal has no value of the event (docs/spec/records.md, events):
+// its Value is the error's text, for the log, and the event writes the word
+// branch alone.
 type Refusal struct{ Reason, Value string }
 
 func (r Refusal) Error() string {

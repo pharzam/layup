@@ -36,3 +36,37 @@ assert the value that names their rule); green after.
 
 **The rejected alternatives:** `git rev-parse` in `repo/`; one type per reason
 of a refusal.
+
+## Review rounds
+
+The record is a comment on #160. Round 1 (Claude Fable 5.1, effort `xhigh`, a
+fresh read-only session in a clone at `240dbae`, cycle 0): `nothing material in
+scope`, seven notes. Applied in the close-out: note 1 (the five malformed loose
+refs have a packed line of the ref beside them and assert their value); note 2
+(a rule file in the session directory itself); note 3 (the acceptance row
+"Before a push" says which level reads which case, and names the packed line of
+another form); note 4 (a `branch` refusal's value is the error's text, not the
+event's); note 5 (an entry of a rule-file name, and a `repo/.git` that is a
+link, refuse, as `Lstat` reads them); note 6 (the head tests in the Test cell of
+`REQ-003`); note 7 (the cells of `internal/run` and `internal/session` in
+`packages.md`). A mutation for each of notes 1 and 2 is in the test record.
+
+## Verdict
+
+Delivered: the checks before the start of a session in `internal/session`:
+`Refusal`, `NewID`, `CheckContext`, `CheckPromptSize`, `CheckRuleFiles` and
+`HeadOf`. The review ended by decay at cycle 0 of cap 1. The diff against
+`cee0e4d`, the branch's base, is inside 650 lines over 13 files. Next: row 34a.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). UTC, 2026-10-09; reviewers' tokens are
+`modelUsage`; the author's are not reported.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan | reasoning | Claude Opus 5.5 | not reported | not reported | to 14:07 |
+| The plan review | reasoning | Claude Fable 5.1 | `xhigh` | 1,228,587 (USD 5.52) | 8 min 2 s |
+| The code, test first | execution | Claude Opus 5.5 | not reported | not reported | 17:01 to 17:06 |
+| Round 1 | reasoning | Claude Fable 5.1 | `xhigh` | 960,813 (USD 5.06) | 10 min 4 s |
+| The close-out, with notes 1 to 7 | execution | Claude Opus 5.5 | not reported | not reported | 17:19 to 17:30 |

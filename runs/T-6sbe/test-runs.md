@@ -55,6 +55,29 @@ checks_test.go:152: .git that is a link: refused "branch" "no ref refs/heads/tas
 checks_test.go:152: a loose ref that is a link: refused "branch" "refs/heads/task/T-ab12/1 is not a SHA and a
 ```
 
-## Green (2026-10-09T17:05Z)
+## The close-out: round 1's note 1 (2026-10-09T17:24Z)
 
-Each with exit 0 on the tree of the commit `feat: T-6sbe …`: `go build ./...`, `go vet ./...`, `gofmt -l internal` (empty), `go test ./...`, `go test -tags=integration ./...` (with `TestPackageRules` and `TestInputRule`); `adr-lint`, `prd-lint`, `link-lint`, `setup-check`, `run-discipline-tests`, `git diff --check`.
+The five malformed loose refs now have a packed line of the ref beside them,
+and assert the value `… is not a SHA and a line feed`. The mutation: line 134
+of `checks.go`, the refusal of a malformed loose ref, made `break`, so the read
+falls through to `packed-refs`. Each of the five is caught, in full:
+
+```
+checks_test.go:158: a symbolic loose ref: <nil>, want a Refusal branch
+checks_test.go:158: a short SHA: <nil>, want a Refusal branch
+checks_test.go:158: no line feed: <nil>, want a Refusal branch
+checks_test.go:158: upper case: <nil>, want a Refusal branch
+checks_test.go:158: two line feeds: <nil>, want a Refusal branch
+```
+
+Note 2: `TestCheckRuleFiles` puts a rule file in the session directory itself
+too. The mutation: the walk starts at the parent of `d.Root`. Caught, the line
+cut at 110 characters:
+
+```
+checks_integration_test.go:31: a rule file at /tmp/TestCheckRuleFiles2033462972/001/a/host/sessions/S-1a2b
+```
+
+## Green (2026-10-09T17:05Z, again at 17:26Z after the close-out)
+
+Each with exit 0 on the tree of the commit `feat: T-6sbe …`, and again on the close-out's: `go build ./...`, `go vet ./...`, `gofmt -l internal` (empty), `go test ./...`, `go test -tags=integration ./...` (with `TestPackageRules` and `TestInputRule`); `adr-lint`, `prd-lint`, `link-lint`, `setup-check`, `run-discipline-tests`, `git diff --check`.

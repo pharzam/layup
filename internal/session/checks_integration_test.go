@@ -24,7 +24,7 @@ func TestCheckRuleFiles(t *testing.T) {
 	if err != nil || !slices.Equal(got, []string{policy}) {
 		t.Fatalf("no rule file above, a file inside repo/: %q, %v; want the one policy path that exists", got, err)
 	}
-	for _, where := range []string{filepath.Join(top, "a", "host", "sessions"), filepath.Join(top, "a")} {
+	for _, where := range []string{d.Root, filepath.Join(top, "a", "host", "sessions"), filepath.Join(top, "a")} {
 		p := filepath.Join(where, ruleName)
 		os.WriteFile(p, []byte("# a rule file above\n"), 0o644)
 		_, err := CheckRuleFiles(d, []string{ruleName}, nil)
