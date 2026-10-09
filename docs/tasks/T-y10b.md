@@ -58,9 +58,10 @@ scope`, seven notes. Applied in the close-out: notes 1 and 2 (`packages.md`: the
 two general sentences point to the register row's form; the refusals of the
 engine line); note 3 (`TestPackageRules` fails when a span of the engine line
 names no package of the module); note 4 (the tolerance of `internal/psb` is
-`netimport`'s only); note 5 (the comments of `netimport`); note 6 (`session.md`:
-the engine rule is added beside the phase-1 import rule, which stays). Declined:
-note 7 (the Task cell of `NFR-005` keeps `M2b`, as the cell of `NFR-001` keeps
+`netimport`'s only); note 6 (`session.md`: the engine rule is added beside the
+phase-1 import rule, which stays). Declined: note 5 (the comments of the three
+files of `netimport` would be three files over the budget of 17; the comments
+are not operative, and `packages.md` says what the fixture breaks); note 7 (the Task cell of `NFR-005` keeps `M2b`, as the cell of `NFR-001` keeps
 `M2a`, the convention of §12). The branch took `origin/main` (the merge of #172)
 by a merge, so the reviewed head stays.
 
@@ -85,4 +86,4 @@ reported.
 | The plan review | reasoning | Claude Fable 5.1, Claude Code CLI | `xhigh` | 875,673 (USD 5.92) | 7 min 31 s, from 11:52 |
 | The answer; the tests, red; the checker; the documents | execution | Claude Opus 5.5, a reasoning-tier model on an execution part | not reported | not reported | 12:00 to 12:08 |
 | Round 1 | reasoning | Claude Fable 5.1, Claude Code CLI | `xhigh` | 970,402 (USD 4.71) | 8 min 28 s, from 12:08 |
-| The close-out, with notes 1 to 6 | execution | Claude Opus 5.5 | not reported | not reported | 12:30 to 12:34 |
+| The close-out, with notes 1 to 4 and 6 | execution | Claude Opus 5.5 | not reported | not reported | 12:30 to 12:34 |

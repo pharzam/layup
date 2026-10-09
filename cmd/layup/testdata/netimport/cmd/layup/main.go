@@ -1,5 +1,5 @@
 // Command layup of the fixture module imports net/http: a breach of rule 5 of
-// docs/spec/packages.md, and of no other rule in this package.
+// docs/spec/packages.md, and of no other rule.
 package main
 
 import "net/http"
