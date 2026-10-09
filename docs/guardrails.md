@@ -311,6 +311,22 @@ check that catches it.
   it is wrong. **The check:** before a question goes to the Operator, derive
   each number of its summary from the table it summarises, row by row, and put
   the per-row result in the question. Learned in `T-fdaq`.
+- ❌ **A hostile configuration whose keys hide each other.** The test of
+  `FetchSession` (`T-z5dj`) writes each program-starting key of `git-config(1)`
+  into a clone, and a control shows which fire on the host. Its first runs
+  showed four ways a key is silent though the list holds it: `include.path`
+  set a key that the file also set, so one of the two never ran; a process
+  filter that fails aborts `git diff` and `git add` before the other drivers
+  run; `git diff` stops at the first external diff that fails, and `textconv`
+  is read only by the built-in diff; and a marker program that reads its
+  standard input deadlocks a process filter and `upload-pack` (a five-minute
+  hang). And a list written from memory left out about twenty keys that
+  `git help --config` lists. **The check:** build the list from `git help
+  --config` of the host's `git`; give each driver key a driver and an attribute
+  of its own; let no include set a key the file sets; read one path per `git
+  diff`, with `--no-ext-diff` for `textconv`; keep each marker program from
+  reading its input; and make the control name each key that did not fire.
+  Learned in `T-z5dj`.
 - ❌ **A harness's own tool runs a model not to use.** In `T-ywk7`, searcher B
   ran on Claude Opus 5.5 (`claude -p`), and the `modelUsage` of its result event
   also named `claude-haiku-5-5`, with 4,759,374 input tokens (USD 1.25): Claude
@@ -505,7 +521,14 @@ These traps are not domain-specific: they hurt every project's test suite.
   test needs some code, not each rule of it: in task `T-8ya0` (#88) two cases
   passed with a wrong lower-case rule and a wrong word position, because the test
   text was shorter in lower case and the extra finding had the text of a real one.
-  For each rule, break that rule alone (a mutation) and watch its case fail.
+  For each rule, break that rule alone (a mutation) and watch its case fail. And
+  give each case a fixture that breaks no second rule at the same column: in task
+  `T-ysph` (#155) an empty `command` on a row with a cap was refused by the rule
+  of `{cap}` too, so dropping the rule of the empty value left the case green,
+  and a lone position `0` was refused by the rule of a gap as well as by the rule
+  it named; move the case to a fixture where only its rule can refuse it, or
+  assert the line as well as the column. When a mutation record is cut to a few
+  lines, say so, or it reads as fewer failing cases than ran.
 - ❌ **Stale tests after a requirement changes.** When a requirement changes but its
   test does not, the suite now guards the old behaviour and blocks the new. The
   check: the [old-tests conflict rule](engineering-discipline.md#testing) — fix the

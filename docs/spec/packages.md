@@ -66,7 +66,7 @@ reads this table, and holds no copy of it, which could differ from it.
 | Package | Job | May import | Starts a program |
 | ------- | --- | ---------- | ---------------- |
 | `cmd/layup` | `main`: passes the arguments to `internal/cli` and exits with its code | `internal/cli` | no |
-| `internal/cli` | parses the arguments, runs one command, maps its result to an exit code ([`README.md`](README.md#commands)); for `layup run`, reads the two host registers and the key file, builds the adapter and hands it to `internal/run` (task `T-mqty`) | `internal/psb`, `internal/setup`, `internal/verify`, `internal/gate`, `internal/run`, `internal/forge`, `internal/forge/github`, `internal/route` | no |
+| `internal/cli` | parses the arguments, runs one command, maps its result to an exit code ([`README.md`](README.md#commands)); for `layup run`, reads the two host registers and the key file, builds the adapter and hands it to `internal/run` (task `T-mqty`), and from `M2b` reads `models.tsv` and `routing.tsv` and checks each harness credential (task `T-ysph`) | `internal/psb`, `internal/setup`, `internal/verify`, `internal/gate`, `internal/run`, `internal/forge`, `internal/forge/github`, `internal/route` | no |
 | `internal/tsv` | reads and writes a record: checks the header row against a schema, the field count of each row, the types and the key; parses the `tsv-schema` blocks of `docs/spec/`, and compares a block with the Go schema of its record ([`README.md`](README.md#the-schema-block)) | — | no |
 | `internal/git` | the one caller of the `git` program: [its calls](#the-calls-of-internalgit) | — | `git` |
 | `internal/psb` | the rules G1 to G5 and the gap table ([`psb-check.md`](psb-check.md)) | `internal/tsv` | no |
@@ -125,7 +125,7 @@ each start so adds only its cell Connects to that row of phase 1.
 | `internal/run` | `layup run`: the steps of Start, the restart, the lease and fencing, the copy of a comment and the rule of a decision ([`run.md`](run.md)); the Go schema of the table `run-steps`; the checks of `git` and of the values of the flags, which `internal/cli` calls before the first step (task `T-mqty`); in `M2b`, the step `probe`, the call that starts an attempt (the event `attempt`), the records of a session, the checks before a push, the push and the bind ([`session.md`](session.md)) | `internal/tsv`, `internal/git`, `internal/records`, `internal/forge`, `internal/route`, `internal/session`, `internal/ledger`, `internal/rules` | no | — |
 | `internal/forge` | the forge interface: the six capabilities and their types ([`forge.md`](forge.md)), `Missing` and `CheckPermissions` (task `T-6bq5`); the reader of the forge register (`host:registers/forge.tsv`), with the Go schema of its block; the check of the key file (task `T-1g1q`) | `internal/tsv` | no | — |
 | `internal/forge/github` | the GitHub adapter: the JWT, the installation token, the calls of [`forge.md`](forge.md#the-calls-of-m2a) | `internal/forge` | no | `net`, `net/http`, `crypto/tls` |
-| `internal/route` | the reader of the harness register (`host:registers/harnesses.tsv`), with the Go schema of its block; in `M2b`, the readers of `models.tsv` and `routing.tsv`, the version that needs a probe, admission and the order of the routing register ([`session.md`](session.md#req-013--the-probe-admission-and-routing)) | `internal/tsv`, `internal/records` | no | — |
+| `internal/route` | the reader of the harness register (`host:registers/harnesses.tsv`), with the Go schema of its block; in `M2b`, the columns that `M2b` adds, the readers of `models.tsv` and `routing.tsv`, the checks across the three and of a credential file (task `T-ysph`), the version that needs a probe, admission and the order of the routing register ([`session.md`](session.md#req-013--the-probe-admission-and-routing)) | `internal/tsv`, `internal/records` | no | — |
 | `cmd/layup` | (the row of phase 1) | (the row of phase 1) | (the row of phase 1) | `net`, `net/http`, `crypto/tls` |
 | `internal/cli` | (the row of phase 1, with the change below) | (the row of phase 1, with the change below) | (the row of phase 1) | `net`, `net/http`, `crypto/tls` |
 
@@ -154,7 +154,7 @@ below it ([`session.md`](session.md#nfr-005--no-harness-in-the-engine-checks)).
 | ------- | --- | ---------- | ---------------- | -------- |
 | `internal/session` | a role session: its directory, its environment and credential, the rule-file check, the start, the limits and the stop, its end, the result file and the usage report ([`session.md`](session.md#req-013--a-role-session)) | `internal/tsv`, `internal/git`, `internal/records` | `harness` (the command of a harness register row) | — |
 | `internal/ledger` | the writer of `telemetry.tsv`: one row per session, from the usage report and `host:prices.tsv` ([`session.md`](session.md#req-011--the-writer-of-the-telemetry-record)) | `internal/tsv`, `internal/records` | no | — |
-| `internal/rules` | in `M2b`, the reader of the rule-path register and the check of a diff before a push ([`session.md`](session.md#a-workflow-or-rule-path-change)); the check `layup/rules` and rule batches come in `M2f` | `internal/tsv`, `internal/records` | no | — |
+| `internal/rules` | in `M2b`, the reader of the rule-path register and the check of a diff before a push ([`session.md`](session.md#a-workflow-or-rule-path-change)), with a second Go value of the block `rule-paths`, whose owner is `internal/setup`, compared with the block by its own test (task `T-m1dx`); the check `layup/rules` and rule batches come in `M2f` | `internal/tsv`, `internal/records` | no | — |
 
 The packages of the engine checks: `internal/psb`, `internal/verify`, `internal/gate`.
 
@@ -288,8 +288,8 @@ takes a token.
 
 | Call | The command, after the `-c` values below | Used by |
 | ---- | ---------------------------------------- | ------- |
-| `CloneLocal` | `git clone --no-local --no-checkout --single-branch --no-tags --branch BRANCH -- SRC DIR`, then `git -C DIR remote remove origin` | the clone of a session, `repo/` |
-| `FetchSession` | `git init --bare -- TMP`; the object directory of the session's `.git` as the one line of `TMP/objects/info/alternates`; `git -C TMP cat-file -t SHA`, which must print `commit`, else the result is refused (`branch`); `git -C TMP update-ref refs/heads/session SHA`; `git -c core.hooksPath=EMPTY fetch --no-tags --no-write-fetch-head -- TMP refs/heads/session:DST`, where `EMPTY` is an empty directory; `TMP` removed | the fetch of a session's head into `layup run`'s clone, with no command in the session's clone |
+| `CloneLocal` | `git clone --no-local --no-checkout --single-branch --no-tags --branch BRANCH -- SRC DIR`, then, in `DIR`, `git remote remove origin` | the clone of a session, `repo/` |
+| `FetchSession` | `git init --bare -- TMP`; the object directory of the session's `.git` as the one line of `TMP/objects/info/alternates`; in `TMP`, `git cat-file -t SHA`, which must print `commit`, else the result is refused (`branch`); in `TMP`, `git update-ref refs/heads/session SHA`; `git -c core.hooksPath=EMPTY fetch --no-tags --no-write-fetch-head -- TMP refs/heads/session:DST`, where `EMPTY` is an empty directory; `TMP` removed | the fetch of a session's head into `layup run`'s clone, with no command in the session's clone |
 | `IsAncestor` | `git merge-base --is-ancestor BASE HEAD`; exit 1 is "no", not an error | the check that a session's head descends from its base |
 | `DiffFile` | `git diff -U0 --no-color --no-renames --end-of-options BASE HEAD -- PATH` | the exception of `docs/guardrails.md` before a push |
 | `DiffBinary` | `git diff --binary --no-renames --end-of-options BASE HEAD --` | the payload of a refused diff |
@@ -301,6 +301,16 @@ takes a token.
   the session's `.git`, a full object ID; `git upload-pack` runs in `TMP`, whose
   configuration is `layup`'s, so no configuration of the session's clone is read
   ([`session.md`](session.md#the-fetch-by-sha)).
+- A SHA that names no commit, whether `cat-file -t` prints another type or exits
+  non-zero (an absent object), is `ErrNotACommit` in the `Err` of a
+  `*FailedError` (task `T-z5dj`); `TMP` and `EMPTY` are removed on each return,
+  a refusal included. `FetchSession` refuses, before `git` starts, a `SHA` that is
+  not a full object ID, as `Push` does, and a `DST` that does not start with
+  `refs/` or holds a `:`, as `Fetch` does. `CloneLocal` refuses an
+  empty `BRANCH` or one that starts with `-` before `git` starts. **Known
+  limit:** `FetchSession` has no `--update-head-ok`, so a `DST` that is the
+  branch of `HEAD` of `dir` is refused by `git`; `layup run`'s clone is on
+  `main` and `DST` is a task branch.
 
 Start makes its clone with `Init` and `Fetch`, and the restart with `Clone`. The
 first records commit is an orphan commit in a scratch work tree, as S15 makes it
@@ -311,8 +321,8 @@ each later one uses the same calls on the last records commit, with no
 - `--end-of-options` or `--` comes before each revision, URL and path, so an
   input is never an option (`layup gate` takes revisions from its arguments).
   `checkout` and `switch` may read `--end-of-options` as a revision before
-  `git` 2.44 (a reading of git's option parser; not measured, the LAYUP host
-  has 2.54.0 only). So `CheckoutDetach`, `SwitchCreate` and `ResetSoft` get
+  `git` 2.44 (a reading of git's option parser; not measured, the Operator's
+  host has 2.54.0). So `CheckoutDetach`, `SwitchCreate` and `ResetSoft` get
   none: `COMMIT` is a full object ID (40 or 64 hexadecimal characters), and the
   call refuses any other text before `git` starts.
 - `DiffNames` names a renamed path at both ends, so a renamed product path
@@ -420,7 +430,7 @@ first version with `GIT_CONFIG_GLOBAL` (the release notes of git 2.32.0, in
 It also covers `switch` (2.23), `init -b` (2.28) and `--end-of-options`
 (2.24; for `rev-parse`, 2.30). `internal/git` gives the
 version (`Version`) and its test (`Supported`); the packages that import it
-check it. The LAYUP host has 2.54.0; no test runs 2.32.0, so the minimum rests
+check it. The Operator's LAYUP host has 2.54.0, and the host of the build tasks of `M2b` has 2.47.3 (task `T-z5dj`); no test runs 2.32.0, so the minimum rests
 on the release notes.
 
 ### The components of phase 1

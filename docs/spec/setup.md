@@ -698,6 +698,11 @@ exception  text       -    the part that is not a rule path; for `docs/guardrail
 source     enum(baseline|catalog|architecture)  -  where the entry comes from
 ```
 
+Its owner is `internal/setup`, which writes the register at S15;
+`internal/rules` holds a second Go value of the block for its reader before a
+push, which its own test compares with the block (task `T-m1dx`), as
+`internal/setup` holds one of `psb-gaps`.
+
 The entries of phase 1 (**decided here** from the baseline at LAYUP's pin, by §6's
 list): `.github/`, `.githooks/`, `.gitattributes`, `AGENTS.md`, `CLAUDE.md`,
 `docs/engineering-discipline.md`, `docs/issue-workflow.md`, `docs/ci/`,

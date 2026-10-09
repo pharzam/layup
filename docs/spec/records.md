@@ -238,6 +238,16 @@ body path - the file of the body on the records branch: `copies/<comment>-<seen>
 harness id(<word>) key the harness ID, for example `claude`
 cap decimal - the spend cap of one session in US dollars; `—` for a harness with no token count or no spend cap
 wall int - the wall-clock limit of one session in minutes, 1 or more; never `—`
+command text - the command line, words separated by one space; `{model}`, `{cap}` and `{prompt}` stand for the model, the cap and the prompt; `{cap}` exactly when `cap` is not `—`
+prompt enum(file|arg|stdin) - how the prompt reaches the harness (`session.md`, The start of a session)
+version text - the command that prints the harness's version on the first line of its standard output, words separated by one space
+credential text - the absolute path of the credential file, mode 0600; `—` for none
+credential_to text - `var:NAME` or `file:PATH`; `—` exactly when `credential` is `—`
+rules list(text) - each rule-file name that the harness loads, for example `CLAUDE.md`
+policy list(text) - each absolute path of a system-wide policy file of the harness; `—` for none
+usage enum(claude-result|none) - the format of its usage report (`session.md`, The usage report of a harness)
+billing enum(api|subscription) - the billing type of its account
+vars list(text) - each fixed variable of its sessions, `NAME=VALUE`; `—` for none
 ```
 
 ```tsv-schema forge-register host:registers/forge.tsv
@@ -367,25 +377,25 @@ session that `layup run` refuses (a probe's refused start is its row of
 and a harness is admitted by its last row at the version that the version check
 reads ([`session.md`](session.md#admission)).
 
-**The columns that `M2b` adds to `host:registers/harnesses.tsv`** (K40), in
-words: the block `harness-register` is built, so the build task that gives
-`internal/route` the probe moves them into the block, in the same change as its
-Go schema, its test and the fixtures that write the register (condition 1 of the
-plan review of #147); until then the block keeps the three columns that Start
-reads.
-
-| Column | Type | Rule |
-| ------ | ---- | ---- |
-| `command` | `text` | the command line, words separated by one space; `{model}`, `{cap}` and `{prompt}` stand for the model, the cap and the prompt; `{cap}` exactly when `cap` is not `—` |
-| `prompt` | `enum(file\|arg\|stdin)` | how the prompt reaches the harness ([`session.md`](session.md#the-start-of-a-session)) |
-| `version` | `text` | the command that prints the harness's version on the first line of its standard output |
-| `credential` | `text` | the absolute path of the credential file, mode 0600; `—` for none |
-| `credential_to` | `text` | `var:NAME` or `file:PATH`; `—` exactly when `credential` is `—` |
-| `rules` | `list(text)` | each rule-file name that the harness loads, for example `CLAUDE.md` |
-| `policy` | `list(text)` | each absolute path of a system-wide policy file of the harness; `—` for none |
-| `usage` | `enum(claude-result\|none)` | the format of its usage report ([`session.md`](session.md#the-usage-report-of-a-harness)) |
-| `billing` | `enum(api\|subscription)` | the billing type of its account |
-| `vars` | `list(text)` | each fixed variable of its sessions, `NAME=VALUE`; `—` for none |
+**The columns that `M2b` adds to `host:registers/harnesses.tsv`** (K40) follow
+`wall` in the block `harness-register`, with their Go schema in
+`internal/route` (task `T-ysph`, row 30a of [the
+plan](../plan/README.md#the-tasks-of-m2b); condition 1 of the plan review of
+#147). **Decided here** (task `T-ysph`), the rules of the host registers of
+`M2b` that their blocks give in words, which `internal/route` checks after the
+types, an error naming the line and the column: in `harness-register`,
+`command`, `prompt`, `version`, `rules`, `usage` and `billing` never hold `—`;
+the rules of `credential_to` and `vars` are those of
+[`session.md`](session.md#the-environment-and-the-harness-credential) (a
+`NAME` of the form `[A-Za-z_][A-Za-z0-9_]*`, not of the named list, not of a
+forge credential or an agent socket; a `PATH` not empty, relative, with no part `..`); in
+`models`, no column but `reason` holds `—`, `reason` is `—` exactly when `use`
+is `yes`, and `source` is an `http` or `https` URL; in `routing-register`, no
+column holds `—`, and the positions of each role and tier are 1 to k, each
+once, in any order of the file, as in `routing`. Across the files, which
+`layup run` checks when it reads them: each row of `models.tsv` and
+`routing.tsv` names a harness of the register, and each model of `routing.tsv`
+has a row of its harness in `models.tsv`.
 
 **`payloads/<sha256>`** has a rule, not a block, as a payload is not a table:
 its name is the SHA-256 of its bytes, in lowercase hexadecimal; `M2b` writes one

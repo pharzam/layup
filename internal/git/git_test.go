@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -93,6 +94,10 @@ func TestEachCallRunsItsVerb(t *testing.T) {
 			func() { Push("r", url, fullID, "layup-records", Auth{}) }, nil},
 		{"push with a token", "r", "push --porcelain -- " + url + " " + fullID + ":refs/heads/layup-records",
 			func() { Push("r", url, fullID, "layup-records", testAuth) }, tokenEnv},
+		{"merge-base --is-ancestor", "r", "merge-base --is-ancestor " + fullID + " " + fullID, func() { IsAncestor("r", fullID, fullID) }, nil},
+		{"diff -U0 of one file", "r", "diff -U0 --no-color --no-renames --end-of-options abc def -- docs/guardrails.md",
+			func() { DiffFile("r", "abc", "def", "docs/guardrails.md") }, nil},
+		{"diff --binary", "r", "diff --binary --no-renames --end-of-options abc def --", func() { DiffBinary("r", "abc", "def") }, nil},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -307,6 +312,138 @@ func TestNoErrorHoldsTheToken(t *testing.T) {
 		Push("r", "https://github.com/a/b.git", fullID, "main", testAuth)} {
 		if err == nil || strings.Contains(err.Error(), "ghs_testtoken") || strings.Contains(err.Error(), "eC1hY2Nlc3MtdG9rZW46") {
 			t.Errorf("the error %v is nil or holds the token", err)
+		}
+	}
+}
+
+// CloneLocal clones one branch with no remote: the clone, then the removal of
+// its remote in the clone (packages.md, The calls of M2b).
+func TestCloneLocalRemovesItsRemote(t *testing.T) {
+	calls := stub(t, "", nil)
+	if err := CloneLocal("/w/run", "/w/s/repo", "main"); err != nil {
+		t.Fatal(err)
+	}
+	want := []stubCall{
+		{"", append(append([]string{}, wantConfig...), strings.Fields("clone --no-local --no-checkout --single-branch --no-tags --branch main -- /w/run /w/s/repo")...), environ()},
+		{"/w/s/repo", append(append([]string{}, wantConfig...), "remote", "remove", "origin"), environ()},
+	}
+	if !reflect.DeepEqual(*calls, want) {
+		t.Fatalf("calls %q\nwant %q", *calls, want)
+	}
+}
+
+// FetchSession runs no git in the session's clone: a scratch bare repository
+// whose alternate is the session's object directory, the type of the SHA,
+// the ref, and the fetch with an empty hooks directory; both directories are
+// gone on each return (packages.md, The calls of M2b).
+func TestFetchSessionRunsNoGitInTheSession(t *testing.T) {
+	session := t.TempDir()
+	calls := stub(t, "commit\n", nil)
+	if err := FetchSession("r", session, fullID, "refs/heads/task/T-ab12/1"); err != nil {
+		t.Fatal(err)
+	}
+	if len(*calls) != 4 {
+		t.Fatalf("%d starts of git, want 4: %q", len(*calls), *calls)
+	}
+	tmp := (*calls)[0].args[len((*calls)[0].args)-1]
+	var empty string
+	for _, a := range (*calls)[3].args {
+		if v, ok := strings.CutPrefix(a, "core.hooksPath="); ok && v != "/dev/null" {
+			empty = v
+		}
+	}
+	steps := []struct{ dir, args string }{
+		{"", "init --bare -- " + tmp},
+		{tmp, "cat-file -t " + fullID},
+		{tmp, "update-ref refs/heads/session " + fullID},
+		{"r", "-c core.hooksPath=" + empty + " fetch --no-tags --no-write-fetch-head -- " + tmp + " refs/heads/session:refs/heads/task/T-ab12/1"},
+	}
+	for i, st := range steps {
+		if c := (*calls)[i]; c.dir != st.dir || !reflect.DeepEqual(c.args, append(append([]string{}, wantConfig...), strings.Fields(st.args)...)) {
+			t.Errorf("start %d: dir %q, args %q\nwant dir %q, args %q", i+1, c.dir, c.args, st.dir, st.args)
+		}
+		if c := (*calls)[i]; c.dir == session || slices.Contains(c.args, session) {
+			t.Errorf("start %d runs git in the session's clone: %q", i+1, c)
+		}
+	}
+	if empty == "" || tmp == "" {
+		t.Fatal("no scratch repository or no empty hooks directory")
+	}
+	if _, err := os.Stat(tmp); err == nil {
+		t.Errorf("the scratch repository %s is left", tmp)
+	}
+	if _, err := os.Stat(empty); err == nil {
+		t.Errorf("the empty hooks directory %s is left", empty)
+	}
+}
+
+// A SHA that names no commit is refused with ErrNotACommit in a *FailedError,
+// whether cat-file prints another type or fails, and no ref is set.
+func TestFetchSessionRefusesASHAOfNoCommit(t *testing.T) {
+	failed := exec.Command("sh", "-c", "exit 128").Run()
+	for name, c := range map[string]struct {
+		stdout string
+		err    error
+	}{"a blob": {"blob\n", nil}, "an absent object": {"", failed}} {
+		calls := &[]stubCall{}
+		saved := run
+		run = func(dir string, args, env []string) ([]byte, []byte, error) {
+			*calls = append(*calls, stubCall{dir, args, env})
+			if slices.Contains(args, "cat-file") {
+				return []byte(c.stdout), []byte("fatal: stub\n"), c.err
+			}
+			return nil, nil, nil
+		}
+		err := FetchSession("r", t.TempDir(), fullID, "refs/heads/task/T-ab12/1")
+		run = saved
+		var fe *FailedError
+		if !errors.Is(err, ErrNotACommit) || !errors.As(err, &fe) {
+			t.Errorf("%s: %v; want ErrNotACommit in a *FailedError", name, err)
+		}
+		if len(*calls) != 2 {
+			t.Errorf("%s: %d starts of git, want 2 (no ref, no fetch)", name, len(*calls))
+		}
+		if tmp := (*calls)[0].args[len((*calls)[0].args)-1]; present(tmp) {
+			t.Errorf("%s: the scratch repository %s is left", name, tmp)
+		}
+	}
+}
+
+func present(path string) bool { _, err := os.Stat(path); return err == nil }
+
+func TestTheCallsOfM2bRefuseTheirInputBeforeGitStarts(t *testing.T) {
+	for name, call := range map[string]func() error{
+		"an empty branch to clone":            func() error { return CloneLocal("/w/run", "/w/s/repo", "") },
+		"a branch to clone that is an option": func() error { return CloneLocal("/w/run", "/w/s/repo", "-u/bin/sh") },
+		"a SHA that is not a full ID":         func() error { return FetchSession("r", "/w/s/repo/.git", "HEAD", "refs/heads/x") },
+		"a destination not under refs/":       func() error { return FetchSession("r", "/w/s/repo/.git", fullID, "main") },
+		"a destination with a colon":          func() error { return FetchSession("r", "/w/s/repo/.git", fullID, "refs/heads/a:b") },
+		"a base that is not a full ID":        func() error { _, err := IsAncestor("r", "--all", fullID); return err },
+		"a head that is not a full ID":        func() error { _, err := IsAncestor("r", fullID, "main"); return err },
+	} {
+		calls := stub(t, "", nil)
+		err := call()
+		var failed *FailedError
+		if !errors.As(err, &failed) || failed.Code != -1 || len(*calls) != 0 {
+			t.Errorf("%s: %v, %d starts of git; want a *FailedError of code -1 and none", name, err, len(*calls))
+		}
+	}
+}
+
+// IsAncestor reads the exit code: 0 is yes, 1 is no, any other is an error.
+func TestIsAncestorReadsTheExitCode(t *testing.T) {
+	for _, c := range []struct {
+		code       int
+		yes, isErr bool
+	}{{0, true, false}, {1, false, false}, {128, false, true}} {
+		var err error
+		if c.code != 0 {
+			err = exec.Command("sh", "-c", fmt.Sprintf("exit %d", c.code)).Run()
+		}
+		stub(t, "", err)
+		yes, got := IsAncestor("r", fullID, fullID)
+		if yes != c.yes || (got != nil) != c.isErr {
+			t.Errorf("exit %d: %v, %v; want %v and an error %v", c.code, yes, got, c.yes, c.isErr)
 		}
 	}
 }

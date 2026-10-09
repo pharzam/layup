@@ -30,10 +30,7 @@ same summary, dated — rather than deleting it or checking it off.
 - **<ID>** — <one-sentence summary> ([<ADR or doc link>](...); [detail](<id>.md))
 -->
 
-- **T-ysph** — Row 30a of `M2b`: the host registers of M2b ([#155](https://github.com/pharzam/layup/issues/155); [the plan](../plan/README.md#the-tasks-of-m2b))
 - **T-cht1** — Row 30b of `M2b`: admission and the routing order ([#156](https://github.com/pharzam/layup/issues/156); [the plan](../plan/README.md#the-tasks-of-m2b))
-- **T-z5dj** — Row 31 of `M2b`: the calls of M2b of internal/git ([#157](https://github.com/pharzam/layup/issues/157); [the plan](../plan/README.md#the-tasks-of-m2b))
-- **T-m1dx** — Row 32 of `M2b`: the rule-path check before a push ([#158](https://github.com/pharzam/layup/issues/158); [the plan](../plan/README.md#the-tasks-of-m2b))
 - **T-vxdg** — Row 33a of `M2b`: the directory and the environment of a session ([#159](https://github.com/pharzam/layup/issues/159); [the plan](../plan/README.md#the-tasks-of-m2b))
 - **T-6sbe** — Row 33b of `M2b`: the checks before the start of a session ([#160](https://github.com/pharzam/layup/issues/160); [the plan](../plan/README.md#the-tasks-of-m2b))
 - **T-5pxd** — Row 34a of `M2b`: the process of a session and its stop ([#161](https://github.com/pharzam/layup/issues/161); [the plan](../plan/README.md#the-tasks-of-m2b))
