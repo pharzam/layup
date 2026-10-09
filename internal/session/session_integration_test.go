@@ -52,7 +52,13 @@ func runClone(t *testing.T) (string, string) {
 	run(t, dir, "commit", "-q", "-m", "chore: base")
 	run(t, dir, "branch", "layup-records")
 	run(t, dir, "tag", "v1")
-	return dir, run(t, dir, "rev-parse", "HEAD")
+	base := run(t, dir, "rev-parse", "HEAD")
+	// A commit after the base, with a file the base lacks, so "at the base"
+	// can fail on its own rule (round 1 of #159, note 2).
+	os.WriteFile(filepath.Join(dir, "later.txt"), []byte("later\n"), 0o644)
+	run(t, dir, "add", "-A")
+	run(t, dir, "commit", "-q", "-m", "chore: after the base")
+	return dir, base
 }
 
 func TestMakeASessionDirectory(t *testing.T) {
@@ -77,7 +83,8 @@ func TestMakeASessionDirectory(t *testing.T) {
 	if remotes := run(t, d.Repo, "remote"); remotes != "" {
 		t.Errorf("repo/ has a remote: %q", remotes)
 	}
-	if st := run(t, d.Repo, "status", "--porcelain"); st != "" || !slices.Contains(entries(t, d.Repo), "internal/x.go") {
+	if st := run(t, d.Repo, "status", "--porcelain"); st != "" || !slices.Contains(entries(t, d.Repo), "internal/x.go") ||
+		slices.Contains(entries(t, d.Repo), "later.txt") {
 		t.Errorf("the work tree and the index of repo/ are not the base: %q", st)
 	}
 	if got := entries(t, d.Home); !slices.Equal(got, []string{".config/devin/credentials.toml", ".gitconfig"}) {
@@ -114,7 +121,8 @@ func TestSweep(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	os.MkdirAll(filepath.Join(host, "sessions", "S-00000003", "repo"), 0o700) // a Make that stopped before its first write
+	os.MkdirAll(filepath.Join(host, "sessions", "S-00000003", "repo"), 0o700)        // a Make that stopped before its first write
+	os.WriteFile(filepath.Join(host, "sessions", "notes.txt"), []byte("x\n"), 0o600) // not a session directory: skipped
 	if err := Sweep(host, "acme/target"); err != nil {
 		t.Fatal(err)
 	}
@@ -123,7 +131,7 @@ func TestSweep(t *testing.T) {
 	for _, e := range left {
 		names = append(names, e.Name())
 	}
-	if !slices.Equal(names, []string{"S-00000002"}) {
+	if !slices.Equal(names, []string{"S-00000002", "notes.txt"}) {
 		t.Errorf("after Sweep: %q; want the session of the other target only", names)
 	}
 	if err := Sweep(t.TempDir(), "acme/target"); err != nil {

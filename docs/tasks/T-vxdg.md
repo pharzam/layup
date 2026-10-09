@@ -39,3 +39,37 @@ package; a mutation of each rule, each caught; green after.
 **The rejected alternatives:** importing `internal/route`; the credential read
 by `layup run`; keeping a stopped run's directory to resume it; one run per
 host as the reading of `Sweep`.
+
+## Review rounds
+
+The record is a comment on #159. Round 1 (Claude Fable 5.1, effort `xhigh`, a
+fresh read-only session in a clone at `0e8f15b`, cycle 0): `nothing material in
+scope`, seven notes. Applied in the close-out: note 1 (the record says its
+mutation lines are cut); note 2 (a commit after the base in the fixture, so "at
+the base" can fail on its own rule); note 3 (the clause of `CloneLocal` beside
+its noun); note 4 (the known limit of the window between the first two writes
+of `Make`); note 5 (`Sweep` skips an entry that is not a directory, with a
+case); note 6 (the fourth test in the Test cell). Declined: note 7, revealed
+(the word "empty" for `home/` in `architecture.md`, ADR-0015 and the glossary
+means "nothing of the host", which `architecture.md` itself shows, and those
+documents are off this row's path).
+
+## Verdict
+
+Delivered: the session's files in `internal/session`: `Make`, `Sweep`,
+`Environ`. The review ended by decay at cycle 0 of cap 1. The diff against
+`d5d0f7f`, the branch's base, is inside 800 lines over 16 files. Next: rows 33b
+and 34a.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). UTC, 2026-10-09; reviewers' tokens are
+`modelUsage`; the author's are not reported.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan | reasoning | Claude Opus 5.5 | not reported | not reported | 13:36 to 13:40 |
+| The plan review | reasoning | Claude Fable 5.1 | `xhigh` | 1,262,363 (USD 5.94) | 8 min 28 s |
+| The code, test first | execution | Claude Opus 5.5 | not reported | not reported | 13:56 to 14:02 |
+| Round 1 | reasoning | Claude Fable 5.1 | `xhigh` | 870,263 (USD 4.83) | 10 min 30 s |
+| The close-out, with notes 1 to 6 | execution | Claude Opus 5.5 | not reported | not reported | 14:19 to 14:23 |

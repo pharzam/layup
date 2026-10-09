@@ -90,7 +90,10 @@ func Make(host, target, id, runClone, branch, task string, attempt int, base str
 // directory under the host directory that a stopped run of that target left:
 // those whose file target is target, and those with no file target, which
 // only a Make that stopped before its first write leaves. A directory of
-// another target is kept: its own lease guards it.
+// another target is kept: its own lease guards it. An entry that is not a
+// directory is skipped. Known limit: a Make of another target that is between
+// its first two writes (the directory, then the file target) is removed, and
+// fails at its next write.
 func Sweep(host, target string) error {
 	dir := filepath.Join(host, "sessions")
 	list, err := os.ReadDir(dir)
@@ -101,6 +104,9 @@ func Sweep(host, target string) error {
 		return err
 	}
 	for _, e := range list {
+		if !e.IsDir() {
+			continue // not a session directory
+		}
 		t, err := os.ReadFile(filepath.Join(dir, e.Name(), "target"))
 		if err != nil && !errors.Is(err, os.ErrNotExist) {
 			return err

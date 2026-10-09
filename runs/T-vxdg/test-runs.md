@@ -12,7 +12,7 @@ vet: internal/session/session_test.go:36:8: undefined: Harness
 
 ## Red 2: a mutation of each rule, described
 
-On copies of `session.go` and `rules_checker_test.go` (put back after), each rule broken alone; each makes its own cases fail. Three mutations first gave no failure: `refuse` (a second `Make` still failed, at the clone, so the test now asserts `fs.ErrExist`), and `sweepother` and `branch` (their first form did not compile; written again):
+On copies of `session.go` and `rules_checker_test.go` (put back after), each rule broken alone; each makes its own cases fail. The lines of each mutation are cut to the first three failing cases, at 110 characters each (`lang` and `path` fail all seven cases of `TestTheEnvironmentIsTheNamedList`). Three mutations first gave no failure: `refuse` (a second `Make` still failed, at the clone, so the test now asserts `fs.ErrExist`), and `sweepother` and `branch` (their first form did not compile; written again):
 
 ```
 == lang: environ: no LANG

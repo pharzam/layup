@@ -47,8 +47,8 @@ checks before a push, the push and the bind ([REQ-003](#req-003--before-a-push))
 - `target`: the target's `OWNER/NAME`, written first (**decided here**, task
   `T-vxdg`: it lets a run tell its own leftover directories from another
   target's, below).
-- `repo/`: the session's clone of the target, made with `CloneLocal` from
-  `layup run`'s own clone, which removes its remote before it returns, then the
+- `repo/`: the session's clone of the target, made from `layup run`'s own
+  clone with `CloneLocal`, which removes its remote before it returns, then the
   branch `task/<task>/<attempt>` at the base commit (`SwitchCreate`), with the
   files of the base in its work tree ([the calls of
   `M2b`](packages.md#the-calls-of-internalgit)). **Decided here:** the clone
@@ -72,7 +72,10 @@ left by a run that stopped is removed before the next session starts.
 removes only the directories of its own target (its file `target`), which the
 target's lease guards, and a directory with no file `target`, which only a start
 that stopped before its first write leaves; a directory of another target on the
-same host is kept, as its own run may be live.
+same host is kept, as its own run may be live, and an entry that is not a
+directory is skipped. **Known limit:** a start of another target that is between
+its first two writes (its directory, then its file `target`) is removed, and
+fails at once at its next write.
 
 ### The environment and the harness credential
 
