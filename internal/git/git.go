@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -368,4 +369,106 @@ func doAuth(dir string, auth Auth, args []string) error {
 	}
 	_, err = call(dir, environ(extra...), args...)
 	return err
+}
+
+// ErrNotACommit is the refusal of FetchSession for a SHA that names no commit
+// of the session's objects: the refusal branch of docs/spec/session.md. It is
+// the Err of a *FailedError, so errors.As still finds the kind.
+var ErrNotACommit = errors.New("the SHA names no commit of the session's objects")
+
+// fullObjectID reports whether s is a full object ID: 40 or 64 lowercase
+// hexadecimal characters.
+func fullObjectID(s string) bool {
+	return (len(s) == 40 || len(s) == 64) && strings.Trim(s, "0123456789abcdef") == ""
+}
+
+// CloneLocal clones the one branch of the local repository src into dir, with
+// no checkout, no tag and its own objects, then removes its remote, so no
+// command in dir reaches a remote through it (packages.md, The calls of M2b).
+func CloneLocal(src, dir, branch string) error {
+	args := []string{"clone", "--no-local", "--no-checkout", "--single-branch", "--no-tags", "--branch", branch, "--", src, dir}
+	if branch == "" || strings.HasPrefix(branch, "-") {
+		return &FailedError{Args: args, Code: -1, Err: errors.New("not a branch")}
+	}
+	if err := do("", args...); err != nil {
+		return err
+	}
+	return do(dir, "remote", "remove", "origin")
+}
+
+// FetchSession fetches the commit sha of a session's clone, whose .git
+// directory is session, into dst of the clone at dir. No git runs in the
+// session's clone: a scratch bare repository whose one alternate is the
+// session's object directory takes the ref, and git upload-pack runs there,
+// with LAYUP's configuration; the fetch runs with an empty hooks directory.
+// Both scratch directories are removed on each return. A sha that names no
+// commit is ErrNotACommit (packages.md, The calls of M2b).
+func FetchSession(dir, session, sha, dst string) error {
+	if !fullObjectID(sha) || !strings.HasPrefix(dst, "refs/") || strings.Contains(dst, ":") {
+		return &FailedError{Args: []string{"fetch", dst}, Code: -1, Err: errors.New("not a full object ID, or not a ref under refs/ with no ':'")}
+	}
+	tmp, err := os.MkdirTemp("", "layup-session-")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(tmp)
+	empty, err := os.MkdirTemp("", "layup-hooks-")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(empty)
+	if err := do("", "init", "--bare", "--", tmp); err != nil {
+		return err
+	}
+	objects, err := filepath.Abs(filepath.Join(session, "objects"))
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(filepath.Join(tmp, "objects", "info"), 0o755); err != nil {
+		return err
+	}
+	if err := os.WriteFile(filepath.Join(tmp, "objects", "info", "alternates"), []byte(objects+"\n"), 0o644); err != nil {
+		return err
+	}
+	args := []string{"cat-file", "-t", sha}
+	out, err := call(tmp, environ(), args...)
+	var failed *FailedError
+	switch {
+	case errors.As(err, &failed):
+		return &FailedError{Args: args, Code: failed.Code, Stderr: failed.Stderr, Err: ErrNotACommit}
+	case err != nil:
+		return err
+	case strings.TrimSpace(string(out)) != "commit":
+		return &FailedError{Args: args, Code: 0, Err: ErrNotACommit}
+	}
+	if err := do(tmp, "update-ref", "refs/heads/session", sha); err != nil {
+		return err
+	}
+	return do(dir, "-c", "core.hooksPath="+empty, "fetch", "--no-tags", "--no-write-fetch-head", "--", tmp, "refs/heads/session:"+dst)
+}
+
+// IsAncestor reports whether base is an ancestor of head, both full object
+// IDs; exit 1 of git is no, not an error.
+func IsAncestor(dir, base, head string) (bool, error) {
+	args := []string{"merge-base", "--is-ancestor", base, head}
+	if !fullObjectID(base) || !fullObjectID(head) {
+		return false, &FailedError{Args: args, Code: -1, Err: errors.New("not a full object ID")}
+	}
+	_, err := call(dir, environ(), args...)
+	var failed *FailedError
+	if errors.As(err, &failed) && failed.Code == 1 {
+		return false, nil
+	}
+	return err == nil, err
+}
+
+// DiffFile gives the diff of path from base to head with no context line.
+func DiffFile(dir, base, head, path string) ([]byte, error) {
+	return call(dir, environ(), "diff", "-U0", "--no-color", "--no-renames", "--end-of-options", base, head, "--", path)
+}
+
+// DiffBinary gives the diff from base to head that git apply takes, binary
+// files included: the payload of a refused diff.
+func DiffBinary(dir, base, head string) ([]byte, error) {
+	return call(dir, environ(), "diff", "--binary", "--no-renames", "--end-of-options", base, head, "--")
 }

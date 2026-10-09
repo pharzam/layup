@@ -278,6 +278,15 @@ takes a token.
   the session's `.git`, a full object ID; `git upload-pack` runs in `TMP`, whose
   configuration is `layup`'s, so no configuration of the session's clone is read
   ([`session.md`](session.md#the-fetch-by-sha)).
+- A SHA that names no commit, whether `cat-file -t` prints another type or exits
+  non-zero (an absent object), is `ErrNotACommit` in the `Err` of a
+  `*FailedError` (task `T-z5dj`); `TMP` and `EMPTY` are removed on each return,
+  a refusal included. Each command of `TMP` runs with `TMP` as its directory,
+  and `remote remove` with `DIR` as its, not with `-C`. `CloneLocal` refuses an
+  empty `BRANCH` or one that starts with `-` before `git` starts. **Known
+  limit:** `FetchSession` has no `--update-head-ok`, so a `DST` that is the
+  branch of `HEAD` of `dir` is refused by `git`; `layup run`'s clone is on
+  `main` and `DST` is a task branch.
 
 Start makes its clone with `Init` and `Fetch`, and the restart with `Clone`. The
 first records commit is an orphan commit in a scratch work tree, as S15 makes it

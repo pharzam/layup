@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"slices"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -549,5 +550,236 @@ func TestTheTokenReachesTheServerAsAHeaderOnly(t *testing.T) {
 	Fetch(dir, srv.URL+"/acme/target.git", "refs/heads/main", Auth{})
 	if h := got.Load().(string); h != "" {
 		t.Errorf("with no token the server got Authorization %q, want none", h)
+	}
+}
+
+// CloneLocal makes a --no-local clone of one branch: no other branch, no tag,
+// no remote, and objects of its own, so the log reads after the source is
+// gone (packages.md, The calls of M2b; session.md, The session directory).
+func TestCloneLocal(t *testing.T) {
+	home := isolate(t)
+	src := t.TempDir()
+	base := commitTree(t, src, map[string]string{"a.txt": "a\n"})
+	gitOK(t, src, plain(home), "branch", "layup-records")
+	gitOK(t, src, plain(home), "tag", "v1")
+	dir := filepath.Join(t.TempDir(), "repo")
+	must(t, CloneLocal(src, dir, "main"))
+	if refs := gitOK(t, dir, plain(home), "for-each-ref", "--format=%(refname)"); refs != "refs/heads/main\n" {
+		t.Errorf("the refs of the clone: %q; want refs/heads/main alone", refs)
+	}
+	if cfg, err := os.ReadFile(filepath.Join(dir, ".git", "config")); err != nil || strings.Contains(string(cfg), "[remote") {
+		t.Errorf("the configuration of the clone holds a remote (%v):\n%s", err, cfg)
+	}
+	if present := exists(filepath.Join(dir, ".git", "objects", "info", "alternates")); present {
+		t.Error("the clone shares the objects of its source")
+	}
+	must(t, os.RemoveAll(src))
+	if got := gitOK(t, dir, plain(home), "log", "-1", "--format=%H", "main"); got != base+"\n" {
+		t.Errorf("the log after the source is gone: %q; want %s", got, base)
+	}
+	must(t, SwitchCreate(dir, "task/T-ab12/1", base))
+	if head := gitOK(t, dir, plain(home), "symbolic-ref", "HEAD"); head != "refs/heads/task/T-ab12/1\n" {
+		t.Errorf("HEAD %q after SwitchCreate", head)
+	}
+}
+
+// session makes a session's clone of the run's clone, on its task branch at
+// the base, with one commit of the session; it gives the clone and the head.
+func session(t *testing.T, home, runClone, base string) (string, string) {
+	t.Helper()
+	dir := filepath.Join(t.TempDir(), "repo")
+	must(t, CloneLocal(runClone, dir, "main"))
+	must(t, SwitchCreate(dir, "task/T-ab12/1", base))
+	write(t, dir, map[string]string{"b.txt": "b\n"})
+	gitOK(t, dir, plain(home), "add", "b.txt")
+	gitOK(t, dir, plain(home), "commit", "-q", "-m", "feat: the session's change")
+	return dir, strings.TrimSpace(gitOK(t, dir, plain(home), "rev-parse", "HEAD"))
+}
+
+// FetchSession brings the session's head into the run's clone, and leaves no
+// scratch directory; a SHA of no commit is refused and sets no ref.
+func TestFetchSession(t *testing.T) {
+	home := isolate(t)
+	t.Setenv("TMPDIR", t.TempDir())
+	runClone := t.TempDir()
+	base := commitTree(t, runClone, map[string]string{"a.txt": "a\n"})
+	dir, head := session(t, home, runClone, base)
+	dst := "refs/heads/task/T-ab12/1"
+	must(t, FetchSession(runClone, filepath.Join(dir, ".git"), head, dst))
+	if got := gitOK(t, runClone, plain(home), "rev-parse", dst); got != head+"\n" {
+		t.Errorf("%s in the run's clone: %q; want %s", dst, got, head)
+	}
+	blob := strings.TrimSpace(gitOK(t, dir, plain(home), "rev-parse", "HEAD:b.txt"))
+	for name, sha := range map[string]string{"a blob": blob, "an absent object": strings.Repeat("e", 40)} {
+		err := FetchSession(runClone, filepath.Join(dir, ".git"), sha, "refs/heads/task/T-ab12/2")
+		if !errors.Is(err, ErrNotACommit) {
+			t.Errorf("%s: %v; want ErrNotACommit", name, err)
+		}
+		if _, err := gitIn(runClone, plain(home), "rev-parse", "--verify", "-q", "refs/heads/task/T-ab12/2"); err == nil {
+			t.Errorf("%s: a ref was set", name)
+		}
+	}
+	if left, _ := os.ReadDir(os.Getenv("TMPDIR")); len(left) != 0 {
+		t.Errorf("scratch directories left in TMPDIR: %v", left)
+	}
+}
+
+// IsAncestor, DiffFile and DiffBinary read two commits of a real repository;
+// the binary diff applies back to the base.
+func TestTheReadsOfM2b(t *testing.T) {
+	home := isolate(t)
+	runClone := t.TempDir()
+	base := commitTree(t, runClone, map[string]string{"a.txt": "a\n", "docs/guardrails.md": "# G\n\n## 2. Pitfalls\n\n- one\n\n## 3. Validation\n"})
+	write(t, runClone, map[string]string{"docs/guardrails.md": "# G\n\n## 2. Pitfalls\n\n- one\n- two\n\n## 3. Validation\n"})
+	must(t, os.WriteFile(filepath.Join(runClone, "bin.dat"), []byte{0, 1, 2, 0, 255}, 0o644))
+	must(t, Add(runClone))
+	must(t, Commit(runClone, "chore: two", who))
+	head, err := RevParse(runClone, "HEAD")
+	must(t, err)
+	if yes, err := IsAncestor(runClone, base, head); err != nil || !yes {
+		t.Errorf("IsAncestor(base, head) = %v, %v; want true", yes, err)
+	}
+	if yes, err := IsAncestor(runClone, head, base); err != nil || yes {
+		t.Errorf("IsAncestor(head, base) = %v, %v; want false", yes, err)
+	}
+	if _, err := IsAncestor(runClone, base, strings.Repeat("e", 40)); err == nil {
+		t.Error("IsAncestor of an absent commit: no error")
+	}
+	diff, err := DiffFile(runClone, base, head, "docs/guardrails.md")
+	if err != nil || !strings.Contains(string(diff), "\n+- two\n") || regexp.MustCompile(`(?m)^-[^-]`).Match(diff) {
+		t.Errorf("DiffFile: %v\n%s", err, diff)
+	}
+	patch, err := DiffBinary(runClone, base, head)
+	if err != nil || !strings.Contains(string(patch), "GIT binary patch") {
+		t.Fatalf("DiffBinary: %v\n%s", err, patch)
+	}
+	must(t, os.WriteFile(filepath.Join(t.TempDir(), "x"), nil, 0o644))
+	back := t.TempDir()
+	gitOK(t, "", plain(home), "clone", "-q", runClone, back)
+	gitOK(t, back, plain(home), "checkout", "-q", base)
+	p := filepath.Join(t.TempDir(), "p.patch")
+	must(t, os.WriteFile(p, patch, 0o644))
+	gitOK(t, back, plain(home), "apply", p)
+	if got, _ := os.ReadFile(filepath.Join(back, "bin.dat")); string(got) != string([]byte{0, 1, 2, 0, 255}) {
+		t.Errorf("the binary file after git apply: %v", got)
+	}
+}
+
+// hostileKeys are the keys of git-config(1) of the host's git (2.47.3 on the
+// LAYUP host of T-z5dj) that name a program or a shell command, with a marker
+// program each; each driver key has a driver of its own, so one key does not
+// hide another. live are the ones that a plain read in the clone fires on this
+// host (the control shows each); the others no plain read fires, so their
+// absence after FetchSession is asserted, not shown live.
+var (
+	hostileKeys = []string{"core.fsmonitor", "core.hooksPath", "core.sshCommand", "core.askPass", "core.editor", "core.pager",
+		"credential.helper", "diff.external", "diff.x.command", "diff.t.textconv", "filter.y.clean", "filter.y.smudge",
+		"filter.p.process", "merge.x.driver", "uploadpack.packObjectsHook", "sequence.editor", "gpg.program",
+		"remote.origin.uploadpack", "remote.origin.receivepack", "remote.ext.url", "core.alternateRefsCommand", "include.path"}
+	notLive = []string{"core.sshCommand", "core.askPass", "core.editor", "core.pager", "credential.helper",
+		"uploadpack.packObjectsHook", "sequence.editor", "gpg.program", "remote.origin.receivepack", "merge.x.driver"}
+)
+
+// arm writes into the clone at dir a configuration that holds each hostile
+// key, each program touching a marker of its name in marks; the hooks
+// directory holds every hook of githooks(5). up is a repository with a commit
+// that the clone lacks, for the fetch that reads the clone's alternates.
+func arm(t *testing.T, dir, marks, up string) {
+	t.Helper()
+	bin := t.TempDir()
+	prog := func(name string) string {
+		p := filepath.Join(bin, strings.NewReplacer("/", "_", ".", "_").Replace(name))
+		write(t, "/", map[string]string{strings.TrimPrefix(p, "/"): "#!/bin/sh\ntouch '" + filepath.Join(marks, name) + "'\nexit 1\n"})
+		return p
+	}
+	hooks := filepath.Join(t.TempDir(), "hooks")
+	for _, h := range strings.Fields("applypatch-msg pre-applypatch post-applypatch pre-commit pre-merge-commit prepare-commit-msg " +
+		"commit-msg post-commit pre-rebase post-checkout post-merge pre-push pre-receive update proc-receive post-receive " +
+		"post-update reference-transaction push-to-checkout pre-auto-gc post-rewrite sendemail-validate fsmonitor-watchman " +
+		"p4-changelist p4-prepare-changelist p4-post-changelist p4-pre-submit post-index-change") {
+		write(t, "/", map[string]string{strings.TrimPrefix(filepath.Join(hooks, h), "/"): "#!/bin/sh\ntouch '" + filepath.Join(marks, "core.hooksPath") + "'\nexit 0\n"})
+	}
+	include := filepath.Join(t.TempDir(), "included")
+	write(t, "/", map[string]string{strings.TrimPrefix(include, "/"): "[alias]\n\tx = !" + prog("include.path") + "\n"})
+	cfg := "[core]\n\tfsmonitor = " + prog("core.fsmonitor") + "\n\thooksPath = " + hooks + "\n\tsshCommand = " + prog("core.sshCommand") +
+		"\n\taskPass = " + prog("core.askPass") + "\n\teditor = " + prog("core.editor") + "\n\tpager = " + prog("core.pager") +
+		"\n\talternateRefsCommand = " + prog("core.alternateRefsCommand") +
+		"\n[credential]\n\thelper = " + prog("credential.helper") +
+		"\n[diff]\n\texternal = " + prog("diff.external") +
+		"\n[diff \"x\"]\n\tcommand = " + prog("diff.x.command") + "\n[diff \"t\"]\n\ttextconv = " + prog("diff.t.textconv") +
+		"\n[filter \"y\"]\n\tclean = " + prog("filter.y.clean") + "\n\tsmudge = " + prog("filter.y.smudge") +
+		"\n[filter \"p\"]\n\tprocess = " + prog("filter.p.process") +
+		"\n[merge \"x\"]\n\tdriver = " + prog("merge.x.driver") +
+		"\n[uploadpack]\n\tpackObjectsHook = " + prog("uploadpack.packObjectsHook") +
+		"\n[sequence]\n\teditor = " + prog("sequence.editor") +
+		"\n[gpg]\n\tprogram = " + prog("gpg.program") +
+		"\n[remote \"origin\"]\n\turl = " + up + "\n\tuploadpack = " + prog("remote.origin.uploadpack") + "\n\treceivepack = " + prog("remote.origin.receivepack") +
+		"\n[remote \"up\"]\n\turl = " + up +
+		"\n[remote \"ext\"]\n\turl = ext::" + prog("remote.ext.url") +
+		"\n[protocol \"ext\"]\n\tallow = always\n[include]\n\tpath = " + include + "\n"
+	f, err := os.OpenFile(filepath.Join(dir, ".git", "config"), os.O_APPEND|os.O_WRONLY, 0)
+	must(t, err)
+	_, err = f.WriteString(cfg)
+	must(t, err)
+	must(t, f.Close())
+	write(t, dir, map[string]string{".git/info/attributes": "a.txt diff=x merge=x\nt.txt diff=t\n*.y filter=y\n*.p filter=p\n"})
+}
+
+// marked gives the names of the markers in marks.
+func marked(t *testing.T, marks string) []string {
+	t.Helper()
+	entries, err := os.ReadDir(marks)
+	must(t, err)
+	var names []string
+	for _, e := range entries {
+		names = append(names, e.Name())
+	}
+	return names
+}
+
+// A session configuration that holds each key of git-config(1) that starts a
+// program runs none of them in FetchSession (session.md, The fetch by SHA). The
+// control shows, one plain read at a time in a copy of the same clone, which
+// keys are live on this host.
+func TestAHostileSessionRunsNothing(t *testing.T) {
+	home := isolate(t)
+	runClone := t.TempDir()
+	base := commitTree(t, runClone, map[string]string{"a.txt": "a\n", "b.y": "y\n"})
+	up := t.TempDir()
+	gitOK(t, "", plain(home), "clone", "-q", runClone, up)
+	write(t, up, map[string]string{"u.txt": "u\n"})
+	gitOK(t, up, plain(home), "add", "u.txt")
+	gitOK(t, up, plain(home), "commit", "-q", "-m", "chore: up")
+
+	t.Run("control: plain reads in the hostile clone fire each live key", func(t *testing.T) {
+		dir, _ := session(t, home, runClone, base)
+		marks := t.TempDir()
+		arm(t, dir, marks, up)
+		env := plain(home)
+		// core.alternateRefsCommand is read in a repository that has an
+		// alternate, so this copy gets one before its fetch of up.
+		write(t, dir, map[string]string{".git/objects/info/alternates": filepath.Join(runClone, ".git", "objects") + "\n",
+			"a.txt": "changed\n", "t.txt": "t\n", "z.txt": "z\n", "b.y": "y\n", "c.p": "p\n"})
+		gitIn(dir, env, "add", "-N", "t.txt", "z.txt")
+		for _, read := range [][]string{{"status"}, {"diff", "--", "a.txt"}, {"diff", "--no-ext-diff", "--", "t.txt"}, {"diff", "--", "z.txt"}, {"add", "b.y"}, {"add", "c.p"}, {"commit", "-q", "-m", "x", "--", "a.txt"},
+			{"x"}, {"fetch", "origin"}, {"fetch", "ext"}, {"fetch", "up"}} {
+			gitIn(dir, env, read...) // a read may fail: the marker is the evidence
+		}
+		must(t, os.Remove(filepath.Join(dir, "b.y")))
+		gitIn(dir, env, "checkout", "--", "b.y")
+		got := marked(t, marks)
+		for _, k := range hostileKeys {
+			if !slices.Contains(notLive, k) && !slices.Contains(got, k) {
+				t.Errorf("the key %s did not fire in the control; the list is not live on this host (fired: %v)", k, got)
+			}
+		}
+	})
+
+	dir, head := session(t, home, runClone, base)
+	marks := t.TempDir()
+	arm(t, dir, marks, up)
+	must(t, FetchSession(runClone, filepath.Join(dir, ".git"), head, "refs/heads/task/T-ab12/1"))
+	if got := marked(t, marks); len(got) != 0 {
+		t.Errorf("FetchSession ran the session's programs: %v", got)
 	}
 }
