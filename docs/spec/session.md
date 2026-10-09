@@ -152,8 +152,8 @@ attempt ([Input states](#input-states)).
    version command that exits non-zero or prints nothing refuses it
    (`version`). No model is called (NEEDLE, mco: the search).
 3. **[The context check](#the-context-of-a-start)**; the size check of the
-   prompt: for a row whose `prompt` is `arg`, a `prompt.md` over 131,072 bytes
-   (Linux's limit of one argument) refuses the start (`prompt` and its size);
+   prompt: for a row whose `prompt` is `arg`, a `prompt.md` over 131,071 bytes
+   (Linux's limit of one argument is 131,072 bytes with its final zero byte) refuses the start (`prompt` and its size);
    and **[the rule-file check](#rules-only-from-the-target)**.
 4. **The start row**: a row of `sessions.tsv`, and for a task session the event
    `session` of the task, committed and pushed before the process starts
@@ -357,8 +357,10 @@ version check finds no passed probe. **Decided here:** the step first skips each
 harness of the register with no model of `use` `yes`, whatever its version, and
 runs no command of it, as a probe needs a model; it gets no row, and the step
 counts it as skipped. Then it probes each other harness whose version has no
-passed probe. The step is `done` when each such harness was probed, passed or
-failed, or skipped, with the three counts in `detail`; it is `fail` when a probe could not run
+passed probe. The step is `done` when each harness that needs a probe was probed, and each
+with no model skipped, with
+three counts in `detail`: probed and passed, probed and failed, skipped; a
+harness whose version already has a passed probe is in none; it is `fail` when a probe could not run
 its records. **Decided here:** the block `run-steps` is built, so the build task
 of the probe adds `probe` to its enum, with its Go schema, in one change
 (condition 1 of the plan review of #147).
@@ -445,7 +447,7 @@ gives no usage report (3000.11.3), so its rows use `none`.
 | A `probe.tsv` with no token, another token, or no `AGENTS.md` row | the probe fails, with the reason |
 | `stdout` with no `result` object, or with lines that are not JSON | tokens `unavailable` (the lines that are not JSON are skipped) |
 | A task with no event `attempt` for the session's attempt | the start is refused (`attempt`) |
-| A `prompt.md` over 131,072 bytes for a row whose `prompt` is `arg` | the start is refused (`prompt`), before the start row |
+| A `prompt.md` over 131,071 bytes for a row whose `prompt` is `arg` | the start is refused (`prompt`), before the start row |
 | A ref of `repo/.git` that is malformed, or whose SHA names no commit of the session's objects | the result is refused (`branch`) |
 | A records push that is refused | the run stops, as [`run.md`](run.md#the-lease-and-fencing) |
 
