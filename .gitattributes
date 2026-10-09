@@ -144,6 +144,10 @@ docs/links/tests/good-crlf/**  eol=crlf
 # case-name check, so deleting the line below cannot be silent. Pinning a single
 # file inside a case named anything else would sit outside that check.
 docs/links/tests/bad-crlf-expect/** eol=crlf
+# The task-state suite reads its inputs and EXPECT through a carriage-return
+# strip (T-eep8, round 1 finding 3); this case is CRLF throughout, so the strip
+# has a case. Named crlf, so the runner's case-name check covers it.
+docs/tasks/tests/good-crlf/** eol=crlf
 
 # --- executable text: line feeds, or it will not run -------------------------
 #

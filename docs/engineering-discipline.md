@@ -905,16 +905,20 @@ branch it happened to have checked out), and never as uncommitted changes that
 sit on top of someone else's in-progress work. Create the worktree and branch
 together under the repo-local `.worktree` directory (gitignored), branched
 off the latest `origin/main`, for example
-`git worktree add .worktree/<slug> -b <slug> origin/main`. Do the work
+`git worktree add .worktree/<slug> -b <slug> origin/main`, where `<slug>` is the
+task ID (`T-xxxx`), so the branch is named the task ID. Do the work
 there, and remove the worktree (`git worktree remove`) once it is merged or
 abandoned. This keeps the main worktree clean and available at all times, and
 lets many tasks (including ones run by agents) proceed at the same time without
 stepping on each other's working-tree state.
 
 **Claim the task by pushing its branch.** Before you take a task, run
-`sh docs/tasks/task-state.sh` and take only one that it prints as `ready`. Right
-after the worktree is created, push its branch to the forge (`git push -u origin
-<slug>`), before any work. The branch on the forge is the one mark that every
+`sh docs/tasks/task-state.sh`. If it prints the task, take the task only when its
+state is `ready`; a task it does not print (one with no row in the current task
+table and no line in the backlog yet) is not refused by this rule. Right after
+the worktree is created, push its branch, named exactly the task ID, to the forge
+(`git push -u origin <slug>`), before any work; a branch of another name, such as
+`T-xxxx-notes`, claims nothing. The branch on the forge is the one mark that every
 session, on every host and harness, can see, and the command reads it as
 `running`; a worktree on one host is invisible to the others. When a task is
 abandoned, delete its branch from the forge, or the task reads `running` until it

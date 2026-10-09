@@ -41,18 +41,21 @@ fi
 
 sh "$here/../task-state.sh" --read "$tmp/in" > "$tmp/out" 2> "$tmp/err"
 got=$?
+# EXPECT is compared with its carriage returns removed, so the suite holds on a
+# checkout with `core.autocrlf=true`; the case good-crlf is CRLF throughout.
+tr -d '\r' < "$case_dir/EXPECT" > "$tmp/expect"
 
 case $name in
 good*)
-	if [ "$got" -eq 0 ] && cmp -s "$tmp/out" "$case_dir/EXPECT"; then exit 0; fi
+	if [ "$got" -eq 0 ] && cmp -s "$tmp/out" "$tmp/expect"; then exit 0; fi
 	printf 'run: %s: exit %s; the output and EXPECT:\n' "$name" "$got" >&2
-	diff "$case_dir/EXPECT" "$tmp/out" >&2
+	diff "$tmp/expect" "$tmp/out" >&2
 	cat "$tmp/err" >&2
 	exit 2 ;;
 bad*)
-	if [ "$got" -eq 1 ] && cmp -s "$tmp/err" "$case_dir/EXPECT"; then exit 1; fi
+	if [ "$got" -eq 1 ] && cmp -s "$tmp/err" "$tmp/expect"; then exit 1; fi
 	printf 'run: %s: exit %s; the stderr and EXPECT:\n' "$name" "$got" >&2
-	diff "$case_dir/EXPECT" "$tmp/err" >&2
+	diff "$tmp/expect" "$tmp/err" >&2
 	exit 2 ;;
 *)
 	printf 'run: %s is neither good* nor bad*\n' "$name" >&2

@@ -85,7 +85,7 @@ not just that it passes the repository's own clean files. It dispatches per suit
 (`adr-lint`, `prd-lint`, `link-lint` and `task-state` take a fixture
 directory, `pr-link-lint`, `review-record-lint` and `commit-msg` take a file), skips entries that are neither
 `good*` nor `bad*` (the shared `prd/tests/facts/`
-directory, a suite `README.md`), and **fails** a suite named here whose linter or
+directory, the shared inputs `tasks/tests/base/`, a suite `README.md`), and **fails** a suite named here whose linter or
 fixtures are absent; a suite leaves the runner only when its dispatch line is
 removed.
 

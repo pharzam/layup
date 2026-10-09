@@ -51,7 +51,7 @@ Every substantive task passes **eight** ordered steps, in this order. Before ste
 covering, test-first plan that is reviewed once and recorded on the issue. That
 plan review is architecture and scope, never implementation approval.
 
-1. **Isolate.** Work in a per-task git worktree branched off `origin/main`, never in the operator's own checkout, and push its branch at once, so other sessions see the task as taken.
+1. **Isolate.** Work in a per-task git worktree branched off `origin/main`, never in the operator's own checkout, and push its branch, named the task ID, at once, so other sessions see the task as taken.
 2. **Honor the guardrails.** Before you write code, read the acceptance criteria, [`docs/guardrails.md`](docs/guardrails.md), and the [ADRs](docs/adr/) the ticket references.
 3. **Test first.** Write the failing test, watch it fail for the right reason, then write the code.
 4. **Make long tasks visible.** Anything that can run over ten seconds shows which step runs and that it lives.
@@ -126,8 +126,8 @@ command that no document names.
 ## Branches, worktrees, commits, and pull requests
 
 Work in a per-task git worktree under `.worktree/<task>`, branched off
-`origin/main`, never in the operator's own checkout, and push the branch before
-any work, which claims the task. Commit at each logical step,
+`origin/main`, never in the operator's own checkout, and push the branch `<task>`
+before any work, which claims the task. Commit at each logical step,
 with a subject that follows Conventional Commits — `<type>: <ID> <description>`
 when it carries a task. Land with a plain merge; **never squash**. A branch on the
 forge, as every claimed task branch is, takes `origin/main` by a merge, never by a

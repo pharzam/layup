@@ -25,6 +25,8 @@ backlog task with no row in the plan, over two task tables of 14 and 13 columns.
 | `good-review-forms` | exit 0 | `FIXED #4` and `resolves: #9`: the forge's other forms, in any case, with a colon |
 | `good-review-not-closing` | exit 0 | `Refs #4`, `Part of #5`, `Closes #44`, `prefixes #6` and `Closes #9x` close nothing |
 | `good-done-first` | exit 0 | a done task with a branch and a pull request stays `done` |
+| `good-crlf` | exit 0 | every input and `EXPECT` with carriage returns, as a checkout with `core.autocrlf=true` gives them: `## Now`, a branch and a closing keyword still match. Endings pinned by [`.gitattributes`](../../../.gitattributes) |
+| `good-columns-order` | exit 0 | the last task table of 14 columns, with `After` first and `Task ID` last: the columns are found by the header, not the position; an `After` of four rows |
 | `bad-missing-completed` | exit 1 | no completed log |
 | `bad-backlog-no-issue` | exit 1 | a backlog line under Now with no issue |
 | `bad-after-unknown-row` | exit 1 | an `After` row that no task table holds |

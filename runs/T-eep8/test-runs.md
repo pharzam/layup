@@ -81,3 +81,27 @@ T-nxe4	#168	blocked	T-fsjp
 T-4tjy	#169	blocked	T-e3sy,T-nxe4
 T-x7cs	#170	blocked	T-4tjy
 ```
+
+## Round 1 fixes (finding 3 and note 6)
+
+Two cases added, red first against `5517013`:
+
+- `good-crlf` (every input and `EXPECT` with carriage returns, pinned `eol=crlf`):
+  red, `run-discipline-tests: 95 passed, 1 failed`; `run.sh` showed `T-ccc1`
+  missing, since `## Now` with a return matched nothing. Green after the strip in
+  `task-state.sh` and in `run.sh`.
+- `good-columns-order` (the last table with `After` first and `Task ID` last): it
+  passed at once, since the reader already finds the columns by the header; it
+  pins that rule, and the mutations below are its red.
+
+| Mutation | Cases that fail |
+| -------- | --------------- |
+| no carriage-return strip in `task-state.sh` | `good-crlf` |
+| no carriage-return strip of `EXPECT` in `run.sh` | `good-crlf` |
+| `After` taken by position (the second-to-last column) | `good-columns-order` |
+| `Task ID` taken by position (the second column) | `good-columns-order` |
+
+After the fixes: `run-discipline-tests: 96 passed, 0 failed`.
+
+Note 7 of round 1: the forge's activity for `T-m1dx` gives `branch_creation` at
+13:00:43 UTC, after the run above at 12:58, so that run's `ready` was right.

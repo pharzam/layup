@@ -92,6 +92,15 @@ for f in backlog completed plan forge/branches; do
 	[ -f "$in/$f" ] || die "missing input: $f"
 done
 
+# Read a copy with each carriage return removed. On a checkout with
+# `core.autocrlf=true` every input arrives with them, and `## Now` or a branch
+# name would then match nothing: a wrong answer with exit 0 (round 1, finding 3).
+mkdir "$tmp/n" && cp -R "$in/." "$tmp/n/" || die "cannot copy the input"
+find "$tmp/n" -type f | while IFS= read -r f; do
+	tr -d '\r' < "$f" > "$f.lf" && mv "$f.lf" "$f"
+done
+in=$tmp/n
+
 # The open pull requests, one line each: NUMBER TAB HEAD TAB ISSUES, where
 # ISSUES are the issues its body closes, comma-separated. A keyword counts only
 # at the start of a word, and a number only when no letter or digit follows it:
