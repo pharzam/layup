@@ -199,7 +199,7 @@ telemetry row.
 As §9: the bytes of `prompt.md`, over four and rounded up (**decided here**),
 are the estimate; `context` of the model's row in `models.tsv` is the size. An
 estimate over the size refuses the start (event `refused`, `context` and both
-numbers); a
+numbers, the estimate then the size: **decided here**, task `T-6sbe`); a
 session that starts has both numbers in its start row.
 
 ### The limit of a session
@@ -257,7 +257,10 @@ is `M2d`'s and `M2f`'s. For a task session whose end is `done`:
 (§4): no command of `layup` runs in `repo/` after the session starts. Code reads
 the head SHA of `refs/heads/task/<task>/<attempt>` from the files of
 `repo/.git`: the loose ref, a regular file of 40 lowercase hexadecimal
-characters and a line feed, else the line of `packed-refs` that names the ref.
+characters and a line feed, else the line of `packed-refs` whose ref field,
+the text after the first space, is the ref, and whose first field is 40
+lowercase hexadecimal characters (**decided here**, task `T-6sbe`; a line that
+names the ref in another form refuses).
 A `repo/.git` that is not a directory; a loose ref that is a link, a symbolic
 ref or a file of any other content (`packed-refs` is then not read); no such
 ref; or a SHA that names no commit of the session's objects, which
