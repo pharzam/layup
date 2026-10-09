@@ -367,7 +367,7 @@ version's last probe did not pass ([Admission](#admission)). **Decided here:** t
 harness of the register with no model of `use` `yes`, whatever its version, and
 runs no command of it, as a probe needs a model; it gets no row, and the step
 counts it as skipped. Then it probes each other harness whose last probe at
-its version did not pass. The step is `done` when each harness that needs a probe was probed, and each
+its version did not pass, or that has no probe at its version. The step is `done` when each harness that needs a probe was probed, and each
 with no model skipped, with
 three counts in `detail`: probed and passed, probed and failed, skipped; a
 harness whose last probe at its version passed is in none; it is `fail` when a probe could not run

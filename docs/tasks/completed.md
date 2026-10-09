@@ -20,6 +20,7 @@ here directly, in the shape above.
 - **YYYY-MM-DD** — **<ID>** — <one-sentence summary of what the task found or delivered> ([<link>](...); [detail](<id>.md))
 -->
 
+- **2026-10-09** — **T-cht1** — Row 30b of `M2b`: admission and the routing order, `Probed`, `Admitted`, `Pair` and the refusal `pair` in `internal/route` ([#156](https://github.com/pharzam/layup/issues/156); [detail](T-cht1.md))
 - **2026-10-09** — **T-z5dj** — Row 31 of `M2b`: the calls of `M2b` of `internal/git`, `CloneLocal`, `FetchSession` (a hostile session runs none of 47 keys), `IsAncestor`, `DiffFile`, `DiffBinary` ([#157](https://github.com/pharzam/layup/issues/157); [detail](T-z5dj.md))
 - **2026-10-09** — **T-m1dx** — Row 32 of `M2b`: the rule-path check before a push, `internal/rules`, the register, the match and the exception of `docs/guardrails.md` ([#158](https://github.com/pharzam/layup/issues/158); [detail](T-m1dx.md))
 - **2026-10-09** — **T-ysph** — Row 30a of `M2b`: the host registers of `M2b`, the ten columns of the harness register, `models.tsv`, `routing.tsv`, the checks across them and of a credential, read by `layup run` ([#155](https://github.com/pharzam/layup/issues/155); [detail](T-ysph.md))

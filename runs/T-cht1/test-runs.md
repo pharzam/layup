@@ -12,7 +12,7 @@ vet: internal/route/admit_test.go:44:13: undefined: Probed
 
 ## Red 2: a mutation of each rule, in full (the fix of round 1)
 
-On a copy of `admit.go` (put back after), each of the fourteen rules broken alone, each line saying what was broken; each makes its own cases fail. The mutation of the harness in `Probed` first passed, so the case "a later failed probe of another harness at the same version" was added before round 1; round 1 named four rules with no mutation (the first admitted pair, `ErrNoPair`, no row at the version, the harness of a models row), now here. `TestThePairOfASession` (note 3) shows the demo in one run.
+On a copy of `admit.go` (put back after), each of the fourteen rules broken alone, each line saying what was broken; each makes its own cases fail. Each line of output is cut at 110 characters. The mutation of the harness in `Probed` first passed, so the case "a later failed probe of another harness at the same version" was added before round 1; round 1 named four rules with no mutation (the first admitted pair, `ErrNoPair`, no row at the version, the harness of a models row), now here. `TestThePairOfASession` (note 3) shows the demo in one run.
 
 ```
 == last: Probed: any passed row at the version, not the last
@@ -67,3 +67,7 @@ admit_test.go:113: a tier of no list: <nil>, want ErrNoPair
 ## Green (2026-10-09T13:38Z)
 
 Each with exit 0 on the tree of the commit `feat: T-cht1 …`: `go build ./...`, `go vet ./...`, `gofmt -l internal` (empty), `go test ./...`, `go test -tags=integration ./...` (with `TestPackageRules`); `adr-lint`, `prd-lint`, `link-lint`, `setup-check`, `run-discipline-tests`, `git diff --check`.
+
+## Green of the fix of round 1, and the notes of round 2
+
+On `9c5d344` (the fix of round 1, with `TestThePairOfASession`), each with exit 0: `go build ./...`, `go vet ./...`, `go test ./...`, `go test -tags=integration ./...`; `prd-lint`, `link-lint`, `setup-check`, `git diff --check` (round 2 ran them too, each exit 0). The close-out applies the three notes of round 2.

@@ -35,3 +35,36 @@ when a mutation first passed); green after.
 
 **The rejected alternatives:** admission by the last row of the harness at any
 version; a closed list of roles here; the version check in `internal/route`.
+
+## Review rounds
+
+The records and the Fixes reply are comments on #156. Round 1 (Claude Fable
+5.1; `655c841`, cycle 0): `material`, one finding (the red record held no
+mutation for four rules), fixed in `9c5d344` (a described mutation of each of
+the fourteen rules; notes 2 and 3: the glossary, `TestThePairOfASession`).
+Round 2 (Fable; `9c5d344`, cycle 1): `nothing material in scope`, three notes,
+applied in the close-out: the record says its lines are cut and has a green of
+the fix; the Test cell names the fourth test; "or that has no probe at its
+version" in `session.md` and the glossary.
+
+## Verdict
+
+Delivered: admission and the order of the routing register in
+`internal/route`. The review ended by decay at cycle 1, the cap. The diff
+against `5fbe7e5`, the branch's base, is inside 600 lines over 12 files (note 4
+of round 1). Next: row 36a calls `Pair` and `Admitted`.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). UTC, 2026-10-09; reviewers' tokens are
+`modelUsage`; the author's are not reported.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan | reasoning | Claude Opus 5.5 | not reported | not reported | 13:15 to 13:17 |
+| The plan review | reasoning | Claude Fable 5.1 | `xhigh` | 728,374 (USD 4.19) | 6 min 55 s |
+| The code, test first | execution | Claude Opus 5.5 | not reported | not reported | 13:34 to 13:39 |
+| Round 1 | reasoning | Claude Fable 5.1 | `xhigh` | 879,416 (USD 4.21) | 8 min 2 s |
+| The fix of round 1 | execution | Claude Opus 5.5 | not reported | not reported | 13:50 to 13:53 |
+| Round 2 | reasoning | Claude Fable 5.1 | `xhigh` | 600,640 (USD 3.44) | 8 min 9 s |
+| The close-out | execution | Claude Opus 5.5 | not reported | not reported | 14:03 to 14:06 |
