@@ -114,3 +114,22 @@ func TestPair(t *testing.T) {
 		}
 	}
 }
+
+// The demo in one run: the first pair whose harness's last probe at the
+// version read passed; the first pair's harness failed its last probe.
+func TestThePairOfASession(t *testing.T) {
+	models := rowsOf(t, ReadModels, table(modelsHeader, opusRow, sweRow))
+	record := probes(t, passed21, failed21, devinPass)
+	routing, err := records.ReadRouting(table(routingRecordHeader,
+		"developer\texecution\t1\tclaude\tclaude-opus-5-5", "developer\texecution\t2\tdevin\tswe-2-high"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	versions := map[string]string{"claude": "2.1.295", "devin": "3000.11.3"}
+	h, m, err := Pair(routing, "developer", "execution", func(harness, model string) bool {
+		return Admitted(record, models, harness, versions[harness], model)
+	})
+	if err != nil || h != "devin" || m != "swe-2-high" {
+		t.Errorf("the pair: %s %s %v, want devin swe-2-high", h, m, err)
+	}
+}
