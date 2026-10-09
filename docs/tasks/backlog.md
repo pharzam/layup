@@ -46,6 +46,7 @@ same summary, dated — rather than deleting it or checking it off.
 - **T-nxe4** — Row 38 of `M2b`: the step probe ([#168](https://github.com/pharzam/layup/issues/168); [the plan](../plan/README.md#the-tasks-of-m2b))
 - **T-4tjy** — Row 39a of `M2b`: the review of the release of M2b ([#169](https://github.com/pharzam/layup/issues/169); [the plan](../plan/README.md#the-tasks-of-m2b))
 - **T-x7cs** — Row 39b of `M2b`: the demo of M2b (uat) ([#170](https://github.com/pharzam/layup/issues/170); [the plan](../plan/README.md#the-tasks-of-m2b))
+- **T-eep8** — The state of each task (running, in review, blocked, ready), derived from the plan and the forge; serves `F-0003#52` ([#175](https://github.com/pharzam/layup/issues/175))
 
 ## Next
 
