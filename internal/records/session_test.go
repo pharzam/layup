@@ -101,7 +101,7 @@ func TestHarnessesRefusesEachBrokenRule(t *testing.T) {
 	}
 	failed := field(harnessesHeader, passedRow, "result", "failed")
 	for _, c := range []struct{ name, row, column string }{
-		{"a session ID that is not S- and 8 hexadecimal characters", field(harnessesHeader, passedRow, "session", "S-1A2B3C4D"), "session"},
+		{"a session ID that is not S- and 8 hexadecimal characters", field(harnessesHeader, passedRow, "session", "S-1a2b3c4z"), "session"},
 		{"a passed probe with a reason", field(harnessesHeader, passedRow, "reason", "token"), "reason"},
 		{"a failed probe with no reason", failed, "reason"},
 		{"a failed probe whose reason is not a word of the block", field(harnessesHeader, failed, "reason", "slow"), "reason"},
@@ -196,7 +196,7 @@ func TestEventsRefusesEachBrokenRule(t *testing.T) {
 	}{
 		{"attempt 0", event(1, "attempt", "0"), "attempt"},
 		{"the events out of their order", gap, "n"},
-		{"a session ID that is not S- and 8 hexadecimal characters", event(2, "session", "S-1"), "session"},
+		{"a session ID that is not S- and 8 hexadecimal characters", event(2, "session", "S-1a2b3c4g"), "session"},
 		{"an attempt with a session", event(1, "session", "S-1a2b3c4d"), "session"},
 		{"a session event with no session", event(2, "session", "—"), "session"},
 		{"a refused with no session whose reason is not pair", event(7, "detail", "context 3 2"), "session"},
@@ -263,6 +263,10 @@ func readResult(data []byte) ([][]string, error) { return ReadResult(data) }
 func TestAValidResultIsRead(t *testing.T) {
 	if _, err := ReadResult(table(resultHeader, resultRows()...)); err != nil {
 		t.Fatal(err)
+	}
+	r := resultRows()
+	if _, err := ReadResult(table(resultHeader, r[2], r[0], r[1])); err != nil {
+		t.Fatalf("the rows in another order of the file: %v", err)
 	}
 	if _, err := ReadResult(table(resultHeader, "status\t1\tfailed\t—\tthe harness stopped")); err != nil {
 		t.Fatalf("a status alone: %v", err)

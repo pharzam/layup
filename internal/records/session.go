@@ -234,7 +234,8 @@ func CheckEvent(r []string) error {
 		return &RowError{c, "this column never holds the empty value"}
 	}
 	kind, detail := f["kind"], f["detail"]
-	noSession := kind == "attempt" || kind == "closed" || kind == "rebased" || (kind == "refused" && detail == "pair")
+	reason, _, _ := strings.Cut(detail, " ") // the reason of a refused, before its value
+	noSession := kind == "attempt" || kind == "closed" || kind == "rebased" || (kind == "refused" && reason == "pair")
 	switch {
 	case !atLeastOne(f["attempt"]):
 		return &RowError{"attempt", "the attempt is 1 or more"}
@@ -322,18 +323,26 @@ func CheckResultRow(r []string) error {
 	return nil
 }
 
-// CheckResult checks the order of a result: within each kind, n runs 1, 2, ...
-// with no gap, and one status row. A broken rule is a *tsv.Error.
+// CheckResult checks the numbers of a result: within each kind, n is 1 to k,
+// each once, in any order of the file (the block gives a number, not an
+// order; the key refuses a repeat), and one status row. A broken rule is a
+// *tsv.Error.
 func CheckResult(rows [][]string) error {
-	next := map[string]int{"status": 1, "artifact": 1}
+	count, most, line := map[string]int{}, map[string]int{}, map[string]int{}
 	for i, r := range rows {
 		f := fields(ResultSchema, r)
-		if f["n"] != strconv.Itoa(next[f["kind"]]) {
-			return &tsv.Error{Line: i + 2, Column: "n", Reason: fmt.Sprintf("the next %s is n %d", f["kind"], next[f["kind"]])}
+		n, _ := strconv.Atoi(f["n"])
+		count[f["kind"]]++
+		if n > most[f["kind"]] {
+			most[f["kind"]], line[f["kind"]] = n, i+2
 		}
-		next[f["kind"]]++
 	}
-	if next["status"] != 2 {
+	for _, k := range []string{"status", "artifact"} {
+		if most[k] != count[k] {
+			return &tsv.Error{Line: line[k], Column: "n", Reason: fmt.Sprintf("the numbers of the %s rows run 1 to %d with no gap", k, count[k])}
+		}
+	}
+	if count["status"] != 1 {
 		return &tsv.Error{Line: 1, Column: "kind", Reason: "a result holds one status row"}
 	}
 	return nil

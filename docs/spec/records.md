@@ -297,7 +297,7 @@ harness id(<word>) - the harness ID of the register
 version text - the version that the probe ran; `—` when the version check refused its start
 model text - the model of the probe
 result enum(passed|failed) - the probe's result
-reason text - why it failed: the reason of a refused start (`version`, `rules`, `context`, `prompt`), and after one space its value where it has one (the path of a rule file, the two numbers of the context, the size of the prompt); the class of its end; `outside`, `not-used`, `token` or `files`; `—` when `passed`
+reason text - why it failed: the reason of a refused start (`version`, `rules`, `context`, `prompt`), and after one space its value where it has one (the path of a rule file, the two numbers of the context, the size of the prompt); the class of its end other than `done`; `outside`, `not-used`, `token` or `files`; `—` when `passed`
 files list(text) - each instruction file that the harness reported, as it wrote it; `—` for none
 models list(text) - each model of its usage report; `—` when the report names none
 end time - when the probe ended, or when its start was refused

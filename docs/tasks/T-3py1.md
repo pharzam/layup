@@ -30,7 +30,8 @@ final by O-187 of #152.
 2. **D2:** `CheckSession`, `CheckHarness`, `CheckRouting` (the positions of
    each role and tier are 1 to k, each once, in any order of the file),
    `CheckEvent`, `CheckEvents`, `CheckEventsAppend` (no row is changed),
-   `CheckResultRow` and `CheckResult`, run by the readers `ReadSessions`,
+   `CheckResultRow` and `CheckResult` (the numbers of each kind are 1 to k, in
+   any order of the file, as `position`; round 1, finding 1), run by the readers `ReadSessions`,
    `ReadHarnesses`, `ReadRouting`, `ReadEvents` and `ReadResult`.
    `session_test.go` has a valid file per record, a wrong header per reader,
    one case per column with no clause for `—`, and one case per rule; each

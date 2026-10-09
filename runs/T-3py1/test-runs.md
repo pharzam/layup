@@ -30,3 +30,7 @@ internal/records/session_test.go:84:62: undefined: ReadHarnesses
 ## Green (2026-10-09T11:49Z)
 
 Each with exit 0 on the tree of the commit `feat: T-3py1 …`: `go build ./...`, `go vet ./...`, `gofmt -l internal/` (empty), `go test ./...`, `go test -tags=integration ./...`; `adr-lint`, `prd-lint`, `link-lint`, `setup-check`, `run-discipline-tests`, `git diff --check`.
+
+## The fix of round 1 (2026-10-09T12:01Z)
+
+Finding 1: `CheckResult` checks the numbers of each kind as a set, 1 to k, in any order of the file; `TestAValidResultIsRead` reads a result whose rows are in another order (it failed at line 2 before the fix: "the next status is n 1"). Note 2, the two session IDs now pass the type and fail the rule: with the check of `sessionForm` taken out of `CheckHarness` and `CheckEvent` (a copy of the file, put back after), `go test ./internal/records/` fails both cases ("want an error in column session"), and passes with it. Each check of the green run above passes again on the fix tree.
