@@ -163,8 +163,12 @@ func newRunWorld(t *testing.T) runWorld {
 	files := map[string]string{
 		"registers/forge.tsv": "forge\tapp_id\tapp_slug\tkey_file\twatch_slug\tapi\tweb\n" +
 			"github\t42\tlayup-agent\t" + keyFile + "\tlayup-watch\t" + srv.URL + "\tfile://" + web + "\n",
-		"registers/harnesses.tsv": "harness\tcap\twall\nclaude\t10.0\t60\n",
-		"psb.md":                  "# The problem\n",
+		"registers/harnesses.tsv": "harness\tcap\twall\tcommand\tprompt\tversion\tcredential\tcredential_to\trules\tpolicy\tusage\tbilling\tvars\n" +
+			"claude\t10.0\t60\tclaude -p --model {model} --max-budget-usd {cap} {prompt}\targ\tclaude --version\t—\t—\tCLAUDE.md\t—\tclaude-result\tapi\t—\n",
+		"registers/models.tsv": "harness\tmodel\tcontext\tsource\tdate\tuse\treason\n" +
+			"claude\tclaude-opus-5-5\t1000000\thttps://docs.claude.com/models\t2026-10-09T12:00:00Z\tyes\t—\n",
+		"registers/routing.tsv": "role\ttier\tposition\tharness\tmodel\ndeveloper\texecution\t1\tclaude\tclaude-opus-5-5\n",
+		"psb.md":                "# The problem\n",
 	}
 	for p, text := range files {
 		os.MkdirAll(filepath.Dir(filepath.Join(w.dir, p)), 0o755)
