@@ -182,6 +182,21 @@ func (a *Adapter) OpenIssue(ctx context.Context, title, body string) (int, error
 	return out.Number, nil
 }
 
+// Comment posts a comment on an issue and gives its ID.
+func (a *Adapter) Comment(ctx context.Context, issue int, body string) (int64, error) {
+	in, err := json.Marshal(map[string]string{"body": body})
+	if err != nil {
+		return 0, err
+	}
+	var out struct {
+		ID int64 `json:"id"`
+	}
+	if _, err := a.do(ctx, "Comment", "POST", fmt.Sprintf("%s%s/issues/%d/comments", a.cfg.API, a.repo(), issue), byToken, in, 201, &out); err != nil {
+		return 0, err
+	}
+	return out.ID, nil
+}
+
 // Comments gives each comment of an issue, every page. A comment of a deleted
 // account (user null) has the author ID 0 and the login ghost.
 func (a *Adapter) Comments(ctx context.Context, issue int) ([]forge.Comment, error) {
