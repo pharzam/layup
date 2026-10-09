@@ -457,17 +457,15 @@ Requirement: "A deterministic check is preferred to an LLM judgement wherever a
 rule can be checked mechanically; the engine checks make no model call, and the
 `layup` process calls a model only through the smart-if provider." From `M2b`,
 `internal/session` starts a harness: the one model process that `layup` starts
-(ADR-0015 decision 3). **Decided here**, the check that will replace the
-phase-1 import rule ([`gate.md`](gate.md#nfr-005--no-model-call-in-the-engine-checks)):
-the build task of the package rules of `M2b`, [row 29 of the
-plan](../plan/README.md#the-tasks-of-m2b) (the plan of #152), before any package
-of the table of `M2b` exists, adds to `TestPackageRules` a line of
-`packages.md`, "The packages of the engine checks:", with one code span per
-package (`internal/psb`, `internal/verify`, `internal/gate`; a later engine
-check adds its own), and the rule that no package of that line depends on
-`internal/session` or on a package of rule 5; and a form of the cell "Starts a
-program" for a program that a register row names. Until that task, the
-phase-1 import rule stays the check of the phase-1 commands.
+(ADR-0015 decision 3). **Decided here**, the check that replaces the phase-1
+import rule ([`gate.md`](gate.md#nfr-005--no-model-call-in-the-engine-checks)):
+`TestPackageRules` reads a line of `packages.md`, "The packages of the engine
+checks:", with one code span per package (`internal/psb`, `internal/verify`,
+`internal/gate`; a later engine check adds its own), and checks that no package
+of that line depends on `internal/session` or on a package of rule 5; and a form
+of the cell "Starts a program" for a program that a register row names
+([`packages.md`](packages.md#the-table-of-m2b); task `T-y10b`, row 29 of [the
+plan](../plan/README.md#the-tasks-of-m2b)).
 
 ## REQ-015 and REQ-017 — The review of the release of M2b
 

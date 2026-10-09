@@ -14,10 +14,12 @@ import (
 )
 
 // The package rules of docs/spec/packages.md hold on the real module, with the
-// table of phase 1, the table of M2a and the line of rule 5, and the same
-// checker finds the seeded breaches of rule 5 in a fixture module: an import
-// of net/http outside the adapter, and one of net/smtp behind a build
-// constraint (NFR-005, NFR-007).
+// tables of phase 1, of M2a and of M2b, the line of rule 5 and the line of the
+// engine checks. The same checker finds the seeded breaches of two fixture
+// modules: in netimport, an import of net/http outside the adapter, and one of
+// net/smtp behind a build constraint, which also breaks the rule of the engine
+// checks in internal/psb; in enginedep, a package of the engine checks that
+// depends on internal/session (NFR-005, NFR-007).
 func TestPackageRules(t *testing.T) {
 	text, err := os.ReadFile(filepath.Join("..", "..", "docs", "spec", "packages.md"))
 	if err != nil {
@@ -31,22 +33,33 @@ func TestPackageRules(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	engine, err := readEngine(string(text))
+	if err != nil {
+		t.Fatal(err)
+	}
 	real := load(t, filepath.Join("..", ".."))
 	if len(real.sources["internal/git"]) == 0 || len(real.sources["cmd/layup"]) == 0 {
 		t.Fatal("no source of internal/git or cmd/layup was read, so the scan checks nothing")
 	}
-	if f := checkRules(rows, adapter, real); len(f) != 0 {
+	if f := checkRules(rows, adapter, engine, real); len(f) != 0 {
 		t.Errorf("the module breaks the package rules:\n%s", strings.Join(f, "\n"))
 	}
-	f := checkRules(rows, adapter, load(t, filepath.Join("testdata", "netimport")))
-	for _, want := range []string{"rule 5: cmd/layup imports net/http; only " + adapter + " imports them", "rule 5: internal/psb depends on net"} {
-		if !slices.Contains(f, want) {
-			t.Errorf("the fixture gives\n%s\nwant the finding %s", strings.Join(f, "\n"), want)
+	for fixture, want := range map[string][]string{
+		"netimport": {"engine checks: internal/psb depends on net",
+			"rule 5: cmd/layup imports net/http; only " + adapter + " imports them", "rule 5: internal/psb depends on net"},
+		"enginedep": {"May import: internal/gate imports internal/session, which its row does not allow",
+			"engine checks: internal/gate depends on internal/session"},
+	} {
+		f := checkRules(rows, adapter, engine, load(t, filepath.Join("testdata", fixture)))
+		for _, w := range want {
+			if !slices.Contains(f, w) {
+				t.Errorf("%s gives\n%s\nwant the finding %s", fixture, strings.Join(f, "\n"), w)
+			}
 		}
-	}
-	for _, s := range f {
-		if !strings.HasPrefix(s, "rule 5: ") {
-			t.Errorf("the fixture breaks another rule too: %s", s)
+		for _, s := range f {
+			if !slices.Contains(want, s) && !strings.HasPrefix(s, "rule 5: internal/psb depends on ") && !strings.HasPrefix(s, "engine checks: internal/psb depends on ") {
+				t.Errorf("%s breaks another rule too: %s", fixture, s)
+			}
 		}
 	}
 }
