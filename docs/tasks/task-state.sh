@@ -10,14 +10,16 @@
 #   sh docs/tasks/task-state.sh             read the forge, then print
 #   sh docs/tasks/task-state.sh --read DIR  print from DIR (the fixtures)
 #
-# DIR holds `backlog`, `completed` and `plan` (copies of docs/tasks/backlog.md,
-# docs/tasks/completed.md and docs/plan/README.md), `forge/branches` (one branch
+# DIR holds `backlog`, `completed` and `plan` (docs/tasks/backlog.md,
+# docs/tasks/completed.md and docs/plan/README.md; the fetcher reads them from
+# the forge's main, not from the checkout), `forge/branches` (one branch
 # of the forge per line) and `forge/pr/<number>/head` and `.../body` (one open
 # pull request each, its head branch and its body).
 #
 # The tasks: the rows of the LAST task table of the plan (the current
 # milestone), in its order, then each task under `## Now` of the backlog that
-# has no row there, in the backlog's order. A task table is one whose header
+# has no row there, in the backlog's order; such a task keeps the `After` of its
+# row when an earlier task table holds one. A task table is one whose header
 # holds the cells `#` and `Task ID`; its columns are found by the header, so a
 # table of 13 columns and one of 14 read the same.
 #
@@ -55,11 +57,16 @@ trap 'rm -rf "$tmp"' EXIT
 fetch() {
 	_in=$1
 	root=$(git rev-parse --show-toplevel 2>/dev/null) || die "not inside a git checkout"
-	cp "$root/docs/tasks/backlog.md" "$_in/backlog" &&
-	cp "$root/docs/tasks/completed.md" "$_in/completed" &&
-	cp "$root/docs/plan/README.md" "$_in/plan" || die "cannot copy the backlog, the completed log or the plan"
 	mkdir -p "$_in/forge/pr"
 	cd "$root" || die "cannot enter $root"
+	# The three files come from the forge's main, not from this checkout, so a
+	# checkout behind main gives the same answer (#182, note 3). The checkout
+	# only names the repository, for the {owner}/{repo} of gh.
+	printf 'task-state: reading the backlog, the completed log and the plan of main\n' >&2
+	for _f in backlog:docs/tasks/backlog.md completed:docs/tasks/completed.md plan:docs/plan/README.md; do
+		gh api -H 'Accept: application/vnd.github.raw' "repos/{owner}/{repo}/contents/${_f#*:}?ref=main" > "$_in/${_f%%:*}" ||
+			die "gh: cannot read ${_f#*:} of main"
+	done
 	printf 'task-state: reading the branches of the forge\n' >&2
 	gh api 'repos/{owner}/{repo}/branches' --paginate -q '.[].name' > "$_in/forge/branches" ||
 		die "gh: cannot read the branches"
@@ -206,7 +213,7 @@ now && /^- \*\*T-[0-9a-z][0-9a-z][0-9a-z][0-9a-z]\*\*/ {
 
 # The state of each task.
 awk -F'\t' -v OFS='\t' -v dash='—' '
-FILENAME == ARGV[1] { rowtask[$2] = $3; if ($1 > last) last = $1; nrows++; rt[nrows] = $1; rr[nrows] = $2; rk[nrows] = $3; ri[nrows] = $4; ra[nrows] = $5; next }
+FILENAME == ARGV[1] { rowtask[$2] = $3; taskrow[$3] = $2; taskafter[$3] = $5; if ($1 > last) last = $1; nrows++; rt[nrows] = $1; rr[nrows] = $2; rk[nrows] = $3; ri[nrows] = $4; ra[nrows] = $5; next }
 FILENAME == ARGV[2] { done[$1] = 1; next }
 FILENAME == ARGV[3] { nnow++; nt[nnow] = $1; ni[nnow] = $2; next }
 FILENAME == ARGV[4] { branch[$0] = 1; next }
@@ -250,6 +257,10 @@ END {
 	}
 	for (i = 1; i <= nnow; i++) {
 		if (nt[i] in inlast) continue
-		print nt[i], "#" ni[i], state(nt[i], ni[i], "")
+		# A task of an earlier task table keeps the After of its row (#182, note 1).
+		cur = (nt[i] in taskrow) ? taskrow[nt[i]] : ""
+		line = nt[i] OFS "#" ni[i] OFS state(nt[i], ni[i], (nt[i] in taskafter) ? taskafter[nt[i]] : "")
+		if (bad) exit 1
+		print line
 	}
 }' "$tmp/rows" "$tmp/done" "$tmp/now" "$in/forge/branches" "$tmp/prs" || exit 1

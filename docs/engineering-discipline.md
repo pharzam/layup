@@ -27,7 +27,8 @@ measured run is [`setup/record-T-n1hp.md`](setup/record-T-n1hp.md); and
 Every substantive task runs through the same gate. The steps below are the
 required order. Each step links to the section that gives its mechanics, and
 states any rule that has no section of its own. **Before step 1, an issue is open
-for the task** — see [Issue-first workflow](#issue-first-workflow) — and the work is
+for the task** — see [Issue-first workflow](#issue-first-workflow) — the task is
+claimed, before its plan ([Starting a task](#starting-a-task)), and the work is
 sliced into an ordered, DoD-covering, test-first plan, reviewed once and recorded
 on the issue
 ([R12](issue-workflow.md#r12--slice-and-prioritize)). Apply the
@@ -41,8 +42,8 @@ routing rule, check script or policy capture starts on its own
 ([ADR-0026](adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md)).
 
 1. **Isolate.** Do the work in a per-task git worktree under `.worktree/<task>`,
-   branched off `origin/main` — see [Starting a task](#starting-a-task). Never
-   work on the operator's main worktree.
+   branched off `origin/main`, made at the claim — see
+   [Starting a task](#starting-a-task). Never work on the operator's main worktree.
 
 2. **Honor the guardrails.** Before you write code, read the ticket's acceptance
    criteria and the docs it references — [`guardrails.md`](guardrails.md) and the
@@ -915,16 +916,17 @@ stepping on each other's working-tree state.
 **Claim the task by pushing its branch.** Before you take a task, run
 `sh docs/tasks/task-state.sh`. If it prints the task, take the task only when its
 state is `ready`; a task it does not print (one with no row in the current task
-table and no line under `## Now` of the backlog) is not refused by this rule. Right after
-the worktree is created, push its branch, named exactly the task ID, to the forge
-(`git push -u origin <slug>`), before any work; a branch of another name, such as
+table and no line under `## Now` of the backlog) is not refused by this rule. The claim is the first act of taking a task, before
+its plan comment: create the worktree, then push its branch, named exactly the task
+ID, to the forge (`git push -u origin <slug>`), before any work; a branch of another name, such as
 `T-xxxx-notes`, claims nothing. The branch on the forge is the one mark that every
 session, on every host and harness, can see, and the command reads it as
 `running`; a worktree on one host is invisible to the others. When a task is
 abandoned, delete its branch from the forge, or the task reads `running` until it
 is. The command ([`task-state.sh`](tasks/task-state.sh), #175) prints each task's
-state, derived from the backlog, the completed log, the plan's task tables and the
-forge; it needs `gh` and the network, and it enforces nothing.
+state, derived from the backlog, the completed log and the plan's task tables of
+the forge's `main` (not of the checkout it runs in), and from the forge's branches
+and pull requests; it needs `gh` and the network, and it enforces nothing.
 
 ## Commit granularity
 
