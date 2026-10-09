@@ -256,6 +256,18 @@ row:
 | `no-result` | exit 0 with no valid result file | uncertain |
 | `wall`, `output` | stopped at the wall-clock limit or an output cap | uncertain |
 
+**Decided here** (task `T-bpxg`, condition 3 of the plan review of #162): a
+process may meet two rows, so the class is the first that holds in this order:
+`start`; `wall` or `output`, a stop that `layup run` sent, whatever the exit and
+the result file; `crash`; `no-result`; `done`. A process that traps `SIGINT`,
+writes a valid result file and exits 0 after the stop at `wall` is `wall`. Every
+other error of the process call, at the start or after it (an output file
+that `layup run` cannot open, a write of an output that fails), is `layup
+run`'s own and no class: the run reports it as its own. **Decided here** (task
+`T-bpxg`): the result file is opened without following a link, and a file
+that is a link or is not a regular file is no valid result file, as for
+`repo/.git` (a session could link to any file of the host's user).
+
 A retry is not `M2b`'s: a new attempt is the task loop's (`M2e`), and its limit
 the stall procedure's (`M3d`).
 
@@ -472,8 +484,16 @@ format here first, with its source, as the types are added
 
 | Format | What `layup run` reads |
 | ------ | ---------------------- |
-| `claude-result` | The last JSON object of `stdout` whose `type` is `result` (Claude Code's `--output-format stream-json`, [headless mode](https://code.claude.com/docs/en/headless)). The tokens are the sums over `modelUsage`: `inputTokens` to `tokens_in`, `outputTokens` to `tokens_out`, `cacheReadInputTokens` plus `cacheCreationInputTokens` to `tokens_cache`; `observed` when each model has the four, `partial` when one lacks a field, `unavailable` with no `result` object. The money is `total_cost_usd`, in USD, Claude Code's own estimate. The models are the keys of `modelUsage`. |
+| `claude-result` | The last JSON object of `stdout` whose `type` is `result` (Claude Code's `--output-format stream-json`, [headless mode](https://code.claude.com/docs/en/headless)). The tokens are the sums over `modelUsage`: `inputTokens` to `tokens_in`, `outputTokens` to `tokens_out`, `cacheReadInputTokens` plus `cacheCreationInputTokens` to `tokens_cache`; `observed` when each model has the four, `partial` when one lacks a field and a class is still summed (below), `unavailable` with no `result` object. The money is `total_cost_usd`, in USD, Claude Code's own estimate. The models are the keys of `modelUsage`, sorted (**decided here**, task `T-bpxg`). |
 | `none` | Nothing: tokens `unavailable` ("the harness reports none"), money `unknown`; the model is the start row's. |
+
+**Decided here** (task `T-bpxg`, condition 1 of the plan review of #162): a
+class of tokens is summed only when every model of `modelUsage` gives each of
+its fields as an integer, else it is `—`, as a sum that leaves a model out would
+undercount (FT2). Three classes summed are `observed`; one or two are
+`partial`; none is `unavailable`. The reason names each model and the fields it
+lacks (`m has no outputTokens`). A `result` object whose `modelUsage` is
+missing or empty is `unavailable` ("the report names no model"), never 0.
 
 **Decided here:** the tokens come from `modelUsage`, not from `usage`. Reason:
 in two runs of `T-ywk7` on Claude Code 2.1.295, `usage` equals `modelUsage` in
@@ -497,9 +517,9 @@ gives no usage report (3000.11.3), so its rows use `none`.
 | A `models.tsv` or `routing.tsv` row of a harness that the register lacks | exit 2 |
 | A harness with no model of `use` `yes`, or with no row of `models.tsv` | not an error: the step `probe` skips it, and no pair of it is admitted |
 | A version command that fails, or whose first line is empty or white space only | the start is refused (`version`) |
-| A result file that is missing, over 1 MiB, malformed, or has two `status` rows | `no-result`; the result is refused |
+| A result file that is missing, a link or not a regular file, over 1 MiB, malformed, or has two `status` rows | `no-result`; the result is refused |
 | A `probe.tsv` with no token, another token, or no `AGENTS.md` row | the probe fails, with the reason |
-| `stdout` with no `result` object, or with lines that are not JSON | tokens `unavailable` (the lines that are not JSON are skipped) |
+| `stdout` with no `result` object, or with lines that are not JSON | tokens `unavailable` (the lines that are not JSON, or not of the form of an object of the report, are skipped) |
 | A task with no event `attempt` for the session's attempt | the start is refused (`attempt`) |
 | A `prompt.md` over 131,071 bytes for a row whose `prompt` is `arg` | the start is refused (`prompt`), before the start row |
 | A ref of `repo/.git` that is malformed, or whose SHA names no commit of the session's objects | the result is refused (`branch`) |
