@@ -59,14 +59,14 @@ future Go gate of LAYUP reads this table.
 "May import" is one or more code spans with a comma between two; for none, the
 cell is the character — and no code span. "Starts a program" is exactly one
 code span at the start of the cell, whose first word is the program, and text
-with no code span after it; for none, the cell is the word no and no code
+with no code span after it (a register row's cell is its own form, [below](#the-table-of-m2b)); for none, the cell is the word no and no code
 span. Reason: the [test of the package rules](#the-test-of-the-package-rules)
 reads this table, and holds no copy of it, which could differ from it.
 
 | Package | Job | May import | Starts a program |
 | ------- | --- | ---------- | ---------------- |
 | `cmd/layup` | `main`: passes the arguments to `internal/cli` and exits with its code | `internal/cli` | no |
-| `internal/cli` | parses the arguments, runs one command, maps its result to an exit code ([`README.md`](README.md#commands)); for `layup run`, reads the two host registers and the key file, builds the adapter and hands it to `internal/run` (task `T-mqty`) | `internal/psb`, `internal/setup`, `internal/verify`, `internal/gate`, `internal/run`, `internal/forge`, `internal/forge/github`, `internal/route` | no |
+| `internal/cli` | parses the arguments, runs one command, maps its result to an exit code ([`README.md`](README.md#commands)); for `layup run`, reads the two host registers and the key file, builds the adapter and hands it to `internal/run` (task `T-mqty`), and from `M2b` reads `models.tsv` and `routing.tsv` and checks each harness credential (task `T-ysph`) | `internal/psb`, `internal/setup`, `internal/verify`, `internal/gate`, `internal/run`, `internal/forge`, `internal/forge/github`, `internal/route` | no |
 | `internal/tsv` | reads and writes a record: checks the header row against a schema, the field count of each row, the types and the key; parses the `tsv-schema` blocks of `docs/spec/`, and compares a block with the Go schema of its record ([`README.md`](README.md#the-schema-block)) | — | no |
 | `internal/git` | the one caller of the `git` program: [its calls](#the-calls-of-internalgit) | — | `git` |
 | `internal/psb` | the rules G1 to G5 and the gap table ([`psb-check.md`](psb-check.md)) | `internal/tsv` | no |
@@ -75,7 +75,7 @@ reads this table, and holds no copy of it, which could differ from it.
 | `internal/gate` | runs the kinds of a gate manifest on a head ([`gate.md`](gate.md)) | `internal/tsv`, `internal/git` | `sh -c`: the gate commands |
 | `internal/setup` | the step runner of `layup setup` ([`setup.md`](setup.md)) | `internal/tsv`, `internal/git`, `internal/catalog`, `internal/work` | no |
 | `internal/verify` | the checks of `layup setup verify` ([`setup.md`](setup.md)) | `internal/tsv`, `internal/git`, `internal/catalog`, `internal/gate`, `internal/work` | `sh`: the baseline's own check scripts |
-| `internal/records` | the schemas and the row rules of the record kinds that phase 1 defines and later phases write: `telemetry.tsv` and `prices.tsv` of `REQ-011` ([`records.md`](records.md#req-011--the-telemetry-record), task `T-tmhw`), and `stalls.tsv` of `REQ-009` ([`records.md`](records.md#req-009--the-stall-record), task `T-dgy7`); and the records of Start of `M2a`, `start.tsv`, `approvers.tsv`, `lease.tsv` and `copies.tsv` ([`records.md`](records.md#nfr-001--the-records-of-start), task `T-8kqn`), which `internal/run` writes; and the records of a session of `M2b`, `sessions.tsv`, `harnesses.tsv`, `routing.tsv`, the events and the result of a task ([`records.md`](records.md#nfr-001--the-records-of-a-session), task `T-ywk7`) | `internal/tsv` | no |
+| `internal/records` | the schemas and the row rules of the record kinds that phase 1 defines and later phases write: `telemetry.tsv` and `prices.tsv` of `REQ-011` ([`records.md`](records.md#req-011--the-telemetry-record), task `T-tmhw`), and `stalls.tsv` of `REQ-009` ([`records.md`](records.md#req-009--the-stall-record), task `T-dgy7`); and the records of Start of `M2a`, `start.tsv`, `approvers.tsv`, `lease.tsv` and `copies.tsv` ([`records.md`](records.md#nfr-001--the-records-of-start), task `T-8kqn`), which `internal/run` writes; and the records of a session of `M2b`, `sessions.tsv`, `harnesses.tsv`, `routing.tsv`, the events and the result of a task ([`records.md`](records.md#nfr-001--the-records-of-a-session), task `T-ywk7`; built by task `T-3py1`) | `internal/tsv` | no |
 | `internal/standin` | for the tests only: a stand-in of the pinned baseline, and a work area set up from it, built at test time (K11; [`setup.md`](setup.md#the-checks-of-layup-setup-verify)); only test files import it | `internal/tsv`, `internal/git`, `internal/work` | no |
 
 **Decided here:** the split of `internal/setup`, `internal/verify` and
@@ -125,7 +125,7 @@ each start so adds only its cell Connects to that row of phase 1.
 | `internal/run` | `layup run`: the steps of Start, the restart, the lease and fencing, the copy of a comment and the rule of a decision ([`run.md`](run.md)); the Go schema of the table `run-steps`; the checks of `git` and of the values of the flags, which `internal/cli` calls before the first step (task `T-mqty`); in `M2b`, the step `probe`, the call that starts an attempt (the event `attempt`), the records of a session, the checks before a push, the push and the bind ([`session.md`](session.md)) | `internal/tsv`, `internal/git`, `internal/records`, `internal/forge`, `internal/route`, `internal/session`, `internal/ledger`, `internal/rules` | no | — |
 | `internal/forge` | the forge interface: the six capabilities and their types ([`forge.md`](forge.md)), `Missing` and `CheckPermissions` (task `T-6bq5`); the reader of the forge register (`host:registers/forge.tsv`), with the Go schema of its block; the check of the key file (task `T-1g1q`) | `internal/tsv` | no | — |
 | `internal/forge/github` | the GitHub adapter: the JWT, the installation token, the calls of [`forge.md`](forge.md#the-calls-of-m2a) | `internal/forge` | no | `net`, `net/http`, `crypto/tls` |
-| `internal/route` | the reader of the harness register (`host:registers/harnesses.tsv`), with the Go schema of its block; in `M2b`, the readers of `models.tsv` and `routing.tsv`, the version that needs a probe, admission and the order of the routing register ([`session.md`](session.md#req-013--the-probe-admission-and-routing)) | `internal/tsv`, `internal/records` | no | — |
+| `internal/route` | the reader of the harness register (`host:registers/harnesses.tsv`), with the Go schema of its block; in `M2b`, the columns that `M2b` adds, the readers of `models.tsv` and `routing.tsv`, the checks across the three and of a credential file (task `T-ysph`), the version that needs a probe, admission and the order of the routing register ([`session.md`](session.md#req-013--the-probe-admission-and-routing)) | `internal/tsv`, `internal/records` | no | — |
 | `cmd/layup` | (the row of phase 1) | (the row of phase 1) | (the row of phase 1) | `net`, `net/http`, `crypto/tls` |
 | `internal/cli` | (the row of phase 1, with the change below) | (the row of phase 1, with the change below) | (the row of phase 1) | `net`, `net/http`, `crypto/tls` |
 
@@ -146,21 +146,35 @@ plan review of #147): a package that a table already has keeps its one row,
 changed in place (`internal/route` and `internal/run` in the table of `M2a`,
 `internal/records` in the table of phase 1, and the calls of `internal/git`
 [below](#the-calls-of-internalgit)); this table holds only the packages that no
-table has. **`TestPackageRules` does not read this table yet:** the build task
-of the package rules of `M2b`, [row 29 of the
-plan](../plan/README.md#the-tasks-of-m2b) (the plan of #152), before any package
-of the table of `M2b` exists, extends the checker to it, as row 22a (task
-`T-esfe`) did
-for the table of `M2a`, together with the line of the engine checks and a form
-of the cell "Starts a program" for the program that a register row names
-([`session.md`](session.md#nfr-005--no-harness-in-the-engine-checks)). Until
-then this table is a specification, not a check.
+table has. `TestPackageRules` reads this table (task `T-y10b`, row 29 of [the
+plan](../plan/README.md#the-tasks-of-m2b)), and the line of the engine checks
+below it ([`session.md`](session.md#nfr-005--no-harness-in-the-engine-checks)).
 
 | Package | Job | May import | Starts a program | Connects |
 | ------- | --- | ---------- | ---------------- | -------- |
 | `internal/session` | a role session: its directory, its environment and credential, the rule-file check, the start, the limits and the stop, its end, the result file and the usage report ([`session.md`](session.md#req-013--a-role-session)) | `internal/tsv`, `internal/git`, `internal/records` | `harness` (the command of a harness register row) | — |
 | `internal/ledger` | the writer of `telemetry.tsv`: one row per session, from the usage report and `host:prices.tsv` ([`session.md`](session.md#req-011--the-writer-of-the-telemetry-record)) | `internal/tsv`, `internal/records` | no | — |
-| `internal/rules` | in `M2b`, the reader of the rule-path register and the check of a diff before a push ([`session.md`](session.md#a-workflow-or-rule-path-change)); the check `layup/rules` and rule batches come in `M2f` | `internal/tsv`, `internal/records` | no | — |
+| `internal/rules` | in `M2b`, the reader of the rule-path register and the check of a diff before a push ([`session.md`](session.md#a-workflow-or-rule-path-change)), with a second Go value of the block `rule-paths`, whose owner is `internal/setup`, compared with the block by its own test (task `T-m1dx`); the check `layup/rules` and rule batches come in `M2f` | `internal/tsv`, `internal/records` | no | — |
+
+The packages of the engine checks: `internal/psb`, `internal/verify`, `internal/gate`.
+
+**The rule of the engine checks** (NFR-005, task `T-y10b`): no package of that
+line depends on `internal/session` or on a package of rule 5, by any path; the
+rule reads no cell, so a cell Connects cannot lift it. A later engine check adds
+its package to the line. No such line, two such lines, a line with no code span,
+or a span that names no package of the module is an error of the test, so the
+rule never passes with a package left out.
+
+**A register row.** A cell "Starts a program" that is exactly one code span, one
+space and the words "(the command of a harness register row)" makes the row a
+register row: the span names the register, not a program. Its package may
+import `os/exec` (rule 4), and may start, by a call of `exec.Command` or
+`exec.CommandContext`, a program that is not a string literal: the command of a
+harness register row. A start by a string literal, a use of `exec.Command` that
+is not a call, and each other start are findings there, as elsewhere. A cell that
+holds those words and any other text cannot be read. **Known limit:** in a
+register row the scan cannot tell `git` from a harness, so rule 3 rests on review
+in that package.
 
 ### The test of the package rules
 
@@ -171,7 +185,10 @@ then this table is a specification, not a check.
   tests are untagged test files of package `main`: the binary holds no checker
   code, and the hook runs the unit part.
 - It reads the table of phase 1, [the table of M2a](#the-table-of-m2a) and the
-  line of rule 5 (task `T-esfe`). It fails on a cell that it cannot read, on a
+  line of rule 5 (task `T-esfe`), and [the table of M2b](#the-table-of-m2b) and
+  the line of the engine checks (task `T-y10b`). A row of the table of `M2b` is a
+  package of its own: a row whose cell starts with "(the row of phase 1", or
+  whose package another table has, is an error. It fails on a cell that it cannot read, on a
   missing heading or column, on a table with no row, on a row of the table of
   `M2a` that mixes cells of phase 1 and cells of its own, on such a row of
   phase 1 that the table of phase 1 lacks, and on a package in two rows. A
@@ -187,16 +204,22 @@ then this table is a specification, not a check.
   `go list -e -deps -json`.
 - Rule 3 and "Starts a program" come from a `go/ast` scan of each non-test Go
   file. A program starts with `exec.Command` or `exec.CommandContext` and a
-  string literal that is the program of the row. Each other start that the
-  scan finds is a defect: `os.StartProcess`, `syscall.Exec`,
+  string literal that is the program of the row, or, in a register row, a
+  program that is not a string literal ([the table of M2b](#the-table-of-m2b)).
+  Each other start that the scan finds is a defect: `os.StartProcess`, `syscall.Exec`,
   `syscall.ForkExec`, `syscall.StartProcess`, and an `exec.Cmd` that the code
   makes itself, whose program the scan cannot read. The scan does not read
   cgo code or a raw system call.
-- The same checker must find the breaches of rule 5, and no other, in the
-  fixture module `cmd/layup/testdata/netimport`: an import of `net/http` in
-  `cmd/layup`, outside the one package of rule 5, and an import of `net/smtp`
-  in a file behind a build constraint, whose dependency on `net` no cell
-  Connects of `internal/psb` names.
+- The same checker must find the breaches of rule 5 and of the rule of the
+  engine checks, and no other, in the fixture module
+  `cmd/layup/testdata/netimport`: an import of `net/http` in `cmd/layup`,
+  outside the one package of rule 5, and an import of `net/smtp` in a file
+  behind a build constraint, whose dependency on `net` no cell Connects of
+  `internal/psb` names, and which breaks the rule of the engine checks in
+  `internal/psb` too. In the fixture module `cmd/layup/testdata/enginedep`, it
+  must find that `internal/gate`, a package of the engine checks, depends on
+  `internal/session` (and imports it, which its row does not allow), and no other
+  breach: the start of `internal/session`, by a variable, is its register row's.
 
 Reason: `cmd/layup` is the entry of the module, and its tests already start
 programs; a new package for the test needs a row of its own, and the root

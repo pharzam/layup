@@ -38,7 +38,9 @@ layup run TARGET --host DIR
   positional argument.
 - **`--host DIR`** (decided here, K40): the directory of the LAYUP host, the root
   of each `host:` location. `layup run` reads
-  `DIR/registers/forge.tsv` and `DIR/registers/harnesses.tsv`, and keeps its own
+  `DIR/registers/forge.tsv` and `DIR/registers/harnesses.tsv`, and from `M2b`
+  `DIR/registers/models.tsv` and `DIR/registers/routing.tsv`
+  ([`session.md`](session.md#input-states)), and keeps its own
   clone of each target in `DIR/targets/OWNER/NAME/`. Reason: one flag names every
   file of the host, so a restart reads the same values; a positional argument
   would make `layup run TARGET` and `layup run --new` take it in two places.

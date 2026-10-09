@@ -264,11 +264,9 @@ from `architecture.md` §4, ADR-0015.
    (S02) and the gate commands of a target. The import rule of [`packages.md`](packages.md#nfr-007--go-the-standard-library-only-and-git-as-the-git-program)
    (no `net`, `net/http` or `crypto/tls` in a package of phase 1, by rule 5) is
    the mechanical check of the packages of phase 1. From `M2b`,
-   `internal/session` starts a harness, a model process; the build task of
-   the package rules of `M2b` ([row 29 of the
-   plan](../plan/README.md#the-tasks-of-m2b)) will add the check that no package
-   of an engine check
-   depends on it ([`session.md`](session.md#nfr-005--no-harness-in-the-engine-checks)).
+   `internal/session` starts a harness, a model process; `TestPackageRules`
+   checks that no package of an engine check depends on it (task `T-y10b`, [row
+   29 of the plan](../plan/README.md#the-tasks-of-m2b)) ([`session.md`](session.md#nfr-005--no-harness-in-the-engine-checks)).
    A gate command of a target may use the network (for example `go` that
    fetches modules); that is the target's tool, not a model call of `layup`.
 2. Each verdict of `layup gate` and `layup setup verify` is reproducible by the

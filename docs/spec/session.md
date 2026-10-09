@@ -93,6 +93,11 @@ file on the host (`credential`: an absolute path, mode 0600, owned by the user
 that runs `layup run`) and how the harness takes it (`credential_to`):
 `var:NAME`, where the variable `NAME` is the file's content without its final
 line feed; or `file:PATH`, where the file is copied to `home/PATH`, mode 0600.
+**Decided here** (task `T-ysph`): `NAME`, and the name of each fixed variable,
+is of the form `[A-Za-z_][A-Za-z0-9_]*`; `NAME` takes the prohibitions of a
+`vars` name below (a `var:PATH` would take the place of the host's `PATH`); and
+`PATH` is not empty, relative, with no part `..`, so `file:a..b` passes and `file:a/../b`
+is refused.
 Reason: harnesses take a key in a variable (`ANTHROPIC_API_KEY`,
 `CODEX_API_KEY` and others,
 `ruvnet-brain:tri-smart-skill/tri-smart/scripts/review.mjs:20-25` of the
@@ -271,7 +276,12 @@ matches, as the register's entry "each file of the tree whose name ends with
 `.sh`" names a kind of file, not the files of one tree. The exception of
 `docs/guardrails.md`: its diff (`DiffFile`) removes no line, and each added line
 lies at the head between the line that starts `## 2.` and the next line that
-starts `## `. A refused diff (`git diff --binary`) goes to the records as
+starts `## `. **Decided here** (task `T-m1dx`): the exception holds only for a
+diff read as hunks with at least one added line; a diff with no hunk, a mode
+change, a binary diff, or other text is a rule-path change; "between" excludes both boundary
+lines, so an added line that starts `## ` is refused and one under a `### `
+sub-heading passes; the exception is that one file's, as the register's block
+allows no other (`internal/rules` refuses another). A refused diff (`git diff --binary`) goes to the records as
 `payloads/<sha256>` with the event `refused`, and the change becomes a proposal
 for the next rule batch (`M2f`). **Known limit:** a target whose product holds
 shell scripts changes them only in a rule batch.
@@ -437,7 +447,7 @@ gives no usage report (3000.11.3), so its rows use `none`.
 | A host register (`harnesses.tsv`, `models.tsv`, `routing.tsv`) with two rows for a key, or a field that its type refuses | exit 2: its reader names the line |
 | A harness row with `cap` and no `{cap}` in `command`, or `{cap}` and `cap` `—` | exit 2 |
 | A `credential` that is not absolute, is missing, is not mode 0600 or has another owner | exit 2, naming the file |
-| A `credential_to` that is not `var:NAME`, `file:PATH` or `—`, or a `PATH` that is absolute or holds `..` | exit 2 |
+| A `credential_to` that is not `var:NAME`, `file:PATH` or `—`, a `NAME` of another form or of [the list above](#the-environment-and-the-harness-credential), or a `PATH` that is empty, absolute or has a part `..` | exit 2 |
 | A `vars` name of the named list, the credential's, or a name of a forge credential or an agent socket of [the list above](#the-environment-and-the-harness-credential) | exit 2 |
 | A host directory with no `registers/models.tsv` or no `registers/routing.tsv` | exit 2, "a missing or unreadable file" ([`README.md`](README.md#commands)) |
 | A `models.tsv` or `routing.tsv` row of a harness that the register lacks | exit 2 |
@@ -457,17 +467,15 @@ Requirement: "A deterministic check is preferred to an LLM judgement wherever a
 rule can be checked mechanically; the engine checks make no model call, and the
 `layup` process calls a model only through the smart-if provider." From `M2b`,
 `internal/session` starts a harness: the one model process that `layup` starts
-(ADR-0015 decision 3). **Decided here**, the check that will replace the
-phase-1 import rule ([`gate.md`](gate.md#nfr-005--no-model-call-in-the-engine-checks)):
-the build task of the package rules of `M2b`, [row 29 of the
-plan](../plan/README.md#the-tasks-of-m2b) (the plan of #152), before any package
-of the table of `M2b` exists, adds to `TestPackageRules` a line of
-`packages.md`, "The packages of the engine checks:", with one code span per
-package (`internal/psb`, `internal/verify`, `internal/gate`; a later engine
-check adds its own), and the rule that no package of that line depends on
-`internal/session` or on a package of rule 5; and a form of the cell "Starts a
-program" for a program that a register row names. Until that task, the
-phase-1 import rule stays the check of the phase-1 commands.
+(ADR-0015 decision 3). **Decided here**, the check that is added beside the
+phase-1 import rule, which stays ([`gate.md`](gate.md#nfr-005--no-model-call-in-the-engine-checks)):
+`TestPackageRules` reads a line of `packages.md`, "The packages of the engine
+checks:", with one code span per package (`internal/psb`, `internal/verify`,
+`internal/gate`; a later engine check adds its own), and checks that no package
+of that line depends on `internal/session` or on a package of rule 5; and a form
+of the cell "Starts a program" for a program that a register row names
+([`packages.md`](packages.md#the-table-of-m2b); task `T-y10b`, row 29 of [the
+plan](../plan/README.md#the-tasks-of-m2b)).
 
 ## REQ-015 and REQ-017 — The review of the release of M2b
 

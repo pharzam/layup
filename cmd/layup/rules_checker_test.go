@@ -21,8 +21,11 @@ const (
 	modulePath   = "github.com/pharzam/layup" // the module of rule 1
 	tableHeading = "### The table of phase 1"
 	m2aHeading   = "### The table of M2a"
-	adapterLine  = "The one package that imports them:" // the line of rule 5
-	phase1Cell   = "(the row of phase 1"                // a cell of the table of M2a that stands for the cell of phase 1
+	m2bHeading   = "### The table of M2b"
+	adapterLine  = "The one package that imports them:"      // the line of rule 5
+	engineLine   = "The packages of the engine checks:"      // the line of NFR-005 (session.md)
+	phase1Cell   = "(the row of phase 1"                     // a cell of the table of M2a that stands for the cell of phase 1
+	registerCell = "(the command of a harness register row)" // the words of a register row's cell Starts a program
 )
 
 var (
@@ -31,11 +34,13 @@ var (
 )
 
 // A row is one row of the tables: the packages of the module that a package
-// may import, the program that it starts ("" for no), and the packages of rule
-// 5 that it may depend on (its cell Connects of the table of M2a).
+// may import, the program that it starts ("" for no), whether it starts the
+// command that a harness register row names instead (a register row), and the
+// packages of rule 5 that it may depend on (its cell Connects).
 type row struct {
 	imports  []string
 	program  string
+	register bool
 	connects []string
 }
 
@@ -122,6 +127,13 @@ func readRow(cells []string, col map[string]int) (string, row, error) {
 	}
 	if prog := cells[col["Starts a program"]]; prog != "no" {
 		list, _ := spans(prog)
+		if len(list) == 1 && prog == "`"+list[0]+"` "+registerCell {
+			r.register = true // the span names the register, not a program
+			return pkg[0], r, nil
+		}
+		if strings.Contains(prog, registerCell) {
+			return "", row{}, fmt.Errorf("%s: a register cell is one code span and %s, and nothing else: %q", pkg[0], registerCell, prog)
+		}
 		if len(list) != 1 || !strings.HasPrefix(prog, "`") || len(strings.Fields(list[0])) == 0 {
 			return "", row{}, fmt.Errorf("%s: cannot read Starts a program %q", pkg[0], prog)
 		}
@@ -205,6 +217,36 @@ func readTable(text string) (map[string]row, error) {
 			rows[pkg[0]] = r
 		}
 	}
+	m2b, err := cellsUnder(text, m2bHeading)
+	if err != nil {
+		return nil, err
+	}
+	col, err = columns(m2b[0], m2bHeading, "Package", "Job", "May import", "Starts a program", "Connects")
+	if err != nil {
+		return nil, err
+	}
+	for _, cells := range m2b[1:] {
+		for _, name := range []string{"Job", "May import", "Starts a program"} {
+			if strings.HasPrefix(cells[col[name]], phase1Cell) {
+				return nil, fmt.Errorf("%s: a row of M2b is a package of its own; a package of another table keeps its one row", cells[col["Package"]])
+			}
+		}
+		pkg, r, err := readRow(cells, col)
+		if err != nil {
+			return nil, err
+		}
+		if _, has := rows[pkg]; has {
+			return nil, fmt.Errorf("%s has a second row", pkg)
+		}
+		if c := cells[col["Connects"]]; c != "—" {
+			list, rest := spans(c)
+			if len(list) == 0 || rest != strings.Repeat(",", len(list)-1) {
+				return nil, fmt.Errorf("%s: cannot read Connects %q", pkg, c)
+			}
+			r.connects = list
+		}
+		rows[pkg] = r
+	}
 	return rows, nil
 }
 
@@ -228,6 +270,26 @@ func readAdapter(text string) (string, error) {
 	return list[0], nil
 }
 
+// readEngine reads the packages of the engine checks: the code spans of the
+// one line that starts with engineLine. No such line, two such lines, or a
+// line with no code span is an error.
+func readEngine(text string) ([]string, error) {
+	var found []string
+	for _, l := range strings.Split(text, "\n") {
+		if strings.HasPrefix(strings.TrimSpace(l), engineLine) {
+			found = append(found, l)
+		}
+	}
+	if len(found) != 1 {
+		return nil, fmt.Errorf("%d lines start with %q, want 1", len(found), engineLine)
+	}
+	list, _ := spans(found[0])
+	if len(list) == 0 {
+		return nil, fmt.Errorf("the line %q has no code span", strings.TrimSpace(found[0]))
+	}
+	return list, nil
+}
+
 // spans gives the code spans of a cell, and the rest of the cell with no
 // space.
 func spans(cell string) ([]string, string) {
@@ -243,7 +305,7 @@ func spans(cell string) ([]string, string) {
 // go list, and from the imports of the sources, which add the files behind a
 // build constraint; rule 3 and the column Starts a program from a scan of the
 // sources.
-func checkRules(rows map[string]row, adapter string, m module) []string {
+func checkRules(rows map[string]row, adapter string, engine []string, m module) []string {
 	var f []string
 	add := func(format string, a ...any) { f = append(f, fmt.Sprintf(format, a...)) }
 	deps := map[string][]string{} // the dependencies of each package of the listing
@@ -281,6 +343,13 @@ func checkRules(rows map[string]row, adapter string, m module) []string {
 			reach = append(append(reach, imp), deps[imp]...)
 		}
 		r, hasRow := rows[rel]
+		if slices.Contains(engine, rel) { // the rule of the engine checks reads no cell
+			for _, d := range append([]string{m.path + "/internal/session"}, network...) {
+				if slices.Contains(reach, d) {
+					add("engine checks: %s depends on %s", rel, strings.TrimPrefix(d, m.path+"/"))
+				}
+			}
+		}
 		for _, d := range network {
 			switch {
 			case slices.Contains(imports, d) && rel != adapter:
@@ -293,7 +362,7 @@ func checkRules(rows map[string]row, adapter string, m module) []string {
 			add("table: %s has no row", rel)
 		}
 		for _, imp := range imports {
-			if imp == "os/exec" && hasRow && r.program == "" {
+			if imp == "os/exec" && hasRow && r.program == "" && !r.register {
 				add("rule 4: %s imports os/exec, and its row starts no program", rel)
 			}
 			if dep, ok := inModule(m.path, imp); ok && hasRow && !slices.Contains(r.imports, dep) {
@@ -307,6 +376,11 @@ func checkRules(rows map[string]row, adapter string, m module) []string {
 			case s.program == "git" && rel != "internal/git":
 				add("rule 3: %s starts git outside internal/git", s.at)
 			case !hasRow: // the finding "has no row" says it
+			case r.register && s.program != "":
+				add("Starts a program: %s starts %s; a register row starts only the command of its register", s.at, s.program)
+			case r.register && s.call != "exec.Command" && s.call != "exec.CommandContext":
+				add("Starts a program: %s starts a program that the scan cannot read", s.at)
+			case r.register: // a call whose program is the register's command
 			case s.program == "":
 				add("Starts a program: %s starts a program that the scan cannot read", s.at)
 			case s.program != r.program:
@@ -378,6 +452,9 @@ func scan(rel string, files map[string]string) []start {
 			if fn := starter(n, local); fn != "" && !seen[n] {
 				if !strings.HasPrefix(fn, "exec.") {
 					fn = "uses " + fn
+				}
+				if strings.HasPrefix(fn, "exec.") {
+					fn += " as a value" // not a call: a register row does not allow it either
 				}
 				out = append(out, start{at: at(n), call: fn}) // not a call: the program is unknown
 			}
