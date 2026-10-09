@@ -208,6 +208,9 @@ func TestARowThatTheRecordRefusesIsAnError(t *testing.T) {
 	if _, err := Row(s, observed(), prices()); err == nil {
 		t.Error("an end before the start: a row, want an error")
 	}
+	if _, err := Row(session(), observed(), [][]string{{"P-001", "claude"}}); err == nil {
+		t.Error("a price row of two columns: a row, want an error")
+	}
 	u := observed()
 	u.Cost, u.Currency = "six", "USD"
 	if _, err := Row(session(), u, prices()); err == nil || !strings.Contains(err.Error(), "six") {

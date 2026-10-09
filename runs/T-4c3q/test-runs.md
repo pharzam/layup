@@ -20,7 +20,7 @@ ledger_test.go:120: the telemetry row of S-1a2b3c4d: column money_status: a subs
 == unknown for two models
 ledger_test.go:193: a report that names two models: "computed" "11.5" "USD" "P-004", want unknown and no money, currency
 == unknown for another model
-ledger_test.go:193: a report that names one model, not the session's: "computed" "11.5" "USD" "P-004", want unknown and 
+ledger_test.go:193: a report that names one model, not the session's: "computed" "11.5" "USD" "P-004", want unknown and
 == the newest date
 ledger_test.go:122: a subscription with a cost is computed: "34.5" "USD" "computed" "P-001", want "11.5" "USD" "computed
 ledger_test.go:122: computed from the newest rows: "34.5" "USD" "computed" "P-001", want "11.5" "USD" "computed" "P-004"
@@ -48,3 +48,7 @@ ledger_test.go:209: an end before the start: a row, want an error
 ## Green (2026-10-09T13:06Z)
 
 Each with exit 0 on the tree of the commit `feat: T-4c3q …`: `go build ./...`, `go vet ./...`, `gofmt -l internal` (empty), `go test ./...`, `go test -tags=integration ./...` (with `TestPackageRules` and the new package); `adr-lint`, `prd-lint`, `link-lint`, `setup-check`, `run-discipline-tests`, `git diff --check`. The case of `3 × 0.1` per million writes `0.0000003`, where a float64 gives `3.0000000000000004e-07`.
+
+## The fix of round 1 (2026-10-09T13:35Z)
+
+Finding 1: the copied line of the mutation record kept a trailing space; it is gone, and `git diff --check ad8774d` exits 0 on this tree. Finding 2: the §6 row of `REQ-011` is back to its text at `ad8774d`; the tests are in its §12 Test cell only, now with the fifth test (note 3). Note 5: `Row` refuses a price row of another width than the block's, with a case. Each check of the green run passes again on the fix tree.

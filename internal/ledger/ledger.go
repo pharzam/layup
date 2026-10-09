@@ -56,7 +56,14 @@ const (
 // when the report gives a cost and the billing is api; else computed from the
 // tokens and the price rows of the session's harness and model, one per class,
 // of the newest date among those rows; else unknown (docs/spec/session.md).
+// prices are the rows of host:prices.tsv as records.ReadPrices gives them; a
+// row of another width is an error.
 func Row(s Session, u Usage, prices [][]string) ([]string, error) {
+	for i, r := range prices {
+		if len(r) != len(records.PricesSchema.Columns) {
+			return nil, fmt.Errorf("price row %d has %d columns, want %d: give the rows of records.ReadPrices", i+1, len(r), len(records.PricesSchema.Columns))
+		}
+	}
 	start, end := s.Start.UTC().Truncate(time.Second), s.End.UTC().Truncate(time.Second)
 	first, latency := "", ""
 	if !s.FirstOutput.IsZero() {
