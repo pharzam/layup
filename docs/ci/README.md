@@ -23,7 +23,7 @@ fixtures under [`tests/`](tests/).
 |-----|----------------|
 | `adr-lint` | `docs/adr/` discipline, via [`adr-lint.sh`](../adr/adr-lint.sh). |
 | `prd-lint` | `docs/prd/` discipline, via [`prd-lint.sh`](../prd/prd-lint.sh). |
-| `discipline-tests` | Each discipline linter against its good and bad fixtures, via [`run-discipline-tests.sh`](../tests/run-discipline-tests.sh). |
+| `discipline-tests` | Each discipline linter against its good and bad fixtures, and the fixtures of the command [`task-state.sh`](../tasks/task-state.sh), which is not a linter, via [`run-discipline-tests.sh`](../tests/run-discipline-tests.sh). |
 | `link-lint` | Every in-tree Markdown link and heading anchor, via [`link-lint.sh`](../links/link-lint.sh). |
 | `nested-checkout-check` | The linters skip a nested checkout, via [`nested-checkout-check.sh`](../tests/nested-checkout-check.sh). |
 | `setup-check` | The setup of this repository and its evidence, via [`setup-check.sh`](../setup/setup-check.sh) and its fixtures. |
@@ -99,10 +99,12 @@ its output. A renamed or removed **job** blocks every merge until the setting
 follows it (the check name is the job's `name:` or its id, never the workflow's
 name), which is the right direction of failure, loud and where the gate lives.
 `enforce_admins: true` binds the operator too. `strict: true` enforces the rule
-to rebase onto the latest `origin/main` before a merge, at a price: with a plain
-merge, every merge to the default branch makes the up-to-date status of every
-other open pull request stale, so a queue of pull requests becomes rebase, re-run,
-merge. And a required check is only as trustworthy as the script it runs: the
+to bring a branch up to the latest `origin/main` before a merge (by a merge of
+`origin/main`, for a branch on the forge:
+[Integrating branches](../engineering-discipline.md#integrating-branches)), at a
+price: with a plain merge, every merge to the default branch makes the up-to-date
+status of every other open pull request stale, so a queue of pull requests
+becomes update, re-run, merge. And a required check is only as trustworthy as the script it runs: the
 restore step above closes that for the check scripts, but the Go jobs run the pull
 request's own Go code and tests (the Invariant 3 gap, ADR-0011, O-9).
 

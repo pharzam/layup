@@ -670,6 +670,17 @@ These traps are not domain-specific: they hurt every project's test suite.
   date as `Z` in git 2.54 and as `+00:00` in older versions, so a test that
   compares the text passes on one host only. Task `T-d6q5` (#92) met it.
   **The check:** compare `%at` and `%ct`, the seconds since the epoch.
+- ❌ **A byte-for-byte fixture suite on a checkout with carriage returns.** A
+  new suite whose runner compares the output with an `EXPECT` file, and whose
+  reader matches a line exactly (`$0 == "## Now"`), passes on every host that
+  keeps line feeds. With `core.autocrlf=true`, git's default on Windows, every
+  input and `EXPECT` arrive with carriage returns: each case fails, and the
+  command in real use drops the tasks under `## Now` with exit 0. Only the
+  linters' own fixtures had a `*crlf*` case, so nothing caught it until round 1
+  of `T-eep8` (#175). **The check:** a new reader strips carriage returns from
+  its inputs, its runner strips them from `EXPECT`, and the suite has a case
+  named `*crlf*`, CRLF throughout and pinned `eol=crlf` in `.gitattributes`,
+  so `run-discipline-tests.sh` checks that it keeps them.
 
 ### Reference-sweep pitfalls
 

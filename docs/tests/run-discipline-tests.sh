@@ -308,6 +308,8 @@ run_file_suite docs/ci/pr-link-lint.sh docs/ci/tests/pr-link  .md  pr-link-lint
 run_file_suite docs/ci/review-record-lint.sh docs/ci/tests/review-record .md review-record-lint
 run_file_suite .githooks/commit-msg    .githooks/tests/commit-msg  .txt  commit-msg
 run_dir_suite  docs/links/link-lint.sh        docs/links/tests    link-lint
+# Not a linter: the fixture suite of a command, whose run.sh gives the contract above.
+run_dir_suite  docs/tasks/tests/run.sh       docs/tasks/tests    task-state
 
 # Repository-wide, so they run once rather than per suite. Both, for the reason
 # written above them: the case-name check survives a deleted pin, the pin check
