@@ -1,0 +1,9 @@
+# Completed
+
+<!--
+- **YYYY-MM-DD** — **<ID>** — an example line in a comment
+-->
+
+- **2026-10-03** — **T-bbb1** — The third ([#3](https://example.invalid/3))
+- **2026-10-02** — **T-aaa2** — The second ([#2](https://example.invalid/2))
+- **2026-10-01** — **T-aaa1** — The first, which names **T-bbb2** in passing ([#1](https://example.invalid/1))

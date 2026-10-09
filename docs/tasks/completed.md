@@ -20,6 +20,7 @@ here directly, in the shape above.
 - **YYYY-MM-DD** — **<ID>** — <one-sentence summary of what the task found or delivered> ([<link>](...); [detail](<id>.md))
 -->
 
+- **2026-10-09** — **T-eep8** — The state of each task: `task-state.sh` prints `done`, `in review`, `running`, `blocked` or `ready` for each task of the current milestone and the backlog, derived from the plan and the forge, and a task is claimed by pushing its branch at its start; serves `F-0003#52` ([#175](https://github.com/pharzam/layup/issues/175); [detail](T-eep8.md))
 - **2026-10-09** — **T-z5dj** — Row 31 of `M2b`: the calls of `M2b` of `internal/git`, `CloneLocal`, `FetchSession` (a hostile session runs none of 47 keys), `IsAncestor`, `DiffFile`, `DiffBinary` ([#157](https://github.com/pharzam/layup/issues/157); [detail](T-z5dj.md))
 - **2026-10-09** — **T-m1dx** — Row 32 of `M2b`: the rule-path check before a push, `internal/rules`, the register, the match and the exception of `docs/guardrails.md` ([#158](https://github.com/pharzam/layup/issues/158); [detail](T-m1dx.md))
 - **2026-10-09** — **T-ysph** — Row 30a of `M2b`: the host registers of `M2b`, the ten columns of the harness register, `models.tsv`, `routing.tsv`, the checks across them and of a credential, read by `layup run` ([#155](https://github.com/pharzam/layup/issues/155); [detail](T-ysph.md))
