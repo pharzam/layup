@@ -86,8 +86,11 @@ command or the rule, so they are #182.
 
 Delivered: the command that prints the state of each task, its fixture suite,
 and the claim rule that makes a started task visible to it. The review ended by
-decay at cycle 1, under the cap of 2. The diff against `ad8774d` is inside 900
-lines over 140 files. Next: #182; PR #177 (the backlog line of this task) is
+decay at cycle 1, under the cap of 2. **Over budget:** the diff against
+`ad8774d` with this close-out is 951 lines added plus removed over 67 files,
+against a maximum of 900 over 140; it was 826 at the frozen head `1185d2c`, and
+the close-out (this file, the lesson in `guardrails.md` §2, the completed line)
+crossed it. The Operator decides whether it merges as it is. Next: #182; PR #177 (the backlog line of this task) is
 superseded by this pull request, which records the task in the completed log.
 
 ## Resource record
