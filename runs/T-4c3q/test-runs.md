@@ -52,3 +52,14 @@ Each with exit 0 on the tree of the commit `feat: T-4c3q …`: `go build ./...`,
 ## The fix of round 1 (2026-10-09T13:35Z)
 
 Finding 1: the copied line of the mutation record kept a trailing space; it is gone, and `git diff --check ad8774d` exits 0 on this tree. Finding 2: the §6 row of `REQ-011` is back to its text at `ad8774d`; the tests are in its §12 Test cell only, now with the fifth test (note 3). Note 5: `Row` refuses a price row of another width than the block's, with a case. Each check of the green run passes again on the fix tree.
+
+## The note of round 2 (2026-10-09T13:53Z)
+
+The mutation of the rule "a class lacks a row" (`len(byClass) != 3` taken out, on a copy, put back after): the test fails, by a panic on the class with no row, not at its assertion:
+
+```
+--- FAIL: TestEachReasonOfAnUnknownMoney (0.00s)
+panic: runtime error: index out of range [4] with length 0 [recovered, repanicked]
+	/home/layup/projects/layup/.worktree/T-4c3q/internal/ledger/ledger_test.go:70 +0xf8
+	/home/layup/projects/layup/.worktree/T-4c3q/internal/ledger/ledger_test.go:198 +0x5226
+```

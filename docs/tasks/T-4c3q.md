@@ -39,3 +39,36 @@ not the start row's gives `unknown`.
 
 **The rejected alternatives:** the writer in `internal/run`; a money computed
 from partial tokens; a rounding rule.
+
+## Review rounds
+
+The records and the Fixes reply are comments on #163. Round 1 (Claude Fable
+5.1; `499c66b`, cycle 0): `material`, two findings (a trailing space in the
+record, while it said `git diff --check` passed; the tests written into the §6
+Facts cell of `REQ-011` too), fixed in `7ab16d4` with notes 3 to 5. Round 2
+(Fable; `7ab16d4`, cycle 1): `nothing material in scope`, one note, applied in
+the close-out: the mutation of "a class lacks a row" is in the record (it fails
+by a panic). The branch took `origin/main` by a merge, so the reviewed head
+stays.
+
+## Verdict
+
+Delivered: `internal/ledger`, the writer of one telemetry row per session, its
+money exact. The review ended by decay at cycle 1, the cap. The diff against
+`ad8774d`, the branch's base, is inside 650 lines over 11 files. Next: rows 36b
+and 38 commit its rows.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). UTC, 2026-10-09; reviewers' tokens are
+`modelUsage`; the author's are not reported.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan | reasoning | Claude Opus 5.5 | not reported | not reported | 12:38 to 12:41 |
+| The plan review | reasoning | Claude Fable 5.1 | `xhigh` | 1,193,037 (USD 5.55) | 8 min 5 s |
+| The code, test first | execution | Claude Opus 5.5 | not reported | not reported | 13:01 to 13:07 |
+| Round 1 | reasoning | Claude Fable 5.1 | `xhigh` | 892,239 (USD 4.35) | 9 min 42 s |
+| The fix of round 1 | execution | Claude Opus 5.5 | not reported | not reported | 13:33 to 13:36 |
+| Round 2 | reasoning | Claude Fable 5.1 | `xhigh` | 809,412 (USD 4.21) | 9 min 14 s |
+| The close-out | execution | Claude Opus 5.5 | not reported | not reported | 13:52 to 13:55 |
