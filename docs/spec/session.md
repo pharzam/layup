@@ -459,7 +459,9 @@ rule can be checked mechanically; the engine checks make no model call, and the
 `internal/session` starts a harness: the one model process that `layup` starts
 (ADR-0015 decision 3). **Decided here**, the check that will replace the
 phase-1 import rule ([`gate.md`](gate.md#nfr-005--no-model-call-in-the-engine-checks)):
-the build task of `internal/session` adds to `TestPackageRules` a line of
+the build task of the package rules of `M2b`, [row 29 of the
+plan](../plan/README.md#the-tasks-of-m2b) (the plan of #152), before any package
+of the table of `M2b` exists, adds to `TestPackageRules` a line of
 `packages.md`, "The packages of the engine checks:", with one code span per
 package (`internal/psb`, `internal/verify`, `internal/gate`; a later engine
 check adds its own), and the rule that no package of that line depends on
@@ -472,12 +474,13 @@ phase-1 import rule stays the check of the phase-1 commands.
 Their criteria: "No code path of LAYUP modifies base LLM weights or trains a
 custom foundation model; a code review of each release records it", and "No
 code path of LAYUP calls a cloud provider or hosting platform to modify it; a
-code review of each release records it". **Decided here:** the demo task
-of `M2b` records a code review of its release (the non-test Go files of `cmd/`
-and `internal/`, `go.mod` and the files that the binary embeds, at the commit
-that the demo runs) by a reviewer of a model that wrote none of it, as task
-`T-efmy` did for phase 1, with `runs/T-efmy/release-check.sh` adapted in that
-task: its check 4 allows the verbs of `Fetch`, `Push` and `FetchSession`, and a
+code review of each release records it". **Decided here:** a task of
+its own, before the demo (row 39a of [the plan](../plan/README.md#the-tasks-of-m2b),
+O-187 of #152), records a code review of the release of `M2b` (the non-test Go
+files of `cmd/` and `internal/`, `go.mod` and the files that the binary embeds,
+the code that the demo runs) by a reviewer of a model that wrote none of it, as
+task `T-efmy` did for phase 1, with `runs/T-efmy/release-check.sh` adapted in
+that task: its check 4 allows the verbs of `Fetch`, `Push` and `FetchSession`, and a
 new list names each program that the code starts (`git`, `sh`, the command of a
 harness register row). The review reads the whole release, so it covers the
 code of `M2a` too (#148). A session runs under the Operator's user and can reach
@@ -518,4 +521,5 @@ Gemini CLI and OpenCode, added when a registered harness needs one.
 | The writer | unit | One row per session that `CheckTelemetry` passes; money `reported`, `computed` or `unknown` by the billing, the prices and the models. |
 | The records of a session | integration | Each new record kind is refused with a wrong header; its Go schema equals its block (`tsv.Compare`), and the owner moves its name from `notYetBuilt` to `built`. |
 | The step `probe` | e2e | In CI with no secret: the binary, a local fake forge and a scripted harness: Start, then a restart whose step `probe` probes the harness, writes its rows, and posts one comment on the control issue whose first line starts with the probe's session ID; the same bytes on a repeat in a new world, as the first run changes the records ([`README.md`](README.md#commands), Determinism). |
-| The demo | uat | With the Operator's credentials: the probe of each registered harness (at least two), then one developer session from the uat test whose commit lands on `task/<task>/1`, with its telemetry row; and the review of the release (`REQ-015`, `REQ-017`). |
+| The review of the release | uat | A recorded code review of the release for `REQ-015` and `REQ-017`, by a reviewer of a model that wrote none of it, with the adapted `release-check.sh`, before the demo (row 39a of [the plan](../plan/README.md#the-tasks-of-m2b), O-187). |
+| The demo | uat | With the Operator's credentials: the probe of each registered harness (at least two), then one developer session from the uat test whose commit lands on `task/<task>/1`, with its telemetry row. |

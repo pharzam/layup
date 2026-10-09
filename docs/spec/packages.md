@@ -147,7 +147,10 @@ changed in place (`internal/route` and `internal/run` in the table of `M2a`,
 `internal/records` in the table of phase 1, and the calls of `internal/git`
 [below](#the-calls-of-internalgit)); this table holds only the packages that no
 table has. **`TestPackageRules` does not read this table yet:** the build task
-of `internal/session` extends the checker to it, as row 22a (task `T-esfe`) did
+of the package rules of `M2b`, [row 29 of the
+plan](../plan/README.md#the-tasks-of-m2b) (the plan of #152), before any package
+of the table of `M2b` exists, extends the checker to it, as row 22a (task
+`T-esfe`) did
 for the table of `M2a`, together with the line of the engine checks and a form
 of the cell "Starts a program" for the program that a register row names
 ([`session.md`](session.md#nfr-005--no-harness-in-the-engine-checks)). Until
