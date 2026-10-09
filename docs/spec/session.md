@@ -259,8 +259,8 @@ configuration is `layup`'s, and reads the session's objects as data. The head
 must descend from the base (`IsAncestor`), else the result is refused (`base`).
 Each later check reads only that SHA in `layup run`'s clone, so a later change in
 `repo/` cannot change what is checked and pushed. The integration test of
-`FetchSession` writes into `repo/.git/config` each key of git's documentation
-that starts a program, and fails when one runs, as the test of `internal/git`
+`FetchSession` writes into `repo/.git/config` each key that `git help --config` of the host's
+`git` lists and that starts a program (task `T-z5dj`, O-188 of #157), and fails when one runs, as the test of `internal/git`
 does for the host's configuration (`TestAHostileHostChangesNothing`).
 
 ### A workflow or rule-path change
