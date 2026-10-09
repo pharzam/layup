@@ -300,7 +300,7 @@ result enum(passed|failed) - the probe's result
 reason text - why it failed: the reason of a refused start (`version`, `rules`, `context`), the class of its end, `outside`, `not-used`, `token` or `files`; `—` when `passed`
 files list(text) - each instruction file that the harness reported, as it wrote it; `—` for none
 models list(text) - each model of its usage report; `—` when the report names none
-end time - when the probe ended
+end time - when the probe ended, or when its start was refused
 ```
 
 ```tsv-schema routing-register host:registers/routing.tsv

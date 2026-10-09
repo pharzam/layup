@@ -35,8 +35,8 @@ A session is started only by `layup run` (ADR-0015 decision 3), through one
 call of `internal/session`, which takes the target, the task and its attempt,
 the role, the base commit, the records commit that the prompt was built from,
 the prompt's text and the admitted pair. In this order: the session ID; the
-version check, the context check and the rule-file check (each can refuse the
-start); the start row, pushed; the process, under its limits; its end; and for a task session the
+attempt check, the version check, the context check and the rule-file check
+(each can refuse the start); the start row, pushed; the process, under its limits; its end; and for a task session the
 checks before a push, the push and the bind ([REQ-003](#req-003--before-a-push)).
 
 ### The session directory
@@ -121,7 +121,7 @@ the Operator's error, which no reader can see. Example: Claude Code's `WebFetch`
 
 Before the start (ADR-0015 decision 4), code looks in each directory from the
 session directory up to `/` for each rule-file name of the row's `rules`; a
-file found refuses the start (event `refused`, with the path), as the harness
+file found refuses the start (event `refused`, `rules` and the path), as the harness
 would load it. Each path of the row's `policy` that exists is recorded in the
 start row (`policy`), and the start goes on (L-A5). The rule files inside
 `repo/` are the target's own: `AGENTS.md` and the harness's entry file that
@@ -139,12 +139,16 @@ attempt ([Input states](#input-states)).
 
 1. **The ID**: `S-` and 8 random lowercase hexadecimal characters, new for each
    session ([`records.md`](records.md#req-011--the-telemetry-record)), drawn
-   first, so that each refusal below names its session.
+   first, so that each refusal below names its session. Then the attempt
+   check: a task session whose attempt has no event `attempt` is refused
+   (`attempt`).
 2. **The version.** Code runs the row's `version` command, with the
    environment above and no credential, and takes the first line of its
    standard output, with no space at either end, as the version. A version that
    `records:harnesses.tsv` holds with a passed probe goes on; any other runs
-   [the probe](#the-probe) first, and a probe that fails refuses the start. A
+   [the probe](#the-probe) first, and a probe that fails refuses the start
+   (`probe`). A probe session's own version check takes the version and runs
+   no probe. A
    version command that exits non-zero or prints nothing refuses it
    (`version`). No model is called (NEEDLE, mco: the search).
 3. **[The context check](#the-context-of-a-start)** and **[the rule-file
@@ -175,7 +179,8 @@ telemetry row.
 
 As §9: the bytes of `prompt.md`, over four and rounded up (**decided here**),
 are the estimate; `context` of the model's row in `models.tsv` is the size. An
-estimate over the size refuses the start (event `refused`, both numbers); a
+estimate over the size refuses the start (event `refused`, `context` and both
+numbers); a
 session that starts has both numbers in its start row.
 
 ### The limit of a session
@@ -347,8 +352,10 @@ telemetry row, or the row of `harnesses.tsv` alone when its start was refused.
 It runs at the step `probe` of `layup run`, in the restart after `lease` and
 before `phase` ([`run.md`](run.md#the-restart)), for each harness of the
 register whose version has no passed probe, and before any session whose version
-check finds none. The step is `done` when each such harness was probed, passed
-or failed, with the counts in `detail`; it is `fail` when a probe could not run
+check finds none. **Decided here:** a harness with no model of `use` `yes` is
+not probed and gets no row, as a probe needs a model; the step counts it as
+skipped. The step is `done` when each such harness was probed, passed or
+failed, or skipped, with the three counts in `detail`; it is `fail` when a probe could not run
 its records. **Decided here:** the block `run-steps` is built, so the build task
 of the probe adds `probe` to its enum, with its Go schema, in one change
 (condition 1 of the plan review of #147).
@@ -429,7 +436,7 @@ gives no usage report (3000.11.3), so its rows use `none`.
 | A `vars` name of the named list, the credential's, or a name of a forge credential or an agent socket of [the list above](#the-environment-and-the-harness-credential) | exit 2 |
 | A host directory with no `registers/models.tsv` or no `registers/routing.tsv` | exit 2, "a missing or unreadable file" ([`README.md`](README.md#commands)) |
 | A `models.tsv` or `routing.tsv` row of a harness that the register lacks | exit 2 |
-| A harness with no model of `use` `yes` | not an error: no pair of it is admitted |
+| A harness with no model of `use` `yes`, or with no row of `models.tsv` | not an error: the step `probe` skips it, and no pair of it is admitted |
 | A version command that fails, or prints nothing | the start is refused (`version`) |
 | A result file that is missing, over 1 MiB, malformed, or has two `status` rows | `no-result`; the result is refused |
 | A `probe.tsv` with no token, another token, or no `AGENTS.md` row | the probe fails, with the reason |
@@ -498,7 +505,8 @@ Gemini CLI and OpenCode, added when a registered harness needs one.
 | The result of a session | integration | A result file of the block `result` is committed byte for byte with the event `result`; an artifact whose SHA-256 differs at the head adds the event `refused` (`artifact`); the session ID, the task, the role, the attempt and the base come from the start row. |
 | The open attempt | unit | With a stand-in events table, a result whose attempt was closed, replaced or rebased is refused; the attempt and the base come from the start row; a session with no event `attempt` of its attempt is refused at its start. |
 | Before a push | integration | With the real `git` and a local bare repository: the head read from the files of `repo/.git` (a loose ref, a packed ref; a link, a symbolic ref, a malformed loose ref, no ref and a SHA of no commit refused); the fetch through the scratch repository with hooks off; a session configuration that holds each key of git's documentation that starts a program runs none of them; a head that does not descend from the base is refused; a change of `.github/workflows/` and of a rule path is refused before any push, its diff a payload; added lines in §2 of `docs/guardrails.md` pass; the SHA is bound only after the push is accepted. |
-| The probe and admission | unit | With a fake harness: the version check; a probe that passes, one that reports a `policy` path and passes, and one that fails for each reason; admission by the probe and `use`. |
+| The probe and admission | unit | With a fake harness: the version check; a probe that passes, one that reports a `policy` path and passes, and one that fails for each reason; admission by the probe and `use`; a harness with no model of `use` `yes` is skipped. |
+| A refused start | unit | A refused start of a task session is an event `refused` with its session ID, its reason (`attempt`, `version`, `probe`, `context`, `rules`) and no row of `sessions.tsv` or `telemetry.tsv`; the refusal `pair` has `—` for the session; a probe's refused start is its row of `harnesses.tsv`, `failed`, with `version` `—` when the version check refused it. |
 | The routing register | unit | `host:registers/routing.tsv` is copied into `records:routing.tsv` at the step `probe` when the two differ, and not when they are equal; the session's pair is the first admitted pair of the role's list for the task's tier; with none, the start is refused (`pair`). |
 | The usage report | unit | `claude-result` on two recorded `result` events of Claude Code 2.1.295 (one with subagents and a second model) sums `modelUsage`; `none` gives `unavailable` and `unknown`. |
 | The writer | unit | One row per session that `CheckTelemetry` passes; money `reported`, `computed` or `unknown` by the billing, the prices and the models. |
