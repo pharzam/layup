@@ -1,0 +1,89 @@
+file	heading	sub	row
+docs/spec/session.md	## REQ-013 — A role session	the one call of internal/session and the order of its steps	34a
+docs/spec/session.md	### The session directory	the directory, its clone, home/ and tmp/, and the removal of a directory that a stopped run left	33a
+docs/spec/session.md	### The session directory	the removal after the session's records are pushed	36b
+docs/spec/session.md	### The environment and the harness credential	—	33a
+docs/spec/session.md	### Rules only from the target	—	33b
+docs/spec/session.md	### The start of a session	the call that starts an attempt (the event attempt), and the attempt check of step 1	36a
+docs/spec/session.md	### The start of a session	step 1: the session ID	33b
+docs/spec/session.md	### The start of a session	step 2: the version check	34a
+docs/spec/session.md	### The start of a session	step 3: the context check, the size check of the prompt and the rule-file check	33b
+docs/spec/session.md	### The start of a session	step 4: the start row and the event session, pushed before the process	36a
+docs/spec/session.md	### The start of a session	step 5: the process	34a
+docs/spec/session.md	### The start of a session	a refused start of a task session	36a
+docs/spec/session.md	### The start of a session	the refusal pair	30b
+docs/spec/session.md	### The start of a session	a probe's refused start	38
+docs/spec/session.md	### The context of a start	—	33b
+docs/spec/session.md	### The limit of a session	—	34a
+docs/spec/session.md	### The end of a session	—	34b
+docs/spec/session.md	## REQ-003 — Before a push	the checks of a task session whose end is done	37a
+docs/spec/session.md	### The fetch by SHA	the head read from the files of repo/.git	33b
+docs/spec/session.md	### The fetch by SHA	the fetch through FetchSession and the check of the base	37a
+docs/spec/session.md	### A workflow or rule-path change	the reader of rule-paths.tsv, the match, the exception of docs/guardrails.md, the refusal of .github/workflows/	32
+docs/spec/session.md	### A workflow or rule-path change	the call before a push, the refused diff as a payload, the proposal	37a
+docs/spec/session.md	### The push and the bind	—	37b
+docs/spec/session.md	### A comment for a session	the comment of a task session	36b
+docs/spec/session.md	### A comment for a session	the comment of a probe	38
+docs/spec/session.md	## REQ-005 — The result of a session	—	36b
+docs/spec/session.md	### The open attempt	—	36b
+docs/spec/session.md	## REQ-013 — The probe, admission and routing	—	none: a heading with no text of its own; its sections are in their rows
+docs/spec/session.md	### The probe	—	38
+docs/spec/session.md	### Admission	—	30b
+docs/spec/session.md	### The routing register	the copy into records:routing.tsv at the step probe	38
+docs/spec/session.md	### The routing register	the first admitted pair of the role's list for the task's tier, and the refusal pair	30b
+docs/spec/session.md	## REQ-011 — The writer of the telemetry record	—	35
+docs/spec/session.md	### The usage report of a harness	—	34b
+docs/spec/session.md	## Input states	rows 1 to 7: the host registers, the credential, credential_to, vars, the missing files, a row of an unknown harness	30a
+docs/spec/session.md	## Input states	row 8: a harness with no model of use yes	30b
+docs/spec/session.md	## Input states	row 9: a version command that fails	34a
+docs/spec/session.md	## Input states	row 10: a result file that is missing, too large or malformed	34b
+docs/spec/session.md	## Input states	row 11: a probe.tsv that fails	38
+docs/spec/session.md	## Input states	row 12: stdout with no result object	34b
+docs/spec/session.md	## Input states	row 13: a task with no event attempt	36a
+docs/spec/session.md	## Input states	row 14: a prompt.md over 131,071 bytes	33b
+docs/spec/session.md	## Input states	row 15: a malformed ref of repo/.git	33b
+docs/spec/session.md	## Input states	row 16: a records push that is refused	36a
+docs/spec/session.md	## NFR-005 — No harness in the engine checks	—	29
+docs/spec/session.md	## REQ-015 and REQ-017 — The review of the release of M2b	—	39a
+docs/spec/session.md	## Not in M2b	—	none: the parts of later milestones
+docs/spec/session.md	## The acceptance tests of M2b	The session directory: the clone, home/ and tmp/, and the removal of a directory that a stopped run left	33a
+docs/spec/session.md	## The acceptance tests of M2b	The session directory: the removal after the session's records are pushed	36b
+docs/spec/session.md	## The acceptance tests of M2b	The environment	33a
+docs/spec/session.md	## The acceptance tests of M2b	Rules only from the target	33b
+docs/spec/session.md	## The acceptance tests of M2b	The start, the limit and the end: the start row pushed before the process	36a
+docs/spec/session.md	## The acceptance tests of M2b	The start, the limit and the end: the fake that waits for its input, the stop at wall, the output cap	34a
+docs/spec/session.md	## The acceptance tests of M2b	The start, the limit and the end: each class of the end	34b
+docs/spec/session.md	## The acceptance tests of M2b	The context of a start	33b
+docs/spec/session.md	## The acceptance tests of M2b	The result of a session	36b
+docs/spec/session.md	## The acceptance tests of M2b	The open attempt: a result of a closed, replaced or rebased attempt	36b
+docs/spec/session.md	## The acceptance tests of M2b	The open attempt: a session with no event attempt of its attempt	36a
+docs/spec/session.md	## The acceptance tests of M2b	Before a push: the head read from the files of repo/.git	33b
+docs/spec/session.md	## The acceptance tests of M2b	Before a push: the session configuration that holds each key that starts a program	31
+docs/spec/session.md	## The acceptance tests of M2b	Before a push: the fetch with hooks off, and a head that does not descend from the base	37a
+docs/spec/session.md	## The acceptance tests of M2b	Before a push: a change of .github/workflows/ or of a rule path refused before any push, its diff a payload	37a
+docs/spec/session.md	## The acceptance tests of M2b	Before a push: added lines in §2 of docs/guardrails.md pass	32
+docs/spec/session.md	## The acceptance tests of M2b	Before a push: the SHA bound only after the push is accepted	37b
+docs/spec/session.md	## The acceptance tests of M2b	The probe and admission: the version check	34a
+docs/spec/session.md	## The acceptance tests of M2b	The probe and admission: a probe that passes, one with a policy path, one that fails for each reason, and the skip	38
+docs/spec/session.md	## The acceptance tests of M2b	The probe and admission: admission by the probe and use	30b
+docs/spec/session.md	## The acceptance tests of M2b	A refused start: a task session's refusals	36a
+docs/spec/session.md	## The acceptance tests of M2b	A refused start: the refusal pair	30b
+docs/spec/session.md	## The acceptance tests of M2b	A refused start: a probe's refused start	38
+docs/spec/session.md	## The acceptance tests of M2b	The routing register: the copy at the step probe	38
+docs/spec/session.md	## The acceptance tests of M2b	The routing register: the pair and its refusal	30b
+docs/spec/session.md	## The acceptance tests of M2b	The usage report	34b
+docs/spec/session.md	## The acceptance tests of M2b	The writer	35
+docs/spec/session.md	## The acceptance tests of M2b	The records of a session: sessions, harnesses, routing, events, result	28
+docs/spec/session.md	## The acceptance tests of M2b	The records of a session: models, routing-register	30a
+docs/spec/session.md	## The acceptance tests of M2b	The records of a session: probe-result	34b
+docs/spec/session.md	## The acceptance tests of M2b	The step `probe`	38
+docs/spec/session.md	## The acceptance tests of M2b	The demo	39b
+docs/spec/records.md	## NFR-001 — The records of a session	the blocks sessions, harnesses, routing, events, result, and the row rules in words	28
+docs/spec/records.md	## NFR-001 — The records of a session	the blocks models, routing-register, and the columns that M2b adds to harness-register	30a
+docs/spec/records.md	## NFR-001 — The records of a session	the block probe-result	34b
+docs/spec/records.md	## NFR-001 — The records of a session	the rule of payloads/<sha256>	37a
+docs/spec/records.md	## NFR-001 — The records of a session	the session directory is not a record	33a
+docs/spec/packages.md	### The table of M2b	the table read by TestPackageRules, the line of the engine checks, the form of Starts a program for a register row	29
+docs/spec/packages.md	**The calls of `M2b`**	CloneLocal, FetchSession, IsAncestor, DiffFile, DiffBinary	31
+docs/spec/run.md	## The command	probe in the enum of the block run-steps, with its Go schema	38
+docs/spec/README.md	## Commands	the read of PATH that TestInputRule allows	33a
