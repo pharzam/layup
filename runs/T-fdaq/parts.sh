@@ -11,7 +11,7 @@ acc='## The acceptance tests of M2b'
 out=$(mktemp)
 fail=0
 # 1. Each heading of session.md outside a fenced block is in the list.
-awk '/^```/{f=!f; next} !f && /^#{2,3} /' "$spec" | while IFS= read -r h; do
+awk '/^```/{f=!f; next} !f && (/^## / || /^### /)' "$spec" | while IFS= read -r h; do
 	grep -Fq "$spec	$h	" "$tab" || echo "FAIL a heading of $spec has no part: $h"
 done >> "$out"
 # 2. Each part (file, heading, sub) is listed once.

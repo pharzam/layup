@@ -77,6 +77,7 @@ docs/spec/session.md	## The acceptance tests of M2b	The records of a session: se
 docs/spec/session.md	## The acceptance tests of M2b	The records of a session: models, routing-register	30a
 docs/spec/session.md	## The acceptance tests of M2b	The records of a session: probe-result	34b
 docs/spec/session.md	## The acceptance tests of M2b	The step `probe`	38
+docs/spec/session.md	## The acceptance tests of M2b	The review of the release	39a
 docs/spec/session.md	## The acceptance tests of M2b	The demo	39b
 docs/spec/records.md	## NFR-001 — The records of a session	the blocks sessions, harnesses, routing, events, result, and the row rules in words	28
 docs/spec/records.md	## NFR-001 — The records of a session	the blocks models, routing-register, and the columns that M2b adds to harness-register	30a

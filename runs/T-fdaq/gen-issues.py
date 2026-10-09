@@ -7,7 +7,8 @@ row come from runs/T-fdaq/parts.tsv, so the issue, the table and the check
 parts.sh read one list. With --post, the script opens one issue per row through
 the layup-agent App (the token from ~/.config/layup-agent/app-token.sh) and
 writes runs/T-fdaq/issues.tsv (row, task, issue). With --body ROW, it prints the
-body of one row's issue. With --table, it prints the table of
+body of one row's issue; with --edit ROW..., it writes the body of each named
+row's issue again (the fixes of round 1). With --table, it prints the table of
 docs/plan/README.md from ROWS, parts.tsv and issues.tsv. A one-off evidence
 command, not a check of the gate.
 
@@ -78,7 +79,7 @@ ROWS = [
      "With a fake harness program, each way a session ends gets its class: `done`, `start`, `crash`, `no-result`, `wall` or `output`.",
      "`internal/session`", "REQ-013, REQ-005, REQ-011", "F-0003#52, F-0003#50",
      "unit (the usage report on two recorded `result` events); integration (each class of the end); the block test (`probe-result` to `built`)",
-     "large", "600", "34a",
+     "large", "600", "28, 34a",
      "2: the end (the classes, the result file); the usage report"),
     ("35", "T-4c3q", "The writer of the telemetry record",
      "One row per session passes `CheckTelemetry`, with its money `reported`, `computed` or `unknown` by the billing, the prices and the models.",
@@ -89,7 +90,7 @@ ROWS = [
      "Against the `httptest` forge and a local bare repository, a task session's start row is pushed before its fake harness starts.",
      "`internal/run`", "REQ-013, NFR-001", "F-0003#52",
      "unit (each refused start; the attempt); integration (a task session with a fake harness, the `httptest` forge, a local bare repository)",
-     "large", "600", "28, 30b, 34a",
+     "large", "600", "28, 30b, 33b, 34a",
      "2: the attempt and the start row before the process; a refused start"),
     ("36b", "T-fsjp", "The result and the end of a task session",
      "A task session's result file is committed byte for byte as `tasks/<task>/results/<session>.tsv`, in the records commit that holds its telemetry row.",
@@ -157,7 +158,7 @@ def parts():
     with open(PARTS) as f:
         for ln in f.read().splitlines()[1:]:
             file, heading, sub, row = ln.split("\t")
-            name = file.rsplit("/", 1)[1]
+            name = file if file.endswith("README.md") else file.rsplit("/", 1)[1]
             h = heading.lstrip("#").strip().strip("*")
             text = f"`{name}`: {h}" + ("" if sub == "—" else f" ({sub})")
             out.setdefault(row, []).append(text)
@@ -222,6 +223,30 @@ def post():
             f.write("\n".join(lines) + "\n")
 
 
+def edit(rows):
+    """Write the body of each named row's issue again, as the App."""
+    p = parts()
+    nums = {}
+    with open(ISSUES) as f:
+        for ln in f.read().splitlines()[1:]:
+            row, task, num = ln.split("\t")
+            nums[row] = num
+    token = subprocess.run([os.path.expanduser("~/.config/layup-agent/app-token.sh")],
+                           capture_output=True, text=True, check=True).stdout.strip()
+    env = dict(os.environ)
+    env["GH_TOKEN"] = token
+    env["GH_PROMPT_DISABLED"] = "1"
+    for r in ROWS:
+        if r[0] not in rows:
+            continue
+        with tempfile.NamedTemporaryFile("w", suffix=".md", delete=False) as f:
+            f.write(body(r, p))
+        subprocess.run(["gh", "issue", "edit", nums[r[0]], "--repo", "pharzam/layup",
+                        "--body-file", f.name], env=env, stdin=subprocess.DEVNULL,
+                       timeout=60, check=True)
+        os.unlink(f.name)
+
+
 def table():
     p = parts()
     nums = {}
@@ -243,6 +268,8 @@ if __name__ == "__main__":
         post()
     elif sys.argv[1:] == ["--table"]:
         table()
+    elif len(sys.argv) >= 3 and sys.argv[1] == "--edit":
+        edit(sys.argv[2:])
     elif len(sys.argv) == 3 and sys.argv[1] == "--body":
         r = [x for x in ROWS if x[0] == sys.argv[2]]
         if not r:

@@ -1,6 +1,6 @@
 # The test runs of T-fdaq
 
-## D1 red, at base `faeb1dd` (2026-10-09T10:49Z)
+## D1 red, on the tree of `1b2d89b` before its commit: the parts list and its check, no table (2026-10-09T10:49Z)
 
 `sh runs/T-fdaq/parts.sh`, before the table: only check 3 fails, one line per row of `parts.tsv`; the headings of `session.md`, the parts of `runs/T-ywk7/sections.tsv` and the rows of "The acceptance tests of M2b" each have their part.
 
@@ -33,7 +33,7 @@ FAIL runs/T-fdaq/issues.tsv is missing: no issue is open
 exit 1
 ```
 
-## Green, on `ec6e3cd` (2026-10-09T10:56Z)
+## Green, on `ec6e3cd`, after the table and the issues (2026-10-09T10:56Z)
 
 ```
 ok   each part is in one row of The tasks of M2b, or named with its reason
@@ -57,4 +57,13 @@ ok   row 39a: #169 (T-4tjy) by layup-agent[bot]
 ok   row 39b: #170 (T-x7cs) by layup-agent[bot]
 ```
 
-The checks of the third acceptance criterion, each with exit 0: `adr-lint`, `prd-lint`, `link-lint` (1842 links resolved), `run-discipline-tests` (81 passed, 0 failed), `nested-checkout-check` (10 cases), `setup-check`, and `git diff --check`.
+On that tree, the checks of the third acceptance criterion, each with exit 0: `adr-lint`, `prd-lint`, `link-lint` (1842 links resolved), `run-discipline-tests` (81 passed, 0 failed), `nested-checkout-check` (10 cases), `setup-check`, and `git diff --check`.
+
+Round 1 (comment 6079740555) found that `setup-check` exits 1 at the frozen
+head `95962fc`: `kit-history FAIL orphan: docs/tasks/T-fdaq.md`, as the task file
+landed before any index line named the task. The run above was before the task
+file existed, so it did not show it.
+
+## The fix of round 1, on the tree of its commit (2026-10-09T11:15Z)
+
+Each with exit 0: `parts.sh` (`ok   each part is in one row of The tasks of M2b, or named with its reason`, with the new acceptance row "The review of the release"); `issues.sh` (18 rows, each by `layup-agent[bot]`, after the bodies of #159, #162, #164 and #169 were written again); `adr-lint`; `prd-lint`; `link-lint` (1869 links resolved); `run-discipline-tests` (81 passed, 0 failed); `nested-checkout-check`; `setup-check` (with `kit-history`, now that `completed.md` names the task); and `git diff --check`.
