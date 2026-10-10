@@ -244,6 +244,13 @@ check that catches it.
   script, run both on a failure of each step, and keep the cases (13 cases in
   `T-evad`: F-9 of [`runs/T-evad/findings.md`](../runs/T-evad/findings.md)). Learned
   in `T-evad`.
+- ❌ **A file list that is empty, read as a pass.** The first draft of check (4) of
+  `release-check.sh` listed its files with `git ls-files 'internal/git/*.go'
+  ':!*_test.go'`; with one positive pathspec and that exclusion, git 2.47 lists
+  no file, so the check read nothing and printed `none`. It is silent because
+  "no hit" and "no file read" give the same output. **The check:** a check that
+  reads a list fails when the list is empty, and its first run is read for the
+  files it names. Learned in `T-4tjy`.
 - ❌ **A claim of a check that nothing runs.** In the first pilot, a setup answer
   filled a command into a comment of the hook, and the prose called the gate jobs
   required while the ruleset was only prepared. A reader takes both for checks

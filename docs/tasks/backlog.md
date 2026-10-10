@@ -30,7 +30,6 @@ same summary, dated — rather than deleting it or checking it off.
 - **<ID>** — <one-sentence summary> ([<ADR or doc link>](...); [detail](<id>.md))
 -->
 
-- **T-4tjy** — Row 39a of `M2b`: the review of the release of M2b ([#169](https://github.com/pharzam/layup/issues/169); [the plan](../plan/README.md#the-tasks-of-m2b))
 - **T-x7cs** — Row 39b of `M2b`: the demo of M2b (uat) ([#170](https://github.com/pharzam/layup/issues/170); [the plan](../plan/README.md#the-tasks-of-m2b))
 
 ## Next

@@ -655,9 +655,12 @@ O-187 of #152), records a code review of the release of `M2b` (the non-test Go
 files of `cmd/` and `internal/`, `go.mod` and the files that the binary embeds,
 the code that the demo runs) by a reviewer of a model that wrote none of it, as
 task `T-efmy` did for phase 1, with `runs/T-efmy/release-check.sh` adapted in
-that task: its check 4 allows the verbs of `Fetch`, `Push` and `FetchSession`, and a
-new list names each program that the code starts (`git`, `sh`, the command of a
-harness register row). The review reads the whole release, so it covers the
+that task: its check 4 allows the verbs of `Fetch`, `Push` and `FetchSession`,
+each in its own function, and `remote` in `CloneLocal` (**decided here**, task
+`T-4tjy`: its `remote remove origin` cuts a session clone's link and reaches no
+remote), and a new list names each program that the code starts (`git`, `sh`,
+the command of a harness register row) with the file that starts it, a check
+that fails on a call out of the list. The review reads the whole release, so it covers the
 code of `M2a` too (#148). A session runs under the Operator's user and can reach
 what that user can (L-A1); the review records it as that limit.
 

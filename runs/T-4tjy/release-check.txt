@@ -1,0 +1,94 @@
+== (1) The commit and the tree
+HEAD 9490de9a80c859b62bb3e4460e2b6934059ef437
+== (2) TestPackageRules (cmd/layup, integration)
+ok  	github.com/pharzam/layup/cmd/layup	1.212s
+The packages of go list -deps ./... that are not in the standard library:
+  github.com/pharzam/layup/internal/tsv
+  github.com/pharzam/layup/internal/forge
+  github.com/pharzam/layup/internal/forge/github
+  github.com/pharzam/layup/internal/git
+  github.com/pharzam/layup/internal/gate
+  github.com/pharzam/layup/internal/psb
+  github.com/pharzam/layup/internal/records
+  github.com/pharzam/layup/internal/route
+  github.com/pharzam/layup/internal/ledger
+  github.com/pharzam/layup/internal/rules
+  github.com/pharzam/layup/internal/session
+  github.com/pharzam/layup/internal/run
+  github.com/pharzam/layup/internal/catalog
+  github.com/pharzam/layup/internal/work
+  github.com/pharzam/layup/internal/setup
+  github.com/pharzam/layup/internal/verify
+  github.com/pharzam/layup/internal/cli
+  github.com/pharzam/layup/cmd/layup
+  github.com/pharzam/layup/internal/standin
+net, net/http and crypto/tls in go list -deps ./...: [net crypto/tls net/http ]
+The packages that import net, net/http or crypto/tls themselves:
+  github.com/pharzam/layup/internal/forge/github: net/http
+== (3) The calls that start a program, in the non-test Go files
+  internal/gate/scratch.go:190:	cmd := exec.Command("sh", "-c", command)
+  internal/git/git.go:83:	cmd := exec.Command("git", args...)
+  internal/session/process.go:33:	cmd := exec.CommandContext(ctx, words[0], words[1:]...)
+  internal/session/process.go:132:	cmd := exec.Command(s.Words[0], s.Words[1:]...)
+  internal/verify/scripts.go:61:	cmd := exec.Command("sh", script)
+== (4) The git verbs that reach a remote, in the non-test Go files of internal/git
+  internal/git/git.go:345: fetch in Fetch
+  internal/git/git.go:356: push in Push
+  internal/git/git.go:395: remote in CloneLocal
+  internal/git/git.go:407: fetch in FetchSession
+  internal/git/git.go:446: fetch in FetchSession
+The exported calls of internal/git:
+  internal/git/git.go:116:func Version() (string, error) {
+  internal/git/git.go:123:func Supported(version string) bool {
+  internal/git/git.go:130:func LsRemote(url, ref string) (string, error) {
+  internal/git/git.go:146:func Clone(url, dir string, auth Auth) error {
+  internal/git/git.go:152:func CheckoutDetach(dir, commit string) error {
+  internal/git/git.go:157:func Init(dir string) error { return do("", "init", "-b", "main", "--", dir) }
+  internal/git/git.go:161:func Add(dir string, paths ...string) error {
+  internal/git/git.go:167:func Commit(dir, message string, who Identity) error {
+  internal/git/git.go:177:func SwitchCreate(dir, branch, commit string) error {
+  internal/git/git.go:193:func Branch(dir string) (string, error) {
+  internal/git/git.go:201:func ResetSoft(dir, commit string) error { return doAt(dir, commit, "reset", "--soft", commit) }
+  internal/git/git.go:206:func ResetHard(dir string) error { return do(dir, "reset", "--hard", "--quiet", "HEAD") }
+  internal/git/git.go:210:func Staged(dir string) (bool, error) {
+  internal/git/git.go:221:func SwitchOrphan(dir, branch string) error { return do(dir, "switch", "--orphan", branch) }
+  internal/git/git.go:224:func RevParse(dir, rev string) (string, error) {
+  internal/git/git.go:230:func RootCommits(dir, rev string) ([]string, error) {
+  internal/git/git.go:237:func Message(dir, rev string) (string, error) {
+  internal/git/git.go:243:func LsFiles(dir string) ([]string, error) {
+  internal/git/git.go:249:func WorktreeAdd(dir, path, rev string) error {
+  internal/git/git.go:254:func WorktreeRemove(dir, path string) error {
+  internal/git/git.go:259:func Show(dir, rev, path string) ([]byte, error) {
+  internal/git/git.go:265:func DiffNames(dir, base, head string) ([]string, error) {
+  internal/git/git.go:271:func Apply(dir, patch string) error { return do(dir, "apply", "--", patch) }
+  internal/git/git.go:288:func LsTree(dir, rev, path string) ([]TreeEntry, error) {
+  internal/git/git.go:307:func IsShallow(dir string) (bool, error) {
+  internal/git/git.go:344:func Fetch(dir, url, ref string, auth Auth) error {
+  internal/git/git.go:355:func Push(dir, url, commit, branch string, auth Auth) error {
+  internal/git/git.go:387:func CloneLocal(src, dir, branch string) error {
+  internal/git/git.go:405:func FetchSession(dir, session, sha, dst string) error {
+  internal/git/git.go:451:func IsAncestor(dir, base, head string) (bool, error) {
+  internal/git/git.go:465:func DiffFile(dir, base, head, path string) ([]byte, error) {
+  internal/git/git.go:471:func DiffBinary(dir, base, head string) ([]byte, error) {
+== (5) The commands that sh runs
+The entries that the binary embeds:
+  internal/catalog/embed.go:12://go:embed all:go
+The command of each kind of each entry, out of testdata (written into a target at S12):
+  internal/catalog/go/kinds.tsv: static (active): out=$(gofmt -l .) && test -z "$out" && go vet ./...
+  internal/catalog/go/kinds.tsv: layout (pending): —
+  internal/catalog/go/kinds.tsv: boundary (pending): —
+  internal/catalog/go/kinds.tsv: contract (pending): —
+  internal/catalog/go/kinds.tsv: test (active): go test -count=1 ./...
+The scripts of the baseline that internal/verify runs:
+  internal/verify/scripts.go:20:	discTests = "docs/tests/run-discipline-tests.sh"
+  internal/verify/scripts.go:21:	linkLint  = "docs/links/link-lint.sh"
+== (6) The calls of the forge adapter (operation, method), in the non-test Go files of internal/forge/github
+  internal/forge/github/github.go:96: Installation GET a.cfg.API+a.repo()+"/installation"
+  internal/forge/github/github.go:119: Token POST path
+  internal/forge/github/github.go:137: Repository GET a.cfg.API+a.repo()
+  internal/forge/github/github.go:145: Repository GET next
+  internal/forge/github/github.go:164: UserID GET a.cfg.API+"/users/"+url.PathEscape(login)
+  internal/forge/github/github.go:179: OpenIssue POST a.cfg.API+a.repo()+"/issues"
+  internal/forge/github/github.go:194: Comment POST fmt.Sprintf("%s%s/issues/%d/comments"
+  internal/forge/github/github.go:219: Comments GET next
+== PASS
