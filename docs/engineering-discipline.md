@@ -923,9 +923,11 @@ its plan comment: create the worktree, then push its branch, named exactly the t
 ID, to the forge (`git push -u origin <slug>`), before any work; a branch of another name, such as
 `T-xxxx-notes`, claims nothing. The branch on the forge is the one mark that every
 session, on every host and harness, can see, and the command reads it as
-`running`; a worktree on one host is invisible to the others. When a task is
-abandoned, delete its branch from the forge, or the task reads `running` until it
-is. The command ([`task-state.sh`](tasks/task-state.sh), #175) prints each task's
+`in progress` while the branch or the task's issue has had a push or a comment
+within the command's window (one day; its value is in the script, #202), and as
+`stalled` after; a worktree on one host is invisible to the others. When a task
+is abandoned, delete its branch from the forge, or the task reads `stalled` until
+it is. The command ([`task-state.sh`](tasks/task-state.sh), #175) prints each task's
 state, derived from the backlog, the completed log and the plan's task tables of
 the forge's `main` (not of the checkout it runs in), and from the forge's branches
 and pull requests; it needs `gh` and the network, and it enforces nothing.

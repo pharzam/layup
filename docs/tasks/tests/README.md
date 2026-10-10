@@ -10,24 +10,30 @@ other outcome exits 2, so a bad case never passes for the wrong reason.
 
 A case holds only the files it changes. The input is [`base/`](base/) with the
 case laid over it, and a file `ABSENT` names the inputs a case removes. The
-inputs have no extension (`backlog`, `completed`, `plan`, `forge/branches`,
-`forge/pr/<n>/head` and `body`), so the Markdown checks do not read them as
-documents. The base gives a done task, a ready one, two blocked ones and a
-backlog task with no row in the plan, over two task tables of 14 and 13 columns.
+inputs have no extension (`backlog`, `completed`, `plan`, `now`,
+`forge/branches`, `forge/pushes`, `forge/comments`, `forge/pr/<n>/head` and
+`body`), so the Markdown checks do not read them as documents. The base gives a
+done task, a ready one, two blocked ones and a backlog task with no row in the
+plan, over two task tables of 14 and 13 columns, at a fixed `now` with no push
+and no comment.
 
 | Case | Expected | Exercises |
 | ---- | -------- | --------- |
 | `good-done-ready-blocked` | exit 0 | the base: the rows of the last table only, then the backlog task with no row; `done` by the ID field of the completed log, not by a mention (`T-bbb2` is named in passing); an `After` of `—`, of one row and of two |
-| `good-running` | exit 0 | a branch named the task ID; a `running` task with an unfinished predecessor shows it as `after T-bbb2` |
+| `good-in-progress` | exit 0 | a branch named the task ID with a push in the window is `in progress`; a branch with no activity is `stalled`, and shows its unfinished predecessor as `after T-bbb2` |
+| `good-comment-activity` | exit 0 | a comment on the task's issue in the window, beside an old push of its branch: the latest counts, `in progress` |
+| `good-window-boundary` | exit 0 | activity at `now - 86400` is `in progress`, at `now - 86401` `stalled` |
+| `good-other-activity` | exit 0 | a push of `T-bbb2-notes` and a comment on another issue are not the task's activity: `stalled` |
 | `good-branch-prefix` | exit 0 | `T-bbb2-backlog` and `x-T-ccc1` are not claims |
-| `good-review-head` | exit 0 | a pull request whose head is the task ID: `in review` before `running` and `blocked`; the smaller of two numbers |
+| `good-review-head` | exit 0 | a pull request whose head is the task ID: `in review` before `in progress` and `blocked`; the smaller of two numbers |
 | `good-review-closes` | exit 0 | `Closes #5` in the body of a pull request from another branch |
 | `good-review-forms` | exit 0 | `FIXED #4` and `resolves: #9`: the forge's other forms, in any case, with a colon |
 | `good-review-not-closing` | exit 0 | `Refs #4`, `Part of #5`, `Closes #44`, `prefixes #6` and `Closes #9x` close nothing |
 | `good-done-first` | exit 0 | a done task with a branch and a pull request stays `done` |
-| `good-crlf` | exit 0 | every input and `EXPECT` with carriage returns, as a checkout with `core.autocrlf=true` gives them: `## Now`, a branch and a closing keyword still match. Endings pinned by [`.gitattributes`](../../../.gitattributes) |
+| `good-crlf` | exit 0 | every input and `EXPECT` with carriage returns, as a checkout with `core.autocrlf=true` gives them: `## Now`, a branch, a push, `now` and a closing keyword still match. Endings pinned by [`.gitattributes`](../../../.gitattributes) |
 | `good-columns-order` | exit 0 | the last task table of 14 columns, with `After` first and `Task ID` last: the columns are found by the header, not the position; an `After` of four rows |
 | `good-earlier-table` | exit 0 | a backlog task whose row is in an earlier task table keeps that row's `After`: `T-aaa2` is `blocked` on `T-aaa1`, listed after the rows of the last table (#182) |
+| `bad-missing-now` | exit 1 | no `now`, the time of the run |
 | `bad-missing-completed` | exit 1 | no completed log |
 | `bad-backlog-no-issue` | exit 1 | a backlog line under Now with no issue |
 | `bad-after-unknown-row` | exit 1 | an `After` row that no task table holds |

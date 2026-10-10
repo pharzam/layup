@@ -119,7 +119,7 @@ artifacts, so they run in CI only and have no local run.
 [`docs/tasks/task-state.sh`](docs/tasks/task-state.sh) is not a check: it reads
 the forge with `gh` (the backlog, the completed log and the plan of `main`, not of
 your checkout), so it needs the network, and it prints the state of each task
-(`done`, `in review`, `running`, `blocked`, `ready`); run it before you take a
+(`done`, `in review`, `in progress`, `stalled`, `blocked`, `ready`); run it before you take a
 task ([Starting a task](docs/engineering-discipline.md#starting-a-task)). The Go code builds and
 tests with `go build ./...`, `go vet ./...` and `go test ./...`; the test levels
 are in [`docs/tests/test-levels.md`](docs/tests/test-levels.md). Never invent a
