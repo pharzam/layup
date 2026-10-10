@@ -69,57 +69,65 @@ func without(name string) []string {
 }
 
 func TestAValidStartIsRead(t *testing.T) {
-	if _, err := ReadStart(table(startHeader, startRows()...), []string{"claude", "devin"}); err != nil {
-		t.Fatal(err)
+	rows, ids, err := ReadStartAsWritten(table(startHeader, startRows()...))
+	if err != nil || len(rows) != len(startRows()) || strings.Join(ids, " ") != "claude devin" {
+		t.Fatalf("%d rows, the harnesses %q, %v; want each row and claude devin", len(rows), ids, err)
+	}
+	noHarness := append(append([]string{}, startRows()[:11]...), startRows()[15:]...)
+	if _, ids, err := ReadStartAsWritten(table(startHeader, noHarness...)); err != nil || len(ids) != 0 {
+		t.Errorf("no harness row: the harnesses %q, %v; want none", ids, err)
+	}
+	// The harnesses are those of the rows, in their order, whatever the
+	// register is now (#199).
+	swapped := startRows()
+	swapped[11], swapped[12], swapped[13], swapped[14] = swapped[13], swapped[14], swapped[11], swapped[12]
+	if _, ids, err := ReadStartAsWritten(table(startHeader, swapped...)); err != nil || strings.Join(ids, " ") != "devin claude" {
+		t.Errorf("devin before claude: the harnesses %q, %v; want devin claude", ids, err)
 	}
 }
 
 func TestStartRefusesEachBrokenRule(t *testing.T) {
-	harnesses := []string{"claude", "devin"}
 	order := startRows()
 	order[0], order[1] = order[1], order[0]
-	swapped := startRows()
-	swapped[11], swapped[12], swapped[13], swapped[14] = swapped[13], swapped[14], swapped[11], swapped[12]
 	wallFirst := startRows()
 	wallFirst[11], wallFirst[12] = wallFirst[12], wallFirst[11]
-	noHarness := append(append([]string{}, startRows()[:11]...), startRows()[15:]...)
+	// renamed gives startRows with the two rows of claude under the ID id, so
+	// that only the form of the ID is wrong.
+	renamed := func(id string) []string {
+		rows := startRows()
+		rows[11] = "harness." + id + ".cap\t10.0\tregister"
+		rows[12] = "harness." + id + ".wall\t60\tregister"
+		return rows
+	}
 	for _, c := range []struct {
-		name      string
-		rows      []string
-		harnesses []string
+		name string
+		rows []string
 	}{
-		{"an unknown name", append(startRows(), "colour\tblue\trun"), harnesses},
-		{"a missing name", without("pin.tree"), harnesses},
-		{"the rows out of order", order, harnesses},
-		{"a harness of the register with no cap row", without("harness.devin.cap"), harnesses},
-		{"a harness of the register with no rows", append(append([]string{}, startRows()[:13]...), startRows()[15:]...), harnesses},
-		{"the harnesses not in the order of the register", swapped, harnesses},
-		{"wall before cap", wallFirst, harnesses},
-		{"a harness row with an empty register", startRows(), nil},
-		{"a harness ID that is not of the form <word>", set("harness.claude.cap", "harness.Claude.cap\t10.0\tregister"), harnesses},
-		{"the empty value where the block does not allow it", set("layup.version", "layup.version\t—\trun"), harnesses},
-		{"a SHA-256 that is not one", set("psb.sha256", "psb.sha256\tabc\tcommand"), harnesses},
-		{"a SHA-1 that is not one", set("pin.commit", "pin.commit\t"+sha256A+"\trun"), harnesses},
-		{"a time that is not one", set("pin.time", "pin.time\t2026-10-07 12:00\trun"), harnesses},
-		{"an ID that is not an int", set("operator.id", "operator.id\tpharzam\tforge"), harnesses},
-		{"lease.H that is not an int", set("lease.H", "lease.H\t5.0\tcommand"), harnesses},
-		{"a wall that is not an int", set("harness.claude.wall", "harness.claude.wall\tan hour\tregister"), harnesses},
-		{"a cap that is not a decimal", set("harness.claude.cap", "harness.claude.cap\t10\tregister"), harnesses},
-		{"an intake cap that is not two decimals", set("intake.cap", "intake.cap\t50.0\tcommand"), harnesses},
-		{"a permission that is not name:level", set("app.permissions", "app.permissions\tcontents issues:write\tforge"), harnesses},
-		{"an issue that is neither an int nor opening", set("issue.intake", "issue.intake\tsoon\tforge"), harnesses},
-		{"a watch that is neither confirmed nor not-confirmed", set("watch", "watch\tyes\trun"), harnesses},
-		{"the wrong source", set("pin.source", "pin.source\thttps://x\tcommand"), harnesses},
+		{"an unknown name", append(startRows(), "colour\tblue\trun")},
+		{"a missing name", without("pin.tree")},
+		{"the rows out of order", order},
+		{"a harness with a wall row and no cap row", without("harness.devin.cap")},
+		{"a harness with a cap row and no wall row", without("harness.devin.wall")},
+		{"wall before cap", wallFirst},
+		{"a harness ID that is not of the form <word>", renamed("Claude")},
+		{"an empty harness ID", renamed("")},
+		{"the empty value where the block does not allow it", set("layup.version", "layup.version\t—\trun")},
+		{"a SHA-256 that is not one", set("psb.sha256", "psb.sha256\tabc\tcommand")},
+		{"a SHA-1 that is not one", set("pin.commit", "pin.commit\t"+sha256A+"\trun")},
+		{"a time that is not one", set("pin.time", "pin.time\t2026-10-07 12:00\trun")},
+		{"an ID that is not an int", set("operator.id", "operator.id\tpharzam\tforge")},
+		{"lease.H that is not an int", set("lease.H", "lease.H\t5.0\tcommand")},
+		{"a wall that is not an int", set("harness.claude.wall", "harness.claude.wall\tan hour\tregister")},
+		{"a cap that is not a decimal", set("harness.claude.cap", "harness.claude.cap\t10\tregister")},
+		{"an intake cap that is not two decimals", set("intake.cap", "intake.cap\t50.0\tcommand")},
+		{"a permission that is not name:level", set("app.permissions", "app.permissions\tcontents issues:write\tforge")},
+		{"an issue that is neither an int nor opening", set("issue.intake", "issue.intake\tsoon\tforge")},
+		{"a watch that is neither confirmed nor not-confirmed", set("watch", "watch\tyes\trun")},
+		{"the wrong source", set("pin.source", "pin.source\thttps://x\tcommand")},
 	} {
-		if _, err := ReadStart(table(startHeader, c.rows...), c.harnesses); err == nil {
+		if _, _, err := ReadStartAsWritten(table(startHeader, c.rows...)); err == nil {
 			t.Errorf("%s: read, want an error", c.name)
 		}
-	}
-	if _, err := ReadStart(table(startHeader, noHarness...), nil); err != nil {
-		t.Errorf("an empty register and no harness row: %v", err)
-	}
-	if _, err := ReadStart(table(startHeader, append(append(append([]string{}, startRows()[:11]...), "harness.Claude.cap\t10.0\tregister", "harness.Claude.wall\t60\tregister"), startRows()[13:]...)...), []string{"Claude", "devin"}); err == nil {
-		t.Error("a register ID that is not of the form <word>: read, want an error")
 	}
 }
 

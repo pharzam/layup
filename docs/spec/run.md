@@ -315,6 +315,7 @@ check of `M2c` posts there.
 | A register with two rows for one key, an unknown or missing column, or a field that its type refuses | exit 2: the reader of `internal/tsv` refuses it and names the line |
 | A forge register with no row | exit 2 |
 | A harness register with no row | allowed: `start.tsv` has no `harness.<id>.*` row; `M2b` admits no session until it has one |
+| A restart whose harness register gained or lost a row after Start | allowed (**decided here**, task `T-s7vr`, #199): `clone` reads `start.tsv` by the harnesses that its rows name ([`records.md`](records.md#nfr-001--the-records-of-a-session)), and a write of `start.tsv` keeps them, as its harness rows are the record of the register at Start; the values a session runs under are its register row's ([`session.md`](session.md#the-limit-of-a-session)) |
 | A harness row with `wall` empty | exit 2 |
 | A key file that is missing, not PEM, or not mode 0600, or owned by another user | exit 2, naming the file and its mode |
 | `--new` on a repository with a commit, or with the branch `layup-records` | `forge`: `fail` (O-163) |

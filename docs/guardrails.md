@@ -244,13 +244,14 @@ check that catches it.
   script, run both on a failure of each step, and keep the cases (13 cases in
   `T-evad`: F-9 of [`runs/T-evad/findings.md`](../runs/T-evad/findings.md)). Learned
   in `T-evad`.
-- ❌ **A harness added to a started target.** `start.tsv` holds a `harness.<id>.cap`
-  and `.wall` row for each harness of the register at Start, and the restart reads
-  it against the register now, so a target started with no harness is refused at
-  `clone` once the register has one (#199). It is silent until the restart, as
-  Start and the register's readers pass. **The check:** start a target with the
-  register it will run with; until #199 is decided, a new harness takes a new
-  target. Learned in `T-x7cs`.
+- ❌ **A record read by the shape of a host file of now.** `start.tsv` holds a
+  `harness.<id>.cap` and `.wall` row for each harness of the register at Start,
+  and the restart read it against the register now, so a target started with no
+  harness was refused at `clone` once the register had one (#199). It is silent
+  until the restart, as Start and the register's readers pass. **The check:** a
+  restart reads its records by what they hold, never by a host file that can
+  change after they were written; a test restarts with that file changed.
+  Learned in `T-x7cs`, fixed in `T-s7vr`.
 - ❌ **A file list that is empty, read as a pass.** The first draft of check (4) of
   `release-check.sh` listed its files with `git ls-files 'internal/git/*.go'
   ':!*_test.go'`; with one positive pathspec and that exclusion, git 2.47 lists
