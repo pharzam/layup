@@ -19,3 +19,17 @@ The target was started in `M2a` with a harness register of no row; the restart
 reads `start.tsv` against the register now, which has two. This is not the
 planned red: it is the defect #199, revealed here, off the path of this task.
 The demo waits for the Operator's choice (comment 6095966713 of #170).
+
+## Run 2: the demo, green (2026-10-10, 14:58:11Z to 14:59:05Z)
+
+On the new target `pharzam/layup-uat-m2b`, started at 14:52Z to 14:58Z with
+the registers of D5 and both credentials: exit 0, `--- PASS:
+TestTheDemoOfM2b (52.41s)`; the output and the records are in
+[`README.md`](README.md).
+
+**A deviation:** the red of condition 2 of the plan review (each probe
+`failed` with no credential) was not run. Run 1 stopped at `clone` (#199)
+before any probe, and on the new target a red after the green would leave a
+`failed` row as the last row of each harness at its version, which admits no
+session. The red of the probe's rules is that of row 38 (`runs/T-nxe4/`); this
+run is the demo on real harnesses.
