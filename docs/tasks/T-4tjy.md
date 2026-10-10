@@ -44,7 +44,9 @@ of a scratch clone. The goal count is 2, final by O-187.
    would catch, or a known limit (L-A1, the program of a register row, the
    raw system call). Note 17 is on the path: its first half is condition 1,
    applied; its second half (check (6) prints `path` for the token call, whose
-   endpoint is the line above) needs no change, as the reviewer says.
+   endpoint is the line above) needs no change, as the reviewer says. The
+   reading of acceptance criterion 2: a finding that its reviewer closes with
+   "no change" names no defect, so it is neither fixed nor an issue.
 4. **The documents** (D5): `session.md` (the allowance of check (4) and the
    failing list of (3)); the plan (the release of `M2b`); the §12 cells of
    `REQ-015` and `REQ-017` and a §13 line of `PRD-0001`; a uat row of

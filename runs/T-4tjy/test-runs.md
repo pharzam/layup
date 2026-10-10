@@ -60,3 +60,29 @@ function. Each is caught by its line of (3) or (4); the first two also by
 
 The adapted check at `9490de9`, in a clean clone: exit 0, `== PASS`. Its
 output is [`release-check.txt`](release-check.txt).
+
+## The fix of round 1 (2026-10-10, 08:15Z to 08:17Z)
+
+Notes 4 and 5 of round 1 (O-192). Each mutation is its own commit on a scratch
+clone of `9490de9`, run with the check of `5adde43` and with the fixed check.
+
+- `curl-in-run`: `exec.Command("curl", ...)` in `internal/run/store.go`, with
+  its import, a call at a file that the list of (3) does not name. Caught by
+  both, at (3) and by `TestPackageRules`:
+
+  ```
+  FAIL: TestPackageRules
+  FAIL: a call that starts a program, out of the list: internal/run/store.go:109:var _ = exec.Command("curl", "https://example.invalid")
+  ```
+
+- `push-after-a-one-line-push`: `Push` made a one-line function, then a
+  top-level `var` with `"push"`. Red: the check of `5adde43` gives exit 0,
+  `== PASS`, as it reads the `var` as inside `Push`. The fixed check, which
+  ends a function at a one-line `func`, gives exit 1:
+
+  ```
+  FAIL: a git verb that reaches a remote, out of its function: internal/git/git.go:357: push in no function
+  ```
+
+The fixed check at `9490de9`: exit 0, `== PASS`, the same output as
+[`release-check.txt`](release-check.txt) but for the time of a test.

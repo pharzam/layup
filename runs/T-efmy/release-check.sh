@@ -39,8 +39,9 @@
 #       remote in CloneLocal (remote remove origin, which cuts a session
 #       clone's link and reaches no remote). A call of git names its verb so,
 #       as in do(dir, "clone", ...). The function of a hit is the last line
-#       that starts with "func" above it; a hit after a line "}" at column one
-#       and before the next such line is in no function, and fails.
+#       that starts with "func" above it; a hit after a line "}" at column one,
+#       or after a one-line function (a "func" line that ends with "}"), and
+#       before the next "func" line is in no function, and fails.
 # The lists of (3), (5) and (6) are for the reviewer, who judges them.
 
 commit=${1:?usage: sh release-check.sh COMMIT}
@@ -87,9 +88,9 @@ if [ -n "$bad3" ]; then
 fi
 
 echo "== (4) The git verbs that reach a remote, in the non-test Go files of internal/git"
-# git ls-files drops every file with the exclusion ':!*_test.go', so the test
-# files are filtered out by name; a list with no file fails, as no file read
-# would pass.
+# git ls-files (2.47) lists no file for one positive pathspec with the
+# exclusion ':!*_test.go', so the test files are filtered out by name; a list
+# with no file fails, as no file read would pass.
 gitfiles=$(git ls-files 'internal/git/*.go' | grep -v '_test\.go$')
 [ -n "$gitfiles" ] || bad "no non-test Go file in internal/git"
 hits=$(for f in $gitfiles; do
@@ -103,7 +104,8 @@ hits=$(for f in $gitfiles; do
 				print f ":" NR ": " verb " in " (fn == "" ? "no function" : fn)
 				line = substr(line, RSTART + RLENGTH)
 			}
-		}' "$f"
+		}
+		/^func .*}[ \t]*$/ { fn = "" }' "$f"
 done)
 if [ -n "$hits" ]; then
 	echo "$hits" | sed 's/^/  /'
