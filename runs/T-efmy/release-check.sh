@@ -71,6 +71,7 @@ gocmd list -f '{{.ImportPath}}:{{range .Imports}} {{.}}{{end}}' ./... | awk '{ f
 
 echo "== (3) The calls that start a program, in the non-test Go files"
 sites=$(git grep -n -E 'exec\.Command|os\.StartProcess|syscall\.(Exec|ForkExec|StartProcess)' -- 'cmd/*.go' 'internal/*.go' ':!*_test.go' ':!*/testdata/*')
+[ -n "$sites" ] || bad "no call that starts a program found"
 echo "$sites" | sed 's/^/  /'
 bad3=$(echo "$sites" | awk '
 	/^internal\/git\/git\.go:[0-9]+:.*exec\.Command\("git", / { next }
@@ -86,7 +87,12 @@ if [ -n "$bad3" ]; then
 fi
 
 echo "== (4) The git verbs that reach a remote, in the non-test Go files of internal/git"
-hits=$(for f in $(git ls-files 'internal/git/*.go' ':!*_test.go'); do
+# git ls-files drops every file with the exclusion ':!*_test.go', so the test
+# files are filtered out by name; a list with no file fails, as no file read
+# would pass.
+gitfiles=$(git ls-files 'internal/git/*.go' | grep -v '_test\.go$')
+[ -n "$gitfiles" ] || bad "no non-test Go file in internal/git"
+hits=$(for f in $gitfiles; do
 	awk -v f="$f" '
 		/^func / { fn = $0; sub(/^func (\([^)]*\) )?/, "", fn); sub(/[^A-Za-z0-9_].*/, "", fn) }
 		/^}/ { fn = "" }
