@@ -46,3 +46,40 @@ with the count of each final.
 `internal/run` would be one task of about 4,000 lines); one task per session
 kind; the e2e inside each row; the names of every step of Intake in one row
 before their code (the restart's order cannot run a step with no code).
+
+## Review rounds
+
+The record is a comment on #211. Round 1 (Claude Fable 5.1, effort `xhigh`, a
+fresh read-only session in a clone at `87c19ea`, cycle 0, the cap): `nothing
+material in scope`, seven notes. The close-out may change only the task indexes
+and this file, so the notes on the specification (1, 2 and 7) are #230, for the
+build rows that edit those files (41a, 44, 47a, 47c). Notes 3 to 6 are recorded
+here and change nothing: the red record shows three of the five rules of
+`parts.sh` (rule 3 is the precedent's code, unchanged); the five steps landed as
+one commit, as the hook refused a commit of the red step on a link to the table
+that did not exist yet; `gen-issues.py` says it was copied from itself (it was
+copied from `runs/T-fdaq/gen-issues.py`) and `issues.sh` calls the issues "D2"
+(they are D3 of the plan); and "What was done" item 3 says each note of #210 is
+a "decided here", where notes 2 and 4 are plain edits.
+
+## Verdict
+
+Delivered: the build tasks of `M2c`, rows 40 to 49b of the plan, each with its
+issue (#212 to #228), the six notes of #210, and the section of the review of
+the release of `M2c`. The review ended by decay at cycle 0 of cap 1. The diff
+against `b54748b`, the branch's base, is inside 1,000 lines over 17 files. Next:
+the build of `M2c`, rows 40, 41a and 43a first.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). UTC; reviewers' tokens are `modelUsage`;
+the author's are not reported.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan | reasoning | Claude Opus 5.5 | not reported | not reported | 2026-10-10 20:12 to 20:16 |
+| The plan review | reasoning | Claude Fable 5.1 | `xhigh` | 1,636,271 (USD 7.74) | 13 min 3 s |
+| The answer, the counts to the Operator, the notes of #210 | execution | Claude Opus 5.5 | not reported | not reported | 20:29 to 20:31 |
+| T, D1 to D3 and the issues, after O-196 | execution | Claude Opus 5.5 | not reported | not reported | 23:17 to 23:23 |
+| Round 1 | reasoning | Claude Fable 5.1 | `xhigh` | 1,216,279 (USD 6.91) | 13 min 5 s |
+| The close-out | execution | Claude Opus 5.5 | not reported | not reported | 23:37 to 23:37 |

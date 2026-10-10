@@ -46,7 +46,6 @@ same summary, dated — rather than deleting it or checking it off.
 - **T-mo9w** — Row 48 of `M2c`: the e2e of the steps of Intake ([#226](https://github.com/pharzam/layup/issues/226); [the plan](../plan/README.md#the-tasks-of-m2c))
 - **T-8byd** — Row 49a of `M2c`: the review of the release of M2c ([#227](https://github.com/pharzam/layup/issues/227); [the plan](../plan/README.md#the-tasks-of-m2c))
 - **T-ekh5** — Row 49b of `M2c`: the demo of M2c (uat) ([#228](https://github.com/pharzam/layup/issues/228); [the plan](../plan/README.md#the-tasks-of-m2c))
-- **T-2r8u** — The build tasks of `M2c` ([#211](https://github.com/pharzam/layup/issues/211); [detail](T-2r8u.md))
 
 
 ## Next
