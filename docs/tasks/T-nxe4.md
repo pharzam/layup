@@ -47,3 +47,48 @@ their red is the mutations.
 
 **The rejected alternatives:** the version command run outside a session to
 decide the skip; one records commit for the whole step.
+
+## Review rounds
+
+The records are comments on #168. Round 1 (Claude Fable 5.1, effort `xhigh`, a
+fresh read-only session in a clone at `918a2f4`, cycle 0): `material`, one
+finding and six notes. Finding 1: the skip and a probe's refused start were
+unit acceptance clauses that this row tests at integration; they moved to a
+row of their own at integration. The fix also reads the `records` column per
+probe (note 3), qualifies the sentence on the counts (note 2), names the cost
+of the early end (note 5) and asserts the two sentences with no test (note 7);
+note 4 is declined with its reason (a routing table is read by its positions,
+in any order), and note 6 is the deviation above. Round 2 (the same reviewer
+type, a fresh session at `b61f585`, cycle 1, the cap): `nothing material in
+scope`, four notes. Applied in the close-out: note 1 (row 38 of the plan names
+the moved clauses); note 2 (the unit row reads "the result of a fake
+harness"), with the new row renamed "The skip, a refused probe and the early
+end" apart from the e2e row "The step `probe`"; note 3 (a row of Input states
+for a `host:prices.tsv` that its reader refuses). Note 4 (a `TaskSpec` with no
+`Admit` panics) is declined: the field was called the same way at the base,
+each caller sets it, and a code change after the last round is read by no
+round.
+
+## Verdict
+
+Delivered: the step `probe` in `internal/run`: the probe of each harness and
+its pass rules, the skip, the three counts, the copy of the routing register,
+and the probe before a task session (`Admit`). The review ended by decay at
+cycle 1 of a cap that O-191 raised to 2. The diff against `6af022c`, the
+branch's base, is inside 1,600 lines over 24 files. Next: row 39a.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). UTC; reviewers' tokens are `modelUsage`;
+the author's are not reported.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan | reasoning | Claude Opus 5.5 | not reported | not reported | to 2026-10-10 03:51 |
+| The plan review | reasoning | Claude Fable 5.1 | `xhigh` | 1,423,679 (USD 6.24) | 9 min 31 s |
+| The code, test first | execution | Claude Opus 5.5 | not reported | not reported | 04:05 to 04:24 |
+| O-191 asked and applied | execution | Claude Opus 5.5 | not reported | not reported | 04:25; 06:39 to 06:40 |
+| Round 1 | reasoning | Claude Fable 5.1 | `xhigh` | 1,919,954 (USD 6.66) | 12 min 24 s |
+| The fix of round 1 | execution | Claude Opus 5.5 | not reported | not reported | 06:53 to 06:59 |
+| Round 2 | reasoning | Claude Fable 5.1 | `xhigh` | 1,230,093 (USD 6.61) | 12 min 21 s |
+| The close-out, with notes 1 to 3 | execution | Claude Opus 5.5 | not reported | not reported | 07:11 to 07:13 |

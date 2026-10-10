@@ -69,7 +69,7 @@ docs/spec/session.md	## The acceptance tests of M2b	The probe and admission: a p
 docs/spec/session.md	## The acceptance tests of M2b	The probe and admission: admission by the probe and use	30b
 docs/spec/session.md	## The acceptance tests of M2b	A refused start: a task session's refusals	36a
 docs/spec/session.md	## The acceptance tests of M2b	A refused start: the refusal pair	30b
-docs/spec/session.md	## The acceptance tests of M2b	The step probe	38
+docs/spec/session.md	## The acceptance tests of M2b	The skip, a refused probe and the early end	38
 docs/spec/session.md	## The acceptance tests of M2b	The routing register: the copy at the step probe	38
 docs/spec/session.md	## The acceptance tests of M2b	The routing register: the pair and its refusal	30b
 docs/spec/session.md	## The acceptance tests of M2b	The usage report	34b
