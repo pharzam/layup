@@ -494,6 +494,26 @@ its records. **Decided here:** the block `run-steps` is built, so the build task
 of the probe adds `probe` to its enum, with its Go schema, in one change
 (condition 1 of the plan review of #147).
 
+**Decided here** (task `T-nxe4`, #168): a harness whose version's last probe
+passed is known only once its version command has run, in the probe's own
+session, so that session ends there: its directory is removed and nothing is
+written, and the harness is in none of the counts. Its cost is the making of
+the directory, one local clone of the target per such harness per restart. A probe that a task
+session's version check starts (step 2) does not sweep, as the task session
+swept and its own directory is live; only the step sweeps. The `records`
+column of a probe's start row is the run's last pushed records commit at the
+start of that probe, so a later probe of the step names the records of the
+earlier ones. A
+relative `file` value is read from `repo/`, after its `..` parts, and an
+absolute one after its `..` parts, before the comparison with the session
+directory. A probe refused at its start (its row `failed`) counts as probed
+and failed, so on a restart where each harness is probed or skipped the three
+counts add up to the harnesses of the register; it
+posts no comment, its record being its row, as a task session's refused start
+posts none (condition 2 of the plan review). The comment of a probe that
+failed ends `: failed <reason>`, for example `S-1a2b3c4d: probe of claude
+2.1.295: failed token`.
+
 ### Admission
 
 A pair of a harness and a model is admitted when the harness's last probe, at
@@ -511,7 +531,7 @@ admitted. Code alone admits; no model is asked.
 (K38: the order only; the weights of §13 come with the learning loop).
 **Decided here:** its source is the Operator's `host:registers/routing.tsv`,
 which `layup run` copies into the records at the step `probe` when the two
-differ, as each value that a run uses is copied into the records (§1). The
+tables differ, in any order of their rows (**decided here**, task `T-nxe4`), as each value that a run uses is copied into the records (§1). The
 first admitted pair of the role's list for the task's tier is the session's
 pair; with none, the start is refused (`pair`).
 
@@ -586,6 +606,7 @@ gives no usage report (3000.11.3), so its rows use `none`.
 | State | Result |
 | ----- | ------ |
 | A host register (`harnesses.tsv`, `models.tsv`, `routing.tsv`) with two rows for a key, or a field that its type refuses | exit 2: its reader names the line |
+| A `host:prices.tsv` that its reader refuses | exit 2: the error names the file (task `T-nxe4`) |
 | A harness row with `cap` and no `{cap}` in `command`, or `{cap}` and `cap` `—` | exit 2 |
 | A `credential` that is not absolute, is missing, is not mode 0600 or has another owner | exit 2, naming the file |
 | A `credential_to` that is not `var:NAME`, `file:PATH` or `—`, a `NAME` of another form or of [the list above](#the-environment-and-the-harness-credential), or a `PATH` that is empty, absolute or has a part `..` | exit 2 |
@@ -668,8 +689,9 @@ Gemini CLI and OpenCode, added when a registered harness needs one.
 | The result of a session | integration | A result file of the block `result` is committed byte for byte with the event `result`; an artifact whose SHA-256 differs at the head adds the event `refused` (`artifact`); the session ID, the task, the role, the attempt and the base come from the start row. |
 | The open attempt | unit | With a stand-in events table, a result whose attempt was closed, replaced or rebased is refused (`closed-attempt`); the attempt and the base come from the start row; a session with no event `attempt` of its attempt is refused at its start. |
 | Before a push | integration | With the real `git` and a local bare repository: the head read from the files of `repo/.git` (a loose ref, a packed ref with `git pack-refs`; with a stand-in reader of the files, at unit: a link, a symbolic ref, a malformed loose ref, a packed line of another form and no ref refused; a SHA of no commit refused by `FetchSession`); the fetch through the scratch repository with hooks off; a session configuration that holds each key of git's documentation that starts a program runs none of them; a head that does not descend from the base is refused; a change of `.github/workflows/` and of a rule path is refused before any push, its diff a payload; added lines in §2 of `docs/guardrails.md` pass; the SHA is bound only after the push is accepted. |
-| The probe and admission | unit | With a fake harness: a probe that passes, one that reports a `policy` path and passes, and one that fails for each reason; admission by the probe and `use`; a harness with no model of `use` `yes` is skipped. |
-| A refused start | unit | A refused start of a task session is an event `refused` with its session ID, its reason (`attempt`, `version`, `probe`, `context`, `prompt`, `rules`) and no row of `sessions.tsv` or `telemetry.tsv`; the refusal `pair` has `—` for the session; a probe's refused start is its row of `harnesses.tsv`, `failed`, with `version` `—` when the version check refused it. |
+| The probe and admission | unit | With the result of a fake harness: a probe that passes, one that reports a `policy` path and passes, and one that fails for each reason; admission by the probe and `use`. |
+| A refused start | unit | A refused start of a task session is an event `refused` with its session ID, its reason (`attempt`, `version`, `probe`, `context`, `prompt`, `rules`) and no row of `sessions.tsv` or `telemetry.tsv`; the refusal `pair` has `—` for the session. |
+| The skip, a refused probe and the early end | integration | With the real `git` and a fake harness program (task `T-nxe4`): a harness with no model of `use` `yes` is skipped; a probe's refused start is its row of `harnesses.tsv`, `failed`, with `version` `—` when the version check refused it; a harness whose last probe at its version passed ends with no record and no directory left. |
 | The routing register | unit | `host:registers/routing.tsv` is copied into `records:routing.tsv` at the step `probe` when the two differ, and not when they are equal; the session's pair is the first admitted pair of the role's list for the task's tier; with none, the start is refused (`pair`). |
 | The usage report | unit | `claude-result` on two recorded `result` events of Claude Code 2.1.295 (one with subagents and a second model) sums `modelUsage`; `none` gives `unavailable` and `unknown`. |
 | The writer | unit | One row per session that `CheckTelemetry` passes; money `reported`, `computed` or `unknown` by the billing, the prices and the models. |

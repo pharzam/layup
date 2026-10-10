@@ -70,7 +70,7 @@ can leave up to twenty seconds with no line. Reason: a Start ends; the phase
 loop of later milestones adds its own rows, so the one-table rule holds.
 
 ```tsv-schema run-steps stdout
-step enum(forge|plan|baseline|root-push|read-back|records|issues|watch|clone|version|lease|phase) key the step, in the order of the two lists below
+step enum(forge|plan|baseline|root-push|read-back|records|issues|watch|clone|version|lease|probe|phase) key the step, in the order of the two lists below
 result enum(done|fail) - `done`, or `fail` with its reason in `detail`
 detail text - one line: what the step found, with no time, no path of the host and no SHA of a records commit (a records commit holds its time, so its SHA differs on a repeat)
 ```
@@ -212,14 +212,17 @@ so a person reads it with no tool. A plain `git clone` carries the branch as
 4. **`lease`**: [the lease](#the-lease-and-fencing) is taken: at once when it is
    `released`; else after the takeover rule. A records commit sets this run as
    the holder.
-5. **`phase`**: the first step of Start that is not done, run again. A row
+5. **`probe`** (`M2b`, task `T-nxe4`): the probe of each registered harness
+   ([`session.md`](session.md#the-probe)): the copy of the routing register, the
+   skip, the probes, and three counts in `detail`.
+6. **`phase`**: the first step of Start that is not done, run again. A row
    `opening` means that a run stopped between the announcement and the record
    of an issue: the restart runs step 7 for that issue again, with no second
    announcement, as the row already says `opening` (a duplicate issue is
    possible, known limit below). When each step of Start is done, the next
    phase is Intake (`M2c`): the row is `done`, and the run releases the lease and
-   exits. `M2c` replaces this row with its steps; `M2b` puts its step `probe`
-   before it ([`session.md`](session.md#the-probe)). **Decided here:** `phase` is one
+   exits. `M2c` replaces this row with its steps; `M2b`'s step `probe` comes
+   before it. **Decided here:** `phase` is one
    row of the restart's table, whatever steps of Start it runs again; its
    `detail` names them, so the key `step` holds no second `lease`.
 

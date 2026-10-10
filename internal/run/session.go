@@ -97,6 +97,7 @@ type TaskSpec struct {
 	Admit         func(version string) error
 	End           func(id string, d session.Dir, r session.Run, err error) error
 	Push          func(id string, d session.Dir, r session.Run) error
+	probe         *probeOf // a probe session's (row 38), nil for a task session
 }
 
 func (s *Sessions) fns() {
@@ -190,8 +191,10 @@ func (s *Sessions) commit(ctx context.Context, files map[string][]byte, message 
 // a lost lease among them, removes the directory too.
 func (s *Sessions) TaskSession(ctx context.Context, spec TaskSpec) (string, error) {
 	s.fns()
-	if err := s.sweep(s.Host, s.Target); err != nil {
-		return "", err
+	if spec.probe == nil || spec.probe.sweep {
+		if err := s.sweep(s.Host, s.Target); err != nil {
+			return "", err
+		}
 	}
 	var (
 		d        session.Dir
@@ -214,6 +217,9 @@ func (s *Sessions) TaskSession(ctx context.Context, spec TaskSpec) (string, erro
 				root = abs
 			}
 			existed := s.exists(root)
+			if spec.probe != nil { // the prompt names the session's own result file
+				spec.Prompt = probeText(filepath.Join(root, "result", "probe.tsv"), spec.probe.token)
+			}
 			if d, err = s.make(id, spec); err != nil {
 				if !existed && s.exists(root) {
 					d, made = session.Dir{Root: root}, true
@@ -283,6 +289,9 @@ func (s *Sessions) TaskSession(ctx context.Context, spec TaskSpec) (string, erro
 	if spec.Push != nil {
 		steps.Push = func(id string, r session.Run) error { return spec.Push(id, d, r) }
 	}
+	if spec.probe != nil { // a probe has no attempt and no push
+		steps.Attempt, steps.Push = nil, nil
+	}
 	id, err := session.Call(steps)
 	if started {
 		// Once the process started, the directory is removed after the call,
@@ -312,6 +321,12 @@ func (s *Sessions) TaskSession(ctx context.Context, spec TaskSpec) (string, erro
 	}
 	var refusal session.Refusal
 	if !errors.As(err, &refusal) {
+		return id, err // errProbed among them: no record
+	}
+	if spec.probe != nil {
+		if pErr := s.refuseProbe(ctx, spec, id, version, refusal); pErr != nil {
+			return id, errors.Join(err, pErr)
+		}
 		return id, err
 	}
 	detail := strings.TrimSpace(refusal.Reason + " " + refusal.Value)
@@ -349,6 +364,9 @@ func (s *Sessions) startRow(ctx context.Context, id string, spec TaskSpec, versi
 	sessions, err := table(records.SessionsSchema, append(append([][]string{}, before...), row))
 	if err != nil {
 		return err
+	}
+	if spec.probe != nil { // a probe has no events: its start row alone
+		return s.commit(ctx, map[string][]byte{"sessions.tsv": sessions}, fmt.Sprintf("layup run: the start of the probe %s", id))
 	}
 	events, err := s.appendEvent(ctx, spec.Task, "session", spec.Attempt, id, "", "")
 	if err != nil {
