@@ -231,9 +231,11 @@ check that catches it.
   a published branch is never rewritten. The way out is one line of
   `.gitleaksignore` with the finding's fingerprint, a change to the input of a
   gate (O-166). **The check:** before the first push, run `go run
-  github.com/zricethezav/gitleaks/v8@v8.30.1 git --redact --log-opts="origin/main..HEAD"`,
-  and write a credential into an environment as `env["NAME"] = value`. Learned in
-  `T-zwke`.
+  github.com/zricethezav/gitleaks/v8@v8.30.1 git --redact --log-opts="origin/main..HEAD"`
+  as a command of its own and push only on its exit 0, never through a pipe (a
+  pipe into `tail` let a finding be pushed, O-191); write a credential into an
+  environment as `env["NAME"] = value`, and name a test value `want`, not
+  `token`. Learned in `T-zwke` and `T-nxe4`.
 - ❌ **A one-line form that loses a failure.** The first lint command of the first
   pilot put the gate script of the brief into one pipe. When `git ls-files` failed
   (an invalid index), the pipe took the status of its last command, and the check
@@ -527,7 +529,11 @@ These traps are not domain-specific: they hurt every project's test suite.
   of `{cap}` too, so dropping the rule of the empty value left the case green,
   and a lone position `0` was refused by the rule of a gap as well as by the rule
   it named; move the case to a fixture where only its rule can refuse it, or
-  assert the line as well as the column. When a mutation record is cut to a few
+  assert the line as well as the column. A fixture can also be too small to tell
+  two rules apart: in task `T-z027` (#166) the payload of a refused head was
+  the diff of the head, and a demo that changed one file could not tell it from
+  the diff of that file alone; give the fixture a second change that the wrong
+  rule would leave out. When a mutation record is cut to a few
   lines, say so, or it reads as fewer failing cases than ran.
 - ❌ **Stale tests after a requirement changes.** When a requirement changes but its
   test does not, the suite now guards the old behaviour and blocks the new. The

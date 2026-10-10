@@ -18,8 +18,10 @@ import (
 type standinStore struct {
 	files   map[string][]byte
 	commits []map[string][]byte
-	refuse  int    // the next pushes that are refused
-	holder  string // the run that the lease names
+	refuse  int      // the next pushes that are refused
+	holder  string   // the run that the lease names
+	ops     []string // each commit (by its events' last kind) and each push of a head, in order
+	pushErr error    // what PushHead gives
 }
 
 func (s *standinStore) ReadLease(context.Context) (LeaseRow, error) {
@@ -37,8 +39,16 @@ func (s *standinStore) Commit(_ context.Context, files map[string][]byte, _ stri
 	s.commits = append(s.commits, files)
 	for p, d := range files {
 		s.files[p] = d
+		if strings.HasSuffix(p, "/events.tsv") {
+			lines := strings.Split(strings.TrimSpace(string(d)), "\n")
+			s.ops = append(s.ops, "commit "+strings.Split(lines[len(lines)-1], "\t")[1])
+		}
 	}
 	return nil
+}
+func (s *standinStore) PushHead(_ context.Context, sha, branch string) error {
+	s.ops = append(s.ops, "push "+sha+" "+branch)
+	return s.pushErr
 }
 
 const aSHA = "0123456789abcdef0123456789abcdef01234567"
@@ -156,7 +166,7 @@ func TestTheStartRowBeforeTheProcess(t *testing.T) {
 	r, spec := task(store, &calls)
 	store.refuse = 1 // one refused push: Fenced reads the lease and tries once more
 	id, err := r.TaskSession(context.Background(), spec)
-	want := []string{"sweep", "make", "version in /h/sessions/S-1a2b3c4d/repo with /h/sessions/S-1a2b3c4d/tmp", "admit 2.1.295 (Claude Code)", "rules", "process with secret", "end"}
+	want := []string{"sweep", "make", "version in /h/sessions/S-1a2b3c4d/repo with /h/sessions/S-1a2b3c4d/tmp", "admit 2.1.295 (Claude Code)", "rules", "process with secret", "end", "remove /h/sessions/S-1a2b3c4d"}
 	if err != nil || id != "S-1a2b3c4d" || !slices.Equal(calls, want) {
 		t.Fatalf("%q, %v, the calls %q; want %q", id, err, calls, want)
 	}
@@ -268,5 +278,100 @@ func TestAFailedMakeRemovesItsDirectory(t *testing.T) {
 		if err == nil || removed == existed || len(store.commits) != 0 {
 			t.Errorf("a directory there before %v: %v, the calls %q, %d commits; want an error, removed %v, no commit", existed, err, calls, len(store.commits), !existed)
 		}
+	}
+}
+
+// ev gives an events table of rows "kind attempt session".
+func ev(rows ...string) [][]string {
+	var t [][]string
+	for i, r := range rows {
+		f := strings.Fields(r)
+		t = append(t, []string{strconv.Itoa(i + 1), f[0], f[1], strings.ReplaceAll(f[2], "—", ""), "", "", "", "2026-10-09T12:00:00Z"})
+	}
+	return t
+}
+
+func TestTheOpenAttempt(t *testing.T) {
+	const id = "S-1a2b3c4d"
+	for _, c := range []struct {
+		name   string
+		events [][]string
+		open   bool
+	}{
+		{"no later event", ev("attempt 1 —", "session 1 "+id), true},
+		{"a closed of its attempt after", ev("attempt 1 —", "session 1 "+id, "closed 1 —"), false},
+		{"a rebased of its attempt after", ev("attempt 1 —", "session 1 "+id, "rebased 1 —"), false},
+		{"an attempt of another after", ev("attempt 1 —", "session 1 "+id, "attempt 2 —"), false},
+		{"a closed of another attempt after", ev("attempt 1 —", "attempt 2 —", "session 1 "+id, "closed 2 —"), true},
+		{"a closed of its attempt before", ev("attempt 1 —", "closed 1 —", "session 1 "+id), true},
+		{"a session of another after", ev("attempt 1 —", "session 1 "+id, "session 1 S-99999999"), true},
+		{"no event session", ev("attempt 1 —"), false},
+	} {
+		if got := openAttempt(c.events, id, 1); got != c.open {
+			t.Errorf("%s: %v, want %v", c.name, got, c.open)
+		}
+	}
+}
+
+func TestPassed(t *testing.T) {
+	const id = "S-1a2b3c4d"
+	row := func(n, kind, session, detail string) []string {
+		return []string{n, kind, "1", session, "", "", detail, "2026-10-09T12:00:00Z"}
+	}
+	for _, c := range []struct {
+		name   string
+		events [][]string
+		want   bool
+	}{
+		{"done", [][]string{row("1", "result", id, "done")}, true},
+		{"another class", [][]string{row("1", "result", id, "crash")}, false},
+		{"done, then refused", [][]string{row("1", "result", id, "done"), row("2", "refused", id, "artifact")}, false},
+		{"done; another session refused", [][]string{row("1", "result", id, "done"), row("2", "refused", "S-99999999", "artifact")}, true},
+		{"no result", [][]string{row("1", "session", id, "")}, false},
+	} {
+		if got := passed(c.events, id); got != c.want {
+			t.Errorf("%s: %v, want %v", c.name, got, c.want)
+		}
+	}
+}
+
+// The push and the bind: the event push is committed before the forge write,
+// and the event bound only after the forge accepts it; a refused push binds
+// nothing.
+func TestThePushAndTheBindInOrder(t *testing.T) {
+	const id, head = "S-1a2b3c4d", "fedcba9876543210fedcba9876543210fedcba98"
+	start := []string{id, "T-ab12", "1", "developer", "claude", "1.0", "m1", aSHA, aSHA, "9", "3", "1000", "", "30", "", ""}
+	for _, c := range []struct {
+		name    string
+		pushErr error
+		ops     []string
+		last    []string
+	}{
+		{"accepted", nil, []string{"commit push", "push " + head + " task/T-ab12/1", "commit bound"},
+			[]string{"2", "bound", "1", id, "", head, "task/T-ab12/1", "2026-10-09T12:00:00Z"}},
+		{"refused", errPushRefused, []string{"commit push", "push " + head + " task/T-ab12/1", "commit refused"},
+			[]string{"2", "refused", "1", id, "", "", "push-refused", "2026-10-09T12:00:00Z"}},
+	} {
+		store := &standinStore{files: map[string][]byte{}, holder: "0123456789abcdef", pushErr: c.pushErr}
+		r := newSessions(store)
+		if err := r.pushAndBind(context.Background(), start, id, head); err != nil {
+			t.Fatalf("%s: %v", c.name, err)
+		}
+		if !slices.Equal(store.ops, c.ops) {
+			t.Errorf("%s: the calls %q, want %q", c.name, store.ops, c.ops)
+		}
+		ev := events(t, store, "T-ab12")
+		if first := ev[0]; !slices.Equal(first, []string{"1", "push", "1", id, "", head, "task/T-ab12/1", "2026-10-09T12:00:00Z"}) {
+			t.Errorf("%s: the event push %q", c.name, first)
+		}
+		if got := ev[len(ev)-1]; !slices.Equal(got, c.last) {
+			t.Errorf("%s: the last event %q, want %q", c.name, got, c.last)
+		}
+	}
+	// Another error of the push is the run's own, and no event follows push.
+	store := &standinStore{files: map[string][]byte{}, holder: "0123456789abcdef", pushErr: errors.New("the remote cannot be reached")}
+	r := newSessions(store)
+	if err := r.pushAndBind(context.Background(), start, id, head); err == nil || len(events(t, store, "T-ab12")) != 1 {
+		t.Errorf("an error of the push: %v, the events %q; want the error and the event push alone", err, events(t, store, "T-ab12"))
 	}
 }

@@ -20,7 +20,8 @@ func (standIn) UserID(context.Context, string) (int64, error)  { return 0, nil }
 func (standIn) OpenIssue(context.Context, string, string) (int, error) {
 	return 0, nil
 }
-func (standIn) Comments(context.Context, int) ([]Comment, error) { return nil, nil }
+func (standIn) Comments(context.Context, int) ([]Comment, error)    { return nil, nil }
+func (standIn) Comment(context.Context, int, string) (int64, error) { return 0, nil }
 
 var _ Forge = standIn{}
 

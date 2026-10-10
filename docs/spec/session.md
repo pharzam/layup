@@ -67,7 +67,9 @@ checks before a push, the push and the bind ([REQ-003](#req-003--before-a-push))
 - `stdout`, `stderr`: the two outputs of the process.
 
 **Decided here:** `layup run` removes the directory after the session's records
-are pushed, so the clone, the home and a copied credential are thrown away (a
+are pushed (**decided here**, task `T-fsjp`: once its process has started, after
+the session's call ends, whether its end and its push succeed or fail, so a
+copied credential never waits for the next sweep), so the clone, the home and a copied credential are thrown away (a
 session is not resumed across attempts: ADR-0015 decision 5, FT6); a directory
 left by a run that stopped is removed before the next session starts.
 **Decided here** (task `T-vxdg`, condition 1 of the plan review of #159): a run
@@ -296,7 +298,13 @@ that they govern: an agent cannot change a rule path without a control that the
 agents cannot pass by themselves (ADR-0017)." `M2b` gives prevention layer 1 (no
 credential: [the environment](#the-environment-and-the-harness-credential)) and
 layer 2 (no rule change leaves the host in a task); layer 3, the forge's rules,
-is `M2d`'s and `M2f`'s. For a task session whose end is `done`:
+is `M2d`'s and `M2f`'s. For a task session whose end is `done`: its event
+`result` is `done` and it has no event `refused` (**decided here**, task
+`T-z027`, condition 3 of the plan review of #166: a `done` session refused at
+its end, `artifact` among them, is never checked or pushed). The checks run on
+the head that the end fetched into `layup run`'s clone
+([REQ-005](#req-005--the-result-of-a-session)). Each refusal below is one
+records commit through fencing, and nothing is pushed:
 
 ### The fetch by SHA
 
@@ -345,7 +353,16 @@ lines, so an added line that starts `## ` is refused and one under a `### `
 sub-heading passes; the exception is that one file's, as the register's block
 allows no other (`internal/rules` refuses another). A refused diff (`git diff --binary`) goes to the records as
 `payloads/<sha256>` with the event `refused`, and the change becomes a proposal
-for the next rule batch (`M2f`). **Known limit:** a target whose product holds
+for the next rule batch (`M2f`): the payload is the proposal, and `M2b` writes
+no other record of it (**decided here**, task `T-z027`). The `detail` of the
+event is the reason, one space, and the payload's SHA-256, for example
+`rule-path 3f2a…` (**decided here**, condition 3 of the plan review of #166).
+**Decided here** (condition 2): a records commit of the session with no
+`rule-paths.tsv`, or one that its reader refuses, refuses the result
+(`rule-paths`), fail closed (a records commit or a `git` that cannot be read
+is the run's own error; round 1 of #166), as ADR-0017 decision 2 makes the register the
+guard of layer 2; a target that Start made has no register until `layup
+setup` writes it. **Known limit:** a target whose product holds
 shell scripts changes them only in a rule batch.
 
 ### The push and the bind
@@ -355,15 +372,33 @@ branch), which announces the forge write (fencing, [`run.md`](run.md#the-lease-a
 then `Push` of the SHA to `task/<task>/<attempt>` with the installation token,
 never with force; then, after the forge accepts it, a records commit adds the
 event `bound`. A refused push binds nothing: an event `refused` with the detail
-`push-refused`. The session never pushes.
+`push-refused`. The session never pushes. **Decided here** (task `T-e3sy`,
+condition 1 of the plan review of #167): a refused push is one that `Push`
+reports as its code 1, not a fast-forward or refused by the remote; a push that
+fails otherwise (the remote cannot be reached) is the run's own error, and no
+event follows `push`, as the forge's answer is unknown. A `push` with no
+`bound` and no `refused` after it, from that error or from a lost lease at the
+commit of `bound`, is a forge write whose result is not recorded: the next
+reader of that session (the task loop of `M2e`) reads the target's branch
+before it acts on it. The push runs from `layup run`'s clone, with the head
+that the end fetched.
 
 ### A comment for a session
 
 **Decided here:** after its records, each probe and each task session posts one
 comment on the control issue (`issue.control` of `start.tsv`), whose first line
 starts with the session ID and gives its result, for example
-`S-1a2b3c4d: probe of claude 2.1.295: passed`. The task loop of `M2e` moves a
-task's comments to the task's issue.
+`S-1a2b3c4d: probe of claude 2.1.295: passed`. **Decided here** (task
+`T-fsjp`): the first line of a task session's comment is `<session>: <role>
+session of <task>, attempt <n>: <class>`, with `, refused <reason>` after it for
+each refusal of its result, for example `S-1a2b3c4d: developer session of
+T-ab12, attempt 1: done, refused artifact`. It is posted after every record of
+the session, those of the checks before a push and of the push too, from what
+the events hold, so it names the refusals of the end and of those checks
+(**decided here**, round 1 of #165); a session whose end recorded nothing has no
+comment, and a lost lease stops the run before it (round 2 of #165). The call is the forge's `Comment`
+([`forge.md`](forge.md#the-calls-of-m2b), O-189). The task loop of `M2e` moves
+a task's comments to the task's issue.
 
 ## REQ-005 — The result of a session
 
@@ -379,6 +414,25 @@ the task, the role, the attempt and the base come from the start row, never
 from the file (§3). The questions, the decisions and the lessons of a handoff,
 and the transition table, are `M2e`'s.
 
+**Decided here** (task `T-fsjp`, condition 2 of the plan review of #165): the
+result file is read for every exit, to tell `done` from `no-result`, and is
+checked against the head and committed for the class `done` only, as only a
+session that ends `done` hands its work over; for another class the events and
+the telemetry row are committed, and no `results/` file. The file is read once,
+and the bytes committed are the bytes checked. A link as the last part of its
+path is refused (no file of the host is followed); a link above it, `result/`
+itself, is followed, and the file still has to pass its block, so it is one the
+session could have written. **Decided here** (condition 1 of the plan review
+of #165): the head of the session is read from the files of `repo/.git`
+([The fetch by SHA](#the-fetch-by-sha)) and fetched into `layup run`'s clone
+with `FetchSession` at the end of the session, and each artifact is read there,
+so no command of `layup` runs in `repo/`; a head that cannot be read or fetched
+adds the event `refused`, `branch`, and the result is not committed. An
+artifact whose SHA-256 differs from its file at the head, or whose path the
+head lacks, adds the event `refused`, `artifact`, and the result is still
+committed (**decided here**: "adds"). The result file, the events `result` and
+`refused`, and the telemetry row are one records commit.
+
 ### The open attempt
 
 A result is refused (the event `refused`, `closed-attempt`) unless the attempt of its
@@ -386,7 +440,10 @@ start row is still the
 task's open attempt: no row of `tasks/<task>/events.tsv` after the session's
 event `session` is `closed` or `rebased` for that attempt, or `attempt` for
 another one (§3). **Decided here:** the check reads the events at the run's own
-last pushed records commit, as the run is the one writer.
+last pushed records commit, as the run is the one writer. **Decided here**
+(task `T-fsjp`): a refused result is not committed as `results/<session>.tsv`;
+the event `result` with the class, the event `refused` and the telemetry row
+are.
 
 ## REQ-013 — The probe, admission and routing
 
@@ -437,6 +494,26 @@ its records. **Decided here:** the block `run-steps` is built, so the build task
 of the probe adds `probe` to its enum, with its Go schema, in one change
 (condition 1 of the plan review of #147).
 
+**Decided here** (task `T-nxe4`, #168): a harness whose version's last probe
+passed is known only once its version command has run, in the probe's own
+session, so that session ends there: its directory is removed and nothing is
+written, and the harness is in none of the counts. Its cost is the making of
+the directory, one local clone of the target per such harness per restart. A probe that a task
+session's version check starts (step 2) does not sweep, as the task session
+swept and its own directory is live; only the step sweeps. The `records`
+column of a probe's start row is the run's last pushed records commit at the
+start of that probe, so a later probe of the step names the records of the
+earlier ones. A
+relative `file` value is read from `repo/`, after its `..` parts, and an
+absolute one after its `..` parts, before the comparison with the session
+directory. A probe refused at its start (its row `failed`) counts as probed
+and failed, so on a restart where each harness is probed or skipped the three
+counts add up to the harnesses of the register; it
+posts no comment, its record being its row, as a task session's refused start
+posts none (condition 2 of the plan review). The comment of a probe that
+failed ends `: failed <reason>`, for example `S-1a2b3c4d: probe of claude
+2.1.295: failed token`.
+
 ### Admission
 
 A pair of a harness and a model is admitted when the harness's last probe, at
@@ -454,7 +531,7 @@ admitted. Code alone admits; no model is asked.
 (K38: the order only; the weights of §13 come with the learning loop).
 **Decided here:** its source is the Operator's `host:registers/routing.tsv`,
 which `layup run` copies into the records at the step `probe` when the two
-differ, as each value that a run uses is copied into the records (§1). The
+tables differ, in any order of their rows (**decided here**, task `T-nxe4`), as each value that a run uses is copied into the records (§1). The
 first admitted pair of the role's list for the task's tier is the session's
 pair; with none, the start is refused (`pair`).
 
@@ -470,7 +547,9 @@ started, the probe's included, in the records commit of the session's end, check
   the task's requirement IDs from the task register (`M2e`); `—` before it.
 - `billing`: the row's `billing`.
 - `start`, `first_output`, `end`: `layup run`'s own times: the start of the
-  process, the first byte of `stdout`, and its end, as the column `end` of
+  process, the first byte of `stdout`, and its end (**decided here**, task
+  `T-fsjp`: a program that cannot start has no end of its own, so its `end`
+  is its `start`), as the column `end` of
   [`telemetry.tsv`](records.md#req-011--the-telemetry-record) says.
 - the tokens: from [the usage report](#the-usage-report-of-a-harness).
 - the money: `reported` when the harness reports a cost and the billing is
@@ -527,6 +606,7 @@ gives no usage report (3000.11.3), so its rows use `none`.
 | State | Result |
 | ----- | ------ |
 | A host register (`harnesses.tsv`, `models.tsv`, `routing.tsv`) with two rows for a key, or a field that its type refuses | exit 2: its reader names the line |
+| A `host:prices.tsv` that its reader refuses | exit 2: the error names the file (task `T-nxe4`) |
 | A harness row with `cap` and no `{cap}` in `command`, or `{cap}` and `cap` `—` | exit 2 |
 | A `credential` that is not absolute, is missing, is not mode 0600 or has another owner | exit 2, naming the file |
 | A `credential_to` that is not `var:NAME`, `file:PATH` or `—`, a `NAME` of another form or of [the list above](#the-environment-and-the-harness-credential), or a `PATH` that is empty, absolute or has a part `..` | exit 2 |
@@ -537,10 +617,15 @@ gives no usage report (3000.11.3), so its rows use `none`.
 | A version command that fails, or whose first line is empty or white space only | the start is refused (`version`) |
 | A result file that is missing, a link or not a regular file, over 1 MiB, malformed, or has two `status` rows | `no-result`; the result is refused |
 | A `probe.tsv` with no token, another token, or no `AGENTS.md` row | the probe fails, with the reason |
+| A `stdout` that cannot be read | tokens `unavailable`, "stdout cannot be read" (**decided here**, task `T-fsjp`); a usage format of no list is the run's own error |
 | `stdout` with no `result` object, or with lines that are not JSON | tokens `unavailable` (the lines that are not JSON, or not of the form of an object of the report, are skipped) |
 | A task with no event `attempt` for the session's attempt | the start is refused (`attempt`) |
 | A `prompt.md` over 131,071 bytes for a row whose `prompt` is `arg` | the start is refused (`prompt`), before the start row |
 | A ref of `repo/.git` that is malformed, or whose SHA names no commit of the session's objects | the result is refused (`branch`) |
+| A `host:prices.tsv` that is missing | an empty table (**decided here**, task `T-fsjp`): no money is `computed`, so a money that is not `reported` is `unknown` |
+| A session's records commit with no `rule-paths.tsv`, or one that its reader refuses | the result is refused (`rule-paths`), and nothing is pushed |
+| A push of a session's head that `git` refuses (not a fast-forward, or refused by the remote) | the event `refused`, `push-refused`; nothing is bound |
+| A push of a session's head that fails otherwise (the remote cannot be reached) | the run's own error; no event follows `push` |
 | A records push that is refused | the run stops, as [`run.md`](run.md#the-lease-and-fencing) |
 
 ## NFR-005 — No harness in the engine checks
@@ -604,8 +689,9 @@ Gemini CLI and OpenCode, added when a registered harness needs one.
 | The result of a session | integration | A result file of the block `result` is committed byte for byte with the event `result`; an artifact whose SHA-256 differs at the head adds the event `refused` (`artifact`); the session ID, the task, the role, the attempt and the base come from the start row. |
 | The open attempt | unit | With a stand-in events table, a result whose attempt was closed, replaced or rebased is refused (`closed-attempt`); the attempt and the base come from the start row; a session with no event `attempt` of its attempt is refused at its start. |
 | Before a push | integration | With the real `git` and a local bare repository: the head read from the files of `repo/.git` (a loose ref, a packed ref with `git pack-refs`; with a stand-in reader of the files, at unit: a link, a symbolic ref, a malformed loose ref, a packed line of another form and no ref refused; a SHA of no commit refused by `FetchSession`); the fetch through the scratch repository with hooks off; a session configuration that holds each key of git's documentation that starts a program runs none of them; a head that does not descend from the base is refused; a change of `.github/workflows/` and of a rule path is refused before any push, its diff a payload; added lines in §2 of `docs/guardrails.md` pass; the SHA is bound only after the push is accepted. |
-| The probe and admission | unit | With a fake harness: a probe that passes, one that reports a `policy` path and passes, and one that fails for each reason; admission by the probe and `use`; a harness with no model of `use` `yes` is skipped. |
-| A refused start | unit | A refused start of a task session is an event `refused` with its session ID, its reason (`attempt`, `version`, `probe`, `context`, `prompt`, `rules`) and no row of `sessions.tsv` or `telemetry.tsv`; the refusal `pair` has `—` for the session; a probe's refused start is its row of `harnesses.tsv`, `failed`, with `version` `—` when the version check refused it. |
+| The probe and admission | unit | With the result of a fake harness: a probe that passes, one that reports a `policy` path and passes, and one that fails for each reason; admission by the probe and `use`. |
+| A refused start | unit | A refused start of a task session is an event `refused` with its session ID, its reason (`attempt`, `version`, `probe`, `context`, `prompt`, `rules`) and no row of `sessions.tsv` or `telemetry.tsv`; the refusal `pair` has `—` for the session. |
+| The skip, a refused probe and the early end | integration | With the real `git` and a fake harness program (task `T-nxe4`): a harness with no model of `use` `yes` is skipped; a probe's refused start is its row of `harnesses.tsv`, `failed`, with `version` `—` when the version check refused it; a harness whose last probe at its version passed ends with no record and no directory left. |
 | The routing register | unit | `host:registers/routing.tsv` is copied into `records:routing.tsv` at the step `probe` when the two differ, and not when they are equal; the session's pair is the first admitted pair of the role's list for the task's tier; with none, the start is refused (`pair`). |
 | The usage report | unit | `claude-result` on two recorded `result` events of Claude Code 2.1.295 (one with subagents and a second model) sums `modelUsage`; `none` gives `unavailable` and `unknown`. |
 | The writer | unit | One row per session that `CheckTelemetry` passes; money `reported`, `computed` or `unknown` by the billing, the prices and the models. |

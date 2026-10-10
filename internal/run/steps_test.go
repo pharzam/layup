@@ -19,6 +19,7 @@ type standInForge struct {
 	repoErr  error
 	ids      map[string]int64
 	fail     string
+	posted   map[int][]string // the bodies of the comments posted, by issue
 }
 
 func (f *standInForge) err(call string) error {
@@ -55,6 +56,16 @@ func (f *standInForge) OpenIssue(context.Context, string, string) (int, error) {
 }
 func (f *standInForge) Comments(context.Context, int) ([]forge.Comment, error) {
 	return nil, f.err("Comments")
+}
+func (f *standInForge) Comment(_ context.Context, issue int, body string) (int64, error) {
+	if err := f.err("Comment"); err != nil {
+		return 0, err
+	}
+	if f.posted == nil {
+		f.posted = map[int][]string{}
+	}
+	f.posted[issue] = append(f.posted[issue], body)
+	return int64(len(f.posted[issue])), nil
 }
 
 func goodForge() *standInForge {

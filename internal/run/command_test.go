@@ -27,7 +27,7 @@ func TestStartAndRestartCallStepAtTheStartOfEachStep(t *testing.T) {
 	cfg = startConfig(f)
 	cfg.Step = step
 	Restart(context.Background(), cfg) // no layup-records: forge fails
-	if want := []string{"1/5 forge"}; !reflect.DeepEqual(calls, want) {
+	if want := []string{"1/6 forge"}; !reflect.DeepEqual(calls, want) {
 		t.Errorf("Restart called Step %q; want %q", calls, want)
 	}
 	cfg.Step = nil // a nil Step is no call
@@ -35,7 +35,7 @@ func TestStartAndRestartCallStepAtTheStartOfEachStep(t *testing.T) {
 	if got := stepNames(9); !reflect.DeepEqual(got, []string{"forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease"}) {
 		t.Errorf("the steps of Start %q; want those of run.md", got)
 	}
-	if got := stepNames(5); !reflect.DeepEqual(got, []string{"forge", "clone", "version", "lease", "phase"}) {
+	if got := stepNames(6); !reflect.DeepEqual(got, []string{"forge", "clone", "version", "lease", "probe", "phase"}) {
 		t.Errorf("the steps of the restart %q; want those of run.md", got)
 	}
 }

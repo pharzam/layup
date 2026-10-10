@@ -18,7 +18,8 @@ docs/spec/session.md	### The limit of a session	—	34a
 docs/spec/session.md	### The end of a session	—	34b
 docs/spec/session.md	## REQ-003 — Before a push	the checks of a task session whose end is done	37a
 docs/spec/session.md	### The fetch by SHA	the head read from the files of repo/.git	33b
-docs/spec/session.md	### The fetch by SHA	the fetch through FetchSession and the check of the base	37a
+docs/spec/session.md	### The fetch by SHA	the fetch through FetchSession	36b
+docs/spec/session.md	### The fetch by SHA	the check of the base	37a
 docs/spec/session.md	### A workflow or rule-path change	the reader of rule-paths.tsv, the match, the exception of docs/guardrails.md, the refusal of .github/workflows/	32
 docs/spec/session.md	### A workflow or rule-path change	the call before a push, the refused diff as a payload, the proposal	37a
 docs/spec/session.md	### The push and the bind	—	37b
@@ -64,11 +65,11 @@ docs/spec/session.md	## The acceptance tests of M2b	Before a push: a change of .
 docs/spec/session.md	## The acceptance tests of M2b	Before a push: added lines in §2 of docs/guardrails.md pass	32
 docs/spec/session.md	## The acceptance tests of M2b	Before a push: the SHA bound only after the push is accepted	37b
 docs/spec/session.md	## The acceptance tests of M2b	The probe and admission: the version check	34a
-docs/spec/session.md	## The acceptance tests of M2b	The probe and admission: a probe that passes, one with a policy path, one that fails for each reason, and the skip	38
+docs/spec/session.md	## The acceptance tests of M2b	The probe and admission: a probe that passes, one with a policy path, one that fails for each reason	38
 docs/spec/session.md	## The acceptance tests of M2b	The probe and admission: admission by the probe and use	30b
 docs/spec/session.md	## The acceptance tests of M2b	A refused start: a task session's refusals	36a
 docs/spec/session.md	## The acceptance tests of M2b	A refused start: the refusal pair	30b
-docs/spec/session.md	## The acceptance tests of M2b	A refused start: a probe's refused start	38
+docs/spec/session.md	## The acceptance tests of M2b	The skip, a refused probe and the early end	38
 docs/spec/session.md	## The acceptance tests of M2b	The routing register: the copy at the step probe	38
 docs/spec/session.md	## The acceptance tests of M2b	The routing register: the pair and its refusal	30b
 docs/spec/session.md	## The acceptance tests of M2b	The usage report	34b

@@ -35,6 +35,7 @@ type fakeGitHub struct {
 	headers     map[string]http.Header
 	branches    int
 	userNull    bool
+	posted      []string // the body of each comment posted
 }
 
 const (
@@ -119,6 +120,15 @@ func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]any{"id": 9001, "login": "acme-layup[bot]"})
 	case call == "GET /users/nobody":
 		http.Error(w, `{"message":"Not Found"}`, 404)
+	case call == "POST /repos/acme/target/issues/3/comments":
+		var in struct{ Body string }
+		if json.NewDecoder(r.Body).Decode(&in) != nil || in.Body == "" {
+			http.Error(w, `{"message":"no body"}`, 422)
+			return
+		}
+		f.posted = append(f.posted, in.Body)
+		w.WriteHeader(201)
+		json.NewEncoder(w).Encode(map[string]any{"id": 7001, "body": in.Body})
 	case call == "POST /repos/acme/target/issues":
 		var in struct{ Title, Body string }
 		if json.NewDecoder(r.Body).Decode(&in) != nil || in.Title == "" {
@@ -222,6 +232,10 @@ func TestTheAdapterPlaysEachCallOfM2a(t *testing.T) {
 	if n, err := a.OpenIssue(ctx, "Intake", "the body"); err != nil || n != 3 {
 		t.Errorf("OpenIssue = %d, %v", n, err)
 	}
+	body := "S-1a2b3c4d: developer session of T-ab12, attempt 1: done\n"
+	if id, err := a.Comment(ctx, 3, body); err != nil || id != 7001 || len(f.posted) != 1 || f.posted[0] != body {
+		t.Errorf("Comment = %d, %v, the bodies posted %q; want 7001 and the body", id, err, f.posted)
+	}
 	f.userNull = true
 	got, err := a.Comments(ctx, 3)
 	if err != nil {
@@ -297,6 +311,8 @@ func TestEachForgeErrorNamesTheCallAndTheStatus(t *testing.T) {
 	}{
 		{"an unexpected status", func(f *fakeGitHub) { f.reject["POST /repos/acme/target/issues"] = []int{410} },
 			func(a *Adapter) error { _, err := a.OpenIssue(ctx, "t", "b"); return err }, 410, "rejected by the test"},
+		{"a comment that the forge refuses", func(f *fakeGitHub) { f.reject["POST /repos/acme/target/issues/3/comments"] = []int{422} },
+			func(a *Adapter) error { _, err := a.Comment(ctx, 3, "b"); return err }, 422, "rejected by the test"},
 		{"an unknown login", func(*fakeGitHub) {},
 			func(a *Adapter) error { _, err := a.UserID(ctx, "nobody"); return err }, 404, "Not Found"},
 		{"a server with no endpoint of Comments", func(f *fakeGitHub) { f.noComments = true },

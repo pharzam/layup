@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pharzam/layup/internal/forge"
 	"github.com/pharzam/layup/internal/records"
 	"github.com/pharzam/layup/internal/session"
 	"github.com/pharzam/layup/internal/tsv"
@@ -28,19 +29,30 @@ type SessionStore interface {
 	Store
 	ReadFile(ctx context.Context, path string) ([]byte, error)
 	Commit(ctx context.Context, files map[string][]byte, message string) error
+	// PushHead pushes the commit sha of the run's clone to branch of the
+	// target with the installation token, never with force; a push that git
+	// refuses (not a fast-forward, or refused by the remote) is
+	// errPushRefused (row 37b).
+	PushHead(ctx context.Context, sha, branch string) error
 }
 
 // Sessions starts the attempts and the task sessions of one run of one
 // target: its records store, its run ID, the host directory, the target
 // OWNER/NAME, the run's clone and its default branch, and its clock
-// (time.Now when nil). The
-// function fields are the session's own, which a unit test replaces.
+// (time.Now when nil); for the end of a task session (row 36b), the forge,
+// the control issue (issue.control of start.tsv) and the rows of
+// host:prices.tsv as records.ReadPrices gives them (none for a missing file:
+// an empty table, decided here, task T-fsjp). The function fields are the
+// session's own, which a unit test replaces.
 type Sessions struct {
 	Store         SessionStore
 	RunID         string
 	Host, Target  string
 	Clone, Branch string
 	Now           func() time.Time
+	Forge         forge.Forge
+	Control       int
+	Prices        [][]string
 	newID         func() (string, error)
 	sweep         func(host, target string) error
 	make          func(id string, spec TaskSpec) (session.Dir, error)
@@ -65,6 +77,7 @@ type Pair struct {
 	Rules, Policy                       []string
 	Context                             int
 	Session                             session.Harness
+	Billing, Usage                      string // the row's billing and usage format (row 36b)
 }
 
 // TaskSpec is one task session to start: the task, its attempt and role, the
@@ -72,7 +85,8 @@ type Pair struct {
 // and the pair; Admit gives nil when the version read may start (row 38 runs
 // the probe in it), else Refusal{probe}; End and Push are the end of the
 // session and the checks before a push, the push and the bind (rows 36b, 37a
-// and 37b), End nil for none yet, Push nil for none.
+// and 37b), End nil for the end of a task session (endTask, row 36b), Push
+// nil for the checks before a push (pushTask, row 37a).
 type TaskSpec struct {
 	Task          string
 	Attempt       int
@@ -83,6 +97,7 @@ type TaskSpec struct {
 	Admit         func(version string) error
 	End           func(id string, d session.Dir, r session.Run, err error) error
 	Push          func(id string, d session.Dir, r session.Run) error
+	probe         *probeOf // a probe session's (row 38), nil for a task session
 }
 
 func (s *Sessions) fns() {
@@ -176,8 +191,10 @@ func (s *Sessions) commit(ctx context.Context, files map[string][]byte, message 
 // a lost lease among them, removes the directory too.
 func (s *Sessions) TaskSession(ctx context.Context, spec TaskSpec) (string, error) {
 	s.fns()
-	if err := s.sweep(s.Host, s.Target); err != nil {
-		return "", err
+	if spec.probe == nil || spec.probe.sweep {
+		if err := s.sweep(s.Host, s.Target); err != nil {
+			return "", err
+		}
 	}
 	var (
 		d        session.Dir
@@ -200,6 +217,9 @@ func (s *Sessions) TaskSession(ctx context.Context, spec TaskSpec) (string, erro
 				root = abs
 			}
 			existed := s.exists(root)
+			if spec.probe != nil { // the prompt names the session's own result file
+				spec.Prompt = probeText(filepath.Join(root, "result", "probe.tsv"), spec.probe.token)
+			}
 			if d, err = s.make(id, spec); err != nil {
 				if !existed && s.exists(root) {
 					d, made = session.Dir{Root: root}, true
@@ -260,17 +280,39 @@ func (s *Sessions) TaskSession(ctx context.Context, spec TaskSpec) (string, erro
 		},
 		End: func(id string, r session.Run, err error) error {
 			if spec.End == nil {
-				return err
+				return s.endTask(ctx, spec, id, d, r, err)
 			}
 			return spec.End(id, d, r, err)
 		},
 	}
+	steps.Push = func(id string, r session.Run) error { return s.pushTask(ctx, id) }
 	if spec.Push != nil {
 		steps.Push = func(id string, r session.Run) error { return spec.Push(id, d, r) }
 	}
+	if spec.probe != nil { // a probe has no attempt and no push
+		steps.Attempt, steps.Push = nil, nil
+	}
 	id, err := session.Call(steps)
-	if err == nil || started {
+	if started {
+		// Once the process started, the directory is removed after the call,
+		// whether the end and the push hooks succeed or fail, so a copied
+		// credential never waits for the next sweep (decided here, task
+		// T-fsjp).
+		if rmErr := s.remove(d.Root); rmErr != nil {
+			err = errors.Join(err, rmErr)
+		}
+		// The comment comes after every record of the session, the push
+		// hook's too (decided here, task T-fsjp, round 1 of #165).
+		// A lost lease stops the run before any other write (run.md).
+		if !errors.As(err, new(*LostError)) {
+			if cErr := s.comment(ctx, id); cErr != nil {
+				err = errors.Join(err, cErr)
+			}
+		}
 		return id, err
+	}
+	if err == nil {
+		return id, nil
 	}
 	if made {
 		if rmErr := s.remove(d.Root); rmErr != nil {
@@ -279,6 +321,12 @@ func (s *Sessions) TaskSession(ctx context.Context, spec TaskSpec) (string, erro
 	}
 	var refusal session.Refusal
 	if !errors.As(err, &refusal) {
+		return id, err // errProbed among them: no record
+	}
+	if spec.probe != nil {
+		if pErr := s.refuseProbe(ctx, spec, id, version, refusal); pErr != nil {
+			return id, errors.Join(err, pErr)
+		}
 		return id, err
 	}
 	detail := strings.TrimSpace(refusal.Reason + " " + refusal.Value)
@@ -316,6 +364,9 @@ func (s *Sessions) startRow(ctx context.Context, id string, spec TaskSpec, versi
 	sessions, err := table(records.SessionsSchema, append(append([][]string{}, before...), row))
 	if err != nil {
 		return err
+	}
+	if spec.probe != nil { // a probe has no events: its start row alone
+		return s.commit(ctx, map[string][]byte{"sessions.tsv": sessions}, fmt.Sprintf("layup run: the start of the probe %s", id))
 	}
 	events, err := s.appendEvent(ctx, spec.Task, "session", spec.Attempt, id, "", "")
 	if err != nil {
