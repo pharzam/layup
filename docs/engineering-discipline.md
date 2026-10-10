@@ -753,6 +753,8 @@ runs in the [`pre-commit` hook](#git-hooks); the whole ladder runs in
 `go test -tags=integration ./...`, `go test -tags=e2e ./...`, and
 `go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./... && go vet ./... && gitleaks git --redact`
 for the parallel security track — with `-timeout 10m` bounding a hanging test.
+A Go test under the tag `uat` is no rung of the ladder: a person runs it with
+real credentials ([`tests/test-levels.md`](tests/test-levels.md)).
 Unit and integration tests are `*_test.go` files beside the code they test; the
 repo-root [`tests/`](../tests/) holds cross-package end-to-end fixtures only.
 
