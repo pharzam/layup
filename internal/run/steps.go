@@ -78,6 +78,8 @@ type state struct {
 	root, target                   string
 	store                          *recordsStore
 	start, approvers, copies       [][]string
+	startHarnesses                 []string // the harnesses of start.tsv, as a restart reads them (#199)
+	restarted                      bool
 	lease                          LeaseRow
 	stopBeat                       func() error       // ends the heartbeat and gives its error
 	cancel                         context.CancelFunc // ends the context of the steps
@@ -433,7 +435,12 @@ func (r *state) set(name, value string) {
 	}
 }
 
+// harnessIDs gives the harnesses of start.tsv: in Start, those of the
+// register; in a restart, those that the Start's rows name.
 func (r *state) harnessIDs() []string {
+	if r.restarted {
+		return r.startHarnesses
+	}
 	var ids []string
 	for _, h := range r.cfg.Harnesses {
 		ids = append(ids, h[0])
@@ -661,7 +668,13 @@ func (r *state) cloneStep(ctx context.Context) Step {
 		}
 		return rows, nil
 	}
-	if r.start, err = read("start/start.tsv", func(d []byte) ([][]string, error) { return records.ReadStart(d, r.harnessIDs()) }); err != nil {
+	// The Start's harnesses are those of its rows, whatever the register is
+	// now (task T-s7vr, #199).
+	if r.start, err = read("start/start.tsv", func(d []byte) ([][]string, error) {
+		rows, harnesses, err := records.ReadStartAsWritten(d)
+		r.startHarnesses, r.restarted = harnesses, true
+		return rows, err
+	}); err != nil {
 		return fail(name, err)
 	}
 	if r.approvers, err = read("approvers.tsv", records.ReadApprovers); err != nil {

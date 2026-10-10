@@ -177,22 +177,32 @@ func CheckStart(rows [][]string, harnesses []string) error {
 	return nil
 }
 
-// ReadStart reads start.tsv by its schema and its rules, for the harness
-// register whose IDs are harnesses; each ID is of the form <word>.
-func ReadStart(data []byte, harnesses []string) ([][]string, error) {
-	for _, h := range harnesses {
-		if !wordForm.MatchString(h) {
-			return nil, fmt.Errorf("the harness ID %q is not of the form <word>", h)
-		}
-	}
+// ReadStartAsWritten reads start.tsv by its schema and its rules, for the
+// harnesses that its own rows name: the IDs of the rows harness.<id>.cap, in
+// their order, each of the form <word> (the register at Start; a restart reads
+// the Start's record whatever the register is now, task T-s7vr, #199). It
+// gives the rows and those IDs.
+func ReadStartAsWritten(data []byte) ([][]string, []string, error) {
 	rows, err := tsv.Read(data, StartSchema)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
+	}
+	var harnesses []string
+	for i, r := range rows {
+		name := fields(StartSchema, r)["name"]
+		if !strings.HasPrefix(name, "harness.") || !strings.HasSuffix(name, ".cap") {
+			continue
+		}
+		h := strings.TrimSuffix(strings.TrimPrefix(name, "harness."), ".cap")
+		if !wordForm.MatchString(h) {
+			return nil, nil, &tsv.Error{Line: i + 2, Column: "name", Reason: fmt.Sprintf("the harness ID %q is not of the form <word>", h)}
+		}
+		harnesses = append(harnesses, h)
 	}
 	if err := CheckStart(rows, harnesses); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return rows, nil
+	return rows, harnesses, nil
 }
 
 // CheckApprover checks the rules of the block approvers on one row: login and

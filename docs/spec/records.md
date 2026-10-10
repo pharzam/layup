@@ -192,9 +192,12 @@ name, not a new column). The names are `layup.version`, `psb.sha256`,
 `vision.sha256`, `forge.plan`, `forge.visibility`, `app.permissions`,
 `operator.id`, `idea-owner.id`, `intake.cap`, `lease.H`, `watch.T`,
 `harness.<id>.cap` and `harness.<id>.wall` for each row of the harness
-register, `pin.source`, `pin.commit`, `pin.tree`, `pin.time`, `issue.intake`,
+register at Start, `pin.source`, `pin.commit`, `pin.tree`, `pin.time`, `issue.intake`,
 `issue.control` and `watch`. The rows are in this order, and the harness rows
-in the order of the register.
+in the order of the register at Start. **Decided here** (task `T-s7vr`, #199):
+the harnesses of `start.tsv` are those that its rows `harness.<id>.cap` name,
+in their order, each `<id>` of the form `<word>`, and each followed by its row
+`harness.<id>.wall`; a restart reads them so, whatever the register is now.
 
 ```tsv-schema start records:start/start.tsv
 name text key one of the names above, and no other

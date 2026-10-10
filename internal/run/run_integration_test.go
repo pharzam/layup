@@ -488,3 +488,31 @@ func TestALostBeatEndsTheWatch(t *testing.T) {
 		t.Errorf("the watch read %d times after the beat was lost; want it ended at the loss", waits)
 	}
 }
+
+// A restart whose harness register changed after Start (#199): a register
+// that gained rows, with the steps of Start that the restart runs again, so
+// that start.tsv is written again; and a register that lost one.
+func TestARestartWithAHarnessRegisterThatChanged(t *testing.T) {
+	w := newWorld(t)
+	w.fake.failOpen = 2
+	cfg := w.config("0.1.0-dev")
+	cfg.Harnesses = nil
+	rows := w.start(cfg)
+	if last := rows[len(rows)-1]; last.Name != "issues" || last.Result != "fail" {
+		t.Fatalf("the Start with no harness and a failed opening:\n%s", steps(rows))
+	}
+	cfg = w.config("0.1.0-dev") // two harnesses now
+	cfg.RunID = "fedcba9876543210"
+	cfg.WatchT, cfg.LeaseH = 0, 0
+	allDone(t, "the restart with a harness gained", Restart(context.Background(), cfg), "forge", "clone", "version", "lease", "probe", "phase")
+	got := show(t, w.bare, "refs/heads/layup-records", "start/start.tsv")
+	if strings.Contains(got, "harness.") || !strings.Contains(got, "\nissue.control\t2\tforge\n") {
+		t.Errorf("start.tsv after the restart: the Start's rows, no harness row, the control issue 2:\n%s", got)
+	}
+
+	w = newWorld(t)
+	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
+	cfg = w.config("0.1.0-dev")
+	cfg.Harnesses = cfg.Harnesses[:1] // devin removed
+	allDone(t, "the restart with a harness lost", Restart(context.Background(), cfg), "forge", "clone", "version", "lease", "probe", "phase")
+}
