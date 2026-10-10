@@ -14,7 +14,9 @@ only: not the architecture, the specification, or the name of any candidate.
 
 [`gh-search.tsv`](gh-search.tsv): 20 GitHub repository searches (the API's best
 match, 10 results each where it gave 10), on 2026-10-10 at 16:53Z, each query
-with the fact words it comes from: 135 results.
+with the fact words it comes from: 135 results. One query, `text span annotation
+byte offsets`, gave no result, so the file holds 19 query strings; searcher B
+counted them and said so.
 
 ## The curated lists
 
@@ -35,3 +37,16 @@ commit makes it reproducible.
 | `muchengracedriver/awesome-requirements-writer` | `158411013a3a` | `README.md` | 161 | 6 | the most-starred list of requirement writing (104 stars) |
 | `JulianFrattini/nlp4re-tools` | `ac754cdbe470` | `tools/nlp4re-tools.md` | 270 | 102 | the classified list of NLP4RE tools (Frattini et al., the NLP4RE handbook); its list is tools/nlp4re-tools.md, not its README |
 | `aabs/awesome-specification-driven-development` | `4fa40ba418f5` | `README.md` | 166 | 102 | a second list of specification-driven development, of its methods |
+
+## The searchers
+
+| Searcher | Model | Harness and mode | Output |
+| -------- | ----- | ---------------- | ------ |
+| A | SWE-2 High (`swe-2-high`, free, O-179) | Devin 3000.11.3, `devin -p --permission-mode dangerous`, with a `HOME` of its own that holds only Devin's credential and configuration files | [`searcher-A.md`](searcher-A.md) |
+| B | Claude Sonnet 5.5 (`claude-sonnet-5-5`) | Claude Code 2.1.296, `claude -p --permission-mode dontAsk`, read-only tools and web search, writes only under `out/` | [`searcher-B.md`](searcher-B.md) |
+
+The order of tries (the author's answer to note 2 of the plan review): A on
+Devin's paid models first (`resource_exhausted`), then `swe-2-high`; B on
+OpenCode first ("Invalid credential"), then Claude Sonnet 5.5, a model other
+than the author's. Each searcher's first try failed on the author's permission
+setting, and its file says how.
