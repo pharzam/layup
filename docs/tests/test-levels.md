@@ -80,6 +80,12 @@ a human runs or signs it off against plain Given/When/Then steps. It is judged b
 a person, not asserted by a command, so it is not a rung of the automated ladder
 — it is the acceptance step that rides on the E2E path.
 
+A uat test that drives LAYUP on real harnesses with the Operator's credentials
+is a Go test under the build tag `uat` (task `T-x7cs`): no CI job and no command
+of the ladder runs it, as it needs those credentials and writes to a real
+target; a person runs it by hand, with the command in its file, and signs off
+its scenario.
+
 ## Discipline tests
 
 A discipline test lints the **process rather than the product**: it checks the
