@@ -1,4 +1,6 @@
 # Continuous integration for LAYUP.
+on:
+  pull_request:
 jobs:
   setup-check:
     steps:

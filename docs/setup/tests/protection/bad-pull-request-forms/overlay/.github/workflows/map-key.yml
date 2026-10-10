@@ -1,0 +1,8 @@
+on:
+  push:
+  pull_request:
+    types: [opened]
+jobs:
+  map-key:
+    steps:
+      - run: true

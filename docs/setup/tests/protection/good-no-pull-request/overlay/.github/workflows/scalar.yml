@@ -1,0 +1,5 @@
+on: workflow_dispatch  # by hand only
+jobs:
+  scalar:
+    steps:
+      - run: true

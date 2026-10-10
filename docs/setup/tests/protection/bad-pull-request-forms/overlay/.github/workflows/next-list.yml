@@ -1,0 +1,6 @@
+on:
+  [push, pull_request_target]
+jobs:
+  next-list:
+    steps:
+      - run: true

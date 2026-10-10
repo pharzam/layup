@@ -67,12 +67,16 @@ This is the step that the branch-protection column of the
 [enforcement table](../issue-workflow.md#what-is-enforced-where) names. LAYUP
 keeps the setting as a file,
 [`docs/setup/branch-protection.json`](../setup/branch-protection.json) (`T-afa5`):
-twelve checks, one per workflow job, each pinned to `"app_id": 15368`, GitHub
-Actions. A bare `contexts` list would let any app or token satisfy a name by
-posting a status under it. A context is the job's `name:`, or its id when it has
-none, which is why `conventional-title` has no parenthesis. Check `protection` in
-[`setup-check.sh`](../setup/setup-check.sh) keeps the contexts equal to the job
-names.
+twelve checks, one per job of a workflow that a `pull_request` event runs, each
+pinned to `"app_id": 15368`, GitHub Actions. A bare `contexts` list would let any
+app or token satisfy a name by posting a status under it. A context is the job's
+`name:`, or its id when it has none, which is why `conventional-title` has no
+parenthesis. Check `protection` in [`setup-check.sh`](../setup/setup-check.sh)
+keeps the contexts equal to the names of those jobs. A workflow that no
+`pull_request` event runs (by the key `pull_request`, so `pull_request_target`
+is not it) judges no pull request: its jobs are not required, and the body must
+not list one (#201). A workflow that judges a pull request uses `pull_request`.
+The forms of `on:` the check reads, and its limit, are in its comment.
 
 Apply it with:
 

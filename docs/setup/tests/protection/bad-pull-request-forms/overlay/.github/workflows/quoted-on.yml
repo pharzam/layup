@@ -1,0 +1,6 @@
+"on":
+  pull_request:
+jobs:
+  quoted-on:
+    steps:
+      - run: true

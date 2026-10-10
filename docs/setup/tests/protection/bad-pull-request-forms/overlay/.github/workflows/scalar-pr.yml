@@ -1,0 +1,5 @@
+on: pull_request
+jobs:
+  scalar-pr:
+    steps:
+      - run: true
