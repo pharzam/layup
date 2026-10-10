@@ -243,7 +243,7 @@ As `architecture.md` §2, with these values decided here:
   push means that another run took the lease first: `fail`, naming it.
 - **Fencing.** A run pushes the records branch only on top of its own last pushed
   records commit, never after a fetch and a rebase, and never with force. Each
-  forge write (an issue, a comment) comes after the records push that announces
+  forge write (an issue, a comment, the push of a session's head, [`session.md`](session.md#the-push-and-the-bind)) comes after the records push that announces
   it. A refused records push stops the run: it reads the lease again, goes on
   only while it still holds it, and else exits 1 with `fail` on the step. To go
   on is to try the same push once more; a second refusal is `fail` (task

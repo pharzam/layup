@@ -372,7 +372,16 @@ branch), which announces the forge write (fencing, [`run.md`](run.md#the-lease-a
 then `Push` of the SHA to `task/<task>/<attempt>` with the installation token,
 never with force; then, after the forge accepts it, a records commit adds the
 event `bound`. A refused push binds nothing: an event `refused` with the detail
-`push-refused`. The session never pushes.
+`push-refused`. The session never pushes. **Decided here** (task `T-e3sy`,
+condition 1 of the plan review of #167): a refused push is one that `Push`
+reports as its code 1, not a fast-forward or refused by the remote; a push that
+fails otherwise (the remote cannot be reached) is the run's own error, and no
+event follows `push`, as the forge's answer is unknown. A `push` with no
+`bound` and no `refused` after it, from that error or from a lost lease at the
+commit of `bound`, is a forge write whose result is not recorded: the next
+reader of that session (the task loop of `M2e`) reads the target's branch
+before it acts on it. The push runs from `layup run`'s clone, with the head
+that the end fetched.
 
 ### A comment for a session
 
@@ -594,6 +603,8 @@ gives no usage report (3000.11.3), so its rows use `none`.
 | A ref of `repo/.git` that is malformed, or whose SHA names no commit of the session's objects | the result is refused (`branch`) |
 | A `host:prices.tsv` that is missing | an empty table (**decided here**, task `T-fsjp`): no money is `computed`, so a money that is not `reported` is `unknown` |
 | A session's records commit with no `rule-paths.tsv`, or one that its reader refuses | the result is refused (`rule-paths`), and nothing is pushed |
+| A push of a session's head that `git` refuses (not a fast-forward, or refused by the remote) | the event `refused`, `push-refused`; nothing is bound |
+| A push of a session's head that fails otherwise (the remote cannot be reached) | the run's own error; no event follows `push` |
 | A records push that is refused | the run stops, as [`run.md`](run.md#the-lease-and-fencing) |
 
 ## NFR-005 — No harness in the engine checks

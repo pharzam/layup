@@ -18,8 +18,10 @@ import (
 type standinStore struct {
 	files   map[string][]byte
 	commits []map[string][]byte
-	refuse  int    // the next pushes that are refused
-	holder  string // the run that the lease names
+	refuse  int      // the next pushes that are refused
+	holder  string   // the run that the lease names
+	ops     []string // each commit (by its events' last kind) and each push of a head, in order
+	pushErr error    // what PushHead gives
 }
 
 func (s *standinStore) ReadLease(context.Context) (LeaseRow, error) {
@@ -37,8 +39,16 @@ func (s *standinStore) Commit(_ context.Context, files map[string][]byte, _ stri
 	s.commits = append(s.commits, files)
 	for p, d := range files {
 		s.files[p] = d
+		if strings.HasSuffix(p, "/events.tsv") {
+			lines := strings.Split(strings.TrimSpace(string(d)), "\n")
+			s.ops = append(s.ops, "commit "+strings.Split(lines[len(lines)-1], "\t")[1])
+		}
 	}
 	return nil
+}
+func (s *standinStore) PushHead(_ context.Context, sha, branch string) error {
+	s.ops = append(s.ops, "push "+sha+" "+branch)
+	return s.pushErr
 }
 
 const aSHA = "0123456789abcdef0123456789abcdef01234567"
@@ -322,5 +332,46 @@ func TestPassed(t *testing.T) {
 		if got := passed(c.events, id); got != c.want {
 			t.Errorf("%s: %v, want %v", c.name, got, c.want)
 		}
+	}
+}
+
+// The push and the bind: the event push is committed before the forge write,
+// and the event bound only after the forge accepts it; a refused push binds
+// nothing.
+func TestThePushAndTheBindInOrder(t *testing.T) {
+	const id, head = "S-1a2b3c4d", "fedcba9876543210fedcba9876543210fedcba98"
+	start := []string{id, "T-ab12", "1", "developer", "claude", "1.0", "m1", aSHA, aSHA, "9", "3", "1000", "", "30", "", ""}
+	for _, c := range []struct {
+		name    string
+		pushErr error
+		ops     []string
+		last    []string
+	}{
+		{"accepted", nil, []string{"commit push", "push " + head + " task/T-ab12/1", "commit bound"},
+			[]string{"2", "bound", "1", id, "", head, "task/T-ab12/1", "2026-10-09T12:00:00Z"}},
+		{"refused", errPushRefused, []string{"commit push", "push " + head + " task/T-ab12/1", "commit refused"},
+			[]string{"2", "refused", "1", id, "", "", "push-refused", "2026-10-09T12:00:00Z"}},
+	} {
+		store := &standinStore{files: map[string][]byte{}, holder: "0123456789abcdef", pushErr: c.pushErr}
+		r := newSessions(store)
+		if err := r.pushAndBind(context.Background(), start, id, head); err != nil {
+			t.Fatalf("%s: %v", c.name, err)
+		}
+		if !slices.Equal(store.ops, c.ops) {
+			t.Errorf("%s: the calls %q, want %q", c.name, store.ops, c.ops)
+		}
+		ev := events(t, store, "T-ab12")
+		if first := ev[0]; !slices.Equal(first, []string{"1", "push", "1", id, "", head, "task/T-ab12/1", "2026-10-09T12:00:00Z"}) {
+			t.Errorf("%s: the event push %q", c.name, first)
+		}
+		if got := ev[len(ev)-1]; !slices.Equal(got, c.last) {
+			t.Errorf("%s: the last event %q, want %q", c.name, got, c.last)
+		}
+	}
+	// Another error of the push is the run's own, and no event follows push.
+	store := &standinStore{files: map[string][]byte{}, holder: "0123456789abcdef", pushErr: errors.New("the remote cannot be reached")}
+	r := newSessions(store)
+	if err := r.pushAndBind(context.Background(), start, id, head); err == nil || len(events(t, store, "T-ab12")) != 1 {
+		t.Errorf("an error of the push: %v, the events %q; want the error and the event push alone", err, events(t, store, "T-ab12"))
 	}
 }
