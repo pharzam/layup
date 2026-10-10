@@ -165,7 +165,8 @@ session uses.
 the root push, so the Operator pushes only to a target that can be held; the
 architecture gives the plan check after the push (§5, Start 3), and the push does
 not change the plan or the visibility, which step 5 reads again. In `M2a`, a
-Start ends after step 9; the Intake of `M2c` adds its rows after `watch`.
+Start ends after step 9; the Intake of `M2c` runs in the restart, after
+`probe`, as its sessions need admitted harnesses ([`intake.md`](intake.md#the-steps-of-intake), task `T-g49f`).
 
 ### The README of a target that Start makes
 
@@ -221,7 +222,7 @@ so a person reads it with no tool. A plain `git clone` carries the branch as
    announcement, as the row already says `opening` (a duplicate issue is
    possible, known limit below). When each step of Start is done, the next
    phase is Intake (`M2c`): the row is `done`, and the run releases the lease and
-   exits. `M2c` replaces this row with its steps; `M2b`'s step `probe` comes
+   exits. `M2c` replaces this row with its steps ([`intake.md`](intake.md#the-steps-of-intake)); `M2b`'s step `probe` comes
    before it. **Decided here:** `phase` is one
    row of the restart's table, whatever steps of Start it runs again; its
    `detail` names them, so the key `step` holds no second `lease`.

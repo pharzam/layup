@@ -30,8 +30,8 @@ Operator.
 | Start 3: the first records commit, `approvers.tsv`, the lease row | no | `layup run`, `M2a` ([`run.md`](run.md#the-steps-of-layup-run---new)) |
 | Start 3: the Intake issue, the control issue, the dead-man job's first notice | no | `layup run`, `M2a`, which reads the notice; the dead-man job itself is `M3d` (K38) |
 | Gap check 1: `layup psb check` | **yes** ([`psb-check.md`](psb-check.md)) | — |
-| Gap check 2 to 4: the review of meaning, the specification sessions, the proposed marker sources | no | sessions of `layup run`, phase 2 |
-| Gap check 5 and 6: one comment on the Intake issue; the answers copied; the follow-up | no; the answers are the input file `answers.tsv` | `layup run`, phase 2 |
+| Gap check 2 to 4: the review of meaning, the specification sessions, the proposed marker sources | no | sessions of `layup run`: the review of meaning and the sessions of the specification in `M2c` ([`intake.md`](intake.md)); the proposed marker sources in `M2d` |
+| Gap check 5 and 6: one comment on the Intake issue; the answers copied; the follow-up | no; the answers are the input file `answers.tsv` | `layup run`, `M2c` ([`intake.md`](intake.md#req-001--the-one-batch)); the setup questions join the batch in `M2d` |
 | Scaffold 1: the rows that need no judgement | **yes** | — |
 | Scaffold 2: the prose rows S07, S08, S09, S14, by a role session | no; the text is an input file, and `layup setup` runs the row's check | a session of `layup run`, phase 2 |
 | Scaffold 3 and 4: the facts, the stack gates | **yes** (S06, S12) | — |
