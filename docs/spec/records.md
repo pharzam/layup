@@ -423,7 +423,7 @@ The records that Intake writes (`M2c`, [`intake.md`](intake.md)); task `T-g49f`
 (#206) specified them. Each is in `notYetBuilt` until the build task of its
 writer compares it with its Go schema. A session of Intake writes the file of
 its block in `result/` without the columns that code adds (`id`, `start`, `end`,
-`session`), and `layup run` commits the rows with them.
+`text`, `session`), and `layup run` commits the rows with them.
 `records:intake/psb.tsv` is the table of `layup psb check`, byte for byte, in
 the form of the block `psb-gaps` ([`psb-check.md`](psb-check.md)); it has no
 block of its own.
@@ -477,7 +477,7 @@ session      id(S-xxxxxxxx)  -  the session that wrote the row
 ```tsv-schema questions records:questions.tsv
 id        id(Q-NNN)  key  the question's ID, from Q-001, in the order of the merge; never renumbered
 source    enum(rule|meaning|coverage|intent|follow-up)  -  where the question comes from; M2d adds setup
-ref       text       -    its source row: the rule and line of a rule gap (G1:0), M-NNN, C-NNN, the field of the intent form, or the Q-NNN that a follow-up asks again
+ref       text       -    its source row: the ID of the rule gap in intake/psb.tsv (a Q-NNN of that table, which the batch's ID replaces), M-NNN, C-NNN, the field of the intent form (band.B, band.U, appetite.hours), or the Q-NNN of the batch that a follow-up asks again
 block     enum(idea-owner|operator)  -  the block of the batch that asks it
 phase     enum(before-delivery)  -  the phase of the question (Early Question Share, architecture.md §12); a later milestone adds its phases
 kind      text       -    the kind of the gap (a rule G1 to G5, a kind of meaning, a kind of coverage, intent, follow-up)
@@ -485,8 +485,9 @@ start     int        -    the byte offset of its quote; `—` for a question wit
 end       int        -    the byte offset after its quote; `—` exactly when start is `—`
 question  text       -    the question as the batch asks it
 asked     time       -    when the comment that asks it was posted
-asker     text       -    `layup psb check`, or the session that wrote its source row
+asker     text       -    `layup psb check`, the session that wrote its source row, or `layup run` for the intent form and a follow-up
 answered  time       -    the time of the copy that holds its answer; `—` until it has one
+state     enum(asked|answered|closed|open)  -  asked until an answer; answered when it has one that no review read (each answer to a follow-up); closed or open as the review of the answers says (intake.md, The review of the answers and the follow-up)
 ```
 
 A later milestone adds the columns of the measures here first: accepted, the
@@ -509,8 +510,8 @@ session   id(S-xxxxxxxx)  -  the session that wrote the row
 ```
 
 ```tsv-schema budget records:budget.tsv
-name    text  key  appetite.money, appetite.hours, band.B or band.U; a later milestone adds its names here first (the accepted bounds of an unknown part, M3b)
-value   decimal  -  the value: USD for money and the band, hours for the appetite
+name    text  key  band.B, band.U (the money appetite of the delivery, architecture.md §12) or appetite.hours; a later milestone adds its names here first (the accepted bounds of an unknown part, M3b)
+value   decimal  -  the value: USD for the band, hours for the appetite
 source  id(Q-NNN)  -  the question of the intent form whose answer gives it
 ```
 

@@ -40,7 +40,8 @@ no event, a **session of a phase**:
   again until no row of `sessions.tsv` holds it), attempt 1, the head of the
   default branch as its base, and its start row in `sessions.tsv`;
 - its pair is the first admitted pair of the routing register for its role and
-  the tier `reasoning` ([`session.md`](session.md#the-routing-register)); its
+  the tier `reasoning` ([`session.md`](session.md#the-routing-register)), but
+  that of the completeness review (below); its
   role is that of the step table of `architecture.md` §9: `systems-architect`
   for the review of meaning and of the answers, `qa-engineer` for the
   completeness review, and `product-owner` for the numbering and the draft;
@@ -78,12 +79,13 @@ cap is `intake.cap` of `start.tsv` (`MONEY,HOURS`). Before each session of
 Intake starts, code sums the milestone's known money (each telemetry row of a
 session of Intake whose `money_status` is `reported` or `computed`) and adds
 the spend cap of the new session; when the sum passes `MONEY`, or the time from
-the first records commit of Intake to now passes `HOURS`, the step is `fail`
+Start (the time of the first commit of the records branch, as milestone 0's
+clock starts at Start, `architecture.md` §12) to now passes `HOURS`, the step is `fail`
 ("the cap of milestone 0") and no session starts. A session whose money is not
 known after it ends adds nothing to the known money and is recorded `unknown`,
 as `session.md` writes it. **Reason:** the cap of milestone 0 is the one budget
 value that exists before the answers (`architecture.md` §12). The band `B` and
-`U` and the appetite come with the answers and go to `budget.tsv` (below); no
+`U` (the money appetite) and the wall-clock appetite come with the answers and go to `budget.tsv` (below); no
 rule of `M2c` reads them.
 
 ### The rule gaps
@@ -93,10 +95,11 @@ The first step of Intake runs the rule check of `layup psb check`
 process (`internal/psb`), and commits its table byte for byte as
 `records:intake/psb.tsv`, in the form of the block `psb-gaps`. **Decided here**
 (decision 4 of #206, F-21 of the first pilot): rule G1 is not changed; a stack
-gap that G1 finds is a question of the batch like any rule gap, and the review
-of meaning and the merge's duplicate removal reach the case where the brief
-names the stack in other words. The stack question of setup step S01 joins the
-batch with the Scaffold (`M2d`).
+gap that G1 finds is a question of the batch like any rule gap, so a false
+positive of G1, as F-21 was, reaches the idea owner as a question that the
+answer closes; a second text pattern for G1 would be a guess at the next brief's
+wording. The stack question of setup step S01 joins the batch with the Scaffold
+(`M2d`).
 
 ### The review of meaning
 
@@ -142,13 +145,17 @@ order of the spans.
 The span check is code, in `internal/spec`. It passes when:
 
 1. **Cover:** every byte that is not white space (ASCII space, tab, CR, LF) lies
-   in exactly one span, and no span holds only white space;
+   in exactly one span, and no span holds only white space (**decided here**: a
+   span of white space only states nothing);
 2. **Bounds:** each span has `0 <= start < end <= size`, and the spans are in
-   the order of `start` and do not overlap;
+   the order of `start` and do not overlap (**decided here**: one order, so
+   that the numbers of the facts follow the text);
 3. **Text:** each span's text is the file's text at its offsets (the session
    writes no text; code reads it, so this rule holds by construction of the
    committed record, and the check reads the file again);
-4. **IDs:** the fact numbers are 1 to n, each once, in the order of the spans;
+4. **IDs:** the fact numbers are 1 to n, each once, in the order of the spans
+   (**decided here**: ADR-0018 asks unique IDs; a number in the order of the
+   text gives one form, as `F-0003` numbers its facts);
 5. **Classes:** each fact's class is one of the four, and a not-a-fact span has a
    reason and no class.
 
@@ -162,7 +169,9 @@ flag of "Commands" does ([`README.md`](README.md#commands)). Exit 0 when each
 row is `pass`, 1 when a row is `fail`, 2 on a usage or input error (a file that
 is missing, unreadable, not valid UTF-8, or a span table that its block
 refuses). **Reason:** a flag with no value is a usage error in the frame of
-`layup`, and the check needs both files. `internal/cli` gains the row of the
+`layup`, and the check needs both files. The exit-code map of `internal/cli`
+([`README.md`](README.md#commands)) gains the table `spec-check`, whose result
+words are `pass` and `fail`. `internal/cli` gains the row of the
 command; `internal/spec` joins the line of the engine checks
 ([`packages.md`](packages.md#the-table-of-m2c)): code, no model call.
 
@@ -178,7 +187,9 @@ on one harness: the first admitted pair of that role) writes `result/draft.tsv`:
 one or more requirements for each `need` fact and one non-functional requirement
 for each `constraint` fact, each with an ID, a statement, `covers` (the fact
 numbers) and an acceptance criterion; one success criterion for each `measure`
-fact; no priority. **The check** (code): each `covers` number is a fact of
+fact; no priority. **The check** (code, **decided here**: the draft's coverage
+of the classes that §7 step 3 gives, checked byte for byte before a session reads
+it): each `covers` number is a fact of
 `spec/spans.tsv`, each `need` and `constraint` fact is covered at least once,
 and each `measure` fact has a success criterion; a row that breaks it refuses
 the file. The rows are `records:spec/draft.tsv`.
@@ -191,8 +202,13 @@ the numbering and the draft** reads the problem statement, `spec/spans.tsv` and
 measure that no requirement or success criterion covers (`uncovered`), each
 requirement that no fact supports (`unsupported`), and each fact whose class it
 doubts (`class`), each with a question. **Decided here** (decision 1 of #206):
-with one admitted harness the review does not run; the step is `fail` ("not
-run: one admitted harness") and no batch is posted. **Reason:** an independent
+its pair is the first admitted pair of the role's list for the tier `reasoning`
+whose harness is not the harness of the numbering and the draft sessions, a
+rule of this step that the routing rule of
+[`session.md`](session.md#the-routing-register) does not have; with no such
+pair (one admitted harness, or a list with none other), the review does not
+run; the step is `fail` ("not run: no admitted pair on another harness") and no
+batch is posted. **Reason:** an independent
 review is the point of the step (`F-0003#52`), and `M2b` admits several
 harnesses. Each row is `records:intake/coverage.tsv`, and each becomes a
 question of the batch.
@@ -217,9 +233,10 @@ decisions 6, 9 and 10 of #206):
 
 1. **For the idea owner:** each question, one line each:
    `Q-NNN: <question>` and, on the next line, its quote in backquotes; then the
-   intent form, one line per field: the appetite in money (`Q-NNN: appetite,
-   money, a decimal in USD`), the appetite in wall-clock hours, and the band `B`
-   and `U` (decimals in USD, `B` below `U`).
+   intent form, one line per field, as `architecture.md` §12 gives it: the band
+   `B` (go on without asking) and `U` (the upper edge, which is the money
+   appetite of the delivery), decimals in USD with `B` below `U`, and the
+   delivery's wall-clock appetite in hours, a decimal.
 2. **For the Operator:** the setup questions. In `M2c` the block is empty and
    says so; the Scaffold (`M2d`) fills it with the questions of setup steps S01
    and S10 and the proposed marker sources, in the same merge.
@@ -233,26 +250,38 @@ per question ID, `Q-NNN: <answer>`.
 [`records.md`](records.md#nfr-001--the-records-of-start)). An answer is a line
 `Q-NNN: <answer>` of a comment whose author's numeric ID is in `approvers.tsv`
 in the role of the question's block (the idea owner, or the Operator); any other
-comment is recorded as input and answers nothing (`architecture.md` §3). The
-last answer line of a question ID, in the order of the copies, is its answer.
-Code checks that each ID of the batch has an answer, and that the answer of each
-field of the intent form parses (a `decimal`, and `B` below `U`). The answers are
-`records:intake/answers.tsv`; when every field of the intent form is answered,
-code writes `records:budget.tsv`.
+comment is recorded as input and answers nothing (`architecture.md` §3).
+**Decided here:** the batch's answers are in hand when each block that asks a
+question has one such comment after the batch (`architecture.md` §5 step 6:
+"each in one comment"); until then the step `answers` waits. Then code reads
+every such comment after the batch, and the last answer line of a question ID,
+in the order of the copies, is its answer (**decided here**: a later line
+corrects an earlier one). Each answered question is a row of
+`records:intake/answers.tsv`, and its state in `questions.tsv` is `answered`;
+a question with no line stays `asked`. When `B`, `U` and the hours parse, with
+`B` below `U`, code writes `records:budget.tsv`.
 
 ### The review of the answers and the follow-up
 
-When each question has an answer, a session of the role `systems-architect`
-reads the questions and the answers and writes `result/answers-review.tsv`: for
-each question, `closed` or `open` with a reason. The rows are
-`records:intake/answers-review.tsv`. Then code posts **one** follow-up comment on
-the Intake issue that asks again only for the questions with no answer, an
-answer that does not parse, or an `open` answer; each is a new row of
-`questions.tsv` with the source `follow-up`, which names the question it asks
-again. With none, Intake is done. **Decided here:** one follow-up round in `M2c`;
-a question still open after it is open in `questions.tsv`, and Shape (`M2e`)
-reads it. **Reason:** `architecture.md` §5 step 6 asks again "in one comment",
-and a loop with no bound waits on a human with no end.
+When the answers are in hand, a session of the role `systems-architect` reads
+the answered questions and their answers and writes `result/answers-review.tsv`:
+for each, `closed` or `open` with a reason. The rows are
+`records:intake/answers-review.tsv`, and each sets the question's state. Then
+code posts **one** follow-up comment on the Intake issue that asks again only
+for the questions still `asked`, a field of the intent form that does not parse,
+and the `open` ones; each is a new row of `questions.tsv` with the source
+`follow-up`, whose `ref` names the question it asks again. With none, Intake is
+done.
+
+**The answers to the follow-up** (the step `follow-up-answers`): they are in
+hand when each block that the follow-up asks has one answer comment after it,
+by the same rule; until then the step waits. Each answered follow-up is a row of
+`intake/answers.tsv` and its state is `answered`; the question that it asks
+again keeps its own state. No review runs on them, and Intake is done.
+**Decided here:** one follow-up round in `M2c`; a question still `asked` or
+`open` after it stays so in `questions.tsv`, and Shape (`M2e`) reads it.
+**Reason:** `architecture.md` §5 step 6 asks again "in one comment", and a loop
+with no bound waits on a human with no end.
 
 ### The raw fact of the answers
 
@@ -270,10 +299,11 @@ fact (`M2e`).
 **Decided here** (decision 11 of #206): when each step of Start is done, the
 restart runs the steps of Intake after `probe`, in place of the row `phase`:
 `rule-gaps`, `meaning`, `numbering`, `spans`, `draft`, `completeness`, `batch`,
-`answers`, `answers-review`, `follow-up`. Each step whose record exists is
+`answers`, `answers-review`, `follow-up`, `follow-up-answers`. Each step whose record exists is
 `done` with "done before" and runs nothing; a step whose input is not there yet
-(no answer to the batch, or to the follow-up) is `done` with "waiting" in
-`detail`, and the run releases the lease and exits 0. A restart goes on from
+(a block of the batch, or of the follow-up, with no answer comment yet, by the
+rule of The answers) is `done` with "waiting" in `detail`, and the run releases
+the lease and exits 0. A restart goes on from
 the records. The block `run-steps` is built, so the build task that adds these
 steps adds them to its enum, with its Go schema, in one change, as `M2b` did
 for `probe` ([`run.md`](run.md#the-command)).
@@ -293,7 +323,7 @@ never guessed.
 | State | Result |
 | ----- | ------ |
 | A routing register with no admitted pair for a role of Intake | the step is `fail` (`pair`), no session starts |
-| One admitted harness | `completeness` is `fail` ("not run: one admitted harness"); no batch |
+| No admitted pair of `qa-engineer` on a harness other than that of the numbering and the draft | `completeness` is `fail` ("not run: no admitted pair on another harness"); no batch |
 | A session's output file that is missing, a link, over 1 MiB, or that its block refuses | the step is `fail`, naming the session; nothing of the file is committed |
 | A quote that occurs nowhere, more than once, or holds a tab | the file of the review is refused (as above) |
 | A span table that fails the span check | `spans` is `fail`; `spec/check.tsv` is committed; no batch |
@@ -329,8 +359,8 @@ Question Share (`M4b`).
 | The span check | unit | It fails when a non-blank byte is in no span or two, a span is out of bounds or out of order, a span's text differs from the file, a fact number repeats or skips, or a class is not one of the four; it passes on a span table that covers the file. |
 | The command `layup spec check --facts` | e2e | The binary prints the table and exits 0, 1 or 2 as above. |
 | The draft | unit | The draft is refused when `covers` names no fact or a `need` or `constraint` fact is not covered, and kept otherwise. |
-| The completeness review | integration | With two admitted harnesses, the review runs on the other one; with one, the step is `fail` and no batch is posted. |
+| The completeness review | integration | With two admitted harnesses, the review runs on the first admitted pair of `qa-engineer` whose harness is not that of the numbering and the draft, even when the role's first pair is on that harness; with none, the step is `fail` and no batch is posted. |
 | The merge and the IDs | unit | A question whose quote and kind repeat is dropped; each kept question gets one ID, in the order of the merge. |
-| The comment and the answers | integration | With the httptest forge: one comment with two blocks; answers by an approver in its role are kept, others recorded as input; a missing or unparsed answer goes to the follow-up; the answers and `budget.tsv` are committed. |
-| The steps of Intake | e2e | In CI with no secret, the binary, a local fake forge and scripted harness programs: a restart runs the steps to `batch` and exits "waiting"; after scripted answer comments, the next restart reads them, runs the review, posts one follow-up for the missing answer, and the next one ends Intake. |
+| The comment and the answers | integration | With the httptest forge: one comment with two blocks; the step waits until each block that asks has a comment by its approver; answers by an approver in its role are kept, others recorded as input; a later line of an ID corrects an earlier one; a missing, unparsed or `open` answer goes to the follow-up; the answers and `budget.tsv` are committed. |
+| The steps of Intake | e2e | In CI with no secret, the binary, a local fake forge and scripted harness programs: a restart runs the steps to `batch` and exits "waiting"; after a scripted answer comment that leaves one question unanswered, the next restart reads it, runs the review, posts one follow-up for that question and exits "waiting"; after a scripted answer to the follow-up, the next restart records it and ends Intake. |
 | The demo | uat | On a pilot problem statement that the idea owner chooses, on real harnesses: one Intake comment holds the rule gaps and the gaps of meaning, and `layup spec check --facts` passes on the numbered spans. |

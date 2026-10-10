@@ -8,7 +8,8 @@ of a target, so `layup spec check` can later read it.
 
 It is written one milestone at a time (task `T-0drh`, #74; decision O-114).
 This version covers **phase 1** of `PRD-0001` §9 and the milestones **`M2a`**
-(task `T-zck8`, #123) and **`M2b`** (task `T-ywk7`, #147) of phase 2. A later milestone adds its own sections; it does
+(task `T-zck8`, #123), **`M2b`** (task `T-ywk7`, #147) and **`M2c`** (task
+`T-g49f`, #206) of phase 2. A later milestone adds its own sections; it does
 not rewrite the package table or the layout of the records, which already name
 the later phases.
 
@@ -124,7 +125,8 @@ Every command of LAYUP follows these rules. A section gives only what differs.
   a table from its result column: 0 only when the table has at least one row
   and each row is `pass`, `clear`, `done` or `operator`; each other word, and a
   table with no row, give 1. It takes the result words of the four tables
-  (`gate-result`, `setup-verify`, `setup-steps`, `run-steps`); a word that a table's schema
+  (`gate-result`, `setup-verify`, `setup-steps`, `run-steps`), and from `M2c`
+  of the table `spec-check` ([`intake.md`](intake.md#the-span-check)); a word that a table's schema
   refuses (for example `done` in a `gate-result` row) cannot reach it, because
   the writer of the record refuses it first. Codes 2 and 3 do not come from a
   table. The rule for a table with no row is the default of the frame; for

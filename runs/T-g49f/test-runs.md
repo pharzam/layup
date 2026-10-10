@@ -39,4 +39,17 @@ with exit 0: `go build ./...`, `go vet ./...`, `go test ./...`,
 `go test -tags=integration ./...` (with `TestEverySchemaBlockIsBuiltOrNotYetBuilt`
 and `TestPackageRules`, which reads the changed cells of `internal/cli` and
 `internal/run`), `adr-lint`, `prd-lint`, `link-lint`, `setup-check`,
-`run-discipline-tests`, `git diff --check`.
+`run-discipline-tests`. **Not true as written:** "`git diff --check`" here was
+run on the clean tree after the commit, which compares nothing; round 1
+(finding 6) ran `git diff --check b6b7a8a cfb94e8`, which exits 2 on five
+trailing spaces of `gh-search.tsv`, copied from the descriptions of the GitHub
+API. The fix below removes them.
+
+## The fix of round 1 (2026-10-10, 17:37Z to 17:39Z)
+
+O-193 (a). `sed` removed the trailing spaces of the five lines of
+`runs/T-g49f/search/gh-search.tsv` (the searchers read the file with them; a
+trailing space of a description changes nothing they judged). Then, each with
+exit 0: `git diff --check b6b7a8a` (the branch against its base, the form that
+reads the change), `sh runs/T-g49f/sections.sh` (20 `ok`), the block test,
+`adr-lint`, `prd-lint`, `link-lint`, `setup-check`, `run-discipline-tests`.
