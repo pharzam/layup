@@ -15,10 +15,17 @@ import (
 	"github.com/pharzam/layup/internal/session"
 )
 
+// worldAt is the base commit of a session and the records commit of its prompt,
+// which holds the rule-path register.
+type worldAt struct{ base, records string }
+
+// register is the rule-path register of the test world.
+const register = "pattern\texception\tsource\nAGENTS.md\t—\tbaseline\ndocs/guardrails.md\tadded lines in section 2\tbaseline\ndocs/rules/\t—\tarchitecture\n"
+
 // sessionWorld gives the world of Start, the Sessions of its run on a clone
-// of the target, with the stand-in forge, and the base: attempt 1 of T-ab12 is
-// started.
-func sessionWorld(t *testing.T) (*world, *Sessions, *standInForge, string) {
+// of the target, with the stand-in forge, the base and a records commit with
+// the register: attempt 1 of T-ab12 is started.
+func sessionWorld(t *testing.T) (*world, *Sessions, *standInForge, worldAt) {
 	t.Helper()
 	w := newWorld(t)
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
@@ -37,17 +44,20 @@ func sessionWorld(t *testing.T) (*world, *Sessions, *standInForge, string) {
 	if n, err := r.StartAttempt(context.Background(), "T-ab12", base); err != nil || n != 1 {
 		t.Fatalf("StartAttempt: %d, %v", n, err)
 	}
-	return w, r, f, base
+	if err := r.commit(context.Background(), map[string][]byte{"rule-paths.tsv": []byte(register)}, "the register"); err != nil {
+		t.Fatal(err)
+	}
+	return w, r, f, worldAt{base, store.pushed}
 }
 
 const resultHead = "kind\tn\tvalue\tsha256\treason\nstatus\t1\tcompleted\t—\tdone\n"
 
 // harness gives a TaskSpec whose fake harness runs body in repo/.
-func harness(t *testing.T, base, body string) TaskSpec {
+func harness(t *testing.T, a worldAt, body string) TaskSpec {
 	bin := t.TempDir()
 	os.WriteFile(filepath.Join(bin, "version"), []byte("#!/bin/sh\necho 1.0.0\n"), 0o755)
 	os.WriteFile(filepath.Join(bin, "harness"), []byte("#!/bin/sh\n"+body+"\n"), 0o755)
-	return TaskSpec{Task: "T-ab12", Attempt: 1, Role: "developer", Base: base, Records: base, Prompt: []byte("the task\n"),
+	return TaskSpec{Task: "T-ab12", Attempt: 1, Role: "developer", Base: a.base, Records: a.records, Prompt: []byte("the task\n"),
 		Pair: Pair{Harness: "fake", Model: "m1", VersionCommand: filepath.Join(bin, "version"), Command: filepath.Join(bin, "harness"),
 			PromptMode: "stdin", Wall: 1, Rules: []string{"LAYUP-TEST-RULES.md"}, Context: 1000,
 			Session: session.Harness{CredentialTo: "—"}, Billing: "subscription", Usage: "none"},

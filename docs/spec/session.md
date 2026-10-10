@@ -298,7 +298,13 @@ that they govern: an agent cannot change a rule path without a control that the
 agents cannot pass by themselves (ADR-0017)." `M2b` gives prevention layer 1 (no
 credential: [the environment](#the-environment-and-the-harness-credential)) and
 layer 2 (no rule change leaves the host in a task); layer 3, the forge's rules,
-is `M2d`'s and `M2f`'s. For a task session whose end is `done`:
+is `M2d`'s and `M2f`'s. For a task session whose end is `done`: its event
+`result` is `done` and it has no event `refused` (**decided here**, task
+`T-z027`, condition 3 of the plan review of #166: a `done` session refused at
+its end, `artifact` among them, is never checked or pushed). The checks run on
+the head that the end fetched into `layup run`'s clone
+([REQ-005](#req-005--the-result-of-a-session)). Each refusal below is one
+records commit through fencing, and nothing is pushed:
 
 ### The fetch by SHA
 
@@ -347,7 +353,16 @@ lines, so an added line that starts `## ` is refused and one under a `### `
 sub-heading passes; the exception is that one file's, as the register's block
 allows no other (`internal/rules` refuses another). A refused diff (`git diff --binary`) goes to the records as
 `payloads/<sha256>` with the event `refused`, and the change becomes a proposal
-for the next rule batch (`M2f`). **Known limit:** a target whose product holds
+for the next rule batch (`M2f`): the payload is the proposal, and `M2b` writes
+no other record of it (**decided here**, task `T-z027`). The `detail` of the
+event is the reason, one space, and the payload's SHA-256, for example
+`rule-path 3f2a…` (**decided here**, condition 3 of the plan review of #166).
+**Decided here** (condition 2): a records commit of the session with no
+`rule-paths.tsv`, or one that its reader refuses, refuses the result
+(`rule-paths`), fail closed (a records commit or a `git` that cannot be read
+is the run's own error; round 1 of #166), as ADR-0017 decision 2 makes the register the
+guard of layer 2; a target that Start made has no register until `layup
+setup` writes it. **Known limit:** a target whose product holds
 shell scripts changes them only in a rule batch.
 
 ### The push and the bind
@@ -578,6 +593,7 @@ gives no usage report (3000.11.3), so its rows use `none`.
 | A `prompt.md` over 131,071 bytes for a row whose `prompt` is `arg` | the start is refused (`prompt`), before the start row |
 | A ref of `repo/.git` that is malformed, or whose SHA names no commit of the session's objects | the result is refused (`branch`) |
 | A `host:prices.tsv` that is missing | an empty table (**decided here**, task `T-fsjp`): no money is `computed`, so a money that is not `reported` is `unknown` |
+| A session's records commit with no `rule-paths.tsv`, or one that its reader refuses | the result is refused (`rule-paths`), and nothing is pushed |
 | A records push that is refused | the run stops, as [`run.md`](run.md#the-lease-and-fencing) |
 
 ## NFR-005 — No harness in the engine checks
