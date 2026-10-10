@@ -10,9 +10,9 @@ import (
 func TestTheReasonOfAProbe(t *testing.T) {
 	d := session.Dir{Root: "/h/sessions/S-1a2b3c4d", Repo: "/h/sessions/S-1a2b3c4d/repo"}
 	models := [][]string{{"claude", "m1", "1000", "https://x", "2026-10-09T12:00:00Z", "yes", ""}, {"claude", "m2", "1000", "https://x", "2026-10-09T12:00:00Z", "no", "too dear"}}
-	const token = "0123456789abcdef"
+	const want = "0123456789abcdef" // the token of the prompt
 	rows := func(r ...[]string) [][]string { return r }
-	good := rows([]string{"token", token}, []string{"file", "AGENTS.md"})
+	good := rows([]string{"token", want}, []string{"file", "AGENTS.md"})
 	for _, c := range []struct {
 		name      string
 		class     string
@@ -29,7 +29,7 @@ func TestTheReasonOfAProbe(t *testing.T) {
 		{"an end that is not done", "crash", nil, good, nil, nil, "crash"},
 		{"another token", "done", nil, rows([]string{"token", "ffffffffffffffff"}, []string{"file", "AGENTS.md"}), nil, nil, "token"},
 		{"no token", "done", nil, rows([]string{"file", "AGENTS.md"}), nil, nil, "token"},
-		{"no AGENTS.md", "done", nil, rows([]string{"token", token}, []string{"file", "CLAUDE.md"}), nil, nil, "files"},
+		{"no AGENTS.md", "done", nil, rows([]string{"token", want}, []string{"file", "CLAUDE.md"}), nil, nil, "files"},
 		{"a file outside", "done", nil, append(good, []string{"file", "/home/op/.claude/CLAUDE.md"}), nil, nil, "outside"},
 		{"a relative path that leaves the session directory", "done", nil, append(good, []string{"file", "../../../x.md"}), nil, nil, "outside"},
 		// A relative value is read from repo/: ../home/ is inside.
@@ -37,13 +37,13 @@ func TestTheReasonOfAProbe(t *testing.T) {
 		{"an absolute path whose .. leaves the session directory", "done", nil, append(good, []string{"file", "/h/sessions/S-1a2b3c4d/../../etc/x.md"}), nil, nil, "outside"},
 		{"a model of use no", "done", nil, good, nil, []string{"m1", "m2"}, "not-used"},
 	} {
-		if got := probeReason(c.class, c.resultErr, c.rows, token, d, c.policy, c.used, models, "claude"); got != c.want {
+		if got := probeReason(c.class, c.resultErr, c.rows, want, d, c.policy, c.used, models, "claude"); got != c.want {
 			t.Errorf("%s: %q, want %q", c.name, got, c.want)
 		}
 	}
 	// A probe.tsv that its block refuses makes the class no-result: the class
 	// is the reason.
-	if got := probeReason("no-result", errors.New("malformed"), nil, token, d, nil, nil, models, "claude"); got != "no-result" {
+	if got := probeReason("no-result", errors.New("malformed"), nil, want, d, nil, nil, models, "claude"); got != "no-result" {
 		t.Errorf("no valid probe.tsv: %q, want no-result", got)
 	}
 }
