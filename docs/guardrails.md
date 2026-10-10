@@ -231,9 +231,11 @@ check that catches it.
   a published branch is never rewritten. The way out is one line of
   `.gitleaksignore` with the finding's fingerprint, a change to the input of a
   gate (O-166). **The check:** before the first push, run `go run
-  github.com/zricethezav/gitleaks/v8@v8.30.1 git --redact --log-opts="origin/main..HEAD"`,
-  and write a credential into an environment as `env["NAME"] = value`. Learned in
-  `T-zwke`.
+  github.com/zricethezav/gitleaks/v8@v8.30.1 git --redact --log-opts="origin/main..HEAD"`
+  as a command of its own and push only on its exit 0, never through a pipe (a
+  pipe into `tail` let a finding be pushed, O-191); write a credential into an
+  environment as `env["NAME"] = value`, and name a test value `want`, not
+  `token`. Learned in `T-zwke` and `T-nxe4`.
 - ❌ **A one-line form that loses a failure.** The first lint command of the first
   pilot put the gate script of the brief into one pipe. When `git ls-files` failed
   (an invalid index), the pipe took the status of its last command, and the check

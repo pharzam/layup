@@ -16,7 +16,10 @@ cap 1; no panel. Its three conditions are applied: the probe before a task
 session (`Admit`, with no sweep inside a task session); a refused probe start
 counts as probed and failed and posts no comment, written in `session.md`; the
 e2e worlds register only scripted harnesses. The goal count is 2, final by
-O-187 of #152.
+O-187 of #152. **O-191** (a): the pushed commit `e4cf2ce` held a test
+constant that the rule `generic-api-key` of `gitleaks` matched, a false
+positive; `.gitleaksignore` gains its fingerprint, a change to a gate's input,
+so the cycle cap is 2.
 
 ## What was done
 
