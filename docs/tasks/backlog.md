@@ -30,7 +30,6 @@ same summary, dated — rather than deleting it or checking it off.
 - **<ID>** — <one-sentence summary> ([<ADR or doc link>](...); [detail](<id>.md))
 -->
 
-- **T-z027** — Row 37a of `M2b`: the checks before a push ([#166](https://github.com/pharzam/layup/issues/166); [the plan](../plan/README.md#the-tasks-of-m2b))
 - **T-e3sy** — Row 37b of `M2b`: the push and the bind ([#167](https://github.com/pharzam/layup/issues/167); [the plan](../plan/README.md#the-tasks-of-m2b))
 - **T-nxe4** — Row 38 of `M2b`: the step probe ([#168](https://github.com/pharzam/layup/issues/168); [the plan](../plan/README.md#the-tasks-of-m2b))
 - **T-4tjy** — Row 39a of `M2b`: the review of the release of M2b ([#169](https://github.com/pharzam/layup/issues/169); [the plan](../plan/README.md#the-tasks-of-m2b))
