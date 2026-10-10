@@ -103,6 +103,25 @@ func (s *recordsStore) ReadFile(ctx context.Context, path string) ([]byte, error
 	return git.Show(s.dir, base, path)
 }
 
+// PushHead pushes sha of the run's clone to branch of the target, never with
+// force; git's refusal (its code 1) is errPushRefused.
+func (s *recordsStore) PushHead(ctx context.Context, sha, branch string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	a, err := s.auth(ctx)
+	if err != nil {
+		return err
+	}
+	if err := git.Push(s.dir, s.url, sha, branch, a); err != nil {
+		var failed *git.FailedError
+		if errors.As(err, &failed) && failed.Code == 1 {
+			return errPushRefused
+		}
+		return err
+	}
+	return nil
+}
+
 // Commit makes a records commit of files on the base and pushes it.
 func (s *recordsStore) Commit(ctx context.Context, files map[string][]byte, message string) error {
 	return s.commit(ctx, files, message, "")

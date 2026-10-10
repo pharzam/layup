@@ -29,6 +29,11 @@ type SessionStore interface {
 	Store
 	ReadFile(ctx context.Context, path string) ([]byte, error)
 	Commit(ctx context.Context, files map[string][]byte, message string) error
+	// PushHead pushes the commit sha of the run's clone to branch of the
+	// target with the installation token, never with force; a push that git
+	// refuses (not a fast-forward, or refused by the remote) is
+	// errPushRefused (row 37b).
+	PushHead(ctx context.Context, sha, branch string) error
 }
 
 // Sessions starts the attempts and the task sessions of one run of one

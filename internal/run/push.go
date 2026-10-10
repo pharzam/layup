@@ -9,6 +9,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"slices"
 	"strconv"
@@ -108,13 +109,48 @@ func (s *Sessions) pushTask(ctx context.Context, id string) error {
 	}
 	reason, _ := rules.Check(names, reg, change)
 	if reason == "" {
-		return nil // the push and the bind are row 37b's
+		return s.pushAndBind(ctx, start, id, head)
 	}
 	diff, err := git.DiffBinary(s.Clone, base, head)
 	if err != nil {
 		return err
 	}
 	return s.refuse(ctx, start, id, reason, diff)
+}
+
+// errPushRefused is a push of a session's head that git refuses: not a
+// fast-forward, or refused by the remote (its code 1).
+var errPushRefused = errors.New("the push of the session's head was refused")
+
+// pushAndBind pushes a head that passed the checks (docs/spec/session.md, The
+// push and the bind): a records commit with the event push (the SHA and the
+// branch task/<task>/<attempt>) announces the forge write; then the push of
+// the SHA, never with force; then, after the forge accepts it, a records
+// commit with the event bound. A refused push binds nothing: the event
+// refused, push-refused. Another error of the push is the run's own, and no
+// event follows push, as the forge's answer is unknown (decided here, task
+// T-e3sy).
+func (s *Sessions) pushAndBind(ctx context.Context, start []string, id, head string) error {
+	task := start[sessionTask]
+	attempt, _ := strconv.Atoi(start[sessionAttempt])
+	branch := "task/" + task + "/" + start[sessionAttempt]
+	event := func(kind, message string) error {
+		data, err := s.appendEvents(ctx, task, attempt, id, []string{kind})
+		if err != nil {
+			return err
+		}
+		return s.commit(ctx, map[string][]byte{eventsPath(task): data}, message)
+	}
+	if err := event("push "+head+" "+branch, fmt.Sprintf("layup run: the push of %s to %s", id, branch)); err != nil {
+		return err
+	}
+	err := s.Store.PushHead(ctx, head, branch)
+	if errors.Is(err, errPushRefused) {
+		return event("refused push-refused", fmt.Sprintf("layup run: the push of %s was refused", id))
+	} else if err != nil {
+		return err
+	}
+	return event("bound "+head+" "+branch, fmt.Sprintf("layup run: %s bound to %s", id, branch))
 }
 
 // refuse commits the event refused of the session with its reason, and with a

@@ -196,3 +196,64 @@ func writeFile(t *testing.T, path, text string) {
 		t.Fatal(err)
 	}
 }
+
+// The demo of row 37b: a clean session head is bound only after the forge
+// accepts its push.
+func TestACleanHeadIsPushedThenBound(t *testing.T) {
+	w, r, f, a := sessionWorld(t)
+	id, err := r.TaskSession(context.Background(), harness(t, a, change("src/app.txt", "work\\n")))
+	if err != nil {
+		t.Fatalf("TaskSession: %q, %v", id, err)
+	}
+	head := strings.TrimSpace(gitOut(t, r.Clone, "rev-parse", "refs/layup/sessions/"+id))
+	if got := strings.TrimSpace(gitOut(t, w.bare, "rev-parse", "refs/heads/task/T-ab12/1")); got != head {
+		t.Errorf("task/T-ab12/1 of the target is %s, want the head %s", got, head)
+	}
+	var kinds []string
+	for _, l := range strings.Split(show(t, w.bare, "layup-records", "tasks/T-ab12/events.tsv"), "\n") {
+		if f := strings.Split(l, "\t"); len(f) == 8 && f[3] == id && (f[1] == "push" || f[1] == "bound") {
+			if f[5] != head || f[6] != "task/T-ab12/1" {
+				t.Errorf("the event %s: the SHA %s and the branch %s", f[1], f[5], f[6])
+			}
+			kinds = append(kinds, f[1])
+		}
+	}
+	if strings.Join(kinds, " ") != "push bound" {
+		t.Errorf("the events %q, want push then bound", kinds)
+	}
+	if got := refusals(t, w, id); len(got) != 0 {
+		t.Errorf("the refusals %q", got)
+	}
+	if c := f.posted[2]; len(c) != 1 || c[0] != id+": developer session of T-ab12, attempt 1: done\n" {
+		t.Errorf("the comment %q", c)
+	}
+}
+
+// A refused push binds nothing: the target holds task/T-ab12/1 at a commit
+// of another history, so the push is not a fast-forward.
+func TestARefusedPushBindsNothing(t *testing.T) {
+	w, r, f, a := sessionWorld(t)
+	other := t.TempDir()
+	gitOut(t, other, "init", "-q", "-b", "x")
+	writeFile(t, filepath.Join(other, "y.txt"), "another history\n")
+	gitOut(t, other, "add", "-A")
+	gitOut(t, other, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "other")
+	gitOut(t, other, "push", "-q", "file://"+w.bare, "x:refs/heads/task/T-ab12/1")
+	before := strings.TrimSpace(gitOut(t, w.bare, "rev-parse", "refs/heads/task/T-ab12/1"))
+	id, err := r.TaskSession(context.Background(), harness(t, a, change("src/app.txt", "work\\n")))
+	if err != nil {
+		t.Fatalf("TaskSession: %q, %v", id, err)
+	}
+	if got := strings.TrimSpace(gitOut(t, w.bare, "rev-parse", "refs/heads/task/T-ab12/1")); got != before {
+		t.Errorf("task/T-ab12/1 moved to %s", got)
+	}
+	if got := refusals(t, w, id); len(got) != 1 || got[0] != "push-refused" {
+		t.Errorf("the refusals %q, want push-refused", got)
+	}
+	if events := show(t, w.bare, "layup-records", "tasks/T-ab12/events.tsv"); strings.Contains(events, "\tbound\t") || !strings.Contains(events, "\tpush\t1\t"+id+"\t") {
+		t.Errorf("the events:\n%s\nwant push and no bound", events)
+	}
+	if c := f.posted[2]; len(c) != 1 || c[0] != id+": developer session of T-ab12, attempt 1: done, refused push-refused\n" {
+		t.Errorf("the comment %q", c)
+	}
+}

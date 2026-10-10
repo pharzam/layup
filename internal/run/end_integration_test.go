@@ -86,7 +86,9 @@ func TestTheResultIsCommittedWithItsTelemetryRow(t *testing.T) {
 	if got := show(t, w.bare, "layup-records", "tasks/T-ab12/results/"+id+".tsv"); got != want {
 		t.Errorf("the result committed:\n%q\nwant byte for byte:\n%q", got, want)
 	}
-	changed := strings.Fields(gitOut(t, w.bare, "show", "--format=", "--name-only", "layup-records"))
+	// The commit of the result; the push and the bind come after it.
+	commit := strings.TrimSpace(gitOut(t, w.bare, "log", "-1", "--format=%H", "layup-records", "--", "tasks/T-ab12/results/"+id+".tsv"))
+	changed := strings.Fields(gitOut(t, w.bare, "show", "--format=", "--name-only", commit))
 	if !slices.Equal(changed, []string{"tasks/T-ab12/events.tsv", "tasks/T-ab12/results/" + id + ".tsv", "telemetry.tsv"}) {
 		t.Errorf("the last records commit changed %q; want the result, the events and the telemetry row in one", changed)
 	}

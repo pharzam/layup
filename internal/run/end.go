@@ -176,7 +176,11 @@ func (s *Sessions) appendEvents(ctx context.Context, task string, attempt int, i
 	after := append([][]string{}, before...)
 	for _, k := range kinds {
 		kind, detail, _ := strings.Cut(k, " ")
-		after = append(after, []string{strconv.Itoa(len(after) + 1), kind, strconv.Itoa(attempt), id, "", "", detail, s.Now().UTC().Format(timeForm)})
+		sha := ""
+		if kind == "push" || kind == "bound" { // "push <sha> <branch>"
+			sha, detail, _ = strings.Cut(detail, " ")
+		}
+		after = append(after, []string{strconv.Itoa(len(after) + 1), kind, strconv.Itoa(attempt), id, "", sha, detail, s.Now().UTC().Format(timeForm)})
 	}
 	if err := records.CheckEventsAppend(before, after); err != nil {
 		return nil, err
