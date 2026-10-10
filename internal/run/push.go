@@ -3,7 +3,8 @@ package run
 // This file holds the checks before a push of a task session
 // (docs/spec/session.md, REQ-003 — Before a push: the check of the base, and
 // a workflow or rule-path change with its refused diff as a payload; row 37a
-// of the plan, task T-z027, #166). The push and the bind are row 37b's.
+// of the plan, task T-z027, #166), and the push and the bind (row 37b, task
+// T-e3sy, #167).
 
 import (
 	"context"

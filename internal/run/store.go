@@ -104,7 +104,9 @@ func (s *recordsStore) ReadFile(ctx context.Context, path string) ([]byte, error
 }
 
 // PushHead pushes sha of the run's clone to branch of the target, never with
-// force; git's refusal (its code 1) is errPushRefused.
+// force; git's refusal (its code 1) is errPushRefused. The store's dir must be
+// the clone that Sessions.Clone names, into which the end fetched the head: a
+// commit that dir lacks is git's code 1 too, a false refusal.
 func (s *recordsStore) PushHead(ctx context.Context, sha, branch string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
