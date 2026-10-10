@@ -78,7 +78,9 @@ another harness, below).
 cap is `intake.cap` of `start.tsv` (`MONEY,HOURS`). Before each session of
 Intake starts, code sums the milestone's known money (each telemetry row of a
 session of Intake whose `money_status` is `reported` or `computed`) and adds
-the spend cap of the new session; when the sum passes `MONEY`, or the time from
+the spend cap of the new session, or nothing for a session whose register row
+has no cap (`—`; its spend is an unknown part, [`session.md`](session.md#the-limit-of-a-session),
+whose actions are not in `M2c`); when the sum passes `MONEY`, or the time from
 Start (the time of the first commit of the records branch, as milestone 0's
 clock starts at Start, `architecture.md` §12) to now passes `HOURS`, the step is `fail`
 ("the cap of milestone 0") and no session starts. A session whose money is not
@@ -152,7 +154,8 @@ The span check is code, in `internal/spec`. It passes when:
    that the numbers of the facts follow the text);
 3. **Text:** each span's text is the file's text at its offsets (the session
    writes no text; code reads it, so this rule holds by construction of the
-   committed record, and the check reads the file again);
+   committed record, and the check reads the file again and compares after the
+   field rule of the column `text`, each tab, CR and LF as one space);
 4. **IDs:** the fact numbers are 1 to n, each once, in the order of the spans
    (**decided here**: ADR-0018 asks unique IDs; a number in the order of the
    text gives one form, as `F-0003` numbers its facts);
@@ -175,10 +178,13 @@ words are `pass` and `fail`. `internal/cli` gains the row of the
 command; `internal/spec` joins the line of the engine checks
 ([`packages.md`](packages.md#the-table-of-m2c)): code, no model call.
 
-**The step:** `layup run` calls the same check in process after the numbering,
-commits `records:spec/spans.tsv` (with the text of each span read from the
-file) and the table as `records:spec/check.tsv`, and posts no batch and stops
-when a row is `fail` (`architecture.md` §7 step 2).
+**The steps:** the step `numbering` commits the session's rows as
+`records:spec/spans.tsv` (with the text of each span read from the file) when
+its block reads them; the step `spans` then runs the same check in process on
+that record and the problem statement, commits the table as
+`records:spec/check.tsv`, and posts no batch and stops when a row is `fail`
+(`architecture.md` §7 step 2); a restart runs the check again only when
+`spec/check.tsv` is not there.
 
 ### The draft
 
@@ -219,7 +225,9 @@ question of the batch.
 
 Code merges into `records:questions.tsv`, in this order: the rule gaps
 (`intake/psb.tsv`), the gaps of meaning (`intake/meaning.tsv`), the items of the
-completeness review (`intake/coverage.tsv`), and the intent form (below). A
+completeness review (`intake/coverage.tsv`; the quote of an `uncovered` or
+`class` item is its fact's span, of an `unsupported` item none), and the intent
+form (below). A
 question whose quote and kind repeat those of a question before it is dropped
 from the batch, and its source row stays in its own record (**decided here**:
 the quote's offsets and the kind are compared; a rule gap's quote is its line,
@@ -252,7 +260,7 @@ per question ID, `Q-NNN: <answer>`.
 in the role of the question's block (the idea owner, or the Operator); any other
 comment is recorded as input and answers nothing (`architecture.md` §3).
 **Decided here:** the batch's answers are in hand when each block that asks a
-question has one such comment after the batch (`architecture.md` §5 step 6:
+question has at least one such comment after the batch (`architecture.md` §5 step 6:
 "each in one comment"); until then the step `answers` waits. Then code reads
 every such comment after the batch, and the last answer line of a question ID,
 in the order of the copies, is its answer (**decided here**: a later line
@@ -269,7 +277,8 @@ for each, `closed` or `open` with a reason. The rows are
 `records:intake/answers-review.tsv`, and each sets the question's state. Then
 code posts **one** follow-up comment on the Intake issue that asks again only
 for the questions still `asked`, a field of the intent form that does not parse,
-and the `open` ones; each is a new row of `questions.tsv` with the source
+and the `open` ones, in the form of the batch (its two blocks, each question
+with its quote, and the rule of the answers); each is a new row of `questions.tsv` with the source
 `follow-up`, whose `ref` names the question it asks again. With none, Intake is
 done.
 
@@ -277,7 +286,13 @@ done.
 hand when each block that the follow-up asks has one answer comment after it,
 by the same rule; until then the step waits. Each answered follow-up is a row of
 `intake/answers.tsv` and its state is `answered`; the question that it asks
-again keeps its own state. No review runs on them, and Intake is done.
+again keeps its own state. When `budget.tsv` is not written yet, code takes each
+of `B`, `U` and the hours from the answer to its follow-up, else from the batch,
+and writes `budget.tsv` when the three parse with `B` below `U` (**decided
+here**: the follow-up of an intent value asks the same field); a value still
+missing or unparsed leaves `budget.tsv` unwritten, its question `asked`, and
+Shape (`M2e`) asks it. No review runs on the answers to the follow-up, and
+Intake is done.
 **Decided here:** one follow-up round in `M2c`; a question still `asked` or
 `open` after it stays so in `questions.tsv`, and Shape (`M2e`) reads it.
 **Reason:** `architecture.md` §5 step 6 asks again "in one comment", and a loop
@@ -299,7 +314,14 @@ fact (`M2e`).
 **Decided here** (decision 11 of #206): when each step of Start is done, the
 restart runs the steps of Intake after `probe`, in place of the row `phase`:
 `rule-gaps`, `meaning`, `numbering`, `spans`, `draft`, `completeness`, `batch`,
-`answers`, `answers-review`, `follow-up`, `follow-up-answers`. Each step whose record exists is
+`answers`, `answers-review`, `follow-up`, `follow-up-answers`. The record of each
+step is: `intake/psb.tsv`; `intake/meaning.tsv`; `spec/spans.tsv` (by `numbering`);
+`spec/check.tsv` (by `spans`); `spec/draft.tsv`; `intake/coverage.tsv`;
+the comment of the batch (its rows of `questions.tsv`); the rows of
+`intake/answers.tsv` of the batch's questions; `intake/answers-review.tsv`; the
+follow-up comment, or for a follow-up with no question a row of `questions.tsv`
+that says so; the rows of `intake/answers.tsv` of the follow-up's questions.
+Each step whose record exists is
 `done` with "done before" and runs nothing; a step whose input is not there yet
 (a block of the batch, or of the follow-up, with no answer comment yet, by the
 rule of The answers) is `done` with "waiting" in `detail`, and the run releases

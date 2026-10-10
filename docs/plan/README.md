@@ -388,7 +388,7 @@ are known limits by the Operator's rulings.
 | F-6 | `M2d` | `layup setup verify` before S12; the Scaffold reads the verify table. |
 | F-13, F-19 | `M2d` | S13: `commands.sh` is not fail-fast; the ruleset parameters that S13 does not set. The Scaffold re-specifies the files and the printed commands of S13 (the Operator still applies the rulesets with the Operator's own login, `architecture.md` §5, Scaffold 6); the fail-fast rule and the two parameters belong to that rewrite. |
 | F-16 | `M2d` | A stale line that the setup does not flag; the adaptation step of the Scaffold. |
-| F-21 | `M2c` | Rule G1 of `layup psb check` reads only `technology stack:`; the gap check of Intake. Settled by `T-g49f` (decision 4 of #206): G1 is not changed; a stack gap is a question of the batch, the review of meaning and the duplicate removal reach other wordings, and the stack question of S01 joins the batch in `M2d` ([`intake.md`](../spec/intake.md#the-rule-gaps)). |
+| F-21 | `M2c` | Rule G1 of `layup psb check` reads only `technology stack:`; the gap check of Intake. Settled by `T-g49f` (decision 4 of #206): G1 is not changed; a stack gap is a question of the batch, so a false positive of G1 reaches the idea owner as a question that the answer closes, and the stack question of S01 joins the batch in `M2d` ([`intake.md`](../spec/intake.md#the-rule-gaps)). |
 | F-22 | `M2e` | The gate jobs read the base's gate files (the Operator's direction). |
 | F-23 | `M2f` | The catalog gates aligned with the target's own gate script. |
 | F-37 | `M2e`, `M2g` | A tested tool for the steps that land a target task: the merge at the head SHA and the close-out commit (`M2e`), and the merge order of the build tasks (`M2g`). |

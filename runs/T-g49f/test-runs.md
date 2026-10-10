@@ -53,3 +53,9 @@ trailing space of a description changes nothing they judged). Then, each with
 exit 0: `git diff --check b6b7a8a` (the branch against its base, the form that
 reads the change), `sh runs/T-g49f/sections.sh` (20 `ok`), the block test,
 `adr-lint`, `prd-lint`, `link-lint`, `setup-check`, `run-discipline-tests`.
+
+## The fix of round 2 (2026-10-10, 19:27Z to 19:28Z)
+
+O-194 (a). Each with exit 0: `git diff --check b6b7a8a`, `sh runs/T-g49f/sections.sh`
+(20 `ok`), the block test, `adr-lint`, `prd-lint`, `link-lint`,
+`setup-check`, `run-discipline-tests`.

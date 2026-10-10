@@ -481,7 +481,7 @@ ref       text       -    its source row: the ID of the rule gap in intake/psb.t
 block     enum(idea-owner|operator)  -  the block of the batch that asks it
 phase     enum(before-delivery)  -  the phase of the question (Early Question Share, architecture.md §12); a later milestone adds its phases
 kind      text       -    the kind of the gap (a rule G1 to G5, a kind of meaning, a kind of coverage, intent, follow-up)
-start     int        -    the byte offset of its quote; `—` for a question with no quote (an absence, the intent form, a requirement of the draft)
+start     int        -    the byte offset of its quote; `—` for a question with no quote (an absence, the intent form, an `unsupported` requirement of the draft)
 end       int        -    the byte offset after its quote; `—` exactly when start is `—`
 question  text       -    the question as the batch asks it
 asked     time       -    when the comment that asks it was posted
@@ -512,7 +512,7 @@ session   id(S-xxxxxxxx)  -  the session that wrote the row
 ```tsv-schema budget records:budget.tsv
 name    text  key  band.B, band.U (the money appetite of the delivery, architecture.md §12) or appetite.hours; a later milestone adds its names here first (the accepted bounds of an unknown part, M3b)
 value   decimal  -  the value: USD for the band, hours for the appetite
-source  id(Q-NNN)  -  the question of the intent form whose answer gives it
+source  id(Q-NNN)  -  the question whose answer gives it: the question of the intent form, or the follow-up that asks it again
 ```
 
 **Decided here:** `budget.tsv` is a table of names, as `start.tsv` is, so that a
