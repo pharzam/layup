@@ -84,7 +84,8 @@ A uat test that drives LAYUP on real harnesses with the Operator's credentials
 is a Go test under the build tag `uat` (task `T-x7cs`): no CI job and no command
 of the ladder runs it, as it needs those credentials and writes to a real
 target; a person runs it by hand, with the command in its file, and signs off
-its scenario.
+its scenario. **Known limit:** no job compiles it either, so a change of its
+package can break it unseen until the next person runs it.
 
 ## Discipline tests
 

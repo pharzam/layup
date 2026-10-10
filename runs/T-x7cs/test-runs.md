@@ -29,7 +29,8 @@ TestTheDemoOfM2b (52.41s)`; the output and the records are in
 
 **A deviation:** the red of condition 2 of the plan review (each probe
 `failed` with no credential) was not run. Run 1 stopped at `clone` (#199)
-before any probe, and on the new target a red after the green would leave a
-`failed` row as the last row of each harness at its version, which admits no
-session. The red of the probe's rules is that of row 38 (`runs/T-nxe4/`); this
+before any probe. On the new target the red could have run before the green,
+whose step `probe` probes a harness again after a `failed` row; the author ran
+the green first, and a red after it would leave a `failed` row as the last row
+of each harness at its version, which admits no session. The red of the probe's rules is that of row 38 (`runs/T-nxe4/`); this
 run is the demo on real harnesses.

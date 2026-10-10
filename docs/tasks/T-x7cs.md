@@ -17,7 +17,7 @@ Budget maximum 900 lines added plus removed over 12 files, close-out inside;
 Cycle cap 1; no panel. Its four conditions are applied: Devin's file holds a
 static API key and no refresh token (read by its key names); the registers are
 drafted before the first run; the full model IDs; the reading of criterion 2
-went to the Operator (comment 6095937983), who raised no objection. The goal
+went to the Operator (comment 6095937983), and the Operator's acceptance of the scenario settles it (comment 6099346566). The goal
 count is 1, final by O-187.
 
 ## What was done
@@ -64,3 +64,44 @@ gives.
 **The rejected alternatives:** a hook in `Config` between `probe` and `phase`
 (product code for a demo, and the seam of `M2e`); copying
 `~/.claude/.credentials.json` (a refresh token that rotates).
+
+## Review rounds
+
+The record is a comment on #170. Round 1 (Claude Fable 5.1, effort `xhigh`, a
+fresh read-only session in a clone at `77daba6`, cycle 0, the cap):
+`nothing material in scope`, seven notes. Applied in the close-out: note 1 (the
+record of the deviation says that a red before the green was possible); note
+3 (the evidence names L-A1 for both credentials, and that the token stays the
+host's until revoked); note 4 (the Operator's acceptance, below); note 5 (a §2
+lesson of #199, and #199 in the open issues of the plan); note 6 (the limit of a
+test that no job compiles, in `test-levels.md`); note 7 (this close-out).
+Declined: note 2 (the test compares the branch's head with the SHA of the
+event `push`): a change of the test after the last round is read by no round;
+the evidence checks the head, its parent and its file by hand, from the
+records.
+
+## Verdict
+
+Delivered: the demo of `M2b` on real harnesses, by the uat test of the tag
+`uat`: the probe of Claude Code and Devin, then one developer session whose
+commit lands on `task/T-rmgw/1` with its telemetry row, each write of LAYUP by
+the App's bot. The Operator's acceptance: on 2026-10-10 at 15:52Z, by Telegram, recorded in comment 6099346566 of #170; it settles condition 4 (the reading of criterion 2) and rules the red of condition 2, not run, acceptable for this uat. The review ended by decay
+at cycle 0 of cap 1. The diff against `33439ce`, the branch's base, is inside
+900 lines over 12 files. This is the last row of `M2b`; #199 stays open for a
+later milestone.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). UTC; reviewers' tokens are `modelUsage`;
+the author's are not reported. The demo's own sessions are in its telemetry
+rows ([`README.md`](../../runs/T-x7cs/README.md)).
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan | reasoning | Claude Opus 5.5 | not reported | not reported | 2026-10-10 08:48 to 08:50 |
+| The plan review | reasoning | Claude Fable 5.1 | `xhigh` | 1,689,783 (USD 8.71) | 12 min 5 s |
+| The registers and the uat test; run 1; #199 | execution | Claude Opus 5.5 | not reported | not reported | 09:03 to 09:10 |
+| The inputs with the Operator; Start; the demo | execution | Claude Opus 5.5 | not reported | not reported | 14:43 to 14:59 |
+| The evidence and the documents | execution | Claude Opus 5.5 | not reported | not reported | 14:59 to 15:03 |
+| Round 1 | reasoning | Claude Fable 5.1 | `xhigh` | 1,548,845 (USD 5.69) | 11 min 28 s |
+| The close-out, with notes 1 and 3 to 7 | execution | Claude Opus 5.5 | not reported | not reported | 15:16 to 15:20; 15:53 |

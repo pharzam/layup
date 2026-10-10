@@ -405,6 +405,7 @@ are known limits by the Operator's rulings.
 | [#49](https://github.com/pharzam/layup/issues/49) | Answered by [R11](../issue-workflow.md#r11--single-goal-issues) ("A task of one artifact", [ADR-0026](../adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md)); the Operator closes it or keeps it open. |
 | [#61](https://github.com/pharzam/layup/issues/61) | Row 12 (`T-9t1q`), with check `facts`; cap 2. |
 | [#68](https://github.com/pharzam/layup/issues/68) | Milestone `M2e`, with the handoff records. |
+| [#199](https://github.com/pharzam/layup/issues/199) | Revealed by row 39b (`T-x7cs`): a restart refuses a target whose harness register gained a row after Start; the demo ran on a new target. A task of a later milestone decides it. |
 | [#148](https://github.com/pharzam/layup/issues/148) | Row 39a (`T-4tjy`, O-187 of #152): the review of the `M2b` release, before the demo, reads the whole release, the code of `M2a` included ([`session.md`](../spec/session.md#req-015-and-req-017--the-review-of-the-release-of-m2b)). |
 
 ## Known limits of this plan

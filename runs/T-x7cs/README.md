@@ -7,7 +7,10 @@ commit lands on `task/T-rmgw/1` with its telemetry row. The uat row:
 [`session.md`](../../docs/spec/session.md), The acceptance tests of M2b, The
 demo. The home directory is written as `~`. No token and no key content is
 here: the credential columns name files, and the session's environment is not
-printed.
+printed. A session can read its own credential (L-A1): the Claude token and
+Devin's API key reach each session of that harness. The token of `claude
+setup-token` stays a credential of the host after the demo, until the Operator
+revokes it.
 
 ## The inputs
 
@@ -234,6 +237,6 @@ Then each harness is probed at its version and passes
 And the developer session's commit lands on task/T-rmgw/1, with its result, its events attempt, session, result, push and bound, and its telemetry row
 And each write of LAYUP on the target shows the App's bot as its author
 
-Accepted by: pending, the Operator on #170
+Accepted by the Operator, by Telegram, on 2026-10-10 (15:52Z), recorded in comment 6099346566 of #170
 Covers REQ-013, REQ-003, REQ-005, REQ-011, NFR-001
 ```
