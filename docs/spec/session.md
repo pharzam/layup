@@ -659,8 +659,8 @@ that task: its check 4 allows the verbs of `Fetch`, `Push` and `FetchSession`,
 each in its own function, and `remote` in `CloneLocal` (**decided here**, task
 `T-4tjy`: its `remote remove origin` cuts a session clone's link and reaches no
 remote), and a new list names each program that the code starts (`git`, `sh`,
-the command of a harness register row), a check that fails on a call out of
-the list. The review reads the whole release, so it covers the
+the command of a harness register row) with the file that starts it, a check
+that fails on a call out of the list. The review reads the whole release, so it covers the
 code of `M2a` too (#148). A session runs under the Operator's user and can reach
 what that user can (L-A1); the review records it as that limit.
 

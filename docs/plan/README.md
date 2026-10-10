@@ -239,9 +239,10 @@ phase 1, and takes #148. The release of `M2b` is the code of `main` that the
 demo runs (the non-test Go files of `cmd/` and `internal/`, `go.mod`, and the
 files that the binary embeds), at `9490de9`, the merge of row 38, the last
 build row; it holds the code of phase 1 and `M2a` too (task `T-4tjy`, #169).
-A task of `M2b` that changes the release code after row 39a checks its own diff for `REQ-015` and `REQ-017` in its review round, and
-runs the adapted `release-check.sh` with the full commit ID of its head. Row 39b
-needs the Operator's inputs, which its issue lists.
+A task of `M2b` that changes the release code after row 39a checks its own
+diff for `REQ-015` and `REQ-017` in its review round, and runs the adapted
+`release-check.sh` with the full commit ID of its head. Row 39b needs the
+Operator's inputs, which its issue lists.
 
 ## The edges of the inventory that the plan drops
 

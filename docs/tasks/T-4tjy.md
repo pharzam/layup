@@ -53,10 +53,52 @@ of a scratch clone. The goal count is 2, final by O-187.
    `traceability.md`.
 
 **Tests:** [`test-runs.md`](../../runs/T-4tjy/test-runs.md): the check of phase
-1 red at the base; a first draft that read no file, caught by its run; five
-mutations, each on its own commit, each caught by its line of (3) or (4); green
-at `9490de9`.
+1 red at the base; a first draft that read no file, caught by its run; seven
+mutations, each on its own commit, each caught by its line of (3) or (4), one
+of them red against the check before the fix of round 1; green at `9490de9`.
 
 **The rejected alternatives:** a new script under `runs/T-4tjy/` (the
 specification adapts the one script); a review of `M2a` on its own (O-187 gives
 #148 to this review).
+
+## Review rounds
+
+The records are comments on #169. Round 1 (Claude Fable 5.1, effort `xhigh`, a
+fresh read-only session in a clone at `5adde43`, cycle 0, at the cap of 1): `not
+mergeable, findings recorded`, for one material finding, the Fact cell of the
+uat row (`F-0003#52` for `F-0003#53`), and five notes. **O-192** (a): one more
+cycle, cap 2; the verdict of round 1 is edited to `material`. The fix sets the
+cell, adds the §2 lesson of the empty file list (note 2), states the reading of
+criterion 2 (note 3), adds the red run of a file out of the list of (3) (note
+4), and ends a function at a one-line `func` in check (4), red against the
+check of `5adde43` (note 5). Round 2 (the same reviewer type, a fresh session
+at `3807c61`, cycle 1, the cap): `nothing material in scope`, three notes,
+applied in the close-out: the wrap of the line of the plan that note 6 of round
+1 asked (note 1); the count of the red runs here (note 2); the file of each
+program in the sentence of `session.md` (note 3).
+
+## Verdict
+
+Delivered: the review of the release of `M2b` for `REQ-015` and `REQ-017`,
+`holds` for both over phase 1, `M2a` and `M2b`, by a model that wrote none of
+the release, with `release-check.sh` adapted and green at `9490de9`; #148 is
+settled. The review ended by decay at cycle 1 of a cap that O-192 raised to 2.
+The diff against `9490de9`, the branch's base, is inside 750 lines over 13
+files. Next: row 39b, the demo, which needs the Operator's inputs.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). UTC; reviewers' tokens are `modelUsage`;
+the author's are not reported.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan | reasoning | Claude Opus 5.5 | not reported | not reported | 2026-10-10 07:16 to 07:17 |
+| The plan review | reasoning | Claude Fable 5.1 | `xhigh` | 877,282 (USD 5.87) | 8 min 30 s |
+| The check, test first | execution | Claude Opus 5.5 | not reported | not reported | 07:27 to 07:30 |
+| The release review (the uat) | reasoning | Claude Fable 5.1 | `xhigh` | 1,888,424 (USD 9.60) | 7 min 54 s |
+| The documents and the freeze | execution | Claude Opus 5.5 | not reported | not reported | 07:39 to 07:42 |
+| Round 1 | reasoning | Claude Fable 5.1 | `xhigh` | 808,252 (USD 4.59) | 9 min 27 s |
+| O-192 asked and applied; the fix of round 1 | execution | Claude Opus 5.5 | not reported | not reported | 07:52; 08:14 to 08:17 |
+| Round 2 | reasoning | Claude Fable 5.1 | `xhigh` | 732,144 (USD 4.48) | 7 min 52 s |
+| The close-out, with the notes of round 2 | execution | Claude Opus 5.5 | not reported | not reported | 08:26 to 08:27 |
