@@ -85,7 +85,10 @@ has no cap (`—`; its spend is an unknown part, [`session.md`](session.md#the-l
 whose actions are not in `M2c`); when the sum passes `MONEY`, or the time from
 Start (the time of the first commit of the records branch, as milestone 0's
 clock starts at Start, `architecture.md` §12) to now passes `HOURS`, the step is `fail`
-("the cap of milestone 0") and no session starts. A session whose money is not
+("the cap of milestone 0") and no session starts. **Decided here** (note 5 of
+#210): the clock of milestone 0 does not pause while the batch waits for a human,
+as milestone 0 has no task whose wait could pause it; the Operator raises the cap
+on the control issue (`architecture.md` §12). A session whose money is not
 known after it ends adds nothing to the known money and is recorded `unknown`,
 as `session.md` writes it. **Reason:** the cap of milestone 0 is the one budget
 value that exists before the answers (`architecture.md` §12). The band `B` and
@@ -267,7 +270,9 @@ per question ID, `Q-NNN: <answer>`.
 in the role of the question's block (the idea owner, or the Operator); any other
 comment is recorded as input and answers nothing (`architecture.md` §3).
 **Decided here:** the batch's answers are in hand when each block that asks a
-question has at least one such comment after the batch (`architecture.md` §5 step 6:
+question has at least one comment after the batch by its approver that holds at
+least one answer line (note 3 of #210: an acknowledgement with no answer line
+does not count) (`architecture.md` §5 step 6:
 "each in one comment"); until then the step `answers` waits. Then code reads
 every such comment after the batch, and the last answer line of a question ID,
 in the order of the copies, is its answer (**decided here**: a later line
@@ -283,7 +288,9 @@ three parse, code writes `records:budget.tsv`.
 When the answers are in hand, a session of the role `systems-architect` reads
 the answered questions and their answers and writes `result/answers-review.tsv`:
 for each, `closed` or `open` with a reason. The rows are
-`records:intake/answers-review.tsv`, and each sets the question's state. Then
+`records:intake/answers-review.tsv`, and each sets the question's state; with no
+answered question the session does not start and the step writes no row
+(**decided here**, note 3 of #210). Then
 code posts **one** follow-up comment on the Intake issue that asks again only
 for the questions still `asked`, a field of the intent form that does not parse,
 and the `open` ones, in the form of the batch (its two blocks, each question
@@ -300,7 +307,11 @@ of `B`, `U` and the hours from the answer to its follow-up, else from the batch,
 and writes `budget.tsv` when the three parse with `B` below `U` (**decided
 here**: the follow-up of an intent value asks the same field); a value still
 missing or unparsed leaves `budget.tsv` unwritten and sets the state of its
-question of the intent form to `open`, and Shape (`M2e`) asks it. No review runs on the answers to the follow-up, and
+question of the intent form to `open`, and Shape (`M2e`) asks it. When
+`budget.tsv` is written already and the follow-up asks a field of the intent
+form again (the review left it `open`), a parsed answer replaces that value in
+`budget.tsv`, its one home, with the follow-up as its `source` (**decided here**,
+note 6 of #210). No review runs on the answers to the follow-up, and
 Intake is done.
 **Decided here:** one follow-up round in `M2c`; a question still `asked` or
 `open` after it stays so in `questions.tsv`, and Shape (`M2e`) reads it.
@@ -332,13 +343,17 @@ follow-up comment (its rows of `questions.tsv`), or, when nothing is left to
 ask (no question `asked` or `open`, and the three fields of the intent form
 parse), that state of the records, from which the step posts nothing; the rows of `intake/answers.tsv` of the follow-up's questions.
 Each step whose record exists is
-`done` with "done before" and runs nothing; a step whose input is not there yet
+`done` with "done before" and runs nothing, but `numbering` and `spans` while the
+last `spec/check.tsv` has a `fail` row: a restart runs `numbering` again (The
+span check; note 1 of #210); a step whose input is not there yet
 (a block of the batch, or of the follow-up, with no answer comment yet, by the
 rule of The answers) is `done` with "waiting" in `detail`, and the run releases
 the lease and exits 0. A restart goes on from
-the records. The block `run-steps` is built, so the build task that adds these
-steps adds them to its enum, with its Go schema, in one change, as `M2b` did
-for `probe` ([`run.md`](run.md#the-command)).
+the records. The block `run-steps` is built, so each build task that adds a step
+adds its name to the enum, with its Go schema, and the step to the restart's
+order, in one change, as `M2b` did for `probe` ([`run.md`](run.md#the-command));
+the first, `rule-gaps`, replaces the row `phase` (the tasks of `M2c`,
+[`plan/README.md`](../plan/README.md#the-tasks-of-m2c); task `T-2r8u`).
 
 ## NFR-003 — No value without evidence at Intake
 
@@ -347,6 +362,20 @@ its offsets in `start/problem-statement.md`; each span by its offsets; each
 answer by the comment ID of its copy; each value of `budget.tsv` by the question
 ID of its answer. A value of the intent form that does not parse is asked again,
 never guessed.
+
+## REQ-015 and REQ-017 — The review of the release of M2c
+
+Their criteria, as for `M2b`
+([`session.md`](session.md#req-015-and-req-017--the-review-of-the-release-of-m2b)).
+**Decided here** (decision 8 of #206; task `T-2r8u`): a task of its own, before
+the demo (row 49a of [the plan](../plan/README.md#the-tasks-of-m2c)), records a
+code review of the release of `M2c` (the non-test Go files of `cmd/` and
+`internal/`, `go.mod` and the files that the binary embeds, the code that the
+demo runs) by a reviewer of a model that wrote none of it, as row 39a did for
+`M2b`, with `runs/T-efmy/release-check.sh` run on the release commit, and
+adapted in that task where the code of `M2c` needs it (a program that the code
+starts, a verb of `git` that reaches a remote). The review reads the whole
+release, the code of `M2b` and `M2a` included.
 
 ## Input states
 
@@ -358,7 +387,7 @@ never guessed.
 | No admitted pair of `qa-engineer` on a harness other than that of the numbering and the draft | `completeness` is `fail` ("not run: no admitted pair on another harness"); no batch |
 | A session's output file that is missing, a link, over 1 MiB, or that its block refuses | the step is `fail`, naming the session; nothing of the file is committed |
 | A quote that occurs nowhere, more than once, or holds a tab | the file of the review is refused (as above) |
-| A span table that fails the span check | `spans` is `fail`; `spec/check.tsv` is committed; no batch |
+| A span table that fails the span check | `spans` is `fail`; `spec/check.tsv` is committed; no batch; a restart runs `numbering` again |
 | A draft row whose `covers` names no fact, or a `need` or `constraint` fact with no requirement | the draft is refused |
 | The cap of milestone 0 reached | the step is `fail` ("the cap of milestone 0"); no session starts |
 | A comment with answer lines by an account that is not an approver, or in the other block's role | recorded as input; it answers nothing |
@@ -395,4 +424,5 @@ Question Share (`M4b`).
 | The merge and the IDs | unit | A question whose quote and kind repeat is dropped; each kept question gets one ID, in the order of the merge. |
 | The comment and the answers | integration | With the httptest forge: one comment with two blocks; the step waits until each block that asks has a comment by its approver; answers by an approver in its role are kept, others recorded as input; a later line of an ID corrects an earlier one; a missing, unparsed or `open` answer goes to the follow-up; the answers and `budget.tsv` are committed. |
 | The steps of Intake | e2e | In CI with no secret, the binary, a local fake forge and scripted harness programs: a restart runs the steps to `batch` and exits "waiting"; after a scripted answer comment that leaves one question unanswered, the next restart reads it, runs the review, posts one follow-up for that question and exits "waiting"; after a scripted answer to the follow-up, the next restart records it and ends Intake. |
+| The review of the release | uat | A recorded code review of the release for `REQ-015` and `REQ-017`, by a reviewer of a model that wrote none of it, with `release-check.sh` on the release commit, before the demo (row 49a of [the plan](../plan/README.md#the-tasks-of-m2c)). |
 | The demo | uat | On a pilot problem statement that the idea owner chooses, on real harnesses: one Intake comment holds the rule gaps and the gaps of meaning, and `layup spec check --facts` passes on the numbered spans. |

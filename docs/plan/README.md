@@ -2,7 +2,7 @@
 
 This is LAYUP's implementation plan: the phases of
 [`PRD-0001`](../prd/PRD-0001-layup.md) §9 with their milestones, the tasks of
-phase 1 and of the milestones `M2a` and `M2b` in their order, and where each part of the work goes. It is written for
+phase 1 and of the milestones `M2a`, `M2b` and `M2c` in their order, and where each part of the work goes. It is written for
 LAYUP itself in the form that [`architecture.md`](../architecture.md) §8 asks of a
 target's milestone plan: each task with the requirement IDs it serves, the tests
 that will show it done, a size class, and its predecessors.
@@ -31,10 +31,10 @@ The Operator's decisions O-121 to O-124 set its structure; they are quoted in
   owner stays a marker with a row in
   [`open-gaps.tsv`](../setup/open-gaps.tsv), as
   [`spec/README.md`](../spec/README.md) says.
-- Phases 2 to 4 are at milestone level only, except `M2a` and `M2b`, whose tasks
-  are below ([`M2a`](#the-tasks-of-m2a), [`M2b`](#the-tasks-of-m2b)). Each milestone starts with its own specification
+- Phases 2 to 4 are at milestone level only, except `M2a`, `M2b` and `M2c`, whose tasks
+  are below ([`M2a`](#the-tasks-of-m2a), [`M2b`](#the-tasks-of-m2b), [`M2c`](#the-tasks-of-m2c)). Each milestone starts with its own specification
   task (O-114), and a slicing task then writes its rows and opens their issues
-  (O-164: `T-zwke` for `M2a`, `T-fdaq` for `M2b`).
+  (O-164: `T-zwke` for `M2a`, `T-fdaq` for `M2b`, `T-2r8u` for `M2c`).
 - A size class is `small` (one package or one step group: about one day of agent
   work and a diff under about 400 lines) or `large`. The expected lines of a task
   are an estimate for its plan review, not a budget; each task's plan review sets
@@ -43,7 +43,7 @@ The Operator's decisions O-121 to O-124 set its structure; they are quoted in
 - The column "After" gives the order of the tasks; the row number is only a
   handle. A task starts when the tasks in its "After" cell have merged.
 - `T-55n2` opens the issue of `T-b97r` and of each row of phase 1, `T-zwke`
-  of each row of `M2a`, and `T-fdaq` of each row of `M2b`; the numbers are in the column "Issue". Each task, in its own pull request, puts its real test names and
+  of each row of `M2a`, `T-fdaq` of each row of `M2b`, and `T-2r8u` of each row of `M2c`; the numbers are in the column "Issue". Each task, in its own pull request, puts its real test names and
   their status in [`tests/traceability.md`](../tests/traceability.md) and in the
   Test column of `PRD-0001` §12.
 
@@ -54,7 +54,7 @@ The Operator's decisions O-121 to O-124 set its structure; they are quoted in
 | `M1` | 1 | REQ-001, REQ-002, REQ-004, REQ-007, REQ-009, REQ-011, NFR-001 to NFR-007; the `Won't` rows REQ-015 to REQ-018 hold in every phase | The first pilot (O-122): `layup` sets up one target repository from a problem statement with a Go stack, and runs that target's gate from outside (ADR-0012 part 6). | the PDR (`T-4wrw`) | the specification of phase 1 (`T-0drh`, merged) |
 | `M2a` | 2 | NFR-001, NFR-002, NFR-006, REQ-002 | On an empty repository, after the Operator's root push, the records branch shows the first commit by the LAYUP App, and the Intake and control issues exist. | `M1` | its specification task (`T-zck8`); its tasks: [rows 21 to 27](#the-tasks-of-m2a) |
 | `M2b` | 2 | REQ-011, REQ-005, REQ-003, REQ-013, NFR-005, NFR-001 | A probe session on each registered harness, then one developer session whose commit lands on its task branch, with one complete telemetry row. | `M2a` | its specification task (`T-ywk7`, #147); its tasks: [rows 28 to 39b](#the-tasks-of-m2b) |
-| `M2c` | 2 | REQ-001, REQ-012, NFR-003 | On a pilot problem statement, one Intake comment holds the rule gaps and the gaps of meaning, and `layup spec check --facts` passes on the numbered spans. | `M2a`, `M2b` | its specification task (`T-g49f`, #206; [`intake.md`](../spec/intake.md)) |
+| `M2c` | 2 | REQ-001, REQ-012, NFR-003 | On a pilot problem statement, one Intake comment holds the rule gaps and the gaps of meaning, and `layup spec check --facts` passes on the numbered spans. | `M2a`, `M2b` | its specification task (`T-g49f`, #206; [`intake.md`](../spec/intake.md)); its tasks: [rows 40 to 49b](#the-tasks-of-m2c) |
 | `M2d` | 2 | REQ-002, NFR-001, NFR-002, NFR-003, NFR-006, REQ-003 | After the Operator's pushes and ruleset apply, the push to `layup-probe` is refused, and `setup/forge-check.tsv` shows each rule and probe as passed. | `M2a`, `M2b`, `M2c` | its specification task |
 | `M2e` | 2 | REQ-005, REQ-007, REQ-012, REQ-003, NFR-004, NFR-001 | The specification task of a target merges after its first bet: each handoff is valid, the rendered commit holds the MoSCoW and Phase columns, and the four `layup/` checks are green. | `M2b`, `M2c`, `M2d` | its specification task |
 | `M2f` | 2 | REQ-003, REQ-004, NFR-001, NFR-004 | The activation batch of a first bet merges only after each known-bad patch fails its kind, and `layup audit` shows zero agent writes to rule paths. | `M2d`, `M2e` | its specification task |
@@ -244,6 +244,58 @@ diff for `REQ-015` and `REQ-017` in its review round, and runs the adapted
 `release-check.sh` with the full commit ID of its head. Row 39b needs the
 Operator's inputs, which its issue lists.
 
+## The tasks of M2c
+
+The build tasks of milestone `M2c`, Intake (task `T-2r8u`, #211; O-164 of #123).
+Its specification is [`spec/intake.md`](../spec/intake.md), [the records of
+Intake](../spec/records.md#nfr-001--the-records-of-intake) and [the table of
+M2c](../spec/packages.md#the-table-of-m2c). The rule of the slicing, as for
+`M2b`: one task per package boundary, in the order of the imports; each part of
+the specification in one row, and each acceptance test of `intake.md`, or each
+clause of one that the slicing cuts, in the row that delivers its part
+([`runs/T-2r8u/parts.tsv`](../../runs/T-2r8u/parts.tsv)). The goal classes of
+each row were counted, and the count of each row is final by the Operator's
+decision O-196 of #211; its issue states it. Row 40 holds the Go schemas of
+`internal/records`; row 41a owns the block `spec-check` and a second Go value of
+`spans` in `internal/spec`, which may import `internal/tsv` only, as
+`internal/psb` holds `GapsSchema`. Each row that adds a step of Intake adds its
+name to the enum of `run-steps` and the step to the restart's order in the same
+change; row 43a, the first, replaces the row `phase` and carries the rule "done
+before", and row 47a carries the rule "waiting" ([`intake.md`](../spec/intake.md#the-steps-of-intake)).
+The columns are those of the tasks of `M2b`; each issue says `Refs #206` and
+`Refs #29`. Rows 40, 41a and 43a can start at once.
+
+| # | Task ID | Issue | Task | Demo | Items | Requirements | Fact | Tests | Size | Lines | After | Cap |
+| - | ------- | ----- | ---- | ---- | ----- | ------------ | ---- | ----- | ---- | ----- | ----- | --- |
+| 40 | `T-529i` | [#212](https://github.com/pharzam/layup/issues/212) | The records of Intake: `records.md`: NFR-001 — The records of Intake (the blocks meaning, spans, draft, coverage, questions, answers, answers-review, budget, and the row rules in words) | The Go schemas of `meaning`, `spans`, `draft`, `coverage`, `questions`, `answers`, `answers-review` and `budget` equal their blocks, and each reader refuses a row that breaks its rule. | `later-p2-intake-spec` | NFR-001, REQ-001, REQ-012 | F-0003#41, F-0003#51 | unit; the block test (the eight names to `built`) | large | 800 | — | 1 |
+| 41a | `T-4ywt` | [#213](https://github.com/pharzam/layup/issues/213) | The span check and the package rules of M2c: `intake.md`: The span check (the five rules and the table of the check); `intake.md`: The acceptance tests of M2c (The span check); `records.md`: NFR-001 — The records of Intake (the block spec-check, and the second Go value of spans in internal/spec); `packages.md`: The table of M2c | The span check refuses a span table with a byte in two spans, and `TestPackageRules` reads "The table of M2c" with `internal/spec` on the line of the engine checks. | `later-p2-intake-spec` | REQ-012, NFR-005, NFR-007 | F-0003#51 | unit (each rule of the check); integration (`TestPackageRules`); the block test (`spec-check` to `built`; the second Go value of `spans` compared) | large | 600 | — | 1 (2 if its plan review reads the package rules as a gate) |
+| 41b | `T-hpid` | [#214](https://github.com/pharzam/layup/issues/214) | The command layup spec check --facts: `intake.md`: The span check (the command layup spec check --facts and its row of the exit-code map); `intake.md`: The acceptance tests of M2c (The command `layup spec check --facts`) | `layup spec check --facts SPANS --psb FILE` exits 1 on a span table with a byte in two spans, 0 on one that covers the file, and 2 on a missing file. | `later-p2-intake-spec` | REQ-012 | F-0003#51 | e2e (the binary) | small | 300 | 41a | 1 |
+| 42a | `T-gmey` | [#215](https://github.com/pharzam/layup/issues/215) | The session of a phase: `intake.md`: The sessions of Intake; `intake.md`: Input states (row 1: no admitted pair for a role of Intake); `intake.md`: Input states (row 3: a session's output file that is missing, a link, too large or refused); `intake.md`: The acceptance tests of M2c (The sessions of Intake) | A session of a phase on a scripted harness commits its rows and its telemetry row in one records commit, from a directory that holds `input/`. | `later-p2-intake-spec` | REQ-001, REQ-012, NFR-001 | F-0003#41, F-0003#51 | integration (scripted harness programs, the real `git`) | large | 700 | 40 | 1 |
+| 42b | `T-ybd5` | [#216](https://github.com/pharzam/layup/issues/216) | The budget of milestone 0: `intake.md`: The budget of Intake; `intake.md`: Input states (row 7: the cap of milestone 0 reached); `intake.md`: The acceptance tests of M2c (The budget of Intake) | No session of Intake starts when the known money since Start plus the new session's cap passes the money cap of milestone 0. | `later-p2-intake-spec` | REQ-011, NFR-001 | F-0003#50 | unit | small | 300 | 42a | 1 |
+| 43a | `T-qk66` | [#217](https://github.com/pharzam/layup/issues/217) | The step rule-gaps: `intake.md`: The rule gaps; `intake.md`: The steps of Intake (the row phase replaced, and the rule done before); `intake.md`: The acceptance tests of M2c (The rule gaps) | A restart after Start commits the table of `layup psb check` as `intake/psb.tsv`, byte for byte, in place of the row `phase`. | `later-p2-intake-spec` | REQ-001 | F-0003#41 | integration; the Go schema of `run-steps` with `rule-gaps` | small | 300 | — | 1 |
+| 43b | `T-1u2v` | [#218](https://github.com/pharzam/layup/issues/218) | The review of meaning: `intake.md`: The review of meaning; `intake.md`: Input states (row 4: a quote that occurs nowhere, twice, or holds a tab); `intake.md`: The acceptance tests of M2c (The review of meaning) | A quote that occurs twice refuses the session's file; one that occurs once is committed with its offsets. | `later-psb-meaning-review` | REQ-001 | F-0003#41 | unit (the quote check); integration (the step `meaning`, a scripted harness) | large | 500 | 42a, 43a | 1 |
+| 44 | `T-hiv9` | [#219](https://github.com/pharzam/layup/issues/219) | The steps numbering and spans: `intake.md`: The numbering; `intake.md`: The span check (the steps numbering and spans, and the rerun after a failed check); `intake.md`: Input states (row 5: a span table that fails the span check) | After a failed span check no batch is posted, and a restart runs `numbering` again. | `later-p2-intake-spec` | REQ-012 | F-0003#51 | integration (scripted harness programs) | large | 500 | 41a, 42a, 43a | 1 |
+| 45a | `T-2et0` | [#220](https://github.com/pharzam/layup/issues/220) | The draft: `intake.md`: The draft; `intake.md`: Input states (row 6: a draft row that covers no fact, or a fact not covered); `intake.md`: The acceptance tests of M2c (The draft) | A draft whose `covers` names no fact is refused, and one that covers each need and constraint is committed. | `later-p2-intake-spec` | REQ-012 | F-0003#51 | unit (the check); integration (the step `draft`) | small | 400 | 44 | 1 |
+| 45b | `T-0mey` | [#221](https://github.com/pharzam/layup/issues/221) | The completeness review: `intake.md`: The completeness review; `intake.md`: Input states (row 2: no admitted pair of qa-engineer on another harness); `intake.md`: The acceptance tests of M2c (The completeness review) | With two harnesses the review runs on the one that did not number or draft; with none, the step is `fail` and no batch is posted. | `later-p2-intake-spec` | REQ-012, REQ-013 | F-0003#51, F-0003#52 | integration (two scripted harnesses) | small | 400 | 45a | 1 |
+| 46 | `T-8r3u` | [#222](https://github.com/pharzam/layup/issues/222) | The batch: `intake.md`: The merge and the IDs; `intake.md`: The comment of the batch; `intake.md`: The acceptance tests of M2c (The merge and the IDs); `intake.md`: The acceptance tests of M2c (The comment and the answers: the comment with two blocks) | One comment on the Intake issue holds the merged questions, with no repeat of a quote and kind, in two blocks. | `later-psb-intake-batch` | REQ-001 | F-0003#41 | unit (the merge and the IDs); integration (the comment, the `httptest` forge) | large | 600 | 43b, 45b | 1 |
+| 47a | `T-hxb9` | [#223](https://github.com/pharzam/layup/issues/223) | The answers: `intake.md`: The answers; `intake.md`: The raw fact of the answers; `intake.md`: The steps of Intake (the rule waiting); `intake.md`: Input states (row 8: answer lines by an account that is not an approver); `intake.md`: The acceptance tests of M2c (The comment and the answers: the wait, the answers by an approver, the last line, budget.tsv) | The step waits until each block has an approver's comment with an answer line, then writes the answers and `budget.tsv`. | `later-psb-intake-batch` | REQ-001, NFR-003 | F-0003#41 | integration (scripted answer comments, the `httptest` forge) | large | 500 | 46 | 1 |
+| 47b | `T-vwu3` | [#224](https://github.com/pharzam/layup/issues/224) | The review of the answers and the follow-up: `intake.md`: The review of the answers and the follow-up (the review of the answers and the follow-up comment); `intake.md`: Input states (row 9: an answer of the intent form that does not parse); `intake.md`: The acceptance tests of M2c (The comment and the answers: a missing, unparsed or open answer to the follow-up) | One follow-up comment asks only the missing, unparsed and open questions. | `later-psb-intake-batch` | REQ-001 | F-0003#41 | integration (a scripted harness, the `httptest` forge) | large | 500 | 47a | 1 |
+| 47c | `T-tmm2` | [#225](https://github.com/pharzam/layup/issues/225) | The answers to the follow-up: `intake.md`: The review of the answers and the follow-up (the answers to the follow-up, with budget.tsv); `intake.md`: Input states (row 10: a question still open after the follow-up) | The answers to the follow-up are recorded, an intent value among them replaces its value in `budget.tsv`, and Intake ends. | `later-psb-intake-batch` | REQ-001 | F-0003#41 | integration | small | 350 | 47b | 1 |
+| 48 | `T-mo9w` | [#226](https://github.com/pharzam/layup/issues/226) | The e2e of the steps of Intake: `intake.md`: The acceptance tests of M2c (The steps of Intake) | In CI with no secret, a restart runs Intake to the batch, the next reads a scripted answer and posts one follow-up, and the next ends Intake. | `later-p2-intake-spec` | REQ-001, REQ-012, NFR-001 | F-0003#41, F-0003#51 | e2e (the binary, a local fake forge, scripted harness programs) | large | 500 | 41b, 42b, 47c | 1 |
+| 49a | `T-8byd` | [#227](https://github.com/pharzam/layup/issues/227) | The review of the release of M2c: `intake.md`: REQ-015 and REQ-017 — The review of the release of M2c; `intake.md`: The acceptance tests of M2c (The review of the release) | The release review of `M2c` is a recorded review of the code for `REQ-015` and `REQ-017`, by a reviewer of a model that wrote none of it. | `later-p2-intake-spec` | REQ-015, REQ-017 | F-0003#51 (the review keeps the out-of-scope facts F-0003#53 and F-0003#55 out) | the review, with `runs/T-efmy/release-check.sh` on the release commit, adapted where the code of `M2c` needs it; its evidence under `runs/` | small | 300 | 48 | 1 |
+| 49b | `T-ekh5` | [#228](https://github.com/pharzam/layup/issues/228) | The demo of M2c (uat): `intake.md`: The acceptance tests of M2c (The demo) | On a pilot problem statement, one Intake comment holds the rule gaps and the gaps of meaning, and `layup spec check --facts` passes on the numbered spans. | `later-p2-intake-spec`, `gov-operator-setup-o112` | REQ-001, REQ-012 | F-0003#41, F-0003#51 | uat, with its evidence under `runs/` | small | 300 | 49a | 1 |
+
+Row 49a reviews the release before the demo, as row 39a did for `M2b`. The
+release of `M2c` is the code of `main` that the demo runs (the non-test Go files
+of `cmd/` and `internal/`, `go.mod`, and the files that the binary embeds), at
+the merge of row 48, the last build row; it holds the code of phase 1, `M2a` and
+`M2b` too. Row 48 is after rows 41b and 42b, so that the release holds them. A
+task of `M2c` that changes the release code after row 49a checks its own diff for
+`REQ-015` and `REQ-017` in its review round, and runs `release-check.sh` with
+the full commit ID of its head. Row 49b needs the Operator's inputs, which its
+issue lists: the pilot problem statement, which the idea owner chooses
+(`PRD-0001` §11 item 6), among them.
+
 ## The edges of the inventory that the plan drops
 
 | From | To | Reason |
@@ -298,14 +350,14 @@ Each inventory item that is not in a row of a task table has one host here; `lat
 | `gov-operator-ci-protection` | out | Phase 1 adds no CI job; a task that changes `ci.yml` names the Operator's step in its own plan (K28). |
 | `gov-issue-68` | `M2e` | The handoff records of the task loop. |
 | `gov-issue-49` | out | [R11](../issue-workflow.md#r11--single-goal-issues) now holds the answer ("A task of one artifact", [ADR-0026](../adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md)); the Operator closes #49 or keeps it open. |
-| `later-psb-meaning-review` | `M2c` | The review of meaning needs a role session. |
-| `later-psb-intake-batch` | `M2c` | The one Intake batch needs `layup run`. |
+| `later-psb-meaning-review` | row 43b (`M2c`) | The review of meaning needs a role session. |
+| `later-psb-intake-batch` | rows 46 to 47c (`M2c`) | The one Intake batch needs `layup run`. |
 | `later-psb-early-question-share` | `M4b` | A measure of `layup report`. |
 | `later-gate-status` | `M2e` | The status `layup/gates` needs `layup run` and the forge. |
 | `later-gate-rule-batch` | `M2f` | Rule batches and activation. |
 | `later-p2-run-start` | rows 21 to 27 | [The tasks of M2a](#the-tasks-of-m2a). |
 | `later-p2-sessions-ledger` | rows 28 to 39b | [The tasks of M2b](#the-tasks-of-m2b). |
-| `later-p2-intake-spec` | `M2c` | The milestone itself. |
+| `later-p2-intake-spec` | rows 40 to 49b (`M2c`) | [The tasks of M2c](#the-tasks-of-m2c). |
 | `later-p2-scaffold` | `M2d` | The milestone itself. |
 | `later-p2-phase-loop-handoffs` | `M2e` | The milestone itself. |
 | `later-p2-rule-protection` | `M2f` | The milestone itself. |

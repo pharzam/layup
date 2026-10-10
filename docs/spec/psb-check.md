@@ -116,7 +116,8 @@ golden table by the block, `psb.tsv` included.
 ### Not in phase 1
 
 Each item below is specified for `M2c` in [`intake.md`](intake.md) (task
-`T-g49f`); the answers' file under `docs/facts/` stays the Scaffold's (`M2d`).
+`T-g49f`), but the setup questions, which join the batch in `M2d`, and the
+answers' file under `docs/facts/`, which stays the Scaffold's (`M2d`).
 
 - **The review of meaning** (§5 gap check step 2): a session; it needs `layup
   run` (phase 2).
