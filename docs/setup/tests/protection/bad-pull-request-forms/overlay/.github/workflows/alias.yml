@@ -1,0 +1,5 @@
+on: *triggers
+jobs:
+  alias:
+    steps:
+      - run: true
