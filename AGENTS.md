@@ -47,11 +47,12 @@ Sources of truth, written once.
 ## The quality gate
 
 Every substantive task passes **eight** ordered steps, in this order. Before step
-1, an issue is open, and the work is sliced into an ordered, Definition-of-Done
+1, an issue is open, the task is claimed (its worktree made and its branch, named
+the task ID, pushed), and the work is sliced into an ordered, Definition-of-Done
 covering, test-first plan that is reviewed once and recorded on the issue. That
 plan review is architecture and scope, never implementation approval.
 
-1. **Isolate.** Work in a per-task git worktree branched off `origin/main`, never in the operator's own checkout, and push its branch, named the task ID, at once, so other sessions see the task as taken.
+1. **Isolate.** Work in a per-task git worktree branched off `origin/main`, never in the operator's own checkout; the worktree and its pushed branch are the claim, made before the plan, so other sessions see the task as taken.
 2. **Honor the guardrails.** Before you write code, read the acceptance criteria, [`docs/guardrails.md`](docs/guardrails.md), and the [ADRs](docs/adr/) the ticket references.
 3. **Test first.** Write the failing test, watch it fail for the right reason, then write the code.
 4. **Make long tasks visible.** Anything that can run over ten seconds shows which step runs and that it lives.
@@ -116,7 +117,8 @@ git diff --check
 [`docs/ci/review-record-lint.sh`](docs/ci/review-record-lint.sh) read forge
 artifacts, so they run in CI only and have no local run.
 [`docs/tasks/task-state.sh`](docs/tasks/task-state.sh) is not a check: it reads
-the forge with `gh`, so it needs the network, and it prints the state of each task
+the forge with `gh` (the backlog, the completed log and the plan of `main`, not of
+your checkout), so it needs the network, and it prints the state of each task
 (`done`, `in review`, `running`, `blocked`, `ready`); run it before you take a
 task ([Starting a task](docs/engineering-discipline.md#starting-a-task)). The Go code builds and
 tests with `go build ./...`, `go vet ./...` and `go test ./...`; the test levels
@@ -127,7 +129,7 @@ command that no document names.
 
 Work in a per-task git worktree under `.worktree/<task>`, branched off
 `origin/main`, never in the operator's own checkout, and push the branch `<task>`
-before any work, which claims the task. Commit at each logical step,
+before any work, the plan included, which claims the task. Commit at each logical step,
 with a subject that follows Conventional Commits — `<type>: <ID> <description>`
 when it carries a task. Land with a plain merge; **never squash**. A branch on the
 forge, as every claimed task branch is, takes `origin/main` by a merge, never by a

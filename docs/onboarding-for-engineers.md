@@ -154,7 +154,8 @@ Consequences you will meet immediately, and which are not negotiable:
 3. [`glossary.md`](glossary.md) — skim, then reference.
 4. [`guardrails.md`](guardrails.md) — the pitfalls and the frozen numbers.
 5. [`tasks/backlog.md`](tasks/backlog.md) — what needs doing; `sh docs/tasks/task-state.sh`
-   prints which of its tasks are taken, blocked or free to take.
+   prints which of its tasks are taken, blocked or free to take, read from `main` on the
+   forge, not from your checkout.
 
 ### Where the project stands
 

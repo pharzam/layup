@@ -1,0 +1,6 @@
+T-bbb1	#3	done	—
+T-bbb2	#4	blocked	T-aaa2
+T-bbb3	#5	blocked	T-bbb2
+T-bbb4	#6	blocked	T-aaa2,T-bbb3
+T-aaa2	#2	blocked	T-aaa1
+T-ccc1	#9	ready	—
