@@ -54,3 +54,13 @@ claimed tasks were added under `## Now` of its backlog copy (`now` 1791654203):
 | `T-eep8` (#175) | — | — | `done` (the completed log wins) |
 
 No task of the forge was `stalled` at the time; the cases hold that state.
+
+## Round 1 notes
+
+At 17:55 UTC. Note 1: `good-window-boundary` gives `T-bbb2` an older comment
+beside its push at the boundary; the mutation "the comment wins when there is
+one" now fails `good-window-boundary`. Note 2: case `bad-now-not-a-number` was
+red (exit 2: the reader read `yesterday` as 0 and printed with exit 0), and is
+green after the check of `now`. Note 5: `good-review-head` holds a push of
+`T-bbb4` in the window, so its README row is true. After the fixes:
+`run-discipline-tests: 102 passed, 0 failed`.

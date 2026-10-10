@@ -61,8 +61,9 @@ die() { printf 'task-state: %s\n' "$1" >&2; exit 1; }
 tmp=$(mktemp -d) || die "cannot make a temporary directory"
 trap 'rm -rf "$tmp"' EXIT
 
-# fetch DIR — read the three files of the forge's main into DIR, and the
-# branches and pull requests of the forge into DIR/forge. One progress line
+# fetch DIR — read the three files of the forge's main into DIR, the clock
+# into DIR/now, and the branches, the pull requests, the pushes and the
+# comments of the window of the forge into DIR/forge. One progress line
 # per step: each call to the forge can take seconds
 # (docs/engineering-discipline.md, progress indicators).
 fetch() {
@@ -92,13 +93,15 @@ fetch() {
 	done < "$tmp/prlist"
 	# The activity of the window. `date +%s` is the clock; gh's jq converts the
 	# times (fromdateiso8601, todate), as no option of `date` that does is
-	# portable. The forge's period is the smallest that covers the window, and
+	# portable. The forge's period is the smallest of its periods (day, week,
+# month, quarter, year) that covers the window, and
 	# the comments' `since` (a time of update, a superset) is now less the
 	# window; the reader cuts both by the same value.
 	_now=$(date -u +%s) || die "cannot read the clock"
 	printf '%s\n' "$_now" > "$_in/now"
 	if [ "$window" -le 86400 ]; then _p=day; elif [ "$window" -le 604800 ]; then _p=week
-	elif [ "$window" -le 2592000 ]; then _p=month; else _p=year; fi
+	elif [ "$window" -le 2592000 ]; then _p=month; elif [ "$window" -le 7776000 ]; then _p=quarter
+	else _p=year; fi
 	printf 'task-state: reading the pushes of the last %s\n' "$_p" >&2
 	gh api "repos/{owner}/{repo}/activity?time_period=$_p&per_page=100" --paginate \
 		-q '.[] | select(.activity_type == "push" or .activity_type == "force_push" or .activity_type == "branch_creation") | select(.ref | startswith("refs/heads/")) | "\(.ref | ltrimstr("refs/heads/"))\t\(.timestamp | fromdateiso8601)"' \
@@ -136,6 +139,10 @@ find "$tmp/n" -type f | while IFS= read -r f; do
 	tr -d '\r' < "$f" > "$f.lf" && mv "$f.lf" "$f"
 done
 in=$tmp/n
+_now=$(sed -n 1p "$in/now")
+case $_now in
+''|*[!0-9]*) die "now is not a number of seconds: $_now" ;;
+esac
 
 # The open pull requests, one line each: NUMBER TAB HEAD TAB ISSUES, where
 # ISSUES are the issues its body closes, comma-separated. A keyword counts only

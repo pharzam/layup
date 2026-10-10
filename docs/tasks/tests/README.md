@@ -22,10 +22,10 @@ and no comment.
 | `good-done-ready-blocked` | exit 0 | the base: the rows of the last table only, then the backlog task with no row; `done` by the ID field of the completed log, not by a mention (`T-bbb2` is named in passing); an `After` of `—`, of one row and of two |
 | `good-in-progress` | exit 0 | a branch named the task ID with a push in the window is `in progress`; a branch with no activity is `stalled`, and shows its unfinished predecessor as `after T-bbb2` |
 | `good-comment-activity` | exit 0 | a comment on the task's issue in the window, beside an old push of its branch: the latest counts, `in progress` |
-| `good-window-boundary` | exit 0 | activity at `now - 86400` is `in progress`, at `now - 86401` `stalled` |
+| `good-window-boundary` | exit 0 | activity at `now - 86400` is `in progress`, at `now - 86401` `stalled`; `T-bbb2` also has an older comment, so the later push decides (round 1, note 1) |
 | `good-other-activity` | exit 0 | a push of `T-bbb2-notes` and a comment on another issue are not the task's activity: `stalled` |
 | `good-branch-prefix` | exit 0 | `T-bbb2-backlog` and `x-T-ccc1` are not claims |
-| `good-review-head` | exit 0 | a pull request whose head is the task ID: `in review` before `in progress` and `blocked`; the smaller of two numbers |
+| `good-review-head` | exit 0 | a pull request whose head is the task ID, with a push in the window: `in review` before `in progress` and `blocked`; the smaller of two numbers |
 | `good-review-closes` | exit 0 | `Closes #5` in the body of a pull request from another branch |
 | `good-review-forms` | exit 0 | `FIXED #4` and `resolves: #9`: the forge's other forms, in any case, with a colon |
 | `good-review-not-closing` | exit 0 | `Refs #4`, `Part of #5`, `Closes #44`, `prefixes #6` and `Closes #9x` close nothing |
@@ -34,6 +34,7 @@ and no comment.
 | `good-columns-order` | exit 0 | the last task table of 14 columns, with `After` first and `Task ID` last: the columns are found by the header, not the position; an `After` of four rows |
 | `good-earlier-table` | exit 0 | a backlog task whose row is in an earlier task table keeps that row's `After`: `T-aaa2` is `blocked` on `T-aaa1`, listed after the rows of the last table (#182) |
 | `bad-missing-now` | exit 1 | no `now`, the time of the run |
+| `bad-now-not-a-number` | exit 1 | a `now` that is not a number of seconds (round 1, note 2) |
 | `bad-missing-completed` | exit 1 | no completed log |
 | `bad-backlog-no-issue` | exit 1 | a backlog line under Now with no issue |
 | `bad-after-unknown-row` | exit 1 | an `After` row that no task table holds |
