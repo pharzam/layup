@@ -66,3 +66,52 @@ step 5 as decisions 9 and 10.
 **The open questions of `later-p2-intake-spec`**, settled: the second harness
 (decision 1, `intake.md`, The completeness review); the phase of
 `questions.tsv` (K38, settled by `T-zck8`; its block here).
+
+## Review rounds
+
+The records are comments on #206; each round is Claude Fable 5.1, effort
+`xhigh`, a fresh read-only session in a clone at its head. Round 1 (`cfb94e8`,
+cycle 0, the cap of 1): seven material findings (the review of the answers
+waited for every answer; the pair of the completeness review; the band as the
+architecture gives it; no step read the follow-up's answers; the README; a
+`git diff --check` that compared nothing, and five trailing spaces; the clock of
+milestone 0). **O-193** (a): cap 2. Round 2 (`f3a321e`, cycle 1): the seven
+fixed; one material finding that the fix opened (`budget.tsv` from the
+follow-up). **O-194** (a): cap 3. Round 3 (`358f74e`, cycle 2): that fixed; two
+material findings on the paths the fixes made explicit (a failed span check;
+`B` not below `U`). **O-195** (a): cap 4. Round 4 (`3ff521a`, cycle 3, the cap):
+`nothing material in scope`, six notes. Each round's verdict at its cap was
+edited to `material` after the Operator raised it. The six notes are #210: the
+close-out may change only the task indexes and this file, and the cap is
+reached, so they land in the next change of `intake.md`, read by its round.
+
+## Verdict
+
+Delivered: the specification of `M2c`, Intake, in `docs/spec/intake.md`, with
+the nine blocks of its records, the table of `M2c`, and the documents it
+changed, after a public-solution search by two blind searchers. The review ended
+by decay at cycle 3 of a cap that the Operator raised three times (O-193, O-194,
+O-195). The diff against `b6b7a8a`, the branch's base, is inside 3,200 lines
+over 28 files. Next: the slicing task of `M2c`, which also takes #210.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). UTC; reviewers' and searchers' tokens are as
+each harness reports them; the author's are not reported.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan | reasoning | Claude Opus 5.5 | not reported | not reported | 2026-10-10 16:35 to 16:41 |
+| The plan review | reasoning | Claude Fable 5.1 | `xhigh` | 1,247,562 (USD 6.76) | 9 min 52 s |
+| S1, the sources | execution | Claude Opus 5.5 | not reported | not reported | 16:51 to 16:55 |
+| Searcher A (two tries) | reasoning | SWE-2 High (execution tier, O-179) | — | not reported by Devin | 3 min 47 s; 12 min 13 s |
+| Searcher B (two tries) | reasoning | Claude Sonnet 5.5 | — | USD 1.47; 2,562,338 (USD 2.08) | 3 min 9 s; 3 min 26 s |
+| The summary, S3, T, D1 to D4 | execution | Claude Opus 5.5 | not reported | not reported | 17:12 to 17:23 |
+| Round 1 | reasoning | Claude Fable 5.1 | `xhigh` | 1,231,180 (USD 6.28) | 12 min 17 s |
+| The fix of round 1 | execution | Claude Opus 5.5 | not reported | not reported | 17:37 to 19:14 (with O-193) |
+| Round 2 | reasoning | Claude Fable 5.1 | `xhigh` | 1,303,804 (USD 6.13) | 11 min 54 s |
+| The fix of round 2 | execution | Claude Opus 5.5 | not reported | not reported | 19:27 to 19:29 |
+| Round 3 | reasoning | Claude Fable 5.1 | `xhigh` | 1,302,337 (USD 5.74) | 9 min 16 s |
+| The fix of round 3 | execution | Claude Opus 5.5 | not reported | not reported | 19:41 to 19:54 (with O-195) |
+| Round 4 | reasoning | Claude Fable 5.1 | `xhigh` | 1,784,378 (USD 6.62) | 12 min 16 s |
+| The close-out | execution | Claude Opus 5.5 | not reported | not reported | 20:09 to 20:08 |
