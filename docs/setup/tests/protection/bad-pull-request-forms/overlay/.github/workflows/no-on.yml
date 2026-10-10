@@ -1,0 +1,5 @@
+# a workflow with no on: block
+jobs:
+  no-on:
+    steps:
+      - run: true
