@@ -95,11 +95,12 @@ func (s *Sessions) pushTask(ctx context.Context, id string) error {
 		if change.Diff, err = git.DiffFile(s.Clone, base, head, rules.GuardrailsPath); err != nil {
 			return err
 		}
-		// A head that lacks the file keeps an empty Head, which no added
-		// line passes: a deletion is a rule-path change.
+		// A head that lacks the file, or whose entry is no file (a gitlink),
+		// keeps an empty Head, which no added line passes: a rule-path
+		// change.
 		if entries, err := git.LsTree(s.Clone, head, rules.GuardrailsPath); err != nil {
 			return err
-		} else if len(entries) == 1 && entries[0].Path == rules.GuardrailsPath {
+		} else if len(entries) == 1 && entries[0].Path == rules.GuardrailsPath && entries[0].Type == "blob" {
 			if change.Head, err = git.Show(s.Clone, head, rules.GuardrailsPath); err != nil {
 				return err
 			}

@@ -132,6 +132,27 @@ printf '` + strings.ReplaceAll(resultHead, "\t", `\t`) + `' > ../result/result.t
 	}
 }
 
+// A head whose docs/guardrails.md is a gitlink, to a commit that the clone
+// lacks, changes a rule path: an entry that is no file keeps an empty head.
+func TestAHeadWhoseGuardrailsIsAGitlinkIsRefused(t *testing.T) {
+	w, r, _, a := sessionWorld(t)
+	gitOut(t, r.Clone, "checkout", "-q", "main")
+	writeFile(t, filepath.Join(r.Clone, "docs", "guardrails.md"), "# G\n\n## 2. Known pitfalls\n\n- one\n")
+	gitOut(t, r.Clone, "add", "-A")
+	gitOut(t, r.Clone, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "guardrails")
+	a.base = strings.TrimSpace(gitOut(t, r.Clone, "rev-parse", "HEAD"))
+	body := `git rm -q --cached docs/guardrails.md && rm docs/guardrails.md &&
+git update-index --add --cacheinfo 160000,1111111111111111111111111111111111111111,docs/guardrails.md && git commit -qm gitlink &&
+printf '` + strings.ReplaceAll(resultHead, "\t", `\t`) + `' > ../result/result.tsv`
+	id, err := r.TaskSession(context.Background(), harness(t, a, body))
+	if err != nil {
+		t.Fatalf("TaskSession: %q, %v", id, err)
+	}
+	if got := refusals(t, w, id); len(got) != 1 || !strings.HasPrefix(got[0], "rule-path ") {
+		t.Errorf("the refusals %q; want one rule-path with its payload", got)
+	}
+}
+
 func TestARecordsCommitWithNoRegisterRefuses(t *testing.T) {
 	for _, broken := range []bool{false, true} {
 		w, r, _, a := sessionWorld(t)

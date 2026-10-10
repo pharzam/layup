@@ -100,7 +100,30 @@ push_integration_test.go:147: TaskSession: "S-6bf2535a", no register
 push_integration_test.go:128: TaskSession: "S-62021a55", git show --end-of-options 107db12a99a2ad32f1939dce169698a6b1febe78:docs/guardrails.md --: exit status 128: fatal: bad revision '107db12a99a2ad32f1939dce169698a6b1febe78:docs/guardrails.md'
 ```
 
-## Green (2026-10-09T20:34Z, again at 20:50Z after the fix of round 1)
+## The fix of round 2, after O-190 (2026-10-09T21:00Z to 21:02Z; committed 2026-10-10T03:29Z)
+
+Finding 1 of round 2: a head whose `docs/guardrails.md` is a gitlink to a
+commit that the clone lacks stopped the hook with the run's own error.
+`TestAHeadWhoseGuardrailsIsAGitlinkIsRefused`, on the code of `cd9cdaf`:
+
+```
+push_integration_test.go:149: TaskSession: "S-13cfeb0b", git show --end-of-options ab3e3028007f30ba596490041aa1631368c3403e:docs/guardrails.md --: exit status 128: fatal: bad object ab3e3028007f30ba596490041aa1631368c3403e:docs/guardrails.md
+```
+
+The head's entry must now be a file (`Type` `blob`); another entry keeps an
+empty `Head`, which no added line passes. The fix was written while the
+Operator's answer was open, and committed after O-190 (a). Its mutation, and
+that of the deletion again, each in full (cut at 400 characters):
+
+```
+== guardrails-deleted: pushTask: a head that lacks docs/guardrails.md is read with Show (exit 1)
+push_integration_test.go:128: TaskSession: "S-babdb5b3", git show --end-of-options 8ee4ddb83e41f0755ee32c0ef8947410b624005a:docs/guardrails.md --: exit status 128: fatal: bad revision '8ee4ddb83e41f0755ee32c0ef8947410b624005a:docs/guardrails.md'
+push_integration_test.go:149: TaskSession: "S-97f1d6f0", git show --end-of-options b2c627a294f371f3b247a4634f2019851c2f9aa6:docs/guardrails.md --: exit status 128: fatal: bad object b2c627a294f371f3b247a4634f2019851c2f9aa6:docs/guardrails.md
+== guardrails-gitlink: pushTask: a gitlink at docs/guardrails.md is read with Show (exit 1)
+push_integration_test.go:149: TaskSession: "S-475aeec3", git show --end-of-options 0aae19473b640f79c607895e53bd191573d89510:docs/guardrails.md --: exit status 128: fatal: bad object 0aae19473b640f79c607895e53bd191573d89510:docs/guardrails.md
+```
+
+## Green (2026-10-09T20:34Z, again at 20:50Z after the fix of round 1, and on 2026-10-10 at 03:29Z after the fix of round 2)
 
 Each with exit 0: `go build ./...`, `go vet ./...`, `gofmt -l internal cmd`
 (empty), `go test ./...`, `go test -tags=integration ./...`; `adr-lint`,
