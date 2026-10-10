@@ -5,6 +5,7 @@ line=setup-check: protection FAIL contexts: flow-item is a job but not a require
 line=setup-check: protection FAIL contexts: flow-map is a job but not a required context
 line=setup-check: protection FAIL contexts: map-key is a job but not a required context
 line=setup-check: protection FAIL contexts: merge-key is a job but not a required context
+line=setup-check: protection FAIL contexts: next-list is a job but not a required context
 line=setup-check: protection FAIL contexts: no-on is a job but not a required context
 line=setup-check: protection FAIL contexts: quoted-on is a job but not a required context
 line=setup-check: protection FAIL contexts: scalar-pr is a job but not a required context

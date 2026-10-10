@@ -71,3 +71,36 @@ this tree.
 | an anchor read | `protection/bad-pull-request-forms` |
 | a merge key read | `protection/bad-pull-request-forms` |
 | an alias read | `protection/bad-pull-request-forms` |
+
+## Round 2 fixes (findings 1 and 2, notes 3 and 4)
+
+The reading of `on:` turns around: a key or an item is read only as a plain
+event name (lowercase letters and `_`, quotes stripped), and anything else sends
+the workflow to the safe side. Cases of `bad-pull-request-forms` repointed, one
+new: `anchor` (`on: [push, &a pull_request_target]`, finding 1), `flow-map`
+(`{…}` on the line after `on:`) and `next-list` (`[…]` on the line after
+`on:`, finding 2), `alias` (`- *pr` in a block sequence), `merge-key` (with a
+complex key `? …`, note 3).
+
+Red at 16:57 UTC, the check of `3ee51b4` against these cases: the two findings,
+and only they.
+
+```
+FAIL  protection/bad-pull-request-forms: no output line: setup-check: protection FAIL contexts: anchor is a job but not a required context
+FAIL  protection/bad-pull-request-forms: no output line: setup-check: protection FAIL contexts: flow-map is a job but not a required context
+FAIL  protection/bad-pull-request-forms: no output line: setup-check: protection FAIL contexts: next-list is a job but not a required context
+setup-check tests: 47 passed, 1 failed
+```
+
+Green at 16:57 UTC: `setup-check tests: 48 passed, 0 failed`; `protection OK` on
+this tree.
+
+| Mutation (on a copy, as above) | Cases that fail |
+| ------------------------------ | --------------- |
+| any value read as an event name | `protection/bad-pull-request-forms` |
+| a sequence item not checked | `protection/bad-pull-request-forms` |
+| a line under `on:` that is not a key read as not run | `protection/bad-pull-request-forms` |
+| a flow-list item not checked | `protection/bad-pull-request-forms` |
+| the scalar not checked | `protection/bad-pull-request-forms` |
+| `pull_request` as a prefix | `protection/good-no-pull-request` |
+| no `on:` read as not run | `protection/bad-pull-request-forms` |

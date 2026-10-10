@@ -1,4 +1,5 @@
-on: {pull_request_target: {types: [opened]}}
+on:
+  {pull_request_target: {types: [opened]}}
 jobs:
   flow-map:
     steps:

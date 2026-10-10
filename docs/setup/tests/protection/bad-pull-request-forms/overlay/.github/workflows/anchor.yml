@@ -1,4 +1,4 @@
-on: &triggers [pull_request_target]
+on: [push, &a pull_request_target]
 jobs:
   anchor:
     steps:

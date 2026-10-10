@@ -1,4 +1,6 @@
-on: *triggers
+on:
+  - push
+  - *pr
 jobs:
   alias:
     steps:

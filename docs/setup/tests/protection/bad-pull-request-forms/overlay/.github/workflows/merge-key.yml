@@ -1,5 +1,6 @@
 on:
   <<: *triggers
+  ? pull_request_target
   push:
 jobs:
   merge-key:
