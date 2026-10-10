@@ -25,7 +25,7 @@ import (
 // RunStepsSchema is the form of the table that layup run prints: the block
 // run-steps of docs/spec/run.md (The command).
 var RunStepsSchema = tsv.Schema{Name: "run-steps", Location: "stdout", Columns: []tsv.Column{
-	{Name: "step", Type: "enum(forge|plan|baseline|root-push|read-back|records|issues|watch|clone|version|lease|phase)", Key: true},
+	{Name: "step", Type: "enum(forge|plan|baseline|root-push|read-back|records|issues|watch|clone|version|lease|probe|phase)", Key: true},
 	{Name: "result", Type: "enum(done|fail)"},
 	{Name: "detail", Type: "text"},
 }}
@@ -54,7 +54,9 @@ type Config struct {
 	Plan, IntakeCap     string
 	LeaseH, WatchT      int // minutes
 	Register            forge.Register
-	Harnesses           [][]string // the rows of harnesses.tsv
+	Harnesses           [][]string // the rows of harnesses.tsv (route.ReadHarnesses)
+	Models, Routing     [][]string // the rows of models.tsv and routing.tsv of the host (row 38)
+	Prices              [][]string // the rows of host:prices.tsv; none for a missing file
 	Forge               forge.Forge
 	Clock               Clock
 	Progress            func(string)                // a line of a wait
@@ -106,7 +108,7 @@ func Restart(ctx context.Context, cfg Config) []Step {
 	defer cancel()
 	return r.run(ctx, cancel, []func(context.Context) Step{
 		func(ctx context.Context) Step { return r.forgeStep(ctx, false) },
-		r.cloneStep, r.versionStep, r.takeStep, r.phaseStep,
+		r.cloneStep, r.versionStep, r.takeStep, r.probeStep, r.phaseStep,
 	})
 }
 
@@ -145,7 +147,7 @@ func stepNames(n int) []string {
 	if n == 9 {
 		return []string{"forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease"}
 	}
-	return []string{"forge", "clone", "version", "lease", "phase"}
+	return []string{"forge", "clone", "version", "lease", "probe", "phase"}
 }
 
 func done(name, detail string) Step { return Step{name, "done", detail} }

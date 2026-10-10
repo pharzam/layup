@@ -96,6 +96,7 @@ type fakeForge struct {
 	bare   string
 	mu     sync.Mutex
 	issues int
+	posted []string // the bodies of the comments on the control issue
 }
 
 func (f *fakeForge) serve(w http.ResponseWriter, r *http.Request) {
@@ -129,6 +130,12 @@ func (f *fakeForge) serve(w http.ResponseWriter, r *http.Request) {
 		f.issues++
 		w.WriteHeader(201)
 		enc.Encode(map[string]any{"number": f.issues})
+	case call == "POST /repos/acme/target/issues/2/comments":
+		var in struct{ Body string }
+		json.NewDecoder(r.Body).Decode(&in)
+		f.posted = append(f.posted, in.Body)
+		w.WriteHeader(201)
+		enc.Encode(map[string]any{"id": 600 + len(f.posted)})
 	case call == "GET /repos/acme/target/issues/2/comments":
 		enc.Encode([]map[string]any{{"id": 501, "user": map[string]any{"id": 777, "login": "layup-watch[bot]"},
 			"performed_via_github_app": map[string]any{"slug": "layup-watch"},
@@ -142,6 +149,7 @@ func (f *fakeForge) serve(w http.ResponseWriter, r *http.Request) {
 // briefs, a bare target under its web, and a fake forge.
 type runWorld struct {
 	dir, bare string
+	forge     *fakeForge
 }
 
 func newRunWorld(t *testing.T) runWorld {
@@ -150,10 +158,13 @@ func newRunWorld(t *testing.T) runWorld {
 	web := filepath.Join(t.TempDir(), "web")
 	w.bare = filepath.Join(web, "acme", "target.git")
 	os.MkdirAll(w.bare, 0o755)
-	if out, err := gitRun(w.bare, "init", "-q", "--bare"); err != nil {
+	// -b main: the bare repository stands in for GitHub, whose HEAD is the
+	// default branch, so the run's clone has a local main (guardrails §2).
+	if out, err := gitRun(w.bare, "init", "-q", "--bare", "-b", "main"); err != nil {
 		t.Fatal(out)
 	}
-	srv := httptest.NewServer(http.HandlerFunc((&fakeForge{bare: w.bare}).serve))
+	w.forge = &fakeForge{bare: w.bare}
+	srv := httptest.NewServer(http.HandlerFunc(w.forge.serve))
 	t.Cleanup(srv.Close)
 	k, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
@@ -163,16 +174,29 @@ func newRunWorld(t *testing.T) runWorld {
 	files := map[string]string{
 		"registers/forge.tsv": "forge\tapp_id\tapp_slug\tkey_file\twatch_slug\tapi\tweb\n" +
 			"github\t42\tlayup-agent\t" + keyFile + "\tlayup-watch\t" + srv.URL + "\tfile://" + web + "\n",
+		// The harness is the world's own scripts, so no table depends on the
+		// host's PATH (condition 3 of the plan review of #168).
 		"registers/harnesses.tsv": "harness\tcap\twall\tcommand\tprompt\tversion\tcredential\tcredential_to\trules\tpolicy\tusage\tbilling\tvars\n" +
-			"claude\t10.0\t60\tclaude -p --model {model} --max-budget-usd {cap} {prompt}\targ\tclaude --version\t—\t—\tCLAUDE.md\t—\tclaude-result\tapi\t—\n",
+			"fake\t—\t1\t" + filepath.Join(w.dir, "bin", "harness") + "\tstdin\t" + filepath.Join(w.dir, "bin", "version") + "\t—\t—\tLAYUP-TEST-RULES.md\t—\tnone\tsubscription\t—\n",
 		"registers/models.tsv": "harness\tmodel\tcontext\tsource\tdate\tuse\treason\n" +
-			"claude\tclaude-opus-5-5\t1000000\thttps://docs.claude.com/models\t2026-10-09T12:00:00Z\tyes\t—\n",
-		"registers/routing.tsv": "role\ttier\tposition\tharness\tmodel\ndeveloper\texecution\t1\tclaude\tclaude-opus-5-5\n",
-		"psb.md":                "# The problem\n",
+			"fake\tm1\t1000000\thttps://example.invalid/models\t2026-10-09T12:00:00Z\tyes\t—\n",
+		"registers/routing.tsv": "role\ttier\tposition\tharness\tmodel\ndeveloper\texecution\t1\tfake\tm1\n",
+		"bin/version":           "#!/bin/sh\necho 1.0.0\n",
+		"bin/harness": `#!/bin/sh
+p=$(cat)
+result=$(printf '%s\n' "$p" | sed -n 's/^Write one file, \(.*\), of tab-separated values, with the header line$/\1/p')
+token=$(printf '%s\n' "$p" | sed -n 's/.*one row "token<TAB>\([0-9a-f]*\)".*/\1/p')
+printf 'kind\tvalue\ntoken\t%s\nfile\tAGENTS.md\n' "$token" > "$result"
+`,
+		"psb.md": "# The problem\n",
 	}
 	for p, text := range files {
 		os.MkdirAll(filepath.Dir(filepath.Join(w.dir, p)), 0o755)
-		os.WriteFile(filepath.Join(w.dir, p), []byte(text), 0o644)
+		mode := os.FileMode(0o644)
+		if strings.HasPrefix(p, "bin/") {
+			mode = 0o755
+		}
+		os.WriteFile(filepath.Join(w.dir, p), []byte(text), mode)
 	}
 	os.WriteFile(keyFile, pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(k)}), 0o600)
 	return w
@@ -272,8 +296,28 @@ func TestRunNewThenRestart(t *testing.T) {
 	if again.code != 0 || !strings.HasPrefix(again.stdout, "step\tresult\tdetail\nforge\tdone\t") || !strings.Contains(again.stdout, "\nphase\tdone\t") {
 		t.Fatalf("layup run TARGET: exit %d\n%s\n%s", again.code, again.stdout, again.stderr)
 	}
-	if third := w.run(t, binary, "run", "acme/target", "--host", "."); third.code != again.code || sameBytes([]byte(third.stdout), []byte(again.stdout)) != nil {
-		t.Errorf("layup run TARGET twice: exit %d and %d\n%s\n%s", again.code, third.code, again.stdout, third.stdout)
+	// The demo of row 38: the restart's step probe probes the scripted
+	// harness, writes its rows and posts one comment on the control issue.
+	if !strings.Contains(again.stdout, "\nprobe\tdone\tprobed and passed 1, probed and failed 0, skipped 0\n") {
+		t.Errorf("the step probe of the restart:\n%s", again.stdout)
+	}
+	if out, err := gitRun(w.bare, "show", "refs/heads/layup-records:harnesses.tsv"); err != nil || !strings.Contains(out, "\tfake\t1.0.0\tm1\tpassed\t—\tAGENTS.md\t") {
+		t.Errorf("harnesses.tsv of the records branch: %v\n%s", err, out)
+	}
+	if len(w.forge.posted) != 1 || !strings.HasPrefix(w.forge.posted[0], "S-") || !strings.Contains(w.forge.posted[0], ": probe of fake 1.0.0: passed\n") {
+		t.Errorf("the comments on the control issue %q", w.forge.posted)
+	}
+	// The same bytes on a repeat in a new world, as the first run changes
+	// the records (README.md, Determinism).
+	w2, _ := startWorld(t, binary)
+	if repeat := w2.run(t, binary, "run", "acme/target", "--host", "."); repeat.code != again.code || sameBytes([]byte(repeat.stdout), []byte(again.stdout)) != nil {
+		t.Errorf("layup run TARGET in two worlds: exit %d and %d\n%s\n%s", again.code, repeat.code, again.stdout, repeat.stdout)
+	}
+	// A second restart in the same world probes none: the last probe at the
+	// version passed.
+	third := w.run(t, binary, "run", "acme/target", "--host", ".")
+	if third.code != 0 || !strings.Contains(third.stdout, "\nprobe\tdone\tprobed and passed 0, probed and failed 0, skipped 0\n") || len(w.forge.posted) != 1 {
+		t.Errorf("layup run TARGET again: exit %d, %d comments\n%s", third.code, len(w.forge.posted), third.stdout)
 	}
 }
 

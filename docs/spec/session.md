@@ -494,6 +494,22 @@ its records. **Decided here:** the block `run-steps` is built, so the build task
 of the probe adds `probe` to its enum, with its Go schema, in one change
 (condition 1 of the plan review of #147).
 
+**Decided here** (task `T-nxe4`, #168): a harness whose version's last probe
+passed is known only once its version command has run, in the probe's own
+session, so that session ends there: its directory is removed and nothing is
+written, and the harness is in none of the counts. A probe that a task
+session's version check starts (step 2) does not sweep, as the task session
+swept and its own directory is live; only the step sweeps. The `records`
+column of a probe's start row is the run's last pushed records commit. A
+relative `file` value is read from `repo/`, after its `..` parts, and an
+absolute one after its `..` parts, before the comparison with the session
+directory. A probe refused at its start (its row `failed`) counts as probed
+and failed, so the three counts add up to the harnesses of the register, and
+posts no comment, its record being its row, as a task session's refused start
+posts none (condition 2 of the plan review). The comment of a probe that
+failed ends `: failed <reason>`, for example `S-1a2b3c4d: probe of claude
+2.1.295: failed token`.
+
 ### Admission
 
 A pair of a harness and a model is admitted when the harness's last probe, at
@@ -511,7 +527,7 @@ admitted. Code alone admits; no model is asked.
 (K38: the order only; the weights of §13 come with the learning loop).
 **Decided here:** its source is the Operator's `host:registers/routing.tsv`,
 which `layup run` copies into the records at the step `probe` when the two
-differ, as each value that a run uses is copied into the records (§1). The
+tables differ, in any order of their rows (**decided here**, task `T-nxe4`), as each value that a run uses is copied into the records (§1). The
 first admitted pair of the role's list for the task's tier is the session's
 pair; with none, the start is refused (`pair`).
 

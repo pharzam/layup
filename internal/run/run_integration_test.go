@@ -310,7 +310,7 @@ func TestARestartWithAnotherVersionFailsAtVersion(t *testing.T) {
 	}
 	// The same version: the lease is released, so it is taken at once; each
 	// step of Start is done.
-	allDone(t, "the restart", Restart(context.Background(), w.config("0.1.0-dev")), "forge", "clone", "version", "lease", "phase")
+	allDone(t, "the restart", Restart(context.Background(), w.config("0.1.0-dev")), "forge", "clone", "version", "lease", "probe", "phase")
 }
 
 // A run that stopped at opening: the restart takes the lease over from the
@@ -341,7 +341,7 @@ func TestARestartAfterARunThatStoppedAtOpening(t *testing.T) {
 	}
 	w.mu.Unlock()
 	rows = Restart(context.Background(), cfg)
-	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "phase")
+	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "phase")
 	if got := show(t, w.bare, "refs/heads/layup-records", "start/start.tsv"); !strings.Contains(got, "watch\tconfirmed\trun\n") {
 		t.Errorf("the restart's watch, for up to watch.T of start.tsv, did not see the notice:\n%s", got)
 	}
@@ -380,6 +380,15 @@ func TestTheTextBlocksOfRunMd(t *testing.T) {
 	spec, err := os.ReadFile("../../docs/spec/run.md")
 	if err != nil {
 		t.Fatal(err)
+	}
+	session, err := os.ReadFile("../../docs/spec/session.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, text, ok := strings.Cut(string(session), "\n```text probe-prompt\n")
+	text, _, _ = strings.Cut(text, "```\n")
+	if !ok || text != probePrompt {
+		t.Errorf("the block probe-prompt of session.md:\n%s\nwant\n%s", text, probePrompt)
 	}
 	for name, want := range map[string]string{"start-readme": startReadme, "intake-issue": intakeBody, "control-issue": controlBody} {
 		_, text, ok := strings.Cut(string(spec), "\n```text "+name+"\n")
@@ -437,7 +446,7 @@ func TestATakeoverAfterACommitThatTheCloneDidNotSee(t *testing.T) {
 	w.mu.Unlock()
 	cfg := w.config("0.1.0-dev")
 	cfg.RunID = "fedcba9876543210"
-	allDone(t, "the restart", Restart(context.Background(), cfg), "forge", "clone", "version", "lease", "phase")
+	allDone(t, "the restart", Restart(context.Background(), cfg), "forge", "clone", "version", "lease", "probe", "phase")
 	if got := show(t, w.bare, "refs/heads/layup-records", "note.md"); got != "a copy of the old run\n" {
 		t.Errorf("the late commit is not in the history of the takeover: %q", got)
 	}
