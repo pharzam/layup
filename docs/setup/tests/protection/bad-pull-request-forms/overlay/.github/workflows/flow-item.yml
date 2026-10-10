@@ -1,0 +1,5 @@
+on: [push, "pull_request"]
+jobs:
+  flow-item:
+    steps:
+      - run: true

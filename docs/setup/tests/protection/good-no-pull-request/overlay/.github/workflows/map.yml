@@ -1,0 +1,12 @@
+# on: as a map, pull_request_target is not pull_request
+on:
+  # a comment under on:
+  pull_request_target:
+    types: [opened, closed]
+  schedule:
+    - cron: '*/30 * * * *'
+jobs:
+  labels:
+    name: labels (not a gate)
+    steps:
+      - run: true

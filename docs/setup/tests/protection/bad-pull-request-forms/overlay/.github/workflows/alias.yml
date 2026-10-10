@@ -1,0 +1,7 @@
+on:
+  - push
+  - *pr
+jobs:
+  alias:
+    steps:
+      - run: true

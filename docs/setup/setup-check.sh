@@ -567,6 +567,24 @@ check_ci() {
 # contexts must equal the check-run names of every job in every workflow: the
 # job's own `name:` (the first key at the job's child indent), else its id.
 # The live setting is compared by hand, with the command in the setup record.
+#
+# A workflow that no `pull_request` event runs judges no pull request, so it is
+# skipped: its jobs are not required contexts, and the body must not list one
+# (such a line fails as "a required context but not a job"). #201: the state
+# labels of #185 run on `pull_request_target` and must not block a merge. A
+# workflow that judges a pull request uses `pull_request`. `pull_request` counts
+# only as a whole key or item, quotes stripped, so `pull_request_target` is not
+# it. The forms of `on:` read: a scalar (`on: pull_request`), a one-line flow
+# list (`on: [push, pull_request]`), a map (`on:` then `pull_request:` as a key
+# at the first deeper indent) and a block sequence (`on:` then `- pull_request`,
+# indented or at the indent of `on:`); `on` may be quoted. A key or an item is
+# read only as a plain event name: lowercase letters and `_`, quotes stripped.
+# Anything else is not read, and the workflow is read as run by `pull_request`,
+# the safe side, so its jobs stay required: an anchor, an alias, a merge key
+# (`&x`, `*x`, `<<:`), a complex key (`? x`), a flow map, a flow collection on
+# the line after `on:`, a list split over lines. A workflow with no `on:` is read
+# the same way. An empty `on:` names no event, so the forge runs nothing of it,
+# and it is read as not run.
 check_protection() {
 	pr_json="$ROOT/docs/setup/branch-protection.json"
 	if [ ! -f "$pr_json" ]; then fail protection "missing: docs/setup/branch-protection.json is absent"; return; fi
@@ -585,6 +603,29 @@ check_protection() {
 	grep -o '"context"[[:space:]]*:[[:space:]]*"[^"]*"' "$pr_json" | sed 's/.*"\([^"]*\)"$/\1/' | sort -u > "$tmpdir/pr_req"
 	for pr_f in "$ROOT"/.github/workflows/*.yml "$ROOT"/.github/workflows/*.yaml; do
 		[ -f "$pr_f" ] || continue
+		pr_run=$(awk '
+			function ind(l) { match(l, /^ */); return RLENGTH }
+			function bare(v) { sub(/[ \t]+#.*$/, "", v); gsub(/^[ \t]+|[ \t]+$/, "", v); gsub(/^["\047]|["\047]$/, "", v); return v }
+			function ev(v) { if (v !~ /^[a-z_]+$/) unread = 1; else if (v == "pull_request") pr = 1 }
+			{ sub(/\r$/, "") }
+			/^[ \t]*#/ || /^[ \t]*$/ { next }
+			inon && ind($0) == 0 && $0 !~ /^- / { inon = 0 }
+			inon {
+				if (cind < 0) cind = ind($0)
+				if (ind($0) != cind) next
+				v = $0; sub(/^ */, "", v)
+				if (v ~ /^- /) { sub(/^- /, "", v); ev(bare(v)); next }
+				if (v !~ /^["\047]?[a-z_]+["\047]?[ \t]*:/) { unread = 1; next }
+				sub(/[ \t]*:.*$/, "", v); ev(bare(v)); next
+			}
+			!seen && /^("on"|\047on\047|on)[ \t]*:/ {
+				seen = 1; v = $0; sub(/^[^:]*:/, "", v); v = bare(v)
+				if (v == "") { inon = 1; cind = -1; next }
+				if (v ~ /^\[[^][]*\]$/) { gsub(/[][]/, "", v); n = split(v, a, ","); for (i = 1; i <= n; i++) ev(bare(a[i])); next }
+				ev(v)
+			}
+			END { print (!seen || unread || pr) ? "pr" : "no" }' "$pr_f")
+		[ "$pr_run" = pr ] || continue
 		awk '
 			function ind(l) { match(l, /^ */); return RLENGTH }
 			{ sub(/\r$/, "") }

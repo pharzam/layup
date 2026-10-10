@@ -1,0 +1,7 @@
+on:
+- push
+- pull_request
+jobs:
+  seq-zero:
+    steps:
+      - run: true
