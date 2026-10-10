@@ -94,7 +94,7 @@ fetch() {
 	# The activity of the window. `date +%s` is the clock; gh's jq converts the
 	# times (fromdateiso8601, todate), as no option of `date` that does is
 	# portable. The forge's period is the smallest of its periods (day, week,
-# month, quarter, year) that covers the window, and
+	# month, quarter, year) that covers the window, and
 	# the comments' `since` (a time of update, a superset) is now less the
 	# window; the reader cuts both by the same value.
 	_now=$(date -u +%s) || die "cannot read the clock"

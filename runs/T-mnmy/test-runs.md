@@ -44,8 +44,10 @@ lines (the pushes of the last `day`; the comments since `now` less 86400
 seconds, `2026-10-09T17:43:08Z`), 4.6 s, and every row of `M2b` `done`, so no
 row of the plan is claimed.
 
-To see the two calls' inputs read, the fetched directory was kept and three
-claimed tasks were added under `## Now` of its backlog copy (`now` 1791654203):
+To see the two calls' inputs read, a second run, 15 seconds later, kept its
+fetched directory (`now` 1791654203; the first run's `now` was 1791654188, whose
+`since` is quoted above), and three claimed tasks were added under `## Now` of
+its backlog copy (round 2, note 2):
 
 | Task | Latest push | Latest comment on its issue | State |
 | ---- | ----------- | --------------------------- | ----- |
