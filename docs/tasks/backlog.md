@@ -29,6 +29,7 @@ same summary, dated — rather than deleting it or checking it off.
 <!-- One line per task. Example shape:
 - **<ID>** — <one-sentence summary> ([<ADR or doc link>](...); [detail](<id>.md))
 -->
+- **T-g49f** — The technical specification of `M2c`, Intake ([#206](https://github.com/pharzam/layup/issues/206); [detail](T-g49f.md))
 
 
 ## Next

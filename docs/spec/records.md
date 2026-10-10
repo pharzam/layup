@@ -38,9 +38,14 @@ or payload of one task is under `tasks/<task>/`.
 | `approvers.tsv` | each human account by its numeric ID, with its role | 3 | `layup run` | 2 | [below](#nfr-001--the-records-of-start) |
 | `lease.tsv` | the lease row: run ID, host, start, heartbeat counter | 2 | `layup run` | 2 | [below](#nfr-001--the-records-of-start) |
 | `copies.tsv`, `copies/<comment-id>-<seen>.md` | each copied comment: the row (author ID and login, comment ID, App field, time, SHA-256) and the body | 3 | `layup run` | 2 | [below](#nfr-001--the-records-of-start) |
-| `intake/meaning.tsv` | the rows of the review of meaning | 5 | `layup run` | 2 | later |
-| `questions.tsv` | every question and its answer, with the phase, the asker and the times | 5, 8, 12 | `layup run` | 2 (`M2c`, K38) | later |
-| `spec/spans.tsv` | the fact spans of the problem statement | 7 | `layup run` | 2 | later |
+| `intake/psb.tsv` | the table of `layup psb check` on the problem statement | 5 | `layup run` | 2 (`M2c`) | the block `psb-gaps` ([`psb-check.md`](psb-check.md)) |
+| `intake/meaning.tsv` | the rows of the review of meaning | 5 | `layup run` | 2 (`M2c`) | [below](#nfr-001--the-records-of-intake) |
+| `intake/coverage.tsv` | the items of the completeness review | 7 | `layup run` | 2 (`M2c`) | [below](#nfr-001--the-records-of-intake) |
+| `intake/answers.tsv`, `intake/answers-review.tsv` | the answers of the batch, one per question, and their review | 5, 7 | `layup run` | 2 (`M2c`) | [below](#nfr-001--the-records-of-intake) |
+| `questions.tsv` | every question and its answer, with the phase, the asker and the times | 5, 8, 12 | `layup run` | 2 (`M2c`, K38) | [below](#nfr-001--the-records-of-intake); `M3c` and `M4b` add columns |
+| `spec/spans.tsv` | the fact spans of the problem statement | 7 | `layup run` | 2 (`M2c`) | [below](#nfr-001--the-records-of-intake) |
+| `spec/check.tsv` | the table of the span check | 7 | `layup run` | 2 (`M2c`) | the block `spec-check`, [below](#nfr-001--the-records-of-intake) |
+| `spec/draft.tsv` | the requirement draft of Intake | 7 | `layup run` | 2 (`M2c`) | [below](#nfr-001--the-records-of-intake) |
 | `spec/inventory-<n>.tsv` | a version of the confirmed inventory, with its SHA-256 in `spec/inventory.tsv` | 7 | `layup run` | 2 | later |
 | `batches.tsv` | each rule batch: head SHA, rule-file hash, approval | 6 | `layup run` | 2 | later |
 | `payloads/<sha256>` | a payload by its SHA-256: a known-bad patch, a refused diff, a stall package | 4, 6, 11 | `layup run` | 2 | a rule, no block: [below](#nfr-001--the-records-of-a-session) |
@@ -62,7 +67,7 @@ or payload of one task is under `tasks/<task>/`.
 | `screens.tsv` | one row per run of the escalation screen | 10 | `layup run` | 3 | later |
 | `candidates.tsv` | the selected candidates | 10 | `layup run` | 3 | later |
 | `escalations.tsv` | the idea owner's escalation decisions | 10 | `layup run` | 3 | later |
-| `budget.tsv` | the band `B`, `U`, the appetite, accepted bounds | 10, 12 | `layup run` | 2 (`M2c`, K38) | later |
+| `budget.tsv` | the band `B`, `U`, the appetite, accepted bounds | 10, 12 | `layup run` | 2 (`M2c`, K38) | [below](#nfr-001--the-records-of-intake); `M3b` adds the accepted bounds |
 | `milestones.tsv` | each milestone: its bet, cap, clock, and a "milestone stopped" row | 11, 12 | `layup run` | 3 | later |
 | `telemetry.tsv` | one row per session | 12 | `layup run` | 1, schema only | [below](#req-011--the-telemetry-record) |
 | `stalls.tsv` | the stall, diagnosis and outcome rows | 11 | `layup run` | 1, schema only | [below](#req-009--the-stall-record) |
@@ -411,6 +416,107 @@ head), which an event `refused` names in its `detail`.
 **The session directory** (`host:sessions/<session>/`) is not a record: it is
 thrown away after the session's records are pushed
 ([`session.md`](session.md#the-session-directory)).
+
+## NFR-001 — The records of Intake
+
+The records that Intake writes (`M2c`, [`intake.md`](intake.md)); task `T-g49f`
+(#206) specified them. Each is in `notYetBuilt` until the build task of its
+writer compares it with its Go schema. A session of Intake writes the file of
+its block in `result/` without the columns that code adds (`id`, `start`, `end`,
+`session`), and `layup run` commits the rows with them.
+`records:intake/psb.tsv` is the table of `layup psb check`, byte for byte, in
+the form of the block `psb-gaps` ([`psb-check.md`](psb-check.md)); it has no
+block of its own.
+
+```tsv-schema meaning records:intake/meaning.tsv
+id        id(M-NNN)  key  the gap's ID, from M-001, in the order of the rows of the session's file
+kind      enum(two-readings|unmeasurable|missing-intent|new-work|fit|no-design|decision)  -  the kind of the gap of meaning (intake.md, The review of meaning)
+start     int        -    the byte offset of the quote in start/problem-statement.md, from 0, found by code
+end       int        -    the byte offset after the quote; the quote is the file's bytes from start to end
+quote     text       -    the quote, byte for byte, one line of the file or part of one, with no tab; it occurs once in the file
+question  text       -    the question for the idea owner
+session   id(S-xxxxxxxx)  -  the session that wrote the row
+```
+
+```tsv-schema spans records:spec/spans.tsv
+start   int   key  the byte offset of the span, from 0
+end     int   -    the byte offset after the span; start below end
+fact    int   -    the fact's number, 1 to n in the order of the spans; `—` for a span that is not a fact
+class   enum(need|constraint|measure|context)  -  the fact's class; `—` exactly when fact is `—`
+reason  text  -    why the span is not a fact (a heading, a rule line); `—` exactly when fact is not `—`
+text    text  -    the span's text as code reads it from the file, with each tab, CR and LF written as one space; written by code, never by the session
+```
+
+```tsv-schema spec-check stdout
+rule    enum(cover|bounds|text|ids|classes)  key  the rule of the span check (intake.md, The span check), in this order
+result  enum(pass|fail)  -  pass, or fail
+detail  text  -  for fail, the first broken place: a byte offset or a span's start, and what breaks; `—` for pass
+```
+
+`layup run` commits the table of the span check byte for byte as
+`records:spec/check.tsv`.
+
+```tsv-schema draft records:spec/draft.tsv
+id         id(R-NNN)  key  the requirement's or success criterion's ID in the draft, from R-001, in the order of the rows
+kind       enum(requirement|non-functional|success-criterion)  -  a requirement (a need), a non-functional requirement (a constraint), or a success criterion (a measure)
+statement  text       -    the statement
+covers     list(int)  -    the numbers of the facts that it covers, each a fact of spec/spans.tsv
+criterion  text       -    the acceptance criterion of a requirement, or the measure of a success criterion
+session    id(S-xxxxxxxx)  -  the session that wrote the row
+```
+
+```tsv-schema coverage records:intake/coverage.tsv
+id           id(C-NNN)  key  the item's ID, from C-001, in the order of the rows
+kind         enum(uncovered|unsupported|class)  -  a fact that nothing covers, a requirement that no fact supports, or a fact whose class the review doubts
+fact         int        -    the fact's number; `—` for `unsupported`
+requirement  id(R-NNN)  -    the requirement of the draft; `—` for `uncovered` and `class`
+question     text       -    the question for the idea owner
+session      id(S-xxxxxxxx)  -  the session that wrote the row
+```
+
+```tsv-schema questions records:questions.tsv
+id        id(Q-NNN)  key  the question's ID, from Q-001, in the order of the merge; never renumbered
+source    enum(rule|meaning|coverage|intent|follow-up)  -  where the question comes from; M2d adds setup
+ref       text       -    its source row: the rule and line of a rule gap (G1:0), M-NNN, C-NNN, the field of the intent form, or the Q-NNN that a follow-up asks again
+block     enum(idea-owner|operator)  -  the block of the batch that asks it
+phase     enum(before-delivery)  -  the phase of the question (Early Question Share, architecture.md §12); a later milestone adds its phases
+kind      text       -    the kind of the gap (a rule G1 to G5, a kind of meaning, a kind of coverage, intent, follow-up)
+start     int        -    the byte offset of its quote; `—` for a question with no quote (an absence, the intent form, a requirement of the draft)
+end       int        -    the byte offset after its quote; `—` exactly when start is `—`
+question  text       -    the question as the batch asks it
+asked     time       -    when the comment that asks it was posted
+asker     text       -    `layup psb check`, or the session that wrote its source row
+answered  time       -    the time of the copy that holds its answer; `—` until it has one
+```
+
+A later milestone adds the columns of the measures here first: accepted, the
+accepting actor (`M3c`, Clarification Turnaround), and a confirmed reversal's
+time and auditor (`M4b`, Reversal Rate) (`architecture.md` §12).
+
+```tsv-schema answers records:intake/answers.tsv
+question  id(Q-NNN)  key  the question
+answer    text       -    the answer line after `Q-NNN: `, byte for byte
+comment   int        -    the numeric ID of the comment that holds it, as copies.tsv records it
+author    int        -    the numeric ID of its author, an approver in the role of the question's block
+time      time       -    the time of the comment, as copies.tsv records it
+```
+
+```tsv-schema answers-review records:intake/answers-review.tsv
+question  id(Q-NNN)  key  the question
+state     enum(closed|open)  -  closed when the answer closes the gap; open otherwise
+reason    text       -    why, one line
+session   id(S-xxxxxxxx)  -  the session that wrote the row
+```
+
+```tsv-schema budget records:budget.tsv
+name    text  key  appetite.money, appetite.hours, band.B or band.U; a later milestone adds its names here first (the accepted bounds of an unknown part, M3b)
+value   decimal  -  the value: USD for money and the band, hours for the appetite
+source  id(Q-NNN)  -  the question of the intent form whose answer gives it
+```
+
+**Decided here:** `budget.tsv` is a table of names, as `start.tsv` is, so that a
+value of a later milestone is a new name, not a new column (note 6 of the plan
+review of #206).
 
 ## REQ-011 — The telemetry record
 

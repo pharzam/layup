@@ -1,0 +1,21 @@
+part	file	heading
+Intake, what M2c adds to layup run: the sessions of a phase, their roles and routing (decision 5)	docs/spec/intake.md	### The sessions of Intake
+the cap of milestone 0 before each Intake session (K38, decision 3)	docs/spec/intake.md	### The budget of Intake
+the rule gaps of layup psb check, committed (later-p2-intake-spec; F-21, decision 4)	docs/spec/intake.md	### The rule gaps
+later-psb-meaning-review: the review session's typed rows, the byte-exact quote, the code check	docs/spec/intake.md	### The review of meaning
+the numbering into byte-offset spans (later-p2-intake-spec)	docs/spec/intake.md	### The numbering
+the span check and layup spec check --facts (later-p2-intake-spec; decision 11)	docs/spec/intake.md	### The span check
+the draft (later-p2-intake-spec)	docs/spec/intake.md	### The draft
+the completeness review on another harness (open question 1, decision 1)	docs/spec/intake.md	### The completeness review
+later-psb-intake-batch: the merge, the duplicate removal, the IDs	docs/spec/intake.md	### The merge and the IDs
+the one Intake comment and its two blocks (decisions 6, 9, 10)	docs/spec/intake.md	### The comment of the batch
+the copy of the answers and their check	docs/spec/intake.md	### The answers
+the review of the answers and one follow-up for each missing or open answer	docs/spec/intake.md	### The review of the answers and the follow-up
+the answers as a raw fact (later-psb-intake-batch)	docs/spec/intake.md	### The raw fact of the answers
+the steps of Intake in layup run and the run that waits (decision 11)	docs/spec/intake.md	## The steps of Intake
+NFR-003 at Intake: no value without evidence	docs/spec/intake.md	## NFR-003 — No value without evidence at Intake
+the input states of Intake	docs/spec/intake.md	## Input states
+what M2c leaves to later milestones (decisions 3, 9, 10; the pilot baseline block; the check of §7 step 5)	docs/spec/intake.md	## Not in M2c
+the acceptance test of each part	docs/spec/intake.md	## The acceptance tests of M2c
+the schema blocks of the records of Intake; questions.tsv and budget.tsv (K38, decision 2; open question 2)	docs/spec/records.md	## NFR-001 — The records of Intake
+the package rows of M2c: internal/spec	docs/spec/packages.md	### The table of M2c
