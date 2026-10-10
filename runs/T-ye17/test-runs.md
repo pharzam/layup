@@ -44,3 +44,30 @@ in every run of the copy, the unchanged one included; it is left out below.
 | the block sequence not read | `protection/bad-pull-request-forms` |
 | quotes kept on a flow-list item | `protection/bad-pull-request-forms` |
 | a quoted `on` not read | `protection/good-no-pull-request` |
+
+## Round 1 fixes (findings 1 and 2, note 4)
+
+Four workflows added to `bad-pull-request-forms`: `seq-zero` (a block sequence
+at the indent of `on:`, with `- pull_request`), `split-flow` (a flow list split
+over two lines, with `pull_request_target`: read as run by `pull_request`, the
+safe side), `anchor` (`on: &triggers […]`) and `merge-key` (`<<: *triggers`).
+
+Red at 16:42 UTC, against the check of `a02031c`: the two findings, and only
+they, are missing.
+
+```
+FAIL  protection/bad-pull-request-forms: no output line: setup-check: protection FAIL contexts: seq-zero is a job but not a required context
+FAIL  protection/bad-pull-request-forms: no output line: setup-check: protection FAIL contexts: split-flow is a job but not a required context
+setup-check tests: 47 passed, 1 failed
+```
+
+Green at 16:42 UTC: `setup-check tests: 48 passed, 0 failed`; `protection OK` on
+this tree.
+
+| Mutation (on a copy, as above) | Cases that fail |
+| ------------------------------ | --------------- |
+| a sequence at the indent of `on:` ends the block | `protection/bad-pull-request-forms` |
+| a split flow list read as a one-line list | `protection/bad-pull-request-forms` |
+| an anchor read | `protection/bad-pull-request-forms` |
+| a merge key read | `protection/bad-pull-request-forms` |
+| an alias read | `protection/bad-pull-request-forms` |

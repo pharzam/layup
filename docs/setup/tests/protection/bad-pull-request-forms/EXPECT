@@ -1,9 +1,13 @@
 exit=1
 line=setup-check: protection FAIL contexts: alias is a job but not a required context
+line=setup-check: protection FAIL contexts: anchor is a job but not a required context
 line=setup-check: protection FAIL contexts: flow-item is a job but not a required context
 line=setup-check: protection FAIL contexts: flow-map is a job but not a required context
 line=setup-check: protection FAIL contexts: map-key is a job but not a required context
+line=setup-check: protection FAIL contexts: merge-key is a job but not a required context
 line=setup-check: protection FAIL contexts: no-on is a job but not a required context
 line=setup-check: protection FAIL contexts: quoted-on is a job but not a required context
 line=setup-check: protection FAIL contexts: scalar-pr is a job but not a required context
 line=setup-check: protection FAIL contexts: seq-item is a job but not a required context
+line=setup-check: protection FAIL contexts: seq-zero is a job but not a required context
+line=setup-check: protection FAIL contexts: split-flow is a job but not a required context

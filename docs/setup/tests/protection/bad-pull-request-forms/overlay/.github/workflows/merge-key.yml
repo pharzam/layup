@@ -1,0 +1,7 @@
+on:
+  <<: *triggers
+  push:
+jobs:
+  merge-key:
+    steps:
+      - run: true
