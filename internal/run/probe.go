@@ -374,8 +374,9 @@ func (s *Sessions) Admit(ctx context.Context, p ProbeSpec) func(version string) 
 // ProbeStep runs the step probe: it copies the routing register into the
 // records when the two differ, skips each harness with no model of use yes,
 // and probes each other one whose last probe at its version did not pass. It
-// gives the three counts of the step's detail.
-func (s *Sessions) ProbeStep(ctx context.Context, harnesses, models, routing [][]string, base, recordsCommit string) (passed, failed, skipped int, err error) {
+// gives the three counts of the step's detail. recordsCommit gives the run's last
+// pushed records commit, read at the start of each probe.
+func (s *Sessions) ProbeStep(ctx context.Context, harnesses, models, routing [][]string, base string, recordsCommit func() string) (passed, failed, skipped int, err error) {
 	s.fns()
 	held, err := s.readTable(ctx, "routing.tsv", records.ReadRouting)
 	if err != nil {
@@ -395,7 +396,7 @@ func (s *Sessions) ProbeStep(ctx context.Context, harnesses, models, routing [][
 			skipped++
 			continue
 		}
-		result, err := s.Probe(ctx, ProbeSpec{Harness: h, Models: models, Base: base, Records: recordsCommit, Sweep: true})
+		result, err := s.Probe(ctx, ProbeSpec{Harness: h, Models: models, Base: base, Records: recordsCommit(), Sweep: true})
 		if err != nil {
 			return passed, failed, skipped, err
 		}
@@ -421,7 +422,7 @@ func (r *state) probeStep(ctx context.Context) Step {
 	if err != nil {
 		return fail(name, err)
 	}
-	passed, failed, skipped, err := s.ProbeStep(ctx, r.cfg.Harnesses, r.cfg.Models, r.cfg.Routing, base, r.store.Base())
+	passed, failed, skipped, err := s.ProbeStep(ctx, r.cfg.Harnesses, r.cfg.Models, r.cfg.Routing, base, r.store.Base)
 	if err != nil {
 		return fail(name, err)
 	}

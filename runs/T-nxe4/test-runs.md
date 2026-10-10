@@ -98,3 +98,31 @@ Each with exit 0: `go build ./...`, `go vet ./...`, `gofmt -l internal cmd`
 `TestPackageRules` and `TestInputRule`), `go test -tags=e2e ./...`;
 `adr-lint`, `prd-lint`, `link-lint`, `setup-check`,
 `run-discipline-tests`, `git diff --check`, `sh runs/T-fdaq/parts.sh`.
+
+## The fix of round 1
+
+Round 1 (comment 6094848498 of #168), notes 3 and 7. `TestTheStepProbe` now
+asserts the `records` column of the probe's start row, the parent of the
+commit that adds it, and that the probe that ended at its version check left
+no directory. Red at 06:54Z on `918a2f4`'s code, with `ProbeStep` taking a
+function read once per step (the copy of the routing register comes first):
+
+```
+--- FAIL: TestTheStepProbe (1.40s)
+    probe_integration_test.go:65: the records column of the probe's start row: want ["2f8d08bff6bb6242cf0ef029e70cb4c128ca551a"]
+```
+
+Green after the read moved into the loop. The directory's mutation, at 06:55Z,
+`if made && !errors.Is(err, errProbed)` in `TaskSession` (the early end keeps
+its directory), is caught:
+
+```
+probe_integration_test.go:92: the session directories after the step again: [d S-4c293f8f/], <nil>; want none
+```
+
+Green at 06:58Z, each with exit 0: `go build ./...`, `go vet ./...`,
+`gofmt -l internal cmd` (empty), `go test ./...`, `go test -tags=integration
+./...`, `go test -tags=e2e ./...`; `adr-lint`, `prd-lint`, `link-lint`,
+`setup-check`, `run-discipline-tests`, `git diff --check`; and `sh
+runs/T-fdaq/parts.sh` after its two rows of row 38 name the new acceptance row
+"The step probe".
