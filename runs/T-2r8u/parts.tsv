@@ -1,0 +1,54 @@
+file	heading	sub	row
+docs/spec/intake.md	## REQ-001 — The gap check of Intake, in one batch	—	none: the requirement's text; its sections are in their rows
+docs/spec/intake.md	### The sessions of Intake	—	42a
+docs/spec/intake.md	### The budget of Intake	—	42b
+docs/spec/intake.md	### The rule gaps	—	43a
+docs/spec/intake.md	### The review of meaning	—	43b
+docs/spec/intake.md	## REQ-012 — The facts and the draft at Intake	—	none: the requirement's text; its sections are in their rows
+docs/spec/intake.md	### The numbering	—	44
+docs/spec/intake.md	### The span check	the five rules and the table of the check	41a
+docs/spec/intake.md	### The span check	the command layup spec check --facts and its row of the exit-code map	41b
+docs/spec/intake.md	### The span check	the steps numbering and spans, and the rerun after a failed check	44
+docs/spec/intake.md	### The draft	—	45a
+docs/spec/intake.md	### The completeness review	—	45b
+docs/spec/intake.md	## REQ-001 — The one batch	—	none: the requirement's text; its sections are in their rows
+docs/spec/intake.md	### The merge and the IDs	—	46
+docs/spec/intake.md	### The comment of the batch	—	46
+docs/spec/intake.md	### The answers	—	47a
+docs/spec/intake.md	### The review of the answers and the follow-up	the review of the answers and the follow-up comment	47b
+docs/spec/intake.md	### The review of the answers and the follow-up	the answers to the follow-up, with budget.tsv	47c
+docs/spec/intake.md	### The raw fact of the answers	—	47a
+docs/spec/intake.md	## The steps of Intake	the row phase replaced, and the rule done before	43a
+docs/spec/intake.md	## The steps of Intake	the rule waiting	47a
+docs/spec/intake.md	## The steps of Intake	each step's name in run-steps and its place in the restart	none: each row adds its own step (condition 2 of the plan review of #211)
+docs/spec/intake.md	## NFR-003 — No value without evidence at Intake	—	none: each row keeps the evidence of its values in its own records
+docs/spec/intake.md	## REQ-015 and REQ-017 — The review of the release of M2c	—	49a
+docs/spec/intake.md	## Input states	row 1: no admitted pair for a role of Intake	42a
+docs/spec/intake.md	## Input states	row 2: no admitted pair of qa-engineer on another harness	45b
+docs/spec/intake.md	## Input states	row 3: a session's output file that is missing, a link, too large or refused	42a
+docs/spec/intake.md	## Input states	row 4: a quote that occurs nowhere, twice, or holds a tab	43b
+docs/spec/intake.md	## Input states	row 5: a span table that fails the span check	44
+docs/spec/intake.md	## Input states	row 6: a draft row that covers no fact, or a fact not covered	45a
+docs/spec/intake.md	## Input states	row 7: the cap of milestone 0 reached	42b
+docs/spec/intake.md	## Input states	row 8: answer lines by an account that is not an approver	47a
+docs/spec/intake.md	## Input states	row 9: an answer of the intent form that does not parse	47b
+docs/spec/intake.md	## Input states	row 10: a question still open after the follow-up	47c
+docs/spec/intake.md	## Not in M2c	—	none: what M2c does not build
+docs/spec/intake.md	## The acceptance tests of M2c	The sessions of Intake	42a
+docs/spec/intake.md	## The acceptance tests of M2c	The budget of Intake	42b
+docs/spec/intake.md	## The acceptance tests of M2c	The rule gaps	43a
+docs/spec/intake.md	## The acceptance tests of M2c	The review of meaning	43b
+docs/spec/intake.md	## The acceptance tests of M2c	The span check	41a
+docs/spec/intake.md	## The acceptance tests of M2c	The command `layup spec check --facts`	41b
+docs/spec/intake.md	## The acceptance tests of M2c	The draft	45a
+docs/spec/intake.md	## The acceptance tests of M2c	The completeness review	45b
+docs/spec/intake.md	## The acceptance tests of M2c	The merge and the IDs	46
+docs/spec/intake.md	## The acceptance tests of M2c	The comment and the answers: the comment with two blocks	46
+docs/spec/intake.md	## The acceptance tests of M2c	The comment and the answers: the wait, the answers by an approver, the last line, budget.tsv	47a
+docs/spec/intake.md	## The acceptance tests of M2c	The comment and the answers: a missing, unparsed or open answer to the follow-up	47b
+docs/spec/intake.md	## The acceptance tests of M2c	The steps of Intake	48
+docs/spec/intake.md	## The acceptance tests of M2c	The review of the release	49a
+docs/spec/intake.md	## The acceptance tests of M2c	The demo	49b
+docs/spec/records.md	## NFR-001 — The records of Intake	the blocks meaning, spans, draft, coverage, questions, answers, answers-review, budget, and the row rules in words	40
+docs/spec/records.md	## NFR-001 — The records of Intake	the block spec-check, and the second Go value of spans in internal/spec	41a
+docs/spec/packages.md	### The table of M2c	—	41a

@@ -215,7 +215,7 @@ id int key the forge's numeric user ID; a login is never a key, as a login can c
 role enum(operator|idea-owner|approver) key the role; the Operator and the idea owner can be one account, with one row per role
 login text - the login when the row was written
 since time - when the row was written
-source text - `start` for the rows of the Start command; else the ID of the comment that named the approver (`M2c`)
+source text - `start` for the rows of the Start command; else the ID of the comment that named the approver (`M2e`, intake.md, Not in M2c)
 ```
 
 ```tsv-schema lease records:lease.tsv
@@ -487,7 +487,7 @@ question  text       -    the question as the batch asks it
 asked     time       -    when the comment that asks it was posted
 asker     text       -    `layup psb check`, the session that wrote its source row, or `layup run` for the intent form and a follow-up
 answered  time       -    the time of the copy that holds its answer; `—` until it has one
-state     enum(asked|answered|closed|open)  -  asked until an answer; answered when it has one that no review read (each answer to a follow-up); closed or open as the review of the answers says (intake.md, The review of the answers and the follow-up)
+state     enum(asked|answered|closed|open)  -  asked until an answer; answered when it has one that no review read (each answer to a follow-up); closed or open as the review of the answers says, or open by code for an intent field still unparsed after the follow-up (intake.md, The review of the answers and the follow-up)
 ```
 
 A later milestone adds the columns of the measures here first: accepted, the

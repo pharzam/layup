@@ -29,6 +29,24 @@ same summary, dated — rather than deleting it or checking it off.
 <!-- One line per task. Example shape:
 - **<ID>** — <one-sentence summary> ([<ADR or doc link>](...); [detail](<id>.md))
 -->
+- **T-529i** — Row 40 of `M2c`: the records of Intake ([#212](https://github.com/pharzam/layup/issues/212); [the plan](../plan/README.md#the-tasks-of-m2c))
+- **T-4ywt** — Row 41a of `M2c`: the span check and the package rules of M2c ([#213](https://github.com/pharzam/layup/issues/213); [the plan](../plan/README.md#the-tasks-of-m2c))
+- **T-hpid** — Row 41b of `M2c`: the command layup spec check --facts ([#214](https://github.com/pharzam/layup/issues/214); [the plan](../plan/README.md#the-tasks-of-m2c))
+- **T-gmey** — Row 42a of `M2c`: the session of a phase ([#215](https://github.com/pharzam/layup/issues/215); [the plan](../plan/README.md#the-tasks-of-m2c))
+- **T-ybd5** — Row 42b of `M2c`: the budget of milestone 0 ([#216](https://github.com/pharzam/layup/issues/216); [the plan](../plan/README.md#the-tasks-of-m2c))
+- **T-qk66** — Row 43a of `M2c`: the step rule-gaps ([#217](https://github.com/pharzam/layup/issues/217); [the plan](../plan/README.md#the-tasks-of-m2c))
+- **T-1u2v** — Row 43b of `M2c`: the review of meaning ([#218](https://github.com/pharzam/layup/issues/218); [the plan](../plan/README.md#the-tasks-of-m2c))
+- **T-hiv9** — Row 44 of `M2c`: the steps numbering and spans ([#219](https://github.com/pharzam/layup/issues/219); [the plan](../plan/README.md#the-tasks-of-m2c))
+- **T-2et0** — Row 45a of `M2c`: the draft ([#220](https://github.com/pharzam/layup/issues/220); [the plan](../plan/README.md#the-tasks-of-m2c))
+- **T-0mey** — Row 45b of `M2c`: the completeness review ([#221](https://github.com/pharzam/layup/issues/221); [the plan](../plan/README.md#the-tasks-of-m2c))
+- **T-8r3u** — Row 46 of `M2c`: the batch ([#222](https://github.com/pharzam/layup/issues/222); [the plan](../plan/README.md#the-tasks-of-m2c))
+- **T-hxb9** — Row 47a of `M2c`: the answers ([#223](https://github.com/pharzam/layup/issues/223); [the plan](../plan/README.md#the-tasks-of-m2c))
+- **T-vwu3** — Row 47b of `M2c`: the review of the answers and the follow-up ([#224](https://github.com/pharzam/layup/issues/224); [the plan](../plan/README.md#the-tasks-of-m2c))
+- **T-tmm2** — Row 47c of `M2c`: the answers to the follow-up ([#225](https://github.com/pharzam/layup/issues/225); [the plan](../plan/README.md#the-tasks-of-m2c))
+- **T-mo9w** — Row 48 of `M2c`: the e2e of the steps of Intake ([#226](https://github.com/pharzam/layup/issues/226); [the plan](../plan/README.md#the-tasks-of-m2c))
+- **T-8byd** — Row 49a of `M2c`: the review of the release of M2c ([#227](https://github.com/pharzam/layup/issues/227); [the plan](../plan/README.md#the-tasks-of-m2c))
+- **T-ekh5** — Row 49b of `M2c`: the demo of M2c (uat) ([#228](https://github.com/pharzam/layup/issues/228); [the plan](../plan/README.md#the-tasks-of-m2c))
+- **T-2r8u** — The build tasks of `M2c` ([#211](https://github.com/pharzam/layup/issues/211); [detail](T-2r8u.md))
 
 
 ## Next
