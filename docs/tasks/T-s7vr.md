@@ -39,3 +39,35 @@ code, a mutation of each of the four rules, each caught, green after.
 **The rejected alternatives:** rewriting `start.tsv` with the register of now
 (the record of the Start would say what the register says now); refusing a
 changed register with a clearer message (the demo of `M2b` needed the change).
+
+## Review rounds
+
+The record is a comment on #199. Round 1 (Claude Fable 5.1, effort `xhigh`, a
+fresh read-only session in a clone at `7c34fcb`, cycle 0, the cap): `nothing
+material in scope`, four notes. Applied in the close-out: note 1 (the row of
+`run.md` links the section of the records of Start); note 2 (the row points to
+`session.md` for the values a session runs under, with no rule of its own).
+Declined: note 3 (the lost case reads `start.tsv` back): a change of a test
+after the last round is read by no round; in that case the Start was complete,
+so `phase` writes nothing. Note 4, revealed and off the path, is #205.
+
+## Verdict
+
+Delivered: a restart reads and writes `start.tsv` by the harnesses that its
+rows name, so a target whose harness register gained or lost a row after Start
+restarts (#199). The review ended by decay at cycle 0 of cap 1. The diff against
+`95dccce`, the branch's base, is inside 400 lines over 12 files. Next: the
+specification task of `M2c`.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). UTC; reviewers' tokens are `modelUsage`;
+the author's are not reported.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan | reasoning | Claude Opus 5.5 | not reported | not reported | 2026-10-10 16:00 to 16:07 |
+| The plan review | reasoning | Claude Fable 5.1 | `xhigh` | 1,104,554 (USD 5.40) | 9 min 1 s |
+| The code, test first | execution | Claude Opus 5.5 | not reported | not reported | 16:17 to 16:26 |
+| Round 1 | reasoning | Claude Fable 5.1 | `xhigh` | 537,192 (USD 3.63) | 7 min 50 s |
+| The close-out, with notes 1 and 2 | execution | Claude Opus 5.5 | not reported | not reported | 16:35 to 16:35 |

@@ -30,8 +30,6 @@ same summary, dated — rather than deleting it or checking it off.
 - **<ID>** — <one-sentence summary> ([<ADR or doc link>](...); [detail](<id>.md))
 -->
 
-- **T-s7vr** — A restart reads `start.tsv` by the harnesses that its rows name ([#199](https://github.com/pharzam/layup/issues/199); [detail](T-s7vr.md))
-
 
 ## Next
 
