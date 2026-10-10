@@ -76,8 +76,10 @@ another harness, below).
 
 **Decided here** (decision 3 of #206): Intake and Shape are milestone 0, whose
 cap is `intake.cap` of `start.tsv` (`MONEY,HOURS`). Before each session of
-Intake starts, code sums the milestone's known money (each telemetry row of a
-session of Intake whose `money_status` is `reported` or `computed`) and adds
+Intake starts, code sums the milestone's known money (each telemetry row since
+Start whose `money_status` is `reported` or `computed`, the probes' rows
+included: **decided here**, as milestone 0 runs from Start and a probe is
+spend before the first bet) and adds
 the spend cap of the new session, or nothing for a session whose register row
 has no cap (`—`; its spend is an unknown part, [`session.md`](session.md#the-limit-of-a-session),
 whose actions are not in `M2c`); when the sum passes `MONEY`, or the time from
@@ -183,8 +185,13 @@ command; `internal/spec` joins the line of the engine checks
 its block reads them; the step `spans` then runs the same check in process on
 that record and the problem statement, commits the table as
 `records:spec/check.tsv`, and posts no batch and stops when a row is `fail`
-(`architecture.md` §7 step 2); a restart runs the check again only when
-`spec/check.tsv` is not there.
+(`architecture.md` §7 step 2). **Decided here:** a `spec/check.tsv` that has a
+`fail` row is the record of neither step: a restart runs `numbering` again with
+a new session, whose rows replace `spec/spans.tsv`, then `spans` again, whose
+table replaces `spec/check.tsv` (a record of the records branch is edited in
+place, and Git history is its log, `architecture.md` §3); no step after `spans`
+runs while the last `spec/check.tsv` has a `fail` row, so no batch is posted on a
+failed check (ADR-0018 decision 2).
 
 ### The draft
 
@@ -266,8 +273,10 @@ every such comment after the batch, and the last answer line of a question ID,
 in the order of the copies, is its answer (**decided here**: a later line
 corrects an earlier one). Each answered question is a row of
 `records:intake/answers.tsv`, and its state in `questions.tsv` is `answered`;
-a question with no line stays `asked`. When `B`, `U` and the hours parse, with
-`B` below `U`, code writes `records:budget.tsv`.
+a question with no line stays `asked`. **Decided here:** a field of the intent
+form parses when its answer is a `decimal`, and `B` and `U` parse only when `B`
+is below `U` (so a `B` not below `U` is an unparsed answer of both). When the
+three parse, code writes `records:budget.tsv`.
 
 ### The review of the answers and the follow-up
 
@@ -283,15 +292,15 @@ with its quote, and the rule of the answers); each is a new row of `questions.ts
 done.
 
 **The answers to the follow-up** (the step `follow-up-answers`): they are in
-hand when each block that the follow-up asks has one answer comment after it,
+hand when each block that the follow-up asks has at least one answer comment after it,
 by the same rule; until then the step waits. Each answered follow-up is a row of
 `intake/answers.tsv` and its state is `answered`; the question that it asks
 again keeps its own state. When `budget.tsv` is not written yet, code takes each
 of `B`, `U` and the hours from the answer to its follow-up, else from the batch,
 and writes `budget.tsv` when the three parse with `B` below `U` (**decided
 here**: the follow-up of an intent value asks the same field); a value still
-missing or unparsed leaves `budget.tsv` unwritten, its question `asked`, and
-Shape (`M2e`) asks it. No review runs on the answers to the follow-up, and
+missing or unparsed leaves `budget.tsv` unwritten and sets the state of its
+question of the intent form to `open`, and Shape (`M2e`) asks it. No review runs on the answers to the follow-up, and
 Intake is done.
 **Decided here:** one follow-up round in `M2c`; a question still `asked` or
 `open` after it stays so in `questions.tsv`, and Shape (`M2e`) reads it.
@@ -319,8 +328,9 @@ step is: `intake/psb.tsv`; `intake/meaning.tsv`; `spec/spans.tsv` (by `numbering
 `spec/check.tsv` (by `spans`); `spec/draft.tsv`; `intake/coverage.tsv`;
 the comment of the batch (its rows of `questions.tsv`); the rows of
 `intake/answers.tsv` of the batch's questions; `intake/answers-review.tsv`; the
-follow-up comment, or for a follow-up with no question a row of `questions.tsv`
-that says so; the rows of `intake/answers.tsv` of the follow-up's questions.
+follow-up comment (its rows of `questions.tsv`), or, when nothing is left to
+ask (no question `asked` or `open`, and the three fields of the intent form
+parse), that state of the records, from which the step posts nothing; the rows of `intake/answers.tsv` of the follow-up's questions.
 Each step whose record exists is
 `done` with "done before" and runs nothing; a step whose input is not there yet
 (a block of the batch, or of the follow-up, with no answer comment yet, by the
@@ -352,7 +362,7 @@ never guessed.
 | A draft row whose `covers` names no fact, or a `need` or `constraint` fact with no requirement | the draft is refused |
 | The cap of milestone 0 reached | the step is `fail` ("the cap of milestone 0"); no session starts |
 | A comment with answer lines by an account that is not an approver, or in the other block's role | recorded as input; it answers nothing |
-| An answer of the intent form that does not parse, or `B` not below `U` | the question is asked again in the follow-up |
+| An answer of the intent form that does not parse (a `B` not below `U` is an unparsed answer of `B` and of `U`) | the field is asked again in the follow-up; still unparsed after it, its question is `open` and `budget.tsv` is not written |
 | A question still open after the follow-up | open in `questions.tsv`; Intake is done |
 
 ## Not in M2c
