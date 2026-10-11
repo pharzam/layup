@@ -29,7 +29,7 @@ same summary, dated — rather than deleting it or checking it off.
 <!-- One line per task. Example shape:
 - **<ID>** — <one-sentence summary> ([<ADR or doc link>](...); [detail](<id>.md))
 -->
-- **T-tmm2** — Row 47c of `M2c`: the answers to the follow-up ([#225](https://github.com/pharzam/layup/issues/225); [the plan](../plan/README.md#the-tasks-of-m2c))
+- **T-tmm2** — Row 47c of `M2c`: the answers to the follow-up ([#225](https://github.com/pharzam/layup/issues/225); [the plan](../plan/README.md#the-tasks-of-m2c); [detail](T-tmm2.md))
 - **T-mo9w** — Row 48 of `M2c`: the e2e of the steps of Intake ([#226](https://github.com/pharzam/layup/issues/226); [the plan](../plan/README.md#the-tasks-of-m2c))
 - **T-8byd** — Row 49a of `M2c`: the review of the release of M2c ([#227](https://github.com/pharzam/layup/issues/227); [the plan](../plan/README.md#the-tasks-of-m2c))
 - **T-ekh5** — Row 49b of `M2c`: the demo of M2c (uat) ([#228](https://github.com/pharzam/layup/issues/228); [the plan](../plan/README.md#the-tasks-of-m2c))

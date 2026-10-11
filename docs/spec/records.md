@@ -41,7 +41,7 @@ or payload of one task is under `tasks/<task>/`.
 | `intake/psb.tsv` | the table of `layup psb check` on the problem statement | 5 | `layup run` | 2 (`M2c`) | the block `psb-gaps` ([`psb-check.md`](psb-check.md)) |
 | `intake/meaning.tsv` | the rows of the review of meaning | 5 | `layup run` | 2 (`M2c`) | [below](#nfr-001--the-records-of-intake) |
 | `intake/coverage.tsv` | the items of the completeness review | 7 | `layup run` | 2 (`M2c`) | [below](#nfr-001--the-records-of-intake) |
-| `intake/answers.tsv`, `intake/answers-review.tsv` | the answers of the batch, one per question, and their review | 5, 7 | `layup run` | 2 (`M2c`) | [below](#nfr-001--the-records-of-intake) |
+| `intake/answers.tsv`, `intake/answers-review.tsv` | the answers of the batch and of its follow-up, one per question (task `T-tmm2`), and the review of the batch's | 5, 7 | `layup run` | 2 (`M2c`) | [below](#nfr-001--the-records-of-intake) |
 | `questions.tsv` | every question and its answer, with the phase, the asker and the times | 5, 8, 12 | `layup run` | 2 (`M2c`, K38) | [below](#nfr-001--the-records-of-intake); `M3c` and `M4b` add columns |
 | `spec/spans.tsv` | the fact spans of the problem statement | 7 | `layup run` | 2 (`M2c`) | [below](#nfr-001--the-records-of-intake) |
 | `spec/check.tsv` | the table of the span check | 7 | `layup run` | 2 (`M2c`) | the block `spec-check`, [below](#nfr-001--the-records-of-intake) |
