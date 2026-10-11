@@ -385,6 +385,21 @@ with its quote, and the rule of the answers); each is a new row of `questions.ts
 `follow-up`, whose `ref` names the question it asks again. With none, Intake is
 done.
 
+**Decided here** (task `T-vwu3`): with no answered question, the step
+`answers-review` commits `intake/answers-review.tsv` with its header alone, so a
+restart knows that it ran. The review's file is the block `answers-review`
+without `session`, its questions the answered questions, each once; its states
+go to `questions.tsv` in the session's one records commit. The follow-up asks
+again one row per question, whatever the number of rules that name it; a
+follow-up row has `kind` `follow-up`, the block of the question it asks again,
+no quote of its own, the question's text, `asked` from the run's clock and
+`asker` `layup run`; its comment's first line is `LAYUP Intake: the follow-up`,
+not the batch's, and each question shows the quote of the question it asks
+again. The follow-up rows are one records commit before the comment; a restart
+that finds the rows and the App's comment of the follow-up is "done before", one
+that finds the rows and no comment posts it from the record (as `batch`), and
+with nothing to ask again the step writes nothing.
+
 **The answers to the follow-up** (the step `follow-up-answers`): they are in
 hand when each block that the follow-up asks has at least one answer comment after it,
 by the same rule; until then the step waits. Each answered follow-up is a row of
@@ -470,7 +485,7 @@ release, the code of `M2b` and `M2a` included.
 
 | State | Result |
 | ----- | ------ |
-| A routing register with no admitted pair for a role of Intake (`systems-architect` for `meaning`, `product-owner` for `numbering` and `draft`; `qa-engineer` is the next row's) | the step is `fail` (`pair`), no session starts |
+| A routing register with no admitted pair for a role of Intake (`systems-architect` for `meaning` and `answers-review`, `product-owner` for `numbering` and `draft`; `qa-engineer` is the next row's) | the step is `fail` (`pair`), no session starts |
 | No admitted pair of `qa-engineer` on a harness other than that of the numbering and the draft, or none of the role at all | `completeness` is `fail` ("not run: no admitted pair on another harness"); no batch |
 | A session's output file that is missing, a link, over 1 MiB, or that its block refuses | the step is `fail`, naming the session; nothing of the file is committed |
 | A refused start of a session of Intake (`session.md`, The start of a session) | the step is `fail`, naming the session and the refusal; no record (**decided here**, task `T-gmey`: no event holds it, and the row of a refused probe is the probe's own) |
