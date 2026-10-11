@@ -45,18 +45,30 @@ A step of Intake, `markers`, runs after `completeness` and before `batch`
    scanner of S10 with LAYUP's `MK_EXEMPT` at the engine's version
    ([`setup.md`](setup.md#the-steps), S10): each by its key `M-<x8>`, its file,
    the line of its open quote and the marker text, in the order of S10's stop
-   table (by file, then line). A marker over more lines is one row.
+   table (by file, then line). A marker over more lines is one row. **Decided
+   here** (finding 1 of round 3 of #265): the key is that of S10, the file and
+   the marker text, so a text that a file holds on more lines is one key and
+   one row, with the line of its first occurrence, and one question, as S10
+   asks it once (`internal/setup`, the stop table of S10).
 2. **The proposals.** When the scan lists one marker or more, one session of a
    phase ([`intake.md`](intake.md#the-sessions-of-intake)) of the role
    `systems-architect` (the gap review of `architecture.md` §9) reads
    `start/problem-statement.md` and the list, as `input/markers.tsv` in the
    form of the block `markers` with the columns `value`, `start`, `end` and
-   `session` as `—`. For each marker it writes a proposed value and a quote of
-   the problem statement that states it, or no proposal. Code checks each
+   `session` as `—`. It writes `result/markers.tsv` (**decided here**, finding 2
+   of round 3 of #265), a table of three columns, `id`, `value` and `quote`, one
+   row per marker of the list that it proposes a value for, in the order of the
+   list: the marker's key, the proposed value, and the quote of the problem
+   statement that states it, byte for byte; a marker with no row has no
+   proposal. Code reads it by the rules of a session's output file
+   ([`intake.md`](intake.md#the-sessions-of-intake)), and refuses a key that the
+   list does not hold, a key twice, and an empty value or quote. Code checks each
    quote by the rule of the review of meaning
    ([`intake.md`](intake.md#the-review-of-meaning)): the quote occurs exactly
    once in the file, byte for byte, and holds no tab; a file with a quote that
-   fails is refused, and the step is `fail`, naming the session.
+   fails is refused, and the step is `fail`, naming the session. The offsets
+   that code finds are `start` and `end` of the record; the quote itself is
+   not kept, as the record's offsets give it from the file.
 3. **The record.** One records commit writes `records:intake/markers.tsv`
    ([`records.md`](records.md#nfr-001--the-records-of-the-scaffold)), one row per
    marker of the scan, in the scan's order, with the proposal or `—`. With no
@@ -411,8 +423,11 @@ bypass list is not seen (L-A4).
 (the tree of the head, the head as its parent, the App's bot as author and
 committer, at the run's time) in its own clone, and pushes it to
 `refs/heads/layup-probe` with the installation token (`internal/git`). It
-passes when the push exits non-zero and its standard error holds `GH013`
-(GitHub's "Repository rule violations found"). Else it is `fail`: a push that
+passes when the push exits non-zero and its standard error holds both `GH013`
+(GitHub's "Repository rule violations found") and the name of the default
+branch's ruleset, `layup: the default branch` (**decided here**, finding 3 of
+round 3 of #265: §3 counts only a refusal "naming the ruleset", so a refusal by
+another ruleset, which a bypass of LAYUP's own could hide, is no pass). Else it is `fail`: a push that
 exits 0, as "probe accepted: <SHA>" (the Operator then deletes the ref and
 checks any workflow run that it started, §3); any other non-zero exit, as
 "probe not run: <the first line of standard error>" (an expired token, a
@@ -595,10 +610,10 @@ six rows of the inventory item `later-p2-scaffold` are the rows marked
 | The apply outputs | unit | Both files present and each a JSON object of `OWNER/NAME`: `setup/rulesets.txt` holds both after their lines; a file missing: "waiting"; a file that is not a JSON object, or of another repository: `fail`, naming it. |
 | The forge check at each later start | integration | With the records of a done Scaffold, a restart runs `forge-check` after `lease` and before `probe`, writes the table again, and stops at a row that is not `pass`; the steps of Intake and of the Scaffold are "done before". |
 | The answers of the setup | unit | Each row of the table of [The answers of the setup](#the-answers-of-the-setup): `accept` with and without a proposal, `gap`, a value, no answer and `open`, for a marker and for `S01-stack`; the source URL. |
-| The step markers | unit | The scan of a fixture tree gives the keys of S10; a quote that occurs once passes, and one that occurs twice, nowhere or with a tab refuses the file; with no marker no session starts. |
+| The step markers | unit | The scan of a fixture tree gives the keys of S10, one row for a text that a file holds on two lines; the session's `result/markers.tsv` with an unknown key, a key twice or an empty quote is refused; a quote that occurs once passes, and one that occurs twice, nowhere or with a tab refuses the file; with no marker no session starts. |
 | The ruleset files (inventory) | unit | The default branch's file names each gate job pinned to 15368, the four `layup/` checks pinned to the forge register's `app_id`, `strict` true, `creation`, `allowed_merge_methods` `["merge"]` and an empty bypass list; the records branch's file has the App as its only bypass actor; phase 1 gets `creation` and the two parameters, and no `layup/` check. |
 | `commands.sh` is fail-fast | unit | Its first line is `set -eu`, and a stand-in command that fails stops the rest (F-13). |
-| The probe (inventory) | integration | With a real local bare repository whose pre-receive hook refuses with the text of `GH013`, and the real `internal/git`: the refusal is `pass`; a hook that refuses with another text, and a remote that cannot be reached, are "probe not run"; an accepted push is "probe accepted". |
+| The probe (inventory) | integration | With a real local bare repository whose pre-receive hook refuses with the text of `GH013` and the ruleset's name, and the real `internal/git`: the refusal is `pass`; a hook that refuses with `GH013` and another ruleset's name, one that refuses with another text, and a remote that cannot be reached, are "probe not run"; an accepted push is "probe accepted". |
 | The read-back | unit | A read-back equal to the files passes; a missing rule, a different parameter, an `integration_id` that differs, and a bypass list that is not empty (default) or not exactly the App (records) each fail, naming it; an extra rule is named and passes. |
 | `layup run` with the real step runner (inventory) | integration | On a fixture baseline: `answers.tsv` is written from the copied answers, a prose stop starts a scripted session, the runner finishes, and `layup run` commits `setup/record.tsv`, `setup/verify.tsv`, `rule-paths.tsv`, `setup/tree.tsv` and the README of the Scaffold; a second run is "done before"; a rebuilt work area gives the same commits, also after the default branch holds the setup commits (its `main` is the root commit). |
 | The steps of the Scaffold, end to end (inventory) | e2e | In CI on a local fake forge and local bare repositories: Start, scripted Intake answers with the setup questions, the setup, the printed commands run by the test in place of the Operator, and the forge check, whose fake forge answers the read-back and the activity, and whose bare repository refuses the probe with `GH013`. |

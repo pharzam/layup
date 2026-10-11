@@ -542,7 +542,7 @@ blocks and owners of phase 1; `layup run` commits them
 ```tsv-schema markers records:intake/markers.tsv
 id      id(M-xxxxxxxx)  key  the marker's key of S10: M- and the first 8 hexadecimal characters of the SHA-256 of its file, a tab and its text; in questions.tsv the source setup tells it from a gap of meaning (M-NNN), whose source is meaning
 file    path   -    the file that holds the marker, in the pinned tree
-line    int    -    the line of its open quote, from 1
+line    int    -    the line of its open quote, from 1; for a text that the file holds on more lines (one key), the first
 marker  text   -    the marker, with its two angle quotes; a marker over more lines has its line breaks written as spaces; never `—`
 value   text   -    the proposed value; `—` for no proposal
 start   int    -    the byte offset of the proposal's quote in start/problem-statement.md, from 0, found by code; `—` exactly when value is `—`
