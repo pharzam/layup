@@ -162,6 +162,9 @@ the first.
 | `TestValidIntakeRecordsAreRead`, `TestIntakeRecordsRefuseEachBrokenRule`, `TestIntakeRecordsRefuseAWrongHeader` (`internal/records/intake_test.go`) | unit | NFR-001, REQ-001, REQ-012 | F-0003#41 | — | — | T-529i | green |
 | `TestASpanTableThatCoversTheFilePasses`, `TestEachRuleFailsOnItsOwnBreak`, `TestAFactNumberThatRepeats`, `TestATextOfOneEmDash`, `TestASpanAcrossALineFeed`, `TestReadTakesASpanTableByItsBlock` (`internal/spec/spec_test.go`) | unit | REQ-012 | F-0003#51 | — | ADR-0018 | T-4ywt | green |
 | `TestTheSchemasEqualTheirBlocks` (`internal/spec/spec_integration_test.go`): `spec-check` and the second value of `spans` | integration | REQ-012 | F-0003#51 | — | ADR-0018 | T-4ywt | green |
+| `TestSpecCheckPassesAndFails`, `TestSpecCheckInputErrors`, `TestSpecCheckUsageErrors` (`cmd/layup/spec_e2e_test.go`) | e2e | REQ-012, NFR-005 | F-0003#51 | — | ADR-0018 | T-hpid | green |
+| `TestSpecCheckGivesTwoWhenItCannotWriteTheTable` (`internal/cli/spec_test.go`) | unit | REQ-012 | F-0003#51 | — | ADR-0018 | T-hpid | green |
+| `TestTheUsageOfLayupListsItsCommands` with `spec check` (`internal/cli/cli_test.go`) | unit | — | — | — | — | T-hpid | green |
 | `TestTelemetryRowsThatPass`, `TestTelemetryRowsThatBreakARule`, `TestPriceRows` (`internal/records/records_test.go`) | unit | REQ-011 | F-0003#50 | — | ADR-0024 | T-tmhw | green |
 | `TestStallRowsThatPass`, `TestStallRowsThatBreakARule` (`internal/records/stalls_test.go`) | unit | REQ-009 | F-0003#49 | — | ADR-0023 | T-dgy7 | green |
 | The release review of phase 1 (`runs/T-efmy/release-review.md`), with its check `runs/T-efmy/release-check.sh` | uat | REQ-015, REQ-017 | F-0003#53 | — | — | T-efmy | green |

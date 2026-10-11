@@ -20,7 +20,6 @@ import (
 	"github.com/pharzam/layup/internal/psb"
 	"github.com/pharzam/layup/internal/setup"
 	"github.com/pharzam/layup/internal/spec"
-	"github.com/pharzam/layup/internal/tsv"
 	"github.com/pharzam/layup/internal/verify"
 )
 
@@ -186,7 +185,7 @@ func specCheck(in call) int {
 		return exitUsage
 	}
 	rows := spec.Check(spans, psbSrc)
-	if err := tsv.Write(in.stdout, spec.CheckSchema, rows); err != nil {
+	if err := spec.WriteTSV(in.stdout, rows); err != nil {
 		fmt.Fprintf(in.stderr, "layup: %v\n", err)
 		return exitUsage
 	}
