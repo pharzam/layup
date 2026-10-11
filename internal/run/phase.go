@@ -7,6 +7,7 @@ package run
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"path/filepath"
@@ -163,14 +164,16 @@ func (s *Sessions) endPhase(ctx context.Context, spec TaskSpec, id string, d ses
 	if err := s.commit(ctx, files, fmt.Sprintf("layup run: the end of %s, the session of %s, %s", id, spec.phase.step, class)); err != nil {
 		return err
 	}
+	// A comment that fails keeps the session's reason (round 1 of #215).
+	var end error
+	if reason != "" {
+		end = &PhaseError{Session: id, Reason: reason}
+	}
 	line := fmt.Sprintf("%s: %s session of %s: %s%s\n", id, spec.Role, spec.phase.step, class, refused)
 	if _, err := s.Forge.Comment(ctx, s.Control, line); err != nil {
-		return err
+		return errors.Join(end, err)
 	}
-	if reason != "" {
-		return &PhaseError{Session: id, Reason: reason}
-	}
-	return nil
+	return end
 }
 
 // refusePhase gives the error of a session of a phase whose start was

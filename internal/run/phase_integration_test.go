@@ -240,3 +240,15 @@ func TestARefusedStartOfASessionOfAPhaseIsNoRecord(t *testing.T) {
 		t.Errorf("the session directory after the call: %v; want it removed", err)
 	}
 }
+
+// A comment that fails after a refused file keeps the session's reason: the
+// step's error names the session and the forge (round 1 of #215, note 5).
+func TestACommentThatFailsKeepsTheReasonOfTheSession(t *testing.T) {
+	w, r, f, a, h := phaseWorld(t, `printf 'kind\tvalue\nnote\tbad\n' > "$out"`)
+	f.fail = "Comment"
+	id, err := r.PhaseSession(context.Background(), phaseSpec(t, w, r, a, h))
+	var pe *PhaseError
+	if !errors.As(err, &pe) || pe.Session != id || !strings.HasPrefix(pe.Reason, "refused file") || !strings.Contains(err.Error(), "Comment") {
+		t.Errorf("PhaseSession: %q, %v; want the PhaseError of the session, refused file, with the error of the comment", id, err)
+	}
+}

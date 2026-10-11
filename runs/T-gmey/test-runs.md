@@ -75,3 +75,16 @@ rewritten (`maps.Copy(files, map[string][]byte{})`), then caught.
 At `5d1ee05` (05:07Z to 05:10Z): `go build ./...`, `go vet ./...`, `go test
 ./...`, `go test -tags=integration ./...` (every package `ok`) and `go test
 -tags=e2e ./cmd/...` (`ok`, 54 s) pass.
+
+## The fix of round 1 (2026-10-11)
+
+Note 5 of round 1: a comment that fails dropped the session's reason.
+`TestACommentThatFailsKeepsTheReasonOfTheSession` first, red (05:23Z):
+
+```
+--- FAIL: TestACommentThatFailsKeepsTheReasonOfTheSession (1.90s)
+    phase_integration_test.go:252: PhaseSession: "S-867dc94a", Comment: status 502: Bad Gateway; want the PhaseError of the session, refused file, with the error of the comment
+```
+
+Then `endPhase` joins the error of the comment with the `*PhaseError`; green
+(05:24Z), with `go test -tags=integration ./internal/run/ ./internal/session/`.

@@ -21,7 +21,7 @@ func fileName(name string) error {
 
 // MakeInput makes input/ in the directory d of a session of a phase and
 // writes each file in it by its name, byte for byte, mode 0600. It runs right
-// after Make, before the prompt and the start row.
+// after Make (whose last write is prompt.md) and before the start row.
 func MakeInput(d Dir, files map[string][]byte) error {
 	for name := range files {
 		if err := fileName(name); err != nil {

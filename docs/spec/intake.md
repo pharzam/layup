@@ -43,14 +43,16 @@ no event, a **session of a phase**:
   the tier `reasoning` ([`session.md`](session.md#the-routing-register)), but
   that of the completeness review (below); **decided here** (task `T-gmey`),
   a harness is read at the version of its last row of `records:harnesses.tsv`,
-  as no version command runs before the session, whose own version check
-  reads the version again and probes a new one; its
+  as no version command runs before the session; the session's own version
+  check then reads the version, and probes it when its last probe did not
+  pass; its
   role is that of the step table of `architecture.md` §9: `systems-architect`
   for the review of meaning and of the answers, `qa-engineer` for the
   completeness review, and `product-owner` for the numbering and the draft;
 - its directory ([`session.md`](session.md#the-session-directory)) gains
-  `input/`, which `internal/session` makes right after the directory, before
-  the prompt and the start row (one reading, task `T-gmey`): the files that
+  `input/`, which `internal/session` makes right after the rest of the
+  directory (`prompt.md` its last file), and before the start row (one
+  reading, task `T-gmey`): the files that
   its step reads, byte for byte from the records (`problem-statement.md` from
   `records:start/problem-statement.md` for each step; `spans.tsv` and
   `draft.tsv` for the completeness review; `questions.tsv` and `answers.tsv` for

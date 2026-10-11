@@ -48,6 +48,8 @@ O-196.
 - **The version of a pair** (note 6 of the plan review): `PhasePair` reads a
   harness at the version of its last row of `harnesses.tsv`. A last row that is
   a refused start (version `—`) refuses a pair that the step would otherwise
-  take, until the next step `probe` writes a row of that harness; a failed probe
-  at a version the harness has since left is corrected by the session's own
-  version check, which probes the new version.
+  take, until the next step `probe` writes a row of that harness, and so does a
+  last row `failed` at a version the harness has since left. A last row
+  `passed` at a version the harness has since left is corrected by the
+  session's own version check, which probes the version it reads (round 1 of
+  #215, note 2).
