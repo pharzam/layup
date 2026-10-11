@@ -70,7 +70,7 @@ can leave up to twenty seconds with no line. Reason: a Start ends; the phase
 loop of later milestones adds its own rows, so the one-table rule holds.
 
 ```tsv-schema run-steps stdout
-step enum(forge|plan|baseline|root-push|read-back|records|issues|watch|clone|version|lease|probe|phase|rule-gaps|meaning|numbering|spans|draft|completeness) key the step, in the order of the two lists below
+step enum(forge|plan|baseline|root-push|read-back|records|issues|watch|clone|version|lease|probe|phase|rule-gaps|meaning|numbering|spans|draft|completeness|batch) key the step, in the order of the two lists below
 result enum(done|fail) - `done`, or `fail` with its reason in `detail`
 detail text - one line: what the step found, with no time, no path of the host and no SHA of a records commit (a records commit holds its time, so its SHA differs on a repeat)
 ```
@@ -287,6 +287,11 @@ its body file, and pushes them. A comment that a later read finds with another
 SHA-256 of its body is an edit: a new row with the next `seen`, and the first
 copy stays. A comment whose SHA-256 is the same as its last copy gets no new
 row. In `M2a`, the comments of the control issue at step 8 are copied.
+**Decided here** (task `T-8r3u`): the App's own comment is read with no copy,
+as it is no human input and no decision rests on it; the step `batch` of
+Intake reads the Intake issue only to know whether its own comment of the batch
+is there ([`intake.md`](intake.md#the-comment-of-the-batch)). A comment of anyone
+else is copied first, as above.
 
 ### The Intake and control issues
 

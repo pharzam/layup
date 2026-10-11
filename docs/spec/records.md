@@ -486,7 +486,7 @@ kind      text       -    the kind of the gap (a rule G1 to G5, a kind of meanin
 start     int        -    the byte offset of its quote; `—` for a question with no quote (an absence, the intent form, an `unsupported` requirement of the draft)
 end       int        -    the byte offset after its quote; `—` exactly when start is `—`
 question  text       -    the question as the batch asks it
-asked     time       -    when the comment that asks it was posted
+asked     time       -    the time that the step read from the run's clock before it wrote the rows, which comes before the records commit and the post of the comment that asks it (task `T-8r3u`)
 asker     text       -    `layup psb check`, the session that wrote its source row, or `layup run` for the intent form and a follow-up
 answered  time       -    the time of the copy that holds its answer; `—` until it has one
 state     enum(asked|answered|closed|open)  -  asked until an answer; answered when it has one that no review read (each answer to a follow-up); closed or open as the review of the answers says, or open by code for an intent field still unparsed after the follow-up (intake.md, The review of the answers and the follow-up)
