@@ -175,8 +175,15 @@ The span check is code, in `internal/spec`. It passes when:
 4. **IDs:** the fact numbers are 1 to n, each once, in the order of the spans
    (**decided here**: ADR-0018 asks unique IDs; a number in the order of the
    text gives one form, as `F-0003` numbers its facts);
-5. **Classes:** each fact's class is one of the four, and a not-a-fact span has a
-   reason and no class.
+5. **Classes:** each fact's class is one of the four and it has no reason, and a
+   not-a-fact span has a reason and no class (the two pairings of the block
+   `spans`, each with `fact`; task `T-4ywt`).
+
+A rule reports only its own first broken place, so one table can fail more
+than one row. **Decided here** (task `T-4ywt`): the rule Text skips a span that
+breaks Bounds, which has no text of the file to compare, and Bounds reports it;
+a field `text` of `—`, which reads back as the empty value, is compared as the
+text `—`.
 
 It prints its table (the block `spec-check`): one row per rule, `pass` or `fail`,
 with the first broken place in `detail`.
