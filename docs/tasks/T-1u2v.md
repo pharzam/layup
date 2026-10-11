@@ -23,15 +23,18 @@ final by O-196.
 
 1. **The quote check:** `quoteAt` finds a quote once in the problem statement
    and gives its byte offsets; an empty quote, a tab, a line break, none or
-   more than one occurrence refuse it.
+   more than one occurrence refuse it, occurrences that overlap counted each
+   (`--` is twice in `---`, round 1).
 2. **The file of the session:** `sessionSchema` derives its form from the block
-   `meaning` by dropping the columns that code adds (`kind`, `quote`,
-   `question`); a kept key stays a key, for the later rows' blocks.
+   `meaning` by dropping the columns that code adds (`id`, `start`, `end`,
+   `session`), so the file holds `kind`, `quote` and `question`; a kept key
+   stays a key, for the later rows' blocks.
 3. **`Keep` of the step:** the quotes found, `M-NNN` in order, the offsets and
    the session ID, as `intake/meaning.tsv`; a refused quote refuses the file.
 4. **The step `meaning`** after `rule-gaps`: "done before" with the record; else
    the pair of `systems-architect` (none: `fail`, `pair`), one session of a
-   phase with its fixed prompt, and `done` with the count of the gaps. The
+   phase with its fixed prompt, and `done` with "N gaps of meaning, in
+   intake/meaning.tsv", in the form of the row `rule-gaps` (round 1, note 2). The
    enum of `run-steps` and its Go schema gained `meaning`.
 5. **The tests' worlds:** the world of `run_integration_test.go` makes its bare
    target with `HEAD` on `main`, takes a posted comment, and has a scripted

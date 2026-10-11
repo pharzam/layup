@@ -613,7 +613,7 @@ func TestTheStepMeaning(t *testing.T) {
 	allDone(t, "Start", w.start(cfg), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	rows := Restart(context.Background(), w.config("0.1.0-dev"))
 	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning")
-	if d := rows[len(rows)-1].Detail; d != "gaps of meaning: 1, in intake/meaning.tsv" {
+	if d := rows[len(rows)-1].Detail; d != "1 gaps of meaning, in intake/meaning.tsv" {
 		t.Errorf("the detail of meaning %q", d)
 	}
 	got := show(t, w.bare, "refs/heads/layup-records", "intake/meaning.tsv")
@@ -670,6 +670,10 @@ func TestTheStepMeaningFails(t *testing.T) {
 			}
 			if !strings.Contains(show(t, w.bare, "refs/heads/layup-records", "lease.tsv"), "\theld\n") {
 				t.Error("the lease is not held after a fail")
+			}
+			// With no pair, no session of systems-architect starts (round 1 of #218).
+			if c.meaning == "" && strings.Contains(show(t, w.bare, "refs/heads/layup-records", "sessions.tsv"), "\tsystems-architect\t") {
+				t.Error("a session of systems-architect started with no pair")
 			}
 		})
 	}

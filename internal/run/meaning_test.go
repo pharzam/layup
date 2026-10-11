@@ -38,6 +38,17 @@ func TestQuoteAt(t *testing.T) {
 			t.Errorf("%q: %v; want it refused, %q", c.quote, err, c.refused)
 		}
 	}
+	// Occurrences that overlap are each an occurrence: "--" is twice in
+	// "---", so it names no one place (round 1 of #218).
+	for _, c := range []struct{ psb, quote, refused string }{
+		{"A rule:\n---\n", "--", "occurs 2 times"},
+		{"....\n", "...", "occurs 2 times"},
+		{"it is is is so\n", "is is", "occurs 2 times"},
+	} {
+		if _, _, err := quoteAt([]byte(c.psb), c.quote); err == nil || !strings.Contains(err.Error(), c.refused) {
+			t.Errorf("%q in %q: %v; want it refused, %q", c.quote, c.psb, err, c.refused)
+		}
+	}
 }
 
 // The file of a session of the review of meaning is the block meaning without

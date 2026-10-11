@@ -300,7 +300,7 @@ func TestRunNewThenRestart(t *testing.T) {
 
 	again := w.run(t, binary, "run", "acme/target", "--host", ".")
 	if again.code != 0 || !strings.HasPrefix(again.stdout, "step\tresult\tdetail\nforge\tdone\t") || !strings.Contains(again.stdout, "\nrule-gaps\tdone\t") ||
-		!strings.HasSuffix(again.stdout, "\nmeaning\tdone\tgaps of meaning: 0, in intake/meaning.tsv\n") {
+		!strings.HasSuffix(again.stdout, "\nmeaning\tdone\t0 gaps of meaning, in intake/meaning.tsv\n") {
 		t.Fatalf("layup run TARGET: exit %d\n%s\n%s", again.code, again.stdout, again.stderr)
 	}
 	// The demo of row 38: the restart's step probe probes the scripted

@@ -48,12 +48,24 @@ func quoteAt(psb []byte, quote string) (int, int, error) {
 		return 0, 0, fmt.Errorf("the quote %q holds a line break", quote)
 	}
 	q := []byte(quote)
-	switch n := bytes.Count(psb, q); n {
+	// Each place counts, those that overlap too ("--" is twice in "---"),
+	// as a quote must name one place (round 1 of #218); bytes.Count does not.
+	n, first := 0, -1
+	for i := 0; i <= len(psb)-len(q); {
+		j := bytes.Index(psb[i:], q)
+		if j < 0 {
+			break
+		}
+		if n++; n == 1 {
+			first = i + j
+		}
+		i += j + 1
+	}
+	switch n {
 	case 0:
 		return 0, 0, fmt.Errorf("the quote %q occurs nowhere", quote)
 	case 1:
-		start := bytes.Index(psb, q)
-		return start, start + len(q), nil
+		return first, first + len(q), nil
 	default:
 		return 0, 0, fmt.Errorf("the quote %q occurs %d times", quote, n)
 	}
@@ -170,5 +182,5 @@ func (r *state) meaningStep(ctx context.Context) Step {
 	if err != nil {
 		return fail(name, err)
 	}
-	return done(name, fmt.Sprintf("gaps of meaning: %d, in intake/meaning.tsv", len(rows)))
+	return done(name, fmt.Sprintf("%d gaps of meaning, in intake/meaning.tsv", len(rows)))
 }

@@ -64,6 +64,10 @@ step `meaning` (07:08Z):
         run_integration_test.go:663: the last row {Name:rule-gaps Result:done Detail:3 rule gaps, in intake/psb.tsv}; want meaning fail with "pair: no admitted pair"
 ```
 
+The expectation of the refused quote's detail gained "row 1: " after this red
+(07:13Z), when the code's detail named the row of the file; the rule it tests
+is the same.
+
 The block `run-steps`: the e2e run of the binary, before the enum gained
 `meaning` (07:12Z): `layup: line 8, column "step": "meaning" is not a value of
 enum(...|phase|rule-gaps)`, exit 2; the Go schema and the block of `run.md`
@@ -98,3 +102,24 @@ a key, with a case of the block `spans`, and that mutant is replaced by
 At `2bc7861` with the documents (07:16Z to 07:19Z): `go build ./...`, `go vet
 ./...`, `go test ./...`, `go test -tags=integration ./...` and `go test
 -count=1 -tags=e2e ./...` pass, every package `ok`.
+
+## The fix of round 1 (2026-10-11)
+
+Finding 1: the quote check counted with `bytes.Count`, which counts no
+overlapping occurrence, so `--` in `---` passed as once. Three cases of
+`TestQuoteAt` first, red (07:30Z):
+
+```
+--- FAIL: TestQuoteAt (0.00s)
+    meaning_test.go:49: "--" in "A rule:\n---\n": <nil>; want it refused, "occurs 2 times"
+    meaning_test.go:49: "..." in "....\n": <nil>; want it refused, "occurs 2 times"
+    meaning_test.go:49: "is is" in "it is is is so\n": <nil>; want it refused, "occurs 2 times"
+```
+
+Then `quoteAt` counts each place, those that overlap too; green (07:31Z) at
+the unit, integration (`TestTheStepMeaning`, `TestTheStepMeaningFails`) and
+e2e (`TestRunNewThenRestart`) levels. With the step back to non-overlapping
+(`i += j + len(q)`), `TestQuoteAt` fails on `--` and `...`: caught. Note 2:
+the detail is "N gaps of meaning, in intake/meaning.tsv", in the form of the
+row `rule-gaps`. Note 6: the case with no route asserts that no session of
+`systems-architect` started.
