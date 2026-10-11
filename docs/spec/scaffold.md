@@ -446,10 +446,21 @@ phase 1.
 ## The adoption of a phase-1 target
 
 K41 (O-163): a target that phase 1 set up, whose records branch holds the
-Operator's commit, was given to `M2d`. Decision 1 of #265 is the Operator's,
-asked with severity normal: (a) no adoption, so `layup run` drives the
-Scaffold only on a target that its own Start made, or (b) a command `layup run
---adopt`. This section is written when the answer comes.
+Operator's commit, was given to `M2d`. **Decided by the Operator** (O-200,
+comment 6110498133 of #265, decision 1 (a)): `M2d` adopts no phase-1 target.
+`layup run` drives the Scaffold only on a target that its own Start made
+(`--new`, O-163); the restart refuses any other target at its step `clone`, as
+the records of Start (`start/start.tsv`) are missing (`run.md`, The restart).
+
+A target that phase 1 set up stays as phase 1 left it: its default branch's
+ruleset requires only its own gate jobs, so it merges with LAYUP absent
+(`records.md`, NFR-002 item 3); its records branch has no ruleset of the App.
+To bring it under `layup run`, the Operator starts again on an empty
+repository with `layup run --new`. Reason (decision 1 of #265): an adoption is a
+second path through each step of Start, Intake and the Scaffold, as no phase-1
+run made `start.tsv`, `approvers.tsv`, the copied answers or the records of
+Intake; and the first pilot showed what a second run on a set-up target costs
+(F-31, F-35, F-37, F-38).
 
 ## The findings of the first pilot
 
@@ -464,7 +475,7 @@ The plan hosts these findings in `M2d`
 | F-13: `commands.sh` is not fail-fast | `set -eu` ([The commands for the Operator](#the-commands-for-the-operator)), in both phases. |
 | F-16: a stale line that the setup does not flag | A known limit: no rule finds a stale line that check `adapted` does not flag without a guess. Its fix is a change of the baseline, or of the list of `adapted`, which is LAYUP's rule. |
 | F-19: two ruleset parameters that S13 does not set | Both set ([The ruleset of the default branch](#the-ruleset-of-the-default-branch)), in both phases. |
-| F-31, F-35: a second setup run on a target | By [the adoption](#the-adoption-of-a-phase-1-target): under `layup run` the Scaffold runs once per target (its steps are "done before" once their records exist), so a second run is only an adoption's. |
+| F-31, F-35: a second setup run on a target | No path in phase 2 ([the adoption](#the-adoption-of-a-phase-1-target), O-200): under `layup run` the Scaffold runs once per target (its steps are "done before" once their records exist), and no phase-1 target is adopted. |
 
 ## The steps of the Scaffold
 
@@ -495,6 +506,7 @@ change, as `M2c` did.
 
 | State | Result |
 | ----- | ------ |
+| A restart on a target that phase 1 set up (a `layup-records` with no `start/start.tsv`) | `clone` is `fail`, as today (`run.md`, The restart); no adoption (O-200) |
 | No marker in the pinned tree | `markers` writes a table with no row and starts no session; the batch asks `S01-stack` only in the Operator's block |
 | No admitted pair of `systems-architect` (for `markers`) or `product-owner` (for a prose session) | the step is `fail` (`pair`), as in Intake |
 | A proposal's quote that occurs nowhere, more than once, or holds a tab | the output of the session is refused; `markers` is `fail` |
@@ -526,7 +538,7 @@ target, the Operator's admin login for the apply) are asked in it.
 
 ## Not in M2d
 
-The commit statuses `layup/gates`, `layup/spec`, `layup/verify` and
+The adoption of a target that phase 1 set up (none, O-200). The commit statuses `layup/gates`, `layup/spec`, `layup/verify` and
 `layup/rules` themselves, the first merge after the setup and the tree rule
 that follows it (`M2e`); `layup audit` and its judgement of the activity
 (`M2f`); the activation of the `pending` kinds at the first bet (`M2f`); the

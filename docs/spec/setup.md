@@ -1281,7 +1281,9 @@ task `T-3jpx`, #81):
   `layup/verify`, `layup/rules`, §6): the Operator applies both at Scaffold 6
   with the commands that `layup run` writes, for a target that its own Start
   made (`M2d`, [`scaffold.md`](scaffold.md#req-003--the-rulesets-of-scaffold-6));
-  for a target that phase 1 set up, [the adoption](scaffold.md#the-adoption-of-a-phase-1-target).
+  a target that phase 1 set up is not adopted (O-200,
+  [`scaffold.md`](scaffold.md#the-adoption-of-a-phase-1-target)): it keeps the
+  ruleset of phase 1.
 - The activation of the `pending` kinds at the first bet (§6): phase 2. The
   tool of a kind of the Go entry is `go` or a program of the runner (The stack
   catalog, task `T-c06a`).

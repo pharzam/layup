@@ -12,8 +12,9 @@ The forge: [`forge.md`](forge.md). Task `T-zck8` (#123) wrote it.
 
 **Decided by the Operator** (O-163, #123): `M2a` specifies an empty repository
 only (`--new`). A target that phase 1 set up, whose records branch already holds
-the Operator's commit (K41), is adopted in milestone `M2d`, where `layup run`
-drives the Scaffold ([`scaffold.md`](scaffold.md#the-adoption-of-a-phase-1-target)).
+the Operator's commit (K41), was given to milestone `M2d`, where `layup run`
+drives the Scaffold; the Operator decided there that none is adopted (O-200,
+[`scaffold.md`](scaffold.md#the-adoption-of-a-phase-1-target)).
 
 ## The command
 
@@ -357,7 +358,7 @@ with the same title.
 
 ### Not in M2a
 
-The adoption of a phase-1 target (`M2d`, O-163); the Scaffold, the rulesets, the
+The adoption of a phase-1 target (none: O-200, `M2d`); the Scaffold, the rulesets, the
 probes and the forge read-back of the rules (`M2d`, [`scaffold.md`](scaffold.md)); the gap check and the
 answers (`M2c`); role sessions, the harness probe, admission and the harness
 credential (`M2b`, K40: [`session.md`](session.md)); the commit status `layup/gates` (`M2e`); the dead-man
