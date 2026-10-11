@@ -67,3 +67,23 @@ At `0a45fde`, with the documents in the tree and not yet committed (12:40Z to
 12:44Z): `go build ./...`, `go vet ./...`, `go test ./...`, `go test
 -tags=integration ./...` and `go test -count=1 -tags=e2e ./...` pass, every
 package `ok`.
+
+## The fix of round 1 (2026-10-11)
+
+Finding 1: with `budget.tsv` not yet written, the pair rule was skipped when
+another field was still unparsed. The case of `TestBudgetAfterFollowUp` with
+`B` 12.0, `U` 11.0 and the hours unparsed after the follow-up, and the case
+of a written `budget.tsv` with no row of `B` or `U` (note 2, a panic), went
+red first (12:55Z, the panic's trace cut):
+
+```
+--- FAIL: TestBudgetAfterFollowUp (0.00s)
+    followanswers_test.go:86: not yet written, B not below U and the hours unparsed: "", open ["Q-004"]; want "", open "Q-002 Q-003 Q-004"
+panic: runtime error: invalid memory address or nil pointer dereference [recovered, repanicked]
+```
+
+Then the pair rule holds whatever the state of the hours, and a `budget.tsv`
+with no `B` or `U` is kept as it was, its field asked again `open`; green
+(12:56Z) at the unit level and for the three integration tests of the step.
+Note 3: a unit case of a written `budget.tsv` with no field asked again, kept as
+it was.

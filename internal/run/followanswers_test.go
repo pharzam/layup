@@ -61,6 +61,9 @@ func TestBudgetAfterFollowUp(t *testing.T) {
 			fuAnswers("Q-002", "5.0", "Q-003", "10.0", "Q-004", "forty", "Q-005", "forty again"), nil, "", "Q-004"},
 		{"not yet written, B not below U after the follow-up", fuQuestions("Q-002", "Q-003"),
 			fuAnswers("Q-002", "10.0", "Q-003", "9.5", "Q-004", "40.0", "Q-005", "12.0", "Q-006", "11.0"), nil, "", "Q-002 Q-003"},
+		// The pair rule holds whatever the state of the hours (round 1 of #225).
+		{"not yet written, B not below U and the hours unparsed", fuQuestions("Q-002", "Q-003", "Q-004"),
+			fuAnswers("Q-002", "10.0", "Q-003", "9.5", "Q-004", "forty", "Q-005", "12.0", "Q-006", "11.0", "Q-007", "forty again"), nil, "", "Q-002 Q-003 Q-004"},
 		{"not yet written, a field asked again with no answer", fuQuestions("Q-004"),
 			fuAnswers("Q-002", "5.0", "Q-003", "10.0"), nil, "", "Q-004"},
 		{"written, the hours asked again and replaced", fuQuestions("Q-004"),
@@ -69,6 +72,13 @@ func TestBudgetAfterFollowUp(t *testing.T) {
 		{"written, an answer that does not parse", fuQuestions("Q-004"),
 			fuAnswers("Q-002", "5.0", "Q-003", "10.0", "Q-004", "40.0", "Q-005", "fifty"), written,
 			"band.B 5.0 Q-002; band.U 10.0 Q-003; appetite.hours 40.0 Q-004", "Q-004"},
+		{"written, no field of the intent form asked again", fuQuestions("Q-001"),
+			fuAnswers("Q-002", "5.0", "Q-003", "10.0", "Q-004", "40.0", "Q-005", "Go"), written,
+			"band.B 5.0 Q-002; band.U 10.0 Q-003; appetite.hours 40.0 Q-004", ""},
+		// A budget.tsv with no B or U (no writer of LAYUP gives one) is kept as
+		// it was, and the field asked again is open.
+		{"written, a budget of one row", fuQuestions("Q-004"),
+			fuAnswers("Q-005", "50.0"), written[2:], "appetite.hours 40.0 Q-004", "Q-004"},
 		{"written, a replacement that leaves B not below U", fuQuestions("Q-003"),
 			fuAnswers("Q-002", "5.0", "Q-003", "10.0", "Q-004", "40.0", "Q-005", "4.0"), written,
 			"band.B 5.0 Q-002; band.U 10.0 Q-003; appetite.hours 40.0 Q-004", "Q-003"},

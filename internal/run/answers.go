@@ -39,9 +39,9 @@ func parseAnswer(line string) (string, string, bool) {
 	return m[1], m[2], true
 }
 
-// collectAnswers gives the rows of intake/answers.tsv of the batch (the rows
-// of questions.tsv as records.ReadQuestions gives them), in the order of the
-// questions, and the blocks that still wait. A copy counts when it is of the
+// collectAnswers gives the rows of intake/answers.tsv of the questions given
+// (the batch's, or the follow-up's, as records.ReadQuestions gives them), in
+// the order of the questions, and the blocks that still wait. A copy counts when it is of the
 // issue, made after the batch's asked (strictly, by its created), and a human
 // decision of an approver in the role of the question's block (Decision: a
 // first copy only, so an edit answers nothing; decided here, task T-hxb9, with

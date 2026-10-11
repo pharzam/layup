@@ -422,7 +422,7 @@ in `intake/answers.tsv`; else it copies the comments of the Intake issue (but
 the App's own) and reads the answers to the follow-up by the rule of the step
 `answers`, from first copies after the follow-up's `asked`. With `budget.tsv`
 not yet written, a `B` not below `U` after the follow-up leaves both questions
-`open`. With `budget.tsv` written, a replacement holds only when the three values
+`open`, whatever the state of the hours. With `budget.tsv` written, a replacement holds only when the three values
 still parse with `B` below `U`; else `budget.tsv` stays as it was, and the
 questions of the fields asked again are `open`, as is a field whose answer to
 the follow-up does not parse. The answers, their states, the questions set

@@ -53,9 +53,9 @@ func budgetAfterFollowUp(questions, answers, budget [][]string) ([][]string, []s
 	pick := map[string]value{}
 	var open []string
 	below := func() bool {
-		b, _ := new(big.Rat).SetString(pick["band.B"].v)
-		u, _ := new(big.Rat).SetString(pick["band.U"].v)
-		return b.Cmp(u) < 0
+		b, okB := new(big.Rat).SetString(pick["band.B"].v)
+		u, okU := new(big.Rat).SetString(pick["band.U"].v)
+		return okB && okU && b.Cmp(u) < 0
 	}
 	rows := func() [][]string {
 		var out [][]string
@@ -78,18 +78,22 @@ func budgetAfterFollowUp(questions, answers, budget [][]string) ([][]string, []s
 				open = append(open, batch[f])
 			}
 		}
-		if open != nil {
-			return nil, open
+		// The pair rule holds whatever the state of the hours: a B not below
+		// U is an unparsed answer of both (round 1 of #225).
+		_, okB := pick["band.B"]
+		_, okU := pick["band.U"]
+		if okB && okU && !below() {
+			open = append(open, batch["band.B"], batch["band.U"])
 		}
-		if !below() {
-			return nil, []string{batch["band.B"], batch["band.U"]}
+		if open != nil {
+			slices.SortFunc(open, func(a, b string) int { return strings.Compare(a, b) })
+			return nil, slices.Compact(open)
 		}
 		return rows(), nil
 	}
 	for _, r := range budget {
 		pick[r[0]] = value{r[1], r[2]}
 	}
-	before := rows()
 	var asked []string
 	for _, f := range intentFields {
 		fu, ok := follow[batch[f]]
@@ -104,7 +108,7 @@ func budgetAfterFollowUp(questions, answers, budget [][]string) ([][]string, []s
 		}
 	}
 	if !below() {
-		return before, asked
+		return budget, asked // kept as it was (decided here, task T-tmm2)
 	}
 	return rows(), open
 }
