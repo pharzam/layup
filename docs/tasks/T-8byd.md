@@ -38,3 +38,35 @@ goal count is 2, final by O-196.
    `traceability.md`.
 
 **Tests:** [`test-runs.md`](../../runs/T-8byd/test-runs.md).
+
+## Review rounds
+
+The record is a comment on #227. Round 1 (Claude Fable 5.1, effort `xhigh`, a
+fresh read-only session in a clone at `15130c2`, cycle 0, the cap): `nothing
+material in scope`, three notes. Notes 1 and 3 (a line of the plan not wrapped;
+the §12 cells naming no output of the check for `M2c`) are #264; note 2 (the
+green run came before the red runs) is in the test record, with its reason.
+
+## Verdict
+
+Delivered: the review of the release of `M2c`: `holds` for REQ-015 and REQ-017
+over the code of `main` at `0b881fa` (phase 1, `M2a`, `M2b` and `M2c`), by the
+check, unchanged, and by a review of a model that wrote none of it. The review
+ended by decay at cycle 0 of cap 1. The diff against `0b881fa` is inside 500
+lines over 11 files. Next: row 49b, the demo, whose inputs the Operator gives
+(comment 6109884732 on #228).
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). UTC; reviewers' tokens are `modelUsage`;
+the author's are not reported.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan | reasoning | Claude Opus 5.5 | not reported | not reported | 2026-10-11 13:45 to 13:46 (the claim to the post) |
+| The plan review | reasoning | Claude Fable 5.1 | `xhigh` | 790,608 (USD 4.50) | 6 min 37 s |
+| The check and the red runs | execution | Claude Opus 5.5 | not reported | not reported | 13:46 to 13:54 |
+| The release review (the uat) | reasoning | Claude Fable 5.1 | `xhigh` | 2,185,023 (USD 10.31) | 8 min 39 s |
+| The documents | execution | Claude Opus 5.5 | not reported | not reported | 14:03 to 14:08 |
+| Round 1 | reasoning | Claude Fable 5.1 | `xhigh` | 611,564 (USD 4.11) | 9 min 10 s |
+| The close-out | execution | Claude Opus 5.5 | not reported | not reported | 14:18 to 14:18 |
