@@ -10,9 +10,7 @@ plan review). The `pre-commit` hook runs the unit level, so the red is recorded
 here and the tests land with the code. `go test -run
 'TestSpecCheck|TestTheUsageOfLayupListsItsCommands' ./internal/cli/` and `go
 test -count=1 -tags=e2e -run TestSpecCheck ./cmd/layup/` (the lines cut at 250
-characters, their trailing spaces taken out; the usage elided; the line
-numbers are of a form of `spec_e2e_test.go` six lines shorter than the one
-committed, whose assertions are the same, at lines 47, 52, 82 and 102):
+characters, their trailing spaces taken out; the usage elided):
 
 ```
 --- FAIL: TestTheUsageOfLayupListsItsCommands (0.00s)
