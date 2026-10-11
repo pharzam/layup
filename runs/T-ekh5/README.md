@@ -54,7 +54,8 @@ off, as for `M2b` ([`runs/T-x7cs/README.md`](../T-x7cs/README.md)).
   - `routing.tsv` gains `systems-architect` and `product-owner` (position 1
     `claude` `claude-opus-5-5`, 2 `devin` `swe-2-high`), and `qa-engineer`
     (1 `devin`, 2 `claude`), all at the tier `reasoning`.
-  - The cap of `claude` in `harnesses.tsv` is 5.00 (O-201).
+  - The cap of `claude` in `harnesses.tsv` is 5.00 (O-201), and its `wall` 30
+    minutes (O-203, at 15:56Z).
   - `forge.tsv` is unchanged; its `watch_slug` is `—`.
 
   The credential columns hold paths, not secrets.
