@@ -172,8 +172,9 @@ func newWorld(t *testing.T) *world {
 	// probe as probeHarness does; and a session of a phase with the file of
 	// bin/ of its output's name, which a test may write (bin/meaning.tsv: no
 	// gap), else, for the numbering, a span table that covers the problem
-	// statement, one fact per line that is not empty (row 44), and for the
-	// draft one requirement per need fact of the span table (row 45a).
+	// statement, one fact per line that is not empty (row 44), for the draft
+	// one requirement per need fact of the span table (row 45a), and for the
+	// completeness review no item (row 45b).
 	bin := filepath.Join(w.dir, "bin")
 	os.MkdirAll(bin, 0o755)
 	os.WriteFile(filepath.Join(bin, "version"), []byte("#!/bin/sh\necho 1.0.0\n"), 0o755)
@@ -192,6 +193,8 @@ case "$p" in
 	sp=$(printf '%s\n' "$p" | sed -n 's/^The span table: //p')
 	if [ -f "$f" ]; then
 		cat "$f" > "$out"
+	elif [ "$(basename "$out")" = coverage.tsv ]; then
+		printf 'kind\tfact\trequirement\tquestion\n' > "$out"
 	elif [ "$(basename "$out")" = draft.tsv ]; then
 		LC_ALL=C awk -F '\t' 'BEGIN { printf "kind\tstatement\tcovers\tcriterion\n" }
 			NR > 1 && $4 == "need" { printf "requirement\tThe statement of fact %s.\t%s\tThe criterion of fact %s.\n", $3, $3, $3 }' "$sp" > "$out"
@@ -221,10 +224,18 @@ func (w *world) config(version string) Config {
 	return Config{Owner: "acme", Name: "target", Dir: w.dir, PSB: []byte("# The problem\n\nbyte for byte\n"), Vision: []byte("# The vision\n"),
 		Operator: "pharzam", IdeaOwner: "carol", Plan: "free", IntakeCap: "50.0,8.0", LeaseH: 5, WatchT: 1,
 		Register: reg, Harnesses: [][]string{{"claude", "10.0", "60", filepath.Join(w.dir, "bin", "harness"), "stdin", filepath.Join(w.dir, "bin", "version"),
-			"", "", "LAYUP-TEST-RULES.md", "", "none", "subscription", ""}, {"devin", "", "30"}},
-		Models:  [][]string{{"claude", "m1", "1000000", "https://example.invalid", "2026-10-09T12:00:00Z", "yes", ""}},
-		Routing: [][]string{{"systems-architect", "reasoning", "1", "claude", "m1"}, {"product-owner", "reasoning", "1", "claude", "m1"}},
-		Forge:   adapter, Clock: clock,
+			"", "", "LAYUP-TEST-RULES.md", "", "none", "subscription", ""},
+			// devin runs the same scripts, a second harness for the
+			// completeness review (row 45b).
+			{"devin", "", "30", filepath.Join(w.dir, "bin", "harness"), "stdin", filepath.Join(w.dir, "bin", "version"),
+				"", "", "LAYUP-TEST-RULES.md", "", "none", "subscription", ""}},
+		Models: [][]string{{"claude", "m1", "1000000", "https://example.invalid", "2026-10-09T12:00:00Z", "yes", ""},
+			{"devin", "m2", "1000000", "https://example.invalid", "2026-10-09T12:00:00Z", "yes", ""}},
+		Routing: [][]string{{"systems-architect", "reasoning", "1", "claude", "m1"}, {"product-owner", "reasoning", "1", "claude", "m1"},
+			// The role's first pair is on the draft's harness, which the
+			// review passes over.
+			{"qa-engineer", "reasoning", "1", "claude", "m1"}, {"qa-engineer", "reasoning", "2", "devin", "m2"}},
+		Forge: adapter, Clock: clock,
 		Progress: progress, RunID: "0123456789abcdef", HostName: "host-1", Version: version,
 		Baseline: "file://" + w.baseline, LayupPin: "a95965534b14b0bf14ad74da0c9a45b5f4aedf88"}
 }
@@ -360,7 +371,7 @@ func TestARestartWithAnotherVersionFailsAtVersion(t *testing.T) {
 	}
 	// The same version: the lease is released, so it is taken at once; each
 	// step of Start is done.
-	allDone(t, "the restart", Restart(context.Background(), w.config("0.1.0-dev")), "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft")
+	allDone(t, "the restart", Restart(context.Background(), w.config("0.1.0-dev")), "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness")
 }
 
 // A run that stopped at opening: the restart takes the lease over from the
@@ -564,7 +575,13 @@ func TestARestartWithAHarnessRegisterThatChanged(t *testing.T) {
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	cfg = w.config("0.1.0-dev")
 	cfg.Harnesses = cfg.Harnesses[:1] // devin removed
-	allDone(t, "the restart with a harness lost", Restart(context.Background(), cfg), "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft")
+	// With one admitted harness left, the completeness review has no pair on
+	// another harness (row 45b): the restart stops there.
+	lost := Restart(context.Background(), cfg)
+	allDone(t, "the restart with a harness lost", lost[:len(lost)-1], "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft")
+	if last := lost[len(lost)-1]; last.Name != "completeness" || last.Result != "fail" || last.Detail != "not run: no admitted pair on another harness" {
+		t.Errorf("the last row of the restart with a harness lost %+v; want completeness fail, not run", last)
+	}
 }
 
 // The step rule-gaps (row 43a, task T-qk66, #217): after a complete Start, the
@@ -580,8 +597,8 @@ func TestTheStepRuleGaps(t *testing.T) {
 	cfg = w.config("0.1.0-dev")
 	cfg.Step = func(i, n int, name string) { progress = append(progress, fmt.Sprintf("%d/%d %s", i, n, name)) }
 	rows := Restart(context.Background(), cfg)
-	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft")
-	if want := []string{"1/6 forge", "2/6 clone", "3/10 version", "4/10 lease", "5/10 probe", "6/10 rule-gaps", "7/10 meaning", "8/10 numbering", "9/10 spans", "10/10 draft"}; strings.Join(progress, ", ") != strings.Join(want, ", ") {
+	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness")
+	if want := []string{"1/6 forge", "2/6 clone", "3/11 version", "4/11 lease", "5/11 probe", "6/11 rule-gaps", "7/11 meaning", "8/11 numbering", "9/11 spans", "10/11 draft", "11/11 completeness"}; strings.Join(progress, ", ") != strings.Join(want, ", ") {
 		t.Errorf("the progress %q, want %q", progress, want)
 	}
 	// What layup psb check prints on the same file (internal/cli/cli.go):
@@ -627,7 +644,7 @@ func TestTheStepMeaning(t *testing.T) {
 	cfg.PSB = []byte("# The problem\n\nThe service is fast.\n")
 	allDone(t, "Start", w.start(cfg), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	rows := Restart(context.Background(), w.config("0.1.0-dev"))
-	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft")
+	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness")
 	if d := rowOf(rows, "meaning").Detail; d != "1 gaps of meaning, in intake/meaning.tsv" {
 		t.Errorf("the detail of meaning %q", d)
 	}
@@ -712,7 +729,7 @@ func TestTheStepsNumberingAndSpans(t *testing.T) {
 	w := newWorld(t)
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	rows := Restart(context.Background(), w.config("0.1.0-dev"))
-	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft")
+	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness")
 	if n, s := rowOf(rows, "numbering").Detail, rowOf(rows, "spans").Detail; n != "2 spans, 2 facts, in spec/spans.tsv" || s != "the span check passed, in spec/check.tsv" {
 		t.Errorf("the details %q and %q", n, s)
 	}
@@ -769,7 +786,7 @@ func TestAFailedSpanCheckRunsNumberingAgain(t *testing.T) {
 	}
 	os.Remove(bad) // the next session covers the file
 	again := Restart(context.Background(), w.config("0.1.0-dev"))
-	allDone(t, "the restart after the fail", again, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft")
+	allDone(t, "the restart after the fail", again, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness")
 	if n := rowOf(again, "numbering").Detail; n != "2 spans, 2 facts, in spec/spans.tsv" {
 		t.Errorf("numbering after a failed check: %q; want a new session's spans", n)
 	}
@@ -807,7 +824,7 @@ func TestTheStepDraft(t *testing.T) {
 	w := newWorld(t)
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	rows := Restart(context.Background(), w.config("0.1.0-dev"))
-	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft")
+	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness")
 	if d := rowOf(rows, "draft").Detail; d != "2 rows, in spec/draft.tsv" {
 		t.Errorf("the detail of draft %q", d)
 	}
@@ -839,5 +856,79 @@ func TestADraftThatCoversNoFactIsRefused(t *testing.T) {
 	}
 	if strings.Contains(gitOut(t, w.bare, "ls-tree", "-r", "--name-only", "refs/heads/layup-records"), "spec/draft.tsv") {
 		t.Error("a refused draft is a record")
+	}
+}
+
+// The completeness review (row 45b, task T-0mey, #221): its pair is the first
+// admitted pair of qa-engineer whose harness is not the draft's, even when the
+// role's first pair is on that harness; its file is intake/coverage.tsv, and a
+// second restart finds the record and runs nothing.
+func TestTheStepCompleteness(t *testing.T) {
+	w := newWorld(t)
+	os.WriteFile(filepath.Join(w.dir, "bin", "coverage.tsv"), []byte("kind\tfact\trequirement\tquestion\nclass\t1\t—\tIs fact 1 a need?\n"), 0o644)
+	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
+	rows := Restart(context.Background(), w.config("0.1.0-dev"))
+	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness")
+	if d := rowOf(rows, "completeness").Detail; d != "1 items, in intake/coverage.tsv" {
+		t.Errorf("the detail of completeness %q", d)
+	}
+	sessions := show(t, w.bare, "refs/heads/layup-records", "sessions.tsv")
+	if !strings.Contains(sessions, "\tqa-engineer\tdevin\t1.0.0\tm2\t") || strings.Contains(sessions, "\tqa-engineer\tclaude\t") ||
+		!strings.Contains(sessions, "\tproduct-owner\tclaude\t") {
+		t.Errorf("the review is not on devin, the harness that did not number or draft:\n%s", sessions)
+	}
+	if got := show(t, w.bare, "refs/heads/layup-records", "intake/coverage.tsv"); !strings.HasPrefix(got, "id\tkind\tfact\trequirement\tquestion\tsession\nC-001\tclass\t1\t—\tIs fact 1 a need?\tS-") {
+		t.Errorf("intake/coverage.tsv:\n%s", got)
+	}
+	again := Restart(context.Background(), w.config("0.1.0-dev"))
+	if c := rowOf(again, "completeness"); c.Result != "done" || c.Detail != "done before" {
+		t.Errorf("the second restart's row %+v; want completeness done before", c)
+	}
+}
+
+// The demo of row 45b: with no admitted pair of qa-engineer on another
+// harness, completeness is fail, the last row (no batch), no session of
+// qa-engineer starts, and the lease is held.
+func TestTheCompletenessReviewWithNoOtherHarness(t *testing.T) {
+	for _, c := range []struct {
+		name   string
+		routes int
+	}{
+		{"qa-engineer on the draft's harness only", 3},
+		{"no route of qa-engineer at all", 2}, // round 1 of #221, note 3
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			w := newWorld(t)
+			allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
+			cfg := w.config("0.1.0-dev")
+			cfg.Routing = cfg.Routing[:c.routes]
+			rows := Restart(context.Background(), cfg)
+			if last := rows[len(rows)-1]; last.Name != "completeness" || last.Result != "fail" || last.Detail != "not run: no admitted pair on another harness" {
+				t.Fatalf("the last row %+v; want completeness fail, not run", last)
+			}
+			if strings.Contains(show(t, w.bare, "refs/heads/layup-records", "sessions.tsv"), "\tqa-engineer\t") {
+				t.Error("a session of qa-engineer started")
+			}
+			if !strings.Contains(show(t, w.bare, "refs/heads/layup-records", "lease.tsv"), "\theld\n") {
+				t.Error("the lease is not held after the fail")
+			}
+		})
+	}
+}
+
+// A review's file that names a fact of no span is refused: completeness is
+// fail, naming the session, and no intake/coverage.tsv is committed.
+func TestACoverageFileThatNamesNoFactIsRefused(t *testing.T) {
+	w := newWorld(t)
+	os.WriteFile(filepath.Join(w.dir, "bin", "coverage.tsv"), []byte("kind\tfact\trequirement\tquestion\nuncovered\t9\t—\tWhat of 9?\n"), 0o644)
+	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
+	rows := Restart(context.Background(), w.config("0.1.0-dev"))
+	last := rows[len(rows)-1]
+	if last.Name != "completeness" || last.Result != "fail" || !strings.HasPrefix(last.Detail, "the session S-") ||
+		!strings.HasSuffix(last.Detail, ": refused file: row 1: the fact 9 is no fact of spec/spans.tsv") {
+		t.Fatalf("the last row %+v; want completeness fail, naming the session and the row", last)
+	}
+	if strings.Contains(gitOut(t, w.bare, "ls-tree", "-r", "--name-only", "refs/heads/layup-records"), "intake/coverage.tsv") {
+		t.Error("a refused file is a record")
 	}
 }

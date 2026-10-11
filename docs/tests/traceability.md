@@ -151,6 +151,8 @@ the first.
 | `TestKeepOfNumbering` (`internal/run/numbering_test.go`) | unit | REQ-012 | F-0003#51 | — | ADR-0018 | T-hiv9 | green |
 | `TestTheStepDraft`, `TestADraftThatCoversNoFactIsRefused` (`internal/run/run_integration_test.go`) | integration | REQ-012 | F-0003#51 | — | ADR-0018 | T-2et0 | green |
 | `TestKeepOfDraft` (`internal/run/draft_test.go`) | unit | REQ-012 | F-0003#51 | — | ADR-0018 | T-2et0 | green |
+| `TestTheStepCompleteness`, `TestTheCompletenessReviewWithNoOtherHarness`, `TestACoverageFileThatNamesNoFactIsRefused`, and the leg "a harness lost" of `TestARestartWithAHarnessRegisterThatChanged` (`internal/run/run_integration_test.go`) | integration | REQ-012, REQ-013 | F-0003#51, F-0003#52 | — | ADR-0018 | T-0mey | green |
+| `TestKeepOfCompleteness` (`internal/run/completeness_test.go`) | unit | REQ-012 | F-0003#51 | — | ADR-0018 | T-0mey | green |
 | `TestASessionOfAPhaseCommitsItsRecordsAndItsTelemetryRow`, `TestAnOutputFileThatIsRefusedIsNoRecord`, `TestNoAdmittedPairStartsNoSession`, `TestARefusedStartOfASessionOfAPhaseIsNoRecord`, `TestACommentThatFailsKeepsTheReasonOfTheSession` (`internal/run/phase_integration_test.go`) | integration | REQ-001, REQ-012, NFR-001 | F-0003#41, F-0003#51 | — | — | T-gmey | green |
 | `TestMakeInput`, `TestReadOutput` (`internal/session/phase_integration_test.go`) | integration | REQ-001, REQ-012 | F-0003#41, F-0003#51 | — | — | T-gmey | green |
 | `TestMilestoneCap` (`internal/ledger/budget_test.go`); `TestTheCapOfMilestoneZeroDrawsNoSession` (`internal/run/phase_test.go`); the rows of `CommitTime` in `TestEachCallRunsItsVerb` and `TestTheOutputIsRead` (`internal/git/git_test.go`) | unit | REQ-011, NFR-001 | F-0003#50 | — | — | T-ybd5 | green |
