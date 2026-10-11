@@ -70,7 +70,7 @@ can leave up to twenty seconds with no line. Reason: a Start ends; the phase
 loop of later milestones adds its own rows, so the one-table rule holds.
 
 ```tsv-schema run-steps stdout
-step enum(forge|plan|baseline|root-push|read-back|records|issues|watch|clone|version|lease|probe|phase|rule-gaps) key the step, in the order of the two lists below
+step enum(forge|plan|baseline|root-push|read-back|records|issues|watch|clone|version|lease|probe|phase|rule-gaps|meaning) key the step, in the order of the two lists below
 result enum(done|fail) - `done`, or `fail` with its reason in `detail`
 detail text - one line: what the step found, with no time, no path of the host and no SHA of a records commit (a records commit holds its time, so its SHA differs on a repeat)
 ```
@@ -336,9 +336,10 @@ check of `M2c` posts there.
 | A host directory with no `registers/harnesses.tsv` | exit 2, "a missing or unreadable file" ([`README.md`](README.md#commands)) |
 | `--new` after an earlier Start that stopped before step 6, on the same host | the run removes `DIR/roots/OWNER/NAME/` and `DIR/targets/OWNER/NAME/` and starts again (step 3) |
 
-**Known limit:** a step that fails after step 6 for a reason other than a lost
-lease leaves the lease `held`, so the next restart waits `3 × lease.H` before it
-takes the lease over (task `T-ax3r`).
+**Known limit:** a step that fails after step 6 of Start, or after the row
+`lease` of a restart (the steps of Intake among them, task `T-1u2v`), for a
+reason other than a lost lease leaves the lease `held`, so the next restart
+waits `3 × lease.H` before it takes the lease over (task `T-ax3r`).
 
 **Known limit:** a run that stops after it opens an issue and before the records
 commit of its number leaves an issue that the records do not name; the restart

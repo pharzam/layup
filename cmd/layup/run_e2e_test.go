@@ -180,13 +180,19 @@ func newRunWorld(t *testing.T) runWorld {
 			"fake\t—\t1\t" + filepath.Join(w.dir, "bin", "harness") + "\tstdin\t" + filepath.Join(w.dir, "bin", "version") + "\t—\t—\tLAYUP-TEST-RULES.md\t—\tnone\tsubscription\t—\n",
 		"registers/models.tsv": "harness\tmodel\tcontext\tsource\tdate\tuse\treason\n" +
 			"fake\tm1\t1000000\thttps://example.invalid/models\t2026-10-09T12:00:00Z\tyes\t—\n",
-		"registers/routing.tsv": "role\ttier\tposition\tharness\tmodel\ndeveloper\texecution\t1\tfake\tm1\n",
+		"registers/routing.tsv": "role\ttier\tposition\tharness\tmodel\ndeveloper\texecution\t1\tfake\tm1\nsystems-architect\treasoning\t1\tfake\tm1\n",
 		"bin/version":           "#!/bin/sh\necho 1.0.0\n",
 		"bin/harness": `#!/bin/sh
 p=$(cat)
-result=$(printf '%s\n' "$p" | sed -n 's/^Write one file, \(.*\), of tab-separated values, with the header line$/\1/p')
-token=$(printf '%s\n' "$p" | sed -n 's/.*one row "token<TAB>\([0-9a-f]*\)".*/\1/p')
-printf 'kind\tvalue\ntoken\t%s\nfile\tAGENTS.md\n' "$token" > "$result"
+case "$p" in
+"This is a probe"*)
+	result=$(printf '%s\n' "$p" | sed -n 's/^Write one file, \(.*\), of tab-separated values, with the header line$/\1/p')
+	token=$(printf '%s\n' "$p" | sed -n 's/.*one row "token<TAB>\([0-9a-f]*\)".*/\1/p')
+	printf 'kind\tvalue\ntoken\t%s\nfile\tAGENTS.md\n' "$token" > "$result" ;;
+*)
+	out=$(printf '%s\n' "$p" | sed -n 's/^The output file: //p')
+	printf 'kind\tquote\tquestion\n' > "$out" ;;
+esac
 `,
 		"psb.md": "# The problem\n",
 	}
@@ -293,7 +299,8 @@ func TestRunNewThenRestart(t *testing.T) {
 	}
 
 	again := w.run(t, binary, "run", "acme/target", "--host", ".")
-	if again.code != 0 || !strings.HasPrefix(again.stdout, "step\tresult\tdetail\nforge\tdone\t") || !strings.Contains(again.stdout, "\nrule-gaps\tdone\t") {
+	if again.code != 0 || !strings.HasPrefix(again.stdout, "step\tresult\tdetail\nforge\tdone\t") || !strings.Contains(again.stdout, "\nrule-gaps\tdone\t") ||
+		!strings.HasSuffix(again.stdout, "\nmeaning\tdone\t0 gaps of meaning, in intake/meaning.tsv\n") {
 		t.Fatalf("layup run TARGET: exit %d\n%s\n%s", again.code, again.stdout, again.stderr)
 	}
 	// The demo of row 38: the restart's step probe probes the scripted
@@ -304,7 +311,10 @@ func TestRunNewThenRestart(t *testing.T) {
 	if out, err := gitRun(w.bare, "show", "refs/heads/layup-records:harnesses.tsv"); err != nil || !strings.Contains(out, "\tfake\t1.0.0\tm1\tpassed\t—\tAGENTS.md\t") {
 		t.Errorf("harnesses.tsv of the records branch: %v\n%s", err, out)
 	}
-	if len(w.forge.posted) != 1 || !strings.HasPrefix(w.forge.posted[0], "S-") || !strings.Contains(w.forge.posted[0], ": probe of fake 1.0.0: passed\n") {
+	// The step meaning (row 43b) runs one session of systems-architect, which
+	// posts its own comment after the probe's.
+	if len(w.forge.posted) != 2 || !strings.HasPrefix(w.forge.posted[0], "S-") || !strings.Contains(w.forge.posted[0], ": probe of fake 1.0.0: passed\n") ||
+		!strings.HasSuffix(w.forge.posted[1], ": systems-architect session of meaning: done\n") {
 		t.Errorf("the comments on the control issue %q", w.forge.posted)
 	}
 	// The same bytes on a repeat in a new world, as the first run changes
@@ -316,8 +326,8 @@ func TestRunNewThenRestart(t *testing.T) {
 	// A second restart in the same world probes none: the last probe at the
 	// version passed.
 	third := w.run(t, binary, "run", "acme/target", "--host", ".")
-	if third.code != 0 || !strings.Contains(third.stdout, "\nprobe\tdone\tprobed and passed 0, probed and failed 0, skipped 0\n") || len(w.forge.posted) != 1 ||
-		!strings.HasSuffix(third.stdout, "\nrule-gaps\tdone\tdone before\n") {
+	if third.code != 0 || !strings.Contains(third.stdout, "\nprobe\tdone\tprobed and passed 0, probed and failed 0, skipped 0\n") || len(w.forge.posted) != 2 ||
+		!strings.Contains(third.stdout, "\nrule-gaps\tdone\tdone before\n") || !strings.HasSuffix(third.stdout, "\nmeaning\tdone\tdone before\n") {
 		t.Errorf("layup run TARGET again: exit %d, %d comments\n%s", third.code, len(w.forge.posted), third.stdout)
 	}
 }
