@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -237,6 +238,22 @@ func RootCommits(dir, rev string) ([]string, error) {
 func Message(dir, rev string) (string, error) {
 	out, err := call(dir, environ(), "log", "-1", "--format=%B", "--end-of-options", rev, "--")
 	return strings.TrimRight(string(out), "\n"), err
+}
+
+// CommitTime gives the committer time of the commit rev, in UTC, read as
+// seconds since the epoch (%ct), as the form of %cI differs between versions
+// of git (docs/guardrails.md): the time of Start is the first commit of the
+// records branch (task T-ybd5).
+func CommitTime(dir, rev string) (time.Time, error) {
+	out, err := call(dir, environ(), "log", "-1", "--format=%ct", "--end-of-options", rev, "--")
+	if err != nil {
+		return time.Time{}, err
+	}
+	n, err := strconv.ParseInt(strings.TrimSpace(string(out)), 10, 64)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("git log: the committer time %q: %w", out, err)
+	}
+	return time.Unix(n, 0).UTC(), nil
 }
 
 // LsFiles gives the paths of the tracked files.

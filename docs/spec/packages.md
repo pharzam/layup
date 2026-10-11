@@ -66,7 +66,7 @@ reads this table, and holds no copy of it, which could differ from it.
 | Package | Job | May import | Starts a program |
 | ------- | --- | ---------- | ---------------- |
 | `cmd/layup` | `main`: passes the arguments to `internal/cli` and exits with its code | `internal/cli` | no |
-| `internal/cli` | parses the arguments, runs one command, maps its result to an exit code ([`README.md`](README.md#commands)); for `layup run`, reads the two host registers and the key file, builds the adapter and hands it to `internal/run` (task `T-mqty`), and from `M2b` reads `models.tsv` and `routing.tsv` and checks each harness credential (task `T-ysph`), and hands their rows and those of `host:prices.tsv` to `internal/run` for the step `probe` (task `T-nxe4`) | `internal/psb`, `internal/setup`, `internal/verify`, `internal/gate`, `internal/run`, `internal/forge`, `internal/forge/github`, `internal/route` | no |
+| `internal/cli` | parses the arguments, runs one command, maps its result to an exit code ([`README.md`](README.md#commands)); for `layup run`, reads the two host registers and the key file, builds the adapter and hands it to `internal/run` (task `T-mqty`), and from `M2b` reads `models.tsv` and `routing.tsv` and checks each harness credential (task `T-ysph`), and hands their rows and those of `host:prices.tsv` to `internal/run` for the step `probe` (task `T-nxe4`) | `internal/psb`, `internal/setup`, `internal/verify`, `internal/gate`, `internal/run`, `internal/forge`, `internal/forge/github`, `internal/route`, `internal/spec` | no |
 | `internal/tsv` | reads and writes a record: checks the header row against a schema, the field count of each row, the types and the key; parses the `tsv-schema` blocks of `docs/spec/`, and compares a block with the Go schema of its record ([`README.md`](README.md#the-schema-block)) | — | no |
 | `internal/git` | the one caller of the `git` program: [its calls](#the-calls-of-internalgit) | — | `git` |
 | `internal/psb` | the rules G1 to G5 and the gap table ([`psb-check.md`](psb-check.md)) | `internal/tsv` | no |
@@ -75,7 +75,7 @@ reads this table, and holds no copy of it, which could differ from it.
 | `internal/gate` | runs the kinds of a gate manifest on a head ([`gate.md`](gate.md)) | `internal/tsv`, `internal/git` | `sh -c`: the gate commands |
 | `internal/setup` | the step runner of `layup setup` ([`setup.md`](setup.md)) | `internal/tsv`, `internal/git`, `internal/catalog`, `internal/work` | no |
 | `internal/verify` | the checks of `layup setup verify` ([`setup.md`](setup.md)) | `internal/tsv`, `internal/git`, `internal/catalog`, `internal/gate`, `internal/work` | `sh`: the baseline's own check scripts |
-| `internal/records` | the schemas and the row rules of the record kinds that phase 1 defines and later phases write: `telemetry.tsv` and `prices.tsv` of `REQ-011` ([`records.md`](records.md#req-011--the-telemetry-record), task `T-tmhw`), and `stalls.tsv` of `REQ-009` ([`records.md`](records.md#req-009--the-stall-record), task `T-dgy7`); and the records of Start of `M2a`, `start.tsv`, `approvers.tsv`, `lease.tsv` and `copies.tsv` ([`records.md`](records.md#nfr-001--the-records-of-start), task `T-8kqn`), which `internal/run` writes; and the records of a session of `M2b`, `sessions.tsv`, `harnesses.tsv`, `routing.tsv`, the events and the result of a task ([`records.md`](records.md#nfr-001--the-records-of-a-session), task `T-ywk7`; built by task `T-3py1`) | `internal/tsv` | no |
+| `internal/records` | the schemas and the row rules of the record kinds that phase 1 defines and later phases write: `telemetry.tsv` and `prices.tsv` of `REQ-011` ([`records.md`](records.md#req-011--the-telemetry-record), task `T-tmhw`), and `stalls.tsv` of `REQ-009` ([`records.md`](records.md#req-009--the-stall-record), task `T-dgy7`); and the records of Start of `M2a`, `start.tsv`, `approvers.tsv`, `lease.tsv` and `copies.tsv` ([`records.md`](records.md#nfr-001--the-records-of-start), task `T-8kqn`), which `internal/run` writes; and the records of a session of `M2b`, `sessions.tsv`, `harnesses.tsv`, `routing.tsv`, the events and the result of a task ([`records.md`](records.md#nfr-001--the-records-of-a-session), task `T-ywk7`; built by task `T-3py1`); and the records of Intake of `M2c`, `intake/meaning.tsv`, `spec/spans.tsv`, `spec/draft.tsv`, `intake/coverage.tsv`, `questions.tsv`, `intake/answers.tsv`, `intake/answers-review.tsv` and `budget.tsv` ([`records.md`](records.md#nfr-001--the-records-of-intake), task `T-g49f`; built by task `T-529i`) | `internal/tsv` | no |
 | `internal/standin` | for the tests only: a stand-in of the pinned baseline, and a work area set up from it, built at test time (K11; [`setup.md`](setup.md#the-checks-of-layup-setup-verify)); only test files import it | `internal/tsv`, `internal/git`, `internal/work` | no |
 
 **Decided here:** the split of `internal/setup`, `internal/verify` and
@@ -122,7 +122,7 @@ each start so adds only its cell Connects to that row of phase 1.
 
 | Package | Job | May import | Starts a program | Connects |
 | ------- | --- | ---------- | ---------------- | -------- |
-| `internal/run` | `layup run`: the steps of Start, the restart, the lease and fencing, the copy of a comment and the rule of a decision ([`run.md`](run.md)); the Go schema of the table `run-steps`; the checks of `git` and of the values of the flags, which `internal/cli` calls before the first step (task `T-mqty`); in `M2b`, the step `probe` and the probe before a task session (task `T-nxe4`), the call that starts an attempt (the event `attempt`) and the start of a task session with its refusals (task `T-d8t9`), the end of a task session: its result, the open attempt, its telemetry row and its comment (task `T-fsjp`), the records of a session, the checks before a push (with the head that `internal/session` reads; task `T-z027`), the push and the bind (task `T-e3sy`) ([`session.md`](session.md)) | `internal/tsv`, `internal/git`, `internal/records`, `internal/forge`, `internal/route`, `internal/session`, `internal/ledger`, `internal/rules` | no | — |
+| `internal/run` | `layup run`: the steps of Start, the restart, the lease and fencing, the copy of a comment and the rule of a decision ([`run.md`](run.md)); the Go schema of the table `run-steps`; the checks of `git` and of the values of the flags, which `internal/cli` calls before the first step (task `T-mqty`); in `M2b`, the step `probe` and the probe before a task session (task `T-nxe4`), the call that starts an attempt (the event `attempt`) and the start of a task session with its refusals (task `T-d8t9`), the end of a task session: its result, the open attempt, its telemetry row and its comment (task `T-fsjp`), the records of a session, the checks before a push (with the head that `internal/session` reads; task `T-z027`), the push and the bind (task `T-e3sy`) ([`session.md`](session.md)); in `M2c`, the steps of Intake in place of `phase` when Start is done, the first `rule-gaps` (task `T-qk66`), and the session of a phase, its pair, its records commit and its comment (task `T-gmey`), with the budget of milestone 0 asked before it (task `T-ybd5`), and the step `meaning`, the review of meaning with its quote check (task `T-1u2v`), and the steps `numbering` and `spans`, the span table of a session and the span check of the records (task `T-hiv9`), and the step `draft` with its check of the facts' coverage (task `T-2et0`), and the step `completeness` on a harness other than the draft's (task `T-0mey`), and the step `batch`, the merge of the questions and the comment of the batch (task `T-8r3u`), and the step `answers`, the wait, the answer lines and `budget.tsv` (task `T-hxb9`), and the steps `answers-review` and `follow-up` (task `T-vwu3`), and the step `follow-up-answers`, the last of Intake (task `T-tmm2`) ([`intake.md`](intake.md#the-steps-of-intake)) | `internal/tsv`, `internal/git`, `internal/records`, `internal/forge`, `internal/route`, `internal/session`, `internal/ledger`, `internal/rules`, `internal/psb`, `internal/spec` | no | — |
 | `internal/forge` | the forge interface: the six capabilities and their types ([`forge.md`](forge.md)), `Missing` and `CheckPermissions` (task `T-6bq5`); the reader of the forge register (`host:registers/forge.tsv`), with the Go schema of its block; the check of the key file (task `T-1g1q`) | `internal/tsv` | no | — |
 | `internal/forge/github` | the GitHub adapter: the JWT, the installation token, the calls of [`forge.md`](forge.md#the-calls-of-m2a), and `Comment` of [`M2b`](forge.md#the-calls-of-m2b) (task `T-fsjp`) | `internal/forge` | no | `net`, `net/http`, `crypto/tls` |
 | `internal/route` | the reader of the harness register (`host:registers/harnesses.tsv`), with the Go schema of its block; in `M2b`, the columns that `M2b` adds, the readers of `models.tsv` and `routing.tsv`, the checks across the three and of a credential file (task `T-ysph`), the version that needs a probe, admission and the order of the routing register ([`session.md`](session.md#req-013--the-probe-admission-and-routing); task `T-cht1`) | `internal/tsv`, `internal/records` | no | — |
@@ -152,11 +152,11 @@ below it ([`session.md`](session.md#nfr-005--no-harness-in-the-engine-checks)).
 
 | Package | Job | May import | Starts a program | Connects |
 | ------- | --- | ---------- | ---------------- | -------- |
-| `internal/session` | a role session: its directory, its environment and credential (task `T-vxdg`), the ID, the context and prompt-size checks, the rule-file check and the head read from the files of `repo/.git` (task `T-6sbe`), the version check, the words of the command, the process, its limits and its stop, and the one call that orders the steps (task `T-5pxd`), its end, the result file, the usage report and the Go schema of `probe-result` (task `T-bpxg`) ([`session.md`](session.md#req-013--a-role-session)) | `internal/tsv`, `internal/git`, `internal/records` | `harness` (the command of a harness register row) | — |
-| `internal/ledger` | the writer of `telemetry.tsv`: one row per session, from the usage report and `host:prices.tsv` ([`session.md`](session.md#req-011--the-writer-of-the-telemetry-record); task `T-4c3q`) | `internal/tsv`, `internal/records` | no | — |
+| `internal/session` | a role session: its directory, its environment and credential (task `T-vxdg`), the ID, the context and prompt-size checks, the rule-file check and the head read from the files of `repo/.git` (task `T-6sbe`), the version check, the words of the command, the process, its limits and its stop, and the one call that orders the steps (task `T-5pxd`), its end, the result file, the usage report and the Go schema of `probe-result` (task `T-bpxg`) ([`session.md`](session.md#req-013--a-role-session)); in `M2c`, the `input/` of a session of a phase and the read of its output file by the rules of a result file (task `T-gmey`, [`intake.md`](intake.md#the-sessions-of-intake)) | `internal/tsv`, `internal/git`, `internal/records` | `harness` (the command of a harness register row) | — |
+| `internal/ledger` | the writer of `telemetry.tsv`: one row per session, from the usage report and `host:prices.tsv` ([`session.md`](session.md#req-011--the-writer-of-the-telemetry-record); task `T-4c3q`); in `M2c`, the rule of the budget of milestone 0, which `internal/run` asks before each session of Intake ([`intake.md`](intake.md#the-budget-of-intake); task `T-ybd5`) | `internal/tsv`, `internal/records` | no | — |
 | `internal/rules` | in `M2b`, the reader of the rule-path register and the check of a diff before a push ([`session.md`](session.md#a-workflow-or-rule-path-change)), with a second Go value of the block `rule-paths`, whose owner is `internal/setup`, compared with the block by its own test (task `T-m1dx`); the check `layup/rules` and rule batches come in `M2f` | `internal/tsv`, `internal/records` | no | — |
 
-The packages of the engine checks: `internal/psb`, `internal/verify`, `internal/gate`.
+The packages of the engine checks: `internal/psb`, `internal/verify`, `internal/gate`, `internal/spec`.
 
 **The rule of the engine checks** (NFR-005, task `T-y10b`): no package of that
 line depends on `internal/session` or on a package of rule 5, by any path; the
@@ -175,6 +175,33 @@ is not a call, and each other start are findings there, as elsewhere. A cell tha
 holds those words and any other text cannot be read. **Known limit:** in a
 register row the scan cannot tell `git` from a harness, so rule 3 rests on review
 in that package.
+
+### The table of M2c
+
+Milestone `M2c` (task `T-g49f`, #206; [`intake.md`](intake.md)). The columns of
+[the table of M2a](#the-table-of-m2a), and the rule of the table of `M2b`: a
+package that a table already has keeps its one row, changed in place. **Changed
+in place** by this task: `internal/cli` may import `internal/spec` (the command
+`layup spec check`); `internal/run` may import `internal/psb` (the rule gaps, in
+process) and `internal/spec` (the span check, in process). The other changes of
+`M2c` are inside rows that already allow them: `internal/run` writes the records
+of Intake, `internal/records` owns their schemas but the block `spec-check`,
+which `internal/spec` owns with a second Go value of `spans` (task `T-4ywt`),
+`internal/session` builds the
+directory of a session of a phase with its `input/`, and `internal/forge` posts
+and reads the comments of the Intake issue.
+
+| Package | Job | May import | Starts a program | Connects |
+| ------- | --- | ---------- | ---------------- | -------- |
+| `internal/spec` | the span check of the facts of a problem statement and its table ([`intake.md`](intake.md#the-span-check)) | `internal/tsv` | no | — |
+
+**Decided here** (decision 11 of #206): `internal/spec` is an engine check
+(code, no model call), so the build task that made the package (row 41a, task
+`T-4ywt`) added it to the line of the engine checks of the table of `M2b`, and
+the heading of this table to `TestPackageRules`, in one change, as a span that
+names no package of the module is an error of the test. `TestPackageRules`
+reads this table in the form of the table of `M2b`: each row is a package of
+its own.
 
 ### The test of the package rules
 
@@ -249,6 +276,7 @@ that the steps, the checks and `layup gate` name.
 | `Staged` | `git diff --cached --quiet --exit-code`; exit 1 is a staged change | the step runner: a commit only of a staged change (task `T-b3r1`, D12 of #90) |
 | `RootCommits` | `git rev-list --max-parents=0 --end-of-options REV --` | check `pin`; S03: the root commit of a run that stopped (task `T-7s0y`); S15: the records commit of a run that stopped (task `T-d6q5`) |
 | `Message` | `git log -1 --format=%B --end-of-options REV --` | S03: the message of the root commit of a run that stopped (task `T-7s0y`); S15: the same for the records commit (task `T-d6q5`) |
+| `CommitTime` | `git log -1 --format=%ct --end-of-options REV --`, read as seconds since the epoch | `layup run`: the time of Start, the committer time of the first commit of the records branch, for the budget of milestone 0 (task `T-ybd5`) |
 | `IsShallow` | `git rev-parse --is-shallow-repository` | check `pin` (task `T-6x75`) |
 | `LsFiles` | `git ls-files -z` | S10; checks `markers` and `adapted` |
 | `WorktreeAdd` | `git worktree add --detach -- PATH REV` | `layup gate`, step 2 of the run; `layup setup verify`: the scratch tree; a fixture run; S15: the scratch tree of the records commit (task `T-d6q5`) |
@@ -457,10 +485,10 @@ requirement's section.
 | `internal/run` | `layup run`: Start, the phase loop, the lease, fencing; its row is in [the table of M2a](#the-table-of-m2a) | 2 |
 | `internal/session` | a role session: its directory, its start, its result; its row is in [the table of M2b](#the-table-of-m2b) | 2 |
 | `internal/handoff` | the transition table and the check of a handoff | 2 |
-| `internal/spec` | `layup spec check` | 2 |
+| `internal/spec` | `layup spec check`; its row is in [the table of M2c](#the-table-of-m2c) (task `T-4ywt`) | 2 |
 | `internal/rules` | the rule-path register, the check `layup/rules`, rule batches; its part before a push is in [the table of M2b](#the-table-of-m2b) | 2 |
 | `internal/audit` | `layup audit` | 2 |
-| `internal/ledger` | the cost ledger (`telemetry.tsv`) and the budget; the writer is in [the table of M2b](#the-table-of-m2b), the budget comes later | 2 |
+| `internal/ledger` | the cost ledger (`telemetry.tsv`) and the budget; the writer is in [the table of M2b](#the-table-of-m2b) and the budget of milestone 0 in its row there (task `T-ybd5`); the budget of a bet comes later | 2 |
 | `internal/smartif` | the smart-if client: the only package that connects to a model service | 3 |
 | `internal/escalate` | the escalation screen | 3 |
 | `internal/stall` | progress, the stall triggers and the procedure | 3 |

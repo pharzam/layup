@@ -90,7 +90,9 @@ record (`internal/setup`; the steps S01 to S15, from the answers and the
 problem statement to the pin, the prose files, the markers, the gate files,
 the ruleset and the first records commit), and
 `layup setup verify WORK` checks the setup of a target from outside, with the
-gates of each kind on a known-bad fixture (`internal/verify`). The [architecture](architecture.md) describes what it becomes:
+gates of each kind on a known-bad fixture (`internal/verify`), and
+`layup spec check --facts SPANS --psb FILE` checks the fact spans of a problem
+statement (`internal/spec`). The [architecture](architecture.md) describes what it becomes:
 `layup run`, the orchestrator of a target's whole lifecycle, from outside the
 target; each part is followed through one concrete case in
 [`walkthroughs/`](walkthroughs/README.md). The exact contracts that the code

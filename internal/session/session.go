@@ -26,12 +26,12 @@ type Harness struct {
 }
 
 // Dir is the paths of a session's directory, DIR/sessions/<session>/.
-type Dir struct{ Root, Repo, Home, Tmp, Prompt, Result string }
+type Dir struct{ Root, Repo, Home, Tmp, Prompt, Result, Input string }
 
 func dirOf(host, id string) Dir {
 	root := filepath.Join(host, "sessions", id)
 	return Dir{Root: root, Repo: filepath.Join(root, "repo"), Home: filepath.Join(root, "home"), Tmp: filepath.Join(root, "tmp"),
-		Prompt: filepath.Join(root, "prompt.md"), Result: filepath.Join(root, "result")}
+		Prompt: filepath.Join(root, "prompt.md"), Result: filepath.Join(root, "result"), Input: filepath.Join(root, "input")}
 }
 
 // Make makes the directory of session id for target (OWNER/NAME) under the

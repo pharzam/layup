@@ -3,15 +3,18 @@
 package run
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -21,6 +24,9 @@ import (
 	"github.com/pharzam/layup/internal/forge"
 	"github.com/pharzam/layup/internal/forge/github"
 	"github.com/pharzam/layup/internal/git"
+	"github.com/pharzam/layup/internal/psb"
+	"github.com/pharzam/layup/internal/records"
+	"github.com/pharzam/layup/internal/spec"
 	"github.com/pharzam/layup/internal/tsv"
 )
 
@@ -34,6 +40,7 @@ type fakeGitHub struct {
 	issues   int
 	failOpen int // the number of the issue whose opening fails, or 0
 	comments map[int][]map[string]any
+	posted   []string // the bodies of the comments that the run posted, on any issue (row 43b)
 }
 
 func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
@@ -76,6 +83,19 @@ func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
 		f.issues++
 		w.WriteHeader(201)
 		json.NewEncoder(w).Encode(map[string]any{"number": f.issues})
+	case strings.HasPrefix(call, "POST /repos/acme/target/issues/") && strings.HasSuffix(call, "/comments"):
+		var in struct{ Body string }
+		json.NewDecoder(r.Body).Decode(&in)
+		f.posted = append(f.posted, in.Body)
+		// The comment is the App's, and a later read of its issue sees it
+		// (row 46: the step batch reads the Intake issue).
+		n, _ := strconv.Atoi(strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/repos/acme/target/issues/"), "/comments"))
+		id := 600 + len(f.posted)
+		f.comments[n] = append(f.comments[n], map[string]any{"id": id, "user": map[string]any{"id": 9001, "login": "layup-agent[bot]"},
+			"performed_via_github_app": map[string]any{"slug": "layup-agent"},
+			"created_at":               "2026-10-08T13:00:00Z", "updated_at": "2026-10-08T13:00:00Z", "body": in.Body})
+		w.WriteHeader(201)
+		json.NewEncoder(w).Encode(map[string]any{"id": id})
 	case strings.HasPrefix(call, "GET /repos/acme/target/issues/") && strings.HasSuffix(call, "/comments"):
 		n, _ := strconv.Atoi(strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/repos/acme/target/issues/"), "/comments"))
 		list := f.comments[n]
@@ -143,7 +163,9 @@ func newWorld(t *testing.T) *world {
 	w.baseline = filepath.Join(t.TempDir(), "armature.git")
 	gitOut(t, "/", "clone", "-q", "--bare", src, w.baseline)
 	w.bare = filepath.Join(w.web, "acme", "target.git")
-	gitOut(t, "/", "init", "-q", "--bare", w.bare)
+	// HEAD names main, as the forge's HEAD names its default branch, so a
+	// clone of the target has its branch main (a session clones it, row 43b).
+	gitOut(t, "/", "init", "-q", "--bare", "-b", "main", w.bare)
 	w.fake = &fakeGitHub{t: t, bare: w.bare, comments: map[int][]map[string]any{
 		2: {{"id": 501, "user": map[string]any{"id": 777, "login": "layup-watch[bot]"}, "performed_via_github_app": map[string]any{"slug": "layup-watch"},
 			"created_at": "2026-10-08T12:00:00Z", "updated_at": "2026-10-08T12:00:00Z", "body": "the dead-man job is watching\n"}},
@@ -155,6 +177,49 @@ func newWorld(t *testing.T) *world {
 		t.Fatal(err)
 	}
 	w.key = k
+	// The world's harness, claude, is its own scripts (row 43b): it answers a
+	// probe as probeHarness does; and a session of a phase with the file of
+	// bin/ of its output's name, which a test may write (bin/meaning.tsv: no
+	// gap), else, for the numbering, a span table that covers the problem
+	// statement, one fact per line that is not empty (row 44), for the draft
+	// one requirement per need fact of the span table (row 45a), for the
+	// completeness review no item (row 45b), and for the review of the
+	// answers each answered question closed (row 47b).
+	bin := filepath.Join(w.dir, "bin")
+	os.MkdirAll(bin, 0o755)
+	os.WriteFile(filepath.Join(bin, "version"), []byte("#!/bin/sh\necho 1.0.0\n"), 0o755)
+	os.WriteFile(filepath.Join(bin, "meaning.tsv"), []byte("kind\tquote\tquestion\n"), 0o644)
+	os.WriteFile(filepath.Join(bin, "harness"), []byte(`#!/bin/sh
+p=$(cat)
+case "$p" in
+"This is a probe"*)
+	result=$(printf '%s\n' "$p" | sed -n 's/^Write one file, \(.*\), of tab-separated values, with the header line$/\1/p')
+	token=$(printf '%s\n' "$p" | sed -n 's/.*one row "token<TAB>\([0-9a-f]*\)".*/\1/p')
+	printf 'kind\tvalue\ntoken\t%s\nfile\tAGENTS.md\n' "$token" > "$result" ;;
+*)
+	out=$(printf '%s\n' "$p" | sed -n 's/^The output file: //p')
+	in=$(printf '%s\n' "$p" | sed -n 's/^The problem statement: //p')
+	f="$(dirname "$0")/$(basename "$out")"
+	sp=$(printf '%s\n' "$p" | sed -n 's/^The span table: //p')
+	# Each session of a phase reads the problem statement (intake.md, The
+	# sessions of Intake; round 1 of #224).
+	[ -f "$in" ] || exit 3
+	if [ -f "$f" ]; then
+		cat "$f" > "$out"
+	elif [ "$(basename "$out")" = answers-review.tsv ]; then
+		qs=$(printf '%s\n' "$p" | sed -n 's/^The questions: //p')
+		LC_ALL=C awk -F '\t' 'BEGIN { printf "question\tstate\treason\n" } NR > 1 && $13 == "answered" { printf "%s\tclosed\tthe answer is clear\n", $1 }' "$qs" > "$out"
+	elif [ "$(basename "$out")" = coverage.tsv ]; then
+		printf 'kind\tfact\trequirement\tquestion\n' > "$out"
+	elif [ "$(basename "$out")" = draft.tsv ]; then
+		LC_ALL=C awk -F '\t' 'BEGIN { printf "kind\tstatement\tcovers\tcriterion\n" }
+			NR > 1 && $4 == "need" { printf "requirement\tThe statement of fact %s.\t%s\tThe criterion of fact %s.\n", $3, $3, $3 }' "$sp" > "$out"
+	else
+		LC_ALL=C awk 'BEGIN { printf "start\tend\tfact\tclass\treason\n"; o = 0; n = 0 }
+			{ l = length($0); if (l > 0) { n++; printf "%d\t%d\t%d\tneed\t\342\200\224\n", o, o + l, n }; o += l + 1 }' "$in" > "$out"
+	fi ;;
+esac
+`), 0o755)
 	return w
 }
 
@@ -174,7 +239,19 @@ func (w *world) config(version string) Config {
 		Client: w.srv.Client(), Progress: progress, Now: clock.Now, Sleep: clock.Sleep})
 	return Config{Owner: "acme", Name: "target", Dir: w.dir, PSB: []byte("# The problem\n\nbyte for byte\n"), Vision: []byte("# The vision\n"),
 		Operator: "pharzam", IdeaOwner: "carol", Plan: "free", IntakeCap: "50.0,8.0", LeaseH: 5, WatchT: 1,
-		Register: reg, Harnesses: [][]string{{"claude", "10.0", "60"}, {"devin", "", "30"}}, Forge: adapter, Clock: clock,
+		Register: reg, Harnesses: [][]string{{"claude", "10.0", "60", filepath.Join(w.dir, "bin", "harness"), "stdin", filepath.Join(w.dir, "bin", "version"),
+			"", "", "LAYUP-TEST-RULES.md", "", "none", "subscription", ""},
+			// devin runs the same scripts, a second harness for the
+			// completeness review (row 45b).
+			{"devin", "", "30", filepath.Join(w.dir, "bin", "harness"), "stdin", filepath.Join(w.dir, "bin", "version"),
+				"", "", "LAYUP-TEST-RULES.md", "", "none", "subscription", ""}},
+		Models: [][]string{{"claude", "m1", "1000000", "https://example.invalid", "2026-10-09T12:00:00Z", "yes", ""},
+			{"devin", "m2", "1000000", "https://example.invalid", "2026-10-09T12:00:00Z", "yes", ""}},
+		Routing: [][]string{{"systems-architect", "reasoning", "1", "claude", "m1"}, {"product-owner", "reasoning", "1", "claude", "m1"},
+			// The role's first pair is on the draft's harness, which the
+			// review passes over.
+			{"qa-engineer", "reasoning", "1", "claude", "m1"}, {"qa-engineer", "reasoning", "2", "devin", "m2"}},
+		Forge: adapter, Clock: clock,
 		Progress: progress, RunID: "0123456789abcdef", HostName: "host-1", Version: version,
 		Baseline: "file://" + w.baseline, LayupPin: "a95965534b14b0bf14ad74da0c9a45b5f4aedf88"}
 }
@@ -310,7 +387,7 @@ func TestARestartWithAnotherVersionFailsAtVersion(t *testing.T) {
 	}
 	// The same version: the lease is released, so it is taken at once; each
 	// step of Start is done.
-	allDone(t, "the restart", Restart(context.Background(), w.config("0.1.0-dev")), "forge", "clone", "version", "lease", "probe", "phase")
+	allDone(t, "the restart", Restart(context.Background(), w.config("0.1.0-dev")), "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers")
 }
 
 // A run that stopped at opening: the restart takes the lease over from the
@@ -514,5 +591,754 @@ func TestARestartWithAHarnessRegisterThatChanged(t *testing.T) {
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	cfg = w.config("0.1.0-dev")
 	cfg.Harnesses = cfg.Harnesses[:1] // devin removed
-	allDone(t, "the restart with a harness lost", Restart(context.Background(), cfg), "forge", "clone", "version", "lease", "probe", "phase")
+	// With one admitted harness left, the completeness review has no pair on
+	// another harness (row 45b): the restart stops there.
+	lost := Restart(context.Background(), cfg)
+	allDone(t, "the restart with a harness lost", lost[:len(lost)-1], "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft")
+	if last := lost[len(lost)-1]; last.Name != "completeness" || last.Result != "fail" || last.Detail != "not run: no admitted pair on another harness" {
+		t.Errorf("the last row of the restart with a harness lost %+v; want completeness fail, not run", last)
+	}
+}
+
+// The step rule-gaps (row 43a, task T-qk66, #217): after a complete Start, the
+// restart commits the table of layup psb check on start/problem-statement.md
+// as intake/psb.tsv, in place of the row phase, and releases the lease; a
+// second restart finds the record and runs nothing, so the blob is the same.
+func TestTheStepRuleGaps(t *testing.T) {
+	w := newWorld(t)
+	cfg := w.config("0.1.0-dev")
+	cfg.PSB = []byte("# The problem\n\nThe service is fast.\n")
+	allDone(t, "Start", w.start(cfg), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
+	var progress []string
+	cfg = w.config("0.1.0-dev")
+	cfg.Step = func(i, n int, name string) { progress = append(progress, fmt.Sprintf("%d/%d %s", i, n, name)) }
+	rows := Restart(context.Background(), cfg)
+	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers")
+	if want := []string{"1/6 forge", "2/6 clone", "3/16 version", "4/16 lease", "5/16 probe", "6/16 rule-gaps", "7/16 meaning", "8/16 numbering", "9/16 spans", "10/16 draft", "11/16 completeness", "12/16 batch", "13/16 answers"}; strings.Join(progress, ", ") != strings.Join(want, ", ") {
+		t.Errorf("the progress %q, want %q", progress, want)
+	}
+	// What layup psb check prints on the same file (internal/cli/cli.go):
+	// psb.WriteTSV of psb.Check.
+	var want bytes.Buffer
+	psb.WriteTSV(&want, psb.Check(string(show(t, w.bare, "refs/heads/layup-records", "start/problem-statement.md"))))
+	got := show(t, w.bare, "refs/heads/layup-records", "intake/psb.tsv")
+	if got != want.String() || !strings.Contains(got, "\tG1\t") {
+		t.Errorf("intake/psb.tsv:\n%s\nwant:\n%s", got, want.String())
+	}
+	if !strings.Contains(show(t, w.bare, "refs/heads/layup-records", "lease.tsv"), "\treleased\n") {
+		t.Error("the lease is not released after the last row")
+	}
+	blob := gitOut(t, w.bare, "rev-parse", "refs/heads/layup-records:intake/psb.tsv")
+	again := Restart(context.Background(), w.config("0.1.0-dev"))
+	if gaps := rowOf(again, "rule-gaps"); gaps.Name != "rule-gaps" || gaps.Result != "done" || gaps.Detail != "done before" {
+		t.Errorf("the second restart's row %+v, want rule-gaps done before", gaps)
+	}
+	if gitOut(t, w.bare, "rev-parse", "refs/heads/layup-records:intake/psb.tsv") != blob {
+		t.Error("the second restart changed intake/psb.tsv")
+	}
+}
+
+// Start is done only when the watch is written too: a start.tsv whose watch is
+// still — gives the row phase, which runs the watch again (row 43a).
+func TestARestartWhoseWatchIsNotWrittenRunsPhase(t *testing.T) {
+	w := newWorld(t)
+	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
+	start := show(t, w.bare, "refs/heads/layup-records", "start/start.tsv")
+	i := strings.Index(start, "\nwatch\t")
+	pushRecords(t, w.bare, map[string]string{"start/start.tsv": start[:i] + "\nwatch\t—\trun\n"}, "records: no watch yet")
+	allDone(t, "the restart", Restart(context.Background(), w.config("0.1.0-dev")), "forge", "clone", "version", "lease", "probe", "phase")
+}
+
+// The step meaning (row 43b, task T-1u2v, #218): after rule-gaps, one session
+// of systems-architect on the world's harness; its quote is found once, so
+// intake/meaning.tsv holds its row with code's offsets, and the lease is
+// released; a second restart finds the record and runs nothing.
+func TestTheStepMeaning(t *testing.T) {
+	w := newWorld(t)
+	os.WriteFile(filepath.Join(w.dir, "bin", "meaning.tsv"), []byte("kind\tquote\tquestion\nunmeasurable\tThe service is fast.\tHow fast?\n"), 0o644)
+	cfg := w.config("0.1.0-dev")
+	cfg.PSB = []byte("# The problem\n\nThe service is fast.\n")
+	allDone(t, "Start", w.start(cfg), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
+	rows := Restart(context.Background(), w.config("0.1.0-dev"))
+	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers")
+	if d := rowOf(rows, "meaning").Detail; d != "1 gaps of meaning, in intake/meaning.tsv" {
+		t.Errorf("the detail of meaning %q", d)
+	}
+	got := show(t, w.bare, "refs/heads/layup-records", "intake/meaning.tsv")
+	if !strings.HasPrefix(got, "id\tkind\tstart\tend\tquote\tquestion\tsession\nM-001\tunmeasurable\t15\t35\tThe service is fast.\tHow fast?\tS-") || strings.Count(got, "\n") != 2 {
+		t.Errorf("intake/meaning.tsv:\n%s", got)
+	}
+	if !strings.Contains(show(t, w.bare, "refs/heads/layup-records", "sessions.tsv"), "\tsystems-architect\tclaude\t1.0.0\tm1\t") {
+		t.Error("sessions.tsv has no start row of a session of systems-architect")
+	}
+	if !strings.Contains(show(t, w.bare, "refs/heads/layup-records", "lease.tsv"), "\treleased\n") {
+		t.Error("the lease is not released after the last row")
+	}
+	blob := gitOut(t, w.bare, "rev-parse", "refs/heads/layup-records:intake/meaning.tsv")
+	again := Restart(context.Background(), w.config("0.1.0-dev"))
+	if m := rowOf(again, "meaning"); m.Result != "done" || m.Detail != "done before" {
+		t.Errorf("the second restart's row %+v, want meaning done before", m)
+	}
+	if gitOut(t, w.bare, "rev-parse", "refs/heads/layup-records:intake/meaning.tsv") != blob {
+		t.Error("the second restart changed intake/meaning.tsv")
+	}
+}
+
+// A quote that occurs twice refuses the session's file: meaning is fail,
+// naming the session, and nothing of the file is committed; with no route for
+// systems-architect, meaning is fail (pair) and no session starts. Each fail
+// leaves the lease held (run.md, the known limit).
+func TestTheStepMeaningFails(t *testing.T) {
+	for _, c := range []struct{ name, meaning, detail string }{
+		{"a quote that occurs twice", "kind\tquote\tquestion\nunmeasurable\tfast\tHow fast?\n", `: refused file: row 1: the quote "fast" occurs 2 times`},
+		{"no route", "", "pair: no admitted pair"},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			w := newWorld(t)
+			if c.meaning != "" {
+				os.WriteFile(filepath.Join(w.dir, "bin", "meaning.tsv"), []byte(c.meaning), 0o644)
+			}
+			cfg := w.config("0.1.0-dev")
+			cfg.PSB = []byte("# The problem\n\nThe service is fast.\nIt is fast.\n")
+			allDone(t, "Start", w.start(cfg), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
+			cfg = w.config("0.1.0-dev")
+			if c.meaning == "" {
+				cfg.Routing = nil
+			}
+			rows := Restart(context.Background(), cfg)
+			last := rows[len(rows)-1]
+			if last.Name != "meaning" || last.Result != "fail" || !strings.Contains(last.Detail, c.detail) {
+				t.Fatalf("the last row %+v; want meaning fail with %q", last, c.detail)
+			}
+			if c.meaning != "" && !strings.HasPrefix(last.Detail, "the session S-") {
+				t.Errorf("the detail %q does not name the session", last.Detail)
+			}
+			if strings.Contains(gitOut(t, w.bare, "ls-tree", "-r", "--name-only", "refs/heads/layup-records"), "intake/meaning.tsv") {
+				t.Error("a refused file is a record")
+			}
+			if !strings.Contains(show(t, w.bare, "refs/heads/layup-records", "lease.tsv"), "\theld\n") {
+				t.Error("the lease is not held after a fail")
+			}
+			// With no pair, no session of systems-architect starts (round 1 of #218).
+			if c.meaning == "" && strings.Contains(show(t, w.bare, "refs/heads/layup-records", "sessions.tsv"), "\tsystems-architect\t") {
+				t.Error("a session of systems-architect started with no pair")
+			}
+		})
+	}
+}
+
+// rowOf gives the row of the step name, or the zero Step.
+func rowOf(rows []Step, name string) Step {
+	for _, r := range rows {
+		if r.Name == name {
+			return r
+		}
+	}
+	return Step{}
+}
+
+// The steps numbering and spans (row 44, task T-hiv9, #219): a session of
+// product-owner writes the span table, code adds each span's text, and the
+// span check of the records commits its table; the lease is released, and a
+// second restart finds both records and runs nothing.
+func TestTheStepsNumberingAndSpans(t *testing.T) {
+	w := newWorld(t)
+	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
+	rows := Restart(context.Background(), w.config("0.1.0-dev"))
+	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers")
+	if n, s := rowOf(rows, "numbering").Detail, rowOf(rows, "spans").Detail; n != "2 spans, 2 facts, in spec/spans.tsv" || s != "the span check passed, in spec/check.tsv" {
+		t.Errorf("the details %q and %q", n, s)
+	}
+	// The world's brief is "# The problem\n\nbyte for byte\n".
+	if got := show(t, w.bare, "refs/heads/layup-records", "spec/spans.tsv"); got != "start\tend\tfact\tclass\treason\ttext\n0\t13\t1\tneed\t—\t# The problem\n15\t28\t2\tneed\t—\tbyte for byte\n" {
+		t.Errorf("spec/spans.tsv:\n%q", got)
+	}
+	// spec/check.tsv is the table of spec.Check on the records, by its schema.
+	spans, err := spec.Read([]byte(show(t, w.bare, "refs/heads/layup-records", "spec/spans.tsv")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var want bytes.Buffer
+	tsv.Write(&want, spec.CheckSchema, spec.Check(spans, []byte(show(t, w.bare, "refs/heads/layup-records", "start/problem-statement.md"))))
+	if got := show(t, w.bare, "refs/heads/layup-records", "spec/check.tsv"); got != want.String() || strings.Contains(got, "fail") {
+		t.Errorf("spec/check.tsv:\n%s\nwant:\n%s", got, want.String())
+	}
+	if !strings.Contains(show(t, w.bare, "refs/heads/layup-records", "sessions.tsv"), "\tproduct-owner\tclaude\t1.0.0\tm1\t") ||
+		!strings.Contains(show(t, w.bare, "refs/heads/layup-records", "lease.tsv"), "\treleased\n") {
+		t.Error("no session of product-owner, or the lease not released")
+	}
+	again := Restart(context.Background(), w.config("0.1.0-dev"))
+	if n, s := rowOf(again, "numbering"), rowOf(again, "spans"); n.Detail != "done before" || s.Detail != "done before" || s.Result != "done" {
+		t.Errorf("the second restart's rows %+v and %+v; want both done before", n, s)
+	}
+}
+
+// The demo of row 44: after a failed span check the run stops at spans, so no
+// row after it runs and no batch is posted, with spec/check.tsv committed and
+// the lease held; the next restart (after the takeover) runs numbering again
+// with a new session, and spans passes, both records replaced.
+func TestAFailedSpanCheckRunsNumberingAgain(t *testing.T) {
+	w := newWorld(t)
+	// Two spans over byte 10 of "# The problem\n\nbyte for byte\n".
+	bad := filepath.Join(w.dir, "bin", "spans.tsv")
+	os.WriteFile(bad, []byte("start\tend\tfact\tclass\treason\n0\t13\t1\tneed\t—\n10\t28\t2\tneed\t—\n"), 0o644)
+	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
+	rows := Restart(context.Background(), w.config("0.1.0-dev"))
+	last := rows[len(rows)-1]
+	if last.Name != "spans" || last.Result != "fail" || last.Detail != "the span check: cover fail: byte 10 is in 2 spans" {
+		t.Fatalf("the last row %+v; want spans fail, the first fail row of the check", last)
+	}
+	if got := show(t, w.bare, "refs/heads/layup-records", "spec/check.tsv"); !strings.Contains(got, "\ncover\tfail\tbyte 10 is in 2 spans\n") {
+		t.Errorf("spec/check.tsv:\n%s", got)
+	}
+	if !strings.Contains(show(t, w.bare, "refs/heads/layup-records", "lease.tsv"), "\theld\n") {
+		t.Error("the lease is not held after the fail")
+	}
+	// A rerun whose session writes the same table fails the same way: its
+	// table equals the last spec/check.tsv, which is kept as it is.
+	same := Restart(context.Background(), w.config("0.1.0-dev"))
+	if last := same[len(same)-1]; last.Name != "spans" || last.Result != "fail" || last.Detail != "the span check: cover fail: byte 10 is in 2 spans" {
+		t.Fatalf("a rerun with the same table: the last row %+v; want spans fail as before", last)
+	}
+	os.Remove(bad) // the next session covers the file
+	again := Restart(context.Background(), w.config("0.1.0-dev"))
+	allDone(t, "the restart after the fail", again, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers")
+	if n := rowOf(again, "numbering").Detail; n != "2 spans, 2 facts, in spec/spans.tsv" {
+		t.Errorf("numbering after a failed check: %q; want a new session's spans", n)
+	}
+	if got := show(t, w.bare, "refs/heads/layup-records", "spec/check.tsv"); strings.Contains(got, "fail") {
+		t.Errorf("spec/check.tsv after the rerun:\n%s", got)
+	}
+	// Three sessions of the numbering, each rerun's a new one, and the
+	// draft's after the check passed (row 45a).
+	if n := strings.Count(show(t, w.bare, "refs/heads/layup-records", "sessions.tsv"), "\tproduct-owner\t"); n != 4 {
+		t.Errorf("%d sessions of product-owner; want 4: three of the numbering and the draft's", n)
+	}
+}
+
+// With no route for product-owner, numbering is fail (pair) and no session of
+// product-owner starts.
+func TestNumberingWithNoPair(t *testing.T) {
+	w := newWorld(t)
+	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
+	cfg := w.config("0.1.0-dev")
+	cfg.Routing = cfg.Routing[:1] // systems-architect only
+	rows := Restart(context.Background(), cfg)
+	if last := rows[len(rows)-1]; last.Name != "numbering" || last.Result != "fail" || !strings.HasPrefix(last.Detail, "pair: no admitted pair") {
+		t.Errorf("the last row %+v; want numbering fail (pair)", last)
+	}
+	if strings.Contains(show(t, w.bare, "refs/heads/layup-records", "sessions.tsv"), "\tproduct-owner\t") {
+		t.Error("a session of product-owner started with no pair")
+	}
+}
+
+// The step draft (row 45a, task T-2et0, #220): one session of product-owner
+// on the problem statement and the span table; its draft covers each need, so
+// spec/draft.tsv holds its rows with their IDs, and the lease is released; a
+// second restart finds the record and runs nothing.
+func TestTheStepDraft(t *testing.T) {
+	w := newWorld(t)
+	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
+	rows := Restart(context.Background(), w.config("0.1.0-dev"))
+	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers")
+	if d := rowOf(rows, "draft").Detail; d != "2 rows, in spec/draft.tsv" {
+		t.Errorf("the detail of draft %q", d)
+	}
+	got := show(t, w.bare, "refs/heads/layup-records", "spec/draft.tsv")
+	if !strings.HasPrefix(got, "id\tkind\tstatement\tcovers\tcriterion\tsession\nR-001\trequirement\tThe statement of fact 1.\t1\tThe criterion of fact 1.\tS-") ||
+		!strings.Contains(got, "\nR-002\trequirement\tThe statement of fact 2.\t2\t") {
+		t.Errorf("spec/draft.tsv:\n%s", got)
+	}
+	if strings.Count(show(t, w.bare, "refs/heads/layup-records", "sessions.tsv"), "\tproduct-owner\t") != 2 ||
+		!strings.Contains(show(t, w.bare, "refs/heads/layup-records", "lease.tsv"), "\treleased\n") {
+		t.Error("not two sessions of product-owner (the numbering and the draft), or the lease not released")
+	}
+	again := Restart(context.Background(), w.config("0.1.0-dev"))
+	if d := rowOf(again, "draft"); d.Result != "done" || d.Detail != "done before" {
+		t.Errorf("the second restart's row %+v; want draft done before", d)
+	}
+}
+
+// The demo of row 45a: a draft whose covers names no fact is refused: draft is
+// fail, naming the session, and nothing of the file is committed.
+func TestADraftThatCoversNoFactIsRefused(t *testing.T) {
+	w := newWorld(t)
+	os.WriteFile(filepath.Join(w.dir, "bin", "draft.tsv"), []byte("kind\tstatement\tcovers\tcriterion\nrequirement\tS.\t1\tC.\nrequirement\tS.\t2\tC.\nrequirement\tS.\t9\tC.\n"), 0o644)
+	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
+	rows := Restart(context.Background(), w.config("0.1.0-dev"))
+	last := rows[len(rows)-1]
+	if last.Name != "draft" || last.Result != "fail" || !strings.HasPrefix(last.Detail, "the session S-") || !strings.HasSuffix(last.Detail, ": refused file: row 3: covers names 9, which is no fact") {
+		t.Fatalf("the last row %+v; want draft fail, naming the session and the row", last)
+	}
+	if strings.Contains(gitOut(t, w.bare, "ls-tree", "-r", "--name-only", "refs/heads/layup-records"), "spec/draft.tsv") {
+		t.Error("a refused draft is a record")
+	}
+}
+
+// The completeness review (row 45b, task T-0mey, #221): its pair is the first
+// admitted pair of qa-engineer whose harness is not the draft's, even when the
+// role's first pair is on that harness; its file is intake/coverage.tsv, and a
+// second restart finds the record and runs nothing.
+func TestTheStepCompleteness(t *testing.T) {
+	w := newWorld(t)
+	os.WriteFile(filepath.Join(w.dir, "bin", "coverage.tsv"), []byte("kind\tfact\trequirement\tquestion\nclass\t1\t—\tIs fact 1 a need?\n"), 0o644)
+	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
+	rows := Restart(context.Background(), w.config("0.1.0-dev"))
+	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers")
+	if d := rowOf(rows, "completeness").Detail; d != "1 items, in intake/coverage.tsv" {
+		t.Errorf("the detail of completeness %q", d)
+	}
+	sessions := show(t, w.bare, "refs/heads/layup-records", "sessions.tsv")
+	if !strings.Contains(sessions, "\tqa-engineer\tdevin\t1.0.0\tm2\t") || strings.Contains(sessions, "\tqa-engineer\tclaude\t") ||
+		!strings.Contains(sessions, "\tproduct-owner\tclaude\t") {
+		t.Errorf("the review is not on devin, the harness that did not number or draft:\n%s", sessions)
+	}
+	if got := show(t, w.bare, "refs/heads/layup-records", "intake/coverage.tsv"); !strings.HasPrefix(got, "id\tkind\tfact\trequirement\tquestion\tsession\nC-001\tclass\t1\t—\tIs fact 1 a need?\tS-") {
+		t.Errorf("intake/coverage.tsv:\n%s", got)
+	}
+	again := Restart(context.Background(), w.config("0.1.0-dev"))
+	if c := rowOf(again, "completeness"); c.Result != "done" || c.Detail != "done before" {
+		t.Errorf("the second restart's row %+v; want completeness done before", c)
+	}
+}
+
+// The demo of row 45b: with no admitted pair of qa-engineer on another
+// harness, completeness is fail, the last row (no batch), no session of
+// qa-engineer starts, and the lease is held.
+func TestTheCompletenessReviewWithNoOtherHarness(t *testing.T) {
+	for _, c := range []struct {
+		name   string
+		routes int
+	}{
+		{"qa-engineer on the draft's harness only", 3},
+		{"no route of qa-engineer at all", 2}, // round 1 of #221, note 3
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			w := newWorld(t)
+			allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
+			cfg := w.config("0.1.0-dev")
+			cfg.Routing = cfg.Routing[:c.routes]
+			rows := Restart(context.Background(), cfg)
+			if last := rows[len(rows)-1]; last.Name != "completeness" || last.Result != "fail" || last.Detail != "not run: no admitted pair on another harness" {
+				t.Fatalf("the last row %+v; want completeness fail, not run", last)
+			}
+			if strings.Contains(show(t, w.bare, "refs/heads/layup-records", "sessions.tsv"), "\tqa-engineer\t") {
+				t.Error("a session of qa-engineer started")
+			}
+			if !strings.Contains(show(t, w.bare, "refs/heads/layup-records", "lease.tsv"), "\theld\n") {
+				t.Error("the lease is not held after the fail")
+			}
+		})
+	}
+}
+
+// A review's file that names a fact of no span is refused: completeness is
+// fail, naming the session, and no intake/coverage.tsv is committed.
+func TestACoverageFileThatNamesNoFactIsRefused(t *testing.T) {
+	w := newWorld(t)
+	os.WriteFile(filepath.Join(w.dir, "bin", "coverage.tsv"), []byte("kind\tfact\trequirement\tquestion\nuncovered\t9\t—\tWhat of 9?\n"), 0o644)
+	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
+	rows := Restart(context.Background(), w.config("0.1.0-dev"))
+	last := rows[len(rows)-1]
+	if last.Name != "completeness" || last.Result != "fail" || !strings.HasPrefix(last.Detail, "the session S-") ||
+		!strings.HasSuffix(last.Detail, ": refused file: row 1: the fact 9 is no fact of spec/spans.tsv") {
+		t.Fatalf("the last row %+v; want completeness fail, naming the session and the row", last)
+	}
+	if strings.Contains(gitOut(t, w.bare, "ls-tree", "-r", "--name-only", "refs/heads/layup-records"), "intake/coverage.tsv") {
+		t.Error("a refused file is a record")
+	}
+}
+
+// intakeComments gives the bodies of the App's comments on the Intake issue,
+// issue 1 of the world.
+func intakeComments(w *world) []string {
+	w.fake.mu.Lock()
+	defer w.fake.mu.Unlock()
+	var out []string
+	for _, c := range w.fake.comments[1] {
+		if app, _ := c["performed_via_github_app"].(map[string]any); app != nil && app["slug"] == "layup-agent" {
+			out = append(out, c["body"].(string))
+		}
+	}
+	return out
+}
+
+// The demo of row 46 (task T-8r3u, #222): after the completeness review, one
+// comment of the App on the Intake issue holds the merged questions in two
+// blocks, after the records commit of questions.tsv; a second restart finds
+// both and posts nothing.
+func TestTheStepBatch(t *testing.T) {
+	w := newWorld(t)
+	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
+	rows := Restart(context.Background(), w.config("0.1.0-dev"))
+	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers")
+	questions := show(t, w.bare, "refs/heads/layup-records", "questions.tsv")
+	n := strings.Count(questions, "\n") - 1
+	if d := rowOf(rows, "batch").Detail; d != fmt.Sprintf("%d questions, in questions.tsv and the comment of the batch", n) || n < 4 {
+		t.Errorf("the detail of batch %q, %d questions", d, n)
+	}
+	for _, f := range []string{"band.B", "band.U", "appetite.hours"} {
+		if !strings.Contains(questions, "\tintent\t"+f+"\tidea-owner\tbefore-delivery\tintent\t—\t—\t") {
+			t.Errorf("questions.tsv has no question of the intent field %s:\n%s", f, questions)
+		}
+	}
+	c := intakeComments(w)
+	if len(c) != 1 || !strings.HasPrefix(c[0], batchHeader+"\n") || !strings.Contains(c[0], "\n## For the idea owner\n") ||
+		!strings.Contains(c[0], "\n## For the Operator\n") || !strings.Contains(c[0], fmt.Sprintf("\nQ-%03d: ", n)) {
+		t.Fatalf("the App's comments on the Intake issue %q; want one batch of %d questions in two blocks", c, n)
+	}
+	blob := gitOut(t, w.bare, "rev-parse", "refs/heads/layup-records:questions.tsv")
+	again := Restart(context.Background(), w.config("0.1.0-dev"))
+	if b := rowOf(again, "batch"); b.Result != "done" || b.Detail != "done before" || len(intakeComments(w)) != 1 {
+		t.Errorf("the second restart's row %+v, %d comments; want batch done before and one comment", b, len(intakeComments(w)))
+	}
+	if gitOut(t, w.bare, "rev-parse", "refs/heads/layup-records:questions.tsv") != blob {
+		t.Error("the second restart changed questions.tsv")
+	}
+}
+
+// A run that stopped between the records commit of questions.tsv and the post
+// leaves the record and no comment: the next restart posts the comment from
+// the record, with no new commit of questions.tsv.
+func TestABatchWithNoCommentIsPostedFromTheRecord(t *testing.T) {
+	w := newWorld(t)
+	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
+	allDone(t, "the restart", Restart(context.Background(), w.config("0.1.0-dev")), "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers")
+	first := intakeComments(w)
+	// The post never happened. The issue holds a comment of a person that
+	// starts with the header and another comment of the App: neither is the
+	// App's batch.
+	w.fake.mu.Lock()
+	w.fake.comments[1] = []map[string]any{
+		{"id": 701, "user": map[string]any{"id": 303, "login": "carol"}, "created_at": "2026-10-08T13:00:00Z", "updated_at": "2026-10-08T13:00:00Z",
+			"body": batchHeader + "\na copy by hand, with no answer line\n"},
+		{"id": 702, "user": map[string]any{"id": 9001, "login": "layup-agent[bot]"}, "performed_via_github_app": map[string]any{"slug": "layup-agent"},
+			"created_at": "2026-10-08T13:00:00Z", "updated_at": "2026-10-08T13:00:00Z", "body": "another comment of the App\n"},
+	}
+	w.fake.mu.Unlock()
+	blob := gitOut(t, w.bare, "rev-parse", "refs/heads/layup-records:questions.tsv")
+	again := Restart(context.Background(), w.config("0.1.0-dev"))
+	if b := rowOf(again, "batch"); b.Result != "done" || b.Detail != "the comment of the batch posted from questions.tsv" {
+		t.Errorf("the row %+v; want batch done, posted from the record", b)
+	}
+	if c := intakeComments(w); len(c) != 2 || len(first) != 1 || c[1] != first[0] {
+		t.Errorf("the comment posted again %q; want the first's bytes %q", c, first)
+	}
+	if gitOut(t, w.bare, "rev-parse", "refs/heads/layup-records:questions.tsv") != blob {
+		t.Error("the restart changed questions.tsv")
+	}
+}
+
+// addComment adds a comment of a person on issue n of the world's forge, at
+// the time created.
+func addComment(w *world, n int, id, author int, login, created, body string) {
+	w.fake.mu.Lock()
+	defer w.fake.mu.Unlock()
+	w.fake.comments[n] = append(w.fake.comments[n], map[string]any{"id": id, "user": map[string]any{"id": author, "login": login},
+		"created_at": created, "updated_at": created, "body": body})
+}
+
+// The demo of row 47a (task T-hxb9, #223): after the batch, the step answers
+// waits, the last row of a restart that releases the lease; after a comment of
+// the idea owner with an answer line of each question (one corrected by a
+// later comment) and one of a person who is no approver, the next restart
+// copies the comments that are not the App's and writes intake/answers.tsv,
+// the answered states and budget.tsv; a third restart finds the record.
+func TestTheStepAnswers(t *testing.T) {
+	w := newWorld(t)
+	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
+	rows := Restart(context.Background(), w.config("0.1.0-dev"))
+	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers")
+	if d := rowOf(rows, "answers").Detail; d != "waiting: no answer yet in the block idea-owner" {
+		t.Errorf("the detail of answers %q; want waiting", d)
+	}
+	if !strings.Contains(show(t, w.bare, "refs/heads/layup-records", "lease.tsv"), "\treleased\n") {
+		t.Error("the lease is not released after a wait")
+	}
+	questions, err := records.ReadQuestions([]byte(show(t, w.bare, "refs/heads/layup-records", "questions.tsv")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	asked, err := time.Parse(time.RFC3339, questions[0][9])
+	if err != nil {
+		t.Fatal(err)
+	}
+	at := func(d time.Duration) string { return asked.Add(d).UTC().Format(time.RFC3339) }
+	var first, last strings.Builder
+	for _, q := range questions {
+		answer := "the answer to " + q[0]
+		switch q[2] {
+		case "band.B":
+			answer = "9.5"
+		case "band.U":
+			answer = "10.0"
+		case "appetite.hours":
+			answer = "40.0"
+		}
+		fmt.Fprintf(&first, "%s: %s\n", q[0], answer)
+	}
+	fmt.Fprintf(&last, "%s: the answer corrected\n", questions[0][0])
+	addComment(w, 1, 801, 999, "mallory", at(time.Minute), questions[0][0]+": not an approver\n")
+	addComment(w, 1, 802, 303, "carol", at(2*time.Minute), first.String())
+	addComment(w, 1, 803, 303, "carol", at(3*time.Minute), last.String())
+	rows = Restart(context.Background(), w.config("0.1.0-dev"))
+	// The review (row 47b) closes each answer, and the follow-up asks nothing.
+	allDone(t, "the restart with the answers", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers", "answers-review", "follow-up", "follow-up-answers")
+	if d := rowOf(rows, "follow-up").Detail; d != "nothing to ask again; Intake is done" {
+		t.Errorf("the detail of follow-up %q", d)
+	}
+	if d := rowOf(rows, "follow-up-answers").Detail; d != "no follow-up; Intake is done" {
+		t.Errorf("the detail of follow-up-answers %q (row 47c)", d)
+	}
+	if d := rowOf(rows, "answers").Detail; d != fmt.Sprintf("%d answers, in intake/answers.tsv; budget.tsv written", len(questions)) {
+		t.Errorf("the detail of answers %q", d)
+	}
+	answers := show(t, w.bare, "refs/heads/layup-records", "intake/answers.tsv")
+	if !strings.Contains(answers, "\n"+questions[0][0]+"\tthe answer corrected\t803\t303\t") || strings.Contains(answers, "not an approver") ||
+		strings.Count(answers, "\n") != len(questions)+1 {
+		t.Errorf("intake/answers.tsv:\n%s", answers)
+	}
+	// Each question has the time of its answer; the review then closed it.
+	after, err := records.ReadQuestions([]byte(show(t, w.bare, "refs/heads/layup-records", "questions.tsv")))
+	if err != nil || len(after) != len(questions) {
+		t.Fatalf("questions.tsv: %d rows, %v", len(after), err)
+	}
+	for _, q := range after {
+		if q[11] == "" || q[12] != "closed" {
+			t.Errorf("the question %q: want the time of its answer, and closed by the review", q)
+		}
+	}
+	budget := show(t, w.bare, "refs/heads/layup-records", "budget.tsv")
+	if !strings.Contains(budget, "\nband.B\t9.5\t") || !strings.Contains(budget, "\nband.U\t10.0\t") || !strings.Contains(budget, "\nappetite.hours\t40.0\t") {
+		t.Errorf("budget.tsv:\n%s", budget)
+	}
+	copies := show(t, w.bare, "refs/heads/layup-records", "copies.tsv")
+	for _, id := range []string{"801", "802", "803"} {
+		if !strings.Contains(copies, "\n"+id+"\t1\t1\t") {
+			t.Errorf("copies.tsv has no copy of the comment %s:\n%s", id, copies)
+		}
+	}
+	if strings.Contains(copies, "\tlayup-agent\t") {
+		t.Errorf("copies.tsv holds the App's own comment:\n%s", copies)
+	}
+	again := Restart(context.Background(), w.config("0.1.0-dev"))
+	if a := rowOf(again, "answers"); a.Result != "done" || a.Detail != "done before" {
+		t.Errorf("the third restart's row %+v; want answers done before", a)
+	}
+}
+
+// The demo of row 47b (task T-vwu3, #224): the idea owner answers all but the
+// first question, with a B not below U, and the review leaves the hours open;
+// one follow-up comment of the App on the Intake issue asks again exactly the
+// missing question, the two unparsed fields and the open one; the next
+// restart finds the records and posts nothing.
+func TestTheReviewOfTheAnswersAndTheFollowUp(t *testing.T) {
+	w := newWorld(t)
+	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
+	allDone(t, "the restart", Restart(context.Background(), w.config("0.1.0-dev")), "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers")
+	questions, err := records.ReadQuestions([]byte(show(t, w.bare, "refs/heads/layup-records", "questions.tsv")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	asked, _ := time.Parse(time.RFC3339, questions[0][9])
+	var body, review strings.Builder
+	review.WriteString("question\tstate\treason\n")
+	ref := map[string]string{} // the ID of each field of the intent form
+	for _, q := range questions[1:] {
+		answer := "the answer to " + q[0]
+		switch q[2] {
+		case "band.B":
+			answer = "10.0" // not below U: both unparsed
+		case "band.U":
+			answer = "9.5"
+		case "appetite.hours":
+			answer = "40.0"
+		}
+		ref[q[2]] = q[0]
+		fmt.Fprintf(&body, "%s: %s\n", q[0], answer)
+		state := "closed"
+		if q[2] == "appetite.hours" {
+			state = "open"
+		}
+		fmt.Fprintf(&review, "%s\t%s\tthe review's reason\n", q[0], state)
+	}
+	os.WriteFile(filepath.Join(w.dir, "bin", "answers-review.tsv"), []byte(review.String()), 0o644)
+	addComment(w, 1, 802, 303, "carol", asked.Add(time.Minute).UTC().Format(time.RFC3339), body.String())
+	rows := Restart(context.Background(), w.config("0.1.0-dev"))
+	allDone(t, "the restart with the answers", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers", "answers-review", "follow-up", "follow-up-answers")
+	if d := rowOf(rows, "follow-up").Detail; d != "4 questions asked again, in questions.tsv and the comment of the follow-up" {
+		t.Errorf("the detail of follow-up %q", d)
+	}
+	after, err := records.ReadQuestions([]byte(show(t, w.bare, "refs/heads/layup-records", "questions.tsv")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var again []string
+	for _, q := range after[len(questions):] {
+		if q[1] != "follow-up" {
+			t.Errorf("a row after the batch %q is no follow-up", q)
+		}
+		again = append(again, q[2])
+	}
+	if want := []string{questions[0][0], ref["band.B"], ref["band.U"], ref["appetite.hours"]}; strings.Join(again, " ") != strings.Join(want, " ") {
+		t.Errorf("the follow-up asks again %q; want the missing, the two unparsed and the open %q", again, want)
+	}
+	if got := show(t, w.bare, "refs/heads/layup-records", "intake/answers-review.tsv"); !strings.Contains(got, "\n"+ref["appetite.hours"]+"\topen\tthe review's reason\tS-") {
+		t.Errorf("intake/answers-review.tsv:\n%s", got)
+	}
+	c := intakeComments(w)
+	if len(c) != 2 || !strings.HasPrefix(c[1], followUpHeader+"\n") || !strings.Contains(c[1], "\n"+after[len(questions)][0]+": "+questions[0][8]+"\n") {
+		t.Fatalf("the App's comments on the Intake issue %q; want the batch and one follow-up", c)
+	}
+	third := Restart(context.Background(), w.config("0.1.0-dev"))
+	for _, name := range []string{"answers", "answers-review", "follow-up"} {
+		if s := rowOf(third, name); s.Result != "done" || s.Detail != "done before" {
+			t.Errorf("the third restart's row %+v; want %s done before", s, name)
+		}
+	}
+	if s := rowOf(third, "follow-up-answers"); s.Detail != "waiting: no answer yet to the follow-up in the block idea-owner" {
+		t.Errorf("the third restart's row %+v; want follow-up-answers waiting (row 47c)", s)
+	}
+	if len(intakeComments(w)) != 2 {
+		t.Errorf("the third restart posted a comment: %d", len(intakeComments(w)))
+	}
+}
+
+// intakeToFollowUp runs a world to the follow-up: the idea owner answers each
+// question of the batch, the intent form with b, u and h, and the review
+// leaves open the fields of the intent form named in open. It gives the world,
+// the rows of questions.tsv after the follow-up, and the restart's rows.
+func intakeToFollowUp(t *testing.T, b, u, h string, open ...string) (*world, [][]string, []Step) {
+	t.Helper()
+	w := newWorld(t)
+	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
+	Restart(context.Background(), w.config("0.1.0-dev"))
+	questions, err := records.ReadQuestions([]byte(show(t, w.bare, "refs/heads/layup-records", "questions.tsv")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	asked, _ := time.Parse(time.RFC3339, questions[0][9])
+	var body, review strings.Builder
+	review.WriteString("question\tstate\treason\n")
+	for _, q := range questions {
+		answer, state := "the answer to "+q[0], "closed"
+		switch q[2] {
+		case "band.B":
+			answer = b
+		case "band.U":
+			answer = u
+		case "appetite.hours":
+			answer = h
+		}
+		if slices.Contains(open, q[2]) {
+			state = "open"
+		}
+		fmt.Fprintf(&body, "%s: %s\n", q[0], answer)
+		fmt.Fprintf(&review, "%s\t%s\tthe review's reason\n", q[0], state)
+	}
+	os.WriteFile(filepath.Join(w.dir, "bin", "answers-review.tsv"), []byte(review.String()), 0o644)
+	addComment(w, 1, 802, 303, "carol", asked.Add(time.Minute).UTC().Format(time.RFC3339), body.String())
+	rows := Restart(context.Background(), w.config("0.1.0-dev"))
+	after, err := records.ReadQuestions([]byte(show(t, w.bare, "refs/heads/layup-records", "questions.tsv")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return w, after, rows
+}
+
+// The demo of row 47c (task T-tmm2, #225): budget.tsv is written at answers,
+// the review leaves the hours open, the follow-up asks them again; the step
+// follow-up-answers waits, then records the idea owner's answer, which
+// replaces the hours in budget.tsv with the follow-up as its source, and
+// Intake ends; a third restart finds the record.
+func TestTheAnswersToTheFollowUpReplaceAValueOfTheBudget(t *testing.T) {
+	w, questions, rows := intakeToFollowUp(t, "5.0", "10.0", "40.0", "appetite.hours")
+	if d := rowOf(rows, "follow-up-answers").Detail; d != "waiting: no answer yet to the follow-up in the block idea-owner" {
+		t.Fatalf("the detail of follow-up-answers %q; want waiting", d)
+	}
+	follow := questions[len(questions)-1]
+	if follow[1] != "follow-up" {
+		t.Fatalf("the last question %q is no follow-up", follow)
+	}
+	asked, _ := time.Parse(time.RFC3339, follow[9])
+	addComment(w, 1, 803, 303, "carol", asked.Add(time.Minute).UTC().Format(time.RFC3339), follow[0]+": 50.0\n")
+	rows = Restart(context.Background(), w.config("0.1.0-dev"))
+	if d := rowOf(rows, "follow-up-answers").Detail; d != "1 answers to the follow-up, in intake/answers.tsv; budget.tsv replaced; Intake is done" {
+		t.Errorf("the detail of follow-up-answers %q", d)
+	}
+	if got := show(t, w.bare, "refs/heads/layup-records", "budget.tsv"); !strings.Contains(got, "\nappetite.hours\t50.0\t"+follow[0]+"\n") || !strings.Contains(got, "\nband.B\t5.0\t") {
+		t.Errorf("budget.tsv:\n%s", got)
+	}
+	if got := show(t, w.bare, "refs/heads/layup-records", "intake/answers.tsv"); !strings.Contains(got, "\n"+follow[0]+"\t50.0\t803\t303\t") {
+		t.Errorf("intake/answers.tsv:\n%s", got)
+	}
+	after, _ := records.ReadQuestions([]byte(show(t, w.bare, "refs/heads/layup-records", "questions.tsv")))
+	for _, q := range after {
+		switch {
+		case q[0] == follow[0] && q[12] != "answered":
+			t.Errorf("the follow-up %q: want answered", q)
+		case q[0] == follow[2] && q[12] != "open":
+			t.Errorf("the question asked again %q: want its own state, open", q)
+		}
+	}
+	if strings.Contains(show(t, w.bare, "refs/heads/layup-records", "copies.tsv"), "\tlayup-agent\t") {
+		t.Error("copies.tsv holds a comment of the App")
+	}
+	third := Restart(context.Background(), w.config("0.1.0-dev"))
+	if s := rowOf(third, "follow-up-answers"); s.Result != "done" || s.Detail != "done before" {
+		t.Errorf("the third restart's row %+v; want follow-up-answers done before", s)
+	}
+}
+
+// With the batch's B not below U, budget.tsv is first written from the
+// answers to the follow-up, each value with the question that gives it.
+func TestTheAnswersToTheFollowUpWriteTheBudget(t *testing.T) {
+	w, questions, _ := intakeToFollowUp(t, "10.0", "9.5", "40.0")
+	var follow [][]string
+	for _, q := range questions {
+		if q[1] == "follow-up" {
+			follow = append(follow, q)
+		}
+	}
+	if len(follow) != 2 {
+		t.Fatalf("the follow-up rows %q; want B and U asked again", follow)
+	}
+	asked, _ := time.Parse(time.RFC3339, follow[0][9])
+	addComment(w, 1, 803, 303, "carol", asked.Add(time.Minute).UTC().Format(time.RFC3339), follow[0][0]+": 5.0\n"+follow[1][0]+": 10.0\n")
+	rows := Restart(context.Background(), w.config("0.1.0-dev"))
+	if d := rowOf(rows, "follow-up-answers").Detail; d != "2 answers to the follow-up, in intake/answers.tsv; budget.tsv written; Intake is done" {
+		t.Errorf("the detail of follow-up-answers %q", d)
+	}
+	got := show(t, w.bare, "refs/heads/layup-records", "budget.tsv")
+	if !strings.Contains(got, "\nband.B\t5.0\t"+follow[0][0]+"\n") || !strings.Contains(got, "\nband.U\t10.0\t"+follow[1][0]+"\n") || !strings.Contains(got, "\nappetite.hours\t40.0\t") {
+		t.Errorf("budget.tsv:\n%s", got)
+	}
+}
+
+// Input states: an answer to the follow-up that still does not parse leaves
+// budget.tsv unwritten and its question of the intent form open; Intake is
+// done.
+func TestAnUnparsedAnswerToTheFollowUpLeavesItsQuestionOpen(t *testing.T) {
+	w, questions, _ := intakeToFollowUp(t, "10.0", "9.5", "40.0")
+	var follow [][]string
+	for _, q := range questions {
+		if q[1] == "follow-up" {
+			follow = append(follow, q)
+		}
+	}
+	asked, _ := time.Parse(time.RFC3339, follow[0][9])
+	addComment(w, 1, 803, 303, "carol", asked.Add(time.Minute).UTC().Format(time.RFC3339), follow[0][0]+": five\n"+follow[1][0]+": 10.0\n")
+	rows := Restart(context.Background(), w.config("0.1.0-dev"))
+	if d := rowOf(rows, "follow-up-answers").Detail; d != "2 answers to the follow-up, in intake/answers.tsv; budget.tsv not written; Intake is done" {
+		t.Errorf("the detail of follow-up-answers %q", d)
+	}
+	if strings.Contains(gitOut(t, w.bare, "ls-tree", "-r", "--name-only", "refs/heads/layup-records"), "budget.tsv") {
+		t.Error("budget.tsv is written")
+	}
+	after, _ := records.ReadQuestions([]byte(show(t, w.bare, "refs/heads/layup-records", "questions.tsv")))
+	for _, q := range after {
+		if q[0] == follow[0][2] && q[12] != "open" {
+			t.Errorf("the question of B %q: want open", q)
+		}
+	}
 }

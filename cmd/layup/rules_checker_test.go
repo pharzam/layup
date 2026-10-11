@@ -22,6 +22,7 @@ const (
 	tableHeading = "### The table of phase 1"
 	m2aHeading   = "### The table of M2a"
 	m2bHeading   = "### The table of M2b"
+	m2cHeading   = "### The table of M2c"
 	adapterLine  = "The one package that imports them:"      // the line of rule 5
 	engineLine   = "The packages of the engine checks:"      // the line of NFR-005 (session.md)
 	phase1Cell   = "(the row of phase 1"                     // a cell of the table of M2a that stands for the cell of phase 1
@@ -217,37 +218,50 @@ func readTable(text string) (map[string]row, error) {
 			rows[pkg[0]] = r
 		}
 	}
-	m2b, err := cellsUnder(text, m2bHeading)
-	if err != nil {
-		return nil, err
+	// The tables of M2b and M2c (task T-4ywt, row 41a) have one form: each row
+	// is a package of its own.
+	for _, heading := range []string{m2bHeading, m2cHeading} {
+		if err := readOwnTable(text, heading, rows); err != nil {
+			return nil, err
+		}
 	}
-	col, err = columns(m2b[0], m2bHeading, "Package", "Job", "May import", "Starts a program", "Connects")
+	return rows, nil
+}
+
+// readOwnTable reads a table whose rows are each a package of its own, in the
+// form of the table of M2b, into rows.
+func readOwnTable(text, heading string, rows map[string]row) error {
+	table, err := cellsUnder(text, heading)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	for _, cells := range m2b[1:] {
+	col, err := columns(table[0], heading, "Package", "Job", "May import", "Starts a program", "Connects")
+	if err != nil {
+		return err
+	}
+	for _, cells := range table[1:] {
 		for _, name := range []string{"Job", "May import", "Starts a program"} {
 			if strings.HasPrefix(cells[col[name]], phase1Cell) {
-				return nil, fmt.Errorf("%s: a row of M2b is a package of its own; a package of another table keeps its one row", cells[col["Package"]])
+				return fmt.Errorf("%s: a row of %s is a package of its own; a package of another table keeps its one row", cells[col["Package"]], strings.TrimPrefix(heading, "### The table of "))
 			}
 		}
 		pkg, r, err := readRow(cells, col)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		if _, has := rows[pkg]; has {
-			return nil, fmt.Errorf("%s has a second row", pkg)
+			return fmt.Errorf("%s has a second row", pkg)
 		}
 		if c := cells[col["Connects"]]; c != "—" {
 			list, rest := spans(c)
 			if len(list) == 0 || rest != strings.Repeat(",", len(list)-1) {
-				return nil, fmt.Errorf("%s: cannot read Connects %q", pkg, c)
+				return fmt.Errorf("%s: cannot read Connects %q", pkg, c)
 			}
 			r.connects = list
 		}
 		rows[pkg] = r
 	}
-	return rows, nil
+	return nil
 }
 
 // readAdapter reads the one package that rule 5 lets import a network package:

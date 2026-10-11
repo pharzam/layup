@@ -42,7 +42,9 @@ checks before a push, the push and the bind ([REQ-003](#req-003--before-a-push))
 ### The session directory
 
 `DIR/sessions/<session>/`, under the host directory of `--host`
-([`run.md`](run.md#the-command)), named by the session ID, never reused:
+([`run.md`](run.md#the-command)), named by the session ID, never reused (a
+session of a phase of `M2c` adds `input/`,
+[`intake.md`](intake.md#the-sessions-of-intake)):
 
 - `target`: the target's `OWNER/NAME`, written first (**decided here**, task
   `T-vxdg`: it lets a run tell its own leftover directories from another
@@ -398,7 +400,8 @@ the events hold, so it names the refusals of the end and of those checks
 (**decided here**, round 1 of #165); a session whose end recorded nothing has no
 comment, and a lost lease stops the run before it (round 2 of #165). The call is the forge's `Comment`
 ([`forge.md`](forge.md#the-calls-of-m2b), O-189). The task loop of `M2e` moves
-a task's comments to the task's issue.
+a task's comments to the task's issue. The comment of a session of a phase of
+`M2c` is in [`intake.md`](intake.md#the-sessions-of-intake) (task `T-gmey`).
 
 ## REQ-005 — The result of a session
 
@@ -670,7 +673,7 @@ The task loop: the plan session, the plan review, the verifier, the close-out,
 the draft pull request, the transition table, and the questions, decisions and
 lessons of a handoff (`M2e`). The tier of a task from its plan, and the authors
 of a change for a plan review or a verification (`M2e`). The budget check
-before each start and `budget.tsv` (`M2c`), and the circuit breaker (`M3d`).
+before each start and `budget.tsv` (`M2c`, [`intake.md`](intake.md#the-budget-of-intake): the cap of milestone 0), and the circuit breaker (`M3d`).
 The branch of a rule batch, `layup/rules` and the known-bad patches (`M2f`).
 The context of a session by its links, the record kinds of each step's row
 (§9, ADR-0020 decision 7): in `M2b` the prompt is the caller's text, and the step

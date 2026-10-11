@@ -34,6 +34,9 @@ type SessionStore interface {
 	// refuses (not a fast-forward, or refused by the remote) is
 	// errPushRefused (row 37b).
 	PushHead(ctx context.Context, sha, branch string) error
+	// Started gives the time of Start, the first commit of the records
+	// branch, for the budget of milestone 0 (row 42b).
+	Started(ctx context.Context) (time.Time, error)
 }
 
 // Sessions starts the attempts and the task sessions of one run of one
@@ -98,6 +101,7 @@ type TaskSpec struct {
 	End           func(id string, d session.Dir, r session.Run, err error) error
 	Push          func(id string, d session.Dir, r session.Run) error
 	probe         *probeOf // a probe session's (row 38), nil for a task session
+	phase         *phaseOf // a session of a phase's (row 42a), nil for a task session
 }
 
 func (s *Sessions) fns() {
@@ -220,6 +224,9 @@ func (s *Sessions) TaskSession(ctx context.Context, spec TaskSpec) (string, erro
 			if spec.probe != nil { // the prompt names the session's own result file
 				spec.Prompt = probeText(filepath.Join(root, "result", "probe.tsv"), spec.probe.token)
 			}
+			if spec.phase != nil { // and the session's own input files
+				spec.Prompt = spec.phase.text(root)
+			}
 			if d, err = s.make(id, spec); err != nil {
 				if !existed && s.exists(root) {
 					d, made = session.Dir{Root: root}, true
@@ -227,6 +234,9 @@ func (s *Sessions) TaskSession(ctx context.Context, spec TaskSpec) (string, erro
 				return id, err
 			}
 			made = true
+			if spec.phase != nil {
+				return id, session.MakeInput(d, spec.phase.input)
+			}
 			return id, nil
 		},
 		Attempt: func(string) error {
@@ -289,7 +299,7 @@ func (s *Sessions) TaskSession(ctx context.Context, spec TaskSpec) (string, erro
 	if spec.Push != nil {
 		steps.Push = func(id string, r session.Run) error { return spec.Push(id, d, r) }
 	}
-	if spec.probe != nil { // a probe has no attempt and no push
+	if spec.probe != nil || spec.phase != nil { // a probe and a session of a phase have no attempt and no push
 		steps.Attempt, steps.Push = nil, nil
 	}
 	id, err := session.Call(steps)
@@ -304,7 +314,8 @@ func (s *Sessions) TaskSession(ctx context.Context, spec TaskSpec) (string, erro
 		// The comment comes after every record of the session, the push
 		// hook's too (decided here, task T-fsjp, round 1 of #165).
 		// A lost lease stops the run before any other write (run.md).
-		if !errors.As(err, new(*LostError)) {
+		// A session of a phase posts its comment in its end (endPhase).
+		if spec.phase == nil && !errors.As(err, new(*LostError)) {
 			if cErr := s.comment(ctx, id); cErr != nil {
 				err = errors.Join(err, cErr)
 			}
@@ -322,6 +333,9 @@ func (s *Sessions) TaskSession(ctx context.Context, spec TaskSpec) (string, erro
 	var refusal session.Refusal
 	if !errors.As(err, &refusal) {
 		return id, err // errProbed among them: no record
+	}
+	if spec.phase != nil {
+		return id, refusePhase(id, refusal)
 	}
 	if spec.probe != nil {
 		if pErr := s.refuseProbe(ctx, spec, id, version, refusal); pErr != nil {
@@ -367,6 +381,9 @@ func (s *Sessions) startRow(ctx context.Context, id string, spec TaskSpec, versi
 	}
 	if spec.probe != nil { // a probe has no events: its start row alone
 		return s.commit(ctx, map[string][]byte{"sessions.tsv": sessions}, fmt.Sprintf("layup run: the start of the probe %s", id))
+	}
+	if spec.phase != nil { // nor has a session of a phase
+		return s.commit(ctx, map[string][]byte{"sessions.tsv": sessions}, fmt.Sprintf("layup run: the start of %s, the session of %s", id, spec.phase.step))
 	}
 	events, err := s.appendEvent(ctx, spec.Task, "session", spec.Attempt, id, "", "")
 	if err != nil {

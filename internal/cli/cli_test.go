@@ -73,7 +73,7 @@ func TestAnInputErrorPrintsTheReasonAndNoUsage(t *testing.T) {
 
 func TestTheUsageOfLayupListsItsCommands(t *testing.T) {
 	_, _, errOut := run()
-	for _, want := range []string{"\n  version ", "\n  psb check FILE "} {
+	for _, want := range []string{"\n  version ", "\n  psb check FILE ", "\n  spec check --facts SPANS --psb FILE "} {
 		if !strings.Contains(errOut, want) {
 			t.Errorf("the usage has no %q:\n%s", want, errOut)
 		}

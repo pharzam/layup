@@ -110,6 +110,8 @@ domain terms are in the sections below.
 | Unicode Transformation Format, 8-bit | `UTF-8` | The byte encoding of Unicode text that every LAYUP record and Markdown file uses. | The `—` of an empty field is three bytes in UTF-8. |
 | Request for Comments 3339 | `RFC 3339` | The Internet standard form of a date and time; LAYUP writes a time in UTC to the second ([`spec/README.md`](spec/README.md#the-types)). | `2026-10-01T08:09:21Z`. |
 | International Organization for Standardization standard 4217 | `ISO 4217` | The three-letter codes of currencies; the `currency` column of a cost record uses them. | `USD`. |
+| World Wide Web Consortium | `W3C` | The body that publishes web standards; its Web Annotation Data Model gives a span of a text by its position and by its quote, the form that the facts of Intake follow ([`spec/intake.md`](spec/intake.md)). | The `TextPositionSelector` of the model. |
+| ISO/IEC/IEEE standard 29148 | `ISO/IEC/IEEE 29148` | The international standard of requirements engineering; its language criteria for a requirement are the source of the requirement smells that the review of meaning of Intake reads ([`spec/intake.md`](spec/intake.md)). | A vague term with no measure. |
 
 ## 1. LAYUP domain (PSB §8)
 
