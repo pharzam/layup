@@ -34,3 +34,42 @@ replacement of a written value of `budget.tsv`; `records.md` says that
 
 **Tests:** [`test-runs.md`](../../runs/T-tmm2/test-runs.md): red before the code;
 13 of 13 mutations caught; green at the three levels.
+
+## Review rounds
+
+The records are comments on #225. Round 1 (Claude Fable 5.1, effort `xhigh`, a
+fresh read-only session in a clone at `56dd2d8`, cycle 0): `material`, one
+finding: with `budget.tsv` not yet written, the pair rule of `B` and `U` was
+skipped when another field was still unparsed. The fix `2d7299b` (cycle 1)
+holds the pair rule whatever the state of the hours, red first, and keeps a
+`budget.tsv` with no `B` or `U` as it was (note 2). The Fixes reply first named
+the old head, as the fix's commit had been refused by `git diff --check`; a
+correction names `2d7299b`, and a round 2 started on the old head was stopped
+before it wrote anything. Round 2 (the same reviewer and effort, a fresh
+session at `2d7299b`, cycle 1, the cap): `nothing material in scope`, three
+notes, which are #260.
+
+## Verdict
+
+Delivered: the step `follow-up-answers`, the last step of Intake: the answers
+to the follow-up recorded, `budget.tsv` written or a value of it replaced with
+the follow-up as its source, a field still unparsed `open`, and the end of
+Intake. The review ended by decay at cycle 1 of cap 1. The diff against
+`863c3e1`, the branch's base, is inside 1,100 lines over 18 files. CI runs the
+three levels on the landing head. Next: row 48.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). UTC; reviewers' tokens are `modelUsage`;
+the author's are not reported. The stopped round, about a minute of a Fable
+session, wrote no record and reported no figure.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan | reasoning | Claude Opus 5.5 | not reported | not reported | 2026-10-11 12:20 to 12:21 (the claim to the post) |
+| The plan review | reasoning | Claude Fable 5.1 | `xhigh` | 800,447 (USD 5.39) | 7 min 30 s |
+| The code, test first | execution | Claude Opus 5.5 | not reported | not reported | 12:29 to 12:46 |
+| Round 1 | reasoning | Claude Fable 5.1 | `xhigh` | 929,526 (USD 4.62) | 8 min 48 s |
+| The fix of round 1 | execution | Claude Opus 5.5 | not reported | not reported | 12:55 to 12:58 |
+| Round 2 | reasoning | Claude Fable 5.1 | `xhigh` | 759,967 (USD 4.32) | 7 min 29 s |
+| The close-out | execution | Claude Opus 5.5 | not reported | not reported | 13:06 to 13:06 |
