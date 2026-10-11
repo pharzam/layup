@@ -156,7 +156,7 @@ below it ([`session.md`](session.md#nfr-005--no-harness-in-the-engine-checks)).
 | `internal/ledger` | the writer of `telemetry.tsv`: one row per session, from the usage report and `host:prices.tsv` ([`session.md`](session.md#req-011--the-writer-of-the-telemetry-record); task `T-4c3q`); in `M2c`, the rule of the budget of milestone 0, which `internal/run` asks before each session of Intake ([`intake.md`](intake.md#the-budget-of-intake); task `T-ybd5`) | `internal/tsv`, `internal/records` | no | — |
 | `internal/rules` | in `M2b`, the reader of the rule-path register and the check of a diff before a push ([`session.md`](session.md#a-workflow-or-rule-path-change)), with a second Go value of the block `rule-paths`, whose owner is `internal/setup`, compared with the block by its own test (task `T-m1dx`); the check `layup/rules` and rule batches come in `M2f` | `internal/tsv`, `internal/records` | no | — |
 
-The packages of the engine checks: `internal/psb`, `internal/verify`, `internal/gate`.
+The packages of the engine checks: `internal/psb`, `internal/verify`, `internal/gate`, `internal/spec`.
 
 **The rule of the engine checks** (NFR-005, task `T-y10b`): no package of that
 line depends on `internal/session` or on a package of rule 5, by any path; the
@@ -185,7 +185,9 @@ in place** by this task: `internal/cli` may import `internal/spec` (the command
 `layup spec check`); `internal/run` may import `internal/psb` (the rule gaps, in
 process) and `internal/spec` (the span check, in process). The other changes of
 `M2c` are inside rows that already allow them: `internal/run` writes the records
-of Intake, `internal/records` owns their schemas, `internal/session` builds the
+of Intake, `internal/records` owns their schemas but the block `spec-check`,
+which `internal/spec` owns with a second Go value of `spans` (task `T-4ywt`),
+`internal/session` builds the
 directory of a session of a phase with its `input/`, and `internal/forge` posts
 and reads the comments of the Intake issue.
 
@@ -194,10 +196,12 @@ and reads the comments of the Intake issue.
 | `internal/spec` | the span check of the facts of a problem statement and its table ([`intake.md`](intake.md#the-span-check)) | `internal/tsv` | no | — |
 
 **Decided here** (decision 11 of #206): `internal/spec` is an engine check
-(code, no model call), so the build task that makes the package adds it to the
-line of the engine checks of the table of `M2b`, and the heading of this table
-to `TestPackageRules`, in one change; until then the test reads neither, as a
-span that names no package of the module is an error of the test.
+(code, no model call), so the build task that made the package (row 41a, task
+`T-4ywt`) added it to the line of the engine checks of the table of `M2b`, and
+the heading of this table to `TestPackageRules`, in one change, as a span that
+names no package of the module is an error of the test. `TestPackageRules`
+reads this table in the form of the table of `M2b`: each row is a package of
+its own.
 
 ### The test of the package rules
 
@@ -481,7 +485,7 @@ requirement's section.
 | `internal/run` | `layup run`: Start, the phase loop, the lease, fencing; its row is in [the table of M2a](#the-table-of-m2a) | 2 |
 | `internal/session` | a role session: its directory, its start, its result; its row is in [the table of M2b](#the-table-of-m2b) | 2 |
 | `internal/handoff` | the transition table and the check of a handoff | 2 |
-| `internal/spec` | `layup spec check` | 2 |
+| `internal/spec` | `layup spec check`; its row is in [the table of M2c](#the-table-of-m2c) (task `T-4ywt`) | 2 |
 | `internal/rules` | the rule-path register, the check `layup/rules`, rule batches; its part before a push is in [the table of M2b](#the-table-of-m2b) | 2 |
 | `internal/audit` | `layup audit` | 2 |
 | `internal/ledger` | the cost ledger (`telemetry.tsv`) and the budget; the writer is in [the table of M2b](#the-table-of-m2b) and the budget of milestone 0 in its row there (task `T-ybd5`); the budget of a bet comes later | 2 |
