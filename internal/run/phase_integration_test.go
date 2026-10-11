@@ -215,3 +215,28 @@ func TestNoAdmittedPairStartsNoSession(t *testing.T) {
 		t.Errorf("a harness never probed: %v; want ErrNoPair", err)
 	}
 }
+
+// A refused start of a session of a phase (here its version check) writes
+// no record and removes its directory; the step's error names the session
+// and the refusal.
+func TestARefusedStartOfASessionOfAPhaseIsNoRecord(t *testing.T) {
+	w, r, f, a, h := phaseWorld(t, `true`)
+	spec := phaseSpec(t, w, r, a, h)
+	spec.Harness = append([]string{}, h...)
+	spec.Harness[regVersion] = "false"
+	commits := gitOut(t, w.bare, "rev-list", "--count", "layup-records")
+	id, err := r.PhaseSession(context.Background(), spec)
+	var pe *PhaseError
+	if !errors.As(err, &pe) || pe.Session != id || id == "" || !strings.HasPrefix(pe.Reason, "refused version") {
+		t.Fatalf("PhaseSession: %q, %v; want a PhaseError of the session, refused version", id, err)
+	}
+	if got := gitOut(t, w.bare, "rev-list", "--count", "layup-records"); got != commits {
+		t.Errorf("the records commits: %s, then %s; want none", commits, got)
+	}
+	if len(f.posted[2]) != 0 {
+		t.Errorf("the comments %q; want none", f.posted[2])
+	}
+	if _, err := os.Stat(filepath.Join(r.Host, "sessions", id)); !os.IsNotExist(err) {
+		t.Errorf("the session directory after the call: %v; want it removed", err)
+	}
+}
