@@ -19,7 +19,9 @@ the record of the answers, the history of the baseline removed, the briefs, the
 prose files from their inputs, the markers asked and filled, the gate files of
 the stack, the ruleset, and the first records commit), and checks the
 setup of a target from outside
-(`layup setup verify WORK`, with the gates of each kind on a known-bad fixture); the stack is Go
+(`layup setup verify WORK`, with the gates of each kind on a known-bad fixture),
+and checks the fact spans of a problem statement
+(`layup spec check --facts SPANS --psb FILE`); the stack is Go
 ([ADR-0010](docs/adr/0010-use-go-as-the-technology-stack.md)), and the core engine
 will be one Go command-line program over files in the repository
 ([ADR-0011](docs/adr/0011-structure-the-core-engine-as-a-go-cli-over-repository-files.md)).
