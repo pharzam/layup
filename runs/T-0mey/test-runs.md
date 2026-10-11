@@ -59,3 +59,10 @@ each mutant built.
 At `283789e` with the documents (09:32Z to 09:35Z): `go build ./...`, `go vet
 ./...`, `go test ./...`, `go test -tags=integration ./...` and `go test
 -count=1 -tags=e2e ./...` pass, every package `ok`.
+
+## The fix of round 1 (2026-10-11)
+
+Finding 1 is a sentence of `intake.md`: row 1 of Input states now names the
+steps it governs, and `qa-engineer` is row 2's. Note 3: the empty list of
+`qa-engineer` is a case of `TestTheCompletenessReviewWithNoOtherHarness`; it
+passed at once (09:50Z), as the code gives the one detail for each case.

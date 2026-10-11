@@ -890,19 +890,29 @@ func TestTheStepCompleteness(t *testing.T) {
 // harness, completeness is fail, the last row (no batch), no session of
 // qa-engineer starts, and the lease is held.
 func TestTheCompletenessReviewWithNoOtherHarness(t *testing.T) {
-	w := newWorld(t)
-	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
-	cfg := w.config("0.1.0-dev")
-	cfg.Routing = cfg.Routing[:3] // qa-engineer on claude only, the draft's harness
-	rows := Restart(context.Background(), cfg)
-	if last := rows[len(rows)-1]; last.Name != "completeness" || last.Result != "fail" || last.Detail != "not run: no admitted pair on another harness" {
-		t.Fatalf("the last row %+v; want completeness fail, not run", last)
-	}
-	if strings.Contains(show(t, w.bare, "refs/heads/layup-records", "sessions.tsv"), "\tqa-engineer\t") {
-		t.Error("a session of qa-engineer started")
-	}
-	if !strings.Contains(show(t, w.bare, "refs/heads/layup-records", "lease.tsv"), "\theld\n") {
-		t.Error("the lease is not held after the fail")
+	for _, c := range []struct {
+		name   string
+		routes int
+	}{
+		{"qa-engineer on the draft's harness only", 3},
+		{"no route of qa-engineer at all", 2}, // round 1 of #221, note 3
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			w := newWorld(t)
+			allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
+			cfg := w.config("0.1.0-dev")
+			cfg.Routing = cfg.Routing[:c.routes]
+			rows := Restart(context.Background(), cfg)
+			if last := rows[len(rows)-1]; last.Name != "completeness" || last.Result != "fail" || last.Detail != "not run: no admitted pair on another harness" {
+				t.Fatalf("the last row %+v; want completeness fail, not run", last)
+			}
+			if strings.Contains(show(t, w.bare, "refs/heads/layup-records", "sessions.tsv"), "\tqa-engineer\t") {
+				t.Error("a session of qa-engineer started")
+			}
+			if !strings.Contains(show(t, w.bare, "refs/heads/layup-records", "lease.tsv"), "\theld\n") {
+				t.Error("the lease is not held after the fail")
+			}
+		})
 	}
 }
 

@@ -436,7 +436,7 @@ release, the code of `M2b` and `M2a` included.
 
 | State | Result |
 | ----- | ------ |
-| A routing register with no admitted pair for a role of Intake | the step is `fail` (`pair`), no session starts |
+| A routing register with no admitted pair for a role of Intake (`systems-architect` for `meaning`, `product-owner` for `numbering` and `draft`; `qa-engineer` is the next row's) | the step is `fail` (`pair`), no session starts |
 | No admitted pair of `qa-engineer` on a harness other than that of the numbering and the draft, or none of the role at all | `completeness` is `fail` ("not run: no admitted pair on another harness"); no batch |
 | A session's output file that is missing, a link, over 1 MiB, or that its block refuses | the step is `fail`, naming the session; nothing of the file is committed |
 | A refused start of a session of Intake (`session.md`, The start of a session) | the step is `fail`, naming the session and the refusal; no record (**decided here**, task `T-gmey`: no event holds it, and the row of a refused probe is the probe's own) |

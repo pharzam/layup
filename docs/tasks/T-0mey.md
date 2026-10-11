@@ -46,3 +46,6 @@ another harness", for every case of the step with no pair, written in
   draft's harness, which is the numbering's by the routing rule; a numbering
   rerun under a changed register could run on another harness (note 2 of the
   plan review).
+- **A draft of no row** (note 2 of round 1): with no `need`, `constraint` or
+  `measure` fact, the draft is committed with no row, so the draft names no
+  session and the step `completeness` fails on each restart; the state is #251's.
