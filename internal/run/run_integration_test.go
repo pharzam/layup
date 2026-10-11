@@ -1003,7 +1003,7 @@ func TestABatchWithNoCommentIsPostedFromTheRecord(t *testing.T) {
 	w.fake.mu.Lock()
 	w.fake.comments[1] = []map[string]any{
 		{"id": 701, "user": map[string]any{"id": 303, "login": "carol"}, "created_at": "2026-10-08T13:00:00Z", "updated_at": "2026-10-08T13:00:00Z",
-			"body": batchHeader + "\nQ-001: a copy by hand\n"},
+			"body": batchHeader + "\na copy by hand, with no answer line\n"},
 		{"id": 702, "user": map[string]any{"id": 9001, "login": "layup-agent[bot]"}, "performed_via_github_app": map[string]any{"slug": "layup-agent"},
 			"created_at": "2026-10-08T13:00:00Z", "updated_at": "2026-10-08T13:00:00Z", "body": "another comment of the App\n"},
 	}

@@ -227,7 +227,10 @@ so a person reads it with no tool. A plain `git clone` carries the branch as
    and `watch` is written), the steps of Intake take the place of `phase`, the
    first `rule-gaps` (task `T-qk66`), and the run releases the lease after its
    last row; a release that fails makes that row `fail`, its `detail` naming the
-   lease. **Decided here** (task `T-qk66`): the rows after `clone` come from the
+   lease. **Decided here** (task `T-hxb9`): a step `done` with a detail that
+   starts with "waiting" (a step of Intake that waits for a human) is the last
+   row that the restart runs, as a `fail` is, and the run then releases the
+   lease and exits 0. **Decided here** (task `T-qk66`): the rows after `clone` come from the
    records that `clone` read, and the progress of `forge` and `clone` counts the
    rows of a restart with Start not done; `M2b`'s step `probe` comes
    before it. **Decided here:** `phase` is one
