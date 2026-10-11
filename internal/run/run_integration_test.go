@@ -24,6 +24,7 @@ import (
 	"github.com/pharzam/layup/internal/forge/github"
 	"github.com/pharzam/layup/internal/git"
 	"github.com/pharzam/layup/internal/psb"
+	"github.com/pharzam/layup/internal/records"
 	"github.com/pharzam/layup/internal/spec"
 	"github.com/pharzam/layup/internal/tsv"
 )
@@ -378,7 +379,7 @@ func TestARestartWithAnotherVersionFailsAtVersion(t *testing.T) {
 	}
 	// The same version: the lease is released, so it is taken at once; each
 	// step of Start is done.
-	allDone(t, "the restart", Restart(context.Background(), w.config("0.1.0-dev")), "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch")
+	allDone(t, "the restart", Restart(context.Background(), w.config("0.1.0-dev")), "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers")
 }
 
 // A run that stopped at opening: the restart takes the lease over from the
@@ -604,8 +605,8 @@ func TestTheStepRuleGaps(t *testing.T) {
 	cfg = w.config("0.1.0-dev")
 	cfg.Step = func(i, n int, name string) { progress = append(progress, fmt.Sprintf("%d/%d %s", i, n, name)) }
 	rows := Restart(context.Background(), cfg)
-	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch")
-	if want := []string{"1/6 forge", "2/6 clone", "3/12 version", "4/12 lease", "5/12 probe", "6/12 rule-gaps", "7/12 meaning", "8/12 numbering", "9/12 spans", "10/12 draft", "11/12 completeness", "12/12 batch"}; strings.Join(progress, ", ") != strings.Join(want, ", ") {
+	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers")
+	if want := []string{"1/6 forge", "2/6 clone", "3/13 version", "4/13 lease", "5/13 probe", "6/13 rule-gaps", "7/13 meaning", "8/13 numbering", "9/13 spans", "10/13 draft", "11/13 completeness", "12/13 batch", "13/13 answers"}; strings.Join(progress, ", ") != strings.Join(want, ", ") {
 		t.Errorf("the progress %q, want %q", progress, want)
 	}
 	// What layup psb check prints on the same file (internal/cli/cli.go):
@@ -651,7 +652,7 @@ func TestTheStepMeaning(t *testing.T) {
 	cfg.PSB = []byte("# The problem\n\nThe service is fast.\n")
 	allDone(t, "Start", w.start(cfg), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	rows := Restart(context.Background(), w.config("0.1.0-dev"))
-	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch")
+	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers")
 	if d := rowOf(rows, "meaning").Detail; d != "1 gaps of meaning, in intake/meaning.tsv" {
 		t.Errorf("the detail of meaning %q", d)
 	}
@@ -736,7 +737,7 @@ func TestTheStepsNumberingAndSpans(t *testing.T) {
 	w := newWorld(t)
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	rows := Restart(context.Background(), w.config("0.1.0-dev"))
-	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch")
+	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers")
 	if n, s := rowOf(rows, "numbering").Detail, rowOf(rows, "spans").Detail; n != "2 spans, 2 facts, in spec/spans.tsv" || s != "the span check passed, in spec/check.tsv" {
 		t.Errorf("the details %q and %q", n, s)
 	}
@@ -793,7 +794,7 @@ func TestAFailedSpanCheckRunsNumberingAgain(t *testing.T) {
 	}
 	os.Remove(bad) // the next session covers the file
 	again := Restart(context.Background(), w.config("0.1.0-dev"))
-	allDone(t, "the restart after the fail", again, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch")
+	allDone(t, "the restart after the fail", again, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers")
 	if n := rowOf(again, "numbering").Detail; n != "2 spans, 2 facts, in spec/spans.tsv" {
 		t.Errorf("numbering after a failed check: %q; want a new session's spans", n)
 	}
@@ -831,7 +832,7 @@ func TestTheStepDraft(t *testing.T) {
 	w := newWorld(t)
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	rows := Restart(context.Background(), w.config("0.1.0-dev"))
-	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch")
+	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers")
 	if d := rowOf(rows, "draft").Detail; d != "2 rows, in spec/draft.tsv" {
 		t.Errorf("the detail of draft %q", d)
 	}
@@ -875,7 +876,7 @@ func TestTheStepCompleteness(t *testing.T) {
 	os.WriteFile(filepath.Join(w.dir, "bin", "coverage.tsv"), []byte("kind\tfact\trequirement\tquestion\nclass\t1\t—\tIs fact 1 a need?\n"), 0o644)
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	rows := Restart(context.Background(), w.config("0.1.0-dev"))
-	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch")
+	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers")
 	if d := rowOf(rows, "completeness").Detail; d != "1 items, in intake/coverage.tsv" {
 		t.Errorf("the detail of completeness %q", d)
 	}
@@ -962,7 +963,7 @@ func TestTheStepBatch(t *testing.T) {
 	w := newWorld(t)
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	rows := Restart(context.Background(), w.config("0.1.0-dev"))
-	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch")
+	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers")
 	questions := show(t, w.bare, "refs/heads/layup-records", "questions.tsv")
 	n := strings.Count(questions, "\n") - 1
 	if d := rowOf(rows, "batch").Detail; d != fmt.Sprintf("%d questions, in questions.tsv and the comment of the batch", n) || n < 4 {
@@ -994,7 +995,7 @@ func TestTheStepBatch(t *testing.T) {
 func TestABatchWithNoCommentIsPostedFromTheRecord(t *testing.T) {
 	w := newWorld(t)
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
-	allDone(t, "the restart", Restart(context.Background(), w.config("0.1.0-dev")), "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch")
+	allDone(t, "the restart", Restart(context.Background(), w.config("0.1.0-dev")), "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers")
 	first := intakeComments(w)
 	// The post never happened. The issue holds a comment of a person that
 	// starts with the header and another comment of the App: neither is the
@@ -1017,5 +1018,89 @@ func TestABatchWithNoCommentIsPostedFromTheRecord(t *testing.T) {
 	}
 	if gitOut(t, w.bare, "rev-parse", "refs/heads/layup-records:questions.tsv") != blob {
 		t.Error("the restart changed questions.tsv")
+	}
+}
+
+// addComment adds a comment of a person on issue n of the world's forge, at
+// the time created.
+func addComment(w *world, n int, id, author int, login, created, body string) {
+	w.fake.mu.Lock()
+	defer w.fake.mu.Unlock()
+	w.fake.comments[n] = append(w.fake.comments[n], map[string]any{"id": id, "user": map[string]any{"id": author, "login": login},
+		"created_at": created, "updated_at": created, "body": body})
+}
+
+// The demo of row 47a (task T-hxb9, #223): after the batch, the step answers
+// waits, the last row of a restart that releases the lease; after a comment of
+// the idea owner with an answer line of each question (one corrected by a
+// later comment) and one of a person who is no approver, the next restart
+// copies the comments that are not the App's and writes intake/answers.tsv,
+// the answered states and budget.tsv; a third restart finds the record.
+func TestTheStepAnswers(t *testing.T) {
+	w := newWorld(t)
+	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
+	rows := Restart(context.Background(), w.config("0.1.0-dev"))
+	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers")
+	if d := rowOf(rows, "answers").Detail; d != "waiting: no answer yet in the block idea-owner" {
+		t.Errorf("the detail of answers %q; want waiting", d)
+	}
+	if !strings.Contains(show(t, w.bare, "refs/heads/layup-records", "lease.tsv"), "\treleased\n") {
+		t.Error("the lease is not released after a wait")
+	}
+	questions, err := records.ReadQuestions([]byte(show(t, w.bare, "refs/heads/layup-records", "questions.tsv")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	asked, err := time.Parse(time.RFC3339, questions[0][9])
+	if err != nil {
+		t.Fatal(err)
+	}
+	at := func(d time.Duration) string { return asked.Add(d).UTC().Format(time.RFC3339) }
+	var first, last strings.Builder
+	for _, q := range questions {
+		answer := "the answer to " + q[0]
+		switch q[2] {
+		case "band.B":
+			answer = "9.5"
+		case "band.U":
+			answer = "10.0"
+		case "appetite.hours":
+			answer = "40.0"
+		}
+		fmt.Fprintf(&first, "%s: %s\n", q[0], answer)
+	}
+	fmt.Fprintf(&last, "%s: the answer corrected\n", questions[0][0])
+	addComment(w, 1, 801, 999, "mallory", at(time.Minute), questions[0][0]+": not an approver\n")
+	addComment(w, 1, 802, 303, "carol", at(2*time.Minute), first.String())
+	addComment(w, 1, 803, 303, "carol", at(3*time.Minute), last.String())
+	rows = Restart(context.Background(), w.config("0.1.0-dev"))
+	allDone(t, "the restart with the answers", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers")
+	if d := rowOf(rows, "answers").Detail; d != fmt.Sprintf("%d answers, in intake/answers.tsv; budget.tsv written", len(questions)) {
+		t.Errorf("the detail of answers %q", d)
+	}
+	answers := show(t, w.bare, "refs/heads/layup-records", "intake/answers.tsv")
+	if !strings.Contains(answers, "\n"+questions[0][0]+"\tthe answer corrected\t803\t303\t") || strings.Contains(answers, "not an approver") ||
+		strings.Count(answers, "\n") != len(questions)+1 {
+		t.Errorf("intake/answers.tsv:\n%s", answers)
+	}
+	if got := show(t, w.bare, "refs/heads/layup-records", "questions.tsv"); strings.Contains(got, "\tasked\n") || strings.Count(got, "\tanswered\n") != len(questions) {
+		t.Errorf("questions.tsv: each question answered\n%s", got)
+	}
+	budget := show(t, w.bare, "refs/heads/layup-records", "budget.tsv")
+	if !strings.Contains(budget, "\nband.B\t9.5\t") || !strings.Contains(budget, "\nband.U\t10.0\t") || !strings.Contains(budget, "\nappetite.hours\t40.0\t") {
+		t.Errorf("budget.tsv:\n%s", budget)
+	}
+	copies := show(t, w.bare, "refs/heads/layup-records", "copies.tsv")
+	for _, id := range []string{"801", "802", "803"} {
+		if !strings.Contains(copies, "\n"+id+"\t1\t1\t") {
+			t.Errorf("copies.tsv has no copy of the comment %s:\n%s", id, copies)
+		}
+	}
+	if strings.Contains(copies, "\tlayup-agent\t") {
+		t.Errorf("copies.tsv holds the App's own comment:\n%s", copies)
+	}
+	again := Restart(context.Background(), w.config("0.1.0-dev"))
+	if a := rowOf(again, "answers"); a.Result != "done" || a.Detail != "done before" {
+		t.Errorf("the third restart's row %+v; want answers done before", a)
 	}
 }
