@@ -70,9 +70,11 @@ func (e *PhaseError) Error() string { return "the session " + e.Session + ": " +
 // whose harness is in the register harnesses and is admitted at the version
 // of its last row of records:harnesses.tsv (decided here, task T-gmey: no
 // version command runs before the session, whose own version check reads the
-// version again and probes a new one). It gives the harness register row and
-// the row of models.tsv; with none, route.ErrNoPair, and no session starts.
-func (s *Sessions) PhasePair(ctx context.Context, role string, harnesses, models [][]string) ([]string, []string, error) {
+// version again and probes a new one). A pair on the harness except is passed
+// over ("" for none; the completeness review passes over the draft's, row
+// 45b). It gives the harness register row and the row of models.tsv; with
+// none, route.ErrNoPair, and no session starts.
+func (s *Sessions) PhasePair(ctx context.Context, role string, harnesses, models [][]string, except string) ([]string, []string, error) {
 	routing, err := s.readTable(ctx, "routing.tsv", records.ReadRouting)
 	if err != nil {
 		return nil, nil, err
@@ -95,7 +97,7 @@ func (s *Sessions) PhasePair(ctx context.Context, role string, harnesses, models
 	}
 	harness, model, err := route.Pair(routing, role, "reasoning", func(h, m string) bool {
 		v, probed := last[h]
-		return probed && row(h) != nil && route.Admitted(probes, models, h, v, m)
+		return h != except && probed && row(h) != nil && route.Admitted(probes, models, h, v, m)
 	})
 	if err != nil {
 		return nil, nil, err

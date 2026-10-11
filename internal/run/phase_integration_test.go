@@ -83,7 +83,7 @@ func phaseWorld(t *testing.T, body string) (*world, *Sessions, *headsForge, worl
 // file.
 func phaseSpec(t *testing.T, w *world, r *Sessions, a worldAt, harness []string) PhaseSpec {
 	t.Helper()
-	h, m, err := r.PhasePair(context.Background(), "systems-architect", [][]string{harness}, probeModels)
+	h, m, err := r.PhasePair(context.Background(), "systems-architect", [][]string{harness}, probeModels, "")
 	if err != nil {
 		t.Fatalf("PhasePair: %v", err)
 	}
@@ -207,7 +207,7 @@ func TestNoAdmittedPairStartsNoSession(t *testing.T) {
 		{"a role with no row", "product-owner", probeModels},
 		{"a model of use no", "systems-architect", [][]string{{"fake", "m1", "1000", "https://example.invalid", "2026-10-09T12:00:00Z", "no", ""}}},
 	} {
-		if _, _, err := r.PhasePair(context.Background(), c.role, [][]string{h}, c.models); !errors.Is(err, route.ErrNoPair) {
+		if _, _, err := r.PhasePair(context.Background(), c.role, [][]string{h}, c.models, ""); !errors.Is(err, route.ErrNoPair) {
 			t.Errorf("%s: %v; want ErrNoPair", c.name, err)
 		}
 	}
@@ -219,7 +219,7 @@ func TestNoAdmittedPairStartsNoSession(t *testing.T) {
 	if err := r2.commit(context.Background(), map[string][]byte{"routing.tsv": []byte("role\ttier\tposition\tharness\tmodel\nsystems-architect\treasoning\t1\tfake\tm1\n")}, "the routing"); err != nil {
 		t.Fatal(err)
 	}
-	if _, _, err := r2.PhasePair(context.Background(), "systems-architect", [][]string{h}, probeModels); !errors.Is(err, route.ErrNoPair) {
+	if _, _, err := r2.PhasePair(context.Background(), "systems-architect", [][]string{h}, probeModels, ""); !errors.Is(err, route.ErrNoPair) {
 		t.Errorf("a harness never probed: %v; want ErrNoPair", err)
 	}
 }

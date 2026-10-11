@@ -177,11 +177,16 @@ func newRunWorld(t *testing.T) runWorld {
 		// The harness is the world's own scripts, so no table depends on the
 		// host's PATH (condition 3 of the plan review of #168).
 		"registers/harnesses.tsv": "harness\tcap\twall\tcommand\tprompt\tversion\tcredential\tcredential_to\trules\tpolicy\tusage\tbilling\tvars\n" +
-			"fake\t—\t1\t" + filepath.Join(w.dir, "bin", "harness") + "\tstdin\t" + filepath.Join(w.dir, "bin", "version") + "\t—\t—\tLAYUP-TEST-RULES.md\t—\tnone\tsubscription\t—\n",
+			"fake\t—\t1\t" + filepath.Join(w.dir, "bin", "harness") + "\tstdin\t" + filepath.Join(w.dir, "bin", "version") + "\t—\t—\tLAYUP-TEST-RULES.md\t—\tnone\tsubscription\t—\n" +
+			// spare, the same scripts, the second harness of the
+			// completeness review (row 45b).
+			"spare\t—\t1\t" + filepath.Join(w.dir, "bin", "harness") + "\tstdin\t" + filepath.Join(w.dir, "bin", "version") + "\t—\t—\tLAYUP-TEST-RULES.md\t—\tnone\tsubscription\t—\n",
 		"registers/models.tsv": "harness\tmodel\tcontext\tsource\tdate\tuse\treason\n" +
-			"fake\tm1\t1000000\thttps://example.invalid/models\t2026-10-09T12:00:00Z\tyes\t—\n",
-		"registers/routing.tsv": "role\ttier\tposition\tharness\tmodel\ndeveloper\texecution\t1\tfake\tm1\nsystems-architect\treasoning\t1\tfake\tm1\nproduct-owner\treasoning\t1\tfake\tm1\n",
-		"bin/version":           "#!/bin/sh\necho 1.0.0\n",
+			"fake\tm1\t1000000\thttps://example.invalid/models\t2026-10-09T12:00:00Z\tyes\t—\n" +
+			"spare\tm1\t1000000\thttps://example.invalid/models\t2026-10-09T12:00:00Z\tyes\t—\n",
+		"registers/routing.tsv": "role\ttier\tposition\tharness\tmodel\ndeveloper\texecution\t1\tfake\tm1\nsystems-architect\treasoning\t1\tfake\tm1\nproduct-owner\treasoning\t1\tfake\tm1\n" +
+			"qa-engineer\treasoning\t1\tfake\tm1\nqa-engineer\treasoning\t2\tspare\tm1\n",
+		"bin/version": "#!/bin/sh\necho 1.0.0\n",
 		"bin/harness": `#!/bin/sh
 p=$(cat)
 case "$p" in
@@ -195,6 +200,7 @@ case "$p" in
 	sp=$(printf '%s\n' "$p" | sed -n 's/^The span table: //p')
 	case "$out" in
 	*/meaning.tsv) printf 'kind\tquote\tquestion\n' > "$out" ;;
+	*/coverage.tsv) printf 'kind\tfact\trequirement\tquestion\n' > "$out" ;;
 	*/draft.tsv) LC_ALL=C awk -F '\t' 'BEGIN { printf "kind\tstatement\tcovers\tcriterion\n" }
 		NR > 1 && $4 == "need" { printf "requirement\tThe statement of fact %s.\t%s\tThe criterion of fact %s.\n", $3, $3, $3 }' "$sp" > "$out" ;;
 	*) LC_ALL=C awk 'BEGIN { printf "start\tend\tfact\tclass\treason\n"; o = 0; n = 0 }
@@ -310,23 +316,27 @@ func TestRunNewThenRestart(t *testing.T) {
 	if again.code != 0 || !strings.HasPrefix(again.stdout, "step\tresult\tdetail\nforge\tdone\t") || !strings.Contains(again.stdout, "\nrule-gaps\tdone\t") ||
 		!strings.Contains(again.stdout, "\nmeaning\tdone\t0 gaps of meaning, in intake/meaning.tsv\n") ||
 		!strings.HasSuffix(again.stdout, "\nnumbering\tdone\t1 spans, 1 facts, in spec/spans.tsv\nspans\tdone\tthe span check passed, in spec/check.tsv\n"+
-			"draft\tdone\t1 rows, in spec/draft.tsv\n") {
+			"draft\tdone\t1 rows, in spec/draft.tsv\ncompleteness\tdone\t0 items, in intake/coverage.tsv\n") {
 		t.Fatalf("layup run TARGET: exit %d\n%s\n%s", again.code, again.stdout, again.stderr)
 	}
 	// The demo of row 38: the restart's step probe probes the scripted
-	// harness, writes its rows and posts one comment on the control issue.
-	if !strings.Contains(again.stdout, "\nprobe\tdone\tprobed and passed 1, probed and failed 0, skipped 0\n") {
+	// harnesses (two from row 45b), writes their rows and posts a comment
+	// for each on the control issue.
+	if !strings.Contains(again.stdout, "\nprobe\tdone\tprobed and passed 2, probed and failed 0, skipped 0\n") {
 		t.Errorf("the step probe of the restart:\n%s", again.stdout)
 	}
 	if out, err := gitRun(w.bare, "show", "refs/heads/layup-records:harnesses.tsv"); err != nil || !strings.Contains(out, "\tfake\t1.0.0\tm1\tpassed\t—\tAGENTS.md\t") {
 		t.Errorf("harnesses.tsv of the records branch: %v\n%s", err, out)
 	}
-	// The steps meaning (row 43b), numbering (row 44) and draft (row 45a) each
-	// run one session, which posts its own comment after the probe's.
-	if len(w.forge.posted) != 4 || !strings.HasPrefix(w.forge.posted[0], "S-") || !strings.Contains(w.forge.posted[0], ": probe of fake 1.0.0: passed\n") ||
-		!strings.HasSuffix(w.forge.posted[1], ": systems-architect session of meaning: done\n") ||
-		!strings.HasSuffix(w.forge.posted[2], ": product-owner session of numbering: done\n") ||
-		!strings.HasSuffix(w.forge.posted[3], ": product-owner session of draft: done\n") {
+	// The steps meaning (row 43b), numbering (row 44), draft (row 45a) and
+	// completeness (row 45b) each run one session, which posts its own
+	// comment after the probes'.
+	if len(w.forge.posted) != 6 || !strings.HasPrefix(w.forge.posted[0], "S-") || !strings.Contains(w.forge.posted[0], ": probe of fake 1.0.0: passed\n") ||
+		!strings.Contains(w.forge.posted[1], ": probe of spare 1.0.0: passed\n") ||
+		!strings.HasSuffix(w.forge.posted[2], ": systems-architect session of meaning: done\n") ||
+		!strings.HasSuffix(w.forge.posted[3], ": product-owner session of numbering: done\n") ||
+		!strings.HasSuffix(w.forge.posted[4], ": product-owner session of draft: done\n") ||
+		!strings.HasSuffix(w.forge.posted[5], ": qa-engineer session of completeness: done\n") {
 		t.Errorf("the comments on the control issue %q", w.forge.posted)
 	}
 	// The same bytes on a repeat in a new world, as the first run changes
@@ -338,9 +348,9 @@ func TestRunNewThenRestart(t *testing.T) {
 	// A second restart in the same world probes none: the last probe at the
 	// version passed.
 	third := w.run(t, binary, "run", "acme/target", "--host", ".")
-	if third.code != 0 || !strings.Contains(third.stdout, "\nprobe\tdone\tprobed and passed 0, probed and failed 0, skipped 0\n") || len(w.forge.posted) != 4 ||
+	if third.code != 0 || !strings.Contains(third.stdout, "\nprobe\tdone\tprobed and passed 0, probed and failed 0, skipped 0\n") || len(w.forge.posted) != 6 ||
 		!strings.Contains(third.stdout, "\nrule-gaps\tdone\tdone before\n") || !strings.Contains(third.stdout, "\nmeaning\tdone\tdone before\n") ||
-		!strings.HasSuffix(third.stdout, "\nnumbering\tdone\tdone before\nspans\tdone\tdone before\ndraft\tdone\tdone before\n") {
+		!strings.HasSuffix(third.stdout, "\nnumbering\tdone\tdone before\nspans\tdone\tdone before\ndraft\tdone\tdone before\ncompleteness\tdone\tdone before\n") {
 		t.Errorf("layup run TARGET again: exit %d, %d comments\n%s", third.code, len(w.forge.posted), third.stdout)
 	}
 }

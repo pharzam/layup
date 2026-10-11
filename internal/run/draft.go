@@ -141,7 +141,7 @@ func (r *state) draftStep(ctx context.Context) Step {
 		return fail(name, fmt.Errorf("spec/spans.tsv: %w", err))
 	}
 	s := r.sessions()
-	h, m, err := s.PhasePair(ctx, "product-owner", r.cfg.Harnesses, r.cfg.Models)
+	h, m, err := s.PhasePair(ctx, "product-owner", r.cfg.Harnesses, r.cfg.Models, "")
 	if errors.Is(err, route.ErrNoPair) {
 		return failf(name, "pair: %v", err)
 	} else if err != nil {

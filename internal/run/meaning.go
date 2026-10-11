@@ -159,7 +159,7 @@ func (r *state) meaningStep(ctx context.Context) Step {
 		return failf(name, "the records have no start/problem-statement.md")
 	}
 	s := r.sessions()
-	h, m, err := s.PhasePair(ctx, "systems-architect", r.cfg.Harnesses, r.cfg.Models)
+	h, m, err := s.PhasePair(ctx, "systems-architect", r.cfg.Harnesses, r.cfg.Models, "")
 	if errors.Is(err, route.ErrNoPair) {
 		return failf(name, "pair: %v", err)
 	} else if err != nil {
