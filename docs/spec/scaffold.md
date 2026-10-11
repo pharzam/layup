@@ -365,7 +365,10 @@ already the head of `layup-setup`, and a stop with exit 1, naming the head, when
 it is neither; then the apply of each ruleset with `gh api --method POST
 /repos/OWNER/NAME/rulesets --input <file>`, its output written to
 `DIR/applies/OWNER/NAME/default.json` and `records.json`, each apply only when
-its output file does not exist yet. **Decided here** (finding 1 of round 4 of
+its output file does not exist yet. The output goes first to a temporary file
+beside it, which `mv` renames to the output file only after `gh api` exits 0
+(**decided here**, finding 1 of round 5 of #265), so an apply that fails, also
+one that wrote part of its output, leaves no output file and is done again. **Decided here** (finding 1 of round 4 of
 #265): so a run of `commands.sh` that stopped after the push, or after one
 apply, is run again as it is, and does each command that is not done yet. **Decided here** (F-13): `commands.sh` starts with `set -eu`,
 so the first command that fails stops it, in phase 1 and phase 2; a command of
@@ -616,7 +619,7 @@ six rows of the inventory item `later-p2-scaffold` are the rows marked
 | The answers of the setup | unit | Each row of the table of [The answers of the setup](#the-answers-of-the-setup): `accept` with and without a proposal, `gap`, a value, no answer and `open`, for a marker and for `S01-stack`; the source URL. |
 | The step markers | unit | The scan of a fixture tree gives the keys of S10, one row for a text that a file holds on two lines; the session's `result/markers.tsv` with an unknown key, a key twice or an empty quote is refused; a quote that occurs once passes, and one that occurs twice, nowhere or with a tab refuses the file; with no marker no session starts. |
 | The ruleset files (inventory) | unit | The default branch's file names each gate job pinned to 15368, the four `layup/` checks pinned to the forge register's `app_id`, `strict` true, `creation`, `allowed_merge_methods` `["merge"]` and an empty bypass list; the records branch's file has the App as its only bypass actor; phase 1 gets `creation` and the two parameters, and no `layup/` check. |
-| `commands.sh` is fail-fast and can be run again | unit | Its first line is `set -eu`, and a stand-in command that fails stops the rest (F-13); with stand-ins of `git` and `gh`, a run again after the push or after one apply pushes nothing and applies only the missing ruleset, and a head that is neither the root nor the setup head stops it. |
+| `commands.sh` is fail-fast and can be run again | unit | Its first line is `set -eu`, and a stand-in command that fails stops the rest (F-13); with stand-ins of `git` and `gh`, a run again after the push or after one apply pushes nothing and applies only the missing ruleset, and a `gh` that writes part of its output and exits 1 leaves no output file, so the run again applies that ruleset; and a head that is neither the root nor the setup head stops it. |
 | The probe (inventory) | integration | With a real local bare repository whose pre-receive hook refuses with the text of `GH013` and the ruleset's name, and the real `internal/git`: the refusal is `pass`; a hook that refuses with `GH013` and another ruleset's name, one that refuses with another text, and a remote that cannot be reached, are "probe not run"; an accepted push is "probe accepted". |
 | The read-back | unit | A read-back equal to the files passes; a missing rule, a different parameter, an `integration_id` that differs, and a bypass list that is not empty (default) or not exactly the App (records) each fail, naming it; an extra rule is named and passes. |
 | `layup run` with the real step runner (inventory) | integration | On a fixture baseline: `answers.tsv` is written from the copied answers, a prose stop starts a scripted session, the runner finishes, and `layup run` commits `setup/record.tsv`, `setup/verify.tsv`, `rule-paths.tsv`, `setup/tree.tsv` and the README of the Scaffold; a second run is "done before"; a rebuilt work area gives the same commits, also after the default branch holds the setup commits (its `main` is the root commit). |
