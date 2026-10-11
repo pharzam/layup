@@ -272,7 +272,7 @@ func TestTheCapOfMilestoneZeroStartsNoSession(t *testing.T) {
 		want      string
 	}{
 		{"the money", "50.01", 0, "the known money 0.0 plus the session's cap 50.01 passes 50.0 USD"},
-		{"the hours", "", 8*time.Hour + time.Minute, "since Start passes 8.0 hours"},
+		{"the hours", "", 8*time.Hour + time.Minute, "the time since Start passes 8.0 hours"},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			w, r, f, a, h := phaseWorld(t, `printf 'kind\tvalue\nnote\tread\n' > "$out"`)

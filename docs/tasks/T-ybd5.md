@@ -40,11 +40,14 @@ by O-196.
 **Tests:** [`test-runs.md`](../../runs/T-ybd5/test-runs.md): red before the code;
 12 of 12 mutations caught; green at the three levels.
 
-**The demo** is shown at the integration level by
-`TestTheCapOfMilestoneZeroStartsNoSession` on `PhaseSession`: no step of the
-restart calls `PhaseSession` yet (rows 43b to 47b do). The error's first line is
-the fixed text "the cap of milestone 0", so each later step's `fail(name, err)`
-gives row 7's detail with no mapping of its own.
+**The demo** is shown at the unit level, as the Tests cell and the acceptance
+row say, by `TestTheCapOfMilestoneZeroDrawsNoSession` on `PhaseSession` with
+the stand-in store (no session ID drawn, no commit), and at the integration
+level by `TestTheCapOfMilestoneZeroStartsNoSession` on the real records branch:
+no step of the restart calls `PhaseSession` yet (rows 43b to 47b do). The error's first line is
+the fixed text "the cap of milestone 0", and its detail holds no clock reading
+(round 1 of #216), so each later step's `fail(name, err)` gives row 7's detail,
+the same bytes on a repeat, with no mapping of its own.
 
 ## Known limits
 

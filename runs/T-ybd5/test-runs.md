@@ -67,3 +67,24 @@ first commit's, not the head's.
 At `e3c48f7` (05:56Z to 05:58Z): `go build ./...`, `go vet ./...`, `go test
 ./...`, `go test -tags=integration ./...` and `go test -tags=e2e ./...` pass,
 every package `ok`.
+
+## The fix of round 1 (2026-10-11)
+
+Finding 1: the hours refusal wrote the elapsed time into the detail. Finding
+2: the demo had no unit test. The tests first, red (06:14Z): the two hours
+cases of `TestMilestoneCap` now ask for the exact detail, and
+`TestTheCapOfMilestoneZeroDrawsNoSession` (unit, the stand-in store) asks for
+no session ID and no commit; its money case was green at once, as the check was
+already in place, and its hours case red for the right reason:
+
+```
+--- FAIL: TestMilestoneCap (0.00s)
+    budget_test.go:65: the hours and one second: the cap of milestone 0: 8h0m1s since Start passes 8.0 hours; want ErrMilestoneCap with "the cap of milestone 0: the time since Start passes 8.0 hours"
+    budget_test.go:65: the hours of a decimal: the cap of milestone 0: 31m0s since Start passes 0.5 hours; want ErrMilestoneCap with "the cap of milestone 0: the time since Start passes 0.5 hours"
+--- FAIL: TestTheCapOfMilestoneZeroDrawsNoSession (0.00s)
+    phase_test.go:49: the hours: "", the cap of milestone 0: 9h0m0s since Start passes 8.0 hours; want ErrMilestoneCap, "the cap of milestone 0: the time since Start passes 8.0 hours"
+```
+
+Then the detail of the hours is fixed text; green (06:15Z). With the check of
+`PhaseSession` cut (`&& false`), the unit test fails (the session goes on to
+a hook the stand-in has not set, and the test panics): caught.

@@ -38,7 +38,10 @@ func column(name string) int {
 // adds nothing), is added to it. The sum passes MONEY when it is above it
 // (equal is inside, decided here, task T-ybd5), and the time from start to
 // now passes HOURS the same way. A known row whose currency is not USD cannot
-// be compared with MONEY, and refuses on the safe side (decided here).
+// be compared with MONEY, and refuses on the safe side (decided here). The
+// other errors (a malformed intake.cap, a row of another width, a value that
+// is not a decimal) are of records that CheckStart and CheckTelemetry refuse
+// before this rule reads them, so they name no Input state.
 func MilestoneCap(capValue string, telemetry [][]string, sessionCap string, start, now time.Time) error {
 	moneyText, hoursText, _ := strings.Cut(capValue, ",")
 	money, okMoney := new(big.Rat).SetString(moneyText)
@@ -82,7 +85,9 @@ func MilestoneCap(capValue string, telemetry [][]string, sessionCap string, star
 	}
 	elapsed := now.Sub(start)
 	if new(big.Rat).SetFrac64(int64(elapsed), int64(time.Hour)).Cmp(hours) > 0 {
-		return fmt.Errorf("%w: %s since Start passes %s hours", ErrMilestoneCap, elapsed.Round(time.Second), hoursText)
+		// No clock reading in the detail: a step's detail holds no time, and a
+		// repeat prints the same bytes (run.md; round 1 of #216).
+		return fmt.Errorf("%w: the time since Start passes %s hours", ErrMilestoneCap, hoursText)
 	}
 	return nil
 }

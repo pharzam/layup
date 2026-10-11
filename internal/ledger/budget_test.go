@@ -51,8 +51,8 @@ func TestMilestoneCap(t *testing.T) {
 		{"the known money alone above", "1.99,8.0", known, "", start, "the known money 2.0 plus the session's cap 0.0 passes 1.99 USD"},
 		{"no row", "0.10,8.0", nil, "0.10", start, ""},
 		{"the hours exactly", "5.00,8.0", known, "", start.Add(8 * time.Hour), ""},
-		{"the hours and one second", "5.00,8.0", known, "", start.Add(8*time.Hour + time.Second), "8h0m1s since Start passes 8.0 hours"},
-		{"the hours of a decimal", "5.00,0.5", known, "", start.Add(31 * time.Minute), "31m0s since Start passes 0.5 hours"},
+		{"the hours and one second", "5.00,8.0", known, "", start.Add(8*time.Hour + time.Second), "the cap of milestone 0: the time since Start passes 8.0 hours"},
+		{"the hours of a decimal", "5.00,0.5", known, "", start.Add(31 * time.Minute), "the cap of milestone 0: the time since Start passes 0.5 hours"},
 		{"a known row not in USD", "5.00,8.0", append(append([][]string{}, known...), telemetryRow("S-00000004", "0.10", "EUR", "computed")), "", start,
 			"the session S-00000004 has money in EUR, not USD"},
 	} {
@@ -60,7 +60,8 @@ func TestMilestoneCap(t *testing.T) {
 		switch {
 		case c.want == "" && err != nil:
 			t.Errorf("%s: %v; want none", c.name, err)
-		case c.want != "" && (!errors.Is(err, ErrMilestoneCap) || !strings.HasPrefix(err.Error(), "the cap of milestone 0: ") || !strings.Contains(err.Error(), c.want)):
+		case c.want != "" && (!errors.Is(err, ErrMilestoneCap) || !strings.HasPrefix(err.Error(), "the cap of milestone 0: ") || !strings.Contains(err.Error(), c.want)),
+			strings.HasPrefix(c.want, "the cap of milestone 0: ") && err.Error() != c.want: // a detail with no clock reading (round 1 of #216)
 			t.Errorf("%s: %v; want ErrMilestoneCap with %q", c.name, err, c.want)
 		}
 	}
