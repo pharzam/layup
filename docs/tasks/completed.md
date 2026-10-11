@@ -20,6 +20,7 @@ here directly, in the shape above.
 - **YYYY-MM-DD** — **<ID>** — <one-sentence summary of what the task found or delivered> ([<link>](...); [detail](<id>.md))
 -->
 
+- **2026-10-10** — **T-mnmy** — `task-state.sh` splits `running` into `in progress` (a claimed task with a push or a comment within a day) and `stalled` (with neither), so a session that stopped shows; serves `F-0003#52` ([#202](https://github.com/pharzam/layup/issues/202); [detail](T-mnmy.md))
 - **2026-10-10** — **T-ye17** — Check `protection` skips a workflow that no `pull_request` event runs, so a workflow that judges no pull request is not a required context; serves `F-0003#52` ([#201](https://github.com/pharzam/layup/issues/201); [detail](T-ye17.md))
 - **2026-10-09** — **T-qhpf** — The three notes of round 2 of `T-eep8`: a backlog task of an earlier task table keeps its `After`, the claim comes before the plan, and `task-state.sh` reads the backlog, the completed log and the plan from the forge's `main`; serves `F-0003#52` ([#182](https://github.com/pharzam/layup/issues/182); [detail](T-qhpf.md))
 - **2026-10-09** — **T-vxdg** — Row 33a of `M2b`: the directory and the environment of a session, `Make`, `Sweep` and `Environ` in `internal/session` ([#159](https://github.com/pharzam/layup/issues/159); [detail](T-vxdg.md))
