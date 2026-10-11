@@ -1,0 +1,3 @@
+harness	cap	wall	command	prompt	version	credential	credential_to	rules	policy	usage	billing	vars
+claude	5.00	15	claude -p --model {model} --max-budget-usd {cap} --output-format stream-json --verbose --permission-mode acceptEdits --allowedTools Bash,Edit,Write,Read	stdin	claude --version	/home/layup/layup-host/credentials/claude-oauth-token	var:CLAUDE_CODE_OAUTH_TOKEN	CLAUDE.md	—	claude-result	subscription	ANTHROPIC_DEFAULT_HAIKU_MODEL=claude-sonnet-5-5
+devin	—	15	devin -p --model {model} --permission-mode dangerous --respect-workspace-trust false --prompt-file {prompt}	file	devin --version	/home/layup/.local/share/devin/credentials.toml	file:.local/share/devin/credentials.toml	AGENTS.md	—	none	subscription	—

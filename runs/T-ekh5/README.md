@@ -43,3 +43,29 @@ Covers REQ-001, REQ-012
 The scenario rides the e2e path of row 48 (`TestTheStepsOfIntake`,
 [`runs/T-mo9w/test-runs.md`](../T-mo9w/test-runs.md)). The Operator signs it
 off, as for `M2b` ([`runs/T-x7cs/README.md`](../T-x7cs/README.md)).
+
+## The inputs
+
+- **The registers** (D1, on 2026-10-11 at 15:38Z): [`registers/`](registers/) holds
+  them as the runs read them. The originals are kept on the host in
+  `registers.bak-2026-10-11/`.
+  - `models.tsv` gains `claude-opus-5-5`, context 1000000, from the models
+    overview of the Claude docs.
+  - `routing.tsv` gains `systems-architect` and `product-owner` (position 1
+    `claude` `claude-opus-5-5`, 2 `devin` `swe-2-high`), and `qa-engineer`
+    (1 `devin`, 2 `claude`), all at the tier `reasoning`.
+  - The cap of `claude` in `harnesses.tsv` is 5.00 (O-201).
+  - `forge.tsv` is unchanged; its `watch_slug` is `—`.
+
+  The credential columns hold paths, not secrets.
+- **The binary** (D2): `go build -o ~/layup-host/bin/layup ./cmd/layup` on this
+  branch at `3f6e910`, `layup 0.1.0-dev`. `git diff --stat 0b881fa 3f6e910 --
+  cmd internal go.mod` prints nothing, so its Go code is the release that row
+  49a reviewed (`0b881fa`, the merge of row 48).
+- **The brief:** `~/layup-host/briefs/psb-chat-001.md`, byte for byte from
+  `docs/facts/problem-statement-brief.md` of `pharzam/chat-orchestrator`.
+  - SHA-256
+    `97c657b6cc38dd2592c84784b0da85af7766a7e31c8cbfe824d67ea794c894fd`, as
+    `runs/T-evad/README.md` records it; 1,132 lines.
+  - It is not copied here; the records of the target hold it as
+    `start/problem-statement.md`.
