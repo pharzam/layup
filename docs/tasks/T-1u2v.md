@@ -47,7 +47,45 @@ final by O-196.
    §13 line.
 
 **Tests:** [`test-runs.md`](../../runs/T-1u2v/test-runs.md): red before the code;
-12 of 12 mutations caught; green at the three levels.
+12 of 12 mutations caught, and the thirteenth of the fix of round 1; green at
+the three levels.
 
 **A known limit met:** the quote of one em dash, which reads back as the empty
 value (row 40, `T-529i`), is refused as an empty quote.
+
+## Review rounds
+
+The records are comments on #218. Round 1 (Claude Fable 5.1, effort `xhigh`, a
+fresh read-only session in a clone at `a161535`, cycle 0): `material`, one
+finding: the quote check counted with `bytes.Count`, which counts no
+overlapping occurrence, so `--` in `---` passed as once. The fix `54137c5`
+(cycle 1) counts each place, red first, with notes 2 to 6. Round 2 (the same
+reviewer and effort, a fresh session at `54137c5`, cycle 1, the cap): `nothing
+material in scope`, three notes: note 2, a row of `traceability.md`, is #244;
+note 3 is the count of mutations above; note 1 changes no file.
+
+## Verdict
+
+Delivered: the step `meaning`, the review of meaning, after `rule-gaps`: one
+session of `systems-architect` whose quotes code finds once in the problem
+statement, committed as `intake/meaning.tsv` with their offsets, or a refused
+file. The review ended by decay at cycle 1 of cap 1. The diff against
+`bec9093`, the branch's base, is inside 1,200 lines over 22 files. At `54137c5`
+the unit level, the integration levels of `internal/run` and `cmd/layup`, and
+`TestRunNewThenRestart` at the e2e level pass (07:31Z to 07:34Z); CI runs the
+three levels on the landing head. Next: row 44.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). UTC; reviewers' tokens are `modelUsage`;
+the author's are not reported.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan | reasoning | Claude Opus 5.5 | not reported | not reported | 2026-10-11 06:53 to 06:54 (the claim to the post) |
+| The plan review | reasoning | Claude Fable 5.1 | `xhigh` | 1,601,219 (USD 7.02) | 8 min 37 s |
+| The code, test first | execution | Claude Opus 5.5 | not reported | not reported | 07:04 to 07:21 |
+| Round 1 | reasoning | Claude Fable 5.1 | `xhigh` | 1,258,803 (USD 4.85) | 9 min 21 s |
+| The fix of round 1 | execution | Claude Opus 5.5 | not reported | not reported | 07:30 to 07:35 |
+| Round 2 | reasoning | Claude Fable 5.1 | `xhigh` | 764,205 (USD 4.91) | 10 min 46 s |
+| The close-out | execution | Claude Opus 5.5 | not reported | not reported | 07:46 to 07:47 |
