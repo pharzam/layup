@@ -46,3 +46,33 @@ IDs; the comment, its two blocks and the intent form.
 - **Two rule gaps of one line and one rule** (G3, two undefined abbreviations of
   one line): the second is dropped by the merge's rule, so its abbreviation is
   not asked (condition 4 of the plan review; `intake.md`).
+
+## Review rounds
+
+The record is a comment on #222. Round 1 (Claude Fable 5.1, effort `xhigh`, a
+fresh read-only session in a clone at `08140f4`, cycle 0, the cap): `nothing
+material in scope`, four notes (a quote with a blank line, one sentence of
+Copy before read, the match of the header, a bounds check of the post from the
+record), which are #254.
+
+## Verdict
+
+Delivered: the step `batch`, the merge of the questions into `questions.tsv`
+with their IDs, and one comment on the Intake issue with its two blocks and the
+intent form, posted after the records commit, or from the record after a stop.
+The review ended by decay at cycle 0 of cap 1. The diff against `06dff9c`, the
+branch's base, is inside 1,400 lines over 24 files. CI runs the three levels on
+the landing head. Next: row 47a.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). UTC; reviewers' tokens are `modelUsage`;
+the author's are not reported.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan | reasoning | Claude Opus 5.5 | not reported | not reported | 2026-10-11 10:00 to 10:01 (the claim to the post) |
+| The plan review | reasoning | Claude Fable 5.1 | `xhigh` | 1,062,375 (USD 5.55) | 9 min 11 s |
+| The code, test first | execution | Claude Opus 5.5 | not reported | not reported | 10:11 to 10:24 |
+| Round 1 | reasoning | Claude Fable 5.1 | `xhigh` | 968,068 (USD 4.64) | 11 min 10 s |
+| The close-out | execution | Claude Opus 5.5 | not reported | not reported | 10:36 to 10:36 |
