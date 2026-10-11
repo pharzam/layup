@@ -30,7 +30,6 @@ same summary, dated — rather than deleting it or checking it off.
 - **<ID>** — <one-sentence summary> ([<ADR or doc link>](...); [detail](<id>.md))
 -->
 - **T-hpid** — Row 41b of `M2c`: the command layup spec check --facts ([#214](https://github.com/pharzam/layup/issues/214); [the plan](../plan/README.md#the-tasks-of-m2c))
-- **T-hiv9** — Row 44 of `M2c`: the steps numbering and spans ([#219](https://github.com/pharzam/layup/issues/219); [the plan](../plan/README.md#the-tasks-of-m2c); [detail](T-hiv9.md))
 - **T-2et0** — Row 45a of `M2c`: the draft ([#220](https://github.com/pharzam/layup/issues/220); [the plan](../plan/README.md#the-tasks-of-m2c))
 - **T-0mey** — Row 45b of `M2c`: the completeness review ([#221](https://github.com/pharzam/layup/issues/221); [the plan](../plan/README.md#the-tasks-of-m2c))
 - **T-8r3u** — Row 46 of `M2c`: the batch ([#222](https://github.com/pharzam/layup/issues/222); [the plan](../plan/README.md#the-tasks-of-m2c))

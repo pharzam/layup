@@ -23,8 +23,9 @@ after a failed check.
 
 1. **The step `numbering`** after `meaning`: one session of `product-owner`
    whose file is the block `spans` without `text`; code adds each span's text
-   from the file; "done before" unless the last `spec/check.tsv` has a `fail`
-   row; with no pair, `fail` (`pair`).
+   from the file; "done before" when `spec/spans.tsv` exists and the last
+   `spec/check.tsv` has no `fail` row (note 4 of round 1); with no pair,
+   `fail` (`pair`).
 2. **The step `spans`** after `numbering`: `spec.Check` in process on the
    records, its table committed as `spec/check.tsv` (kept as it is when equal to
    the last); `fail` with the first `fail` row, so no step after it runs.
@@ -48,3 +49,33 @@ after a failed check.
 - **A spare session** (note 9): a run that stops between the rerun of
   `numbering` and `spans` leaves the `fail` row, so the next restart runs
   `numbering` once more.
+
+## Review rounds
+
+The record is a comment on #219. Round 1 (Claude Fable 5.1, effort `xhigh`, a
+fresh read-only session in a clone at `66f7ed1`, cycle 0, the cap): `nothing
+material in scope`, four notes. Notes 1 to 3 (a span that splits a multi-byte
+character, the two runs of the mutation listing, a lesson of §2 on an empty
+commit) are #247; note 4 is applied above.
+
+## Verdict
+
+Delivered: the steps `numbering` and `spans` with their records
+`spec/spans.tsv` and `spec/check.tsv`, and the rerun of `numbering` after a
+failed span check, with no step after `spans` while the check fails. The review
+ended by decay at cycle 0 of cap 1. The diff against `6d531db`, the branch's
+base, is inside 1,400 lines over 24 files. CI runs the three levels on the
+landing head. Next: row 45a.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). UTC; reviewers' tokens are `modelUsage`;
+the author's are not reported.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan | reasoning | Claude Opus 5.5 | not reported | not reported | 2026-10-11 07:51 to 07:52 (the claim to the correction) |
+| The plan review | reasoning | Claude Fable 5.1 | `xhigh` | 1,477,753 (USD 6.28) | 8 min 11 s |
+| The code, test first | execution | Claude Opus 5.5 | not reported | not reported | 08:02 to 08:23 |
+| Round 1 | reasoning | Claude Fable 5.1 | `xhigh` | 1,053,519 (USD 5.34) | 9 min 51 s |
+| The close-out | execution | Claude Opus 5.5 | not reported | not reported | 08:33 to 08:33 |
