@@ -44,3 +44,36 @@ its red is a mutation, caught.
 **The rejected alternatives:** the check in `internal/records` (the
 specification puts it in `internal/spec`); the row rules of `spans` in
 `internal/spec` (a second home of row 40's rules).
+
+## Review rounds
+
+The record is a comment on #213. Round 1 (Claude Fable 5.1, effort `xhigh`, a
+fresh read-only session in a clone at `3e960b4`, cycle 0, the cap): `nothing
+material in scope`, eight notes. Note 1, the base the budget is read against,
+went to the Operator: by O-198 (comment 6106146661) the budget is read against
+`6f3adae`, the base of the branch's own work. Notes 2 to 7 are #235, for the
+next change of those files. Note 8 is the deviation below.
+
+## Verdict
+
+Delivered: the span check in `internal/spec`, its five rules and the table of
+`spec-check`, with the second Go value of `spans`, and the table of `M2c` read
+by `TestPackageRules` with `internal/spec` on the line of the engine checks. The
+review ended by decay at cycle 0 of cap 1. The diff against `6f3adae` (O-198)
+is inside 800 lines over 18 files. **Deviation** (note 8 of round 1): the
+schemas' integration test was written after the schemas; its red is a mutation,
+caught. Next: row 41b.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). UTC; reviewers' tokens are `modelUsage`;
+the author's are not reported.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan | reasoning | Claude Opus 5.5 | not reported | not reported | 2026-10-11 03:52 to 03:53 (the claim to the post) |
+| The plan review | reasoning | Claude Fable 5.1 | `xhigh` | 1,340,364 (USD 5.85) | 8 min 19 s |
+| The code, test first | execution | Claude Opus 5.5 | not reported | not reported | 04:05 to 04:14 |
+| Round 1 | reasoning | Claude Fable 5.1 | `xhigh` | 1,024,183 (USD 4.33) | 10 min 2 s |
+| The question to the Operator | — | the Operator | — | — | 04:27 to 06:11 (O-198) |
+| The close-out | execution | Claude Opus 5.5 | not reported | not reported | 06:20 to 06:18 |
