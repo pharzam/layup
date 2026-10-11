@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/pharzam/layup/internal/ledger"
 	"github.com/pharzam/layup/internal/records"
 	"github.com/pharzam/layup/internal/route"
 	"github.com/pharzam/layup/internal/session"
@@ -114,6 +115,9 @@ func (s *Sessions) PhasePair(ctx context.Context, role string, harnesses, models
 // that is not done and a refused output file are a *PhaseError.
 func (s *Sessions) PhaseSession(ctx context.Context, p PhaseSpec) (string, error) {
 	s.fns()
+	if err := s.milestoneCap(ctx, pairOf(p.Harness, p.Model).Cap); err != nil {
+		return "", err
+	}
 	task, err := s.probeTaskID(ctx)
 	if err != nil {
 		return "", err
@@ -125,6 +129,36 @@ func (s *Sessions) PhaseSession(ctx context.Context, p PhaseSpec) (string, error
 		return s.endPhase(ctx, spec, id, d, r, err)
 	}
 	return s.TaskSession(ctx, spec)
+}
+
+// milestoneCap asks the budget of milestone 0 before a session of Intake
+// whose spend cap is sessionCap ("" for none) starts (docs/spec/intake.md,
+// The budget of Intake; task T-ybd5): intake.cap of start.tsv, the rows of
+// telemetry.tsv at the run's records base, the time of Start and now. A
+// refusal wraps ledger.ErrMilestoneCap, and no session starts.
+func (s *Sessions) milestoneCap(ctx context.Context, sessionCap string) error {
+	start, err := s.readTable(ctx, "start/start.tsv", func(d []byte) ([][]string, error) {
+		rows, _, err := records.ReadStartAsWritten(d)
+		return rows, err
+	})
+	if err != nil {
+		return err
+	}
+	capValue := ""
+	for _, r := range start {
+		if r[0] == "intake.cap" {
+			capValue = r[1]
+		}
+	}
+	telemetry, err := s.readTable(ctx, "telemetry.tsv", records.ReadTelemetry)
+	if err != nil {
+		return err
+	}
+	started, err := s.Store.Started(ctx)
+	if err != nil {
+		return err
+	}
+	return ledger.MilestoneCap(capValue, telemetry, sessionCap, started, s.Now())
 }
 
 // endPhase is the end of a session of a phase: the class, with the output

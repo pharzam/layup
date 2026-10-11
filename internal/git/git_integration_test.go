@@ -816,3 +816,18 @@ func TestAHostileSessionRunsNothing(t *testing.T) {
 		t.Errorf("FetchSession ran the session's programs: %v", got)
 	}
 }
+
+// CommitTime gives the committer time of a commit of a real repository, read
+// as seconds since the epoch; a rev that names no commit is an error (task
+// T-ybd5: the time of Start is the first commit of the records branch).
+func TestCommitTime(t *testing.T) {
+	isolate(t)
+	dir := t.TempDir()
+	commitTree(t, dir, map[string]string{"a.txt": "a\n"})
+	if got, err := CommitTime(dir, "HEAD"); err != nil || !got.Equal(who.Time) {
+		t.Errorf("CommitTime(HEAD) = %v, %v; want %v", got, err, who.Time)
+	}
+	if _, err := CommitTime(dir, "no-such-branch"); err == nil {
+		t.Error("CommitTime of a rev that names no commit: no error")
+	}
+}

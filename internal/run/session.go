@@ -34,6 +34,9 @@ type SessionStore interface {
 	// refuses (not a fast-forward, or refused by the remote) is
 	// errPushRefused (row 37b).
 	PushHead(ctx context.Context, sha, branch string) error
+	// Started gives the time of Start, the first commit of the records
+	// branch, for the budget of milestone 0 (row 42b).
+	Started(ctx context.Context) (time.Time, error)
 }
 
 // Sessions starts the attempts and the task sessions of one run of one

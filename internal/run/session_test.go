@@ -46,6 +46,7 @@ func (s *standinStore) Commit(_ context.Context, files map[string][]byte, _ stri
 	}
 	return nil
 }
+func (s *standinStore) Started(context.Context) (time.Time, error) { return sessionAt, nil }
 func (s *standinStore) PushHead(_ context.Context, sha, branch string) error {
 	s.ops = append(s.ops, "push "+sha+" "+branch)
 	return s.pushErr
