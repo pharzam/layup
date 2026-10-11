@@ -776,6 +776,15 @@ failure modes worth keeping.
   tree for the check-set enumeration — the old name and each spelled count — and reconcile
   every living mirror in the same change; the immutable ADR and archived decision copies
   stay as history.
+- ❌ **A rule on the clock, in a test world on another clock.** A rule that compares
+  `Now` with a recorded time (the hours since Start of milestone 0) breaks every test
+  world whose records were written on a clock of their own: the world of
+  `internal/run` starts on 2026-10-08 by its fast clock, so with the real `Now` each
+  session of a phase was refused "past 8.0 hours", and six green tests of another row
+  went red at once. It is silent in a test that asserts only the refusal, which
+  passes for the wrong reason. **The check:** in a test world, set `Now` from the
+  world's own records (its time of Start), never from the wall clock, and keep one
+  case inside the cap so a refusal for the wrong reason shows. Learned in `T-ybd5`.
 
 ## 3. Validation — how you check you are not fooling yourself
 

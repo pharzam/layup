@@ -101,7 +101,13 @@ clock starts at Start, `architecture.md` §12) to now passes `HOURS`, the step i
 as milestone 0 has no task whose wait could pause it; the Operator raises the cap
 on the control issue (`architecture.md` §12). A session whose money is not
 known after it ends adds nothing to the known money and is recorded `unknown`,
-as `session.md` writes it. **Reason:** the cap of milestone 0 is the one budget
+as `session.md` writes it. **Decided here** (task `T-ybd5`): `MONEY` is US
+dollars (`run.md`, `--intake-cap`), and a sum or a time **passes** its cap when
+it is above it (equal is inside); the time of Start is the committer time of the
+root commit of the run's records base; the rule is asked at the start of each
+session of a phase, before its task ID is drawn, so a refused session leaves no
+record; a probe that the session's own version check runs after the rule
+counts from the next session. **Reason:** the cap of milestone 0 is the one budget
 value that exists before the answers (`architecture.md` §12). The band `B` and
 `U` (the money appetite) and the wall-clock appetite come with the answers and go to `budget.tsv` (below); no
 rule of `M2c` reads them.
@@ -409,6 +415,7 @@ release, the code of `M2b` and `M2a` included.
 | A span table that fails the span check | `spans` is `fail`; `spec/check.tsv` is committed; no batch; a restart runs `numbering` again |
 | A draft row whose `covers` names no fact, or a `need` or `constraint` fact with no requirement | the draft is refused |
 | The cap of milestone 0 reached | the step is `fail` ("the cap of milestone 0"); no session starts |
+| A known row of `telemetry.tsv` (`reported` or `computed`) whose `currency` is not `USD` | the step is `fail` ("the cap of milestone 0"), the detail naming the row's session and its currency, as the sum cannot be compared with `MONEY`; no session starts (**decided here**, task `T-ybd5`) |
 | A comment with answer lines by an account that is not an approver, or in the other block's role | recorded as input; it answers nothing |
 | An answer of the intent form that does not parse (a `B` not below `U` is an unparsed answer of `B` and of `U`) | the field is asked again in the follow-up; still unparsed after it, its question is `open` and `budget.tsv` is not written |
 | A question still open after the follow-up | open in `questions.tsv`; Intake is done |

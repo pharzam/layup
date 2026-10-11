@@ -114,6 +114,21 @@ func (s *recordsStore) Base() string {
 	return s.read
 }
 
+// Started gives the time of Start: the committer time of the root commit of
+// the run's records base, the first commit of the records branch
+// (docs/spec/intake.md, The budget of Intake; task T-ybd5).
+func (s *recordsStore) Started(ctx context.Context) (time.Time, error) {
+	base := s.Base()
+	roots, err := git.RootCommits(s.dir, base)
+	if err != nil {
+		return time.Time{}, err
+	}
+	if len(roots) != 1 {
+		return time.Time{}, fmt.Errorf("the records base %s has %d root commits; want 1", base, len(roots))
+	}
+	return git.CommitTime(s.dir, roots[0])
+}
+
 // PushHead pushes sha of the run's clone to branch of the target, never with
 // force; git's refusal (its code 1) is errPushRefused. The store's dir must be
 // the clone that Sessions.Clone names, into which the end fetched the head: a

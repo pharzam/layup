@@ -10,9 +10,12 @@ import (
 	"path/filepath"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/pharzam/layup/internal/ledger"
 	"github.com/pharzam/layup/internal/route"
 )
 
@@ -54,8 +57,9 @@ esac
 }
 
 // phaseWorld gives the world of the sessions with the routing register of
-// one pair for systems-architect, probed and passed by the step probe, and a
-// forge that keeps the head of the records at each comment.
+// one pair for systems-architect, probed and passed by the step probe, a
+// forge that keeps the head of the records at each comment, and a clock a
+// minute after Start.
 func phaseWorld(t *testing.T, body string) (*world, *Sessions, *headsForge, worldAt, []string) {
 	w, r, f, a := sessionWorld(t)
 	hf := &headsForge{standInForge: f, t: t, bare: w.bare}
@@ -66,6 +70,10 @@ func phaseWorld(t *testing.T, body string) (*world, *Sessions, *headsForge, worl
 		t.Fatalf("the step probe: %d passed, %v", p, err)
 	}
 	hf.heads, f.posted = nil, nil
+	// The world's Start is on its own clock: the sessions run a minute after
+	// it, inside the hours of milestone 0 (row 42b).
+	started := startOf(t, r)
+	r.Now = func() time.Time { return started.Add(time.Minute) }
 	return w, r, hf, worldAt{a.base, r.Store.(*recordsStore).Base()}, h
 }
 
@@ -251,4 +259,68 @@ func TestACommentThatFailsKeepsTheReasonOfTheSession(t *testing.T) {
 	if !errors.As(err, &pe) || pe.Session != id || !strings.HasPrefix(pe.Reason, "refused file") || !strings.Contains(err.Error(), "Comment") {
 		t.Errorf("PhaseSession: %q, %v; want the PhaseError of the session, refused file, with the error of the comment", id, err)
 	}
+}
+
+// The demo of row 42b: no session of Intake starts when the known money since
+// Start plus the new session's cap passes the money cap of milestone 0
+// (intake.cap 50.0,8.0 of the world), or when the hours since Start pass its
+// hours; no records commit and no session directory.
+func TestTheCapOfMilestoneZeroStartsNoSession(t *testing.T) {
+	for _, c := range []struct {
+		name, cap string
+		later     time.Duration
+		want      string
+	}{
+		{"the money", "50.01", 0, "the known money 0.0 plus the session's cap 50.01 passes 50.0 USD"},
+		{"the hours", "", 8*time.Hour + time.Minute, "the time since Start passes 8.0 hours"},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			w, r, f, a, h := phaseWorld(t, `printf 'kind\tvalue\nnote\tread\n' > "$out"`)
+			h[regCap] = c.cap
+			spec := phaseSpec(t, w, r, a, h)
+			spec.Harness = h
+			started := startOf(t, r)
+			r.Now = func() time.Time { return started.Add(c.later) }
+			commits := gitOut(t, w.bare, "rev-list", "--count", "layup-records")
+			id, err := r.PhaseSession(context.Background(), spec)
+			if !errors.Is(err, ledger.ErrMilestoneCap) || id != "" || !strings.Contains(err.Error(), c.want) {
+				t.Fatalf("PhaseSession: %q, %v; want ErrMilestoneCap with %q and no session", id, err, c.want)
+			}
+			if got := gitOut(t, w.bare, "rev-list", "--count", "layup-records"); got != commits {
+				t.Errorf("the records commits: %s, then %s; want none", commits, got)
+			}
+			if left, _ := os.ReadDir(filepath.Join(r.Host, "sessions")); len(left) != 0 || len(f.posted[2]) != 0 {
+				t.Errorf("the session directories %v and the comments %q; want none", left, f.posted[2])
+			}
+		})
+	}
+	// Inside the cap, the session starts: the money and the hours at the cap
+	// exactly.
+	w, r, _, a, h := phaseWorld(t, `printf 'kind\tvalue\nnote\tread\n' > "$out"`)
+	// The time of Start is the committer time of the first commit of the
+	// records branch, not of its head.
+	root := strings.TrimSpace(gitOut(t, w.bare, "rev-list", "--max-parents=0", "layup-records"))
+	head := strings.TrimSpace(gitOut(t, w.bare, "log", "-1", "--format=%ct", "layup-records"))
+	if s := strings.TrimSpace(gitOut(t, w.bare, "log", "-1", "--format=%ct", root)); s == head || strconv.FormatInt(startOf(t, r).Unix(), 10) != s {
+		t.Errorf("the time of Start %v; want the first commit's, %s (the head's is %s)", startOf(t, r), s, head)
+	}
+	h[regCap] = "50.0"
+	started := startOf(t, r)
+	r.Now = func() time.Time { return started.Add(8 * time.Hour) }
+	spec := phaseSpec(t, w, r, a, h)
+	spec.Harness = h
+	if id, err := r.PhaseSession(context.Background(), spec); err != nil || id == "" {
+		t.Errorf("a session at the cap exactly: %q, %v; want it run", id, err)
+	}
+}
+
+// startOf gives the time of Start of the world, the first commit of its
+// records branch, whose clock is the world's own.
+func startOf(t *testing.T, r *Sessions) time.Time {
+	t.Helper()
+	started, err := r.Store.Started(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	return started
 }
