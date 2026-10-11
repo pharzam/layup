@@ -400,7 +400,8 @@ the events hold, so it names the refusals of the end and of those checks
 (**decided here**, round 1 of #165); a session whose end recorded nothing has no
 comment, and a lost lease stops the run before it (round 2 of #165). The call is the forge's `Comment`
 ([`forge.md`](forge.md#the-calls-of-m2b), O-189). The task loop of `M2e` moves
-a task's comments to the task's issue.
+a task's comments to the task's issue. The comment of a session of a phase of
+`M2c` is in [`intake.md`](intake.md#the-sessions-of-intake) (task `T-gmey`).
 
 ## REQ-005 — The result of a session
 
