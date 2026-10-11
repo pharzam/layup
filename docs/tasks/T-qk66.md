@@ -40,3 +40,38 @@ restart with Start not done, as the run plans its rows when it prints them.
 
 **The rejected alternatives:** the steps of Start and Intake in one restart; a
 row `lease` at the end of a restart.
+
+## Review rounds
+
+The record is a comment on #217. Round 1 (Claude Fable 5.1, effort `xhigh`, a
+fresh read-only session in a clone at `4826c2f`, cycle 0, the cap): `nothing
+material in scope`, five notes. Notes 1 to 3 (the sentence of `M2a` in step 6 of
+`run.md`; "before `phase`" in `session.md` and in the comment of `probeStep`)
+are #236, for the next change of those files. Note 4: the red of the schema of
+`run-steps` was seen and not recorded in `test-runs.md`: after the code, before
+the block of `run.md` changed, `TestTheTextBlocksOfRunMd` gave "schema run-steps:
+column 1 (step): the type: the block has
+"enum(forge|…|probe|phase)"; the Go schema has "enum(forge|…|probe|phase|rule-gaps)""
+(04:24Z), then green with the block. Note 5 is a limit of the round (the e2e
+level was not open to it); the author ran it green, and CI runs it.
+
+## Verdict
+
+Delivered: the step `rule-gaps`, the first step of Intake, in place of the row
+`phase` when Start is done, with the rule "done before" and the release of the
+lease after the last row. The review ended by decay at cycle 0 of cap 1. The diff
+against `6f3adae`, the branch's base, is inside 650 lines over 15 files. Next:
+row 42a.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). UTC; reviewers' tokens are `modelUsage`;
+the author's are not reported.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan | reasoning | Claude Opus 5.5 | not reported | not reported | 2026-10-11 04:12 to 04:15 |
+| The plan review | reasoning | Claude Fable 5.1 | `xhigh` | 1,059,200 (USD 5.56) | 6 min 13 s |
+| The code, test first | execution | Claude Opus 5.5 | not reported | not reported | 04:21 to 04:32 |
+| Round 1 | reasoning | Claude Fable 5.1 | `xhigh` | 1,187,638 (USD 4.70) | 9 min 40 s |
+| The close-out | execution | Claude Opus 5.5 | not reported | not reported | 04:44 to 04:43 |
