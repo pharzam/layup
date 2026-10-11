@@ -157,6 +157,8 @@ the first.
 | `TestMergeQuestions`, `TestTheCommentOfTheBatch`, `TestBackquote`, `TestLineSpan` (`internal/run/batch_test.go`) | unit | REQ-001 | F-0003#41 | — | — | T-8r3u | green |
 | `TestTheStepAnswers` (`internal/run/run_integration_test.go`) | integration | REQ-001, NFR-003 | F-0003#41 | — | — | T-hxb9 | green |
 | `TestCollectAnswers`, `TestBudgetOf` (`internal/run/answers_test.go`); `TestAWaitingStepIsTheLastRow` (`internal/run/steps_test.go`) | unit | REQ-001, NFR-003 | F-0003#41 | — | — | T-hxb9 | green |
+| `TestTheReviewOfTheAnswersAndTheFollowUp` (`internal/run/run_integration_test.go`) | integration | REQ-001 | F-0003#41 | — | — | T-vwu3 | green |
+| `TestKeepOfTheReview`, `TestFollowUpRows`, `TestTheCommentOfTheFollowUp` (`internal/run/followup_test.go`) | unit | REQ-001 | F-0003#41 | — | — | T-vwu3 | green |
 | `TestASessionOfAPhaseCommitsItsRecordsAndItsTelemetryRow`, `TestAnOutputFileThatIsRefusedIsNoRecord`, `TestNoAdmittedPairStartsNoSession`, `TestARefusedStartOfASessionOfAPhaseIsNoRecord`, `TestACommentThatFailsKeepsTheReasonOfTheSession` (`internal/run/phase_integration_test.go`) | integration | REQ-001, REQ-012, NFR-001 | F-0003#41, F-0003#51 | — | — | T-gmey | green |
 | `TestMakeInput`, `TestReadOutput` (`internal/session/phase_integration_test.go`) | integration | REQ-001, REQ-012 | F-0003#41, F-0003#51 | — | — | T-gmey | green |
 | `TestMilestoneCap` (`internal/ledger/budget_test.go`); `TestTheCapOfMilestoneZeroDrawsNoSession` (`internal/run/phase_test.go`); the rows of `CommitTime` in `TestEachCallRunsItsVerb` and `TestTheOutputIsRead` (`internal/git/git_test.go`) | unit | REQ-011, NFR-001 | F-0003#50 | — | — | T-ybd5 | green |

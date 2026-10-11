@@ -483,7 +483,7 @@ ref       text       -    its source row: the ID of the rule gap in intake/psb.t
 block     enum(idea-owner|operator)  -  the block of the batch that asks it
 phase     enum(before-delivery)  -  the phase of the question (Early Question Share, architecture.md §12); a later milestone adds its phases
 kind      text       -    the kind of the gap (a rule G1 to G5, a kind of meaning, a kind of coverage, intent, follow-up)
-start     int        -    the byte offset of its quote; `—` for a question with no quote (an absence, the intent form, an `unsupported` requirement of the draft)
+start     int        -    the byte offset of its quote; `—` for a question with no quote (an absence, the intent form, an `unsupported` requirement of the draft, a follow-up, whose quote is that of the question it asks again, task `T-vwu3`)
 end       int        -    the byte offset after its quote; `—` exactly when start is `—`
 question  text       -    the question as the batch asks it
 asked     time       -    the time that the step read from the run's clock before it wrote the rows, which comes before the records commit and the post of the comment that asks it (task `T-8r3u`)
