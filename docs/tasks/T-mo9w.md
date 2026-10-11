@@ -32,3 +32,33 @@ panel. Its condition is applied: each scripted comment takes its time from the
 **Tests:** [`test-runs.md`](../../runs/T-mo9w/test-runs.md): red before the
 world was extended; 2 of 2 mutations of the product caught; green at the three
 levels. No defect of the product was found on the path.
+
+## Review rounds
+
+The record is a comment on #226. Round 1 (Claude Fable 5.1, effort `xhigh`, a
+fresh read-only session in a clone at `8d1ef93`, cycle 0, the cap): `nothing
+material in scope`, three notes. Notes 1 and 3 (the line numbers of the record,
+a lesson of §2 on the time of a scripted comment) are #262; note 2 (the red seen
+was one step past the one the plan predicted, both on the world) needs no
+change.
+
+## Verdict
+
+Delivered: `TestTheStepsOfIntake`, the e2e of the steps of Intake on the built
+binary, from the batch through one follow-up to the end of Intake, with no
+secret. The review ended by decay at cycle 0 of cap 1. The diff against
+`121d6a6`, the branch's base, is inside 700 lines over 11 files. CI runs the
+three levels on the landing head. Next: row 49a.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). UTC; reviewers' tokens are `modelUsage`;
+the author's are not reported.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan | reasoning | Claude Opus 5.5 | not reported | not reported | 2026-10-11 13:10 to 13:10 (the claim to the post) |
+| The plan review | reasoning | Claude Fable 5.1 | `xhigh` | 1,390,865 (USD 6.19) | 8 min 20 s |
+| The test and the world | execution | Claude Opus 5.5 | not reported | not reported | 13:19 to 13:29 |
+| Round 1 | reasoning | Claude Fable 5.1 | `xhigh` | 890,421 (USD 4.08) | 10 min 12 s |
+| The close-out | execution | Claude Opus 5.5 | not reported | not reported | 13:40 to 13:40 |
