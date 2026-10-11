@@ -124,6 +124,7 @@ The same API and version header as [The calls of M2a](#the-calls-of-m2a)
 | Method | Call | What it gives `layup run` |
 | ------ | ---- | ------------------------- |
 | `EffectiveRules` | `GET /repos/{owner}/{repo}/rules/branches/{branch}`, every page | each active rule that applies to the branch, also to one that does not exist yet: its `type` and its `parameters`; a ruleset in `evaluate` or `disabled` gives none |
+| `Repository` | the calls of `M2a`; it also gives the head of each branch, `commit.sha` of each item of the list of branches | the head of the default branch, for the tree check ([`scaffold.md`](scaffold.md#the-tree-check)) |
 | `Activity` | `GET /repos/{owner}/{repo}/activity`, with `ref` the branch and one page | the activities of the ref: each with its `actor`, `ref`, `before`, `after`, `timestamp` and `activity_type`; `M2d` reads only that the call works |
 
 The bypass list of a ruleset is not in either call, and the App's permissions

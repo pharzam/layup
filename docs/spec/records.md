@@ -574,6 +574,22 @@ at      time   -    when the check ran, from the run's clock; never `—`
 The table is written again at each start after the Scaffold
 ([`scaffold.md`](scaffold.md#at-each-later-start)); Git history keeps each.
 
+**The built blocks that `M2d` changes in words** (condition 4 of the plan
+review of #265): each change is written beside its rule, and the build task
+that writes it changes the block and its Go schema in one change.
+
+- `questions`: the enum of `source` gains `setup`, and `ref` the setup IDs
+  ([`scaffold.md`](scaffold.md#the-answers-of-the-setup));
+- `run-steps`: the enum of `step` gains `markers`, `setup`, `verify`,
+  `scaffold-push` and `forge-check`
+  ([`scaffold.md`](scaffold.md#the-steps-of-the-scaffold));
+- `setup-record`: the row name `without-layup`
+  ([`scaffold.md`](scaffold.md#nfr-002--a-target-without-layup)), and two forms
+  of the `ref` of a `computed` row, `records:start/start.tsv` (S01, S02 in
+  phase 2) and `out/ruleset-default.json` (`without-layup`), which check
+  `sources` accepts as it is (a ref that is not empty);
+- `setup-steps`: none; the actor `layup-run` exists.
+
 **Not a block:** `setup/rulesets.txt`, the Operator's two apply outputs, each
 after a line `== <file>`, byte for byte (JSON, not a table); and
 `setup/inputs/files/<path>`, a prose text at its path in the target, which the

@@ -147,7 +147,9 @@ item 4):
   `records:start/`, byte for byte;
 - `inputs/answers.tsv`: the rows of [The answers of the setup](#the-answers-of-the-setup),
   then one row per row of `intake/answers.tsv` whose question is not a setup
-  question, with `question` its `Q-NNN`, `by` the role of its block, `source`
+  question (**decided here**: a setup question is a row of `questions.tsv` with
+  `source` `setup`, or a follow-up whose `ref` is the `Q-NNN` of one; the
+  answer of such a follow-up is the setup row's, and it is not a `Q-` row), with `question` its `Q-NNN`, `by` the role of its block, `source`
   the URL of its comment and `question_text` `—`; in the order of the question
   IDs;
 - `inputs/files/<path>` from `records:setup/inputs/files/<path>`, the texts of
@@ -171,11 +173,21 @@ stop from the records, and runs the runner again, until a run does not stop:
 | any other row (`S01-stack` with no answer, an `M-` row that the batch did not ask, an `O-` row) | the step `setup` is `fail`; its `detail` names the rows |
 
 An `M-` row that the batch asked always has a row of `answers.tsv` (an answer
-or `gap`), so S10 does not stop on it. A stop with `F-` rows that a session of
-the same step already answered (its files are in the records) is `fail`,
-naming the rows: the session's files did not satisfy the stop. A step that
-ends `fail` or `not-active` makes the step `setup` `fail`, with the runner's
-reason; an input error (exit 2 of phase 1) does the same.
+or `gap`), so S10 does not stop on it. A step that ends `fail` or `not-active`
+makes the step `setup` `fail`, with the runner's reason; an input error (exit 2
+of phase 1) does the same.
+
+**Decided here** (finding 3 of round 1 of #265): the runner stops with `F-`
+rows only for a file that is missing (`setup.md`, S05 and S07), so a prose
+text that is in the records is never asked again. When the step `setup` is
+`fail` after a prose session of the same run (a check that fails, an `M-` row
+of S10 that the batch did not ask, as the session's text holds a new marker, or
+any other `fail` that follows the copy), one records commit removes each file
+of that session from `setup/inputs/files/` before the step ends, its message
+naming the session and the reason. So the next restart builds the work area
+without them, the runner stops on their `F-` rows again, and a new session
+writes them. The files of an earlier session whose rows the runner passed
+stay.
 
 ### The prose rows
 
@@ -193,7 +205,8 @@ file whose link S05's deletion breaks. **Decided here** (decision 6 of #265):
 - its `input/`: `problem-statement.md`, `vision.md` when there is one, and
   `stop.tsv`, the stop table of the runner (the block `setup-stop`); its
   `repo/` is `WORK/target` at the head of `layup-setup` at that stop;
-- its output: one file per `F-` row, at `output/files/<path>`; a missing file,
+- its output: one file per `F-` row, at `result/files/<path>` of its session
+  directory (`result/` is where a session writes, [`session.md`](session.md#the-session-directory)); a missing file,
   a link, a file over 1 MiB, a file that is not valid UTF-8, or a file at a
   path that the stop does not name refuses the output, and the step is `fail`,
   naming the session;
@@ -205,8 +218,9 @@ file whose link S05's deletion breaks. **Decided here** (decision 6 of #265):
 
 So no role session edits a path of the target: code copies its text, and the
 check of the row decides. A restart after a `fail` builds the work area again
-and starts a new session for the stop; the files of the failed session stay in
-the records' history.
+and starts a new session for the stop ([The stops of the runner](#the-stops-of-the-runner)):
+the files of the failed session are removed from the head of the records, and
+stay in their history.
 
 ### The step verify and the records of the setup
 
@@ -221,7 +235,7 @@ runner does S15, and one records commit writes:
 - `setup/tree.tsv`, the record of the verified tree
   ([`records.md`](records.md#nfr-001--the-records-of-the-scaffold)): the root
   commit, then each setup commit of `layup-setup` in order, each with its tree
-  and its step, so its last row is the head that the Operator pushes;
+  and its step, so its last row is the head that the Operator then pushes;
 - `README.md` in [the text of the Scaffold](#the-readme-of-the-scaffold).
 
 The step `verify` is the only caller of `layup setup verify` under `layup
@@ -257,7 +271,11 @@ so a person reads it with no tool. A plain `git clone` carries the branch as
   row per step.
 - `setup/verify.tsv`: the table of `layup setup verify` before the records
   commit of the setup.
-- `setup/tree.tsv`: the commits of the setup that the Operator pushed.
+- `setup/tree.tsv`: the commits of the setup that `layup setup verify` read,
+  which the Operator then pushes.
+- `setup/inputs/files/`: the texts of the setup that a role session wrote.
+- `setup/rulesets.txt`: the Operator's apply of the two rulesets, with their
+  bypass lists.
 - `setup/forge-check.tsv`: the rules read back and the probes of the last start.
 - `rule-paths.tsv`: the rule-path register: the paths whose change is a change
   of the rules.
@@ -277,8 +295,11 @@ as there are none.
 S13 writes both files in phase 2 (decision 7 of #265, with S13 as the one
 writer of a ruleset, as in phase 1). Each file is the body of `POST
 /repos/{owner}/{repo}/rulesets`, in the form of the file of phase 1
-(`internal/setup`, `rulesetBody`): JSON with an indent of two spaces, the name
-`LAYUP`, the target `branch` and the enforcement `active`. Every parameter of
+(`internal/setup`, `rulesetBody`): JSON with an indent of two spaces, the target
+`branch` and the enforcement `active`. The name of the default branch's
+ruleset is that of phase 1, `layup: the default branch` (`setup.md`, S13); the
+records branch's is `layup: the records branch` (**decided here**, in the form of
+the first, so the Operator tells the two apart). Every parameter of
 each rule is written, so the read-back compares each.
 
 ### The ruleset of the default branch
@@ -312,7 +333,10 @@ branch keeps its empty bypass list: the two scopes are two rulesets.
 ### The commands for the Operator
 
 S13 writes to `commands.sh`, in order: the check that the default branch's head
-on the forge is the root commit (`git ls-remote`, compared with `pin.commit`);
+on the forge is the root commit that Start read back (`git ls-remote origin
+refs/heads/<default>`, compared with the root commit of `WORK/target`, the
+row of order 0 of `setup/tree.tsv`; `pin.commit` is the baseline's commit, not
+the target's);
 the push of `layup-setup` onto the default branch (`git push origin
 layup-setup:<default>`, a fast-forward from the root commit); and the apply of
 each ruleset with `gh api --method POST /repos/OWNER/NAME/rulesets --input
@@ -349,8 +373,8 @@ row; the table is committed in both cases.
 
 ### The tree check
 
-`tree`: the head of the default branch on the forge (the branch list of
-`Repository`) equals, by SHA, the last commit of `setup/tree.tsv`. The push is a
+`tree`: the head of the default branch on the forge (`Repository`, which gains
+the head of each branch in `M2d`, [`forge.md`](forge.md#the-calls-of-m2d)) equals, by SHA, the last commit of `setup/tree.tsv`. The push is a
 fast-forward of the verified commits, so their SHA, not only their tree, is
 on the forge. Any other head is `fail`, naming the head.
 
@@ -409,8 +433,8 @@ LAYUP, so a target whose ruleset requires them merges nothing when LAYUP is
 absent. **Decided here** (decision 7 of #265): S13 in phase 2 writes the record
 row `without-layup` (source `computed`, ref `out/ruleset-default.json`), whose
 value is the line "To merge with LAYUP absent, remove the required checks
-layup/gates, layup/spec, layup/verify and layup/rules from the ruleset LAYUP of
-the default branch." The gate jobs stay required, so the target still passes
+layup/gates, layup/spec, layup/verify and layup/rules from the ruleset "layup: the
+default branch"." The gate jobs stay required, so the target still passes
 its own gates with LAYUP absent. The name `without-layup` is a new row name of
 the built block `setup-record`, whose `name` column is text: its build task
 adds it with its test.
@@ -513,7 +537,8 @@ change, as `M2c` did.
 | `S01-stack` with no answer, or `open`, after the follow-up | `setup` is `fail`, naming `S01-stack`; no setup commit is kept |
 | A stack that the catalog does not have | the runner's own result (S12), and `setup` is `fail` with it |
 | A prose session's output that is missing, a link, over 1 MiB, not UTF-8, or at a path that the stop does not name | `setup` is `fail`, naming the session; nothing of it is committed |
-| A prose text whose check fails | `setup` is `fail`, naming the check; a restart starts a new session |
+| A prose text whose check fails | `setup` is `fail`, naming the check; the session's files are removed from the records, and a restart starts a new session |
+| A prose text that holds a marker that the pinned tree does not | S10 stops on an `M-` row that the batch did not ask: `setup` is `fail`, and the session's files are removed, as above |
 | A row of `layup setup verify` that is not `pass` or `clear` | `verify` is `fail`; no records commit of the setup |
 | The default branch's head is neither the root commit nor the verified head when the Operator's commands run | the first command of `commands.sh` stops it (`set -eu`); `scaffold-push` keeps "waiting" |
 | The default branch's head is the verified head, and an apply output is missing | `scaffold-push` keeps "waiting" |
@@ -553,7 +578,11 @@ six rows of the inventory item `later-p2-scaffold` are the rows marked
 
 | Test | Level | What it shows |
 | ---- | ----- | ------------- |
-| The stops of the runner under `layup run` (inventory) | unit | A run that does not stop goes on; a stop with `F-` rows starts a prose session; a stop with any other row, an input error, a `fail` or a `not-active` make `setup` `fail`; a stop that the same session already answered is `fail`. |
+| The stops of the runner under `layup run` (inventory) | unit | A run that does not stop goes on; a stop with `F-` rows starts a prose session; a stop with any other row, an input error, a `fail` or a `not-active` make `setup` `fail`; a `fail` after a prose session of the run removes that session's files from the records, and one before it removes none. |
+| The steps of the setup in phase 2, and the pin | unit | S01 reads only `S01-stack` and runs no `layup psb check`; S02 writes the pin rows of `start.tsv` with ref `records:start/start.tsv` and resolves nothing; S03 makes no commit and fails on a tree other than `pin.tree`; S04 writes `docs/setup/armature.pin` from those rows and the raw fact of the `S01-` and `Q-` rows; S15 makes no commit of `layup-records`. |
+| The row `without-layup` | unit | S13 in phase 2 writes it with its fixed line and source `computed`; in phase 1 it writes none. |
+| The apply outputs | unit | Both files present and each a JSON object of `OWNER/NAME`: `setup/rulesets.txt` holds both after their lines; a file missing: "waiting"; a file that is not a JSON object, or of another repository: `fail`, naming it. |
+| The forge check at each later start | integration | With the records of a done Scaffold, a restart runs `forge-check` after `lease` and before `probe`, writes the table again, and stops at a row that is not `pass`; the steps of Intake and of the Scaffold are "done before". |
 | The answers of the setup | unit | Each row of the table of [The answers of the setup](#the-answers-of-the-setup): `accept` with and without a proposal, `gap`, a value, no answer and `open`, for a marker and for `S01-stack`; the source URL. |
 | The step markers | unit | The scan of a fixture tree gives the keys of S10; a quote that occurs once passes, and one that occurs twice, nowhere or with a tab refuses the file; with no marker no session starts. |
 | The ruleset files (inventory) | unit | The default branch's file names each gate job pinned to 15368, the four `layup/` checks pinned to the forge register's `app_id`, `strict` true, `creation`, `allowed_merge_methods` `["merge"]` and an empty bypass list; the records branch's file has the App as its only bypass actor; phase 1 gets `creation` and the two parameters, and no `layup/` check. |
