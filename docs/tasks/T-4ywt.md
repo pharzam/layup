@@ -3,8 +3,8 @@
 Issue: [#213](https://github.com/pharzam/layup/issues/213), row 41a of [the tasks
 of M2c](../plan/README.md#the-tasks-of-m2c), opened by `T-2r8u` (#211). Serves
 `F-0003#51` through REQ-012, NFR-005 and NFR-007; takes note 2 of #230. Base
-`e689d12` (the merge of #229), with `main` at `6f3adae` merged in before the
-work; the budget is read against `e689d12`. Author: Claude Opus 5.5 on Claude
+`e689d12` (the merge of #229), fast-forwarded to `main` at `6f3adae` (the merge
+of #231, row 40) before any work; the budget is read against `6f3adae`. Author: Claude Opus 5.5 on Claude
 Code. Evidence: [`runs/T-4ywt/`](../../runs/T-4ywt/).
 
 ## Plan and plan review
