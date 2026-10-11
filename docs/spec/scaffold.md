@@ -321,7 +321,11 @@ each ruleset with `gh api --method POST /repos/OWNER/NAME/rulesets --input
 so the first command that fails stops it, in phase 1 and phase 2; a command of
 phase 1 that does not hold under `set -eu` is a defect of its step.
 
-The step `scaffold-push` prints `commands.sh` on standard error with the
+When `DIR/work/OWNER/NAME/` is missing (a restart on another host, or after
+it was removed), `scaffold-push` builds it again as `setup` does, with the
+prose files of the records, and runs the step runner; the head of
+`layup-setup` must equal the last commit of `setup/tree.tsv`, else the step is
+`fail`, naming both. The step `scaffold-push` prints `commands.sh` on standard error with the
 Operator's rule (with the Operator's own login, from a clone with no hooks
 installed, `architecture.md` §5 Scaffold 6) and is `done` with "waiting for the
 Operator's pushes and ruleset apply". A later restart goes on when the head of
@@ -508,6 +512,7 @@ change, as `M2c` did.
 | The activity read fails | `forge-check` is `fail` |
 | A private repository on GitHub Free (no enforced rulesets) | the read-back finds no rule: `forge-check` is `fail` (K15; the plan check of Start refuses it before) |
 | A restart while `scaffold-push` waits | it runs the steps again from the records: `setup` and `verify` are "done before", and `scaffold-push` reads the forge again |
+| A work area that is missing when `scaffold-push` runs | it is built again from the records; a head of `layup-setup` other than the last commit of `setup/tree.tsv` is `fail` |
 
 ## REQ-015 and REQ-017 — The review of the release of M2d
 
