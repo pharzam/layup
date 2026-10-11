@@ -70,7 +70,7 @@ can leave up to twenty seconds with no line. Reason: a Start ends; the phase
 loop of later milestones adds its own rows, so the one-table rule holds.
 
 ```tsv-schema run-steps stdout
-step enum(forge|plan|baseline|root-push|read-back|records|issues|watch|clone|version|lease|probe|phase|rule-gaps|meaning|numbering|spans) key the step, in the order of the two lists below
+step enum(forge|plan|baseline|root-push|read-back|records|issues|watch|clone|version|lease|probe|phase|rule-gaps|meaning|numbering|spans|draft) key the step, in the order of the two lists below
 result enum(done|fail) - `done`, or `fail` with its reason in `detail`
 detail text - one line: what the step found, with no time, no path of the host and no SHA of a records commit (a records commit holds its time, so its SHA differs on a repeat)
 ```

@@ -172,7 +172,8 @@ func newWorld(t *testing.T) *world {
 	// probe as probeHarness does; and a session of a phase with the file of
 	// bin/ of its output's name, which a test may write (bin/meaning.tsv: no
 	// gap), else, for the numbering, a span table that covers the problem
-	// statement, one fact per line that is not empty (row 44).
+	// statement, one fact per line that is not empty (row 44), and for the
+	// draft one requirement per need fact of the span table (row 45a).
 	bin := filepath.Join(w.dir, "bin")
 	os.MkdirAll(bin, 0o755)
 	os.WriteFile(filepath.Join(bin, "version"), []byte("#!/bin/sh\necho 1.0.0\n"), 0o755)
@@ -188,8 +189,12 @@ case "$p" in
 	out=$(printf '%s\n' "$p" | sed -n 's/^The output file: //p')
 	in=$(printf '%s\n' "$p" | sed -n 's/^The problem statement: //p')
 	f="$(dirname "$0")/$(basename "$out")"
+	sp=$(printf '%s\n' "$p" | sed -n 's/^The span table: //p')
 	if [ -f "$f" ]; then
 		cat "$f" > "$out"
+	elif [ "$(basename "$out")" = draft.tsv ]; then
+		LC_ALL=C awk -F '\t' 'BEGIN { printf "kind\tstatement\tcovers\tcriterion\n" }
+			NR > 1 && $4 == "need" { printf "requirement\tThe statement of fact %s.\t%s\tThe criterion of fact %s.\n", $3, $3, $3 }' "$sp" > "$out"
 	else
 		LC_ALL=C awk 'BEGIN { printf "start\tend\tfact\tclass\treason\n"; o = 0; n = 0 }
 			{ l = length($0); if (l > 0) { n++; printf "%d\t%d\t%d\tneed\t\342\200\224\n", o, o + l, n }; o += l + 1 }' "$in" > "$out"
@@ -355,7 +360,7 @@ func TestARestartWithAnotherVersionFailsAtVersion(t *testing.T) {
 	}
 	// The same version: the lease is released, so it is taken at once; each
 	// step of Start is done.
-	allDone(t, "the restart", Restart(context.Background(), w.config("0.1.0-dev")), "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans")
+	allDone(t, "the restart", Restart(context.Background(), w.config("0.1.0-dev")), "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft")
 }
 
 // A run that stopped at opening: the restart takes the lease over from the
@@ -559,7 +564,7 @@ func TestARestartWithAHarnessRegisterThatChanged(t *testing.T) {
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	cfg = w.config("0.1.0-dev")
 	cfg.Harnesses = cfg.Harnesses[:1] // devin removed
-	allDone(t, "the restart with a harness lost", Restart(context.Background(), cfg), "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans")
+	allDone(t, "the restart with a harness lost", Restart(context.Background(), cfg), "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft")
 }
 
 // The step rule-gaps (row 43a, task T-qk66, #217): after a complete Start, the
@@ -575,8 +580,8 @@ func TestTheStepRuleGaps(t *testing.T) {
 	cfg = w.config("0.1.0-dev")
 	cfg.Step = func(i, n int, name string) { progress = append(progress, fmt.Sprintf("%d/%d %s", i, n, name)) }
 	rows := Restart(context.Background(), cfg)
-	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans")
-	if want := []string{"1/6 forge", "2/6 clone", "3/9 version", "4/9 lease", "5/9 probe", "6/9 rule-gaps", "7/9 meaning", "8/9 numbering", "9/9 spans"}; strings.Join(progress, ", ") != strings.Join(want, ", ") {
+	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft")
+	if want := []string{"1/6 forge", "2/6 clone", "3/10 version", "4/10 lease", "5/10 probe", "6/10 rule-gaps", "7/10 meaning", "8/10 numbering", "9/10 spans", "10/10 draft"}; strings.Join(progress, ", ") != strings.Join(want, ", ") {
 		t.Errorf("the progress %q, want %q", progress, want)
 	}
 	// What layup psb check prints on the same file (internal/cli/cli.go):
@@ -622,7 +627,7 @@ func TestTheStepMeaning(t *testing.T) {
 	cfg.PSB = []byte("# The problem\n\nThe service is fast.\n")
 	allDone(t, "Start", w.start(cfg), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	rows := Restart(context.Background(), w.config("0.1.0-dev"))
-	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans")
+	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft")
 	if d := rowOf(rows, "meaning").Detail; d != "1 gaps of meaning, in intake/meaning.tsv" {
 		t.Errorf("the detail of meaning %q", d)
 	}
@@ -707,7 +712,7 @@ func TestTheStepsNumberingAndSpans(t *testing.T) {
 	w := newWorld(t)
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	rows := Restart(context.Background(), w.config("0.1.0-dev"))
-	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans")
+	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft")
 	if n, s := rowOf(rows, "numbering").Detail, rowOf(rows, "spans").Detail; n != "2 spans, 2 facts, in spec/spans.tsv" || s != "the span check passed, in spec/check.tsv" {
 		t.Errorf("the details %q and %q", n, s)
 	}
@@ -764,7 +769,7 @@ func TestAFailedSpanCheckRunsNumberingAgain(t *testing.T) {
 	}
 	os.Remove(bad) // the next session covers the file
 	again := Restart(context.Background(), w.config("0.1.0-dev"))
-	allDone(t, "the restart after the fail", again, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans")
+	allDone(t, "the restart after the fail", again, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft")
 	if n := rowOf(again, "numbering").Detail; n != "2 spans, 2 facts, in spec/spans.tsv" {
 		t.Errorf("numbering after a failed check: %q; want a new session's spans", n)
 	}
@@ -789,5 +794,48 @@ func TestNumberingWithNoPair(t *testing.T) {
 	}
 	if strings.Contains(show(t, w.bare, "refs/heads/layup-records", "sessions.tsv"), "\tproduct-owner\t") {
 		t.Error("a session of product-owner started with no pair")
+	}
+}
+
+// The step draft (row 45a, task T-2et0, #220): one session of product-owner
+// on the problem statement and the span table; its draft covers each need, so
+// spec/draft.tsv holds its rows with their IDs, and the lease is released; a
+// second restart finds the record and runs nothing.
+func TestTheStepDraft(t *testing.T) {
+	w := newWorld(t)
+	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
+	rows := Restart(context.Background(), w.config("0.1.0-dev"))
+	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft")
+	if d := rowOf(rows, "draft").Detail; d != "2 rows, in spec/draft.tsv" {
+		t.Errorf("the detail of draft %q", d)
+	}
+	got := show(t, w.bare, "refs/heads/layup-records", "spec/draft.tsv")
+	if !strings.HasPrefix(got, "id\tkind\tstatement\tcovers\tcriterion\tsession\nR-001\trequirement\tThe statement of fact 1.\t1\tThe criterion of fact 1.\tS-") ||
+		!strings.Contains(got, "\nR-002\trequirement\tThe statement of fact 2.\t2\t") {
+		t.Errorf("spec/draft.tsv:\n%s", got)
+	}
+	if strings.Count(show(t, w.bare, "refs/heads/layup-records", "sessions.tsv"), "\tproduct-owner\t") != 2 ||
+		!strings.Contains(show(t, w.bare, "refs/heads/layup-records", "lease.tsv"), "\treleased\n") {
+		t.Error("not two sessions of product-owner (the numbering and the draft), or the lease not released")
+	}
+	again := Restart(context.Background(), w.config("0.1.0-dev"))
+	if d := rowOf(again, "draft"); d.Result != "done" || d.Detail != "done before" {
+		t.Errorf("the second restart's row %+v; want draft done before", d)
+	}
+}
+
+// The demo of row 45a: a draft whose covers names no fact is refused: draft is
+// fail, naming the session, and nothing of the file is committed.
+func TestADraftThatCoversNoFactIsRefused(t *testing.T) {
+	w := newWorld(t)
+	os.WriteFile(filepath.Join(w.dir, "bin", "draft.tsv"), []byte("kind\tstatement\tcovers\tcriterion\nrequirement\tS.\t1\tC.\nrequirement\tS.\t2\tC.\nrequirement\tS.\t9\tC.\n"), 0o644)
+	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
+	rows := Restart(context.Background(), w.config("0.1.0-dev"))
+	last := rows[len(rows)-1]
+	if last.Name != "draft" || last.Result != "fail" || !strings.HasPrefix(last.Detail, "the session S-") || !strings.HasSuffix(last.Detail, ": refused file: row 3: covers names 9, which is no fact") {
+		t.Fatalf("the last row %+v; want draft fail, naming the session and the row", last)
+	}
+	if strings.Contains(gitOut(t, w.bare, "ls-tree", "-r", "--name-only", "refs/heads/layup-records"), "spec/draft.tsv") {
+		t.Error("a refused draft is a record")
 	}
 }
