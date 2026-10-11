@@ -12,7 +12,8 @@ import (
 
 // The Go schemas of telemetry.tsv, prices.tsv (the demo of #94), stalls.tsv
 // (the demo of #95), the four records of Start (the demo of #126) and the five
-// records of a session (the demo of #153) equal their blocks of
+// records of a session (the demo of #153) and the eight records of Intake (the
+// demo of #212) equal their blocks of
 // docs/spec/records.md.
 func TestTheSchemasEqualTheirBlocks(t *testing.T) {
 	blocks, err := tsv.ReadBlocks(os.DirFS(filepath.Join("..", "..", "docs", "spec")))
@@ -21,7 +22,9 @@ func TestTheSchemasEqualTheirBlocks(t *testing.T) {
 	}
 	for name, s := range map[string]tsv.Schema{"telemetry": TelemetrySchema, "prices": PricesSchema, "stalls": StallsSchema,
 		"start": StartSchema, "approvers": ApproversSchema, "lease": LeaseSchema, "copies": CopiesSchema,
-		"sessions": SessionsSchema, "harnesses": HarnessesSchema, "routing": RoutingSchema, "events": EventsSchema, "result": ResultSchema} {
+		"sessions": SessionsSchema, "harnesses": HarnessesSchema, "routing": RoutingSchema, "events": EventsSchema, "result": ResultSchema,
+		"meaning": MeaningSchema, "spans": SpansSchema, "draft": DraftSchema, "coverage": CoverageSchema, "questions": QuestionsSchema,
+		"answers": AnswersSchema, "answers-review": AnswersReviewSchema, "budget": BudgetSchema} {
 		block, ok := blocks[name]
 		if !ok {
 			t.Errorf("docs/spec/ has no block %s", name)
