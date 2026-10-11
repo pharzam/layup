@@ -96,8 +96,9 @@ type fakeForge struct {
 	bare   string
 	mu     sync.Mutex
 	issues int
-	posted []string // the bodies of the comments on the control issue
-	intake []string // the bodies of the comments on the Intake issue, the App's (row 46)
+	posted []string         // the bodies of the comments on the control issue
+	intake []string         // the bodies of the comments on the Intake issue, the App's (row 46)
+	people []map[string]any // the comments of persons on the Intake issue, scripted by a test (row 48)
 }
 
 func (f *fakeForge) serve(w http.ResponseWriter, r *http.Request) {
@@ -150,7 +151,7 @@ func (f *fakeForge) serve(w http.ResponseWriter, r *http.Request) {
 				"performed_via_github_app": map[string]any{"slug": "layup-agent"},
 				"created_at":               "2026-10-08T13:00:00Z", "updated_at": "2026-10-08T13:00:00Z", "body": body})
 		}
-		enc.Encode(list)
+		enc.Encode(append(list, f.people...))
 	case call == "GET /repos/acme/target/issues/2/comments":
 		enc.Encode([]map[string]any{{"id": 501, "user": map[string]any{"id": 777, "login": "layup-watch[bot]"},
 			"performed_via_github_app": map[string]any{"slug": "layup-watch"},
@@ -216,6 +217,9 @@ case "$p" in
 	case "$out" in
 	*/meaning.tsv) printf 'kind\tquote\tquestion\n' > "$out" ;;
 	*/coverage.tsv) printf 'kind\tfact\trequirement\tquestion\n' > "$out" ;;
+	*/answers-review.tsv)
+		qs=$(printf '%s\n' "$p" | sed -n 's/^The questions: //p')
+		LC_ALL=C awk -F '\t' 'BEGIN { printf "question\tstate\treason\n" } NR > 1 && $13 == "answered" { printf "%s\tclosed\tthe answer is clear\n", $1 }' "$qs" > "$out" ;;
 	*/draft.tsv) LC_ALL=C awk -F '\t' 'BEGIN { printf "kind\tstatement\tcovers\tcriterion\n" }
 		NR > 1 && $4 == "need" { printf "requirement\tThe statement of fact %s.\t%s\tThe criterion of fact %s.\n", $3, $3, $3 }' "$sp" > "$out" ;;
 	*) LC_ALL=C awk 'BEGIN { printf "start\tend\tfact\tclass\treason\n"; o = 0; n = 0 }
