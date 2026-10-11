@@ -156,13 +156,21 @@ func backquote(s string) string {
 // <question>" and its quote on the next line; the block for the Operator,
 // which has no question in M2c; the rule of the answers.
 func batchComment(rows [][]string, psb []byte) string {
+	return questionsComment(batchHeader, rows, func(r []string) (string, string) { return r[6], r[7] }, psb)
+}
+
+// questionsComment gives a comment in the form of the batch: header, the block
+// for the idea owner, each row's question and the quote at the offsets that
+// quote gives for it (none for ""), the block for the Operator and the rule of
+// the answers; the batch and the follow-up share it (row 47b).
+func questionsComment(header string, rows [][]string, quote func([]string) (string, string), psb []byte) string {
 	var b strings.Builder
-	b.WriteString(batchHeader + "\n\n## For the idea owner\n\n")
+	b.WriteString(header + "\n\n## For the idea owner\n\n")
 	for _, r := range rows {
 		fmt.Fprintf(&b, "%s: %s\n", r[0], r[8])
-		if r[6] != "" {
-			start, _ := strconv.Atoi(r[6])
-			end, _ := strconv.Atoi(r[7])
+		if s, e := quote(r); s != "" {
+			start, _ := strconv.Atoi(s)
+			end, _ := strconv.Atoi(e)
 			b.WriteString(backquote(string(psb[start:end])) + "\n")
 		}
 		b.WriteString("\n")

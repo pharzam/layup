@@ -181,8 +181,9 @@ func newWorld(t *testing.T) *world {
 	// bin/ of its output's name, which a test may write (bin/meaning.tsv: no
 	// gap), else, for the numbering, a span table that covers the problem
 	// statement, one fact per line that is not empty (row 44), for the draft
-	// one requirement per need fact of the span table (row 45a), and for the
-	// completeness review no item (row 45b).
+	// one requirement per need fact of the span table (row 45a), for the
+	// completeness review no item (row 45b), and for the review of the
+	// answers each answered question closed (row 47b).
 	bin := filepath.Join(w.dir, "bin")
 	os.MkdirAll(bin, 0o755)
 	os.WriteFile(filepath.Join(bin, "version"), []byte("#!/bin/sh\necho 1.0.0\n"), 0o755)
@@ -201,6 +202,9 @@ case "$p" in
 	sp=$(printf '%s\n' "$p" | sed -n 's/^The span table: //p')
 	if [ -f "$f" ]; then
 		cat "$f" > "$out"
+	elif [ "$(basename "$out")" = answers-review.tsv ]; then
+		qs=$(printf '%s\n' "$p" | sed -n 's/^The questions: //p')
+		LC_ALL=C awk -F '\t' 'BEGIN { printf "question\tstate\treason\n" } NR > 1 && $13 == "answered" { printf "%s\tclosed\tthe answer is clear\n", $1 }' "$qs" > "$out"
 	elif [ "$(basename "$out")" = coverage.tsv ]; then
 		printf 'kind\tfact\trequirement\tquestion\n' > "$out"
 	elif [ "$(basename "$out")" = draft.tsv ]; then
@@ -606,7 +610,7 @@ func TestTheStepRuleGaps(t *testing.T) {
 	cfg.Step = func(i, n int, name string) { progress = append(progress, fmt.Sprintf("%d/%d %s", i, n, name)) }
 	rows := Restart(context.Background(), cfg)
 	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers")
-	if want := []string{"1/6 forge", "2/6 clone", "3/13 version", "4/13 lease", "5/13 probe", "6/13 rule-gaps", "7/13 meaning", "8/13 numbering", "9/13 spans", "10/13 draft", "11/13 completeness", "12/13 batch", "13/13 answers"}; strings.Join(progress, ", ") != strings.Join(want, ", ") {
+	if want := []string{"1/6 forge", "2/6 clone", "3/15 version", "4/15 lease", "5/15 probe", "6/15 rule-gaps", "7/15 meaning", "8/15 numbering", "9/15 spans", "10/15 draft", "11/15 completeness", "12/15 batch", "13/15 answers"}; strings.Join(progress, ", ") != strings.Join(want, ", ") {
 		t.Errorf("the progress %q, want %q", progress, want)
 	}
 	// What layup psb check prints on the same file (internal/cli/cli.go):
@@ -1074,7 +1078,11 @@ func TestTheStepAnswers(t *testing.T) {
 	addComment(w, 1, 802, 303, "carol", at(2*time.Minute), first.String())
 	addComment(w, 1, 803, 303, "carol", at(3*time.Minute), last.String())
 	rows = Restart(context.Background(), w.config("0.1.0-dev"))
-	allDone(t, "the restart with the answers", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers")
+	// The review (row 47b) closes each answer, and the follow-up asks nothing.
+	allDone(t, "the restart with the answers", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers", "answers-review", "follow-up")
+	if d := rowOf(rows, "follow-up").Detail; d != "nothing to ask again; Intake is done" {
+		t.Errorf("the detail of follow-up %q", d)
+	}
 	if d := rowOf(rows, "answers").Detail; d != fmt.Sprintf("%d answers, in intake/answers.tsv; budget.tsv written", len(questions)) {
 		t.Errorf("the detail of answers %q", d)
 	}
@@ -1083,8 +1091,15 @@ func TestTheStepAnswers(t *testing.T) {
 		strings.Count(answers, "\n") != len(questions)+1 {
 		t.Errorf("intake/answers.tsv:\n%s", answers)
 	}
-	if got := show(t, w.bare, "refs/heads/layup-records", "questions.tsv"); strings.Contains(got, "\tasked\n") || strings.Count(got, "\tanswered\n") != len(questions) {
-		t.Errorf("questions.tsv: each question answered\n%s", got)
+	// Each question has the time of its answer; the review then closed it.
+	after, err := records.ReadQuestions([]byte(show(t, w.bare, "refs/heads/layup-records", "questions.tsv")))
+	if err != nil || len(after) != len(questions) {
+		t.Fatalf("questions.tsv: %d rows, %v", len(after), err)
+	}
+	for _, q := range after {
+		if q[11] == "" || q[12] != "closed" {
+			t.Errorf("the question %q: want the time of its answer, and closed by the review", q)
+		}
 	}
 	budget := show(t, w.bare, "refs/heads/layup-records", "budget.tsv")
 	if !strings.Contains(budget, "\nband.B\t9.5\t") || !strings.Contains(budget, "\nband.U\t10.0\t") || !strings.Contains(budget, "\nappetite.hours\t40.0\t") {
@@ -1102,5 +1117,79 @@ func TestTheStepAnswers(t *testing.T) {
 	again := Restart(context.Background(), w.config("0.1.0-dev"))
 	if a := rowOf(again, "answers"); a.Result != "done" || a.Detail != "done before" {
 		t.Errorf("the third restart's row %+v; want answers done before", a)
+	}
+}
+
+// The demo of row 47b (task T-vwu3, #224): the idea owner answers all but the
+// first question, with a B not below U, and the review leaves the hours open;
+// one follow-up comment of the App on the Intake issue asks again exactly the
+// missing question, the two unparsed fields and the open one; the next
+// restart finds the records and posts nothing.
+func TestTheReviewOfTheAnswersAndTheFollowUp(t *testing.T) {
+	w := newWorld(t)
+	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
+	allDone(t, "the restart", Restart(context.Background(), w.config("0.1.0-dev")), "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers")
+	questions, err := records.ReadQuestions([]byte(show(t, w.bare, "refs/heads/layup-records", "questions.tsv")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	asked, _ := time.Parse(time.RFC3339, questions[0][9])
+	var body, review strings.Builder
+	review.WriteString("question\tstate\treason\n")
+	ref := map[string]string{} // the ID of each field of the intent form
+	for _, q := range questions[1:] {
+		answer := "the answer to " + q[0]
+		switch q[2] {
+		case "band.B":
+			answer = "10.0" // not below U: both unparsed
+		case "band.U":
+			answer = "9.5"
+		case "appetite.hours":
+			answer = "40.0"
+		}
+		ref[q[2]] = q[0]
+		fmt.Fprintf(&body, "%s: %s\n", q[0], answer)
+		state := "closed"
+		if q[2] == "appetite.hours" {
+			state = "open"
+		}
+		fmt.Fprintf(&review, "%s\t%s\tthe review's reason\n", q[0], state)
+	}
+	os.WriteFile(filepath.Join(w.dir, "bin", "answers-review.tsv"), []byte(review.String()), 0o644)
+	addComment(w, 1, 802, 303, "carol", asked.Add(time.Minute).UTC().Format(time.RFC3339), body.String())
+	rows := Restart(context.Background(), w.config("0.1.0-dev"))
+	allDone(t, "the restart with the answers", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers", "answers-review", "follow-up")
+	if d := rowOf(rows, "follow-up").Detail; d != "4 questions asked again, in questions.tsv and the comment of the follow-up" {
+		t.Errorf("the detail of follow-up %q", d)
+	}
+	after, err := records.ReadQuestions([]byte(show(t, w.bare, "refs/heads/layup-records", "questions.tsv")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var again []string
+	for _, q := range after[len(questions):] {
+		if q[1] != "follow-up" {
+			t.Errorf("a row after the batch %q is no follow-up", q)
+		}
+		again = append(again, q[2])
+	}
+	if want := []string{questions[0][0], ref["band.B"], ref["band.U"], ref["appetite.hours"]}; strings.Join(again, " ") != strings.Join(want, " ") {
+		t.Errorf("the follow-up asks again %q; want the missing, the two unparsed and the open %q", again, want)
+	}
+	if got := show(t, w.bare, "refs/heads/layup-records", "intake/answers-review.tsv"); !strings.Contains(got, "\n"+ref["appetite.hours"]+"\topen\tthe review's reason\tS-") {
+		t.Errorf("intake/answers-review.tsv:\n%s", got)
+	}
+	c := intakeComments(w)
+	if len(c) != 2 || !strings.HasPrefix(c[1], followUpHeader+"\n") || !strings.Contains(c[1], "\n"+after[len(questions)][0]+": "+questions[0][8]+"\n") {
+		t.Fatalf("the App's comments on the Intake issue %q; want the batch and one follow-up", c)
+	}
+	third := Restart(context.Background(), w.config("0.1.0-dev"))
+	for _, name := range []string{"answers", "answers-review", "follow-up"} {
+		if s := rowOf(third, name); s.Result != "done" || s.Detail != "done before" {
+			t.Errorf("the third restart's row %+v; want %s done before", s, name)
+		}
+	}
+	if len(intakeComments(w)) != 2 {
+		t.Errorf("the third restart posted a comment: %d", len(intakeComments(w)))
 	}
 }
