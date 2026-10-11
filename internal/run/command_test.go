@@ -38,7 +38,7 @@ func TestStartAndRestartCallStepAtTheStartOfEachStep(t *testing.T) {
 	if got := restartNames(false); !reflect.DeepEqual(got, []string{"forge", "clone", "version", "lease", "probe", "phase"}) {
 		t.Errorf("the steps of a restart with Start not done %q; want those of run.md", got)
 	}
-	if got := restartNames(true); !reflect.DeepEqual(got, []string{"forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers", "answers-review", "follow-up"}) {
+	if got := restartNames(true); !reflect.DeepEqual(got, []string{"forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers", "answers-review", "follow-up", "follow-up-answers"}) {
 		t.Errorf("the steps of a restart with Start done %q; want those of run.md and intake.md", got)
 	}
 }

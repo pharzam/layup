@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -613,7 +614,7 @@ func TestTheStepRuleGaps(t *testing.T) {
 	cfg.Step = func(i, n int, name string) { progress = append(progress, fmt.Sprintf("%d/%d %s", i, n, name)) }
 	rows := Restart(context.Background(), cfg)
 	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers")
-	if want := []string{"1/6 forge", "2/6 clone", "3/15 version", "4/15 lease", "5/15 probe", "6/15 rule-gaps", "7/15 meaning", "8/15 numbering", "9/15 spans", "10/15 draft", "11/15 completeness", "12/15 batch", "13/15 answers"}; strings.Join(progress, ", ") != strings.Join(want, ", ") {
+	if want := []string{"1/6 forge", "2/6 clone", "3/16 version", "4/16 lease", "5/16 probe", "6/16 rule-gaps", "7/16 meaning", "8/16 numbering", "9/16 spans", "10/16 draft", "11/16 completeness", "12/16 batch", "13/16 answers"}; strings.Join(progress, ", ") != strings.Join(want, ", ") {
 		t.Errorf("the progress %q, want %q", progress, want)
 	}
 	// What layup psb check prints on the same file (internal/cli/cli.go):
@@ -1082,9 +1083,12 @@ func TestTheStepAnswers(t *testing.T) {
 	addComment(w, 1, 803, 303, "carol", at(3*time.Minute), last.String())
 	rows = Restart(context.Background(), w.config("0.1.0-dev"))
 	// The review (row 47b) closes each answer, and the follow-up asks nothing.
-	allDone(t, "the restart with the answers", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers", "answers-review", "follow-up")
+	allDone(t, "the restart with the answers", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers", "answers-review", "follow-up", "follow-up-answers")
 	if d := rowOf(rows, "follow-up").Detail; d != "nothing to ask again; Intake is done" {
 		t.Errorf("the detail of follow-up %q", d)
+	}
+	if d := rowOf(rows, "follow-up-answers").Detail; d != "no follow-up; Intake is done" {
+		t.Errorf("the detail of follow-up-answers %q (row 47c)", d)
 	}
 	if d := rowOf(rows, "answers").Detail; d != fmt.Sprintf("%d answers, in intake/answers.tsv; budget.tsv written", len(questions)) {
 		t.Errorf("the detail of answers %q", d)
@@ -1161,7 +1165,7 @@ func TestTheReviewOfTheAnswersAndTheFollowUp(t *testing.T) {
 	os.WriteFile(filepath.Join(w.dir, "bin", "answers-review.tsv"), []byte(review.String()), 0o644)
 	addComment(w, 1, 802, 303, "carol", asked.Add(time.Minute).UTC().Format(time.RFC3339), body.String())
 	rows := Restart(context.Background(), w.config("0.1.0-dev"))
-	allDone(t, "the restart with the answers", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers", "answers-review", "follow-up")
+	allDone(t, "the restart with the answers", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers", "answers-review", "follow-up", "follow-up-answers")
 	if d := rowOf(rows, "follow-up").Detail; d != "4 questions asked again, in questions.tsv and the comment of the follow-up" {
 		t.Errorf("the detail of follow-up %q", d)
 	}
@@ -1192,7 +1196,149 @@ func TestTheReviewOfTheAnswersAndTheFollowUp(t *testing.T) {
 			t.Errorf("the third restart's row %+v; want %s done before", s, name)
 		}
 	}
+	if s := rowOf(third, "follow-up-answers"); s.Detail != "waiting: no answer yet to the follow-up in the block idea-owner" {
+		t.Errorf("the third restart's row %+v; want follow-up-answers waiting (row 47c)", s)
+	}
 	if len(intakeComments(w)) != 2 {
 		t.Errorf("the third restart posted a comment: %d", len(intakeComments(w)))
+	}
+}
+
+// intakeToFollowUp runs a world to the follow-up: the idea owner answers each
+// question of the batch, the intent form with b, u and h, and the review
+// leaves open the fields of the intent form named in open. It gives the world,
+// the rows of questions.tsv after the follow-up, and the restart's rows.
+func intakeToFollowUp(t *testing.T, b, u, h string, open ...string) (*world, [][]string, []Step) {
+	t.Helper()
+	w := newWorld(t)
+	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
+	Restart(context.Background(), w.config("0.1.0-dev"))
+	questions, err := records.ReadQuestions([]byte(show(t, w.bare, "refs/heads/layup-records", "questions.tsv")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	asked, _ := time.Parse(time.RFC3339, questions[0][9])
+	var body, review strings.Builder
+	review.WriteString("question\tstate\treason\n")
+	for _, q := range questions {
+		answer, state := "the answer to "+q[0], "closed"
+		switch q[2] {
+		case "band.B":
+			answer = b
+		case "band.U":
+			answer = u
+		case "appetite.hours":
+			answer = h
+		}
+		if slices.Contains(open, q[2]) {
+			state = "open"
+		}
+		fmt.Fprintf(&body, "%s: %s\n", q[0], answer)
+		fmt.Fprintf(&review, "%s\t%s\tthe review's reason\n", q[0], state)
+	}
+	os.WriteFile(filepath.Join(w.dir, "bin", "answers-review.tsv"), []byte(review.String()), 0o644)
+	addComment(w, 1, 802, 303, "carol", asked.Add(time.Minute).UTC().Format(time.RFC3339), body.String())
+	rows := Restart(context.Background(), w.config("0.1.0-dev"))
+	after, err := records.ReadQuestions([]byte(show(t, w.bare, "refs/heads/layup-records", "questions.tsv")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return w, after, rows
+}
+
+// The demo of row 47c (task T-tmm2, #225): budget.tsv is written at answers,
+// the review leaves the hours open, the follow-up asks them again; the step
+// follow-up-answers waits, then records the idea owner's answer, which
+// replaces the hours in budget.tsv with the follow-up as its source, and
+// Intake ends; a third restart finds the record.
+func TestTheAnswersToTheFollowUpReplaceAValueOfTheBudget(t *testing.T) {
+	w, questions, rows := intakeToFollowUp(t, "5.0", "10.0", "40.0", "appetite.hours")
+	if d := rowOf(rows, "follow-up-answers").Detail; d != "waiting: no answer yet to the follow-up in the block idea-owner" {
+		t.Fatalf("the detail of follow-up-answers %q; want waiting", d)
+	}
+	follow := questions[len(questions)-1]
+	if follow[1] != "follow-up" {
+		t.Fatalf("the last question %q is no follow-up", follow)
+	}
+	asked, _ := time.Parse(time.RFC3339, follow[9])
+	addComment(w, 1, 803, 303, "carol", asked.Add(time.Minute).UTC().Format(time.RFC3339), follow[0]+": 50.0\n")
+	rows = Restart(context.Background(), w.config("0.1.0-dev"))
+	if d := rowOf(rows, "follow-up-answers").Detail; d != "1 answers to the follow-up, in intake/answers.tsv; budget.tsv replaced; Intake is done" {
+		t.Errorf("the detail of follow-up-answers %q", d)
+	}
+	if got := show(t, w.bare, "refs/heads/layup-records", "budget.tsv"); !strings.Contains(got, "\nappetite.hours\t50.0\t"+follow[0]+"\n") || !strings.Contains(got, "\nband.B\t5.0\t") {
+		t.Errorf("budget.tsv:\n%s", got)
+	}
+	if got := show(t, w.bare, "refs/heads/layup-records", "intake/answers.tsv"); !strings.Contains(got, "\n"+follow[0]+"\t50.0\t803\t303\t") {
+		t.Errorf("intake/answers.tsv:\n%s", got)
+	}
+	after, _ := records.ReadQuestions([]byte(show(t, w.bare, "refs/heads/layup-records", "questions.tsv")))
+	for _, q := range after {
+		switch {
+		case q[0] == follow[0] && q[12] != "answered":
+			t.Errorf("the follow-up %q: want answered", q)
+		case q[0] == follow[2] && q[12] != "open":
+			t.Errorf("the question asked again %q: want its own state, open", q)
+		}
+	}
+	if strings.Contains(show(t, w.bare, "refs/heads/layup-records", "copies.tsv"), "\tlayup-agent\t") {
+		t.Error("copies.tsv holds a comment of the App")
+	}
+	third := Restart(context.Background(), w.config("0.1.0-dev"))
+	if s := rowOf(third, "follow-up-answers"); s.Result != "done" || s.Detail != "done before" {
+		t.Errorf("the third restart's row %+v; want follow-up-answers done before", s)
+	}
+}
+
+// With the batch's B not below U, budget.tsv is first written from the
+// answers to the follow-up, each value with the question that gives it.
+func TestTheAnswersToTheFollowUpWriteTheBudget(t *testing.T) {
+	w, questions, _ := intakeToFollowUp(t, "10.0", "9.5", "40.0")
+	var follow [][]string
+	for _, q := range questions {
+		if q[1] == "follow-up" {
+			follow = append(follow, q)
+		}
+	}
+	if len(follow) != 2 {
+		t.Fatalf("the follow-up rows %q; want B and U asked again", follow)
+	}
+	asked, _ := time.Parse(time.RFC3339, follow[0][9])
+	addComment(w, 1, 803, 303, "carol", asked.Add(time.Minute).UTC().Format(time.RFC3339), follow[0][0]+": 5.0\n"+follow[1][0]+": 10.0\n")
+	rows := Restart(context.Background(), w.config("0.1.0-dev"))
+	if d := rowOf(rows, "follow-up-answers").Detail; d != "2 answers to the follow-up, in intake/answers.tsv; budget.tsv written; Intake is done" {
+		t.Errorf("the detail of follow-up-answers %q", d)
+	}
+	got := show(t, w.bare, "refs/heads/layup-records", "budget.tsv")
+	if !strings.Contains(got, "\nband.B\t5.0\t"+follow[0][0]+"\n") || !strings.Contains(got, "\nband.U\t10.0\t"+follow[1][0]+"\n") || !strings.Contains(got, "\nappetite.hours\t40.0\t") {
+		t.Errorf("budget.tsv:\n%s", got)
+	}
+}
+
+// Input states: an answer to the follow-up that still does not parse leaves
+// budget.tsv unwritten and its question of the intent form open; Intake is
+// done.
+func TestAnUnparsedAnswerToTheFollowUpLeavesItsQuestionOpen(t *testing.T) {
+	w, questions, _ := intakeToFollowUp(t, "10.0", "9.5", "40.0")
+	var follow [][]string
+	for _, q := range questions {
+		if q[1] == "follow-up" {
+			follow = append(follow, q)
+		}
+	}
+	asked, _ := time.Parse(time.RFC3339, follow[0][9])
+	addComment(w, 1, 803, 303, "carol", asked.Add(time.Minute).UTC().Format(time.RFC3339), follow[0][0]+": five\n"+follow[1][0]+": 10.0\n")
+	rows := Restart(context.Background(), w.config("0.1.0-dev"))
+	if d := rowOf(rows, "follow-up-answers").Detail; d != "2 answers to the follow-up, in intake/answers.tsv; budget.tsv not written; Intake is done" {
+		t.Errorf("the detail of follow-up-answers %q", d)
+	}
+	if strings.Contains(gitOut(t, w.bare, "ls-tree", "-r", "--name-only", "refs/heads/layup-records"), "budget.tsv") {
+		t.Error("budget.tsv is written")
+	}
+	after, _ := records.ReadQuestions([]byte(show(t, w.bare, "refs/heads/layup-records", "questions.tsv")))
+	for _, q := range after {
+		if q[0] == follow[0][2] && q[12] != "open" {
+			t.Errorf("the question of B %q: want open", q)
+		}
 	}
 }

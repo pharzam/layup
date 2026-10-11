@@ -415,6 +415,19 @@ form again (the review left it `open`), a parsed answer replaces that value in
 `budget.tsv`, its one home, with the follow-up as its `source` (**decided here**,
 note 6 of #210). No review runs on the answers to the follow-up, and
 Intake is done.
+**Decided here** (task `T-tmm2`): the step `follow-up-answers` with no
+follow-up row (nothing was asked again) is `done` with "no follow-up; Intake is
+done" and writes nothing; it is "done before" when an answer to a follow-up is
+in `intake/answers.tsv`; else it copies the comments of the Intake issue (but
+the App's own) and reads the answers to the follow-up by the rule of the step
+`answers`, from first copies after the follow-up's `asked`. With `budget.tsv`
+not yet written, a `B` not below `U` after the follow-up leaves both questions
+`open`, whatever the state of the hours. With `budget.tsv` written, a replacement holds only when the three values
+still parse with `B` below `U`; else `budget.tsv` stays as it was, and the
+questions of the fields asked again are `open`, as is a field whose answer to
+the follow-up does not parse. The answers, their states, the questions set
+`open` and `budget.tsv` are one records commit, and the step's detail says that
+Intake is done.
 **Decided here:** one follow-up round in `M2c`; a question still `asked` or
 `open` after it stays so in `questions.tsv`, and Shape (`M2e`) reads it.
 **Reason:** `architecture.md` §5 step 6 asks again "in one comment", and a loop
