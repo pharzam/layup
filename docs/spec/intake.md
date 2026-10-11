@@ -144,6 +144,12 @@ so does a quote that holds a tab. **Reason:** a TSV field holds no line break,
 and a quote that occurs twice names no one place. A gap whose text spans lines
 quotes the part of one line that names it best. The committed rows are
 `records:intake/meaning.tsv`, each with an ID `M-NNN` in the order of the rows.
+**Decided here** (task `T-1u2v`): the form of the session's file is one Go
+value derived from the block `meaning` by dropping the columns that code adds,
+with no block of its own; its header is the remaining columns in the block's
+order (`kind`, `quote`, `question`), and a key column that is kept stays a key.
+A `fail` of the step leaves the lease `held`, by the known limit under
+[`run.md`](run.md#input-states), Input states.
 
 ## REQ-012 — The facts and the draft at Intake
 
