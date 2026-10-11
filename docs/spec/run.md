@@ -12,8 +12,9 @@ The forge: [`forge.md`](forge.md). Task `T-zck8` (#123) wrote it.
 
 **Decided by the Operator** (O-163, #123): `M2a` specifies an empty repository
 only (`--new`). A target that phase 1 set up, whose records branch already holds
-the Operator's commit (K41), is adopted in milestone `M2d`, where `layup run`
-drives the Scaffold.
+the Operator's commit (K41), was given to milestone `M2d`, where `layup run`
+drives the Scaffold; the Operator decided there that none is adopted (O-200,
+[`scaffold.md`](scaffold.md#the-adoption-of-a-phase-1-target)).
 
 ## The command
 
@@ -173,7 +174,8 @@ Start ends after step 9; the Intake of `M2c` runs in the restart, after
 The text of `README.md` of `layup-records` that step 6 writes (**decided here**:
 the text of [`setup.md`](setup.md#the-readme-of-the-records-branch) names the
 files of the setup, which a target that Start makes has only after the Scaffold;
-the Scaffold of `M2d` replaces this text with that one when it adds them):
+the Scaffold of `M2d` replaces this text with [its own](scaffold.md#the-readme-of-the-scaffold),
+which names the files of both, when it adds them):
 
 ```text start-readme
 # The records of this repository
@@ -356,8 +358,8 @@ with the same title.
 
 ### Not in M2a
 
-The adoption of a phase-1 target (`M2d`, O-163); the Scaffold, the rulesets, the
-probes and the forge read-back of the rules (`M2d`); the gap check and the
+The adoption of a phase-1 target (none: O-200, `M2d`); the Scaffold, the rulesets, the
+probes and the forge read-back of the rules (`M2d`, [`scaffold.md`](scaffold.md)); the gap check and the
 answers (`M2c`); role sessions, the harness probe, admission and the harness
 credential (`M2b`, K40: [`session.md`](session.md)); the commit status `layup/gates` (`M2e`); the dead-man
 job itself (`M3d`; `M2a` only reads its notice).
@@ -368,7 +370,7 @@ The baseline commit that step 3 resolves is the target's own pin (O-101): its
 source, commit, tree and time go into the first records commit (`pin.*` of
 `start.tsv`). Once that commit exists, no run resolves the commit again; the
 Scaffold (`M2d`, step S04) writes `docs/setup/armature.pin` of the target from
-that record. LAYUP's own pin does not bind a target. A run that stops before
+that record ([`scaffold.md`](scaffold.md#nfr-006--the-pin-at-the-scaffold)). LAYUP's own pin does not bind a target. A run that stops before
 step 6 leaves no pin, and the Operator starts again with an empty repository.
 
 ## NFR-002 — The records with no tool
@@ -402,5 +404,5 @@ resolved pin and the root commit come from the same calls as S02 and S03 of
 
 The plan hosts nine findings here ([`docs/plan/README.md`](../plan/README.md#the-findings-of-the-first-pilot-that-are-not-fixed)).
 `M2a` changes none of them: F-2, F-6, F-13, F-16, F-19, F-31 and F-35 are in
-`M2d`, F-21 in `M2c`, and F-37 in `M2e` and `M2g`, each with its reason in the
+`M2d` ([`scaffold.md`](scaffold.md#the-findings-of-the-first-pilot)), F-21 in `M2c`, and F-37 in `M2e` and `M2g`, each with its reason in the
 plan.

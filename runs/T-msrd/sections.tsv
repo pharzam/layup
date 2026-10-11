@@ -1,0 +1,32 @@
+part	file	heading
+the setup questions of S01 and S10 in the one batch (deferred by decision 9 of #206; decision 5; F-21)	docs/spec/scaffold.md	## REQ-002 — The setup questions in the one batch
+the proposed marker sources with their byte-exact quote and the code check (decision 5)	docs/spec/scaffold.md	### The step markers
+the answers of the setup written from the copied Intake answers (later-p2-scaffold; decision 5)	docs/spec/scaffold.md	### The answers of the setup
+layup run runs the phase-1 step runner (later-p2-scaffold; decisions 3 and 4)	docs/spec/scaffold.md	## REQ-002 — The setup under `layup run`
+the phase-2 changes of S01 to S04 and S15 (later-p2-scaffold; decision 3)	docs/spec/scaffold.md	### The steps of the setup in phase 2
+the work area rebuilt from the records (decision 4; NFR-001 item 4)	docs/spec/scaffold.md	### The work area
+exit code 3 read as a wait, answered from the records (later-p2-scaffold; decision 4)	docs/spec/scaffold.md	### The stops of the runner
+the prose rows S07, S08, S09, S14 by a role session (Scaffold 2; decision 6)	docs/spec/scaffold.md	### The prose rows
+layup run commits setup/record.tsv, setup/verify.tsv and rule-paths.tsv, and the record of the verified tree (later-p2-scaffold; decision 4)	docs/spec/scaffold.md	### The step verify and the records of the setup
+the rulesets of both branches, applied at Scaffold 6 (later-p2-scaffold; open question 2; decisions 2 and 7)	docs/spec/scaffold.md	## REQ-003 — The rulesets of Scaffold 6
+the ruleset of the default branch and layup-probe (F-19; decision 7)	docs/spec/scaffold.md	### The ruleset of the default branch
+the ruleset of the records branch (decision 2)	docs/spec/scaffold.md	### The ruleset of the records branch
+the printed push and apply commands, fail-fast, and the recorded apply output (F-13; decision 7)	docs/spec/scaffold.md	### The commands for the Operator
+Scaffold 7: the tree, the read-back, the probe, the activity read (later-p2-scaffold; decision 8)	docs/spec/scaffold.md	## REQ-003 — Scaffold 7, the forge check
+the tree check (decision 8)	docs/spec/scaffold.md	### The tree check
+the read-back of the effective rules (decision 8; EffectiveRules of forge.md)	docs/spec/scaffold.md	### The read-back
+the probe refused with GH013 (decision 8)	docs/spec/scaffold.md	### The probe
+the activity read (decision 8)	docs/spec/scaffold.md	### The activity read
+the read-back and the probe at each later start (later-p2-scaffold; decision 8)	docs/spec/scaffold.md	### At each later start
+the setup-record line for a target without LAYUP (later-p2-scaffold; decision 7)	docs/spec/scaffold.md	## NFR-002 — A target without LAYUP
+NFR-003 at the Scaffold (condition 1 of the plan review)	docs/spec/scaffold.md	## NFR-003 — No value without evidence at the Scaffold
+NFR-006: S04 from the record of Start (decision 3)	docs/spec/scaffold.md	## NFR-006 — The pin at the Scaffold
+the adoption of a phase-1 target (K41, O-163; open question 1; decision 1)	docs/spec/scaffold.md	## The adoption of a phase-1 target
+F-2, F-6, F-13, F-16, F-19, F-31, F-35 (decision 9)	docs/spec/scaffold.md	## The findings of the first pilot
+the steps of the Scaffold in run-steps (decision 4)	docs/spec/scaffold.md	## The steps of the Scaffold
+the input states (note 9 of the plan review)	docs/spec/scaffold.md	## Input states
+the review of the release of M2d (decision 10)	docs/spec/scaffold.md	## REQ-015 and REQ-017 — The review of the release of M2d
+what M2d leaves to later milestones	docs/spec/scaffold.md	## Not in M2d
+the acceptance tests, with the six rows of the inventory (condition 3 of the plan review)	docs/spec/scaffold.md	## The acceptance tests of M2d
+the records of the Scaffold: markers, setup-tree, forge-check (D2)	docs/spec/records.md	## NFR-001 — The records of the Scaffold
+the package rows of M2d (D3)	docs/spec/packages.md	### The table of M2d

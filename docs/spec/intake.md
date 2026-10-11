@@ -316,7 +316,8 @@ decisions 6, 9 and 10 of #206):
    delivery's wall-clock appetite in hours, a decimal.
 2. **For the Operator:** the setup questions. In `M2c` the block is empty and
    says so; the Scaffold (`M2d`) fills it with the questions of setup steps S01
-   and S10 and the proposed marker sources, in the same merge.
+   and S10 and the proposed marker sources, in the same merge
+   ([`scaffold.md`](scaffold.md#the-answers-of-the-setup)).
 
 The comment ends with the rule of the answers: one comment per block, one line
 per question ID, `Q-NNN: <answer>`.
@@ -439,7 +440,8 @@ The answers are a raw fact of the target, one fact per question ID
 (`architecture.md` §7 step 5). In `M2c` the fact is `records:intake/answers.tsv`
 with the copied comments that hold it (`copies/`), byte for byte; the file of
 the fact under the target's `docs/facts/` is written by the Scaffold (`M2d`,
-`architecture.md` §7 step 8), as `docs/facts/` is a rule path that no role
+`architecture.md` §7 step 8; S04 in phase 2,
+[`scaffold.md`](scaffold.md#the-steps-of-the-setup-in-phase-2)), as `docs/facts/` is a rule path that no role
 session may edit. **Decided here** (decision 6 of #206). Each question keeps its
 quote, so a requirement that later covers an answer's fact can name the quote's
 fact (`M2e`).
@@ -468,7 +470,9 @@ the records. The block `run-steps` is built, so each build task that adds a step
 adds its name to the enum, with its Go schema, and the step to the restart's
 order, in one change, as `M2b` did for `probe` ([`run.md`](run.md#the-command));
 the first, `rule-gaps`, replaces the row `phase` (the tasks of `M2c`,
-[`plan/README.md`](../plan/README.md#the-tasks-of-m2c); task `T-2r8u`).
+[`plan/README.md`](../plan/README.md#the-tasks-of-m2c); task `T-2r8u`). `M2d` adds the step `markers` between `completeness`
+and `batch`, and the steps of the Scaffold after `follow-up-answers`
+([`scaffold.md`](scaffold.md#the-steps-of-the-scaffold)).
 
 ## NFR-003 — No value without evidence at Intake
 
@@ -514,7 +518,9 @@ release, the code of `M2b` and `M2a` included.
 ## Not in M2c
 
 The setup questions of steps S01 and S10, the proposed marker sources with their
-quotes and their check (`M2d`, decision 9 of #206); the file of the raw fact
+quotes and their check (`M2d`, decision 9 of #206;
+[`scaffold.md`](scaffold.md#req-002--the-setup-questions-in-the-one-batch)), with
+the step `markers` between `completeness` and `batch`; the file of the raw fact
 under `docs/facts/` (`M2d`); the success criteria in the intent form, the
 approver of each approval point and the role `approver` (`M2e`, decision 10);
 the revision of the draft with the answers, the check that a requirement that
