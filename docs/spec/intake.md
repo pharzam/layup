@@ -54,8 +54,9 @@ no event, a **session of a phase**:
   directory (`prompt.md` its last file), and before the start row (one
   reading, task `T-gmey`): the files that
   its step reads, byte for byte from the records (`problem-statement.md` from
-  `records:start/problem-statement.md` for each step; `spans.tsv` and
-  `draft.tsv` for the completeness review; `questions.tsv` and `answers.tsv` for
+  `records:start/problem-statement.md` for each step; `spans.tsv` for the
+  draft, **decided here** (task `T-2et0`), as its rows name fact numbers;
+  `spans.tsv` and `draft.tsv` for the completeness review; `questions.tsv` and `answers.tsv` for
   the review of the answers); **decided here**, as `repo/` is the target's
   default branch, which holds none of them;
 - its prompt is fixed text built by code, with the absolute paths of its input
@@ -241,9 +242,12 @@ is, with no records commit, as a records commit changes a file.
 A session of the role `product-owner` (routing puts the numbering and the draft
 on one harness: the first admitted pair of that role) writes `result/draft.tsv`:
 one or more requirements for each `need` fact and one non-functional requirement
-for each `constraint` fact, each with an ID, a statement, `covers` (the fact
-numbers) and an acceptance criterion; one success criterion for each `measure`
-fact; no priority. **The check** (code, **decided here**: the draft's coverage
+for each `constraint` fact, each with a statement, `covers` (the fact numbers)
+and an acceptance criterion; one success criterion for each `measure` fact; no
+priority. **Decided here** (task `T-2et0`): the session's file is the block
+`draft` without `id` and `session`, which code adds (`R-NNN` in the order of the
+rows), so its header is `kind`, `statement`, `covers`, `criterion`; a row whose
+`covers` is empty names no fact. **The check** (code, **decided here**: the draft's coverage
 of the classes that §7 step 3 gives, checked byte for byte before a session reads
 it): each `covers` number is a fact of
 `spec/spans.tsv`, each `need` and `constraint` fact is covered at least once,
@@ -429,7 +433,7 @@ release, the code of `M2b` and `M2a` included.
 | A refused start of a session of Intake (`session.md`, The start of a session) | the step is `fail`, naming the session and the refusal; no record (**decided here**, task `T-gmey`: no event holds it, and the row of a refused probe is the probe's own) |
 | A quote that occurs nowhere, more than once, or holds a tab | the file of the review is refused (as above) |
 | A span table that fails the span check | `spans` is `fail`; `spec/check.tsv` is committed; no batch; a restart runs `numbering` again |
-| A draft row whose `covers` names no fact, or a `need` or `constraint` fact with no requirement | the draft is refused |
+| A draft row whose `covers` names no fact, a `need` or `constraint` fact with no requirement, or a `measure` fact with no success criterion | the draft is refused |
 | The cap of milestone 0 reached | the step is `fail` ("the cap of milestone 0"); no session starts |
 | A known row of `telemetry.tsv` (`reported` or `computed`) whose `currency` is not `USD` | the step is `fail` ("the cap of milestone 0"), the detail naming the row's session and its currency, as the sum cannot be compared with `MONEY`; no session starts (**decided here**, task `T-ybd5`) |
 | A comment with answer lines by an account that is not an approver, or in the other block's role | recorded as input; it answers nothing |
@@ -461,7 +465,7 @@ Question Share (`M4b`).
 | The review of meaning | unit | The quote check refuses a quote that occurs nowhere, twice, or holds a tab, and gives the offsets of one that occurs once. |
 | The span check | unit | It fails when a non-blank byte is in no span or two, a span is out of bounds or out of order, a span's text differs from the file, a fact number repeats or skips, or a class is not one of the four; it passes on a span table that covers the file. |
 | The command `layup spec check --facts` | e2e | The binary prints the table and exits 0, 1 or 2 as above. |
-| The draft | unit | The draft is refused when `covers` names no fact or a `need` or `constraint` fact is not covered, and kept otherwise. |
+| The draft | unit | The draft is refused when `covers` names no fact, a `need` or `constraint` fact is not covered, or a `measure` fact has no success criterion, and kept otherwise. |
 | The completeness review | integration | With two admitted harnesses, the review runs on the first admitted pair of `qa-engineer` whose harness is not that of the numbering and the draft, even when the role's first pair is on that harness; with none, the step is `fail` and no batch is posted. |
 | The merge and the IDs | unit | A question whose quote and kind repeat is dropped; each kept question gets one ID, in the order of the merge. |
 | The comment and the answers | integration | With the httptest forge: one comment with two blocks; the step waits until each block that asks has a comment by its approver; answers by an approver in its role are kept, others recorded as input; a later line of an ID corrects an earlier one; a missing, unparsed or `open` answer goes to the follow-up; the answers and `budget.tsv` are committed. |

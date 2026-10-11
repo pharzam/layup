@@ -776,8 +776,10 @@ func TestAFailedSpanCheckRunsNumberingAgain(t *testing.T) {
 	if got := show(t, w.bare, "refs/heads/layup-records", "spec/check.tsv"); strings.Contains(got, "fail") {
 		t.Errorf("spec/check.tsv after the rerun:\n%s", got)
 	}
-	if n := strings.Count(show(t, w.bare, "refs/heads/layup-records", "sessions.tsv"), "\tproduct-owner\t"); n != 3 {
-		t.Errorf("%d sessions of product-owner; want 3, each rerun's a new one", n)
+	// Three sessions of the numbering, each rerun's a new one, and the
+	// draft's after the check passed (row 45a).
+	if n := strings.Count(show(t, w.bare, "refs/heads/layup-records", "sessions.tsv"), "\tproduct-owner\t"); n != 4 {
+		t.Errorf("%d sessions of product-owner; want 4: three of the numbering and the draft's", n)
 	}
 }
 
