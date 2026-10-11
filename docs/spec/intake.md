@@ -295,7 +295,13 @@ question whose quote and kind repeat those of a question before it is dropped
 from the batch, and its source row stays in its own record (**decided here**:
 the quote's offsets and the kind are compared; a rule gap's quote is its line,
 trimmed of its line break). Each kept question gets an ID `Q-NNN` from `Q-001`, in the order of the
-merge; a question of the batch is never renumbered.
+merge; a question of the batch is never renumbered. **Decided here** (task
+`T-8r3u`): a question with no quote is never dropped, as the three fields of the
+intent form share the kind `intent` and have none; a rule gap's line is trimmed
+of a CR before its line feed too. In `M2c` a repeat of quote and kind is within
+one source, as the kinds of the sources differ. **Known limit:** two rule gaps
+of one line and one rule (two undefined abbreviations of one line, G3) have one
+quote and one kind, so the second is dropped and its abbreviation is not asked.
 
 ### The comment of the batch
 
@@ -314,6 +320,19 @@ decisions 6, 9 and 10 of #206):
 
 The comment ends with the rule of the answers: one comment per block, one line
 per question ID, `Q-NNN: <answer>`.
+
+**Decided here** (task `T-8r3u`): the comment's first line is `LAYUP Intake:
+the batch of questions`, by which a restart knows the batch was posted; a quote
+is written in a run of backquotes one longer than its longest run of
+backquotes, with a space inside when it begins or ends with one; the intent
+questions are fixed text. The step `batch` reads the time of `asked` from the
+run's clock, writes `questions.tsv` in one records commit, then posts the
+comment on the Intake issue (fencing). A restart that finds `questions.tsv` and
+the App's comment of the batch is "done before"; one that finds the record and
+no such comment (a run that stopped between the commit and the post) posts the
+comment from the record, with no second commit. The step `answers` (row 47a)
+compares "a comment after the batch" with that time of `asked`, which comes a
+little before the post.
 
 ### The answers
 

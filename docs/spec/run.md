@@ -287,6 +287,11 @@ its body file, and pushes them. A comment that a later read finds with another
 SHA-256 of its body is an edit: a new row with the next `seen`, and the first
 copy stays. A comment whose SHA-256 is the same as its last copy gets no new
 row. In `M2a`, the comments of the control issue at step 8 are copied.
+**Decided here** (task `T-8r3u`): the App's own comment is read with no copy,
+as it is no human input and no decision rests on it; the step `batch` of
+Intake reads the Intake issue only to know whether its own comment of the batch
+is there ([`intake.md`](intake.md#the-comment-of-the-batch)). A comment of anyone
+else is copied first, as above.
 
 ### The Intake and control issues
 
