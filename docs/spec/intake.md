@@ -355,6 +355,21 @@ form parses when its answer is a `decimal`, and `B` and `U` parse only when `B`
 is below `U` (so a `B` not below `U` is an unparsed answer of both). When the
 three parse, code writes `records:budget.tsv`.
 
+**Decided here** (task `T-hxb9`): the step `answers` copies each comment of the
+Intake issue but the App's own ([`run.md`](run.md#copy-before-read)). An answer
+comes from a human decision only ([`run.md`](run.md#a-human-decision)): a first
+copy (`seen` 1, so an edit answers nothing and stays as input), made by no App,
+by an approver in the role of the question's block, whose `created` is strictly
+after the batch's `asked`. An answer line is read after a CR at its end is
+trimmed: it starts with `Q-` and the question's number, then `: ` exactly, and
+the rest is the answer, its trailing spaces kept (and a tab written as a space
+by the field rule of the record); an empty answer, and one of exactly `—` (which
+reads back as the empty value), answer nothing. The rows of
+`intake/answers.tsv` are in the order of the questions. A field of the intent
+form is parsed after the spaces around its answer are trimmed, and `B` is
+compared with `U` as numbers. A block that waits makes the step `done` with
+"waiting" in its detail, the last row of the restart.
+
 ### The review of the answers and the follow-up
 
 When the answers are in hand, a session of the role `systems-architect` reads

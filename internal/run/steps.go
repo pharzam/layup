@@ -27,7 +27,7 @@ import (
 // RunStepsSchema is the form of the table that layup run prints: the block
 // run-steps of docs/spec/run.md (The command).
 var RunStepsSchema = tsv.Schema{Name: "run-steps", Location: "stdout", Columns: []tsv.Column{
-	{Name: "step", Type: "enum(forge|plan|baseline|root-push|read-back|records|issues|watch|clone|version|lease|probe|phase|rule-gaps|meaning|numbering|spans|draft|completeness|batch)", Key: true},
+	{Name: "step", Type: "enum(forge|plan|baseline|root-push|read-back|records|issues|watch|clone|version|lease|probe|phase|rule-gaps|meaning|numbering|spans|draft|completeness|batch|answers)", Key: true},
 	{Name: "result", Type: "enum(done|fail)"},
 	{Name: "detail", Type: "text"},
 }}
@@ -129,7 +129,7 @@ func Restart(ctx context.Context, cfg Config) []Step {
 	startDone := r.startDone()
 	tail := []func(context.Context) Step{r.versionStep, r.takeStep, r.probeStep, r.phaseStep}
 	if startDone {
-		tail = []func(context.Context) Step{r.versionStep, r.takeStep, r.probeStep, r.ruleGapsStep, r.meaningStep, r.numberingStep, r.spansStep, r.draftStep, r.completenessStep, r.batchStep}
+		tail = []func(context.Context) Step{r.versionStep, r.takeStep, r.probeStep, r.ruleGapsStep, r.meaningStep, r.numberingStep, r.spansStep, r.draftStep, r.completenessStep, r.batchStep, r.answersStep}
 	}
 	rows = append(rows, r.steps(ctx, restartNames(startDone), len(rows), tail)...)
 	if end := &rows[len(rows)-1]; startDone && end.Result == "done" {
@@ -172,7 +172,10 @@ func (r *state) steps(ctx context.Context, names []string, from int, steps []fun
 		}
 		s.Detail = r.clean(s.Detail)
 		rows = append(rows, s)
-		if s.Result == "fail" {
+		// A step that waits for a human is the last row of the run, which
+		// then releases the lease and exits 0 (intake.md, The steps of
+		// Intake; decided here, task T-hxb9).
+		if s.Result == "fail" || (s.Result == "done" && strings.HasPrefix(s.Detail, "waiting")) {
 			break
 		}
 	}
@@ -191,7 +194,7 @@ func (r *state) lost() error {
 // task T-qk66, adds the first, rule-gaps).
 func restartNames(startDone bool) []string {
 	if startDone {
-		return []string{"forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch"}
+		return []string{"forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers"}
 	}
 	return []string{"forge", "clone", "version", "lease", "probe", "phase"}
 }

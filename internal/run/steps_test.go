@@ -173,3 +173,19 @@ func TestRunStepsIsATableOfItsBlock(t *testing.T) {
 		t.Error("forge.Error")
 	}
 }
+
+// A step done with a detail that starts with "waiting" is the last row that
+// the run runs, as a fail is (intake.md, The steps of Intake; task T-hxb9).
+func TestAWaitingStepIsTheLastRow(t *testing.T) {
+	r := &state{}
+	ran := 0
+	step := func(name, detail string) func(context.Context) Step {
+		return func(context.Context) Step { ran++; return done(name, detail) }
+	}
+	rows := r.steps(context.Background(), []string{"a", "b", "c"}, 0, []func(context.Context) Step{
+		step("a", "the first"), step("b", "waiting: no answer yet"), step("c", "never run"),
+	})
+	if len(rows) != 2 || ran != 2 || rows[1].Detail != "waiting: no answer yet" {
+		t.Errorf("the rows %+v, %d steps ran; want the waiting step last", rows, ran)
+	}
+}

@@ -70,7 +70,7 @@ can leave up to twenty seconds with no line. Reason: a Start ends; the phase
 loop of later milestones adds its own rows, so the one-table rule holds.
 
 ```tsv-schema run-steps stdout
-step enum(forge|plan|baseline|root-push|read-back|records|issues|watch|clone|version|lease|probe|phase|rule-gaps|meaning|numbering|spans|draft|completeness|batch) key the step, in the order of the two lists below
+step enum(forge|plan|baseline|root-push|read-back|records|issues|watch|clone|version|lease|probe|phase|rule-gaps|meaning|numbering|spans|draft|completeness|batch|answers) key the step, in the order of the two lists below
 result enum(done|fail) - `done`, or `fail` with its reason in `detail`
 detail text - one line: what the step found, with no time, no path of the host and no SHA of a records commit (a records commit holds its time, so its SHA differs on a repeat)
 ```
@@ -227,7 +227,10 @@ so a person reads it with no tool. A plain `git clone` carries the branch as
    and `watch` is written), the steps of Intake take the place of `phase`, the
    first `rule-gaps` (task `T-qk66`), and the run releases the lease after its
    last row; a release that fails makes that row `fail`, its `detail` naming the
-   lease. **Decided here** (task `T-qk66`): the rows after `clone` come from the
+   lease. **Decided here** (task `T-hxb9`): a step `done` with a detail that
+   starts with "waiting" (a step of Intake that waits for a human) is the last
+   row that the restart runs, as a `fail` is, and the run then releases the
+   lease and exits 0. **Decided here** (task `T-qk66`): the rows after `clone` come from the
    records that `clone` read, and the progress of `forge` and `clone` counts the
    rows of a restart with Start not done; `M2b`'s step `probe` comes
    before it. **Decided here:** `phase` is one
