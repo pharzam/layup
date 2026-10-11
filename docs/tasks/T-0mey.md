@@ -49,3 +49,38 @@ another harness", for every case of the step with no pair, written in
 - **A draft of no row** (note 2 of round 1): with no `need`, `constraint` or
   `measure` fact, the draft is committed with no row, so the draft names no
   session and the step `completeness` fails on each restart; the state is #251's.
+
+## Review rounds
+
+The records are comments on #221. Round 1 (Claude Fable 5.1, effort `xhigh`, a
+fresh read-only session in a clone at `c63e7a8`, cycle 0): `material`, one
+finding: rows 1 and 2 of Input states both claimed the state "no admitted pair
+of `qa-engineer` at all", with two details. The fix `59e90b4` (cycle 1) made row
+1 name its steps, and added the empty list of `qa-engineer` to the test (note
+3); note 2, a draft of no row, is #251. Round 2 (the same reviewer and effort,
+a fresh session at `59e90b4`, cycle 1, the cap): `nothing material in scope`,
+two notes, which are #252 with one of the author's: the time "09:50Z" of the
+fix's record was written a minute ahead of the clock.
+
+## Verdict
+
+Delivered: the step `completeness`, the review of the draft's coverage on a
+harness other than the draft's, with `intake/coverage.tsv`, and one detail when
+no pair is on another harness. The review ended by decay at cycle 1 of cap 1.
+The diff against `1b36954`, the branch's base, is inside 1,000 lines over 24
+files. CI runs the three levels on the landing head. Next: row 46.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). UTC; reviewers' tokens are `modelUsage`;
+the author's are not reported.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan | reasoning | Claude Opus 5.5 | not reported | not reported | 2026-10-11 09:16 to 09:17 (the claim to the post) |
+| The plan review | reasoning | Claude Fable 5.1 | `xhigh` | 1,409,855 (USD 5.82) | 6 min 56 s |
+| The code, test first | execution | Claude Opus 5.5 | not reported | not reported | 09:24 to 09:37 |
+| Round 1 | reasoning | Claude Fable 5.1 | `xhigh` | 843,127 (USD 4.19) | 9 min 48 s |
+| The fix of round 1 | execution | Claude Opus 5.5 | not reported | not reported | 09:47 to 09:49 |
+| Round 2 | reasoning | Claude Fable 5.1 | `xhigh` | 1,372,317 (USD 4.28) | 6 min 26 s |
+| The close-out | execution | Claude Opus 5.5 | not reported | not reported | 09:56 to 09:56 |
