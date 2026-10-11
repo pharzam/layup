@@ -97,6 +97,7 @@ type fakeForge struct {
 	mu     sync.Mutex
 	issues int
 	posted []string // the bodies of the comments on the control issue
+	intake []string // the bodies of the comments on the Intake issue, the App's (row 46)
 }
 
 func (f *fakeForge) serve(w http.ResponseWriter, r *http.Request) {
@@ -136,6 +137,20 @@ func (f *fakeForge) serve(w http.ResponseWriter, r *http.Request) {
 		f.posted = append(f.posted, in.Body)
 		w.WriteHeader(201)
 		enc.Encode(map[string]any{"id": 600 + len(f.posted)})
+	case call == "POST /repos/acme/target/issues/1/comments":
+		var in struct{ Body string }
+		json.NewDecoder(r.Body).Decode(&in)
+		f.intake = append(f.intake, in.Body)
+		w.WriteHeader(201)
+		enc.Encode(map[string]any{"id": 800 + len(f.intake)})
+	case call == "GET /repos/acme/target/issues/1/comments":
+		list := []map[string]any{}
+		for i, body := range f.intake {
+			list = append(list, map[string]any{"id": 801 + i, "user": map[string]any{"id": 9001, "login": "layup-agent[bot]"},
+				"performed_via_github_app": map[string]any{"slug": "layup-agent"},
+				"created_at":               "2026-10-08T13:00:00Z", "updated_at": "2026-10-08T13:00:00Z", "body": body})
+		}
+		enc.Encode(list)
 	case call == "GET /repos/acme/target/issues/2/comments":
 		enc.Encode([]map[string]any{{"id": 501, "user": map[string]any{"id": 777, "login": "layup-watch[bot]"},
 			"performed_via_github_app": map[string]any{"slug": "layup-watch"},
@@ -315,8 +330,9 @@ func TestRunNewThenRestart(t *testing.T) {
 	again := w.run(t, binary, "run", "acme/target", "--host", ".")
 	if again.code != 0 || !strings.HasPrefix(again.stdout, "step\tresult\tdetail\nforge\tdone\t") || !strings.Contains(again.stdout, "\nrule-gaps\tdone\t") ||
 		!strings.Contains(again.stdout, "\nmeaning\tdone\t0 gaps of meaning, in intake/meaning.tsv\n") ||
-		!strings.HasSuffix(again.stdout, "\nnumbering\tdone\t1 spans, 1 facts, in spec/spans.tsv\nspans\tdone\tthe span check passed, in spec/check.tsv\n"+
-			"draft\tdone\t1 rows, in spec/draft.tsv\ncompleteness\tdone\t0 items, in intake/coverage.tsv\n") {
+		!strings.Contains(again.stdout, "\nnumbering\tdone\t1 spans, 1 facts, in spec/spans.tsv\nspans\tdone\tthe span check passed, in spec/check.tsv\n"+
+			"draft\tdone\t1 rows, in spec/draft.tsv\ncompleteness\tdone\t0 items, in intake/coverage.tsv\nbatch\tdone\t") ||
+		!strings.HasSuffix(again.stdout, " questions, in questions.tsv and the comment of the batch\n") || len(w.forge.intake) != 1 || !strings.HasPrefix(w.forge.intake[0], "LAYUP Intake: the batch of questions\n") {
 		t.Fatalf("layup run TARGET: exit %d\n%s\n%s", again.code, again.stdout, again.stderr)
 	}
 	// The demo of row 38: the restart's step probe probes the scripted
@@ -350,7 +366,8 @@ func TestRunNewThenRestart(t *testing.T) {
 	third := w.run(t, binary, "run", "acme/target", "--host", ".")
 	if third.code != 0 || !strings.Contains(third.stdout, "\nprobe\tdone\tprobed and passed 0, probed and failed 0, skipped 0\n") || len(w.forge.posted) != 6 ||
 		!strings.Contains(third.stdout, "\nrule-gaps\tdone\tdone before\n") || !strings.Contains(third.stdout, "\nmeaning\tdone\tdone before\n") ||
-		!strings.HasSuffix(third.stdout, "\nnumbering\tdone\tdone before\nspans\tdone\tdone before\ndraft\tdone\tdone before\ncompleteness\tdone\tdone before\n") {
+		!strings.HasSuffix(third.stdout, "\nnumbering\tdone\tdone before\nspans\tdone\tdone before\ndraft\tdone\tdone before\ncompleteness\tdone\tdone before\n"+
+			"batch\tdone\tdone before\n") || len(w.forge.intake) != 1 {
 		t.Errorf("layup run TARGET again: exit %d, %d comments\n%s", third.code, len(w.forge.posted), third.stdout)
 	}
 }
