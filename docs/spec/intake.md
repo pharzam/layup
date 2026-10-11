@@ -266,9 +266,18 @@ its pair is the first admitted pair of the role's list for the tier `reasoning`
 whose harness is not the harness of the numbering and the draft sessions, a
 rule of this step that the routing rule of
 [`session.md`](session.md#the-routing-register) does not have; with no such
-pair (one admitted harness, or a list with none other), the review does not
-run; the step is `fail` ("not run: no admitted pair on another harness") and no
-batch is posted. **Reason:** an independent
+pair (no admitted pair of the role at all, one admitted harness, or a list with
+none other: one detail for each, **decided here**, task `T-0mey`), the review
+does not run; the step is `fail` ("not run: no admitted pair on another
+harness") and no batch is posted. **Decided here** (task `T-0mey`): the harness
+passed over is the draft's session's (the `session` column of `spec/draft.tsv`,
+its row of `sessions.tsv`), as the records name the draft's session and the span
+table names none, and the routing rule of The draft puts the numbering on the
+same harness; the session's file is the block `coverage` without `id` and
+`session`, which code adds (`C-NNN` in the order of the rows), and each `fact` of
+it must be a fact of `spec/spans.tsv` and each `requirement` a row of
+`spec/draft.tsv`, else the file is refused, as each row becomes a question of
+the batch. **Reason:** an independent
 review is the point of the step (`F-0003#52`), and `M2b` admits several
 harnesses. Each row is `records:intake/coverage.tsv`, and each becomes a
 question of the batch.
@@ -428,7 +437,7 @@ release, the code of `M2b` and `M2a` included.
 | State | Result |
 | ----- | ------ |
 | A routing register with no admitted pair for a role of Intake | the step is `fail` (`pair`), no session starts |
-| No admitted pair of `qa-engineer` on a harness other than that of the numbering and the draft | `completeness` is `fail` ("not run: no admitted pair on another harness"); no batch |
+| No admitted pair of `qa-engineer` on a harness other than that of the numbering and the draft, or none of the role at all | `completeness` is `fail` ("not run: no admitted pair on another harness"); no batch |
 | A session's output file that is missing, a link, over 1 MiB, or that its block refuses | the step is `fail`, naming the session; nothing of the file is committed |
 | A refused start of a session of Intake (`session.md`, The start of a session) | the step is `fail`, naming the session and the refusal; no record (**decided here**, task `T-gmey`: no event holds it, and the row of a refused probe is the probe's own) |
 | A quote that occurs nowhere, more than once, or holds a tab | the file of the review is refused (as above) |
