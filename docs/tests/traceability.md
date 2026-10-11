@@ -161,6 +161,7 @@ the first.
 | `TestKeepOfTheReview`, `TestFollowUpRows`, `TestTheCommentOfTheFollowUp` (`internal/run/followup_test.go`) | unit | REQ-001 | F-0003#41 | — | — | T-vwu3 | green |
 | `TestTheAnswersToTheFollowUpReplaceAValueOfTheBudget`, `TestTheAnswersToTheFollowUpWriteTheBudget`, `TestAnUnparsedAnswerToTheFollowUpLeavesItsQuestionOpen` (`internal/run/run_integration_test.go`) | integration | REQ-001 | F-0003#41 | — | — | T-tmm2 | green |
 | `TestBudgetAfterFollowUp` (`internal/run/followanswers_test.go`) | unit | REQ-001 | F-0003#41 | — | — | T-tmm2 | green |
+| `TestTheStepsOfIntake` (`cmd/layup/intake_e2e_test.go`) | e2e | REQ-001, REQ-012, NFR-001 | F-0003#41, F-0003#51 | — | — | T-mo9w | green |
 | `TestASessionOfAPhaseCommitsItsRecordsAndItsTelemetryRow`, `TestAnOutputFileThatIsRefusedIsNoRecord`, `TestNoAdmittedPairStartsNoSession`, `TestARefusedStartOfASessionOfAPhaseIsNoRecord`, `TestACommentThatFailsKeepsTheReasonOfTheSession` (`internal/run/phase_integration_test.go`) | integration | REQ-001, REQ-012, NFR-001 | F-0003#41, F-0003#51 | — | — | T-gmey | green |
 | `TestMakeInput`, `TestReadOutput` (`internal/session/phase_integration_test.go`) | integration | REQ-001, REQ-012 | F-0003#41, F-0003#51 | — | — | T-gmey | green |
 | `TestMilestoneCap` (`internal/ledger/budget_test.go`); `TestTheCapOfMilestoneZeroDrawsNoSession` (`internal/run/phase_test.go`); the rows of `CommitTime` in `TestEachCallRunsItsVerb` and `TestTheOutputIsRead` (`internal/git/git_test.go`) | unit | REQ-011, NFR-001 | F-0003#50 | — | — | T-ybd5 | green |
