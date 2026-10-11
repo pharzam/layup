@@ -23,3 +23,17 @@ The red of `TestTheNumberingPromptGivesEachColumnOnce` on the old prompt, at
     numbering_test.go:62: the prompt still holds the sentence that reads two ways: "has \"—\" as its fact and its class, and its reason"
 FAIL	github.com/pharzam/layup/internal/run
 ```
+
+## The other prompts of Intake (D2)
+
+Each prompt of a session of Intake was read for the same fault, a list of
+columns in one sentence that can be read as one value for all:
+
+- `meaningPrompt` (`internal/run/meaning.go`), `draftPrompt`
+  (`internal/run/draft.go`) and `reviewPrompt` (`internal/run/followup.go`) name
+  no `—`, and each column of their header has its own clause;
+- `completenessPrompt` (`internal/run/completeness.go`) gives each `—` in
+  parentheses beside the item that fills it, for example "uncovered, … (its
+  fact, the requirement "—")", one pair for each kind.
+
+None reads two ways, so none changes.
