@@ -6,7 +6,6 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/pharzam/layup/internal/tsv"
 )
@@ -180,7 +179,7 @@ func CheckMeaning(r []string) error {
 	switch {
 	case start >= end:
 		return &RowError{"end", "end is above start"}
-	case len(f["quote"]) != end-start || !utf8.ValidString(f["quote"]):
+	case len(f["quote"]) != end-start:
 		return &RowError{"quote", fmt.Sprintf("the quote is the file's bytes from start to end: %d bytes", end-start)}
 	case !sessionForm.MatchString(f["session"]):
 		return &RowError{"session", "a session ID is S- and 8 lowercase hexadecimal characters"}
@@ -293,7 +292,13 @@ func CheckQuestion(r []string) error {
 	case "follow-up":
 		refOK, kindOK, askerOK = qForm.MatchString(f["ref"]), f["kind"] == "follow-up", f["asker"] == "layup run"
 	}
-	noQuote := f["source"] == "intent" || f["kind"] == "unsupported"
+	// The quote, exactly when the row shows it (note 3 of round 1 of #212): a
+	// gap of meaning, an uncovered or class item and a rule gap G2 to G5 have
+	// one; the intent form, an unsupported item and G1 (an absence) have none;
+	// a follow-up's is that of the question it asks again, which the row does
+	// not show.
+	noQuote := f["source"] == "intent" || f["kind"] == "unsupported" || f["kind"] == "G1"
+	needQuote := f["source"] == "meaning" || (f["source"] == "coverage" && !noQuote) || (f["source"] == "rule" && !noQuote)
 	switch {
 	case !refOK:
 		return &RowError{"ref", "ref names the source row of the question in the form of its source"}
@@ -304,7 +309,9 @@ func CheckQuestion(r []string) error {
 	case f["start"] == "" && f["end"] != "":
 		return &RowError{"start", "start and end are both the empty value or both given"}
 	case noQuote && f["start"] != "":
-		return &RowError{"start", "the intent form and an unsupported item have no quote"}
+		return &RowError{"start", "the intent form, an unsupported item and G1 have no quote"}
+	case needQuote && f["start"] == "":
+		return &RowError{"start", "a gap of meaning, an uncovered or class item and a rule gap G2 to G5 have a quote"}
 	case f["start"] != "" && !below(f["start"], f["end"]):
 		return &RowError{"end", "end is given with start, and above it"}
 	case f["state"] == "asked" && f["answered"] != "":

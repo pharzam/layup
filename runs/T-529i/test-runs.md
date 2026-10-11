@@ -14,8 +14,11 @@ vet: internal/records/intake_test.go:34:63: undefined: ReadMeaning
 
 ## Mutations (2026-10-10, 23:53Z to 23:54Z, the second run; the first ended at 23:51Z)
 
-Each rule of `intake.go` mutated alone (its condition joined with `&& false`,
+Each rule of `intake.go` mutated alone, the empty-value rule for two records (its condition joined with `&& false`,
 so each mutant builds), then `go test ./internal/records/`: 30 of 30 caught.
+The 30 are each rule of a row or a table but the empty-value rule, which was
+mutated for `meaning` and `answers` only; the other six records share the same
+helper, `missing`, and each column has its case.
 A first run counted mutants that did not build as caught (a condition replaced
 by `false` left a variable unused); they were rewritten so each builds. That
 run also found two rules no test could catch on its own: the session's form
@@ -68,3 +71,19 @@ Each with exit 0: `go build ./...`, `go vet ./...`, `gofmt -l internal` (empty),
 failed to link three test binaries, "no space left on device", as `/tmp` (a
 tmpfs of 1.9 GB) was full of the author's scratch clones; with those removed and
 `GOTMPDIR` on the disk, the run passed.
+
+## The fix of round 1 (2026-10-11, 00:10Z to 00:14Z; O-197 at 03:50Z)
+
+Notes 2 to 6 of round 1, and its finding 1 (the two rows of `traceability.md`
+of other packages restored to the base). The reverse direction of the quote of
+`questions` (note 3) was written with its four cases; its two mutants, the rule
+of a needed quote and `G1` among the rows with none, are each caught:
+
+```
+intake_test.go:148: questions: a gap of meaning with no quote: read, want an error in column start
+intake_test.go:72: questions: line 7, column "start": a gap of meaning, an uncovered or class item and a rule gap G2 to G5 have a quote
+```
+
+The second mutant's first try did not build (an operator precedence of `&&`
+over `||`); it was rewritten. The condition of the quote that cannot fail
+(`utf8.ValidString`, as `tsv.Read` refuses bytes that are not UTF-8) is gone.
