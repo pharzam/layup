@@ -420,9 +420,10 @@ thrown away after the session's records are pushed
 ## NFR-001 — The records of Intake
 
 The records that Intake writes (`M2c`, [`intake.md`](intake.md)); task `T-g49f`
-(#206) specified them. Row 40 (task `T-529i`) compares the eight blocks of
-`internal/records` with their Go schemas; `spec-check` is in `notYetBuilt`
-until row 41a compares it. A session of Intake writes the file of
+(#206) specified them. `internal/records` owns eight of their blocks, which row
+40 (task `T-529i`) compares with their Go schemas; `internal/spec` owns
+`spec-check` and holds a second Go value of `spans`, which row 41a (task
+`T-4ywt`) compares. A session of Intake writes the file of
 its block in `result/` without the columns that code adds (`id`, `start`, `end`,
 `text`, `session`), and `layup run` commits the rows with them.
 `records:intake/psb.tsv` is the table of `layup psb check`, byte for byte, in
