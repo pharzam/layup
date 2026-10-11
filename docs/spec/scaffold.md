@@ -355,16 +355,19 @@ branch keeps its empty bypass list: the two scopes are two rulesets.
 
 ### The commands for the Operator
 
-S13 writes to `commands.sh`, in order: the check that the default branch's head
-on the forge is the root commit that Start read back (`git ls-remote origin
-refs/heads/<default>`, compared with the root commit of `WORK/target`, the
-row of order 0 of `setup/tree.tsv`; `pin.commit` is the baseline's commit, not
-the target's);
-the push of `layup-setup` onto the default branch (`git push origin
-layup-setup:<default>`, a fast-forward from the root commit); and the apply of
-each ruleset with `gh api --method POST /repos/OWNER/NAME/rulesets --input
-<file>`, its output written to `DIR/applies/OWNER/NAME/default.json` and
-`records.json`. **Decided here** (F-13): `commands.sh` starts with `set -eu`,
+S13 writes to `commands.sh`, in order: the read of the default branch's head on
+the forge (`git ls-remote origin refs/heads/<default>`); the push of
+`layup-setup` onto the default branch (`git push origin
+layup-setup:<default>`, a fast-forward from the root commit) when that head is
+the root commit of `WORK/target`, the row of order 0 of `setup/tree.tsv`
+(`pin.commit` is the baseline's commit, not the target's), no push when it is
+already the head of `layup-setup`, and a stop with exit 1, naming the head, when
+it is neither; then the apply of each ruleset with `gh api --method POST
+/repos/OWNER/NAME/rulesets --input <file>`, its output written to
+`DIR/applies/OWNER/NAME/default.json` and `records.json`, each apply only when
+its output file does not exist yet. **Decided here** (finding 1 of round 4 of
+#265): so a run of `commands.sh` that stopped after the push, or after one
+apply, is run again as it is, and does each command that is not done yet. **Decided here** (F-13): `commands.sh` starts with `set -eu`,
 so the first command that fails stops it, in phase 1 and phase 2; a command of
 phase 1 that does not hold under `set -eu` is a defect of its step.
 
@@ -566,7 +569,8 @@ change, as `M2c` did.
 | A prose text whose check fails | `setup` is `fail`, naming the check; the session's files are removed from the records, and a restart starts a new session |
 | A prose text that holds a marker that the pinned tree does not | S10 stops on an `M-` row that the batch did not ask: `setup` is `fail`, and the session's files are removed, as above |
 | A row of `layup setup verify` that is not `pass` or `clear` | `verify` is `fail`; no records commit of the setup |
-| The default branch's head is neither the root commit nor the verified head when the Operator's commands run | the first command of `commands.sh` stops it (`set -eu`); `scaffold-push` keeps "waiting" |
+| The default branch's head is neither the root commit nor the verified head when the Operator's commands run | the first command of `commands.sh` stops it with exit 1, naming the head; `scaffold-push` keeps "waiting" |
+| `commands.sh` stopped after the push, or after one apply | it is run again as it is: no second push, and only the apply whose output file is missing |
 | The default branch's head is the verified head, and an apply output is missing | `scaffold-push` keeps "waiting" |
 | An apply output that is not a JSON object, or whose `source` is another repository | `scaffold-push` is `fail`, naming the file |
 | A ruleset in `evaluate` or `disabled` | its rules are missing in the read-back: `forge-check` is `fail` |
@@ -612,7 +616,7 @@ six rows of the inventory item `later-p2-scaffold` are the rows marked
 | The answers of the setup | unit | Each row of the table of [The answers of the setup](#the-answers-of-the-setup): `accept` with and without a proposal, `gap`, a value, no answer and `open`, for a marker and for `S01-stack`; the source URL. |
 | The step markers | unit | The scan of a fixture tree gives the keys of S10, one row for a text that a file holds on two lines; the session's `result/markers.tsv` with an unknown key, a key twice or an empty quote is refused; a quote that occurs once passes, and one that occurs twice, nowhere or with a tab refuses the file; with no marker no session starts. |
 | The ruleset files (inventory) | unit | The default branch's file names each gate job pinned to 15368, the four `layup/` checks pinned to the forge register's `app_id`, `strict` true, `creation`, `allowed_merge_methods` `["merge"]` and an empty bypass list; the records branch's file has the App as its only bypass actor; phase 1 gets `creation` and the two parameters, and no `layup/` check. |
-| `commands.sh` is fail-fast | unit | Its first line is `set -eu`, and a stand-in command that fails stops the rest (F-13). |
+| `commands.sh` is fail-fast and can be run again | unit | Its first line is `set -eu`, and a stand-in command that fails stops the rest (F-13); with stand-ins of `git` and `gh`, a run again after the push or after one apply pushes nothing and applies only the missing ruleset, and a head that is neither the root nor the setup head stops it. |
 | The probe (inventory) | integration | With a real local bare repository whose pre-receive hook refuses with the text of `GH013` and the ruleset's name, and the real `internal/git`: the refusal is `pass`; a hook that refuses with `GH013` and another ruleset's name, one that refuses with another text, and a remote that cannot be reached, are "probe not run"; an accepted push is "probe accepted". |
 | The read-back | unit | A read-back equal to the files passes; a missing rule, a different parameter, an `integration_id` that differs, and a bypass list that is not empty (default) or not exactly the App (records) each fail, naming it; an extra rule is named and passes. |
 | `layup run` with the real step runner (inventory) | integration | On a fixture baseline: `answers.tsv` is written from the copied answers, a prose stop starts a scripted session, the runner finishes, and `layup run` commits `setup/record.tsv`, `setup/verify.tsv`, `rule-paths.tsv`, `setup/tree.tsv` and the README of the Scaffold; a second run is "done before"; a rebuilt work area gives the same commits, also after the default branch holds the setup commits (its `main` is the root commit). |

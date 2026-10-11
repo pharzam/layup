@@ -31,12 +31,12 @@ or payload of one task is under `tasks/<task>/`.
 | `start/problem-statement.md`, `start/vision.md` | the two briefs, byte for byte | 5 | `layup run` | 2 | — |
 | `start/start.tsv` | each brief's SHA-256, the LAYUP version, the forge plan, the values of the Start command | 5, 13 | `layup run` | 2 | [below](#nfr-001--the-records-of-start) |
 | `setup/record.tsv` | the setup record: each value with its source, the pin rows included | 5 | `layup setup`; committed by `layup run` in phase 2 (`M2d`) | 1 | [`setup.md`](setup.md#the-setup-record) |
-| `setup/verify.tsv` | the table of `layup setup verify` | 5 | `layup setup verify`, committed by `layup setup` (O-115) | 1 | [`setup.md`](setup.md#the-checks-of-layup-setup-verify) |
+| `setup/verify.tsv` | the table of `layup setup verify` | 5 | `layup setup verify`, committed by `layup setup` (O-115); by `layup run` in phase 2 (`M2d`) | 1 | [`setup.md`](setup.md#the-checks-of-layup-setup-verify) |
 | `setup/rulesets.txt` | the output of the Operator's ruleset commands (the bypass lists) | 3 | `layup run` | 2 (`M2d`) | a rule, no block: [below](#nfr-001--the-records-of-the-scaffold) |
 | `setup/tree.tsv` | the root commit and each setup commit that `layup setup verify` read | 5 | `layup run` | 2 (`M2d`) | [below](#nfr-001--the-records-of-the-scaffold) |
 | `setup/inputs/files/<path>` | the text of a prose row of the setup, written by a role session | 5 | `layup run` | 2 (`M2d`) | a rule, no block: [below](#nfr-001--the-records-of-the-scaffold) |
 | `setup/forge-check.tsv` | the effective rules read back, and the probe results | 3, 5 | `layup run` | 2 (`M2d`) | [below](#nfr-001--the-records-of-the-scaffold) |
-| `rule-paths.tsv` | the rule-path register | 6 | `layup setup` | 1 | [`setup.md`](setup.md#the-rule-path-register) |
+| `rule-paths.tsv` | the rule-path register | 6 | `layup setup`; committed by `layup run` in phase 2 (`M2d`) | 1 | [`setup.md`](setup.md#the-rule-path-register) |
 | `approvers.tsv` | each human account by its numeric ID, with its role | 3 | `layup run` | 2 | [below](#nfr-001--the-records-of-start) |
 | `lease.tsv` | the lease row: run ID, host, start, heartbeat counter | 2 | `layup run` | 2 | [below](#nfr-001--the-records-of-start) |
 | `copies.tsv`, `copies/<comment-id>-<seen>.md` | each copied comment: the row (author ID and login, comment ID, App field, time, SHA-256) and the body | 3 | `layup run` | 2 | [below](#nfr-001--the-records-of-start) |
