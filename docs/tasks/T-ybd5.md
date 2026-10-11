@@ -51,6 +51,51 @@ the same bytes on a repeat, with no mapping of its own.
 
 ## Known limits
 
+- **The evidence of the unit test** (note 1 of round 2): with the check of
+  `PhaseSession` cut, `TestTheCapOfMilestoneZeroDrawsNoSession` fails by a
+  panic at a function of `Sessions` that the stand-in leaves unset, not at its
+  own assertions on the session IDs drawn and the commits; a change that sets
+  those functions in the stand-in should run that mutation again.
+
 - **A probe after the rule** (note 4 of the plan review): the session's own
   version check may run a probe after the rule read the known money; its spend
   counts from the next session, as `intake.md` now says.
+
+## Review rounds
+
+The records are comments on #216. Round 1 (Claude Fable 5.1, effort `xhigh`, a
+fresh read-only session in a clone at `a8adfaf`, cycle 0): `material`, two
+findings: the hours refusal wrote a clock reading into the step's detail, and
+the demo had no unit test, which the Tests cell names. The fix `0072ab5` (cycle
+1) made the detail fixed text and added D2 at the unit level, red first, with a
+lesson of §2 (note 3) and the doc comment of note 4. Round 2 (the same reviewer
+and effort, a fresh session at `0072ab5`, cycle 1, the cap): `nothing material
+in scope`, four notes: note 1 is a known limit above; note 2 is the run below;
+note 3, a quoted text of the lesson, is #240; note 4, the headroom, holds at
+landing.
+
+## Verdict
+
+Delivered: the budget of milestone 0, asked before each session of Intake: the
+known money since Start plus the new session's cap against `MONEY` in US
+dollars, and the hours since Start against `HOURS`; past either, no session
+starts, with a fixed detail. The review ended by decay at cycle 1 of cap 1. The
+diff against `cafebd3`, the branch's base, is inside 700 lines over 20 files.
+At `0072ab5` (06:28Z to 06:29Z): `go build ./...`, `go vet ./...`, `go test
+./...`, `go test -tags=integration ./...` and `go test -count=1 -tags=e2e ./...`
+pass, every package `ok`. Next: row 41b.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). UTC; reviewers' tokens are `modelUsage`;
+the author's are not reported.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan | reasoning | Claude Opus 5.5 | not reported | not reported | 2026-10-11 05:39 to 05:40 (the claim to the post) |
+| The plan review | reasoning | Claude Fable 5.1 | `xhigh` | 1,467,128 (USD 6.80) | 8 min 47 s |
+| The code, test first | execution | Claude Opus 5.5 | not reported | not reported | 05:49 to 06:00 |
+| Round 1 | reasoning | Claude Fable 5.1 | `xhigh` | 1,462,491 (USD 5.30) | 12 min 58 s |
+| The fix of round 1 | execution | Claude Opus 5.5 | not reported | not reported | 06:13 to 06:18 |
+| Round 2 | reasoning | Claude Fable 5.1 | `xhigh` | 937,953 (USD 4.87) | 10 min 10 s |
+| The close-out | execution | Claude Opus 5.5 | not reported | not reported | 06:28 to 06:30 |
