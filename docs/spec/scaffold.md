@@ -104,8 +104,9 @@ of the target come only with the first bet (`architecture.md` §7), so the quote
 stays the evidence of the proposal in `intake/markers.tsv`.
 
 **Known limit:** a marker of a file that the setup then deletes (S05) or
-replaces (the prose step) is asked, and its answer is not used by S11; it stays
-in the raw fact of the answers.
+replaces (the prose step) is asked, and its answer is not used: S10 does not
+list it, so `layup run` writes no row of it. It stays in `intake/answers.tsv`
+and `questions.tsv` of the records, not in the raw fact of S11.
 
 ## REQ-002 — The setup under `layup run`
 
@@ -145,7 +146,8 @@ item 4):
 
 - `inputs/briefs/problem-statement.md` and `inputs/briefs/vision.md` from
   `records:start/`, byte for byte;
-- `inputs/answers.tsv`: the rows of [The answers of the setup](#the-answers-of-the-setup),
+- `inputs/answers.tsv`: the row of `S01-stack` of [The answers of the setup](#the-answers-of-the-setup)
+  (no `M-` row: `layup run` adds those at the stop of S10, [The stops of the runner](#the-stops-of-the-runner)),
   then one row per row of `intake/answers.tsv` whose question is not a setup
   question (**decided here**: a setup question is a row of `questions.tsv` with
   `source` `setup`, or a follow-up whose `ref` is the `Q-NNN` of one; the
@@ -154,7 +156,11 @@ item 4):
   IDs;
 - `inputs/files/<path>` from `records:setup/inputs/files/<path>`, the texts of
   [the prose rows](#the-prose-rows);
-- `target/`: a clone of the default branch from the run's clone.
+- `target/`: a clone of the default branch from the run's clone, with `main`
+  at the root commit: the row of order 0 of `setup/tree.tsv` once it exists,
+  else the default branch's one commit, which Start read back (**decided here**,
+  finding 2 of round 2 of #265: after the Operator's push the default branch
+  holds the setup commits, and S03 in phase 2 needs the root commit).
 
 The setup is deterministic (O-136: the author, the committer and the date of
 each setup commit are fixed), so a rebuilt work area gives the same commits.
@@ -169,11 +175,16 @@ stop from the records, and runs the runner again, until a run does not stop:
 
 | Rows of the stop table | What `layup run` does |
 | ---------------------- | --------------------- |
+| `M-<x8>` rows (S10) whose marker the batch asked | `layup run` adds one row per such marker to `inputs/answers.tsv` from [the answers of the setup](#the-answers-of-the-setup) (an answer, or `gap`), and runs the runner again |
 | `F-<path>` rows (S05, and the prose step) | one session of [the prose rows](#the-prose-rows) for that stop |
 | any other row (`S01-stack` with no answer, an `M-` row that the batch did not ask, an `O-` row) | the step `setup` is `fail`; its `detail` names the rows |
 
-An `M-` row that the batch asked always has a row of `answers.tsv` (an answer
-or `gap`), so S10 does not stop on it. A step that ends `fail` or `not-active`
+**Decided here** (finding 1 of round 2 of #265): `inputs/answers.tsv` holds an
+`M-` row only for a marker that S10 lists, as the runner refuses an `M-` row
+whose marker is not in the tree at S10 (an input error, `setup.md`, The answers;
+`internal/setup`, `CheckAsked`). So `layup run` writes no `M-` row before S10,
+and S10 stops once with each marker of the tree; a marker that the batch asked
+then gets its row, and the next run of S10 is done. A step that ends `fail` or `not-active`
 makes the step `setup` `fail`, with the runner's reason; an input error (exit 2
 of phase 1) does the same.
 
@@ -578,7 +589,7 @@ six rows of the inventory item `later-p2-scaffold` are the rows marked
 
 | Test | Level | What it shows |
 | ---- | ----- | ------------- |
-| The stops of the runner under `layup run` (inventory) | unit | A run that does not stop goes on; a stop with `F-` rows starts a prose session; a stop with any other row, an input error, a `fail` or a `not-active` make `setup` `fail`; a `fail` after a prose session of the run removes that session's files from the records, and one before it removes none. |
+| The stops of the runner under `layup run` (inventory) | unit | A run that does not stop goes on; a stop with `M-` rows adds the rows of the markers that the batch asked and runs again, and one with an `M-` row that it did not ask is `fail`; a marker of the pinned tree that S05 deletes gets no row and fails nothing; a stop with `F-` rows starts a prose session; a stop with any other row, an input error, a `fail` or a `not-active` make `setup` `fail`; a `fail` after a prose session of the run removes that session's files from the records, and one before it removes none. |
 | The steps of the setup in phase 2, and the pin | unit | S01 reads only `S01-stack` and runs no `layup psb check`; S02 writes the pin rows of `start.tsv` with ref `records:start/start.tsv` and resolves nothing; S03 makes no commit and fails on a tree other than `pin.tree`; S04 writes `docs/setup/armature.pin` from those rows and the raw fact of the `S01-` and `Q-` rows; S15 makes no commit of `layup-records`. |
 | The row `without-layup` | unit | S13 in phase 2 writes it with its fixed line and source `computed`; in phase 1 it writes none. |
 | The apply outputs | unit | Both files present and each a JSON object of `OWNER/NAME`: `setup/rulesets.txt` holds both after their lines; a file missing: "waiting"; a file that is not a JSON object, or of another repository: `fail`, naming it. |
@@ -589,6 +600,6 @@ six rows of the inventory item `later-p2-scaffold` are the rows marked
 | `commands.sh` is fail-fast | unit | Its first line is `set -eu`, and a stand-in command that fails stops the rest (F-13). |
 | The probe (inventory) | integration | With a real local bare repository whose pre-receive hook refuses with the text of `GH013`, and the real `internal/git`: the refusal is `pass`; a hook that refuses with another text, and a remote that cannot be reached, are "probe not run"; an accepted push is "probe accepted". |
 | The read-back | unit | A read-back equal to the files passes; a missing rule, a different parameter, an `integration_id` that differs, and a bypass list that is not empty (default) or not exactly the App (records) each fail, naming it; an extra rule is named and passes. |
-| `layup run` with the real step runner (inventory) | integration | On a fixture baseline: `answers.tsv` is written from the copied answers, a prose stop starts a scripted session, the runner finishes, and `layup run` commits `setup/record.tsv`, `setup/verify.tsv`, `rule-paths.tsv`, `setup/tree.tsv` and the README of the Scaffold; a second run is "done before"; a rebuilt work area gives the same commits. |
+| `layup run` with the real step runner (inventory) | integration | On a fixture baseline: `answers.tsv` is written from the copied answers, a prose stop starts a scripted session, the runner finishes, and `layup run` commits `setup/record.tsv`, `setup/verify.tsv`, `rule-paths.tsv`, `setup/tree.tsv` and the README of the Scaffold; a second run is "done before"; a rebuilt work area gives the same commits, also after the default branch holds the setup commits (its `main` is the root commit). |
 | The steps of the Scaffold, end to end (inventory) | e2e | In CI on a local fake forge and local bare repositories: Start, scripted Intake answers with the setup questions, the setup, the printed commands run by the test in place of the Operator, and the forge check, whose fake forge answers the read-back and the activity, and whose bare repository refuses the probe with `GH013`. |
 | The demo (inventory) | uat | On a real GitHub test target, the Operator runs the printed pushes and the ruleset apply, and sees the push to `layup-probe` refused and `setup/forge-check.tsv` show each rule and probe as passed. |
