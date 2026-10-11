@@ -206,8 +206,9 @@ with the first broken place in `detail`.
 flag of "Commands" does ([`README.md`](README.md#commands)). Exit 0 when each
 row is `pass`, 1 when a row is `fail`, 2 on a usage or input error (a file that
 is missing, unreadable, not valid UTF-8, or a span table that its block
-refuses). **Reason:** a flag with no value is a usage error in the frame of
-`layup`, and the check needs both files. The exit-code map of `internal/cli`
+refuses, or a table that it cannot write to standard output: **decided here**,
+task `T-hpid`, as for `layup psb check`). **Reason:** a flag with no value is a
+usage error in the frame of `layup`, and the check needs both files. The exit-code map of `internal/cli`
 ([`README.md`](README.md#commands)) gains the table `spec-check`, whose result
 words are `pass` and `fail`. `internal/cli` gains the row of the
 command; `internal/spec` joins the line of the engine checks

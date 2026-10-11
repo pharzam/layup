@@ -95,8 +95,8 @@ Every command of LAYUP follows these rules. A section gives only what differs.
   progress on standard error, never on standard output: before each step, one
   line `layup <command>: [<i>/<n>] <step>`, and while that step runs, one more
   line every ten seconds, `layup <command>: [<i>/<n>] <step>: <s> s`. A step is
-  a row of the command's own table: a kind, a step, a check. `layup version` and
-  `layup psb check` print none. `internal/cli` prints the lines; the package
+  a row of the command's own table: a kind, a step, a check. `layup version`,
+  `layup psb check` and `layup spec check` print none. `internal/cli` prints the lines; the package
   that runs the steps gets a function that it calls at the start of each step,
   and the command stops the lines of its last step before it prints its table,
   so no progress line comes after the table. The output of a command that a
@@ -114,7 +114,7 @@ Every command of LAYUP follows these rules. A section gives only what differs.
   | ---- | ------- |
   | 0 | Every row of the table passed: `pass`, or `clear` where the section allows it. For `layup psb check`: no gap. |
   | 1 | At least one row is `fail` or `not-active`, or (for `layup psb check`) at least one gap. |
-  | 2 | A usage or input error: an unknown flag, a missing or unreadable file, an input that does not match its schema, an input that the command parses as text and that is not valid UTF-8 (below). For `layup gate` also `git` or `sh` not found, `git` older than 2.32, and a scratch work tree that it could not remove ([`gate.md`](gate.md#the-command)). For `layup psb check` also a table that it cannot write to standard output ([`psb-check.md`](psb-check.md#the-command)). For `layup run` also `git` not found or older than 2.32, checked before its first step (task `T-mqty`). For `layup setup verify` also `git` older than 2.32, a `docs/gates.tsv` at the head of `layup-setup` that is missing or malformed, a temporary directory in `WORK`, and a scratch work tree that it could not remove ([`setup.md`](setup.md#the-checks-of-layup-setup-verify)). The table can be empty or incomplete. |
+  | 2 | A usage or input error: an unknown flag, a missing or unreadable file, an input that does not match its schema, an input that the command parses as text and that is not valid UTF-8 (below). For `layup gate` also `git` or `sh` not found, `git` older than 2.32, and a scratch work tree that it could not remove ([`gate.md`](gate.md#the-command)). For `layup psb check` and `layup spec check` also a table that it cannot write to standard output ([`psb-check.md`](psb-check.md#the-command), [`intake.md`](intake.md#the-span-check)). For `layup run` also `git` not found or older than 2.32, checked before its first step (task `T-mqty`). For `layup setup verify` also `git` older than 2.32, a `docs/gates.tsv` at the head of `layup-setup` that is missing or malformed, a temporary directory in `WORK`, and a scratch work tree that it could not remove ([`setup.md`](setup.md#the-checks-of-layup-setup-verify)). The table can be empty or incomplete. |
   | 3 | Only `layup setup`: the run stopped at a step that needs a human input; the table lists every missing input of that step. |
 
   A check that did not run is never 0 (`NFR-004`). Code 3 is not a failure and

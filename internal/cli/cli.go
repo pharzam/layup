@@ -19,6 +19,7 @@ import (
 	"github.com/pharzam/layup/internal/gate"
 	"github.com/pharzam/layup/internal/psb"
 	"github.com/pharzam/layup/internal/setup"
+	"github.com/pharzam/layup/internal/spec"
 	"github.com/pharzam/layup/internal/verify"
 )
 
@@ -89,6 +90,8 @@ var commands = []command{
 	{words: []string{"version"}, help: "print the version of layup", run: version},
 	{words: []string{"psb", "check"}, args: []string{"FILE"},
 		help: "print the gap questions of a problem statement as a table", run: psbCheck},
+	{words: []string{"spec", "check"}, flags: []flag{{"facts", "SPANS"}, {"psb", "FILE"}},
+		help: "check the fact spans SPANS of the problem statement FILE and print the table", run: specCheck},
 	{words: []string{"gate"}, args: []string{"REPO"}, flags: []flag{{"base", "REV"}, {"head", "REV"}},
 		help: "run the gate kinds of the manifest at --base on --head", run: gateCommand},
 	{words: []string{"setup"}, args: []string{"WORK"},
@@ -148,6 +151,49 @@ func psbCheck(in call) int {
 		return exitFail
 	}
 	return exitPass
+}
+
+// specCheck runs layup spec check (docs/spec/intake.md, The span check): the
+// table of internal/spec on standard output, 0 when each row is pass and 1
+// when a row is fail; 2 for a file that it cannot read or that is not valid
+// UTF-8 (K32), a span table that its block refuses, and a table that it cannot
+// write (decided here, task T-hpid, as for layup psb check).
+func specCheck(in call) int {
+	read := func(path string) ([]byte, bool) {
+		src, err := readFile(path)
+		if err != nil {
+			fmt.Fprintf(in.stderr, "layup: %v\n", err)
+			return nil, false
+		}
+		if n := invalidLine(src); n > 0 {
+			fmt.Fprintf(in.stderr, "layup: %s: line %d is not valid UTF-8\n", path, n)
+			return nil, false
+		}
+		return src, true
+	}
+	data, ok := read(in.flags["facts"])
+	if !ok {
+		return exitUsage
+	}
+	psbSrc, ok := read(in.flags["psb"])
+	if !ok {
+		return exitUsage
+	}
+	spans, err := spec.Read(data)
+	if err != nil {
+		fmt.Fprintf(in.stderr, "layup: %s: %v\n", in.flags["facts"], err)
+		return exitUsage
+	}
+	rows := spec.Check(spans, psbSrc)
+	if err := spec.WriteTSV(in.stdout, rows); err != nil {
+		fmt.Fprintf(in.stderr, "layup: %v\n", err)
+		return exitUsage
+	}
+	results := make([]string, len(rows))
+	for i, r := range rows {
+		results[i] = r[1]
+	}
+	return exitCode(results)
 }
 
 // invalidLine gives the line, from 1, of the first byte of src that is not

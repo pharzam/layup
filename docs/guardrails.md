@@ -785,6 +785,19 @@ failure modes worth keeping.
   passes for the wrong reason. **The check:** in a test world, set `Now` from the
   world's own records (its time of Start), never from the wall clock, and keep one
   case inside the cap so a refusal for the wrong reason shows. Learned in `T-ybd5`.
+- ❌ **`git diff --check` before `git add` reads no new file.** The check reads the
+  diff of the tracked files; a new file, untracked until `git add`, is not in it, so
+  a record pasted into a new file (a test run cut at a width, with its trailing
+  spaces) passes the check and fails it after the commit. It is silent because the
+  command exits 0. **The check:** run `git diff --check <base>` after `git add`, or
+  on the commit, never on a tree with new untracked files. Learned in `T-hpid`.
+- ❌ **The writer of a command's table in `internal/cli`.** `internal/cli` may not
+  import `internal/tsv` (`packages.md`, its row), so a command that prints a table
+  by its schema needs the writer in the package that owns the table, as
+  `psb.WriteTSV` and `spec.WriteTSV` are; `TestPackageRules` refuses the other
+  form at the integration level only, after the unit level is green. **The
+  check:** give the engine package its `WriteTSV` with the code that builds the
+  rows. Learned in `T-hpid`.
 
 ## 3. Validation — how you check you are not fooling yourself
 

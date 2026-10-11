@@ -10,6 +10,7 @@ package spec
 
 import (
 	"fmt"
+	"io"
 	"slices"
 	"strconv"
 	"strings"
@@ -52,6 +53,11 @@ var classes = []string{"need", "constraint", "measure", "context"}
 // A table that its types accept is always checked: a broken pairing of class
 // and reason is a fail of the rule classes, not an error of the read.
 func Read(data []byte) ([][]string, error) { return tsv.Read(data, SpansSchema) }
+
+// WriteTSV writes the table of the span check, rows as Check gives them, by
+// CheckSchema: the writer of layup spec check (task T-hpid), as internal/cli
+// may not import internal/tsv.
+func WriteTSV(w io.Writer, rows [][]string) error { return tsv.Write(w, CheckSchema, rows) }
 
 // isSpace reports whether b is white space by the rule cover: ASCII space,
 // tab, CR or LF.
