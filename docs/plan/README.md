@@ -288,8 +288,8 @@ The columns are those of the tasks of `M2b`; each issue says `Refs #206` and
 Row 49a reviews the release before the demo, as row 39a did for `M2b`. The
 release of `M2c` is the code of `main` that the demo runs (the non-test Go files
 of `cmd/` and `internal/`, `go.mod`, and the files that the binary embeds), at
-the merge of row 48, the last build row; it holds the code of phase 1, `M2a` and
-`M2b` too. Row 48 is after rows 41b and 42b, so that the release holds them. A
+`0b881fa`, the merge of row 48, the last build row; it holds the code of phase
+1, `M2a` and `M2b` too (task `T-8byd`, #227). Row 48 is after rows 41b and 42b, so that the release holds them. A
 task of `M2c` that changes the release code after row 49a checks its own diff for
 `REQ-015` and `REQ-017` in its review round, and runs `release-check.sh` with
 the full commit ID of its head. Row 49b needs the Operator's inputs, which its
