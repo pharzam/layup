@@ -31,7 +31,7 @@ same summary, dated — rather than deleting it or checking it off.
 -->
 - **T-4ywt** — Row 41a of `M2c`: the span check and the package rules of M2c ([#213](https://github.com/pharzam/layup/issues/213); [the plan](../plan/README.md#the-tasks-of-m2c))
 - **T-hpid** — Row 41b of `M2c`: the command layup spec check --facts ([#214](https://github.com/pharzam/layup/issues/214); [the plan](../plan/README.md#the-tasks-of-m2c))
-- **T-ybd5** — Row 42b of `M2c`: the budget of milestone 0 ([#216](https://github.com/pharzam/layup/issues/216); [the plan](../plan/README.md#the-tasks-of-m2c))
+- **T-ybd5** — Row 42b of `M2c`: the budget of milestone 0 ([#216](https://github.com/pharzam/layup/issues/216); [the plan](../plan/README.md#the-tasks-of-m2c); [detail](T-ybd5.md))
 - **T-1u2v** — Row 43b of `M2c`: the review of meaning ([#218](https://github.com/pharzam/layup/issues/218); [the plan](../plan/README.md#the-tasks-of-m2c))
 - **T-hiv9** — Row 44 of `M2c`: the steps numbering and spans ([#219](https://github.com/pharzam/layup/issues/219); [the plan](../plan/README.md#the-tasks-of-m2c))
 - **T-2et0** — Row 45a of `M2c`: the draft ([#220](https://github.com/pharzam/layup/issues/220); [the plan](../plan/README.md#the-tasks-of-m2c))
