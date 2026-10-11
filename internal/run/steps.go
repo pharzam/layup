@@ -1,6 +1,7 @@
 package run
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -18,6 +19,7 @@ import (
 
 	"github.com/pharzam/layup/internal/forge"
 	"github.com/pharzam/layup/internal/git"
+	"github.com/pharzam/layup/internal/psb"
 	"github.com/pharzam/layup/internal/records"
 	"github.com/pharzam/layup/internal/tsv"
 )
@@ -25,7 +27,7 @@ import (
 // RunStepsSchema is the form of the table that layup run prints: the block
 // run-steps of docs/spec/run.md (The command).
 var RunStepsSchema = tsv.Schema{Name: "run-steps", Location: "stdout", Columns: []tsv.Column{
-	{Name: "step", Type: "enum(forge|plan|baseline|root-push|read-back|records|issues|watch|clone|version|lease|probe|phase)", Key: true},
+	{Name: "step", Type: "enum(forge|plan|baseline|root-push|read-back|records|issues|watch|clone|version|lease|probe|phase|rule-gaps)", Key: true},
 	{Name: "result", Type: "enum(done|fail)"},
 	{Name: "detail", Type: "text"},
 }}
@@ -104,26 +106,67 @@ func Start(ctx context.Context, cfg Config) []Step {
 }
 
 // Restart runs the steps of layup run TARGET (docs/spec/run.md, The restart).
+// The rows after clone come from the records that clone read: with Start not
+// done, the row phase runs its steps again and releases the lease; with Start
+// done, the steps of Intake take the place of phase (docs/spec/intake.md, The
+// steps of Intake), and the run releases the lease after its last row. The
+// progress of forge and clone counts the rows of a restart with Start not done
+// (decided here, task T-qk66: the count is that of the rows that the run
+// plans when it prints, and clone reads what it plans next).
 func Restart(ctx context.Context, cfg Config) []Step {
 	r := &state{cfg: cfg}
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	return r.run(ctx, cancel, []func(context.Context) Step{
+	r.cancel = cancel
+	defer r.endBeat()
+	rows := r.steps(ctx, restartNames(false), 0, []func(context.Context) Step{
 		func(ctx context.Context) Step { return r.forgeStep(ctx, false) },
-		r.cloneStep, r.versionStep, r.takeStep, r.probeStep, r.phaseStep,
+		r.cloneStep,
 	})
+	if rows[len(rows)-1].Result == "fail" {
+		return rows
+	}
+	startDone := r.startDone()
+	last := r.phaseStep
+	if startDone {
+		last = r.ruleGapsStep
+	}
+	rows = append(rows, r.steps(ctx, restartNames(startDone), len(rows), []func(context.Context) Step{
+		r.versionStep, r.takeStep, r.probeStep, last,
+	})...)
+	if end := &rows[len(rows)-1]; startDone && end.Result == "done" {
+		if s := r.leaseStep(ctx); s.Result == "fail" {
+			end.Result, end.Detail = "fail", r.clean("the lease: "+s.Detail)
+		}
+	}
+	return rows
+}
+
+// startDone reports whether each step of Start is done, by the values of
+// start.tsv that the row phase reads: the two issues and the watch.
+func (r *state) startDone() bool {
+	_, intake := strconv.Atoi(r.value("issue.intake"))
+	_, control := strconv.Atoi(r.value("issue.control"))
+	return intake == nil && control == nil && r.value("watch") != ""
 }
 
 // run runs the steps in order, stops at the first fail, and ends the heartbeat
 // before it returns. A lost beat ends the context of the step that runs, and
 // that step fails with the loss.
 func (r *state) run(ctx context.Context, cancel context.CancelFunc, steps []func(context.Context) Step) []Step {
-	var rows []Step
 	r.cancel = cancel
 	defer r.endBeat()
+	return r.steps(ctx, stepNames(len(steps)), 0, steps)
+}
+
+// steps runs steps in order, as the rows names[from:] of a table of
+// len(names) rows, and stops at the first fail. A lost beat ends the context
+// of the step that runs, and that step fails with the loss.
+func (r *state) steps(ctx context.Context, names []string, from int, steps []func(context.Context) Step) []Step {
+	var rows []Step
 	for i, step := range steps {
 		if r.cfg.Step != nil {
-			r.cfg.Step(i+1, len(steps), stepNames(len(steps))[i])
+			r.cfg.Step(from+i+1, len(names), names[from+i])
 		}
 		s := step(ctx)
 		if lost := r.lost(); s.Result == "fail" && lost != nil {
@@ -144,12 +187,20 @@ func (r *state) lost() error {
 	return r.lostBeat
 }
 
-// stepNames gives the names of the steps of Start (nine) or of the restart.
-func stepNames(n int) []string {
-	if n == 9 {
-		return []string{"forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease"}
+// restartNames gives the names of the rows of a restart: with Start not done,
+// the row phase runs the steps of Start again; with Start done, the steps of
+// Intake take its place (docs/spec/intake.md, The steps of Intake; row 43a,
+// task T-qk66, adds the first, rule-gaps).
+func restartNames(startDone bool) []string {
+	if startDone {
+		return []string{"forge", "clone", "version", "lease", "probe", "rule-gaps"}
 	}
 	return []string{"forge", "clone", "version", "lease", "probe", "phase"}
+}
+
+// stepNames gives the names of the steps of Start.
+func stepNames(int) []string {
+	return []string{"forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease"}
 }
 
 func done(name, detail string) Step { return Step{name, "done", detail} }
@@ -755,4 +806,35 @@ func (r *state) phaseStep(ctx context.Context) Step {
 		return done(name, "each step of Start is done; the lease is released")
 	}
 	return done(name, "ran again: "+strings.Join(again, ", ")+"; the lease is released")
+}
+
+// ruleGapsStep is the first step of Intake (docs/spec/intake.md, The rule
+// gaps; row 43a, task T-qk66): the table of layup psb check on the problem
+// statement of the records, committed byte for byte as intake/psb.tsv. It is
+// what layup psb check prints on the same file (internal/cli runs psb.Check
+// and psb.WriteTSV), and the UTF-8 check of the brief is Start's. A record
+// that exists makes the step done before, and it runs nothing.
+func (r *state) ruleGapsStep(ctx context.Context) Step {
+	const name = "rule-gaps"
+	if data, err := r.store.ReadFile(ctx, "intake/psb.tsv"); err != nil {
+		return fail(name, err)
+	} else if data != nil {
+		return done(name, "done before")
+	}
+	brief, err := r.store.ReadFile(ctx, "start/problem-statement.md")
+	if err != nil {
+		return fail(name, err)
+	}
+	if brief == nil {
+		return failf(name, "the records hold no start/problem-statement.md")
+	}
+	gaps := psb.Check(string(brief))
+	var table bytes.Buffer
+	if err := psb.WriteTSV(&table, gaps); err != nil {
+		return fail(name, err)
+	}
+	if err := r.write(ctx, map[string][]byte{"intake/psb.tsv": table.Bytes()}, "layup run: the rule gaps of the problem statement"); err != nil {
+		return fail(name, err)
+	}
+	return done(name, fmt.Sprintf("%d rule gaps, in intake/psb.tsv", len(gaps)))
 }

@@ -66,26 +66,37 @@ func ResultFile(d Dir, probe bool) ([]byte, [][]string, error) {
 	if probe {
 		path, read = filepath.Join(d.Result, "probe.tsv"), ReadProbeResult
 	}
-	f, err := os.OpenFile(path, os.O_RDONLY|syscall.O_NOFOLLOW|syscall.O_NONBLOCK, 0)
-	if err != nil {
-		return nil, nil, fmt.Errorf("the result file: %w", err)
-	}
-	defer f.Close()
-	if info, err := f.Stat(); err != nil || !info.Mode().IsRegular() {
-		return nil, nil, fmt.Errorf("the result file %s is not a regular file", path)
-	}
-	data, err := io.ReadAll(io.LimitReader(f, maxResult+1))
+	data, err := readResult(path)
 	if err != nil {
 		return nil, nil, err
-	}
-	if len(data) > maxResult {
-		return nil, nil, fmt.Errorf("the result file %s is over 1 MiB", path)
 	}
 	rows, err := read(data)
 	if err != nil {
 		return nil, nil, err
 	}
 	return data, rows, nil
+}
+
+// readResult reads the file at path by the rules of a result file: a link as
+// the last part of the path is refused, the file must be a regular file, and
+// at most 1 MiB is read.
+func readResult(path string) ([]byte, error) {
+	f, err := os.OpenFile(path, os.O_RDONLY|syscall.O_NOFOLLOW|syscall.O_NONBLOCK, 0)
+	if err != nil {
+		return nil, fmt.Errorf("the result file: %w", err)
+	}
+	defer f.Close()
+	if info, err := f.Stat(); err != nil || !info.Mode().IsRegular() {
+		return nil, fmt.Errorf("the result file %s is not a regular file", path)
+	}
+	data, err := io.ReadAll(io.LimitReader(f, maxResult+1))
+	if err != nil {
+		return nil, err
+	}
+	if len(data) > maxResult {
+		return nil, fmt.Errorf("the result file %s is over 1 MiB", path)
+	}
+	return data, nil
 }
 
 // ProbeResultSchema is the form of result/probe.tsv: the block probe-result

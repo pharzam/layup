@@ -41,12 +41,18 @@ no event, a **session of a phase**:
   default branch as its base, and its start row in `sessions.tsv`;
 - its pair is the first admitted pair of the routing register for its role and
   the tier `reasoning` ([`session.md`](session.md#the-routing-register)), but
-  that of the completeness review (below); its
+  that of the completeness review (below); **decided here** (task `T-gmey`),
+  a harness is read at the version of its last row of `records:harnesses.tsv`,
+  as no version command runs before the session; the session's own version
+  check then reads the version, and probes it when its last probe did not
+  pass; its
   role is that of the step table of `architecture.md` §9: `systems-architect`
   for the review of meaning and of the answers, `qa-engineer` for the
   completeness review, and `product-owner` for the numbering and the draft;
 - its directory ([`session.md`](session.md#the-session-directory)) gains
-  `input/`, made with the directory and before the start row: the files that
+  `input/`, which `internal/session` makes right after the rest of the
+  directory (`prompt.md` its last file), and before the start row (one
+  reading, task `T-gmey`): the files that
   its step reads, byte for byte from the records (`problem-statement.md` from
   `records:start/problem-statement.md` for each step; `spans.tsv` and
   `draft.tsv` for the completeness review; `questions.tsv` and `answers.tsv` for
@@ -61,11 +67,16 @@ no event, a **session of a phase**:
   file (a link as the last part of its path is refused; at most 1 MiB;
   [`session.md`](session.md#req-005--the-result-of-a-session)), checks it, and
   commits its records with the session's telemetry row in one records commit,
-  then posts the session's comment, as a probe does;
+  then posts the session's comment, as a probe does; **decided here** (task
+  `T-gmey`), the first line of that comment is `<session>: <role> session of
+  <step>: <class>`, with `, refused file` when its file is refused, for
+  example `S-1a2b3c4d: systems-architect session of meaning: done`;
 - a session whose end is not `done`, or whose file its block or its check
   refuses, writes no record of its file; the step is `fail`, naming the session
   and the reason, and the run stops (a restart runs the step again with a new
-  session).
+  session). **Decided here** (task `T-gmey`): its records commit holds its
+  telemetry row alone, as the telemetry record has a row for each session that
+  started ([`records.md`](records.md#req-011--the-telemetry-record)).
 
 **Reason:** a task, an attempt and its events are the task loop's (`M2e`);
 Intake has none, and a probe has the same frame. **Rejected:** a task session
@@ -393,6 +404,7 @@ release, the code of `M2b` and `M2a` included.
 | A routing register with no admitted pair for a role of Intake | the step is `fail` (`pair`), no session starts |
 | No admitted pair of `qa-engineer` on a harness other than that of the numbering and the draft | `completeness` is `fail` ("not run: no admitted pair on another harness"); no batch |
 | A session's output file that is missing, a link, over 1 MiB, or that its block refuses | the step is `fail`, naming the session; nothing of the file is committed |
+| A refused start of a session of Intake (`session.md`, The start of a session) | the step is `fail`, naming the session and the refusal; no record (**decided here**, task `T-gmey`: no event holds it, and the row of a refused probe is the probe's own) |
 | A quote that occurs nowhere, more than once, or holds a tab | the file of the review is refused (as above) |
 | A span table that fails the span check | `spans` is `fail`; `spec/check.tsv` is committed; no batch; a restart runs `numbering` again |
 | A draft row whose `covers` names no fact, or a `need` or `constraint` fact with no requirement | the draft is refused |

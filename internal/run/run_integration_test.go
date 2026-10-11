@@ -3,10 +3,12 @@
 package run
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -21,6 +23,7 @@ import (
 	"github.com/pharzam/layup/internal/forge"
 	"github.com/pharzam/layup/internal/forge/github"
 	"github.com/pharzam/layup/internal/git"
+	"github.com/pharzam/layup/internal/psb"
 	"github.com/pharzam/layup/internal/tsv"
 )
 
@@ -310,7 +313,7 @@ func TestARestartWithAnotherVersionFailsAtVersion(t *testing.T) {
 	}
 	// The same version: the lease is released, so it is taken at once; each
 	// step of Start is done.
-	allDone(t, "the restart", Restart(context.Background(), w.config("0.1.0-dev")), "forge", "clone", "version", "lease", "probe", "phase")
+	allDone(t, "the restart", Restart(context.Background(), w.config("0.1.0-dev")), "forge", "clone", "version", "lease", "probe", "rule-gaps")
 }
 
 // A run that stopped at opening: the restart takes the lease over from the
@@ -514,5 +517,54 @@ func TestARestartWithAHarnessRegisterThatChanged(t *testing.T) {
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	cfg = w.config("0.1.0-dev")
 	cfg.Harnesses = cfg.Harnesses[:1] // devin removed
-	allDone(t, "the restart with a harness lost", Restart(context.Background(), cfg), "forge", "clone", "version", "lease", "probe", "phase")
+	allDone(t, "the restart with a harness lost", Restart(context.Background(), cfg), "forge", "clone", "version", "lease", "probe", "rule-gaps")
+}
+
+// The step rule-gaps (row 43a, task T-qk66, #217): after a complete Start, the
+// restart commits the table of layup psb check on start/problem-statement.md
+// as intake/psb.tsv, in place of the row phase, and releases the lease; a
+// second restart finds the record and runs nothing, so the blob is the same.
+func TestTheStepRuleGaps(t *testing.T) {
+	w := newWorld(t)
+	cfg := w.config("0.1.0-dev")
+	cfg.PSB = []byte("# The problem\n\nThe service is fast.\n")
+	allDone(t, "Start", w.start(cfg), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
+	var progress []string
+	cfg = w.config("0.1.0-dev")
+	cfg.Step = func(i, n int, name string) { progress = append(progress, fmt.Sprintf("%d/%d %s", i, n, name)) }
+	rows := Restart(context.Background(), cfg)
+	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps")
+	if want := []string{"1/6 forge", "2/6 clone", "3/6 version", "4/6 lease", "5/6 probe", "6/6 rule-gaps"}; strings.Join(progress, ", ") != strings.Join(want, ", ") {
+		t.Errorf("the progress %q, want %q", progress, want)
+	}
+	// What layup psb check prints on the same file (internal/cli/cli.go):
+	// psb.WriteTSV of psb.Check.
+	var want bytes.Buffer
+	psb.WriteTSV(&want, psb.Check(string(show(t, w.bare, "refs/heads/layup-records", "start/problem-statement.md"))))
+	got := show(t, w.bare, "refs/heads/layup-records", "intake/psb.tsv")
+	if got != want.String() || !strings.Contains(got, "\tG1\t") {
+		t.Errorf("intake/psb.tsv:\n%s\nwant:\n%s", got, want.String())
+	}
+	if !strings.Contains(show(t, w.bare, "refs/heads/layup-records", "lease.tsv"), "\treleased\n") {
+		t.Error("the lease is not released after the last row")
+	}
+	blob := gitOut(t, w.bare, "rev-parse", "refs/heads/layup-records:intake/psb.tsv")
+	again := Restart(context.Background(), w.config("0.1.0-dev"))
+	if last := again[len(again)-1]; last.Name != "rule-gaps" || last.Result != "done" || last.Detail != "done before" {
+		t.Errorf("the second restart's last row %+v, want rule-gaps done before", last)
+	}
+	if gitOut(t, w.bare, "rev-parse", "refs/heads/layup-records:intake/psb.tsv") != blob {
+		t.Error("the second restart changed intake/psb.tsv")
+	}
+}
+
+// Start is done only when the watch is written too: a start.tsv whose watch is
+// still — gives the row phase, which runs the watch again (row 43a).
+func TestARestartWhoseWatchIsNotWrittenRunsPhase(t *testing.T) {
+	w := newWorld(t)
+	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
+	start := show(t, w.bare, "refs/heads/layup-records", "start/start.tsv")
+	i := strings.Index(start, "\nwatch\t")
+	pushRecords(t, w.bare, map[string]string{"start/start.tsv": start[:i] + "\nwatch\t—\trun\n"}, "records: no watch yet")
+	allDone(t, "the restart", Restart(context.Background(), w.config("0.1.0-dev")), "forge", "clone", "version", "lease", "probe", "phase")
 }

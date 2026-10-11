@@ -9,7 +9,7 @@ package run
 //
 //	go test -tags=uat -run TestTheDemoOfM2b -timeout 60m -v ./internal/run -args -host DIR -target OWNER/NAME
 //
-// It runs the steps of the restart on one run, and between probe and phase,
+// It runs the steps of the restart on one run, and between probe and the row after it,
 // with the lease held, the developer session of a small fixed task.
 
 import (
