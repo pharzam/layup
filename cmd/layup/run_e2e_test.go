@@ -192,8 +192,11 @@ case "$p" in
 *)
 	out=$(printf '%s\n' "$p" | sed -n 's/^The output file: //p')
 	in=$(printf '%s\n' "$p" | sed -n 's/^The problem statement: //p')
+	sp=$(printf '%s\n' "$p" | sed -n 's/^The span table: //p')
 	case "$out" in
 	*/meaning.tsv) printf 'kind\tquote\tquestion\n' > "$out" ;;
+	*/draft.tsv) LC_ALL=C awk -F '\t' 'BEGIN { printf "kind\tstatement\tcovers\tcriterion\n" }
+		NR > 1 && $4 == "need" { printf "requirement\tThe statement of fact %s.\t%s\tThe criterion of fact %s.\n", $3, $3, $3 }' "$sp" > "$out" ;;
 	*) LC_ALL=C awk 'BEGIN { printf "start\tend\tfact\tclass\treason\n"; o = 0; n = 0 }
 		{ l = length($0); if (l > 0) { n++; printf "%d\t%d\t%d\tneed\t\342\200\224\n", o, o + l, n }; o += l + 1 }' "$in" > "$out" ;;
 	esac ;;
@@ -306,7 +309,8 @@ func TestRunNewThenRestart(t *testing.T) {
 	again := w.run(t, binary, "run", "acme/target", "--host", ".")
 	if again.code != 0 || !strings.HasPrefix(again.stdout, "step\tresult\tdetail\nforge\tdone\t") || !strings.Contains(again.stdout, "\nrule-gaps\tdone\t") ||
 		!strings.Contains(again.stdout, "\nmeaning\tdone\t0 gaps of meaning, in intake/meaning.tsv\n") ||
-		!strings.HasSuffix(again.stdout, "\nnumbering\tdone\t1 spans, 1 facts, in spec/spans.tsv\nspans\tdone\tthe span check passed, in spec/check.tsv\n") {
+		!strings.HasSuffix(again.stdout, "\nnumbering\tdone\t1 spans, 1 facts, in spec/spans.tsv\nspans\tdone\tthe span check passed, in spec/check.tsv\n"+
+			"draft\tdone\t1 rows, in spec/draft.tsv\n") {
 		t.Fatalf("layup run TARGET: exit %d\n%s\n%s", again.code, again.stdout, again.stderr)
 	}
 	// The demo of row 38: the restart's step probe probes the scripted
@@ -317,11 +321,12 @@ func TestRunNewThenRestart(t *testing.T) {
 	if out, err := gitRun(w.bare, "show", "refs/heads/layup-records:harnesses.tsv"); err != nil || !strings.Contains(out, "\tfake\t1.0.0\tm1\tpassed\t—\tAGENTS.md\t") {
 		t.Errorf("harnesses.tsv of the records branch: %v\n%s", err, out)
 	}
-	// The steps meaning (row 43b) and numbering (row 44) each run one session,
-	// which posts its own comment after the probe's.
-	if len(w.forge.posted) != 3 || !strings.HasPrefix(w.forge.posted[0], "S-") || !strings.Contains(w.forge.posted[0], ": probe of fake 1.0.0: passed\n") ||
+	// The steps meaning (row 43b), numbering (row 44) and draft (row 45a) each
+	// run one session, which posts its own comment after the probe's.
+	if len(w.forge.posted) != 4 || !strings.HasPrefix(w.forge.posted[0], "S-") || !strings.Contains(w.forge.posted[0], ": probe of fake 1.0.0: passed\n") ||
 		!strings.HasSuffix(w.forge.posted[1], ": systems-architect session of meaning: done\n") ||
-		!strings.HasSuffix(w.forge.posted[2], ": product-owner session of numbering: done\n") {
+		!strings.HasSuffix(w.forge.posted[2], ": product-owner session of numbering: done\n") ||
+		!strings.HasSuffix(w.forge.posted[3], ": product-owner session of draft: done\n") {
 		t.Errorf("the comments on the control issue %q", w.forge.posted)
 	}
 	// The same bytes on a repeat in a new world, as the first run changes
@@ -333,9 +338,9 @@ func TestRunNewThenRestart(t *testing.T) {
 	// A second restart in the same world probes none: the last probe at the
 	// version passed.
 	third := w.run(t, binary, "run", "acme/target", "--host", ".")
-	if third.code != 0 || !strings.Contains(third.stdout, "\nprobe\tdone\tprobed and passed 0, probed and failed 0, skipped 0\n") || len(w.forge.posted) != 3 ||
+	if third.code != 0 || !strings.Contains(third.stdout, "\nprobe\tdone\tprobed and passed 0, probed and failed 0, skipped 0\n") || len(w.forge.posted) != 4 ||
 		!strings.Contains(third.stdout, "\nrule-gaps\tdone\tdone before\n") || !strings.Contains(third.stdout, "\nmeaning\tdone\tdone before\n") ||
-		!strings.HasSuffix(third.stdout, "\nnumbering\tdone\tdone before\nspans\tdone\tdone before\n") {
+		!strings.HasSuffix(third.stdout, "\nnumbering\tdone\tdone before\nspans\tdone\tdone before\ndraft\tdone\tdone before\n") {
 		t.Errorf("layup run TARGET again: exit %d, %d comments\n%s", third.code, len(w.forge.posted), third.stdout)
 	}
 }
