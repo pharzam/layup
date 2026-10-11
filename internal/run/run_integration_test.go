@@ -24,6 +24,7 @@ import (
 	"github.com/pharzam/layup/internal/forge/github"
 	"github.com/pharzam/layup/internal/git"
 	"github.com/pharzam/layup/internal/psb"
+	"github.com/pharzam/layup/internal/spec"
 	"github.com/pharzam/layup/internal/tsv"
 )
 
@@ -168,8 +169,10 @@ func newWorld(t *testing.T) *world {
 	}
 	w.key = k
 	// The world's harness, claude, is its own scripts (row 43b): it answers a
-	// probe as probeHarness does, and the meaning prompt with bin/meaning.tsv,
-	// which a test may replace (no gap by default).
+	// probe as probeHarness does; and a session of a phase with the file of
+	// bin/ of its output's name, which a test may write (bin/meaning.tsv: no
+	// gap), else, for the numbering, a span table that covers the problem
+	// statement, one fact per line that is not empty (row 44).
 	bin := filepath.Join(w.dir, "bin")
 	os.MkdirAll(bin, 0o755)
 	os.WriteFile(filepath.Join(bin, "version"), []byte("#!/bin/sh\necho 1.0.0\n"), 0o755)
@@ -183,7 +186,14 @@ case "$p" in
 	printf 'kind\tvalue\ntoken\t%s\nfile\tAGENTS.md\n' "$token" > "$result" ;;
 *)
 	out=$(printf '%s\n' "$p" | sed -n 's/^The output file: //p')
-	cat "$(dirname "$0")/meaning.tsv" > "$out" ;;
+	in=$(printf '%s\n' "$p" | sed -n 's/^The problem statement: //p')
+	f="$(dirname "$0")/$(basename "$out")"
+	if [ -f "$f" ]; then
+		cat "$f" > "$out"
+	else
+		LC_ALL=C awk 'BEGIN { printf "start\tend\tfact\tclass\treason\n"; o = 0; n = 0 }
+			{ l = length($0); if (l > 0) { n++; printf "%d\t%d\t%d\tneed\t\342\200\224\n", o, o + l, n }; o += l + 1 }' "$in" > "$out"
+	fi ;;
 esac
 `), 0o755)
 	return w
@@ -208,7 +218,7 @@ func (w *world) config(version string) Config {
 		Register: reg, Harnesses: [][]string{{"claude", "10.0", "60", filepath.Join(w.dir, "bin", "harness"), "stdin", filepath.Join(w.dir, "bin", "version"),
 			"", "", "LAYUP-TEST-RULES.md", "", "none", "subscription", ""}, {"devin", "", "30"}},
 		Models:  [][]string{{"claude", "m1", "1000000", "https://example.invalid", "2026-10-09T12:00:00Z", "yes", ""}},
-		Routing: [][]string{{"systems-architect", "reasoning", "1", "claude", "m1"}},
+		Routing: [][]string{{"systems-architect", "reasoning", "1", "claude", "m1"}, {"product-owner", "reasoning", "1", "claude", "m1"}},
 		Forge:   adapter, Clock: clock,
 		Progress: progress, RunID: "0123456789abcdef", HostName: "host-1", Version: version,
 		Baseline: "file://" + w.baseline, LayupPin: "a95965534b14b0bf14ad74da0c9a45b5f4aedf88"}
@@ -345,7 +355,7 @@ func TestARestartWithAnotherVersionFailsAtVersion(t *testing.T) {
 	}
 	// The same version: the lease is released, so it is taken at once; each
 	// step of Start is done.
-	allDone(t, "the restart", Restart(context.Background(), w.config("0.1.0-dev")), "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning")
+	allDone(t, "the restart", Restart(context.Background(), w.config("0.1.0-dev")), "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans")
 }
 
 // A run that stopped at opening: the restart takes the lease over from the
@@ -549,7 +559,7 @@ func TestARestartWithAHarnessRegisterThatChanged(t *testing.T) {
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	cfg = w.config("0.1.0-dev")
 	cfg.Harnesses = cfg.Harnesses[:1] // devin removed
-	allDone(t, "the restart with a harness lost", Restart(context.Background(), cfg), "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning")
+	allDone(t, "the restart with a harness lost", Restart(context.Background(), cfg), "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans")
 }
 
 // The step rule-gaps (row 43a, task T-qk66, #217): after a complete Start, the
@@ -565,8 +575,8 @@ func TestTheStepRuleGaps(t *testing.T) {
 	cfg = w.config("0.1.0-dev")
 	cfg.Step = func(i, n int, name string) { progress = append(progress, fmt.Sprintf("%d/%d %s", i, n, name)) }
 	rows := Restart(context.Background(), cfg)
-	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning")
-	if want := []string{"1/6 forge", "2/6 clone", "3/7 version", "4/7 lease", "5/7 probe", "6/7 rule-gaps", "7/7 meaning"}; strings.Join(progress, ", ") != strings.Join(want, ", ") {
+	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans")
+	if want := []string{"1/6 forge", "2/6 clone", "3/9 version", "4/9 lease", "5/9 probe", "6/9 rule-gaps", "7/9 meaning", "8/9 numbering", "9/9 spans"}; strings.Join(progress, ", ") != strings.Join(want, ", ") {
 		t.Errorf("the progress %q, want %q", progress, want)
 	}
 	// What layup psb check prints on the same file (internal/cli/cli.go):
@@ -582,7 +592,7 @@ func TestTheStepRuleGaps(t *testing.T) {
 	}
 	blob := gitOut(t, w.bare, "rev-parse", "refs/heads/layup-records:intake/psb.tsv")
 	again := Restart(context.Background(), w.config("0.1.0-dev"))
-	if gaps := again[len(again)-2]; gaps.Name != "rule-gaps" || gaps.Result != "done" || gaps.Detail != "done before" {
+	if gaps := rowOf(again, "rule-gaps"); gaps.Name != "rule-gaps" || gaps.Result != "done" || gaps.Detail != "done before" {
 		t.Errorf("the second restart's row %+v, want rule-gaps done before", gaps)
 	}
 	if gitOut(t, w.bare, "rev-parse", "refs/heads/layup-records:intake/psb.tsv") != blob {
@@ -612,8 +622,8 @@ func TestTheStepMeaning(t *testing.T) {
 	cfg.PSB = []byte("# The problem\n\nThe service is fast.\n")
 	allDone(t, "Start", w.start(cfg), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	rows := Restart(context.Background(), w.config("0.1.0-dev"))
-	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning")
-	if d := rows[len(rows)-1].Detail; d != "1 gaps of meaning, in intake/meaning.tsv" {
+	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans")
+	if d := rowOf(rows, "meaning").Detail; d != "1 gaps of meaning, in intake/meaning.tsv" {
 		t.Errorf("the detail of meaning %q", d)
 	}
 	got := show(t, w.bare, "refs/heads/layup-records", "intake/meaning.tsv")
@@ -628,8 +638,8 @@ func TestTheStepMeaning(t *testing.T) {
 	}
 	blob := gitOut(t, w.bare, "rev-parse", "refs/heads/layup-records:intake/meaning.tsv")
 	again := Restart(context.Background(), w.config("0.1.0-dev"))
-	if last := again[len(again)-1]; last.Name != "meaning" || last.Result != "done" || last.Detail != "done before" {
-		t.Errorf("the second restart's last row %+v, want meaning done before", last)
+	if m := rowOf(again, "meaning"); m.Result != "done" || m.Detail != "done before" {
+		t.Errorf("the second restart's row %+v, want meaning done before", m)
 	}
 	if gitOut(t, w.bare, "rev-parse", "refs/heads/layup-records:intake/meaning.tsv") != blob {
 		t.Error("the second restart changed intake/meaning.tsv")
@@ -676,5 +686,108 @@ func TestTheStepMeaningFails(t *testing.T) {
 				t.Error("a session of systems-architect started with no pair")
 			}
 		})
+	}
+}
+
+// rowOf gives the row of the step name, or the zero Step.
+func rowOf(rows []Step, name string) Step {
+	for _, r := range rows {
+		if r.Name == name {
+			return r
+		}
+	}
+	return Step{}
+}
+
+// The steps numbering and spans (row 44, task T-hiv9, #219): a session of
+// product-owner writes the span table, code adds each span's text, and the
+// span check of the records commits its table; the lease is released, and a
+// second restart finds both records and runs nothing.
+func TestTheStepsNumberingAndSpans(t *testing.T) {
+	w := newWorld(t)
+	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
+	rows := Restart(context.Background(), w.config("0.1.0-dev"))
+	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans")
+	if n, s := rowOf(rows, "numbering").Detail, rowOf(rows, "spans").Detail; n != "2 spans, 2 facts, in spec/spans.tsv" || s != "the span check passed, in spec/check.tsv" {
+		t.Errorf("the details %q and %q", n, s)
+	}
+	// The world's brief is "# The problem\n\nbyte for byte\n".
+	if got := show(t, w.bare, "refs/heads/layup-records", "spec/spans.tsv"); got != "start\tend\tfact\tclass\treason\ttext\n0\t13\t1\tneed\t—\t# The problem\n15\t28\t2\tneed\t—\tbyte for byte\n" {
+		t.Errorf("spec/spans.tsv:\n%q", got)
+	}
+	// spec/check.tsv is the table of spec.Check on the records, by its schema.
+	spans, err := spec.Read([]byte(show(t, w.bare, "refs/heads/layup-records", "spec/spans.tsv")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var want bytes.Buffer
+	tsv.Write(&want, spec.CheckSchema, spec.Check(spans, []byte(show(t, w.bare, "refs/heads/layup-records", "start/problem-statement.md"))))
+	if got := show(t, w.bare, "refs/heads/layup-records", "spec/check.tsv"); got != want.String() || strings.Contains(got, "fail") {
+		t.Errorf("spec/check.tsv:\n%s\nwant:\n%s", got, want.String())
+	}
+	if !strings.Contains(show(t, w.bare, "refs/heads/layup-records", "sessions.tsv"), "\tproduct-owner\tclaude\t1.0.0\tm1\t") ||
+		!strings.Contains(show(t, w.bare, "refs/heads/layup-records", "lease.tsv"), "\treleased\n") {
+		t.Error("no session of product-owner, or the lease not released")
+	}
+	again := Restart(context.Background(), w.config("0.1.0-dev"))
+	if n, s := rowOf(again, "numbering"), rowOf(again, "spans"); n.Detail != "done before" || s.Detail != "done before" || s.Result != "done" {
+		t.Errorf("the second restart's rows %+v and %+v; want both done before", n, s)
+	}
+}
+
+// The demo of row 44: after a failed span check the run stops at spans, so no
+// row after it runs and no batch is posted, with spec/check.tsv committed and
+// the lease held; the next restart (after the takeover) runs numbering again
+// with a new session, and spans passes, both records replaced.
+func TestAFailedSpanCheckRunsNumberingAgain(t *testing.T) {
+	w := newWorld(t)
+	// Two spans over byte 10 of "# The problem\n\nbyte for byte\n".
+	bad := filepath.Join(w.dir, "bin", "spans.tsv")
+	os.WriteFile(bad, []byte("start\tend\tfact\tclass\treason\n0\t13\t1\tneed\t—\n10\t28\t2\tneed\t—\n"), 0o644)
+	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
+	rows := Restart(context.Background(), w.config("0.1.0-dev"))
+	last := rows[len(rows)-1]
+	if last.Name != "spans" || last.Result != "fail" || last.Detail != "the span check: cover fail: byte 10 is in 2 spans" {
+		t.Fatalf("the last row %+v; want spans fail, the first fail row of the check", last)
+	}
+	if got := show(t, w.bare, "refs/heads/layup-records", "spec/check.tsv"); !strings.Contains(got, "\ncover\tfail\tbyte 10 is in 2 spans\n") {
+		t.Errorf("spec/check.tsv:\n%s", got)
+	}
+	if !strings.Contains(show(t, w.bare, "refs/heads/layup-records", "lease.tsv"), "\theld\n") {
+		t.Error("the lease is not held after the fail")
+	}
+	// A rerun whose session writes the same table fails the same way: its
+	// table equals the last spec/check.tsv, which is kept as it is.
+	same := Restart(context.Background(), w.config("0.1.0-dev"))
+	if last := same[len(same)-1]; last.Name != "spans" || last.Result != "fail" || last.Detail != "the span check: cover fail: byte 10 is in 2 spans" {
+		t.Fatalf("a rerun with the same table: the last row %+v; want spans fail as before", last)
+	}
+	os.Remove(bad) // the next session covers the file
+	again := Restart(context.Background(), w.config("0.1.0-dev"))
+	allDone(t, "the restart after the fail", again, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans")
+	if n := rowOf(again, "numbering").Detail; n != "2 spans, 2 facts, in spec/spans.tsv" {
+		t.Errorf("numbering after a failed check: %q; want a new session's spans", n)
+	}
+	if got := show(t, w.bare, "refs/heads/layup-records", "spec/check.tsv"); strings.Contains(got, "fail") {
+		t.Errorf("spec/check.tsv after the rerun:\n%s", got)
+	}
+	if n := strings.Count(show(t, w.bare, "refs/heads/layup-records", "sessions.tsv"), "\tproduct-owner\t"); n != 3 {
+		t.Errorf("%d sessions of product-owner; want 3, each rerun's a new one", n)
+	}
+}
+
+// With no route for product-owner, numbering is fail (pair) and no session of
+// product-owner starts.
+func TestNumberingWithNoPair(t *testing.T) {
+	w := newWorld(t)
+	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
+	cfg := w.config("0.1.0-dev")
+	cfg.Routing = cfg.Routing[:1] // systems-architect only
+	rows := Restart(context.Background(), cfg)
+	if last := rows[len(rows)-1]; last.Name != "numbering" || last.Result != "fail" || !strings.HasPrefix(last.Detail, "pair: no admitted pair") {
+		t.Errorf("the last row %+v; want numbering fail (pair)", last)
+	}
+	if strings.Contains(show(t, w.bare, "refs/heads/layup-records", "sessions.tsv"), "\tproduct-owner\t") {
+		t.Error("a session of product-owner started with no pair")
 	}
 }
