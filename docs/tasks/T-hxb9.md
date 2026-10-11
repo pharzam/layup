@@ -36,3 +36,34 @@ intent form and `budget.tsv`.
 
 **Tests:** [`test-runs.md`](../../runs/T-hxb9/test-runs.md): red before the code;
 17 of 17 mutations caught; green at the three levels.
+
+## Review rounds
+
+The record is a comment on #223. Round 1 (Claude Fable 5.1, effort `xhigh`, a
+fresh read-only session in a clone at `86e40b8`, cycle 0, the cap): `nothing
+material in scope`, six notes. Notes 1, 2, 4, 5 and 6 (the class of the spaces
+trimmed, the tab rule in `records.md`, the detail of a budget not written, the
+form of `decimal`, a lesson of a shared fixture) are #256; note 3, a unit test
+written after its code, is in the test record.
+
+## Verdict
+
+Delivered: the step `answers`, the copies of the comments of the Intake issue,
+the answers of the approvers from first copies after the batch, the wait, and
+`budget.tsv` from the intent form; a step that waits ends the restart. The
+review ended by decay at cycle 0 of cap 1. The diff against `4c90530`, the
+branch's base, is inside 1,400 lines over 24 files. CI runs the three levels on
+the landing head. Next: row 47b.
+
+## Resource record
+
+Recorded, not budgeted (ADR-0007). UTC; reviewers' tokens are `modelUsage`;
+the author's are not reported.
+
+| Part | Expected tier | Model | Effort | Tokens | Elapsed |
+| ---- | ------------- | ----- | ------ | ------ | ------- |
+| The plan | reasoning | Claude Opus 5.5 | not reported | not reported | 2026-10-11 10:40 to 10:41 (the claim to the post) |
+| The plan review | reasoning | Claude Fable 5.1 | `xhigh` | 1,734,197 (USD 7.41) | 6 min 57 s |
+| The code, test first | execution | Claude Opus 5.5 | not reported | not reported | 10:49 to 11:06 |
+| Round 1 | reasoning | Claude Fable 5.1 | `xhigh` | 713,823 (USD 4.39) | 10 min 44 s |
+| The close-out | execution | Claude Opus 5.5 | not reported | not reported | 11:17 to 11:18 |
