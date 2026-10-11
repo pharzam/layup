@@ -93,13 +93,15 @@ func reviewKeep(questions [][]string) func(id string, data []byte) (map[string][
 const reviewPrompt = `You review the answers of the idea owner to the questions of a problem
 statement, for LAYUP. Change no file in this repository and make no commit.
 
+The problem statement: {input}
 The questions: {questions}
 The answers: {answers}
 The output file: {output}
 
 The questions are tab-separated values, one row per question (its ID in the
 column id, the question in the column question, its state in the column
-state); the answers name the question they answer. Write the output file as
+state, and the byte offsets of its quote in the problem statement in the
+columns start and end); the answers name the question they answer. Write the output file as
 tab-separated values, with the header line "question<TAB>state<TAB>reason" and
 one row for each question whose state is answered: the state closed when the
 answer closes the gap, or open when it does not, and the reason on one line.
@@ -107,13 +109,15 @@ Then end.
 `
 
 func reviewText(input map[string]string, output string) []byte {
-	return []byte(strings.NewReplacer("{questions}", input["questions.tsv"], "{answers}", input["answers.tsv"], "{output}", output).Replace(reviewPrompt))
+	return []byte(strings.NewReplacer("{input}", input["problem-statement.md"], "{questions}", input["questions.tsv"],
+		"{answers}", input["answers.tsv"], "{output}", output).Replace(reviewPrompt))
 }
 
 // answersReviewStep is the step answers-review of Intake: "done before" when
 // intake/answers-review.tsv exists; with no answered question, the record with
-// no row and no session; else one session of systems-architect on questions.tsv
-// and answers.tsv of the records.
+// no row and no session; else one session of systems-architect on the problem
+// statement, questions.tsv and answers.tsv of the records (intake.md, The
+// sessions of Intake: the problem statement for each step).
 func (r *state) answersReviewStep(ctx context.Context) Step {
 	const name = "answers-review"
 	if data, err := r.store.ReadFile(ctx, "intake/answers-review.tsv"); err != nil {
@@ -121,8 +125,8 @@ func (r *state) answersReviewStep(ctx context.Context) Step {
 	} else if data != nil {
 		return done(name, "done before")
 	}
-	var inputs [2][]byte
-	for i, path := range []string{"questions.tsv", "intake/answers.tsv"} {
+	var inputs [3][]byte
+	for i, path := range []string{"questions.tsv", "intake/answers.tsv", "start/problem-statement.md"} {
 		data, err := r.store.ReadFile(ctx, path)
 		if err != nil {
 			return fail(name, err)
@@ -154,7 +158,7 @@ func (r *state) answersReviewStep(ctx context.Context) Step {
 		return fail(name, err)
 	}
 	if _, err := s.PhaseSession(ctx, PhaseSpec{Step: name, Role: "systems-architect", Harness: h, Model: m, Models: r.cfg.Models,
-		Base: base, Records: r.store.Base(), Input: map[string][]byte{"questions.tsv": inputs[0], "answers.tsv": inputs[1]},
+		Base: base, Records: r.store.Base(), Input: map[string][]byte{"questions.tsv": inputs[0], "answers.tsv": inputs[1], "problem-statement.md": inputs[2]},
 		Output: "answers-review.tsv", Prompt: reviewText, Keep: reviewKeep(questions)}); err != nil {
 		return fail(name, err)
 	}
@@ -249,6 +253,9 @@ func (r *state) followUpStep(ctx context.Context) Step {
 	psbData, err := r.store.ReadFile(ctx, "start/problem-statement.md")
 	if err != nil {
 		return fail(name, err)
+	}
+	if psbData == nil {
+		return failf(name, "the records have no start/problem-statement.md")
 	}
 	questions, err := r.readRecord(ctx, "questions.tsv", records.ReadQuestions)
 	if err != nil {

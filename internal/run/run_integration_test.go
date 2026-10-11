@@ -200,6 +200,9 @@ case "$p" in
 	in=$(printf '%s\n' "$p" | sed -n 's/^The problem statement: //p')
 	f="$(dirname "$0")/$(basename "$out")"
 	sp=$(printf '%s\n' "$p" | sed -n 's/^The span table: //p')
+	# Each session of a phase reads the problem statement (intake.md, The
+	# sessions of Intake; round 1 of #224).
+	[ -f "$in" ] || exit 3
 	if [ -f "$f" ]; then
 		cat "$f" > "$out"
 	elif [ "$(basename "$out")" = answers-review.tsv ]; then

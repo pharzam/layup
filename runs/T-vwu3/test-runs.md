@@ -1,7 +1,9 @@
 # T-vwu3 — test runs
 
 The review of the answers and the follow-up (#224, row 47b). The order: the
-red of D1 to D4 before the code, then the code, then the documents with it.
+red of D1 to D3 before the code, then the code, then the documents with it.
+D4, the Go schema of `run-steps`, changed with the enum in one edit, and its
+red is not recorded.
 
 ## Red, the unit level (11:30Z, 2026-10-11)
 
@@ -76,6 +78,31 @@ second run (11:39Z to 11:40Z): 12 of 12 caught, each mutant built.
 
 ## Green
 
-At `dceb86c` with the documents (11:41Z to 11:45Z): `go build ./...`, `go vet
+At `dceb86c`, with the documents in the tree and not yet committed (11:41Z to
+11:45Z): `go build ./...`, `go vet
 ./...`, `go test ./...`, `go test -tags=integration ./...` and `go test
 -count=1 -tags=e2e ./...` pass, every package `ok`.
+
+## The fix of round 1 (2026-10-11)
+
+Finding 1: the session of the review got no `problem-statement.md`. The
+world's script now refuses a session of a phase with no problem statement in its
+input (exit 3), and `TestTheReviewOfTheAnswersAndTheFollowUp` went red first
+(12:00Z):
+
+```
+--- FAIL: TestTheReviewOfTheAnswersAndTheFollowUp (5.02s)
+    run_integration_test.go:1164: the restart with the answers: the step answers-review is fail: the session S-3426d66f: crash
+    run_integration_test.go:1164: the restart with the answers: the steps [forge clone version lease probe rule-gaps meaning numbering spans draft completeness batch answers answers-review], want [for
+    run_integration_test.go:1166: the detail of follow-up ""
+    run_integration_test.go:1180: the follow-up asks again []; want the missing, the two unparsed and the open ["Q-001" "Q-002" "Q-003" "Q-004"]
+    run_integration_test.go:1182: git show refs/heads/layup-records:intake/answers-review.tsv: exit status 128
+```
+
+Then the review's input holds `problem-statement.md` and its prompt names it;
+green (12:01Z). Note 4: `follow-up` fails on a missing problem statement, as
+`batch` does.
+
+With the fix (12:01Z to 12:05Z): `go build ./...`, `go vet ./...`, `go test ./...`,
+`go test -tags=integration ./...` and `go test -count=1 -tags=e2e ./...` pass,
+every package `ok`.
