@@ -252,6 +252,13 @@ check that catches it.
   restart reads its records by what they hold, never by a host file that can
   change after they were written; a test restarts with that file changed.
   Learned in `T-x7cs`, fixed in `T-s7vr`.
+- ❌ **A mutant that does not build, counted as caught.** A mutation run counts a
+  mutant as caught when `go test` fails; a mutant that replaces a condition with
+  `false` can leave a variable unused, so the package does not build and the
+  test "fails" with no rule read. It is silent because "FAIL" reads the same.
+  **The check:** a mutant keeps the code building (join the condition with
+  `&& false`), and the run counts a "build failed" as not run, never as caught.
+  Learned in `T-529i`.
 - ❌ **A file list that is empty, read as a pass.** The first draft of check (4) of
   `release-check.sh` listed its files with `git ls-files 'internal/git/*.go'
   ':!*_test.go'`; with one positive pathspec and that exclusion, git 2.47 lists
