@@ -13,8 +13,11 @@
 # DIR holds `backlog`, `completed` and `plan` (docs/tasks/backlog.md,
 # docs/tasks/completed.md and docs/plan/README.md; the fetcher reads them from
 # the forge's main, not from the checkout), `forge/branches` (one branch
-# of the forge per line) and `forge/pr/<number>/head` and `.../body` (one open
-# pull request each, its head branch and its body).
+# of the forge per line), `forge/pr/<number>/head` and `.../body` (one open
+# pull request each, its head branch and its body), `now` (the time of the run,
+# in seconds since the epoch), `forge/pushes` (`BRANCH TAB SECONDS`, a push, a
+# force push or a creation of a branch) and `forge/comments` (`ISSUE TAB
+# SECONDS`, a comment created on an issue).
 #
 # The tasks: the rows of the LAST task table of the plan (the current
 # milestone), in its order, then each task under `## Now` of the backlog that
@@ -31,28 +34,36 @@
 #              its body closes the task's issue: close, closes, closed, fix,
 #              fixes, fixed, resolve, resolves or resolved, in any case, an
 #              optional colon, then `#N` (the forge's set; R1 names three)
-#   running    the forge has a branch named exactly the task ID (the claim rule
-#              of docs/engineering-discipline.md, Starting a task)
+#   in progress  the forge has a branch named exactly the task ID (the claim of
+#              docs/engineering-discipline.md, Starting a task), and the task's
+#              activity, the latest push to that branch or comment created on
+#              its issue, is at most `window` seconds before `now` (#202)
+#   stalled    the branch is there, and no such activity is
 #   blocked    a row of the task's `After` cell names a task that is not done
 #   ready      none of the above
 #
 # The output, one line per task: TASK TAB #ISSUE TAB STATE TAB DETAIL. The
 # detail is the smallest pull request for `in review`, the unfinished
-# predecessors for `blocked` (and for `running`, as `after …`, so a branch
-# started too early shows), else `—`. The same input gives the same bytes.
+# predecessors for `blocked` (and for `in progress` and `stalled`, as
+# `after …`, so a branch started too early shows), else `—`. The same input gives the same bytes.
 #
 # Exit status: 0 = printed, 1 = an input is missing or malformed, or the forge
 # cannot be read, 2 = a bad argument.
 
 set -u
 
+# The window of activity, in seconds: one value, which the reader cuts by and
+# the fetcher's two bounds follow (#202).
+window=86400
+
 die() { printf 'task-state: %s\n' "$1" >&2; exit 1; }
 
 tmp=$(mktemp -d) || die "cannot make a temporary directory"
 trap 'rm -rf "$tmp"' EXIT
 
-# fetch DIR — read the three files of the forge's main into DIR, and the
-# branches and pull requests of the forge into DIR/forge. One progress line
+# fetch DIR — read the three files of the forge's main into DIR, the clock
+# into DIR/now, and the branches, the pull requests, the pushes and the
+# comments of the window of the forge into DIR/forge. One progress line
 # per step: each call to the forge can take seconds
 # (docs/engineering-discipline.md, progress indicators).
 fetch() {
@@ -80,6 +91,26 @@ fetch() {
 		printf '%s\n' "$_h" > "$_in/forge/pr/$_n/head"
 		printf '%s' "$_b" | base64 -d > "$_in/forge/pr/$_n/body" || die "cannot decode the body of pull request $_n"
 	done < "$tmp/prlist"
+	# The activity of the window. `date +%s` is the clock; gh's jq converts the
+	# times (fromdateiso8601, todate), as no option of `date` that does is
+	# portable. The forge's period is the smallest of its periods (day, week,
+	# month, quarter, year) that covers the window, and
+	# the comments' `since` (a time of update, a superset) is now less the
+	# window; the reader cuts both by the same value.
+	_now=$(date -u +%s) || die "cannot read the clock"
+	printf '%s\n' "$_now" > "$_in/now"
+	if [ "$window" -le 86400 ]; then _p=day; elif [ "$window" -le 604800 ]; then _p=week
+	elif [ "$window" -le 2592000 ]; then _p=month; elif [ "$window" -le 7776000 ]; then _p=quarter
+	else _p=year; fi
+	printf 'task-state: reading the pushes of the last %s\n' "$_p" >&2
+	gh api "repos/{owner}/{repo}/activity?time_period=$_p&per_page=100" --paginate \
+		-q '.[] | select(.activity_type == "push" or .activity_type == "force_push" or .activity_type == "branch_creation") | select(.ref | startswith("refs/heads/")) | "\(.ref | ltrimstr("refs/heads/"))\t\(.timestamp | fromdateiso8601)"' \
+		> "$_in/forge/pushes" || die "gh: cannot read the activity"
+	_since=$(gh api rate_limit -q "$((_now - window)) | todate") || die "gh: cannot convert the time"
+	printf 'task-state: reading the comments since %s\n' "$_since" >&2
+	gh api "repos/{owner}/{repo}/issues/comments?since=$_since&per_page=100" --paginate \
+		-q '.[] | "\(.issue_url | split("/") | last)\t\(.created_at | fromdateiso8601)"' \
+		> "$_in/forge/comments" || die "gh: cannot read the comments"
 }
 
 case $# in
@@ -96,7 +127,7 @@ case $# in
 	exit 2 ;;
 esac
 
-for f in backlog completed plan forge/branches; do
+for f in backlog completed plan now forge/branches forge/pushes forge/comments; do
 	[ -f "$in/$f" ] || die "missing input: $f"
 done
 
@@ -108,6 +139,10 @@ find "$tmp/n" -type f | while IFS= read -r f; do
 	tr -d '\r' < "$f" > "$f.lf" && mv "$f.lf" "$f"
 done
 in=$tmp/n
+_now=$(sed -n 1p "$in/now")
+case $_now in
+''|*[!0-9]*) die "now is not a number of seconds: $_now" ;;
+esac
 
 # The open pull requests, one line each: NUMBER TAB HEAD TAB ISSUES, where
 # ISSUES are the issues its body closes, comma-separated. A keyword counts only
@@ -213,18 +248,21 @@ now && /^- \*\*T-[0-9a-z][0-9a-z][0-9a-z][0-9a-z]\*\*/ {
 }' "$in/backlog" > "$tmp/now" || exit 1
 
 # The state of each task.
-awk -F'\t' -v OFS='\t' -v dash='—' '
+awk -F'\t' -v OFS='\t' -v dash='—' -v window="$window" '
 FILENAME == ARGV[1] { rowtask[$2] = $3; taskrow[$3] = $2; taskafter[$3] = $5; if ($1 > last) last = $1; nrows++; rt[nrows] = $1; rr[nrows] = $2; rk[nrows] = $3; ri[nrows] = $4; ra[nrows] = $5; next }
 FILENAME == ARGV[2] { done[$1] = 1; next }
 FILENAME == ARGV[3] { nnow++; nt[nnow] = $1; ni[nnow] = $2; next }
 FILENAME == ARGV[4] { branch[$0] = 1; next }
+FILENAME == ARGV[6] { now = $1 + 0; next }
+FILENAME == ARGV[7] { if (!($1 in pushed) || $2 + 0 > pushed[$1]) pushed[$1] = $2 + 0; next }
+FILENAME == ARGV[8] { if (!($1 in commented) || $2 + 0 > commented[$1]) commented[$1] = $2 + 0; next }
 FILENAME == ARGV[5] {
 	if (!($2 in review) || $1 + 0 < review[$2] + 0) review[$2] = $1
 	k = split($3, c, ",")
 	for (i = 1; i <= k; i++) if (!(("#" c[i]) in review) || $1 + 0 < review["#" c[i]] + 0) review["#" c[i]] = $1
 	next
 }
-function state(t, issue, after,    k, a, i, p, preds) {
+function state(t, issue, after,    k, a, i, p, preds, act) {
 	preds = ""
 	if (after != "" && after != dash) {
 		k = split(after, a, ",")
@@ -243,7 +281,12 @@ function state(t, issue, after,    k, a, i, p, preds) {
 	}
 	if (t in review) return "in review" OFS "#" review[t]
 	if (("#" issue) in review) return "in review" OFS "#" review["#" issue]
-	if (t in branch) return "running" OFS (preds == "" ? dash : "after " preds)
+	if (t in branch) {
+		act = -1
+		if (t in pushed) act = pushed[t]
+		if (issue in commented && commented[issue] > act) act = commented[issue]
+		return (act >= 0 && act >= now - window ? "in progress" : "stalled") OFS (preds == "" ? dash : "after " preds)
+	}
 	if (preds != "") return "blocked" OFS preds
 	return "ready" OFS dash
 }
@@ -264,4 +307,4 @@ END {
 		if (bad) exit 1
 		print line
 	}
-}' "$tmp/rows" "$tmp/done" "$tmp/now" "$in/forge/branches" "$tmp/prs" || exit 1
+}' "$tmp/rows" "$tmp/done" "$tmp/now" "$in/forge/branches" "$tmp/prs" "$in/now" "$in/forge/pushes" "$in/forge/comments" || exit 1
