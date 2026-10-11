@@ -30,14 +30,14 @@ Operator.
 | Start 3: the first records commit, `approvers.tsv`, the lease row | no | `layup run`, `M2a` ([`run.md`](run.md#the-steps-of-layup-run---new)) |
 | Start 3: the Intake issue, the control issue, the dead-man job's first notice | no | `layup run`, `M2a`, which reads the notice; the dead-man job itself is `M3d` (K38) |
 | Gap check 1: `layup psb check` | **yes** ([`psb-check.md`](psb-check.md)) | — |
-| Gap check 2 to 4: the review of meaning, the specification sessions, the proposed marker sources | no | sessions of `layup run`: the review of meaning and the sessions of the specification in `M2c` ([`intake.md`](intake.md)); the proposed marker sources in `M2d` |
-| Gap check 5 and 6: one comment on the Intake issue; the answers copied; the follow-up | no; the answers are the input file `answers.tsv` | `layup run`, `M2c` ([`intake.md`](intake.md#req-001--the-one-batch)); the setup questions join the batch in `M2d` |
+| Gap check 2 to 4: the review of meaning, the specification sessions, the proposed marker sources | no | sessions of `layup run`: the review of meaning and the sessions of the specification in `M2c` ([`intake.md`](intake.md)); the proposed marker sources in `M2d` ([`scaffold.md`](scaffold.md#the-step-markers)) |
+| Gap check 5 and 6: one comment on the Intake issue; the answers copied; the follow-up | no; the answers are the input file `answers.tsv` | `layup run`, `M2c` ([`intake.md`](intake.md#req-001--the-one-batch)); the setup questions join the batch in `M2d` ([`scaffold.md`](scaffold.md#the-answers-of-the-setup)) |
 | Scaffold 1: the rows that need no judgement | **yes** | — |
-| Scaffold 2: the prose rows S07, S08, S09, S14, by a role session | no; the text is an input file, and `layup setup` runs the row's check | a session of `layup run`, phase 2 |
+| Scaffold 2: the prose rows S07, S08, S09, S14, by a role session | no; the text is an input file, and `layup setup` runs the row's check | a session of `layup run`, `M2d` ([`scaffold.md`](scaffold.md#the-prose-rows)) |
 | Scaffold 3 and 4: the facts, the stack gates | **yes** (S06, S12) | — |
 | Scaffold 5: `layup setup verify` | **yes** | — |
-| Scaffold 6: the push of the setup commits; the rulesets | **yes**, as printed commands (S13) | the Operator runs them |
-| Scaffold 7: the pushed tree equals the verified one; the rules read back; the probes of §3 | no | `layup run`, phase 2 |
+| Scaffold 6: the push of the setup commits; the rulesets | **yes**, as printed commands (S13) | the Operator runs them; the ruleset of the records branch and the `layup/` checks from `M2d` ([`scaffold.md`](scaffold.md#req-003--the-rulesets-of-scaffold-6)) |
+| Scaffold 7: the pushed tree equals the verified one; the rules read back; the probes of §3 | no | `layup run`, `M2d` ([`scaffold.md`](scaffold.md#req-003--scaffold-7-the-forge-check)) |
 | The pilot baseline | no | `layup run`, phase 4 |
 
 ### The command `layup setup`
@@ -131,7 +131,8 @@ layup setup WORK
   [Where the records go in phase 1](#where-the-records-go-in-phase-1), each
   with a comment line before it, and empty when no done step has a command, so
   no command of an earlier record stays; a run that ends with exit 2 does not
-  write it. The texts of the commands, the apply of the ruleset included, are
+  write it. Its first line is `set -eu`, so the first command that fails stops
+  it (task `T-msrd`, F-13). The texts of the commands, the apply of the ruleset included, are
   the steps' (S03, S13, S15).
 - **The present code**: S01 to S04 are built (task `T-7s0y`, #86), S05 to
   S11 and S14 (task `T-b3r1`, #90), and S12, S13 and S15 (task `T-d6q5`,
@@ -180,7 +181,7 @@ the one home of the phase-1 steps of a target. A row that differs from
 | S10 | `layup setup`; stops for the Operator | the tree; `answers.tsv` | Lists every marker of the tree outside the exemptions of LAYUP's `MK_EXEMPT` ([`setup-check.sh`](../setup/setup-check.sh); the baseline has no setup check, §5), which the engine embeds at its version. A path of that pattern that a target does not have matches nothing. A marker with no answer row stops the run; the table lists all of them at once (§5 gap check, "one batch"), each by its key at the line of its open quote. It changes no file. | — | every marker has an answer row |
 | S11 | `layup setup` | the answers of S10 | Replaces each marker whose answer has a value with that value, the whole marker, also over more lines, and writes its record row with the source. A marker whose answer is `gap` keeps its marker and gets a row in `docs/setup/open-gaps.tsv` with the answer's question (Invariant 4). When S10 listed at least one marker, writes the answer of each marker that S10 listed as a second raw fact record, in the same form, with its own index row and its own line in `facts.sha256`; with no marker, it writes no second record; the record of S04 does not change (a raw facts record is immutable; O-124). | the tree; the second answers record; record rows `marker:<file>:<line>` | checks `markers`, `sources` and `facts` |
 | S12 | `layup setup` | the catalog entry of the stack | Writes the files of the entry (for Go: `go.mod` with the module path from `name`, the tools' configuration), `docs/gates.tsv`, and one CI job per gate kind, whose id and name are the kind (K30). For each gap of the entry (the coverage floor of Go, K24), writes its row of `docs/setup/open-gaps.tsv` and its record row. The baseline's own workflows stay byte for byte (`REQ-018`). Adds no `setup-check` job. Changes `steps.tsv` S12: ADR-0011 decision 7, ADR-0016, §5 Scaffold 4. | the gate files; the gap rows of the entry | checks `jobs` and `gates` (each row `gate:<kind>`) |
-| S13 | `layup setup`; applied by the Operator | the job names | Writes `docs/setup/branch-protection.json` (in the form of LAYUP's own file of that name; the baseline has no `docs/setup/`) and `WORK/out/ruleset-default.json`: the default branch and the ref `layup-probe`; a pull request required; each gate job a required check, pinned to GitHub Actions; no force push, no deletion; an empty bypass list. Changes `steps.tsv` S13 ("one required check per job"): the required checks are the gate jobs only (**decided here**, task `T-d6q5`, condition 2 of the plan review of #92), as §6 names the native gate jobs as the required checks, this table is the one home of a target's steps, and a required check of a baseline job that a later baseline renames or removes would block each merge of the target. So the baseline's own CI jobs run on each pull request of the target and block no merge. In phase 1 it requires no `layup/` check, because no phase-1 command posts one ([`records.md`](records.md#nfr-002--a-target-is-independent-of-layup)). Writes to `commands.sh` the push of `layup-setup` onto the default branch (`git push origin layup-setup:main`, a fast-forward from the root commit; §5 Scaffold 6: "pushes the setup commits on top of the root commit") and, after it, the apply command of the ruleset. | the ruleset file; commands | the ruleset file, and its commands in `commands.sh` for the Operator (a hand-off: phase 1 does not see the Operator's run) |
+| S13 | `layup setup`; applied by the Operator | the job names | Writes `docs/setup/branch-protection.json` (in the form of LAYUP's own file of that name; the baseline has no `docs/setup/`) and `WORK/out/ruleset-default.json`: the default branch and the ref `layup-probe`; a pull request required; each gate job a required check, pinned to GitHub Actions; no force push, no deletion; an empty bypass list; and (task `T-msrd`, F-19, decision 7 of #265) the rule `creation`, and in `pull_request` `allowed_merge_methods` `["merge"]` and `require_extra_approval_for_unattributed_changes` `false` ([`scaffold.md`](scaffold.md#the-ruleset-of-the-default-branch)); in phase 2 also the four `layup/` checks and the ruleset of the records branch. Changes `steps.tsv` S13 ("one required check per job"): the required checks are the gate jobs only (**decided here**, task `T-d6q5`, condition 2 of the plan review of #92), as §6 names the native gate jobs as the required checks, this table is the one home of a target's steps, and a required check of a baseline job that a later baseline renames or removes would block each merge of the target. So the baseline's own CI jobs run on each pull request of the target and block no merge. In phase 1 it requires no `layup/` check, because no phase-1 command posts one ([`records.md`](records.md#nfr-002--a-target-is-independent-of-layup)). Writes to `commands.sh` the push of `layup-setup` onto the default branch (`git push origin layup-setup:main`, a fast-forward from the root commit; §5 Scaffold 6: "pushes the setup commits on top of the root commit") and, after it, the apply command of the ruleset. | the ruleset file; commands | the ruleset file, and its commands in `commands.sh` for the Operator (a hand-off: phase 1 does not see the Operator's run) |
 | S14 | `layup setup`; the text is an input | `inputs/files/README.md`, `inputs/files/AGENTS.md`, and `inputs/files/<path>` of each other file that check `adapted` flags | Copies the files, with a record row `file:<path>` each (K42); a missing file stops the run, in the one table of the prose step (O-123). | the files | checks `identity` and `adapted` |
 | S15 | `layup setup`; the push by the Operator | the record; `out/verify.tsv` | Writes the record's last rows and the rule-path register, and the first commit of `layup-records` ([below](#where-the-records-go-in-phase-1), O-115). Not `steps.tsv` into the target (§5: LAYUP's own file). | `out/record.tsv`, `out/rule-paths.tsv`; the records commit; a command | every row of `verify.tsv` is `pass` or `clear` |
 
@@ -755,7 +756,8 @@ root commit. The order of a setup in phase 1:
    it from Start on; [the text](#the-readme-of-the-records-branch)), `setup/record.tsv`,
    `setup/verify.tsv` and `rule-paths.tsv`, and adds its push to
    `commands.sh`.
-4. The Operator runs `commands.sh`: the push of the root commit to `main`
+4. The Operator runs `commands.sh`, which stops at the first command that
+   fails (`set -eu`, F-13): the push of the root commit to `main`
    (S03), the push of `layup-setup` onto `main` (S13), the push of
    `layup-records` (S15), and the apply of the default branch's ruleset (S13),
    in that order, so the setup commits are on the default branch before the
@@ -813,7 +815,7 @@ of each such check passes and fails on the same fixtures as
 | `jobs` | yes | each kind of `docs/gates.tsv` has a CI job with the kind's name (the evidence of S12) |
 | `gate:<kind>`, one per kind | yes | an `active` kind: `layup gate` with `--base` and `--head` the setup head gives `pass` or `clear`, and with `--head` a commit of the kind's known-bad fixture applied (`git apply`) on the setup head gives `fail`; then `pass`. The first rule that matches decides: the clean run `fail` gives `fail`; either run `not-active` gives `not-active`; a fixture run that is not `fail` gives `fail`, reason `fixture not detected`. A `pending` kind: `clear`, reason `pending: fixture not run` (§6: "recorded as not run, never as a detection"). |
 | `ci`, `procedure`, `protection` | not a check for a target | they read LAYUP's own CI and `steps.tsv`, and the classic protection that the rulesets replace (§5) |
-| the rulesets read back (S13); the probes of §3 | no | `layup run`, phase 2: not in the list, so a correct setup exits 0 |
+| the rulesets read back (S13); the probes of §3 | no | `layup run`, `M2d`, the forge check ([`scaffold.md`](scaffold.md#req-003--scaffold-7-the-forge-check)): not in the list, so a correct setup exits 0 |
 
 **Decided here:** the target's form of `facts`, `onboarding`, `glossary` and
 `guardrails`. LAYUP's functions count LAYUP's own facts (39 facts of `F-0001`,
@@ -1276,8 +1278,10 @@ task `T-3jpx`, #81):
   session.
 - The ruleset of the records branch (§6: updates only by the LAYUP App), and the
   `layup/` required checks of the default branch (`layup/gates`, `layup/spec`,
-  `layup/verify`, `layup/rules`, §6): the Operator applies both with the
-  commands that `layup run` prints when it first starts on the target (phase 2).
+  `layup/verify`, `layup/rules`, §6): the Operator applies both at Scaffold 6
+  with the commands that `layup run` writes, for a target that its own Start
+  made (`M2d`, [`scaffold.md`](scaffold.md#req-003--the-rulesets-of-scaffold-6));
+  for a target that phase 1 set up, [the adoption](scaffold.md#the-adoption-of-a-phase-1-target).
 - The activation of the `pending` kinds at the first bet (§6): phase 2. The
   tool of a kind of the Go entry is `go` or a program of the runner (The stack
   catalog, task `T-c06a`).

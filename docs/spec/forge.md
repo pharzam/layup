@@ -23,8 +23,8 @@ fail, naming it.
 | issues and comments, with the actor and whether an App made it | `OpenIssue`, `Comments(issue)`, `Comment(issue, body)` | `M2a` (steps 7 and 8 of [`run.md`](run.md#the-steps-of-layup-run---new)); `Comment` in `M2b` (the comment of a session) |
 | pull requests with a draft state | `OpenDraft`, `MarkReady`, `Merge` | `M2e` |
 | commit statuses bound to a source | `SetStatus` | `M2e` |
-| branch rules with bypass actors, read back | `EffectiveRules(branch)` | `M2d` |
-| the repository activity with its actors | `Activity(ref)` | `M2f` |
+| branch rules with bypass actors, read back | `EffectiveRules(branch)` | `M2d` ([`scaffold.md`](scaffold.md#the-read-back)) |
+| the repository activity with its actors | `Activity(ref)` | `M2d` (the activity read of the forge check, [`scaffold.md`](scaffold.md#the-activity-read)); `layup audit` in `M2f` |
 | an App identity for LAYUP with scoped permissions | `Token`, `Installation`, `UserID(login)`, `Repository` | `M2a` (step 1 of `run.md`) |
 
 `M2a` specifies the calls of the rows it uses; each later milestone gives the
@@ -115,6 +115,22 @@ The same API and version header as [The calls of M2a](#the-calls-of-m2a)
 
 `M2b` posts the comment of a probe and of a task session on the control issue
 ([`session.md`](session.md#a-comment-for-a-session)).
+
+## The calls of M2d
+
+The same API and version header as [The calls of M2a](#the-calls-of-m2a)
+(task `T-msrd`, #265; [`scaffold.md`](scaffold.md#req-003--scaffold-7-the-forge-check)).
+
+| Method | Call | What it gives `layup run` |
+| ------ | ---- | ------------------------- |
+| `EffectiveRules` | `GET /repos/{owner}/{repo}/rules/branches/{branch}`, every page | each active rule that applies to the branch, also to one that does not exist yet: its `type` and its `parameters`; a ruleset in `evaluate` or `disabled` gives none |
+| `Activity` | `GET /repos/{owner}/{repo}/activity`, with `ref` the branch and one page | the activities of the ref: each with its `actor`, `ref`, `before`, `after`, `timestamp` and `activity_type`; `M2d` reads only that the call works |
+
+The bypass list of a ruleset is not in either call, and the App's permissions
+cannot read it (`architecture.md` §3): the Operator's apply output gives it.
+The permission that each call needs, and the fields above, are read in GitHub's
+documentation at the date of the build task; a difference from this table is a
+defect of this table. The push of the probe is a `git` call, not an API call.
 
 ## Forge errors
 

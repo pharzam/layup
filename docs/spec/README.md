@@ -18,14 +18,15 @@ the later phases.
 | File | Requirements | What it gives |
 | ---- | ------------ | ------------- |
 | [`packages.md`](packages.md) | `NFR-007` | the Go packages, their jobs, and the import rules that the boundary gate reads |
-| [`records.md`](records.md) | `NFR-001`, `NFR-002`, `REQ-009`, `REQ-011` | where each record lives, who writes it, and the schemas of the records of phase 1, of Start (`M2a`), of a session (`M2b`) and of Intake (`M2c`) |
+| [`records.md`](records.md) | `NFR-001`, `NFR-002`, `REQ-009`, `REQ-011` | where each record lives, who writes it, and the schemas of the records of phase 1, of Start (`M2a`), of a session (`M2b`), of Intake (`M2c`) and of the Scaffold (`M2d`) |
 | [`psb-check.md`](psb-check.md) | `REQ-001` | `layup psb check` |
 | [`setup.md`](setup.md) | `REQ-002`, `NFR-003`, `NFR-006` | `layup setup`, `layup setup verify`, the stack catalog |
 | [`gate.md`](gate.md) | `REQ-004`, `REQ-007`, `NFR-004`, `NFR-005` | `layup gate`, the gate manifest |
 | [`run.md`](run.md) | `NFR-001`, `NFR-002`, `NFR-006`, `REQ-002` | `layup run`: the Start of a target and the restart (`M2a`) |
-| [`forge.md`](forge.md) | `NFR-001`, `NFR-007` | the forge interface and the GitHub adapter (`M2a`) |
+| [`forge.md`](forge.md) | `NFR-001`, `NFR-007` | the forge interface and the GitHub adapter (`M2a`), with the calls of `M2b` and `M2d` |
 | [`session.md`](session.md) | `REQ-013`, `REQ-003`, `REQ-005`, `REQ-011`, `NFR-005` | `layup run`: role sessions on registered harnesses, the probe, the checks before a push and the writer of the ledger (`M2b`) |
 | [`intake.md`](intake.md) | `REQ-001`, `REQ-012`, `NFR-003` | `layup run`: Intake, the gap check in one batch and the fact spans; `layup spec check` (`M2c`) |
+| [`scaffold.md`](scaffold.md) | `REQ-002`, `REQ-003`, `NFR-001`, `NFR-002`, `NFR-003`, `NFR-006` | `layup run`: the setup questions in the batch, the setup under `layup run`, the rulesets of both branches and the forge check (`M2d`) |
 
 ## How a section is written
 
@@ -118,8 +119,10 @@ Every command of LAYUP follows these rules. A section gives only what differs.
   | 3 | Only `layup setup`: the run stopped at a step that needs a human input; the table lists every missing input of that step. |
 
   A check that did not run is never 0 (`NFR-004`). Code 3 is not a failure and
-  not a usage error: a later `layup run` reads it as "wait for the answers", so
-  it gets its own code.
+  not a usage error, so it gets its own code. `layup run` calls the step
+  runner in its own process and answers a stop from the records
+  ([`scaffold.md`](scaffold.md#the-stops-of-the-runner)), so it reads the stop
+  table, not the code (task `T-msrd`).
 
   **Decided here** (task `T-2yw7`): one map in `internal/cli` gives the code of
   a table from its result column: 0 only when the table has at least one row
@@ -297,4 +300,5 @@ under **Not in phase 1**. Milestone `M2a` specifies the Start of `layup run`
 delivers is under **Not in M2a**, with that milestone. Milestone `M2b` specifies
 role sessions on registered harnesses ([`session.md`](session.md)), with its
 own **Not in M2b**. Milestone `M2c` specifies Intake ([`intake.md`](intake.md)),
-with its own **Not in M2c**.
+with its own **Not in M2c**. Milestone `M2d` specifies the Scaffold
+([`scaffold.md`](scaffold.md)), with its own **Not in M2d**.

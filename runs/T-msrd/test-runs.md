@@ -24,3 +24,16 @@ blocks_integration_test.go:36: forge-check is listed, but no block of docs/spec/
 blocks_integration_test.go:36: markers is listed, but no block of docs/spec/ has that name
 blocks_integration_test.go:36: setup-tree is listed, but no block of docs/spec/ has that name
 ```
+
+## Green (2026-10-11, 14:58Z)
+
+`sh runs/T-msrd/sections.sh`: exit 0, each of the 31 headings `ok` (the row
+of the setup under `layup run` named its heading without the backquotes of
+the file at first, and was corrected to the heading as written). The block test
+passes with the three blocks. Each with exit 0: `go build ./...`,
+`go vet ./...`, `go test -tags=integration ./internal/tsv/ ./internal/records/
+./internal/run/ ./internal/setup/`, `go test -tags=integration -run
+TestPackageRules ./cmd/layup/` (which reads the changed cell of
+`internal/run`), `adr-lint`, `prd-lint`, `link-lint`,
+`run-discipline-tests` and `setup-check` (whose check `adapted` first
+found the word "optional" in `scaffold.md`, reworded).
