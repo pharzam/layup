@@ -168,7 +168,12 @@ writes `result/spans.tsv`: each span by its byte offsets (from 0; the end is
 exclusive), and for a **fact** its number and its class (`need`, `constraint`,
 `measure`, `context`), for a **not a fact** span (a heading, a rule line) its
 reason. A span may be part of a line. The numbers of the facts are 1 to n in the
-order of the spans.
+order of the spans. **Decided here** (task `T-hiv9`): the session's file is the
+block `spans` without `text`, which code adds from the file at the span's
+offsets; a span partly outside the file gets the text of its part in the file,
+and the rule Bounds of the check reports it; a span with no byte in the file has
+no text, and a repeated `start` repeats the block's key, so the block refuses
+either, and with it the file.
 
 ### The span check
 
@@ -224,7 +229,11 @@ a new session, whose rows replace `spec/spans.tsv`, then `spans` again, whose
 table replaces `spec/check.tsv` (a record of the records branch is edited in
 place, and Git history is its log, `architecture.md` §3); no step after `spans`
 runs while the last `spec/check.tsv` has a `fail` row, so no batch is posted on a
-failed check (ADR-0018 decision 2).
+failed check (ADR-0018 decision 2). **Decided here** (task `T-hiv9`): the
+detail of `spans` is "the span check passed, in spec/check.tsv", or "the span
+check: <rule> fail: <detail>" of its first `fail` row; a table equal to the
+last `spec/check.tsv` (a rerun whose session wrote the same spans) is kept as it
+is, with no records commit, as a records commit changes a file.
 
 ### The draft
 
