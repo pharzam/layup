@@ -293,7 +293,7 @@ func TestRunNewThenRestart(t *testing.T) {
 	}
 
 	again := w.run(t, binary, "run", "acme/target", "--host", ".")
-	if again.code != 0 || !strings.HasPrefix(again.stdout, "step\tresult\tdetail\nforge\tdone\t") || !strings.Contains(again.stdout, "\nphase\tdone\t") {
+	if again.code != 0 || !strings.HasPrefix(again.stdout, "step\tresult\tdetail\nforge\tdone\t") || !strings.Contains(again.stdout, "\nrule-gaps\tdone\t") {
 		t.Fatalf("layup run TARGET: exit %d\n%s\n%s", again.code, again.stdout, again.stderr)
 	}
 	// The demo of row 38: the restart's step probe probes the scripted
@@ -316,7 +316,8 @@ func TestRunNewThenRestart(t *testing.T) {
 	// A second restart in the same world probes none: the last probe at the
 	// version passed.
 	third := w.run(t, binary, "run", "acme/target", "--host", ".")
-	if third.code != 0 || !strings.Contains(third.stdout, "\nprobe\tdone\tprobed and passed 0, probed and failed 0, skipped 0\n") || len(w.forge.posted) != 1 {
+	if third.code != 0 || !strings.Contains(third.stdout, "\nprobe\tdone\tprobed and passed 0, probed and failed 0, skipped 0\n") || len(w.forge.posted) != 1 ||
+		!strings.HasSuffix(third.stdout, "\nrule-gaps\tdone\tdone before\n") {
 		t.Errorf("layup run TARGET again: exit %d, %d comments\n%s", third.code, len(w.forge.posted), third.stdout)
 	}
 }
