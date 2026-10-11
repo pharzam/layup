@@ -72,10 +72,12 @@ Write the output file as tab-separated values, with the header line
 problem statement, in the order of the file. A span is a part of the file by
 its byte offsets: start from 0, end exclusive; a span may be part of a line.
 Every byte that is not white space lies in exactly one span, and the spans do
-not overlap. A fact has its number, 1 to n in the order of the spans, and its
-class, one of need, constraint, measure, context, with the reason written as
-"—"; a span that is not a fact (a heading, a rule line) has "—" as its fact and
-its class, and its reason. Then end.
+not overlap. A span that is a fact has its number in the column fact, 1 to n
+in the order of the spans, its class in the column class, one of need,
+constraint, measure, context, and "—" in the column reason. A span that is not
+a fact (a heading, a rule line) has "—" in the column fact and in the column
+class, and in the column reason a few words of why it is not a fact, for
+example "a heading"; its reason is never "—". Then end.
 `
 
 func numberingText(input map[string]string, output string) []byte {

@@ -1,0 +1,25 @@
+# T-pzgw — the evidence of the cause
+
+[`spans-head.tsv`](spans-head.tsv) is the first 20 lines of `result/spans.tsv`
+written by the session `S-445dee66` (`product-owner`, `claude-opus-5-5`) in run 3
+of the demo of `M2c` (#228), at 2026-10-11 21:43Z. It was copied by a watcher
+before the session's directory was removed. The problem statement is the public
+`PSB-CHAT-001` of `pharzam/chat-orchestrator`.
+
+The whole file had 771 rows: 696 facts, each with its class and the reason `—`,
+as asked; and 75 spans that are not facts, each with `—` as its fact, its class
+**and its reason**. Line 2 is the first of them, so `CheckSpan` refused the file
+there: "reason is the empty value exactly when fact is not". Runs 1 and 2
+(sessions `S-2742cb40` and `S-37a7776c`) were refused at the same line and
+column.
+
+The red of `TestTheNumberingPromptGivesEachColumnOnce` on the old prompt, at
+`347d845`:
+
+```
+--- FAIL: TestTheNumberingPromptGivesEachColumnOnce
+    numbering_test.go:58: the prompt lacks "A span that is a fact has its number in the column fact, …"
+    numbering_test.go:58: the prompt lacks "A span that is not a fact (a heading, a rule line) has \"—\" in the column fact and …"
+    numbering_test.go:62: the prompt still holds the sentence that reads two ways: "has \"—\" as its fact and its class, and its reason"
+FAIL	github.com/pharzam/layup/internal/run
+```
