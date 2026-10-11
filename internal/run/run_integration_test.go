@@ -37,6 +37,7 @@ type fakeGitHub struct {
 	issues   int
 	failOpen int // the number of the issue whose opening fails, or 0
 	comments map[int][]map[string]any
+	posted   []string // the bodies of the comments that the run posted, on any issue (row 43b)
 }
 
 func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
@@ -79,6 +80,12 @@ func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
 		f.issues++
 		w.WriteHeader(201)
 		json.NewEncoder(w).Encode(map[string]any{"number": f.issues})
+	case strings.HasPrefix(call, "POST /repos/acme/target/issues/") && strings.HasSuffix(call, "/comments"):
+		var in struct{ Body string }
+		json.NewDecoder(r.Body).Decode(&in)
+		f.posted = append(f.posted, in.Body)
+		w.WriteHeader(201)
+		json.NewEncoder(w).Encode(map[string]any{"id": 600 + len(f.posted)})
 	case strings.HasPrefix(call, "GET /repos/acme/target/issues/") && strings.HasSuffix(call, "/comments"):
 		n, _ := strconv.Atoi(strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/repos/acme/target/issues/"), "/comments"))
 		list := f.comments[n]
@@ -146,7 +153,9 @@ func newWorld(t *testing.T) *world {
 	w.baseline = filepath.Join(t.TempDir(), "armature.git")
 	gitOut(t, "/", "clone", "-q", "--bare", src, w.baseline)
 	w.bare = filepath.Join(w.web, "acme", "target.git")
-	gitOut(t, "/", "init", "-q", "--bare", w.bare)
+	// HEAD names main, as the forge's HEAD names its default branch, so a
+	// clone of the target has its branch main (a session clones it, row 43b).
+	gitOut(t, "/", "init", "-q", "--bare", "-b", "main", w.bare)
 	w.fake = &fakeGitHub{t: t, bare: w.bare, comments: map[int][]map[string]any{
 		2: {{"id": 501, "user": map[string]any{"id": 777, "login": "layup-watch[bot]"}, "performed_via_github_app": map[string]any{"slug": "layup-watch"},
 			"created_at": "2026-10-08T12:00:00Z", "updated_at": "2026-10-08T12:00:00Z", "body": "the dead-man job is watching\n"}},
@@ -158,6 +167,25 @@ func newWorld(t *testing.T) *world {
 		t.Fatal(err)
 	}
 	w.key = k
+	// The world's harness, claude, is its own scripts (row 43b): it answers a
+	// probe as probeHarness does, and the meaning prompt with bin/meaning.tsv,
+	// which a test may replace (no gap by default).
+	bin := filepath.Join(w.dir, "bin")
+	os.MkdirAll(bin, 0o755)
+	os.WriteFile(filepath.Join(bin, "version"), []byte("#!/bin/sh\necho 1.0.0\n"), 0o755)
+	os.WriteFile(filepath.Join(bin, "meaning.tsv"), []byte("kind\tquote\tquestion\n"), 0o644)
+	os.WriteFile(filepath.Join(bin, "harness"), []byte(`#!/bin/sh
+p=$(cat)
+case "$p" in
+"This is a probe"*)
+	result=$(printf '%s\n' "$p" | sed -n 's/^Write one file, \(.*\), of tab-separated values, with the header line$/\1/p')
+	token=$(printf '%s\n' "$p" | sed -n 's/.*one row "token<TAB>\([0-9a-f]*\)".*/\1/p')
+	printf 'kind\tvalue\ntoken\t%s\nfile\tAGENTS.md\n' "$token" > "$result" ;;
+*)
+	out=$(printf '%s\n' "$p" | sed -n 's/^The output file: //p')
+	cat "$(dirname "$0")/meaning.tsv" > "$out" ;;
+esac
+`), 0o755)
 	return w
 }
 
@@ -177,7 +205,11 @@ func (w *world) config(version string) Config {
 		Client: w.srv.Client(), Progress: progress, Now: clock.Now, Sleep: clock.Sleep})
 	return Config{Owner: "acme", Name: "target", Dir: w.dir, PSB: []byte("# The problem\n\nbyte for byte\n"), Vision: []byte("# The vision\n"),
 		Operator: "pharzam", IdeaOwner: "carol", Plan: "free", IntakeCap: "50.0,8.0", LeaseH: 5, WatchT: 1,
-		Register: reg, Harnesses: [][]string{{"claude", "10.0", "60"}, {"devin", "", "30"}}, Forge: adapter, Clock: clock,
+		Register: reg, Harnesses: [][]string{{"claude", "10.0", "60", filepath.Join(w.dir, "bin", "harness"), "stdin", filepath.Join(w.dir, "bin", "version"),
+			"", "", "LAYUP-TEST-RULES.md", "", "none", "subscription", ""}, {"devin", "", "30"}},
+		Models:  [][]string{{"claude", "m1", "1000000", "https://example.invalid", "2026-10-09T12:00:00Z", "yes", ""}},
+		Routing: [][]string{{"systems-architect", "reasoning", "1", "claude", "m1"}},
+		Forge:   adapter, Clock: clock,
 		Progress: progress, RunID: "0123456789abcdef", HostName: "host-1", Version: version,
 		Baseline: "file://" + w.baseline, LayupPin: "a95965534b14b0bf14ad74da0c9a45b5f4aedf88"}
 }
@@ -313,7 +345,7 @@ func TestARestartWithAnotherVersionFailsAtVersion(t *testing.T) {
 	}
 	// The same version: the lease is released, so it is taken at once; each
 	// step of Start is done.
-	allDone(t, "the restart", Restart(context.Background(), w.config("0.1.0-dev")), "forge", "clone", "version", "lease", "probe", "rule-gaps")
+	allDone(t, "the restart", Restart(context.Background(), w.config("0.1.0-dev")), "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning")
 }
 
 // A run that stopped at opening: the restart takes the lease over from the
@@ -517,7 +549,7 @@ func TestARestartWithAHarnessRegisterThatChanged(t *testing.T) {
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	cfg = w.config("0.1.0-dev")
 	cfg.Harnesses = cfg.Harnesses[:1] // devin removed
-	allDone(t, "the restart with a harness lost", Restart(context.Background(), cfg), "forge", "clone", "version", "lease", "probe", "rule-gaps")
+	allDone(t, "the restart with a harness lost", Restart(context.Background(), cfg), "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning")
 }
 
 // The step rule-gaps (row 43a, task T-qk66, #217): after a complete Start, the
@@ -533,8 +565,8 @@ func TestTheStepRuleGaps(t *testing.T) {
 	cfg = w.config("0.1.0-dev")
 	cfg.Step = func(i, n int, name string) { progress = append(progress, fmt.Sprintf("%d/%d %s", i, n, name)) }
 	rows := Restart(context.Background(), cfg)
-	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps")
-	if want := []string{"1/6 forge", "2/6 clone", "3/6 version", "4/6 lease", "5/6 probe", "6/6 rule-gaps"}; strings.Join(progress, ", ") != strings.Join(want, ", ") {
+	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning")
+	if want := []string{"1/6 forge", "2/6 clone", "3/7 version", "4/7 lease", "5/7 probe", "6/7 rule-gaps", "7/7 meaning"}; strings.Join(progress, ", ") != strings.Join(want, ", ") {
 		t.Errorf("the progress %q, want %q", progress, want)
 	}
 	// What layup psb check prints on the same file (internal/cli/cli.go):
@@ -550,8 +582,8 @@ func TestTheStepRuleGaps(t *testing.T) {
 	}
 	blob := gitOut(t, w.bare, "rev-parse", "refs/heads/layup-records:intake/psb.tsv")
 	again := Restart(context.Background(), w.config("0.1.0-dev"))
-	if last := again[len(again)-1]; last.Name != "rule-gaps" || last.Result != "done" || last.Detail != "done before" {
-		t.Errorf("the second restart's last row %+v, want rule-gaps done before", last)
+	if gaps := again[len(again)-2]; gaps.Name != "rule-gaps" || gaps.Result != "done" || gaps.Detail != "done before" {
+		t.Errorf("the second restart's row %+v, want rule-gaps done before", gaps)
 	}
 	if gitOut(t, w.bare, "rev-parse", "refs/heads/layup-records:intake/psb.tsv") != blob {
 		t.Error("the second restart changed intake/psb.tsv")
@@ -567,4 +599,78 @@ func TestARestartWhoseWatchIsNotWrittenRunsPhase(t *testing.T) {
 	i := strings.Index(start, "\nwatch\t")
 	pushRecords(t, w.bare, map[string]string{"start/start.tsv": start[:i] + "\nwatch\t—\trun\n"}, "records: no watch yet")
 	allDone(t, "the restart", Restart(context.Background(), w.config("0.1.0-dev")), "forge", "clone", "version", "lease", "probe", "phase")
+}
+
+// The step meaning (row 43b, task T-1u2v, #218): after rule-gaps, one session
+// of systems-architect on the world's harness; its quote is found once, so
+// intake/meaning.tsv holds its row with code's offsets, and the lease is
+// released; a second restart finds the record and runs nothing.
+func TestTheStepMeaning(t *testing.T) {
+	w := newWorld(t)
+	os.WriteFile(filepath.Join(w.dir, "bin", "meaning.tsv"), []byte("kind\tquote\tquestion\nunmeasurable\tThe service is fast.\tHow fast?\n"), 0o644)
+	cfg := w.config("0.1.0-dev")
+	cfg.PSB = []byte("# The problem\n\nThe service is fast.\n")
+	allDone(t, "Start", w.start(cfg), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
+	rows := Restart(context.Background(), w.config("0.1.0-dev"))
+	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning")
+	if d := rows[len(rows)-1].Detail; d != "gaps of meaning: 1, in intake/meaning.tsv" {
+		t.Errorf("the detail of meaning %q", d)
+	}
+	got := show(t, w.bare, "refs/heads/layup-records", "intake/meaning.tsv")
+	if !strings.HasPrefix(got, "id\tkind\tstart\tend\tquote\tquestion\tsession\nM-001\tunmeasurable\t15\t35\tThe service is fast.\tHow fast?\tS-") || strings.Count(got, "\n") != 2 {
+		t.Errorf("intake/meaning.tsv:\n%s", got)
+	}
+	if !strings.Contains(show(t, w.bare, "refs/heads/layup-records", "sessions.tsv"), "\tsystems-architect\tclaude\t1.0.0\tm1\t") {
+		t.Error("sessions.tsv has no start row of a session of systems-architect")
+	}
+	if !strings.Contains(show(t, w.bare, "refs/heads/layup-records", "lease.tsv"), "\treleased\n") {
+		t.Error("the lease is not released after the last row")
+	}
+	blob := gitOut(t, w.bare, "rev-parse", "refs/heads/layup-records:intake/meaning.tsv")
+	again := Restart(context.Background(), w.config("0.1.0-dev"))
+	if last := again[len(again)-1]; last.Name != "meaning" || last.Result != "done" || last.Detail != "done before" {
+		t.Errorf("the second restart's last row %+v, want meaning done before", last)
+	}
+	if gitOut(t, w.bare, "rev-parse", "refs/heads/layup-records:intake/meaning.tsv") != blob {
+		t.Error("the second restart changed intake/meaning.tsv")
+	}
+}
+
+// A quote that occurs twice refuses the session's file: meaning is fail,
+// naming the session, and nothing of the file is committed; with no route for
+// systems-architect, meaning is fail (pair) and no session starts. Each fail
+// leaves the lease held (run.md, the known limit).
+func TestTheStepMeaningFails(t *testing.T) {
+	for _, c := range []struct{ name, meaning, detail string }{
+		{"a quote that occurs twice", "kind\tquote\tquestion\nunmeasurable\tfast\tHow fast?\n", `: refused file: row 1: the quote "fast" occurs 2 times`},
+		{"no route", "", "pair: no admitted pair"},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			w := newWorld(t)
+			if c.meaning != "" {
+				os.WriteFile(filepath.Join(w.dir, "bin", "meaning.tsv"), []byte(c.meaning), 0o644)
+			}
+			cfg := w.config("0.1.0-dev")
+			cfg.PSB = []byte("# The problem\n\nThe service is fast.\nIt is fast.\n")
+			allDone(t, "Start", w.start(cfg), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
+			cfg = w.config("0.1.0-dev")
+			if c.meaning == "" {
+				cfg.Routing = nil
+			}
+			rows := Restart(context.Background(), cfg)
+			last := rows[len(rows)-1]
+			if last.Name != "meaning" || last.Result != "fail" || !strings.Contains(last.Detail, c.detail) {
+				t.Fatalf("the last row %+v; want meaning fail with %q", last, c.detail)
+			}
+			if c.meaning != "" && !strings.HasPrefix(last.Detail, "the session S-") {
+				t.Errorf("the detail %q does not name the session", last.Detail)
+			}
+			if strings.Contains(gitOut(t, w.bare, "ls-tree", "-r", "--name-only", "refs/heads/layup-records"), "intake/meaning.tsv") {
+				t.Error("a refused file is a record")
+			}
+			if !strings.Contains(show(t, w.bare, "refs/heads/layup-records", "lease.tsv"), "\theld\n") {
+				t.Error("the lease is not held after a fail")
+			}
+		})
+	}
 }

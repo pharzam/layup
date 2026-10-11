@@ -14,7 +14,6 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
-	"strconv"
 	"strings"
 	"time"
 
@@ -415,9 +414,7 @@ func (s *Sessions) ProbeStep(ctx context.Context, harnesses, models, routing [][
 // could not write its records.
 func (r *state) probeStep(ctx context.Context) Step {
 	const name = "probe"
-	control, _ := strconv.Atoi(r.value("issue.control"))
-	s := &Sessions{Store: r.store, RunID: r.cfg.RunID, Host: r.cfg.Dir, Target: r.cfg.Owner + "/" + r.cfg.Name, Clone: r.target,
-		Branch: r.defaultBranch, Now: r.cfg.Clock.Now, Forge: r.cfg.Forge, Control: control, Prices: r.cfg.Prices}
+	s := r.sessions()
 	base, err := git.RevParse(r.target, "refs/remotes/origin/"+r.defaultBranch)
 	if err != nil {
 		return fail(name, err)
