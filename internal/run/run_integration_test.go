@@ -149,11 +149,13 @@ type world struct {
 	lines    []string
 	mu       sync.Mutex
 	hook     func(line string) // a test acts on a progress line
+	clock    fastClock         // the world's one clock: no config of it goes back in time
 }
 
 func newWorld(t *testing.T) *world {
 	t.Setenv("HOME", t.TempDir())
-	w := &world{t: t, dir: t.TempDir(), web: t.TempDir()}
+	w := &world{t: t, dir: t.TempDir(), web: t.TempDir(),
+		clock: fastClock{begin: time.Date(2026, 10, 8, 12, 0, 0, 0, time.UTC), real: time.Now()}}
 	src := t.TempDir()
 	os.WriteFile(filepath.Join(src, "README.md"), []byte("# Armature\n"), 0o644)
 	gitOut(t, src, "init", "-q", "-b", "main")
@@ -224,7 +226,7 @@ esac
 }
 
 func (w *world) config(version string) Config {
-	clock := fastClock{begin: time.Date(2026, 10, 8, 12, 0, 0, 0, time.UTC), real: time.Now()}
+	clock := w.clock
 	reg := forge.Register{Forge: "github", AppID: 42, AppSlug: "layup-agent", KeyFile: "/k.pem", WatchSlug: "layup-watch", API: w.srv.URL, Web: "file://" + w.web}
 	progress := func(l string) {
 		w.mu.Lock()
@@ -299,6 +301,19 @@ func allDone(t *testing.T, name string, rows []Step, want ...string) {
 	}
 	if strings.Join(got, " ") != strings.Join(want, " ") {
 		t.Errorf("%s: the steps %v, want %v\n%s", name, got, want, steps(rows))
+	}
+}
+
+// The clock of a world does not go back from one config of it to the next. A
+// restart gets a new config, and a clock that began at 12:00:00 again let two
+// restarts of one run write the same lease row, second for second (T-0p5p).
+func TestTheClockOfAWorldDoesNotGoBack(t *testing.T) {
+	w := newWorld(t)
+	first := w.config("0.1.0-dev")
+	time.Sleep(20 * time.Millisecond) // 12 seconds of the clock
+	seen := first.Clock.Now()
+	if got := w.config("0.1.0-dev").Clock.Now(); got.Before(seen) {
+		t.Errorf("the clock of a second config reads %s, before the %s that the first read", got.Format(time.RFC3339Nano), seen.Format(time.RFC3339Nano))
 	}
 }
 

@@ -147,7 +147,8 @@ the first.
 | `TestTheStepRuleGaps`, `TestARestartWhoseWatchIsNotWrittenRunsPhase` (`internal/run/run_integration_test.go`) | integration | REQ-001 | F-0003#41 | — | — | T-qk66 | green |
 | `TestTheStepMeaning`, `TestTheStepMeaningFails` (`internal/run/run_integration_test.go`) | integration | REQ-001 | F-0003#41 | — | — | T-1u2v | green |
 | `TestQuoteAt`, `TestKeepOfMeaning`, `TestSessionSchema` (`internal/run/meaning_test.go`) | unit | REQ-001 | F-0003#41 | — | — | T-1u2v | green |
-| `TestTheStepsNumberingAndSpans`, `TestAFailedSpanCheckRunsNumberingAgain`, `TestNumberingWithNoPair` (`internal/run/run_integration_test.go`) | integration | REQ-012 | F-0003#51 | — | ADR-0018 | T-hiv9 | green |
+| `TestTheStepsNumberingAndSpans`, `TestAFailedSpanCheckRunsNumberingAgain`, `TestNumberingWithNoPair` (`internal/run/run_integration_test.go`) | integration | REQ-012 | F-0003#51 | — | ADR-0018 | T-hiv9, T-0p5p | green |
+| `TestTheClockOfAWorldDoesNotGoBack` (`internal/run/run_integration_test.go`): a check of the test world's clock, which proves no requirement | integration | — | — | guardrails.md §2 | — | T-0p5p | green |
 | `TestKeepOfNumbering` (`internal/run/numbering_test.go`) | unit | REQ-012 | F-0003#51 | — | ADR-0018 | T-hiv9 | green |
 | `TestTheStepDraft`, `TestADraftThatCoversNoFactIsRefused` (`internal/run/run_integration_test.go`) | integration | REQ-012 | F-0003#51 | — | ADR-0018 | T-2et0 | green |
 | `TestKeepOfDraft` (`internal/run/draft_test.go`) | unit | REQ-012 | F-0003#51 | — | ADR-0018 | T-2et0 | green |
