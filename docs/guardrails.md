@@ -376,6 +376,36 @@ check that catches it.
   below it then downloads that toolchain under `GOTOOLCHAIN=auto`, or refuses
   to build under `GOTOOLCHAIN=local`. Learned in `T-w89c`
   ([#150](https://github.com/pharzam/layup/issues/150)).
+- ❌ **A review record without its heading.** `review-record-lint` takes a comment
+  for a record only by a line that starts `## Review record` and names the round
+  after the word `round`. A final message with no such line is no record to it:
+  round 2 of `T-bng8` had none, so the linter read the rounds of the issue as 1, 3,
+  4, 5 and 6, and the required check `review-record` was red on each push of the
+  pull request until the heading was added. It is silent on the issue, where the rounds run and
+  nothing shows that check: the record reads well, and no step that posts it looks
+  at the heading. The check of the pull request runs on a pull-request event, so it
+  shows the gap at the next push, not when the record is posted. **The check:** the
+  brief of a round says that the first line of the final message is the heading
+  `## Review record — round N`; and after each post, build the stream as the
+  workflow does and run the linter on it:
+  `gh api --paginate "repos/OWNER/NAME/issues/N/comments" --jq '.[] | "=== comment created=\(.created_at) updated=\(.updated_at) ===\n\(.body)"' > comments.txt`,
+  then `sh docs/ci/review-record-lint.sh comments.txt`. Learned in `T-bng8`
+  ([#267](https://github.com/pharzam/layup/issues/267)).
+- ❌ **An allow rule whose glob reaches a script with a write mode.** A reviewer
+  session runs read-only by its allow rules (`claude -p --permission-mode dontAsk`).
+  The allow rules of a harness script, outside the repository, as they stood after
+  a round with many denied commands, included `Bash(python3 runs/*)`, `Bash(PLAN=*)`
+  and `Bash(sh runs/*)`, which let a reviewer run the check of a task with an option.
+  The same globs also allow `gen-issues.py --post` and `--edit`, which open and edit
+  issues through the App: writes to the forge that the brief barred only in words.
+  It is silent because a reviewer that follows its brief never runs them, and the
+  rules read as read-only. **The check:** allow the exact read-only forms (`--table`,
+  `--body ROW`, `sh runs/T-xxxx/parts.sh`), never the glob of a directory, and before
+  the round run a probe against the same rules, with a negative control: a command
+  that must be denied (`gen-issues.py --help`, which prints only its usage and is
+  not in the allow list). The rules of "A headless reviewer whose commands are
+  denied" have the opposite fault, too narrow to run the commands of the brief.
+  Learned in `T-bng8` ([#267](https://github.com/pharzam/layup/issues/267)).
 
 ### Writing a lesson back
 
@@ -514,6 +544,23 @@ success without having done its job.
   eol=lf` for a script or a list that a script reads); the case
   `facts/good-autocrlf` of `docs/setup/tests/run.sh` clones `HEAD` with
   `core.autocrlf=true` and runs check `facts`.
+- ❌ **A trigger that runs a branch's copy of a write-token workflow.**
+  `workflow_dispatch` and `create` each can name a branch, and the run
+  then uses **that branch's own file** — so a task branch's edited copy of the
+  workflow executes with `permissions: issues: write`. (`delete` names a branch
+  too, but the ref is gone: the run uses the default branch's file — it is left
+  out of `task-state.yml` only because a run on a deletion adds nothing the
+  schedule does not give.) Checking out the default
+  branch inside the file does not constrain what the file itself does. It is
+  silent because the trigger reads as a convenience and the write scope looks
+  guarded by the checkout. **The check:** a workflow holding a write token takes
+  no trigger a branch's copy can fire — the allowed set of `task-state.yml` is
+  `push` to `main`, `pull_request_target`, `issues`, `issue_comment` and
+  `schedule`, and `docs/tasks/task-labels.sh --check-workflow` fails any other,
+  any `push` bound that is not `branches` of `main` alone, and any event
+  `types:` outside the named ones
+  (the `bad-labels-workflow-*` fixtures). Learned in `T-dm8m` (#185, the review
+  of the re-plan, condition 1).
 - ❌ **An `awk` check that reads the locale.** `awk` reads characters in a UTF-8
   locale and bytes in the C locale, so one sh check can give other lines on
   another host. macOS `awk` 20200816 in a UTF-8 locale stops ("towc: multibyte
@@ -538,6 +585,17 @@ These traps are not domain-specific: they hurt every project's test suite.
   reasons unrelated to the code. The check: isolate and control every dependency,
   with a fresh fixture per run — see
   [`tests/scaling-checklist.md`](tests/scaling-checklist.md).
+- ❌ **A fake clock made anew at each call of a world's helper.** The test world of
+  `internal/run` made its fast clock inside `config`, so each restart of a run got a
+  clock that began at 12:00:00 again, and the run kept its ID. A restart takes the
+  lease over after 15 minutes of its own clock without a beat, and writes the row
+  with its time cut to the second, so two restarts could write the same row in the
+  same second, and `git commit` ended with exit 1, as it does when nothing changed.
+  The test failed in 5 of 70 runs of CI (#291) and in 1 of 200 runs on a host of two
+  CPUs, and its message names no clock. A real clock does not go back. Task `T-0p5p`
+  (#293) met it. **The check:** make the fake clock once for each world, not for each
+  call of the helper that reads the world's config, and assert that the clock of a
+  second config is not before what the first read.
 - ❌ **Tests that pass for the wrong reason.** A test that asserts nothing, asserts
   the wrong thing, or never actually exercises the path reports a safety that is not
   there — worse than no test. The check: confirm the test fails when the behaviour
@@ -672,6 +730,20 @@ These traps are not domain-specific: they hurt every project's test suite.
   **The check:** start each `git` of the product and of a test helper that
   commits with `-c maintenance.auto=false`, and test it with a repository whose
   own configuration asks for the maintenance at once, in the foreground.
+- ❌ **A bare repository that receives a push starts its own maintenance.** The `-c
+  maintenance.auto=false` of the pushing git (`T-d6q5`) does not reach the git that
+  receives: a local transport clears the values of `-c` before it starts `git
+  receive-pack`, which then runs `git maintenance run --auto --quiet --detach` in the
+  target. From git 2.54 (measured on 2.55.0, CI's; 2.54 read from its source) that
+  repacks the target in the background once `objects/17` holds two loose objects, and
+  a test that removes its directory a moment after its last push fails in `TempDir
+  RemoveAll cleanup` ("directory not empty"): 3 of 70 runs of CI (#291). In the made
+  setup git 2.47.3 and 2.56.0 failed none of 100 removals. The receiving repository
+  of a local push is not one of those that `docs/spec/packages.md` says no call
+  leaves a process in. Task `T-2hm3` (#297) met it. **The check:** set
+  `receive.autogc` and `maintenance.auto` to `false` in each bare repository that a
+  test pushes into, and test it by pushing with `GIT_TRACE2_EVENT` set and reading
+  that no `git maintenance run` starts.
 - ❌ **A bare repository with no default branch.** `git init --bare` with no
   `-b` names `master` as its `HEAD` when no setting of the host gives another
   name, so after a push of `main` a clone of it has no checkout ("remote HEAD
@@ -716,6 +788,16 @@ These traps are not domain-specific: they hurt every project's test suite.
   signals a whole process group sees no `SIGINT` in the child, and reads it as a
   defect of the code. Task `T-5pxd` (#161) met it. **The check:** run the child
   in the foreground, under a parent whose trap is `:`, not `''`.
+- ❌ **A short time limit that a slow runner reaches.** A table of cases gave each
+  case the same wall limit, 300 ms, which only the case `wall` tests. On a slow
+  runner a shell that started late was stopped by the limit before it signalled
+  itself, and the case "crash by a signal of its own" was classed `wall`:
+  `TestEachEndGetsItsClass` failed twice in three hours of CI (#291), and never in
+  300 runs of the old test on a host of two CPUs, idle or with a busy loop for each
+  CPU, so a quiet host does not show it. Task `T-6rgp` (#292) met it. **The
+  check:** give the short limit to the case that tests it and to each other case a
+  limit that a slow start cannot reach (5 s), and add a case that runs longer than
+  the short limit and expects its own class: it is red while the limit is shared.
 
 ### Reference-sweep pitfalls
 

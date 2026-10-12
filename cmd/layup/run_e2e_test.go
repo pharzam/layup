@@ -179,6 +179,13 @@ func newRunWorld(t *testing.T) runWorld {
 	if out, err := gitRun(w.bare, "init", "-q", "--bare", "-b", "main"); err != nil {
 		t.Fatal(out)
 	}
+	// The target receives pushes: the git that receives one starts no
+	// maintenance of its own in the background (T-2hm3).
+	for _, kv := range [][2]string{{"receive.autogc", "false"}, {"maintenance.auto", "false"}} {
+		if out, err := gitRun(w.bare, "config", kv[0], kv[1]); err != nil {
+			t.Fatal(out)
+		}
+	}
 	w.forge = &fakeForge{bare: w.bare}
 	srv := httptest.NewServer(http.HandlerFunc(w.forge.serve))
 	t.Cleanup(srv.Close)

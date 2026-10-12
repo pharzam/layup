@@ -106,8 +106,9 @@ runs each one — the five above **and** the [`commit-msg`](../../.githooks/comm
 hook — against a fixture suite, asserting that a `good` fixture is accepted and a
 `bad-*` fixture rejected. It is a *harness over* the linters, not a sixth linter,
 and it runs in the hook and CI. It also runs the fixture suite of the command
-[`task-state.sh`](../tasks/task-state.sh), which prints the state of each task and
-is not a linter. See
+[`task-state.sh`](../tasks/task-state.sh), which prints the state of each task, and
+of [`task-labels.sh`](../tasks/task-labels.sh), which copies it onto the issues;
+neither is a linter. See
 [The discipline self-tests](README.md#the-discipline-self-tests).
 
 ## Security tests sit alongside the ladder
