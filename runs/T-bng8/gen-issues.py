@@ -245,8 +245,11 @@ def edit(rows):
     for r in ROWS:
         if r[0] not in rows:
             continue
+        b = body(r, p)
+        sig = b.rindex("\n*Written by")
+        b = b[:sig] + dup(r[2], env) + b[sig:]  # note 2 of round 1 of #267
         with tempfile.NamedTemporaryFile("w", suffix=".md", delete=False) as f:
-            f.write(body(r, p))
+            f.write(b)
         subprocess.run(["gh", "issue", "edit", nums[r[0]], "--repo", "pharzam/layup",
                         "--body-file", f.name], env=env, stdin=subprocess.DEVNULL,
                        timeout=60, check=True)

@@ -42,3 +42,18 @@ each in its body):
   lines `ok   row <n>: #<issue> (<task>) by layup-agent[bot]`.
 - `link-lint` (2,318 links), `prd-lint`, `setup-check` and `run-discipline-tests`
   (102 passed): exit 0.
+
+## The fix of round 1 (2026-10-12, 06:26Z)
+
+Finding 1 of round 1: `parts.sh` compared `parts.tsv` with the plan by row
+number only. Check 6 adds that each listed part is named in the Task cell of its
+own row, in the form that `gen-issues.py` writes it. The plan's path can come from
+`PLAN`, so a mutant of the plan is checked:
+
+- The first form of check 6 read the wrong field and failed on each part: a
+  defect of the check, fixed before any record.
+- With `PLAN` a copy of the plan whose row 57a drops "`scaffold.md`: The
+  read-back": exit 1, `FAIL row 57a of The tasks of M2d does not name its part:
+  \`scaffold.md\`: The read-back`.
+- On the real plan: exit 0, "ok   each part is in one row of The tasks of M2d,
+  or named with its reason".

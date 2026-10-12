@@ -8,7 +8,7 @@
 # evidence command of this task, not a check of the gate. Run from the root of
 # the repository; exit 0 when each rule holds, 1 otherwise.
 tab=runs/T-bng8/parts.tsv
-plan=docs/plan/README.md
+plan=${PLAN:-docs/plan/README.md}
 spec=docs/spec/scaffold.md
 acc='## The acceptance tests of M2d'
 inp='## Input states'
@@ -54,6 +54,20 @@ for b in questions run-steps setup-record; do
 	grep -q "^docs/spec/records.md	## NFR-001 — The records of the Scaffold	$b: " "$tab" ||
 		echo "FAIL the built block $b, changed in words, has no part" >> "$out"
 done
+# 6. Each listed part is named in the Task cell of its own row, in the form that
+#    gen-issues.py writes it: `<file>`: <heading> (<sub>) (finding 1 of round 1
+#    of #267: a part dropped from its row fails here, not only a missing row).
+tail -n +2 "$tab" | grep -v '	none' | while IFS='	' read -r file heading sub row; do
+	name=${file##*/}
+	h=$(printf '%s' "$heading" | sed 's/^#* *//')
+	if [ "$sub" = "—" ]; then text="\`$name\`: $h"; else text="\`$name\`: $h ($sub)"; fi
+	line=$(awk -v r="$row" '/^## The tasks of M2d/{t=1; next} t && /^## /{t=0} t && $2==r' "$plan")
+	task=$(printf '%s' "$line" | awk -F' [|] ' '{print $4}')
+	case "$task" in
+	*"$text"*) ;;
+	*) echo "FAIL row $row of The tasks of M2d does not name its part: $text" ;;
+	esac
+done >> "$out"
 if [ -s "$out" ]; then cat "$out"; fail=1; else echo "ok   each part is in one row of The tasks of M2d, or named with its reason"; fi
 rm -f "$out"
 exit "$fail"
