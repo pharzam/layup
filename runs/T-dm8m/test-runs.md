@@ -190,3 +190,26 @@ stays the Operator's.
 `git diff --shortstat a4d41cf` of this head: **1,666 lines, 95 files** —
 measured on the tree of this commit, the reviewer's 1,643/95 plus the 23 lines
 of the note's fix and this section.
+
+## The fixes of round 5
+
+Review round 5 (`ea9aa4e`, GPT-6 Sol on Devin) ended `not mergeable, findings
+recorded` at the raised cap of 5, with two material findings. One is fixed on
+the forge; the budget stays the Operator's.
+
+- Finding 1 (material, open): `git diff --shortstat a4d41cf ea9aa4e` reports
+  **1,667 lines, 95 files** — the figure of the last section was one line
+  short of the commit's own measure; it is left as recorded there.
+- Finding 2 (material, fixed on the forge): the issue's Goal still said "Each
+  task issue carries one state label" and the labels section "Exactly one
+  `state:` label per task issue" — both miss the re-plan's exception that an
+  open issue the command does not name carries none. The Goal now reads "Each
+  task issue the command names carries one `state:` label … (an open issue it
+  does not name carries none)", and the labels section "At most one `state:`
+  label per task issue — an open issue the command does not name carries
+  none".
+
+### The budget, measured
+
+`git diff --shortstat a4d41cf` of this head: **1,690 lines, 95 files** —
+measured on the tree of this commit.
