@@ -763,6 +763,16 @@ These traps are not domain-specific: they hurt every project's test suite.
   signals a whole process group sees no `SIGINT` in the child, and reads it as a
   defect of the code. Task `T-5pxd` (#161) met it. **The check:** run the child
   in the foreground, under a parent whose trap is `:`, not `''`.
+- ❌ **A short time limit that a slow runner reaches.** A table of cases gave each
+  case the same wall limit, 300 ms, which only the case `wall` tests. On a slow
+  runner a shell that started late was stopped by the limit before it signalled
+  itself, and the case "crash by a signal of its own" was classed `wall`:
+  `TestEachEndGetsItsClass` failed twice in three hours of CI (#291), and never in
+  300 runs of the old test on a host of two CPUs, idle or with a busy loop for each
+  CPU, so a quiet host does not show it. Task `T-6rgp` (#292) met it. **The
+  check:** give the short limit to the case that tests it and to each other case a
+  limit that a slow start cannot reach (5 s), and add a case that runs longer than
+  the short limit and expects its own class: it is red while the limit is shared.
 
 ### Reference-sweep pitfalls
 

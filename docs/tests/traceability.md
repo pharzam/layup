@@ -132,7 +132,7 @@ the first.
 | `TestRunNewThenRestart` with the step `probe` (`cmd/layup/run_e2e_test.go`) | e2e | REQ-013 | F-0003#52 | — | ADR-0020 | T-nxe4 | green |
 | `TestRunNewThenRestart` with the step `rule-gaps` and its "done before" (`cmd/layup/run_e2e_test.go`) | e2e | REQ-001 | F-0003#41 | — | — | T-qk66 | green |
 | `TestClass`, `TestUsageOfClaudeResult`, `TestUsageOfNone`, `TestCheckProbeResult` (`internal/session/end_test.go`) | unit | REQ-013, REQ-011 | F-0003#52, F-0003#50 | — | ADR-0015, ADR-0024 | T-bpxg | green |
-| `TestEachEndGetsItsClass`, `TestResultOf`, `TestUsageOfAFile`, `TestTheSchemaOfProbeResultEqualsItsBlock` (`internal/session/end_integration_test.go`) | integration | REQ-013, REQ-005, REQ-011 | F-0003#52, F-0003#50 | — | ADR-0015 | T-bpxg | green |
+| `TestEachEndGetsItsClass`, `TestResultOf`, `TestUsageOfAFile`, `TestTheSchemaOfProbeResultEqualsItsBlock` (`internal/session/end_integration_test.go`) | integration | REQ-013, REQ-005, REQ-011 | F-0003#52, F-0003#50 | — | ADR-0015 | T-bpxg, T-6rgp | green |
 | `TestCheckCredentialOnARealFile` (`internal/route/register_integration_test.go`) | integration | REQ-013 | F-0003#52 | — | ADR-0015 | T-ysph | green |
 | `TestTheSchemaEqualsItsBlock` (`internal/forge/register_integration_test.go`, `internal/route/register_integration_test.go`: with `models` and `routing-register`) | integration | NFR-001, REQ-013 | F-0001#1 | — | ADR-0014 | T-1g1q, T-ysph | green |
 | `TestEachCallRunsItsVerb` (the rows of `Fetch` and `Push`), `TestFetchAndPushRefuseTheirInputBeforeGitStarts`, `TestNoErrorHoldsTheToken` (`internal/git/git_test.go`) | unit | NFR-001 | F-0003#42 | — | ADR-0014 | T-xhgz | green |
