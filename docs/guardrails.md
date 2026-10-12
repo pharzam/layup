@@ -406,6 +406,22 @@ check that catches it.
   not in the allow list). The rules of "A headless reviewer whose commands are
   denied" have the opposite fault, too narrow to run the commands of the brief.
   Learned in `T-bng8` ([#267](https://github.com/pharzam/layup/issues/267)).
+- ❌ **A Start that names the wrong idea owner.** `layup run --new … --idea-owner
+  ACCOUNT` writes `approvers.tsv` once, and an answer counts only from an approver in
+  the role of its block: the block of the idea owner takes the answers of that account
+  and of no other. No step changes the file. In the demo of `M2c` the person who owned
+  the idea answered the follow-up from another account than the Start named: the restart
+  copied those comments as input and read no answer in them, and alone they would have
+  left the step at `waiting: no answer yet to the follow-up in the block idea-owner`,
+  which reads as "nobody has answered". A quote of an answer with a `>` before each line
+  (the quote-reply of the forge) holds none either, as a line counts only when it starts
+  `Q-NNN: `. It is silent because the wait is the normal state of Intake and the comment
+  reads well on the issue. **The check:** before Start, ask who will answer the batch
+  and name that account in `--idea-owner`; if another account answers, the account that
+  the Start named posts the answers in a comment of its own, one `Q-NNN: answer` line
+  per question (a comment that held only a quote is edited to those lines before the
+  next restart copies it: an edit before the first copy counts). Learned in `T-ekh5`
+  ([#228](https://github.com/pharzam/layup/issues/228)).
 
 ### Writing a lesson back
 

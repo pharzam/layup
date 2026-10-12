@@ -1,0 +1,4 @@
+harness	model	context	source	date	use	reason
+claude	claude-sonnet-5-5	1000000	https://platform.claude.com/docs/en/models/overview	2026-10-10T09:04:43Z	yes	—
+devin	swe-2-high	262000	https://docs.devin.ai/cli/models	2026-10-10T09:04:43Z	yes	—
+claude	claude-opus-5-5	1000000	https://platform.claude.com/docs/en/models/overview	2026-10-11T15:38:39Z	yes	—

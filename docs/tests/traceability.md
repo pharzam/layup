@@ -197,6 +197,6 @@ the first.
 | `M3c/uat/clarification` | uat | REQ-006 | F-0003#46 | — | ADR-0019 | M3c | planned |
 | `M3b/e2e/escalation` | e2e | REQ-008 | F-0003#48 | — | ADR-0022 | M3b | planned |
 | `M3d/e2e/stall-procedure` | e2e | REQ-010 | F-0003#49 | — | ADR-0023 | M3d | planned |
-| `M2c/uat/specification-trace` | uat | REQ-012 | F-0003#51 | — | ADR-0018 | M2c | planned |
+| The demo of `M2c` (`runs/T-ekh5/`): the uat on `pharzam/layup-uat-m2c`, by the restarts of `layup run` with the pilot brief and two real harnesses: one comment of the App holds the rule gaps and the gaps of meaning, `layup spec check --facts` exits 0 on the numbered spans, each write of LAYUP by the App's bot | uat | REQ-012, REQ-001 | F-0003#51 | — | ADR-0018 | T-ekh5 | green |
 | `M4a/uat/two-harnesses` | uat | REQ-013 | F-0003#52 | guardrails.md §1.1 Inv-9 | ADR-0020 | M4a | planned |
 | `M4c/uat/two-stacks` | uat | REQ-014 | F-0003#67 | — | — | M4c | planned |

@@ -1,0 +1,9 @@
+role	tier	position	harness	model
+developer	execution	1	claude	claude-sonnet-5-5
+developer	execution	2	devin	swe-2-high
+systems-architect	reasoning	1	claude	claude-opus-5-5
+systems-architect	reasoning	2	devin	swe-2-high
+product-owner	reasoning	1	claude	claude-opus-5-5
+product-owner	reasoning	2	devin	swe-2-high
+qa-engineer	reasoning	1	devin	swe-2-high
+qa-engineer	reasoning	2	claude	claude-opus-5-5
