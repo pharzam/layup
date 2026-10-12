@@ -590,9 +590,9 @@ These traps are not domain-specific: they hurt every project's test suite.
   clock that began at 12:00:00 again, and the run kept its ID. A restart takes the
   lease over after 15 minutes of its own clock without a beat, and writes the row
   with its time cut to the second, so two restarts could write the same row in the
-  same second, and `git commit` ended with exit 1 for want of a change. The test
-  failed in 5 of 70 runs of CI (#291) and in 1 of 200 runs on a host of two CPUs,
-  and its message names no clock. A real clock does not go back. Task `T-0p5p`
+  same second, and `git commit` ended with exit 1, as it does when nothing changed.
+  The test failed in 5 of 70 runs of CI (#291) and in 1 of 200 runs on a host of two
+  CPUs, and its message names no clock. A real clock does not go back. Task `T-0p5p`
   (#293) met it. **The check:** make the fake clock once for each world, not for each
   call of the helper that reads the world's config, and assert that the clock of a
   second config is not before what the first read.

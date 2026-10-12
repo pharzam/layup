@@ -59,16 +59,18 @@ The failed run of the old test (the 10th of the idle count, 6.15 s) shows the me
 --- FAIL: TestAFailedSpanCheckRunsNumberingAgain (6.15s)
 ```
 
-**What the counts show, and what they do not.** The old test failed once in 200 runs on
-this host, with that message: a rate of 0.5%, below the 5 in 70 of CI (7%) and below the one
-in 28 (3.6%) that the plan review reads from the mechanism; a count below one in 28 does not
-refute that reading. The new test did not fail in 200 runs. At a rate of 0.5% the chance of
-200 runs with no failure is 37% (0.995 to the power 200), at 1 in 28 it is 0.07%, so the
-counts alone cannot show the fix. The fix is shown by the red test, which names the cause
-(a clock that goes back), and by the sources: with one clock for the world, the third
-restart reads the row of the second after it was written, so its wait ends at least 15
-minutes of the clock after that row's `Started` (`lease.go:66-67, 81`), and the two rows
-cannot be equal.
+**What the counts show, and what they do not.** The old test failed once in 200 runs on this
+host, with that message: a rate of 0.5%, below the 5 in 70 of CI (7%) and below the one in
+28 (3.6%) that the plan review reads from the mechanism; a count below one in 28 does not
+refute that reading. The reason of the exit, nothing to commit, is a reading too: `call` in
+`internal/git/git.go` keeps the standard error of git and not its standard output, where git
+writes that message, so no output of the failed run names it. The new test did not fail in
+200 runs. At a rate of 0.5% the chance of 200 runs with no failure is 37% (0.995 to the
+power 200), at 1 in 28 it is 0.07%, so the counts alone cannot show the fix. The fix is
+shown by the red test, which names the cause (a clock that goes back), and by the sources:
+with one clock for the world, the third restart reads the row of the second after it was
+written, so its wait ends at least 15 minutes of the clock after that row's `Started`
+(`lease.go:66-67, 81`), and the two rows cannot be equal.
 
 ## The suite, and the hours cap
 
