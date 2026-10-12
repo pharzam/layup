@@ -152,3 +152,37 @@ FAIL no part: docs/spec/records.md	## NFR-001 — The records of the Scaffold	se
 
 Green after: `sh runs/T-bng8/parts.sh` exits 0 on the real tree; the check
 above is the only change in this commit beside the usage text.
+
+## The fix of round 5 (2026-10-12)
+
+Finding 1 of round 5, and the note:
+
+- Finding 1: check 4 accepted *any* entry prefixed by a test's or state's name,
+  so a clause of a row split between task rows could be dropped while another
+  clause survived. Check 4 now also requires each clause of each split row by
+  name — the two clauses of the "No admitted pair" input state and the two of
+  "The answers of the setup" acceptance test.
+- The note: `runs/T-bng8/__pycache__/gen-issues.cpython-313.pyc`, bytecode
+  committed with the helper, is removed; `.gitignore` now names `__pycache__/`.
+
+Red, each against the fixed check with the named line dropped from
+`parts.tsv` (one `FAIL no part` each):
+
+```
+FAIL no part: docs/spec/scaffold.md	## The acceptance tests of M2d	The answers of the setup: the merge into the batch and the comment
+FAIL no part: docs/spec/scaffold.md	## Input states	No admitted pair of `systems-architect` (for `markers`) or `product-owner` (for a prose session): for markers
+FAIL no part: docs/spec/scaffold.md	## Input states	No admitted pair of `systems-architect` (for `markers`) or `product-owner` (for a prose session): for a prose session
+FAIL no part: docs/spec/scaffold.md	## The acceptance tests of M2d	The answers of the setup: the rows of answers.tsv
+```
+
+Green after:
+
+- `sh runs/T-bng8/parts.sh`: exit 0, "ok   each part is in one row of The tasks
+  of M2d, or named with its reason"; `PLAN=/dev/null sh runs/T-bng8/parts.sh`:
+  exit 1 as before.
+- `go build ./...`, `go vet ./...`, `go test ./...`, `go test
+  -tags=integration ./...`, `gofmt -l .` (empty), `prd-lint`, `link-lint`
+  (2,318 links), `setup-check`, `run-discipline-tests` (102 passed),
+  `adr-lint`, `git diff --check`: exit 0.
+- `python3 -I runs/T-bng8/gen-issues.py --table`: exit 0; the plan table is
+  unchanged by this commit (no part or row changed).
