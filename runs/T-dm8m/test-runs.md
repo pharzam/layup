@@ -213,3 +213,33 @@ the forge; the budget stays the Operator's.
 
 `git diff --shortstat a4d41cf` of this head: **1,690 lines, 95 files** —
 measured on the tree of this commit.
+
+## The fixes of round 6
+
+Review round 6 (`5acd43c`, GPT-6 Sol on Devin) ended `not mergeable, findings
+recorded` at the raised cap of 6, with three material findings. Two are fixed
+here; the budget stays the Operator's.
+
+- Finding 1 (material, open): `git diff --shortstat a4d41cf 5acd43c` reports
+  **1,690 lines, 95 files** — the overrun stays unapproved; it is the
+  Operator's decision, not an implementation defect.
+- Finding 2 (material, fixed): the `docs/ci/README.md` account of
+  `task-state.yml` named neither qualification the plan review's note 2 asks
+  for. It now says the task issues are the ones the command lists from the
+  task tables, the completed log and `## Now` of `main`; that an open issue
+  it does not list carries none; and that a closed issue takes
+  `state: merged` when `state_reason` is `completed` — which stands in for
+  "merged by its pull request" — and `state: rejected` otherwise.
+- Finding 3 (material, fixed): a quoted push bound `'tags': ['*']` is valid
+  YAML beside `branches: [main]`, but the checker's key pattern wanted an
+  unquoted name and skipped the line, so the run printed `the workflow OK`.
+  The bound keys of `on:` are now matched quoted or unquoted (single or
+  double quote, and a space before the colon), and the name is recorded
+  de-quoted, so a quoted `branches` still passes and every other bound fails.
+  The mutant `bad-labels-workflow-tags-quoted` carries `'tags': ['*']`
+  and fails with `push: tags: a bound of push is branches only`.
+
+### The budget, measured
+
+`git diff --shortstat a4d41cf` of this head: **1,803 lines, 98 files** —
+measured on the tree of this commit.

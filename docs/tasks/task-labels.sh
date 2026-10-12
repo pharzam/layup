@@ -130,6 +130,7 @@ read_dir() {
 check_workflow() {
 	[ -f "$1" ] || die "missing input: the workflow $1"
 	tr -d '\r' < "$1" | awk '
+	BEGIN { squo = sprintf("%c", 39); dquo = sprintf("%c", 34); keyre = "^ *[" squo dquo "]?[a-z_-]+[" squo dquo "]?[ \t]*:" }
 	function ind(l) { match(l, /^ */); return RLENGTH }
 	function fail(m) { print "task-labels: the workflow FAIL " m > "/dev/stderr"; bad = 1 }
 	function isin(v, w, n,   i) { for (i = 1; i <= n; i++) if (v == w[i]) return 1; return 0 }
@@ -142,10 +143,14 @@ check_workflow() {
 	/^[ \t]*#/ || /^[ \t]*$/ { next }
 	ind($0) == 0 { top = $0; sub(/:.*/, "", top); inrun = 0 }
 	top == "on" && ind($0) == 2 { k = $0; sub(/^ */, "", k); sub(/:.*/, "", k); trig[k] = 1; cur = k; curk = "" }
-	top == "on" && ind($0) == 4 && $0 ~ /^ *[a-z_-]+:/ {
-		kn = $0; sub(/^ */, "", kn); sub(/:.*/, "", kn); curk = kn
+	top == "on" && ind($0) == 4 && $0 ~ keyre {
+		kn = $0; sub(/^ */, "", kn)
+		if (substr(kn, 1, 1) == squo || substr(kn, 1, 1) == dquo) kn = substr(kn, 2)
+		sub(/:.*/, "", kn); sub(/[ \t]*$/, "", kn)
+		if (substr(kn, length(kn), 1) == squo || substr(kn, length(kn), 1) == dquo) kn = substr(kn, 1, length(kn) - 1)
+		curk = kn
 		if (cur == "push") bound[kn] = 1
-		v = $0; sub(/^ *[a-z_-]+:[ \t]*/, "", v)
+		v = $0; sub(keyre "[ \t]*", "", v)
 		if (v ~ /^\[/) { sub(/^\[/, "", v); sub(/\][ \t]*$/, "", v)
 			m = split(v, a, /,[ \t]*/)
 			for (i = 1; i <= m; i++) if (a[i] != "") { key[cur SUBSEP curk SUBSEP a[i]] = 1; ord[cur SUBSEP curk] = ord[cur SUBSEP curk] " " a[i] } }
