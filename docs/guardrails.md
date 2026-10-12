@@ -585,6 +585,17 @@ These traps are not domain-specific: they hurt every project's test suite.
   reasons unrelated to the code. The check: isolate and control every dependency,
   with a fresh fixture per run — see
   [`tests/scaling-checklist.md`](tests/scaling-checklist.md).
+- ❌ **A fake clock made anew at each call of a world's helper.** The test world of
+  `internal/run` made its fast clock inside `config`, so each restart of a run got a
+  clock that began at 12:00:00 again, and the run kept its ID. A restart takes the
+  lease over after 15 minutes of its own clock without a beat, and writes the row
+  with its time cut to the second, so two restarts could write the same row in the
+  same second, and `git commit` ended with exit 1 for want of a change. The test
+  failed in 5 of 70 runs of CI (#291) and in 1 of 200 runs on a host of two CPUs,
+  and its message names no clock. A real clock does not go back. Task `T-0p5p`
+  (#293) met it. **The check:** make the fake clock once for each world, not for each
+  call of the helper that reads the world's config, and assert that the clock of a
+  second config is not before what the first read.
 - ❌ **Tests that pass for the wrong reason.** A test that asserts nothing, asserts
   the wrong thing, or never actually exercises the path reports a safety that is not
   there — worse than no test. The check: confirm the test fails when the behaviour
