@@ -168,3 +168,25 @@ a closed issue's label comes from its close reason — the same claim
 
 `git diff --shortstat a4d41cf` of this head: **1,609 lines, 95 files** —
 recorded after the commit below.
+
+## The fixes of round 4
+
+Review round 4 (`8e7c48a`, GPT-6 Sol on Devin) ended `not mergeable, findings
+recorded` at the raised cap of 4, with two material findings and a note. The
+note is fixed here; the issue's own wording was fixed on the forge; the budget
+stays the Operator's.
+
+- Finding 1 (material, open): the reviewer measured `git diff --shortstat
+  a4d41cf 8e7c48a` at **1,643 lines, 95 files** — the 1,609 recorded above
+  missed the 34 lines of that evidence commit itself.
+- Finding 2 (material, fixed on the forge): the issue's body still said "The
+  six labels are created once" while the re-plan's table names seven (`stalled`
+  from #202). The body now says seven.
+- The note (fixed): `docs/ci/README.md`'s `discipline-tests` row now names the
+  `task-labels.sh` fixtures beside `task-state.sh`'s.
+
+### The budget, measured
+
+`git diff --shortstat a4d41cf` of this head: **1,666 lines, 95 files** —
+measured on the tree of this commit, the reviewer's 1,643/95 plus the 23 lines
+of the note's fix and this section.
