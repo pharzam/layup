@@ -52,7 +52,8 @@ Operator settled the finding as fixed by `ed813d1`, as O-207 did for
 Delivered: the prompt of the numbering gives each column of each kind of span
 once, under a test of its text, with the lesson in `guardrails.md`. The review
 ended by the Operator's decision at the cap of 1 (O-208). The diff against
-`347d845` is inside 160 lines over 6 files. Next: the demo of `M2c` runs again
+`347d845` is inside 160 lines over 6 files, after the sample of the
+session's file moved into the README at the close-out. Next: the demo of `M2c` runs again
 on a binary built from this merge.
 
 ## Resource record
@@ -67,4 +68,4 @@ usage; the author's tokens are not reported.
 | T, D1, D2, the lesson | execution | Claude Opus 5.5 | not reported | not reported | 21:46 to 21:47 |
 | Round 1 | reasoning | GPT-6 Sol | — | not reported by Devin | 4 min 37 s |
 | The fix of round 1 | execution | Claude Opus 5.5 | not reported | not reported | 21:56 to 21:57 |
-| The close-out | execution | Claude Opus 5.5 | not reported | not reported | 2026-10-12 05:53 to 05:53 |
+| The close-out | execution | Claude Opus 5.5 | not reported | not reported | 2026-10-12 05:53 to 05:54 |
