@@ -1,0 +1,15 @@
+# run 5: 2026-10-12T07:18:21Z to 2026-10-12T08:00:54Z, exit 0
+step	result	detail
+forge	done	the installation token, the six capabilities and the permissions of M2a; a public repository, with layup-records
+clone	done	start.tsv, approvers.tsv and lease.tsv read
+version	done	LAYUP 0.1.0-dev
+lease	done	held by this run
+probe	done	probed and passed 0, probed and failed 0, skipped 0
+rule-gaps	done	done before
+meaning	done	done before
+numbering	done	800 spans, 679 facts, in spec/spans.tsv
+spans	done	the span check passed, in spec/check.tsv
+draft	done	587 rows, in spec/draft.tsv
+completeness	done	9 items, in intake/coverage.tsv
+batch	done	34 questions, in questions.tsv and the comment of the batch
+answers	done	waiting: no answer yet in the block idea-owner

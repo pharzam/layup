@@ -1,0 +1,138 @@
+# T-ekh5: the actors of the writes on pharzam/layup-uat-m2c, read from the forge on 2026-10-12T19:10:13Z, after run 7, and the telemetry of the records
+
+## The commits of layup-records (rule 4): sha, author, committer, date
+2b7d1c215a75c083a46d042046e5b638e0eeeb5a	layup-agent[bot]	layup-agent[bot]	2026-10-12T18:43:54Z
+312ea280c5792d7c94350d524e419707ea0e7816	layup-agent[bot]	layup-agent[bot]	2026-10-12T18:43:53Z
+eb0d43fa7a4fefc18662bcd2f743130c09d0ed64	layup-agent[bot]	layup-agent[bot]	2026-10-12T18:43:51Z
+6391076718667a8e06682201ef2d2b7aae6c2de5	layup-agent[bot]	layup-agent[bot]	2026-10-12T18:43:50Z
+b00c49b739f7704bb692fb34f106f2d9fe53fcba	layup-agent[bot]	layup-agent[bot]	2026-10-12T18:43:48Z
+563b13505baf7547b4e0f5d4211f09e1cd45cc6f	layup-agent[bot]	layup-agent[bot]	2026-10-12T18:43:45Z
+95364b36cc8196620a81065f5206ec4827b0696a	layup-agent[bot]	layup-agent[bot]	2026-10-12T18:09:04Z
+03c80168e0dbba85edcf47e3e433bacb583d3691	layup-agent[bot]	layup-agent[bot]	2026-10-12T18:09:02Z
+3262c75c99e1ff3158c865547032637e58b72327	layup-agent[bot]	layup-agent[bot]	2026-10-12T18:09:00Z
+59339d7aca23e18d6d6e2599b1510ccd37e5a578	layup-agent[bot]	layup-agent[bot]	2026-10-12T18:07:48Z
+22e9998daef00ee1479869b221d62e03404fe10d	layup-agent[bot]	layup-agent[bot]	2026-10-12T18:07:46Z
+8f677454cc0265a21a4d75b16ac08a21fe7ccc62	layup-agent[bot]	layup-agent[bot]	2026-10-12T18:07:45Z
+8994e0b1479351e6b9a4f3ff5cc4d3ee6e41b918	layup-agent[bot]	layup-agent[bot]	2026-10-12T18:07:41Z
+2fa60ff252e46a41ce5c655acce7044c31d60bdc	layup-agent[bot]	layup-agent[bot]	2026-10-12T08:00:53Z
+4e327427dfd865f331c05e23d0811cfa3897ea72	layup-agent[bot]	layup-agent[bot]	2026-10-12T08:00:50Z
+1ee54ef5a888c0c578a86b6ef9dba1ed74344917	layup-agent[bot]	layup-agent[bot]	2026-10-12T08:00:48Z
+bcf2975192b15552be45ea676d634a745b1e6fe9	layup-agent[bot]	layup-agent[bot]	2026-10-12T07:58:29Z
+82c1c00d14115b0c0ea9f70aaf3c32cbbdd5411c	layup-agent[bot]	layup-agent[bot]	2026-10-12T07:56:00Z
+c6b7356440c6fdc9747a54361b8e19fcf0dd5a63	layup-agent[bot]	layup-agent[bot]	2026-10-12T07:55:58Z
+5d7e73b04c0071bd5c799b1caf43a61e12bb30cc	layup-agent[bot]	layup-agent[bot]	2026-10-12T07:51:10Z
+6e6c20f58535a3221ec4e4783dfb321be77ce032	layup-agent[bot]	layup-agent[bot]	2026-10-12T07:51:08Z
+2a6ba491163ca9f4e148f50a27f7ba174b94b646	layup-agent[bot]	layup-agent[bot]	2026-10-12T07:51:06Z
+3596d598f32712dd4f284bf11d2e30116bdca6cb	layup-agent[bot]	layup-agent[bot]	2026-10-12T07:48:30Z
+d784faba41279334f62a59817435c6233611a301	layup-agent[bot]	layup-agent[bot]	2026-10-12T07:48:27Z
+d153d5883f8a6157e85ec79f3fbd414c5614bcda	layup-agent[bot]	layup-agent[bot]	2026-10-12T06:31:54Z
+9f61c1f9bba7c4ba4e67c753f1891e33e354208a	layup-agent[bot]	layup-agent[bot]	2026-10-12T06:30:13Z
+16cf7303c89e360819e89ee185f949afac140e4d	layup-agent[bot]	layup-agent[bot]	2026-10-12T06:30:11Z
+bab35de6268e6fc1f41fb0684b1dc7208fc6da42	layup-agent[bot]	layup-agent[bot]	2026-10-11T21:44:11Z
+c39ff7ac268e82c639069fab453bb37923cc11bf	layup-agent[bot]	layup-agent[bot]	2026-10-11T21:42:01Z
+d9d884e9cd8360457529540bda428d1314089772	layup-agent[bot]	layup-agent[bot]	2026-10-11T21:41:59Z
+cc975e61e2ae259288ef0d471d93b08efa8d259b	layup-agent[bot]	layup-agent[bot]	2026-10-11T21:11:16Z
+bf8d4bf57eb0c31a290b0e2363b10421acf48858	layup-agent[bot]	layup-agent[bot]	2026-10-11T21:09:06Z
+c6eeea133679c66ebc59e672b6c07ba8c9892285	layup-agent[bot]	layup-agent[bot]	2026-10-11T21:09:03Z
+2f8d650e9b842884f5abca6d1c38dfa65ec7dbb9	layup-agent[bot]	layup-agent[bot]	2026-10-11T20:38:06Z
+c65e99e6439317841b47c3f27304911aba53cbc5	layup-agent[bot]	layup-agent[bot]	2026-10-11T20:36:52Z
+43364c905e35dcbe1830598fe035f29e0d1f09c2	layup-agent[bot]	layup-agent[bot]	2026-10-11T20:36:48Z
+72925869b71a7192efa3a3bacb77ca43ed8300f1	layup-agent[bot]	layup-agent[bot]	2026-10-11T20:35:11Z
+edd3bb697e1872ee986291d7a081fe3bbb77bfd9	layup-agent[bot]	layup-agent[bot]	2026-10-11T20:35:10Z
+f605653a7f4d5747672305043b8b0f232adce8ea	layup-agent[bot]	layup-agent[bot]	2026-10-11T20:35:08Z
+483385791a352e4341b353fcc3c87d2982f20c56	layup-agent[bot]	layup-agent[bot]	2026-10-11T20:34:52Z
+bd8abbc25c0481954600c686a133f553d140b043	layup-agent[bot]	layup-agent[bot]	2026-10-11T20:34:50Z
+d45040415c286db94fe76b14b7174c4b24c5d2e6	layup-agent[bot]	layup-agent[bot]	2026-10-11T20:34:38Z
+3a9d8663dc3dea70db13df2976995e0a0ee9d51f	layup-agent[bot]	layup-agent[bot]	2026-10-11T20:34:37Z
+fbc34fe87dfa4b5da66e09de25300a64c188f4fc	layup-agent[bot]	layup-agent[bot]	2026-10-11T20:34:35Z
+b754bed2640dc867a196f45e7ce0b526d27e18c5	layup-agent[bot]	layup-agent[bot]	2026-10-11T20:34:07Z
+52482545a37c67a9395aae960d56d8d0d3b3dd44	layup-agent[bot]	layup-agent[bot]	2026-10-11T20:34:06Z
+a7ca9d87700b6b05d48d1ab515f060dfa8438b7d	layup-agent[bot]	layup-agent[bot]	2026-10-11T20:34:05Z
+fccc850c381aea650ce1f6dfb9990f3599b00b89	layup-agent[bot]	layup-agent[bot]	2026-10-11T20:34:03Z
+6a59ca64ac2b0139db35efc7d83cb0d995ae83d2	layup-agent[bot]	layup-agent[bot]	2026-10-11T20:34:01Z
+a7306f3225a6b9fbf91b503cc65bd4a8f5ceb880	layup-agent[bot]	layup-agent[bot]	2026-10-11T20:34:00Z
+84d6b52acdc112f0f2edbd5e6d11f8f2e5800d65	layup-agent[bot]	layup-agent[bot]	2026-10-11T20:33:58Z
+
+## The commits of main: sha, author, committer, date
+1f0d4de03084cb89f7c1be68497af8f3dffd46ca	layup-agent[bot]	layup-agent[bot]	2026-10-11T20:26:39Z
+
+## The issues: number, author, created, comments
+1	layup-agent[bot]	2026-10-11T20:34:01Z	6
+2	layup-agent[bot]	2026-10-11T20:34:04Z	11
+
+## The comments of the issues 1 (Intake) and 2 (control): issue, id, author, app, created, updated
+1	6120182070	layup-agent[bot]	layup-agent	2026-10-12T08:00:52Z	2026-10-12T08:00:52Z
+1	6129740226	pharzam	-	2026-10-12T17:59:20Z	2026-10-12T17:59:20Z
+1	6129893541	layup-agent[bot]	layup-agent	2026-10-12T18:09:04Z	2026-10-12T18:09:04Z
+1	6130283081	yaltunbicak	-	2026-10-12T18:33:57Z	2026-10-12T18:33:57Z
+1	6130363413	pharzam	-	2026-10-12T18:38:39Z	2026-10-12T18:42:58Z
+1	6130399762	yaltunbicak	-	2026-10-12T18:41:00Z	2026-10-12T18:41:00Z
+2	6113462612	layup-agent[bot]	layup-agent	2026-10-11T20:34:52Z	2026-10-11T20:34:52Z
+2	6113465522	layup-agent[bot]	layup-agent	2026-10-11T20:35:10Z	2026-10-11T20:35:10Z
+2	6113483171	layup-agent[bot]	layup-agent	2026-10-11T20:36:50Z	2026-10-11T20:36:50Z
+2	6113495458	layup-agent[bot]	layup-agent	2026-10-11T20:38:08Z	2026-10-11T20:38:08Z
+2	6113799023	layup-agent[bot]	layup-agent	2026-10-11T21:11:18Z	2026-10-11T21:11:18Z
+2	6114118445	layup-agent[bot]	layup-agent	2026-10-11T21:44:12Z	2026-10-11T21:44:12Z
+2	6119031572	layup-agent[bot]	layup-agent	2026-10-12T06:31:56Z	2026-10-12T06:31:56Z
+2	6120047343	layup-agent[bot]	layup-agent	2026-10-12T07:51:08Z	2026-10-12T07:51:08Z
+2	6120114903	layup-agent[bot]	layup-agent	2026-10-12T07:56:00Z	2026-10-12T07:56:00Z
+2	6120181597	layup-agent[bot]	layup-agent	2026-10-12T08:00:50Z	2026-10-12T08:00:50Z
+2	6129892997	layup-agent[bot]	layup-agent	2026-10-12T18:09:01Z	2026-10-12T18:09:01Z
+
+## The events of the forge (the pushes and the creation of main): time, type, actor, ref, action
+2026-10-11T20:33:47Z	CreateEvent	pharzam	main	-
+2026-10-11T20:34:03Z	IssuesEvent	layup-agent[bot]	-	opened
+2026-10-11T20:34:04Z	PushEvent	layup-agent[bot]	refs/heads/layup-records	-
+2026-10-11T20:34:05Z	IssuesEvent	layup-agent[bot]	-	opened
+2026-10-11T20:34:06Z	PushEvent	layup-agent[bot]	refs/heads/layup-records	-
+2026-10-11T20:34:37Z	PushEvent	layup-agent[bot]	refs/heads/layup-records	-
+2026-10-11T20:34:38Z	PushEvent	layup-agent[bot]	refs/heads/layup-records	-
+2026-10-11T20:34:40Z	PushEvent	layup-agent[bot]	refs/heads/layup-records	-
+2026-10-11T20:34:52Z	IssueCommentEvent	layup-agent[bot]	-	created
+2026-10-11T20:34:52Z	PushEvent	layup-agent[bot]	refs/heads/layup-records	-
+2026-10-11T20:34:54Z	PushEvent	layup-agent[bot]	refs/heads/layup-records	-
+2026-10-11T20:35:10Z	IssueCommentEvent	layup-agent[bot]	-	created
+2026-10-11T20:35:10Z	PushEvent	layup-agent[bot]	refs/heads/layup-records	-
+2026-10-11T20:35:12Z	PushEvent	layup-agent[bot]	refs/heads/layup-records	-
+2026-10-11T20:35:13Z	PushEvent	layup-agent[bot]	refs/heads/layup-records	-
+2026-10-11T20:36:50Z	IssueCommentEvent	layup-agent[bot]	-	created
+2026-10-11T20:36:50Z	PushEvent	layup-agent[bot]	refs/heads/layup-records	-
+2026-10-11T20:36:55Z	PushEvent	layup-agent[bot]	refs/heads/layup-records	-
+2026-10-11T20:38:08Z	IssueCommentEvent	layup-agent[bot]	-	created
+2026-10-11T20:38:08Z	PushEvent	layup-agent[bot]	refs/heads/layup-records	-
+2026-10-11T21:09:05Z	PushEvent	layup-agent[bot]	refs/heads/layup-records	-
+2026-10-11T21:11:18Z	IssueCommentEvent	layup-agent[bot]	-	created
+2026-10-11T21:11:18Z	PushEvent	layup-agent[bot]	refs/heads/layup-records	-
+2026-10-11T21:42:03Z	PushEvent	layup-agent[bot]	refs/heads/layup-records	-
+2026-10-11T21:44:12Z	IssueCommentEvent	layup-agent[bot]	-	created
+2026-10-12T06:30:13Z	PushEvent	layup-agent[bot]	refs/heads/layup-records	-
+2026-10-12T06:30:15Z	PushEvent	layup-agent[bot]	refs/heads/layup-records	-
+2026-10-12T06:31:56Z	IssueCommentEvent	layup-agent[bot]	-	created
+2026-10-12T06:31:56Z	PushEvent	layup-agent[bot]	refs/heads/layup-records	-
+2026-10-12T07:48:31Z	PushEvent	layup-agent[bot]	refs/heads/layup-records	-
+2026-10-12T07:51:08Z	IssueCommentEvent	layup-agent[bot]	-	created
+2026-10-12T07:51:08Z	PushEvent	layup-agent[bot]	refs/heads/layup-records	-
+2026-10-12T07:51:11Z	PushEvent	layup-agent[bot]	refs/heads/layup-records	-
+2026-10-12T07:56:00Z	IssueCommentEvent	layup-agent[bot]	-	created
+2026-10-12T07:58:31Z	PushEvent	layup-agent[bot]	refs/heads/layup-records	-
+2026-10-12T08:00:50Z	IssueCommentEvent	layup-agent[bot]	-	created
+2026-10-12T08:00:50Z	PushEvent	layup-agent[bot]	refs/heads/layup-records	-
+2026-10-12T08:00:52Z	IssueCommentEvent	layup-agent[bot]	-	created
+2026-10-12T18:07:50Z	PushEvent	layup-agent[bot]	refs/heads/layup-records	-
+2026-10-12T18:09:04Z	PushEvent	layup-agent[bot]	refs/heads/layup-records	-
+2026-10-12T18:09:06Z	PushEvent	layup-agent[bot]	refs/heads/layup-records	-
+2026-10-12T18:43:53Z	PushEvent	layup-agent[bot]	refs/heads/layup-records	-
+
+## telemetry.tsv of layup-records, at run 7 (a copy)
+session	task	requirements	role	harness	model	billing	start	first_output	end	latency_s	duration_s	tokens_in	tokens_out	tokens_cache	tokens_status	tokens_reason	money	currency	money_status	price
+S-992a396a	T-p9tk	—	probe	claude	claude-sonnet-5-5	subscription	2026-10-11T20:34:39Z	2026-10-11T20:34:41Z	2026-10-11T20:34:50Z	2	11	4	236	41293	observed	—	—	—	unknown	—
+S-9b59fbdd	T-bg57	—	probe	devin	swe-2-high	subscription	2026-10-11T20:34:54Z	2026-10-11T20:34:54Z	2026-10-11T20:35:08Z	0	14	—	—	—	unavailable	the harness reports none	—	—	unknown	—
+S-2fcc58b7	T-33eu	—	systems-architect	claude	claude-opus-5-5	subscription	2026-10-11T20:35:13Z	2026-10-11T20:35:14Z	2026-10-11T20:36:48Z	1	95	8	9389	188188	observed	—	—	—	unknown	—
+S-2742cb40	T-fvmw	—	product-owner	claude	claude-opus-5-5	subscription	2026-10-11T20:36:55Z	2026-10-11T20:37:05Z	2026-10-11T20:38:06Z	10	71	12	4705	162374	observed	—	—	—	unknown	—
+S-37a7776c	T-lhpc	—	product-owner	claude	claude-opus-5-5	subscription	2026-10-11T21:09:07Z	2026-10-11T21:09:08Z	2026-10-11T21:11:16Z	1	129	30	12494	876639	observed	—	—	—	unknown	—
+S-445dee66	T-83vl	—	product-owner	claude	claude-opus-5-5	subscription	2026-10-11T21:42:03Z	2026-10-11T21:42:04Z	2026-10-11T21:44:11Z	1	128	28	12982	897869	observed	—	—	—	unknown	—
+S-21d94fd8	T-vagk	—	product-owner	claude	claude-opus-5-5	subscription	2026-10-12T06:30:14Z	2026-10-12T06:30:16Z	2026-10-12T06:31:54Z	2	100	20	8940	619294	observed	—	—	—	unknown	—
+S-4e900a71	T-w3za	—	product-owner	claude	claude-opus-5-5	subscription	2026-10-12T07:48:31Z	2026-10-12T07:48:33Z	2026-10-12T07:51:06Z	2	155	28	14727	949233	observed	—	—	—	unknown	—
+S-e1c64020	T-tyf6	—	product-owner	claude	claude-opus-5-5	subscription	2026-10-12T07:51:11Z	2026-10-12T07:51:13Z	2026-10-12T07:55:58Z	2	287	18	36676	379744	observed	—	—	—	unknown	—
+S-c24921f3	T-2zzu	—	qa-engineer	devin	swe-2-high	subscription	2026-10-12T07:56:02Z	2026-10-12T07:56:02Z	2026-10-12T08:00:48Z	0	286	—	—	—	unavailable	the harness reports none	—	—	unknown	—
+S-7498a5a2	T-tbke	—	systems-architect	claude	claude-opus-5-5	subscription	2026-10-12T18:07:50Z	2026-10-12T18:07:53Z	2026-10-12T18:08:59Z	3	69	14	6346	232372	observed	—	—	—	unknown	—

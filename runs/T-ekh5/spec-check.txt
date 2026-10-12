@@ -1,0 +1,15 @@
+# layup spec check --facts spans.tsv --psb problem-statement.md, run at 2026-10-12T18:58:43Z on the copy of spans.tsv of this directory, exit 0
+# spans.tsv is spec/spans.tsv of layup-records of pharzam/layup-uat-m2c (sha256 c4f8588b572762dc38eb44bfda1aaa194dc93bf98f08dca6c64645f3065708da); problem-statement.md is start/problem-statement.md of the same branch (sha256 97c657b6cc38dd2592c84784b0da85af7766a7e31c8cbfe824d67ea794c894fd, 1132 lines); the binary is layup 0.1.0-dev (the run binary)
+rule	result	detail
+cover	pass	—
+bounds	pass	—
+text	pass	—
+ids	pass	—
+classes	pass	—
+# spec/check.tsv of layup-records (the span check of the step spans, run 5):
+rule	result	detail
+cover	pass	—
+bounds	pass	—
+text	pass	—
+ids	pass	—
+classes	pass	—

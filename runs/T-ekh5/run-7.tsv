@@ -1,0 +1,18 @@
+# run 7: 2026-10-12T18:43:42Z to 2026-10-12T18:43:55Z, exit 0
+step	result	detail
+forge	done	the installation token, the six capabilities and the permissions of M2a; a public repository, with layup-records
+clone	done	start.tsv, approvers.tsv and lease.tsv read
+version	done	LAYUP 0.1.0-dev
+lease	done	held by this run
+probe	done	probed and passed 0, probed and failed 0, skipped 0
+rule-gaps	done	done before
+meaning	done	done before
+numbering	done	done before
+spans	done	done before
+draft	done	done before
+completeness	done	done before
+batch	done	done before
+answers	done	done before
+answers-review	done	done before
+follow-up	done	done before
+follow-up-answers	done	7 answers to the follow-up, in intake/answers.tsv; budget.tsv written; Intake is done
