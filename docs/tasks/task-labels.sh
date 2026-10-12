@@ -1,7 +1,8 @@
 #!/bin/sh
 #
-# task-labels.sh — set one `state:` label on each task issue, from the state
-# that task-state.sh derives (#185, T-dm8m).
+# task-labels.sh — set one `state:` label on each task issue — an open issue
+# the command does not list carries none, and a closed issue takes
+# `state: merged` or `state: rejected` from its close reason (#185, T-dm8m).
 #
 # The workflow .github/workflows/task-state.yml runs it, and is the one writer
 # of these labels; a label set by hand is replaced at the next run.
@@ -141,10 +142,10 @@ check_workflow() {
 	/^[ \t]*#/ || /^[ \t]*$/ { next }
 	ind($0) == 0 { top = $0; sub(/:.*/, "", top); inrun = 0 }
 	top == "on" && ind($0) == 2 { k = $0; sub(/^ */, "", k); sub(/:.*/, "", k); trig[k] = 1; cur = k; curk = "" }
-	top == "on" && ind($0) == 4 && $0 ~ /^ *[a-z_]+:/ {
+	top == "on" && ind($0) == 4 && $0 ~ /^ *[a-z_-]+:/ {
 		kn = $0; sub(/^ */, "", kn); sub(/:.*/, "", kn); curk = kn
 		if (cur == "push") bound[kn] = 1
-		v = $0; sub(/^ *[a-z_]+:[ \t]*/, "", v)
+		v = $0; sub(/^ *[a-z_-]+:[ \t]*/, "", v)
 		if (v ~ /^\[/) { sub(/^\[/, "", v); sub(/\][ \t]*$/, "", v)
 			m = split(v, a, /,[ \t]*/)
 			for (i = 1; i <= m; i++) if (a[i] != "") { key[cur SUBSEP curk SUBSEP a[i]] = 1; ord[cur SUBSEP curk] = ord[cur SUBSEP curk] " " a[i] } }

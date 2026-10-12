@@ -70,6 +70,7 @@ own `task-state.yml` when the file says `real`).
 | `bad-labels-workflow-push` | exit 1 | a `push` trigger with no `branches:` bound |
 | `bad-labels-workflow-branches` | exit 1 | a `push` to a branch that is not `main` |
 | `bad-labels-workflow-tags` | exit 1 | a `push` bound that is not `branches` (`tags`) |
+| `bad-labels-workflow-tags-ignore` | exit 1 | a `push` bound that is not `branches` (`tags-ignore`, a hyphenated key) |
 | `bad-labels-workflow-types` | exit 1 | a named type missing from `pull_request_target` |
 | `bad-labels-workflow-issues-types` | exit 1 | a `types:` of `issues` with a foreign and a missing value |
 | `bad-labels-workflow-write` | exit 1 | `pull-requests: write` |
