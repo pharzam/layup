@@ -130,3 +130,25 @@ Green after:
   `adr-lint`, `git diff --check`: exit 0.
 - `gen-issues.py --edit 54 56` wrote the bodies of issues #277 and #279 with
   their new parts.
+
+## The fix of round 4 (2026-10-12, 15:05Z)
+
+Finding 1 of round 4, and the note:
+
+- Finding 1: the usage text of `gen-issues.py` gave `--body 40` as its
+  example; the rows of `M2d` start at 50, so the command exits 1. The example
+  now reads `--body 50`, and `python3 -I runs/T-bng8/gen-issues.py --body 50`
+  prints the body of row 50.
+- The note: the two check-5 wants added in round 3 (`setup/inputs/files`,
+  `setup/rulesets.txt`) had no recorded red run of their own. Recorded below.
+
+Red, each against the fixed check with the named line dropped from
+`parts.tsv`:
+
+```
+FAIL no part: docs/spec/records.md	## NFR-001 — The records of the Scaffold	setup/inputs/files
+FAIL no part: docs/spec/records.md	## NFR-001 — The records of the Scaffold	setup/rulesets.txt
+```
+
+Green after: `sh runs/T-bng8/parts.sh` exits 0 on the real tree; the check
+above is the only change in this commit beside the usage text.

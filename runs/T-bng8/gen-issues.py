@@ -12,7 +12,7 @@ row's issue again (the fixes of round 1). With --table, it prints the table of
 docs/plan/README.md from ROWS, parts.tsv and issues.tsv. A one-off evidence
 command, not a check of the gate.
 
-    python3 -I runs/T-bng8/gen-issues.py --body 40
+    python3 -I runs/T-bng8/gen-issues.py --body 50
     python3 -I runs/T-bng8/gen-issues.py --post
     python3 -I runs/T-bng8/gen-issues.py --table
 """
