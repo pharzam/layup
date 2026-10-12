@@ -381,7 +381,7 @@ check that catches it.
   after the word `round`. A final message with no such line is no record to it:
   round 2 of `T-bng8` had none, so the linter read the rounds of the issue as 1, 3,
   4, 5 and 6, and the required check `review-record` was red on each push of the
-  pull request from then on. It is silent on the issue, where the rounds run and
+  pull request until the heading was added. It is silent on the issue, where the rounds run and
   nothing shows that check: the record reads well, and no step that posts it looks
   at the heading. The check of the pull request runs on a pull-request event, so it
   shows the gap at the next push, not when the record is posted. **The check:** the
@@ -393,10 +393,10 @@ check that catches it.
   ([#267](https://github.com/pharzam/layup/issues/267)).
 - ❌ **An allow rule whose glob reaches a script with a write mode.** A reviewer
   session runs read-only by its allow rules (`claude -p --permission-mode dontAsk`).
-  After a round with many denied commands, the allow rules of a harness script,
-  outside the repository, were widened to `Bash(python3 runs/*)`, `Bash(PLAN=*)` and
-  `Bash(sh runs/*)`, so that the reviewer could run the check of a task with an
-  option. They also allow `gen-issues.py --post` and `--edit`, which open and edit
+  The allow rules of a harness script, outside the repository, as they stood after
+  a round with many denied commands, included `Bash(python3 runs/*)`, `Bash(PLAN=*)`
+  and `Bash(sh runs/*)`, which let a reviewer run the check of a task with an option.
+  The same globs also allow `gen-issues.py --post` and `--edit`, which open and edit
   issues through the App: writes to the forge that the brief barred only in words.
   It is silent because a reviewer that follows its brief never runs them, and the
   rules read as read-only. **The check:** allow the exact read-only forms (`--table`,

@@ -1,7 +1,7 @@
 # T-bgvq — test runs
 
-The two lessons of the review rounds of `T-bng8` (#288). The test is
-`runs/T-bgvq/check.sh`: red on `main`, where neither entry exists, green after the
+The two lessons of the review rounds of `T-bng8` (#267), as task `T-bgvq`
+(#288). The test is `runs/T-bgvq/check.sh`: red on `main`, where neither entry exists, green after the
 two entries are in `docs/guardrails.md`.
 
 ## Red (2026-10-12, 12:23Z)
