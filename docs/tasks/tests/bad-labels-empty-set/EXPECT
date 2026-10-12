@@ -1,1 +1,9 @@
+task-labels: running task-state.sh
+task-labels: reading the backlog, the completed log and the plan of main
+task-labels: reading the issues
 task-labels: no task issue in the plan, the completed log or the backlog
+--- calls
+api -H Accept: application/vnd.github.raw repos/{owner}/{repo}/contents/docs/tasks/backlog.md?ref=main
+api -H Accept: application/vnd.github.raw repos/{owner}/{repo}/contents/docs/tasks/completed.md?ref=main
+api -H Accept: application/vnd.github.raw repos/{owner}/{repo}/contents/docs/plan/README.md?ref=main
+api repos/{owner}/{repo}/issues?state=all&per_page=100 --paginate -q .[] | select(.pull_request | not) | "\(.number)\t\(.state)\t\(.state_reason // "")\t\([.labels[].name] | join(","))"

@@ -58,14 +58,19 @@ own `task-state.yml` when the file says `real`).
 | `good-labels-right` | exit 0 | nothing for an issue already right; a hand-set label replaced (`blocked`); a second `state:` label removed; an open task issue the command does not list loses its `state:` label; an issue closed as `duplicate` while the command says `in progress` is `rejected`; labels outside `state:` and an issue outside the set untouched |
 | `good-labels-crlf` | exit 0 | `state`, `issues` and `EXPECT` with carriage returns. Endings pinned by [`.gitattributes`](../../../.gitattributes) |
 | `good-labels-applier-dry-run` | exit 0 | `--dry-run`: the four reads, the changes printed, no write |
+| `good-labels-applier` | exit 0 | the writes: the seven labels created, then one `issue edit` a task — an addition, a removal only, an addition with a removal; the calls the stand-in records prove each |
 | `good-labels-workflow` | exit 0 | the repository's `task-state.yml` passes its check |
-| `bad-labels-empty-set` | exit 1 | the three files name no task issue |
-| `bad-labels-disjoint` | exit 1 | an issue read that holds none of the task issues |
+| `bad-labels-empty-set` | exit 1 | the three files name no task issue; the calls show the reads and no write |
+| `bad-labels-disjoint` | exit 1 | an issue read that holds none of the task issues; the calls show the reads and no write |
 | `bad-labels-missing-issues` | exit 1 | no `issues` |
 | `bad-labels-unknown-state` | exit 1 | a state the labels do not know |
 | `bad-labels-applier-state-fails` | exit 1 | `task-state.sh` fails: no call to the forge at all |
 | `bad-labels-applier-issues-fail` | exit 1 | the issue read fails after the three files: no write |
 | `bad-labels-workflow-dispatch` | exit 1 | a `workflow_dispatch` trigger |
+| `bad-labels-workflow-push` | exit 1 | a `push` trigger with no `branches:` bound |
+| `bad-labels-workflow-branches` | exit 1 | a `push` to a branch that is not `main` |
+| `bad-labels-workflow-types` | exit 1 | a named type missing from `pull_request_target` |
+| `bad-labels-workflow-issues-types` | exit 1 | a `types:` of `issues` with a foreign and a missing value |
 | `bad-labels-workflow-write` | exit 1 | `pull-requests: write` |
 | `bad-labels-workflow-ref` | exit 1 | a checkout with no `ref:` of the default branch |
 | `bad-labels-workflow-event` | exit 1 | an event field in a one-line `run:` step |

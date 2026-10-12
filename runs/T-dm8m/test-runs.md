@@ -64,6 +64,40 @@ was added; each is red under its mutation.
 | expressions in run: allowed | bad-labels-workflow-event-block |
 | no ref check | bad-labels-workflow-ref |
 
+## The fixes of round 1
+
+On 2026-10-12, against the head `aafee79` that round 1 reviewed (reviewer GPT-6
+Sol on Devin; verdict `material`, seven findings). The author of the fixes is
+SWE-2 Max on Devin, continuing the task after the first author's usage limit.
+
+### Red first
+
+The new cases against `aafee79`: `good-labels-applier` exits 2 — the stand-in
+records `issue edit 5 --add-label state: ready` where the removal belongs (the
+empty second field of the edits file collapsed in `read`, and a removal was
+applied as an addition); `bad-labels-workflow-push`, `-branches`, `-types` and
+`-issues-types` exit 2 — the check answered `the workflow OK` on each bound it
+did not read. `bad-labels-empty-set` and `bad-labels-disjoint` read now through
+the applier and pass, their `--- calls` recording the reads and no write.
+
+### Each new rule fails a case on its own
+
+Each line is one change of `task-labels.sh`, applied to a copy of the tree
+outside it, and the cases that then fail (exit 2 from `run.sh`).
+
+| Mutation | Cases that fail |
+| -------- | --------------- |
+| labels created before the issue read | bad-labels-empty-set bad-labels-disjoint good-labels-applier good-labels-applier-dry-run |
+| a removal applied as an addition (no `-` field) | good-labels-applier |
+| the push branches bound not checked | bad-labels-workflow-push bad-labels-workflow-branches |
+| the event types bounds not checked | bad-labels-workflow-types bad-labels-workflow-issues-types |
+
+### Green
+
+`run-discipline-tests`: 124 passed, 0 failed, the 119 of `aafee79` plus the five
+new cases. `git diff --check` on the branch diff: clean (the ten fixture lines
+that ended in an empty field now drop it).
+
 ## The applier on this repository, a dry run
 
 At 06:06 UTC, `sh docs/tasks/task-labels.sh --dry-run` in this worktree: the

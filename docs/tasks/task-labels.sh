@@ -131,9 +131,28 @@ check_workflow() {
 	tr -d '\r' < "$1" | awk '
 	function ind(l) { match(l, /^ */); return RLENGTH }
 	function fail(m) { print "task-labels: the workflow FAIL " m > "/dev/stderr"; bad = 1 }
+	function isin(v, w, n,   i) { for (i = 1; i <= n; i++) if (v == w[i]) return 1; return 0 }
+	function boundtypes(ev, wants,   i, n, w, m, tv) {
+		n = split(wants, w, " ")
+		m = split(ord[ev SUBSEP "types"], tv, " ")
+		for (i = 1; i <= m; i++) if (tv[i] != "" && !isin(tv[i], w, n)) fail(ev ": types: " tv[i] " is not one of " wants)
+		for (i = 1; i <= n; i++) if (!((ev SUBSEP "types" SUBSEP w[i]) in key)) fail(ev ": types: " w[i] " is missing")
+	}
 	/^[ \t]*#/ || /^[ \t]*$/ { next }
 	ind($0) == 0 { top = $0; sub(/:.*/, "", top); inrun = 0 }
-	top == "on" && ind($0) == 2 { k = $0; sub(/^ */, "", k); sub(/:.*/, "", k); trig[k] = 1 }
+	top == "on" && ind($0) == 2 { k = $0; sub(/^ */, "", k); sub(/:.*/, "", k); trig[k] = 1; cur = k; curk = "" }
+	top == "on" && ind($0) == 4 && $0 ~ /^ *[a-z_]+:/ {
+		kn = $0; sub(/^ */, "", kn); sub(/:.*/, "", kn); curk = kn
+		v = $0; sub(/^ *[a-z_]+:[ \t]*/, "", v)
+		if (v ~ /^\[/) { sub(/^\[/, "", v); sub(/\][ \t]*$/, "", v)
+			m = split(v, a, /,[ \t]*/)
+			for (i = 1; i <= m; i++) if (a[i] != "") { key[cur SUBSEP curk SUBSEP a[i]] = 1; ord[cur SUBSEP curk] = ord[cur SUBSEP curk] " " a[i] } }
+	}
+	top == "on" && ind($0) == 4 && $0 ~ /^ *- / { if ($0 ~ /cron:/) cron[cur] = 1 }
+	top == "on" && ind($0) > 4 && $0 ~ /^ *- / && curk != "" {
+		v = $0; sub(/^ *- */, "", v); sub(/[ \t]*$/, "", v)
+		key[cur SUBSEP curk SUBSEP v] = 1; ord[cur SUBSEP curk] = ord[cur SUBSEP curk] " " v
+	}
 	top == "permissions" && ind($0) == 2 { k = $0; sub(/^ */, "", k); perm[k] = 1 }
 	top == "jobs" && /^ +permissions:/ { fail("permissions: a job sets its own") }
 	/uses: actions\/checkout@/ { checkout = 1 }
@@ -155,6 +174,13 @@ check_workflow() {
 		n = split("contents: read|issues: write|pull-requests: read", pw, "|")
 		for (p in perm) { ok = 0; for (i = 1; i <= n; i++) if (p == pw[i]) ok = 1; if (!ok) fail("permissions: " p " is not one of contents: read, issues: write, pull-requests: read") }
 		for (i = 1; i <= n; i++) if (!(pw[i] in perm)) fail("permissions: " pw[i] " is missing")
+		m = split(ord["push" SUBSEP "branches"], pb, " ")
+		for (i = 1; i <= m; i++) if (pb[i] != "" && pb[i] != "main") fail("push: branches: " pb[i] " is not main")
+		if (!(("push" SUBSEP "branches" SUBSEP "main") in key)) fail("push: branches: main is missing")
+		boundtypes("pull_request_target", "opened reopened closed edited")
+		boundtypes("issues", "opened closed reopened")
+		boundtypes("issue_comment", "created")
+		if (("schedule" in trig) && !("schedule" in cron)) fail("schedule: no cron entry")
 		if (!ref) fail("checkout: no ref: of the default branch")
 		if (!restore || !resdocs) fail("restore: no step named Restore that names docs/tasks")
 		if (bad) exit 1
@@ -185,12 +211,16 @@ apply() {
 			die "gh: cannot create the label $_l"
 	done
 	say "writing $(grep -c . "$tmp/changes") changes"
-	# One edit per issue: its removals, then its addition.
+	# One edit per issue: its removals, then its addition; a `-` field is
+	# empty (an empty tab field would collapse in `read` and shift a removal
+	# into the addition).
 	awk '{ n = $2; sub(/^#/, "", n); act = $1; l = $0; sub(/^[a-z]+ #[0-9]+ /, "", l)
-		if (n != cur) { if (cur != "") print cur "\t" add "\t" rem; cur = n; add = ""; rem = "" }
+		if (n != cur) { if (cur != "") print cur "\t" (add == "" ? "-" : add) "\t" (rem == "" ? "-" : rem); cur = n; add = ""; rem = "" }
 		if (act == "add") add = l; else rem = (rem == "" ? l : rem "," l) }
-		END { if (cur != "") print cur "\t" add "\t" rem }' "$tmp/changes" > "$tmp/edits"
+		END { if (cur != "") print cur "\t" (add == "" ? "-" : add) "\t" (rem == "" ? "-" : rem) }' "$tmp/changes" > "$tmp/edits"
 	while IFS="$(printf '\t')" read -r _n _add _rem; do
+		[ "$_add" = - ] && _add=
+		[ "$_rem" = - ] && _rem=
 		set -- issue edit "$_n"
 		[ -n "$_add" ] && set -- "$@" --add-label "$_add"
 		[ -n "$_rem" ] && set -- "$@" --remove-label "$_rem"

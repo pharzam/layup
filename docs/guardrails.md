@@ -514,6 +514,19 @@ success without having done its job.
   eol=lf` for a script or a list that a script reads); the case
   `facts/good-autocrlf` of `docs/setup/tests/run.sh` clones `HEAD` with
   `core.autocrlf=true` and runs check `facts`.
+- ❌ **A trigger that runs a branch's copy of a write-token workflow.**
+  `workflow_dispatch`, `create` and `delete` each can name a branch, and the run
+  then uses **that branch's own file** — so a task branch's edited copy of the
+  workflow executes with `permissions: issues: write`. Checking out the default
+  branch inside the file does not constrain what the file itself does. It is
+  silent because the trigger reads as a convenience and the write scope looks
+  guarded by the checkout. **The check:** a workflow holding a write token takes
+  no trigger a branch's copy can fire — the allowed set of `task-state.yml` is
+  `push` to `main`, `pull_request_target`, `issues`, `issue_comment` and
+  `schedule`, and `docs/tasks/task-labels.sh --check-workflow` fails any other,
+  any `push` not bound to `main`, and any event `types:` outside the named ones
+  (the `bad-labels-workflow-*` fixtures). Learned in `T-dm8m` (#185, the review
+  of the re-plan, condition 1).
 - ❌ **An `awk` check that reads the locale.** `awk` reads characters in a UTF-8
   locale and bytes in the C locale, so one sh check can give other lines on
   another host. macOS `awk` 20200816 in a UTF-8 locale stops ("towc: multibyte
