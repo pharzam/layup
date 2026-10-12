@@ -97,3 +97,36 @@ Green after:
   `adr-lint`, `git diff --check`: exit 0.
 - `gen-issues.py --edit 50 51a 51b 52a 52b 53 54 55 56 57a` wrote the bodies of
   issues #270 to #280 with their new parts and the corrected duplicate check.
+
+## The fix of round 3 (2026-10-12, 14:20Z)
+
+Findings 1 and 2 of round 3:
+
+- Finding 1: `setup/rulesets.txt` and `setup/inputs/files` were one `none`
+  entry reasoning "a rule, no block; written by rows 56 and 54" — the reason
+  named the rows but no Task cell named either part. They are now two parts,
+  `setup/inputs/files` in row 54 and `setup/rulesets.txt` in row 56, each in
+  the row that writes the file; the Task cells and the bodies of #277 and #279
+  come from the same `parts.tsv`.
+- Finding 2: "exactly one" was checked only against the mapped row: a copy of
+  a part in a second row's Task cell passed. Check 6 now also counts the Task
+  cells that name each part and fails unless the count is one.
+
+Red before the fix — the mutant of finding 2, "`scaffold.md`: The step
+markers" copied into row 54's Task cell, against the old check: exit 0.
+Against the fixed check:
+
+```
+FAIL the part is named in 2 Task cells of The tasks of M2d, not one: `scaffold.md`: The step markers
+```
+
+Green after:
+
+- `sh runs/T-bng8/parts.sh`: exit 0, "ok   each part is in one row of The tasks
+  of M2d, or named with its reason".
+- `go build ./...`, `go vet ./...`, `go test ./...`, `go test
+  -tags=integration ./...`, `gofmt -l .` (empty), `prd-lint`, `link-lint`
+  (2,318 links), `setup-check`, `run-discipline-tests` (102 passed),
+  `adr-lint`, `git diff --check`: exit 0.
+- `gen-issues.py --edit 54 56` wrote the bodies of issues #277 and #279 with
+  their new parts.

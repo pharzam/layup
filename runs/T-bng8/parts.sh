@@ -56,6 +56,8 @@ for want in \
 	"docs/spec/records.md	## NFR-001 — The records of the Scaffold	run-steps: forge-check" \
 	"docs/spec/records.md	## NFR-001 — The records of the Scaffold	setup-record: the computed refs of S01 and S02" \
 	"docs/spec/records.md	## NFR-001 — The records of the Scaffold	setup-record: the row without-layup" \
+	"docs/spec/records.md	## NFR-001 — The records of the Scaffold	setup/inputs/files" \
+	"docs/spec/records.md	## NFR-001 — The records of the Scaffold	setup/rulesets.txt" \
 	"docs/spec/forge.md	## The calls of M2d	—" \
 	"docs/spec/packages.md	### The table of M2d	internal/run: the imports of the step runner" \
 	"docs/spec/packages.md	### The table of M2d	internal/run: the step markers" \
@@ -75,17 +77,23 @@ for want in \
 done
 # 6. Each listed part is named in the Task cell of its own row, in the form that
 #    gen-issues.py writes it: `<file>`: <heading> (<sub>) (finding 1 of round 1
-#    of #267: a part dropped from its row fails here, not only a missing row).
+#    of #267: a part dropped from its row fails here, not only a missing row),
+#    and in no other Task cell — "exactly one" (finding 2 of round 3 of #267:
+#    a copy in a second row's cell must fail).
+lines=$(awk '/^## The tasks of M2d/{t=1; next} t && /^## /{t=0} t && /^\| [0-9]+[a-z]? \|/' "$plan")
+cells=$(printf '%s\n' "$lines" | awk -F' [|] ' '{print $4}')
 tail -n +2 "$tab" | grep -v '	none' | while IFS='	' read -r file heading sub row; do
 	name=${file##*/}
 	h=$(printf '%s' "$heading" | sed 's/^#* *//')
 	if [ "$sub" = "—" ]; then text="\`$name\`: $h"; else text="\`$name\`: $h ($sub)"; fi
-	line=$(awk -v r="$row" '/^## The tasks of M2d/{t=1; next} t && /^## /{t=0} t && $2==r' "$plan")
+	line=$(printf '%s\n' "$lines" | awk -v r="$row" '$2==r')
 	task=$(printf '%s' "$line" | awk -F' [|] ' '{print $4}')
 	case "$task" in
 	*"$text"*) ;;
 	*) echo "FAIL row $row of The tasks of M2d does not name its part: $text" ;;
 	esac
+	n=$(printf '%s\n' "$cells" | grep -Fc "$text" || true)
+	[ "$n" = "1" ] || echo "FAIL the part is named in $n Task cells of The tasks of M2d, not one: $text"
 done >> "$out"
 if [ -s "$out" ]; then cat "$out"; fail=1; else echo "ok   each part is in one row of The tasks of M2d, or named with its reason"; fi
 rm -f "$out"

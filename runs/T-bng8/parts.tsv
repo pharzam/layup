@@ -78,7 +78,8 @@ docs/spec/records.md	## NFR-001 — The records of the Scaffold	run-steps: scaff
 docs/spec/records.md	## NFR-001 — The records of the Scaffold	run-steps: forge-check	57a
 docs/spec/records.md	## NFR-001 — The records of the Scaffold	setup-record: the computed refs of S01 and S02	52a
 docs/spec/records.md	## NFR-001 — The records of the Scaffold	setup-record: the row without-layup	52b
-docs/spec/records.md	## NFR-001 — The records of the Scaffold	setup/rulesets.txt and setup/inputs/files	none: a rule, no block; written by rows 56 and 54
+docs/spec/records.md	## NFR-001 — The records of the Scaffold	setup/inputs/files	54
+docs/spec/records.md	## NFR-001 — The records of the Scaffold	setup/rulesets.txt	56
 docs/spec/forge.md	## The calls of M2d	—	51a
 docs/spec/packages.md	### The table of M2d	internal/run: the imports of the step runner	54
 docs/spec/packages.md	### The table of M2d	internal/run: the step markers	53
