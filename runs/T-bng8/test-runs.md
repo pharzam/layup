@@ -58,7 +58,7 @@ own row, in the form that `gen-issues.py` writes it. The plan's path can come fr
 - On the real plan: exit 0, "ok   each part is in one row of The tasks of M2d,
   or named with its reason".
 
-## The fix of round 2 (2026-10-12, 12:40Z)
+## The fix of round 2 (2026-10-12, 08:41Z)
 
 Findings 1 and 2 of round 2, and the note:
 
@@ -98,7 +98,7 @@ Green after:
 - `gen-issues.py --edit 50 51a 51b 52a 52b 53 54 55 56 57a` wrote the bodies of
   issues #270 to #280 with their new parts and the corrected duplicate check.
 
-## The fix of round 3 (2026-10-12, 14:20Z)
+## The fix of round 3 (2026-10-12, 09:10Z)
 
 Findings 1 and 2 of round 3:
 
@@ -131,7 +131,7 @@ Green after:
 - `gen-issues.py --edit 54 56` wrote the bodies of issues #277 and #279 with
   their new parts.
 
-## The fix of round 4 (2026-10-12, 15:05Z)
+## The fix of round 4 (2026-10-12, 09:47Z)
 
 Finding 1 of round 4, and the note:
 
@@ -186,3 +186,43 @@ Green after:
   `adr-lint`, `git diff --check`: exit 0.
 - `python3 -I runs/T-bng8/gen-issues.py --table`: exit 0; the plan table is
   unchanged by this commit (no part or row changed).
+
+## The fix of round 6 (2026-10-12)
+
+Findings 1 and 2 of round 6, and note 3:
+
+- Finding 1: row 53 named the acceptance-test clause "The answers of the
+  setup: the merge into the batch and the comment", a clause the test does
+  not have — the test at `scaffold.md` covers the rows of `answers.tsv`
+  only. The clause entry, its want in check 4, its naming in row 53's Task
+  cell and in the body of issue #276 are removed. The merge and the comment
+  stay covered by the heading clause `### The answers of the setup` (row
+  53), which the check's wants now name too.
+- Finding 2: check 1 asked only that a heading has some entry, so a clause
+  of a heading split between rows could be dropped while a sibling survived
+  — the heading forms of finding 1 of round 5, for `### The answers of the
+  setup` and `### The commands for the Operator`. The clause wants now name
+  each of the four heading clauses too.
+- Note 3: the times of the fix sections of rounds 2 to 4 read a local clock
+  and wrote `Z`; they now read the UTC of their commits (08:41Z, 09:10Z,
+  09:47Z).
+
+Red, each against the fixed check with the named line dropped from
+`parts.tsv` (one `FAIL no part` each):
+
+```
+FAIL no part: docs/spec/scaffold.md	### The answers of the setup	the merge into the batch and the comment
+FAIL no part: docs/spec/scaffold.md	### The answers of the setup	the rows of answers.tsv
+FAIL no part: docs/spec/scaffold.md	### The commands for the Operator	the text of commands.sh
+FAIL no part: docs/spec/scaffold.md	### The commands for the Operator	the print, the wait, the apply outputs and setup/rulesets.txt, the work area built again
+```
+
+Green after:
+
+- `sh runs/T-bng8/parts.sh`: exit 0 on the real tree.
+- `go build ./...`, `go vet ./...`, `go test ./...`, `go test
+  -tags=integration ./...`, `gofmt -l .` (empty), `prd-lint`, `link-lint`,
+  `setup-check`, `run-discipline-tests`, `adr-lint`, `git diff --check`:
+  exit 0.
+- `python3 -I runs/T-bng8/gen-issues.py --edit 53` wrote the body of issue
+  #276 without the clause.

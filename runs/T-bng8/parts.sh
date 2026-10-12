@@ -33,8 +33,9 @@ printf '%s\n' "$rows" | grep . | while read -r r; do
 done >> "$out"
 # 4. Each row of the acceptance tests and of the input states of scaffold.md is
 #    a part, whole or by its clauses ("<Part>: <clause>"), and each clause of a
-#    row split between task rows has its own entry — one surviving clause does
-#    not cover another (finding 1 of round 5 of #267).
+#    row split between task rows — of a test, an input state or a heading — has
+#    its own entry: one surviving clause does not cover another (findings 1 of
+#    rounds 5 and 6 of #267).
 for sect in "$acc" "$inp"; do
 	awk -v a="$sect" '$0==a{t=1; next} t && /^## /{t=0} t && /^\| / && !/^\| (Test|State|-)/' "$spec" |
 		cut -d'|' -f2 | sed 's/^ *//; s/ *$//' | while IFS= read -r p; do
@@ -47,7 +48,10 @@ for want in \
 	"docs/spec/scaffold.md	## Input states	No admitted pair of \`systems-architect\` (for \`markers\`) or \`product-owner\` (for a prose session): for markers" \
 	"docs/spec/scaffold.md	## Input states	No admitted pair of \`systems-architect\` (for \`markers\`) or \`product-owner\` (for a prose session): for a prose session" \
 	"docs/spec/scaffold.md	## The acceptance tests of M2d	The answers of the setup: the rows of answers.tsv" \
-	"docs/spec/scaffold.md	## The acceptance tests of M2d	The answers of the setup: the merge into the batch and the comment"; do
+	"docs/spec/scaffold.md	### The answers of the setup	the merge into the batch and the comment" \
+	"docs/spec/scaffold.md	### The answers of the setup	the rows of answers.tsv" \
+	"docs/spec/scaffold.md	### The commands for the Operator	the text of commands.sh" \
+	"docs/spec/scaffold.md	### The commands for the Operator	the print, the wait, the apply outputs and setup/rulesets.txt, the work area built again"; do
 	grep -Fq "$want	" "$tab" || echo "FAIL no part: $want" >> "$out"
 done
 # 5. The parts outside scaffold.md (condition 2): each kind has its part, and
