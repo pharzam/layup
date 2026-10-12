@@ -483,6 +483,9 @@ func TestPushAndFetchOfABareRepository(t *testing.T) {
 	home := isolate(t)
 	bare := filepath.Join(t.TempDir(), "target.git")
 	gitOK(t, "", plain(home), "init", "--bare", "-q", bare)
+	// The bare repository receives the pushes: its git starts no maintenance of its own in the background (T-2hm3).
+	gitOK(t, bare, plain(home), "config", "receive.autogc", "false")
+	gitOK(t, bare, plain(home), "config", "maintenance.auto", "false")
 	url := "file://" + bare
 
 	work := t.TempDir()
