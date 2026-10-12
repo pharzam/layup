@@ -80,5 +80,17 @@ docs/spec/records.md	## NFR-001 — The records of the Scaffold	setup-record: th
 docs/spec/records.md	## NFR-001 — The records of the Scaffold	setup-record: the row without-layup	52b
 docs/spec/records.md	## NFR-001 — The records of the Scaffold	setup/rulesets.txt and setup/inputs/files	none: a rule, no block; written by rows 56 and 54
 docs/spec/forge.md	## The calls of M2d	—	51a
-docs/spec/packages.md	### The table of M2d	—	none: no new package; each changed cell is in the row whose code needs it (internal/run: 53 to 57b; internal/setup: 52a to 52c; internal/forge: 51a; internal/records: 50; internal/git: 51b)
+docs/spec/packages.md	### The table of M2d	internal/run: the imports of the step runner	54
+docs/spec/packages.md	### The table of M2d	internal/run: the step markers	53
+docs/spec/packages.md	### The table of M2d	internal/run: the step setup	54
+docs/spec/packages.md	### The table of M2d	internal/run: the step verify	55
+docs/spec/packages.md	### The table of M2d	internal/run: the step scaffold-push	56
+docs/spec/packages.md	### The table of M2d	internal/run: the step forge-check	57a
+docs/spec/packages.md	### The table of M2d	internal/setup: the inputs of phase 2	52a
+docs/spec/packages.md	### The table of M2d	internal/setup: the two rulesets of S13	52b
+docs/spec/packages.md	### The table of M2d	internal/forge and internal/forge/github: EffectiveRules and Activity	51a
+docs/spec/packages.md	### The table of M2d	internal/records: the block markers	50
+docs/spec/packages.md	### The table of M2d	internal/run: the blocks setup-tree and forge-check	50
+docs/spec/packages.md	### The table of M2d	internal/git: CommitTree	51b
+docs/spec/packages.md	### The table of M2d	internal/run: starts no program for the setup	54
 docs/spec/packages.md	### The calls of `internal/git`	CommitTree	51b

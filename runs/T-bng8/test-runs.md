@@ -57,3 +57,43 @@ own row, in the form that `gen-issues.py` writes it. The plan's path can come fr
   \`scaffold.md\`: The read-back`.
 - On the real plan: exit 0, "ok   each part is in one row of The tasks of M2d,
   or named with its reason".
+
+## The fix of round 2 (2026-10-12, 12:40Z)
+
+Findings 1 and 2 of round 2, and the note:
+
+- Finding 1: the table of `M2d` in `packages.md` sat at `none`, reasoning that
+  it adds no package while its changed cells had no owning Task cell. The part
+  is now 13 clause parts, each in the row whose code changes the cell (the
+  steps to 53 to 57a, the setup cells to 52a and 52b, the forge calls to 51a,
+  the blocks to 50, `CommitTree` to 51b, the imports and the starts-no-program
+  cell to 54). The Task cells and the bodies of issues #270 to #280 come from
+  the same `parts.tsv` through `gen-issues.py`.
+- Finding 2: check 5 asked for any `run-steps:` entry, so a clause dropped from
+  the map and its row still passed. Check 5 now names each clause of each built
+  block changed in words and each cell of the table of `M2d`, one `want` per
+  clause.
+- The note: `gen-issues.py --edit` re-ran the duplicate search with the issue
+  already open, so the search found the issue itself and the words "before this
+  issue opened" misdated the check. `dup()` now takes the issue number, drops
+  it from the found set, and says "at this edit, this issue itself excluded".
+
+Red before the fix — the mutant of finding 2, `run-steps: verify` and
+`internal/run: the step verify` dropped from `parts.tsv` and row 55's Task
+cell, against the old check: exit 0. Against the fixed check:
+
+```
+FAIL no part: docs/spec/records.md	## NFR-001 — The records of the Scaffold	run-steps: verify
+FAIL no part: docs/spec/packages.md	### The table of M2d	internal/run: the step verify
+```
+
+Green after:
+
+- `sh runs/T-bng8/parts.sh`: exit 0, "ok   each part is in one row of The tasks
+  of M2d, or named with its reason".
+- `go build ./...`, `go vet ./...`, `go test ./...`, `go test
+  -tags=integration ./...`, `gofmt -l .` (empty), `prd-lint`, `link-lint`
+  (2,318 links), `setup-check`, `run-discipline-tests` (102 passed),
+  `adr-lint`, `git diff --check`: exit 0.
+- `gen-issues.py --edit 50 51a 51b 52a 52b 53 54 55 56 57a` wrote the bodies of
+  issues #270 to #280 with their new parts and the corrected duplicate check.

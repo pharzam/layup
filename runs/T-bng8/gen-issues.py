@@ -187,19 +187,23 @@ Task `{task}`: row {row} of the [implementation plan](https://github.com/pharzam
     return b + "\n*Written by Claude Opus 5.5, the author of T-bng8 (#267).*\n"
 
 
-def dup(title, env):
+def dup(title, env, num=None):
     """The duplicate check of one child issue (R2; condition 4 of the plan review
-    of #267): the open and closed issues whose title holds the row's title."""
+    of #267): the open and closed issues whose title holds the row's title. At an
+    edit the issue exists, so num drops it from the found set (note of round 2
+    of #267)."""
     q = f'repo:pharzam/layup in:title "{title}"'
+    sel = f'[.items[] | select(.number != {num or 0}) | "#\\(.number) (\\(.title))"] | join("; ")'
     out = subprocess.run(["gh", "api", "-X", "GET", "search/issues", "-f", f"q={q}",
-                          "--jq", '[.items[] | "#\\(.number) (\\(.title))"] | join("; ")'],
+                          "--jq", sel],
                          capture_output=True, text=True, env=env, stdin=subprocess.DEVNULL,
                          timeout=60, check=True).stdout.strip()
     day = subprocess.run(["date", "-u", "+%Y-%m-%d"], capture_output=True, text=True).stdout.strip()
     found = out if out else "none"
+    when = "before this issue opened" if num is None else "at this edit, this issue itself excluded"
     return (f"\n## Duplicate check (R2)\n\n- [x] Searched the open and closed issues of "
-            f"`pharzam/layup` for the title \"{title}\" on {day}, before this issue "
-            f"opened: {found}. None of them is this task: each is a task of another "
+            f"`pharzam/layup` for the title \"{title}\" on {day}, {when}: "
+            f"{found}. None of them is this task: each is a task of another "
             f"milestone or of the specification. Related: #265 (the specification), #267 (the slicing).\n")
 
 
@@ -247,7 +251,7 @@ def edit(rows):
             continue
         b = body(r, p)
         sig = b.rindex("\n*Written by")
-        b = b[:sig] + dup(r[2], env) + b[sig:]  # note 2 of round 1 of #267
+        b = b[:sig] + dup(r[2], env, nums[r[0]]) + b[sig:]  # notes of rounds 1 and 2 of #267
         with tempfile.NamedTemporaryFile("w", suffix=".md", delete=False) as f:
             f.write(b)
         subprocess.run(["gh", "issue", "edit", nums[r[0]], "--repo", "pharzam/layup",

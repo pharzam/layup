@@ -41,18 +41,37 @@ for sect in "$acc" "$inp"; do
 			echo "FAIL a row of $sect has no part: $p"
 	done >> "$out"
 done
-# 5. The parts outside scaffold.md (condition 2): each kind has its part.
+# 5. The parts outside scaffold.md (condition 2): each kind has its part, and
+#    each clause of a built block or of the table of M2d changed in words has
+#    its own entry — one surviving clause of a block does not cover another
+#    (finding 2 of round 2 of #267).
 for want in \
 	"docs/spec/records.md	## NFR-001 — The records of the Scaffold	the block markers" \
 	"docs/spec/records.md	## NFR-001 — The records of the Scaffold	the blocks setup-tree and forge-check" \
+	"docs/spec/records.md	## NFR-001 — The records of the Scaffold	questions: source setup and the setup refs" \
+	"docs/spec/records.md	## NFR-001 — The records of the Scaffold	run-steps: markers" \
+	"docs/spec/records.md	## NFR-001 — The records of the Scaffold	run-steps: setup" \
+	"docs/spec/records.md	## NFR-001 — The records of the Scaffold	run-steps: verify" \
+	"docs/spec/records.md	## NFR-001 — The records of the Scaffold	run-steps: scaffold-push" \
+	"docs/spec/records.md	## NFR-001 — The records of the Scaffold	run-steps: forge-check" \
+	"docs/spec/records.md	## NFR-001 — The records of the Scaffold	setup-record: the computed refs of S01 and S02" \
+	"docs/spec/records.md	## NFR-001 — The records of the Scaffold	setup-record: the row without-layup" \
 	"docs/spec/forge.md	## The calls of M2d	—" \
-	"docs/spec/packages.md	### The table of M2d	—" \
+	"docs/spec/packages.md	### The table of M2d	internal/run: the imports of the step runner" \
+	"docs/spec/packages.md	### The table of M2d	internal/run: the step markers" \
+	"docs/spec/packages.md	### The table of M2d	internal/run: the step setup" \
+	"docs/spec/packages.md	### The table of M2d	internal/run: the step verify" \
+	"docs/spec/packages.md	### The table of M2d	internal/run: the step scaffold-push" \
+	"docs/spec/packages.md	### The table of M2d	internal/run: the step forge-check" \
+	"docs/spec/packages.md	### The table of M2d	internal/setup: the inputs of phase 2" \
+	"docs/spec/packages.md	### The table of M2d	internal/setup: the two rulesets of S13" \
+	"docs/spec/packages.md	### The table of M2d	internal/forge and internal/forge/github: EffectiveRules and Activity" \
+	"docs/spec/packages.md	### The table of M2d	internal/records: the block markers" \
+	"docs/spec/packages.md	### The table of M2d	internal/run: the blocks setup-tree and forge-check" \
+	"docs/spec/packages.md	### The table of M2d	internal/git: CommitTree" \
+	"docs/spec/packages.md	### The table of M2d	internal/run: starts no program for the setup" \
 	"docs/spec/packages.md	### The calls of \`internal/git\`	CommitTree"; do
 	grep -Fq "$want	" "$tab" || echo "FAIL no part: $want" >> "$out"
-done
-for b in questions run-steps setup-record; do
-	grep -q "^docs/spec/records.md	## NFR-001 — The records of the Scaffold	$b: " "$tab" ||
-		echo "FAIL the built block $b, changed in words, has no part" >> "$out"
 done
 # 6. Each listed part is named in the Task cell of its own row, in the form that
 #    gen-issues.py writes it: `<file>`: <heading> (<sub>) (finding 1 of round 1
