@@ -42,3 +42,32 @@ and no comment.
 | `bad-row-cells` | exit 1 | a row with one cell more than its header |
 
 Each `bad-*` case is otherwise valid, so it fails for its own single reason.
+
+## The cases of task-labels.sh (#185)
+
+`run.sh` runs [`../task-labels.sh`](../task-labels.sh) when a case holds `state`
+(the reader, `--read`), `APPLIER` (the applier, with the arguments the file
+holds, against the stand-in [`gh-stub.sh`](gh-stub.sh) and a stand-in
+`task-state.stub`; the calls the stand-in records are appended to the output) or
+`WORKFLOW` (the check of a workflow: the case's `workflow`, or the repository's
+own `task-state.yml` when the file says `real`).
+
+| Case | Expected | Exercises |
+| ---- | -------- | --------- |
+| `good-labels-each` | exit 0 | each label added: a closed issue `completed` (`merged`) and `not_planned` (`rejected`), an open issue the command says is `done` (`merged`), `in review`, `in progress`, `stalled`, `ready`; an issue only the completed log names (`#7`) |
+| `good-labels-right` | exit 0 | nothing for an issue already right; a hand-set label replaced (`blocked`); a second `state:` label removed; an open task issue the command does not list loses its `state:` label; an issue closed as `duplicate` while the command says `in progress` is `rejected`; labels outside `state:` and an issue outside the set untouched |
+| `good-labels-crlf` | exit 0 | `state`, `issues` and `EXPECT` with carriage returns. Endings pinned by [`.gitattributes`](../../../.gitattributes) |
+| `good-labels-applier-dry-run` | exit 0 | `--dry-run`: the four reads, the changes printed, no write |
+| `good-labels-workflow` | exit 0 | the repository's `task-state.yml` passes its check |
+| `bad-labels-empty-set` | exit 1 | the three files name no task issue |
+| `bad-labels-disjoint` | exit 1 | an issue read that holds none of the task issues |
+| `bad-labels-missing-issues` | exit 1 | no `issues` |
+| `bad-labels-unknown-state` | exit 1 | a state the labels do not know |
+| `bad-labels-applier-state-fails` | exit 1 | `task-state.sh` fails: no call to the forge at all |
+| `bad-labels-applier-issues-fail` | exit 1 | the issue read fails after the three files: no write |
+| `bad-labels-workflow-dispatch` | exit 1 | a `workflow_dispatch` trigger |
+| `bad-labels-workflow-write` | exit 1 | `pull-requests: write` |
+| `bad-labels-workflow-ref` | exit 1 | a checkout with no `ref:` of the default branch |
+| `bad-labels-workflow-event` | exit 1 | an event field in a one-line `run:` step |
+| `bad-labels-workflow-event-block` | exit 1 | an event field in a `run: |` block |
+| `bad-labels-workflow-restore` | exit 1 | no step named `Restore` that names `docs/tasks` |

@@ -120,7 +120,9 @@ artifacts, so they run in CI only and have no local run.
 the forge with `gh` (the backlog, the completed log and the plan of `main`, not of
 your checkout), so it needs the network, and it prints the state of each task
 (`done`, `in review`, `in progress`, `stalled`, `blocked`, `ready`); run it before you take a
-task ([Starting a task](docs/engineering-discipline.md#starting-a-task)). The Go code builds and
+task ([Starting a task](docs/engineering-discipline.md#starting-a-task)). The
+workflow [`task-state.yml`](.github/workflows/task-state.yml) copies the same
+state onto each task issue as a `state:` label; never set one by hand. The Go code builds and
 tests with `go build ./...`, `go vet ./...` and `go test ./...`; the test levels
 are in [`docs/tests/test-levels.md`](docs/tests/test-levels.md). Never invent a
 command that no document names.

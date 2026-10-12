@@ -1,0 +1,8 @@
+add #1 state: merged
+add #2 state: rejected
+add #3 state: merged
+add #4 state: in review
+add #5 state: in progress
+add #6 state: stalled
+add #7 state: merged
+add #9 state: ready

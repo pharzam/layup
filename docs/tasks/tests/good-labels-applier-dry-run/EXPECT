@@ -1,0 +1,6 @@
+add #4 state: ready
+--- calls
+api -H Accept: application/vnd.github.raw repos/{owner}/{repo}/contents/docs/tasks/backlog.md?ref=main
+api -H Accept: application/vnd.github.raw repos/{owner}/{repo}/contents/docs/tasks/completed.md?ref=main
+api -H Accept: application/vnd.github.raw repos/{owner}/{repo}/contents/docs/plan/README.md?ref=main
+api repos/{owner}/{repo}/issues?state=all&per_page=100 --paginate -q .[] | select(.pull_request | not) | "\(.number)\t\(.state)\t\(.state_reason // "")\t\([.labels[].name] | join(","))"

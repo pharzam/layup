@@ -1,0 +1,7 @@
+add #2 state: rejected
+remove #4 state: ready
+add #4 state: blocked
+remove #5 state: in progress
+remove #6 state: in progress
+add #6 state: rejected
+remove #9 state: stalled

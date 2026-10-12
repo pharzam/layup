@@ -39,8 +39,33 @@ if [ -f "$tmp/in/ABSENT" ]; then
 	rm -f "$tmp/in/ABSENT"
 fi
 
-sh "$here/../task-state.sh" --read "$tmp/in" > "$tmp/out" 2> "$tmp/err"
-got=$?
+# The case's files choose the command (#185): `WORKFLOW` checks a workflow file
+# with task-labels.sh (the case's `workflow`, or the repository's own
+# .github/workflows/task-state.yml when `WORKFLOW` says `real`); `APPLIER` runs
+# the applier of task-labels.sh with `ARGS`, against a stand-in `gh`
+# (gh-stub.sh) and a stand-in task-state.sh (`task-state.stub`), and appends the
+# calls the stand-in recorded; `state` runs the reader of task-labels.sh;
+# anything else runs task-state.sh.
+if [ -f "$tmp/in/WORKFLOW" ]; then
+	wf=$tmp/in/workflow
+	[ "$(tr -d '\r' < "$tmp/in/WORKFLOW")" = real ] && wf=$here/../../../.github/workflows/task-state.yml
+	sh "$here/../task-labels.sh" --check-workflow "$wf" > "$tmp/out" 2> "$tmp/err"
+	got=$?
+elif [ -f "$tmp/in/APPLIER" ]; then
+	mkdir "$tmp/bin" && cp "$here/gh-stub.sh" "$tmp/bin/gh" && chmod +x "$tmp/bin/gh" || exit 2
+	: > "$tmp/calls"
+	(cd "$tmp/in" && PATH="$tmp/bin:$PATH" GH_LOG="$tmp/calls" GH_STUB_DIR="$tmp/in" \
+		TASK_STATE_CMD="$tmp/in/task-state.stub" sh "$here/../task-labels.sh" $(tr -d '\r' < "$tmp/in/APPLIER")) \
+		> "$tmp/out" 2> "$tmp/err"
+	got=$?
+	{ printf -- '--- calls\n'; cat "$tmp/calls"; } | tee -a "$tmp/out" >> "$tmp/err"
+elif [ -f "$tmp/in/state" ]; then
+	sh "$here/../task-labels.sh" --read "$tmp/in" > "$tmp/out" 2> "$tmp/err"
+	got=$?
+else
+	sh "$here/../task-state.sh" --read "$tmp/in" > "$tmp/out" 2> "$tmp/err"
+	got=$?
+fi
 # EXPECT is compared with its carriage returns removed, so the suite holds on a
 # checkout with `core.autocrlf=true`; the case good-crlf is CRLF throughout.
 tr -d '\r' < "$case_dir/EXPECT" > "$tmp/expect"

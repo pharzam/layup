@@ -13,6 +13,20 @@ LAYUP's CI is on GitHub Actions, in [`.github/workflows/`](../../.github/workflo
 | [`pr-title.yml`](../../.github/workflows/pr-title.yml) | `conventional-title` |
 | [`pr-link.yml`](../../.github/workflows/pr-link.yml) | `pr-link` |
 | [`review-record.yml`](../../.github/workflows/review-record.yml) | `review-record` |
+| [`task-state.yml`](../../.github/workflows/task-state.yml) | `task-state labels` (not a required check) |
+
+`task-state.yml` (#185) is no gate: it is the one writer of the `state:` labels
+of the task issues, which [`task-labels.sh`](../tasks/task-labels.sh) sets from
+the state that [`task-state.sh`](../tasks/task-state.sh) derives. It runs on a
+push to `main`, a pull request event (by `pull_request_target`), an issue event,
+a new comment, and every 30 minutes, each of which runs the workflow file of the
+default branch; it has no `workflow_dispatch`, `create` or `delete`, which could
+run a branch's own copy with the write token. It checks out the default branch,
+puts no event field into a `run:` step, and holds `issues: write` and nothing
+else that writes. No `pull_request` event runs it, so check `protection` leaves
+its job out of the required contexts (#201), and a failed run blocks no merge.
+`task-labels.sh --check-workflow` holds these rules, and its fixtures run in the
+job `discipline-tests`.
 
 This directory holds the two scripts that read forge artifacts, and their
 fixtures under [`tests/`](tests/).

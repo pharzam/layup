@@ -930,7 +930,10 @@ is abandoned, delete its branch from the forge, or the task reads `stalled` unti
 it is. The command ([`task-state.sh`](tasks/task-state.sh), #175) prints each task's
 state, derived from the backlog, the completed log and the plan's task tables of
 the forge's `main` (not of the checkout it runs in), and from the forge's branches
-and pull requests; it needs `gh` and the network, and it enforces nothing.
+and pull requests; it needs `gh` and the network, and it enforces nothing. The
+same state is on each task issue as a `state:` label, which the workflow
+[`task-state.yml`](../.github/workflows/task-state.yml) sets after each event and
+every 30 minutes (#185); a `state:` label is never set by hand.
 
 ## Commit granularity
 

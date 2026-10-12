@@ -1,0 +1,8 @@
+1	closed	completed	state: merged
+2	closed	duplicate	bug
+3	closed	completed	bug,state: merged
+4	open		state: ready
+5	open		state: in progress,task
+6	closed	not_planned	state: in progress
+9	open		state: ready,state: stalled,task
+44	open		state: ready
