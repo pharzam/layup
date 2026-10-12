@@ -799,6 +799,17 @@ failure modes worth keeping.
   check:** give the engine package its `WriteTSV` with the code that builds the
   rows. Learned in `T-hpid`.
 
+- ❌ **A prompt that lists the columns of a row in one sentence.** "A span that is
+  not a fact has "—" as its fact and its class, and its reason" reads as "`—` for
+  each of the three" as easily as "`—` for two, and a reason". Three sessions of
+  the demo of `M2c` took the first reading on every heading. The block refused
+  each file, so `numbering` failed on every try, while every unit test passed:
+  they write the file by hand. It is silent until a real session runs. **The
+  check:** in a prompt, give each column of each kind of row its own clause, as
+  "X in the column C"; say what a column is never; and test the prompt's text. Find
+  a refused file by copying the session's `result/` before its directory is
+  removed. Learned in `T-pzgw`.
+
 ## 3. Validation — how you check you are not fooling yourself
 
 A result is **untrusted** until it passes the checks below, and the pass is a

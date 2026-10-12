@@ -42,3 +42,23 @@ func TestKeepOfNumbering(t *testing.T) {
 		}
 	}
 }
+
+// The prompt of the numbering gives each column of each kind of span once, so
+// a span that is not a fact cannot be read as "—" in its reason (#268: three
+// sessions of the demo of M2c wrote "—" as the reason of each heading).
+func TestTheNumberingPromptGivesEachColumnOnce(t *testing.T) {
+	text := strings.Join(strings.Fields(string(numberingText(map[string]string{"problem-statement.md": "/in/psb.md"}, "/out/spans.tsv"))), " ")
+	for _, want := range []string{
+		`A span that is a fact has its number in the column fact, 1 to n in the order of the spans, its class in the column class, one of need, constraint, measure, context, and "—" in the column reason.`,
+		`A span that is not a fact (a heading, a rule line) has "—" in the column fact and in the column class, and in the column reason a few words of why it is not a fact, for example "a heading"; its reason is never "—".`,
+		"The problem statement: /in/psb.md",
+		"The output file: /out/spans.tsv",
+	} {
+		if !strings.Contains(text, want) {
+			t.Errorf("the prompt lacks %q:\n%s", want, text)
+		}
+	}
+	if old := `has "—" as its fact and its class, and its reason`; strings.Contains(text, old) {
+		t.Errorf("the prompt still holds the sentence that reads two ways: %q", old)
+	}
+}
