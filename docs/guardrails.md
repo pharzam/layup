@@ -376,6 +376,36 @@ check that catches it.
   below it then downloads that toolchain under `GOTOOLCHAIN=auto`, or refuses
   to build under `GOTOOLCHAIN=local`. Learned in `T-w89c`
   ([#150](https://github.com/pharzam/layup/issues/150)).
+- ❌ **A review record without its heading.** `review-record-lint` takes a comment
+  for a record only by a line that starts `## Review record` and names the round
+  after the word `round`. A final message with no such line is no record to it:
+  round 2 of `T-bng8` had none, so the linter read the rounds of the issue as 1, 3,
+  4, 5 and 6, and the required check `review-record` was red on each push of the
+  pull request until the heading was added. It is silent on the issue, where the rounds run and
+  nothing shows that check: the record reads well, and no step that posts it looks
+  at the heading. The check of the pull request runs on a pull-request event, so it
+  shows the gap at the next push, not when the record is posted. **The check:** the
+  brief of a round says that the first line of the final message is the heading
+  `## Review record — round N`; and after each post, build the stream as the
+  workflow does and run the linter on it:
+  `gh api --paginate "repos/OWNER/NAME/issues/N/comments" --jq '.[] | "=== comment created=\(.created_at) updated=\(.updated_at) ===\n\(.body)"' > comments.txt`,
+  then `sh docs/ci/review-record-lint.sh comments.txt`. Learned in `T-bng8`
+  ([#267](https://github.com/pharzam/layup/issues/267)).
+- ❌ **An allow rule whose glob reaches a script with a write mode.** A reviewer
+  session runs read-only by its allow rules (`claude -p --permission-mode dontAsk`).
+  The allow rules of a harness script, outside the repository, as they stood after
+  a round with many denied commands, included `Bash(python3 runs/*)`, `Bash(PLAN=*)`
+  and `Bash(sh runs/*)`, which let a reviewer run the check of a task with an option.
+  The same globs also allow `gen-issues.py --post` and `--edit`, which open and edit
+  issues through the App: writes to the forge that the brief barred only in words.
+  It is silent because a reviewer that follows its brief never runs them, and the
+  rules read as read-only. **The check:** allow the exact read-only forms (`--table`,
+  `--body ROW`, `sh runs/T-xxxx/parts.sh`), never the glob of a directory, and before
+  the round run a probe against the same rules, with a negative control: a command
+  that must be denied (`gen-issues.py --help`, which prints only its usage and is
+  not in the allow list). The rules of "A headless reviewer whose commands are
+  denied" have the opposite fault, too narrow to run the commands of the brief.
+  Learned in `T-bng8` ([#267](https://github.com/pharzam/layup/issues/267)).
 
 ### Writing a lesson back
 
@@ -815,6 +845,17 @@ failure modes worth keeping.
   form at the integration level only, after the unit level is green. **The
   check:** give the engine package its `WriteTSV` with the code that builds the
   rows. Learned in `T-hpid`.
+
+- ❌ **A prompt that lists the columns of a row in one sentence.** "A span that is
+  not a fact has "—" as its fact and its class, and its reason" reads as "`—` for
+  each of the three" as easily as "`—` for two, and a reason". Three sessions of
+  the demo of `M2c` took the first reading on every heading. The block refused
+  each file, so `numbering` failed on every try, while every unit test passed:
+  they write the file by hand. It is silent until a real session runs. **The
+  check:** in a prompt, give each column of each kind of row its own clause, as
+  "X in the column C"; say what a column is never; and test the prompt's text. Find
+  a refused file by copying the session's `result/` before its directory is
+  removed. Learned in `T-pzgw`.
 
 ## 3. Validation — how you check you are not fooling yourself
 

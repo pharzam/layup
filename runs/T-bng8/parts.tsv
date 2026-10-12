@@ -1,0 +1,97 @@
+file	heading	sub	row
+docs/spec/scaffold.md	## REQ-002 — The setup questions in the one batch	—	none: the requirement's text; its sections are in their rows
+docs/spec/scaffold.md	### The step markers	—	53
+docs/spec/scaffold.md	### The answers of the setup	the merge into the batch and the comment	53
+docs/spec/scaffold.md	### The answers of the setup	the rows of answers.tsv	54
+docs/spec/scaffold.md	## REQ-002 — The setup under `layup run`	—	none: the requirement's text; its sections are in their rows
+docs/spec/scaffold.md	### The steps of the setup in phase 2	—	52a
+docs/spec/scaffold.md	### The work area	—	54
+docs/spec/scaffold.md	### The stops of the runner	—	54
+docs/spec/scaffold.md	### The prose rows	—	54
+docs/spec/scaffold.md	### The step verify and the records of the setup	—	55
+docs/spec/scaffold.md	### The README of the Scaffold	—	55
+docs/spec/scaffold.md	## REQ-003 — The rulesets of Scaffold 6	—	none: the requirement's text; its sections are in their rows
+docs/spec/scaffold.md	### The ruleset of the default branch	—	52b
+docs/spec/scaffold.md	### The ruleset of the records branch	—	52b
+docs/spec/scaffold.md	### The commands for the Operator	the text of commands.sh	52c
+docs/spec/scaffold.md	### The commands for the Operator	the print, the wait, the apply outputs and setup/rulesets.txt, the work area built again	56
+docs/spec/scaffold.md	## REQ-003 — Scaffold 7, the forge check	—	57a
+docs/spec/scaffold.md	### The tree check	—	57a
+docs/spec/scaffold.md	### The read-back	—	57a
+docs/spec/scaffold.md	### The probe	—	57a
+docs/spec/scaffold.md	### The activity read	—	57a
+docs/spec/scaffold.md	### At each later start	—	57b
+docs/spec/scaffold.md	## NFR-002 — A target without LAYUP	—	52b
+docs/spec/scaffold.md	## NFR-003 — No value without evidence at the Scaffold	—	none: a rule of the rows 52a, 53 and 54, each of which writes the values that it names
+docs/spec/scaffold.md	## NFR-006 — The pin at the Scaffold	—	52a
+docs/spec/scaffold.md	## The adoption of a phase-1 target	—	none: no adoption (O-200); the restart's refusal is the built rule of clone, its input state below
+docs/spec/scaffold.md	## The findings of the first pilot	—	none: each finding is settled in the row of its rule (F-2: 54; F-6: 55; F-13: 52c; F-19: 52b; F-16, F-31, F-35: no code)
+docs/spec/scaffold.md	## The steps of the Scaffold	—	none: each row of a step adds its name to run-steps and its place in the restart's order
+docs/spec/scaffold.md	## Input states	—	none: each row is in the row of its step, below
+docs/spec/scaffold.md	## REQ-015 and REQ-017 — The review of the release of M2d	—	59a
+docs/spec/scaffold.md	## Not in M2d	—	none: no part of M2d
+docs/spec/scaffold.md	## The acceptance tests of M2d	—	none: each test is in its row, below
+docs/spec/scaffold.md	## Input states	A restart on a target that phase 1 set up (a `layup-records` with no `start/start.tsv`)	none: the built rule of clone (run.md, The restart); no code
+docs/spec/scaffold.md	## Input states	No marker in the pinned tree	53
+docs/spec/scaffold.md	## Input states	No admitted pair of `systems-architect` (for `markers`) or `product-owner` (for a prose session): for markers	53
+docs/spec/scaffold.md	## Input states	No admitted pair of `systems-architect` (for `markers`) or `product-owner` (for a prose session): for a prose session	54
+docs/spec/scaffold.md	## Input states	A proposal's quote that occurs nowhere, more than once, or holds a tab	53
+docs/spec/scaffold.md	## Input states	`S01-stack` with no answer, or `open`, after the follow-up	54
+docs/spec/scaffold.md	## Input states	A stack that the catalog does not have	54
+docs/spec/scaffold.md	## Input states	A prose session's output that is missing, a link, over 1 MiB, not UTF-8, or at a path that the stop does not name	54
+docs/spec/scaffold.md	## Input states	A prose text whose check fails	54
+docs/spec/scaffold.md	## Input states	A prose text that holds a marker that the pinned tree does not	54
+docs/spec/scaffold.md	## Input states	A row of `layup setup verify` that is not `pass` or `clear`	55
+docs/spec/scaffold.md	## Input states	The default branch's head is neither the root commit nor the verified head when the Operator's commands run	52c
+docs/spec/scaffold.md	## Input states	`commands.sh` stopped after the push, or after one apply	52c
+docs/spec/scaffold.md	## Input states	The default branch's head is the verified head, and an apply output is missing	56
+docs/spec/scaffold.md	## Input states	An apply output that is not a JSON object, or whose `source` is another repository	56
+docs/spec/scaffold.md	## Input states	A ruleset in `evaluate` or `disabled`	57a
+docs/spec/scaffold.md	## Input states	A probe that the forge accepts	57a
+docs/spec/scaffold.md	## Input states	A probe that fails for another reason (token, network, server)	57a
+docs/spec/scaffold.md	## Input states	The activity read fails	57a
+docs/spec/scaffold.md	## Input states	A private repository on GitHub Free (no enforced rulesets)	57a
+docs/spec/scaffold.md	## Input states	A restart while `scaffold-push` waits	56
+docs/spec/scaffold.md	## Input states	A work area that is missing when `scaffold-push` runs	56
+docs/spec/scaffold.md	## The acceptance tests of M2d	The stops of the runner under `layup run` (inventory)	54
+docs/spec/scaffold.md	## The acceptance tests of M2d	The steps of the setup in phase 2, and the pin	52a
+docs/spec/scaffold.md	## The acceptance tests of M2d	The row `without-layup`	52b
+docs/spec/scaffold.md	## The acceptance tests of M2d	The apply outputs	56
+docs/spec/scaffold.md	## The acceptance tests of M2d	The forge check at each later start	57b
+docs/spec/scaffold.md	## The acceptance tests of M2d	The answers of the setup: the rows of answers.tsv	54
+docs/spec/scaffold.md	## The acceptance tests of M2d	The step markers	53
+docs/spec/scaffold.md	## The acceptance tests of M2d	The setup questions in the batch and the comment	53
+docs/spec/scaffold.md	## The acceptance tests of M2d	The ruleset files (inventory)	52b
+docs/spec/scaffold.md	## The acceptance tests of M2d	`commands.sh` is fail-fast and can be run again	52c
+docs/spec/scaffold.md	## The acceptance tests of M2d	The probe (inventory)	57a
+docs/spec/scaffold.md	## The acceptance tests of M2d	The read-back	57a
+docs/spec/scaffold.md	## The acceptance tests of M2d	`layup run` with the real step runner (inventory)	55
+docs/spec/scaffold.md	## The acceptance tests of M2d	The steps of the Scaffold, end to end (inventory)	58
+docs/spec/scaffold.md	## The acceptance tests of M2d	The demo (inventory)	59b
+docs/spec/records.md	## NFR-001 — The records of the Scaffold	the block markers	50
+docs/spec/records.md	## NFR-001 — The records of the Scaffold	the blocks setup-tree and forge-check	50
+docs/spec/records.md	## NFR-001 — The records of the Scaffold	questions: source setup and the setup refs	53
+docs/spec/records.md	## NFR-001 — The records of the Scaffold	run-steps: markers	53
+docs/spec/records.md	## NFR-001 — The records of the Scaffold	run-steps: setup	54
+docs/spec/records.md	## NFR-001 — The records of the Scaffold	run-steps: verify	55
+docs/spec/records.md	## NFR-001 — The records of the Scaffold	run-steps: scaffold-push	56
+docs/spec/records.md	## NFR-001 — The records of the Scaffold	run-steps: forge-check	57a
+docs/spec/records.md	## NFR-001 — The records of the Scaffold	setup-record: the computed refs of S01 and S02	52a
+docs/spec/records.md	## NFR-001 — The records of the Scaffold	setup-record: the row without-layup	52b
+docs/spec/records.md	## NFR-001 — The records of the Scaffold	setup/inputs/files	54
+docs/spec/records.md	## NFR-001 — The records of the Scaffold	setup/rulesets.txt	56
+docs/spec/forge.md	## The calls of M2d	—	51a
+docs/spec/packages.md	### The table of M2d	internal/run: the imports of the step runner	54
+docs/spec/packages.md	### The table of M2d	internal/run: the step markers	53
+docs/spec/packages.md	### The table of M2d	internal/run: the step setup	54
+docs/spec/packages.md	### The table of M2d	internal/run: the step verify	55
+docs/spec/packages.md	### The table of M2d	internal/run: the step scaffold-push	56
+docs/spec/packages.md	### The table of M2d	internal/run: the step forge-check	57a
+docs/spec/packages.md	### The table of M2d	internal/setup: the inputs of phase 2	52a
+docs/spec/packages.md	### The table of M2d	internal/setup: the two rulesets of S13	52b
+docs/spec/packages.md	### The table of M2d	internal/forge and internal/forge/github: EffectiveRules and Activity	51a
+docs/spec/packages.md	### The table of M2d	internal/records: the block markers	50
+docs/spec/packages.md	### The table of M2d	internal/run: the blocks setup-tree and forge-check	50
+docs/spec/packages.md	### The table of M2d	internal/git: CommitTree	51b
+docs/spec/packages.md	### The table of M2d	internal/run: starts no program for the setup	54
+docs/spec/packages.md	### The calls of `internal/git`	CommitTree	51b
