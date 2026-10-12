@@ -30,6 +30,21 @@ same summary, dated — rather than deleting it or checking it off.
 - **<ID>** — <one-sentence summary> ([<ADR or doc link>](...); [detail](<id>.md))
 -->
 - **T-ekh5** — Row 49b of `M2c`: the demo of M2c (uat) ([#228](https://github.com/pharzam/layup/issues/228); [the plan](../plan/README.md#the-tasks-of-m2c))
+- **T-tetz** — Row 50 of `M2d`: the records of the Scaffold ([#270](https://github.com/pharzam/layup/issues/270); [the plan](../plan/README.md#the-tasks-of-m2d))
+- **T-jpkc** — Row 51a of `M2d`: the forge calls of M2d ([#271](https://github.com/pharzam/layup/issues/271); [the plan](../plan/README.md#the-tasks-of-m2d))
+- **T-j4sd** — Row 51b of `M2d`: the call CommitTree ([#272](https://github.com/pharzam/layup/issues/272); [the plan](../plan/README.md#the-tasks-of-m2d))
+- **T-ktgx** — Row 52a of `M2d`: the setup in phase 2 ([#273](https://github.com/pharzam/layup/issues/273); [the plan](../plan/README.md#the-tasks-of-m2d))
+- **T-9v92** — Row 52b of `M2d`: the rulesets of S13 ([#274](https://github.com/pharzam/layup/issues/274); [the plan](../plan/README.md#the-tasks-of-m2d))
+- **T-56dj** — Row 52c of `M2d`: the commands of S13 ([#275](https://github.com/pharzam/layup/issues/275); [the plan](../plan/README.md#the-tasks-of-m2d))
+- **T-4c5c** — Row 53 of `M2d`: the step markers ([#276](https://github.com/pharzam/layup/issues/276); [the plan](../plan/README.md#the-tasks-of-m2d))
+- **T-eahr** — Row 54 of `M2d`: the step setup ([#277](https://github.com/pharzam/layup/issues/277); [the plan](../plan/README.md#the-tasks-of-m2d))
+- **T-79zk** — Row 55 of `M2d`: the step verify ([#278](https://github.com/pharzam/layup/issues/278); [the plan](../plan/README.md#the-tasks-of-m2d))
+- **T-hfn1** — Row 56 of `M2d`: the step scaffold-push ([#279](https://github.com/pharzam/layup/issues/279); [the plan](../plan/README.md#the-tasks-of-m2d))
+- **T-wphp** — Row 57a of `M2d`: the step forge-check ([#280](https://github.com/pharzam/layup/issues/280); [the plan](../plan/README.md#the-tasks-of-m2d))
+- **T-2j13** — Row 57b of `M2d`: the forge check at each later start ([#281](https://github.com/pharzam/layup/issues/281); [the plan](../plan/README.md#the-tasks-of-m2d))
+- **T-eevt** — Row 58 of `M2d`: the e2e of the Scaffold ([#282](https://github.com/pharzam/layup/issues/282); [the plan](../plan/README.md#the-tasks-of-m2d))
+- **T-5xjc** — Row 59a of `M2d`: the review of the release of M2d ([#283](https://github.com/pharzam/layup/issues/283); [the plan](../plan/README.md#the-tasks-of-m2d))
+- **T-sdtb** — Row 59b of `M2d`: the demo of M2d (uat) ([#284](https://github.com/pharzam/layup/issues/284); [the plan](../plan/README.md#the-tasks-of-m2d))
 
 
 ## Next

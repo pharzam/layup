@@ -6,3 +6,6 @@ output/
 
 # Per-task git worktrees (Operator decision O-1, issue #8)
 .worktree/
+
+# Python bytecode cache, not project content
+__pycache__/
