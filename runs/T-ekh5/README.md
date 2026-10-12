@@ -87,3 +87,10 @@ Before `numbering`, run 1 did:
 - `meaning`: 21 gaps of meaning, in `intake/meaning.tsv`.
 
 The three refusals share one cause, a sentence of the prompt of the numbering that reads two ways. It is a defect of the build of `M2c`, off the path of this task, fixed by `T-pzgw` (#268, merged at `5dbd7af`). Each `-progress.txt` file holds the step lines of a run, without its ten-second beats.
+
+**The binary of run 4 and later:** built on this branch at `6400637`, after the
+merge of `main` at `5dbd7af`, `layup 0.1.0-dev`. `git diff --stat 0b881fa
+6400637 -- cmd internal go.mod` names three files. The one non-test file is
+`internal/run/numbering.go`, the prompt of `T-pzgw`; the two test files are its
+test and the empty `notYetBuilt` list of the block test. So the code that row
+49a reviewed is the code of this demo, but the prompt.
