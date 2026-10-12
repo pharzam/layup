@@ -23,13 +23,21 @@ func TestEachEndGetsItsClass(t *testing.T) {
 		{"no-result", "exit 0", "no-result"},
 		{"crash by its exit", write + "; exit 3", "crash"},
 		{"crash by a signal of its own", write + "; kill -SEGV $$", "crash"},
+		{"crash by a signal of its own, late", write + "; sleep 0.5; kill -SEGV $$", "crash"},
 		{"wall", write + "; trap 'exit 0' INT; while :; do sleep 0.05; done", "wall"},
 		{"output", write + "; while :; do echo aaaaaaaaa; done", "output"},
 		{"start", "", "start"},
 	} {
 		d := dirOf(t.TempDir(), "S-1a2b3c4d")
 		os.MkdirAll(d.Result, 0o700)
-		s := spec(t, fake(t, c.body), d.Result, 300*time.Millisecond)
+		// Only the case "wall" ends by its limit. Each other case gets a limit
+		// that a slow start cannot reach, so a loaded host does not stop it
+		// first and change its class; a Wall of zero would stop it at once.
+		wall := 5 * time.Second
+		if c.want == "wall" {
+			wall = 300 * time.Millisecond
+		}
+		s := spec(t, fake(t, c.body), d.Result, wall)
 		if c.want == "start" {
 			s.Words = []string{filepath.Join(t.TempDir(), "none")}
 		}
