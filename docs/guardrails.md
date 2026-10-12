@@ -733,16 +733,17 @@ These traps are not domain-specific: they hurt every project's test suite.
 - ❌ **A bare repository that receives a push starts its own maintenance.** The `-c
   maintenance.auto=false` of the pushing git (`T-d6q5`) does not reach the git that
   receives: a local transport clears the values of `-c` before it starts `git
-  receive-pack`, which then runs `git maintenance run --auto --detach` in the target.
-  In git 2.54 and 2.55 (CI has 2.55.0) that repacks the target in the background once
-  `objects/17` holds two loose objects, and a test that removes its directory a
-  moment after its last push fails in `TempDir RemoveAll cleanup` ("directory not
-  empty"): 3 of 70 runs of CI (#291), and never on git 2.47.3 or 2.56.0, which start
-  no such repack. The receiving repository of a local push is not one of those that
-  `docs/spec/packages.md` says no call leaves a process in. Task `T-2hm3` (#297) met
-  it. **The check:** set `receive.autogc` and `maintenance.auto` to `false` in each
-  bare repository that a test pushes into, and test it by pushing with
-  `GIT_TRACE2_EVENT` set and reading that no `git maintenance run` starts.
+  receive-pack`, which then runs `git maintenance run --auto --quiet --detach` in the
+  target. From git 2.54 (measured on 2.55.0, CI's; 2.54 read from its source) that
+  repacks the target in the background once `objects/17` holds two loose objects, and
+  a test that removes its directory a moment after its last push fails in `TempDir
+  RemoveAll cleanup` ("directory not empty"): 3 of 70 runs of CI (#291). In the made
+  setup git 2.47.3 and 2.56.0 failed none of 100 removals. The receiving repository
+  of a local push is not one of those that `docs/spec/packages.md` says no call
+  leaves a process in. Task `T-2hm3` (#297) met it. **The check:** set
+  `receive.autogc` and `maintenance.auto` to `false` in each bare repository that a
+  test pushes into, and test it by pushing with `GIT_TRACE2_EVENT` set and reading
+  that no `git maintenance run` starts.
 - ❌ **A bare repository with no default branch.** `git init --bare` with no
   `-b` names `master` as its `HEAD` when no setting of the host gives another
   name, so after a push of `main` a clone of it has no checkout ("remote HEAD

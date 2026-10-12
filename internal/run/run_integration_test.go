@@ -326,8 +326,9 @@ func TestTheClockOfAWorldDoesNotGoBack(t *testing.T) {
 // git that receives a push runs `git maintenance run --auto --quiet --detach`
 // in the target, and the -c maintenance.auto=false of the pushing call does
 // not reach it: a local transport clears the values of -c before it starts the
-// receiving git. In git 2.54 and 2.55 that maintenance repacks the target in the
-// background, and the removal of the test's directory races with it (T-2hm3).
+// receiving git. From git 2.54 (measured on 2.55, CI's) that maintenance repacks
+// the target in the background, and the removal of the test's directory races
+// with it (T-2hm3).
 func TestAPushIntoTheTargetOfAWorldStartsNoMaintenance(t *testing.T) {
 	w := newWorld(t)
 	src := t.TempDir()

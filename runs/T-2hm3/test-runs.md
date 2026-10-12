@@ -66,6 +66,22 @@ a cruft pack and a multi-pack index while the directory is removed. Git 2.56.0 e
 two loose objects in `objects/17` no longer cross it). The function of git 2.54.0 is that of
 2.55.0 (read, not run), so the setup applies from 2.54.
 
+## Where the readings come from
+
+Outside the tree, so not checkable from it. **The source of git,** by tag: `builtin/receive-pack.c`
+(v2.55.0: `receive.autogc`, and `prepare_auto_maintenance` with `start_command` at the end of a
+push); `builtin/gc.c` (`maintenance_run_tasks`: the lock `objects/maintenance.lock`, then
+`daemonize()`; `initialize_task_config`: the default strategy is `gc_strategy` in v2.52.0 and
+v2.53.0 and `geometric_strategy` from v2.54.0; `geometric_repack_auto_condition` and
+`too_many_loose_objects`: the value 100 is rounded up to 256 and the count is read from
+`objects/17`); `environment.c` (`local_repo_env`, v2.55.0: `GIT_CONFIG_PARAMETERS` and
+`GIT_CONFIG_COUNT`); `odb.c` (v2.56.0: `odb_optimize_required`, which replaces the condition).
+The function `geometric_repack_auto_condition` of v2.54.0 is that of v2.55.0, by a diff of the
+two texts. **The three CI runs** of #291: 38228267168 (`TestATaskSessionProbesItsVersionFirst`),
+38178467454 (`TestARefusedPushBindsNothing`) and 38172518765
+(`TestAnArtifactThatTheHeadLacksIsRefused`), read with `gh run view ID --log-failed`; the
+git of the CI image is read from the same log (2.55.0).
+
 ## Red (T) and green (D1)
 
 The new test, `TestAPushIntoTheTargetOfAWorldStartsNoMaintenance`
