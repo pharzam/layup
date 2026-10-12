@@ -1,0 +1,3 @@
+task-labels: running task-state.sh
+task-labels: task-state.sh failed, so no label is written
+--- calls

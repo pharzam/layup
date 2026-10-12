@@ -1,0 +1,2 @@
+#!/bin/sh
+printf "T-bbb2\t#4\tready\t—\n"

@@ -13,6 +13,27 @@ LAYUP's CI is on GitHub Actions, in [`.github/workflows/`](../../.github/workflo
 | [`pr-title.yml`](../../.github/workflows/pr-title.yml) | `conventional-title` |
 | [`pr-link.yml`](../../.github/workflows/pr-link.yml) | `pr-link` |
 | [`review-record.yml`](../../.github/workflows/review-record.yml) | `review-record` |
+| [`task-state.yml`](../../.github/workflows/task-state.yml) | `task-state labels` (not a required check) |
+
+`task-state.yml` (#185) is no gate: it is the one writer of the `state:` labels
+of the task issues — the issues that the task tables, the completed log and
+`## Now` of `main` name, which [`task-labels.sh`](../tasks/task-labels.sh)
+reads. It sets each of them from the state the
+[`task-state.sh`](../tasks/task-state.sh) command derives: an open issue the
+command does not list carries none, and a
+closed issue takes `state: merged` when its `state_reason` is `completed` —
+which stands in for "merged by its pull request" — and `state: rejected`
+otherwise. It runs on a
+push to `main`, a pull request event (by `pull_request_target`), an issue event,
+a new comment, and every 30 minutes, each of which runs the workflow file of the
+default branch; it has no `workflow_dispatch` or `create`, which could run a
+branch's own copy with the write token, and no `delete`, which would add nothing
+the schedule does not give. It checks out the default branch,
+puts no event field into a `run:` step, and holds `issues: write` and nothing
+else that writes. No `pull_request` event runs it, so check `protection` leaves
+its job out of the required contexts (#201), and a failed run blocks no merge.
+`task-labels.sh --check-workflow` holds these rules, and its fixtures run in the
+job `discipline-tests`.
 
 This directory holds the two scripts that read forge artifacts, and their
 fixtures under [`tests/`](tests/).
@@ -23,7 +44,7 @@ fixtures under [`tests/`](tests/).
 |-----|----------------|
 | `adr-lint` | `docs/adr/` discipline, via [`adr-lint.sh`](../adr/adr-lint.sh). |
 | `prd-lint` | `docs/prd/` discipline, via [`prd-lint.sh`](../prd/prd-lint.sh). |
-| `discipline-tests` | Each discipline linter against its good and bad fixtures, and the fixtures of the command [`task-state.sh`](../tasks/task-state.sh), which is not a linter, via [`run-discipline-tests.sh`](../tests/run-discipline-tests.sh). |
+| `discipline-tests` | Each discipline linter against its good and bad fixtures, and the fixtures of the commands [`task-state.sh`](../tasks/task-state.sh) and [`task-labels.sh`](../tasks/task-labels.sh), which are not linters, via [`run-discipline-tests.sh`](../tests/run-discipline-tests.sh). |
 | `link-lint` | Every in-tree Markdown link and heading anchor, via [`link-lint.sh`](../links/link-lint.sh). |
 | `nested-checkout-check` | The linters skip a nested checkout, via [`nested-checkout-check.sh`](../tests/nested-checkout-check.sh). |
 | `setup-check` | The setup of this repository and its evidence, via [`setup-check.sh`](../setup/setup-check.sh) and its fixtures. |

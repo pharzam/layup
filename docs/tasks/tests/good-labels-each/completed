@@ -1,0 +1,10 @@
+# Completed
+
+<!--
+- **YYYY-MM-DD** — **<ID>** — an example line in a comment
+-->
+
+- **2026-10-03** — **T-bbb1** — The third ([#3](https://example.invalid/3))
+- **2026-10-02** — **T-aaa2** — The second ([#2](https://example.invalid/2))
+- **2026-10-01** — **T-aaa1** — The first, which names **T-bbb2** in passing ([#1](https://example.invalid/1))
+- **2026-09-30** — **T-zzz1** — A task only the completed log names ([#7](https://example.invalid/7))

@@ -77,7 +77,10 @@ One suite is not a linter's: `task-state` runs the command
 [`task-state.sh`](../tasks/task-state.sh) through
 [`tasks/tests/run.sh`](../tasks/tests/run.sh), which compares its output with an
 `EXPECT` file and gives it the same exit contract. It is the fixture suite of a
-command, not a sixth discipline linter.
+command, not a sixth discipline linter. The same suite holds the cases of
+[`task-labels.sh`](../tasks/task-labels.sh) (the `*-labels-*` cases: its reader,
+its applier against a stand-in `gh`, and its check of the workflow
+`task-state.yml`).
 
 The linters already self-lint the *real* repo green in the hook and CI; the runner
 does the complementary job — it proves each linter correctly *rejects* bad input,

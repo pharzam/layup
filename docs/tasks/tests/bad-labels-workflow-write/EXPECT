@@ -1,0 +1,2 @@
+task-labels: the workflow FAIL permissions: pull-requests: write is not one of contents: read, issues: write, pull-requests: read
+task-labels: the workflow FAIL permissions: pull-requests: read is missing
