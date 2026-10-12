@@ -97,7 +97,10 @@ merge of `main` at `5dbd7af`, `layup 0.1.0-dev`. `git diff --stat 0b881fa
 6400637 -- cmd internal go.mod` names three files. The one non-test file is
 `internal/run/numbering.go`, the prompt of `T-pzgw`; the two test files are its
 test and the empty `notYetBuilt` list of the block test. So the code that row
-49a reviewed is the code of this demo, but the prompt.
+49a reviewed is the code of this demo, but the prompt. `release-check.sh` (`runs/T-efmy/`),
+run on 2026-10-12 at 19:32Z in a clone at the full ID of `6400637`, exits 0 and prints the
+output of row 49a ([`release-check.txt`](../T-8byd/release-check.txt)) but for its `HEAD` line;
+the thread of `T-pzgw` (#268) records no release check of its own.
 
 Each `run-N.tsv` holds the table of the restart, with its times and its exit in the first
 line, and not the progress lines and the ten-second beats of standard error. Models are
@@ -114,7 +117,12 @@ The four rules written before any run (above), read on 2026-10-12 after run 7.
    the record, [`questions.tsv`](questions.tsv): 1 of the source `rule`, 21 of
    `meaning`, 3 of `intent` and 9 of `coverage`. So the demo holds under the first reading
    of condition 3: at least one question of each of `rule` and `meaning`. The 7 rows of the
-   source `follow-up` are those of run 6.
+   source `follow-up` are those of run 6. Thirty of the 34 questions carry the quote of their
+   span: the 21 of `meaning` and the 9 of `coverage`. The four with none are Q-001, the one
+   rule gap (a gap of G1 is an absence, so it has no span to quote), and the three questions of
+   the intent form, which code asks. So "each with its question and its quote" of the scenario
+   holds for each gap that has a span; the scenario says more than the rule gap can give, and
+   the Operator accepted it on this evidence.
 2. **The span check.** [`spec-check.txt`](spec-check.txt): `layup spec check --facts
    spans.tsv --psb problem-statement.md` exits 0 on the copy of `spec/spans.tsv` (800 spans,
    equal to the record byte for byte) and on `start/problem-statement.md`, the brief
@@ -183,8 +191,9 @@ of run 7 (2026-10-12 18:43:55Z): 22.2 hours.
 - **#268** (merged by `T-pzgw`): a sentence of the prompt of the numbering that read two ways
   refused the file of runs 1 to 3.
 - **The `crash` of run 4** was the weekly limit of `claude`, a limit of the host's
-  subscription, and it left the lease held: run 5 waited 1,792 s, the `3 × lease.H` of the
-  rule, with `lease.H` of 10 minutes in `start.tsv`, to take it over.
+  subscription, and it left the lease held: run 5 waited about 30 minutes, the `3 × lease.H` of
+  the rule, with `lease.H` of 10 minutes in `start.tsv`, to take it over: it began at 07:18:21Z
+  and its first session started at 07:48:31Z.
 - **Issue #300:** `answers` says "budget.tsv not written (a field of the intent form does
   not parse)" and names neither the field nor the form; the answers `50 USD.`, `100 USD.`
   and `48 hours.` cost a restart and a follow-up.

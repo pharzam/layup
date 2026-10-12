@@ -419,8 +419,8 @@ check that catches it.
   reads well on the issue. **The check:** before Start, ask who will answer the batch
   and name that account in `--idea-owner`; if another account answers, the account that
   the Start named posts the answers in a comment of its own, one `Q-NNN: answer` line
-  per question, and edits it before the next restart copies it (an edit before the first
-  copy counts). Learned in `T-ekh5`
+  per question (a comment that held only a quote is edited to those lines before the
+  next restart copies it: an edit before the first copy counts). Learned in `T-ekh5`
   ([#228](https://github.com/pharzam/layup/issues/228)).
 
 ### Writing a lesson back
