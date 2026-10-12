@@ -1,0 +1,10 @@
+step	result	detail
+forge	done	the installation token, the six capabilities and the permissions of M2a; a public repository, empty
+plan	done	the plan free on a public repository
+baseline	done	the baseline at a95965534b14b0bf14ad74da0c9a45b5f4aedf88
+root-push	done	the default branch main exists
+read-back	done	one branch, one root commit, root tree = pin.tree
+records	done	the first records commit: the pin, the briefs, approvers.tsv, start.tsv, the lease
+issues	done	the Intake issue 1, the control issue 2
+watch	done	not-confirmed
+lease	done	released

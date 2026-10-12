@@ -1,0 +1,10 @@
+# run 1: 2026-10-11T20:34:32Z to 2026-10-11T20:38:09Z, exit 1
+step	result	detail
+forge	done	the installation token, the six capabilities and the permissions of M2a; a public repository, with layup-records
+clone	done	start.tsv, approvers.tsv and lease.tsv read
+version	done	LAYUP 0.1.0-dev
+lease	done	held by this run
+probe	done	probed and passed 2, probed and failed 0, skipped 0
+rule-gaps	done	1 rule gaps, in intake/psb.tsv
+meaning	done	21 gaps of meaning, in intake/meaning.tsv
+numbering	fail	the session S-2742cb40: refused file: line 2, column "reason": reason is the empty value exactly when fact is not

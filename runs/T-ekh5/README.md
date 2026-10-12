@@ -70,3 +70,20 @@ off, as for `M2b` ([`runs/T-x7cs/README.md`](../T-x7cs/README.md)).
     `runs/T-evad/README.md` records it; 1,132 lines.
   - It is not copied here; the records of the target hold it as
     `start/problem-statement.md`.
+
+## The runs
+
+| Run | From | To | Exit | The last row |
+| --- | ---- | -- | ---- | ------------ |
+| [0](run-0-start.tsv), Start, by the Operator | 2026-10-11 | 20:34Z | 0 | `lease`: released; Intake issue 1, control issue 2 |
+| [1](run-1.tsv) | 20:34:32Z | 20:38:09Z | 1 | `numbering`: fail, the file of S-2742cb40 refused at line 2, column `reason` |
+| [2](run-2.tsv) | 20:38:53Z | 21:11:18Z | 1 | the same, S-37a7776c, after the takeover of the lease |
+| [3](run-3.tsv) | 21:11:48Z | 21:44:13Z | 1 | the same, S-445dee66, whose file was copied before its directory was removed |
+
+Before `numbering`, run 1 did:
+
+- `probe`: both harnesses probed and passed;
+- `rule-gaps`: 1 rule gap, in `intake/psb.tsv`;
+- `meaning`: 21 gaps of meaning, in `intake/meaning.tsv`.
+
+The three refusals share one cause, a sentence of the prompt of the numbering that reads two ways. It is a defect of the build of `M2c`, off the path of this task, fixed by `T-pzgw` (#268, merged at `5dbd7af`). Each `-progress.txt` file holds the step lines of a run, without its ten-second beats.
