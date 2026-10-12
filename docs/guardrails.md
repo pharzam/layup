@@ -515,9 +515,12 @@ success without having done its job.
   `facts/good-autocrlf` of `docs/setup/tests/run.sh` clones `HEAD` with
   `core.autocrlf=true` and runs check `facts`.
 - ❌ **A trigger that runs a branch's copy of a write-token workflow.**
-  `workflow_dispatch`, `create` and `delete` each can name a branch, and the run
+  `workflow_dispatch` and `create` each can name a branch, and the run
   then uses **that branch's own file** — so a task branch's edited copy of the
-  workflow executes with `permissions: issues: write`. Checking out the default
+  workflow executes with `permissions: issues: write`. (`delete` names a branch
+  too, but the ref is gone: the run uses the default branch's file — it is left
+  out of `task-state.yml` only because a run on a deletion adds nothing the
+  schedule does not give.) Checking out the default
   branch inside the file does not constrain what the file itself does. It is
   silent because the trigger reads as a convenience and the write scope looks
   guarded by the checkout. **The check:** a workflow holding a write token takes

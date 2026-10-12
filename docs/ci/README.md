@@ -16,17 +16,19 @@ LAYUP's CI is on GitHub Actions, in [`.github/workflows/`](../../.github/workflo
 | [`task-state.yml`](../../.github/workflows/task-state.yml) | `task-state labels` (not a required check) |
 
 `task-state.yml` (#185) is no gate: it is the one writer of the `state:` labels
-of the task issues — the issues [`task-state.sh`](../tasks/task-state.sh) lists
-from the task tables, the completed log and `## Now` of `main`.
-[`task-labels.sh`](../tasks/task-labels.sh) sets each of them from the state the
-command derives: an open issue the command does not list carries none, and a
+of the task issues — the issues that the task tables, the completed log and
+`## Now` of `main` name, which [`task-labels.sh`](../tasks/task-labels.sh)
+reads. It sets each of them from the state the
+[`task-state.sh`](../tasks/task-state.sh) command derives: an open issue the
+command does not list carries none, and a
 closed issue takes `state: merged` when its `state_reason` is `completed` —
 which stands in for "merged by its pull request" — and `state: rejected`
 otherwise. It runs on a
 push to `main`, a pull request event (by `pull_request_target`), an issue event,
 a new comment, and every 30 minutes, each of which runs the workflow file of the
-default branch; it has no `workflow_dispatch`, `create` or `delete`, which could
-run a branch's own copy with the write token. It checks out the default branch,
+default branch; it has no `workflow_dispatch` or `create`, which could run a
+branch's own copy with the write token, and no `delete`, which would add nothing
+the schedule does not give. It checks out the default branch,
 puts no event field into a `run:` step, and holds `issues: write` and nothing
 else that writes. No `pull_request` event runs it, so check `protection` leaves
 its job out of the required contexts (#201), and a failed run blocks no merge.

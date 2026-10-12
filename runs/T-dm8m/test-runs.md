@@ -243,3 +243,45 @@ here; the budget stays the Operator's.
 
 `git diff --shortstat a4d41cf` of this head: **1,803 lines, 98 files** —
 measured on the tree of this commit.
+
+## The fixes of round 7
+
+Review round 7 (`8d1b77b`, Claude Fable 5.1 on Claude Code, effort `max`)
+ended `not mergeable, findings recorded` at the raised cap of 7, with two
+material findings and four notes. The material doc finding and three notes
+are fixed here; the budget stays the Operator's, and one note is recorded as
+a limit.
+
+- Finding 1 (material, open): the landing figure, **1,803 lines / 98 files**
+  at `8d1b77b`, is past every approved number; the Operator's approval is the
+  only settling, and the head below measures **1,858 lines / 98 files**.
+- Finding 2 (material, fixed): the new `docs/ci/README.md` sentence named
+  `task-state.sh` as listing the three files; that command prints the last
+  task table's rows and `## Now` only, and `task-labels.sh` is the reader of
+  all three files. The sentence now says the task issues are the ones the
+  task tables, the completed log and `## Now` of `main` name, which
+  `task-labels.sh` reads.
+- Note 3 (fixed): `DEFAULT_BRANCH` was `${{ github.event.repository.default_branch }}`,
+  which a `schedule` run does not carry, so `git clone --branch ""` would
+  fail under `set -eu` on every scheduled run. It is now
+  `${{ github.event.repository.default_branch || 'main' }}`; the checkout's
+  `ref:` is unchanged (an empty `ref:` falls back to the run's ref, the
+  default branch on a schedule).
+- Note 4 (fixed): the stated reason for dropping `delete` was wrong —
+  `delete` has no ref left, so its run uses the default branch's file; it is
+  dropped because a run on a deletion adds nothing the schedule gives. Said
+  so in the workflow header, `docs/ci/README.md` and `docs/guardrails.md`.
+- Note 5 (fixed): `--check-workflow` now names its limits in a `LIMIT`
+  comment, as the checks of `setup-check.sh` do: a second checkout of
+  another `ref:`, an event field outside a `run:` step, and YAML's
+  explicit-key bound form pass it; each needs an edit of `main`'s file,
+  which review of `.github/**` covers.
+- Note 6 (fixed): the `good-labels-right` row of the tests README described
+  a `duplicate`/`in progress` cross the case does not hold; it now names the
+  `not_planned`/`in progress` cross it does hold, and the `duplicate` close
+  as `rejected` besides.
+
+### The budget, measured
+
+`git diff --shortstat a4d41cf` of this head: **1,858 lines, 98 files** —
+measured on the tree of this commit.

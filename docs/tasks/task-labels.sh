@@ -127,6 +127,12 @@ read_dir() {
 }
 
 # check_workflow FILE — the rules of the header of task-state.yml.
+# LIMIT: the header it reads, not the workflow: a second checkout of another
+# `ref:` passes (only the first `ref:` of the default branch sets the flag); an
+# event field in a `uses:`, `with:` or `env:` passes (only `run:` lines are read
+# for `${{`); a bound written as YAML's explicit key (`? tags`) records no bound
+# and passes. Each form needs an edit of the file on `main`, which review of
+# `.github/**` covers; the check is a guard against forgetting.
 check_workflow() {
 	[ -f "$1" ] || die "missing input: the workflow $1"
 	tr -d '\r' < "$1" | awk '
