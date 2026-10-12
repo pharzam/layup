@@ -168,6 +168,11 @@ func newWorld(t *testing.T) *world {
 	// HEAD names main, as the forge's HEAD names its default branch, so a
 	// clone of the target has its branch main (a session clones it, row 43b).
 	gitOut(t, "/", "init", "-q", "--bare", "-b", "main", w.bare)
+	// The target receives pushes, and the git that receives one starts its own
+	// maintenance in the background unless the repository says no: the -c of the
+	// pushing call does not reach it (T-2hm3).
+	gitOut(t, w.bare, "config", "receive.autogc", "false")
+	gitOut(t, w.bare, "config", "maintenance.auto", "false")
 	w.fake = &fakeGitHub{t: t, bare: w.bare, comments: map[int][]map[string]any{
 		2: {{"id": 501, "user": map[string]any{"id": 777, "login": "layup-watch[bot]"}, "performed_via_github_app": map[string]any{"slug": "layup-watch"},
 			"created_at": "2026-10-08T12:00:00Z", "updated_at": "2026-10-08T12:00:00Z", "body": "the dead-man job is watching\n"}},
@@ -314,6 +319,39 @@ func TestTheClockOfAWorldDoesNotGoBack(t *testing.T) {
 	seen := first.Clock.Now()
 	if got := w.config("0.1.0-dev").Clock.Now(); got.Before(seen) {
 		t.Errorf("the clock of a second config reads %s, before the %s that the first read", got.Format(time.RFC3339Nano), seen.Format(time.RFC3339Nano))
+	}
+}
+
+// A push into the target of a world starts no maintenance of git in it. The
+// git that receives a push runs `git maintenance run --auto --quiet --detach`
+// in the target, and the -c maintenance.auto=false of the pushing call does
+// not reach it: a local transport clears the values of -c before it starts the
+// receiving git. In git 2.54 and 2.55 that maintenance repacks the target in the
+// background, and the removal of the test's directory races with it (T-2hm3).
+func TestAPushIntoTheTargetOfAWorldStartsNoMaintenance(t *testing.T) {
+	w := newWorld(t)
+	src := t.TempDir()
+	writeFile(t, filepath.Join(src, "a.txt"), "a\n")
+	gitOut(t, src, "init", "-q", "-b", "main")
+	gitOut(t, src, "add", "-A")
+	gitOut(t, src, "commit", "-q", "-m", "one")
+	trace := filepath.Join(t.TempDir(), "trace2.json")
+	t.Setenv("GIT_TRACE2_EVENT", trace) // gitOut starts from this environment; internal/git does not
+	gitOut(t, src, "push", "-q", "file://"+w.bare, "main:refs/heads/probe")
+	b, err := os.ReadFile(trace)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := string(b)
+	// The receiving git wrote an event of its own, so the trace is that of the
+	// process that would start the maintenance.
+	if !strings.Contains(got, `"name":"receive-pack"`) {
+		t.Fatalf("the trace of the push holds no event of receive-pack:\n%s", got)
+	}
+	for _, started := range []string{`"maintenance","run"`, `"name":"maintenance"`} {
+		if strings.Contains(got, started) {
+			t.Errorf("a push into the target started the maintenance of git: %s is in the trace", started)
+		}
 	}
 }
 

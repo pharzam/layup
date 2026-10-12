@@ -721,6 +721,9 @@ func pushed(t *testing.T, w *whole) (area, bare, gh string) {
 	tmp := t.TempDir()
 	bare, stub := filepath.Join(tmp, "target.git"), filepath.Join(tmp, "bin")
 	gitOut(t, tmp, "init", "-q", "--bare", "-b", "main", bare) // the default branch of the repository on GitHub
+	// The target receives the push: its git starts no maintenance of its own in the background (T-2hm3).
+	gitOut(t, bare, "config", "receive.autogc", "false")
+	gitOut(t, bare, "config", "maintenance.auto", "false")
 	args := filepath.Join(tmp, "gh-args")
 	if err := writeFiles(stub, map[string]string{"gh": "#!/bin/sh\nprintf '%s\\n' \"$*\" >> '" + args + "'\n"}); err != nil {
 		t.Fatal(err)
