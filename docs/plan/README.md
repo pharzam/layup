@@ -2,7 +2,7 @@
 
 This is LAYUP's implementation plan: the phases of
 [`PRD-0001`](../prd/PRD-0001-layup.md) §9 with their milestones, the tasks of
-phase 1 and of the milestones `M2a`, `M2b` and `M2c` in their order, and where each part of the work goes. It is written for
+phase 1 and of the milestones `M2a`, `M2b`, `M2c` and `M2d` in their order, and where each part of the work goes. It is written for
 LAYUP itself in the form that [`architecture.md`](../architecture.md) §8 asks of a
 target's milestone plan: each task with the requirement IDs it serves, the tests
 that will show it done, a size class, and its predecessors.
@@ -31,10 +31,10 @@ The Operator's decisions O-121 to O-124 set its structure; they are quoted in
   owner stays a marker with a row in
   [`open-gaps.tsv`](../setup/open-gaps.tsv), as
   [`spec/README.md`](../spec/README.md) says.
-- Phases 2 to 4 are at milestone level only, except `M2a`, `M2b` and `M2c`, whose tasks
-  are below ([`M2a`](#the-tasks-of-m2a), [`M2b`](#the-tasks-of-m2b), [`M2c`](#the-tasks-of-m2c)). Each milestone starts with its own specification
+- Phases 2 to 4 are at milestone level only, except `M2a`, `M2b`, `M2c` and `M2d`, whose tasks
+  are below ([`M2a`](#the-tasks-of-m2a), [`M2b`](#the-tasks-of-m2b), [`M2c`](#the-tasks-of-m2c), [`M2d`](#the-tasks-of-m2d)). Each milestone starts with its own specification
   task (O-114), and a slicing task then writes its rows and opens their issues
-  (O-164: `T-zwke` for `M2a`, `T-fdaq` for `M2b`, `T-2r8u` for `M2c`).
+  (O-164: `T-zwke` for `M2a`, `T-fdaq` for `M2b`, `T-2r8u` for `M2c`, `T-bng8` for `M2d`).
 - A size class is `small` (one package or one step group: about one day of agent
   work and a diff under about 400 lines) or `large`. The expected lines of a task
   are an estimate for its plan review, not a budget; each task's plan review sets
@@ -43,7 +43,7 @@ The Operator's decisions O-121 to O-124 set its structure; they are quoted in
 - The column "After" gives the order of the tasks; the row number is only a
   handle. A task starts when the tasks in its "After" cell have merged.
 - `T-55n2` opens the issue of `T-b97r` and of each row of phase 1, `T-zwke`
-  of each row of `M2a`, `T-fdaq` of each row of `M2b`, and `T-2r8u` of each row of `M2c`; the numbers are in the column "Issue". Each task, in its own pull request, puts its real test names and
+  of each row of `M2a`, `T-fdaq` of each row of `M2b`, `T-2r8u` of each row of `M2c`, and `T-bng8` of each row of `M2d`; the numbers are in the column "Issue". Each task, in its own pull request, puts its real test names and
   their status in [`tests/traceability.md`](../tests/traceability.md) and in the
   Test column of `PRD-0001` §12.
 
@@ -55,7 +55,7 @@ The Operator's decisions O-121 to O-124 set its structure; they are quoted in
 | `M2a` | 2 | NFR-001, NFR-002, NFR-006, REQ-002 | On an empty repository, after the Operator's root push, the records branch shows the first commit by the LAYUP App, and the Intake and control issues exist. | `M1` | its specification task (`T-zck8`); its tasks: [rows 21 to 27](#the-tasks-of-m2a) |
 | `M2b` | 2 | REQ-011, REQ-005, REQ-003, REQ-013, NFR-005, NFR-001 | A probe session on each registered harness, then one developer session whose commit lands on its task branch, with one complete telemetry row. | `M2a` | its specification task (`T-ywk7`, #147); its tasks: [rows 28 to 39b](#the-tasks-of-m2b) |
 | `M2c` | 2 | REQ-001, REQ-012, NFR-003 | On a pilot problem statement, one Intake comment holds the rule gaps and the gaps of meaning, and `layup spec check --facts` passes on the numbered spans. | `M2a`, `M2b` | its specification task (`T-g49f`, #206; [`intake.md`](../spec/intake.md)); its tasks: [rows 40 to 49b](#the-tasks-of-m2c) |
-| `M2d` | 2 | REQ-002, NFR-001, NFR-002, NFR-003, NFR-006, REQ-003 | After the Operator's pushes and ruleset apply, the push to `layup-probe` is refused, and `setup/forge-check.tsv` shows each rule and probe as passed. | `M2a`, `M2b`, `M2c` | its specification task (`T-msrd`, #265; [`scaffold.md`](../spec/scaffold.md)) |
+| `M2d` | 2 | REQ-002, NFR-001, NFR-002, NFR-003, NFR-006, REQ-003 | After the Operator's pushes and ruleset apply, the push to `layup-probe` is refused, and `setup/forge-check.tsv` shows each rule and probe as passed. | `M2a`, `M2b`, `M2c` | its specification task (`T-msrd`, #265; [`scaffold.md`](../spec/scaffold.md)); its tasks: [rows 50 to 59b](#the-tasks-of-m2d) |
 | `M2e` | 2 | REQ-005, REQ-007, REQ-012, REQ-003, NFR-004, NFR-001 | The specification task of a target merges after its first bet: each handoff is valid, the rendered commit holds the MoSCoW and Phase columns, and the four `layup/` checks are green. | `M2b`, `M2c`, `M2d` | its specification task |
 | `M2f` | 2 | REQ-003, REQ-004, NFR-001, NFR-004 | The activation batch of a first bet merges only after each known-bad patch fails its kind, and `layup audit` shows zero agent writes to rule paths. | `M2d`, `M2e` | its specification task |
 | `M2g` | 2 | REQ-005, REQ-007, REQ-004, REQ-012, NFR-004 | One build task that changes a product path merges after the activation with every gate and the four `layup/` checks green, and the idea owner's "accept" is a row of `acceptance.tsv`. | `M2e`, `M2f` | its specification task |
@@ -296,6 +296,50 @@ the full commit ID of its head. Row 49b needs the Operator's inputs, which its
 issue lists: the pilot problem statement, which the idea owner chooses
 (`PRD-0001` §11 item 6), among them.
 
+## The tasks of M2d
+
+The build tasks of milestone `M2d`, the Scaffold (task `T-bng8`, #267; O-164 of
+#123). Its specification is [`spec/scaffold.md`](../spec/scaffold.md), [the
+records of the Scaffold](../spec/records.md#nfr-001--the-records-of-the-scaffold),
+[the calls of M2d](../spec/forge.md#the-calls-of-m2d) and [the table of
+M2d](../spec/packages.md#the-table-of-m2d). The rule of the slicing, as for
+`M2c`: one task per package boundary, in the order of the imports. Each part of
+the specification is in one row. Each acceptance test and each input state of
+`scaffold.md` is in the row that delivers its part, or each clause of one in its
+row where the slicing cuts it. A built block that `M2d` changes in words changes
+in the row whose code changes it, clause by clause
+([`runs/T-bng8/parts.tsv`](../../runs/T-bng8/parts.tsv)). The goal classes of
+each row were counted, and the count of each row is final by the Operator's
+decision O-209 of #267; its issue states it. Each row that adds a step adds its
+name to the enum of `run-steps` and the step to the restart's order in the same
+change, as `M2c` did.
+
+**The release of `M2d`** is the code of `main` that the demo of row 59b runs: the
+non-test Go files of `cmd/` and `internal/`, `go.mod`, and the files that the
+binary embeds, at the merge of row 58, the last build row. Row 59a reviews the
+whole release ([`scaffold.md`](../spec/scaffold.md#req-015-and-req-017--the-review-of-the-release-of-m2d)).
+
+The columns are those of the tasks of `M2c`, and each issue says `Refs #265` and
+`Refs #29`. Rows 50, 51a, 51b and 52a can start at once.
+
+| # | Task ID | Issue | Task | Demo | Items | Requirements | Fact | Tests | Size | Lines | After | Cap |
+| - | ------- | ----- | ---- | ---- | ----- | ------------ | ---- | ----- | ---- | ----- | ----- | --- |
+| 50 | `T-tetz` | [#270](https://github.com/pharzam/layup/issues/270) | The records of the Scaffold: `records.md`: NFR-001 — The records of the Scaffold (the block markers); `records.md`: NFR-001 — The records of the Scaffold (the blocks setup-tree and forge-check) | The Go schemas of `markers`, `setup-tree` and `forge-check` equal their blocks, and each reader refuses a row that breaks its rule. | `later-p2-scaffold` | NFR-001, REQ-002, REQ-003 | F-0001#1, F-0003#42 | unit; the block test (the three names to `built`) | small | 400 | — | 1 |
+| 51a | `T-jpkc` | [#271](https://github.com/pharzam/layup/issues/271) | The forge calls of M2d: `forge.md`: The calls of M2d | Against the `httptest` forge, `EffectiveRules` gives each active rule of a branch with its parameters, `Activity` gives the activities of a ref, and `Repository` gives the head of each branch. | `later-p2-scaffold` | REQ-003, NFR-001 | F-0003#43 | integration (the `httptest` forge) | small | 400 | — | 1 |
+| 51b | `T-j4sd` | [#272](https://github.com/pharzam/layup/issues/272) | The call CommitTree: `packages.md`: The calls of `internal/git` (CommitTree) | `CommitTree` makes an empty commit on a parent with the fixed identity, and refuses a tree or a parent that is not a full object ID before `git` starts. | `later-p2-scaffold` | REQ-003 | F-0003#43 | unit; integration (the real `git`) | small | 200 | — | 1 |
+| 52a | `T-ktgx` | [#273](https://github.com/pharzam/layup/issues/273) | The setup in phase 2: `scaffold.md`: The steps of the setup in phase 2; `scaffold.md`: NFR-006 — The pin at the Scaffold; `scaffold.md`: The acceptance tests of M2d (The steps of the setup in phase 2, and the pin); `records.md`: NFR-001 — The records of the Scaffold (setup-record: the computed refs of S01 and S02) | The step runner with the inputs of phase 2 reads only `S01-stack`, takes the pin rows from `start.tsv` with resolving nothing, makes no commit at S03 and none of `layup-records` at S15, and writes the target's pin file from the rows. | `later-p2-scaffold` | REQ-002, NFR-006, NFR-003 | F-0003#42, F-0001#8 | unit (each step of phase 2) | large | 600 | — | 1 |
+| 52b | `T-9v92` | [#274](https://github.com/pharzam/layup/issues/274) | The rulesets of S13: `scaffold.md`: The ruleset of the default branch; `scaffold.md`: The ruleset of the records branch; `scaffold.md`: NFR-002 — A target without LAYUP; `scaffold.md`: The acceptance tests of M2d (The row `without-layup`); `scaffold.md`: The acceptance tests of M2d (The ruleset files (inventory)); `records.md`: NFR-001 — The records of the Scaffold (setup-record: the row without-layup) | S13 writes the ruleset of the default branch with `creation`, the merge method and, in phase 2, the four `layup/` checks pinned to the App, and in phase 2 the ruleset of the records branch and the row `without-layup`. | `later-p2-scaffold` | REQ-003, NFR-002 | F-0003#43, F-0003#65 | unit (the two files in both phases; the record row) | small | 400 | 52a | 1 |
+| 52c | `T-56dj` | [#275](https://github.com/pharzam/layup/issues/275) | The commands of S13: `scaffold.md`: The commands for the Operator (the text of commands.sh); `scaffold.md`: Input states (The default branch's head is neither the root commit nor the verified head when the Operator's commands run); `scaffold.md`: Input states (`commands.sh` stopped after the push, or after one apply); `scaffold.md`: The acceptance tests of M2d (`commands.sh` is fail-fast and can be run again) | `commands.sh` stops at the first command that fails, and a run of it again after the push or after one apply pushes nothing and applies only the missing ruleset. | `later-p2-scaffold` | REQ-003 | F-0003#43 | unit (stand-ins of `git` and `gh`) | small | 300 | 52b | 1 |
+| 53 | `T-4c5c` | [#276](https://github.com/pharzam/layup/issues/276) | The step markers: `scaffold.md`: The step markers; `scaffold.md`: The answers of the setup (the merge into the batch and the comment); `scaffold.md`: Input states (No marker in the pinned tree); `scaffold.md`: Input states (No admitted pair of `systems-architect` (for `markers`) or `product-owner` (for a prose session): for markers); `scaffold.md`: Input states (A proposal's quote that occurs nowhere, more than once, or holds a tab); `scaffold.md`: The acceptance tests of M2d (The answers of the setup: the merge into the batch and the comment); `scaffold.md`: The acceptance tests of M2d (The step markers); `records.md`: NFR-001 — The records of the Scaffold (questions: source setup and the setup refs); `records.md`: NFR-001 — The records of the Scaffold (run-steps: markers) | A restart runs `markers` before `batch`: the markers of the pinned tree with their checked proposals are committed, and the batch asks `S01-stack` and each marker in the Operator's block. | `later-p2-scaffold` | REQ-002, NFR-003 | F-0003#42, F-0003#63 | unit (the scan, the result file of the proposals); integration (the step, the batch, a scripted harness) | large | 700 | 50 | 1 |
+| 54 | `T-eahr` | [#277](https://github.com/pharzam/layup/issues/277) | The step setup: `scaffold.md`: The answers of the setup (the rows of answers.tsv); `scaffold.md`: The work area; `scaffold.md`: The stops of the runner; `scaffold.md`: The prose rows; `scaffold.md`: Input states (No admitted pair of `systems-architect` (for `markers`) or `product-owner` (for a prose session): for a prose session); `scaffold.md`: Input states (`S01-stack` with no answer, or `open`, after the follow-up); `scaffold.md`: Input states (A stack that the catalog does not have); `scaffold.md`: Input states (A prose session's output that is missing, a link, over 1 MiB, not UTF-8, or at a path that the stop does not name); `scaffold.md`: Input states (A prose text whose check fails); `scaffold.md`: Input states (A prose text that holds a marker that the pinned tree does not); `scaffold.md`: The acceptance tests of M2d (The stops of the runner under `layup run` (inventory)); `scaffold.md`: The acceptance tests of M2d (The answers of the setup: the rows of answers.tsv); `records.md`: NFR-001 — The records of the Scaffold (run-steps: setup) | After Intake, a restart builds the work area from the records, answers each stop of the runner from them or with a prose session, and runs S01 to S14. | `later-p2-scaffold` | REQ-002, NFR-001, NFR-003 | F-0003#42, F-0001#1 | unit (the answers, the stops); integration (the real step runner, a scripted harness) | large | 800 | 52a, 52c, 53 | 1 |
+| 55 | `T-79zk` | [#278](https://github.com/pharzam/layup/issues/278) | The step verify: `scaffold.md`: The step verify and the records of the setup; `scaffold.md`: The README of the Scaffold; `scaffold.md`: Input states (A row of `layup setup verify` that is not `pass` or `clear`); `scaffold.md`: The acceptance tests of M2d (`layup run` with the real step runner (inventory)); `records.md`: NFR-001 — The records of the Scaffold (run-steps: verify) | After S14, `layup run` runs `layup setup verify` and S15 and commits the setup's records, `setup/tree.tsv` and the README of the Scaffold in one records commit. | `later-p2-scaffold` | REQ-002, NFR-001 | F-0003#42, F-0001#1 | integration (`layup run` with the real step runner) | small | 400 | 54 | 1 |
+| 56 | `T-hfn1` | [#279](https://github.com/pharzam/layup/issues/279) | The step scaffold-push: `scaffold.md`: The commands for the Operator (the print, the wait, the apply outputs and setup/rulesets.txt, the work area built again); `scaffold.md`: Input states (The default branch's head is the verified head, and an apply output is missing); `scaffold.md`: Input states (An apply output that is not a JSON object, or whose `source` is another repository); `scaffold.md`: Input states (A restart while `scaffold-push` waits); `scaffold.md`: Input states (A work area that is missing when `scaffold-push` runs); `scaffold.md`: The acceptance tests of M2d (The apply outputs); `records.md`: NFR-001 — The records of the Scaffold (run-steps: scaffold-push) | The step prints the Operator's commands and waits, commits `setup/rulesets.txt` from both apply outputs, and builds a missing work area again from the records. | `later-p2-scaffold` | REQ-003, NFR-001 | F-0003#43 | unit (the apply outputs); integration (the wait, the work area built again) | small | 500 | 52c, 55 | 1 |
+| 57a | `T-wphp` | [#280](https://github.com/pharzam/layup/issues/280) | The step forge-check: `scaffold.md`: REQ-003 — Scaffold 7, the forge check; `scaffold.md`: The tree check; `scaffold.md`: The read-back; `scaffold.md`: The probe; `scaffold.md`: The activity read; `scaffold.md`: Input states (A ruleset in `evaluate` or `disabled`); `scaffold.md`: Input states (A probe that the forge accepts); `scaffold.md`: Input states (A probe that fails for another reason (token, network, server)); `scaffold.md`: Input states (The activity read fails); `scaffold.md`: Input states (A private repository on GitHub Free (no enforced rulesets)); `scaffold.md`: The acceptance tests of M2d (The probe (inventory)); `scaffold.md`: The acceptance tests of M2d (The read-back); `records.md`: NFR-001 — The records of the Scaffold (run-steps: forge-check) | The forge check commits one row per check: the tree, the rules read back, the bypass lists, the probe refused with `GH013` and the ruleset's name, and the activity read. | `later-p2-scaffold` | REQ-003, NFR-001 | F-0003#43, F-0003#64 | unit (the read-back); integration (the probe against a bare repository with a refusing hook; the `httptest` forge) | large | 700 | 50, 51a, 51b, 56 | 1 |
+| 57b | `T-2j13` | [#281](https://github.com/pharzam/layup/issues/281) | The forge check at each later start: `scaffold.md`: At each later start; `scaffold.md`: The acceptance tests of M2d (The forge check at each later start) | Once the Scaffold is done, each restart runs the forge check after `lease` and before `probe`, and stops at a row that is not `pass`. | `later-p2-scaffold` | REQ-003 | F-0003#43 | integration | small | 300 | 57a | 1 |
+| 58 | `T-eevt` | [#282](https://github.com/pharzam/layup/issues/282) | The e2e of the Scaffold: `scaffold.md`: The acceptance tests of M2d (The steps of the Scaffold, end to end (inventory)) | In CI with no secret, the restarts run from Intake's answers through the setup, the printed commands run by the test in place of the Operator, and the forge check. | `later-p2-scaffold` | REQ-002, REQ-003, NFR-001 | F-0003#42, F-0003#43 | e2e (the binary, a local fake forge, local bare repositories, scripted harness programs) | large | 600 | 57b | 1 |
+| 59a | `T-5xjc` | [#283](https://github.com/pharzam/layup/issues/283) | The review of the release of M2d: `scaffold.md`: REQ-015 and REQ-017 — The review of the release of M2d | The release review of `M2d` is a recorded review of the code for `REQ-015` and `REQ-017`, by a reviewer of a model that wrote none of it. | `later-p2-scaffold` | REQ-015, REQ-017 | F-0003#43 (the review keeps the out-of-scope facts F-0003#53 and F-0003#55 out) | the review, with `runs/T-efmy/release-check.sh` on the release commit, adapted where the code of `M2d` needs it (the push of the probe reaches a remote); its evidence under `runs/` | small | 300 | 58 | 1 |
+| 59b | `T-sdtb` | [#284](https://github.com/pharzam/layup/issues/284) | The demo of M2d (uat): `scaffold.md`: The acceptance tests of M2d (The demo (inventory)) | After the Operator's pushes and ruleset apply, the push to `layup-probe` is refused, and `setup/forge-check.tsv` shows each rule and probe as passed. | `later-p2-scaffold`, `gov-operator-setup-o112` | REQ-002, REQ-003 | F-0003#42, F-0003#43 | uat, with its evidence under `runs/` | small | 300 | 59a | 1 |
+
 ## The edges of the inventory that the plan drops
 
 | From | To | Reason |
@@ -358,7 +402,7 @@ Each inventory item that is not in a row of a task table has one host here; `lat
 | `later-p2-run-start` | rows 21 to 27 | [The tasks of M2a](#the-tasks-of-m2a). |
 | `later-p2-sessions-ledger` | rows 28 to 39b | [The tasks of M2b](#the-tasks-of-m2b). |
 | `later-p2-intake-spec` | rows 40 to 49b (`M2c`) | [The tasks of M2c](#the-tasks-of-m2c). |
-| `later-p2-scaffold` | `M2d` | The milestone itself. |
+| `later-p2-scaffold` | `M2d` | The milestone itself: [rows 50 to 59b](#the-tasks-of-m2d). |
 | `later-p2-phase-loop-handoffs` | `M2e` | The milestone itself. |
 | `later-p2-rule-protection` | `M2f` | The milestone itself. |
 | `later-p2-build-accept` | `M2g` | The milestone itself. |

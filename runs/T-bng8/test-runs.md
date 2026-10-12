@@ -28,3 +28,17 @@ FAIL row 58 is not a row of The tasks of M2d
 FAIL row 59a is not a row of The tasks of M2d
 FAIL row 59b is not a row of The tasks of M2d
 ```
+
+## Green (2026-10-12, 06:18Z)
+
+After D1 (the table "The tasks of M2d", 15 rows from `gen-issues.py --table`)
+and D3 (the issues #270 to #284, opened by the App with the duplicate check of
+each in its body):
+
+- `sh runs/T-bng8/parts.sh`: exit 0, "ok   each part is in one row of The tasks
+  of M2d, or named with its reason".
+- `sh runs/T-bng8/issues.sh`: exit 1 before the issues ("FAIL
+  runs/T-bng8/issues.tsv is missing: no issue is open"), and exit 0 after, with 15
+  lines `ok   row <n>: #<issue> (<task>) by layup-agent[bot]`.
+- `link-lint` (2,318 links), `prd-lint`, `setup-check` and `run-discipline-tests`
+  (102 passed): exit 0.
