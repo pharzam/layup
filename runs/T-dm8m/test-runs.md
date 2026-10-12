@@ -134,3 +134,37 @@ passed, 0 failed.
 
 `git diff --shortstat a4d41cf` of this head: **1,534 lines, 92 files** —
 recorded after the commit below.
+
+## The fixes of round 3
+
+Review round 3 (`e4aabfe`, GPT-6 Sol on Devin) ended `not mergeable, findings
+recorded` at the raised cap of 3, with four findings. The two code findings
+are fixed in `ea43afe`; the review bookkeeping is done on the issue; the
+budget stays the Operator's.
+
+### Red
+
+`bad-labels-workflow-tags-ignore` (new): a `push` bound `tags-ignore: ['*']`
+beside `branches: [main]` — the key pattern `[a-z_]+` of round 2's fix could
+not see a hyphenated bound, so `--check-workflow` printed `the workflow OK`;
+`run.sh` exit 2, the fail for the finding's reason.
+
+### Green
+
+The workflow keys are recorded with `[a-z_-]+`, so `tags-ignore` and
+`branches-ignore` are seen and rejected like `tags` and `branches`:
+`bad-labels-workflow-tags-ignore`, `bad-labels-workflow-tags`,
+`bad-labels-workflow-push` and `bad-labels-workflow-branches` each fail on
+their own bound; `good-labels-workflow` and `good-labels-right` pass. The
+workflow header, `glossary.md` and the `task-labels.sh` header now say an
+open indexed issue absent from `task-state.sh` carries no `state:` label and
+a closed issue's label comes from its close reason — the same claim
+`AGENTS.md` was updated with in round 1. `run-discipline-tests`: 126 passed,
+0 failed; `adr-lint`, `prd-lint`, `link-lint`, `setup-check`, `go build`,
+`go vet`, `go test` (unit and `-tags=integration`), `gofmt -l` (empty) and
+`git diff --check`: exit 0.
+
+### The budget, measured
+
+`git diff --shortstat a4d41cf` of this head: **1,609 lines, 95 files** —
+recorded after the commit below.
