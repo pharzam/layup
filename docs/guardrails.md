@@ -524,7 +524,8 @@ success without having done its job.
   no trigger a branch's copy can fire — the allowed set of `task-state.yml` is
   `push` to `main`, `pull_request_target`, `issues`, `issue_comment` and
   `schedule`, and `docs/tasks/task-labels.sh --check-workflow` fails any other,
-  any `push` not bound to `main`, and any event `types:` outside the named ones
+  any `push` bound that is not `branches` of `main` alone, and any event
+  `types:` outside the named ones
   (the `bad-labels-workflow-*` fixtures). Learned in `T-dm8m` (#185, the review
   of the re-plan, condition 1).
 - ❌ **An `awk` check that reads the locale.** `awk` reads characters in a UTF-8

@@ -107,3 +107,30 @@ progress lines of `task-state.sh` and of the reads, 9.6 s, exit 0, and no write
 plan, the completed log and the backlog) and one `add #228 state: in progress`
 (`T-ekh5`, the demo of `M2c`, claimed by another session with recent activity).
 No indexed task issue was closed as not planned, so no `state: rejected`.
+
+## The fixes of round 2
+
+Review round 2 (`33156a2`, GPT-6 Sol on Devin) ended `not mergeable, findings
+recorded` at the cap of 2, with four material findings. Three are fixed here;
+the fourth, the budget, is the Operator's.
+
+### Red
+
+`bad-labels-workflow-tags` (new): a `push` bound `tags: ['*']` beside
+`branches: [main]` — `--check-workflow` printed `the workflow OK`; `run.sh`
+exit 2, the fail for the finding's reason. `good-labels-right` gains a `plan`
+naming #7 and the issue closed with an empty `state_reason`: the reader
+already sent it to `state: rejected`, so the case adds the promised coverage
+(D1) without a code change.
+
+### Green
+
+The check now rejects a `push` bound other than `branches`, and the mutant
+fails on it alone. `glossary.md` and the `task-state.yml` comment now name the
+indexed set and the close-reason precedence. `run-discipline-tests`: 125
+passed, 0 failed.
+
+### The budget, measured
+
+`git diff --shortstat a4d41cf` of this head: **1,534 lines, 92 files** —
+recorded after the commit below.

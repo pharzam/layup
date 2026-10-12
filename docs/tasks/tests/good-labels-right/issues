@@ -4,5 +4,6 @@
 4	open		state: ready
 5	open		state: in progress,task
 6	closed	not_planned	state: in progress
+7	closed		state: in review
 9	open		state: ready,state: stalled,task
 44	open		state: ready

@@ -143,6 +143,7 @@ check_workflow() {
 	top == "on" && ind($0) == 2 { k = $0; sub(/^ */, "", k); sub(/:.*/, "", k); trig[k] = 1; cur = k; curk = "" }
 	top == "on" && ind($0) == 4 && $0 ~ /^ *[a-z_]+:/ {
 		kn = $0; sub(/^ */, "", kn); sub(/:.*/, "", kn); curk = kn
+		if (cur == "push") bound[kn] = 1
 		v = $0; sub(/^ *[a-z_]+:[ \t]*/, "", v)
 		if (v ~ /^\[/) { sub(/^\[/, "", v); sub(/\][ \t]*$/, "", v)
 			m = split(v, a, /,[ \t]*/)
@@ -174,6 +175,7 @@ check_workflow() {
 		n = split("contents: read|issues: write|pull-requests: read", pw, "|")
 		for (p in perm) { ok = 0; for (i = 1; i <= n; i++) if (p == pw[i]) ok = 1; if (!ok) fail("permissions: " p " is not one of contents: read, issues: write, pull-requests: read") }
 		for (i = 1; i <= n; i++) if (!(pw[i] in perm)) fail("permissions: " pw[i] " is missing")
+		for (b in bound) if (b != "branches") fail("push: " b ": a bound of push is branches only")
 		m = split(ord["push" SUBSEP "branches"], pb, " ")
 		for (i = 1; i <= m; i++) if (pb[i] != "" && pb[i] != "main") fail("push: branches: " pb[i] " is not main")
 		if (!(("push" SUBSEP "branches" SUBSEP "main") in key)) fail("push: branches: main is missing")
