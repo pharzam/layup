@@ -27,20 +27,23 @@ or payload of one task is under `tasks/<task>/`.
 
 | Path | Record | § | Writer | Phase | Schema |
 | ---- | ------ | - | ------ | ----- | ------ |
-| `README.md` | what the branch is, and how to read it with no tool | 3 | `layup setup` (O-115); `layup run` for a target that Start makes (`M2a`) | 1 | a fixed text per writer: [`setup.md`](setup.md#the-readme-of-the-records-branch); [`run.md`](run.md#the-readme-of-a-target-that-start-makes) |
+| `README.md` | what the branch is, and how to read it with no tool | 3 | `layup setup` (O-115); `layup run` for a target that Start makes (`M2a`), replaced at the Scaffold (`M2d`) | 1 | a fixed text per writer: [`setup.md`](setup.md#the-readme-of-the-records-branch); [`run.md`](run.md#the-readme-of-a-target-that-start-makes); [`scaffold.md`](scaffold.md#the-readme-of-the-scaffold) |
 | `start/problem-statement.md`, `start/vision.md` | the two briefs, byte for byte | 5 | `layup run` | 2 | — |
 | `start/start.tsv` | each brief's SHA-256, the LAYUP version, the forge plan, the values of the Start command | 5, 13 | `layup run` | 2 | [below](#nfr-001--the-records-of-start) |
-| `setup/record.tsv` | the setup record: each value with its source, the pin rows included | 5 | `layup setup` | 1 | [`setup.md`](setup.md#the-setup-record) |
-| `setup/verify.tsv` | the table of `layup setup verify` | 5 | `layup setup verify`, committed by `layup setup` (O-115) | 1 | [`setup.md`](setup.md#the-checks-of-layup-setup-verify) |
-| `setup/rulesets.txt` | the output of the Operator's ruleset command (the bypass list) | 3 | `layup run` | 2 | — |
-| `setup/forge-check.tsv` | the effective rules read back, and the probe results | 3, 5 | `layup run` | 2 | later |
-| `rule-paths.tsv` | the rule-path register | 6 | `layup setup` | 1 | [`setup.md`](setup.md#the-rule-path-register) |
+| `setup/record.tsv` | the setup record: each value with its source, the pin rows included | 5 | `layup setup`; committed by `layup run` in phase 2 (`M2d`) | 1 | [`setup.md`](setup.md#the-setup-record) |
+| `setup/verify.tsv` | the table of `layup setup verify` | 5 | `layup setup verify`, committed by `layup setup` (O-115); by `layup run` in phase 2 (`M2d`) | 1 | [`setup.md`](setup.md#the-checks-of-layup-setup-verify) |
+| `setup/rulesets.txt` | the output of the Operator's ruleset commands (the bypass lists) | 3 | `layup run` | 2 (`M2d`) | a rule, no block: [below](#nfr-001--the-records-of-the-scaffold) |
+| `setup/tree.tsv` | the root commit and each setup commit that `layup setup verify` read | 5 | `layup run` | 2 (`M2d`) | [below](#nfr-001--the-records-of-the-scaffold) |
+| `setup/inputs/files/<path>` | the text of a prose row of the setup, written by a role session | 5 | `layup run` | 2 (`M2d`) | a rule, no block: [below](#nfr-001--the-records-of-the-scaffold) |
+| `setup/forge-check.tsv` | the effective rules read back, and the probe results | 3, 5 | `layup run` | 2 (`M2d`) | [below](#nfr-001--the-records-of-the-scaffold) |
+| `rule-paths.tsv` | the rule-path register | 6 | `layup setup`; committed by `layup run` in phase 2 (`M2d`) | 1 | [`setup.md`](setup.md#the-rule-path-register) |
 | `approvers.tsv` | each human account by its numeric ID, with its role | 3 | `layup run` | 2 | [below](#nfr-001--the-records-of-start) |
 | `lease.tsv` | the lease row: run ID, host, start, heartbeat counter | 2 | `layup run` | 2 | [below](#nfr-001--the-records-of-start) |
 | `copies.tsv`, `copies/<comment-id>-<seen>.md` | each copied comment: the row (author ID and login, comment ID, App field, time, SHA-256) and the body | 3 | `layup run` | 2 | [below](#nfr-001--the-records-of-start) |
 | `intake/psb.tsv` | the table of `layup psb check` on the problem statement | 5 | `layup run` | 2 (`M2c`) | the block `psb-gaps` ([`psb-check.md`](psb-check.md)) |
 | `intake/meaning.tsv` | the rows of the review of meaning | 5 | `layup run` | 2 (`M2c`) | [below](#nfr-001--the-records-of-intake) |
 | `intake/coverage.tsv` | the items of the completeness review | 7 | `layup run` | 2 (`M2c`) | [below](#nfr-001--the-records-of-intake) |
+| `intake/markers.tsv` | the markers of the pinned tree and the proposed values | 5 | `layup run` | 2 (`M2d`) | [below](#nfr-001--the-records-of-the-scaffold) |
 | `intake/answers.tsv`, `intake/answers-review.tsv` | the answers of the batch and of its follow-up, one per question (task `T-tmm2`), and the review of the batch's | 5, 7 | `layup run` | 2 (`M2c`) | [below](#nfr-001--the-records-of-intake) |
 | `questions.tsv` | every question and its answer, with the phase, the asker and the times | 5, 8, 12 | `layup run` | 2 (`M2c`, K38) | [below](#nfr-001--the-records-of-intake); `M3c` and `M4b` add columns |
 | `spec/spans.tsv` | the fact spans of the problem statement | 7 | `layup run` | 2 (`M2c`) | [below](#nfr-001--the-records-of-intake) |
@@ -135,7 +138,9 @@ ADR-0014 and ADR-0011 decision 2.
    a later phase.
 
 **Not in phase 1:** the one-writer rule as a ruleset (only the LAYUP App
-updates `layup-records`), applied at Start (phase 2); and `layup audit`, which
+updates `layup-records`), applied by the Operator at Scaffold 6 (`M2d`,
+[`scaffold.md`](scaffold.md#the-ruleset-of-the-records-branch); ADR-0014
+decision 6, ADR-0017 decision 3); and `layup audit`, which
 then allows the Operator's phase-1 commit of the records branch by its SHA, as
 it allows the setup commits (§3).
 
@@ -178,6 +183,9 @@ and ADR-0016.
    jobs, not the `layup/` checks, which no phase-1 command posts
    ([`setup.md`](setup.md#the-steps), S13). So a target set up in phase 1 merges
    with LAYUP absent from the start.
+   In phase 2 the ruleset also requires the four `layup/` checks, and the
+   setup record tells the Operator how to remove them when LAYUP is absent
+   ([`scaffold.md`](scaffold.md#nfr-002--a-target-without-layup)).
 4. Every record is a table or a Markdown file that a human reads with no tool;
    a plain `git clone` carries `origin/layup-records`.
 
@@ -478,8 +486,8 @@ session      id(S-xxxxxxxx)  -  the session that wrote the row
 
 ```tsv-schema questions records:questions.tsv
 id        id(Q-NNN)  key  the question's ID, from Q-001, in the order of the merge; never renumbered
-source    enum(rule|meaning|coverage|intent|follow-up)  -  where the question comes from; M2d adds setup
-ref       text       -    its source row: the ID of the rule gap in intake/psb.tsv (a Q-NNN of that table, which the batch's ID replaces), M-NNN, C-NNN, the field of the intent form (band.B, band.U, appetite.hours), or the Q-NNN of the batch that a follow-up asks again
+source    enum(rule|meaning|coverage|intent|follow-up)  -  where the question comes from; M2d adds setup (scaffold.md, The answers of the setup), with its build task
+ref       text       -    its source row: the ID of the rule gap in intake/psb.tsv (a Q-NNN of that table, which the batch's ID replaces), M-NNN, C-NNN, the field of the intent form (band.B, band.U, appetite.hours), the Q-NNN of the batch that a follow-up asks again, or for a setup question (M2d) its setup ID, S01-stack or a marker's M-<x8>
 block     enum(idea-owner|operator)  -  the block of the batch that asks it
 phase     enum(before-delivery)  -  the phase of the question (Early Question Share, architecture.md §12); a later milestone adds its phases
 kind      text       -    the kind of the gap (a rule G1 to G5, a kind of meaning, a kind of coverage, intent, follow-up)
@@ -520,6 +528,72 @@ source  id(Q-NNN)  -  the question whose answer gives it: the question of the in
 **Decided here:** `budget.tsv` is a table of names, as `start.tsv` is, so that a
 value of a later milestone is a new name, not a new column (note 6 of the plan
 review of #206).
+
+## NFR-001 — The records of the Scaffold
+
+Milestone `M2d` (task `T-msrd`, #265): the records that `layup run` writes for
+the setup questions, the setup and the forge check
+([`scaffold.md`](scaffold.md)). `internal/records` owns `markers`;
+`internal/run` owns `setup-tree` and `forge-check`, which it alone writes and
+reads. `setup/record.tsv`, `setup/verify.tsv` and `rule-paths.tsv` keep their
+blocks and owners of phase 1; `layup run` commits them
+([`scaffold.md`](scaffold.md#the-step-verify-and-the-records-of-the-setup)).
+
+```tsv-schema markers records:intake/markers.tsv
+id      id(M-xxxxxxxx)  key  the marker's key of S10: M- and the first 8 hexadecimal characters of the SHA-256 of its file, a tab and its text; in questions.tsv the source setup tells it from a gap of meaning (M-NNN), whose source is meaning
+file    path   -    the file that holds the marker, in the pinned tree
+line    int    -    the line of its open quote, from 1; for a text that the file holds on more lines (one key), the first
+marker  text   -    the marker, with its two angle quotes; a marker over more lines has its line breaks written as spaces; never `—`
+value   text   -    the proposed value; `—` for no proposal
+start   int    -    the byte offset of the proposal's quote in start/problem-statement.md, from 0, found by code; `—` exactly when value is `—`
+end     int    -    the byte offset after the quote; `—` exactly when start is `—`
+session text   -    the session that proposed the values (S-xxxxxxxx); `—` only for a table with no row, which has none
+```
+
+The rows are in the order of S10's stop table (by file, then line). A table
+with no row is a scan that found no marker, and no session started.
+
+```tsv-schema setup-tree records:setup/tree.tsv
+order   int   key  0 for the root commit, then 1, 2, … for each setup commit of layup-setup, in order
+commit  sha1  -    the commit
+tree    sha1  -    its tree
+step    text  -    `root` for order 0; else the step of the commit, S04 to S14, from its message `chore: setup <step>`; never `—`
+```
+
+The last row is the head of `layup-setup` that `layup setup verify` read and
+that the Operator pushes; no column is ever `—`.
+
+```tsv-schema forge-check records:setup/forge-check.tsv
+check   text   key  `tree`, `rules:<branch>` for the default branch, `layup-probe` and `layup-records`, `bypass:default`, `bypass:records`, `probe`, `activity`, in that order
+result  enum(pass|fail)  -  the result by the rule of the check (scaffold.md, REQ-003, Scaffold 7)
+detail  text   -    what the check found, one line: for a `fail` the first missing or different rule or the reason; for a `pass` of `rules:<branch>` the extra rule types or `—`; `—` for another `pass`
+run     text   -    the run ID that made the check (lease.tsv); never `—`
+at      time   -    when the check ran, from the run's clock; never `—`
+```
+
+The table is written again at each start after the Scaffold
+([`scaffold.md`](scaffold.md#at-each-later-start)); Git history keeps each.
+
+**The built blocks that `M2d` changes in words** (condition 4 of the plan
+review of #265): each change is written beside its rule, and the build task
+that writes it changes the block and its Go schema in one change.
+
+- `questions`: the enum of `source` gains `setup`, and `ref` the setup IDs
+  ([`scaffold.md`](scaffold.md#the-answers-of-the-setup));
+- `run-steps`: the enum of `step` gains `markers`, `setup`, `verify`,
+  `scaffold-push` and `forge-check`
+  ([`scaffold.md`](scaffold.md#the-steps-of-the-scaffold));
+- `setup-record`: the row name `without-layup`
+  ([`scaffold.md`](scaffold.md#nfr-002--a-target-without-layup)), and two forms
+  of the `ref` of a `computed` row, `records:start/start.tsv` (S01, S02 in
+  phase 2) and `out/ruleset-default.json` (`without-layup`), which check
+  `sources` accepts as it is (a ref that is not empty);
+- `setup-steps`: none; the actor `layup-run` exists.
+
+**Not a block:** `setup/rulesets.txt`, the Operator's two apply outputs, each
+after a line `== <file>`, byte for byte (JSON, not a table); and
+`setup/inputs/files/<path>`, a prose text at its path in the target, which the
+check of its setup row reads.
 
 ## REQ-011 — The telemetry record
 
