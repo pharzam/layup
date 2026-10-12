@@ -60,6 +60,7 @@ docs/spec/scaffold.md	## The acceptance tests of M2d	The apply outputs	56
 docs/spec/scaffold.md	## The acceptance tests of M2d	The forge check at each later start	57b
 docs/spec/scaffold.md	## The acceptance tests of M2d	The answers of the setup: the rows of answers.tsv	54
 docs/spec/scaffold.md	## The acceptance tests of M2d	The step markers	53
+docs/spec/scaffold.md	## The acceptance tests of M2d	The setup questions in the batch and the comment	53
 docs/spec/scaffold.md	## The acceptance tests of M2d	The ruleset files (inventory)	52b
 docs/spec/scaffold.md	## The acceptance tests of M2d	`commands.sh` is fail-fast and can be run again	52c
 docs/spec/scaffold.md	## The acceptance tests of M2d	The probe (inventory)	57a
