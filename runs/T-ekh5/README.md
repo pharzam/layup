@@ -36,7 +36,7 @@ Then one comment of the App on the Intake issue holds the rule gaps and the gaps
 And layup spec check --facts passes on the numbered spans that the records hold
 And each write of LAYUP on the target shows the App's bot as its author
 
-Accepted: not yet; the Operator's sign-off, with its date, is written here after the run
+Accepted by the Operator, by Telegram, on 2026-10-12 (19:20Z), recorded in comment 6131023042 of #228
 Covers REQ-001, REQ-012
 ```
 
@@ -197,5 +197,7 @@ of run 7 (2026-10-12 18:43:55Z): 22.2 hours.
 ## The sign-off
 
 The scenario above, "The demo of M2c on a pilot problem statement", rests on the evidence
-of this directory. Its `Accepted:` line is the Operator's: it is written after the
-Operator's sign-off, with the date and the comment on #228 that records it.
+of this directory. The Operator accepted it on 2026-10-12 at 19:20Z, by Telegram, on reading
+this directory at commit `52b3311`; the comment 6131023042 of #228 records the answer. The text
+of the scenario is the one written at step T, before any run, and only its `Accepted:`
+line has changed since.
