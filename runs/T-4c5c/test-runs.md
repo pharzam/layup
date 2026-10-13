@@ -27,7 +27,7 @@ vet: internal/setup/scaffold_test.go:577:12: undefined: MarkerPlace
 == go vet ./internal/run/ and go vet -tags=integration ./internal/run/
 vet: internal/run/markers_test.go:31:29: undefined: setup.MarkerPlace
 vet: internal/run/markers_test.go:31:29: undefined: setup.MarkerPlace
-== go test ./internal/run/ -run TestRestartNames (the step list of a restart)
+== go test ./internal/run/ (the package does not build; the list of the steps of a restart is asserted by TestStartAndRestartCallStepAtTheStartOfEachStep)
 # github.com/pharzam/layup/internal/run [github.com/pharzam/layup/internal/run.test]
 internal/run/markers_test.go:31:29: undefined: setup.MarkerPlace
 internal/run/batch_test.go:42:3: unknown field Markers in struct literal of type batchRecords
