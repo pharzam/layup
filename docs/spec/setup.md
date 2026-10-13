@@ -158,6 +158,7 @@ layup setup WORK
 | `WORK/out/rule-paths.tsv` | the rule-path register ([below](#the-rule-path-register)) | `layup setup` |
 | `WORK/out/verify.tsv` | the table of `layup setup verify`, which S15 commits | the Operator, by redirecting its output |
 | `WORK/out/ruleset-default.json` | the ruleset of the default branch ([S13](#the-steps)) | `layup setup` |
+| `WORK/out/ruleset-records.json` | the ruleset of the records branch ([S13](#the-steps), phase 2 only) | `layup run` (phase 2) |
 | `WORK/out/commands.sh` | each command for the Operator, in order, with a comment line before each | `layup setup` |
 
 ### The steps
@@ -525,17 +526,27 @@ and the notes of its plan review):
   `POST /repos/{owner}/{repo}/rulesets`: the name `layup: the default branch`
   (it names the tool that wrote it and the branch, for the Operator who reads
   the rulesets of the repository), target `branch`, enforcement `active`, the
-  refs `~DEFAULT_BRANCH` and `refs/heads/layup-probe`, the rules
-  `pull_request` (0 approvals, as an approval is an issue comment, §3, and the
-  App merges; review threads resolved), `required_status_checks` (strict),
-  `non_fast_forward` and `deletion`, and no bypass actor. Its value rows:
+  refs `~DEFAULT_BRANCH` and `refs/heads/layup-probe`, the rules `creation`,
+  `deletion`, `non_fast_forward`, `pull_request` (0 approvals, as an approval is
+  an issue comment, §3, and the App merges; review threads resolved;
+  `allowed_merge_methods` `["merge"]` and
+  `require_extra_approval_for_unattributed_changes` `false`, F-19) and
+  `required_status_checks` (strict), in the order of
+  [the table of `scaffold.md`](scaffold.md#the-ruleset-of-the-default-branch)
+  (task `T-9v92`), and no bypass actor; in phase 2 also the four `layup/`
+  checks, the file of the records branch and the row `without-layup`
+  ([`scaffold.md`](scaffold.md#the-steps-of-the-setup-in-phase-2)). Its value rows:
   `branch-protection.sha256` and `ruleset.sha256` (source `computed`, ref
   `sha256 <path>`). Its commands, run from the work area: order 2
   `git -C target push origin layup-setup:main`, and order 4
   `gh api --method POST 'repos/<OWNER/NAME>/rulesets' --input out/ruleset-default.json`.
   **Known limit** (`NFR-003` item 1): the record has no source kind for a
   fixed value of this specification, so the app ID, `strict` and the review
-  settings have no row of their own; the two hash rows hold the files.
+  settings have no row of their own; the two hash rows hold the files of phase 1.
+  The ruleset of the records branch, which phase 2 adds, has no hash row: it is a
+  function of the App's ID, which the forge register holds, and the read-back of
+  its bypass list reads the apply output
+  ([`scaffold.md`](scaffold.md#the-read-back)).
 - **S15** (D5, D6, notes 2 and 3). With no `WORK/out/verify.tsv`, S15 stops
   with one row `O-verify`, ask `Run layup setup verify '<WORK>' >
   '<WORK>/out/verify.tsv', then run layup setup '<WORK>' again.` and `where`
@@ -685,7 +696,7 @@ step    id(SNN)                                   key  the step that set the val
 name    text                                      key  the value's name: `stack`, `pin.commit`, `marker:<file>:<line>[:<column>]`, …; `done` for a step's evidence row
 value   text                                      -    the value; for `done`, the evidence line
 source  enum(answer|catalog|fact|computed|gap|step)  -  (`computed` is decided here: §5 names three sources, and the pin values come from `git`, not from a person) `answer`: an answer row; `catalog`: a catalog file; `fact`: a fact citation the Operator accepted; `computed`: a command's output, a hash that the engine computes, or a value that `layup run` takes from the records of Start; `gap`: kept as an open gap; `step`: a `done` row
-ref     text                                      -    `answer`: the question ID; `catalog`: `<stack>/<path>`; `fact`: `F-NNNN#n`; `computed`: the command, `sha256 <path>` for the hash of a file, or `sha256 <path> <prefix>…` for the hash of the rows of the file whose question has one of the prefixes (`answers.sha256`), or `records:start/start.tsv` for a value that `layup run` takes from the records of Start (S01 and S02 in phase 2); `gap`: `docs/setup/open-gaps.tsv`; `step`: `—`
+ref     text                                      -    `answer`: the question ID; `catalog`: `<stack>/<path>`; `fact`: `F-NNNN#n`; `computed`: the command, `sha256 <path>` for the hash of a file, or `sha256 <path> <prefix>…` for the hash of the rows of the file whose question has one of the prefixes (`answers.sha256`), or `records:start/start.tsv` for a value that `layup run` takes from the records of Start (S01 and S02 in phase 2), or `out/ruleset-default.json` for the row `without-layup` (S13 in phase 2); `gap`: `docs/setup/open-gaps.tsv`; `step`: `—`
 ```
 
 ### The rule-path register
