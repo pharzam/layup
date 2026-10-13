@@ -619,6 +619,22 @@ success without having done its job.
   `LABEL=COLOR` list of `apply()` in [`task-labels.sh`](tasks/task-labels.sh), and
   let the workflow write it; never edit a `state:` label on the forge.
 
+- ❌ **A merge of `main` moves the base of the budget.** The plan review names a base
+  SHA, and the budget counts the lines added plus removed on the whole branch diff
+  against it. A branch on the forge takes `main` by a merge before its freeze, so the
+  diff against the old base also holds the tasks that landed meanwhile: in task
+  `T-jpkc` (#271) it was 1,508 lines over 23 files at the head that round 1 read,
+  against a maximum of 850 over 14, while the task's own diff against the `main` that
+  the branch had taken was 614 over 10, and round 1 gave `material` for the first
+  figure; at the head of round 2, after four merges, it was 4,823 over 61 against 700
+  over 11. **The check:** when you merge `main`, say it on the issue in one comment,
+  before the freeze: the new base SHA, the figure against it and the figure against
+  the old base, and the tasks that landed between (`git log --merges OLD..NEW`); and
+  ask the Operator to rule that the bound is read against the new base, as the plan
+  review names the old one and an overrun against the named base is a finding
+  ([the budget](engineering-discipline.md#reviewing-until-findings-decay)); the task file names the base that the
+  ruling gives.
+
 ### Testing pitfalls
 
 These traps are not domain-specific: they hurt every project's test suite.

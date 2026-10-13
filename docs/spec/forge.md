@@ -133,6 +133,41 @@ The permission that each call needs, and the fields above, are read in GitHub's
 documentation at the date of the build task; a difference from this table is a
 defect of this table. The push of the probe is a `git` call, not an API call.
 
+**Decided here** (task `T-jpkc`, #271, with the conditions of its plan review):
+
+- `EffectiveRules` asks 100 a page and follows the `rel="next"` of the `Link`
+  header as `Comments` does: a next page that is not at the `api` of the forge
+  register is a forge error naming `EffectiveRules`. The branch is a multi-segment
+  path parameter of GitHub (`x-multi-segment` in its description), so each segment
+  of its name is escaped and its slashes stay. The endpoint answers by the name of the
+  branch: a branch with no rule gives an empty list (GitHub answers 200 with `[]`), and
+  a branch that does not exist yet, as `layup-probe` is before its probe, gives the
+  rules of the rulesets whose conditions name it. The call asks for no list of branches
+  and adds no filter of its own, as the endpoint gives the active rules only.
+- A rule is its `type` and its `parameters`, decoded. A rule that GitHub gives with
+  no `parameters`, or with an empty object of them, has none, so the read-back
+  ([`scaffold.md`](scaffold.md#the-read-back)) compares the two forms alike. The
+  `ruleset_id`, `ruleset_source` and `ruleset_source_type` that GitHub adds are not
+  kept: the read-back reads by branch.
+- `Activity` sends the `ref` as it is given (GitHub takes `refs/heads/BRANCH_NAME` or
+  `BRANCH_NAME`), escaped as a query value, with no other parameter, so it reads the
+  first page of the default size, 30; it does not follow a `Link`. An activity whose
+  `actor` is `null` has the actor ID `0` and the login `ghost`, as a comment of a
+  deleted account has the author `0`.
+- `Repository` also gives `Heads`, the head of each branch by its name, beside
+  `Branches`, which does not change.
+- A body of JSON `null` reads as an empty list, as for `Comments` and `Repository`; a
+  body that is an object, or is not JSON, is a forge error naming the call and the
+  status. The rules of [Forge errors](#forge-errors) hold for both calls with the
+  handling that every call shares: one new token and one retry after a 401 of the
+  token, a wait after a 403 or a 429 that names a reset time, and a failure at once
+  when it names none.
+- The permission that each call needs, in GitHub's documentation read on 2026-10-13
+  (the page of each endpoint, and the REST description `github/rest-api-description`,
+  commit `9492527246942bb85a2e05ad167881076c27835a`): `EffectiveRules`, `Metadata`
+  read; `Activity`, `Contents` read. The App has `contents` `write`, which holds
+  `read`, and `metadata` `read`, so `CheckPermissions` does not change.
+
 ## Forge errors
 
 **Decided here** (FT1): a forge call that fails, gives a status other than the
@@ -152,7 +187,8 @@ neither is a `fail` at once (GitHub, "Rate limits for the REST API", read on
 An integration test of `internal/forge/github` starts an `httptest` server on
 loopback that plays the calls above. It checks the JWT (its header, its claims,
 its signature with the public key of a test key), the token request, the paging
-of `Comments`, and each error rule above. A server that lacks a permission or a
+of `Comments` and of `EffectiveRules`, the one page of `Activity`, the head of each
+branch of `Repository`, and each error rule above, also for the calls of `M2d`. A server that lacks a permission or a
 capability makes `forge` fail and name it: the permission, which `CheckPermissions`
 names from the installation; or the endpoint of a call, and then that call fails with the call and the status. A
 capability that an adapter does not declare is the test of `Missing`, with a
