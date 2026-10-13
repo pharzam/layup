@@ -41,9 +41,7 @@ func TestARecordsCommitRemovesFiles(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("TMPDIR", tmp)
 	outside := filepath.Join(tmp, "outside.txt")
-	if err := os.WriteFile(outside, []byte("keep\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	writeFile(t, outside, "keep\n")
 	if err := store.Remove(ctx, []string{"../../outside.txt"}, "refused"); err == nil || !strings.Contains(err.Error(), "is not a path of the records") {
 		t.Errorf("Remove of ../../outside.txt: %v; want a refusal that says it is not a path of the records", err)
 	}
@@ -83,9 +81,6 @@ func TestTheFilesOfTheRecordsAreReadByTheirPaths(t *testing.T) {
 	// A link in the directory.
 	clone := filepath.Join(t.TempDir(), "records")
 	gitOut(t, "/", "clone", "-q", "--branch", "layup-records", "--single-branch", "file://"+w.bare, clone)
-	if err := os.MkdirAll(filepath.Join(clone, "setup", "inputs", "files"), 0o755); err != nil {
-		t.Fatal(err)
-	}
 	if err := os.Symlink("/etc/hostname", filepath.Join(clone, "setup", "inputs", "files", "link.md")); err != nil {
 		t.Fatal(err)
 	}
@@ -103,12 +98,7 @@ func TestARecordsCommitRemovesNoFileThroughALink(t *testing.T) {
 	w, r, _, _ := sessionWorld(t)
 	store := r.Store.(*recordsStore)
 	outside := t.TempDir()
-	if err := os.MkdirAll(filepath.Join(outside, "files"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(outside, "files", "a.md"), []byte("keep\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	writeFile(t, filepath.Join(outside, "files", "a.md"), "keep\n")
 	clone := filepath.Join(t.TempDir(), "records")
 	gitOut(t, "/", "clone", "-q", "--branch", "layup-records", "--single-branch", "file://"+w.bare, clone)
 	if err := os.Symlink(outside, filepath.Join(clone, "linked")); err != nil {

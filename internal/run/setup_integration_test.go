@@ -59,12 +59,7 @@ func scaffoldBaseline(t *testing.T) (string, string) {
 		"docs/how-to.md":          "# How to\n\nAdapt this to your project.\n",
 		"docs/glossary.md":        "# Glossary\n\nThe words of the kit.\n",
 	} {
-		if err := os.MkdirAll(filepath.Dir(filepath.Join(dir, filepath.FromSlash(p))), 0o755); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.WriteFile(filepath.Join(dir, filepath.FromSlash(p)), []byte(text), 0o644); err != nil {
-			t.Fatal(err)
-		}
+		writeFile(t, filepath.Join(dir, filepath.FromSlash(p)), text)
 	}
 	// One commit: the world's test of the Operator pushes the HEAD of the root clone as soon as
 	// it exists, which can be the baseline's own commit, and the default branch must be one root commit.
@@ -108,13 +103,7 @@ func scaffoldWorld(t *testing.T, files map[string]string) *world {
 	w := newWorld(t)
 	w.baseline, w.pin = scaffoldBaseline(t)
 	for p, text := range files {
-		path := filepath.Join(w.dir, "bin", "files", filepath.FromSlash(p))
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.WriteFile(path, []byte(text), 0o644); err != nil {
-			t.Fatal(err)
-		}
+		writeFile(t, filepath.Join(w.dir, "bin", "files", filepath.FromSlash(p)), text)
 	}
 	return w
 }
@@ -241,16 +230,11 @@ func TestTheStepSetupRunsS01ToS14(t *testing.T) {
 	t.Run("setup is done before when the record exists", func(t *testing.T) {
 		clone := filepath.Join(t.TempDir(), "records")
 		gitOut(t, "/", "clone", "-q", "--branch", "layup-records", "--single-branch", "file://"+w.bare, clone)
-		if err := os.MkdirAll(filepath.Join(clone, "setup"), 0o755); err != nil {
-			t.Fatal(err)
-		}
 		var b bytes.Buffer
 		if err := tsv.Write(&b, workpkg.RecordSchema, [][]string{{"S01", "done", "S01-stack answered", "step", ""}}); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(filepath.Join(clone, "setup", "record.tsv"), b.Bytes(), 0o644); err != nil {
-			t.Fatal(err)
-		}
+		writeFile(t, filepath.Join(clone, "setup", "record.tsv"), b.String())
 		gitOut(t, clone, "add", "-A")
 		gitOut(t, clone, "commit", "-q", "-m", "the record of the setup, as the step verify writes it")
 		gitOut(t, clone, "push", "-q", "origin", "layup-records")
@@ -312,9 +296,7 @@ func TestAProseTextWhoseCheckFailsIsRemovedAndANewSessionStarts(t *testing.T) {
 		t.Errorf("a restart with no pair of product-owner: %+v, %d sessions; want setup fail with pair, and no session", last, setupSessions(w))
 	}
 	// The pair back and the text put right: a new session, and done.
-	if err := os.WriteFile(filepath.Join(w.dir, "bin", "files", "docs", "glossary.md"), []byte(proseFiles()["docs/glossary.md"]), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	writeFile(t, filepath.Join(w.dir, "bin", "files", "docs", "glossary.md"), proseFiles()["docs/glossary.md"])
 	rows = Restart(context.Background(), w.config("0.1.0-dev"))
 	if last := rows[len(rows)-1]; last != (Step{"setup", "done", "S01 to S14 done, in the work area"}) || setupSessions(w) != 3 {
 		t.Errorf("the restart with the text put right: %+v, %d sessions; want setup done after a third session\n%s", last, setupSessions(w), steps(rows))

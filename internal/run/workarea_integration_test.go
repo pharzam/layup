@@ -30,12 +30,7 @@ func forgeRepo(t *testing.T, branch string, sets ...map[string]string) (bare str
 	gitOut(t, src, "init", "-q", "-b", branch)
 	for i, files := range sets {
 		for path, text := range files {
-			if err := os.MkdirAll(filepath.Dir(filepath.Join(src, path)), 0o755); err != nil {
-				t.Fatal(err)
-			}
-			if err := os.WriteFile(filepath.Join(src, path), []byte(text), 0o644); err != nil {
-				t.Fatal(err)
-			}
+			writeFile(t, filepath.Join(src, path), text)
 		}
 		gitOut(t, src, "add", "-A")
 		gitOut(t, src, "commit", "-q", "-m", fmt.Sprintf("commit %d", i+1))
@@ -82,12 +77,7 @@ var answersRows = [][]string{{"S01-stack", "go", "operator", "https://github.inv
 func TestTheWorkAreaIsBuiltFromTheRecords(t *testing.T) {
 	bare, ids := forgeRepo(t, "main", map[string]string{"README.md": "# Target\n", "docs/a.md": "a\n"})
 	dir := filepath.Join(t.TempDir(), "work", "acme", "target")
-	if err := os.MkdirAll(dir, 0o755); err != nil { // a work area of an earlier run, which is removed
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(dir, "stale.txt"), []byte("old"), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	writeFile(t, filepath.Join(dir, "stale.txt"), "old") // a work area of an earlier run, which is removed
 	src := workSource{Brief: []byte("The problem.\n"), Vision: []byte("The vision.\n"), Answers: answersRows,
 		Files: map[string][]byte{"docs/glossary.md": []byte("# Glossary\n"), "README.md": []byte("# Acme\n")}}
 	if err := buildWorkArea(dir, src, runClone(t, bare), "main", originURL); err != nil {
@@ -133,9 +123,7 @@ func TestTheWorkAreaIsBuiltAgainFromScratch(t *testing.T) {
 			t.Errorf("build %d: HEAD %s; want %s", i+1, got, ids[0])
 		}
 	}
-	if err := os.WriteFile(filepath.Join(dir, "target", "dirty.txt"), []byte("x"), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	writeFile(t, filepath.Join(dir, "target", "dirty.txt"), "x")
 	if err := buildWorkArea(dir, src, clone, "main", originURL); err != nil {
 		t.Fatal(err)
 	}
@@ -233,12 +221,7 @@ func TestTheWorkAreaIsNotBuiltThroughALink(t *testing.T) {
 		host, outside := t.TempDir(), t.TempDir()
 		keep := []string{"target/keep.txt", "acme/target/keep.txt"}
 		for _, k := range keep {
-			if err := os.MkdirAll(filepath.Join(outside, filepath.Dir(k)), 0o755); err != nil {
-				t.Fatal(err)
-			}
-			if err := os.WriteFile(filepath.Join(outside, k), []byte("keep\n"), 0o644); err != nil {
-				t.Fatal(err)
-			}
+			writeFile(t, filepath.Join(outside, k), "keep\n")
 		}
 		if err := os.MkdirAll(filepath.Dir(filepath.Join(host, link)), 0o755); err != nil {
 			t.Fatal(err)
