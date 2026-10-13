@@ -161,6 +161,7 @@ other step is as in phase 1. Each row names this section as its decision.
 | S02 | Resolves nothing: the record rows `pin.source`, `pin.commit`, `pin.tree` and `pin.time` are those of `start.tsv`, with source `computed` and ref `records:start/start.tsv` (NFR-006: no run resolves the commit again). Its evidence line is `the commit and the tree of start.tsv`. |
 | S03 | Makes no commit and writes no command: `WORK/target` is a clone of the default branch, whose one commit is the root commit that Start read back; the step checks that its tree equals `pin.tree`. |
 | S04 | As in phase 1, from the pin rows of S02. Its raw fact of the answers holds the `S01-` and `Q-` rows of `answers.tsv` (O-124), each `Q-` row with the `question` of its row of `questions.tsv` as its question text and `S01-stack` with the text of S01 (a `Q-` row that the batch does not hold is a `fail`), so the answers of the batch become the file of the raw fact under the target's `docs/facts/` (`architecture.md` §5, Scaffold 3). Its evidence is that of phase 1, the checks `pin` and `facts`. |
+| S12 | As in phase 1, but the record row `module` has the source and the ref of the row `name` of S01 (`computed`, `records:start/start.tsv`): the answer `S01-name` is not a row of `answers.tsv`, and check `sources` of `layup setup verify` refuses a row that cites it (found by the real runner, task `T-79zk`). |
 | S13 | Writes the two rulesets of [REQ-003](#req-003--the-rulesets-of-scaffold-6) and their commands: `WORK/out/ruleset-default.json` with the four `layup/` checks, `WORK/out/ruleset-records.json`, and the record row `without-layup` ([NFR-002](#nfr-002--a-target-without-layup)). `layup run` gives the `app_id` of the forge register in Go, and a value below 1 (the register can hold 0) is a `fail`, not an input error. Its evidence line is `the ruleset files, and their commands in commands.sh`. |
 | S15 | Writes the record's last rows and the rule-path register, and makes no commit of `layup-records`: `layup run` commits the records ([The step verify and the records of the setup](#the-step-verify-and-the-records-of-the-setup)). |
 
@@ -330,6 +331,27 @@ runner does S15, and one records commit writes:
   commit, then each setup commit of `layup-setup` in order, each with its tree
   and its step, so its last row is the head that the Operator then pushes;
 - `README.md` in [the text of the Scaffold](#the-readme-of-the-scaffold).
+
+**Decided here** (task `T-79zk`, #278, with the conditions of its plan review): the
+step is "done before" when `setup/record.tsv` is in the records, as `setup` is, and
+else removes the work area, builds it again from the records and runs the loop of
+[the stops of the runner](#the-stops-of-the-runner) as `setup` does (the runner is
+deterministic, so the commits are the same); a loop that does not end done is the
+`fail` of the step with its detail. It then runs `layup setup verify` in process,
+writes its table to `out/verify.tsv` and runs the loop again, which ends S15. The step
+is `fail`, and no setup records commit is published, when `layup setup verify` gives an
+error whatever its table holds (a scratch tree that is not removed, with every row
+`pass`, too), when `out/verify.tsv` cannot be written, when a row is not `pass` or
+`clear` (its detail is `layup setup verify: <check> is <result>: <reason>` for the
+first, in the table's order), when the second loop does not end done, when
+`out/record.tsv` lacks the row `setup.head` of S15, or when the tree or the commit
+fails. The records commit (message `layup run: the records of the setup`) updates
+exactly the five paths and keeps the other records. `setup/tree.tsv` has the commit of
+`main` of `WORK/target` with the step `root`, then the commits of `layup-setup` above
+it, oldest first by their first parents (S14 comes before S11), each with the step of
+its message `chore: setup <step>`; a message of another form, a `main` that is not an
+ancestor of `layup-setup` and no commit above `main` are a `fail` (the reader of the
+block still takes a table of the root alone).
 
 The step `verify` is the only caller of `layup setup verify` under `layup
 run`, after S14, so F-6 (verify before S12) is not reached in phase 2.
@@ -665,7 +687,7 @@ change, as `M2c` did.
 | A prose session's output that is missing, a link, over 1 MiB, not UTF-8, or at a path that the stop does not name | `setup` is `fail`, naming the session; nothing of it is committed |
 | A prose text whose check fails | `setup` is `fail`, naming the check; the session's files are removed from the records, and a restart starts a new session |
 | A prose text that holds a marker that the pinned tree does not | S10 stops on an `M-` row that the batch did not ask: `setup` is `fail`, and the session's files are removed, as above |
-| A row of `layup setup verify` that is not `pass` or `clear` | `verify` is `fail`; no records commit of the setup |
+| A row of `layup setup verify` that is not `pass` or `clear` | `verify` is `fail`, naming the check and its reason; no records commit of the setup is published |
 | The default branch's head is neither the root commit nor the verified head when the Operator's commands run | the first command of `commands.sh` stops it with exit 1, naming the head; `scaffold-push` keeps "waiting" |
 | `commands.sh` stopped after the push, or after one apply | it is run again as it is: no second push, and only the apply whose output file is missing |
 | The default branch's head is the verified head, and an apply output is missing | `scaffold-push` keeps "waiting" |
