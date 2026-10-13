@@ -31,7 +31,6 @@ same summary, dated — rather than deleting it or checking it off.
 -->
 - **T-jpkc** — Row 51a of `M2d`: the forge calls of M2d ([#271](https://github.com/pharzam/layup/issues/271); [the plan](../plan/README.md#the-tasks-of-m2d))
 - **T-j4sd** — Row 51b of `M2d`: the call CommitTree ([#272](https://github.com/pharzam/layup/issues/272); [the plan](../plan/README.md#the-tasks-of-m2d))
-- **T-9v92** — Row 52b of `M2d`: the rulesets of S13 ([#274](https://github.com/pharzam/layup/issues/274); [the plan](../plan/README.md#the-tasks-of-m2d))
 - **T-56dj** — Row 52c of `M2d`: the commands of S13 ([#275](https://github.com/pharzam/layup/issues/275); [the plan](../plan/README.md#the-tasks-of-m2d))
 - **T-4c5c** — Row 53 of `M2d`: the step markers ([#276](https://github.com/pharzam/layup/issues/276); [the plan](../plan/README.md#the-tasks-of-m2d))
 - **T-eahr** — Row 54 of `M2d`: the step setup ([#277](https://github.com/pharzam/layup/issues/277); [the plan](../plan/README.md#the-tasks-of-m2d))

@@ -21,7 +21,7 @@ import (
 // phase2 gives the inputs of phase 2 of these tests: the pin of pinRecord, the
 // questions of the batch, and the sum of a brief.
 func phase2() Phase2 {
-	return Phase2{Name: "acme/widget", Visibility: "public", PinSource: baseURL, PinCommit: commitA, PinTree: treeA, PinTime: "2026-09-30T08:00:00Z", BriefSum: "abc",
+	return Phase2{Name: "acme/widget", Visibility: "public", PinSource: baseURL, PinCommit: commitA, PinTree: treeA, PinTime: "2026-09-30T08:00:00Z", BriefSum: "abc", AppID: 42,
 		Questions: []work.Question{{ID: "Q-001", Text: "Which technology stack does the product use?"}, {ID: "Q-002", Text: "What does fast mean here, as a number?"}}}
 }
 
@@ -240,7 +240,7 @@ func TestPhase2S15MakesNoRecordsCommit(t *testing.T) {
 // S02, S03 and S15 are layup run's in the step table.
 func TestPhase2KeepsTheOtherStepsOfPhase1(t *testing.T) {
 	one, two := Steps(Brief{}, Calls{}), StepsPhase2(phase2(), Calls{})
-	changed := []string{"S01", "S02", "S03", "S04"}
+	changed := []string{"S01", "S02", "S03", "S04", "S13"}
 	for _, id := range ids() {
 		a, b := one[id], two[id]
 		same := reflect.ValueOf(a.Run).Pointer() == reflect.ValueOf(b.Run).Pointer()
