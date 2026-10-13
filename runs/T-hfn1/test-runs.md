@@ -28,6 +28,12 @@ written after the code and before the first run of the mutants; the details of t
 The world passed at its first run on the code. Two things of the plan were needed in the tests: the fake forge gives the head of each branch (`commit.sha`), and the world of row 55
 no longer asserts that a restart builds no work area, as the step `scaffold-push` builds one that is missing.
 
+## Round 1: the fix
+
+Round 1 (comment 6151696485, one finding): condition 4 of the plan review asked for an output that is a directory and one that cannot be read, and only the directory had a case. The cases of the
+file with no permission (in `readApplies` and in the world, with the check that no record of the applies is published) were green at once, as the code names any name that it cannot read; they are skipped for a
+user that may read any file. The code is that of the second run of the mutants.
+
 ## Mutations
 
 Each rule of the step, its record, its reading of the outputs, its work area and its wiring mutated alone on a copy of the tree and never on the worktree: a condition inverted or dropped,
@@ -38,9 +44,10 @@ a name, a path or a field changed, so each mutant builds. A mutant that does not
 
 ## Green
 
-On `decab3b` (17:29:02Z to 17:41:19Z), each with exit 0, in this order (the time is when the command ended; `go test` with `-count=1`, then
-`-tags=integration` and `-tags=e2e`, `TMPDIR` on the disk, `-timeout 30m`): go build ./... 17:29:03Z; go vet ./... 17:29:04Z; gofmt -l internal cmd (empty) 17:29:04Z; go test ./... 17:29:10Z; go test -tags=integration ./...
-17:39:09Z; go test -tags=e2e ./... 17:40:28Z; adr-lint 17:40:29Z; prd-lint 17:40:29Z; link-lint 17:40:44Z; run-discipline-tests 17:40:51Z; nested-
-checkout-check 17:40:52Z; setup-check 17:41:19Z; git diff --check origin/main HEAD 17:41:19Z.
-The integration level of `internal/run` took 573 s on this host (510 s at the end of T-79zk: the new world makes eleven restarts, several of which rebuild the work area); CI's own run of the
-integration level of that package took 125 s on `main` at `720a149`, against the 600 s of its `-timeout 10m`, and CI's whole job about 4.5 minutes. The run here used `-timeout 30m`.
+On `5cb9c94` (17:52:02Z to 18:04:10Z), each with exit 0, in this order (the time is when the command ended; `go test` with `-count=1`, then
+`-tags=integration` and `-tags=e2e`, `TMPDIR` on the disk, `-timeout 30m`): go build ./... 17:52:03Z; go vet ./... 17:52:04Z; gofmt -l internal cmd (empty) 17:52:04Z; go test ./... 17:52:11Z; go test -tags=integration ./...
+18:02:01Z; go test -tags=e2e ./... 18:03:18Z; adr-lint 18:03:20Z; prd-lint 18:03:20Z; link-lint 18:03:34Z; run-discipline-tests 18:03:42Z; nested-
+checkout-check 18:03:43Z; setup-check 18:04:10Z; git diff --check origin/main HEAD 18:04:10Z.
+The integration level of `internal/run` took 573 s on this host (510 s at the end of T-79zk: the new world makes about twelve restarts, several of which rebuild the work area); CI's own run of the
+integration level of that package took 125 s on `main` at `720a149`, against the 600 s of its `-timeout 10m`, and CI's whole job about 4.5 minutes. The run here used `-timeout 30m`. The commits
+after `5cb9c94` change only documents: this record, the task file and the two indexes.
