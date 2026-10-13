@@ -88,7 +88,9 @@ func proseText(input map[string]string, output string) []byte {
 	return []byte(b.String())
 }
 
-// proseRule is the fixed text of the prompt after its paths.
+// proseRule is the fixed text of the prompt after its paths. The ask of an
+// adapted file begins Adapt (internal/setup), and S14 refuses an input that loses
+// a place of a marker of the file (docs/spec/setup.md, S14).
 const proseRule = `The stop table has one row for each file to write: its where column is the
 path of the file in the project, and its ask column says what the file must be.
 Read the problem statement, the vision brief when there is one, and the project
@@ -98,5 +100,9 @@ output directory, at its path below it (the file docs/glossary.md goes to
 the files of the table and no other: a file that is missing, a file that the table
 does not name, a link, a file over 1 MiB and a file that is not valid UTF-8 refuse
 the whole output. Write plain text or Markdown in the language of the problem
-statement, with no placeholder and no angle quote. Then end.
+statement, with no placeholder and no angle quote of your own. A row whose ask
+says Adapt names a file that this directory already has: give that file with
+your changes, and keep each marker that it holds (a text between the angle
+quotes U+2039 and U+203A), in every place, byte for byte, with its line ends.
+Then end.
 `

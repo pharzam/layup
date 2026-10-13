@@ -83,6 +83,17 @@ func TestTheProsePromptNamesItsPaths(t *testing.T) {
 	}
 }
 
+// A file that the runner asks to adapt keeps each marker that it holds: S14 refuses an input that
+// loses a place of one (docs/spec/setup.md), so the ban of angle quotes has that exception.
+func TestTheProsePromptLetsAnAdaptedFileKeepItsMarkers(t *testing.T) {
+	text := strings.Join(strings.Fields(string(proseText(map[string]string{"stop.tsv": "/s/input/stop.tsv"}, "/s/result/files"))), " ")
+	for _, want := range []string{"A row whose ask says Adapt", "keep each marker that it holds", "U+2039 and U+203A", "in every place, byte for byte, with its line ends"} {
+		if !strings.Contains(text, want) {
+			t.Errorf("the prompt does not say %q:\n%s", want, text)
+		}
+	}
+}
+
 // The stop table of the session is the table that the runner printed, the block
 // setup-stop, byte for byte.
 func TestTheStopTableOfTheSessionIsTheRunnersTable(t *testing.T) {
