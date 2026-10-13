@@ -152,7 +152,7 @@ func setupTree(target string) ([]byte, error) {
 				return nil, err
 			}
 			line, _, _ := strings.Cut(msg, "\n")
-			if step = strings.TrimPrefix(line, "chore: setup "); step == line || len(step) != 3 || step[0] != 'S' {
+			if step = strings.TrimPrefix(line, "chore: setup "); step == line || !setupStepForm.MatchString(step) {
 				return nil, fmt.Errorf("the commit %s has the message %q, not chore: setup <step>", c, line)
 			}
 		}

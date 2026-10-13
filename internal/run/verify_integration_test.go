@@ -67,16 +67,22 @@ func TestTheTreeOfTheSetupIsTheCommitsOfLayupSetupAboveMain(t *testing.T) {
 }
 
 func TestTheTreeOfTheSetupRefusesWhatTheRunnerNeverMakes(t *testing.T) {
-	wip := setupRepo(t, "S04")
-	writeFile(t, filepath.Join(wip, "wip.txt"), "x\n")
-	gitOut(t, wip, "add", "-A")
-	gitOut(t, wip, "commit", "-q", "-m", "wip")
+	bad := func(message string) string {
+		dir := setupRepo(t, "S04")
+		writeFile(t, filepath.Join(dir, "x.txt"), "x\n")
+		gitOut(t, dir, "add", "-A")
+		gitOut(t, dir, "commit", "-q", "-m", message)
+		return dir
+	}
 	unrelated := setupRepo(t)
 	gitOut(t, unrelated, "switch", "-q", "--orphan", "other")
 	gitOut(t, unrelated, "commit", "-q", "--allow-empty", "-m", "chore: setup S04")
 	gitOut(t, unrelated, "branch", "-q", "-M", "layup-setup")
 	for _, c := range []struct{ name, dir, want string }{
-		{"a message of another form", wip, `"wip"`},
+		{"a message of another form", bad("wip"), `"wip"`},
+		{"a step that does not begin with S", bad("chore: setup X04"), `"chore: setup X04"`},
+		{"a step of one digit", bad("chore: setup S4"), `"chore: setup S4"`},
+		{"a step with a letter for a digit", bad("chore: setup S0A"), `"chore: setup S0A"`},
 		{"a main that is not an ancestor of layup-setup", unrelated, "main is not an ancestor of layup-setup"},
 		{"no commit above main", setupRepo(t), "no commit above main"},
 	} {
@@ -155,7 +161,7 @@ func TestTheStepVerifyCommitsTheRecordsOfTheSetup(t *testing.T) {
 	if got := recordsFile(t, w, "README.md"); got != scaffoldReadme {
 		t.Errorf("README.md in the records:\n%s\nwant the README of the Scaffold", got)
 	}
-	commit := strings.TrimSpace(gitOut(t, w.bare, "log", "-1", "--format=%H", "--grep=^"+setupMessage+"$", "refs/heads/layup-records"))
+	commit := strings.TrimSpace(gitOut(t, w.bare, "log", "-1", "--format=%H", "--grep=^layup run: the records of the setup$", "refs/heads/layup-records"))
 	changed := strings.Fields(gitOut(t, w.bare, "diff", "--name-only", commit+"~1", commit))
 	if want := "README.md rule-paths.tsv setup/record.tsv setup/tree.tsv setup/verify.tsv"; strings.Join(changed, " ") != want {
 		t.Errorf("the paths of the records commit: %q; want exactly %q", changed, want)
