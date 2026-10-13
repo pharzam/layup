@@ -158,7 +158,7 @@ setup-check: exit 0 (09:52:56Z)
 git diff --check origin/main HEAD: exit 0 (09:52:56Z)
 ```
 
-## After round 1 (10:10:09Z to 11:06:04Z)
+## After round 1 (10:10:09Z to 11:29:04Z)
 
 Round 1 (comment 6143289886 of #271) gave `material` on two findings. **The sentence on a branch that does not exist yet** was wrong: the endpoint answers by
 the name of the branch, so `layup-probe`, before its probe, gets the rules of the rulesets that name
@@ -179,8 +179,8 @@ EffectiveRulesEscapesTheBranch: --- FAIL: TestEffectiveRulesEscapesTheBranchSegm
 ```
 
 **The base of the budget.** The plan review set 850 lines over 14 files against `9144e4e`. The
-branch took `main` by a merge three times (`38ee78e`, the merge of #306; `6734a23`, the merge of
-#307; and `b28171b`, the merge of #311), so the diff against `9144e4e` counts those tasks. Against the last of them the
+branch took `main` by a merge four times (`38ee78e`, the merge of #306; `6734a23`, the merge of
+#307; `b28171b`, the merge of #311; and `5e40952`, the merge of #310), so the diff against `9144e4e` counts those tasks. Against the last of them the
 change of this task is the figure of the close-out; the comments "The base of the budget" on #271
 give the figures.
 
@@ -191,23 +191,25 @@ integration level, which exited 1: the package `internal/run` ran past the 10 mi
 and the tests of another task (a load average of 8 to 10). The level run again alone with the
 timeout of CI, `go test -count=1 -tags=integration -timeout 10m ./...` (10:34:44Z to 10:41:04Z), exited 0, and
 `internal/run` took 355 s of the 600 that its timeout allows. CI's own `tests` job runs the three
-levels in less than 3 minutes. Then the branch took `main` once more, and the whole run was made
-again on `1f896ec`, each line with exit 0, the three runs of `go test` with `-count=1`, then
-`-tags=integration` and `-tags=e2e` (the integration level took 9 min 14 s of the 10 that its
-timeout allows, as the host ran a review session and the tests of another task):
+levels in less than 3 minutes. Then the branch took `main` twice more, and the whole run was made
+again after each. On `1f896ec` (10:54:09Z to 11:06:04Z, after the merge of `b28171b`) each line was
+at exit 0, the integration level in 9 min 14 s of the 10 that its timeout allows, as the host ran a
+review session and the tests of another task. On `6200944` (11:20:41Z to 11:29:04Z, after the merge of
+`5e40952`), the merged head that round 2 reads with this record, each line was at exit 0, the integration level in 5 min 55 s. The
+three runs of `go test` are with `-count=1`, then `-tags=integration` and `-tags=e2e`:
 
 ```
-go build ./...: exit 0 (10:54:11Z)
-go vet ./...: exit 0 (10:54:11Z)
-gofmt -l internal cmd (empty): exit 0 (10:54:11Z)
-go test ./...: exit 0 (10:54:17Z)
-go test -tags=integration ./...: exit 0 (11:03:31Z)
-go test -tags=e2e ./...: exit 0 (11:05:15Z)
-adr-lint: exit 0 (11:05:17Z)
-prd-lint: exit 0 (11:05:17Z)
-link-lint: exit 0 (11:05:29Z)
-run-discipline-tests: exit 0 (11:05:36Z)
-nested-checkout-check: exit 0 (11:05:37Z)
-setup-check: exit 0 (11:06:04Z)
-git diff --check origin/main HEAD: exit 0 (11:06:04Z)
+go build ./...: exit 0 (11:20:43Z)
+go vet ./...: exit 0 (11:20:43Z)
+gofmt -l internal cmd (empty): exit 0 (11:20:43Z)
+go test ./...: exit 0 (11:20:49Z)
+go test -tags=integration ./...: exit 0 (11:26:44Z)
+go test -tags=e2e ./...: exit 0 (11:28:13Z)
+adr-lint: exit 0 (11:28:15Z)
+prd-lint: exit 0 (11:28:15Z)
+link-lint: exit 0 (11:28:29Z)
+run-discipline-tests: exit 0 (11:28:36Z)
+nested-checkout-check: exit 0 (11:28:37Z)
+setup-check: exit 0 (11:29:04Z)
+git diff --check origin/main HEAD: exit 0 (11:29:04Z)
 ```
