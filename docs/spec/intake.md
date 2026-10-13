@@ -289,8 +289,10 @@ question of the batch.
 Code merges into `records:questions.tsv`, in this order: the rule gaps
 (`intake/psb.tsv`), the gaps of meaning (`intake/meaning.tsv`), the items of the
 completeness review (`intake/coverage.tsv`; the quote of an `uncovered` or
-`class` item is its fact's span, of an `unsupported` item none), and the intent
-form (below). A
+`class` item is its fact's span, of an `unsupported` item none), the intent
+form (below), and, from `M2d`, the setup questions of the Operator's block:
+`S01-stack`, and one question for each row of `intake/markers.tsv`, in its
+order ([`scaffold.md`](scaffold.md#the-answers-of-the-setup)). A
 question whose quote and kind repeat those of a question before it is dropped
 from the batch, and its source row stays in its own record (**decided here**:
 the quote's offsets and the kind are compared; a rule gap's quote is its line,
@@ -299,7 +301,10 @@ merge; a question of the batch is never renumbered. **Decided here** (task
 `T-8r3u`): a question with no quote is never dropped, as the three fields of the
 intent form share the kind `intent` and have none; a rule gap's line is trimmed
 of a CR before its line feed too. In `M2c` a repeat of quote and kind is within
-one source, as the kinds of the sources differ. **Known limit:** two rule gaps
+one source, as the kinds of the sources differ. **Decided here** (task `T-4c5c`):
+a setup question is never dropped as a repeat: two markers may share the quote of
+their proposals, they share the kind `setup`, and each is asked, as a marker with
+no question would stop S10. **Known limit:** two rule gaps
 of one line and one rule (two undefined abbreviations of one line, G3) have one
 quote and one kind, so the second is dropped and its abbreviation is not asked.
 
@@ -314,13 +319,16 @@ decisions 6, 9 and 10 of #206):
    `B` (go on without asking) and `U` (the upper edge, which is the money
    appetite of the delivery), decimals in USD with `B` below `U`, and the
    delivery's wall-clock appetite in hours, a decimal.
-2. **For the Operator:** the setup questions. In `M2c` the block is empty and
-   says so; the Scaffold (`M2d`) fills it with the questions of setup steps S01
-   and S10 and the proposed marker sources, in the same merge
-   ([`scaffold.md`](scaffold.md#the-answers-of-the-setup)).
+2. **For the Operator:** the setup questions: `S01-stack`, and one for each
+   marker, as `Q-NNN: the value of <marker> at <file>:<line>` and, when the
+   marker has a proposal, the line `proposed: <value>` and its quote in
+   backquotes ([`scaffold.md`](scaffold.md#the-answers-of-the-setup)).
 
-The comment ends with the rule of the answers: one comment per block, one line
-per question ID, `Q-NNN: <answer>`.
+**Decided here** (task `T-4c5c`): a block with no question says `No question for
+the Operator.` or `No question for the idea owner.`, as a follow-up may ask one
+block only. The comment ends with the rule of the answers: one comment per block,
+one line per question ID, `Q-NNN: <answer>`; when a marker is asked, the rule adds
+the three forms of its answer, `accept` (the proposed value), a value, and `gap`.
 
 **Decided here** (task `T-8r3u`): the comment's first line is `LAYUP Intake:
 the batch of questions`, by which a restart knows the batch was posted; a quote
@@ -396,7 +404,11 @@ follow-up row has `kind` `follow-up`, the block of the question it asks again,
 no quote of its own, the question's text, `asked` from the run's clock and
 `asker` `layup run`; its comment's first line is `LAYUP Intake: the follow-up`,
 not the batch's, and each question shows the quote of the question it asks
-again. The follow-up rows are one records commit before the comment; a restart
+again. **Decided here** (task `T-4c5c`): each question is in the block of the
+question it asks again, so a follow-up of a setup question is in the Operator's
+block, shows the line `proposed:` and the quote of its marker when it has one, and
+an empty block says `No question for the Operator.` or `No question for the idea
+owner.`. The follow-up rows are one records commit before the comment; a restart
 that finds the rows and the App's comment of the follow-up is "done before", one
 that finds the rows and no comment posts it from the record (as `batch`), and
 with nothing to ask again the step writes nothing.
