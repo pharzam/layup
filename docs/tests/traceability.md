@@ -106,7 +106,7 @@ the first.
 | `TestAWholeSetupOnAStandInBaseline`, `TestLayupSetupVerifyOnAWholeSetup` (`cmd/layup/whole_e2e_test.go`) | e2e | REQ-002, NFR-003, NFR-004, NFR-005, NFR-006 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-dep6 | green |
 | `TestTheRecordsAreInTheTargetsGit`, `TestThePushesOfCommandsSh` (`cmd/layup/whole_e2e_test.go`) | e2e | NFR-001 | F-0001#1 | guardrails.md §1.1 Inv-1 | ADR-0014 | T-dep6, T-2hm3 | green |
 | `TestTheTargetPassesItsGateWithLAYUPAbsent` (`cmd/layup/whole_e2e_test.go`) | e2e | NFR-002 | F-0001#2 | guardrails.md §1.1 Inv-2 | ADR-0013 | T-dep6 | green |
-| `TestTheSchemasEqualTheirBlocks` (`internal/records/records_integration_test.go`) | integration | REQ-011, REQ-009, NFR-001, REQ-005, REQ-013, REQ-001, REQ-012 | F-0003#50 | — | ADR-0024 | T-tmhw, T-dgy7, T-8kqn, T-3py1, T-529i | green |
+| `TestTheSchemasEqualTheirBlocks` (`internal/records/records_integration_test.go`) | integration | REQ-011, REQ-009, NFR-001, REQ-005, REQ-013, REQ-001, REQ-012, REQ-002 | F-0003#50 | — | ADR-0024 | T-tmhw, T-dgy7, T-8kqn, T-3py1, T-529i, T-tetz | green |
 | `TestTheColumnsOfASession`, `TestTheMoney`, `TestAComputedMoneyIsExact`, `TestEachReasonOfAnUnknownMoney`, `TestARowThatTheRecordRefusesIsAnError` (`internal/ledger/ledger_test.go`) | unit | REQ-011 | F-0003#50 | — | ADR-0024 | T-4c3q | green |
 | `TestAGoodForgeRegisterIsRead`, `TestForgeRegisterRefusesEachBrokenRule`, `TestAGoodKeyIsChecked`, `TestCheckKeyRefusesEachBrokenRule`, `TestCheckKeyFileRefusesAMissingFile` (`internal/forge/register_test.go`) | unit | NFR-001, NFR-007 | F-0001#1 | — | ADR-0014 | T-1g1q | green |
 | `TestAGoodHarnessRegisterIsRead`, `TestHarnessRegisterRefusesEachBrokenRule` (`internal/route/register_test.go`) | unit | NFR-001, REQ-013 | F-0001#1 | — | ADR-0014 | T-1g1q, T-ysph | green |
@@ -182,6 +182,9 @@ the first.
 | `TestASpanTableThatCoversTheFilePasses`, `TestEachRuleFailsOnItsOwnBreak`, `TestAFactNumberThatRepeats`, `TestATextOfOneEmDash`, `TestASpanAcrossALineFeed`, `TestReadTakesASpanTableByItsBlock` (`internal/spec/spec_test.go`) | unit | REQ-012 | F-0003#51 | — | ADR-0018 | T-4ywt | green |
 | `TestTheSchemasEqualTheirBlocks` (`internal/spec/spec_integration_test.go`): `spec-check` and the second value of `spans` | integration | REQ-012 | F-0003#51 | — | ADR-0018 | T-4ywt | green |
 | `TestSpecCheckPassesAndFails`, `TestSpecCheckInputErrors`, `TestSpecCheckUsageErrors` (`cmd/layup/spec_e2e_test.go`) | e2e | REQ-012, NFR-005 | F-0003#51 | — | ADR-0018 | T-hpid | green |
+| `TestValidMarkersAreRead`, `TestMarkersRefuseEachBrokenRule`, `TestMarkersRefuseAWrongHeader` (`internal/records/scaffold_test.go`) | unit | NFR-001, REQ-002 | F-0001#1 | — | ADR-0014 | T-tetz | green |
+| `TestAValidSetupTreeIsRead`, `TestSetupTreeRefusesEachBrokenRule`, `TestSetupTreeRefusesAWrongHeader`, `TestAValidForgeCheckIsRead`, `TestForgeCheckRefusesEachBrokenRule`, `TestForgeCheckRefusesAWrongHeader` (`internal/run/scaffold_test.go`) | unit | NFR-001, REQ-003 | F-0001#1 | — | ADR-0014 | T-tetz | green |
+| `TestTheSchemasOfTheScaffoldEqualTheirBlocks` (`internal/run/scaffold_integration_test.go`): `setup-tree` and `forge-check` | integration | NFR-001, REQ-003 | F-0001#1 | — | ADR-0014 | T-tetz | green |
 | `TestSpecCheckGivesTwoWhenItCannotWriteTheTable` (`internal/cli/spec_test.go`) | unit | REQ-012, NFR-004 | F-0003#51 | — | ADR-0018 | T-hpid | green |
 | `TestTheUsageOfLayupListsItsCommands` with `spec check` (`internal/cli/cli_test.go`) | unit | — | — | — | — | T-hpid | green |
 | `TestTelemetryRowsThatPass`, `TestTelemetryRowsThatBreakARule`, `TestPriceRows` (`internal/records/records_test.go`) | unit | REQ-011 | F-0003#50 | — | ADR-0024 | T-tmhw | green |

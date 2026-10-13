@@ -422,6 +422,16 @@ check that catches it.
   per question (a comment that held only a quote is edited to those lines before the
   next restart copies it: an edit before the first copy counts). Learned in `T-ekh5`
   ([#228](https://github.com/pharzam/layup/issues/228)).
+- ❌ **A key recomputed from a field that the field rule changed.** The id of a marker in
+  `intake/markers.tsv` is the SHA-256 of its file, a tab and its text, over the raw
+  text, and the record holds the text after the field rule, which makes a tab or a
+  carriage return one space. A reader that recomputes the hash from the row refuses the
+  row of a marker that holds one; S11 already refuses such a marker for a `gap`, for the
+  same reason. It is silent because each marker of a fixture is a word on one line.
+  **The check:** the reader checks the form of a key that hashes raw text, and the
+  writer computes it from the source; a test reads the row of a marker that held a tab,
+  under the id of its raw text. Learned in `T-tetz`
+  ([#270](https://github.com/pharzam/layup/issues/270)).
 
 ### Writing a lesson back
 
@@ -629,8 +639,11 @@ These traps are not domain-specific: they hurt every project's test suite.
   two rules apart: in task `T-z027` (#166) the payload of a refused head was
   the diff of the head, and a demo that changed one file could not tell it from
   the diff of that file alone; give the fixture a second change that the wrong
-  rule would leave out. When a mutation record is cut to a few
-  lines, say so, or it reads as fewer failing cases than ran.
+  rule would leave out. The case of the empty value is one of these: the form of
+  a column (a line from 1, a session, a run ID) refuses `—` too, at the same column,
+  so a case that names only the column passed with its rule removed in 5 of 37
+  mutants in task `T-tetz` (#270); assert the reason as well. When a mutation record
+  is cut to a few lines, say so, or it reads as fewer failing cases than ran.
 - ❌ **Stale tests after a requirement changes.** When a requirement changes but its
   test does not, the suite now guards the old behaviour and blocks the new. The
   check: the [old-tests conflict rule](engineering-discipline.md#testing) — fix the
