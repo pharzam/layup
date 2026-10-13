@@ -201,7 +201,7 @@ func TestTheStepVerifyCommitsTheRecordsOfTheSetup(t *testing.T) {
 			t.Errorf("the step %s of a second restart: %+v; want done before\n%s", name, r, steps(rows))
 		}
 	}
-	if r := rowOf(rows, "scaffold-push"); r != (Step{"scaffold-push", "done", scaffoldWaiting}) {
+	if r := rowOf(rows, "scaffold-push"); r != (Step{"scaffold-push", "done", "waiting for the Operator's pushes and ruleset apply"}) {
 		t.Errorf("the step scaffold-push of a second restart: %+v; want done, waiting\n%s", r, steps(rows))
 	}
 	if _, err := os.Stat(filepath.Join(w.dir, "work", "acme", "target")); err != nil {

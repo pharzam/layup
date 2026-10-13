@@ -65,7 +65,7 @@ func TestTheStepScaffoldPushWaitsAndRecordsTheAppliesOfTheOperator(t *testing.T)
 		return verify.Table{Rows: []verify.Row{{Check: "pin", Result: "pass", Reason: "—"}}}, nil
 	}
 	cfg := w.config("0.1.0-dev")
-	waiting := Step{"scaffold-push", "done", scaffoldWaiting}
+	waiting := Step{"scaffold-push", "done", "waiting for the Operator's pushes and ruleset apply"}
 	rows := toSetup(t, w, "go")
 	if r := rows[len(rows)-1]; r != waiting || rowOf(rows, "verify") != (Step{"verify", "done", verifyDoneDetail}) {
 		t.Fatalf("the last row of the first restart: %+v; want scaffold-push, waiting, after the step verify\n%s", r, steps(rows))
@@ -165,7 +165,7 @@ func TestTheStepScaffoldPushWaitsAndRecordsTheAppliesOfTheOperator(t *testing.T)
 	if err := os.RemoveAll(filepath.Join(w.dir, "work")); err != nil {
 		t.Fatal(err)
 	}
-	restart(Step{"scaffold-push", "done", scaffoldDone})
+	restart(Step{"scaffold-push", "done", "the apply of the rulesets recorded"})
 	if got := strings.TrimSpace(gitOut(t, target, "rev-parse", "layup-setup")); got != head || setupSessions(w) != sessions {
 		t.Errorf("the work area built again on the ready path: layup-setup %s (was %s), %d sessions (were %d); want the same head and no session", got, head, setupSessions(w), sessions)
 	}

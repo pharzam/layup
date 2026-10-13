@@ -131,7 +131,7 @@ func (r *state) workAreaAgain(ctx context.Context, area, last string) error {
 	if _, err := os.Stat(area); err == nil {
 		return nil
 	} else if !errors.Is(err, fs.ErrNotExist) {
-		return err
+		return fmt.Errorf("the work area: %w", err)
 	}
 	dir, l, err := r.setupArea(ctx)
 	if err != nil {

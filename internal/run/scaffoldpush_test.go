@@ -35,24 +35,24 @@ func TestTheRecordOfTheAppliesFramesEachOutputByteForByte(t *testing.T) {
 
 // An output that is not a JSON object whose source is OWNER/NAME is refused, naming its file.
 func TestAnApplyOutputThatIsNotARulesetOfTheTargetIsRefusedNamingItsFile(t *testing.T) {
-	good := map[string][]byte{"default.json": []byte(defaultOut), "records.json": []byte(recordsOut)}
-	for _, c := range []struct{ name, file, text string }{
-		{"an array", "default.json", `[{"source":"acme/target"}]`},
-		{"a string", "records.json", `"acme/target"`},
-		{"invalid JSON", "default.json", `{"source":`},
-		{"an empty file", "records.json", ``},
-		{"a number", "default.json", `7`},
-		{"null", "records.json", `null`},
-		{"another repository", "records.json", `{"source":"acme/other"}`},
-		{"the owner in another case", "default.json", `{"source":"Acme/target"}`},
-		{"no source", "default.json", `{"id":1}`},
-		{"a source that is not a string", "records.json", `{"source":7}`},
+	const notObject, otherSource = "is not a JSON object", "its source is"
+	for _, c := range []struct{ name, file, text, want string }{
+		{"an array", "default.json", `[{"source":"acme/target"}]`, notObject},
+		{"a string", "records.json", `"acme/target"`, notObject},
+		{"invalid JSON", "default.json", `{"source":`, notObject},
+		{"an empty file", "records.json", ``, notObject},
+		{"a number", "default.json", `7`, notObject},
+		{"null", "records.json", `null`, notObject},
+		{"another repository", "records.json", `{"source":"acme/other"}`, otherSource},
+		{"the owner in another case", "default.json", `{"source":"Acme/target"}`, otherSource},
+		{"no source", "default.json", `{"id":1}`, otherSource},
+		{"a source that is not a string", "records.json", `{"source":7}`, otherSource},
 	} {
-		files := map[string][]byte{"default.json": good["default.json"], "records.json": good["records.json"]}
+		files := both()
 		files[c.file] = []byte(c.text)
 		got, err := rulesetsRecord("acme/target", files)
-		if err == nil || !strings.Contains(err.Error(), c.file) || got != nil {
-			t.Errorf("%s in %s: %q, %v; want an error that names %s and no record", c.name, c.file, got, err, c.file)
+		if err == nil || !strings.Contains(err.Error(), c.file) || !strings.Contains(err.Error(), c.want) || got != nil {
+			t.Errorf("%s in %s: %q, %v; want an error that names %s and says %q, and no record", c.name, c.file, got, err, c.file, c.want)
 		}
 	}
 }
@@ -112,7 +112,7 @@ func TestTheStepScaffoldPushWaitsAndPrintsTheWholeRuleOfTheOperator(t *testing.T
 	} {
 		f := c.f
 		got := f.job().do()
-		if got != (Step{"scaffold-push", "done", scaffoldWaiting}) {
+		if got != (Step{"scaffold-push", "done", "waiting for the Operator's pushes and ruleset apply"}) {
 			t.Errorf("%s: %+v; want done, waiting", c.name, got)
 		}
 		if want := []string{"last", "area", "head", "applies", "commands"}; !slices.Equal(f.called, want) || len(f.commits) != 0 || f.areaFor != sha1 {
@@ -129,7 +129,7 @@ func TestTheStepScaffoldPushGoesOnWithOneCommitOfTheRecordOfTheApplies(t *testin
 	f := &pushFake{last: sha1, head: sha1, applies: both()}
 	got := f.job().do()
 	want, _ := rulesetsRecord("acme/target", both())
-	if got != (Step{"scaffold-push", "done", scaffoldDone}) || len(f.notes) != 0 {
+	if got != (Step{"scaffold-push", "done", "the apply of the rulesets recorded"}) || len(f.notes) != 0 {
 		t.Errorf("the step %+v and the notes %q; want done and nothing printed", got, f.notes)
 	}
 	if calls := []string{"last", "area", "head", "applies", "commit"}; !slices.Equal(f.called, calls) {
