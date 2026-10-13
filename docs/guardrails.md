@@ -915,6 +915,11 @@ These traps are not domain-specific: they hurt every project's test suite.
   link (`result/`, `DIR/work/OWNER`, a link of the records base). Task `T-eahr` (#277),
   round 1. **The check:** `Lstat` each directory above the file, or ask the tree for the
   path (a path below a link has no entry), before you read or remove it.
+- ❌ **A record that no test read through the real check.** S12 in phase 2 wrote its row
+  `module` as the answer `S01-name`, which phase 2 does not have; every step passed, and
+  the first run of the real `layup setup verify` refused it (check `sources`). Task
+  `T-79zk` (#278). **The check:** run the real check on the record of a world that a new
+  step writes or that a step in a new phase writes, before the freeze.
 
 ### Reference-sweep pitfalls
 
