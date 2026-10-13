@@ -10,8 +10,10 @@ The plan was made against `9144e4e` (the merge of #305). The branch took `38ee78
 #306, `T-9v92`) by a fast-forward before it had a commit of its own, and the red run and the
 mutation runs ran on that base with the change uncommitted; the mutants were made on a copy of the
 tree whose `internal/git` equals the two commits that follow. Before the freeze the branch took
-`6734a23` (the merge of #307, `T-4c5c`) by a merge, `da6cb27`, so the budget is read against
-`6734a23`, as the comment "The base of the budget" on #272 says. The green run is on the merged head.
+`6734a23` (the merge of #307, `T-4c5c`) by a merge, `da6cb27`, and after round 1 `4687b39` (the merge
+of #312, `T-p481`) by a second one, `af5992d`; the budget is read against `4687b39`, as the comments
+"The base of the budget" on #272 say. The green run is on `da6cb27`; the last two sections hold the
+checks that read the changes after it.
 
 ## Red (09:32:16Z to 09:32:19Z)
 
@@ -124,4 +126,26 @@ run-discipline-tests: exit 0 (10:35:11Z)
 nested-checkout-check: exit 0 (10:35:12Z)
 setup-check: exit 0 (10:35:48Z)
 git diff --check origin/main HEAD: exit 0 (10:35:48Z)
+```
+
+
+## After the merge of `main` at `4687b39` (10:40:36Z to 10:41:44Z, head `af5992d`)
+
+The merge brought the task `T-p481`: documents and a script, and no Go file. The checks of the same
+script as after the note, each with its exit code (the integration level of the other packages and the
+end-to-end level are not run again, and CI runs them):
+
+```
+go build ./...: exit 0 (10:40:37Z)
+go vet ./...: exit 0 (10:40:38Z)
+gofmt -l internal cmd (empty): exit 0 (10:40:38Z)
+go test ./...: exit 0 (10:40:47Z)
+go test -tags=integration ./internal/git/: exit 0 (10:40:51Z)
+adr-lint: exit 0 (10:40:53Z)
+prd-lint: exit 0 (10:40:53Z)
+link-lint: exit 0 (10:41:06Z)
+run-discipline-tests: exit 0 (10:41:14Z)
+nested-checkout-check: exit 0 (10:41:15Z)
+setup-check: exit 0 (10:41:44Z)
+git diff --check origin/main HEAD: exit 0 (10:41:44Z)
 ```
