@@ -586,6 +586,35 @@ func TestCloneLocal(t *testing.T) {
 	}
 }
 
+// AddRemote gives a clone with no remote its origin, the URL of the forge, with
+// no credential (docs/spec/scaffold.md, The work area; task T-eahr): a name or a
+// URL that git could read as an option starts no git.
+func TestAddRemote(t *testing.T) {
+	home := isolate(t)
+	dir := t.TempDir()
+	commitTree(t, dir, map[string]string{"a.txt": "a\n"})
+	const url = "https://github.invalid/acme/target.git"
+	must(t, AddRemote(dir, "origin", url))
+	if got := gitOK(t, dir, plain(home), "remote", "get-url", "origin"); got != url+"\n" {
+		t.Errorf("the URL of origin: %q; want %q", got, url)
+	}
+	if got := gitOK(t, dir, plain(home), "remote"); got != "origin\n" {
+		t.Errorf("the remotes: %q; want origin alone", got)
+	}
+	if err := AddRemote(dir, "origin", "https://other.invalid/x.git"); err == nil {
+		t.Error("a second remote of the same name: no error; want git's refusal")
+	}
+	for _, c := range []struct{ name, url string }{{"-f", url}, {"second", "--upload-pack=touch x"}, {"", url}, {"second", ""}, {"a b", url}, {"second", "a\nb"}, {"second", "a\x7fb"}} {
+		var failed *FailedError
+		if err := AddRemote(dir, c.name, c.url); !errors.As(err, &failed) || failed.Code != -1 {
+			t.Errorf("AddRemote(%q, %q): %v; want a refusal before git starts (code -1)", c.name, c.url, err)
+		}
+	}
+	if got := gitOK(t, dir, plain(home), "remote"); got != "origin\n" {
+		t.Errorf("the remotes after the refusals: %q; want origin alone", got)
+	}
+}
+
 // session makes a session's clone of the run's clone, on its task branch at
 // the base, with one commit of the session; it gives the clone and the head.
 func session(t *testing.T, home, runClone, base string) (string, string) {
