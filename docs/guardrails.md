@@ -608,6 +608,16 @@ success without having done its job.
   wait of the plan review on reading, and on nothing that the plan names as a step; start
   the red slice after the answer is posted, and compare the time of the first red run
   with the time of the confirmation before the freeze.
+- ❌ **A `state:` label — or its color — set by hand is overwritten at the next
+  run.** `task-labels.sh`, run by `task-state.yml` on a 30-minute schedule and on
+  issue and pull-request events, recreates the eight `state:` labels with
+  `gh label create --force`: a description or a color edited on the forge holds
+  until the next run, then reverts to the script's. It is silent because the edit
+  applies — the label shows the new color for up to half an hour — and the revert
+  lands on no issue and in no log. Task `T-p481` (#309) began from eight hand-set
+  colors found back at `ededed`. **The check:** change the color in the one
+  `LABEL=COLOR` list of `apply()` in [`task-labels.sh`](tasks/task-labels.sh), and
+  let the workflow write it; never edit a `state:` label on the forge.
 
 - ❌ **A merge of `main` moves the base of the budget.** The plan review names a base
   SHA, and the budget counts the lines added plus removed on the whole branch diff

@@ -333,10 +333,16 @@ func runS13(in Input) Outcome { return runS13With(0, in) }
 // the four layup/ checks to the default branch's ruleset, the ruleset of the
 // records branch, and the row without-layup. layup run made the work area, so
 // an app_id that is not a positive number (the register can hold 0) is a fail,
-// not an input error.
+// not an input error. The inputs of its commands (the host directory, an absolute path,
+// and the default branch) are checked here too, before any file is written.
 func runS13Phase2(p Phase2, in Input) Outcome {
-	if p.AppID < 1 {
+	switch {
+	case p.AppID < 1:
 		return Outcome{Kind: Fail, Evidence: fmt.Sprintf("S13: the app_id of the forge register is %d, not a positive number", p.AppID)}
+	case !filepath.IsAbs(p.Host):
+		return Outcome{Kind: Fail, Evidence: "S13: the host directory of the commands, " + p.Host + ", is not an absolute path"}
+	case p.DefaultBranch == "":
+		return Outcome{Kind: Fail, Evidence: "S13: the default branch of the forge is empty"}
 	}
 	return runS13With(p.AppID, in)
 }
@@ -390,6 +396,67 @@ func commandsS13(r work.Record) []Command {
 		{Order: 2, Comment: "the push of the setup commits onto the default branch, a fast-forward from the root commit", Text: "git -C " + work.TargetPath + " push origin layup-setup:main"},
 		{Order: 4, Comment: "the apply of the ruleset of the default branch, with the Operator's login", Text: "gh api --method POST " + quote("repos/"+name+"/rulesets") + " --input " + rulesetPath},
 	}
+}
+
+// commandsS13Phase2 gives the commands of S13 in phase 2 (scaffold.md, The commands
+// for the Operator; task T-56dj), with absolute paths so the Operator may run the
+// file from any directory: in order 2 the reads of the forge and of the work area, the
+// guard on the head of the default branch and the push of layup-setup; in order 4 the
+// directory of the apply outputs and the apply of each ruleset when its output file is
+// missing. The output goes to a temporary file that mv renames when gh exits 0, so
+// under set -e a failed apply never reaches the mv and leaves no output file. Each read
+// of git is an assignment of its own, so a failing read stops the file; an empty head
+// is neither the root commit nor the head of layup-setup, and reaches the diagnostic.
+func commandsS13Phase2(p Phase2) func(work.Record) []Command {
+	return func(work.Record) []Command {
+		w := filepath.Join(p.Host, "work", p.Name)
+		applies := filepath.Join(p.Host, "applies", p.Name)
+		target := quote(filepath.Join(w, work.TargetPath))
+		branch := p.DefaultBranch
+		inMessage := branch // the branch inside a double-quoted word of sh
+		if !shellSafe(branch) {
+			inMessage = `"` + quote(branch) + `"`
+		}
+		head := strings.Join([]string{
+			"remote=$(git -C " + target + " ls-remote origin " + quote("refs/heads/"+branch) + ")",
+			`head=$(printf '%s\n' "$remote" | cut -f1)`,
+			"root=$(git -C " + target + " rev-list --max-parents=0 refs/heads/layup-setup)",
+			"setup=$(git -C " + target + " rev-parse refs/heads/layup-setup)",
+			`if [ "$head" = "$root" ]; then`,
+			"\tgit -C " + target + " push origin " + shellWord("layup-setup:"+branch),
+			`elif [ "$head" != "$setup" ]; then`,
+			"\techo \"the head of " + inMessage + " on the forge is '$head', neither the root commit '$root' nor the head of layup-setup '$setup'\" >&2",
+			"\texit 1",
+			"fi",
+		}, "\n")
+		apply := func(which, file, ruleset string) Command {
+			out, tmp := quote(filepath.Join(applies, file)), quote(filepath.Join(applies, file+".tmp"))
+			in := quote(filepath.Join(w, filepath.FromSlash(ruleset)))
+			return Command{Order: 4, Comment: "the apply of the ruleset of the " + which + " branch, with the Operator's login, when its output file is missing: the output goes to a temporary file, renamed when gh exits 0",
+				Text: "if [ ! -e " + out + " ]; then\n\tgh api --method POST /repos/" + shellWord(p.Name) + "/rulesets --input " + in + " > " + tmp + "\n\tmv " + tmp + " " + out + "\nfi"}
+		}
+		return []Command{
+			{Order: 2, Comment: "the head of the default branch on the forge, and the push of the setup commits onto it: a fast-forward from the root commit when the head is that commit, nothing when it is the head of layup-setup, and a stop when it is neither", Text: head},
+			{Order: 4, Comment: "the directory of the apply outputs", Text: "mkdir -p " + quote(applies)},
+			apply("default", "default.json", rulesetPath),
+			apply("records", "records.json", rulesetRecordsPath),
+		}
+	}
+}
+
+// shellSafe reports whether s is a word of sh with nothing special in it, so it needs no quotes.
+func shellSafe(s string) bool {
+	return strings.IndexFunc(s, func(r rune) bool {
+		return !(r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || strings.ContainsRune("._/:@%+=-", r))
+	}) < 0
+}
+
+// shellWord gives s as one word of sh: itself when it has nothing special, else quoted.
+func shellWord(s string) string {
+	if shellSafe(s) {
+		return s
+	}
+	return quote(s)
 }
 
 // RulePathsSchema is the form of the rule-path register: the block rule-paths
