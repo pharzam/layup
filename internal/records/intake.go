@@ -73,7 +73,7 @@ var CoverageSchema = tsv.Schema{Name: "coverage", Location: "records:intake/cove
 // QuestionsSchema is the form of questions.tsv: the block questions.
 var QuestionsSchema = tsv.Schema{Name: "questions", Location: "records:questions.tsv", Columns: []tsv.Column{
 	{Name: "id", Type: "id(Q-NNN)", Key: true},
-	{Name: "source", Type: "enum(rule|meaning|coverage|intent|follow-up)"},
+	{Name: "source", Type: "enum(rule|meaning|coverage|intent|follow-up|setup)"},
 	{Name: "ref", Type: "text"},
 	{Name: "block", Type: "enum(idea-owner|operator)"},
 	{Name: "phase", Type: "enum(before-delivery)"},
@@ -271,8 +271,9 @@ func ReadCoverage(data []byte) ([][]string, error) {
 }
 
 // CheckQuestion checks the rules of the block questions on one row: the forms
-// of ref, kind and asker by the source; start and end both empty or both given,
-// start below end, empty for the intent form and an unsupported item; and
+// of ref, kind and asker by the source; the Operator's block for a setup
+// question (task T-4c5c, #276); start and end both empty or both given, start
+// below end, empty for the intent form, S01-stack and an unsupported item; and
 // answered empty exactly when the state is asked, either way for open.
 func CheckQuestion(r []string) error {
 	f := fields(QuestionsSchema, r)
@@ -291,13 +292,19 @@ func CheckQuestion(r []string) error {
 		refOK, kindOK, askerOK = slices.Contains(intentFields, f["ref"]), f["kind"] == "intent", f["asker"] == "layup run"
 	case "follow-up":
 		refOK, kindOK, askerOK = qForm.MatchString(f["ref"]), f["kind"] == "follow-up", f["asker"] == "layup run"
+	case "setup":
+		// S01-stack has no source row and is asked by layup run; a marker's question has the
+		// session of its row of intake/markers.tsv (docs/spec/scaffold.md, The answers of the setup).
+		stack := f["ref"] == "S01-stack"
+		refOK, kindOK = stack || markerIDForm.MatchString(f["ref"]), f["kind"] == "setup"
+		askerOK = (stack && f["asker"] == "layup run") || (!stack && sessionForm.MatchString(f["asker"]))
 	}
 	// The quote, exactly when the row shows it (note 3 of round 1 of #212): a
 	// gap of meaning, an uncovered or class item and a rule gap G2 to G5 have
 	// one; the intent form, an unsupported item and G1 (an absence) have none;
 	// a follow-up's is that of the question it asks again, which the row does
 	// not show.
-	noQuote := f["source"] == "intent" || f["kind"] == "unsupported" || f["kind"] == "G1"
+	noQuote := f["source"] == "intent" || f["kind"] == "unsupported" || f["kind"] == "G1" || (f["source"] == "setup" && f["ref"] == "S01-stack")
 	needQuote := f["source"] == "meaning" || (f["source"] == "coverage" && !noQuote) || (f["source"] == "rule" && !noQuote)
 	switch {
 	case !refOK:
@@ -305,7 +312,9 @@ func CheckQuestion(r []string) error {
 	case !kindOK:
 		return &RowError{"kind", "kind is a kind of the question's source"}
 	case !askerOK:
-		return &RowError{"asker", "the asker is layup psb check for a rule gap, the session for a gap of meaning or coverage, layup run for the intent form and a follow-up"}
+		return &RowError{"asker", "the asker is layup psb check for a rule gap, the session for a gap of meaning or coverage or for a marker, layup run for the intent form, S01-stack and a follow-up"}
+	case f["source"] == "setup" && f["block"] != "operator":
+		return &RowError{"block", "a setup question is asked in the Operator's block"}
 	case f["start"] == "" && f["end"] != "":
 		return &RowError{"start", "start and end are both the empty value or both given"}
 	case noQuote && f["start"] != "":

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/pharzam/layup/internal/records"
+	workpkg "github.com/pharzam/layup/internal/work"
 )
 
 // followQuestions is a batch after the answers: Q-001 a rule gap with a quote,
@@ -123,14 +124,43 @@ func TestFollowUpRows(t *testing.T) {
 func TestTheCommentOfTheFollowUp(t *testing.T) {
 	questions := followQuestions("open", "closed", "closed", "closed", "closed")
 	rows := followUpRows(questions, followAnswers("9.5", "10.0", "40.0"), "t")
-	c := followUpComment(questions, rows, []byte(batchPSB))
+	c := followUpComment(questions, rows, []byte(batchPSB), nil)
 	for _, want := range []string{followUpHeader + "\n", "\n## For the idea owner\n", "\nQ-007: What is TLA?\n`We use Go and TLA and XYZ.`\n",
-		"\nQ-008: Which stack?\n\n", "\n## For the Operator\n", "`Q-NNN: <answer>`"} {
+		"\nQ-008: Which stack?\n\n", "\n## For the Operator\n\nNo question for the Operator.\n", "`Q-NNN: <answer>`"} {
 		if !strings.Contains(c, want) {
 			t.Errorf("the comment has no %q:\n%s", want, c)
 		}
 	}
 	if strings.HasPrefix(c, batchHeader) {
 		t.Error("the follow-up starts with the header of the batch")
+	}
+}
+
+// A follow-up of a setup question is in the Operator's block, and shows what the
+// batch showed: S01-stack asked again, and a marker asked again with the line
+// proposed: and the quote of its proposal; the rule gap is in the idea owner's
+// block (task T-4c5c, #276; docs/spec/intake.md, The review of the answers and
+// the follow-up).
+func TestTheFollowUpOfASetupQuestion(t *testing.T) {
+	questions := followQuestions("closed", "closed", "closed", "closed", "closed")
+	setup := func(id, ref, start, end, text, asker, answered, state string) []string {
+		return []string{id, "setup", ref, "operator", "before-delivery", "setup", start, end, text, "2026-10-11T10:00:00Z", asker, answered, state}
+	}
+	marker := "the value of " + angled("owner") + " at docs/a.md:2"
+	questions = append(questions,
+		setup("Q-007", "S01-stack", "", "", workpkg.S01Questions[0].Text, "layup run", "", "asked"),
+		setup("Q-008", "M-0a1b2c3d", "4", "30", marker, "S-33333333", "2026-10-11T10:05:00Z", "open"))
+	rows := followUpRows(questions, followAnswers("9.5", "10.0", "40.0"), "t")
+	if len(rows) != 3 || rows[1][3] != "operator" || rows[2][3] != "operator" || rows[0][3] != "idea-owner" {
+		t.Fatalf("the follow-up rows %q; want the rule gap, S01-stack and the marker, each in the block of its question", rows)
+	}
+	c := followUpComment(questions, rows, []byte(batchPSB), batchFixture(t).Markers)
+	want := "\n## For the idea owner\n\nQ-009: Which stack?\n\n## For the Operator\n\nQ-010: " + workpkg.S01Questions[0].Text + "\n\n" +
+		"Q-011: " + marker + "\nproposed: Carol\n`We use Go and TLA and XYZ.`\n\n"
+	if !strings.Contains(c, want) {
+		t.Errorf("the comment has no %q:\n%s", want, c)
+	}
+	if !strings.Contains(c, "`Q-NNN: accept`") {
+		t.Errorf("the comment asks a marker and has no forms of its answer:\n%s", c)
 	}
 }

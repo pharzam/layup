@@ -28,6 +28,7 @@ import (
 	"github.com/pharzam/layup/internal/records"
 	"github.com/pharzam/layup/internal/spec"
 	"github.com/pharzam/layup/internal/tsv"
+	workpkg "github.com/pharzam/layup/internal/work"
 )
 
 // fakeGitHub plays the calls of M2a for the steps of Start and the restart
@@ -152,12 +153,20 @@ type world struct {
 	clock    fastClock         // the world's one clock: no config of it goes back in time
 }
 
-func newWorld(t *testing.T) *world {
+func newWorld(t *testing.T) *world { return newWorldWith(t, nil) }
+
+// newWorldWith makes a world whose baseline also holds files, by path (task
+// T-4c5c, #276: the step markers scans the pinned tree, which is the baseline's).
+func newWorldWith(t *testing.T, files map[string]string) *world {
 	t.Setenv("HOME", t.TempDir())
 	w := &world{t: t, dir: t.TempDir(), web: t.TempDir(),
 		clock: fastClock{begin: time.Date(2026, 10, 8, 12, 0, 0, 0, time.UTC), real: time.Now()}}
 	src := t.TempDir()
 	os.WriteFile(filepath.Join(src, "README.md"), []byte("# Armature\n"), 0o644)
+	for path, text := range files {
+		os.MkdirAll(filepath.Dir(filepath.Join(src, path)), 0o755)
+		os.WriteFile(filepath.Join(src, path), []byte(text), 0o644)
+	}
 	gitOut(t, src, "init", "-q", "-b", "main")
 	gitOut(t, src, "add", "-A")
 	gitOut(t, src, "commit", "-q", "-m", "baseline")
@@ -190,8 +199,9 @@ func newWorld(t *testing.T) *world {
 	// gap), else, for the numbering, a span table that covers the problem
 	// statement, one fact per line that is not empty (row 44), for the draft
 	// one requirement per need fact of the span table (row 45a), for the
-	// completeness review no item (row 45b), and for the review of the
-	// answers each answered question closed (row 47b).
+	// completeness review no item (row 45b), for the step markers no proposal
+	// (row 53), and for the review of the answers each answered question closed
+	// (row 47b).
 	bin := filepath.Join(w.dir, "bin")
 	os.MkdirAll(bin, 0o755)
 	os.WriteFile(filepath.Join(bin, "version"), []byte("#!/bin/sh\necho 1.0.0\n"), 0o755)
@@ -211,6 +221,11 @@ case "$p" in
 	# Each session of a phase reads the problem statement (intake.md, The
 	# sessions of Intake; round 1 of #224).
 	[ -f "$in" ] || exit 3
+	# The session of the step markers reads the list of the markers too (row 53).
+	if printf '%s\n' "$p" | grep -q '^The list of markers: '; then
+		ls=$(printf '%s\n' "$p" | sed -n 's/^The list of markers: //p')
+		[ "$(head -n 1 "$ls")" = "$(printf 'id\tfile\tline\tmarker\tvalue\tstart\tend\tsession')" ] || exit 4
+	fi
 	if [ -f "$f" ]; then
 		cat "$f" > "$out"
 	elif [ "$(basename "$out")" = answers-review.tsv ]; then
@@ -218,6 +233,8 @@ case "$p" in
 		LC_ALL=C awk -F '\t' 'BEGIN { printf "question\tstate\treason\n" } NR > 1 && $13 == "answered" { printf "%s\tclosed\tthe answer is clear\n", $1 }' "$qs" > "$out"
 	elif [ "$(basename "$out")" = coverage.tsv ]; then
 		printf 'kind\tfact\trequirement\tquestion\n' > "$out"
+	elif [ "$(basename "$out")" = markers.tsv ]; then
+		printf 'id\tvalue\tquote\n' > "$out"
 	elif [ "$(basename "$out")" = draft.tsv ]; then
 		LC_ALL=C awk -F '\t' 'BEGIN { printf "kind\tstatement\tcovers\tcriterion\n" }
 			NR > 1 && $4 == "need" { printf "requirement\tThe statement of fact %s.\t%s\tThe criterion of fact %s.\n", $3, $3, $3 }' "$sp" > "$out"
@@ -441,7 +458,7 @@ func TestARestartWithAnotherVersionFailsAtVersion(t *testing.T) {
 	}
 	// The same version: the lease is released, so it is taken at once; each
 	// step of Start is done.
-	allDone(t, "the restart", Restart(context.Background(), w.config("0.1.0-dev")), "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers")
+	allDone(t, "the restart", Restart(context.Background(), w.config("0.1.0-dev")), "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers")
 }
 
 // A run that stopped at opening: the restart takes the lease over from the
@@ -547,6 +564,7 @@ func pushRecords(t *testing.T, bare string, files map[string]string, message str
 		work := t.TempDir()
 		gitOut(t, work, "clone", "-q", "-b", "layup-records", bare, ".")
 		for p, text := range files {
+			os.MkdirAll(filepath.Dir(filepath.Join(work, p)), 0o755) // a record of a directory that the branch lacks (task T-4c5c)
 			os.WriteFile(filepath.Join(work, p), []byte(text), 0o644)
 		}
 		gitOut(t, work, "add", "-A")
@@ -667,8 +685,8 @@ func TestTheStepRuleGaps(t *testing.T) {
 	cfg = w.config("0.1.0-dev")
 	cfg.Step = func(i, n int, name string) { progress = append(progress, fmt.Sprintf("%d/%d %s", i, n, name)) }
 	rows := Restart(context.Background(), cfg)
-	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers")
-	if want := []string{"1/6 forge", "2/6 clone", "3/16 version", "4/16 lease", "5/16 probe", "6/16 rule-gaps", "7/16 meaning", "8/16 numbering", "9/16 spans", "10/16 draft", "11/16 completeness", "12/16 batch", "13/16 answers"}; strings.Join(progress, ", ") != strings.Join(want, ", ") {
+	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers")
+	if want := []string{"1/6 forge", "2/6 clone", "3/17 version", "4/17 lease", "5/17 probe", "6/17 rule-gaps", "7/17 meaning", "8/17 numbering", "9/17 spans", "10/17 draft", "11/17 completeness", "12/17 markers", "13/17 batch", "14/17 answers"}; strings.Join(progress, ", ") != strings.Join(want, ", ") {
 		t.Errorf("the progress %q, want %q", progress, want)
 	}
 	// What layup psb check prints on the same file (internal/cli/cli.go):
@@ -714,7 +732,7 @@ func TestTheStepMeaning(t *testing.T) {
 	cfg.PSB = []byte("# The problem\n\nThe service is fast.\n")
 	allDone(t, "Start", w.start(cfg), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	rows := Restart(context.Background(), w.config("0.1.0-dev"))
-	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers")
+	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers")
 	if d := rowOf(rows, "meaning").Detail; d != "1 gaps of meaning, in intake/meaning.tsv" {
 		t.Errorf("the detail of meaning %q", d)
 	}
@@ -799,7 +817,7 @@ func TestTheStepsNumberingAndSpans(t *testing.T) {
 	w := newWorld(t)
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	rows := Restart(context.Background(), w.config("0.1.0-dev"))
-	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers")
+	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers")
 	if n, s := rowOf(rows, "numbering").Detail, rowOf(rows, "spans").Detail; n != "2 spans, 2 facts, in spec/spans.tsv" || s != "the span check passed, in spec/check.tsv" {
 		t.Errorf("the details %q and %q", n, s)
 	}
@@ -856,7 +874,7 @@ func TestAFailedSpanCheckRunsNumberingAgain(t *testing.T) {
 	}
 	os.Remove(bad) // the next session covers the file
 	again := Restart(context.Background(), w.config("0.1.0-dev"))
-	allDone(t, "the restart after the fail", again, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers")
+	allDone(t, "the restart after the fail", again, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers")
 	if n := rowOf(again, "numbering").Detail; n != "2 spans, 2 facts, in spec/spans.tsv" {
 		t.Errorf("numbering after a failed check: %q; want a new session's spans", n)
 	}
@@ -894,7 +912,7 @@ func TestTheStepDraft(t *testing.T) {
 	w := newWorld(t)
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	rows := Restart(context.Background(), w.config("0.1.0-dev"))
-	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers")
+	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers")
 	if d := rowOf(rows, "draft").Detail; d != "2 rows, in spec/draft.tsv" {
 		t.Errorf("the detail of draft %q", d)
 	}
@@ -938,7 +956,7 @@ func TestTheStepCompleteness(t *testing.T) {
 	os.WriteFile(filepath.Join(w.dir, "bin", "coverage.tsv"), []byte("kind\tfact\trequirement\tquestion\nclass\t1\t—\tIs fact 1 a need?\n"), 0o644)
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	rows := Restart(context.Background(), w.config("0.1.0-dev"))
-	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers")
+	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers")
 	if d := rowOf(rows, "completeness").Detail; d != "1 items, in intake/coverage.tsv" {
 		t.Errorf("the detail of completeness %q", d)
 	}
@@ -1025,7 +1043,7 @@ func TestTheStepBatch(t *testing.T) {
 	w := newWorld(t)
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	rows := Restart(context.Background(), w.config("0.1.0-dev"))
-	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers")
+	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers")
 	questions := show(t, w.bare, "refs/heads/layup-records", "questions.tsv")
 	n := strings.Count(questions, "\n") - 1
 	if d := rowOf(rows, "batch").Detail; d != fmt.Sprintf("%d questions, in questions.tsv and the comment of the batch", n) || n < 4 {
@@ -1036,10 +1054,17 @@ func TestTheStepBatch(t *testing.T) {
 			t.Errorf("questions.tsv has no question of the intent field %s:\n%s", f, questions)
 		}
 	}
+	// With no marker in the baseline the Operator's block asks S01-stack alone, whatever rule G1
+	// found (row 53, task T-4c5c).
+	stack := fmt.Sprintf("Q-%03d\tsetup\tS01-stack\toperator\tbefore-delivery\tsetup\t—\t—\t%s\t", n, workpkg.S01Questions[0].Text)
+	if !strings.Contains(questions, "\n"+stack) || strings.Count(questions, "\tsetup\t") != 2 { // the source and the kind of the one row
+		t.Errorf("questions.tsv has no question of S01-stack as its last row:\n%s", questions)
+	}
 	c := intakeComments(w)
 	if len(c) != 1 || !strings.HasPrefix(c[0], batchHeader+"\n") || !strings.Contains(c[0], "\n## For the idea owner\n") ||
-		!strings.Contains(c[0], "\n## For the Operator\n") || !strings.Contains(c[0], fmt.Sprintf("\nQ-%03d: ", n)) {
-		t.Fatalf("the App's comments on the Intake issue %q; want one batch of %d questions in two blocks", c, n)
+		!strings.Contains(c[0], "\n## For the Operator\n\n"+fmt.Sprintf("Q-%03d: ", n)+workpkg.S01Questions[0].Text+"\n\n") || !strings.Contains(c[0], fmt.Sprintf("\nQ-%03d: ", n)) ||
+		strings.Contains(c[0], "`Q-NNN: accept`") {
+		t.Fatalf("the App's comments on the Intake issue %q; want one batch of %d questions in two blocks, S01-stack in the Operator's", c, n)
 	}
 	blob := gitOut(t, w.bare, "rev-parse", "refs/heads/layup-records:questions.tsv")
 	again := Restart(context.Background(), w.config("0.1.0-dev"))
@@ -1055,10 +1080,13 @@ func TestTheStepBatch(t *testing.T) {
 // leaves the record and no comment: the next restart posts the comment from
 // the record, with no new commit of questions.tsv.
 func TestABatchWithNoCommentIsPostedFromTheRecord(t *testing.T) {
-	w := newWorld(t)
-	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
-	allDone(t, "the restart", Restart(context.Background(), w.config("0.1.0-dev")), "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers")
+	// A world with markers, so the comment has the proposals that intake/markers.tsv holds (row 53).
+	w, rows := markersToBatch(t, proposals())
+	allDone(t, "the restart", rows, intakeSteps...)
 	first := intakeComments(w)
+	if len(first) != 1 || !strings.Contains(first[0], "\nproposed: Carol Jones\n") {
+		t.Fatalf("the batch %q; want one comment with the proposal of the owner", first)
+	}
 	// The post never happened. The issue holds a comment of a person that
 	// starts with the header and another comment of the App: neither is the
 	// App's batch.
@@ -1102,9 +1130,9 @@ func TestTheStepAnswers(t *testing.T) {
 	w := newWorld(t)
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	rows := Restart(context.Background(), w.config("0.1.0-dev"))
-	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers")
-	if d := rowOf(rows, "answers").Detail; d != "waiting: no answer yet in the block idea-owner" {
-		t.Errorf("the detail of answers %q; want waiting", d)
+	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers")
+	if d := rowOf(rows, "answers").Detail; d != "waiting: no answer yet in the block idea-owner and the block operator" {
+		t.Errorf("the detail of answers %q; want waiting in the two blocks (row 53: the Operator's block asks S01-stack)", d)
 	}
 	if !strings.Contains(show(t, w.bare, "refs/heads/layup-records", "lease.tsv"), "\treleased\n") {
 		t.Error("the lease is not released after a wait")
@@ -1118,7 +1146,7 @@ func TestTheStepAnswers(t *testing.T) {
 		t.Fatal(err)
 	}
 	at := func(d time.Duration) string { return asked.Add(d).UTC().Format(time.RFC3339) }
-	var first, last strings.Builder
+	var first, last, operator strings.Builder
 	for _, q := range questions {
 		answer := "the answer to " + q[0]
 		switch q[2] {
@@ -1129,15 +1157,20 @@ func TestTheStepAnswers(t *testing.T) {
 		case "appetite.hours":
 			answer = "40.0"
 		}
+		if q[3] == "operator" { // the Operator's block, S01-stack, answered by the Operator
+			fmt.Fprintf(&operator, "%s: go\n", q[0])
+			continue
+		}
 		fmt.Fprintf(&first, "%s: %s\n", q[0], answer)
 	}
 	fmt.Fprintf(&last, "%s: the answer corrected\n", questions[0][0])
 	addComment(w, 1, 801, 999, "mallory", at(time.Minute), questions[0][0]+": not an approver\n")
 	addComment(w, 1, 802, 303, "carol", at(2*time.Minute), first.String())
 	addComment(w, 1, 803, 303, "carol", at(3*time.Minute), last.String())
+	addComment(w, 1, 804, 101, "pharzam", at(4*time.Minute), operator.String())
 	rows = Restart(context.Background(), w.config("0.1.0-dev"))
 	// The review (row 47b) closes each answer, and the follow-up asks nothing.
-	allDone(t, "the restart with the answers", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers", "answers-review", "follow-up", "follow-up-answers")
+	allDone(t, "the restart with the answers", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers", "answers-review", "follow-up", "follow-up-answers")
 	if d := rowOf(rows, "follow-up").Detail; d != "nothing to ask again; Intake is done" {
 		t.Errorf("the detail of follow-up %q", d)
 	}
@@ -1167,7 +1200,7 @@ func TestTheStepAnswers(t *testing.T) {
 		t.Errorf("budget.tsv:\n%s", budget)
 	}
 	copies := show(t, w.bare, "refs/heads/layup-records", "copies.tsv")
-	for _, id := range []string{"801", "802", "803"} {
+	for _, id := range []string{"801", "802", "803", "804"} {
 		if !strings.Contains(copies, "\n"+id+"\t1\t1\t") {
 			t.Errorf("copies.tsv has no copy of the comment %s:\n%s", id, copies)
 		}
@@ -1189,13 +1222,13 @@ func TestTheStepAnswers(t *testing.T) {
 func TestTheReviewOfTheAnswersAndTheFollowUp(t *testing.T) {
 	w := newWorld(t)
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
-	allDone(t, "the restart", Restart(context.Background(), w.config("0.1.0-dev")), "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers")
+	allDone(t, "the restart", Restart(context.Background(), w.config("0.1.0-dev")), "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers")
 	questions, err := records.ReadQuestions([]byte(show(t, w.bare, "refs/heads/layup-records", "questions.tsv")))
 	if err != nil {
 		t.Fatal(err)
 	}
 	asked, _ := time.Parse(time.RFC3339, questions[0][9])
-	var body, review strings.Builder
+	var body, operator, review strings.Builder
 	review.WriteString("question\tstate\treason\n")
 	ref := map[string]string{} // the ID of each field of the intent form
 	for _, q := range questions[1:] {
@@ -1209,7 +1242,11 @@ func TestTheReviewOfTheAnswersAndTheFollowUp(t *testing.T) {
 			answer = "40.0"
 		}
 		ref[q[2]] = q[0]
-		fmt.Fprintf(&body, "%s: %s\n", q[0], answer)
+		if q[3] == "operator" { // S01-stack, answered by the Operator
+			fmt.Fprintf(&operator, "%s: go\n", q[0])
+		} else {
+			fmt.Fprintf(&body, "%s: %s\n", q[0], answer)
+		}
 		state := "closed"
 		if q[2] == "appetite.hours" {
 			state = "open"
@@ -1218,8 +1255,9 @@ func TestTheReviewOfTheAnswersAndTheFollowUp(t *testing.T) {
 	}
 	os.WriteFile(filepath.Join(w.dir, "bin", "answers-review.tsv"), []byte(review.String()), 0o644)
 	addComment(w, 1, 802, 303, "carol", asked.Add(time.Minute).UTC().Format(time.RFC3339), body.String())
+	addComment(w, 1, 803, 101, "pharzam", asked.Add(2*time.Minute).UTC().Format(time.RFC3339), operator.String())
 	rows := Restart(context.Background(), w.config("0.1.0-dev"))
-	allDone(t, "the restart with the answers", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "batch", "answers", "answers-review", "follow-up", "follow-up-answers")
+	allDone(t, "the restart with the answers", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers", "answers-review", "follow-up", "follow-up-answers")
 	if d := rowOf(rows, "follow-up").Detail; d != "4 questions asked again, in questions.tsv and the comment of the follow-up" {
 		t.Errorf("the detail of follow-up %q", d)
 	}
@@ -1272,7 +1310,7 @@ func intakeToFollowUp(t *testing.T, b, u, h string, open ...string) (*world, [][
 		t.Fatal(err)
 	}
 	asked, _ := time.Parse(time.RFC3339, questions[0][9])
-	var body, review strings.Builder
+	var body, operator, review strings.Builder
 	review.WriteString("question\tstate\treason\n")
 	for _, q := range questions {
 		answer, state := "the answer to "+q[0], "closed"
@@ -1287,11 +1325,16 @@ func intakeToFollowUp(t *testing.T, b, u, h string, open ...string) (*world, [][
 		if slices.Contains(open, q[2]) {
 			state = "open"
 		}
-		fmt.Fprintf(&body, "%s: %s\n", q[0], answer)
+		if q[3] == "operator" { // S01-stack, answered by the Operator
+			fmt.Fprintf(&operator, "%s: go\n", q[0])
+		} else {
+			fmt.Fprintf(&body, "%s: %s\n", q[0], answer)
+		}
 		fmt.Fprintf(&review, "%s\t%s\tthe review's reason\n", q[0], state)
 	}
 	os.WriteFile(filepath.Join(w.dir, "bin", "answers-review.tsv"), []byte(review.String()), 0o644)
 	addComment(w, 1, 802, 303, "carol", asked.Add(time.Minute).UTC().Format(time.RFC3339), body.String())
+	addComment(w, 1, 801, 101, "pharzam", asked.Add(2*time.Minute).UTC().Format(time.RFC3339), operator.String())
 	rows := Restart(context.Background(), w.config("0.1.0-dev"))
 	after, err := records.ReadQuestions([]byte(show(t, w.bare, "refs/heads/layup-records", "questions.tsv")))
 	if err != nil {

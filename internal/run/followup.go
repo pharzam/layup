@@ -230,13 +230,27 @@ func followUpRows(questions, answers [][]string, asked string) [][]string {
 }
 
 // followUpComment gives the comment of the follow-up rows, in the form of the
-// batch, each question with the quote of the question it asks again.
-func followUpComment(questions, rows [][]string, psb []byte) string {
-	quote := map[string][2]string{}
+// batch, each question in the block of the question it asks again, with its
+// quote and, for a marker, the value that the session proposed (the rows of
+// intake/markers.tsv; task T-4c5c, #276).
+func followUpComment(questions, rows [][]string, psb []byte, markers [][]string) string {
+	asked := map[string][]string{}
 	for _, q := range questions {
-		quote[q[0]] = [2]string{q[6], q[7]}
+		asked[q[0]] = q
 	}
-	return questionsComment(followUpHeader, rows, func(r []string) (string, string) { q := quote[r[2]]; return q[0], q[1] }, psb)
+	quote := func(r []string) (string, string) {
+		if q := asked[r[2]]; q != nil {
+			return q[6], q[7]
+		}
+		return "", ""
+	}
+	about := func(r []string) (bool, string) {
+		if q := asked[r[2]]; q != nil {
+			return aboutAMarker(q, markers)
+		}
+		return false, ""
+	}
+	return questionsComment(followUpHeader, rows, quote, about, psb)
 }
 
 // followUpStep is the step follow-up of Intake: with follow-up rows in
@@ -261,6 +275,10 @@ func (r *state) followUpStep(ctx context.Context) Step {
 	if err != nil {
 		return fail(name, err)
 	}
+	markers, err := r.readRecord(ctx, "intake/markers.tsv", records.ReadMarkers)
+	if err != nil {
+		return fail(name, err)
+	}
 	var held [][]string
 	for _, q := range questions {
 		if q[1] == "follow-up" {
@@ -277,7 +295,7 @@ func (r *state) followUpStep(ctx context.Context) Step {
 				return done(name, "done before")
 			}
 		}
-		if _, err := r.cfg.Forge.Comment(ctx, issue, followUpComment(questions, held, psbData)); err != nil {
+		if _, err := r.cfg.Forge.Comment(ctx, issue, followUpComment(questions, held, psbData, markers)); err != nil {
 			return fail(name, err)
 		}
 		return done(name, "the comment of the follow-up posted from questions.tsv")
@@ -300,7 +318,7 @@ func (r *state) followUpStep(ctx context.Context) Step {
 	if err := r.write(ctx, map[string][]byte{"questions.tsv": data}, "layup run: the follow-up"); err != nil {
 		return fail(name, err)
 	}
-	if _, err := r.cfg.Forge.Comment(ctx, issue, followUpComment(questions, rows, psbData)); err != nil {
+	if _, err := r.cfg.Forge.Comment(ctx, issue, followUpComment(questions, rows, psbData, markers)); err != nil {
 		return fail(name, err)
 	}
 	return done(name, fmt.Sprintf("%d questions asked again, in questions.tsv and the comment of the follow-up", len(rows)))
