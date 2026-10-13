@@ -381,6 +381,23 @@ apply, is run again as it is, and does each command that is not done yet. **Deci
 so the first command that fails stops it, in phase 1 and phase 2; a command of
 phase 1 that does not hold under `set -eu` is a defect of its step.
 
+**Decided here** (task `T-56dj`, #275, with the conditions of its plan review): in
+phase 2 the text of S13 is four commands, each with a comment line of its own: the
+reads, the guard on the head and the push, in order 2, and the directory of the
+apply outputs and the apply of each ruleset, in order 4. The paths are absolute, so
+the Operator may run the file from any directory; `layup run` gives `DIR` and the
+default branch in Go. Each read of `git` is an assignment of its own, so a read that
+fails stops the file with its status, as a pipe would hide it; the head is the first
+field of the answer of `ls-remote`, cut in a second assignment, and a head that the
+forge does not give is empty, which is neither commit: the file stops with exit 1 and
+the message, on standard error, names the empty head, the root commit and the head of
+`layup-setup`. The root commit and the head of `layup-setup` are read from the work
+area when the file runs and are not written into it, so one file serves a work area
+that is built again, which gives the same commits ([The work area](#the-work-area)).
+The temporary file of an apply that fails stays, and the next run writes over it:
+only the output file says that an apply is done. S13 is a `fail` when the host
+directory is not an absolute path or the default branch is empty.
+
 When `DIR/work/OWNER/NAME/` is missing (a restart on another host, or after
 it was removed), `scaffold-push` builds it again as `setup` does, with the
 prose files of the records, and runs the step runner; the head of
