@@ -4,6 +4,18 @@ The rulesets of S13 (#274, row 52b): `rulesetBody` and `rulesetRecordsBody`, the
 phase 2 with the App's ID of `Phase2`, and the row `without-layup`, in `internal/setup`.
 All times are UTC, 2026-10-13, read from the clock after each step.
 
+## The order of the gate
+
+The plan was posted at 08:05:06Z. The plan review ran from 08:05:09Z to 08:14:06Z, and was
+posted at 08:14:30Z, with the author's answer at 08:14:47Z. The tests were written and run
+red from 08:06Z to 08:07:44Z, in the time of the review, which R12 does not allow ("one round
+of independent review and a reviewer's confirmation before building begins"): a breach of the
+author's, found by round 1 (comment 6141901257 of #274). The confirmation asked for changes of
+documents and none of a test, so no test was rewritten because of it. The code (the green
+step) was written after the answer, from about 08:17Z, and so was each document. The red
+below is the red of tests written before the confirmation, and it stays dated as it was; a
+later passing run cannot move it. `guardrails.md` §2 gains the lesson.
+
 ## The base (08:03:33Z to 08:04:25Z)
 
 At `9144e4e`, each with exit 0 (`go test` of `internal/setup`, `internal/verify` and
