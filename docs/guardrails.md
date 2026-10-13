@@ -913,6 +913,11 @@ These traps are not domain-specific: they hurt every project's test suite.
   such a world is green by luck. Task `T-eahr` (#277) met it. **The check:** make the
   baseline of a world one commit (remove its `.git` and initialise it again after its files
   are written), and run a new world several times before you trust it.
+- ❌ **A path that is clean by its spelling still leaves through a link.** A name with no
+  `..` and no empty part read or removed a file outside its directory when a parent was a
+  link (`result/`, `DIR/work/OWNER`, a link of the records base). Task `T-eahr` (#277),
+  round 1. **The check:** `Lstat` each directory above the file, or ask the tree for the
+  path (a path below a link has no entry), before you read or remove it.
 
 ### Reference-sweep pitfalls
 
