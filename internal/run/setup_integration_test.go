@@ -228,8 +228,8 @@ func TestTheStepSetupRunsS01ToS14(t *testing.T) {
 	sessions := setupSessions(w)
 	t.Run("a second restart before verify rebuilds the same head and starts no session", func(t *testing.T) {
 		again := Restart(context.Background(), w.config("0.1.0-dev"))
-		if last := again[len(again)-1]; last != (Step{"setup", "done", "S01 to S14 done, in the work area"}) {
-			t.Fatalf("the last row of a second restart: %+v; want setup done\n%s", last, steps(again))
+		if last := rowOf(again, "setup"); last != (Step{"setup", "done", "S01 to S14 done, in the work area"}) {
+			t.Fatalf("the row of the step setup of a second restart: %+v; want setup done\n%s", last, steps(again))
 		}
 		if now := gitOut(t, target, "rev-parse", "layup-setup"); now != head || setupSessions(w) != sessions {
 			t.Errorf("a second restart: the head %s (was %s), %d sessions (were %d); want the same head and no session", strings.TrimSpace(now), strings.TrimSpace(head), setupSessions(w), sessions)
@@ -252,8 +252,8 @@ func TestTheStepSetupRunsS01ToS14(t *testing.T) {
 			t.Fatal(err)
 		}
 		again := Restart(context.Background(), w.config("0.1.0-dev"))
-		if last := again[len(again)-1]; last != (Step{"setup", "done", "done before"}) {
-			t.Fatalf("the last row of the restart: %+v; want setup done before\n%s", last, steps(again))
+		if last := rowOf(again, "setup"); last != (Step{"setup", "done", "done before"}) {
+			t.Fatalf("the row of the step setup of the restart: %+v; want setup done before\n%s", last, steps(again))
 		}
 		if _, err := os.Stat(filepath.Join(w.dir, "work")); err == nil || setupSessions(w) != sessions {
 			t.Errorf("a step done before: the work area exists (%v) or a session started (%d, was %d); want neither", err, setupSessions(w), sessions)
