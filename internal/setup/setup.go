@@ -2,9 +2,9 @@
 // command layup setup): it runs the steps of a target's setup in their order,
 // resumes from the setup record, and gives the step table, or the stop table
 // of a stop. The steps themselves are rows 9, 13 and 15 of the plan (Steps);
-// Stubs gives a stub of each. In phase 2, layup run calls the same runner with
-// StepsPhase2 and the inputs of Phase2 given in Go (row 52a of M2d, task
-// T-ktgx).
+// Stubs gives a stub of each. In phase 2, layup run (row 54 of M2d, task
+// T-eahr) calls the same runner with StepsPhase2 and the inputs of Phase2 given
+// in Go (row 52a, task T-ktgx).
 package setup
 
 import (

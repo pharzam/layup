@@ -2,8 +2,8 @@ package setup
 
 // The steps of the setup in phase 2 (docs/spec/scaffold.md, REQ-002 — The setup
 // under layup run, The steps of the setup in phase 2; task T-ktgx, #273):
-// layup run calls the step runner of this package with the inputs of phase 2
-// given in Go, not as a file. StepsPhase2 takes the steps of phase 1 and changes
+// layup run (row 54 of M2d, task T-eahr) calls the step runner of this package
+// with the inputs of phase 2 given in Go, not as a file. StepsPhase2 takes the steps of phase 1 and changes
 // the five that differ: S01 to S04 have the code of phase 2, and S15 gives no
 // records commit and no command. S05 to S14 are phase 1's, with the same Calls;
 // S13 and its commands are rows 52b and 52c.
