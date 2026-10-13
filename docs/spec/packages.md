@@ -68,7 +68,7 @@ reads this table, and holds no copy of it, which could differ from it.
 | `cmd/layup` | `main`: passes the arguments to `internal/cli` and exits with its code | `internal/cli` | no |
 | `internal/cli` | parses the arguments, runs one command, maps its result to an exit code ([`README.md`](README.md#commands)); for `layup run`, reads the two host registers and the key file, builds the adapter and hands it to `internal/run` (task `T-mqty`), and from `M2b` reads `models.tsv` and `routing.tsv` and checks each harness credential (task `T-ysph`), and hands their rows and those of `host:prices.tsv` to `internal/run` for the step `probe` (task `T-nxe4`) | `internal/psb`, `internal/setup`, `internal/verify`, `internal/gate`, `internal/run`, `internal/forge`, `internal/forge/github`, `internal/route`, `internal/spec` | no |
 | `internal/tsv` | reads and writes a record: checks the header row against a schema, the field count of each row, the types and the key; parses the `tsv-schema` blocks of `docs/spec/`, and compares a block with the Go schema of its record ([`README.md`](README.md#the-schema-block)) | — | no |
-| `internal/git` | the one caller of the `git` program: [its calls](#the-calls-of-internalgit) | — | `git` |
+| `internal/git` | the one caller of the `git` program: [its calls](#the-calls-of-internalgit); in `M2d`, `CommitTree` (task `T-j4sd`) | — | `git` |
 | `internal/psb` | the rules G1 to G5 and the gap table ([`psb-check.md`](psb-check.md)) | `internal/tsv` | no |
 | `internal/catalog` | the stack catalog, embedded with `embed` ([`setup.md`](setup.md#the-stack-catalog)) | `internal/tsv` | no |
 | `internal/work` | the work area of a target: its paths, and the schemas and the readers of `answers.tsv` and `record.tsv` ([`setup.md`](setup.md#the-answers)), which `internal/setup` and `internal/verify` share (K9); the record row `answers.sha256`, which `internal/setup` writes and `internal/standin` gives its stand-in; the texts of the four questions of S01, which the stop table, the answers record of S04 and the stand-in use (task `T-7s0y`); the schema of the table of `layup setup verify`, which `internal/verify` writes and S15 reads (task `T-d6q5`) | `internal/tsv` | no |
@@ -215,7 +215,7 @@ its job gains the steps `markers`, `setup`, `verify`, `scaffold-push` and
 rulesets of S13; `internal/forge` and `internal/forge/github` gain
 `EffectiveRules` and `Activity` ([`forge.md`](forge.md#the-calls-of-m2d));
 `internal/records` owns the block `markers`, and `internal/run` the blocks
-`setup-tree` and `forge-check`; `internal/git` gains `CommitTree`
+`setup-tree` and `forge-check`; `internal/git` gains `CommitTree` (task `T-j4sd`)
 ([above](#the-calls-of-internalgit)). `internal/run` starts no program for the
 setup: the cell "Starts a program" of its row does not change, and the
 programs that `internal/verify` starts stay in its own row.
@@ -361,13 +361,14 @@ takes a token.
 
 | Call | The command, after the `-c` values below | Used by |
 | ---- | ---------------------------------------- | ------- |
-| `CommitTree` | `git commit-tree TREE -p PARENT -m MESSAGE`, with the author and the committer in the fixed list of the environment, as `Commit` takes them | the probe of the forge check: an empty commit on top of the default branch's head, on no ref ([`scaffold.md`](scaffold.md#the-probe)) |
+| `CommitTree` | `git commit-tree TREE -p PARENT -m MESSAGE`, with the author and the committer in the fixed list of the environment, as `Commit` takes them; it gives the ID that `git` prints. An empty commit is the call with the tree of its parent, which the caller gives | the probe of the forge check: an empty commit on top of the default branch's head, on no ref ([`scaffold.md`](scaffold.md#the-probe)) |
 
 - The probe is pushed with `Push` and the token, to `refs/heads/layup-probe`;
   a refusal by the remote is a `FailedError` with `Code` 1 whose `Stderr` holds
   the remote's lines, where the forge check looks for `GH013`.
 - `CommitTree` refuses, before `git` starts, a `TREE` or a `PARENT` that is not
-  a full object ID.
+  a full object ID (a `FailedError` with `Code` -1); an output of `git` that is no
+  object ID is a `FailedError` with `Code` 0.
 - The setup under `layup run` uses the calls of phase 1 through
   `internal/setup`, and `layup run` builds the work area's `target/` with
   `CloneLocal` from its own clone.
@@ -384,7 +385,10 @@ each later one uses the same calls on the last records commit, with no
   `git` 2.44 (a reading of git's option parser; not measured, the Operator's
   host has 2.54.0). So `CheckoutDetach`, `SwitchCreate` and `ResetSoft` get
   none: `COMMIT` is a full object ID (40 or 64 hexadecimal characters), and the
-  call refuses any other text before `git` starts.
+  call refuses any other text before `git` starts. `CommitTree` gets none for the
+  same reason (task `T-j4sd`): its `TREE` and `PARENT` are full object IDs, so no
+  input can be an option on any version of `git` from the minimum, and its
+  `MESSAGE` is the argument of `-m`.
 - `DiffNames` names a renamed path at both ends, so a renamed product path
   counts as changed; `-z` gives each path unchanged.
 - S15 makes the orphan commit in a scratch work tree (task `T-d6q5`, #92), as
