@@ -416,6 +416,26 @@ func markerQuestions(marks []Marker) []question {
 	return out
 }
 
+// A MarkerPlace is a question of S10 as a caller outside the package reads it:
+// the question ID of a file and marker key, the file, the key (the marker with
+// each line end one space, work.MarkerKey) and the first line where it occurs.
+type MarkerPlace struct {
+	ID, File, Marker string
+	Line             int
+}
+
+// MarkerPlaces gives one place per file and marker key of marks, in the order of
+// their first place, which is the order of the stop table of S10: the one home
+// of that rule is markerQuestions, so the step markers of layup run (task
+// T-4c5c, #276) asks what S10 will ask.
+func MarkerPlaces(marks []Marker) []MarkerPlace {
+	var out []MarkerPlace
+	for _, q := range markerQuestions(marks) {
+		out = append(out, MarkerPlace{ID: q.id, File: q.file, Marker: q.text, Line: q.line})
+	}
+	return out
+}
+
 // markerAsk gives the question of a marker of a file (D6 of #90).
 func markerAsk(file, marker string) string {
 	return "What is the value of " + marker + " in " + file + "? Answer gap to keep it as an open gap, with its question as question_text."

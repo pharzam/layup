@@ -342,8 +342,8 @@ func TestRunNewThenRestart(t *testing.T) {
 	if again.code != 0 || !strings.HasPrefix(again.stdout, "step\tresult\tdetail\nforge\tdone\t") || !strings.Contains(again.stdout, "\nrule-gaps\tdone\t") ||
 		!strings.Contains(again.stdout, "\nmeaning\tdone\t0 gaps of meaning, in intake/meaning.tsv\n") ||
 		!strings.Contains(again.stdout, "\nnumbering\tdone\t1 spans, 1 facts, in spec/spans.tsv\nspans\tdone\tthe span check passed, in spec/check.tsv\n"+
-			"draft\tdone\t1 rows, in spec/draft.tsv\ncompleteness\tdone\t0 items, in intake/coverage.tsv\nbatch\tdone\t") ||
-		!strings.HasSuffix(again.stdout, " questions, in questions.tsv and the comment of the batch\nanswers\tdone\twaiting: no answer yet in the block idea-owner\n") || len(w.forge.intake) != 1 || !strings.HasPrefix(w.forge.intake[0], "LAYUP Intake: the batch of questions\n") {
+			"draft\tdone\t1 rows, in spec/draft.tsv\ncompleteness\tdone\t0 items, in intake/coverage.tsv\nmarkers\tdone\tno marker in the pinned tree; intake/markers.tsv has no row\nbatch\tdone\t") ||
+		!strings.HasSuffix(again.stdout, " questions, in questions.tsv and the comment of the batch\nanswers\tdone\twaiting: no answer yet in the block idea-owner and the block operator\n") || len(w.forge.intake) != 1 || !strings.HasPrefix(w.forge.intake[0], "LAYUP Intake: the batch of questions\n") {
 		t.Fatalf("layup run TARGET: exit %d\n%s\n%s", again.code, again.stdout, again.stderr)
 	}
 	// The demo of row 38: the restart's step probe probes the scripted
@@ -378,7 +378,7 @@ func TestRunNewThenRestart(t *testing.T) {
 	if third.code != 0 || !strings.Contains(third.stdout, "\nprobe\tdone\tprobed and passed 0, probed and failed 0, skipped 0\n") || len(w.forge.posted) != 6 ||
 		!strings.Contains(third.stdout, "\nrule-gaps\tdone\tdone before\n") || !strings.Contains(third.stdout, "\nmeaning\tdone\tdone before\n") ||
 		!strings.HasSuffix(third.stdout, "\nnumbering\tdone\tdone before\nspans\tdone\tdone before\ndraft\tdone\tdone before\ncompleteness\tdone\tdone before\n"+
-			"batch\tdone\tdone before\nanswers\tdone\twaiting: no answer yet in the block idea-owner\n") || len(w.forge.intake) != 1 {
+			"markers\tdone\tdone before\nbatch\tdone\tdone before\nanswers\tdone\twaiting: no answer yet in the block idea-owner and the block operator\n") || len(w.forge.intake) != 1 {
 		t.Errorf("layup run TARGET again: exit %d, %d comments\n%s", third.code, len(w.forge.posted), third.stdout)
 	}
 }

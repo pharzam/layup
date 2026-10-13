@@ -555,3 +555,42 @@ func TestTheRunnerResetsTheTargetBeforeAStep(t *testing.T) {
 		t.Errorf("a reset that fails: %v, %+v, calls %q; want S04 fail and not run", err, res.Steps[3], f.calls)
 	}
 }
+
+// MarkerPlaces gives the questions of S10 to a caller outside the package
+// (task T-4c5c, #276: the step markers of layup run asks them before S10 does):
+// one place per file and marker key, at the first line of the key, in the order
+// of the first place, with the question ID of the key. A marker over more lines
+// is one key, its line ends one space each.
+func TestMarkerPlaces(t *testing.T) {
+	open, shut := string(rune(0x2039)), string(rune(0x203a))
+	one, two := open+"owner"+shut, open+"two\nlines"+shut
+	key2 := open + "two lines" + shut
+	marks := []Marker{
+		{"docs/a.md", 3, 1, one},
+		{"docs/a.md", 5, 1, two},
+		{"docs/a.md", 9, 1, one},                // the same key again, later: no second place
+		{"docs/a.md", 9, 20, open + "x" + shut}, // two markers on one line are two places
+		{"docs/b.md", 1, 1, one},                // the same text in another file is another key
+		{"docs/b.md", 2, 1, open + "two\r\nlines" + shut},
+		{"docs/b.md", 4, 1, two},
+	}
+	want := []MarkerPlace{
+		{MarkerID("docs/a.md", one), "docs/a.md", one, 3},
+		{MarkerID("docs/a.md", key2), "docs/a.md", key2, 5},
+		{MarkerID("docs/a.md", open+"x"+shut), "docs/a.md", open + "x" + shut, 9},
+		{MarkerID("docs/b.md", one), "docs/b.md", one, 1},
+		{MarkerID("docs/b.md", key2), "docs/b.md", key2, 2},
+	}
+	if got := MarkerPlaces(marks); !reflect.DeepEqual(got, want) {
+		t.Errorf("the places:\n%+v\nwant:\n%+v", got, want)
+	}
+	if got := MarkerPlaces(nil); len(got) != 0 {
+		t.Errorf("no marker: %+v; want no place", got)
+	}
+	// The places are the questions of S10, in its order, with its IDs.
+	for i, q := range markerQuestions(marks) {
+		if p := MarkerPlaces(marks)[i]; p.ID != q.id || p.File != q.file || p.Marker != q.text || p.Line != q.line {
+			t.Errorf("place %d is %+v, S10's question is %+v", i, p, q)
+		}
+	}
+}
