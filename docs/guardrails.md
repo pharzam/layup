@@ -706,6 +706,15 @@ These traps are not domain-specific: they hurt every project's test suite.
   needs more than 10 minutes alone on an idle host breaks
   [the rule of the scaling checklist](tests/scaling-checklist.md#fast-enough-for-hook-and-ci),
   and is a task.
+- ❌ **A `git` verb that reads its standard input when its argument is empty.**
+  `git commit-tree TREE -p PARENT -m ''` finds an empty message and reads the message
+  from its standard input, as it does with no `-m`; with a standard input that stays
+  open, the call hangs (measured with `git` 2.56.0: a pipe that stays open and a 5 s
+  limit gave exit 124). `internal/git` leaves `cmd.Stdin` nil, so `git` reads the null
+  device and the commit has an empty message; round 1 of `T-j4sd` (#272) found that no
+  test passed an empty message. **The check:** keep `cmd.Stdin` nil in `call`, and give
+  each call that passes a free text to `git` a test with the empty text, at the unit
+  level (the arguments) and at the integration level (the result, and a return).
 - ❌ **Stale tests after a requirement changes.** When a requirement changes but its
   test does not, the suite now guards the old behaviour and blocks the new. The
   check: the [old-tests conflict rule](engineering-discipline.md#testing) — fix the

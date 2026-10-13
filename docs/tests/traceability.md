@@ -60,6 +60,8 @@ the first.
 | `TestGateUsageErrors`, `TestGatePrintsTheTableAndGivesItsExitCode`, `TestGateGivesTwoOnAnInputErrorOrALeftoverScratchTree`, `TestTheUsageListsGate` (`internal/cli/gate_test.go`) | unit | REQ-004, NFR-004 | F-0003#44 | guardrails.md §1.1 Inv-7 | ADR-0016 | T-5sgt | green |
 | `TestLsTreeReadsEachEntry` (`internal/git/git_test.go`) | unit | REQ-004 | F-0003#44 | guardrails.md §1.1 Inv-7 | ADR-0016 | T-5sgt | green |
 | `TestLsTree` (`internal/git/git_integration_test.go`) | integration | REQ-004 | F-0003#44 | guardrails.md §1.1 Inv-7 | ADR-0016 | T-5sgt | green |
+| `TestCommitTreeRunsItsVerb`, `TestCommitTreeTakesTheIdentityOfCommit`, `TestCommitTreeTakesFullObjectIDsAndNoOtherText`, `TestCommitTreeReadsItsOutput` (`internal/git/git_test.go`) | unit | REQ-003, NFR-005 | F-0003#43 | guardrails.md §1.1 Inv-3 | ADR-0017 | T-j4sd | green |
+| `TestCommitTree` (`internal/git/git_integration_test.go`) | integration | REQ-003, NFR-005 | F-0003#43 | guardrails.md §1.1 Inv-3 | ADR-0017 | T-j4sd | green |
 | `TestARecordValueByStepAndName`, `TestARecordOfAnotherFormIsAnError` (`internal/work/work_test.go`) | unit | REQ-002 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-6x75 | green |
 | `TestTheSchemasEqualTheirBlocks`, `TestReadTheTwoFilesOfAWorkArea` (`internal/work/work_integration_test.go`) | integration | REQ-002 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-6x75, T-d6q5 | green |
 | `TestPinFindings`, `TestKitHistoryFindings`, `TestIdentityFindings`, `TestThePinOfATarget`, `TestTheKitLinkOfATarget`, `TestTheChecksOfATarget` (`internal/verify/checks_test.go`) | unit | REQ-002, NFR-006 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-6x75, T-b3r1 | green |
