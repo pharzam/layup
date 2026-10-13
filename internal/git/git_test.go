@@ -449,3 +449,89 @@ func TestIsAncestorReadsTheExitCode(t *testing.T) {
 		}
 	}
 }
+
+// CommitTree runs git commit-tree with the tree, the parent and the message, in
+// dir, with the author and the committer of Commit, and gives the ID that git
+// prints, trimmed (task T-j4sd, #272; docs/spec/packages.md, The calls of M2d).
+func TestCommitTreeRunsItsVerb(t *testing.T) {
+	parent := strings.Repeat("ab", 20)
+	calls := stub(t, fullID+"\n", nil)
+	id, err := CommitTree("r", fullID, parent, "probe: one\n\ntwo lines", who)
+	if err != nil || id != fullID {
+		t.Fatalf("CommitTree: %q, %v; want the ID that git printed, with no line feed", id, err)
+	}
+	c := only(t, calls)
+	want := append(slices.Clone(wantConfig), "commit-tree", fullID, "-p", parent, "-m", "probe: one\n\ntwo lines")
+	if c.dir != "r" || !reflect.DeepEqual(c.args, want) {
+		t.Errorf("the call: dir %q, args\n got %q\nwant %q", c.dir, c.args, want)
+	}
+}
+
+// The identity of a commit-tree is the identity of a commit: the same six
+// variables, in the same order, after the same fixed list, so the same input
+// gives the same commit ID (NFR-005).
+func TestCommitTreeTakesTheIdentityOfCommit(t *testing.T) {
+	calls := stub(t, "", nil)
+	Commit("r", "m", who)
+	want := only(t, calls).env
+	calls = stub(t, fullID+"\n", nil)
+	if _, err := CommitTree("r", fullID, fullID, "m", who); err != nil {
+		t.Fatal(err)
+	}
+	if got := only(t, calls).env; !reflect.DeepEqual(got, want) {
+		t.Errorf("the environment of CommitTree\n got %q\nwant that of Commit %q", got, want)
+	}
+	other := Identity{Name: "A", Email: "a@x.invalid", Time: time.Unix(1700000000, 0)}
+	calls = stub(t, fullID+"\n", nil)
+	CommitTree("r", fullID, fullID, "m", other)
+	tail := only(t, calls).env[len(want)-6:]
+	wantTail := []string{"GIT_AUTHOR_NAME=A", "GIT_AUTHOR_EMAIL=a@x.invalid", "GIT_AUTHOR_DATE=@1700000000 +0000",
+		"GIT_COMMITTER_NAME=A", "GIT_COMMITTER_EMAIL=a@x.invalid", "GIT_COMMITTER_DATE=@1700000000 +0000"}
+	if !reflect.DeepEqual(tail, wantTail) {
+		t.Errorf("the identity of another commit\n got %q\nwant %q", tail, wantTail)
+	}
+}
+
+// CommitTree takes full object IDs and no other text for the tree and for the
+// parent, each alone: any other text, which could be an option, starts no git.
+func TestCommitTreeTakesFullObjectIDsAndNoOtherText(t *testing.T) {
+	for _, bad := range []string{"", "-x", "--help", "HEAD", "main:dir", fullID[:39], fullID + "0", strings.ToUpper(fullID), fullID[:20] + "g" + fullID[21:]} {
+		for _, c := range []struct{ field, tree, parent string }{{"tree", bad, fullID}, {"parent", fullID, bad}} {
+			calls := stub(t, fullID+"\n", nil)
+			id, err := CommitTree("r", c.tree, c.parent, "m", who)
+			var failed *FailedError
+			if !errors.As(err, &failed) || failed.Code != -1 || id != "" || len(*calls) != 0 {
+				t.Errorf("%s %q: %q, %v, %d starts of git; want a *FailedError with code -1, no ID and no start", c.field, bad, id, err, len(*calls))
+			}
+		}
+	}
+	sha256 := strings.Repeat("ab", 32)
+	calls := stub(t, sha256+"\n", nil)
+	if id, err := CommitTree("r", sha256, sha256, "m", who); err != nil || id != sha256 || len(*calls) != 1 {
+		t.Errorf("object IDs of SHA-256: %q, %v, %d starts of git; want the ID, no error and 1 start", id, err, len(*calls))
+	}
+}
+
+// What git prints is read as an object ID, as the one result of the call: an
+// output that is none is a *FailedError with code 0; a failure of git is its
+// own error, with its code and standard error; no git is a *NotFoundError.
+func TestCommitTreeReadsItsOutput(t *testing.T) {
+	for _, out := range []string{"", "\n", "nothing\n", fullID[:39] + "\n", fullID + "\nmore\n", strings.ToUpper(fullID) + "\n"} {
+		stub(t, out, nil)
+		id, err := CommitTree("r", fullID, fullID, "m", who)
+		var failed *FailedError
+		if !errors.As(err, &failed) || failed.Code != 0 || id != "" {
+			t.Errorf("the output %q: %q, %v; want no ID and a *FailedError with code 0", out, id, err)
+		}
+	}
+	stub(t, "", exec.Command("sh", "-c", "exit 128").Run())
+	var failed *FailedError
+	if id, err := CommitTree("r", fullID, fullID, "m", who); !errors.As(err, &failed) || failed.Code != 128 || !strings.Contains(failed.Stderr, "fatal: stub") || id != "" {
+		t.Errorf("a failure of git: %q, %v; want its code 128 and its standard error in the error", id, err)
+	}
+	stub(t, "", exec.ErrNotFound)
+	var missing *NotFoundError
+	if _, err := CommitTree("r", fullID, fullID, "m", who); !errors.As(err, &missing) {
+		t.Errorf("no git: %v; want a *NotFoundError", err)
+	}
+}

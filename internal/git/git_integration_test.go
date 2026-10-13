@@ -12,6 +12,7 @@ import (
 	"reflect"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -832,5 +833,57 @@ func TestCommitTime(t *testing.T) {
 	}
 	if _, err := CommitTime(dir, "no-such-branch"); err == nil {
 		t.Error("CommitTime of a rev that names no commit: no error")
+	}
+}
+
+// CommitTree makes an empty commit on a parent with the identity that it is
+// given, on no ref (task T-j4sd, #272; docs/spec/packages.md, The calls of M2d):
+// the commit has the tree of the parent, the parent as its one parent, the
+// author and the committer of the identity at its time, and the message as
+// given; one input gives one ID; no ref moves and HEAD stays; git refuses a tree
+// that no object has and a commit given as the tree, with its code.
+func TestCommitTree(t *testing.T) {
+	home := isolate(t)
+	dir := t.TempDir()
+	parent := commitTree(t, dir, map[string]string{"a.txt": "a\n"})
+	tree, err := RevParse(dir, parent+"^{tree}")
+	must(t, err)
+	refs, head := gitOK(t, dir, plain(home), "for-each-ref"), gitOK(t, dir, plain(home), "symbolic-ref", "HEAD")
+	bot := Identity{Name: "layup-agent[bot]", Email: "9001+layup-agent[bot]@users.noreply.github.com", Time: time.Date(2026, 10, 13, 9, 0, 0, 0, time.UTC)}
+	id, err := CommitTree(dir, tree, parent, "probe: layup\n\nan empty commit", bot)
+	must(t, err)
+	at := strconv.FormatInt(bot.Time.Unix(), 10) + " +0000\n"
+	obj := gitOK(t, dir, plain(home), "cat-file", "-p", id)
+	for _, want := range []string{"tree " + tree + "\nparent " + parent + "\n", "\nauthor " + bot.Name + " <" + bot.Email + "> " + at,
+		"\ncommitter " + bot.Name + " <" + bot.Email + "> " + at, "\n\nprobe: layup\n\nan empty commit\n"} {
+		if !strings.Contains(obj, want) {
+			t.Errorf("the commit %s has no %q:\n%s", id, want, obj)
+		}
+	}
+	if strings.Count(obj, "\nparent ") != 1 {
+		t.Errorf("the commit has not one parent:\n%s", obj)
+	}
+	if diff := gitOK(t, dir, plain(home), "diff-tree", "-r", "--no-commit-id", parent, id); diff != "" {
+		t.Errorf("the commit is not empty: it differs from its parent in\n%s", diff)
+	}
+	if now := gitOK(t, dir, plain(home), "for-each-ref"); now != refs || gitOK(t, dir, plain(home), "symbolic-ref", "HEAD") != head {
+		t.Error("the call moved a ref or HEAD")
+	}
+	if headID, _ := RevParse(dir, "HEAD"); headID != parent {
+		t.Errorf("HEAD is %s, want the parent %s", headID, parent)
+	}
+	if again, err := CommitTree(dir, tree, parent, "probe: layup\n\nan empty commit", bot); err != nil || again != id {
+		t.Errorf("the same input again: %q, %v; want the ID %s (NFR-005)", again, err, id)
+	}
+	dash, err := CommitTree(dir, tree, parent, "-x is a message", bot)
+	must(t, err)
+	if obj := gitOK(t, dir, plain(home), "cat-file", "-p", dash); !strings.Contains(obj, "\n\n-x is a message\n") {
+		t.Errorf("a message that starts with a dash:\n%s", obj)
+	}
+	for name, tree := range map[string]string{"a tree that no object has": strings.Repeat("0", 40), "a commit as the tree": parent} {
+		var failed *FailedError
+		if got, err := CommitTree(dir, tree, parent, "m", bot); !errors.As(err, &failed) || failed.Code <= 0 || failed.Stderr == "" || got != "" {
+			t.Errorf("%s: %q, %v; want git's refusal, with its code and its standard error", name, got, err)
+		}
 	}
 }
