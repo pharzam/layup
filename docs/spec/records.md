@@ -599,7 +599,9 @@ after a line `== <file>`, byte for byte (JSON, not a table); and
 `setup/inputs/files/<path>`, a prose text at its path in the target, which the
 check of its setup row reads; it is committed with the end of the prose session
 that wrote it, and removed again, in one commit, when the step `setup` is `fail`
-after that session ([`scaffold.md`](scaffold.md#the-stops-of-the-runner)).
+after the last session of the run, also one that ends in an error after its commit;
+the files of an earlier session whose rows the runner passed stay
+([`scaffold.md`](scaffold.md#the-stops-of-the-runner)).
 
 ## REQ-011 — The telemetry record
 

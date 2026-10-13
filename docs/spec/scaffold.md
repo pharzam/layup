@@ -204,7 +204,8 @@ Operator's own login. The row of order 0 of `setup/tree.tsv` must be in the clon
 and with no such file the default branch must hold the one commit that Start read
 back, else the step is `fail`. A path of `setup/inputs/files/` that leaves
 `inputs/files/` is refused before the work area is touched, and so is an entry of
-that directory that is not a regular file.
+that directory that is not a regular file. A link at `DIR/work` or at
+`DIR/work/OWNER` is refused too, as the removal of the area would reach outside `DIR`.
 
 The setup is deterministic (O-136: the author, the committer and the date of
 each setup commit are fixed), so a rebuilt work area gives the same commits.
@@ -242,11 +243,15 @@ it). The same stop twice in a row, the rows equal in order in `Step`, `Question`
 stops after twelve runs, `fail` too. A marker that the batch asked and that no stop
 lists gets no row and fails nothing. A prose session ends `fail` of the step with
 its own text, which names the session (a pair that is not admitted, a refused output,
-a class that is not `done`, the cap of milestone 0); nothing of it is committed.
+a class that is not `done`, the cap of milestone 0); nothing of it is committed, but
+for a session that ends in an error after its commit (its comment is refused, its
+directory is not removed, the copy into the work area fails): its files are in the
+records, and it is the last session of the run.
 **The files that a `fail` removes** are those of the last prose session of the run,
 which the loop keeps across the runs that follow it with `M-` rows only: whichever run
 ends in the `fail`, one records commit through fencing removes them, its message naming
-the session and the reason. A later stop with `F-` rows means that the runner has passed
+the session and the reason, and it refuses a path that is no regular file of the records
+base, one below a link of it too. A later stop with `F-` rows means that the runner has passed
 the rows of the session before it, whose files stay; a `fail` with no session in the
 run removes none.
 
@@ -283,8 +288,9 @@ file whose link S05's deletion breaks. **Decided here** (decision 6 of #265):
   a link, a file over 1 MiB, a file that is not valid UTF-8, or a file at a
   path that the stop does not name refuses the output, and the step is `fail`,
   naming the session. **Decided here** (task `T-eahr`): the whole set is read and
-  checked before any file is committed: a link is refused as a file and as a
-  directory above a file, an empty directory or a nested file that no row names
+  checked before any file is committed: a link is refused (as a file, as a
+  directory above a file, and as `result/` or its output directory), an empty
+  directory or a nested file that no row names
   refuses the output, 1 MiB (1,048,576 bytes) passes and one byte more does not,
   and a path that is not clean (`..`, an empty part, absolute) is a defect of the
   runner's row, which the step reports as its own `fail`; the session's `repo/` is
