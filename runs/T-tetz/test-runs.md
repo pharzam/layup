@@ -94,7 +94,10 @@ build would be counted as not run, never as caught.
 
 Each with exit 0, in this order; the time of a line is when its command ended. The
 three runs of `go test` are with `-count=1`, then with `-tags=integration` and with
-`-tags=e2e`:
+`-tags=e2e`. They read the working tree of 04:26Z, whose files are those of `a89030b`:
+`1473df7` (the code and the tests) was committed at 04:29Z and `a89030b` (the
+documents) at 04:30Z, with no file changed between; this record is the one file of
+`89917d2` (04:34Z):
 
 ```
 go build ./...: exit 0 (04:26:21Z)

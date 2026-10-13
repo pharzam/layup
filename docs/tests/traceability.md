@@ -183,8 +183,8 @@ the first.
 | `TestTheSchemasEqualTheirBlocks` (`internal/spec/spec_integration_test.go`): `spec-check` and the second value of `spans` | integration | REQ-012 | F-0003#51 | — | ADR-0018 | T-4ywt | green |
 | `TestSpecCheckPassesAndFails`, `TestSpecCheckInputErrors`, `TestSpecCheckUsageErrors` (`cmd/layup/spec_e2e_test.go`) | e2e | REQ-012, NFR-005 | F-0003#51 | — | ADR-0018 | T-hpid | green |
 | `TestValidMarkersAreRead`, `TestMarkersRefuseEachBrokenRule`, `TestMarkersRefuseAWrongHeader` (`internal/records/scaffold_test.go`) | unit | NFR-001, REQ-002 | F-0001#1 | — | ADR-0014 | T-tetz | green |
-| `TestAValidSetupTreeIsRead`, `TestSetupTreeRefusesEachBrokenRule`, `TestSetupTreeRefusesAWrongHeader`, `TestAValidForgeCheckIsRead`, `TestForgeCheckRefusesEachBrokenRule`, `TestForgeCheckRefusesAWrongHeader` (`internal/run/scaffold_test.go`) | unit | NFR-001, REQ-003 | F-0001#1 | — | ADR-0014 | T-tetz | green |
-| `TestTheSchemasOfTheScaffoldEqualTheirBlocks` (`internal/run/scaffold_integration_test.go`): `setup-tree` and `forge-check` | integration | NFR-001, REQ-003 | F-0001#1 | — | ADR-0014 | T-tetz | green |
+| `TestAValidSetupTreeIsRead`, `TestSetupTreeRefusesEachBrokenRule`, `TestSetupTreeRefusesAWrongHeader`, `TestAValidForgeCheckIsRead`, `TestForgeCheckRefusesEachBrokenRule`, `TestForgeCheckRefusesAWrongHeader` (`internal/run/scaffold_test.go`) | unit | NFR-001, REQ-002, REQ-003 | F-0001#1 | — | ADR-0014 | T-tetz | green |
+| `TestTheSchemasOfTheScaffoldEqualTheirBlocks` (`internal/run/scaffold_integration_test.go`): `setup-tree` and `forge-check` | integration | NFR-001, REQ-002, REQ-003 | F-0001#1 | — | ADR-0014 | T-tetz | green |
 | `TestSpecCheckGivesTwoWhenItCannotWriteTheTable` (`internal/cli/spec_test.go`) | unit | REQ-012, NFR-004 | F-0003#51 | — | ADR-0018 | T-hpid | green |
 | `TestTheUsageOfLayupListsItsCommands` with `spec check` (`internal/cli/cli_test.go`) | unit | — | — | — | — | T-hpid | green |
 | `TestTelemetryRowsThatPass`, `TestTelemetryRowsThatBreakARule`, `TestPriceRows` (`internal/records/records_test.go`) | unit | REQ-011 | F-0003#50 | — | ADR-0024 | T-tmhw | green |

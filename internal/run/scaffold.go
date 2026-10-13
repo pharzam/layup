@@ -15,10 +15,10 @@ import (
 // setup/tree.tsv and setup/forge-check.tsv, which this package alone writes and
 // reads, and the rules that their blocks give in words, as the records of
 // Intake do in internal/records ("— when" is "exactly when"). What reads
-// another file or the forge is the writer's, rows 54 to 57a: that the last row
-// of setup-tree is the head of layup-setup and that each commit has its tree,
-// that the time of forge-check rises, and that each row of it has the run of
-// the table.
+// another file or the forge is the writer's: for setup-tree the step verify,
+// row 55 (that its last row is the head of layup-setup and that each commit has
+// its tree), and for forge-check the step forge-check, row 57a (that the time
+// rises and that each row has the run of the table).
 
 // SetupTreeSchema is the form of setup/tree.tsv: the block setup-tree.
 var SetupTreeSchema = tsv.Schema{Name: "setup-tree", Location: "records:setup/tree.tsv", Columns: []tsv.Column{
