@@ -54,6 +54,7 @@ func TestTheSourcesOfARecord(t *testing.T) {
 			[]string{"source: S11 x: a gap row is not named marker:<file>:<line>"}},
 		{"a command", []string{"S02", "pin.commit", "abc", "computed", "git ls-remote x HEAD"}, nil},
 		{"a value that layup run takes from the records of Start", []string{"S02", "pin.commit", "abc", "computed", "records:start/start.tsv"}, nil},
+		{"the row without-layup of S13 in phase 2", []string{"S13", "without-layup", "To merge with LAYUP absent, remove the required checks.", "computed", "out/ruleset-default.json"}, nil},
 		{"a hash of a file of the tree", []string{"S06", "x", "abc", "computed", "sha256 docs/x.txt"}, nil},
 		{"a hash of rows of a file of the work area", []string{"S01", "answers.sha256", "abc", "computed", "sha256 inputs/answers.tsv S01- Q-"}, nil},
 		{"a hash of no file", []string{"S06", "x", "abc", "computed", "sha256 docs/nope"},
