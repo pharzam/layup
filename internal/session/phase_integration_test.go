@@ -163,6 +163,12 @@ func TestReadOutputFiles(t *testing.T) {
 		"a link as the output directory": func(d Dir) {
 			os.Symlink(host, filepath.Join(d.Result, "files"))
 		},
+		"a link as the result directory, to a directory that holds the output": func(d Dir) {
+			os.MkdirAll(filepath.Join(host, "files"), 0o700)
+			os.WriteFile(filepath.Join(host, "files", "README.md"), []byte("outside\n"), 0o600)
+			os.RemoveAll(d.Result)
+			os.Symlink(host, d.Result)
+		},
 	} {
 		e := dirOf(t.TempDir(), "S-1a2b3c4d")
 		os.MkdirAll(e.Result, 0o700)

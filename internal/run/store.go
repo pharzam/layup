@@ -125,7 +125,7 @@ func (s *recordsStore) ReadFiles(ctx context.Context, dir string) (map[string][]
 	}
 	files := map[string][]byte{}
 	for _, e := range entries {
-		if e.Type != "blob" || (e.Mode != "100644" && e.Mode != "100755") {
+		if !regular(e) {
 			return nil, fmt.Errorf("%s of the records is not a regular file (mode %s, %s)", e.Path, e.Mode, e.Type)
 		}
 		data, err := git.Show(s.dir, base, e.Path)
@@ -135,6 +135,11 @@ func (s *recordsStore) ReadFiles(ctx context.Context, dir string) (map[string][]
 		files[strings.TrimPrefix(e.Path, dir+"/")] = data
 	}
 	return files, nil
+}
+
+// regular reports whether a tree entry is a regular file: a blob of mode 100644 or 100755.
+func regular(e git.TreeEntry) bool {
+	return e.Type == "blob" && (e.Mode == "100644" || e.Mode == "100755")
 }
 
 // Base gives the run's records base: the commit it pushed last, else of its
@@ -248,6 +253,13 @@ func (s *recordsStore) commitFiles(ctx context.Context, files map[string][]byte,
 		}
 	}
 	for _, p := range remove {
+		// The base's tree holds p as a regular file: a path below a link of the base has no entry, and
+		// would take the removal out of the work tree.
+		if entries, err := git.LsTree(s.dir, base, p); err != nil {
+			return err
+		} else if len(entries) != 1 || !regular(entries[0]) {
+			return fmt.Errorf("the records base has no regular file %s to remove", p)
+		}
 		if err := os.Remove(filepath.Join(tree, filepath.FromSlash(p))); err != nil {
 			return fmt.Errorf("the records base has no file %s to remove: %w", p, err)
 		}

@@ -37,7 +37,8 @@ type proseDone struct {
 
 // setupLoop is the loop of the step with its seams: the runner on the work
 // area; the row that a marker gets, for a marker that the batch asked; the
-// rows added to inputs/answers.tsv; one session for the F- rows of a stop; the
+// rows added to inputs/answers.tsv; one session for the F- rows of a stop, which
+// gives the files that the session may have committed with any error; the
 // removal of a session's files from the records, with the reason; and the bound
 // of the runs (decided here, task T-eahr: the loop has no other).
 type setupLoop struct {
@@ -60,14 +61,15 @@ const setupDoneDetail = "S01 to S14 done, in the work area"
 // batch did not ask is a fail); a stop with F- rows with one prose session; any
 // other row is a fail. A fail after a prose session of the run, whichever run
 // ends in it, removes the files of the last of them from the records, unless the
-// runner has passed its rows since (a later stop with F- rows); the same stop
-// twice in a row is a fail.
+// runner has passed its rows since (a later stop with F- rows), and also when
+// the session itself ends in an error after its commit; the same stop twice in a
+// row is a fail.
 func (l setupLoop) do(ctx context.Context) Step {
 	const name = "setup"
 	var last *proseDone
 	var prev []setup.StopRow
 	failed := func(detail string) Step {
-		if last != nil {
+		if last != nil && len(last.Files) > 0 {
 			if err := l.remove(ctx, *last, detail); err != nil {
 				detail += "; its files could not be removed from the records: " + strings.SplitN(err.Error(), "\n", 2)[0]
 			}
@@ -134,10 +136,10 @@ func (l setupLoop) do(ctx context.Context) Step {
 		}
 		if len(files) > 0 {
 			p, err := l.prose(ctx, files)
+			last = &p // its files are in the records once it has ended, whatever its end
 			if err != nil {
 				return failed(strings.SplitN(err.Error(), "\n", 2)[0])
 			}
-			last = &p
 		}
 	}
 	return failed(fmt.Sprintf("the runner did not end after %d runs", l.max))
@@ -281,7 +283,8 @@ func appendAnswers(dir string, rows [][]string) error {
 // branch at that head); its files are committed to the records by the end of the
 // session, and written to inputs/files/ of the work area, where the runner reads
 // them before the next run (docs/spec/scaffold.md, The prose rows). No admitted
-// pair is an error that starts with "pair:".
+// pair is an error that starts with "pair:". The files that the session's check
+// of its output kept come with any error that follows, as they may be committed.
 func (r *state) proseSession(ctx context.Context, dir string, rows []setup.StopRow) (proseDone, error) {
 	names, err := proseNames(rows)
 	if err != nil {
@@ -323,19 +326,25 @@ func (r *state) proseSession(ctx context.Context, dir string, rows []setup.StopR
 			}
 			return records, err
 		}})
-	if err != nil {
-		return proseDone{}, err
+	if err == nil {
+		err = copyProse(dir, kept)
 	}
-	for p, data := range kept {
+	// Whatever the error, once the session's files were kept they may be in the records: the caller removes them.
+	return proseDone{Session: id, Files: kept}, err
+}
+
+// copyProse writes the files of a prose session below inputs/files/ of the work area at dir.
+func copyProse(dir string, files map[string][]byte) error {
+	for p, data := range files {
 		dst := filepath.Join(dir, "inputs", "files", filepath.FromSlash(p))
 		if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
-			return proseDone{}, err
+			return err
 		}
 		if err := os.WriteFile(dst, data, 0o644); err != nil {
-			return proseDone{}, err
+			return err
 		}
 	}
-	return proseDone{Session: id, Files: kept}, nil
+	return nil
 }
 
 // removeProse removes the files of a prose session from the records in one

@@ -36,11 +36,17 @@ type workSource struct {
 // read back) and origin the URL of the forge. The runner reads refs/heads/main,
 // so a default branch of another name gets main at the root commit as well
 // (decided here, task T-eahr). A path of the prose texts that leaves inputs/files
-// is refused before the disk changes.
+// is refused before the disk changes, and so is a link at DIR/work/OWNER or at
+// DIR/work, through which the removal would reach outside DIR.
 func buildWorkArea(dir string, src workSource, clone, branch, url string) error {
 	for p := range src.Files {
 		if path.IsAbs(p) || path.Clean(p) != p || p == "." || p == ".." || strings.HasPrefix(p, "../") {
 			return fmt.Errorf("setup/inputs/files/%s is not a path below inputs/files of the work area", p)
+		}
+	}
+	for _, up := range []string{filepath.Dir(dir), filepath.Dir(filepath.Dir(dir))} {
+		if info, err := os.Lstat(up); err == nil && info.Mode()&os.ModeSymlink != 0 {
+			return fmt.Errorf("%s is a link; the work area is DIR/work/OWNER/NAME, below no link", up)
 		}
 	}
 	if err := os.RemoveAll(dir); err != nil {

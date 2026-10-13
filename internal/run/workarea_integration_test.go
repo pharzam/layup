@@ -207,3 +207,53 @@ func TestTheTargetIsOnMainWhateverTheDefaultBranchIs(t *testing.T) {
 		t.Errorf("the tree of target/: %q; want it clean", got)
 	}
 }
+
+// The work area refuses, before it touches the disk, a file of the records
+// whose path leaves inputs/files (docs/spec/scaffold.md, The work area): the
+// records are LAYUP's own, and a path with .. is no path of the target.
+func TestTheWorkAreaRefusesAFilePathThatLeavesItsDirectory(t *testing.T) {
+	for _, path := range []string{"..", "../escape.md", "docs/../../escape.md", "/etc/passwd", "docs//glossary.md", "", ".", "docs/./glossary.md"} {
+		dir := filepath.Join(t.TempDir(), "work", "acme", "target")
+		err := buildWorkArea(dir, workSource{Brief: []byte("b"), Files: map[string][]byte{path: []byte("x")}}, "/no/such/clone", "main", originURL)
+		if err == nil || !strings.Contains(err.Error(), "setup/inputs/files/") {
+			t.Errorf("the path %q: %v; want an error that names the path in the records", path, err)
+		}
+		if _, statErr := os.Stat(dir); statErr == nil {
+			t.Errorf("the path %q: the work area exists after the refusal; want no change of the disk", path)
+		}
+	}
+}
+
+// A link at DIR/work or at DIR/work/OWNER would take the removal of the area outside DIR
+// (docs/spec/scaffold.md, The work area): the build is refused, and the files outside stay.
+func TestTheWorkAreaIsNotBuiltThroughALink(t *testing.T) {
+	bare, _ := forgeRepo(t, "main", map[string]string{"README.md": "# Target\n"})
+	clone := runClone(t, bare)
+	for _, link := range []string{"work/acme", "work"} {
+		host, outside := t.TempDir(), t.TempDir()
+		keep := []string{"target/keep.txt", "acme/target/keep.txt"}
+		for _, k := range keep {
+			if err := os.MkdirAll(filepath.Join(outside, filepath.Dir(k)), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(filepath.Join(outside, k), []byte("keep\n"), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}
+		if err := os.MkdirAll(filepath.Dir(filepath.Join(host, link)), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Symlink(outside, filepath.Join(host, link)); err != nil {
+			t.Fatal(err)
+		}
+		err := buildWorkArea(filepath.Join(host, "work", "acme", "target"), workSource{Brief: []byte("b\n")}, clone, "main", originURL)
+		if err == nil || !strings.Contains(err.Error(), "is a link") {
+			t.Errorf("a link at %s: %v; want an error that names the link", link, err)
+		}
+		for _, k := range keep {
+			if data, err := os.ReadFile(filepath.Join(outside, k)); err != nil || string(data) != "keep\n" {
+				t.Errorf("a link at %s: %s outside DIR is %q, %v; want it kept", link, k, data, err)
+			}
+		}
+	}
+}

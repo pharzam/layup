@@ -44,8 +44,8 @@ func TestARecordsCommitRemovesFiles(t *testing.T) {
 	if err := os.WriteFile(outside, []byte("keep\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := store.Remove(ctx, []string{"../../outside.txt"}, "refused"); err == nil {
-		t.Error("Remove of ../../outside.txt: no error; want a refusal")
+	if err := store.Remove(ctx, []string{"../../outside.txt"}, "refused"); err == nil || !strings.Contains(err.Error(), "is not a path of the records") {
+		t.Errorf("Remove of ../../outside.txt: %v; want a refusal that says it is not a path of the records", err)
 	}
 	if data, err := os.ReadFile(outside); err != nil || string(data) != "keep\n" {
 		t.Errorf("the file outside the work tree after the refused removal: %q, %v; want it kept", data, err)
@@ -94,5 +94,35 @@ func TestTheFilesOfTheRecordsAreReadByTheirPaths(t *testing.T) {
 	linked := &recordsStore{dir: clone, read: strings.TrimSpace(gitOut(t, clone, "rev-parse", "HEAD"))}
 	if got, err := linked.ReadFiles(ctx, "setup/inputs/files"); err == nil || !strings.Contains(err.Error(), "link.md") {
 		t.Errorf("a link in the directory: %q, %v; want an error that names link.md", got, err)
+	}
+}
+
+// A path below a link of the records base removes no file: the base's tree has no such
+// path, and the link would take the removal out of the work tree (task T-eahr).
+func TestARecordsCommitRemovesNoFileThroughALink(t *testing.T) {
+	w, r, _, _ := sessionWorld(t)
+	store := r.Store.(*recordsStore)
+	outside := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(outside, "files"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(outside, "files", "a.md"), []byte("keep\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	clone := filepath.Join(t.TempDir(), "records")
+	gitOut(t, "/", "clone", "-q", "--branch", "layup-records", "--single-branch", "file://"+w.bare, clone)
+	if err := os.Symlink(outside, filepath.Join(clone, "linked")); err != nil {
+		t.Fatal(err)
+	}
+	gitOut(t, clone, "add", "-A")
+	gitOut(t, clone, "commit", "-q", "-m", "a link")
+	linked := &recordsStore{dir: clone, url: store.url, auth: store.auth, who: store.who, read: strings.TrimSpace(gitOut(t, clone, "rev-parse", "HEAD"))}
+	for _, path := range []string{"linked/files/a.md", "linked"} { // a path below a link, and the link itself, which is no regular file
+		if err := linked.Remove(context.Background(), []string{path}, "refused"); err == nil || !strings.Contains(err.Error(), "no regular file "+path) {
+			t.Errorf("Remove of %s: %v; want a refusal that names it", path, err)
+		}
+	}
+	if data, err := os.ReadFile(filepath.Join(outside, "files", "a.md")); err != nil || string(data) != "keep\n" {
+		t.Errorf("the file outside the work tree after the refused removal: %q, %v; want it kept", data, err)
 	}
 }

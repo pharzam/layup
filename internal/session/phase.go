@@ -56,9 +56,10 @@ func ReadOutput(d Dir, name string) ([]byte, error) {
 // must hold the files at the paths in names, and nothing else. The whole set is
 // read and checked before any file is given: a name that is not a clean relative
 // path; a missing file; an entry that no name covers (a file, a directory with no
-// name below it, also a nested one); a link, as a file or as a directory above
-// one; an entry that is no regular file; a file over 1 MiB; and a file that is
-// not valid UTF-8 refuse the output, and the files read are not given.
+// name below it, also a nested one); a link, as a file, as a directory above
+// one, or as result/ or result/<dir> itself; an entry that is no regular file;
+// a file over 1 MiB; and a file that is not valid UTF-8 refuse the output, and
+// the files read are not given.
 func ReadOutputFiles(d Dir, dir string, names []string) (map[string][]byte, error) {
 	if err := fileName(dir); err != nil {
 		return nil, fmt.Errorf("the output directory: %w", err)
@@ -74,10 +75,12 @@ func ReadOutputFiles(d Dir, dir string, names []string) (map[string][]byte, erro
 		}
 	}
 	root := filepath.Join(d.Result, dir)
-	if info, err := os.Lstat(root); err != nil {
-		return nil, fmt.Errorf("the output directory: %w", err)
-	} else if !info.IsDir() {
-		return nil, fmt.Errorf("the output directory %s is a link, or not a directory", dir)
+	for _, p := range []string{d.Result, root} { // a link at either takes the read out of the session's directory
+		if info, err := os.Lstat(p); err != nil {
+			return nil, fmt.Errorf("the output directory: %w", err)
+		} else if !info.IsDir() {
+			return nil, fmt.Errorf("the output directory %s is a link, or not a directory", p)
+		}
 	}
 	seen := map[string]bool{}
 	err := filepath.WalkDir(root, func(p string, e fs.DirEntry, err error) error {

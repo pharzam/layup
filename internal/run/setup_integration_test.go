@@ -321,6 +321,23 @@ func TestAProseTextWhoseCheckFailsIsRemovedAndANewSessionStarts(t *testing.T) {
 	}
 }
 
+// A prose session that ends after its records commit (its comment on the control issue is refused): the step is fail,
+// and the files of that session are removed from the records, as for any fail that follows a session.
+func TestAProseSessionWhoseCommentFailsLeavesNoFileInTheRecords(t *testing.T) {
+	w := scaffoldWorld(t, proseFiles())
+	w.fake.failNote = " session of setup: "
+	rows := toSetup(t, w, "go")
+	if last := rows[len(rows)-1]; last.Name != "setup" || last.Result != "fail" {
+		t.Fatalf("the last row of the restart: %+v; want setup fail\n%s", last, steps(rows))
+	}
+	if out, err := gitRunOK(w.bare, "show", "refs/heads/layup-records:setup/inputs/files/docs/guide.md"); err == nil {
+		t.Errorf("docs/guide.md is in the records after the fail: %q; want the files of the session removed", out)
+	}
+	if log := gitOut(t, w.bare, "log", "--format=%s", "refs/heads/layup-records"); !strings.Contains(log, "layup run: the files of the session S-") {
+		t.Errorf("the log of the records has no commit that removes the files of the session:\n%s", log)
+	}
+}
+
 // The real runner on a work area that layup run built, with no prose session: the
 // two input states of S01. With no row of S01-stack the runner stops on it, the step
 // is fail and names it, and no setup commit is kept: layup-setup does not exist. With

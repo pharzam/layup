@@ -39,7 +39,8 @@ type fakeGitHub struct {
 	bare     string
 	mu       sync.Mutex
 	issues   int
-	failOpen int // the number of the issue whose opening fails, or 0
+	failOpen int    // the number of the issue whose opening fails, or 0
+	failNote string // a comment whose body holds this fails once, or ""
 	comments map[int][]map[string]any
 	posted   []string // the bodies of the comments that the run posted, on any issue (row 43b)
 }
@@ -87,6 +88,11 @@ func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
 	case strings.HasPrefix(call, "POST /repos/acme/target/issues/") && strings.HasSuffix(call, "/comments"):
 		var in struct{ Body string }
 		json.NewDecoder(r.Body).Decode(&in)
+		if f.failNote != "" && strings.Contains(in.Body, f.failNote) {
+			f.failNote = ""
+			http.Error(w, `{"message":"Server Error"}`, 500)
+			return
+		}
 		f.posted = append(f.posted, in.Body)
 		// The comment is the App's, and a later read of its issue sees it
 		// (row 46: the step batch reads the Intake issue).

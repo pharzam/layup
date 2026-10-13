@@ -82,10 +82,13 @@ func (f *loopFake) loop(markers map[string][]string) setupLoop {
 		prose: func(_ context.Context, rows []setup.StopRow) (proseDone, error) {
 			n := len(f.prosed)
 			f.prosed = append(f.prosed, rows)
-			if err := f.proseErr[n]; err != nil {
+			done := proseDone{Session: fmt.Sprintf("S-0000000%d", n+1), Files: map[string][]byte{"a.md": []byte("a")}}
+			if err := f.proseErr[n]; err == errAfterTheCommit {
+				return done, err
+			} else if err != nil {
 				return proseDone{}, err
 			}
-			return proseDone{Session: fmt.Sprintf("S-0000000%d", n+1), Files: map[string][]byte{"a.md": []byte("a")}}, nil
+			return done, nil
 		},
 		remove: func(_ context.Context, p proseDone, reason string) error {
 			f.removed = append(f.removed, p.Session+": "+reason)
@@ -93,6 +96,11 @@ func (f *loopFake) loop(markers map[string][]string) setupLoop {
 		},
 	}
 }
+
+// errAfterTheCommit is the error of a session that ends after its files were committed to the records
+// (its comment is refused, its directory is not removed, or the copy into the work area fails): it
+// comes with the session and its files, as the session of the step gives them.
+var errAfterTheCommit = errors.New("the comment of the session was refused")
 
 var asked = map[string][]string{
 	"M-aaaaaaaa": {"M-aaaaaaaa", "Carol", "operator", "https://x/1#issuecomment-1", ""},
@@ -226,6 +234,10 @@ func TestAFailAfterAProseSessionRemovesItsFilesAndOneBeforeRemovesNone(t *testin
 			[]string{"S-00000002: S08: glossary: fail"}, "S08: glossary: fail"},
 		{"a second session that ends badly leaves the first, whose rows passed", []any{stopOf(fRow("a.md")), stopOf(fRow("b.md"))}, map[int]error{1: errors.New("the session S-bad: no-result: missing")},
 			nil, "the session S-bad: no-result: missing"},
+		{"a session that ends after its commit: its files are in the records", []any{stopOf(fRow("a.md"))}, map[int]error{0: errAfterTheCommit},
+			[]string{"S-00000001: " + errAfterTheCommit.Error()}, errAfterTheCommit.Error()},
+		{"the second of two ends after its commit: the first's files stay", []any{stopOf(fRow("a.md")), stopOf(fRow("b.md"))}, map[int]error{1: errAfterTheCommit},
+			[]string{"S-00000002: " + errAfterTheCommit.Error()}, errAfterTheCommit.Error()},
 		{"a fail before any session", []any{stopOf(mRow("M-aaaaaaaa")), failedAt("S12", "the stack x has no entry")}, nil, nil, "S12: the stack x has no entry"},
 		{"an input error after a session", []any{stopOf(fRow("a.md")), &setup.InputError{Err: errors.New("a bad row")}}, nil,
 			[]string{"S-00000001: a bad row"}, "a bad row"},
