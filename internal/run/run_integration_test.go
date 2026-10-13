@@ -35,14 +35,16 @@ import (
 // (docs/spec/run.md, the acceptance row Start): its branches are those of the
 // bare target repository, so the stand-in Operator's push shows.
 type fakeGitHub struct {
-	t        *testing.T
-	bare     string
-	mu       sync.Mutex
-	issues   int
-	failOpen int    // the number of the issue whose opening fails, or 0
-	failNote string // a comment whose body holds this fails once, or ""
-	comments map[int][]map[string]any
-	posted   []string // the bodies of the comments that the run posted, on any issue (row 43b)
+	t          *testing.T
+	bare       string
+	mu         sync.Mutex
+	issues     int
+	failOpen   int    // the number of the issue whose opening fails, or 0
+	failNote   string // a comment whose body holds this fails once, or ""
+	comments   map[int][]map[string]any
+	posted     []string          // the bodies of the comments that the run posted, on any issue (row 43b)
+	rules      map[string]string // the JSON list that the rules of a branch answer, by the branch (row 57a); [] when none
+	noActivity bool              // the read of the activity answers 404 (row 57a)
 }
 
 func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
@@ -70,6 +72,18 @@ func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		json.NewEncoder(w).Encode(list)
+	case strings.HasPrefix(call, "GET /repos/acme/target/rules/branches/"):
+		text := f.rules[strings.TrimPrefix(r.URL.Path, "/repos/acme/target/rules/branches/")]
+		if text == "" {
+			text = "[]"
+		}
+		w.Write([]byte(text))
+	case call == "GET /repos/acme/target/activity":
+		if f.noActivity {
+			http.Error(w, `{"message":"Not Found"}`, 404)
+			return
+		}
+		w.Write([]byte("[]"))
 	case strings.HasPrefix(call, "GET /users/"):
 		ids := map[string]int{"pharzam": 101, "carol": 303, "layup-agent[bot]": 9001}
 		login := strings.TrimPrefix(r.URL.Path, "/users/")
@@ -728,7 +742,7 @@ func TestTheStepRuleGaps(t *testing.T) {
 	cfg.Step = func(i, n int, name string) { progress = append(progress, fmt.Sprintf("%d/%d %s", i, n, name)) }
 	rows := Restart(context.Background(), cfg)
 	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers")
-	if want := []string{"1/6 forge", "2/6 clone", "3/20 version", "4/20 lease", "5/20 probe", "6/20 rule-gaps", "7/20 meaning", "8/20 numbering", "9/20 spans", "10/20 draft", "11/20 completeness", "12/20 markers", "13/20 batch", "14/20 answers"}; strings.Join(progress, ", ") != strings.Join(want, ", ") {
+	if want := []string{"1/6 forge", "2/6 clone", "3/21 version", "4/21 lease", "5/21 probe", "6/21 rule-gaps", "7/21 meaning", "8/21 numbering", "9/21 spans", "10/21 draft", "11/21 completeness", "12/21 markers", "13/21 batch", "14/21 answers"}; strings.Join(progress, ", ") != strings.Join(want, ", ") {
 		t.Errorf("the progress %q, want %q", progress, want)
 	}
 	// What layup psb check prints on the same file (internal/cli/cli.go):

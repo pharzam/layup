@@ -27,7 +27,7 @@ import (
 // RunStepsSchema is the form of the table that layup run prints: the block
 // run-steps of docs/spec/run.md (The command).
 var RunStepsSchema = tsv.Schema{Name: "run-steps", Location: "stdout", Columns: []tsv.Column{
-	{Name: "step", Type: "enum(forge|plan|baseline|root-push|read-back|records|issues|watch|clone|version|lease|probe|phase|rule-gaps|meaning|numbering|spans|draft|completeness|markers|batch|answers|answers-review|follow-up|follow-up-answers|setup|verify|scaffold-push)", Key: true},
+	{Name: "step", Type: "enum(forge|plan|baseline|root-push|read-back|records|issues|watch|clone|version|lease|probe|phase|rule-gaps|meaning|numbering|spans|draft|completeness|markers|batch|answers|answers-review|follow-up|follow-up-answers|setup|verify|scaffold-push|forge-check)", Key: true},
 	{Name: "result", Type: "enum(done|fail)"},
 	{Name: "detail", Type: "text"},
 }}
@@ -129,7 +129,7 @@ func Restart(ctx context.Context, cfg Config) []Step {
 	startDone := r.startDone()
 	tail := []func(context.Context) Step{r.versionStep, r.takeStep, r.probeStep, r.phaseStep}
 	if startDone {
-		tail = []func(context.Context) Step{r.versionStep, r.takeStep, r.probeStep, r.ruleGapsStep, r.meaningStep, r.numberingStep, r.spansStep, r.draftStep, r.completenessStep, r.markersStep, r.batchStep, r.answersStep, r.answersReviewStep, r.followUpStep, r.followUpAnswersStep, r.setupStep, r.verifyStep, r.scaffoldPushStep}
+		tail = []func(context.Context) Step{r.versionStep, r.takeStep, r.probeStep, r.ruleGapsStep, r.meaningStep, r.numberingStep, r.spansStep, r.draftStep, r.completenessStep, r.markersStep, r.batchStep, r.answersStep, r.answersReviewStep, r.followUpStep, r.followUpAnswersStep, r.setupStep, r.verifyStep, r.scaffoldPushStep, r.forgeCheckStep}
 	}
 	rows = append(rows, r.steps(ctx, restartNames(startDone), len(rows), tail)...)
 	if end := &rows[len(rows)-1]; startDone && end.Result == "done" {
@@ -194,7 +194,7 @@ func (r *state) lost() error {
 // task T-qk66, adds the first, rule-gaps).
 func restartNames(startDone bool) []string {
 	if startDone {
-		return []string{"forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers", "answers-review", "follow-up", "follow-up-answers", "setup", "verify", "scaffold-push"}
+		return []string{"forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers", "answers-review", "follow-up", "follow-up-answers", "setup", "verify", "scaffold-push", "forge-check"}
 	}
 	return []string{"forge", "clone", "version", "lease", "probe", "phase"}
 }
