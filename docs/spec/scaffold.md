@@ -584,6 +584,42 @@ one page, with the installation token, returns without an error. An error is
 `fail` (`layup audit`, `M2f`, needs the read). The rows that it returns are not
 judged here.
 
+**Decided here** (task `T-wphp`, #280, with the conditions of its plan review): the
+step runs after `scaffold-push` is `done` and not waiting, and is not "done before"
+(its later starts are [below](#at-each-later-start)). Its table always has the eight
+rows, and the records commit of `setup/forge-check.tsv` is made in every case; the
+step is `done` "the forge check passed", or `fail` naming the first row that is not
+`pass` as `<check>: <detail>`.
+
+- **The files** of the read-back are `out/ruleset-default.json`, for the default branch and
+  for `layup-probe`, which its conditions name, and `out/ruleset-records.json`, for
+  `layup-records`, in the work area, which the step makes sure of as `scaffold-push` does
+  (built again when missing, its head checked against the last commit of `setup/tree.tsv`;
+  a work area that is there is used as it is, and its head is not read).
+- **The comparison:** each rule of the file needs one returned rule of its type whose
+  parameters equal each parameter of the file's rule; parameters of different entries are
+  never combined, so the outcome does not depend on the order of the answer. A parameter
+  that the call returns and the file lacks is ignored; one that the file holds and the call
+  lacks is a difference, whatever its value (`false` and `0` too). The required checks are the
+  set of the pairs `context` and `integration_id`, with `strict_required_status_checks_policy`:
+  an extra pair and a missing pair differ, in any order. Absent parameters and an empty object
+  of them are alike. The `detail` of a `pass` is empty (`—`), except a rules row with a rule
+  type that the call returns and the file lacks: `extra: <types>`, sorted, a comma and a space.
+- **The bypass lists** are read from `setup/rulesets.txt` by its framing (an output is what lies
+  between its marker line and the line feed before the next marker line, or before the end of
+  the file); the `bypass_actors` of `default.json` must be an empty list, and those of
+  `records.json` must be one actor, `Integration`, `always`, with the `app_id` of the register.
+- **What fails what:** a failure of a check's own call (the forge, the push, a file, the token,
+  the commit of the probe) is that row's `fail`, with the first line of the error; a work area
+  that cannot be made sure of fails the three rules rows with its reason; a `setup/tree.tsv`
+  or a `setup/rulesets.txt` that is absent or cannot be read back fails the `tree` row, or the two
+  bypass rows; a read of the repository that fails gives the `tree` row's `fail` and a `probe`
+  `fail` that says the head was unavailable, and the expected commit is never put in its place.
+  Only a records base that is unavailable (a read of the two records that errors) or a records
+  commit that fails ends the step with no table, and its detail says so.
+- **The probe's commit** has the message `layup: the probe of the forge check`; the `run` and
+  `at` columns are the run's ID and the run's clock at each check.
+
 ### At each later start
 
 **Decided here:** once `setup/forge-check.tsv` exists with each row `pass`,
