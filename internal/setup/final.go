@@ -38,7 +38,8 @@ const (
 )
 
 // runS12 is S12 (D1 of #92): the files of the catalog entry of the stack, with
-// the module path github.com/OWNER/NAME of the answer S01-name, the manifest
+// the module path github.com/OWNER/NAME of the answer S01-name (in phase 2 the
+// name that S01 computed, and its source), the manifest
 // docs/gates.tsv, and for each gap of the entry its row of open-gaps.tsv and
 // its record row. A path of the entry that the head holds with other bytes is
 // a fail: the baseline's own files stay byte for byte (REQ-018), and the head
@@ -65,7 +66,13 @@ func runS12(in Input) Outcome {
 	if err != nil {
 		return Outcome{Kind: Fail, Evidence: "the tree of the head: " + firstLine(err)}
 	}
-	values := [][]string{{"module", module, "answer", "S01-name"}}
+	src, ref := "answer", "S01-name" // phase 2 has no such answer: the module has the source of the name there
+	for _, r := range in.Record {
+		if r[0] == "S01" && r[1] == "name" && r[3] == "computed" {
+			src, ref = r[3], r[4]
+		}
+	}
+	values := [][]string{{"module", module, src, ref}}
 	out := map[string][]byte{}
 	for _, f := range files {
 		for _, e := range head {
