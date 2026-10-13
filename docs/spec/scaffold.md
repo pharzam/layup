@@ -343,10 +343,13 @@ is `fail`, and no setup records commit is published, when `layup setup verify` g
 error whatever its table holds (a scratch tree that is not removed, with every row
 `pass`, too), when `out/verify.tsv` cannot be written, when a row is not `pass` or
 `clear` (its detail is `layup setup verify: <check> is <result>: <reason>` for the
-first, in the table's order), when the second loop does not end done, when
-`out/record.tsv` lacks the row `setup.head` of S15, or when the tree or the commit
-fails. The records commit (message `layup run: the records of the setup`) updates
-exactly the five paths and keeps the other records. `setup/tree.tsv` has the commit of
+first, in the table's order, whatever its result), when the second loop does not end
+done, when S15 did not complete (`out/record.tsv` lacks a row `setup.head`,
+`verify.sha256` or `rule-paths.sha256` of S15, or holds a hash that is not that of its
+file, or `out/rule-paths.tsv` holds no path), or when the tree or the commit fails. The
+records commit (message `layup run: the records of the setup`) writes exactly the five
+paths (a path whose bytes the base holds already is no change of the commit) and keeps
+the other records. `setup/tree.tsv` has the commit of
 `main` of `WORK/target` with the step `root`, then the commits of `layup-setup` above
 it, oldest first by their first parents (S14 comes before S11), each with the step of
 its message `chore: setup <step>`; a message of another form, a `main` that is not an
