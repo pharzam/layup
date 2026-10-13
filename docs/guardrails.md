@@ -649,6 +649,19 @@ These traps are not domain-specific: they hurt every project's test suite.
   survived; give the old caller a case that names the refusal before the refactor.
   When a mutation record is cut to a few lines, say so, or it reads as fewer
   failing cases than ran.
+- ❌ **A step added to a list of steps, and the tests of the list at a tag that the
+  author did not run.** The restart's steps are listed by name in tests of three
+  levels: the unit test of `restartNames`, the integration world's lists and progress
+  counts, and the end-to-end tests of `cmd/layup` that read the table that the binary
+  prints. The last two need a build tag, so `go test ./...` and the hook leave them
+  unread. Row 53 (`T-4c5c`, #276) added `markers` between `completeness` and `batch`,
+  and the end-to-end lists were red only at `go test -tags=e2e ./...`; the same step
+  made the Operator's block ask a question, so each test that answers the batch had to
+  answer as the Operator too, which the plan review found for the integration tests and
+  not for the end-to-end ones. **The check:** when a step is added to the restart, or a
+  question to the batch, `git grep -n` the name of its neighbour step and the wait text
+  ("waiting: no answer yet") in every `_test.go`, whatever its tag, and run the three
+  levels before the freeze, not at the run of CI.
 - ❌ **Stale tests after a requirement changes.** When a requirement changes but its
   test does not, the suite now guards the old behaviour and blocks the new. The
   check: the [old-tests conflict rule](engineering-discipline.md#testing) — fix the
