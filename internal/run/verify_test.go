@@ -107,6 +107,8 @@ func TestEachFailureOfTheStepVerifyPublishesNoCommit(t *testing.T) {
 			"out/verify.tsv: boom", []string{"loop", "verify", "write"}},
 		{"a row is fail", verifyFake{loops: []Step{okLoop()}, table: badTable(verify.Row{Check: "adapted", Result: "fail", Reason: "docs/how-to.md:3: kit text"})},
 			"layup setup verify: adapted is fail: docs/how-to.md:3: kit text", []string{"loop", "verify", "write"}},
+		{"a row is not-active (the scratch tree could not be made): the first such row is named", verifyFake{loops: []Step{okLoop()}, table: badTable(verify.Row{Check: "markers", Result: "not-active", Reason: "scratch tree: add failed"}, verify.Row{Check: "sources", Result: "fail", Reason: "x"})},
+			"layup setup verify: markers is not-active: scratch tree: add failed", []string{"loop", "verify", "write"}},
 		{"the first of two rows that are not pass or clear is named", verifyFake{loops: []Step{okLoop()}, table: badTable(verify.Row{Check: "jobs", Result: "fail", Reason: "no job"}, verify.Row{Check: "sources", Result: "fail", Reason: "no source"})},
 			"layup setup verify: jobs is fail: no job", []string{"loop", "verify", "write"}},
 		{"the loop after the table does not end done", verifyFake{loops: []Step{okLoop(), {"setup", "fail", "S15: the row link-lint is fail: x"}}, table: goodTable()},

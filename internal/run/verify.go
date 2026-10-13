@@ -8,6 +8,7 @@ package run
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"io"
@@ -17,6 +18,7 @@ import (
 	"strings"
 
 	"github.com/pharzam/layup/internal/git"
+	"github.com/pharzam/layup/internal/setup"
 	"github.com/pharzam/layup/internal/tsv"
 	"github.com/pharzam/layup/internal/verify"
 	workpkg "github.com/pharzam/layup/internal/work"
@@ -35,7 +37,7 @@ const (
 // verifyJob is the step with its seams: the loop of the runner on the work area;
 // layup setup verify; the write of its table to out/verify.tsv; the three files
 // of out/ at their paths in the records, which are there when S15 completed; the
-// rows of setup/tree.tsv; and the records commit, which updates the five paths
+// rows of setup/tree.tsv; and the records commit, which writes the five paths
 // and keeps the other records. A failure never reaches the commit (decided here,
 // task T-79zk).
 type verifyJob struct {
@@ -94,7 +96,9 @@ func (j verifyJob) do() Step {
 }
 
 // setupOutputs reads the three files of out/ that the records keep, at their
-// paths there; S15 completed when out/record.tsv holds its row setup.head.
+// paths there. S15 completed when out/record.tsv holds its rows setup.head,
+// verify.sha256 and rule-paths.sha256, each hash that of its file, and the
+// register holds a path.
 func setupOutputs(dir string) (map[string][]byte, error) {
 	files := map[string][]byte{}
 	for _, f := range []struct{ from, to string }{{workpkg.RecordPath, "setup/record.tsv"}, {workpkg.VerifyPath, "setup/verify.tsv"}, {rulePathsOut, "rule-paths.tsv"}} {
@@ -110,6 +114,17 @@ func setupOutputs(dir string) (map[string][]byte, error) {
 	}
 	if v, ok := record.Value("S15", "setup.head"); !ok || v == "" {
 		return nil, errors.New("out/record.tsv has no row setup.head of S15: S15 did not complete")
+	}
+	for _, f := range []struct{ row, path, from string }{{"verify.sha256", "setup/verify.tsv", workpkg.VerifyPath}, {"rule-paths.sha256", "rule-paths.tsv", rulePathsOut}} {
+		if v, ok := record.Value("S15", f.row); !ok || v != fmt.Sprintf("%x", sha256.Sum256(files[f.path])) {
+			return nil, fmt.Errorf("out/record.tsv: the row %s of S15 is not the hash of %s: S15 did not complete with this file", f.row, f.from)
+		}
+	}
+	rows, err := tsv.Read(files["rule-paths.tsv"], setup.RulePathsSchema)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", rulePathsOut, err)
+	} else if len(rows) == 0 {
+		return nil, errors.New(rulePathsOut + " holds no path")
 	}
 	return files, nil
 }

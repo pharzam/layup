@@ -3,7 +3,10 @@
 package run
 
 import (
+	"bytes"
 	"context"
+	"crypto/sha256"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -11,7 +14,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/pharzam/layup/internal/setup"
+	"github.com/pharzam/layup/internal/tsv"
 	"github.com/pharzam/layup/internal/verify"
+	workpkg "github.com/pharzam/layup/internal/work"
 )
 
 // The step verify on the real step runner (docs/spec/scaffold.md, The step verify
@@ -221,41 +227,70 @@ func TestTheStepVerifyCommitsTheRecordsOfTheSetup(t *testing.T) {
 	if got := recordsFile(t, w, "setup/tree.tsv"); got != gitOut(t, w.bare, "show", commit+":setup/tree.tsv") {
 		t.Errorf("setup/tree.tsv of the second verify differs from the first")
 	}
+	again := strings.TrimSpace(gitOut(t, w.bare, "log", "-1", "--format=%H", "--grep=^layup run: the records of the setup$", "refs/heads/layup-records"))
+	if changed := strings.Fields(gitOut(t, w.bare, "diff", "--name-only", again+"~1", again)); again == commit || strings.Join(changed, " ") != "setup/record.tsv" {
+		t.Errorf("the second records commit %s (the first was %s) changes %q; want a new commit that changes setup/record.tsv alone, as the other four paths are written with the bytes that the records hold", again, commit, changed)
+	}
 }
 
-// The three files of out/ go to their paths in the records, byte for byte, once S15 completed:
-// out/record.tsv holds its row setup.head. A file that is missing, or a record with no such row,
-// is an error.
+// The three files of out/ go to their paths in the records, byte for byte, once S15 completed
+// (the agreed contract of the plan review): out/record.tsv holds its rows setup.head,
+// verify.sha256 and rule-paths.sha256, each hash that of its file, and the register holds a
+// path. A file that is missing, a row that is missing or a hash that is not its file's is an error.
 func TestTheFilesOfOutAreTheRecordsOfTheSetup(t *testing.T) {
-	dir := t.TempDir()
-	record := "step\tname\tvalue\tsource\tref\nS15\tsetup.head\t" + strings.Repeat("a", 40) + "\tcomputed\tgit rev-parse layup-setup\n"
-	noHead := "step\tname\tvalue\tsource\tref\nS14\tdone\tx\tstep\t—\n"
-	for p, text := range map[string]string{"out/record.tsv": record, "out/verify.tsv": "table\n", "out/rule-paths.tsv": "paths\n"} {
-		writeFile(t, filepath.Join(dir, filepath.FromSlash(p)), text)
+	sum := func(text string) string { return fmt.Sprintf("%x", sha256.Sum256([]byte(text))) }
+	var reg, none bytes.Buffer
+	if err := tsv.Write(&reg, setup.RulePathsSchema, [][]string{{".github/", "—", "baseline"}}); err != nil {
+		t.Fatal(err)
 	}
-	got, err := setupOutputs(dir)
-	if want := map[string]string{"setup/record.tsv": record, "setup/verify.tsv": "table\n", "rule-paths.tsv": "paths\n"}; err != nil || len(got) != 3 {
-		t.Fatalf("the files: %q, %v; want the three of out/", got, err)
-	} else {
-		for p, text := range want {
-			if string(got[p]) != text {
-				t.Errorf("%s: %q; want %q", p, got[p], text)
+	if err := tsv.Write(&none, setup.RulePathsSchema, nil); err != nil {
+		t.Fatal(err)
+	}
+	const table = "table\n"
+	// out writes the work area of a case: the rows of S15 that it lacks or holds wrong, and the files.
+	out := func(drop string, wrong map[string]string, register string, missing string) string {
+		rows := [][]string{{"S15", "setup.head", strings.Repeat("a", 40), "computed", "git rev-parse layup-setup"},
+			{"S15", "verify.sha256", sum(table), "computed", "sha256 out/verify.tsv"}, {"S15", "rule-paths.sha256", sum(register), "computed", "sha256 out/rule-paths.tsv"}}
+		var kept [][]string
+		for _, r := range rows {
+			if v, ok := wrong[r[1]]; ok {
+				r[2] = v
+			}
+			if r[1] != drop {
+				kept = append(kept, r)
 			}
 		}
+		var rec bytes.Buffer
+		if err := tsv.Write(&rec, workpkg.RecordSchema, kept); err != nil {
+			t.Fatal(err)
+		}
+		dir := t.TempDir()
+		for p, text := range map[string]string{"out/record.tsv": rec.String(), "out/verify.tsv": table, "out/rule-paths.tsv": register} {
+			if p != missing {
+				writeFile(t, filepath.Join(dir, filepath.FromSlash(p)), text)
+			}
+		}
+		return dir
 	}
-	for _, c := range []struct{ name, remove, record, want string }{
-		{"a missing table", "out/verify.tsv", record, "verify.tsv"},
-		{"a missing register", "out/rule-paths.tsv", record, "rule-paths.tsv"},
-		{"a record with no row of S15", "", noHead, "S15 did not complete"},
+	got, err := setupOutputs(out("", nil, reg.String(), ""))
+	if err != nil || len(got) != 3 || string(got["setup/verify.tsv"]) != table || string(got["rule-paths.tsv"]) != reg.String() || !strings.Contains(string(got["setup/record.tsv"]), "setup.head") {
+		t.Fatalf("the files of a work area whose S15 completed: %q, %v; want the three of out/, byte for byte", got, err)
+	}
+	for _, c := range []struct {
+		name, dir, want string
+	}{
+		{"no row setup.head", out("setup.head", nil, reg.String(), ""), "setup.head"},
+		{"no row verify.sha256", out("verify.sha256", nil, reg.String(), ""), "verify.sha256"},
+		{"no row rule-paths.sha256", out("rule-paths.sha256", nil, reg.String(), ""), "rule-paths.sha256"},
+		{"a hash of another table", out("", map[string]string{"verify.sha256": sum("other\n")}, reg.String(), ""), "verify.sha256"},
+		{"a hash of another register", out("", map[string]string{"rule-paths.sha256": sum("other\n")}, reg.String(), ""), "rule-paths.sha256"},
+		{"a register with no path", out("", nil, none.String(), ""), "holds no path"},
+		{"a register that its schema refuses", out("", nil, "x\\n", ""), "rule-paths.tsv"},
+		{"a missing table", out("", nil, reg.String(), "out/verify.tsv"), "verify.tsv"},
+		{"a missing register", out("", nil, reg.String(), "out/rule-paths.tsv"), "rule-paths.tsv"},
+		{"a missing record", out("", nil, reg.String(), "out/record.tsv"), "record.tsv"},
 	} {
-		d := t.TempDir()
-		for p, text := range map[string]string{"out/record.tsv": c.record, "out/verify.tsv": "table\n", "out/rule-paths.tsv": "paths\n"} {
-			writeFile(t, filepath.Join(d, filepath.FromSlash(p)), text)
-		}
-		if c.remove != "" {
-			os.Remove(filepath.Join(d, filepath.FromSlash(c.remove)))
-		}
-		if _, err := setupOutputs(d); err == nil || !strings.Contains(err.Error(), c.want) {
+		if _, err := setupOutputs(c.dir); err == nil || !strings.Contains(err.Error(), c.want) {
 			t.Errorf("%s: %v; want an error with %q", c.name, err, c.want)
 		}
 	}
