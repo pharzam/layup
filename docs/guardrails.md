@@ -904,15 +904,12 @@ These traps are not domain-specific: they hurt every project's test suite.
   the short limit and expects its own class: it is red while the limit is shared.
 
 - ❌ **A baseline of more than one commit in a world of `layup run`.** With a stand-in
-  baseline of two commits (the stand-in's, then the scaffold's) the step `read-back` of a
-  world failed in one of the first four runs, with "the default branch is not one root
-  commit with the tree pin.tree", and it passed in every run after the baseline was made one
-  commit. The cause that fits the code: the world's Operator pushes the `HEAD` of the root
-  directory as soon as it has one, which is the clone of the baseline before its `.git` is
-  removed, and a baseline of one commit makes that push the same tree and a root commit, so
-  such a world is green by luck. Task `T-eahr` (#277) met it. **The check:** make the
-  baseline of a world one commit (remove its `.git` and initialise it again after its files
-  are written), and run a new world several times before you trust it.
+  baseline of two commits the step `read-back` failed in one of the first four runs ("the
+  default branch is not one root commit with the tree pin.tree") and passed in every run
+  after the baseline was made one commit: the world's Operator pushes the `HEAD` of the root
+  directory as soon as it has one, so a world of several commits is green by luck. Task
+  `T-eahr` (#277). **The check:** make the baseline one commit (remove its `.git` and
+  initialise it again after its files are written), and run a new world several times.
 - ❌ **A path that is clean by its spelling still leaves through a link.** A name with no
   `..` and no empty part read or removed a file outside its directory when a parent was a
   link (`result/`, `DIR/work/OWNER`, a link of the records base). Task `T-eahr` (#277),

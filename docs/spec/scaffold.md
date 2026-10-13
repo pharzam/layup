@@ -283,6 +283,11 @@ file whose link S05's deletion breaks. **Decided here** (decision 6 of #265):
 - its `input/`: `problem-statement.md`, `vision.md` when there is one, and
   `stop.tsv`, the stop table of the runner (the block `setup-stop`); its
   `repo/` is `WORK/target` at the head of `layup-setup` at that stop;
+- its prompt (**decided here**, task `T-eahr`, round 2): no placeholder and no
+  angle quote, but a row of an adapted file (its ask is the `adaptAsk` of
+  `internal/setup`, which the prompt names by its first word) names a file that
+  `repo/` has, which the session gives with its changes and each marker it holds
+  kept, in every place, byte for byte, as S14 requires ([`setup.md`](setup.md));
 - its output: one file per `F-` row, at `result/files/<path>` of its session
   directory (`result/` is where a session writes, [`session.md`](session.md#the-session-directory)); a missing file,
   a link, a file over 1 MiB, a file that is not valid UTF-8, or a file at a
