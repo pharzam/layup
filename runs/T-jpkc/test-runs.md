@@ -10,7 +10,7 @@ The plan was posted at 09:11:53Z, its review (GPT-6.1 Sol on Codex CLI, effort `
 09:11:59Z to 09:15:57Z and was posted at 09:19:19Z, and the author's answer at 09:19:37Z. The tests
 were written after that, and run red at 09:24:39Z.
 
-## The base (09:11:35Z to 09:11:48Z)
+## The base (10:19:16Z to 10:34:29Z)
 
 At `9144e4e`, each with exit 0 (`go test` of `internal/forge/...`, then with `-tags=integration`):
 
@@ -156,4 +156,58 @@ run-discipline-tests: exit 0 (09:52:33Z)
 nested-checkout-check: exit 0 (09:52:34Z)
 setup-check: exit 0 (09:52:56Z)
 git diff --check origin/main HEAD: exit 0 (09:52:56Z)
+```
+
+## After round 1 (10:10:09Z to 11:06:04Z)
+
+Round 1 (comment 6143289886 of #271) gave `material` on two findings. **The sentence on a branch that does not exist yet** was wrong: the endpoint answers by
+the name of the branch, so `layup-probe`, before its probe, gets the rules of the rulesets that name
+it, and a branch with no rule gets an empty list. `forge.md` and the comment of `EffectiveRules` say
+so, and `TestEffectiveRulesOfABranchThatDoesNotExistYetGivesTheRulesThatNameIt` asks a branch that no
+branch of the repository has, keeps each rule that the server gives and counts no request of the
+list of branches; the test of a branch with no rule is its own. It passes at the code, which
+forwards what the server gives, so its check is a mutant on a copy of the tree (10:10:09Z to
+10:10:17Z): `EffectiveRules` that first asks `Repository` and returns nothing for a branch that is
+not in the list. The new test fails with it; `TestEffectiveRulesGivesEachActiveRuleOfABranchOverEveryPage`
+passes, as its branch is in the list; and `TestEffectiveRulesEscapesTheBranchSegmentBySegment` fails
+too, as its branch is not in the list either:
+
+```
+EffectiveRulesOfABranchThatDoesNotExistYetGivesTheRulesThatNameIt: --- FAIL: TestEffectiveRulesOfABranchThatDoesNotExistYetGivesTheRulesThatNameIt (0.39s) FAIL
+EffectiveRulesGivesEachActiveRule: ok  	github.com/pharzam/layup/internal/forge/github	0.228s
+EffectiveRulesEscapesTheBranch: --- FAIL: TestEffectiveRulesEscapesTheBranchSegmentBySegment (0.17s) FAIL
+```
+
+**The base of the budget.** The plan review set 850 lines over 14 files against `9144e4e`. The
+branch took `main` by a merge three times (`38ee78e`, the merge of #306; `6734a23`, the merge of
+#307; and `b28171b`, the merge of #311), so the diff against `9144e4e` counts those tasks. Against the last of them the
+change of this task is the figure of the close-out; the comments "The base of the budget" on #271
+give the figures.
+
+**The checks that read the tree.** A first run on `b001c03` (the head after the fix, the first merge of
+`main` and the pitfall of the budget; 10:19:16Z to 10:34:29Z) had every line at exit 0 but the
+integration level, which exited 1: the package `internal/run` ran past the 10 minutes of its timeout
+(`FAIL github.com/pharzam/layup/internal/run 600.079s`) while the host also ran two review sessions
+and the tests of another task (a load average of 8 to 10). The level run again alone with the
+timeout of CI, `go test -count=1 -tags=integration -timeout 10m ./...` (10:34:44Z to 10:41:04Z), exited 0, and
+`internal/run` took 355 s of the 600 that its timeout allows. CI's own `tests` job runs the three
+levels in less than 3 minutes. Then the branch took `main` once more, and the whole run was made
+again on `1f896ec`, each line with exit 0, the three runs of `go test` with `-count=1`, then
+`-tags=integration` and `-tags=e2e` (the integration level took 9 min 14 s of the 10 that its
+timeout allows, as the host ran a review session and the tests of another task):
+
+```
+go build ./...: exit 0 (10:54:11Z)
+go vet ./...: exit 0 (10:54:11Z)
+gofmt -l internal cmd (empty): exit 0 (10:54:11Z)
+go test ./...: exit 0 (10:54:17Z)
+go test -tags=integration ./...: exit 0 (11:03:31Z)
+go test -tags=e2e ./...: exit 0 (11:05:15Z)
+adr-lint: exit 0 (11:05:17Z)
+prd-lint: exit 0 (11:05:17Z)
+link-lint: exit 0 (11:05:29Z)
+run-discipline-tests: exit 0 (11:05:36Z)
+nested-checkout-check: exit 0 (11:05:37Z)
+setup-check: exit 0 (11:06:04Z)
+git diff --check origin/main HEAD: exit 0 (11:06:04Z)
 ```
