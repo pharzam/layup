@@ -21,14 +21,16 @@ import (
 // the baseline's repository: the values of the records of Start, the questions
 // of the batch and the App's ID, which the work area and its files do not hold.
 type Phase2 struct {
-	Name       string // OWNER/NAME of the target
-	Visibility string // forge.visibility of start.tsv: public or private
-	PinSource  string // the rows pin.source, pin.commit, pin.tree and pin.time of start.tsv
-	PinCommit  string
-	PinTree    string
-	PinTime    string
-	BriefSum   string // psb.sha256 of start.tsv
-	AppID      int64  // app_id of the host's forge register (not of the records of Start): the pin of the layup/ checks of S13 and its bypass actor
+	Name          string // OWNER/NAME of the target
+	Visibility    string // forge.visibility of start.tsv: public or private
+	PinSource     string // the rows pin.source, pin.commit, pin.tree and pin.time of start.tsv
+	PinCommit     string
+	PinTree       string
+	PinTime       string
+	BriefSum      string // psb.sha256 of start.tsv
+	AppID         int64  // app_id of the host's forge register (not of the records of Start): the pin of the layup/ checks of S13 and its bypass actor
+	Host          string // the --host DIR of layup run, the root of DIR/work/OWNER/NAME/ and DIR/applies/OWNER/NAME/: the paths of the commands of S13
+	DefaultBranch string // the default branch of the forge's repository: the branch that the commands of S13 read and push to
 	// Questions are the Q- questions of the batch, each with the question of
 	// its row of questions.tsv: the raw fact of the answers names them (S04).
 	Questions []work.Question
@@ -59,7 +61,10 @@ func StepsPhase2(p Phase2, c Calls) map[string]Step {
 	set("S02", func(s *Step) { s.Actor, s.Run = runActor, func(Input) Outcome { return runS02Phase2(p) } })
 	set("S03", func(s *Step) { s.Actor, s.Run, s.Commands = runActor, runS03Phase2, nil })
 	set("S04", func(s *Step) { s.Run = func(in Input) Outcome { return runS04With(p.asked, in) } })
-	set("S13", func(s *Step) { s.Run = func(in Input) Outcome { return runS13Phase2(p, in) } })
+	set("S13", func(s *Step) {
+		s.Run = func(in Input) Outcome { return runS13Phase2(p, in) }
+		s.Commands = commandsS13Phase2(p)
+	})
 	set("S15", func(s *Step) { s.Actor, s.Commands, s.Records = runActor, nil, nil })
 	return m
 }

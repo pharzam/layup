@@ -702,11 +702,11 @@ func TestTheRecordsAreInTheTargetsGit(t *testing.T) {
 			lines = append(lines, l)
 		}
 	}
-	want := []string{"git -C target remote add origin 'https://github.com/" + standin.Name + ".git'", "git -C target push origin main",
+	want := []string{"set -eu", "git -C target remote add origin 'https://github.com/" + standin.Name + ".git'", "git -C target push origin main",
 		"git -C target push origin layup-setup:main", "git -C target push origin layup-records",
 		"gh api --method POST 'repos/" + standin.Name + "/rulesets' --input out/ruleset-default.json"}
 	if !slices.Equal(lines, want) {
-		t.Errorf("the commands of commands.sh:\n%q\nwant, in this order (S03, S13, S15, S13):\n%q", lines, want)
+		t.Errorf("the commands of commands.sh:\n%q\nwant, in this order (set -eu, S03, S13, S15, S13):\n%q", lines, want)
 	}
 }
 
