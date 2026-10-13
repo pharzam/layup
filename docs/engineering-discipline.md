@@ -919,7 +919,7 @@ stepping on each other's working-tree state.
 `sh docs/tasks/task-state.sh`. If it prints the task, take the task only when its
 state is `ready`; a task it does not print (one with no row in the current task
 table, no line under `## Now` of the backlog and no open issue whose title starts
-with its ID) is not refused by this rule. The claim is the first act of taking a task, before
+with its ID and a colon) is not refused by this rule. The claim is the first act of taking a task, before
 its plan comment: create the worktree, then push its branch, named exactly the task
 ID, to the forge (`git push -u origin <slug>`), before any work; a branch of another name, such as
 `T-xxxx-notes`, claims nothing. The branch on the forge is the one mark that every
@@ -936,11 +936,12 @@ open issue carries one `state:` label (#185, #303), which the workflow
 [`task-state.yml`](../.github/workflows/task-state.yml) sets after each event and
 every 30 minutes: a task issue takes the state the command lists, and any other
 open issue takes `state: in review` when an open pull request closes it and
-`state: on hold` when none does ([the rule](tasks/task-labels.sh)); a closed issue
-takes `state: merged` or `state: rejected` from its `state_reason`, whatever the
-command says. An issue becomes a task by a row of the plan, a line under `## Now`
-of the backlog, or a task ID at the start of its title. A `state:` label is never
-set by hand.
+`state: on hold` when none does ([the rule](tasks/task-labels.sh)); a closed task
+issue, or a closed issue that still carries a `state:` label, takes `state: merged`
+or `state: rejected` from its `state_reason`, whatever the command says. An issue
+becomes a task by a row of the plan, a line under `## Now` of the backlog, or a
+task ID and a colon at the start of its title. A `state:` label is never set by
+hand.
 
 ## Commit granularity
 

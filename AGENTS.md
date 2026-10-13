@@ -120,13 +120,14 @@ artifacts, so they run in CI only and have no local run.
 the forge with `gh` (the backlog, the completed log and the plan of `main`, not of
 your checkout), so it needs the network, and it prints the state of each task
 (`done`, `in review`, `in progress`, `stalled`, `blocked`, `ready`; an open issue
-whose title starts with a task ID is a task); run it before you take a
+whose title starts with a task ID and a colon is a task); run it before you take a
 task ([Starting a task](docs/engineering-discipline.md#starting-a-task)). The
 workflow [`task-state.yml`](.github/workflows/task-state.yml) sets a `state:` label
 on each open issue — a task issue the state the command lists, any other issue
 `in review` when an open pull request closes it and `on hold` when none does
-([the rule](docs/tasks/task-labels.sh)) — and a closed issue takes `state: merged`
-or `state: rejected` from its close reason; never set one by hand. The Go code builds and
+([the rule](docs/tasks/task-labels.sh)) — and a closed task issue, or a closed issue
+that still carries a `state:` label, takes `state: merged` or `state: rejected` from
+its close reason; never set one by hand. The Go code builds and
 tests with `go build ./...`, `go vet ./...` and `go test ./...`; the test levels
 are in [`docs/tests/test-levels.md`](docs/tests/test-levels.md). Never invent a
 command that no document names.

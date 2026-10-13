@@ -15,4 +15,5 @@ issue edit 3 --add-label state: merged --remove-label state: in progress
 issue edit 4 --add-label state: ready
 issue edit 5 --add-label state: on hold --remove-label state: ready
 issue edit 9 --add-label state: on hold --remove-label state: stalled,state: ready
+issue edit 10 --remove-label state: ready
 issue edit 44 --add-label state: on hold --remove-label state: ready

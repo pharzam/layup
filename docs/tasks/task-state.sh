@@ -13,7 +13,9 @@
 #       table of the open pull requests, NUMBER TAB HEAD TAB ISSUES, where ISSUES
 #       are the issues that its body closes, and a pull request that closes none
 #       has no third field (the one parser of the closing keywords: task-labels.sh
-#       reads this table, #303)
+#       reads this table, #303). Give FILE as an absolute path: when the forge is
+#       read the command works from the repository root, so a relative FILE
+#       lands there
 #
 # DIR holds `backlog`, `completed` and `plan` (docs/tasks/backlog.md,
 # docs/tasks/completed.md and docs/plan/README.md; the fetcher reads them from
@@ -31,12 +33,16 @@
 # row when an earlier task table holds one. Last come the tasks that only an
 # open issue names (#303): its title starts with a task ID and a colon
 # (`T-xxxx: `, as the issues of the plan do), the task has no `After`, and the
-# issues come in the order of their numbers. A task or an issue that a file
-# names makes no second task, so a title that carries the ID of a task of the
-# plan or the backlog, or sits on an issue that one of them names, adds none;
-# of two open issues that start with one ID, the lower number is the task. A task table is one whose header
-# holds the cells `#` and `Task ID`; its columns are found by the header, so a
-# table of 13 columns and one of 14 read the same.
+# issues come in the order of their numbers. A task or an issue that a row of
+# the plan or a line under `## Now` names makes no second task, so a title that
+# carries the ID of such a task, or sits on an issue that one of them names,
+# adds none; of two open issues that start with one ID, the lower number is the
+# task. A task that only the completed log names is `done`, so an open issue
+# whose title starts with its ID is listed `done` and takes `state: merged`
+# while it is open, as a reopened issue of a done task of the plan does.
+# A task table is one whose header holds the cells `#` and `Task ID`; its
+# columns are found by the header, so a table of 13 columns and one of 14 read
+# the same.
 #
 # The state, the first that holds:
 #   done       the task ID is the ID field of a line of the completed log (the
