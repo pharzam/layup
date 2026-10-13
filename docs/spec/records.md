@@ -535,26 +535,30 @@ Milestone `M2d` (task `T-msrd`, #265): the records that `layup run` writes for
 the setup questions, the setup and the forge check
 ([`scaffold.md`](scaffold.md)). `internal/records` owns `markers`;
 `internal/run` owns `setup-tree` and `forge-check`, which it alone writes and
-reads. `setup/record.tsv`, `setup/verify.tsv` and `rule-paths.tsv` keep their
+reads; row 50 (task `T-tetz`) compares the three with their Go schemas.
+`setup/record.tsv`, `setup/verify.tsv` and `rule-paths.tsv` keep their
 blocks and owners of phase 1; `layup run` commits them
 ([`scaffold.md`](scaffold.md#the-step-verify-and-the-records-of-the-setup)).
 
 ```tsv-schema markers records:intake/markers.tsv
-id      id(M-xxxxxxxx)  key  the marker's key of S10: M- and the first 8 hexadecimal characters of the SHA-256 of its file, a tab and its text; in questions.tsv the source setup tells it from a gap of meaning (M-NNN), whose source is meaning
+id      id(M-xxxxxxxx)  key  the marker's key of S10: M- and the first 8 hexadecimal characters of the SHA-256 of its file, a tab and its text; in questions.tsv the source setup tells it from a gap of meaning (M-NNN), whose source is meaning; the reader checks its form, `M-` and 8 lowercase hexadecimal characters, and does not compute the hash again, as the row holds the marker after the field rule, which makes a tab or a carriage return one space
 file    path   -    the file that holds the marker, in the pinned tree
 line    int    -    the line of its open quote, from 1; for a text that the file holds on more lines (one key), the first
 marker  text   -    the marker, with its two angle quotes; a marker over more lines has its line breaks written as spaces; never `—`
 value   text   -    the proposed value; `—` for no proposal
 start   int    -    the byte offset of the proposal's quote in start/problem-statement.md, from 0, found by code; `—` exactly when value is `—`
-end     int    -    the byte offset after the quote; `—` exactly when start is `—`
+end     int    -    the byte offset after the quote, above start; `—` exactly when start is `—`
 session text   -    the session that proposed the values (S-xxxxxxxx); `—` only for a table with no row, which has none
 ```
 
-The rows are in the order of S10's stop table (by file, then line). A table
-with no row is a scan that found no marker, and no session started.
+The rows are in the order of S10's stop table, by file and then by line: the
+file of a row is not below the file before it, in the bytes of the path, and in
+one file the line is not below the line before it, so two markers on one line
+are two rows with one line. A table with no row is a scan that found no marker,
+and no session started.
 
 ```tsv-schema setup-tree records:setup/tree.tsv
-order   int   key  0 for the root commit, then 1, 2, … for each setup commit of layup-setup, in order
+order   int   key  0 for the root commit, then 1, 2, … for each setup commit of layup-setup, in order; the rows are in the order of this column, so the first row is the root commit, and a table has at least that row
 commit  sha1  -    the commit
 tree    sha1  -    its tree
 step    text  -    `root` for order 0; else the step of the commit, S04 to S14, from its message `chore: setup <step>`; never `—`
@@ -564,10 +568,10 @@ The last row is the head of `layup-setup` that `layup setup verify` read and
 that the Operator pushes; no column is ever `—`.
 
 ```tsv-schema forge-check records:setup/forge-check.tsv
-check   text   key  `tree`, `rules:<branch>` for the default branch, `layup-probe` and `layup-records`, `bypass:default`, `bypass:records`, `probe`, `activity`, in that order
+check   text   key  `tree`, `rules:<branch>` for the default branch, `layup-probe` and `layup-records`, `bypass:default`, `bypass:records`, `probe`, `activity`, in that order, one row for each whatever its result, so the table has eight rows; the branch of the default branch is not empty, and is neither of the next two names, which would repeat a key
 result  enum(pass|fail)  -  the result by the rule of the check (scaffold.md, REQ-003, Scaffold 7)
 detail  text   -    what the check found, one line: for a `fail` the first missing or different rule or the reason; for a `pass` of `rules:<branch>` the extra rule types or `—`; `—` for another `pass`
-run     text   -    the run ID that made the check (lease.tsv); never `—`
+run     text   -    the run ID that made the check, in the form of lease.tsv (16 lowercase hexadecimal characters); never `—`
 at      time   -    when the check ran, from the run's clock; never `—`
 ```
 

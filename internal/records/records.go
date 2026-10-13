@@ -3,8 +3,9 @@
 // telemetry record and the price table of REQ-011 (task T-tmhw, #94), and the
 // stall record of REQ-009 (task T-dgy7, #95); the records of Start of
 // milestone M2a (start.go; task T-8kqn, #126); the records of a session of
-// milestone M2b (session.go; task T-3py1, #153); and the records of Intake of
-// milestone M2c (intake.go; task T-529i, #212). internal/run writes them.
+// milestone M2b (session.go; task T-3py1, #153); the records of Intake of
+// milestone M2c (intake.go; task T-529i, #212); and the block markers of
+// milestone M2d (scaffold.go; task T-tetz, #270). internal/run writes them.
 package records
 
 import (
