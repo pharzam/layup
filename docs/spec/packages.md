@@ -369,6 +369,9 @@ takes a token.
 - `CommitTree` refuses, before `git` starts, a `TREE` or a `PARENT` that is not
   a full object ID (a `FailedError` with `Code` -1); an output of `git` that is no
   object ID is a `FailedError` with `Code` 0.
+- An empty `MESSAGE` is the argument `-m ''` (task `T-j4sd`): `git` finds no
+  message and reads it from its standard input, which `call` leaves at the null
+  device, so the commit has an empty message and the call returns.
 - The setup under `layup run` uses the calls of phase 1 through
   `internal/setup`, and `layup run` builds the work area's `target/` with
   `CloneLocal` from its own clone.

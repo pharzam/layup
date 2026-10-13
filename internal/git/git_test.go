@@ -465,6 +465,16 @@ func TestCommitTreeRunsItsVerb(t *testing.T) {
 	if c.dir != "r" || !reflect.DeepEqual(c.args, want) {
 		t.Errorf("the call: dir %q, args\n got %q\nwant %q", c.dir, c.args, want)
 	}
+	// An empty message is the argument of -m as well, not a refusal and not an
+	// argument that is left out (git then reads the message from its standard
+	// input, which call leaves at the null device).
+	calls = stub(t, fullID+"\n", nil)
+	if id, err := CommitTree("r", fullID, parent, "", who); err != nil || id != fullID {
+		t.Fatalf("CommitTree with an empty message: %q, %v; want the ID that git printed", id, err)
+	}
+	if got, want := only(t, calls).args, append(slices.Clone(wantConfig), "commit-tree", fullID, "-p", parent, "-m", ""); !reflect.DeepEqual(got, want) {
+		t.Errorf("an empty message: args\n got %q\nwant %q", got, want)
+	}
 }
 
 // The identity of a commit-tree is the identity of a commit: the same six

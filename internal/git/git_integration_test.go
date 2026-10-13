@@ -880,6 +880,16 @@ func TestCommitTree(t *testing.T) {
 	if obj := gitOK(t, dir, plain(home), "cat-file", "-p", dash); !strings.Contains(obj, "\n\n-x is a message\n") {
 		t.Errorf("a message that starts with a dash:\n%s", obj)
 	}
+	// An empty message: git finds no message and reads it from its standard
+	// input, which the call leaves at the null device, so the commit has an empty
+	// message and the call returns.
+	empty, err := CommitTree(dir, tree, parent, "", bot)
+	must(t, err)
+	if obj := gitOK(t, dir, plain(home), "cat-file", "-p", empty); !strings.Contains(obj, "tree "+tree+"\nparent "+parent+"\n") {
+		t.Errorf("an empty message: the commit has not the tree and the parent:\n%s", obj)
+	} else if _, body, _ := strings.Cut(obj, "\n\n"); body != "" {
+		t.Errorf("an empty message: the commit has the message %q", body)
+	}
 	for name, tree := range map[string]string{"a tree that no object has": strings.Repeat("0", 40), "a commit as the tree": parent} {
 		var failed *FailedError
 		if got, err := CommitTree(dir, tree, parent, "m", bot); !errors.As(err, &failed) || failed.Code <= 0 || failed.Stderr == "" || got != "" {
