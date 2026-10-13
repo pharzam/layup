@@ -295,8 +295,8 @@ func sameParameter(name string, want, got any) bool {
 	return reflect.DeepEqual(want, got)
 }
 
-// checkPairs gives the set of the pairs of a list of required checks; the integration_id that is absent
-// is 0.
+// checkPairs gives the set of the pairs of a list of required checks; a context or an integration_id that is
+// absent is no 0 and no empty string.
 func checkPairs(v any) (map[string]bool, bool) {
 	list, ok := v.([]any)
 	if !ok {
@@ -308,8 +308,7 @@ func checkPairs(v any) (map[string]bool, bool) {
 		if !ok {
 			return nil, false
 		}
-		id, _ := m["integration_id"].(float64)
-		pairs[fmt.Sprintf("%v\x00%v", m["context"], id)] = true
+		pairs[fmt.Sprintf("%#v|%#v", m["context"], m["integration_id"])] = true
 	}
 	return pairs, true
 }
@@ -384,7 +383,7 @@ func probeVerdict(sha string, err error) (result, detail string) {
 
 // pushProbe makes the empty commit of the probe on top of head in dir (the tree of head, head as its parent,
 // the identity who) and pushes it to layup-probe of url; it gives the commit, also when the push fails. The
-// commit is on no ref of dir.
+// commit is on no branch of dir.
 func pushProbe(dir, url string, auth git.Auth, head string, who git.Identity) (string, error) {
 	tree, err := git.RevParse(dir, head+"^{tree}")
 	if err != nil {

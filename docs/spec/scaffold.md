@@ -575,9 +575,10 @@ exits 0, as "probe accepted: <SHA>" (the Operator then deletes the ref and
 checks any workflow run that it started, §3); any other non-zero exit, as
 "probe not run: <the first line of standard error>" (an expired token, a
 network or server error), never a pass (FT1). The commit is on no branch of the
-run's clone after the push (**decided here**, task `T-wphp`: `git` makes the remote-tracking ref
-`origin/layup-probe` for a push that the forge accepts, which is a `fail`, because the push is to the
-URL of the clone's own `origin`; the next start clones afresh).
+run's clone after the push (**decided here**, task `T-wphp`: a push that the forge accepts, which is a
+`fail`, may leave the remote-tracking ref `origin/layup-probe`, as the `git` of the host of the tests
+does and that of CI does not, because the push is to the URL of the clone's own `origin`; the next start
+clones afresh).
 
 ### The activity read
 

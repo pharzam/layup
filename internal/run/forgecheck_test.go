@@ -66,6 +66,8 @@ func TestTheReadBackComparesEachRuleOfTheFileWithOneReturnedRule(t *testing.T) {
 		{"two entries of a type, the second equal", []forge.Rule{pr("merge")}, []forge.Rule{pr("squash"), pr("merge")}, true, ""},
 		{"the required checks in another order", []forge.Rule{gates(true, pair("a", 1), pair("b", 2))}, []forge.Rule{gates(true, pair("b", 2), pair("a", 1))}, true, ""},
 		{"an integration_id that differs", []forge.Rule{gates(true, pair("layup/gates", 42))}, []forge.Rule{gates(true, pair("layup/gates", 15368))}, false, "required_status_checks: required_status_checks differs"},
+		{"an integration_id of 0 that the call lacks", []forge.Rule{gates(true, pair("a", 0))}, []forge.Rule{gates(true, map[string]any{"context": "a"})}, false, "required_status_checks: required_status_checks differs"},
+		{"an integration_id that the file lacks and the call holds as 0", []forge.Rule{gates(true, map[string]any{"context": "a"})}, []forge.Rule{gates(true, pair("a", 0))}, false, "required_status_checks: required_status_checks differs"},
 		{"a context that differs", []forge.Rule{gates(true, pair("a", 1))}, []forge.Rule{gates(true, pair("b", 1))}, false, "required_status_checks: required_status_checks differs"},
 		{"an extra required check", []forge.Rule{gates(true, pair("a", 1))}, []forge.Rule{gates(true, pair("a", 1), pair("b", 2))}, false, "required_status_checks"},
 		{"a required check missing", []forge.Rule{gates(true, pair("a", 1), pair("b", 2))}, []forge.Rule{gates(true, pair("a", 1))}, false, "required_status_checks"},

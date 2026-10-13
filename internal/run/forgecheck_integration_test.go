@@ -69,15 +69,16 @@ func TestTheProbeIsAPassOnlyForTheRefusalOfTheRulesetOfTheDefaultBranch(t *testi
 		if result != c.result || !strings.HasPrefix(detail, c.detail) || sha == "" {
 			t.Errorf("%s: %s, %q, %v; want %s, %q, and the commit", c.name, result, detail, err, c.result, c.detail)
 		}
-		// No branch of the clone holds the commit; git makes the remote-tracking ref of a push that the forge accepts, to its own URL.
+		// No branch of the clone holds the commit; a push that the forge accepts, to the clone's own URL, makes the remote-tracking ref in
+		// the git of this host and not in that of CI.
 		accepted := c.detail == "probe accepted: "
-		wantRefs := map[bool]string{true: "refs/remotes/origin/layup-probe\n", false: ""}[accepted]
+		refs := strings.Fields(gitOut(t, clone, "for-each-ref", "--format=%(refname)", "--contains", sha))
 		_, onForge := gitRunOK(bare, "rev-parse", "--verify", "-q", "refs/heads/layup-probe")
 		bot := "layup-agent[bot]|9001+layup-agent[bot]@users.noreply.github.com"
 		wantCommit := head + "|" + strings.TrimSpace(gitOut(t, clone, "rev-parse", head+"^{tree}")) + "|" + bot + "|" + bot + "|1791892800|layup: the probe of the forge check\n"
-		if got := gitOut(t, clone, "for-each-ref", "--format=%(refname)", "--contains", sha); got != wantRefs || (onForge == nil) != accepted ||
+		if len(refs) > 1 || len(refs) == 1 && (!accepted || refs[0] != "refs/remotes/origin/layup-probe") || (onForge == nil) != accepted ||
 			gitOut(t, clone, "show", "-s", "--format=%P|%T|%an|%ae|%cn|%ce|%at|%s", sha) != wantCommit {
-			t.Errorf("%s: the commit is on %q of the clone, layup-probe on the forge: %v; want %q, and only where accepted, an empty commit on the head by the bot at the run's time", c.name, got, onForge, wantRefs)
+			t.Errorf("%s: the commit is on %q of the clone, layup-probe on the forge: %v; want no ref, or only where accepted the remote-tracking ref, an empty commit on the head by the bot at the run's time", c.name, refs, onForge)
 		}
 	}
 	if sha, err := pushProbe(t.TempDir(), "file:///nowhere", git.Auth{}, "1111", who); err == nil || sha != "" {
@@ -202,17 +203,29 @@ func TestTheStepForgeCheckChecksTheForgeAndCommitsItsTableAtEachRestart(t *testi
 	if got := table()[3][2]; !strings.HasPrefix(got, "open DIR/work/") || !strings.HasSuffix(got, "/out/ruleset-records.json: no such file or directory") || strings.Contains(got, w.dir) {
 		t.Errorf("the rules row of a ruleset file that is gone: %q; want its path and the reason, with DIR for the host", got)
 	}
-	// A work area that cannot be built again (a file in the place of its directory): the three rules rows fail with that reason, DIR for the host.
+	// A work area that cannot be built again (a link where its directory belongs): the three rules rows fail with that reason, DIR for the host.
 	must(os.RemoveAll(filepath.Join(w.dir, "work")))
-	writeFile(t, filepath.Join(w.dir, "work"), "x")
+	must(os.Symlink(t.TempDir(), filepath.Join(w.dir, "work")))
 	restart(Step{"forge-check", "fail", "tree: "})
 	for _, r := range table()[1:4] {
-		if r[1] != "fail" || !strings.HasPrefix(r[2], "the work area: ") || strings.Contains(r[2], w.dir) || !strings.Contains(r[2], "DIR") {
-			t.Errorf("the row %s: %s, %q; want a fail for the work area, with DIR for the host", r[0], r[1], r[2])
+		if r[1] != "fail" || !strings.HasPrefix(r[2], "the work area: DIR/work is a link") || strings.Contains(r[2], w.dir) {
+			t.Errorf("the row %s: %s, %q; want a fail for the work area that is a link, with DIR for the host", r[0], r[1], r[2])
 		}
 	}
-	// A work area built again whose head is not the last commit of setup/tree.tsv: the three rules rows fail, naming both.
+	// A work area built again whose loop fails (a glossary whose citation resolves to no fact): the three rules rows fail with its reason.
 	must(os.Remove(filepath.Join(w.dir, "work")))
+	glossary := "setup/inputs/files/docs/glossary.md"
+	pushRecords(t, w.bare, map[string]string{glossary: "# Glossary\n\n| Term | Meaning |\n| ---- | ------- |\n| Target | the product repository (`F-0099#1`) |\n"}, "a glossary whose citation resolves to no fact")
+	restart(Step{"forge-check", "fail", "tree: "})
+	for _, r := range table()[1:4] {
+		if r[1] != "fail" || !strings.HasPrefix(r[2], "the work area: ") || !strings.Contains(r[2], "glossary") {
+			t.Errorf("the row %s: %s, %q; want a fail for the work area, naming the glossary", r[0], r[1], r[2])
+		}
+	}
+	pushRecords(t, w.bare, map[string]string{glossary: proseFiles()["docs/glossary.md"]}, "the glossary again")
+	// A work area built again whose head is not the last commit of setup/tree.tsv: the three rules rows fail, naming both (the half-built
+	// area of the failed loop is removed first, as a work area that is there is used as it is).
+	must(os.RemoveAll(filepath.Join(w.dir, "work")))
 	lines := strings.Split(strings.TrimRight(recordsFile(t, w, "setup/tree.tsv"), "\n"), "\n")
 	cells := strings.Split(lines[len(lines)-1], "\t")
 	cells[1] = strings.Repeat("1", 40)

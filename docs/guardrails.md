@@ -932,8 +932,13 @@ These traps are not domain-specific: they hurt every project's test suite.
   Task `T-wphp` (#280). **The check:** the demo of `M2d` (`T-sdtb`) reads the real refusal; if it lacks the name,
   fix the check and its spec sentence together, never accept any refusal as a pass.
 - ❌ **A claim that a pushed commit is "on no ref" of the clone.** A `git push` to the URL of the clone's own
-  `origin` makes `origin/<branch>` when the forge accepts it, so an accepted probe is on `origin/layup-probe`.
-  Task `T-wphp` (#280). **The check:** test `git for-each-ref --contains` after a refused push and an accepted one.
+  `origin` makes `origin/<branch>` when the forge accepts it in the `git` of one host (2.56) and not in that of CI,
+  so a test that wants the ref, or its absence, passed on the host and failed in CI. Task `T-wphp` (#280).
+  **The check:** test `git for-each-ref --contains` after a refused push and an accepted one, and accept both forms.
+- ❌ **A test that a plan review's condition names, written after the code.** The world scenarios of conditions 2
+  and 3 were slow to write and went last, so they were never red first; round 1 of `T-wphp` (#280) took it as a
+  failed acceptance criterion ("written red first"). **The check:** write each test that a condition names in its
+  red slice; one that is late is run against the mutant of its rule, which shows the right reason, not the order.
 
 ### Reference-sweep pitfalls
 
