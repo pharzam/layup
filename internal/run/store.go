@@ -196,8 +196,9 @@ func (s *recordsStore) Commit(ctx context.Context, files map[string][]byte, mess
 
 // Remove makes a records commit that removes the files at paths, each a path of
 // the records, and pushes it: the same lock, work tree and push as a commit that
-// writes. A path that the base lacks, or that is not a path of the records, is
-// an error, and no commit is made (task T-eahr).
+// writes. A path that is not a path of the records, or not a regular file of the
+// base's tree (a path below a link of it too), is an error, and no commit is made
+// (task T-eahr).
 func (s *recordsStore) Remove(ctx context.Context, paths []string, message string) error {
 	for _, p := range paths {
 		if !fs.ValidPath(p) || p == "." {
