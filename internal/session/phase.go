@@ -94,7 +94,10 @@ func ReadOutputFiles(d Dir, dir string, names []string) (map[string][]byte, erro
 			return fmt.Errorf("the output file %s is a link", rel)
 		case wanted[rel]:
 			seen[rel] = true
-		case above[rel] && e.IsDir():
+		case above[rel]:
+			if !e.IsDir() {
+				return fmt.Errorf("the output has a file at %s, where a directory is needed", rel)
+			}
 		default:
 			return fmt.Errorf("the output holds %s, which the stop does not name", rel)
 		}

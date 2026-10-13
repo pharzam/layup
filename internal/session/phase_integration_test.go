@@ -121,14 +121,15 @@ func TestReadOutputFiles(t *testing.T) {
 		{"an absolute name", []string{"/etc/passwd"}, func(string) {}, "not a clean relative path"},
 		{"a name with an empty part", []string{"docs//glossary.md"}, func(string) {}, "not a clean relative path"},
 		{"a name that is the directory itself", []string{"."}, func(string) {}, "not a clean relative path"},
-		{"a file two directories deep", []string{"README.md", "docs/glossary.md", "docs/deep/er.md"}, func(dir string) {
-			os.MkdirAll(filepath.Join(dir, "docs", "deep"), 0o700)
-			os.WriteFile(filepath.Join(dir, "docs", "deep", "er.md"), []byte("deep\n"), 0o600)
+		{"a file two directories deep", []string{"README.md", "a/b/c.md"}, func(dir string) {
+			os.RemoveAll(filepath.Join(dir, "docs"))
+			os.MkdirAll(filepath.Join(dir, "a", "b"), 0o700)
+			os.WriteFile(filepath.Join(dir, "a", "b", "c.md"), []byte("deep\n"), 0o600)
 		}, ""},
 		{"a file where a directory is named", names, func(dir string) {
 			os.RemoveAll(filepath.Join(dir, "docs"))
 			os.WriteFile(filepath.Join(dir, "docs"), []byte("x"), 0o600)
-		}, "docs"},
+		}, "a file at docs, where a directory is needed"},
 		{"an empty name", []string{""}, func(string) {}, "not a clean relative path"},
 	} {
 		d := dirOf(t.TempDir(), "S-1a2b3c4d")
