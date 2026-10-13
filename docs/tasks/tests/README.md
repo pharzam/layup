@@ -69,7 +69,7 @@ own `task-state.yml` when the file says `real`).
 | `good-labels-listed-outside-set` | exit 0 | an open issue that the command lists and no file names (a title task) takes the listed state; an open issue outside the set with a stale `in progress` takes `on hold` |
 | `good-labels-crlf` | exit 0 | `state`, `issues` and `EXPECT` with carriage returns. Endings pinned by [`.gitattributes`](../../../.gitattributes) |
 | `good-labels-applier-dry-run` | exit 0 | `--dry-run`: the four reads, the changes printed, no write |
-| `good-labels-applier` | exit 0 | the writes: the eight labels created, then one `issue edit` an issue — an addition, an addition with a removal, a removal alone (#10 holds the right label and a second one), for a task and for an issue outside the set; the calls the stand-in records prove each |
+| `good-labels-applier` | exit 0 | the writes: the eight labels created, each in the color of its state, then one `issue edit` an issue — an addition, an addition with a removal, a removal alone (#10 holds the right label and a second one), for a task and for an issue outside the set; the calls the stand-in records prove each |
 | `good-labels-applier-prs` | exit 0 | the applier runs the command with `--prs FILE` and the reader takes the table: an issue that a pull request closes is `in review`, another open issue `on hold` |
 | `good-labels-workflow` | exit 0 | the repository's `task-state.yml` passes its check |
 | `bad-labels-empty-set` | exit 1 | the three files name no task issue; the calls show the reads and no write |

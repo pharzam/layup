@@ -5,7 +5,11 @@
 # every open issue, #303, T-j304).
 #
 # The workflow .github/workflows/task-state.yml runs it, and is the one writer
-# of these labels; a label set by hand is replaced at the next run.
+# of these labels; a label set by hand is replaced at the next run, and so is a
+# color set by hand. Each label's color is the pair in the one list of apply():
+# ready blue (1d76db), in progress amber (fbca04), stalled orange (d93f0b), in
+# review purple (5319e7), blocked dark red (b60205), merged green (0e8a16, the
+# `task` green), rejected slate (57606a), on hold ice (c5def5).
 #
 # Usage:
 #   sh docs/tasks/task-labels.sh                   read, then write the labels
@@ -244,10 +248,12 @@ apply() {
 		> "$tmp/in/issues" || die "gh: cannot read the issues, so no label is written"
 	read_dir "$tmp/in" > "$tmp/changes" || exit 1
 	if [ "$1" = dry ]; then cat "$tmp/changes"; return 0; fi
-	say "making sure the eight labels exist"
-	for _l in 'state: ready' 'state: in progress' 'state: stalled' 'state: in review' 'state: blocked' 'state: merged' 'state: rejected' 'state: on hold'; do
-		gh label create "$_l" --force --color ededed --description 'Set by .github/workflows/task-state.yml; never by hand' > /dev/null ||
-			die "gh: cannot create the label $_l"
+	say "making sure the eight labels exist, each in the color of its state"
+	# LABEL=COLOR: the pairs the header names, in the order the calls are
+	# recorded; a label holds no `=`, so the split is on it.
+	for _lc in 'state: ready=1d76db' 'state: in progress=fbca04' 'state: stalled=d93f0b' 'state: in review=5319e7' 'state: blocked=b60205' 'state: merged=0e8a16' 'state: rejected=57606a' 'state: on hold=c5def5'; do
+		gh label create "${_lc%%=*}" --force --color "${_lc##*=}" --description 'Set by .github/workflows/task-state.yml; never by hand' > /dev/null ||
+			die "gh: cannot create the label ${_lc%%=*}"
 	done
 	say "writing $(grep -c . "$tmp/changes") changes"
 	# One edit per issue: its removals, then its addition; a `-` field is
