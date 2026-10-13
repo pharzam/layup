@@ -598,6 +598,17 @@ success without having done its job.
   locale missed a marker at the end of a line in `check_markers`, which runs its
   `awk` with `LC_ALL=C` since round 1 of #87.
 
+- ❌ **Tests written while the plan review runs.** R12 puts the reviewer's
+  confirmation before building begins, and the first thing built is the test slice, so
+  a red run dated before the confirmation breaks the order, even when the review asks
+  for nothing that touches a test. In task `T-9v92` (#274) the author used the nine
+  minutes of the plan review to write the tests and ran them red at 08:07Z, seven
+  minutes before the confirmation at 08:14Z; the reviewer of round 1 read the two times
+  in the record and gave `material`, which cost a second round. **The check:** spend the
+  wait of the plan review on reading, and on nothing that the plan names as a step; start
+  the red slice after the answer is posted, and compare the time of the first red run
+  with the time of the confirmation before the freeze.
+
 ### Testing pitfalls
 
 These traps are not domain-specific: they hurt every project's test suite.

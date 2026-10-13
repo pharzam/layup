@@ -154,7 +154,7 @@ other step is as in phase 1. Each row names this section as its decision.
 | S02 | Resolves nothing: the record rows `pin.source`, `pin.commit`, `pin.tree` and `pin.time` are those of `start.tsv`, with source `computed` and ref `records:start/start.tsv` (NFR-006: no run resolves the commit again). Its evidence line is `the commit and the tree of start.tsv`. |
 | S03 | Makes no commit and writes no command: `WORK/target` is a clone of the default branch, whose one commit is the root commit that Start read back; the step checks that its tree equals `pin.tree`. |
 | S04 | As in phase 1, from the pin rows of S02. Its raw fact of the answers holds the `S01-` and `Q-` rows of `answers.tsv` (O-124), each `Q-` row with the `question` of its row of `questions.tsv` as its question text and `S01-stack` with the text of S01 (a `Q-` row that the batch does not hold is a `fail`), so the answers of the batch become the file of the raw fact under the target's `docs/facts/` (`architecture.md` §5, Scaffold 3). Its evidence is that of phase 1, the checks `pin` and `facts`. |
-| S13 | Writes the two rulesets of [REQ-003](#req-003--the-rulesets-of-scaffold-6) and their commands. |
+| S13 | Writes the two rulesets of [REQ-003](#req-003--the-rulesets-of-scaffold-6) and their commands: `WORK/out/ruleset-default.json` with the four `layup/` checks, `WORK/out/ruleset-records.json`, and the record row `without-layup` ([NFR-002](#nfr-002--a-target-without-layup)). `layup run` gives the `app_id` of the forge register in Go, and a value below 1 (the register can hold 0) is a `fail`, not an input error. Its evidence line is `the ruleset files, and their commands in commands.sh`. |
 | S15 | Writes the record's last rows and the rule-path register, and makes no commit of `layup-records`: `layup run` commits the records ([The step verify and the records of the setup](#the-step-verify-and-the-records-of-the-setup)). |
 
 The actor of S02, S03 and S15 in the step table `setup-steps` is `layup-run`,
@@ -356,15 +356,22 @@ written in phase 1 too, as `WORK/out/ruleset-default.json` is a file of the
 work area, not of the target's tree, so no target commit changes;
 `docs/setup/branch-protection.json` does not change. The four `layup/` checks
 are phase 2 only: no phase-1 command posts them (`records.md`, NFR-002 item 3).
+**Decided here** (task `T-9v92`): the rules are written in the order of the table,
+so the file reads as the table does; the read-back compares them by type.
 
 ### The ruleset of the records branch
 
 `WORK/out/ruleset-records.json`, the ruleset of `refs/heads/layup-records`:
-the rules `update`, `deletion` and `non_fast_forward`, with one bypass actor,
-`actor_type` `Integration`, `actor_id` the `app_id` of the forge register,
-`bypass_mode` `always`. The rule `update` lets only a bypass actor update the
-branch (searcher A), so only the App writes it, and the ruleset of the default
-branch keeps its empty bypass list: the two scopes are two rulesets.
+the rules `update`, `deletion` and `non_fast_forward`, in this order, with one
+bypass actor, `actor_type` `Integration`, `actor_id` the `app_id` of the forge
+register, `bypass_mode` `always`. The rule `update` lets only a bypass actor update
+the branch (searcher A), so only the App writes it, and the ruleset of the default
+branch keeps its empty bypass list: the two scopes are two rulesets. **Decided
+here** (task `T-9v92`, condition 1 of its plan review): the rule `update` has one
+parameter in GitHub's description of it, `update_allows_fetch_and_merge`, and it
+is written `false` (no fork pulls into the branch), so the read-back compares it;
+`deletion` and `non_fast_forward` have none. The setup record has no hash row for
+this file: it is a function of the App's ID, which the forge register holds.
 
 ### The commands for the Operator
 

@@ -4,9 +4,9 @@ package setup
 // under layup run, The steps of the setup in phase 2; task T-ktgx, #273):
 // layup run (row 54 of M2d, task T-eahr) calls the step runner of this package
 // with the inputs of phase 2 given in Go, not as a file. StepsPhase2 takes the steps of phase 1 and changes
-// the five that differ: S01 to S04 have the code of phase 2, and S15 gives no
-// records commit and no command. S05 to S14 are phase 1's, with the same Calls;
-// S13 and its commands are rows 52b and 52c.
+// the six that differ: S01 to S04 and S13 have the code of phase 2 (S13: the two
+// rulesets, task T-9v92), and S15 gives no records commit and no command. S05 to
+// S12 and S14 are phase 1's, with the same Calls; the commands of S13 are row 52c.
 
 import (
 	"fmt"
@@ -18,8 +18,8 @@ import (
 )
 
 // Phase2 is what layup run gives the steps in place of a person, the forge and
-// the baseline's repository: the values of the records of Start and the
-// questions of the batch, which the work area and its files do not hold.
+// the baseline's repository: the values of the records of Start, the questions
+// of the batch and the App's ID, which the work area and its files do not hold.
 type Phase2 struct {
 	Name       string // OWNER/NAME of the target
 	Visibility string // forge.visibility of start.tsv: public or private
@@ -28,6 +28,7 @@ type Phase2 struct {
 	PinTree    string
 	PinTime    string
 	BriefSum   string // psb.sha256 of start.tsv
+	AppID      int64  // app_id of the host's forge register (not of the records of Start): the pin of the layup/ checks of S13 and its bypass actor
 	// Questions are the Q- questions of the batch, each with the question of
 	// its row of questions.tsv: the raw fact of the answers names them (S04).
 	Questions []work.Question
@@ -41,7 +42,7 @@ const runActor = "layup-run"
 const startRef = "records:start/start.tsv"
 
 // StepsPhase2 gives the steps of the setup in phase 2: the steps of phase 1
-// with S01 to S04 run by the code of phase 2, and S15 with no records commit
+// with S01 to S04 and S13 run by the code of phase 2, and S15 with no records commit
 // and no command (docs/spec/scaffold.md, The steps of the setup in phase 2). The
 // evidence of S04 stays that of phase 1: the checks pin and facts.
 func StepsPhase2(p Phase2, c Calls) map[string]Step {
@@ -58,6 +59,7 @@ func StepsPhase2(p Phase2, c Calls) map[string]Step {
 	set("S02", func(s *Step) { s.Actor, s.Run = runActor, func(Input) Outcome { return runS02Phase2(p) } })
 	set("S03", func(s *Step) { s.Actor, s.Run, s.Commands = runActor, runS03Phase2, nil })
 	set("S04", func(s *Step) { s.Run = func(in Input) Outcome { return runS04With(p.asked, in) } })
+	set("S13", func(s *Step) { s.Run = func(in Input) Outcome { return runS13Phase2(p, in) } })
 	set("S15", func(s *Step) { s.Actor, s.Commands, s.Records = runActor, nil, nil })
 	return m
 }
