@@ -2,8 +2,11 @@ add #2 state: rejected
 remove #4 state: ready
 add #4 state: blocked
 remove #5 state: in progress
+add #5 state: on hold
 remove #6 state: in progress
 add #6 state: rejected
 remove #7 state: in review
 add #7 state: rejected
 remove #9 state: stalled
+remove #44 state: ready
+add #44 state: on hold

@@ -1,10 +1,11 @@
 # Task state labels (#185, T-dm8m): the one writer of the `state:` labels.
 #
 # docs/tasks/task-labels.sh runs docs/tasks/task-state.sh and sets one
-# `state:` label on each task issue — an open issue the command does not list
-# carries none, and a closed issue takes `state: merged` or `state: rejected`
-# from its close reason. Nothing else sets these labels; a label set by hand
-# is replaced at the next run.
+# `state:` label on each open issue (#303): the state of a task, else `in review`
+# for an issue that an open pull request closes, else `on hold`. The rule is
+# written once, in the header of that script. A closed issue takes `state: merged`
+# or `state: rejected` from its close reason. Nothing else sets these labels; a
+# label set by hand is replaced at the next run.
 #
 # SAFETY, a write token on these triggers. Each trigger runs the workflow file of
 # the default branch: `push` to main, `pull_request_target`, `issues`,

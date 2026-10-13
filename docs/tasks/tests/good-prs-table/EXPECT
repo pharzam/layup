@@ -1,0 +1,11 @@
+T-bbb1	#3	done	—
+T-bbb2	#4	ready	—
+T-bbb3	#5	blocked	T-bbb2
+T-bbb4	#6	blocked	T-bbb3
+T-ccc1	#9	ready	—
+T-eee1	#20	in review	#51
+T-eee2	#21	in review	#50
+--- prs
+50	T-eee2
+51	other	20,21
+52	last

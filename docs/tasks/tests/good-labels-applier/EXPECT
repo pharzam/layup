@@ -3,14 +3,16 @@ api -H Accept: application/vnd.github.raw repos/{owner}/{repo}/contents/docs/tas
 api -H Accept: application/vnd.github.raw repos/{owner}/{repo}/contents/docs/tasks/completed.md?ref=main
 api -H Accept: application/vnd.github.raw repos/{owner}/{repo}/contents/docs/plan/README.md?ref=main
 api repos/{owner}/{repo}/issues?state=all&per_page=100 --paginate -q .[] | select(.pull_request | not) | "\(.number)\t\(.state)\t\(.state_reason // "")\t\([.labels[].name] | join(","))"
-label create state: ready --force --color ededed --description Set by .github/workflows/task-state.yml (#185); never by hand
-label create state: in progress --force --color ededed --description Set by .github/workflows/task-state.yml (#185); never by hand
-label create state: stalled --force --color ededed --description Set by .github/workflows/task-state.yml (#185); never by hand
-label create state: in review --force --color ededed --description Set by .github/workflows/task-state.yml (#185); never by hand
-label create state: blocked --force --color ededed --description Set by .github/workflows/task-state.yml (#185); never by hand
-label create state: merged --force --color ededed --description Set by .github/workflows/task-state.yml (#185); never by hand
-label create state: rejected --force --color ededed --description Set by .github/workflows/task-state.yml (#185); never by hand
+label create state: ready --force --color ededed --description Set by .github/workflows/task-state.yml; never by hand
+label create state: in progress --force --color ededed --description Set by .github/workflows/task-state.yml; never by hand
+label create state: stalled --force --color ededed --description Set by .github/workflows/task-state.yml; never by hand
+label create state: in review --force --color ededed --description Set by .github/workflows/task-state.yml; never by hand
+label create state: blocked --force --color ededed --description Set by .github/workflows/task-state.yml; never by hand
+label create state: merged --force --color ededed --description Set by .github/workflows/task-state.yml; never by hand
+label create state: rejected --force --color ededed --description Set by .github/workflows/task-state.yml; never by hand
+label create state: on hold --force --color ededed --description Set by .github/workflows/task-state.yml; never by hand
 issue edit 3 --add-label state: merged --remove-label state: in progress
 issue edit 4 --add-label state: ready
-issue edit 5 --remove-label state: ready
-issue edit 9 --remove-label state: stalled,state: ready
+issue edit 5 --add-label state: on hold --remove-label state: ready
+issue edit 9 --add-label state: on hold --remove-label state: stalled,state: ready
+issue edit 44 --add-label state: on hold --remove-label state: ready
