@@ -36,6 +36,20 @@ func TestARecordsCommitRemovesFiles(t *testing.T) {
 		t.Errorf("the store's base %s is not the head of layup-records: the removal was not pushed through the store", got)
 	}
 	head := strings.TrimSpace(gitOut(t, w.bare, "rev-parse", "layup-records"))
+	// A path that leaves the work tree removes no file outside it: the work tree is made two
+	// directories below TMPDIR, so ../../outside.txt is a file of TMPDIR that the test made.
+	tmp := t.TempDir()
+	t.Setenv("TMPDIR", tmp)
+	outside := filepath.Join(tmp, "outside.txt")
+	if err := os.WriteFile(outside, []byte("keep\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Remove(ctx, []string{"../../outside.txt"}, "refused"); err == nil {
+		t.Error("Remove of ../../outside.txt: no error; want a refusal")
+	}
+	if data, err := os.ReadFile(outside); err != nil || string(data) != "keep\n" {
+		t.Errorf("the file outside the work tree after the refused removal: %q, %v; want it kept", data, err)
+	}
 	for _, paths := range [][]string{{"setup/inputs/files/nope.md"}, {"keep.txt", "setup/inputs/files/nope.md"}, {"../x"}, {"/etc/passwd"}, {"a//b"}, {""}} {
 		if err := store.Remove(ctx, paths, "refused"); err == nil {
 			t.Errorf("Remove(%q): no error; want a refusal", paths)
