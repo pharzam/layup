@@ -926,6 +926,14 @@ These traps are not domain-specific: they hurt every project's test suite.
   check:** write the marker and the separator as bytes of the record that are not the
   payload's, always the same, and test the whole record for a payload that ends with a line
   feed and for one that does not.
+- ❌ **A pass test on a text that nobody has read from the real forge.** The probe of the forge check
+  passes only for a refusal with `GH013` and the default branch's ruleset name in its standard error; the
+  tests' forge refuses so, and no official page confirms that GitHub does (task `T-msrd`'s search found none).
+  Task `T-wphp` (#280). **The check:** the demo of `M2d` (`T-sdtb`) reads the real refusal; if it lacks the name,
+  fix the check and its spec sentence together, never accept any refusal as a pass.
+- ❌ **A claim that a pushed commit is "on no ref" of the clone.** A `git push` to the URL of the clone's own
+  `origin` makes `origin/<branch>` when the forge accepts it, so an accepted probe is on `origin/layup-probe`.
+  Task `T-wphp` (#280). **The check:** test `git for-each-ref --contains` after a refused push and an accepted one.
 
 ### Reference-sweep pitfalls
 

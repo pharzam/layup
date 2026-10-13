@@ -574,8 +574,10 @@ another ruleset, which a bypass of LAYUP's own could hide, is no pass). Else it 
 exits 0, as "probe accepted: <SHA>" (the Operator then deletes the ref and
 checks any workflow run that it started, §3); any other non-zero exit, as
 "probe not run: <the first line of standard error>" (an expired token, a
-network or server error), never a pass (FT1). The commit is on no ref of the
-run's clone after the push.
+network or server error), never a pass (FT1). The commit is on no branch of the
+run's clone after the push (**decided here**, task `T-wphp`: `git` makes the remote-tracking ref
+`origin/layup-probe` for a push that the forge accepts, which is a `fail`, because the push is to the
+URL of the clone's own `origin`; the next start clones afresh).
 
 ### The activity read
 
@@ -591,34 +593,33 @@ rows, and the records commit of `setup/forge-check.tsv` is made in every case; t
 step is `done` "the forge check passed", or `fail` naming the first row that is not
 `pass` as `<check>: <detail>`.
 
-- **The files** of the read-back are `out/ruleset-default.json`, for the default branch and
-  for `layup-probe`, which its conditions name, and `out/ruleset-records.json`, for
-  `layup-records`, in the work area, which the step makes sure of as `scaffold-push` does
-  (built again when missing, its head checked against the last commit of `setup/tree.tsv`;
-  a work area that is there is used as it is, and its head is not read).
-- **The comparison:** each rule of the file needs one returned rule of its type whose
-  parameters equal each parameter of the file's rule; parameters of different entries are
-  never combined, so the outcome does not depend on the order of the answer. A parameter
-  that the call returns and the file lacks is ignored; one that the file holds and the call
-  lacks is a difference, whatever its value (`false` and `0` too). The required checks are the
-  set of the pairs `context` and `integration_id`, with `strict_required_status_checks_policy`:
-  an extra pair and a missing pair differ, in any order. Absent parameters and an empty object
-  of them are alike. The `detail` of a `pass` is empty (`—`), except a rules row with a rule
-  type that the call returns and the file lacks: `extra: <types>`, sorted, a comma and a space.
-- **The bypass lists** are read from `setup/rulesets.txt` by its framing (an output is what lies
-  between its marker line and the line feed before the next marker line, or before the end of
-  the file); the `bypass_actors` of `default.json` must be an empty list, and those of
-  `records.json` must be one actor, `Integration`, `always`, with the `app_id` of the register.
-- **What fails what:** a failure of a check's own call (the forge, the push, a file, the token,
-  the commit of the probe) is that row's `fail`, with the first line of the error; a work area
-  that cannot be made sure of fails the three rules rows with its reason; a `setup/tree.tsv`
-  or a `setup/rulesets.txt` that is absent or cannot be read back fails the `tree` row, or the two
-  bypass rows; a read of the repository that fails gives the `tree` row's `fail` and a `probe`
-  `fail` that says the head was unavailable, and the expected commit is never put in its place.
-  Only a records base that is unavailable (a read of the two records that errors) or a records
-  commit that fails ends the step with no table, and its detail says so.
-- **The probe's commit** has the message `layup: the probe of the forge check`; the `run` and
-  `at` columns are the run's ID and the run's clock at each check.
+- **The files** of the read-back are `out/ruleset-default.json`, for the default branch and for
+  `layup-probe`, which its conditions name, and `out/ruleset-records.json`, for `layup-records`, in the
+  work area, which the step makes sure of as `scaffold-push` does (a work area that is there is used as
+  it is, and its head is not read).
+- **The comparison:** each rule of the file needs one returned rule of its type whose parameters equal
+  each of the file's own; the parameters of two returned rules are never combined, so the answer's order
+  does not matter. A parameter that the call returns and the file lacks is ignored; one that the file
+  holds and the call lacks is a difference, whatever its value (`false` and `0` too). The required checks
+  are the set of the pairs `context` and `integration_id`, in any order, with their strict flag. The
+  `detail` of a `pass` is empty (`—`), except a rules row with a rule type that the call returns and the
+  file lacks: `extra: <types>`, sorted, a comma and a space.
+- **The bypass lists** are read from `setup/rulesets.txt` by its framing (an output is what lies between
+  its marker line and the line feed before the next marker line, or before the end of the file): the
+  `bypass_actors` of `default.json` is an empty list, and that of `records.json` is one actor,
+  `Integration`, `always`, with the `app_id` of the register.
+- **What fails what:** a failure of a check's own call (the forge, the push, a file, the token, the
+  commit of the probe) is that row's `fail`; a work area that cannot be made sure of fails the three
+  rules rows; a `setup/tree.tsv` that is absent or refused fails the `tree` row and those three, and a
+  `setup/rulesets.txt` that is absent or refused the two bypass rows; a read of the repository that fails
+  fails the `tree` row and the `probe` row ("the head was not read": the expected commit is never put in
+  its place). Only records that cannot be read, a table that its reader (`ReadForgeCheck`) refuses (a
+  run ID that is none) or a records commit that fails end the step with no table, and its detail says so.
+- **The probe's commit** has the message `layup: the probe of the forge check`, and is made in the run's
+  own clone, which the step `clone` made afresh, so the objects of the head are there. The `run` and `at`
+  columns are the run's ID and the run's clock when the check ends: one reading for each row.
+- **A detail** is the first line of its reason, in valid UTF-8, with `DIR` for the host's directory as a
+  detail of `run-steps` has it. The `activity` read is of the default branch by its name.
 
 ### At each later start
 
