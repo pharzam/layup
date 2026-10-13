@@ -324,3 +324,114 @@ func startOf(t *testing.T, r *Sessions) time.Time {
 	}
 	return started
 }
+
+// filesSpec is phaseSpec for a session whose output is a directory of files,
+// as the prose session of the step setup has (docs/spec/scaffold.md, The prose
+// rows; task T-eahr): the paths of its two files, and Keep, which refuses a file
+// that holds "bad" and gives each at setup/inputs/files/<path>.
+func filesSpec(t *testing.T, w *world, r *Sessions, a worldAt, harness []string) PhaseSpec {
+	t.Helper()
+	s := phaseSpec(t, w, r, a, harness)
+	s.Step, s.Output, s.Files, s.Keep = "setup", "files", []string{"README.md", "docs/glossary.md"}, nil
+	s.KeepFiles = func(id string, files map[string][]byte) (map[string][]byte, error) {
+		kept := map[string][]byte{}
+		for p, data := range files {
+			if bytes.Contains(data, []byte("bad")) {
+				return nil, errors.New("a bad file " + p)
+			}
+			kept["setup/inputs/files/"+p] = data
+		}
+		return kept, nil
+	}
+	return s
+}
+
+// A session of a phase whose output is files commits all of them, with the
+// telemetry row, in one records commit, byte for byte.
+func TestASessionOfAPhaseWithFilesCommitsThemInOneRecordsCommit(t *testing.T) {
+	w, r, f, a, h := phaseWorld(t, `mkdir -p "$out/docs" && printf '# Readme\n' > "$out/README.md" && printf '# Glossary\r\n' > "$out/docs/glossary.md"`)
+	id, err := r.PhaseSession(context.Background(), filesSpec(t, w, r, a, h))
+	if err != nil {
+		t.Fatalf("PhaseSession: %q, %v", id, err)
+	}
+	for path, want := range map[string]string{"setup/inputs/files/README.md": "# Readme\n", "setup/inputs/files/docs/glossary.md": "# Glossary\r\n"} {
+		if got := show(t, w.bare, "layup-records", path); got != want {
+			t.Errorf("%s: %q; want %q", path, got, want)
+		}
+	}
+	if changed := strings.Fields(gitOut(t, w.bare, "show", "--format=", "--name-only", "layup-records")); !slices.Equal(changed, []string{"setup/inputs/files/README.md", "setup/inputs/files/docs/glossary.md", "telemetry.tsv"}) {
+		t.Errorf("the last records commit changed %q; want the two files and the telemetry row in one", changed)
+	}
+	if len(f.posted[2]) != 1 || f.posted[2][0] != id+": systems-architect session of setup: done\n" {
+		t.Errorf("the comments %q", f.posted[2])
+	}
+	if _, err := os.Stat(filepath.Join(r.Host, "sessions", id)); !os.IsNotExist(err) {
+		t.Errorf("the session directory after the call: %v; want it removed", err)
+	}
+}
+
+// An output of files that is refused is no record: the whole set is read and
+// checked first (the cases of the reader are in internal/session), and the end
+// commits the telemetry row alone, whichever file is the cause (docs/spec/scaffold.md, Input states: "nothing of it is committed").
+func TestAnOutputOfFilesThatIsRefusedIsNoRecord(t *testing.T) {
+	good := `mkdir -p "$out/docs" && printf 'g\n' > "$out/docs/glossary.md" && `
+	for _, c := range []struct{ name, body, comment string }{
+		{"a file that no name covers", good + `printf 'r\n' > "$out/README.md" && printf 'x\n' > "$out/extra.md"`, "no-result"},
+		{"not valid UTF-8", good + `printf 'a\377b' > "$out/README.md"`, "no-result"},
+		{"refused by its check", good + `printf 'a bad one\n' > "$out/README.md"`, "done, refused file"},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			w, r, f, a, h := phaseWorld(t, c.body)
+			id, err := r.PhaseSession(context.Background(), filesSpec(t, w, r, a, h))
+			var pe *PhaseError
+			if !errors.As(err, &pe) || pe.Session != id || id == "" {
+				t.Fatalf("PhaseSession: %q, %v; want a PhaseError of the session", id, err)
+			}
+			for _, p := range tree(t, w) {
+				if strings.HasPrefix(p, "setup/inputs/files/") {
+					t.Errorf("the refused output left %s in the records", p)
+				}
+			}
+			last := strings.Fields(gitOut(t, w.bare, "show", "--format=", "--name-only", "layup-records"))
+			if !slices.Equal(last, []string{"telemetry.tsv"}) {
+				t.Errorf("the last records commit changed %q; want the telemetry row alone", last)
+			}
+			if len(f.posted[2]) != 1 || f.posted[2][0] != id+": systems-architect session of setup: "+c.comment+"\n" {
+				t.Errorf("the comments %q", f.posted[2])
+			}
+		})
+	}
+}
+
+// The session of a phase runs on the clone and the branch of its Sessions, with
+// repo/ on its task branch at Base: the prose session of the step setup gets
+// the work area's target at the head of layup-setup (task T-eahr).
+func TestASessionOfAPhaseRunsOnTheCloneAndTheBranchOfItsSessions(t *testing.T) {
+	seen := filepath.Join(t.TempDir(), "seen")
+	w, r, _, a, h := phaseWorld(t, `{ git rev-parse --abbrev-ref HEAD; git rev-parse HEAD; cat docs/setup/armature.pin; git branch --list; } > `+seen+` && mkdir -p "$out" && printf 'x\n' > "$out/README.md"`)
+	other := t.TempDir()
+	gitOut(t, other, "init", "-q", "-b", "main")
+	os.WriteFile(filepath.Join(other, "README.md"), []byte("# Root\n"), 0o644)
+	gitOut(t, other, "add", "-A")
+	gitOut(t, other, "commit", "-q", "-m", "root")
+	gitOut(t, other, "switch", "-q", "-c", "layup-setup")
+	os.MkdirAll(filepath.Join(other, "docs", "setup"), 0o755)
+	os.WriteFile(filepath.Join(other, "docs", "setup", "armature.pin"), []byte("the pin\n"), 0o644)
+	gitOut(t, other, "add", "-A")
+	gitOut(t, other, "commit", "-q", "-m", "chore: setup S04")
+	head := strings.TrimSpace(gitOut(t, other, "rev-parse", "HEAD"))
+	r.Clone, r.Branch = other, "layup-setup"
+	spec := filesSpec(t, w, r, a, h)
+	spec.Files, spec.Base = []string{"README.md"}, head
+	if id, err := r.PhaseSession(context.Background(), spec); err != nil {
+		t.Fatalf("PhaseSession: %q, %v", id, err)
+	}
+	got, err := os.ReadFile(seen)
+	lines := strings.Split(strings.TrimRight(string(got), "\n"), "\n")
+	if err != nil || len(lines) < 4 || !regexp.MustCompile(`^task/T-[0-9a-z]{4}/1$`).MatchString(lines[0]) || lines[1] != head || lines[2] != "the pin" {
+		t.Errorf("what the session saw in repo/: %q, %v; want its task branch at %s, with docs/setup/armature.pin", got, err, head)
+	}
+	if branches := strings.Join(lines[3:], " "); strings.Contains(branches, "main") {
+		t.Errorf("the branches of repo/: %q; want the one branch of the clone and the task branch", branches)
+	}
+}

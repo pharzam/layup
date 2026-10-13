@@ -6,8 +6,11 @@ package session
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
+	"unicode/utf8"
 )
 
 // fileName refuses a name that is not one plain file name: empty, . or .., or
@@ -46,4 +49,73 @@ func ReadOutput(d Dir, name string) ([]byte, error) {
 		return nil, fmt.Errorf("the output file: %w", err)
 	}
 	return readResult(filepath.Join(d.Result, name))
+}
+
+// ReadOutputFiles reads the output files of a session of a phase, whose output
+// is a directory (docs/spec/scaffold.md, The prose rows; task T-eahr): result/<dir>
+// must hold the files at the paths in names, and nothing else. The whole set is
+// read and checked before any file is given: a name that is not a clean relative
+// path; a missing file; an entry that no name covers (a file, a directory with no
+// name below it, also a nested one); a link, as a file or as a directory above
+// one; an entry that is no regular file; a file over 1 MiB; and a file that is
+// not valid UTF-8 refuse the output, and the files read are not given.
+func ReadOutputFiles(d Dir, dir string, names []string) (map[string][]byte, error) {
+	if err := fileName(dir); err != nil {
+		return nil, fmt.Errorf("the output directory: %w", err)
+	}
+	wanted, above := map[string]bool{}, map[string]bool{}
+	for _, n := range names {
+		if !fs.ValidPath(n) || n == "." {
+			return nil, fmt.Errorf("the output file name %q is not a clean relative path", n)
+		}
+		wanted[n] = true
+		for p := path.Dir(n); p != "."; p = path.Dir(p) {
+			above[p] = true
+		}
+	}
+	root := filepath.Join(d.Result, dir)
+	if info, err := os.Lstat(root); err != nil {
+		return nil, fmt.Errorf("the output directory: %w", err)
+	} else if !info.IsDir() {
+		return nil, fmt.Errorf("the output directory %s is a link, or not a directory", dir)
+	}
+	seen := map[string]bool{}
+	err := filepath.WalkDir(root, func(p string, e fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		rel, err := filepath.Rel(root, p)
+		if err != nil || rel == "." {
+			return err
+		}
+		rel = filepath.ToSlash(rel)
+		switch {
+		case e.Type()&fs.ModeSymlink != 0:
+			return fmt.Errorf("the output file %s is a link", rel)
+		case wanted[rel]:
+			seen[rel] = true
+		case above[rel] && e.IsDir():
+		default:
+			return fmt.Errorf("the output holds %s, which the stop does not name", rel)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	files := map[string][]byte{}
+	for _, n := range names {
+		if !seen[n] {
+			return nil, fmt.Errorf("the output file %s is missing", n)
+		}
+		data, err := readResult(filepath.Join(root, filepath.FromSlash(n)))
+		if err != nil {
+			return nil, err
+		}
+		if !utf8.Valid(data) {
+			return nil, fmt.Errorf("the output file %s is not valid UTF-8", n)
+		}
+		files[n] = data
+	}
+	return files, nil
 }
