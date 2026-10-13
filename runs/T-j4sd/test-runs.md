@@ -87,3 +87,41 @@ the merge. It was stopped after `go build`, `go vet`, `gofmt` and `go test ./...
 of #307, `T-4c5c`), and the branch took it by a merge (`da6cb27`; one conflict, in `PRD-0001`, solved
 by keeping each task's rows and both lines of section 13). The run above is the whole script again,
 on the merged head.
+
+
+## The note of round 1: the empty message (10:32:51Z to 10:35:48Z, head `3563b56`)
+
+Round 1 found that no test passed an empty message (note 2). The cases were added to the unit
+test and to the integration test of the call, and each of the two rules was mutated alone on a
+copy of the tree (10:32:51Z to 10:33:04Z): the empty message refused with a `*FailedError` of `Code` -1 before
+`git` starts (`empty-refused`), and its argument left out, so that `git` finds no `-m` (`empty-dropped`).
+The unmutated copy passes both levels.
+
+```
+== empty-refused: unit: caught, --- FAIL: TestCommitTreeRunsItsVerb (0.00s) | integration: caught, --- FAIL: TestCommitTree (0.34s)
+== empty-dropped: unit: caught, --- FAIL: TestCommitTreeRunsItsVerb (0.00s) | integration: caught, --- FAIL: TestCommitTreeRunsItsVerb (0.00s)
+```
+
+The second line of the integration column names the unit test, because the run with the tag runs the
+unit tests of the same prefix too. The integration test alone (`-run '^TestCommitTree$'`, 10:37:06Z)
+does not catch `empty-dropped`: without `-m` the message is empty and `git` reads the null device, the same
+empty message, so it makes the same commit; the unit test, which reads the arguments, is what catches it.
+
+Then the checks that the note can change, on the head `3563b56` (10:34:26Z to 10:35:48Z), each with its exit code (the
+integration level of the other packages and the end-to-end level are not run again: the note changes
+tests of `internal/git` and two documents, and CI runs them):
+
+```
+go build ./...: exit 0 (10:34:28Z)
+go vet ./...: exit 0 (10:34:28Z)
+gofmt -l internal cmd (empty): exit 0 (10:34:29Z)
+go test ./...: exit 0 (10:34:35Z)
+go test -tags=integration ./internal/git/: exit 0 (10:34:39Z)
+adr-lint: exit 0 (10:34:41Z)
+prd-lint: exit 0 (10:34:41Z)
+link-lint: exit 0 (10:35:01Z)
+run-discipline-tests: exit 0 (10:35:11Z)
+nested-checkout-check: exit 0 (10:35:12Z)
+setup-check: exit 0 (10:35:48Z)
+git diff --check origin/main HEAD: exit 0 (10:35:48Z)
+```
