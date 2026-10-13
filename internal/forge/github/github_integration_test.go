@@ -557,13 +557,27 @@ func TestEffectiveRulesGivesEachActiveRuleOfABranchOverEveryPage(t *testing.T) {
 	}
 }
 
-// A branch that has no rule, or does not exist yet, gives no rule and no error: the
-// server answers 200 with an empty list, and the call adds no filter of its own.
-func TestEffectiveRulesOfABranchThatHasNoneOrDoesNotExistYet(t *testing.T) {
+// A branch that has no rule gives no rule and no error: the server answers 200 with an empty
+// list.
+func TestEffectiveRulesOfABranchThatHasNone(t *testing.T) {
 	_, _, a, _ := setup(t)
-	got, err := a.EffectiveRules(context.Background(), "layup-probe")
+	got, err := a.EffectiveRules(context.Background(), "no-rule-here")
 	if err != nil || len(got) != 0 {
 		t.Errorf("EffectiveRules of a branch with no rule = %+v, %v; want none", got, err)
+	}
+}
+
+// A branch that does not exist yet gives the rules of the rulesets that name it, as layup-probe
+// does before its probe: the call asks no list of branches, and keeps each rule that the server gives.
+func TestEffectiveRulesOfABranchThatDoesNotExistYetGivesTheRulesThatNameIt(t *testing.T) {
+	f, _, a, _ := setup(t)
+	f.rules = map[string][][]map[string]any{"layup-probe": {{ruleItem("creation", nil), ruleItem("deletion", nil)}}}
+	got, err := a.EffectiveRules(context.Background(), "layup-probe")
+	if want := []forge.Rule{{Type: "creation"}, {Type: "deletion"}}; err != nil || !reflect.DeepEqual(got, want) {
+		t.Errorf("EffectiveRules of layup-probe, which no branch of the repository has = %+v, %v; want %+v", got, err, want)
+	}
+	if n := f.requests["GET /repos/acme/target/branches"]; n != 0 {
+		t.Errorf("%d requests of the list of branches; want none", n)
 	}
 }
 

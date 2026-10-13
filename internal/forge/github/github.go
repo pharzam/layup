@@ -246,9 +246,11 @@ func (a *Adapter) Comments(ctx context.Context, issue int) ([]forge.Comment, err
 // EffectiveRules gives each active rule that applies to a branch, every page
 // (forge.md, The calls of M2d; task T-jpkc): GET .../rules/branches/{branch},
 // 100 a page. The branch is a multi-segment parameter of GitHub, so each of its
-// segments is escaped and its slashes stay. A branch with no rule, or one that
-// does not exist yet, gives an empty list; the call adds no filter of its own: the
-// endpoint omits a ruleset in evaluate or disabled.
+// segments is escaped and its slashes stay. The endpoint answers by the name of
+// the branch: a branch with no rule gives an empty list, and a branch that does not
+// exist yet, as layup-probe before its probe, gives the rules of the rulesets whose
+// conditions name it. The call asks for no list of branches and adds no filter of
+// its own: the endpoint omits a ruleset in evaluate or disabled.
 func (a *Adapter) EffectiveRules(ctx context.Context, branch string) ([]forge.Rule, error) {
 	segments := strings.Split(branch, "/")
 	for i, s := range segments {

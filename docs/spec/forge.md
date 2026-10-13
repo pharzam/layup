@@ -139,9 +139,11 @@ defect of this table. The push of the probe is a `git` call, not an API call.
   header as `Comments` does: a next page that is not at the `api` of the forge
   register is a forge error naming `EffectiveRules`. The branch is a multi-segment
   path parameter of GitHub (`x-multi-segment` in its description), so each segment
-  of its name is escaped and its slashes stay. A branch with no rule, or one that
-  does not exist yet, gives an empty list: GitHub answers 200 with `[]`, and the call
-  adds no filter of its own, as the endpoint gives the active rules only.
+  of its name is escaped and its slashes stay. The endpoint answers by the name of the
+  branch: a branch with no rule gives an empty list (GitHub answers 200 with `[]`), and
+  a branch that does not exist yet, as `layup-probe` is before its probe, gives the
+  rules of the rulesets whose conditions name it. The call asks for no list of branches
+  and adds no filter of its own, as the endpoint gives the active rules only.
 - A rule is its `type` and its `parameters`, decoded. A rule that GitHub gives with
   no `parameters`, or with an empty object of them, has none, so the read-back
   ([`scaffold.md`](scaffold.md#the-read-back)) compares the two forms alike. The
