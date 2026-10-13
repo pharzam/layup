@@ -6,7 +6,7 @@ missing, in `internal/setup`. All times are UTC, 2026-10-13, read from the clock
 
 ## The order of the gate
 
-The plan was posted at 09:22:52Z, its review (GPT-6.1 Sol on Codex CLI, effort `high`) ran from
+The plan was posted at 09:22:51Z, its review (GPT-6.1 Sol on Codex CLI, effort `high`) ran from
 09:22:57Z to 09:28:16Z and was posted at 09:30:39Z, and the author's answer at 09:30:54Z. The tests
 were written after that, and run red at 09:33:15Z.
 
@@ -68,8 +68,8 @@ caught.
 - **The first run** (09:38:16Z to 09:41:23Z): 41 mutants, 39 caught, **2 survived**:
   `message-branch-quoting`, because a double-quoted word of `sh` prints a space and a single quote
   as they are, so the branch of the test (`we ird'x`) needed no quoting (and a space is not valid in
-  a branch name of git); and `unsafe-chars`, the same branch. The test now has the branches `a$b`
-  and `a$b"c`, which are valid in git and are read by `sh`.
+  a branch name of git); and `unsafe-chars`, the same branch. The test took the branch `a$b"c` in
+  place of that one: it is valid in git, and `sh` reads its `$` and its `"`.
 - **The second run** (09:42:52Z to 09:46:34Z): 41 mutants, 40 caught, **1 survived**,
   `unsafe-chars` (a mutant that adds `$` to the characters that need no quotes): `a$b"c` is
   unsafe by its `"` too, so only a branch with the `$` alone tells the mutant; `a$b` was added.
