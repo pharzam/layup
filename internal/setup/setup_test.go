@@ -427,9 +427,9 @@ func TestMarkerID(t *testing.T) {
 	}
 }
 
-// commands.sh holds the commands of the done steps in the order of setup.md,
-// each with its comment line; a step done in an earlier run keeps its command
-// (D7).
+// commands.sh starts with set -eu (F-13, task T-56dj), and holds the commands
+// of the done steps in the order of setup.md, each with its comment line; a step
+// done in an earlier run keeps its command (D7).
 func TestTheCommandsFile(t *testing.T) {
 	f := &fakeSys{record: doneRows(3)}
 	f.install(t)
@@ -451,7 +451,7 @@ func TestTheCommandsFile(t *testing.T) {
 	if _, err := Run("/w", m, testWho, noStep); err != nil {
 		t.Fatal(err)
 	}
-	want := "# the git push root\ngit push root\n# the push of layup-setup\ngit push setup\n# the git push records\ngit push records\n# the apply\ngh api apply\n"
+	want := "set -eu\n# the git push root\ngit push root\n# the push of layup-setup\ngit push setup\n# the git push records\ngit push records\n# the apply\ngh api apply\n"
 	if f.commands != want {
 		t.Errorf("commands.sh\n%s\nwant\n%s", f.commands, want)
 	}
