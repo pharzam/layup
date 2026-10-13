@@ -685,7 +685,7 @@ step    id(SNN)                                   key  the step that set the val
 name    text                                      key  the value's name: `stack`, `pin.commit`, `marker:<file>:<line>[:<column>]`, …; `done` for a step's evidence row
 value   text                                      -    the value; for `done`, the evidence line
 source  enum(answer|catalog|fact|computed|gap|step)  -  (`computed` is decided here: §5 names three sources, and the pin values come from `git`, not from a person) `answer`: an answer row; `catalog`: a catalog file; `fact`: a fact citation the Operator accepted; `computed`: a command's output, or a hash that the engine computes; `gap`: kept as an open gap; `step`: a `done` row
-ref     text                                      -    `answer`: the question ID; `catalog`: `<stack>/<path>`; `fact`: `F-NNNN#n`; `computed`: the command, `sha256 <path>` for the hash of a file, or `sha256 <path> <prefix>…` for the hash of the rows of the file whose question has one of the prefixes (`answers.sha256`); `gap`: `docs/setup/open-gaps.tsv`; `step`: `—`
+ref     text                                      -    `answer`: the question ID; `catalog`: `<stack>/<path>`; `fact`: `F-NNNN#n`; `computed`: the command, `sha256 <path>` for the hash of a file, or `sha256 <path> <prefix>…` for the hash of the rows of the file whose question has one of the prefixes (`answers.sha256`), or `records:start/start.tsv` for a value that `layup run` takes from the records of Start (S01 and S02 in phase 2); `gap`: `docs/setup/open-gaps.tsv`; `step`: `—`
 ```
 
 ### The rule-path register
