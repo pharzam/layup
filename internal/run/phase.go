@@ -27,7 +27,11 @@ import (
 // of the output file under result/; Prompt, the fixed text of the step built
 // from the absolute paths of the input files (by name) and of the output
 // file; and Keep, which reads the output file by its block, runs the step's
-// check, and gives the records to commit, by path, or refuses the file.
+// check, and gives the records to commit, by path, or refuses the file. A
+// session whose output is files (the prose session of the step setup, task
+// T-eahr) names a directory as Output and the paths below it as Files: the
+// whole set is read by session.ReadOutputFiles, and KeepFiles takes the place
+// of Keep, on the files by their paths.
 type PhaseSpec struct {
 	Step, Role    string
 	Harness       []string
@@ -36,17 +40,21 @@ type PhaseSpec struct {
 	Base, Records string
 	Input         map[string][]byte
 	Output        string
+	Files         []string
 	Prompt        func(input map[string]string, output string) []byte
 	Keep          func(id string, data []byte) (map[string][]byte, error)
+	KeepFiles     func(id string, files map[string][]byte) (map[string][]byte, error)
 }
 
 // phaseOf holds what a session of a phase adds to a TaskSpec.
 type phaseOf struct {
-	step   string
-	input  map[string][]byte
-	output string
-	prompt func(input map[string]string, output string) []byte
-	keep   func(id string, data []byte) (map[string][]byte, error)
+	step      string
+	input     map[string][]byte
+	output    string
+	files     []string
+	prompt    func(input map[string]string, output string) []byte
+	keep      func(id string, data []byte) (map[string][]byte, error)
+	keepFiles func(id string, files map[string][]byte) (map[string][]byte, error)
 }
 
 // text gives the prompt of the session whose directory is root.
@@ -125,7 +133,7 @@ func (s *Sessions) PhaseSession(ctx context.Context, p PhaseSpec) (string, error
 		return "", err
 	}
 	spec := TaskSpec{Task: task, Attempt: 1, Role: p.Role, Base: p.Base, Records: p.Records, Pair: pairOf(p.Harness, p.Model),
-		phase: &phaseOf{step: p.Step, input: p.Input, output: p.Output, prompt: p.Prompt, keep: p.Keep}}
+		phase: &phaseOf{step: p.Step, input: p.Input, output: p.Output, files: p.Files, prompt: p.Prompt, keep: p.Keep, keepFiles: p.KeepFiles}}
 	spec.Admit = s.Admit(ctx, ProbeSpec{Harness: p.Harness, Models: p.Models, Base: p.Base, Records: p.Records})
 	spec.End = func(id string, d session.Dir, r session.Run, err error) error {
 		return s.endPhase(ctx, spec, id, d, r, err)
@@ -169,7 +177,14 @@ func (s *Sessions) milestoneCap(ctx context.Context, sessionCap string) error {
 // telemetry row alone when the class is not done or Keep refuses the file
 // (decided here, task T-gmey); then its comment on the control issue.
 func (s *Sessions) endPhase(ctx context.Context, spec TaskSpec, id string, d session.Dir, r session.Run, err error) error {
-	data, readErr := session.ReadOutput(d, spec.phase.output)
+	var data []byte
+	var output map[string][]byte
+	var readErr error
+	if spec.phase.files != nil {
+		output, readErr = session.ReadOutputFiles(d, spec.phase.output, spec.phase.files)
+	} else {
+		data, readErr = session.ReadOutput(d, spec.phase.output)
+	}
 	class := session.Class(r, err, readErr)
 	if class == "" {
 		return err
@@ -185,7 +200,13 @@ func (s *Sessions) endPhase(ctx context.Context, spec TaskSpec, id string, d ses
 	case class != "done":
 		reason = class
 	default:
-		kept, err := spec.phase.keep(id, data)
+		var kept map[string][]byte
+		var err error
+		if spec.phase.files != nil {
+			kept, err = spec.phase.keepFiles(id, output)
+		} else {
+			kept, err = spec.phase.keep(id, data)
+		}
 		if err != nil {
 			reason, refused = "refused file: "+err.Error(), ", refused file"
 		} else {

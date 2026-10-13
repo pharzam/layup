@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -441,6 +442,22 @@ func CloneLocal(src, dir, branch string) error {
 	}
 	return do(dir, "remote", "remove", "origin")
 }
+
+// AddRemote adds the remote name, with url, to the repository at dir: layup run
+// gives the clone of a work area its origin, the forge's URL with no credential
+// (docs/spec/scaffold.md, The work area; task T-eahr). A name or a URL that is
+// empty, that starts with a dash, or that holds a space (a name) or a control
+// character, starts no git: git could read it as an option.
+func AddRemote(dir, name, url string) error {
+	args := []string{"remote", "add", "--", name, url}
+	if !remoteName.MatchString(name) || url == "" || url[0] == '-' || strings.ContainsFunc(url, func(r rune) bool { return r < 0x20 || r == 0x7f }) {
+		return &FailedError{Args: args, Code: -1, Err: errors.New("not a remote name and a URL that git cannot read as an option")}
+	}
+	return do(dir, args...)
+}
+
+// remoteName is the form of the name of a remote that AddRemote accepts.
+var remoteName = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]*$`)
 
 // FetchSession fetches the commit sha of a session's clone, whose .git
 // directory is session, into dst of the clone at dir. No git runs in the

@@ -5,9 +5,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -103,6 +105,43 @@ func (s *recordsStore) ReadFile(ctx context.Context, path string) ([]byte, error
 	return git.Show(s.dir, base, path)
 }
 
+// ReadFiles gives each file at or under dir in the run's records base, by its
+// path below dir (none when the base has no such directory). An entry that is
+// not a regular file, a link or a submodule, is an error (task T-eahr: the work
+// area copies these files, and a link would reach a file of the host).
+func (s *recordsStore) ReadFiles(ctx context.Context, dir string) (map[string][]byte, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	base := s.pushed
+	if base == "" {
+		base = s.read
+	}
+	if base == "" {
+		return nil, errors.New("no records commit to read")
+	}
+	entries, err := git.LsTree(s.dir, base, dir)
+	if err != nil {
+		return nil, err
+	}
+	files := map[string][]byte{}
+	for _, e := range entries {
+		if !regular(e) {
+			return nil, fmt.Errorf("%s of the records is not a regular file (mode %s, %s)", e.Path, e.Mode, e.Type)
+		}
+		data, err := git.Show(s.dir, base, e.Path)
+		if err != nil {
+			return nil, err
+		}
+		files[strings.TrimPrefix(e.Path, dir+"/")] = data
+	}
+	return files, nil
+}
+
+// regular reports whether a tree entry is a regular file: a blob of mode 100644 or 100755.
+func regular(e git.TreeEntry) bool {
+	return e.Type == "blob" && (e.Mode == "100644" || e.Mode == "100755")
+}
+
 // Base gives the run's records base: the commit it pushed last, else of its
 // last read.
 func (s *recordsStore) Base() string {
@@ -155,10 +194,29 @@ func (s *recordsStore) Commit(ctx context.Context, files map[string][]byte, mess
 	return s.commit(ctx, files, message, "")
 }
 
+// Remove makes a records commit that removes the files at paths, each a path of
+// the records, and pushes it: the same lock, work tree and push as a commit that
+// writes. A path that is not a path of the records, or not a regular file of the
+// base's tree (a path below a link of it too), is an error, and no commit is made
+// (task T-eahr).
+func (s *recordsStore) Remove(ctx context.Context, paths []string, message string) error {
+	for _, p := range paths {
+		if !fs.ValidPath(p) || p == "." {
+			return fmt.Errorf("%q is not a path of the records", p)
+		}
+	}
+	return s.commitFiles(ctx, nil, paths, message, "")
+}
+
 // commit makes a records commit of files on the base and pushes it; orphan is
 // the default branch of the first records commit, which has no parent.
 // git's refusal of the push is ErrRefused.
 func (s *recordsStore) commit(ctx context.Context, files map[string][]byte, message, orphan string) error {
+	return s.commitFiles(ctx, files, nil, message, orphan)
+}
+
+// commitFiles is commit that also removes the files at remove.
+func (s *recordsStore) commitFiles(ctx context.Context, files map[string][]byte, remove []string, message, orphan string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	base := s.pushed
@@ -193,6 +251,18 @@ func (s *recordsStore) commit(ctx context.Context, files map[string][]byte, mess
 		}
 		if err := os.WriteFile(path, data, 0o644); err != nil {
 			return err
+		}
+	}
+	for _, p := range remove {
+		// The base's tree holds p as a regular file: a path below a link of the base has no entry, and
+		// would take the removal out of the work tree.
+		if entries, err := git.LsTree(s.dir, base, p); err != nil {
+			return err
+		} else if len(entries) != 1 || !regular(entries[0]) {
+			return fmt.Errorf("the records base has no regular file %s to remove", p)
+		}
+		if err := os.Remove(filepath.Join(tree, filepath.FromSlash(p))); err != nil {
+			return fmt.Errorf("the records base has no file %s to remove: %w", p, err)
 		}
 	}
 	if err := git.Add(tree); err != nil {

@@ -100,7 +100,9 @@ func TestTheStepsOfIntake(t *testing.T) {
 	// 3. The answer to the follow-up ends Intake.
 	answer(t, w, 902, follow, follow[0]+": Go\n")
 	r = restart()
-	if r.code != 0 || !strings.HasSuffix(r.stdout, "\nfollow-up-answers\tdone\t1 answers to the follow-up, in intake/answers.tsv; budget.tsv kept; Intake is done\n") {
+	// Intake ends, and the step setup runs after it: in this world, whose baseline is
+	// no baseline of a setup and whose harness writes no prose, it is fail (row 54, task T-eahr).
+	if r.code != 1 || !strings.Contains(r.stdout, "\nfollow-up-answers\tdone\t1 answers to the follow-up, in intake/answers.tsv; budget.tsv kept; Intake is done\nsetup\tfail\t") {
 		t.Fatalf("the third restart: exit %d\n%s\n%s", r.code, r.stdout, r.stderr)
 	}
 	for path, want := range map[string]string{

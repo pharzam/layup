@@ -903,6 +903,19 @@ These traps are not domain-specific: they hurt every project's test suite.
   limit that a slow start cannot reach (5 s), and add a case that runs longer than
   the short limit and expects its own class: it is red while the limit is shared.
 
+- ❌ **A baseline of more than one commit in a world of `layup run`.** With a stand-in
+  baseline of two commits the step `read-back` failed in one of the first four runs ("the
+  default branch is not one root commit with the tree pin.tree") and passed in every run
+  after the baseline was made one commit: the world's Operator pushes the `HEAD` of the root
+  directory as soon as it has one, so a world of several commits is green by luck. Task
+  `T-eahr` (#277). **The check:** make the baseline one commit (remove its `.git` and
+  initialise it again after its files are written), and run a new world several times.
+- ❌ **A path that is clean by its spelling still leaves through a link.** A name with no
+  `..` and no empty part read or removed a file outside its directory when a parent was a
+  link (`result/`, `DIR/work/OWNER`, a link of the records base). Task `T-eahr` (#277),
+  round 1. **The check:** `Lstat` each directory above the file, or ask the tree for the
+  path (a path below a link has no entry), before you read or remove it.
+
 ### Reference-sweep pitfalls
 
 A change that edits references or a rule's wording across the tree has three silent
