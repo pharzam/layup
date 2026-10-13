@@ -372,27 +372,47 @@ func (r *state) removeProse(ctx context.Context, p proseDone, reason string) err
 // (docs/spec/scaffold.md; row 54 of the plan, task T-eahr, #277).
 func (r *state) setupStep(ctx context.Context) Step {
 	const name = "setup"
-	if data, err := r.store.ReadFile(ctx, "setup/record.tsv"); err != nil {
+	if recorded, err := r.setupRecorded(ctx); err != nil {
 		return fail(name, err)
-	} else if data != nil {
+	} else if recorded {
 		return done(name, "done before")
 	}
-	d, err := r.setupInputs(ctx)
+	_, l, err := r.setupArea(ctx)
 	if err != nil {
 		return fail(name, err)
+	}
+	return l.do(ctx)
+}
+
+// setupRecorded reports whether the records hold setup/record.tsv, which the commit
+// of the step verify writes: the steps setup and verify are then done before.
+func (r *state) setupRecorded(ctx context.Context) (bool, error) {
+	data, err := r.store.ReadFile(ctx, "setup/record.tsv")
+	return data != nil, err
+}
+
+// setupArea builds the work area at DIR/work/OWNER/NAME again from the records,
+// with the answers of the setup written from the answers of Intake, and gives its
+// path with the loop of the step runner on it: the beginning of the steps setup and
+// verify, which each remove the area and build it again (docs/spec/scaffold.md, The
+// work area).
+func (r *state) setupArea(ctx context.Context) (string, setupLoop, error) {
+	d, err := r.setupInputs(ctx)
+	if err != nil {
+		return "", setupLoop{}, err
 	}
 	rows, asked, markers := setupAnswers(d)
 	src, err := r.workSource(ctx, rows)
 	if err != nil {
-		return fail(name, err)
+		return "", setupLoop{}, err
 	}
 	host, err := filepath.Abs(r.cfg.Dir)
 	if err != nil {
-		return fail(name, err)
+		return "", setupLoop{}, err
 	}
 	dir := filepath.Join(host, "work", r.cfg.Owner, r.cfg.Name)
 	if err := buildWorkArea(dir, src, r.target, r.defaultBranch, r.url()); err != nil {
-		return fail(name, err)
+		return "", setupLoop{}, err
 	}
 	p := setup.Phase2{Name: r.cfg.Owner + "/" + r.cfg.Name, Visibility: r.value("forge.visibility"), PinSource: r.value("pin.source"),
 		PinCommit: r.value("pin.commit"), PinTree: r.value("pin.tree"), PinTime: r.value("pin.time"), BriefSum: r.value("psb.sha256"),
@@ -404,5 +424,5 @@ func (r *state) setupStep(ctx context.Context) Step {
 			return r.proseSession(ctx, dir, rows)
 		},
 		remove: r.removeProse}
-	return l.do(ctx)
+	return dir, l, nil
 }

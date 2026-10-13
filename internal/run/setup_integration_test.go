@@ -5,6 +5,8 @@ package run
 import (
 	"bytes"
 	"context"
+	"errors"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -17,6 +19,7 @@ import (
 	"github.com/pharzam/layup/internal/setup"
 	"github.com/pharzam/layup/internal/standin"
 	"github.com/pharzam/layup/internal/tsv"
+	"github.com/pharzam/layup/internal/verify"
 	workpkg "github.com/pharzam/layup/internal/work"
 )
 
@@ -97,9 +100,16 @@ func proseFiles() map[string]string {
 	}
 }
 
-// scaffoldWorld is a world on the scaffold baseline, with the prose files in bin/files/.
+// scaffoldWorld is a world on the scaffold baseline, with the prose files in bin/files/. The
+// step verify of row 55 has its own test: in this world layup setup verify is not run (its call
+// is an error), so the step verify is fail and no record of the setup is written, as before it.
 func scaffoldWorld(t *testing.T, files map[string]string) *world {
 	t.Helper()
+	saved := verifyRun
+	t.Cleanup(func() { verifyRun = saved })
+	verifyRun = func(string, func(int, int, string) func(), io.Writer) (verify.Table, error) {
+		return verify.Table{}, errors.New("not run in this world")
+	}
 	w := newWorld(t)
 	w.baseline, w.pin = scaffoldBaseline(t)
 	for p, text := range files {
@@ -181,8 +191,8 @@ func setupSessions(w *world) int {
 func TestTheStepSetupRunsS01ToS14(t *testing.T) {
 	w := scaffoldWorld(t, proseFiles())
 	rows := toSetup(t, w, "go")
-	if last := rows[len(rows)-1]; last != (Step{"setup", "done", "S01 to S14 done, in the work area"}) {
-		t.Fatalf("the last row of the restart: %+v; want setup done\n%s", last, steps(rows))
+	if last := rowOf(rows, "setup"); last != (Step{"setup", "done", "S01 to S14 done, in the work area"}) {
+		t.Fatalf("the row of the step setup: %+v; want setup done\n%s", last, steps(rows))
 	}
 	target := workTarget(w)
 	if got := gitOut(t, target, "log", "--reverse", "--format=%s", "main..layup-setup"); got != "chore: setup S04\nchore: setup S05\nchore: setup S06\nchore: setup S07\nchore: setup S08\n"+
@@ -298,7 +308,7 @@ func TestAProseTextWhoseCheckFailsIsRemovedAndANewSessionStarts(t *testing.T) {
 	// The pair back and the text put right: a new session, and done.
 	writeFile(t, filepath.Join(w.dir, "bin", "files", "docs", "glossary.md"), proseFiles()["docs/glossary.md"])
 	rows = Restart(context.Background(), w.config("0.1.0-dev"))
-	if last := rows[len(rows)-1]; last != (Step{"setup", "done", "S01 to S14 done, in the work area"}) || setupSessions(w) != 3 {
+	if last := rowOf(rows, "setup"); last != (Step{"setup", "done", "S01 to S14 done, in the work area"}) || setupSessions(w) != 3 {
 		t.Errorf("the restart with the text put right: %+v, %d sessions; want setup done after a third session\n%s", last, setupSessions(w), steps(rows))
 	}
 }

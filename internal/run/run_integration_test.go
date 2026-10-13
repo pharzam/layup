@@ -573,11 +573,16 @@ func TestTheTextBlocksOfRunMd(t *testing.T) {
 	if !ok || text != probePrompt {
 		t.Errorf("the block probe-prompt of session.md:\n%s\nwant\n%s", text, probePrompt)
 	}
-	for name, want := range map[string]string{"start-readme": startReadme, "intake-issue": intakeBody, "control-issue": controlBody} {
-		_, text, ok := strings.Cut(string(spec), "\n```text "+name+"\n")
+	scaffold, err := os.ReadFile("../../docs/spec/scaffold.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, c := range map[string]struct{ doc, want string }{"start-readme": {string(spec), startReadme}, "intake-issue": {string(spec), intakeBody},
+		"control-issue": {string(spec), controlBody}, "scaffold-readme": {string(scaffold), scaffoldReadme}} {
+		_, text, ok := strings.Cut(c.doc, "\n```text "+name+"\n")
 		text, _, _ = strings.Cut(text, "```\n")
-		if !ok || text != want {
-			t.Errorf("the block %s of run.md:\n%s\nwant\n%s", name, text, want)
+		if !ok || text != c.want {
+			t.Errorf("the block %s:\n%s\nwant\n%s", name, text, c.want)
 		}
 	}
 	blocks, err := tsv.ReadBlocks(os.DirFS("../../docs/spec"))
@@ -721,7 +726,7 @@ func TestTheStepRuleGaps(t *testing.T) {
 	cfg.Step = func(i, n int, name string) { progress = append(progress, fmt.Sprintf("%d/%d %s", i, n, name)) }
 	rows := Restart(context.Background(), cfg)
 	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers")
-	if want := []string{"1/6 forge", "2/6 clone", "3/18 version", "4/18 lease", "5/18 probe", "6/18 rule-gaps", "7/18 meaning", "8/18 numbering", "9/18 spans", "10/18 draft", "11/18 completeness", "12/18 markers", "13/18 batch", "14/18 answers"}; strings.Join(progress, ", ") != strings.Join(want, ", ") {
+	if want := []string{"1/6 forge", "2/6 clone", "3/19 version", "4/19 lease", "5/19 probe", "6/19 rule-gaps", "7/19 meaning", "8/19 numbering", "9/19 spans", "10/19 draft", "11/19 completeness", "12/19 markers", "13/19 batch", "14/19 answers"}; strings.Join(progress, ", ") != strings.Join(want, ", ") {
 		t.Errorf("the progress %q, want %q", progress, want)
 	}
 	// What layup psb check prints on the same file (internal/cli/cli.go):
