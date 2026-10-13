@@ -29,7 +29,6 @@ same summary, dated — rather than deleting it or checking it off.
 <!-- One line per task. Example shape:
 - **<ID>** — <one-sentence summary> ([<ADR or doc link>](...); [detail](<id>.md))
 -->
-- **T-hfn1** — Row 56 of `M2d`: the step scaffold-push ([#279](https://github.com/pharzam/layup/issues/279); [the plan](../plan/README.md#the-tasks-of-m2d))
 - **T-wphp** — Row 57a of `M2d`: the step forge-check ([#280](https://github.com/pharzam/layup/issues/280); [the plan](../plan/README.md#the-tasks-of-m2d))
 - **T-2j13** — Row 57b of `M2d`: the forge check at each later start ([#281](https://github.com/pharzam/layup/issues/281); [the plan](../plan/README.md#the-tasks-of-m2d))
 - **T-eevt** — Row 58 of `M2d`: the e2e of the Scaffold ([#282](https://github.com/pharzam/layup/issues/282); [the plan](../plan/README.md#the-tasks-of-m2d))

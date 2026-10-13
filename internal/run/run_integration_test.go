@@ -58,14 +58,16 @@ func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
 	case call == "GET /repos/acme/target":
 		json.NewEncoder(w).Encode(map[string]any{"default_branch": "main", "visibility": "public"})
 	case call == "GET /repos/acme/target/branches":
-		out, err := exec.Command("git", "-C", f.bare, "for-each-ref", "--format=%(refname:short)", "refs/heads").Output()
+		out, err := exec.Command("git", "-C", f.bare, "for-each-ref", "--format=%(refname:short) %(objectname)", "refs/heads").Output()
 		if err != nil {
 			http.Error(w, `{"message":"no bare repository"}`, 500)
 			return
 		}
-		list := []map[string]string{}
-		for _, name := range strings.Fields(string(out)) {
-			list = append(list, map[string]string{"name": name})
+		list := []map[string]any{}
+		for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
+			if name, sha, ok := strings.Cut(line, " "); ok {
+				list = append(list, map[string]any{"name": name, "commit": map[string]string{"sha": sha}})
+			}
 		}
 		json.NewEncoder(w).Encode(list)
 	case strings.HasPrefix(call, "GET /users/"):
@@ -726,7 +728,7 @@ func TestTheStepRuleGaps(t *testing.T) {
 	cfg.Step = func(i, n int, name string) { progress = append(progress, fmt.Sprintf("%d/%d %s", i, n, name)) }
 	rows := Restart(context.Background(), cfg)
 	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers")
-	if want := []string{"1/6 forge", "2/6 clone", "3/19 version", "4/19 lease", "5/19 probe", "6/19 rule-gaps", "7/19 meaning", "8/19 numbering", "9/19 spans", "10/19 draft", "11/19 completeness", "12/19 markers", "13/19 batch", "14/19 answers"}; strings.Join(progress, ", ") != strings.Join(want, ", ") {
+	if want := []string{"1/6 forge", "2/6 clone", "3/20 version", "4/20 lease", "5/20 probe", "6/20 rule-gaps", "7/20 meaning", "8/20 numbering", "9/20 spans", "10/20 draft", "11/20 completeness", "12/20 markers", "13/20 batch", "14/20 answers"}; strings.Join(progress, ", ") != strings.Join(want, ", ") {
 		t.Errorf("the progress %q, want %q", progress, want)
 	}
 	// What layup psb check prints on the same file (internal/cli/cli.go):

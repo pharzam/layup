@@ -510,6 +510,24 @@ output must be a JSON object whose `source` is `OWNER/NAME`; else the step is
 the list that the App's permissions cannot read (`architecture.md` §3; known
 limit L-A4).
 
+**Decided here** (task `T-hfn1`, #279, with the conditions of its plan review): the
+step is "done before" when `setup/rulesets.txt` is in the records. Else a missing
+work area is built again, and its head checked, before either outcome below, the
+waiting one and the going-on one; an existing work area is used as it is, and its
+head is not read. The step then reads the last commit of `setup/tree.tsv`, the head
+of the default branch on the forge (a branch that the forge lacks has no head, which
+is no commit, so the step waits) and the files `default.json` and `records.json` of
+`DIR/applies/OWNER/NAME/`; a name that is a directory or cannot be read is a `fail`,
+naming it. While it waits, the step prints a note that says to run `out/commands.sh`
+of the work area with the Operator's own login, from a clone with no hooks installed,
+then each line of that file as a note, and it ends the restart, which releases the
+lease. The file `setup/rulesets.txt` is, for `default.json` and then `records.json`,
+the line `== <file>` and a line feed, the output byte for byte, and one line feed that
+LAYUP adds as a separator. The marker and the separator are not bytes of the output:
+an output is what lies between its marker line and the line feed before the next
+marker line, or before the end of the file, whether or not it ends with a line feed.
+A loop of the rebuild that does not end done is the `fail` of the step, with its detail.
+
 ## REQ-003 — Scaffold 7, the forge check
 
 The step `forge-check` (decision 8 of #265). Each rule below is the exact rule;

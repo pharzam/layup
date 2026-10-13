@@ -119,9 +119,10 @@ func recordsFile(t *testing.T, w *world, path string) string {
 // The demo of row 55: after S14 a restart runs layup setup verify and S15 and commits
 // the records of the setup in one records commit, five paths and the earlier records
 // kept; a row that is not pass or clear is the fail of the step with no such commit; a
-// second restart is "done before" and builds no work area; and, after the Operator's
-// push of the setup commits and a records branch that lacks the record, the work area
-// is built again to the same commits, its main the root commit by setup/tree.tsv.
+// second restart finds setup and verify "done before" (the work area that is missing is
+// built again by the step scaffold-push that follows, which waits); and, after the
+// Operator's push of the setup commits and a records branch that lacks the record, the
+// work area is built again to the same commits, its main the root commit by setup/tree.tsv.
 func TestTheStepVerifyCommitsTheRecordsOfTheSetup(t *testing.T) {
 	goEnv(t)
 	saved := verifyRun
@@ -201,8 +202,11 @@ func TestTheStepVerifyCommitsTheRecordsOfTheSetup(t *testing.T) {
 			t.Errorf("the step %s of a second restart: %+v; want done before\n%s", name, r, steps(rows))
 		}
 	}
-	if _, err := os.Stat(filepath.Join(w.dir, "work")); err == nil {
-		t.Error("a restart that finds the setup done built a work area")
+	if r := rowOf(rows, "scaffold-push"); r != (Step{"scaffold-push", "done", "waiting for the Operator's pushes and ruleset apply"}) {
+		t.Errorf("the step scaffold-push of a second restart: %+v; want done, waiting\n%s", r, steps(rows))
+	}
+	if _, err := os.Stat(filepath.Join(w.dir, "work", "acme", "target")); err != nil {
+		t.Errorf("the step scaffold-push, which waits, did not build the work area again: %v", err)
 	}
 	// A records branch without the record of the setup: the work area is built again from the records, with
 	// main of target/ the root commit though the default branch holds the setup commits, to the same commits.

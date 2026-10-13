@@ -920,6 +920,12 @@ These traps are not domain-specific: they hurt every project's test suite.
   the first run of the real `layup setup verify` refused it (check `sources`). Task
   `T-79zk` (#278). **The check:** run the real check on the record of a world that a new
   step writes or that a step in a new phase writes, before the freeze.
+- ❌ **A record that keeps a payload "byte for byte" and adds a byte to it.** The plan of
+  `setup/rulesets.txt` added a line feed to an output that had none, so a reader could not
+  tell the output's last byte from the separator. Task `T-hfn1` (#279), plan review. **The
+  check:** write the marker and the separator as bytes of the record that are not the
+  payload's, always the same, and test the whole record for a payload that ends with a line
+  feed and for one that does not.
 
 ### Reference-sweep pitfalls
 

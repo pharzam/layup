@@ -595,7 +595,8 @@ that writes it changes the block and its Go schema in one change.
 - `setup-steps`: none; the actor `layup-run` exists.
 
 **Not a block:** `setup/rulesets.txt`, the Operator's two apply outputs, each
-after a line `== <file>`, byte for byte (JSON, not a table); and
+after a line `== <file>`, byte for byte, and one line feed that `layup run` adds
+after it ([the framing](scaffold.md#the-commands-for-the-operator); JSON, not a table); and
 `setup/inputs/files/<path>`, a prose text at its path in the target, which the
 check of its setup row reads; it is committed with the end of the prose session
 that wrote it, and removed again, in one commit, when the step `setup` is `fail`
