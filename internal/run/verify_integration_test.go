@@ -201,8 +201,11 @@ func TestTheStepVerifyCommitsTheRecordsOfTheSetup(t *testing.T) {
 			t.Errorf("the step %s of a second restart: %+v; want done before\n%s", name, r, steps(rows))
 		}
 	}
-	if _, err := os.Stat(filepath.Join(w.dir, "work")); err == nil {
-		t.Error("a restart that finds the setup done built a work area")
+	if r := rowOf(rows, "scaffold-push"); r != (Step{"scaffold-push", "done", scaffoldWaiting}) {
+		t.Errorf("the step scaffold-push of a second restart: %+v; want done, waiting\n%s", r, steps(rows))
+	}
+	if _, err := os.Stat(filepath.Join(w.dir, "work", "acme", "target")); err != nil {
+		t.Errorf("the step scaffold-push, which waits, did not build the work area again: %v", err)
 	}
 	// A records branch without the record of the setup: the work area is built again from the records, with
 	// main of target/ the root commit though the default branch holds the setup commits, to the same commits.
