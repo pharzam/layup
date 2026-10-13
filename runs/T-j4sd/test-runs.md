@@ -9,11 +9,11 @@ read from the clock after each step.
 The plan was made against `9144e4e` (the merge of #305). The branch took `38ee78e` (the merge of
 #306, `T-9v92`) by a fast-forward before it had a commit of its own, and the red run and the
 mutation runs ran on that base with the change uncommitted; the mutants were made on a copy of the
-tree whose `internal/git` equals the two commits that follow. Before the freeze the branch took
-`6734a23` (the merge of #307, `T-4c5c`) by a merge, `da6cb27`, and after round 1 `4687b39` (the merge
-of #312, `T-p481`) by a second one, `af5992d`; the budget is read against `4687b39`, as the comments
-"The base of the budget" on #272 say. The green run is on `da6cb27`; the last two sections hold the
-checks that read the changes after it.
+tree whose `internal/git` equals the two commits that follow. It then took `main` by three merges:
+`6734a23` (#307, `T-4c5c`; `da6cb27`) before the freeze, `4687b39` (#312, `T-p481`; `af5992d`) after
+round 1 and `b28171b` (#311, `T-56dj`; `0daa935`) after round 2. The budget is read against
+`b28171b`, as the comments "The base of the budget" on #272 say. The first green run is on `da6cb27`;
+the sections after it hold the checks on the later heads.
 
 ## Red (09:32:16Z to 09:32:19Z)
 
@@ -128,24 +128,30 @@ setup-check: exit 0 (10:35:48Z)
 git diff --check origin/main HEAD: exit 0 (10:35:48Z)
 ```
 
+## After the merge of `4687b39` (10:40:36Z to 10:41:44Z, head `af5992d`)
 
-## After the merge of `main` at `4687b39` (10:40:36Z to 10:41:44Z, head `af5992d`)
+The merge brought documents and a script (`T-p481`), no Go file. The checks of the same script as after
+the note ran, `go build`, `go vet`, `gofmt`, `go test ./...`, the integration level of `internal/git`,
+the five linters, `setup-check` and `git diff --check`: each exit 0, the last at 10:41:44Z. The
+integration level of the other packages and the end-to-end level were not run again.
 
-The merge brought the task `T-p481`: documents and a script, and no Go file. The checks of the same
-script as after the note, each with its exit code (the integration level of the other packages and the
-end-to-end level are not run again, and CI runs them):
+## After the merge of `b28171b` (the whole script, 10:55:38Z to 11:09:21Z, head `0daa935`)
+
+The merge brought the task `T-56dj` (`internal/setup`, `cmd/layup`, documents), so the whole script ran
+again, each with exit 0 (`-timeout 30m`, the host's load average about 7):
 
 ```
-go build ./...: exit 0 (10:40:37Z)
-go vet ./...: exit 0 (10:40:38Z)
-gofmt -l internal cmd (empty): exit 0 (10:40:38Z)
-go test ./...: exit 0 (10:40:47Z)
-go test -tags=integration ./internal/git/: exit 0 (10:40:51Z)
-adr-lint: exit 0 (10:40:53Z)
-prd-lint: exit 0 (10:40:53Z)
-link-lint: exit 0 (10:41:06Z)
-run-discipline-tests: exit 0 (10:41:14Z)
-nested-checkout-check: exit 0 (10:41:15Z)
-setup-check: exit 0 (10:41:44Z)
-git diff --check origin/main HEAD: exit 0 (10:41:44Z)
+go build ./...: exit 0 (10:55:40Z)
+go vet ./...: exit 0 (10:55:41Z)
+gofmt -l internal cmd (empty): exit 0 (10:55:41Z)
+go test ./...: exit 0 (10:55:53Z)
+go test -tags=integration ./...: exit 0 (11:04:55Z)
+go test -tags=e2e ./...: exit 0 (11:06:41Z)
+adr-lint: exit 0 (11:06:46Z)
+prd-lint: exit 0 (11:06:46Z)
+link-lint: exit 0 (11:07:51Z)
+run-discipline-tests: exit 0 (11:08:28Z)
+nested-checkout-check: exit 0 (11:08:31Z)
+setup-check: exit 0 (11:09:21Z)
+git diff --check origin/main HEAD: exit 0 (11:09:21Z)
 ```

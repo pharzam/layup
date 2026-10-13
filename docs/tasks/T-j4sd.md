@@ -4,10 +4,10 @@ Issue: [#272](https://github.com/pharzam/layup/issues/272), row 51b of [the task
 of M2d](../plan/README.md#the-tasks-of-m2d), opened by `T-bng8` (#267). Serves
 `F-0003#43` through REQ-003. The plan was made against `9144e4e` (the merge of #305);
 the branch took `38ee78e` (the merge of #306, `T-9v92`) by a fast-forward before it
-had a commit of its own, `6734a23` (the merge of #307, `T-4c5c`) by a merge before the freeze,
-and `4687b39` (the merge of #312, `T-p481`) by a second merge after round 1. The budget is read
-against `4687b39`, as the change of this task alone: the comments "The base of the budget" and
-"The base of the budget, again" (6143368806 and 6143768991 on #272) give the figures.
+had a commit of its own, and `main` three times more by a merge: `6734a23` (#307, `T-4c5c`)
+before the freeze, `4687b39` (#312, `T-p481`) after round 1 and `b28171b` (#311, `T-56dj`) after
+round 2. The budget is read against `b28171b`, as the change of this task alone: three comments
+"The base of the budget" on #272 (6143368806, 6143768991 and 6144155883) give the figures.
 Author: Claude Sonnet 5.5 on Claude Code. Evidence: [`runs/T-j4sd/`](../../runs/T-j4sd/).
 
 ## Plan and plan review
@@ -52,9 +52,9 @@ of the tree, 15 of 15 caught, at the unit level and again by the integration lev
 two mutants of the empty message (note 2 of round 1) caught, the refusal by both tests and the
 argument left out by the unit test only (`git` makes the same commit without `-m`); every check of the gate
 exits 0 on the merged head before the round, and the checks that the note can change exit 0
-after it, and again on the merged head (the integration level of the other packages and the
-end-to-end level were not run after the note and the merge: they changed tests of `internal/git`,
-documents and a script, and no other Go file; CI runs them).
+after it and after the first merge; the whole script exits 0 again on the head of round 3 (the
+integration level of the other packages and the end-to-end level were not run on the two heads in
+between: they changed tests of `internal/git`, documents and a script; CI runs them).
 
 **Known limits:** the call does not read the tree of the parent, so a caller that wants an
 empty commit gives the parent's tree itself; the call does not check that `tree` names a
@@ -103,6 +103,16 @@ origin/main`. The verdict row of round 1 was edited to `material`, with that rea
 lint reads the two records in their positions (precedent: `T-4c5c`). Round 2 found nothing:
 `nothing material in scope`, no finding and no note.
 
+Round 3 (GPT-6.1 Sol on Codex CLI, effort `high`, a fresh session in a clone at `0daa935`;
+comment 6144146264): `main` moved again, to `b28171b`, the merge of #311 (`T-56dj`), and the
+branch took it by a merge; it changed five files that this branch had touched (`PRD-0001`,
+`packages.md`, `traceability.md`, `backlog.md`, `completed.md`), so a round scoped to them
+followed, with no cycle. It found nothing: `nothing material in scope`, no finding. A third
+numbered record would fail `review-record-lint.sh` (RR7: the k-th record carries cycle k-1, and
+none is past the cap of 1), so the reviewer's message is posted under a heading that the check
+does not count, with a note that says so, and the check reads rounds 1 and 2. The disagreement
+between the rule and the check is issue #313.
+
 ## Verdict
 
 Delivered: the call `CommitTree` of `internal/git`, which makes a commit of a tree on a
@@ -111,11 +121,11 @@ parent that is no full object ID before `git` starts; `commitEnv` is the one hom
 identity. The tests were red first, each rule was mutated alone and caught (15 of 15 at two
 levels, and two more after the note), and every check of the gate exits 0. The review ended by
 decay at cycle 0 of cap 1, with no material finding, and the round scoped to the merge of `main`
-found nothing. The diff against `4687b39` is inside 550
-lines over 11 files (517 lines added plus removed over 11 files, measured with the close-out inside; the comment on the base
+found nothing. The diff against `b28171b` is inside 550
+lines over 11 files (536 lines added plus removed over 11 files, measured with the close-out inside; the comment on the base
 estimated about 410 lines over 10 files, before the note added `guardrails.md`, its tests and a section
-of the record); against `9144e4e`, the base of the plan review, it holds the work of `T-9v92`, `T-4c5c`
-and `T-p481` too, as the comments "The base of the budget" say. Next: row 57a, `T-wphp`, the step `forge-check`, makes the
+of the record); against `9144e4e`, the base of the plan review, it holds the work of `T-9v92`, `T-4c5c`,
+`T-p481` and `T-56dj` too, as the comments "The base of the budget" say. Next: row 57a, `T-wphp`, the step `forge-check`, makes the
 probe's commit with this call.
 
 ## Resource record
@@ -133,4 +143,7 @@ reports them; the author's are not reported. The harness exception is the one ab
 | The close-out before the merge | execution | Claude Sonnet 5.5 | `max` | not reported | 10:36 to 10:38 |
 | The merge of `main` and its checks | execution | Claude Sonnet 5.5 | `max` | not reported | 10:38 to 10:41 |
 | Round 2, scoped to the merge | reasoning | GPT-6.1 Sol (Codex CLI, `codex exec`) | `high` | 70,434 (as Codex reports; no USD) | 4 min 58 s, 10:41 to 10:46 |
-| The close-out of round 2 | execution | Claude Sonnet 5.5 | `max` | not reported | 10:47 to 10:48 (the commit of this file) |
+| The close-out of round 2 | execution | Claude Sonnet 5.5 | `max` | not reported | 10:47 to 10:49 |
+| The second merge of `main`, its brief and the full run | execution | Claude Sonnet 5.5 | `max` | not reported | 10:53 to 11:08 |
+| Round 3, scoped to the second merge | reasoning | GPT-6.1 Sol (Codex CLI, `codex exec`) | `high` | 64,962 (as Codex reports; no USD) | 5 min 50 s, 10:56 to 11:02 |
+| The close-out of round 3 | execution | Claude Sonnet 5.5 | `max` | not reported | 11:02 to 11:09 (the commit of this file) |
