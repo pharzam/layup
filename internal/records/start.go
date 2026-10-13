@@ -67,6 +67,11 @@ var (
 
 func isTime(v string) bool { _, ok := seconds(v, v); return ok }
 
+// ValidRunID reports whether v has the form of a run ID: 16 lowercase
+// hexadecimal characters, the form of the column run of lease.tsv and of
+// forge-check.tsv (docs/spec/records.md), so the form has one home.
+func ValidRunID(v string) bool { return runForm.MatchString(v) }
+
 // A startName is the rule of one name of start.tsv: the form of its value,
 // whether the value may be the empty value, and its source.
 type startName struct {
@@ -230,7 +235,7 @@ func CheckLease(r []string) error {
 	if c := missing(f, []string{"host", "version", "started", "heartbeat", "state"}); c != "" {
 		return &RowError{c, "no column of lease.tsv holds the empty value"}
 	}
-	if !runForm.MatchString(f["run"]) {
+	if !ValidRunID(f["run"]) {
 		return &RowError{"run", "a run ID is 16 lowercase hexadecimal characters"}
 	}
 	return nil
