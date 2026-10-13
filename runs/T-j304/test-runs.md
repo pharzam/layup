@@ -181,3 +181,33 @@ nested-checkout-check: exit 0 (07:15:38Z)
 setup-check: exit 0 (07:16:05Z)
 git diff --check origin/main HEAD: exit 0 (07:16:05Z)
 ```
+
+## After round 1 (07:33:13Z to 07:34:11Z)
+
+Round 1 gave `nothing material in scope` and eight notes; the notes commit `b87fd68` changes
+documents, the usage text of a script and one fixture, and no code.
+
+**One mutant for the new case** (note 7), on a copy of `docs/tasks` and never on the worktree
+(07:32:32Z): in the applier of `task-labels.sh`, `[ -n "$_rem" ] && set -- ...` joined with
+`&& [ -n "$_add" ]`, so that an edit with a removal and no addition drops the removal. It is
+caught by `good-labels-applier` alone (exit 2, the call `issue edit 10 --remove-label
+state: ready` missing); `good-labels-applier-prs` and `good-labels-applier-dry-run` stay at 0.
+Before the case had #10 the three passed with the mutant.
+
+**The checks that read the tree**, on `b87fd68`, each with exit 0 (the levels `integration`
+and `e2e` are not repeated: the notes touch no Go code, and CI runs them on the head of the
+pull request):
+
+```
+go build ./...: exit 0 (07:33:14Z)
+go vet ./...: exit 0 (07:33:15Z)
+gofmt -l internal cmd (empty): exit 0 (07:33:15Z)
+go test ./...: exit 0 (07:33:21Z)
+adr-lint: exit 0 (07:33:23Z)
+prd-lint: exit 0 (07:33:23Z)
+link-lint: exit 0 (07:33:36Z)
+run-discipline-tests: exit 0 (07:33:43Z)
+nested-checkout-check: exit 0 (07:33:44Z)
+setup-check: exit 0 (07:34:10Z)
+git diff --check origin/main HEAD: exit 0 (07:34:11Z)
+```
