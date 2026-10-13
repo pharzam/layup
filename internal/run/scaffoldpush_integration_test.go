@@ -42,6 +42,16 @@ func TestTheAppliesOfTheOperatorAreReadByTheirNames(t *testing.T) {
 	if got, err := readApplies(dir); err == nil || !strings.Contains(err.Error(), "records.json") {
 		t.Errorf("a directory named records.json: %q, %v; want an error that names it", got, err)
 	}
+	// A file that cannot be read (a user that may read any file reads it, so the case needs another).
+	if err := os.Remove(filepath.Join(dir, "records.json")); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "records.json"), []byte("r"), 0o000); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := readApplies(dir); os.Geteuid() != 0 && (err == nil || !strings.Contains(err.Error(), "records.json")) {
+		t.Errorf("a file named records.json that cannot be read: %q, %v; want an error that names it", got, err)
+	}
 }
 
 // notes gives the lines of progress that the world has seen so far.
@@ -133,6 +143,20 @@ func TestTheStepScaffoldPushWaitsAndRecordsTheAppliesOfTheOperator(t *testing.T)
 	restart(Step{"scaffold-push", "fail", "records.json"})
 	if err := os.Remove(filepath.Join(applies, "records.json")); err != nil {
 		t.Fatal(err)
+	}
+	// An output that cannot be read (a user that may read any file reads it, so the case is then skipped).
+	writeFile(t, filepath.Join(applies, "records.json"), recordsOut)
+	if err := os.Chmod(filepath.Join(applies, "records.json"), 0o000); err != nil {
+		t.Fatal(err)
+	}
+	if os.Geteuid() != 0 {
+		restart(Step{"scaffold-push", "fail", "records.json"})
+	}
+	if err := os.Remove(filepath.Join(applies, "records.json")); err != nil {
+		t.Fatal(err)
+	}
+	if out, err := gitRunOK(w.bare, "show", "refs/heads/layup-records:setup/rulesets.txt"); err == nil {
+		t.Errorf("setup/rulesets.txt is in the records after a failure to read an output: %q; want no record of the applies", out)
 	}
 	writeFile(t, filepath.Join(applies, "records.json"), `{"source":"acme/other"}`)
 	restart(Step{"scaffold-push", "fail", "records.json"})
