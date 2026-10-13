@@ -221,6 +221,21 @@ case "$p" in
 	# Each session of a phase reads the problem statement (intake.md, The
 	# sessions of Intake; round 1 of #224).
 	[ -f "$in" ] || exit 3
+	# The prose session of the step setup (row 54, task T-eahr): repo/ is the target on its task
+	# branch at the head of layup-setup, and the files of the F- rows of the stop table, in
+	# bin/files/, are written below the output directory.
+	if printf '%s\n' "$p" | grep -q '^The output directory: '; then
+		dir=$(printf '%s\n' "$p" | sed -n 's/^The output directory: //p')
+		stop=$(printf '%s\n' "$p" | sed -n 's/^The stop table: //p')
+		[ -f docs/setup/armature.pin ] || exit 5
+		[ "$(git rev-parse --abbrev-ref HEAD | cut -c1-5)" = task/ ] || exit 6
+		for want in $(awk -F '\t' 'NR > 1 { print $4 }' "$stop"); do
+			src="$(dirname "$0")/files/$want"
+			[ -f "$src" ] || exit 7
+			mkdir -p "$dir/$(dirname "$want")" && cp "$src" "$dir/$want" || exit 8
+		done
+		exit 0
+	fi
 	# The session of the step markers reads the list of the markers too (row 53).
 	if printf '%s\n' "$p" | grep -q '^The list of markers: '; then
 		ls=$(printf '%s\n' "$p" | sed -n 's/^The list of markers: //p')
@@ -324,6 +339,20 @@ func allDone(t *testing.T, name string, rows []Step, want ...string) {
 	if strings.Join(got, " ") != strings.Join(want, " ") {
 		t.Errorf("%s: the steps %v, want %v\n%s", name, got, want, steps(rows))
 	}
+}
+
+// beforeSetup gives the rows of a restart that ran to the end of Intake without
+// the last, the step setup, which these worlds cannot do: their baseline holds no
+// file of a setup and their scripted harness writes no prose, so the step is fail
+// at S04, whose file docs/adr/README.md the baseline lacks (row 54, task T-eahr).
+// The rows before it are asserted as they were.
+func beforeSetup(t *testing.T, rows []Step) []Step {
+	t.Helper()
+	last := rows[len(rows)-1]
+	if last.Name != "setup" || last.Result != "fail" || !strings.HasPrefix(last.Detail, "S04: docs/adr/README.md of the baseline") {
+		t.Errorf("the last row of a restart that ends Intake: %+v; want the step setup, fail at S04 for the file that its baseline lacks", last)
+	}
+	return rows[:len(rows)-1]
 }
 
 // The clock of a world does not go back from one config of it to the next. A
@@ -686,7 +715,7 @@ func TestTheStepRuleGaps(t *testing.T) {
 	cfg.Step = func(i, n int, name string) { progress = append(progress, fmt.Sprintf("%d/%d %s", i, n, name)) }
 	rows := Restart(context.Background(), cfg)
 	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers")
-	if want := []string{"1/6 forge", "2/6 clone", "3/17 version", "4/17 lease", "5/17 probe", "6/17 rule-gaps", "7/17 meaning", "8/17 numbering", "9/17 spans", "10/17 draft", "11/17 completeness", "12/17 markers", "13/17 batch", "14/17 answers"}; strings.Join(progress, ", ") != strings.Join(want, ", ") {
+	if want := []string{"1/6 forge", "2/6 clone", "3/18 version", "4/18 lease", "5/18 probe", "6/18 rule-gaps", "7/18 meaning", "8/18 numbering", "9/18 spans", "10/18 draft", "11/18 completeness", "12/18 markers", "13/18 batch", "14/18 answers"}; strings.Join(progress, ", ") != strings.Join(want, ", ") {
 		t.Errorf("the progress %q, want %q", progress, want)
 	}
 	// What layup psb check prints on the same file (internal/cli/cli.go):
@@ -1170,6 +1199,7 @@ func TestTheStepAnswers(t *testing.T) {
 	addComment(w, 1, 804, 101, "pharzam", at(4*time.Minute), operator.String())
 	rows = Restart(context.Background(), w.config("0.1.0-dev"))
 	// The review (row 47b) closes each answer, and the follow-up asks nothing.
+	rows = beforeSetup(t, rows)
 	allDone(t, "the restart with the answers", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers", "answers-review", "follow-up", "follow-up-answers")
 	if d := rowOf(rows, "follow-up").Detail; d != "nothing to ask again; Intake is done" {
 		t.Errorf("the detail of follow-up %q", d)
