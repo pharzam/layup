@@ -597,7 +597,9 @@ that writes it changes the block and its Go schema in one change.
 **Not a block:** `setup/rulesets.txt`, the Operator's two apply outputs, each
 after a line `== <file>`, byte for byte (JSON, not a table); and
 `setup/inputs/files/<path>`, a prose text at its path in the target, which the
-check of its setup row reads.
+check of its setup row reads; it is committed with the end of the prose session
+that wrote it, and removed again, in one commit, when the step `setup` is `fail`
+after that session ([`scaffold.md`](scaffold.md#the-stops-of-the-runner)).
 
 ## REQ-011 — The telemetry record
 

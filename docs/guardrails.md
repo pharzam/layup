@@ -878,6 +878,17 @@ These traps are not domain-specific: they hurt every project's test suite.
   limit that a slow start cannot reach (5 s), and add a case that runs longer than
   the short limit and expects its own class: it is red while the limit is shared.
 
+- ❌ **A baseline of more than one commit in a world of `layup run`.** With a stand-in
+  baseline of two commits (the stand-in's, then the scaffold's) the step `read-back` of a
+  world failed in one of the first four runs, with "the default branch is not one root
+  commit with the tree pin.tree", and it passed in every run after the baseline was made one
+  commit. The cause that fits the code: the world's Operator pushes the `HEAD` of the root
+  directory as soon as it has one, which is the clone of the baseline before its `.git` is
+  removed, and a baseline of one commit makes that push the same tree and a root commit, so
+  such a world is green by luck. Task `T-eahr` (#277) met it. **The check:** make the
+  baseline of a world one commit (remove its `.git` and initialise it again after its files
+  are written), and run a new world several times before you trust it.
+
 ### Reference-sweep pitfalls
 
 A change that edits references or a rule's wording across the tree has three silent

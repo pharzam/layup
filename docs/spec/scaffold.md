@@ -121,7 +121,14 @@ from it into the setup's `answers.tsv` ([The work area](#the-work-area)):
 
 Each row has `by` `operator` and `source` the URL of the comment that holds
 the answer, `<web>/OWNER/NAME/issues/<n>#issuecomment-<id>` of its copy, and
-for a `gap` with no answer the URL of the comment of the batch. An accepted
+for a `gap` with no answer the URL of the comment of the batch. **Decided here**
+(task `T-eahr`): the answer of a setup question is that of the follow-up that asks
+it again, when that has one (whatever the state of the question it asks again,
+which keeps its own); else its own, unless its state is `open` (the review found it
+unclear and nothing cleared it), which is no answer. `accept` and `gap`, in lower
+case, are the whole answer; any other text, with the spaces round it, is a value,
+byte for byte. `by` is the block of the question's row, and the comment of the batch
+is the App's comment of the Intake issue that starts with the batch's header line. An accepted
 proposal is an answer of the Operator, not a fact citation: the numbered facts
 of the target come only with the first bet (`architecture.md` §7), so the quote
 stays the evidence of the proposal in `intake/markers.tsv`.
@@ -187,6 +194,18 @@ item 4):
   finding 2 of round 2 of #265: after the Operator's push the default branch
   holds the setup commits, and S03 in phase 2 needs the root commit).
 
+**Decided here** (task `T-eahr`): `target/` is made by `git clone` of the run's
+clone (one branch, with its objects, no remote), then its work tree is put at the
+branch, `main` is put at the root commit (the branch of the clone is `main` whatever
+the forge's default branch is called, as the runner reads `refs/heads/main`), and
+`origin` is the URL of the forge's repository with no credential: S03 in phase 2
+writes no command, and the commands of S13 read and push through `origin` with the
+Operator's own login. The row of order 0 of `setup/tree.tsv` must be in the clone,
+and with no such file the default branch must hold the one commit that Start read
+back, else the step is `fail`. A path of `setup/inputs/files/` that leaves
+`inputs/files/` is refused before the work area is touched, and so is an entry of
+that directory that is not a regular file.
+
 The setup is deterministic (O-136: the author, the committer and the date of
 each setup commit are fixed), so a rebuilt work area gives the same commits.
 The outputs of the Operator's apply commands are not in the work area: they are
@@ -202,7 +221,8 @@ stop from the records, and runs the runner again, until a run does not stop:
 | ---------------------- | --------------------- |
 | `M-<x8>` rows (S10) whose marker the batch asked | `layup run` adds one row per such marker to `inputs/answers.tsv` from [the answers of the setup](#the-answers-of-the-setup) (an answer, or `gap`), and runs the runner again |
 | `F-<path>` rows (S05, and the prose step) | one session of [the prose rows](#the-prose-rows) for that stop |
-| any other row (`S01-stack` with no answer, an `M-` row that the batch did not ask, an `O-` row) | the step `setup` is `fail`; its `detail` names the rows |
+| the one row `O-verify` of S15 | the runner has done S01 to S14: the step `setup` is `done`, and the step `verify` runs it again once `out/verify.tsv` exists |
+| any other row (`S01-stack` with no answer, an `M-` row that the batch did not ask, any other `O-` row, `O-verify` of another step, `O-verify` with another row) | the step `setup` is `fail`; its `detail` names the rows |
 
 **Decided here** (finding 1 of round 2 of #265): `inputs/answers.tsv` holds an
 `M-` row only for a marker that S10 lists, as the runner refuses an `M-` row
@@ -212,6 +232,23 @@ and S10 stops once with each marker of the tree; a marker that the batch asked
 then gets its row, and the next run of S10 is done. A step that ends `fail` or `not-active`
 makes the step `setup` `fail`, with the runner's reason; an input error (exit 2
 of phase 1) does the same.
+
+**Decided here** (task `T-eahr`, #277, with the conditions of its plan review): the
+runner always reaches S15 after S14 and S15 stops on `O-verify` while `out/verify.tsv`
+is missing, so that stop, alone and of S15, is the end of the step `setup`
+(`M-` rows are answered one run at a time, so a table that holds them never holds
+it). The same stop twice in a row, the rows equal in order in `Step`, `Question`,
+`Ask` and `Where`, is `fail`, naming the rows: the loop has no other bound, and it
+stops after twelve runs, `fail` too. A marker that the batch asked and that no stop
+lists gets no row and fails nothing. A prose session ends `fail` of the step with
+its own text, which names the session (a pair that is not admitted, a refused output,
+a class that is not `done`, the cap of milestone 0); nothing of it is committed.
+**The files that a `fail` removes** are those of the last prose session of the run,
+which the loop keeps across the runs that follow it with `M-` rows only: whichever run
+ends in the `fail`, one records commit through fencing removes them, its message naming
+the session and the reason. A later stop with `F-` rows means that the runner has passed
+the rows of the session before it, whose files stay; a `fail` with no session in the
+run removes none.
 
 **Decided here** (finding 3 of round 1 of #265): the runner stops with `F-`
 rows only for a file that is missing (`setup.md`, S05 and S07), so a prose
@@ -245,9 +282,18 @@ file whose link S05's deletion breaks. **Decided here** (decision 6 of #265):
   directory (`result/` is where a session writes, [`session.md`](session.md#the-session-directory)); a missing file,
   a link, a file over 1 MiB, a file that is not valid UTF-8, or a file at a
   path that the stop does not name refuses the output, and the step is `fail`,
-  naming the session;
+  naming the session. **Decided here** (task `T-eahr`): the whole set is read and
+  checked before any file is committed: a link is refused as a file and as a
+  directory above a file, an empty directory or a nested file that no row names
+  refuses the output, 1 MiB (1,048,576 bytes) passes and one byte more does not,
+  and a path that is not clean (`..`, an empty part, absolute) is a defect of the
+  runner's row, which the step reports as its own `fail`; the session's `repo/` is
+  `WORK/target` cloned on its one branch `layup-setup`, on its task branch at the
+  head of `layup-setup` that the stop was made at;
 - code commits each file to `records:setup/inputs/files/<path>` in one records
-  commit, and the next build of the work area copies it to
+  commit (the commit of the end of the session, with its telemetry row), writes
+  the same bytes to `inputs/files/<path>` of the work area, which the runner reads
+  at its next run, and the next build of the work area copies it to
   `inputs/files/<path>`; the runner then runs each row's check (`kit-history`
   and `link-lint` for S05; `onboarding`, `glossary`, `guardrails`, `identity`
   and `adapted` for the prose step). A check that fails is the runner's `fail`.
@@ -604,7 +650,7 @@ change, as `M2c` did.
 | No admitted pair of `systems-architect` (for `markers`) or `product-owner` (for a prose session) | the step is `fail` (`pair`), as in Intake |
 | A proposal's quote that occurs nowhere, more than once, or holds a tab | the output of the session is refused; `markers` is `fail` |
 | `S01-stack` with no answer, or `open`, after the follow-up | `setup` is `fail`, naming `S01-stack`; no setup commit is kept |
-| A stack that the catalog does not have | the runner's own result (S12), and `setup` is `fail` with it |
+| A stack that the catalog does not have | the runner's own result (S01 in phase 2, "the stack has no entry in the catalog"; S12 in phase 1), and `setup` is `fail` with it, and no setup commit is kept |
 | A prose session's output that is missing, a link, over 1 MiB, not UTF-8, or at a path that the stop does not name | `setup` is `fail`, naming the session; nothing of it is committed |
 | A prose text whose check fails | `setup` is `fail`, naming the check; the session's files are removed from the records, and a restart starts a new session |
 | A prose text that holds a marker that the pinned tree does not | S10 stops on an `M-` row that the batch did not ask: `setup` is `fail`, and the session's files are removed, as above |
@@ -648,12 +694,12 @@ six rows of the inventory item `later-p2-scaffold` are the rows marked
 
 | Test | Level | What it shows |
 | ---- | ----- | ------------- |
-| The stops of the runner under `layup run` (inventory) | unit | A run that does not stop goes on; a stop with `M-` rows adds the rows of the markers that the batch asked and runs again, and one with an `M-` row that it did not ask is `fail`; a marker of the pinned tree that S05 deletes gets no row and fails nothing; a stop with `F-` rows starts a prose session; a stop with any other row, an input error, a `fail` or a `not-active` make `setup` `fail`; a `fail` after a prose session of the run removes that session's files from the records, and one before it removes none. |
+| The stops of the runner under `layup run` (inventory) | unit | A run that does not stop goes on; a stop with `M-` rows adds the rows of the markers that the batch asked and runs again, and one with an `M-` row that it did not ask is `fail`; a marker of the pinned tree that S05 deletes gets no row and fails nothing; a stop with `F-` rows starts a prose session; the one stop `O-verify` of S15 ends the step `done`, and a table that holds it with another row, or an `O-verify` of another step, is `fail`; a stop with any other row, an input error, a `fail` or a `not-active` make `setup` `fail`; the same stop twice in a row is `fail`; a `fail` after a prose session of the run, also after the answers of the markers that followed it, removes that session's files from the records, one before it removes none, and a session whose rows the runner passed keeps its files when a later one fails. |
 | The steps of the setup in phase 2, and the pin | unit | S01 reads only `S01-stack` and runs no `layup psb check`; S02 writes the pin rows of `start.tsv` with ref `records:start/start.tsv` and resolves nothing; S03 makes no commit and fails on a tree other than `pin.tree`; S04 writes `docs/setup/armature.pin` from those rows and the raw fact of the `S01-` and `Q-` rows; S15 makes no commit of `layup-records`. |
 | The row `without-layup` | unit | S13 in phase 2 writes it with its fixed line and source `computed`; in phase 1 it writes none. |
 | The apply outputs | unit | Both files present and each a JSON object of `OWNER/NAME`: `setup/rulesets.txt` holds both after their lines; a file missing: "waiting"; a file that is not a JSON object, or of another repository: `fail`, naming it. |
 | The forge check at each later start | integration | With the records of a done Scaffold, a restart runs `forge-check` after `lease` and before `probe`, writes the table again, and stops at a row that is not `pass`; the steps of Intake and of the Scaffold are "done before". |
-| The answers of the setup | unit | Each row of the table of [The answers of the setup](#the-answers-of-the-setup): `accept` with and without a proposal, `gap`, a value, no answer and `open`, for a marker and for `S01-stack`; the source URL. |
+| The answers of the setup | unit | Each row of the table of [The answers of the setup](#the-answers-of-the-setup): `accept` with and without a proposal, `gap`, a value, no answer and `open`, for a marker and for `S01-stack`; the answer of a follow-up that asks it again; the source URL and `by`; the `Q-` rows. |
 | The step markers | unit; integration | The scan of a fixture tree gives the keys of S10, one row for a text that a file holds on two lines; the session's `result/markers.tsv` with an unknown key, a key twice or an empty quote is refused; a quote that occurs once passes, and one that occurs twice, nowhere or with a tab refuses the file; with no marker no session starts (the integration level). |
 | The setup questions in the batch and the comment | integration | With `intake/markers.tsv` of two markers, one with a proposal and one with none, and the httptest forge: the step `batch` merges, after the questions of the idea owner's block and in the Operator's block, first `S01-stack` and then one question per row of `intake/markers.tsv`, in its order, each a row of `questions.tsv` with `source` `setup`, `ref` its ID (`S01-stack`, `M-<x8>`), `kind` `setup`, and `start` and `end` the quote's for a marker with a proposal, else `—`; `S01-stack` is asked whatever rule G1 found; the comment writes a marker's question as `Q-NNN: the value of <marker> at <file>:<line>`, with `proposed: <value>` and the quote in backquotes on the next lines when it has a proposal, and its rule of the answers adds the three forms of a marker's answer, `accept`, a value and `gap`. |
 | The ruleset files (inventory) | unit | The default branch's file names each gate job pinned to 15368, the four `layup/` checks pinned to the forge register's `app_id`, `strict` true, `creation`, `allowed_merge_methods` `["merge"]` and an empty bypass list; the records branch's file has the App as its only bypass actor; phase 1 gets `creation` and the two parameters, and no `layup/` check. |
