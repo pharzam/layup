@@ -371,6 +371,25 @@ const (
 // answers with its index row and its line of facts.sha256 (O-124). Each file
 // comes from the files of the root commit, so a rerun writes the same files.
 func runS04(b Brief, in Input) Outcome {
+	return runS04With(func(Input) ([]work.Question, Outcome, bool) {
+		gaps, err := readGaps(b.Gaps)
+		if err != nil {
+			return nil, Outcome{Kind: Invalid, Evidence: err.Error()}, false
+		}
+		asked := slices.Clone(work.S01Questions)
+		for _, g := range gaps {
+			asked = append(asked, work.Question{ID: g.ID, Text: g.Question})
+		}
+		return asked, Outcome{}, true
+	}, in)
+}
+
+// runS04With is the body of S04 for both phases (task T-ktgx, #273): askedOf
+// gives the questions that the raw fact records, in their order, or the outcome
+// that refuses them. In phase 1 they are the four of S01 and the gaps of the
+// gap table; in phase 2 they are S01-stack and the questions of the batch
+// (Phase2.asked).
+func runS04With(askedOf func(Input) ([]work.Question, Outcome, bool), in Input) Outcome {
 	target := filepath.Join(in.Dir, work.TargetPath)
 	pinned := map[string]string{}
 	for _, n := range []string{"pin.source", "pin.commit", "pin.tree", "pin.time"} {
@@ -418,13 +437,9 @@ func runS04(b Brief, in Input) Outcome {
 	if err != nil {
 		return Outcome{Kind: Fail, Evidence: err.Error()}
 	}
-	gaps, err := readGaps(b.Gaps)
-	if err != nil {
-		return Outcome{Kind: Invalid, Evidence: err.Error()}
-	}
-	asked := slices.Clone(work.S01Questions)
-	for _, g := range gaps {
-		asked = append(asked, work.Question{ID: g.ID, Text: g.Question})
+	asked, refused, ok := askedOf(in)
+	if !ok {
+		return refused
 	}
 	record := answersRecord(id, date, setupRecord, asked, in.Answers)
 	recordPath := factsDir + "/" + id + "-setup-answers.md"

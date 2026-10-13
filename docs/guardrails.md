@@ -642,8 +642,13 @@ These traps are not domain-specific: they hurt every project's test suite.
   rule would leave out. The case of the empty value is one of these: the form of
   a column (a line from 1, a session, a run ID) refuses `—` too, at the same column,
   so a case that names only the column passed with its rule removed in 5 of 37
-  mutants in task `T-tetz` (#270); assert the reason as well. When a mutation record
-  is cut to a few lines, say so, or it reads as fewer failing cases than ran.
+  mutants in task `T-tetz` (#270); assert the reason as well. A refusal that a
+  refactor moves into a body that two callers share is another: in task `T-ktgx`
+  (#273) the refusal of a gap table of another form moved into the shared body
+  of S04, no test of phase 1 pinned its kind, and the mutant that dropped it
+  survived; give the old caller a case that names the refusal before the refactor.
+  When a mutation record is cut to a few lines, say so, or it reads as fewer
+  failing cases than ran.
 - ❌ **Stale tests after a requirement changes.** When a requirement changes but its
   test does not, the suite now guards the old behaviour and blocks the new. The
   check: the [old-tests conflict rule](engineering-discipline.md#testing) — fix the
