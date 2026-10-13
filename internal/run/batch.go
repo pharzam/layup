@@ -3,8 +3,9 @@ package run
 // This file holds the step batch of Intake (docs/spec/intake.md, The merge and
 // the IDs; The comment of the batch; The steps of Intake; row 46 of the plan,
 // task T-8r3u, #222): the questions of the rule gaps, of meaning, of the
-// completeness review and the intent form, merged into questions.tsv and
-// posted as one comment on the Intake issue.
+// completeness review and the intent form, and in M2d the setup questions of
+// the Operator's block (row 53, task T-4c5c, #276), merged into questions.tsv
+// and posted as one comment on the Intake issue.
 
 import (
 	"bytes"
@@ -16,6 +17,7 @@ import (
 	"github.com/pharzam/layup/internal/psb"
 	"github.com/pharzam/layup/internal/records"
 	"github.com/pharzam/layup/internal/tsv"
+	workpkg "github.com/pharzam/layup/internal/work"
 )
 
 // psbGapsSchema is the form of intake/psb.tsv, the table of layup psb check.
@@ -38,11 +40,11 @@ var (
 
 // batchRecords are the records that the batch merges: the problem statement;
 // intake/psb.tsv by psbGapsSchema (id, rule, line, excerpt, question); and
-// intake/meaning.tsv, intake/coverage.tsv and spec/spans.tsv, as their
-// readers give them.
+// intake/meaning.tsv, intake/coverage.tsv, spec/spans.tsv and
+// intake/markers.tsv, as their readers give them.
 type batchRecords struct {
-	PSB                            []byte
-	Gaps, Meaning, Coverage, Spans [][]string
+	PSB                                     []byte
+	Gaps, Meaning, Coverage, Spans, Markers [][]string
 }
 
 // lineSpan gives the offsets of line n (from 1) of psb, trimmed of its line
@@ -71,12 +73,15 @@ func lineSpan(psb []byte, n int) (int, int, bool) {
 
 // mergeQuestions gives the rows of questions.tsv of the batch: the rule gaps,
 // the gaps of meaning, the items of the completeness review and the intent
-// form, in that order. A question whose quote (its offsets) and kind equal
-// those of a question before it is dropped; a question with no quote never is
-// (decided here, task T-8r3u: the three fields of the intent form share one
-// kind and have no quote). Each kept question gets Q-NNN in the order of the
-// merge; asked is the time the step read from the run's clock before it wrote
-// the rows (decided here, task T-8r3u).
+// form, in that order, then the setup questions of the Operator's block:
+// S01-stack and one for each row of intake/markers.tsv, in its order. A
+// question whose quote (its offsets) and kind equal those of a question before
+// it is dropped; a question with no quote never is (decided here, task T-8r3u:
+// the three fields of the intent form share one kind and have no quote), and a
+// setup question never (decided here, task T-4c5c: two markers may share the
+// quote of their proposals, and each is asked). Each kept question gets Q-NNN
+// in the order of the merge; asked is the time the step read from the run's
+// clock before it wrote the rows (decided here, task T-8r3u).
 func mergeQuestions(b batchRecords, asked string) ([][]string, error) {
 	type question struct{ source, ref, kind, start, end, text, asker string }
 	var qs []question
@@ -127,6 +132,17 @@ func mergeQuestions(b batchRecords, asked string) ([][]string, error) {
 		rows = append(rows, []string{fmt.Sprintf("Q-%03d", len(rows)+1), q.source, q.ref, "idea-owner", "before-delivery", q.kind,
 			q.start, q.end, q.text, asked, q.asker, "", "asked"})
 	}
+	// The setup questions: S01-stack, which no rule gap decides (F-21), and a
+	// marker's, with the quote of its proposal when it has one; their asker is
+	// layup run for the stack and the session of the row for a marker.
+	setup := func(ref, start, end, text, asker string) {
+		rows = append(rows, []string{fmt.Sprintf("Q-%03d", len(rows)+1), "setup", ref, "operator", "before-delivery", "setup",
+			start, end, text, asked, asker, "", "asked"})
+	}
+	setup("S01-stack", "", "", workpkg.S01Questions[0].Text, "layup run")
+	for _, m := range b.Markers { // id, file, line, marker, value, start, end, session: no proposal, no quote
+		setup(m[0], m[5], m[6], "the value of "+m[3]+" at "+m[1]+":"+m[2], m[7])
+	}
 	return rows, nil
 }
 
@@ -151,32 +167,73 @@ func backquote(s string) string {
 }
 
 // batchComment gives the comment of the batch of the rows of questions.tsv
-// (as records.ReadQuestions gives them) on the problem statement psb: the
-// header line; the block for the idea owner, each question as "Q-NNN:
-// <question>" and its quote on the next line; the block for the Operator,
-// which has no question in M2c; the rule of the answers.
-func batchComment(rows [][]string, psb []byte) string {
-	return questionsComment(batchHeader, rows, func(r []string) (string, string) { return r[6], r[7] }, psb)
+// (as records.ReadQuestions gives them) on the problem statement psb, with the
+// rows of intake/markers.tsv (as records.ReadMarkers gives them): the header
+// line; the block for the idea owner, each question as "Q-NNN: <question>" and
+// its quote on the next line; the block for the Operator, S01-stack and each
+// marker, with its proposal and its quote; the rule of the answers.
+func batchComment(rows [][]string, psb []byte, markers [][]string) string {
+	about := func(r []string) (bool, string) { return aboutAMarker(r, markers) }
+	return questionsComment(batchHeader, rows, func(r []string) (string, string) { return r[6], r[7] }, about, psb)
 }
 
-// questionsComment gives a comment in the form of the batch: header, the block
-// for the idea owner, each row's question and the quote at the offsets that
-// quote gives for it (none for ""), the block for the Operator and the rule of
-// the answers; the batch and the follow-up share it (row 47b).
-func questionsComment(header string, rows [][]string, quote func([]string) (string, string), psb []byte) string {
-	var b strings.Builder
-	b.WriteString(header + "\n\n## For the idea owner\n\n")
-	for _, r := range rows {
-		fmt.Fprintf(&b, "%s: %s\n", r[0], r[8])
-		if s, e := quote(r); s != "" {
-			start, _ := strconv.Atoi(s)
-			end, _ := strconv.Atoi(e)
-			b.WriteString(backquote(string(psb[start:end])) + "\n")
-		}
-		b.WriteString("\n")
+// aboutAMarker says whether the setup question r asks the value of a marker
+// (not S01-stack) and gives what the session proposed for it, "" for none; r is
+// the row of questions.tsv of the question, and markers the rows of
+// intake/markers.tsv (row 53, task T-4c5c).
+func aboutAMarker(r []string, markers [][]string) (bool, string) {
+	if r[1] != "setup" || r[2] == "S01-stack" {
+		return false, ""
 	}
-	b.WriteString("## For the Operator\n\nNo setup question in M2c.\n\n")
+	for _, m := range markers {
+		if m[0] == r[2] {
+			return true, m[4]
+		}
+	}
+	return true, ""
+}
+
+// questionsComment gives a comment in the form of the batch: header; the
+// block for the idea owner and the block for the Operator, each with the
+// questions of its rows (the block column), a question with its proposal when
+// it asks a marker that has one and the quote at the offsets that quote gives
+// for it (none for ""), or the line "No question for <the owner of the block>."
+// when it has none; and the rule of the answers, with the three forms of a
+// marker's answer when a marker is asked. The batch and the follow-up share it
+// (row 47b; the blocks and the proposals, task T-4c5c, #276).
+func questionsComment(header string, rows [][]string, quote func([]string) (string, string), about func([]string) (bool, string), psb []byte) string {
+	var b strings.Builder
+	b.WriteString(header + "\n\n")
+	marker := false
+	for _, block := range []struct{ id, owner string }{{"idea-owner", "the idea owner"}, {"operator", "the Operator"}} {
+		fmt.Fprintf(&b, "## For %s\n\n", block.owner)
+		asked := 0
+		for _, r := range rows {
+			if r[3] != block.id {
+				continue
+			}
+			asked++
+			fmt.Fprintf(&b, "%s: %s\n", r[0], r[8])
+			isMarker, proposed := about(r)
+			marker = marker || isMarker
+			if proposed != "" {
+				fmt.Fprintf(&b, "proposed: %s\n", proposed)
+			}
+			if s, e := quote(r); s != "" {
+				start, _ := strconv.Atoi(s)
+				end, _ := strconv.Atoi(e)
+				b.WriteString(backquote(string(psb[start:end])) + "\n")
+			}
+			b.WriteString("\n")
+		}
+		if asked == 0 {
+			fmt.Fprintf(&b, "No question for %s.\n\n", block.owner)
+		}
+	}
 	b.WriteString("Answer each block in one comment, one line per question ID: `Q-NNN: <answer>`.\n")
+	if marker {
+		b.WriteString("For a marker, `Q-NNN: accept` takes the value that is proposed, `Q-NNN: <value>` gives a value, and `Q-NNN: gap` keeps the marker as an open gap.\n")
+	}
 	return b.String()
 }
 
@@ -248,7 +305,11 @@ func (r *state) batchStep(ctx context.Context) Step {
 		if err != nil {
 			return fail(name, fmt.Errorf("questions.tsv: %w", err))
 		}
-		if _, err := r.cfg.Forge.Comment(ctx, issue, batchComment(rows, psbData)); err != nil {
+		markers, err := r.readRecord(ctx, "intake/markers.tsv", records.ReadMarkers)
+		if err != nil {
+			return fail(name, err)
+		}
+		if _, err := r.cfg.Forge.Comment(ctx, issue, batchComment(rows, psbData, markers)); err != nil {
 			return fail(name, err)
 		}
 		return done(name, "the comment of the batch posted from questions.tsv")
@@ -263,6 +324,7 @@ func (r *state) batchStep(ctx context.Context) Step {
 		{"intake/meaning.tsv", records.ReadMeaning, &b.Meaning},
 		{"intake/coverage.tsv", records.ReadCoverage, &b.Coverage},
 		{"spec/spans.tsv", records.ReadSpans, &b.Spans},
+		{"intake/markers.tsv", records.ReadMarkers, &b.Markers},
 	} {
 		if *rec.into, err = r.readRecord(ctx, rec.path, rec.read); err != nil {
 			return fail(name, err)
@@ -282,7 +344,7 @@ func (r *state) batchStep(ctx context.Context) Step {
 	if err := r.write(ctx, map[string][]byte{"questions.tsv": data}, "layup run: the batch of questions"); err != nil {
 		return fail(name, err)
 	}
-	if _, err := r.cfg.Forge.Comment(ctx, issue, batchComment(rows, psbData)); err != nil {
+	if _, err := r.cfg.Forge.Comment(ctx, issue, batchComment(rows, psbData, b.Markers)); err != nil {
 		return fail(name, err)
 	}
 	return done(name, fmt.Sprintf("%d questions, in questions.tsv and the comment of the batch", len(rows)))

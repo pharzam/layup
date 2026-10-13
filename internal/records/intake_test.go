@@ -16,6 +16,9 @@ var (
 	coverage1 = "Q-001\tcoverage\tC-001\tidea-owner\tbefore-delivery\tuncovered\t12\t40\tWhich requirement covers fact 1?\t2026-10-10T12:00:00Z\tS-1a2b3c4d\t—\tasked"
 	intent1   = "Q-001\tintent\tband.U\tidea-owner\tbefore-delivery\tintent\t—\t—\tThe band U, in USD?\t2026-10-10T12:00:00Z\tlayup run\t—\tasked"
 	followup1 = "Q-001\tfollow-up\tQ-001\tidea-owner\tbefore-delivery\tfollow-up\t—\t—\tWhich app, again?\t2026-10-10T14:00:00Z\tlayup run\t—\tasked"
+	// The setup questions of M2d (docs/spec/scaffold.md, The answers of the setup; task T-4c5c, #276): the Operator's.
+	stack1  = "Q-001\tsetup\tS01-stack\toperator\tbefore-delivery\tsetup\t—\t—\tWhich stack?\t2026-10-10T12:00:00Z\tlayup run\t—\tasked"
+	marker1 = "Q-001\tsetup\tM-1a2b3c4d\toperator\tbefore-delivery\tsetup\t12\t40\tthe value of a marker\t2026-10-10T12:00:00Z\tS-1a2b3c4d\t—\tasked"
 )
 
 const (
@@ -62,7 +65,9 @@ func TestValidIntakeRecordsAreRead(t *testing.T) {
 		"draft":    {readDraft, table(draftHeader, draftRow, "R-002\tsuccess-criterion\tNine in ten users act on it.\t3\tThe share of users who act, by the app's log.\tS-1a2b3c4d")},
 		"coverage": {readCoverage, table(coverageHeader, uncoveredRow, unsupportedRow, "C-003\tclass\t4\t—\tIs fact 4 a need?\tS-1a2b3c4d")},
 		"questions": {readQuestions, table(questionsHead, askedRow, intentRow, open, unanswered, closed,
-			strings.Replace(rule1, "Q-001", "Q-006", 1), strings.Replace(coverage1, "Q-001", "Q-007", 1), strings.Replace(followup1, "Q-001	follow-up", "Q-008	follow-up", 1))},
+			strings.Replace(rule1, "Q-001", "Q-006", 1), strings.Replace(coverage1, "Q-001", "Q-007", 1), strings.Replace(followup1, "Q-001	follow-up", "Q-008	follow-up", 1),
+			strings.Replace(stack1, "Q-001", "Q-009", 1), strings.Replace(marker1, "Q-001", "Q-010", 1),
+			field(questionsHead, field(questionsHead, strings.Replace(marker1, "Q-001", "Q-011", 1), "start", "—"), "end", "—"))},
 		"answers":         {readAnswers, table(answersHeader, answerRow)},
 		"answers-review":  {readAnswersReview, table(reviewHeader, reviewRow, "Q-002\topen\tThe band is not below U.\tS-1a2b3c4d")},
 		"budget":          {readBudget, table(budgetHeader, "band.B\t50.0\tQ-002", "band.U\t200.0\tQ-003", "appetite.hours\t40.0\tQ-004")},
@@ -141,6 +146,16 @@ func TestIntakeRecordsRefuseEachBrokenRule(t *testing.T) {
 		c{"questions: a rule gap G2 with no quote", readQuestions, table(questionsHead, field(questionsHead, rule1, "kind", "G2")), "start"},
 		c{"questions: a rule gap G1 with a quote", readQuestions, table(questionsHead, field(questionsHead, field(questionsHead, rule1, "start", "0"), "end", "11")), "start"},
 		c{"questions: a follow-up of no question before it", readQuestions, table(questionsHead, followup1), "ref"},
+		c{"questions: a setup question whose ref is not S01-stack", readQuestions, table(questionsHead, field(questionsHead, stack1, "ref", "S01-name")), "ref"},
+		c{"questions: a setup question whose ref is a gap of meaning's ID", readQuestions, table(questionsHead, field(questionsHead, marker1, "ref", "M-001")), "ref"},
+		c{"questions: a setup question whose ref is a marker's key of 7 characters", readQuestions, table(questionsHead, field(questionsHead, marker1, "ref", "M-1a2b3c4")), "ref"},
+		c{"questions: a setup question whose ref has an uppercase hexadecimal character", readQuestions, table(questionsHead, field(questionsHead, marker1, "ref", "M-1A2B3C4D")), "ref"},
+		c{"questions: a setup question of a kind that is not setup", readQuestions, table(questionsHead, field(questionsHead, stack1, "kind", "intent")), "kind"},
+		c{"questions: a meaning question of the kind setup", readQuestions, table(questionsHead, field(questionsHead, askedRow, "kind", "setup")), "kind"},
+		c{"questions: S01-stack not asked by layup run", readQuestions, table(questionsHead, field(questionsHead, stack1, "asker", "S-1a2b3c4d")), "asker"},
+		c{"questions: a marker's question not asked by a session", readQuestions, table(questionsHead, field(questionsHead, marker1, "asker", "layup run")), "asker"},
+		c{"questions: S01-stack with a quote", readQuestions, table(questionsHead, field(questionsHead, field(questionsHead, stack1, "start", "1"), "end", "5")), "start"},
+		c{"questions: a setup question in the idea owner's block", readQuestions, table(questionsHead, field(questionsHead, stack1, "block", "idea-owner")), "block"},
 		c{"answers-review: a session that is not S- and 8 hexadecimal characters", readAnswersReview, table(reviewHeader, field(reviewHeader, reviewRow, "session", "S-1a2b3c4z")), "session"},
 		c{"budget: a name that is not of the block", readBudget, table(budgetHeader, "appetite.money\t200.0\tQ-003"), "name"},
 	)

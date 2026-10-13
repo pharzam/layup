@@ -149,6 +149,9 @@ the first.
 | `TestARestartWithAHarnessRegisterThatChanged` (`internal/run/run_integration_test.go`) | integration | NFR-001 | F-0003#52 | — | — | T-s7vr | green |
 | `TestTheStepRuleGaps`, `TestARestartWhoseWatchIsNotWrittenRunsPhase` (`internal/run/run_integration_test.go`) | integration | REQ-001 | F-0003#41 | — | — | T-qk66 | green |
 | `TestTheStepMeaning`, `TestTheStepMeaningFails` (`internal/run/run_integration_test.go`) | integration | REQ-001 | F-0003#41 | — | — | T-1u2v | green |
+| `TestTheListOfMarkers`, `TestTheTextOfTheMarkersPrompt`, `TestKeepOfMarkers`, `TestKeepOfMarkersRefusesEachBrokenRule`, `TestKeepOfMarkersReadsTheTableByItsBlock` (`internal/run/markers_test.go`) | unit | REQ-002, NFR-003 | F-0003#42, F-0003#63 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-4c5c | green |
+| `TestTheStepMarkers`, `TestTheStepMarkersWithNoMarker`, `TestTheStepMarkersFails`, `TestTheStepBatchAsksTheSetupQuestions`, `TestTheFollowUpAsksTheMarkersAgain`, `TestThePinnedTreeOfTheMarkers` (`internal/run/markers_integration_test.go`) | integration | REQ-002, NFR-003 | F-0003#42, F-0003#63 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-4c5c | green |
+| `TestMarkerPlaces` (`internal/setup/scaffold_test.go`) | unit | REQ-002 | F-0003#42 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-4c5c | green |
 | `TestQuoteAt`, `TestKeepOfMeaning`, `TestSessionSchema` (`internal/run/meaning_test.go`) | unit | REQ-001 | F-0003#41 | — | — | T-1u2v | green |
 | `TestTheStepsNumberingAndSpans`, `TestAFailedSpanCheckRunsNumberingAgain`, `TestNumberingWithNoPair` (`internal/run/run_integration_test.go`) | integration | REQ-012 | F-0003#51 | — | ADR-0018 | T-hiv9, T-0p5p | green |
 | `TestTheClockOfAWorldDoesNotGoBack` (`internal/run/run_integration_test.go`): a check of the test world's clock, which proves no requirement | integration | — | — | guardrails.md §2 | — | T-0p5p | green |
@@ -158,8 +161,9 @@ the first.
 | `TestKeepOfDraft` (`internal/run/draft_test.go`) | unit | REQ-012 | F-0003#51 | — | ADR-0018 | T-2et0 | green |
 | `TestTheStepCompleteness`, `TestTheCompletenessReviewWithNoOtherHarness`, `TestACoverageFileThatNamesNoFactIsRefused`, and the leg "a harness lost" of `TestARestartWithAHarnessRegisterThatChanged` (`internal/run/run_integration_test.go`) | integration | REQ-012, REQ-013 | F-0003#51, F-0003#52 | — | ADR-0018 | T-0mey | green |
 | `TestKeepOfCompleteness` (`internal/run/completeness_test.go`) | unit | REQ-012 | F-0003#51 | — | ADR-0018 | T-0mey | green |
-| `TestTheStepBatch`, `TestABatchWithNoCommentIsPostedFromTheRecord` (`internal/run/run_integration_test.go`) | integration | REQ-001 | F-0003#41 | — | — | T-8r3u | green |
+| `TestTheStepBatch`, `TestABatchWithNoCommentIsPostedFromTheRecord` (`internal/run/run_integration_test.go`) | integration | REQ-001, REQ-002 | F-0003#41, F-0003#42 | — | — | T-8r3u, T-4c5c | green |
 | `TestMergeQuestions`, `TestTheCommentOfTheBatch`, `TestBackquote`, `TestLineSpan` (`internal/run/batch_test.go`) | unit | REQ-001 | F-0003#41 | — | — | T-8r3u | green |
+| `TestMergeQuestionsAsksTheStackWithNoMarker`, `TestTheBlocksOfAComment` (`internal/run/batch_test.go`); `TestTheFollowUpOfASetupQuestion` (`internal/run/followup_test.go`) | unit | REQ-002, NFR-003 | F-0003#42, F-0003#63 | guardrails.md §1.1 Inv-4 | ADR-0016 | T-4c5c | green |
 | `TestTheStepAnswers` (`internal/run/run_integration_test.go`) | integration | REQ-001, NFR-003 | F-0003#41 | — | — | T-hxb9 | green |
 | `TestCollectAnswers`, `TestBudgetOf` (`internal/run/answers_test.go`); `TestAWaitingStepIsTheLastRow` (`internal/run/steps_test.go`) | unit | REQ-001, NFR-003 | F-0003#41 | — | — | T-hxb9 | green |
 | `TestTheReviewOfTheAnswersAndTheFollowUp` (`internal/run/run_integration_test.go`) | integration | REQ-001 | F-0003#41 | — | — | T-vwu3 | green |
@@ -181,7 +185,7 @@ the first.
 | `TestAValidStartIsRead`, `TestStartRefusesEachBrokenRule`, `TestApproversRefusesEachBrokenRule`, `TestLeaseRefusesEachBrokenRule`, `TestCopiesRefusesEachBrokenRule` (`internal/records/start_test.go`) | unit | NFR-001 | F-0001#1 | — | ADR-0014 | T-8kqn | green |
 | `TestAValidStartIsRead`, `TestStartRefusesEachBrokenRule` with the reader `ReadStartAsWritten` (`internal/records/start_test.go`) | unit | NFR-001 | F-0003#52 | — | — | T-s7vr | green |
 | `TestAValidSessionsIsRead`, `TestSessionsRefusesEachBrokenRule`, `TestAValidHarnessesIsRead`, `TestHarnessesRefusesEachBrokenRule`, `TestAValidRoutingIsRead`, `TestRoutingRefusesEachBrokenRule`, `TestAValidEventsIsRead`, `TestEventsRefusesEachBrokenRule`, `TestEventsAreOnlyAppended`, `TestAValidResultIsRead`, `TestResultRefusesEachBrokenRule` (`internal/records/session_test.go`) | unit | NFR-001, REQ-005, REQ-013 | F-0003#52, F-0003#45 | — | ADR-0014, ADR-0015 | T-3py1 | green |
-| `TestValidIntakeRecordsAreRead`, `TestIntakeRecordsRefuseEachBrokenRule`, `TestIntakeRecordsRefuseAWrongHeader` (`internal/records/intake_test.go`) | unit | NFR-001, REQ-001, REQ-012 | F-0003#41 | — | — | T-529i | green |
+| `TestValidIntakeRecordsAreRead`, `TestIntakeRecordsRefuseEachBrokenRule`, `TestIntakeRecordsRefuseAWrongHeader` (`internal/records/intake_test.go`) | unit | NFR-001, REQ-001, REQ-012, REQ-002 | F-0003#41, F-0003#42 | — | — | T-529i, T-4c5c | green |
 | `TestASpanTableThatCoversTheFilePasses`, `TestEachRuleFailsOnItsOwnBreak`, `TestAFactNumberThatRepeats`, `TestATextOfOneEmDash`, `TestASpanAcrossALineFeed`, `TestReadTakesASpanTableByItsBlock` (`internal/spec/spec_test.go`) | unit | REQ-012 | F-0003#51 | — | ADR-0018 | T-4ywt | green |
 | `TestTheSchemasEqualTheirBlocks` (`internal/spec/spec_integration_test.go`): `spec-check` and the second value of `spans` | integration | REQ-012 | F-0003#51 | — | ADR-0018 | T-4ywt | green |
 | `TestSpecCheckPassesAndFails`, `TestSpecCheckInputErrors`, `TestSpecCheckUsageErrors` (`cmd/layup/spec_e2e_test.go`) | e2e | REQ-012, NFR-005 | F-0003#51 | — | ADR-0018 | T-hpid | green |

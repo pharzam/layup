@@ -30,6 +30,13 @@ func questionsOf(t *testing.T, w runWorld) [][]string {
 // record (condition 1 of the plan review of #226).
 func answer(t *testing.T, w runWorld, id int, q []string, body string) {
 	t.Helper()
+	answerBy(t, w, id, 303, "carol", q, body)
+}
+
+// answerBy is answer for another approver: the Operator (pharzam, 101) answers
+// the setup question of the Operator's block (row 53, task T-4c5c).
+func answerBy(t *testing.T, w runWorld, id, author int, login string, q []string, body string) {
+	t.Helper()
 	asked, err := time.Parse(time.RFC3339, q[9])
 	if err != nil {
 		t.Fatalf("the asked of %q: %v", q, err)
@@ -37,7 +44,7 @@ func answer(t *testing.T, w runWorld, id int, q []string, body string) {
 	at := asked.Add(time.Minute).UTC().Format(time.RFC3339)
 	w.forge.mu.Lock()
 	defer w.forge.mu.Unlock()
-	w.forge.people = append(w.forge.people, map[string]any{"id": id, "user": map[string]any{"id": 303, "login": "carol"},
+	w.forge.people = append(w.forge.people, map[string]any{"id": id, "user": map[string]any{"id": author, "login": login},
 		"created_at": at, "updated_at": at, "body": body})
 }
 
@@ -56,23 +63,24 @@ func TestTheStepsOfIntake(t *testing.T) {
 	}
 	restart := func() result { return w.run(t, binary, "run", "acme/target", "--host", ".") }
 
-	// 1. To the batch: G1 and the three fields of the intent form.
+	// 1. To the batch: G1, the three fields of the intent form, and S01-stack in the Operator's block.
 	r := restart()
-	if r.code != 0 || !strings.HasSuffix(r.stdout, "\nbatch\tdone\t4 questions, in questions.tsv and the comment of the batch\n"+
-		"answers\tdone\twaiting: no answer yet in the block idea-owner\n") || len(w.forge.intake) != 1 {
+	if r.code != 0 || !strings.HasSuffix(r.stdout, "\nbatch\tdone\t5 questions, in questions.tsv and the comment of the batch\n"+
+		"answers\tdone\twaiting: no answer yet in the block idea-owner and the block operator\n") || len(w.forge.intake) != 1 {
 		t.Fatalf("the first restart: exit %d, %d comments of the App\n%s\n%s", r.code, len(w.forge.intake), r.stdout, r.stderr)
 	}
 	questions := questionsOf(t, w)
-	if len(questions) != 4 || questions[0][5] != "G1" {
-		t.Fatalf("questions.tsv %q; want G1 and the intent form", questions)
+	if len(questions) != 5 || questions[0][5] != "G1" || questions[4][1] != "setup" || questions[4][2] != "S01-stack" || questions[4][3] != "operator" {
+		t.Fatalf("questions.tsv %q; want G1, the intent form and S01-stack of the Operator", questions)
 	}
 
-	// 2. The idea owner answers each question but Q-001.
+	// 2. The idea owner answers each question but Q-001; the Operator answers S01-stack.
 	answer(t, w, 901, questions[0], fmt.Sprintf("%s: 5.0\n%s: 10.0\n%s: 40.0\n", questions[1][0], questions[2][0], questions[3][0]))
+	answerBy(t, w, 903, 101, "pharzam", questions[4], questions[4][0]+": go\n")
 	r = restart()
 	for _, want := range []string{
-		"\nanswers\tdone\t3 answers, in intake/answers.tsv; budget.tsv written\n",
-		"\nanswers-review\tdone\t3 answers reviewed, 0 open, in intake/answers-review.tsv\n",
+		"\nanswers\tdone\t4 answers, in intake/answers.tsv; budget.tsv written\n",
+		"\nanswers-review\tdone\t4 answers reviewed, 0 open, in intake/answers-review.tsv\n",
 		"\nfollow-up\tdone\t1 questions asked again, in questions.tsv and the comment of the follow-up\n",
 	} {
 		if !strings.Contains(r.stdout, want) {
@@ -84,7 +92,7 @@ func TestTheStepsOfIntake(t *testing.T) {
 	}
 	questions = questionsOf(t, w)
 	follow := questions[len(questions)-1]
-	if len(questions) != 5 || follow[1] != "follow-up" || follow[2] != questions[0][0] || len(w.forge.intake) != 2 ||
+	if len(questions) != 6 || follow[1] != "follow-up" || follow[2] != questions[0][0] || len(w.forge.intake) != 2 ||
 		!strings.HasPrefix(w.forge.intake[1], "LAYUP Intake: the follow-up\n") || !strings.Contains(w.forge.intake[1], "\n"+follow[0]+": ") {
 		t.Fatalf("the follow-up: the questions %q, the App's comments %q; want one follow-up of %s", questions, w.forge.intake, questions[0][0])
 	}

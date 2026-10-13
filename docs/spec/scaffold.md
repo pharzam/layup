@@ -49,7 +49,10 @@ A step of Intake, `markers`, runs after `completeness` and before `batch`
    here** (finding 1 of round 3 of #265): the key is that of S10, the file and
    the marker text, so a text that a file holds on more lines is one key and
    one row, with the line of its first occurrence, and one question, as S10
-   asks it once (`internal/setup`, the stop table of S10).
+   asks it once (`internal/setup`, the stop table of S10). **Decided here**
+   (task `T-4c5c`): code reads the one root commit of the default branch in a
+   scratch work tree, and the step is `fail` when its tree is not `pin.tree`
+   (after Scaffold 6 the head is the setup head, not the pinned tree).
 2. **The proposals.** When the scan lists one marker or more, one session of a
    phase ([`intake.md`](intake.md#the-sessions-of-intake)) of the role
    `systems-architect` (the gap review of `architecture.md` §9) reads
@@ -68,7 +71,9 @@ A step of Intake, `markers`, runs after `completeness` and before `batch`
    once in the file, byte for byte, and holds no tab; a file with a quote that
    fails is refused, and the step is `fail`, naming the session. The offsets
    that code finds are `start` and `end` of the record; the quote itself is
-   not kept, as the record's offsets give it from the file.
+   not kept, as the record's offsets give it from the file. **Decided here**
+   (task `T-4c5c`): the rows of the file may be in any order, as code refuses
+   only what is named here; the record is in the scan's order.
 3. **The record.** One records commit writes `records:intake/markers.tsv`
    ([`records.md`](records.md#nfr-001--the-records-of-the-scaffold)), one row per
    marker of the scan, in the scan's order, with the proposal or `—`. With no
@@ -81,7 +86,13 @@ the Operator's block, first the question `S01-stack` (the stack of the target,
 from the catalog), then one question per row of `intake/markers.tsv`, in its
 order. Each is a row of `questions.tsv` with `source` `setup` and `ref` the
 setup's own ID (`S01-stack`, `M-<x8>`); its `kind` is `setup`, its `start` and
-`end` are the quote's for a marker with a proposal, else `—`. **Decided here:**
+`end` are the quote's for a marker with a proposal, else `—`. **Decided here**
+(task `T-4c5c`): its `block` is `operator`; its `asker` is `layup run` for
+`S01-stack`, which has no source row, and the `session` of its row of
+`intake/markers.tsv` for a marker; the text of `S01-stack` is that of S01 in
+phase 1 (`work.S01Questions`), and a marker's is `the value of <marker> at
+<file>:<line>`, the marker as the key of S10 gives it; and a setup question is
+never dropped as a repeat of quote and kind ([`intake.md`](intake.md#the-merge-and-the-ids)). **Decided here:**
 the enum of `source` of the block `questions` gains `setup`, which the build
 task of the step `markers` adds to the block and its Go schema in one change
 (condition 4 of the plan review of #265: the block is built). `S01-stack` is
@@ -118,7 +129,9 @@ stays the evidence of the proposal in `intake/markers.tsv`.
 **Known limit:** a marker of a file that the setup then deletes (S05) or
 replaces (the prose step) is asked, and its answer is not used: S10 does not
 list it, so `layup run` writes no row of it. It stays in `intake/answers.tsv`
-and `questions.tsv` of the records, not in the raw fact of S11.
+and `questions.tsv` of the records, not in the raw fact of S11. A batch that a run
+of this version posted before the step `markers` existed (a development build)
+gets the record and no setup question: the batch is "done before".
 
 ## REQ-002 — The setup under `layup run`
 
@@ -624,7 +637,7 @@ six rows of the inventory item `later-p2-scaffold` are the rows marked
 | The apply outputs | unit | Both files present and each a JSON object of `OWNER/NAME`: `setup/rulesets.txt` holds both after their lines; a file missing: "waiting"; a file that is not a JSON object, or of another repository: `fail`, naming it. |
 | The forge check at each later start | integration | With the records of a done Scaffold, a restart runs `forge-check` after `lease` and before `probe`, writes the table again, and stops at a row that is not `pass`; the steps of Intake and of the Scaffold are "done before". |
 | The answers of the setup | unit | Each row of the table of [The answers of the setup](#the-answers-of-the-setup): `accept` with and without a proposal, `gap`, a value, no answer and `open`, for a marker and for `S01-stack`; the source URL. |
-| The step markers | unit | The scan of a fixture tree gives the keys of S10, one row for a text that a file holds on two lines; the session's `result/markers.tsv` with an unknown key, a key twice or an empty quote is refused; a quote that occurs once passes, and one that occurs twice, nowhere or with a tab refuses the file; with no marker no session starts. |
+| The step markers | unit; integration | The scan of a fixture tree gives the keys of S10, one row for a text that a file holds on two lines; the session's `result/markers.tsv` with an unknown key, a key twice or an empty quote is refused; a quote that occurs once passes, and one that occurs twice, nowhere or with a tab refuses the file; with no marker no session starts (the integration level). |
 | The setup questions in the batch and the comment | integration | With `intake/markers.tsv` of two markers, one with a proposal and one with none, and the httptest forge: the step `batch` merges, after the questions of the idea owner's block and in the Operator's block, first `S01-stack` and then one question per row of `intake/markers.tsv`, in its order, each a row of `questions.tsv` with `source` `setup`, `ref` its ID (`S01-stack`, `M-<x8>`), `kind` `setup`, and `start` and `end` the quote's for a marker with a proposal, else `—`; `S01-stack` is asked whatever rule G1 found; the comment writes a marker's question as `Q-NNN: the value of <marker> at <file>:<line>`, with `proposed: <value>` and the quote in backquotes on the next lines when it has a proposal, and its rule of the answers adds the three forms of a marker's answer, `accept`, a value and `gap`. |
 | The ruleset files (inventory) | unit | The default branch's file names each gate job pinned to 15368, the four `layup/` checks pinned to the forge register's `app_id`, `strict` true, `creation`, `allowed_merge_methods` `["merge"]` and an empty bypass list; the records branch's file has the App as its only bypass actor; phase 1 gets `creation` and the two parameters, and no `layup/` check. |
 | `commands.sh` is fail-fast and can be run again | unit | Its first line is `set -eu`, and a stand-in command that fails stops the rest (F-13); with stand-ins of `git` and `gh`, a run again after the push or after one apply pushes nothing and applies only the missing ruleset, and a `gh` that writes part of its output and exits 1 leaves no output file, so the run again applies that ruleset; and a head that is neither the root nor the setup head stops it. |
