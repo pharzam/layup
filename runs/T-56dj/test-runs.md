@@ -24,18 +24,11 @@ go test -tags=integration ./internal/setup/ ./internal/cli/: exit 0 (09:23:18Z)
 
 ## Red (09:33:15Z to 09:33:24Z)
 
-The tests before the code: `go vet` of `internal/setup` with and without the tag `integration`
-stops at the first error, and `go test` lists the others, as the package does not build.
+The tests before the code: the package does not build. `go vet` of `internal/setup`, with and
+without the tag `integration`, stops at the first error (`p.Host undefined`), and `go test` lists
+the others.
 
 ```
-== go vet ./internal/setup/
-# github.com/pharzam/layup/internal/setup
-# [github.com/pharzam/layup/internal/setup]
-vet: internal/setup/commands_test.go:66:4: p.Host undefined (type Phase2 has no field or method Host)
-== go vet -tags=integration ./internal/setup/
-# github.com/pharzam/layup/internal/setup
-# [github.com/pharzam/layup/internal/setup]
-vet: internal/setup/commands_test.go:66:4: p.Host undefined (type Phase2 has no field or method Host)
 == go test ./internal/setup/ (the compile errors)
 # github.com/pharzam/layup/internal/setup [github.com/pharzam/layup/internal/setup.test]
 internal/setup/commands_test.go:66:4: p.Host undefined (type Phase2 has no field or method Host)
@@ -53,7 +46,8 @@ Two more red steps came after the first green, and are dated by the order of thi
   `TestPhase2S13KeepsItsActorAndHandOff`.
 - **The inputs of the commands** (a host directory that is not an absolute path, an empty default
   branch) were not in the plan; the test `TestPhase2S13RefusesInputsThatMakeNoCommands` was written
-  first and failed for the right reason (before the second run of the mutations, at 09:37:55Z), each case with `done` where `fail` was wanted:
+  first and failed for the right reason (at 09:37:55Z, before the second run of the mutations),
+  each case with `done` where `fail` was wanted:
 
 ```
 --- FAIL: TestPhase2S13RefusesInputsThatMakeNoCommands (0.00s)
@@ -79,66 +73,40 @@ caught.
 - **The second run** (09:42:52Z to 09:46:34Z): 41 mutants, 40 caught, **1 survived**,
   `unsafe-chars` (a mutant that adds `$` to the characters that need no quotes): `a$b"c` is
   unsafe by its `"` too, so only a branch with the `$` alone tells the mutant; `a$b` was added.
-- **The final run** (09:46:56Z to 09:51:09Z): 41 of 41 caught, each with its first failing
-  line (each line cut at 170 characters).
+- **The final run** (09:46:56Z to 09:51:09Z): 41 caught, 0 survived, 0 not run, of 41, grouped by the first failing
+  line of the tests (`internal/setup/commands_test.go`):
 
-```
-== header-set-e-only: caught commands_test.go:191: commands.sh of phase 2:
-== header-dropped: caught commands_test.go:191: commands.sh of phase 2:
-== empty-with-no-command: caught commands_test.go:216: no done step has a command: commands.sh is "set -eu\n"; want it empty
-== order-reversed: caught commands_test.go:191: commands.sh of phase 2:
-== read-remote: caught commands_test.go:191: commands.sh of phase 2:
-== read-ref-main: caught commands_test.go:397: sh, a plain name: exit 0, the read "git -C ~/host/work/acme/widget/target ls-remote origin refs/heads/main", the push "git -C ~/host/work/acme/widge
-== head-field: caught commands_test.go:191: commands.sh of phase 2:
-== head-read-in-one-pipe: caught commands_test.go:191: commands.sh of phase 2:
-== root-read: caught commands_test.go:191: commands.sh of phase 2:
-== setup-read: caught commands_test.go:191: commands.sh of phase 2:
-== push-when-root: caught commands_test.go:191: commands.sh of phase 2:
-== stop-when-setup: caught commands_test.go:191: commands.sh of phase 2:
-== push-refspec: caught commands_test.go:397: sh, a plain name: exit 0, the read "git -C ~/host/work/acme/widget/target ls-remote origin refs/heads/trunk", the push "git -C ~/host/work/acme/widg
-== push-remote: caught commands_test.go:191: commands.sh of phase 2:
-== message-text: caught commands_test.go:191: commands.sh of phase 2:
-== message-head: caught commands_test.go:191: commands.sh of phase 2:
-== message-stderr: caught commands_test.go:191: commands.sh of phase 2:
-== message-branch-quoting: caught commands_test.go:402: sh, a name with a dollar: exit 2, stderr "/home/layup/.cache/layup-session/tmp-T-56dj/TestTheCommandsNameTheDefaultBranchOfTheForge124467133/006/com
-== exit-status: caught commands_test.go:191: commands.sh of phase 2:
-== host-absolute: caught commands_test.go:427: a host directory that is relative: done "the ruleset files, and their commands in commands.sh", 3 files; want fail "S13: the host directory of the c
-== host-reason: caught commands_test.go:427: a host directory that is relative: fail "S13: the host directory is not an absolute path", 0 files; want fail "S13: the host directory of the comman
-== branch-empty: caught commands_test.go:427: no default branch: done "the ruleset files, and their commands in commands.sh", 3 files; want fail "S13: the default branch of the forge is empty" a
-== branch-reason: caught commands_test.go:427: no default branch: fail "S13: no default branch", 0 files; want fail "S13: the default branch of the forge is empty" and no file
-== unsafe-chars: caught commands_test.go:397: sh, a name with a dollar: exit 2, the read "git -C ~/host/work/acme/widget/target ls-remote origin refs/heads/a$b", the push ""; want the branch "a$
-== applies-mkdir-p: caught commands_test.go:191: commands.sh of phase 2:
-== apply-guard: caught commands_test.go:191: commands.sh of phase 2:
-== apply-method: caught commands_test.go:191: commands.sh of phase 2:
-== apply-repo-path: caught commands_test.go:191: commands.sh of phase 2:
-== apply-input-swapped: caught commands_test.go:191: commands.sh of phase 2:
-== apply-records-input: caught commands_test.go:191: commands.sh of phase 2:
-== apply-no-temp-file: caught commands_test.go:191: commands.sh of phase 2:
-== apply-no-rename: caught commands_test.go:191: commands.sh of phase 2:
-== apply-rename-order: caught commands_test.go:191: commands.sh of phase 2:
-== apply-order-swapped: caught commands_test.go:191: commands.sh of phase 2:
-== apply-dir: caught commands_test.go:191: commands.sh of phase 2:
-== work-dir: caught commands_test.go:191: commands.sh of phase 2:
-== target-dir: caught commands_test.go:191: commands.sh of phase 2:
-== order-of-head: caught commands_test.go:202: the orders of the commands of S13 in phase 2 are [4 4 4 4]; want [2 4 4 4]
-== order-of-mkdir: caught commands_test.go:202: the orders of the commands of S13 in phase 2 are [2 2 4 4]; want [2 4 4 4]
-== comment-dropped: caught commands_test.go:191: commands.sh of phase 2:
-== wiring-commands: caught commands_test.go:191: commands.sh of phase 2:
-41 caught, 0 survived, 0 not run, of 41
-```
+- **30** by the golden text of `commands.sh` of phase 2 (`TestTheCommandsOfS13InPhase2`) at `:191`:
+  `header-set-e-only`, `header-dropped`, `order-reversed`, `read-remote`, `head-field`,
+  `head-read-in-one-pipe`, `root-read`, `setup-read`, `push-when-root`, `stop-when-setup`,
+  `push-remote`, `message-text`, `message-head`, `message-stderr`, `exit-status`, `applies-mkdir-p`,
+  `apply-guard`, `apply-method`, `apply-repo-path`, `apply-input-swapped`, `apply-records-input`,
+  `apply-no-temp-file`, `apply-no-rename`, `apply-rename-order`, `apply-order-swapped`, `apply-dir`,
+  `work-dir`, `target-dir`, `comment-dropped`, `wiring-commands`
+- **2** by the orders of the commands of S13 (the same test) at `:202`: `order-of-head`,
+  `order-of-mkdir`
+- **1** by no command, no text (`TestTheFileStartsWithSetEUInBothPhases`) at `:216`:
+  `empty-with-no-command`
+- **3** by the shell cases under `sh` and `bash` (`TestTheCommandsNameTheDefaultBranchOfTheForge`)
+  at `:397`: `read-ref-main`, `push-refspec`, `unsafe-chars`
+- **1** by the message that names a head under `sh` and `bash` (the same test) at `:402`:
+  `message-branch-quoting`
+- **4** by the inputs of the commands (`TestPhase2S13RefusesInputsThatMakeNoCommands`) at `:427`:
+  `host-absolute`, `host-reason`, `branch-empty`, `branch-reason`
 
 ## Green
 
-A first run (09:54:24Z to 10:04:15Z, on `8a0fed5`) had every line at exit 0 but `go test -tags=e2e ./...`, which
-exited 1: `TestTheRecordsAreInTheTargetsGit` (`cmd/layup`, e2e) lists the commands of `commands.sh`
+A first run (09:54:24Z to 10:04:15Z, on `8a0fed5`) had every line at exit 0 but
+`go test -tags=e2e ./...`, which exited 1: `TestTheRecordsAreInTheTargetsGit` (`cmd/layup`, e2e) lists the commands of `commands.sh`
 and did not expect the first line `set -eu`. The unit and the integration levels do not run that
 test, so only the run of the e2e level found it; `702e47e` changes its expectation. The
 branch then took `main` by a merge (`6734a23`, the merge of #307, `T-4c5c`; the conflicts were the
 cells of the PRD, kept from both tasks), and the whole run was made again.
 
-**The final run on `ad2201b`** (10:08:52Z to 10:18:54Z), each with exit 0, in this order; the time of a line is when its command ended. The three runs of
-`go test` are with `-count=1`, then with `-tags=integration` and with `-tags=e2e`, `TMPDIR` is on the
-disk, and `git diff --check` reads the commits against `origin/main`:
+**The final run on `ad2201b`** (10:08:52Z to 10:18:54Z), each with exit 0, in this order; the
+time of a line is when its command ended. The three runs of `go test` are with `-count=1`, then
+with `-tags=integration` and with `-tags=e2e`, `TMPDIR` is on the disk, and `git diff --check`
+reads the commits against `origin/main`:
 
 ```
 go build ./...: exit 0 (10:08:54Z)
