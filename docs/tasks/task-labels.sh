@@ -7,8 +7,8 @@
 # The workflow .github/workflows/task-state.yml runs it, and is the one writer
 # of these labels; a label set by hand is replaced at the next run, and so is a
 # color set by hand. Each label's color is the pair in the one list of apply():
-# ready blue (1d76db), in progress amber (fbca04), in review purple (5319e7),
-# stalled orange (d93f0b), blocked dark red (b60205), merged green (0e8a16, the
+# ready blue (1d76db), in progress amber (fbca04), stalled orange (d93f0b), in
+# review purple (5319e7), blocked dark red (b60205), merged green (0e8a16, the
 # `task` green), rejected slate (57606a), on hold ice (c5def5).
 #
 # Usage:
