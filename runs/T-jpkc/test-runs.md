@@ -10,7 +10,7 @@ The plan was posted at 09:11:53Z, its review (GPT-6.1 Sol on Codex CLI, effort `
 09:11:59Z to 09:15:57Z and was posted at 09:19:19Z, and the author's answer at 09:19:37Z. The tests
 were written after that, and run red at 09:24:39Z.
 
-## The base (10:19:16Z to 10:34:29Z)
+## The base (09:11:35Z to 09:11:48Z)
 
 At `9144e4e`, each with exit 0 (`go test` of `internal/forge/...`, then with `-tags=integration`):
 
@@ -178,13 +178,19 @@ EffectiveRulesGivesEachActiveRule: ok  	github.com/pharzam/layup/internal/forge/
 EffectiveRulesEscapesTheBranch: --- FAIL: TestEffectiveRulesEscapesTheBranchSegmentBySegment (0.17s) FAIL
 ```
 
+**What the new test shows.** The documentation of GitHub that the section above cites describes the branch
+parameter of the endpoint and its response fields; it does not say what a branch that no ruleset names, or
+that does not exist yet, is given, and the fake server supplies that answer. The test shows that the adapter
+forwards the rules that the server gives and asks no list of branches; the first apply on a real target, row
+59b (`T-sdtb`), observes what the server gives for `layup-probe` before its probe.
+
 **The base of the budget.** The plan review set 850 lines over 14 files against `9144e4e`. The
 branch took `main` by a merge four times (`38ee78e`, the merge of #306; `6734a23`, the merge of
 #307; `b28171b`, the merge of #311; and `5e40952`, the merge of #310), so the diff against `9144e4e` counts those tasks. Against the last of them the
 change of this task is the figure of the close-out; the comments "The base of the budget" on #271
 give the figures.
 
-**The checks that read the tree.** A first run on `b001c03` (the head after the fix, the first merge of
+**The checks that read the tree.** A first run on `b001c03` (the head after the fix, the second merge of
 `main` and the pitfall of the budget; 10:19:16Z to 10:34:29Z) had every line at exit 0 but the
 integration level, which exited 1: the package `internal/run` ran past the 10 minutes of its timeout
 (`FAIL github.com/pharzam/layup/internal/run 600.079s`) while the host also ran two review sessions
