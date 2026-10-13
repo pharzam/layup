@@ -36,7 +36,19 @@ type fakeGitHub struct {
 	branches    int
 	userNull    bool
 	posted      []string // the body of each comment posted
+
+	rules           map[string][][]map[string]any // the pages of the rules of a branch, by its name as the server decodes it
+	rulesBody       string                        // when set, the body of each answer of the rules
+	rulesNext       string                        // when set, the next page that each answer of the rules names
+	rulePaths       []string                      // the escaped path of each request of the rules
+	activity        []map[string]any              // the items of the activity
+	activityBody    string                        // when set, the body of the answer of the activity
+	activityLink    bool                          // the answer of the activity names a next page
+	activityQueries []string                      // the query of each request of the activity
 }
+
+// head gives the head that the fake gives to the branch of index i.
+func (f *fakeGitHub) head(i int) string { return fmt.Sprintf("%040x", i+1) }
 
 const (
 	appID    = 42
@@ -110,12 +122,49 @@ func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
 			if i > 0 {
 				name = fmt.Sprintf("b%03d", i)
 			}
-			list = append(list, map[string]any{"name": name})
+			list = append(list, map[string]any{"name": name, "commit": map[string]any{"sha": f.head(i)}})
 		}
 		if page*100 < f.branches {
 			w.Header().Set("Link", fmt.Sprintf(`<http://%s/repos/acme/target/branches?per_page=100&page=%d>; rel="next"`, r.Host, page+1))
 		}
 		json.NewEncoder(w).Encode(list)
+	case r.Method == "GET" && strings.HasPrefix(r.URL.Path, "/repos/acme/target/rules/branches/"):
+		branch := strings.TrimPrefix(r.URL.Path, "/repos/acme/target/rules/branches/")
+		f.rulePaths = append(f.rulePaths, r.URL.EscapedPath())
+		if r.URL.Query().Get("per_page") != "100" {
+			http.Error(w, `{"message":"per_page is not 100"}`, 400)
+			return
+		}
+		if f.rulesNext != "" {
+			w.Header().Set("Link", fmt.Sprintf(`<%s>; rel="next"`, f.rulesNext))
+		}
+		if f.rulesBody != "" {
+			io.WriteString(w, f.rulesBody)
+			return
+		}
+		page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+		if page == 0 {
+			page = 1
+		}
+		pages := f.rules[branch]
+		if page < len(pages) {
+			w.Header().Set("Link", fmt.Sprintf(`<http://%s%s?per_page=100&page=%d>; rel="next"`, r.Host, r.URL.EscapedPath(), page+1))
+		}
+		list := []map[string]any{}
+		if page <= len(pages) {
+			list = pages[page-1]
+		}
+		json.NewEncoder(w).Encode(list)
+	case call == "GET /repos/acme/target/activity":
+		f.activityQueries = append(f.activityQueries, r.URL.RawQuery)
+		if f.activityLink {
+			w.Header().Set("Link", fmt.Sprintf(`<http://%s/repos/acme/target/activity?ref=main&per_page=30&page=2>; rel="next"`, r.Host))
+		}
+		if f.activityBody != "" {
+			io.WriteString(w, f.activityBody)
+			return
+		}
+		json.NewEncoder(w).Encode(f.activity)
 	case call == "GET /users/acme-layup[bot]":
 		json.NewEncoder(w).Encode(map[string]any{"id": 9001, "login": "acme-layup[bot]"})
 	case call == "GET /users/nobody":
@@ -215,7 +264,7 @@ func TestTheAdapterPlaysEachCallOfM2a(t *testing.T) {
 		t.Fatalf("Token = %v, %v", tok.Expires, err)
 	}
 	repo, err := a.Repository(ctx)
-	if err != nil || !reflect.DeepEqual(repo, forge.Repository{DefaultBranch: "main", Visibility: "public", HasCommit: true, Branches: []string{"main"}}) {
+	if err != nil || !reflect.DeepEqual(repo, forge.Repository{DefaultBranch: "main", Visibility: "public", HasCommit: true, Branches: []string{"main"}, Heads: map[string]string{"main": f.head(0)}}) {
 		t.Errorf("Repository = %+v, %v", repo, err)
 	}
 	f.branches = 101 // two pages
@@ -465,5 +514,239 @@ func TestTheOwnClientFollowsNoRedirectAndNoProxy(t *testing.T) {
 	tr, ok := a.cfg.Client.Transport.(*http.Transport)
 	if !ok || tr.Proxy != nil {
 		t.Errorf("the transport of the own client is %T with a proxy function; want an *http.Transport with none", a.cfg.Client.Transport)
+	}
+}
+
+// The calls of M2d (forge.md, The calls of M2d; task T-jpkc, #271), played on
+// the same server: the rules of a branch, the activity of a ref, and the head of
+// each branch. Each case breaks one rule only.
+
+// ruleItem is an item of the answer of GET .../rules/branches/{branch}: the rule,
+// with the fields of its ruleset that GitHub adds.
+func ruleItem(typ string, parameters map[string]any) map[string]any {
+	item := map[string]any{"type": typ, "ruleset_source_type": "Repository", "ruleset_source": "acme/target", "ruleset_id": 11}
+	if parameters != nil {
+		item["parameters"] = parameters
+	}
+	return item
+}
+
+// EffectiveRules gives each rule of the branch over every page, in order, with its
+// type and its parameters as GitHub gives them, and nothing of its ruleset; a rule
+// with no parameters, or with an empty object of them, has none.
+func TestEffectiveRulesGivesEachActiveRuleOfABranchOverEveryPage(t *testing.T) {
+	f, _, a, _ := setup(t)
+	f.rules = map[string][][]map[string]any{"main": {
+		{ruleItem("creation", nil), ruleItem("pull_request", map[string]any{"required_approving_review_count": 0, "allowed_merge_methods": []string{"merge"}, "required_review_thread_resolution": true})},
+		{ruleItem("deletion", map[string]any{}), ruleItem("required_status_checks", map[string]any{"strict_required_status_checks_policy": true,
+			"required_status_checks": []map[string]any{{"context": "static", "integration_id": 15368}}})},
+	}}
+	got, err := a.EffectiveRules(context.Background(), "main")
+	want := []forge.Rule{
+		{Type: "creation"},
+		{Type: "pull_request", Parameters: map[string]any{"required_approving_review_count": float64(0), "allowed_merge_methods": []any{"merge"}, "required_review_thread_resolution": true}},
+		{Type: "deletion"},
+		{Type: "required_status_checks", Parameters: map[string]any{"strict_required_status_checks_policy": true,
+			"required_status_checks": []any{map[string]any{"context": "static", "integration_id": float64(15368)}}}},
+	}
+	if err != nil || !reflect.DeepEqual(got, want) {
+		t.Errorf("EffectiveRules over two pages = %+v, %v\nwant %+v", got, err, want)
+	}
+	if n := f.requests["GET /repos/acme/target/rules/branches/main"]; n != 2 {
+		t.Errorf("%d requests, want 2 (each page once)", n)
+	}
+}
+
+// A branch that has no rule, or does not exist yet, gives no rule and no error: the
+// server answers 200 with an empty list, and the call adds no filter of its own.
+func TestEffectiveRulesOfABranchThatHasNoneOrDoesNotExistYet(t *testing.T) {
+	_, _, a, _ := setup(t)
+	got, err := a.EffectiveRules(context.Background(), "layup-probe")
+	if err != nil || len(got) != 0 {
+		t.Errorf("EffectiveRules of a branch with no rule = %+v, %v; want none", got, err)
+	}
+}
+
+// The branch is a multi-segment path parameter of GitHub: each segment is
+// escaped and the slashes stay.
+func TestEffectiveRulesEscapesTheBranchSegmentBySegment(t *testing.T) {
+	f, _, a, _ := setup(t)
+	if _, err := a.EffectiveRules(context.Background(), "feature/x#y z"); err != nil {
+		t.Fatal(err)
+	}
+	if want := []string{"/repos/acme/target/rules/branches/feature/x%23y%20z"}; !reflect.DeepEqual(f.rulePaths, want) {
+		t.Errorf("the path of the request is %q; want %q", f.rulePaths, want)
+	}
+}
+
+// A body of null reads as an empty list, as for Comments and Repository; a body that
+// is an object, or is not JSON, is an error that names the call and the status.
+func TestEffectiveRulesAndActivityReadABodyOfNullAsNoItem(t *testing.T) {
+	ctx := context.Background()
+	f, _, a, _ := setup(t)
+	f.rulesBody, f.activityBody = "null", "null"
+	if got, err := a.EffectiveRules(ctx, "main"); err != nil || len(got) != 0 {
+		t.Errorf("EffectiveRules with a body of null = %+v, %v; want none", got, err)
+	}
+	if got, err := a.Activity(ctx, "main"); err != nil || len(got) != 0 {
+		t.Errorf("Activity with a body of null = %+v, %v; want none", got, err)
+	}
+}
+
+func TestEffectiveRulesAndActivityRefuseABodyThatIsNotAList(t *testing.T) {
+	ctx := context.Background()
+	for _, body := range []string{`{"message":"x"}`, "not json"} {
+		f, _, a, _ := setup(t)
+		f.rulesBody, f.activityBody = body, body
+		for call, run := range map[string]func() error{
+			"EffectiveRules": func() error { _, err := a.EffectiveRules(ctx, "main"); return err },
+			"Activity":       func() error { _, err := a.Activity(ctx, "main"); return err },
+		} {
+			var fe *forge.Error
+			if err := run(); !errors.As(err, &fe) || fe.Call != call || fe.Status != 200 {
+				t.Errorf("%s with the body %q: %v; want a forge.Error of %s, 200", call, body, err, call)
+			}
+		}
+	}
+}
+
+// A next page that is not at the api of the forge register is a forge error of the call.
+func TestEffectiveRulesRefusesANextPageAtAnotherHost(t *testing.T) {
+	f, _, a, _ := setup(t)
+	f.rulesNext = "http://elsewhere.invalid/repos/acme/target/rules/branches/main?page=2"
+	var fe *forge.Error
+	_, err := a.EffectiveRules(context.Background(), "main")
+	if !errors.As(err, &fe) || fe.Call != "EffectiveRules" || fe.Status != 200 || !strings.Contains(fe.Message, "not at the api of the forge register") {
+		t.Errorf("EffectiveRules with a next page elsewhere: %v; want a forge.Error of EffectiveRules, 200, naming the api", err)
+	}
+}
+
+// Activity gives the six fields of each item, a null actor as the ID 0 and the login
+// ghost, with the ref of the query and one request, whatever the Link header says.
+func TestActivityGivesTheEntriesOfARefInOnePage(t *testing.T) {
+	f, _, a, _ := setup(t)
+	f.activity = []map[string]any{
+		{"id": 1, "node_id": "A_1", "before": strings.Repeat("a", 40), "after": strings.Repeat("b", 40), "ref": "refs/heads/main", "timestamp": "2026-10-13T08:00:00Z",
+			"activity_type": "push", "actor": map[string]any{"id": 9001, "login": "acme-layup[bot]"}},
+		{"id": 2, "node_id": "A_2", "before": strings.Repeat("b", 40), "after": strings.Repeat("c", 40), "ref": "refs/heads/main", "timestamp": "2026-10-13T09:30:00Z",
+			"activity_type": "force_push", "actor": nil},
+	}
+	f.activityLink = true
+	got, err := a.Activity(context.Background(), "main")
+	want := []forge.ActivityEntry{
+		{ActorID: 9001, ActorLogin: "acme-layup[bot]", Ref: "refs/heads/main", Before: strings.Repeat("a", 40), After: strings.Repeat("b", 40),
+			Timestamp: time.Date(2026, 10, 13, 8, 0, 0, 0, time.UTC), Type: "push"},
+		{ActorID: 0, ActorLogin: "ghost", Ref: "refs/heads/main", Before: strings.Repeat("b", 40), After: strings.Repeat("c", 40),
+			Timestamp: time.Date(2026, 10, 13, 9, 30, 0, 0, time.UTC), Type: "force_push"},
+	}
+	if err != nil || !reflect.DeepEqual(got, want) {
+		t.Errorf("Activity = %+v, %v\nwant %+v", got, err, want)
+	}
+	if !reflect.DeepEqual(f.activityQueries, []string{"ref=main"}) {
+		t.Errorf("the queries are %q; want one request, with the ref and no other parameter", f.activityQueries)
+	}
+}
+
+// The ref is sent as it is given, escaped as a query value.
+func TestActivitySendsTheRefAsGiven(t *testing.T) {
+	f, _, a, _ := setup(t)
+	if _, err := a.Activity(context.Background(), "refs/heads/feature/x y"); err != nil {
+		t.Fatal(err)
+	}
+	if want := []string{"ref=refs%2Fheads%2Ffeature%2Fx+y"}; !reflect.DeepEqual(f.activityQueries, want) {
+		t.Errorf("the query is %q; want %q", f.activityQueries, want)
+	}
+}
+
+// Repository gives the head of each branch over every page, and the names as before.
+func TestRepositoryGivesTheHeadOfEachBranch(t *testing.T) {
+	f, _, a, _ := setup(t)
+	f.branches = 101
+	repo, err := a.Repository(context.Background())
+	if err != nil || len(repo.Heads) != 101 || len(repo.Branches) != 101 {
+		t.Fatalf("Repository with 101 branches: %d heads, %d names, %v", len(repo.Heads), len(repo.Branches), err)
+	}
+	if repo.Heads["main"] != f.head(0) || repo.Heads["b050"] != f.head(50) || repo.Heads["b100"] != f.head(100) {
+		t.Errorf("the heads of main, b050 and b100 are %q, %q, %q; want %q, %q, %q", repo.Heads["main"], repo.Heads["b050"], repo.Heads["b100"], f.head(0), f.head(50), f.head(100))
+	}
+	f.branches = 0
+	if repo, err := a.Repository(context.Background()); err != nil || len(repo.Heads) != 0 {
+		t.Errorf("Repository with no branch has the heads %v, %v; want none", repo.Heads, err)
+	}
+}
+
+// Each new call names itself and the status in a forge error, with the first line of
+// the message, after the handling that every call shares: a rate limit that names no
+// reset time fails at once, and a 403 with a reset time but requests left is no limit.
+func TestTheCallsOfM2dNameTheCallAndTheStatus(t *testing.T) {
+	ctx := context.Background()
+	for _, c := range []struct {
+		call   string
+		path   string
+		run    func(*Adapter) error
+		status int
+	}{
+		{"EffectiveRules", "GET /repos/acme/target/rules/branches/main", func(a *Adapter) error { _, err := a.EffectiveRules(ctx, "main"); return err }, 422},
+		{"Activity", "GET /repos/acme/target/activity", func(a *Adapter) error { _, err := a.Activity(ctx, "main"); return err }, 422},
+	} {
+		for _, status := range []int{c.status, 404, 500, 429} {
+			f, clk, a, _ := setup(t)
+			f.reject[c.path] = []int{status}
+			var fe *forge.Error
+			switch err := c.run(a); {
+			case !errors.As(err, &fe):
+				t.Errorf("%s with %d: %v; want a forge.Error", c.call, status, err)
+			case fe.Call != c.call || fe.Status != status || fe.Message != "rejected by the test":
+				t.Errorf("%s with %d: %+v; want the call, the status and the first line of the message", c.call, status, fe)
+			case len(clk.sleeps) != 0:
+				t.Errorf("%s with %d: the adapter waited %v", c.call, status, clk.sleeps)
+			}
+		}
+		f, clk, a, _ := setup(t)
+		f.reject[c.path] = []int{403}
+		f.headers[c.path] = http.Header{"X-Ratelimit-Reset": {"1791460800"}, "X-Ratelimit-Remaining": {"5"}}
+		var fe *forge.Error
+		if err := c.run(a); !errors.As(err, &fe) || fe.Call != c.call || fe.Status != 403 || len(clk.sleeps) != 0 {
+			t.Errorf("%s with a 403 that has requests left: %v (waited %v); want a forge.Error of the call, 403, and no wait", c.call, err, clk.sleeps)
+		}
+	}
+}
+
+// Each new call shares the handling of a 401 of the token (one new token and one
+// retry, then the error) and of a rate limit (a wait until the reset time, by
+// retry-after or by x-ratelimit-reset, with a progress line).
+func TestTheCallsOfM2dShareTheHandlingOfA401AndOfARateLimit(t *testing.T) {
+	ctx := context.Background()
+	for _, c := range []struct {
+		call string
+		path string
+		run  func(*Adapter) error
+	}{
+		{"EffectiveRules", "GET /repos/acme/target/rules/branches/main", func(a *Adapter) error { _, err := a.EffectiveRules(ctx, "main"); return err }},
+		{"Activity", "GET /repos/acme/target/activity", func(a *Adapter) error { _, err := a.Activity(ctx, "main"); return err }},
+	} {
+		f, _, a, _ := setup(t)
+		f.reject[c.path] = []int{401}
+		if err := c.run(a); err != nil || f.tokens != 2 {
+			t.Errorf("%s after one 401: %v, %d tokens; want success and 2 tokens", c.call, err, f.tokens)
+		}
+		f, _, a, _ = setup(t)
+		f.reject[c.path] = []int{401, 401, 401}
+		var fe *forge.Error
+		if err := c.run(a); !errors.As(err, &fe) || fe.Status != 401 || fe.Call != c.call || f.requests[c.path] != 2 {
+			t.Errorf("%s after two 401: %v, %d requests; want a forge.Error of the call, 401, and one retry", c.call, err, f.requests[c.path])
+		}
+		f, clk, a, lines := setup(t)
+		f.reject[c.path] = []int{429}
+		f.headers[c.path] = http.Header{"Retry-After": {"25"}}
+		if err := c.run(a); err != nil || len(clk.sleeps) != 3 || clk.sleeps[0] != 10*time.Second || clk.sleeps[2] != 5*time.Second || len(*lines) != 3 || !strings.HasPrefix((*lines)[0], c.call+": the rate limit") {
+			t.Errorf("%s after a 429 with retry-after 25: %v, sleeps %v, lines %q; want 10 s, 10 s, 5 s and a line of the call each time", c.call, err, clk.sleeps, *lines)
+		}
+		f, clk, a, _ = setup(t)
+		f.reject[c.path] = []int{403}
+		f.headers[c.path] = http.Header{"X-Ratelimit-Remaining": {"0"}, "X-Ratelimit-Reset": {strconv.FormatInt(clk.now().Add(12*time.Second).Unix(), 10)}}
+		if err := c.run(a); err != nil || len(clk.sleeps) != 2 || clk.sleeps[0] != 10*time.Second || clk.sleeps[1] != 2*time.Second {
+			t.Errorf("%s after a 403 with x-ratelimit-reset in 12 s: %v, sleeps %v; want 10 s and 2 s", c.call, err, clk.sleeps)
+		}
 	}
 }

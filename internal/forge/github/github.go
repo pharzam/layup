@@ -138,9 +138,13 @@ func (a *Adapter) Repository(ctx context.Context) (forge.Repository, error) {
 		return forge.Repository{}, err
 	}
 	var names []string
+	heads := map[string]string{}
 	for next := a.cfg.API + a.repo() + "/branches?per_page=100"; next != ""; {
 		var page []struct {
-			Name string `json:"name"`
+			Name   string `json:"name"`
+			Commit struct {
+				SHA string `json:"sha"`
+			} `json:"commit"`
 		}
 		h, err := a.do(ctx, "Repository", "GET", next, byToken, nil, 200, &page)
 		if err != nil {
@@ -148,12 +152,13 @@ func (a *Adapter) Repository(ctx context.Context) (forge.Repository, error) {
 		}
 		for _, b := range page {
 			names = append(names, b.Name)
+			heads[b.Name] = b.Commit.SHA
 		}
 		if next = nextPage(h.Get("Link")); next != "" && !strings.HasPrefix(next, a.cfg.API+"/") {
 			return forge.Repository{}, &forge.Error{Call: "Repository", Status: 200, Message: "the next page is not at the api of the forge register"}
 		}
 	}
-	return forge.Repository{DefaultBranch: repo.DefaultBranch, Visibility: repo.Visibility, HasCommit: len(names) > 0, Branches: names}, nil
+	return forge.Repository{DefaultBranch: repo.DefaultBranch, Visibility: repo.Visibility, HasCommit: len(names) > 0, Branches: names, Heads: heads}, nil
 }
 
 // UserID gives the numeric ID of a login.
@@ -234,6 +239,73 @@ func (a *Adapter) Comments(ctx context.Context, issue int) ([]forge.Comment, err
 		if next != "" && !strings.HasPrefix(next, a.cfg.API+"/") {
 			return nil, &forge.Error{Call: "Comments", Status: 200, Message: "the next page is not at the api of the forge register"}
 		}
+	}
+	return all, nil
+}
+
+// EffectiveRules gives each active rule that applies to a branch, every page
+// (forge.md, The calls of M2d; task T-jpkc): GET .../rules/branches/{branch},
+// 100 a page. The branch is a multi-segment parameter of GitHub, so each of its
+// segments is escaped and its slashes stay. A branch with no rule, or one that
+// does not exist yet, gives an empty list; the call adds no filter of its own: the
+// endpoint omits a ruleset in evaluate or disabled.
+func (a *Adapter) EffectiveRules(ctx context.Context, branch string) ([]forge.Rule, error) {
+	segments := strings.Split(branch, "/")
+	for i, s := range segments {
+		segments[i] = url.PathEscape(s)
+	}
+	next := a.cfg.API + a.repo() + "/rules/branches/" + strings.Join(segments, "/") + "?per_page=100"
+	var all []forge.Rule
+	for next != "" {
+		var page []struct {
+			Type       string         `json:"type"`
+			Parameters map[string]any `json:"parameters"`
+		}
+		h, err := a.do(ctx, "EffectiveRules", "GET", next, byToken, nil, 200, &page)
+		if err != nil {
+			return nil, err
+		}
+		for _, r := range page {
+			rule := forge.Rule{Type: r.Type}
+			if len(r.Parameters) > 0 {
+				rule.Parameters = r.Parameters
+			}
+			all = append(all, rule)
+		}
+		next = nextPage(h.Get("Link"))
+		if next != "" && !strings.HasPrefix(next, a.cfg.API+"/") {
+			return nil, &forge.Error{Call: "EffectiveRules", Status: 200, Message: "the next page is not at the api of the forge register"}
+		}
+	}
+	return all, nil
+}
+
+// Activity gives the activities of a ref, one page of the default size
+// (forge.md, The calls of M2d; task T-jpkc): GET .../activity with the ref as it
+// is given, a branch name or a full ref, and no other parameter. A null actor is
+// the ID 0 and the login ghost, as for Comments.
+func (a *Adapter) Activity(ctx context.Context, ref string) ([]forge.ActivityEntry, error) {
+	var page []struct {
+		Actor *struct {
+			ID    int64  `json:"id"`
+			Login string `json:"login"`
+		} `json:"actor"`
+		Ref       string    `json:"ref"`
+		Before    string    `json:"before"`
+		After     string    `json:"after"`
+		Timestamp time.Time `json:"timestamp"`
+		Type      string    `json:"activity_type"`
+	}
+	if _, err := a.do(ctx, "Activity", "GET", a.cfg.API+a.repo()+"/activity?ref="+url.QueryEscape(ref), byToken, nil, 200, &page); err != nil {
+		return nil, err
+	}
+	var all []forge.ActivityEntry
+	for _, e := range page {
+		entry := forge.ActivityEntry{ActorLogin: "ghost", Ref: e.Ref, Before: e.Before, After: e.After, Timestamp: e.Timestamp, Type: e.Type}
+		if e.Actor != nil {
+			entry.ActorID, entry.ActorLogin = e.Actor.ID, e.Actor.Login
+		}
+		all = append(all, entry)
 	}
 	return all, nil
 }
