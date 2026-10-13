@@ -70,6 +70,23 @@ func TestS12(t *testing.T) {
 		t.Errorf("go.mod %q and the manifest %q; want the module path of S01-name, and the kinds of the entry", f.files["w/target/go.mod"], f.files["w/target/docs/gates.tsv"])
 	}
 
+	// In phase 2 the answer S01-name is not a row of answers.tsv, which check sources would refuse: the
+	// module has the source of the row name of S01, computed from records:start/start.tsv.
+	f = &fakeRepo{trees: map[string][]git.TreeEntry{".": {{Path: "README.md"}}}}
+	f.install(t)
+	two := append(work.Record{{"S01", "stack", "go", "answer", "S01-stack"}, {"S01", "name", "acme/widget", "computed", "records:start/start.tsv"}}, pinRecord()[1:]...)
+	if o := runS12(Input{Dir: "w", Record: two}); o.Kind != Done || !reflect.DeepEqual(o.Values[0], []string{"module", "github.com/acme/widget", "computed", "records:start/start.tsv"}) {
+		t.Errorf("S12 in phase 2: %s %q, the first value %q; want done and the module row with the source of the name", o.Kind, o.Evidence, o.Values[0])
+	}
+
+	// A name that phase 1 took from a fact leaves the module row as it was: the answer S01-name.
+	f = &fakeRepo{trees: map[string][]git.TreeEntry{".": {{Path: "README.md"}}}}
+	f.install(t)
+	fact := append(work.Record{{"S01", "stack", "go", "answer", "S01-stack"}, {"S01", "name", "acme/widget", "fact", "F-0003#5"}}, pinRecord()[1:]...)
+	if o := runS12(Input{Dir: "w", Record: fact}); o.Kind != Done || !reflect.DeepEqual(o.Values[0], []string{"module", "github.com/acme/widget", "answer", "S01-name"}) {
+		t.Errorf("S12 with a name from a fact: %s %q, the first value %q; want the module row of phase 1", o.Kind, o.Evidence, o.Values[0])
+	}
+
 	// The head of a run that stopped after the commit of S12 holds the same
 	// bytes and the gap row: no second row.
 	head := []git.TreeEntry{{Path: "go.mod"}, {Path: work.OpenGapsPath}}
