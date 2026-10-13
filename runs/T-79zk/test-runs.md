@@ -57,3 +57,6 @@ checkout-check 16:21:04Z; setup-check 16:21:34Z; git diff --check origin/main HE
 The integration level of `internal/run` took 510 s of the 600 that CI's `-timeout 10m` gives a package (458 s at the end of T-eahr: each restart of the worlds of row 54 that passes `setup`
 now runs S01 to S14 once more in the step `verify`, and the new world makes four restarts); CI's own job takes about 4 minutes. The first run of the gate on `8a8816b` (15:19:05Z to
 15:28:00Z) exited 1 on two subtests of the demo of row 54 that read the last row of a restart (fixed in `7e6cfe2`, then green from 15:30:52Z to 15:41:57Z).
+The second run of S01 to S14 that the step `verify` makes took 2.58 s, 2.67 s and 2.54 s in the three restarts of the demo world that run it (the loop of `setup` before it: 3.98 s with
+the two prose sessions, then 2.54 s and 2.43 s; the loop that ends S15: 15 to 21 ms), measured on a scratch copy with the clock around each call of the loop; the estimate of about 15 seconds
+in the plan was wrong. The commits after `0e1cd25` change only documents: this record, the task file and the two indexes.
