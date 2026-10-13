@@ -1,0 +1,10 @@
+3	closed	completed	state: merged
+4	open		state: ready
+50	open
+51	open		state: ready
+52	open		state: on hold
+53	closed	completed
+54	closed	completed	state: in review
+55	closed	not_planned	state: on hold,bug
+56	open		bug,task
+57	closed	completed	bug,state: in progress

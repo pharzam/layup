@@ -15,15 +15,15 @@ LAYUP's CI is on GitHub Actions, in [`.github/workflows/`](../../.github/workflo
 | [`review-record.yml`](../../.github/workflows/review-record.yml) | `review-record` |
 | [`task-state.yml`](../../.github/workflows/task-state.yml) | `task-state labels` (not a required check) |
 
-`task-state.yml` (#185) is no gate: it is the one writer of the `state:` labels
-of the task issues — the issues that the task tables, the completed log and
-`## Now` of `main` name, which [`task-labels.sh`](../tasks/task-labels.sh)
-reads. It sets each of them from the state the
-[`task-state.sh`](../tasks/task-state.sh) command derives: an open issue the
-command does not list carries none, and a
-closed issue takes `state: merged` when its `state_reason` is `completed` —
-which stands in for "merged by its pull request" — and `state: rejected`
-otherwise. It runs on a
+`task-state.yml` (#185) is no gate: it is the one writer of the `state:` labels,
+which [`task-labels.sh`](../tasks/task-labels.sh) sets (its header holds the
+rule, #303). Each open issue carries one: a task issue the state that the
+[`task-state.sh`](../tasks/task-state.sh) command derives, and any other open
+issue `state: in review` when an open pull request closes it and `state: on
+hold` when none does. A closed issue takes `state: merged` when its
+`state_reason` is `completed` — which stands in for "merged by its pull
+request" — and `state: rejected` otherwise; a closed issue that is no task issue
+and never had a label stays as it is. It runs on a
 push to `main`, a pull request event (by `pull_request_target`), an issue event,
 a new comment, and every 30 minutes, each of which runs the workflow file of the
 default branch; it has no `workflow_dispatch` or `create`, which could run a

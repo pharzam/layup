@@ -1,0 +1,3 @@
+#!/bin/sh
+[ "$1" = --prs ] && printf '60\tother\t44\n' > "$2"
+printf "T-bbb2\t#4\tready\t—\n"

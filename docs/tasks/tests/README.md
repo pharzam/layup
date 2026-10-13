@@ -11,8 +11,10 @@ other outcome exits 2, so a bad case never passes for the wrong reason.
 A case holds only the files it changes. The input is [`base/`](base/) with the
 case laid over it, and a file `ABSENT` names the inputs a case removes. The
 inputs have no extension (`backlog`, `completed`, `plan`, `now`,
-`forge/branches`, `forge/pushes`, `forge/comments`, `forge/pr/<n>/head` and
-`body`), so the Markdown checks do not read them as documents. The base gives a
+`forge/branches`, `forge/pushes`, `forge/comments`, `forge/issues` (#303),
+`forge/pr/<n>/head` and `body`), so the Markdown checks do not read them as
+documents. A file `PRS` in a case makes the run write the table of the open pull
+requests (`--prs`), which follows the states after a line `--- prs`. The base gives a
 done task, a ready one, two blocked ones and a backlog task with no row in the
 plan, over two task tables of 14 and 13 columns, at a fixed `now` with no push
 and no comment.
@@ -35,6 +37,12 @@ and no comment.
 | `good-earlier-table` | exit 0 | a backlog task whose row is in an earlier task table keeps that row's `After`: `T-aaa2` is `blocked` on `T-aaa1`, listed after the rows of the last table (#182) |
 | `bad-missing-now` | exit 1 | no `now`, the time of the run |
 | `bad-now-not-a-number` | exit 1 | a `now` that is not a number of seconds (round 1, note 2) |
+| `good-title-tasks` | exit 0 | an open issue whose title starts with a task ID and a colon is a task with no `After`, listed after the others in the order of the issue numbers: `ready` with no branch, `in progress` with a branch and a push in the window, `stalled` with a branch and none; a title with no ID, with three characters, with a lowercase `t` or with no colon is no task (#303) |
+| `good-title-review` | exit 0 | a title task whose branch has a pull request, and one that a pull request from another branch closes, are `in review` |
+| `good-title-in-plan` | exit 0 | a title makes no second task of a task that the plan or the backlog names, on its own issue or on another, nor of an issue that a row of the plan or a line of the backlog names under another ID |
+| `good-title-two-issues` | exit 0 | two open issues that start with one ID: the lower number is the task |
+| `good-prs-table` | exit 0 | `--prs`: the table `NUMBER TAB HEAD TAB ISSUES` of the open pull requests, the issues that each body closes (`Closes #20 and fixes: #21`; `Refs #22`, `prefixes #6` and `Closes #9x` close none, and their rows have no third field); the states after it |
+| `bad-missing-issues` | exit 1 | no `forge/issues`: a missing read is no empty one |
 | `bad-missing-completed` | exit 1 | no completed log |
 | `bad-backlog-no-issue` | exit 1 | a backlog line under Now with no issue |
 | `bad-after-unknown-row` | exit 1 | an `After` row that no task table holds |
@@ -55,14 +63,19 @@ own `task-state.yml` when the file says `real`).
 | Case | Expected | Exercises |
 | ---- | -------- | --------- |
 | `good-labels-each` | exit 0 | each label added: a closed issue `completed` (`merged`) and `not_planned` (`rejected`), an open issue the command says is `done` (`merged`), `in review`, `in progress`, `stalled`, `ready`; an issue only the completed log names (`#7`) |
-| `good-labels-right` | exit 0 | nothing for an issue already right; a hand-set label replaced (`blocked`); a second `state:` label removed; an open task issue the command does not list loses its `state:` label; an issue closed as `not_planned` while the command says `in progress` is `rejected`, and a `duplicate` close is `rejected` too; an issue closed with an empty reason is `rejected` (`#7`, named by a `plan` of the case); labels outside `state:` and an issue outside the set untouched |
+| `good-labels-right` | exit 0 | nothing for an issue already right; a hand-set label replaced (`blocked`); a second `state:` label removed; an open task issue the command does not list takes `on hold`, and so does an open issue outside the set that carries a hand-set label (`#44`); an issue closed as `not_planned` while the command says `in progress` is `rejected`, and a `duplicate` close is `rejected` too; an issue closed with an empty reason is `rejected` (`#7`, named by a `plan` of the case); labels outside `state:` untouched |
+| `good-labels-hold` | exit 0 | an open issue outside the set takes `state: on hold` with no label, with a wrong one (the removal, then the addition) and with another label (kept); one already right gets nothing; a closed issue outside the set with no `state:` label is left alone, and with a stale one takes `merged` (`completed`) or `rejected` (#303) |
+| `good-labels-closing` | exit 0 | an open issue outside the set that a row of `prs` names is `in review` (also the second issue that one row names, and with a wrong label replaced); one that none names is `on hold`; a task issue that a row names keeps its task state |
+| `good-labels-listed-outside-set` | exit 0 | an open issue that the command lists and no file names (a title task) takes the listed state; an open issue outside the set with a stale `in progress` takes `on hold` |
 | `good-labels-crlf` | exit 0 | `state`, `issues` and `EXPECT` with carriage returns. Endings pinned by [`.gitattributes`](../../../.gitattributes) |
 | `good-labels-applier-dry-run` | exit 0 | `--dry-run`: the four reads, the changes printed, no write |
-| `good-labels-applier` | exit 0 | the writes: the seven labels created, then one `issue edit` a task — an addition, a removal only, an addition with a removal; the calls the stand-in records prove each |
+| `good-labels-applier` | exit 0 | the writes: the eight labels created, then one `issue edit` an issue — an addition, an addition with a removal, a removal alone (#10 holds the right label and a second one), for a task and for an issue outside the set; the calls the stand-in records prove each |
+| `good-labels-applier-prs` | exit 0 | the applier runs the command with `--prs FILE` and the reader takes the table: an issue that a pull request closes is `in review`, another open issue `on hold` |
 | `good-labels-workflow` | exit 0 | the repository's `task-state.yml` passes its check |
 | `bad-labels-empty-set` | exit 1 | the three files name no task issue; the calls show the reads and no write |
 | `bad-labels-disjoint` | exit 1 | an issue read that holds none of the task issues; the calls show the reads and no write |
 | `bad-labels-missing-issues` | exit 1 | no `issues` |
+| `bad-labels-missing-prs` | exit 1 | no `prs`: a missing read is no empty one |
 | `bad-labels-unknown-state` | exit 1 | a state the labels do not know |
 | `bad-labels-applier-state-fails` | exit 1 | `task-state.sh` fails: no call to the forge at all |
 | `bad-labels-applier-issues-fail` | exit 1 | the issue read fails after the three files: no write |

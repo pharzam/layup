@@ -1,0 +1,6 @@
+3	T-eee9: An issue of a row of the plan, under another ID
+4	T-bbb2: The task of the plan, on its own issue
+9	T-eee8: The issue of a backlog task, under another ID
+30	T-bbb2: Another issue for a task of the plan
+31	T-aaa2: Another issue for a task of an earlier table
+32	T-ccc1: Another issue for a task of the backlog

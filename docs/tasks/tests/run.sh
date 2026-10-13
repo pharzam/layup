@@ -63,8 +63,13 @@ elif [ -f "$tmp/in/state" ]; then
 	sh "$here/../task-labels.sh" --read "$tmp/in" > "$tmp/out" 2> "$tmp/err"
 	got=$?
 else
-	sh "$here/../task-state.sh" --read "$tmp/in" > "$tmp/out" 2> "$tmp/err"
+	set -- --read "$tmp/in"
+	[ -f "$tmp/in/PRS" ] && set -- "$@" --prs "$tmp/prs.out"
+	sh "$here/../task-state.sh" "$@" > "$tmp/out" 2> "$tmp/err"
 	got=$?
+	# A case with a file PRS also gets the table of the open pull requests that
+	# --prs writes (#303): it follows the states, after a line `--- prs`.
+	[ -f "$tmp/in/PRS" ] && { printf -- '--- prs\n'; cat "$tmp/prs.out" 2> /dev/null; } >> "$tmp/out"
 fi
 # EXPECT is compared with its carriage returns removed, so the suite holds on a
 # checkout with `core.autocrlf=true`; the case good-crlf is CRLF throughout.

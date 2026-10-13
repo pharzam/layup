@@ -1,8 +1,8 @@
 #!/bin/sh
 #
-# task-labels.sh — set one `state:` label on each task issue — an open issue
-# the command does not list carries none, and a closed issue takes
-# `state: merged` or `state: rejected` from its close reason (#185, T-dm8m).
+# task-labels.sh — set one `state:` label on each open issue, and on each closed
+# issue that is a task issue or still carries a `state:` label (#185, T-dm8m;
+# every open issue, #303, T-j304).
 #
 # The workflow .github/workflows/task-state.yml runs it, and is the one writer
 # of these labels; a label set by hand is replaced at the next run.
@@ -13,32 +13,49 @@
 #   sh docs/tasks/task-labels.sh --read DIR        print the changes from DIR
 #   sh docs/tasks/task-labels.sh --check-workflow FILE   check the workflow
 #
-# DIR holds `state` (the output of task-state.sh), `plan`, `completed` and
+# DIR holds `state` (the output of task-state.sh), `prs` (the table of the open
+# pull requests that `task-state.sh --prs` writes: NUMBER TAB HEAD TAB ISSUES,
+# the issues that the body closes, comma-separated, and no third field when it
+# closes none), `plan`, `completed` and
 # `backlog` (docs/plan/README.md, docs/tasks/completed.md and
 # docs/tasks/backlog.md of main), and `issues` (`NUMBER TAB open|closed TAB
 # STATE_REASON TAB LABELS`, the labels comma-separated).
 #
-# The task issues are the ones the three files name: the `Issue` of each row of
+# THE RULE. This header is the one home of who gets which label; the documents
+# that name the labels summarise it and link here.
+#
+# A task issue is one that a file or a title names: the `Issue` of each row of
 # every task table of the plan, the first `[#N]` of each line of the completed
 # log, and of each line under `## Now` of the backlog (the Operator's choice of
-# 2026-10-12: a task rejected before it was ever indexed stays unlabelled). The
-# label of a task issue, the first that holds:
+# 2026-10-12: a task rejected before it was ever indexed stays unlabelled), and
+# an open issue whose title starts with a task ID and a colon, which
+# task-state.sh lists (#303). The label of an issue, the first that holds:
 #   closed   `state: merged` if its state_reason is `completed`, else
-#            `state: rejected` (not_planned, duplicate, empty)
+#            `state: rejected` (not_planned, duplicate, empty); for a task issue,
+#            and for any other closed issue that still carries a `state:` label
+#            (the label of its open time, now stale). Any other closed issue is
+#            left as it is.
 #   open     the state task-state.sh lists for it: done -> `state: merged`,
 #            `in review`, `in progress`, `stalled`, `blocked`, `ready`
-#   else     no `state:` label
-# Every other `state:` label of a task issue is removed. Labels outside
-# `state:`, and issues outside the set, are never touched.
+#   open     else `state: in review` when an open pull request closes it (the
+#            table `prs` names it), else `state: on hold`
+# So each open issue has one `state:` label. Every other `state:` label of an
+# issue that it labels is removed. Labels outside `state:` are never touched.
 #
 # The output: `add #N LABEL` and `remove #N LABEL`, in the order of the issue
 # numbers, the removals of an issue before its addition; nothing for an issue
 # already right. The same input gives the same bytes.
 #
-# No write before every read has passed: task-state.sh, the three files, the
-# issues, and the reader's checks. An empty set of task issues, or an issue read
-# that holds none of them, exits 1 and writes nothing, so a broken read never
-# strips the labels. `--dry-run` writes nothing at all.
+# No write before every read has passed: task-state.sh (the states and the
+# table of the pull requests), the three files, the issues, and the reader's
+# checks. An empty set of task issues, or an issue read that holds none of them,
+# exits 1 and writes nothing, so a broken read never strips the labels.
+# `--dry-run` writes nothing at all.
+#
+# LIMIT: a read that succeeds and returns too little is not seen. An empty table
+# of pull requests turns each `in review` of an issue outside the plan into
+# `on hold`, as an empty list of branches turns each `in progress` of a task into
+# `ready`; the next run sets them again.
 #
 # TASK_STATE_CMD, when set, names the script run in place of task-state.sh; the
 # fixtures use it with a stand-in. In use it is not set.
@@ -57,7 +74,7 @@ trap 'rm -rf "$tmp"' EXIT
 
 # read_dir DIR — print the changes; exit 1 on a missing or malformed input.
 read_dir() {
-	for f in state plan completed backlog issues; do
+	for f in state plan completed backlog issues prs; do
 		[ -f "$1/$f" ] || die "missing input: $f"
 		tr -d '\r' < "$1/$f" > "$tmp/r.$f"
 	done
@@ -90,6 +107,11 @@ read_dir() {
 		if ($2 ~ /^#[0-9]+$/) st[substr($2, 2) + 0] = $3
 		next
 	}
+	FILENAME ~ /r\.prs$/ {
+		k = split($3, closes, ",")
+		for (i = 1; i <= k; i++) if (closes[i] ~ /^[0-9]+$/) pr[closes[i] + 0] = 1
+		next
+	}
 	FILENAME ~ /r\.issues$/ {
 		if ($1 !~ /^[0-9]+$/) next
 		ni++; num[ni] = $1 + 0; open_[ni] = ($2 == "open"); reason[ni] = $3; labs[ni] = $4
@@ -103,14 +125,16 @@ read_dir() {
 		label["blocked"] = "state: blocked"; label["ready"] = "state: ready"
 		for (i = 1; i <= ni; i++) {
 			n = num[i]
-			if (!(n in set)) continue
-			seen++
-			want = ""
-			if (!open_[i]) want = (reason[i] == "completed") ? "state: merged" : "state: rejected"
-			else if (n in st) {
+			if (n in set) seen++
+			stale = (labs[i] ~ /(^|,)state: /)
+			if (!open_[i]) {
+				if (!(n in set) && !stale) continue
+				want = (reason[i] == "completed") ? "state: merged" : "state: rejected"
+			} else if (n in st) {
 				if (!(st[n] in label)) { printf "task-labels: #%d has a state the labels do not know: %s\n", n, st[n] > "/dev/stderr"; exit 1 }
 				want = label[st[n]]
-			}
+			} else if (n in pr) want = "state: in review"
+			else want = "state: on hold"
 			have = 0; out = ""
 			k = split(labs[i], l, ",")
 			for (j = 1; j <= k; j++) {
@@ -122,7 +146,7 @@ read_dir() {
 			printf "%s", out
 		}
 		if (!seen) { print "task-labels: the issue read holds no task issue" > "/dev/stderr"; exit 1 }
-	}' "$tmp/r.plan" "$tmp/r.completed" "$tmp/r.backlog" "$tmp/r.state" "$tmp/r.issues" > "$tmp/r.changes" || exit 1
+	}' "$tmp/r.plan" "$tmp/r.completed" "$tmp/r.backlog" "$tmp/r.state" "$tmp/r.prs" "$tmp/r.issues" > "$tmp/r.changes" || exit 1
 	sort -t' ' -k1,1n -k2,2n -s "$tmp/r.changes" | cut -d' ' -f3-
 }
 
@@ -206,8 +230,9 @@ check_workflow() {
 apply() {
 	mkdir "$tmp/in" || die "cannot make $tmp/in"
 	say "running task-state.sh"
-	if [ -n "${TASK_STATE_CMD:-}" ]; then sh "$TASK_STATE_CMD" > "$tmp/in/state"
-	else sh "$here/task-state.sh" > "$tmp/in/state"; fi || die "task-state.sh failed, so no label is written"
+	: > "$tmp/in/prs"
+	if [ -n "${TASK_STATE_CMD:-}" ]; then sh "$TASK_STATE_CMD" --prs "$tmp/in/prs" > "$tmp/in/state"
+	else sh "$here/task-state.sh" --prs "$tmp/in/prs" > "$tmp/in/state"; fi || die "task-state.sh failed, so no label is written"
 	say "reading the backlog, the completed log and the plan of main"
 	for _f in backlog:docs/tasks/backlog.md completed:docs/tasks/completed.md plan:docs/plan/README.md; do
 		gh api -H 'Accept: application/vnd.github.raw' "repos/{owner}/{repo}/contents/${_f#*:}?ref=main" > "$tmp/in/${_f%%:*}" ||
@@ -219,9 +244,9 @@ apply() {
 		> "$tmp/in/issues" || die "gh: cannot read the issues, so no label is written"
 	read_dir "$tmp/in" > "$tmp/changes" || exit 1
 	if [ "$1" = dry ]; then cat "$tmp/changes"; return 0; fi
-	say "making sure the seven labels exist"
-	for _l in 'state: ready' 'state: in progress' 'state: stalled' 'state: in review' 'state: blocked' 'state: merged' 'state: rejected'; do
-		gh label create "$_l" --force --color ededed --description 'Set by .github/workflows/task-state.yml (#185); never by hand' > /dev/null ||
+	say "making sure the eight labels exist"
+	for _l in 'state: ready' 'state: in progress' 'state: stalled' 'state: in review' 'state: blocked' 'state: merged' 'state: rejected' 'state: on hold'; do
+		gh label create "$_l" --force --color ededed --description 'Set by .github/workflows/task-state.yml; never by hand' > /dev/null ||
 			die "gh: cannot create the label $_l"
 	done
 	say "writing $(grep -c . "$tmp/changes") changes"

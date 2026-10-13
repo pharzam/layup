@@ -906,7 +906,12 @@ failure modes worth keeping.
   a record pasted into a new file (a test run cut at a width, with its trailing
   spaces) passes the check and fails it after the commit. It is silent because the
   command exits 0. **The check:** run `git diff --check <base>` after `git add`, or
-  on the commit, never on a tree with new untracked files. Learned in `T-hpid`.
+  on the commit, never on a tree with new untracked files. Learned in `T-hpid`, and
+  met again in `T-j304` (#303): the green script ran it with 11 new case directories
+  untracked, and six fixture files showed trailing tabs only at the first `git add`.
+  A row of a TSV fixture whose last field is empty ends in a tab: write the row
+  without it where the reader takes a missing field as empty (`awk -F'\t'` does),
+  or let the writer of the table leave the tab out.
 - ❌ **The writer of a command's table in `internal/cli`.** `internal/cli` may not
   import `internal/tsv` (`packages.md`, its row), so a command that prints a table
   by its schema needs the writer in the package that owns the table, as

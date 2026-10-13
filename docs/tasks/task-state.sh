@@ -7,8 +7,15 @@
 # nothing, and it needs `gh` and the network to read the forge.
 #
 # Usage:
-#   sh docs/tasks/task-state.sh             read the forge, then print
-#   sh docs/tasks/task-state.sh --read DIR  print from DIR (the fixtures)
+#   sh docs/tasks/task-state.sh                       read the forge, then print
+#   sh docs/tasks/task-state.sh --read DIR            print from DIR (the fixtures)
+#   sh docs/tasks/task-state.sh [--read DIR] --prs FILE   also write to FILE the
+#       table of the open pull requests, NUMBER TAB HEAD TAB ISSUES, where ISSUES
+#       are the issues that its body closes, and a pull request that closes none
+#       has no third field (the one parser of the closing keywords: task-labels.sh
+#       reads this table, #303). Give FILE as an absolute path: when the forge is
+#       read the command works from the repository root, so a relative FILE
+#       lands there
 #
 # DIR holds `backlog`, `completed` and `plan` (docs/tasks/backlog.md,
 # docs/tasks/completed.md and docs/plan/README.md; the fetcher reads them from
@@ -17,14 +24,25 @@
 # pull request each, its head branch and its body), `now` (the time of the run,
 # in seconds since the epoch), `forge/pushes` (`BRANCH TAB SECONDS`, a push, a
 # force push or a creation of a branch) and `forge/comments` (`ISSUE TAB
-# SECONDS`, a comment created on an issue).
+# SECONDS`, a comment created on an issue) and `forge/issues` (`NUMBER TAB
+# TITLE`, each open issue).
 #
 # The tasks: the rows of the LAST task table of the plan (the current
 # milestone), in its order, then each task under `## Now` of the backlog that
 # has no row there, in the backlog's order; such a task keeps the `After` of its
-# row when an earlier task table holds one. A task table is one whose header
-# holds the cells `#` and `Task ID`; its columns are found by the header, so a
-# table of 13 columns and one of 14 read the same.
+# row when an earlier task table holds one. Last come the tasks that only an
+# open issue names (#303): its title starts with a task ID and a colon
+# (`T-xxxx: `, as the issues of the plan do), the task has no `After`, and the
+# issues come in the order of their numbers. A task or an issue that a row of
+# the plan or a line under `## Now` names makes no second task, so a title that
+# carries the ID of such a task, or sits on an issue that one of them names,
+# adds none; of two open issues that start with one ID, the lower number is the
+# task. A task that only the completed log names is `done`, so an open issue
+# whose title starts with its ID is listed `done` and takes `state: merged`
+# while it is open, as a reopened issue of a done task of the plan does.
+# A task table is one whose header holds the cells `#` and `Task ID`; its
+# columns are found by the header, so a table of 13 columns and one of 14 read
+# the same.
 #
 # The state, the first that holds:
 #   done       the task ID is the ID field of a line of the completed log (the
@@ -91,6 +109,10 @@ fetch() {
 		printf '%s\n' "$_h" > "$_in/forge/pr/$_n/head"
 		printf '%s' "$_b" | base64 -d > "$_in/forge/pr/$_n/body" || die "cannot decode the body of pull request $_n"
 	done < "$tmp/prlist"
+	printf 'task-state: reading the open issues\n' >&2
+	gh api 'repos/{owner}/{repo}/issues?state=open&per_page=100' --paginate \
+		-q '.[] | select(.pull_request | not) | "\(.number)\t\(.title | gsub("[\t\n\r]"; " "))"' > "$_in/forge/issues" ||
+		die "gh: cannot read the open issues"
 	# The activity of the window. `date +%s` is the clock; gh's jq converts the
 	# times (fromdateiso8601, todate), as no option of `date` that does is
 	# portable. The forge's period is the smallest of its periods (day, week,
@@ -113,21 +135,26 @@ fetch() {
 		> "$_in/forge/comments" || die "gh: cannot read the comments"
 }
 
-case $# in
-0)
+in=
+prs_out=
+while [ $# -gt 0 ]; do
+	case $1 in
+	--read | --prs)
+		[ $# -ge 2 ] || { printf 'task-state: usage: task-state.sh [--read DIR] [--prs FILE]\n' >&2; exit 2; }
+		if [ "$1" = --read ]; then in=$2; else prs_out=$2; fi
+		shift 2 ;;
+	*) printf 'task-state: unknown argument: %s\n' "$1" >&2; exit 2 ;;
+	esac
+done
+if [ -z "$in" ]; then
 	in=$tmp/in
 	mkdir "$in" || die "cannot make $in"
-	fetch "$in" ;;
-2)
-	[ "$1" = --read ] || { printf 'task-state: unknown argument: %s\n' "$1" >&2; exit 2; }
-	in=$2
-	[ -d "$in" ] || { printf 'task-state: not a directory: %s\n' "$in" >&2; exit 2; } ;;
-*)
-	printf 'task-state: usage: task-state.sh [--read DIR]\n' >&2
-	exit 2 ;;
-esac
+	fetch "$in"
+else
+	[ -d "$in" ] || { printf 'task-state: not a directory: %s\n' "$in" >&2; exit 2; }
+fi
 
-for f in backlog completed plan now forge/branches forge/pushes forge/comments; do
+for f in backlog completed plan now forge/branches forge/pushes forge/comments forge/issues; do
 	[ -f "$in/$f" ] || die "missing input: $f"
 done
 
@@ -145,7 +172,8 @@ case $_now in
 esac
 
 # The open pull requests, one line each: NUMBER TAB HEAD TAB ISSUES, where
-# ISSUES are the issues its body closes, comma-separated. A keyword counts only
+# ISSUES are the issues its body closes, comma-separated, and no tab before an
+# empty ISSUES (no line ends in a tab). A keyword counts only
 # at the start of a word, and a number only when no letter or digit follows it:
 # `prefixes #6` and `Closes #9x` close nothing.
 : > "$tmp/prs"
@@ -173,8 +201,10 @@ for p in "$in"/forge/pr/*/; do
 		}
 		END { print out }' "$p/body")
 	fi
-	printf '%s\t%s\t%s\n' "$n" "$h" "$c" >> "$tmp/prs"
+	if [ -n "$c" ]; then printf '%s\t%s\t%s\n' "$n" "$h" "$c"; else printf '%s\t%s\n' "$n" "$h"; fi >> "$tmp/prs"
 done
+
+[ -z "$prs_out" ] || cp "$tmp/prs" "$prs_out" || die "cannot write $prs_out"
 
 # The rows of every task table: TABLE TAB ROW TAB TASK TAB ISSUE TAB AFTER.
 awk -v OFS='\t' '
@@ -246,6 +276,20 @@ now && /^- \*\*T-[0-9a-z][0-9a-z][0-9a-z][0-9a-z]\*\*/ {
 	}
 	print t, substr($0, RSTART + 2, RLENGTH - 3)
 }' "$in/backlog" > "$tmp/now" || exit 1
+
+# The tasks that only an open issue names (#303): TASK TAB ISSUE, in the order of
+# the issue numbers, from a title that starts with a task ID and a colon. An
+# issue or a task that the plan or the backlog names makes none, and of two issues
+# with one ID the lower number is the task.
+awk -F'\t' -v OFS='\t' '
+FILENAME == ARGV[1] { named[$3] = 1; named["#" $4] = 1; next }
+FILENAME == ARGV[2] { named[$1] = 1; named["#" $2] = 1; next }
+$2 ~ /^T-[0-9a-z][0-9a-z][0-9a-z][0-9a-z]: / {
+	id = substr($2, 1, 6)
+	if (id in named || ("#" $1) in named) next
+	if (!(id in low) || $1 + 0 < low[id] + 0) low[id] = $1
+}
+END { for (id in low) print low[id] + 0, id }' "$tmp/rows" "$tmp/now" "$in/forge/issues" | sort -n | awk -F' ' -v OFS='\t' '{ print $2, $1 }' >> "$tmp/now" || exit 1
 
 # The state of each task.
 awk -F'\t' -v OFS='\t' -v dash='—' -v window="$window" '
