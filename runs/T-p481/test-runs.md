@@ -4,7 +4,7 @@ Each `state:` label in the color of its state (#309): the change of `apply()` in
 `docs/tasks/task-labels.sh`, and the `label create` lines the two applier cases
 of `docs/tasks/tests/` expect. All times UTC, 2026-10-13.
 
-## Red (10:05Z)
+## Red (10:25Z)
 
 The two `EXPECT` files at the new colors, `task-labels.sh` and `run.sh` as at
 the base `6734a23` — run on a copy of the tree, because the `pre-commit` hook
@@ -30,7 +30,7 @@ on the `ededed` byte alone, the right reason:
 `good-labels-applier-prs` fails the same way, on the same eight lines of its own
 `EXPECT`.
 
-## Mutation (10:20Z)
+## Mutation (10:26Z)
 
 Two single-value mutants, each on a copy of the tree, to prove a wrong color
 cannot pass: `state: ready=ffffff` fails `good-labels-applier` on the `ready`
