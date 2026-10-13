@@ -145,13 +145,26 @@ const rulesetText = `{
   },
   "rules": [
     {
+      "type": "creation"
+    },
+    {
+      "type": "deletion"
+    },
+    {
+      "type": "non_fast_forward"
+    },
+    {
       "type": "pull_request",
       "parameters": {
         "dismiss_stale_reviews_on_push": false,
         "require_code_owner_review": false,
         "require_last_push_approval": false,
         "required_approving_review_count": 0,
-        "required_review_thread_resolution": true
+        "required_review_thread_resolution": true,
+        "allowed_merge_methods": [
+          "merge"
+        ],
+        "require_extra_approval_for_unattributed_changes": false
       }
     },
     {
@@ -169,12 +182,6 @@ const rulesetText = `{
         ],
         "strict_required_status_checks_policy": true
       }
-    },
-    {
-      "type": "non_fast_forward"
-    },
-    {
-      "type": "deletion"
     }
   ],
   "bypass_actors": []

@@ -30,10 +30,11 @@ var catalogEntry = func(stack string) (*catalog.Entry, error) { return catalog.R
 // The paths of the last steps: the gate manifest and the protection file of a
 // target, and the files of the work area that S13 and S15 write.
 const (
-	manifestPath   = "docs/gates.tsv"
-	protectionPath = "docs/setup/branch-protection.json"
-	rulesetPath    = "out/ruleset-default.json"
-	rulePathsPath  = "out/rule-paths.tsv"
+	manifestPath       = "docs/gates.tsv"
+	protectionPath     = "docs/setup/branch-protection.json"
+	rulesetPath        = "out/ruleset-default.json"
+	rulesetRecordsPath = "out/ruleset-records.json"
+	rulePathsPath      = "out/rule-paths.tsv"
 )
 
 // runS12 is S12 (D1 of #92): the files of the catalog entry of the stack, with
@@ -191,14 +192,23 @@ func protectionBody(kinds []string) ([]byte, error) {
 	return jsonText(body)
 }
 
+// layupChecks are the four checks that LAYUP posts, which the ruleset of the
+// default branch requires in phase 2, each pinned to the App (scaffold.md, The
+// ruleset of the default branch).
+var layupChecks = []string{"layup/gates", "layup/spec", "layup/verify", "layup/rules"}
+
 // rulesetBody gives the ruleset of the default branch and of the ref
-// layup-probe (D4 of #92): a pull request with no required review (an
-// approval is an issue comment, and the App merges), one required check per
-// kind pinned to GitHub Actions, no force push, no deletion, and no bypass.
-func rulesetBody(kinds []string) ([]byte, error) {
+// layup-probe (D4 of #92; scaffold.md, The ruleset of the default branch), the
+// rules in the order of its table: the creation of a ref and its deletion
+// refused, no force push, a pull request with no required review (an approval
+// is an issue comment, and the App merges) that allows the merge method
+// only, one required check per kind pinned to GitHub Actions, and no bypass.
+// appID is the App's ID in phase 2, which adds the four layup/ checks pinned to
+// it, and 0 in phase 1, which has none (no phase-1 command posts one).
+func rulesetBody(kinds []string, appID int64) ([]byte, error) {
 	type check struct {
 		Context       string `json:"context"`
-		IntegrationID int    `json:"integration_id"`
+		IntegrationID int64  `json:"integration_id"`
 	}
 	type rule struct {
 		Type       string `json:"type"`
@@ -211,6 +221,11 @@ func rulesetBody(kinds []string) ([]byte, error) {
 	checks := []check{}
 	for _, k := range kinds {
 		checks = append(checks, check{k, actionsApp})
+	}
+	if appID != 0 {
+		for _, c := range layupChecks {
+			checks = append(checks, check{c, appID})
+		}
 	}
 	return jsonText(struct {
 		Name        string `json:"name"`
@@ -227,21 +242,68 @@ func rulesetBody(kinds []string) ([]byte, error) {
 			RefName refs `json:"ref_name"`
 		}{refs{[]string{"~DEFAULT_BRANCH", "refs/heads/layup-probe"}, []string{}}},
 		Rules: []rule{
+			{"creation", nil},
+			{"deletion", nil},
+			{"non_fast_forward", nil},
 			{"pull_request", struct {
-				DismissStale bool `json:"dismiss_stale_reviews_on_push"`
-				CodeOwner    bool `json:"require_code_owner_review"`
-				LastPush     bool `json:"require_last_push_approval"`
-				Approvals    int  `json:"required_approving_review_count"`
-				Resolution   bool `json:"required_review_thread_resolution"`
-			}{Resolution: true}},
+				DismissStale bool     `json:"dismiss_stale_reviews_on_push"`
+				CodeOwner    bool     `json:"require_code_owner_review"`
+				LastPush     bool     `json:"require_last_push_approval"`
+				Approvals    int      `json:"required_approving_review_count"`
+				Resolution   bool     `json:"required_review_thread_resolution"`
+				MergeMethods []string `json:"allowed_merge_methods"`
+				ExtraApprove bool     `json:"require_extra_approval_for_unattributed_changes"`
+			}{Resolution: true, MergeMethods: []string{"merge"}}},
 			{"required_status_checks", struct {
 				Checks []check `json:"required_status_checks"`
 				Strict bool    `json:"strict_required_status_checks_policy"`
 			}{checks, true}},
-			{"non_fast_forward", nil},
-			{"deletion", nil},
 		},
 		Bypass: []any{},
+	})
+}
+
+// rulesetRecordsBody gives the ruleset of the records branch (phase 2;
+// scaffold.md, The ruleset of the records branch): the update of the branch,
+// its deletion and a force push refused, with the App as the one bypass actor,
+// so only the App writes the branch. The rule update has its one parameter,
+// update_allows_fetch_and_merge, false: no fork pulls into the branch.
+func rulesetRecordsBody(appID int64) ([]byte, error) {
+	type rule struct {
+		Type       string `json:"type"`
+		Parameters any    `json:"parameters,omitempty"`
+	}
+	type refs struct {
+		Include []string `json:"include"`
+		Exclude []string `json:"exclude"`
+	}
+	type actor struct {
+		ID   int64  `json:"actor_id"`
+		Type string `json:"actor_type"`
+		Mode string `json:"bypass_mode"`
+	}
+	return jsonText(struct {
+		Name        string `json:"name"`
+		Target      string `json:"target"`
+		Enforcement string `json:"enforcement"`
+		Conditions  struct {
+			RefName refs `json:"ref_name"`
+		} `json:"conditions"`
+		Rules  []rule  `json:"rules"`
+		Bypass []actor `json:"bypass_actors"`
+	}{
+		Name: rulesetRecordsName, Target: "branch", Enforcement: "active",
+		Conditions: struct {
+			RefName refs `json:"ref_name"`
+		}{refs{[]string{"refs/heads/" + recordsBranch}, []string{}}},
+		Rules: []rule{
+			{"update", struct {
+				FetchAndMerge bool `json:"update_allows_fetch_and_merge"`
+			}{}},
+			{"deletion", nil},
+			{"non_fast_forward", nil},
+		},
+		Bypass: []actor{{appID, "Integration", "always"}},
 	})
 }
 
@@ -250,11 +312,39 @@ func rulesetBody(kinds []string) ([]byte, error) {
 // of #92).
 const rulesetName = "layup: the default branch"
 
-// runS13 is S13 (D4 of #92): docs/setup/branch-protection.json in the tree and
-// out/ruleset-default.json in the work area, each with its record row, from
-// the kinds of the manifest at the head, which are the names of the gate jobs
-// (K30); its commands are the hand-off.
-func runS13(in Input) Outcome {
+// rulesetRecordsName names the ruleset of the records branch, in the form of
+// the first so that the Operator tells the two apart (scaffold.md, REQ-003, The
+// rulesets of Scaffold 6).
+const rulesetRecordsName = "layup: the records branch"
+
+// withoutLayupLine is the value of the row without-layup that S13 writes in
+// phase 2 (scaffold.md, NFR-002): what the Operator does to merge with LAYUP
+// absent.
+const withoutLayupLine = `To merge with LAYUP absent, remove the required checks layup/gates, layup/spec, layup/verify and layup/rules from the ruleset "` + rulesetName + `".`
+
+// runS13 is S13 in phase 1 (D4 of #92): docs/setup/branch-protection.json in
+// the tree and out/ruleset-default.json in the work area, each with its record
+// row, from the kinds of the manifest at the head, which are the names of the
+// gate jobs (K30); its commands are the hand-off.
+func runS13(in Input) Outcome { return runS13With(0, in) }
+
+// runS13Phase2 is S13 in phase 2 (scaffold.md, REQ-003, The rulesets of
+// Scaffold 6; task T-9v92): the body of phase 1 with the App's ID, which adds
+// the four layup/ checks to the default branch's ruleset, the ruleset of the
+// records branch, and the row without-layup. layup run made the work area, so
+// an app_id that is not a positive number (the register can hold 0) is a fail,
+// not an input error.
+func runS13Phase2(p Phase2, in Input) Outcome {
+	if p.AppID < 1 {
+		return Outcome{Kind: Fail, Evidence: fmt.Sprintf("S13: the app_id of the forge register is %d, not a positive number", p.AppID)}
+	}
+	return runS13With(p.AppID, in)
+}
+
+// runS13With is the body of S13 for both phases: appID is 0 in phase 1, which
+// writes the one ruleset file and no row without-layup, and the App's ID in
+// phase 2.
+func runS13With(appID int64, in Input) Outcome {
 	kinds, _, err := manifestKinds(filepath.Join(in.Dir, work.TargetPath), "HEAD")
 	if err != nil {
 		return Outcome{Kind: Fail, Evidence: "the head: " + err.Error()}
@@ -263,7 +353,7 @@ func runS13(in Input) Outcome {
 	if err != nil {
 		return Outcome{Kind: Fail, Evidence: "S13: " + err.Error()}
 	}
-	ruleset, err := rulesetBody(kinds)
+	ruleset, err := rulesetBody(kinds, appID)
 	if err != nil {
 		return Outcome{Kind: Fail, Evidence: "S13: " + err.Error()}
 	}
@@ -273,10 +363,22 @@ func runS13(in Input) Outcome {
 	if err := sys.write(filepath.Join(in.Dir, filepath.FromSlash(rulesetPath)), ruleset); err != nil {
 		return Outcome{Kind: Fail, Evidence: "S13: " + firstLine(err)}
 	}
-	return Outcome{Kind: Done, Evidence: "the ruleset file, and its commands in commands.sh", Commit: true, Values: [][]string{
+	values := [][]string{
 		{"branch-protection.sha256", sha(protection), "computed", "sha256 " + protectionPath},
 		{"ruleset.sha256", sha(ruleset), "computed", "sha256 " + rulesetPath},
-	}}
+	}
+	if appID == 0 {
+		return Outcome{Kind: Done, Evidence: "the ruleset file, and its commands in commands.sh", Commit: true, Values: values}
+	}
+	records, err := rulesetRecordsBody(appID)
+	if err != nil {
+		return Outcome{Kind: Fail, Evidence: "S13: " + err.Error()}
+	}
+	if err := sys.write(filepath.Join(in.Dir, filepath.FromSlash(rulesetRecordsPath)), records); err != nil {
+		return Outcome{Kind: Fail, Evidence: "S13: " + firstLine(err)}
+	}
+	values = append(values, []string{"without-layup", withoutLayupLine, "computed", rulesetPath})
+	return Outcome{Kind: Done, Evidence: "the ruleset files, and their commands in commands.sh", Commit: true, Values: values}
 }
 
 // commandsS13 gives the commands of S13 (D4 of #92), run from the work area:
