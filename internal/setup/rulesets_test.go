@@ -328,15 +328,17 @@ func TestPhase2S13Refuses(t *testing.T) {
 	}
 }
 
-// S13 in phase 2 keeps what phase 1 gives it but its code: the actor, the hand-off and the commands,
-// which row 52c rewrites (the apply of the records ruleset is its).
-func TestPhase2S13KeepsItsCommandsAndHandOff(t *testing.T) {
+// S13 in phase 2 keeps what phase 1 gives it but its code and its commands: the actor and the
+// hand-off (the commands of phase 2 are those of row 52c, task T-56dj).
+func TestPhase2S13KeepsItsActorAndHandOff(t *testing.T) {
 	one, two := Steps(Brief{}, Calls{})["S13"], StepsPhase2(phase2App(42), Calls{})["S13"]
 	if reflect.ValueOf(one.Run).Pointer() == reflect.ValueOf(two.Run).Pointer() {
 		t.Errorf("S13 in phase 2 has the code of phase 1")
 	}
-	if two.Actor != one.Actor || !two.HandOff || reflect.ValueOf(one.Commands).Pointer() != reflect.ValueOf(two.Commands).Pointer() || !reflect.DeepEqual(one.Reads, two.Reads) {
-		t.Errorf("S13 in phase 2: actor %q, hand-off %v, commands the same as phase 1's %v; want the actor %q, the hand-off, and the commands of phase 1",
-			two.Actor, two.HandOff, reflect.ValueOf(one.Commands).Pointer() == reflect.ValueOf(two.Commands).Pointer(), one.Actor)
+	if reflect.ValueOf(one.Commands).Pointer() == reflect.ValueOf(two.Commands).Pointer() || two.Commands == nil {
+		t.Errorf("S13 in phase 2 has the commands of phase 1, or none")
+	}
+	if two.Actor != one.Actor || !two.HandOff || !reflect.DeepEqual(one.Reads, two.Reads) {
+		t.Errorf("S13 in phase 2: actor %q, hand-off %v, reads %q; want the actor %q, the hand-off and the reads of phase 1", two.Actor, two.HandOff, two.Reads, one.Actor)
 	}
 }

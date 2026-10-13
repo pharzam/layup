@@ -458,18 +458,30 @@ func commit(dir, id string, who git.Identity, record work.Record) string {
 // in their fixed order, each with its comment line (D7 of #85); with no
 // command, the file is empty, so no command of an earlier record stays.
 func writeCommands(dir string, steps map[string]Step, record work.Record) error {
+	return sys.writeCommands(dir, commandsText(steps, record))
+}
+
+// commandsText gives the text of commands.sh: its first line is set -eu, so the
+// first command that fails stops it, in both phases (scaffold.md, The commands for
+// the Operator, F-13; task T-56dj); then each command of the done steps in the order
+// of setup.md, with its comment line before it. With no command the text is empty.
+func commandsText(steps map[string]Step, record work.Record) string {
 	var cmds []Command
 	for _, id := range ids() {
 		if _, ok := record.Value(id, "done"); ok && steps[id].Commands != nil {
 			cmds = append(cmds, steps[id].Commands(record)...)
 		}
 	}
+	if len(cmds) == 0 {
+		return ""
+	}
 	sort.SliceStable(cmds, func(i, j int) bool { return cmds[i].Order < cmds[j].Order })
 	var b strings.Builder
+	b.WriteString("set -eu\n")
 	for _, c := range cmds {
 		fmt.Fprintf(&b, "# %s\n%s\n", c.Comment, c.Text)
 	}
-	return sys.writeCommands(dir, b.String())
+	return b.String()
 }
 
 // ids gives S01 to S15, the order of the step table.
