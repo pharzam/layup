@@ -619,6 +619,22 @@ success without having done its job.
   `LABEL=COLOR` list of `apply()` in [`task-labels.sh`](tasks/task-labels.sh), and
   let the workflow write it; never edit a `state:` label on the forge.
 
+- ❌ **A merge of `main` moves the base of the budget.** The plan review names a base
+  SHA, and the budget counts the lines added plus removed on the whole branch diff
+  against it. A branch on the forge takes `main` by a merge before its freeze, so the
+  diff against the old base also holds the tasks that landed meanwhile: in task
+  `T-jpkc` (#271) it was 1,508 lines over 23 files at the head that round 1 read,
+  against a maximum of 850 over 14, while the task's own diff against the `main` that
+  the branch had taken was 614 over 10, and round 1 gave `material` for the first
+  figure; at the head of round 2, after four merges, it was 4,823 over 61 against 700
+  over 11. **The check:** when you merge `main`, say it on the issue in one comment,
+  before the freeze: the new base SHA, the figure against it and the figure against
+  the old base, and the tasks that landed between (`git log --merges OLD..NEW`); and
+  ask the Operator to rule that the bound is read against the new base, as the plan
+  review names the old one and an overrun against the named base is a finding
+  ([the budget](engineering-discipline.md#reviewing-until-findings-decay)); the task file names the base that the
+  ruling gives.
+
 ### Testing pitfalls
 
 These traps are not domain-specific: they hurt every project's test suite.
@@ -694,6 +710,15 @@ These traps are not domain-specific: they hurt every project's test suite.
   needs more than 10 minutes alone on an idle host breaks
   [the rule of the scaling checklist](tests/scaling-checklist.md#fast-enough-for-hook-and-ci),
   and is a task.
+- ❌ **A `git` verb that reads its standard input when its argument is empty.**
+  `git commit-tree TREE -p PARENT -m ''` finds an empty message and reads the message
+  from its standard input, as it does with no `-m`; with a standard input that stays
+  open, the call hangs (measured with `git` 2.56.0: a pipe that stays open and a 5 s
+  limit gave exit 124). `internal/git` leaves `cmd.Stdin` nil, so `git` reads the null
+  device and the commit has an empty message; round 1 of `T-j4sd` (#272) found that no
+  test passed an empty message. **The check:** keep `cmd.Stdin` nil in `call`, and give
+  each call that passes a free text to `git` a test with the empty text, at the unit
+  level (the arguments) and at the integration level (the result, and a return).
 - ❌ **Stale tests after a requirement changes.** When a requirement changes but its
   test does not, the suite now guards the old behaviour and blocks the new. The
   check: the [old-tests conflict rule](engineering-discipline.md#testing) — fix the

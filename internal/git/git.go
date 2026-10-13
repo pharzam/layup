@@ -164,14 +164,44 @@ func Add(dir string, paths ...string) error {
 	return do(dir, append([]string{"add", "--all", "--"}, paths...)...)
 }
 
+// commitEnv is the environment of a call that makes a commit: the fixed list,
+// then the six variables of who, the author and the committer, and its time as
+// both dates, so one input gives one commit ID (NFR-005). Commit and CommitTree
+// take it from here.
+func commitEnv(who Identity) []string {
+	date := fmt.Sprintf("@%d +0000", who.Time.Unix())
+	return environ("GIT_AUTHOR_NAME="+who.Name, "GIT_AUTHOR_EMAIL="+who.Email, "GIT_AUTHOR_DATE="+date,
+		"GIT_COMMITTER_NAME="+who.Name, "GIT_COMMITTER_EMAIL="+who.Email, "GIT_COMMITTER_DATE="+date)
+}
+
 // Commit commits the staged changes. who is the author and the committer, and
 // its time is both dates.
 func Commit(dir, message string, who Identity) error {
-	date := fmt.Sprintf("@%d +0000", who.Time.Unix())
-	env := environ("GIT_AUTHOR_NAME="+who.Name, "GIT_AUTHOR_EMAIL="+who.Email, "GIT_AUTHOR_DATE="+date,
-		"GIT_COMMITTER_NAME="+who.Name, "GIT_COMMITTER_EMAIL="+who.Email, "GIT_COMMITTER_DATE="+date)
-	_, err := call(dir, env, "commit", "-m", message)
+	_, err := call(dir, commitEnv(who), "commit", "-m", message)
 	return err
+}
+
+// CommitTree makes a commit of tree on parent, in dir, with who as its author
+// and its committer, on no ref, and gives its ID: the probe of the forge check
+// pushes it (task T-j4sd, #272; docs/spec/packages.md, The calls of M2d). tree
+// and parent are full object IDs, and any other text, which could be an option,
+// starts no git (so the call needs no --end-of-options); the message is the
+// argument of -m. An empty commit is the call with the tree of its parent: the
+// caller gives it. An output that is no object ID is a *FailedError with code 0.
+func CommitTree(dir, tree, parent, message string, who Identity) (string, error) {
+	args := []string{"commit-tree", tree, "-p", parent, "-m", message}
+	if !fullObjectID(tree) || !fullObjectID(parent) {
+		return "", &FailedError{Args: args, Code: -1, Err: errors.New("not a full object ID")}
+	}
+	out, err := call(dir, commitEnv(who), args...)
+	if err != nil {
+		return "", err
+	}
+	id := strings.TrimSpace(string(out))
+	if !fullObjectID(id) {
+		return "", &FailedError{Args: args, Code: 0, Err: fmt.Errorf("the output %q is no object ID", id)}
+	}
+	return id, nil
 }
 
 // SwitchCreate makes the branch at commit, a full object ID, and puts the

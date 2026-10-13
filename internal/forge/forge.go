@@ -45,6 +45,12 @@ type Forge interface {
 	// Comment posts a comment on an issue and gives its ID (M2b: the comment
 	// of a session, task T-fsjp, O-189).
 	Comment(ctx context.Context, issue int, body string) (int64, error)
+	// EffectiveRules gives each active rule that applies to a branch, also to one
+	// that does not exist yet (M2d: forge.md, The calls of M2d; task T-jpkc).
+	EffectiveRules(ctx context.Context, branch string) ([]Rule, error)
+	// Activity gives the activities of a ref, one page (M2d: forge.md, The calls
+	// of M2d; task T-jpkc).
+	Activity(ctx context.Context, ref string) ([]ActivityEntry, error)
 }
 
 // Installation is the installation of the App on the repository.
@@ -64,8 +70,32 @@ type Token struct {
 type Repository struct {
 	DefaultBranch string
 	Visibility    string
-	HasCommit     bool     // the list of branches is not empty
-	Branches      []string // the names of the branches, each page
+	HasCommit     bool              // the list of branches is not empty
+	Branches      []string          // the names of the branches, each page
+	Heads         map[string]string // the head of each branch, by its name (M2d, task T-jpkc)
+}
+
+// Rule is a rule that applies to a branch: its type and its parameters, the
+// object that the forge gives, decoded; nil when the forge gives none or an
+// empty object (forge.md, The calls of M2d). The ruleset of the rule is not
+// kept: the read-back reads by branch.
+type Rule struct {
+	Type       string
+	Parameters map[string]any
+}
+
+// ActivityEntry is an activity of a ref: a push, a force push, the creation or
+// the deletion of a branch, a merge. An activity whose actor the forge gives as
+// null has the actor ID 0 and the login ghost, as a comment of a deleted account
+// has the author 0 (forge.md, The calls of M2d).
+type ActivityEntry struct {
+	ActorID    int64
+	ActorLogin string
+	Ref        string
+	Before     string
+	After      string
+	Timestamp  time.Time
+	Type       string // the activity_type of the forge
 }
 
 // Comment is a comment of an issue.

@@ -57,6 +57,12 @@ func (f *standInForge) OpenIssue(context.Context, string, string) (int, error) {
 func (f *standInForge) Comments(context.Context, int) ([]forge.Comment, error) {
 	return nil, f.err("Comments")
 }
+func (f *standInForge) EffectiveRules(context.Context, string) ([]forge.Rule, error) {
+	return nil, f.err("EffectiveRules")
+}
+func (f *standInForge) Activity(context.Context, string) ([]forge.ActivityEntry, error) {
+	return nil, f.err("Activity")
+}
 func (f *standInForge) Comment(_ context.Context, issue int, body string) (int64, error) {
 	if err := f.err("Comment"); err != nil {
 		return 0, err
