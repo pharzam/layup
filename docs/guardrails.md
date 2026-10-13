@@ -673,6 +673,17 @@ These traps are not domain-specific: they hurt every project's test suite.
   question to the batch, `git grep -n` the name of its neighbour step and the wait text
   ("waiting: no answer yet") in every `_test.go`, whatever its tag, and run the three
   levels before the freeze, not at the run of CI.
+- ❌ **A package's integration level that needs minutes, run on a loaded host with the
+  default limit.** `go test` stops a package after 10 minutes when no `-timeout` is given and
+  prints the goroutines that still ran, which reads like a crash. On the host of the sessions
+  (2 CPUs, a load average of about 6 when several sessions run their suites) the integration
+  level of `internal/run` took 486 s alone and was stopped at 600 s inside a run of every
+  package, while CI ran all three levels in 3 min 22 s (`T-4c5c`, #276). **The check:** run
+  the level with `-timeout 30m`; when a package stops at the limit, read `uptime`, run that
+  package alone with `-v`, record both runs, and edit no test for the stop. A package that
+  needs more than 10 minutes alone on an idle host breaks
+  [the rule of the scaling checklist](tests/scaling-checklist.md#fast-enough-for-hook-and-ci),
+  and is a task.
 - ❌ **Stale tests after a requirement changes.** When a requirement changes but its
   test does not, the suite now guards the old behaviour and blocks the new. The
   check: the [old-tests conflict rule](engineering-discipline.md#testing) — fix the

@@ -136,3 +136,47 @@ nested-checkout-check: exit 0 (09:10:14Z)
 setup-check: exit 0 (09:10:43Z)
 git diff --check origin/main HEAD: exit 0 (09:10:43Z)
 ```
+
+
+## Green on the merged head (09:30:43Z to 09:54:19Z, head `aa6c834`)
+
+After the note of round 1 (`29bbcce`) and the merge of `origin/main` (`38ee78e`, the merge of
+`T-9v92`, #306) the checks ran again on the head `aa6c834`, with the same script as above, each with
+its exit code and the clock time at which its command ended:
+
+```
+go build ./...: exit 0 (09:30:44Z)
+go vet ./...: exit 0 (09:30:45Z)
+gofmt -l internal cmd (empty): exit 0 (09:30:45Z)
+go test ./...: exit 0 (09:30:50Z)
+go test -tags=integration ./...: exit 1 (09:41:14Z)   # internal/run: FAIL 600.024s, see below
+go test -tags=e2e ./...: exit 0 (09:42:52Z)
+adr-lint: exit 0 (09:42:56Z)
+prd-lint: exit 0 (09:42:56Z)
+link-lint: exit 0 (09:43:21Z)
+run-discipline-tests: exit 0 (09:43:36Z)
+nested-checkout-check: exit 0 (09:43:37Z)
+setup-check: exit 0 (09:44:31Z)
+git diff --check origin/main HEAD: exit 0 (09:44:31Z)
+```
+
+**The one failure is the time limit, not a test.** The integration level of `internal/run` stopped at
+600.024 s, the 10 minutes that `go test` allows a package when no `-timeout` is given; the dump that
+follows the stop is of the tests that were still running (an `os/exec` copy, a connection of the
+fake GitHub), and no test of the package had failed before it. The host has 2 CPUs and the load
+average was about 6: the sessions of the other tasks ran their own suites at the same time. The same
+level of the same package had taken about 6 minutes in all at 09:08Z on `cf2fc05`. So the package
+was run again alone, on the same head, with the limit raised and with `-v`, and the rest of the
+packages at the integration level apart:
+
+```
+go test -count=1 -timeout 25m -v -tags=integration ./internal/run: ok 486.611s, 126 tests PASS, 0 FAIL, 0 SKIP (09:44:49Z to 09:52:57Z)
+go test -count=1 -timeout 30m -tags=integration (every package but internal/run): exit 0, 19 packages ok (09:53:13Z to 09:54:19Z)
+```
+
+The time limit is a limit of the host and its load, and the tests were not changed for it. The rule
+to take away is in the task file: give the integration level `-timeout 30m` on this host.
+
+The checks that read text, on the tree of the close-out (the index before its commit): `adr-lint`,
+`prd-lint`, `link-lint`, `run-discipline-tests`, `nested-checkout-check`, `setup-check` and
+`git diff --cached --check`: exit 0 each (09:57:21Z to 09:58:15Z).
