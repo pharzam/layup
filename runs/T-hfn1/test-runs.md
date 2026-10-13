@@ -50,4 +50,4 @@ On `5cb9c94` (17:52:02Z to 18:04:10Z), each with exit 0, in this order (the time
 checkout-check 18:03:43Z; setup-check 18:04:10Z; git diff --check origin/main HEAD 18:04:10Z.
 The integration level of `internal/run` took 573 s on this host (510 s at the end of T-79zk: the new world makes about twelve restarts, several of which rebuild the work area); CI's own run of the
 integration level of that package took 125 s on `main` at `720a149`, against the 600 s of its `-timeout 10m`, and CI's whole job about 4.5 minutes. The run here used `-timeout 30m`. The commits
-after `5cb9c94` change only documents: this record, the task file and the two indexes.
+after `5cb9c94` change only a comment of a test (the note of round 2) and documents: this record, the task file and the two indexes.
