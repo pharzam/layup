@@ -42,6 +42,7 @@ func TestAnApplyOutputThatIsNotARulesetOfTheTargetIsRefusedNamingItsFile(t *test
 		{"invalid JSON", "default.json", `{"source":`},
 		{"an empty file", "records.json", ``},
 		{"a number", "default.json", `7`},
+		{"null", "records.json", `null`},
 		{"another repository", "records.json", `{"source":"acme/other"}`},
 		{"the owner in another case", "default.json", `{"source":"Acme/target"}`},
 		{"no source", "default.json", `{"id":1}`},

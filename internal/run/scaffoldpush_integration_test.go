@@ -106,10 +106,14 @@ func TestTheStepScaffoldPushWaitsAndRecordsTheAppliesOfTheOperator(t *testing.T)
 		}
 		return rows
 	}
-	// Both outputs, but the forge's default branch is at the root commit: waiting.
+	// Both outputs, but the forge's default branch is at the root commit: waiting; a work area that is there is not built again.
 	writeFile(t, filepath.Join(applies, "default.json"), defaultOut)
 	writeFile(t, filepath.Join(applies, "records.json"), recordsOut)
+	writeFile(t, filepath.Join(area, "stays.txt"), "x")
 	restart(waiting)
+	if _, err := os.Stat(filepath.Join(area, "stays.txt")); err != nil {
+		t.Errorf("a work area that was there was built again: %v", err)
+	}
 	// The Operator's push; an output missing; the work area gone: built again to the same commits, and the step waits.
 	gitOut(t, target, "push", "-q", w.bare, "layup-setup:main")
 	if err := os.Remove(filepath.Join(applies, "records.json")); err != nil {
@@ -132,8 +136,32 @@ func TestTheStepScaffoldPushWaitsAndRecordsTheAppliesOfTheOperator(t *testing.T)
 	}
 	writeFile(t, filepath.Join(applies, "records.json"), `{"source":"acme/other"}`)
 	restart(Step{"scaffold-push", "fail", "records.json"})
-	// Ready, with the work area gone: built again before the outcome; one commit of the one path.
+	// A work area built again whose loop fails (a text of the records whose citation resolves to no fact), and one whose
+	// head is not the last commit of setup/tree.tsv: fail, the second naming both; the records are put right after each.
 	writeFile(t, filepath.Join(applies, "records.json"), recordsOut)
+	glossary := "setup/inputs/files/docs/glossary.md"
+	pushRecords(t, w.bare, map[string]string{glossary: "# Glossary\n\n| Term | Meaning |\n| ---- | ------- |\n| Target | the product repository (`F-0099#1`) |\n"}, "a glossary whose citation resolves to no fact")
+	if err := os.RemoveAll(filepath.Join(w.dir, "work")); err != nil {
+		t.Fatal(err)
+	}
+	restart(Step{"scaffold-push", "fail", "glossary"})
+	pushRecords(t, w.bare, map[string]string{glossary: proseFiles()["docs/glossary.md"]}, "the glossary again")
+	tree := recordsFile(t, w, "setup/tree.tsv")
+	lines := strings.Split(strings.TrimRight(tree, "\n"), "\n")
+	cells := strings.Split(lines[len(lines)-1], "\t")
+	cells[1] = strings.Repeat("1", 40)
+	lines[len(lines)-1] = strings.Join(cells, "\t")
+	pushRecords(t, w.bare, map[string]string{"setup/tree.tsv": strings.Join(lines, "\n") + "\n"}, "a tree whose last commit is not the head")
+	if err := os.RemoveAll(filepath.Join(w.dir, "work")); err != nil {
+		t.Fatal(err)
+	}
+	for _, r := range restart(Step{"scaffold-push", "fail", strings.Repeat("1", 40)}) {
+		if r.Name == "scaffold-push" && !strings.Contains(r.Detail, head) {
+			t.Errorf("the detail of a head that is not the last commit: %q; want the head %s and the last commit", r.Detail, head)
+		}
+	}
+	pushRecords(t, w.bare, map[string]string{"setup/tree.tsv": tree}, "the tree again")
+	// Ready, with the work area gone: built again before the outcome; one commit of the one path.
 	if err := os.RemoveAll(filepath.Join(w.dir, "work")); err != nil {
 		t.Fatal(err)
 	}
