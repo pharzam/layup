@@ -149,8 +149,9 @@ defect of this table. The push of the probe is a `git` call, not an API call.
   ([`scaffold.md`](scaffold.md#the-read-back)) compares the two forms alike. A rule
   also names the ruleset that it is of, as GitHub gives it (**decided here**, task
   `T-gkvi`, #323): `ruleset_source_type` (`Repository`, `Organization`), `ruleset_source`
-  and `ruleset_id`, each the zero value when the answer lacks it; a `ruleset_id` that
-  is no integer is an error of the call. The read-back reads by branch and does not
+  and `ruleset_id`, each the zero value when the answer lacks it or gives JSON `null` (as
+  decoding does); a `ruleset_id` that is anything else but an integer (a string, a fraction,
+  a boolean, a list) is an error of the call. The read-back reads by branch and does not
   use them; the attribution of the probe's refusal does
   ([`scaffold.md`](scaffold.md#the-probe)).
 - `Activity` sends the `ref` as it is given (GitHub takes `refs/heads/BRANCH_NAME` or

@@ -578,10 +578,17 @@ func TestEffectiveRulesGivesTheRulesetOfEachRuleAndZeroValuesWhenTheAnswerLacksI
 	if err != nil || !reflect.DeepEqual(got, want) {
 		t.Errorf("EffectiveRules with rules of two sources and one with no ruleset = %+v, %v\nwant %+v", got, err, want)
 	}
-	f.rules = map[string][][]map[string]any{"layup-probe": {{{"type": "creation", "ruleset_id": "11"}}}}
-	var fe *forge.Error
-	if _, err := a.EffectiveRules(ctx, "layup-probe"); !errors.As(err, &fe) || fe.Call != "EffectiveRules" || fe.Status != 200 {
-		t.Errorf("EffectiveRules with a ruleset_id that is a string: %v; want a forge.Error of EffectiveRules, 200", err)
+	// A null reads as the zero value, as an absent field does.
+	f.rules = map[string][][]map[string]any{"layup-probe": {{{"type": "creation", "ruleset_id": nil, "ruleset_source": nil, "ruleset_source_type": nil}}}}
+	if got, err := a.EffectiveRules(ctx, "layup-probe"); err != nil || !reflect.DeepEqual(got, []forge.Rule{{Type: "creation"}}) {
+		t.Errorf("EffectiveRules with a null ruleset: %+v, %v; want the rule with the zero values", got, err)
+	}
+	for _, id := range []any{"11", 1.5, true, []int{11}} {
+		f.rules = map[string][][]map[string]any{"layup-probe": {{{"type": "creation", "ruleset_id": id}}}}
+		var fe *forge.Error
+		if _, err := a.EffectiveRules(ctx, "layup-probe"); !errors.As(err, &fe) || fe.Call != "EffectiveRules" || fe.Status != 200 {
+			t.Errorf("EffectiveRules with a ruleset_id of %v: %v; want a forge.Error of EffectiveRules, 200", id, err)
+		}
 	}
 }
 

@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -496,14 +497,20 @@ func probeAttribution(rules []forge.Rule, id int64) error {
 	return nil
 }
 
-// rulesetID gives the ID of a ruleset from the output of its apply: the `id` of the JSON object, a positive integer.
+// rulesetID gives the ID of a ruleset from the output of its apply: the `id` of the one JSON object that the output is, a positive
+// integer. An output that is anything but one object, with a second value or other text after it, is refused: the ID of the first of
+// two objects would be the ID of a ruleset that no apply made.
 func rulesetID(output []byte) (int64, error) {
+	notObject := errors.New("the output of the default branch's ruleset is not one JSON object")
 	noID := errors.New("the output of the default branch's ruleset has no id")
 	dec := json.NewDecoder(bytes.NewReader(output))
 	dec.UseNumber()
 	var object map[string]any
-	if err := dec.Decode(&object); err != nil {
-		return 0, noID
+	if err := dec.Decode(&object); err != nil || object == nil {
+		return 0, notObject
+	}
+	if _, err := dec.Token(); err != io.EOF {
+		return 0, notObject
 	}
 	n, ok := object["id"].(json.Number)
 	if !ok {

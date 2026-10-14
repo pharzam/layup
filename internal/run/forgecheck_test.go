@@ -245,16 +245,24 @@ func TestTheIDOfTheDefaultRulesetIsThePositiveIntegerIDOfItsApplyOutput(t *testi
 		fault        string
 	}{
 		{"an output with its id", `{"id":24509051,"name":"layup: the default branch","source":"acme/target"}`, 24509051, ""},
+		{"an output with a line feed after it", "{\"id\":77}\n", 77, ""},
+		{"an output with spaces round it", " \t{\"id\":77}  \n\n", 77, ""},
 		{"an id beyond the exact range of a float", `{"id":9007199254740993}`, 9007199254740993, ""},
+		{"two objects, the first with the id", `{"id":77}{"id":99}`, 0, "not one JSON object"},
+		{"two objects with a line feed between", "{\"id\":77}\n{\"id\":99}", 0, "not one JSON object"},
+		{"text after the object", `{"id":77} x`, 0, "not one JSON object"},
+		{"the start of a second object", `{"id":77}{`, 0, "not one JSON object"},
+		{"a value after the object", `{"id":77} 5`, 0, "not one JSON object"},
 		{"an output with no id", `{"source":"acme/target"}`, 0, "no id"},
 		{"an id that is a string", `{"id":"77"}`, 0, "no id"},
 		{"an id of zero", `{"id":0}`, 0, "no id"},
 		{"an id below zero", `{"id":-5}`, 0, "no id"},
 		{"an id that is a fraction", `{"id":1.5}`, 0, "no id"},
 		{"an id of null", `{"id":null}`, 0, "no id"},
-		{"a list", `[{"id":77}]`, 0, "no id"},
-		{"a text that is no JSON", `not json`, 0, "no id"},
-		{"an empty output", ``, 0, "no id"},
+		{"a bare null", `null`, 0, "not one JSON object"},
+		{"a list", `[{"id":77}]`, 0, "not one JSON object"},
+		{"a text that is no JSON", `not json`, 0, "not one JSON object"},
+		{"an empty output", ``, 0, "not one JSON object"},
 	} {
 		id, err := rulesetID([]byte(c.output))
 		if id != c.id || (err == nil) != (c.fault == "") || (err != nil && !strings.Contains(err.Error(), c.fault)) {
@@ -428,6 +436,9 @@ func TestEachCheckThatFailsIsItsRowAndTheTableStillHasEightRows(t *testing.T) {
 			map[string]string{"bypass:default": "setup/rulesets.txt", "bypass:records": "setup/rulesets.txt", "probe": notAttributed + "setup/rulesets.txt"}, "bypass:default: "},
 		{"an apply output of the default ruleset with no id", func(f *checkFake) { f.applied = strings.Replace(f.applied, `"id":77,`, "", 1) },
 			map[string]string{"probe": notAttributed + "the output of the default branch's ruleset has no id"}, "probe: "},
+		{"an apply output of the default ruleset that is two objects", func(f *checkFake) {
+			f.applied = strings.Replace(f.applied, `"source":"acme/target","bypass_actors":[]}`, `"source":"acme/target","bypass_actors":[]}{"id":99}`, 1)
+		}, map[string]string{"bypass:default": "the output has no list of bypass actors", "probe": notAttributed + "the output of the default branch's ruleset is not one JSON object"}, "bypass:default: "},
 		{"an apply output of the default ruleset with the id of another ruleset", func(f *checkFake) { f.applied = strings.Replace(f.applied, `"id":77,`, `"id":99,`, 1) },
 			map[string]string{"probe": notAttributed + "the creation of layup-probe is also restricted by ruleset 77 (Repository acme/target)"}, "probe: "},
 		{"a creation rule of another ruleset on layup-probe", func(f *checkFake) {
