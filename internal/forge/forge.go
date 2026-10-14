@@ -77,11 +77,17 @@ type Repository struct {
 
 // Rule is a rule that applies to a branch: its type and its parameters, the
 // object that the forge gives, decoded; nil when the forge gives none or an
-// empty object (forge.md, The calls of M2d). The ruleset of the rule is not
-// kept: the read-back reads by branch.
+// empty object (forge.md, The calls of M2d). It also names the ruleset that it is
+// of, as the forge does (task T-gkvi, #323): the type of the ruleset's source
+// (Repository, Organization), the source and the ID of the ruleset, each the zero
+// value when the answer lacks it. The read-back reads by branch and does not use
+// them; the attribution of the probe's refusal does.
 type Rule struct {
-	Type       string
-	Parameters map[string]any
+	Type              string
+	Parameters        map[string]any
+	RulesetSourceType string
+	RulesetSource     string
+	RulesetID         int64
 }
 
 // ActivityEntry is an activity of a ref: a push, a force push, the creation or

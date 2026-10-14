@@ -142,7 +142,18 @@ func (f *fakeForge) serve(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte("[]"))
 			return
 		}
-		w.Write(set.Rules)
+		// Each rule carries its ruleset, as the forge gives it: the one that the Operator applied from the file (7001 and 7002, the IDs
+		// that the stand-in gh writes into the output of each apply).
+		var list []map[string]any
+		json.Unmarshal(set.Rules, &list)
+		id := 7001
+		if branch == "layup-records" {
+			id = 7002
+		}
+		for _, r := range list {
+			r["ruleset_source_type"], r["ruleset_source"], r["ruleset_id"] = "Repository", "acme/target", id
+		}
+		enc.Encode(list)
 	case call == "GET /repos/acme/target/activity":
 		w.Write([]byte("[]"))
 	case strings.HasPrefix(call, "GET /users/"):

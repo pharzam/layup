@@ -23,7 +23,8 @@ import (
 // row 57a of the plan, #280).
 
 // refuseProbe makes the bare repository refuse a push to layup-probe, as the forge does: the text of
-// GH013 and the name of the ruleset, and exit 1; and, once, the push of a table of the forge check
+// GH013 in the form that GitHub prints (it names the ref and the violated rule, and no ruleset; task
+// T-gkvi, #323), and exit 1; and, once, the push of a table of the forge check
 // while the file refuse-once is there; any other push is accepted.
 func refuseProbe(t *testing.T, bare, text string) {
 	t.Helper()
@@ -33,21 +34,52 @@ func refuseProbe(t *testing.T, bare, text string) {
 	}
 }
 
-const refusal = "error: GH013: Repository rule violations found for refs/heads/layup-probe.\n- Rulesets: layup: the default branch"
+const refusal = "error: GH013: Repository rule violations found for refs/heads/layup-probe.\nReview all repository rules at https://github.com/acme/target/rules?ref=refs/heads/layup-probe\n\n- Cannot create ref due to creations being restricted.\n"
 
-// The probe is pushed with the real internal/git: only the refusal that holds GH013 and the name of the
-// ruleset of the default branch is a pass; a refusal by another ruleset, one with another text, a remote
-// that cannot be reached and a push that is accepted are not; the commit is empty on top of the head, by
-// the identity that is given, and on no branch of the clone.
-func TestTheProbeIsAPassOnlyForTheRefusalOfTheRulesetOfTheDefaultBranch(t *testing.T) {
+// inRuleset gives a JSON list of rules as the forge answers for a ruleset: each rule with the source type, the source and the ID of
+// the ruleset; withAnotherCreation adds a creation rule of an organization's ruleset.
+func inRuleset(t *testing.T, rules string, id int) string {
+	t.Helper()
+	var list []map[string]any
+	if err := json.Unmarshal([]byte(rules), &list); err != nil {
+		t.Fatal(err)
+	}
+	for _, r := range list {
+		r["ruleset_source_type"], r["ruleset_source"], r["ruleset_id"] = "Repository", "acme/target", id
+	}
+	out, err := json.Marshal(list)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(out)
+}
+
+func withAnotherCreation(t *testing.T, rules string) string {
+	t.Helper()
+	var list []map[string]any
+	if err := json.Unmarshal([]byte(rules), &list); err != nil {
+		t.Fatal(err)
+	}
+	list = append(list, map[string]any{"type": "creation", "ruleset_source_type": "Organization", "ruleset_source": "acme", "ruleset_id": 9001})
+	out, err := json.Marshal(list)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(out)
+}
+
+// The probe is pushed with the real internal/git: GitHub's refusal of the ref layup-probe is a pass, as far as the attribution goes (it
+// is given here as none); a refusal of another ref, one with another text, a remote that cannot be reached and a push that is accepted
+// are not; the commit is empty on top of the head, by the identity that is given, and on no branch of the clone.
+func TestTheProbeIsAPassOnlyForGitHubsRefusalOfTheProbeRef(t *testing.T) {
 	who := git.Identity{Name: "layup-agent[bot]", Email: "9001+layup-agent[bot]@users.noreply.github.com", Time: time.Date(2026, 10, 13, 12, 0, 0, 0, time.UTC)}
 	for _, c := range []struct {
 		name, hook, result, detail string
 		gone                       bool
 	}{
-		{"the refusal that names the ruleset", refusal, "pass", "", false},
-		{"a refusal by another ruleset", strings.Replace(refusal, "layup: the default branch", "another", 1), "fail", "probe not run: remote: error: GH013", false},
-		{"a refusal with another text", "error: denied\n- Rulesets: layup: the default branch", "fail", "probe not run: remote: error: denied", false},
+		{"GitHub's refusal of the probe ref", refusal, "pass", "", false},
+		{"a refusal of another ref", strings.ReplaceAll(refusal, "layup-probe", "layup-probe-other"), "fail", "probe not run: remote: error: GH013", false},
+		{"a refusal with another text", "error: denied\n- Cannot create ref due to creations being restricted.", "fail", "probe not run: remote: error: denied", false},
 		{"a remote that cannot be reached", "", "fail", "probe not run: ", true},
 		{"a push that is accepted", "", "fail", "probe accepted: ", false},
 	} {
@@ -66,7 +98,7 @@ func TestTheProbeIsAPassOnlyForTheRefusalOfTheRulesetOfTheDefaultBranch(t *testi
 			url = "file://" + filepath.Join(bare, "nowhere.git")
 		}
 		sha, err := pushProbe(clone, url, git.Auth{}, head, who)
-		result, detail := probeVerdict(sha, err)
+		result, detail := probeVerdict(sha, err, nil)
 		if result != c.result || !strings.HasPrefix(detail, c.detail) || sha == "" {
 			t.Errorf("%s: %s, %q, %v; want %s, %q, and the commit", c.name, result, detail, err, c.result, c.detail)
 		}
@@ -110,8 +142,8 @@ func TestTheStepForgeCheckChecksTheForgeAndCommitsItsTableAtEachRestart(t *testi
 	// The Operator pushes the setup commits and applies the two rulesets; the forge answers their rules and refuses the probe.
 	gitOut(t, target, "push", "-q", w.bare, "layup-setup:main")
 	applies := filepath.Join(w.dir, "applies", "acme", "target")
-	writeFile(t, filepath.Join(applies, "default.json"), "{\"source\":\"acme/target\",\"bypass_actors\":[]}\n")
-	writeFile(t, filepath.Join(applies, "records.json"), "{\"source\":\"acme/target\",\"bypass_actors\":[{\"actor_id\":42,\"actor_type\":\"Integration\",\"bypass_mode\":\"always\"}]}")
+	writeFile(t, filepath.Join(applies, "default.json"), "{\"id\":7001,\"source\":\"acme/target\",\"bypass_actors\":[]}\n")
+	writeFile(t, filepath.Join(applies, "records.json"), "{\"id\":7002,\"source\":\"acme/target\",\"bypass_actors\":[{\"actor_id\":42,\"actor_type\":\"Integration\",\"bypass_mode\":\"always\"}]}")
 	refuseProbe(t, w.bare, refusal)
 	rulesOf := func(file string) string {
 		var f struct {
@@ -124,7 +156,7 @@ func TestTheStepForgeCheckChecksTheForgeAndCommitsItsTableAtEachRestart(t *testi
 	}
 	fake := func(change func()) { w.fake.mu.Lock(); change(); w.fake.mu.Unlock() }
 	fake(func() {
-		w.fake.rules = map[string]string{"main": rulesOf("ruleset-default.json"), "layup-probe": rulesOf("ruleset-default.json"), "layup-records": rulesOf("ruleset-records.json")}
+		w.fake.rules = map[string]string{"main": inRuleset(t, rulesOf("ruleset-default.json"), 7001), "layup-probe": inRuleset(t, rulesOf("ruleset-default.json"), 7001), "layup-records": inRuleset(t, rulesOf("ruleset-records.json"), 7002)}
 	})
 	tables := func() int {
 		return len(strings.Fields(gitOut(t, w.bare, "log", "--format=%H", "--grep=^layup run: the forge check$", "refs/heads/layup-records")))
@@ -207,6 +239,14 @@ func TestTheStepForgeCheckChecksTheForgeAndCommitsItsTableAtEachRestart(t *testi
 			t.Errorf("at a later start the step %s is %+v; want done, %q", name, got, detail)
 		}
 	}
+	// Another ruleset's creation rule on layup-probe: the push is refused as before, and the probe is a fail that names the ruleset; the table is committed.
+	fake(func() { w.fake.rules["layup-probe"] = withAnotherCreation(t, w.fake.rules["layup-probe"]) })
+	restart(Step{"forge-check", "fail", "probe: probe refused, but not attributed to the default branch's ruleset: the creation of layup-probe is also restricted by ruleset 9001 (Organization acme)"}, later[:5])
+	passes("probe")
+	// The Scaffold is not done while a row is not a pass, so the restart that follows is of the first-start chain; with the rule gone, it passes.
+	fake(func() { w.fake.rules["layup-probe"] = inRuleset(t, rulesOf("ruleset-default.json"), 7001) })
+	restart(Step{"forge-check", "done", "the forge check passed"}, first)
+	passes()
 	// Three checks fail, the rules of the records branch, the probe (accepted) and the activity, and the table is committed; a work area that is there stays.
 	writeFile(t, filepath.Join(area, "stays.txt"), "x")
 	fake(func() { w.fake.rules["layup-records"], w.fake.noActivity = "", true })
@@ -216,14 +256,16 @@ func TestTheStepForgeCheckChecksTheForgeAndCommitsItsTableAtEachRestart(t *testi
 	accepted := strings.Fields(table()[6][2])
 	out, err := probeRef()
 	by := strings.TrimSpace(gitOut(t, w.bare, "log", "-1", "--format=%an|%ae|%s", "refs/heads/layup-probe"))
-	if _, stays := os.Stat(filepath.Join(area, "stays.txt")); stays != nil || tables() != 3 || len(accepted) != 3 || accepted[1] != "accepted:" || err != nil || strings.TrimSpace(out) != accepted[2] ||
+	if _, stays := os.Stat(filepath.Join(area, "stays.txt")); stays != nil || tables() != 5 || len(accepted) != 3 || accepted[1] != "accepted:" || err != nil || strings.TrimSpace(out) != accepted[2] ||
 		by != "layup-agent[bot]|9001+layup-agent[bot]@users.noreply.github.com|"+probeMessage {
 		t.Errorf("the probe row %q, %d tables, the work area kept: %v, layup-probe %q, %v by %q; want the commit of the App's bot, accepted", table()[6], tables(), stays, out, err, by)
 	}
 	// A default branch one commit ahead of the last commit of setup/tree.tsv, and a ruleset file gone from the work area: the probe is made on that head.
 	gitOut(t, w.bare, "update-ref", "-d", "refs/heads/layup-probe")
 	refuseProbe(t, w.bare, refusal)
-	fake(func() { w.fake.rules["layup-records"], w.fake.noActivity = rulesOf("ruleset-records.json"), false })
+	fake(func() {
+		w.fake.rules["layup-records"], w.fake.noActivity = inRuleset(t, rulesOf("ruleset-records.json"), 7002), false
+	})
 	gitOut(t, target, "switch", "-q", "-c", "ahead", "layup-setup")
 	gitOut(t, target, "commit", "-q", "--allow-empty", "-m", "one commit ahead")
 	ahead := strings.TrimSpace(gitOut(t, target, "rev-parse", "HEAD"))

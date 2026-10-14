@@ -566,11 +566,11 @@ bypass list is not seen (L-A4).
 (the tree of the head, the head as its parent, the App's bot as author and
 committer, at the run's time) in its own clone, and pushes it to
 `refs/heads/layup-probe` with the installation token (`internal/git`). It
-passes when the push exits non-zero and its standard error holds both `GH013`
-(GitHub's "Repository rule violations found") and the name of the default
-branch's ruleset, `layup: the default branch` (**decided here**, finding 3 of
-round 3 of #265: §3 counts only a refusal "naming the ruleset", so a refusal by
-another ruleset, which a bypass of LAYUP's own could hide, is no pass). Else it is `fail`: a push that
+passes when the push exits non-zero, its standard error holds GitHub's line
+`GH013: Repository rule violations found for refs/heads/layup-probe.` (the ref as
+the whole ref, and the full stop optional), and the refusal is attributed to the
+default branch's ruleset, as the paragraph below says (**decided here**, task
+`T-gkvi`, #323). Else it is `fail`: a push that
 exits 0, as "probe accepted: <SHA>" (the Operator then deletes the ref and
 checks any workflow run that it started, §3); any other non-zero exit, as
 "probe not run: <the first line of standard error>" (an expired token, a
@@ -580,6 +580,27 @@ run's clone after the push (**decided here**, task `T-wphp`: a push that the for
 does and that of CI does not, because the push is to the URL of the clone's own `origin`; the next start
 clones afresh).
 
+**Decided here** (task `T-gkvi`, #323, with the conditions of its plan review; the rule of finding 3 of
+round 3 of #265 asked that the refusal name the ruleset): GitHub's refusal of a push for a rule violation
+is the line `GH013: Repository rule violations found for refs/heads/<ref>.`, the line of the rules URL of
+the ref, and one line for each violated rule; it names **no ruleset** (ten public reports, listed in #323;
+no official page gives the text, `runs/T-msrd/search/searcher-B.md`). So the refusal is **attributed** by the
+data that GitHub does give: the effective rules of `layup-probe`, read once in the check for its rules row
+(`EffectiveRules`, each rule with the source type, the source and the ID of its ruleset), and the `id` of the
+output of the apply of the default branch's ruleset in `setup/rulesets.txt`. The refusal is attributed when
+the rules hold at least one rule of type `creation` and **each** `creation` rule is of a ruleset of source
+type `Repository` with that ID; only a `creation` rule refuses the creation of a ref that does not exist, so
+a rule of another type of another ruleset is no fault. A matching refusal that is not attributed is `fail`:
+"probe refused, but not attributed to the default branch's ruleset: <the reason>", the reason being that the
+rules of `layup-probe` were not read, that `setup/rulesets.txt` is absent, does not read back or gives no
+positive integer `id`, that no `creation` rule applies, or that the creation is also restricted by another
+ruleset (its ID, source type and source). A push that is accepted and any other failure keep their verdicts,
+and the push is made on the head that the forge gives whatever the attribution. **Known limits:** the
+attribution reads a snapshot taken just before the push (a ruleset added between the two is not seen), the
+bypass list is the apply output's (L-A4), a second ruleset of an organization with a `creation` rule makes the
+row `fail` though the push is refused (the Operator reads the detail), and GitHub's line is read by one
+pattern, so a change of that sentence makes the probe "probe not run", never a pass. The demo of `M2d`
+records GitHub's own text of the real refusal.
 ### The activity read
 
 `activity`: `Activity(ref)` of the default branch ([`forge.md`](forge.md#the-calls-of-m2d)),
@@ -614,7 +635,10 @@ step is `done` "the forge check passed", or `fail` naming the first row that is 
   rules rows; a `setup/tree.tsv` that is absent or refused fails the `tree` row and those three, and a
   `setup/rulesets.txt` that is absent or refused the two bypass rows; a read of the repository that fails
   fails the `tree` row and the `probe` row ("the head was not read": the expected commit is never put in
-  its place). Only records that cannot be read, a table that its reader (`ReadForgeCheck`) refuses (a
+  its place); the rules of `layup-probe` are read once, whatever the work area and the ruleset file are, and a
+  read that fails, a `setup/rulesets.txt` that is absent or refused or has no `id` for the default ruleset, and
+  an answer with no `creation` rule fail the `probe` row when the refusal matches (the row `rules:layup-probe`
+  and the bypass rows fail on their own). Only records that cannot be read, a table that its reader (`ReadForgeCheck`) refuses (a
   run ID that is none) or a records commit that fails end the step with no table, and its detail says so.
 - **The probe's commit** has the message `layup: the probe of the forge check`, and is made in the run's
   own clone, which the step `clone` made afresh, so the objects of the head are there. The `run` and `at`
@@ -774,7 +798,8 @@ change, as `M2c` did.
 | An apply output that is not a JSON object, or whose `source` is another repository | `scaffold-push` is `fail`, naming the file |
 | A ruleset in `evaluate` or `disabled` | its rules are missing in the read-back: `forge-check` is `fail` |
 | A probe that the forge accepts | `forge-check` is `fail`, "probe accepted" |
-| A probe that fails for another reason (token, network, server) | `forge-check` is `fail`, "probe not run" |
+| A probe that fails for another reason (token, network, server), or whose refusal is for another ref than `layup-probe` or has no `GH013` line | `forge-check` is `fail`, "probe not run" |
+| A refusal of the probe while another ruleset also restricts the creation of `layup-probe`, or no `creation` rule applies to it, or its rules were not read, or the apply output of the default ruleset has no id | `forge-check` is `fail`, "probe refused, but not attributed to the default branch's ruleset" (task `T-gkvi`) |
 | The activity read fails | `forge-check` is `fail` |
 | A private repository on GitHub Free (no enforced rulesets) | the read-back finds no rule: `forge-check` is `fail` (K15; the plan check of Start refuses it before) |
 | A restart while `scaffold-push` waits | it runs the steps again from the records: `setup` and `verify` are "done before", and `scaffold-push` reads the forge again |
@@ -828,10 +853,10 @@ six rows of the inventory item `later-p2-scaffold` are the rows marked
 | The setup questions in the batch and the comment | integration | With `intake/markers.tsv` of two markers, one with a proposal and one with none, and the httptest forge: the step `batch` merges, after the questions of the idea owner's block and in the Operator's block, first `S01-stack` and then one question per row of `intake/markers.tsv`, in its order, each a row of `questions.tsv` with `source` `setup`, `ref` its ID (`S01-stack`, `M-<x8>`), `kind` `setup`, and `start` and `end` the quote's for a marker with a proposal, else `—`; `S01-stack` is asked whatever rule G1 found; the comment writes a marker's question as `Q-NNN: the value of <marker> at <file>:<line>`, with `proposed: <value>` and the quote in backquotes on the next lines when it has a proposal, and its rule of the answers adds the three forms of a marker's answer, `accept`, a value and `gap`. |
 | The ruleset files (inventory) | unit | The default branch's file names each gate job pinned to 15368, the four `layup/` checks pinned to the forge register's `app_id`, `strict` true, `creation`, `allowed_merge_methods` `["merge"]` and an empty bypass list; the records branch's file has the App as its only bypass actor; phase 1 gets `creation` and the two parameters, and no `layup/` check. |
 | `commands.sh` is fail-fast and can be run again | unit | Its first line is `set -eu`, and a stand-in command that fails stops the rest (F-13); with stand-ins of `git` and `gh`, a run again after the push or after one apply pushes nothing and applies only the missing ruleset, and a `gh` that writes part of its output and exits 1 leaves no output file, so the run again applies that ruleset; and a head that is neither the root nor the setup head stops it. |
-| The probe (inventory) | integration | With a real local bare repository whose pre-receive hook refuses with the text of `GH013` and the ruleset's name, and the real `internal/git`: the refusal is `pass`; a hook that refuses with `GH013` and another ruleset's name, one that refuses with another text, and a remote that cannot be reached, are "probe not run"; an accepted push is "probe accepted". |
+| The probe (inventory) | integration | With a real local bare repository whose pre-receive hook refuses in the form that GitHub prints (`GH013` and the ref `layup-probe`, the line of the rules URL, a line for the violated rule, no ruleset's name), and the real `internal/git`: the refusal is `pass`, as far as the attribution goes; a hook that refuses for another ref, one that refuses with another text, and a remote that cannot be reached, are "probe not run"; an accepted push is "probe accepted". At the unit level: the exact ref (`layup-probe-other`, `layup-probe/child` and `layup-probe.x` are not it), the attribution (the default ruleset's `creation` rule alone passes; another ruleset's `creation` rule, none, an `Organization` source with the same ID and another ID fail), the ID of an apply output, and the one read of the rules of `layup-probe`; at the adapter's integration level, the ruleset of each rule (task `T-gkvi`). |
 | The read-back | unit | A read-back equal to the files passes; a missing rule, a different parameter, an `integration_id` that differs, and a bypass list that is not empty (default) or not exactly the App (records) each fail, naming it; an extra rule is named and passes. |
 | `layup run` with the real step runner (inventory) | integration | On a fixture baseline: `answers.tsv` is written from the copied answers, a prose stop starts a scripted session, the runner finishes, and `layup run` commits `setup/record.tsv`, `setup/verify.tsv`, `rule-paths.tsv`, `setup/tree.tsv` and the README of the Scaffold; a second run is "done before"; a rebuilt work area gives the same commits, also after the default branch holds the setup commits (its `main` is the root commit). |
-| The steps of the Scaffold, end to end (inventory) | e2e | In CI on a local fake forge and local bare repositories: Start, scripted Intake answers with the setup questions, the setup, the printed commands run by the test in place of the Operator, and the forge check, whose fake forge answers the read-back and the activity, and whose bare repository refuses the probe with `GH013`. |
+| The steps of the Scaffold, end to end (inventory) | e2e | In CI on a local fake forge and local bare repositories: Start, scripted Intake answers with the setup questions, the setup, the printed commands run by the test in place of the Operator, and the forge check, whose fake forge answers the read-back (each rule with the ruleset that it is of) and the activity, and whose bare repository refuses the probe in the form that GitHub prints, with `GH013` and the ref. |
 | The demo (inventory) | uat | On a real GitHub test target, the Operator runs the printed pushes and the ruleset apply, and sees the push to `layup-probe` refused and `setup/forge-check.tsv` show each rule and probe as passed. |
 
 **Decided here** (task `T-eevt`, #282, with the conditions of its plan review): the row
@@ -849,9 +874,12 @@ test runs the printed `out/commands.sh` as it is, with a stand-in `gh` first on 
 answers an apply with its `--input` file and the `source` of the repository added, and no git
 configuration, so the clone has no hook. **Stage 4:** the restart that records the applies and
 runs `forge-check`, whose fake forge gives the head of each branch, the rules of `main`,
-`layup-probe` and `layup-records` from the ruleset files of the work area, and an empty activity,
-and whose bare repository refuses the push to `layup-probe` with `GH013` and the ruleset's name
-by a `pre-receive` hook: eight rows `pass`, exit 0, the lease released. **Stage 5:** a later start,
+`layup-probe` and `layup-records` from the ruleset files of the work area, each rule with the
+ruleset that it is of (7001 for the default branch's file and 7002 for the records branch's, the IDs that the
+stand-in `gh` writes into the output of each apply), and an empty activity, and whose bare repository refuses
+the push to `layup-probe` by a `pre-receive` hook in the form that GitHub prints (`GH013` and the ref, the
+line of the rules URL and the violated rule, no ruleset's name; task `T-gkvi`): eight rows `pass`, exit 0, the
+lease released. **Stage 5:** a later start,
 with `forge-check` fifth, the steps of Intake and of the Scaffold done before (but `follow-up` and
 `follow-up-answers`, with their own details), the lease released and a new table in Git history;
 then a forge that gives no rule for `layup-records`: exit 1, the rows ending at `forge-check`, no

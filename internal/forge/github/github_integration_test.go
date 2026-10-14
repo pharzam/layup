@@ -532,8 +532,9 @@ func ruleItem(typ string, parameters map[string]any) map[string]any {
 }
 
 // EffectiveRules gives each rule of the branch over every page, in order, with its
-// type and its parameters as GitHub gives them, and nothing of its ruleset; a rule
-// with no parameters, or with an empty object of them, has none.
+// type and its parameters as GitHub gives them, and the source type, the source and the
+// ID of its ruleset (task T-gkvi, #323); a rule with no parameters, or with an empty
+// object of them, has none.
 func TestEffectiveRulesGivesEachActiveRuleOfABranchOverEveryPage(t *testing.T) {
 	f, _, a, _ := setup(t)
 	f.rules = map[string][][]map[string]any{"main": {
@@ -543,17 +544,44 @@ func TestEffectiveRulesGivesEachActiveRuleOfABranchOverEveryPage(t *testing.T) {
 	}}
 	got, err := a.EffectiveRules(context.Background(), "main")
 	want := []forge.Rule{
-		{Type: "creation"},
-		{Type: "pull_request", Parameters: map[string]any{"required_approving_review_count": float64(0), "allowed_merge_methods": []any{"merge"}, "required_review_thread_resolution": true}},
-		{Type: "deletion"},
+		{Type: "creation", RulesetSourceType: "Repository", RulesetSource: "acme/target", RulesetID: 11},
+		{Type: "pull_request", Parameters: map[string]any{"required_approving_review_count": float64(0), "allowed_merge_methods": []any{"merge"}, "required_review_thread_resolution": true},
+			RulesetSourceType: "Repository", RulesetSource: "acme/target", RulesetID: 11},
+		{Type: "deletion", RulesetSourceType: "Repository", RulesetSource: "acme/target", RulesetID: 11},
 		{Type: "required_status_checks", Parameters: map[string]any{"strict_required_status_checks_policy": true,
-			"required_status_checks": []any{map[string]any{"context": "static", "integration_id": float64(15368)}}}},
+			"required_status_checks": []any{map[string]any{"context": "static", "integration_id": float64(15368)}}},
+			RulesetSourceType: "Repository", RulesetSource: "acme/target", RulesetID: 11},
 	}
 	if err != nil || !reflect.DeepEqual(got, want) {
 		t.Errorf("EffectiveRules over two pages = %+v, %v\nwant %+v", got, err, want)
 	}
 	if n := f.requests["GET /repos/acme/target/rules/branches/main"]; n != 2 {
 		t.Errorf("%d requests, want 2 (each page once)", n)
+	}
+}
+
+// The rules of rulesets of two sources: the repository's and an organization's, each with its own ID; an answer that
+// lacks the three fields gives their zero values, and a ruleset_id that is no integer is an error of the call.
+func TestEffectiveRulesGivesTheRulesetOfEachRuleAndZeroValuesWhenTheAnswerLacksIt(t *testing.T) {
+	ctx := context.Background()
+	f, _, a, _ := setup(t)
+	org := ruleItem("creation", nil)
+	org["ruleset_source_type"], org["ruleset_source"], org["ruleset_id"] = "Organization", "acme", 4242
+	bare := map[string]any{"type": "deletion"}
+	f.rules = map[string][][]map[string]any{"layup-probe": {{ruleItem("creation", nil), org, bare}}}
+	got, err := a.EffectiveRules(ctx, "layup-probe")
+	want := []forge.Rule{
+		{Type: "creation", RulesetSourceType: "Repository", RulesetSource: "acme/target", RulesetID: 11},
+		{Type: "creation", RulesetSourceType: "Organization", RulesetSource: "acme", RulesetID: 4242},
+		{Type: "deletion"},
+	}
+	if err != nil || !reflect.DeepEqual(got, want) {
+		t.Errorf("EffectiveRules with rules of two sources and one with no ruleset = %+v, %v\nwant %+v", got, err, want)
+	}
+	f.rules = map[string][][]map[string]any{"layup-probe": {{{"type": "creation", "ruleset_id": "11"}}}}
+	var fe *forge.Error
+	if _, err := a.EffectiveRules(ctx, "layup-probe"); !errors.As(err, &fe) || fe.Call != "EffectiveRules" || fe.Status != 200 {
+		t.Errorf("EffectiveRules with a ruleset_id that is a string: %v; want a forge.Error of EffectiveRules, 200", err)
 	}
 }
 
@@ -573,7 +601,7 @@ func TestEffectiveRulesOfABranchThatDoesNotExistYetGivesTheRulesThatNameIt(t *te
 	f, _, a, _ := setup(t)
 	f.rules = map[string][][]map[string]any{"layup-probe": {{ruleItem("creation", nil), ruleItem("deletion", nil)}}}
 	got, err := a.EffectiveRules(context.Background(), "layup-probe")
-	if want := []forge.Rule{{Type: "creation"}, {Type: "deletion"}}; err != nil || !reflect.DeepEqual(got, want) {
+	if want := []forge.Rule{{Type: "creation", RulesetSourceType: "Repository", RulesetSource: "acme/target", RulesetID: 11}, {Type: "deletion", RulesetSourceType: "Repository", RulesetSource: "acme/target", RulesetID: 11}}; err != nil || !reflect.DeepEqual(got, want) {
 		t.Errorf("EffectiveRules of layup-probe, which no branch of the repository has = %+v, %v; want %+v", got, err, want)
 	}
 	if n := f.requests["GET /repos/acme/target/branches"]; n != 0 {

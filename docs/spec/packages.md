@@ -366,7 +366,7 @@ takes a token.
 
 - The probe is pushed with `Push` and the token, to `refs/heads/layup-probe`;
   a refusal by the remote is a `FailedError` with `Code` 1 whose `Stderr` holds
-  the remote's lines, where the forge check looks for `GH013`.
+  the remote's lines, where the forge check looks for GitHub's line of `GH013` for the probe's ref.
 - `CommitTree` refuses, before `git` starts, a `TREE` or a `PARENT` that is not
   a full object ID (a `FailedError` with `Code` -1); an output of `git` that is no
   object ID is a `FailedError` with `Code` 0.

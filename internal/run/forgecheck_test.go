@@ -157,28 +157,108 @@ func TestTheBypassListsAreEmptyForTheDefaultAndTheAppAloneForTheRecords(t *testi
 	}
 }
 
-func TestTheVerdictOfTheProbeIsAPassOnlyForTheRefusalOfTheRulesetByName(t *testing.T) {
+// GitHub's refusal for a rule violation is the line `GH013: Repository rule violations found for refs/heads/<ref>.`, the
+// line of the rules URL and one line for each violated rule; it names no ruleset (ten public reports, issue #323). The
+// verdict passes it for the probe's ref alone, as the whole ref, and only when the attribution has no fault.
+func TestTheVerdictOfTheProbeIsAPassOnlyForGitHubsRefusalOfTheProbeRefThatARulesetExplains(t *testing.T) {
 	const sha = "0123456789012345678901234567890123456789"
+	const notAttributed = "probe refused, but not attributed to the default branch's ruleset: "
 	refused := func(stderr string) error {
 		return &git.FailedError{Args: []string{"push"}, Code: 1, Stderr: stderr, Err: errors.New("exit status 1")}
 	}
+	text := func(ref string) string {
+		return "remote: error: GH013: Repository rule violations found for " + ref + ".\nremote: Review all repository rules at https://github.com/acme/target/rules?ref=" + ref +
+			"\nremote: \nremote: - Cannot create ref due to creations being restricted.\nremote: \n"
+	}
+	fault := errors.New("the creation of layup-probe is also restricted by ruleset 9 (Organization acme)")
 	for _, c := range []struct {
 		name, result, detail string
-		err                  error
+		err, attributed      error
 	}{
-		{"a refusal that names the ruleset", "pass", "", refused("remote: error: GH013: Repository rule violations found for refs/heads/layup-probe.\nremote: - Rulesets: layup: the default branch\n")},
-		{"a push that the forge accepts", "fail", "probe accepted: " + sha, nil},
-		{"a refusal by the ruleset of the records branch", "fail", "probe not run: remote: error: GH013", refused("remote: error: GH013: Repository rule violations found\nremote: - Rulesets: layup: the records branch\n")},
-		{"a refusal by another ruleset", "fail", "probe not run: remote: error: GH013: Repository rule violations found", refused("remote: error: GH013: Repository rule violations found\nremote: - Rulesets: another\n")},
-		{"a refusal with another text", "fail", "probe not run: remote: error: denied", refused("remote: error: denied\nlayup: the default branch\n")},
-		{"a remote that cannot be reached", "fail", "probe not run: fatal: unable to access", &git.FailedError{Args: []string{"push"}, Code: 128, Stderr: "fatal: unable to access 'x'\n", Err: errors.New("exit status 128")}},
-		{"an error that is no refusal of git", "fail", "probe not run: the token expired", errors.New("the token expired\nmore")},
-		{"a call that did not start, whose text holds both", "fail", "probe not run: remote: error: GH013", &git.FailedError{Args: []string{"push"}, Code: -1, Stderr: "remote: error: GH013\nlayup: the default branch\n", Err: errors.New("not started")}},
-		{"a failure with no standard error", "fail", "probe not run: git push: exit status 1", &git.FailedError{Args: []string{"push"}, Code: 1, Err: errors.New("exit status 1")}},
+		{"GitHub's refusal of the probe ref, attributed", "pass", "", refused(text("refs/heads/layup-probe")), nil},
+		{"the same with a line that names a ruleset, as the tests used to invent", "pass", "", refused(text("refs/heads/layup-probe") + "remote: - Rulesets: layup: the default branch\n"), nil},
+		{"the line without its final period", "pass", "", refused("remote: error: GH013: Repository rule violations found for refs/heads/layup-probe\n"), nil},
+		{"the line that ends with a carriage return", "pass", "", refused("remote: error: GH013: Repository rule violations found for refs/heads/layup-probe.\r\n"), nil},
+		{"a refusal for a ref that starts with the probe's name", "fail", "probe not run: remote: error: GH013: Repository rule violations found for refs/heads/layup-probe-other.", refused(text("refs/heads/layup-probe-other")), nil},
+		{"a refusal for a ref below the probe's name", "fail", "probe not run: remote: error: GH013: Repository rule violations found for refs/heads/layup-probe/child.", refused(text("refs/heads/layup-probe/child")), nil},
+		{"a refusal for a ref with an extension", "fail", "probe not run: remote: error: GH013: Repository rule violations found for refs/heads/layup-probe.x.", refused(text("refs/heads/layup-probe.x")), nil},
+		{"a refusal for the default branch", "fail", "probe not run: remote: error: GH013: Repository rule violations found for refs/heads/main.", refused(text("refs/heads/main")), nil},
+		{"the line with a word after the ref", "fail", "probe not run: remote: error: GH013: Repository rule violations found for refs/heads/layup-probe for", refused("remote: error: GH013: Repository rule violations found for refs/heads/layup-probe for the user.\n"), nil},
+		{"a refusal with no GH013", "fail", "probe not run: remote: error: denied", refused("remote: error: denied\nremote: Repository rule violations found for refs/heads/layup-probe.\n"), nil},
+		{"a refusal that the attribution does not explain", "fail", notAttributed + fault.Error(), refused(text("refs/heads/layup-probe")), fault},
+		{"a fault of the attribution and a refusal for another ref: the text decides first", "fail", "probe not run: remote: error: GH013: Repository rule violations found for refs/heads/main.", refused(text("refs/heads/main")), fault},
+		{"a push that the forge accepts, with a fault", "fail", "probe accepted: " + sha, nil, fault},
+		{"a push that the forge accepts", "fail", "probe accepted: " + sha, nil, nil},
+		{"a remote that cannot be reached", "fail", "probe not run: fatal: unable to access", &git.FailedError{Args: []string{"push"}, Code: 128, Stderr: "fatal: unable to access 'x'\n", Err: errors.New("exit status 128")}, fault},
+		{"an error that is no refusal of git", "fail", "probe not run: the token expired", errors.New("the token expired\nmore"), nil},
+		{"a call that did not start, whose text matches", "fail", "probe not run: remote: error: GH013", &git.FailedError{Args: []string{"push"}, Code: -1, Stderr: text("refs/heads/layup-probe"), Err: errors.New("not started")}, nil},
+		{"a failure with no standard error", "fail", "probe not run: git push: exit status 1", &git.FailedError{Args: []string{"push"}, Code: 1, Err: errors.New("exit status 1")}, nil},
 	} {
-		result, detail := probeVerdict(sha, c.err)
+		result, detail := probeVerdict(sha, c.err, c.attributed)
 		if result != c.result || !strings.HasPrefix(detail, c.detail) || (result == "pass" && detail != "") {
 			t.Errorf("%s: %s, %q; want %s, %q", c.name, result, detail, c.result, c.detail)
+		}
+	}
+}
+
+// The attribution of a refusal: every creation rule that the effective rules of layup-probe list is the default branch's
+// ruleset's, by its source type and its ID, and there is one at least; a rule of another type of another ruleset is no fault,
+// as only a creation rule refuses the creation of a ref that does not exist.
+func TestAProbeIsAttributedOnlyWhenEachCreationRuleOfTheRefIsTheDefaultRulesets(t *testing.T) {
+	of := func(typ, source string, id int64) forge.Rule {
+		return forge.Rule{Type: typ, RulesetSourceType: "Repository", RulesetSource: source, RulesetID: id}
+	}
+	other := func(typ, sourceType string, id int64) forge.Rule {
+		return forge.Rule{Type: typ, RulesetSourceType: sourceType, RulesetSource: "acme", RulesetID: id}
+	}
+	for _, c := range []struct {
+		name  string
+		rules []forge.Rule
+		id    int64
+		fault string // a part of the error, or "" for none
+	}{
+		{"the default's creation rule alone", []forge.Rule{of("creation", "acme/target", 77)}, 77, ""},
+		{"the default's rules", []forge.Rule{of("creation", "acme/target", 77), of("deletion", "acme/target", 77), of("non_fast_forward", "acme/target", 77)}, 77, ""},
+		{"a rule of another type of another ruleset", []forge.Rule{of("creation", "acme/target", 77), other("pull_request", "Organization", 9)}, 77, ""},
+		{"the creation rule twice, as two entries of the default", []forge.Rule{of("creation", "acme/target", 77), of("creation", "acme/target", 77)}, 77, ""},
+		{"a second ruleset's creation rule", []forge.Rule{of("creation", "acme/target", 77), other("creation", "Organization", 9)}, 77, "the creation of layup-probe is also restricted by ruleset 9 (Organization acme)"},
+		{"a second ruleset's creation rule first", []forge.Rule{other("creation", "Repository", 8), of("creation", "acme/target", 77)}, 77, "ruleset 8 (Repository acme)"},
+		{"the default's ID of another source type", []forge.Rule{other("creation", "Organization", 77)}, 77, "ruleset 77 (Organization acme)"},
+		{"a repository ruleset of another ID", []forge.Rule{of("creation", "acme/target", 78)}, 77, "ruleset 78 (Repository acme/target)"},
+		{"no creation rule", []forge.Rule{of("deletion", "acme/target", 77), of("non_fast_forward", "acme/target", 77)}, 77, "no creation rule applies to layup-probe"},
+		{"no rule", nil, 77, "no creation rule applies to layup-probe"},
+		{"a creation rule of no ruleset, for an ID of zero", []forge.Rule{{Type: "creation"}}, 0, "no ID"},
+		{"an ID that is not positive", []forge.Rule{of("creation", "acme/target", -3)}, -3, "no ID"},
+	} {
+		err := probeAttribution(c.rules, c.id)
+		if (err == nil) != (c.fault == "") || (err != nil && !strings.Contains(err.Error(), c.fault)) {
+			t.Errorf("%s: %v; want a fault with %q (none when empty)", c.name, err, c.fault)
+		}
+	}
+}
+
+// The ID of the default branch's ruleset is the `id` of the output of its apply, a positive integer of GitHub's object.
+func TestTheIDOfTheDefaultRulesetIsThePositiveIntegerIDOfItsApplyOutput(t *testing.T) {
+	for _, c := range []struct {
+		name, output string
+		id           int64
+		fault        string
+	}{
+		{"an output with its id", `{"id":24509051,"name":"layup: the default branch","source":"acme/target"}`, 24509051, ""},
+		{"an id beyond the exact range of a float", `{"id":9007199254740993}`, 9007199254740993, ""},
+		{"an output with no id", `{"source":"acme/target"}`, 0, "no id"},
+		{"an id that is a string", `{"id":"77"}`, 0, "no id"},
+		{"an id of zero", `{"id":0}`, 0, "no id"},
+		{"an id below zero", `{"id":-5}`, 0, "no id"},
+		{"an id that is a fraction", `{"id":1.5}`, 0, "no id"},
+		{"an id of null", `{"id":null}`, 0, "no id"},
+		{"a list", `[{"id":77}]`, 0, "no id"},
+		{"a text that is no JSON", `not json`, 0, "no id"},
+		{"an empty output", ``, 0, "no id"},
+	} {
+		id, err := rulesetID([]byte(c.output))
+		if id != c.id || (err == nil) != (c.fault == "") || (err != nil && !strings.Contains(err.Error(), c.fault)) {
+			t.Errorf("%s: %d, %v; want %d and a fault with %q (none when empty)", c.name, id, err, c.id, c.fault)
 		}
 	}
 }
@@ -202,7 +282,26 @@ type checkFake struct {
 	probedHead        string
 	activityRef       string
 	areaCalls         int
+	rulesRead         map[string]int // the reads of the effective rules of each branch
 }
+
+// The IDs that the apply outputs of the fake give the two rulesets, and the rules as the forge returns them for a ruleset.
+const (
+	defaultRulesetID = 77
+	recordsRulesetID = 78
+)
+
+func ofRuleset(rules []forge.Rule, id int64) []forge.Rule {
+	out := make([]forge.Rule, len(rules))
+	for i, r := range rules {
+		r.RulesetSourceType, r.RulesetSource, r.RulesetID = "Repository", "acme/target", id
+		out[i] = r
+	}
+	return out
+}
+
+// GitHub's refusal of the probe: the line of GH013 with the ref, the line of the rules URL, one line for the rule.
+const githubRefusal = "remote: error: GH013: Repository rule violations found for refs/heads/layup-probe.\nremote: Review all repository rules at https://github.com/acme/target/rules?ref=refs/heads/layup-probe\nremote: \nremote: - Cannot create ref due to creations being restricted.\nremote: \n"
 
 const lastCommit = "0123456789012345678901234567890123456789"
 
@@ -211,13 +310,13 @@ func newCheckFake() *checkFake {
 	tsv.Write(&t, SetupTreeSchema, [][]string{{"0", "1111111111111111111111111111111111111111", "2222222222222222222222222222222222222222", "root"}, {"1", lastCommit, "3333333333333333333333333333333333333333", "S13"}})
 	defaultFile := `{"rules":[{"type":"creation"},{"type":"deletion"},{"type":"required_status_checks","parameters":{"strict_required_status_checks_policy":true,"required_status_checks":[{"context":"layup/gates","integration_id":42}]}}],"bypass_actors":[]}`
 	recordsFile := `{"rules":[{"type":"update","parameters":{"update_allows_fetch_and_merge":false}},{"type":"deletion"}],"bypass_actors":[]}`
-	rec, _ := rulesetsRecord("acme/target", map[string][]byte{"default.json": []byte(`{"source":"acme/target","bypass_actors":[]}`), "records.json": []byte(`{"source":"acme/target","bypass_actors":[{"actor_id":42,"actor_type":"Integration","bypass_mode":"always"}]}`)})
+	rec, _ := rulesetsRecord("acme/target", map[string][]byte{"default.json": []byte(`{"id":77,"source":"acme/target","bypass_actors":[]}`), "records.json": []byte(`{"id":78,"source":"acme/target","bypass_actors":[{"actor_id":42,"actor_type":"Integration","bypass_mode":"always"}]}`)})
 	def, _ := rulesetRules([]byte(defaultFile))
 	recs, _ := rulesetRules([]byte(recordsFile))
 	return &checkFake{treeText: t.String(), applied: string(rec), files: map[string][]byte{"ruleset-default.json": []byte(defaultFile), "ruleset-records.json": []byte(recordsFile)},
 		repo:  forge.Repository{DefaultBranch: "main", Heads: map[string]string{"main": lastCommit}},
-		rules: map[string][]forge.Rule{"main": def, "layup-probe": def, "layup-records": recs}, rulesErr: map[string]error{},
-		probeErr: &git.FailedError{Args: []string{"push"}, Code: 1, Stderr: "remote: error: GH013: Repository rule violations found\nremote: - Rulesets: layup: the default branch\n", Err: errors.New("exit status 1")},
+		rules: map[string][]forge.Rule{"main": ofRuleset(def, defaultRulesetID), "layup-probe": ofRuleset(def, defaultRulesetID), "layup-records": ofRuleset(recs, recordsRulesetID)}, rulesErr: map[string]error{}, rulesRead: map[string]int{},
+		probeErr: &git.FailedError{Args: []string{"push"}, Code: 1, Stderr: githubRefusal, Err: errors.New("exit status 1")},
 		clock:    time.Date(2026, 10, 13, 12, 0, 0, 0, time.UTC)}
 }
 
@@ -242,8 +341,11 @@ func (f *checkFake) job() forgeCheckJob {
 			}
 			return nil, fmt.Errorf("%s: no such file", name)
 		},
-		repo:     func() (forge.Repository, error) { return f.repo, f.repoErr },
-		rules:    func(branch string) ([]forge.Rule, error) { return f.rules[branch], f.rulesErr[branch] },
+		repo: func() (forge.Repository, error) { return f.repo, f.repoErr },
+		rules: func(branch string) ([]forge.Rule, error) {
+			f.rulesRead[branch]++
+			return f.rules[branch], f.rulesErr[branch]
+		},
 		probe:    func(head string) (string, error) { f.probedHead = head; return lastCommit, f.probeErr },
 		activity: func(ref string) error { f.activityRef = ref; return f.activityErr },
 		clean:    func(s string) string { return s },
@@ -288,6 +390,7 @@ func TestTheStepForgeCheckCommitsEightRowsAndIsDoneWhenEachIsAPass(t *testing.T)
 }
 
 func TestEachCheckThatFailsIsItsRowAndTheTableStillHasEightRows(t *testing.T) {
+	const notAttributed = "probe refused, but not attributed to the default branch's ruleset: "
 	boom := errors.New("boom\nthe second line")
 	for _, c := range []struct {
 		name     string
@@ -304,11 +407,11 @@ func TestEachCheckThatFailsIsItsRowAndTheTableStillHasEightRows(t *testing.T) {
 		{"a rule that is missing on the default branch", func(f *checkFake) { f.rules["main"] = f.rules["main"][1:] },
 			map[string]string{"rules:main": "creation is missing"}, "rules:main: "},
 		{"a rule that is missing on layup-probe", func(f *checkFake) { f.rules["layup-probe"] = nil },
-			map[string]string{"rules:layup-probe": "creation is missing"}, "rules:layup-probe: "},
+			map[string]string{"rules:layup-probe": "creation is missing", "probe": notAttributed + "no creation rule applies to layup-probe"}, "rules:layup-probe: "},
 		{"a rule that is missing on layup-records", func(f *checkFake) { f.rules["layup-records"] = f.rules["layup-records"][:1] },
 			map[string]string{"rules:layup-records": "deletion is missing"}, "rules:layup-records: "},
 		{"a call of rules that fails", func(f *checkFake) { f.rulesErr["layup-probe"] = boom },
-			map[string]string{"rules:layup-probe": "boom"}, "rules:layup-probe: "},
+			map[string]string{"rules:layup-probe": "boom", "probe": notAttributed + "the rules of layup-probe were not read: boom"}, "rules:layup-probe: "},
 		{"a ruleset file that is missing", func(f *checkFake) { delete(f.files, "ruleset-records.json") },
 			map[string]string{"rules:layup-records": "ruleset-records.json: no such file"}, "rules:layup-records: "},
 		{"a ruleset file that holds no rule", func(f *checkFake) { f.files["ruleset-default.json"] = []byte(`{"rules":[]}`) },
@@ -320,9 +423,19 @@ func TestEachCheckThatFailsIsItsRowAndTheTableStillHasEightRows(t *testing.T) {
 		{"a setup/tree.tsv that its reader refuses", func(f *checkFake) { f.treeText = "order\tcommit\n" },
 			map[string]string{"tree": "setup/tree.tsv: line 1", "rules:main": "setup/tree.tsv: line 1", "rules:layup-probe": "setup/tree.tsv: line 1", "rules:layup-records": "setup/tree.tsv: line 1"}, "tree: "},
 		{"a setup/rulesets.txt that is not in the records", func(f *checkFake) { f.applied = "" },
-			map[string]string{"bypass:default": "setup/rulesets.txt is not in the records", "bypass:records": "setup/rulesets.txt is not in the records"}, "bypass:default: "},
+			map[string]string{"bypass:default": "setup/rulesets.txt is not in the records", "bypass:records": "setup/rulesets.txt is not in the records", "probe": notAttributed + "setup/rulesets.txt is not in the records"}, "bypass:default: "},
 		{"a setup/rulesets.txt that does not read back", func(f *checkFake) { f.applied = "not framed" },
-			map[string]string{"bypass:default": "setup/rulesets.txt", "bypass:records": "setup/rulesets.txt"}, "bypass:default: "},
+			map[string]string{"bypass:default": "setup/rulesets.txt", "bypass:records": "setup/rulesets.txt", "probe": notAttributed + "setup/rulesets.txt"}, "bypass:default: "},
+		{"an apply output of the default ruleset with no id", func(f *checkFake) { f.applied = strings.Replace(f.applied, `"id":77,`, "", 1) },
+			map[string]string{"probe": notAttributed + "the output of the default branch's ruleset has no id"}, "probe: "},
+		{"an apply output of the default ruleset with the id of another ruleset", func(f *checkFake) { f.applied = strings.Replace(f.applied, `"id":77,`, `"id":99,`, 1) },
+			map[string]string{"probe": notAttributed + "the creation of layup-probe is also restricted by ruleset 77 (Repository acme/target)"}, "probe: "},
+		{"a creation rule of another ruleset on layup-probe", func(f *checkFake) {
+			f.rules["layup-probe"] = append(f.rules["layup-probe"], forge.Rule{Type: "creation", RulesetSourceType: "Organization", RulesetSource: "acme", RulesetID: 9})
+		}, map[string]string{"probe": notAttributed + "the creation of layup-probe is also restricted by ruleset 9 (Organization acme)"}, "probe: "},
+		{"a refusal for another ref", func(f *checkFake) {
+			f.probeErr = &git.FailedError{Args: []string{"push"}, Code: 1, Stderr: strings.ReplaceAll(githubRefusal, "refs/heads/layup-probe", "refs/heads/layup-probe-other"), Err: errors.New("exit status 1")}
+		}, map[string]string{"probe": "probe not run: remote: error: GH013"}, "probe: "},
 		{"a bypass list of the default that is not empty", func(f *checkFake) {
 			f.applied = strings.Replace(f.applied, `"source":"acme/target","bypass_actors":[]`, `"source":"acme/target","bypass_actors":[{"actor_id":1}]`, 1)
 		}, map[string]string{"bypass:default": "not empty"}, "bypass:default: "},
@@ -331,7 +444,7 @@ func TestEachCheckThatFailsIsItsRowAndTheTableStillHasEightRows(t *testing.T) {
 		{"a probe that fails for another reason", func(f *checkFake) { f.probeErr = boom }, map[string]string{"probe": "probe not run: boom"}, "probe: "},
 		{"an activity read that fails", func(f *checkFake) { f.activityErr = boom }, map[string]string{"activity": "boom"}, "activity: "},
 		{"a ruleset of the forge that is in evaluate (no rule is returned)", func(f *checkFake) { f.rules = map[string][]forge.Rule{} },
-			map[string]string{"rules:main": "missing", "rules:layup-probe": "missing", "rules:layup-records": "missing"}, "rules:main: "},
+			map[string]string{"rules:main": "missing", "rules:layup-probe": "missing", "rules:layup-records": "missing", "probe": notAttributed + "no creation rule applies to layup-probe"}, "rules:main: "},
 	} {
 		f := newCheckFake()
 		c.change(f)
@@ -360,6 +473,28 @@ func TestEachCheckThatFailsIsItsRowAndTheTableStillHasEightRows(t *testing.T) {
 		}
 		if got.Name != "forge-check" || got.Result != "fail" || !strings.HasPrefix(got.Detail, c.stepWord) {
 			t.Errorf("%s: the step %+v; want fail, naming %q first", c.name, got, c.stepWord)
+		}
+	}
+}
+
+// The rules of layup-probe are read once, with the answer of the same read for its rules row and for the attribution of the probe,
+// and independently of the work area and of the ruleset file; the probe is still made on the forge's head in each case.
+func TestTheRulesOfLayupProbeAreReadOnceWhateverTheWorkAreaAndTheRulesetFile(t *testing.T) {
+	for _, c := range []struct {
+		name   string
+		change func(f *checkFake)
+	}{
+		{"nothing broken", func(f *checkFake) {}},
+		{"a work area that cannot be made sure of", func(f *checkFake) { f.areaErr = errors.New("layup-setup is at x") }},
+		{"a ruleset file that is missing", func(f *checkFake) { delete(f.files, "ruleset-default.json") }},
+		{"a setup/tree.tsv that is not in the records", func(f *checkFake) { f.treeText = "" }},
+		{"a call of rules that fails", func(f *checkFake) { f.rulesErr["layup-probe"] = errors.New("boom") }},
+	} {
+		f := newCheckFake()
+		c.change(f)
+		f.job().do()
+		if f.rulesRead["layup-probe"] != 1 || f.probedHead != lastCommit {
+			t.Errorf("%s: %d reads of the rules of layup-probe, the probe on %q; want one read, and the probe on the forge's head", c.name, f.rulesRead["layup-probe"], f.probedHead)
 		}
 	}
 }

@@ -123,7 +123,7 @@ The same API and version header as [The calls of M2a](#the-calls-of-m2a)
 
 | Method | Call | What it gives `layup run` |
 | ------ | ---- | ------------------------- |
-| `EffectiveRules` | `GET /repos/{owner}/{repo}/rules/branches/{branch}`, every page | each active rule that applies to the branch, also to one that does not exist yet: its `type` and its `parameters`; a ruleset in `evaluate` or `disabled` gives none |
+| `EffectiveRules` | `GET /repos/{owner}/{repo}/rules/branches/{branch}`, every page | each active rule that applies to the branch, also to one that does not exist yet: its `type`, its `parameters` and the ruleset that it is of (`ruleset_source_type`, `ruleset_source`, `ruleset_id`); a ruleset in `evaluate` or `disabled` gives none |
 | `Repository` | the calls of `M2a`; it also gives the head of each branch, `commit.sha` of each item of the list of branches | the head of the default branch, for the tree check ([`scaffold.md`](scaffold.md#the-tree-check)) |
 | `Activity` | `GET /repos/{owner}/{repo}/activity`, with `ref` the branch and one page | the activities of the ref: each with its `actor`, `ref`, `before`, `after`, `timestamp` and `activity_type`; `M2d` reads only that the call works |
 
@@ -146,9 +146,13 @@ defect of this table. The push of the probe is a `git` call, not an API call.
   and adds no filter of its own, as the endpoint gives the active rules only.
 - A rule is its `type` and its `parameters`, decoded. A rule that GitHub gives with
   no `parameters`, or with an empty object of them, has none, so the read-back
-  ([`scaffold.md`](scaffold.md#the-read-back)) compares the two forms alike. The
-  `ruleset_id`, `ruleset_source` and `ruleset_source_type` that GitHub adds are not
-  kept: the read-back reads by branch.
+  ([`scaffold.md`](scaffold.md#the-read-back)) compares the two forms alike. A rule
+  also names the ruleset that it is of, as GitHub gives it (**decided here**, task
+  `T-gkvi`, #323): `ruleset_source_type` (`Repository`, `Organization`), `ruleset_source`
+  and `ruleset_id`, each the zero value when the answer lacks it; a `ruleset_id` that
+  is no integer is an error of the call. The read-back reads by branch and does not
+  use them; the attribution of the probe's refusal does
+  ([`scaffold.md`](scaffold.md#the-probe)).
 - `Activity` sends the `ref` as it is given (GitHub takes `refs/heads/BRANCH_NAME` or
   `BRANCH_NAME`), escaped as a query value, with no other parameter, so it reads the
   first page of the default size, 30; it does not follow a `Link`. An activity whose

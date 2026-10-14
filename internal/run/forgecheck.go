@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -26,8 +27,12 @@ const (
 	forgeCheckMessage = "layup run: the forge check"
 	probeMessage      = "layup: the probe of the forge check"
 	probeBranch       = "layup-probe"
-	probeRuleset      = "layup: the default branch" // the ruleset whose refusal is the pass
 )
+
+// probeRefusal is the line of GitHub's refusal of a push for a rule violation, for the ref of the probe and for it alone, as the
+// whole ref: `GH013: Repository rule violations found for refs/heads/layup-probe.` (the full stop may be left out). GitHub prints
+// the violated rules after it and the URL of the rules of the ref, and names no ruleset (docs/spec/scaffold.md, The probe).
+var probeRefusal = regexp.MustCompile(`(?m)GH013: Repository rule violations found for refs/heads/` + regexp.QuoteMeta(probeBranch) + `\.?\s*$`)
 
 // forgeCheckJob is the step with its seams: the two records that the checks read (setup/tree.tsv and
 // setup/rulesets.txt, nil when absent); the work area, made sure of for the last commit; a ruleset file
@@ -124,10 +129,19 @@ func (j forgeCheckJob) checks(tree, applied []byte) [][]string {
 			areaErr = fmt.Errorf("the work area: %w", err)
 		}
 	}
-	for _, c := range [][3]string{{"rules:" + j.branch, j.branch, "ruleset-default.json"}, {"rules:layup-probe", probeBranch, "ruleset-default.json"},
-		{"rules:layup-records", "layup-records", "ruleset-records.json"}} {
-		detail, ok := j.rulesRow(areaErr, c[1], c[2])
-		row(c[0], detail, ok)
+	// The effective rules of layup-probe are read once, whatever the work area and the ruleset file are: the row rules:layup-probe compares
+	// them with the file, and the attribution of the probe's refusal reads the ruleset of each of their creation rules.
+	probeRules, probeRulesErr := j.rules(probeBranch)
+	for _, c := range []struct {
+		check, file string
+		read        func() ([]forge.Rule, error)
+	}{
+		{"rules:" + j.branch, "ruleset-default.json", func() ([]forge.Rule, error) { return j.rules(j.branch) }},
+		{"rules:layup-probe", "ruleset-default.json", func() ([]forge.Rule, error) { return probeRules, probeRulesErr }},
+		{"rules:layup-records", "ruleset-records.json", func() ([]forge.Rule, error) { return j.rules("layup-records") }},
+	} {
+		detail, ok := j.rulesRow(areaErr, c.file, c.read)
+		row(c.check, detail, ok)
 	}
 	outs, outsErr := appliedOutputs(applied)
 	for _, c := range []struct {
@@ -147,7 +161,7 @@ func (j forgeCheckJob) checks(tree, applied []byte) [][]string {
 		row("probe", "probe not run: the forge gives no head for "+j.branch, false)
 	default:
 		sha, err := j.probe(head)
-		result, detail := probeVerdict(sha, err)
+		result, detail := probeVerdict(sha, err, attribution(probeRules, probeRulesErr, outs, outsErr))
 		row("probe", detail, result == "pass")
 	}
 	rowErr("activity", j.activity(j.branch))
@@ -178,8 +192,8 @@ func appliedOutputs(data []byte) (map[string][]byte, error) {
 	return outs, nil
 }
 
-// rulesRow reads back the rules of a branch against a ruleset file; a work area that failed fails it.
-func (j forgeCheckJob) rulesRow(areaErr error, branch, file string) (string, bool) {
+// rulesRow reads back the rules of a branch, which read gives, against a ruleset file; a work area that failed fails it.
+func (j forgeCheckJob) rulesRow(areaErr error, file string, read func() ([]forge.Rule, error)) (string, bool) {
 	if areaErr != nil {
 		return areaErr.Error(), false
 	}
@@ -191,7 +205,7 @@ func (j forgeCheckJob) rulesRow(areaErr error, branch, file string) (string, boo
 	if err != nil {
 		return file + ": " + err.Error(), false
 	}
-	got, err := j.rules(branch)
+	got, err := read()
 	if err != nil {
 		return err.Error(), false
 	}
@@ -363,15 +377,20 @@ func bypassRecords(output []byte, app int64) error {
 }
 
 // probeVerdict is the row of the probe from the push: a pass only for a refusal of the remote (git exits
-// non-zero) whose standard error holds GH013 and the name of the default branch's ruleset; a push that
-// is accepted gives the commit, and any other failure is "probe not run", never a pass.
-func probeVerdict(sha string, err error) (result, detail string) {
+// non-zero) whose standard error holds GitHub's line of GH013 for the ref of the probe (probeRefusal), when the
+// attribution of the refusal to the default branch's ruleset has no fault (it is nil); a push that is accepted
+// gives the commit, a refusal that the attribution does not explain is a fail that says so, and any other failure
+// is "probe not run", never a pass.
+func probeVerdict(sha string, err error, attributed error) (result, detail string) {
 	if err == nil {
 		return "fail", "probe accepted: " + sha
 	}
 	var failed *git.FailedError
 	if errors.As(err, &failed) {
-		if failed.Code > 0 && strings.Contains(failed.Stderr, "GH013") && strings.Contains(failed.Stderr, probeRuleset) {
+		if failed.Code > 0 && probeRefusal.MatchString(failed.Stderr) {
+			if attributed != nil {
+				return "fail", "probe refused, but not attributed to the default branch's ruleset: " + firstLine(attributed.Error())
+			}
 			return "pass", ""
 		}
 		if line := firstLine(strings.TrimSpace(failed.Stderr)); line != "" {
@@ -434,4 +453,65 @@ func (r *state) forgeCheckStep(ctx context.Context) Step {
 			})
 		},
 	}.do()
+}
+
+// attribution says whether a refusal of the probe can be attributed to the default branch's ruleset: the rules of layup-probe
+// were read, the apply output of that ruleset is in the records and gives its ID, and each creation rule of the ref is of it.
+func attribution(rules []forge.Rule, rulesErr error, outs map[string][]byte, outsErr error) error {
+	if rulesErr != nil {
+		return fmt.Errorf("the rules of %s were not read: %s", probeBranch, firstLine(rulesErr.Error()))
+	}
+	if outsErr != nil {
+		return outsErr
+	}
+	id, err := rulesetID(outs[applyFiles[0]])
+	if err != nil {
+		return err
+	}
+	return probeAttribution(rules, id)
+}
+
+// probeAttribution gives nil when the creation of layup-probe is restricted by the ruleset of ID id and by no other: the rules of the
+// ref, as the forge gives them for a ref that does not exist yet, hold at least one rule of type creation, and each of them is of a
+// ruleset of the repository with that ID. Only a creation rule refuses the creation of a ref (docs/spec/scaffold.md, The ruleset of
+// the default branch), so a rule of another type of another ruleset is no fault. GitHub's refusal names the ref and the violated rule and
+// no ruleset, so this is how a refusal is attributed to the ruleset of LAYUP.
+func probeAttribution(rules []forge.Rule, id int64) error {
+	if id <= 0 {
+		return errors.New("the default branch's ruleset has no ID")
+	}
+	found := false
+	for _, r := range rules {
+		if r.Type != "creation" {
+			continue
+		}
+		if r.RulesetSourceType != "Repository" || r.RulesetID != id {
+			return fmt.Errorf("the creation of %s is also restricted by ruleset %d (%s %s)", probeBranch, r.RulesetID, r.RulesetSourceType, r.RulesetSource)
+		}
+		found = true
+	}
+	if !found {
+		return fmt.Errorf("no creation rule applies to %s", probeBranch)
+	}
+	return nil
+}
+
+// rulesetID gives the ID of a ruleset from the output of its apply: the `id` of the JSON object, a positive integer.
+func rulesetID(output []byte) (int64, error) {
+	noID := errors.New("the output of the default branch's ruleset has no id")
+	dec := json.NewDecoder(bytes.NewReader(output))
+	dec.UseNumber()
+	var object map[string]any
+	if err := dec.Decode(&object); err != nil {
+		return 0, noID
+	}
+	n, ok := object["id"].(json.Number)
+	if !ok {
+		return 0, noID
+	}
+	id, err := n.Int64()
+	if err != nil || id <= 0 {
+		return 0, noID
+	}
+	return id, nil
 }
