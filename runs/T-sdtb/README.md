@@ -25,10 +25,16 @@ that clone, never its checkout.
    origin/layup-records -- setup/forge-check.tsv`, then `git -C clone show COMMIT:setup/forge-check.tsv`
    for the commit of each table (the first check and the later start of rule 5); saved in
    `forge-check.txt`, each table with its commit and run ID, byte for byte.
-2. **The refusal.** The row `probe` is `pass` by the rule of the specification
-   ([`scaffold.md`](../../docs/spec/scaffold.md#the-probe)): the push to `refs/heads/layup-probe`
-   exits non-zero and its standard error holds `GH013` and the ruleset's name
-   `layup: the default branch`. The words are those of GitHub, kept by the wrapper of
+2. **The refusal.** The row `probe` is `pass` by the rule of the specification as task `T-gkvi`
+   (#323) made it ([`scaffold.md`](../../docs/spec/scaffold.md#the-probe)): the push to
+   `refs/heads/layup-probe` exits non-zero, its standard error holds GitHub's line `GH013: Repository
+   rule violations found for refs/heads/layup-probe.`, and each `creation` rule of `layup-probe` is of
+   the default branch's ruleset by its ID. **Restated before any run** (13:31Z on 2026-10-14; the text
+   of step T, commit `00c9cdf`, asked that the standard error hold the ruleset's name `layup: the
+   default branch`, as the specification then said): GitHub's refusal names no ruleset (ten public
+   reports, listed on #323), so that rule could not hold on a real forge; #323 changed the rule and the
+   specification together, with its own review, on that evidence and not on a result of this demo, of
+   which none existed. The words are those of GitHub, kept by the wrapper of
    [the wrapper](#the-wrapper) (`~/layup-host/wrap/push.log`), and after the run `layup-probe` is no
    branch of the forge and no push event of it is in the activity. Read by the entry of the probe in
    the log, `git ls-remote https://github.com/pharzam/layup-uat-m2d.git refs/heads/layup-probe` (no
@@ -131,7 +137,7 @@ release (`git diff --stat 0a104b8 COMMIT -- cmd internal go.mod`, and the releas
   `swe-2-high`) and of `qa-engineer` (`devin`, then `claude`). The credential columns hold paths, not secrets.
 - **The harnesses and git:** Claude Code 2.1.299 and Devin 3000.11.3 (9c803229faa4); git 2.56.0 at
   `/home/layup/.local/bin/git`, the real git of the wrapper.
-- **The binary:** `go build -o ~/layup-host/bin/layup ./cmd/layup` at `00c9cdf` (this branch after step T);
+- **The binary, first build (superseded by the rebuild below):** `go build -o ~/layup-host/bin/layup ./cmd/layup` at `00c9cdf` (this branch after step T);
   `layup version` gives `layup 0.1.0-dev`, its SHA-256 is
   `ddbae124e5de0e63b09bc363888c59a4cc07713b082e081237f2439da0cb7204`, and `git diff --stat 0a104b8 00c9cdf --
   cmd internal go.mod` prints nothing: its Go code is the release that row 59a reviewed. The binary before it
@@ -141,3 +147,12 @@ release (`git diff --stat 0a104b8 COMMIT -- cmd internal go.mod`, and the releas
   `PATH=$HOME/layup-host/wrap:$PATH` for each `layup run`; `git --version` through it gives 2.56.0.
 - **The run settings:** `--operator pharzam --idea-owner pharzam --plan free --intake-cap 50.0,48.0 --lease-h 10
   --watch-t 1`, as `M2c` set them but for the idea owner, who is the Operator's own account here.
+- **The binary, rebuilt after `T-gkvi`** (13:30Z, before Start): `go build -o ~/layup-host/bin/layup ./cmd/layup` at
+  `236c9afe405f43eb005ceedb4b9977496d25cd59` (this branch after the merge of `main` at `b7f3f7d`, the merge of #324);
+  `layup version` gives `layup 0.1.0-dev`, its SHA-256 is
+  `7f6379d6d7cf1d22daa3a35f19e07ef2f0a72d8d2e25332cb9e9bd6f0db49a1d`. `git diff --stat 0a104b8 236c9af -- cmd internal
+  go.mod` names eight files: three that the binary is made of (`internal/forge/forge.go`, `internal/forge/github/github.go` and
+  `internal/run/forgecheck.go`, 119 lines added and 22 removed: the probe's rule and the ruleset fields of a rule) and five of tests.
+  So its Go code is the release that row 59a reviewed (`0a104b8`) and the change of `T-gkvi`; the release check on that commit,
+  run at 13:30:56Z in a clean clone (`sh runs/T-efmy/release-check.sh 236c9afe405f43eb005ceedb4b9977496d25cd59`), gives exit 0 and
+  `== PASS`, with the same sites as at `0a104b8`: the three references to `git.Push` are in `PushHead`, `commitFiles` and `pushProbe`.
