@@ -43,27 +43,27 @@
 #       own function: fetch in Fetch and FetchSession, push in Push, remote in
 #       CloneLocal (remote remove origin, which cuts a session clone's link and
 #       reaches no remote) and remote in AddRemote (remote add, which writes a
-#       name and a URL into the config of a local clone and reaches no remote;
-#       T-5xjc). A call of git names its verb so,
-#       as in do(dir, "clone", ...). The function of a hit is the last line
-#       that starts with "func" above it; a hit after a line "}" at column one,
-#       or after a one-line function (a "func" line that ends with "}"), and
-#       before the next "func" line is in no function, and fails;
+#       name and a URL into the config of a local clone; by verb, so another
+#       subcommand of git remote in these two functions passes). A call of git
+#       names its verb so, as in do(dir, "clone", ...). The function of a hit is
+#       the last line that starts with "func" above it; a hit after a "}" line at
+#       column one, or after a one-line function (a "func" line that ends with
+#       "}"), and before the next "func" line is in no function, and fails;
 #   (7) a non-test Go file of cmd/ or internal/ out of internal/git and
 #       testdata/ refers to git.Push (a call, or a value such as f := git.Push)
 #       in a function other than PushHead or commitFiles of
 #       internal/run/store.go (the heads of sessions and the records branch) or
 #       pushProbe of internal/run/forgecheck.go (the probe of the forge check,
 #       which the Operator's ruleset must refuse); or imports internal/git
-#       under a name other than git (the selector git.Push would not show it).
-#       The function of a reference is found as in (4). The limits: a second
-#       call of git.Push inside one of the three functions passes (7), so the
-#       review reads those three functions in full; (7) reads the selector of
-#       the package only, and a push by a program that is started with the
-#       text "git push" is check (3)'s (it allows exec.Command("git", ...) in
-#       internal/git/git.go only). The calls of internal/git that read
-#       (LsRemote, Clone, Fetch, CloneLocal, AddRemote and FetchSession) are
-#       listed with their callers and fail nothing.
+#       under an explicit name (the selector git.Push would not show it).
+#       The function is found as in (4), by its name. The limits: a second call
+#       of git.Push in one of the three functions, and a new caller of one of
+#       them, pass (7), so the review reads those functions and their callers;
+#       (7) reads a line at a time and skips a comment line; the import guard
+#       passes when it finds no import at all; a push by a program started with
+#       the text "git push" is check (3)'s. The other calls of internal/git
+#       that name a remote verb (LsRemote, Clone, Fetch, CloneLocal, AddRemote
+#       and FetchSession) are listed with their callers and fail nothing.
 # Checks (3), (4) and (7) print a list and fail on an entry out of their
 # allowance, which the reviewer judges; checks (5) and (6) only list.
 
@@ -157,7 +157,7 @@ git grep -n -E '"docs/[^"]*\.sh"' -- 'internal/verify/*.go' ':!*_test.go' | sed 
 echo "== (6) The calls of the forge adapter (operation, method), in the non-test Go files of internal/forge/github"
 git grep -n -E 'a\.do\(ctx, "' -- 'internal/forge/github/*.go' ':!*_test.go' | sed -E 's/^([^:]*:[0-9]+):.*a\.do\(ctx, "([^"]*)", "([^"]*)", ([^,]*),.*/  \1: \2 \3 \4/'
 
-echo "== (7) The calls of internal/git that reach a remote, and who calls them (non-test Go files of cmd/ and internal/ out of internal/git)"
+echo "== (7) The calls of internal/git that name a remote verb, and who calls them (non-test Go files of cmd/ and internal/ out of internal/git)"
 callfiles=$(git ls-files 'cmd/*.go' 'internal/*.go' | grep -v -E '_test\.go$|/testdata/|^internal/git/')
 [ -n "$callfiles" ] || bad "no non-test Go file out of internal/git"
 refs=$(for f in $callfiles; do
@@ -184,12 +184,12 @@ if [ -n "$refs" ]; then
 		fail=1
 	fi
 else
-	bad "no reference to a call of internal/git that reaches a remote found"
+	bad "no reference to a call of internal/git that names a remote verb found"
 fi
 aliased=$(git grep -n -F '"github.com/pharzam/layup/internal/git"' -- 'cmd/*.go' 'internal/*.go' ':!*_test.go' ':!*/testdata/*' | awk '{ line = $0; sub(/^[^:]*:[0-9]+:/, "", line); sub(/"github\.com\/pharzam\/layup\/internal\/git".*/, "", line); sub(/^[ \t]*(import[ \t]+)?/, "", line); if (line != "") print }')
 if [ -n "$aliased" ]; then
 	# The loop runs in a subshell of the pipe, so fail is set here.
-	echo "$aliased" | while IFS= read -r l; do echo "FAIL: internal/git imported under a name other than git: $l"; done
+	echo "$aliased" | while IFS= read -r l; do echo "FAIL: internal/git imported under an explicit name: $l"; done
 	fail=1
 fi
 

@@ -956,8 +956,9 @@ These traps are not domain-specific: they hurt every project's test suite.
   reviewer the plan, its review and the author's answer, which the plan review of `T-5xjc` (#283) read as a breach
   of context independence. **The check:** give a release review the issue, the criteria verbatim, the list of the
   release with its line counts, the check with its output and a blank record form, in a clone with `runs/`,
-  `docs/tasks/`, `docs/prd/` and `docs/plan/` out of its working tree (a sparse checkout), and compare the Coverage
-  table of its record with the commit.
+  `docs/tasks/`, `docs/prd/` and `docs/plan/` out of its working tree (a sparse checkout; the history and
+  `docs/tests/traceability.md` still hold earlier verdicts, so the brief says what it may read), and compare the
+  Coverage table of its record with the commit.
 
 ### Reference-sweep pitfalls
 

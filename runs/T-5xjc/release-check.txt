@@ -1,7 +1,7 @@
 == (1) The commit and the tree
 HEAD 0a104b8fc710f45cfe3e73778518616374bae1db
 == (2) TestPackageRules (cmd/layup, integration)
-ok  	github.com/pharzam/layup/cmd/layup	1.246s
+ok  	github.com/pharzam/layup/cmd/layup	1.153s
 The packages of go list -deps ./... that are not in the standard library:
   github.com/pharzam/layup/internal/tsv
   github.com/pharzam/layup/internal/forge
@@ -98,7 +98,7 @@ The scripts of the baseline that internal/verify runs:
   internal/forge/github/github.go:224: Comments GET next
   internal/forge/github/github.go:266: EffectiveRules GET next
   internal/forge/github/github.go:301: Activity GET a.cfg.API+a.repo()+"/activity?ref="+url.QueryEscape(ref)
-== (7) The calls of internal/git that reach a remote, and who calls them (non-test Go files of cmd/ and internal/ out of internal/git)
+== (7) The calls of internal/git that name a remote verb, and who calls them (non-test Go files of cmd/ and internal/ out of internal/git)
   internal/run/end.go:203: FetchSession in artifacts
   internal/run/forgecheck.go:396: Push in pushProbe
   internal/run/steps.go:355: LsRemote in baselineStep

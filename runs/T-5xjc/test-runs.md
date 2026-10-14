@@ -65,7 +65,17 @@ It recorded `holds` for REQ-015 and for REQ-017, with 29 findings, none of which
 
 **The Coverage section against the commit (condition 3):** the 90 rows of the record are the 90 paths of the release in the order of the list of the brief (the 81 non-test Go files out of `testdata/`, `go.mod` and the eight files of `internal/catalog/go/`, from `git ls-files`), each with the line count that `wc -l` gives at the commit and the word `in full`: 90 of 90, no row missing, extra, out of order or with another count. The comparison is a script of the scratch directory, not part of the tree.
 
+**The size of a chunk:** the brief said "about 250 lines at most", where the answer to the plan review said 200 (the author wrote 250 in the brief and did not note the difference). The aim of condition 3 held: the record says that each cut output was read again, and its 90 rows equal the commit.
+
+**Sessions of the same model on this release:** the task files name GPT-6.1 Sol as a reviewer in the plan reviews and rounds of `T-4c5c`, `T-56dj`, `T-9v92`, `T-j4sd`, `T-jpkc`, `T-eahr`, `T-79zk`, `T-hfn1`, `T-wphp`, `T-2j13` and `T-eevt`, and in the plan review of this task (note 4 of it already reads the probe as a write of content). That is review, not a commit of the release, and the gate defines an author as the model whose session wrote the change (Who may review). The fresh session could not know it; the records of `T-4tjy` and `T-8byd` said the same of their reviewer's model.
+
 **A miscount in the record, not a finding:** finding 15 says ten non-push references and its table of runs says thirteen references outside `internal/git`; check (7) lists fourteen, eleven of them not pushes (the two entries `in no function` of `internal/setup/setup.go` are two references), and finding 15 names each of the eleven. The record is posted as it was written.
+
+## After round 1 (11:01Z to 11:03Z): notes 1 to 5 of the round
+
+The round (comment 6166857401, `nothing material in scope`, nine notes) asked for words, and the script's logic is unchanged. The header of the script says what check (4) admits (the verb, not the subcommand, in `CloneLocal` and `AddRemote`) and what check (7) cannot see (a new caller of one of the three functions, a reference that a line break or a comment line hides, an import guard that passes when it finds no import at all); the heading of (7) and its refusal text say "name a remote verb" and "explicit name", where they said "reach a remote" and "a name other than git" (check (4) says that `AddRemote` and `CloneLocal` reach no remote). The header keeps its 197 lines, so the lines of the record's citations of the script do not move. The script now has the sha256 `b6f57973aa140cf1a37685f9a1098ae5f5f29a9fe34653cc34c594edd7be8eb6`; the one that the review read, `7a24759e8a62c1647666759746f62d5f872ac4c877cb3d2db8c21d17812d65cd`, is the file of `62fd959`.
+
+The six mutants and the clean release again with the new script (11:02:44Z to 11:03:05Z): the clean release exits 0, and each mutant exits 1 on the same line as before; `alias-import` now says `FAIL: internal/git imported under an explicit name: internal/run/aliasmut.go:3:import gitx "github.com/pharzam/layup/internal/git"`. The output at the release (11:03:11Z to 11:03:14Z, exit 0) differs from the earlier one in the time of check (2) and the heading of (7) only; `release-check.txt` is that output.
 
 ## Criterion 3: the whole gate (10:14:02Z to 10:28:15Z, head `a0d759a`)
 
