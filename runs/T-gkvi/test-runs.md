@@ -80,7 +80,7 @@ whole output of each run is kept on the host, in the scratch directory of the se
 # 3. world, 12:03:09Z
 --- FAIL: TestTheProbeIsAPassOnlyForGitHubsRefusalOfTheProbeRef
     forgecheck_integration_test.go:103: GitHub's refusal of the probe ref: fail, "probe not run: remote: error: GH013: Repository rule violations found for refs/heads/layup-probe.        ", git push --porcelain…
-        remote: Review all repository rules at https://github.com/acme/target/rules?ref=refs/heads/layup-probe        
+        remote: Review all repository rules at https://github.com/acme/target/rules?ref=refs/heads/layup-probe
 --- FAIL: TestTheStepForgeCheckChecksTheForgeAndCommitsItsTableAtEachRestart
     forgecheck_integration_test.go:217: the step forge-check: {Name:forge-check Result:fail Detail:probe: probe not run: remote: error: GH013: Repository rule violations found for refs/heads/layup-probe.       …
         step	result	detail
@@ -155,3 +155,15 @@ tests that can see it, run until one fails: **18 caught, 0 survived, 0 not run, 
 4. **The evidence** (finding 4): the failing output of each red run is above, and the whole gate, with the e2e level as
    `go test -count=1 -tags=e2e -timeout 10m ./...`, is recorded below with its times and exit codes.
 
+## The whole gate
+
+Each step is run by one script with its exit code and its times; the e2e level is `go test -count=1 -tags=e2e -timeout 10m ./...` (the
+condition 5 of the plan review), the integration level `go test -count=1 -timeout 30m -tags=integration ./...`.
+
+- **On `5446e8e`, before round 1** (12:18:44Z to 12:33:12Z): `go build ./...`, `go vet ./...`, `gofmt -l internal cmd` (empty) and `go test ./...`
+  exit 0; the integration level exit 0 (12:18:50Z to 12:30:18Z, 11 min 28 s); the e2e level exit 0 (12:30:18Z to 12:32:19Z, 2 min 1 s);
+  `adr-lint`, `prd-lint`, `link-lint`, `run-discipline-tests`, `nested-checkout-check`, `setup-check` and `git diff --check origin/main HEAD` exit 0.
+- **On `0b2f344`, the fix of round 1** (12:51:52Z to 13:06:02Z): the same steps, each exit 0, but `git diff --check origin/main HEAD`, which gave
+  exit 2 on two faults of this record (a pasted line with trailing spaces and a blank line at its end), fixed in the commit that adds this
+  section and checked again (exit 0). The integration level took 12:52:00Z to 13:03:20Z (11 min 20 s) and the e2e level 13:03:20Z to 13:05:10Z
+  (1 min 50 s).
