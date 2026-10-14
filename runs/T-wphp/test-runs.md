@@ -69,6 +69,12 @@ Round 1 (comment 6154043779, `e7e818c`, GPT-6.1 Sol on Codex CLI `xhigh`, 9 min 
 - Finding 3, stale names of tests in the traceability and the PRD cells (three tests that were removed or merged) and a comment of `pushProbe`: fixed; the names are checked against the code.
 - Finding 4, a note: the reviewer's sandbox cannot open a loopback socket, so it could not run the integration level; nothing to do.
 
+## Round 2 and the cap
+
+Round 2 (comment 6155102401, `b94b1c6`, GPT-6.1 Sol `xhigh`, 9 min 0 s from 20:50:57Z) ended `not mergeable, findings recorded`: finding 1, the order of the tests, is still material at the cap of 1; its other findings are
+notes (the wording of run 8, applied in `23ccb66`; the sandbox; and #318, which the reviewer agrees is revealed). The author recommended a known limit, and the Operator chose one more cycle (Telegram message 227, 2026-10-14T03:49Z), so the cap is 2.
+The order in which the late cases were written cannot change; round 3 reads this record with that choice, and is asked what would settle the finding besides a ruling that accepts the deviation.
+
 ## Green
 
 On `7c03bc2` (19:31:32Z to 19:44:42Z), the code that round 1 read less its comment, each with exit 0, in this order (the time is when the command ended; `go test` with `-count=1`, then
