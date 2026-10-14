@@ -568,7 +568,7 @@ committer, at the run's time) in its own clone, and pushes it to
 `refs/heads/layup-probe` with the installation token (`internal/git`). It
 passes when the push exits non-zero, its standard error holds GitHub's line
 `GH013: Repository rule violations found for refs/heads/layup-probe.` (the ref as
-the whole ref, and the full stop optional), and the refusal is attributed to the
+the whole ref, and the full stop may be left out), and the refusal is attributed to the
 default branch's ruleset, as the paragraph below says (**decided here**, task
 `T-gkvi`, #323). Else it is `fail`: a push that
 exits 0, as "probe accepted: <SHA>" (the Operator then deletes the ref and
