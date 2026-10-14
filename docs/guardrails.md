@@ -943,6 +943,10 @@ These traps are not domain-specific: they hurt every project's test suite.
   table with no row, so a header alone would have called the Scaffold done and moved `forge-check` before
   `probe`. `scaffoldIsDone` reads the table by its schema first. Task `T-2j13` (#281), plan review. **The check:**
   a header and no row is a case of every test that decides from a table.
+- ❌ **A test that compares the times of two rows of two runs as strictly later.** The `at` of a table has the
+  resolution of a second, and the forge check of a restart that ends a run and the one of the restart that
+  follows it can fall in the same second; the e2e of the Scaffold failed one run in two on it. Task `T-eevt`
+  (#282). **The check:** let a second pass between the two runs, or compare the run IDs and the commits.
 
 ### Reference-sweep pitfalls
 

@@ -11,6 +11,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -94,11 +95,14 @@ func buildRunBinary(t *testing.T) (string, string) {
 // fakeForge plays the calls of M2a; its branches are those of the bare target.
 type fakeForge struct {
 	bare   string
+	host   string // the host directory, whose work area holds the ruleset files that the rules are read from (row 58)
 	mu     sync.Mutex
 	issues int
 	posted []string         // the bodies of the comments on the control issue
 	intake []string         // the bodies of the comments on the Intake issue, the App's (row 46)
 	people []map[string]any // the comments of persons on the Intake issue, scripted by a test (row 48)
+	// noRules names the branches whose rules the forge gives as none (row 58).
+	noRules map[string]bool
 }
 
 func (f *fakeForge) serve(w http.ResponseWriter, r *http.Request) {
@@ -115,12 +119,32 @@ func (f *fakeForge) serve(w http.ResponseWriter, r *http.Request) {
 	case call == "GET /repos/acme/target":
 		enc.Encode(map[string]any{"default_branch": "main", "visibility": "public"})
 	case call == "GET /repos/acme/target/branches":
-		out, _ := gitRun(f.bare, "for-each-ref", "--format=%(refname:short)", "refs/heads")
-		list := []map[string]string{}
-		for _, n := range strings.Fields(out) {
-			list = append(list, map[string]string{"name": n})
+		out, _ := gitRun(f.bare, "for-each-ref", "--format=%(refname:short) %(objectname)", "refs/heads")
+		list := []map[string]any{}
+		for _, line := range strings.Split(strings.TrimSpace(out), "\n") {
+			if name, sha, ok := strings.Cut(line, " "); ok {
+				list = append(list, map[string]any{"name": name, "commit": map[string]string{"sha": sha}})
+			}
 		}
 		enc.Encode(list)
+	case strings.HasPrefix(call, "GET /repos/acme/target/rules/branches/"):
+		// The rules of a branch are those of its ruleset file in the work area, as an active ruleset of the forge gives them.
+		branch := strings.TrimPrefix(r.URL.Path, "/repos/acme/target/rules/branches/")
+		file := "ruleset-default.json"
+		if branch == "layup-records" {
+			file = "ruleset-records.json"
+		}
+		var set struct {
+			Rules json.RawMessage `json:"rules"`
+		}
+		data, err := os.ReadFile(filepath.Join(f.host, "work", "acme", "target", "out", file))
+		if err != nil || f.noRules[branch] || json.Unmarshal(data, &set) != nil {
+			w.Write([]byte("[]"))
+			return
+		}
+		w.Write(set.Rules)
+	case call == "GET /repos/acme/target/activity":
+		w.Write([]byte("[]"))
 	case strings.HasPrefix(call, "GET /users/"):
 		ids := map[string]int{"pharzam": 101, "carol": 303, "layup-agent[bot]": 9001}
 		if id, ok := ids[strings.TrimPrefix(r.URL.Path, "/users/")]; ok {
@@ -168,7 +192,11 @@ type runWorld struct {
 	forge     *fakeForge
 }
 
-func newRunWorld(t *testing.T) runWorld {
+func newRunWorld(t *testing.T) runWorld { return newRunWorldWith(t, nil) }
+
+// newRunWorldWith is newRunWorld with a change of the files of the host's directory, by path, which a scenario
+// makes to replace one, as the harness, or to add one (row 58).
+func newRunWorldWith(t *testing.T, change func(files map[string]string)) runWorld {
 	t.Helper()
 	w := runWorld{dir: t.TempDir()}
 	web := filepath.Join(t.TempDir(), "web")
@@ -186,7 +214,7 @@ func newRunWorld(t *testing.T) runWorld {
 			t.Fatal(out)
 		}
 	}
-	w.forge = &fakeForge{bare: w.bare}
+	w.forge = &fakeForge{bare: w.bare, host: w.dir}
 	srv := httptest.NewServer(http.HandlerFunc(w.forge.serve))
 	t.Cleanup(srv.Close)
 	k, err := rsa.GenerateKey(rand.Reader, 2048)
@@ -236,10 +264,13 @@ esac
 `,
 		"psb.md": "# The problem\n",
 	}
+	if change != nil {
+		change(files)
+	}
 	for p, text := range files {
 		os.MkdirAll(filepath.Dir(filepath.Join(w.dir, p)), 0o755)
 		mode := os.FileMode(0o644)
-		if strings.HasPrefix(p, "bin/") {
+		if strings.HasPrefix(p, "bin/") || strings.HasPrefix(p, "ops/") {
 			mode = 0o755
 		}
 		os.WriteFile(filepath.Join(w.dir, p), []byte(text), mode)
@@ -271,16 +302,26 @@ func (w runWorld) operator(stop <-chan struct{}) {
 // in each world.
 func (w runWorld) run(t *testing.T, binary string, args ...string) result {
 	t.Helper()
-	cmd := exec.Command(binary, args...)
+	return w.runWith(t, binary, nil, args...)
+}
+
+// runWith is run with the variables of env added to the fixed environment: the settings of Go for
+// the step that runs the real verification (row 58).
+func (w runWorld) runWith(t *testing.T, binary string, env []string, args ...string) result {
+	t.Helper()
+	// A run that waits for a lease that no one releases ends the scenario with its reason, not at the limit of the package.
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, binary, args...)
 	cmd.Dir = w.dir
-	cmd.Env = []string{"HOME=" + t.TempDir(), "TMPDIR=" + t.TempDir(), "PATH=" + os.Getenv("PATH"), "LC_ALL=C"}
+	cmd.Env = append([]string{"HOME=" + t.TempDir(), "TMPDIR=" + t.TempDir(), "PATH=" + os.Getenv("PATH"), "LC_ALL=C"}, env...)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &stdout, &stderr
 	code := 0
 	if err := cmd.Run(); err != nil {
 		var exit *exec.ExitError
-		if !errors.As(err, &exit) {
-			t.Fatalf("layup %q: %v", args, err)
+		if ctx.Err() != nil || !errors.As(err, &exit) {
+			t.Fatalf("layup %q: %v (no end in three minutes: %v)\n%s", args, err, ctx.Err(), stderr.String())
 		}
 		code = exit.ExitCode()
 	}
@@ -294,10 +335,16 @@ var startArgs = []string{"run", "--new", "acme/target", "--host", ".", "--psb", 
 func startWorld(t *testing.T, binary string) (runWorld, result) {
 	t.Helper()
 	w := newRunWorld(t)
+	return w, w.start(t, binary)
+}
+
+// start runs layup run --new in the world, with the stand-in Operator.
+func (w runWorld) start(t *testing.T, binary string) result {
+	t.Helper()
 	stop := make(chan struct{})
 	go w.operator(stop)
 	defer close(stop)
-	return w, w.run(t, binary, startArgs...)
+	return w.run(t, binary, startArgs...)
 }
 
 // The demo of row 26: layup run --new, then layup run TARGET, give their

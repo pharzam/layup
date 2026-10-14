@@ -822,3 +822,31 @@ six rows of the inventory item `later-p2-scaffold` are the rows marked
 | `layup run` with the real step runner (inventory) | integration | On a fixture baseline: `answers.tsv` is written from the copied answers, a prose stop starts a scripted session, the runner finishes, and `layup run` commits `setup/record.tsv`, `setup/verify.tsv`, `rule-paths.tsv`, `setup/tree.tsv` and the README of the Scaffold; a second run is "done before"; a rebuilt work area gives the same commits, also after the default branch holds the setup commits (its `main` is the root commit). |
 | The steps of the Scaffold, end to end (inventory) | e2e | In CI on a local fake forge and local bare repositories: Start, scripted Intake answers with the setup questions, the setup, the printed commands run by the test in place of the Operator, and the forge check, whose fake forge answers the read-back and the activity, and whose bare repository refuses the probe with `GH013`. |
 | The demo (inventory) | uat | On a real GitHub test target, the Operator runs the printed pushes and the ruleset apply, and sees the push to `layup-probe` refused and `setup/forge-check.tsv` show each rule and probe as passed. |
+
+**Decided here** (task `T-eevt`, #282, with the conditions of its plan review): the row
+"The steps of the Scaffold, end to end" is one test of the built binary, in five stages: the
+exit code, the whole sequence of rows, the details and the standard error of each restart are
+asserted (stage 5 has two restarts), the test runs the printed file between two restarts, and
+the records are read from the bare repository. **Stage 1:** Start, then the restart to the batch, on a scaffold
+baseline (the stand-in baseline of `internal/standin` with files that make markers, a link to
+repair and files that check `adapted` flags), which the test builds into the pin of a second
+binary; the README-only baseline of the other scenarios cannot run the setup. **Stage 2:** the
+answers, then the restart that ends Intake, runs `setup` (the prose sessions of the world's
+scripted harness) and `verify` (the real `layup setup verify`, in process, offline, on the
+host's Go build cache) and waits at `scaffold-push` (exit 0, the lease released). **Stage 3:** the
+test runs the printed `out/commands.sh` as it is, with a stand-in `gh` first on `PATH` that
+answers an apply with its `--input` file and the `source` of the repository added, and no git
+configuration, so the clone has no hook. **Stage 4:** the restart that records the applies and
+runs `forge-check`, whose fake forge gives the head of each branch, the rules of `main`,
+`layup-probe` and `layup-records` from the ruleset files of the work area, and an empty activity,
+and whose bare repository refuses the push to `layup-probe` with `GH013` and the ruleset's name
+by a `pre-receive` hook: eight rows `pass`, exit 0, the lease released. **Stage 5:** a later start,
+with `forge-check` fifth, the steps of Intake and of the Scaffold done before (but `follow-up` and
+`follow-up-answers`, with their own details), the lease released and a new table in Git history;
+then a forge that gives no rule for `layup-records`: exit 1, the rows ending at `forge-check`, no
+`probe` row, the table committed with that `fail`, and the lease held.
+
+The scenario shows the binary's plumbing, the files, the branches and the tables, and not that
+GitHub holds the rules or refuses the probe in those words: the demo row above, on a real
+target, does. No output holds a token, and no `detail` of a table holds a path of the host; the
+printed commands hold absolute paths, by [their rule](#the-commands-for-the-operator).
