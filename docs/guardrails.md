@@ -926,6 +926,19 @@ These traps are not domain-specific: they hurt every project's test suite.
   check:** write the marker and the separator as bytes of the record that are not the
   payload's, always the same, and test the whole record for a payload that ends with a line
   feed and for one that does not.
+- ❌ **A pass test on a text that nobody has read from the real forge.** The probe of the forge check
+  passes only for a refusal with `GH013` and the default branch's ruleset name in its standard error; the
+  tests' forge refuses so, and no official page confirms that GitHub does (task `T-msrd`'s search found none).
+  Task `T-wphp` (#280). **The check:** the demo of `M2d` (`T-sdtb`) reads the real refusal; if it lacks the name,
+  fix the check and its spec sentence together, never accept any refusal as a pass.
+- ❌ **A claim that a pushed commit is "on no ref" of the clone.** A `git push` to the URL of the clone's own
+  `origin` makes `origin/<branch>` when the forge accepts it in the `git` of one host (2.56) and not in that of CI,
+  so a test that wants the ref, or its absence, passed on the host and failed in CI. Task `T-wphp` (#280).
+  **The check:** test `git for-each-ref --contains` after a refused push and an accepted one, and accept both forms.
+- ❌ **A test that a plan review's condition names, written after the code.** The world scenarios of conditions 2
+  and 3 were slow to write and went last, so they were never red first; round 1 of `T-wphp` (#280) took it as a
+  failed acceptance criterion ("written red first"). **The check:** write each test that a condition names in its
+  red slice; one that is late is run against the mutant of its rule, which shows the right reason, not the order.
 
 ### Reference-sweep pitfalls
 
