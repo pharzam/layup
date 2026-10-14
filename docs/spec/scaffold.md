@@ -847,6 +847,6 @@ then a forge that gives no rule for `layup-records`: exit 1, the rows ending at 
 `probe` row, the table committed with that `fail`, and the lease held.
 
 The scenario shows the binary's plumbing, the files, the branches and the tables, and not that
-GitHub holds the rules or refuses the probe in those words: the demo of the row below, on a real
+GitHub holds the rules or refuses the probe in those words: the demo row above, on a real
 target, does. No output holds a token, and no `detail` of a table holds a path of the host; the
 printed commands hold absolute paths, by [their rule](#the-commands-for-the-operator).

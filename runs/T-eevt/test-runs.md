@@ -31,7 +31,7 @@ as such, and not as red.
 
 ## After the first green
 
-Four things were written after the scenario's first green: the assertions of the records (the thirteen checks of the verification in order, the rule-paths register and the README of the records) that condition 3 of the plan review named,
+Three things were written after the scenario's first green: the assertions of the records (the thirteen checks of the verification in order, the rule-paths register and the README of the records) that condition 3 of the plan review named,
 each of which passed on arrival, as a guard of the earlier rows, and each shown sensitive by a mutant of its own (run 2); the second of waiting before the later start, because two runs of the scenario in succession differed in one assertion (the table of the
 later start was strictly later than the first by the second of its clock, which a restart can fall inside: a pitfall of `guardrails.md` §2), after which the scenario passed twice in succession (30.8 s and 31.2 s); and the limit of three minutes for each run of
 the binary, which the mutant `lease-kept` showed to be missing. The three are test support and guards, not tests of a behavior that was missing.
