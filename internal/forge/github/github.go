@@ -244,8 +244,9 @@ func (a *Adapter) Comments(ctx context.Context, issue int) ([]forge.Comment, err
 }
 
 // EffectiveRules gives each active rule that applies to a branch, every page
-// (forge.md, The calls of M2d; task T-jpkc): GET .../rules/branches/{branch},
-// 100 a page. The branch is a multi-segment parameter of GitHub, so each of its
+// (forge.md, The calls of M2d; tasks T-jpkc and T-gkvi): GET .../rules/branches/{branch},
+// 100 a page, each rule with its type, its parameters and the ruleset that it is of
+// (ruleset_source_type, ruleset_source and ruleset_id, the zero value when absent). The branch is a multi-segment parameter of GitHub, so each of its
 // segments is escaped and its slashes stay. The endpoint answers by the name of
 // the branch: a branch with no rule gives an empty list, and a branch that does not
 // exist yet, as layup-probe before its probe, gives the rules of the rulesets whose
@@ -260,15 +261,18 @@ func (a *Adapter) EffectiveRules(ctx context.Context, branch string) ([]forge.Ru
 	var all []forge.Rule
 	for next != "" {
 		var page []struct {
-			Type       string         `json:"type"`
-			Parameters map[string]any `json:"parameters"`
+			Type              string         `json:"type"`
+			Parameters        map[string]any `json:"parameters"`
+			RulesetSourceType string         `json:"ruleset_source_type"`
+			RulesetSource     string         `json:"ruleset_source"`
+			RulesetID         int64          `json:"ruleset_id"`
 		}
 		h, err := a.do(ctx, "EffectiveRules", "GET", next, byToken, nil, 200, &page)
 		if err != nil {
 			return nil, err
 		}
 		for _, r := range page {
-			rule := forge.Rule{Type: r.Type}
+			rule := forge.Rule{Type: r.Type, RulesetSourceType: r.RulesetSourceType, RulesetSource: r.RulesetSource, RulesetID: r.RulesetID}
 			if len(r.Parameters) > 0 {
 				rule.Parameters = r.Parameters
 			}
