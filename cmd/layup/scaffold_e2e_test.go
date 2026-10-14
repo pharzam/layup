@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -15,13 +16,14 @@ import (
 	layuprun "github.com/pharzam/layup/internal/run"
 	"github.com/pharzam/layup/internal/setup"
 	"github.com/pharzam/layup/internal/standin"
+	"github.com/pharzam/layup/internal/work"
 )
 
 // The e2e of the Scaffold (docs/spec/scaffold.md, "The acceptance tests of M2d", the row "The steps of the
 // Scaffold, end to end" and its paragraph "Decided here" of task T-eevt; row 58 of the plan, #282): the built
 // binary, a fake forge on loopback, local bare repositories and the world's scripted harness programs, with no
-// secret and no network, in five stages, each a restart whose exit code, table and standard error are asserted
-// and whose records are read from the bare repository.
+// secret and no network, in five stages: each restart's exit code, rows (the whole sequence of its steps), details and
+// standard error are asserted, the printed file is run by the test, and the records are read from the bare repository.
 
 // table gives the rows of a table of run-steps: the steps in order, and for each its result and detail.
 func table(stdout string) ([]string, map[string][2]string) {
@@ -45,14 +47,42 @@ func record(t *testing.T, w runWorld, path string) string {
 	return out
 }
 
+// leaks fails the scenario when a table of a run holds a path of the host or a token of the forge in a detail, or an
+// output holds a token; the printed commands hold absolute paths, by their rule, and are not a detail of a table.
+func leaks(t *testing.T, stage string, w runWorld, r result) {
+	t.Helper()
+	names, rows := table(r.stdout)
+	for _, name := range names {
+		if d := rows[name][1]; strings.Contains(d, w.dir) || strings.Contains(d, "ghs_") {
+			t.Errorf("%s: the detail of %s holds a path of the host or a token: %q", stage, name, d)
+		}
+	}
+	if strings.Contains(r.stdout+r.stderr, "ghs_") {
+		t.Errorf("%s: an output holds a token of the forge:\n%s\n%s", stage, r.stdout, r.stderr)
+	}
+}
+
 func TestTheStepsOfTheScaffold(t *testing.T) {
 	bin := buildScaffoldBinary(t)
 	w, first := startScaffoldWorld(t, bin)
 	if first.code != 0 {
 		t.Fatalf("layup run --new: exit %d\n%s\n%s", first.code, first.stdout, first.stderr)
 	}
+	leaks(t, "Start", w, first)
 	env := goEnv(t)
-	restart := func() result { return w.runWith(t, bin, env, "run", "acme/target", "--host", ".") }
+	restart := func(stage string) result {
+		t.Helper()
+		r := w.runWith(t, bin, env, "run", "acme/target", "--host", ".")
+		leaks(t, stage, w, r)
+		return r
+	}
+	// The rows that each restart makes, in order: the four steps before the steps of Intake, those of Intake, the three of the
+	// Scaffold, and forge-check: last at the first start, and after lease once the Scaffold is done.
+	front := []string{"forge", "clone", "version", "lease"}
+	intake := []string{"probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers", "answers-review", "follow-up", "follow-up-answers"}
+	scaffold := []string{"setup", "verify", "scaffold-push"}
+	stage1, stage2 := slices.Concat(front, intake[:10]), slices.Concat(front, intake, scaffold)
+	atFirst, atLater := slices.Concat(stage2, []string{"forge-check"}), slices.Concat(front, []string{"forge-check"}, intake, scaffold)
 	area := filepath.Join(w.dir, "work", "acme", "target")
 	leaseIs := func(state string) {
 		t.Helper()
@@ -62,13 +92,14 @@ func TestTheStepsOfTheScaffold(t *testing.T) {
 	}
 
 	// Stage 1: the restart to the batch, on a baseline that holds two markers, asks the setup questions of the Operator's block.
-	r := restart()
-	if r.code != 0 || !strings.HasSuffix(r.stdout, "\nanswers\tdone\twaiting: no answer yet in the block idea-owner and the block operator\n") {
-		t.Fatalf("stage 1, the restart to the batch: exit %d\n%s\n%s", r.code, r.stdout, r.stderr)
+	r := restart("stage 1")
+	names, rows := table(r.stdout)
+	if r.code != 0 || !slices.Equal(names, stage1) || !strings.HasSuffix(r.stdout, "\nanswers\tdone\twaiting: no answer yet in the block idea-owner and the block operator\n") {
+		t.Fatalf("stage 1, the restart to the batch: exit %d, the rows %q\n%s\n%s", r.code, names, r.stdout, r.stderr)
 	}
 	port, owner := setup.MarkerID("docs/ops.md", angled("port")), setup.MarkerID("docs/ops.md", angled("owner"))
 	questions := questionsOf(t, w)
-	if _, rows := table(r.stdout); len(questions) != 7 || !strings.HasPrefix(rows["markers"][1], "2 markers") || !strings.HasPrefix(rows["batch"][1], "7 questions") {
+	if len(questions) != 7 || !strings.HasPrefix(rows["markers"][1], "2 markers") || !strings.HasPrefix(rows["batch"][1], "7 questions") {
 		t.Fatalf("stage 1: the markers row %q, the batch row %q, %d questions; want two markers and seven questions: G1, the three fields, S01-stack and the two markers\n%q", rows["markers"], rows["batch"], len(questions), questions)
 	}
 
@@ -98,13 +129,13 @@ func TestTheStepsOfTheScaffold(t *testing.T) {
 	}
 	answer(t, w, 901, questions[0], idea.String())
 	answerBy(t, w, 903, 101, "pharzam", questions[0], operator.String())
-	r = restart()
-	names, rows := table(r.stdout)
+	r = restart("stage 2")
+	names, rows = table(r.stdout)
 	waiting := "waiting for the Operator's pushes and ruleset apply"
-	if r.code != 0 || names[len(names)-1] != "scaffold-push" || rows["scaffold-push"] != [2]string{"done", waiting} ||
+	if r.code != 0 || !slices.Equal(names, stage2) || rows["scaffold-push"] != [2]string{"done", waiting} ||
 		rows["follow-up"][1] != "nothing to ask again; Intake is done" || rows["follow-up-answers"][1] != "no follow-up; Intake is done" ||
 		rows["setup"][0] != "done" || rows["verify"] != [2]string{"done", "the setup verified and its records committed"} {
-		t.Fatalf("stage 2, the restart that runs the setup: exit %d\n%s\n%s", r.code, r.stdout, r.stderr)
+		t.Fatalf("stage 2, the restart that runs the setup: exit %d, the rows %q\n%s\n%s", r.code, names, r.stdout, r.stderr)
 	}
 	commands, err := os.ReadFile(filepath.Join(area, "out", "commands.sh"))
 	if err != nil || !strings.Contains(string(commands), w.dir) {
@@ -115,29 +146,37 @@ func TestTheStepsOfTheScaffold(t *testing.T) {
 			t.Errorf("standard error has no line %q:\n%s", line, r.stderr)
 		}
 	}
-	// The records of the setup: the real verification's table, the thirteen checks of its block in order, each a pass, then a row
-	// for each kind of the manifest, a pass or a clear; the rule-paths register; the README of the Scaffold; the tree.
+	// The records of the setup: the real verification's table, the thirteen checks of its block in order, each a pass, then a row for
+	// each kind of the Go entry's manifest, in its order (the active kinds pass, the pending kinds are clear); the three files that the
+	// step publishes are those of out/ of the work area; the README is the block of the specification; the tree.
 	lines := strings.Split(strings.TrimSuffix(record(t, w, "setup/verify.tsv"), "\n"), "\n")
-	for i, check := range []string{"discipline-tests", "pin", "kit-history", "facts", "onboarding", "glossary", "guardrails", "markers", "adapted", "identity", "link-lint", "sources", "jobs"} {
-		if lines[0] != "check\tresult\treason" || len(lines) < 15 || !strings.HasPrefix(lines[i+1], check+"\tpass\t") {
-			t.Fatalf("setup/verify.tsv: row %d is %q; want %s, a pass\n%s", i+1, lines[i+1], check, strings.Join(lines, "\n"))
-		}
+	var got []string
+	for _, l := range lines {
+		f := strings.Split(l, "\t")
+		got = append(got, f[0]+" "+f[1])
 	}
-	for _, l := range lines[14:] {
-		if !strings.HasPrefix(l, "gate:") || (!strings.Contains(l, "\tpass\t") && !strings.Contains(l, "\tclear\t")) {
-			t.Errorf("setup/verify.tsv: the row %q of a kind; want gate:<kind>, a pass or a clear", l)
+	want := []string{"check result", "discipline-tests pass", "pin pass", "kit-history pass", "facts pass", "onboarding pass", "glossary pass", "guardrails pass", "markers pass", "adapted pass",
+		"identity pass", "link-lint pass", "sources pass", "jobs pass", "gate:static pass", "gate:layout clear", "gate:boundary clear", "gate:contract clear", "gate:test pass"}
+	if !slices.Equal(got, want) {
+		t.Errorf("setup/verify.tsv: %q; want %q", got, want)
+	}
+	for path, from := range map[string]string{"setup/record.tsv": work.RecordPath, "setup/verify.tsv": work.VerifyPath, "rule-paths.tsv": "out/rule-paths.tsv"} {
+		if out, err := os.ReadFile(filepath.Join(area, filepath.FromSlash(from))); err != nil || string(out) != record(t, w, path) {
+			t.Errorf("%s of layup-records is not %s of the work area: %v\n%s", path, from, err, out)
 		}
 	}
 	if paths := record(t, w, "rule-paths.tsv"); !strings.HasPrefix(paths, "pattern\texception\tsource\n.github/\t\u2014\tbaseline\n") || !strings.Contains(paths, "\ndocs/guardrails.md\tadded lines in section 2\tbaseline\n") {
 		t.Errorf("rule-paths.tsv:\n%s", paths)
 	}
-	readme := record(t, w, "README.md")
-	for _, file := range []string{"setup/record.tsv", "setup/verify.tsv", "setup/tree.tsv", "setup/rulesets.txt", "setup/forge-check.tsv", "rule-paths.tsv"} {
-		if !strings.Contains(readme, "`"+file+"`") {
-			t.Errorf("the README of the records does not name %s:\n%s", file, readme)
-		}
+	spec, err := os.ReadFile(filepath.Join("..", "..", "docs", "spec", "scaffold.md"))
+	if err != nil {
+		t.Fatal(err)
 	}
-	record(t, w, "setup/record.tsv")
+	_, block, found := strings.Cut(string(spec), "\n```text scaffold-readme\n")
+	block, _, _ = strings.Cut(block, "```\n")
+	if readme := record(t, w, "README.md"); !found || readme != block {
+		t.Errorf("README.md of layup-records is not the block scaffold-readme of scaffold.md:\n%s\nwant\n%s", readme, block)
+	}
 	if out, err := gitRun(w.bare, "show", "refs/heads/layup-records:setup/rulesets.txt"); err == nil {
 		t.Errorf("setup/rulesets.txt is in the records while the step waits:\n%s", out)
 	}
@@ -163,10 +202,10 @@ func TestTheStepsOfTheScaffold(t *testing.T) {
 	}
 
 	// Stage 4: the restart that records the applies and runs the forge check; the bare repository refuses the probe.
-	r = restart()
+	r = restart("stage 4")
 	names, rows = table(r.stdout)
-	if r.code != 0 || names[len(names)-1] != "forge-check" || rows["scaffold-push"] != [2]string{"done", "the apply of the rulesets recorded"} || rows["forge-check"] != [2]string{"done", "the forge check passed"} {
-		t.Fatalf("stage 4, the restart that records the applies: exit %d\n%s\n%s", r.code, r.stdout, r.stderr)
+	if r.code != 0 || !slices.Equal(names, atFirst) || rows["scaffold-push"] != [2]string{"done", "the apply of the rulesets recorded"} || rows["forge-check"] != [2]string{"done", "the forge check passed"} {
+		t.Fatalf("stage 4, the restart that records the applies: exit %d, the rows %q\n%s\n%s", r.code, names, r.stdout, r.stderr)
 	}
 	if got, want := record(t, w, "setup/rulesets.txt"), "== default.json\n"+applies["default.json"]+"\n== records.json\n"+applies["records.json"]+"\n"; got != want {
 		t.Errorf("setup/rulesets.txt:\n%q\nwant\n%q", got, want)
@@ -195,18 +234,18 @@ func TestTheStepsOfTheScaffold(t *testing.T) {
 
 	// Stage 5: a later start runs the forge check after the lease, writes the table again, and ends the rows at a row that is not a pass.
 	time.Sleep(1100 * time.Millisecond) // the clock of the rows has a second: the next table's is later than the first's
-	r = restart()
+	r = restart("stage 5")
 	names, rows = table(r.stdout)
-	if r.code != 0 || strings.Join(names[:6], " ") != "forge clone version lease forge-check probe" || rows["forge-check"] != [2]string{"done", "the forge check passed"} || names[len(names)-1] != "scaffold-push" {
-		t.Fatalf("stage 5, a later start: exit %d\n%s\n%s", r.code, r.stdout, r.stderr)
+	if r.code != 0 || !slices.Equal(names, atLater) || rows["forge-check"] != [2]string{"done", "the forge check passed"} {
+		t.Fatalf("stage 5, a later start: exit %d, the rows %q\n%s\n%s", r.code, names, r.stdout, r.stderr)
 	}
 	own := map[string]string{"follow-up": "nothing to ask again; Intake is done", "follow-up-answers": "no follow-up; Intake is done"}
-	for _, name := range names[6:] {
+	for _, name := range names[5:] {
 		want, ok := own[name]
-		if !ok {
+		if !ok && name != "probe" {
 			want = "done before"
 		}
-		if rows[name] != [2]string{"done", want} {
+		if rows[name][0] != "done" || (name != "probe" && rows[name][1] != want) {
 			t.Errorf("at a later start the step %s is %q; want done, %q", name, rows[name], want)
 		}
 	}
@@ -218,18 +257,15 @@ func TestTheStepsOfTheScaffold(t *testing.T) {
 	w.forge.mu.Lock()
 	w.forge.noRules = map[string]bool{"layup-records": true}
 	w.forge.mu.Unlock()
-	r = restart()
+	r = restart("stage 5, a forge that gives no rule")
 	names, rows = table(r.stdout)
-	if r.code != 1 || names[len(names)-1] != "forge-check" || rows["forge-check"] != [2]string{"fail", "rules:layup-records: update is missing"} || rows["probe"] != ([2]string{}) {
-		t.Fatalf("stage 5, a later start whose forge gives no rule: exit %d\n%s\n%s", r.code, r.stdout, r.stderr)
+	if r.code != 1 || !slices.Equal(names, atLater[:5]) || rows["forge-check"] != [2]string{"fail", "rules:layup-records: update is missing"} {
+		t.Fatalf("stage 5, a later start whose forge gives no rule: exit %d, the rows %q\n%s\n%s", r.code, names, r.stdout, r.stderr)
 	}
 	if got := checks(); got[3][0] != "rules:layup-records" || got[3][1] != "fail" {
 		t.Errorf("setup/forge-check.tsv after the failing later start: %q; want the row rules:layup-records fail", got)
 	}
 	leaseIs("held")
-	if strings.Contains(r.stdout+r.stderr, "ghs_") {
-		t.Errorf("an output holds a token of the forge")
-	}
 }
 
 // angled gives the marker of a name, with the angle quotes U+2039 and U+203A.
@@ -351,10 +387,12 @@ func startScaffoldWorld(t *testing.T, binary string) (runWorld, result) {
 		for path, text := range prose {
 			files["bin/files/"+path] = text
 		}
-		// The Operator's gh, which the test puts first on the PATH of commands.sh: it answers the apply of a ruleset with its
-		// input and the source of the repository, as the forge does.
-		files["ops/gh"] = "#!/bin/sh\n[ \"$1\" = api ] || exit 2\nwhile [ $# -gt 0 ]; do [ \"$1\" = --input ] && in=$2; shift; done\n" +
-			"sed '1s/^{/{\"source\":\"acme\\/target\",/' \"$in\"\n"
+		// The Operator's gh, which the test puts first on the PATH of commands.sh: it takes the one call that the file makes, the
+		// POST of a ruleset file of the work area to /repos/acme/target/rulesets, and answers it with the input and the source of
+		// the repository, as the forge does; any other call is an error.
+		files["ops/gh"] = "#!/bin/sh\n[ \"$#\" = 6 ] && [ \"$1 $2 $3 $4 $5\" = 'api --method POST /repos/acme/target/rulesets --input' ] && " +
+			"case \"$6\" in */out/ruleset-default.json | */out/ruleset-records.json) [ -f \"$6\" ] ;; *) false ;; esac || { echo \"gh: not the apply of a ruleset of acme/target: $*\" >&2; exit 2; }\n" +
+			"sed '1s/^{/{\"source\":\"acme\\/target\",/' \"$6\"\n"
 	})
 	// The forge refuses the push of the probe, as the ruleset of the default branch does: GH013 and the name of the ruleset.
 	hook := "#!/bin/sh\nwhile read old new ref; do\n\tif [ \"$ref\" = refs/heads/layup-probe ]; then\n" +

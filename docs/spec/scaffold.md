@@ -824,9 +824,10 @@ six rows of the inventory item `later-p2-scaffold` are the rows marked
 | The demo (inventory) | uat | On a real GitHub test target, the Operator runs the printed pushes and the ruleset apply, and sees the push to `layup-probe` refused and `setup/forge-check.tsv` show each rule and probe as passed. |
 
 **Decided here** (task `T-eevt`, #282, with the conditions of its plan review): the row
-"The steps of the Scaffold, end to end" is one test of the built binary, in five stages, each
-a restart whose exit code, table and standard error are asserted and whose records are read
-from the bare repository. **Stage 1:** Start, then the restart to the batch, on a scaffold
+"The steps of the Scaffold, end to end" is one test of the built binary, in five stages: the
+exit code, the whole sequence of rows, the details and the standard error of each restart are
+asserted (stage 5 has two restarts), the test runs the printed file between two restarts, and
+the records are read from the bare repository. **Stage 1:** Start, then the restart to the batch, on a scaffold
 baseline (the stand-in baseline of `internal/standin` with files that make markers, a link to
 repair and files that check `adapted` flags), which the test builds into the pin of a second
 binary; the README-only baseline of the other scenarios cannot run the setup. **Stage 2:** the
