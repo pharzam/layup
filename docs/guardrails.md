@@ -947,6 +947,17 @@ These traps are not domain-specific: they hurt every project's test suite.
   resolution of a second, and the forge check of a restart that ends a run and the one of the restart that
   follows it can fall in the same second; the e2e of the Scaffold failed one run in two on it. Task `T-eevt`
   (#282). **The check:** let a second pass between the two runs, or compare the run IDs and the commits.
+- ❌ **A mutant run against a script that already fails the clean tree.** The plan said that the script as it
+  stands would pass the two push mutants and so show that it "does not bite"; it fails the clean release too
+  (`remote in AddRemote`), so each exit 1 was the clean tree's. Task `T-5xjc` (#283), plan review. **The check:**
+  run each mutant against a control, the script with only the fix of the clean tree, and read the `FAIL` line of
+  each run, not its exit code.
+- ❌ **A review brief that carries the plan.** The briefs of the release reviews of `T-4tjy` and `T-8byd` gave the
+  reviewer the plan, its review and the author's answer, which the plan review of `T-5xjc` (#283) read as a breach
+  of context independence. **The check:** give a release review the issue, the criteria verbatim, the list of the
+  release with its line counts, the check with its output and a blank record form, in a clone with `runs/`,
+  `docs/tasks/`, `docs/prd/` and `docs/plan/` out of its working tree (a sparse checkout), and compare the Coverage
+  table of its record with the commit.
 
 ### Reference-sweep pitfalls
 
