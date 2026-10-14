@@ -561,7 +561,8 @@ func TestEffectiveRulesGivesEachActiveRuleOfABranchOverEveryPage(t *testing.T) {
 }
 
 // The rules of rulesets of two sources: the repository's and an organization's, each with its own ID; an answer that
-// lacks the three fields gives their zero values, and a ruleset_id that is no integer is an error of the call.
+// lacks the three fields, or gives them as null, gives their zero values, and a ruleset_id that is anything else but an integer is an
+// error of the call.
 func TestEffectiveRulesGivesTheRulesetOfEachRuleAndZeroValuesWhenTheAnswerLacksIt(t *testing.T) {
 	ctx := context.Background()
 	f, _, a, _ := setup(t)
