@@ -624,14 +624,33 @@ step is `done` "the forge check passed", or `fail` naming the first row that is 
 
 ### At each later start
 
-**Decided here:** once `setup/forge-check.tsv` exists with each row `pass`,
-each restart runs `forge-check` after `lease` and before `probe`, and writes
-the table again in a records commit (Git history keeps each); a row that is
-not `pass` stops the run at that step, as `architecture.md` §3 says ("stops
-when a rule is missing"). The steps of Intake and of the Scaffold are then
-"done before". The tree check of a later start compares the default branch
-with the head of `setup/tree.tsv` only until the first merge after the setup
-(`M2e`), which adds its own rule; in `M2d` no merge follows the setup.
+**Decided here:** once the Scaffold is done, each restart runs `forge-check`
+after `lease` and before `probe`, and writes the table again in a records
+commit (Git history keeps each); a row that is not `pass` stops the run at that
+step, as `architecture.md` §3 says ("stops when a rule is missing"), and the
+steps after it have no row. The tree check of a later start compares the default
+branch with the head of `setup/tree.tsv` only until the first merge after the
+setup (`M2e`), which adds its own rule; in `M2d` no merge follows the setup.
+
+**The Scaffold is done** (**decided here**, task `T-2j13`, #281, with the
+conditions of its plan review) when `setup/forge-check.tsv` is in the records,
+`ReadForgeCheck` accepts it and each of its eight rows is `pass`; the step `clone`
+reads it with the other records. The specification fixes this trigger and leaves
+a refused table unstated, so: an absent table, a table that its reader refuses
+and a table with a row that is not `pass` give the chain of the first start, with
+`forge-check` last, after `scaffold-push`, which writes the table again, and a
+refused table is replaced, not a failure of its own. With Start not done the chain
+is that of Start, with `phase`, and has no `forge-check`, whatever the table.
+
+At a later start the steps of Intake and of the Scaffold are each "done before",
+or give the detail that their own rule gives for a finished Intake (an R10
+correction of "are then done before", which the rules of
+[`intake.md`](intake.md#the-steps-of-intake) contradict): `follow-up` says
+"nothing to ask again; Intake is done" and `follow-up-answers` "no follow-up;
+Intake is done". The progress of a restart with Start done counts 21 steps in
+both chains, after the `1/6 forge` and `2/6 clone` of a restart with Start not
+done: `5/21 forge-check` at a later start and `21/21 forge-check` at the first
+start.
 
 ## NFR-002 — A target without LAYUP
 
@@ -723,8 +742,10 @@ the work area); `setup/record.tsv` with the files of
 before" when `setup/record.tsv` exists, and `forge-check` at a later start
 ([At each later start](#at-each-later-start)). `scaffold-push` that waits is
 `done` with "waiting", the last row of the restart, which then releases the
-lease and exits 0. When `forge-check` is done, the run releases the lease and
-exits 0; the next phase is Shape (`M2e`).
+lease and exits 0. When `forge-check` at the tail is done, the run releases the
+lease and exits 0; at a later start the check is not the last row, and the run goes
+on through the steps that are done before and releases the lease after its last row
+([At each later start](#at-each-later-start)). The next phase is Shape (`M2e`).
 
 The block `run-steps` is built: each build task that adds a step adds its name
 to the enum, with its Go schema, and the step to the restart's order, in one
@@ -790,7 +811,7 @@ six rows of the inventory item `later-p2-scaffold` are the rows marked
 | The steps of the setup in phase 2, and the pin | unit | S01 reads only `S01-stack` and runs no `layup psb check`; S02 writes the pin rows of `start.tsv` with ref `records:start/start.tsv` and resolves nothing; S03 makes no commit and fails on a tree other than `pin.tree`; S04 writes `docs/setup/armature.pin` from those rows and the raw fact of the `S01-` and `Q-` rows; S15 makes no commit of `layup-records`. |
 | The row `without-layup` | unit | S13 in phase 2 writes it with its fixed line and source `computed`; in phase 1 it writes none. |
 | The apply outputs | unit | Both files present and each a JSON object of `OWNER/NAME`: `setup/rulesets.txt` holds both after their lines; a file missing: "waiting"; a file that is not a JSON object, or of another repository: `fail`, naming it. |
-| The forge check at each later start | integration | With the records of a done Scaffold, a restart runs `forge-check` after `lease` and before `probe`, writes the table again, and stops at a row that is not `pass`; the steps of Intake and of the Scaffold are "done before". |
+| The forge check at each later start | integration | With the records of a done Scaffold ([the rule](#at-each-later-start)), a restart runs `forge-check` after `lease` and before `probe` (`5/21`), writes the table again, and stops at a row that is not `pass`, with no row after it; the steps of Intake and of the Scaffold are "done before", but `follow-up` and `follow-up-answers`, which keep their own details; a table that is absent, refused or with a row that is not `pass` gives the first-start chain (`21/21 forge-check`, the table written again). |
 | The answers of the setup | unit | Each row of the table of [The answers of the setup](#the-answers-of-the-setup): `accept` with and without a proposal, `gap`, a value, no answer and `open`, for a marker and for `S01-stack`; the answer of a follow-up that asks it again; the source URL and `by`; the `Q-` rows. |
 | The step markers | unit; integration | The scan of a fixture tree gives the keys of S10, one row for a text that a file holds on two lines; the session's `result/markers.tsv` with an unknown key, a key twice or an empty quote is refused; a quote that occurs once passes, and one that occurs twice, nowhere or with a tab refuses the file; with no marker no session starts (the integration level). |
 | The setup questions in the batch and the comment | integration | With `intake/markers.tsv` of two markers, one with a proposal and one with none, and the httptest forge: the step `batch` merges, after the questions of the idea owner's block and in the Operator's block, first `S01-stack` and then one question per row of `intake/markers.tsv`, in its order, each a row of `questions.tsv` with `source` `setup`, `ref` its ID (`S01-stack`, `M-<x8>`), `kind` `setup`, and `start` and `end` the quote's for a marker with a proposal, else `—`; `S01-stack` is asked whatever rule G1 found; the comment writes a marker's question as `Q-NNN: the value of <marker> at <file>:<line>`, with `proposed: <value>` and the quote in backquotes on the next lines when it has a proposal, and its rule of the answers adds the three forms of a marker's answer, `accept`, a value and `gap`. |

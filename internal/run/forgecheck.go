@@ -396,8 +396,9 @@ func pushProbe(dir, url string, auth git.Auth, head string, who git.Identity) (s
 	return sha, git.Push(dir, url, sha, probeBranch, auth)
 }
 
-// forgeCheckStep is the step forge-check of the restart, after scaffold-push, whenever that step is
-// done and not waiting: the job on the records, the forge, the work area and the run's clone.
+// forgeCheckStep is the step forge-check of the restart: the job on the records, the forge, the work
+// area and the run's clone. It follows scaffold-push when that step is done and not waiting, and, once the
+// Scaffold is done, it comes between lease and probe (docs/spec/scaffold.md, At each later start).
 func (r *state) forgeCheckStep(ctx context.Context) Step {
 	const name = "forge-check"
 	host, err := filepath.Abs(r.cfg.Dir)

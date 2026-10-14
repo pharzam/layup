@@ -209,7 +209,9 @@ so a person reads it with no tool. A plain `git clone` carries the branch as
 2. **`clone`**: it rebuilds `DIR/targets/OWNER/NAME/` from the forge (a fresh
    `Clone` of the default branch and `layup-records`); nothing in the old clone is
    read. It reads `start.tsv`, `approvers.tsv` and `lease.tsv`; `lease.H` and
-   `watch.T` of the restart are those of `start.tsv` (task `T-ax3r`).
+   `watch.T` of the restart are those of `start.tsv` (task `T-ax3r`). It also
+   reads `setup/forge-check.tsv`, which says whether the Scaffold is done
+   ([`scaffold.md`](scaffold.md#at-each-later-start), task `T-2j13`).
 3. **`version`**: the LAYUP version of the run equals `layup.version` of
    `start.tsv`; else `fail` (the inventory: "stops when its own version differs").
 4. **`lease`**: [the lease](#the-lease-and-fencing) is taken: at once when it is
@@ -232,7 +234,10 @@ so a person reads it with no tool. A plain `git clone` carries the branch as
    lease. **Decided here** (task `T-hxb9`): a step `done` with a detail that
    starts with "waiting" (a step of Intake that waits for a human) is the last
    row that the restart runs, as a `fail` is, and the run then releases the
-   lease and exits 0. **Decided here** (task `T-qk66`): the rows after `clone` come from the
+   lease and exits 0. **Decided here** (task `T-2j13`): once the Scaffold is done
+   (the rule is in [`scaffold.md`](scaffold.md#at-each-later-start)), the row
+   `forge-check` comes between `lease` and `probe` and not at the end, and a row
+   of it that is not `pass` makes it the last row of the restart. **Decided here** (task `T-qk66`): the rows after `clone` come from the
    records that `clone` read, and the progress of `forge` and `clone` counts the
    rows of a restart with Start not done; `M2b`'s step `probe` comes
    before it. **Decided here:** `phase` is one

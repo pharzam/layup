@@ -939,6 +939,10 @@ These traps are not domain-specific: they hurt every project's test suite.
   and 3 were slow to write and went last, so they were never red first; round 1 of `T-wphp` (#280) took it as a
   failed acceptance criterion ("written red first"). **The check:** write each test that a condition names in its
   red slice; one that is late is run against the mutant of its rule, which shows the right reason, not the order.
+- ❌ **A "done" test over the rows of a table that its reader did not accept.** "Each row is `pass`" is true of a
+  table with no row, so a header alone would have called the Scaffold done and moved `forge-check` before
+  `probe`. `scaffoldIsDone` reads the table by its schema first. Task `T-2j13` (#281), plan review. **The check:**
+  a header and no row is a case of every test that decides from a table.
 
 ### Reference-sweep pitfalls
 

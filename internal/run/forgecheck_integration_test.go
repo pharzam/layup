@@ -5,6 +5,7 @@ package run
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -128,11 +129,32 @@ func TestTheStepForgeCheckChecksTheForgeAndCommitsItsTableAtEachRestart(t *testi
 	tables := func() int {
 		return len(strings.Fields(gitOut(t, w.bare, "log", "--format=%H", "--grep=^layup run: the forge check$", "refs/heads/layup-records")))
 	}
-	restart := func(want Step) []Step {
+	// restart runs a restart and checks which rows it makes, in which order, and the notes of progress: a row's note is its place of the 21 rows
+	// that a restart with Start done plans, after the 1/6 forge and 2/6 clone of one with Start not done.
+	first := []string{"forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers", "answers-review", "follow-up", "follow-up-answers", "setup", "verify", "scaffold-push", "forge-check"}
+	later := []string{"forge", "clone", "version", "lease", "forge-check", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers", "answers-review", "follow-up", "follow-up-answers", "setup", "verify", "scaffold-push"}
+	var progress []string
+	cfg.Step = func(i, n int, name string) { progress = append(progress, fmt.Sprintf("%d/%d %s", i, n, name)) }
+	restart := func(want Step, names []string) []Step {
 		t.Helper()
+		progress = nil
 		rows := Restart(context.Background(), cfg)
-		if r := rowOf(rows, "forge-check"); r.Name != want.Name || r.Result != want.Result || !strings.Contains(r.Detail, want.Detail) || rows[len(rows)-1].Name != "forge-check" {
-			t.Fatalf("the step forge-check: %+v; want %+v, the last row\n%s", r, want, steps(rows))
+		if r := rowOf(rows, "forge-check"); r.Name != want.Name || r.Result != want.Result || !strings.Contains(r.Detail, want.Detail) {
+			t.Fatalf("the step forge-check: %+v; want %+v\n%s", r, want, steps(rows))
+		}
+		var got, notes []string
+		for _, row := range rows {
+			got = append(got, row.Name)
+		}
+		for i, name := range names {
+			total := 21
+			if i < 2 {
+				total = 6
+			}
+			notes = append(notes, fmt.Sprintf("%d/%d %s", i+1, total, name))
+		}
+		if !slices.Equal(got, names) || !slices.Equal(progress, notes) {
+			t.Errorf("the rows %q and the notes of progress %q; want the rows %q and the notes %q\n%s", got, progress, names, notes, steps(rows))
 		}
 		return rows
 	}
@@ -160,7 +182,7 @@ func TestTheStepForgeCheckChecksTheForgeAndCommitsItsTableAtEachRestart(t *testi
 		return gitRunOK(w.bare, "rev-parse", "--verify", "-q", "refs/heads/layup-probe")
 	}
 	// The first restart after the apply: the record of the applies, then the table, in one commit of its path.
-	rows := restart(Step{"forge-check", "done", "the forge check passed"})
+	rows := restart(Step{"forge-check", "done", "the forge check passed"}, first)
 	passes()
 	commit := strings.TrimSpace(gitOut(t, w.bare, "log", "-1", "--format=%H", "--grep=^layup run: the forge check$", "refs/heads/layup-records"))
 	if changed := strings.Fields(gitOut(t, w.bare, "diff", "--name-only", commit+"~1", commit)); strings.Join(changed, " ") != "setup/forge-check.tsv" || len(table()) != 8 || table()[1][0] != "rules:main" {
@@ -172,15 +194,24 @@ func TestTheStepForgeCheckChecksTheForgeAndCommitsItsTableAtEachRestart(t *testi
 	// A later restart, the work area gone: built again to the same commits, the table written again.
 	sessions := setupSessions(w)
 	must(os.RemoveAll(filepath.Join(w.dir, "work")))
-	rows = restart(Step{"forge-check", "done", "the forge check passed"})
+	rows = restart(Step{"forge-check", "done", "the forge check passed"}, later)
 	if got := strings.TrimSpace(gitOut(t, target, "rev-parse", "layup-setup")); rowOf(rows, "scaffold-push").Detail != "done before" || tables() != 2 || got != head || setupSessions(w) != sessions {
 		t.Errorf("the restart: %+v, %d tables, layup-setup %s (was %s), %d sessions (were %d); want done before, two tables, the same head and no session", rowOf(rows, "scaffold-push"), tables(), got, head, setupSessions(w), sessions)
+	}
+	// At a later start each step of Intake and of the Scaffold is done before, but the two that give the detail of a finished Intake.
+	doneBefore := map[string]string{"rule-gaps": "done before", "meaning": "done before", "numbering": "done before", "spans": "done before", "draft": "done before", "completeness": "done before",
+		"markers": "done before", "batch": "done before", "answers": "done before", "answers-review": "done before", "follow-up": "nothing to ask again; Intake is done",
+		"follow-up-answers": "no follow-up; Intake is done", "setup": "done before", "verify": "done before", "scaffold-push": "done before"}
+	for name, detail := range doneBefore {
+		if got := rowOf(rows, name); got.Result != "done" || got.Detail != detail {
+			t.Errorf("at a later start the step %s is %+v; want done, %q", name, got, detail)
+		}
 	}
 	// Three checks fail, the rules of the records branch, the probe (accepted) and the activity, and the table is committed; a work area that is there stays.
 	writeFile(t, filepath.Join(area, "stays.txt"), "x")
 	fake(func() { w.fake.rules["layup-records"], w.fake.noActivity = "", true })
 	must(os.Remove(filepath.Join(w.bare, "hooks", "pre-receive")))
-	restart(Step{"forge-check", "fail", "rules:layup-records: update is missing"})
+	restart(Step{"forge-check", "fail", "rules:layup-records: update is missing"}, later[:5])
 	passes("rules:layup-records", "probe", "activity")
 	accepted := strings.Fields(table()[6][2])
 	out, err := probeRef()
@@ -198,7 +229,7 @@ func TestTheStepForgeCheckChecksTheForgeAndCommitsItsTableAtEachRestart(t *testi
 	ahead := strings.TrimSpace(gitOut(t, target, "rev-parse", "HEAD"))
 	gitOut(t, target, "push", "-q", w.bare, "ahead:main")
 	must(os.Remove(filepath.Join(area, "out", "ruleset-records.json")))
-	restart(Step{"forge-check", "fail", "tree: the head of main is " + ahead + ", and setup/tree.tsv ends at " + head})
+	restart(Step{"forge-check", "fail", "tree: the head of main is " + ahead + ", and setup/tree.tsv ends at " + head}, first)
 	passes("tree", "rules:layup-records")
 	if got := table()[3][2]; !strings.HasPrefix(got, "open DIR/work/") || !strings.HasSuffix(got, "/out/ruleset-records.json: no such file or directory") || strings.Contains(got, w.dir) {
 		t.Errorf("the rules row of a ruleset file that is gone: %q; want its path and the reason, with DIR for the host", got)
@@ -206,7 +237,7 @@ func TestTheStepForgeCheckChecksTheForgeAndCommitsItsTableAtEachRestart(t *testi
 	// A work area that cannot be built again (a link where its directory belongs): the three rules rows fail with that reason, DIR for the host.
 	must(os.RemoveAll(filepath.Join(w.dir, "work")))
 	must(os.Symlink(t.TempDir(), filepath.Join(w.dir, "work")))
-	restart(Step{"forge-check", "fail", "tree: "})
+	restart(Step{"forge-check", "fail", "tree: "}, first)
 	for _, r := range table()[1:4] {
 		if r[1] != "fail" || !strings.HasPrefix(r[2], "the work area: DIR/work is a link") || strings.Contains(r[2], w.dir) {
 			t.Errorf("the row %s: %s, %q; want a fail for the work area that is a link, with DIR for the host", r[0], r[1], r[2])
@@ -216,7 +247,7 @@ func TestTheStepForgeCheckChecksTheForgeAndCommitsItsTableAtEachRestart(t *testi
 	must(os.Remove(filepath.Join(w.dir, "work")))
 	glossary := "setup/inputs/files/docs/glossary.md"
 	pushRecords(t, w.bare, map[string]string{glossary: "# Glossary\n\n| Term | Meaning |\n| ---- | ------- |\n| Target | the product repository (`F-0099#1`) |\n"}, "a glossary whose citation resolves to no fact")
-	restart(Step{"forge-check", "fail", "tree: "})
+	restart(Step{"forge-check", "fail", "tree: "}, first)
 	for _, r := range table()[1:4] {
 		if r[1] != "fail" || !strings.HasPrefix(r[2], "the work area: ") || !strings.Contains(r[2], "glossary") {
 			t.Errorf("the row %s: %s, %q; want a fail for the work area, naming the glossary", r[0], r[1], r[2])
@@ -231,7 +262,7 @@ func TestTheStepForgeCheckChecksTheForgeAndCommitsItsTableAtEachRestart(t *testi
 	cells[1] = strings.Repeat("1", 40)
 	lines[len(lines)-1] = strings.Join(cells, "\t")
 	pushRecords(t, w.bare, map[string]string{"setup/tree.tsv": strings.Join(lines, "\n") + "\n"}, "a tree whose last commit is not the head")
-	restart(Step{"forge-check", "fail", "tree: "})
+	restart(Step{"forge-check", "fail", "tree: "}, first)
 	for _, r := range table()[1:4] {
 		if r[1] != "fail" || !strings.Contains(r[2], head) || !strings.Contains(r[2], strings.Repeat("1", 40)) {
 			t.Errorf("the row %s: %s, %q; want a fail for the work area that names its head %s and the last commit of the tree", r[0], r[1], r[2], head)
@@ -240,8 +271,15 @@ func TestTheStepForgeCheckChecksTheForgeAndCommitsItsTableAtEachRestart(t *testi
 	// A push of the table that the forge refuses once is tried once more, as the lease is still the run's: the table is committed.
 	before := tables()
 	must(os.WriteFile(filepath.Join(w.bare, "refuse-once"), nil, 0o644))
-	restart(Step{"forge-check", "fail", "tree: "})
+	restart(Step{"forge-check", "fail", "tree: "}, first)
 	if tables() != before+1 {
 		t.Errorf("%d tables after a push that was refused once; want %d", tables(), before+1)
+	}
+	// A table that its reader refuses, a header and no row (a reading of "each row is pass" would call it done): the first-start chain, and the table written again.
+	before = tables()
+	pushRecords(t, w.bare, map[string]string{"setup/forge-check.tsv": "check\tresult\tdetail\trun\tat\n"}, "a table that its reader refuses")
+	restart(Step{"forge-check", "fail", "tree: "}, first)
+	if _, err := ReadForgeCheck([]byte(recordsFile(t, w, "setup/forge-check.tsv"))); err != nil || tables() != before+1 {
+		t.Errorf("the table after a refused one: %v, %d tables; want it readable again and %d tables", err, tables(), before+1)
 	}
 }
