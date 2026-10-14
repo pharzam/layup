@@ -392,11 +392,13 @@ func startScaffoldWorld(t *testing.T, binary string) (runWorld, result) {
 		// the repository, as the forge does; any other call is an error.
 		files["ops/gh"] = "#!/bin/sh\n[ \"$#\" = 6 ] && [ \"$1 $2 $3 $4 $5\" = 'api --method POST /repos/acme/target/rulesets --input' ] && " +
 			"case \"$6\" in */out/ruleset-default.json | */out/ruleset-records.json) [ -f \"$6\" ] ;; *) false ;; esac || { echo \"gh: not the apply of a ruleset of acme/target: $*\" >&2; exit 2; }\n" +
-			"sed '1s/^{/{\"source\":\"acme\\/target\",/' \"$6\"\n"
+			"case \"$6\" in */out/ruleset-default.json) id=7001 ;; *) id=7002 ;; esac\n" +
+			"sed \"1s/^{/{\\\"source\\\":\\\"acme\\\\/target\\\",\\\"id\\\":$id,/\" \"$6\"\n"
 	})
-	// The forge refuses the push of the probe, as the ruleset of the default branch does: GH013 and the name of the ruleset.
+	// The forge refuses the push of the probe, as the ruleset of the default branch does, in the form that GitHub prints: GH013 and the ref,
+	// the line of the rules URL and the violated rule, and no name of a ruleset (task T-gkvi).
 	hook := "#!/bin/sh\nwhile read old new ref; do\n\tif [ \"$ref\" = refs/heads/layup-probe ]; then\n" +
-		"\t\tprintf '%s\\n' 'error: GH013: Repository rule violations found for refs/heads/layup-probe.' '- Rulesets: layup: the default branch' >&2\n\t\texit 1\n\tfi\ndone\nexit 0\n"
+		"\t\tprintf '%s\\n' 'error: GH013: Repository rule violations found for refs/heads/layup-probe.' 'Review all repository rules at https://github.com/acme/target/rules?ref=refs/heads/layup-probe' '' '- Cannot create ref due to creations being restricted.' >&2\n\t\texit 1\n\tfi\ndone\nexit 0\n"
 	if err := os.WriteFile(filepath.Join(w.bare, "hooks", "pre-receive"), []byte(hook), 0o755); err != nil {
 		t.Fatal(err)
 	}

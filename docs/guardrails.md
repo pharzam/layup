@@ -927,10 +927,14 @@ These traps are not domain-specific: they hurt every project's test suite.
   payload's, always the same, and test the whole record for a payload that ends with a line
   feed and for one that does not.
 - ❌ **A pass test on a text that nobody has read from the real forge.** The probe of the forge check
-  passes only for a refusal with `GH013` and the default branch's ruleset name in its standard error; the
-  tests' forge refuses so, and no official page confirms that GitHub does (task `T-msrd`'s search found none).
-  Task `T-wphp` (#280). **The check:** the demo of `M2d` (`T-sdtb`) reads the real refusal; if it lacks the name,
-  fix the check and its spec sentence together, never accept any refusal as a pass.
+  passed only for a refusal with `GH013` and the default branch's ruleset name in its standard error; the
+  tests' forge refused so (a line `- Rulesets: layup: the default branch` that no source had), and no official page
+  gave the text (task `T-msrd`'s search found none). GitHub's refusal names the ref and the violated rule and no
+  ruleset: ten public reports show it, and the demo of `M2d` would have failed on a correct target. Task `T-wphp`
+  (#280), found before the demo by `T-gkvi` (#323), which attributes the refusal by the ruleset ID of the effective
+  rules. **The check:** a test double of an external system's message copies a text from a source that the test
+  names (a report, a log of the real run), and the demo keeps the real text (`runs/T-sdtb/`); a rule never
+  accepts a refusal because of its text alone.
 - ❌ **A claim that a pushed commit is "on no ref" of the clone.** A `git push` to the URL of the clone's own
   `origin` makes `origin/<branch>` when the forge accepts it in the `git` of one host (2.56) and not in that of CI,
   so a test that wants the ref, or its absence, passed on the host and failed in CI. Task `T-wphp` (#280).

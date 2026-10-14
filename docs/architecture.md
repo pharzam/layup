@@ -172,7 +172,8 @@ to the LAYUP App, its only bypass actor. At the Scaffold phase and at each start
    missing (Invariant 5);
 2. pushes an empty probe commit to the ref `layup-probe`, which the same ruleset
    as the default branch covers, with the App's token. Only a refusal for a rule
-   violation (GitHub's `GH013` "Repository rule violations found", naming the
+   violation (GitHub's `GH013` "Repository rule violations found for" the probe's
+   ref, which the effective rules of the ref attribute to the default branch's
    ruleset) counts; any other failure (an expired token, a network or server
    error) stops the run as "probe not run", never as a pass (FT1). A bypass is set per ruleset, so this proves that no bypass
    covers LAYUP's own actor on the default branch, and a probe that the forge
