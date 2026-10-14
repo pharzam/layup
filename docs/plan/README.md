@@ -316,8 +316,14 @@ change, as `M2c` did.
 
 **The release of `M2d`** is the code of `main` that the demo of row 59b runs: the
 non-test Go files of `cmd/` and `internal/`, `go.mod`, and the files that the
-binary embeds, at the merge of row 58, the last build row. Row 59a reviews the
-whole release ([`scaffold.md`](../spec/scaffold.md#req-015-and-req-017--the-review-of-the-release-of-m2d)).
+binary embeds, at `0a104b8`, the merge of row 58, the last build row; it holds
+the code of phase 1, `M2a`, `M2b` and `M2c` too. Row 59a reviews the whole
+release ([`scaffold.md`](../spec/scaffold.md#req-015-and-req-017--the-review-of-the-release-of-m2d);
+task `T-5xjc`, #283). A task of `M2d` that changes the release code after row
+59a checks its own diff for `REQ-015` and `REQ-017` in its review round, and
+runs `release-check.sh` with the full commit ID of its head. Row 59b needs the
+Operator's inputs, which its issue lists: the test target and the Operator's
+admin login for the apply.
 
 The columns are those of the tasks of `M2c`, and each issue says `Refs #265` and
 `Refs #29`. Rows 50, 51a, 51b and 52a can start at once.
