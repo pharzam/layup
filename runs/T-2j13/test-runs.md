@@ -5,7 +5,7 @@ The forge check at each later start (#281, row 57b). All times are UTC, 2026-10-
 ## The order of the gate
 
 The claim was pushed at 06:09:07Z, after its secret scan, and the plan was posted at 06:11:23Z; its review (GPT-6.1 Sol on Codex CLI, `high`) ran from 06:11:23Z to 06:16:50Z and was posted at 06:17:21Z, with the author's
-answer at 06:17:41Z. The base was run at 06:11:31Z. The specification was committed first (06:18:43Z by the clock of the commit: the readings of the plan, with the R10 correction that
+answer at 06:17:41Z. The base was run at 06:11:31Z. The specification was committed first (06:18:10Z by the clock of the commit: the readings of the plan, with the R10 correction that
 condition 3 of the plan review asked for) and no test or code came before it.
 
 ## The base (06:11:31Z to 06:11:53Z)
@@ -28,6 +28,11 @@ The unit level passed at 06:22:11Z and the world at its first run on the code (0
 Each rule of the change mutated alone on a copy of the tree and never on the worktree: the reading of the table (a table that its reader refuses, a row that is not a pass, a row that is a pass), where `clone` reads it and its path, the names
 that `Restart` gives, the place of the step in each chain (before `lease`, never early, a step of Intake dropped), the names of the chains and the guard of Start not done. A mutant that does not build is counted as not run.
 Run 1 (06:24:10Z to 06:35:08Z): 13 caught, 0 survived, 0 not run, of 13. The mutants show the sensitivity of the tests, and say nothing of their order.
+
+## Round 1
+
+Round 1 (comment 6162795713, `99a3a94`, GPT-6.1 Sol `xhigh`, 7 min 59 s from 06:51:40Z) ended `nothing material in scope`. Its note on the time of the specification commit is applied above (06:18:10Z; 06:18:43Z was the time of the shell that read it after the
+commit); its note on the sandbox, which cannot open a loopback socket, needs no change.
 
 ## Green
 
