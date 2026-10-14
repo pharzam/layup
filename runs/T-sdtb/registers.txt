@@ -1,0 +1,22 @@
+== forge.tsv
+forge	app_id	app_slug	key_file	watch_slug	api	web
+github	5118100	layup-agent	/home/layup/.config/layup-agent/app.pem	—	https://api.github.com	https://github.com
+== harnesses.tsv
+harness	cap	wall	command	prompt	version	credential	credential_to	rules	policy	usage	billing	vars
+claude	5.00	30	claude -p --model {model} --max-budget-usd {cap} --output-format stream-json --verbose --permission-mode acceptEdits --allowedTools Bash,Edit,Write,Read	stdin	claude --version	/home/layup/layup-host/credentials/claude-oauth-token	var:CLAUDE_CODE_OAUTH_TOKEN	CLAUDE.md	—	claude-result	subscription	ANTHROPIC_DEFAULT_HAIKU_MODEL=claude-sonnet-5-5
+devin	—	15	devin -p --model {model} --permission-mode dangerous --respect-workspace-trust false --prompt-file {prompt}	file	devin --version	/home/layup/.local/share/devin/credentials.toml	file:.local/share/devin/credentials.toml	AGENTS.md	—	none	subscription	—
+== models.tsv
+harness	model	context	source	date	use	reason
+claude	claude-sonnet-5-5	1000000	https://platform.claude.com/docs/en/models/overview	2026-10-10T09:04:43Z	yes	—
+devin	swe-2-high	262000	https://docs.devin.ai/cli/models	2026-10-10T09:04:43Z	yes	—
+claude	claude-opus-5-5	1000000	https://platform.claude.com/docs/en/models/overview	2026-10-11T15:38:39Z	yes	—
+== routing.tsv
+role	tier	position	harness	model
+developer	execution	1	claude	claude-sonnet-5-5
+developer	execution	2	devin	swe-2-high
+systems-architect	reasoning	1	claude	claude-opus-5-5
+systems-architect	reasoning	2	devin	swe-2-high
+product-owner	reasoning	1	claude	claude-opus-5-5
+product-owner	reasoning	2	devin	swe-2-high
+qa-engineer	reasoning	1	devin	swe-2-high
+qa-engineer	reasoning	2	claude	claude-opus-5-5

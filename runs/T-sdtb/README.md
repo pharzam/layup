@@ -121,3 +121,23 @@ runs: a fix in `forge-check` is one restart with the new binary (the earlier ste
 the table is written again, and the earlier refused probe left no ref); a fix in an earlier step needs its records and
 those after it read first, and may need a new target. A later change of the binary is recorded against the reviewed
 release (`git diff --stat 0a104b8 COMMIT -- cmd internal go.mod`, and the release check on the new head).
+
+## The inputs (recorded on 2026-10-14, 11:32Z to 11:35Z, before Start)
+
+- **The registers** ([`registers.txt`](registers.txt), as the runs read them, no change of them): the forge
+  `github` with the App `layup-agent` (5118100); the harnesses `claude` (cap 5.00, wall 30 minutes) and `devin`
+  (wall 15 minutes); the models `claude-sonnet-5-5`, `claude-opus-5-5` and `swe-2-high`; the routing of
+  `systems-architect` and `product-owner` at the tier `reasoning` (`claude` `claude-opus-5-5`, then `devin`
+  `swe-2-high`) and of `qa-engineer` (`devin`, then `claude`). The credential columns hold paths, not secrets.
+- **The harnesses and git:** Claude Code 2.1.299 and Devin 3000.11.3 (9c803229faa4); git 2.56.0 at
+  `/home/layup/.local/bin/git`, the real git of the wrapper.
+- **The binary:** `go build -o ~/layup-host/bin/layup ./cmd/layup` at `00c9cdf` (this branch after step T);
+  `layup version` gives `layup 0.1.0-dev`, its SHA-256 is
+  `ddbae124e5de0e63b09bc363888c59a4cc07713b082e081237f2439da0cb7204`, and `git diff --stat 0a104b8 00c9cdf --
+  cmd internal go.mod` prints nothing: its Go code is the release that row 59a reviewed. The binary before it
+  is kept on the host as `layup.before-T-sdtb`.
+- **The brief:** `layup psb check brief.md` on the committed file gives exit 0 and a header row only (11:33Z).
+- **The wrapper:** installed as `~/layup-host/wrap/git`, its log `~/layup-host/wrap/push.log` empty, and
+  `PATH=$HOME/layup-host/wrap:$PATH` for each `layup run`; `git --version` through it gives 2.56.0.
+- **The run settings:** `--operator pharzam --idea-owner pharzam --plan free --intake-cap 50.0,48.0 --lease-h 10
+  --watch-t 1`, as `M2c` set them but for the idea owner, who is the Operator's own account here.
