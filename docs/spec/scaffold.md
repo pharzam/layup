@@ -789,6 +789,17 @@ of a model that wrote none of it, with `runs/T-efmy/release-check.sh` run on
 the release commit and adapted where the code of `M2d` needs it (the push of
 the probe reaches a remote). The demo is the next row; its inputs (the test
 target, the Operator's admin login for the apply) are asked in it.
+**Decided here** (task `T-5xjc`, #283): the check is changed in two places. Its
+check (4) also allows `remote` in `AddRemote` (`git remote add`, which writes a
+name and a URL into the config of a local clone and reaches no remote). A new
+check (7) lists each call of `internal/git` that names a remote verb with its
+caller, and fails on a reference to `git.Push` out of `PushHead` and
+`commitFiles` of `internal/run/store.go` (the heads of sessions and the records
+branch) and `pushProbe` of `internal/run/forgecheck.go` (the probe), and on an
+import of `internal/git` under an explicit name; the other calls are listed and
+fail nothing. The function is found by its name, so a second call of
+`git.Push` in one of the three functions and a new caller of one of them pass
+(7), and the review reads those functions and their callers.
 
 ## Not in M2d
 
