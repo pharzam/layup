@@ -21,7 +21,7 @@ func TestTheSearchCommandOfTheProsePromptFindsWhatCheckAdaptedFinds(t *testing.T
 	if cmd == "" {
 		t.Fatal("the prompt has no search command")
 	}
-	text, want, none := "# Notes\n\nA line with a Kit.\nThe adopters, and this\ntemplate; skips this\nsection and your projectile.\n", []string{"kit", "adopters", "this template", "skips this section", "your project"}, []string(nil)
+	text, want, neg := "# Notes\n\nA line with a Kit.\nThe adopters, and this\ntemplate; skips this\nsection and your projectile.\n", []string{"kit", "adopters", "this template", "skips this section", "your project"}, ""
 	for _, p := range verify.AdaptedPhrases() {
 		for _, w := range p.Words() {
 			switch {
@@ -30,12 +30,16 @@ func TestTheSearchCommandOfTheProsePromptFindsWhatCheckAdaptedFinds(t *testing.T
 				text += "Then " + strings.ToUpper(w) + "able to the marker.\n"
 				want = append(want, w+"able")
 			case p.Tail == verify.TailWord:
-				text += "We keep " + strings.ToUpper(w) + " here; " + w + "x and x" + w + " there.\n"
-				want, none = append(want, w), append(none, w+"x", "x"+w)
+				text += "We keep " + strings.ToUpper(w) + " here.\n"
+				want = append(want, w)
+				if !strings.HasPrefix(w, "fill") { // "fill in" holds a stem, which the aid shows with no marker (the prompt says so)
+					neg += w + "x, x" + w + ", " + w + "9 and _" + w + ".\n"
+				}
 			}
 		}
 	}
 	writeFile(t, filepath.Join(dir, "a.md"), text)
+	writeFile(t, filepath.Join(dir, "neg.md"), neg) // each whole word inside a longer word: no hit
 	writeFile(t, filepath.Join(dir, "docs", "b.txt"), "the kit\n")
 	out, err := exec.Command("sh", "-c", cmd).CombinedOutput()
 	if err != nil {
@@ -47,10 +51,8 @@ func TestTheSearchCommandOfTheProsePromptFindsWhatCheckAdaptedFinds(t *testing.T
 			t.Errorf("the search does not find %q:\n%s", w, out)
 		}
 	}
-	for _, w := range none {
-		if strings.Contains(got, ": "+strings.ToLower(w)+"\n") {
-			t.Errorf("the search finds %q, which is no hit of the check:\n%s", w, out)
-		}
+	if strings.Contains(got, "neg.md") {
+		t.Errorf("the search finds a whole word inside a longer word, which is no hit of the check:\n%s", out)
 	}
 	if strings.Contains(got, "b.txt") {
 		t.Errorf("the search reads a file that is not .md:\n%s", out)

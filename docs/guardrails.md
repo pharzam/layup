@@ -1069,9 +1069,11 @@ failure modes worth keeping.
   no name of the target. Two runs failed, each leaving a lease held for 30 minutes, and every unit test
   was green, because the tests write the files by hand. Task `T-92lm` (#326). **The check:** a prompt
   for a producer whose output a check judges names each rule of that check with the files that it
-  governs, from the check's own table where it has one (a field that a new pattern must give); a test
-  ties each rule to the prompt; and one real session on a copy of the real input, its files put through
-  the engine's own run, is the evidence before a real run costs a lease.
+  governs, from the check's own table where it has one (a phrase and a tail that a new pattern must
+  give, probed against the check by a test: a first text that said "a letter" for "an ASCII letter" was
+  looser than the check in five places, `T-92lm` round 1); a test ties each rule to the prompt; and one
+  real session on a copy of the real input, its files put through the functions that `layup run` calls,
+  is the evidence before a real run costs a lease.
 
 ## 3. Validation — how you check you are not fooling yourself
 
