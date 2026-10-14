@@ -1,6 +1,6 @@
 # T-92lm — the test runs
 
-Task `T-92lm` (#326), base `b7f3f7d`. Times are UTC on 2026-10-14, read from the clock after each step. The code of round 1 is `b3f78e7`, that of round 2 `14b7333`, the final code `52d11f5`.
+Task `T-92lm` (#326), base `b7f3f7d`. Times are UTC on 2026-10-14, read from the clock after each step. The code that round 1 read is `b3f78e7`, that round 2 read `4fbfc06`, the final code `d229767`.
 
 ## Step 3: the tests, red first
 
@@ -16,6 +16,7 @@ old body ignores, with the closure that passes it. For round 1 (comment 61767830
 | round 1: `internal/verify` | 19:42:04Z | 3 FAIL: "the tail \"\" is none of word, open and stem" for the 16 patterns, "no name", "a list is empty". The probes of what stands before a phrase PASS at red: they hold already (guards). |
 | round 1: `internal/run`, unit | 19:43:17Z | 4 FAIL (words, identity, onboarding and guardrails, the search). |
 | round 1: the search command, integration | 19:43:22Z | FAIL: the old command does not find "fillable". |
+| round 2: `internal/run`, unit | 20:39Z | 2 FAIL (the words, the search) by the new sentences; the probes of the six contexts of a stem in `internal/verify` PASS at red (guards: they describe the check). |
 
 **Guards that passed at red:** `TestTheProsePromptHoldsNoAngleQuote`. **Changed after a red run:** in round 1's code two sentences of the prompt and the test of the allowed files (mutants 22, 23 and 7
 of that set show them red or alive), and in round 2 the negative half of the test of the search command (mutant 38 survived the first text: `grep -o` prints only the match, so the test now reads
@@ -23,8 +24,8 @@ a file of whole words inside longer ones).
 
 ## Mutants (step 3, each alone on a copy of the tree, a build failure counted as not run)
 
-Round 1's set of 29 (26 caught, 2 survived and 1 not run on the first run; the weak test and two mutants repaired) was caught in full on `b3f78e7`. The set of round 2 has 40 mutants
-on `14b7333`; a first run stopped on a mutant whose old text wrapped, the run after it left mutant 38 alive, and with the test strengthened all 40 are caught.
+Round 1's set of 29 (26 caught, 2 survived and 1 not run on the first run; the weak test and two mutants repaired) was caught in full on `b3f78e7`. The set of round 2 had 40 mutants
+on `4fbfc06` (one survived, mutant 38 below, and the test was strengthened); the final set has 44 on `d229767`, each caught.
 
 | Caught by | Mutants |
 | --------- | ------- |
@@ -33,28 +34,25 @@ on `14b7333`; a first run stopped on a mutant whose old text wrapped, the run af
 | TestThePassedNamesOfCheckAdaptedAreNoHit; TestTheHitsOfAdapted, TestTheTextOfAdapted | a-name-passed-that-the-check-does-not-pass; a-passed-name-left-out-of-the-check |
 | TestTheListsOfThePromptAreCopies | the-passed-names-are-not-a-copy, the-lines-of-the-baseline-are-not-a-copy |
 | TestTheProsePromptHasTheNameOfItsTarget; TestTheStepSetupRunsS01ToS14 | the-name-of-the-target-ignored; the-name-not-passed-to-the-text |
-| TestTheProsePromptGivesTheWordsOfCheckAdapted | a-phrase-left-out-of-the-prompt, the-open-group-merged-into-the-whole-group, the-capital-word-read-as-a-phrase-of-the-list, the-allowed-files-left-out, the-passed-names-left-out, a-letter-that-is-not-ASCII-as-in-the-first-draft, the-first-sentence-of-rule-1-as-it-was-drafted |
+| TestTheProsePromptGivesTheWordsOfCheckAdapted | a-phrase-left-out-of-the-prompt, the-open-group-merged-into-the-whole-group, the-capital-word-read-as-a-phrase-of-the-list, the-allowed-files-left-out, the-passed-names-left-out, a-letter-that-is-not-ASCII-as-in-the-first-draft, the-first-sentence-of-rule-1-as-it-was-drafted, the-stem-context-as-a-marker-only, blanks-as-in-the-first-drafts, the-passed-names-without-the-words-that-start-with-them |
 | TestTheProsePromptGivesTheRulesOfTheOtherChecks | the-lines-of-the-baseline-left-out, the-branch-left-out, the-keeping-of-the-baseline-rules-left-out, the-form-of-ci-left-out, a-whole-line-reading-of-the-identity-lines, the-end-of-the-line-of-a-check-value-left-out, the-ban-of-the-onboarding-file-left-out, rule-6-left-out |
-| TestTheProsePromptAsksForASearchBeforeTheEnd (the first two also HoldsNoAngleQuote and the words test) | the-request-to-search-left-out, an-angle-quote-in-the-text, the-end-left-out |
+| TestTheProsePromptAsksForASearchBeforeTheEnd (the second also HoldsNoAngleQuote and the words test) | the-request-to-search-left-out, an-angle-quote-in-the-text, the-end-left-out, the-stopping-rule-of-the-second-draft |
 | TestTheProsePromptLetsAnAdaptedFileKeepItsMarkers | the-marker-sentence-left-out |
 | TestTheSearchCommandOfTheProsePromptFindsWhatCheckAdaptedFinds (integration) | the-aid-without-the-end-of-a-word, the-aid-without-the-letters-of-a-stem, the-aid-without-the-join-of-lines |
 
-## The gate on `52d11f5`, from 20:08:22Z (each exit code)
+## The gate on `d229767`, from 20:42:17Z (each exit code)
 
 go build ./... 0; go vet ./... 0; gofmt -l internal cmd (empty) 0; go test ./... 0; go test -tags=integration ./... 0; go test -tags=e2e ./... 0; adr-lint 0; prd-lint 0; link-lint 0; run-discipline-tests 0; nested-checkout-check 0; setup-check 0; git diff --check origin/main HEAD 0.
 
-## The rules of the prompt against their sources (note 4 of the plan review; round 1 compared them again from the source)
+## The rules of the prompt against their sources (note 4 of the plan review; rounds 1 and 2 compared them again from the source)
 
 | Clause | Source | Comparison |
 | ------ | ------ | ---------- |
-| The phrases, by tail | `adHits` and `tail` (`adapted.go:48`); `AdaptedPhrases` | Each form is a hit of its pattern and of no other; before a phrase an ASCII letter, digit or underscore makes another word and a letter that is not ASCII does not; after it, by tail: whole word, open end (no right boundary), stem (the beginning shared by the forms, any ASCII letters after it, a marker before the next full stop). All probed by a test. The check also lets `#` or `-` before `fill`, `replace` and `fill in`, and `-` after `the template`, pass: the prompt is stricter and does not say so. |
-| Case, line ends, blanks, paragraph | `hitsOf`, `paragraphHits` | ASCII A to Z read as small; lines of a paragraph joined by a space, blanks one space, a blank line ends the paragraph: stated. |
-| A marker is one unit | `unitText` | A marker runs to its first close quote, also over lines; stated. |
-| The names that pass | `kitExempt`, `passes`, `AdaptedExempt` | A hit of `kit` that starts one of the two names is dropped, whatever follows: stated, and a test. |
-| The capital word | `adAllowed`, rule 2, `AdaptedAllowed` | Read as it is, outside the nine files: stated. |
-| A citation | `citation`, `resolveFact`, three consumers | `F-`, four digits, `#`, digits; one record file and a line of the number: stated, with its files. Leading zeros on the fact line are accepted by the check: the prompt is stricter. |
-| `README.md`, `AGENTS.md` | `identityTarget`, `identityFindings` | The name and `layup-records` are substrings of `README.md`; the link; the three texts are substrings anywhere in either file: stated "anywhere, also inside a longer line". |
-| The onboarding file | `onboardingFindings` | Any U+2039 is a finding; the prompt bans both quotes, which is stricter; the link is exact. |
+| The phrases, by tail | `adHits` and `tail` (`adapted.go:48`) | Each form is a hit of its pattern and of no other; before a phrase an ASCII letter, digit or underscore makes another word, a letter that is not ASCII does not; after it, by tail (whole word, open end, stem). All probed by a test. `#` or `-` next to `fill`, `replace` and `fill in`, and `-` after `the template`, pass in the check: the prompt is stricter. |
+| Case, lines, blanks, paragraph, marker | `hitsOf`, `paragraphHits`, `unitText` | ASCII A to Z read as small; lines of a paragraph joined, spaces and tabs one space, a blank line ends the paragraph; a marker is one unit; a stem needs an angle quote U+2039 after it before the next period (six contexts probed): stated. |
+| The passed names, the capital word | `kitExempt`, `passes`; `adAllowed`, rule 2 | A hit of `kit` that starts one of the two names is dropped, whatever follows; the capital word is read as it is outside the nine files: stated. |
+| A citation | `citation`, `resolveFact`, three consumers | `F-`, four digits, `#`, digits; one record file and a line of the number: stated, with its files. Leading zeros on the fact line pass in the check: stricter. |
+| `README.md`, `AGENTS.md`, the onboarding file | `identityTarget`, `identityFindings`, `onboardingFindings` | The name and `layup-records` are substrings of `README.md`; the link; the three texts anywhere in either file: stated. Any U+2039 in the onboarding file is a finding; the prompt bans both quotes: stricter. |
 | The guardrails file | `guardrailsEntry`, `guardrailsFindings` | An entry runs to the next entry or heading; the value is the text after the last `Check: ` of the first such line, to the end of that line; three forms, an existing file, a job: stated. |
-| Markers | `LostMarkers`, `CheckAsked` | An adapted file loses no place; a new marker makes S10 stop on an `M-` row that the batch did not ask: stricter than `LostMarkers`, which allows more places. |
-| The search command | `grep -o -i -E`, `\\<`, `\\>` | Joins every line, also over a blank line; takes a letter that is not ASCII as part of a word; shows a word inside a marker and the passed names; not the baseline's name: all stated; a test runs it as printed. |
+| Markers | `LostMarkers`, `CheckAsked` | An adapted file loses no place; a new marker makes S10 stop on an `M-` row that the batch did not ask: stricter than `LostMarkers`. |
+| The search command | `grep -o -i -E`, `\\<`, `\\>` | Joins every line, also over a blank line; takes a letter that is not ASCII as part of a word; shows a word inside a marker and the passed names; not the capital word: all stated; a test runs it as printed. |
