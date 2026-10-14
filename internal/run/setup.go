@@ -317,8 +317,10 @@ func (r *state) proseSession(ctx context.Context, dir string, rows []setup.StopR
 	}
 	var kept map[string][]byte
 	keep := proseKeep(names)
+	target := r.cfg.Owner + "/" + r.cfg.Name // the name that the prompt gives to README.md (task T-92lm)
 	id, err := s.PhaseSession(ctx, PhaseSpec{Step: "setup", Role: "product-owner", Harness: h, Model: m, Models: r.cfg.Models,
-		Base: base, Records: r.store.Base(), Input: input, Output: proseOutput, Files: names, Prompt: proseText,
+		Base: base, Records: r.store.Base(), Input: input, Output: proseOutput, Files: names,
+		Prompt: func(input map[string]string, output string) []byte { return proseText(target, input, output) },
 		KeepFiles: func(id string, files map[string][]byte) (map[string][]byte, error) {
 			records, err := keep(id, files)
 			if err == nil {

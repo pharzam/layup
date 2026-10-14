@@ -247,6 +247,7 @@ case "$p" in
 	# branch at the head of layup-setup, and the files of the F- rows of the stop table, in
 	# bin/files/, are written below the output directory.
 	if printf '%s\n' "$p" | grep -q '^The output directory: '; then
+		printf '%s\n' "$p" > "$(dirname "$0")/prose-prompt.txt"
 		dir=$(printf '%s\n' "$p" | sed -n 's/^The output directory: //p')
 		stop=$(printf '%s\n' "$p" | sed -n 's/^The stop table: //p')
 		[ -f docs/setup/armature.pin ] || exit 5

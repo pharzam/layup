@@ -160,6 +160,26 @@ func TestIdentityFindings(t *testing.T) {
 	}
 }
 
+// The lines of the baseline that the prompt of the prose session names (task T-92lm, #326) are those that check identity refuses in
+// each of the two entry files, and no others.
+func TestTheLinesOfTheBaselineAreThoseThatCheckIdentityRefuses(t *testing.T) {
+	lines := KitPhrases()
+	if len(lines) == 0 {
+		t.Fatal("no line")
+	}
+	for _, line := range lines {
+		for _, f := range []string{"README.md", "AGENTS.md"} {
+			fsys := fstest.MapFS{"README.md": {Data: []byte("the [pin](docs/setup/armature.pin)\n")}, f: {Data: []byte(line + "\n")}}
+			if f == "README.md" {
+				fsys[f] = &fstest.MapFile{Data: []byte(line + " the [pin](docs/setup/armature.pin)\n")}
+			}
+			want := []string{"kit: " + f + " says the repository is the Armature kit (\"" + line + "\")"}
+			same(t, f+": "+line, identityFindings(fsys), want)
+		}
+	}
+	same(t, "an ordinary README.md", identityFindings(fstest.MapFS{"README.md": {Data: []byte("# acme\n\nthe [pin](docs/setup/armature.pin)\n")}}), nil)
+}
+
 // targetRecord is a record with the rows that the three checks read.
 func targetRecord(t *testing.T, drop string, change map[string]string) work.Record {
 	t.Helper()

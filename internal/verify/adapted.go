@@ -42,25 +42,26 @@ type adHit struct {
 	rule, name string
 	re         *regexp.Regexp
 	cased      bool
+	say        string // the pattern as the prompt of the prose session says it: its forms, each in double quotes (AdaptedPhrases)
 }
 
 var adHits = []adHit{
-	{"rule-1", "kit", regexp.MustCompile(`(^|[^a-z0-9_])kits?([^a-z0-9_]|$)`), false},
-	{"rule-1", "adopter", regexp.MustCompile(`(^|[^a-z0-9_])adopters?([^a-z0-9_]|$)`), false},
-	{"rule-1", "the template", regexp.MustCompile(`(^|[^a-z0-9_])(the|this) templates?([^a-z0-9_-]|$)`), false},
-	{"rule-2", "Armature", regexp.MustCompile(`(^|[^A-Za-z0-9_])Armature([^A-Za-z0-9_]|$)`), true},
-	{"rule-3", "optional", regexp.MustCompile(`(^|[^a-z0-9_])optional([^a-z0-9_]|$)`), false},
-	{"rule-3", "skip this section", regexp.MustCompile(`(^|[^a-z0-9_])skips? this section`), false},
-	{"rule-3", "fill \u2039", regexp.MustCompile(`(^|[^a-z0-9_#-])fill[a-z]*[^.\x01]*\x01`), false},
-	{"rule-3", "replace \u2039", regexp.MustCompile(`(^|[^a-z0-9_#-])replac[a-z]*[^.\x01]*\x01`), false},
-	{"rule-3", "fill in", regexp.MustCompile(`(^|[^a-z0-9_#-])fill in([^a-z0-9_-]|$)`), false},
-	{"rule-3", "delete this", regexp.MustCompile(`(^|[^a-z0-9_])delete this([^a-z0-9_]|$)`), false},
-	{"rule-3", "delete the one you do not use", regexp.MustCompile(`(^|[^a-z0-9_])delete the ones? you do not use`), false},
-	{"rule-3", "adapt", regexp.MustCompile(`(^|[^a-z0-9_])adapts?([^a-z0-9_]|$)`), false},
-	{"rule-3", "your project", regexp.MustCompile(`(^|[^a-z0-9_])your project`), false},
-	{"rule-3", "your forge", regexp.MustCompile(`(^|[^a-z0-9_])your forge`), false},
-	{"rule-3", "your stack", regexp.MustCompile(`(^|[^a-z0-9_])your stack`), false},
-	{"rule-3", "you use", regexp.MustCompile(`(^|[^a-z0-9_])you use([^a-z0-9_]|$)`), false},
+	{"rule-1", "kit", regexp.MustCompile(`(^|[^a-z0-9_])kits?([^a-z0-9_]|$)`), false, `"kit", "kits"`},
+	{"rule-1", "adopter", regexp.MustCompile(`(^|[^a-z0-9_])adopters?([^a-z0-9_]|$)`), false, `"adopter", "adopters"`},
+	{"rule-1", "the template", regexp.MustCompile(`(^|[^a-z0-9_])(the|this) templates?([^a-z0-9_-]|$)`), false, `"the template", "the templates", "this template"`},
+	{"rule-2", "Armature", regexp.MustCompile(`(^|[^A-Za-z0-9_])Armature([^A-Za-z0-9_]|$)`), true, `"Armature"`},
+	{"rule-3", "optional", regexp.MustCompile(`(^|[^a-z0-9_])optional([^a-z0-9_]|$)`), false, `"optional"`},
+	{"rule-3", "skip this section", regexp.MustCompile(`(^|[^a-z0-9_])skips? this section`), false, `"skip this section", "skips this section"`},
+	{"rule-3", "fill \u2039", regexp.MustCompile(`(^|[^a-z0-9_#-])fill[a-z]*[^.\x01]*\x01`), false, `"fill", "fills", "filled" or "filling" in a sentence that goes on to a marker`},
+	{"rule-3", "replace \u2039", regexp.MustCompile(`(^|[^a-z0-9_#-])replac[a-z]*[^.\x01]*\x01`), false, `"replace", "replaces", "replaced", "replacing" or "replacement" in a sentence that goes on to a marker`},
+	{"rule-3", "fill in", regexp.MustCompile(`(^|[^a-z0-9_#-])fill in([^a-z0-9_-]|$)`), false, `"fill in"`},
+	{"rule-3", "delete this", regexp.MustCompile(`(^|[^a-z0-9_])delete this([^a-z0-9_]|$)`), false, `"delete this"`},
+	{"rule-3", "delete the one you do not use", regexp.MustCompile(`(^|[^a-z0-9_])delete the ones? you do not use`), false, `"delete the one you do not use", "delete the ones you do not use"`},
+	{"rule-3", "adapt", regexp.MustCompile(`(^|[^a-z0-9_])adapts?([^a-z0-9_]|$)`), false, `"adapt", "adapts"`},
+	{"rule-3", "your project", regexp.MustCompile(`(^|[^a-z0-9_])your project`), false, `"your project", "your projects"`},
+	{"rule-3", "your forge", regexp.MustCompile(`(^|[^a-z0-9_])your forge`), false, `"your forge", "your forges"`},
+	{"rule-3", "your stack", regexp.MustCompile(`(^|[^a-z0-9_])your stack`), false, `"your stack", "your stacks"`},
+	{"rule-3", "you use", regexp.MustCompile(`(^|[^a-z0-9_])you use([^a-z0-9_]|$)`), false, `"you use"`},
 }
 
 // adaptedFindings is check_adapted (D2 to D5 of #88): the hits of the tracked
@@ -271,6 +272,42 @@ func LostMarkers(path string, before, after []byte) []string {
 		default:
 			out = append(out, fmt.Sprintf("%s:%d: the input loses %d of the %d places of the marker %s", path, first[text], n-k, n, key))
 		}
+	}
+	return out
+}
+
+// An AdaptedPhrase is a pattern of check adapted as the prompt of the prose session says it (task T-92lm, #326): the forms of the
+// pattern, each in double quotes, the one home of the words that the prompt gives the session (docs/spec/scaffold.md, The prose rows).
+type AdaptedPhrase struct {
+	Say   string // the phrase, with the forms of the pattern, each in double quotes
+	Cased bool   // the check reads it as it is, in its letter case (rule 2, which a file of AdaptedAllowed is free of)
+}
+
+// Words gives the forms that the phrase quotes, in the order of the phrase.
+func (p AdaptedPhrase) Words() []string {
+	var out []string
+	for _, m := range quoted.FindAllStringSubmatch(p.Say, -1) {
+		out = append(out, m[1])
+	}
+	return out
+}
+
+var quoted = regexp.MustCompile(`"([^"]+)"`)
+
+// AdaptedPhrases gives one phrase for each pattern of check adapted, in the order of the table; the slice is a copy.
+func AdaptedPhrases() []AdaptedPhrase {
+	out := make([]AdaptedPhrase, len(adHits))
+	for i, h := range adHits {
+		out[i] = AdaptedPhrase{h.say, h.cased}
+	}
+	return out
+}
+
+// AdaptedAllowed gives the paths of the files that may name the baseline (rule 2), in the order of the table; the slice is a copy.
+func AdaptedAllowed() []string {
+	out := make([]string, len(adAllowed))
+	for i, a := range adAllowed {
+		out[i] = a[0]
 	}
 	return out
 }

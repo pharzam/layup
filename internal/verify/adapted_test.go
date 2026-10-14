@@ -182,3 +182,82 @@ func TestLostMarkers(t *testing.T) {
 	same(t, "two places of a flagged line, one kept", LostMarkers("docs/e.md", []byte(two), []byte(kept)),
 		[]string{"docs/e.md:3: the input loses 1 of the 2 places of the marker \u2039name your reasoning-tier models\u203a"})
 }
+
+// The prompt of the prose session says each pattern of check adapted in one phrase of its own (task T-92lm, #326, conditions 1 and 2
+// of its plan review). The literals of the table are positional, so a pattern needs the field, but the compiler takes an empty
+// phrase and the phrase of another pattern: the phrase is not empty, names its pattern, has no angle quote and is its own, and each
+// form that it quotes is a hit of that pattern and of no other.
+func TestEachPatternOfAdaptedHasAPhraseThatNamesIt(t *testing.T) {
+	phrases := AdaptedPhrases()
+	if len(phrases) != len(adHits) {
+		t.Fatalf("%d phrases for %d patterns", len(phrases), len(adHits))
+	}
+	seen := map[string]bool{}
+	for i, h := range adHits {
+		p, id := phrases[i], h.rule+" "+h.name
+		name := strings.TrimSuffix(h.name, " \u2039")
+		switch {
+		case strings.TrimSpace(p.Say) == "":
+			t.Errorf("%s: the phrase is empty", id)
+		case !strings.Contains(p.Say, name):
+			t.Errorf("%s: the phrase %q does not name the pattern", id, p.Say)
+		case strings.ContainsAny(p.Say, "\u2039\u203a"):
+			t.Errorf("%s: the phrase %q holds an angle quote, which the prompt may not", id, p.Say)
+		case seen[p.Say]:
+			t.Errorf("%s: the phrase %q is the phrase of another pattern", id, p.Say)
+		case p.Cased != h.cased:
+			t.Errorf("%s: the phrase is cased %v; the pattern %v", id, p.Cased, h.cased)
+		}
+		seen[p.Say] = true
+		forms := p.Words()
+		if len(forms) == 0 {
+			t.Errorf("%s: the phrase %q quotes no form", id, p.Say)
+		}
+		for _, form := range forms {
+			text := "We keep " + form + " here.\n"
+			if strings.HasSuffix(h.name, " \u2039") {
+				text = "We keep " + form + " the \u2039x\u203a value.\n"
+			}
+			want := []string{id + ": docs/a.md:1"}
+			if got := adapted(map[string]string{"docs/a.md": text}); !slices.Equal(got, want) {
+				t.Errorf("%s: the form %q:\n got %q\nwant %q", id, form, got, want)
+			}
+		}
+	}
+}
+
+// The files that may name the baseline (rule 2) are the ones that check adapted honors: each is read, and the capital word is no
+// finding in it, and is one in another file.
+func TestTheFilesThatMayNameTheBaselineAreTheOnesCheckAdaptedHonors(t *testing.T) {
+	allowed := AdaptedAllowed()
+	if len(allowed) != len(adAllowed) || len(allowed) == 0 {
+		t.Fatalf("%d paths for %d files of the table", len(allowed), len(adAllowed))
+	}
+	for _, p := range allowed {
+		// The file is read (a word of rule 1 in it is a finding) and the capital word of rule 2 is none.
+		if got, want := adapted(map[string]string{p: "The kit is Armature.\n"}), []string{"rule-1 kit: " + p + ":1"}; !slices.Equal(got, want) {
+			t.Errorf("%s:\n got %q\nwant %q", p, got, want)
+		}
+	}
+	if got := adapted(map[string]string{"docs/other.md": "Armature is the baseline.\n"}); !slices.Equal(got, []string{"rule-2 Armature: docs/other.md:1"}) {
+		t.Errorf("another file: %q", got)
+	}
+}
+
+// The three lists that the prompt reads are copies: a caller that changes one changes no later call, and no table of the check.
+func TestTheListsOfThePromptAreCopies(t *testing.T) {
+	phrases, allowed, kit := AdaptedPhrases(), AdaptedAllowed(), KitPhrases()
+	if len(phrases) == 0 || len(allowed) == 0 || len(kit) == 0 {
+		t.Fatalf("a list is empty: %d phrases, %d files, %d lines of the baseline", len(phrases), len(allowed), len(kit))
+	}
+	phrases[0].Say, allowed[0], kit[0] = "changed", "changed", "changed"
+	if got := AdaptedPhrases()[0].Say; got == "changed" {
+		t.Errorf("the phrases are not a copy: %q", got)
+	}
+	if got := AdaptedAllowed()[0]; got == "changed" || adAllowed[0][0] == "changed" {
+		t.Errorf("the allowed files are not a copy: %q", got)
+	}
+	if got := KitPhrases()[0]; got == "changed" || kitPhrases[0] == "changed" {
+		t.Errorf("the lines of the baseline are not a copy: %q", got)
+	}
+}
