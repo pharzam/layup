@@ -112,25 +112,32 @@ quotes U+2039 and U+203A), in every place, byte for byte, with its line ends.
 
 `
 
-// proseChecksText is the fixed text of the rules of the checks, with {phrases},
-// {cased}, {allowed}, {name}, {lines}, {output} and {aid}. Each rule says which
-// files it governs; its home is the function of internal/verify that the test
-// of the prompt names, and the words, the files and the lines come from there.
+// proseChecksText is the fixed text of the rules of the checks, with {whole},
+// {open}, {stems}, {exempt}, {cased}, {allowed}, {name}, {lines}, {output} and
+// {aid}. Each rule says which files it governs; its home is the function of
+// internal/verify that the test of the prompt names, and the phrases, the
+// names, the files and the lines come from there.
 const proseChecksText = `Code checks the files that you give when you end, and the first check that fails
 refuses all of them, so check each file yourself before you end. These are the
 rules of the checks, each with the files that it governs.
 
-1. Words, in every file. No file may hold any of these phrases. Letter case does not
-   matter (the baseline's name below is the one exception), each line end counts as
-   a space, a run of blanks counts as one space, and a letter, a digit or an
-   underscore just before a phrase makes it another word. A marker is read as one
-   unit, so a word inside a marker is no hit, and you change no marker. Rewrite each
-   sentence that holds a phrase so that it speaks of this project and of its people,
-   in its own terms, and keep what the sentence says: do not drop a sentence for its
-   words alone. The phrases:
-{phrases}
-   The phrase {cased}, with its capital A, is read as it is, in its letter case. It
-   may stand only in these files: {allowed}. In any other file write "the baseline".
+1. Words, in every file. No file may hold any of these phrases. The check reads each
+   capital ASCII letter as the small one (the baseline's name below is the one
+   exception), each line end as a space and each run of blanks as one space; a blank
+   line ends a paragraph, and no phrase runs across it. A phrase is a hit unless an
+   ASCII letter, an ASCII digit or an underscore stands just before it. A marker is
+   read as one unit, so a word inside a marker is no hit, and you change no marker.
+   Rewrite each sentence that holds a phrase so that it speaks of this project and of
+   its people, in its own terms, and keep what the sentence says: do not drop a
+   sentence for its words alone.
+   Whole words (a hit unless an ASCII letter, an ASCII digit or an underscore follows: "kits" is a hit, "kitten" is not):
+{whole}
+   Open at the end (a hit whatever follows: "your projectile" is a hit):
+{open}
+   Stems (a hit as the start of any word of ASCII letters, with a marker after it before the next full stop: "fillable" is one):
+{stems}
+   The check passes the names {exempt}, though they hold the word "kit": leave them as they are.
+   The phrase {cased}, with its capital A, is read as it is, in its letter case. It may stand only in these files: {allowed}. In any other file write "the baseline".
 2. Citations. The checks read them in docs/onboarding-for-engineers.md,
    docs/glossary.md and docs/guardrails.md; keep them right in every file. A
    citation is "F-", four digits, "#" and a number, as in F-0001#3. It must name a
@@ -139,54 +146,71 @@ rules of the checks, each with the files that it governs.
    with the number, a full stop and a space. List docs/facts/ and read what is
    there. A citation that names no fact of this project is an unsupported
    attribution. Remove it, or point it to a fact of this project that supports the
-   text. Never remove a rule, a step, a definition,
-   an entry or a row of the baseline for that reason alone: keep its text and
-   change only its attribution. Remove a sentence or a row only when it is an
-   example that belongs to the baseline's own project and says nothing about this
-   one.
+   text. Never remove a rule, a step, a definition, an entry or a row of the
+   baseline for that reason alone: keep its text and change only its attribution.
+   Remove a sentence or a row only when it is an example that belongs to the
+   baseline's own project and says nothing about this one.
 3. README.md must hold the name of this repository, {name}, as text; must name the
    branch layup-records; and must hold the link ](docs/setup/armature.pin). Neither
-   README.md nor AGENTS.md may hold any of these lines: {lines}.
+   README.md nor AGENTS.md may hold any of these texts anywhere, also inside a
+   longer line: {lines}.
 4. docs/onboarding-for-engineers.md must hold no angle quote at all, not even a
    marker, and must hold the link ](facts/problem-statement-brief.md).
 5. In docs/guardrails.md each entry is a bullet that starts with "- **Inv-", a
-   number and "**". The first "Check: " of an entry must be exactly "no check yet",
-   or the path of a file of this project that exists, a space and "(hook)", or that
-   path, a space, "(ci:", a job name and ")". A file with no entry passes.
+   number and "**", and runs to the next entry or heading. Each entry must have a
+   line with "Check: ", and the text from the last "Check: " of the first such line
+   to the end of that line must be exactly "no check yet", or the path of a file of
+   this project that exists, a space and "(hook)", or that path, a space, "(ci:", a
+   job name and ")". A file with no entry passes.
 6. Markers: a row that asks you to adapt a file keeps each marker of it, as said
    above, and no file holds a marker of your own.
 
-Before you end, search each file that you wrote for each phrase of rule 1. This is
-an aid, not the check: it reads a phrase across a line end, it cannot read the two
-phrases about a marker (a form of fill or replace in a sentence that goes on to a
-marker before its full stop), which you read by eye, and it does not look for the
-baseline's name, which you search in its own letter case. For example:
+Before you end, search each file that you wrote for the phrases of rule 1. This is
+an aid, not the check: it joins every line, also across a blank line; it takes a
+letter that is not ASCII as part of a word, as the check does not; it shows a word
+inside a marker and the two names that the check passes, which are no hits; and it
+does not look for the baseline's name, which you search in its own letter case.
+For example:
 
-for f in $(find {output} -name '*.md'); do tr -s ' \t\n' ' ' < "$f" | grep -o -i -w -F {aid} | sed "s|^|$f: |"; done
+for f in $(find {output} -name '*.md'); do tr -s ' \t\n' ' ' < "$f" | grep -o -i -E '{aid}' | sed "s|^|$f: |"; done
 
-Read your files against the other rules, and repeat until nothing is left.
+A hit of a stem is a hit of the check only when a marker follows it before the next
+full stop: read those by eye. Repeat until each hit that is left is of that kind,
+inside a marker, or one of the two names. Then read your files against the other
+rules.
 Then end.
 `
 
 // proseChecks gives the rules of the checks for the target name and the output
-// directory: the phrases of check adapted, the files that may name the baseline
-// and the lines of check identity are those of internal/verify.
+// directory: the phrases of check adapted, the names that it passes, the files
+// that may name the baseline and the lines of check identity are those of
+// internal/verify, and the search command is built from the same phrases.
 func proseChecks(name, output string) string {
-	var phrases, aid, lines []string
+	var whole, open, stems, wholeWords, openWords, stemWords, lines, exempt []string
 	var cased string
 	for _, p := range verify.AdaptedPhrases() {
-		if p.Cased {
+		switch {
+		case p.Cased:
 			cased = p.Say
-			continue
-		}
-		phrases = append(phrases, "   - "+p.Say)
-		for _, w := range p.Words() {
-			aid = append(aid, "-e '"+w+"'")
+		case p.Tail == verify.TailStem:
+			stems = append(stems, "   - words that start with \""+p.Stem()+"\" ("+p.Say+")")
+			stemWords = append(stemWords, p.Stem())
+		case p.Tail == verify.TailOpen:
+			open = append(open, "   - "+p.Say)
+			openWords = append(openWords, p.Words()...)
+		default:
+			whole = append(whole, "   - "+p.Say)
+			wholeWords = append(wholeWords, p.Words()...)
 		}
 	}
 	for _, l := range verify.KitPhrases() {
 		lines = append(lines, `"`+l+`"`)
 	}
-	return strings.NewReplacer("{phrases}", strings.Join(phrases, "\n"), "{cased}", cased, "{allowed}", strings.Join(verify.AdaptedAllowed(), ", "),
-		"{name}", name, "{lines}", strings.Join(lines, ", "), "{output}", output, "{aid}", strings.Join(aid, " ")).Replace(proseChecksText)
+	for _, n := range verify.AdaptedExempt() {
+		exempt = append(exempt, `"`+n+`"`)
+	}
+	aid := `\<(` + strings.Join(wholeWords, "|") + `)\>|\<(` + strings.Join(openWords, "|") + `)|\<(` + strings.Join(stemWords, "|") + `)[a-z]*`
+	return strings.NewReplacer("{whole}", strings.Join(whole, "\n"), "{open}", strings.Join(open, "\n"), "{stems}", strings.Join(stems, "\n"),
+		"{exempt}", strings.Join(exempt, " and "), "{cased}", cased, "{allowed}", strings.Join(verify.AdaptedAllowed(), ", "),
+		"{name}", name, "{lines}", strings.Join(lines, ", "), "{output}", output, "{aid}", aid).Replace(proseChecksText)
 }

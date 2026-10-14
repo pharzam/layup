@@ -289,27 +289,28 @@ file whose link S05's deletion breaks. **Decided here** (decision 6 of #265):
   `internal/setup`, which the prompt names by its first word) names a file that
   `repo/` has, which the session gives with its changes and each marker it holds
   kept, in every place, byte for byte, as S14 requires ([`setup.md`](setup.md)).
-  **Decided here** (task `T-92lm`, #326, with the conditions of its plan review): the
-  prompt also gives the session the rules of the five checks that judge its files
-  (`onboarding`, `glossary`, `guardrails`, `identity` and `adapted`), each with the
-  files that it governs, for the first real target failed on rules that it did not
-  give (S08 on a citation of an example of the baseline, then S14 on the words of the
-  baseline in about twenty files and on a `README.md` with no name). The text has: the
-  phrases of `adapted` with their forms, how the check reads letter case, line ends,
-  blanks and a marker, and the one word that is read as it is and the files that may
-  hold it; the rule of a citation (a numbered fact of a record that the target has) and
-  the rule that no rule of the baseline goes with an example's citation; the three
-  things of `README.md` (the name `OWNER/NAME` of the run, the branch `layup-records`,
-  the link of the pin) and the lines that `identity` refuses in the two entry files;
-  the form of the onboarding file; the forms of `Check:` of the guardrails file; the
-  markers; and a request to search the files for the phrases before the session ends,
-  with a command that reads across line ends and is called an aid, not the check. The
-  phrases, the files and the lines are read from `internal/verify` (`AdaptedPhrases`,
-  `AdaptedAllowed`, `KitPhrases`), so a pattern that the check gains with no phrase
-  does not compile, and a test names each rule; the other rules are written in the
-  text, beside the function that is their home. The links that S05's rows ask to fix
-  (checked by `kit-history` and `link-lint`) and the checks of S11 (`markers`,
-  `sources` and `facts`, which read the files only for the markers they keep) are
+  **Decided here** (task `T-92lm`, #326, with the conditions of its plan review and
+  round 1): the prompt also gives the session the rules of the five checks that judge its
+  files (`onboarding`, `glossary`, `guardrails`, `identity` and `adapted`), each with the
+  files that it governs, for the first real target failed on rules that it did not give
+  (S08 on a citation of an example of the baseline, then S14 on the words of the baseline
+  in about twenty files and on a `README.md` with no name). The text has: the phrases of
+  `adapted` in three groups by what the check reads after them (whole words, open ends,
+  stems), how it reads ASCII case, line ends, blanks, paragraphs, markers and what stands
+  before a phrase, the names it passes, and the one word read as it is with the files that
+  may hold it; the rule of a citation, and that a citation that goes takes no rule of the
+  baseline with it; the three things of `README.md` (the name `OWNER/NAME` of the run, the
+  branch `layup-records`, the link of the pin) and the texts that `identity` refuses
+  anywhere in the two entry files; the forms of the onboarding file and of `Check:` in the
+  guardrails file; the markers; and a request to search the files with a command built from
+  the phrases, called an aid and not the check. The phrases, their tails, the names, the
+  files and the texts are read from `internal/verify` (`AdaptedPhrases`, `AdaptedExempt`,
+  `AdaptedAllowed`, `KitPhrases`): a pattern added without its phrase and tail does not
+  compile, and a test fails on an empty phrase, on a phrase that does not name its pattern
+  or reads it wrongly, because it probes each pattern for what it reads before and after
+  its phrase; the other rules are written in the text beside their function. The links that
+  S05's rows ask to fix (checked by `kit-history` and `link-lint`) and the checks of S11
+  (`markers`, `sources` and `facts`, which read the files only for the markers they keep) are
   acknowledged and get no rule here; a failed check still ends `setup` as `fail`, and a
   restart starts a new session: the prompt is not a retry with the findings;
 - its output: one file per `F-` row, at `result/files/<path>` of its session
@@ -874,7 +875,7 @@ six rows of the inventory item `later-p2-scaffold` are the rows marked
 | The answers of the setup | unit | Each row of the table of [The answers of the setup](#the-answers-of-the-setup): `accept` with and without a proposal, `gap`, a value, no answer and `open`, for a marker and for `S01-stack`; the answer of a follow-up that asks it again; the source URL and `by`; the `Q-` rows. |
 | The step markers | unit; integration | The scan of a fixture tree gives the keys of S10, one row for a text that a file holds on two lines; the session's `result/markers.tsv` with an unknown key, a key twice or an empty quote is refused; a quote that occurs once passes, and one that occurs twice, nowhere or with a tab refuses the file; with no marker no session starts (the integration level). |
 | The setup questions in the batch and the comment | integration | With `intake/markers.tsv` of two markers, one with a proposal and one with none, and the httptest forge: the step `batch` merges, after the questions of the idea owner's block and in the Operator's block, first `S01-stack` and then one question per row of `intake/markers.tsv`, in its order, each a row of `questions.tsv` with `source` `setup`, `ref` its ID (`S01-stack`, `M-<x8>`), `kind` `setup`, and `start` and `end` the quote's for a marker with a proposal, else `—`; `S01-stack` is asked whatever rule G1 found; the comment writes a marker's question as `Q-NNN: the value of <marker> at <file>:<line>`, with `proposed: <value>` and the quote in backquotes on the next lines when it has a proposal, and its rule of the answers adds the three forms of a marker's answer, `accept`, a value and `gap`. |
-| The prompt of the prose session | unit | The prompt holds each phrase of check `adapted` as `internal/verify` says it, how the check reads case, line ends, blanks and a marker, and the files that may name the baseline; the rule of a citation with its files and the keeping of the baseline's rules; the rules of `identity` with the name of the target and the branch, and the lines of the baseline; the forms of the onboarding file and of `Check:`; the markers; the search command built from the forms, and its end; two targets give two texts; it holds no angle quote. In `internal/verify`: each phrase is not empty, names its pattern, is its own, and each quoted form is a hit of that pattern and of no other; the allowed files are the ones the check honors; the three lists are copies. |
+| The prompt of the prose session | unit; integration | The prompt holds each phrase of check `adapted` as `internal/verify` says it, each in the group of its tail, how the check reads case, line ends, blanks, paragraphs and a marker, the names it passes, and the files that may name the baseline; the rule of a citation with its files and the keeping of the baseline's rules; the rules of `identity` with the name of the target, the branch and the texts anywhere in a line; the forms of the onboarding file and of `Check:`; the markers; the search command built from the phrases, and its end; two targets give two texts; it holds no angle quote; the command, run by the real `sh` and `grep`, finds each form and no phrase inside a longer word. In `internal/verify`: each phrase is not empty, names its pattern, is its own, each quoted form is a hit of that pattern and of no other, and what it reads before and after the phrase is what the tail says; the allowed files are the ones the check honors; the passed names pass; the lists are copies. |
 | The ruleset files (inventory) | unit | The default branch's file names each gate job pinned to 15368, the four `layup/` checks pinned to the forge register's `app_id`, `strict` true, `creation`, `allowed_merge_methods` `["merge"]` and an empty bypass list; the records branch's file has the App as its only bypass actor; phase 1 gets `creation` and the two parameters, and no `layup/` check. |
 | `commands.sh` is fail-fast and can be run again | unit | Its first line is `set -eu`, and a stand-in command that fails stops the rest (F-13); with stand-ins of `git` and `gh`, a run again after the push or after one apply pushes nothing and applies only the missing ruleset, and a `gh` that writes part of its output and exits 1 leaves no output file, so the run again applies that ruleset; and a head that is neither the root nor the setup head stops it. |
 | The probe (inventory) | integration | With a real local bare repository whose pre-receive hook refuses in the form that GitHub prints (`GH013` and the ref `layup-probe`, the line of the rules URL, a line for the violated rule, no ruleset's name), and the real `internal/git`: the refusal is `pass`, as far as the attribution goes; a hook that refuses for another ref, one that refuses with another text, and a remote that cannot be reached, are "probe not run"; an accepted push is "probe accepted". At the unit level: the exact ref (`layup-probe-other`, `layup-probe/child` and `layup-probe.x` are not it), the attribution (the default ruleset's `creation` rule alone passes; another ruleset's `creation` rule, none, an `Organization` source with the same ID and another ID fail), the ID of an apply output, and the one read of the rules of `layup-probe`; at the adapter's integration level, the ruleset of each rule (task `T-gkvi`). |
