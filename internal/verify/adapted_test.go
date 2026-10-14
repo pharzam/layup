@@ -228,7 +228,17 @@ func TestEachPatternOfAdaptedHasAPhraseThatNamesIt(t *testing.T) {
 		}
 		if stem := p.Stem(); p.Tail == TailStem && (len(stem) < 4 || !hit("", stem, "zz") || hit("", stem[:len(stem)-1], "qq")) {
 			t.Errorf("%s: the stem %q of %q is not the stem of the check", id, stem, p.Say)
-		} else if p.Tail != TailStem && p.Tail != TailWord && p.Tail != TailOpen {
+		} else if p.Tail == TailStem {
+			// After a stem the check needs an angle quote U+2039 before the next period: in a marker, in the text of the convention, between
+			// backticks or alone (round 2 of #326); a period first, or a close quote alone, is none.
+			for ctx, want := range map[string]bool{" the \u2039x\u203a value": true, " the `\u2039` character": true, " a lone \u2039 quote": true,
+				" the \u2039\u2026\u203a form": true, ". Then \u2039x\u203a": false, " a close quote \u203a here": false} {
+				text := "We keep " + stem + "zz" + ctx + ".\n"
+				if got := slices.Equal(adapted(map[string]string{"docs/a.md": text}), []string{id + ": docs/a.md:1"}); got != want {
+					t.Errorf("%s: %q is a hit: %v; the prompt says %v", id, text, got, want)
+				}
+			}
+		} else if p.Tail != TailWord && p.Tail != TailOpen {
 			t.Errorf("%s: the tail %q is none of word, open and stem", id, p.Tail)
 		}
 	}

@@ -123,7 +123,7 @@ rules of the checks, each with the files that it governs.
 
 1. Words, in every file. No file may hold any of these phrases. The check reads each
    capital ASCII letter as the small one (the baseline's name below is the one
-   exception), each line end as a space and each run of blanks as one space; a blank
+   exception), each line end as a space and each run of spaces and tabs as one space; a blank
    line ends a paragraph, and no phrase runs across it. A phrase is a hit unless an
    ASCII letter, an ASCII digit or an underscore stands just before it. A marker is
    read as one unit, so a word inside a marker is no hit, and you change no marker.
@@ -134,9 +134,9 @@ rules of the checks, each with the files that it governs.
 {whole}
    Open at the end (a hit whatever follows: "your projectile" is a hit):
 {open}
-   Stems (a hit as the start of any word of ASCII letters, with a marker after it before the next full stop: "fillable" is one):
+   Stems (a hit as the start of any word of ASCII letters, with an angle quote U+2039 after it, in a marker or alone, before the next period: "fillable" is one):
 {stems}
-   The check passes the names {exempt}, though they hold the word "kit": leave them as they are.
+   The check passes the names {exempt}, and any word that starts with one of them, though they hold the word "kit": leave them as they are.
    The phrase {cased}, with its capital A, is read as it is, in its letter case. It may stand only in these files: {allowed}. In any other file write "the baseline".
 2. Citations. The checks read them in docs/onboarding-for-engineers.md,
    docs/glossary.md and docs/guardrails.md; keep them right in every file. A
@@ -174,10 +174,11 @@ For example:
 
 for f in $(find {output} -name '*.md'); do tr -s ' \t\n' ' ' < "$f" | grep -o -i -E '{aid}' | sed "s|^|$f: |"; done
 
-A hit of a stem is a hit of the check only when a marker follows it before the next
-full stop: read those by eye. Repeat until each hit that is left is of that kind,
-inside a marker, or one of the two names. Then read your files against the other
-rules.
+A hit of a stem is a hit of the check only when an angle quote U+2039 follows it
+before the next period: read each by eye, and rewrite its sentence when one does.
+Repeat until every hit that is left is a stem with no angle quote U+2039 after it
+in its sentence, a word inside a marker, or one of the two names. Then read your
+files against the other rules.
 Then end.
 `
 

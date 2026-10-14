@@ -134,7 +134,7 @@ func TestTheProsePromptGivesTheWordsOfCheckAdapted(t *testing.T) {
 	const (
 		hWhole = `Whole words (a hit unless an ASCII letter, an ASCII digit or an underscore follows: "kits" is a hit, "kitten" is not):`
 		hOpen  = `Open at the end (a hit whatever follows: "your projectile" is a hit):`
-		hStems = `Stems (a hit as the start of any word of ASCII letters, with a marker after it before the next full stop: "fillable" is one):`
+		hStems = `Stems (a hit as the start of any word of ASCII letters, with an angle quote U+2039 after it, in a marker or alone, before the next period: "fillable" is one):`
 		hEnd   = "The check passes the names"
 	)
 	seg := func(from, to string) string { // the group between its heading and the next
@@ -170,11 +170,11 @@ func TestTheProsePromptGivesTheWordsOfCheckAdapted(t *testing.T) {
 	}
 	wantAll(t, text, "Code checks the files that you give when you end, and the first check that fails refuses all of them, so check each file yourself before you end.",
 		"1. Words, in every file. No file may hold any of these phrases.",
-		"The check reads each capital ASCII letter as the small one (the baseline's name below is the one exception), each line end as a space and each run of blanks as one space; a blank line ends a paragraph, and no phrase runs across it.",
+		"The check reads each capital ASCII letter as the small one (the baseline's name below is the one exception), each line end as a space and each run of spaces and tabs as one space; a blank line ends a paragraph, and no phrase runs across it.",
 		"A phrase is a hit unless an ASCII letter, an ASCII digit or an underscore stands just before it.",
 		"A marker is read as one unit, so a word inside a marker is no hit, and you change no marker.",
 		"Rewrite each sentence that holds a phrase so that it speaks of this project and of its people, in its own terms, and keep what the sentence says: do not drop a sentence for its words alone.",
-		hWhole, hOpen, hStems, "The check passes the names "+strings.Join(passed, " and ")+`, though they hold the word "kit": leave them as they are.`,
+		hWhole, hOpen, hStems, "The check passes the names "+strings.Join(passed, " and ")+`, and any word that starts with one of them, though they hold the word "kit": leave them as they are.`,
 		"The phrase "+cased[0]+", with its capital A, is read as it is, in its letter case. It may stand only in these files: "+strings.Join(verify.AdaptedAllowed(), ", ")+`. In any other file write "the baseline".`)
 }
 
@@ -219,8 +219,9 @@ func TestTheProsePromptAsksForASearchBeforeTheEnd(t *testing.T) {
 	regex := `\<(` + strings.Join(whole, "|") + `)\>|\<(` + strings.Join(open, "|") + `)|\<(` + strings.Join(stems, "|") + `)[a-z]*`
 	wantAll(t, text, "Before you end, search each file that you wrote for the phrases of rule 1. This is an aid, not the check:",
 		"it joins every line, also across a blank line; it takes a letter that is not ASCII as part of a word, as the check does not; it shows a word inside a marker and the two names that the check passes, which are no hits; and it does not look for the baseline's name, which you search in its own letter case.",
-		`for f in $(find /s/result/files -name '*.md'); do tr -s ' \t\n' ' ' < "$f" | grep -o -i -E '`+regex+`' | sed "s|^|$f: |"; done`,
-		"A hit of a stem is a hit of the check only when a marker follows it before the next full stop: read those by eye. Repeat until each hit that is left is of that kind, inside a marker, or one of the two names. Then read your files against the other rules.")
+		"A hit of a stem is a hit of the check only when an angle quote U+2039 follows it before the next period: read each by eye, and rewrite its sentence when one does.",
+		"Repeat until every hit that is left is a stem with no angle quote U+2039 after it in its sentence, a word inside a marker, or one of the two names. Then read your files against the other rules.",
+		`for f in $(find /s/result/files -name '*.md'); do tr -s ' \t\n' ' ' < "$f" | grep -o -i -E '`+regex+`' | sed "s|^|$f: |"; done`)
 	if !strings.HasSuffix(strings.TrimSpace(text), "Then end.") {
 		t.Errorf("the prompt does not end with the end of the session:\n%s", text)
 	}
