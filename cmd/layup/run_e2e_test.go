@@ -11,6 +11,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -308,7 +309,10 @@ func (w runWorld) run(t *testing.T, binary string, args ...string) result {
 // the step that runs the real verification (row 58).
 func (w runWorld) runWith(t *testing.T, binary string, env []string, args ...string) result {
 	t.Helper()
-	cmd := exec.Command(binary, args...)
+	// A run that waits for a lease that no one releases ends the scenario with its reason, not at the limit of the package.
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, binary, args...)
 	cmd.Dir = w.dir
 	cmd.Env = append([]string{"HOME=" + t.TempDir(), "TMPDIR=" + t.TempDir(), "PATH=" + os.Getenv("PATH"), "LC_ALL=C"}, env...)
 	var stdout, stderr bytes.Buffer
@@ -316,8 +320,8 @@ func (w runWorld) runWith(t *testing.T, binary string, env []string, args ...str
 	code := 0
 	if err := cmd.Run(); err != nil {
 		var exit *exec.ExitError
-		if !errors.As(err, &exit) {
-			t.Fatalf("layup %q: %v", args, err)
+		if ctx.Err() != nil || !errors.As(err, &exit) {
+			t.Fatalf("layup %q: %v (no end in three minutes: %v)\n%s", args, err, ctx.Err(), stderr.String())
 		}
 		code = exit.ExitCode()
 	}
