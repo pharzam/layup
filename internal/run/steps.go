@@ -82,6 +82,7 @@ type state struct {
 	start, approvers, copies       [][]string
 	startHarnesses                 []string // the harnesses of start.tsv, as a restart reads them (#199)
 	restarted                      bool
+	scaffoldDone                   bool // setup/forge-check.tsv is in the records and each of its rows is a pass (docs/spec/scaffold.md, At each later start)
 	lease                          LeaseRow
 	stopBeat                       func() error       // ends the heartbeat and gives its error
 	cancel                         context.CancelFunc // ends the context of the steps
@@ -119,7 +120,7 @@ func Restart(ctx context.Context, cfg Config) []Step {
 	defer cancel()
 	r.cancel = cancel
 	defer r.endBeat()
-	rows := r.steps(ctx, restartNames(false), 0, []func(context.Context) Step{
+	rows := r.steps(ctx, restartNames(false, false), 0, []func(context.Context) Step{
 		func(ctx context.Context) Step { return r.forgeStep(ctx, false) },
 		r.cloneStep,
 	})
@@ -129,9 +130,13 @@ func Restart(ctx context.Context, cfg Config) []Step {
 	startDone := r.startDone()
 	tail := []func(context.Context) Step{r.versionStep, r.takeStep, r.probeStep, r.phaseStep}
 	if startDone {
-		tail = []func(context.Context) Step{r.versionStep, r.takeStep, r.probeStep, r.ruleGapsStep, r.meaningStep, r.numberingStep, r.spansStep, r.draftStep, r.completenessStep, r.markersStep, r.batchStep, r.answersStep, r.answersReviewStep, r.followUpStep, r.followUpAnswersStep, r.setupStep, r.verifyStep, r.scaffoldPushStep, r.forgeCheckStep}
+		intake := []func(context.Context) Step{r.probeStep, r.ruleGapsStep, r.meaningStep, r.numberingStep, r.spansStep, r.draftStep, r.completenessStep, r.markersStep, r.batchStep, r.answersStep, r.answersReviewStep, r.followUpStep, r.followUpAnswersStep, r.setupStep, r.verifyStep, r.scaffoldPushStep}
+		tail = append(append([]func(context.Context) Step{r.versionStep, r.takeStep}, intake...), r.forgeCheckStep)
+		if r.scaffoldDone {
+			tail = append([]func(context.Context) Step{r.versionStep, r.takeStep, r.forgeCheckStep}, intake...)
+		}
 	}
-	rows = append(rows, r.steps(ctx, restartNames(startDone), len(rows), tail)...)
+	rows = append(rows, r.steps(ctx, restartNames(startDone, r.scaffoldDone), len(rows), tail)...)
 	if end := &rows[len(rows)-1]; startDone && end.Result == "done" {
 		if s := r.leaseStep(ctx); s.Result == "fail" {
 			end.Result, end.Detail = "fail", r.clean("the lease: "+s.Detail)
@@ -191,12 +196,34 @@ func (r *state) lost() error {
 // restartNames gives the names of the rows of a restart: with Start not done,
 // the row phase runs the steps of Start again; with Start done, the steps of
 // Intake take its place (docs/spec/intake.md, The steps of Intake; row 43a,
-// task T-qk66, adds the first, rule-gaps).
-func restartNames(startDone bool) []string {
-	if startDone {
-		return []string{"forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers", "answers-review", "follow-up", "follow-up-answers", "setup", "verify", "scaffold-push", "forge-check"}
+// task T-qk66, adds the first, rule-gaps), and the steps of the Scaffold follow
+// them: forge-check last, or, once the Scaffold is done, between lease and
+// probe (docs/spec/scaffold.md, At each later start; task T-2j13).
+func restartNames(startDone, scaffoldDone bool) []string {
+	if !startDone {
+		return []string{"forge", "clone", "version", "lease", "probe", "phase"}
 	}
-	return []string{"forge", "clone", "version", "lease", "probe", "phase"}
+	steps := []string{"probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers", "answers-review", "follow-up", "follow-up-answers", "setup", "verify", "scaffold-push"}
+	if scaffoldDone {
+		return append([]string{"forge", "clone", "version", "lease", "forge-check"}, steps...)
+	}
+	return append(append([]string{"forge", "clone", "version", "lease"}, steps...), "forge-check")
+}
+
+// scaffoldIsDone reports whether the Scaffold is done: the table setup/forge-check.tsv reads by its
+// schema, which holds the eight checks, and each of its rows is a pass. An absent table, a table that its
+// reader refuses and a table with a row that is not a pass are not.
+func scaffoldIsDone(table []byte) bool {
+	rows, err := ReadForgeCheck(table)
+	if err != nil {
+		return false
+	}
+	for _, r := range rows {
+		if r[1] != "pass" {
+			return false
+		}
+	}
+	return true
 }
 
 // stepNames gives the names of the steps of Start.
@@ -747,6 +774,9 @@ func (r *state) cloneStep(ctx context.Context) Step {
 	}
 	if r.cfg.WatchT, err = strconv.Atoi(r.value("watch.T")); err != nil {
 		return fail(name, err)
+	}
+	if table, err := git.Show(r.target, head, "setup/forge-check.tsv"); err == nil {
+		r.scaffoldDone = scaffoldIsDone(table)
 	}
 	r.newStore(head)
 	return done(name, "start.tsv, approvers.tsv and lease.tsv read")

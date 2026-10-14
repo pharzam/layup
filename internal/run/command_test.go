@@ -35,11 +35,22 @@ func TestStartAndRestartCallStepAtTheStartOfEachStep(t *testing.T) {
 	if got := stepNames(9); !reflect.DeepEqual(got, []string{"forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease"}) {
 		t.Errorf("the steps of Start %q; want those of run.md", got)
 	}
-	if got := restartNames(false); !reflect.DeepEqual(got, []string{"forge", "clone", "version", "lease", "probe", "phase"}) {
-		t.Errorf("the steps of a restart with Start not done %q; want those of run.md", got)
-	}
-	if got := restartNames(true); !reflect.DeepEqual(got, []string{"forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers", "answers-review", "follow-up", "follow-up-answers", "setup", "verify", "scaffold-push", "forge-check"}) {
-		t.Errorf("the steps of a restart with Start done %q; want those of run.md and intake.md", got)
+	phase := []string{"forge", "clone", "version", "lease", "probe", "phase"}
+	intake := []string{"probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers", "answers-review", "follow-up", "follow-up-answers", "setup", "verify", "scaffold-push"}
+	first := append(append([]string{"forge", "clone", "version", "lease"}, intake...), "forge-check")
+	later := append([]string{"forge", "clone", "version", "lease", "forge-check"}, intake...)
+	for _, c := range []struct {
+		startDone, scaffoldDone bool
+		want                    []string
+		what                    string
+	}{
+		{false, false, phase, "with Start not done"}, {false, true, phase, "with Start not done, whatever the table"},
+		{true, false, first, "with Start done and the Scaffold not done: forge-check last, after scaffold-push"},
+		{true, true, later, "with the Scaffold done: forge-check between lease and probe, and not last"},
+	} {
+		if got := restartNames(c.startDone, c.scaffoldDone); !reflect.DeepEqual(got, c.want) {
+			t.Errorf("the steps of a restart %s: %q; want %q", c.what, got, c.want)
+		}
 	}
 }
 
