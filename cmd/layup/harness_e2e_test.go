@@ -38,6 +38,9 @@ func TestMain(m *testing.M) {
 	if runDir != "" { // the build of the scenarios of layup run
 		os.RemoveAll(runDir)
 	}
+	if scaffoldDir != "" { // the second build, of the scenario of the Scaffold
+		os.RemoveAll(scaffoldDir)
+	}
 	os.Exit(code)
 }
 
