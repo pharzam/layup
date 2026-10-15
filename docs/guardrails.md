@@ -935,6 +935,14 @@ These traps are not domain-specific: they hurt every project's test suite.
   rules. **The check:** a test double of an external system's message copies a text from a source that the test
   names (a report, a log of the real run), and the demo keeps the real text (`runs/T-sdtb/`); a rule never
   accepts a refusal because of its text alone.
+- ❌ **A fake forge that echoes the file that it was given.** The read-back of the forge check compared each parameter
+  of a ruleset file with the effective rules, and the fakes of the job, the world and the e2e gave back each rule as
+  the file held it. The real forge does not: the rule `update` of the records ruleset, written with
+  `update_allows_fetch_and_merge` `false`, came back with no `parameters`, and the row `rules:layup-records` was
+  `fail` on a correct target in run 6 of the demo of `M2d`, with every test green. Task `T-j7c5` (#330). **The
+  check:** a fake of the forge's answer takes its form from a first-hand answer, cites it beside the fixture and
+  has an assertion on the fake itself; a comparison that accepts an omitted parameter lists the observed cases by
+  rule type and parameter name, never "any missing `false`" (GitHub echoes the other `false` parameters).
 - ❌ **A claim that a pushed commit is "on no ref" of the clone.** A `git push` to the URL of the clone's own
   `origin` makes `origin/<branch>` when the forge accepts it in the `git` of one host (2.56) and not in that of CI,
   so a test that wants the ref, or its absence, passed on the host and failed in CI. Task `T-wphp` (#280).

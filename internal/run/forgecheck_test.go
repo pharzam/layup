@@ -53,7 +53,14 @@ func TestTheReadBackComparesEachRuleOfTheFileWithOneReturnedRule(t *testing.T) {
 		{"a rule that the file holds is missing", []forge.Rule{creation, deletion}, []forge.Rule{creation}, false, "deletion is missing"},
 		{"the call returns none", []forge.Rule{creation}, nil, false, "creation is missing"},
 		{"a parameter that differs", []forge.Rule{pr("merge")}, []forge.Rule{pr("squash")}, false, "pull_request: allowed_merge_methods differs"},
-		{"a parameter of the file that the call lacks, false", []forge.Rule{rule("update", map[string]any{"update_allows_fetch_and_merge": false})}, []forge.Rule{rule("update", nil)}, false, "update: update_allows_fetch_and_merge is missing"},
+		{"a parameter that GitHub omits at its default: update_allows_fetch_and_merge false", []forge.Rule{rule("update", map[string]any{"update_allows_fetch_and_merge": false})}, []forge.Rule{rule("update", nil)}, true, ""},
+		{"the same parameter true in the file, omitted by the call", []forge.Rule{rule("update", map[string]any{"update_allows_fetch_and_merge": true})}, []forge.Rule{rule("update", nil)}, false, "update: update_allows_fetch_and_merge is missing"},
+		{"the same parameter false in the file, true returned", []forge.Rule{rule("update", map[string]any{"update_allows_fetch_and_merge": false})}, []forge.Rule{rule("update", map[string]any{"update_allows_fetch_and_merge": true})}, false, "update: update_allows_fetch_and_merge differs"},
+		{"the same parameter true in the file, false returned", []forge.Rule{rule("update", map[string]any{"update_allows_fetch_and_merge": true})}, []forge.Rule{rule("update", map[string]any{"update_allows_fetch_and_merge": false})}, false, "update: update_allows_fetch_and_merge differs"},
+		{"the same name, false and omitted, on a rule of another type", []forge.Rule{rule("x", map[string]any{"update_allows_fetch_and_merge": false})}, []forge.Rule{rule("x", nil)}, false, "x: update_allows_fetch_and_merge is missing"},
+		{"another parameter of update, false and omitted", []forge.Rule{rule("update", map[string]any{"other": false})}, []forge.Rule{rule("update", nil)}, false, "update: other is missing"},
+		{"the omitted default and another missing parameter, named after it", []forge.Rule{rule("update", map[string]any{"update_allows_fetch_and_merge": false, "z_other": true})}, []forge.Rule{rule("update", nil)}, false, "update: z_other is missing"},
+		{"update with no parameters on both sides", []forge.Rule{rule("update", nil)}, []forge.Rule{rule("update", nil)}, true, ""},
 		{"a parameter of the file that the call lacks, zero", []forge.Rule{rule("x", map[string]any{"n": float64(0)})}, []forge.Rule{rule("x", map[string]any{})}, false, "x: n is missing"},
 		{"a parameter of the call that the file lacks", []forge.Rule{creation, rule("update", map[string]any{})}, []forge.Rule{creation, rule("update", map[string]any{"update_allows_fetch_and_merge": false})}, true, ""},
 		{"absent parameters and an empty object are alike", []forge.Rule{rule("a", nil), rule("b", map[string]any{})}, []forge.Rule{rule("a", map[string]any{}), rule("b", nil)}, true, ""},
@@ -299,6 +306,19 @@ const (
 	recordsRulesetID = 78
 )
 
+// asGitHubGives gives the rules of a ruleset file as the real forge returns them: the rule update with no parameters, though the file wrote
+// update_allows_fetch_and_merge false (first hand, run 6 of the demo of M2d, 2026-10-15; task T-j7c5, #330; runs/T-j7c5/test-runs.md).
+func asGitHubGives(rules []forge.Rule) []forge.Rule {
+	out := make([]forge.Rule, len(rules))
+	for i, r := range rules {
+		if r.Type == "update" && r.Parameters["update_allows_fetch_and_merge"] == false {
+			r.Parameters = nil
+		}
+		out[i] = r
+	}
+	return out
+}
+
 func ofRuleset(rules []forge.Rule, id int64) []forge.Rule {
 	out := make([]forge.Rule, len(rules))
 	for i, r := range rules {
@@ -323,7 +343,7 @@ func newCheckFake() *checkFake {
 	recs, _ := rulesetRules([]byte(recordsFile))
 	return &checkFake{treeText: t.String(), applied: string(rec), files: map[string][]byte{"ruleset-default.json": []byte(defaultFile), "ruleset-records.json": []byte(recordsFile)},
 		repo:  forge.Repository{DefaultBranch: "main", Heads: map[string]string{"main": lastCommit}},
-		rules: map[string][]forge.Rule{"main": ofRuleset(def, defaultRulesetID), "layup-probe": ofRuleset(def, defaultRulesetID), "layup-records": ofRuleset(recs, recordsRulesetID)}, rulesErr: map[string]error{}, rulesRead: map[string]int{},
+		rules: map[string][]forge.Rule{"main": ofRuleset(def, defaultRulesetID), "layup-probe": ofRuleset(def, defaultRulesetID), "layup-records": ofRuleset(asGitHubGives(recs), recordsRulesetID)}, rulesErr: map[string]error{}, rulesRead: map[string]int{},
 		probeErr: &git.FailedError{Args: []string{"push"}, Code: 1, Stderr: githubRefusal, Err: errors.New("exit status 1")},
 		clock:    time.Date(2026, 10, 13, 12, 0, 0, 0, time.UTC)}
 }
@@ -374,6 +394,24 @@ func (f *checkFake) rowsOf(t *testing.T) [][]string {
 	return rows
 }
 
+// The fake of the job gives the rules of layup-records as the real forge does (#330): the rule update with no parameters, while the ruleset
+// file that the apply sent holds update_allows_fetch_and_merge written false.
+func TestTheFakeOfTheJobGivesTheRecordsRulesAsGitHubDoes(t *testing.T) {
+	f := newCheckFake()
+	var update []forge.Rule
+	for _, r := range f.rules["layup-records"] {
+		if r.Type == "update" {
+			update = append(update, r)
+		}
+	}
+	if len(update) != 1 || len(update[0].Parameters) != 0 {
+		t.Errorf("the rules of layup-records in the fake: %+v; want one update rule with no parameters", f.rules["layup-records"])
+	}
+	if !strings.Contains(string(f.files["ruleset-records.json"]), `"update_allows_fetch_and_merge":false`) {
+		t.Errorf("the ruleset file of the records in the fake: %s; want the parameter written false", f.files["ruleset-records.json"])
+	}
+}
+
 func TestTheStepForgeCheckCommitsEightRowsAndIsDoneWhenEachIsAPass(t *testing.T) {
 	f := newCheckFake()
 	f.rules["main"] = append(f.rules["main"], rule("required_signatures", nil))
@@ -418,6 +456,18 @@ func TestEachCheckThatFailsIsItsRowAndTheTableStillHasEightRows(t *testing.T) {
 			map[string]string{"rules:layup-probe": "creation is missing", "probe": notAttributed + "no creation rule applies to layup-probe"}, "rules:layup-probe: "},
 		{"a rule that is missing on layup-records", func(f *checkFake) { f.rules["layup-records"] = f.rules["layup-records"][:1] },
 			map[string]string{"rules:layup-records": "deletion is missing"}, "rules:layup-records: "},
+		{"a records file that wrote true, the forge that returns false", func(f *checkFake) {
+			f.files["ruleset-records.json"] = []byte(strings.Replace(string(f.files["ruleset-records.json"]), `"update_allows_fetch_and_merge":false`, `"update_allows_fetch_and_merge":true`, 1))
+			f.rules["layup-records"] = ofRuleset([]forge.Rule{rule("update", map[string]any{"update_allows_fetch_and_merge": false}), rule("deletion", nil)}, recordsRulesetID)
+		}, map[string]string{"rules:layup-records": "update: update_allows_fetch_and_merge differs"}, "rules:layup-records: "},
+		{"the rule update that the forge lacks on layup-records", func(f *checkFake) { f.rules["layup-records"] = f.rules["layup-records"][1:] },
+			map[string]string{"rules:layup-records": "update is missing"}, "rules:layup-records: "},
+		{"a records file that wrote true, the forge that omits it", func(f *checkFake) {
+			f.files["ruleset-records.json"] = []byte(strings.Replace(string(f.files["ruleset-records.json"]), `"update_allows_fetch_and_merge":false`, `"update_allows_fetch_and_merge":true`, 1))
+		}, map[string]string{"rules:layup-records": "update: update_allows_fetch_and_merge is missing"}, "rules:layup-records: "},
+		{"a records file that wrote false, the forge that returns true", func(f *checkFake) {
+			f.rules["layup-records"] = ofRuleset([]forge.Rule{rule("update", map[string]any{"update_allows_fetch_and_merge": true}), rule("deletion", nil)}, recordsRulesetID)
+		}, map[string]string{"rules:layup-records": "update: update_allows_fetch_and_merge differs"}, "rules:layup-records: "},
 		{"a call of rules that fails", func(f *checkFake) { f.rulesErr["layup-probe"] = boom },
 			map[string]string{"rules:layup-probe": "boom", "probe": notAttributed + "the rules of layup-probe were not read: boom"}, "rules:layup-probe: "},
 		{"a ruleset file that is missing", func(f *checkFake) { delete(f.files, "ruleset-records.json") },
