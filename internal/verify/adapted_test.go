@@ -182,3 +182,109 @@ func TestLostMarkers(t *testing.T) {
 	same(t, "two places of a flagged line, one kept", LostMarkers("docs/e.md", []byte(two), []byte(kept)),
 		[]string{"docs/e.md:3: the input loses 1 of the 2 places of the marker \u2039name your reasoning-tier models\u203a"})
 }
+
+// Each pattern of check adapted has a phrase for the prompt of the prose session (task T-92lm, #326, condition 2 of its plan review
+// and round 1): it is not empty, names its pattern, has no angle quote and is its own; each form that it quotes is a hit of that
+// pattern and of no other; and what the check reads before and after a form is what the phrase and its tail say.
+func TestEachPatternOfAdaptedHasAPhraseThatNamesIt(t *testing.T) {
+	phrases := AdaptedPhrases()
+	if len(phrases) != len(adHits) {
+		t.Fatalf("%d phrases for %d patterns", len(phrases), len(adHits))
+	}
+	seen := map[string]bool{}
+	for i, h := range adHits {
+		p, id := phrases[i], h.rule+" "+h.name
+		switch {
+		case strings.TrimSpace(p.Say) == "":
+			t.Errorf("%s: the phrase is empty", id)
+		case !strings.Contains(p.Say, strings.TrimSuffix(h.name, " \u2039")):
+			t.Errorf("%s: the phrase %q does not name the pattern", id, p.Say)
+		case strings.ContainsAny(p.Say, "\u2039\u203a"):
+			t.Errorf("%s: the phrase %q holds an angle quote, which the prompt may not", id, p.Say)
+		case seen[p.Say]:
+			t.Errorf("%s: the phrase %q is the phrase of another pattern", id, p.Say)
+		case p.Cased != h.cased:
+			t.Errorf("%s: the phrase is cased %v; the pattern %v", id, p.Cased, h.cased)
+		}
+		seen[p.Say] = true
+		hit := func(before, form, after string) bool { // the form with what stands around it is the one hit of this pattern
+			text := "We keep " + before + form + after + " here.\n"
+			if strings.HasSuffix(h.name, " \u2039") {
+				text = "We keep " + before + form + after + " the \u2039x\u203a value.\n"
+			}
+			return slices.Equal(adapted(map[string]string{"docs/a.md": text}), []string{id + ": docs/a.md:1"})
+		}
+		if len(p.Words()) == 0 {
+			t.Errorf("%s: the phrase %q quotes no form", id, p.Say)
+		}
+		for _, f := range p.Words() {
+			// Before a phrase an ASCII letter, digit or underscore makes another word, and a letter that is not ASCII does not.
+			if !hit("", f, "") || hit("x", f, "") || hit("9", f, "") || hit("_", f, "") || !hit("\u00e9", f, "") {
+				t.Errorf("%s: %q is no hit of its pattern alone, or the check reads what stands before it otherwise", id, f)
+			}
+			if (p.Tail == TailWord && (hit("", f, "x") || hit("", f, "9") || hit("", f, "_") || !hit("", f, "\u00e9"))) || (p.Tail == TailOpen && !hit("", f, "x")) {
+				t.Errorf("%s: %q is not read after as the tail %q says", id, f, p.Tail)
+			}
+		}
+		if stem := p.Stem(); p.Tail == TailStem && (len(stem) < 4 || !hit("", stem, "zz") || hit("", stem[:len(stem)-1], "qq")) {
+			t.Errorf("%s: the stem %q of %q is not the stem of the check", id, stem, p.Say)
+		} else if p.Tail == TailStem {
+			// After a stem the check needs an angle quote U+2039 before the next period, with any text between, digits and "!" included, and the
+			// quote in a marker, in the text of the convention, between backticks or alone (rounds 2 and 3 of #326); a period first, or a close quote alone, is none.
+			for ctx, want := range map[string]bool{"zz the \u2039x\u203a value": true, "2 the \u2039x\u203a value": true, "zz that! The value is \u2039x\u203a": true,
+				"zz the `\u2039` character": true, "zz a lone \u2039 quote": true, "zz the \u2039\u2026\u203a form": true, "zz. Then \u2039x\u203a": false, "zz a close quote \u203a here": false} {
+				text := "We keep " + stem + ctx + ".\n"
+				if got := slices.Equal(adapted(map[string]string{"docs/a.md": text}), []string{id + ": docs/a.md:1"}); got != want {
+					t.Errorf("%s: %q is a hit: %v; the prompt says %v", id, text, got, want)
+				}
+			}
+		} else if p.Tail != TailWord && p.Tail != TailOpen {
+			t.Errorf("%s: the tail %q is none of word, open and stem", id, p.Tail)
+		}
+	}
+}
+
+// The names that check adapted passes though they hold a word of rule 1 are given to the prompt: each is no hit, whatever follows it.
+func TestThePassedNamesOfCheckAdaptedAreNoHit(t *testing.T) {
+	if len(AdaptedExempt()) == 0 {
+		t.Fatal("no name")
+	}
+	for _, n := range AdaptedExempt() {
+		if got := adapted(map[string]string{"docs/a.md": "The " + n + " check, the " + n + "x check.\n"}); got != nil {
+			t.Errorf("%s: %q", n, got)
+		}
+	}
+	if got := adapted(map[string]string{"docs/a.md": "The kit-other check.\n"}); !slices.Equal(got, []string{"rule-1 kit: docs/a.md:1"}) {
+		t.Errorf("another name with the word: %q", got)
+	}
+}
+
+// The files that may name the baseline (rule 2) are the ones that check adapted honors: each is read, and the capital word is no
+// finding in it, and is one in another file.
+func TestTheFilesThatMayNameTheBaselineAreTheOnesCheckAdaptedHonors(t *testing.T) {
+	allowed := AdaptedAllowed()
+	if len(allowed) != len(adAllowed) || len(allowed) == 0 {
+		t.Fatalf("%d paths for %d files of the table", len(allowed), len(adAllowed))
+	}
+	for _, p := range allowed { // read: a word of rule 1 is a finding; the capital word of rule 2 is none
+		if got, want := adapted(map[string]string{p: "The kit is Armature.\n"}), []string{"rule-1 kit: " + p + ":1"}; !slices.Equal(got, want) {
+			t.Errorf("%s:\n got %q\nwant %q", p, got, want)
+		}
+	}
+	if got := adapted(map[string]string{"docs/other.md": "Armature is the baseline.\n"}); !slices.Equal(got, []string{"rule-2 Armature: docs/other.md:1"}) {
+		t.Errorf("another file: %q", got)
+	}
+}
+
+// The lists that the prompt reads are copies: a caller that changes one changes no later call and no table of the check.
+func TestTheListsOfThePromptAreCopies(t *testing.T) {
+	phrases, allowed, kit, passed := AdaptedPhrases(), AdaptedAllowed(), KitPhrases(), AdaptedExempt()
+	if len(phrases) == 0 || len(allowed) == 0 || len(kit) == 0 || len(passed) == 0 {
+		t.Fatalf("a list is empty: %d phrases, %d files, %d lines of the baseline, %d names", len(phrases), len(allowed), len(kit), len(passed))
+	}
+	phrases[0].Say, allowed[0], kit[0], passed[0] = "changed", "changed", "changed", "changed"
+	if AdaptedPhrases()[0].Say == "changed" || AdaptedAllowed()[0] == "changed" || adAllowed[0][0] == "changed" || KitPhrases()[0] == "changed" || kitPhrases[0] == "changed" ||
+		AdaptedExempt()[0] == "changed" || kitExempt[0] == "changed" {
+		t.Error("a list of the prompt is not a copy")
+	}
+}

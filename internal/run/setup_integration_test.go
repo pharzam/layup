@@ -224,6 +224,16 @@ func TestTheStepSetupRunsS01ToS14(t *testing.T) {
 	if n := setupSessions(w); n != 2 {
 		t.Errorf("%d sessions of the step setup; want 2 (the guide of S05, the six files of the prose step)", n)
 	}
+	// The prompt that the last prose session read has the rules of the checks and the name of this world's target (task T-92lm, #326).
+	prompt, err := os.ReadFile(filepath.Join(w.dir, "bin", "prose-prompt.txt"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"the name of this repository, acme/target, as text", "must name the branch layup-records", `"kit", "kits"`, "Before you end, search each file that you wrote"} {
+		if !strings.Contains(strings.Join(strings.Fields(string(prompt)), " "), want) {
+			t.Errorf("the prompt of the prose session does not say %q:\n%s", want, prompt)
+		}
+	}
 	head := gitOut(t, target, "rev-parse", "layup-setup")
 	sessions := setupSessions(w)
 	t.Run("a second restart before verify rebuilds the same head and starts no session", func(t *testing.T) {

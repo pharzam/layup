@@ -160,6 +160,26 @@ func TestIdentityFindings(t *testing.T) {
 	}
 }
 
+// The lines of the baseline that the prompt of the prose session names (task T-92lm, #326) are those that check identity refuses in
+// each of the two entry files, and no others.
+func TestTheLinesOfTheBaselineAreThoseThatCheckIdentityRefuses(t *testing.T) {
+	lines := KitPhrases()
+	if len(lines) == 0 {
+		t.Fatal("no line")
+	}
+	for _, line := range lines {
+		for _, f := range []string{"README.md", "AGENTS.md"} {
+			fsys := fstest.MapFS{"README.md": {Data: []byte("the [pin](docs/setup/armature.pin)\n")}, f: {Data: []byte(line + "\n")}}
+			if f == "README.md" {
+				fsys[f] = &fstest.MapFile{Data: []byte(line + " the [pin](docs/setup/armature.pin)\n")}
+			}
+			want := []string{"kit: " + f + " says the repository is the Armature kit (\"" + line + "\")"}
+			same(t, f+": "+line, identityFindings(fsys), want)
+		}
+	}
+	same(t, "an ordinary README.md", identityFindings(fstest.MapFS{"README.md": {Data: []byte("# acme\n\nthe [pin](docs/setup/armature.pin)\n")}}), nil)
+}
+
 // targetRecord is a record with the rows that the three checks read.
 func targetRecord(t *testing.T, drop string, change map[string]string) work.Record {
 	t.Helper()
@@ -276,4 +296,33 @@ func TestTheChecksOfATarget(t *testing.T) {
 	in.record = targetRecord(t, "", nil)
 	in.fsys = fstest.MapFS{"README.md": {Data: []byte("# acme\n\nThe [pin](docs/setup/armature.pin).\n")}}
 	same(t, "identity with no records branch", checkIdentity(in), []string{"branch: README.md does not name the branch layup-records"})
+}
+
+// A Check: value is split at the first space and opening parenthesis for its path and at the last for its gate, so neither the path nor the job
+// name may hold them (rounds 3 and the rehearsals of #326: the prompt of the prose session says so); a name with a parenthesis and no space before it is whole.
+func TestAGuardrailsValueIsSplitAtTheFirstAndTheLastSpaceAndParenthesis(t *testing.T) {
+	entry := func(v string) fstest.MapFS {
+		return fstest.MapFS{"docs/guardrails.md": {Data: []byte("- **Inv-1** \u2014 a rule. Check: " + v + "\n")}, "docs/check (local).sh": {Data: []byte("x")}, "docs/check": {Data: []byte("x")}, "README.md": {Data: []byte("x")}}
+	}
+	same(t, "a path with ' (' and a file before it", guardrailsFindings(entry("docs/check (local).sh (hook)")), nil)
+	tree := entry("docs/check (local).sh (hook)")
+	delete(tree, "docs/check")
+	same(t, "a path with ' (' and no file before it", guardrailsFindings(tree), []string{"check: Inv-1 names \"docs/check\", which is not a file"})
+	same(t, "a job name with ' ('", guardrailsFindings(entry("README.md (ci:test (linux))")), []string{"check: Inv-1 gate \"linux)\" is not hook or ci:<job>"})
+	same(t, "a job name with '(' and no space before it", guardrailsFindings(entry("README.md (ci:test(linux))")), nil)
+	// An entry runs to the next entry or to the next raw line that starts with "#", also a comment in a code block (round 3 of #326).
+	raw := fstest.MapFS{"docs/guardrails.md": {Data: []byte("- **Inv-1** \u2014 a rule.\n\n```sh\n# a comment\n```\n\nCheck: no check yet\n")}}
+	same(t, "a '#' line in a code block ends the entry", guardrailsFindings(raw), []string{"check: Inv-1 has no valid Check: value (\"\")"})
+}
+
+// The path of a Check: value is read by fs.ValidPath from the root of the tree: no "." or ".." element, no empty element and no "/" at its start or its end
+// (the fourth look at #326: the prompt of the prose session says so).
+func TestAGuardrailsPathIsWrittenFromTheRootOfTheTree(t *testing.T) {
+	entry := func(p string) fstest.MapFS {
+		return fstest.MapFS{"docs/guardrails.md": {Data: []byte("- **Inv-1** \u2014 a rule. Check: " + p + " (hook)\n")}, "docs/check.sh": {Data: []byte("x")}}
+	}
+	same(t, "a path from the root", guardrailsFindings(entry("docs/check.sh")), nil)
+	for _, p := range []string{"./docs/check.sh", "docs/./check.sh", "docs/../docs/check.sh", "docs//check.sh", "/docs/check.sh", "docs/check.sh/"} {
+		same(t, p, guardrailsFindings(entry(p)), []string{"check: Inv-1 names \"" + p + "\", which is not a file"})
+	}
 }

@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/pharzam/layup/internal/setup"
+	"github.com/pharzam/layup/internal/verify"
 )
 
 // proseOutput is the directory of result/ that holds the files of the session.
@@ -74,8 +75,11 @@ func stopTable(rows []setup.StopRow) ([]byte, error) {
 
 // proseText gives the prompt of the session: the paths of its input files, each
 // on a line of its own (the vision brief only when the target has one), and of
-// the directory of its output.
-func proseText(input map[string]string, output string) []byte {
+// the directory of its output, then the rules of what it writes and of the
+// checks that its files must pass, with the name of the target (task T-92lm,
+// #326: the prompt gave the rules of the writing and none of the checks, and the
+// step setup failed on the first real target).
+func proseText(name string, input map[string]string, output string) []byte {
 	var b strings.Builder
 	b.WriteString("You write the prose files of a project's repository, for LAYUP. Change no file in this repository and make no commit.\n\n")
 	b.WriteString("The problem statement: " + input["problem-statement.md"] + "\n")
@@ -85,6 +89,7 @@ func proseText(input map[string]string, output string) []byte {
 	b.WriteString("The stop table: " + input["stop.tsv"] + "\n")
 	b.WriteString("The output directory: " + output + "\n\n")
 	b.WriteString(proseRule)
+	b.WriteString(proseChecks(name, output))
 	return []byte(b.String())
 }
 
@@ -104,5 +109,115 @@ statement, with no placeholder and no angle quote of your own. A row whose ask
 says Adapt names a file that this directory already has: give that file with
 your changes, and keep each marker that it holds (a text between the angle
 quotes U+2039 and U+203A), in every place, byte for byte, with its line ends.
+
+`
+
+// proseChecksText is the fixed text of the rules of the checks, with {whole},
+// {open}, {stems}, {exempt}, {cased}, {allowed}, {name}, {lines}, {output} and
+// {aid}. Each rule says which files it governs; its home is the function of
+// internal/verify that the test of the prompt names, and the phrases, the
+// names, the files and the lines come from there.
+const proseChecksText = `Code checks the files that you give when you end, and the first check that fails
+refuses all of them, so check each file yourself before you end. These are the
+rules of the checks, each with the files that it governs.
+
+1. Words, in every file. No file may hold any of these phrases. The check reads each
+   capital ASCII letter as the small one (the baseline's name below is the one
+   exception), each line end as a space and each run of spaces and tabs as one space; a blank
+   line ends a paragraph, and no phrase runs across it. A phrase is a hit unless an
+   ASCII letter, an ASCII digit or an underscore stands just before it. A marker is
+   read as one unit, so a word inside a marker is no hit, and you change no marker.
+   Rewrite each sentence that holds a phrase so that it speaks of this project and of
+   its people, in its own terms, and keep what the sentence says: do not drop a
+   sentence for its words alone.
+   Whole words (a hit unless an ASCII letter, an ASCII digit or an underscore follows: "kits" is a hit, "kitten" is not):
+{whole}
+   Open at the end (a hit whatever follows: "your projectile" is a hit):
+{open}
+   Stems (a hit as the letters at the start of a word, then any text that has no period in it, then an angle quote U+2039, in a marker or alone: "fillable" and "fill2" are the start of one):
+{stems}
+   The check passes the names {exempt}, and any word that starts with one of them, though they hold the word "kit": leave them as they are.
+   The phrase {cased}, with its capital A, is read as it is, in its letter case. It may stand only in these files: {allowed}. In any other file write "the baseline".
+2. Citations. The checks read them in docs/onboarding-for-engineers.md,
+   docs/glossary.md and docs/guardrails.md; keep them right in every file. A
+   citation is "F-", four digits, "#" and a number written with no leading zero, as in
+   F-0001#3. It must name a
+   fact of this project: the directory docs/facts/ holds one file
+   F-<four digits>-<name>.md for that number, and the file has a line that starts
+   with the number, a full stop and a space. List docs/facts/ and read what is
+   there. A citation that names no fact of this project is an unsupported
+   attribution. Remove it, or point it to a fact of this project that supports the
+   text. Never remove a rule, a step, a definition, an entry or a row of the
+   baseline for that reason alone: keep its text and change only its attribution.
+   Remove a sentence or a row only when it is an example that belongs to the
+   baseline's own project and says nothing about this one.
+3. README.md must hold the name of this repository, {name}, as text; must name the
+   branch layup-records; and must hold the link ](docs/setup/armature.pin). Neither
+   README.md nor AGENTS.md may hold any of these texts anywhere, also inside a
+   longer line: {lines}.
+4. docs/onboarding-for-engineers.md must hold no angle quote at all, not even a
+   marker, and must hold the link ](facts/problem-statement-brief.md).
+5. In docs/guardrails.md each entry is a bullet that starts with "- **Inv-", a
+   number and "**", and runs to the next entry or to the next line that starts with
+   "#" (a heading, but also a comment inside a code block). Each entry must have a
+   line with "Check: ", and the text from the last "Check: " of the first such line
+   to the end of that line must be exactly "no check yet", or the path of a regular
+   file of this project (not a directory), a space and "(hook)", or that path, a space, "(ci:", a
+   job name and ")", with no space followed by an opening parenthesis in the path or in
+   the job name (the check splits the value at the first of them for the path and at the
+   last for the gate). Write the path from the root of the project, as in docs/x.sh,
+   with no "." or ".." element, no "//" and no "/" at its start or its end. A file with
+   no entry passes.
+6. Markers: a row that asks you to adapt a file keeps each marker of it, as said
+   above, and no file holds a marker of your own.
+
+Before you end, search each file that you wrote for the phrases of rule 1. This is
+an aid, not the check: it joins every line, also across a blank line; it takes a
+letter that is not ASCII as part of a word, as the check does not; it shows a word
+inside a marker and the two names that the check passes, which are no hits; and it
+does not look for the baseline's name, which you search in its own letter case.
+For example:
+
+for f in $(find {output} -name '*.md'); do tr -s ' \t\n' ' ' < "$f" | grep -o -i -E '{aid}' | sed "s|^|$f: |"; done
+
+A hit of a stem is a hit of the check only when an angle quote U+2039 follows it
+before the next period: read each by eye, and rewrite its sentence when one does.
+Repeat until every hit that is left is a stem with no angle quote U+2039 after it
+before the next period, a word inside a marker, or one of the two names. Then read your
+files against the other rules.
 Then end.
 `
+
+// proseChecks gives the rules of the checks for the target name and the output
+// directory: the phrases of check adapted, the names that it passes, the files
+// that may name the baseline and the lines of check identity are those of
+// internal/verify, and the search command is built from the same phrases.
+func proseChecks(name, output string) string {
+	var whole, open, stems, wholeWords, openWords, stemWords, lines, exempt []string
+	var cased string
+	for _, p := range verify.AdaptedPhrases() {
+		switch {
+		case p.Cased:
+			cased = p.Say
+		case p.Tail == verify.TailStem:
+			stems = append(stems, "   - words that start with \""+p.Stem()+"\" ("+p.Say+")")
+			stemWords = append(stemWords, p.Stem())
+		case p.Tail == verify.TailOpen:
+			open = append(open, "   - "+p.Say)
+			openWords = append(openWords, p.Words()...)
+		default:
+			whole = append(whole, "   - "+p.Say)
+			wholeWords = append(wholeWords, p.Words()...)
+		}
+	}
+	for _, l := range verify.KitPhrases() {
+		lines = append(lines, `"`+l+`"`)
+	}
+	for _, n := range verify.AdaptedExempt() {
+		exempt = append(exempt, `"`+n+`"`)
+	}
+	aid := `\<(` + strings.Join(wholeWords, "|") + `)\>|\<(` + strings.Join(openWords, "|") + `)|\<(` + strings.Join(stemWords, "|") + `)[a-z]*`
+	return strings.NewReplacer("{whole}", strings.Join(whole, "\n"), "{open}", strings.Join(open, "\n"), "{stems}", strings.Join(stems, "\n"),
+		"{exempt}", strings.Join(exempt, " and "), "{cased}", cased, "{allowed}", strings.Join(verify.AdaptedAllowed(), ", "),
+		"{name}", name, "{lines}", strings.Join(lines, ", "), "{output}", output, "{aid}", aid).Replace(proseChecksText)
+}

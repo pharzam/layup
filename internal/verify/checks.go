@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
@@ -120,6 +121,10 @@ func kitHistoryFindings(fsys fs.FS, repo string) []string {
 // kitPhrases are the phrases with which the kit's entry files say that the
 // repository is the kit.
 var kitPhrases = []string{"Agent context for **Armature**", "This repository is a generic **template**", "A domain-free **template**, not a product"}
+
+// KitPhrases gives the lines with which check identity refuses an entry file (task T-92lm, #326: the prompt of the prose session
+// names them); the slice is a copy.
+func KitPhrases() []string { return slices.Clone(kitPhrases) }
 
 // identityFindings is check_identity: the entry files do not say that the
 // repository is the kit, and README.md links the pin.
