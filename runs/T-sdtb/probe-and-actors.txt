@@ -1,0 +1,110 @@
+# T-sdtb: the probe, the rulesets and the actors on pharzam/layup-uat-m2d, read at 2026-10-15T09:51:49Z (rules 2, 3 and 4).
+
+## The probe in the wrapper's log (~/layup-host/wrap/push.log): each push to refs/heads/layup-probe, with its time, exit status and standard error
+
+== 2026-10-15T07:57:16Z exit 1
+args: https://github.com/pharzam/layup-uat-m2d.git 7b6c40f40f20c58c1e86bcb4221f1b13b74f1650:refs/heads/layup-probe
+remote: error: GH013: Repository rule violations found for refs/heads/layup-probe.
+remote: Review all repository rules at https://github.com/pharzam/layup-uat-m2d/rules?ref=refs%2Fheads%2Flayup-probe
+remote:
+remote: - Cannot create ref due to creations being restricted.
+remote:
+remote: - 9 of 9 required status checks are expected.
+remote:
+error: failed to push some refs to 'https://github.com/pharzam/layup-uat-m2d.git'
+
+== 2026-10-15T09:51:10Z exit 1
+args: https://github.com/pharzam/layup-uat-m2d.git e64dd83c489c1bca3da20fe61180406f2ac19f29:refs/heads/layup-probe
+remote: error: GH013: Repository rule violations found for refs/heads/layup-probe.
+remote: Review all repository rules at https://github.com/pharzam/layup-uat-m2d/rules?ref=refs%2Fheads%2Flayup-probe
+remote:
+remote: - Cannot create ref due to creations being restricted.
+remote:
+remote: - 9 of 9 required status checks are expected.
+remote:
+error: failed to push some refs to 'https://github.com/pharzam/layup-uat-m2d.git'
+
+== 2026-10-15T09:51:33Z exit 1
+args: https://github.com/pharzam/layup-uat-m2d.git 2e343bb75af3e466379c126c346e24f72507e053:refs/heads/layup-probe
+remote: error: GH013: Repository rule violations found for refs/heads/layup-probe.
+remote: Review all repository rules at https://github.com/pharzam/layup-uat-m2d/rules?ref=refs%2Fheads%2Flayup-probe
+remote:
+remote: - Cannot create ref due to creations being restricted.
+remote:
+remote: - 9 of 9 required status checks are expected.
+remote:
+error: failed to push some refs to 'https://github.com/pharzam/layup-uat-m2d.git'
+
+## git ls-remote https://github.com/pharzam/layup-uat-m2d.git refs/heads/layup-probe (no output: no branch of the forge)
+
+(no output)
+
+## gh api 'repos/pharzam/layup-uat-m2d/activity?per_page=100' --paginate: 65 events; the push events of refs/heads/layup-probe: 0
+
+events by type, ref and actor:
+    1  branch_creation  refs/heads/layup-records  layup-agent[bot]
+    1  branch_creation  refs/heads/main  pharzam
+   62  push  refs/heads/layup-records  layup-agent[bot]
+    1  push  refs/heads/main  pharzam
+
+the pushes of the Operator (`pharzam`):
+  2026-10-15T07:56:49Z  push  refs/heads/main
+  2026-10-14T13:34:08Z  branch_creation  refs/heads/main
+
+## gh api 'repos/pharzam/layup-uat-m2d/rulesets/rule-suites?ref=refs/heads/layup-probe' (the Operator's login): which ruleset evaluated the push, and its result
+
+{"actor_name": "layup-agent[bot]", "evaluation_result": null, "id": 4538449565, "pushed_at": "2026-10-15T09:51:33Z", "ref": "refs/heads/layup-probe", "result": "fail"}
+  {"id": null, "result": "pass", "rule_type": "secret_scanning", "ruleset": null}
+  {"id": 25145510, "result": "fail", "rule_type": "creation", "ruleset": "layup: the default branch"}
+  {"id": 25145510, "result": "fail", "rule_type": "required_status_checks", "ruleset": "layup: the default branch"}
+  {"id": 25145510, "result": "pass", "rule_type": "pull_request", "ruleset": "layup: the default branch"}
+  {"id": 25145510, "result": "pass", "rule_type": "non_fast_forward", "ruleset": "layup: the default branch"}
+  {"id": 25145510, "result": "pass", "rule_type": "deletion", "ruleset": "layup: the default branch"}
+{"actor_name": "layup-agent[bot]", "evaluation_result": null, "id": 4538443845, "pushed_at": "2026-10-15T09:51:10Z", "ref": "refs/heads/layup-probe", "result": "fail"}
+  {"id": null, "result": "pass", "rule_type": "secret_scanning", "ruleset": null}
+  {"id": 25145510, "result": "fail", "rule_type": "creation", "ruleset": "layup: the default branch"}
+  {"id": 25145510, "result": "fail", "rule_type": "required_status_checks", "ruleset": "layup: the default branch"}
+  {"id": 25145510, "result": "pass", "rule_type": "pull_request", "ruleset": "layup: the default branch"}
+  {"id": 25145510, "result": "pass", "rule_type": "non_fast_forward", "ruleset": "layup: the default branch"}
+  {"id": 25145510, "result": "pass", "rule_type": "deletion", "ruleset": "layup: the default branch"}
+{"actor_name": "layup-agent[bot]", "evaluation_result": null, "id": 4536626836, "pushed_at": "2026-10-15T07:57:15Z", "ref": "refs/heads/layup-probe", "result": "fail"}
+  {"id": null, "result": "pass", "rule_type": "secret_scanning", "ruleset": null}
+  {"id": 25145510, "result": "fail", "rule_type": "creation", "ruleset": "layup: the default branch"}
+  {"id": 25145510, "result": "fail", "rule_type": "required_status_checks", "ruleset": "layup: the default branch"}
+  {"id": 25145510, "result": "pass", "rule_type": "pull_request", "ruleset": "layup: the default branch"}
+  {"id": 25145510, "result": "pass", "rule_type": "non_fast_forward", "ruleset": "layup: the default branch"}
+  {"id": 25145510, "result": "pass", "rule_type": "deletion", "ruleset": "layup: the default branch"}
+
+## gh api repos/pharzam/layup-uat-m2d/rulesets, and /rulesets/ID/history for each (the Operator's login): the name, the enforcement and the actor of each apply
+
+{"enforcement": "active", "id": 25145510, "name": "layup: the default branch", "source": "pharzam/layup-uat-m2d", "source_type": "Repository"}
+  history: {"actor": {"id": 1675602, "type": "User"}, "login": "pharzam", "updated_at": "2026-10-15T07:56:50.228Z", "version_id": 53296187}
+{"enforcement": "active", "id": 25145511, "name": "layup: the records branch", "source": "pharzam/layup-uat-m2d", "source_type": "Repository"}
+  history: {"actor": {"id": 1675602, "type": "User"}, "login": "pharzam", "updated_at": "2026-10-15T07:56:51.064Z", "version_id": 53296188}
+
+## git -C clone log --format='%an <%ae> | %cn <%ce>' origin/layup-records origin/main: author and committer of each commit, by count (rule 4)
+
+   74  layup-agent[bot] <335371832+layup-agent[bot]@users.noreply.github.com> | layup-agent[bot] <335371832+layup-agent[bot]@users.noreply.github.com>
+
+the commits of main:
+0d4c4ab layup-agent[bot] | layup-agent[bot] | chore: setup S13
+c8ac05b layup-agent[bot] | layup-agent[bot] | chore: setup S12
+45e5c7f layup-agent[bot] | layup-agent[bot] | chore: setup S11
+b2af610 layup-agent[bot] | layup-agent[bot] | chore: setup S14
+3777b8e layup-agent[bot] | layup-agent[bot] | chore: setup S09
+1e59787 layup-agent[bot] | layup-agent[bot] | chore: setup S08
+f7cfa2f layup-agent[bot] | layup-agent[bot] | chore: setup S07
+754055b layup-agent[bot] | layup-agent[bot] | chore: setup S06
+8b6195f layup-agent[bot] | layup-agent[bot] | chore: setup S05
+60072e8 layup-agent[bot] | layup-agent[bot] | chore: setup S04
+2fc9ad7 layup-agent[bot] | layup-agent[bot] | chore: the unmodified baseline at a95965534b14b0bf14ad74da0c9a45b5f4aedf88
+
+## The issues and each comment: the author (`user.login`) (rule 4)
+
+issues (number, author, created, comments, title):
+2	layup-agent[bot]	2026-10-14T13:34:21Z	13	LAYUP control
+1	layup-agent[bot]	2026-10-14T13:34:18Z	5	LAYUP Intake
+
+comments by author:
+   15  layup-agent[bot]
+    3  pharzam

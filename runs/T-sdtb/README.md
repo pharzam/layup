@@ -173,8 +173,24 @@ release (`git diff --stat 0a104b8 COMMIT -- cmd internal go.mod`, and the releas
 ## The failed attempt (run 6)
 
 Run 6 (07:57:04Z to 07:57:17Z on 2026-10-15), the restart that records the applies and runs the forge check for the first time on the real forge, ended with `forge-check` `fail`: `rules:layup-records: update:
-update_allows_fetch_and_merge is missing`. Its table (`forge-check.txt`: commit `4313def` of `layup-records`, run `6daeecbaf4565805`; `runs.txt`) has seven rows `pass`, the `probe` among them, and that row `fail`. **Classification** (as
+update_allows_fetch_and_merge is missing`. Its table ([`forge-check.txt`](forge-check.txt): commit `4313def` of `layup-records`, run `6daeecbaf4565805`; [`runs.txt`](runs.txt)) has seven rows `pass`, the `probe` among them, and that row `fail`. **Classification** (as
 "After a failed attempt" says): a defect of the build that makes rule 1 false, found by the demo, off its path; a failed attempt, not the end of the demo. Its fix is the task `T-j7c5` (#330, merged at `461d47a`, with its own plan
 review and two rounds). **The cause, first hand:** GitHub accepts the records ruleset's file with `update_allows_fetch_and_merge` `false` and returns the rule `update` with no parameters, in the response of the apply, in the read of
 the ruleset and in the effective rules of the branch ([`runs/T-j7c5/test-runs.md`](../T-j7c5/test-runs.md) has the answers). No rule of this file is changed after the result: the fix changes the check and its specification together.
 The replay is the one that this file named before any run: one restart with the new binary (run 7), the earlier steps "done before" by their records, the table written again; the refused probe of run 6 left no ref.
+
+## The results (read on 2026-10-15 from 09:51Z to 09:53Z)
+
+Each rule is read by the command that it names, from a plain clone of the target (`origin/layup-records`), the forge and the wrapper's log; the outputs are the files below. The passing attempt is run 7, the restart with the binary of `8b76fdc`
+(09:20:52Z to 09:51:14Z, the first 30 minutes of it the wait for the lease that the failed run 6 left), and, for rule 5, run 8 (09:51:25Z to 09:51:39Z); the attempt that failed is run 6, [above](#the-failed-attempt-run-6).
+
+| Rule | Verdict | Where it is read |
+| ---- | ------- | ---------------- |
+| 1. The forge check | holds | [`forge-check.txt`](forge-check.txt): the table of commit `148dc30` (run `30ac922b1e4a9a68`, 09:51:11Z) has the eight rows `tree`, `rules:main`, `rules:layup-probe`, `rules:layup-records`, `bypass:default`, `bypass:records`, `probe` and `activity`, each `pass`, and run 7 ended with "the forge check passed" ([`runs.txt`](runs.txt)); the failed table of run 6 stands before it |
+| 2. The refusal | holds | [`probe-and-actors.txt`](probe-and-actors.txt): in the wrapper's log, GitHub's line `GH013: Repository rule violations found for refs/heads/layup-probe.` and "Cannot create ref due to creations being restricted." for each of the three probes (exit 1); `layup-probe` is no branch of the forge, and no push event of it is in the activity; the rule-suites read with the Operator's login shows each probe push evaluated by the ruleset `layup: the default branch` (25145510), its `creation` rule `fail` |
+| 3. The apply | holds | [`rulesets.txt`](rulesets.txt) (both outputs, `source` `pharzam/layup-uat-m2d`, ids 25145510 and 25145511); the forge lists the two rulesets, `active`, and the history of each names the Operator, `pharzam`, as the actor of the apply ([`probe-and-actors.txt`](probe-and-actors.txt)) |
+| 4. The actors | holds | [`probe-and-actors.txt`](probe-and-actors.txt): each of the 74 commits of `layup-records` and `main` has the App's bot as author and committer; the two issues and 15 of the 18 comments are the bot's, the other 3 are the Operator's answers; the pushes and the applies are the Operator's: `main` at 07:56:49Z (and the root push, 2026-10-14T13:34:08Z) and the two applies at 07:56:50Z and 07:56:51Z |
+| 5. A later start | holds | run 8 ([`runs.txt`](runs.txt)): `forge-check` fifth, between `lease` and `probe`, `done`; a new table, commit `1b2b0aa` (09:51:33Z, run `392284f8fc1bfb29`), later than the first passing table ([`forge-check.txt`](forge-check.txt)) |
+
+**Reading of the scenario's third line** (rule 2 was restated before any run, and the scenario's wording was left as the plan wrote it): GitHub's refusal prints the ref and the violated rules and no ruleset's name; "naming the ruleset" is met as rule 2
+says it: each refusal is attributed to LAYUP's ruleset by its ID (the check), and the rule-suites read names `layup: the default branch` as the ruleset that evaluated the push.
