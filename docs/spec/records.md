@@ -60,6 +60,7 @@ or payload of one task is under `tasks/<task>/`.
 | `tasks/<task>/events.tsv` | the events of one task | 3, 8 | `layup run` | 2 (`M2b`, K38) | [below](#nfr-001--the-records-of-a-session) |
 | `tasks/<task>/results/<session>.tsv` | the typed result (handoff) of one session, after its check | 4, 8 | `layup run` | 2 (`M2b`) | [below](#nfr-001--the-records-of-a-session) |
 | `tasks/<task>/tests.tsv` | the frozen test list | 11 | `layup run` | 2 (`M2e`, K38) | [below](#nfr-001--the-records-of-the-task-loop) |
+| `tasks/<task>/results/<session>/<file>` | a file that a `comment` row of the typed result names (the plan, the plan review or the review record), copied byte for byte at the records commit of the result, so that a stop before the post loses nothing | 8 | `layup run` | 2 (`M2e`) | a rule, no block: [`loop.md`](loop.md#the-artifact-that-is-a-comment) |
 | `tasks/<task>/gates.tsv` | the table of `layup gate` for each head of the task | 6, 8 | `layup run` | 2 (`M2e`) | [below](#nfr-001--the-records-of-the-task-loop), the block `task-gates` |
 | `tasks/<task>/spec-check.tsv` | the table of the full `layup spec check` for each head of the task | 7, 8 | `layup run` | 2 (`M2e`) | [below](#nfr-001--the-records-of-the-task-loop) |
 | `acceptance.tsv` | one row per review of a requirement | 8, 12 | `layup run` | 2 | later |
@@ -631,7 +632,7 @@ task          id(T-xxxx)   key  the task ID
 issue         int          -    the task's issue number
 kind          enum(specification|architecture|batch|rendered|plan|build)  -  the kind of the task, which picks the row of the transition table
 requirements  list(text)   -    the requirement IDs it serves, each with no space; never `—` (each task names a requirement, `layup spec check`)
-size          enum(small|large)  -  the size class from the milestone plan's row of the task; `—` for a task that has none (a specification, a batch, a rendered task); the plan's own `size` field gives the tier, loop.md
+size          enum(small|large)  -  the size class from the milestone plan's row of the task; `—` for a task that has none (a specification, an architecture task, a batch, a rendered task); the plan's own `size` field gives the tier, loop.md
 predecessors  list(id(T-xxxx))   -  the tasks that must merge first, each a task of this table; `—` for none
 pr            int          -    the pull request's number; `—` until it is opened
 opened        time         -    when `layup run` wrote the row
@@ -683,6 +684,7 @@ brief_sha256  sha256    -    the SHA-256 of the brief's copy
 appetite_usd  decimal   -    the money of the appetite, from the brief's line `appetite: USD <n>, <n> hours`; the check against `budget.tsv` is the rule of `loop.md` (The bet), which allows a cap below `band.B`
 appetite_hours  decimal -    the hours of the appetite, from the same line
 answer        int       -    the comment ID of the approver's answer, a copy in `copies.tsv`
+options       list(text)  -   the choices of the answer's lines `option <decision>: <option>`, each written `<decision>=<option>` with no space; `—` for none
 verdict       enum(bet|no-bet)  -  the answer's last line, `bet` or `no bet` written `no-bet`
 approver      int       -    the answering account's numeric ID, a row of `approvers.tsv`
 decided       time      -    when `layup run` copied the answer

@@ -410,7 +410,9 @@ target that a machine validates against a schema based on [the baseline]
 conventions." A session writes `result/result.tsv` in the form of the block
 [`result`](records.md#nfr-001--the-records-of-a-session); `layup run` reads it
 by the block and its rules, checks each artifact's SHA-256 against the file at
-the head (a mismatch adds the event `refused`, `artifact`), and commits it byte
+the head (a mismatch adds the event `refused`, `artifact`; a row of the kind `comment`,
+which `M2e` adds, is checked against the file of `result/` that it names,
+[`loop.md`](loop.md#the-artifact-that-is-a-comment)), and commits it byte
 for byte as
 `tasks/<task>/results/<session>.tsv`, with the event `result`. The session ID,
 the task, the role, the attempt and the base come from the start row, never

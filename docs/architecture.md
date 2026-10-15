@@ -493,7 +493,8 @@ gate files run only in a scratch work tree, as evidence for its verifier and its
 brief, never as a status. The LAYUP host needs each stack's toolchain
 (L-B1). With LAYUP absent, the target's own CI runs the workflow of the pull request's
 head, and each gate job takes the manifest, the `config` paths and `gates.sh` from the
-base; a change to `.github/**`, `docs/gates.tsv` or `docs/gates/**` needs the
+base (a pull request of a `batch/<point>` branch takes them from its head, with the
+code-owner review below as its control; issue #345); a change to `.github/**`, `docs/gates.tsv` or `docs/gates/**` needs the
 Operator's review as code owner (F-22, [`loop.md`](spec/loop.md#the-gate-jobs-read-the-base));
 FT4 then rests on the rulesets and on review, not on LAYUP.
 

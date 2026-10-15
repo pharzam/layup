@@ -21,7 +21,7 @@ fail, naming it.
 | Capability (§1) | Interface method | First used in |
 | --------------- | ---------------- | ------------- |
 | issues and comments, with the actor and whether an App made it | `OpenIssue`, `Comments(issue)`, `Comment(issue, body)` | `M2a` (steps 7 and 8 of [`run.md`](run.md#the-steps-of-layup-run---new)); `Comment` in `M2b` (the comment of a session) |
-| pull requests with a draft state | `OpenDraft`, `MarkReady`, `Merge` | `M2e` ([The calls of M2e](#the-calls-of-m2e)) |
+| pull requests with a draft state | `OpenDraft`, `MarkReady`, `PullRequest`, `Merge` | `M2e` ([The calls of M2e](#the-calls-of-m2e)) |
 | commit statuses bound to a source | `SetStatus`, `Statuses` | `M2e` ([The calls of M2e](#the-calls-of-m2e)) |
 | branch rules with bypass actors, read back | `EffectiveRules(branch)` | `M2d` ([`scaffold.md`](scaffold.md#the-read-back)) |
 | the repository activity with its actors | `Activity(ref)` | `M2d` (the activity read of the forge check, [`scaffold.md`](scaffold.md#the-activity-read)); `layup audit` in `M2f` |
@@ -190,8 +190,8 @@ The same API and version header as [The calls of M2a](#the-calls-of-m2a) (task
 
 **Decided here** (decision 5 and 6 of #333):
 
-- **The permissions** beyond those of `M2a` are pull requests `write` (the first
-  three and the last) and commit statuses `write` (`SetStatus`; both are in
+- **The permissions** beyond those of `M2a` are pull requests `write` (`OpenDraft`,
+  `MarkReady`, `Merge`) and commit statuses `write` (`SetStatus`; both are in
   `architecture.md` §3); `Statuses` needs `read` of both and checks `read`, which ADR-0014 decision 3 does
   not list: it is **an amendment of that decision**, asked in #336 and granted by the
   Operator with the others (a draft pull request's `mergeable_state` is `draft`, never
@@ -200,11 +200,11 @@ The same API and version header as [The calls of M2a](#the-calls-of-m2a) (task
   one is a `fail` of the step `forge` that names it. The Operator grants them
   (`gov-operator-setup-o112`).
 - **`PullRequest`** also serves the restart and the tree rule ([`loop.md`](loop.md#the-tree-after-the-first-merge)): the merged state and the merge commit of a task's pull request, and the pull request of a branch.
-- **A comparison reads, never trusts.** The ready and merge rule reads `Statuses`
+- **A comparison reads, never trusts.** The ready and merge rule reads `Statuses` (a check run: the newest of each name, `filter=latest`)
   just before each of `MarkReady` and `Merge`; a context counts only when it is
   `success`, its creator is the App, and it is the newest status of that context at
   the head. A required check of another source with the same name does not count.
-- **The stand-in** of `internal/standin` and the httptest forge each give the five
+- **The stand-in** of `internal/standin` and the httptest forge each give the six
   methods, a status list that a test sets, a pull request whose head a test moves
   (to give the 409), and a status of another source.
 - The permission that each call needs, and the fields above, are read in GitHub's

@@ -101,7 +101,7 @@ session uses.
    six capabilities and that the installation has the permissions that `M2a`
    uses (contents, issues: write; metadata: read), and records each permission of
    the installation in `app.permissions`. A missing permission of a later
-   milestone (commit statuses and pull requests, `M2e`, [`forge.md`](forge.md#the-calls-of-m2e)) is recorded, not a `fail`. The repository
+   milestone (commit statuses, pull requests and checks `read`, `M2e`, [`forge.md`](forge.md#the-calls-of-m2e)) is recorded, not a `fail`. The repository
    must exist and have no branch (O-163; `Repository` gives the names of the
    branches). It reads the numeric IDs of `--operator` and `--idea-owner`; an
    unknown login is `fail`. It reads the ID of the App's bot (`<slug>[bot]`),
