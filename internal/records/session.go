@@ -15,7 +15,9 @@ import (
 // The records of a session; task T-3py1, #153): the schemas of sessions.tsv,
 // harnesses.tsv, routing.tsv, tasks/<task>/events.tsv and
 // tasks/<task>/results/<session>.tsv, and the rules that their blocks give in
-// words. internal/run writes and reads them (docs/spec/session.md).
+// words. internal/run writes and reads them (docs/spec/session.md). Milestone
+// M2e adds the kinds of the task loop to events (handoff, merged) and to result
+// (question, decision, lesson, comment), task T-fn5s, row 60 of the plan.
 //
 // Each "— when" and "— for" of these blocks is read as "exactly when" (the
 // plan review of #153, condition 3), where the row can see the condition. A
@@ -107,9 +109,11 @@ var (
 	// The detail of a handoff: valid or invalid with the item that failed (a word
 	// of the table of loop.md), and the copy of a comment that holds its artifact,
 	// <comment ID>-<seen>, after a space (task T-fn5s).
-	handoffForm = regexp.MustCompile(`^(valid|invalid [a-z]+(-[a-z]+)*)( comment [1-9][0-9]*-[1-9][0-9]*)?$`)
-	numberForm  = regexp.MustCompile(`^[1-9][0-9]*$`)  // the pull request of a merged
-	commentForm = regexp.MustCompile(`^result/[^/]+$`) // the file of a comment row, one level of result/
+	handoffForm = regexp.MustCompile(`^(valid|invalid ([a-z]+(-[a-z]+)*))( comment [1-9][0-9]*-[1-9][0-9]*)?$`)
+	// The items of the table of loop.md (The transition table), and pair for a pair with no row.
+	handoffItems = []string{"schema", "artifacts", "plan-fields", "verdict-field", "tests-red-green", "spec-sections", "patch-per-kind", "register-rows", "rendering-equal", "nothing-material", "findings-located", "heading-ids", "question-row", "answer-row", "pair"}
+	numberForm   = regexp.MustCompile(`^[1-9][0-9]*$`)  // the pull request of a merged
+	commentForm  = regexp.MustCompile(`^result/[^/]+$`) // the file of a comment row, one level of result/
 )
 
 // isPath reports whether v is of the type path of docs/spec/README.md, as
@@ -233,7 +237,9 @@ func ReadRouting(data []byte) ([][]string, error) {
 
 // CheckEvent checks the rules of the block events on one row: which columns
 // each kind fills, the session ID, the class of a result, and the branch of a
-// push or a bind, task/<task>/<attempt> with the row's attempt.
+// push or a bind, task/<task>/<attempt> with the row's attempt, the detail of a
+// handoff (valid, or invalid with an item of the table, and the copy of a
+// comment) and of a merged (the number of the pull request).
 func CheckEvent(r []string) error {
 	f := fields(EventsSchema, r)
 	if c := missing(f, eventsRequired); c != "" {
@@ -259,8 +265,8 @@ func CheckEvent(r []string) error {
 		return &RowError{"detail", "the detail of a result is a class of the end: " + strings.Join(ends, ", ")}
 	case kind == "refused" && detail == "":
 		return &RowError{"detail", "the detail of a refused is its reason"}
-	case kind == "handoff" && !handoffForm.MatchString(detail):
-		return &RowError{"detail", "the detail of a handoff is valid or invalid <item>, and after a space comment <ID>-<seen> for an artifact that is a comment"}
+	case kind == "handoff" && !handoffDetail(detail):
+		return &RowError{"detail", "the detail of a handoff is valid or invalid <item> (an item of the table of loop.md, or pair), and after a space comment <ID>-<seen> for an artifact that is a comment"}
 	case kind == "merged" && !numberForm.MatchString(detail):
 		return &RowError{"detail", "the detail of a merged is the number of the pull request"}
 	case kind == "push" || kind == "bound":
@@ -269,6 +275,27 @@ func CheckEvent(r []string) error {
 		}
 	}
 	return nil
+}
+
+// handoffDetail reports whether d is a detail of a handoff: valid, or invalid
+// with one item of the table (or pair), and the copy of a comment after a space.
+func handoffDetail(d string) bool {
+	m := handoffForm.FindStringSubmatch(d)
+	if m == nil {
+		return false
+	}
+	return m[1] == "valid" || slices.Contains(handoffItems, m[2])
+}
+
+// oneSpaced reports whether v is words with one space between two and none at
+// either end, the form that a reader splitting on one space reads like this check.
+func oneSpaced(v string) bool {
+	for _, w := range strings.Split(v, " ") {
+		if w == "" {
+			return false
+		}
+	}
+	return true
 }
 
 // CheckEvents checks the order of events.tsv: n runs 1, 2, ... with no gap,
@@ -352,8 +379,10 @@ func CheckResultRow(r []string) error {
 		switch {
 		case f["sha256"] != "":
 			return &RowError{"sha256", "sha256 is given exactly for an artifact and a comment"}
-		case f["kind"] == "question" && len(strings.Fields(f["reason"])) < 2:
-			return &RowError{"reason", "the reason of a question is its label, its needs_human word, and each record it concerns, one space between"}
+		case f["kind"] == "question" && (len(strings.Split(f["reason"], " ")) < 2 || !oneSpaced(f["reason"])):
+			return &RowError{"reason", "the reason of a question is its label, its needs_human word, and each record it concerns, one space between two words and none at either end"}
+		case f["kind"] == "lesson" && f["reason"] != "" && !oneSpaced(f["reason"]):
+			return &RowError{"reason", "the reason of a lesson is the empty value or its records, one space between two words and none at either end"}
 		case f["kind"] == "decision" && f["reason"] == "":
 			return &RowError{"reason", "the reason of a decision is one line"}
 		}

@@ -148,7 +148,9 @@ const eventsHeader = "n\tkind\tattempt\tsession\tbase\tsha\tdetail\ttime"
 
 // eventRows is a valid events.tsv of task T-ab12: an attempt, its session,
 // the result, the push and the bind, a second attempt refused before a
-// session (pair), and the task loop's closed.
+// session (pair), the task loop's closed and rebased, the handoffs of the task
+// loop (with a session, with none for a rendered task, valid, invalid, with the
+// copy of a comment) and a merged.
 func eventRows() []string {
 	return []string{
 		"1\tattempt\t1\t—\t" + sha1A + "\t—\t—\t2026-10-09T12:00:00Z",
@@ -225,6 +227,9 @@ func TestEventsRefusesEachBrokenRule(t *testing.T) {
 		{"an invalid handoff with no item", event(12, "detail", "invalid"), "detail"},
 		{"an invalid handoff whose item is not a word of the table", event(12, "detail", "invalid Spec_Sections"), "detail"},
 		{"a valid handoff with an item", event(14, "detail", "valid spec-sections"), "detail"},
+		{"an invalid handoff with a well-formed word that is not an item", event(12, "detail", "invalid nonsense"), "detail"},
+		{"an invalid handoff with an item that has a double hyphen", event(12, "detail", "invalid spec--sections"), "detail"},
+		{"a handoff naming a comment with ID 0", event(11, "detail", "valid comment 0-1"), "detail"},
 		{"a handoff naming a comment with no copy number", event(11, "detail", "valid comment 6191163525"), "detail"},
 		{"a handoff naming a comment with copy 0", event(11, "detail", "valid comment 6191163525-0"), "detail"},
 		{"a handoff naming a comment and more", event(11, "detail", "valid comment 6191163525-1 again"), "detail"},
@@ -339,6 +344,13 @@ func TestResultRefusesEachBrokenRule(t *testing.T) {
 		{"a comment with a reason", set(6, "reason", "the plan"), "reason"},
 		{"a gap in the questions", append(resultRows(), "question\t4\tAnd another?\t—\tlabel no"), "n"},
 		{"a gap in the comments", set(6, "n", "2"), "n"},
+		{"a gap in the decisions", append(resultRows(), "decision\t3\tAnother\t—\tbecause"), "n"},
+		{"a gap in the lessons", append(resultRows(), "lesson\t4\tAnother\t—\t—"), "n"},
+		{"a comment whose path is result/..", set(6, "value", "result/.."), "value"},
+		{"a comment whose path is result/.", set(6, "value", "result/."), "value"},
+		{"a question reason with two spaces", set(3, "reason", "interface-contract  yes"), "reason"},
+		{"a question reason with a space at its end", set(3, "reason", "interface-contract yes "), "reason"},
+		{"a lesson reason with two spaces", set(5, "reason", "docs/spec/loop.md  T-xs4y"), "reason"},
 	} {
 		refusedAt(t, c.name, readResult, table(resultHeader, c.rows...), c.column)
 	}

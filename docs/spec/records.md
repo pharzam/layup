@@ -391,23 +391,25 @@ of `events`, each with its writer: `attempt`, the call that starts an attempt
 session; `result`, its end; `refused`, a start, a result or a push of a task
 session that `layup run` refuses (a probe's refused start is its row of
 `harnesses.tsv`); `push` and `bound`, the push of a session's SHA; `closed` and
-`rebased`, the task loop of `M2e`; each row is one event, and no row is changed
+`rebased`, the task loop of `M2e`; `handoff`, the check of a handoff by `layup run` (row 66d of the
+plan); `merged`, the merge of a task's pull request by `layup run` (row 66g); each row is one event, and no row is changed
 (§3); a result holds one `status` row, with `n` 1, and an
 `artifact` value of the type `path`; **decided here** (task `T-fn5s`, row 60 of [the
 plan](../plan/README.md#the-tasks-of-m2e)), the rules of the kinds that `M2e` adds, since
 [`loop.md`](loop.md#the-checks-of-a-handoff) gives the content and not the columns: a
 `question`, a `decision` and a `lesson` have a `value` (its text) and no `sha256`; the
 `reason` of a `question` holds at least two words: the label of its kind as one word (the
-words of a kind joined by `-`, `interface-contract`; an unknown label is read, as the owner
+words of a kind joined by `-`: `domain-or-business`, `architecture-boundary`, `interface-contract` or
+`environment-or-infrastructure` for the four of the default owner map; an unknown label is read, as the owner
 map is `loop.md`'s), the `needs_human` word (any word: a word other than `yes` or `no`
 sends the question to a human, `loop.md`), and the records it concerns, one word each, after
-them; the `reason` of a `lesson` is `—` or its records in that form; the `reason` of a `decision` is not `—`; a
+them, with one space between two words and none at either end (a reader that splits on one space reads
+the same words as the check); the `reason` of a `lesson` is `—` or its records in that form; the `reason` of a `decision` is not `—`; a
 `comment` has a `value` of the form `result/<file>` (one level, of the type `path`) and a
 `sha256`, no `reason`, and is checked at the end of the session against its file, not
 against the head ([`loop.md`](loop.md#the-artifact-that-is-a-comment)); within each of
 the six kinds `n` runs 1 to k; a `handoff` event has no `base` and no `sha`, its `detail`
-is `valid` or `invalid <item>` (one word of lowercase letters and `-`, an item of the table
-of `loop.md`) and, for an artifact that is a comment, ends with ` comment <ID>-<seen>`
+is `valid` or `invalid <item>` (the item is one word of the table of items of `loop.md`, or `pair` for a pair with no row of `transitions.tsv`) and, for an artifact that is a comment, ends with ` comment <ID>-<seen>`
 (the key of a row of `copies.tsv`, both numbers of 1 or more); a `merged` event has no
 `session` and no `base`, the merge commit's SHA in `sha`, and the number of the pull
 request, of 1 or more with no leading zero, as `detail`; a `probe-result` holds at most one
