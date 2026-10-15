@@ -20,3 +20,7 @@ Times from the clock of the host, UTC, 2026-10-15; the runs of step T are from b
 ## Mutant runs of `parts.sh`, after round 1
 
 Each on a copy of the table or of the plan, `parts.sh` exit 1 with the line shown: the forge part dropped (`FAIL no part: docs/spec/forge.md	## The calls of M2e	—`); a clause dropped (`FAIL no part: ... ### The revision of the draft	the check of the quote's fact`); a heading dropped (`FAIL a heading of docs/spec/loop.md has no part: ### The task register`); a part listed twice (`FAIL a part is listed twice`); a part copied into a second Task cell (`FAIL the part is named in 2 Task cells of The tasks of M2e, not one`); a row renamed (`FAIL row 66a is not a row of The tasks of M2e`). After the fixes of round 1 the unchanged table: exit 0; `issues.sh`: exit 0, 24 lines `ok`.
+
+## After round 2 (the fixes that wait for the Operator's answer), 2026-10-15T17:09Z
+
+Round 2 ended `not mergeable, findings recorded` at the cap 1 (two material findings, five notes). The fixes are a local commit, not pushed until the Operator chooses: the After cell of 66d gains 62b; the end check of a `comment` row is row 66d's; five clauses are cut or moved (the Retrospective step of the `internal/run` bullet; the lost merge event split between 66g and 66k; the open question shown in the brief, 66j; the two-survivors clause, 66j); the Tests cell of 65b; the labels of the run-steps and of the layout path; `issues.sh` says D3. `parts.sh` exit 0; `issues.sh` exit 0 (24 `ok`); the five checks exit 0; `git diff --check` exit 0.

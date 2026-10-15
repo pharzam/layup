@@ -104,7 +104,7 @@ ROWS = [
      'The code-owner rule',
      "The setup writes `CODEOWNERS` for the four path classes and the rule `pull_request` of the default branch's ruleset sets `require_code_owner_review` with no required approval.",
      '`internal/setup`', 'REQ-007, REQ-003', 'F-0003#47, F-0003#43',
-     'unit (the golden ruleset file)', 'small', '300', '65a',
+     'unit (the golden ruleset file, the `CODEOWNERS` text); the refusal of a pull request that weakens its own gate is shown on a real repository in the demo (row 68b)', 'small', '300', '65a',
      '2: the `CODEOWNERS` file; the code-owner rule of the ruleset'),
     ('66a',
      'T-cak3',
@@ -130,9 +130,9 @@ ROWS = [
     ('66d',
      'T-q5k4',
      'The handoff in the loop',
-     "The plan, the plan review and the review record are posted from the bytes of the session's file, copied with their hash and kept; the `handoff` event holds the comment ID; a question goes to its owner role and an answer is accepted by its attempt; the items that need a program (`spec-sections`, `rendering-equal`) are computed by the caller and passed to the handoff check.",
+     "The plan, the plan review and the review record are posted from the bytes of the session's file, copied with their hash and kept; the `handoff` event holds the comment ID; the end of a session checks a `comment` row against the session\'s `result/` file; a question goes to its owner role and an answer is accepted by its attempt; the items that need a program (`spec-sections`, `rendering-equal`) are computed by the caller and passed to the handoff check.",
      '`internal/run`', 'REQ-005', 'F-0003#45, F-0003#59',
-     'unit; integration (the `httptest` forge)', 'large', '600', '61, 64, 66a',
+     'unit; integration (the `httptest` forge)', 'large', '600', '61, 62b, 64, 66a',
      '2: the comment artifact; the `handoff` event and the route of a question'),
     ('66e',
      'T-6zj3',
@@ -210,6 +210,9 @@ CAPS = {}
 
 EXTRA = {
     "65b": "The Operator's question (R6: severity normal; row 65b waits on it): where the setup writes `CODEOWNERS`, and how the Operator applies the code-owner rule of the ruleset to a target that `M2d` set up. It is the open gap \"where CODEOWNERS is written and how its ruleset is applied\" of `docs/setup/open-gaps.tsv`; ask it in this issue before the build, with the answer as the evidence.",
+    "66g": "The forge calls to edit a pull request's body and to close a pull request or an issue are not yet in `forge.md`: issue #373 asks them; this row may settle them in its own pull request (R10).",
+    "66k": "The forge call that closes a pull request or an issue (the redo of a task) is not yet in `forge.md`: issue #373; this row may settle it in its own pull request (R10).",
+    "64": "The home of the stand-in forge (`forge.md` names `internal/standin`, which cannot hold it) is in issue #373; this row may settle it in its own pull request (R10).",
     "66c": "The record of the Retrospective's event is not yet named: the block `events` is the file of one task. Issue #372 asks it; this row may settle it in its own pull request (R10), and #372 then closes with it.",
 }
 

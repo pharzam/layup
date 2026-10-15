@@ -6,7 +6,6 @@ docs/spec/loop.md	### The attempts	—	66e
 docs/spec/loop.md	### The tier and the context of a task	the record kinds of the step table	63b
 docs/spec/loop.md	### The tier and the context of a task	the tier selection and the construction of the prompt file	66e
 docs/spec/loop.md	## REQ-005 — The handoff	—	none: the requirement's text; its sections are in their rows
-docs/spec/loop.md	### The artifact that is a comment	the kind comment of the result and the three equal hashes	61
 docs/spec/loop.md	### The artifact that is a comment	the post, the copy and the kept file	66d
 docs/spec/loop.md	### The transition table	the default rows, the lists and the check of a table	61
 docs/spec/loop.md	### The transition table	the replacement by set transitions and its history	66b
@@ -26,7 +25,6 @@ docs/spec/loop.md	### The gate jobs read the base	part 3: the test	65b
 docs/spec/loop.md	### The tree after the first merge	—	66g
 docs/spec/loop.md	## REQ-012 — Shape	the filter and its list of constraints	62a
 docs/spec/loop.md	## REQ-012 — Shape	the step: the options, the rewrite, the stop with no survivor	66h
-docs/spec/loop.md	### The questions left open	—	66h
 docs/spec/loop.md	## REQ-012 — The bet	the check of the brief, the appetite rule and the answer lines	62b
 docs/spec/loop.md	## REQ-012 — The bet	the step: the brief, the answer, bets.tsv, the option choices, the architecture tasks	66j
 docs/spec/loop.md	### The approvers and the success criteria	—	66i
@@ -61,7 +59,6 @@ docs/spec/loop.md	## The acceptance tests of M2e	The ready and merge rule (inven
 docs/spec/loop.md	## The acceptance tests of M2e	The close-out commit and the rendered commit: the close-out and the carry-over check	66g
 docs/spec/loop.md	## The acceptance tests of M2e	The close-out commit and the rendered commit: the rendered commit's push	66j
 docs/spec/loop.md	## The acceptance tests of M2e	The steps after the Scaffold: the restart, the push with no result and the comments of a session	66k
-docs/spec/loop.md	## The acceptance tests of M2e	The steps after the Scaffold: the lost merge event and the tree	66g
 docs/spec/loop.md	## The acceptance tests of M2e	The steps after the Scaffold: the step shape that is not done before	66h
 docs/spec/loop.md	## The acceptance tests of M2e	The bet step is atomic to its last act	66j
 docs/spec/loop.md	## The acceptance tests of M2e	The tier and the context of a task (`session.md` deferral): the record kinds of the step table	63b
@@ -98,10 +95,10 @@ docs/spec/records.md	## NFR-001 — The records of the task loop	result: the kin
 docs/spec/records.md	## NFR-001 — The records of the task loop	events: the kinds handoff and merged	60
 docs/spec/records.md	## NFR-001 — The records of the task loop	events: the details of closed and rebased	66k
 docs/spec/records.md	## NFR-001 — The records of the task loop	copies: the copy of a comment that is an artifact	66d
-docs/spec/records.md	## NFR-001 — The records of the task loop	run-steps: shape	66h
-docs/spec/records.md	## NFR-001 — The records of the task loop	run-steps: bet	66j
-docs/spec/records.md	## NFR-001 — The records of the task loop	run-steps: loop	66k
-docs/spec/records.md	## NFR-001 — The records of the task loop	tasks/<task>/results/<session>/<file>	66d
+docs/spec/loop.md	## REQ-005 — The steps of the loop after the Scaffold	run-steps: shape	66h
+docs/spec/loop.md	## REQ-005 — The steps of the loop after the Scaffold	run-steps: bet	66j
+docs/spec/loop.md	## REQ-005 — The steps of the loop after the Scaffold	run-steps: loop	66k
+docs/spec/records.md	### On the records branch (`records:`)	tasks/<task>/results/<session>/<file>	66d
 docs/spec/forge.md	## The calls of M2e	—	64
 docs/spec/packages.md	### The table of M2e	internal/handoff: the transition table and the check of a handoff	61
 docs/spec/packages.md	### The table of M2e	internal/spec: the Shape filter	62a
@@ -133,3 +130,11 @@ docs/spec/packages.md	### The table of M2e	internal/run: the step shape	66h
 docs/spec/packages.md	### The table of M2e	internal/run: the step bet	66j
 docs/spec/packages.md	### The table of M2e	internal/run: the step loop	66k
 docs/spec/packages.md	### The table of M2e	internal/handoff: the items that a program computes are the caller's	66d
+docs/spec/loop.md	### The artifact that is a comment	the three equal hashes (the handoff check)	61
+docs/spec/loop.md	### The artifact that is a comment	the end check of a comment row of the result	66d
+docs/spec/loop.md	### The questions left open	asking the questions, the intent answer and the wait	66h
+docs/spec/loop.md	### The questions left open	a question still open shown in the brief	66j
+docs/spec/loop.md	## The acceptance tests of M2e	The steps after the Scaffold: the tree check that accepts a lost merge event	66g
+docs/spec/loop.md	## The acceptance tests of M2e	The steps after the Scaffold: the step loop that records the lost merge event	66k
+docs/spec/loop.md	## The acceptance tests of M2e	The Shape filter (inventory): two survivors give a brief with no recommendation	66j
+docs/spec/packages.md	### The table of M2e	internal/run: the Retrospective step	66c

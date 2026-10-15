@@ -1,5 +1,5 @@
 #!/bin/sh
-# The check of D2 of task T-57vx (#346): each row of "The tasks of M2e" links the
+# The check of D3 of task T-57vx (#346): each row of "The tasks of M2e" links the
 # issue of runs/T-57vx/issues.tsv, and the App's bot opened each issue. It reads
 # the forge with gh, so it runs by hand, not in a hook or CI; a one-off evidence
 # command. Run from the root of the repository; exit 0 when each rule holds.

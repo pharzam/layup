@@ -44,7 +44,6 @@ done >> "$out"
 for want in \
 	"docs/spec/loop.md	### The tier and the context of a task	the record kinds of the step table" \
 	"docs/spec/loop.md	### The tier and the context of a task	the tier selection and the construction of the prompt file" \
-	"docs/spec/loop.md	### The artifact that is a comment	the kind comment of the result and the three equal hashes" \
 	"docs/spec/loop.md	### The artifact that is a comment	the post, the copy and the kept file" \
 	"docs/spec/loop.md	### The transition table	the default rows, the lists and the check of a table" \
 	"docs/spec/loop.md	### The transition table	the replacement by set transitions and its history" \
@@ -84,7 +83,6 @@ for want in \
 	"docs/spec/loop.md	## The acceptance tests of M2e	The close-out commit and the rendered commit: the close-out and the carry-over check" \
 	"docs/spec/loop.md	## The acceptance tests of M2e	The close-out commit and the rendered commit: the rendered commit's push" \
 	"docs/spec/loop.md	## The acceptance tests of M2e	The steps after the Scaffold: the restart, the push with no result and the comments of a session" \
-	"docs/spec/loop.md	## The acceptance tests of M2e	The steps after the Scaffold: the lost merge event and the tree" \
 	"docs/spec/loop.md	## The acceptance tests of M2e	The steps after the Scaffold: the step shape that is not done before" \
 	"docs/spec/loop.md	## The acceptance tests of M2e	The bet step is atomic to its last act" \
 	"docs/spec/loop.md	## The acceptance tests of M2e	The tier and the context of a task (\`session.md\` deferral): the record kinds of the step table" \
@@ -121,10 +119,10 @@ for want in \
 	"docs/spec/records.md	## NFR-001 — The records of the task loop	events: the kinds handoff and merged" \
 	"docs/spec/records.md	## NFR-001 — The records of the task loop	events: the details of closed and rebased" \
 	"docs/spec/records.md	## NFR-001 — The records of the task loop	copies: the copy of a comment that is an artifact" \
-	"docs/spec/records.md	## NFR-001 — The records of the task loop	run-steps: shape" \
-	"docs/spec/records.md	## NFR-001 — The records of the task loop	run-steps: bet" \
-	"docs/spec/records.md	## NFR-001 — The records of the task loop	run-steps: loop" \
-	"docs/spec/records.md	## NFR-001 — The records of the task loop	tasks/<task>/results/<session>/<file>" \
+	"docs/spec/loop.md	## REQ-005 — The steps of the loop after the Scaffold	run-steps: shape" \
+	"docs/spec/loop.md	## REQ-005 — The steps of the loop after the Scaffold	run-steps: bet" \
+	"docs/spec/loop.md	## REQ-005 — The steps of the loop after the Scaffold	run-steps: loop" \
+	"docs/spec/records.md	### On the records branch (\`records:\`)	tasks/<task>/results/<session>/<file>" \
 	"docs/spec/forge.md	## The calls of M2e	—" \
 	"docs/spec/packages.md	### The table of M2e	internal/handoff: the transition table and the check of a handoff" \
 	"docs/spec/packages.md	### The table of M2e	internal/spec: the Shape filter" \
@@ -154,7 +152,15 @@ for want in \
 	"docs/spec/packages.md	### The table of M2e	internal/run: the step shape" \
 	"docs/spec/packages.md	### The table of M2e	internal/run: the step bet" \
 	"docs/spec/packages.md	### The table of M2e	internal/run: the step loop" \
-	"docs/spec/packages.md	### The table of M2e	internal/handoff: the items that a program computes are the caller's"; do
+	"docs/spec/packages.md	### The table of M2e	internal/handoff: the items that a program computes are the caller's" \
+	"docs/spec/loop.md	### The artifact that is a comment	the three equal hashes (the handoff check)" \
+	"docs/spec/loop.md	### The artifact that is a comment	the end check of a comment row of the result" \
+	"docs/spec/loop.md	### The questions left open	asking the questions, the intent answer and the wait" \
+	"docs/spec/loop.md	### The questions left open	a question still open shown in the brief" \
+	"docs/spec/loop.md	## The acceptance tests of M2e	The steps after the Scaffold: the tree check that accepts a lost merge event" \
+	"docs/spec/loop.md	## The acceptance tests of M2e	The steps after the Scaffold: the step loop that records the lost merge event" \
+	"docs/spec/loop.md	## The acceptance tests of M2e	The Shape filter (inventory): two survivors give a brief with no recommendation" \
+	"docs/spec/packages.md	### The table of M2e	internal/run: the Retrospective step"; do
 	grep -Fq "$want	" "$tab" || echo "FAIL no part: $want" >> "$out"
 done
 # 6. Each listed part is named in the Task cell of its own row, in the form that
