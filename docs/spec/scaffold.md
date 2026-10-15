@@ -433,7 +433,8 @@ writer of a ruleset, as in phase 1). Each file is the body of `POST
 ruleset is that of phase 1, `layup: the default branch` (`setup.md`, S13); the
 records branch's is `layup: the records branch` (**decided here**, in the form of
 the first, so the Operator tells the two apart). Every parameter of
-each rule is written, so the read-back compares each.
+each rule is written, so the read-back compares each, but for the one that GitHub
+omits at its default ([The read-back](#the-read-back)).
 
 ### The ruleset of the default branch
 
@@ -466,7 +467,8 @@ the branch (searcher A), so only the App writes it, and the ruleset of the defau
 branch keeps its empty bypass list: the two scopes are two rulesets. **Decided
 here** (task `T-9v92`, condition 1 of its plan review): the rule `update` has one
 parameter in GitHub's description of it, `update_allows_fetch_and_merge`, and it
-is written `false` (no fork pulls into the branch), so the read-back compares it;
+is written `false` (no fork pulls into the branch), so the read-back compares it as far as
+GitHub returns it (the rule comes back without it when it is `false`: [The read-back](#the-read-back));
 `deletion` and `non_fast_forward` have none. The setup record has no hash row for
 this file: it is a function of the App's ID, which the forge register holds.
 
@@ -570,6 +572,19 @@ the call does not return) or a parameter that differs is `fail`, naming it. A
 rule that the call returns and the file does not hold (a ruleset of an
 organization) is not a failure; its type is named in the `detail`.
 
+**Decided here** (task `T-j7c5`, #330, with the conditions of its plan review; first hand, run 6 of
+the demo of `M2d`, 2026-10-15): GitHub leaves a parameter out of the rule that it returns when the
+file wrote its default. On a repository that is not a fork, the rule `update` of a file that wrote
+`update_allows_fetch_and_merge` `false` comes back with no `parameters`, in the response of the apply,
+in the read of the ruleset and in the effective rules of the branch, while GitHub echoes the other
+`false` parameters (those of `pull_request`). So a parameter of the file that the call lacks is
+equal when it is one that GitHub omits at its default, and the table of those, `omittedAtDefault`
+in `internal/run/forgecheck.go`, has one entry: the rule `update`, the parameter
+`update_allows_fetch_and_merge`, `false`. An omitted `true`, any other missing parameter, the same
+name on another rule type, a value that differs (`true` for `false`, and `false` for `true`) and a
+missing rule are `fail`, naming it ("is missing" or "differs"). A fork may return the field, which is
+then compared as it is. A new entry needs its own first-hand answers of the forge.
+
 `bypass:<ruleset>` for `default` and `records`: the `bypass_actors` of the
 apply output in `setup/rulesets.txt` are empty for `default`, and exactly the
 App's (`Integration`, `app_id`, `always`) for `records`. A later change of a
@@ -637,7 +652,8 @@ step is `done` "the forge check passed", or `fail` naming the first row that is 
 - **The comparison:** each rule of the file needs one returned rule of its type whose parameters equal
   each of the file's own; the parameters of two returned rules are never combined, so the answer's order
   does not matter. A parameter that the call returns and the file lacks is ignored; one that the file
-  holds and the call lacks is a difference, whatever its value (`false` and `0` too). The required checks
+  holds and the call lacks is a difference, whatever its value (`false` and `0` too), but for the one that
+  GitHub omits at its default (The read-back). The required checks
   are the set of the pairs `context` and `integration_id`, in any order, with their strict flag. The
   `detail` of a `pass` is empty (`—`), except a rules row with a rule type that the call returns and the
   file lacks: `extra: <types>`, sorted, a comma and a space.
@@ -812,6 +828,8 @@ change, as `M2c` did.
 | The default branch's head is the verified head, and an apply output is missing | `scaffold-push` keeps "waiting" |
 | An apply output that is not a JSON object, or whose `source` is another repository | `scaffold-push` is `fail`, naming the file |
 | A ruleset in `evaluate` or `disabled` | its rules are missing in the read-back: `forge-check` is `fail` |
+| The forge returns the rule `update` of the records ruleset with no `update_allows_fetch_and_merge`, the file having written `false` (GitHub's own form) | the row `rules:layup-records` is a `pass` (task `T-j7c5`) |
+| The forge omits `update_allows_fetch_and_merge` for a file that wrote `true`, returns another value than the file's, or lacks another parameter or a rule of the file | the row is `fail`, naming the rule and "is missing" or "differs" |
 | A probe that the forge accepts | `forge-check` is `fail`, "probe accepted" |
 | A probe that fails for another reason (token, network, server), or whose refusal is for another ref than `layup-probe` or has no `GH013` line | `forge-check` is `fail`, "probe not run" |
 | A refusal of the probe while another ruleset also restricts the creation of `layup-probe`, or no `creation` rule applies to it, or its rules were not read, or the apply output of the default ruleset has no id | `forge-check` is `fail`, "probe refused, but not attributed to the default branch's ruleset" (task `T-gkvi`) |
@@ -870,9 +888,9 @@ six rows of the inventory item `later-p2-scaffold` are the rows marked
 | The ruleset files (inventory) | unit | The default branch's file names each gate job pinned to 15368, the four `layup/` checks pinned to the forge register's `app_id`, `strict` true, `creation`, `allowed_merge_methods` `["merge"]` and an empty bypass list; the records branch's file has the App as its only bypass actor; phase 1 gets `creation` and the two parameters, and no `layup/` check. |
 | `commands.sh` is fail-fast and can be run again | unit | Its first line is `set -eu`, and a stand-in command that fails stops the rest (F-13); with stand-ins of `git` and `gh`, a run again after the push or after one apply pushes nothing and applies only the missing ruleset, and a `gh` that writes part of its output and exits 1 leaves no output file, so the run again applies that ruleset; and a head that is neither the root nor the setup head stops it. |
 | The probe (inventory) | integration | With a real local bare repository whose pre-receive hook refuses in the form that GitHub prints (`GH013` and the ref `layup-probe`, the line of the rules URL, a line for the violated rule, no ruleset's name), and the real `internal/git`: the refusal is `pass`, as far as the attribution goes; a hook that refuses for another ref, one that refuses with another text, and a remote that cannot be reached, are "probe not run"; an accepted push is "probe accepted". At the unit level: the exact ref (`layup-probe-other`, `layup-probe/child` and `layup-probe.x` are not it), the attribution (the default ruleset's `creation` rule alone passes; another ruleset's `creation` rule, none, an `Organization` source with the same ID and another ID fail), the ID of an apply output, and the one read of the rules of `layup-probe`; at the adapter's integration level, the ruleset of each rule (task `T-gkvi`). |
-| The read-back | unit | A read-back equal to the files passes; a missing rule, a different parameter, an `integration_id` that differs, and a bypass list that is not empty (default) or not exactly the App (records) each fail, naming it; an extra rule is named and passes. |
+| The read-back | unit | A read-back equal to the files passes; a missing rule, a different parameter, an `integration_id` that differs, and a bypass list that is not empty (default) or not exactly the App (records) each fail, naming it; an extra rule is named and passes; a parameter that GitHub omits at its default (`update_allows_fetch_and_merge` `false` of `update`) is equal, and the same omitted `true`, another missing parameter, the same name on another rule type and a value that differs (`true` for `false`, `false` for `true`) each fail, naming it; the fakes give the rules of the records branch in GitHub's form, shown by an assertion on each (task `T-j7c5`). |
 | `layup run` with the real step runner (inventory) | integration | On a fixture baseline: `answers.tsv` is written from the copied answers, a prose stop starts a scripted session whose prompt names the target and gives the rules of the checks, the runner finishes, and `layup run` commits `setup/record.tsv`, `setup/verify.tsv`, `rule-paths.tsv`, `setup/tree.tsv` and the README of the Scaffold; a second run is "done before"; a rebuilt work area gives the same commits, also after the default branch holds the setup commits (its `main` is the root commit). |
-| The steps of the Scaffold, end to end (inventory) | e2e | In CI on a local fake forge and local bare repositories: Start, scripted Intake answers with the setup questions, the setup, the printed commands run by the test in place of the Operator, and the forge check, whose fake forge answers the read-back (each rule with the ruleset that it is of) and the activity, and whose bare repository refuses the probe in the form that GitHub prints, with `GH013` and the ref. |
+| The steps of the Scaffold, end to end (inventory) | e2e | In CI on a local fake forge and local bare repositories: Start, scripted Intake answers with the setup questions, the setup, the printed commands run by the test in place of the Operator, and the forge check, whose fake forge answers the read-back (each rule with the ruleset that it is of) and the activity, and whose bare repository refuses the probe in the form that GitHub prints, with `GH013` and the ref; the fake gives the rule `update` of `layup-records` with no `update_allows_fetch_and_merge`, as GitHub does. |
 | The review of the release | uat | A recorded code review of the release for `REQ-015` and `REQ-017`, by a reviewer of a model that wrote none of it, with `runs/T-efmy/release-check.sh` on the release commit, adapted where the code of `M2d` needs it, before the demo (row 59a of [the plan](../plan/README.md#the-tasks-of-m2d)). |
 | The demo (inventory) | uat | On a real GitHub test target, the Operator runs the printed pushes and the ruleset apply, and sees the push to `layup-probe` refused and `setup/forge-check.tsv` show each rule and probe as passed. |
 
@@ -893,7 +911,8 @@ configuration, so the clone has no hook. **Stage 4:** the restart that records t
 runs `forge-check`, whose fake forge gives the head of each branch, the rules of `main`,
 `layup-probe` and `layup-records` from the ruleset files of the work area, each rule with the
 ruleset that it is of (7001 for the default branch's file and 7002 for the records branch's, the IDs that the
-stand-in `gh` writes into the output of each apply), and an empty activity, and whose bare repository refuses
+stand-in `gh` writes into the output of each apply), the rule `update` of the records branch with no
+`update_allows_fetch_and_merge` as GitHub gives it (task `T-j7c5`), and an empty activity, and whose bare repository refuses
 the push to `layup-probe` by a `pre-receive` hook in the form that GitHub prints (`GH013` and the ref, the
 line of the rules URL and the violated rule, no ruleset's name; task `T-gkvi`): eight rows `pass`, exit 0, the
 lease released. **Stage 5:** a later start,

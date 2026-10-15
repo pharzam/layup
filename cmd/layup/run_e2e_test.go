@@ -152,6 +152,11 @@ func (f *fakeForge) serve(w http.ResponseWriter, r *http.Request) {
 		}
 		for _, r := range list {
 			r["ruleset_source_type"], r["ruleset_source"], r["ruleset_id"] = "Repository", "acme/target", id
+			// GitHub leaves update_allows_fetch_and_merge out of the rule update when the file wrote false (first hand, run 6 of the demo of M2d,
+			// 2026-10-15; task T-j7c5, #330; runs/T-j7c5/test-runs.md).
+			if params, ok := r["parameters"].(map[string]any); ok && r["type"] == "update" && params["update_allows_fetch_and_merge"] == false {
+				delete(r, "parameters")
+			}
 		}
 		enc.Encode(list)
 	case call == "GET /repos/acme/target/activity":

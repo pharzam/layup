@@ -236,7 +236,8 @@ func rulesetRules(data []byte) ([]forge.Rule, error) {
 
 // readBack compares the rules that a ruleset file holds with those that the forge returns: each needs one
 // returned rule of its type whose parameters equal each of its own, so parameters of two returned rules are
-// never combined; a parameter that the forge returns and the file lacks is ignored. The detail of a pass
+// never combined; a parameter that the forge returns and the file lacks is ignored, and one that the file
+// holds at the default that GitHub omits (omittedAtDefault) and the forge lacks is equal. The detail of a pass
 // is empty, or names the rule types that the forge returns and the file lacks; the detail of a fail names
 // the first rule that is missing, or the first parameter that is missing or differs.
 func readBack(want, got []forge.Rule) (string, bool) {
@@ -248,7 +249,7 @@ func readBack(want, got []forge.Rule) (string, bool) {
 			if g.Type != w.Type {
 				continue
 			}
-			d := parameterDiff(w.Parameters, g.Parameters)
+			d := parameterDiff(w.Type, w.Parameters, g.Parameters)
 			if d == "" {
 				found = true
 				break
@@ -277,9 +278,17 @@ func readBack(want, got []forge.Rule) (string, bool) {
 	return "extra: " + strings.Join(types, ", "), true
 }
 
+// omittedAtDefault names, by the type of the rule, the parameters that GitHub leaves out of the rule that it returns when
+// the file wrote their default: on a repository that is not a fork the rule update comes back with no
+// update_allows_fetch_and_merge, though the file wrote false (first hand, run 6 of the demo of M2d, 2026-10-15, in the
+// answer of the apply, the read of the ruleset and the effective rules; task T-j7c5, #330; docs/spec/scaffold.md, The
+// read-back). An entry needs first-hand evidence: GitHub echoes the other false parameters, those of pull_request.
+var omittedAtDefault = map[string]map[string]any{"update": {"update_allows_fetch_and_merge": false}}
+
 // parameterDiff names the first parameter of want, in the order of the names, that got lacks or holds
-// with another value, or is "".
-func parameterDiff(want, got map[string]any) string {
+// with another value, or is "". A parameter that got lacks is no difference when it is one of
+// omittedAtDefault for the type of the rule and want holds that default.
+func parameterDiff(ruleType string, want, got map[string]any) string {
 	names := make([]string, 0, len(want))
 	for n := range want {
 		names = append(names, n)
@@ -289,6 +298,9 @@ func parameterDiff(want, got map[string]any) string {
 		g, ok := got[n]
 		switch {
 		case !ok:
+			if d, omitted := omittedAtDefault[ruleType][n]; omitted && reflect.DeepEqual(want[n], d) {
+				continue
+			}
 			return n + " is missing"
 		case !sameParameter(n, want[n], g):
 			return n + " differs"
