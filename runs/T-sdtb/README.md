@@ -156,3 +156,10 @@ release (`git diff --stat 0a104b8 COMMIT -- cmd internal go.mod`, and the releas
   So its Go code is the release that row 59a reviewed (`0a104b8`) and the change of `T-gkvi`; the release check on that commit,
   run at 13:30:56Z in a clean clone (`sh runs/T-efmy/release-check.sh 236c9afe405f43eb005ceedb4b9977496d25cd59`), gives exit 0 and
   `== PASS`, with the same sites as at `0a104b8`: the three references to `git.Push` are in `PushHead`, `commitFiles` and `pushProbe`.
+- **The binary, rebuilt after `T-92lm`** (07:14Z on 2026-10-15, before run 5; runs 3 and 4 had failed at the step `setup` on the old prompt of the prose session): `go build -o ~/layup-host/bin/layup ./cmd/layup` at
+  `3f723570f00cc05ad5129c7c814896b8f7c30727` (this branch after the merge of `main` at `8802e6c`, the merge of #327); `layup version` gives `layup 0.1.0-dev`, its SHA-256 is
+  `3407da21c918ed89ab3452ac65994cc77e095a5aaa18cbd04854230eed914383`; the binary before it is kept as `layup.before-T-92lm` (SHA-256 `7f6379d6…9a1d`, the build after `T-gkvi`). `git diff --stat 0a104b8 3f72357 -- cmd internal go.mod` names
+  18 files: seven that the binary is made of (`internal/forge/forge.go`, `internal/forge/github/github.go`, `internal/run/forgecheck.go` of `T-gkvi`, and `internal/run/prose.go`, `internal/run/setup.go`, `internal/verify/adapted.go`,
+  `internal/verify/checks.go` of `T-92lm`: 341 lines added and 42 removed) and eleven of tests. So its Go code is the release that row 59a reviewed (`0a104b8`) and the changes of `T-gkvi` and `T-92lm` (the words that the prompt of the prose session
+  gives); the release check on that commit, run at 07:13:51Z in a clean clone (`sh runs/T-efmy/release-check.sh 3f723570f00cc05ad5129c7c814896b8f7c30727`), gives exit 0 and `== PASS`, with the same sites as at `0a104b8` and `236c9af`
+  (its output differs from that at `236c9af` in one timing figure): the three references to `git.Push` are in `PushHead`, `commitFiles` and `pushProbe`.
