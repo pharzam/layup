@@ -67,6 +67,7 @@ docs/spec/scaffold.md	## The acceptance tests of M2d	The probe (inventory)	57a
 docs/spec/scaffold.md	## The acceptance tests of M2d	The read-back	57a
 docs/spec/scaffold.md	## The acceptance tests of M2d	`layup run` with the real step runner (inventory)	55
 docs/spec/scaffold.md	## The acceptance tests of M2d	The steps of the Scaffold, end to end (inventory)	58
+docs/spec/scaffold.md	## The acceptance tests of M2d	The review of the release	59a
 docs/spec/scaffold.md	## The acceptance tests of M2d	The demo (inventory)	59b
 docs/spec/records.md	## NFR-001 — The records of the Scaffold	the block markers	50
 docs/spec/records.md	## NFR-001 — The records of the Scaffold	the blocks setup-tree and forge-check	50
