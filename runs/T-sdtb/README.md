@@ -112,7 +112,8 @@ error in the log (1).
 characters of text files, with a table of measured targets and a terms table. `layup psb check brief.md` is
 expected to find no gap; its output is recorded with the inputs. It is the short brief, not `PSB-CHAT-001` (1,132
 lines): the demo is about the Scaffold, and the Operator was told (on 2026-10-14, 11:20Z) that a request for
-`PSB-CHAT-001` before Start would change it. The Operator's reply is recorded with the inputs.
+`PSB-CHAT-001` before Start would change it ("Tell me only if you want PSB-CHAT-001 instead"). The Operator asked for no other brief: their messages before Start were "step one is done" (12:29Z), "done" (13:34Z) and
+"pushed" (13:38Z), so the short brief stands.
 
 ## After a failed attempt
 
@@ -199,4 +200,4 @@ says it: each refusal is attributed to LAYUP's ruleset by its ID (the check), an
 
 This task is a uat and has no Go test, so there is no red run to record. The Go code of the branch is that of `main` at `461d47a` (`git diff origin/main HEAD -- cmd internal go.mod` prints nothing). On the head `f5121d5`, each exit status: `go build ./...` 0;
 `go vet ./...` 0; `gofmt -l internal cmd` (empty) 0; `go test ./...` 0; `adr-lint` 0; `prd-lint` 0; `link-lint` 0; `run-discipline-tests` 0; `nested-checkout-check` 0; `setup-check` 0; `git diff --check origin/main HEAD` 0. The integration and e2e levels of
-the Go tests are those of the CI of the pull request and of the tasks that changed the Go code (`T-gkvi`, `T-92lm`, `T-j7c5`); they were not run again here.
+the Go tests are those of the CI of the pull request and of the tasks that changed the Go code (`T-gkvi`, `T-92lm`, `T-j7c5`); they were not run again here: the `tests` job of the CI of the pull request (unit, integration, e2e) runs them on its final head, and the closing comment of the pull request names that run.
