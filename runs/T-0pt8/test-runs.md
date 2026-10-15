@@ -10,7 +10,7 @@ Times from the clock of the host, UTC, 2026-10-15.
 
 ## Each rule's test fails when that rule alone is broken
 
-One mutant on a copy of `shape.go`, restored after each; the tests that fail (none ALIVE):
+One mutant on a copy of `shape.go`, restored after each; each text change whole (a newline and a tab as a space), and the tests that fail; none builds badly and none is alive (re-run at 18:35Z, after round 2):
 
 - a failed row does not drop: `case r[optResult] == "fail":` → `case false:`: TestEachBreakDropsOnlyItsOption TestAnOptionWithSeveralBreaksNamesEachInTheOrderOfTheConstraints
 - a missing row does not drop: `case r == nil:` → `case false:`: TestEachBreakDropsOnlyItsOption
@@ -19,16 +19,18 @@ One mutant on a copy of `shape.go`, restored after each; the tests that fail (no
 - no survivor gives a choice: `if len(r.Survivors) == 1 {` → `if len(r.Survivors) <= 1 {`: TestTheSurvivorsAreChosenOnlyWhenThereIsOne
 - every requirement kind applies: `if r.Kind == "non-functional" {` → `if true {`: TestTheConstraintsThatApplyComeFromTheRecordsInOneOrder
 - every fact applies: `if f.Class == "constraint" {` → `if true {`: TestTheConstraintsThatApplyComeFromTheRecordsInOneOrder TestTheCallerChoosesTheSourceOfTheFacts
-- an unaccepted record applies: `a.Status == "Accepted" || strings.HasPrefix(a.Status, "Accep` → `true`: TestTheConstraintsThatApplyComeFromTheRecordsInOneOrder
-- an amended record is left out: `a.Status == "Accepted" || strings.HasPrefix(a.Status, "Accep` → `a.Status == "Accepted"`: TestTheConstraintsThatApplyComeFromTheRecordsInOneOrder
-- a fact of the answers gets F-: `if strings.HasPrefix(f.Number, "Q-") {` → `if false {`: TestTheConstraintsThatApplyComeFromTheRecordsInOneOrder
-- the invariants do not apply: `	for _, v := range invariants {` → ``: TestTheConstraintsThatApplyComeFromTheRecordsInOneOrder
+- an unaccepted record applies: `if a.Status == "Accepted" || strings.HasPrefix(a.Status, "Accepted. Amended by ") {` → `if true {`: TestTheConstraintsThatApplyComeFromTheRecordsInOneOrder
+- an amended record is left out: `if a.Status == "Accepted" || strings.HasPrefix(a.Status, "Accepted. Amended by ") {` → `if a.Status == "Accepted" || strings.HasPrefix("", "x") {`: TestTheConstraintsThatApplyComeFromTheRecordsInOneOrder
+- a fact of the answers gets F-: `if strings.HasPrefix(f.Number, "Q-") {` → `if strings.HasPrefix("", "x") {`: TestTheConstraintsThatApplyComeFromTheRecordsInOneOrder
+- the invariants do not apply: ` for _, v := range invariants { out = append(out, Constraint{v, ""}) }` → ` _ = invariants`: TestTheConstraintsThatApplyComeFromTheRecordsInOneOrder
 - the criterion is dropped: `out = append(out, Constraint{r.ID, r.Criterion})` → `out = append(out, Constraint{r.ID, ""})`: TestTheConstraintsThatApplyComeFromTheRecordsInOneOrder
-- an extra constraint is not judged: `listed[c] = true` → `listed[c] = true`: TestEachBreakDropsOnlyItsOption
+- an extra constraint is not judged: ` if !listed[c] { listed[c] = true judge(c, byOpt[o.Name][c]) }` → ` if !listed[c] { listed[c] = true }`: TestEachBreakDropsOnlyItsOption
+- an extra constraint is demanded of every option: ` for _, c := range constraints { listed[c] = true` → ` all := append([]string(nil), constraints...) for _, r := range rows { all = append(all, r[optConstraint]) } for _, c := range all { listed[c] = true`: TestEachBreakDropsOnlyItsOption TestAnExtraConstraintIsJudgedButNotDemanded TestAMissingRowDropsOnlyTheOptionThatLacksIt TestAnOptionWithSeveralBreaksNamesEachInTheOrderOfTheConstraints
+- a missing row is read from another option: ` listed[c] = true judge(c, byOpt[o.Name][c])` → ` listed[c] = true var any []string for _, m := range byOpt { if x, ok := m[c]; ok { any = x } } judge(c, any)`: TestEachBreakDropsOnlyItsOption TestAMissingRowDropsOnlyTheOptionThatLacksIt TestAnOptionWithSeveralBreaksNamesEachInTheOrderOfTheConstraints TestTheSurvivorsAreChosenOnlyWhenThereIsOne
 - an option name is unchecked: `!optionName.MatchString(r[optName])` → `false`: TestAnOptionsTableThatBreaksAnOwnerRuleIsRefused
 - a fail with evidence is accepted: `r[optResult] == "fail" && r[optEvidence] != ""` → `false`: TestAnOptionsTableThatBreaksAnOwnerRuleIsRefused
 - an empty result is accepted: `r[optResult] == ""` → `false`: TestAnOptionsTableThatBreaksAnOwnerRuleIsRefused
-- a non-fact span is a fact: `if r[colFact] != "" {` → `if true {`: TestTheFactsOfASpanTableAreItsFactRows
+- a non-fact span is a fact: ` if r[colFact] != "" {` → ` if true {`: TestTheFactsOfASpanTableAreItsFactRows
 
 ## Green and the validation, at the content of the head
 
@@ -42,6 +44,7 @@ sh docs/links/link-lint.sh → exit 0
 sh docs/setup/setup-check.sh → exit 0
 sh docs/tests/run-discipline-tests.sh → exit 0
 gofmt -l . → exit 0
+git diff --check origin/main HEAD → exit 0
 ```
 
 `go test -count=1 -tags=integration ./...` (the whole module, TMPDIR on the disk, under the load of two other forks): exit 0, 18:06:28 to 18:22:40Z (16 min 12 s), at the content of the head after the fixes of round 1. The first run, before them (17:28:23 to 17:47:07Z), was also exit 0.

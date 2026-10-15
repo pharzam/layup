@@ -102,7 +102,7 @@ func RequirementsOfDraft(draft [][]string) []Requirement {
 // ADR is a decision record of the target with its status line. A record applies
 // when it is accepted: the status is Accepted, or Accepted. Amended by
 // ADR-NNNN, as the baseline's record rules write an extended record, whose old
-// decision still holds. A proposed, rejected or superseded record does not.
+// decision still holds. A proposed, deprecated or superseded record does not.
 type ADR struct{ ID, Status string }
 
 // Constraint is a constraint that applies: its ID, and the text that the
