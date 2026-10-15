@@ -196,7 +196,7 @@ func TestTheProsePromptGivesTheRulesOfTheOtherChecks(t *testing.T) {
 		"Neither README.md nor AGENTS.md may hold any of these texts anywhere, also inside a longer line: "+strings.Join(lines, ", ")+".",
 		"4. docs/onboarding-for-engineers.md must hold no angle quote at all, not even a marker, and must hold the link ](facts/problem-statement-brief.md).",
 		`5. In docs/guardrails.md each entry is a bullet that starts with "- **Inv-", a number and "**", and runs to the next entry or heading.`,
-		`Each entry must have a line with "Check: ", and the text from the last "Check: " of the first such line to the end of that line must be exactly "no check yet", or the path of a file of this project that exists, a space and "(hook)", or that path, a space, "(ci:", a job name and ")", with no space followed by an opening parenthesis in the path (the check splits the value at the first of them). A file with no entry passes.`,
+		`Each entry must have a line with "Check: ", and the text from the last "Check: " of the first such line to the end of that line must be exactly "no check yet", or the path of a file of this project that exists, a space and "(hook)", or that path, a space, "(ci:", a job name and ")", with no space followed by an opening parenthesis in the path or in the job name (the check splits the value at the first of them for the path and at the last for the gate). A file with no entry passes.`,
 		"6. Markers: a row that asks you to adapt a file keeps each marker of it, as said above, and no file holds a marker of your own.")
 }
 

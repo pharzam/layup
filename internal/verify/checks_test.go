@@ -298,11 +298,16 @@ func TestTheChecksOfATarget(t *testing.T) {
 	same(t, "identity with no records branch", checkIdentity(in), []string{"branch: README.md does not name the branch layup-records"})
 }
 
-// A path of a Check: value that holds a space and an opening parenthesis is read at the first of them (round 3 of #326: the prompt of
-// the prose session says so), whatever file the project has: the check names the part before it, which is no file.
-func TestAGuardrailsPathWithASpaceAndAParenthesisIsReadAtTheFirstOfThem(t *testing.T) {
-	tree := fstest.MapFS{"docs/guardrails.md": {Data: []byte("- **Inv-1** \u2014 a rule. Check: docs/check (local).sh (hook)\n")}, "docs/check (local).sh": {Data: []byte("x")}, "docs/check": {Data: []byte("x")}}
-	same(t, "a path with ' ('", guardrailsFindings(tree), nil)
+// A Check: value is split at the first space and opening parenthesis for its path and at the last for its gate, so neither the path nor the job
+// name may hold them (rounds 3 and the rehearsals of #326: the prompt of the prose session says so); a name with a parenthesis and no space before it is whole.
+func TestAGuardrailsValueIsSplitAtTheFirstAndTheLastSpaceAndParenthesis(t *testing.T) {
+	entry := func(v string) fstest.MapFS {
+		return fstest.MapFS{"docs/guardrails.md": {Data: []byte("- **Inv-1** \u2014 a rule. Check: " + v + "\n")}, "docs/check (local).sh": {Data: []byte("x")}, "docs/check": {Data: []byte("x")}, "README.md": {Data: []byte("x")}}
+	}
+	same(t, "a path with ' (' and a file before it", guardrailsFindings(entry("docs/check (local).sh (hook)")), nil)
+	tree := entry("docs/check (local).sh (hook)")
 	delete(tree, "docs/check")
 	same(t, "a path with ' (' and no file before it", guardrailsFindings(tree), []string{"check: Inv-1 names \"docs/check\", which is not a file"})
+	same(t, "a job name with ' ('", guardrailsFindings(entry("README.md (ci:test (linux))")), []string{"check: Inv-1 gate \"linux)\" is not hook or ci:<job>"})
+	same(t, "a job name with '(' and no space before it", guardrailsFindings(entry("README.md (ci:test(linux))")), nil)
 }

@@ -161,8 +161,9 @@ rules of the checks, each with the files that it governs.
    line with "Check: ", and the text from the last "Check: " of the first such line
    to the end of that line must be exactly "no check yet", or the path of a file of
    this project that exists, a space and "(hook)", or that path, a space, "(ci:", a
-   job name and ")", with no space followed by an opening parenthesis in the path (the
-   check splits the value at the first of them). A file with no entry passes.
+   job name and ")", with no space followed by an opening parenthesis in the path or in
+   the job name (the check splits the value at the first of them for the path and at the
+   last for the gate). A file with no entry passes.
 6. Markers: a row that asks you to adapt a file keeps each marker of it, as said
    above, and no file holds a marker of your own.
 
