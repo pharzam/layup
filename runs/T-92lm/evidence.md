@@ -44,10 +44,10 @@ attempts below, and gives no rate of success. The demo of `M2d` (`T-sdtb`, #284)
 
 It runs merged code (no review needed) and shows that this layout reproduces runs 3 and 4. The prompt of `b7f3f7d`, 1,395 bytes with a real session's paths (sha256 `203e17496682e374d219c93adc2b38554b1feb63789b1a8224b31b177e7ad8ea`); session `ctl1`, `claude` 2.1.300, `claude-opus-5-5`, cap USD 5.00, wall 1,800 s, 18:47:27Z to 19:03:13Z (15 min 46 s), 56 turns, USD 3.76 (list basis; subscription), 25 files, exit 0; output manifest sha256 `50704aee905ed72aa777e7d6ef97557b0a7bf3bf6f26a0d377f27dd46a68dc88`, archive `ctl1.tar.gz` `31e00063e9c5c9db751f1f4f9073a004d2a8eeb8ad1f56c123f1f9e296d37035`. The engine (`layup` sha256 `7f6379d6d7cf1d22daa3a35f19e07ef2f0a72d8d2e25332cb9e9bd6f0db49a1d`, built at `236c9af`), with the control's files in `inputs/files/`: S01 to S07 done, **S08 `fail`: `glossary: fail: fact: F-0007#3 is not a fact of the F-0007 record`**, as runs 3 and 4; S09 to S15 not run. Check `adapted` (LAYUP's own `setup-check.sh`, which reports every hit): **154 hits in 24 of the 25 files** (kit 28, optional 26, adapt 16, fill-before-a-marker 15, replace-before-a-marker 11, delete this 11, the template 10, your stack 9, adopter 8, your project 6, fill in 6, your forge 3, you use 2, skip this section 2, Armature 1).
 
-## Attempt 1 — the head `4fbfc06`, before round 3 (02:07:16Z to 02:16:47Z)
+## Attempt 1 — the head `4fbfc06`, before the fixes of round 2 and of the rehearsals (02:07:16Z to 02:16:47Z)
 
 Run while the Operator's answer at the cap was awaited, on the head that rounds 1 and 2 had read (order of condition 5 kept: the code was reviewed before the paid session), as the protocol says; the final head
-differs from it by the sentences that the findings of rounds 2 and 3 changed (the stem, the stopping rule, spaces and tabs, the passed words, the path of a `Check:` value) and is attempt 2's. **Passed, on its first attempt.**
+differs from it by the sentences that the findings of round 2 and of the three private rehearsals changed (the stem, the stopping rule, spaces and tabs, the passed words, the path of a `Check:` value) and is attempt 2's. **Passed, on its first attempt.**
 
 | What | Value |
 | ---- | ----- |
