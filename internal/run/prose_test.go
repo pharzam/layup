@@ -188,7 +188,7 @@ func TestTheProsePromptGivesTheRulesOfTheOtherChecks(t *testing.T) {
 	}
 	wantAll(t, proseTextOf(),
 		"2. Citations. The checks read them in docs/onboarding-for-engineers.md, docs/glossary.md and docs/guardrails.md; keep them right in every file.",
-		"A citation is \"F-\", four digits, \"#\" and a number, as in F-0001#3. It must name a fact of this project: the directory docs/facts/ holds one file F-<four digits>-<name>.md for that number, and the file has a line that starts with the number, a full stop and a space.",
+		"A citation is \"F-\", four digits, \"#\" and a number written with no leading zero, as in F-0001#3. It must name a fact of this project: the directory docs/facts/ holds one file F-<four digits>-<name>.md for that number, and the file has a line that starts with the number, a full stop and a space.",
 		"List docs/facts/ and read what is there. A citation that names no fact of this project is an unsupported attribution. Remove it, or point it to a fact of this project that supports the text.",
 		"Never remove a rule, a step, a definition, an entry or a row of the baseline for that reason alone: keep its text and change only its attribution.",
 		"Remove a sentence or a row only when it is an example that belongs to the baseline's own project and says nothing about this one.",

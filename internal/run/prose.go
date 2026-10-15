@@ -140,7 +140,8 @@ rules of the checks, each with the files that it governs.
    The phrase {cased}, with its capital A, is read as it is, in its letter case. It may stand only in these files: {allowed}. In any other file write "the baseline".
 2. Citations. The checks read them in docs/onboarding-for-engineers.md,
    docs/glossary.md and docs/guardrails.md; keep them right in every file. A
-   citation is "F-", four digits, "#" and a number, as in F-0001#3. It must name a
+   citation is "F-", four digits, "#" and a number written with no leading zero, as in
+   F-0001#3. It must name a
    fact of this project: the directory docs/facts/ holds one file
    F-<four digits>-<name>.md for that number, and the file has a line that starts
    with the number, a full stop and a space. List docs/facts/ and read what is
