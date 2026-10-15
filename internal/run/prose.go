@@ -134,7 +134,7 @@ rules of the checks, each with the files that it governs.
 {whole}
    Open at the end (a hit whatever follows: "your projectile" is a hit):
 {open}
-   Stems (a hit as the start of any word of ASCII letters, with an angle quote U+2039 after it, in a marker or alone, before the next period: "fillable" is one):
+   Stems (a hit as the letters at the start of a word, then any text that has no period in it, then an angle quote U+2039, in a marker or alone: "fillable" and "fill2" are the start of one):
 {stems}
    The check passes the names {exempt}, and any word that starts with one of them, though they hold the word "kit": leave them as they are.
    The phrase {cased}, with its capital A, is read as it is, in its letter case. It may stand only in these files: {allowed}. In any other file write "the baseline".
@@ -161,7 +161,8 @@ rules of the checks, each with the files that it governs.
    line with "Check: ", and the text from the last "Check: " of the first such line
    to the end of that line must be exactly "no check yet", or the path of a file of
    this project that exists, a space and "(hook)", or that path, a space, "(ci:", a
-   job name and ")". A file with no entry passes.
+   job name and ")", with no space followed by an opening parenthesis in the path (the
+   check splits the value at the first of them). A file with no entry passes.
 6. Markers: a row that asks you to adapt a file keeps each marker of it, as said
    above, and no file holds a marker of your own.
 
@@ -177,7 +178,7 @@ for f in $(find {output} -name '*.md'); do tr -s ' \t\n' ' ' < "$f" | grep -o -i
 A hit of a stem is a hit of the check only when an angle quote U+2039 follows it
 before the next period: read each by eye, and rewrite its sentence when one does.
 Repeat until every hit that is left is a stem with no angle quote U+2039 after it
-in its sentence, a word inside a marker, or one of the two names. Then read your
+before the next period, a word inside a marker, or one of the two names. Then read your
 files against the other rules.
 Then end.
 `

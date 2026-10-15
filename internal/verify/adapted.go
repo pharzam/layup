@@ -287,7 +287,8 @@ type AdaptedPhrase struct {
 
 // The tails of a phrase. A letter, a digit or an underscore that is ASCII before a phrase makes it another word, for every pattern;
 // after it, TailWord is a hit when none follows ("kits", not "kitten"), TailOpen is a hit whatever follows ("your projectile"), and
-// TailStem is a hit as the beginning of any word of ASCII letters, with a marker after it before the next full stop.
+// TailStem is a hit as the letters at the start of a word, then any text with no period, then an angle quote U+2039 (in a marker, in the
+// text of the convention, between backticks or alone).
 const (
 	TailWord = "word"
 	TailOpen = "open"

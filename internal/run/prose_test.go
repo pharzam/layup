@@ -134,7 +134,7 @@ func TestTheProsePromptGivesTheWordsOfCheckAdapted(t *testing.T) {
 	const (
 		hWhole = `Whole words (a hit unless an ASCII letter, an ASCII digit or an underscore follows: "kits" is a hit, "kitten" is not):`
 		hOpen  = `Open at the end (a hit whatever follows: "your projectile" is a hit):`
-		hStems = `Stems (a hit as the start of any word of ASCII letters, with an angle quote U+2039 after it, in a marker or alone, before the next period: "fillable" is one):`
+		hStems = `Stems (a hit as the letters at the start of a word, then any text that has no period in it, then an angle quote U+2039, in a marker or alone: "fillable" and "fill2" are the start of one):`
 		hEnd   = "The check passes the names"
 	)
 	seg := func(from, to string) string { // the group between its heading and the next
@@ -196,7 +196,7 @@ func TestTheProsePromptGivesTheRulesOfTheOtherChecks(t *testing.T) {
 		"Neither README.md nor AGENTS.md may hold any of these texts anywhere, also inside a longer line: "+strings.Join(lines, ", ")+".",
 		"4. docs/onboarding-for-engineers.md must hold no angle quote at all, not even a marker, and must hold the link ](facts/problem-statement-brief.md).",
 		`5. In docs/guardrails.md each entry is a bullet that starts with "- **Inv-", a number and "**", and runs to the next entry or heading.`,
-		`Each entry must have a line with "Check: ", and the text from the last "Check: " of the first such line to the end of that line must be exactly "no check yet", or the path of a file of this project that exists, a space and "(hook)", or that path, a space, "(ci:", a job name and ")". A file with no entry passes.`,
+		`Each entry must have a line with "Check: ", and the text from the last "Check: " of the first such line to the end of that line must be exactly "no check yet", or the path of a file of this project that exists, a space and "(hook)", or that path, a space, "(ci:", a job name and ")", with no space followed by an opening parenthesis in the path (the check splits the value at the first of them). A file with no entry passes.`,
 		"6. Markers: a row that asks you to adapt a file keeps each marker of it, as said above, and no file holds a marker of your own.")
 }
 
@@ -220,7 +220,7 @@ func TestTheProsePromptAsksForASearchBeforeTheEnd(t *testing.T) {
 	wantAll(t, text, "Before you end, search each file that you wrote for the phrases of rule 1. This is an aid, not the check:",
 		"it joins every line, also across a blank line; it takes a letter that is not ASCII as part of a word, as the check does not; it shows a word inside a marker and the two names that the check passes, which are no hits; and it does not look for the baseline's name, which you search in its own letter case.",
 		"A hit of a stem is a hit of the check only when an angle quote U+2039 follows it before the next period: read each by eye, and rewrite its sentence when one does.",
-		"Repeat until every hit that is left is a stem with no angle quote U+2039 after it in its sentence, a word inside a marker, or one of the two names. Then read your files against the other rules.",
+		"Repeat until every hit that is left is a stem with no angle quote U+2039 after it before the next period, a word inside a marker, or one of the two names. Then read your files against the other rules.",
 		`for f in $(find /s/result/files -name '*.md'); do tr -s ' \t\n' ' ' < "$f" | grep -o -i -E '`+regex+`' | sed "s|^|$f: |"; done`)
 	if !strings.HasSuffix(strings.TrimSpace(text), "Then end.") {
 		t.Errorf("the prompt does not end with the end of the session:\n%s", text)
