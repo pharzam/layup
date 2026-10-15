@@ -45,6 +45,8 @@ type fakeGitHub struct {
 	activityBody    string                        // when set, the body of the answer of the activity
 	activityLink    bool                          // the answer of the activity names a next page
 	activityQueries []string                      // the query of each request of the activity
+
+	handlers map[string]func(http.ResponseWriter, *http.Request) // the calls of M2e, by "METHOD path"; the lock is held
 }
 
 // head gives the head that the fake gives to the branch of index i.
@@ -210,6 +212,8 @@ func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
 			"id": 900 + page, "user": user, "performed_via_github_app": app,
 			"created_at": "2026-10-08T12:00:00Z", "updated_at": "2026-10-08T12:05:00Z",
 			"body": fmt.Sprintf("comment %d", page)}})
+	case f.handlers[call] != nil:
+		f.handlers[call](w, r)
 	default:
 		http.Error(w, `{"message":"Not Found"}`, 404)
 	}

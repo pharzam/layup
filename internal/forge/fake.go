@@ -1,0 +1,252 @@
+package forge
+
+import (
+	"context"
+	"fmt"
+	"slices"
+	"sync"
+)
+
+// Fake is the stand-in forge of the tests of other packages (docs/spec/forge.md,
+// The calls of M2e; task T-cr8j, which settles the home of the stand-in that
+// issue #373 asked about): the whole interface in memory, with no network and no
+// clock. Production code never makes one. A test sets the fields before it starts
+// and reads them after; the calls and the helpers hold a lock, so a Fake serves
+// goroutines. A call that names Fail gives a forge error of status 502.
+type Fake struct {
+	mu sync.Mutex
+
+	Fail        string            // the name of the call that gives a forge error
+	Declared    []Capability      // nil declares the six
+	Permissions map[string]string // of the installation
+	Repo        Repository
+	IDs         map[string]int64 // the numeric ID of a login
+	Rules       map[string][]Rule
+	Activities  map[string][]ActivityEntry
+	AppBot      Status // the creator (ID and login) that SetStatus gives a status
+
+	issues   int
+	comments map[int][]Comment
+	prs      []*fakePR
+	heads    map[string]string
+	statuses map[string][]Status // by SHA, newest first
+	checks   map[string][]CheckRun
+}
+
+type fakePR struct {
+	PullRequest
+	branch string
+}
+
+// NewFake gives an empty stand-in that declares the six capabilities.
+func NewFake() *Fake {
+	return &Fake{Permissions: map[string]string{}, heads: map[string]string{}, comments: map[int][]Comment{},
+		statuses: map[string][]Status{}, checks: map[string][]CheckRun{}}
+}
+
+func (f *Fake) err(call string) error {
+	if f.Fail == call {
+		return &Error{Call: call, Status: 502, Message: "Bad Gateway"}
+	}
+	return nil
+}
+
+// SetHead sets the head of a branch: a pull request opened from it has that head.
+func (f *Fake) SetHead(branch, sha string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.heads[branch] = sha
+}
+
+// MoveHead moves the head of a pull request, as a push to its branch would.
+func (f *Fake) MoveHead(number int, sha string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if pr := f.pr(number); pr != nil {
+		pr.HeadSHA = sha
+	}
+}
+
+// AddStatus adds a status of another source to a head, as the newest.
+func (f *Fake) AddStatus(sha string, s Status) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.statuses[sha] = slices.Insert(f.statuses[sha], 0, s)
+}
+
+// SetCheckRuns sets the check runs of a head.
+func (f *Fake) SetCheckRuns(sha string, runs []CheckRun) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.checks[sha] = slices.Clone(runs)
+}
+
+func (f *Fake) pr(number int) *fakePR {
+	if number < 1 || number > len(f.prs) {
+		return nil
+	}
+	return f.prs[number-1]
+}
+
+func (f *Fake) Capabilities() []Capability {
+	if f.Declared != nil {
+		return f.Declared
+	}
+	return Capabilities
+}
+
+func (f *Fake) Installation(context.Context) (Installation, error) {
+	return Installation{ID: 1, Permissions: f.Permissions}, f.err("Installation")
+}
+
+func (f *Fake) Token(context.Context) (Token, error) {
+	return Token{Token: "ghs_fake"}, f.err("Token")
+}
+
+func (f *Fake) Repository(context.Context) (Repository, error) {
+	return f.Repo, f.err("Repository")
+}
+
+func (f *Fake) UserID(_ context.Context, login string) (int64, error) {
+	if err := f.err("UserID"); err != nil {
+		return 0, err
+	}
+	id, ok := f.IDs[login]
+	if !ok {
+		return 0, &Error{Call: "UserID", Status: 404, Message: "Not Found"}
+	}
+	return id, nil
+}
+
+func (f *Fake) OpenIssue(context.Context, string, string) (int, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if err := f.err("OpenIssue"); err != nil {
+		return 0, err
+	}
+	f.issues++
+	return f.issues, nil
+}
+
+func (f *Fake) Comments(_ context.Context, issue int) ([]Comment, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return slices.Clone(f.comments[issue]), f.err("Comments")
+}
+
+func (f *Fake) Comment(_ context.Context, issue int, body string) (int64, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if err := f.err("Comment"); err != nil {
+		return 0, err
+	}
+	id := int64(len(f.comments[issue]) + 1)
+	f.comments[issue] = append(f.comments[issue], Comment{ID: id, Body: body})
+	return id, nil
+}
+
+func (f *Fake) EffectiveRules(_ context.Context, branch string) ([]Rule, error) {
+	return f.Rules[branch], f.err("EffectiveRules")
+}
+
+func (f *Fake) Activity(_ context.Context, ref string) ([]ActivityEntry, error) {
+	return f.Activities[ref], f.err("Activity")
+}
+
+func (f *Fake) OpenDraft(_ context.Context, head, base, title, body string) (PullRequest, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if err := f.err("OpenDraft"); err != nil {
+		return PullRequest{}, err
+	}
+	n := len(f.prs) + 1
+	pr := &fakePR{branch: head, PullRequest: PullRequest{Number: n, NodeID: fmt.Sprintf("PR_fake%d", n), State: "open", Draft: true, HeadSHA: f.heads[head]}}
+	f.prs = append(f.prs, pr)
+	return pr.PullRequest, nil
+}
+
+func (f *Fake) MarkReady(_ context.Context, nodeID string) (PullRequest, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if err := f.err("MarkReady"); err != nil {
+		return PullRequest{}, err
+	}
+	for _, pr := range f.prs {
+		if pr.NodeID == nodeID {
+			pr.Draft = false
+			return pr.PullRequest, nil
+		}
+	}
+	return PullRequest{}, &Error{Call: "MarkReady", Status: 200, Message: "Could not resolve to a node with the global id " + nodeID}
+}
+
+func (f *Fake) SetStatus(_ context.Context, sha, context, state, description string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if err := f.err("SetStatus"); err != nil {
+		return err
+	}
+	if len(sha) != 40 {
+		return &Error{Call: "SetStatus", Message: "the SHA is not a full object ID"}
+	}
+	if err := ValidStatus(state, description); err != nil {
+		return &Error{Call: "SetStatus", Message: err.Error()}
+	}
+	s := Status{Context: context, State: state, Description: description, CreatorID: f.AppBot.CreatorID, CreatorLogin: f.AppBot.CreatorLogin}
+	f.statuses[sha] = slices.Insert(f.statuses[sha], 0, s)
+	return nil
+}
+
+func (f *Fake) Statuses(_ context.Context, sha string) (HeadChecks, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return HeadChecks{Statuses: slices.Clone(f.statuses[sha]), CheckRuns: slices.Clone(f.checks[sha])}, f.err("Statuses")
+}
+
+func (f *Fake) PullRequest(_ context.Context, q PullRequestQuery) (PullRequest, bool, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if err := f.err("PullRequest"); err != nil {
+		return PullRequest{}, false, err
+	}
+	switch {
+	case (q.Number != 0) == (q.Branch != ""):
+		return PullRequest{}, false, &Error{Call: "PullRequest", Message: "the query names a number or a branch, one of the two"}
+	case q.Number != 0:
+		pr := f.pr(q.Number)
+		if pr == nil {
+			return PullRequest{}, false, &Error{Call: "PullRequest", Status: 404, Message: "Not Found"}
+		}
+		return pr.PullRequest, true, nil
+	}
+	for i := len(f.prs) - 1; i >= 0; i-- { // the newest first, as the list of the forge
+		if f.prs[i].branch == q.Branch {
+			return f.prs[i].PullRequest, true, nil
+		}
+	}
+	return PullRequest{}, false, nil
+}
+
+func (f *Fake) Merge(_ context.Context, number int, sha string) (string, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if err := f.err("Merge"); err != nil {
+		return "", err
+	}
+	pr := f.pr(number)
+	switch {
+	case pr == nil:
+		return "", &Error{Call: "Merge", Status: 404, Message: "Not Found"}
+	case pr.Merged || pr.State != "open":
+		return "", &Error{Call: "Merge", Status: 405, Message: "Pull Request is not mergeable"}
+	case pr.Draft:
+		return "", &Error{Call: "Merge", Status: 405, Message: "Pull Request is still a draft"}
+	case sha != pr.HeadSHA:
+		return "", &Error{Call: "Merge", Status: 409, Message: "Head branch was modified. Review and try the merge again."}
+	}
+	pr.Merged, pr.State = true, "closed"
+	pr.MergeSHA = fmt.Sprintf("%040x", 0xabc000+number)
+	return pr.MergeSHA, nil
+}
+
+var _ Forge = (*Fake)(nil)

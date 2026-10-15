@@ -182,31 +182,45 @@ The same API and version header as [The calls of M2a](#the-calls-of-m2a) (task
 | Method | Call | What it gives `layup run` |
 | ------ | ---- | ------------------------- |
 | `OpenDraft` | `POST /repos/{owner}/{repo}/pulls` with `draft` true, the head branch, the base, the title and the body | the pull request's number, its node ID and its head SHA; it requests no review |
-| `MarkReady` | the GraphQL mutation `markPullRequestReadyForReview` with the node ID (the REST API has no call that leaves the draft state) | the pull request, no longer a draft; **to confirm in GitHub's documentation at the build** |
-| `SetStatus` | `POST /repos/{owner}/{repo}/statuses/{sha}` with `state` (`success`, `failure`, `pending` or `error`), `context` and `description` of at most 140 characters | the status for that SHA and context; it is bound to the head SHA that the caller gives, and it is posted again only when its state or its description changes |
-| `Statuses` | `GET /repos/{owner}/{repo}/commits/{sha}/statuses`, every page, and `GET /repos/{owner}/{repo}/commits/{sha}/check-runs`, every page | each status of the head with its context, state and creator (the App or another), and each check run with its name, `conclusion` and the App that made it (a job of GitHub Actions is a check run of the App with the ID 15368) |
-| `PullRequest` | `GET /repos/{owner}/{repo}/pulls/{number}`, and `GET /repos/{owner}/{repo}/pulls?head={owner}:{branch}&state=all` to find the pull request of a branch | the pull request's state, whether it is merged, its merge commit's SHA, its head SHA, its draft flag and its node ID |
-| `Merge` | `PUT /repos/{owner}/{repo}/pulls/{number}/merge` with `sha` the head SHA and `merge_method` `merge` | the merge commit; GitHub refuses (409) a head that moved |
+| `MarkReady` | the GraphQL mutation `markPullRequestReadyForReview` at `<api>/graphql` (`<api>` without its `/v3` and `/graphql` after it for a GitHub Enterprise Server api that ends in `/api/v3`), with the node ID as a variable, never in the text (the REST API has no call that leaves the draft state) | the pull request's number, node ID and draft flag; an answer with an `errors` array, or with no pull request, is a forge error. **To confirm in GitHub's documentation at the build** that the mutation and its answer are as named |
+| `SetStatus` | `POST /repos/{owner}/{repo}/statuses/{sha}` with `state` (`success`, `failure`, `pending` or `error`), `context` and `description` of at most 140 characters; the SHA must be a full object ID, the state one of the four and the description at most 140 characters (counted in characters), each checked before any request | the status for that SHA and context; it is bound to the head SHA that the caller gives; the adapter does not decide whether to post (row 66f, `internal/run`, posts again only when the state or the description changes); the 140 characters are LAYUP's own bound, which GitHub's page does not state |
+| `Statuses` | `GET /repos/{owner}/{repo}/commits/{sha}/statuses?per_page=100`, every page, and `GET /repos/{owner}/{repo}/commits/{sha}/check-runs?filter=latest&per_page=100`, every page; the next page of a list is at the api of the forge register only | each status of the head with its context, state, description and creator (the numeric ID and the login; a null creator is the ID 0 and `ghost`), newest first as the forge gives them, and each latest check run with its name, status, `conclusion` and the App that made it (its ID and slug; a job of GitHub Actions is a check run of the App with the ID 15368) |
+| `PullRequest` | one method with a query that names a number or a branch, one of the two (**decided here**, task `T-cr8j`: the interface keeps its six new methods): `GET /repos/{owner}/{repo}/pulls/{number}`, or `GET /repos/{owner}/{repo}/pulls?head={owner}:{branch}&state=all`, whose first item (the newest) is the pull request of the branch | the pull request's number, state, whether it is merged (`merged`, or `merged_at` in a list), its merge commit's SHA, its head SHA, its draft flag and its node ID; a branch with no pull request is `found` false and no error, a number that is none is a forge error of status 404 |
+| `Merge` | `PUT /repos/{owner}/{repo}/pulls/{number}/merge` with `sha` the head SHA and `merge_method` `merge` | the merge commit's SHA; GitHub refuses (409) a head that moved, a forge error with its status; an answer with `merged` false is a forge error too |
 
 **Decided here** (decision 5 and 6 of #333):
 
-- **The permissions** beyond those of `M2a` are pull requests `write` (`OpenDraft`,
-  `MarkReady`, `Merge`) and commit statuses `write` (`SetStatus`; both are in
+- **The permissions** beyond those of `M2a` are pull requests `write` (`OpenDraft`
+  and, taken so, `MarkReady`, to confirm in the demo: no page names the mutation's
+  permission; `Merge` is listed under Contents write, which `M2a` holds) and commit statuses `write` (`SetStatus`; both are in
   `architecture.md` §3); `Statuses` needs `read` of both and checks `read`, which ADR-0014 decision 3 does
   not list: it is **an amendment of that decision**, asked in #336 and granted by the
   Operator with the others (a draft pull request's `mergeable_state` is `draft`, never
   `clean`, so it cannot say that the native jobs are green before the pull request is
-  marked ready). `CheckPermissions` reads the three, and a missing
-  one is a `fail` of the step `forge` that names it. The Operator grants them
+  marked ready). **The check** is `forge.CheckLoopPermissions` over `forge.LoopPermissions`
+  (`pull_requests` write, `statuses` write, `checks` read; write holds read; each
+  missing one named as `name: level`), built as `CheckPermissions` is, which keeps
+  the three of `M2a` alone (task `T-cr8j`). **Decided here** (the same task, R10):
+  Start and the restart before the loop record the permissions and do not fail on
+  these three, as [`run.md`](run.md#the-steps-of-layup-run---new) says, because an App
+  that the Operator has not yet granted them must still start; row 66a of the plan
+  (#357, the first `internal/run` row of the loop; its After cell names row 64) calls
+  the check before the loop's first write, and a missing one is then a `fail` of the
+  step `forge` that names it, tested there by a red run. The Operator grants them
   (`gov-operator-setup-o112`).
 - **`PullRequest`** also serves the restart and the tree rule ([`loop.md`](loop.md#the-tree-after-the-first-merge)): the merged state and the merge commit of a task's pull request, and the pull request of a branch.
 - **A comparison reads, never trusts.** The ready and merge rule reads `Statuses` (a check run: the newest of each name, `filter=latest`)
   just before each of `MarkReady` and `Merge`; a context counts only when it is
   `success`, its creator is the App, and it is the newest status of that context at
   the head. A required check of another source with the same name does not count.
-- **The stand-in** of `internal/standin` and the httptest forge each give the six
-  methods, a status list that a test sets, a pull request whose head a test moves
-  (to give the 409), and a status of another source.
+- **The stand-in** is `forge.Fake` (**decided here**, task `T-cr8j`; it settles the
+  home that #373 asked about): a non-test file of `internal/forge`, standard library
+  only, in memory, which gives the whole interface; a test sets its permissions,
+  heads, statuses and check runs, moves the head of a pull request (to give the 409),
+  adds a status of another source, and names a call that fails. Production code
+  never makes one. `internal/standin` is the baseline's stand-in and cannot hold it
+  (it may import `internal/tsv`, `internal/git` and `internal/work` only). The
+  httptest forge of the adapter's test serves the same calls.
 - The permission that each call needs, and the fields above, are read in GitHub's
   documentation at the date of the build task; a difference from this table is a
   defect of this table.

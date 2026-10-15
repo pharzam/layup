@@ -3,7 +3,10 @@ package forge
 import (
 	"context"
 	"fmt"
+	"slices"
+	"strings"
 	"time"
+	"unicode/utf8"
 )
 
 // Capability is one of the six capabilities of a forge (docs/spec/forge.md,
@@ -51,6 +54,24 @@ type Forge interface {
 	// Activity gives the activities of a ref, one page (M2d: forge.md, The calls
 	// of M2d; task T-jpkc).
 	Activity(ctx context.Context, ref string) ([]ActivityEntry, error)
+	// The calls of M2e (forge.md, The calls of M2e; task T-cr8j).
+	//
+	// OpenDraft opens a draft pull request of head onto base and requests no
+	// review.
+	OpenDraft(ctx context.Context, head, base, title, body string) (PullRequest, error)
+	// MarkReady takes a pull request out of the draft state, by its node ID.
+	MarkReady(ctx context.Context, nodeID string) (PullRequest, error)
+	// SetStatus posts a commit status on a SHA: one of the four states, and a
+	// description of 140 characters or fewer.
+	SetStatus(ctx context.Context, sha, context, state, description string) error
+	// Statuses gives each status and each check run of a head, every page.
+	Statuses(ctx context.Context, sha string) (HeadChecks, error)
+	// PullRequest gives a pull request by its number or by its branch; for a
+	// branch with none, found is false and there is no error.
+	PullRequest(ctx context.Context, q PullRequestQuery) (pr PullRequest, found bool, err error)
+	// Merge merges a pull request at its head SHA, by a merge commit, and gives
+	// the merge commit's SHA; a head that moved is a forge error of status 409.
+	Merge(ctx context.Context, number int, sha string) (string, error)
 }
 
 // Installation is the installation of the App on the repository.
@@ -115,6 +136,70 @@ type Comment struct {
 	Body        string
 }
 
+// PullRequest is a pull request, as the calls of M2e give it (forge.md, The calls
+// of M2e).
+type PullRequest struct {
+	Number   int
+	NodeID   string
+	State    string // open or closed
+	Draft    bool
+	Merged   bool
+	HeadSHA  string
+	MergeSHA string // the merge commit's SHA, when it is merged
+}
+
+// PullRequestQuery names a pull request by its number, or by the branch it
+// comes from; exactly one of the two is set.
+type PullRequestQuery struct {
+	Number int
+	Branch string
+}
+
+// Status is a commit status of a head: the creator is the account that posted it,
+// which the caller compares with the App's bot (forge.md, The calls of M2e).
+type Status struct {
+	Context      string
+	State        string
+	Description  string
+	CreatorID    int64
+	CreatorLogin string
+}
+
+// CheckRun is a check run of a head, the newest of its name: a job of GitHub
+// Actions is one of the App with the ID 15368.
+type CheckRun struct {
+	Name       string
+	Status     string
+	Conclusion string
+	AppID      int64
+	AppSlug    string
+}
+
+// HeadChecks is each status of a head, newest first as the forge gives them, and
+// each latest check run.
+type HeadChecks struct {
+	Statuses  []Status
+	CheckRuns []CheckRun
+}
+
+// The four states of a commit status.
+var StatusStates = []string{"success", "failure", "pending", "error"}
+
+// MaxDescription is the longest description of a commit status, in characters.
+const MaxDescription = 140
+
+// ValidStatus gives an error when state is not one of the four, or description is
+// longer than MaxDescription characters (the check is made before any request).
+func ValidStatus(state, description string) error {
+	if !slices.Contains(StatusStates, state) {
+		return fmt.Errorf("the state %q is none of %s", state, strings.Join(StatusStates, ", "))
+	}
+	if n := utf8.RuneCountInString(description); n > MaxDescription {
+		return fmt.Errorf("the description has %d characters, over %d", n, MaxDescription)
+	}
+	return nil
+}
+
 // Error is a forge call that failed (forge.md, Forge errors): the call, the
 // status (0 when no response came) and the first line of the message.
 type Error struct {
@@ -152,13 +237,25 @@ var Permissions = []struct{ Name, Level string }{
 
 // CheckPermissions gives each permission of M2a that got lacks, as
 // "name: level"; write holds read.
-func CheckPermissions(got map[string]string) []string {
+func CheckPermissions(got map[string]string) []string { return missingOf(got, Permissions) }
+
+func missingOf(got map[string]string, list []struct{ Name, Level string }) []string {
 	rank := map[string]int{"read": 1, "write": 2}
 	var missing []string
-	for _, p := range Permissions {
+	for _, p := range list {
 		if rank[got[p.Name]] < rank[p.Level] {
 			missing = append(missing, p.Name+": "+p.Level)
 		}
 	}
 	return missing
 }
+
+// LoopPermissions are the permissions that the loop of M2e adds to those of M2a
+// (forge.md, The calls of M2e): checks read amends ADR-0014 decision 3 (#336).
+var LoopPermissions = []struct{ Name, Level string }{
+	{"pull_requests", "write"}, {"statuses", "write"}, {"checks", "read"},
+}
+
+// CheckLoopPermissions gives each permission of the loop that got lacks, as
+// "name: level"; write holds read.
+func CheckLoopPermissions(got map[string]string) []string { return missingOf(got, LoopPermissions) }

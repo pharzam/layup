@@ -261,8 +261,10 @@ heading of this table to it in the same change, as task `T-4ywt` did for
   no program: the cell "Starts a program" does not change.
 - `internal/forge` and `internal/forge/github`: `OpenDraft`, `MarkReady`,
   `SetStatus`, `Statuses`, `PullRequest` and `Merge` ([`forge.md`](forge.md#the-calls-of-m2e)),
-  their types, and the permission check for pull requests, statuses and checks `read`
-  (the last amends ADR-0014 decision 3, #336); the adapter alone connects, as before.
+  their types, the permission check for pull requests, statuses and checks `read`
+  (the last amends ADR-0014 decision 3, #336), and the stand-in forge `forge.Fake`, a
+  non-test file of `internal/forge` (standard library only; tests construct it); the
+  adapter alone connects, as before.
 - `internal/session`: the record kinds of each step's context in the step table
   ([`loop.md`](loop.md#the-tier-and-the-context-of-a-task)).
 - `internal/setup` and `internal/catalog`: the `CODEOWNERS` file and the code-owner
