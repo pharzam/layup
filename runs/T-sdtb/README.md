@@ -194,3 +194,9 @@ Each rule is read by the command that it names, from a plain clone of the target
 
 **Reading of the scenario's third line** (rule 2 was restated before any run, and the scenario's wording was left as the plan wrote it): GitHub's refusal prints the ref and the violated rules and no ruleset's name; "naming the ruleset" is met as rule 2
 says it: each refusal is attributed to LAYUP's ruleset by its ID (the check), and the rule-suites read names `layup: the default branch` as the ruleset that evaluated the push.
+
+## The checks of the head (09:57:20Z to 09:58:20Z)
+
+This task is a uat and has no Go test, so there is no red run to record. The Go code of the branch is that of `main` at `461d47a` (`git diff origin/main HEAD -- cmd internal go.mod` prints nothing). On the head `f5121d5`, each exit status: `go build ./...` 0;
+`go vet ./...` 0; `gofmt -l internal cmd` (empty) 0; `go test ./...` 0; `adr-lint` 0; `prd-lint` 0; `link-lint` 0; `run-discipline-tests` 0; `nested-checkout-check` 0; `setup-check` 0; `git diff --check origin/main HEAD` 0. The integration and e2e levels of
+the Go tests are those of the CI of the pull request and of the tasks that changed the Go code (`T-gkvi`, `T-92lm`, `T-j7c5`); they were not run again here.
