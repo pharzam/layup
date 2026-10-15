@@ -161,6 +161,10 @@ func eventRows() []string {
 		"8\trefused\t2\tS-0000000a\t—\t—\tcontext 300000 200000\t2026-10-09T12:11:02Z",
 		"9\tclosed\t2\t—\t—\t—\t—\t2026-10-09T12:12:00Z",
 		"10\trebased\t3\t—\t" + sha1A + "\t—\tmain moved\t2026-10-09T12:13:00Z",
+		"11\thandoff\t1\tS-1a2b3c4d\t—\t—\tvalid comment 6191163525-1\t2026-10-09T12:14:00Z",
+		"12\thandoff\t1\t—\t—\t—\tinvalid spec-sections\t2026-10-09T12:15:00Z",
+		"13\tmerged\t1\t—\t—\t" + sha1A + "\t334\t2026-10-09T12:16:00Z",
+		"14\thandoff\t1\tS-1a2b3c4d\t—\t—\tvalid\t2026-10-09T12:17:00Z",
 	}
 }
 
@@ -213,6 +217,24 @@ func TestEventsRefusesEachBrokenRule(t *testing.T) {
 		{"a push to a branch of another form", event(4, "detail", "main"), "detail"},
 		{"a bound to the branch of another attempt", event(5, "detail", "task/T-ab12/2"), "detail"},
 		{"a push to a task that is not an ID", event(4, "detail", "task/feature/1"), "detail"},
+		{"a handoff with a base", event(11, "base", sha1A), "base"},
+		{"a handoff with a sha", event(11, "sha", sha1A), "sha"},
+		{"a handoff with a session that is not an ID", event(11, "session", "S-1a2b3c"), "session"},
+		{"a handoff with no detail", event(11, "detail", "—"), "detail"},
+		{"a handoff whose detail is neither valid nor invalid", event(11, "detail", "ok"), "detail"},
+		{"an invalid handoff with no item", event(12, "detail", "invalid"), "detail"},
+		{"an invalid handoff whose item is not a word of the table", event(12, "detail", "invalid Spec_Sections"), "detail"},
+		{"a valid handoff with an item", event(14, "detail", "valid spec-sections"), "detail"},
+		{"a handoff naming a comment with no copy number", event(11, "detail", "valid comment 6191163525"), "detail"},
+		{"a handoff naming a comment with copy 0", event(11, "detail", "valid comment 6191163525-0"), "detail"},
+		{"a handoff naming a comment and more", event(11, "detail", "valid comment 6191163525-1 again"), "detail"},
+		{"a merged with a session", event(13, "session", "S-1a2b3c4d"), "session"},
+		{"a merged with a base", event(13, "base", sha1A), "base"},
+		{"a merged with no sha", event(13, "sha", "—"), "sha"},
+		{"a merged with no pull request number", event(13, "detail", "—"), "detail"},
+		{"a merged whose detail is not a number", event(13, "detail", "the PR"), "detail"},
+		{"a merged whose pull request is 0", event(13, "detail", "0"), "detail"},
+		{"a merged whose pull request has a leading zero", event(13, "detail", "0334"), "detail"},
 	} {
 		refusedAt(t, c.name, readEvents, table(eventsHeader, c.rows...), c.column)
 	}
@@ -255,6 +277,12 @@ func resultRows() []string {
 		"status\t1\tcompleted\t—\tthe test passes",
 		"artifact\t1\tinternal/records/session.go\t" + sha256A + "\t—",
 		"artifact\t2\tinternal/records/session_test.go\t" + sha256A + "\t—",
+		"question\t1\tMay a draft pull request be marked ready?\t—\tinterface-contract yes docs/spec/forge.md docs/spec/loop.md",
+		"decision\t1\tRead the check runs of the head\t—\tthe merge state of a draft is draft",
+		"lesson\t1\tRead the forge before a write\t—\t—",
+		"comment\t1\tresult/plan.md\t" + sha256A + "\t—",
+		"question\t2\tWhich label is this?\t—\tsome-unknown-label maybe",
+		"lesson\t2\tCheck the neighbours of a fix\t—\tdocs/spec/loop.md T-xs4y",
 	}
 }
 
@@ -297,6 +325,20 @@ func TestResultRefusesEachBrokenRule(t *testing.T) {
 		{"a gap in the artifacts", set(2, "n", "3"), "n"},
 		{"no status row", resultRows()[1:], "kind"},
 		{"a status row with n 2", set(0, "n", "2"), "n"},
+		{"a question with no text", set(3, "value", "—"), "value"},
+		{"a question with a sha256", set(3, "sha256", sha256A), "sha256"},
+		{"a question with no reason", set(3, "reason", "—"), "reason"},
+		{"a question with a label and no needs_human word", set(3, "reason", "interface-contract"), "reason"},
+		{"a decision with a sha256", set(4, "sha256", sha256A), "sha256"},
+		{"a decision with no reason", set(4, "reason", "—"), "reason"},
+		{"a lesson with a sha256", set(5, "sha256", sha256A), "sha256"},
+		{"a comment whose path is not under result/", set(6, "value", "plan.md"), "value"},
+		{"a comment whose path is in a directory of result/", set(6, "value", "result/a/plan.md"), "value"},
+		{"a comment whose path is the directory", set(6, "value", "result/"), "value"},
+		{"a comment with no sha256", set(6, "sha256", "—"), "sha256"},
+		{"a comment with a reason", set(6, "reason", "the plan"), "reason"},
+		{"a gap in the questions", append(resultRows(), "question\t4\tAnd another?\t—\tlabel no"), "n"},
+		{"a gap in the comments", set(6, "n", "2"), "n"},
 	} {
 		refusedAt(t, c.name, readResult, table(resultHeader, c.rows...), c.column)
 	}

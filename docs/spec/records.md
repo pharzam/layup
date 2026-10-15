@@ -361,21 +361,21 @@ reason text - why `no`, with its source; `—` when `yes`
 
 ```tsv-schema events records:tasks/<task>/events.tsv
 n int key the event's number, from 1, in the order of the events
-kind enum(attempt|session|refused|result|push|bound|closed|rebased) - the event
+kind enum(attempt|session|refused|result|push|bound|closed|rebased|handoff|merged) - the event
 attempt int - the attempt that the event concerns, 1 or more
-session id(S-xxxxxxxx) - the session; `—` for `attempt`, `closed` and `rebased`, and for a `refused` whose reason is `pair`, which comes before a session
+session id(S-xxxxxxxx) - the session; `—` for `attempt`, `closed`, `rebased` and `merged`, and for a `refused` whose reason is `pair`, which comes before a session; a `handoff` has its session, and `—` when code wrote it for a rendered task
 base sha1 - the base commit, for `attempt` and `rebased`; `—` otherwise
-sha sha1 - the commit, for `push` and `bound`; `—` otherwise
-detail text - one line: for `result`, the class of the end; for `refused`, the reason, and after one space its value where it has one: the path of a rule file, the two numbers of the context, the size of the prompt, or the SHA-256 of the payload of a refused diff (`payloads/<sha256>`, task `T-z027`); for `push` and `bound`, the branch `task/<task>/<attempt>`, with the row's attempt; `—` for `attempt` and `session`; for `closed` and `rebased`, as `M2e` sets
+sha sha1 - the commit, for `push`, `bound` and `merged` (the merge commit); `—` otherwise
+detail text - one line: for `result`, the class of the end; for `refused`, the reason, and after one space its value where it has one: the path of a rule file, the two numbers of the context, the size of the prompt, or the SHA-256 of the payload of a refused diff (`payloads/<sha256>`, task `T-z027`); for `push` and `bound`, the branch `task/<task>/<attempt>`, with the row's attempt; `—` for `attempt` and `session`; for `closed` and `rebased`, as `M2e` sets; for `handoff`, `valid` or `invalid <item>` and, for an artifact that is a comment, after a space `comment <ID>-<seen>`; for `merged`, the number of the pull request
 time time - when `layup run` recorded the event
 ```
 
 ```tsv-schema result records:tasks/<task>/results/<session>.tsv
-kind enum(status|artifact) key the kind of the row; `M2e` adds the kinds of a handoff
+kind enum(status|artifact|question|decision|lesson|comment) key the kind of the row; `M2e` adds the kinds of a handoff: `question`, `decision`, `lesson` and `comment`
 n int key the row's number within its kind, from 1
-value text - for `status`: `completed`, `blocked`, `needs_context`, `decision_needed` or `failed`; for `artifact`: its path in the target
-sha256 sha256 - for `artifact`: the SHA-256 of the file at the session's head; `—` for `status`
-reason text - for `status`: one line; `—` for `artifact`
+value text - for `status`: `completed`, `blocked`, `needs_context`, `decision_needed` or `failed`; for `artifact`: its path in the target; for `question`, `decision` and `lesson`: its text, one line; for `comment`: `result/<file>`, a file of the session's `result/` directory
+sha256 sha256 - for `artifact`: the SHA-256 of the file at the session's head; for `comment`: the SHA-256 of that file of `result/`; `—` for the other kinds
+reason text - for `status`: one line; for `question`: the label of its kind, its `needs_human` word and each record it concerns, one space between; for `decision`: one line; for `lesson`: the records it concerns, or `—`; `—` for `artifact` and `comment`
 ```
 
 ```tsv-schema probe-result host:sessions/<session>/result/probe.tsv
@@ -393,7 +393,24 @@ session that `layup run` refuses (a probe's refused start is its row of
 `harnesses.tsv`); `push` and `bound`, the push of a session's SHA; `closed` and
 `rebased`, the task loop of `M2e`; each row is one event, and no row is changed
 (§3); a result holds one `status` row, with `n` 1, and an
-`artifact` value of the type `path`; a `probe-result` holds at most one
+`artifact` value of the type `path`; **decided here** (task `T-fn5s`, row 60 of [the
+plan](../plan/README.md#the-tasks-of-m2e)), the rules of the kinds that `M2e` adds, since
+[`loop.md`](loop.md#the-checks-of-a-handoff) gives the content and not the columns: a
+`question`, a `decision` and a `lesson` have a `value` (its text) and no `sha256`; the
+`reason` of a `question` holds at least two words: the label of its kind as one word (the
+words of a kind joined by `-`, `interface-contract`; an unknown label is read, as the owner
+map is `loop.md`'s), the `needs_human` word (any word: a word other than `yes` or `no`
+sends the question to a human, `loop.md`), and the records it concerns, one word each, after
+them; the `reason` of a `lesson` is `—` or its records in that form; the `reason` of a `decision` is not `—`; a
+`comment` has a `value` of the form `result/<file>` (one level, of the type `path`) and a
+`sha256`, no `reason`, and is checked at the end of the session against its file, not
+against the head ([`loop.md`](loop.md#the-artifact-that-is-a-comment)); within each of
+the six kinds `n` runs 1 to k; a `handoff` event has no `base` and no `sha`, its `detail`
+is `valid` or `invalid <item>` (one word of lowercase letters and `-`, an item of the table
+of `loop.md`) and, for an artifact that is a comment, ends with ` comment <ID>-<seen>`
+(the key of a row of `copies.tsv`, both numbers of 1 or more); a `merged` event has no
+`session` and no `base`, the merge commit's SHA in `sha`, and the number of the pull
+request, of 1 or more with no leading zero, as `detail`; a `probe-result` holds at most one
 `token` row (**decided here**, task `T-bpxg`, condition 2 of the plan review of
 #162: a `probe.tsv` with none passes the block, and the probe fails with
 `token`, [`session.md`](session.md#the-probe)); `harnesses.tsv` holds one row per probe,

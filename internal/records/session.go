@@ -68,7 +68,7 @@ var RoutingSchema = tsv.Schema{Name: "routing", Location: "records:routing.tsv",
 // EventsSchema is the form of tasks/<task>/events.tsv: the block events.
 var EventsSchema = tsv.Schema{Name: "events", Location: "records:tasks/<task>/events.tsv", Columns: []tsv.Column{
 	{Name: "n", Type: "int", Key: true},
-	{Name: "kind", Type: "enum(attempt|session|refused|result|push|bound|closed|rebased)"},
+	{Name: "kind", Type: "enum(attempt|session|refused|result|push|bound|closed|rebased|handoff|merged)"},
 	{Name: "attempt", Type: "int"},
 	{Name: "session", Type: "id(S-xxxxxxxx)"},
 	{Name: "base", Type: "sha1"},
@@ -80,7 +80,7 @@ var EventsSchema = tsv.Schema{Name: "events", Location: "records:tasks/<task>/ev
 // ResultSchema is the form of tasks/<task>/results/<session>.tsv: the block
 // result.
 var ResultSchema = tsv.Schema{Name: "result", Location: "records:tasks/<task>/results/<session>.tsv", Columns: []tsv.Column{
-	{Name: "kind", Type: "enum(status|artifact)", Key: true},
+	{Name: "kind", Type: "enum(status|artifact|question|decision|lesson|comment)", Key: true},
 	{Name: "n", Type: "int", Key: true},
 	{Name: "value", Type: "text"},
 	{Name: "sha256", Type: "sha256"},
@@ -104,6 +104,12 @@ var (
 	// the classes of the end other than done.
 	probeReasons = []string{"version", "rules", "context", "prompt", "outside", "not-used", "token", "files", "start", "crash", "no-result", "wall", "output"}
 	statuses     = []string{"completed", "blocked", "needs_context", "decision_needed", "failed"}
+	// The detail of a handoff: valid or invalid with the item that failed (a word
+	// of the table of loop.md), and the copy of a comment that holds its artifact,
+	// <comment ID>-<seen>, after a space (task T-fn5s).
+	handoffForm = regexp.MustCompile(`^(valid|invalid [a-z]+(-[a-z]+)*)( comment [1-9][0-9]*-[1-9][0-9]*)?$`)
+	numberForm  = regexp.MustCompile(`^[1-9][0-9]*$`)  // the pull request of a merged
+	commentForm = regexp.MustCompile(`^result/[^/]+$`) // the file of a comment row, one level of result/
 )
 
 // isPath reports whether v is of the type path of docs/spec/README.md, as
@@ -235,24 +241,28 @@ func CheckEvent(r []string) error {
 	}
 	kind, detail := f["kind"], f["detail"]
 	reason, _, _ := strings.Cut(detail, " ") // the reason of a refused, before its value
-	noSession := kind == "attempt" || kind == "closed" || kind == "rebased" || (kind == "refused" && reason == "pair")
+	noSession := kind == "attempt" || kind == "closed" || kind == "rebased" || kind == "merged" || (kind == "refused" && reason == "pair")
 	switch {
 	case !atLeastOne(f["attempt"]):
 		return &RowError{"attempt", "the attempt is 1 or more"}
 	case f["session"] != "" && !sessionForm.MatchString(f["session"]):
 		return &RowError{"session", "a session ID is S- and 8 lowercase hexadecimal characters"}
-	case noSession != (f["session"] == ""):
-		return &RowError{"session", "session is the empty value exactly for attempt, closed, rebased and a refused whose reason is pair"}
+	case kind != "handoff" && noSession != (f["session"] == ""):
+		return &RowError{"session", "session is the empty value exactly for attempt, closed, rebased, merged and a refused whose reason is pair (a handoff has one unless code wrote it for a rendered task)"}
 	case (kind == "attempt" || kind == "rebased") != (f["base"] != ""):
 		return &RowError{"base", "base is given exactly for attempt and rebased"}
-	case (kind == "push" || kind == "bound") != (f["sha"] != ""):
-		return &RowError{"sha", "sha is given exactly for push and bound"}
+	case (kind == "push" || kind == "bound" || kind == "merged") != (f["sha"] != ""):
+		return &RowError{"sha", "sha is given exactly for push, bound and merged"}
 	case (kind == "attempt" || kind == "session") && detail != "":
 		return &RowError{"detail", "detail is the empty value for attempt and session"}
 	case kind == "result" && !slices.Contains(ends, detail):
 		return &RowError{"detail", "the detail of a result is a class of the end: " + strings.Join(ends, ", ")}
 	case kind == "refused" && detail == "":
 		return &RowError{"detail", "the detail of a refused is its reason"}
+	case kind == "handoff" && !handoffForm.MatchString(detail):
+		return &RowError{"detail", "the detail of a handoff is valid or invalid <item>, and after a space comment <ID>-<seen> for an artifact that is a comment"}
+	case kind == "merged" && !numberForm.MatchString(detail):
+		return &RowError{"detail", "the detail of a merged is the number of the pull request"}
 	case kind == "push" || kind == "bound":
 		if m := branchForm.FindStringSubmatch(detail); m == nil || m[1] != f["attempt"] {
 			return &RowError{"detail", "the detail of a push or a bind is the branch task/<task>/" + f["attempt"]}
@@ -300,25 +310,53 @@ func CheckEventsAppend(before, after [][]string) error {
 }
 
 // CheckResultRow checks the rules of the block result on one row: the words
-// of a status, the path of an artifact, and which of sha256 and reason each
+// of a status, the path of an artifact, the words of the kinds of a handoff
+// (question, decision, lesson, comment), and which of sha256 and reason each
 // kind fills.
 func CheckResultRow(r []string) error {
 	f := fields(ResultSchema, r)
 	if f["value"] == "" {
 		return &RowError{"value", "this column never holds the empty value"}
 	}
-	status := f["kind"] == "status"
-	switch {
-	case status && !slices.Contains(statuses, f["value"]):
-		return &RowError{"value", "a status is one of " + strings.Join(statuses, ", ")}
-	case !status && !isPath(f["value"]):
-		return &RowError{"value", "an artifact is a path of the target, of the type path"}
-	case status == (f["sha256"] != ""):
-		return &RowError{"sha256", "sha256 is given exactly for an artifact"}
-	case status != (f["reason"] != ""):
-		return &RowError{"reason", "reason is given exactly for a status"}
-	case status && f["n"] != "1":
-		return &RowError{"n", "a result holds one status row, with n 1"}
+	switch f["kind"] {
+	case "status":
+		switch {
+		case !slices.Contains(statuses, f["value"]):
+			return &RowError{"value", "a status is one of " + strings.Join(statuses, ", ")}
+		case f["sha256"] != "":
+			return &RowError{"sha256", "sha256 is given exactly for an artifact and a comment"}
+		case f["reason"] == "":
+			return &RowError{"reason", "reason is given for a status"}
+		case f["n"] != "1":
+			return &RowError{"n", "a result holds one status row, with n 1"}
+		}
+	case "artifact":
+		switch {
+		case !isPath(f["value"]):
+			return &RowError{"value", "an artifact is a path of the target, of the type path"}
+		case f["sha256"] == "":
+			return &RowError{"sha256", "sha256 is given exactly for an artifact and a comment"}
+		case f["reason"] != "":
+			return &RowError{"reason", "reason is the empty value for an artifact"}
+		}
+	case "comment":
+		switch {
+		case !commentForm.MatchString(f["value"]) || !isPath(f["value"]):
+			return &RowError{"value", "a comment is a file of the result/ directory of the session, result/<file>"}
+		case f["sha256"] == "":
+			return &RowError{"sha256", "sha256 is given exactly for an artifact and a comment"}
+		case f["reason"] != "":
+			return &RowError{"reason", "reason is the empty value for a comment"}
+		}
+	default: // question, decision, lesson: the text is the value
+		switch {
+		case f["sha256"] != "":
+			return &RowError{"sha256", "sha256 is given exactly for an artifact and a comment"}
+		case f["kind"] == "question" && len(strings.Fields(f["reason"])) < 2:
+			return &RowError{"reason", "the reason of a question is its label, its needs_human word, and each record it concerns, one space between"}
+		case f["kind"] == "decision" && f["reason"] == "":
+			return &RowError{"reason", "the reason of a decision is one line"}
+		}
 	}
 	return nil
 }
@@ -337,7 +375,7 @@ func CheckResult(rows [][]string) error {
 			most[f["kind"]], line[f["kind"]] = n, i+2
 		}
 	}
-	for _, k := range []string{"status", "artifact"} {
+	for _, k := range []string{"status", "artifact", "question", "decision", "lesson", "comment"} {
 		if most[k] != count[k] {
 			return &tsv.Error{Line: line[k], Column: "n", Reason: fmt.Sprintf("the numbers of the %s rows run 1 to %d with no gap", k, count[k])}
 		}
