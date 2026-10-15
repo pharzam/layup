@@ -1,0 +1,125 @@
+file	heading	sub	row
+docs/spec/loop.md	## REQ-005 — The task loop	—	none: the requirement's text; its sections are in their rows
+docs/spec/loop.md	### The task register	—	66a
+docs/spec/loop.md	### The pull request	—	66g
+docs/spec/loop.md	### The attempts	—	66e
+docs/spec/loop.md	### The independence of the reviewers	—	66e
+docs/spec/loop.md	### The tier and the context of a task	the record kinds of the step table	63b
+docs/spec/loop.md	### The tier and the context of a task	the tier selection and the construction of the prompt file	66e
+docs/spec/loop.md	## REQ-005 — The handoff	—	none: the requirement's text; its sections are in their rows
+docs/spec/loop.md	### The artifact that is a comment	the kind comment of the result and the three equal hashes	61
+docs/spec/loop.md	### The artifact that is a comment	the post, the copy and the kept file	66d
+docs/spec/loop.md	### The transition table	the default rows, the lists and the check of a table	61
+docs/spec/loop.md	### The transition table	the replacement by set transitions and its history	66b
+docs/spec/loop.md	### The checks of a handoff	the schema, the artifacts, the items and the pair	61
+docs/spec/loop.md	### The checks of a handoff	the event handoff, the routing of a question and the accepted answer	66d
+docs/spec/loop.md	### The frozen test list	—	66e
+docs/spec/loop.md	## REQ-007 — The four `layup/` statuses	the statuses, their sources and their posting	66f
+docs/spec/loop.md	## REQ-007 — The four `layup/` statuses	the permissions of the App	64
+docs/spec/loop.md	### layup/gates	—	66f
+docs/spec/loop.md	### layup/spec	—	66f
+docs/spec/loop.md	### layup/rules	the check (the basic rule)	63a
+docs/spec/loop.md	### layup/rules	the status	66f
+docs/spec/loop.md	### layup/verify	—	66f
+docs/spec/loop.md	### The ready and merge rule	—	66g
+docs/spec/loop.md	### The merge at the head SHA and the close-out commit	—	66g
+docs/spec/loop.md	### The gate jobs read the base	part 1: the jobs read the base and the exception for a batch branch	65a
+docs/spec/loop.md	### The gate jobs read the base	part 2: the code-owner review	65b
+docs/spec/loop.md	### The gate jobs read the base	part 3: the test	65b
+docs/spec/loop.md	### The tree after the first merge	—	66g
+docs/spec/loop.md	## REQ-012 — Shape	the filter and its list of constraints	62a
+docs/spec/loop.md	## REQ-012 — Shape	the step: the options, the rewrite, the stop with no survivor	66h
+docs/spec/loop.md	### The questions left open	—	66h
+docs/spec/loop.md	## REQ-012 — The bet	the check of the brief, the appetite rule and the answer lines	62b
+docs/spec/loop.md	## REQ-012 — The bet	the step: the brief, the answer, bets.tsv, the option choices, the architecture tasks	66j
+docs/spec/loop.md	### The approvers and the success criteria	—	66i
+docs/spec/loop.md	### The revision of the draft	the check of the quote's fact	62b
+docs/spec/loop.md	### The revision of the draft	the session of the revision	66i
+docs/spec/loop.md	### The rendered commit and the confirmed inventory	the rendering and the versions of the inventory	62b
+docs/spec/loop.md	### The rendered commit and the confirmed inventory	the expected prd-lint failure	62c
+docs/spec/loop.md	### The rendered commit and the confirmed inventory	the push of the rendered commit	66j
+docs/spec/loop.md	## REQ-012 — The full spec check	—	62c
+docs/spec/loop.md	## REQ-012 — The parameter change	—	66b
+docs/spec/loop.md	### The Retrospective	—	66c
+docs/spec/loop.md	## REQ-005 — The steps of the loop after the Scaffold	the step shape	66h
+docs/spec/loop.md	## REQ-005 — The steps of the loop after the Scaffold	the step bet	66j
+docs/spec/loop.md	## REQ-005 — The steps of the loop after the Scaffold	the step loop, the restart, the push with no result, the comments of a task session	66k
+docs/spec/loop.md	## NFR-004 — A check that did not run	—	none: a rule of the rows 66f and 66g, which post the statuses and block the merge
+docs/spec/loop.md	## NFR-001 — The records	—	none: each record is in the row of its owner, below
+docs/spec/loop.md	## The acceptance tests of M2e	—	none: each test is in its row, below
+docs/spec/loop.md	### The demo and the release review	the demo	68b
+docs/spec/loop.md	### The demo and the release review	the review of the release	68a
+docs/spec/loop.md	## Not in M2e	—	none: no part of M2e
+docs/spec/loop.md	## The acceptance tests of M2e	A handoff is valid only by its table (inventory)	61
+docs/spec/loop.md	## The acceptance tests of M2e	The artifact that is a comment (`gov-issue-68`): the unit part	61
+docs/spec/loop.md	## The acceptance tests of M2e	The artifact that is a comment (`gov-issue-68`): the integration part	66d
+docs/spec/loop.md	## The acceptance tests of M2e	The transition table: the default rows and the check of a table	61
+docs/spec/loop.md	## The acceptance tests of M2e	The transition table: the replacement by set transitions	66b
+docs/spec/loop.md	## The acceptance tests of M2e	`layup spec check`, the full check (inventory)	62c
+docs/spec/loop.md	## The acceptance tests of M2e	`layup/gates` (inventory, `later-gate-status`)	66f
+docs/spec/loop.md	## The acceptance tests of M2e	`layup/rules`, the basic rule	63a
+docs/spec/loop.md	## The acceptance tests of M2e	`layup/verify` and the independence: the authors and the independence	66e
+docs/spec/loop.md	## The acceptance tests of M2e	`layup/verify` and the independence: the status	66f
+docs/spec/loop.md	## The acceptance tests of M2e	The ready and merge rule (inventory, `later-gate-status`)	66g
+docs/spec/loop.md	## The acceptance tests of M2e	The close-out commit and the rendered commit: the close-out and the carry-over check	66g
+docs/spec/loop.md	## The acceptance tests of M2e	The close-out commit and the rendered commit: the rendered commit's push	66j
+docs/spec/loop.md	## The acceptance tests of M2e	The steps after the Scaffold: the restart, the push with no result and the comments of a session	66k
+docs/spec/loop.md	## The acceptance tests of M2e	The steps after the Scaffold: the lost merge event and the tree	66g
+docs/spec/loop.md	## The acceptance tests of M2e	The steps after the Scaffold: the step shape that is not done before	66h
+docs/spec/loop.md	## The acceptance tests of M2e	The bet step is atomic to its last act	66j
+docs/spec/loop.md	## The acceptance tests of M2e	The tier and the context of a task (`session.md` deferral): the record kinds of the step table	63b
+docs/spec/loop.md	## The acceptance tests of M2e	The tier and the context of a task (`session.md` deferral): the tier and the prompt file	66e
+docs/spec/loop.md	## The acceptance tests of M2e	The questions left open and the band (`intake.md` deferral)	66h
+docs/spec/loop.md	## The acceptance tests of M2e	The approvers and the success criteria (`intake.md` deferral)	66i
+docs/spec/loop.md	## The acceptance tests of M2e	The task register and the Retrospective: the register	66a
+docs/spec/loop.md	## The acceptance tests of M2e	The task register and the Retrospective: the Retrospective	66c
+docs/spec/loop.md	## The acceptance tests of M2e	The Shape filter (inventory): the filter	62a
+docs/spec/loop.md	## The acceptance tests of M2e	The Shape filter (inventory): the rewrite, the round with no progress and the stop	66h
+docs/spec/loop.md	## The acceptance tests of M2e	The Shape filter (inventory): the option answer lines	66j
+docs/spec/loop.md	## The acceptance tests of M2e	The bet and its brief (inventory): the checks of the brief and the appetite	62b
+docs/spec/loop.md	## The acceptance tests of M2e	The bet and its brief (inventory): the role of the approver and the copy of the answer	66j
+docs/spec/loop.md	## The acceptance tests of M2e	The rendered commit (inventory): the rendering and the changes allowed	62b
+docs/spec/loop.md	## The acceptance tests of M2e	The rendered commit (inventory): layup/rules passes a rendered record	63a
+docs/spec/loop.md	## The acceptance tests of M2e	The parameter change (inventory): the refusals and the application of a set	66b
+docs/spec/loop.md	## The acceptance tests of M2e	The parameter change (inventory): the prd-lint head	62c
+docs/spec/loop.md	## The acceptance tests of M2e	The frozen test list	66e
+docs/spec/loop.md	## The acceptance tests of M2e	The gate jobs read the base (F-22): the catalog	65a
+docs/spec/loop.md	## The acceptance tests of M2e	The gate jobs read the base (F-22): the setup	65b
+docs/spec/loop.md	## The acceptance tests of M2e	The task loop with the stand-in forge (inventory)	66k
+docs/spec/loop.md	## The acceptance tests of M2e	The specification task, end to end (inventory)	67
+docs/spec/loop.md	## The acceptance tests of M2e	The demo (inventory)	68b
+docs/spec/records.md	## NFR-001 — The records of the task loop	the block tasks	66a
+docs/spec/records.md	## NFR-001 — The records of the task loop	the block transitions	61
+docs/spec/records.md	## NFR-001 — The records of the task loop	the block task-gates	66f
+docs/spec/records.md	## NFR-001 — The records of the task loop	the block task-tests	66e
+docs/spec/records.md	## NFR-001 — The records of the task loop	the block task-spec-check	62c
+docs/spec/records.md	## NFR-001 — The records of the task loop	the block options	62a
+docs/spec/records.md	## NFR-001 — The records of the task loop	the block bets	66j
+docs/spec/records.md	## NFR-001 — The records of the task loop	the blocks inventory and inventory-index	62b
+docs/spec/records.md	## NFR-001 — The records of the task loop	the block parameters	66b
+docs/spec/records.md	## NFR-001 — The records of the task loop	result: the kinds question, decision, lesson and comment	60
+docs/spec/records.md	## NFR-001 — The records of the task loop	events: the kinds handoff and merged	60
+docs/spec/records.md	## NFR-001 — The records of the task loop	events: the details of closed and rebased	66k
+docs/spec/records.md	## NFR-001 — The records of the task loop	copies: the copy of a comment that is an artifact	66d
+docs/spec/records.md	## NFR-001 — The records of the task loop	run-steps: shape	66h
+docs/spec/records.md	## NFR-001 — The records of the task loop	run-steps: bet	66j
+docs/spec/records.md	## NFR-001 — The records of the task loop	run-steps: loop	66k
+docs/spec/records.md	## NFR-001 — The records of the task loop	tasks/<task>/results/<session>/<file>	66d
+docs/spec/forge.md	## The calls of M2e	—	64
+docs/spec/packages.md	### The table of M2e	internal/handoff: the transition table and the check of a handoff	61
+docs/spec/packages.md	### The table of M2e	internal/spec: the Shape filter	62a
+docs/spec/packages.md	### The table of M2e	internal/spec: the checks of the bet and the rendering	62b
+docs/spec/packages.md	### The table of M2e	internal/spec: the full check and the pinned prd-lint, which starts sh	62c
+docs/spec/packages.md	### The table of M2e	internal/rules: the basic layup/rules	63a
+docs/spec/packages.md	### The table of M2e	internal/session: the record kinds of the step table	63b
+docs/spec/packages.md	### The table of M2e	internal/forge and internal/forge/github: the calls of M2e and the permission check	64
+docs/spec/packages.md	### The table of M2e	internal/catalog: the workflow that reads the base	65a
+docs/spec/packages.md	### The table of M2e	internal/setup: CODEOWNERS and the code-owner rule	65b
+docs/spec/packages.md	### The table of M2e	internal/records: the kinds of result and events	60
+docs/spec/packages.md	### The table of M2e	internal/run: the register, the transition table and the parameters	66a
+docs/spec/packages.md	### The table of M2e	internal/run: the handoff in the loop, the attempts and the frozen test list	66e
+docs/spec/packages.md	### The table of M2e	internal/run: the statuses, the pull request and the merge	66g
+docs/spec/packages.md	### The table of M2e	internal/run: the steps shape, bet and loop	66k
+docs/spec/packages.md	### The table of M2e	internal/run: the May import cell of the table of M2a	66a
+docs/spec/packages.md	### The table of M2e	No new command and no flag	none: no code
+docs/spec/packages.md	### The table of M2e	TestPackageRules reads the table of M2e	61
