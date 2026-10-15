@@ -1,0 +1,54 @@
+# T-sdtb: the tables of setup/forge-check.tsv of pharzam/layup-uat-m2d, each as its commit of layup-records holds it, oldest first (rules 1 and 5); read at 2026-10-15T09:51:49Z.
+
+## commit 4313defef8765036dc617cb094f2abc4040c0912 (2026-10-15T07:57:16Z): layup run: the forge check
+
+check	result	detail	run	at
+tree	pass	—	6daeecbaf4565805	2026-10-15T07:57:13Z
+rules:main	pass	—	6daeecbaf4565805	2026-10-15T07:57:14Z
+rules:layup-probe	pass	—	6daeecbaf4565805	2026-10-15T07:57:14Z
+rules:layup-records	fail	update: update_allows_fetch_and_merge is missing	6daeecbaf4565805	2026-10-15T07:57:14Z
+bypass:default	pass	—	6daeecbaf4565805	2026-10-15T07:57:14Z
+bypass:records	pass	—	6daeecbaf4565805	2026-10-15T07:57:14Z
+probe	pass	—	6daeecbaf4565805	2026-10-15T07:57:16Z
+activity	pass	—	6daeecbaf4565805	2026-10-15T07:57:16Z
+
+## commit 148dc302e355049af388a8d9111b17689a8c9765 (2026-10-15T09:51:11Z): layup run: the forge check
+
+check	result	detail	run	at
+tree	pass	—	30ac922b1e4a9a68	2026-10-15T09:51:08Z
+rules:main	pass	—	30ac922b1e4a9a68	2026-10-15T09:51:09Z
+rules:layup-probe	pass	—	30ac922b1e4a9a68	2026-10-15T09:51:09Z
+rules:layup-records	pass	—	30ac922b1e4a9a68	2026-10-15T09:51:09Z
+bypass:default	pass	—	30ac922b1e4a9a68	2026-10-15T09:51:09Z
+bypass:records	pass	—	30ac922b1e4a9a68	2026-10-15T09:51:09Z
+probe	pass	—	30ac922b1e4a9a68	2026-10-15T09:51:10Z
+activity	pass	—	30ac922b1e4a9a68	2026-10-15T09:51:11Z
+
+## commit 1b2b0aa5f85c33fcd7b109d4af5affe3ba3b32c7 (2026-10-15T09:51:33Z): layup run: the forge check
+
+check	result	detail	run	at
+tree	pass	—	392284f8fc1bfb29	2026-10-15T09:51:31Z
+rules:main	pass	—	392284f8fc1bfb29	2026-10-15T09:51:31Z
+rules:layup-probe	pass	—	392284f8fc1bfb29	2026-10-15T09:51:31Z
+rules:layup-records	pass	—	392284f8fc1bfb29	2026-10-15T09:51:32Z
+bypass:default	pass	—	392284f8fc1bfb29	2026-10-15T09:51:32Z
+bypass:records	pass	—	392284f8fc1bfb29	2026-10-15T09:51:32Z
+probe	pass	—	392284f8fc1bfb29	2026-10-15T09:51:33Z
+activity	pass	—	392284f8fc1bfb29	2026-10-15T09:51:33Z
+
+## The commits of the lease on layup-records (git log --grep='^lease:'): the run ID of each run of layup run that held it, with the time
+
+2026-10-14T13:34:24Z lease: released
+2026-10-14T13:34:40Z lease: the run b904570e9241db24 takes the released lease from the run 8c322351aa1c80ce
+2026-10-14T13:42:18Z lease: released
+2026-10-14T17:09:57Z lease: the run a97ba43c08bf9d39 takes the released lease from the run b904570e9241db24
+2026-10-14T17:10:52Z lease: released
+2026-10-14T17:40:41Z lease: the run e3c41a7de8e5809d takes the released lease from the run a97ba43c08bf9d39
+2026-10-14T18:20:52Z lease: the run 5106e7871153ec07 takes the lease over from the run e3c41a7de8e5809d
+2026-10-15T07:45:41Z lease: the run 2dd362cc2b079406 takes the lease over from the run 5106e7871153ec07
+2026-10-15T07:51:29Z lease: released
+2026-10-15T07:57:07Z lease: the run 6daeecbaf4565805 takes the released lease from the run 2dd362cc2b079406
+2026-10-15T09:51:04Z lease: the run 30ac922b1e4a9a68 takes the lease over from the run 6daeecbaf4565805
+2026-10-15T09:51:12Z lease: released
+2026-10-15T09:51:28Z lease: the run 392284f8fc1bfb29 takes the released lease from the run 30ac922b1e4a9a68
+2026-10-15T09:51:37Z lease: released

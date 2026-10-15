@@ -1,0 +1,196 @@
+# T-sdtb: the tables of the runs of `layup run`, as each printed them (its progress lines left out), with its times and exit status.
+
+## run 0: 2026-10-14T13:32:18Z to 2026-10-14T13:34:25Z, exit 0
+
+step	result	detail
+forge	done	the installation token, the six capabilities and the permissions of M2a; a public repository, empty
+plan	done	the plan free on a public repository
+baseline	done	the baseline at a95965534b14b0bf14ad74da0c9a45b5f4aedf88
+root-push	done	the default branch main exists
+read-back	done	one branch, one root commit, root tree = pin.tree
+records	done	the first records commit: the pin, the briefs, approvers.tsv, start.tsv, the lease
+issues	done	the Intake issue 1, the control issue 2
+watch	done	not-confirmed
+lease	done	released
+
+## run 1: 2026-10-14T13:34:36Z to 2026-10-14T13:42:19Z, exit 0
+
+step	result	detail
+forge	done	the installation token, the six capabilities and the permissions of M2a; a public repository, with layup-records
+clone	done	start.tsv, approvers.tsv and lease.tsv read
+version	done	LAYUP 0.1.0-dev
+lease	done	held by this run
+probe	done	probed and passed 2, probed and failed 0, skipped 0
+rule-gaps	done	0 rule gaps, in intake/psb.tsv
+meaning	done	11 gaps of meaning, in intake/meaning.tsv
+numbering	done	38 spans, 25 facts, in spec/spans.tsv
+spans	done	the span check passed, in spec/check.tsv
+draft	done	21 rows, in spec/draft.tsv
+completeness	done	0 items, in intake/coverage.tsv
+markers	done	154 markers, 4 with a proposal, in intake/markers.tsv
+batch	done	169 questions, in questions.tsv and the comment of the batch
+answers	done	waiting: no answer yet in the block idea-owner and the block operator
+
+## run 2: 2026-10-14T17:09:54Z to 2026-10-14T17:10:54Z, exit 0
+
+step	result	detail
+forge	done	the installation token, the six capabilities and the permissions of M2a; a public repository, with layup-records
+clone	done	start.tsv, approvers.tsv and lease.tsv read
+version	done	LAYUP 0.1.0-dev
+lease	done	held by this run
+probe	done	probed and passed 0, probed and failed 0, skipped 0
+rule-gaps	done	done before
+meaning	done	done before
+numbering	done	done before
+spans	done	done before
+draft	done	done before
+completeness	done	done before
+markers	done	done before
+batch	done	done before
+answers	done	169 answers, in intake/answers.tsv; budget.tsv written
+answers-review	done	169 answers reviewed, 150 open, in intake/answers-review.tsv
+follow-up	done	150 questions asked again, in questions.tsv and the comment of the follow-up
+follow-up-answers	done	waiting: no answer yet to the follow-up in the block operator
+
+## run 3: 2026-10-14T17:40:37Z to 2026-10-14T17:49:44Z, exit 1
+
+step	result	detail
+forge	done	the installation token, the six capabilities and the permissions of M2a; a public repository, with layup-records
+clone	done	start.tsv, approvers.tsv and lease.tsv read
+version	done	LAYUP 0.1.0-dev
+lease	done	held by this run
+probe	done	probed and passed 0, probed and failed 0, skipped 0
+rule-gaps	done	done before
+meaning	done	done before
+numbering	done	done before
+spans	done	done before
+draft	done	done before
+completeness	done	done before
+markers	done	done before
+batch	done	done before
+answers	done	done before
+answers-review	done	done before
+follow-up	done	done before
+follow-up-answers	done	150 answers to the follow-up, in intake/answers.tsv; budget.tsv kept; Intake is done
+setup	fail	S08: glossary: fail: fact: F-0007#3 is not a fact of the F-0007 record
+
+## run 4: 2026-10-14T17:50:38Z to 2026-10-14T18:30:06Z, exit 1
+
+step	result	detail
+forge	done	the installation token, the six capabilities and the permissions of M2a; a public repository, with layup-records
+clone	done	start.tsv, approvers.tsv and lease.tsv read
+version	done	LAYUP 0.1.0-dev
+lease	done	held by this run
+probe	done	probed and passed 0, probed and failed 0, skipped 0
+rule-gaps	done	done before
+meaning	done	done before
+numbering	done	done before
+spans	done	done before
+draft	done	done before
+completeness	done	done before
+markers	done	done before
+batch	done	done before
+answers	done	done before
+answers-review	done	done before
+follow-up	done	done before
+follow-up-answers	done	done before
+setup	fail	S08: glossary: fail: fact: F-0007#3 is not a fact of the F-0007 record
+
+## run 5: 2026-10-15T07:15:30Z to 2026-10-15T07:51:31Z, exit 0
+
+step	result	detail
+forge	done	the installation token, the six capabilities and the permissions of M2a; a public repository, with layup-records
+clone	done	start.tsv, approvers.tsv and lease.tsv read
+version	done	LAYUP 0.1.0-dev
+lease	done	held by this run
+probe	done	probed and passed 2, probed and failed 0, skipped 0
+rule-gaps	done	done before
+meaning	done	done before
+numbering	done	done before
+spans	done	done before
+draft	done	done before
+completeness	done	done before
+markers	done	done before
+batch	done	done before
+answers	done	done before
+answers-review	done	done before
+follow-up	done	done before
+follow-up-answers	done	done before
+setup	done	S01 to S14 done, in the work area
+verify	done	the setup verified and its records committed
+scaffold-push	done	waiting for the Operator's pushes and ruleset apply
+
+## run 6: 2026-10-15T07:57:04Z to 2026-10-15T07:57:17Z, exit 1
+
+step	result	detail
+forge	done	the installation token, the six capabilities and the permissions of M2a; a public repository, with layup-records
+clone	done	start.tsv, approvers.tsv and lease.tsv read
+version	done	LAYUP 0.1.0-dev
+lease	done	held by this run
+probe	done	probed and passed 0, probed and failed 0, skipped 0
+rule-gaps	done	done before
+meaning	done	done before
+numbering	done	done before
+spans	done	done before
+draft	done	done before
+completeness	done	done before
+markers	done	done before
+batch	done	done before
+answers	done	done before
+answers-review	done	done before
+follow-up	done	done before
+follow-up-answers	done	done before
+setup	done	done before
+verify	done	done before
+scaffold-push	done	the apply of the rulesets recorded
+forge-check	fail	rules:layup-records: update: update_allows_fetch_and_merge is missing
+
+## run 7: 2026-10-15T09:20:52Z to 2026-10-15T09:51:14Z, exit 0
+
+step	result	detail
+forge	done	the installation token, the six capabilities and the permissions of M2a; a public repository, with layup-records
+clone	done	start.tsv, approvers.tsv and lease.tsv read
+version	done	LAYUP 0.1.0-dev
+lease	done	held by this run
+probe	done	probed and passed 0, probed and failed 0, skipped 0
+rule-gaps	done	done before
+meaning	done	done before
+numbering	done	done before
+spans	done	done before
+draft	done	done before
+completeness	done	done before
+markers	done	done before
+batch	done	done before
+answers	done	done before
+answers-review	done	done before
+follow-up	done	done before
+follow-up-answers	done	done before
+setup	done	done before
+verify	done	done before
+scaffold-push	done	done before
+forge-check	done	the forge check passed
+
+## run 8: 2026-10-15T09:51:25Z to 2026-10-15T09:51:39Z, exit 0
+
+step	result	detail
+forge	done	the installation token, the six capabilities and the permissions of M2a; a public repository, with layup-records
+clone	done	start.tsv, approvers.tsv and lease.tsv read
+version	done	LAYUP 0.1.0-dev
+lease	done	held by this run
+forge-check	done	the forge check passed
+probe	done	probed and passed 0, probed and failed 0, skipped 0
+rule-gaps	done	done before
+meaning	done	done before
+numbering	done	done before
+spans	done	done before
+draft	done	done before
+completeness	done	done before
+markers	done	done before
+batch	done	done before
+answers	done	done before
+answers-review	done	done before
+follow-up	done	done before
+follow-up-answers	done	done before
+setup	done	done before
+verify	done	done before
+scaffold-push	done	done before
