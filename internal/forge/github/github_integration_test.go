@@ -838,7 +838,11 @@ func prJSON(number int, draft, merged bool) map[string]any {
 // listItemJSON is a pull request as GET /pulls gives it: no merged, a merged_at that
 // is null until the merge (GitHub's page, "List pull requests").
 func listItemJSON(number int, draft bool, mergedAt any, mergeSHA string) map[string]any {
-	return map[string]any{"number": number, "node_id": fmt.Sprintf("PR_node%d", number), "state": "open", "draft": draft,
+	state := "open"
+	if mergedAt != nil {
+		state = "closed" // a merged pull request is closed
+	}
+	return map[string]any{"number": number, "node_id": fmt.Sprintf("PR_node%d", number), "state": state, "draft": draft,
 		"merged_at": mergedAt, "merge_commit_sha": mergeSHA, "head": map[string]any{"sha": headSHA, "ref": "task/T-aaaa/1"}}
 }
 
@@ -909,10 +913,22 @@ func TestMarkReadySendsTheMutationWithTheNodeIDAndGivesThePullRequest(t *testing
 	}
 }
 
+func TestMarkReadyReadsTheMergedStateAndRefusesAnAnswerWithNoPullRequest(t *testing.T) {
+	f, _, a, _ := setup(t)
+	handle(f, "POST /graphql", func(w http.ResponseWriter, r *http.Request) {
+		io.WriteString(w, `{"data":{"markPullRequestReadyForReview":{"pullRequest":{"id":"PR_node5","number":5,"isDraft":false,"state":"MERGED","headRefOid":"`+headSHA+`"}}}}`)
+	})
+	if pr, err := a.MarkReady(context.Background(), "PR_node5"); err != nil || !pr.Merged || pr.State != "closed" {
+		t.Errorf("MarkReady of a merged pull request = %+v, %v, want merged and closed", pr, err)
+	}
+}
+
 func TestMarkReadyGivesAForgeErrorForAnErrorsArrayOrAnEmptyAnswer(t *testing.T) {
 	for name, body := range map[string]string{
-		"errors": `{"errors":[{"message":"Could not resolve to a node\nwith the global id"}],"data":null}`,
-		"empty":  `{"data":{"markPullRequestReadyForReview":null}}`,
+		"data null":  `{"data":null}`,
+		"no payload": `{"data":{"markPullRequestReadyForReview":{"pullRequest":null}}}`,
+		"errors":     `{"errors":[{"message":"Could not resolve to a node\nwith the global id"}],"data":null}`,
+		"empty":      `{"data":{"markPullRequestReadyForReview":null}}`,
 	} {
 		f, _, a, _ := setup(t)
 		handle(f, "POST /graphql", func(w http.ResponseWriter, r *http.Request) { io.WriteString(w, body) })
@@ -1168,11 +1184,26 @@ func TestMergeThatAnswersNotMergedIsNeverASuccess(t *testing.T) {
 			t.Errorf("Merge = %q, nil for an answer with merged false and the SHA %q", got, sha)
 		}
 	}
-	if _, err := a.Merge(context.Background(), 5, "main"); err == nil {
-		t.Errorf("Merge at a SHA that is none gave no error")
+}
+
+func TestMergeRefusesBeforeAnyRequestAPullRequestBelow1OrAHeadThatIsNoFullSHA(t *testing.T) {
+	f, _, a, _ := setup(t)
+	handle(f, "PUT "+pulls+"/5/merge", func(w http.ResponseWriter, r *http.Request) {
+		json.NewEncoder(w).Encode(map[string]any{"sha": mergeSHA, "merged": true}) // a call that got through would succeed
+	})
+	handle(f, "PUT "+pulls+"/0/merge", func(w http.ResponseWriter, r *http.Request) {
+		json.NewEncoder(w).Encode(map[string]any{"sha": mergeSHA, "merged": true})
+	})
+	for _, c := range []struct {
+		n   int
+		sha string
+	}{{5, "main"}, {5, ""}, {5, headSHA[:39]}, {0, headSHA}, {-1, headSHA}} {
+		if sha, err := a.Merge(context.Background(), c.n, c.sha); err == nil {
+			t.Errorf("Merge(%d, %q) = %q, nil: it is a refusal", c.n, c.sha, sha)
+		}
 	}
-	if _, err := a.Merge(context.Background(), 0, headSHA); err == nil {
-		t.Errorf("Merge of the pull request 0 gave no error")
+	if n := len(f.requests); n != 0 {
+		t.Errorf("a refused merge made %d requests: %v", n, f.requests)
 	}
 }
 

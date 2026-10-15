@@ -56,3 +56,7 @@ number) and the tests were tightened; **all 24 mutants are now caught**. `go bui
 at the step `read-back` when the temporary directory is inside the checkout) did not reproduce here:
 `TMPDIR=<worktree>/.tmp go test -tags=integration ./internal/run -run 'TestARefusedPushBindsNothing|TestTheStepMarkersWithNoMarker'`
 exit 0 (12.2 s).
+
+## After round 2 (the fixes that wait for the Operator's answer), 2026-10-15T19:55Z
+
+Round 2 (comment 6200984600) ended `not mergeable, findings recorded` at the cap of 1 (one material finding, eight notes). The fixes are a local commit, not pushed until the Operator chooses: the refusals of `Merge` are tested by a test that counts the requests (and whose handler would succeed); `forge.Fake` refuses before it fails, as the adapter refuses before any request, and its tests assert the status 0 of a refusal and the status 502 of `Fail`; `MarkReady` is tested on the state `MERGED`, `data` null and `pullRequest` null; the list fixture gives a merged pull request the state `closed`; the cells of the PRD and a traceability row. Five more mutants (a refusal of `Merge` removed; the stand-in ignoring `Fail` in `Merge` and in `SetStatus`; the merged state of `MarkReady` dropped; the stand-in accepting a negative number): **all 29 mutants are caught**. `go vet` and `go test -count=1 -tags=integration ./internal/forge/...`: exit 0; the five checks: exit 0. The full integration run is to be repeated before the push.

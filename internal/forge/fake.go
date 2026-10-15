@@ -197,14 +197,14 @@ func (f *Fake) MarkReady(_ context.Context, nodeID string) (PullRequest, error) 
 func (f *Fake) SetStatus(_ context.Context, sha, context, state, description string) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	if err := f.err("SetStatus"); err != nil {
-		return err
-	}
 	if !FullSHA(sha) {
 		return &Error{Call: "SetStatus", Message: "the SHA is not a full object ID"}
 	}
 	if err := ValidStatus(state, description); err != nil {
 		return &Error{Call: "SetStatus", Message: err.Error()}
+	}
+	if err := f.err("SetStatus"); err != nil {
+		return err
 	}
 	s := Status{Context: context, State: state, Description: description, CreatorID: f.AppBot.CreatorID, CreatorLogin: f.AppBot.CreatorLogin}
 	f.statuses[sha] = slices.Insert(f.statuses[sha], 0, s)
@@ -223,12 +223,13 @@ func (f *Fake) Statuses(_ context.Context, sha string) (HeadChecks, error) {
 func (f *Fake) PullRequest(_ context.Context, q PullRequestQuery) (PullRequest, bool, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
+	if (q.Number != 0) == (q.Branch != "") || q.Number < 0 {
+		return PullRequest{}, false, &Error{Call: "PullRequest", Message: "the query names a number or a branch, one of the two"}
+	}
 	if err := f.err("PullRequest"); err != nil {
 		return PullRequest{}, false, err
 	}
 	switch {
-	case (q.Number != 0) == (q.Branch != "") || q.Number < 0:
-		return PullRequest{}, false, &Error{Call: "PullRequest", Message: "the query names a number or a branch, one of the two"}
 	case q.Number != 0:
 		pr := f.pr(q.Number)
 		if pr == nil {
@@ -247,11 +248,11 @@ func (f *Fake) PullRequest(_ context.Context, q PullRequestQuery) (PullRequest, 
 func (f *Fake) Merge(_ context.Context, number int, sha string) (string, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	if err := f.err("Merge"); err != nil {
-		return "", err
-	}
 	if number < 1 || !FullSHA(sha) {
 		return "", &Error{Call: "Merge", Message: "the pull request number or the head SHA is not valid"}
+	}
+	if err := f.err("Merge"); err != nil {
+		return "", err
 	}
 	pr := f.pr(number)
 	switch {

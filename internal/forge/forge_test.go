@@ -249,18 +249,22 @@ func TestFakeRefusesWhatTheAdapterRefusesBeforeAnyRequest(t *testing.T) {
 	ctx := context.Background()
 	pr, _ := f.OpenDraft(ctx, "b", "main", "t", "")
 	f.MarkReady(ctx, pr.NodeID)
-	if _, err := f.Statuses(ctx, "abc"); err == nil {
-		t.Errorf("Statuses of a SHA that is none gave no error")
+	refused := func(call string, err error) {
+		t.Helper()
+		if e := new(Error); !errors.As(err, &e) || e.Call != call || e.Status != 0 {
+			t.Errorf("%s = %v, want a refusal of that call with the status 0 (a 404 or a 502 is not one)", call, err)
+		}
 	}
-	if _, err := f.Merge(ctx, pr.Number, ""); err == nil {
-		t.Errorf("Merge at no SHA gave no error: an empty head merged")
-	}
-	if _, err := f.Merge(ctx, 0, sha1a); err == nil {
-		t.Errorf("Merge of the pull request 0 gave no error")
-	}
-	if _, _, err := f.PullRequest(ctx, PullRequestQuery{Number: -1}); err == nil {
-		t.Errorf("PullRequest of the number -1 gave no error")
-	}
+	_, err := f.Statuses(ctx, "abc")
+	refused("Statuses", err)
+	_, err = f.Merge(ctx, pr.Number, "")
+	refused("Merge", err)
+	_, err = f.Merge(ctx, 0, sha1a)
+	refused("Merge", err)
+	_, _, err = f.PullRequest(ctx, PullRequestQuery{Number: -1})
+	refused("PullRequest", err)
+	f.Fail = "SetStatus"
+	refused("SetStatus", f.SetStatus(ctx, "abc", "layup/gates", "success", "x")) // a refusal comes before a failure of the call
 	if !FullSHA(sha1a) || FullSHA("") || FullSHA(sha1a[:39]) || FullSHA(sha1a+"0") || FullSHA("ABCDEF"+sha1a[6:]) {
 		t.Errorf("FullSHA is not 40 lowercase hexadecimal characters")
 	}
@@ -281,8 +285,14 @@ func TestFakeFailsTheNamedCall(t *testing.T) {
 	ctx := context.Background()
 	pr, _ := f.OpenDraft(ctx, "b", "main", "t", "")
 	f.MarkReady(ctx, pr.NodeID)
-	_, err := f.Merge(ctx, pr.Number, "")
-	if e := new(Error); !errors.As(err, &e) || e.Call != "Merge" {
-		t.Errorf("Merge with Fail = %v", err)
+	_, err := f.Merge(ctx, pr.Number, sha1a)
+	if e := new(Error); !errors.As(err, &e) || e.Call != "Merge" || e.Status != 502 {
+		t.Errorf("Merge with Fail = %v, want the forge error of status 502 that Fail gives, not a refusal", err)
+	}
+	f.Fail = ""
+	if _, err := f.Merge(ctx, pr.Number, "main"); err == nil {
+		t.Errorf("Merge at a SHA that is none gave no error")
+	} else if e := new(Error); errors.As(err, &e) && e.Status != 0 {
+		t.Errorf("a refusal has the status %d, want 0: it is made before any request", e.Status)
 	}
 }
