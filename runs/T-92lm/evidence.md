@@ -51,3 +51,16 @@ The engine (`layup` sha256 `7f6379d6d7cf1d22daa3a35f19e07ef2f0a72d8d2e25332cb9e9
 done, **S08 `fail` with `glossary: fail: fact: F-0007#3 is not a fact of the F-0007 record`**, the same text as runs 3 and 4; S09 to S15 not run. Check `adapted` (LAYUP's own `setup-check.sh`
 with the lists of the engine, which reports every hit) holds **154 hits in 24 of the 25 files**: kit 28, optional 26, adapt 16, fill-before-a-marker 15, replace-before-a-marker 11, delete this 11,
 the template 10, your stack 9, adopter 8, your project 6, fill in 6, your forge 3, you use 2, skip this section 2, Armature 1.
+
+## Attempt 1 — the head `4fbfc06`, before round 3 (02:07:16Z to 02:16:47Z)
+
+Run while the Operator's answer at the cap was awaited, on the head that rounds 1 and 2 had read (order of condition 5 kept: the code was reviewed before the paid session), as the protocol says; the final head
+differs from it by four sentences of the prompt (the stem context, the stopping rule, spaces and tabs, the passed words) and is attempt 2's. **Passed, on its first attempt.**
+
+| What | Value |
+| ---- | ----- |
+| Binary and prompt | `layup` built from the copy of `4fbfc06`, sha256 `cec1058a82df45d7b864d2b6499ce35754752a98715d27f2b9c0441074ff0ada`; the prompt 7,226 bytes, sha256 `3a8011b0b1bc2e7e57c726cd812c6cb6920346de572a568d233df6e93dda9602` |
+| Session | `claude` 2.1.300, `claude-opus-5-5`, cap USD 5.00, wall 1,800 s, snapshot manifest `c4652dea…85af2` before it (equal); exit 0, result `success`, `terminal_reason completed`, `is_error` false; 48 turns, 568.9 s in the stream, **USD 3.49** (list basis; subscription); `repo/` left unchanged |
+| End and output | class `done`; `session.ReadOutputFiles` and `proseKeep` accept 25 files (manifest sha256 `2336155a…102d`; archive `a1.tar.gz`, sha256 `8f3d321c…441e`, in `/home/layup/layup-host/evidence/T-92lm/`) |
+| Engine | step verify `done` ("the setup verified and its records committed"), the 18 rows of `verify.tsv` `pass` or `clear` (its sha256 `368a24d4…47c8`, that of the mechanically fixed control files too); the commit would hold `README.md`, `rule-paths.tsv`, `setup/record.tsv`, `setup/tree.tsv` and `setup/verify.tsv` |
+| Hits of check `adapted` | 0 (the control had 154); 210 markers kept in 19 files; glossary citations all of `F-0001`; `README.md` holds `pharzam/layup-uat-m2d` and `layup-records` |
