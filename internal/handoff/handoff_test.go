@@ -74,8 +74,9 @@ func TestTheListsAreTheWordsOfTheSpecification(t *testing.T) {
 	}
 }
 
-// The list of items cannot drift from the words that the block events takes in
-// the detail of a handoff (records.CheckEvent).
+// Each item of the table is a word that the block events takes in the detail of
+// a handoff (records.CheckEvent), and so is pair, which is no item of a table.
+// The test does not detect a word added to the private list of records.
 func TestEachItemIsAWordOfTheDetailOfAnEvent(t *testing.T) {
 	event := func(detail string) error {
 		return records.CheckEvent([]string{"1", "handoff", "1", "S-12345678", "", "", detail, "2026-10-15T12:00:00Z"})
@@ -417,5 +418,90 @@ func TestThePairIsNotAnItemOfTheTable(t *testing.T) {
 	}
 	if err := CheckTable(append(Default(), Row{"a", "b", []string{"plan"}, []string{"pair"}})); err == nil || !strings.Contains(err.Error(), "pair") {
 		t.Errorf("CheckTable accepts the item pair: %v", err)
+	}
+}
+
+// A handoff that code writes itself has no typed result: it cannot satisfy a
+// row that lists "schema", whatever SchemaOK says (finding 1 of round 1).
+func TestACodeWrittenHandoffCannotSatisfyARowThatListsSchema(t *testing.T) {
+	good := Handoff{From: "task plan", To: "plan review", CodeWritten: true,
+		Artifacts: []Artifact{{Kind: "plan", Comment: &Comment{ID: 4, Seen: 1, File: h64("a"), Copy: h64("a"), Forge: h64("a")}}},
+		Items:     map[string]bool{"plan-fields": true}}
+	for _, ok := range []bool{false, true} {
+		h := good
+		h.SchemaOK = ok
+		if v := Check(Default(), h); v.Valid || v.Detail != "invalid schema comment 4-1" {
+			t.Errorf("code-written, SchemaOK %v, on a row with schema: %+v", ok, v)
+		}
+	}
+	table := Default()
+	for i := range table {
+		if table[i].From == "code (rendered task)" {
+			table[i].Items = []string{"schema", "artifacts", "rendering-equal"}
+		}
+	}
+	rendered := Handoff{From: "code (rendered task)", To: "verifier", CodeWritten: true, Artifacts: []Artifact{{Kind: "rendering", Named: h64("3"), Found: h64("3")}}, Items: map[string]bool{"rendering-equal": true}}
+	if v := Check(table, rendered); v.Valid || v.Detail != "invalid schema" {
+		t.Errorf("a replacement that lists schema for the rendered task: %+v", v)
+	}
+	if v := Check(Default(), rendered); !v.Valid {
+		t.Errorf("the default row of the rendered task: %+v", v)
+	}
+}
+
+// A file artifact is a SHA-256 (64 characters); only the commits may be an
+// object name of 40 characters too. Any other length fails.
+func TestTheLengthOfAHashDependsOnTheKind(t *testing.T) {
+	table := []Row{{"a", "b", []string{"task-file", "commits"}, []string{"schema", "artifacts"}}}
+	mk := func(file, commits string) Handoff {
+		return Handoff{From: "a", To: "b", SchemaOK: true, Artifacts: []Artifact{
+			{Kind: "task-file", Path: "f", Named: file, Found: file}, {Kind: "commits", Path: "c", Named: commits, Found: commits}}}
+	}
+	for name, tc := range map[string]struct {
+		file, commits string
+		valid         bool
+	}{
+		"a SHA-256 and a SHA-1 commit":   {h64("a"), h40("b"), true},
+		"a SHA-256 and a SHA-256 commit": {h64("a"), h64("b"), true},
+		"a file with 40 characters":      {h40("a"), h40("b"), false},
+		"a file with 41 characters":      {strings.Repeat("a", 41), h40("b"), false},
+		"a file with 63 characters":      {strings.Repeat("a", 63), h40("b"), false},
+		"a file with 65 characters":      {strings.Repeat("a", 65), h40("b"), false},
+		"a file with 128 characters":     {strings.Repeat("a", 128), h40("b"), false},
+		"a commit with 41 characters":    {h64("a"), strings.Repeat("b", 41), false},
+		"a commit with 63 characters":    {h64("a"), strings.Repeat("b", 63), false},
+		"a commit with 65 characters":    {h64("a"), strings.Repeat("b", 65), false},
+	} {
+		if v := Check(table, mk(tc.file, tc.commits)); v.Valid != tc.valid {
+			t.Errorf("%s: %+v", name, v)
+		}
+	}
+}
+
+// The comment's ID and Seen are 1 or more, and only a comment artifact has a
+// Comment: the detail never names a copy that does not exist.
+func TestACommentIsNamedByItsCopyAndOnlyACommentHasOne(t *testing.T) {
+	table := []Row{{"a", "b", []string{"plan"}, []string{"schema", "artifacts"}}}
+	mk := func(id, seen int) Handoff {
+		return Handoff{From: "a", To: "b", SchemaOK: true, Artifacts: []Artifact{{Kind: "plan", Comment: &Comment{ID: id, Seen: seen, File: h64("a"), Copy: h64("a"), Forge: h64("a")}}}}
+	}
+	if v := Check(table, mk(5, 2)); !v.Valid || v.Detail != "valid comment 5-2" {
+		t.Fatalf("%+v", v)
+	}
+	for name, h := range map[string]Handoff{"ID 0": mk(0, 1), "Seen 0": mk(1, 0), "both 0": mk(0, 0), "a negative ID": mk(-1, 1)} {
+		if v := Check(table, h); v.Valid || v.Detail != "invalid artifacts" {
+			t.Errorf("%s: %+v", name, v)
+		}
+	}
+	stray := Handoff{From: "a", To: "b", SchemaOK: true, Artifacts: []Artifact{
+		{Kind: "plan", Comment: &Comment{ID: 5, Seen: 2, File: h64("a"), Copy: h64("a"), Forge: h64("a")}},
+		{Kind: "task-file", Path: "f", Named: h64("1"), Found: h64("1"), Comment: &Comment{ID: 9, Seen: 9, File: h64("a"), Copy: h64("a"), Forge: h64("a")}}}}
+	if v := Check(table, stray); v.Valid || v.Detail != "invalid artifacts comment 5-2" {
+		t.Errorf("a file artifact that carries a comment: %+v", v)
+	}
+	onlyStray := Handoff{From: "a", To: "b", SchemaOK: true, Artifacts: []Artifact{
+		{Kind: "task-file", Path: "f", Named: h64("1"), Found: h64("1"), Comment: &Comment{ID: 9, Seen: 9, File: h64("a"), Copy: h64("a"), Forge: h64("a")}}}}
+	if v := Check([]Row{{"a", "b", []string{"task-file"}, []string{"artifacts"}}}, onlyStray); v.Valid || v.Detail != "invalid artifacts" {
+		t.Errorf("a stray comment names no copy in the detail: %+v", v)
 	}
 }

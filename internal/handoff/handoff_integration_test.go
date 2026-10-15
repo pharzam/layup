@@ -66,8 +66,8 @@ func TestTheDefaultRowsAreTheTableOfTheSpecification(t *testing.T) {
 			t.Fatalf("a row of the table has %d cells: %q", len(cells), line)
 		}
 		from, to, _ := strings.Cut(cells[0], ", ")
-		// "task plan, plan review": the step is the text up to the last comma that
-		// the words of the steps never hold ("developer (build task), verifier").
+		// "task plan, plan review": the first ", " parts the two steps; no step
+		// holds a comma ("developer (build task), verifier").
 		rows = append(rows, Row{From: from, To: to, Artifacts: words(cells[1]), Items: words(strings.NewReplacer("(`M2f`)", "", "(`M2g`)", "").Replace(cells[2]))})
 	}
 	got := Default()

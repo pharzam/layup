@@ -32,7 +32,8 @@ type Artifact struct {
 // named and found, and the result of each other item that needs a program, a
 // gate run or a read of a commit (Items). An item with no result is false.
 // CodeWritten is true for a handoff that code writes itself and that has no
-// session result (the rendered task): only then is SchemaOK not read.
+// session result (the rendered task): SchemaOK is not read for it, and a row
+// that lists "schema" cannot be satisfied by it.
 type Handoff struct {
 	From, To    string
 	CodeWritten bool
@@ -53,10 +54,9 @@ func commentKind(kind string) bool {
 	return kind == "plan" || kind == "plan-review" || kind == "review-record"
 }
 
-// hexHash reports whether h is a full object name: 40 or 64 lowercase
-// hexadecimal characters.
-func hexHash(h string) bool {
-	if len(h) != 40 && len(h) != 64 {
+// hexHash reports whether h is lowercase hexadecimal of the given length.
+func hexHash(h string, n int) bool {
+	if len(h) != n {
 		return false
 	}
 	for _, c := range h {
@@ -67,13 +67,24 @@ func hexHash(h string) bool {
 	return true
 }
 
-// artifactOK reports whether one artifact is what its kind says.
+// artifactOK reports whether one artifact is what its kind says. A comment
+// artifact (a plan, a plan review or a review record) has its Comment, whose
+// ID and Seen are 1 or more and whose three hashes are one SHA-256; any other
+// artifact has no Comment, and the hash that the session named is the one that
+// code found: a SHA-256 of a file, or, for the commits, an object name of 40 or
+// 64 characters.
 func artifactOK(a Artifact) bool {
 	if commentKind(a.Kind) {
 		c := a.Comment
-		return c != nil && len(c.File) == 64 && hexHash(c.File) && c.File == c.Copy && c.Copy == c.Forge
+		return c != nil && c.ID >= 1 && c.Seen >= 1 && hexHash(c.File, 64) && c.File == c.Copy && c.Copy == c.Forge
 	}
-	return hexHash(a.Found) && a.Named == a.Found
+	if a.Comment != nil || a.Named != a.Found {
+		return false
+	}
+	if a.Kind == "commits" {
+		return hexHash(a.Found, 40) || hexHash(a.Found, 64)
+	}
+	return hexHash(a.Found, 64)
 }
 
 // artifactsOK checks the item "artifacts": each artifact that the handoff
@@ -98,9 +109,9 @@ func artifactsOK(row Row, h Handoff) bool {
 
 // Check checks a handoff against a table. The pair must be a row of the table
 // ("invalid pair" otherwise). Then, whatever the row lists, the schema (the
-// caller's result of the check of the block result, unless the handoff is
-// CodeWritten) and each artifact that the handoff names are checked, in that
-// order, so that a replacement row that omits "schema" or "artifacts" cannot
+// caller's result of the check of the block result; a CodeWritten handoff has
+// none, so it is invalid on a row that lists "schema") and each artifact that
+// the handoff names are checked, in that order, so that a replacement row that omits "schema" or "artifacts" cannot
 // let a bad result or a bad artifact through; and then each item of the row in
 // the row's order. "artifacts" is computed here from the hashes, and the map
 // Items is never read for "schema" or "artifacts", so a caller's claim for them
@@ -109,7 +120,7 @@ func artifactsOK(row Row, h Handoff) bool {
 func Check(table []Row, h Handoff) Verdict {
 	suffix := ""
 	for _, a := range h.Artifacts {
-		if c := a.Comment; c != nil && c.ID >= 1 && c.Seen >= 1 {
+		if c := a.Comment; c != nil && commentKind(a.Kind) && c.ID >= 1 && c.Seen >= 1 {
 			suffix = fmt.Sprintf(" comment %d-%d", c.ID, c.Seen)
 			break
 		}
@@ -119,7 +130,7 @@ func Check(table []Row, h Handoff) Verdict {
 		return Verdict{Detail: "invalid pair" + suffix}
 	}
 	row := table[i]
-	if !h.CodeWritten && !h.SchemaOK {
+	if (h.CodeWritten && slices.Contains(row.Items, "schema")) || (!h.CodeWritten && !h.SchemaOK) {
 		return Verdict{Detail: "invalid schema" + suffix}
 	}
 	if !artifactsOK(row, h) {

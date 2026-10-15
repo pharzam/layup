@@ -24,3 +24,14 @@ The first version read `schema` and `artifacts` only when the row listed them, a
 - `go build ./...`, `go vet ./...`, `go test -count=1 ./...` and `go test -count=1 -tags=integration ./...` (TMPDIR on the disk): see the end of this file.
 - At the head: `go build ./...` exit 0; `go vet ./...` exit 0; `go test -count=1 ./...` exit 0; `go test -count=1 -tags=integration ./...` 18:53:19 to 19:03:53Z: 20 packages ok and `internal/run` timed out at the default 10 minutes (the host runs other tasks in parallel; the memory of the host says 6 to 9 minutes alone). Rerun alone with `-timeout 1500s`, 19:04:15 to 19:15:03Z: ok, 644.763 s. A first full run at 18:41:41Z failed on `TestAGoodModuleKeepsTheRules` and `TestEachRuleAndColumnFindsItsBreach` (my fixture of `goodModule` added two packages that had no row: "table: internal/records has no row"); fixed in `cmd/layup/rules_test.go`, then the runs above.
 - The five scripts: `adr-lint`, `prd-lint`, `link-lint`, `run-discipline-tests`, `setup-check`: exit 0 each, and `git diff --check`: exit 0 (19:16Z).
+
+## After round 1 (comment 6200497472)
+
+One material finding and six notes, fixed at 19:20 to 19:28Z in the order: the code, then the tests (as for condition 1, the mutant run is the red evidence: a mutant that removes the new rule is caught by the new test).
+
+- **The code-written handoff** cannot satisfy a row that lists `schema` (`TestACodeWrittenHandoffCannotSatisfyARowThatListsSchema`, three cases and a replacement table); the rendered task's default row lists no `schema`, so it is valid.
+- **The hash by kind:** a file artifact is 64 characters; only `commits` may be 40 or 64 (`TestTheLengthOfAHashDependsOnTheKind`, ten cases). **The comment:** `ID` and `Seen` are 1 or more, a non-comment artifact has no `Comment`, and the suffix comes only from a comment artifact (`TestACommentIsNamedByItsCopyAndOnlyACommentHasOne`).
+- The comments of two tests, the traceability row (all the unit tests), and this note.
+- **The order of the first red runs** (finding 7): the red runs of step T (18:34 to 18:35Z) were made while the plan review ran (18:33 to 18:40Z) and before its conditions; the tests of its conditions were written after it. The plan was posted at 18:33Z, before any red run.
+- **Mutants again:** the 26 mutants of the first version are replaced by 30 of the final code (the new rules included), each applied alone and undone: all 30 caught.
+- `go build`, `go vet`, `go test -count=1 ./...` exit 0; `go test -count=1 -tags=integration` of `internal/handoff`, `internal/tsv`, `cmd/layup` and `internal/records` ok (19:28Z); the full integration level of the head before round 1 is above, and nothing outside `internal/handoff` changed since.
