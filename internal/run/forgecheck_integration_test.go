@@ -37,7 +37,9 @@ func refuseProbe(t *testing.T, bare, text string) {
 const refusal = "error: GH013: Repository rule violations found for refs/heads/layup-probe.\nReview all repository rules at https://github.com/acme/target/rules?ref=refs/heads/layup-probe\n\n- Cannot create ref due to creations being restricted.\n"
 
 // inRuleset gives a JSON list of rules as the forge answers for a ruleset: each rule with the source type, the source and the ID of
-// the ruleset; withAnotherCreation adds a creation rule of an organization's ruleset.
+// the ruleset, and the rule update with no parameters when the file wrote update_allows_fetch_and_merge false, as GitHub gives it (first
+// hand, run 6 of the demo of M2d, 2026-10-15; task T-j7c5, #330; runs/T-j7c5/test-runs.md); withAnotherCreation adds a creation rule of an
+// organization's ruleset, and withUpdateTrue gives the update parameter as true.
 func inRuleset(t *testing.T, rules string, id int) string {
 	t.Helper()
 	var list []map[string]any
@@ -46,6 +48,27 @@ func inRuleset(t *testing.T, rules string, id int) string {
 	}
 	for _, r := range list {
 		r["ruleset_source_type"], r["ruleset_source"], r["ruleset_id"] = "Repository", "acme/target", id
+		if params, ok := r["parameters"].(map[string]any); ok && r["type"] == "update" && params["update_allows_fetch_and_merge"] == false {
+			delete(r, "parameters")
+		}
+	}
+	out, err := json.Marshal(list)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(out)
+}
+
+func withUpdateTrue(t *testing.T, rules string) string {
+	t.Helper()
+	var list []map[string]any
+	if err := json.Unmarshal([]byte(rules), &list); err != nil {
+		t.Fatal(err)
+	}
+	for _, r := range list {
+		if r["type"] == "update" {
+			r["parameters"] = map[string]any{"update_allows_fetch_and_merge": true}
+		}
 	}
 	out, err := json.Marshal(list)
 	if err != nil {
@@ -158,6 +181,15 @@ func TestTheStepForgeCheckChecksTheForgeAndCommitsItsTableAtEachRestart(t *testi
 	fake(func() {
 		w.fake.rules = map[string]string{"main": inRuleset(t, rulesOf("ruleset-default.json"), 7001), "layup-probe": inRuleset(t, rulesOf("ruleset-default.json"), 7001), "layup-records": inRuleset(t, rulesOf("ruleset-records.json"), 7002)}
 	})
+	// The fake answers as GitHub does: the rule update of layup-records has no parameters, while the file that the real writer made holds the
+	// parameter written false (#330).
+	var served, wrote []map[string]any
+	must(json.Unmarshal([]byte(w.fake.rules["layup-records"]), &served))
+	must(json.Unmarshal([]byte(rulesOf("ruleset-records.json")), &wrote))
+	fileParams, _ := wrote[0]["parameters"].(map[string]any)
+	if _, has := served[0]["parameters"]; served[0]["type"] != "update" || has || wrote[0]["type"] != "update" || fileParams["update_allows_fetch_and_merge"] != false {
+		t.Errorf("the fake gives %v for the rule update of layup-records, the file %v; want no parameters in the answer and update_allows_fetch_and_merge false in the file", served[0], wrote[0])
+	}
 	tables := func() int {
 		return len(strings.Fields(gitOut(t, w.bare, "log", "--format=%H", "--grep=^layup run: the forge check$", "refs/heads/layup-records")))
 	}
@@ -247,6 +279,13 @@ func TestTheStepForgeCheckChecksTheForgeAndCommitsItsTableAtEachRestart(t *testi
 	fake(func() { w.fake.rules["layup-probe"] = inRuleset(t, rulesOf("ruleset-default.json"), 7001) })
 	restart(Step{"forge-check", "done", "the forge check passed"}, first)
 	passes()
+	// The forge returns true for the update parameter that the file wrote false: the row of the records rules fails, naming it; with the answer back, it passes.
+	fake(func() { w.fake.rules["layup-records"] = withUpdateTrue(t, w.fake.rules["layup-records"]) })
+	restart(Step{"forge-check", "fail", "rules:layup-records: update: update_allows_fetch_and_merge differs"}, later[:5])
+	passes("rules:layup-records")
+	fake(func() { w.fake.rules["layup-records"] = inRuleset(t, rulesOf("ruleset-records.json"), 7002) })
+	restart(Step{"forge-check", "done", "the forge check passed"}, first)
+	passes()
 	// Three checks fail, the rules of the records branch, the probe (accepted) and the activity, and the table is committed; a work area that is there stays.
 	writeFile(t, filepath.Join(area, "stays.txt"), "x")
 	fake(func() { w.fake.rules["layup-records"], w.fake.noActivity = "", true })
@@ -256,7 +295,7 @@ func TestTheStepForgeCheckChecksTheForgeAndCommitsItsTableAtEachRestart(t *testi
 	accepted := strings.Fields(table()[6][2])
 	out, err := probeRef()
 	by := strings.TrimSpace(gitOut(t, w.bare, "log", "-1", "--format=%an|%ae|%s", "refs/heads/layup-probe"))
-	if _, stays := os.Stat(filepath.Join(area, "stays.txt")); stays != nil || tables() != 5 || len(accepted) != 3 || accepted[1] != "accepted:" || err != nil || strings.TrimSpace(out) != accepted[2] ||
+	if _, stays := os.Stat(filepath.Join(area, "stays.txt")); stays != nil || tables() != 7 || len(accepted) != 3 || accepted[1] != "accepted:" || err != nil || strings.TrimSpace(out) != accepted[2] ||
 		by != "layup-agent[bot]|9001+layup-agent[bot]@users.noreply.github.com|"+probeMessage {
 		t.Errorf("the probe row %q, %d tables, the work area kept: %v, layup-probe %q, %v by %q; want the commit of the App's bot, accepted", table()[6], tables(), stays, out, err, by)
 	}

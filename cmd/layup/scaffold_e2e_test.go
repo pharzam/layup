@@ -3,7 +3,10 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -226,6 +229,22 @@ func TestTheStepsOfTheScaffold(t *testing.T) {
 	}
 	if out, err := gitRun(w.bare, "rev-parse", "--verify", "-q", "refs/heads/layup-probe"); err == nil {
 		t.Errorf("layup-probe is on the forge after a refused probe: %s", out)
+	}
+	// The fake forge answers as GitHub does (#330): the rule update of layup-records has no parameters, while the file that the writer made holds
+	// update_allows_fetch_and_merge written false.
+	rec := httptest.NewRecorder()
+	w.forge.serve(rec, httptest.NewRequest(http.MethodGet, "/repos/acme/target/rules/branches/layup-records", nil))
+	var served []map[string]any
+	var file struct {
+		Rules []map[string]any `json:"rules"`
+	}
+	data, err := os.ReadFile(filepath.Join(area, "out", "ruleset-records.json"))
+	if err != nil || json.Unmarshal(data, &file) != nil || json.Unmarshal(rec.Body.Bytes(), &served) != nil || len(served) == 0 || len(file.Rules) == 0 {
+		t.Fatalf("the rules of layup-records from the fake: %s; the ruleset file: %v", rec.Body.String(), err)
+	}
+	fileParams, _ := file.Rules[0]["parameters"].(map[string]any)
+	if _, has := served[0]["parameters"]; served[0]["type"] != "update" || has || file.Rules[0]["type"] != "update" || fileParams["update_allows_fetch_and_merge"] != false {
+		t.Errorf("the fake gives %v for the rule update of layup-records, the file %v; want no parameters in the answer and update_allows_fetch_and_merge false in the file", served[0], file.Rules[0])
 	}
 	if tree := record(t, w, "setup/tree.tsv"); !strings.Contains(tree, "\t"+strings.TrimSpace(head)+"\t") {
 		t.Errorf("setup/tree.tsv does not end at the head of the default branch %s:\n%s", strings.TrimSpace(head), tree)

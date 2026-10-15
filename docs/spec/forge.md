@@ -146,7 +146,8 @@ defect of this table. The push of the probe is a `git` call, not an API call.
   and adds no filter of its own, as the endpoint gives the active rules only.
 - A rule is its `type` and its `parameters`, decoded. A rule that GitHub gives with
   no `parameters`, or with an empty object of them, has none, so the read-back
-  ([`scaffold.md`](scaffold.md#the-read-back)) compares the two forms alike. A rule
+  ([`scaffold.md`](scaffold.md#the-read-back)) compares the two forms alike, and reads the one parameter that GitHub omits
+  at its default (`update_allows_fetch_and_merge` `false` of `update`) as equal, as that section says (task `T-j7c5`). A rule
   also names the ruleset that it is of, as GitHub gives it (**decided here**, task
   `T-gkvi`, #323): `ruleset_source_type` (`Repository`, `Organization`), `ruleset_source`
   and `ruleset_id`, each the zero value when the answer lacks it or gives JSON `null` (as
