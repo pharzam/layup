@@ -163,3 +163,18 @@ release (`git diff --stat 0a104b8 COMMIT -- cmd internal go.mod`, and the releas
   `internal/verify/checks.go` of `T-92lm`: 341 lines added and 42 removed) and eleven of tests. So its Go code is the release that row 59a reviewed (`0a104b8`) and the changes of `T-gkvi` and `T-92lm` (the words that the prompt of the prose session
   gives); the release check on that commit, run at 07:13:51Z in a clean clone (`sh runs/T-efmy/release-check.sh 3f723570f00cc05ad5129c7c814896b8f7c30727`), gives exit 0 and `== PASS`, with the same sites as at `0a104b8` and `236c9af`
   (its output differs from that at `236c9af` in one timing figure): the three references to `git.Push` are in `PushHead`, `commitFiles` and `pushProbe`.
+- **The binary, rebuilt after `T-j7c5`** (09:19Z on 2026-10-15, before run 7; run 6 had ended at the forge check, see [The failed attempt](#the-failed-attempt-run-6)): `go build -o ~/layup-host/bin/layup ./cmd/layup` at
+  `8b76fdc22d60cdd51105ad4bc9706c84459ea2d7` (this branch after the merge of `main` at `461d47a`, the merge of #331); `layup version` gives `layup 0.1.0-dev`, its SHA-256 is
+  `1b4b96d8de1ccf5227b5d8d13a5e199b5980534a78b2abfbb76e4d11201f2cf1`; the binary before it is kept as `layup.before-T-j7c5` (SHA-256 `3407da21…4383`, the build after `T-92lm`). `git diff --stat 0a104b8 8b76fdc -- cmd internal
+  go.mod` names the same seven files that the binary is made of as after `T-92lm` (`internal/forge/forge.go`, `internal/forge/github/github.go`, `internal/run/forgecheck.go`, `internal/run/prose.go`, `internal/run/setup.go`,
+  `internal/verify/adapted.go`, `internal/verify/checks.go`: 357 lines added and 46 removed, of which `T-j7c5` is `internal/run/forgecheck.go`) and eleven of tests. The release check on that commit, run at 09:19:12Z in a clean clone
+  (`sh runs/T-efmy/release-check.sh 8b76fdc22d60cdd51105ad4bc9706c84459ea2d7`), gives exit 0 and `== PASS`, with the same sites as at `0a104b8`, `236c9af` and `3f72357` (the line of `pushProbe` moved from 416 to 428).
+
+## The failed attempt (run 6)
+
+Run 6 (07:57:04Z to 07:57:17Z on 2026-10-15), the restart that records the applies and runs the forge check for the first time on the real forge, ended with `forge-check` `fail`: `rules:layup-records: update:
+update_allows_fetch_and_merge is missing`. Its table (`forge-check.txt`: commit `4313def` of `layup-records`, run `6daeecbaf4565805`; `runs.txt`) has seven rows `pass`, the `probe` among them, and that row `fail`. **Classification** (as
+"After a failed attempt" says): a defect of the build that makes rule 1 false, found by the demo, off its path; a failed attempt, not the end of the demo. Its fix is the task `T-j7c5` (#330, merged at `461d47a`, with its own plan
+review and two rounds). **The cause, first hand:** GitHub accepts the records ruleset's file with `update_allows_fetch_and_merge` `false` and returns the rule `update` with no parameters, in the response of the apply, in the read of
+the ruleset and in the effective rules of the branch ([`runs/T-j7c5/test-runs.md`](../T-j7c5/test-runs.md) has the answers). No rule of this file is changed after the result: the fix changes the check and its specification together.
+The replay is the one that this file named before any run: one restart with the new binary (run 7), the earlier steps "done before" by their records, the table written again; the refused probe of run 6 left no ref.
