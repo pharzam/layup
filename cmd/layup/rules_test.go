@@ -11,7 +11,7 @@ import (
 )
 
 // goodTable is a table of phase 1, a table of M2a, a table of M2b and a table
-// of M2c in the
+// of M2c and a table of M2e in the
 // cell form of docs/spec/packages.md, with the line of rule 5 and the line of
 // the engine checks; ' stands for a backtick.
 var goodTable = strings.ReplaceAll(`# The packages
@@ -56,6 +56,12 @@ The text after the table of M2a.
 | ------- | --- | ---------- | ---------------- | -------- |
 | 'internal/spec' | the span check | — | no | — |
 
+### The table of M2e
+
+| Package | Job | May import | Starts a program | Connects |
+| ------- | --- | ---------- | ---------------- | -------- |
+| 'internal/handoff' | the transition table | 'internal/tsv', 'internal/records' | no | — |
+
 The packages of the engine checks: 'internal/psb', 'internal/gate'.
 `, "'", "`")
 
@@ -80,6 +86,7 @@ func goodModule() module {
 			pkg("internal/gate", "gate", modulePath+"/internal/git", "os/exec"),
 			pkg("internal/session", "session", modulePath+"/internal/git", "os/exec"),
 			pkg("internal/spec", "spec", "strings"),
+			pkg("internal/handoff", "handoff", "strings"),
 			{ImportPath: "fmt", Standard: true}, {ImportPath: "os", Standard: true},
 			{ImportPath: "os/exec", Standard: true}, {ImportPath: "strings", Standard: true},
 		},
@@ -105,6 +112,7 @@ func TestReadTable(t *testing.T) {
 		"internal/forge/github": {connects: []string{"net", "net/http", "crypto/tls"}},
 		"internal/session":      {imports: []string{"internal/git"}, register: true},
 		"internal/spec":         {},
+		"internal/handoff":      {imports: []string{"internal/tsv", "internal/records"}},
 	}
 	if err != nil || !reflect.DeepEqual(rows, want) {
 		t.Fatalf("rows %+v, %v\nwant %+v", rows, err, want)
@@ -138,6 +146,9 @@ func TestReadTableRefusesWhatItCannotRead(t *testing.T) {
 		"a full row of M2a for a package of phase 1":    strings.Replace(goodTable, "| `cmd/layup` | (the row of phase 1) | (the row of phase 1) | (the row of phase 1) |", "| `cmd/layup` | main | `internal/cli` | no |", 1),
 		"no table of M2b":                               strings.Replace(goodTable, "### The table of M2b", "### The table of M2z", 1),
 		"no table of M2c":                               strings.Replace(goodTable, "### The table of M2c", "### The table of M2z", 1),
+		"no table of M2e":                               strings.Replace(goodTable, "### The table of M2e", "### The table of M2z", 1),
+		"a row of M2e for a package of another table":   strings.Replace(goodTable, "| `internal/handoff` | the transition table |", "| `internal/session` | the transition table |", 1),
+		"a row of M2e that stands for a row of phase 1": strings.Replace(goodTable, "| `internal/handoff` | the transition table |", "| `internal/handoff` | (the row of phase 1) |", 1),
 		"a row of M2c for a package of another table":   strings.Replace(goodTable, "| `internal/spec` | the span check |", "| `internal/session` | the span check |", 1),
 		"a row of M2c that stands for a row of phase 1": strings.Replace(goodTable, "| `internal/spec` | the span check |", "| `internal/spec` | (the row of phase 1) |", 1),
 		"no column Connects in the table of M2b":        strings.Replace(goodTable, "| Package | Job | May import | Starts a program | Connects |\n| ------- | --- | ---------- | ---------------- | -------- |\n| `internal/session`", "| Package | Job | May import | Starts a program | Other |\n| ------- | --- | ---------- | ---------------- | -------- |\n| `internal/session`", 1),

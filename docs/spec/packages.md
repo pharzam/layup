@@ -226,9 +226,9 @@ Milestone `M2e` (task `T-xs4y`, #333; [`loop.md`](loop.md)). The columns of
 [the table of M2a](#the-table-of-m2a), and the rule of the table of `M2b`: a
 package that a table already has keeps its one row, changed in place; this table
 holds only the package that no table has. `TestPackageRules` reads the tables
-of `M2a`, `M2b` and `M2c`; the build task that makes `internal/handoff` adds the
-heading of this table to it in the same change, as task `T-4ywt` did for
-`internal/spec`.
+of `M2a`, `M2b`, `M2c` and `M2e`; the build task that made `internal/handoff` (task
+`T-h17s`, row 61) added the heading of this table to it in the same change, as task
+`T-4ywt` did for `internal/spec`.
 
 | Package | Job | May import | Starts a program | Connects |
 | ------- | --- | ---------- | ---------------- | -------- |
