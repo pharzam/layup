@@ -3,7 +3,7 @@
 Read on 2026-10-15 (UTC, 18:40 to 18:50), by `WebFetch` of the pages below, and, for the
 GraphQL mutation, of GitHub's public schema file `https://docs.github.com/public/fpt/schema.docs.graphql`
 (1,562,177 bytes, SHA-256 `3ed095654b22b1a8…`, saved locally and searched with `grep`). The test
-fixtures of `internal/forge/github/github_m2e_integration_test.go` follow these facts; where a page
+fixtures of `internal/forge/github/github_integration_test.go` follow these facts; where a page
 is silent the row says so, and `forge.md` marks it.
 
 | Call | Source | What it says (used by a fixture) | Not said |
