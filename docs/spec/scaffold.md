@@ -583,7 +583,9 @@ in `internal/run/forgecheck.go`, has one entry: the rule `update`, the parameter
 `update_allows_fetch_and_merge`, `false`. An omitted `true`, any other missing parameter, the same
 name on another rule type, a value that differs (`true` for `false`, and `false` for `true`) and a
 missing rule are `fail`, naming it ("is missing" or "differs"). A fork may return the field, which is
-then compared as it is. A new entry needs its own first-hand answers of the forge.
+then compared as it is. A new entry needs its own first-hand answers of the forge. **Known limit:** an
+omitted `false` cannot be told from a parameter that the forge never held; the apply output in
+`setup/rulesets.txt`, which the bypass rows also read, is the record that the forge accepted the file.
 
 `bypass:<ruleset>` for `default` and `records`: the `bypass_actors` of the
 apply output in `setup/rulesets.txt` are empty for `default`, and exactly the

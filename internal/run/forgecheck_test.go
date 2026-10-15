@@ -456,6 +456,10 @@ func TestEachCheckThatFailsIsItsRowAndTheTableStillHasEightRows(t *testing.T) {
 			map[string]string{"rules:layup-probe": "creation is missing", "probe": notAttributed + "no creation rule applies to layup-probe"}, "rules:layup-probe: "},
 		{"a rule that is missing on layup-records", func(f *checkFake) { f.rules["layup-records"] = f.rules["layup-records"][:1] },
 			map[string]string{"rules:layup-records": "deletion is missing"}, "rules:layup-records: "},
+		{"a records file that wrote true, the forge that returns false", func(f *checkFake) {
+			f.files["ruleset-records.json"] = []byte(strings.Replace(string(f.files["ruleset-records.json"]), `"update_allows_fetch_and_merge":false`, `"update_allows_fetch_and_merge":true`, 1))
+			f.rules["layup-records"] = ofRuleset([]forge.Rule{rule("update", map[string]any{"update_allows_fetch_and_merge": false}), rule("deletion", nil)}, recordsRulesetID)
+		}, map[string]string{"rules:layup-records": "update: update_allows_fetch_and_merge differs"}, "rules:layup-records: "},
 		{"the rule update that the forge lacks on layup-records", func(f *checkFake) { f.rules["layup-records"] = f.rules["layup-records"][1:] },
 			map[string]string{"rules:layup-records": "update is missing"}, "rules:layup-records: "},
 		{"a records file that wrote true, the forge that omits it", func(f *checkFake) {
