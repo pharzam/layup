@@ -21,7 +21,7 @@ attempts below, and gives no rate of success. The demo of `M2d` (`T-sdtb`, #284)
    the snapshot before the session and the record says that it equals the one above. No finding of a failed check is ever given to a session.
 3. **The end and the output** are accepted as `endPhase` accepts them, in its order: the output is read by `session.ReadOutputFiles` on `result/` with the paths of the stop table (the exact set, no
    link, no other file, 1 MiB, UTF-8); the class of the end is `session.Class` of the exit status of the process (the exit 124 of `timeout` is a stop by the wall) and of the reader's error, and
-   must be `done`; then the Keep of the prose session (`proseKeep`). Any refusal, or a class other than `done`, ends the attempt as failed. The files are used byte for byte, with no hand fix.
+   must be `done`; then the Keep of the prose session (`proseKeep`). The class also takes the limits that `session.NewSpec` sets on the process: an output over 64 MiB, or a line of stdout over 8 MiB, is a stop of the class `output`, which the harness checks from the two files of the session. Any refusal, or a class other than `done`, ends the attempt as failed. The files are used byte for byte, with no hand fix.
 4. **The engine's run** is the step `verify` of `layup run`, which holds the loop of the step `setup`, by the harness `zz_evidence_test.go` (a throwaway test of a copy of the head under test, never in the
    repository) through the functions that production calls: `buildWorkArea` from the snapshot's brief and root commit, the rows of `setupAnswers` (from the records of the target, `layup-records` at
    `f029e1281551ee10c65f4d082f19bc090b58b1bb`) and the session's files; `setup.StepsPhase2` through `setupRunner` with the phase-2 values `Name pharzam/layup-uat-m2d`, `Visibility public`,
@@ -37,30 +37,24 @@ attempts below, and gives no rate of success. The demo of `M2d` (`T-sdtb`, #284)
    demands is made tests first, re-frozen and read by a further round before another attempt, on a fresh session and a fresh copy; a failed attempt and a revision are recorded here, with whether the final
    prompt passed on its first attempt. If the attempt on the head that the last round read fails, the task ends `not mergeable, findings recorded`, or the Operator moves the cap.
 7. **The tools** are kept in `/home/layup/layup-host/evidence/T-92lm/tools/`: `ev-session.sh` (the session directory, the manifest and the harness command) `e3afdd16…c24f`, `ev-prompt.py` (the prompt, by a
-   throwaway test of the copy) `9fc51cad…cf8f`, `zz_evidence_test.go` (the harness of items 1, 3 and 4) `eb1b88cf…0a80`, and `ev-count.sh` (the hits of check `adapted`, by LAYUP's own `setup-check.sh`) `765bfc91…5f8f`.
+   throwaway test of the copy) `9fc51cad…cf8f`, `zz_evidence_test.go` (the harness of items 1, 3 and 4) `90191a79…18e8`, `ev-count.sh` (the hits of check `adapted`, by LAYUP's own `setup-check.sh`)
+   `765bfc91…5f8f` and `run-attempt.sh` (one attempt from a commit) `d8cdc1a6…950b`.
 
 ## The control: the old prompt on the same snapshot (not an attempt)
 
-It runs merged code, so it needs no review; it shows that this layout reproduces the failure of runs 3 and 4. The prompt is the one of `b7f3f7d`, 1,395 bytes with the
-paths of a real session as in `sessions.tsv`. Session `ctl1`, `claude` 2.1.300, `claude-opus-5-5`, cap USD 5.00, wall 1,800 s; 18:47:27Z to 19:03:13Z (15 min 46 s), 56 turns,
-USD 3.76 on the list basis (the billing is a subscription), 25 files written, exit 0. The prompt file has sha256 `203e17496682e374d219c93adc2b38554b1feb63789b1a8224b31b177e7ad8ea`;
-the manifest of the output `50704aee905ed72aa777e7d6ef97557b0a7bf3bf6f26a0d377f27dd46a68dc88`; the archive `/home/layup/layup-host/evidence/T-92lm/ctl1.tar.gz`
-`31e00063e9c5c9db751f1f4f9073a004d2a8eeb8ad1f56c123f1f9e296d37035`.
-
-The engine (`layup` sha256 `7f6379d6d7cf1d22daa3a35f19e07ef2f0a72d8d2e25332cb9e9bd6f0db49a1d`, built at `236c9af`), on the snapshot with the control's files in `inputs/files/`: S01 to S07
-done, **S08 `fail` with `glossary: fail: fact: F-0007#3 is not a fact of the F-0007 record`**, the same text as runs 3 and 4; S09 to S15 not run. Check `adapted` (LAYUP's own `setup-check.sh`
-with the lists of the engine, which reports every hit) holds **154 hits in 24 of the 25 files**: kit 28, optional 26, adapt 16, fill-before-a-marker 15, replace-before-a-marker 11, delete this 11,
-the template 10, your stack 9, adopter 8, your project 6, fill in 6, your forge 3, you use 2, skip this section 2, Armature 1.
+It runs merged code (no review needed) and shows that this layout reproduces runs 3 and 4. The prompt of `b7f3f7d`, 1,395 bytes with a real session's paths (sha256 `203e17496682e374d219c93adc2b38554b1feb63789b1a8224b31b177e7ad8ea`); session `ctl1`, `claude` 2.1.300, `claude-opus-5-5`, cap USD 5.00, wall 1,800 s, 18:47:27Z to 19:03:13Z (15 min 46 s), 56 turns, USD 3.76 (list basis; subscription), 25 files, exit 0; output manifest sha256 `50704aee905ed72aa777e7d6ef97557b0a7bf3bf6f26a0d377f27dd46a68dc88`, archive `ctl1.tar.gz` `31e00063e9c5c9db751f1f4f9073a004d2a8eeb8ad1f56c123f1f9e296d37035`. The engine (`layup` sha256 `7f6379d6d7cf1d22daa3a35f19e07ef2f0a72d8d2e25332cb9e9bd6f0db49a1d`, built at `236c9af`), with the control's files in `inputs/files/`: S01 to S07 done, **S08 `fail`: `glossary: fail: fact: F-0007#3 is not a fact of the F-0007 record`**, as runs 3 and 4; S09 to S15 not run. Check `adapted` (LAYUP's own `setup-check.sh`, which reports every hit): **154 hits in 24 of the 25 files** (kit 28, optional 26, adapt 16, fill-before-a-marker 15, replace-before-a-marker 11, delete this 11, the template 10, your stack 9, adopter 8, your project 6, fill in 6, your forge 3, you use 2, skip this section 2, Armature 1).
 
 ## Attempt 1 — the head `4fbfc06`, before round 3 (02:07:16Z to 02:16:47Z)
 
 Run while the Operator's answer at the cap was awaited, on the head that rounds 1 and 2 had read (order of condition 5 kept: the code was reviewed before the paid session), as the protocol says; the final head
-differs from it by four sentences of the prompt (the stem context, the stopping rule, spaces and tabs, the passed words) and is attempt 2's. **Passed, on its first attempt.**
+differs from it by the sentences that the findings of rounds 2 and 3 changed (the stem, the stopping rule, spaces and tabs, the passed words, the path of a `Check:` value) and is attempt 2's. **Passed, on its first attempt.**
 
 | What | Value |
 | ---- | ----- |
 | Binary and prompt | `layup` built from the copy of `4fbfc06`, sha256 `cec1058a82df45d7b864d2b6499ce35754752a98715d27f2b9c0441074ff0ada`; the prompt 7,226 bytes, sha256 `3a8011b0b1bc2e7e57c726cd812c6cb6920346de572a568d233df6e93dda9602` |
 | Session | `claude` 2.1.300, `claude-opus-5-5`, cap USD 5.00, wall 1,800 s, snapshot manifest `c4652dea…85af2` before it (equal); exit 0, result `success`, `terminal_reason completed`, `is_error` false; 48 turns, 568.9 s in the stream, **USD 3.49** (list basis; subscription); `repo/` left unchanged |
-| End and output | class `done`; `session.ReadOutputFiles` and `proseKeep` accept 25 files (manifest sha256 `2336155a…102d`; archive `a1.tar.gz`, sha256 `8f3d321c…441e`, in `/home/layup/layup-host/evidence/T-92lm/`) |
+| End and output | class `done`; `session.ReadOutputFiles` and `proseKeep` accept 25 files. Kept in `/home/layup/layup-host/evidence/T-92lm/` with their sha256: `a1/manifest.sha256` (a sha256 of each of the 25 files) `2336155ae86104dd5cae316ee9439ec5648dc40bfac3f9df76025738b58d102d`, `a1.tar.gz` (the output, the prompt, the manifest and the tables below) `8f3d321c62bb8339f669e4c9e760f553ac8b98ec9159e1714f0d93c0ec79441e`, `a1/harness.out` (the rows of the steps and of the verify, and the five files of the commit) `deeb1c5b93a105dbcde2b935cef2163c292602051c5b3c6c0e22163d0e886f98`, `a1/stream.jsonl.gz` `67e018b5a8171eea218dcbd74cc6735cd0e777b50de5611d6cc6ffaeab75f7b3`, `a1/hits.txt` `c38f0ba6644f9250e67f9c6db25b2128a1354bb3e576ca0b9726ed02a55886e9` |
 | Engine | step verify `done` ("the setup verified and its records committed"), the 18 rows of `verify.tsv` `pass` or `clear` (its sha256 `368a24d4…47c8`, that of the mechanically fixed control files too); the commit would hold `README.md`, `rule-paths.tsv`, `setup/record.tsv`, `setup/tree.tsv` and `setup/verify.tsv` |
 | Hits of check `adapted` | 0 (the control had 154); 210 markers kept in 19 files; glossary citations all of `F-0001`; `README.md` holds `pharzam/layup-uat-m2d` and `layup-records` |
+
+Attempt 1 ran under the harness as it was at 20:52; the check of the process limits (item 3) was added after it, and the replay of attempt 1's session files through the final harness passes (stdout 965 KB, stderr empty, exit 0): class `done`, the step verify `done`.

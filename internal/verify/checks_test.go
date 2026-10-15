@@ -297,3 +297,12 @@ func TestTheChecksOfATarget(t *testing.T) {
 	in.fsys = fstest.MapFS{"README.md": {Data: []byte("# acme\n\nThe [pin](docs/setup/armature.pin).\n")}}
 	same(t, "identity with no records branch", checkIdentity(in), []string{"branch: README.md does not name the branch layup-records"})
 }
+
+// A path of a Check: value that holds a space and an opening parenthesis is read at the first of them (round 3 of #326: the prompt of
+// the prose session says so), whatever file the project has: the check names the part before it, which is no file.
+func TestAGuardrailsPathWithASpaceAndAParenthesisIsReadAtTheFirstOfThem(t *testing.T) {
+	tree := fstest.MapFS{"docs/guardrails.md": {Data: []byte("- **Inv-1** \u2014 a rule. Check: docs/check (local).sh (hook)\n")}, "docs/check (local).sh": {Data: []byte("x")}, "docs/check": {Data: []byte("x")}}
+	same(t, "a path with ' ('", guardrailsFindings(tree), nil)
+	delete(tree, "docs/check")
+	same(t, "a path with ' (' and no file before it", guardrailsFindings(tree), []string{"check: Inv-1 names \"docs/check\", which is not a file"})
+}
