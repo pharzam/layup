@@ -38,3 +38,7 @@ Round 3 ended `not mergeable, findings recorded` at the cap 2 (six material find
 ## After round 4 (the fixes that wait for the Operator's answer), 2026-10-15T14:01Z
 
 Round 4 ended `not mergeable, findings recorded` at the cap 3 (four material findings, nine notes). The fixes are a local commit, not pushed until the Operator chooses. `sections.sh` 33 of 33; `adr-lint`, `prd-lint`, `link-lint`, `run-discipline-tests` and `setup-check` exit 0; `go test -tags=integration ./internal/tsv/ ./cmd/layup/` ok; `git diff --check origin/main` exit 0.
+
+## After round 5 (the fixes that wait for the Operator's answer), 2026-10-15T14:21Z
+
+Round 5 ended `not mergeable, findings recorded` at the cap 4 (four material findings, six notes). The fixes are a local commit, not pushed until the Operator chooses. `sections.sh` 33 of 33; the five checks exit 0; `go test -tags=integration ./internal/tsv/ ./cmd/layup/` ok; `git diff --check origin/main` exit 0.

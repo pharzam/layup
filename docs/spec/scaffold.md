@@ -452,7 +452,7 @@ omits at its default ([The read-back](#the-read-back)).
 **From `M2e`** ([`loop.md`](loop.md#the-gate-jobs-read-the-base), F-22): the rule
 `pull_request` also sets `require_code_owner_review` `true` with
 `required_approving_review_count` `0`, so that a change to `.github/**`,
-`docs/gates.tsv` or `docs/gates/**` waits for the Operator as code owner; the build
+`docs/gates.tsv`, `docs/gates/**` or a `config` path of the manifest waits for the Operator as code owner; the build
 task of `M2e` writes it, and its effect with no required approval is to confirm on
 a real repository.
 

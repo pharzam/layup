@@ -494,7 +494,7 @@ brief, never as a status. The LAYUP host needs each stack's toolchain
 (L-B1). With LAYUP absent, the target's own CI runs the workflow of the pull request's
 head, and each gate job takes the manifest, the `config` paths and `gates.sh` from the
 base (a pull request of a `batch/<point>` branch takes them from its head, with the
-code-owner review below as its control; issue #345); a change to `.github/**`, `docs/gates.tsv` or `docs/gates/**` needs the
+code-owner review below as its control; issue #345); a change to `.github/**`, `docs/gates.tsv`, `docs/gates/**` or a `config` path of the manifest needs the
 Operator's review as code owner (F-22, [`loop.md`](spec/loop.md#the-gate-jobs-read-the-base));
 FT4 then rests on the rulesets and on review, not on LAYUP.
 
@@ -736,13 +736,15 @@ a verifier session check them as for any task.
   verified batch that it asks to approve. `layup run` posts it on the milestone's
   issue. The approver of that planned point (the idea owner by default, from
   Intake) answers by one comment: a line per requirement, a line per fact to
-  change, and "bet" or "no bet". The bet approves the milestone, the architecture
+  change, in phase 2, where no panel recommends, a line `option <decision>: <option>`
+  for each decision with more than one surviving option
+  ([`loop.md`](spec/loop.md#req-012--shape)), and "bet" or "no bet". The bet approves the milestone, the architecture
   and its batches; there is no other approval inside the milestone, apart from
   escalations (§10) and stalls (§11). A bet that changes a class or a priority
   does not touch the approved batches: at the first bet, code adds the rendered
   commit to the specification's head (§7 step 7); at a later bet, it renders the
   change as a rendered task. **Merge order after a bet:** the specification (or
-  the rendered task), the rule batches, then the build tasks. A requirement changes only
+  the rendered task), the target's architecture tasks, the rule batches, then the build tasks. A requirement changes only
   at a bet, or by an escalation decision (§10).
 - **Build.** A plan task splits the milestone into build tasks, each with the
   requirement IDs it serves, the tests that will show it done, a size class, and
