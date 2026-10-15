@@ -1061,6 +1061,14 @@ failure modes worth keeping.
   "X in the column C"; say what a column is never; and test the prompt's text. Find
   a refused file by copying the session's `result/` before its directory is
   removed. Learned in `T-pzgw`.
+- ❌ **A prompt that gives the producer the task and not the rules of the check that judges it.** The prompt of
+  the prose session of the step `setup` gave none of the rules of the five checks that accept its files. On the
+  first real target (the demo of `M2d`) S08 failed on a citation of an example fact of the baseline, and S14 then
+  refused 222 hits of the baseline's words in 20 files and a `README.md` with no name: two runs, each leaving a
+  lease held for 30 minutes, with every unit test green. Task `T-92lm` (#326). **The check:** such a prompt names
+  each rule with the files it governs, from the check's own table where it has one, so that a test probes the table
+  against the check (a first text that said "a letter" for "an ASCII letter" was looser in five places); a test ties
+  each rule to the prompt; and one real session on a copy of the real input is the evidence before a real run.
 
 ## 3. Validation — how you check you are not fooling yourself
 

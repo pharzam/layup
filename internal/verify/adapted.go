@@ -42,25 +42,27 @@ type adHit struct {
 	rule, name string
 	re         *regexp.Regexp
 	cased      bool
+	say        string // the pattern as the prompt of the prose session says it: its forms, each in double quotes (AdaptedPhrases)
+	tail       string // how the pattern reads what follows its phrase: TailWord, TailOpen or TailStem
 }
 
 var adHits = []adHit{
-	{"rule-1", "kit", regexp.MustCompile(`(^|[^a-z0-9_])kits?([^a-z0-9_]|$)`), false},
-	{"rule-1", "adopter", regexp.MustCompile(`(^|[^a-z0-9_])adopters?([^a-z0-9_]|$)`), false},
-	{"rule-1", "the template", regexp.MustCompile(`(^|[^a-z0-9_])(the|this) templates?([^a-z0-9_-]|$)`), false},
-	{"rule-2", "Armature", regexp.MustCompile(`(^|[^A-Za-z0-9_])Armature([^A-Za-z0-9_]|$)`), true},
-	{"rule-3", "optional", regexp.MustCompile(`(^|[^a-z0-9_])optional([^a-z0-9_]|$)`), false},
-	{"rule-3", "skip this section", regexp.MustCompile(`(^|[^a-z0-9_])skips? this section`), false},
-	{"rule-3", "fill \u2039", regexp.MustCompile(`(^|[^a-z0-9_#-])fill[a-z]*[^.\x01]*\x01`), false},
-	{"rule-3", "replace \u2039", regexp.MustCompile(`(^|[^a-z0-9_#-])replac[a-z]*[^.\x01]*\x01`), false},
-	{"rule-3", "fill in", regexp.MustCompile(`(^|[^a-z0-9_#-])fill in([^a-z0-9_-]|$)`), false},
-	{"rule-3", "delete this", regexp.MustCompile(`(^|[^a-z0-9_])delete this([^a-z0-9_]|$)`), false},
-	{"rule-3", "delete the one you do not use", regexp.MustCompile(`(^|[^a-z0-9_])delete the ones? you do not use`), false},
-	{"rule-3", "adapt", regexp.MustCompile(`(^|[^a-z0-9_])adapts?([^a-z0-9_]|$)`), false},
-	{"rule-3", "your project", regexp.MustCompile(`(^|[^a-z0-9_])your project`), false},
-	{"rule-3", "your forge", regexp.MustCompile(`(^|[^a-z0-9_])your forge`), false},
-	{"rule-3", "your stack", regexp.MustCompile(`(^|[^a-z0-9_])your stack`), false},
-	{"rule-3", "you use", regexp.MustCompile(`(^|[^a-z0-9_])you use([^a-z0-9_]|$)`), false},
+	{"rule-1", "kit", regexp.MustCompile(`(^|[^a-z0-9_])kits?([^a-z0-9_]|$)`), false, `"kit", "kits"`, TailWord},
+	{"rule-1", "adopter", regexp.MustCompile(`(^|[^a-z0-9_])adopters?([^a-z0-9_]|$)`), false, `"adopter", "adopters"`, TailWord},
+	{"rule-1", "the template", regexp.MustCompile(`(^|[^a-z0-9_])(the|this) templates?([^a-z0-9_-]|$)`), false, `"the template", "the templates", "this template", "this templates"`, TailWord},
+	{"rule-2", "Armature", regexp.MustCompile(`(^|[^A-Za-z0-9_])Armature([^A-Za-z0-9_]|$)`), true, `"Armature"`, TailWord},
+	{"rule-3", "optional", regexp.MustCompile(`(^|[^a-z0-9_])optional([^a-z0-9_]|$)`), false, `"optional"`, TailWord},
+	{"rule-3", "skip this section", regexp.MustCompile(`(^|[^a-z0-9_])skips? this section`), false, `"skip this section", "skips this section"`, TailOpen},
+	{"rule-3", "fill \u2039", regexp.MustCompile(`(^|[^a-z0-9_#-])fill[a-z]*[^.\x01]*\x01`), false, `"fill", "fills", "filled", "filling"`, TailStem},
+	{"rule-3", "replace \u2039", regexp.MustCompile(`(^|[^a-z0-9_#-])replac[a-z]*[^.\x01]*\x01`), false, `"replace", "replaces", "replaced", "replacing", "replacement"`, TailStem},
+	{"rule-3", "fill in", regexp.MustCompile(`(^|[^a-z0-9_#-])fill in([^a-z0-9_-]|$)`), false, `"fill in"`, TailWord},
+	{"rule-3", "delete this", regexp.MustCompile(`(^|[^a-z0-9_])delete this([^a-z0-9_]|$)`), false, `"delete this"`, TailWord},
+	{"rule-3", "delete the one you do not use", regexp.MustCompile(`(^|[^a-z0-9_])delete the ones? you do not use`), false, `"delete the one you do not use", "delete the ones you do not use"`, TailOpen},
+	{"rule-3", "adapt", regexp.MustCompile(`(^|[^a-z0-9_])adapts?([^a-z0-9_]|$)`), false, `"adapt", "adapts"`, TailWord},
+	{"rule-3", "your project", regexp.MustCompile(`(^|[^a-z0-9_])your project`), false, `"your project", "your projects"`, TailOpen},
+	{"rule-3", "your forge", regexp.MustCompile(`(^|[^a-z0-9_])your forge`), false, `"your forge", "your forges"`, TailOpen},
+	{"rule-3", "your stack", regexp.MustCompile(`(^|[^a-z0-9_])your stack`), false, `"your stack", "your stacks"`, TailOpen},
+	{"rule-3", "you use", regexp.MustCompile(`(^|[^a-z0-9_])you use([^a-z0-9_]|$)`), false, `"you use"`, TailWord},
 }
 
 // adaptedFindings is check_adapted (D2 to D5 of #88): the hits of the tracked
@@ -225,7 +227,7 @@ func paragraphHits(para string, starts, lines []int, allowed bool) []adFound {
 				break
 			}
 			word := off + loc[3] // the end of the boundary: the first letter of the word
-			if h.name != "kit" || !(bytes.HasPrefix(low[word:], []byte("kit-history")) || bytes.HasPrefix(low[word:], []byte("kit-linters"))) {
+			if h.name != "kit" || !passes(low[word:]) {
 				line := lines[0]
 				for k, s := range starts {
 					if s <= word {
@@ -274,3 +276,81 @@ func LostMarkers(path string, before, after []byte) []string {
 	}
 	return out
 }
+
+// An AdaptedPhrase is a pattern of check adapted as the prompt of the prose session says it (task T-92lm, #326): the forms of the
+// pattern, each in double quotes, the one home of the words that the prompt gives the session (docs/spec/scaffold.md, The prose rows).
+type AdaptedPhrase struct {
+	Say   string // the phrase, with the forms of the pattern, each in double quotes
+	Cased bool   // the check reads it as it is, in its letter case (rule 2, which a file of AdaptedAllowed is free of)
+	Tail  string // how the check reads what follows the phrase: TailWord, TailOpen or TailStem
+}
+
+// The tails of a phrase. A letter, a digit or an underscore that is ASCII before a phrase makes it another word, for every pattern;
+// after it, TailWord is a hit when none follows ("kits", not "kitten"), TailOpen is a hit whatever follows ("your projectile"), and
+// TailStem is a hit as the letters at the start of a word, then any text with no period, then an angle quote U+2039 (in a marker, in the
+// text of the convention, between backticks or alone).
+const (
+	TailWord = "word"
+	TailOpen = "open"
+	TailStem = "stem"
+)
+
+// Words gives the forms that the phrase quotes, in the order of the phrase.
+func (p AdaptedPhrase) Words() []string {
+	var out []string
+	for _, m := range quoted.FindAllStringSubmatch(p.Say, -1) {
+		out = append(out, m[1])
+	}
+	return out
+}
+
+// Stem gives the beginning that all the forms of the phrase share ("fill", "replac"), which is the stem of a TailStem pattern.
+func (p AdaptedPhrase) Stem() string {
+	forms := p.Words()
+	if len(forms) == 0 {
+		return ""
+	}
+	stem := forms[0]
+	for _, f := range forms[1:] {
+		for !strings.HasPrefix(f, stem) {
+			stem = stem[:len(stem)-1]
+		}
+	}
+	return stem
+}
+
+var quoted = regexp.MustCompile(`"([^"]+)"`)
+
+// AdaptedPhrases gives one phrase for each pattern of check adapted, in the order of the table; the slice is a copy.
+func AdaptedPhrases() []AdaptedPhrase {
+	out := make([]AdaptedPhrase, len(adHits))
+	for i, h := range adHits {
+		out[i] = AdaptedPhrase{Say: h.say, Cased: h.cased, Tail: h.tail}
+	}
+	return out
+}
+
+// AdaptedAllowed gives the paths of the files that may name the baseline (rule 2), in the order of the table; the slice is a copy.
+func AdaptedAllowed() []string {
+	out := make([]string, len(adAllowed))
+	for i, a := range adAllowed {
+		out[i] = a[0]
+	}
+	return out
+}
+
+// kitExempt are the names with the word kit that check adapted passes, whatever follows them: the names of two checks.
+var kitExempt = []string{"kit-history", "kit-linters"}
+
+// passes reports whether the text, in lower case, starts with a name of kitExempt.
+func passes(low []byte) bool {
+	for _, n := range kitExempt {
+		if bytes.HasPrefix(low, []byte(n)) {
+			return true
+		}
+	}
+	return false
+}
+
+// AdaptedExempt gives the names that check adapted passes though they hold a word of rule 1; the slice is a copy.
+func AdaptedExempt() []string { return slices.Clone(kitExempt) }
