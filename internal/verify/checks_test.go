@@ -314,3 +314,15 @@ func TestAGuardrailsValueIsSplitAtTheFirstAndTheLastSpaceAndParenthesis(t *testi
 	raw := fstest.MapFS{"docs/guardrails.md": {Data: []byte("- **Inv-1** \u2014 a rule.\n\n```sh\n# a comment\n```\n\nCheck: no check yet\n")}}
 	same(t, "a '#' line in a code block ends the entry", guardrailsFindings(raw), []string{"check: Inv-1 has no valid Check: value (\"\")"})
 }
+
+// The path of a Check: value is read by fs.ValidPath from the root of the tree: no "." or ".." element, no empty element and no "/" at its start or its end
+// (the fourth look at #326: the prompt of the prose session says so).
+func TestAGuardrailsPathIsWrittenFromTheRootOfTheTree(t *testing.T) {
+	entry := func(p string) fstest.MapFS {
+		return fstest.MapFS{"docs/guardrails.md": {Data: []byte("- **Inv-1** \u2014 a rule. Check: " + p + " (hook)\n")}, "docs/check.sh": {Data: []byte("x")}}
+	}
+	same(t, "a path from the root", guardrailsFindings(entry("docs/check.sh")), nil)
+	for _, p := range []string{"./docs/check.sh", "docs/./check.sh", "docs/../docs/check.sh", "docs//check.sh", "/docs/check.sh", "docs/check.sh/"} {
+		same(t, p, guardrailsFindings(entry(p)), []string{"check: Inv-1 names \"" + p + "\", which is not a file"})
+	}
+}

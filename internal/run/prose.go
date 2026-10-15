@@ -164,7 +164,9 @@ rules of the checks, each with the files that it governs.
    file of this project (not a directory), a space and "(hook)", or that path, a space, "(ci:", a
    job name and ")", with no space followed by an opening parenthesis in the path or in
    the job name (the check splits the value at the first of them for the path and at the
-   last for the gate). A file with no entry passes.
+   last for the gate). Write the path from the root of the project, as in docs/x.sh,
+   with no "." or ".." element, no "//" and no "/" at its start or its end. A file with
+   no entry passes.
 6. Markers: a row that asks you to adapt a file keeps each marker of it, as said
    above, and no file holds a marker of your own.
 
