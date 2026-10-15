@@ -336,7 +336,9 @@ type pullWire struct {
 func (w pullWire) pull() forge.PullRequest {
 	pr := forge.PullRequest{Number: w.Number, NodeID: w.NodeID, State: w.State, Draft: w.Draft, HeadSHA: w.Head.SHA,
 		Merged: w.Merged || w.MergedAt != nil}
-	if w.MergeSHA != nil {
+	// Before a merge merge_commit_sha holds a test merge commit (GitHub's page), which
+	// is no merge commit: the field is the merge commit's SHA only when it is merged.
+	if pr.Merged && w.MergeSHA != nil {
 		pr.MergeSHA = *w.MergeSHA
 	}
 	return pr
@@ -361,7 +363,7 @@ func (a *Adapter) OpenDraft(ctx context.Context, head, base, title, body string)
 // errors array, or with no pull request, is a forge error.
 func (a *Adapter) MarkReady(ctx context.Context, nodeID string) (forge.PullRequest, error) {
 	in, err := json.Marshal(map[string]any{
-		"query":     "mutation($id: ID!) { markPullRequestReadyForReview(input: {pullRequestId: $id}) { pullRequest { id number isDraft } } }",
+		"query":     "mutation($id: ID!) { markPullRequestReadyForReview(input: {pullRequestId: $id}) { pullRequest { id number isDraft state headRefOid } } }",
 		"variables": map[string]string{"id": nodeID}})
 	if err != nil {
 		return forge.PullRequest{}, err
@@ -370,9 +372,11 @@ func (a *Adapter) MarkReady(ctx context.Context, nodeID string) (forge.PullReque
 		Data *struct {
 			Mark *struct {
 				PullRequest *struct {
-					ID      string `json:"id"`
-					Number  int    `json:"number"`
-					IsDraft bool   `json:"isDraft"`
+					ID         string `json:"id"`
+					Number     int    `json:"number"`
+					IsDraft    bool   `json:"isDraft"`
+					State      string `json:"state"`
+					HeadRefOid string `json:"headRefOid"`
 				} `json:"pullRequest"`
 			} `json:"markPullRequestReadyForReview"`
 		} `json:"data"`
@@ -390,26 +394,17 @@ func (a *Adapter) MarkReady(ctx context.Context, nodeID string) (forge.PullReque
 		return forge.PullRequest{}, &forge.Error{Call: "MarkReady", Status: 200, Message: "the answer holds no pull request"}
 	}
 	p := out.Data.Mark.PullRequest
-	return forge.PullRequest{Number: p.Number, NodeID: p.ID, State: "open", Draft: p.IsDraft}, nil
-}
-
-// isSHA tells a full object ID: 40 lowercase hexadecimal characters.
-func isSHA(s string) bool {
-	if len(s) != 40 {
-		return false
+	state := "closed"
+	if p.State == "OPEN" {
+		state = "open"
 	}
-	for _, c := range s {
-		if !(c >= '0' && c <= '9' || c >= 'a' && c <= 'f') {
-			return false
-		}
-	}
-	return true
+	return forge.PullRequest{Number: p.Number, NodeID: p.ID, State: state, Draft: p.IsDraft, HeadSHA: p.HeadRefOid, Merged: p.State == "MERGED"}, nil
 }
 
 // SetStatus posts a commit status on a SHA. The state, the length of the
 // description and the form of the SHA are checked before any request.
 func (a *Adapter) SetStatus(ctx context.Context, sha, context, state, description string) error {
-	if !isSHA(sha) {
+	if !forge.FullSHA(sha) {
 		return &forge.Error{Call: "SetStatus", Message: "the SHA is not a full object ID"}
 	}
 	if err := forge.ValidStatus(state, description); err != nil {
@@ -428,7 +423,7 @@ func (a *Adapter) SetStatus(ctx context.Context, sha, context, state, descriptio
 // and each latest check run, every page of each. The next page of a list is at the
 // api of the forge register only.
 func (a *Adapter) Statuses(ctx context.Context, sha string) (forge.HeadChecks, error) {
-	if !isSHA(sha) {
+	if !forge.FullSHA(sha) {
 		return forge.HeadChecks{}, &forge.Error{Call: "Statuses", Message: "the SHA is not a full object ID"}
 	}
 	var out forge.HeadChecks
@@ -525,7 +520,7 @@ func (a *Adapter) PullRequest(ctx context.Context, q forge.PullRequestQuery) (fo
 // and gives the merge commit's SHA. A head that moved is the forge's 409, a forge
 // error; an answer with merged false is one too.
 func (a *Adapter) Merge(ctx context.Context, number int, sha string) (string, error) {
-	if number < 1 || !isSHA(sha) {
+	if number < 1 || !forge.FullSHA(sha) {
 		return "", &forge.Error{Call: "Merge", Message: "the pull request number or the head SHA is not valid"}
 	}
 	in, err := json.Marshal(map[string]string{"sha": sha, "merge_method": "merge"})

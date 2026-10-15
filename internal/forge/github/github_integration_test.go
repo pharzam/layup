@@ -806,9 +806,10 @@ func TestTheCallsOfM2dShareTheHandlingOfA401AndOfARateLimit(t *testing.T) {
 }
 
 const (
-	headSHA  = "1111111111111111111111111111111111111111"
-	mergeSHA = "3333333333333333333333333333333333333333"
-	pulls    = "/repos/acme/target/pulls"
+	headSHA      = "1111111111111111111111111111111111111111"
+	mergeSHA     = "3333333333333333333333333333333333333333"
+	testMergeSHA = "4444444444444444444444444444444444444444"
+	pulls        = "/repos/acme/target/pulls"
 )
 
 // handle registers the handler of one call of M2e on the fake.
@@ -826,9 +827,19 @@ func decode(t *testing.T, r *http.Request, v any) {
 	}
 }
 
+// prJSON is a pull request as GET /pulls/{number} gives it: merged is a boolean, and
+// merge_commit_sha is, before a merge, a test merge commit (GitHub's page, "Get a
+// pull request"; runs/T-cr8j/api-sources.md).
 func prJSON(number int, draft, merged bool) map[string]any {
 	return map[string]any{"number": number, "node_id": fmt.Sprintf("PR_node%d", number), "state": "open", "draft": draft,
-		"merged": merged, "merge_commit_sha": nil, "head": map[string]any{"sha": headSHA, "ref": "task/T-aaaa/1"}}
+		"merged": merged, "merge_commit_sha": testMergeSHA, "head": map[string]any{"sha": headSHA, "ref": "task/T-aaaa/1"}}
+}
+
+// listItemJSON is a pull request as GET /pulls gives it: no merged, a merged_at that
+// is null until the merge (GitHub's page, "List pull requests").
+func listItemJSON(number int, draft bool, mergedAt any, mergeSHA string) map[string]any {
+	return map[string]any{"number": number, "node_id": fmt.Sprintf("PR_node%d", number), "state": "open", "draft": draft,
+		"merged_at": mergedAt, "merge_commit_sha": mergeSHA, "head": map[string]any{"sha": headSHA, "ref": "task/T-aaaa/1"}}
 }
 
 func TestOpenDraftPostsADraftPullRequestAndGivesIt(t *testing.T) {
@@ -873,7 +884,7 @@ func TestMarkReadySendsTheMutationWithTheNodeIDAndGivesThePullRequest(t *testing
 	}
 	handle(f, "POST /graphql", func(w http.ResponseWriter, r *http.Request) {
 		decode(t, r, &in)
-		io.WriteString(w, `{"data":{"markPullRequestReadyForReview":{"pullRequest":{"id":"PR_node5","number":5,"isDraft":false}}}}`)
+		io.WriteString(w, `{"data":{"markPullRequestReadyForReview":{"pullRequest":{"id":"PR_node5","number":5,"isDraft":false,"state":"OPEN","headRefOid":"`+headSHA+`"}}}}`)
 	})
 	pr, err := a.MarkReady(context.Background(), "PR_node5")
 	if err != nil {
@@ -885,8 +896,16 @@ func TestMarkReadySendsTheMutationWithTheNodeIDAndGivesThePullRequest(t *testing
 	if strings.Contains(in.Query, "PR_node5") {
 		t.Errorf("the node ID is in the text of the mutation: %q", in.Query)
 	}
-	if pr.Number != 5 || pr.Draft || pr.NodeID != "PR_node5" {
-		t.Errorf("MarkReady = %+v", pr)
+	if pr != (forge.PullRequest{Number: 5, NodeID: "PR_node5", State: "open", HeadSHA: headSHA}) {
+		t.Errorf("MarkReady = %+v, want the state and the head that the answer holds", pr)
+	}
+	closed := `{"data":{"markPullRequestReadyForReview":{"pullRequest":{"id":"PR_node5","number":5,"isDraft":false,"state":"CLOSED","headRefOid":"` + headSHA + `"}}}}`
+	handle(f, "POST /graphql", func(w http.ResponseWriter, r *http.Request) { io.WriteString(w, closed) })
+	if pr, err := a.MarkReady(context.Background(), "PR_node5"); err != nil || pr.State != "closed" || pr.Merged {
+		t.Errorf("MarkReady of a closed pull request = %+v, %v, want the state closed", pr, err)
+	}
+	if !strings.Contains(in.Query, "state") || !strings.Contains(in.Query, "headRefOid") {
+		t.Errorf("the mutation does not select the state and the head: %q", in.Query)
 	}
 }
 
@@ -1043,13 +1062,17 @@ func TestPullRequestByNumberAndByBranch(t *testing.T) {
 	merged := prJSON(5, false, true)
 	merged["state"], merged["merge_commit_sha"] = "closed", mergeSHA
 	handle(f, "GET "+pulls+"/5", func(w http.ResponseWriter, r *http.Request) { json.NewEncoder(w).Encode(merged) })
+	handle(f, "GET "+pulls+"/6", func(w http.ResponseWriter, r *http.Request) { json.NewEncoder(w).Encode(prJSON(6, true, false)) })
 	handle(f, "GET "+pulls, func(w http.ResponseWriter, r *http.Request) {
 		queries = append(queries, r.URL.RawQuery)
-		if r.URL.Query().Get("head") == "acme:task/T-aaaa/1" {
-			json.NewEncoder(w).Encode([]map[string]any{prJSON(6, true, false), prJSON(5, false, true)})
-			return
+		switch r.URL.Query().Get("head") {
+		case "acme:task/T-aaaa/1": // the newest is open, with a test merge commit
+			json.NewEncoder(w).Encode([]map[string]any{listItemJSON(6, true, nil, testMergeSHA), listItemJSON(5, false, "2026-10-15T12:00:00Z", mergeSHA)})
+		case "acme:task/T-bbbb/1": // the newest is merged: only merged_at says so
+			json.NewEncoder(w).Encode([]map[string]any{listItemJSON(7, false, "2026-10-15T12:00:00Z", mergeSHA)})
+		default:
+			io.WriteString(w, `[]`)
 		}
-		io.WriteString(w, `[]`)
 	})
 	ctx := context.Background()
 	pr, found, err := a.PullRequest(ctx, forge.PullRequestQuery{Number: 5})
@@ -1057,10 +1080,17 @@ func TestPullRequestByNumberAndByBranch(t *testing.T) {
 		t.Errorf("by number = %+v, %v, %v", pr, found, err)
 	}
 	pr, found, err = a.PullRequest(ctx, forge.PullRequestQuery{Branch: "task/T-aaaa/1"})
-	if err != nil || !found || pr.Number != 6 || !pr.Draft {
-		t.Errorf("by branch = %+v, %v, %v, want the first of the list, the newest", pr, found, err)
+	if err != nil || !found || pr != (forge.PullRequest{Number: 6, NodeID: "PR_node6", State: "open", Draft: true, HeadSHA: headSHA}) {
+		t.Errorf("by branch = %+v, %v, %v, want the first of the list, the newest, not merged, with no merge commit (the test merge commit is none)", pr, found, err)
 	}
-	if len(queries) != 1 || !strings.Contains(queries[0], "state=all") {
+	pr, found, err = a.PullRequest(ctx, forge.PullRequestQuery{Branch: "task/T-bbbb/1"})
+	if err != nil || !found || !pr.Merged || pr.MergeSHA != mergeSHA {
+		t.Errorf("by branch, merged_at set = %+v, %v, %v, want merged with the merge commit", pr, found, err)
+	}
+	if pr, _, _ := a.PullRequest(ctx, forge.PullRequestQuery{Number: 6}); pr.Merged || pr.MergeSHA != "" {
+		t.Errorf("an open pull request by number = %+v, want no merge commit: merge_commit_sha is a test merge commit before the merge", pr)
+	}
+	if len(queries) != 2 || !strings.Contains(queries[0], "state=all") {
 		t.Errorf("the list request = %v, want head and state=all", queries)
 	}
 	if _, found, err := a.PullRequest(ctx, forge.PullRequestQuery{Branch: "task/none"}); found || err != nil {
@@ -1068,13 +1098,28 @@ func TestPullRequestByNumberAndByBranch(t *testing.T) {
 	}
 }
 
+func TestStatusesRefusesAHeadThatIsNoFullSHABeforeAnyRequest(t *testing.T) {
+	f, _, a, _ := setup(t)
+	for _, sha := range []string{"", "main", headSHA[:39], headSHA + "0", strings.ToUpper(headSHA[:39]) + "A"} {
+		if _, err := a.Statuses(context.Background(), sha); err == nil {
+			t.Errorf("Statuses(%q) gave no error", sha)
+		}
+	}
+	if n := len(f.requests); n != 0 {
+		t.Errorf("a refused head made %d requests: %v", n, f.requests)
+	}
+}
+
 func TestPullRequestRefusesAQueryThatNamesNeitherOrBothAndGivesAnErrorForANumberItDoesNotKnow(t *testing.T) {
-	_, _, a, _ := setup(t)
+	f, _, a, _ := setup(t)
 	ctx := context.Background()
-	for _, q := range []forge.PullRequestQuery{{}, {Number: 5, Branch: "b"}} {
+	for _, q := range []forge.PullRequestQuery{{}, {Number: 5, Branch: "b"}, {Number: -1}} {
 		if _, _, err := a.PullRequest(ctx, q); err == nil {
 			t.Errorf("PullRequest(%+v) gave no error", q)
 		}
+	}
+	if n := len(f.requests); n != 0 {
+		t.Errorf("a refused query made %d requests: %v", n, f.requests)
 	}
 	_, _, err := a.PullRequest(ctx, forge.PullRequestQuery{Number: 404})
 	var fe *forge.Error

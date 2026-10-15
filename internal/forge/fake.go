@@ -89,6 +89,8 @@ func (f *Fake) pr(number int) *fakePR {
 }
 
 func (f *Fake) Capabilities() []Capability {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	if f.Declared != nil {
 		return f.Declared
 	}
@@ -96,18 +98,26 @@ func (f *Fake) Capabilities() []Capability {
 }
 
 func (f *Fake) Installation(context.Context) (Installation, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	return Installation{ID: 1, Permissions: f.Permissions}, f.err("Installation")
 }
 
 func (f *Fake) Token(context.Context) (Token, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	return Token{Token: "ghs_fake"}, f.err("Token")
 }
 
 func (f *Fake) Repository(context.Context) (Repository, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	return f.Repo, f.err("Repository")
 }
 
 func (f *Fake) UserID(_ context.Context, login string) (int64, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	if err := f.err("UserID"); err != nil {
 		return 0, err
 	}
@@ -146,10 +156,14 @@ func (f *Fake) Comment(_ context.Context, issue int, body string) (int64, error)
 }
 
 func (f *Fake) EffectiveRules(_ context.Context, branch string) ([]Rule, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	return f.Rules[branch], f.err("EffectiveRules")
 }
 
 func (f *Fake) Activity(_ context.Context, ref string) ([]ActivityEntry, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	return f.Activities[ref], f.err("Activity")
 }
 
@@ -186,7 +200,7 @@ func (f *Fake) SetStatus(_ context.Context, sha, context, state, description str
 	if err := f.err("SetStatus"); err != nil {
 		return err
 	}
-	if len(sha) != 40 {
+	if !FullSHA(sha) {
 		return &Error{Call: "SetStatus", Message: "the SHA is not a full object ID"}
 	}
 	if err := ValidStatus(state, description); err != nil {
@@ -200,6 +214,9 @@ func (f *Fake) SetStatus(_ context.Context, sha, context, state, description str
 func (f *Fake) Statuses(_ context.Context, sha string) (HeadChecks, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
+	if !FullSHA(sha) {
+		return HeadChecks{}, &Error{Call: "Statuses", Message: "the SHA is not a full object ID"}
+	}
 	return HeadChecks{Statuses: slices.Clone(f.statuses[sha]), CheckRuns: slices.Clone(f.checks[sha])}, f.err("Statuses")
 }
 
@@ -210,7 +227,7 @@ func (f *Fake) PullRequest(_ context.Context, q PullRequestQuery) (PullRequest, 
 		return PullRequest{}, false, err
 	}
 	switch {
-	case (q.Number != 0) == (q.Branch != ""):
+	case (q.Number != 0) == (q.Branch != "") || q.Number < 0:
 		return PullRequest{}, false, &Error{Call: "PullRequest", Message: "the query names a number or a branch, one of the two"}
 	case q.Number != 0:
 		pr := f.pr(q.Number)
@@ -232,6 +249,9 @@ func (f *Fake) Merge(_ context.Context, number int, sha string) (string, error) 
 	defer f.mu.Unlock()
 	if err := f.err("Merge"); err != nil {
 		return "", err
+	}
+	if number < 1 || !FullSHA(sha) {
+		return "", &Error{Call: "Merge", Message: "the pull request number or the head SHA is not valid"}
 	}
 	pr := f.pr(number)
 	switch {

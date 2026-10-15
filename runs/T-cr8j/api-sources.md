@@ -4,7 +4,7 @@ Read on 2026-10-15 (UTC, 18:40 to 18:50), by `WebFetch` of the pages below, and,
 GraphQL mutation, of GitHub's public schema file `https://docs.github.com/public/fpt/schema.docs.graphql`
 (1,562,177 bytes, SHA-256 `3ed095654b22b1a8…`, saved locally and searched with `grep`). The test
 fixtures of `internal/forge/github/github_integration_test.go` follow these facts; where a page
-is silent the row says so, and `forge.md` marks it.
+is silent the row says so, and `forge.md` marks it. The pull request fixtures are two (round 1 of `T-cr8j`, finding 1): `prJSON`, a pull request as `GET /pulls/{n}` gives it (`merged`, and a test merge commit in `merge_commit_sha` before a merge), and `listItemJSON`, a list item of `GET /pulls` (no `merged`, a `merged_at` that is null until the merge); the check runs and the statuses follow the two list pages; the GraphQL answer follows the schema's payload type.
 
 | Call | Source | What it says (used by a fixture) | Not said |
 | ---- | ------ | -------------------------------- | -------- |

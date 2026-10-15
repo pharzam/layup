@@ -244,6 +244,28 @@ func TestFakeGivesTheStatusesNewestFirstWithTheirCreatorAndTheCheckRuns(t *testi
 	}
 }
 
+func TestFakeRefusesWhatTheAdapterRefusesBeforeAnyRequest(t *testing.T) {
+	f := NewFake()
+	ctx := context.Background()
+	pr, _ := f.OpenDraft(ctx, "b", "main", "t", "")
+	f.MarkReady(ctx, pr.NodeID)
+	if _, err := f.Statuses(ctx, "abc"); err == nil {
+		t.Errorf("Statuses of a SHA that is none gave no error")
+	}
+	if _, err := f.Merge(ctx, pr.Number, ""); err == nil {
+		t.Errorf("Merge at no SHA gave no error: an empty head merged")
+	}
+	if _, err := f.Merge(ctx, 0, sha1a); err == nil {
+		t.Errorf("Merge of the pull request 0 gave no error")
+	}
+	if _, _, err := f.PullRequest(ctx, PullRequestQuery{Number: -1}); err == nil {
+		t.Errorf("PullRequest of the number -1 gave no error")
+	}
+	if !FullSHA(sha1a) || FullSHA("") || FullSHA(sha1a[:39]) || FullSHA(sha1a+"0") || FullSHA("ABCDEF"+sha1a[6:]) {
+		t.Errorf("FullSHA is not 40 lowercase hexadecimal characters")
+	}
+}
+
 func TestFakeRefusesAStatusThatTheCallRefuses(t *testing.T) {
 	f := NewFake()
 	for _, c := range []struct{ sha, state string }{{sha1a, "ok"}, {"abc", "success"}, {"", "success"}} {

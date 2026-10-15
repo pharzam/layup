@@ -37,3 +37,22 @@ the check runs unchecked; a branch's pull request taken from the end of the list
 stand-in ignoring a moved head; `graphqlURL` ignoring `/api/v3`; the stand-in appending a status
 at the end; a branch's list without `state=all`; `MarkReady` ignoring an `errors` array;
 `SetStatus` skipping the SHA check.
+
+## After round 1 (the fixes, 19:25Z to 19:38Z)
+
+Round 1 (comment 6200399675) had three material findings and ten notes. The fixes, test first where they
+add a rule: the fixtures now follow the two shapes of a pull request (`prJSON`, a list item with
+`merged_at` and no `merged`), a test merge commit before a merge, the mutation's `state` and
+`headRefOid`; the refusals of a SHA in `Statuses` and of a negative number in `PullRequest` have tests
+that count the requests; `forge.Fake` refuses what the adapter refuses and locks in every call; the
+rows of `internal/forge` and `internal/forge/github` of the table of `M2a`, the cell of `NFR-001`, the
+cell of `MarkReady` and the section "The test of the adapter" of `forge.md` are changed. Seven more
+mutants (`merged_at` ignored; a test merge commit given as the merge commit; the state of `MarkReady` a
+constant; the SHA check of `Statuses` skipped; a negative number accepted; the stand-in merging an empty
+head; the head of `MarkReady` dropped): two were alive at first (the state constant and the negative
+number) and the tests were tightened; **all 24 mutants are now caught**. `go build`, `go vet` (both tags),
+`go test -count=1 ./...` and `go test -count=1 -tags=integration ./...`: exit 0 (19:25:53Z to
+19:37:33Z, 11 min 40 s); the five checks: exit 0. Finding 12 of round 1 (five `internal/run` tests fail
+at the step `read-back` when the temporary directory is inside the checkout) did not reproduce here:
+`TMPDIR=<worktree>/.tmp go test -tags=integration ./internal/run -run 'TestARefusedPushBindsNothing|TestTheStepMarkersWithNoMarker'`
+exit 0 (12.2 s).

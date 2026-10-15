@@ -188,6 +188,20 @@ var StatusStates = []string{"success", "failure", "pending", "error"}
 // MaxDescription is the longest description of a commit status, in characters.
 const MaxDescription = 140
 
+// FullSHA tells a full object ID: 40 lowercase hexadecimal characters. The calls
+// of M2e that take a SHA refuse any other text before any request.
+func FullSHA(s string) bool {
+	if len(s) != 40 {
+		return false
+	}
+	for _, c := range s {
+		if !(c >= '0' && c <= '9' || c >= 'a' && c <= 'f') {
+			return false
+		}
+	}
+	return true
+}
+
 // ValidStatus gives an error when state is not one of the four, or description is
 // longer than MaxDescription characters (the check is made before any request).
 func ValidStatus(state, description string) error {
