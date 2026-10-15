@@ -620,8 +620,8 @@ milestone that `M2e` extends keeps its name in `built` and changes in words here
 build task changes the block and its Go value in one change. The three that
 `M2e` extends are `result` (the kinds `question`, `decision` and `lesson` after
 `status` and `artifact`), `events` (the new kinds `handoff`, with the detail `valid` or
-`invalid <item>` and, for a comment, after a space `comment <ID>`, and `merged`, with
-the merge commit's SHA in `sha` and the pull request's number as its detail; the
+`invalid <item>` and, for a comment, after a space `comment <ID>-<seen>` (the key of the row of `copies.tsv`), and `merged`, with
+the merge commit's SHA in `sha` and the pull request's number as its detail (`session` is `—` for `merged`, and for the `handoff` of a rendered task, which code writes); the
 kinds `closed` and `rebased` exist, and `M2e` sets their detail: that of `closed`
 names the task that redoes it, and that of `rebased` the task it replaces) and `copies` (the copy
 of a comment that is an artifact of a handoff, [`loop.md`](loop.md#the-artifact-that-is-a-comment)).
@@ -691,11 +691,11 @@ decided       time      -    when `layup run` copied the answer
 ```tsv-schema inventory-index records:spec/inventory.tsv
 n       int      key  the version, from 1
 sha256  sha256   -    the SHA-256 of `spec/inventory-<n>.tsv`
-bet     text     -    the milestone of the bet that confirmed it
+bet     text     -    the milestone of the bet that confirmed it; the word `decision` for a version that an escalation decision wrote (`M3`)
 ```
 
 ```tsv-schema inventory records:spec/inventory-<n>.tsv
-fact   int                              key  the fact's number, as in `spec/spans.tsv`
+fact   text                             key  the fact's number in `spec/spans.tsv`, or the ID `Q-NNN` of a fact of the answers (the rules of `architecture.md` §7 step 5 apply to it)
 class  enum(need|constraint|measure|context)  -  the confirmed class (a change that the bet's answer gave, or the class of Intake)
 scope  enum(in|out)                     -    `out` for a fact that the bet's answer marked out of scope
 copy   int                              -    the comment ID of the bet's or the decision's copy that gave this version
@@ -713,11 +713,11 @@ since     time    -    when `layup run` wrote the row
 ```
 
 **Decided here** (the owner checks, after the types, an error naming the line and the
-column): in `tasks`, `requirements` is not `—` for a `build` task, each predecessor is
+column): in `tasks`, `requirements` is never `—`, each predecessor is
 a task of the table and no cycle exists, and `pr` is `—` only until the pull request is
 opened (the row is replaced by a later commit, never edited in place within one);
-in `transitions`, a row for each step of the task loop and no `artifacts` value outside
-the list; in `task-gates` and `task-spec-check`, one table for each head, rows in the
+in `transitions`, a row for each default pair of the table of `loop.md` (The transition table) and no
+`artifacts` or `items` value outside the lists there; in `task-gates` and `task-spec-check`, one table for each head, rows in the
 order of the manifest and of the rule list; in `task-tests`, `frozen` is the same on each
 row of a freezing; in `options`, a `pass` with `—` in `evidence` is a valid row (the
 filter drops the option) and `fail` has `—`; in `bets`, one row for a milestone that has

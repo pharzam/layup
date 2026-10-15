@@ -26,3 +26,7 @@ FAIL docs/spec/loop.md: ### The tier and the context of a task (the tier of a ta
 ## After round 1 (fixes of the review), 2026-10-15T12:44Z
 
 Nine material findings and six notes of round 1 are fixed in documents only (`loop.md`, `records.md`, `forge.md`, `packages.md`, `scaffold.md`, `architecture.md`, the plan, `sections.tsv` with one new row). Re-run: `sh runs/T-xs4y/sections.sh` exit 0 (33 of 33); `adr-lint`, `prd-lint`, `link-lint`, `run-discipline-tests` and `setup-check` exit 0; `go test -tags=integration ./internal/tsv/ ./cmd/layup/` ok (the two packages that read the changed documents); `git diff --check origin/main` exit 0. No Go file changed since the full integration run above.
+
+## After round 2 (the fixes that wait for the Operator's answer), 2026-10-15T13:01Z
+
+Round 2 ended `not mergeable, findings recorded` at the cap 1 (six material findings, seven notes). The fixes are a local commit, not pushed until the Operator chooses. Red then green for the section added in round 1's fix: with its heading renamed in a copy, `sh runs/T-xs4y/sections.sh` prints `FAIL docs/spec/loop.md: ## REQ-005 — The steps of the loop after the Scaffold`; restored, 33 of 33 `ok`. `adr-lint`, `prd-lint`, `link-lint`, `run-discipline-tests` and `setup-check` exit 0; `go test -tags=integration ./internal/tsv/ ./cmd/layup/` ok; `git diff --check origin/main` exit 0.

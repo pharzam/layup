@@ -154,7 +154,7 @@ below it ([`session.md`](session.md#nfr-005--no-harness-in-the-engine-checks)).
 | ------- | --- | ---------- | ---------------- | -------- |
 | `internal/session` | a role session: its directory, its environment and credential (task `T-vxdg`), the ID, the context and prompt-size checks, the rule-file check and the head read from the files of `repo/.git` (task `T-6sbe`), the version check, the words of the command, the process, its limits and its stop, and the one call that orders the steps (task `T-5pxd`), its end, the result file, the usage report and the Go schema of `probe-result` (task `T-bpxg`) ([`session.md`](session.md#req-013--a-role-session)); in `M2c`, the `input/` of a session of a phase and the read of its output file by the rules of a result file (task `T-gmey`, [`intake.md`](intake.md#the-sessions-of-intake)); in `M2d`, `ReadOutputFiles`, the read of the output files of a prose session (task `T-eahr`, [`scaffold.md`](scaffold.md#the-prose-rows)) | `internal/tsv`, `internal/git`, `internal/records` | `harness` (the command of a harness register row) | — |
 | `internal/ledger` | the writer of `telemetry.tsv`: one row per session, from the usage report and `host:prices.tsv` ([`session.md`](session.md#req-011--the-writer-of-the-telemetry-record); task `T-4c3q`); in `M2c`, the rule of the budget of milestone 0, which `internal/run` asks before each session of Intake ([`intake.md`](intake.md#the-budget-of-intake); task `T-ybd5`) | `internal/tsv`, `internal/records` | no | — |
-| `internal/rules` | in `M2b`, the reader of the rule-path register and the check of a diff before a push ([`session.md`](session.md#a-workflow-or-rule-path-change)), with a second Go value of the block `rule-paths`, whose owner is `internal/setup`, compared with the block by its own test (task `T-m1dx`); the check `layup/rules` and rule batches come in `M2f` | `internal/tsv`, `internal/records` | no | — |
+| `internal/rules` | in `M2b`, the reader of the rule-path register and the check of a diff before a push ([`session.md`](session.md#a-workflow-or-rule-path-change)), with a second Go value of the block `rule-paths`, whose owner is `internal/setup`, compared with the block by its own test (task `T-m1dx`); the check `layup/rules` and rule batches come in `M2f`, except its basic rule, which is `M2e`'s ([the table of M2e](#the-table-of-m2e)) | `internal/tsv`, `internal/records`, `internal/spec`, `internal/git` | no | — |
 
 The packages of the engine checks: `internal/psb`, `internal/verify`, `internal/gate`, `internal/spec`.
 
@@ -246,7 +246,7 @@ heading of this table to it in the same change, as task `T-4ywt` did for
   target's own script, as `internal/gate` starts `sh -c`. It stays an engine check
   (no model call, no connection), so its row stays on the line of the engine
   checks.
-- `internal/rules` (its row in [the table of M2b](#the-table-of-m2b) says the check `layup/rules` comes in `M2f`; its basic rule is `M2e`'s, and the batch part stays `M2f`'s): the check `layup/rules` of the basic rule
+- `internal/rules` (its row in [the table of M2b](#the-table-of-m2b) is changed in place by this task: the job names the basic rule, and the May import cell gains `internal/spec` and `internal/git`): the check `layup/rules` of the basic rule
   ([`loop.md`](loop.md#layuprules)): the base's register against the changed paths
   and the comparison of a rendered record with code's rendering; it may import
   `internal/tsv`, `internal/records`, `internal/spec` and `internal/git`. The batch
@@ -260,7 +260,7 @@ heading of this table to it in the same change, as task `T-4ywt` did for
   no program: the cell does not change.
 - `internal/forge` and `internal/forge/github`: `OpenDraft`, `MarkReady`,
   `SetStatus`, `Statuses` and `Merge` ([`forge.md`](forge.md#the-calls-of-m2e)),
-  their types, and the permission check for pull requests and statuses; the
+  their types, and the permission check for pull requests and statuses (no new permission); the
   adapter alone connects, as before.
 - `internal/session`: the record kinds of each step's context in the step table
   ([`loop.md`](loop.md#the-tier-and-the-context-of-a-task)).

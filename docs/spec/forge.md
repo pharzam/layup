@@ -184,15 +184,16 @@ The same API and version header as [The calls of M2a](#the-calls-of-m2a) (task
 | `OpenDraft` | `POST /repos/{owner}/{repo}/pulls` with `draft` true, the head branch, the base, the title and the body | the pull request's number, its node ID and its head SHA; it requests no review |
 | `MarkReady` | the GraphQL mutation `markPullRequestReadyForReview` with the node ID (the REST API has no call that leaves the draft state) | the pull request, no longer a draft; **to confirm in GitHub's documentation at the build** |
 | `SetStatus` | `POST /repos/{owner}/{repo}/statuses/{sha}` with `state` (`success`, `failure`, `pending` or `error`), `context` and `description` of at most 140 characters | the status for that SHA and context; it is bound to the head SHA that the caller gives, and it is posted again only when its state or its description changes |
-| `Statuses` | `GET /repos/{owner}/{repo}/commits/{sha}/statuses`, every page, and `GET /repos/{owner}/{repo}/commits/{sha}/check-runs`, every page | each status and each check run of the head with its context or name, state or conclusion, and the App that made it (the check run's `app`; a status's `creator`) |
+| `Statuses` | `GET /repos/{owner}/{repo}/commits/{sha}/statuses`, every page, and `GET /repos/{owner}/{repo}/pulls/{number}` | each status of the head with its context, state and creator (the App or another), and the pull request's `mergeable_state`, which says whether the required checks, the native jobs among them, are met (`clean`); **to confirm** that `mergeable_state` reflects the required checks of a ruleset |
 | `Merge` | `PUT /repos/{owner}/{repo}/pulls/{number}/merge` with `sha` the head SHA and `merge_method` `merge` | the merge commit; GitHub refuses (409) a head that moved |
 
 **Decided here** (decision 5 and 6 of #333):
 
 - **The permissions** beyond those of `M2a` are pull requests `write` (the first
   three and the last) and commit statuses `write` (`SetStatus`; both are in
-  `architecture.md` §3); `Statuses` needs `read` of both and, for the check runs,
-  checks `read`, which is new and which `architecture.md` §3 gains. `CheckPermissions` reads them, and a missing
+  `architecture.md` §3); `Statuses` needs `read` of both. No new permission is asked: the native jobs are not read as check runs (that would need checks `read`, a permission that
+  ADR-0014 decision 3 does not list); their result is the `mergeable_state` of the pull request. If it does not reflect a ruleset, the build task stops
+  and asks the Operator, as a change of that decision. `CheckPermissions` reads them, and a missing
   one is a `fail` of the step `forge` that names it. The Operator grants them
   (`gov-operator-setup-o112`).
 - **A comparison reads, never trusts.** The ready and merge rule reads `Statuses`

@@ -674,7 +674,7 @@ the draft pull request, the transition table, and the questions, decisions and
 lessons of a handoff (`M2e`, [`loop.md`](loop.md#req-005--the-handoff)). The tier of a task from its plan, and the authors
 of a change for a plan review or a verification (`M2e`, [`loop.md`](loop.md#the-independence-of-the-reviewers)). The budget check
 before each start and `budget.tsv` (`M2c`, [`intake.md`](intake.md#the-budget-of-intake): the cap of milestone 0), and the circuit breaker (`M3d`).
-The branch of a rule batch, `layup/rules` and the known-bad patches (`M2f`).
+The branch of a rule batch, the batch part of `layup/rules` and the known-bad patches (`M2f`); its basic rule is `M2e`'s ([`loop.md`](loop.md#layuprules)).
 The context of a session by its links, the record kinds of each step's row
 (§9, ADR-0020 decision 7): in `M2b` the prompt is the caller's text, and the step
 table's record kinds come with the task loop (`M2e`, [`loop.md`](loop.md#the-tier-and-the-context-of-a-task)). The learned weights of
