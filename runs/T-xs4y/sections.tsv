@@ -1,0 +1,34 @@
+part	file	heading
+the task loop, step by step (later-p2-phase-loop-handoffs; decision 2)	docs/spec/loop.md	## REQ-005 — The task loop
+the attempts, the retry and the new attempt (decision 2; session.md)	docs/spec/loop.md	### The attempts
+independence of the plan review and the verifier; the authors of a change (decision 4; session.md)	docs/spec/loop.md	### The independence of the reviewers
+the tier of a task from its plan and the record kinds of each step's context (condition 1; session.md)	docs/spec/loop.md	### The tier and the context of a task
+the handoff, typed and checked by code (decision 3)	docs/spec/loop.md	## REQ-005 — The handoff
+the artifact that is only an issue comment (#68; decision 1)	docs/spec/loop.md	### The artifact that is a comment
+the transition table (decision 3)	docs/spec/loop.md	### The transition table
+the checks of a handoff (decision 3)	docs/spec/loop.md	### The checks of a handoff
+the frozen test list: its freeze and its amendment (condition 1)	docs/spec/loop.md	### The frozen test list
+the four layup/ statuses (later-gate-status; decision 5)	docs/spec/loop.md	## REQ-007 — The four `layup/` statuses
+the status layup/gates (later-gate-status)	docs/spec/loop.md	### layup/gates
+the status layup/spec (decision 9)	docs/spec/loop.md	### layup/spec
+the basic status layup/rules (REQ-003; decision 5)	docs/spec/loop.md	### layup/rules
+the status layup/verify (decision 5)	docs/spec/loop.md	### layup/verify
+the rule that no pull request is ready or merges with a kind that did not run (NFR-004)	docs/spec/loop.md	### The ready and merge rule
+the merge at the head SHA and the close-out commit (F-37; decision 6)	docs/spec/loop.md	### The merge at the head SHA and the close-out commit
+the gate jobs read the base's gate files (F-22; decision 6)	docs/spec/loop.md	### The gate jobs read the base
+the tree rule after the first merge (scaffold.md; condition 2)	docs/spec/loop.md	### The tree after the first merge
+Shape and its filter of options (decision 7)	docs/spec/loop.md	## REQ-012 — Shape
+the questions still open after Intake (condition 1; intake.md)	docs/spec/loop.md	### The questions left open
+the bet, its brief and its caps (decision 8)	docs/spec/loop.md	## REQ-012 — The bet
+the intent form's success criteria, the approver of each approval point, the role approver (condition 1; intake.md)	docs/spec/loop.md	### The approvers and the success criteria
+the revision of the draft with the answers and the answer-fact link (condition 1; intake.md)	docs/spec/loop.md	### The revision of the draft
+the rendered commit and the confirmed inventory (decision 8)	docs/spec/loop.md	### The rendered commit and the confirmed inventory
+the full layup spec check (decision 9)	docs/spec/loop.md	## REQ-012 — The full spec check
+the parameter change set <name> <value> because <reason> (decision 10)	docs/spec/loop.md	## REQ-012 — The parameter change
+the Retrospective in phases 2 and 3 (decision 10)	docs/spec/loop.md	### The Retrospective
+NFR-001: the records of the task loop	docs/spec/records.md	## NFR-001 — The records of the task loop
+NFR-004: a check that did not run is never a pass	docs/spec/loop.md	## NFR-004 — A check that did not run
+the acceptance tests of M2e, with the nine Tests rows of the inventory (condition 3 of the plan review)	docs/spec/loop.md	## The acceptance tests of M2e
+the demo and the release review of M2e, as acceptance contracts (condition 4)	docs/spec/loop.md	### The demo and the release review
+what M2e leaves to M2f, M2g and later (condition 4)	docs/spec/loop.md	## Not in M2e
+the steps of the loop after the Scaffold, the restart, the push with no result, the comments of a task session (criterion 1; session.md and scaffold.md deferrals)	docs/spec/loop.md	## REQ-005 — The steps of the loop after the Scaffold

@@ -1,0 +1,1026 @@
+# The task loop: handoffs, the four `layup/` statuses, Shape and the first bet
+
+The specification of milestone `M2e` of [the plan](../plan/README.md#milestones):
+what `layup run` adds after the Scaffold, so that each change to a target is a
+task that goes through a plan, a plan review, a developer, a verifier and a
+close-out, each handoff is checked by code against a table, the forge shows four
+`layup/` statuses for each head, and the first bet approves the milestone. Its
+requirements are `REQ-005` (role handoffs), the status part of `REQ-007`,
+`REQ-012` (the rest of the specification synthesis: Shape, the bet, the full
+`layup spec check`), the basic rule of `REQ-003` (`layup/rules`), `NFR-004` and
+`NFR-001`; the design is [`architecture.md`](../architecture.md) §6 (the stack
+gates and rule protection), §7 (the specification), §8 (the phase loop and its
+handoffs), §9 (squads and routing) and §10 (the parameters), with ADR-0016,
+ADR-0017, ADR-0019 and ADR-0020. Task `T-xs4y` (#333) wrote it, after a
+public-solution search ([`runs/T-xs4y/search/`](../../runs/T-xs4y/search/)),
+whose result is that no public solution can be its base; the decisions are
+comment 6191483681 of #333. The records are in
+[`records.md`](records.md#nfr-001--the-records-of-the-task-loop). The sessions
+are those of [`session.md`](session.md), the forge calls those of
+[`forge.md`](forge.md), the gate that `layup/gates` reports is
+[`gate.md`](gate.md).
+
+**What the search gives this file.** GitHub's commit-status API gives a status
+for a head SHA with a `context` and one of four states; a required check can be
+pinned to the App as its source; the merge call takes the head SHA and refuses a
+head that moved; and a required check may be met by a `neutral` or `skipped`
+state, which is why this file counts only `success` (searcher A); at most 1,000
+statuses are kept for one SHA and context (searcher B). The best public handoff
+tools validate a handoff record against a schema and a role-to-role rule, as
+this file does, but none keeps the table of transitions where the agent cannot
+write it, and none gives an artifact that exists only as an issue comment a place
+and a hash (both searchers). Nothing public filters architecture options by code,
+checks a brief to the idea owner, or fails a requirement that has no criterion
+by four rules together.
+
+## REQ-005 — The task loop
+
+Requirement `REQ-005`: information that passes between role agents has a form
+that a machine can validate (`F-0003#45`, `#59`). **Every pull request is a
+task** (`architecture.md` §8): the specification, the target's architecture, each rule batch, each rendered
+record, the milestone plan and each build task. Each task has a row in
+`tasks.tsv` ([the records](records.md#nfr-001--the-records-of-the-task-loop)),
+written when `layup run` opens its issue, and goes through the steps below. The
+steps are the eight of `architecture.md` §8, "The task loop"; this table gives
+their actor, their input and the check of code at each, and the section that
+holds the rule.
+
+| # | Step | Actor | Input | Checked by code | Rule in |
+| - | ---- | ----- | ----- | --------------- | ------- |
+| 1 | the issue | `layup run` | the requirement IDs and the Definition of Done of the task's row | the row of `tasks.tsv` names each requirement ID and each predecessor | [The task register](#the-task-register) |
+| 2 | the plan and its review | a plan session; a plan-review session on another harness | the issue, the specification sections of the requirement IDs | the plan has its four fixed fields and lists its tests by ID; the review has the verdict field `approve` or `approve-with-conditions` | [The transition table](#the-transition-table) |
+| 3 | the developer | a developer session | the plan, the findings of the last attempt | the typed result ([`session.md`](session.md#req-005--the-result-of-a-session)); the tests of the plan fail at the base and pass at the head | [The checks of a handoff](#the-checks-of-a-handoff) |
+| 4 | the draft pull request | `layup run` | the branch of the attempt | no rule-path change ([`architecture.md`](../architecture.md) §6, prevention layer 2); the title in the target's form; the body links the issue and the records commit the task started from | [The pull request](#the-pull-request) |
+| 5 | the checks | the target's CI, `layup gate`, `layup spec check`, `layup/rules` | each new head | the four statuses | [The four `layup/` statuses](#req-007--the-four-layup-statuses) |
+| 6 | the verifier | a verifier session on a harness that is not an author | the head, read-only | the review record in the target's form, with a `file:line` for each finding | [The independence of the reviewers](#the-independence-of-the-reviewers) |
+| 7 | the close-out | a close-out session | the verdict, the ledger | the commit changes only the task file and the completed log | [The merge at the head SHA and the close-out commit](#the-merge-at-the-head-sha-and-the-close-out-commit) |
+| 8 | the merge | `layup run` | the head, the four statuses | the merge at the head SHA | [The ready and merge rule](#the-ready-and-merge-rule) |
+
+### The task register
+
+`tasks.tsv` has one row for each task, written by `layup
+run` and never changed (a change is a new row of a later `tasks.tsv` commit that
+Git history keeps, as for each record, ADR-0014): the task ID, the issue, the
+kind (`specification`, `architecture`, `batch`, `rendered`, `plan`, `build`), the requirement IDs
+it serves, its size class, its predecessors, and its pull request when it has
+one. **Decided here:** a task starts only when each predecessor is a task of the
+register and has merged, and the predecessors form no cycle; code checks both
+when it writes the row, and refuses a row that breaks one. At most
+`build.parallel` build tasks run at once (a parameter, `architecture.md` §10);
+the merge order of build tasks is `M2g`'s.
+
+### The pull request
+
+**Decided here.** `layup run` opens the pull request as a draft, with a title
+of the form `<type>: <task ID> <description>` (the target's own convention,
+read from the setup record), a body that links the issue (`Closes #N`, or
+`Refs #N` for a task that does not close it) and links the records commit that
+the task started from, and requests no review. A draft is only visible; a
+pull request "reaches human review" when a review is requested or it is marked
+ready (the reading of `F-0003#58`, which the approval brief asks the Operator to
+confirm). The review record of the verifier is posted on the **issue**, and the
+body of the pull request is edited to link it, which makes the target's own
+`review-record` check run again. **Reason:** the target's checks parse the
+issue's comments and the body, so the loop writes them in the forms that those
+checks read.
+
+### The attempts
+
+A new attempt starts from the base commit, with the findings of the last attempt
+and any diagnosis in its prompt file and not its diff, so that its commits have
+one author harness (`architecture.md` §8, "Attempts"). **Decided here:**
+
+- A failure of a check at step 5 goes back to the developer as a finding and
+  starts a new attempt (the two expected failures of `architecture.md` §8 step 5, the
+  rule batch before its approval and the specification that waits for its bet, do
+  not: [The rendered commit and the confirmed inventory](#the-rendered-commit-and-the-confirmed-inventory)): an `attempt` row of `tasks/<task>/events.tsv` with the
+  base SHA, then the sessions of that attempt ([`session.md`](session.md)).
+- Once the task's test list is frozen ([The frozen test list](#the-frozen-test-list)),
+  code puts the frozen test files at the start of each new attempt, so that their
+  hashes stay; the harness that wrote them is an author of every later attempt.
+- When the Operator passes the last diff to the new attempt (a stall answer,
+  `M3d`), the harness that wrote it is an author of the new attempt.
+- A question that ends an attempt (status `needs_context`) is a wait for the
+  owner role, not a round without progress ([The checks of a
+  handoff](#the-checks-of-a-handoff)).
+- **Known limit:** no bound stops a loop of failures of step 5 before `M3d` (the
+  stall triggers) but the budget cap of `M2c` (`intake.md`, the budget of Intake)
+  and the cycle cap of the target for the review rounds of step 6; an attempt
+  that ends with no commit is an `attempt` row with no `push` row, and the next
+  attempt starts as above.
+
+### The independence of the reviewers
+
+The authors of a change decide which harness may review it
+(`architecture.md` §9). **Decided here:** code computes the authors from the
+records and the ledger, never from a field that an agent writes:
+
+- the **authors for a plan review** are the harnesses of the task's plan
+  sessions (`sessions.tsv`);
+- the **authors for a verification** are every harness whose session is bound,
+  in the ledger, to a commit in the diff from the base, every harness whose diff
+  went into an attempt's prompt, and the harness that wrote the task's frozen
+  tests (Invariant 9).
+
+Code admits a pair of harness and model for a plan review or a verification only
+when its harness passed the probe ([`session.md`](session.md#admission)), its
+model is not on the target's "not used" list, and its harness is not an author.
+When no admitted harness is outside the authors, the verification is
+`not-active`: `layup/verify` is posted `failure` with the description
+`not-active: no harness outside the authors`, and the pull request does not merge
+(`F-0001#5`, Invariant 5). **Reason:** the forge's four states have no
+`not-active`, and `failure` is the one that stays a refusal until a harness
+exists; `pending` is kept for a verifier that waits for its turn (below).
+
+### The tier and the context of a task
+
+**The tier** of an implementing task starts from its plan, which has four fixed
+fields: `size` (`small` or `large`), `open questions`, `new interfaces` and `new
+dependencies`. The reasoning tier when `size` is `large` or any of the three
+lists is not empty; the execution tier otherwise (`architecture.md` §9). The
+progress position of a task, uphill while it has open unknowns and before its
+test list is frozen, moves it to the reasoning tier, and downhill to the
+execution tier (`architecture.md` §11). **Decided here:** the tier is read when
+the plan is accepted (step 2) and again at each attempt, from the plan and the
+open unknowns that the records give; the result is a column of the routing
+request, not a new record.
+
+**The context of a session.** The step table has a column of record kinds for
+each step ([`session.md`](session.md#the-context-of-a-start) holds the table and `M2b`
+the prompt as the caller's text). **Decided here:** from `M2e` the prompt file of
+a step holds, in this order, the task's issue and plan, the rows and the
+specification sections of the task's requirement IDs, the decision records that
+those sections name, the task's handoffs and the answers to its questions, and
+the target's rule files; code builds the list from the records and writes the
+links, so a session reads the files and not a summary. Each item is a path of the
+target or of the records branch with its SHA-256, which the ledger keeps.
+
+## REQ-005 — The handoff
+
+A **handoff** is the typed result of one session for the next step: its session
+ID, the task, the role, its status (`completed`, `blocked`, `needs_context`,
+`decision_needed`, `failed`), the reason, each artifact with its path and
+SHA-256, the questions, the proposed decisions and the lessons
+(`architecture.md` §8). `M2b` built the typed result with the kinds `status` and
+`artifact` ([`records.md`](records.md#nfr-001--the-records-of-a-session), the
+block `result`); `M2e` adds the rows of the other fields as kinds of the same
+file, `question`, `decision` and `lesson`, and a kind `comment` for an artifact that
+`layup run` posts as a comment (**decided here**; the block changes in
+the build task, which moves nothing in `built`, as the plan review of #333
+asked: a built block changes in words here and in its owner's code there).
+The Inter-Role Communication Format of `F-0003#59` is the share of valid
+handoffs among all handoffs, which `layup report` (`M4b`) reads from the records.
+
+### The artifact that is a comment
+
+The plan, the plan review and the review record of a task are comments of its
+issue, so no commit holds them (#68). **Decided here** (decision 1 of #333, as
+corrected by the answer to round 1):
+
+- **The session writes a file, code writes the comment.** The session that
+  writes the plan, the plan review or the review record leaves its text as a file
+  of its `result/` directory, which its typed result names as a **`comment` row**
+  (not an `artifact` row: the check of `M2b` refuses an `artifact` that the session's
+  head lacks, and this file is in no commit) with its path in `result/` and its
+  SHA-256, which the end of the session checks against that file
+  ([`session.md`](session.md#req-005--the-result-of-a-session)); a `comment` row
+  never names a path of the target. **The file is kept:** at the records commit of the
+  result, `layup run` copies it byte for byte as
+  `tasks/<task>/results/<session>/<file>` ([the records](records.md#nfr-001--the-records-of-the-task-loop)),
+  because the session's directory is removed after its records are pushed
+  ([`session.md`](session.md#the-session-directory)); a run that stops after that
+  commit and before the post posts from the copy at the next start, and the posted
+  bytes are those of the copy. **To confirm at the build:** that GitHub gives a
+  comment's body back byte for byte, within its size limit (65,536 characters); a
+  file over the limit is refused as `refused` `handoff` before the post.
+  The session posts nothing and holds no forge credential. After the result is
+  valid, `layup run` posts that file's bytes, unchanged, as the comment of the
+  task's issue (`architecture.md` §8 step 2 and step 6), and copies the comment
+  into the records branch as `copies/<comment-id>-<seen>.md`, with its row in
+  `copies.tsv` (the author's numeric ID and login, the comment ID, whether an App
+  made it, the time, the SHA-256 of the body), by the mechanism of `M2a`
+  ([`records.md`](records.md#nfr-001--the-records-of-start), the block `copies`).
+- **The link is written by code.** The comment ID is never in the session's
+  result. The `handoff` event ([The checks of a handoff](#the-checks-of-a-handoff))
+  holds the comment ID that `layup run` read from the row of `copies.tsv` whose
+  `sha256` equals the artifact's SHA-256 and whose `issue` is the task's issue.
+- **Code accepts the handoff only when three SHA-256 are equal:** the session's
+  file, the copy, and the body that the forge gives for that comment at the step.
+  A comment edited after the copy is a new copy with a new `seen`, the forge's
+  body then differs from the first copy, and the handoff is invalid until a new
+  handoff names the new copy.
+- An artifact of the target's files (the task file, the tests) is named by path
+  and SHA-256 at the commit, as before.
+
+**Rejected:** a file in the task's branch (the plan would enter the target's tree
+and its diff); a comment ID or a hash that a session writes (it proves only what
+the agent says, `F-0003#59`). **Reason:** a copy by the controller with a hash is
+the one form that code owns, and the forge keeps the original. The search found no
+tool that does it.
+
+### The transition table
+
+`transitions.tsv` on the records branch is the table of the allowed handoffs; its
+default rows are those of `architecture.md` §8, and the table is a register that
+the Operator can replace. **Decided here:**
+
+- `layup run` writes `transitions.tsv` from the default rows, which the binary
+  embeds, in the same commit that opens the first task of the target; a later run
+  reads it and never rewrites it from the default.
+- **The kinds of artifact** that a row may name are: `plan`, `plan-review`,
+  `review-record`, `task-file`, `commits`, `rows`, `patch`, `rendering`, `question`
+  and `answer`.
+- **The names of the items** that a row may name are in the table below, one word
+  each, with what code checks for it. The block `transitions` holds the words.
+- A step of the task loop that is `layup run`'s own act and no handoff (the
+  issue, the draft pull request, the checks, the merge: steps 1, 4, 5 and 8) has
+  no row. **The check of a table** is that it has a row for each default pair
+  `(from, to)` of the table below, and for no other pair than a pair that the
+  Operator's table lists with kinds and items of these lists.
+- The Operator replaces the table with `set transitions <sha256> because
+  <reason>` on the control issue ([The parameter change](#req-012--the-parameter-change)),
+  where the value is the SHA-256 of a copied comment that holds the whole table;
+  code reads it with the same schema and refuses a table that fails the check
+  above. The old table stays in Git history.
+
+**Rejected:** a table in the code only (it could not be replaced, `architecture.md`
+§8); a free handoff file (the public tools validate a record against a schema but
+leave the transition to the agent).
+
+| Item | What code checks |
+| ---- | ---------------- |
+| `schema` | the typed result passes the block `result` and its rules |
+| `artifacts` | each named artifact is in the commits (or in the copies) with its hash |
+| `plan-fields` | the plan has its four fixed fields and lists its tests by ID |
+| `verdict-field` | the review has the verdict `approve` or `approve-with-conditions` in its fixed field |
+| `tests-red-green` | each listed test fails at the base and passes at the head (`layup gate` runs them) |
+| `spec-sections` | a section of `docs/spec/` for each requirement ID the task names |
+| `patch-per-kind` | a known-bad patch for each kind a rule batch touches; `layup gate` passes on its head and fails on each patch (`M2f`) |
+| `register-rows` | the task register rows of a milestone plan: each `Must` requirement has a task, each predecessor is a task, no cycle (`M2g`) |
+| `rendering-equal` | the change equals code's rendering of the named copy |
+| `nothing-material` | the review record says `nothing material in scope` at the head |
+| `findings-located` | each finding of the record is at a `file:line` |
+| `heading-ids` | a heading of `docs/spec/` holds each requirement ID of the milestone |
+| `question-row` | a question row names the records it concerns |
+| `answer-row` | an answer row cites the records it rests on |
+
+### The checks of a handoff
+
+A handoff is valid only when code finds the schema right, each named artifact in
+the commits (or in the copies, for a comment) with its hash, and each required
+item true; a pair with no row in the table is not valid; and a field that an
+agent writes never makes it valid (`F-0003#59`, Sol-21, Fable-M14).
+**Decided here:**
+
+1. **The schema.** The typed result of `M2b` and the rows of the kinds above; a
+   result that fails it is `refused` with the reason `handoff` and the line of the
+   row, as a refused result of `M2b` is.
+2. **Each artifact.** A path and a SHA-256 of the file at the session's head; a
+   comment by the three equal hashes of [the artifact that is a
+   comment](#the-artifact-that-is-a-comment). A path that is not in the commits,
+   or a hash that differs, makes the handoff invalid.
+3. **The required items** of the row, by the table below.
+4. **The pair.** The `from` and `to` of the handoff are a row of `transitions.tsv`.
+5. **The result.** `layup run` writes an event row of the task, `handoff`, in
+   `tasks/<task>/events.tsv` with the detail `valid` or `invalid <item>`, and, for
+   an artifact that is a comment, after a space `comment <ID>-<seen>` (the kind is
+   added in prose here and in the block by the build task).
+
+| From, to | Artifacts | Items |
+| -------- | --------- | ----- |
+| task plan, plan review | `plan` | `schema`, `artifacts`, `plan-fields` |
+| plan review, developer | `plan-review` | `schema`, `artifacts`, `verdict-field` |
+| developer (build task), verifier | `commits`, `task-file` | `schema`, `artifacts`, `tests-red-green` |
+| developer (specification), verifier | `commits`, `task-file` | `schema`, `artifacts`, `spec-sections` |
+| developer (architecture), verifier | `commits`, `task-file` | `schema`, `artifacts` |
+| developer (rule batch), verifier | `commits`, `task-file`, `patch` | `schema`, `artifacts`, `patch-per-kind` (`M2f`) |
+| developer (milestone plan), verifier | `rows` | `schema`, `artifacts`, `register-rows` (`M2g`) |
+| code (rendered task), verifier | `rendering` | `artifacts`, `rendering-equal` |
+| verifier, close-out | `review-record` | `schema`, `artifacts`, `nothing-material` |
+| verifier, developer | `review-record` | `schema`, `artifacts`, `findings-located` |
+| specification, milestone plan | `task-file` | `artifacts`, `heading-ids` |
+| asking role, owner role | `question` | `schema`, `question-row` |
+| owner role, asking role | `answer` | `schema`, `answer-row` |
+
+**A question during the work.** A session that meets a question ends with the
+status `needs_context` and the question: its text, its own label for the kind,
+its `needs_human` field and the records it concerns. `layup run` records it with
+its time, posts it on the task's issue and, in `M2e`, sends it to the owner role
+of its kind (`architecture.md` §9, the default owner map: domain or business, the
+Domain Expert; architecture boundary, the Systems Architect; interface contract, the
+Software Architect; environment or infrastructure, the Software Engineer; the
+confirmed map, `owners.tsv`, is phase 3) when it needs no human and its label is one
+of those four kinds, and to the Operator
+or the idea owner when it needs one, or when its label is none of the four; the smart-if that gives the kind and
+`needs_human` is `M3a`'s, so in `M2e` the session's own label and field are
+used, and a question whose `needs_human` is not `yes` or `no` goes to a human
+(**decided here**, the conservative reading). The answer's pass through the
+escalation screen (`architecture.md` §8, §10) is `M3`'s ([Not in M2e](#not-in-m2e)).
+The owner role's answer cites the records it rests on; the asking role starts its
+next attempt with the answer in its prompt file. The answer is **accepted** when
+that attempt ends `completed`, cites the answer ID, and none of its questions
+cites the answer ID; the accepting actor is that session. An attempt that a
+question ends counts only toward `stall.attempts` (`M3d`).
+
+### The frozen test list
+
+The plan lists its tests by ID (`architecture.md` §8 step 2). **Decided here**
+(`architecture.md` §11, "Progress is computed"):
+
+- The list is **frozen** at the task's first valid handoff to the verifier, when
+  each listed test fails at the base and passes at the head: `tasks/<task>/tests.tsv`
+  gets one row for each test, its ID, the SHA-256 of its source file at the head
+  and the harness that wrote it, and the time.
+- A later head where the SHA-256 of a listed test's source differs makes that
+  test not counted as passed, and the change is a finding `test changed`.
+- An **amendment** is a new plan, which the plan session writes on that finding,
+  and a new plan review; the list is frozen again at the next valid handoff, and
+  the finding is closed.
+- A test that fails at the head, or passes at the base, makes the handoff to the
+  verifier invalid, so the list is never frozen on a test that proves nothing.
+
+**Execution of the named tests** is `M2g`'s (the build task's test run); in `M2e`
+the check runs the target's gate command for the test kind and reads its result
+by `layup gate`.
+
+## REQ-007 — The four `layup/` statuses
+
+Requirement `REQ-007`: each change passes the gates before review or merge
+(`F-0003#47`), and no pull request with a failed gate reaches human review or
+merges (`F-0003#58`). **Decided here** (decision 5 of #333). `layup run` posts
+four commit statuses on each head of a task's pull request, each with the call
+`SetStatus(sha, context, state, description)` of `internal/forge`
+([`forge.md`](forge.md#the-calls-of-m2e)):
+
+| Context | From | Posted when |
+| ------- | ---- | ----------- |
+| `layup/gates` | the table of `layup gate` at the head | after each new head |
+| `layup/spec` | the full `layup spec check` at the head | after each new head |
+| `layup/rules` | the basic rule below | after each new head |
+| `layup/verify` | the review record of the verifier | after each review, and `pending` while the verifier waits |
+
+The state is `success`, `failure`, `pending` or `error`. `error` means that the
+check itself could not run; it is never a pass. **The source** of each status is
+the App: the ruleset of `M2d` requires the four contexts pinned to the App's
+`integration_id`, the `app_id` of the forge register
+([`scaffold.md`](scaffold.md#the-ruleset-of-the-default-branch)), so a status of
+the same name from another source does not count. **A status is posted again only
+when its state or its description changes**, as GitHub keeps at most 1,000
+statuses for one SHA and context. The description is one line of at most 140
+characters that names the reason (`pass`, `clear: no product path`, `not-active:
+tool not found: <tool>`, `waits for its turn`).
+
+**The permissions** of the App beyond those of `M2a` are pull requests `write` and
+commit statuses `write`, both in `architecture.md` §3 and ADR-0014 decision 3, and
+checks `read`, which the native jobs need (a job of GitHub Actions is a check run, and
+the `mergeable_state` of a draft is `draft`, never `clean`): checks `read` **amends
+ADR-0014 decision 3**, asked in #336 (`gov-operator-setup-o112`: the Operator's step,
+asked in the demo row of the slicing task, as the first demo of `M2d` asked its
+own) ([`forge.md`](forge.md#the-calls-of-m2e)). The step
+`forge` of `layup run` reads the granted permissions, and a missing one is `fail`,
+naming it, as it is for the `M2a` permissions.
+
+### layup/gates
+
+`layup/gates` is the table of `layup gate` at the head, posted from its rows
+(`architecture.md` §6, the table; [`gate.md`](gate.md#the-table)):
+
+| Result of a kind | `layup/gates` |
+| ---------------- | ------------- |
+| `pass` | counts as a pass |
+| `fail`, or `not-active` | `failure` |
+| `clear` (a `pending` kind with no product path changed, or an `active` kind with no product path) | counts as a pass, with the reason from the row |
+| a `pending` kind and the head changes a product path | `failure` |
+
+The status is `success` only when every kind counts as a pass. **Decided here:**
+`layup/gates` is read from the table that `layup gate` gives for the head, run by
+`layup run` in a scratch work tree with the base's gate files (FT4), and the
+table is committed as `tasks/<task>/gates.tsv` with the head SHA as a key (the
+block `task-gates`); the head's own gate files never judge the head. A run that
+the tool could not make (git, the scratch tree) is `error`.
+
+### layup/spec
+
+`layup/spec` is the full `layup spec check` at the head
+([The full spec check](#req-012--the-full-spec-check)): `success` when no row of its
+table is `fail` (a row `clear` counts as a pass, whether the whole table is `clear`
+because the task touches neither the PRD nor `docs/spec/` before the first bet, or
+only the rules `classes` and `inventory` are, before it, on the specification
+task's head); `failure` with the first failing rule in the description otherwise;
+`error` when the check could not run.
+
+### layup/rules
+
+The **basic rule** (`architecture.md` §6; the batch part is `M2f`'s): `layup/rules`
+fails a pull request that changes a path of the rule-path register
+(`rule-paths.tsv`, [`setup.md`](setup.md#the-rule-path-register)) unless it is a
+**rendered record**: a change to the PRD or the facts record that equals code's
+rendering of the named copy (an inventory version of a bet, a decision copy or the
+start-values copy), checked by rendering again from the copy and comparing bytes.
+**Decided here:** the status is `success` when the head changes no rule path
+(the reason `no rule path`) or only a rendered record that equals; `failure`
+otherwise; before `M2f` no rule batch is approved, so a change to a rule path that
+is not a rendered record fails. The check reads the register of the **base**, not
+of the head. The refusal before the push (prevention layer 2) is the first line
+of defence and `layup/rules` the second; both read the same register.
+
+### layup/verify
+
+`layup/verify` follows the verifier (`architecture.md` §8 step 6). **Decided here:**
+
+- `pending` with the description `waits for its turn` while a build task is not
+  next in the merge order or not up to date with the base (a wait state of
+  `architecture.md` §11; the merge order is `M2g`'s, so in `M2e` the only tasks are
+  one at a time and the wait does not occur); `pending` with `verifier running`
+  while its session runs.
+- `success` at the head SHA the verifier reviewed, only for a review record with
+  `nothing material in scope`; `failure` for a material finding (one more round, up
+  to the target's cycle cap, then the stall of `M3d`), and for `not-active` (above).
+- After the rendered commit of the first bet, and after the close-out commit,
+  `layup/verify` is set on the new head by the check of [The merge at the head SHA
+  and the close-out commit](#the-merge-at-the-head-sha-and-the-close-out-commit),
+  not by a second review: the verdict carries over to a head that differs from the
+  head that carries it by that one commit. A head **carries the verdict** when it is
+  the verified head, a head that came from it by the rendered commit, or a head that
+  came from it by a clean merge of the base that changes no file the task touches
+  (the next bullet), also when the verified head is the close-out head of a Shape
+  task that the loop brought up to date with the base.
+- A verified task whose base then moves carries its verdict over a clean merge of
+  the base that changes no file it touches (the target's own rule); otherwise the
+  task is closed and redone as a new task with its own issue, which takes the old
+  task's row and predecessor links (`architecture.md` §8). The redone task has an
+  `closed` event on the old one and a `rebased` event on the new one
+  ([the records](records.md#nfr-001--the-records-of-the-task-loop)).
+
+### The ready and merge rule
+
+**Decided here.** No pull request is marked ready or merges while a selected kind
+did not run (`F-0003#58`, `NFR-004`):
+
+1. `layup run` marks a pull request ready (`MarkReady`) only when, at the head,
+   each of the four contexts is `success` **by a read of the forge**, not by its
+   own earlier post, and each native gate job of the target is green: each required
+   check of the default branch's ruleset whose source is GitHub Actions (read back
+   by `EffectiveRules`) has a check run at the head with the conclusion `success`, taking the newest run of
+   each name (`filter=latest` of the list call; a later `failure` beside an older
+   `success` is a failure) (`skipped` and `neutral` do not count).
+2. A state other than `success` of any of the four, including a context that has
+   no status at the head, a status of another source and an `error`, blocks the
+   marking and the merge. GitHub accepts a `neutral` or `skipped` check as met
+   for a required check; code counts only `success`.
+3. A kind that is `not-active` is never a pass: it makes `layup/gates` a
+   `failure`, which blocks both.
+4. The merge is the call of the next section.
+
+### The merge at the head SHA and the close-out commit
+
+**Decided here** (F-37; decision 6 of #333):
+
+- **The close-out commit.** After `nothing material in scope`, a close-out session
+  writes the target's close-out (the verdict, the line of the completed log, the
+  resource record from the ledger) as one last commit. Code checks that this
+  commit changes only the task file `docs/tasks/<task>.md` and
+  `docs/tasks/completed.md` of the target, the paths from the setup record, and
+  that its parent is a head that carries the verdict (defined in
+  [layup/verify](#layupverify): the verified head, the head after the rendered commit
+  of the first bet, or the head after a clean merge of the base). A commit that changes another
+  file is refused as a rule-path or scope refusal, as a developer's would be.
+- **The rendered commit.** The commit that code adds at the first bet
+  ([The rendered commit and the confirmed inventory](#the-rendered-commit-and-the-confirmed-inventory))
+  gets the same check with the rendered files in place of the task file: it
+  changes only them, they equal code's rendering of the bet's copy, and its parent
+  is a head that carries the verdict. The close-out of the specification task then follows it.
+- **The verdict at the new head.** `layup run` sets `layup/verify` `success` on
+  the new head with the description `verified head <sha> plus the close-out` (or
+  `plus the rendered commit`); the other three contexts run on it as on any head.
+- **The merge.** When the four contexts are `success` at that head and the native
+  jobs are green, `layup run` calls `Merge(pull request, head SHA, method)` with
+  the head SHA it read the statuses for; the forge refuses a head that moved, and
+  code then reads the statuses again, as it never trusts the earlier read. The
+  method is a plain merge, never a squash (the target's rule). A batch that
+  changes `.github/workflows/`, which the Operator pushed, is merged by its
+  approver (`M2f`).
+- **A tested tool** (F-37): the close-out check and the merge call are one
+  function each in `internal/run`, with a stand-in forge, so the steps that land a
+  target task are a Go test, not a script.
+
+### The gate jobs read the base
+
+F-22 (the Operator's direction, task `T-evad`): a pull request could weaken its
+own gate, as each native gate job runs the head's `gates.sh` with the head's
+`docs/gates.tsv`. **Decided here**, in three parts that `M2e` builds:
+
+1. **The jobs read the base.** The catalog workflow makes each
+   gate job take the manifest, the `config` paths and `gates.sh` from the base of
+   the pull request before it runs them, as `layup gate` does (`gate.md`, The run).
+   That workflow is the setup's file, so each target has it from its setup; a target
+   set up before `M2e` gets it by a rule batch (`M2f`). **The exception, decided
+   here:** a pull request whose head branch is `batch/<point>` takes the gate files
+   from its own head, because the activation batch changes the manifest and writes
+   Go files in the scope of the `pending` kinds, and with the base's manifest its
+   `pending` jobs would fail it for ever (`architecture.md` §6, ADR-0016 decision 2).
+   The control for such a pull request is part 2: a change of a gate path waits for
+   the Operator as code owner. Whether this exception stands, or another way, is the
+   specification of `M2f` (issue #345).
+2. **Code-owner review.** A change to `.github/**`, `docs/gates.tsv`, `docs/gates/**`
+   or a `config` path of the manifest (the setup writes the file from the manifest)
+   needs the Operator's review as code owner: the setup writes a
+   `CODEOWNERS` file for those paths with the Operator's account, and the rule
+   `pull_request` of the default branch's ruleset sets `require_code_owner_review`
+   `true` with `required_approving_review_count` `0`, so that the rule binds a pull
+   request that touches a listed path and no other
+   ([`scaffold.md`](scaffold.md#the-ruleset-of-the-default-branch), whose table
+   `M2e` changes in the build). **Unconfirmed:** whether GitHub binds the
+   code-owner rule when the count of approvals is 0 is not in a source of the
+   search; the build task confirms it on a real repository in the demo. If GitHub
+   needs one approval for the rule to bind, every pull request would wait for a
+   human, which `architecture.md` §8 step 8 forbids, and the Operator decides
+   (a question asked then, severity normal).
+3. **The test.** A pull request that weakens its own gate (it edits `docs/gates.tsv`
+   to make a kind pass) is refused: its jobs read the base and fail, and the
+   change of a gate file waits for the code owner.
+
+**The contract changes** the sentence of `architecture.md` §6 that the target's
+own CI runs the workflow and the manifest of the pull request's head: with part
+1, the manifest and the gate files come from the base (except for a pull request of a
+`batch/<point>` branch, whose gate files come from its head: the exception of part 1),
+and the workflow file of a `pull_request` still comes from the head, which part 2 covers
+with the code owner's review. `architecture.md` is edited in the same change, with the
+exception in it.
+
+**How it fits the ADRs.** F-22 is the Operator's direction (comment 6002406785 of
+#119, in `runs/T-evad/findings.md`), later than ADR-0017. ADR-0017 "We reject" code
+owners whose approval comes from a second human account (O-77), as its means of
+preventing a rule change by an agent; here the code
+owner's review is a condition of the ruleset on four path classes (`.github/**`, `docs/gates.tsv`, `docs/gates/**` and the `config` paths of the manifest), for a human
+push or a rule batch, and a task of `M2e` never touches them (the refusal before
+the push, prevention layer 2, stops an agent's change there). It is therefore no
+approval point of the milestone (`architecture.md` §8 and ADR-0019 decision 2 allow
+none inside it but escalations and stalls): in `M2e` no pull request waits for it.
+A rule batch that touches those paths (the activation of the first bet) waits for
+the code owner too: that is an exception to ADR-0019 decision 2 and a use that
+ADR-0017 rejects as a means against agents, so **both ADRs need a note**; it is the
+issue #336, and the batch part is `M2f`'s (both in [Not in M2e](#not-in-m2e)). The
+comment with the decisions of S3 said that no decision changes an accepted ADR; the
+correction of round 2 withdraws that for decision 6 and points to #336. The account
+of the code owner is the Operator's row of `approvers.tsv`; where `CODEOWNERS` is
+written and how the ruleset reaches a target that `M2d` set up is a marker, ‹where CODEOWNERS is written and how its ruleset is applied› (`open-gaps.tsv`): the Operator's apply step, as in `M2d`.
+
+### The tree after the first merge
+
+The tree check of a later start compares the default branch with the head of
+`setup/tree.tsv` only until the first merge after the setup
+([`scaffold.md`](scaffold.md#at-each-later-start)). **Decided here:** from the
+first merge of a task, the check is that the head of the default branch is the
+commit of a `merged` event of `tasks/<task>/events.tsv` (the event that `layup run`
+writes with the merge commit's SHA when the merge call answers), or a descendant
+of one through such commits, **or the merge commit of the pull request of a task of
+the register that the forge shows merged and whose `merged` event is not yet
+recorded**: a lease lost, or a process killed, between the merge call and the records
+commit leaves such a head, and the row `tree` of `forge-check` is `pass` (its detail
+stays `—`, as the block says) while the step's own detail line says
+`tree: <sha> merge of <task>, not yet recorded`, read from the forge with the call
+`PullRequest` ([`forge.md`](forge.md#the-calls-of-m2e)); the step `loop` then writes the
+missing event (the restart rule below). A head with no such explanation fails; a commit that reaches the default
+branch in any other way (the ruleset forbids it, so this is a read-back's
+second line) makes `forge-check` `fail` with the detail `tree: <sha> is not a
+recorded merge`. **Reason:** after the first merge the head is no longer the
+verified setup tree, and the one thing that may move the branch is a task.
+
+## REQ-012 — Shape
+
+Requirement `REQ-012` (`F-0003#51`): Shape writes the specification, the target's
+architecture and the gate-activation batch (`architecture.md` §8). **Decided
+here** (decision 7 of #333): for each architecture decision an **architect
+session** writes at least two options, each with a fixed table, the block
+`options` ([the records](records.md#nfr-001--the-records-of-the-task-loop)): for
+every constraint that applies a `pass` or `fail` with its evidence. **The
+constraints that apply** are listed by code, never by the session: each requirement
+of kind `non-functional` of the draft or the PRD, by its ID `R-NNN` and its criterion (a
+requirement of another kind that the architect names in the column `constraint` of its
+rows is judged too, but no row is demanded for it); each fact of class `constraint` in `spec/spans.tsv` (before the first
+bet; the confirmed constraints of the inventory after it), by `F-<n>`; each
+invariant of the PSB, by `Inv-<n>`; and each accepted decision record of the target,
+by `ADR-NNNN`.
+
+**The filter is code.** An option is **dropped** when a row is `fail`, a row is
+missing (a constraint that applies and has no row), or a `pass` has no evidence
+(the evidence column holds `—`). The filter reads the table, never the session's
+own judgement of it.
+
+- **One survivor** is chosen.
+- **More than one survivor:** in phase 2 no panel sits (the panel is `M3`'s,
+  `REQ-010`), so the bet brief shows the survivors, the dropped options with their
+  failed rows, and **no recommendation**; the bet decides (`architecture.md` §8,
+  "The brief then shows the survivors with no recommendation"). **How the bet
+  decides, decided here:** an option's name is a word of lowercase letters, digits and
+  `-`, so that `<decision>=<option>` holds no space; the answer to the brief has one
+  more line for each such decision, `option <decision>: <option>`, naming one survivor,
+  and an answer with a `bet` and no such line for a decision with more than one
+  survivor is recorded as human input and answers nothing (the brief stays open); code checks that the
+  option is a survivor of that decision's table, and records the choices in the column
+  `options` of the row of `bets.tsv`. **What the architecture task writes before the
+  bet:** the decisions that have one survivor, written as decided, and, for each
+  decision with more survivors, a section `Decision pending the bet` that lists the
+  survivors and decides nothing. **After the bet**, code opens one task of kind
+  `architecture` for each settled decision, with the chosen option in its prompt
+  file, which writes it into the target's architecture; it merges in the merge order
+  below, after the specification.
+- **Every option dropped:** the architect session writes new options once; if they
+  are dropped too, the round made no progress. `layup run` posts a comment on the
+  milestone's issue that names each dropped option with its failed rows, and stops
+  the run as a wait for the Operator (the step's detail says `shape: no survivor`).
+  It writes no row of `stalls.tsv`: that row holds the SHA-256 of a stall package,
+  which with the stall triggers and their procedure is `M3d`'s ([Not in
+  M2e](#not-in-m2e)). **Reason:** open question
+  2 of the inventory; the architecture allows no panel with fewer than two
+  harnesses, and the filter is the part of the solution routing that code does.
+
+The decisions and their options are tasks' outputs: the specification task, the
+target's architecture task and the activation batch are tasks like any other.
+
+### The questions left open
+
+A question still `open` or still `asked` in `questions.tsv` after Intake
+([`intake.md`](intake.md#the-review-of-the-answers-and-the-follow-up)) is read by Shape. **Decided here:** before
+the options of a decision are written, `layup run` asks each such question of the
+owner role of its kind (the idea owner for the intent form, as `intake.md` sets):
+one comment on the milestone's issue, copied into the records, and the answer sets
+the question's state. **An answer to a question of the intent form** is parsed as the
+step `answers` parses it (`B` below `U`, the hours a number): a value that parses is
+written to `budget.tsv` with `source` the question's ID, and replaces the value there
+when the file exists (the answer to Shape's question is the source, as the follow-up
+was in `M2c`); a value that does not parse leaves the question `open` and the run
+in its wait. A question that stays `open` when the brief is made is shown
+in the brief's "rabbit holes" part. The intent form's budget fields (`B`, `U` and
+the hours) are never defaulted: with none of them Shape does not start, and the
+run stops as a wait.
+
+## REQ-012 — The bet
+
+**The Bet** is Decision Points 1 and 3, one bet for each milestone
+(`architecture.md` §8). **Decided here** (decision 8 of #333): a session of the
+Product Owner role writes the **brief**, in five parts:
+
+1. **The problem:** the requirements of the milestone.
+2. **The appetite:** its cap of money and wall-clock, in the fixed line `appetite: USD
+   <n>, <n> hours`, which fits the rule below (`architecture.md` §12).
+3. **The solution:** the architecture, or a proposed change of it, which sends the
+   milestone back to Shape.
+4. **The rabbit holes and the no-gos**, with the fixed line `architecture change:
+   yes` or `architecture change: no`.
+5. At the first bet, **every fact with its class** (`architecture.md` §7 step 7).
+
+Code checks the five headings, the line limit, and that each link resolves; the
+brief names the head SHA and the rule-file hash of each verified batch that it
+asks to approve. `layup run` posts it on the milestone's issue.
+
+- **The line limit** is the parameter `brief.lines`, a row of the Operator
+  (`architecture.md` §10: "the brief's line limit", set at Intake). No source
+  gives its value: `M2c` did not set it. It is a **marker** (row in
+  [`open-gaps.tsv`](../setup/open-gaps.tsv)): ‹the line limit of the bet brief›,
+  and the check refuses a brief while the parameter is unset, with the message
+  `brief.lines is not set`. The Operator sets it, on the evidence that the idea owner gives, with a
+  `set brief.lines <n> because <evidence>` ([The parameter
+  change](#req-012--the-parameter-change)).
+- **The caps.** The appetite of a bet is two columns of its row of `bets.tsv`,
+  `appetite_usd` and `appetite_hours`, read by code from the part 2 of the brief's
+  copy (the brief states them in a fixed line `appetite: USD <n>, <n> hours`);
+  code refuses a brief that does not fit, by `architecture.md` §12: the money
+  caps of the bets so far, this one included, are at most `band.U` of `budget.tsv`
+  ([`records.md`](records.md#nfr-001--the-records-of-intake)), which stays as `M2c`
+  made it; their wall-clock caps are at most `appetite.hours` of the same table; and
+  the bets' caps plus the spend of milestone 0 (`telemetry.tsv`) stay within
+  `band.U`. A cap below `band.B` is allowed. The idea owner can raise `U` or the
+  appetite, or the brief is reshaped. `milestones.tsv` stays phase 3. **Reason:** open question
+  3 of the inventory; the block `budget` takes its `source` from a question, and a
+  bet's answer is not one.
+- **The answer.** The approver of that planned point, the idea owner by default,
+  answers by one comment: a line for each requirement, a line for each fact to
+  change, a line `option <decision>: <option>` for each decision with more than one
+  survivor, and `bet` or `no bet`. Code takes it only from an account whose role in
+  `approvers.tsv` allows the point; `layup run` copies it, and records the bet in
+  `bets.tsv` (the block `bets`). The bet approves the milestone, the architecture
+  and its batches; no other approval sits inside the milestone, apart from
+  escalations (`M3`) and stalls (`M3d`). A requirement changes only at a bet, or by
+  an escalation decision.
+
+**The merge order after a bet:** the specification (or the rendered task), the target's
+architecture tasks, the rule batches, then the build tasks (`layup run` merges the
+base into the branch of each next task, a Shape task included, as `architecture.md` §8
+says for the build tasks, because the branch rule is "up to date"); a bet that changes a class or a priority does not
+touch the approved batches.
+
+### The approvers and the success criteria
+
+Deferred by `M2c` ([`intake.md`](intake.md#not-in-m2c)). **Decided here**
+(decision 12 of #333):
+
+- The **success criteria** of the intent form are read from the answer to its
+  question and kept as the measure rows of the requirement draft
+  ([`records.md`](records.md#nfr-001--the-records-of-intake), the block `draft`):
+  one row for each criterion, with the idea owner's words, and a measure fact that
+  has none is refused by the draft check of `M2c`.
+- The **approver of each planned point** comes from the Intake batch and is a row
+  of `approvers.tsv` with `source` the ID of the answering comment (the column that
+  `M2a` left for it). Code finds the point from the copy of that comment (the
+  batch's line `<point>: <login>`), so that a row of `approvers.tsv` and the point
+  it serves are tied by `source`, as `architecture.md` §3 asks. The **role `approver`** is the one that an approval point
+  names for the account that is neither the Operator nor the idea owner; a point
+  that names no approver is approved by the idea owner.
+- A comment by an account with no row, or in a role the point does not allow, is
+  recorded as human input and answers nothing.
+
+### The revision of the draft
+
+After the answers, a session revises the requirement draft (`architecture.md` §7
+step 5). **Decided here:** code checks that a requirement that covers an answer's
+fact also names the fact of the answer's quote (the link kept by `M2c`:
+[`intake.md`](intake.md#the-raw-fact-of-the-answers)); a requirement that covers an
+answer and not the quote's fact is refused, and the session gets the finding in a
+new attempt. The revised draft is the input of the specification task.
+
+### The rendered commit and the confirmed inventory
+
+At the first bet, code adds the **rendered commit** to the specification's head
+(`architecture.md` §7 step 7). **Decided here:**
+
+- The commit changes only the MoSCoW and Phase columns of the requirement tables,
+  the non-goals and the numbered facts record, from the idea owner's answer;
+  nothing else of the PRD or of the facts. `layup/rules` passes it only when it
+  equals code's rendering of the copy of the bet's answer, by [the basic
+  rule](#layuprules).
+- The **confirmed inventory** is what `architecture.md` §7 step 8 says: at each
+  bet code writes a new version from that bet's copy, with the numbered facts, their
+  classes and the out-of-scope marks (`spec/inventory-<n>.tsv`, the block
+  `inventory`: one row for each fact, with its class and its mark), and the SHA-256
+  of the version in `spec/inventory.tsv`; `n` counts from 1, and a later bet writes
+  a new version, never a change of one that exists. **The numbered facts record** of
+  the target, `docs/facts/`, is rendered by code from the version, with the
+  confirmed classes: at the first bet on the specification's head, as the rendered
+  commit above. The priorities (MoSCoW and Phase) are not in the version: they are
+  the lines of the bet's copy, which the PRD's columns are rendered from and the rule
+  `classes` of the full check compares. The specification's `layup/spec` check
+  reads the hash.
+- The specification task waits for its bet: its head fails `prd-lint` on the empty
+  MoSCoW and Phase cells, which code expects: it runs the pinned `prd-lint` itself
+  and accepts the head only when each failure line names an empty MoSCoW or Phase
+  cell (`architecture.md` §8 step 5).
+- At a later bet, code renders the change as a rendered task of its own, with a
+  plan ("render from copy N") that a plan-review and a verifier session check.
+
+## REQ-012 — The full spec check
+
+`layup spec check` is the command of the whole specification step
+(`architecture.md` §7); `M2c` built the part on the numbered spans
+([`intake.md`](intake.md#the-span-check)). **Decided here** (decision 9 of #333): the
+full check adds these rules, in this order, each a row of the table
+`tasks/<task>/spec-check.tsv` (the block `task-spec-check`: rule, result, detail),
+one table for each head:
+
+| Rule | Fails when |
+| ---- | ---------- |
+| `covers` | a `covers` ID does not resolve to a fact of the confirmed inventory or of the answers |
+| `needs` | a `need` or `constraint` fact has no requirement, and it has no out-of-scope mark and no requirement marked "waits for a bet" |
+| `measures` | a `measure` fact has no success-criterion row that cites its ID, and it has no out-of-scope mark and no requirement marked "waits for a bet" |
+| `criteria` | a requirement has no criterion |
+| `classes` | a MoSCoW or Phase value in the PRD differs from the latest copy of the bet |
+| `inventory` | the SHA-256 of a version of the inventory is wrong |
+| `quotes` | a requirement covers an answer's fact and not its quote's fact |
+| `sections` | a delivered requirement has no non-empty `docs/spec/` section whose heading holds its ID |
+| `tasks` | a task of the register names no requirement (the column `requirements` of `tasks.tsv` is never `—`) |
+| `ran` | a rule did not run (`did not run`, never a pass, `NFR-004`) |
+
+**Before the first bet** no inventory is confirmed (`architecture.md` §7, the end).
+**Decided here:** a task that changes the PRD or `docs/spec/` is checked against the
+numbered facts of Intake (`spec/spans.tsv` and the answers) by the rules `covers`,
+`needs`, `measures`, `criteria`, `quotes`, `sections`, `tasks` and `ran`, and the
+rules `classes` and `inventory`, which have nothing to judge against, are `clear` on
+that table, each with the reason `before the first bet`; the status is then `success`
+only when each other rule is `pass`. Any other task is `clear` for the whole table
+with the reason `no specification yet`, and the status is `success`. After the first
+bet each rule is `pass` or `fail`. The rows are committed as the table `tasks/<task>/spec-check.tsv`, with the head SHA
+in the first column that `layup run` adds (the block `task-spec-check`); they are not
+the table of `layup spec check --facts`, whose rule `classes` is another rule of
+another block `spec-check` (`M2c`). The full check is a function of `internal/spec`
+that `layup run` calls in process for the status `layup/spec`; **no command of the
+binary runs it in `M2e`**: `layup spec check` keeps its flag `--facts`, and a CLI form
+for the PRD, `docs/spec/` and the register is a later task. The rule `ran` makes a
+missing row a failure. The function returns the table; it has no exit code, as no
+command of the binary runs it (the status `layup/spec` is `success` when no row is
+`fail`).
+
+## REQ-012 — The parameter change
+
+Every value that the Operator or the idea owner can set is a row of
+`parameters.tsv` (the block `parameters`; `architecture.md` §10). **Decided here**
+(decision 10 of #333): **the first writer** is `layup run`, which writes every row of
+the table of `architecture.md` §10 with its default (a value that has none is `—`, and
+the parameters that Start sets, `lease.H`, `watch.T` and the intake cap, take their
+values from `start.tsv`, the evidence being the command; the band `B`, `U` and the
+hours of the intent form are **not** parameter rows: `budget.tsv` is their one home
+and a bet changes them as a rendered change, `architecture.md` §10) in the commit that writes
+`transitions.tsv`, when the loop first runs. Each row has **one role**: the Operator
+for most rows and for `brief.lines`, `build.parallel` and `transitions`; the idea
+owner for the allowed dependencies. A change is a comment on the control issue (`layup run`
+opens it at Start) in the form
+
+```
+set <name> <value> because <reason>
+```
+
+`layup run` copies the comment, and checks, in this order:
+
+1. the **author**: an account whose role in `approvers.tsv` the row allows (the
+   Operator for most rows; the idea owner for the allowed dependencies);
+2. the **name**: a row of `parameters.tsv`;
+3. the **value**: of the row's type;
+4. the **bound** of the row, which says what the value cannot do (no parameter
+   removes a PSB rule, O-84).
+
+The type and the bound of each name are held by the binary, in a table that is
+`architecture.md` §10 in code; the column `bound` of `parameters.tsv` is that bound
+written in words for a reader, and the two are compared by the owner's test.
+
+A change that passes is a new row of `parameters.tsv` and takes effect **at the
+next step boundary**; a change that takes effect on an open task is input to that
+task. A refused change is recorded as human input, names the refused item, and
+changes nothing. `architecture.md` §10 lets the idea owner change "the intent rows": in `M2e` they are not parameter rows (the band and the hours are `budget.tsv`, changed by a bet), so the idea owner's rows are the allowed dependencies. The parameters that `M2e` reads are `brief.lines`, `build.parallel`,
+`transitions` and the allowed dependencies; the others are read by their
+milestones.
+
+### The Retrospective
+
+`architecture.md` §8 puts a Retrospective between the Accept and the next Bet. In
+phases 2 and 3 **decided here** (open question 4 of the inventory) it is a step
+with **no session**: code writes its event and goes to the next Bet. Proposals for
+a rule batch that came from refused rule-path changes are collected for `M2f`; the
+lessons and `layup learn` are phase 4. **Reason:** `architecture.md` §13 gives the
+retrospective its content in phase 4, and an empty step that is a row keeps the
+loop's order and no more.
+
+## REQ-005 — The steps of the loop after the Scaffold
+
+**Decided here.** `layup run` goes on, after the steps of the Scaffold
+([`scaffold.md`](scaffold.md#the-steps-of-the-scaffold)), with the steps `shape`,
+`bet` and `loop`; the block `run-steps` takes each name into its enum with its Go
+schema in the build task, as `M2c` and `M2d` did.
+
+- **`shape`** runs the Shape tasks that `M2e` can verify (the specification and the
+  target's architecture; the activation batch is `M2f`'s and joins the step then)
+  through the task loop of this file, up to the verified head of each, which
+  `architecture.md` §8 asks before the bet; it also writes the
+  options of each decision and asks the questions left open. It is **done** when each
+  decision's table in `spec/options/` has a survivor and each Shape task has a
+  verified head; a decision with no survivor leaves the step with the detail
+  `shape: no survivor`, which is not "done before", so a restart stops there again
+  and never goes on to `bet`.
+- **`bet`** posts the brief, waits for the answer, copies it, writes the version of
+  the inventory, pushes the rendered commit to the specification's branch (with its
+  carry-over of `layup/verify`), opens the `architecture` tasks of the settled
+  decisions (rows of `tasks.tsv`; each with `requirements` the requirement IDs among
+  the `constraint` values of the chosen option's rows, and a decision whose table
+  names none is refused, as an architecture decision serves a requirement), and writes
+  the row of `bets.tsv` **last**. It is done when that row exists with its verdict, so
+  a stop before it resumes inside `bet`, and no later step runs on a half-made bet.
+- **`loop`** merges the Shape tasks in the merge order after a bet (the specification
+  first), then runs the tasks that the register holds; the build tasks are `M2g`'s.
+
+The record of each step: for `shape`, the files of `spec/options/`, the rows and the
+`tasks/<task>/` files of its tasks; for `bet`, `bets.tsv`, the copies of the brief and
+of the answer, and `spec/inventory.tsv`; for `loop`, the rows of `tasks.tsv`,
+`transitions.tsv` and each `tasks/<task>/` file.
+
+- **A restart resumes from the records and the forge, never from memory.** A step
+  whose record exists is `done` with "done before", but `shape` and `loop`, which
+  have their own rule above and below (a record of `shape` that holds a decision with
+  no survivor, or of `loop` that holds an open task, is not "done before"). The `loop` step reads
+  `tasks.tsv`, the events of each task and the forge (the pull request of the
+  branch `task/<task>/<attempt>`, the statuses of its head) and goes on from the
+  first step of the task loop (the table of [The task loop](#req-005--the-task-loop))
+  that its records show not done.
+- **A write is read before it is repeated.** Before `layup run` posts a comment,
+  opens a pull request, posts a status or merges, it reads the forge: a comment whose
+  SHA-256 is in `copies.tsv` is not posted again, an open pull request of the branch
+  is not opened again, a status already at the state is not posted again, and a
+  merged pull request is recorded with its `merged` event.
+- **The branch of a session that has a `push` and no result.** A `push` event with
+  no `bound` and no `refused` after it is a forge write whose result is not
+  recorded ([`session.md`](session.md#the-push-and-the-bind)). **Decided here:** the
+  `loop` step, before it acts on that session, reads the branch `task/<task>/<attempt>`
+  of the forge: when it holds the SHA of the `push` event, the step writes the missing
+  `bound` event; when it does not, it writes `refused` with the detail `push-lost`
+  and starts a new attempt.
+- **The comments of a session** ([`session.md`](session.md#a-comment-for-a-session)):
+  from `M2e` the comment of a task session is posted on the task's issue and no
+  longer on the control issue, with the same first line; the control issue keeps the
+  comments of the probes and of the phase sessions.
+- The lease, the fencing and the exit codes are those of [`run.md`](run.md); a lost
+  lease stops the run before any write of a step.
+
+## NFR-004 — A check that did not run
+
+`NFR-004` (`F-0001#5`): a check that is not active does not count as passed. In
+`M2e` this holds in four places, each tested:
+
+- `layup/gates`: a `not-active` kind and a `pending` kind with a product path give
+  `failure`; a `clear` is a pass for the reason it names.
+- `layup/verify`: no harness outside the authors is `failure` with `not-active`.
+- `layup/spec`: the rule `ran` of the full check.
+- The merge: a context with no status at the head, a status of another source or a
+  state other than `success` blocks the marking and the merge; the code counts only
+  `success`.
+
+## NFR-001 — The records
+
+Git is the system of record (`F-0001#1`). The records of `M2e`, each a file of
+the records branch that only the App may update (the rulesets of `M2d`), are in
+[`records.md`](records.md#nfr-001--the-records-of-the-task-loop): the task
+register, the transition table, the gates of each head, the frozen test list, the
+spec check of each head, the options of a decision, the bets, the inventory
+versions and the parameters. Each artifact that is a comment is a copy with its
+hash. Nothing of the task loop is kept only on the forge.
+
+## The acceptance tests of M2e
+
+Each test names its level ([`test-levels.md`](../tests/test-levels.md)). The nine
+rows of the inventory item `later-p2-phase-loop-handoffs` (six unit rows, one
+integration row, one e2e row and one uat row; the table below splits the unit rows
+into several) and the two of `later-gate-status` are the rows marked "inventory"; each is
+kept at its level, and the e2e row of `later-gate-status` ("a pull request whose head
+has a failed kind is not marked ready and does not merge") is kept as the integration
+row "The ready and merge rule", because the stand-in forge shows it and the e2e row of
+the milestone covers it end to end.
+
+| Test | Level | What it shows |
+| ---- | ----- | ------------- |
+| A handoff is valid only by its table (inventory) | unit | A handoff with a wrong schema, an artifact that is not in the commits, a hash that differs, a required item that is false, and a pair with no row is each invalid, naming the item; a field that an agent writes never makes one valid; a comment artifact whose body at the forge differs from its copy is invalid. |
+| The artifact that is a comment (`gov-issue-68`) | unit; integration | With the stand-in forge, for each of the kinds `plan`, `plan-review` and `review-record`: the session's file, the comment that code posts from its bytes, the copy and its row, the `handoff` event with the comment ID that code read, the three equal hashes; an edited comment is a new copy and the first handoff is invalid; a result that holds a comment ID is refused; a `comment` row is checked against the session's `result/` file and an `artifact` row against the head. |
+| The transition table | unit | The default rows are the thirteen of the table (the twelve of `architecture.md` §8 and the row of the target's architecture task, which §8 names a task and gives no row); a replacement by `set transitions` with a missing default pair, or a kind or an item not in the lists, is refused, and the steps that are `layup run`'s own acts need no row; the old table stays in history. |
+| `layup spec check`, the full check (inventory) | unit | Each rule of the table fails on its input and passes on its fixture; before the first bet a task that touches neither the PRD nor `docs/spec/` is `clear`; `did not run` is a failure. |
+| `layup/gates` (inventory, `later-gate-status`) | unit; integration | Each row combination maps to the status by the table, `not-active` is never a success, a `pending` kind with a product path is `failure`; with the stand-in forge, the status is posted once for an unchanged state. |
+| `layup/rules`, the basic rule | unit | A change to a rule path fails; a rendered record equal to code's rendering passes; one that differs by a byte fails; the register is read at the base. |
+| `layup/verify` and the independence | unit | The authors of a plan review and of a verification from the ledger; no harness outside them is `failure` `not-active`; a waiting verifier is `pending`. |
+| The ready and merge rule (inventory, `later-gate-status`) | integration | With the stand-in forge, a pull request whose head has one context not `success`, no status, a status of another source, or an `error`, or a required job of GitHub Actions with no check run or a conclusion other than `success`, is not marked ready and does not merge; with the four `success` it is marked ready and merged at the head SHA, and a moved head is refused. |
+| The close-out commit and the rendered commit | integration | A close-out that changes only the task file and the completed log, on a parent that carries the verdict, is accepted and `layup/verify` is set on the new head; one that changes another file, or whose parent does not carry the verdict, is refused; the rendered commit of the first bet gets the same carry-over, and the close-out after it is accepted. |
+| The steps after the Scaffold | integration | A restart resumes the `loop` step from the records and the forge: a comment, a pull request, a status or a merge that exists is not made again; a `push` with no result is bound when the branch holds its SHA and `refused` with `push-lost` when it does not; a task session's comment is on the task's issue; a merge whose `merged` event was lost passes `forge-check` with its detail and `loop` records the event; `shape` with a decision that has no survivor is not "done before" and a restart stops there. |
+| The bet step is atomic to its last act | integration | A stop after the inventory version and before the row of `bets.tsv` resumes inside `bet`: the rendered commit and each `architecture` task are not made twice, and the row is written last; a decision whose chosen option names no requirement is refused. |
+| The tier and the context of a task (`session.md` deferral) | unit | The tier from the four fields of a plan (`large`, any non-empty list: reasoning; else execution), moved by the progress position (uphill to reasoning, downhill to execution); the prompt file lists the issue and plan, the rows and sections of the requirement IDs, the decision records they name, the handoffs and answers, and the rule files, in that order, each with its SHA-256. |
+| The questions left open and the band (`intake.md` deferral) | integration | With the stand-in forge: an `open` and an `asked` question are asked of the owner role; an intent answer that parses (`B` below `U`) writes `budget.tsv` with the question as `source` and replaces a value that exists; one that does not parse leaves the question `open` and the run in its wait; a question still `open` at the brief is shown in "rabbit holes". |
+| The approvers and the success criteria (`intake.md` deferral) | unit | The measure rows read from the intent answer; an approver row with `source` the answering comment ties to its point; a role `approver`; a point with no approver is the idea owner's; the revision's check that a requirement that covers an answer's fact names the quote's fact. |
+| The task register and the Retrospective | unit | A row with a predecessor that is not a task, a cycle of predecessors, or `—` in `requirements` is refused; the Retrospective step writes its event and no session starts. |
+| The Shape filter (inventory) | unit | An option with a failed row, a missing row or a pass with no evidence is dropped; one survivor is chosen; two survivors give a brief with no recommendation, and an answer line `option <decision>: <option>` naming a dropped option or an unknown decision is refused and one naming a survivor is recorded in `bets.tsv`; every option dropped asks one rewrite, and a second full drop is a round with no progress. |
+| The bet and its brief (inventory) | unit | The five headings, `brief.lines` unset is refused, a link that does not resolve is refused, two bets of 0.6 `U` each (the second brief), a cap above `band.U`, hours above `appetite.hours` and caps plus the spend of milestone 0 above `band.U` are each refused, and a cap below `band.B` passes, an answer by an account with no allowed role answers nothing, and the answer is copied. |
+| The rendered commit (inventory) | unit | The commit may change only the MoSCoW and Phase columns, the non-goals and the numbered facts record; `layup/rules` passes a rendered record only when it equals code's rendering of the named copy. |
+| The parameter change (inventory) | unit | A `set` is refused for a wrong role, an unknown name, a value out of bound, and is applied at the next step boundary; a `prd-lint` head is accepted only when each failure line names an empty MoSCoW or Phase cell. |
+| The frozen test list | unit | The list freezes at the first valid handoff to the verifier, a changed source hash is a finding, an amendment freezes it again, and a test that does not fail at the base makes the handoff invalid. |
+| The gate jobs read the base (F-22) | integration | A pull request that edits `docs/gates.tsv` to pass a failing kind is judged by the base's file and fails; the catalog workflow reads the base; a pull request of a `batch/<point>` branch reads its own head's gate files and a pull request of any other branch does not; a change of a `config` path of the manifest waits for the code owner. |
+| The task loop with the stand-in forge (inventory) | integration | With the httptest forge, fake harness programs and the real git: a gate failure goes back to the developer as a new attempt; the close-out commit is refused when it changes a file other than the task file and the completed log; the pull request body links the records commit; the merge is at the head SHA. |
+| The specification task, end to end (inventory) | e2e | In CI on a local fake forge, with scripted harnesses and scripted approver comments: Shape, the first bet, and the specification task merged with the four `layup/` statuses green. |
+| The demo (inventory) | uat | On a real test target, the idea owner reads a bet brief of five parts within the line limit and answers it with one comment; the specification task merges after the first bet, with each handoff valid, the rendered commit holding the MoSCoW and Phase columns, and the four `layup/` checks green. |
+
+### The demo and the release review
+
+Defined here, as acceptance contracts; the rows, their IDs, issues and the inputs
+that each asks are the slicing task's.
+
+**The demo** (REQ-015) is the last row of the table: on a real GitHub test target
+that `M2d` set up, a specification task goes through the loop, Shape runs with its
+filter, the idea owner answers the brief with one comment, the rendered commit is
+added, and the task merges at its head SHA with the four statuses `success`. As the
+demo of `M2d` held five rules (`runs/T-sdtb/README.md`), this one passes when each of
+five rules holds on the target and fails when one is false: (1) each handoff of the
+task is a `handoff` event `valid`; (2) the rendered commit changes only the MoSCoW and
+Phase columns, the non-goals and the facts record; (3) the four `layup/` statuses are
+`success` at the merged head, read from the forge; (4) the merge is the recorded
+`merged` event at that head SHA; (5) a pull request that weakens its own gate is
+refused. The evidence is kept under `runs/` by the slicing task's demo row, the Operator
+accepts the scenario in one word before the review, and a defect that the demo
+finds is a task of its own. **The inputs** it needs from the Operator (for the
+slicing task to ask): the commit-statuses, pull-requests and checks `read` permissions of the App, at least
+two admitted harnesses (`architecture.md` §9), the confirmation of the reading of
+`F-0003#58` (a pull request "reaches human review" when a review is requested or it is
+marked ready), a target whose plan allows draft pull requests (GitHub refuses a draft
+pull request in a private repository of the Free plan, so the target is public or on a
+plan that allows it),
+the `CODEOWNERS` apply, the value of `brief.lines`, and the idea owner's account.
+
+**The review of the release** (REQ-015 and REQ-017) is a recorded code review of the
+release of `M2e` by a reviewer of a model that wrote none of it, with the release
+check of `runs/T-efmy/release-check.sh` on the release commit, before the demo, with
+a coverage table of the files read that a script compares with `git ls-files`.
+
+## Not in M2e
+
+The batch part of `layup/rules` (an approved rule batch, its approval hash, the
+known-bad patches, the activation of the `pending` kinds at the first bet) and
+`layup audit` (`M2f`); the Operator's code-owner review of a rule batch that touches
+the gate paths and the amendment of ADR-0017 and ADR-0019 decision 2 that records the use of code
+owners (#336, `M2f` or earlier). A bet that raises `U` or the appetite, which `architecture.md` §10 makes a rendered change of `budget.tsv` (a later milestone; in `M2e` a brief that does not fit is reshaped), and a command form of the full check for the PRD, `docs/spec/` and the register (a later task). The escalation screen of an answer (`M3`) and the stall package, the stall
+triggers and their procedure, which Shape's round with no progress and the loops of
+failures wait for (`M3d`). The milestone plan, the build tasks and their merge order,
+the execution of the named tests of a plan and Accept (`M2g`). The smart-if that
+gives the kind and `needs_human` of a question (`M3a`). The panel of Shape and the
+stall triggers (`M3`, `M3d`). The lessons and `layup learn`, the Retrospective's
+content (phase 4). `layup report` and the Inter-Role Communication Format share
+(`M4b`). The adoption of a target that phase 1 set up (none, O-200).

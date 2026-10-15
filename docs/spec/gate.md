@@ -196,7 +196,7 @@ ends, so no progress line comes inside them.
 ### Not in phase 1
 
 - **The commit status `layup/gates`** that `layup run` posts from this table
-  (§6): phase 2, with `layup run` and the forge adapter.
+  (§6): specified in `M2e` ([`loop.md`](loop.md#layupgates)), with `layup run` and the forge adapter.
 - **A rule batch's own gate files** on its head, and the run with each recorded
   known-bad patch and the approval hash (§6 Activation): phase 2, with the
   rule batches of `REQ-003`.
@@ -226,7 +226,7 @@ gate is deterministic where a rule can be checked mechanically." Derives from
 
 **Not in phase 1:** the status `layup/gates` as a required check, and the rule
 that no pull request is marked ready or merged while a selected kind did not
-run (§8 steps 5 and 8): phase 2, with `layup run`.
+run (§8 steps 5 and 8): `M2e` ([`loop.md`](loop.md#the-ready-and-merge-rule)), with `layup run`.
 
 ## NFR-004 — A check that is not active is not passed
 

@@ -422,7 +422,7 @@ of `B`, `U` and the hours from the answer to its follow-up, else from the batch,
 and writes `budget.tsv` when the three parse with `B` below `U` (**decided
 here**: the follow-up of an intent value asks the same field); a value still
 missing or unparsed leaves `budget.tsv` unwritten and sets the state of its
-question of the intent form to `open`, and Shape (`M2e`) asks it. When
+question of the intent form to `open`, and Shape (`M2e`, [`loop.md`](loop.md#the-questions-left-open)) asks it. When
 `budget.tsv` is written already and the follow-up asks a field of the intent
 form again (the review left it `open`), a parsed answer replaces that value in
 `budget.tsv`, its one home, with the follow-up as its `source` (**decided here**,
@@ -442,7 +442,7 @@ the follow-up does not parse. The answers, their states, the questions set
 `open` and `budget.tsv` are one records commit, and the step's detail says that
 Intake is done.
 **Decided here:** one follow-up round in `M2c`; a question still `asked` or
-`open` after it stays so in `questions.tsv`, and Shape (`M2e`) reads it.
+`open` after it stays so in `questions.tsv`, and Shape (`M2e`, [`loop.md`](loop.md#the-questions-left-open)) reads it.
 **Reason:** `architecture.md` §5 step 6 asks again "in one comment", and a loop
 with no bound waits on a human with no end.
 
@@ -534,13 +534,13 @@ quotes and their check (`M2d`, decision 9 of #206;
 [`scaffold.md`](scaffold.md#req-002--the-setup-questions-in-the-one-batch)), with
 the step `markers` between `completeness` and `batch`; the file of the raw fact
 under `docs/facts/` (`M2d`); the success criteria in the intent form, the
-approver of each approval point and the role `approver` (`M2e`, decision 10);
+approver of each approval point and the role `approver` (`M2e`, [`loop.md`](loop.md#the-approvers-and-the-success-criteria));
 the revision of the draft with the answers, the check that a requirement that
 covers an answer's fact names the quote's fact (`architecture.md` §7 step 5),
-the first bet, the rendered commit and the confirmed inventory (`M2e`); the
+the first bet, the rendered commit and the confirmed inventory (`M2e`, [`loop.md`](loop.md#the-revision-of-the-draft)); the
 owner map (phase 3); the smart-if provider and its authority (`M3a`); the
 actions of the band `B` and `U` and the accepted bounds of an unknown part
-(`M3a`, `M3b`); the caps of later milestones (`M2e`); the pilot baseline block of
+(`M3a`, `M3b`); the caps of later milestones (`M2e`, [`loop.md`](loop.md#req-012--the-bet)); the pilot baseline block of
 the Intake answer (`architecture.md` §5; `baseline.tsv`, phase 4); the Early
 Question Share (`M4b`).
 

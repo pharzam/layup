@@ -101,7 +101,7 @@ session uses.
    six capabilities and that the installation has the permissions that `M2a`
    uses (contents, issues: write; metadata: read), and records each permission of
    the installation in `app.permissions`. A missing permission of a later
-   milestone (commit statuses, `M2e`) is recorded, not a `fail`. The repository
+   milestone (commit statuses, pull requests and checks `read`, `M2e`, [`forge.md`](forge.md#the-calls-of-m2e)) is recorded, not a `fail`. The repository
    must exist and have no branch (O-163; `Repository` gives the names of the
    branches). It reads the numeric IDs of `--operator` and `--idea-owner`; an
    unknown login is `fail`. It reads the ID of the App's bot (`<slug>[bot]`),
@@ -366,7 +366,7 @@ with the same title.
 The adoption of a phase-1 target (none: O-200, `M2d`); the Scaffold, the rulesets, the
 probes and the forge read-back of the rules (`M2d`, [`scaffold.md`](scaffold.md)); the gap check and the
 answers (`M2c`); role sessions, the harness probe, admission and the harness
-credential (`M2b`, K40: [`session.md`](session.md)); the commit status `layup/gates` (`M2e`); the dead-man
+credential (`M2b`, K40: [`session.md`](session.md)); the commit status `layup/gates` and the task loop (`M2e`, [`loop.md`](loop.md)); the dead-man
 job itself (`M3d`; `M2a` only reads its notice).
 
 ## NFR-006 — The target's pin at Start
@@ -409,5 +409,5 @@ resolved pin and the root commit come from the same calls as S02 and S03 of
 
 The plan hosts nine findings here ([`docs/plan/README.md`](../plan/README.md#the-findings-of-the-first-pilot-that-are-not-fixed)).
 `M2a` changes none of them: F-2, F-6, F-13, F-16, F-19, F-31 and F-35 are in
-`M2d` ([`scaffold.md`](scaffold.md#the-findings-of-the-first-pilot)), F-21 in `M2c`, and F-37 in `M2e` and `M2g`, each with its reason in the
+`M2d` ([`scaffold.md`](scaffold.md#the-findings-of-the-first-pilot)), F-21 in `M2c`, and F-37 in `M2e` ([`loop.md`](loop.md#the-merge-at-the-head-sha-and-the-close-out-commit)) and `M2g`, each with its reason in the
 plan.

@@ -21,8 +21,8 @@ fail, naming it.
 | Capability (§1) | Interface method | First used in |
 | --------------- | ---------------- | ------------- |
 | issues and comments, with the actor and whether an App made it | `OpenIssue`, `Comments(issue)`, `Comment(issue, body)` | `M2a` (steps 7 and 8 of [`run.md`](run.md#the-steps-of-layup-run---new)); `Comment` in `M2b` (the comment of a session) |
-| pull requests with a draft state | `OpenDraft`, `MarkReady`, `Merge` | `M2e` |
-| commit statuses bound to a source | `SetStatus` | `M2e` |
+| pull requests with a draft state | `OpenDraft`, `MarkReady`, `PullRequest`, `Merge` | `M2e` ([The calls of M2e](#the-calls-of-m2e)) |
+| commit statuses bound to a source | `SetStatus`, `Statuses` | `M2e` ([The calls of M2e](#the-calls-of-m2e)) |
 | branch rules with bypass actors, read back | `EffectiveRules(branch)` | `M2d` ([`scaffold.md`](scaffold.md#the-read-back)) |
 | the repository activity with its actors | `Activity(ref)` | `M2d` (the activity read of the forge check, [`scaffold.md`](scaffold.md#the-activity-read)); `layup audit` in `M2f` |
 | an App identity for LAYUP with scoped permissions | `Token`, `Installation`, `UserID(login)`, `Repository` | `M2a` (step 1 of `run.md`) |
@@ -173,6 +173,43 @@ defect of this table. The push of the probe is a `git` call, not an API call.
   commit `9492527246942bb85a2e05ad167881076c27835a`): `EffectiveRules`, `Metadata`
   read; `Activity`, `Contents` read. The App has `contents` `write`, which holds
   `read`, and `metadata` `read`, so `CheckPermissions` does not change.
+
+## The calls of M2e
+
+The same API and version header as [The calls of M2a](#the-calls-of-m2a) (task
+`T-xs4y`, #333; [`loop.md`](loop.md#req-007--the-four-layup-statuses)).
+
+| Method | Call | What it gives `layup run` |
+| ------ | ---- | ------------------------- |
+| `OpenDraft` | `POST /repos/{owner}/{repo}/pulls` with `draft` true, the head branch, the base, the title and the body | the pull request's number, its node ID and its head SHA; it requests no review |
+| `MarkReady` | the GraphQL mutation `markPullRequestReadyForReview` with the node ID (the REST API has no call that leaves the draft state) | the pull request, no longer a draft; **to confirm in GitHub's documentation at the build** |
+| `SetStatus` | `POST /repos/{owner}/{repo}/statuses/{sha}` with `state` (`success`, `failure`, `pending` or `error`), `context` and `description` of at most 140 characters | the status for that SHA and context; it is bound to the head SHA that the caller gives, and it is posted again only when its state or its description changes |
+| `Statuses` | `GET /repos/{owner}/{repo}/commits/{sha}/statuses`, every page, and `GET /repos/{owner}/{repo}/commits/{sha}/check-runs`, every page | each status of the head with its context, state and creator (the App or another), and each check run with its name, `conclusion` and the App that made it (a job of GitHub Actions is a check run of the App with the ID 15368) |
+| `PullRequest` | `GET /repos/{owner}/{repo}/pulls/{number}`, and `GET /repos/{owner}/{repo}/pulls?head={owner}:{branch}&state=all` to find the pull request of a branch | the pull request's state, whether it is merged, its merge commit's SHA, its head SHA, its draft flag and its node ID |
+| `Merge` | `PUT /repos/{owner}/{repo}/pulls/{number}/merge` with `sha` the head SHA and `merge_method` `merge` | the merge commit; GitHub refuses (409) a head that moved |
+
+**Decided here** (decision 5 and 6 of #333):
+
+- **The permissions** beyond those of `M2a` are pull requests `write` (`OpenDraft`,
+  `MarkReady`, `Merge`) and commit statuses `write` (`SetStatus`; both are in
+  `architecture.md` §3); `Statuses` needs `read` of both and checks `read`, which ADR-0014 decision 3 does
+  not list: it is **an amendment of that decision**, asked in #336 and granted by the
+  Operator with the others (a draft pull request's `mergeable_state` is `draft`, never
+  `clean`, so it cannot say that the native jobs are green before the pull request is
+  marked ready). `CheckPermissions` reads the three, and a missing
+  one is a `fail` of the step `forge` that names it. The Operator grants them
+  (`gov-operator-setup-o112`).
+- **`PullRequest`** also serves the restart and the tree rule ([`loop.md`](loop.md#the-tree-after-the-first-merge)): the merged state and the merge commit of a task's pull request, and the pull request of a branch.
+- **A comparison reads, never trusts.** The ready and merge rule reads `Statuses` (a check run: the newest of each name, `filter=latest`)
+  just before each of `MarkReady` and `Merge`; a context counts only when it is
+  `success`, its creator is the App, and it is the newest status of that context at
+  the head. A required check of another source with the same name does not count.
+- **The stand-in** of `internal/standin` and the httptest forge each give the six
+  methods, a status list that a test sets, a pull request whose head a test moves
+  (to give the 409), and a status of another source.
+- The permission that each call needs, and the fields above, are read in GitHub's
+  documentation at the date of the build task; a difference from this table is a
+  defect of this table.
 
 ## Forge errors
 

@@ -139,9 +139,10 @@ actor.
 - **LAYUP.** `layup run` alone holds the App's private key and makes an
   installation token from it for each hour of work. The App's permissions are
   those of O-92 (contents, issues and pull requests: write; metadata: read) plus
-  commit statuses (write); no workflows and no administration. For the pilot
-  this is the App `layup-agent`, installed on each target and given the
-  commit-statuses permission; both changes are the Operator's.
+  commit statuses (write) and checks (read, to read the native jobs of a head: the
+  amendment of ADR-0014 decision 3 is issue #336); no workflows and no administration.
+  For the pilot this is the App `layup-agent`, installed on each target and given the
+  commit-statuses and checks permissions; both changes are the Operator's.
 - **Humans.** The accounts in `approvers.tsv`, each by the forge's numeric user
   ID and a role: Operator, idea owner (both from Start; they can be the same
   person), or approver (named by the idea owner at Intake for a planned point).
@@ -490,9 +491,12 @@ head's gate files for a status (FT4), with one exception: an approved rule batch
 whose rule files are the approved ones (below). Before its approval, a batch's own
 gate files run only in a scratch work tree, as evidence for its verifier and its
 brief, never as a status. The LAYUP host needs each stack's toolchain
-(L-B1). With LAYUP absent, the target's own CI runs the workflow and the manifest
-of the pull request's head; FT4 then rests on the rulesets and on review, not on
-LAYUP.
+(L-B1). With LAYUP absent, the target's own CI runs the workflow of the pull request's
+head, and each gate job takes the manifest, the `config` paths and `gates.sh` from the
+base (a pull request of a `batch/<point>` branch takes them from its head, with the
+code-owner review below as its control; issue #345); a change to `.github/**`, `docs/gates.tsv`, `docs/gates/**` or a `config` path of the manifest needs the
+Operator's review as code owner (F-22, [`loop.md`](spec/loop.md#the-gate-jobs-read-the-base));
+FT4 then rests on the rulesets and on review, not on LAYUP.
 
 **Activation.** Each rule batch that adds or changes a gate kind carries one new
 known-bad patch per kind it touches, and may replace a recorded patch of such a
@@ -732,13 +736,15 @@ a verifier session check them as for any task.
   verified batch that it asks to approve. `layup run` posts it on the milestone's
   issue. The approver of that planned point (the idea owner by default, from
   Intake) answers by one comment: a line per requirement, a line per fact to
-  change, and "bet" or "no bet". The bet approves the milestone, the architecture
+  change, in phase 2, where no panel recommends, a line `option <decision>: <option>`
+  for each decision with more than one surviving option
+  ([`loop.md`](spec/loop.md#req-012--shape)), and "bet" or "no bet". The bet approves the milestone, the architecture
   and its batches; there is no other approval inside the milestone, apart from
   escalations (§10) and stalls (§11). A bet that changes a class or a priority
   does not touch the approved batches: at the first bet, code adds the rendered
   commit to the specification's head (§7 step 7); at a later bet, it renders the
   change as a rendered task. **Merge order after a bet:** the specification (or
-  the rendered task), the rule batches, then the build tasks. A requirement changes only
+  the rendered task), the target's architecture tasks, the rule batches, then the build tasks. A requirement changes only
   at a bet, or by an escalation decision (§10).
 - **Build.** A plan task splits the milestone into build tasks, each with the
   requirement IDs it serves, the tests that will show it done, a size class, and

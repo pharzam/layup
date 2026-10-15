@@ -449,6 +449,13 @@ omits at its default ([The read-back](#the-read-back)).
 | `pull_request` | those of phase 1 (no required review, thread resolution required), with `allowed_merge_methods` `["merge"]` (F-19: the target's rules forbid a squash and a rebase) and `require_extra_approval_for_unattributed_changes` `false` (F-19: no rule of the target asks for it, and the pilot saw that it did not block a pull request) |
 | `required_status_checks` | `strict_required_status_checks_policy` `true`; one check per gate job, its `integration_id` that of GitHub Actions, 15368, as in phase 1 (V-21 of `docs/setup/record-T-n1hp.md`); and `layup/gates`, `layup/spec`, `layup/verify` and `layup/rules`, each with `integration_id` the `app_id` of the forge register (§6: each `layup/` check pinned to the App) |
 
+**From `M2e`** ([`loop.md`](loop.md#the-gate-jobs-read-the-base), F-22): the rule
+`pull_request` also sets `require_code_owner_review` `true` with
+`required_approving_review_count` `0`, so that a change to `.github/**`,
+`docs/gates.tsv`, `docs/gates/**` or a `config` path of the manifest waits for the Operator as code owner; the build
+task of `M2e` writes it, and its effect with no required approval is to confirm on
+a real repository.
+
 **Decided here:** `creation` and the two parameters of `pull_request` are
 written in phase 1 too, as `WORK/out/ruleset-default.json` is a file of the
 work area, not of the target's tree, so no target commit changes;
@@ -687,7 +694,7 @@ commit (Git history keeps each); a row that is not `pass` stops the run at that
 step, as `architecture.md` §3 says ("stops when a rule is missing"), and the
 steps after it have no row. The tree check of a later start compares the default
 branch with the head of `setup/tree.tsv` only until the first merge after the
-setup (`M2e`), which adds its own rule; in `M2d` no merge follows the setup.
+setup (`M2e`, [`loop.md`](loop.md#the-tree-after-the-first-merge)), which adds its own rule; in `M2d` no merge follows the setup.
 
 **The Scaffold is done** (**decided here**, task `T-2j13`, #281, with the
 conditions of its plan review) when `setup/forge-check.tsv` is in the records,
@@ -865,7 +872,7 @@ fail nothing. The function is found by its name, so a second call of
 
 The adoption of a target that phase 1 set up (none, O-200). The commit statuses `layup/gates`, `layup/spec`, `layup/verify` and
 `layup/rules` themselves, the first merge after the setup and the tree rule
-that follows it (`M2e`); `layup audit` and its judgement of the activity
+that follows it (`M2e`, [`loop.md`](loop.md)); `layup audit` and its judgement of the activity
 (`M2f`); the activation of the `pending` kinds at the first bet (`M2f`); the
 pilot baseline block of the Intake answer (`baseline.tsv`, phase 4); the
 dead-man job (`M3d`).
