@@ -310,4 +310,7 @@ func TestAGuardrailsValueIsSplitAtTheFirstAndTheLastSpaceAndParenthesis(t *testi
 	same(t, "a path with ' (' and no file before it", guardrailsFindings(tree), []string{"check: Inv-1 names \"docs/check\", which is not a file"})
 	same(t, "a job name with ' ('", guardrailsFindings(entry("README.md (ci:test (linux))")), []string{"check: Inv-1 gate \"linux)\" is not hook or ci:<job>"})
 	same(t, "a job name with '(' and no space before it", guardrailsFindings(entry("README.md (ci:test(linux))")), nil)
+	// An entry runs to the next entry or to the next raw line that starts with "#", also a comment in a code block (round 3 of #326).
+	raw := fstest.MapFS{"docs/guardrails.md": {Data: []byte("- **Inv-1** \u2014 a rule.\n\n```sh\n# a comment\n```\n\nCheck: no check yet\n")}}
+	same(t, "a '#' line in a code block ends the entry", guardrailsFindings(raw), []string{"check: Inv-1 has no valid Check: value (\"\")"})
 }
