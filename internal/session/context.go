@@ -32,8 +32,11 @@ func ContextKinds() []Kind { return append([]Kind(nil), contextKinds...) }
 
 // StepRow is a row of the step table: a step, its role and its tier as
 // docs/architecture.md §9 gives them, and the record kinds of its prompt file.
-// A step of a phase that has no task has no kinds: its prompt reads the
-// input/ files of its own section (intake.md, scaffold.md).
+// A step of a phase that has no task has no kinds: a session of Intake or of the
+// Scaffold reads the input/ files of its own section (intake.md, scaffold.md),
+// and the bet brief and the retrospective lessons have their own sections
+// (loop.md, architecture.md §13). The values by-class and owner-of-its-kind are
+// the table's own words, resolved before routing (session.md).
 type StepRow struct {
 	Step, Role, Tier string
 	Kinds            []Kind
