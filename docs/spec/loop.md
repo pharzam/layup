@@ -280,7 +280,7 @@ agent writes never makes it valid (`F-0003#59`, Sol-21, Fable-M14).
    comment](#the-artifact-that-is-a-comment). A path that is not in the commits,
    or a hash that differs, makes the handoff invalid.
 3. **The required items** of the row, by the table below.
-4. **The pair.** The `from` and `to` of the handoff are a row of `transitions.tsv`.
+4. **The pair.** The `from` and `to` of the handoff are a row of `transitions.tsv`; a pair with no row is `invalid pair` (the one detail that is not an item of the table below).
 5. **The result.** `layup run` writes an event row of the task, `handoff`, in
    `tasks/<task>/events.tsv` with the detail `valid` or `invalid <item>`, and, for
    an artifact that is a comment, after a space `comment <ID>-<seen>` (the kind is
