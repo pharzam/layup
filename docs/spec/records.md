@@ -612,14 +612,14 @@ the files of an earlier session whose rows the runner passed stay
 Milestone `M2e` (task `T-xs4y`, #333): the records that `layup run` writes for the
 task loop, the handoffs, Shape and the bet ([`loop.md`](loop.md)). Each is a file of
 the records branch, which only the App updates (the rulesets of `M2d`). The owners
-are `internal/run` for `tasks`, `transitions`, `task-gates`, `task-tests`, `bets` and
-`parameters`, `internal/spec` for `inventory`, `inventory-index`, `options` and
+are `internal/run` for `tasks`, `task-gates`, `task-tests`, `bets` and
+`parameters`, `internal/handoff` for `transitions` (it checks the table), `internal/spec` for `inventory`, `inventory-index`, `options` and
 `task-spec-check`; their tasks compare each with its Go schema and move its name from
 `notYetBuilt` ([`README.md`](README.md#the-schema-block)). A block of an earlier
 milestone that `M2e` extends keeps its name in `built` and changes in words here: the
 build task changes the block and its Go value in one change. The three that
-`M2e` extends are `result` (the kinds `question`, `decision` and `lesson` after
-`status` and `artifact`), `events` (the new kinds `handoff`, with the detail `valid` or
+`M2e` extends are `result` (the kinds `question`, `decision`, `lesson` and `comment` after
+`status` and `artifact`; a `comment` row names a file of the session's `result/` directory, which the end of the session checks, not the head), `events` (the new kinds `handoff`, with the detail `valid` or
 `invalid <item>` and, for a comment, after a space `comment <ID>-<seen>` (the key of the row of `copies.tsv`), and `merged`, with
 the merge commit's SHA in `sha` and the pull request's number as its detail (`session` is `—` for `merged`, and for the `handoff` of a rendered task, which code writes); the
 kinds `closed` and `rebased` exist, and `M2e` sets their detail: that of `closed`
@@ -629,7 +629,7 @@ of a comment that is an artifact of a handoff, [`loop.md`](loop.md#the-artifact-
 ```tsv-schema tasks records:tasks.tsv
 task          id(T-xxxx)   key  the task ID
 issue         int          -    the task's issue number
-kind          enum(specification|batch|rendered|plan|build)  -  the kind of the task, which picks the row of the transition table
+kind          enum(specification|architecture|batch|rendered|plan|build)  -  the kind of the task, which picks the row of the transition table
 requirements  list(text)   -    the requirement IDs it serves, each with no space; never `—` (each task names a requirement, `layup spec check`)
 size          enum(small|large)  -  the size class from the milestone plan's row of the task; `—` for a task that has none (a specification, a batch, a rendered task); the plan's own `size` field gives the tier, loop.md
 predecessors  list(id(T-xxxx))   -  the tasks that must merge first, each a task of this table; `—` for none
@@ -680,7 +680,7 @@ milestone     text      key  the milestone's name as the plan has it
 kind          enum(first|later)  -  the first bet or a later one
 brief         int       -    the comment ID of the brief on the milestone's issue
 brief_sha256  sha256    -    the SHA-256 of the brief's copy
-appetite_usd  decimal   -    the money of the appetite, from the brief's line `appetite: USD <n>, <n> hours`, inside the band of `budget.tsv`
+appetite_usd  decimal   -    the money of the appetite, from the brief's line `appetite: USD <n>, <n> hours`; the check against `budget.tsv` is the rule of `loop.md` (The bet), which allows a cap below `band.B`
 appetite_hours  decimal -    the hours of the appetite, from the same line
 answer        int       -    the comment ID of the approver's answer, a copy in `copies.tsv`
 verdict       enum(bet|no-bet)  -  the answer's last line, `bet` or `no bet` written `no-bet`

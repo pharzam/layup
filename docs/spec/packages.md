@@ -254,8 +254,9 @@ heading of this table to it in the same change, as task `T-4ywt` did for
 - `internal/run`: the task loop: the register and the transition table, the
   handoff and its events, the attempts, the statuses, the ready and merge rule, the
   close-out check and the merge at the head SHA, Shape and the bet, the parameter
-  change and the Retrospective step, and the Go schemas of `tasks`, `transitions`,
-  `task-gates`, `task-tests`, `bets` and `parameters`. It may now import
+  change and the Retrospective step, and the Go schemas of `tasks`,
+  `task-gates`, `task-tests`, `bets` and `parameters` (`internal/handoff` owns that of
+  `transitions`). It may now import
   `internal/handoff`, `internal/spec`, `internal/rules` and `internal/gate`. It starts
   no program: the cell does not change.
 - `internal/forge` and `internal/forge/github`: `OpenDraft`, `MarkReady`,

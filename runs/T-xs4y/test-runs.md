@@ -30,3 +30,7 @@ Nine material findings and six notes of round 1 are fixed in documents only (`lo
 ## After round 2 (the fixes that wait for the Operator's answer), 2026-10-15T13:01Z
 
 Round 2 ended `not mergeable, findings recorded` at the cap 1 (six material findings, seven notes). The fixes are a local commit, not pushed until the Operator chooses. Red then green for the section added in round 1's fix: with its heading renamed in a copy, `sh runs/T-xs4y/sections.sh` prints `FAIL docs/spec/loop.md: ## REQ-005 — The steps of the loop after the Scaffold`; restored, 33 of 33 `ok`. `adr-lint`, `prd-lint`, `link-lint`, `run-discipline-tests` and `setup-check` exit 0; `go test -tags=integration ./internal/tsv/ ./cmd/layup/` ok; `git diff --check origin/main` exit 0.
+
+## After round 3 (the fixes that wait for the Operator's answer), 2026-10-15T13:29Z
+
+Round 3 ended `not mergeable, findings recorded` at the cap 2 (six material findings, six notes). The fixes are a local commit, not pushed until the Operator chooses. `sections.sh` 33 of 33; `adr-lint`, `prd-lint`, `link-lint`, `run-discipline-tests` and `setup-check` exit 0; `go test -tags=integration ./internal/tsv/ ./cmd/layup/` ok; `git diff --check origin/main` exit 0.
