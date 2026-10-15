@@ -105,27 +105,3 @@ func TestTheListsAreThoseOfTheSpecification(t *testing.T) {
 		t.Errorf("items %v, loop.md %v", Items(), items)
 	}
 }
-
-// The package may import only what the table of M2e says (internal/tsv and
-// internal/records), and the table gives it its row.
-func TestThePackageHasItsRowInTheTableOfM2e(t *testing.T) {
-	text := spec(t, "packages.md")
-	i := strings.Index(text, "### The table of M2e")
-	if i < 0 {
-		t.Fatal("packages.md has no table of M2e")
-	}
-	var row string
-	for _, line := range strings.Split(text[i:], "\n") {
-		if strings.HasPrefix(line, "| `internal/handoff`") {
-			row = line
-			break
-		}
-	}
-	if row == "" {
-		t.Fatal("the table of M2e has no row of internal/handoff")
-	}
-	cells := strings.Split(row, " | ")
-	if got := words(cells[2]); !slices.Equal(got, []string{"internal/tsv", "internal/records"}) {
-		t.Errorf("May import %v", got)
-	}
-}

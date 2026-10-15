@@ -505,3 +505,55 @@ func TestACommentIsNamedByItsCopyAndOnlyACommentHasOne(t *testing.T) {
 		t.Errorf("a stray comment names no copy in the detail: %+v", v)
 	}
 }
+
+// A SHA-256 with every hexadecimal digit, the first and the last included,
+// is valid (round 2 of T-h17s: the range of a digit had mutants).
+func TestEveryHexDigitIsAccepted(t *testing.T) {
+	all := "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+	table := []Row{{"a", "b", []string{"task-file", "commits"}, []string{"schema", "artifacts"}}}
+	h := Handoff{From: "a", To: "b", SchemaOK: true, Artifacts: []Artifact{{Kind: "task-file", Path: "f", Named: all, Found: all}, {Kind: "commits", Path: "c", Named: all[:40], Found: all[:40]}}}
+	if v := Check(table, h); !v.Valid {
+		t.Fatalf("%+v", v)
+	}
+	for _, bad := range []string{"g", "G", "/", ":", "`", "!"} {
+		x := bad + all[1:]
+		h.Artifacts[0].Named, h.Artifacts[0].Found = x, x
+		if v := Check(table, h); v.Valid {
+			t.Errorf("a hash with %q is valid", bad)
+		}
+	}
+}
+
+// The suffix names the first comment artifact; a second comment artifact is
+// checked too, and a bad second one makes the handoff invalid.
+func TestEachCommentArtifactIsCheckedAndTheFirstIsNamed(t *testing.T) {
+	table := []Row{{"a", "b", []string{"plan", "review-record"}, []string{"schema", "artifacts"}}}
+	c := func(id int, hash string) *Comment {
+		return &Comment{ID: id, Seen: 1, File: hash, Copy: hash, Forge: hash}
+	}
+	h := Handoff{From: "a", To: "b", SchemaOK: true, Artifacts: []Artifact{{Kind: "plan", Comment: c(3, h64("a"))}, {Kind: "review-record", Comment: c(8, h64("b"))}}}
+	if v := Check(table, h); !v.Valid || v.Detail != "valid comment 3-1" {
+		t.Fatalf("%+v", v)
+	}
+	h.Artifacts[1].Comment.Forge = h64("c")
+	if v := Check(table, h); v.Valid || v.Detail != "invalid artifacts comment 3-1" {
+		t.Errorf("a bad second comment: %+v", v)
+	}
+	h.Artifacts[0].Comment = nil
+	h.Artifacts[1].Comment = c(8, h64("b"))
+	if v := Check(table, h); v.Valid || v.Detail != "invalid artifacts comment 8-1" {
+		t.Errorf("a bad first comment, a good second: %+v", v)
+	}
+}
+
+// WriteTable refuses a row that its writer could not read back.
+func TestWriteTableRefusesAWordWithASpace(t *testing.T) {
+	var b bytes.Buffer
+	if err := WriteTable(&b, []Row{{"a", "b", []string{"plan blueprint"}, []string{"schema"}}}); err == nil {
+		t.Error("an artifact word with a space is written")
+	}
+	b.Reset()
+	if err := WriteTable(&b, []Row{{"a", "b", []string{"plan"}, []string{"schema vibes"}}}); err == nil {
+		t.Error("an item word with a space is written")
+	}
+}

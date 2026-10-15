@@ -2,36 +2,20 @@
 
 UTC, 2026-10-15; times from the clock of the host.
 
-## Step T: the tests first, seen red (18:34 to 18:35Z)
+## Step T, red (18:34 to 18:35Z)
 
-With a stub of the package (the types and the functions returning zero values) so that each test fails on its assertion:
+With a stub of the package, so that each test fails on its assertion: all but one of the unit tests failed (`TestEachDefaultPairNeedsItsOwnItemsAndKinds` passed on an empty `Default()`; a guard `len(Default()) == 13` was added); in the integration tag `TestTheSchemaEqualsItsBlock`, `TestTheDefaultRowsAreTheTableOfTheSpecification` and `TestTheListsAreThoseOfTheSpecification` failed. With a table of `M2e` in `goodTable`, `TestReadTable` failed (the row of `internal/handoff` was not read) and `TestReadTableRefusesWhatItCannotRead` failed on "no table of M2e", "a row of M2e for a package of another table" and "a row of M2e that stands for a row of phase 1". These runs were made while the plan review ran (18:33 to 18:40Z); the tests of its conditions came after it.
 
-- `go test ./internal/handoff/`, each test alone: FAIL for `TestTheDefaultRowsAreTheThirteenOfTheSpecification`, `TestDefaultGivesACopy`, `TestTheListsAreTheWordsOfTheSpecification`, `TestEachItemIsAWordOfTheDetailOfAnEvent`, `TestWriteThenReadGivesTheDefaultTable`, `TestReadTableRefuses`, `TestCheckTable`, `TestACheckedHandoffIsValidOnlyByItsTable`, `TestTheFirstFailingItemNamesTheDetail`, `TestWhatAnAgentWritesNeverMakesAHandoffValid`, `TestCheckUsesTheTableItIsGiven`. `TestEachDefaultPairNeedsItsOwnItemsAndKinds` passed on the stub because `Default()` was empty; a guard (`len(Default()) == 13`) was added, so it fails there too.
-- `go test -tags=integration ./internal/handoff/`: FAIL for `TestTheSchemaEqualsItsBlock`, `TestTheDefaultRowsAreTheTableOfTheSpecification` and `TestTheListsAreThoseOfTheSpecification`; `TestThePackageHasItsRowInTheTableOfM2e` passed (the specification already had the row).
-- `go test ./cmd/layup/ -run TestReadTable` with a table of `M2e` in `goodTable`: `TestReadTable` FAIL (the row of `internal/handoff` is not read) and `TestReadTableRefusesWhatItCannotRead` FAIL for "no table of M2e", "a row of M2e for a package of another table" and "a row of M2e that stands for a row of phase 1" (no error, 9 rows).
-- The block test (`internal/tsv`, `transitions` still in `notYetBuilt`) is green until the Go schema exists; its change is the move of the name, checked by `TestTheSchemaEqualsItsBlock`.
+## The code before its tests, and the mutants
 
-## The tests of conditions 1 to 3 of the plan review, red against the first version of `Check`
+Conditions 1 to 3 of the plan review, and finding 1 and notes 2 and 3 of round 1, were code first and tests second. The red evidence is a run against the earlier code (18:53Z: `TestAReplacementRowCannotLetABadResultThrough` failed on six cases) and 30 mutants of the final `check.go` and `table.go`, each applied alone and undone: all caught; after round 2, seven more (the range of each hexadecimal digit, the first comment named, the two checks of `WriteTable`) are caught by three added tests. The script is a one-off, not kept.
 
-The first version read `schema` and `artifacts` only when the row listed them, and only for the row's kinds. Written after the plan review (comment 6199608521), run at 18:53:13Z with that version of `Check` put back in a copy of the file, then restored: `TestAReplacementRowCannotLetABadResultThrough` FAIL on six cases (a bad schema, a named artifact whose hash differs, an extra artifact that is bad, an extra artifact of an unknown kind, an extra comment with no comment, the same handoff written by a session). With the final `Check`: ok. (The order of the work was the change of `Check`, then these tests; this run is the red evidence that they bite.)
+## Green
 
-## Mutant runs (`go test -tags=integration ./internal/handoff/`), 18:39 to 18:50Z
+- 18:53:19 to 19:03:53Z: `go build`, `go vet`, `go test -count=1 ./...` exit 0; `go test -count=1 -tags=integration ./...`: 20 packages ok, `internal/run` timed out at the default 10 minutes (other tasks run on the host); alone with `-timeout 1500s` (19:04:15 to 19:15:03Z): ok, 644.763 s. A run at 18:41Z had failed on two tests of `cmd/layup` (my fixture added two packages with no row); fixed.
+- After the fixes of round 1 and the notes of round 2: `go build`, `go vet`, `go test ./...` exit 0; `go test -tags=integration` of `internal/handoff`, `internal/tsv`, `cmd/layup`, `internal/records` ok; nothing outside `internal/handoff` and its fixtures changed since the full run.
+- `adr-lint`, `prd-lint`, `link-lint`, `run-discipline-tests`, `setup-check`: exit 0 each; `git diff --check`: exit 0.
 
-26 mutants of `check.go` and `table.go`, each applied alone to the file and undone: all 26 caught by a test (a named hash not compared with the found one; the forge's body, or the session's file, not compared; a comment hash that need not be a SHA-256; a hash that need not be a full object name; the schema result ignored; a code-written handoff that needs a schema; `artifacts` taken from the caller's claim; an artifact of an unknown kind; a required kind that may be absent; an item with a false result that passes; a pair with no row that is valid; the comment's copy not named; a review record that is not a comment; a default pair that may be missing; a pair listed twice; a kind or an item outside the list; a row with no artifact or no item; `ReadTable` not checking the words; a default row that lacks an item or has a wrong one; `Kinds` that does not copy). The script is not kept in the tree (a one-off evidence command).
+## Round 2's notes, left as they are
 
-## Green, at the head before the freeze
-
-- `go build ./...`, `go vet ./...`, `go test -count=1 ./...` and `go test -count=1 -tags=integration ./...` (TMPDIR on the disk): see the end of this file.
-- At the head: `go build ./...` exit 0; `go vet ./...` exit 0; `go test -count=1 ./...` exit 0; `go test -count=1 -tags=integration ./...` 18:53:19 to 19:03:53Z: 20 packages ok and `internal/run` timed out at the default 10 minutes (the host runs other tasks in parallel; the memory of the host says 6 to 9 minutes alone). Rerun alone with `-timeout 1500s`, 19:04:15 to 19:15:03Z: ok, 644.763 s. A first full run at 18:41:41Z failed on `TestAGoodModuleKeepsTheRules` and `TestEachRuleAndColumnFindsItsBreach` (my fixture of `goodModule` added two packages that had no row: "table: internal/records has no row"); fixed in `cmd/layup/rules_test.go`, then the runs above.
-- The five scripts: `adr-lint`, `prd-lint`, `link-lint`, `run-discipline-tests`, `setup-check`: exit 0 each, and `git diff --check`: exit 0 (19:16Z).
-
-## After round 1 (comment 6200497472)
-
-One material finding and six notes, fixed at 19:20 to 19:28Z in the order: the code, then the tests (as for condition 1, the mutant run is the red evidence: a mutant that removes the new rule is caught by the new test).
-
-- **The code-written handoff** cannot satisfy a row that lists `schema` (`TestACodeWrittenHandoffCannotSatisfyARowThatListsSchema`, three cases and a replacement table); the rendered task's default row lists no `schema`, so it is valid.
-- **The hash by kind:** a file artifact is 64 characters; only `commits` may be 40 or 64 (`TestTheLengthOfAHashDependsOnTheKind`, ten cases). **The comment:** `ID` and `Seen` are 1 or more, a non-comment artifact has no `Comment`, and the suffix comes only from a comment artifact (`TestACommentIsNamedByItsCopyAndOnlyACommentHasOne`).
-- The comments of two tests, the traceability row (all the unit tests), and this note.
-- **The order of the first red runs** (finding 7): the red runs of step T (18:34 to 18:35Z) were made while the plan review ran (18:33 to 18:40Z) and before its conditions; the tests of its conditions were written after it. The plan was posted at 18:33Z, before any red run.
-- **Mutants again:** the 26 mutants of the first version are replaced by 30 of the final code (the new rules included), each applied alone and undone: all 30 caught.
-- `go build`, `go vet`, `go test -count=1 ./...` exit 0; `go test -count=1 -tags=integration` of `internal/handoff`, `internal/tsv`, `cmd/layup` and `internal/records` ok (19:28Z); the full integration level of the head before round 1 is above, and nothing outside `internal/handoff` changed since.
+Note 3 (a replacement table that lists `schema` for the rendered task makes it impossible: a question for row 66b, posted on #358); note 5 (`ReadTable` returns a plain error that names the line and the column, as `records.md` asks, not `*tsv.Error`); note 6 (the order, above); note 7 (the budget).

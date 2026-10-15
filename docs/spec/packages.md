@@ -294,7 +294,8 @@ check verifies that each required item has a result and that it is true.
   code, and the hook runs the unit part.
 - It reads the table of phase 1, [the table of M2a](#the-table-of-m2a) and the
   line of rule 5 (task `T-esfe`), and [the table of M2b](#the-table-of-m2b) and
-  the line of the engine checks (task `T-y10b`). A row of the table of `M2b` is a
+  the line of the engine checks (task `T-y10b`); the tables of `M2c` and of `M2e`
+  (task `T-h17s`) have the form of the table of `M2b`. A row of the table of `M2b` is a
   package of its own: a row whose cell starts with "(the row of phase 1", or
   whose package another table has, is an error. It fails on a cell that it cannot read, on a
   missing heading or column, on a table with no row, on a row of the table of
