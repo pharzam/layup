@@ -77,7 +77,7 @@ Then the push of the probe to layup-probe is refused by GitHub, naming the rules
 And setup/forge-check.tsv shows the eight rows as pass
 And each write of LAYUP on the target shows the App's bot as its author, and the pushes and the applies are the Operator's
 
-Accepted: pending
+Accepted: the Operator (`pharzam`), on 2026-10-15 at 09:56Z, in the session of Claude Code on the host, with the one word "accept", on the evidence of this directory at commit `45ec2f1f308862c18f902b2c7fa643ca39a22c66`, with the reading of the third line that [The results](#the-results-read-on-2026-10-15-from-0951z-to-0953z) states
 Covers REQ-002, REQ-003
 ```
 
