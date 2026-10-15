@@ -687,7 +687,7 @@ commit (Git history keeps each); a row that is not `pass` stops the run at that
 step, as `architecture.md` §3 says ("stops when a rule is missing"), and the
 steps after it have no row. The tree check of a later start compares the default
 branch with the head of `setup/tree.tsv` only until the first merge after the
-setup (`M2e`), which adds its own rule; in `M2d` no merge follows the setup.
+setup (`M2e`, [`loop.md`](loop.md#the-tree-after-the-first-merge)), which adds its own rule; in `M2d` no merge follows the setup.
 
 **The Scaffold is done** (**decided here**, task `T-2j13`, #281, with the
 conditions of its plan review) when `setup/forge-check.tsv` is in the records,
@@ -865,7 +865,7 @@ fail nothing. The function is found by its name, so a second call of
 
 The adoption of a target that phase 1 set up (none, O-200). The commit statuses `layup/gates`, `layup/spec`, `layup/verify` and
 `layup/rules` themselves, the first merge after the setup and the tree rule
-that follows it (`M2e`); `layup audit` and its judgement of the activity
+that follows it (`M2e`, [`loop.md`](loop.md)); `layup audit` and its judgement of the activity
 (`M2f`); the activation of the `pending` kinds at the first bet (`M2f`); the
 pilot baseline block of the Intake answer (`baseline.tsv`, phase 4); the
 dead-man job (`M3d`).

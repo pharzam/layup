@@ -669,15 +669,15 @@ what that user can (L-A1); the review records it as that limit.
 
 ## Not in M2b
 
-The task loop: the plan session, the plan review, the verifier, the close-out,
+The task loop (`M2e`, [`loop.md`](loop.md)): the plan session, the plan review, the verifier, the close-out,
 the draft pull request, the transition table, and the questions, decisions and
-lessons of a handoff (`M2e`). The tier of a task from its plan, and the authors
-of a change for a plan review or a verification (`M2e`). The budget check
+lessons of a handoff (`M2e`, [`loop.md`](loop.md#req-005--the-handoff)). The tier of a task from its plan, and the authors
+of a change for a plan review or a verification (`M2e`, [`loop.md`](loop.md#the-independence-of-the-reviewers)). The budget check
 before each start and `budget.tsv` (`M2c`, [`intake.md`](intake.md#the-budget-of-intake): the cap of milestone 0), and the circuit breaker (`M3d`).
 The branch of a rule batch, `layup/rules` and the known-bad patches (`M2f`).
 The context of a session by its links, the record kinds of each step's row
 (§9, ADR-0020 decision 7): in `M2b` the prompt is the caller's text, and the step
-table's record kinds come with the task loop (`M2e`). The learned weights of
+table's record kinds come with the task loop (`M2e`, [`loop.md`](loop.md#the-tier-and-the-context-of-a-task)). The learned weights of
 routing (the learning loop). A harness's hook events and
 the stall triggers (`M3d`). A second harness on one task (`M4a`). Telemetry
 Completeness and Cost per Requirement (`M4b`). The usage formats of Codex,

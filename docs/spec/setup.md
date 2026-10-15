@@ -1295,7 +1295,9 @@ task `T-3jpx`, #81):
   a target that phase 1 set up is not adopted (O-200,
   [`scaffold.md`](scaffold.md#the-adoption-of-a-phase-1-target)): it keeps the
   ruleset of phase 1.
-- The activation of the `pending` kinds at the first bet (§6): phase 2. The
+- The statuses themselves, the code-owner rule and the gate jobs that read the
+  base (F-22): `M2e` ([`loop.md`](loop.md#req-007--the-four-layup-statuses)).
+- The activation of the `pending` kinds at the first bet (§6): phase 2 (`M2f`). The
   tool of a kind of the Go entry is `go` or a program of the runner (The stack
   catalog, task `T-c06a`).
 

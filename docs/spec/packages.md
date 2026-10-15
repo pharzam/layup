@@ -193,7 +193,7 @@ and reads the comments of the Intake issue.
 
 | Package | Job | May import | Starts a program | Connects |
 | ------- | --- | ---------- | ---------------- | -------- |
-| `internal/spec` | the span check of the facts of a problem statement and its table ([`intake.md`](intake.md#the-span-check)) | `internal/tsv` | no | — |
+| `internal/spec` | the span check of the facts of a problem statement and its table ([`intake.md`](intake.md#the-span-check)); in `M2e`, the full check, the filter of options and the rendering of a bet ([the table of M2e](#the-table-of-m2e)) | `internal/tsv`, `internal/records`, `internal/git` | `sh`: the pinned prd-lint script of a target | — |
 
 **Decided here** (decision 11 of #206): `internal/spec` is an engine check
 (code, no model call), so the build task that made the package (row 41a, task
@@ -219,6 +219,61 @@ rulesets of S13; `internal/forge` and `internal/forge/github` gain
 ([above](#the-calls-of-internalgit)). `internal/run` starts no program for the
 setup: the cell "Starts a program" of its row does not change, and the
 programs that `internal/verify` starts stay in its own row.
+
+### The table of M2e
+
+Milestone `M2e` (task `T-xs4y`, #333; [`loop.md`](loop.md)). The columns of
+[the table of M2a](#the-table-of-m2a), and the rule of the table of `M2b`: a
+package that a table already has keeps its one row, changed in place; this table
+holds only the package that no table has. `TestPackageRules` reads the tables
+of `M2a`, `M2b` and `M2c`; the build task that makes `internal/handoff` adds the
+heading of this table to it in the same change, as task `T-4ywt` did for
+`internal/spec`.
+
+| Package | Job | May import | Starts a program | Connects |
+| ------- | --- | ---------- | ---------------- | -------- |
+| `internal/handoff` | the transition table and the check of a handoff ([`loop.md`](loop.md#req-005--the-handoff)): the schema, each artifact with its hash (a comment by its copy), each required item; the Go schemas of `transitions`; it calls no forge and no session | `internal/tsv`, `internal/records` | no | — |
+
+**Changed in place** by this task (each row keeps its one row in the table that has it):
+
+- `internal/spec`: the full `layup spec check` ([`loop.md`](loop.md#req-012--the-full-spec-check)),
+  the filter of options, the rendering of a bet (the rendered commit and the
+  inventory), the brief check, and the Go schemas of `inventory`, `inventory-index`,
+  `options` and `task-spec-check`. It may now import `internal/tsv`,
+  `internal/records` and `internal/git`, and it **starts a program**: `sh`, for the
+  pinned `prd-lint` of the target (the check that accepts a head only when each
+  failure line names an empty MoSCoW or Phase cell), by `os/exec` with the
+  target's own script, as `internal/gate` starts `sh -c`. It stays an engine check
+  (no model call, no connection), so its row stays on the line of the engine
+  checks.
+- `internal/rules`: the check `layup/rules` of the basic rule
+  ([`loop.md`](loop.md#layuprules)): the base's register against the changed paths
+  and the comparison of a rendered record with code's rendering; it may import
+  `internal/tsv`, `internal/records`, `internal/spec` and `internal/git`. The batch
+  part stays `M2f`'s.
+- `internal/run`: the task loop: the register and the transition table, the
+  handoff and its events, the attempts, the statuses, the ready and merge rule, the
+  close-out check and the merge at the head SHA, Shape and the bet, the parameter
+  change and the Retrospective step, and the Go schemas of `tasks`, `transitions`,
+  `task-gates`, `task-tests`, `bets` and `parameters`. It may now import
+  `internal/handoff`, `internal/spec`, `internal/rules` and `internal/gate`. It starts
+  no program: the cell does not change.
+- `internal/forge` and `internal/forge/github`: `OpenDraft`, `MarkReady`,
+  `SetStatus`, `Statuses` and `Merge` ([`forge.md`](forge.md#the-calls-of-m2e)),
+  their types, and the permission check for pull requests and statuses; the
+  adapter alone connects, as before.
+- `internal/session`: the record kinds of each step's context in the step table
+  ([`loop.md`](loop.md#the-tier-and-the-context-of-a-task)).
+- `internal/setup` and `internal/catalog`: the `CODEOWNERS` file and the code-owner
+  rule of the default branch's ruleset, and the catalog workflow whose gate jobs
+  read the base ([`loop.md`](loop.md#the-gate-jobs-read-the-base)); that workflow is
+  the catalog's file, the ruleset the setup's.
+- `internal/records`: the kinds `question`, `decision` and `lesson` of the block
+  `result`, and the kinds `handoff`, `closed` and `rebased` of the block `events`.
+
+**No new command** and no flag: the handoff check is a function that `layup run`
+calls, the full `layup spec check` is the command of `M2c` with more rules, and
+`internal/cli` changes only its use of `internal/spec`.
 
 ### The test of the package rules
 
@@ -528,9 +583,9 @@ requirement's section.
 | `internal/forge/github` | the GitHub adapter of the forge interface; its row is in [the table of M2a](#the-table-of-m2a) | 2 |
 | `internal/run` | `layup run`: Start, the phase loop, the lease, fencing; its row is in [the table of M2a](#the-table-of-m2a) | 2 |
 | `internal/session` | a role session: its directory, its start, its result; its row is in [the table of M2b](#the-table-of-m2b) | 2 |
-| `internal/handoff` | the transition table and the check of a handoff | 2 |
+| `internal/handoff` | the transition table and the check of a handoff; its row is in [the table of M2e](#the-table-of-m2e) | 2 |
 | `internal/spec` | `layup spec check`; its row is in [the table of M2c](#the-table-of-m2c) (task `T-4ywt`) | 2 |
-| `internal/rules` | the rule-path register, the check `layup/rules`, rule batches; its part before a push is in [the table of M2b](#the-table-of-m2b) | 2 |
+| `internal/rules` | the rule-path register, the check `layup/rules`, rule batches; its part before a push is in [the table of M2b](#the-table-of-m2b), the basic `layup/rules` in [the table of M2e](#the-table-of-m2e) | 2 |
 | `internal/audit` | `layup audit` | 2 |
 | `internal/ledger` | the cost ledger (`telemetry.tsv`) and the budget; the writer is in [the table of M2b](#the-table-of-m2b) and the budget of milestone 0 in its row there (task `T-ybd5`); the budget of a bet comes later | 2 |
 | `internal/smartif` | the smart-if client: the only package that connects to a model service | 3 |

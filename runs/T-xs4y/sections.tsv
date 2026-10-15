@@ -8,7 +8,7 @@ the artifact that is only an issue comment (#68; decision 1)	docs/spec/loop.md	#
 the transition table (decision 3)	docs/spec/loop.md	### The transition table
 the checks of a handoff (decision 3)	docs/spec/loop.md	### The checks of a handoff
 the frozen test list: its freeze and its amendment (condition 1)	docs/spec/loop.md	### The frozen test list
-the four layup/ statuses (later-gate-status; decision 5)	docs/spec/loop.md	## REQ-007 — The four layup/ statuses
+the four layup/ statuses (later-gate-status; decision 5)	docs/spec/loop.md	## REQ-007 — The four `layup/` statuses
 the status layup/gates (later-gate-status)	docs/spec/loop.md	### layup/gates
 the status layup/spec (decision 9)	docs/spec/loop.md	### layup/spec
 the basic status layup/rules (REQ-003; decision 5)	docs/spec/loop.md	### layup/rules

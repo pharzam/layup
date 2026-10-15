@@ -49,18 +49,21 @@ or payload of one task is under `tasks/<task>/`.
 | `spec/spans.tsv` | the fact spans of the problem statement | 7 | `layup run` | 2 (`M2c`) | [below](#nfr-001--the-records-of-intake) |
 | `spec/check.tsv` | the table of the span check | 7 | `layup run` | 2 (`M2c`) | the block `spec-check`, [below](#nfr-001--the-records-of-intake) |
 | `spec/draft.tsv` | the requirement draft of Intake | 7 | `layup run` | 2 (`M2c`) | [below](#nfr-001--the-records-of-intake) |
-| `spec/inventory-<n>.tsv` | a version of the confirmed inventory, with its SHA-256 in `spec/inventory.tsv` | 7 | `layup run` | 2 | later |
+| `spec/inventory-<n>.tsv`, `spec/inventory.tsv` | a version of the confirmed inventory, and the index with its SHA-256 | 7 | `layup run` | 2 (`M2e`) | [below](#nfr-001--the-records-of-the-task-loop) |
+| `spec/options/<decision>.tsv` | the options of one architecture decision, each constraint with its pass or fail and its evidence | 8 | `layup run` | 2 (`M2e`) | [below](#nfr-001--the-records-of-the-task-loop) |
+| `bets.tsv` | each bet: the brief, the answer, the verdict | 8 | `layup run` | 2 (`M2e`) | [below](#nfr-001--the-records-of-the-task-loop) |
 | `batches.tsv` | each rule batch: head SHA, rule-file hash, approval | 6 | `layup run` | 2 | later |
 | `payloads/<sha256>` | a payload by its SHA-256: a known-bad patch, a refused diff, a stall package | 4, 6, 11 | `layup run` | 2 | a rule, no block: [below](#nfr-001--the-records-of-a-session) |
-| `tasks.tsv` | the task register | 8 | `layup run` | 2 | later |
-| `transitions.tsv` | the transition table | 8 | `layup run` | 2 | later |
+| `tasks.tsv` | the task register | 8 | `layup run` | 2 (`M2e`) | [below](#nfr-001--the-records-of-the-task-loop) |
+| `transitions.tsv` | the transition table | 8 | `layup run` | 2 (`M2e`) | [below](#nfr-001--the-records-of-the-task-loop) |
 | `sessions.tsv` | the session start rows | 4, 9, 12 | `layup run` | 2 (`M2b`) | [below](#nfr-001--the-records-of-a-session) |
 | `tasks/<task>/events.tsv` | the events of one task | 3, 8 | `layup run` | 2 (`M2b`, K38) | [below](#nfr-001--the-records-of-a-session) |
 | `tasks/<task>/results/<session>.tsv` | the typed result (handoff) of one session, after its check | 4, 8 | `layup run` | 2 (`M2b`) | [below](#nfr-001--the-records-of-a-session) |
-| `tasks/<task>/tests.tsv` | the frozen test list | 11 | `layup run` | 2 (`M2e`, K38) | later |
-| `tasks/<task>/gates.tsv` | the table of `layup gate` for each head of the task | 6, 8 | `layup run` | 2 | [`gate.md`](gate.md#the-table), with the head as part of the key |
+| `tasks/<task>/tests.tsv` | the frozen test list | 11 | `layup run` | 2 (`M2e`, K38) | [below](#nfr-001--the-records-of-the-task-loop) |
+| `tasks/<task>/gates.tsv` | the table of `layup gate` for each head of the task | 6, 8 | `layup run` | 2 (`M2e`) | [below](#nfr-001--the-records-of-the-task-loop), the block `task-gates` |
+| `tasks/<task>/spec-check.tsv` | the table of the full `layup spec check` for each head of the task | 7, 8 | `layup run` | 2 (`M2e`) | [below](#nfr-001--the-records-of-the-task-loop) |
 | `acceptance.tsv` | one row per review of a requirement | 8, 12 | `layup run` | 2 | later |
-| `parameters.tsv` | every parameter | 10 | `layup run` | 2 | later |
+| `parameters.tsv` | every parameter | 10 | `layup run` | 2 (`M2e`) | [below](#nfr-001--the-records-of-the-task-loop) |
 | `harnesses.tsv` | the admitted harnesses, their versions and probe results | 9 | `layup run` | 2 (`M2b`) | [below](#nfr-001--the-records-of-a-session) |
 | `owners.tsv` | the confirmed owner map | 9 | `layup run` | 3 | later |
 | `routing.tsv` | the routing register and its weights | 9, 13 | `layup run` | 2 (`M2b`, K38) | [below](#nfr-001--the-records-of-a-session), the order only |
@@ -603,6 +606,123 @@ that wrote it, and removed again, in one commit, when the step `setup` is `fail`
 after the last session of the run, also one that ends in an error after its commit;
 the files of an earlier session whose rows the runner passed stay
 ([`scaffold.md`](scaffold.md#the-stops-of-the-runner)).
+
+## NFR-001 — The records of the task loop
+
+Milestone `M2e` (task `T-xs4y`, #333): the records that `layup run` writes for the
+task loop, the handoffs, Shape and the bet ([`loop.md`](loop.md)). Each is a file of
+the records branch, which only the App updates (the rulesets of `M2d`). The owners
+are `internal/run` for `tasks`, `transitions`, `task-gates`, `task-tests`, `bets` and
+`parameters`, `internal/spec` for `inventory`, `inventory-index`, `options` and
+`task-spec-check`; their tasks compare each with its Go schema and move its name from
+`notYetBuilt` ([`README.md`](README.md#the-schema-block)). A block of an earlier
+milestone that `M2e` extends keeps its name in `built` and changes in words here: the
+build task changes the block and its Go value in one change. The three that
+`M2e` extends are `result` (the kinds `question`, `decision` and `lesson` after
+`status` and `artifact`), `events` (the kinds `handoff`, with the detail `valid` or
+`invalid <item>`, `closed` and `rebased`; the detail of `closed` names the task that
+redoes it, and the detail of `rebased` the task it replaces) and `copies` (the copy
+of a comment that is an artifact of a handoff, [`loop.md`](loop.md#the-artifact-that-is-a-comment)).
+
+```tsv-schema tasks records:tasks.tsv
+task          id(T-xxxx)   key  the task ID
+issue         int          -    the task's issue number
+kind          enum(specification|batch|rendered|plan|build)  -  the kind of the task, which picks the row of the transition table
+requirements  list(text)   -    the requirement IDs it serves, each with no space; `—` for a task that serves none (code refuses it for a build task)
+size          enum(small|large)  -  the size class of its plan
+predecessors  list(id(T-xxxx))   -  the tasks that must merge first, each a task of this table; `—` for none
+pr            int          -    the pull request's number; `—` until it is opened
+opened        time         -    when `layup run` wrote the row
+```
+
+```tsv-schema transitions records:transitions.tsv
+from       text         key  the step the handoff leaves, as the table of `loop.md` names it (for example `developer (build task)`)
+to         text         key  the step it enters
+artifacts  list(text)   -    the kinds of artifact the handoff names: `plan`, `plan-review`, `review-record`, `task-file`, `commits`, `rows`, `patch`; `—` for none
+items      list(text)   -    the names of the items that code checks, each a word of the list in `loop.md`; `—` for none
+```
+
+```tsv-schema task-gates records:tasks/<task>/gates.tsv
+head    sha1                                 key  the head the table was run for
+kind    id(<word>)                           key  the kind, as in the manifest
+base    sha1                                 -    the base commit
+state   enum(active|pending)                 -    as in the manifest at the base
+result  enum(pass|fail|not-active|clear)     -    by the table of `gate.md`
+reason  text                                 -    by that table; `—` for `pass`
+```
+
+```tsv-schema task-tests records:tasks/<task>/tests.tsv
+test     text            key  the test's ID in the plan
+source   path            -    the file that holds the test, at the head
+sha256   sha256          -    the SHA-256 of that file at the head that froze the list
+harness  id(<word>)      -    the harness whose session wrote it
+frozen   time            -    when the list was frozen
+```
+
+```tsv-schema task-spec-check records:tasks/<task>/spec-check.tsv
+head    sha1  key  the head the table was run for
+rule    enum(covers|needs|measures|criteria|classes|inventory|quotes|sections|tasks|ran)  key  the rule, in this order
+result  enum(pass|fail|clear)  -  `clear` only for the whole table of a head that touches neither the PRD nor `docs/spec/` before the first bet
+detail  text  -  for `fail`, the first broken place; `—` otherwise
+```
+
+```tsv-schema options records:spec/options/<decision>.tsv
+option      text       key  the option's name, from the architect session
+constraint  text       key  the constraint that applies: a requirement ID, a confirmed constraint, an invariant or a decision record
+result      enum(pass|fail)  -  the session's row
+evidence    text       -    the evidence of a `pass`: a path or a link; `—` for `fail`, and a `pass` with `—` drops the option
+```
+
+```tsv-schema bets records:bets.tsv
+milestone     text      key  the milestone's name as the plan has it
+kind          enum(first|later)  -  the first bet or a later one
+brief         int       -    the comment ID of the brief on the milestone's issue
+brief_sha256  sha256    -    the SHA-256 of the brief's copy
+answer        int       -    the comment ID of the approver's answer, a copy in `copies.tsv`
+verdict       enum(bet|no-bet)  -  the answer's last line
+approver      int       -    the answering account's numeric ID, a row of `approvers.tsv`
+decided       time      -    when `layup run` copied the answer
+```
+
+```tsv-schema inventory-index records:spec/inventory.tsv
+n       int      key  the version, from 1
+sha256  sha256   -    the SHA-256 of `spec/inventory-<n>.tsv`
+bet     text     -    the milestone of the bet that confirmed it
+```
+
+```tsv-schema inventory records:spec/inventory-<n>.tsv
+id         text       key  the requirement's ID as the target's PRD has it
+statement  text       -    the statement
+moscow     enum(must|should|could|wont)  -  the class that the bet's answer gave
+phase      int        -    the phase that the answer gave, 1 or more
+criterion  text       -    the acceptance criterion
+facts      list(int)  -    the numbers of the facts the requirement covers
+```
+
+```tsv-schema parameters records:parameters.tsv
+name      text    key  the parameter's name (`architecture.md` §10), for example `brief.lines`
+value     text    -    its value, of the row's type; `—` while it is unset
+default   text    -    the default of `architecture.md` §10; `—` for none
+bound     text    -    what the value cannot do, in words
+role      enum(operator|idea-owner|approver)  -  the role that may change it
+evidence  text    -    the evidence of the value: the `because` reason; `—` for a default
+comment   int     -    the comment that set it; `—` for the default
+since     time    -    when `layup run` wrote the row
+```
+
+**Decided here** (the owner checks, after the types, an error naming the line and the
+column): in `tasks`, `requirements` is not `—` for a `build` task, each predecessor is
+a task of the table and no cycle exists, and `pr` is `—` only until the pull request is
+opened (the row is replaced by a later commit, never edited in place within one);
+in `transitions`, a row for each step of the task loop and no `artifacts` value outside
+the list; in `task-gates` and `task-spec-check`, one table for each head, rows in the
+order of the manifest and of the rule list; in `task-tests`, `frozen` is the same on each
+row of a freezing; in `options`, a `pass` with `—` in `evidence` is a valid row (the
+filter drops the option) and `fail` has `—`; in `bets`, one row for a milestone that has
+a `first` kind, and a `later` row only after it; in `inventory`, `moscow` and `phase`
+never `—`; in `parameters`, the key is the name and a change is the next commit's
+row. The rows of `copies.tsv` that a handoff names are read by the key of the
+comment and its `seen`.
 
 ## REQ-011 — The telemetry record
 

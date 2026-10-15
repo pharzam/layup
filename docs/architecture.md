@@ -490,9 +490,11 @@ head's gate files for a status (FT4), with one exception: an approved rule batch
 whose rule files are the approved ones (below). Before its approval, a batch's own
 gate files run only in a scratch work tree, as evidence for its verifier and its
 brief, never as a status. The LAYUP host needs each stack's toolchain
-(L-B1). With LAYUP absent, the target's own CI runs the workflow and the manifest
-of the pull request's head; FT4 then rests on the rulesets and on review, not on
-LAYUP.
+(L-B1). With LAYUP absent, the target's own CI runs the workflow of the pull request's
+head, and each gate job takes the manifest, the `config` paths and `gates.sh` from the
+base; a change to `.github/**`, `docs/gates.tsv` or `docs/gates/**` needs the
+Operator's review as code owner (F-22, [`loop.md`](spec/loop.md#the-gate-jobs-read-the-base));
+FT4 then rests on the rulesets and on review, not on LAYUP.
 
 **Activation.** Each rule batch that adds or changes a gate kind carries one new
 known-bad patch per kind it touches, and may replace a recorded patch of such a
