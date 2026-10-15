@@ -1077,6 +1077,13 @@ failure modes worth keeping.
   each rule with the files it governs, from the check's own table where it has one, so that a test probes the table
   against the check (a first text that said "a letter" for "an ASCII letter" was looser in five places); a test ties
   each rule to the prompt; and one real session on a copy of the real input is the evidence before a real run.
+- ❌ **A specification that changes a cell or a block and leaves the test that reads it unchecked.** The task that
+  specified `M2e` changed the cell "Starts a program" of the row `internal/spec` with a second code span in it, and
+  `TestPackageRules` refused it ("cannot read Starts a program"); a new schema block fails
+  `TestEverySchemaBlockIsBuiltOrNotYetBuilt` until its name is listed; and `setup-check` `markers` reads only the
+  tracked files, so a new file that holds a marker reports its row of `open-gaps.tsv` as stale until it is added.
+  Task `T-xs4y` (#333). **The check:** after a change of `packages.md` run `go test -tags=integration ./cmd/layup/`,
+  after a new block `go test -tags=integration ./internal/tsv/`, and `git add` a new file before `setup-check`.
 
 ## 3. Validation — how you check you are not fooling yourself
 
