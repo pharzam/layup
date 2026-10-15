@@ -58,3 +58,12 @@ differs from it by the sentences that the findings of round 2 and of the three p
 | Hits of check `adapted` | 0 (the control had 154); 210 markers kept in 19 files; glossary citations all of `F-0001`; `README.md` holds `pharzam/layup-uat-m2d` and `layup-records` |
 
 Attempt 1 ran under the harness as it was at 20:52; the check of the process limits (item 3) was added after it, and the replay of attempt 1's session files through the final harness passes (stdout 965 KB, stderr empty, exit 0): class `done`, the step verify `done`.
+
+## Attempt 2 — the head `ec62a6d`, the head that round 3 read (06:04:34Z to 06:09:53Z): passed, on its first attempt
+
+| What | Value |
+| ---- | ----- |
+| Binary, prompt, session | Run after round 3 (`nothing material in scope`), under the final harness (the check of the process limits included); two attempts are two samples, and no rate is given. `layup` built from the copy of `ec62a6d`, sha256 `d370fcd3f9d14b361d3a1796d4934ee9240efe9854841e388dfab0642f8dc34a`; the prompt 7,901 bytes, sha256 `a6bb7d07fce46c15422b9dc6f49da9ac05ec3bffe31f91dda38800bbd6c2dcea`; `claude` 2.1.300, `claude-opus-5-5`, cap USD 5.00, wall 1,800 s; snapshot manifest `c4652dea…85af2` before it (equal); exit 0, result `success`, `terminal_reason completed`, `is_error` false; 36 turns, 315.9 s in the stream, 5 min 19 s on the clock, **USD 3.43** (list basis; subscription); `repo/` unchanged; stdout 992,719 bytes (longest line 36,134), stderr empty |
+| End and output | class `done`; `session.ReadOutputFiles` and `proseKeep` accept 25 files. Kept in `/home/layup/layup-host/evidence/T-92lm/`: `a2/manifest.sha256` (a sha256 of each file) `afcc021f3d7a5ed3288f9a785e15cdbc3283a287841827e66c1a3ccca045438a`, `a2.tar.gz` (the output, the prompt, the stream and the tables) `a0734dd340170657c6f5af07d7f7e98a9adcd7cf5cce974c87911f1dd1e5ba38` |
+| Engine | step verify `done`, the 18 rows of `verify.tsv` `pass` or `clear` (its sha256 `368a24d4…47c8`, as in attempt 1); the commit would hold the same five files |
+| Hits of check `adapted` | 0 (the control had 154); 222 markers in 23 files (attempt 1: 210 in 19): the five files that the session writes and does not adapt held 3, 4, 14, 20 and 15 markers in the baseline, and attempt 2 kept 2, 4, 4 and 2 of them in `README.md`, `AGENTS.md`, `docs/glossary.md` and `docs/guardrails.md`, where attempt 1 kept none; each found its answer in the records of the batch (the loop made no stop); glossary citations all of `F-0001`; `README.md` holds `pharzam/layup-uat-m2d` and `layup-records` |
