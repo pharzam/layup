@@ -289,25 +289,21 @@ file whose link S05's deletion breaks. **Decided here** (decision 6 of #265):
   `internal/setup`, which the prompt names by its first word) names a file that
   `repo/` has, which the session gives with its changes and each marker it holds
   kept, in every place, byte for byte, as S14 requires ([`setup.md`](setup.md)).
-  **Decided here** (task `T-92lm`, #326, with its plan review and rounds 1 and 2): the prompt
-  also gives the session the rules of the five checks that judge its files (`onboarding`,
-  `glossary`, `guardrails`, `identity` and `adapted`), each with the files it governs, for the
-  first real target failed on rules that it did not give (S08 on a citation of an example of
-  the baseline, then S14 on the words of the baseline in about twenty files and on a `README.md`
-  with no name). The text has: the phrases of `adapted` in three groups by what the check reads
-  after them (whole words, open ends, stems; a stem is a hit with an angle quote U+2039 after it
-  and no period between), how it reads ASCII case, line ends, blanks, paragraphs, markers and
-  what stands before a phrase, the names it passes, and the one word read as it is with the files
-  that may hold it; the citation rule, which keeps the baseline's rules when a citation goes; the
-  three things of `README.md` and the texts that `identity` refuses anywhere in the two entry
-  files; the forms of the onboarding file and of `Check:`; the markers; and a search command
-  built from the phrases, called an aid and not the check. The phrases, their tails, the names,
-  the files and the texts are read from `internal/verify` (`AdaptedPhrases`, `AdaptedExempt`,
-  `AdaptedAllowed`, `KitPhrases`): a pattern added without its phrase and tail does not compile,
-  and a test fails on an empty phrase or one that reads its pattern wrongly, as it probes each
-  pattern before and after its phrase. S05's link rows and the checks of S11 get no rule; a failed
-  check still ends `setup` as `fail`, and a restart starts a new session: the prompt is not a
-  retry with the findings;
+  **Decided here** (task `T-92lm`, #326): the prompt also gives the session the rules of the five
+  checks that judge its files (`onboarding`, `glossary`, `guardrails`, `identity` and `adapted`),
+  each with the files it governs, because the first real target failed on rules that it did not give
+  (S08 on a citation of an example of the baseline, then S14 on the baseline's words in about twenty
+  files and a `README.md` with no name). The text has: the phrases of `adapted` in three groups by
+  what the check reads after them (whole words, open ends, stems: a hit with an angle quote U+2039
+  after it and no period between), how it reads case, line ends, blanks, paragraphs, markers and what
+  stands before a phrase, the names it passes, and the one word read as it is with its files; the
+  citation rule, which keeps the baseline's rules when a citation goes; the three things of `README.md`
+  and the texts that `identity` refuses; the forms of the onboarding file and of `Check:`; the
+  markers; and a search command built from the phrases, an aid and not the check. The phrases, names,
+  files and texts are read from `internal/verify` (`AdaptedPhrases`, `AdaptedExempt`, `AdaptedAllowed`,
+  `KitPhrases`): a pattern added without its phrase and tail does not compile, and a test probes each
+  pattern before and after its phrase. S05's link rows and the checks of S11 get no rule; a failed check
+  still ends `setup` as `fail`, and a restart starts a new session: the prompt is not a retry with the findings;
 - its output: one file per `F-` row, at `result/files/<path>` of its session
   directory (`result/` is where a session writes, [`session.md`](session.md#the-session-directory)); a missing file,
   a link, a file over 1 MiB, a file that is not valid UTF-8, or a file at a
