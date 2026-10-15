@@ -3,7 +3,6 @@ docs/spec/loop.md	## REQ-005 — The task loop	—	none: the requirement's text;
 docs/spec/loop.md	### The task register	—	66a
 docs/spec/loop.md	### The pull request	—	66g
 docs/spec/loop.md	### The attempts	—	66e
-docs/spec/loop.md	### The independence of the reviewers	—	66e
 docs/spec/loop.md	### The tier and the context of a task	the record kinds of the step table	63b
 docs/spec/loop.md	### The tier and the context of a task	the tier selection and the construction of the prompt file	66e
 docs/spec/loop.md	## REQ-005 — The handoff	—	none: the requirement's text; its sections are in their rows
@@ -12,7 +11,6 @@ docs/spec/loop.md	### The artifact that is a comment	the post, the copy and the 
 docs/spec/loop.md	### The transition table	the default rows, the lists and the check of a table	61
 docs/spec/loop.md	### The transition table	the replacement by set transitions and its history	66b
 docs/spec/loop.md	### The checks of a handoff	the schema, the artifacts, the items and the pair	61
-docs/spec/loop.md	### The checks of a handoff	the event handoff, the routing of a question and the accepted answer	66d
 docs/spec/loop.md	### The frozen test list	—	66e
 docs/spec/loop.md	## REQ-007 — The four `layup/` statuses	the statuses, their sources and their posting	66f
 docs/spec/loop.md	## REQ-007 — The four `layup/` statuses	the permissions of the App	64
@@ -20,7 +18,6 @@ docs/spec/loop.md	### layup/gates	—	66f
 docs/spec/loop.md	### layup/spec	—	66f
 docs/spec/loop.md	### layup/rules	the check (the basic rule)	63a
 docs/spec/loop.md	### layup/rules	the status	66f
-docs/spec/loop.md	### layup/verify	—	66f
 docs/spec/loop.md	### The ready and merge rule	—	66g
 docs/spec/loop.md	### The merge at the head SHA and the close-out commit	—	66g
 docs/spec/loop.md	### The gate jobs read the base	part 1: the jobs read the base and the exception for a batch branch	65a
@@ -44,7 +41,7 @@ docs/spec/loop.md	### The Retrospective	—	66c
 docs/spec/loop.md	## REQ-005 — The steps of the loop after the Scaffold	the step shape	66h
 docs/spec/loop.md	## REQ-005 — The steps of the loop after the Scaffold	the step bet	66j
 docs/spec/loop.md	## REQ-005 — The steps of the loop after the Scaffold	the step loop, the restart, the push with no result, the comments of a task session	66k
-docs/spec/loop.md	## NFR-004 — A check that did not run	—	none: a rule of the rows 66f and 66g, which post the statuses and block the merge
+docs/spec/loop.md	## NFR-004 — A check that did not run	—	none: a rule of the rows 62c (the rule ran), 66e and 66f (the not-active verifier), 66f and 66g (the statuses and the merge)
 docs/spec/loop.md	## NFR-001 — The records	—	none: each record is in the row of its owner, below
 docs/spec/loop.md	## The acceptance tests of M2e	—	none: each test is in its row, below
 docs/spec/loop.md	### The demo and the release review	the demo	68b
@@ -116,10 +113,23 @@ docs/spec/packages.md	### The table of M2e	internal/forge and internal/forge/git
 docs/spec/packages.md	### The table of M2e	internal/catalog: the workflow that reads the base	65a
 docs/spec/packages.md	### The table of M2e	internal/setup: CODEOWNERS and the code-owner rule	65b
 docs/spec/packages.md	### The table of M2e	internal/records: the kinds of result and events	60
-docs/spec/packages.md	### The table of M2e	internal/run: the register, the transition table and the parameters	66a
-docs/spec/packages.md	### The table of M2e	internal/run: the handoff in the loop, the attempts and the frozen test list	66e
-docs/spec/packages.md	### The table of M2e	internal/run: the statuses, the pull request and the merge	66g
-docs/spec/packages.md	### The table of M2e	internal/run: the steps shape, bet and loop	66k
 docs/spec/packages.md	### The table of M2e	internal/run: the May import cell of the table of M2a	66a
 docs/spec/packages.md	### The table of M2e	No new command and no flag	none: no code
 docs/spec/packages.md	### The table of M2e	TestPackageRules reads the table of M2e	61
+docs/spec/loop.md	### The independence of the reviewers	the authors and the admitted pair	66e
+docs/spec/loop.md	### The independence of the reviewers	the status not-active	66f
+docs/spec/loop.md	### layup/verify	the status	66f
+docs/spec/loop.md	### layup/verify	the redo of a task whose base moved	66k
+docs/spec/loop.md	### The checks of a handoff	the event handoff, the items that need a program, the routing of a question and the accepted answer	66d
+docs/spec/loop.md	### The rendered commit and the confirmed inventory	the rendered task of a later bet	66j
+docs/spec/loop.md	## REQ-012 — The bet	the merge order after a bet	66k
+docs/spec/packages.md	### The table of M2e	internal/run: the register and the transition table	66a
+docs/spec/packages.md	### The table of M2e	internal/run: the parameters	66b
+docs/spec/packages.md	### The table of M2e	internal/run: the handoff in the loop	66d
+docs/spec/packages.md	### The table of M2e	internal/run: the attempts and the frozen test list	66e
+docs/spec/packages.md	### The table of M2e	internal/run: the statuses	66f
+docs/spec/packages.md	### The table of M2e	internal/run: the pull request and the merge	66g
+docs/spec/packages.md	### The table of M2e	internal/run: the step shape	66h
+docs/spec/packages.md	### The table of M2e	internal/run: the step bet	66j
+docs/spec/packages.md	### The table of M2e	internal/run: the step loop	66k
+docs/spec/packages.md	### The table of M2e	internal/handoff: the items that a program computes are the caller's	66d

@@ -111,14 +111,14 @@ ROWS = [
      'The task register',
      '`layup run` writes `tasks.tsv` and `transitions.tsv` from the default when the loop first runs and refuses a task whose predecessor is not a task, a cycle, or no requirement.',
      '`internal/run`', 'REQ-005, NFR-001', 'F-0003#45',
-     'unit; integration (the `httptest` forge)', 'small', '400', '60, 61',
+     'unit; integration (the `httptest` forge); the block test (`tasks` to `built`)', 'small', '400', '60, 61',
      '1: the register and the first writes'),
     ('66b',
      'T-dx1h',
      'The parameters',
      '`layup run` writes `parameters.tsv` with its defaults, copies a `set <name> <value> because <reason>` and applies it at the next step boundary only for an allowed role, a known name and a value inside its bound, and replaces the transition table by `set transitions`.',
      '`internal/run`', 'REQ-012, NFR-001', 'F-0003#51',
-     'unit; the block test (`tasks`, `parameters` to `built`)', 'small', '400', '66a',
+     'unit; the block test (`parameters` to `built`)', 'small', '400', '66a',
      '2: the first writer and the `set` command; the replacement of the transition table'),
     ('66c',
      'T-v2sv',
@@ -130,7 +130,7 @@ ROWS = [
     ('66d',
      'T-q5k4',
      'The handoff in the loop',
-     "The plan, the plan review and the review record are posted from the bytes of the session's file, copied with their hash and kept; the `handoff` event holds the comment ID; a question goes to its owner role and an answer is accepted by its attempt.",
+     "The plan, the plan review and the review record are posted from the bytes of the session's file, copied with their hash and kept; the `handoff` event holds the comment ID; a question goes to its owner role and an answer is accepted by its attempt; the items that need a program (`spec-sections`, `rendering-equal`) are computed by the caller and passed to the handoff check.",
      '`internal/run`', 'REQ-005', 'F-0003#45, F-0003#59',
      'unit; integration (the `httptest` forge)', 'large', '600', '61, 64, 66a',
      '2: the comment artifact; the `handoff` event and the route of a question'),
@@ -139,7 +139,7 @@ ROWS = [
      'The attempts, the independence and the frozen tests',
      'A gate failure starts a new attempt with its findings; the authors of a plan review and of a verification come from the ledger; the frozen test list freezes at the first valid handoff and a changed source is a finding; the tier and the prompt file are built from the plan and the records.',
      '`internal/run`', 'REQ-005, NFR-004', 'F-0003#45, F-0003#58',
-     'unit; integration (the real `git`)', 'large', '700', '61, 63b, 66d',
+     'unit; integration (the real `git`); the block test (`task-tests` to `built`)', 'large', '700', '61, 63b, 66d',
      '3: the attempts and the independence; the frozen test list; the tier and the prompt file'),
     ('66f',
      'T-q0kr',
@@ -160,7 +160,7 @@ ROWS = [
      'The step shape',
      '`layup run` runs the Shape tasks through the loop, writes the options, asks the questions left open (the intent answer writes `budget.tsv`) and stops with no survivor; `run-steps` gains `shape`.',
      '`internal/run`', 'REQ-012', 'F-0003#51',
-     'integration (the `httptest` forge, scripted harnesses)', 'large', '600', '62a, 66b, 66g',
+     'unit (the rewrite and the stop); integration (the `httptest` forge, scripted harnesses)', 'large', '600', '62a, 66b, 66g',
      '2: the step shape; the questions left open and the band'),
     ('66i',
      'T-8rm6',
@@ -172,14 +172,14 @@ ROWS = [
     ('66j',
      'T-2vva',
      'The step bet',
-     '`layup run` posts the brief, takes the answer of the approver, writes the inventory version, pushes the rendered commit with its carry-over of `layup/verify`, opens the architecture tasks, and writes `bets.tsv` last; `run-steps` gains `bet`.',
+     '`layup run` posts the brief, takes the answer of the approver, writes the inventory version, pushes the rendered commit with its carry-over of `layup/verify`, opens the architecture tasks, renders a later bet as a rendered task, and writes `bets.tsv` last; `run-steps` gains `bet`.',
      '`internal/run`', 'REQ-012, REQ-003', 'F-0003#51, F-0003#54',
-     'integration (the `httptest` forge, the real `git`); the block test (`bets` to `built`)', 'large', '700', '62b, 66g, 66h, 66i',
+     'unit (the option answer lines, the approver\'s role); integration (the `httptest` forge, the real `git`); the block test (`bets` to `built`)', 'large', '700', '62b, 66g, 66h, 66i',
      '2: the step bet; the rendered commit and the architecture tasks'),
     ('66k',
      'T-9nbf',
      'The step loop and the restart',
-     "`layup run` resumes the loop from the records and the forge, binds a push with no result or refuses it as `push-lost`, posts a task session's comment on its issue, and redoes a task whose base moved; `run-steps` gains `loop`.",
+     "`layup run` resumes the loop from the records and the forge, binds a push with no result or refuses it as `push-lost`, posts a task session's comment on its issue, merges the Shape tasks in the merge order after a bet, and redoes a task whose base moved (the events `closed` and `rebased`); `run-steps` gains `loop`.",
      '`internal/run`', 'REQ-005, NFR-001', 'F-0003#45',
      'integration (the `httptest` forge, scripted harnesses)', 'large', '700', '66c, 66j',
      '2: the step loop and the restart; the redo of a task'),
@@ -208,6 +208,11 @@ ROWS = [
 
 CAPS = {}
 
+EXTRA = {
+    "65b": "The Operator's question (R6: severity normal; row 65b waits on it): where the setup writes `CODEOWNERS`, and how the Operator applies the code-owner rule of the ruleset to a target that `M2d` set up. It is the open gap \"where CODEOWNERS is written and how its ruleset is applied\" of `docs/setup/open-gaps.tsv`; ask it in this issue before the build, with the answer as the evidence.",
+    "66c": "The record of the Retrospective's event is not yet named: the block `events` is the file of one task. Issue #372 asks it; this row may settle it in its own pull request (R10), and #372 then closes with it.",
+}
+
 OPERATOR_INPUTS = """## The Operator's inputs (R6: severity normal; needed when row 68a merges)
 
 - A test target that `M2d` set up (the target of the demo of `M2d`, or a new one), public or on a plan that allows draft pull requests and enforces rulesets.
@@ -227,7 +232,7 @@ COMMON = """- [ ] The demo above holds, by the tests of the Tests cell, written 
 - [ ] Each part above is built as the specification says; a difference is a defect of the specification, fixed in the same pull request (R10).
 - [ ] `go build ./...`, `go vet ./...`, `go test ./...` and `go test -tags=integration ./...` pass; `adr-lint`, `prd-lint`, `link-lint`, `setup-check` and `run-discipline-tests` exit 0.
 """
-REVIEW = """- [ ] The review is recorded under `runs/`, by a reviewer of a model that wrote none of the release, with the result of `release-check.sh` at the reviewed commit and a coverage table of the files read.
+REVIEW = """- [ ] The review is recorded under `runs/`, by a reviewer of a model that wrote none of the release, with the result of `release-check.sh` at the reviewed commit and a coverage table of the files read that a script compares with `git ls-files`.
 - [ ] Each finding of the review is fixed, or opens an issue with its reason.
 """
 UAT = """- [ ] The demo above holds on a test target, on the Operator's harnesses, with its evidence under `runs/`, and passes when each of the five rules of `loop.md` (The demo and the release review) holds.
@@ -252,7 +257,7 @@ def body(r, p):
     cap = CAPS.get(row, "1")
     crit = COMMON
     if row == "68a":
-        crit = REVIEW + COMMON.split("\n", 2)[2]
+        crit = REVIEW + COMMON.split("\n", 1)[1]
     elif row == "68b":
         crit = UAT
     items = item(row)
@@ -275,6 +280,8 @@ Task `{task}`: row {row} of the [implementation plan](https://github.com/pharzam
 
 {crit}- [ ] Docs updated in the same PR (`docs/tests/traceability.md`, the Test cells of `PRD-0001` §12).
 """
+    if row in EXTRA:
+        b += "\n## Notes\n\n- " + EXTRA[row] + "\n"
     if row == "68a":
         b += "\n" + REVIEW_NOTE
     if row == "68b":
@@ -282,10 +289,9 @@ Task `{task}`: row {row} of the [implementation plan](https://github.com/pharzam
     return b + "\n*Written by Claude Sonnet 5.5, the author of T-57vx (#346).*\n"
 
 def dup(title, env, num=None):
-    """The duplicate check of one child issue (R2; condition 4 of the plan review
-    of #346): the open and closed issues whose title holds the row's title. At an
-    edit the issue exists, so num drops it from the found set (note of round 2
-    of #346)."""
+    """The duplicate check of one child issue (R2), as the model of T-bng8 made it:
+    the open and closed issues whose title holds the row's title. At an edit the
+    issue exists, so num drops it from the found set."""
     q = f'repo:pharzam/layup in:title "{title}"'
     sel = f'[.items[] | select(.number != {num or 0}) | "#\\(.number) (\\(.title))"] | join("; ")'
     out = subprocess.run(["gh", "api", "-X", "GET", "search/issues", "-f", f"q={q}",

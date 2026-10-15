@@ -49,7 +49,6 @@ for want in \
 	"docs/spec/loop.md	### The transition table	the default rows, the lists and the check of a table" \
 	"docs/spec/loop.md	### The transition table	the replacement by set transitions and its history" \
 	"docs/spec/loop.md	### The checks of a handoff	the schema, the artifacts, the items and the pair" \
-	"docs/spec/loop.md	### The checks of a handoff	the event handoff, the routing of a question and the accepted answer" \
 	"docs/spec/loop.md	## REQ-007 — The four \`layup/\` statuses	the statuses, their sources and their posting" \
 	"docs/spec/loop.md	## REQ-007 — The four \`layup/\` statuses	the permissions of the App" \
 	"docs/spec/loop.md	### layup/rules	the check (the basic rule)" \
@@ -126,6 +125,7 @@ for want in \
 	"docs/spec/records.md	## NFR-001 — The records of the task loop	run-steps: bet" \
 	"docs/spec/records.md	## NFR-001 — The records of the task loop	run-steps: loop" \
 	"docs/spec/records.md	## NFR-001 — The records of the task loop	tasks/<task>/results/<session>/<file>" \
+	"docs/spec/forge.md	## The calls of M2e	—" \
 	"docs/spec/packages.md	### The table of M2e	internal/handoff: the transition table and the check of a handoff" \
 	"docs/spec/packages.md	### The table of M2e	internal/spec: the Shape filter" \
 	"docs/spec/packages.md	### The table of M2e	internal/spec: the checks of the bet and the rendering" \
@@ -136,12 +136,25 @@ for want in \
 	"docs/spec/packages.md	### The table of M2e	internal/catalog: the workflow that reads the base" \
 	"docs/spec/packages.md	### The table of M2e	internal/setup: CODEOWNERS and the code-owner rule" \
 	"docs/spec/packages.md	### The table of M2e	internal/records: the kinds of result and events" \
-	"docs/spec/packages.md	### The table of M2e	internal/run: the register, the transition table and the parameters" \
-	"docs/spec/packages.md	### The table of M2e	internal/run: the handoff in the loop, the attempts and the frozen test list" \
-	"docs/spec/packages.md	### The table of M2e	internal/run: the statuses, the pull request and the merge" \
-	"docs/spec/packages.md	### The table of M2e	internal/run: the steps shape, bet and loop" \
 	"docs/spec/packages.md	### The table of M2e	internal/run: the May import cell of the table of M2a" \
-	"docs/spec/packages.md	### The table of M2e	TestPackageRules reads the table of M2e"; do
+	"docs/spec/packages.md	### The table of M2e	TestPackageRules reads the table of M2e" \
+	"docs/spec/loop.md	### The independence of the reviewers	the authors and the admitted pair" \
+	"docs/spec/loop.md	### The independence of the reviewers	the status not-active" \
+	"docs/spec/loop.md	### layup/verify	the status" \
+	"docs/spec/loop.md	### layup/verify	the redo of a task whose base moved" \
+	"docs/spec/loop.md	### The checks of a handoff	the event handoff, the items that need a program, the routing of a question and the accepted answer" \
+	"docs/spec/loop.md	### The rendered commit and the confirmed inventory	the rendered task of a later bet" \
+	"docs/spec/loop.md	## REQ-012 — The bet	the merge order after a bet" \
+	"docs/spec/packages.md	### The table of M2e	internal/run: the register and the transition table" \
+	"docs/spec/packages.md	### The table of M2e	internal/run: the parameters" \
+	"docs/spec/packages.md	### The table of M2e	internal/run: the handoff in the loop" \
+	"docs/spec/packages.md	### The table of M2e	internal/run: the attempts and the frozen test list" \
+	"docs/spec/packages.md	### The table of M2e	internal/run: the statuses" \
+	"docs/spec/packages.md	### The table of M2e	internal/run: the pull request and the merge" \
+	"docs/spec/packages.md	### The table of M2e	internal/run: the step shape" \
+	"docs/spec/packages.md	### The table of M2e	internal/run: the step bet" \
+	"docs/spec/packages.md	### The table of M2e	internal/run: the step loop" \
+	"docs/spec/packages.md	### The table of M2e	internal/handoff: the items that a program computes are the caller's"; do
 	grep -Fq "$want	" "$tab" || echo "FAIL no part: $want" >> "$out"
 done
 # 6. Each listed part is named in the Task cell of its own row, in the form that
