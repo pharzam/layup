@@ -619,17 +619,19 @@ are `internal/run` for `tasks`, `transitions`, `task-gates`, `task-tests`, `bets
 milestone that `M2e` extends keeps its name in `built` and changes in words here: the
 build task changes the block and its Go value in one change. The three that
 `M2e` extends are `result` (the kinds `question`, `decision` and `lesson` after
-`status` and `artifact`), `events` (the kinds `handoff`, with the detail `valid` or
-`invalid <item>`, `closed` and `rebased`; the detail of `closed` names the task that
-redoes it, and the detail of `rebased` the task it replaces) and `copies` (the copy
+`status` and `artifact`), `events` (the new kinds `handoff`, with the detail `valid` or
+`invalid <item>` and, for a comment, after a space `comment <ID>`, and `merged`, with
+the merge commit's SHA in `sha` and the pull request's number as its detail; the
+kinds `closed` and `rebased` exist, and `M2e` sets their detail: that of `closed`
+names the task that redoes it, and that of `rebased` the task it replaces) and `copies` (the copy
 of a comment that is an artifact of a handoff, [`loop.md`](loop.md#the-artifact-that-is-a-comment)).
 
 ```tsv-schema tasks records:tasks.tsv
 task          id(T-xxxx)   key  the task ID
 issue         int          -    the task's issue number
 kind          enum(specification|batch|rendered|plan|build)  -  the kind of the task, which picks the row of the transition table
-requirements  list(text)   -    the requirement IDs it serves, each with no space; `—` for a task that serves none (code refuses it for a build task)
-size          enum(small|large)  -  the size class of its plan
+requirements  list(text)   -    the requirement IDs it serves, each with no space; never `—` (each task names a requirement, `layup spec check`)
+size          enum(small|large)  -  the size class from the milestone plan's row of the task; `—` for a task that has none (a specification, a batch, a rendered task); the plan's own `size` field gives the tier, loop.md
 predecessors  list(id(T-xxxx))   -  the tasks that must merge first, each a task of this table; `—` for none
 pr            int          -    the pull request's number; `—` until it is opened
 opened        time         -    when `layup run` wrote the row
@@ -638,8 +640,8 @@ opened        time         -    when `layup run` wrote the row
 ```tsv-schema transitions records:transitions.tsv
 from       text         key  the step the handoff leaves, as the table of `loop.md` names it (for example `developer (build task)`)
 to         text         key  the step it enters
-artifacts  list(text)   -    the kinds of artifact the handoff names: `plan`, `plan-review`, `review-record`, `task-file`, `commits`, `rows`, `patch`; `—` for none
-items      list(text)   -    the names of the items that code checks, each a word of the list in `loop.md`; `—` for none
+artifacts  list(text)   -    the kinds of artifact the handoff names, each of the list in `loop.md` (The transition table): `plan`, `plan-review`, `review-record`, `task-file`, `commits`, `rows`, `patch`, `rendering`, `question`, `answer`; never `—`
+items      list(text)   -    the names of the items that code checks, each of the table of items in `loop.md` (The transition table); never `—`
 ```
 
 ```tsv-schema task-gates records:tasks/<task>/gates.tsv
@@ -662,7 +664,7 @@ frozen   time            -    when the list was frozen
 ```tsv-schema task-spec-check records:tasks/<task>/spec-check.tsv
 head    sha1  key  the head the table was run for
 rule    enum(covers|needs|measures|criteria|classes|inventory|quotes|sections|tasks|ran)  key  the rule, in this order
-result  enum(pass|fail|clear)  -  `clear` only for the whole table of a head that touches neither the PRD nor `docs/spec/` before the first bet
+result  enum(pass|fail|clear)  -  `clear` for the rules `classes` and `inventory` before the first bet, and for each rule of the table of a head that touches neither the PRD nor `docs/spec/` before it (loop.md, The full spec check)
 detail  text  -  for `fail`, the first broken place; `—` otherwise
 ```
 
@@ -678,8 +680,10 @@ milestone     text      key  the milestone's name as the plan has it
 kind          enum(first|later)  -  the first bet or a later one
 brief         int       -    the comment ID of the brief on the milestone's issue
 brief_sha256  sha256    -    the SHA-256 of the brief's copy
+appetite_usd  decimal   -    the money of the appetite, from the brief's line `appetite: USD <n>, <n> hours`, inside the band of `budget.tsv`
+appetite_hours  decimal -    the hours of the appetite, from the same line
 answer        int       -    the comment ID of the approver's answer, a copy in `copies.tsv`
-verdict       enum(bet|no-bet)  -  the answer's last line
+verdict       enum(bet|no-bet)  -  the answer's last line, `bet` or `no bet` written `no-bet`
 approver      int       -    the answering account's numeric ID, a row of `approvers.tsv`
 decided       time      -    when `layup run` copied the answer
 ```
@@ -691,12 +695,10 @@ bet     text     -    the milestone of the bet that confirmed it
 ```
 
 ```tsv-schema inventory records:spec/inventory-<n>.tsv
-id         text       key  the requirement's ID as the target's PRD has it
-statement  text       -    the statement
-moscow     enum(must|should|could|wont)  -  the class that the bet's answer gave
-phase      int        -    the phase that the answer gave, 1 or more
-criterion  text       -    the acceptance criterion
-facts      list(int)  -    the numbers of the facts the requirement covers
+fact   int                              key  the fact's number, as in `spec/spans.tsv`
+class  enum(need|constraint|measure|context)  -  the confirmed class (a change that the bet's answer gave, or the class of Intake)
+scope  enum(in|out)                     -    `out` for a fact that the bet's answer marked out of scope
+copy   int                              -    the comment ID of the bet's or the decision's copy that gave this version
 ```
 
 ```tsv-schema parameters records:parameters.tsv
@@ -719,8 +721,7 @@ the list; in `task-gates` and `task-spec-check`, one table for each head, rows i
 order of the manifest and of the rule list; in `task-tests`, `frozen` is the same on each
 row of a freezing; in `options`, a `pass` with `—` in `evidence` is a valid row (the
 filter drops the option) and `fail` has `—`; in `bets`, one row for a milestone that has
-a `first` kind, and a `later` row only after it; in `inventory`, `moscow` and `phase`
-never `—`; in `parameters`, the key is the name and a change is the next commit's
+a `first` kind, and a `later` row only after it; in `inventory`, no column holds `—` and a fact has one row; in `inventory-index`, `sha256` and `bet` never `—`; in `task-tests`, `source`, `sha256` and `harness` never `—`; in `bets`, `brief_sha256` and `verdict` never `—`, and `appetite_usd` and `appetite_hours` are `—` exactly when `verdict` is `no-bet`; in `parameters`, the key is the name and a change is the next commit's
 row. The rows of `copies.tsv` that a handoff names are read by the key of the
 comment and its `seen`.
 

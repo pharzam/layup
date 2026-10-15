@@ -246,7 +246,7 @@ heading of this table to it in the same change, as task `T-4ywt` did for
   target's own script, as `internal/gate` starts `sh -c`. It stays an engine check
   (no model call, no connection), so its row stays on the line of the engine
   checks.
-- `internal/rules`: the check `layup/rules` of the basic rule
+- `internal/rules` (its row in [the table of M2b](#the-table-of-m2b) says the check `layup/rules` comes in `M2f`; its basic rule is `M2e`'s, and the batch part stays `M2f`'s): the check `layup/rules` of the basic rule
   ([`loop.md`](loop.md#layuprules)): the base's register against the changed paths
   and the comparison of a rendered record with code's rendering; it may import
   `internal/tsv`, `internal/records`, `internal/spec` and `internal/git`. The batch
@@ -269,7 +269,8 @@ heading of this table to it in the same change, as task `T-4ywt` did for
   read the base ([`loop.md`](loop.md#the-gate-jobs-read-the-base)); that workflow is
   the catalog's file, the ruleset the setup's.
 - `internal/records`: the kinds `question`, `decision` and `lesson` of the block
-  `result`, and the kinds `handoff`, `closed` and `rebased` of the block `events`.
+  `result`, and the kinds `handoff` and `merged` of the block `events` (`closed` and
+  `rebased` exist there; `M2e` sets their detail).
 
 **No new command** and no flag: the handoff check is a function that `layup run`
 calls, the full `layup spec check` is the command of `M2c` with more rules, and

@@ -449,6 +449,13 @@ omits at its default ([The read-back](#the-read-back)).
 | `pull_request` | those of phase 1 (no required review, thread resolution required), with `allowed_merge_methods` `["merge"]` (F-19: the target's rules forbid a squash and a rebase) and `require_extra_approval_for_unattributed_changes` `false` (F-19: no rule of the target asks for it, and the pilot saw that it did not block a pull request) |
 | `required_status_checks` | `strict_required_status_checks_policy` `true`; one check per gate job, its `integration_id` that of GitHub Actions, 15368, as in phase 1 (V-21 of `docs/setup/record-T-n1hp.md`); and `layup/gates`, `layup/spec`, `layup/verify` and `layup/rules`, each with `integration_id` the `app_id` of the forge register (§6: each `layup/` check pinned to the App) |
 
+**From `M2e`** ([`loop.md`](loop.md#the-gate-jobs-read-the-base), F-22): the rule
+`pull_request` also sets `require_code_owner_review` `true` with
+`required_approving_review_count` `0`, so that a change to `.github/**`,
+`docs/gates.tsv` or `docs/gates/**` waits for the Operator as code owner; the build
+task of `M2e` writes it, and its effect with no required approval is to confirm on
+a real repository.
+
 **Decided here:** `creation` and the two parameters of `pull_request` are
 written in phase 1 too, as `WORK/out/ruleset-default.json` is a file of the
 work area, not of the target's tree, so no target commit changes;

@@ -139,9 +139,10 @@ actor.
 - **LAYUP.** `layup run` alone holds the App's private key and makes an
   installation token from it for each hour of work. The App's permissions are
   those of O-92 (contents, issues and pull requests: write; metadata: read) plus
-  commit statuses (write); no workflows and no administration. For the pilot
-  this is the App `layup-agent`, installed on each target and given the
-  commit-statuses permission; both changes are the Operator's.
+  commit statuses (write) and checks (read, to read the native jobs of a head); no
+  workflows and no administration. For the pilot this is the App `layup-agent`,
+  installed on each target and given the commit-statuses and checks permissions;
+  both changes are the Operator's.
 - **Humans.** The accounts in `approvers.tsv`, each by the forge's numeric user
   ID and a role: Operator, idea owner (both from Start; they can be the same
   person), or approver (named by the idea owner at Intake for a planned point).

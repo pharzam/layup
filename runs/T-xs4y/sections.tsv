@@ -31,3 +31,4 @@ NFR-004: a check that did not run is never a pass	docs/spec/loop.md	## NFR-004 â
 the acceptance tests of M2e, with the six Tests rows of the inventory (condition 3 of the plan review)	docs/spec/loop.md	## The acceptance tests of M2e
 the demo and the release review of M2e, as acceptance contracts (condition 4)	docs/spec/loop.md	### The demo and the release review
 what M2e leaves to M2f, M2g and later (condition 4)	docs/spec/loop.md	## Not in M2e
+the steps of the loop after the Scaffold, the restart, the push with no result, the comments of a task session (criterion 1; session.md and scaffold.md deferrals)	docs/spec/loop.md	## REQ-005 â€” The steps of the loop after the Scaffold
