@@ -208,8 +208,9 @@ var layupChecks = []string{"layup/gates", "layup/spec", "layup/verify", "layup/r
 // layup-probe (D4 of #92; scaffold.md, The ruleset of the default branch), the
 // rules in the order of its table: the creation of a ref and its deletion
 // refused, no force push, a pull request with no required review (an approval
-// is an issue comment, and the App merges) that allows the merge method
-// only, one required check per kind pinned to GitHub Actions, and no bypass.
+// is an issue comment, and the App merges; in phase 2 the review of a code owner
+// is required, which with no approval binds only a pull request that touches a
+// path of CODEOWNERS) that allows the merge method only, one required check per kind pinned to GitHub Actions, and no bypass.
 // appID is the App's ID in phase 2, which adds the four layup/ checks pinned to
 // it, and 0 in phase 1, which has none (no phase-1 command posts one).
 func rulesetBody(kinds []string, appID int64) ([]byte, error) {
@@ -260,7 +261,7 @@ func rulesetBody(kinds []string, appID int64) ([]byte, error) {
 				Resolution   bool     `json:"required_review_thread_resolution"`
 				MergeMethods []string `json:"allowed_merge_methods"`
 				ExtraApprove bool     `json:"require_extra_approval_for_unattributed_changes"`
-			}{Resolution: true, MergeMethods: []string{"merge"}}},
+			}{CodeOwner: appID != 0, Resolution: true, MergeMethods: []string{"merge"}}},
 			{"required_status_checks", struct {
 				Checks []check `json:"required_status_checks"`
 				Strict bool    `json:"strict_required_status_checks_policy"`
@@ -333,7 +334,7 @@ const withoutLayupLine = `To merge with LAYUP absent, remove the required checks
 // the tree and out/ruleset-default.json in the work area, each with its record
 // row, from the kinds of the manifest at the head, which are the names of the
 // gate jobs (K30); its commands are the hand-off.
-func runS13(in Input) Outcome { return runS13With(0, in) }
+func runS13(in Input) Outcome { return runS13With(0, nil, in) }
 
 // runS13Phase2 is S13 in phase 2 (scaffold.md, REQ-003, The rulesets of
 // Scaffold 6; task T-9v92): the body of phase 1 with the App's ID, which adds
@@ -350,15 +351,19 @@ func runS13Phase2(p Phase2, in Input) Outcome {
 		return Outcome{Kind: Fail, Evidence: "S13: the host directory of the commands, " + p.Host + ", is not an absolute path"}
 	case p.DefaultBranch == "":
 		return Outcome{Kind: Fail, Evidence: "S13: the default branch of the forge is empty"}
+	case p.Migrate != nil && p.Migrate.RulesetID < 1:
+		return Outcome{Kind: Fail, Evidence: fmt.Sprintf("S13: the recorded ruleset ID is %d, not a positive number", p.Migrate.RulesetID)}
 	}
-	return runS13With(p.AppID, in)
+	return runS13With(p.AppID, &p, in)
 }
 
 // runS13With is the body of S13 for both phases: appID is 0 in phase 1, which
 // writes the one ruleset file and no row without-layup, and the App's ID in
-// phase 2.
-func runS13With(appID int64, in Input) Outcome {
-	kinds, _, err := manifestKinds(filepath.Join(in.Dir, work.TargetPath), "HEAD")
+// phase 2, where p holds the owner of the gate paths: a new target carries
+// .github/CODEOWNERS in its tree, and a target set up before the code-owner rule
+// (p.Migrate) keeps the tree of M2d and gets the files of its migration in out/.
+func runS13With(appID int64, p *Phase2, in Input) Outcome {
+	kinds, configs, err := manifestKinds(filepath.Join(in.Dir, work.TargetPath), "HEAD")
 	if err != nil {
 		return Outcome{Kind: Fail, Evidence: "the head: " + err.Error()}
 	}
@@ -369,6 +374,12 @@ func runS13With(appID int64, in Input) Outcome {
 	ruleset, err := rulesetBody(kinds, appID)
 	if err != nil {
 		return Outcome{Kind: Fail, Evidence: "S13: " + err.Error()}
+	}
+	var owners []byte
+	if p != nil {
+		if owners, err = CodeOwners(p.CodeOwner, configs); err != nil {
+			return Outcome{Kind: Fail, Evidence: "S13: " + err.Error()}
+		}
 	}
 	if err := sys.write(targetFile(in.Dir, protectionPath), protection); err != nil {
 		return Outcome{Kind: Fail, Evidence: "S13: " + firstLine(err)}
@@ -389,6 +400,18 @@ func runS13With(appID int64, in Input) Outcome {
 	}
 	if err := sys.write(filepath.Join(in.Dir, filepath.FromSlash(rulesetRecordsPath)), records); err != nil {
 		return Outcome{Kind: Fail, Evidence: "S13: " + firstLine(err)}
+	}
+	if p.Migrate == nil {
+		if err := sys.write(targetFile(in.Dir, codeOwnersPath), owners); err != nil {
+			return Outcome{Kind: Fail, Evidence: "S13: " + firstLine(err)}
+		}
+		values = append(values, []string{"codeowners.sha256", sha(owners), "computed", "sha256 " + codeOwnersPath})
+	} else {
+		for path, data := range map[string][]byte{codeOwnersOutPath: owners, landScriptPath: []byte(landScript(*p, landApplicable))} {
+			if err := sys.write(filepath.Join(in.Dir, filepath.FromSlash(path)), data); err != nil {
+				return Outcome{Kind: Fail, Evidence: "S13: " + firstLine(err)}
+			}
+		}
 	}
 	values = append(values, []string{"without-layup", withoutLayupLine, "computed", rulesetPath})
 	return Outcome{Kind: Done, Evidence: "the ruleset files, and their commands in commands.sh", Commit: true, Values: values}
@@ -416,6 +439,9 @@ func commandsS13(r work.Record) []Command {
 // is neither the root commit nor the head of layup-setup, and reaches the diagnostic.
 func commandsS13Phase2(p Phase2) func(work.Record) []Command {
 	return func(work.Record) []Command {
+		if p.Migrate != nil {
+			return updateCommands(p)
+		}
 		w := filepath.Join(p.Host, "work", p.Name)
 		applies := filepath.Join(p.Host, "applies", p.Name)
 		target := quote(filepath.Join(w, work.TargetPath))

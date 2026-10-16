@@ -611,8 +611,10 @@ that writes it changes the block and its Go schema in one change.
 - `run-steps`: the enum of `step` gains `markers`, `setup`, `verify`,
   `scaffold-push` and `forge-check`
   ([`scaffold.md`](scaffold.md#the-steps-of-the-scaffold));
-- `setup-record`: the row name `without-layup`
-  ([`scaffold.md`](scaffold.md#nfr-002--a-target-without-layup)), and two forms
+- `setup-record`: the row names `without-layup`
+  ([`scaffold.md`](scaffold.md#nfr-002--a-target-without-layup)) and, from `M2e`, `codeowners.sha256` of S13
+  (`computed`, ref `sha256 .github/CODEOWNERS`; the record of a target set up before the code-owner rule lacks it, which is how `layup run` tells
+  that target, [`scaffold.md`](scaffold.md#the-code-owner-rule-of-a-target-that-m2d-set-up)), and two forms
   of the `ref` of a `computed` row, `records:start/start.tsv` (S01, S02 in
   phase 2) and `out/ruleset-default.json` (`without-layup`), which check
   `sources` accepts as it is (a ref that is not empty);

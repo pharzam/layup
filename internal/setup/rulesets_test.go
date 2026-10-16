@@ -42,7 +42,7 @@ const rulesetPhase2Text = `{
       "type": "pull_request",
       "parameters": {
         "dismiss_stale_reviews_on_push": false,
-        "require_code_owner_review": false,
+        "require_code_owner_review": true,
         "require_last_push_approval": false,
         "required_approving_review_count": 0,
         "required_review_thread_resolution": true,
@@ -137,6 +137,22 @@ func TestTheRulesetOfTheDefaultBranchInPhase2(t *testing.T) {
 	}
 }
 
+// The rule of the code owner (loop.md, The gate jobs read the base, part 2; task T-jew3): phase 2 requires the
+// review of a code owner with no required approval, so that the rule binds a pull request that touches a path of
+// CODEOWNERS and no other; phase 1 and its file do not change.
+func TestTheRulesetRequiresTheCodeOwner(t *testing.T) {
+	for app, want := range map[int64]bool{0: false, 5118100: true} {
+		body, err := rulesetBody([]string{"static"}, app)
+		if err != nil {
+			t.Fatal(err)
+		}
+		p := rulesOf(decode(t, body))[3]["parameters"].(map[string]any)
+		if p["require_code_owner_review"] != want || p["required_approving_review_count"] != float64(0) {
+			t.Errorf("app %d: require_code_owner_review %v, approvals %v; want %v and 0", app, p["require_code_owner_review"], p["required_approving_review_count"], want)
+		}
+	}
+}
+
 // The file of the records branch, byte for byte.
 func TestTheRulesetOfTheRecordsBranch(t *testing.T) {
 	got, err := rulesetRecordsBody(42)
@@ -171,12 +187,13 @@ func TestTheRulesAreThoseOfTheTables(t *testing.T) {
 		return map[string]any{"context": context, "integration_id": float64(id)}
 	}
 	for _, c := range []struct {
-		name   string
-		app    int64
-		checks []any
+		name      string
+		app       int64
+		codeOwner bool
+		checks    []any
 	}{
-		{"phase 1", 0, []any{check("static", 15368), check("layout", 15368)}},
-		{"phase 2", 5118100, []any{check("static", 15368), check("layout", 15368), check("layup/gates", 5118100), check("layup/spec", 5118100),
+		{"phase 1", 0, false, []any{check("static", 15368), check("layout", 15368)}},
+		{"phase 2", 5118100, true, []any{check("static", 15368), check("layout", 15368), check("layup/gates", 5118100), check("layup/spec", 5118100),
 			check("layup/verify", 5118100), check("layup/rules", 5118100)}},
 	} {
 		body, err := rulesetBody([]string{"static", "layout"}, c.app)
@@ -197,7 +214,7 @@ func TestTheRulesAreThoseOfTheTables(t *testing.T) {
 				t.Errorf("%s: the rule %v has parameters; want none", c.name, r["type"])
 			}
 		}
-		pr := map[string]any{"dismiss_stale_reviews_on_push": false, "require_code_owner_review": false, "require_last_push_approval": false,
+		pr := map[string]any{"dismiss_stale_reviews_on_push": false, "require_code_owner_review": c.codeOwner, "require_last_push_approval": false,
 			"required_approving_review_count": float64(0), "required_review_thread_resolution": true, "allowed_merge_methods": []any{"merge"},
 			"require_extra_approval_for_unattributed_changes": false}
 		if got := rules[3]["parameters"]; !reflect.DeepEqual(got, any(pr)) {
@@ -264,6 +281,7 @@ func TestTheAppIDIsThePinAndTheBypassActor(t *testing.T) {
 func phase2App(id int64) Phase2 {
 	p := phase2()
 	p.AppID = id
+	p.CodeOwner = owner
 	return p
 }
 
@@ -276,18 +294,19 @@ func TestPhase2S13WritesBothRulesetsAndTheRow(t *testing.T) {
 	o := StepsPhase2(phase2App(42), Calls{})["S13"].Run(Input{Dir: "w", Record: lastRecord()})
 	values := [][]string{{"branch-protection.sha256", sha([]byte(protectionText)), "computed", "sha256 docs/setup/branch-protection.json"},
 		{"ruleset.sha256", sha([]byte(rulesetPhase2Text)), "computed", "sha256 out/ruleset-default.json"},
+		{"codeowners.sha256", sha([]byte(codeOwnersTwoKinds)), "computed", "sha256 .github/CODEOWNERS"},
 		{"without-layup", withoutLayup, "computed", "out/ruleset-default.json"}}
 	if o.Kind != Done || o.Evidence != "the ruleset files, and their commands in commands.sh" || !o.Commit || !reflect.DeepEqual(o.Values, values) {
 		t.Errorf("S13 in phase 2: %s %q %v, values %q; want done with the rows %q", o.Kind, o.Evidence, o.Commit, o.Values, values)
 	}
 	for path, want := range map[string]string{"w/target/docs/setup/branch-protection.json": protectionText,
-		"w/out/ruleset-default.json": rulesetPhase2Text, "w/out/ruleset-records.json": rulesetRecordsText} {
+		"w/target/.github/CODEOWNERS": codeOwnersTwoKinds, "w/out/ruleset-default.json": rulesetPhase2Text, "w/out/ruleset-records.json": rulesetRecordsText} {
 		if got := f.files[path]; got != want {
 			t.Errorf("%s:\n%s\nwant\n%s", path, got, want)
 		}
 	}
-	if len(f.files) != 3 {
-		t.Errorf("S13 in phase 2 wrote %d files; want the three above", len(f.files))
+	if len(f.files) != 4 {
+		t.Errorf("S13 in phase 2 wrote %d files; want the four above", len(f.files))
 	}
 }
 

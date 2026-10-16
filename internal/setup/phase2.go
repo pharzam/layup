@@ -27,10 +27,12 @@ type Phase2 struct {
 	PinCommit     string
 	PinTree       string
 	PinTime       string
-	BriefSum      string // psb.sha256 of start.tsv
-	AppID         int64  // app_id of the host's forge register (not of the records of Start): the pin of the layup/ checks of S13 and its bypass actor
-	Host          string // the --host DIR of layup run, the root of DIR/work/OWNER/NAME/ and DIR/applies/OWNER/NAME/: the paths of the commands of S13
-	DefaultBranch string // the default branch of the forge's repository: the branch that the commands of S13 read and push to
+	BriefSum      string     // psb.sha256 of start.tsv
+	AppID         int64      // app_id of the host's forge register (not of the records of Start): the pin of the layup/ checks of S13 and its bypass actor
+	Host          string     // the --host DIR of layup run, the root of DIR/work/OWNER/NAME/ and DIR/applies/OWNER/NAME/: the paths of the commands of S13
+	DefaultBranch string     // the default branch of the forge's repository: the branch that the commands of S13 read and push to
+	CodeOwner     string     // the login of the Operator's row of approvers.tsv: the owner of the gate paths in .github/CODEOWNERS (S13)
+	Migrate       *Migration // non-nil for a target set up before the code-owner rule: S13 writes the files of M2d into the tree, and the update by the recorded ruleset ID
 	// Questions are the Q- questions of the batch, each with the question of
 	// its row of questions.tsv: the raw fact of the answers names them (S04).
 	Questions []work.Question
