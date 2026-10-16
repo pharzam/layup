@@ -231,3 +231,55 @@ f86f71c resolutions: PRD REQ012 task/test union, records clear-table sentence
 beside the transition-schema rule, and both parameters/task-spec-check lists.
 No broad shared-index exception is claimed for ordinary prose/changelog overlaps.
 Final combined full-SHA CI remains required after the new main Go code.
+
+## Third merge of main and round-2 tests (cap 2, tests only)
+
+`origin/main` advanced to `d5e199f` (PR #394, `T-9et9`, #352) during round 2.
+Merged it before the new tests, per the coordinator's order — merge commit
+`d615410`, never a rebase. Two files conflicted, each resolved by union:
+`docs/guardrails.md` (the three `T-4wyg` pitfalls kept, then `T-9et9`'s
+three) and `docs/prd/PRD-0001-layup.md` (NFR-004's Task cell is
+`T-9et9, T-4wyg` with both test sentences, and the changelog lists both
+entries, `T-9et9` then `T-4wyg`). `loop.md`, `packages.md`,
+`traceability.md` and `records.md` merged cleanly. The author's answer to
+round 2 is comment 6220274712, posted before these edits.
+
+Round-2 F1 is a test-coverage omission, so the added tests pass on the
+correct code — the meaningful red is the mutant sweep below. New tests in
+`internal/spec/full_test.go` (author's own, no reviewer code):
+`TestCheckFullBeforeTheFirstBetOnAPRDPath` (N2), `TestWaitsForABetIsTheExactFoldedHeading`,
+`TestWaitsForABetEndsAtTheNextHeading`, `TestWaitsForABetNamesTheCitationForms`,
+`TestSuccessMetricsHeadingIsLevelTwo`, `TestTheUniverseIsTheLatestConfirmedVersion`,
+and a leg of `TestClassesComparesWithTheLatestCopy` (N1: empty MoSCoW with a
+set Phase and no copy line fails). All pass on the unmutated tree, exit 0 at
+2026-10-16T16:50Z.
+
+### Round-2 mutation sweep (on a copy at /tmp/T-4wyg-mut2, exact source restored)
+
+Each mutant was compile-checked, then `go test -count=1 ./internal/spec` on
+the copy; a kill is an assertion failure, never a compile error. Original
+`full.go` sha256 `dac51aa4…` restored byte-exact after each run and verified
+at the end (`SOURCE-RESTORED-EXACT`).
+
+| Mutant | Result | Killing test |
+| --- | --- | --- |
+| M1 heading match → `Contains` | killed | `TestWaitsForABetIsTheExactFoldedHeading` (near-miss `## waits for a bet later`) |
+| M2 `inWaits ||=` never resets | killed | `TestWaitsForABetEndsAtTheNextHeading` |
+| M3 `Q-NNN` dropped from `citeTok` | killed | `TestWaitsForABetNamesTheCitationForms` (`Q-009` no longer exempt) |
+| M3b `#n` suffix dropped from `citeTok` | killed | consistent-input and pre-bet tests (`F-0001#8` unexempt) |
+| M4 case-sensitive heading | killed | `TestWaitsForABetIsTheExactFoldedHeading` (`## WAITS FOR A BET`) |
+| M5 metrics accepted at any level | killed | `TestSuccessMetricsHeadingIsLevelTwo` |
+| M6 bare `F-NNNN` dropped from `citeTok` | killed | `TestWaitsForABetNamesTheCitationForms` (`F-9999` cite fails `covers`) |
+| N12 smallest-n version selected | killed | `TestTheUniverseIsTheLatestConfirmedVersion` (both index orders) |
+| N1mut classes `mo==""` alone | killed | `TestClassesComparesWithTheLatestCopy` (empty-MoSCoW/set-Phase leg) |
+| N4mut `docs/prd/` branch dropped | killed | `TestCheckFullBeforeTheFirstBetOnAPRDPath` |
+
+Zero survivors among the targeted mutants; none compile-invalid.
+
+Post-merge and post-test verification on the worktree, all exit 0 at
+2026-10-16T16:50:45Z: `go build ./internal/spec`, `go vet ./internal/spec`,
+`go test -count=1 ./internal/spec` (0.042s),
+`go test -count=1 -tags=integration ./internal/spec ./internal/tsv`,
+`git diff --check`; merge-commit hooks green (adr-lint, prd-lint,
+run-discipline-tests 138/0, link-lint 2780, setup-check adapted/markers).
+No full-module suite run by this author — the coordinator owns it (#360).

@@ -234,6 +234,25 @@ func TestCheckFullBeforeTheFirstBet(t *testing.T) {
 	}
 }
 
+// A docs/prd/ path takes the spec-touching mode as a docs/spec/ path does:
+// the bet rules are clear and the numbered-facts rules judge (round-2 note
+// N2 — the docs/prd/ half of touchesSpec).
+func TestCheckFullBeforeTheFirstBetOnAPRDPath(t *testing.T) {
+	in := preBetInput(t)
+	in.Changed = []string{"docs/prd/PRD-0001-x.md"}
+	rows := CheckFull(in)
+	wantTenRows(t, rows)
+	for _, rule := range []string{"classes", "inventory"} {
+		got, detail := ruleOf(t, rows, rule)
+		if got != resClear || detail != "before the first bet" {
+			t.Errorf("the rule %s: (%q, %q), want clear with the reason `before the first bet`", rule, got, detail)
+		}
+	}
+	for _, rule := range []string{"covers", "needs", "criteria", "tasks"} {
+		wantResult(t, rows, rule, resPass)
+	}
+}
+
 func TestCheckFullNoSpecificationYet(t *testing.T) {
 	in := preBetInput(t)
 	in.Changed = []string{"internal/spec/full.go"}
@@ -362,6 +381,67 @@ func TestMeasuresExemptsAWaitingFact(t *testing.T) {
 	wantResult(t, CheckFull(in), "measures", resPass)
 }
 
+// The waits-for-a-bet heading is the exact text, case-folded, at any heading
+// level: a heading that only holds the phrase is prose (round-2 F1 — the
+// stated contract needed these falsifiers).
+func TestWaitsForABetIsTheExactFoldedHeading(t *testing.T) {
+	prd := func(heading string) map[string][]byte {
+		return map[string][]byte{"PRD-0001-x.md": []byte(strings.Replace(testPRD,
+			"## waits for a bet", heading, 1))}
+	}
+	// The phrase inside a longer heading names no section: fact 8 loses its
+	// exemption and needs fails.
+	in := baseInput(t)
+	in.PRDs = prd("## waits for a bet later")
+	wantFail(t, CheckFull(in), "needs", "8")
+
+	// Any case and any level hold the section.
+	for _, heading := range []string{"## WAITS FOR A BET", "### Waits for a bet", "# waits for a bet"} {
+		in = baseInput(t)
+		in.PRDs = prd(heading)
+		wantResult(t, CheckFull(in), "needs", resPass)
+	}
+}
+
+// The waits section ends at the next heading of any level: a cite in the
+// prose after it exempts nothing.
+func TestWaitsForABetEndsAtTheNextHeading(t *testing.T) {
+	in := baseInput(t)
+	in.PRDs = map[string][]byte{"PRD-0001-x.md": []byte(strings.Replace(testPRD,
+		"## waits for a bet\n\nA requirement that waits for its next bet covers F-0001#8.\n",
+		"## waits for a bet\n\nNothing waits.\n\n### Later notes\n\nA note covers F-0001#8.\n", 1))}
+	wantFail(t, CheckFull(in), "needs", "8")
+}
+
+// The waits section names facts by the citation forms (C9): F-<record>#n
+// (the base fixture's F-0001#8), F-<answers>#N, and the bare Q-NNN. A bare
+// F-NNNN of a record that numbers nothing is a cite covers judges — it
+// resolves to no fact of the universe.
+func TestWaitsForABetNamesTheCitationForms(t *testing.T) {
+	in := baseInput(t)
+	in.Index, in.Versions = inventoryOfSpans(t,
+		[]string{"Q-002", "need", "in", "9"}, []string{"Q-009", "need", "in", "9"})
+	in.PRDs = map[string][]byte{"PRD-0001-x.md": []byte(strings.Replace(testPRD,
+		"covers F-0001#8.", "covers F-0001#8, F-0004#2 and Q-009.", 1))}
+	wantResult(t, CheckFull(in), "needs", resPass)
+
+	in = baseInput(t)
+	in.PRDs = map[string][]byte{"PRD-0001-x.md": []byte(strings.Replace(testPRD,
+		"covers F-0001#8.", "covers F-0001#8 and F-9999.", 1))}
+	wantFail(t, CheckFull(in), "covers", "F-9999")
+}
+
+// The success table counts only under a `## … Success metrics` heading: the
+// same table at another level covers no measure (round-2 F1).
+func TestSuccessMetricsHeadingIsLevelTwo(t *testing.T) {
+	for _, heading := range []string{"### 8. Success metrics", "# 8. Success metrics"} {
+		in := baseInput(t)
+		in.PRDs = map[string][]byte{"PRD-0001-x.md": []byte(strings.Replace(testPRD,
+			"## 8. Success metrics", heading, 1))}
+		wantFail(t, CheckFull(in), "measures", "3")
+	}
+}
+
 func TestCriteriaNeedsOneRowPerRequirement(t *testing.T) {
 	in := baseInput(t)
 	in.PRDs = map[string][]byte{"PRD-0001-x.md": []byte(strings.Replace(testPRD,
@@ -414,6 +494,14 @@ func TestClassesComparesWithTheLatestCopy(t *testing.T) {
 	rows = CheckFull(in)
 	wantFail(t, rows, "classes", "REQ-009") // a set MoSCoW without a copy line
 
+	// Both cells must be empty to wait: an empty MoSCoW with a set Phase and
+	// no copy line fails (round-2 note N1 — the exemption needs the whole row).
+	in.PRDs = map[string][]byte{"PRD-0001-x.md": []byte(strings.Replace(testPRD,
+		"| NFR-001 | Delta. | Must | 1 | F-0001#4 |",
+		"| NFR-001 | Delta. | Must | 1 | F-0001#4 |\n| REQ-009 | Later. |  | 1 | F-0001#6 |", 1))}
+	rows = CheckFull(in)
+	wantFail(t, rows, "classes", "REQ-009")
+
 	// A REQ-headed line that breaks the grammar fails.
 	in = baseInput(t)
 	in.Copy = []byte(testCopy + "REQ-001: Later\n")
@@ -445,6 +533,37 @@ func TestInventoryVerifiesEachVersion(t *testing.T) {
 		wantFail(t, rows, rule, notRun)
 	}
 	wantFail(t, rows, "ran", notRun)
+}
+
+// The post-bet universe is the latest confirmed version — the greatest n of
+// the index, wherever its row sits (C13, round-2 F1). Version 1 carries a
+// need fact no requirement covers; version 2, the index's latest, does not —
+// a selection by the smallest n, or by the row's position, fails needs.
+func TestTheUniverseIsTheLatestConfirmedVersion(t *testing.T) {
+	var v1, v2 bytes.Buffer
+	var rows [][]string
+	for _, s := range testSpans() {
+		rows = append(rows, []string{s[colFact], s[colClass], "in", "9"})
+	}
+	rows = append(rows, []string{"Q-001", "context", "in", "9"})
+	if err := tsv.Write(&v2, InventorySchema, rows); err != nil {
+		t.Fatal(err)
+	}
+	if err := tsv.Write(&v1, InventorySchema, append(rows, []string{"9", "need", "in", "9"})); err != nil {
+		t.Fatal(err)
+	}
+	index := [][]string{
+		{"1", fmt.Sprintf("%x", sha256.Sum256(v1.Bytes())), "M2e"},
+		{"2", fmt.Sprintf("%x", sha256.Sum256(v2.Bytes())), "M2e"},
+	}
+	for _, idx := range [][][]string{index, {index[1], index[0]}} {
+		in := baseInput(t)
+		in.Index = idx
+		in.Versions = map[int][]byte{1: v1.Bytes(), 2: v2.Bytes()}
+		got := CheckFull(in)
+		wantResult(t, got, "needs", resPass)
+		wantResult(t, got, "inventory", resPass)
+	}
 }
 
 // quotes: a requirement that covers an answer's fact also names the fact of
