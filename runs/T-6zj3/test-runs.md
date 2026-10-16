@@ -31,4 +31,8 @@ The coordinator's audit of `801291b` found that `applyFrozen` followed a symboli
 
 ## Interruptions, as they were
 
-The first context ended with a mutation run complete (run 1: 50 rows, all of the list in the driver; an earlier count of 56 in this author's own words was wrong) and a watcher loop of the coordinator's that matched its own command text. A focused integration run (`green-final-int`) was in flight when the second interruption came; it finished with exit 0 (above). No elapsed time or token count is written here: the coordinator extracts them from the CLI metadata.
+The first context was interrupted after run1 completed (50 rows, all of the driver list; the author's earlier count of56 was wrong): its watcher matched its own command text and waited indefinitely. The later context was interrupted to deliver the coordinator's reproducible frozen-file write defect before review. A focused integration run (`green-final-int`) was in flight then and finished with exit0 (above). Neither interruption is credited as a successful CLI completion. Resources come from actual CLI metadata; waiting time is not inferred.
+
+Coordinator source-audit control: the original parent-link scratch assertion
+failed on801291b and passed against the byte/hash-checked repair, direct exits1/0
+(public6220627072). This is not the independent frozen-head review.
