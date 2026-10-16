@@ -3,7 +3,8 @@
 Issue: [#351](https://github.com/pharzam/layup/issues/351), row 62c of [the tasks of
 M2e](../plan/README.md#the-tasks-of-m2e). Serves `F-0003#51`, `F-0003#62`
 (`REQ-012`) and `F-0001#5` (`NFR-004`). Branched off `e16568c`; `main` was
-merged once (`9d500fd`, merge-base `cfcfc1c`). Author of the
+merged twice (`9d500fd` at merge-base `cfcfc1c`, and the merge of `f86f71c`,
+PR #388 / `T-dx1h`, before round 2). Author of the
 plan, of the answer and of record: Devin SWE-2 Max (execution tier; the routing
 note is on the issue). Evidence: [`runs/T-4wyg/`](../../runs/T-4wyg/).
 
@@ -47,4 +48,12 @@ modified; `internal/cli` is not touched; no `layup run` wiring is claimed.
 
 ## Review rounds
 
-None yet — this file records the implementation before the frozen-head rounds.
+Round 1 (comment 6217333827, a fresh Claude Sonnet 5.5 session, on the head
+after the first main merge) gave `not mergeable, findings recorded`: F1 a
+panic on a truncated criteria row, F2 the missing traceability rows, F3 the
+untested `measures` exemptions, F4 the un-named second `tasks` value in
+`packages.md`; notes N1–N5. The author's answer (6217372050) accepted each
+finding before the edits; the fixes land in `e48c7c6` and `9130b14` and are
+itemised in [`runs/T-4wyg/test-runs.md`](../../runs/T-4wyg/test-runs.md). N5
+is declined with its reason there. Cycle 0 of cap 1; round 2 reads the head
+after the `f86f71c` merge.

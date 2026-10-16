@@ -176,3 +176,27 @@ integration entry above predates these fixes; a new head freezes for round 2.
 
 Focused green after the fixes: `go test -count=1 ./internal/spec` exit 0 and
 `go test -count=1 -tags=integration ./internal/spec` exit 0 at 14:14:09Z.
+
+## Second merge of main (before round 2)
+
+`origin/main` advanced to `f86f71c` (PR #388, `T-dx1h`) while the round-1
+fixes landed; the branch takes it by merge, never rebase. Three files
+conflicted and each was resolved by union — `docs/prd/PRD-0001-layup.md`
+(the REQ-012 row keeps both `T-dx1h` and `T-4wyg` task cells and both test
+lists), `docs/spec/records.md` (the `transitions` clause of `T-dx1h` kept,
+the `clear`-table sentence of this task kept), and
+`internal/tsv/blocks_integration_test.go` (`built` holds both `parameters`
+and `task-spec-check`, `notYetBuilt` neither). Merge commit `64677ec`
+("chore: T-4wyg merge current main f86f71c (T-dx1h) before round 2").
+
+Post-merge focused verification, all exit 0 at 2026-10-16T14:23:57Z–14:24Z:
+`go build ./...`, `go vet ./...`, `go test -count=1 ./internal/spec`
+(0.070s), `go test -count=1 -tags=integration ./internal/spec
+./internal/tsv`, and `git diff --check`; the commit's hooks (adr-lint,
+prd-lint, run-discipline-tests 138/0, link-lint 2764 links, setup-check
+adapted/markers) all pass. No full-module integration was run by this
+author — that stays with the coordinator (#360).
+
+Size against the new merge-base `f86f71c` (`git diff origin/main...HEAD`):
+2,029 insertions + 10 deletions = **2,039 changed lines over 16 files**,
+inside the approved 2,100-line / 20-file maximum.
