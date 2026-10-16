@@ -509,6 +509,51 @@ is not a rendered record fails. The check reads the register of the **base**, no
 of the head. The refusal before the push (prevention layer 2) is the first line
 of defence and `layup/rules` the second; both read the same register.
 
+**Decided here** (R10, task `T-9et9`, #352; the functions `Basic` and `Judge` of
+`internal/rules`):
+
+- **The inputs.** The caller names the base, the head, the commit of the register
+  (the records commit) and the rendered records, and, for a PRD, the commit that it is
+  rendered from. A record is a path, a kind (`prd` or `facts`) and the copy as parsed
+  values: the answer of the bet for the PRD, the version of the inventory and the text
+  of each fact for the facts record. `internal/rules` reads no copy and checks no hash
+  of a copy: both are the caller's.
+- **The register** is the file `rule-paths.tsv` at the root of the commit that the
+  caller names, as the check before a push reads it ([`session.md`](session.md#a-workflow-or-rule-path-change));
+  the head's tree is never read for it, and a commit that is the head is refused. A
+  register with no file, one that is no regular file, one that its reader refuses and
+  one with no row is `error`: a register with no row passes every path, and S15 refuses
+  to write one ([`scaffold.md`](scaffold.md#the-step-verify-and-the-records-of-the-setup)).
+  The refusal of a register with no row is `layup/rules`'s; the reader before a push is
+  not changed by this task.
+- **The paths** are those that differ between the base and the head, both ends of a
+  rename; the base must be an ancestor of the head, else `error`.
+- **A rule path** is a path that `Check` refuses (the register, the kind `.sh` and the
+  workflow rule): the exception of `docs/guardrails.md` holds here as before the push
+  (`architecture.md` §6), and a path under `.github/workflows/` is a rule path (the
+  reason `rule path`, not one of its own).
+- **A rendered record** is judged only for a changed path that the rule-path check
+  refuses. It passes when the head holds a regular file there (mode `100644`: a link, an
+  executable, a submodule and a directory are not one) whose bytes equal `Render`, byte
+  for byte, with no trimming: the rendering of `internal/spec`, of the PRD from its
+  pre-image or of the facts record from the version. A copy that cannot be rendered is
+  a `failure`, never a pass. An unchanged path or a path that `Check` allows is not
+  judged: under the register of phase 1 the PRD is no rule path
+  ([`setup.md`](setup.md#the-rule-path-register)), and its cells are judged by the rule
+  `classes` of `layup/spec`.
+- **The pre-image of a PRD** is its file at the commit that the caller names: at the
+  first bet the verified head of the specification (the parent of the rendered commit),
+  at a later bet the base. The commit is the base or lies between the base and the head,
+  and is not the head, else `error`.
+- **The result** is a state, a reason and the first path in the order of git. `success`
+  with `no rule path` or `rendered record`. `failure` with `rule path`, `not equal` (the
+  bytes differ, or the record is deleted), `not a regular file` or `no rendering`.
+  `error` with `register`, `input`, `base` or `git`; it is a check that could not run
+  and never a pass. A record is `input` when its path is not relative and clean, holds
+  a `..` or `.git` part, a backslash or a NUL, or is the path of the guardrails; when two
+  records name one path, a kind is neither of the two, or a PRD has no pre-image. The
+  status, its description and its posting once for an unchanged state are row 66f's.
+
 ### layup/verify
 
 `layup/verify` follows the verifier (`architecture.md` §8 step 6). **Decided here:**

@@ -1,10 +1,11 @@
 // Package rules holds, in milestone M2b, the reader of the rule-path register
 // and the check of a session's diff before a push (docs/spec/session.md, A
 // workflow or rule-path change; row 32 of the plan, task T-m1dx, #158). The
-// check layup/rules and rule batches come in M2f. Its functions read bytes and
-// names, and start no program: the caller (internal/run) gives the register of
-// the session's records commit, the names of DiffNames, and the diff and the
-// head of docs/guardrails.md.
+// basic rule of layup/rules is in basic.go (M2e, row 63a, #352); the rest of
+// layup/rules and rule batches come in M2f. The functions of this file read
+// bytes and names, and start no program: the caller (internal/run) gives the
+// register of the session's records commit, the names of DiffNames, and the
+// diff and the head of docs/guardrails.md.
 package rules
 
 import (
