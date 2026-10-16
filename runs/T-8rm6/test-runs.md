@@ -90,5 +90,7 @@ retry loop the malformed fixture caused; it is not counted as a pass anywhere.
   numeric ID); operative detail stays in `loop.md`.
 - `docs/tests/traceability.md`: three rows for the new unit/integration tests
   of this task, and `T-8rm6` appended to the rows of the tests it extended.
-- `main` at `d5e199f` merged into the branch; conflicts and the checks after
-  the merge are recorded below their resolution.
+- `main` at `d5e199f` merged into the branch (merge commit `0334197`, strategy
+  `ort`): no conflicts; `docs/prd/PRD-0001-layup.md`, `docs/spec/loop.md` and
+  `docs/tests/traceability.md` auto-merged, keeping both sides. After the
+  merge: `go build ./...`, `go vet ./...` and `go test ./...` all clean.
