@@ -15,7 +15,6 @@ import (
 
 	"github.com/pharzam/layup/internal/ledger"
 	"github.com/pharzam/layup/internal/records"
-	"github.com/pharzam/layup/internal/route"
 	"github.com/pharzam/layup/internal/session"
 )
 
@@ -83,39 +82,11 @@ func (e *PhaseError) Error() string { return "the session " + e.Session + ": " +
 // 45b). It gives the harness register row and the row of models.tsv; with
 // none, route.ErrNoPair, and no session starts.
 func (s *Sessions) PhasePair(ctx context.Context, role string, harnesses, models [][]string, except string) ([]string, []string, error) {
-	routing, err := s.readTable(ctx, "routing.tsv", records.ReadRouting)
-	if err != nil {
-		return nil, nil, err
+	var passed []string
+	if except != "" {
+		passed = []string{except}
 	}
-	probes, err := s.readTable(ctx, "harnesses.tsv", records.ReadHarnesses)
-	if err != nil {
-		return nil, nil, err
-	}
-	last := map[string]string{} // the version of each harness's last row
-	for _, r := range probes {
-		last[r[1]] = r[2]
-	}
-	row := func(harness string) []string {
-		for _, h := range harnesses {
-			if h[regHarness] == harness {
-				return h
-			}
-		}
-		return nil
-	}
-	harness, model, err := route.Pair(routing, role, "reasoning", func(h, m string) bool {
-		v, probed := last[h]
-		return h != except && probed && row(h) != nil && route.Admitted(probes, models, h, v, m)
-	})
-	if err != nil {
-		return nil, nil, err
-	}
-	for _, m := range models {
-		if m[0] == harness && m[1] == model {
-			return row(harness), m, nil
-		}
-	}
-	return nil, nil, route.ErrNoPair // not reached: Admitted holds only for a row of models
+	return s.PairFor(ctx, role, "reasoning", harnesses, models, passed)
 }
 
 // PhaseSession runs one session of a phase through the one call of

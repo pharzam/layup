@@ -17,8 +17,13 @@ import (
 // that opens T-ab12 on issue 3, and the lease held by the run: the world of a
 // restart that posts a comment and records a handoff.
 func commentWorld(t *testing.T) (*world, *Sessions, worldAt) {
+	return commentWorldWith(t, nil)
+}
+
+// commentWorldWith is commentWorld whose target also holds the baseline files by path.
+func commentWorldWith(t *testing.T, baseline map[string]string) (*world, *Sessions, worldAt) {
 	t.Helper()
-	w, r, _, base := sessionWorld(t)
+	w, r, _, base := sessionWorldWith(t, baseline)
 	r.Forge, r.App = w.config("0.1.0-dev").Forge, "layup-agent"
 	ctx := context.Background()
 	files, err := registerFiles(nil, nil, Task{ID: "T-ab12", Issue: taskIssue, Kind: "build", Requirements: []string{"REQ-005"}, Size: "small", Opened: time.Now().UTC().Truncate(time.Second)})

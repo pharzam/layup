@@ -221,7 +221,10 @@ func (s *Sessions) copyComment(ctx context.Context, c forge.Comment, issue int, 
 // items that need a program, a gate run or a read of a commit. An item the
 // caller does not pass is false; schema, artifacts, question-row and
 // answer-row are computed here, and a value of the caller's for one of them is
-// never read.
+// never read. Freeze is the list of tests of a handoff to the verifier with their
+// results (task T-6zj3, #361): when it is given, tests-red-green is computed
+// from it too, and the first valid handoff writes tasks/<task>/tests.tsv in the
+// commit of its event.
 type HandoffInput struct {
 	Task, Session string
 	Attempt       int
@@ -230,6 +233,7 @@ type HandoffInput struct {
 	Artifacts     []handoff.Artifact
 	Items         map[string]bool
 	CodeWritten   bool
+	Freeze        *Freeze
 }
 
 // RecordHandoff checks a handoff against the table of the records and writes
@@ -285,6 +289,17 @@ func (s *Sessions) RecordHandoff(ctx context.Context, in HandoffInput) (handoff.
 		items = map[string]bool{}
 	}
 	items["question-row"], items["answer-row"] = QuestionRowOK(result), AnswerRowOK(result)
+	// A list of tests at a handoff to the verifier: tests-red-green is computed
+	// from the typed results (the caller's own value is never read), and the list
+	// is written in the commit of the event (loop.md, The frozen test list).
+	var frozen freezing
+	if in.Freeze != nil && !in.CodeWritten && in.To == "verifier" {
+		var err error
+		if frozen, err = s.freeze(ctx, in); err != nil {
+			return handoff.Verdict{}, err
+		}
+		items["tests-red-green"] = frozen.redGreen
+	}
 	h := handoff.Handoff{From: in.From, To: in.To, CodeWritten: in.CodeWritten, SchemaOK: schemaOK, Artifacts: slices.Clone(in.Artifacts), Items: items}
 	files := map[string][]byte{}
 	if in.File != "" {
@@ -315,6 +330,11 @@ func (s *Sessions) RecordHandoff(ctx context.Context, in HandoffInput) (handoff.
 		return handoff.Verdict{}, err
 	}
 	files[eventsPath(in.Task)] = data
+	if shouldFreeze(in, v) && frozen.rows != nil {
+		if files[testsPath(in.Task)], err = WriteTests(frozen.rows); err != nil {
+			return handoff.Verdict{}, err
+		}
+	}
 	return v, s.commit(ctx, files, fmt.Sprintf("layup run: the handoff %s to %s of %s, %s", in.From, in.To, in.Task, v.Detail))
 }
 
