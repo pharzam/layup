@@ -37,3 +37,24 @@ Control B — the item only in the owner's Tests cell
 The `tests-red-green`/66e exception stays exactly as disclosed by the
 confirmation (the row exists and the item is named in the mapping; its cells
 are not edited, C1) — not widened to any other item.
+
+Control C — a mapping cell with no owner-row token (round-1 note)
+  Mutation: `(row 66l)` stripped from the three mapping cells that read
+  exactly "`internal/run` (row 66l)" (plan-fields, verdict-field,
+  findings-located) — applied by sed over a byte snapshot
+  (cp to /tmp, restored by cp; the file held uncommitted grammar repairs, so
+  no git checkout was used).
+
+  Repaired checker:
+    FAIL (3) plan-fields's computed-by cell names no owner row (anchor: docs/plan/README.md task rows)
+    FAIL (3) verdict-field's computed-by cell names no owner row (anchor: docs/plan/README.md task rows)
+    NOTE (3) exception: tests-red-green's owner 66e keeps its cells (C1); the row exists and the item is named in the mapping
+    FAIL (3) findings-located's computed-by cell names no owner row (anchor: docs/plan/README.md task rows)
+    exit=1
+
+  Restored (byte snapshot, verified byte-equal by cmp): exit=0
+
+Honest record: an earlier control restored docs/spec/loop.md with
+`git checkout` while the file held an uncommitted fix, which discarded the
+fix; it was detected and reapplied. The controls above and below restore by
+byte snapshot or act only on files whose changes were already committed.

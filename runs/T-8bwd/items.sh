@@ -86,6 +86,9 @@ while IFS='	' read -r item cb ms; do
 	[ -n "$r" ] && ! grep -q "^| $r |" "$tasks" && say "FAIL (3) owner row $r of $item is not a row of The tasks of M2e"
 	case "$ms" in
 	M2e*)
+		# An M2e cell must name a row: without a `row N` token no owner can be
+		# checked and the item would pass unowned.
+		[ -z "$r" ] && say "FAIL (3) $item's computed-by cell names no owner row (anchor: $plan task rows)"
 		for r in $r; do
 			if [ "$item:$r" = "tests-red-green:66e" ]; then
 				say "NOTE (3) exception: $item's owner 66e keeps its cells (C1); the row exists and the item is named in the mapping"
