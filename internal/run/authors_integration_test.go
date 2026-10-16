@@ -43,6 +43,10 @@ func TestTheAuthorsAreReadFromRealCommitsAndRealRecords(t *testing.T) {
 	if got, err := s.Authors(ctx, "T-ab12", PlanReview, l.a.base, head2); err != nil || !slices.Equal(got, []string{"codex"}) {
 		t.Errorf("the authors of the plan review: %v, %v; want [codex], the harness of the plan session", got, err)
 	}
+	// A commit that the base already holds is no author: the head is the base.
+	if got, err := s.Authors(ctx, "T-ab12", Verification, head1, head1); err != nil || len(got) != 0 {
+		t.Errorf("the authors when the base is the head of attempt 1: %v, %v; want none", got, err)
+	}
 	// A diff of no commit: the head is the base, and nobody is bound to a commit of it.
 	if got, err := s.Authors(ctx, "T-ab12", Verification, l.a.base, l.a.base); err != nil || len(got) != 0 {
 		t.Errorf("the authors of an empty diff: %v, %v; want none", got, err)

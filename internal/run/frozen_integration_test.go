@@ -260,8 +260,8 @@ func TestASessionWithNoBoundHeadFreezesNothing(t *testing.T) {
 		t.Fatal("the session was bound")
 	}
 	n := len(l.events())
-	if _, err := l.toVerifier(l.r, id, &Freeze{Tests: []TestResult{green("TestA", "a_test.go")}}, nil); err == nil {
-		t.Error("a handoff of a session with no bound head: no error")
+	if _, err := l.toVerifier(l.r, id, &Freeze{Tests: []TestResult{green("TestA", "a_test.go")}}, nil); !errors.Is(err, ErrNoBoundHead) {
+		t.Errorf("a handoff of a session with no bound head: %v; want ErrNoBoundHead", err)
 	}
 	if l.testsFile() != "" || len(l.events()) != n {
 		t.Errorf("a list or an event was written for a session that has no head (%d events, was %d)", len(l.events()), n)

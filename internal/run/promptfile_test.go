@@ -172,6 +172,14 @@ func TestTheRequirementItemsAreTheFilesWhoseRowOrHeadingHoldTheID(t *testing.T) 
 	if got := itemsOf(c, session.KindRequirements); !slices.Equal(got, []string{"docs/prd/PRD-0001.md"}) {
 		t.Errorf("REQ-0050 = %v; want only the PRD, whose row holds it (the spec's REQ-005 is not it)", got)
 	}
+	// A longer ID that starts with the ID, and one that ends with it, are not the ID.
+	src = baseSrc(t, "implement")
+	src.Tree = memTree(map[string]string{"docs/prd/PRD-0001.md": "| REQ-0050 | a |\n| XREQ-005 | b |\n"})
+	src.Rules = nil
+	c, _ = buildPrompt(src)
+	if got := itemsOf(c, session.KindRequirements); len(got) != 0 {
+		t.Errorf("REQ-0050 and XREQ-005 hold REQ-005: %v", got)
+	}
 	// A file that holds the ID in prose only is no item.
 	src = baseSrc(t, "implement")
 	src.Tree = memTree(map[string]string{"docs/prd/PRD-0001.md": "REQ-005 in prose.\n", "docs/spec/loop.md": "# Spec\n\nREQ-005 in prose.\n"})

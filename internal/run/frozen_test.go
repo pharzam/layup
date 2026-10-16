@@ -1,6 +1,7 @@
 package run
 
 import (
+	"context"
 	"errors"
 	"strconv"
 	"strings"
@@ -282,6 +283,19 @@ func TestAnAmendmentIsNotAReviewWithoutAPlanOrInTheWrongOrder(t *testing.T) {
 	if wrong.pending() {
 		t.Error("a review before the plan is an amendment")
 	}
+	// Two reviews and no plan, and two plans and no review, are no amendment: each leg needs its own role.
+	twoReviews := newAmend(t)
+	twoReviews.review("S-a0000002", "valid comment 702-1")
+	twoReviews.review("S-a0000003", "valid comment 703-1")
+	if twoReviews.pending() {
+		t.Error("two reviews and no plan are an amendment")
+	}
+	twoPlans := newAmend(t)
+	twoPlans.plan("S-a0000001", "valid comment 701-1")
+	twoPlans.plan("S-a0000004", "valid comment 704-1")
+	if twoPlans.pending() {
+		t.Error("two plans and no review are an amendment")
+	}
 	// A plan or a review that is not valid, or that has no comment, is none.
 	for name, plan := range map[string]string{"an invalid plan": "invalid plan-fields comment 701-1", "a plan with no comment": "valid"} {
 		a := newAmend(t)
@@ -352,5 +366,20 @@ func TestTheListFreezesOnlyAtAValidHandoffToTheVerifierThatGaveOne(t *testing.T)
 		if shouldFreeze(c.in, c.v) {
 			t.Errorf("%s freezes the list", name)
 		}
+	}
+}
+
+// A list given to a handoff that is not to the verifier is ignored whole: it
+// asks for no head, so a session with none is no error there.
+func TestAListGivenToAnotherHandoffIsIgnored(t *testing.T) {
+	w := newHandoffWorld(t)
+	w.session(t, planSess, 1, roleOfStep("implement"), "", "question\t1\tMay it?\t—\tinterface-contract no docs/spec/forge.md\n")
+	in := HandoffInput{Task: "T-ab12", Session: planSess, From: "asking role", To: "owner role",
+		Freeze: &Freeze{Tests: []TestResult{{ID: "A", Source: "a_test.go"}}}}
+	if v, err := w.s.RecordHandoff(context.Background(), in); err != nil || v.Detail != "valid" {
+		t.Errorf("RecordHandoff = %+v, %v; want valid: the list of a handoff to the owner role is not read", v, err)
+	}
+	if _, ok := w.store.files[testsPath("T-ab12")]; ok {
+		t.Error("a list was written")
 	}
 }
