@@ -363,6 +363,11 @@ check that catches it.
   run with it used no Haiku), read `modelUsage` after each run, name every model
   of it in the record, and take the tokens of a resource record from it. Learned
   in `T-ywk7` ([#147](https://github.com/pharzam/layup/issues/147)).
+  A resumed Claude session also accumulates `modelUsage` across invocations:
+  take per-model deltas between result events, preserving every model, rather
+  than assigning the cumulative total to the latest part. Top-level `usage`
+  is sufficient only after verifying that no child model ran. The plan-plus-build
+  counters were mistaken for build-only counts in `T-cak3` (#357).
 - ❌ **A Go version that CI resolves at its own time.** `go.mod` said `go 1.26`,
   and `actions/setup-go` with `go-version-file: go.mod` installs the newest
   release of that line it knows. The job `security` passed on `main` at
