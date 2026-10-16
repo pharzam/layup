@@ -601,9 +601,13 @@ constraints that apply** are listed by code, never by the session: each requirem
 of kind `non-functional` of the draft or the PRD, by its ID `R-NNN` and its criterion (a
 requirement of another kind that the architect names in the column `constraint` of its
 rows is judged too, but no row is demanded for it); each fact of class `constraint` in `spec/spans.tsv` (before the first
-bet; the confirmed constraints of the inventory after it), by `F-<n>`; each
+bet; the confirmed constraints of the inventory after it), by `F-<n>`, and a fact
+of the answers, which the inventory holds by its ID `Q-NNN`, by that ID (the same
+constraint facts, named so); each
 invariant of the PSB, by `Inv-<n>`; and each accepted decision record of the target,
-by `ADR-NNNN`.
+by `ADR-NNNN` (its status is `Accepted`, or `Accepted. Amended by ADR-NNNN`, which
+the baseline's record rules write for an extended record whose old decision still
+holds; a proposed, deprecated or superseded record does not apply).
 
 **The filter is code.** An option is **dropped** when a row is `fail`, a row is
 missing (a constraint that applies and has no row), or a `pass` has no evidence
