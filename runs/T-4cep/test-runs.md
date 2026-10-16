@@ -82,3 +82,14 @@ conflicts are resolved: PRD changelog keeps #360 then #384; packages.md retains
 CheckCodeOwnerLanding ownership and the answer result kind settling #377.
 The first independent review must judge both, plus the earlier f86 guardrail merge.
 No source identity field is read as authorization; no real target was accessed.
+
+Coordinator full integration: `go test -count=1 -tags=integration -timeout 25m ./...`
+on `be0a38f96e979db32ddd27697bceb8e700d0af90`, 2026-10-16
+15:22:49.182859–15:34:49.256158 UTC, direct exit 0, all 21 packages;
+elapsed 720,073.299 ms. This includes current main's code.
+Resource metadata: Sonnet plan I90/O69078/Cw224606/Cr5860322, 654549 ms;
+build and bounded finish increment I356/O151617/Cw262937/Cr71545742.
+The timed-out build reports no actual elapsed; bounded finish 127825 ms.
+SWE-2 Max plan review cumulative P1522611/O40627/C1338011, 32 steps;
+elapsed unreported. Its earlier 28-step export is a subset, never added.
+Counters use each CLI's own fields; cached tokens are not added to prompt.
