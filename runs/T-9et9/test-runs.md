@@ -116,3 +116,21 @@ cached1801766,32 unique rows; the initial export is a subset of the corrected
 export and counted once. Cache is inside prompt. Elapsed is not reported.
 Metadata audits issue352-resource-metadata-complete.json and
 issue352-plan-review-resource-union.json stay outside git with private exports.
+
+## Review and main integration before round2
+
+The SWE-2 Max attempt is uncredited: it read an earlier unrelated verdict for
+formatting despite the blind brief (6217959614). No source finding from that
+attempt is supplied to its replacement. One originally fresh OpenCode DeepSeek
+context completed qualifying round1 (6218385008), after a timed-out invocation,
+bounded completion and pre-publication factual correction. Named reasoning tier
+was unavailable; observed test output through pipelines is not a captured own
+return code. Its off-path classifications of #390/#391/#392 are independent.
+F2's wording note is applied: rendered records follow the already defined
+Check refusal, including the .sh/workflow rules, rather than only register
+patterns. F3 is declined as defensive behavior outside valid setup preconditions.
+The failed-context lesson is written back to guardrails. No Go code changes.
+Main a3a4cdd (#360) is merged before round2; the only textual conflict is the
+PRD changelog, retaining main's #360 entry then this branch's #352 entry.
+Round2 reads these changes and the resulting shared documents. Final combined
+full-SHA CI remains required; the original maximum stays1,600/16.

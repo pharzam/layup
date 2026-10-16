@@ -17,7 +17,8 @@ import (
 // tasks/<task>/results/<session>.tsv, and the rules that their blocks give in
 // words. internal/run writes and reads them (docs/spec/session.md). Milestone
 // M2e adds the kinds of the task loop to events (handoff, merged) and to result
-// (question, decision, lesson, comment), task T-fn5s, row 60 of the plan.
+// (question, decision, lesson, comment), task T-fn5s, row 60 of the plan, and
+// the answer (task T-q5k4, row 66d, which settles #377).
 //
 // Each "— when" and "— for" of these blocks is read as "exactly when" (the
 // plan review of #153, condition 3), where the row can see the condition. A
@@ -82,7 +83,7 @@ var EventsSchema = tsv.Schema{Name: "events", Location: "records:tasks/<task>/ev
 // ResultSchema is the form of tasks/<task>/results/<session>.tsv: the block
 // result.
 var ResultSchema = tsv.Schema{Name: "result", Location: "records:tasks/<task>/results/<session>.tsv", Columns: []tsv.Column{
-	{Name: "kind", Type: "enum(status|artifact|question|decision|lesson|comment)", Key: true},
+	{Name: "kind", Type: "enum(status|artifact|question|decision|lesson|comment|answer)", Key: true},
 	{Name: "n", Type: "int", Key: true},
 	{Name: "value", Type: "text"},
 	{Name: "sha256", Type: "sha256"},
@@ -338,7 +339,7 @@ func CheckEventsAppend(before, after [][]string) error {
 
 // CheckResultRow checks the rules of the block result on one row: the words
 // of a status, the path of an artifact, the words of the kinds of a handoff
-// (question, decision, lesson, comment), and which of sha256 and reason each
+// (question, decision, lesson, comment, answer), and which of sha256 and reason each
 // kind fills.
 func CheckResultRow(r []string) error {
 	f := fields(ResultSchema, r)
@@ -385,6 +386,8 @@ func CheckResultRow(r []string) error {
 			return &RowError{"reason", "the reason of a lesson is the empty value or its records, one space between two words and none at either end"}
 		case f["kind"] == "decision" && f["reason"] == "":
 			return &RowError{"reason", "the reason of a decision is one line"}
+		case f["kind"] == "answer" && (f["reason"] == "" || !oneSpaced(f["reason"])):
+			return &RowError{"reason", "the reason of an answer is the records it rests on, at least one, one space between two words and none at either end"}
 		}
 	}
 	return nil
@@ -404,7 +407,7 @@ func CheckResult(rows [][]string) error {
 			most[f["kind"]], line[f["kind"]] = n, i+2
 		}
 	}
-	for _, k := range []string{"status", "artifact", "question", "decision", "lesson", "comment"} {
+	for _, k := range []string{"status", "artifact", "question", "decision", "lesson", "comment", "answer"} {
 		if most[k] != count[k] {
 			return &tsv.Error{Line: line[k], Column: "n", Reason: fmt.Sprintf("the numbers of the %s rows run 1 to %d with no gap", k, count[k])}
 		}

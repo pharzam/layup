@@ -255,3 +255,15 @@ func countSet(counts ...*int64) int {
 	}
 	return n
 }
+
+// CommentFile reads the file result/<name> of the session in d, which a row of
+// the kind comment names (docs/spec/loop.md, The artifact that is a comment),
+// by the rules of a result file: a link as the last part of the path, a file
+// that is not a regular file and a file over 1 MiB are refused. name is one
+// file name, no path.
+func CommentFile(d Dir, name string) ([]byte, error) {
+	if name == "" || name == "." || name == ".." || strings.ContainsAny(name, "/\x00") {
+		return nil, fmt.Errorf("the comment file %q is not one file name of result/", name)
+	}
+	return readResult(filepath.Join(d.Result, name))
+}
