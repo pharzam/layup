@@ -30,7 +30,6 @@ same summary, dated — rather than deleting it or checking it off.
 - **<ID>** — <one-sentence summary> ([<ADR or doc link>](...); [detail](<id>.md))
 -->
 - **T-sdtb** — Row 59b of `M2d`: the demo of M2d (uat) ([#284](https://github.com/pharzam/layup/issues/284); [the plan](../plan/README.md#the-tasks-of-m2d))
-- **T-3q0b** — Row 62b of `M2e`: The checks of the bet and the rendering ([#350](https://github.com/pharzam/layup/issues/350); [the plan](../plan/README.md#the-tasks-of-m2e))
 - **T-4wyg** — Row 62c of `M2e`: The full spec check ([#351](https://github.com/pharzam/layup/issues/351); [the plan](../plan/README.md#the-tasks-of-m2e))
 - **T-9et9** — Row 63a of `M2e`: The basic layup/rules ([#352](https://github.com/pharzam/layup/issues/352); [the plan](../plan/README.md#the-tasks-of-m2e))
 - **T-jew3** — Row 65b of `M2e`: The code-owner rule ([#356](https://github.com/pharzam/layup/issues/356); [the plan](../plan/README.md#the-tasks-of-m2e))
