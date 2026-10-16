@@ -200,3 +200,16 @@ author — that stays with the coordinator (#360).
 Size against the new merge-base `f86f71c` (`git diff origin/main...HEAD`):
 2,029 insertions + 10 deletions = **2,039 changed lines over 16 files**,
 inside the approved 2,100-line / 20-file maximum.
+
+## Coordinator resource audit before the repaired full-module run
+
+SWE-2 Max fix export retains30 metric rows from14:19:02 to14:25:20UTC:
+prompt2318995/completion10270/cached2266176, cached inside prompt. Those rows
+are disjoint from the retained plan/build rows. Known union of131 metric rows:
+prompt12353225/completion98858/cached11831384; cache is not added twice.
+The export compacted earlier fix work before14:19 as well as the previously
+reported missing build history; that usage is unavailable, not estimated.
+Elapsed is not reported. Source: issue351-plan-build-fix-resource-union.json,
+kept outside git with the private exports. The coordinator owns #351's repaired
+full-module run; references above to coordinator #360 identify the serialized
+slot previously occupied, not a claim that #360's run verifies this fix.
