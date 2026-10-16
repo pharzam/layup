@@ -114,6 +114,18 @@ retry loop the malformed fixture caused; it is not counted as a pass anywhere.
   original assertion unchanged. Green at 11.8s; removing the correction
   restores the failure (the "4 questions" detail); restoring it is green
   again.
-- `main` at `d09b1c0` merged after the repair; the focused intersection run
-  of the markers world (new-main codeowner row × revision × markers) follows
-  in this file.
+- `main` at `d09b1c0` merged after the repair (merge commit `7e621d7`,
+  `ort`, no conflicts; `PRD-0001`, `loop.md`, `traceability.md` and
+  `forgecheck_integration_test.go` auto-merged, both sides kept — the
+  codeowner work of `T-4cep` and this branch's step). Post-merge:
+  `go build`, `go vet`, `go test ./...` clean.
+- Focused intersection run (explicit, the markers/forgecheck/revision worlds
+  on the merged head), `go test -tags=integration -timeout 480s
+  ./internal/run -run 'TestTheRevision|TestTheStepForgeCheck|
+  TestTheStepMarkers|TestTheFollowUpAsksTheMarkersAgain|
+  TestTheStepBatchAsksTheSetupQuestions|TestThePinnedTreeOfTheMarkers'`:
+  11 tests, all PASS, 211.5s — `TestTheStepForgeCheck...` 89.5s exercises the
+  codeowner row with `revision` in the world, `TestTheFollowUpAsksTheMarkersAgain`
+  11.1s passes with the repaired fixture.
+- The next complete `-tags=integration` run and the final combined-head CI are
+  the root's; #397 is fixed pending them, not closed.
