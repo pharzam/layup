@@ -357,17 +357,9 @@ func (f *forgeFake) enforcements() (out []string) {
 	return out
 }
 
-// The landing script (docs/spec/scaffold.md): as produced for this task it refuses at its first command and runs
-// no program; with its gate removed it makes one commit that adds .github/CODEOWNERS on the head, disables the ruleset,
+// The landing script (docs/spec/scaffold.md), as S13 writes it (task T-4cep: the tree check admits its commit): it makes one commit that adds .github/CODEOWNERS on the head, disables the ruleset,
 // pushes, and puts back the AFTER object (the updated protection, never the one before), whatever the push does.
 func TestTheLandingScript(t *testing.T) {
-	// not applicable: the first command refuses and no gh or git runs
-	q, _, _ := migrationHost(t)
-	g := newForge(t, liveFor(t))
-	if code, stderr := g.run(t, q.Host, landScript(q, false), "PATH="+t.TempDir()); code == 0 || !strings.Contains(stderr, "not applicable") || len(g.calls) != 0 {
-		t.Errorf("the script as produced: exit %d, %q; want a refusal that says not applicable, and no call", code, stderr)
-	}
-
 	prepare := func(t *testing.T) (Phase2, string, *forgeFake) {
 		p, bare, _ := migrationHost(t)
 		f := newForge(t, withUnknown(liveFor(t)))
@@ -381,7 +373,7 @@ func TestTheLandingScript(t *testing.T) {
 	// the landing
 	p, bare, f := prepare(t)
 	before := gitIn(t, bare, "rev-parse", "refs/heads/main")
-	if code, stderr := f.run(t, p.Host, landScript(p, true)); code != 0 {
+	if code, stderr := f.run(t, p.Host, landScript(p)); code != 0 {
 		t.Fatalf("the landing exited %d:\n%s", code, stderr)
 	}
 	if got := gitIn(t, bare, "log", "--format=%H", "-n", "2", "refs/heads/main"); !strings.HasSuffix(got, before) || strings.Count(got, "\n") != 1 {
@@ -407,7 +399,7 @@ func TestTheLandingScript(t *testing.T) {
 	if err := os.WriteFile(hook, []byte("#!/bin/sh\nexit 1\n"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	code, _ := f.run(t, p.Host, landScript(p, true))
+	code, _ := f.run(t, p.Host, landScript(p))
 	after = decodeFile(t, filepath.Join(p.Host, "applies", "acme", "widget", "default.after.json"))
 	if code == 0 || strings.Join(f.enforcements(), ",") != "disabled,active" || !jsonEqual(reduced(f.obj), after) {
 		t.Errorf("a push that fails: exit %d, PUTs %v; want exit 1, disabled then the AFTER object back", code, f.enforcements())
@@ -416,7 +408,7 @@ func TestTheLandingScript(t *testing.T) {
 	// the restore fails: loud, and it says enforcement may be off
 	p, _, f = prepare(t)
 	f.failPut = 2
-	if code, stderr := f.run(t, p.Host, landScript(p, true)); code == 0 || !strings.Contains(stderr, "enforcement may be off") || !strings.Contains(stderr, "acme/widget") || !strings.Contains(stderr, "25145510") {
+	if code, stderr := f.run(t, p.Host, landScript(p)); code == 0 || !strings.Contains(stderr, "enforcement may be off") || !strings.Contains(stderr, "acme/widget") || !strings.Contains(stderr, "25145510") {
 		t.Errorf("a restore that fails: exit %d, %q; want exit 1 and a message that names the repository, the ID and that enforcement may be off", code, stderr)
 	}
 
@@ -424,7 +416,7 @@ func TestTheLandingScript(t *testing.T) {
 	p, bare, f = prepare(t)
 	f.failPut = 1
 	before = gitIn(t, bare, "rev-parse", "refs/heads/main")
-	if code, _ := f.run(t, p.Host, landScript(p, true)); code == 0 || f.puts != 1 || gitIn(t, bare, "rev-parse", "refs/heads/main") != before {
+	if code, _ := f.run(t, p.Host, landScript(p)); code == 0 || f.puts != 1 || gitIn(t, bare, "rev-parse", "refs/heads/main") != before {
 		t.Errorf("a disable that fails: exit %d, %d PUTs; want exit 1, one PUT, no push", code, f.puts)
 	}
 
@@ -451,7 +443,7 @@ func TestTheLandingScript(t *testing.T) {
 	} {
 		p, bare, f := prepare(t)
 		c.change(t, p, bare, f)
-		if code, stderr := f.run(t, p.Host, landScript(p, true)); code == 0 || !strings.Contains(stderr, c.want) || f.methods("PUT") != 0 {
+		if code, stderr := f.run(t, p.Host, landScript(p)); code == 0 || !strings.Contains(stderr, c.want) || f.methods("PUT") != 0 {
 			t.Errorf("%s: exit %d, %d PUTs, %q; want a refusal that says %q and no write", c.name, code, f.methods("PUT"), stderr, c.want)
 		}
 	}

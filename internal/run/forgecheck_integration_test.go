@@ -14,7 +14,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/pharzam/layup/internal/forge"
 	"github.com/pharzam/layup/internal/git"
+	"github.com/pharzam/layup/internal/setup"
 	"github.com/pharzam/layup/internal/verify"
 )
 
@@ -362,5 +364,74 @@ func TestTheStepForgeCheckChecksTheForgeAndCommitsItsTableAtEachRestart(t *testi
 	restart(Step{"forge-check", "fail", "tree: "}, first)
 	if _, err := ReadForgeCheck([]byte(recordsFile(t, w, "setup/forge-check.tsv"))); err != nil || tables() != before+1 {
 		t.Errorf("the table after a refused one: %v, %d tables; want it readable again and %d tables", err, tables(), before+1)
+	}
+}
+
+// The row tree on a real repository, with the check of the run over its real objects (docs/spec/scaffold.md, The tree
+// check; task T-4cep, #384; the ruling 6217133467): the last setup commit has the manifest, the canonical commit above it
+// passes the row, and each of the heads that follows fails it with the reason of the check; a setup record that has the row
+// S13 codeowners.sha256 refuses even the canonical commit. The repository is the run's clone of the check.
+func TestTheTreeRowOnRealObjects(t *testing.T) {
+	dir := t.TempDir()
+	gitOut(t, dir, "init", "-q", "-b", "main")
+	manifest := "kind\tstate\ttool\tcommand\tscope\tconfig\nstatic\tactive\tgo\tgo vet ./...\t./*.go\t—\nlayout\tpending\t—\t—\t./*.go\tdocs/gates/x.txt tools/cfg.yml\n"
+	writeFile(t, filepath.Join(dir, "docs", "gates.tsv"), manifest)
+	writeFile(t, filepath.Join(dir, ".github", "workflows", "ci.yml"), "name: ci\n")
+	gitOut(t, dir, "add", "-A")
+	gitOut(t, dir, "commit", "-q", "-m", "chore: setup S14")
+	last := strings.TrimSpace(gitOut(t, dir, "rev-parse", "HEAD"))
+	owners, err := setup.CodeOwners("pharzam", []string{"docs/gates/x.txt", "tools/cfg.yml"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	land := func(content string, extra map[string]string) string {
+		gitOut(t, dir, "switch", "-q", "--detach", last)
+		writeFile(t, filepath.Join(dir, ".github", "CODEOWNERS"), content)
+		for p, c := range extra {
+			writeFile(t, filepath.Join(dir, p), c)
+		}
+		gitOut(t, dir, "add", "-A")
+		gitOut(t, dir, "commit", "-q", "-m", "chore: the code owners of the gate paths")
+		return strings.TrimSpace(gitOut(t, dir, "rev-parse", "HEAD"))
+	}
+	approvers := [][]string{{"2", "operator", "pharzam", "t", "start"}}
+	before := recordText(t, "ruleset.sha256")
+	canonical := land(string(owners), nil)
+	tree := func(head string, record []byte) (string, string) {
+		f := newCheckFake()
+		f.lastForTest(last)
+		f.repo = forge.Repository{DefaultBranch: "main", Heads: map[string]string{"main": head}}
+		j := f.job()
+		j.landing = codeOwnerLanding(dir, record, approvers)
+		got := j.do()
+		rows := f.rowsOf(t)
+		return rows[0][1] + " " + rows[0][2], got.Detail
+	}
+	if got, _ := tree(last, before); got != "pass " {
+		t.Errorf("the last commit: %q; want a pass", got)
+	}
+	if got, _ := tree(canonical, before); got != "pass " {
+		t.Errorf("the canonical commit: %q; want a pass", got)
+	}
+	prefix := "fail the head of main is %s, and setup/tree.tsv ends at " + last + "; it is not the code-owner commit: "
+	for _, c := range []struct{ name, head, record, want string }{
+		{"other bytes", land(string(owners)+"/extra @pharzam\n", nil), "", "the bytes of .github/CODEOWNERS are not those that S13 writes for the login pharzam"},
+		{"a second file", land(string(owners), map[string]string{"docs/x.md": "x\n"}), "", `the tree of the head differs from that of the last setup commit at "docs/x.md"`},
+		{"a record with the row S13 codeowners.sha256", canonical, "withrow",
+			"the setup record has the row S13 codeowners.sha256: .github/CODEOWNERS is in the tree of the last setup commit, and a target set up with the rule takes no code-owner commit"},
+	} {
+		record := before
+		if c.record == "withrow" {
+			record = recordText(t, "ruleset.sha256", "codeowners.sha256")
+		}
+		if got, _ := tree(c.head, record); got != fmt.Sprintf(prefix, c.head)+c.want {
+			t.Errorf("%s:\n got %q\nwant %q", c.name, got, fmt.Sprintf(prefix, c.head)+c.want)
+		}
+	}
+	gitOut(t, dir, "switch", "-q", "--detach", canonical)
+	gitOut(t, dir, "commit", "-q", "--allow-empty", "-m", "one more")
+	more := strings.TrimSpace(gitOut(t, dir, "rev-parse", "HEAD"))
+	if got, _ := tree(more, before); got != fmt.Sprintf(prefix, more)+"the parent of the head is "+canonical+", not the last setup commit "+last {
+		t.Errorf("a commit above the canonical one: %q", got)
 	}
 }
