@@ -136,15 +136,26 @@ func checkRow(r Row) error {
 	return nil
 }
 
+// renderedFrom is the step that code itself writes the handoff of: the rendered
+// task has no session, so no typed result, and a row of it cannot list "schema".
+const renderedFrom = "code (rendered task)"
+
 // CheckTable checks a table, the default or an Operator's replacement: each
 // row has words of the lists, no pair is listed twice, and each default pair
 // has its row. A pair that is not a default pair is allowed, with words of the
-// lists. It is the check that a replacement by "set transitions" passes.
+// lists. The one other rule is for the row of code's own handoff, which lists
+// no "schema" (Check could never find one: the handoff would be invalid at each
+// attempt); another row keeps its "schema". It is the check that a replacement
+// by "set transitions" passes, and that the register applies to the table it
+// reads (docs/spec/loop.md, The transition table; task T-dx1h, #358).
 func CheckTable(rows []Row) error {
 	seen := map[[2]string]bool{}
 	for i, r := range rows {
 		if err := checkRow(r); err != nil {
 			return fmt.Errorf("row %d: %w", i+1, err)
+		}
+		if r.From == renderedFrom && slices.Contains(r.Items, "schema") {
+			return fmt.Errorf("row %d: the row of %s (%s -> %s) lists schema, but code's own handoff has no typed result", i+1, renderedFrom, r.From, r.To)
 		}
 		p := [2]string{r.From, r.To}
 		if seen[p] {

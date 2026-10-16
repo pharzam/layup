@@ -1006,22 +1006,30 @@ These traps are not domain-specific: they hurt every project's test suite.
   `go vet` and were counted as kills, so the count of kills was three too high. **The check:** a variant is valid only if `go build` and `go vet` pass on
   it, its kill is the named assertion in its own output, each run's exit status and output are kept, and the file's hash before and
   after proves the restore (`runs/T-jew3/mutants.md`). Learned in `T-jew3` (#356).
-- ❌ **A check that admits a head by who made it.** An admission keyed to the author, the committer, the message, the date or a signature
-  header of a commit proves nothing: the pusher writes each of them. The tree check had to admit one commit above the setup head, and the
-  tempting test was the Operator's name. **The check:** judge the content alone, the parents, the whole tree and the bytes of the one file,
-  and test it both ways, a commit with the Operator's name and wrong content refused and a commit with hostile metadata and the canonical
-  content admitted (`TestCheckCodeOwnerLanding`, `TestCheckCodeOwnerLandingReadsOnlyTheObjectsOfTheConditions`). Learned in `T-4cep` (#384).
-- ❌ **A script and the check that judges its result, tested apart.** The landing script made a commit and the tree check judged commits, each
-  with a green test of its own, and nothing showed that they agreed, so the script could have been switched on to land a commit that the
-  next run refused. **The check:** one test runs the producer as production writes it and has the checker judge what it made, and a producer
-  that adds the file at another path or a second file is refused by the same call (`TestTheLandingCommitIsAdmitted`). Learned in `T-4cep` (#384).
-- ❌ **A fixture that adds a submodule or a link and then `git add --all`.** `Add` stages the whole tree as the work tree is, so an index entry
-  that has no file (a mode 160000) is dropped before the commit, and the case that needs it goes green without the entry. **The check:** put
-  the entry in after `Add`, and read the listing of the commit it made (`TestParentsAndTheWholeTree`). Learned in `T-4cep` (#384).
-- ❌ **A red slice that the pre-commit hook will not take.** The hook runs the unit level of the whole module, so tests written first and
-  red cannot be committed alone. **The check:** observe each red against a stub that has the signature and not the behaviour, and against a
-  stub that admits everything for the refusals, keep the output and the clock times, and commit the tests with the green code of their step
-  (`runs/T-4cep/test-runs.md`); a hook is never skipped. Learned in `T-4cep` (#384).
+- ❌ **A check that admits a head by who made it.** The author, committer, message, date and signature of a commit are text the pusher writes,
+  so an admission keyed to them proves nothing. **The check:** judge the parents, the whole tree and the bytes of the one file, and test both
+  ways: the Operator's name with wrong content is refused, hostile metadata with the canonical content is admitted
+  (`TestCheckCodeOwnerLanding`). Learned in `T-4cep` (#384).
+- ❌ **A script and the check that judges its result, tested apart.** Each had a green test of its own and nothing showed that they agreed, so
+  the script could land a commit that the next run refused. **The check:** one test runs the producer as production writes it and has the
+  checker judge what it made, and a producer that adds another path or a second file is refused by the same call
+  (`TestTheLandingCommitIsAdmitted`). Learned in `T-4cep` (#384).
+- ❌ **A fixture that adds a submodule entry and then `git add --all`.** `Add` stages the tree as the work tree is, so an entry with no file is
+  dropped and the case goes green without it. **The check:** add the entry after `Add` and read the listing (`TestParentsAndTheWholeTree`).
+  Learned in `T-4cep` (#384).
+- ❌ **A set that is "not yet applied" because its comment is in no row.** The plan of the parameters (`T-dx1h`,
+  #358) judged each comment of the control issue again at every boundary and skipped a set only when its ID was the
+  `comment` of some row. After a later set of the same name, the earlier one's ID is in no row, so it is applied again:
+  a commit at every boundary, and the value goes back to the older one for a pass. It is silent until a second set of one
+  name exists. Found by the plan review (C2), before any code. **The check:** decide "applied" by order and not by
+  membership (apply a set only when its comment ID is greater than the row's recorded `comment`), and give the test two
+  sets of one name, a second boundary that writes no commit, and the earlier set listed after the later one.
+- ❌ **An owner check written for the rows of a table, not for the rows that the first writer writes.** The plan of
+  the same task said "`evidence` and `comment` are `—` together" and also gave the three rows that take their value
+  from `start.tsv` the evidence `command` and no comment, so the file the writer wrote would have been refused by its
+  own reader (plan review, C1). **The check:** write the reader's rules as the kinds of row (here: a row with no
+  comment is its own origin, a row with a comment is a set) and give the test the writer's output before any other
+  case, so the writer and the reader cannot disagree.
 
 ### Reference-sweep pitfalls
 

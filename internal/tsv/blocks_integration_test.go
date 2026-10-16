@@ -13,13 +13,13 @@ import (
 // built lists each block of docs/spec/ whose owner package compares it with
 // its Go schema in the owner's own test (tsv.Compare). The owner moves the name
 // here from notYetBuilt in the same change as that test.
-var built = []string{"answers", "answers-review", "approvers", "budget", "catalog-gaps", "catalog-kinds", "copies", "coverage", "draft", "events", "forge-check", "forge-register", "gate-manifest", "gate-result", "harness-register", "harnesses", "inventory", "inventory-index", "lease", "markers", "meaning", "models", "open-gaps", "options", "prices", "probe-result", "psb-gaps", "questions", "result", "retrospectives", "routing", "routing-register", "rule-paths", "run-steps", "sessions", "setup-answers", "setup-record", "setup-steps", "setup-stop", "setup-tree", "setup-verify", "spans", "spec-check", "stalls", "start", "tasks", "telemetry", "transitions"}
+var built = []string{"answers", "answers-review", "approvers", "budget", "catalog-gaps", "catalog-kinds", "copies", "coverage", "draft", "events", "forge-check", "forge-register", "gate-manifest", "gate-result", "harness-register", "harnesses", "inventory", "inventory-index", "lease", "markers", "meaning", "models", "open-gaps", "options", "parameters", "prices", "probe-result", "psb-gaps", "questions", "result", "retrospectives", "routing", "routing-register", "rule-paths", "run-steps", "sessions", "setup-answers", "setup-record", "setup-steps", "setup-stop", "setup-tree", "setup-verify", "spans", "spec-check", "stalls", "start", "tasks", "telemetry", "transitions"}
 
 // notYetBuilt lists each block that no owner compares with a Go schema yet.
 // A later section adds the names of its new blocks; otherwise it only becomes
 // shorter: a rule for the reviewer of each owner task; a test cannot read the
 // list of its base (docs/spec/README.md, The schema block).
-var notYetBuilt = []string{"bets", "parameters", "task-gates", "task-spec-check", "task-tests"}
+var notYetBuilt = []string{"bets", "task-gates", "task-spec-check", "task-tests"}
 
 // Each block of docs/spec/ has the form of the README, and is in exactly one
 // of the two lists; each listed name is a block. A block that a later section

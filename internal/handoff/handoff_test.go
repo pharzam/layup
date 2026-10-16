@@ -557,3 +557,40 @@ func TestWriteTableRefusesAWordWithASpace(t *testing.T) {
 		t.Error("an item word with a space is written")
 	}
 }
+
+// A handoff that code writes (the rendered task) has no typed result, so a row
+// of it that lists "schema" can never hold; the check of a table refuses the row
+// (the comment of #358, found by round 2 of #348). The row of another step keeps
+// its "schema": "owner role, asking role" becomes satisfiable when #377 lands.
+func TestCheckTableRefusesARowOfCodesOwnHandoffThatListsSchema(t *testing.T) {
+	with := func(items ...string) []Row {
+		table := Default()
+		for i := range table {
+			if table[i].From == "code (rendered task)" {
+				table[i].Items = items
+			}
+		}
+		return table
+	}
+	for name, tc := range map[string]struct {
+		rows []Row
+		why  string // "" for a table that passes
+	}{
+		"the default row":                                {Default(), ""},
+		"a replacement row with no schema":               {with("artifacts"), ""},
+		"a replacement row with its two items reordered": {with("rendering-equal", "artifacts"), ""},
+		"a replacement row that lists schema":            {with("schema", "artifacts", "rendering-equal"), "code (rendered task)"},
+		"schema alone":                                   {with("schema"), "schema"},
+		"an extra pair of code's own handoff":            {append(Default(), Row{"code (rendered task)", "developer", []string{"rendering"}, []string{"schema"}}), "schema"},
+		"another extra pair that lists schema":           {append(Default(), Row{"a", "b", []string{"plan"}, []string{"schema"}}), ""},
+		"the row of the owner role keeps its schema":     {func() []Row { r := Default(); r[12].Items = []string{"schema", "answer-row"}; return r }(), ""},
+	} {
+		err := CheckTable(tc.rows)
+		switch {
+		case tc.why == "" && err != nil:
+			t.Errorf("%s: %v", name, err)
+		case tc.why != "" && (err == nil || !strings.Contains(err.Error(), tc.why)):
+			t.Errorf("%s: err %v, want one that names %q", name, err, tc.why)
+		}
+	}
+}
