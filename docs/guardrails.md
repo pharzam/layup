@@ -646,6 +646,30 @@ success without having done its job.
   ([the budget](engineering-discipline.md#reviewing-until-findings-decay)); the task file names the base that the
   ruling gives.
 
+- ❌ **Equal bytes are not an equal file.** A check that compares what `git show
+  REV:PATH` gives with the bytes it expects (the basic `layup/rules` compares a
+  rendered record) passes a symbolic link whose target text is the expected text,
+  and an executable copy of the file: the blob of a link is its target, and the
+  mode is not in the bytes. It is silent because every fixture is a regular file.
+  **The check:** ask the tree for the entry first (`git ls-tree`, as `LsTree`
+  does) and read only mode `100644` of type blob; give the test the same bytes as
+  a link, as an executable and as a submodule, made with `update-index
+  --cacheinfo`, which keeps them from being rewritten by `git add`. Learned in
+  `T-9et9` (#352).
+- ❌ **A fixture that holds one register cannot show which register a check read.**
+  A test of "the register is read at the base" over a head and a base that hold
+  the same `rule-paths.tsv` passes whichever it reads. **The check:** let the head
+  carry a forged register that lists nothing, the base the true one, and keep a
+  control that judges the same change by the forged register and passes, so the
+  case can fail; a mutant that reads the head must fail it. Learned in `T-9et9`
+  (#352).
+
+- ❌ **Reading an earlier review to copy its record format.** An otherwise fresh
+  reviewer read #359's verdict during #352, despite its blind brief; that invocation
+  was not a qualifying review (issue comment 6217959614). **The check:** supply the
+  required field names from the discipline text, and audit actual tool inputs against
+  the brief before recording context independence.
+
 ### Testing pitfalls
 
 These traps are not domain-specific: they hurt every project's test suite.
