@@ -439,8 +439,10 @@ conventions." A session writes `result/result.tsv` in the form of the block
 [`result`](records.md#nfr-001--the-records-of-a-session); `layup run` reads it
 by the block and its rules, checks each artifact's SHA-256 against the file at
 the head (a mismatch adds the event `refused`, `artifact`; a row of the kind `comment`,
-which `M2e` adds, is checked against the file of `result/` that it names,
-[`loop.md`](loop.md#the-artifact-that-is-a-comment)), and commits it byte
+which `M2e` adds, is checked against the file of `result/` that it names, with the
+same refusal, and its file is committed byte for byte as
+`tasks/<task>/results/<session>/<file>` in the same records commit, task `T-q5k4`,
+[`loop.md`](loop.md#the-artifact-that-is-a-comment)), and commits the result file byte
 for byte as
 `tasks/<task>/results/<session>.tsv`, with the event `result`. The session ID,
 the task, the role, the attempt and the base come from the start row, never

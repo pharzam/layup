@@ -184,15 +184,31 @@ corrected by the answer to round 1):
   head lacks, and this file is in no commit) with its path in `result/` and its
   SHA-256, which the end of the session checks against that file
   ([`session.md`](session.md#req-005--the-result-of-a-session)); a `comment` row
-  never names a path of the target. **The file is kept:** at the records commit of the
+  never names a path of the target. **Decided here** (task `T-q5k4`, row 66d): a row
+  whose file is missing, is a link as its last part, is not a regular file, is over 1 MiB
+  or has another SHA-256 than the row's adds the event `refused` with the reason `artifact`
+  (one refusal, even when an `artifact` row fails too), the result is still committed, as for an
+  artifact, and the file of that row is not kept; a result that holds a comment ID in a
+  `comment` row is no valid result (the block refuses it: class `no-result`). **The file is kept:** at the records commit of the
   result, `layup run` copies it byte for byte as
   `tasks/<task>/results/<session>/<file>` ([the records](records.md#nfr-001--the-records-of-the-task-loop)),
   because the session's directory is removed after its records are pushed
   ([`session.md`](session.md#the-session-directory)); a run that stops after that
   commit and before the post posts from the copy at the next start, and the posted
-  bytes are those of the copy. **To confirm at the build:** that GitHub gives a
-  comment's body back byte for byte, within its size limit (65,536 characters); a
-  file over the limit is refused as `refused` `handoff` before the post.
+  bytes are those of the copy. **Confirmed at the build** (task `T-q5k4`, 2026-10-16,
+  `runs/T-q5k4/`): GitHub gave back, byte for byte, seven bodies posted as comments of
+  `pharzam/layup` #360 by the App and read by `GET /issues/comments/{id}`: one with CRLF,
+  trailing spaces and tabs, a letter outside the Basic Multilingual Plane and no final
+  newline, and bodies of 65,536 and 65,537 characters (ASCII and three-byte letters), of
+  131,072 bytes and of 262,143 bytes. The size limit is **not** what its own message says:
+  that message ("maximum is 65536 characters") came with the refusal of a body of 131,072
+  three-byte letters (393,216 bytes), and bodies of 65,537 characters and of 262,143
+  bytes were accepted. **Decided here:** code keeps the documented limit, the safe side:
+  a file that is empty, not valid UTF-8 (JSON would replace its bad bytes, and the three
+  hashes would differ) or over 65,536 characters (counted in characters, not bytes) is
+  refused as `refused` `handoff` before any forge call, once for the session, with no
+  post, no copy and no event `handoff`. A body that the forge gives back with other
+  bytes is not trusted on that account: it is caught by the three hashes below.
   The session posts nothing and holds no forge credential. After the result is
   valid, `layup run` posts that file's bytes, unchanged, as the comment of the
   task's issue (`architecture.md` §8 step 2 and step 6), and copies the comment
@@ -200,10 +216,26 @@ corrected by the answer to round 1):
   `copies.tsv` (the author's numeric ID and login, the comment ID, whether an App
   made it, the time, the SHA-256 of the body), by the mechanism of `M2a`
   ([`records.md`](records.md#nfr-001--the-records-of-start), the block `copies`).
+  **The order of the post** (**decided here**, task `T-q5k4`; the call is `internal/run`'s
+  `PostComment`, a stop between two of its acts is resumed from the records and the forge,
+  never from memory): the kept copy is read from the records; a row of `copies.tsv` on the
+  task's issue with the file's SHA-256 ends it (no post); else a comment of the App on the
+  issue whose body is the file's bytes (a post whose copy was lost) is copied and no
+  second is posted; else the lease is read from the records (a lease of another run, or
+  not held, is a lost lease and nothing is posted) and the one `Comment` call is made;
+  the forge is read again for that comment, as `Comment` gives only the ID, and the
+  comment is copied in one fenced records commit. The window between the lease read and
+  the post is one call: a takeover inside it could post once, and the next run adopts that
+  comment as the copy.
 - **The link is written by code.** The comment ID is never in the session's
   result. The `handoff` event ([The checks of a handoff](#the-checks-of-a-handoff))
   holds the comment ID that `layup run` read from the row of `copies.tsv` whose
-  `sha256` equals the artifact's SHA-256 and whose `issue` is the task's issue.
+  `sha256` equals the artifact's SHA-256 and whose `issue` is the task's issue (the last
+  such row of the file, **decided here**, task `T-q5k4`, as a comment edited back to its
+  first text is a new copy of those bytes). At each handoff `layup run` reads the comment
+  again (copy before read), and the copy of an edit is written in the same records commit
+  as the event. A comment never posted has no row: the event is `invalid artifacts`, with
+  no comment named.
 - **Code accepts the handoff only when three SHA-256 are equal:** the session's
   file, the copy, and the body that the forge gives for that comment at the step.
   A comment edited after the copy is a new copy with a new `seen`, the forge's
@@ -299,6 +331,25 @@ agent writes never makes it valid (`F-0003#59`, Sol-21, Fable-M14).
    `tasks/<task>/events.tsv` with the detail `valid` or `invalid <item>`, and, for
    an artifact that is a comment, after a space `comment <ID>-<seen>` (the kind is
    added in prose here and in the block by the build task).
+6. **What the check is given** (**decided here**, task `T-q5k4`, row 66d; the call is
+   `internal/run`'s `RecordHandoff`). The schema is the result file of the records,
+   `tasks/<task>/results/<session>.tsv`, read by the block `result` (a handoff of a
+   session with no such file is `invalid schema`). The items `question-row` and
+   `answer-row` are computed from that result by code: `question-row` is true when the
+   result has at least one `question` row and each names at least one record after its
+   label and its `needs_human` word, and `answer-row` when it has at least one `answer`
+   row (the block gives each one or more records); neither resolves a record. A value of
+   the caller's for `schema`, `artifacts`, `question-row` or `answer-row` is never read.
+   Every other item is the caller's result, passed in the value it hands the check
+   (`plan-fields`, `verdict-field`, `nothing-material`, `findings-located`, `heading-ids`
+   and `register-rows` from the text of a comment or a table; `tests-red-green`,
+   `spec-sections`, `rendering-equal` and `patch-per-kind` from a program, a gate run
+   or a read of a commit): an item it does not pass is false. Whose rows compute these
+   is not `M2e`'s first row; [`packages.md`](packages.md#the-table-of-m2e) says that
+   they are the caller's. A handoff that code writes (the rendered task) has no session:
+   the event's `session` is `—` and its attempt is the caller's. A handoff whose event
+   is already in `events.tsv` with the same session and detail is not written again;
+   a different outcome of the same session is a new event.
 
 | From, to | Artifacts | Items |
 | -------- | --------- | ----- |
@@ -325,7 +376,11 @@ Domain Expert; architecture boundary, the Systems Architect; interface contract,
 Software Architect; environment or infrastructure, the Software Engineer; the
 confirmed map, `owners.tsv`, is phase 3) when it needs no human and its label is one
 of those four kinds, and to the Operator
-or the idea owner when it needs one, or when its label is none of the four; the smart-if that gives the kind and
+when it needs one, or when its label is none of the four (**decided here**, task `T-q5k4`,
+which settles the words "the Operator or the idea owner": `architecture.md` §10 names the
+idea owner for the points P1 and P5 and "the Operator for the others", and for P2, the
+point of this question, it has the Operator classify the kind when the provider fails;
+no clause names the idea owner for a question that needs a human); the smart-if that gives the kind and
 `needs_human` is `M3a`'s, so in `M2e` the session's own label and field are
 used, and a question whose `needs_human` is not `yes` or `no` goes to a human
 (**decided here**, the conservative reading). The answer's pass through the
@@ -335,6 +390,20 @@ next attempt with the answer in its prompt file. The answer is **accepted** when
 that attempt ends `completed`, cites the answer ID, and none of its questions
 cites the answer ID; the accepting actor is that session. An attempt that a
 question ends counts only toward `stall.attempts` (`M3d`).
+**Decided here** (task `T-q5k4`, row 66d, which settles #377 by R10): the session of the
+owner role writes its answer as a row of the kind `answer` of its typed result
+([`records.md`](records.md#nfr-001--the-records-of-a-session): the text, and the records it rests
+on in `reason`, at least one); the **answer ID** is `<S-xxxxxxxx>.<n>`, that session and
+the row's `n`; a result **cites** an ID when it is a word of the `reason` of its
+`status` row, and a question cites it when it is a word of the `reason` of its
+`question` row. The session of the owner role is recorded under the attempt it answers
+(no attempt starts for it); the answer is the answer to the attempt that last ended
+`needs_context` before that session started, and the **next attempt** is the attempt
+with the next number, started after that session ended and neither `closed` nor
+`rebased`; one of its sessions that ended `done` with the status `completed` and the
+cite accepts it, the first in the order of the events. The acceptance is a function of
+the records (`internal/run`'s `AnswerAccepted`), not a record of its own: the columns of
+the accepted answer and its actor are `M3c`'s (`records.md`, the block `questions`).
 
 ### The frozen test list
 
@@ -1068,7 +1137,8 @@ the milestone covers it end to end.
 | Test | Level | What it shows |
 | ---- | ----- | ------------- |
 | A handoff is valid only by its table (inventory) | unit | A handoff with a wrong schema, an artifact that is not in the commits, a hash that differs, a required item that is false, and a pair with no row is each invalid, naming the item; a field that an agent writes never makes one valid; a comment artifact whose body at the forge differs from its copy is invalid. |
-| The artifact that is a comment (`gov-issue-68`) | unit; integration | With the stand-in forge, for each of the kinds `plan`, `plan-review` and `review-record`: the session's file, the comment that code posts from its bytes, the copy and its row, the `handoff` event with the comment ID that code read, the three equal hashes; an edited comment is a new copy and the first handoff is invalid; a result that holds a comment ID is refused; a `comment` row is checked against the session's `result/` file and an `artifact` row against the head. |
+| The artifact that is a comment (`gov-issue-68`) | unit; integration | With the stand-in forge (the `httptest` forge for the integration part), for each of the kinds `plan`, `plan-review` and `review-record`: the session's file, the comment that code posts from its bytes, the copy and its row, the `handoff` event with the comment ID that code read, the three equal hashes; an edited comment is a new copy and the first handoff is invalid; a result that holds a comment ID is refused; a `comment` row is checked against the session's `result/` file, its file is kept byte for byte in the commit of the result, and an `artifact` row against the head; a run that stops after the end, between the post and the copy, or before the post, posts once from the records; a lost lease posts nothing. |
+| The route of a question and the acceptance of an answer | unit; integration | A question goes to the owner role of its kind when its `needs_human` word is `no` and its label is one of the four, and to the Operator for `yes`, for any other word and for any other label; a replaced owner map routes by its roles; the items `question-row` and `answer-row` are computed from the result, whatever the caller passes; an answer is accepted by the next attempt that ends `completed` and cites its ID in the status row, with no question of that attempt citing it, and by no other attempt; with the real `git`, a question session, the session of the owner role and the next attempt give the records from which the route and the acceptance are read. |
 | The transition table | unit | The default rows are the thirteen of the table (the twelve of `architecture.md` §8 and the row of the target's architecture task, which §8 names a task and gives no row); a replacement table is refused for a missing default pair, a kind or an item not in the lists, and a row of code's own handoff (`code (rendered task)`) that lists `schema`, while another row keeps its `schema`, and the steps that are `layup run`'s own acts need no row. |
 | The replacement of the transition table at the boundary | integration | With the stand-in forge and real git: `set transitions <sha256>` names a copy of a comment of the control issue; the new table is the bytes of that copy, written with the row `transitions` in one records commit, so its SHA-256 is the row's value; the old table stays in Git history and the next task keeps the new one; a hash of no copy or of a copy of another issue, a body that is no table (a code fence, a carriage return) and a table that fails the check each refuse with the item `bound` (`value` for a value that is no SHA-256) and write nothing. |
 | `layup spec check`, the full check (inventory) | unit | Each rule of the table fails on its input and passes on its fixture; before the first bet a task that touches neither the PRD nor `docs/spec/` is `clear`; `did not run` is a failure. |

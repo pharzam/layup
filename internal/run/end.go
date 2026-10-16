@@ -13,7 +13,9 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"maps"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -79,6 +81,7 @@ func (s *Sessions) endTask(ctx context.Context, spec TaskSpec, id string, d sess
 	}
 	var refused []string // the reasons, in order
 	keep := class == "done"
+	kept := map[string][]byte{} // the files of the comment rows, by their path in the records
 	switch {
 	case !openAttempt(events, id, attempt):
 		refused, keep = append(refused, "closed-attempt"), false
@@ -92,10 +95,19 @@ func (s *Sessions) endTask(ctx context.Context, spec TaskSpec, id string, d sess
 		case bad:
 			refused = append(refused, "artifact")
 		}
+		// A comment row is checked against its file of result/, not against the
+		// head; one failure of either check is the one refusal, artifact, and the
+		// file of a row that fails is not kept (session.md, The result of a session).
+		if keep {
+			if kept, bad = keepComments(d, task, id, rows); bad && !slices.Contains(refused, "artifact") {
+				refused = append(refused, "artifact")
+			}
+		}
 	}
 	files := map[string][]byte{}
 	if keep {
 		files["tasks/"+task+"/results/"+id+".tsv"] = data
+		maps.Copy(files, kept)
 	}
 	evData, err := s.appendEvents(ctx, task, attempt, id, append([]string{"result " + class}, prefix("refused ", refused)...))
 	if err != nil {

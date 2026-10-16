@@ -288,6 +288,7 @@ func resultRows() []string {
 		"comment\t1\tresult/plan.md\t" + sha256A + "\t—",
 		"question\t2\tWhich label is this?\t—\tsome-unknown-label maybe",
 		"lesson\t2\tCheck the neighbours of a fix\t—\tdocs/spec/loop.md T-xs4y",
+		"answer\t1\tYes, a draft is marked ready by its node ID\t—\tdocs/spec/forge.md T-cr8j",
 	}
 }
 
@@ -351,6 +352,12 @@ func TestResultRefusesEachBrokenRule(t *testing.T) {
 		{"a question reason with two spaces", set(3, "reason", "interface-contract  yes"), "reason"},
 		{"a question reason with a space at its end", set(3, "reason", "interface-contract yes "), "reason"},
 		{"a lesson reason with two spaces", set(5, "reason", "docs/spec/loop.md  T-xs4y"), "reason"},
+		{"an answer with no text", set(9, "value", "—"), "value"},
+		{"an answer with a sha256", set(9, "sha256", sha256A), "sha256"},
+		{"an answer with no reason (it rests on no record)", set(9, "reason", "—"), "reason"},
+		{"an answer reason with two spaces", set(9, "reason", "docs/spec/forge.md  T-cr8j"), "reason"},
+		{"an answer reason with a space at its end", set(9, "reason", "docs/spec/forge.md "), "reason"},
+		{"a gap in the answers", append(resultRows(), "answer\t3\tAnother\t—\tT-cr8j"), "n"},
 	} {
 		refusedAt(t, c.name, readResult, table(resultHeader, c.rows...), c.column)
 	}

@@ -75,3 +75,10 @@ whose manifest differs is refused by the tree comparison first) has no row.
 or at that commit: the conditions of the plan review (above), the per-variant kills (grouped above; the ungrouped table of the first run is in `53ceb15:runs/T-4cep/mutants.md`). `579c035` removed the nil guards of the job's
 two seams (`landing`, `note`) and their two tests: `forgeCheckStep` always gives both and no other job is built, so the guards were unreachable; the guarded refusal of a head asked of no check is still
 shown by `TestTheTreeRowAdmitsTheCodeOwnerCommitAndNothingElse` and `m12`. `a6ff498` folded one case into the variant table and dropped four unit rows that the real-object table covers. No acceptance coverage was removed.
+
+
+Coordinator before full integration: merge current maina3a4cdd (#360). Two textual
+conflicts are resolved: PRD changelog keeps #360 then #384; packages.md retains
+CheckCodeOwnerLanding ownership and the answer result kind settling #377.
+The first independent review must judge both, plus the earlier f86 guardrail merge.
+No source identity field is read as authorization; no real target was accessed.
