@@ -185,6 +185,7 @@ type system struct {
 	message        func(dir, rev string) (string, error)
 	initRepo       func(dir string) error
 	lsTree         func(dir, rev, path string) ([]git.TreeEntry, error)
+	parents        func(dir, rev string) ([]string, error)
 	show           func(dir, rev, path string) ([]byte, error)
 	switchCreate   func(dir, branch, commit string) error
 	exists         func(path string) bool
@@ -235,6 +236,7 @@ var sys = system{
 	message:        git.Message,
 	initRepo:       git.Init,
 	lsTree:         git.LsTree,
+	parents:        git.Parents,
 	show:           git.Show,
 	switchCreate:   git.SwitchCreate,
 	exists:         func(p string) bool { _, err := os.Lstat(p); return err == nil },

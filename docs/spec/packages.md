@@ -276,7 +276,11 @@ of `M2a`, `M2b`, `M2c` and `M2e`; the build task that made `internal/handoff` (t
   `.github/CODEOWNERS`, the rule and, for a target set up before it, the files of its migration
   ([`scaffold.md`](scaffold.md#the-code-owner-rule)); `internal/run` gives it the Operator's login (the row of
   `approvers.tsv`) and the mode (from `setup/record.tsv` and `setup/rulesets.txt`) in `setup.Phase2`. No new
-  package, import, command, flag, step or record kind.
+  package, import, command, flag, step or record kind. Task `T-4cep` (#384, the child of row 65b): `internal/setup` owns
+  `CheckCodeOwnerLanding`, the judgment of the code-owner commit that [the tree check](scaffold.md#the-tree-check) admits, and
+  the landing script it agrees with; `internal/run` asks it of a head that is not the last commit of `setup/tree.tsv`, with the
+  Operator's login and the record of the setup, in the step `forge-check`; `internal/git` gives it `Parents` and `BlobID`, with
+  `LsTree` for the whole tree. No new package, import, command, flag, step, record kind or schema.
 - `internal/records`: the kinds `question`, `decision`, `lesson`, `comment` and `answer` of the block
   `result` (the `answer`, task `T-q5k4`, which settles #377: [`records.md`](records.md#nfr-001--the-records-of-a-session)), and the kinds `handoff` and `merged` of the block `events` (`closed` and
   `rebased` exist there; `M2e` sets their detail).
@@ -379,6 +383,8 @@ that the steps, the checks and `layup gate` name.
 | `DiffNames` | `git diff --name-only --no-renames -z --end-of-options BASE HEAD --` | `layup gate`: a `pending` kind; `M2b`: the check before a push ([`session.md`](session.md#a-workflow-or-rule-path-change)) |
 | `Apply` | `git apply -- PATCH` | check `gate:<kind>`: the known-bad fixture |
 | `LsTree` | `git ls-tree -r -z --full-tree --end-of-options REV -- PATH` | `layup gate`, step 2 of the run: the files of a `config` path at the base, with their modes (task `T-5sgt`); S04: the records of `docs/adr/` and `docs/facts/` at the root commit (task `T-7s0y`); S05: the history at the head; S11: the records of `docs/facts/` at the head (task `T-b3r1`); S12: the tree of the head; S15: the `.sh` files of `layup-setup`, and the tree of the records commit of a run that stopped (task `T-d6q5`) |
+| `Parents` | `git rev-list --parents -n 1 --end-of-options REV --`; the fields after the first of the line | `M2e`, task `T-4cep` (#384): the parents of the head in the tree check of the code-owner commit ([`scaffold.md`](scaffold.md#the-tree-check)) |
+| `BlobID` | none: the SHA-1 of `blob`, the length, a NUL and the bytes, as `git hash-object` gives, with no process and no object written | `M2e`, task `T-4cep`: the object of the bytes that S13 writes for `.github/CODEOWNERS`, compared with the object of the head's tree |
 
 **The calls of `M2a`** (task `T-zck8`; [`run.md`](run.md)). Each takes the
 token of [`forge.md`](forge.md#the-app-identity) in its environment when the
