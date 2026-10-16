@@ -146,9 +146,9 @@ open unknowns that the records give; the result is a column of the routing
 request, not a new record.
 
 **The context of a session.** The step table has a column of record kinds for
-each step ([`session.md`](session.md#the-context-of-a-start) holds the table and `M2b`
-the prompt as the caller's text). **Decided here:** from `M2e` the prompt file of
-a step holds, in this order, the task's issue and plan, the rows and the
+each step ([`session.md`](session.md#the-step-table-and-the-kinds-of-a-steps-context) holds the
+table and `M2b` the prompt as the caller's text). **Decided here:** from `M2e` the
+prompt file of a step of a task holds, in this order, the task's issue and plan, the rows and the
 specification sections of the task's requirement IDs, the decision records that
 those sections name, the task's handoffs and the answers to its questions, and
 the target's rule files; code builds the list from the records and writes the
@@ -377,8 +377,10 @@ the `mergeable_state` of a draft is `draft`, never `clean`): checks `read` **ame
 ADR-0014 decision 3**, asked in #336 (`gov-operator-setup-o112`: the Operator's step,
 asked in the demo row of the slicing task, as the first demo of `M2d` asked its
 own) ([`forge.md`](forge.md#the-calls-of-m2e)). The step
-`forge` of `layup run` reads the granted permissions, and a missing one is `fail`,
-naming it, as it is for the `M2a` permissions.
+`forge` of `layup run` reads the granted permissions: Start and the restart before the
+loop record them, as for any later milestone's, and the loop's first run (row 66a of
+the plan) calls `forge.CheckLoopPermissions` before its first write, so a missing one
+is then `fail`, naming it, as it is for the `M2a` permissions (`forge.md`).
 
 ### layup/gates
 

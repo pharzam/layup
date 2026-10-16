@@ -316,6 +316,244 @@ func (a *Adapter) Activity(ctx context.Context, ref string) ([]forge.ActivityEnt
 	return all, nil
 }
 
+// The calls of M2e (forge.md, The calls of M2e; task T-cr8j).
+
+// pullWire is a pull request as the REST API gives it, in a list too (a list
+// item has merged_at and no merged).
+type pullWire struct {
+	Number   int     `json:"number"`
+	NodeID   string  `json:"node_id"`
+	State    string  `json:"state"`
+	Draft    bool    `json:"draft"`
+	Merged   bool    `json:"merged"`
+	MergedAt *string `json:"merged_at"`
+	MergeSHA *string `json:"merge_commit_sha"`
+	Head     struct {
+		SHA string `json:"sha"`
+	} `json:"head"`
+}
+
+func (w pullWire) pull() forge.PullRequest {
+	pr := forge.PullRequest{Number: w.Number, NodeID: w.NodeID, State: w.State, Draft: w.Draft, HeadSHA: w.Head.SHA,
+		Merged: w.Merged || w.MergedAt != nil}
+	// Before a merge merge_commit_sha holds a test merge commit (GitHub's page), which
+	// is no merge commit: the field is the merge commit's SHA only when it is merged.
+	if pr.Merged && w.MergeSHA != nil {
+		pr.MergeSHA = *w.MergeSHA
+	}
+	return pr
+}
+
+// OpenDraft opens a draft pull request of head onto base and requests no review.
+func (a *Adapter) OpenDraft(ctx context.Context, head, base, title, body string) (forge.PullRequest, error) {
+	in, err := json.Marshal(map[string]any{"title": title, "head": head, "base": base, "body": body, "draft": true})
+	if err != nil {
+		return forge.PullRequest{}, err
+	}
+	var out pullWire
+	if _, err := a.do(ctx, "OpenDraft", "POST", a.cfg.API+a.repo()+"/pulls", byToken, in, 201, &out); err != nil {
+		return forge.PullRequest{}, err
+	}
+	return out.pull(), nil
+}
+
+// MarkReady takes a pull request out of the draft state with the GraphQL
+// mutation markPullRequestReadyForReview, which the REST API has no call for. The
+// node ID is a variable, never part of the text of the mutation. An answer with an
+// errors array, or with no pull request, is a forge error.
+func (a *Adapter) MarkReady(ctx context.Context, nodeID string) (forge.PullRequest, error) {
+	in, err := json.Marshal(map[string]any{
+		"query":     "mutation($id: ID!) { markPullRequestReadyForReview(input: {pullRequestId: $id}) { pullRequest { id number isDraft state headRefOid } } }",
+		"variables": map[string]string{"id": nodeID}})
+	if err != nil {
+		return forge.PullRequest{}, err
+	}
+	var out struct {
+		Data *struct {
+			Mark *struct {
+				PullRequest *struct {
+					ID         string `json:"id"`
+					Number     int    `json:"number"`
+					IsDraft    bool   `json:"isDraft"`
+					State      string `json:"state"`
+					HeadRefOid string `json:"headRefOid"`
+				} `json:"pullRequest"`
+			} `json:"markPullRequestReadyForReview"`
+		} `json:"data"`
+		Errors []struct {
+			Message string `json:"message"`
+		} `json:"errors"`
+	}
+	if _, err := a.do(ctx, "MarkReady", "POST", graphqlURL(a.cfg.API), byToken, in, 200, &out); err != nil {
+		return forge.PullRequest{}, err
+	}
+	if len(out.Errors) > 0 {
+		return forge.PullRequest{}, &forge.Error{Call: "MarkReady", Status: 200, Message: firstLine([]byte(out.Errors[0].Message))}
+	}
+	if out.Data == nil || out.Data.Mark == nil || out.Data.Mark.PullRequest == nil {
+		return forge.PullRequest{}, &forge.Error{Call: "MarkReady", Status: 200, Message: "the answer holds no pull request"}
+	}
+	p := out.Data.Mark.PullRequest
+	state := "closed"
+	if p.State == "OPEN" {
+		state = "open"
+	}
+	return forge.PullRequest{Number: p.Number, NodeID: p.ID, State: state, Draft: p.IsDraft, HeadSHA: p.HeadRefOid, Merged: p.State == "MERGED"}, nil
+}
+
+// SetStatus posts a commit status on a SHA. The state, the length of the
+// description and the form of the SHA are checked before any request.
+func (a *Adapter) SetStatus(ctx context.Context, sha, context, state, description string) error {
+	if !forge.FullSHA(sha) {
+		return &forge.Error{Call: "SetStatus", Message: "the SHA is not a full object ID"}
+	}
+	if err := forge.ValidStatus(state, description); err != nil {
+		return &forge.Error{Call: "SetStatus", Message: err.Error()}
+	}
+	in, err := json.Marshal(map[string]string{"state": state, "context": context, "description": description})
+	if err != nil {
+		return err
+	}
+	var out struct{}
+	_, err = a.do(ctx, "SetStatus", "POST", a.cfg.API+a.repo()+"/statuses/"+sha, byToken, in, 201, &out)
+	return err
+}
+
+// Statuses gives each status of a head, in the order of the forge (newest first),
+// and each latest check run, every page of each. The next page of a list is at the
+// api of the forge register only.
+func (a *Adapter) Statuses(ctx context.Context, sha string) (forge.HeadChecks, error) {
+	if !forge.FullSHA(sha) {
+		return forge.HeadChecks{}, &forge.Error{Call: "Statuses", Message: "the SHA is not a full object ID"}
+	}
+	var out forge.HeadChecks
+	next := a.cfg.API + a.repo() + "/commits/" + sha + "/statuses?per_page=100"
+	for next != "" {
+		var page []struct {
+			Context     string  `json:"context"`
+			State       string  `json:"state"`
+			Description *string `json:"description"`
+			Creator     *struct {
+				ID    int64  `json:"id"`
+				Login string `json:"login"`
+			} `json:"creator"`
+		}
+		h, err := a.do(ctx, "Statuses", "GET", next, byToken, nil, 200, &page)
+		if err != nil {
+			return forge.HeadChecks{}, err
+		}
+		for _, s := range page {
+			st := forge.Status{Context: s.Context, State: s.State, CreatorLogin: "ghost"}
+			if s.Description != nil {
+				st.Description = *s.Description
+			}
+			if s.Creator != nil {
+				st.CreatorID, st.CreatorLogin = s.Creator.ID, s.Creator.Login
+			}
+			out.Statuses = append(out.Statuses, st)
+		}
+		if next = nextPage(h.Get("Link")); next != "" && !strings.HasPrefix(next, a.cfg.API+"/") {
+			return forge.HeadChecks{}, &forge.Error{Call: "Statuses", Status: 200, Message: "the next page is not at the api of the forge register"}
+		}
+	}
+	next = a.cfg.API + a.repo() + "/commits/" + sha + "/check-runs?filter=latest&per_page=100"
+	for next != "" {
+		var page struct {
+			CheckRuns []struct {
+				Name       string  `json:"name"`
+				Status     string  `json:"status"`
+				Conclusion *string `json:"conclusion"`
+				App        *struct {
+					ID   int64  `json:"id"`
+					Slug string `json:"slug"`
+				} `json:"app"`
+			} `json:"check_runs"`
+		}
+		h, err := a.do(ctx, "Statuses", "GET", next, byToken, nil, 200, &page)
+		if err != nil {
+			return forge.HeadChecks{}, err
+		}
+		for _, c := range page.CheckRuns {
+			run := forge.CheckRun{Name: c.Name, Status: c.Status}
+			if c.Conclusion != nil {
+				run.Conclusion = *c.Conclusion
+			}
+			if c.App != nil {
+				run.AppID, run.AppSlug = c.App.ID, c.App.Slug
+			}
+			out.CheckRuns = append(out.CheckRuns, run)
+		}
+		if next = nextPage(h.Get("Link")); next != "" && !strings.HasPrefix(next, a.cfg.API+"/") {
+			return forge.HeadChecks{}, &forge.Error{Call: "Statuses", Status: 200, Message: "the next page is not at the api of the forge register"}
+		}
+	}
+	return out, nil
+}
+
+// PullRequest gives a pull request by its number (GET /pulls/{n}), or the
+// newest one of a branch (GET /pulls?head=OWNER:BRANCH&state=all, the first item
+// of the list); a branch with none is found false and no error. A query that
+// names neither or both is refused before any request.
+func (a *Adapter) PullRequest(ctx context.Context, q forge.PullRequestQuery) (forge.PullRequest, bool, error) {
+	if (q.Number != 0) == (q.Branch != "") || q.Number < 0 {
+		return forge.PullRequest{}, false, &forge.Error{Call: "PullRequest", Message: "the query names a number or a branch, one of the two"}
+	}
+	if q.Number != 0 {
+		var out pullWire
+		if _, err := a.do(ctx, "PullRequest", "GET", fmt.Sprintf("%s%s/pulls/%d", a.cfg.API, a.repo(), q.Number), byToken, nil, 200, &out); err != nil {
+			return forge.PullRequest{}, false, err
+		}
+		return out.pull(), true, nil
+	}
+	var list []pullWire
+	target := a.cfg.API + a.repo() + "/pulls?state=all&head=" + url.QueryEscape(a.cfg.Owner+":"+q.Branch)
+	if _, err := a.do(ctx, "PullRequest", "GET", target, byToken, nil, 200, &list); err != nil {
+		return forge.PullRequest{}, false, err
+	}
+	if len(list) == 0 {
+		return forge.PullRequest{}, false, nil
+	}
+	return list[0].pull(), true, nil
+}
+
+// Merge merges a pull request at its head SHA by a merge commit, never a squash,
+// and gives the merge commit's SHA. A head that moved is the forge's 409, a forge
+// error; an answer with merged false is one too.
+func (a *Adapter) Merge(ctx context.Context, number int, sha string) (string, error) {
+	if number < 1 || !forge.FullSHA(sha) {
+		return "", &forge.Error{Call: "Merge", Message: "the pull request number or the head SHA is not valid"}
+	}
+	in, err := json.Marshal(map[string]string{"sha": sha, "merge_method": "merge"})
+	if err != nil {
+		return "", err
+	}
+	var out struct {
+		SHA     string `json:"sha"`
+		Merged  bool   `json:"merged"`
+		Message string `json:"message"`
+	}
+	if _, err := a.do(ctx, "Merge", "PUT", fmt.Sprintf("%s%s/pulls/%d/merge", a.cfg.API, a.repo(), number), byToken, in, 200, &out); err != nil {
+		return "", err
+	}
+	if !out.Merged || out.SHA == "" {
+		msg := firstLine([]byte(out.Message))
+		if out.Message == "" {
+			msg = "the pull request is not merged"
+		}
+		return "", &forge.Error{Call: "Merge", Status: 200, Message: msg}
+	}
+	return out.SHA, nil
+}
+
+// graphqlURL gives the URL of the GraphQL API of a REST api: <api>/graphql, and
+// for a GitHub Enterprise Server api that ends in /api/v3, /api/graphql.
+func graphqlURL(api string) string {
+	if strings.HasSuffix(api, "/api/v3") {
+		return strings.TrimSuffix(api, "/v3") + "/graphql"
+	}
+	return api + "/graphql"
+}
+
 // nextPage gives the URL of rel="next" of a Link header, or "".
 func nextPage(link string) string {
 	for _, part := range strings.Split(link, ",") {

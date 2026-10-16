@@ -13,13 +13,14 @@ import (
 // standInForge is a stand-in forge of a unit test: each answer is a field, and
 // fail names the call that gives a forge error.
 type standInForge struct {
-	declared []forge.Capability
-	perms    map[string]string
-	repo     forge.Repository
-	repoErr  error
-	ids      map[string]int64
-	fail     string
-	posted   map[int][]string // the bodies of the comments posted, by issue
+	forge.Forge // the calls of M2e: a call of one is a defect of the test (nil)
+	declared    []forge.Capability
+	perms       map[string]string
+	repo        forge.Repository
+	repoErr     error
+	ids         map[string]int64
+	fail        string
+	posted      map[int][]string // the bodies of the comments posted, by issue
 }
 
 func (f *standInForge) err(call string) error {
