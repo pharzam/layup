@@ -410,7 +410,9 @@ least one record; the **answer ID** is `<S-xxxxxxxx>.<n>`, the session of the ow
 `status` row, as a `question` row cites it when it is a word of its `reason` ([`loop.md`](loop.md#the-checks-of-a-handoff)); a
 `comment` has a `value` of the form `result/<file>` (one level, of the type `path`) and a
 `sha256`, no `reason`, and is checked at the end of the session against its file, not
-against the head ([`loop.md`](loop.md#the-artifact-that-is-a-comment)); within each of
+against the head ([`loop.md`](loop.md#the-artifact-that-is-a-comment)): a row that fails adds the event
+`refused` with the reason `artifact`, and a file that cannot be posted the event `refused` with the reason `handoff`, once
+for the session (task `T-q5k4`); within each of
 the seven kinds `n` runs 1 to k; a `handoff` event has no `base` and no `sha`, its `detail`
 is `valid` or `invalid <item>` (the item is one word of the table of items of `loop.md`, or `pair` for a pair with no row of `transitions.tsv`) and, for an artifact that is a comment, ends with ` comment <ID>-<seen>`
 (the key of a row of `copies.tsv`, both numbers of 1 or more); a `merged` event has no

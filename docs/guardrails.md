@@ -982,6 +982,19 @@ These traps are not domain-specific: they hurt every project's test suite.
   the case was green before the code. Task `T-hz4m` (#355). **The check:** give the head a clean file and put the
   bad one only where the new code must read it (the base); run the case red against a stub that has the step and
   not the behaviour, and read each failing line, not the exit code.
+- ❌ **A negative assertion on a records file that the world has already written to.** The test of a post that
+  fails asserted that `copies.tsv` held no `copies/` text, and it was false on a correct tree: Start had copied the
+  dead-man notice of the control issue (`copies/501-1.md`), so the file always held one. Task `T-q5k4` (#360),
+  found when its integration tests were run against a stub. **The check:** count the rows that belong to the thing
+  under test (here the rows whose `issue` is the task's), never the text of a file that other steps write, and
+  run a "nothing was written" case against the real code once before the stub.
+- ❌ **A limit quoted from the forge's error message and not measured.** The comment of a task is posted as one
+  body, and `loop.md` took the forge's own words for its size ("maximum is 65536 characters"). Probes on
+  2026-10-16 (`runs/T-q5k4/`) found 65,537 characters, 131,072 bytes and 262,143 bytes accepted, and 131,072
+  three-byte letters (393,216 bytes) refused with that same message, so the message is not the rule that is
+  enforced. Task `T-q5k4` (#360). **The check:** when code relies on a forge limit, read the answer of a probe at
+  both sides of the number, say which unit it is counted in, and keep the documented number as the side that
+  never posts a body the forge could refuse; do not write the limit as a fact on the strength of the message.
 
 ### Reference-sweep pitfalls
 
