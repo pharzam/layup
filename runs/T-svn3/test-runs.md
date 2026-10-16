@@ -35,3 +35,7 @@ The mutant runs are of 17:3xZ (between the green at 17:30:49Z and the full runs,
 ## After round 1 (notes only), 2026-10-15
 
 Round 1 ended `nothing material in scope` with seven notes. The fixes are documents and one Go comment (`loop.md`'s pointer and "a step of a task", `session.md`'s reading of "for each step" and the words `by-class` and `owner-of-its-kind`, the comment of `StepRow`), and this record; no code changed. Re-run: `go vet ./internal/session` and `go test ./internal/session` ok; the whole integration level exit 0 (above); the five checks and `git diff --check` exit 0.
+
+## After the third merge of `main` (row 62a, `2aafa64`), 2026-10-16
+
+Head `601b98e`. `go build ./...` and `go vet ./...`: exit 0. The whole integration level, `go test -tags=integration -timeout 25m ./...`, 05:55:53Z to 06:10:19Z: exit 0, 21 packages ok (`internal/run` 808 s alone).
