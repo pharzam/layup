@@ -36,9 +36,9 @@ func goEnv(t *testing.T) {
 	}
 }
 
-// commitFiles writes each file (a path and its text; "" removes the path) into
-// the repository at repo, and commits them; it gives the commit.
-func commitFiles(t *testing.T, repo string, files map[string]string, message string) string {
+// writeFiles writes each file (a path and its text; "" removes the path) into
+// the repository at repo.
+func writeFiles(t *testing.T, repo string, files map[string]string) {
 	t.Helper()
 	for p, text := range files {
 		path := filepath.Join(repo, filepath.FromSlash(p))
@@ -55,6 +55,19 @@ func commitFiles(t *testing.T, repo string, files map[string]string, message str
 			t.Fatal(err)
 		}
 	}
+}
+
+// commitFiles writes the files into the repository at repo, and commits them;
+// it gives the commit.
+func commitFiles(t *testing.T, repo string, files map[string]string, message string) string {
+	t.Helper()
+	writeFiles(t, repo, files)
+	return commitAll(t, repo, message)
+}
+
+// commitAll commits the work tree of the repository at repo.
+func commitAll(t *testing.T, repo, message string) string {
+	t.Helper()
 	if err := git.Add(repo); err != nil {
 		t.Fatal(err)
 	}
@@ -363,4 +376,253 @@ func reason(r gate.Row) string {
 		return "—"
 	}
 	return r.Reason
+}
+
+// overlayStep gives the text of the step of the job of kind in the workflow that
+// takes the gate files from the base (the lines between "- run: |" and "env:",
+// without their indent), or fails the test when the job has none.
+func overlayStep(t *testing.T, workflow, kind string) string {
+	t.Helper()
+	_, jobs, _ := strings.Cut(workflow, "\njobs:\n")
+	_, job, ok := strings.Cut("\n"+jobs, "\n  "+kind+":\n")
+	if !ok {
+		t.Fatalf("the workflow has no job of the kind %s", kind)
+	}
+	_, step, ok := strings.Cut(job, "      - run: |\n")
+	if !ok {
+		t.Fatalf("the job of the kind %s has no step that takes the gate files from the base", kind)
+	}
+	body, _, _ := strings.Cut(step, "        env:\n")
+	var out []string
+	for _, l := range strings.Split(strings.TrimSuffix(body, "\n"), "\n") {
+		out = append(out, strings.TrimPrefix(l, "          "))
+	}
+	return strings.Join(out, "\n") + "\n"
+}
+
+// The gate jobs read the base (F-22; loop.md, "The gate jobs read the base"):
+// the step of each job runs the base's own script in its mode --overlay, which
+// puts the base's manifest, script and config paths into the checkout of the
+// head, and then the job runs. A head that weakens its own gate is judged by the
+// base's files; the exception is a head ref of the form batch/<point>, with one
+// segment after batch/. Each case also runs the job with no step (the control),
+// which shows that the case can fail.
+func TestTheJobsReadTheBase(t *testing.T) {
+	goEnv(t)
+	const header = "kind\tstate\ttool\tcommand\tscope\tconfig\n"
+	const dirCmd = `test -x docs/gates/dir/run.sh && test "$(cat docs/gates/dir/a.txt)" = ok && test ! -e docs/gates/dir/extra.txt` +
+		` && git diff --cached --quiet "$GATE_BASE" -- docs/gates/dir && git diff --quiet -- docs/gates/dir`
+	manifestWith := func(cfg string) string {
+		return header + "ok\tactive\tsh\ttrue\t./*.txt\t—\n" + "bad\tactive\tsh\texit 3\t./*.txt\t—\n" +
+			"cfg\tactive\tsh\ttest \"$(cat docs/gates/cfg.txt)\" = ok\t./*.txt\t" + cfg + "\n" +
+			"newcfg\tactive\tsh\ttest -f docs/gates/new.txt\t./*.txt\tdocs/gates/new.txt\n" +
+			"dir\tactive\tsh\t" + dirCmd + "\t./*.txt\tdocs/gates/dir\n"
+	}
+	manifest := manifestWith("docs/gates/cfg.txt")
+	weak := strings.Replace(manifest, "bad\tactive\tsh\texit 3", "bad\tactive\tsh\ttrue", 1)
+	alwaysPass := "#!/bin/sh\nprintf 'bad\\tpass\\t—\\n'\nexit 0\n"
+	base := map[string]string{"docs/gates.tsv": manifest, "docs/gates/cfg.txt": "no\n", "x.txt": "x\n"}
+	with := func(over map[string]string) map[string]string {
+		m := map[string]string{}
+		for k, v := range base {
+			m[k] = v
+		}
+		for k, v := range over {
+			m[k] = v
+		}
+		return m
+	}
+	outside := t.TempDir()
+	// link replaces the path of the repository by a symbolic link to target.
+	link := func(p, target string) func(*testing.T, string) {
+		return func(t *testing.T, repo string) {
+			if err := os.RemoveAll(filepath.Join(repo, p)); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Symlink(target, filepath.Join(repo, p)); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+	chmod := func(p string, mode os.FileMode) func(*testing.T, string) {
+		return func(t *testing.T, repo string) {
+			if err := os.Chmod(filepath.Join(repo, p), mode); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+	dirBase, dirHead := with(map[string]string{"docs/gates/dir/a.txt": "ok\n", "docs/gates/dir/run.sh": "x\n"}),
+		map[string]string{"docs/gates/dir/a.txt": "no\n", "docs/gates/dir/run.sh": "y\n", "docs/gates/dir/extra.txt": "e\n"}
+	type scenario struct {
+		name, kind, ref string
+		base, head      map[string]string
+		noScript        bool // the base has no .github/gates.sh
+		baseIsTree      bool // GATE_BASE names the tree of the base
+		baseEdit        func(t *testing.T, repo string)
+		headEdit        func(t *testing.T, repo string) // both are made before their commit
+		stepFails       string                          // a part of the output of the step when it must fail
+		result, reason  string                          // the job after the step: the result and a part of its reason
+		control         string                          // the result of the job with no step; "" for none
+	}
+	cases := []scenario{
+		{name: "a head that makes a failing kind pass", kind: "bad", ref: "feature/x", base: base, head: map[string]string{"docs/gates.tsv": weak}, result: "fail", reason: "exit 3", control: "pass"},
+		{name: "a head whose script always passes", kind: "bad", ref: "feature/x", base: base, head: map[string]string{".github/gates.sh": alwaysPass}, result: "fail", reason: "exit 3", control: "pass"},
+		{name: "a head that changes the file of a config path", kind: "cfg", ref: "feature/x", base: base, head: map[string]string{"docs/gates/cfg.txt": "ok\n"}, result: "fail", reason: "exit 1", control: "pass"},
+		{name: "a head that adds a file of a config path that the base lacks", kind: "newcfg", ref: "feature/x", base: base, head: map[string]string{"docs/gates/new.txt": "n\n"}, result: "fail", reason: "exit 1", control: "pass"},
+		{name: "a head that removes the file of a config path", kind: "cfg", ref: "feature/x", base: with(map[string]string{"docs/gates/cfg.txt": "ok\n"}), head: map[string]string{"docs/gates/cfg.txt": ""}, result: "pass", reason: "—", control: "fail"},
+		{name: "a head that has no manifest of the base", kind: "ok", ref: "feature/x", base: with(map[string]string{"docs/gates.tsv": ""}), head: map[string]string{"docs/gates.tsv": manifest}, result: "fail", reason: "no manifest", control: "pass"},
+		{name: "a directory config path: its files, their modes, no other", kind: "dir", ref: "feature/x", base: dirBase, head: dirHead, result: "pass", reason: "—", control: "fail",
+			baseEdit: chmod("docs/gates/dir/run.sh", 0o755), headEdit: chmod("docs/gates/dir/run.sh", 0o644)},
+		{name: "the head of a batch branch", kind: "bad", ref: "batch/activation", base: base, head: map[string]string{"docs/gates.tsv": weak}, result: "pass", reason: "—"},
+		{name: "a ref that is batch/ alone", kind: "bad", ref: "batch/", base: base, head: map[string]string{"docs/gates.tsv": weak}, result: "fail", reason: "exit 3"},
+		{name: "a ref with two segments after batch/", kind: "bad", ref: "batch/a/b", base: base, head: map[string]string{"docs/gates.tsv": weak}, result: "fail", reason: "exit 3"},
+		{name: "a ref that is batch alone", kind: "bad", ref: "batch", base: base, head: map[string]string{"docs/gates.tsv": weak}, result: "fail", reason: "exit 3"},
+		{name: "a ref that holds batch/ after another word", kind: "bad", ref: "xbatch/a", base: base, head: map[string]string{"docs/gates.tsv": weak}, result: "fail", reason: "exit 3"},
+		{name: "a ref that holds batch/ after a segment", kind: "bad", ref: "feature/batch/x", base: base, head: map[string]string{"docs/gates.tsv": weak}, result: "fail", reason: "exit 3"},
+		{name: "a base that is a tree", kind: "bad", ref: "feature/x", base: base, head: map[string]string{"x.txt": "y\n"}, baseIsTree: true, stepFails: "not a commit"},
+		{name: "a base with no script", kind: "bad", ref: "feature/x", base: base, head: map[string]string{"x.txt": "y\n"}, noScript: true, stepFails: "gates.sh"},
+		{name: "a config path in .git", kind: "cfg", ref: "feature/x", base: with(map[string]string{"docs/gates.tsv": manifestWith(".git/hooks/pre-commit")}), head: map[string]string{"docs/gates.tsv": manifest}, stepFails: "in .git"},
+		{name: "a config path that is not a path", kind: "cfg", ref: "feature/x", base: with(map[string]string{"docs/gates.tsv": manifestWith("../x")}), head: map[string]string{"docs/gates.tsv": manifest}, stepFails: "is not a path"},
+		{name: "a config path that is a link at the base", kind: "cfg", ref: "feature/x", base: with(map[string]string{"docs/gates/cfg.txt": "elsewhere\n"}), head: map[string]string{"docs/gates/cfg.txt": ""}, stepFails: "link",
+			baseEdit: link("docs/gates/cfg.txt", "elsewhere")}, // the head has no link: only the base can refuse
+		{name: "a config path under a link of the head to the outside", kind: "cfg", ref: "feature/x", base: base, head: map[string]string{"x.txt": "y\n"}, stepFails: "link",
+			headEdit: link("docs/gates", outside)},
+		{name: "a config path under a link of the head to a directory of the tree", kind: "cfg", ref: "feature/x", base: base, head: map[string]string{"x.txt": "y\n"}, stepFails: "link",
+			headEdit: link("docs/gates", "../.github")},
+		{name: "a config file that is a link of the head", kind: "cfg", ref: "feature/x", base: base, head: map[string]string{"x.txt": "y\n"}, stepFails: "link",
+			headEdit: link("docs/gates/cfg.txt", "../../x.txt")},
+		{name: "a manifest that is a link of the head to a file of the tree", kind: "bad", ref: "feature/x", base: base, head: map[string]string{"x.txt": "y\n"}, stepFails: "link",
+			headEdit: link("docs/gates.tsv", "../x.txt")},
+		{name: "a manifest that is a link of the head to nothing", kind: "bad", ref: "feature/x", base: base, head: map[string]string{"x.txt": "y\n"}, stepFails: "link",
+			headEdit: link("docs/gates.tsv", filepath.Join(outside, "none"))},
+		{name: "a script that is a link of the head to the outside", kind: "bad", ref: "feature/x", base: base, head: map[string]string{"x.txt": "y\n"}, stepFails: "link",
+			headEdit: link(".github/gates.sh", filepath.Join(outside, "none"))},
+		{name: "a file of the head above a config path", kind: "cfg", ref: "feature/x", base: base, head: map[string]string{"x.txt": "y\n"}, stepFails: "not a directory",
+			headEdit: func(t *testing.T, repo string) {
+				if err := os.RemoveAll(filepath.Join(repo, "docs", "gates")); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.WriteFile(filepath.Join(repo, "docs", "gates"), []byte("f\n"), 0o644); err != nil {
+					t.Fatal(err)
+				}
+			}},
+	}
+	stacks, err := Stacks(Embedded())
+	if err != nil || len(stacks) == 0 {
+		t.Fatalf("the binary embeds no entry: %q, %v", stacks, err)
+	}
+	var shells [][]string
+	for _, sh := range [][]string{{"sh"}, {"dash"}, {"bash", "--posix"}} {
+		if _, err := exec.LookPath(sh[0]); err == nil {
+			shells = append(shells, sh)
+		}
+	}
+	for _, s := range stacks {
+		e, err := Read(Embedded(), s)
+		if err != nil {
+			t.Fatal(err)
+		}
+		files, err := e.Files("example.com/target")
+		if err != nil {
+			t.Fatal(err)
+		}
+		entry := map[string]string{}
+		for _, f := range files {
+			entry[f.Path] = string(f.Data)
+		}
+		step := overlayStep(t, entry[".github/workflows/gates.yml"], "static")
+		for _, c := range cases {
+			all := map[string]string{}
+			for k, v := range entry {
+				all[k] = v
+			}
+			for k, v := range c.base {
+				if v == "" {
+					delete(all, k) // the base has no such file
+				} else {
+					all[k] = v
+				}
+			}
+			if c.noScript {
+				delete(all, ".github/gates.sh")
+			}
+			repo := filepath.Join(t.TempDir(), "target")
+			if err := git.Init(repo); err != nil {
+				t.Fatal(err)
+			}
+			writeFiles(t, repo, all)
+			if c.baseEdit != nil {
+				c.baseEdit(t, repo)
+			}
+			b := commitAll(t, repo, "the base")
+			if c.baseIsTree {
+				if b, err = git.RevParse(repo, b+"^{tree}"); err != nil {
+					t.Fatal(err)
+				}
+			}
+			writeFiles(t, repo, c.head)
+			if c.headEdit != nil {
+				c.headEdit(t, repo)
+			}
+			h := commitAll(t, repo, "the head")
+			var firstStep, firstJob string
+			for i, sh := range shells {
+				env := append(os.Environ(), "GATE_BASE="+b, "GATE_HEAD="+h, "GATE_HEAD_REF="+c.ref, "RUNNER_TEMP="+t.TempDir())
+				run := func(args ...string) (string, bool) {
+					cmd := exec.Command(sh[0], append(sh[1:], args...)...)
+					cmd.Dir, cmd.Env = repo, env
+					o, err := cmd.CombinedOutput()
+					var exit *exec.ExitError
+					if err != nil && !errors.As(err, &exit) {
+						t.Fatalf("%s: %s: %v", s, c.name, err)
+					}
+					return string(o), err == nil
+				}
+				reset := func() {
+					if out, err := exec.Command("git", "-C", repo, "reset", "--hard", "-q", h).CombinedOutput(); err != nil {
+						t.Fatalf("%v: %s", err, out)
+					}
+				}
+				reset()
+				if c.control != "" && i == 0 {
+					// the control: the same checkout with no step
+					o, _ := run(".github/gates.sh", c.kind)
+					l := strings.Split(strings.TrimSuffix(o, "\n"), "\n")
+					if g := strings.Split(l[len(l)-1], "\t"); len(g) != 3 || g[1] != c.control {
+						t.Errorf("%s: %s: the control (no step) gave %q; want %s: the case cannot tell the overlay from none", s, c.name, l[len(l)-1], c.control)
+					}
+					reset()
+				}
+				stepOut, stepOK := run("-c", step)
+				if c.stepFails != "" {
+					if stepOK || !strings.Contains(stepOut, c.stepFails) {
+						t.Errorf("%s: %s: with %s the step gave %q (passed %v); want a failure that names %q", s, c.name, sh, stepOut, stepOK, c.stepFails)
+					}
+					if ents, _ := os.ReadDir(outside); len(ents) != 0 {
+						t.Errorf("%s: %s: the step wrote into a directory outside the checkout: %v", s, c.name, ents)
+					}
+					if st, err := exec.Command("git", "-C", repo, "status", "--porcelain").Output(); err != nil || len(st) != 0 {
+						t.Errorf("%s: %s: with %s the failed step changed the checkout: %q (%v)", s, c.name, sh, st, err)
+					}
+					continue
+				}
+				if !stepOK {
+					t.Errorf("%s: %s: with %s the step failed: %q", s, c.name, sh, stepOut)
+					continue
+				}
+				jobOut, jobOK := run(".github/gates.sh", c.kind)
+				lines := strings.Split(strings.TrimSuffix(jobOut, "\n"), "\n")
+				last := lines[len(lines)-1]
+				got := strings.Split(last, "\t")
+				if len(got) != 3 || got[1] != c.result || !strings.Contains(got[2], c.reason) || jobOK != (c.result == "pass" || c.result == "clear") {
+					t.Errorf("%s: %s: with %s the job gave %q (passed %v); want %s with a reason that holds %q", s, c.name, sh, last, jobOK, c.result, c.reason)
+				}
+				if i == 0 {
+					firstStep, firstJob = stepOut, jobOut
+				} else if stepOut != firstStep || jobOut != firstJob {
+					t.Errorf("%s: %s: with %s the step and the job give %q and %q; with %s %q and %q", s, c.name, sh, stepOut, jobOut, shells[0], firstStep, firstJob)
+				}
+			}
+		}
+	}
 }

@@ -971,6 +971,12 @@ These traps are not domain-specific: they hurt every project's test suite.
   `docs/tasks/`, `docs/prd/` and `docs/plan/` out of its working tree (a sparse checkout; the history and
   `docs/tests/traceability.md` still hold earlier verdicts, so the brief says what it may read), and compare the
   Coverage table of its record with the commit.
+- ❌ **A refusal case whose bad input an older check of the same program refuses too.** The first cases of
+  `TestTheJobsReadTheBase` that a `config` path in `.git` or one that is not a path must fail the step made the
+  head carry the bad manifest too, so the script as it stood (no mode) refused them with the same words, and
+  the case was green before the code. Task `T-hz4m` (#355). **The check:** give the head a clean file and put the
+  bad one only where the new code must read it (the base); run the case red against a stub that has the step and
+  not the behaviour, and read each failing line, not the exit code.
 
 ### Reference-sweep pitfalls
 

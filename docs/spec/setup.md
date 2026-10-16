@@ -1225,8 +1225,13 @@ task `T-3jpx`, #81):
   so a reader that takes the name, and a ruleset that takes the context of a
   check from the name, both get the kind. Each job checks out the head commit
   of the pull request with its history (`actions/checkout@v4`, `fetch-depth:
-  0`), installs Go from `go.mod` (`actions/setup-go@v5`, `go-version-file`), and
-  runs `sh .github/gates.sh <kind>` with the base and the head commits in
+  0`), installs Go from `go.mod` (`actions/setup-go@v5`, `go-version-file`),
+  takes the gate files from the base (task `T-hz4m`, F-22,
+  [`loop.md`](loop.md#the-gate-jobs-read-the-base): a step that writes the base's
+  `.github/gates.sh` to `$RUNNER_TEMP` with `git show`, under `set -eu`, so that a
+  base with no script fails the step, and runs it as `sh <that file> --overlay`,
+  with the base commit and the head ref in `GATE_BASE` and `GATE_HEAD_REF`), and
+  then runs `sh .github/gates.sh <kind>` with the base and the head commits in
   `GATE_BASE` and `GATE_HEAD`. No job has `paths:` or a job-level `if:`, because
   a skipped required check counts as passed; no job starts `layup`, fetches a
   LAYUP file or runs `setup-check.sh` (`NFR-002`, ADR-0016 decision 5). Each
@@ -1237,8 +1242,8 @@ task `T-3jpx`, #81):
 - **The job script,** `.github/gates.sh` in the target, holds the rules of the
   run of [`layup gate`](gate.md#the-command) for one kind, in POSIX `sh`, `awk`
   and `git`, with `tail`, `iconv`, `tr`, `mktemp` and `rm`. It reads the kind's
-  row of the head's `docs/gates.tsv` (known limit L-B3) on a checkout of the
-  head, prints the kind, the result and the reason of `gate.md` (a tab of a
+  row of `docs/gates.tsv` on a checkout of the head, which the step before the
+  job has made the base's manifest (below), prints the kind, the result and the reason of `gate.md` (a tab of a
   path is a space, as in the table), and exits 0 for `pass` and `clear`, 1
   otherwise. Each input that `layup gate` refuses with exit 2 is `fail` in the
   job, because a job has no third state and each of the two is not a pass: a
@@ -1261,6 +1266,27 @@ task `T-3jpx`, #81):
   job fails where `layup gate` runs the kind; and with a relative directory of
   `PATH` before the absolute one that holds the tool, `exec.LookPath` gives
   `not-active` where the job finds the tool.
+- **The mode `--overlay`** of the job script (task `T-hz4m`, F-22) is the step
+  before each job. It runs from the base's own copy of the script, so the head
+  cannot change it, and does what `layup gate` does in its scratch tree
+  ([`gate.md`](gate.md#the-command), The run) on the checkout: it puts the base's
+  `docs/gates.tsv`, `.github/gates.sh` and each `config` path of the base's
+  manifest into the work tree and the index, as the base has them (a file, or
+  each file under a directory, with its mode; a path that the base lacks is
+  removed). **The exception** (`loop.md`, decided in the same task): a
+  `GATE_HEAD_REF` that is `batch/` and exactly one nonempty segment with no `/`
+  does nothing, so the head's own files judge it; `batch/`, `batch/a/b`,
+  `xbatch/a` and `batch` do not match. It fails the job, before it writes any
+  file, for a revision that is not a commit; a `config` path that is not a path
+  or is in `.git`; a `config` path that is not a file at the base (a link, a
+  submodule); a symbolic link of the head at or above any destination; and a file
+  of the head above a path that the base has. **Known limits:** `layup gate`
+  follows a link of the head that points to a directory inside the tree, and the
+  job refuses it, as sh has no `os.Root` and a job that fails is never a pass; the
+  exception looks at the name of the head branch only, not at its repository, so
+  a fork can name a branch `batch/x` (the control is the code-owner review of row
+  65b; the fate of the exception is #345, `M2f`); a target set up before `M2e`
+  gets the step by a rule batch (`M2f`).
 - **The coverage floor** (K24, L-B2): the file `docs/gates/coverage-floor.txt`
   of the target, the `config` of `test`, has one line, the marker of the floor,
   and `gaps.tsv` gives its question. S12 (task `T-d6q5`) writes, for each

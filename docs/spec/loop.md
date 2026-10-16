@@ -519,6 +519,14 @@ own gate, as each native gate job runs the head's `gates.sh` with the head's
    from its own head, because the activation batch changes the manifest and writes
    Go files in the scope of the `pending` kinds, and with the base's manifest its
    `pending` jobs would fail it for ever (`architecture.md` §6, ADR-0016 decision 2).
+   **The match** (decided in task `T-hz4m`, R13; no source gives a form for
+   `<point>`, and a point is named once, in a line `<point>: <login>`): the head
+   ref is `batch/` and exactly one nonempty segment that holds no `/`, matched on
+   the whole ref. `batch/activation` takes its own files; `batch/`, `batch/a/b`,
+   `batch`, `xbatch/a` and `feature/batch/x` do not. The reading that fails
+   closed holds, as the exception lets a head judge itself; a point that needs
+   another form is a change of this text (`M2f`, #345). The step is
+   [`setup.md`](setup.md#the-stack-catalog) (the mode `--overlay` of the job script).
    The control for such a pull request is part 2: a change of a gate path waits for
    the Operator as code owner. Whether this exception stands, or another way, is the
    specification of `M2f` (issue #345).
