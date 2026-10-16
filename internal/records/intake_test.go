@@ -60,9 +60,10 @@ func TestValidIntakeRecordsAreRead(t *testing.T) {
 		read func([]byte) ([][]string, error)
 		data []byte
 	}{
-		"meaning":  {readMeaning, table(meaningHeader, meaningRow, m2)},
-		"spans":    {readSpans, table(spansHeader, headingRow, factRow)},
-		"draft":    {readDraft, table(draftHeader, draftRow, "R-002\tsuccess-criterion\tNine in ten users act on it.\t3\tThe share of users who act, by the app's log.\tS-1a2b3c4d")},
+		"meaning": {readMeaning, table(meaningHeader, meaningRow, m2)},
+		"spans":   {readSpans, table(spansHeader, headingRow, factRow)},
+		"draft": {readDraft, table(draftHeader, draftRow, "R-002\tsuccess-criterion\tNine in ten users act on it.\t3\tThe share of users who act, by the app's log.\tS-1a2b3c4d",
+			"R-003\trequirement\tThe app names its target.\t1 Q-001\tThe target is named.\tS-1a2b3c4d")},
 		"coverage": {readCoverage, table(coverageHeader, uncoveredRow, unsupportedRow, "C-003\tclass\t4\t—\tIs fact 4 a need?\tS-1a2b3c4d")},
 		"questions": {readQuestions, table(questionsHead, askedRow, intentRow, open, unanswered, closed,
 			strings.Replace(rule1, "Q-001", "Q-006", 1), strings.Replace(coverage1, "Q-001", "Q-007", 1), strings.Replace(followup1, "Q-001	follow-up", "Q-008	follow-up", 1),
@@ -113,6 +114,8 @@ func TestIntakeRecordsRefuseEachBrokenRule(t *testing.T) {
 		c{"spans: fact 0", readSpans, table(spansHeader, field(spansHeader, factRow, "fact", "0")), "fact"},
 		c{"draft: an ID out of order", readDraft, table(draftHeader, field(draftHeader, draftRow, "id", "R-002")), "id"},
 		c{"draft: a covered fact 0", readDraft, table(draftHeader, field(draftHeader, draftRow, "covers", "1 0")), "covers"},
+		c{"draft: a covers token that is no fact number and no Q-NNN", readDraft, table(draftHeader, field(draftHeader, draftRow, "covers", "1 abc")), "covers"},
+		c{"draft: a covers token that is a wrong form of ID", readDraft, table(draftHeader, field(draftHeader, draftRow, "covers", "1 Q-01")), "covers"},
 		c{"draft: a session that is not S- and 8 hexadecimal characters", readDraft, table(draftHeader, field(draftHeader, draftRow, "session", "S-1a2b3c4z")), "session"},
 		c{"coverage: an ID out of order", readCoverage, table(coverageHeader, unsupportedRow), "id"},
 		c{"coverage: an uncovered item with no fact", readCoverage, table(coverageHeader, field(coverageHeader, uncoveredRow, "fact", "—")), "fact"},

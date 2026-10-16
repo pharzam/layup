@@ -1095,6 +1095,23 @@ failure modes worth keeping.
   tracked files, so a new file that holds a marker reports its row of `open-gaps.tsv` as stale until it is added.
   Task `T-xs4y` (#333). **The check:** after a change of `packages.md` run `go test -tags=integration ./cmd/layup/`,
   after a new block `go test -tags=integration ./internal/tsv/`, and `git add` a new file before `setup-check`.
+- ❌ **A piped exit status that is the last command's, not the test's.** A run of
+  `go test ./... | tail; echo exit=$?` reports the status of `tail`, normally 0
+  when `tail` succeeds, so a red suite can read green. Earlier evidence also used
+  unmeasured future timestamps from a draft instead of measured run times.
+  The pipeline can succeed while the tests fail and its output looks like a result. **The check:** capture the
+  real status — run the command directly, or `set -o pipefail`, or read
+  `${PIPESTATUS[0]}` — and record only times `date -u` was read for; a file that
+  cites a run names its start, end and exit, or says the run was interrupted
+  and claims nothing. Task `T-3q0b` (#350); found by the root audit.
+- ❌ **A mutation sweep whose restore brings back stale copies.** A harness
+  that keeps backups at a fixed path (`/tmp/*.go.bak`) can restore copies
+  from an older run and silently revert the fix under test; every mutant
+  then runs against the pre-fix source and its results prove nothing —
+  they are discarded, not counted. Task `T-3q0b` (#350). **The check:**
+  take the backup fresh from the frozen head, verify what each restore
+  wrote (content or hash against the head's file), and re-run a green
+  control on the restored tree before crediting a single mutant.
 
 ## 3. Validation — how you check you are not fooling yourself
 

@@ -493,7 +493,7 @@ detail  text  -  for fail, the first broken place: a byte offset or a span's sta
 id         id(R-NNN)  key  the requirement's or success criterion's ID in the draft, from R-001, in the order of the rows
 kind       enum(requirement|non-functional|success-criterion)  -  a requirement (a need), a non-functional requirement (a constraint), or a success criterion (a measure)
 statement  text       -    the statement
-covers     list(int)  -    the numbers of the facts that it covers, each a fact of spec/spans.tsv
+covers     list(text)  -   the facts that it covers, each a positive number of a fact of spec/spans.tsv or the ID `Q-NNN` of a fact of the answers (M2e: the revision of the draft persists the answer facts a requirement covers, task `T-3q0b`; the initial draft of M2c names only span facts, which its own check enforces)
 criterion  text       -    the acceptance criterion of a requirement, or the measure of a success criterion
 session    id(S-xxxxxxxx)  -  the session that wrote the row
 ```
@@ -742,7 +742,7 @@ in `transitions`, a row for each default pair of the table of `loop.md` (The tra
 order of the manifest and of the rule list; in `task-tests`, `frozen` is the same on each
 row of a freezing; in `options`, a `pass` with `—` in `evidence` is a valid row (the
 filter drops the option) and `fail` has `—`; in `bets`, one row for a milestone that has
-a `first` kind, and a `later` row only after it; in `inventory`, no column holds `—` and a fact has one row; in `inventory-index`, `sha256` and `bet` never `—`; in `task-tests`, `source`, `sha256` and `harness` never `—`; in `bets`, `brief_sha256` and `verdict` never `—`, and `appetite_usd` and `appetite_hours` are `—` exactly when `verdict` is `no-bet`; in `parameters`, the key is the name and a change is the next commit's
+a `first` kind, and a `later` row only after it; in `inventory`, no column holds `—` and a fact has one row; in `inventory-index`, `sha256` and `bet` never `—`, and a reader that takes the rows of version n−1 verifies its `sha256` against the version's bytes first — `layup/spec` check reads the hash (loop.md, The rendered commit and the confirmed inventory); the writer of the next version trusts that verification, it sees rows, not bytes; in `task-tests`, `source`, `sha256` and `harness` never `—`; in `bets`, `brief_sha256` and `verdict` never `—`, and `appetite_usd` and `appetite_hours` are `—` exactly when `verdict` is `no-bet`; in `parameters`, the key is the name and a change is the next commit's
 row. The rows of `copies.tsv` that a handoff names are read by the key of the
 comment and its `seen`.
 
