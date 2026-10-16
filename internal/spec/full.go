@@ -373,7 +373,11 @@ func (p *prdData) parse(name, text string) {
 		}
 		switch table {
 		case "criteria":
-			p.criteria[strings.Trim(cells[0], "`")] = cells[1]
+			// A malformed row (fewer than two cells) records no criterion:
+			// the requirement it truncates then fails the rule, never a panic.
+			if len(cells) >= 2 {
+				p.criteria[strings.Trim(cells[0], "`")] = cells[1]
+			}
 		case "success":
 			if factCol >= 0 && factCol < len(cells) {
 				for _, tok := range factTokens(cells[factCol]) {
@@ -604,7 +608,9 @@ func (c *fullCheck) inventory() verdict {
 		}
 		b, ok := c.in.Versions[n]
 		if !ok {
-			return failv(fmt.Sprintf("version %d: no bytes are in the input", n))
+			// An absent required input did not run the rule; ran fails it
+			// again (the CheckFull contract, and the universe's own signal).
+			return noRun(fmt.Sprintf("version %d", n))
 		}
 		if sha := fmt.Sprintf("%x", sha256.Sum256(b)); sha != r[idxSHA] {
 			return failv(fmt.Sprintf("version %d: the sha256 of its bytes differs from the index", n))

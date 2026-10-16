@@ -114,13 +114,13 @@ func testInventory(t *testing.T, rows [][]string) (index [][]string, versions ma
 	return [][]string{{"1", fmt.Sprintf("%x", sha256.Sum256(b.Bytes())), "M2e"}}, map[int][]byte{1: b.Bytes()}
 }
 
-func inventoryOfSpans(t *testing.T) ([][]string, map[int][]byte) {
+func inventoryOfSpans(t *testing.T, extra ...[]string) ([][]string, map[int][]byte) {
 	var rows [][]string
 	for _, s := range testSpans() {
 		rows = append(rows, []string{s[colFact], s[colClass], "in", "9"})
 	}
 	rows = append(rows, []string{"Q-001", "context", "in", "9"})
-	return testInventory(t, rows)
+	return testInventory(t, append(rows, extra...))
 }
 
 const testCopy = `REQ-001: Must, phase 1
@@ -345,12 +345,42 @@ func TestMeasuresReadsOnlyTheSuccessRows(t *testing.T) {
 	wantFail(t, rows, "measures", "3")
 }
 
+// measures' two exemptions (round-1 finding F3): a measure fact the confirmed
+// version marks out of scope, and one a waits-for-a-bet section names, each
+// pass with no success row — drop either guard and the rule fails.
+func TestMeasuresExemptsAnOutOfScopeFact(t *testing.T) {
+	in := baseInput(t)
+	in.Index, in.Versions = inventoryOfSpans(t, []string{"9", "measure", "out", "9"})
+	wantResult(t, CheckFull(in), "measures", resPass)
+}
+
+func TestMeasuresExemptsAWaitingFact(t *testing.T) {
+	in := baseInput(t)
+	in.Index, in.Versions = inventoryOfSpans(t, []string{"9", "measure", "in", "9"})
+	in.PRDs = map[string][]byte{"PRD-0001-x.md": []byte(strings.Replace(testPRD,
+		"covers F-0001#8.", "covers F-0001#8 and F-0001#9.", 1))}
+	wantResult(t, CheckFull(in), "measures", resPass)
+}
+
 func TestCriteriaNeedsOneRowPerRequirement(t *testing.T) {
 	in := baseInput(t)
 	in.PRDs = map[string][]byte{"PRD-0001-x.md": []byte(strings.Replace(testPRD,
 		"| `NFR-001` | a check of it |\n", "", 1))}
 	rows := CheckFull(in)
 	wantFail(t, rows, "criteria", "NFR-001")
+}
+
+// A malformed row of the criteria table — one cell, or none — is no panic and
+// no criterion: the requirement it truncates keeps no row and the rule fails
+// (round-1 finding F1).
+func TestAShortCriteriaRowIsNoPanicAndNoCriterion(t *testing.T) {
+	for _, row := range []string{"| `NFR-001` |", "|"} {
+		in := baseInput(t)
+		in.PRDs = map[string][]byte{"PRD-0001-x.md": []byte(strings.Replace(testPRD,
+			"| `NFR-001` | a check of it |", row, 1))}
+		rows := CheckFull(in)
+		wantFail(t, rows, "criteria", "NFR-001")
+	}
 }
 
 // classes: the PRD's cells agree with the latest copy, and a requirement
@@ -400,7 +430,8 @@ func TestInventoryVerifiesEachVersion(t *testing.T) {
 	in = baseInput(t)
 	in.Versions = map[int][]byte{}
 	rows = CheckFull(in)
-	wantFail(t, rows, "inventory", "version 1")
+	wantFail(t, rows, "inventory", "did not run: version 1")
+	wantFail(t, rows, "ran", "did not run") // an absent input is a did-not-run (note N2)
 
 	// A version whose bytes match the index but are not a readable inventory:
 	// inventory fails and the rules of the universe did not run (C13).
