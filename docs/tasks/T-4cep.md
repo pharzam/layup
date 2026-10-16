@@ -34,7 +34,7 @@ read), piped-check exit-code limits and same-context prepublication corrections.
 No code fix followed; the round's model and blind-content independence held.
 The reviewed resolutions preserve both guardrail lessons, PRD changelog entries
 and packages ownership with #377's answer kind; no general overlap waiver.
-Exact complete landing: 1290 lines/25 files; original maximum1,300/26 unchanged.
+Exact complete landing: 1292 lines/25 files; original maximum1,300/26 unchanged.
 Final CI on the complete landing SHA remains required. The earlier security
 scan failed on the vulnerability database's HTTP403; it is not credited as pass.
 The named reasoning tier was unavailable under the requested harness models;
@@ -54,9 +54,11 @@ Missing parts are unreported; no timeout ceiling or overlapping export is added.
 | Full integration | — | deterministic | — | not applicable | 720073.299ms |
 | Code review including metadata correction | reasoning | SWE-2 Max | not reported | P3757434/O40629/C3650176 | not reported |
 | Merge/audit/close-out | — | Codex GPT-6 family | not reported | not reported | not reported |
+| **Total reported subset** | | | | 83,476,049 tokens; cache counted once | 1,502,447.299ms |
 
 Sonnet cumulative I446/O220695/Cw487543/Cr77406064 counts plan/build/finish once.
 SWE plan review's earlier28step export is a subset of the final32steps, not added.
 Initial author timeout ended without a result; bounded completion reports only
 its own127825ms. No inferred elapsed or unreported context counter is credited.
 No backlog entry existed; the completed log receives its direct entry.
+The reported totals exclude unreported parts and do not claim full-session totals.
