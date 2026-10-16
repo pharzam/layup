@@ -194,9 +194,15 @@ func TestACommentThatHasACopyIsNotPostedAgain(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	calls := len(w.f.calls)
 	second, err := w.s.PostComment(context.Background(), "T-ab12", planSess, "plan.md")
-	if err != nil || second != first || w.f.count("Comment") != 1 || len(w.store.commits) != 1 {
-		t.Errorf("the second call: %+v, %v; %d posts, %d commits; want the first copy, one post and one commit", second, err, w.f.count("Comment"), len(w.store.commits))
+	if err != nil || second != first || w.f.count("Comment") != 1 || len(w.store.commits) != 1 || len(w.f.calls) != calls {
+		t.Errorf("the second call: %+v, %v; %d posts, %d commits, %d new forge calls; want the first copy, one post, one commit and no forge call", second, err, w.f.count("Comment"), len(w.store.commits), len(w.f.calls)-calls)
+	}
+	// A comment that was edited since its copy is not posted again either: the copy of these bytes exists.
+	w.f.edit(taskIssue, 701, "edited since\n")
+	if again, err := w.s.PostComment(context.Background(), "T-ab12", planSess, "plan.md"); err != nil || again != first || w.f.count("Comment") != 1 {
+		t.Errorf("after an edit: %+v, %v, %d posts; want the copy of these bytes and no second post", again, err, w.f.count("Comment"))
 	}
 	// The same bytes on another issue are no copy of this issue's comment.
 	w2 := newHandoffWorld(t)
