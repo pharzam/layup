@@ -221,3 +221,13 @@ slot previously occupied, not a claim that #360's run verifies this fix.
 Wrapper2026-10-16T14:27:31.723887Z–14:43:51.856630Z,980132.743ms;
 return code captured directly. This run includes current mainf86f71c.
 Any later main merge needs its own combined final full-SHA CI evidence.
+
+## Main integration before final independent review
+
+After #360 landed, merge maina3a4cdd (PR389). The only textual conflict is the
+PRD changelog: retain main's #360 entry and then this branch's #351 entry.
+Other shared document hunks merge disjointly. Round2 also judges the earlier
+f86f71c resolutions: PRD REQ012 task/test union, records clear-table sentence
+beside the transition-schema rule, and both parameters/task-spec-check lists.
+No broad shared-index exception is claimed for ordinary prose/changelog overlaps.
+Final combined full-SHA CI remains required after the new main Go code.

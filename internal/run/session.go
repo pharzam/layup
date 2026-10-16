@@ -55,6 +55,7 @@ type Sessions struct {
 	Now           func() time.Time
 	Forge         forge.Forge
 	Control       int
+	App           string // the slug of the App, to tell its own comment (row 66d)
 	Prices        [][]string
 	newID         func() (string, error)
 	sweep         func(host, target string) error
