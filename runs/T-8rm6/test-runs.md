@@ -94,3 +94,26 @@ retry loop the malformed fixture caused; it is not counted as a pass anywhere.
   `ort`): no conflicts; `docs/prd/PRD-0001-layup.md`, `docs/spec/loop.md` and
   `docs/tests/traceability.md` auto-merged, keeping both sides. After the
   merge: `go build ./...`, `go vet ./...` and `go test ./...` all clean.
+
+## The root's full integration on `773bcf9` — FAILED (direct exit 1)
+
+- Command (the root's): the complete `-tags=integration` module run on
+  `773bcf91ce32d38328fadeb45909eab8e7bcb321`,
+  2026-10-16T16:52:02.899492Z – 17:10:03.037731Z, direct exit 1. Exactly one
+  test failed: `TestTheFollowUpAsksTheMarkersAgain`
+  (`internal/run/markers_integration_test.go`) — bug sub-issue #397.
+- Cause (fixture, not production): the test's idea-owner answer map supplied
+  only `band.B`, `band.U` and `appetite.hours`. With `success-criteria` a
+  fourth intent question, the map returned `""` for it, the follow-up asked it
+  again, and the frozen assertions (3 marker questions, Operator's block
+  waiting) broke: 4 questions, both blocks waiting.
+- Reproduced in this worktree at `773bcf9`: `go test -tags=integration
+  -timeout 300s ./internal/run -run 'TestTheFollowUpAsksTheMarkersAgain'`
+  fails identically (11.1s).
+- Repair: the map gains `"success-criteria": "it does its work"`; every
+  original assertion unchanged. Green at 11.8s; removing the correction
+  restores the failure (the "4 questions" detail); restoring it is green
+  again.
+- `main` at `d09b1c0` merged after the repair; the focused intersection run
+  of the markers world (new-main codeowner row × revision × markers) follows
+  in this file.
