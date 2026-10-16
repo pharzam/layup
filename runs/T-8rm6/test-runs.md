@@ -78,3 +78,17 @@ The full-module `-tags=integration` run and the e2e suite are the root
 coordinator's, serialized after this head is stable. An earlier combined
 invocation during development was interrupted at exit 143 inside the invalid
 retry loop the malformed fixture caused; it is not counted as a pass anywhere.
+
+## Post-audit additions (comment 6220264944)
+
+- `TestTheCapOfMilestoneZeroStartsNoSession` — the revert of the provisional
+  cap had missed its clock jump (still `96 * time.Hour`); restored to
+  `8 * time.Hour`, re-run green in 9.1s. The file is again byte-identical to
+  `a3a4cdd` for its remaining lines.
+- `docs/architecture.md` §5 step 5 qualified: a named login is added to
+  `approvers.tsv` only when its account holds no row already (the key is the
+  numeric ID); operative detail stays in `loop.md`.
+- `docs/tests/traceability.md`: three rows for the new unit/integration tests
+  of this task, and `T-8rm6` appended to the rows of the tests it extended.
+- `main` at `d5e199f` merged into the branch; conflicts and the checks after
+  the merge are recorded below their resolution.

@@ -306,7 +306,7 @@ func TestTheCapOfMilestoneZeroStartsNoSession(t *testing.T) {
 	}
 	h[regCap] = "50.0"
 	started := startOf(t, r)
-	r.Now = func() time.Time { return started.Add(96 * time.Hour) }
+	r.Now = func() time.Time { return started.Add(8 * time.Hour) }
 	spec := phaseSpec(t, w, r, a, h)
 	spec.Harness = h
 	if id, err := r.PhaseSession(context.Background(), spec); err != nil || id == "" {
