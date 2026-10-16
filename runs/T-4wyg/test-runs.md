@@ -111,9 +111,7 @@ clean at 13:16:41Z.
 
 14 files, 1,898 insertions and 9 deletions = **1,907 changed lines**
 (modified lines count twice by the add+remove measure), under the reviewed
-maximum of 2,100 lines / 20 files. `docs/spec/packages.md` needed no edit:
-its M2e bullet already pins the `internal/spec` full-check ownership and the
-`sh` seam (written by the milestone's spec task).
+maximum of 2,100 lines / 20 files.
 
 ## Coordinator resource audit and main merge
 
@@ -146,3 +144,35 @@ current-main merge. Wrapper start2026-10-16T13:27:44.363674Z,
 end2026-10-16T13:39:04.424635Z (680060.961ms), exit0.
 Audit: /home/layup/.cache/layup-session/audits/issue351/integration-result.json.
 Only this run-evidence entry follows; no Go or spec changes after that run.
+
+## Round 1 fixes — 2026-10-16T14:12Z–14:15Z (cycle 0 of cap 1)
+
+Review round 1 (comment 6217333827, a fresh Claude Sonnet 5.5 session) gave
+`not mergeable, findings recorded`: F1–F4 material, notes N1–N5. The author's
+answer (6217372050) accepted each before the edits. The coordinator's
+integration entry above predates these fixes; a new head freezes for round 2.
+
+- **F1** — red: `TestAShortCriteriaRowIsNoPanicAndNoCriterion` panics at
+  `full.go:376` (`index out of range`), exit 1 at 14:12:45Z. Fix: the
+  `criteria` case takes a `len(cells) >= 2` guard, so a truncated row records
+  no criterion and the rule fails. Green at 14:12:55Z.
+- **F3** — the two exemptions get their own tests
+  (`TestMeasuresExemptsAnOutOfScopeFact`, `TestMeasuresExemptsAWaitingFact`),
+  green on the correct code at 14:13:32Z. On the copy, the mutant
+  `class == "measure" && !cited[f]` (both guards removed) compiles and is
+  **killed**: both tests fail, 14:14:23Z; restored green.
+- **N2** — a missing version's bytes is a `did not run: version <n>` (the
+  `CheckFull` contract), and `ran` fails it; asserted at 14:14:09Z.
+- **F2** — `docs/tests/traceability.md` gains the three rows (the full-check
+  unit tests, the prd-lint unit tests, the real-`sh` integration tests with
+  the `task-spec-check` and second-`tasks` schema compares).
+- **F4** — the `packages.md` M2e bullet names the second Go value of `tasks`
+  (C11's "and").
+- **N1** — `loop.md` states the `waits for a bet` match (case-insensitive,
+  any level, to the next heading, the citation token forms). **N4** — the task
+  file restates the conditions under the review's own numbers.
+- **N5** — declined: an empty `Index` is the documented pre-bet signal, a
+  caller boundary the wiring task keeps.
+
+Focused green after the fixes: `go test -count=1 ./internal/spec` exit 0 and
+`go test -count=1 -tags=integration ./internal/spec` exit 0 at 14:14:09Z.

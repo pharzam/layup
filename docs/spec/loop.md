@@ -859,8 +859,11 @@ numbered fact and is no failure of `covers` — the pinned `prd-lint` already
 requires the record file to exist; any other token fails `covers`. `measures`
 reads only a `Fact` cell of a table under a `## … Success metrics` heading, never
 an acceptance criterion's prose; the exemption of `needs` and `measures` is a
-fact a token under a `waits for a bet` heading names, or one the confirmed
-version marks out of scope. `classes` compares the PRD's values with the latest
+fact a token under a `waits for a bet` heading names — the heading text matches
+case-insensitively at any heading level, the section runs to the next heading of
+any level, and a token is one of the citation forms above
+(`F-<record>#n`, `F-<the answers' record>#N`, `Q-NNN`), resolved record-bound —
+or one the confirmed version marks out of scope. `classes` compares the PRD's values with the latest
 copy's lines both directions, parsed by the one requirement-line grammar of the
 bet's answer; a Phase cell `—` reads as empty, and a PRD row with an empty
 MoSCoW and an empty or `—` Phase that the copy does not name waits for its bet

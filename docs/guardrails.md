@@ -666,6 +666,14 @@ success without having done its job.
   It is silent because "clear" reads as "nothing to write". **The check:**
   `CheckFull` returns the ten rows in every mode and the writer round-trip reads
   them back (internal/spec, task `T-4wyg`).
+- ❌ **A short table row panics the check.** A parser that indexes `cells[1]`
+  crashes on a truncated row — and the pinned producer never reads that table,
+  so nothing upstream catches it first. It is silent because every fixture row
+  is well-formed: the suite stays green while one malformed line takes the
+  whole check down with it. **The check:** each cell index carries a bounds
+  guard, a truncated row records nothing (so its requirement fails the rule,
+  never the process), and a test feeds the shortest forms — one cell and a
+  bare `|` (internal/spec, task `T-4wyg`, round-1 finding F1).
 
 ### Testing pitfalls
 
