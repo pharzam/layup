@@ -213,3 +213,11 @@ Elapsed is not reported. Source: issue351-plan-build-fix-resource-union.json,
 kept outside git with the private exports. The coordinator owns #351's repaired
 full-module run; references above to coordinator #360 identify the serialized
 slot previously occupied, not a claim that #360's run verifies this fix.
+
+## Coordinator full-module verification of the round1 fixes
+
+`go test -count=1 -tags=integration -timeout 25m ./...` at
+1845cec1be846ea8276a1da07303b7070518a1c3 passed, direct exit0,21 packages.
+Wrapper2026-10-16T14:27:31.723887Z–14:43:51.856630Z,980132.743ms;
+return code captured directly. This run includes current mainf86f71c.
+Any later main merge needs its own combined final full-SHA CI evidence.
