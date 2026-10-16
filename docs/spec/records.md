@@ -493,7 +493,7 @@ detail  text  -  for fail, the first broken place: a byte offset or a span's sta
 id         id(R-NNN)  key  the requirement's or success criterion's ID in the draft, from R-001, in the order of the rows
 kind       enum(requirement|non-functional|success-criterion)  -  a requirement (a need), a non-functional requirement (a constraint), or a success criterion (a measure)
 statement  text       -    the statement
-covers     list(int)  -    the numbers of the facts that it covers, each a fact of spec/spans.tsv
+covers     list(text)  -   the facts that it covers, each a positive number of a fact of spec/spans.tsv or the ID `Q-NNN` of a fact of the answers (M2e: the revision of the draft persists the answer facts a requirement covers, task `T-3q0b`; the initial draft of M2c names only span facts, which its own check enforces)
 criterion  text       -    the acceptance criterion of a requirement, or the measure of a success criterion
 session    id(S-xxxxxxxx)  -  the session that wrote the row
 ```

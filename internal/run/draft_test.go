@@ -45,6 +45,7 @@ func TestKeepOfDraft(t *testing.T) {
 	}
 	for _, c := range []struct{ name, file, refused string }{
 		{"a row that covers nothing", good + "requirement\tMore.\t—\tMore.\n", "row 4: covers names no fact"},
+		{"an answer fact in the initial draft of M2c", good + "requirement\tMore.\t1 Q-001\tMore.\n", "row 4: covers names Q-001, which is no fact"},
 		{"a number above the facts", good + "requirement\tMore.\t5\tMore.\n", "row 4: covers names 5, which is no fact"},
 		{"a need covered by no row", head + "non-functional\tK.\t2\tK.\nsuccess-criterion\tM.\t3\tM.\n", "the need fact 1 is covered by no row"},
 		{"a constraint covered by no row", head + "requirement\tD.\t1\tD.\nsuccess-criterion\tM.\t3\tM.\n", "the constraint fact 2 is covered by no row"},

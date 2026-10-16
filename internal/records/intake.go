@@ -55,7 +55,7 @@ var DraftSchema = tsv.Schema{Name: "draft", Location: "records:spec/draft.tsv", 
 	{Name: "id", Type: "id(R-NNN)", Key: true},
 	{Name: "kind", Type: "enum(requirement|non-functional|success-criterion)"},
 	{Name: "statement", Type: "text"},
-	{Name: "covers", Type: "list(int)"},
+	{Name: "covers", Type: "list(text)"},
 	{Name: "criterion", Type: "text"},
 	{Name: "session", Type: "id(S-xxxxxxxx)"},
 }}
@@ -219,15 +219,17 @@ func CheckSpan(r []string) error {
 func ReadSpans(data []byte) ([][]string, error) { return read(data, SpansSchema, CheckSpan) }
 
 // CheckDraft checks the rules of the block draft on one row: each covered
-// fact 1 or more, and the session's form.
+// fact a span fact's number, 1 or more, or the ID Q-NNN of a fact of the
+// answers (the covers list the revision of the draft persists, task T-3q0b,
+// #350), and the session's form.
 func CheckDraft(r []string) error {
 	f := fields(DraftSchema, r)
 	if c := missing(f, draftRequired); c != "" {
 		return &RowError{c, "this column never holds the empty value"}
 	}
 	for _, n := range strings.Fields(f["covers"]) {
-		if !atLeastOne(n) {
-			return &RowError{"covers", "each covered fact's number is 1 or more"}
+		if !atLeastOne(n) && !qForm.MatchString(n) {
+			return &RowError{"covers", "each covered fact's number is 1 or more, or the ID Q-NNN of a fact of the answers"}
 		}
 	}
 	if !sessionForm.MatchString(f["session"]) {

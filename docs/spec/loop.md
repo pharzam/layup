@@ -675,9 +675,11 @@ Product Owner role writes the **brief**, in five parts:
    yes` or `architecture change: no`.
 5. At the first bet, **every fact with its class** (`architecture.md` §7 step 7).
 
-Code checks the five headings, the line limit, and that each link resolves; the
-brief names the head SHA and the rule-file hash of each verified batch that it
-asks to approve. `layup run` posts it on the milestone's issue.
+Code checks the five headings, the line limit, that at least one link is
+there and that each link resolves; the brief names the head SHA and the
+rule-file hash of each verified batch that it asks to approve, one line
+`approve batch <point>: <head-sha> <rule-sha256>` for each. `layup run` posts
+it on the milestone's issue.
 
 - **The line limit** is the parameter `brief.lines`, a row of the Operator
   (`architecture.md` §10: "the brief's line limit", set at Intake). No source
@@ -702,7 +704,11 @@ asks to approve. `layup run` posts it on the milestone's issue.
 - **The answer.** The approver of that planned point, the idea owner by default,
   answers by one comment: a line for each requirement, a line for each fact to
   change, a line `option <decision>: <option>` for each decision with more than one
-  survivor, and `bet` or `no bet`. Code takes it only from an account whose role in
+  survivor, and `bet` or `no bet`. **Decided here** (R10, task `T-3q0b`): a
+  requirement's line is `<REQ-or-NFR-ID>: <Must|Should|Could|Won't>, phase <tag|—>`,
+  with `phase —` exactly for `Won't` and the tag one of the target's §9 phase tags,
+  and a fact's line is `fact <number-or-Q-NNN>: out of scope` or `fact <id>:
+  <need|constraint|measure|context>`. Code takes it only from an account whose role in
   `approvers.tsv` allows the point; `layup run` copies it, and records the bet in
   `bets.tsv` (the block `bets`). The bet approves the milestone, the architecture
   and its batches; no other approval sits inside the milestone, apart from
@@ -751,7 +757,11 @@ At the first bet, code adds the **rendered commit** to the specification's head
 
 - The commit changes only the MoSCoW and Phase columns of the requirement tables,
   the non-goals and the numbered facts record, from the idea owner's answer;
-  nothing else of the PRD or of the facts. `layup/rules` passes it only when it
+  nothing else of the PRD or of the facts. **Decided here** (R10, task `T-3q0b`):
+  the non-goals change is the bounded portion `Out of scope by the bet: <ids>.`
+  appended to the `**Non-goals.**` paragraph, the ids sorted numbers first then
+  the answer facts, and a fact's line is `<ID>. **<class>:** <text>` with `(out of
+  scope)` in the class text for a mark of out. `layup/rules` passes it only when it
   equals code's rendering of the copy of the bet's answer, by [the basic
   rule](#layuprules).
 - The **confirmed inventory** is what `architecture.md` §7 step 8 says: at each
