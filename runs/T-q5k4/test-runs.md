@@ -227,3 +227,13 @@ tests the constructor. The six notes of the round are not fixed here.
 Checks after the fix (13:55:10Z to 13:56:15Z, all exit 0): `adr-lint`, `prd-lint`, `link-lint`, `run-discipline-tests`, `setup-check`,
 `git diff --cached --check`, `go build ./...`, `go vet ./...`, `go test -count=1 ./...` (the unit level, 21 packages). No
 integration command beyond the two named tests above was run.
+
+Root full-module integration after the constructor fix: `go test -count=1
+-tags=integration -timeout 25m ./...` at 7e10a292c9f20cfecff6183b4a0209ff02cdd1ab,
+2026-10-16T14:00:52.928001Z–14:12:13.012882Z, direct exit0, all21 packages pass.
+Elapsed680084.881ms; the wrapper captured the process return code directly.
+Sonnet5.5 fix invocation reported an initial177ms acknowledgment with unchanged
+counters, then278052ms for the actual fix turn. Fix increment I24/O8194/cache
+creation16821/read5730253; thinking1440 is included in output. End cumulative
+I388/O222268/cache creation472089/read58461733 counts plan, build and fix once.
+No missing elapsed or unreported usage is inferred from context counters.
