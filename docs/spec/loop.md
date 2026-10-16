@@ -891,7 +891,12 @@ Deferred by `M2c` ([`intake.md`](intake.md#not-in-m2c)). **Decided here**
   binds it, the earliest comment that named a login gives the row's `source`
   and `since`, and whether a login's account already holds a row is decided by
   the numeric ID the forge resolves — a login is never a key, whatever its
-  spelling. A login the forge does not know is input only and gets no row.
+  spelling. The same resolved ID decides which existing row serves a point: a
+  point whose line resolves to a recorded account is served by that account's
+  row, not the idea owner's, however the stored login is spelled. A login the
+  forge does not know is input only and gets no row, and the point falls to
+  the idea owner; a lookup that fails otherwise resolves nothing and is the
+  call's error, never a choice of another account.
 - A comment by an account with no row, or in a role the point does not allow, is
   recorded as human input and answers nothing.
 

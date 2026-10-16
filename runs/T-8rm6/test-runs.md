@@ -129,3 +129,43 @@ retry loop the malformed fixture caused; it is not counted as a pass anywhere.
   11.1s passes with the repaired fixture.
 - The next complete `-tags=integration` run and the final combined-head CI are
   the root's; #397 is fixed pending them, not closed.
+
+## Second C4 finding — account-ID serving (audit comment 6221307548)
+
+The producing audit found a second instance of the login-as-key error, at the
+other end of the same helper pair: `approverRows` correctly declines a second
+row for an account already recorded, but `approverFor` picked the point's
+serving row by case-folded login *text*. A point naming a login that resolves
+to an existing row's numeric ID under a spelling beyond case fell through to
+the idea-owner row.
+
+- Author response before the fix: `#365` comment 6221341023.
+- Regression `TestThePointIsServedByTheResolvedAccount`
+  (`internal/run/answers_test.go`, author's own): `bet` names
+  `operator-today`, resolving to the Operator's recorded ID 101; `audit`
+  names `carol-renamed`, resolving to the idea owner's ID 303; `setup` names
+  a login the forge answers 404. RED at first run — `approverFor("bet")`
+  returned `[303 idea-owner carol …]` and `pointsServed` omitted `bet` —
+  the audit's exact counterexample (distinct IDs 101/303 so the fallback
+  could not mask it).
+- Repair (bounded, existing caller boundary): `approverFor` and
+  `pointsServed` take `(ctx, idOf)` — the same resolver shape
+  `approverRows` uses — and the bound login resolves to a numeric ID
+  before the row is chosen: the row whose `a[0]` is the resolved ID serves,
+  whatever role it holds and however its stored login is spelled; a 404 is
+  input only and falls to the idea owner as before; any other lookup error
+  is the call's error and chooses nothing. No new record kind, column,
+  point, role or authority; `approverRows` unchanged. #366's caller must
+  pass a real `Forge.UserID`-shaped resolver and decide its own error
+  policy — the helpers now return errors for it.
+- Compiled controls (each applied, killed, restored):
+  M1 text-match in place of the ID match → `bet` returned 303, killed;
+  M2 non-404 errors treated as unknown → the idea owner answered a 503
+  lookup, killed;
+  M3 ID match dropped → every point fell to the idea owner, killed;
+  M4 `pointsServed` swallowing the error → no error returned, killed.
+  Restored `internal/run/answers.go` sha256
+  `420b7d26e6924785ceff880c653a18d176fc02a8c757b4b4af77c409322c733a`;
+  `go test -count=1 ./internal/...` green, `go build`, `go vet` clean.
+- Doc sync (R10): `loop.md` Decided-here gains the serving-resolution and
+  fail-closed clauses; `traceability.md` names the new test.
