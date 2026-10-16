@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -73,6 +74,7 @@ type Config struct {
 type state struct {
 	cfg                            Config
 	permissions                    string
+	granted                        map[string]string // the permissions of the installation, as step forge read them (the loop checks them, register.go)
 	operatorID, ideaOwnerID, botID int64
 	visibility, defaultBranch      string
 	pinCommit, pinTree             string
@@ -289,6 +291,7 @@ func (r *state) forgeStep(ctx context.Context, isNew bool) Step {
 	if m := forge.CheckPermissions(inst.Permissions); len(m) > 0 {
 		return failf(name, "the installation lacks the permissions %s", strings.Join(m, ", "))
 	}
+	r.granted = maps.Clone(inst.Permissions)
 	var pairs []string
 	for n, level := range inst.Permissions {
 		pairs = append(pairs, n+":"+level)
