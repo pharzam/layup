@@ -7,7 +7,9 @@ package git
 
 import (
 	"bytes"
+	"crypto/sha1"
 	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"os"
@@ -349,6 +351,30 @@ func LsTree(dir, rev, path string) ([]TreeEntry, error) {
 		entries = append(entries, TreeEntry{Mode: f[0], Type: f[1], Object: f[2], Path: p})
 	}
 	return entries, nil
+}
+
+// Parents gives the parents of the commit rev, in order: none for a root commit.
+func Parents(dir, rev string) ([]string, error) {
+	args := []string{"rev-list", "--parents", "-n", "1", "--end-of-options", rev, "--"}
+	out, err := call(dir, environ(), args...)
+	if err != nil {
+		return nil, err
+	}
+	f := strings.Fields(string(out))
+	if len(f) == 0 {
+		return nil, &FailedError{Args: args, Err: errors.New("the output is empty")}
+	}
+	return f[1:], nil
+}
+
+// BlobID gives the object ID that git gives a blob of data, in a repository of SHA-1 (the object format of
+// every target of GitHub): the hash of "blob", the length, a NUL and the data. It starts no process and
+// writes no object.
+func BlobID(data []byte) string {
+	h := sha1.New()
+	fmt.Fprintf(h, "blob %d\x00", len(data))
+	h.Write(data)
+	return hex.EncodeToString(h.Sum(nil))
 }
 
 // IsShallow reports whether the repository at dir is a shallow clone.

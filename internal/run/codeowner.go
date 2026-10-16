@@ -4,6 +4,7 @@ package run
 // area is built for a new target, or for one that was set up before the rule, from records that are already there.
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 
@@ -66,6 +67,36 @@ func operatorLogin(approvers [][]string) (string, error) {
 func migrateNotes(area string) []string {
 	return []string{
 		"this target was set up before the code-owner rule: apply the update with your own login: sh " + filepath.Join(area, "out", "commands.sh"),
-		filepath.Join(area, "out", "land-code-owner.sh") + " is not applicable until the tree check admits its commit (Q1 of #356, open)",
+		"then land the code-owner file with your own login, once the update is read back: sh " + filepath.Join(area, "out", "land-code-owner.sh"),
+	}
+}
+
+// landingInputs gives the login that the check of the code-owner commit needs, from setup/record.tsv (nil when absent) and
+// the rows of approvers.tsv, or the reason that the check is refused. The ruling 6217133467 limits the commit to a target
+// set up before the rule: a record with the row S13 codeowners.sha256 has .github/CODEOWNERS in its tree and takes none.
+// The login is the Operator's row, never the repository's owner.
+func landingInputs(record []byte, approvers [][]string) (string, error) {
+	if record == nil {
+		return "", errors.New("setup/record.tsv is not in the records")
+	}
+	rows, err := workpkg.ParseRecord(record)
+	if err != nil {
+		return "", fmt.Errorf("setup/record.tsv: %w", err)
+	}
+	if _, ok := rows.Value("S13", "codeowners.sha256"); ok {
+		return "", errors.New("the setup record has the row S13 codeowners.sha256: .github/CODEOWNERS is in the tree of the last setup commit, and a target set up with the rule takes no code-owner commit")
+	}
+	return operatorLogin(approvers)
+}
+
+// codeOwnerLanding gives the check that the job asks of a head other than the last commit: whether head is the code-owner
+// commit above last in the repository at dir (the run's clone), for the setup record and the approvers of the run.
+func codeOwnerLanding(dir string, record []byte, approvers [][]string) func(head, last string) error {
+	return func(head, last string) error {
+		login, err := landingInputs(record, approvers)
+		if err != nil {
+			return err
+		}
+		return setup.CheckCodeOwnerLanding(dir, last, head, login)
 	}
 }
