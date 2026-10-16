@@ -105,6 +105,8 @@ func TestACommentRowIsCheckedByItsHashAgainstTheResultFile(t *testing.T) {
 		{"a hash that differs", [][]string{commentRow("1", "plan.md", sum("another\n"))}, true, nil},
 		{"the hash of the text with its final newline trimmed", [][]string{commentRow("1", "plan.md", sum("the plan"))}, true, nil},
 		{"a file that is missing", [][]string{commentRow("1", "none.md", sum("the plan\n"))}, true, nil},
+		{"a file that is missing, with the hash of no bytes", [][]string{commentRow("1", "none.md", sum(""))}, true, nil},
+		{"a file that is a link, with the hash of no bytes", [][]string{commentRow("1", "link.md", sum(""))}, true, nil},
 		{"a file that is a link, of the right bytes", [][]string{commentRow("1", "link.md", sum("the plan\n"))}, true, nil},
 		{"two good rows", [][]string{good, commentRow("2", "review.md", sum("the review\n"))}, false, []string{"plan.md", "review.md"}},
 		{"one good row and one bad: the good one is kept, the failure is reported", [][]string{good, commentRow("2", "review.md", sum("no\n"))}, true, []string{"plan.md"}},
