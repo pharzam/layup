@@ -101,3 +101,16 @@ func TestFirstLineOfAMessage(t *testing.T) {
 		}
 	}
 }
+
+func TestGraphqlURLIsTheApiPlusGraphqlAndForAnEnterpriseApiTheSiblingOfV3(t *testing.T) {
+	for api, want := range map[string]string{
+		"https://api.github.com":                "https://api.github.com/graphql",
+		"http://127.0.0.1:5000":                 "http://127.0.0.1:5000/graphql",
+		"https://ghe.example.com/api/v3":        "https://ghe.example.com/api/graphql",
+		"https://ghe.example.com/prefix/api/v3": "https://ghe.example.com/prefix/api/graphql",
+	} {
+		if got := graphqlURL(api); got != want {
+			t.Errorf("graphqlURL(%q) = %q, want %q", api, got, want)
+		}
+	}
+}
