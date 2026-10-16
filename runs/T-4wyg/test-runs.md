@@ -291,3 +291,11 @@ full integration and final cycle2 review. Only the PRD changelog conflicted:
 keep main's #384 entry, then #351. All auto-merged shared prose and indexes
 retain both sides. No #351 production code changed in the tests-only cycle.
 The fresh final round must judge this resolution; no ordinary-prose waiver.
+
+## Root full integration after the cap2 test repair
+
+`go test -count=1 -tags=integration -timeout 25m ./...` on
+`3f406f80e20ac3f4ad0bef6f35b2f87f0c5d4094` passed all21packages, direct exit0.
+UTC 2026-10-16T17:11:54.482887+00:00 to 2026-10-16T17:25:34.613722+00:00; 820130.835ms.
+This run includes main d09b1c0; the tests-only repair changed no #351 production
+code. Later main changes, if any, are reported separately before final review.
