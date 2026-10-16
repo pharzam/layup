@@ -55,3 +55,19 @@ The integration control after sweep 2 (the 13 focused tests) exit 0, the git sta
 **Not run here, by the instruction of the root:** the full integration level (`go test -tags=integration ./...`), which the root runs
 once on the stable head, the freeze and the review. The focused integration runs are the 13 tests of `internal/run`, `internal/handoff` and
 `internal/tsv` (whole packages) and `TestPackageRules` of `cmd/layup`, each with its time above.
+
+## Coordinator full integration and actual CLI resources
+
+Full module integration on 0c5e9f626433054347ddb4bf2d8a98a1509d4bc9:
+`go test -count=1 -tags=integration -timeout 25m ./...` exited directly 0,
+all 21 packages ok. Wrapper UTC start 2026-10-16T12:20:34.367100Z,
+end 2026-10-16T12:34:54.471589Z (860104.489ms). No Go changes follow.
+The earlier “not run here” refers to the author invocation, not this later run.
+
+Actual Claude CLI metadata, Sonnet5.5 only, effort high; thinking is included
+in output. Plan: uncached input100/output61047/cache creation202435/read6486617,
+duration553343ms. Build invocation increment: input256/output158002/cache
+creation237934/read46287147, duration2333621ms. End-of-build cumulative counters:
+input356/output219049/cache creation440369/read52773764, not added again to
+the plan. No other model is reported. Private sessions stay outside git;
+metadata audit: /tmp/layup-m2e-resume/issue358-resource-metadata.json.
