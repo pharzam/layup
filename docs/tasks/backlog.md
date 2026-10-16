@@ -33,7 +33,6 @@ same summary, dated — rather than deleting it or checking it off.
 - **T-3q0b** — Row 62b of `M2e`: The checks of the bet and the rendering ([#350](https://github.com/pharzam/layup/issues/350); [the plan](../plan/README.md#the-tasks-of-m2e))
 - **T-4wyg** — Row 62c of `M2e`: The full spec check ([#351](https://github.com/pharzam/layup/issues/351); [the plan](../plan/README.md#the-tasks-of-m2e))
 - **T-9et9** — Row 63a of `M2e`: The basic layup/rules ([#352](https://github.com/pharzam/layup/issues/352); [the plan](../plan/README.md#the-tasks-of-m2e))
-- **T-svn3** — Row 63b of `M2e`: The record kinds of a step's context ([#353](https://github.com/pharzam/layup/issues/353); [the plan](../plan/README.md#the-tasks-of-m2e))
 - **T-cr8j** — Row 64 of `M2e`: The forge calls of M2e ([#354](https://github.com/pharzam/layup/issues/354); [the plan](../plan/README.md#the-tasks-of-m2e))
 - **T-hz4m** — Row 65a of `M2e`: The gate jobs read the base ([#355](https://github.com/pharzam/layup/issues/355); [the plan](../plan/README.md#the-tasks-of-m2e))
 - **T-jew3** — Row 65b of `M2e`: The code-owner rule ([#356](https://github.com/pharzam/layup/issues/356); [the plan](../plan/README.md#the-tasks-of-m2e))
