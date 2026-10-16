@@ -121,8 +121,9 @@ func TestTheFirstTaskIsOneRecordsCommitOfTheRegisterAndTheDefaultTable(t *testin
 	if parent := strings.TrimSpace(gitOut(t, w.bare, "rev-parse", after+"^")); parent != before {
 		t.Errorf("the parent of the commit is %s; want the head %s", parent, before)
 	}
-	if names := gitOut(t, w.bare, "diff", "--name-only", before, after); names != "tasks.tsv\ntransitions.tsv\n" {
-		t.Errorf("the commit changes %q; want tasks.tsv and transitions.tsv", names)
+	// Row 66b (task T-dx1h): loop.md writes parameters.tsv in the commit that writes transitions.tsv.
+	if names := gitOut(t, w.bare, "diff", "--name-only", before, after); names != "parameters.tsv\ntasks.tsv\ntransitions.tsv\n" {
+		t.Errorf("the commit changes %q; want parameters.tsv, tasks.tsv and transitions.tsv", names)
 	}
 	if who := gitOut(t, w.bare, "log", "-1", "--format=%an <%ae>|%cn <%ce>|%s", after); who != "layup-agent[bot] <9001+layup-agent[bot]@users.noreply.github.com>|layup-agent[bot] <9001+layup-agent[bot]@users.noreply.github.com>|tasks: register T-aaaa\n" {
 		t.Errorf("the author, committer and subject %q; want the App's bot and %q", who, "tasks: register T-aaaa")

@@ -16,6 +16,8 @@ here directly, in the shape above.
 
 ## Log
 
+- **2026-10-16** — **T-dx1h** — The sourced parameters and first-copy set boundary, with fenced transition updates, test-first unit/integration evidence and independent reviews ([#358](https://github.com/pharzam/layup/issues/358); [detail](T-dx1h.md)).
+
 - **2026-10-16** — **T-v2sv** — Row 66c of `M2e`: The Retrospective ([#359](https://github.com/pharzam/layup/issues/359); [the plan](../plan/README.md#the-tasks-of-m2e)); [detail](T-v2sv.md)
 
 <!-- Most recent first. Example shape:

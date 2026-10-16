@@ -236,12 +236,26 @@ the Operator can replace. **Decided here:**
   issue, the draft pull request, the checks, the merge: steps 1, 4, 5 and 8) has
   no row. **The check of a table** is that it has a row for each default pair
   `(from, to)` of the table below, and for no other pair than a pair that the
-  Operator's table lists with kinds and items of these lists.
+  Operator's table lists with kinds and items of these lists; and that the row of
+  code's own handoff, `code (rendered task)`, lists no `schema` (**decided here**,
+  R10, task `T-dx1h`, the comment of #358): code writes that handoff and a rendered
+  task has no session result, so a row that asks for the `schema` could never be
+  satisfied and no rendered task would be valid under it. This is the one row-specific
+  rule: every other row keeps its `schema` (the row `owner role, asking role` becomes
+  satisfiable when #377 gives the kind `answer` of the block `result`), and a row
+  that leaves out an item is the Operator's to leave out. The function
+  `handoff.CheckTable` makes the check, at the `set` and at each read of the table.
 - The Operator replaces the table with `set transitions <sha256> because
   <reason>` on the control issue ([The parameter change](#req-012--the-parameter-change)),
-  where the value is the SHA-256 of a copied comment that holds the whole table;
-  code reads it with the same schema and refuses a table that fails the check
-  above. The old table stays in Git history.
+  where the value is the SHA-256 of a copied comment **of the control issue** (a
+  restriction of "a copied comment": the `set` is on that issue) whose whole body,
+  byte for byte, is the table with its header row (no code fence, no carriage
+  return); code reads it with the same schema and refuses a table that fails the
+  check above. The new `transitions.tsv` is the bytes of that copy, written in the
+  one records commit that also sets the row `transitions` of `parameters.tsv`, so the
+  SHA-256 of the file equals the value of the row. The author of the comment that
+  holds the table is not checked: the Operator's `set` names it by its hash. The
+  old table stays in Git history.
 
 **Rejected:** a table in the code only (it could not be replaced, `architecture.md`
 §8); a free handoff file (the public tools validate a record against a schema but
@@ -876,13 +890,17 @@ detail `did not run: <what>` — fails `ran` as `did not run: <rule>` (NFR-004).
 
 Every value that the Operator or the idea owner can set is a row of
 `parameters.tsv` (the block `parameters`; `architecture.md` §10). **Decided here**
-(decision 10 of #333): **the first writer** is `layup run`, which writes every row of
-the table of `architecture.md` §10 with its default (a value that has none is `—`, and
-the parameters that Start sets, `lease.H`, `watch.T` and the intake cap, take their
-values from `start.tsv`, the evidence being the command; the band `B`, `U` and the
+(decision 10 of #333, narrowed by R10 in task `T-dx1h`, #358): **the first writer** is
+`layup run`, which writes the rows of [the table below](#the-parameters-of-m2e), each
+with its default (a value that has none is `—`, and the parameters that Start sets,
+`lease.H`, `watch.T` and the intake cap, take their values from `start.tsv`, the
+evidence being the command: the word `command` and no comment; the band `B`, `U` and the
 hours of the intent form are **not** parameter rows: `budget.tsv` is their one home
 and a bet changes them as a rendered change, `architecture.md` §10) in the commit that writes
-`transitions.tsv`, when the loop first runs. Each row has **one role**: the Operator
+`transitions.tsv`, when the loop first runs: the commit of the first task, in which each
+of `tasks.tsv`, `transitions.tsv` and `parameters.tsv` that is absent is written, one that
+exists is read, checked and kept (never written again from the default), and one that its
+reader refuses refuses the task and writes nothing. Each row has **one role**: the Operator
 for most rows and for `brief.lines`, `build.parallel` and `transitions`; the idea
 owner for the allowed dependencies. A change is a comment on the control issue (`layup run`
 opens it at Start) in the form
@@ -891,25 +909,89 @@ opens it at Start) in the form
 set <name> <value> because <reason>
 ```
 
-`layup run` copies the comment, and checks, in this order:
+`layup run` copies the comment, and judges its first copy (an edit of a comment is never
+a decision, and an App's comment is none, [`run.md`](run.md#a-human-decision)). A comment
+whose first word is not `set` is no set and is ignored. A set is judged by five items, **the
+form first**, then in this order (**decided here**, R10, task `T-dx1h`: `form` is a fifth item of
+refusal, judged before the four that this section first gave):
 
-1. the **author**: an account whose role in `approvers.tsv` the row allows (the
-   Operator for most rows; the idea owner for the allowed dependencies);
-2. the **name**: a row of `parameters.tsv`;
-3. the **value**: of the row's type;
-4. the **bound** of the row, which says what the value cannot do (no parameter
+0. the **form** (`form`): the body is one line, with its trailing white space trimmed,
+   `set`, a name and a value of no space, `because`, and a reason that is not empty and
+   not `—` (the writer of a table reads `—` as empty), each part after one space;
+1. the **author** (`author`): an account whose role in `approvers.tsv` the row allows (the
+   Operator for most rows; the idea owner for the allowed dependencies); before the name is
+   known, any account of `approvers.tsv`;
+2. the **name** (`name`): a row of `parameters.tsv`;
+3. the **value** (`value`): of the row's type (and not `—`);
+4. the **bound** (`bound`) of the row, which says what the value cannot do (no parameter
    removes a PSB rule, O-84).
 
-The type and the bound of each name are held by the binary, in a table that is
-`architecture.md` §10 in code; the column `bound` of `parameters.tsv` is that bound
-written in words for a reader, and the two are compared by the owner's test.
+The type and the bound of each name are held by the binary, in the table below in code;
+the column `bound` of `parameters.tsv` is that bound written in words for a reader, and
+the two are compared by the owner's test (`TestTheParameterTableEqualsTheSpecification`
+reads the table below).
 
 A change that passes is a new row of `parameters.tsv` and takes effect **at the
 next step boundary**; a change that takes effect on an open task is input to that
-task. A refused change is recorded as human input, names the refused item, and
-changes nothing. `architecture.md` §10 lets the idea owner change "the intent rows": in `M2e` they are not parameter rows (the band and the hours are `budget.tsv`, changed by a bet), so the idea owner's rows are the allowed dependencies. The parameters that `M2e` reads are `brief.lines`, `build.parallel`,
+task. The **boundary** is a call of `(*state).parametersBoundary` between two steps
+of the loop: it copies the comments of the control issue, judges the first copy of
+each in the order of the comment IDs, and writes each change as one records commit, through the fence of the
+lease: `parameters.tsv` with the row replaced (its value, the reason as evidence, the
+comment, the time) and, for `transitions`, `transitions.tsv` in the same commit. Until the
+call, no read of the table sees the change. **The call is row 66k's** (`T-9nbf`, #367, the
+step `loop` and the order of the steps; rows 66h and 66j read the table after it): row 66b
+builds the function and shows it on the state of a restart, and no step calls it yet.
+**A set is applied at most once and a superseded one never again** (the plan review of
+#358, C2): it is applied only when its comment ID is greater than the `comment` that its
+row records (`—` is none), the IDs of the comments of one forge growing with time; a set
+at or below that comment is no change, no refusal and no report. A refused change is
+recorded as human input, names the refused item, and changes nothing: in `M2e` the
+record is the copy of the comment in `copies.tsv` (`human-inputs.tsv` is phase 3), and the
+boundary reports each refusal (the comment, the item `form`, `author`, `name`, `value` or
+`bound`, and the reason) as a progress line and in its result; it writes no row, no file and no
+comment, so a refused set is judged again at each boundary, with the same result unless
+what refused it changed (an account that gains its role, a name that a milestone adds),
+and then it is applied if no later set of that row was. A set of `lease.H`, `watch.T` or the intake cap is judged like
+any other and recorded, but nothing of `M2e` reads those rows from `parameters.tsv` (the
+run reads `start.tsv`), so the boundary says `recorded; this run reads start.tsv, so M2e
+still acts on the old value`. `architecture.md` §10 lets the idea owner change "the intent rows": in `M2e` they are not parameter rows (the band and the hours are `budget.tsv`, changed by a bet), so the idea owner's rows are the allowed dependencies. The parameters that `M2e` reads are `brief.lines`, `build.parallel`,
 `transitions` and the allowed dependencies; the others are read by their
 milestones.
+
+### The parameters of M2e
+
+**Decided here** (R10, task `T-dx1h`; the plan review of #358, C3). `architecture.md` §10
+gives most of its rows no name, and no row other than these six has a complete source: a
+name, a type and a bound (`stall.T`'s "10 minutes (a maximum)" is a direction, not a bound).
+The table has exactly the six rows that a source gives completely, in this order, each
+cell with its source in the last column; nothing in it is made up but the lower bound 1 of
+two counts, which no source gives and which is the least that a use can hold.
+
+| Name | Type | Bound | Role | Default | Source |
+| ---- | ---- | ----- | ---- | ------- | ------ |
+| `brief.lines` | `int` | a whole number of lines, 1 or more | `operator` | `—` | name: `architecture.md` §10 ("the brief's line limit"), The bet; type: a count of lines; bound: decided here, 1 the least that holds a brief of five headings; role: this section (the Operator for `brief.lines`); default: none, no source gives a value (the open gap of The bet: the Operator sets it, on the idea owner's evidence) |
+| `build.parallel` | `int` | a whole number of tasks, 1 or more | `operator` | `—` | name: `architecture.md` §10, The task register; type: a count of tasks; bound: decided here, 1 the least that lets a task run; role: this section (the Operator for `build.parallel`); default: none, §10 says "set at Intake" and no step of Intake sets it |
+| `transitions` | `sha256` | the SHA-256 of a copied comment of the control issue whose whole body is a table that passes the check of a table: a row for each default pair, only the kinds and items of the lists, and no `schema` in the row of code's own handoff | `operator` | `—` | name: The transition table; type: The transition table (the value is a SHA-256); bound: The transition table (a table that fails the check of a table is refused); role: this section (the Operator for `transitions`); default: none, the table that the binary embeds is in force while the value is `—` (decided here) |
+| `lease.H` | `int` | whole minutes, 1 or more, as the flag `--lease-h` | `operator` | `—` | name: `records.md` (the names of `start.tsv`), `architecture.md` §10; type: the block `start`; bound: the flag's check (`run.md`, The command: whole minutes, 1 or more); role: this section (the Operator for most rows); default: none, the first value is `start.tsv`'s with the evidence `command` |
+| `watch.T` | `int` | whole minutes, 1 or more, as the flag `--watch-t` | `operator` | `—` | name: `records.md` (the names of `start.tsv`), `architecture.md` §10; type: the block `start`; bound: the flag's check (`run.md`, The command: whole minutes, 1 or more); role: this section (the Operator for most rows); default: none, the first value is `start.tsv`'s with the evidence `command` |
+| `intake.cap` | `MONEY,HOURS` | MONEY,HOURS, each a decimal with a fraction, as the flag `--intake-cap` | `operator` | `—` | name: `records.md` (the names of `start.tsv`), `architecture.md` §10; type: the block `start` (two decimals joined by a comma); bound: the flag's check (`run.md`, The command), no more; role: this section (the Operator for most rows); default: none, the first value is `start.tsv`'s with the evidence `command` |
+
+**No row of the idea owner is written:** the allowed dependencies, which `architecture.md`
+§10 gives to the idea owner, have no name in any source, so no row exists and no name is
+made up; the role check of such a row is tested on a table that the test supplies. **The
+other rows of §10** (the provider, the model version, the authority and threshold per
+point, the escalation frequency, the owner map, the role matrix, the step table,
+`stall.T`, `stall.N`, `stall.attempts`, `ci.T`, `panel.K`, the reward's term weights,
+`learn.*`, the learning authority, `audit.n`, `harness.<id>.cap` and `harness.<id>.wall`,
+the paid work of a harness with no spend cap) are read by their milestones, which write
+each row with its type and bound; a `set` of one of them is refused as an unknown name
+until then. The questions that remain (which of these rows are written now, and the name
+of the idea owner's row) are asked on #358 and block no code.
+
+**The owner checks** of `parameters` are in [`records.md`](records.md#nfr-001--the-records-of-the-task-loop):
+a row has no comment when it is its own origin (a Start row with the value of `start.tsv`
+and the evidence `command`; any other row unset) and a comment when a set gave it, the
+reason being its evidence.
 
 ### The Retrospective
 
@@ -1019,7 +1101,8 @@ the milestone covers it end to end.
 | ---- | ----- | ------------- |
 | A handoff is valid only by its table (inventory) | unit | A handoff with a wrong schema, an artifact that is not in the commits, a hash that differs, a required item that is false, and a pair with no row is each invalid, naming the item; a field that an agent writes never makes one valid; a comment artifact whose body at the forge differs from its copy is invalid. |
 | The artifact that is a comment (`gov-issue-68`) | unit; integration | With the stand-in forge, for each of the kinds `plan`, `plan-review` and `review-record`: the session's file, the comment that code posts from its bytes, the copy and its row, the `handoff` event with the comment ID that code read, the three equal hashes; an edited comment is a new copy and the first handoff is invalid; a result that holds a comment ID is refused; a `comment` row is checked against the session's `result/` file and an `artifact` row against the head. |
-| The transition table | unit | The default rows are the thirteen of the table (the twelve of `architecture.md` §8 and the row of the target's architecture task, which §8 names a task and gives no row); a replacement by `set transitions` with a missing default pair, or a kind or an item not in the lists, is refused, and the steps that are `layup run`'s own acts need no row; the old table stays in history. |
+| The transition table | unit | The default rows are the thirteen of the table (the twelve of `architecture.md` §8 and the row of the target's architecture task, which §8 names a task and gives no row); a replacement table is refused for a missing default pair, a kind or an item not in the lists, and a row of code's own handoff (`code (rendered task)`) that lists `schema`, while another row keeps its `schema`, and the steps that are `layup run`'s own acts need no row. |
+| The replacement of the transition table at the boundary | integration | With the stand-in forge and real git: `set transitions <sha256>` names a copy of a comment of the control issue; the new table is the bytes of that copy, written with the row `transitions` in one records commit, so its SHA-256 is the row's value; the old table stays in Git history and the next task keeps the new one; a hash of no copy or of a copy of another issue, a body that is no table (a code fence, a carriage return) and a table that fails the check each refuse with the item `bound` (`value` for a value that is no SHA-256) and write nothing. |
 | `layup spec check`, the full check (inventory) | unit | Each rule of the table fails on its input and passes on its fixture; before the first bet a task that touches neither the PRD nor `docs/spec/` is `clear`; `did not run` is a failure. |
 | `layup/gates` (inventory, `later-gate-status`) | unit; integration | Each row combination maps to the status by the table, `not-active` is never a success, a `pending` kind with a product path is `failure`; with the stand-in forge, the status is posted once for an unchanged state. |
 | `layup/rules`, the basic rule | unit | A change to a rule path fails; a rendered record equal to code's rendering passes; one that differs by a byte fails; the register is read at the base. |
@@ -1035,7 +1118,8 @@ the milestone covers it end to end.
 | The Shape filter (inventory) | unit | An option with a failed row, a missing row or a pass with no evidence is dropped; one survivor is chosen; two survivors give a brief with no recommendation, and an answer line `option <decision>: <option>` naming a dropped option or an unknown decision is refused and one naming a survivor is recorded in `bets.tsv`; every option dropped asks one rewrite, and a second full drop is a round with no progress. |
 | The bet and its brief (inventory) | unit | The five headings, `brief.lines` unset is refused, a link that does not resolve is refused, two bets of 0.6 `U` each (the second brief), a cap above `band.U`, hours above `appetite.hours` and caps plus the spend of milestone 0 above `band.U` are each refused, and a cap below `band.B` passes, an answer by an account with no allowed role answers nothing, and the answer is copied. |
 | The rendered commit (inventory) | unit | The commit may change only the MoSCoW and Phase columns, the non-goals and the numbered facts record; `layup/rules` passes a rendered record only when it equals code's rendering of the named copy. |
-| The parameter change (inventory) | unit | A `set` is refused for a wrong role, an unknown name, a value out of bound, and is applied at the next step boundary; a `prd-lint` head is accepted only when each failure line names an empty MoSCoW or Phase cell. |
+| The parameter change (inventory) | unit | A `set` is refused for a form that is not one line, a wrong role, an unknown name, a value of no type or out of bound, and the one that passes is applied as one replaced row, its default, bound and role kept; a set at or below the comment that its row records is superseded and is no change; a `prd-lint` head is accepted only when each failure line names an empty MoSCoW or Phase cell. |
+| The parameter change at the boundary | integration | With the stand-in forge and real git: `layup run` writes `parameters.tsv` with its six rows in the commit of the first task (a table that exists is kept, one that its reader refuses refuses the task); a `set` is copied and, at the boundary, applied as one records commit when its author has the role of the row, and changes nothing before it; each refusal (`form`, `author`, `name`, `value`, `bound`) is reported with its item, changes nothing and is judged again at the next boundary; a set that is applied is not applied again, the later of two wins in the order of the comment IDs, and an edit of a comment is no set; a set of a Start row is recorded with the note that the run reads `start.tsv`; the write is fenced by the lease. The call between steps is row 66k's. |
 | The frozen test list | unit | The list freezes at the first valid handoff to the verifier, a changed source hash is a finding, an amendment freezes it again, and a test that does not fail at the base makes the handoff invalid. |
 | The gate jobs read the base (F-22) | integration | A pull request that edits `docs/gates.tsv` to pass a failing kind is judged by the base's file and fails; the catalog workflow reads the base; a pull request of a `batch/<point>` branch reads its own head's gate files and a pull request of any other branch does not; a change of a `config` path of the manifest waits for the code owner (shown on a real repository in the demo). The setup (task `T-jew3`, unit and integration): `.github/CODEOWNERS` of the four path classes with the Operator's login is in the tree of a new target, the ruleset sets `require_code_owner_review` with no required approval, and a target set up before the rule gets the update by its recorded ruleset ID, which keeps what the file never held ([`scaffold.md`](scaffold.md#the-code-owner-rule)). |
 | The task loop with the stand-in forge (inventory) | integration | With the httptest forge, fake harness programs and the real git: a gate failure goes back to the developer as a new attempt; the close-out commit is refused when it changes a file other than the task file and the completed log; the pull request body links the records commit; the merge is at the head SHA. |
