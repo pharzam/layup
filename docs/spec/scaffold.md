@@ -490,8 +490,9 @@ comments 6210782039 and 6214007155):
 - **Where.** S13 of phase 2 writes `.github/CODEOWNERS` into the **tree** of the target, in the commit of S13 with
   `docs/setup/branch-protection.json`, and the record row `codeowners.sha256` (`computed`, ref `sha256 .github/CODEOWNERS`) follows
   `ruleset.sha256`. The one push of `layup-setup` (a fast-forward, `commands.sh`) puts the file on the base before the ruleset is
-  applied. Phase 1 does not change. Rejected: a file in `out/` for the Operator to place (after the first push every commit on the base
-  is one that the tree check refuses, below), the repository's owner as the owner, and a new flag.
+  applied. Phase 1 does not change. Rejected: a file in `out/` for the Operator to place on a new target (it would be a commit that
+  the tree check refuses: it admits one only for a target set up before the rule, [The tree check](#the-tree-check)), the repository's
+  owner as the owner, and a new flag.
 - **The text.** A comment line, then one root-anchored line `<pattern> @<login>` for `/.github/`, `/docs/gates.tsv` and `/docs/gates/`,
   then one for each `config` path of the manifest at the head that no earlier line covers: a line covers a path that equals it or lies
   below it at a `/` (`docs/gatesx/a` is not below `/docs/gates/`), and a duplicate has no line; the order is the manifest's. A path
@@ -526,7 +527,7 @@ applied; the setup commits recorded then hold no `CODEOWNERS`, so no area built 
 In the mode of a target set up before the rule, S13 writes into the **tree** the files of `M2d` alone (the same commits), and into `out/`:
 `ruleset-default.json` (the new body), `CODEOWNERS` (the bytes of the file, for the landing) and `land-code-owner.sh`; `commands.sh` holds the
 update below and nothing else (no push, no `POST`). The Operator removes the work area `DIR/work/OWNER/NAME` and restarts `layup run`; the
-step `forge-check` builds the area again in this mode and prints, once, the path of `out/commands.sh` and the state of the landing script
+step `forge-check` builds the area again in this mode and prints, once, the paths of `out/commands.sh` and `out/land-code-owner.sh`, in the order the Operator runs them
 (`forge-check` prints no commands, so the build of the area is where the Operator is given the path); until the update is applied, the row
 `rules:<default branch>` reads `fail` (the file requires the code owner and the live ruleset does not), and the read-back after the update
 is the proof that it took. **A limit:** an area that is not built again keeps the file of `M2d` and passes as before, so that target stays
@@ -546,18 +547,20 @@ with an omitted field, which its documentation does not say. Rejected: the file 
 unknown), a partial `PUT`, a `POST` (a second ruleset), and a program of LAYUP (the App cannot read the bypass list, L-A4, so only the
 Operator's login can read what must be kept).
 
-**The landing** of `CODEOWNERS` on the base of such a target is prepared in `out/land-code-owner.sh` and **cannot run**: its first command
-refuses and names the open question. The tree check above accepts no head but the last commit of `setup/tree.tsv`, and the landing is
-a commit on top of it, so the next `forge-check` would stop on the row `tree` (Q1 of #356, tracked as the child issue #384; a rule batch of `M2f` must settle the tree check
-for its own commits too). The body, which a review reads, starts from the `AFTER` object (`default.after.json`, the updated protection)
+**The landing** of `CODEOWNERS` on the base of such a target is `out/land-code-owner.sh`, which the Operator runs with their own login after the
+update is read back (task `T-4cep`, #384; the Operator's ruling 6217133467, which classifies the push as the Operator completing that target's
+setup at the planned point "the setup" of ADR-0017, not a rule change outside a batch and not an approval inside a milestone). The commit it
+makes is the one that [the tree check](#the-tree-check) admits, so the next `forge-check` passes on the row `tree`; the script is written so
+that the check and the script agree, and the test that runs the script and has the check judge its commit is the proof. The body, which a
+review reads, starts from the `AFTER` object (`default.after.json`, the updated protection)
 and refuses unless it requires the code owner, the head is the head of `layup-setup` and the live ruleset equals it; makes one commit on the
 head that adds `.github/CODEOWNERS` before the ruleset is touched; disables the ruleset (a `PUT` of the `AFTER` object with the enforcement
 `disabled`); arms an `EXIT` trap **only after that `PUT` succeeded**; pushes the commit as a fast-forward of the default branch; and the trap
 puts back the **`AFTER` object, never the object before the update**, and reads it back. A restore that fails exits 1 and says, with the
 repository and the ID, that enforcement may be off. The default branch is unprotected between the two writes, by the Operator's hand, so a
 review round reads the script before it is applied. Tests: `TestTheUpdateKeepsWhatIsUnknown`, `TestTheUpdateRefusals`,
-`TestTheLandingScript`, `TestARebuiltAreaReproducesTheRecordedCommits` (real `sh`, `git` and `gh` against an `httptest` TLS server that
-serves the live object of the demo of `M2d`; they need `gh` on `PATH` and fail, never skip, without it).
+`TestTheLandingScript`, `TestTheLandingCommitIsAdmitted`, `TestARebuiltAreaReproducesTheRecordedCommits` (real `sh`, `git` and `gh` against an
+`httptest` TLS server that serves the live object of the demo of `M2d`; they need `gh` on `PATH` and fail, never skip, without it).
 
 ### The commands for the Operator
 
@@ -643,11 +646,35 @@ row; the table is committed in both cases.
 
 ### The tree check
 
-`tree`: the head of the default branch on the forge (`Repository`, which gains
-the head of each branch in `M2d`, [`forge.md`](forge.md#the-calls-of-m2d)) equals, by SHA, the last commit of `setup/tree.tsv`. The push is a
+`tree`: the head *H* of the default branch on the forge (`Repository`, which gains
+the head of each branch in `M2d`, [`forge.md`](forge.md#the-calls-of-m2d)) equals, by SHA, *L*, the last commit of `setup/tree.tsv` (`pass`),
+**or** is the code-owner commit of a target set up before the code-owner rule (`pass`). The push is a
 fast-forward of the verified commits, so their SHA, not only their tree, is
-on the forge. Any other head is `fail`, naming the head. (The commit that lands `CODEOWNERS` on the base of a target
-set up before the code-owner rule is such a head: [its landing script](#the-code-owner-rule-of-a-target-that-m2d-set-up) cannot run until the check admits it.)
+on the forge. Any other head is `fail`, naming the head. **Decided here** (task `T-4cep`, #384; the Operator's ruling 6217133467 on
+#384, with the audit note 6217334547 on #336): *H* is the code-owner commit exactly when the setup record has no row `S13 codeowners.sha256` (the
+target was set up before the rule, [its subsection](#the-code-owner-rule-of-a-target-that-m2d-set-up)) and all of these hold, read from the
+objects of the run's clone and from no author, committer, message, date, signature or actor:
+
+1. *H* has exactly one parent, and it is *L* (a merge, a second commit above the code-owner commit, an unrelated commit, an ancestor of *L* each
+   fail here);
+2. the tree of *H* is the tree of *L* plus exactly one entry: the path `.github/CODEOWNERS`, mode `100644`, a blob, which the tree of *L* does
+   not have (another path, a second added, removed or changed entry, a link, a submodule, an executable file and a commit that adds nothing
+   each fail here);
+3. the bytes of that blob equal `CodeOwners(login, configs)`, the text that S13 writes ([the code-owner rule](#the-code-owner-rule)): *login* is
+   the login of the Operator's row of `approvers.tsv`, never the repository's owner, and *configs* are the `config` paths of `docs/gates.tsv`
+   at *L*.
+
+The check is asked only of a head that is another commit than *L* and is not empty, and never when the repository or the tree record cannot be
+read; an error of the check is a `fail`, never a pass. A pass leaves the `detail` of the table `—`, as the block says, and the step prints its
+own line, `tree: H is the code-owner commit above L` (the precedent is [the tree after the first merge](loop.md#the-tree-after-the-first-merge)).
+A `fail` gives the old words, "the head of B is H, and setup/tree.tsv ends at L", and then "; it is not the code-owner commit: " and the first
+condition that failed (the setup record, the parents, the first path that differs with its mode, the mode of the file, or its bytes).
+**Reason:** the Operator completes the setup of such a target with one push, which the tree check must not refuse and must not widen to any other
+head; the admission is a function of the records and of the objects, so it needs no record of its own, and the audit of `M2f` classifies the
+same commit by the same function. **Known limits:** a change of the Operator's login in `approvers.tsv` after the push makes the bytes differ, so
+the next check fails and names them; the check judges the commit, not who pushed it (the forge's activity names the pusher, and `layup audit` of
+`M2f` reads it); the admission holds until the first merge of a task, after which [the tree after the first merge](loop.md#the-tree-after-the-first-merge)
+(row 66g, not built when this text was written) is the rule, and nothing here claims that check is built.
 
 ### The read-back
 

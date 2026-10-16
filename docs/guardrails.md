@@ -1006,6 +1006,22 @@ These traps are not domain-specific: they hurt every project's test suite.
   `go vet` and were counted as kills, so the count of kills was three too high. **The check:** a variant is valid only if `go build` and `go vet` pass on
   it, its kill is the named assertion in its own output, each run's exit status and output are kept, and the file's hash before and
   after proves the restore (`runs/T-jew3/mutants.md`). Learned in `T-jew3` (#356).
+- ❌ **A check that admits a head by who made it.** An admission keyed to the author, the committer, the message, the date or a signature
+  header of a commit proves nothing: the pusher writes each of them. The tree check had to admit one commit above the setup head, and the
+  tempting test was the Operator's name. **The check:** judge the content alone, the parents, the whole tree and the bytes of the one file,
+  and test it both ways, a commit with the Operator's name and wrong content refused and a commit with hostile metadata and the canonical
+  content admitted (`TestCheckCodeOwnerLanding`, `TestCheckCodeOwnerLandingReadsOnlyTheObjectsOfTheConditions`). Learned in `T-4cep` (#384).
+- ❌ **A script and the check that judges its result, tested apart.** The landing script made a commit and the tree check judged commits, each
+  with a green test of its own, and nothing showed that they agreed, so the script could have been switched on to land a commit that the
+  next run refused. **The check:** one test runs the producer as production writes it and has the checker judge what it made, and a producer
+  that adds the file at another path or a second file is refused by the same call (`TestTheLandingCommitIsAdmitted`). Learned in `T-4cep` (#384).
+- ❌ **A fixture that adds a submodule or a link and then `git add --all`.** `Add` stages the whole tree as the work tree is, so an index entry
+  that has no file (a mode 160000) is dropped before the commit, and the case that needs it goes green without the entry. **The check:** put
+  the entry in after `Add`, and read the listing of the commit it made (`TestParentsAndTheWholeTree`). Learned in `T-4cep` (#384).
+- ❌ **A red slice that the pre-commit hook will not take.** The hook runs the unit level of the whole module, so tests written first and
+  red cannot be committed alone. **The check:** observe each red against a stub that has the signature and not the behaviour, and against a
+  stub that admits everything for the refusals, keep the output and the clock times, and commit the tests with the green code of their step
+  (`runs/T-4cep/test-runs.md`); a hook is never skipped. Learned in `T-4cep` (#384).
 
 ### Reference-sweep pitfalls
 
