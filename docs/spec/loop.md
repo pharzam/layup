@@ -418,7 +418,8 @@ names the row that posts them.
 
 ### The items a caller computes
 
-`internal/handoff` computes `schema`, `artifacts`, `question-row` and `answer-row`;
+`internal/handoff` computes `schema` and `artifacts`, and `internal/run` computes
+`question-row` and `answer-row` from the result (`RecordHandoff`, row 66d);
 every other item is the caller's result, and **decided here** (task `T-8bwd`,
 #387; the assignment of rows is the decision of the plan review of #387, an
 `approve-with-conditions`) each item below is computed by the named package in
@@ -473,6 +474,10 @@ result's `question` and `answer` rows — first line and body as [a question dur
 the work](#the-checks-of-a-handoff) pins — and posted on the task's issue by the
 post→copy machinery of the step loop (**row 66k**, #367, whose comments of a task
 session it is); they are plain comments of the App, not artifacts of a handoff.
+The parsed review record is also the input of the caller boundary that keeps
+the loop uphill while a material finding is open (`architecture.md` §11):
+row 66l's parse exposes the located findings, the step loop's wiring of it
+stays row 66k's (#367), and nothing of either is claimed built here.
 
 **The deferrals are recorded, not hidden.** `patch-per-kind`, `register-rows` and
 `heading-ids` name checks whose inputs — a rule batch's patches, a milestone
