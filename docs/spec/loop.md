@@ -146,9 +146,9 @@ open unknowns that the records give; the result is a column of the routing
 request, not a new record.
 
 **The context of a session.** The step table has a column of record kinds for
-each step ([`session.md`](session.md#the-context-of-a-start) holds the table and `M2b`
-the prompt as the caller's text). **Decided here:** from `M2e` the prompt file of
-a step holds, in this order, the task's issue and plan, the rows and the
+each step ([`session.md`](session.md#the-step-table-and-the-kinds-of-a-steps-context) holds the
+table and `M2b` the prompt as the caller's text). **Decided here:** from `M2e` the
+prompt file of a step of a task holds, in this order, the task's issue and plan, the rows and the
 specification sections of the task's requirement IDs, the decision records that
 those sections name, the task's handoffs and the answers to its questions, and
 the target's rule files; code builds the list from the records and writes the

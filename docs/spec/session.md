@@ -231,6 +231,34 @@ estimate over the size refuses the start (event `refused`, `context` and both
 numbers, the estimate then the size: **decided here**, task `T-6sbe`); a
 session that starts has both numbers in its start row.
 
+### The step table and the kinds of a step's context
+
+**Decided here** (task `T-svn3`, #353, with the plan review's condition 1): the
+step table of `architecture.md` §9 is a Go value of this package, `StepTable`,
+with one row for each step that §9 names: its grouped rows are split (`gap-review` and
+`completeness-review`; `numbering-and-draft` and `specification`;
+`shape-architecture` and `shape-activation-batch`, the roles in the order of the
+row; `plan-of-a-milestone` and `plan-of-a-task`; `implement` and `close-out`;
+`plan-review` and `verification`), giving 15 rows with the role and the tier of
+§9 (the tier of `implement` and `close-out` is `by-class`). A step that belongs
+to a task (the specification, the target's architecture, the activation batch,
+the plans, implement, close-out, the plan review, the verification and the answer
+to a question) has the five record kinds of [`loop.md`](loop.md#the-tier-and-the-context-of-a-task),
+`ContextKinds`, in its order: `issue-and-plan`, `requirements`,
+`decision-records`, `handoffs-and-answers`, `rule-files`. A step of a phase with no
+task (the Intake reviews, numbering and draft, the bet brief, and the
+retrospective lessons of phase 4) has none: a session of Intake or of the Scaffold
+reads the `input/` files of its own section ([`intake.md`](intake.md#the-sessions-of-intake),
+[`scaffold.md`](scaffold.md#the-prose-rows)); the records that go into the prompt of
+the bet brief and of the retrospective lessons are those of their own sections
+(`loop.md`, "The bet"; `architecture.md` §13), not kinds of this table; the
+Retrospective of `M2e` has no session. The values `by-class` (the tier is the task's
+class, `architecture.md` §9) and `owner-of-its-kind` (the owner map resolves the role
+before routing, `loop.md`) are the table's own words, not keys of the routing
+register, which takes a role and a tier of `reasoning` or `execution`; the Operator
+can replace the matrix per target, and this is its default. The builder of the prompt file is `internal/run`'s (row 66e); both
+values return copies.
+
 ### The limit of a session
 
 - **Wall clock:** `wall` minutes of the row, timed by `layup run` from the
