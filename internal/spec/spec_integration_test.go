@@ -28,3 +28,19 @@ func TestTheSchemasEqualTheirBlocks(t *testing.T) {
 		}
 	}
 }
+
+// The Go value of the block options equals its block of docs/spec/records.md
+// (task T-0pt8, #349).
+func TestTheOptionsSchemaEqualsItsBlock(t *testing.T) {
+	blocks, err := tsv.ReadBlocks(os.DirFS(filepath.Join("..", "..", "docs", "spec")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	block, ok := blocks["options"]
+	if !ok {
+		t.Fatal("docs/spec/ has no block options")
+	}
+	if err := tsv.Compare(block, OptionsSchema); err != nil {
+		t.Error(err)
+	}
+}
