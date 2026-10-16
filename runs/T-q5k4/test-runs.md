@@ -237,3 +237,22 @@ counters, then278052ms for the actual fix turn. Fix increment I24/O8194/cache
 creation16821/read5730253; thinking1440 is included in output. End cumulative
 I388/O222268/cache creation472089/read58461733 counts plan, build and fix once.
 No missing elapsed or unreported usage is inferred from context counters.
+
+Before round2, merge current main f86f71c (the reviewed #358 landing). Five
+conflicting files are resolved explicitly: guardrails keeps both sets of lessons;
+PRD REQ005/NFR001 cells retain both sets of task/test citations; loop.md keeps
+#360 artifact/answer acceptance tests and #358 schema refusal/replacement tests;
+packages.md keeps both handoff and parameter ownership; traceability keeps both
+sets of rows. Round2 must judge these resolutions and their code neighbors.
+Only the PRD/traceability rows claim the named shared-index exception; other
+conflicts receive scoped review. New main Go code follows the earlier full run,
+so combined final full-SHA CI remains required.
+SWE-2 Max round1 retained metrics: prompt1426076/completion18044/cached1301548
+(cached inside prompt),17 unique metric rows. The completion export is a subset
+of the corrected export, counted once. Earlier lost history and elapsed are not
+reported; the timeout bound is not elapsed. Metadata: issue360-r1-resource-union-audit.json.
+
+The merged unit test package initially failed vet: sum was declared by both the
+parameter byte-slice helper and the handoff string helper. Rename only the
+handoff helper and its callers to commentSum; no assertion or product code is
+changed. The failed hook is not credited as a pass; the repeated hook must pass.

@@ -12,7 +12,7 @@ import (
 	"github.com/pharzam/layup/internal/session"
 )
 
-func sum(text string) string {
+func commentSum(text string) string {
 	h := sha256.Sum256([]byte(text))
 	return hex.EncodeToString(h[:])
 }
@@ -80,7 +80,7 @@ func commentRow(n, file, sha string) []string {
 func TestTheKeptBytesAreTheBytesOfTheFile(t *testing.T) {
 	for _, text := range []string{"a plan\n", "no final newline", "crlf\r\nlines\r\n", "trailing  \n  spaces \t\n", "ü 𝄞 non-ASCII\n", "\n", "a\x00nul"} {
 		d := resultOf(t, map[string]string{"plan.md": text})
-		files, bad := keepComments(d, "T-ab12", "S-1a2b3c4d", [][]string{{"status", "1", "completed", "", "done"}, commentRow("1", "plan.md", sum(text))})
+		files, bad := keepComments(d, "T-ab12", "S-1a2b3c4d", [][]string{{"status", "1", "completed", "", "done"}, commentRow("1", "plan.md", commentSum(text))})
 		got, ok := files["tasks/T-ab12/results/S-1a2b3c4d/plan.md"]
 		if bad || !ok || string(got) != text || len(files) != 1 {
 			t.Errorf("%q: kept %q (found %v), bad %v; want the bytes alone at the kept path", text, got, ok, bad)
@@ -93,7 +93,7 @@ func TestACommentRowIsCheckedByItsHashAgainstTheResultFile(t *testing.T) {
 	outside := filepath.Join(t.TempDir(), "x")
 	os.WriteFile(outside, []byte("the plan\n"), 0o644)
 	os.Symlink(outside, filepath.Join(d.Result, "link.md"))
-	good := commentRow("1", "plan.md", sum("the plan\n"))
+	good := commentRow("1", "plan.md", commentSum("the plan\n"))
 	for _, c := range []struct {
 		name string
 		rows [][]string
@@ -102,16 +102,16 @@ func TestACommentRowIsCheckedByItsHashAgainstTheResultFile(t *testing.T) {
 	}{
 		{"no comment row", [][]string{{"status", "1", "completed", "", "done"}}, false, nil},
 		{"a row whose hash is the file's", [][]string{good}, false, []string{"plan.md"}},
-		{"a hash that differs", [][]string{commentRow("1", "plan.md", sum("another\n"))}, true, nil},
-		{"the hash of the text with its final newline trimmed", [][]string{commentRow("1", "plan.md", sum("the plan"))}, true, nil},
-		{"a file that is missing", [][]string{commentRow("1", "none.md", sum("the plan\n"))}, true, nil},
-		{"a file that is missing, with the hash of no bytes", [][]string{commentRow("1", "none.md", sum(""))}, true, nil},
-		{"a file that is a link, with the hash of no bytes", [][]string{commentRow("1", "link.md", sum(""))}, true, nil},
-		{"a file that is a link, of the right bytes", [][]string{commentRow("1", "link.md", sum("the plan\n"))}, true, nil},
-		{"two good rows", [][]string{good, commentRow("2", "review.md", sum("the review\n"))}, false, []string{"plan.md", "review.md"}},
-		{"one good row and one bad: the good one is kept, the failure is reported", [][]string{good, commentRow("2", "review.md", sum("no\n"))}, true, []string{"plan.md"}},
-		{"two rows of one file", [][]string{good, commentRow("2", "plan.md", sum("the plan\n"))}, false, []string{"plan.md"}},
-		{"an artifact row is not read here", [][]string{{"artifact", "1", "out.txt", sum("x"), ""}}, false, nil},
+		{"a hash that differs", [][]string{commentRow("1", "plan.md", commentSum("another\n"))}, true, nil},
+		{"the hash of the text with its final newline trimmed", [][]string{commentRow("1", "plan.md", commentSum("the plan"))}, true, nil},
+		{"a file that is missing", [][]string{commentRow("1", "none.md", commentSum("the plan\n"))}, true, nil},
+		{"a file that is missing, with the hash of no bytes", [][]string{commentRow("1", "none.md", commentSum(""))}, true, nil},
+		{"a file that is a link, with the hash of no bytes", [][]string{commentRow("1", "link.md", commentSum(""))}, true, nil},
+		{"a file that is a link, of the right bytes", [][]string{commentRow("1", "link.md", commentSum("the plan\n"))}, true, nil},
+		{"two good rows", [][]string{good, commentRow("2", "review.md", commentSum("the review\n"))}, false, []string{"plan.md", "review.md"}},
+		{"one good row and one bad: the good one is kept, the failure is reported", [][]string{good, commentRow("2", "review.md", commentSum("no\n"))}, true, []string{"plan.md"}},
+		{"two rows of one file", [][]string{good, commentRow("2", "plan.md", commentSum("the plan\n"))}, false, []string{"plan.md"}},
+		{"an artifact row is not read here", [][]string{{"artifact", "1", "out.txt", commentSum("x"), ""}}, false, nil},
 	} {
 		files, bad := keepComments(d, "T-ab12", "S-1a2b3c4d", c.rows)
 		if bad != c.bad || len(files) != len(c.kept) {

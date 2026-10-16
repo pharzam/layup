@@ -133,7 +133,7 @@ func (w *handoffWorld) session(t *testing.T, id string, attempt int, role, text 
 	}
 	rows := resultTop + "status\t1\tcompleted\t—\tposted as comment 999-1\n" + strings.Join(extra, "")
 	if text != "" {
-		rows += "comment\t1\tresult/plan.md\t" + sum(text) + "\t—\n"
+		rows += "comment\t1\tresult/plan.md\t" + commentSum(text) + "\t—\n"
 		w.store.files[KeptPath("T-ab12", id, "plan.md")] = []byte(text)
 	}
 	w.store.files["tasks/T-ab12/results/"+id+".tsv"] = []byte(rows)
@@ -169,11 +169,11 @@ func TestTheCommentIsPostedFromTheKeptBytes(t *testing.T) {
 	if bodies := w.f.comments[taskIssue]; len(bodies) != 1 || bodies[0].Body != planBody {
 		t.Fatalf("the comments of the task's issue %+v; want one with the bytes of the kept file", bodies)
 	}
-	if got != (Posted{ID: 701, Seen: 1, SHA: sum(planBody)}) {
+	if got != (Posted{ID: 701, Seen: 1, SHA: commentSum(planBody)}) {
 		t.Errorf("Posted = %+v; want the ID that the forge gave (not 999, which the result's text names)", got)
 	}
 	rows := w.copies(t)
-	if len(rows) != 1 || rows[0][0] != "701" || rows[0][1] != "1" || rows[0][2] != "3" || rows[0][3] != "9001" || rows[0][5] != "layup-agent" || rows[0][8] != sum(planBody) || rows[0][9] != "copies/701-1.md" {
+	if len(rows) != 1 || rows[0][0] != "701" || rows[0][1] != "1" || rows[0][2] != "3" || rows[0][3] != "9001" || rows[0][5] != "layup-agent" || rows[0][8] != commentSum(planBody) || rows[0][9] != "copies/701-1.md" {
 		t.Errorf("copies.tsv %q; want comment 701, seen 1, issue 3, the App's author, the SHA-256 of the file", rows)
 	}
 	if string(w.store.files["copies/701-1.md"]) != planBody {
@@ -207,7 +207,7 @@ func TestACommentThatHasACopyIsNotPostedAgain(t *testing.T) {
 	// The same bytes on another issue are no copy of this issue's comment.
 	w2 := newHandoffWorld(t)
 	w2.session(t, planSess, 1, "developer", planBody)
-	other := sum(planBody)
+	other := commentSum(planBody)
 	w2.store.files["copies.tsv"], _ = table(records.CopiesSchema, [][]string{{"650", "1", "9", "9001", "layup-agent[bot]", "layup-agent", "2026-10-09T11:00:00Z", "2026-10-09T11:00:00Z", other, "copies/650-1.md"}})
 	if _, err := w2.s.PostComment(context.Background(), "T-ab12", planSess, "plan.md"); err != nil || w2.f.count("Comment") != 1 {
 		t.Errorf("a copy of the same bytes on issue 9: %v, %d posts; want the post on issue 3", err, w2.f.count("Comment"))
@@ -229,7 +229,7 @@ func TestACommentThatTheForgeHoldsIsCopiedAndNotPostedAgain(t *testing.T) {
 	w.session(t, planSess, 1, "developer", planBody)
 	w.f.hold(taskIssue, forge.Comment{ID: 655, AuthorID: 9001, AuthorLogin: "layup-agent[bot]", App: "layup-agent", Body: planBody, Created: sessionAt, Updated: sessionAt})
 	got, err := w.s.PostComment(context.Background(), "T-ab12", planSess, "plan.md")
-	if err != nil || got != (Posted{ID: 655, Seen: 1, SHA: sum(planBody)}) || w.f.count("Comment") != 0 {
+	if err != nil || got != (Posted{ID: 655, Seen: 1, SHA: commentSum(planBody)}) || w.f.count("Comment") != 0 {
 		t.Errorf("the comment the forge holds: %+v, %v, %d posts; want it copied and none posted", got, err, w.f.count("Comment"))
 	}
 	if rows := w.copies(t); len(rows) != 1 || rows[0][0] != "655" {
@@ -391,7 +391,7 @@ func TestAnEditedCommentIsANewCopyAndTheFirstHandoffIsInvalid(t *testing.T) {
 		t.Fatalf("RecordHandoff = %+v, %v; want invalid artifacts naming the first copy", v, err)
 	}
 	rows := w.copies(t)
-	if len(rows) != 2 || rows[0][1] != "1" || rows[0][8] != sum(planBody) || rows[1][1] != "2" || rows[1][8] != sum("edited after the copy\n") {
+	if len(rows) != 2 || rows[0][1] != "1" || rows[0][8] != commentSum(planBody) || rows[1][1] != "2" || rows[1][8] != commentSum("edited after the copy\n") {
 		t.Fatalf("copies.tsv %q; want the first copy kept and the edit as seen 2", rows)
 	}
 	if string(w.store.files["copies/701-1.md"]) != planBody || string(w.store.files["copies/701-2.md"]) != "edited after the copy\n" {

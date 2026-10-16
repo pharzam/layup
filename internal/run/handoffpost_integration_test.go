@@ -44,7 +44,7 @@ func afterRestart(r *Sessions) *Sessions {
 // and names it by a comment row.
 func commentSession(t *testing.T, r *Sessions, base worldAt, role, text string) string {
 	t.Helper()
-	spec := harness(t, base, planWork("plan.md", text, "comment\t1\tresult/plan.md\t"+sum(text)+"\t—"))
+	spec := harness(t, base, planWork("plan.md", text, "comment\t1\tresult/plan.md\t"+commentSum(text)+"\t—"))
 	spec.Role = role
 	id, err := r.TaskSession(context.Background(), spec)
 	if err != nil {
@@ -114,11 +114,11 @@ func TestThePlanThePlanReviewAndTheReviewRecordArePostedFromTheKeptCopy(t *testi
 			if len(cs) != 1 || cs[0]["body"] != planText {
 				t.Fatalf("the comments of the task's issue %v; want one with the bytes of the file", cs)
 			}
-			if p.Seen != 1 || p.SHA != sum(planText) || cs[0]["id"] != int(p.ID) {
+			if p.Seen != 1 || p.SHA != commentSum(planText) || cs[0]["id"] != int(p.ID) {
 				t.Errorf("Posted %+v for the comment %v", p, cs[0]["id"])
 			}
 			copies := keptRecord(t, w, "copies.tsv")
-			if !strings.Contains(copies, fmt.Sprintf("\n%d\t1\t%d\t9001\tlayup-agent[bot]\tlayup-agent\t", p.ID, taskIssue)) || !strings.Contains(copies, "\t"+sum(planText)+"\t") {
+			if !strings.Contains(copies, fmt.Sprintf("\n%d\t1\t%d\t9001\tlayup-agent[bot]\tlayup-agent\t", p.ID, taskIssue)) || !strings.Contains(copies, "\t"+commentSum(planText)+"\t") {
 				t.Errorf("copies.tsv:\n%s", copies)
 			}
 			if got := keptRecord(t, w, fmt.Sprintf("copies/%d-1.md", p.ID)); got != planText {
@@ -242,7 +242,7 @@ func TestTheLimitOfACommentThroughTheAdapter(t *testing.T) {
 	at := strings.Repeat("€", MaxCommentChars) // 65,536 characters, 196,608 bytes
 	id := commentSession(t, r, base, "software-engineer", at)
 	p, err := afterRestart(r).PostComment(ctx, "T-ab12", id, "plan.md")
-	if cs := commentsOf(w); err != nil || len(cs) != 1 || cs[0]["body"] != at || p.SHA != sum(at) {
+	if cs := commentsOf(w); err != nil || len(cs) != 1 || cs[0]["body"] != at || p.SHA != commentSum(at) {
 		t.Fatalf("the body at the limit: %v, %d comments; want it posted and read back equal", err, len(cs))
 	}
 	v, err := afterRestart(r).RecordHandoff(ctx, HandoffInput{Task: "T-ab12", Session: id, From: "task plan", To: "plan review", File: "plan.md", Kind: "plan", Items: map[string]bool{"plan-fields": true}})

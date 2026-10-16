@@ -324,7 +324,7 @@ func keptFiles(t *testing.T, w *world, id string) string {
 // the result; the session posts nothing (loop.md, The artifact that is a comment).
 func TestTheCommentRowOfASessionIsKeptWithTheResultInOneCommit(t *testing.T) {
 	w, r, f, base := sessionWorld(t)
-	row := "comment\t1\tresult/plan.md\t" + sum(planText) + "\t—"
+	row := "comment\t1\tresult/plan.md\t" + commentSum(planText) + "\t—"
 	id, err := r.TaskSession(context.Background(), harness(t, base, planWork("plan.md", planText, row)))
 	if err != nil {
 		t.Fatalf("TaskSession: %q, %v", id, err)
@@ -351,9 +351,9 @@ func TestTheCommentRowOfASessionIsKeptWithTheResultInOneCommit(t *testing.T) {
 // committed, as for an artifact, and that row's file is not kept.
 func TestACommentFileThatFailsItsRowIsRefusedArtifactAndNotKept(t *testing.T) {
 	for _, c := range []struct{ name, body string }{
-		{"differs", planWork("plan.md", planText, "comment\t1\tresult/plan.md\t"+sum("another")+"\t—")},
-		{"missing", planWork("plan.md", planText, "comment\t1\tresult/none.md\t"+sum(planText)+"\t—")},
-		{"a link", planWork("real.md", planText, "comment\t1\tresult/plan.md\t"+sum(planText)+"\t—") + " && ln -s real.md ../result/plan.md"},
+		{"differs", planWork("plan.md", planText, "comment\t1\tresult/plan.md\t"+commentSum("another")+"\t—")},
+		{"missing", planWork("plan.md", planText, "comment\t1\tresult/none.md\t"+commentSum(planText)+"\t—")},
+		{"a link", planWork("real.md", planText, "comment\t1\tresult/plan.md\t"+commentSum(planText)+"\t—") + " && ln -s real.md ../result/plan.md"},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			w, r, _, base := sessionWorld(t)
@@ -380,8 +380,8 @@ func TestACommentFileThatFailsItsRowIsRefusedArtifactAndNotKept(t *testing.T) {
 // comment ID is never in the session's result").
 func TestAResultThatHoldsACommentIDIsNoResult(t *testing.T) {
 	for _, c := range []struct{ name, row string }{
-		{"in the reason", "comment\t1\tresult/plan.md\t" + sum(planText) + "\t6213845433-1"},
-		{"as the value", "comment\t1\t6213845433\t" + sum(planText) + "\t—"},
+		{"in the reason", "comment\t1\tresult/plan.md\t" + commentSum(planText) + "\t6213845433-1"},
+		{"as the value", "comment\t1\t6213845433\t" + commentSum(planText) + "\t—"},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			w, r, _, base := sessionWorld(t)

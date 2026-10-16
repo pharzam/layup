@@ -736,8 +736,8 @@ value     text    -    its value, of the row's type; `—` while it is unset
 default   text    -    the default of `architecture.md` §10; `—` for none
 bound     text    -    what the value cannot do, in words
 role      enum(operator|idea-owner|approver)  -  the role that may change it
-evidence  text    -    the evidence of the value: the `because` reason; `—` for a default
-comment   int     -    the comment that set it; `—` for the default
+evidence  text    -    the evidence of the value: the `because` reason of the set that gave it, or `command` for the value of a Start row (`lease.H`, `watch.T`, `intake.cap`) that `start.tsv` gave; `—` for a row with no value
+comment   int     -    the comment that set it; `—` for a row that no set gave (a row with no value, or a Start row with its value of `start.tsv`)
 since     time    -    when `layup run` wrote the row
 ```
 
@@ -751,12 +751,11 @@ column): in `tasks`, `requirements` is never `—`, each predecessor is
 a task of the table and no cycle exists, and `pr` is `—` only until the pull request is
 opened (the row is replaced by a later commit, never edited in place within one);
 in `transitions`, a row for each default pair of the table of `loop.md` (The transition table) and no
-`artifacts` or `items` value outside the lists there; in `task-gates` and `task-spec-check`, one table for each head, rows in the
+`artifacts` or `items` value outside the lists there, and no `schema` among the `items` of the row of `code (rendered task)`, whose handoff code writes with no typed result; in `task-gates` and `task-spec-check`, one table for each head, rows in the
 order of the manifest and of the rule list; in `task-tests`, `frozen` is the same on each
 row of a freezing; in `options`, a `pass` with `—` in `evidence` is a valid row (the
 filter drops the option) and `fail` has `—`; in `bets`, one row for a milestone that has
-a `first` kind, and a `later` row only after it; in `inventory`, no column holds `—` and a fact has one row; in `inventory-index`, `sha256` and `bet` never `—`, and a reader that takes the rows of version n−1 verifies its `sha256` against the version's bytes first — `layup/spec` check reads the hash (loop.md, The rendered commit and the confirmed inventory); the writer of the next version trusts that verification, it sees rows, not bytes; in `task-tests`, `source`, `sha256` and `harness` never `—`; in `bets`, `brief_sha256` and `verdict` never `—`, and `appetite_usd` and `appetite_hours` are `—` exactly when `verdict` is `no-bet`; in `parameters`, the key is the name and a change is the next commit's
-row; in `retrospectives`, `time` is never `—` (a non-key column would hold
+a `first` kind, and a `later` row only after it; in `inventory`, no column holds `—` and a fact has one row; in `inventory-index`, `sha256` and `bet` never `—`, and a reader that takes the rows of version n−1 verifies its `sha256` against the version's bytes first — `layup/spec` check reads the hash (loop.md, The rendered commit and the confirmed inventory); the writer of the next version trusts that verification, it sees rows, not bytes; in `task-tests`, `source`, `sha256` and `harness` never `—`; in `bets`, `brief_sha256` and `verdict` never `—`, and `appetite_usd` and `appetite_hours` are `—` exactly when `verdict` is `no-bet`; in `parameters`, the key is the name and a change is the next commit's row; the rows are those of the table of `loop.md` (The parameters of M2e), in its order and no other, with its bound words, role and default, and `since` never `—`; a row with no `comment` is its own origin (a Start row has the value of `start.tsv`, of its type and within its bound, and `command` as `evidence`; any other row has no value and no `evidence`), and a row with a `comment` is a set (a `value` of its type and within its bound, and its reason as `evidence`, so the word `command` is a reason there); in `retrospectives`, `time` is never `—` (a non-key column would hold
 it). The rows of `copies.tsv` that a handoff names are read by the key of the
 comment and its `seen`.
 
