@@ -44,12 +44,15 @@ map=$(mktemp)
 awk -F'|' '/^\| `/{it=$2; gsub(/[` ]/,"",it); cb=$4; ms=$5; gsub(/^ +| +$/,"",cb); gsub(/^ +| +$/,"",ms); print it "\t" cb "\t" ms}' "$sec" > "$map"
 
 # Check 1: the mapping's first column equals the items list of internal/handoff
-# and the handoffItems of internal/records (minus pair).
+# and the handoffItems of internal/records (minus pair) — exact equality, so
+# membership joins for missing/extra items and a duplicate check for
+# cardinality; a duplicated mapping row is a failure, not a green.
 items_of() { sed -n "s/.*$1 = \[\]string{\(.*\)}.*/\1/p" "$2" | tr ',' '\n' | tr -d ' "'; }
 items_of 'items' "$handoff" | sort > /tmp/it-handoff.$$
 items_of 'handoffItems' "$records" | grep -v '^pair$' | sort > /tmp/it-records.$$
 diff -q /tmp/it-handoff.$$ /tmp/it-records.$$ > /dev/null || say "FAIL (1) the two code anchors differ: $handoff items vs $records handoffItems"
 cut -f1 "$map" | sort > /tmp/it-map.$$
+cut -f1 "$map" | sort | uniq -d | while read -r x; do say "FAIL (1) item mapped more than once: $x (anchors: $handoff items, $records handoffItems)"; done
 join -v1 /tmp/it-map.$$ /tmp/it-handoff.$$ | while read -r x; do say "FAIL (1) item in the mapping, not in $handoff: $x"; done
 join -v2 /tmp/it-map.$$ /tmp/it-handoff.$$ | while read -r x; do say "FAIL (1) item of $handoff not in the mapping: $x"; done
 join -v1 /tmp/it-map.$$ /tmp/it-records.$$ | while read -r x; do say "FAIL (1) item in the mapping, not in $records: $x"; done
@@ -88,7 +91,12 @@ while IFS='	' read -r item cb ms; do
 				say "NOTE (3) exception: $item's owner 66e keeps its cells (C1); the row exists and the item is named in the mapping"
 				continue
 			fi
-			grep "^| $r |" "$tasks" | grep -q "$item" || say "FAIL (3) $item's owner row $r does not name it in its Task or Demo cell"
+			# Only the Task and Demo cells count: table columns 4 and 5 (awk
+			# fields 5 and 6 with the leading empty column). An item that
+			# appears only in the Tests cell (column 9 / field 10) or in the
+			# scope links of another cell does not satisfy the anchor.
+			grep "^| $r |" "$tasks" | head -1 | awk -F'|' '{print $5 "|" $6}' |
+				grep -q "$item" || say "FAIL (3) $item's owner row $r does not name it in its Task or Demo cell"
 		done
 		;;
 	esac

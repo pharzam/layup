@@ -1,0 +1,39 @@
+Adversarial controls for runs/T-8bwd/items.sh — run in this worktree on the
+committed artifact (356f161, the merge of d09b1c0), each mutation applied to a
+tracked file, observed, and restored with git checkout. Both defects are those
+of the pre-first-freeze audit (issue #387, comment-6220740712).
+
+Control A — a duplicated mapping row
+  Mutation: the `plan-fields` row of "The items a caller computes"
+  (docs/spec/loop.md) duplicated by `sed -i '459p'`.
+
+  Checker at 356f161 (pre-repair):
+    NOTE (3) exception: tests-red-green's owner 66e keeps its cells (C1); the row exists and the item is named in the mapping
+    exit=0        <- false green: a duplicated row passes
+
+  Repaired checker:
+    FAIL (1) item mapped more than once: plan-fields (anchors: internal/handoff/table.go items, internal/records/session.go handoffItems)
+    NOTE (3) exception: tests-red-green's owner 66e keeps its cells (C1); the row exists and the item is named in the mapping
+    exit=1
+
+  Restored (git checkout docs/spec/loop.md): exit=0
+
+Control B — the item only in the owner's Tests cell
+  Mutation: `plan-fields` removed from the Task and Demo cells of plan-table
+  row 66l (docs/plan/README.md) and placed in its Tests cell
+  ("unit; integration (a real `git` tree); `plan-fields`").
+
+  Checker at 356f161 (pre-repair):
+    NOTE (3) exception: tests-red-green's owner 66e keeps its cells (C1); the row exists and the item is named in the mapping
+    exit=0        <- false green: the whole-row grep matched the Tests cell
+
+  Repaired checker (Task and Demo cells only — columns 4/5):
+    FAIL (3) plan-fields's owner row 66l does not name it in its Task or Demo cell
+    NOTE (3) exception: tests-red-green's owner 66e keeps its cells (C1); the row exists and the item is named in the mapping
+    exit=1
+
+  Restored (git checkout docs/plan/README.md): exit=0
+
+The `tests-red-green`/66e exception stays exactly as disclosed by the
+confirmation (the row exists and the item is named in the mapping; its cells
+are not edited, C1) — not widened to any other item.
