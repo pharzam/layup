@@ -1085,10 +1085,10 @@ failure modes worth keeping.
   Task `T-xs4y` (#333). **The check:** after a change of `packages.md` run `go test -tags=integration ./cmd/layup/`,
   after a new block `go test -tags=integration ./internal/tsv/`, and `git add` a new file before `setup-check`.
 - ❌ **A piped exit status that is the last command's, not the test's.** A run of
-  `go test ./... | tail; echo exit=$?` reports the status of `tail` — always 0 —
-  so a red suite reads green, and the same run's recorded times were of the
-  clock's reading of a draft, not of a measured run. It is silent because the
-  pipeline succeeds and output looks like a result. **The check:** capture the
+  `go test ./... | tail; echo exit=$?` reports the status of `tail`, normally 0
+  when `tail` succeeds, so a red suite can read green. Earlier evidence also used
+  unmeasured future timestamps from a draft instead of measured run times.
+  The pipeline can succeed while the tests fail and its output looks like a result. **The check:** capture the
   real status — run the command directly, or `set -o pipefail`, or read
   `${PIPESTATUS[0]}` — and record only times `date -u` was read for; a file that
   cites a run names its start, end and exit, or says the run was interrupted
