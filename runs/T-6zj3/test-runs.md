@@ -36,3 +36,12 @@ The first context was interrupted after run1 completed (50 rows, all of the driv
 Coordinator source-audit control: the original parent-link scratch assertion
 failed on801291b and passed against the byte/hash-checked repair, direct exits1/0
 (public6220627072). This is not the independent frozen-head review.
+
+## Root full integration on the stable repaired head
+
+`go test -count=1 -tags=integration -timeout 25m ./...` on
+`dff729b77e79329f6d40095990c371c2b21b1ee4` passed all21packages, direct exit0.
+UTC 2026-10-16T17:25:59.241544+00:00 to 2026-10-16T17:41:19.332701+00:00; 920091.157ms.
+This includes the whole-list link preflight and main d09b1c0. The main merge
+40741ce had no conflict; shared summaries retain both branches. Final exact-head
+CI and the fresh independent review remain required.
