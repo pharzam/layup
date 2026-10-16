@@ -179,3 +179,30 @@ them once on the stable head).
 | `git diff --cached --check` | | | 0 |
 | `go test -count=1 -tags=integration -run TestPackageRules ./cmd/layup/` (after `packages.md`) | 12:40:41Z | 12:40:43Z | 0 |
 | `go test -count=1 -tags=integration ./internal/tsv/ ./internal/records/ ./internal/session/ ./internal/handoff/` (the block equality) | 12:40:43Z | 12:40:54Z | 0 |
+
+## Coordinator full integration, main merge and actual resource reports
+
+Full module integration on abd7eadee4ae47a954da8023a7f00da7fced6e18:
+`go test -count=1 -tags=integration -timeout 25m ./...` direct exit0,
+all21packagesok. Wrapper UTC start2026-10-16T13:02:01.654318Z,
+end2026-10-16T13:19:21.769262Z (1040114.944ms).
+Current main cfcfc1c was then merged at4f05c2b. No task-authored Go changes
+follow the full run; main adds the separately verified #356/#359 implementations.
+Combined local checks and full-SHA CI are required on the merged landing tree.
+The first independent code review must explicitly assess four documentation
+conflicts: guardrails retains both sets of lessons; plan retains #359's real-git
+Test cell and #360's real-git Test cell; PRD changelog retains #356 then #360;
+packages retains #356 setup/migration ownership and #360's answer record kind.
+No shared-index review exception is claimed for these resolutions.
+
+Actual Sonnet5.5 CLI reports, effort high, no other model reported: plan
+I120/O64449/cache creation224153/read7495702, duration594914ms; build increment
+I244/O149625/cache creation231115/read45235778, duration2815648ms.
+Thinking39652/46664 respectively is already included in output, not added again.
+The end-of-build cumulative counters are not added to the plan a second time.
+The author's remaining-context counter is not token usage and is not credited.
+Independent SWE-2 Max plan review export: prompt3701351/completion47906/
+cached3543055 over51steps; cached is inside prompt, not an additional input.
+All exported step models are swe-2-max; elapsed is not reported.
+Private exports stay outside git. Metadata audits are issue360-resource-metadata.json
+and issue360-plan-review-resource.json under /tmp/layup-m2e-resume/.
