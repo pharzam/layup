@@ -18,8 +18,9 @@ Evidence: [`runs/T-8bwd/`](../../runs/T-8bwd/) (`items.sh`, `baseline-red.txt`,
    maps each of the fourteen handoff items to its input, its rule, the package
    and plan-table row that computes it, and its milestone; pins the field-line
    forms of the plan, the plan review and the review record; states that
-   `internal/handoff` computes `schema`, `artifacts`, `question-row` and
-   `answer-row` and that every other item is the caller's computed result, a
+   `internal/handoff` computes `schema` and `artifacts`, that `internal/run`
+   computes `question-row` and `answer-row` from the result (`RecordHandoff`,
+   row 66d) and that every other item is the caller's computed result, a
    missing result being false; records the question/answer comments as composed
    by `internal/run` from the `question`/`answer` rows and posted on the task's
    issue by the step-loop machinery; marks `patch-per-kind`, `register-rows`,
@@ -101,6 +102,39 @@ Evidence: [`runs/T-8bwd/`](../../runs/T-8bwd/) (`items.sh`, `baseline-red.txt`,
   run and was stopped before it reported; it is recorded here as interrupted
   and counts as neither pass nor fail. No full-module or e2e run was made by
   this task.
+
+## The producing-document audit and its repairs
+
+The pre-first-freeze audit
+([comment-6220740712](https://github.com/pharzam/layup/issues/387#issuecomment-6220740712))
+found three in-scope defects in the committed artifact `356f161`; the author's
+answer is
+[comment-6220818955](https://github.com/pharzam/layup/issues/387#issuecomment-6220818955):
+
+1. The section's opening sentence assigned `question-row`/`answer-row` to
+   `internal/handoff`; `internal/run.RecordHandoff` (handoffpost.go:287)
+   computes them. Sentence corrected (R10); the table already named the right
+   owners.
+2. `items.sh` check 1 used membership joins, so a duplicated mapping row
+   stayed green. Repaired to exact equality: a `uniq -d` duplicate diagnostic
+   plus the per-item member diagnostics.
+3. `items.sh` check 3 grepped the whole plan row, so an item appearing only
+   in the Tests cell satisfied the owner anchor. Repaired to grep only the
+   owner's Task and Demo cells (columns 4 and 5). The `tests-red-green`/66e
+   exception (C1) is unchanged.
+
+Controls in this worktree, run on the committed artifact and restored:
+duplicating the `plan-fields` row — old exit 0, repaired exit 1 naming
+`plan-fields` and its anchors; `plan-fields` only in row 66l's Tests cell —
+old exit 0, repaired exit 1 naming owner row 66l; each restored copy exit 0.
+Runs recorded in [`runs/T-8bwd/adversarial.txt`](../../runs/T-8bwd/adversarial.txt).
+
+The #396 boundary note
+([comment-6220700567](https://github.com/pharzam/layup/issues/396#issuecomment-6220700567))
+is registered: the `findings-located` parse is the input the step loop's
+caller boundary reads for the uphill rule of `architecture.md` §11 — the
+parser is row 66l's, the wiring stays #367's; no O-214 count changes and
+nothing is claimed implemented.
 
 ## Open
 
