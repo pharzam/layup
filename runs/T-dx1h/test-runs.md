@@ -71,3 +71,16 @@ creation237934/read46287147, duration2333621ms. End-of-build cumulative counters
 input356/output219049/cache creation440369/read52773764, not added again to
 the plan. No other model is reported. Private sessions stay outside git;
 metadata audit: /tmp/layup-m2e-resume/issue358-resource-metadata.json.
+
+## Current-main integration before the final review cycle
+
+Main cfcfc1c was merged at5ccc6f9 after the first code review. No task-authored
+Go implementation or test changes follow7095100; main adds #356/#359 code and
+the shared built-list resolution retains parameters and retrospectives.
+The final review explicitly judges five conflict resolutions: both guardrail
+lesson sets, #358/#359 Test cells in the plan, both PRD Task/Test additions,
+the parameters owner predicates together with the retrospective time predicate,
+and the implemented-block union. Only the named shared indexes claim O-219;
+the other overlaps consume the task's allowed fix-and-review cycle1/cap1.
+The earlier full integration covers the task's Go implementation; combined local
+checks and final full-SHA CI are still required for this merged landing tree.
