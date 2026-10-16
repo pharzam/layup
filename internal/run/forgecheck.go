@@ -56,7 +56,7 @@ type forgeCheckJob struct {
 	commit   func(table []byte) error
 	clean    func(string) string
 	landing  func(head, last string) error // asked of a head that is another commit than the last: nil, it is the code-owner commit
-	note     func(string)                  // a line of the step's own; nil for none
+	note     func(string)                  // a line of the step's own
 }
 
 // firstLine is the text up to its first line feed.
@@ -181,15 +181,13 @@ func (j forgeCheckJob) treeHead(head, last string) (string, bool) {
 		none = "none"
 	}
 	plain := fmt.Sprintf("the head of %s is %s, and setup/tree.tsv ends at %s", j.branch, none, last)
-	if head == "" || j.landing == nil {
+	if head == "" {
 		return plain, false
 	}
 	if err := j.landing(head, last); err != nil {
 		return plain + "; it is not the code-owner commit: " + err.Error(), false
 	}
-	if j.note != nil {
-		j.note("tree: " + head + " is the code-owner commit above " + last)
-	}
+	j.note("tree: " + head + " is the code-owner commit above " + last)
 	return "", true
 }
 

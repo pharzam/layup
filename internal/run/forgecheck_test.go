@@ -667,24 +667,6 @@ func TestTheTreeRowAdmitsTheCodeOwnerCommitAndNothingElse(t *testing.T) {
 			t.Errorf("%s: row %q, the check asked %v; want a fail and the check never asked", name, rows[0], f.landingCalls)
 		}
 	}
-
-	// a job with no check (the seam nil) and a note nil keep the old row and do not panic
-	f = newCheckFake()
-	f.repo.Heads["main"] = ahead
-	j := f.job()
-	j.landing, j.note = nil, nil
-	j.do()
-	if rows := f.rowsOf(t); rows[0][1] != "fail" || rows[0][2] != "the head of main is "+ahead+", and setup/tree.tsv ends at "+lastCommit {
-		t.Errorf("no check: row %q; want the old fail", rows[0])
-	}
-	f = newCheckFake()
-	f.repo.Heads["main"], f.landingErr = ahead, nil
-	j = f.job()
-	j.note = nil
-	j.do()
-	if rows := f.rowsOf(t); rows[0][1] != "pass" {
-		t.Errorf("an admitted head with no note seam: row %q; want a pass", rows[0])
-	}
 }
 
 // lastForTest makes the last commit of the tree record of the fake sha, a real commit of a test repository.
