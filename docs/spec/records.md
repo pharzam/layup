@@ -65,6 +65,7 @@ or payload of one task is under `tasks/<task>/`.
 | `tasks/<task>/spec-check.tsv` | the table of the full `layup spec check` for each head of the task | 7, 8 | `layup run` | 2 (`M2e`) | [below](#nfr-001--the-records-of-the-task-loop) |
 | `acceptance.tsv` | one row per review of a requirement | 8, 12 | `layup run` | 2 | later |
 | `parameters.tsv` | every parameter | 10 | `layup run` | 2 (`M2e`) | [below](#nfr-001--the-records-of-the-task-loop) |
+| `retrospectives.tsv` | the event of a milestone's Retrospective | 8 | `layup run` | 2 (`M2e`) | [below](#nfr-001--the-records-of-the-task-loop) |
 | `harnesses.tsv` | the admitted harnesses, their versions and probe results | 9 | `layup run` | 2 (`M2b`) | [below](#nfr-001--the-records-of-a-session) |
 | `owners.tsv` | the confirmed owner map | 9 | `layup run` | 3 | later |
 | `routing.tsv` | the routing register and its weights | 9, 13 | `layup run` | 2 (`M2b`, K38) | [below](#nfr-001--the-records-of-a-session), the order only |
@@ -610,8 +611,10 @@ that writes it changes the block and its Go schema in one change.
 - `run-steps`: the enum of `step` gains `markers`, `setup`, `verify`,
   `scaffold-push` and `forge-check`
   ([`scaffold.md`](scaffold.md#the-steps-of-the-scaffold));
-- `setup-record`: the row name `without-layup`
-  ([`scaffold.md`](scaffold.md#nfr-002--a-target-without-layup)), and two forms
+- `setup-record`: the row names `without-layup`
+  ([`scaffold.md`](scaffold.md#nfr-002--a-target-without-layup)) and, from `M2e`, `codeowners.sha256` of S13
+  (`computed`, ref `sha256 .github/CODEOWNERS`; the record of a target set up before the code-owner rule lacks it, which is how `layup run` tells
+  that target, [`scaffold.md`](scaffold.md#the-code-owner-rule-of-a-target-that-m2d-set-up)), and two forms
   of the `ref` of a `computed` row, `records:start/start.tsv` (S01, S02 in
   phase 2) and `out/ruleset-default.json` (`without-layup`), which check
   `sources` accepts as it is (a ref that is not empty);
@@ -632,8 +635,8 @@ the files of an earlier session whose rows the runner passed stay
 Milestone `M2e` (task `T-xs4y`, #333): the records that `layup run` writes for the
 task loop, the handoffs, Shape and the bet ([`loop.md`](loop.md)). Each is a file of
 the records branch, which only the App updates (the rulesets of `M2d`). The owners
-are `internal/run` for `tasks`, `task-gates`, `task-tests`, `bets` and
-`parameters`, `internal/handoff` for `transitions` (it checks the table), `internal/spec` for `inventory`, `inventory-index`, `options` and
+are `internal/run` for `tasks`, `task-gates`, `task-tests`, `bets`,
+`parameters` and `retrospectives`, `internal/handoff` for `transitions` (it checks the table), `internal/spec` for `inventory`, `inventory-index`, `options` and
 `task-spec-check`; their tasks compare each with its Go schema and move its name from
 `notYetBuilt` ([`README.md`](README.md#the-schema-block)). A block of an earlier
 milestone that `M2e` extends keeps its name in `built` and changes in words here: the
@@ -733,6 +736,11 @@ comment   int     -    the comment that set it; `—` for a row that no set gave
 since     time    -    when `layup run` wrote the row
 ```
 
+```tsv-schema retrospectives records:retrospectives.tsv
+milestone  text  key  the milestone, the same string as `bets.milestone`
+time       time  -    when `layup run` recorded the event
+```
+
 **Decided here** (the owner checks, after the types, an error naming the line and the
 column): in `tasks`, `requirements` is never `—`, each predecessor is
 a task of the table and no cycle exists, and `pr` is `—` only until the pull request is
@@ -742,8 +750,8 @@ in `transitions`, a row for each default pair of the table of `loop.md` (The tra
 order of the manifest and of the rule list; in `task-tests`, `frozen` is the same on each
 row of a freezing; in `options`, a `pass` with `—` in `evidence` is a valid row (the
 filter drops the option) and `fail` has `—`; in `bets`, one row for a milestone that has
-a `first` kind, and a `later` row only after it; in `inventory`, no column holds `—` and a fact has one row; in `inventory-index`, `sha256` and `bet` never `—`, and a reader that takes the rows of version n−1 verifies its `sha256` against the version's bytes first — `layup/spec` check reads the hash (loop.md, The rendered commit and the confirmed inventory); the writer of the next version trusts that verification, it sees rows, not bytes; in `task-tests`, `source`, `sha256` and `harness` never `—`; in `bets`, `brief_sha256` and `verdict` never `—`, and `appetite_usd` and `appetite_hours` are `—` exactly when `verdict` is `no-bet`; in `parameters`, the key is the name and a change is the next commit's row; the rows are those of the table of `loop.md` (The parameters of M2e), in its order and no other, with its bound words, role and default, and `since` never `—`; a row with no `comment` is its own origin (a Start row has the value of `start.tsv`, of its type and within its bound, and `command` as `evidence`; any other row has no value and no `evidence`), and a row with a `comment` is a set (a `value` of its type and within its bound, and its reason as `evidence`, so the word `command` is a reason there).
-The rows of `copies.tsv` that a handoff names are read by the key of the
+a `first` kind, and a `later` row only after it; in `inventory`, no column holds `—` and a fact has one row; in `inventory-index`, `sha256` and `bet` never `—`, and a reader that takes the rows of version n−1 verifies its `sha256` against the version's bytes first — `layup/spec` check reads the hash (loop.md, The rendered commit and the confirmed inventory); the writer of the next version trusts that verification, it sees rows, not bytes; in `task-tests`, `source`, `sha256` and `harness` never `—`; in `bets`, `brief_sha256` and `verdict` never `—`, and `appetite_usd` and `appetite_hours` are `—` exactly when `verdict` is `no-bet`; in `parameters`, the key is the name and a change is the next commit's row; the rows are those of the table of `loop.md` (The parameters of M2e), in its order and no other, with its bound words, role and default, and `since` never `—`; a row with no `comment` is its own origin (a Start row has the value of `start.tsv`, of its type and within its bound, and `command` as `evidence`; any other row has no value and no `evidence`), and a row with a `comment` is a set (a `value` of its type and within its bound, and its reason as `evidence`, so the word `command` is a reason there); in `retrospectives`, `time` is never `—` (a non-key column would hold
+it). The rows of `copies.tsv` that a handoff names are read by the key of the
 comment and its `seen`.
 
 ## REQ-011 — The telemetry record

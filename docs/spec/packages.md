@@ -255,7 +255,7 @@ of `M2a`, `M2b`, `M2c` and `M2e`; the build task that made `internal/handoff` (t
   handoff and its events, the attempts, the statuses, the ready and merge rule, the
   close-out check and the merge at the head SHA, Shape and the bet, the parameter
   change and the Retrospective step, and the Go schemas of `tasks`,
-  `task-gates`, `task-tests`, `bets` and `parameters` (`internal/handoff` owns that of
+  `task-gates`, `task-tests`, `bets`, `parameters` and `retrospectives` (`internal/handoff` owns that of
   `transitions`). Its row in [the table of M2a](#the-table-of-m2a) is changed in place:
   its May import cell gains `internal/handoff` and `internal/gate`. It starts
   no program: the cell "Starts a program" does not change.
@@ -270,7 +270,11 @@ of `M2a`, `M2b`, `M2c` and `M2e`; the build task that made `internal/handoff` (t
 - `internal/setup` and `internal/catalog`: the `CODEOWNERS` file and the code-owner
   rule of the default branch's ruleset, and the catalog workflow whose gate jobs
   read the base ([`loop.md`](loop.md#the-gate-jobs-read-the-base)); that workflow is
-  the catalog's file, the ruleset the setup's.
+  the catalog's file, the ruleset the setup's. Task `T-jew3` (row 65b): `internal/setup` writes
+  `.github/CODEOWNERS`, the rule and, for a target set up before it, the files of its migration
+  ([`scaffold.md`](scaffold.md#the-code-owner-rule)); `internal/run` gives it the Operator's login (the row of
+  `approvers.tsv`) and the mode (from `setup/record.tsv` and `setup/rulesets.txt`) in `setup.Phase2`. No new
+  package, import, command, flag, step or record kind.
 - `internal/records`: the kinds `question`, `decision`, `lesson` and `comment` of the block
   `result`, and the kinds `handoff` and `merged` of the block `events` (`closed` and
   `rebased` exist there; `M2e` sets their detail).

@@ -553,8 +553,8 @@ own gate, as each native gate job runs the head's `gates.sh` with the head's
    `pull_request` of the default branch's ruleset sets `require_code_owner_review`
    `true` with `required_approving_review_count` `0`, so that the rule binds a pull
    request that touches a listed path and no other
-   ([`scaffold.md`](scaffold.md#the-ruleset-of-the-default-branch), whose table
-   `M2e` changes in the build). **Unconfirmed:** whether GitHub binds the
+   ([`scaffold.md`](scaffold.md#the-code-owner-rule), task `T-jew3`: `.github/CODEOWNERS` is in the
+   tree of the target, and the rule is in the ruleset file of the default branch). **Unconfirmed:** whether GitHub binds the
    code-owner rule when the count of approvals is 0 is not in a source of the
    search; the build task confirms it on a real repository in the demo. If GitHub
    needs one approval for the rule to bind, every pull request would wait for a
@@ -588,7 +588,11 @@ issue #336, and the batch part is `M2f`'s (both in [Not in M2e](#not-in-m2e)). T
 comment with the decisions of S3 said that no decision changes an accepted ADR; the
 correction of round 2 withdraws that for decision 6 and points to #336. The account
 of the code owner is the Operator's row of `approvers.tsv`; where `CODEOWNERS` is
-written and how the ruleset reaches a target that `M2d` set up is a marker, ‹where CODEOWNERS is written and how its ruleset is applied› (`open-gaps.tsv`): the Operator's apply step, as in `M2d`.
+written and how the ruleset reaches a target that `M2d` set up is decided by the Operator (comment 6209820437 of #356): the file in the tree of
+the target, the ruleset files and the commands for the Operator to review and run, and, for a target set up before the rule, the update of its
+ruleset by the recorded ID with its protections kept ([`scaffold.md`](scaffold.md#the-code-owner-rule-of-a-target-that-m2d-set-up)). **Open
+(Q1 of #356, the child issue #384):** the commit that lands `CODEOWNERS` on the base of such a target is a head that the tree check refuses, so its script cannot run
+until the check admits it (`M2f` or a task of its own).
 
 ### The tree after the first merge
 
@@ -959,7 +963,8 @@ reason being its evidence.
 
 `architecture.md` §8 puts a Retrospective between the Accept and the next Bet. In
 phases 2 and 3 **decided here** (open question 4 of the inventory) it is a step
-with **no session**: code writes its event and goes to the next Bet. Proposals for
+with **no session**: code writes its event — a row of `retrospectives.tsv`, the
+block `retrospectives` of [`records.md`](records.md#nfr-001--the-records-of-the-task-loop) — and goes to the next Bet. Proposals for
 a rule batch that came from refused rule-path changes are collected for `M2f`; the
 lessons and `layup learn` are phase 4. **Reason:** `architecture.md` §13 gives the
 retrospective its content in phase 4, and an empty step that is a row keeps the
@@ -1082,7 +1087,7 @@ the milestone covers it end to end.
 | The parameter change (inventory) | unit | A `set` is refused for a form that is not one line, a wrong role, an unknown name, a value of no type or out of bound, and the one that passes is applied as one replaced row, its default, bound and role kept; a set at or below the comment that its row records is superseded and is no change; a `prd-lint` head is accepted only when each failure line names an empty MoSCoW or Phase cell. |
 | The parameter change at the boundary | integration | With the stand-in forge and real git: `layup run` writes `parameters.tsv` with its six rows in the commit of the first task (a table that exists is kept, one that its reader refuses refuses the task); a `set` is copied and, at the boundary, applied as one records commit when its author has the role of the row, and changes nothing before it; each refusal (`form`, `author`, `name`, `value`, `bound`) is reported with its item, changes nothing and is judged again at the next boundary; a set that is applied is not applied again, the later of two wins in the order of the comment IDs, and an edit of a comment is no set; a set of a Start row is recorded with the note that the run reads `start.tsv`; the write is fenced by the lease. The call between steps is row 66k's. |
 | The frozen test list | unit | The list freezes at the first valid handoff to the verifier, a changed source hash is a finding, an amendment freezes it again, and a test that does not fail at the base makes the handoff invalid. |
-| The gate jobs read the base (F-22) | integration | A pull request that edits `docs/gates.tsv` to pass a failing kind is judged by the base's file and fails; the catalog workflow reads the base; a pull request of a `batch/<point>` branch reads its own head's gate files and a pull request of any other branch does not; a change of a `config` path of the manifest waits for the code owner. |
+| The gate jobs read the base (F-22) | integration | A pull request that edits `docs/gates.tsv` to pass a failing kind is judged by the base's file and fails; the catalog workflow reads the base; a pull request of a `batch/<point>` branch reads its own head's gate files and a pull request of any other branch does not; a change of a `config` path of the manifest waits for the code owner (shown on a real repository in the demo). The setup (task `T-jew3`, unit and integration): `.github/CODEOWNERS` of the four path classes with the Operator's login is in the tree of a new target, the ruleset sets `require_code_owner_review` with no required approval, and a target set up before the rule gets the update by its recorded ruleset ID, which keeps what the file never held ([`scaffold.md`](scaffold.md#the-code-owner-rule)). |
 | The task loop with the stand-in forge (inventory) | integration | With the httptest forge, fake harness programs and the real git: a gate failure goes back to the developer as a new attempt; the close-out commit is refused when it changes a file other than the task file and the completed log; the pull request body links the records commit; the merge is at the head SHA. |
 | The specification task, end to end (inventory) | e2e | In CI on a local fake forge, with scripted harnesses and scripted approver comments: Shape, the first bet, and the specification task merged with the four `layup/` statuses green. |
 | The demo (inventory) | uat | On a real test target, the idea owner reads a bet brief of five parts within the line limit and answers it with one comment; the specification task merges after the first bet, with each handoff valid, the rendered commit holding the MoSCoW and Phase columns, and the four `layup/` checks green. |
