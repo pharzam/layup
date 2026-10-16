@@ -159,6 +159,7 @@ layup setup WORK
 | `WORK/out/verify.tsv` | the table of `layup setup verify`, which S15 commits | the Operator, by redirecting its output |
 | `WORK/out/ruleset-default.json` | the ruleset of the default branch ([S13](#the-steps)) | `layup setup` |
 | `WORK/out/ruleset-records.json` | the ruleset of the records branch ([S13](#the-steps), phase 2 only) | `layup run` (phase 2) |
+| `WORK/out/CODEOWNERS`, `WORK/out/land-code-owner.sh` | the file for the landing of `.github/CODEOWNERS`, and the script of the landing, of a target set up before the code-owner rule ([`scaffold.md`](scaffold.md#the-code-owner-rule-of-a-target-that-m2d-set-up), phase 2 only) | `layup run` (phase 2) |
 | `WORK/out/commands.sh` | each command for the Operator, in order, with a comment line before each | `layup setup` |
 
 ### The steps
@@ -534,8 +535,10 @@ and the notes of its plan review):
   `required_status_checks` (strict), in the order of
   [the table of `scaffold.md`](scaffold.md#the-ruleset-of-the-default-branch)
   (task `T-9v92`), and no bypass actor; in phase 2 also the four `layup/`
-  checks, the file of the records branch and the row `without-layup`
-  ([`scaffold.md`](scaffold.md#the-steps-of-the-setup-in-phase-2)). Its value rows:
+  checks, `require_code_owner_review` `true` (task `T-jew3`), the file of the records branch and the row `without-layup`
+  ([`scaffold.md`](scaffold.md#the-steps-of-the-setup-in-phase-2)); in phase 2 it also writes `.github/CODEOWNERS` into the tree, with the row
+  `codeowners.sha256` (source `computed`, ref `sha256 .github/CODEOWNERS`), or, for a target set up before that rule, the files of `out/` of
+  [its migration](scaffold.md#the-code-owner-rule-of-a-target-that-m2d-set-up). Its value rows:
   `branch-protection.sha256` and `ruleset.sha256` (source `computed`, ref
   `sha256 <path>`). Its commands, run from the work area: order 2
   `git -C target push origin layup-setup:main`, and order 4

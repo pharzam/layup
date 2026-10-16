@@ -17,4 +17,3 @@ docs/tests/dod-checklist.md	‹unit \| integration \| e2e›	What is LAYUP's Def
 docs/tests/dod-checklist.md	‹unit \| integration›	What is LAYUP's Definition of Done? No source gives it yet; the kit's example items are not LAYUP's (question for the idea owner).
 docs/tests/dod-checklist.md	‹✓ / ✗›	What is LAYUP's Definition of Done? No source gives it yet; the kit's example items are not LAYUP's (question for the idea owner).
 docs/spec/loop.md	‹the line limit of the bet brief›	What is the brief's line limit (`brief.lines`, architecture.md §10)? No source gives it: M2c did not set it at Intake; the Operator sets it, on the idea owner's evidence.
-docs/spec/loop.md	‹where CODEOWNERS is written and how its ruleset is applied›	Where does the setup write CODEOWNERS for the gate paths, and how does the Operator apply the code-owner rule of the default branch's ruleset to a target that M2d set up (F-22)? Question for the Operator.
