@@ -1019,6 +1019,26 @@ These traps are not domain-specific: they hurt every project's test suite.
   own reader (plan review, C1). **The check:** write the reader's rules as the kinds of row (here: a row with no
   comment is its own origin, a row with a comment is a set) and give the test the writer's output before any other
   case, so the writer and the reader cannot disagree.
+- ❌ **A negative assertion on a records file that the world has already written to.** The test of a post that
+  fails asserted that `copies.tsv` held no `copies/` text, and it was false on a correct tree: Start had copied the
+  dead-man notice of the control issue (`copies/501-1.md`), so the file always held one. Task `T-q5k4` (#360),
+  found when its integration tests were run against a stub. **The check:** count the rows that belong to the thing
+  under test (here the rows whose `issue` is the task's), never the text of a file that other steps write, and
+  run a "nothing was written" case against the real code once before the stub.
+- ❌ **A limit quoted from the forge's error message and not measured.** The comment of a task is posted as one
+  body, and `loop.md` took the forge's own words for its size ("maximum is 65536 characters"). Probes on
+  2026-10-16 (`runs/T-q5k4/`) found 65,537 characters, 131,072 bytes and 262,143 bytes accepted, and 131,072
+  three-byte letters (393,216 bytes) refused with that same message, so the message is not the rule that is
+  enforced. Task `T-q5k4` (#360). **The check:** when code relies on a forge limit, read the answer of a probe at
+  both sides of the number, say which unit it is counted in, and keep the documented number as the side that
+  never posts a body the forge could refuse; do not write the limit as a fact on the strength of the message.
+- ❌ **A fixture that sets a field on the struct and so bypasses the production constructor.** `Sessions.App` was
+  added for the adoption of the App's own comment after a lost copy, and its test passed because the test world set
+  `App` by hand; the only constructor that a run uses, `state.sessions()`, never set it, so the recovery was dead code
+  and a restart posted a second comment. Task `T-q5k4` (#360), round 1, finding 1. **The check:** when a change adds a
+  field that a run must carry, build the object under test in at least one behavioural test through the constructor
+  that the run uses (here `state.sessions()` on a `Config` with the App's slug), and run that test against the mutant
+  that removes the assignment; a test that only reads the copied field, or sets it itself, proves nothing about the run.
 
 ### Reference-sweep pitfalls
 

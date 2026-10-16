@@ -372,11 +372,11 @@ time time - when `layup run` recorded the event
 ```
 
 ```tsv-schema result records:tasks/<task>/results/<session>.tsv
-kind enum(status|artifact|question|decision|lesson|comment) key the kind of the row; `M2e` adds the kinds of a handoff: `question`, `decision`, `lesson` and `comment`
+kind enum(status|artifact|question|decision|lesson|comment|answer) key the kind of the row; `M2e` adds the kinds of a handoff: `question`, `decision`, `lesson`, `comment` and `answer`
 n int key the row's number within its kind, from 1
-value text - for `status`: `completed`, `blocked`, `needs_context`, `decision_needed` or `failed`; for `artifact`: its path in the target; for `question`, `decision` and `lesson`: its text, one line; for `comment`: `result/<file>`, a file of the session's `result/` directory
+value text - for `status`: `completed`, `blocked`, `needs_context`, `decision_needed` or `failed`; for `artifact`: its path in the target; for `question`, `decision`, `lesson` and `answer`: its text, one line; for `comment`: `result/<file>`, a file of the session's `result/` directory
 sha256 sha256 - for `artifact`: the SHA-256 of the file at the session's head; for `comment`: the SHA-256 of that file of `result/`; `—` for the other kinds
-reason text - for `status`: one line; for `question`: the label of its kind, its `needs_human` word and each record it concerns, one space between; for `decision`: one line; for `lesson`: the records it concerns, or `—`; `—` for `artifact` and `comment`
+reason text - for `status`: one line; for `question`: the label of its kind, its `needs_human` word and each record it concerns, one space between; for `decision`: one line; for `lesson`: the records it concerns, or `—`; for `answer`: the records it rests on, one or more, one space between; `—` for `artifact` and `comment`
 ```
 
 ```tsv-schema probe-result host:sessions/<session>/result/probe.tsv
@@ -398,18 +398,23 @@ plan); `merged`, the merge of a task's pull request by `layup run` (row 66g); ea
 `artifact` value of the type `path`; **decided here** (task `T-fn5s`, row 60 of [the
 plan](../plan/README.md#the-tasks-of-m2e)), the rules of the kinds that `M2e` adds, since
 [`loop.md`](loop.md#the-checks-of-a-handoff) gives the content and not the columns: a
-`question`, a `decision` and a `lesson` have a `value` (its text) and no `sha256`; the
+`question`, a `decision`, a `lesson` and an `answer` have a `value` (its text) and no `sha256`; the
 `reason` of a `question` holds at least two words: the label of its kind as one word (the
 words of a kind joined by `-`: `domain-or-business`, `architecture-boundary`, `interface-contract` or
 `environment-or-infrastructure` for the four of the default owner map; an unknown label is read, as the owner
 map is `loop.md`'s), the `needs_human` word (any word: a word other than `yes` or `no`
 sends the question to a human, `loop.md`), and the records it concerns, one word each, after
 them, with one space between two words and none at either end (a reader that splits on one space reads
-the same words as the check); the `reason` of a `lesson` is `—` or its records in that form; the `reason` of a `decision` is not `—`; a
+the same words as the check); the `reason` of a `lesson` is `—` or its records in that form; the `reason` of a `decision` is not `—`; the `reason`
+of an `answer` is the records it rests on (**decided here**, task `T-q5k4`, row 66d, which settles #377 by R10): one or more, in that form, never `—`, so that an answer row cites at
+least one record; the **answer ID** is `<S-xxxxxxxx>.<n>`, the session of the owner role that wrote the row and the row's `n`, and **a result cites** an ID when it is a word of the `reason` of its
+`status` row, as a `question` row cites it when it is a word of its `reason` ([`loop.md`](loop.md#the-checks-of-a-handoff)); a
 `comment` has a `value` of the form `result/<file>` (one level, of the type `path`) and a
 `sha256`, no `reason`, and is checked at the end of the session against its file, not
-against the head ([`loop.md`](loop.md#the-artifact-that-is-a-comment)); within each of
-the six kinds `n` runs 1 to k; a `handoff` event has no `base` and no `sha`, its `detail`
+against the head ([`loop.md`](loop.md#the-artifact-that-is-a-comment)): a row that fails adds the event
+`refused` with the reason `artifact`, and a file that cannot be posted the event `refused` with the reason `handoff`, once
+for the session (task `T-q5k4`); within each of
+the seven kinds `n` runs 1 to k; a `handoff` event has no `base` and no `sha`, its `detail`
 is `valid` or `invalid <item>` (the item is one word of the table of items of `loop.md`, or `pair` for a pair with no row of `transitions.tsv`) and, for an artifact that is a comment, ends with ` comment <ID>-<seen>`
 (the key of a row of `copies.tsv`, both numbers of 1 or more); a `merged` event has no
 `session` and no `base`, the merge commit's SHA in `sha`, and the number of the pull
@@ -641,7 +646,7 @@ are `internal/run` for `tasks`, `task-gates`, `task-tests`, `bets`,
 `notYetBuilt` ([`README.md`](README.md#the-schema-block)). A block of an earlier
 milestone that `M2e` extends keeps its name in `built` and changes in words here: the
 build task changes the block and its Go value in one change. The three that
-`M2e` extends are `result` (the kinds `question`, `decision`, `lesson` and `comment` after
+`M2e` extends are `result` (the kinds `question`, `decision`, `lesson`, `comment` and `answer` after
 `status` and `artifact`; a `comment` row names a file of the session's `result/` directory, which the end of the session checks, not the head), `events` (the new kinds `handoff`, with the detail `valid` or
 `invalid <item>` and, for a comment, after a space `comment <ID>-<seen>` (the key of the row of `copies.tsv`), and `merged`, with
 the merge commit's SHA in `sha` and the pull request's number as its detail (`session` is `—` for `merged`, and for the `handoff` of a rendered task, which code writes); the
