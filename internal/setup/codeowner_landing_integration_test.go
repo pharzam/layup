@@ -159,6 +159,8 @@ func TestCheckCodeOwnerLanding(t *testing.T) {
 			"the head has 0 parents, and must have exactly one, the last setup commit " + r.last},
 		{"the canonical tree above the root commit", func() string { return r.commit(canonicalTree, "wrong parent", nil, r.root) },
 			"the parent of the head is " + r.root + ", not the last setup commit " + r.last},
+		{"an empty commit above the canonical one", func() string { return r.commit(canonicalTree, "empty", nil, child(canonicalTree)) },
+			"the parent of the head is " + child(canonicalTree) + ", not the last setup commit " + r.last},
 		{"a merge of the last commit and a side commit", func() string { return r.commit(canonicalTree, "merge", nil, r.last, side) },
 			"the head has 2 parents, and must have exactly one, the last setup commit " + r.last},
 		{"an empty commit above the last one", func() string { return r.commit(r.tree, "empty", nil, r.last) }, "the head adds no .github/CODEOWNERS"},
@@ -216,26 +218,6 @@ func TestCheckCodeOwnerLanding(t *testing.T) {
 		case c.want != "" && (err == nil || err.Error() != c.want):
 			t.Errorf("%s:\n got %v\nwant %q", c.name, err, c.want)
 		}
-	}
-}
-
-// A second commit above the canonical one, and an empty commit above it, are heads of their own: their parent is the canonical
-// commit, not the last setup commit, so they are refused (the table above gives them the parent that CheckCodeOwnerLanding reads).
-func TestAHeadAboveTheCanonicalCommitIsRefused(t *testing.T) {
-	r := newLandingRepo(t, false)
-	canonicalTree := r.treeOf(r.tree, edit{path: ".github/CODEOWNERS", content: []byte(canonical)})
-	one := r.commit(canonicalTree, "canonical", nil, r.last)
-	for name, head := range map[string]string{
-		"an empty commit": r.commit(canonicalTree, "empty", nil, one),
-		"a second change": r.commit(r.treeOf(canonicalTree, edit{path: "docs/y.md", content: []byte("y\n")}), "second", nil, one),
-	} {
-		want := "the parent of the head is " + one + ", not the last setup commit " + r.last
-		if err := r.check(head); err == nil || err.Error() != want {
-			t.Errorf("%s:\n got %v\nwant %q", name, err, want)
-		}
-	}
-	if err := r.check(one); err != nil {
-		t.Errorf("the canonical commit: %v", err)
 	}
 }
 

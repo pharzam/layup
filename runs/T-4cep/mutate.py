@@ -37,7 +37,7 @@ V = [
 UNIT = ["go", "test", "-count=1", "./internal/setup", "./internal/run", "./internal/git"]
 INT = ["go", "test", "-count=1", "-tags=integration"]
 STEPS = [("unit", UNIT),
- ("int0", INT + ["./internal/setup", "-run", "TestTheLandingScript$|TestTheLandingCommitIsAdmitted|TestCheckCodeOwnerLanding$|TestAHeadAbove|TestATargetSetUp"]),
+ ("int0", INT + ["./internal/setup", "-run", "TestTheLandingScript$|TestTheLandingCommitIsAdmitted|TestCheckCodeOwnerLanding$|TestATargetSetUp"]),
  ("int1", INT + ["./internal/run", "-run", "TestTheTreeRowOnRealObjects"]), ("int2", INT + ["./internal/git", "-run", "TestParentsAndTheWholeTree"])]
 
 def sha(p): return hashlib.sha256(open(p, "rb").read()).hexdigest()
