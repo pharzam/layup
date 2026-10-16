@@ -23,6 +23,7 @@ const (
 	m2aHeading   = "### The table of M2a"
 	m2bHeading   = "### The table of M2b"
 	m2cHeading   = "### The table of M2c"
+	m2eHeading   = "### The table of M2e"
 	adapterLine  = "The one package that imports them:"      // the line of rule 5
 	engineLine   = "The packages of the engine checks:"      // the line of NFR-005 (session.md)
 	phase1Cell   = "(the row of phase 1"                     // a cell of the table of M2a that stands for the cell of phase 1
@@ -218,9 +219,9 @@ func readTable(text string) (map[string]row, error) {
 			rows[pkg[0]] = r
 		}
 	}
-	// The tables of M2b and M2c (task T-4ywt, row 41a) have one form: each row
-	// is a package of its own.
-	for _, heading := range []string{m2bHeading, m2cHeading} {
+	// The tables of M2b, M2c and M2e (task T-4ywt, row 41a; task T-h17s, row
+	// 61) have one form: each row is a package of its own.
+	for _, heading := range []string{m2bHeading, m2cHeading, m2eHeading} {
 		if err := readOwnTable(text, heading, rows); err != nil {
 			return nil, err
 		}
