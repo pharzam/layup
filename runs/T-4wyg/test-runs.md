@@ -137,3 +137,12 @@ cached9565208 (101metricrows), plus missing portions. Cached is inside prompt,
 not added again. The interrupted export is a subset and is not added again.
 Elapsed is not reported; original system-message timestamps do not prove a
 complete retained history. Private reasoning/transcripts stay outside git.
+
+## Coordinator full-module integration
+
+`go test -count=1 -tags=integration -timeout 25m ./...` passed directly,
+all21packagesok, on6d3334e2357a4ac221e9918cfca2bb936e64c7a9 including the
+current-main merge. Wrapper start2026-10-16T13:27:44.363674Z,
+end2026-10-16T13:39:04.424635Z (680060.961ms), exit0.
+Audit: /home/layup/.cache/layup-session/audits/issue351/integration-result.json.
+Only this run-evidence entry follows; no Go or spec changes after that run.
