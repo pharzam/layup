@@ -428,46 +428,68 @@ by the rule text of the table. The forms the loop's sessions write in the three
 comment artifacts are pinned here in one grammar, so two implementers read one
 form.
 
-**The fields of a comment.** A plan, a plan review or a review record is parsed
-by lines: a field is a line whose key starts at column 0, lowercase, and is
-followed by `: `, and whose value runs to the end of the line with trailing
-spaces and a final `\r` ignored (the forge and a checkout can carry CRLF); a
-line inside a fenced code block is not read; a key that appears twice or not at
-all makes the item false; `—` (U+2014) is the empty value. **The plan** holds
-each of `size:`, `open questions:`, `new interfaces:` and `new dependencies:`
-once — `size:` is `small` or `large` and each of the other three is a one-line
-text or `—` — then `tests:` and, below it, one line `- <id> <path>` for each
-listed test: the ID is one word, unique in the list, and the path is relative,
-clean and inside the tree (the register's own `path` rule of `internal/rules`);
-`tests:` ends at the first line that is not `- <id> <path>`. **The plan review**
+**The fields and the blocks of a comment.** A plan, a plan review or a review
+record is parsed by lines, and two line forms count — a field and a block
+marker; every other line is ignored. A field is a line whose key starts at
+column 0, lowercase, and is followed by `: `, and whose value runs to the end
+of the line with trailing spaces and a final `\r` ignored (the forge and a
+checkout can carry CRLF); `—` (U+2014) is the empty value of a field. A block
+marker is a line that is exactly a marker word and `:` — `tests:` in a plan,
+`findings:` in a review record, never a value after the colon — and its block
+is the run of `- ` lines directly under it, ending at the first line that does
+not start `- `; a `- ` line inside the run that does not match the block's
+bullet form is malformed and makes the item false, and a `- ` line outside
+every block is ignored prose. A line inside a fenced code block is not read.
+Each required field and each required marker appears exactly once — twice or
+not at all makes the item false — other field lines are ignored, and field and
+block order is free. **The plan** holds each of `size:`, `open questions:`,
+`new interfaces:` and `new dependencies:` once — `size:` is `small` or `large`
+and each of the other three is a one-line text or `—` — and the `tests:`
+marker once, its block holding a line `- <id> <path>` for each listed test:
+the ID is one word, unique in the list, and the path is relative, clean and
+inside the tree (the register's own `path` rule of `internal/rules`). The
+block may hold no line — that is the form of a specification task's plan,
+which lists no tests — and `tests: —` is not the marker. **The plan review**
 holds `verdict:` once, one of `approve`, `approve-with-conditions` and `reject`
 (the words `review-record-lint.sh` reads). **The review record** holds `head:`
 once — 40 or 64 lowercase hexadecimal characters, as the check already accepts
 for commits — `verdict:` once — one of `material`, `nothing material in scope`
 and `not mergeable, findings recorded` (the words `engineering-discipline.md`
-fixes for a round) — and a findings part of one line per finding, each
-`- <path>:<line> <rule>: <text>` with `line` an integer of 1 or more and `rule`
-one word; a record whose verdict is not `nothing material in scope` has its
-findings counted as material. These are the forms the loop's sessions write for
-a target; `review-record-lint.sh` reads a different, LAYUP-own form (the
+fixes for a round) — and the `findings:` marker once, its block holding a line
+`- <path>:<line> <rule>: <text>` per finding, `line` an integer of 1 or more
+and `rule` one word; the count of material findings is the number of bullets
+of the block. These are the forms the loop's sessions write for a target;
+`review-record-lint.sh` reads a different, LAYUP-own form (the
 `| Field | Value |` table), and neither document is read as the other's check.
 
 | Item | The input and the rule | Computed by | Milestone |
 | ---- | ---------------------- | ----------- | --------- |
 | `schema` | the result file and its records: the typed result passes the block `result` and its rules | `internal/handoff` `Check` (row 61, done) | M2e |
 | `artifacts` | the commits and the copies: each named artifact is there with its hash, a comment by its three equal hashes | `internal/handoff` `Check` (row 61, done) | M2e |
-| `plan-fields` | the plan comment's kept copy: it parses in the pinned form — the four fields each once, and the `tests:` block | `internal/run` (row 66l) | M2e |
+| `plan-fields` | the plan comment's kept copy: it parses in the pinned form — the four fields each once, the `tests:` marker once, and each `- ` line of its block a `- <id> <path>`; an empty block is valid | `internal/run` (row 66l) | M2e |
 | `verdict-field` | the plan-review copy: its `verdict:` is `approve` or `approve-with-conditions` (`reject` is false) | `internal/run` (row 66l) | M2e |
 | `tests-red-green` | typed per-test results — the ID, the base verdict, the head verdict and the source hash of each listed test: each fails at the base and passes at the head, and its source hash is the frozen list's | `internal/run` from typed values (row 66e — #361's typed boundary); the producer — the gate run of the task's test kind and the mapping of an ID to its file — is the specification task of `M2g`'s | M2e item, `M2g` producer |
 | `spec-sections` | the `docs/spec/` files at the head and the task's requirement IDs: a non-empty section whose heading holds each ID — the `sections` predicate of the full check over the task's IDs | `internal/spec`, wired by `internal/run` (row 66l); the section finder rides the `sections` machinery of the full check (#351) where it is exported, else lands in row 66l | M2e |
 | `patch-per-kind` | the batch's known-bad patches: `layup gate` passes on the head and fails on each patch of a kind the batch touches | the rule-batch tasks of `M2f` | M2f |
 | `register-rows` | the milestone plan's rows artifact: each `Must` requirement has a task, each predecessor is a task, no cycle | the milestone-plan task of `M2g` | M2g |
 | `rendering-equal` | the tree at the head and code's rendering of the named copy: byte-equal — `internal/spec`'s `RenderPRD` and `RenderFacts` for a specification copy, `internal/rules`' `Render` for a record copy | `internal/spec` and `internal/rules`, wired by `internal/run` (row 66l) | M2e |
-| `nothing-material` | the review-record copy and the head code holds for the verifier's session — from the records and the forge, never a field of the result: `verdict:` is `nothing material in scope` and `head:` equals that head | `internal/run` (row 66l; the same parse serves `layup/verify` of row 66f) | M2e |
-| `findings-located` | the review-record copy: each finding line is `- <path>:<line> <rule>: <text>` — a findings part that is empty is false, an empty list is never a pass | `internal/run` (row 66l) | M2e |
+| `nothing-material` | the review-record copy and the head code holds for the verifier's session — from the records and the forge, never a field of the result: `verdict:` is `nothing material in scope`, `head:` equals that head, and the `findings:` marker is present with an empty block | `internal/run` (row 66l; the same parse serves `layup/verify` of row 66f) | M2e |
+| `findings-located` | the review-record copy: the `findings:` marker once, every `- ` line of its block a `- <path>:<line> <rule>: <text>` finding, and at least one finding — an empty block is false, an empty list is never a pass | `internal/run` (row 66l) | M2e |
 | `heading-ids` | the `docs/spec/` files at the head and the milestone's requirement IDs: a heading holds each ID — the `sections` predicate over the milestone's IDs | the milestone-plan task of `M2g` | M2g |
 | `question-row` | the result: at least one `question` row and each names at least one record | `internal/run` (row 66d, done) | M2e |
 | `answer-row` | the result: at least one `answer` row and each cites at least one record | `internal/run` (row 66d, done) | M2e |
+
+The edge cases read one way: `tests:` with no bullet is the valid plan of a
+specification task, and `tests-red-green` reads an empty list as false for a
+build task; `tests:` absent or twice, or `findings:` absent or twice, makes
+`plan-fields` or each review-record item false; a `- ` line that is no bullet
+of the block's form inside a block makes the item false, while the same line
+after the block's end is ignored prose; `verdict: nothing material in scope`
+with a non-empty `findings:` block makes `nothing-material` false, and
+`not mergeable, findings recorded` with an empty one makes `findings-located`
+false. The parsed plan fields likewise feed the task's tier and context read:
+the parse is row 66l's, the consuming wiring the step loop's (row 66k) — a
+declaration of the boundary, nothing of it claimed built.
 
 **The question and answer comments** are composed by `internal/run` from the
 result's `question` and `answer` rows — first line and body as [a question during
