@@ -1,0 +1,1 @@
+NOTE (3) exception: tests-red-green's owner 66e keeps its cells (C1); the row exists and the item is named in the mapping
