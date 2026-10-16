@@ -7,6 +7,7 @@ package run
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
 	"regexp"
@@ -14,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/pharzam/layup/internal/forge"
 	"github.com/pharzam/layup/internal/records"
 )
 
@@ -92,6 +94,145 @@ func collectAnswers(questions, approvers [][]string, copies []answerCopy, issue 
 	return answers, waiting
 }
 
+// pointLine is the rule of a line that names the approver of a planned point
+// in a comment of the batch's owner (docs/spec/loop.md, The approvers and the
+// success criteria, Decided here, task T-8rm6): the point's name, then ": "
+// exactly, then the login.
+var pointLine = regexp.MustCompile(`^([a-z][a-z-]*): ([A-Za-z0-9][-A-Za-z0-9]*)$`)
+
+// pointBindings gives the login that each planned point's last counted line
+// names, and for each login a counted line names the earliest comment that
+// named it (its ID and its created — the source and the since of the row the
+// step writes). A copy counts by the rule of an answer: of the issue, made
+// after the batch's asked, and a decision of the idea owner (first copy, no
+// App). A line whose name is none of the set's, and the rest of a counted
+// comment, are input only and name nothing.
+func pointBindings(copies []answerCopy, approvers [][]string, asked, issue string) (bound map[string]string, named map[string][2]string) {
+	bound = map[string]string{}
+	named = map[string][2]string{}
+	for _, c := range copies {
+		if c.Row[2] != issue || c.Row[6] <= asked || !Decision(c.Row, approvers, "idea-owner") {
+			continue
+		}
+		for _, line := range strings.Split(c.Body, "\n") {
+			m := pointLine.FindStringSubmatch(strings.TrimSuffix(line, "\r"))
+			if m == nil || !slices.Contains(approvalPoints, m[1]) {
+				continue
+			}
+			bound[m[1]] = m[2]
+			if _, ok := named[m[2]]; !ok {
+				named[m[2]] = [2]string{c.Row[0], c.Row[6]}
+			}
+		}
+	}
+	return bound, named
+}
+
+// approverRows gives the rows the step appends to approvers.tsv for each login
+// a counted line names that holds no row of any role: one row each, in the
+// order of the points, its ID from the forge, its since the naming comment's
+// time and its source the earliest comment that named it. A login the forge
+// does not know is recorded input and gives no row; a forge error is the
+// step's (docs/spec/loop.md, The approvers and the success criteria; the
+// Operator's and the idea owner's logins get none, architecture.md §5 and the
+// decision of #365).
+func approverRows(ctx context.Context, idOf func(context.Context, string) (int64, error), bound map[string]string, named map[string][2]string, approvers [][]string) ([][]string, error) {
+	rowed := map[string]bool{}
+	for _, a := range approvers {
+		rowed[a[0]] = true // the account's ID: the login's spelling varies, the account does not
+	}
+	seen := map[string]bool{}
+	var rows [][]string
+	for _, p := range approvalPoints {
+		login, ok := bound[p]
+		if !ok || seen[login] {
+			continue
+		}
+		seen[login] = true
+		id, err := idOf(ctx, login)
+		if err != nil {
+			var fe *forge.Error
+			if errors.As(err, &fe) && fe.Status == 404 {
+				continue
+			}
+			return nil, err
+		}
+		key := strconv.FormatInt(id, 10)
+		if rowed[key] {
+			continue
+		}
+		rowed[key] = true
+		rows = append(rows, []string{key, "approver", login, named[login][1], named[login][0]})
+	}
+	return rows, nil
+}
+
+// approverFor gives the approvers.tsv row whose account may answer the
+// approval point (the answer #366's caller computes): the row of the login the
+// point's last counted line names, whatever its role — the naming comment is
+// enough for an account that already has a row, and a login is one account
+// whatever its spelling's case — and the idea owner's row when the point names
+// no account that holds one. nil when approvers holds no idea owner.
+func approverFor(point string, bound map[string]string, approvers [][]string) []string {
+	if login, ok := bound[point]; ok {
+		for _, a := range approvers {
+			if strings.EqualFold(a[2], login) {
+				return a
+			}
+		}
+	}
+	for _, a := range approvers {
+		if a[1] == "idea-owner" {
+			return a
+		}
+	}
+	return nil
+}
+
+// pointsServed gives the planned points the row serves, in the order of the
+// set: each whose binding resolves to it.
+func pointsServed(row []string, bound map[string]string, approvers [][]string) []string {
+	var out []string
+	for _, p := range approvalPoints {
+		if a := approverFor(p, bound, approvers); a != nil && a[0] == row[0] {
+			out = append(out, p)
+		}
+	}
+	return out
+}
+
+// criteriaOf gives the criteria of the intent answer's answer: split on ";",
+// each segment trimmed, the empty dropped (docs/spec/loop.md, Decided here).
+func criteriaOf(answer string) []string {
+	var out []string
+	for _, s := range strings.Split(answer, ";") {
+		if s = strings.TrimSpace(s); s != "" {
+			out = append(out, s)
+		}
+	}
+	return out
+}
+
+// criteriaAnswer gives the ID of the success-criteria question of the intent
+// form and the criteria of its answer, none when it has none.
+func criteriaAnswer(questions, answers [][]string) (string, []string) {
+	var id string
+	for _, q := range questions {
+		if q[1] == "intent" && q[2] == "success-criteria" {
+			id = q[0]
+		}
+	}
+	if id == "" {
+		return "", nil
+	}
+	for _, a := range answers {
+		if a[0] == id {
+			return id, criteriaOf(a[1])
+		}
+	}
+	return id, nil
+}
+
 // decimal is the form of the type decimal of internal/tsv.
 var decimal = regexp.MustCompile(`^(0|[1-9][0-9]*)\.[0-9]+$`)
 
@@ -105,7 +246,7 @@ func budgetOf(questions, answers [][]string) ([][]string, bool) {
 	}
 	value := map[string][2]string{} // the value and the question of each field
 	for _, q := range questions {
-		if q[1] != "intent" {
+		if q[1] != "intent" || !slices.Contains(budgetFields, q[2]) {
 			continue
 		}
 		a, ok := answerOf[q[0]]
@@ -115,7 +256,7 @@ func budgetOf(questions, answers [][]string) ([][]string, bool) {
 		value[q[2]] = [2]string{a, q[0]}
 	}
 	var rows [][]string
-	for _, f := range intentFields {
+	for _, f := range budgetFields {
 		v, ok := value[f]
 		if !ok {
 			return nil, false
@@ -178,6 +319,13 @@ func (r *state) answersStep(ctx context.Context) Step {
 	if len(waiting) > 0 {
 		return done(name, "waiting: no answer yet in the block "+strings.Join(waiting, " and the block "))
 	}
+	var newApprovers [][]string
+	if len(questions) > 0 {
+		bound, named := pointBindings(copies, r.approvers, questions[0][9], strconv.Itoa(issue))
+		if newApprovers, err = approverRows(ctx, r.cfg.Forge.UserID, bound, named, r.approvers); err != nil {
+			return fail(name, err)
+		}
+	}
 	when := map[string]string{}
 	for _, a := range answers {
 		when[a[0]] = a[4]
@@ -214,8 +362,22 @@ func (r *state) answersStep(ctx context.Context) Step {
 		}
 		written = "budget.tsv written"
 	}
+	if len(newApprovers) > 0 {
+		held := append(slices.Clone(r.approvers), newApprovers...)
+		if files["approvers.tsv"], err = table(records.ApproversSchema, held); err != nil {
+			return fail(name, err)
+		}
+		if _, err := records.ReadApprovers(files["approvers.tsv"]); err != nil {
+			return fail(name, err)
+		}
+	}
 	if err := r.write(ctx, files, "layup run: the answers of the batch"); err != nil {
 		return fail(name, err)
 	}
-	return done(name, fmt.Sprintf("%d answers, in intake/answers.tsv; %s", len(answers), written))
+	r.approvers = append(r.approvers, newApprovers...)
+	named := ""
+	if len(newApprovers) > 0 {
+		named = fmt.Sprintf("; approvers.tsv: %d approver row(s)", len(newApprovers))
+	}
+	return done(name, fmt.Sprintf("%d answers, in intake/answers.tsv; %s%s", len(answers), written, named))
 }
