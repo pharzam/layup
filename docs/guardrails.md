@@ -1024,6 +1024,19 @@ These traps are not domain-specific: they hurt every project's test suite.
   `go vet` and were counted as kills, so the count of kills was three too high. **The check:** a variant is valid only if `go build` and `go vet` pass on
   it, its kill is the named assertion in its own output, each run's exit status and output are kept, and the file's hash before and
   after proves the restore (`runs/T-jew3/mutants.md`). Learned in `T-jew3` (#356).
+- ❌ **A set that is "not yet applied" because its comment is in no row.** The plan of the parameters (`T-dx1h`,
+  #358) judged each comment of the control issue again at every boundary and skipped a set only when its ID was the
+  `comment` of some row. After a later set of the same name, the earlier one's ID is in no row, so it is applied again:
+  a commit at every boundary, and the value goes back to the older one for a pass. It is silent until a second set of one
+  name exists. Found by the plan review (C2), before any code. **The check:** decide "applied" by order and not by
+  membership (apply a set only when its comment ID is greater than the row's recorded `comment`), and give the test two
+  sets of one name, a second boundary that writes no commit, and the earlier set listed after the later one.
+- ❌ **An owner check written for the rows of a table, not for the rows that the first writer writes.** The plan of
+  the same task said "`evidence` and `comment` are `—` together" and also gave the three rows that take their value
+  from `start.tsv` the evidence `command` and no comment, so the file the writer wrote would have been refused by its
+  own reader (plan review, C1). **The check:** write the reader's rules as the kinds of row (here: a row with no
+  comment is its own origin, a row with a comment is a set) and give the test the writer's output before any other
+  case, so the writer and the reader cannot disagree.
 
 ### Reference-sweep pitfalls
 

@@ -94,3 +94,25 @@ The head of the run is the commit above plus the uncommitted documents (`loop.md
 ## The measurements behind the issues opened by this task
 
 On a scratch copy of the tree, not in a branch (2026-10-16 about 13:44Z): `ReadRegister` of a header-only file gives 0 entries and no error, and `Check` over it gives no refusal for `AGENTS.md`, `.github/CODEOWNERS`, `docs/tests/test-levels.md` and `go.mod` (#390). `Match` gives no entry for `docs/facts`, `.github` and `docs/ci`, and `Basic` over the real `git` gives `success`, `no rule path` for a link at `docs/facts`, `.github` or `docs/tests` when the base lacks the directory (#391). Reading the register twice, by `push.go` and by `Basic` (#392).
+
+## Coordinator full integration and pre-review merge
+
+Full-module `go test -count=1 -tags=integration -timeout 25m ./...` at
+f5693500d5a9d76b202a24fa54f2d7b6d89f18d7 passed: direct exit0,21 packages;
+2026-10-16T14:12:19.645234Z–14:26:39.749756Z,860104.522ms.
+Current main f86f71c (#358) then merged without textual conflicts. First blind
+code review must assess semantic agreement of all five overlapping documents:
+guardrails, PRD, loop.md, packages.md and traceability. Final combined full-SHA
+CI is required; the earlier integration is not claimed to cover new main Go.
+
+Actual Sonnet5.5 CLI metadata, effort high, no other model reported:
+plan I68/O69116/cache creation201709/read4590433,585946ms; build increment
+I196/O101557/cache creation172629/read31070610. Thinking34887 in the build
+increment is already included in output. The build's main turn reports909884ms,
+and its completed-monitor notification reports2131ms separately; no idle is
+inferred. End cumulative counters count plan and build once, not twice.
+SWE-2 Max independent plan-review retained metrics: prompt2043525/output35830/
+cached1801766,32 unique rows; the initial export is a subset of the corrected
+export and counted once. Cache is inside prompt. Elapsed is not reported.
+Metadata audits issue352-resource-metadata-complete.json and
+issue352-plan-review-resource-union.json stay outside git with private exports.

@@ -325,3 +325,18 @@ func TestTheLoopPermissionsStepNamesEachMissingPermission(t *testing.T) {
 		}
 	}
 }
+
+// A table of the Operator whose row of code's own handoff lists schema can satisfy no rendered task, so the check of
+// a table refuses it where the register reads it (the comment of #358; task T-dx1h, row 66b).
+func TestAnExistingTransitionTableThatListsSchemaForTheRenderedTaskRefusesTheTask(t *testing.T) {
+	custom := handoff.Default()
+	for i := range custom {
+		if custom[i].From == "code (rendered task)" {
+			custom[i].Items = []string{"schema", "artifacts", "rendering-equal"}
+		}
+	}
+	files, err := registerFiles(nil, transitionBytes(t, custom), aTask("T-aaaa"))
+	if err == nil || !strings.Contains(err.Error(), "code (rendered task)") || files != nil {
+		t.Errorf("registerFiles: %v, %v; want a refusal that names the row and no file", files, err)
+	}
+}
