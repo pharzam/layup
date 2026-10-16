@@ -4,7 +4,8 @@ Issue: [#353](https://github.com/pharzam/layup/issues/353), row 63b of [the task
 M2e](../plan/README.md#the-tasks-of-m2e), opened by `T-57vx` (#346). Serves
 `F-0003#45` through `REQ-005`. Base `48f07ca` (the merge of #371); the budget is read
 against `9e6393a` (the merge of #375, row 60), which the branch took by the merge
-`4adf52a`, by the Operator's ruling on #353 (the comment on the budget after the merge). Author: Claude Sonnet 5.5 on Claude Code. Evidence:
+`4adf52a`, by the Operator's ruling O-218 on #353, which is read against the current `main`
+at landing (`6bc1051`, after row 61): 330 lines over 11 files at landing (323 when ruled, before the notes of this close-out), inside 350 over 12. Author: Claude Sonnet 5.5 on Claude Code. Evidence:
 [`runs/T-svn3/`](../../runs/T-svn3/).
 
 ## Plan and plan review
@@ -50,17 +51,23 @@ files of this branch.
 Round 2 (the same model and effort, a clone at `4adf52a`, **scoped to the merge**, no
 cycle consumed, `Cycle` 1): `not mergeable, findings recorded`, one material finding
 (the budget measured against the old base, 615 lines over 16 files, against 308 over
-11 against `9e6393a`) and two notes. The Operator ruled that the bound is read
-against `9e6393a`; the finding is settled by that ruling and the task file names that
-base. Note 2 is this close-out; note 3 (`T-sdtb` still in the backlog) is not this
+11 against `9e6393a`) and two notes. The Operator ruled (**O-218**) that the bound is read
+against the current `main` at landing; the finding is settled by that ruling and the
+task file names that base. Note 2 is this close-out; note 3 (`T-sdtb` still in the backlog) is not this
 task's line.
+
+Then `main` moved again (row 61, `T-h17s`, #379) and the branch took it by a second
+merge. Its two conflicts, `completed.md` and the row `REQ-005` of `PRD-0001` §12,
+are index lines kept on both sides and nothing else overlapped, so by the Operator's
+standing ruling **O-219** no scoped round follows it.
 
 ## Verdict
 
 Delivered: the step table of `internal/session` with its column of record kinds, in
 the order of `loop.md`. The review ended by decay at cycle 0 of cap 1, and the
 round scoped to the merge was settled by the Operator's ruling on the base of the
-budget. The diff against `9e6393a` is inside 350 lines over 12 files. Next: rows 66e and 66j read the
+budget. The diff against the current `main` (`6bc1051`) is 330 lines over
+11 files, inside 350 over 12, by O-218. Next: rows 66e and 66j read the
 table.
 
 ## Resource record
