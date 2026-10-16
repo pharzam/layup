@@ -1,0 +1,181 @@
+# T-q5k4 test runs (row 66d of M2e, #360)
+
+Base `e16568c` (`main`). Author Claude Sonnet 5.5 on Claude Code, no other model and no subagent. Every time is
+UTC from `date -u`, taken by the runner `x.sh` after the command; every exit code is the command's own (the
+command writes its log to a file, so no pipe hides it). The runner `~/.cache/layup-session/q5k4/x.sh` and the mutation
+runner `~/.cache/layup-session/q5k4/mut.py` are host scripts, not part of the change.
+
+## Red and green, by slice
+
+### Slice A: the kind `answer` (internal/records, records.md)
+- RED 2026-10-16T12:15:47Z..12:15:48Z exit=1 `go test -count=1 ./internal/records/` at code reverted to base: TestAValidResultIsRead and TestResultRefusesEachBrokenRule FAIL; 38 assertion lines, all `"answer" is not a value of enum(...)` / want an error in column X (log /var/tmp/q-A-red.log)
+- GREEN 2026-10-16T12:14:56Z exit=0 go test ./internal/records/ (code applied); 12:15:41Z exit=0 go test -count=1 -tags=integration ./internal/tsv/ (block equality with records.md)
+### Slice B: session.CommentFile
+- RED (stub = os.ReadFile, "has the step, not the behaviour") 2026-10-16T12:17:00Z..12:17:01Z exit=1: TestACommentFileThatIsNotARegularFileOfOneNameIsRefused fails on link.md (read 19 bytes), big.md (read 1048577 bytes), plan.md/ (read 5 bytes); TestACommentFileIsReadByteForByte green on arrival with the reading stub (declared; its mutants are M-B*). First stub (always error) gave 7 failures incl. the byte-for-byte cases at 12:16:54Z exit=1.
+- GREEN 12:17:06Z exit=0 go test -count=1 ./internal/session/
+### Slice C: the end check and the kept copy (internal/run commentfile.go, end.go)
+- RED unit (stubs: KeptPath "", CheckCommentBody nil, keepComments nil/false) 12:18:21Z..12:18:25Z exit=1: TestTheKeptPathIsTheTaskTheSessionAndTheFile, TestACommentBodyIsRefusedBeforeThePost (4 refusals missing), TestTheKeptBytesAreTheBytesOfTheFile (7), TestACommentRowIsCheckedByItsHashAgainstTheResultFile (8) fail by assertion text
+- RED integration 12:18:54Z..12:19:15Z exit=1: TestTheCommentRowOfASessionIsKeptWithTheResultInOneCommit (kept file does not exist), TestACommentFileThatFailsItsRowIsRefusedArtifactAndNotKept x3 (events lack `refused artifact`); TestAResultThatHoldsACommentIDIsNoResult x2 GREEN on arrival (row 60's rule, declared)
+- GREEN unit 12:19:42Z..12:19:47Z exit=0; integration 12:19:47Z exit=1 (my expectation listed the commit's paths in the wrong git order; test fixed, not code); 12:20:23Z..12:21:13Z exit=0 (33.6 s)
+### Slice D: the route of a question and the items question-row / answer-row (internal/run question.go)
+- RED 2026-10-16T12:22:59Z exit=1 (stub DefaultOwners nil: 22 assertion lines then a nil-map panic in TestAReplacedOwnerMapRoutesByItsRoles, which hid two tests); stub made `map{}`; RED 12:23:15Z..12:23:27Z exit=1: seven tests fail by assertion (22 lines). Cases that expect false/Operator pass with a stub that returns false only for the cases they do not distinguish; their mutants M-D* carry them.
+- GREEN 12:23:38Z..12:23:43Z exit=0
+### Slice E1: PostComment and RecordHandoff, unit (internal/run handoffpost.go, handoffpost_test.go)
+- RED (stubs return errors "not built") 2026-10-16T12:26:39Z..12:26:45Z exit=1: 17 of 18 tests fail (30 assertion lines); TestAHandoffOfASessionWithoutAStartRowIsAnError green on arrival with an erroring stub (declared; its mutant M-E-start carries it).
+- GREEN first run 12:28:07Z..12:28:21Z exit=1: two assertions of mine expected a comment suffix on `invalid schema` where the result refused by the block names no comment row (expectation wrong, test fixed to `invalid schema`, not the code). An earlier expectation about the edit-back copy was also set by decision before the run: the handoff names the last copy of its bytes (seen 3). GREEN 12:28:27Z..12:28:39Z exit=0 go test -count=1 ./internal/run/ (the whole unit level of the package)
+### Slice F: AnswerAccepted (internal/run answer.go, answer_test.go)
+- RED (stub returns "", false) 2026-10-16T12:30:51Z..12:31:00Z exit=1: the accepted case and two accepting cases (a question citing another record; a second session of the attempt) fail by assertion; the 17 not-accepted cases pass with the stub (declared; their mutants M-F* carry them). An identifier clash (`asked`, setup_test.go) stopped the first compile at vet (exit 1) and was renamed.
+- GREEN 12:31:15Z..12:31:25Z exit=0
+### Slice G: integration tests of the post, the copy, the handoff, the fences and the route/acceptance from the records
+- HONEST ORDER: these tests were written AFTER the code of slice E1/F (the unit slices were red first). To show them red for their own reason, handoffpost.go and answer.go were replaced by stubs (not committed) and the seven tests run: 2026-10-16T12:33:30Z..12:34:07Z exit=1, all seven (9 subtests incl. 3 kinds) FAIL; one assertion of mine (`a copy exists for a post that failed`) was a false positive of the test (Start already copied the dead-man notice, `copies/501-1.md`): fixed to count copies of the task's issue (3). Real code restored byte for byte (cp of the saved files).
+- GREEN 12:34:17Z..12:35:03Z exit=0 (36.2 s): the seven integration tests with the real code
+
+
+## The live probe of "to confirm at the build" (`loop.md`)
+
+2026-10-16T12:36:09Z to 12:37:14Z, as `layup-agent[bot]` on issue #360 of `pharzam/layup`. Seven bodies were posted by
+`POST /issues/{n}/comments`, read back by `GET /issues/comments/{id}`, compared with the bytes sent, and deleted by
+`DELETE` (each delete exit 0). All seven came back byte for byte; the table gives the length in bytes, in characters,
+the verdict and the SHA-256 of what was sent.
+
+```
+p1 111 bytes 104 chars equal f9932f213bc8763162d05b8ecb4b0c66d6acea934caba5bf0c22e30f6eba5a0d
+p2 196608 bytes 65536 chars equal 957009e2bb57293a0b5805dc9602bb83ec943078e006d11cc644849751e1e542
+p3 196611 bytes 65537 chars equal 3dfa7e064bf0dec8ed448e8acacd13ed54dd5d53163e3c8b1a6327c5e9d42beb
+a1 65536 bytes 65536 chars equal bf718b6f653bebc184e1479f1935b8da974d701b893afcf49e701f3e2f9f9c5a
+a2 65537 bytes 65537 chars equal 008ffc88d3c96a9f307524eb361e47c5222a887fc45fa0c1fb8d429c5c23b430
+a3 131072 bytes 131072 chars equal b44ffb72fcc259676bd80495fef1b44b808ca8f1ffe1b1706a4d7911b0e31f11
+e3 262143 bytes 87381 chars equal 973b0fd630c3f5d89138b92828894ee571bb0c601aaaccc5e27bf6e89e5660a3
+```
+
+Two bodies were refused or tested at the edge: 131,072 three-byte letters (393,216 bytes) were refused with HTTP 422 and
+the message `Body is too long (maximum is 65536 characters)` (no comment was made), while 65,537 characters,
+131,072 bytes and 262,143 bytes were accepted. The message is therefore not the enforced rule; code keeps the documented
+65,536 characters, the safe side (`loop.md`, `guardrails.md` §2).
+
+## Mutants
+
+Method (`mut.py`): the target file's SHA-256 is compared with `git show HEAD:<file>` before the run (a differing file is
+`SKIPPED`), a backup is copied bound to that hash, exactly one occurrence of the old text is replaced (else
+`not-applied`), then `gofmt`, `go build ./...` and `go vet <package>` (with the tag for the integration cases) must pass
+(else `build-broken`, which is not a kill), then the tests of the package run (`-count=1`); `killed` means a named test
+of the mutant's list failed by its own assertion, `failed-other` a failure of another test, `survived` none failed. The
+file is restored from the backup and the hash checked equal to the hash before and to the backup after each mutant
+(`RESTORE-HASH-MISMATCH` would stop the run; none occurred), and `git status` was empty after each pass.
+
+Result: 61 mutants. Pass 1: 50 killed, 8 build-broken (a variable left unused by the edit), 3 survived. The 8 were
+rerun as variants that build (pass 2/3): all killed. Of the 3 survivors, `B2` and `R1` are **equivalent** (the
+removed check is repeated by the next one: `readResult` refuses a directory, and `oneSpaced` refuses an empty reason),
+kept in the code as defence in depth; `H2` was a **real test gap** (the lookup of `copies.tsv` could be skipped because the
+forge read found the same comment), closed by two assertions (no forge call on the second call; no second post after an
+edit) and killed on rerun. The variant `C7b` first **survived** (a missing file or a link with the hash of no bytes
+passed the check: a real gap in the test), a case was added, and it was killed. No mutant is left surviving but the two
+equivalent ones; none was `not-applied` or `failed-other`.
+
+### Pass 1: 61 mutants, the source bound to its hash at HEAD
+
+| id | outcome | detail |
+| -- | ------- | ------ |
+| B1 | killed | TestACommentFileThatIsNotARegularFileOfOneNameIsRefused |
+| B2 | survived | the name checks of "", . and .. dropped (the directory is refused by readResult anyway: expected equivalent) |
+| B3 | killed | TestACommentFileThatIsNotARegularFileOfOneNameIsRefused |
+| C1 | killed | TestTheKeptBytesAreTheBytesOfTheFile,TestTheKeptPathIsTheTaskTheSessionAndTheFile |
+| C2 | killed | TestACommentBodyIsRefusedBeforeThePost |
+| C3 | killed | TestACommentBodyIsRefusedBeforeThePost |
+| C4 | killed | TestACommentBodyIsRefusedBeforeThePost |
+| C5 | killed | TestACommentBodyIsRefusedBeforeThePost |
+| C6 | build-broken | # github.com/pharzam/layup/internal/run |
+| C7 | build-broken | # github.com/pharzam/layup/internal/run |
+| C8 | killed | TestTheKeptBytesAreTheBytesOfTheFile |
+| C9 | killed | TestACommentRowIsCheckedByItsHashAgainstTheResultFile |
+| C10 | killed | TestACommentRowIsCheckedByItsHashAgainstTheResultFile,TestTheKeptBytesAreTheBytesOfTheFile |
+| E1 | killed | TestACommentFileThatFailsItsRowIsRefusedArtifactAndNotKept,TestTheCommentRowOfASessionIsKeptWithTheResultInOneCommit |
+| E2 | build-broken | # github.com/pharzam/layup/internal/run |
+| E3 | build-broken | # github.com/pharzam/layup/internal/run |
+| Q1 | killed | TestAQuestionThatNeedsAHumanGoesToTheOperator |
+| Q2 | killed | TestALabelOutsideTheFourGoesToTheOperator,TestAReplacedOwnerMapRoutesByItsRoles |
+| Q3 | killed | TestALabelOutsideTheFourGoesToTheOperator,TestAQuestionThatNeedsAHumanGoesToTheOperator |
+| Q4 | killed | TestTheRouteOfEachKindWithNoHumanNeeded |
+| Q5 | build-broken | # github.com/pharzam/layup/internal/run |
+| Q6 | killed | TestQuestionRowNeedsARecordAndAQuestion |
+| Q7 | killed | TestAnAnswerRowNeedsAnAnswer |
+| Q8 | killed | TestAnAnswerRowNeedsAnAnswer |
+| Q9 | killed | TestAQuestionRowIsRead,TestQuestionRowNeedsARecordAndAQuestion |
+| Q10 | killed | TestAQuestionRowIsRead |
+| A1 | killed | TestAnAnswerIsNotAcceptedUnlessEachConditionHolds |
+| A2 | killed | TestAnAnswerIsAcceptedByTheNextAttemptThatCitesIt,TestAnAnswerIsNotAcceptedUnlessEachConditionHolds |
+| A3 | killed | TestAnAnswerIsNotAcceptedUnlessEachConditionHolds |
+| A4 | build-broken | # github.com/pharzam/layup/internal/run |
+| A5 | killed | TestAnAnswerIsNotAcceptedUnlessEachConditionHolds |
+| A6 | killed | TestAnAnswerIsNotAcceptedUnlessEachConditionHolds |
+| A7 | killed | TestAnAnswerIsNotAcceptedUnlessEachConditionHolds |
+| A8 | killed | TestAnAnswerIsAcceptedByTheNextAttemptThatCitesIt |
+| A9 | killed | TestAnAnswerIsNotAcceptedUnlessEachConditionHolds |
+| A10 | killed | TestAnAnswerIsNotAcceptedUnlessEachConditionHolds |
+| A11 | killed | TestAnAnswerIsNotAcceptedUnlessEachConditionHolds |
+| H1 | killed | TestACommentThatHasACopyIsNotPostedAgain |
+| H2 | survived | the lookup of copies.tsv skipped |
+| H3 | killed | TestACommentThatTheForgeHoldsIsCopiedAndNotPostedAgain,TestAPostWhoseAnswerWasLostIsFoundAndCopiedNotPostedTwice |
+| H4 | killed | TestACommentThatTheForgeHoldsIsCopiedAndNotPostedAgain |
+| H5 | killed | TestALostLeaseStopsTheComment |
+| H6 | killed | TestALostLeaseStopsTheComment |
+| H7 | killed | TestTheCommentIsPostedFromTheKeptBytes |
+| H8 | killed | TestThePostIsFencedByTheLease |
+| H9 | killed | TestAnEditedCommentIsANewCopyAndTheFirstHandoffIsInvalid |
+| H10 | killed | TestAnEditedCommentIsANewCopyAndTheFirstHandoffIsInvalid |
+| H11 | build-broken | # github.com/pharzam/layup/internal/run |
+| H12 | killed | TestAClaimOfTheCallerForWhatCodeComputesIsNotRead,TestTheQuestionAndAnswerHandoffsAreComputedFromTheRecords |
+| H13 | killed | TestAClaimOfTheCallerForWhatCodeComputesIsNotRead |
+| H14 | build-broken | # github.com/pharzam/layup/internal/run |
+| H15 | killed | TestAFileThatCannotBeACommentIsRefusedBeforeThePost |
+| H16 | killed | TestAHandoffOfASessionWithoutAStartRowIsAnError |
+| H17 | killed | TestAnEditedCommentIsANewCopyAndTheFirstHandoffIsInvalid |
+| H18 | killed | TestAFileThatCannotBeACommentIsRefusedBeforeThePost |
+| H19 | killed | TestAnItemThatTheCallerDoesNotPassIsFalse,TestTheProgramItemsOfTheCallerAreHandedToTheCheck |
+| H20 | killed | TestACommentThatWasNeverPostedIsInvalidArtifactsWithNoCopy |
+| R1 | survived | the empty reason of an answer tested twice (expected equivalent) |
+| R2 | killed | TestResultRefusesEachBrokenRule |
+| R3 | killed | TestResultRefusesEachBrokenRule |
+| R4 | killed | TestAValidResultIsRead,TestResultRefusesEachBrokenRule |
+
+### Pass 2: the build-broken cases as variants that build, and H2 after its test was added
+
+| id | outcome | detail |
+| -- | ------- | ------ |
+| H2 | killed | TestACommentThatHasACopyIsNotPostedAgain |
+| C6b | killed | TestACommentRowIsCheckedByItsHashAgainstTheResultFile |
+| C7b | survived | the read error not tested (variant that builds) |
+| E2b | build-broken | # github.com/pharzam/layup/internal/run |
+| E3b | killed | TestACommentFileThatFailsItsRowIsRefusedArtifactAndNotKept |
+| Q5b | killed | TestQuestionRowNeedsARecordAndAQuestion |
+| A4b | killed | TestAnAnswerIsNotAcceptedUnlessEachConditionHolds |
+| H11b | killed | TestAHandoffIsNotRecordedTwice |
+| H14b | killed | TestAFileThatCannotBeACommentIsRefusedBeforeThePost |
+
+### Pass 3: C7b after its test was added, and a second variant of E2
+
+| id | outcome | detail |
+| -- | ------- | ------ |
+| C7b | killed | TestACommentRowIsCheckedByItsHashAgainstTheResultFile |
+| E2c | killed | TestTheCommentRowOfASessionIsKeptWithTheResultInOneCommit |
+
+## Controls and checks on the clean tree
+
+| Check | Start | End | Exit |
+| ----- | ----- | --- | ---- |
+| `go build ./...` | 12:55:07Z | 12:55:09Z | 0 |
+| `go vet ./...` | 12:55:09Z | 12:55:09Z | 0 |
+| `go test -count=1 ./...` (the unit level, 21 packages) | 12:55:09Z | 12:55:18Z | 0 |
+| `go test -count=1 -tags=integration` of the ten new integration tests of `internal/run`, by exact name | 12:55:23Z | 12:56:22Z | 0 |
+
+The full module integration level and the unfiltered `internal/run` integration level were **not** run here (the root runs
+them once on the stable head).
+
+| `sh docs/adr/adr-lint.sh` | 12:56:44Z | 12:56:45Z | 0 |
+| `sh docs/prd/prd-lint.sh` | 12:56:45Z | 12:56:45Z | 0 |
+| `sh docs/links/link-lint.sh` (2,737 links) | 12:56:45Z | 12:57:02Z | 0 |
+| `sh docs/tests/run-discipline-tests.sh` (138 passed) | 12:57:02Z | 12:57:09Z | 0 |
+| `sh docs/setup/setup-check.sh` | 12:57:09Z | 12:57:40Z | 0 |
+| `git diff --cached --check` | | | 0 |
+| `go test -count=1 -tags=integration -run TestPackageRules ./cmd/layup/` (after `packages.md`) | 12:40:41Z | 12:40:43Z | 0 |
+| `go test -count=1 -tags=integration ./internal/tsv/ ./internal/records/ ./internal/session/ ./internal/handoff/` (the block equality) | 12:40:43Z | 12:40:54Z | 0 |
