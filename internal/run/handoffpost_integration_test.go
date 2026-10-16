@@ -338,3 +338,28 @@ func TestTheQuestionOfASessionIsRoutedAndItsAnswerAcceptedFromTheRecords(t *test
 		t.Errorf("AnswerAccepted = %q, %v; want accepted by %s", who, ok, citing)
 	}
 }
+
+// The Sessions of a run come from the constructor of the run, state.sessions(),
+// not from a literal: a stop between the post and the copy, and the restart
+// that follows it, post one comment only when that constructor knows the App's
+// slug (round 1 of #360, finding 1: it did not, so the adoption of the App's own
+// comment was skipped and the restart posted twice).
+func TestTheSessionsOfTheRunAdoptTheCommentOfALostCopyAndPostOnce(t *testing.T) {
+	w, r, base := commentWorld(t)
+	ctx := context.Background()
+	id := commentSession(t, r, base, "software-engineer", planText)
+	st := &state{cfg: w.config("0.1.0-dev"), store: r.Store.(*recordsStore), target: r.Clone, defaultBranch: r.Branch,
+		start: [][]string{{"issue.control", "2", "run"}}}
+	stopped := st.sessions()
+	stopped.Store = &failOnCopy{SessionStore: stopped.Store}
+	if _, err := stopped.PostComment(ctx, "T-ab12", id, "plan.md"); err == nil || len(commentsOf(w)) != 1 {
+		t.Fatalf("the stop after the post: %v, %d comments; want an error and the one posted comment", err, len(commentsOf(w)))
+	}
+	p, err := st.sessions().PostComment(ctx, "T-ab12", id, "plan.md")
+	if err != nil || len(commentsOf(w)) != 1 || p.Seen != 1 {
+		t.Errorf("the restart: %+v, %v, %d comments on the task's issue; want the comment adopted and copied, none posted again", p, err, len(commentsOf(w)))
+	}
+	if n := copiesOfIssue(t, w); n != 1 {
+		t.Errorf("%d copies of the task's issue after the restart; want 1", n)
+	}
+}
