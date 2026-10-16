@@ -635,7 +635,9 @@ the records branch, which only the App updates (the rulesets of `M2d`). The owne
 are `internal/run` for `tasks`, `task-gates`, `task-tests`, `bets` and
 `parameters`, `internal/handoff` for `transitions` (it checks the table), `internal/spec` for `inventory`, `inventory-index`, `options` and
 `task-spec-check`; their tasks compare each with its Go schema and move its name from
-`notYetBuilt` ([`README.md`](README.md#the-schema-block)). A block of an earlier
+`notYetBuilt` ([`README.md`](README.md#the-schema-block)). `internal/spec` also
+holds a second Go value of `tasks`, to read the register for the full check —
+the `spans` precedent above — which its task compares. A block of an earlier
 milestone that `M2e` extends keeps its name in `built` and changes in words here: the
 build task changes the block and its Go value in one change. The three that
 `M2e` extends are `result` (the kinds `question`, `decision`, `lesson` and `comment` after
@@ -685,7 +687,7 @@ frozen   time            -    when the list was frozen
 head    sha1  key  the head the table was run for
 rule    enum(covers|needs|measures|criteria|classes|inventory|quotes|sections|tasks|ran)  key  the rule, in this order
 result  enum(pass|fail|clear)  -  `clear` for the rules `classes` and `inventory` before the first bet, and for each rule of the table of a head that touches neither the PRD nor `docs/spec/` before it (loop.md, The full spec check)
-detail  text  -  for `fail`, the first broken place; `—` otherwise
+detail  text  -  for `fail`, the first broken place — `did not run: <what>` when the rule's input did not run it; for `clear`, the reason — `before the first bet` or `no specification yet`; `—` for `pass`
 ```
 
 ```tsv-schema options records:spec/options/<decision>.tsv
@@ -739,7 +741,7 @@ a task of the table and no cycle exists, and `pr` is `—` only until the pull r
 opened (the row is replaced by a later commit, never edited in place within one);
 in `transitions`, a row for each default pair of the table of `loop.md` (The transition table) and no
 `artifacts` or `items` value outside the lists there; in `task-gates` and `task-spec-check`, one table for each head, rows in the
-order of the manifest and of the rule list; in `task-tests`, `frozen` is the same on each
+order of the manifest and of the rule list — a `clear` head's table still holds every rule row; in `task-tests`, `frozen` is the same on each
 row of a freezing; in `options`, a `pass` with `—` in `evidence` is a valid row (the
 filter drops the option) and `fail` has `—`; in `bets`, one row for a milestone that has
 a `first` kind, and a `later` row only after it; in `inventory`, no column holds `—` and a fact has one row; in `inventory-index`, `sha256` and `bet` never `—`, and a reader that takes the rows of version n−1 verifies its `sha256` against the version's bytes first — `layup/spec` check reads the hash (loop.md, The rendered commit and the confirmed inventory); the writer of the next version trusts that verification, it sees rows, not bytes; in `task-tests`, `source`, `sha256` and `harness` never `—`; in `bets`, `brief_sha256` and `verdict` never `—`, and `appetite_usd` and `appetite_hours` are `—` exactly when `verdict` is `no-bet`; in `parameters`, the key is the name and a change is the next commit's

@@ -640,6 +640,22 @@ success without having done its job.
   ([the budget](engineering-discipline.md#reviewing-until-findings-decay)); the task file names the base that the
   ruling gives.
 
+- ❌ **The pinned `prd-lint` fails on two streams.** Its awk `print` goes to
+  stdout and its `err()` — the filename refusal — goes to stderr, so a reader of
+  stdout alone sees an accepted run while a refused name stands unread. It is
+  silent because every line starts `FAIL  ` and exit 1 is the expected verdict
+  of a waiting specification. **The check:** `RunPRDLint` keeps the streams
+  apart and the acceptance judges every non-empty line of both — only
+  `MoSCoW "" not in Must|Should|Could|Won't` and `has no phase value` are an
+  empty cell, a `—` MoSCoW is not (internal/spec, task `T-4wyg`).
+- ❌ **A `clear` spec-check table that drops its rows.** Before the first bet, a
+  head that touches neither the PRD nor `docs/spec/` is `clear` — but the table
+  still holds the ten rule rows, `ran` included; a writer that emits nothing, or
+  a partial table, leaves the head with a spec-check record `ran` never judged.
+  It is silent because "clear" reads as "nothing to write". **The check:**
+  `CheckFull` returns the ten rows in every mode and the writer round-trip reads
+  them back (internal/spec, task `T-4wyg`).
+
 ### Testing pitfalls
 
 These traps are not domain-specific: they hurt every project's test suite.

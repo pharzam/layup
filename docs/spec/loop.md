@@ -789,7 +789,15 @@ At the first bet, code adds the **rendered commit** to the specification's head
 - The specification task waits for its bet: its head fails `prd-lint` on the empty
   MoSCoW and Phase cells, which code expects: it runs the pinned `prd-lint` itself
   and accepts the head only when each failure line names an empty MoSCoW or Phase
-  cell (`architecture.md` §8 step 5).
+  cell (`architecture.md` §8 step 5). **Decided here** (row 62c, #351): `prd-lint`
+  runs by `sh <script> <dir>` and exit 0 accepts; exit 1 accepts only when at
+  least one output line stands and each non-empty line of both streams is one of
+  the two forms the pinned producer prints for an empty cell —
+  `FAIL  <PRD-NNNN-kebab>.md: <REQ|NFR>-NNN MoSCoW "" not in Must|Should|Could|Won't`
+  and `FAIL  <PRD-NNNN-kebab>.md: <REQ|NFR>-NNN has no phase value`. A `—`
+  MoSCoW is not an empty cell; a line of any other form on either stream — a real
+  violation, the filename refusal `err()` sends to stderr, a stray line — or an
+  empty output refuses the head, and any other exit is an error, not a verdict.
 - At a later bet, code renders the change as a rendered task of its own, with a
   plan ("render from copy N") that a plan-review and a verifier session check.
 
@@ -833,6 +841,29 @@ for the PRD, `docs/spec/` and the register is a later task. The rule `ran` makes
 missing row a failure. The function returns the table; it has no exit code, as no
 command of the binary runs it (the status `layup/spec` is `success` when no row is
 `fail`).
+
+**Decided here** (row 62c, #351): the mode is source-bound — the caller's list of
+the head's changed paths, repo-relative against the base, decides it before the
+first bet: a head that touches `docs/prd/` or `docs/spec/` is judged, any other
+head takes the whole-table `clear`; after the first bet all ten rules judge and
+the changed paths decide nothing. A fact token is record-bound:
+`F-<a problem-statement record>#n` resolves to the numbered fact `n` (LAYUP's
+records are `F-0001` and `F-0003`, two records of the one file, so the input is
+a list), `F-<the answers' record>#N` resolves to `Q-00N`, a bare `Q-NNN` is the
+answers' fact itself, and a bare `F-NNNN` names a record, resolves to no
+numbered fact and is no failure of `covers` — the pinned `prd-lint` already
+requires the record file to exist; any other token fails `covers`. `measures`
+reads only a `Fact` cell of a table under a `## … Success metrics` heading, never
+an acceptance criterion's prose; the exemption of `needs` and `measures` is a
+fact a token under a `waits for a bet` heading names, or one the confirmed
+version marks out of scope. `classes` compares the PRD's values with the latest
+copy's lines both directions, parsed by the one requirement-line grammar of the
+bet's answer; a Phase cell `—` reads as empty, and a PRD row with an empty
+MoSCoW and an empty or `—` Phase that the copy does not name waits for its bet
+and agrees. The `inventory` rule verifies each index row's `sha256` against the
+exact bytes the caller supplies and does not repair or infer one. `ran` fails a
+missing row, and a rule that did not run — whose own row is a `fail` with the
+detail `did not run: <what>` — fails `ran` as `did not run: <rule>` (NFR-004).
 
 ## REQ-012 — The parameter change
 
