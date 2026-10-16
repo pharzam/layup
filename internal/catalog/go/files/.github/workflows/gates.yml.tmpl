@@ -1,7 +1,10 @@
 # The gate jobs of this repository: one job per kind of docs/gates.tsv, each a
 # required check of the default branch. The id and the name of a job are its
 # kind. Each job runs .github/gates.sh with its kind on the head of the pull
-# request; the script reads the kind's row of docs/gates.tsv.
+# request; the script reads the kind's row of docs/gates.tsv. Before it, a step
+# runs the base's own script in its mode --overlay, which puts the base's
+# manifest, script and config paths into the checkout (F-22): the head's own
+# gate files never judge the head, except for a branch batch/<point>.
 name: gates
 
 on:
@@ -22,6 +25,13 @@ jobs:
       - uses: actions/setup-go@v5 # https://github.com/actions/setup-go/tree/v5
         with:
           go-version-file: go.mod
+      - run: |
+          set -eu
+          git show "$GATE_BASE:.github/gates.sh" > "$RUNNER_TEMP/gates-base.sh"
+          sh "$RUNNER_TEMP/gates-base.sh" --overlay
+        env:
+          GATE_BASE: ${{ github.event.pull_request.base.sha }}
+          GATE_HEAD_REF: ${{ github.event.pull_request.head.ref }}
       - run: sh .github/gates.sh static
         env:
           GATE_BASE: ${{ github.event.pull_request.base.sha }}
@@ -37,6 +47,13 @@ jobs:
       - uses: actions/setup-go@v5 # https://github.com/actions/setup-go/tree/v5
         with:
           go-version-file: go.mod
+      - run: |
+          set -eu
+          git show "$GATE_BASE:.github/gates.sh" > "$RUNNER_TEMP/gates-base.sh"
+          sh "$RUNNER_TEMP/gates-base.sh" --overlay
+        env:
+          GATE_BASE: ${{ github.event.pull_request.base.sha }}
+          GATE_HEAD_REF: ${{ github.event.pull_request.head.ref }}
       - run: sh .github/gates.sh layout
         env:
           GATE_BASE: ${{ github.event.pull_request.base.sha }}
@@ -52,6 +69,13 @@ jobs:
       - uses: actions/setup-go@v5 # https://github.com/actions/setup-go/tree/v5
         with:
           go-version-file: go.mod
+      - run: |
+          set -eu
+          git show "$GATE_BASE:.github/gates.sh" > "$RUNNER_TEMP/gates-base.sh"
+          sh "$RUNNER_TEMP/gates-base.sh" --overlay
+        env:
+          GATE_BASE: ${{ github.event.pull_request.base.sha }}
+          GATE_HEAD_REF: ${{ github.event.pull_request.head.ref }}
       - run: sh .github/gates.sh boundary
         env:
           GATE_BASE: ${{ github.event.pull_request.base.sha }}
@@ -67,6 +91,13 @@ jobs:
       - uses: actions/setup-go@v5 # https://github.com/actions/setup-go/tree/v5
         with:
           go-version-file: go.mod
+      - run: |
+          set -eu
+          git show "$GATE_BASE:.github/gates.sh" > "$RUNNER_TEMP/gates-base.sh"
+          sh "$RUNNER_TEMP/gates-base.sh" --overlay
+        env:
+          GATE_BASE: ${{ github.event.pull_request.base.sha }}
+          GATE_HEAD_REF: ${{ github.event.pull_request.head.ref }}
       - run: sh .github/gates.sh contract
         env:
           GATE_BASE: ${{ github.event.pull_request.base.sha }}
@@ -82,6 +113,13 @@ jobs:
       - uses: actions/setup-go@v5 # https://github.com/actions/setup-go/tree/v5
         with:
           go-version-file: go.mod
+      - run: |
+          set -eu
+          git show "$GATE_BASE:.github/gates.sh" > "$RUNNER_TEMP/gates-base.sh"
+          sh "$RUNNER_TEMP/gates-base.sh" --overlay
+        env:
+          GATE_BASE: ${{ github.event.pull_request.base.sha }}
+          GATE_HEAD_REF: ${{ github.event.pull_request.head.ref }}
       - run: sh .github/gates.sh test
         env:
           GATE_BASE: ${{ github.event.pull_request.base.sha }}

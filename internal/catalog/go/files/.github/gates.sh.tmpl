@@ -8,6 +8,18 @@
 # and the kind's own tool. It prints the kind, the result and the reason, and
 # exits 0 for pass or clear, 1 otherwise. A manifest that `layup gate` refuses
 # fails the job.
+#
+# The mode --overlay (the step before the job, run from the script of the base,
+# git show "$GATE_BASE:.github/gates.sh", so that the head cannot change it):
+#   sh gates.sh --overlay
+# with GATE_BASE and GATE_HEAD_REF, on the checkout of the head. It puts the
+# manifest, this script and each config path of the manifest as the base has
+# them into the work tree and the index, so that the head's own gate files never
+# judge the head (F-22). The exception is a head ref of the form batch/<point>:
+# batch/ and one segment that holds no /; it takes its own files. A config path
+# that is no path or is in .git, that is not a file at the base (a link, a
+# submodule), or that lies under a link of the head, and a head with a file above
+# a path of the base, fail the job: it checks each path before it writes one.
 set -u
 set -f
 kind=${1:-}
@@ -51,6 +63,67 @@ function match_one(path, p,   j, dir, ext, name) {
 }
 '
 
+# overlay is the mode --overlay: it checks each destination, then writes them.
+overlay() {
+	kind=overlay
+	case ${GATE_HEAD_REF:-} in
+	batch/ | batch/*/*) ;;
+	batch/?*) result pass "a batch branch: the head's own gate files" ;;
+	esac
+	rev=${GATE_BASE:-}
+	git rev-parse --verify --quiet "$rev^{commit}" > /dev/null || result fail "the revision $rev is not a commit"
+	tmp=$(mktemp) || result not-active "mktemp failed"
+	lines=$(mktemp) || result not-active "mktemp failed"
+	g() { git -c core.hooksPath=/dev/null --literal-pathspecs "$@"; }
+	# the config paths of the manifest of the base, as awk reads them: "!" and a
+	# reason when one is not a path or is in .git
+	cfgs=
+	if g cat-file -e "$rev:docs/gates.tsv" 2> /dev/null; then
+		g show "$rev:docs/gates.tsv" > "$tmp" || result fail "the manifest of the base could not be read"
+		cfgs=$(LC_ALL=C awk -F '\t' "$awklib"'
+NR > 1 && $6 != "\342\200\224" {
+	n = split($6, c, "[ ]")
+	for (i = 1; i <= n; i++) {
+		first = c[i]; sub(/\/.*/, "", first)
+		if (!valid(c[i])) { msg = "the config path " c[i] " is not a path"; exit }
+		if (tolower(first) == ".git") { msg = "the config path " c[i] " is in .git"; exit }
+		out = out c[i] "\n"
+	}
+}
+END { if (msg != "") print "!" msg; else printf "%s", out }' "$tmp") || result fail "awk failed"
+		case $cfgs in "!"*) result fail "${cfgs#!}" ;; esac
+	fi
+	dests="docs/gates.tsv .github/gates.sh $cfgs"
+	for pass in check write; do
+		for p in $dests; do
+			if [ $pass = check ]; then
+				# no link at or above the path, and no file above it where the base has files
+				g ls-tree -r -z "$rev" -- "$p" > "$tmp" || result fail "the base has no tree"
+				tr '\0' '\n' < "$tmp" > "$lines" || result fail "tr failed"
+				[ -s "$lines" ] && has=1 || has=0
+				bad=$(awk -F '\t' '{ split($1, m, " "); if (m[1] != "100644" && m[1] != "100755") { print $2; exit } }' "$lines") ||
+					result fail "awk failed"
+				[ -z "$bad" ] || result fail "$bad at the base is a symbolic link or a submodule, not a file"
+				up=
+				rest=$p
+				while :; do
+					up=${up:+$up/}${rest%%/*}
+					[ ! -L "$up" ] || result fail "$up is a symbolic link of the head"
+					case $rest in */*) rest=${rest#*/} ;; *) break ;; esac
+					[ $has = 0 ] || [ ! -e "$up" ] || [ -d "$up" ] || result fail "$up is not a directory"
+				done
+				continue
+			fi
+			g ls-tree -r -z "$rev" -- "$p" > "$tmp" || result fail "the base has no tree"
+			g rm -r -q -f --cached --ignore-unmatch -- "$p" > /dev/null || result fail "git rm failed for $p"
+			rm -rf -- "$p" || result fail "rm failed for $p"
+			if [ -s "$tmp" ]; then g checkout -q "$rev" -- "$p" || result fail "git checkout failed for $p"; fi
+		done
+	done
+	result pass "—"
+}
+
+[ "$kind" != --overlay ] || overlay
 [ -n "$kind" ] || result fail "usage: sh .github/gates.sh KIND"
 
 # The base and the head are commits, and the checkout is the head: the job
