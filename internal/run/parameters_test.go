@@ -286,6 +286,11 @@ func TestASetIsRefusedByTheFirstFailingItemInTheOrderOfTheSpecification(t *testi
 	appSet.Row[5] = "layup-agent"
 	edited := aSet(10, "101", "set brief.lines 7 because x")
 	edited.Row[1] = "2"
+	// The author comes before the name: an edit or an App's comment of an unknown name is refused as author.
+	editedUnknown := aSet(10, "101", "set stall.T 5 because x")
+	editedUnknown.Row[1] = "2"
+	appUnknown := aSet(10, "101", "set stall.T 5 because x")
+	appUnknown.Row[5] = "layup-agent"
 	for _, tc := range []struct {
 		name      string
 		table     []paramSpec
@@ -302,6 +307,8 @@ func TestASetIsRefusedByTheFirstFailingItemInTheOrderOfTheSpecification(t *testi
 		{"an approver of a point on a row of the Operator", parameterTable, paramApprovers, aSet(10, "404", "set brief.lines 7 because x"), "author"},
 		{"a comment of an App", parameterTable, paramApprovers, appSet, "author"},
 		{"an edit (a second copy) is never a decision", parameterTable, paramApprovers, edited, "author"},
+		{"an edit of a comment of an unknown name", parameterTable, paramApprovers, editedUnknown, "author"},
+		{"an App's comment of an unknown name", parameterTable, paramApprovers, appUnknown, "author"},
 		{"an unknown name by the Operator", parameterTable, paramApprovers, aSet(10, "101", "set stall.T 5 because x"), "name"},
 		{"an unknown name and a value of no type", parameterTable, paramApprovers, aSet(10, "101", "set stall.T abc because x"), "name"},
 		{"a value of no type", parameterTable, paramApprovers, aSet(10, "101", "set brief.lines abc because x"), "value"},

@@ -333,6 +333,11 @@ func TestARefusedSetChangesNothingAndIsReportedWithItsItem(t *testing.T) {
 	} {
 		say(w, c.id, c.author, "login", c.body)
 	}
+	// A comment of an App is no human input: it is not copied and not judged.
+	w.fake.mu.Lock()
+	w.fake.comments[2] = append(w.fake.comments[2], map[string]any{"id": 9108, "user": map[string]any{"id": 777, "login": "layup-watch[bot]"}, "performed_via_github_app": map[string]any{"slug": "layup-watch"},
+		"created_at": "2026-10-08T13:00:00Z", "updated_at": "2026-10-08T13:00:00Z", "body": "set brief.lines 7 because an App asks"})
+	w.fake.mu.Unlock()
 	r := restarted(t, w)
 	before := recordsHead(t, w)
 	blob := gitOut(t, w.bare, "rev-parse", before+":parameters.tsv")
@@ -360,6 +365,9 @@ func TestARefusedSetChangesNothingAndIsReportedWithItsItem(t *testing.T) {
 	}
 	if gitOut(t, w.bare, "rev-parse", recordsHead(t, w)+":parameters.tsv") != blob {
 		t.Error("a refused set changed parameters.tsv")
+	}
+	if strings.Contains(show(t, w.bare, "refs/heads/layup-records", "copies.tsv"), "9108\t") {
+		t.Error("a comment of an App was copied")
 	}
 	if n := len(progressLines(w, "parameters: refused")); n != 6 {
 		t.Errorf("%d progress lines of a refusal; want 6", n)
@@ -552,6 +560,19 @@ func TestTheBoundaryIsFencedByTheLease(t *testing.T) {
 	w, _ := loopWorld(t)
 	say(w, 9101, operatorID, "pharzam", "set build.parallel 2 because two cores")
 	r := restarted(t, w)
+	// The comment is copied before the push is refused, so that the refusal falls on the change's own commit.
+	ctx := context.Background()
+	comments, err := r.cfg.Forge.Comments(ctx, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range comments {
+		if c.App == "" {
+			if err := r.copy(ctx, c, 2); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
 	held := LeaseRow{Run: "fedcba9876543210", Host: "host-1", Version: "1.0.0", Started: opened, Heartbeat: 1, State: "held"}
 	if err := r.store.WriteLease(context.Background(), held, "lease: held by the test"); err != nil {
 		t.Fatal(err)
@@ -563,7 +584,7 @@ func TestTheBoundaryIsFencedByTheLease(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(w.bare, "refuse-once"), nil, 0o644); err != nil {
 		t.Fatal(err)
 	}
-	_, _, err := r.parametersBoundary(context.Background())
+	_, _, err = r.parametersBoundary(ctx)
 	var lost *LostError
 	if !errors.As(err, &lost) || lost.Holder != "fedcba9876543210" {
 		t.Errorf("the boundary: %v; want a LostError whose holder is the other run", err)
