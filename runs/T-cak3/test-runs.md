@@ -80,9 +80,17 @@ Run by the coordinator, not by the author, at `e16b7c93b37b0dd2b9ad63a2b4bf7403b
 
 By the Operator's addition (the coordinator's message of 2026-10-16 after 07:49Z): the independent review is chosen by the coordinator, first Antigravity `gemini-4-argon-high` (its probe succeeded), then Devin SWE-2 Max as the fallback, against this author, Claude Sonnet 5.5; no Antigravity Anthropic or GPT model is permitted. The limits recorded for a review session: 5 minutes with no output, 15 minutes with no record. The reviewer's context is the source, the issue body and the independent plan review only, with none of the author's decisions. The author does not launch the review.
 
-## Resources of the author's build session, as its harness reported them
+## Resources of the author's invocations, as the harness reported them
 
-From the `result` line of `/tmp/layup-m2e-resume/claude-66a-build.jsonl` (Claude Code, `claude-sonnet-5-5`; 42 turns): started 2026-10-16T07:11:52Z, last event 07:32:20Z, `duration_ms` 1,231,322 (20 min 31 s); input 180 tokens, output 90,993 (of which thinking 38,336), cache read 15,408,895, cache creation 264,580; cost USD 3.51 at list price (`costBasis: list`). This covers tests, code, mutants, documents and the first push. The plan session (comment 6210010288) is another session whose report is not read here, so its tokens are not recorded.
+The three result files report one model only, `claude-sonnet-5-5`, with no child-model usage. The per-invocation `usage` and `duration_ms` values are below; thinking is included in output, not added again. Resumed-session `modelUsage` and costs are cumulative, so they are not assigned to build-only work.
+
+| Invocation | Input | Output (thinking included) | Cache creation | Cache read | Elapsed ms |
+| --- | --- | --- | --- | --- | --- |
+| Plan | 98 | 38,005 (22,980) | 176,936 | 5,591,107 | 359,780 |
+| Build, tests, mutants, documents, first push | 82 | 52,988 (15,356) | 87,644 | 9,817,788 | 1,231,322 |
+| Full-run evidence and merge | 22 | 7,563 (1,520) | 12,071 | 3,097,698 | 255,941 |
+
+The source is each `result` in `claude-66a-plan.jsonl`, `claude-66a-build.jsonl` and `claude-66a-freeze.jsonl` under the coordinator's run-log directory. The earlier paragraph wrongly assigned cumulative plan-plus-build counters to the build alone; these rows supersede it.
 
 ## The checks after the merge (07:50 to 07:52Z)
 
