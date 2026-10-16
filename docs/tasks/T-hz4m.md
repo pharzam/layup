@@ -26,7 +26,7 @@ before the code, 22 mutants all caught; `setup.md`, `loop.md`, `architecture.md`
 `traceability.md`, `PRD-0001` §12 and one pitfall in `guardrails.md` §2. **Known limits,
 written in `setup.md`:** the job refuses every link of the head at or above a destination
 where `layup gate` follows one into the tree; the exception looks at the branch name, not the
-repository (#345, row 65b). **Off the path:** none opened by this task.
+repository (#345, M2f). **Off the path:** none opened by this task.
 
 ## Review rounds
 
@@ -57,7 +57,7 @@ vet`, `go test ./...` and `go test -tags=integration ./internal/catalog/` exit 0
 five checks exit 0. **Budget:** the maximum is 650 lines over 14 files, read against current
 `main` at landing (the Operator's answer, comment 6209416363, recorded as 6209446202 on #355
 and 6209446809 on #354, to the question 6209355485). The diff against `main` (`f12da6a`),
-close-out included, is 587 lines over 14 files; at `511cc4e` it was 510 over 11. Against
+close-out included, is 595 lines over 14 files; at `511cc4e` it was 510 over 11. Against
 `6bc1051` the branch is larger, as it carries rows 62a, 63b and 64.
 
 ## Resource record
@@ -69,7 +69,15 @@ Recorded, not budgeted (ADR-0007). UTC; "not reported" is a value the harness di
 | The plan | reasoning | Claude Sonnet 5.5 | not reported | not reported | start not reported, to 05:30 on 2026-10-16 |
 | The plan review | reasoning | GPT-6 Sol on Devin CLI | not reported | not reported | start not reported, to 05:54 |
 | The implementation (T and D) | execution | Claude Sonnet 5.5 | `high` | input 126, output 65,893 (thinking 30,338 of it), cache read 7,388,824, cache creation 153,484; cost 2.0120004 USD | 1,272,732 ms (21 min 13 s), from 05:56 |
-| The merge of `d24fae3`, the full integration run, the evidence | execution | Claude Sonnet 5.5 | `high` | not reported | from 06:19 to the comment of 06:39 |
+| The merge of `d24fae3`, the full integration run, the evidence | execution | Claude Sonnet 5.5 | `high` | input 30, output 8,345 (thinking 1,073 included), cache creation 14,308, cache read 2,607,330 | 1,232,719 ms |
 | The discarded Devin SWE-2 Max review attempt | reasoning | SWE-2 Max on Devin CLI | not reported | not reported | 15 min, exit 124, no record |
-| Round 1 | reasoning | Claude Sonnet 5.5 (model independence not held) | not reported | not reported | not reported, ends 07:11 |
-| The answer to round 1, the merge of `f12da6a` and this close-out | execution | Claude Sonnet 5.5 | `high` | not reported | from about 07:11 on 2026-10-16 |
+| Round 1 | reasoning | Claude Sonnet 5.5 (model independence not held) | `high` | input 22, output 10,300 (thinking 3,742 included), cache creation 54,386, cache read 486,932 | 264,978 ms |
+| The answer to round 1, the merge of `f12da6a` and close-out | reasoning / — | Claude Sonnet 5.5 | `high` | input 40, output 17,396 (thinking 5,156 included), cache creation 38,478, cache read 4,113,431 | 945,039 ms for the combined invocation; allocation by part not reported |
+| The resource bookkeeping correction | — | Codex (model not reported) | not reported | not reported | not reported |
+| **Total** | | | | not fully reported; reported subtotal 14,959,325 tokens including caches | not fully reported; reported subtotal 4,615,468 ms including the discarded Devin attempt |
+
+The reported subtotals omit unreported parts; thinking is included in output, not added again.
+Figures are per invocation from the harness result, not the resumed session’s cumulative totals.
+The combined answer/merge/close-out invocation spans reasoning and unrouted bookkeeping; its
+per-part allocation is not reported. OpenCode availability failures were earlier shared attempts,
+not another completed review of this head. The Operator selected the two harness models.
