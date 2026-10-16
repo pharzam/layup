@@ -67,3 +67,23 @@ The last row, M30, is a document mutant: removing `internal/handoff` from the Ma
 
 All exit 0, each alone: `gofmt -l cmd internal` (no output) 07:28:38; `go build ./...` 07:28:39; `go vet ./...` 07:28:41; `go test ./...` 07:28:49; `go vet -tags=integration ./...` 07:28:52; the focused integration run of `internal/run` (the six tests of the task register) 07:29:12; `go test -tags=integration ./internal/tsv/` 07:29:12; `go test -tags=integration ./cmd/layup/ -run TestPackageRules` 07:29:15; `sh docs/adr/adr-lint.sh` 07:29:18; `sh docs/prd/prd-lint.sh` 07:29:18; `sh docs/links/link-lint.sh` 07:29:31; `sh docs/tests/run-discipline-tests.sh` 07:29:38; `sh docs/setup/setup-check.sh` 07:30:10 (after `git add` of the new files); `git diff --check` and `git diff --cached --check` 07:30:10. The full integration level (`go test -tags=integration ./...`) has **not** been run: it waits for the coordinator's go-ahead (it is serialised with another row's run on this host).
 The focused integration run was repeated with `-count=1` at 07:30:51, exit 0 (21 s).
+
+## The full integration level at the pushed head (07:33 to 07:47Z)
+
+Run by the coordinator, not by the author, at `e16b7c93b37b0dd2b9ad63a2b4bf7403b77a0395`; the record is `integration-result.json` and `integration.log` under `~/.cache/layup-session/audits/T-cak3/` (not in the repository). Command `go test -count=1 -tags=integration -timeout 25m ./...`; start 2026-10-16T07:33:19.112569Z, end 2026-10-16T07:46:59.169359Z (13 min 40 s); **direct exit code 0**. Every package of the log is `ok`; the slowest are `internal/run` 783.245 s and `internal/verify` 94.250 s. The author did not run this level.
+
+## The merge of `main` (2026-10-16, after 07:49Z)
+
+`main` moved from `f12da6a` to `8e26eca` (the merge of #381, row 65a, and the contributor-identity commit `cbb0a9d`). `git fetch` over HTTPS, then `git merge --no-commit --no-ff origin/main`: exit 0, no conflict. The files `main` changed that this branch also changed are the shared index files `docs/prd/PRD-0001-layup.md` and `docs/tests/traceability.md`, merged on disjoint hunks (O-219: no scoped round); the other files of `main`'s change (`docs/tasks/`, `docs/spec/loop.md`, `setup.md`, `docs/architecture.md`, `docs/guardrails.md`, `internal/catalog/**`, `runs/T-hz4m/`) are not files of this branch. No Go file of this branch is touched; no source file was edited in this step (R7: comment 6210744754 on #357). The checks after the merge are in the next section.
+
+## Review routing, as the coordinator gave it (recorded, not decided here)
+
+By the Operator's addition (the coordinator's message of 2026-10-16 after 07:49Z): the independent review is chosen by the coordinator, first Antigravity `gemini-4-argon-high` (its probe succeeded), then Devin SWE-2 Max as the fallback, against this author, Claude Sonnet 5.5; no Antigravity Anthropic or GPT model is permitted. The limits recorded for a review session: 5 minutes with no output, 15 minutes with no record. The reviewer's context is the source, the issue body and the independent plan review only, with none of the author's decisions. The author does not launch the review.
+
+## Resources of the author's build session, as its harness reported them
+
+From the `result` line of `/tmp/layup-m2e-resume/claude-66a-build.jsonl` (Claude Code, `claude-sonnet-5-5`; 42 turns): started 2026-10-16T07:11:52Z, last event 07:32:20Z, `duration_ms` 1,231,322 (20 min 31 s); input 180 tokens, output 90,993 (of which thinking 38,336), cache read 15,408,895, cache creation 264,580; cost USD 3.51 at list price (`costBasis: list`). This covers tests, code, mutants, documents and the first push. The plan session (comment 6210010288) is another session whose report is not read here, so its tokens are not recorded.
+
+## The checks after the merge (07:50 to 07:52Z)
+
+All exit 0, each alone, on the merged tree: `go build ./...` 07:50:42; `go vet ./...` 07:50:43; `go test -count=1 ./...` 07:50:52; `gofmt -l cmd internal` (no output) 07:50:53; `sh docs/adr/adr-lint.sh` 07:50:54; `sh docs/prd/prd-lint.sh` 07:50:54; `sh docs/links/link-lint.sh` 07:51:12; `sh docs/tests/run-discipline-tests.sh` 07:51:23; `sh docs/setup/setup-check.sh` 07:52:05; `git diff --cached --check` and `git diff --check` 07:52:05. The gitleaks scan of `origin/main..HEAD` is run alone before the push.
