@@ -283,3 +283,11 @@ Post-merge and post-test verification on the worktree, all exit 0 at
 `git diff --check`; merge-commit hooks green (adr-lint, prd-lint,
 run-discipline-tests 138/0, link-lint 2780, setup-check adapted/markers).
 No full-module suite run by this author — the coordinator owns it (#360).
+
+## Main after code-owner admission, before final review
+
+Merged current main d09b1c04a1871b58799ae33ebb57aebdfea0a71d before the queued
+full integration and final cycle2 review. Only the PRD changelog conflicted:
+keep main's #384 entry, then #351. All auto-merged shared prose and indexes
+retain both sides. No #351 production code changed in the tests-only cycle.
+The fresh final round must judge this resolution; no ordinary-prose waiver.

@@ -86,6 +86,7 @@ func TestEachCallRunsItsVerb(t *testing.T) {
 		{"show", "r", "show --end-of-options abc:docs/gates.tsv --", func() { Show("r", "abc", "docs/gates.tsv") }, nil},
 		{"diff --name-only", "r", "diff --name-only --no-renames -z --end-of-options abc def --", func() { DiffNames("r", "abc", "def") }, nil},
 		{"apply", "r", "apply -- /s/static.patch", func() { Apply("r", "/s/static.patch") }, nil},
+		{"rev-list --parents", "r", "rev-list --parents -n 1 --end-of-options abc --", func() { Parents("r", "abc") }, nil},
 		{"ls-tree", "r", "ls-tree -r -z --full-tree --end-of-options abc -- layout", func() { LsTree("r", "abc", "layout") }, nil},
 		{"fetch", "r", "fetch --no-tags --update-head-ok -- " + url + " refs/heads/main:refs/heads/main",
 			func() { Fetch("r", url, "refs/heads/main", Auth{}) }, nil},
@@ -170,6 +171,9 @@ func TestTheOutputIsRead(t *testing.T) {
 		{"diff: no change", "", func() (any, error) { return DiffNames("r", "a", "b") }, []string(nil)},
 		{"show: the bytes unchanged", "a\r\nb", func() (any, error) { return Show("r", "HEAD", "a.txt") }, []byte("a\r\nb")},
 		{"version", "git version 2.54.0 (Apple Git-157)\n", func() (any, error) { return Version() }, "2.54.0 (Apple Git-157)"},
+		{"rev-list --parents: a root commit", "c0\n", func() (any, error) { return Parents("r", "c0") }, []string{}},
+		{"rev-list --parents: a commit", "c1 p1\n", func() (any, error) { return Parents("r", "c1") }, []string{"p1"}},
+		{"rev-list --parents: a merge", "c2 p1 p2\n", func() (any, error) { return Parents("r", "c2") }, []string{"p1", "p2"}},
 		{"is-shallow: a shallow clone", "true\n", func() (any, error) { return IsShallow("r") }, true},
 		{"is-shallow: a full history", "false\n", func() (any, error) { return IsShallow("r") }, false},
 	} {
@@ -543,5 +547,29 @@ func TestCommitTreeReadsItsOutput(t *testing.T) {
 	var missing *NotFoundError
 	if _, err := CommitTree("r", fullID, fullID, "m", who); !errors.As(err, &missing) {
 		t.Errorf("no git: %v; want a *NotFoundError", err)
+	}
+}
+
+// BlobID is the object ID that git gives a blob, computed with no process: the empty blob and one line are the IDs
+// that `git hash-object` prints (task T-4cep, #384).
+func TestBlobID(t *testing.T) {
+	for data, want := range map[string]string{"": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391", "hello\n": "ce013625030ba8dba906f756967f9e9ca394464a"} {
+		if got := BlobID([]byte(data)); got != want {
+			t.Errorf("BlobID(%q) = %q, want %q", data, got, want)
+		}
+	}
+	calls := stub(t, "", nil)
+	BlobID([]byte("x"))
+	if len(*calls) != 0 {
+		t.Errorf("BlobID started git %d times; want a computation with no process", len(*calls))
+	}
+}
+
+// Parents of an output that is empty, or whose first field is not the commit asked for, is an error of the call.
+func TestParentsRefusesAnOutputOfAnotherForm(t *testing.T) {
+	stub(t, "", nil)
+	var failed *FailedError
+	if _, err := Parents("r", "c1"); !errors.As(err, &failed) || failed.Code != 0 {
+		t.Errorf("no output: %v; want a *FailedError with code 0", err)
 	}
 }

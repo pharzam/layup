@@ -1058,6 +1058,17 @@ These traps are not domain-specific: they hurt every project's test suite.
   `go vet` and were counted as kills, so the count of kills was three too high. **The check:** a variant is valid only if `go build` and `go vet` pass on
   it, its kill is the named assertion in its own output, each run's exit status and output are kept, and the file's hash before and
   after proves the restore (`runs/T-jew3/mutants.md`). Learned in `T-jew3` (#356).
+- ❌ **A check that admits a head by who made it.** The author, committer, message, date and signature of a commit are text the pusher writes,
+  so an admission keyed to them proves nothing. **The check:** judge the parents, the whole tree and the bytes of the one file, and test both
+  ways: the Operator's name with wrong content is refused, hostile metadata with the canonical content is admitted
+  (`TestCheckCodeOwnerLanding`). Learned in `T-4cep` (#384).
+- ❌ **A script and the check that judges its result, tested apart.** Each had a green test of its own and nothing showed that they agreed, so
+  the script could land a commit that the next run refused. **The check:** one test runs the producer as production writes it and has the
+  checker judge what it made, and a producer that adds another path or a second file is refused by the same call
+  (`TestTheLandingCommitIsAdmitted`). Learned in `T-4cep` (#384).
+- ❌ **A fixture that adds a submodule entry and then `git add --all`.** `Add` stages the tree as the work tree is, so an entry with no file is
+  dropped and the case goes green without it. **The check:** add the entry after `Add` and read the listing (`TestParentsAndTheWholeTree`).
+  Learned in `T-4cep` (#384).
 - ❌ **A set that is "not yet applied" because its comment is in no row.** The plan of the parameters (`T-dx1h`,
   #358) judged each comment of the control issue again at every boundary and skipped a set only when its ID was the
   `comment` of some row. After a later set of the same name, the earlier one's ID is in no row, so it is applied again:
