@@ -136,7 +136,42 @@ caller boundary reads for the uphill rule of `architecture.md` §11 — the
 parser is row 66l's, the wiring stays #367's; no O-214 count changes and
 nothing is claimed implemented.
 
+## Review — round 1
+
+[Record](https://github.com/pharzam/layup/issues/387#issuecomment-6221128932):
+Claude Sonnet 5.5 on Claude Code, a fresh session, `e48ef43` at cycle 0 of cap
+1 — `not mergeable, findings recorded`, two material findings, both in the
+pinned grammar this task adds. The author's answer is
+[comment-6221153143](https://github.com/pharzam/layup/issues/387#issuecomment-6221153143).
+
+- **findings-part-undefined** — repaired: the grammar gains block markers. A
+  marker is a line that is exactly `tests:` or `findings:`; its block is the
+  run of `- ` lines directly under it, ending at the first non-`- ` line; a
+  malformed `- ` line inside makes the item false, one outside is ignored
+  prose; each required field and marker appears exactly once; order is free.
+  The count of material findings is the block's bullet count; `nothing-material`
+  requires the verdict and an empty `findings:` block, `findings-located`
+  requires the marker once and at least one located finding.
+- **tests-key-form** — repaired under the same rule: `tests:` is a marker, not
+  a `key: value` field; zero bullets is the valid form of a specification
+  task's plan, and `tests: —` is not the marker. `tests-red-green` keeps
+  reading an empty list as false for a build task.
+- Rejected alternatives: `tests: —` as a scalar empty form beside the block
+  (two spellings of empty, `—` colliding with the scalar empty value); a
+  fenced or table form for either part (a second grammar class); reading the
+  findings part by position with no marker (the ambiguity the finding names).
+- Notes: the no-owner-row-token gap of check 3 is guarded (permissible under
+  C10) and control C of
+  [`adversarial.txt`](../../runs/T-8bwd/adversarial.txt) demonstrates it;
+  semantic prose checks are declined (no independent anchor — the section is
+  the anchor); the plan fields' producer/caller boundary is declared only
+  (66l parses, 66k's wiring consumes). The earlier restore incident is
+  recorded in `adversarial.txt`.
+- Round 2 waits for #351's landing and merge per the coordinator and covers
+  this fix plus the then-current `main`; it is not requested here.
+
 ## Open
 
-The independent review round, the verdict, the resource record, the
-completed-log line and the merge are close-out and are not written yet.
+The independent review round 2 (after #351 lands), the verdict, the resource
+record, the completed-log line and the merge are close-out and are not
+written yet.
