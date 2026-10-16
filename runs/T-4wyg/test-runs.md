@@ -109,7 +109,7 @@ clean at 13:16:41Z.
 
 ## Size against `e16568c`
 
-14 files, 1,859 insertions and 9 deletions = **1,868 changed lines**
+14 files, 1,898 insertions and 9 deletions = **1,907 changed lines**
 (modified lines count twice by the add+remove measure), under the reviewed
 maximum of 2,100 lines / 20 files. `docs/spec/packages.md` needed no edit:
 its M2e bullet already pins the `internal/spec` full-check ownership and the
