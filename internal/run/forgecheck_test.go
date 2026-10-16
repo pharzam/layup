@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -298,6 +299,9 @@ type checkFake struct {
 	activityRef       string
 	areaCalls         int
 	rulesRead         map[string]int // the reads of the effective rules of each branch
+	landingErr        error          // what the code-owner check answers: refused by default
+	landingCalls      [][2]string    // the head and the last commit of each call of the check
+	notes             []string       // the lines of the step's own
 }
 
 // The IDs that the apply outputs of the fake give the two rulesets, and the rules as the forge returns them for a ruleset.
@@ -345,7 +349,7 @@ func newCheckFake() *checkFake {
 		repo:  forge.Repository{DefaultBranch: "main", Heads: map[string]string{"main": lastCommit}},
 		rules: map[string][]forge.Rule{"main": ofRuleset(def, defaultRulesetID), "layup-probe": ofRuleset(def, defaultRulesetID), "layup-records": ofRuleset(asGitHubGives(recs), recordsRulesetID)}, rulesErr: map[string]error{}, rulesRead: map[string]int{},
 		probeErr: &git.FailedError{Args: []string{"push"}, Code: 1, Stderr: githubRefusal, Err: errors.New("exit status 1")},
-		clock:    time.Date(2026, 10, 13, 12, 0, 0, 0, time.UTC)}
+		clock:    time.Date(2026, 10, 13, 12, 0, 0, 0, time.UTC), landingErr: errors.New("the head adds no .github/CODEOWNERS")}
 }
 
 func (f *checkFake) job() forgeCheckJob {
@@ -378,6 +382,11 @@ func (f *checkFake) job() forgeCheckJob {
 		activity: func(ref string) error { f.activityRef = ref; return f.activityErr },
 		clean:    func(s string) string { return s },
 		commit:   func(table []byte) error { f.committed = append(f.committed, table); return f.commitErr },
+		landing: func(head, last string) error {
+			f.landingCalls = append(f.landingCalls, [2]string{head, last})
+			return f.landingErr
+		},
+		note: func(s string) { f.notes = append(f.notes, s) },
 	}
 }
 
@@ -606,4 +615,81 @@ func TestATableThatItsReaderWouldRefuseIsNotCommitted(t *testing.T) {
 	if got := job.do(); got.Result != "fail" || !strings.HasPrefix(got.Detail, "the table: ") || !strings.Contains(got.Detail, "no table was committed") || len(f.committed) != 0 {
 		t.Errorf("a run that is no run ID: %+v, %d commits; want the table refused by its reader, and no commit", got, len(f.committed))
 	}
+}
+
+// The row tree admits one head besides the last commit: the code-owner commit of a target set up before the rule
+// (docs/spec/scaffold.md, The tree check; task T-4cep, #384). The check answers for it; the row never judges the commit itself.
+func TestTheTreeRowAdmitsTheCodeOwnerCommitAndNothingElse(t *testing.T) {
+	const ahead = "abcdefabcdefabcdefabcdefabcdefabcdefabcd"
+	f := newCheckFake()
+	f.job().do()
+	if len(f.landingCalls) != 0 {
+		t.Errorf("the head is the last commit and the check was asked %v; want it never asked", f.landingCalls)
+	}
+
+	// admitted: a pass with no detail, the probe on that head, the word on the step's own line, eight rows, done
+	f = newCheckFake()
+	f.repo.Heads["main"], f.landingErr = ahead, nil
+	got := f.job().do()
+	rows := f.rowsOf(t)
+	if got != (Step{"forge-check", "done", "the forge check passed"}) || rows[0][0] != "tree" || rows[0][1] != "pass" || rows[0][2] != "" || len(rows) != 8 {
+		t.Errorf("an admitted head: %+v, row %q, %d rows; want done, a pass with no detail, eight rows", got, rows[0], len(rows))
+	}
+	if !reflect.DeepEqual(f.landingCalls, [][2]string{{ahead, lastCommit}}) || f.probedHead != ahead || f.areaFor != lastCommit {
+		t.Errorf("the check was asked %v, the probe on %q, the area for %q; want the head and the last commit once, the probe on the head, the area for the last commit", f.landingCalls, f.probedHead, f.areaFor)
+	}
+	if want := []string{"tree: " + ahead + " is the code-owner commit above " + lastCommit}; !reflect.DeepEqual(f.notes, want) {
+		t.Errorf("the notes %q; want %q", f.notes, want)
+	}
+
+	// refused: the head fails, with the old words and then the reason of the check; the step names the row
+	f = newCheckFake()
+	f.repo.Heads["main"] = ahead
+	got = f.job().do()
+	rows = f.rowsOf(t)
+	wantDetail := "the head of main is " + ahead + ", and setup/tree.tsv ends at " + lastCommit + "; it is not the code-owner commit: the head adds no .github/CODEOWNERS"
+	if rows[0][1] != "fail" || rows[0][2] != wantDetail || got != (Step{"forge-check", "fail", "tree: " + wantDetail}) || len(f.notes) != 0 {
+		t.Errorf("a refused head: row %q, step %+v, notes %q; want the fail %q and no note", rows[0], got, f.notes, wantDetail)
+	}
+
+	// the check is asked only of a head that is another commit: not of no head, not when the repository cannot be read, not
+	// when the record of the tree is gone
+	for name, change := range map[string]func(f *checkFake){
+		"a default branch that the forge lacks": func(f *checkFake) { delete(f.repo.Heads, "main") },
+		"a read of the repository that fails":   func(f *checkFake) { f.repoErr = errors.New("boom") },
+		"a setup/tree.tsv that is not there":    func(f *checkFake) { f.treeText = "" },
+	} {
+		f = newCheckFake()
+		f.landingErr = nil
+		change(f)
+		f.job().do()
+		if rows := f.rowsOf(t); rows[0][1] != "fail" || len(f.landingCalls) != 0 || len(f.notes) != 0 {
+			t.Errorf("%s: row %q, the check asked %v; want a fail and the check never asked", name, rows[0], f.landingCalls)
+		}
+	}
+
+	// a job with no check (the seam nil) and a note nil keep the old row and do not panic
+	f = newCheckFake()
+	f.repo.Heads["main"] = ahead
+	j := f.job()
+	j.landing, j.note = nil, nil
+	j.do()
+	if rows := f.rowsOf(t); rows[0][1] != "fail" || rows[0][2] != "the head of main is "+ahead+", and setup/tree.tsv ends at "+lastCommit {
+		t.Errorf("no check: row %q; want the old fail", rows[0])
+	}
+	f = newCheckFake()
+	f.repo.Heads["main"], f.landingErr = ahead, nil
+	j = f.job()
+	j.note = nil
+	j.do()
+	if rows := f.rowsOf(t); rows[0][1] != "pass" {
+		t.Errorf("an admitted head with no note seam: row %q; want a pass", rows[0])
+	}
+}
+
+// lastForTest makes the last commit of the tree record of the fake sha, a real commit of a test repository.
+func (f *checkFake) lastForTest(sha string) {
+	var t bytes.Buffer
+	tsv.Write(&t, SetupTreeSchema, [][]string{{"0", "1111111111111111111111111111111111111111", "2222222222222222222222222222222222222222", "root"}, {"1", sha, "3333333333333333333333333333333333333333", "S13"}})
+	f.treeText = t.String()
 }

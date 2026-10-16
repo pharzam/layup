@@ -38,7 +38,9 @@ var probeRefusal = regexp.MustCompile(`(?m)GH013: Repository rule violations fou
 // forgeCheckJob is the step with its seams: the two records that the checks read (setup/tree.tsv and
 // setup/rulesets.txt, nil when absent); the work area, made sure of for the last commit; a ruleset file
 // of its out/; the forge's repository, rules of a branch and activity of a ref; the probe of a head, which
-// gives its commit; the records commit of the table; and the clean of a detail of host paths.
+// gives its commit; the records commit of the table; the clean of a detail of host paths; the check of the
+// code-owner commit, which a head other than the last commit of the tree record is given to (the tree check,
+// docs/spec/scaffold.md); and a line of the step's own.
 type forgeCheckJob struct {
 	branch   string
 	app      int64
@@ -53,6 +55,8 @@ type forgeCheckJob struct {
 	activity func(ref string) error
 	commit   func(table []byte) error
 	clean    func(string) string
+	landing  func(head, last string) error // asked of a head that is another commit than the last: nil, it is the code-owner commit
+	note     func(string)                  // a line of the step's own; nil for none
 }
 
 // firstLine is the text up to its first line feed.
@@ -115,14 +119,9 @@ func (j forgeCheckJob) checks(tree, applied []byte) [][]string {
 		row("tree", lastErr.Error(), false)
 	case repoErr != nil:
 		row("tree", "the forge: "+repoErr.Error(), false)
-	case head != last:
-		none := head
-		if none == "" {
-			none = "none"
-		}
-		row("tree", fmt.Sprintf("the head of %s is %s, and setup/tree.tsv ends at %s", j.branch, none, last), false)
 	default:
-		row("tree", "", true)
+		detail, ok := j.treeHead(head, last)
+		row("tree", detail, ok)
 	}
 	areaErr := lastErr
 	if lastErr == nil {
@@ -167,6 +166,31 @@ func (j forgeCheckJob) checks(tree, applied []byte) [][]string {
 	}
 	rowErr("activity", j.activity(j.branch))
 	return rows
+}
+
+// treeHead judges the head of the default branch (docs/spec/scaffold.md, The tree check): the last commit of
+// setup/tree.tsv passes; so does the code-owner commit of a target set up before the code-owner rule, which only the
+// check of the job can tell (never asked of no head), and then the step says so on its own line while the table keeps
+// its empty detail. Any other head fails, with the reason of the check when it was asked.
+func (j forgeCheckJob) treeHead(head, last string) (string, bool) {
+	if head == last {
+		return "", true
+	}
+	none := head
+	if none == "" {
+		none = "none"
+	}
+	plain := fmt.Sprintf("the head of %s is %s, and setup/tree.tsv ends at %s", j.branch, none, last)
+	if head == "" || j.landing == nil {
+		return plain, false
+	}
+	if err := j.landing(head, last); err != nil {
+		return plain + "; it is not the code-owner commit: " + err.Error(), false
+	}
+	if j.note != nil {
+		j.note("tree: " + head + " is the code-owner commit above " + last)
+	}
+	return "", true
 }
 
 // lastOfTree gives the last commit of setup/tree.tsv, or the reason that it cannot.
@@ -447,6 +471,18 @@ func (r *state) forgeCheckStep(ctx context.Context) Step {
 			}
 			applied, err := r.store.ReadFile(ctx, "setup/rulesets.txt")
 			return tree, applied, err
+		},
+		landing: func(head, last string) error {
+			record, err := r.store.ReadFile(ctx, "setup/record.tsv")
+			if err != nil {
+				return err
+			}
+			return codeOwnerLanding(r.target, record, r.approvers)(head, last)
+		},
+		note: func(line string) {
+			if r.cfg.Progress != nil {
+				r.cfg.Progress(line)
+			}
 		},
 		area:  func(last string) error { return r.workAreaAgain(ctx, area, last) },
 		read:  func(file string) ([]byte, error) { return os.ReadFile(filepath.Join(area, "out", file)) },
