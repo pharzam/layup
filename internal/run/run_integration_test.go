@@ -45,6 +45,7 @@ type fakeGitHub struct {
 	posted     []string          // the bodies of the comments that the run posted, on any issue (row 43b)
 	rules      map[string]string // the JSON list that the rules of a branch answer, by the branch (row 57a); [] when none
 	noActivity bool              // the read of the activity answers 404 (row 57a)
+	perms      map[string]string // the permissions of the installation; the three of M2a when nil (task T-cak3)
 }
 
 func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
@@ -53,7 +54,11 @@ func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
 	call := r.Method + " " + r.URL.Path
 	switch {
 	case call == "GET /repos/acme/target/installation":
-		json.NewEncoder(w).Encode(map[string]any{"id": 7, "permissions": map[string]string{"contents": "write", "issues": "write", "metadata": "read"}})
+		perms := map[string]string{"contents": "write", "issues": "write", "metadata": "read"}
+		if f.perms != nil {
+			perms = f.perms
+		}
+		json.NewEncoder(w).Encode(map[string]any{"id": 7, "permissions": perms})
 	case call == "POST /app/installations/7/access_tokens":
 		w.WriteHeader(201)
 		json.NewEncoder(w).Encode(map[string]any{"token": "ghs_runtest", "expires_at": "2099-01-01T00:00:00Z"})
