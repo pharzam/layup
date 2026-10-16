@@ -3,6 +3,8 @@ package session
 import (
 	_ "embed"
 	"errors"
+	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"syscall"
@@ -122,5 +124,63 @@ func TestCheckProbeResult(t *testing.T) {
 		if _, err := ReadProbeResult([]byte(data)); err == nil {
 			t.Errorf("%s: no error", name)
 		}
+	}
+}
+
+// resultDir gives a session directory whose result/ holds the files by name.
+func resultDir(t *testing.T, files map[string]string) Dir {
+	t.Helper()
+	d := Dir{Result: filepath.Join(t.TempDir(), "result")}
+	if err := os.MkdirAll(d.Result, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for name, text := range files {
+		if err := os.WriteFile(filepath.Join(d.Result, name), []byte(text), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	return d
+}
+
+func TestACommentFileIsReadByteForByte(t *testing.T) {
+	for _, text := range []string{"a plan\n", "no final newline", "crlf\r\nlines\r\n", "trailing  \n  spaces \t\n", "ü 𝄞 non-ASCII\n", "a\x00nul\n"} {
+		d := resultDir(t, map[string]string{"plan.md": text})
+		got, err := CommentFile(d, "plan.md")
+		if err != nil || string(got) != text {
+			t.Errorf("%q: got %q, %v; want the bytes of the file", text, got, err)
+		}
+	}
+}
+
+func TestACommentFileThatIsNotARegularFileOfOneNameIsRefused(t *testing.T) {
+	d := resultDir(t, map[string]string{"plan.md": "text\n"})
+	outside := filepath.Join(t.TempDir(), "host-file")
+	if err := os.WriteFile(outside, []byte("a file of the host\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(outside, filepath.Join(d.Result, "link.md")); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Mkdir(filepath.Join(d.Result, "dir.md"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	big := strings.Repeat("x", maxResult+1)
+	if err := os.WriteFile(filepath.Join(d.Result, "big.md"), []byte(big), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"link.md", "dir.md", "big.md", "missing.md", "", ".", "..", "a/plan.md", "../plan.md", "plan.md/"} {
+		if got, err := CommentFile(d, name); err == nil {
+			t.Errorf("%q: read %d bytes, want an error", name, len(got))
+		}
+	}
+	// A link above result/ is followed, as for the result file: result/ itself
+	// is what the session could have made.
+	real := resultDir(t, map[string]string{"plan.md": "through a link\n"})
+	linked := Dir{Result: filepath.Join(t.TempDir(), "result")}
+	if err := os.Symlink(real.Result, linked.Result); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := CommentFile(linked, "plan.md"); err != nil || string(got) != "through a link\n" {
+		t.Errorf("a link above result/: %q, %v; want the file", got, err)
 	}
 }
