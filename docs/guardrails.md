@@ -1099,6 +1099,14 @@ failure modes worth keeping.
   `${PIPESTATUS[0]}` — and record only times `date -u` was read for; a file that
   cites a run names its start, end and exit, or says the run was interrupted
   and claims nothing. Task `T-3q0b` (#350); found by the root audit.
+- ❌ **A mutation sweep whose restore brings back stale copies.** A harness
+  that keeps backups at a fixed path (`/tmp/*.go.bak`) can restore copies
+  from an older run and silently revert the fix under test; every mutant
+  then runs against the pre-fix source and its results prove nothing —
+  they are discarded, not counted. Task `T-3q0b` (#350). **The check:**
+  take the backup fresh from the frozen head, verify what each restore
+  wrote (content or hash against the head's file), and re-run a green
+  control on the restored tree before crediting a single mutant.
 
 ## 3. Validation — how you check you are not fooling yourself
 

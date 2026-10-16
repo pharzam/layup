@@ -24,8 +24,18 @@ On the frozen head `72528bd`, 07:43:21Z–07:43:26Z, `go test -count=1 -run
 ## Round-1 findings: green and the mutants of the fixes
 
 07:44:52Z after the fixes, `go build ./...`, `go vet ./...` and `go test
--count=1 ./...` — all 21 packages `ok`. The mutants of the fixes, applied
-one at a time, each restored after, 07:46:15Z–07:47:05Z, direct exits:
+-count=1 ./...` — all 21 packages `ok`.
+
+A first mutation attempt before the recorded sweep was **discarded and is
+not evidence**: its harness restored stale pre-fix copies from
+`/tmp/*.go.bak` and silently reverted the five fixed files. The revert was
+caught by reading the restored source, the post-fix `.bak2` copies (taken
+07:45:29Z) were restored, the focused tests were re-run green, and the
+recorded sweep then ran with backups taken fresh from the fixed files at
+07:46:15Z (the `/tmp/*.go.bak` mtimes). The valid sweep — applied one at a
+time, each restored after, 07:46:15Z–07:47:05Z, direct exits — gave the
+six outcomes below: five assertion failures and the one expected panic the
+last row names. It is not an "all assertions" sweep:
 
 | Patch | Caught by |
 |---|---|
@@ -193,3 +203,18 @@ the measured start, end and exit of the run:
 - Start `2026-10-16T07:08:36Z`, end `2026-10-16T07:27:36Z`, **exit 0** —
   all 21 packages `ok`, none `FAIL` (`internal/run` the long one,
   1,087 s; `internal/verify` 79 s).
+
+After the round-1 fixes the root ran the same command, unchanged, on the
+new frozen head `db3330f492e6e90ad4fe086a71a097253a6ee408` (audit
+`.cache/layup-session/audits/T-3q0b-r1-fixes/`, `integration-result.json`):
+start `2026-10-16T07:51:08.801645Z`, end `2026-10-16T08:03:48.871209Z`,
+**exit 0** — all 21 packages `ok`, none `FAIL` (`internal/run` 705 s,
+`internal/verify` 65 s).
+
+The merge of `8e26eca` in `db3330f` hit one same-date PRD changelog
+append; both dated entries were kept. An earlier report of this branch
+described that keep-both resolution as "per O219"; that was wrong — the
+coordinator's ruling (issue #350, comment 6210747940) is that the
+changelog conflict is not one of O-219's named PRD §12 Task/Test-cell
+exceptions, it is a proposed resolution only, and round 2 reviews it
+explicitly. No waiver is claimed.
