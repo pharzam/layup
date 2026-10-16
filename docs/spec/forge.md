@@ -203,9 +203,11 @@ The same API and version header as [The calls of M2a](#the-calls-of-m2a) (task
   the three of `M2a` alone (task `T-cr8j`). **Decided here** (the same task, R10):
   Start and the restart before the loop record the permissions and do not fail on
   these three, as [`run.md`](run.md#the-steps-of-layup-run---new) says, because an App
-  that the Operator has not yet granted them must still start; row 66a of the plan
-  (#357, the first `internal/run` row of the loop; its After cell names row 64) calls
-  the check before the loop's first write, and a missing one is then a `fail` of the
+  that the Operator has not yet granted them must still start; the first
+  `internal/run` row of the loop (task `T-cak3`, row 66a, #357) holds the check as
+  the step `forge` of the loop (`loopPermissionsStep`): the loop's caller (row 66k)
+  makes it before the loop's first write, the issue of a task included, and the
+  register's own write refuses without it; a missing one is then a `fail` of the
   step `forge` that names it, tested there by a red run. The Operator grants them
   (`gov-operator-setup-o112`).
 - **`PullRequest`** also serves the restart and the tree rule ([`loop.md`](loop.md#the-tree-after-the-first-merge)): the merged state and the merge commit of a task's pull request, and the pull request of a branch.
