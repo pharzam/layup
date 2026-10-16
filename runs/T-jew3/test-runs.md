@@ -48,3 +48,12 @@ All times UTC from the clock; statuses are those of `go test`.
 ## The controls and the checks after the documents
 
 See [`mutants.md`](mutants.md) for the controls of the mutation audit (exit 0 for build, vet, unit and the three integration tests at 11:33Z).
+
+## Coordinator full integration on the combined head
+
+At `5564b10d5f5b5110d269697075678cf63bb1011c` (main merged at `1e9a5d5`), the coordinator ran
+`go test -count=1 -tags=integration -timeout 25m ./...` by a direct subprocess, with no pipe masking its exit.
+Wrapper start 2026-10-16T11:41:10.871415Z; end 11:53:50.955797Z; exit **0**. All 21 packages report `ok`.
+Audit: `/home/layup/.cache/layup-session/audits/issue356/integration-result.json` and `integration.log`.
+The test-producing code was read before this run: new forge commands use the local TLS test server with a dummy Enterprise token and local bare git repositories. No target was changed.
+No Go file changes after this head; subsequent commits only record evidence before the first freeze.
