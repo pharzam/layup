@@ -117,7 +117,11 @@ one author harness (`architecture.md` §8, "Attempts"). **Decided here:**
   and commits them as one commit `layup: the frozen tests` (so the head's tree holds them,
   as the base lacks the tests that an earlier attempt wrote), its author the session's own
   identity (`layup session <session>`) at the run's time; a file that is already as frozen
-  at the base needs no commit. The file's mode is not kept: a known limit.
+  at the base needs no commit. The file's mode is not kept: a known limit. A symbolic link in the
+  checkout, in a parent of a path or as the file itself, whatever it points to, is **not followed**:
+  the call refuses with an error naming the path, after checking the whole list and before writing
+  any file, so nothing is written inside or outside the checkout (`guardrails.md` §2, a path that is
+  clean by its spelling).
 - When the Operator passes the last diff to the new attempt (a stall answer,
   `M3d`), the harness that wrote it is an author of the new attempt. No record names
   that diff before `M3d`, so the authors of [the independence](#the-independence-of-the-reviewers)

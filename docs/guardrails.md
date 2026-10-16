@@ -949,7 +949,14 @@ These traps are not domain-specific: they hurt every project's test suite.
   `..` and no empty part read or removed a file outside its directory when a parent was a
   link (`result/`, `DIR/work/OWNER`, a link of the records base). Task `T-eahr` (#277),
   round 1. **The check:** `Lstat` each directory above the file, or ask the tree for the
-  path (a path below a link has no entry), before you read or remove it.
+  path (a path below a link has no entry), before you read or remove it. The same trap
+  met a **write** in task `T-6zj3` (#361): `applyFrozen` wrote the frozen test files with
+  `MkdirAll` and `WriteFile` after `fs.ValidPath`, and a checkout whose parent directory or
+  file was a symbolic link let the write overwrite a file outside it (found by the
+  producing-code audit, compiled assertion: the outside bytes went from `original` to
+  `frozen`). For a write, `Lstat` every existing part of the path, refuse a link (the file
+  itself too, and one that points inside the checkout), and make this check for the whole
+  list before the first file is written.
 - ❌ **A record that no test read through the real check.** S12 in phase 2 wrote its row
   `module` as the answer `S01-name`, which phase 2 does not have; every step passed, and
   the first run of the real `layup setup verify` refused it (check `sources`). Task

@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"path/filepath"
 	"slices"
 	"sort"
 	"strconv"
@@ -14,8 +15,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/pharzam/layup/internal/git"
 	"github.com/pharzam/layup/internal/handoff"
 	"github.com/pharzam/layup/internal/records"
+	"github.com/pharzam/layup/internal/session"
 	"github.com/pharzam/layup/internal/tsv"
 )
 
@@ -571,5 +574,123 @@ func TestAFrozenListWhoseHashNoHeadHoldsIsRefused(t *testing.T) {
 	}
 	if got, err := l.r.FrozenFiles(context.Background(), "T-ab12"); err == nil {
 		t.Errorf("FrozenFiles = %v; want an error: no bound head holds the bytes of TestA", got)
+	}
+}
+
+// checkout makes a clone-like repository with one commit, and a directory
+// outside it, for the tests of the write of the frozen files.
+func checkout(t *testing.T) (session.Dir, string, *Sessions) {
+	t.Helper()
+	t.Setenv("HOME", t.TempDir())
+	repo, outside := filepath.Join(t.TempDir(), "repo"), t.TempDir()
+	if err := git.Init(repo); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "README.md"), []byte("r\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := git.Add(repo); err != nil {
+		t.Fatal(err)
+	}
+	if err := git.Commit(repo, "base", git.Identity{Name: "t", Email: "t@t.invalid", Time: time.Unix(1, 0)}); err != nil {
+		t.Fatal(err)
+	}
+	return session.Dir{Repo: repo}, outside, &Sessions{Now: func() time.Time { return time.Unix(2, 0) }}
+}
+
+func untouched(t *testing.T, path, want string) {
+	t.Helper()
+	if got, err := os.ReadFile(path); err != nil || string(got) != want {
+		t.Errorf("%s = %q, %v; want %q: the write of a frozen file left the checkout", path, got, err, want)
+	}
+}
+
+// guardrails §2, a path that is clean by its spelling still leaves through a
+// link: a parent of the frozen path, or the file itself, that is a link in the
+// checkout is not followed; the write is refused, naming the path, and nothing
+// outside the checkout is read or written.
+func TestAFrozenFileThroughAParentLinkIsRefusedAndWritesNothingOutside(t *testing.T) {
+	d, outside, s := checkout(t)
+	if err := os.WriteFile(filepath.Join(outside, "a_test.go"), []byte("original"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(outside, filepath.Join(d.Repo, "tests")); err != nil {
+		t.Fatal(err)
+	}
+	err := s.applyFrozen(d, "S-aaaaaaaa", []FrozenFile{{Path: "tests/a_test.go", Data: []byte("frozen")}})
+	if err == nil || !strings.Contains(err.Error(), "tests/a_test.go") {
+		t.Errorf("applyFrozen through a link to a directory: %v; want an error naming tests/a_test.go", err)
+	}
+	untouched(t, filepath.Join(outside, "a_test.go"), "original")
+}
+
+func TestAFrozenFileThatIsALinkIsRefusedAndWritesNothingOutside(t *testing.T) {
+	d, outside, s := checkout(t)
+	target := filepath.Join(outside, "victim.go")
+	if err := os.WriteFile(target, []byte("original"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(target, filepath.Join(d.Repo, "a_test.go")); err != nil {
+		t.Fatal(err)
+	}
+	err := s.applyFrozen(d, "S-aaaaaaaa", []FrozenFile{{Path: "a_test.go", Data: []byte("frozen")}})
+	if err == nil || !strings.Contains(err.Error(), "a_test.go") {
+		t.Errorf("applyFrozen over a link to a file: %v; want an error naming a_test.go", err)
+	}
+	untouched(t, target, "original")
+}
+
+// The rule is on the link, not on its target: a link that points inside the
+// checkout is refused too, and the file it points to is not written.
+func TestAFrozenFileThroughALinkInsideTheCheckoutIsRefused(t *testing.T) {
+	d, _, s := checkout(t)
+	if err := os.WriteFile(filepath.Join(d.Repo, "real.go"), []byte("original"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink("real.go", filepath.Join(d.Repo, "a_test.go")); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.applyFrozen(d, "S-aaaaaaaa", []FrozenFile{{Path: "a_test.go", Data: []byte("frozen")}}); err == nil {
+		t.Error("applyFrozen over a link that points inside the checkout: no error")
+	}
+	untouched(t, filepath.Join(d.Repo, "real.go"), "original")
+}
+
+// A refusal writes nothing for the files before it either would be wrong, so the
+// check is made for the whole list first: a plain file earlier in the list is not
+// written when a later one is refused.
+func TestARefusedFrozenListWritesNoFile(t *testing.T) {
+	d, outside, s := checkout(t)
+	if err := os.Symlink(outside, filepath.Join(d.Repo, "tests")); err != nil {
+		t.Fatal(err)
+	}
+	err := s.applyFrozen(d, "S-aaaaaaaa", []FrozenFile{{Path: "a_test.go", Data: []byte("one")}, {Path: "tests/b_test.go", Data: []byte("two")}})
+	if err == nil {
+		t.Fatal("no error")
+	}
+	if _, err := os.Lstat(filepath.Join(d.Repo, "a_test.go")); err == nil {
+		t.Error("a_test.go was written before the later file was refused")
+	}
+	if entries, _ := os.ReadDir(outside); len(entries) != 0 {
+		t.Errorf("%d entries outside the checkout", len(entries))
+	}
+}
+
+// The control: a plain checkout gets the frozen bytes, a missing parent is made,
+// an existing regular file is replaced, and the commit has the session's identity.
+func TestAPlainCheckoutGetsTheFrozenFilesInOneCommit(t *testing.T) {
+	d, _, s := checkout(t)
+	if err := os.WriteFile(filepath.Join(d.Repo, "a_test.go"), []byte("old"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	files := []FrozenFile{{Path: "a_test.go", Data: []byte("frozen a")}, {Path: "pkg/deep/b_test.go", Data: []byte("frozen b")}}
+	if err := s.applyFrozen(d, "S-aaaaaaaa", files); err != nil {
+		t.Fatal(err)
+	}
+	untouched(t, filepath.Join(d.Repo, "a_test.go"), "frozen a")
+	untouched(t, filepath.Join(d.Repo, "pkg/deep/b_test.go"), "frozen b")
+	head, err := git.Message(d.Repo, "HEAD")
+	if err != nil || head != frozenMessage {
+		t.Errorf("the message of HEAD = %q, %v", head, err)
 	}
 }

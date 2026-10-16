@@ -419,10 +419,16 @@ func (s *Sessions) applyFrozen(d session.Dir, id string, files []FrozenFile) err
 	if len(files) == 0 {
 		return nil
 	}
+	// Every path is checked before any file is written: a link is never followed.
 	for _, f := range files {
 		if !fs.ValidPath(f.Path) || f.Path == "." {
 			return fmt.Errorf("the frozen test file %q is no path of the target", f.Path)
 		}
+		if err := noLink(d.Repo, f.Path); err != nil {
+			return err
+		}
+	}
+	for _, f := range files {
 		dst := filepath.Join(d.Repo, filepath.FromSlash(f.Path))
 		if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
 			return err
@@ -438,4 +444,26 @@ func (s *Sessions) applyFrozen(d session.Dir, id string, files []FrozenFile) err
 		return err
 	}
 	return git.Commit(d.Repo, frozenMessage, git.Identity{Name: "layup session " + id, Email: id + "@sessions.layup.invalid", Time: s.Now()})
+}
+
+// noLink refuses a path whose existing part below root holds a symbolic link, in
+// a parent or as the file itself: MkdirAll and WriteFile follow a link, so a
+// clean spelling does not keep the write inside the checkout (guardrails §2). A
+// part that does not exist yet is made by the write, and ends the walk.
+func noLink(root, rel string) error {
+	cur := root
+	for i, part := range strings.Split(rel, "/") {
+		cur = filepath.Join(cur, part)
+		info, err := os.Lstat(cur)
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		if info.Mode()&os.ModeSymlink != 0 {
+			return fmt.Errorf("the frozen test file %s: %s is a symbolic link in the checkout, which is not followed", rel, strings.Join(strings.Split(rel, "/")[:i+1], "/"))
+		}
+	}
+	return nil
 }
