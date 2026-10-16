@@ -149,7 +149,7 @@ var (
 // characters; NAME of letters, digits, ., _ and -, at most 100, not . or ...
 func ownerName(s string) bool {
 	owner, name, ok := strings.Cut(s, "/")
-	return ok && len(owner) <= 39 && ownerForm.MatchString(owner) &&
+	return ok && ownerLogin(owner) &&
 		len(name) <= 100 && nameForm.MatchString(name) && name != "." && name != ".."
 }
 

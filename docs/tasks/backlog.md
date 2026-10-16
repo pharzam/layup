@@ -32,7 +32,6 @@ same summary, dated — rather than deleting it or checking it off.
 - **T-sdtb** — Row 59b of `M2d`: the demo of M2d (uat) ([#284](https://github.com/pharzam/layup/issues/284); [the plan](../plan/README.md#the-tasks-of-m2d))
 - **T-4wyg** — Row 62c of `M2e`: The full spec check ([#351](https://github.com/pharzam/layup/issues/351); [the plan](../plan/README.md#the-tasks-of-m2e))
 - **T-9et9** — Row 63a of `M2e`: The basic layup/rules ([#352](https://github.com/pharzam/layup/issues/352); [the plan](../plan/README.md#the-tasks-of-m2e))
-- **T-jew3** — Row 65b of `M2e`: The code-owner rule ([#356](https://github.com/pharzam/layup/issues/356); [the plan](../plan/README.md#the-tasks-of-m2e))
 - **T-dx1h** — Row 66b of `M2e`: The parameters ([#358](https://github.com/pharzam/layup/issues/358); [the plan](../plan/README.md#the-tasks-of-m2e))
 - **T-v2sv** — Row 66c of `M2e`: The Retrospective ([#359](https://github.com/pharzam/layup/issues/359); [the plan](../plan/README.md#the-tasks-of-m2e))
 - **T-q5k4** — Row 66d of `M2e`: The handoff in the loop ([#360](https://github.com/pharzam/layup/issues/360); [the plan](../plan/README.md#the-tasks-of-m2e))
