@@ -299,14 +299,14 @@ leave the transition to the agent).
 | `artifacts` | each named artifact is in the commits (or in the copies) with its hash |
 | `plan-fields` | the plan has its four fixed fields and lists its tests by ID |
 | `verdict-field` | the review has the verdict `approve` or `approve-with-conditions` in its fixed field |
-| `tests-red-green` | each listed test fails at the base and passes at the head (`layup gate` runs them) |
+| `tests-red-green` | each listed test fails at the base and passes at the head, by typed per-test results (the producing run is `M2g`'s) |
 | `spec-sections` | a section of `docs/spec/` for each requirement ID the task names |
 | `patch-per-kind` | a known-bad patch for each kind a rule batch touches; `layup gate` passes on its head and fails on each patch (`M2f`) |
 | `register-rows` | the task register rows of a milestone plan: each `Must` requirement has a task, each predecessor is a task, no cycle (`M2g`) |
 | `rendering-equal` | the change equals code's rendering of the named copy |
 | `nothing-material` | the review record says `nothing material in scope` at the head |
 | `findings-located` | each finding of the record is at a `file:line` |
-| `heading-ids` | a heading of `docs/spec/` holds each requirement ID of the milestone |
+| `heading-ids` | a heading of `docs/spec/` holds each requirement ID of the milestone (`M2g`) |
 | `question-row` | a question row names the records it concerns |
 | `answer-row` | an answer row cites the records it rests on |
 
@@ -344,9 +344,9 @@ agent writes never makes it valid (`F-0003#59`, Sol-21, Fable-M14).
    (`plan-fields`, `verdict-field`, `nothing-material`, `findings-located`, `heading-ids`
    and `register-rows` from the text of a comment or a table; `tests-red-green`,
    `spec-sections`, `rendering-equal` and `patch-per-kind` from a program, a gate run
-   or a read of a commit): an item it does not pass is false. Whose rows compute these
-   is not `M2e`'s first row; [`packages.md`](packages.md#the-table-of-m2e) says that
-   they are the caller's. A handoff that code writes (the rendered task) has no session:
+   or a read of a commit): an item it does not pass is false. The rows that compute
+   them, and the rule text of each, are [the items a caller
+   computes](#the-items-a-caller-computes). A handoff that code writes (the rendered task) has no session:
    the event's `session` is `—` and its attempt is the caller's. A handoff whose event
    is already in `events.tsv` with the same session and detail is not written again;
    a different outcome of the same session is a new event.
@@ -363,7 +363,7 @@ agent writes never makes it valid (`F-0003#59`, Sol-21, Fable-M14).
 | code (rendered task), verifier | `rendering` | `artifacts`, `rendering-equal` |
 | verifier, close-out | `review-record` | `schema`, `artifacts`, `nothing-material` |
 | verifier, developer | `review-record` | `schema`, `artifacts`, `findings-located` |
-| specification, milestone plan | `task-file` | `artifacts`, `heading-ids` |
+| specification, milestone plan | `task-file` | `artifacts`, `heading-ids` (`M2g`) |
 | asking role, owner role | `question` | `schema`, `question-row` |
 | owner role, asking role | `answer` | `schema`, `answer-row` |
 
@@ -404,6 +404,86 @@ with the next number, started after that session ended and neither `closed` nor
 cite accepts it, the first in the order of the events. The acceptance is a function of
 the records (`internal/run`'s `AnswerAccepted`), not a record of its own: the columns of
 the accepted answer and its actor are `M3c`'s (`records.md`, the block `questions`).
+**Decided here** (task `T-8bwd`, #387, under the plan review of #387): the question's
+comment and the answer's comment are composed by code from their rows — first line
+`<session>: <role> session of <task>, attempt <n>: question <q-id>`, and for the
+answer `answer <a-id> of <q-id>` in the place of `question <q-id>`, where `<q-id>`
+and `<a-id>` are `<S-xxxxxxxx>.<n>`, the session that wrote the row and the row's
+`n` (the form of the answer ID), then the row's text — posted on the task's issue
+and copied by the same machinery as a session's comment: a plain comment of the
+App, **not** an artifact of a handoff, and `commentKind` keeps its three kinds. A
+restart recomposes the same bytes from the row, so the adoption of a comment of
+the App that exists applies. [The items a caller computes](#the-items-a-caller-computes)
+names the row that posts them.
+
+### The items a caller computes
+
+`internal/handoff` computes `schema`, `artifacts`, `question-row` and `answer-row`;
+every other item is the caller's result, and **decided here** (task `T-8bwd`,
+#387; the assignment of rows is the decision of the plan review of #387, an
+`approve-with-conditions`) each item below is computed by the named package in
+the named row — row 66l (`T-4pje`, #396), the item computers of the task loop —
+by the rule text of the table. The forms the loop's sessions write in the three
+comment artifacts are pinned here in one grammar, so two implementers read one
+form.
+
+**The fields of a comment.** A plan, a plan review or a review record is parsed
+by lines: a field is a line whose key starts at column 0, lowercase, and is
+followed by `: `, and whose value runs to the end of the line with trailing
+spaces and a final `\r` ignored (the forge and a checkout can carry CRLF); a
+line inside a fenced code block is not read; a key that appears twice or not at
+all makes the item false; `—` (U+2014) is the empty value. **The plan** holds
+each of `size:`, `open questions:`, `new interfaces:` and `new dependencies:`
+once — `size:` is `small` or `large` and each of the other three is a one-line
+text or `—` — then `tests:` and, below it, one line `- <id> <path>` for each
+listed test: the ID is one word, unique in the list, and the path is relative,
+clean and inside the tree (the register's own `path` rule of `internal/rules`);
+`tests:` ends at the first line that is not `- <id> <path>`. **The plan review**
+holds `verdict:` once, one of `approve`, `approve-with-conditions` and `reject`
+(the words `review-record-lint.sh` reads). **The review record** holds `head:`
+once — 40 or 64 lowercase hexadecimal characters, as the check already accepts
+for commits — `verdict:` once — one of `material`, `nothing material in scope`
+and `not mergeable, findings recorded` (the words `engineering-discipline.md`
+fixes for a round) — and a findings part of one line per finding, each
+`- <path>:<line> <rule>: <text>` with `line` an integer of 1 or more and `rule`
+one word; a record whose verdict is not `nothing material in scope` has its
+findings counted as material. These are the forms the loop's sessions write for
+a target; `review-record-lint.sh` reads a different, LAYUP-own form (the
+`| Field | Value |` table), and neither document is read as the other's check.
+
+| Item | The input and the rule | Computed by | Milestone |
+| ---- | ---------------------- | ----------- | --------- |
+| `schema` | the result file and its records: the typed result passes the block `result` and its rules | `internal/handoff` `Check` (row 61, done) | M2e |
+| `artifacts` | the commits and the copies: each named artifact is there with its hash, a comment by its three equal hashes | `internal/handoff` `Check` (row 61, done) | M2e |
+| `plan-fields` | the plan comment's kept copy: it parses in the pinned form — the four fields each once, and the `tests:` block | `internal/run` (row 66l) | M2e |
+| `verdict-field` | the plan-review copy: its `verdict:` is `approve` or `approve-with-conditions` (`reject` is false) | `internal/run` (row 66l) | M2e |
+| `tests-red-green` | typed per-test results — the ID, the base verdict, the head verdict and the source hash of each listed test: each fails at the base and passes at the head, and its source hash is the frozen list's | `internal/run` from typed values (row 66e — #361's typed boundary); the producer — the gate run of the task's test kind and the mapping of an ID to its file — is the specification task of `M2g`'s | M2e item, `M2g` producer |
+| `spec-sections` | the `docs/spec/` files at the head and the task's requirement IDs: a non-empty section whose heading holds each ID — the `sections` predicate of the full check over the task's IDs | `internal/spec`, wired by `internal/run` (row 66l); the section finder rides the `sections` machinery of the full check (#351) where it is exported, else lands in row 66l | M2e |
+| `patch-per-kind` | the batch's known-bad patches: `layup gate` passes on the head and fails on each patch of a kind the batch touches | the rule-batch tasks of `M2f` | M2f |
+| `register-rows` | the milestone plan's rows artifact: each `Must` requirement has a task, each predecessor is a task, no cycle | the milestone-plan task of `M2g` | M2g |
+| `rendering-equal` | the tree at the head and code's rendering of the named copy: byte-equal — `internal/spec`'s `RenderPRD` and `RenderFacts` for a specification copy, `internal/rules`' `Render` for a record copy | `internal/spec` and `internal/rules`, wired by `internal/run` (row 66l) | M2e |
+| `nothing-material` | the review-record copy and the head code holds for the verifier's session — from the records and the forge, never a field of the result: `verdict:` is `nothing material in scope` and `head:` equals that head | `internal/run` (row 66l; the same parse serves `layup/verify` of row 66f) | M2e |
+| `findings-located` | the review-record copy: each finding line is `- <path>:<line> <rule>: <text>` — a findings part that is empty is false, an empty list is never a pass | `internal/run` (row 66l) | M2e |
+| `heading-ids` | the `docs/spec/` files at the head and the milestone's requirement IDs: a heading holds each ID — the `sections` predicate over the milestone's IDs | the milestone-plan task of `M2g` | M2g |
+| `question-row` | the result: at least one `question` row and each names at least one record | `internal/run` (row 66d, done) | M2e |
+| `answer-row` | the result: at least one `answer` row and each cites at least one record | `internal/run` (row 66d, done) | M2e |
+
+**The question and answer comments** are composed by `internal/run` from the
+result's `question` and `answer` rows — first line and body as [a question during
+the work](#the-checks-of-a-handoff) pins — and posted on the task's issue by the
+post→copy machinery of the step loop (**row 66k**, #367, whose comments of a task
+session it is); they are plain comments of the App, not artifacts of a handoff.
+
+**The deferrals are recorded, not hidden.** `patch-per-kind`, `register-rows` and
+`heading-ids` name checks whose inputs — a rule batch's patches, a milestone
+plan's rows, a milestone's requirement IDs — exist only where [Not in
+M2e](#not-in-m2e) puts them (`M2f`, `M2g`), and the transition rows carry the
+same marks, so no `M2e` run makes one and none is silently passed.
+`tests-red-green`'s producer is `M2g`'s for the same reason: the item's `M2e`
+contract is row 66e's typed values, a build-task handoff cannot be valid in
+`M2e` (no producer exists), and the demo and the end-to-end row exercise a
+specification task, whose transition row does not list the item. An empty
+`tests:` list makes `tests-red-green` false for a build task.
 
 ### The frozen test list
 
@@ -422,9 +502,14 @@ The plan lists its tests by ID (`architecture.md` §8 step 2). **Decided here**
 - A test that fails at the head, or passes at the base, makes the handoff to the
   verifier invalid, so the list is never frozen on a test that proves nothing.
 
-**Execution of the named tests** is `M2g`'s (the build task's test run); in `M2e`
-the check runs the target's gate command for the test kind and reads its result
-by `layup gate`.
+**Execution of the named tests** — the gate run of the task's test kind that
+produces the per-test results, and the mapping of an ID to its file — is `M2g`'s
+(the build task's test run). In `M2e` the item `tests-red-green` is computed
+from the typed per-test results a caller holds (row 66e), and no caller produces
+them: a build-task handoff cannot be valid in `M2e`, and no `M2e` run makes one
+(the demo and the end-to-end exercise a specification task). An empty `tests:`
+list makes `tests-red-green` false for a build task; a specification task's
+transition row does not list the item.
 
 ## REQ-007 — The four `layup/` statuses
 
@@ -1182,6 +1267,7 @@ the milestone covers it end to end.
 | A handoff is valid only by its table (inventory) | unit | A handoff with a wrong schema, an artifact that is not in the commits, a hash that differs, a required item that is false, and a pair with no row is each invalid, naming the item; a field that an agent writes never makes one valid; a comment artifact whose body at the forge differs from its copy is invalid. |
 | The artifact that is a comment (`gov-issue-68`) | unit; integration | With the stand-in forge (the `httptest` forge for the integration part), for each of the kinds `plan`, `plan-review` and `review-record`: the session's file, the comment that code posts from its bytes, the copy and its row, the `handoff` event with the comment ID that code read, the three equal hashes; an edited comment is a new copy and the first handoff is invalid; a result that holds a comment ID is refused; a `comment` row is checked against the session's `result/` file, its file is kept byte for byte in the commit of the result, and an `artifact` row against the head; a run that stops after the end, between the post and the copy, or before the post, posts once from the records; a lost lease posts nothing. |
 | The route of a question and the acceptance of an answer | unit; integration | A question goes to the owner role of its kind when its `needs_human` word is `no` and its label is one of the four, and to the Operator for `yes`, for any other word and for any other label; a replaced owner map routes by its roles; the items `question-row` and `answer-row` are computed from the result, whatever the caller passes; an answer is accepted by the next attempt that ends `completed` and cites its ID in the status row, with no question of that attempt citing it, and by no other attempt; with the real `git`, a question session, the session of the owner role and the next attempt give the records from which the route and the acceptance are read. |
+| The item computers of the task loop | unit; integration (a real `git` tree for `spec-sections` and `rendering-equal`) | Each item is computed from the kept copy of a comment, the `docs/spec/` files or the tree at a head: a copy that parses the pinned form makes the item true and one that does not makes it false, and a handoff listing the item is `valid` or `invalid <item>` by the computed result, never by a caller's literal; the question and answer comments are composed from their rows and posted on the task's issue. |
 | The transition table | unit | The default rows are the thirteen of the table (the twelve of `architecture.md` §8 and the row of the target's architecture task, which §8 names a task and gives no row); a replacement table is refused for a missing default pair, a kind or an item not in the lists, and a row of code's own handoff (`code (rendered task)`) that lists `schema`, while another row keeps its `schema`, and the steps that are `layup run`'s own acts need no row. |
 | The replacement of the transition table at the boundary | integration | With the stand-in forge and real git: `set transitions <sha256>` names a copy of a comment of the control issue; the new table is the bytes of that copy, written with the row `transitions` in one records commit, so its SHA-256 is the row's value; the old table stays in Git history and the next task keeps the new one; a hash of no copy or of a copy of another issue, a body that is no table (a code fence, a carriage return) and a table that fails the check each refuse with the item `bound` (`value` for a value that is no SHA-256) and write nothing. |
 | `layup spec check`, the full check (inventory) | unit | Each rule of the table fails on its input and passes on its fixture; before the first bet a task that touches neither the PRD nor `docs/spec/` is `clear`; `did not run` is a failure. |
@@ -1241,13 +1327,15 @@ a coverage table of the files read that a script compares with `git ls-files`.
 ## Not in M2e
 
 The batch part of `layup/rules` (an approved rule batch, its approval hash, the
-known-bad patches, the activation of the `pending` kinds at the first bet) and
+known-bad patches, the activation of the `pending` kinds at the first bet, and
+with it the item `patch-per-kind` of a rule-batch handoff) and
 `layup audit` (`M2f`); the Operator's code-owner review of a rule batch that touches
 the gate paths and the amendment of ADR-0017 and ADR-0019 decision 2 that records the use of code
 owners (#336, `M2f` or earlier). A bet that raises `U` or the appetite, which `architecture.md` §10 makes a rendered change of `budget.tsv` (a later milestone; in `M2e` a brief that does not fit is reshaped), and a command form of the full check for the PRD, `docs/spec/` and the register (a later task). The escalation screen of an answer (`M3`) and the stall package, the stall
 triggers and their procedure, which Shape's round with no progress and the loops of
 failures wait for (`M3d`). The milestone plan, the build tasks and their merge order,
-the execution of the named tests of a plan and Accept (`M2g`). The smart-if that
+the execution of the named tests of a plan (the producer of `tests-red-green`), the
+items `heading-ids` and `register-rows` of its handoffs, and Accept (`M2g`). The smart-if that
 gives the kind and `needs_human` of a question (`M3a`). The panel of Shape and the
 stall triggers (`M3`, `M3d`). The lessons and `layup learn`, the Retrospective's
 content (phase 4). `layup report` and the Inter-Role Communication Format share
