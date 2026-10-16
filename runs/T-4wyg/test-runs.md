@@ -114,3 +114,26 @@ clean at 13:16:41Z.
 maximum of 2,100 lines / 20 files. `docs/spec/packages.md` needed no edit:
 its M2e bullet already pins the `internal/spec` full-check ownership and the
 `sh` seam (written by the milestone's spec task).
+
+## Coordinator resource audit and main merge
+
+Main cfcfc1c was merged at9d500fd before the full integration run. The shared
+built-list resolution retains both task-spec-check and retrospectives; the PRD
+Task/Test cells retain both changes. The changelog retains #356 then #351.
+The first independent code review must explicitly assess the resolutions.
+
+Actual ATIF export metrics are retained outside git (issue351-export-resource-metadata.json
+and issue351-resource-union-audit.json under /tmp/layup-m2e-resume/).
+Plan reports prompt3186764/completion50035/cached3015704,36steps.
+Interrupted build reports retained prompt969388/completion1216/cached935424,
+14steps. Final resumed export reports prompt6847466/completion38553/
+cached6549504,82steps. Every recorded step model is swe-2-max.
+The final export contains all7 interrupted metric rows exactly, but none of the
+plan's28 metric rows. Those exports are not three disjoint totals or a complete
+monotonic conversation counter: compaction discarded earlier build history.
+The first retained build metric is13:07:43Z; earlier build usage is not reported.
+The unique retained plan-plus-final rows report prompt10034230/completion88588/
+cached9565208 (101metricrows), plus missing portions. Cached is inside prompt,
+not added again. The interrupted export is a subset and is not added again.
+Elapsed is not reported; original system-message timestamps do not prove a
+complete retained history. Private reasoning/transcripts stay outside git.

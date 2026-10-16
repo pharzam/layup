@@ -374,6 +374,11 @@ check that catches it.
   input count ([format](https://github.com/harbor-framework/harbor/blob/main/rfcs/0001-trajectory-format.md#metricsschema)).
   Keep private session exports outside version control and commit only reported
   metrics, preserving unavailable parts as unavailable. Learned in #359.
+  A resumed export can lose earlier agent metrics after compaction while keeping
+  the original system timestamp. Compare per-step timestamps and metric rows,
+  not just session IDs or the final totals; union matching rows once, and label
+  missing earlier usage unavailable. In #351 the interrupted export was a subset
+  of the final export, while the plan metrics had been discarded.
 - ❌ **A Go version that CI resolves at its own time.** `go.mod` said `go 1.26`,
   and `actions/setup-go` with `go-version-file: go.mod` installs the newest
   release of that line it knows. The job `security` passed on `main` at
