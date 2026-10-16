@@ -6,10 +6,14 @@ package setup
 // its base.
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
+
+	"github.com/pharzam/layup/internal/git"
 )
 
 // Migration marks a target that was set up before the code-owner rule: the ID of the ruleset that the
@@ -23,11 +27,6 @@ const (
 	codeOwnersOutPath = "out/CODEOWNERS"
 	landScriptPath    = "out/land-code-owner.sh"
 )
-
-// landApplicable says whether the landing script may run. It is false until the tree check admits the commit
-// that the script makes (docs/spec/scaffold.md, The tree check; the question Q1 of #356 is open), so the text
-// that S13 writes refuses at its first command.
-const landApplicable = false
 
 // ownerLogin reports whether s is the login of a GitHub account: letters, digits and single hyphens, not at
 // an end, at most 39 characters (the bound of ownerName).
@@ -135,18 +134,14 @@ func updateCommands(p Phase2) []Command {
 // landScript gives out/land-code-owner.sh (scaffold.md, The code-owner rule of a target that M2d set up): it
 // adds .github/CODEOWNERS to the head of layup-setup in one commit and pushes it as a fast-forward of the
 // default branch, with the ruleset disabled for the push. It starts from the AFTER object, the updated
-// protection that the update kept, and puts exactly that back, never the object before the update. When
-// applicable is false its first command refuses, naming the open question, and the rest is only to be read.
-func landScript(p Phase2, applicable bool) string {
+// protection that the update kept, and puts exactly that back, never the object before the update. The commit
+// it makes is the one that the tree check admits (CheckCodeOwnerLanding; docs/spec/scaffold.md, The tree check).
+func landScript(p Phase2) string {
 	area, target, applies := migrationPaths(p)
 	rs := fmt.Sprintf("/repos/%s/rulesets/%d", p.Name, p.Migrate.RulesetID)
 	t := quote(target)
 	var b strings.Builder
 	b.WriteString("set -eu\n")
-	if !applicable {
-		b.WriteString("# not applicable until the tree check admits the commit that this script makes (Q1 of #356, open): the next forge-check would stop on the row tree\n")
-		b.WriteString("echo 'not applicable: the tree check admits no head but the last commit of setup/tree.tsv (Q1 of #356, open)' >&2\nexit 1\n")
-	}
 	b.WriteString("after=" + quote(filepath.Join(applies, "default.after.json")) + "\n")
 	b.WriteString("off=" + quote(filepath.Join(applies, "default.landing-off.json")) + "\n")
 	b.WriteString(`# the AFTER object: the update was done, and it is the protection to put back
@@ -174,4 +169,101 @@ if [ "$(grep -o '"enforcement":"active"' "$after" | wc -l)" != 1 ]; then echo "$
 	b.WriteString("trap restore EXIT\n")
 	b.WriteString("git -C " + t + " push origin \"$commit:refs/heads/\"" + shellWord(p.DefaultBranch) + "\n")
 	return b.String()
+}
+
+// landingMode is the mode of the file that the code-owner commit adds: a regular file that is not executable.
+const landingMode = "100644"
+
+// CheckCodeOwnerLanding reports whether head is the code-owner commit of a target set up before the code-owner rule
+// (docs/spec/scaffold.md, The tree check; task T-4cep, #384; the Operator's ruling 6217133467): a commit with exactly one
+// parent, last, the last commit of setup/tree.tsv, whose tree is the tree of last plus .github/CODEOWNERS as a regular
+// file of the bytes that CodeOwners gives for login and the config paths of the manifest at last. It reads the parents
+// of head, the manifest at last and the whole trees of last and head, and nothing else: no author, committer, message,
+// date, signature or actor is evidence of anything here. A head that is not that commit is an error with the first
+// condition that fails; so is a read that fails, never a pass.
+func CheckCodeOwnerLanding(dir, last, head, login string) error {
+	parents, err := sys.parents(dir, head)
+	if err != nil {
+		return fmt.Errorf("the parents of the head %s: %w", head, err)
+	}
+	if reason := landingParents(parents, last); reason != "" {
+		return errors.New(reason)
+	}
+	_, configs, err := manifestKinds(dir, last)
+	if err != nil {
+		return fmt.Errorf("the last setup commit: %w", err)
+	}
+	want, err := CodeOwners(login, configs)
+	if err != nil {
+		return fmt.Errorf("the expected .github/CODEOWNERS cannot be written: %w", err)
+	}
+	lastEntries, err := sys.lsTree(dir, last, ".")
+	if err != nil {
+		return fmt.Errorf("the tree of the last setup commit %s: %w", last, err)
+	}
+	headEntries, err := sys.lsTree(dir, head, ".")
+	if err != nil {
+		return fmt.Errorf("the tree of the head %s: %w", head, err)
+	}
+	if reason := classifyLanding(parents, last, lastEntries, headEntries, want, login); reason != "" {
+		return errors.New(reason)
+	}
+	return nil
+}
+
+// landingParents gives the reason that the parents of the head are not the one parent last, or "".
+func landingParents(parents []string, last string) string {
+	switch {
+	case len(parents) != 1:
+		return fmt.Sprintf("the head has %d parents, and must have exactly one, the last setup commit %s", len(parents), last)
+	case parents[0] != last:
+		return fmt.Sprintf("the parent of the head is %s, not the last setup commit %s", parents[0], last)
+	}
+	return ""
+}
+
+// classifyLanding judges the parents of a head and the listings of the whole trees of last and head against the bytes want
+// of .github/CODEOWNERS for login, and gives the first condition that fails, as a sentence, or "" for the code-owner commit.
+// The conditions in order: one parent that is last; last has no .github/CODEOWNERS; no path but that one differs between the
+// trees; the head has it; as a regular file of mode 100644; with the bytes of want.
+func classifyLanding(parents []string, last string, lastEntries, headEntries []git.TreeEntry, want []byte, login string) string {
+	if reason := landingParents(parents, last); reason != "" {
+		return reason
+	}
+	byPath := func(entries []git.TreeEntry) map[string]git.TreeEntry {
+		m := make(map[string]git.TreeEntry, len(entries))
+		for _, e := range entries {
+			m[e.Path] = e
+		}
+		return m
+	}
+	l, h := byPath(lastEntries), byPath(headEntries)
+	if _, has := l[codeOwnersPath]; has {
+		return "the last setup commit already has " + codeOwnersPath
+	}
+	var differ []string
+	for p, e := range h {
+		if old, ok := l[p]; p != codeOwnersPath && (!ok || old != e) {
+			differ = append(differ, p)
+		}
+	}
+	for p := range l {
+		if _, ok := h[p]; !ok {
+			differ = append(differ, p)
+		}
+	}
+	if len(differ) > 0 {
+		sort.Strings(differ)
+		return fmt.Sprintf("the tree of the head differs from that of the last setup commit at %q", differ[0])
+	}
+	e, ok := h[codeOwnersPath]
+	switch {
+	case !ok:
+		return "the head adds no " + codeOwnersPath
+	case e.Mode != landingMode || e.Type != "blob":
+		return fmt.Sprintf("the head adds %s as mode %s, type %s, not a regular file of mode %s", codeOwnersPath, e.Mode, e.Type, landingMode)
+	case e.Object != git.BlobID(want):
+		return fmt.Sprintf("the bytes of %s are not those that S13 writes for the login %s", codeOwnersPath, login)
+	}
+	return ""
 }

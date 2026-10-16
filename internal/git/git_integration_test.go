@@ -926,3 +926,49 @@ func TestCommitTree(t *testing.T) {
 		}
 	}
 }
+
+// Parents of a root, a linear and a merge commit, and the whole tree through LsTree with the path ".": the entries of
+// every depth with their modes, a symbolic link and a submodule among them; the ID of BlobID is the one git stores
+// (task T-4cep, #384).
+func TestParentsAndTheWholeTree(t *testing.T) {
+	home := isolate(t)
+	dir := t.TempDir()
+	env := plain(home)
+	root := commitTree(t, dir, map[string]string{"a/b/c.txt": "c\n", "top.txt": "top\n"})
+	must(t, os.Symlink("top.txt", filepath.Join(dir, "link")))
+	must(t, Add(dir))
+	gitOK(t, dir, env, "update-index", "--add", "--cacheinfo", "160000,"+root+",sub") // after Add, which drops a path with no file
+	must(t, Commit(dir, "chore: two", who))
+	second, _ := RevParse(dir, "HEAD")
+	gitOK(t, dir, env, "switch", "-q", "-c", "side", root)
+	write(t, dir, map[string]string{"side.txt": "s\n"})
+	must(t, Add(dir))
+	must(t, Commit(dir, "chore: side", who))
+	side, _ := RevParse(dir, "HEAD")
+	gitOK(t, dir, env, "switch", "-q", "main")
+	gitOK(t, dir, env, "merge", "-q", "--no-ff", "-m", "merge", side)
+	merge, _ := RevParse(dir, "HEAD")
+	for rev, want := range map[string][]string{root: {}, second: {root}, merge: {second, side}} {
+		got, err := Parents(dir, rev)
+		if err != nil || !reflect.DeepEqual(got, want) {
+			t.Errorf("Parents(%s) = %q, %v; want %q", rev, got, err, want)
+		}
+	}
+	entries, err := LsTree(dir, second, ".")
+	var got []string
+	for _, e := range entries {
+		got = append(got, e.Mode+" "+e.Type+" "+e.Path)
+	}
+	want := []string{"100644 blob a/b/c.txt", "120000 blob link", "160000 commit sub", "100644 blob top.txt"}
+	if err != nil || !reflect.DeepEqual(got, want) {
+		t.Errorf("LsTree(second, \".\") = %q, %v; want %q", got, err, want)
+	}
+	for _, e := range entries {
+		if e.Path == "top.txt" && e.Object != BlobID([]byte("top\n")) {
+			t.Errorf("the object of top.txt is %s, BlobID gives %s", e.Object, BlobID([]byte("top\n")))
+		}
+	}
+	if _, err := Parents(dir, strings.Repeat("0", 40)); err == nil {
+		t.Errorf("Parents of a commit that is not there: no error")
+	}
+}

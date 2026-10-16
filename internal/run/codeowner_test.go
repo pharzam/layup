@@ -84,14 +84,41 @@ func TestOperatorLoginIsTheRowOfTheRole(t *testing.T) {
 	}
 }
 
-// The area built for a target set up before the rule names the files of the migration once, and an area for a
-// new target names none: forge-check prints no commands, so this is the path that the Operator is given.
+// The area built for a target set up before the rule names the files of the migration once, in the order that the Operator
+// runs them, and an area for a new target names none: forge-check prints no commands, so this is the path that the Operator
+// is given (task T-4cep: the tree check admits the commit of the landing).
 func TestTheMigrationNamesItsFiles(t *testing.T) {
 	want := []string{
 		"this target was set up before the code-owner rule: apply the update with your own login: sh DIR/work/acme/widget/out/commands.sh",
-		"DIR/work/acme/widget/out/land-code-owner.sh is not applicable until the tree check admits its commit (Q1 of #356, open)",
+		"then land the code-owner file with your own login, once the update is read back: sh DIR/work/acme/widget/out/land-code-owner.sh",
 	}
 	if got := migrateNotes("DIR/work/acme/widget"); !reflect.DeepEqual(got, want) {
 		t.Errorf("migrateNotes: %q; want %q", got, want)
+	}
+}
+
+// The inputs of the check of the code-owner commit are the record of the setup and the Operator's row of approvers.tsv, and
+// nothing else (the ruling 6217133467: a target whose setup record has the row S13 codeowners.sha256 takes no such commit).
+// Each case breaks one rule only, and a refusal is compared with its whole reason.
+func TestLandingInputs(t *testing.T) {
+	approvers := [][]string{{"1", "idea-owner", "someone", "t", "start"}, {"2", "operator", "pharzam", "t", "start"}}
+	for _, c := range []struct {
+		name      string
+		record    []byte
+		approvers [][]string
+		login     string
+		err       string
+	}{
+		{"a record without the row, the Operator's row", recordText(t, "ruleset.sha256"), approvers, "pharzam", ""},
+		{"no setup record", nil, approvers, "", "setup/record.tsv is not in the records"},
+		{"a record that is not setup/record.tsv", []byte("not a table\n"), approvers, "", "setup/record.tsv: "},
+		{"the row S13 codeowners.sha256", recordText(t, "codeowners.sha256"), approvers, "",
+			"the setup record has the row S13 codeowners.sha256: .github/CODEOWNERS is in the tree of the last setup commit, and a target set up with the rule takes no code-owner commit"},
+		{"no row of the role operator", recordText(t, "ruleset.sha256"), approvers[:1], "", "approvers.tsv has no row of the role operator"},
+	} {
+		login, err := landingInputs(c.record, c.approvers)
+		if c.err == "" && (err != nil || login != c.login) || c.err != "" && (err == nil || !strings.HasPrefix(err.Error(), c.err) || login != "") {
+			t.Errorf("%s: %q, %v; want %q, error %q", c.name, login, err, c.login, c.err)
+		}
 	}
 }

@@ -828,15 +828,17 @@ correction of round 2 withdraws that for decision 6 and points to #336. The acco
 of the code owner is the Operator's row of `approvers.tsv`; where `CODEOWNERS` is
 written and how the ruleset reaches a target that `M2d` set up is decided by the Operator (comment 6209820437 of #356): the file in the tree of
 the target, the ruleset files and the commands for the Operator to review and run, and, for a target set up before the rule, the update of its
-ruleset by the recorded ID with its protections kept ([`scaffold.md`](scaffold.md#the-code-owner-rule-of-a-target-that-m2d-set-up)). **Open
-(Q1 of #356, the child issue #384):** the commit that lands `CODEOWNERS` on the base of such a target is a head that the tree check refuses, so its script cannot run
-until the check admits it (`M2f` or a task of its own).
+ruleset by the recorded ID with its protections kept ([`scaffold.md`](scaffold.md#the-code-owner-rule-of-a-target-that-m2d-set-up)). **Decided
+(the child issue #384, task `T-4cep`; the Operator's ruling 6217133467):** the Operator's one push of the commit that lands `CODEOWNERS` on the base of such a
+target is an act of the Operator completing that target's setup at the planned point "the setup", and [the tree check](scaffold.md#the-tree-check) admits that commit and no other
+head above the setup head (a non-operative summary; the conditions are there). The note of #336 names the act and its actor classification for the audit of `M2f`.
 
 ### The tree after the first merge
 
 The tree check of a later start compares the default branch with the head of
-`setup/tree.tsv` only until the first merge after the setup
-([`scaffold.md`](scaffold.md#at-each-later-start)). **Decided here:** from the
+`setup/tree.tsv` (and with the code-owner commit of a target set up before the code-owner rule, [`scaffold.md`](scaffold.md#the-tree-check))
+only until the first merge after the setup
+([`scaffold.md`](scaffold.md#at-each-later-start)). The check of this section is row 66g's and is specified here, not built. **Decided here:** from the
 first merge of a task, the check is that the head of the default branch is the
 commit of a `merged` event of `tasks/<task>/events.tsv` (the event that `layup run`
 writes with the merge commit's SHA when the merge call answers), or a descendant

@@ -407,7 +407,7 @@ func runS13With(appID int64, p *Phase2, in Input) Outcome {
 		}
 		values = append(values, []string{"codeowners.sha256", sha(owners), "computed", "sha256 " + codeOwnersPath})
 	} else {
-		for path, data := range map[string][]byte{codeOwnersOutPath: owners, landScriptPath: []byte(landScript(*p, landApplicable))} {
+		for path, data := range map[string][]byte{codeOwnersOutPath: owners, landScriptPath: []byte(landScript(*p))} {
 			if err := sys.write(filepath.Join(in.Dir, filepath.FromSlash(path)), data); err != nil {
 				return Outcome{Kind: Fail, Evidence: "S13: " + firstLine(err)}
 			}
