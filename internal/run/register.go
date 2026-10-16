@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"maps"
 	"slices"
 	"strconv"
 	"strings"
@@ -259,7 +260,8 @@ func (r *state) loopPermissionsStep() Step {
 }
 
 // registerTask opens t in the register: one records commit of tasks.tsv and,
-// when the records have no transition table, of the default one. It checks the
+// when the records have none, of the default transition table and of
+// parameters.tsv with its defaults (row 66b). It checks the
 // permissions first, and writes nothing when the task, the register or the
 // table is refused. The step of the caller (row 66k) is not named here.
 func (r *state) registerTask(ctx context.Context, t Task) error {
@@ -274,11 +276,21 @@ func (r *state) registerTask(ctx context.Context, t Task) error {
 	if err != nil {
 		return err
 	}
+	parameters, err := r.store.ReadFile(ctx, parametersPath)
+	if err != nil {
+		return err
+	}
 	t.Opened = r.cfg.Clock.Now().UTC().Truncate(time.Second)
 	files, err := registerFiles(tasks, transitions, t)
 	if err != nil {
 		return err
 	}
+	// parameters.tsv is written in the same commit, when the records have none (task T-dx1h, row 66b).
+	more, err := parameterFiles(parameters, r.value, t.Opened)
+	if err != nil {
+		return err
+	}
+	maps.Copy(files, more)
 	return Fenced(ctx, r.store, r.cfg.RunID, func(ctx context.Context) error {
 		return r.store.Commit(ctx, files, "tasks: register "+t.ID)
 	})
