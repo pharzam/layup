@@ -827,25 +827,45 @@ Deferred by `M2c` ([`intake.md`](intake.md#not-in-m2c)). **Decided here**
   question and kept as the measure rows of the requirement draft
   ([`records.md`](records.md#nfr-001--the-records-of-intake), the block `draft`):
   one row for each criterion, with the idea owner's words, and a measure fact that
-  has none is refused by the draft check of `M2c`.
+  has none is refused by the draft check of `M2c`. **Decided here** (task
+  `T-8rm6`): the form's fourth field is `success-criteria`, its criteria
+  separated by `;`, and the revision appends one `success-criterion` row for
+  each, in the answer's order.
 - The **approver of each planned point** comes from the Intake batch and is a row
   of `approvers.tsv` with `source` the ID of the answering comment (the column that
   `M2a` left for it). Code finds the point from the copy of that comment (the
   batch's line `<point>: <login>`), so that a row of `approvers.tsv` and the point
   it serves are tied by `source`, as `architecture.md` §3 asks. The **role `approver`** is the one that an approval point
   names for the account that is neither the Operator nor the idea owner; a point
-  that names no approver is approved by the idea owner.
+  that names no approver is approved by the idea owner. **Decided here** (task
+  `T-8rm6`): the planned points are `setup`, `bet`, `activation`,
+  `retrospective`, `early-retrospective` and `audit`; only a counted answer of
+  the idea owner's block names an approver, the last counted line of a point
+  binds it, the earliest comment that named a login gives the row's `source`
+  and `since`, and whether a login's account already holds a row is decided by
+  the numeric ID the forge resolves — a login is never a key, whatever its
+  spelling. A login the forge does not know is input only and gets no row.
 - A comment by an account with no row, or in a role the point does not allow, is
   recorded as human input and answers nothing.
 
 ### The revision of the draft
 
 After the answers, a session revises the requirement draft (`architecture.md` §7
-step 5). **Decided here:** code checks that a requirement that covers an answer's
+step 5). **Decided here:** the step `revision` runs it on the role
+`product-owner`, after `follow-up-answers` and before the Scaffold
+([`intake.md`](intake.md#the-steps-of-intake); task `T-8rm6`). Code checks that a
+requirement that covers an answer's
 fact also names the fact of the answer's quote (the link kept by `M2c`:
 [`intake.md`](intake.md#the-raw-fact-of-the-answers)); a requirement that covers an
 answer and not the quote's fact is refused, and the session gets the finding in a
-new attempt. The revised draft is the input of the specification task.
+new attempt. **Decided here** (task `T-8rm6`): the check keeps the coverage
+rules of the draft of `M2c` — a `need` or `constraint` fact must stay covered, a
+`measure` fact must keep a success criterion — and adds that a fact covered by
+both drafts whose set of classes changed is kept only when a row that covers it
+names a fact of the answers; a fact newly covered or dropped is no class
+change. A row that covers the answer of `success-criteria` is refused: its
+criteria are the code's rows, which the keep appends as `success-criterion`
+rows after the session's. The revised draft is the input of the specification task.
 
 ### The rendered commit and the confirmed inventory
 
@@ -1149,7 +1169,7 @@ the milestone covers it end to end.
 | The bet step is atomic to its last act | integration | A stop after the inventory version and before the row of `bets.tsv` resumes inside `bet`: the rendered commit and each `architecture` task are not made twice, and the row is written last; a decision whose chosen option names no requirement is refused. |
 | The tier and the context of a task (`session.md` deferral) | unit | The tier from the four fields of a plan (`large`, any non-empty list: reasoning; else execution), moved by the progress position (uphill to reasoning, downhill to execution); the prompt file lists the issue and plan, the rows and sections of the requirement IDs, the decision records they name, the handoffs and answers, and the rule files, in that order, each with its SHA-256. |
 | The questions left open and the band (`intake.md` deferral) | integration | With the stand-in forge: an `open` and an `asked` question are asked of the owner role; an intent answer that parses (`B` below `U`) writes `budget.tsv` with the question as `source` and replaces a value that exists; one that does not parse leaves the question `open` and the run in its wait; a question still `open` at the brief is shown in "rabbit holes". |
-| The approvers and the success criteria (`intake.md` deferral) | unit | The measure rows read from the intent answer; an approver row with `source` the answering comment ties to its point; a role `approver`; a point with no approver is the idea owner's; the revision's check that a requirement that covers an answer's fact names the quote's fact. |
+| The approvers and the success criteria (`intake.md` deferral) | unit | The measure rows read from the intent answer; an approver row with `source` the answering comment ties to its point; a role `approver`; a point with no approver is the idea owner's; an account named by another spelling gets no second row; the revision's check that a requirement that covers an answer's fact names the quote's fact, and that a class change of a fact covered by both drafts names a fact of the answers. |
 | The task register and the Retrospective | unit | A row with a predecessor that is not a task, a cycle of predecessors, or `—` in `requirements` is refused; the Retrospective step writes its event and no session starts. |
 | The Shape filter (inventory) | unit | An option with a failed row, a missing row or a pass with no evidence is dropped; one survivor is chosen; two survivors give a brief with no recommendation, and an answer line `option <decision>: <option>` naming a dropped option or an unknown decision is refused and one naming a survivor is recorded in `bets.tsv`; every option dropped asks one rewrite, and a second full drop is a round with no progress. |
 | The bet and its brief (inventory) | unit | The five headings, `brief.lines` unset is refused, a link that does not resolve is refused, two bets of 0.6 `U` each (the second brief), a cap above `band.U`, hours above `appetite.hours` and caps plus the spend of milestone 0 above `band.U` are each refused, and a cap below `band.B` passes, an answer by an account with no allowed role answers nothing, and the answer is copied. |
