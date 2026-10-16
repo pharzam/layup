@@ -601,4 +601,11 @@ func TestAHandoffOfASessionWithoutAStartRowIsAnError(t *testing.T) {
 	if _, err := w.s.RecordHandoff(context.Background(), planInput()); err == nil || len(w.store.commits) != 0 {
 		t.Errorf("a session with no start row: %v, %d commits; want an error and no write", err, len(w.store.commits))
 	}
+	// A session of another task is no session of this one.
+	w.session(t, planSess, 1, "developer", planBody)
+	in := planInput()
+	in.Task = "T-cd34"
+	if _, err := w.s.RecordHandoff(context.Background(), in); err == nil || len(w.store.commits) != 0 {
+		t.Errorf("a session of another task: %v, %d commits; want an error and no write", err, len(w.store.commits))
+	}
 }

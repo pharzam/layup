@@ -168,6 +168,15 @@ func TestACommentFileThatIsNotARegularFileOfOneNameIsRefused(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(d.Result, "big.md"), []byte(big), 0o644); err != nil {
 		t.Fatal(err)
 	}
+	// Files that a path in the name would reach: one in a directory of result/ and one beside it.
+	if err := os.Mkdir(filepath.Join(d.Result, "a"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for _, f := range []string{filepath.Join(d.Result, "a", "plan.md"), filepath.Join(filepath.Dir(d.Result), "plan.md")} {
+		if err := os.WriteFile(f, []byte("reached by a path\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
 	for _, name := range []string{"link.md", "dir.md", "big.md", "missing.md", "", ".", "..", "a/plan.md", "../plan.md", "plan.md/"} {
 		if got, err := CommentFile(d, name); err == nil {
 			t.Errorf("%q: read %d bytes, want an error", name, len(got))
