@@ -95,11 +95,33 @@ one author harness (`architecture.md` §8, "Attempts"). **Decided here:**
   rule batch before its approval and the specification that waits for its bet, do
   not: [The rendered commit and the confirmed inventory](#the-rendered-commit-and-the-confirmed-inventory)): an `attempt` row of `tasks/<task>/events.tsv` with the
   base SHA, then the sessions of that attempt ([`session.md`](session.md)).
+- **Decided here** (task `T-6zj3`, #361, row 66e): the findings of a gate failure are
+  the rows of the table of `layup gate` ([`gate.md`](gate.md): `gate.Table`) whose
+  result is neither `pass` nor `clear`, in the order of the manifest, each a finding
+  with the rule `gate:<kind>`, the row's reason as its text, and no file and no line (a
+  row has none); a `not-active` row is a finding, as it never counts as a pass
+  (`NFR-004`). `internal/run`'s `NextAttempt` starts the attempt (`StartAttempt`: the
+  next number, the base that the caller gives) only when a row failed, and gives the
+  findings back (`ErrNoFailure` otherwise, and nothing is written); the prompt file of the
+  attempt carries them and no diff ([The tier and the context](#the-tier-and-the-context-of-a-task)).
+  **Later wiring:** the call that notices the failure at step 5 and the rows of
+  `gates.tsv` that keep the findings across a restart are #362's and #367's; until then
+  the caller gives the table, and the findings are the caller's to give again.
 - Once the task's test list is frozen ([The frozen test list](#the-frozen-test-list)),
   code puts the frozen test files at the start of each new attempt, so that their
   hashes stay; the harness that wrote them is an author of every later attempt.
+  **Decided here** (task `T-6zj3`): `FrozenFiles` gives, for each listed test, the bytes
+  whose SHA-256 is the frozen one, found among the heads that were bound to the task's
+  sessions, the newest first (a test whose bytes no bound head holds is an error, never a
+  guess); `TaskSession` writes them in the session's clone, right after the clone is made,
+  and commits them as one commit `layup: the frozen tests` (so the head's tree holds them,
+  as the base lacks the tests that an earlier attempt wrote), its author the session's own
+  identity (`layup session <session>`) at the run's time; a file that is already as frozen
+  at the base needs no commit. The file's mode is not kept: a known limit.
 - When the Operator passes the last diff to the new attempt (a stall answer,
-  `M3d`), the harness that wrote it is an author of the new attempt.
+  `M3d`), the harness that wrote it is an author of the new attempt. No record names
+  that diff before `M3d`, so the authors of [the independence](#the-independence-of-the-reviewers)
+  do not read it in `M2e`, and `M3d` adds it.
 - A question that ends an attempt (status `needs_context`) is a wait for the
   owner role, not a round without progress ([The checks of a
   handoff](#the-checks-of-a-handoff)).
@@ -122,6 +144,21 @@ records and the ledger, never from a field that an agent writes:
   went into an attempt's prompt, and the harness that wrote the task's frozen
   tests (Invariant 9).
 
+**Decided here** (task `T-6zj3`, #361, row 66e; `internal/run`'s `Authors`): a session is
+bound, in the ledger, to a commit of the diff from the base when the event `bound` of its
+task holds a SHA that is an ancestor of the head and not an ancestor of the base (the two
+calls `IsAncestor` of the run's clone, into which the end of each session fetched its head);
+its harness is that of its row of `sessions.tsv`, a row that `layup run` wrote, never a
+field of the session's result. A session that pushed and was never bound is no author, nor
+is one bound to a commit of an earlier attempt or of the base. The authors of a
+verification are those harnesses and the `harness` of each row of the frozen list
+(`tests.tsv`); the authors of a plan review are the harnesses of the task's sessions whose
+role is the plan role of the step table (`plan-of-a-task`), and as `sessions.tsv` has a role
+and no step, a session of that role that answered a question is counted too: a known limit,
+on the safe side (fewer admitted reviewers). The result is sorted, each harness once. The
+third source (a diff that an Operator's stall answer passed to an attempt) has no record
+before `M3d`, which adds it.
+
 Code admits a pair of harness and model for a plan review or a verification only
 when its harness passed the probe ([`session.md`](session.md#admission)), its
 model is not on the target's "not used" list, and its harness is not an author.
@@ -130,7 +167,13 @@ When no admitted harness is outside the authors, the verification is
 `not-active: no harness outside the authors`, and the pull request does not merge
 (`F-0001#5`, Invariant 5). **Reason:** the forge's four states have no
 `not-active`, and `failure` is the one that stays a refusal until a harness
-exists; `pending` is kept for a verifier that waits for its turn (below).
+exists; `pending` is kept for a verifier that waits for its turn (below). **Decided here** (task
+`T-6zj3`): `PairFor` gives the first pair of `routing.tsv` for the role and the tier of the
+step (`plan-review` and `verification` of the step table: `qa-engineer`, `reasoning`) that is
+admitted by the rule of [Admission](session.md#admission) and whose harness is none of the
+authors, and `ReviewerPair` gives it with the authors read; with none the error holds both
+`ErrNoHarnessOutsideAuthors`, whose text `no harness outside the authors` is the description
+after `not-active: `, and `route.ErrNoPair`. The status that posts it is row 66f's.
 
 ### The tier and the context of a task
 
@@ -144,6 +187,50 @@ execution tier (`architecture.md` §11). **Decided here:** the tier is read when
 the plan is accepted (step 2) and again at each attempt, from the plan and the
 open unknowns that the records give; the result is a column of the routing
 request, not a new record.
+
+**Decided here** (task `T-6zj3`, #361, row 66e), the reading of the tier:
+
+- **The plan is a typed value.** `Plan` holds the four fixed fields (`size`, and the three
+  lists); the text form of a plan, the reader of its comment and the check `plan-fields` are
+  #387's, so the caller gives the value. `PlanTier` is the tier of the plan alone: reasoning
+  when `size` is not `small` (a size that is neither `small` nor `large` counts as large: the
+  field has no other value, and a typo must not choose the cheaper tier) or any list is not
+  empty, else execution.
+- **The position moves it at an attempt.** `TierOf(plan, position)` is reasoning when the task
+  is uphill and execution when it is downhill; with no position the plan alone decides, as at
+  its acceptance (step 2). By this reading the plan's class decides at the acceptance and the
+  position at each attempt; both are the text of `architecture.md` §9. A task is downhill when
+  its test list is frozen and it has no open unknown, uphill otherwise (`Position`).
+- **The open unknowns that the records give in `M2e`** are the question rows of the last attempt
+  that ended `needs_context`, until an answer of a session of an owner role that started after
+  it is accepted by the next attempt (`AnswerAccepted`). The open material findings (their
+  form is #387's) and the open escalations (`M3`) are added when they exist.
+- **`by-class` and `owner-of-its-kind`** ([`session.md`](session.md#the-step-table-and-the-kinds-of-a-steps-context))
+  are resolved by `ResolveStep`: `by-class` becomes the tier of `TierOf`, `owner-of-its-kind`
+  becomes the routing role of the owner map's role. The key of `routing.tsv` is the role ID of
+  the step table (`systems-architect`), the owner map's roles are names (`Systems Architect`),
+  so the one rule is lower case with each run of spaces a hyphen (`RoutingRole`): the three
+  default owners that the step table has as roles come out as exactly those IDs, and `Domain
+  Expert`, which no step has, becomes `domain-expert`, for which the Operator's register has a
+  pair or the start is refused (`pair`). A human has no routing role.
+- **The prompt file** is the list of links of the five kinds of the step table in their order
+  (`PromptFile`), each item a path with the SHA-256 of the bytes that code read, a file once
+  (the first kind that names it keeps it): `issue-and-plan` is `tasks.tsv` (the issue's own text
+  is no record in `M2e`: a known limit; its row has the number, the requirement IDs and the
+  class) and the kept copy of the last valid handoff with a comment from a session of the plan
+  role; `requirements` are the files of `docs/prd/` that have a table row, and the files of
+  `docs/spec/` that have a heading, that holds a requirement ID of the task's row as a whole
+  word (`REQ-0050` is not `REQ-005`); `decision-records` are the `docs/adr/<NNNN>-*.md` of each
+  `ADR-NNNN` that a section of those headings names (the heading's text down to the next heading
+  of its level or above), and a decision record that a section names and the target lacks is an
+  error; `handoffs-and-answers` are the copies of each valid handoff with a comment, and the
+  result files that hold an `answer` row, then, as text, the findings of the last attempt and no
+  diff; `rule-files` are the files of the target at the base that the rule-path register of the
+  records matches. A target item is read at the base; a records item is copied under the
+  session's `input/` by its file name (two records of one name are refused), and the text names
+  it at `<session directory>/input/<name>`. The SHA-256 that the ledger keeps, as the paragraph below says, is
+  the one in the prompt file itself, which the start row's `records` commit rebuilds. **Later wiring:**
+  the call of `PromptFile` and of `TierOf` at each step is the step `loop` (#367).
 
 **The context of a session.** The step table has a column of record kinds for
 each step ([`session.md`](session.md#the-step-table-and-the-kinds-of-a-steps-context) holds the
@@ -421,6 +508,39 @@ The plan lists its tests by ID (`architecture.md` §8 step 2). **Decided here**
   the finding is closed.
 - A test that fails at the head, or passes at the base, makes the handoff to the
   verifier invalid, so the list is never frozen on a test that proves nothing.
+
+**Decided here** (task `T-6zj3`, #361, row 66e; `internal/run`'s `RecordHandoff` with
+`HandoffInput.Freeze`, and `FrozenFindings`):
+
+- **The text of the list is #387's.** The caller gives the tests as typed values: the ID, the
+  file that holds it, and whether it fails at the base and passes at the head (the producer of
+  that result is a gate or test run that is not in `M2e`).
+- **The freeze is in the commit of the event.** When a `Freeze` is given to a handoff to the
+  verifier, `tests-red-green` is computed from it and the caller's own value is never read:
+  it is true for a list of at least one test, each with an ID and a source, none repeated,
+  each failing at the base and passing at the head, and each source a file of the head that
+  the session was bound to (its event `bound`; a session with no bound head is an error, and
+  nothing is written). The first valid handoff writes `tasks/<task>/tests.tsv` in the records
+  commit of its event, with the SHA-256 of each source at that head, the harness of the
+  session (from `sessions.tsv`) and one time; no other handoff, no invalid one and none to
+  another role freezes. An Operator's table that leaves `tests-red-green` out of the row is the
+  Operator's: the handoff is as the table says, and the list is still never frozen on a test
+  that proves nothing.
+- **A changed source is a finding and an invalid handoff.** With a list frozen and no amendment
+  pending, a handoff to the verifier is `invalid tests-red-green` unless its tests are the
+  frozen ones, each at its frozen hash; `FrozenFindings` gives, for a head, the finding `test
+  changed` (the rule, the source as its file, the test's ID as its text) of each listed test
+  whose source there has another hash or is missing.
+- **An amendment is read from the events.** After the last valid handoff of a session of the
+  developer's role (`software-developer`), a valid handoff **with a comment** from a session of
+  the plan role (`software-engineer`), then one from a session of the plan-review role
+  (`qa-engineer`) **whose event `session` comes after it**: the order is the events', never the
+  clock's (the `at` of two events can be one second), and a verifier's review record, which
+  shares the plan reviewer's role, is no review of a plan that began after its session. With an
+  amendment pending the results alone decide, the next valid handoff to the verifier writes the
+  list again whole (when it differs; a test whose source and hash did not change keeps its
+  harness, any other takes the session's) and uses the amendment up, as it is that developer's
+  handoff.
 
 **Execution of the named tests** is `M2g`'s (the build task's test run); in `M2e`
 the check runs the target's gate command for the test kind and reads its result

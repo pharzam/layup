@@ -1040,6 +1040,15 @@ These traps are not domain-specific: they hurt every project's test suite.
   that the run uses (here `state.sessions()` on a `Config` with the App's slug), and run that test against the mutant
   that removes the assignment; a test that only reads the copied field, or sets it itself, proves nothing about the run.
 
+- ❌ **A display name used as a routing key.** `DefaultOwners()` of `internal/run` gave the owner of a
+  question as `Systems Architect`, while `routing.tsv` and the step table key a role by its ID
+  (`systems-architect`); the route of a question would have matched no routing row. It is silent because
+  the route was tested alone, no caller used it with the register yet, and each value is right in its own
+  file. Task `T-6zj3` (#361), found when its plan read the two sources side by side. **The check:** turn
+  the name into the ID by one rule (`RoutingRole`: lower case, spaces as hyphens), and test that each
+  default owner that the step table has as a role comes out as exactly that ID, with the roles read
+  from `session.StepTable()`, never typed in the test.
+
 ### Reference-sweep pitfalls
 
 A change that edits references or a rule's wording across the tree has three silent

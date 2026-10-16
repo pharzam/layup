@@ -256,7 +256,8 @@ Retrospective of `M2e` has no session. The values `by-class` (the tier is the ta
 class, `architecture.md` §9) and `owner-of-its-kind` (the owner map resolves the role
 before routing, `loop.md`) are the table's own words, not keys of the routing
 register, which takes a role and a tier of `reasoning` or `execution`; the Operator
-can replace the matrix per target, and this is its default. The builder of the prompt file is `internal/run`'s (row 66e); both
+can replace the matrix per target, and this is its default. The builder of the prompt file, and the resolution of the two words,
+are `internal/run`'s (`PromptFile` and `ResolveStep`, task `T-6zj3`, [`loop.md`](loop.md#the-tier-and-the-context-of-a-task)); both
 values return copies.
 
 ### The limit of a session
