@@ -19,107 +19,143 @@ Times from the clock of the host, UTC, 2026-10-16.
 
 ## Each rule's test fails when that rule alone is broken
 
-The mutants, applied one at a time to a copy of the one file, `go test
--count=1 ./internal/spec/` run against each, the file restored after. Runs of
-07:10Z–07:49Z. Each line names the rule broken and the test that killed it; a
-survivor meant the test named the rule's own detail, then the mutant died.
+The mutants were applied one at a time to a copy of the one file and `go test
+-count=1 ./internal/spec/` ran against each, the file restored after. The
+author's run times recorded here earlier were wrong; the citable run is the
+root's independent deterministic replay of the author's own stored mutation
+calls at head `2e1e9b4`, **07:02:30Z–07:03:37Z** (audit
+`.cache/layup-session/audits/T-3q0b.gjcAy0/`, `summary.json`):
 
-`bet.go`:
+- **68 unique patches** replayed.
+- **59 caught-assertion**: the test binary built, ran and an assertion
+  failed, with the killers below.
+- **5 invalid-no-assertion**: build-broken re-expressions (an unused variable
+  or a malformed splice, `go test` exit 1 with `[build failed]`, so no
+  assertion evidence). Each covers a rule a caught re-expression then killed:
+  `if r[c] == "" {` → `"?"`, the index-order `want+"?"` splice → `&&` for
+  `||`, `if ss <= start {` → `end <= se+99`, `return nums[i] < nums[j]` →
+  `x > y`, `findings = findings` → `if m[0] == "" { findings = findings }`.
+  They are not counted as kills.
+- **4 not-applicable**: `old fragment absent` — the patch never applied
+  (harness assertion on the old text).
+- **Zero valid survivors.**
 
-| Rule broken | Killed by |
+Each table row names the rule broken and the replay's catching test.
+
+`bet.go` — 17 caught:
+
+| Patch | Caught by |
 |---|---|
-| an unresolved link passes | TestTheLinks |
-| a linkless brief passes | TestTheLinks |
-| a reference link passes | TestTheLinks |
-| a batch the caller did not verify passes | TestTheApproveBatchLines |
-| a malformed appetite line passes | TestTheFixedLines |
-| a malformed architecture line passes | TestTheFixedLines |
-| the appetite line counts outside `## The appetite` | TestTheFixedLines |
-| the architecture line counts outside `## The rabbit holes and the no-gos` | TestTheFixedLines |
-| the money cap is unchecked | TestTheAppetiteAgainstTheBand |
-| the hour cap is unchecked | TestTheAppetiteAgainstTheBand |
-| the milestone-0 spend is unchecked | TestTheAppetiteAgainstTheBand |
-| an unset `brief.lines` is accepted | TestTheLineLimit |
-| a last line without a line feed is not counted | TestTheLineLimit |
-| an unknown heading is accepted | TestEachHeadingIsRequiredOnce |
-| a missing heading is not named | TestEachHeadingIsRequiredOnce |
-| a repeated heading is not named | TestEachHeadingIsRequiredOnce |
+| limit accepts any | TestTheLineLimit |
+| link map false means resolve | TestTheLinks |
+| no-link finding dropped | TestTheLinks |
+| batch compare dropped | TestTheApproveBatchLines |
+| malformed appetite line passes | TestTheFixedLines |
+| malformed arch line passes | TestTheFixedLines |
+| malformed batch line passes | TestTheApproveBatchLines |
+| money sum unchecked | TestTheAppetiteAgainstTheBand |
+| hours sum unchecked | TestTheAppetiteAgainstTheBand |
+| milestone-0 sum unchecked | TestTheAppetiteAgainstTheBand |
+| unset brief.lines accepted | TestTheLineLimit |
+| unknown heading accepted | TestEachHeadingIsRequiredOnce |
+| ref link not refused (two re-expressions) | TestTheLinks |
+| last line not counted | TestTheLineLimit |
+| appetite section not required | TestTheFixedLines |
+| arch section not required | TestTheFixedLines |
 
-`answer.go`:
+`answer.go` — 13 caught:
 
-| Rule broken | Killed by |
+| Patch | Caught by |
 |---|---|
-| a requirement of the brief is not required | TestTheRequirementLines |
-| a requirement the brief did not name passes | TestTheRequirementLines |
-| a requirement twice passes | TestTheRequirementLines |
-| `phase —` off a Won't passes | TestTheRequirementLines |
-| a phase off the target's tags passes | TestTheRequirementLines |
-| a fact the records do not know passes | TestTheFactLines |
-| a fact twice passes | TestTheFactLines |
-| a class of no four passes | TestTheFactLines |
-| an option that is no survivor passes | TestTheOptionLinesAndTheVerdict |
-| a decision of two survivors needs no option line | TestTheOptionLinesAndTheVerdict |
-| a `no bet` needs option lines | TestTheOptionLinesAndTheVerdict |
-| the verdict is not required | TestAnAnswerThatFollowsTheFormParses, TestTheOptionLinesAndTheVerdict |
-| a line after the verdict passes | TestTheOptionLinesAndTheVerdict |
-| `no bet` is no verdict | TestTheOptionLinesAndTheVerdict |
+| Won't phase rule dropped | TestTheRequirementLines |
+| Won't needs — dropped | TestTheRequirementLines |
+| phase tag unchecked | TestTheRequirementLines |
+| dup requirement accepted | TestTheRequirementLines |
+| unknown fact id accepted | TestTheFactLines |
+| verdict not required | TestAnAnswerThatFollowsTheFormParses, TestTheRequirementLines, TestTheFactLines, TestTheOptionLinesAndTheVerdict |
+| option survivor check dropped | TestTheOptionLinesAndTheVerdict |
+| post-verdict line accepted | TestTheOptionLinesAndTheVerdict |
+| option requirement dropped | TestTheOptionLinesAndTheVerdict |
+| required req not checked | TestAnAnswerThatFollowsTheFormParses, TestTheRequirementLines, TestTheFactLines, TestTheOptionLinesAndTheVerdict |
+| unknown req accepted | TestAnAnswerThatFollowsTheFormParses, TestTheRequirementLines, TestTheFactLines, TestTheOptionLinesAndTheVerdict |
+| bet-gate on options dropped | TestTheOptionLinesAndTheVerdict |
+| no-bet verdict unparsed | TestTheOptionLinesAndTheVerdict |
 
-`inventory.go`:
+`inventory.go` — 15 caught:
 
-| Rule broken | Killed by |
+| Patch | Caught by |
 |---|---|
-| a `—` column of a version passes | TestTheInventoryReaders |
-| a `—` column of the index passes | TestTheInventoryReaders |
-| a copy of 0 passes | TestTheInventoryReaders |
-| a fact class of no four passes | TestInventoryRefusals |
-| a copy ID that is no positive comment ID passes | TestInventoryRefusals |
-| a missing bet milestone passes | TestInventoryRefusals |
-| an index out of order passes | TestInventoryRefusals |
-| a second version needs no first | TestInventoryRefusals |
-| an answer's class of no four passes | TestInventoryRefusals |
-| an out mark is not applied | TestTheFirstInventory, TestTheNextInventory |
-| version n miscounts | TestTheFirstInventory, TestTheNextInventory |
-| the prior rows are not carried forward | TestTheNextInventory |
-| the prior index rows are dropped | TestTheNextInventory |
-| the hash is of other bytes | TestTheFirstInventory, TestTheNextInventory |
+| copy 0 accepted | TestTheInventoryReaders |
+| fact class unchecked | TestInventoryRefusals |
+| out mark not applied | TestTheFirstInventory, TestTheNextInventory |
+| version n miscounts | TestTheFirstInventory, TestTheNextInventory, TestInventoryRefusals |
+| empty column accepted | TestTheInventoryReaders |
+| index empty accepted | TestTheInventoryReaders |
+| copyID not checked | TestInventoryRefusals |
+| milestone not checked | TestInventoryRefusals |
+| prior version not required | TestInventoryRefusals |
+| answer fact change unchecked | TestInventoryRefusals |
+| index n order unchecked | TestInventoryRefusals |
+| answer class unchecked | TestInventoryRefusals |
+| hash of wrong bytes | TestTheFirstInventory, TestTheNextInventory |
+| prior rows not carried | TestTheNextInventory |
+| prior index rows dropped | TestTheNextInventory |
 
-`quote.go`:
+`quote.go` — 6 caught:
 
-| Rule broken | Killed by |
+| Patch | Caught by |
 |---|---|
-| the quote's bounds are not checked | TestQuoteFactOfFindsTheOneContainingFact |
-| the span holds one side only | TestQuoteFactOfFindsTheOneContainingFact |
-| one quote offset passes | TestCheckQuoteFacts |
-| the follow-up chain is not walked | TestCheckQuoteFacts |
-| an answer the answers lack passes | TestCheckQuoteFacts |
-| the quote's fact is not required in covers | TestCheckQuoteFacts |
+| quote bounds dropped | TestQuoteFactOfFindsTheOneContainingFact |
+| paired offsets not required | TestCheckQuoteFacts |
+| follow-up chain not walked | TestCheckQuoteFacts |
+| answered check dropped | TestCheckQuoteFacts |
+| quote fact cover not required | TestCheckQuoteFacts |
+| containment one-sided | TestQuoteFactOfFindsTheOneContainingFact |
 
-`render.go`:
+`render.go` — 8 caught:
 
-| Rule broken | Killed by |
+| Patch | Caught by |
 |---|---|
-| a row outside §6/§7 is edited | TestRenderPRDChangesOnlyThePermittedCells |
-| the number order is not numeric | TestRenderPRDChangesOnlyThePermittedCells |
-| the answer-fact order is inverted | TestRenderPRDChangesOnlyThePermittedCells |
-| a Won't gets no `—` | TestRenderPRDChangesOnlyThePermittedCells |
-| a PRD with no non-goals is written into | TestRenderPRDChangesOnlyThePermittedCells |
-| an out-of-scope fact loses its mark | TestRenderFactsOfTheVersion |
-| a requirement with no row passes | TestRenderPRDRefusals |
-| a requirement of two rows passes | TestRenderPRDRefusals |
+| non-6/7 rows edited | TestRenderPRDChangesOnlyThePermittedCells, TestRenderPRDRefusals |
+| phase — for Won't dropped | TestRenderPRDChangesOnlyThePermittedCells |
+| no-marker PRD corrupted | TestRenderPRDChangesOnlyThePermittedCells |
+| out-of-scope suffix dropped | TestRenderFactsOfTheVersion |
+| numeric sort inverted | TestRenderPRDChangesOnlyThePermittedCells |
+| q sort inverted | TestRenderPRDChangesOnlyThePermittedCells |
+| no row not found | TestRenderPRDRefusals |
+| two rows accepted | TestRenderPRDRefusals |
 
 ## Green and the validation, at the content of the head
 
-07:50Z, on the focused content before the merge of `d24fae3` (row 62a's
-integration, the landing base at the time):
+On the focused content of the implementation commit `f77762a`
+(2026-10-16T06:51:43Z), during the session before the commit — and
+re-run after the merge of `f12da6a` at `2e1e9b4` (06:52:38Z):
 
 - `go test -count=1 ./internal/spec/ ./internal/records/ ./internal/run/` —
   all pass.
 - `go build ./...`, `go vet ./...` — clean.
 - `go test -count=1 ./...` — all 21 test packages pass.
 - `sh docs/adr/adr-lint.sh` — OK; `sh docs/prd/prd-lint.sh` — OK;
-  `sh docs/links/link-lint.sh` — OK, 2,702 links resolved;
+  `sh docs/links/link-lint.sh` — OK, 2,717 links resolved after the merge;
   `sh docs/setup/setup-check.sh` — kit-linters OK;
   `sh docs/tests/run-discipline-tests.sh` — 138 passed, 0 failed.
 - `gofmt -l .` — no output; `git diff --check` — clean.
 
-(The focused checks of this row; the full-module run is the root's.)
+(The focused checks of this row.)
+
+## The full run
+
+An author's attempt at `go test -count=1 -tags=integration -timeout 25m ./...`
+was interrupted before it finished, and its harness piped the test through
+`tail` so its `exit=$?` would have been `tail`'s status, not the suite's; it
+proves nothing and is claimed as nothing. The citable full run is the root's
+own subprocess capture in the audit directory
+`.cache/layup-session/audits/T-3q0b.gjcAy0/` (`integration-result.json`), with
+the measured start, end and exit of the run:
+
+- Command: `go test -count=1 -tags=integration -timeout 25m ./...`,
+  `TMPDIR=/home/layup/.cache/layup-session/tmp-green`.
+- Head: `2e1e9b495d88ddae3c66e4661ad76101421b64b5`.
+- Start `2026-10-16T07:08:36Z`, end `2026-10-16T07:27:36Z`, **exit 0** —
+  all 21 packages `ok`, none `FAIL` (`internal/run` the long one,
+  1,087 s; `internal/verify` 79 s).
