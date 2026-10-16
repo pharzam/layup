@@ -4,6 +4,7 @@ package run
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -288,5 +289,112 @@ func TestAStdoutThatCannotBeReadIsUnavailable(t *testing.T) {
 	}
 	if tel := show(t, w.bare, "layup-records", "telemetry.tsv"); !strings.Contains(tel, "\tunavailable\tstdout cannot be read\t") {
 		t.Errorf("telemetry.tsv:\n%s", tel)
+	}
+}
+
+// octal writes text as the escapes of printf, byte for byte.
+func octal(text string) string {
+	var b strings.Builder
+	for i := 0; i < len(text); i++ {
+		fmt.Fprintf(&b, "\\%03o", text[i])
+	}
+	return b.String()
+}
+
+// planWork writes result/<name> with text, and a result file whose status row
+// is followed by rows (the lines of the table, with real tabs), in the shell of
+// a harness; it commits nothing.
+func planWork(name, text string, rows ...string) string {
+	out := resultHead
+	for _, r := range rows {
+		out += r + "\n"
+	}
+	return "printf '" + octal(text) + "' > ../result/" + name + " && printf '" + octal(out) + "' > ../result/result.tsv"
+}
+
+const planText = "# The plan\r\n\r\nno final newline, trailing  \t"
+
+func keptFiles(t *testing.T, w *world, id string) string {
+	t.Helper()
+	return gitOut(t, w.bare, "ls-tree", "-r", "--name-only", "layup-records", "tasks/T-ab12/results/"+id)
+}
+
+// The end of a session that names a comment: the file of result/ is checked
+// against the row's hash and kept byte for byte, in the one records commit of
+// the result; the session posts nothing (loop.md, The artifact that is a comment).
+func TestTheCommentRowOfASessionIsKeptWithTheResultInOneCommit(t *testing.T) {
+	w, r, f, base := sessionWorld(t)
+	row := "comment\t1\tresult/plan.md\t" + sum(planText) + "\t—"
+	id, err := r.TaskSession(context.Background(), harness(t, base, planWork("plan.md", planText, row)))
+	if err != nil {
+		t.Fatalf("TaskSession: %q, %v", id, err)
+	}
+	if got := show(t, w.bare, "layup-records", "tasks/T-ab12/results/"+id+"/plan.md"); got != planText {
+		t.Errorf("the kept file %q; want the bytes %q", got, planText)
+	}
+	commit := strings.TrimSpace(gitOut(t, w.bare, "log", "-1", "--format=%H", "layup-records", "--", "tasks/T-ab12/results/"+id+".tsv"))
+	changed := strings.Fields(gitOut(t, w.bare, "show", "--format=", "--name-only", commit))
+	want := []string{"tasks/T-ab12/events.tsv", "tasks/T-ab12/results/" + id + ".tsv", "tasks/T-ab12/results/" + id + "/plan.md", "telemetry.tsv"}
+	if !slices.Equal(changed, want) { // git lists a path by byte order: ".tsv" before "/"
+		t.Errorf("the commit of the result changed %q; want %q in one", changed, want)
+	}
+	if events := show(t, w.bare, "layup-records", "tasks/T-ab12/events.tsv"); strings.Contains(events, "refused") {
+		t.Errorf("the events:\n%s", events)
+	}
+	if len(f.posted) != 1 || len(f.posted[2]) != 1 {
+		t.Errorf("the session's end posted %v; want only the comment of the session on the control issue", f.posted)
+	}
+}
+
+// A comment row whose file differs, is missing or is a link adds the event
+// refused, artifact (session.md, The result of a session): the result is still
+// committed, as for an artifact, and that row's file is not kept.
+func TestACommentFileThatFailsItsRowIsRefusedArtifactAndNotKept(t *testing.T) {
+	for _, c := range []struct{ name, body string }{
+		{"differs", planWork("plan.md", planText, "comment\t1\tresult/plan.md\t"+sum("another")+"\t—")},
+		{"missing", planWork("plan.md", planText, "comment\t1\tresult/none.md\t"+sum(planText)+"\t—")},
+		{"a link", planWork("real.md", planText, "comment\t1\tresult/plan.md\t"+sum(planText)+"\t—") + " && ln -s real.md ../result/plan.md"},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			w, r, _, base := sessionWorld(t)
+			id, err := r.TaskSession(context.Background(), harness(t, base, c.body))
+			if err != nil {
+				t.Fatalf("TaskSession: %q, %v", id, err)
+			}
+			events := show(t, w.bare, "layup-records", "tasks/T-ab12/events.tsv")
+			if !strings.Contains(events, "\tresult\t1\t"+id+"\t—\t—\tdone\t") || !strings.Contains(events, "\trefused\t1\t"+id+"\t—\t—\tartifact\t") {
+				t.Errorf("the events:\n%s", events)
+			}
+			if gitOut(t, w.bare, "ls-tree", "--name-only", "layup-records", "tasks/T-ab12/results/"+id+".tsv") == "" {
+				t.Error("the result is not committed; want it kept, as for an artifact")
+			}
+			if got := keptFiles(t, w, id); got != "" {
+				t.Errorf("kept %q; want no file of a row that fails", got)
+			}
+		})
+	}
+}
+
+// A comment row that holds a comment ID, in its value or its reason, is not
+// a valid result: the class is no-result and nothing is kept (loop.md, "The
+// comment ID is never in the session's result").
+func TestAResultThatHoldsACommentIDIsNoResult(t *testing.T) {
+	for _, c := range []struct{ name, row string }{
+		{"in the reason", "comment\t1\tresult/plan.md\t" + sum(planText) + "\t6213845433-1"},
+		{"as the value", "comment\t1\t6213845433\t" + sum(planText) + "\t—"},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			w, r, _, base := sessionWorld(t)
+			id, err := r.TaskSession(context.Background(), harness(t, base, planWork("plan.md", planText, c.row)))
+			if err != nil {
+				t.Fatalf("TaskSession: %q, %v", id, err)
+			}
+			if events := show(t, w.bare, "layup-records", "tasks/T-ab12/events.tsv"); !strings.Contains(events, "\tresult\t1\t"+id+"\t—\t—\tno-result\t") {
+				t.Errorf("the events:\n%s", events)
+			}
+			if got := keptFiles(t, w, id); got != "" {
+				t.Errorf("kept %q; want nothing", got)
+			}
+		})
 	}
 }
