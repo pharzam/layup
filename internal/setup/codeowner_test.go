@@ -2,11 +2,15 @@ package setup
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
+
+	"github.com/pharzam/layup/internal/git"
 )
 
 // The code-owner rule of S13 in phase 2 (docs/spec/scaffold.md, The code-owner rule; docs/spec/loop.md, The
@@ -200,5 +204,149 @@ func TestTheStubFormIsTheLiveForm(t *testing.T) {
 	}
 	if _, ok := rulesOf(decode(t, file))[3]["parameters"].(map[string]any)["required_reviewers"]; ok {
 		t.Errorf("the file of S13 holds required_reviewers: the difference that the update must keep has gone")
+	}
+}
+
+// The commit that lands CODEOWNERS on a target set up before the rule (docs/spec/scaffold.md, The tree check; task
+// T-4cep, #384; the Operator's ruling 6217133467). classifyLanding judges the parents and the two listings of whole
+// trees, and gives the first condition that fails, as a whole sentence, or "" for the one commit that is admitted.
+const (
+	lastSetup   = "1111111111111111111111111111111111111111"
+	strayParent = "2222222222222222222222222222222222222222"
+	ownersBlob  = "7efc45d58203810bb12f9115bc722ce5fec65a58" // git hash-object of codeOwnersTwoKinds
+	strayBlob   = "0000000000000000000000000000000000000001"
+)
+
+func entry(mode, typ, object, path string) git.TreeEntry {
+	return git.TreeEntry{Mode: mode, Type: typ, Object: object, Path: path}
+}
+
+// lastTree is the tree of the last setup commit of these cases: files of three depths, none of them CODEOWNERS.
+func lastTree() []git.TreeEntry {
+	return []git.TreeEntry{
+		entry("100644", "blob", "aaaa", ".github/workflows/ci.yml"),
+		entry("100644", "blob", "bbbb", "README.md"),
+		entry("100644", "blob", "cccc", "docs/gates.tsv"),
+	}
+}
+
+// withEntries gives the tree of lastTree with the entries of change applied: a path with a nil entry is removed.
+func withEntries(change map[string]*git.TreeEntry) []git.TreeEntry {
+	var out []git.TreeEntry
+	for _, e := range lastTree() {
+		if c, ok := change[e.Path]; ok {
+			if c == nil {
+				continue
+			}
+			e = *c
+		}
+		out = append(out, e)
+	}
+	for p, c := range change {
+		if c != nil && !slices.ContainsFunc(lastTree(), func(e git.TreeEntry) bool { return e.Path == p }) {
+			out = append(out, *c)
+		}
+	}
+	return out
+}
+
+func ptr(e git.TreeEntry) *git.TreeEntry { return &e }
+
+func TestClassifyLanding(t *testing.T) {
+	good := ptr(entry("100644", "blob", ownersBlob, ".github/CODEOWNERS"))
+	for _, c := range []struct {
+		name    string
+		parents []string
+		last    []git.TreeEntry
+		head    []git.TreeEntry
+		want    string
+	}{
+		{"the one commit that is admitted", []string{lastSetup}, lastTree(), withEntries(map[string]*git.TreeEntry{".github/CODEOWNERS": good}), ""},
+		{"the same, the listing in another order", []string{lastSetup}, lastTree(), slices.Concat([]git.TreeEntry{*good}, lastTree()), ""},
+		{"no parent: a root commit", nil, lastTree(), withEntries(map[string]*git.TreeEntry{".github/CODEOWNERS": good}),
+			"the head has 0 parents, and must have exactly one, the last setup commit " + lastSetup},
+		{"two parents: a merge", []string{lastSetup, strayParent}, lastTree(), withEntries(map[string]*git.TreeEntry{".github/CODEOWNERS": good}),
+			"the head has 2 parents, and must have exactly one, the last setup commit " + lastSetup},
+		{"another parent: a grandchild, an ancestor, an unrelated commit", []string{strayParent}, lastTree(), withEntries(map[string]*git.TreeEntry{".github/CODEOWNERS": good}),
+			"the parent of the head is " + strayParent + ", not the last setup commit " + lastSetup},
+		{"the last commit already has CODEOWNERS", []string{lastSetup},
+			withEntries(map[string]*git.TreeEntry{".github/CODEOWNERS": good}), withEntries(map[string]*git.TreeEntry{".github/CODEOWNERS": good}),
+			"the last setup commit already has .github/CODEOWNERS"},
+		{"nothing added: an empty commit", []string{lastSetup}, lastTree(), lastTree(), "the head adds no .github/CODEOWNERS"},
+		{"another path: CODEOWNERS at the root", []string{lastSetup}, lastTree(), withEntries(map[string]*git.TreeEntry{"CODEOWNERS": ptr(entry("100644", "blob", ownersBlob, "CODEOWNERS"))}),
+			`the tree of the head differs from that of the last setup commit at "CODEOWNERS"`},
+		{"another path: docs/CODEOWNERS", []string{lastSetup}, lastTree(), withEntries(map[string]*git.TreeEntry{"docs/CODEOWNERS": ptr(entry("100644", "blob", ownersBlob, "docs/CODEOWNERS"))}),
+			`the tree of the head differs from that of the last setup commit at "docs/CODEOWNERS"`},
+		{"another path: the name in lower case", []string{lastSetup}, lastTree(), withEntries(map[string]*git.TreeEntry{".github/codeowners": ptr(entry("100644", "blob", ownersBlob, ".github/codeowners"))}),
+			`the tree of the head differs from that of the last setup commit at ".github/codeowners"`},
+		{"a second file added", []string{lastSetup}, lastTree(), withEntries(map[string]*git.TreeEntry{".github/CODEOWNERS": good, "docs/x.md": ptr(entry("100644", "blob", "dddd", "docs/x.md"))}),
+			`the tree of the head differs from that of the last setup commit at "docs/x.md"`},
+		{"a file changed", []string{lastSetup}, lastTree(), withEntries(map[string]*git.TreeEntry{".github/CODEOWNERS": good, "README.md": ptr(entry("100644", "blob", "eeee", "README.md"))}),
+			`the tree of the head differs from that of the last setup commit at "README.md"`},
+		{"a file removed", []string{lastSetup}, lastTree(), withEntries(map[string]*git.TreeEntry{".github/CODEOWNERS": good, "README.md": nil}),
+			`the tree of the head differs from that of the last setup commit at "README.md"`},
+		{"a mode changed elsewhere", []string{lastSetup}, lastTree(), withEntries(map[string]*git.TreeEntry{".github/CODEOWNERS": good, "README.md": ptr(entry("100755", "blob", "bbbb", "README.md"))}),
+			`the tree of the head differs from that of the last setup commit at "README.md"`},
+		{"a symbolic link", []string{lastSetup}, lastTree(), withEntries(map[string]*git.TreeEntry{".github/CODEOWNERS": ptr(entry("120000", "blob", ownersBlob, ".github/CODEOWNERS"))}),
+			"the head adds .github/CODEOWNERS as mode 120000, type blob, not a regular file of mode 100644"},
+		{"a submodule", []string{lastSetup}, lastTree(), withEntries(map[string]*git.TreeEntry{".github/CODEOWNERS": ptr(entry("160000", "commit", ownersBlob, ".github/CODEOWNERS"))}),
+			"the head adds .github/CODEOWNERS as mode 160000, type commit, not a regular file of mode 100644"},
+		{"an executable file", []string{lastSetup}, lastTree(), withEntries(map[string]*git.TreeEntry{".github/CODEOWNERS": ptr(entry("100755", "blob", ownersBlob, ".github/CODEOWNERS"))}),
+			"the head adds .github/CODEOWNERS as mode 100755, type blob, not a regular file of mode 100644"},
+		{"other bytes", []string{lastSetup}, lastTree(), withEntries(map[string]*git.TreeEntry{".github/CODEOWNERS": ptr(entry("100644", "blob", strayBlob, ".github/CODEOWNERS"))}),
+			"the bytes of .github/CODEOWNERS are not those that S13 writes for the login " + owner},
+	} {
+		if got := classifyLanding(c.parents, lastSetup, c.last, c.head, []byte(codeOwnersTwoKinds), owner); got != c.want {
+			t.Errorf("%s:\n got %q\nwant %q", c.name, got, c.want)
+		}
+	}
+}
+
+// CheckCodeOwnerLanding reads the parents of the head, the manifest and the whole tree of the last commit, and the
+// whole tree of the head, and nothing else: no author, committer, message, date, signature or actor is read, so no
+// identity is inferred (condition 3 of the plan review 6217115601). A head whose parent is not the last commit
+// is judged before any tree is read.
+func TestCheckCodeOwnerLandingReadsOnlyTheObjectsOfTheConditions(t *testing.T) {
+	const head = "3333333333333333333333333333333333333333"
+	saved := sys
+	t.Cleanup(func() { sys = saved })
+	var calls []string
+	parents := []string{lastSetup}
+	sys.parents = func(dir, rev string) ([]string, error) { calls = append(calls, "parents "+rev); return parents, nil }
+	sys.lsTree = func(dir, rev, path string) ([]git.TreeEntry, error) {
+		calls = append(calls, "ls-tree "+rev+" "+path)
+		if rev == head {
+			return withEntries(map[string]*git.TreeEntry{".github/CODEOWNERS": ptr(entry("100644", "blob", ownersBlob, ".github/CODEOWNERS"))}), nil
+		}
+		return lastTree(), nil
+	}
+	sys.show = func(dir, rev, path string) ([]byte, error) {
+		calls = append(calls, "show "+rev+" "+path)
+		return []byte(twoKinds), nil
+	}
+	if err := CheckCodeOwnerLanding("d", lastSetup, head, owner); err != nil {
+		t.Errorf("the canonical head: %v; want nil", err)
+	}
+	want := []string{"parents " + head, "show " + lastSetup + " docs/gates.tsv", "ls-tree " + lastSetup + " .", "ls-tree " + head + " ."}
+	if !reflect.DeepEqual(calls, want) {
+		t.Errorf("the reads %q; want %q (the manifest at the last commit, never at the head)", calls, want)
+	}
+	calls, parents = nil, []string{strayParent}
+	err := CheckCodeOwnerLanding("d", lastSetup, head, owner)
+	if wantErr := "the parent of the head is " + strayParent + ", not the last setup commit " + lastSetup; err == nil || err.Error() != wantErr {
+		t.Errorf("a wrong parent: %v; want %q", err, wantErr)
+	}
+	if want := []string{"parents " + head}; !reflect.DeepEqual(calls, want) {
+		t.Errorf("a wrong parent read %q; want %q, no tree", calls, want)
+	}
+	// a login that CODEOWNERS cannot hold is an error that names it, not a pass
+	parents = []string{lastSetup}
+	if err := CheckCodeOwnerLanding("d", lastSetup, head, "a b"); err == nil || !strings.Contains(err.Error(), `the login "a b"`) {
+		t.Errorf("a login with a space: %v; want an error that names it", err)
+	}
+	// a read that fails is an error of the call, never an admission
+	sys.lsTree = func(dir, rev, path string) ([]git.TreeEntry, error) { return nil, errors.New("boom") }
+	if err := CheckCodeOwnerLanding("d", lastSetup, head, owner); err == nil || !strings.Contains(err.Error(), "boom") {
+		t.Errorf("a tree that cannot be read: %v; want an error with the cause", err)
 	}
 }
