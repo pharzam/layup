@@ -495,7 +495,7 @@ brief, never as a status. The LAYUP host needs each stack's toolchain
 head, and each gate job takes the manifest, the `config` paths and `gates.sh` from the
 base (a pull request of a `batch/<point>` branch takes them from its head, with the
 code-owner review below as its control; issue #345); a change to `.github/**`, `docs/gates.tsv`, `docs/gates/**` or a `config` path of the manifest needs the
-Operator's review as code owner (F-22, [`loop.md`](spec/loop.md#the-gate-jobs-read-the-base));
+Operator's review as code owner (F-22, [`loop.md`](spec/loop.md#the-gate-jobs-read-the-base); the setup writes `.github/CODEOWNERS` into the target's tree, [`scaffold.md`](spec/scaffold.md#the-code-owner-rule));
 FT4 then rests on the rulesets and on review, not on LAYUP.
 
 **Activation.** Each rule batch that adds or changes a gate kind carries one new

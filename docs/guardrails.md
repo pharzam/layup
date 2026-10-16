@@ -368,6 +368,12 @@ check that catches it.
   than assigning the cumulative total to the latest part. Top-level `usage`
   is sufficient only after verifying that no child model ran. The plan-plus-build
   counters were mistaken for build-only counts in `T-cak3` (#357).
+  Devin's console can omit usage while --export records ATIF final_metrics.
+  Compare completed exports of a resumed conversation to attribute each part.
+  ATIF total_cached_tokens is a subset of total_prompt_tokens, not an extra
+  input count ([format](https://github.com/harbor-framework/harbor/blob/main/rfcs/0001-trajectory-format.md#metricsschema)).
+  Keep private session exports outside version control and commit only reported
+  metrics, preserving unavailable parts as unavailable. Learned in #359.
 - ❌ **A Go version that CI resolves at its own time.** `go.mod` said `go 1.26`,
   and `actions/setup-go` with `go-version-file: go.mod` installs the newest
   release of that line it knows. The job `security` passed on `main` at
@@ -982,6 +988,24 @@ These traps are not domain-specific: they hurt every project's test suite.
   the case was green before the code. Task `T-hz4m` (#355). **The check:** give the head a clean file and put the
   bad one only where the new code must read it (the base); run the case red against a stub that has the step and
   not the behaviour, and read each failing line, not the exit code.
+- ❌ **A work area built again that cannot reproduce the recorded commits.** S13 gained a file in the tree of the target, so the
+  area of a target recorded before it would have been rebuilt with another head, and `scaffold-push` and `forge-check` fail on the
+  head of `setup/tree.tsv`. It is silent because a new target passes. **The check:** a change to what a setup step puts in the tree is
+  a change to every recorded target; key the step to the record (`codeowners.sha256`), run the real step over a real work area in
+  both modes and compare what its commit changed, and make the state with no way back a `fail` that names the recovery, never a guess
+  (`TestARebuiltAreaReproducesTheRecordedCommits`, `TestSetupAreaChoosesTheMode`). Learned in `T-jew3` (#356).
+- ❌ **A body regenerated from the file, sent over a live ruleset.** The file that S13 wrote is not the ruleset that the forge holds:
+  the live object of the demo of `M2d` has fields the file never had (`required_reviewers`, `do_not_enforce_on_create`, `id`,
+  `source`), and GitHub's page on the update says nothing of an omitted field or of `rules`. A `PUT` of the file would drop whatever
+  the Operator added. **The check:** write the live object back whole with the one parameter changed, refuse unless it is the ruleset
+  the records name, read it back and compare the reduced object byte for byte, and serve the live object of a first-hand record in the
+  test's forge (`runs/T-sdtb/rulesets.txt`; `TestTheUpdateKeepsWhatIsUnknown`). A landing that disables a ruleset puts back the object
+  that the update left, never the one before it, and arms its trap only after the disable succeeded. Learned in `T-jew3` (#356).
+- ❌ **A mutant that does not build counts as caught.** The first mutation helper of `T-jew3` read only the lines `--- FAIL` and a
+  word of `build failed`, and ignored the exit status of `go`: three variants that removed a `%s` and left its argument were refused by
+  `go vet` and were counted as kills, so the count of kills was three too high. **The check:** a variant is valid only if `go build` and `go vet` pass on
+  it, its kill is the named assertion in its own output, each run's exit status and output are kept, and the file's hash before and
+  after proves the restore (`runs/T-jew3/mutants.md`). Learned in `T-jew3` (#356).
 - ❌ **A negative assertion on a records file that the world has already written to.** The test of a post that
   fails asserted that `copies.tsv` held no `copies/` text, and it was false on a correct tree: Start had copied the
   dead-man notice of the control issue (`copies/501-1.md`), so the file always held one. Task `T-q5k4` (#360),

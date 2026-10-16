@@ -162,7 +162,7 @@ other step is as in phase 1. Each row names this section as its decision.
 | S03 | Makes no commit and writes no command: `WORK/target` is a clone of the default branch, whose one commit is the root commit that Start read back; the step checks that its tree equals `pin.tree`. |
 | S04 | As in phase 1, from the pin rows of S02. Its raw fact of the answers holds the `S01-` and `Q-` rows of `answers.tsv` (O-124), each `Q-` row with the `question` of its row of `questions.tsv` as its question text and `S01-stack` with the text of S01 (a `Q-` row that the batch does not hold is a `fail`), so the answers of the batch become the file of the raw fact under the target's `docs/facts/` (`architecture.md` §5, Scaffold 3). Its evidence is that of phase 1, the checks `pin` and `facts`. |
 | S12 | As in phase 1, but the record row `module` has the source and the ref of the row `name` of S01 (`computed`, `records:start/start.tsv`): the answer `S01-name` is not a row of `answers.tsv`, and check `sources` of `layup setup verify` refuses a row that cites it (found by the real runner, task `T-79zk`). |
-| S13 | Writes the two rulesets of [REQ-003](#req-003--the-rulesets-of-scaffold-6) and their commands: `WORK/out/ruleset-default.json` with the four `layup/` checks, `WORK/out/ruleset-records.json`, and the record row `without-layup` ([NFR-002](#nfr-002--a-target-without-layup)). `layup run` gives the `app_id` of the forge register in Go, and a value below 1 (the register can hold 0) is a `fail`, not an input error. Its evidence line is `the ruleset files, and their commands in commands.sh`. |
+| S13 | Writes the two rulesets of [REQ-003](#req-003--the-rulesets-of-scaffold-6) and their commands: `WORK/out/ruleset-default.json` with the four `layup/` checks, `WORK/out/ruleset-records.json`, and the record row `without-layup` ([NFR-002](#nfr-002--a-target-without-layup)). From `M2e` it also writes `.github/CODEOWNERS` into the tree and the record row `codeowners.sha256`, or, for a target set up before that rule, the files of [its migration](#the-code-owner-rule-of-a-target-that-m2d-set-up) ([The code-owner rule](#the-code-owner-rule)). `layup run` gives the `app_id` of the forge register in Go, and a value below 1 (the register can hold 0) is a `fail`, not an input error; it gives the Operator's login and the migration the same way, and S13 is a `fail` for a login that is not a GitHub login or a `config` path that `CODEOWNERS` cannot hold. Its evidence line is `the ruleset files, and their commands in commands.sh`. |
 | S15 | Writes the record's last rows and the rule-path register, and makes no commit of `layup-records`: `layup run` commits the records ([The step verify and the records of the setup](#the-step-verify-and-the-records-of-the-setup)). |
 
 The actor of S02, S03 and S15 in the step table `setup-steps` is `layup-run`,
@@ -449,12 +449,12 @@ omits at its default ([The read-back](#the-read-back)).
 | `pull_request` | those of phase 1 (no required review, thread resolution required), with `allowed_merge_methods` `["merge"]` (F-19: the target's rules forbid a squash and a rebase) and `require_extra_approval_for_unattributed_changes` `false` (F-19: no rule of the target asks for it, and the pilot saw that it did not block a pull request) |
 | `required_status_checks` | `strict_required_status_checks_policy` `true`; one check per gate job, its `integration_id` that of GitHub Actions, 15368, as in phase 1 (V-21 of `docs/setup/record-T-n1hp.md`); and `layup/gates`, `layup/spec`, `layup/verify` and `layup/rules`, each with `integration_id` the `app_id` of the forge register (§6: each `layup/` check pinned to the App) |
 
-**From `M2e`** ([`loop.md`](loop.md#the-gate-jobs-read-the-base), F-22): the rule
+**From `M2e`** ([`loop.md`](loop.md#the-gate-jobs-read-the-base), F-22): in phase 2 the rule
 `pull_request` also sets `require_code_owner_review` `true` with
 `required_approving_review_count` `0`, so that a change to `.github/**`,
-`docs/gates.tsv`, `docs/gates/**` or a `config` path of the manifest waits for the Operator as code owner; the build
-task of `M2e` writes it, and its effect with no required approval is to confirm on
-a real repository.
+`docs/gates.tsv`, `docs/gates/**` or a `config` path of the manifest waits for the Operator as code owner (task `T-jew3`,
+[the code-owner rule](#the-code-owner-rule)); phase 1 and its file do not change. Its effect with no required approval is still to
+confirm on a real repository, in the demo of row 68b.
 
 **Decided here:** `creation` and the two parameters of `pull_request` are
 written in phase 1 too, as `WORK/out/ruleset-default.json` is a file of the
@@ -478,6 +478,86 @@ is written `false` (no fork pulls into the branch), so the read-back compares it
 GitHub returns it (the rule comes back without it when it is `false`: [The read-back](#the-read-back));
 `deletion` and `non_fast_forward` have none. The setup record has no hash row for
 this file: it is a function of the App's ID, which the forge register holds.
+
+### The code-owner rule
+
+`REQ-003` and `REQ-007` (`F-0003#43`, `F-0003#47`; task `T-jew3`, #356; [`loop.md`](loop.md#the-gate-jobs-read-the-base), part 2).
+**Decided by the Operator** (comment 6209820437 of #356, which closed the open gap "where CODEOWNERS is written and how its ruleset is
+applied"): setup writes `.github/CODEOWNERS` for the four path classes with the Operator's account, generates the ruleset files and the
+commands for the Operator to review and run, and writes nothing to a target by itself. **Decided here** (the plan of #356 and its review,
+comments 6210782039 and 6214007155):
+
+- **Where.** S13 of phase 2 writes `.github/CODEOWNERS` into the **tree** of the target, in the commit of S13 with
+  `docs/setup/branch-protection.json`, and the record row `codeowners.sha256` (`computed`, ref `sha256 .github/CODEOWNERS`) follows
+  `ruleset.sha256`. The one push of `layup-setup` (a fast-forward, `commands.sh`) puts the file on the base before the ruleset is
+  applied. Phase 1 does not change. Rejected: a file in `out/` for the Operator to place (after the first push every commit on the base
+  is one that the tree check refuses, below), the repository's owner as the owner, and a new flag.
+- **The text.** A comment line, then one root-anchored line `<pattern> @<login>` for `/.github/`, `/docs/gates.tsv` and `/docs/gates/`,
+  then one for each `config` path of the manifest at the head that no earlier line covers: a line covers a path that equals it or lies
+  below it at a `/` (`docs/gatesx/a` is not below `/docs/gates/`), and a duplicate has no line; the order is the manifest's. A path
+  outside `[A-Za-z0-9._/-]`, with an empty, `.` or `..` segment, or that ends in a `/`, is a `fail` of S13 that names it; it is never
+  quoted.
+- **The owner.** The login of the Operator's row of `approvers.tsv` (`internal/run` gives it as `Phase2.CodeOwner`); no such row is an
+  error of the step, never an empty owner, and the repository's owner is never read. A login is letters, digits and single hyphens, not at
+  an end, at most 39 characters (the bound of an owner of a repository), else S13 is a `fail`.
+- **The rule.** The rule `pull_request` of the default branch's ruleset sets `require_code_owner_review` `true` with
+  `required_approving_review_count` `0` in phase 2, so that it binds a pull request that touches a path of `CODEOWNERS` and no other.
+  **Not shown by the tests:** whether GitHub binds the rule at a count of 0 (`loop.md`); the demo of row 68b shows it, and this row claims
+  nothing of it. The read-back of the forge check compares the parameter like any other.
+
+### The code-owner rule of a target that M2d set up
+
+A target that `M2d` set up has its setup commits in `setup/tree.tsv`, and a work area that is built again must reproduce them
+([The work area](#the-work-area)); its ruleset is the one that the Operator applied, and it is updated by its recorded ID, never created
+again. So the work area of such a target is built in a mode of its own, and **nothing is applied by LAYUP**.
+
+| `setup/record.tsv` | row `S13 codeowners.sha256` | `setup/rulesets.txt` | The work area |
+| ------------------ | --------------------------- | -------------------- | ------------- |
+| absent | none | none | a new target: `CODEOWNERS` in the tree |
+| present | present | any | a new target built again: the same commits |
+| present | absent | `default.json` gives a positive integer `id` | the mode of a target set up before the rule, with that ID |
+| present | absent | absent | `fail`: the rulesets were never applied, and the area cannot be built again; the detail names `DIR/work/OWNER/NAME`, the command `layup run OWNER/NAME --host DIR` on a copy of that directory, and the start of a new target |
+| present | absent | present, not the record of the two applies, not an object, with no `id`, or an `id` that is not positive | `fail` that names the reason and the same recovery; no ID is guessed and nothing is applied or created |
+
+The `fail` writes nothing: the reads come before the work area is touched. **A limit, said plainly:** the state of the fourth row is
+reachable only for a target recorded before this rule whose host copy of the work area is lost and whose rulesets the Operator never
+applied; the setup commits recorded then hold no `CODEOWNERS`, so no area built now can reproduce them.
+
+In the mode of a target set up before the rule, S13 writes into the **tree** the files of `M2d` alone (the same commits), and into `out/`:
+`ruleset-default.json` (the new body), `CODEOWNERS` (the bytes of the file, for the landing) and `land-code-owner.sh`; `commands.sh` holds the
+update below and nothing else (no push, no `POST`). The Operator removes the work area `DIR/work/OWNER/NAME` and restarts `layup run`; the
+step `forge-check` builds the area again in this mode and prints, once, the path of `out/commands.sh` and the state of the landing script
+(`forge-check` prints no commands, so the build of the area is where the Operator is given the path); until the update is applied, the row
+`rules:<default branch>` reads `fail` (the file requires the code owner and the live ruleset does not), and the read-back after the update
+is the proof that it took. **A limit:** an area that is not built again keeps the file of `M2d` and passes as before, so that target stays
+without the rule, unreported, until its area is built again.
+
+**The update** (`commands.sh`, each output through a temporary file that `mv` renames when the command succeeds, each done only when its
+output file in `DIR/applies/OWNER/NAME/` is missing; the order-2 command is a guard and pushes nothing): the head of the default branch on
+the forge is the head of `layup-setup`, else exit 1; the live ruleset `GET /repos/OWNER/NAME/rulesets/ID` is kept as `default.before.json`;
+the body `default.body.json` is the live ruleset reduced to the fields of a write (`name`, `target`, `enforcement`, `conditions`, `rules`,
+`bypass_actors`) with `require_code_owner_review` `true` in its one `pull_request` rule, by `gh api --jq`, which refuses (an error of the
+filter, exit 1) unless the live ruleset has that `id`, the name `layup: the default branch`, the source `OWNER/NAME`, the enforcement
+`active` and exactly one `pull_request` rule; `PUT` of that body is `default.update.json`; the live ruleset read again and reduced the same
+way must equal the body byte for byte, else exit 1, and is `default.after.json`. **Why the whole object:** a rule, a parameter, a
+condition or a bypass actor that the file of S13 never held (the live object of the demo of `M2d` has `required_reviewers` and
+`do_not_enforce_on_create`, which the file lacks, `runs/T-sdtb/rulesets.txt`) is copied as read, so none is dropped whatever the forge does
+with an omitted field, which its documentation does not say. Rejected: the file `ruleset-default.json` as the body (it overwrites what is
+unknown), a partial `PUT`, a `POST` (a second ruleset), and a program of LAYUP (the App cannot read the bypass list, L-A4, so only the
+Operator's login can read what must be kept).
+
+**The landing** of `CODEOWNERS` on the base of such a target is prepared in `out/land-code-owner.sh` and **cannot run**: its first command
+refuses and names the open question. The tree check above accepts no head but the last commit of `setup/tree.tsv`, and the landing is
+a commit on top of it, so the next `forge-check` would stop on the row `tree` (Q1 of #356, tracked as the child issue #384; a rule batch of `M2f` must settle the tree check
+for its own commits too). The body, which a review reads, starts from the `AFTER` object (`default.after.json`, the updated protection)
+and refuses unless it requires the code owner, the head is the head of `layup-setup` and the live ruleset equals it; makes one commit on the
+head that adds `.github/CODEOWNERS` before the ruleset is touched; disables the ruleset (a `PUT` of the `AFTER` object with the enforcement
+`disabled`); arms an `EXIT` trap **only after that `PUT` succeeded**; pushes the commit as a fast-forward of the default branch; and the trap
+puts back the **`AFTER` object, never the object before the update**, and reads it back. A restore that fails exits 1 and says, with the
+repository and the ID, that enforcement may be off. The default branch is unprotected between the two writes, by the Operator's hand, so a
+review round reads the script before it is applied. Tests: `TestTheUpdateKeepsWhatIsUnknown`, `TestTheUpdateRefusals`,
+`TestTheLandingScript`, `TestARebuiltAreaReproducesTheRecordedCommits` (real `sh`, `git` and `gh` against an `httptest` TLS server that
+serves the live object of the demo of `M2d`; they need `gh` on `PATH` and fail, never skip, without it).
 
 ### The commands for the Operator
 
@@ -566,7 +646,8 @@ row; the table is committed in both cases.
 `tree`: the head of the default branch on the forge (`Repository`, which gains
 the head of each branch in `M2d`, [`forge.md`](forge.md#the-calls-of-m2d)) equals, by SHA, the last commit of `setup/tree.tsv`. The push is a
 fast-forward of the verified commits, so their SHA, not only their tree, is
-on the forge. Any other head is `fail`, naming the head.
+on the forge. Any other head is `fail`, naming the head. (The commit that lands `CODEOWNERS` on the base of a target
+set up before the code-owner rule is such a head: [its landing script](#the-code-owner-rule-of-a-target-that-m2d-set-up) cannot run until the check admits it.)
 
 ### The read-back
 
@@ -846,6 +927,7 @@ change, as `M2c` did.
 | A private repository on GitHub Free (no enforced rulesets) | the read-back finds no rule: `forge-check` is `fail` (K15; the plan check of Start refuses it before) |
 | A restart while `scaffold-push` waits | it runs the steps again from the records: `setup` and `verify` are "done before", and `scaffold-push` reads the forge again |
 | A work area that is missing when `scaffold-push` runs | it is built again from the records; a head of `layup-setup` other than the last commit of `setup/tree.tsv` is `fail` |
+| A work area that is missing for a target recorded before the code-owner rule, whose rulesets were never applied or whose `setup/rulesets.txt` gives no positive `id` | `fail` with the recovery of [the table](#the-code-owner-rule-of-a-target-that-m2d-set-up); nothing is written, applied or created |
 
 ## REQ-015 and REQ-017 — The review of the release of M2d
 
