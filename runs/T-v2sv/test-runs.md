@@ -53,7 +53,7 @@ tests.
 | M10 | the error of `retrospectiveFiles` dropped (`_ =`) | `TestATableThatReadRefusesStopsTheStep`, `TestAnEmptyOrDashedMilestoneIsRefusedAndNothingCommits`, `TestADashInTimeIsRefusedByTheOwner` | FAIL |
 | M11 | the owner check reads `r[0]` instead of `r[1]` | `TestADashInTimeIsRefusedByTheOwner` | FAIL |
 
-`2026-10-16T11:48:52Z`–`11:51:4_Z`. A `Truncate`-only mutation is not listed:
+`2026-10-16T11:48:52Z`–`11:51:43Z`. A `Truncate`-only mutation is not listed:
 `stamp` formats UTC second precision, so it cannot change the written bytes —
 it is recorded as unobservable, not as caught.
 
@@ -68,3 +68,20 @@ docs/setup/setup-check.sh`: OK (after `git add` of the new files); `git diff
 Not run here, by instruction: `go test -tags=integration ./...` — the full
 integration level runs once before the freeze, serialized by the integration
 coordinator after the Go head is stable.
+
+## Coordinator integration and reported resources
+
+Full integration at Go head2566c759ea5fa5dfae9af75d1912c77d4d28969d:
+go test -count=1 -tags=integration -timeout 25m ./...
+Wrapper start2026-10-16T11:59:07.405138Z/end12:12:47.517735Z; direct exit0, all21packagesok.
+Audit: /home/layup/.cache/layup-session/audits/issue359/integration-result.json.
+No Go source changes after that head; subsequent changes record evidence and the export lesson only.
+
+The mutation end-time typo11:51:4_Z is corrected to11:51:43Z from the actual tool observation in ATIF step70, not inferred from a model estimate.
+Devin export reports plan cumulative prompt2,093,066/completion35,128/cached1,901,893 over26steps.
+Build increment between completed exports: prompt8,841,569/completion60,825/cached8,669,336 over60steps.
+Combined reported conversation: prompt10,934,635/completion95,953/cached10,571,229 over86steps; cached is a subset of prompt, not added again.
+All recorded per-step models are swe-2-max. Cost, separate cache creation and complete interrupted-request usage are not reported.
+The first planning invocation ended exit124; the subsequent plan/build invocations resume that same conversation.
+Private full session exports remain outside the repository; the committed record includes resource metadata only.
+Source: /tmp/layup-m2e-resume/issue359-reported-resource-metrics.json, actual completed CLI ATIF-v1.7 exports.
