@@ -1,7 +1,7 @@
 # T-jew3: the mutation audit
 
-Each variant changes `internal/setup/codeowner.go` or `internal/run/codeowner.go` alone, runs the tests, and is restored. A variant counts only if
-`go build` and `go vet` pass on it and its kill is a named assertion in its own output.
+Each variant changes one source file, runs the tests, and is restored. First-pass validity is evidenced by named assertion failures after Go compiled the tested packages;
+separate `go build` and `go vet` exit statuses were not captured for that pass. The second pass records those exits directly. Build-broken variants are never credited.
 
 ## First pass (helper `/tmp/mut/mutants.py`, 2026-10-16T11:20:19Z to 11:25:06Z): 22 variants, 19 valid, 3 invalid
 
@@ -50,4 +50,4 @@ Hash of `internal/setup/codeowner.go` before and after all four: `71fb9f6d5a70e7
 **Control** (the restored file): `go build ./...` 0, `go vet ./internal/setup` 0, `go test ./internal/setup` 0, the three integration tests 0 (18 s).
 
 **Count:** 22 variants of the first pass, of which 19 valid and killed and 3 invalid (not credited); 4 variants of the second pass, valid and killed, of which 3 stand for the invalid
-three. So 22 valid variants are killed in all (19 + 3), plus one added; the first pass alone does not give 22.
+three. So 23 distinct valid variants are killed in all (19 + 3 re-expressed + 1 added), including the explicitly weak first-pass `$before` variant; the first pass alone does not give 22.
