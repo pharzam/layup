@@ -168,37 +168,54 @@ func approverRows(ctx context.Context, idOf func(context.Context, string) (int64
 }
 
 // approverFor gives the approvers.tsv row whose account may answer the
-// approval point (the answer #366's caller computes): the row of the login the
-// point's last counted line names, whatever its role — the naming comment is
-// enough for an account that already has a row, and a login is one account
-// whatever its spelling's case — and the idea owner's row when the point names
-// no account that holds one. nil when approvers holds no idea owner.
-func approverFor(point string, bound map[string]string, approvers [][]string) []string {
+// approval point (the answer #366's caller computes): the row of the account
+// the point's last counted line names, whatever its role and whatever spelling
+// the line used — the forge resolves the login to the account's numeric ID,
+// which is the row's key, as a login is never one — and the idea owner's row
+// when the point names no account that holds one (a name the forge answers
+// 404 is no account, so the line was input only). A lookup that fails for any
+// other reason is the call's error and chooses nothing: the idea owner's row
+// is never the answer to a resolution that did not run. nil when approvers
+// holds no idea owner.
+func approverFor(ctx context.Context, idOf func(context.Context, string) (int64, error), point string, bound map[string]string, approvers [][]string) ([]string, error) {
 	if login, ok := bound[point]; ok {
-		for _, a := range approvers {
-			if strings.EqualFold(a[2], login) {
-				return a
+		id, err := idOf(ctx, login)
+		if err != nil {
+			var fe *forge.Error
+			if !errors.As(err, &fe) || fe.Status != 404 {
+				return nil, err
+			}
+		} else {
+			key := strconv.FormatInt(id, 10)
+			for _, a := range approvers {
+				if a[0] == key {
+					return a, nil
+				}
 			}
 		}
 	}
 	for _, a := range approvers {
 		if a[1] == "idea-owner" {
-			return a
+			return a, nil
 		}
 	}
-	return nil
+	return nil, nil
 }
 
 // pointsServed gives the planned points the row serves, in the order of the
-// set: each whose binding resolves to it.
-func pointsServed(row []string, bound map[string]string, approvers [][]string) []string {
+// set: each whose binding resolves to it; approverFor's error is the call's.
+func pointsServed(ctx context.Context, idOf func(context.Context, string) (int64, error), row []string, bound map[string]string, approvers [][]string) ([]string, error) {
 	var out []string
 	for _, p := range approvalPoints {
-		if a := approverFor(p, bound, approvers); a != nil && a[0] == row[0] {
+		a, err := approverFor(ctx, idOf, p, bound, approvers)
+		if err != nil {
+			return nil, err
+		}
+		if a != nil && a[0] == row[0] {
 			out = append(out, p)
 		}
 	}
-	return out
+	return out, nil
 }
 
 // criteriaOf gives the criteria of the intent answer's answer: split on ";",

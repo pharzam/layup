@@ -214,34 +214,92 @@ func TestAnAccountARowAlreadyServesIsNamedByAnotherSpelling(t *testing.T) {
 	if len(rows) != 1 || strings.Join(rows[0], " ") != strings.Join(want, " ") {
 		t.Errorf("the new rows %v; want %v — PHARZAM resolves to the Operator's recorded ID 101, and DAVE to dave's ID 707, so one row of 707", rows, want)
 	}
-	got := approverFor("activation", bound, answersApprovers)
-	if got == nil || got[0] != "101" || got[1] != "operator" {
-		t.Errorf("the approver of activation %v; want the Operator's row 101, the account PHARZAM resolves to — not the idea owner's row 303 of the fallback", got)
+	got, err := approverFor(ctx, ids, "activation", bound, answersApprovers)
+	if err != nil || got == nil || got[0] != "101" || got[1] != "operator" {
+		t.Errorf("the approver of activation %v, %v; want the Operator's row 101, the account PHARZAM resolves to — not the idea owner's row 303 of the fallback", got, err)
 	}
-	if served := pointsServed(answersApprovers[1], bound, answersApprovers); !slices.Contains(served, "activation") {
-		t.Errorf("the points the Operator's row serves %v; want activation among them", served)
+	served, err := pointsServed(ctx, ids, answersApprovers[1], bound, answersApprovers)
+	if err != nil || !slices.Contains(served, "activation") {
+		t.Errorf("the points the Operator's row serves %v, %v; want activation among them", served, err)
+	}
+}
+
+// A point's approver is the account its counted line resolves to, not the
+// login's spelling: bet names a login that is no case-fold of the stored one
+// yet resolves to the Operator's recorded ID, so its row is the Operator's,
+// never the idea owner's of the fallback; a name the forge answers 404 names
+// no account and falls back as before, and a lookup that is no 404 is the
+// call's error, never a silent choice of another account (the second finding
+// of C4, the audit of #365, task T-8rm6).
+func TestThePointIsServedByTheResolvedAccount(t *testing.T) {
+	ctx := context.Background()
+	bound := map[string]string{"bet": "operator-today", "audit": "carol-renamed", "setup": "no-such-login"}
+	ids := func(_ context.Context, login string) (int64, error) {
+		switch login {
+		case "operator-today":
+			return 101, nil // the Operator's account under a name the row never spelled
+		case "carol-renamed":
+			return 303, nil // the idea owner's account, likewise renamed
+		}
+		return 0, &forge.Error{Call: "UserID", Status: 404, Message: "Not Found"}
+	}
+	got, err := approverFor(ctx, ids, "bet", bound, answersApprovers)
+	if err != nil || got == nil || got[0] != "101" || got[1] != "operator" {
+		t.Errorf("the approver of bet %v, %v; want the Operator's row 101, the account operator-today resolves to — not the idea owner's row 303", got, err)
+	}
+	got, err = approverFor(ctx, ids, "audit", bound, answersApprovers)
+	if err != nil || got == nil || got[0] != "303" || got[1] != "idea-owner" {
+		t.Errorf("the approver of audit %v, %v; want the idea owner's row 303, the account carol-renamed resolves to", got, err)
+	}
+	got, err = approverFor(ctx, ids, "setup", bound, answersApprovers)
+	if err != nil || got == nil || got[0] != "303" {
+		t.Errorf("the approver of setup %v, %v; want the idea owner's row 303 — a name the forge answers 404 is no account and binds nothing", got, err)
+	}
+	served, err := pointsServed(ctx, ids, answersApprovers[1], bound, answersApprovers)
+	if err != nil || !slices.Contains(served, "bet") {
+		t.Errorf("the points the Operator's row serves %v, %v; want bet among them", served, err)
+	}
+	down := func(_ context.Context, _ string) (int64, error) {
+		return 0, &forge.Error{Call: "UserID", Status: 503, Message: "Service Unavailable"}
+	}
+	if got, err = approverFor(ctx, down, "bet", bound, answersApprovers); err == nil || got != nil {
+		t.Errorf("a lookup that is no 404: row %v, error %v; want the error and no row — never the idea owner of a guess", got, err)
+	}
+	if _, err = pointsServed(ctx, down, answersApprovers[1], bound, answersApprovers); err == nil {
+		t.Errorf("pointsServed over a lookup that is no 404: %v; want the error", err)
 	}
 }
 
 // The account that may answer a point, and the set of points a row serves (the
-// answer #366's caller computes): the row of the login the point's last
-// counted line names, whatever its role — the naming comment is enough for an
-// account that already has a row — and the idea owner's row for a point that
-// names none; a login named but holding no row binds nothing (its line was
-// input only, and the point falls back to the idea owner).
+// answer #366's caller computes): the row of the account the point's last
+// counted line resolves to, whatever its role — the naming comment is enough
+// for an account that already has a row — and the idea owner's row for a point
+// that names none; a login named but holding no row binds nothing (its line
+// was input only, and the point falls back to the idea owner).
 func TestTheApproverOfEachPoint(t *testing.T) {
 	rows := append(slices.Clone(answersApprovers), []string{"404", "approver", "alice", "2026-10-11T10:05:00Z", "701"})
 	bound := map[string]string{"setup": "pharzam", "bet": "alice", "audit": "alice", "activation": "mallory"}
+	ids := func(_ context.Context, login string) (int64, error) {
+		switch login {
+		case "pharzam":
+			return 101, nil
+		case "alice":
+			return 404, nil
+		case "mallory":
+			return 999, nil // an account, but no row of it
+		}
+		return 0, &forge.Error{Call: "UserID", Status: 404, Message: "Not Found"}
+	}
 	for _, c := range []struct{ point, wantRole, wantLogin string }{
 		{"bet", "approver", "alice"},             // a named login with its new row
 		{"audit", "approver", "alice"},           // one login may serve two points
 		{"setup", "operator", "pharzam"},         // bound to the Operator's row by the copy
 		{"retrospective", "idea-owner", "carol"}, // no line names it: the idea owner's
-		{"activation", "idea-owner", "carol"},    // named a login with no row: none
+		{"activation", "idea-owner", "carol"},    // named an account with no row: none
 	} {
-		got := approverFor(c.point, bound, rows)
-		if got == nil || got[1] != c.wantRole || got[2] != c.wantLogin {
-			t.Errorf("the approver of %s: %v; want the %s row of %s", c.point, got, c.wantRole, c.wantLogin)
+		got, err := approverFor(context.Background(), ids, c.point, bound, rows)
+		if err != nil || got == nil || got[1] != c.wantRole || got[2] != c.wantLogin {
+			t.Errorf("the approver of %s: %v, %v; want the %s row of %s", c.point, got, err, c.wantRole, c.wantLogin)
 		}
 	}
 	for _, c := range []struct {
@@ -252,9 +310,9 @@ func TestTheApproverOfEachPoint(t *testing.T) {
 		{1, "setup"},     // the Operator's row serves setup
 		{2, "bet audit"}, // alice's row serves both it names
 	} {
-		got := pointsServed(rows[c.row], bound, rows)
-		if strings.Join(got, " ") != c.want {
-			t.Errorf("the points of row %v: %v; want %q", rows[c.row], got, c.want)
+		got, err := pointsServed(context.Background(), ids, rows[c.row], bound, rows)
+		if err != nil || strings.Join(got, " ") != c.want {
+			t.Errorf("the points of row %v: %v, %v; want %q", rows[c.row], got, err, c.want)
 		}
 	}
 }
