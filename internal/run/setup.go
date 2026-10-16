@@ -413,12 +413,21 @@ func (r *state) setupArea(ctx context.Context) (string, setupLoop, error) {
 		return "", setupLoop{}, err
 	}
 	dir := filepath.Join(host, "work", r.cfg.Owner, r.cfg.Name)
+	owner, migrate, err := r.codeOwnerInputs(ctx, dir)
+	if err != nil {
+		return "", setupLoop{}, err
+	}
 	if err := buildWorkArea(dir, src, r.target, r.defaultBranch, r.url()); err != nil {
 		return "", setupLoop{}, err
 	}
+	if migrate != nil && r.cfg.Progress != nil {
+		for _, note := range migrateNotes(dir) {
+			r.cfg.Progress(note)
+		}
+	}
 	p := setup.Phase2{Name: r.cfg.Owner + "/" + r.cfg.Name, Visibility: r.value("forge.visibility"), PinSource: r.value("pin.source"),
 		PinCommit: r.value("pin.commit"), PinTree: r.value("pin.tree"), PinTime: r.value("pin.time"), BriefSum: r.value("psb.sha256"),
-		AppID: r.cfg.Register.AppID, Host: host, DefaultBranch: r.defaultBranch, Questions: asked}
+		AppID: r.cfg.Register.AppID, Host: host, DefaultBranch: r.defaultBranch, CodeOwner: owner, Migrate: migrate, Questions: asked}
 	l := setupLoop{max: 12, run: setupRunner(dir, p, r.cfg.Progress),
 		markers: func(id string) ([]string, bool) { row, ok := markers[id]; return row, ok },
 		answer:  func(rows [][]string) error { return appendAnswers(dir, rows) },
@@ -427,4 +436,23 @@ func (r *state) setupArea(ctx context.Context) (string, setupLoop, error) {
 		},
 		remove: r.removeProse}
 	return dir, l, nil
+}
+
+// codeOwnerInputs reads what S13 needs for the code-owner rule, before the work area is touched: the Operator's login from
+// approvers.tsv, and, from the two records of the setup, whether the target was set up before the rule (codeOwnerMode).
+func (r *state) codeOwnerInputs(ctx context.Context, area string) (string, *setup.Migration, error) {
+	login, err := operatorLogin(r.approvers)
+	if err != nil {
+		return "", nil, err
+	}
+	record, err := r.store.ReadFile(ctx, "setup/record.tsv")
+	if err != nil {
+		return "", nil, err
+	}
+	rulesets, err := r.store.ReadFile(ctx, "setup/rulesets.txt")
+	if err != nil {
+		return "", nil, err
+	}
+	migrate, err := codeOwnerMode(r.cfg.Owner+"/"+r.cfg.Name, area, record, rulesets)
+	return login, migrate, err
 }
