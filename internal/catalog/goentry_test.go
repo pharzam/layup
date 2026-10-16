@@ -143,11 +143,34 @@ func TestTheWorkflowOfTheGoEntry(t *testing.T) {
 	if !slices.Equal(ids, names) {
 		t.Errorf("the jobs %q; want one per kind, in its order: %q", ids, names)
 	}
+	// Each job takes the gate files from the base before it runs them (F-22, loop.md,
+	// "The gate jobs read the base"): a step that runs the base's own script in its
+	// mode --overlay, in this form, once, before the run line of the job.
+	const overlay = "      - run: |\n" +
+		"          set -eu\n" +
+		"          git show \"$GATE_BASE:.github/gates.sh\" > \"$RUNNER_TEMP/gates-base.sh\"\n" +
+		"          sh \"$RUNNER_TEMP/gates-base.sh\" --overlay\n" +
+		"        env:\n" +
+		"          GATE_BASE: ${{ github.event.pull_request.base.sha }}\n" +
+		"          GATE_HEAD_REF: ${{ github.event.pull_request.head.ref }}\n"
+	starts := regexp.MustCompile(`(?m)^  ([a-z][a-z-]*):$`).FindAllStringSubmatchIndex(jobs, -1)
+	for i, m := range starts {
+		end := len(jobs)
+		if i+1 < len(starts) {
+			end = starts[i+1][0]
+		}
+		section, name := jobs[m[0]:end], jobs[m[2]:m[3]]
+		o, r := strings.Index(section, overlay), strings.Index(section, "      - run: sh .github/gates.sh "+name+"\n")
+		if strings.Count(section, overlay) != 1 || o < 0 || r < 0 || o > r {
+			t.Errorf("the job of the kind %s: the overlay step at %d (%d times), the run line at %d; want the step once, before the run line", name, o, strings.Count(section, overlay), r)
+		}
+	}
 	for want, n := range map[string]int{
 		"          ref: ${{ github.event.pull_request.head.sha }}\n":                        len(kinds),
 		"          fetch-depth: 0\n":                                                        len(kinds),
 		"          go-version-file: go.mod\n":                                               len(kinds),
-		"          GATE_BASE: ${{ github.event.pull_request.base.sha }}\n":                  len(kinds),
+		"          GATE_BASE: ${{ github.event.pull_request.base.sha }}\n":                  2 * len(kinds),
+		"          GATE_HEAD_REF: ${{ github.event.pull_request.head.ref }}\n":              len(kinds),
 		"          GATE_HEAD: ${{ github.event.pull_request.head.sha }}\n":                  len(kinds),
 		"      - uses: actions/checkout@v4 # https://github.com/actions/checkout/tree/v4\n": len(kinds),
 		"      - uses: actions/setup-go@v5 # https://github.com/actions/setup-go/tree/v5\n": len(kinds),

@@ -1571,10 +1571,15 @@ such as ISO-01 is a scenario of the [research review](../runs/T-hbw8/slice-revie
   until then it runs the tests and checks no floor, and the setup record lists
   the floor as an open gap.
 - **L-B3. Gates with LAYUP absent.** Once the `layup/` checks are removed, the
-  target's own CI runs the workflow and `docs/gates.tsv` of each pull request's
-  head, so a pull request can weaken a gate that it is checked by; review is then
-  the only guard (FT4). An organisation ruleset that requires a workflow from a
-  protected repository would close this, and needs an organisation.
+  target's own CI runs the workflow of each pull request's head, and each gate job
+  takes `docs/gates.tsv`, the `config` paths and `gates.sh` from the pull request's
+  base (F-22, [`loop.md`](spec/loop.md#the-gate-jobs-read-the-base)), so a pull
+  request cannot weaken a gate by editing those files. Two guards remain with
+  review (FT4): the workflow file itself, which a `pull_request` takes from the
+  head and which the code-owner review covers, and a pull request of a
+  `batch/<point>` branch (one segment after `batch/`, any repository), whose gate
+  files come from its head (issue #345). An organisation ruleset that requires a
+  workflow from a protected repository would close this, and needs an organisation.
 - **L-C1. A fact classed wrongly.** The numbering session can class a need as
   context. The completeness review on another harness and the idea owner's
   confirmation at each bet, which shows every fact with its class and text and
