@@ -377,8 +377,10 @@ the `mergeable_state` of a draft is `draft`, never `clean`): checks `read` **ame
 ADR-0014 decision 3**, asked in #336 (`gov-operator-setup-o112`: the Operator's step,
 asked in the demo row of the slicing task, as the first demo of `M2d` asked its
 own) ([`forge.md`](forge.md#the-calls-of-m2e)). The step
-`forge` of `layup run` reads the granted permissions, and a missing one is `fail`,
-naming it, as it is for the `M2a` permissions.
+`forge` of `layup run` reads the granted permissions: Start and the restart before the
+loop record them, as for any later milestone's, and the loop's first run (row 66a of
+the plan) calls `forge.CheckLoopPermissions` before its first write, so a missing one
+is then `fail`, naming it, as it is for the `M2a` permissions (`forge.md`).
 
 ### layup/gates
 
