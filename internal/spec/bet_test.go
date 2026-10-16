@@ -169,6 +169,17 @@ func TestTheAppetiteAgainstTheBand(t *testing.T) {
 			t.Errorf("%s: findings %v, refused %v", c.name, f, c.refused)
 		}
 	}
+	// Each amount is explicit decimal — the form of the fixed appetite line:
+	// no fraction, hexadecimal, exponent, sign or thousand mark passes.
+	for _, s := range []string{"1/2", "0x10", "1e2", "+5", "1_0", "-5"} {
+		if f := CheckAppetite(nil, Cap{s, "1"}, "100.0", "40.0", "0"); !hasFinding(f, "amount", "no usable amount") {
+			t.Errorf("the amount %q: findings %v", s, f)
+		}
+	}
+	// A leading zero is the fixed line's own form and stays accepted.
+	if f := CheckAppetite(nil, Cap{"010", "1"}, "100.0", "40.0", "0"); len(f) != 0 {
+		t.Errorf("the amount 010: findings %v", f)
+	}
 }
 
 func hasFinding(fs []Finding, rule, detail string) bool {
@@ -277,5 +288,15 @@ func TestTheOptionLinesAndTheVerdict(t *testing.T) {
 	// A no-bet asks no option of a decision of two survivors either.
 	if _, f = answered(t, "REQ-001: Could, phase 1\nNFR-001: Won't, phase —\nno bet", wantIDs, wantPhases, nil, wantSurviv); len(f) != 0 {
 		t.Errorf("no bet with survivors: findings %v", f)
+	}
+	// An option line is asked of a decision with more than one survivor alone:
+	// one survivor or none needs none.
+	for _, s := range []map[string][]string{
+		{"stack": {"go"}},
+		{"stack": {}},
+	} {
+		if _, f := answered(t, strings.Replace(goodAnswer, "option stack: go\n", "", 1), wantIDs, wantPhases, wantFacts, s); len(f) != 0 {
+			t.Errorf("a decision with %d survivors asks no option: findings %v", len(s["stack"]), f)
+		}
 	}
 }

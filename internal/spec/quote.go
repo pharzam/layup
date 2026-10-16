@@ -89,6 +89,8 @@ func CheckQuoteFacts(revised, questions, answers, spans [][]string, psb []byte) 
 		covers := map[string]bool{}
 		for _, t := range strings.Fields(r[dCovers]) {
 			covers[t] = true
+		}
+		for _, t := range strings.Fields(r[dCovers]) {
 			switch {
 			case qIDForm.MatchString(t):
 				if !answered[t] {

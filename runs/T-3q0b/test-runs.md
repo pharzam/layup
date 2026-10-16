@@ -2,6 +2,40 @@
 
 Times from the clock of the host, UTC, 2026-10-16.
 
+## Round-1 findings: red for the right reason
+
+On the frozen head `72528bd`, 07:43:21Z–07:43:26Z, `go test -count=1 -run
+'<the five tests>' ./internal/spec/` (direct exit 1):
+
+- `TestCheckQuoteFacts` — `the answer's fact before the quote's fact: findings
+  [{covers the row R-001: covers an answer's fact Q-001 and not the fact 1 of
+  that answer's quote}]` (finding 2, the unordered covers).
+- `TestTheOptionLinesAndTheVerdict` — `a decision with 1 survivors asks no
+  option` and `with 0 survivors` each get `the decision stack has more than
+  one survivor and no option line` (finding 3).
+- `TestRenderPRDChangesOnlyThePermittedCells` — the portion reads `Out of
+  scope by the bet: 5.`, not the union `2, 5, 10, Q-001, Q-002.` (finding 4).
+- `TestTheAppetiteAgainstTheBand` — `the amount "1/2"`, `"0x10"`, `"1e2"`,
+  `"+5"`, `"1_0"` each give no finding (finding 5; `"-5"` the sign guard
+  already refused).
+- `TestInventoryRefusals` — `panic: runtime error: index out of range [0]
+  with length 0` at `inventory.go:108` (finding 7).
+
+## Round-1 findings: green and the mutants of the fixes
+
+07:44:52Z after the fixes, `go build ./...`, `go vet ./...` and `go test
+-count=1 ./...` — all 21 packages `ok`. The mutants of the fixes, applied
+one at a time, each restored after, 07:46:15Z–07:47:05Z, direct exits:
+
+| Patch | Caught by |
+|---|---|
+| covers judged while filling | TestCheckQuoteFacts |
+| the multi-survivor gate dropped | TestTheOptionLinesAndTheVerdict |
+| the prior marks dropped | TestRenderPRDChangesOnlyThePermittedCells |
+| the decimal grammar open | TestTheAppetiteAgainstTheBand |
+| the empty-row guard off | TestInventoryRefusals (panic, the test aborts) |
+| the index order check inverted | TestInventoryRefusals, TestTheNextInventory |
+
 ## Red for the right reason
 
 - 06:25:44Z, before the code of row 62b existed (`bet.go`, `answer.go`,

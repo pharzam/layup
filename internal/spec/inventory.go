@@ -95,7 +95,11 @@ type InventoryFact struct{ ID, Class, Text string }
 // facts with scope in; a later one carries the previous rows forward and adds
 // each fact the records know since. The answer's explicit changes apply; an
 // unknown fact or change is a finding. Every row names this version's copy,
-// and the hash is of the version's exact complete bytes.
+// and the hash is of the version's exact complete bytes. The caller hands the
+// rows of version n-1 only after it verifies that version's sha256 against
+// the index row — `layup/spec` check reads the hash (docs/spec/loop.md), so
+// verification lives there and in the bet step that hands the bytes, never
+// here: this function sees rows, not the bytes a hash would check.
 func NextInventory(previous, index [][]string, facts []InventoryFact, answer Answer, copyID int) (version, nextIndex []byte, findings []Finding) {
 	if copyID <= 0 {
 		findings = append(findings, Finding{"copy", fmt.Sprintf("the copy %d is no positive comment ID", copyID)})
@@ -104,8 +108,12 @@ func NextInventory(previous, index [][]string, facts []InventoryFact, answer Ans
 		findings = append(findings, Finding{"index", "the bet's milestone, for the index's bet column, is not set"})
 	}
 	for i, r := range index {
-		if want := strconv.Itoa(i + 1); len(r) <= idxN || r[idxN] != want {
-			findings = append(findings, Finding{"index", fmt.Sprintf("the index's row %d names version %s, want %s", i+1, r[idxN], want)})
+		var have string
+		if len(r) > idxN {
+			have = r[idxN]
+		}
+		if want := strconv.Itoa(i + 1); have != want {
+			findings = append(findings, Finding{"index", fmt.Sprintf("the index's row %d names version %q, want %s", i+1, have, want)})
 		}
 	}
 	n := len(index) + 1

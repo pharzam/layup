@@ -89,17 +89,24 @@ func TestRenderPRDChangesOnlyThePermittedCells(t *testing.T) {
 	if len(f2) != 0 || string(out2) != got {
 		t.Errorf("the second render: findings %v, bytes equal %v", f2, string(out2) == got)
 	}
-	// A later bet with other out-of-scope marks replaces the portion.
+	// A later bet unions its marks with the prior portion: the marks the new
+	// answer leaves unchanged stay (plan-review condition 3); the inventory
+	// keeps them too, so the PRD and the version agree.
 	out3, _ := RenderPRD(out, Answer{Reqs: map[string]ReqAnswer{"REQ-001": {"Should", "3"}, "REQ-015": {"Won't", ""}, "NFR-001": {"Could", "alpha"}},
 		Facts: map[string]FactAnswer{"5": {Out: true}}})
-	if !strings.Contains(string(out3), "Out of scope by the bet: 5.") || strings.Count(string(out3), "Out of scope by the bet:") != 1 {
-		t.Errorf("the generated portion was not replaced:\n%s", out3)
+	if !strings.Contains(string(out3), "Out of scope by the bet: 2, 5, 10, Q-001, Q-002.") || strings.Count(string(out3), "Out of scope by the bet:") != 1 {
+		t.Errorf("the generated portion did not union the prior marks:\n%s", out3)
+	}
+	// An answer that marks nothing new still retains the prior marks.
+	out4, _ := RenderPRD(out, Answer{Reqs: map[string]ReqAnswer{"REQ-001": {"Should", "3"}, "REQ-015": {"Won't", ""}, "NFR-001": {"Could", "alpha"}}})
+	if !strings.Contains(string(out4), "Out of scope by the bet: 2, 10, Q-001, Q-002.") {
+		t.Errorf("the prior marks were not retained:\n%s", out4)
 	}
 	// A PRD with no non-goals paragraph keeps every byte but the cells.
 	bare := "## 6. Functional requirements\n\n| REQ | Statement | MoSCoW | Phase | Facts |\n| REQ-001 | x | Must | 1 | F-0001#1 |\n"
-	out4, _ := RenderPRD([]byte(bare), Answer{Reqs: map[string]ReqAnswer{"REQ-001": {"Could", "2"}}, Facts: map[string]FactAnswer{"5": {Out: true}}})
-	if want := strings.Replace(bare, "| Must | 1 |", "| Could | 2 |", 1); string(out4) != want {
-		t.Errorf("the rendering of a PRD with no non-goals:\n%s", out4)
+	out5, _ := RenderPRD([]byte(bare), Answer{Reqs: map[string]ReqAnswer{"REQ-001": {"Could", "2"}}, Facts: map[string]FactAnswer{"5": {Out: true}}})
+	if want := strings.Replace(bare, "| Must | 1 |", "| Could | 2 |", 1); string(out5) != want {
+		t.Errorf("the rendering of a PRD with no non-goals:\n%s", out5)
 	}
 }
 
@@ -285,6 +292,10 @@ func TestInventoryRefusals(t *testing.T) {
 	if _, _, f := NextInventory(nil, [][]string{{"1", strings.Repeat("a", 64), "M2e"}}, facts, Answer{Milestone: "M2f"}, 77); len(f) == 0 || f[0].Rule != "version" {
 		t.Errorf("a second version with no first: findings %v", f)
 	}
+	// An empty index row is a finding, never a panic.
+	if _, _, f := NextInventory(nil, [][]string{{}}, facts, Answer{Milestone: "M2e"}, 42); len(f) == 0 || f[0].Rule != "index" {
+		t.Errorf("an empty index row: findings %v", f)
+	}
 	// The answer's class is one of the four or a finding, as for the fact's own —
 	// the owner rule, not the writer's enum check, names the fact.
 	if _, _, f := NextInventory(nil, nil, facts, Answer{Facts: map[string]FactAnswer{"1": {Class: "bogus"}}, Milestone: "M2e"}, 42); len(f) == 0 || f[0].Rule != "fact" {
@@ -369,6 +380,7 @@ func TestCheckQuoteFacts(t *testing.T) {
 		want   bool // a finding
 	}{
 		{"a covered answer and its quote's fact", "1 Q-001", questions, answers, false},
+		{"the answer's fact before the quote's fact", "Q-001 1", questions, answers, false},
 		{"the answer's fact alone", "Q-001", questions, answers, true},
 		{"the answer's fact and another fact", "2 Q-001", questions, answers, true},
 		{"an answer that has no quote", "Q-002", questions, answers, false},

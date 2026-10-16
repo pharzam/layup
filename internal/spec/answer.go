@@ -137,7 +137,7 @@ func ParseAnswer(body []byte, requiredIDs, phaseTags, factIDs []string, survivor
 		findings = append(findings, Finding{"verdict", "the last line is not `bet` or `no bet`"})
 	} else if a.Verdict == "bet" {
 		for d := range survivors {
-			if _, ok := a.Options[d]; !ok {
+			if _, ok := a.Options[d]; !ok && len(survivors[d]) > 1 {
 				findings = append(findings, Finding{"line", fmt.Sprintf("the decision %s has more than one survivor and no option line", d)})
 			}
 		}

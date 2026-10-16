@@ -37,9 +37,13 @@ var (
 	refLink    = regexp.MustCompile(`\[[^\]]*\]\[[^\]]*\]`)
 
 	appetiteLine = regexp.MustCompile(`^appetite: USD ([0-9]+(\.[0-9]+)?), ([0-9]+(\.[0-9]+)?) hours$`)
-	archLine     = regexp.MustCompile(`^architecture change: (yes|no)$`)
-	batchLine    = regexp.MustCompile(`^approve batch ([^:]+): ([0-9a-f]{40}) ([0-9a-f]{64})$`)
-	batchStart   = regexp.MustCompile(`^approve batch `)
+	// amountForm is the explicit decimal grammar of the amounts, the same
+	// form the fixed appetite line takes: digits, one optional fraction —
+	// no fraction bar, base, exponent, sign or thousand mark.
+	amountForm = regexp.MustCompile(`^[0-9]+(\.[0-9]+)?$`)
+	archLine   = regexp.MustCompile(`^architecture change: (yes|no)$`)
+	batchLine  = regexp.MustCompile(`^approve batch ([^:]+): ([0-9a-f]{40}) ([0-9a-f]{64})$`)
+	batchStart = regexp.MustCompile(`^approve batch `)
 )
 
 // VerifiedBatch is a rule batch that the brief asks to approve: its point,
@@ -158,8 +162,10 @@ type Cap struct{ USD, Hours string }
 // (loop.md, REQ-012 — The bet: the money caps of the bets so far, this one
 // included, at most band.U; the wall-clock caps at most appetite.hours; the
 // caps plus the spend of milestone 0 within band.U; a cap below band.B is
-// allowed). Each amount is exact decimal; an absent or unusable one is a
-// finding, never a zero.
+// allowed). Each amount is explicit decimal, the fixed line's own form
+// (`amountForm`); an absent or unusable one is a finding, never a zero. A
+// cap that breaks more than one rule gets the first failing rule's finding —
+// the session fixes it and its new attempt gets the next.
 func CheckAppetite(prior []Cap, proposed Cap, bandU, hours, milestoneZeroUSD string) []Finding {
 	var findings []Finding
 	amount := func(what, s string) *big.Rat {
@@ -167,7 +173,10 @@ func CheckAppetite(prior []Cap, proposed Cap, bandU, hours, milestoneZeroUSD str
 			findings = append(findings, Finding{"amount", "the " + what + " is not set"})
 			return nil
 		}
-		r, ok := new(big.Rat).SetString(s)
+		r, ok := new(big.Rat), false
+		if amountForm.MatchString(s) {
+			r, ok = new(big.Rat).SetString(s)
+		}
 		if !ok || r.Sign() < 0 {
 			findings = append(findings, Finding{"amount", fmt.Sprintf("the %s %q is no usable amount", what, s)})
 			return nil

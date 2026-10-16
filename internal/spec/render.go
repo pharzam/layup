@@ -83,9 +83,33 @@ func outIDs(a Answer) []string {
 	return append(nums, qs...)
 }
 
+// unionIDs merges the prior generated portion's ids with the answer's: a
+// later bet keeps the marks its answer leaves unchanged, and the one order
+// holds — numbers first, then the answer facts.
+func unionIDs(prior, ids []string) []string {
+	var nums, qs []string
+	seen := map[string]bool{}
+	for _, id := range append(append([]string{}, prior...), ids...) {
+		if seen[id] {
+			continue
+		}
+		seen[id] = true
+		if strings.HasPrefix(id, "Q-") {
+			qs = append(qs, id)
+		} else {
+			nums = append(nums, id)
+		}
+	}
+	sort.Slice(nums, func(i, j int) bool { x, _ := strconv.Atoi(nums[i]); y, _ := strconv.Atoi(nums[j]); return x < y })
+	sort.Strings(qs)
+	return append(nums, qs...)
+}
+
 // nonGoals writes the generated non-goals portion: the `**Non-goals.**`
-// paragraph, to its end at a blank line, drops a portion it holds and gets
-// ` Out of scope by the bet: <ids>.` appended, or none.
+// paragraph, to its end at a blank line, takes the ids of a portion it holds
+// into the new one's union — a later bet's marks add to the earlier ones,
+// never drop them — and gets ` Out of scope by the bet: <ids>.` appended,
+// or none when no id exists at all.
 func nonGoals(lines []string, ids []string) []string {
 	start := -1
 	for i, l := range lines {
@@ -101,15 +125,20 @@ func nonGoals(lines []string, ids []string) []string {
 	for end+1 < len(lines) && strings.TrimSpace(lines[end+1]) != "" {
 		end++
 	}
+	var prior []string
 	for i := start; i <= end; i++ {
 		if j := strings.Index(lines[i], " Out of scope by the bet:"); j >= 0 {
+			prior = strings.Fields(strings.TrimSuffix(strings.TrimSpace(lines[i][j+len(" Out of scope by the bet:"):]), "."))
+			for k := range prior {
+				prior[k] = strings.TrimSuffix(prior[k], ",")
+			}
 			lines[i] = lines[i][:j]
 			lines = append(lines[:i+1], lines[end+1:]...)
 			end = i
 			break
 		}
 	}
-	if len(ids) > 0 {
+	if ids := unionIDs(prior, ids); len(ids) > 0 {
 		lines[end] += " Out of scope by the bet: " + strings.Join(ids, ", ") + "."
 	}
 	return lines
