@@ -219,7 +219,7 @@ func followUpRows(questions, answers [][]string, asked string) [][]string {
 		if q[1] == "follow-up" {
 			continue
 		}
-		unparsed := q[1] == "intent" && !parsed[q[0]]
+		unparsed := q[1] == "intent" && slices.Contains(budgetFields, q[2]) && !parsed[q[0]]
 		if q[12] != "asked" && q[12] != "open" && !unparsed {
 			continue
 		}
