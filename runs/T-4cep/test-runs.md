@@ -25,6 +25,8 @@ were committed with the green code of their step; a hook is never skipped. The s
 | A: integration setup (variants, lockstep, landing) | 14:21:35Z–14:21:52Z | 1 | 25 variants and 2 controls "got not implemented"; `TestTheLandingScript`, `TestTheLandingCommitIsAdmitted` "exited 1: not applicable … Q1 of #356" |
 | B, stub admits all: classifier, variants | 14:22:32Z–14:22:48Z | 1, 1 | the 16 refusals of the table and the 25 variants fail, both controls pass (a first try at 14:22:21Z did not build and is not counted) |
 
+The counts are those of the red runs; the commit `a6ff498` later folded one case into the variant table (26 variants) and removed four duplicate rows of the unit table (12 refusals).
+
 One defect of a test, found at the first green run of `TestParentsAndTheWholeTree` (14:23Z): the fixture added the submodule entry before `Add`, which drops it; fixed by adding it after (guardrails.md §2).
 
 ## Green, step by step (commits `e3db27a`, `3064bb8`, `e49e564`, `3069526`, `311ea87`; the hook ran gofmt, vet and the unit level on each, exit 0)
@@ -34,47 +36,42 @@ git calls 14:23:09Z; predicate: unit 14:26:04Z, the 25 variants 14:26:13Z–14:2
 
 ## Mutants: 23 valid, 23 killed
 
-`runs/T-4cep/mutate.py`, one replacement per variant, `go build` and `go vet -tags=integration ./internal/...` first (a variant that fails either is not credited), then the unit level and, if it
-survives, the focused integration tests; the kill is a `--- FAIL` line of its own output; the hash of the file before and after proves the restore. Run 14:51:09Z–14:57:07Z on the final code, exit 0,
-hashes equal, control (build, unit, three integrations) 0. An earlier run with an earlier helper had one variant that did not build (`m07` passed `nil` and left `configs` unused) and counted it out;
-its repaired form is in this run. The equivalent mutant (the configs read at the head, not the last commit: a head whose manifest differs is refused by the tree comparison first) has no row.
+`runs/T-4cep/mutate.py`, one replacement per variant (`m01` to `m23`, named in the helper), `go build` and `go vet -tags=integration ./internal/...` first (a variant that fails either is not
+credited), then the unit level and, if it survives, the focused integration tests; the kill is a `--- FAIL` line of its own output; the hash of the file before and after proves the restore.
+Final run 15:03:28Z–15:07:45Z on the final code, exit 0, hashes equal, control (build, unit, three integrations) 0. An earlier run, on code and a helper that later changed, had one variant that
+did not build (`m07` passed `nil` and left `configs` unused) and counted it out; its repaired form is in this run. The equivalent mutant (the configs read at the head, not the last commit: a head
+whose manifest differs is refused by the tree comparison first) has no row.
 
-| Variant | Killed by |
-| ------- | --------- |
-| `m01-parent-not-compared` | `TestCheckCodeOwnerLandingReadsOnlyTheObjectsOfTheConditions`, `TestClassifyLanding` |
-| `m02-more-than-one-parent` | `TestClassifyLanding` |
-| `m03-tree-not-compared` | `TestClassifyLanding` |
-| `m04-mode-ignored` | `TestClassifyLanding` |
-| `m05-bytes-not-compared` | `TestClassifyLanding` |
-| `m06-last-may-have-the-file` | `TestClassifyLanding` |
-| `m07-config-paths-ignored` | `TestAHeadAboveTheCanonicalCommitIsRefused`, `TestCheckCodeOwnerLanding` |
-| `m08-login-is-the-first-row` | `TestLandingInputs` |
-| `m09-record-gate-ignored` | `TestLandingInputs` |
-| `m10-check-asked-of-the-last-commit` | `TestADetailIsTheFirstLineOfItsReasonInValidUTF8WithDIRForTheHost`, `TestEachCheckThatFailsIsItsRowAndTheTableStillHasEightRows` (+2) |
-| `m11-check-error-is-a-pass` | `TestEachCheckThatFailsIsItsRowAndTheTableStillHasEightRows`, `TestTheTreeRowAdmitsTheCodeOwnerCommitAndNothingElse` |
-| `m12-check-asked-of-no-head` | `TestTheTreeRowAdmitsTheCodeOwnerCommitAndNothingElse` |
-| `m13-probe-on-the-last-commit` | `TestEachCheckThatFailsIsItsRowAndTheTableStillHasEightRows`, `TestTheRulesOfLayupProbeAreReadOnceWhateverTheWorkAreaAndTheRulesetFile` (+1) |
-| `m14-no-note-on-admit` | `TestTheTreeRowAdmitsTheCodeOwnerCommitAndNothingElse` |
-| `m15-detail-on-admit` | `TestTheTreeRowAdmitsTheCodeOwnerCommitAndNothingElse` |
-| `m16-script-refuses-again` | `TestTheLandingScriptAsProducedIsNoRefusal` |
-| `m17-script-adds-another-path` | `TestTheLandingCommitIsAdmitted`, `TestTheLandingScript` |
-| `m18-script-commit-on-the-wrong-parent` | `TestTheLandingCommitIsAdmitted`, `TestTheLandingScript` |
-| `m19-trap-missing` | `TestTheLandingScript` |
-| `m20-restore-the-before-object` | `TestTheLandingCommitIsAdmitted`, `TestTheLandingScript` |
-| `m21-no-disable-before-the-push` | `TestTheLandingScript` |
-| `m22-git-parents-include-the-commit` | `TestTheOutputIsRead` |
-| `m23-blob-header-without-the-length` | `TestBlobID`, `TestCheckCodeOwnerLandingReadsOnlyTheObjectsOfTheConditions` (+1) |
+| Variants | Killed by |
+| -------- | --------- |
+| `m01` | `TestCheckCodeOwnerLandingReadsOnlyTheObjectsOfTheConditions`, `TestClassifyLanding` |
+| `m02`, `m03`, `m04`, `m05`, `m06` | `TestClassifyLanding` |
+| `m07` | `TestCheckCodeOwnerLanding` |
+| `m08`, `m09` | `TestLandingInputs` |
+| `m10` | `TestADetailIsTheFirstLineOfItsReasonInValidUTF8WithDIRForTheHost`, `TestEachCheckThatFailsIsItsRowAndTheTableStillHasEightRows` (+2) |
+| `m11` | `TestEachCheckThatFailsIsItsRowAndTheTableStillHasEightRows`, `TestTheTreeRowAdmitsTheCodeOwnerCommitAndNothingElse` |
+| `m12`, `m14`, `m15` | `TestTheTreeRowAdmitsTheCodeOwnerCommitAndNothingElse` |
+| `m13` | `TestEachCheckThatFailsIsItsRowAndTheTableStillHasEightRows`, `TestTheRulesOfLayupProbeAreReadOnceWhateverTheWorkAreaAndTheRulesetFile` (+1) |
+| `m16` | `TestTheLandingScriptAsProducedIsNoRefusal` |
+| `m17`, `m18`, `m20` | `TestTheLandingCommitIsAdmitted`, `TestTheLandingScript` |
+| `m19`, `m21` | `TestTheLandingScript` |
+| `m22` | `TestTheOutputIsRead` |
+| `m23` | `TestBlobID`, `TestCheckCodeOwnerLandingReadsOnlyTheObjectsOfTheConditions` (+1) |
 
 ## The final pass
 
 | Check | Start–End | Exit | Result |
 | ----- | --------- | ---- | ------ |
-| `go build ./...`, `go vet ./...`, `gofmt -l internal cmd` | 14:57:48Z–14:57:51Z | 0, 0, 0 | clean |
-| `go test -count=1 ./...` | 14:57:51Z–14:57:58Z | 0 | 21 packages ok |
-| `-tags=integration ./cmd/layup -run TestPackageRules` | 14:57:58Z–14:58:01Z | 0 | ok |
-| focused integration (git calls, 25 variants, lockstep, landing script, update, rebuilt area, tree row) | 14:58:01Z–14:58:30Z | 0 | ok |
-| the existing restart test of the forge check | 14:58:33Z–14:59:27Z | 0 | ok (52.6 s) |
-| `adr-lint`, `prd-lint`, `link-lint`, `run-discipline-tests`, `setup-check`, `nested-checkout-check`, `git diff --check` | 14:59:57Z–15:00:49Z | 0 each | OK; 2,771 links; 138 passed, 0 failed; 10 cases behaved |
-| standalone `gitleaks git --redact` | see the report | 0 | run after the last commit |
+| `go build ./...`, `go vet ./...`, `gofmt -l internal cmd` | 15:08:43Z–15:08:46Z | 0, 0, 0 | clean |
+| `go test -count=1 ./...` | 15:08:46Z–15:08:55Z | 0 | 21 packages ok |
+| `-tags=integration ./cmd/layup -run TestPackageRules` | 15:08:55Z–15:08:57Z | 0 | ok |
+| focused integration (git calls, the variants, lockstep, landing script, update, rebuilt area, tree row, and the existing restart test of the forge check) | 15:08:57Z–15:10:01Z | 0 | ok (setup 35.7 s, run 60.8 s) |
+| `adr-lint`, `prd-lint`, `link-lint`, `run-discipline-tests`, `setup-check`, `nested-checkout-check`, `git diff --check` | 15:10Z–15:15:42Z in two calls (the first was cut off at setup-check, exit 137, and that check and the next two were rerun, 15:15:11Z–15:15:42Z) | 0 each | OK; 2,771 links; 138 passed, 0 failed; 10 cases behaved |
+| standalone `gitleaks git --redact` | after the last commit, see the report | 0 | no leaks |
 
 **Not run, by the instruction:** the full module integration level, the e2e level, the close-out files, the push and the review. The token and time counters belong to the coordinator.
+
+**Consolidation and refactors, said plainly.** Commit `53ceb15` held the evidence as `README.md`, `mutants.md` and this file; they were merged into this file to save files and lines. Everything they held survives here
+or at that commit: the conditions of the plan review (above), the per-variant kills (grouped above; the ungrouped table of the first run is in `53ceb15:runs/T-4cep/mutants.md`). `579c035` removed the nil guards of the job's
+two seams (`landing`, `note`) and their two tests: `forgeCheckStep` always gives both and no other job is built, so the guards were unreachable; the guarded refusal of a head asked of no check is still
+shown by `TestTheTreeRowAdmitsTheCodeOwnerCommitAndNothingElse` and `m12`. `a6ff498` folded one case into the variant table and dropped four unit rows that the real-object table covers. No acceptance coverage was removed.
