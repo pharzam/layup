@@ -46,6 +46,8 @@ requires a noncanonical milestone and no driver supplies one; N6 helper-only
 scope is explicit above. Notes do not cause a new round. Only this close-out
 and the completed/backlog indexes follow the reviewed head.
 Delivered and reviewed with no material findings. No target changes performed.
+Main82bb082 merged without conflicts; changes are disjoint or shared indexes.
+The completion entry uses the parser-required bullet; final size exactly668/15.
 
 ## Resource record
 
