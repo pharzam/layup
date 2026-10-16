@@ -16,6 +16,8 @@ here directly, in the shape above.
 
 ## Log
 
+- **2026-10-16** — **T-v2sv** — Row 66c of `M2e`: The Retrospective ([#359](https://github.com/pharzam/layup/issues/359); [the plan](../plan/README.md#the-tasks-of-m2e)); [detail](T-v2sv.md)
+
 <!-- Most recent first. Example shape:
 - **YYYY-MM-DD** — **<ID>** — <one-sentence summary of what the task found or delivered> ([<link>](...); [detail](<id>.md))
 -->

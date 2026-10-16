@@ -881,7 +881,8 @@ milestones.
 
 `architecture.md` §8 puts a Retrospective between the Accept and the next Bet. In
 phases 2 and 3 **decided here** (open question 4 of the inventory) it is a step
-with **no session**: code writes its event and goes to the next Bet. Proposals for
+with **no session**: code writes its event — a row of `retrospectives.tsv`, the
+block `retrospectives` of [`records.md`](records.md#nfr-001--the-records-of-the-task-loop) — and goes to the next Bet. Proposals for
 a rule batch that came from refused rule-path changes are collected for `M2f`; the
 lessons and `layup learn` are phase 4. **Reason:** `architecture.md` §13 gives the
 retrospective its content in phase 4, and an empty step that is a row keeps the

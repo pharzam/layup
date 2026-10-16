@@ -368,6 +368,12 @@ check that catches it.
   than assigning the cumulative total to the latest part. Top-level `usage`
   is sufficient only after verifying that no child model ran. The plan-plus-build
   counters were mistaken for build-only counts in `T-cak3` (#357).
+  Devin's console can omit usage while --export records ATIF final_metrics.
+  Compare completed exports of a resumed conversation to attribute each part.
+  ATIF total_cached_tokens is a subset of total_prompt_tokens, not an extra
+  input count ([format](https://github.com/harbor-framework/harbor/blob/main/rfcs/0001-trajectory-format.md#metricsschema)).
+  Keep private session exports outside version control and commit only reported
+  metrics, preserving unavailable parts as unavailable. Learned in #359.
 - ❌ **A Go version that CI resolves at its own time.** `go.mod` said `go 1.26`,
   and `actions/setup-go` with `go-version-file: go.mod` installs the newest
   release of that line it knows. The job `security` passed on `main` at
