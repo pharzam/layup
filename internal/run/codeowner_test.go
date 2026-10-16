@@ -84,12 +84,13 @@ func TestOperatorLoginIsTheRowOfTheRole(t *testing.T) {
 	}
 }
 
-// The area built for a target set up before the rule names the files of the migration once, and an area for a
-// new target names none: forge-check prints no commands, so this is the path that the Operator is given.
+// The area built for a target set up before the rule names the files of the migration once, in the order that the Operator
+// runs them, and an area for a new target names none: forge-check prints no commands, so this is the path that the Operator
+// is given (task T-4cep: the tree check admits the commit of the landing).
 func TestTheMigrationNamesItsFiles(t *testing.T) {
 	want := []string{
 		"this target was set up before the code-owner rule: apply the update with your own login: sh DIR/work/acme/widget/out/commands.sh",
-		"DIR/work/acme/widget/out/land-code-owner.sh is not applicable until the tree check admits its commit (Q1 of #356, open)",
+		"then land the code-owner file with your own login, once the update is read back: sh DIR/work/acme/widget/out/land-code-owner.sh",
 	}
 	if got := migrateNotes("DIR/work/acme/widget"); !reflect.DeepEqual(got, want) {
 		t.Errorf("migrateNotes: %q; want %q", got, want)

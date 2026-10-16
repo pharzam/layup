@@ -28,11 +28,6 @@ const (
 	landScriptPath    = "out/land-code-owner.sh"
 )
 
-// landApplicable says whether the landing script may run. It is false until the tree check admits the commit
-// that the script makes (docs/spec/scaffold.md, The tree check; the question Q1 of #356 is open), so the text
-// that S13 writes refuses at its first command.
-const landApplicable = false
-
 // ownerLogin reports whether s is the login of a GitHub account: letters, digits and single hyphens, not at
 // an end, at most 39 characters (the bound of ownerName).
 func ownerLogin(s string) bool { return len(s) <= 39 && ownerForm.MatchString(s) }
@@ -139,18 +134,14 @@ func updateCommands(p Phase2) []Command {
 // landScript gives out/land-code-owner.sh (scaffold.md, The code-owner rule of a target that M2d set up): it
 // adds .github/CODEOWNERS to the head of layup-setup in one commit and pushes it as a fast-forward of the
 // default branch, with the ruleset disabled for the push. It starts from the AFTER object, the updated
-// protection that the update kept, and puts exactly that back, never the object before the update. When
-// applicable is false its first command refuses, naming the open question, and the rest is only to be read.
-func landScript(p Phase2, applicable bool) string {
+// protection that the update kept, and puts exactly that back, never the object before the update. The commit
+// it makes is the one that the tree check admits (CheckCodeOwnerLanding; docs/spec/scaffold.md, The tree check).
+func landScript(p Phase2) string {
 	area, target, applies := migrationPaths(p)
 	rs := fmt.Sprintf("/repos/%s/rulesets/%d", p.Name, p.Migrate.RulesetID)
 	t := quote(target)
 	var b strings.Builder
 	b.WriteString("set -eu\n")
-	if !applicable {
-		b.WriteString("# not applicable until the tree check admits the commit that this script makes (Q1 of #356, open): the next forge-check would stop on the row tree\n")
-		b.WriteString("echo 'not applicable: the tree check admits no head but the last commit of setup/tree.tsv (Q1 of #356, open)' >&2\nexit 1\n")
-	}
 	b.WriteString("after=" + quote(filepath.Join(applies, "default.after.json")) + "\n")
 	b.WriteString("off=" + quote(filepath.Join(applies, "default.landing-off.json")) + "\n")
 	b.WriteString(`# the AFTER object: the update was done, and it is the protection to put back

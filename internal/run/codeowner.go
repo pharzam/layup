@@ -67,7 +67,7 @@ func operatorLogin(approvers [][]string) (string, error) {
 func migrateNotes(area string) []string {
 	return []string{
 		"this target was set up before the code-owner rule: apply the update with your own login: sh " + filepath.Join(area, "out", "commands.sh"),
-		filepath.Join(area, "out", "land-code-owner.sh") + " is not applicable until the tree check admits its commit (Q1 of #356, open)",
+		"then land the code-owner file with your own login, once the update is read back: sh " + filepath.Join(area, "out", "land-code-owner.sh"),
 	}
 }
 

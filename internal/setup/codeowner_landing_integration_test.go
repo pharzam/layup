@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -249,6 +250,75 @@ func TestATargetSetUpWithTheRuleTakesNoCodeOwnerCommit(t *testing.T) {
 	} {
 		if err := r.check(head); err == nil || err.Error() != want {
 			t.Errorf("%s:\n got %v\nwant %q", name, err, want)
+		}
+	}
+}
+
+// The landing script as S13 writes it, run against a bare remote with the stub gh, makes the commit that the check
+// admits (the lockstep of the producer and its checker). A script with the file at another path, or with a second file,
+// is refused by the same call.
+func TestTheLandingCommitIsAdmitted(t *testing.T) {
+	land := func(mutate func(script string) string) (clone, last, head string) {
+		p := phase2Owner()
+		p.Name, p.Host, p.Migrate = "acme/widget", t.TempDir(), &Migration{RulesetID: rulesetID}
+		_, built := s13Tree(t, p)
+		dest := filepath.Join(p.Host, "work", "acme", "widget")
+		if err := os.MkdirAll(filepath.Dir(dest), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if out, err := exec.Command("cp", "-a", filepath.Dir(built), dest).CombinedOutput(); err != nil {
+			t.Fatalf("cp: %v\n%s", err, out)
+		}
+		target := filepath.Join(dest, "target")
+		bare := filepath.Join(t.TempDir(), "origin.git")
+		gitIn(t, ".", "init", "-q", "--bare", "-b", "main", bare)
+		_ = exec.Command("git", "-C", target, "remote", "remove", "origin").Run()
+		gitIn(t, target, "remote", "add", "origin", bare)
+		gitIn(t, target, "push", "-q", "origin", "layup-setup:main")
+		f := newForge(t, withUnknown(liveFor(t)))
+		if code, stderr := f.run(t, p.Host, updateScript(p)); code != 0 {
+			t.Fatalf("the update before the landing exited %d: %s", code, stderr)
+		}
+		script, err := os.ReadFile(filepath.Join(dest, "out", "land-code-owner.sh"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if code, stderr := f.run(t, p.Host, mutate(string(script))); code != 0 {
+			t.Fatalf("the landing exited %d:\n%s", code, stderr)
+		}
+		clone = filepath.Join(t.TempDir(), "clone")
+		gitIn(t, ".", "clone", "-q", "--no-checkout", bare, clone)
+		return clone, gitIn(t, target, "rev-parse", "refs/heads/layup-setup"), gitIn(t, bare, "rev-parse", "refs/heads/main")
+	}
+	clone, last, head := land(func(s string) string { return s })
+	if err := CheckCodeOwnerLanding(clone, last, head, owner); err != nil {
+		t.Errorf("the commit that the script made: %v; want it admitted", err)
+	}
+	line := regexp.MustCompile(`(?m)^(GIT_INDEX_FILE="\$dir/index" git -C \S+ update-index --add --cacheinfo )"100644,\$blob,\.github/CODEOWNERS"$`)
+	if !line.MatchString(landScript(func() Phase2 {
+		p := phase2Owner()
+		p.Name, p.Host, p.Migrate = "acme/widget", "/h", &Migration{RulesetID: 1}
+		return p
+	}())) {
+		t.Fatalf("the update-index line of the script is not the one this test mutates")
+	}
+	viaLine := func(s string, f func(line string) string) string { return line.ReplaceAllStringFunc(s, f) }
+	for _, c := range []struct {
+		name   string
+		mutate func(string) string
+		want   string
+	}{
+		{"the file at another path", func(s string) string {
+			return viaLine(s, func(l string) string { return strings.Replace(l, ".github/CODEOWNERS", "docs/CODEOWNERS", 1) })
+		},
+			`the tree of the head differs from that of the last setup commit at "docs/CODEOWNERS"`},
+		{"a second file", func(s string) string {
+			return viaLine(s, func(l string) string { return l + "\n" + strings.Replace(l, ".github/CODEOWNERS", "docs/extra.md", 1) })
+		}, `the tree of the head differs from that of the last setup commit at "docs/extra.md"`},
+	} {
+		clone, last, head := land(c.mutate)
+		if err := CheckCodeOwnerLanding(clone, last, head, owner); err == nil || err.Error() != c.want {
+			t.Errorf("%s:\n got %v\nwant %q", c.name, err, c.want)
 		}
 	}
 }

@@ -125,8 +125,8 @@ func TestS13WritesCodeOwnersInTheTree(t *testing.T) {
 
 // A target set up before the rule is rebuilt with the files of M2d in its tree (the commits of the rebuilt area
 // must be the recorded ones, scaffold.md, The work area): the protection file alone, no CODEOWNERS in the tree and
-// no row for it. The file for the landing is in out/, with the new ruleset file, the landing script (not
-// applicable) and the update in place of the push and the POST of commands.sh.
+// no row for it. The file for the landing is in out/, with the new ruleset file and the landing script, and
+// commands.sh holds the update in place of the push and the POST.
 func TestS13InMigrateModeWritesTheFilesOfM2d(t *testing.T) {
 	p := phase2Owner()
 	p.Migrate = &Migration{RulesetID: 25145510}
@@ -138,7 +138,7 @@ func TestS13InMigrateModeWritesTheFilesOfM2d(t *testing.T) {
 		t.Errorf("S13: %s %q %v, values %q; want the three rows of M2d", o.Kind, o.Evidence, o.Commit, o.Values)
 	}
 	for path, want := range map[string]string{"w/target/docs/setup/branch-protection.json": protectionText, "w/out/ruleset-default.json": rulesetPhase2Text,
-		"w/out/CODEOWNERS": codeOwnersTwoKinds, "w/out/land-code-owner.sh": landScript(p, false), "w/out/ruleset-records.json": rulesetRecordsText} {
+		"w/out/CODEOWNERS": codeOwnersTwoKinds, "w/out/land-code-owner.sh": landScript(p), "w/out/ruleset-records.json": rulesetRecordsText} {
 		if got, ok := f.files[path]; !ok || got != want {
 			t.Errorf("%s:\n%s\nwant\n%s", path, got, want)
 		}
@@ -348,5 +348,21 @@ func TestCheckCodeOwnerLandingReadsOnlyTheObjectsOfTheConditions(t *testing.T) {
 	sys.lsTree = func(dir, rev, path string) ([]git.TreeEntry, error) { return nil, errors.New("boom") }
 	if err := CheckCodeOwnerLanding("d", lastSetup, head, owner); err == nil || !strings.Contains(err.Error(), "boom") {
 		t.Errorf("a tree that cannot be read: %v; want an error with the cause", err)
+	}
+}
+
+// The landing script as S13 writes it (the constant of the production code) is no refusal: it runs git and gh from its
+// first command, and names neither the open question nor "not applicable" (task T-4cep; the tree check admits its commit).
+func TestTheLandingScriptAsProducedIsNoRefusal(t *testing.T) {
+	p := phase2Owner()
+	p.Migrate = &Migration{RulesetID: 25145510}
+	got := landScript(p)
+	for _, bad := range []string{"not applicable", "Q1 of #356", "exit 1\nafter="} {
+		if strings.Contains(got, bad) {
+			t.Errorf("the landing script holds %q:\n%s", bad, got)
+		}
+	}
+	if !strings.HasPrefix(got, "set -eu\nafter=") {
+		t.Errorf("the landing script starts %q; want set -eu and then the AFTER object", got[:min(len(got), 40)])
 	}
 }
