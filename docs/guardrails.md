@@ -1019,6 +1019,13 @@ These traps are not domain-specific: they hurt every project's test suite.
   enforced. Task `T-q5k4` (#360). **The check:** when code relies on a forge limit, read the answer of a probe at
   both sides of the number, say which unit it is counted in, and keep the documented number as the side that
   never posts a body the forge could refuse; do not write the limit as a fact on the strength of the message.
+- ❌ **A fixture that sets a field on the struct and so bypasses the production constructor.** `Sessions.App` was
+  added for the adoption of the App's own comment after a lost copy, and its test passed because the test world set
+  `App` by hand; the only constructor that a run uses, `state.sessions()`, never set it, so the recovery was dead code
+  and a restart posted a second comment. Task `T-q5k4` (#360), round 1, finding 1. **The check:** when a change adds a
+  field that a run must carry, build the object under test in at least one behavioural test through the constructor
+  that the run uses (here `state.sessions()` on a `Config` with the App's slug), and run that test against the mutant
+  that removes the assignment; a test that only reads the copied field, or sets it itself, proves nothing about the run.
 
 ### Reference-sweep pitfalls
 

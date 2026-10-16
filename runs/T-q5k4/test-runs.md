@@ -206,3 +206,24 @@ cached3543055 over51steps; cached is inside prompt, not an additional input.
 All exported step models are swe-2-max; elapsed is not reported.
 Private exports stay outside git. Metadata audits are issue360-resource-metadata.json
 and issue360-plan-review-resource.json under /tmp/layup-m2e-resume/.
+
+## Round 1 of #360: finding 1 (the constructor of the run did not set `Sessions.App`)
+
+All times UTC from `date -u` taken by the runner after the command; the exit code is the command's own.
+
+| Step | Start | End | Exit | Result |
+| ---- | ----- | --- | ---- | ------ |
+| RED: `go test -count=1 -tags=integration -run '^TestTheSessionsOfTheRunAdoptTheCommentOfALostCopyAndPostOnce$' ./internal/run/` before the fix | 13:53:21Z | 13:53:31Z | 1 | fails by its assertion: `the restart: {ID:603 Seen:1 ...}, <nil>, 2 comments on the task's issue; want the comment adopted and copied, none posted again` |
+| The one line `App: r.cfg.Register.AppSlug` in `state.sessions()` (`internal/run/meaning.go`) | | | | |
+| GREEN: the same test and `TestAStopBetweenThePostAndTheCopyDoesNotPostTwice` | 13:53:37Z | 13:53:50Z | 0 | pass |
+| Mutant `F1m` (`mut.py`: the assignment removed from `meaning.go`; `gofmt`, `go build ./...` and `go vet -tags=integration ./internal/run/` pass before the run) | 13:54:45Z | 13:54:50Z | 0 (runner) | **killed** by `TestTheSessionsOfTheRunAdoptTheCommentOfALostCopyAndPostOnce`; the file restored, `git hash-object` equals the blob of `HEAD`, `git status` empty |
+
+The test builds a `state` from the world's real `Config` (`Register.AppSlug` `layup-agent`, the adapter, the `httptest`
+forge) and the real records store, takes its `Sessions` from the production `state.sessions()`, runs the stop between the
+post and the copy (the first `PostComment`'s copy commit fails) and a restart (a second `state.sessions()`), and asserts one
+comment on the task's issue and one copy. The older tests that set `App` by hand stay (they test `PostComment`); this one
+tests the constructor. The six notes of the round are not fixed here.
+
+Checks after the fix (13:55:10Z to 13:56:15Z, all exit 0): `adr-lint`, `prd-lint`, `link-lint`, `run-discipline-tests`, `setup-check`,
+`git diff --cached --check`, `go build ./...`, `go vet ./...`, `go test -count=1 ./...` (the unit level, 21 packages). No
+integration command beyond the two named tests above was run.
