@@ -3,8 +3,8 @@
 Issue: [#350](https://github.com/pharzam/layup/issues/350), row 62b of [the tasks of
 M2e](../plan/README.md#the-tasks-of-m2e), opened by `T-57vx` (#346). Serves
 `F-0003#51`, `F-0003#54` (`REQ-012`). Branched off `2aafa64`; `main` was merged
-twice, at `f12da6a` (`2e1e9b4`) and at `8e26eca` (`db3330f`). Pull request
-[#382](https://github.com/pharzam/layup/pull/382), a draft. Author of the plan and
+three times: `f12da6a` (`2e1e9b4`), `8e26eca` (`db3330f`), `0e2f06c` (`c9a31c7`).
+Pull request [#382](https://github.com/pharzam/layup/pull/382), ready. Author of the plan and
 of record: Claude Sonnet 5.5; implementer: Devin SWE-2 Max; design clarification:
 GPT-6 Sol on Devin. Evidence: [`runs/T-3q0b/`](../../runs/T-3q0b/).
 
@@ -74,10 +74,10 @@ Delivered, as code and test result: the checks of the bet and the rendering, wit
 the widened `covers` schema, the specification decisions and the evidence. The
 full integration run on the round-1 head `db3330f` exited 0 (07:51:08.801645Z to
 08:03:48.871209Z, 21 packages ok, root's direct subprocess capture); the earlier
-run at `2e1e9b4` exited 0 (07:08:36Z to 07:27:36Z); the head since `db3330f`
-changes only `docs/guardrails.md` and `runs/T-3q0b/test-runs.md` plus this
-close-out — no Go — so the run stands. **Budget:** the maximum is 1,600 lines
-added plus removed over 20 files against current `main` (`8e26eca`), close-out
+run at `2e1e9b4` exited 0 (07:08:36Z to 07:27:36Z); this task's Go is unchanged.
+The merge `c9a31c7` imports #357's independently tested register; the combined
+block test passes. Its paired-index resolution is covered by O-219 as extended
+by 6214113095. **Budget:** maximum 1,600 lines / 20 files, current `main` `0e2f06c`, close-out
 inside. The complete landing is **2,001 changed lines / 21 files**, approved
 once by the Operator in comment 6213987433 (answer to 6213978483), including
 this close-out. This settles the sole material budget finding; the last review
@@ -104,7 +104,7 @@ session boundaries, where no start was measured.
 | The full integration run at `db3330f` | — (deterministic) | not applicable | not applicable | not applicable | 07:51:08.801645Z–08:03:48.871209Z, exit 0 |
 | The docs-only evidence correction (the full run, the discarded sweep, the stale-restore pitfall, the changelog ruling) | — | Devin SWE-2 Max | not reported | not reported | R7 comment 08:07:33Z to commit `2e8b944` 08:09:06Z |
 | Round 2 | reasoning | Claude Sonnet 5.5 on Claude Code | high | input 44; output 18,933 (thinking 9,890 included); cache creation 90,203; cache read 1,444,112 | 302,455 ms |
-| This close-out preparation | — | Devin SWE-2 Max | not reported | not reported | not reported by the harness; completed before staging |
+| This close-out and merge bookkeeping | — | Devin SWE-2 Max; Codex GPT-6 family | not reported | not reported | not reported by the harness; completed before staging |
 | **Total** | | | | not fully reported; reported subtotal 2,636,394 tokens including review cache | not fully reported |
 
 The figures are what each harness reported. The retained Devin CLI outputs give
