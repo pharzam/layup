@@ -193,9 +193,15 @@ func (f *fakeForge) serve(w http.ResponseWriter, r *http.Request) {
 		}
 		enc.Encode(append(list, f.people...))
 	case call == "GET /repos/acme/target/issues/2/comments":
-		enc.Encode([]map[string]any{{"id": 501, "user": map[string]any{"id": 777, "login": "layup-watch[bot]"},
+		comments := []map[string]any{{"id": 501, "user": map[string]any{"id": 777, "login": "layup-watch[bot]"},
 			"performed_via_github_app": map[string]any{"slug": "layup-watch"},
-			"created_at":               "2026-10-08T12:00:00Z", "updated_at": "2026-10-08T12:00:00Z", "body": "watching\n"}})
+			"created_at":               "2026-10-08T12:00:00Z", "updated_at": "2026-10-08T12:00:00Z", "body": "watching\n"}}
+		for i, body := range f.posted {
+			comments = append(comments, map[string]any{"id": 601 + i, "user": map[string]any{"id": 9001, "login": "layup-agent[bot]"},
+				"performed_via_github_app": map[string]any{"slug": "layup-agent"},
+				"created_at":               "2026-10-08T13:00:00Z", "updated_at": "2026-10-08T13:00:00Z", "body": body})
+		}
+		enc.Encode(comments)
 	default:
 		http.Error(w, `{"message":"Not Found"}`, 404)
 	}

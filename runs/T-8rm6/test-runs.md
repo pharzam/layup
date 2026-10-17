@@ -296,3 +296,12 @@ Scratch compile-only check passed before authorization:
 go test -tags=e2e -run '^$' ./cmd/layup (no E2E runtime executed).
 The task-branch compile, hook checks and new CI results follow on the issue.
 Fresh independent second-cycle review and complete exact-size approval remain.
+
+The first repaired CI on a60079d passed the intake E2E but failed the scaffold's
+existing later-start assertion: revision reported reposted rather than done
+before. Run39041277646/job117421114446. The fake forge retained POSTed control
+comments but GET returned only the watch bot's comment. Its same shared fixture
+now returns those stored App comments with their actual fake IDs and App identity,
+matching the existing intake-comment precedent. The unchanged done-before
+assertion is the falsifier; no production or assertion change. This is still the
+authorized three-test-file compatibility repair before the cap2 freeze/review.
