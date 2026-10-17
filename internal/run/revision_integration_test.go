@@ -264,6 +264,48 @@ func TestTheRevisionOfTheDraft(t *testing.T) {
 	if gitOut(t, w.bare, "rev-parse", "refs/heads/layup-records:spec/draft.tsv") != blob {
 		t.Error("the repost restart changed spec/draft.tsv")
 	}
+	// The point resolution on the records the steps committed (the promised
+	// pass over the real approvers.tsv and copies.tsv, not literals): the
+	// copies of the Intake issue give the bindings, and the world's forge
+	// resolves each login to its account — dave's row serves bet, the
+	// Operator's audit, and the unknown mallory falls back to the idea owner.
+	committed, err := records.ReadApprovers([]byte(show(t, w.bare, "refs/heads/layup-records", "approvers.tsv")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	copied, err := records.ReadCopies([]byte(show(t, w.bare, "refs/heads/layup-records", "copies.tsv")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var copies []answerCopy
+	for _, row := range copied {
+		if row[2] != "1" {
+			continue
+		}
+		copies = append(copies, answerCopy{Row: row, Body: show(t, w.bare, "refs/heads/layup-records", row[9])})
+	}
+	bound, _ := pointBindings(copies, committed, questions[0][9], "1")
+	cfg := w.config("0.1.0-dev")
+	got, err := approverFor(context.Background(), cfg.Forge.UserID, "bet", bound, committed)
+	if err != nil || got == nil || got[0] != "707" || got[1] != "approver" {
+		t.Errorf("the approver of bet on the committed records %v, %v; want dave's row 707", got, err)
+	}
+	if got, err = approverFor(context.Background(), cfg.Forge.UserID, "audit", bound, committed); err != nil || got == nil || got[0] != "101" {
+		t.Errorf("the approver of audit %v, %v; want the Operator's row 101", got, err)
+	}
+	if got, err = approverFor(context.Background(), cfg.Forge.UserID, "retrospective", bound, committed); err != nil || got == nil || got[0] != "303" {
+		t.Errorf("the approver of retrospective %v, %v; want the idea owner's row 303 — the forge answers mallory 404", got, err)
+	}
+	var daves []string
+	for _, a := range committed {
+		if a[0] == "707" {
+			daves = a
+		}
+	}
+	served, err := pointsServed(context.Background(), cfg.Forge.UserID, daves, bound, committed)
+	if err != nil || len(served) != 1 || served[0] != "bet" {
+		t.Errorf("the points dave's row serves %v, %v; want [bet]", served, err)
+	}
 }
 
 // A file that the check refuses ends the session done but refused, with its
@@ -320,6 +362,172 @@ func TestTheRevisionRefusedThenKept(t *testing.T) {
 	w.fake.mu.Unlock()
 	if len(ends) != 2 || !strings.HasSuffix(ends[0], "done, refused file") || !strings.HasSuffix(ends[1], "done") {
 		t.Errorf("the comments of the revision's sessions %q; want refused file, then done", ends)
+	}
+}
+
+// The follow-up's answers serve the revision as the batch's do (the audit of
+// #365, F1 and F2): the idea owner leaves the success criteria unanswered in
+// the batch and the Operator the marker with the proposal, the follow-up asks
+// both again, and their answers commit at the second restart — the criteria
+// give the measure rows, covering the follow-up's Q-NNN (the answer to the
+// follow-up is the field's, the rule of budget.tsv's sources), a row of the
+// session that covers the follow-up's answer names the fact of the question
+// the follow-up asks again, or the check refuses it, and a point line of the
+// follow-up's window still names an approver, whose row the step appends.
+func TestTheRevisionReadsTheFollowUp(t *testing.T) {
+	w, _ := markersToBatch(t, proposals())
+	questions, err := records.ReadQuestions([]byte(show(t, w.bare, "refs/heads/layup-records", "questions.tsv")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	asked, err := time.Parse(time.RFC3339, questions[0][9])
+	if err != nil {
+		t.Fatal(err)
+	}
+	var owner, operator strings.Builder
+	var criteriaQ, portQ string
+	markers, err := records.ReadMarkers([]byte(show(t, w.bare, "refs/heads/layup-records", "intake/markers.tsv")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	proposed := map[string]bool{}
+	for _, m := range markers {
+		proposed[m[0]] = m[4] != ""
+	}
+	for _, q := range questions {
+		answer := "the answer to " + q[0]
+		skip := false
+		switch {
+		case q[3] == "operator":
+			switch {
+			case q[2] == "S01-stack":
+				answer = "go"
+			case q[2] == markerKeys()[1]: // the port's marker: the follow-up asks it
+				skip = true
+			case proposed[q[2]]:
+				answer = "accept"
+			default:
+				answer = "gap"
+			}
+		case q[2] == "success-criteria":
+			criteriaQ, skip = q[0], true // the follow-up asks it
+		case q[2] == "band.B":
+			answer = "5.0"
+		case q[2] == "band.U":
+			answer = "10.0"
+		case q[2] == "appetite.hours":
+			answer = "40.0"
+		}
+		if q[2] == markerKeys()[1] {
+			portQ = q[0]
+		}
+		if skip {
+			continue
+		}
+		if q[3] == "operator" {
+			fmt.Fprintf(&operator, "%s: %s\n", q[0], answer)
+		} else {
+			fmt.Fprintf(&owner, "%s: %s\n", q[0], answer)
+		}
+	}
+	if criteriaQ == "" || portQ == "" {
+		t.Fatalf("the questions lack the criteria field or the port marker: %q %q", criteriaQ, portQ)
+	}
+	addComment(w, 1, 802, 303, "carol", asked.Add(time.Minute).UTC().Format(time.RFC3339), owner.String())
+	addComment(w, 1, 803, 101, "pharzam", asked.Add(2*time.Minute).UTC().Format(time.RFC3339), operator.String())
+	// The run stops at the step that waits for the follow-up's answers.
+	rows := Restart(context.Background(), w.config("0.1.0-dev"))
+	allDone(t, "the restart with the batch's answers", rows, throughRevision[:17]...)
+	if d := rowOf(rows, "follow-up-answers").Detail; d != "waiting: no answer yet to the follow-up in the block idea-owner and the block operator" {
+		t.Fatalf("the detail of follow-up-answers %q; want both blocks waiting", d)
+	}
+	// The follow-up's rows and its asked stamp: the answers to it come after.
+	questions, err = records.ReadQuestions([]byte(show(t, w.bare, "refs/heads/layup-records", "questions.tsv")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var criteriaFU, portFU, fuAsked string
+	for _, q := range questions {
+		if q[1] != "follow-up" {
+			continue
+		}
+		fuAsked = q[9]
+		switch q[2] {
+		case criteriaQ:
+			criteriaFU = q[0]
+		case portQ:
+			portFU = q[0]
+		}
+	}
+	if criteriaFU == "" || portFU == "" {
+		t.Fatalf("the follow-up asked neither the criteria nor the port: %q %q", criteriaFU, portFU)
+	}
+	stamp, err := time.Parse(time.RFC3339, fuAsked)
+	if err != nil {
+		t.Fatal(err)
+	}
+	addComment(w, 1, 804, 303, "carol", stamp.Add(time.Minute).UTC().Format(time.RFC3339),
+		criteriaFU+": slow; steady\nsetup: dave\n")
+	addComment(w, 1, 805, 101, "pharzam", stamp.Add(2*time.Minute).UTC().Format(time.RFC3339), portFU+": accept\n")
+	// The first attempt covers the follow-up's answer without the fact of the
+	// question it asks again: refused, the finding in the next prompt; the
+	// second names it and keeps.
+	var portRow []string
+	for _, q := range questions {
+		if q[0] == portQ {
+			portRow = q
+		}
+	}
+	spans, err := records.ReadSpans([]byte(show(t, w.bare, "refs/heads/layup-records", "spec/spans.tsv")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	portFact := factOfQuote(portRow[6], portRow[7], spans)
+	if portFact == "" {
+		t.Fatal("the port question's quote lies in no fact")
+	}
+	os.WriteFile(filepath.Join(w.dir, "bin", "revision.tsv"), []byte(
+		"kind\tstatement\tcovers\tcriterion\n"+
+			"requirement\tThe statement of fact 1.\t1\tThe criterion of fact 1.\n"+
+			"requirement\tThe statement of fact 2.\t2\tThe criterion of fact 2.\n"+
+			"requirement\tThe statement of fact 3.\t3\tThe criterion of fact 3.\n"+
+			"requirement\tThe port of the follow-up's answer.\t"+portFU+"\tThe port is set.\n"), 0o644)
+	w.hook = func(line string) {
+		if line == "revision: attempt 2" {
+			os.WriteFile(filepath.Join(w.dir, "bin", "revision.tsv"), []byte(
+				"kind\tstatement\tcovers\tcriterion\n"+
+					"requirement\tThe statement of fact 1.\t1\tThe criterion of fact 1.\n"+
+					"requirement\tThe statement of fact 2.\t2\tThe criterion of fact 2.\n"+
+					"requirement\tThe statement of fact 3.\t3\tThe criterion of fact 3.\n"+
+					"requirement\tThe port of the follow-up's answer.\t"+portFact+" "+portFU+"\tThe port is set.\n"), 0o644)
+		}
+	}
+	rows = beforeSetup(t, Restart(context.Background(), w.config("0.1.0-dev")))
+	allDone(t, "the restart with the follow-up's answers", rows, throughRevision...)
+	if d := rowOf(rows, "revision").Detail; d != "the draft revised, 6 rows of which 2 the success criteria, in spec/draft.tsv" {
+		t.Errorf("the detail of revision %q", d)
+	}
+	prompt, err := os.ReadFile(filepath.Join(w.dir, "bin", "revision-prompt.txt"))
+	finding := "row 4: covers names " + portFU + ", a fact of the answers, but not the fact " + portFact + " of its quote"
+	if err != nil || !strings.Contains(string(prompt), "The check refused the last revision: "+finding) {
+		t.Errorf("the prompt of the second attempt has no finding of the follow-up's quote %q: %v\n%s", finding, err, prompt)
+	}
+	draft := draftOf(t, w)
+	if len(draft) != 6 {
+		t.Fatalf("the draft of the revision:\n%s", show(t, w.bare, "refs/heads/layup-records", "spec/draft.tsv"))
+	}
+	if got := strings.Join(draft[3][1:5], "\t"); got != "requirement\tThe port of the follow-up's answer.\t"+portFact+" "+portFU+"\tThe port is set." {
+		t.Errorf("the row that covers the follow-up's answer %q", draft[3])
+	}
+	for i, want := range []string{"slow", "steady"} {
+		if got := strings.Join(draft[4+i][1:5], "\t"); got != "success-criterion\tThe delivery's success criteria.\t"+criteriaFU+"\t"+want {
+			t.Errorf("criteria row %d %q; want it covering %s, the follow-up's question", i+1, draft[4+i], criteriaFU)
+		}
+	}
+	// The point line of the follow-up's window named dave: its row came in the
+	// commit of the follow-up's answers, source the second comment.
+	if a := show(t, w.bare, "refs/heads/layup-records", "approvers.tsv"); !strings.Contains(a, "\n707\tapprover\tdave\t"+stamp.Add(time.Minute).UTC().Format(time.RFC3339)+"\t804\n") {
+		t.Errorf("approvers.tsv lacks dave's row of the follow-up's comment:\n%s", a)
 	}
 }
 
