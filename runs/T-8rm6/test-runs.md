@@ -169,3 +169,16 @@ the idea-owner row.
   `go test -count=1 ./internal/...` green, `go build`, `go vet` clean.
 - Doc sync (R10): `loop.md` Decided-here gains the serving-resolution and
   fail-closed clauses; `traceability.md` names the new test.
+
+## Coordinator full rerun and current-main integration, 2026-10-17
+
+The repaired source a79d26e5bb1a805b9d123c0b099e42dcca0d782f passed
+`go test -count=1 -tags=integration -timeout 25m ./...`, all21 packages, direct0.
+Recorded wrapper start10:41:17.688780UTC/end10:57:17.780785UTC,960092.005ms.
+The original failed run remains recorded as failure; this pass includes #397's
+fixture repair and the account-ID serving fix. Current main3c9c4be (including
+#351) was then merged before first code review. Its shared REQ-012 conflict
+is the additive union of both Task/Test cells, with other cells unchanged.
+The new account-ID regression name is also added to that PRD Test cell;
+traceability already names it. No production code changed in this integration.
+Final exact combined-head CI is still required; the full run above was on a79d26e.
