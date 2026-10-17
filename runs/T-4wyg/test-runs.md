@@ -299,3 +299,49 @@ The fresh final round must judge this resolution; no ordinary-prose waiver.
 UTC 2026-10-16T17:11:54.482887+00:00 to 2026-10-16T17:25:34.613722+00:00; 820130.835ms.
 This run includes main d09b1c0; the tests-only repair changed no #351 production
 code. Later main changes, if any, are reported separately before final review.
+
+## Round-3 proposal checks — 2026-10-16T17:48Z–17:50Z (unlanded, no approval claimed)
+
+Prepared on a disposable scratch clone of `0e82386`
+(`/home/layup/.cache/layup-session/proposals/issue351-cap2-fix/layup`), never
+the claimed worktree. A reviewable proposal only: no commit, no push, no post,
+no new model review; the post-cap route (further cycle vs. bounded fix) stays
+the Operator's choice. Sole model SWE-2 Max, no subagents.
+
+Round-3 findings F1/F2 are test-coverage omissions (the code matches the
+spec), so the added assertions pass on the correct code — the meaningful red
+is the mutant sweep. Changes: `TestWaitsForABetIsTheExactFoldedHeading` gains
+a leading-prose near-miss (`## the team waits for a bet` must fail `needs` on
+fact 8) and the pass loop now covers all six Markdown levels with varied
+casefolding; `TestCoversBindsEachTokenToItsRecord` gains a bare `F-0004` Facts
+cell (`covers` passes, resolving to no numbered fact). N2: `universeOf`'s
+comment now says the version the index's greatest n names (comment only). N1:
+`traceability.md` and the PRD REQ-012/NFR-004 Test cells name the tests.
+
+### Round-3 mutation sweep (in the scratch clone, exact source restored)
+
+`internal/spec/full.go` sha256 `0fbafa35…` (frozen bytes plus the N2 comment)
+was the restore target; verified byte-exact after each mutant and at the end
+(`SOURCE-RESTORED-EXACT`). Each mutant compile-checked with `go build
+./internal/spec`, judged by `go test -count=1 ./internal/spec` (direct exit).
+A kill is an assertion failure, never a compile error; none compile-invalid.
+(One sed application attempt failed on a `|` delimiter before touching the
+file — hash verified unmodified, then reapplied; not a compile event.)
+
+| Mutant | Result | Killing assertion |
+| --- | --- | --- |
+| `inWaits` → `strings.HasSuffix(strings.ToLower(h), "waits for a bet")` | compiled, **killed** | `TestWaitsForABetIsTheExactFoldedHeading` — `## the team waits for a bet` leg, needs wrongly passed |
+| `inWaits` → `level <= 3 && strings.EqualFold(h, "waits for a bet")` | compiled, **killed** | `TestWaitsForABetIsTheExactFoldedHeading` — levels 4, 5, 6 legs fail needs |
+| bare-record branch drops `rec == c.in.AnswersRecord` | compiled, **killed** | `TestCoversBindsEachTokenToItsRecord` — bare `F-0004` fails `covers` |
+
+### Checks (direct exits, UTC)
+
+`go test -count=1 ./internal/spec` — exit 0 (0.037s) on the correct code.
+`go test -count=1 -tags=integration ./internal/spec ./internal/tsv` — exit 0
+(0.236s / 0.021s). `go build ./...` exit 0; `go vet ./...` exit 0 at
+17:49:13Z. `adr-lint` exit 0; `prd-lint` exit 0; `link-lint` exit 0 (2,791
+links); `run-discipline-tests` exit 0 (138/0); `git diff --check` exit 0 at
+17:49:55Z. No full-module suite and no e2e run here — those stay with the
+coordinator. Production logic unchanged: the only `full.go` hunk versus
+`0e82386` is the N2 comment (frozen sha256 `dac51aa4…` → comment-only diff);
+the mutants above were applied and reverted, never kept.

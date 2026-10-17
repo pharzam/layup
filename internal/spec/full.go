@@ -194,9 +194,9 @@ func (c *fullCheck) judge(rule string) verdict {
 // universe is the set of fact IDs the PRD may cite — the numbered facts of
 // the problem statement and the answers' Q-NNNs — with the class and scope of
 // each. Before the first bet it is spec/spans.tsv and the answers; after, the
-// latest version of the confirmed inventory (the version the index names
-// last) and the answers. A latest version that is absent or unreadable leaves
-// notWhy set: the rules that need the universe did not run.
+// latest version of the confirmed inventory (the version the index's
+// greatest n names) and the answers. A latest version that is absent or
+// unreadable leaves notWhy set: the rules that need the universe did not run.
 type universe struct {
 	facts  map[string]bool
 	class  map[string]string // the universe facts' classes; an answer fact has none

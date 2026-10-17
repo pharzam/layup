@@ -308,6 +308,10 @@ func TestCoversBindsEachTokenToItsRecord(t *testing.T) {
 	in.PRDs = prd("F-0001") // a bare record of the problem statement's facts
 	rows = CheckFull(in)
 	wantResult(t, rows, "covers", resPass)
+
+	in.PRDs = prd("F-0004") // a bare cite of the answers' record resolves to no numbered fact
+	rows = CheckFull(in)
+	wantResult(t, rows, "covers", resPass)
 }
 
 // needs: an in-scope need or constraint with no requirement and no waiting
@@ -390,13 +394,21 @@ func TestWaitsForABetIsTheExactFoldedHeading(t *testing.T) {
 			"## waits for a bet", heading, 1))}
 	}
 	// The phrase inside a longer heading names no section: fact 8 loses its
-	// exemption and needs fails.
+	// exemption and needs fails, for trailing prose and for leading prose
+	// alike — a suffix match would wrongly open the section.
 	in := baseInput(t)
 	in.PRDs = prd("## waits for a bet later")
 	wantFail(t, CheckFull(in), "needs", "8")
 
-	// Any case and any level hold the section.
-	for _, heading := range []string{"## WAITS FOR A BET", "### Waits for a bet", "# waits for a bet"} {
+	in = baseInput(t)
+	in.PRDs = prd("## the team waits for a bet")
+	wantFail(t, CheckFull(in), "needs", "8")
+
+	// Any case and each of the six Markdown levels hold the section.
+	for _, heading := range []string{
+		"# waits for a bet", "## WAITS FOR A BET", "### Waits for a bet",
+		"#### waits FOR a bet", "##### Waits For A Bet", "###### waits for a bet",
+	} {
 		in = baseInput(t)
 		in.PRDs = prd(heading)
 		wantResult(t, CheckFull(in), "needs", resPass)
