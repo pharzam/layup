@@ -80,13 +80,19 @@ func (l *loopRun) attempt(n int) {
 // files that the records hold, as the loop will call it, and gives its ID.
 func (l *loopRun) dev(attempt int, harnessID string, files map[string]string, result string) string {
 	l.t.Helper()
+	return l.as(roleOfStep("implement"), attempt, harnessID, files, result)
+}
+
+// as runs a session of the role in the attempt, as dev does for the developer.
+func (l *loopRun) as(role string, attempt int, harnessID string, files map[string]string, result string) string {
+	l.t.Helper()
 	ctx := context.Background()
 	frozen, err := l.r.FrozenFiles(ctx, "T-ab12")
 	if err != nil {
 		l.t.Fatalf("FrozenFiles: %v", err)
 	}
 	spec := harness(l.t, l.a, fileWork(files, result))
-	spec.Role, spec.Attempt, spec.Pair.Harness, spec.Frozen = roleOfStep("implement"), attempt, harnessID, frozen
+	spec.Role, spec.Attempt, spec.Pair.Harness, spec.Frozen = role, attempt, harnessID, frozen
 	id, err := l.r.TaskSession(ctx, spec)
 	if err != nil {
 		l.t.Fatalf("TaskSession: %q, %v", id, err)

@@ -60,9 +60,10 @@ func TierOf(p Plan, pos Position) string {
 // OpenQuestions counts the open questions of a task that its records give in
 // M2e: the question rows of the last attempt that ended needs_context, unless an
 // answer of an owner role's session that started after it is accepted by the
-// next attempt (AnswerAccepted). The open material findings (their form is
+// next attempt (AnswerAccepted, which also asks the session of the owner role of
+// roles and owners). The open material findings (their form is
 // #387's) and the open escalations (M3) are added when they exist.
-func OpenQuestions(events [][]string, results map[string][][]string) int {
+func OpenQuestions(events [][]string, results map[string][][]string, roles Roles, owners Owners) int {
 	last := -1
 	for i, e := range events {
 		if e[1] == "result" && e[6] == "done" && statusOf(results[e[3]]) == "needs_context" {
@@ -81,7 +82,7 @@ func OpenQuestions(events [][]string, results map[string][][]string) int {
 			if r[0] != "answer" {
 				continue
 			}
-			if _, ok := AnswerAccepted(events, results, id+"."+r[1]); ok {
+			if _, ok := AnswerAccepted(events, results, roles, owners, id+"."+r[1]); ok {
 				return 0
 			}
 		}
@@ -123,7 +124,11 @@ func (s *Sessions) Position(ctx context.Context, task string) (Position, error) 
 			results[e[3]] = rows
 		}
 	}
-	if frozen != nil && OpenQuestions(events, results) == 0 {
+	starts, err := s.readTable(ctx, "sessions.tsv", records.ReadSessions)
+	if err != nil {
+		return "", err
+	}
+	if frozen != nil && OpenQuestions(events, results, sessionRoles(starts), Owners(DefaultOwners())) == 0 {
 		return Downhill, nil
 	}
 	return Uphill, nil

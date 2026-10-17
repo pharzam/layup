@@ -40,6 +40,49 @@ func statusOf(result [][]string) string {
 	return ""
 }
 
+// Roles gives the role of each session by its ID, from the start rows of
+// sessions.tsv (sessionRoles), which layup run writes from the role it starts the
+// session as: never a claim of the session's own result.
+type Roles map[string]string
+
+// Owners gives the owner role of each label of a question, as the owner map
+// does (DefaultOwners): a display name, which RoutingRole turns into a role ID.
+type Owners map[string]string
+
+// sessionRoles gives the Roles of the rows of sessions.tsv.
+func sessionRoles(rows [][]string) Roles {
+	out := Roles{}
+	for _, r := range rows {
+		out[r[sessionID]] = r[sessionRole]
+	}
+	return out
+}
+
+// answerOwner gives the role ID that has to have written an answer to the
+// attempt asking: the one owner role of every question of its sessions that
+// ended done with needs_context. It is false when there is no question, when one
+// goes to a human (the route of a human is the role operator, which no session
+// has) or to a label with no role, and when the questions have more than one
+// owner role: no session answer closes those (loop.md, A question during the
+// work).
+func answerOwner(events [][]string, results map[string][][]string, asking string, owners Owners) (string, bool) {
+	role := ""
+	for _, e := range events {
+		if e[1] != "result" || e[2] != asking || e[6] != "done" || statusOf(results[e[3]]) != "needs_context" {
+			continue
+		}
+		for _, q := range QuestionsOf(results[e[3]]) {
+			route := RouteQuestion(q, owners)
+			id := RoutingRole(route.Role)
+			if id == "" || id == "operator" || (role != "" && id != role) {
+				return "", false
+			}
+			role = id
+		}
+	}
+	return role, role != ""
+}
+
 // AnswerAccepted says whether the answer with the ID answerID (<session>.<n>)
 // is accepted, and by which session, from the events of the task (events.tsv)
 // and the typed result of each session (by its ID). The answer is a row of the
@@ -48,9 +91,11 @@ func statusOf(result [][]string) string {
 // accepted by the next attempt (the number after it, started after the answer
 // and neither closed nor rebased) when one of its sessions ended done with the
 // status completed, its status row cites the ID, and none of its question rows
-// does. The accepting actor is that session. Nothing is recorded: M3c adds the
-// columns (records.md).
-func AnswerAccepted(events [][]string, results map[string][][]string, answerID string) (string, bool) {
+// does. The session of the answer has to be of the owner role of the questions
+// it answers, by roles and owners (loop.md, A question during the work, the rule
+// of T-b3s3). The accepting actor is that session. Nothing is recorded: M3c adds
+// the columns (records.md).
+func AnswerAccepted(events [][]string, results map[string][][]string, roles Roles, owners Owners, answerID string) (string, bool) {
 	m := answerForm.FindStringSubmatch(answerID)
 	if m == nil {
 		return "", false
@@ -71,6 +116,9 @@ func AnswerAccepted(events [][]string, results map[string][][]string, answerID s
 		}
 	}
 	if asking == 0 {
+		return "", false
+	}
+	if want, ok := answerOwner(events, results, strconv.Itoa(asking), owners); !ok || roles[owner] != want {
 		return "", false
 	}
 	next := strconv.Itoa(asking + 1)

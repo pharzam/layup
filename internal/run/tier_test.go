@@ -61,23 +61,39 @@ func eventsOf(lines string) [][]string { return taskEvents(strings.Split(lines, 
 func TestOpenQuestionsAreTheQuestionsNoAcceptedAnswerClosed(t *testing.T) {
 	asked := map[string][][]string{askSess: resultOfRows(needsHuman, askedRow, askedRow)}
 	pending := "attempt 1\nsession 1 " + askSess + "\nresult 1 " + askSess + " done"
-	if n := OpenQuestions(eventsOf(pending), asked); n != 2 {
+	if n := OpenQuestions(eventsOf(pending), asked, stdRoles(), DefaultOwners()); n != 2 {
 		t.Errorf("two questions of the last attempt: %d open, want 2", n)
 	}
-	if n := OpenQuestions(eventsOf("attempt 1\nsession 1 "+askSess+"\nresult 1 "+askSess+" done"), map[string][][]string{askSess: resultOfRows("completed\t—\tdone")}); n != 0 {
+	if n := OpenQuestions(eventsOf("attempt 1\nsession 1 "+askSess+"\nresult 1 "+askSess+" done"), map[string][][]string{askSess: resultOfRows("completed\t—\tdone")}, stdRoles(), DefaultOwners()); n != 0 {
 		t.Errorf("an attempt that ended completed: %d open, want 0", n)
 	}
-	if n := OpenQuestions(eventsOf(stdEvents), answered()); n != 0 {
+	if n := OpenQuestions(eventsOf(stdEvents), answered(), stdRoles(), DefaultOwners()); n != 0 {
 		t.Errorf("an answer accepted by the next attempt: %d open, want 0", n)
 	}
 	// The next attempt cites the answer and asks it again: not accepted, so the question stays open.
 	again := answered()
 	again[nextSess] = resultOfRows(cited, "question\t1\tAgain?\t—\tinterface-contract no docs/spec/forge.md "+answerID)
-	if n := OpenQuestions(eventsOf(stdEvents), again); n != 1 {
+	if n := OpenQuestions(eventsOf(stdEvents), again, stdRoles(), DefaultOwners()); n != 1 {
 		t.Errorf("an answer that the next attempt asks again: %d open, want 1 (the questions of the last attempt, the answer not accepted)", n)
 	}
-	if n := OpenQuestions(nil, nil); n != 0 {
+	if n := OpenQuestions(nil, nil, nil, nil); n != 0 {
 		t.Errorf("no event: %d open, want 0", n)
+	}
+}
+
+// An answer of a session outside the owner role closes no question, and the
+// owner role's does (loop.md, A question during the work, T-b3s3).
+func TestAWrongRoleAnswerClosesNoOpenQuestion(t *testing.T) {
+	roles := stdRoles()
+	roles[ownerSess] = "software-developer"
+	if n := OpenQuestions(eventsOf(stdEvents), answered(), roles, DefaultOwners()); n != 1 {
+		t.Errorf("an answer of a developer: %d open, want 1", n)
+	}
+	if n := OpenQuestions(eventsOf(stdEvents), answered(), nil, DefaultOwners()); n != 1 {
+		t.Errorf("an answer with no role known: %d open, want 1", n)
+	}
+	if n := OpenQuestions(eventsOf(stdEvents), answered(), stdRoles(), DefaultOwners()); n != 0 {
+		t.Errorf("an answer of the owner role: %d open, want 0", n)
 	}
 }
 
