@@ -262,3 +262,15 @@ testable consequences recorded there).
 Limits: whole-module and unfiltered `internal/run` integration are the
 root's serialized runs, not done here; the 8h test-world caps unchanged;
 budget counted at the complete closeout, R12 ruling the root's.
+
+## Coordinator verification of the complete repair, 2026-10-17
+
+Root full integration passed all21packages/direct0 on
+`d2cb9ae433757c9e32b6d532156a8c7fd07c6402`, after the R0 repair and #387 main union:
+11:29:27.127486–11:43:27.205682UTC,840078.196ms wrapper elapsed.
+The earlier failed run and earlier repaired pass remain separate evidence.
+Then main9d8bb9a (#361) was merged cleanly before final review. This union
+retains the approver/revision code and the new attempts/frozen/PhasePair APIs.
+The full run above is not retroactively attributed to this later union; focused
+intersection checks and final exact-head CI validate the combined source.
+No extra goal, record kind, column or authority was introduced by the merge.
