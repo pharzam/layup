@@ -172,10 +172,41 @@ func TestThePlanAndTheRecordsGiveTheTierOfARetry(t *testing.T) {
 		t.Errorf("an open question: %s; want uphill", p)
 	}
 	// The owner's answer, and attempt 3 that uses it: accepted, so downhill.
-	owner := l.dev(2, "codex", map[string]string{"o.txt": "o\n"}, "kind\tn\tvalue\tsha256\treason\nstatus\t1\tcompleted\t—\tanswered\nanswer\t1\tYes\t—\tdocs/spec/forge.md\n")
+	owner := l.as("software-architect", 2, "codex", map[string]string{"o.txt": "o\n"}, "kind\tn\tvalue\tsha256\treason\nstatus\t1\tcompleted\t—\tanswered\nanswer\t1\tYes\t—\tdocs/spec/forge.md\n")
 	l.attempt(3)
 	l.dev(3, "devin", map[string]string{"d.txt": "d\n"}, "kind\tn\tvalue\tsha256\treason\nstatus\t1\tcompleted\t—\tuses the answer "+owner+".1\n")
 	if p := pos(); p != Downhill {
 		t.Errorf("an answer accepted by the next attempt: %s; want downhill", p)
+	}
+}
+
+// The same ledger twice, differing only in the role of the session that wrote
+// the answer row: the owner role of the question moves the task downhill, any
+// other role leaves it uphill (loop.md, A question during the work, T-b3s3).
+func TestAnAnswerOfAWrongRoleSessionLeavesThePositionUphill(t *testing.T) {
+	const ask = "kind\tn\tvalue\tsha256\treason\nstatus\t1\tneeds_context\t—\tasks\n"
+	const answer = "kind\tn\tvalue\tsha256\treason\nstatus\t1\tcompleted\t—\tanswered\nanswer\t1\tYes\t—\tdocs/spec/forge.md\n"
+	for _, c := range []struct {
+		name, role, questions string
+		want                  Position
+	}{
+		{"the owner role of the question", "software-architect", "question\t1\tMay it?\t—\tinterface-contract no docs/spec/forge.md\n", Downhill},
+		{"a developer", "software-developer", "question\t1\tMay it?\t—\tinterface-contract no docs/spec/forge.md\n", Uphill},
+		{"the owner of another kind", "software-engineer", "question\t1\tMay it?\t—\tinterface-contract no docs/spec/forge.md\n", Uphill},
+		{"one of two owners of one session's questions", "software-architect", "question\t1\tMay it?\t—\tinterface-contract no docs/spec/forge.md\nquestion\t2\tWhere?\t—\tenvironment-or-infrastructure no docs/spec/forge.md\n", Uphill},
+		{"the owner of two questions of one kind", "software-architect", "question\t1\tMay it?\t—\tinterface-contract no docs/spec/forge.md\nquestion\t2\tHow?\t—\tinterface-contract no docs/spec/forge.md\n", Downhill},
+	} {
+		l := newLoop(t, nil)
+		ctx := context.Background()
+		s := l.prod()
+		l.frozenAt("claude")
+		l.attempt(2)
+		l.dev(2, "devin", map[string]string{"q.txt": "q\n"}, ask+c.questions)
+		owner := l.as(c.role, 2, "codex", map[string]string{"o.txt": "o\n"}, answer)
+		l.attempt(3)
+		l.dev(3, "devin", map[string]string{"d.txt": "d\n"}, "kind\tn\tvalue\tsha256\treason\nstatus\t1\tcompleted\t—\tuses the answer "+owner+".1\n")
+		if p, err := s.Position(ctx, "T-ab12"); err != nil || p != c.want {
+			t.Errorf("%s: %s, %v; want %s", c.name, p, err, c.want)
+		}
 	}
 }
