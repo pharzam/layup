@@ -344,4 +344,21 @@ func TestTheSuccessCriteriaOfTheAnswer(t *testing.T) {
 	if id != "Q-006" || got != nil {
 		t.Errorf("the criteria unanswered: %q, %v; want Q-006 and none", id, got)
 	}
+	// The answer to the follow-up that asked the field again, when it has one
+	// — the rule of budgetAfterFollowUp (task T-tmm2), the same for every
+	// field of the form: the criteria come from the follow-up's answer, and
+	// the follow-up's Q-NNN is the question they cover.
+	follow := append(slices.Clone(questions),
+		[]string{"Q-007", "follow-up", "Q-006", "idea-owner", "before-delivery", "follow-up", "", "", "The criteria?", "2026-10-11T10:10:00Z", "layup run", "", "asked"})
+	only := [][]string{{"Q-007", "steady; kind", "811", "303", "2026-10-11T10:12:00Z"}}
+	if id, got = criteriaAnswer(follow, only); id != "Q-007" || strings.Join(got, " ") != "steady kind" {
+		t.Errorf("the criteria answered only in the follow-up: %q, %q; want Q-007 and [steady kind]", id, got)
+	}
+	both := append(slices.Clone(answers), only...)
+	if id, got = criteriaAnswer(follow, both); id != "Q-007" || strings.Join(got, " ") != "steady kind" {
+		t.Errorf("answered twice: %q, %q; want the follow-up's Q-007 and [steady kind]", id, got)
+	}
+	if id, got = criteriaAnswer(follow, answers); id != "Q-006" || strings.Join(got, " ") != "fast cheap" {
+		t.Errorf("a follow-up still unanswered: %q, %q; want the batch's Q-006 and [fast cheap]", id, got)
+	}
 }

@@ -230,22 +230,39 @@ func criteriaOf(answer string) []string {
 	return out
 }
 
-// criteriaAnswer gives the ID of the success-criteria question of the intent
-// form and the criteria of its answer, none when it has none.
+// criteriaAnswer gives the ID of the question whose answer gives the success
+// criteria, and the criteria, none when it has none: the intent form's
+// question of the batch, or the follow-up that asked it again when the
+// follow-up has the answer — the answer to the follow-up is the field's
+// answer then (the rule of budgetAfterFollowUp, task T-tmm2, the same for
+// every field of the form).
 func criteriaAnswer(questions, answers [][]string) (string, []string) {
 	var id string
+	follow := map[string]string{} // the follow-up of each question asked again
 	for _, q := range questions {
-		if q[1] == "intent" && q[2] == "success-criteria" {
-			id = q[0]
+		switch q[1] {
+		case "intent":
+			if q[2] == "success-criteria" {
+				id = q[0]
+			}
+		case "follow-up":
+			follow[q[2]] = q[0]
 		}
 	}
 	if id == "" {
 		return "", nil
 	}
+	answerOf := map[string]string{}
 	for _, a := range answers {
-		if a[0] == id {
-			return id, criteriaOf(a[1])
+		answerOf[a[0]] = a[1]
+	}
+	if fu, asked := follow[id]; asked {
+		if _, answered := answerOf[fu]; answered {
+			id = fu
 		}
+	}
+	if a, ok := answerOf[id]; ok {
+		return id, criteriaOf(a)
 	}
 	return id, nil
 }
