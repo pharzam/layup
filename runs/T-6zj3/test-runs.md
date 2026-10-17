@@ -1,0 +1,47 @@
+# T-6zj3 — the test runs (#361)
+
+Times are read from `date -u` by the run script itself (start and end of the `go test` process), never drafted. Exit codes are those of `go test`, run directly, not through a pipe. The red runs are on stubs that compile and return an empty or "not built" value, so each failure is an assertion; the first failing lines are in the logs kept outside git (host `/tmp/t6zj3/`); the failing test names are below.
+
+| Run | Level | Start (UTC) | End (UTC) | Exit | Failing tests |
+| --- | ----- | ----------- | --------- | ---- | ------------- |
+| `red-tier` | unit, tier | 2026-10-16T15:49:42.455742260Z | 2026-10-16T15:49:43.169753628Z | 1 (red) | 6: TestEveryRowOfTheStepTableResolvesToATier, TestOpenQuestionsAreTheQuestionsNoAcceptedAnswerClosed, TestOwnerOfItsKindIsResolvedByTheOwnerMap, TestTheProgressPositionMovesTheTier, TestTheRoutingRoleOfAnOwnerIsTheRoleIDOfTheStepTable, TestTheTierOfEachPlanClass |
+| `red-authors-unit` | unit, authors | 2026-10-16T15:52:03.038804217Z | 2026-10-16T15:52:03.778639277Z | 1 (red) | 8: TestAHarnessThatFailedItsProbeAndAModelOfUseNoAreNotAdmitted, TestASessionBoundToACommitOutsideTheDiffIsNoAuthor, TestAnAuthorsReadThatFailsIsNoAnswer, TestNoHarnessOutsideTheAuthorsIsTheErrorOfThePair, TestTheAuthorsOfAPlanReviewAreTheHarnessesOfThePlanSessions, TestTheAuthorsOfAVerificationAreTheHarnessesBoundToACommitOfTheDiff, TestThePairIsTheFirstAdmittedOneOutsideTheAuthors, TestTheWriterOfTheFrozenTestsIsAnAuthor |
+| `red-attempt-unit` | unit, attempts | 2026-10-16T15:52:21.049489170Z | 2026-10-16T15:52:21.710365986Z | 1 (red) | 3: TestAGateFailureIsTheRowsThatDidNotPass, TestNoFailureStartsNoAttempt, TestTheNextAttemptIsTheNextNumberAtTheBaseWithTheFindings |
+| `red-prompt-unit` | unit, prompt file | 2026-10-16T15:53:11.247726250Z | 2026-10-16T15:53:18.742078369Z | 1 (red) | 9: TestADecisionRecordIsOneThatASectionNames, TestEachItemHasItsPathAndTheSHA256OfItsBytes, TestTheFindingsAreInThePromptAndThePromptHoldsNoDiff, TestTheHandoffsAreTheCopiesOfValidHandoffsAndTheResultsThatHoldAnAnswer, TestTheIssueAndPlanArePartOneAndAMissingPlanIsAnEmptyPartAndNotAnError, TestThePromptFileListsTheFiveKindsInTheirOrder, TestTheRequirementItemsAreTheFilesWhoseRowOrHeadingHoldTheID, TestTheRuleFilesAreTheFilesOfTheRulePathRegister, TestTwoRecordsOfOneFileNameAreRefused |
+| `red-frozen-unit` | unit, frozen list | 2026-10-16T15:55:07.621281272Z | 2026-10-16T15:55:08.317526362Z | 1 (red) | 11: TestAChangedSourceIsTheFindingTestChanged, TestAFreezingWritesTheRowsWithTheSessionsHarnessAndOneTime, TestAFrozenListIsReadByItsRules, TestAFrozenListRefusesEachBrokenRule, TestAListThatIsNotTheFrozenOneIsNotTheSame, TestAListedTestThatDoesNotFailAtTheBaseMakesTheHandoffInvalid, TestAStaleVerifiersRecordIsNoReviewOfTheNewPlan, TestAnAmendmentIsANewPlanThenANewPlanReview, TestAnEmptyListFreezesNothingAndIsInvalid, TestTheHarnessOfAnUnchangedTestIsKept, TestTheListFreezesOnlyAtAValidHandoffToTheVerifierThatGaveOne |
+| `red-frozen-int` | integration, frozen list | 2026-10-16T15:58:16.593105255Z | 2026-10-16T15:59:26.583381545Z | 1 (red) | 13: TestAChangedFrozenSourceIsAFindingAndTheHandoffIsInvalid, TestAFrozenListWhoseHashNoHeadHoldsIsRefused, TestAListedTestThatIsNotRedThenGreenMakesTheHandoffInvalidAndFreezesNothing, TestALostLeaseWritesNoFrozenList, TestARestartRecordsTheSameHandoffOnceAndTheListStays, TestASecondValidHandoffDoesNotWriteTheListAgain, TestASessionWithNoBoundHeadFreezesNothing, TestAnAmendmentFreezesTheListAgainAndTheFindingCloses, TestTheFrozenFilesAreInTheNextAttemptAtTheirHashes, TestTheFrozenListHoldsTheHashesOfTheFilesAtTheBoundHead, TestTheTestsBlockEqualsItsGoSchema, TestTwoFreezesInTheSameSecondAreOrderedByTheEvents, TestWithoutAnAmendmentAChangedTestIsNotFrozenAgain |
+| `red-others-int` | integration, authors/attempts/prompt/tier | 2026-10-16T16:00:14.869126382Z | 2026-10-16T16:00:55.296218043Z | 1 (red) | 8: TestAGateFailureStartsTheNextAttemptFromTheBaseWithItsFindings, TestAPromptFileIsBuiltFromTheRecordsOfARealTaskAndTheSessionReadsTheFiles, TestAPromptThatDoesNotFitRefusesTheStartWithBothNumbers, TestAnAttemptThatAQuestionEndedStillCountsInTheNumbering, TestTheAuthorsAreReadFromRealCommitsAndRealRecords, TestThePlanAndTheRecordsGiveTheTierOfARetry, TestTheReviewersPairComesFromTheRoutingOfTheRecordsOutsideTheAuthors, TestTheWriterOfTheFrozenTestsIsAnAuthorOfALaterAttempt |
+| `red-links` | integration, links (own regressions) | 2026-10-16T16:54:54.309632553Z | 2026-10-16T16:55:11.849789099Z | 1 (red) | 4: TestAFrozenFileThatIsALinkIsRefusedAndWritesNothingOutside, TestAFrozenFileThroughALinkInsideTheCheckoutIsRefused, TestAFrozenFileThroughAParentLinkIsRefusedAndWritesNothingOutside, TestARefusedFrozenListWritesNoFile |
+
+Red notes. Tests that pass on the stubs, by design, and are attacked by mutants instead: `TestAnAmendmentIsNotAReviewWithoutAPlanOrInTheWrongOrder`, `TestAnAnswerOfThePlanRoleIsNoNewPlan`, `TestAStepOfNoTaskHasNoPromptFile`, `TestNoListPutsNoFileInAnAttempt`, `TestALostLeaseWritesNoFrozenList`, `TestNoFailedRowStartsNoAttemptOnTheRealRecords`, `TestAPlainCheckoutGetsTheFrozenFilesInOneCommit` (a control). Two red runs first failed for the wrong reason and were corrected before they count: the stub of `FrozenFiles` returned an error, which stopped every integration test before its own assertion (it now returns no file, and `red-frozen-int` is the rerun); a nil index in `authors_test.go` panicked the first authors run (`red-authors-unit` is the rerun).
+
+## Green
+
+| Run | Start (UTC) | End (UTC) | Exit | Note |
+| --- | ----------- | --------- | ---- | ---- |
+| `green-all-int` | 2026-10-16T16:10:47.408873417Z | 2026-10-16T16:11:06.429366310Z | 0 | the last of five targeted integration runs of the first green attempt; the earlier ones failed on a wiring edit that did not apply (`TaskSession` never called the frozen-file and input steps) and on two test assertions (a line count, a records path), all found and fixed before the commit; this one covers `TestASecondValidHandoff` and `TestAPromptFileIsBuilt` |
+| `green-final-int` | 2026-10-16T16:52:21.172518179Z | 2026-10-16T16:55:37.071138817Z | 0 | all 26 named integration tests of this task and the block tests, on the merged head `d1d0a31`, before the link repair |
+| `green-links` | 2026-10-16T16:55:27.566506587Z | 2026-10-16T16:55:45.921685365Z | 0 | the four link regressions after the repair |
+
+`final-checks.txt` on the merged head `d1d0a31` (start 2026-10-16T16:50:26Z, end 2026-10-16T16:51:49Z): `gofmt -l .`, `go build ./...`, `go vet ./...`, `go test -count=1 ./...`, the targeted integration `TestPackageRules|TestEverySchemaBlock|TestTheTestsBlockEqualsItsGoSchema` over `./cmd/layup ./internal/tsv ./internal/run`, `adr-lint`, `prd-lint`, `link-lint`, `run-discipline-tests`, `setup-check` and `git diff --check origin/main`: every exit 0. No full-module integration and no e2e was run by this task; the root runs them.
+
+## The audit finding (the frozen-file write)
+
+The coordinator's audit of `801291b` found that `applyFrozen` followed a symbolic link in the checkout (comment 6220373564). The author wrote its own regressions (`red-links`: four tests failed, the outside file `original` read `frozen` after the call, and the call returned no error), repaired it (refuse any link in a parent or as the file, the whole list checked before the first write), and ran five compiled fix-removal mutants (`mutants.md`, rows L1 to L5), all killed, with the file restored to the same hash.
+
+## Interruptions, as they were
+
+The first context was interrupted after run1 completed (50 rows, all of the driver list; the author's earlier count of56 was wrong): its watcher matched its own command text and waited indefinitely. The later context was interrupted to deliver the coordinator's reproducible frozen-file write defect before review. A focused integration run (`green-final-int`) was in flight then and finished with exit0 (above). Neither interruption is credited as a successful CLI completion. Resources come from actual CLI metadata; waiting time is not inferred.
+
+Coordinator source-audit control: the original parent-link scratch assertion
+failed on801291b and passed against the byte/hash-checked repair, direct exits1/0
+(public6220627072). This is not the independent frozen-head review.
+
+## Root full integration on the stable repaired head
+
+`go test -count=1 -tags=integration -timeout 25m ./...` on
+`dff729b77e79329f6d40095990c371c2b21b1ee4` passed all21packages, direct exit0.
+UTC 2026-10-16T17:25:59.241544+00:00 to 2026-10-16T17:41:19.332701+00:00; 920091.157ms.
+This includes the whole-list link preflight and main d09b1c0. The main merge
+40741ce had no conflict; shared summaries retain both branches. Final exact-head
+CI and the fresh independent review remain required.
