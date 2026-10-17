@@ -239,7 +239,10 @@ of `M2a`, `M2b`, `M2c` and `M2e`; the build task that made `internal/handoff` (t
 - `internal/spec`: the full `layup spec check` ([`loop.md`](loop.md#req-012--the-full-spec-check)),
   the filter of options, the rendering of a bet (the rendered commit and the
   inventory), the brief check, and the Go schemas of `inventory`, `inventory-index`,
-  `options` and `task-spec-check`. It may now import `internal/tsv`,
+  `options` and `task-spec-check`; it also holds a second Go value of `tasks`,
+  to read the register for the full check — the `spans` precedent — which its
+  task compares with the block (`internal/run` owns the writer's). It may now
+  import `internal/tsv`,
   `internal/records` and `internal/git`, and it **starts a program**: `sh`, for the
   pinned `prd-lint` of the target (the check that accepts a head only when each
   failure line names an empty MoSCoW or Phase cell), by `os/exec` with the

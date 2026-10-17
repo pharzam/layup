@@ -374,6 +374,11 @@ check that catches it.
   input count ([format](https://github.com/harbor-framework/harbor/blob/main/rfcs/0001-trajectory-format.md#metricsschema)).
   Keep private session exports outside version control and commit only reported
   metrics, preserving unavailable parts as unavailable. Learned in #359.
+  A resumed export can lose earlier agent metrics after compaction while keeping
+  the original system timestamp. Compare per-step timestamps and metric rows,
+  not just session IDs or the final totals; union matching rows once, and label
+  missing earlier usage unavailable. In #351 the interrupted export was a subset
+  of the final export, while the plan metrics had been discarded.
 - ❌ **A Go version that CI resolves at its own time.** `go.mod` said `go 1.26`,
   and `actions/setup-go` with `go-version-file: go.mod` installs the newest
   release of that line it knows. The job `security` passed on `main` at
@@ -646,6 +651,29 @@ success without having done its job.
   ([the budget](engineering-discipline.md#reviewing-until-findings-decay)); the task file names the base that the
   ruling gives.
 
+- ❌ **The pinned `prd-lint` fails on two streams.** Its awk `print` goes to
+  stdout and its `err()` — the filename refusal — goes to stderr, so a reader of
+  stdout alone sees an accepted run while a refused name stands unread. It is
+  silent because every line starts `FAIL  ` and exit 1 is the expected verdict
+  of a waiting specification. **The check:** `RunPRDLint` keeps the streams
+  apart and the acceptance judges every non-empty line of both — only
+  `MoSCoW "" not in Must|Should|Could|Won't` and `has no phase value` are an
+  empty cell, a `—` MoSCoW is not (internal/spec, task `T-4wyg`).
+- ❌ **A `clear` spec-check table that drops its rows.** Before the first bet, a
+  head that touches neither the PRD nor `docs/spec/` is `clear` — but the table
+  still holds the ten rule rows, `ran` included; a writer that emits nothing, or
+  a partial table, leaves the head with a spec-check record `ran` never judged.
+  It is silent because "clear" reads as "nothing to write". **The check:**
+  `CheckFull` returns the ten rows in every mode and the writer round-trip reads
+  them back (internal/spec, task `T-4wyg`).
+- ❌ **A short table row panics the check.** A parser that indexes `cells[1]`
+  crashes on a truncated row — and the pinned producer never reads that table,
+  so nothing upstream catches it first. It is silent because every fixture row
+  is well-formed: the suite stays green while one malformed line takes the
+  whole check down with it. **The check:** each cell index carries a bounds
+  guard, a truncated row records nothing (so its requirement fails the rule,
+  never the process), and a test feeds the shortest forms — one cell and a
+  bare `|` (internal/spec, task `T-4wyg`, round-1 finding F1).
 - ❌ **Equal bytes are not an equal file.** A check that compares what `git show
   REV:PATH` gives with the bytes it expects (the basic `layup/rules` compares a
   rendered record) passes a symbolic link whose target text is the expected text,
