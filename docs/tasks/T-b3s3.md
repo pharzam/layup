@@ -1,6 +1,6 @@
 # T-b3s3 — the owner role of an accepted answer
 
-Issue [#401](https://github.com/pharzam/layup/issues/401), row 66m of the plan of `M2e`. Serves REQ-005/F-0003#45.
+Issue [#401](https://github.com/pharzam/layup/issues/401), PR [#403](https://github.com/pharzam/layup/pull/403), row 66m of the plan of `M2e`. Serves REQ-005/F-0003#45.
 Author: Sonnet 5.5. Initial plan 6233490565, plan review 6233654484 (approve-with-conditions, SWE-2 Max), author
 response 6233745458 before any edit. The Operator's "Approve #401 coupled scope" (comment 6233711446) keeps both goal
 classes in the issue: A the owner-role predicate in `AnswerAccepted`, B the trusted data feed through `Position` and
@@ -41,4 +41,49 @@ duplicates `RoutingRole` and leaves the feed untested); widening #361.
 
 ## Verdict and resource record
 
-Pending the root audit and the independent review round.
+Fresh independent SWE-2 Max round1 on ef435d0, record6234079442:
+**nothing material in scope**, cycle0/cap1. Its producing-record audit corrected
+piped test-status claims with direct saved statuses, disclosed an invalid first
+feed mutant, and distinguished two compiled assertion kills from one type-level
+rejection. Own overflow/temporary scratch and byte-exact restored controls are
+disclosed; no author source change followed the round.
+
+Root full integration passed all21packages on ef435d0, direct0,
+1000084.734ms. All12 required exact-head checks also pass on that pre-closeout
+head, including CI-only end-to-end. Final closeout-head CI remains required.
+The last commit changes only task detail/backlog/completed bookkeeping. The
+complete current-main landing figure is recorded on the issue, within the
+unchanged850/16 maximum; no overrun approval is inferred.
+
+Notes disposition (no code or ordinary document patch after the review):
+1. Retain records.md's existing answer-ID definition; it asserts no new role check.
+2. Retain representative PRD test names; traceability registers all six new tests.
+3. Retain the unconditional sessions.tsv read: corrupt records fail loudly.
+4. Disclose the evidence's20-case wording as a typo: the new matrix has21 cases,
+   four positive arms and17 refusals. Existing refusal matrix remains unchanged.
+5. Retain the matching operator literals; a shared constant is optional.
+6. Retain the awkward pointer comment: its operative target is correct.
+7. Measure complete file count after the completed-log move, including all files.
+
+### Actual resources
+
+Reported subset only. Sonnet I/O/Cw/Cr are uncached input/output/cache creation/
+read, with thinking inside output. SWE P/O/C are prompt/output/cache, C already
+inside P. Retained metric rows are deduplicated across exports; missing elapsed
+values are not inferred.
+
+| Part | Expected tier | Model | Effort | Reported tokens | Elapsed |
+| --- | --- | --- | --- | --- | --- |
+| Plan | reasoning | Sonnet5.5 | not reported | I54/O28160/Cw105199/Cr1573593 | 288360ms |
+| Independent plan review | reasoning | SWE-2 Max | not reported | P6114863/O60445/C5967040 | not reported |
+| Implementation/tests/docs | execution | Sonnet5.5 | not reported | I54/O34129/Cw65439/Cr4105045 | 1000567ms |
+| Evidence organization/correction | execution | Sonnet5.5 | not reported | I6/O2292/Cw5111/Cr542507 | 44017ms |
+| Independent round1 including same-head record audit | reasoning | SWE-2 Max | not reported | P8327573/O65037/C8216704;72 unique rows | not reported |
+| Root full integration | — | deterministic | — | not applicable | 1000084.734ms |
+| Root producing audit/metadata/coordination/closeout | reasoning/execution | Codex GPT-6 family | not reported | not reported | not reported |
+| **Total reported subset** | | | | 21029507 tokens; cache counted once | 2333028.734ms |
+
+Requested models do not reach the repository's named reasoning tier; this routing
+limit and model-level independence are explicit. The total is a known subset,
+not whole-session usage or elapsed wall time. No cumulative-plus-increment double
+counting and no elapsed estimate from transcript timestamps.
