@@ -274,3 +274,25 @@ retains the approver/revision code and the new attempts/frozen/PhasePair APIs.
 The full run above is not retroactively attributed to this later union; focused
 intersection checks and final exact-head CI validate the combined source.
 No extra goal, record kind, column or authority was introduced by the merge.
+
+## Operator-authorized second cycle: end-to-end fixture compatibility
+
+Exact-head CI on e8002cd failed in TestTheStepsOfIntake (five expected questions,
+six actual) and TestTheStepsOfTheScaffold (seven expected, eight actual). Unit
+and integration stages passed; end-to-end failed. Run39031898632, job117393864963
+is the semantic red, not a flaky timing failure. The previous2,364/28 size request
+was withdrawn. Operator6235055886 explicitly approved one additional cycle, cap2;
+confirmation6235114373 preserves the unchanged1,500/24 maximum.
+
+The reviewed concrete proposal6233887395 updates only three end-to-end fixture
+files: exact counts and setup-question index, supplied criteria answers, the
+asserted revision step and scripted revision output. Existing behavior assertions
+remain. No production code changes. The shared script reads the pre-revision
+draft named by the prompt and emits its four session-output columns; production
+code still creates success-criterion rows. A guardrails lesson covers fixtures
+under every build tag.
+
+Scratch compile-only check passed before authorization:
+go test -tags=e2e -run '^$' ./cmd/layup (no E2E runtime executed).
+The task-branch compile, hook checks and new CI results follow on the issue.
+Fresh independent second-cycle review and complete exact-size approval remain.

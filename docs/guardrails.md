@@ -1119,6 +1119,14 @@ These traps are not domain-specific: they hurt every project's test suite.
   default owner that the step table has as a role comes out as exactly that ID, with the roles read
   from `session.StepTable()`, never typed in the test.
 
+- ❌ **A required intake field changes only the integration fixtures.** Adding
+  success criteria and the revision step in #365 left the CI-only end-to-end
+  worlds on the old question counts, setup-question index and scripted outputs.
+  **The check:** inspect fixtures under every build tag when a required field or
+  step changes; preserve their behavior assertions, supply the new answer and
+  scripted output, and require the full CI ladder before landing. A local
+  integration pass does not stand for the CI-only end-to-end level.
+
 ### Reference-sweep pitfalls
 
 A change that edits references or a rule's wording across the tree has three silent

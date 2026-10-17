@@ -44,8 +44,12 @@ Final blind round6233744064 read frozen ba3b70c against current main9d8bb9a:
 **code, tests and documents: nothing material in scope**, cycle1/cap1.
 The formal verdict is **not mergeable, findings recorded**, solely because the
 complete landing size exceeds the unchanged initial maximum without approval.
-Only task detail/backlog/completed bookkeeping follows this final round.
-The exact complete figure and any one-time R12 ruling are recorded on the issue;
+The original final CI then exposed two stale end-to-end fixtures. Operator
+6235055886 authorized one additional cycle, cap2; the prior final record is
+intermediate. The bounded three-test-file repair6233887395 and guardrails lesson
+receive a fresh independent round. No production-code fix enters this cycle.
+The previous2,364/28 request is withdrawn; the new exact complete figure and
+any one-time R12 ruling are recorded on the issue;
 no estimate, reserve or implicit approval replaces that ruling.
 
 Final notes disposition (no code correction or additional review round):
