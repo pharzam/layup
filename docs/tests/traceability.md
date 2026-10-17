@@ -265,5 +265,5 @@ the first.
 | `M4a/uat/two-harnesses` | uat | REQ-013 | F-0003#52 | guardrails.md §1.1 Inv-9 | ADR-0020 | M4a | planned |
 | `M4c/uat/two-stacks` | uat | REQ-014 | F-0003#67 | — | — | M4c | planned |
 | `TestThePointBindings`, `TestTheApproverRows`, `TestAnAccountARowAlreadyServesIsNamedByAnotherSpelling`, `TestThePointIsServedByTheResolvedAccount`, `TestTheApproverOfEachPoint`, `TestTheSuccessCriteriaOfTheAnswer` (`internal/run/answers_test.go`) | unit | REQ-012 | F-0003#51, F-0003#54 | — | ADR-0019 | T-8rm6 | green |
-| `TestCheckRevision`, `TestKeepOfRevision` (`internal/run/revision_test.go`) | unit | REQ-012 | F-0003#51, F-0003#54 | — | ADR-0019 | T-8rm6 | green |
-| `TestTheRevisionOfTheDraft`, `TestTheRevisionRefusedThenKept`, `TestTheRevisionStopsAtTheCap` (`internal/run/revision_integration_test.go`) | integration | REQ-012 | F-0003#51, F-0003#54 | — | ADR-0019 | T-8rm6 | green |
+| `TestCheckRevision`, `TestTheFactOfAQuote`, `TestKeepOfRevision` (`internal/run/revision_test.go`) | unit | REQ-012 | F-0003#51, F-0003#54 | — | ADR-0019 | T-8rm6 | green |
+| `TestTheRevisionOfTheDraft`, `TestTheRevisionRefusedThenKept`, `TestTheRevisionReadsTheFollowUp`, `TestTheRevisionStopsAtTheCap` (`internal/run/revision_integration_test.go`) | integration | REQ-012 | F-0003#51, F-0003#54 | — | ADR-0019 | T-8rm6 | green |

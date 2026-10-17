@@ -478,7 +478,9 @@ the batch's point lines named; `intake/answers-review.tsv`; the
 follow-up comment (its rows of `questions.tsv`), or, when nothing is left to
 ask (no question `asked` or `open`, and the three fields of the intent form that
 `budget.tsv` records parse), that state of the records, from which the step posts nothing; the rows of `intake/answers.tsv` of the follow-up's questions, with the rows of `approvers.tsv` its point lines named; the revised `spec/draft.tsv`.
-Each step whose record exists is
+Each step whose record exists — the record of `revision` being the *revised*
+`spec/draft.tsv`, told from the session's own draft by the done-before rule of
+[`loop.md`](loop.md#the-revision-of-the-draft) — is
 `done` with "done before" and runs nothing, but `numbering` and `spans` while the
 last `spec/check.tsv` has a `fail` row: a restart runs `numbering` again (The
 span check; note 1 of #210); a step whose input is not there yet

@@ -876,8 +876,11 @@ Deferred by `M2c` ([`intake.md`](intake.md#not-in-m2c)). **Decided here**
   one row for each criterion, with the idea owner's words, and a measure fact that
   has none is refused by the draft check of `M2c`. **Decided here** (task
   `T-8rm6`): the form's fourth field is `success-criteria`, its criteria
-  separated by `;`, and the revision appends one `success-criterion` row for
-  each, in the answer's order.
+  separated by `;`, each segment trimmed and an empty one dropped; the answer
+  is that of the follow-up that asked the field again when the follow-up has
+  one, else the batch's (the rule of `budget.tsv`'s fields, task `T-tmm2`),
+  and the revision appends one `success-criterion` row for each, in the
+  answer's order, covering the question whose answer gave them.
 - The **approver of each planned point** comes from the Intake batch and is a row
   of `approvers.tsv` with `source` the ID of the answering comment (the column that
   `M2a` left for it). Code finds the point from the copy of that comment (the
@@ -910,14 +913,28 @@ requirement that covers an answer's
 fact also names the fact of the answer's quote (the link kept by `M2c`:
 [`intake.md`](intake.md#the-raw-fact-of-the-answers)); a requirement that covers an
 answer and not the quote's fact is refused, and the session gets the finding in a
-new attempt. **Decided here** (task `T-8rm6`): the check keeps the coverage
+new attempt — a refused revision is run again with the check's finding in its
+prompt, until a draft keeps or the cap of milestone 0 stops the step
+([`intake.md`](intake.md#input-states), task `T-8rm6`). **Decided here** (task `T-8rm6`): the check keeps the coverage
 rules of the draft of `M2c` — a `need` or `constraint` fact must stay covered, a
 `measure` fact must keep a success criterion — and adds that a fact covered by
 both drafts whose set of classes changed is kept only when a row that covers it
 names a fact of the answers; a fact newly covered or dropped is no class
-change. A row that covers the answer of `success-criteria` is refused: its
+change. A row that covers the answer of `success-criteria` is refused — the
+question of the batch's form and the follow-up that asked it again alike: its
 criteria are the code's rows, which the keep appends as `success-criterion`
-rows after the session's. The revised draft is the input of the specification task.
+rows after the session's.
+An `R-NNN` is the position of its row in the draft it belongs to, never an
+identity kept from the draft before it: a revision that reorders or drops
+rows writes the IDs of the new order, and a record written before the
+revision — a row of `intake/coverage.tsv`, an answer's text that names one —
+names that earlier draft's row, the draft the revision session reads
+([`records.md`](records.md#nfr-001--the-records-of-intake), the block `draft`).
+**Done before** (task `T-8rm6`): the revised draft is
+there when every row's `session` is a session that started on a records base
+holding `intake/answers.tsv`, and the step is done before — with the
+session's comment reposted from the record when the control issue lacks it,
+the batch's precedent. The revised draft is the input of the specification task.
 
 ### The rendered commit and the confirmed inventory
 
