@@ -182,3 +182,83 @@ is the additive union of both Task/Test cells, with other cells unchanged.
 The new account-ID regression name is also added to that PRD Test cell;
 traceability already names it. No production code changed in this integration.
 Final exact combined-head CI is still required; the full run above was on a79d26e.
+
+## Round-1 review repair (cycle 0 of cap 1), 2026-10-17
+
+Review #365comment6233209670 on the frozen head `35baa1f`, verdict `not
+mergeable`: F1–F4 material, N1–N6 notes. Author response posted before any
+edit: #365comment6233246316 (the F3 contract analysis, alternatives and
+testable consequences recorded there).
+
+- **F1, follow-up quote through `ref`** (`internal/run/revision.go`). Own
+  regressions red first in `TestCheckRevision` — a follow-up row whose `ref`
+  names a quoted question, covered without the quote's fact, passed when the
+  source promises refusal; the criteria-family cases red with it. Fix: the
+  check builds `byID`/`refOf`, resolves a row with no own `start` through
+  `ref` to the question it asks again (bounded by `len(questions)` so a
+  malformed chain cannot loop), and refuses a row covering either the batch
+  `success-criteria` question or the follow-up that re-asks it. The session
+  prompt states the follow-up's quote is that of the question it asks again.
+- **F2, criteria of the follow-up's answer** (`internal/run/answers.go`).
+  Own regressions red first in `TestTheSuccessCriteriaOfTheAnswer` —
+  follow-up-only answer, both answered (follow-up wins, per the `budget.tsv`
+  source rule of T-tmm2), follow-up unanswered (batch's answer kept). Fix:
+  `criteriaAnswer` indexes answers by question ID and follow-ups by `ref`,
+  selects the follow-up's answer only when one exists, and returns the
+  answering question's ID so the appended `success-criterion` rows cover the
+  question whose answer gave them.
+- **F3, `R-NNN` after the revision.** Contract analysis on the issue; the
+  schema already rules the ID positional (`from R-001, in the order of the
+  rows`, `inOrder` enforced), so the repair is the recorded ruling: no stable
+  identity, no schema or column change; `records.md` (`id` of the draft,
+  `requirement` of `coverage.tsv`) and `loop.md` state that records written
+  before the revision name the earlier draft, the draft the revision session
+  reads, and that no reader joins them to the revised table.
+- **F4, missing operative text.** `loop.md` now carries, each in its one
+  home: the done-before test (every draft row's `session` started on a
+  records base holding `intake/answers.tsv`) with the session comment
+  reposted from the record; the retry-with-finding loop bound by the cap of
+  milestone 0; the trimmed, empty-dropped `;` segments; the criteria
+  follow-up precedence. `intake.md`'s generic "record exists" sentence is
+  qualified for `revision`; `records.md` gains the N4 spelling note (the
+  stored login is the point line's spelling; the key is the numeric ID).
+- **N1** applied in the existing slice: `TestTheRevisionOfTheDraft` gains a
+  pass recomputing `pointBindings` from the committed `copies.tsv`/bodies
+  and calling `approverFor`/`pointsServed` with the world's real forge
+  resolver on the committed `approvers.tsv` (dave→bet on row 707, the
+  Operator→audit on 101, the unknown mallory→404 fallback to 303).
+- **N2** (a),(b) already covered by `TestTheApproverRows` (502 propagates)
+  and `TestThePointBindings` (alice named in two comments, the earlier
+  source); (c) added — `TestTheRevisionReadsTheFollowUp` names `dave` in the
+  follow-up's answer window and asserts `follow-up-answers` commits his row
+  with `source` 804.
+- **N3** applied: `traceability.md` names `TestTheFactOfAQuote` and the new
+  integration test; REQ-012's Task cell gains `T-8rm6` and its Test cell the
+  new tests; the §13 change log gains the T-8rm6 row.
+- **N6** untouched: the #397 fixture line and every original assertion stand.
+
+- Controls, each compiled, killed, restored. On `revision.go`: M-A the old
+  source (own `start` only) fails the follow-up case; M-B `ref` resolution
+  that ignores a row's own `start` fails the quoted cases and
+  `TestKeepOfRevision`; M-C the criteria-family refusal dropped fails the
+  criteria cases. On `answers.go`: M-D the batch-only `criteriaAnswer`
+  fails the follow-up-only and both-answered cases; M-E the follow-up taken
+  unconditionally fails the unanswered case; M-F the follow-up's criteria
+  under the batch question's ID fails the ID assertions. Restored source
+  sha256 `2ea0c2111a765b225aa5b487dd3dade4715892152759f68e83f56f1a24deb302`
+  (`revision.go`) and `0622034013052afb70e1768381b667dc8859f02ece54f4251dd1f3c492498d1d`
+  (`answers.go`); `go test -count=1 ./internal/run` green.
+
+- Named integration runs (direct exits): `TestTheRevisionReadsTheFollowUp`
+  PASS 10.2s (criteria answered only in the follow-up become the two
+  `success-criterion` rows covering the follow-up's `Q-NNN`; the refused
+  first attempt's finding names the port marker's quote fact `3`; the kept
+  attempt is "6 rows of which 2 the success criteria"; dave's approver row
+  from the follow-up window). `TestTheRevisionOfTheDraft` PASS 13.5s with
+  the N1 pass. Unit `go test -count=1 ./...`, `go build`, `go vet`,
+  `gofmt -l`, adr-lint, prd-lint, run-discipline-tests (138), link-lint
+  (2795 links), `git diff --check` — all 0.
+
+Limits: whole-module and unfiltered `internal/run` integration are the
+root's serialized runs, not done here; the 8h test-world caps unchanged;
+budget counted at the complete closeout, R12 ruling the root's.
