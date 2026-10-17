@@ -323,6 +323,7 @@ func TestTheQuestionOfASessionIsRoutedAndItsAnswerAcceptedFromTheRecords(t *test
 	}
 	next := run("developer", 2, resultWork("completed"))
 	// The next attempt that does not cite the answer does not accept it.
+	roles := func() Roles { return sessionRoles(startRows(t, w)) }
 	read := func() ([][]string, map[string][][]string) {
 		ev, err := records.ReadEvents([]byte(keptRecord(t, w, "tasks/T-ab12/events.tsv")))
 		if err != nil {
@@ -331,7 +332,7 @@ func TestTheQuestionOfASessionIsRoutedAndItsAnswerAcceptedFromTheRecords(t *test
 		return ev, resultsOf(t, w, asking, owner, next)
 	}
 	if ev, res := read(); true {
-		if who, ok := AnswerAccepted(ev, res, answer); ok {
+		if who, ok := AnswerAccepted(ev, res, roles(), Owners(DefaultOwners()), answer); ok {
 			t.Errorf("accepted by %s with no cite", who)
 		}
 	}
@@ -339,7 +340,7 @@ func TestTheQuestionOfASessionIsRoutedAndItsAnswerAcceptedFromTheRecords(t *test
 	citing := run("developer", 2, resultWork("completed")+" && "+"printf '"+octal("kind\tn\tvalue\tsha256\treason\nstatus\t1\tcompleted\t—\tuses the answer "+answer+"\n")+"' > ../result/result.tsv")
 	ev, res := read()
 	res[citing] = resultsOf(t, w, citing)[citing]
-	if who, ok := AnswerAccepted(ev, res, answer); !ok || who != citing {
+	if who, ok := AnswerAccepted(ev, res, roles(), Owners(DefaultOwners()), answer); !ok || who != citing {
 		t.Errorf("AnswerAccepted = %q, %v; want accepted by %s", who, ok, citing)
 	}
 }
@@ -367,4 +368,50 @@ func TestTheSessionsOfTheRunAdoptTheCommentOfALostCopyAndPostOnce(t *testing.T) 
 	if n := copiesOfIssue(t, w); n != 1 {
 		t.Errorf("%d copies of the task's issue after the restart; want 1", n)
 	}
+}
+
+// An answer row is a valid record whoever wrote it, so a developer session's
+// answer to a question of the Software Architect passes every reader of the
+// records; the acceptance alone reads the role of the answering session from
+// sessions.tsv (loop.md, A question during the work, T-b3s3).
+func TestAnAnswerOfADeveloperSessionIsNotAcceptedFromTheRecords(t *testing.T) {
+	w, r, base := commentWorld(t)
+	ctx := context.Background()
+	run := func(role string, attempt int, body string) string {
+		spec := harness(t, base, body)
+		spec.Role, spec.Attempt = role, attempt
+		id, err := r.TaskSession(ctx, spec)
+		if err != nil {
+			t.Fatalf("TaskSession: %q, %v", id, err)
+		}
+		return id
+	}
+	asking := run("developer", 1, resultWork("needs_context", "question\t1\tMay a draft be marked ready?\t—\tinterface-contract no docs/spec/forge.md"))
+	wrong := run("developer", 1, resultWork("completed", "answer\t1\tYes\t—\tdocs/spec/forge.md"))
+	if v, err := r.RecordHandoff(ctx, HandoffInput{Task: "T-ab12", Session: wrong, From: "owner role", To: "asking role"}); err != nil || v.Detail != "valid" {
+		t.Fatalf("the handoff of the answer: %+v, %v; want valid (a known limit: it reads no role)", v, err)
+	}
+	if _, err := r.StartAttempt(ctx, "T-ab12", base.base); err != nil {
+		t.Fatal(err)
+	}
+	id := wrong + ".1"
+	next := run("developer", 2, resultWork("completed")+" && printf '"+octal("kind\tn\tvalue\tsha256\treason\nstatus\t1\tcompleted\t—\tuses the answer "+id+"\n")+"' > ../result/result.tsv")
+	ev, err := records.ReadEvents([]byte(keptRecord(t, w, "tasks/T-ab12/events.tsv")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	roles := sessionRoles(startRows(t, w))
+	if who, ok := AnswerAccepted(ev, resultsOf(t, w, asking, wrong, next), roles, Owners(DefaultOwners()), id); ok {
+		t.Errorf("the answer of a developer session is accepted by %s", who)
+	}
+}
+
+// startRows gives the rows of the sessions.tsv that the run kept.
+func startRows(t *testing.T, w *world) [][]string {
+	t.Helper()
+	rows, err := records.ReadSessions([]byte(keptRecord(t, w, "sessions.tsv")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return rows
 }
