@@ -206,8 +206,9 @@ request, not a new record.
   position at each attempt; both are the text of `architecture.md` §9. A task is downhill when
   its test list is frozen and it has no open unknown, uphill otherwise (`Position`).
 - **The open unknowns that the records give in `M2e`** are the question rows of the last attempt
-  that ended `needs_context`, until an answer of a session of an owner role that started after
-  it is accepted by the next attempt (`AnswerAccepted`). The open material findings (their
+  that ended `needs_context`, until an answer that started after it is accepted by the next
+  attempt (`AnswerAccepted`, with the rule of the owner role in [The checks of a
+  handoff](#the-checks-of-a-handoff), "A question during the work"). The open material findings (their
   form is #387's) and the open escalations (`M3`) are added when they exist.
 - **`by-class` and `owner-of-its-kind`** ([`session.md`](session.md#the-step-table-and-the-kinds-of-a-steps-context))
   are resolved by `ResolveStep`: `by-class` becomes the tier of `TierOf`, `owner-of-its-kind`
@@ -495,6 +496,23 @@ with the next number, started after that session ended and neither `closed` nor
 cite accepts it, the first in the order of the events. The acceptance is a function of
 the records (`internal/run`'s `AnswerAccepted`), not a record of its own: the columns of
 the accepted answer and its actor are `M3c`'s (`records.md`, the block `questions`).
+**Decided here** (task `T-b3s3`, #401, under the plan review of #401): the rule of the owner
+role, which is the one place that states it. The session that wrote the answer has to be of the
+owner role of **every** question of the attempt that it answers — the question rows of every
+session of that attempt that ended `done` with `needs_context` — by the role of its start row in
+`sessions.tsv`, which `layup run` writes from the role it starts the session as and no result of
+a session can claim. The owner role of a question is `RoutingRole` of the owner of its label in
+the owner map (`internal/run`'s `Owners`, the default map in `M2e`), the role of a session is
+read by `Roles`, and the answer is accepted by the next attempt only when both are the same role
+ID. A session whose start row is missing, a question that goes to a human, a label of no owner
+and an attempt whose questions have more than one owner role are never closed by a session's
+answer: they fail closed (the task stays uphill), because one accepted answer closes every
+question of its attempt and no field binds an answer row to one question. Who resolves those
+attempts (the Operator's answer is no session's `answer` row) is `T-9nbf`'s (#367) or later
+text's, not decided here. A known limit: the `From` and `To` of a handoff are role-class labels
+of the transition table, and `RecordHandoff` reads no session's role, so the handoff of an
+answer is `valid` whatever role wrote it; the handoff closes no question, and the acceptance is
+what reads the role.
 **Decided here** (task `T-8bwd`, #387, under the plan review of #387): the question's
 comment and the answer's comment are composed by code from their rows — first line
 `<session>: <role> session of <task>, attempt <n>: question <q-id>`, and for the
@@ -1453,7 +1471,7 @@ the milestone covers it end to end.
 | ---- | ----- | ------------- |
 | A handoff is valid only by its table (inventory) | unit | A handoff with a wrong schema, an artifact that is not in the commits, a hash that differs, a required item that is false, and a pair with no row is each invalid, naming the item; a field that an agent writes never makes one valid; a comment artifact whose body at the forge differs from its copy is invalid. |
 | The artifact that is a comment (`gov-issue-68`) | unit; integration | With the stand-in forge (the `httptest` forge for the integration part), for each of the kinds `plan`, `plan-review` and `review-record`: the session's file, the comment that code posts from its bytes, the copy and its row, the `handoff` event with the comment ID that code read, the three equal hashes; an edited comment is a new copy and the first handoff is invalid; a result that holds a comment ID is refused; a `comment` row is checked against the session's `result/` file, its file is kept byte for byte in the commit of the result, and an `artifact` row against the head; a run that stops after the end, between the post and the copy, or before the post, posts once from the records; a lost lease posts nothing. |
-| The route of a question and the acceptance of an answer | unit; integration | A question goes to the owner role of its kind when its `needs_human` word is `no` and its label is one of the four, and to the Operator for `yes`, for any other word and for any other label; a replaced owner map routes by its roles; the items `question-row` and `answer-row` are computed from the result, whatever the caller passes; an answer is accepted by the next attempt that ends `completed` and cites its ID in the status row, with no question of that attempt citing it, and by no other attempt; with the real `git`, a question session, the session of the owner role and the next attempt give the records from which the route and the acceptance are read. |
+| The route of a question and the acceptance of an answer | unit; integration | A question goes to the owner role of its kind when its `needs_human` word is `no` and its label is one of the four, and to the Operator for `yes`, for any other word and for any other label; a replaced owner map routes by its roles; the items `question-row` and `answer-row` are computed from the result, whatever the caller passes; an answer is accepted by the next attempt that ends `completed` and cites its ID in the status row, with no question of that attempt citing it, and by no other attempt, and only when its session is of the owner role (the rule of "A question during the work": an answer of a developer, of the owner of another kind, of a session with no start row, to a human question or to questions of more than one owner role is refused, and the owner role's is accepted, from `sessions.tsv` and through `Position`); with the real `git`, a question session, the session of the owner role and the next attempt give the records from which the route and the acceptance are read. |
 | The item computers of the task loop | unit; integration (a real `git` tree for `spec-sections` and `rendering-equal`) | Each item is computed from the kept copy of a comment, the `docs/spec/` files or the tree at a head: a copy that parses the pinned form makes the item true and one that does not makes it false, and a handoff listing the item is `valid` or `invalid <item>` by the computed result, never by a caller's literal; the question and answer comments are composed from their rows and posted on the task's issue. |
 | The transition table | unit | The default rows are the thirteen of the table (the twelve of `architecture.md` §8 and the row of the target's architecture task, which §8 names a task and gives no row); a replacement table is refused for a missing default pair, a kind or an item not in the lists, and a row of code's own handoff (`code (rendered task)`) that lists `schema`, while another row keeps its `schema`, and the steps that are `layup run`'s own acts need no row. |
 | The replacement of the transition table at the boundary | integration | With the stand-in forge and real git: `set transitions <sha256>` names a copy of a comment of the control issue; the new table is the bytes of that copy, written with the row `transitions` in one records commit, so its SHA-256 is the row's value; the old table stays in Git history and the next task keeps the new one; a hash of no copy or of a copy of another issue, a body that is no table (a code fence, a carriage return) and a table that fails the check each refuse with the item `bound` (`value` for a value that is no SHA-256) and write nothing. |

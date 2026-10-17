@@ -1119,6 +1119,14 @@ These traps are not domain-specific: they hurt every project's test suite.
   default owner that the step table has as a role comes out as exactly that ID, with the roles read
   from `session.StepTable()`, never typed in the test.
 
+- ❌ **A doc comment that names a role the code never reads.** `AnswerAccepted` said an answer is "of a session of
+  the owner role", took only `events`, `results` and the answer ID, and so accepted the answer of a developer session
+  with every record valid (`CheckSession` takes `role` as free text, and `RecordHandoff` reads no session's role).
+  Task `T-b3s3` (#401), revealed by the first review of #361. **The check:** when a contract names a role, the
+  function takes the role from the records (`sessions.tsv`, written by `layup run`, never the result of the session
+  itself) and a test runs two ledgers that differ only in that role; give the two maps of such a function different
+  named types, so that a swap does not compile.
+
 ### Reference-sweep pitfalls
 
 A change that edits references or a rule's wording across the tree has three silent
