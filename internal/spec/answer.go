@@ -18,7 +18,33 @@ var (
 	reqLine  = regexp.MustCompile(`^(Must|Should|Could|Won't), phase (\S+)$`)
 	factForm = regexp.MustCompile(`^fact (\S+): (.+)$`)
 	optForm  = regexp.MustCompile(`^option (\S+): (.+)$`)
+
+	// reqHead heads a requirement line of an answer or of a copy: a
+	// requirement ID, a colon and a space. Other lines of a copy — `fact`,
+	// `option`, the verdict, prose — are not requirement lines.
+	reqHead = regexp.MustCompile(`^(REQ|NFR)-[0-9]{3}: `)
 )
+
+// parseReqLine parses one requirement line of a copy: the ID of reqHead, then
+// the grammar of reqLine — the one form, shared by the bet's answer and the
+// full check's classes rule (task T-4wyg). The phase is `""` for a `—` tag, as
+// ReqAnswer writes it.
+func parseReqLine(l string) (id string, a ReqAnswer, ok bool) {
+	h := reqHead.FindString(l)
+	if h == "" {
+		return "", a, false
+	}
+	id = strings.TrimSuffix(h, ": ")
+	m := reqLine.FindStringSubmatch(strings.TrimPrefix(l, h))
+	if m == nil {
+		return id, a, false
+	}
+	phase := m[2]
+	if phase == "—" {
+		phase = ""
+	}
+	return id, ReqAnswer{Class: m[1], Phase: phase}, true
+}
 
 // ReqAnswer is the priority the answer gives one requirement: its MoSCoW
 // class and its phase ("" for the — that Won't asks).

@@ -20,7 +20,8 @@ func TestTheSchemasEqualTheirBlocks(t *testing.T) {
 		t.Fatal(err)
 	}
 	for name, s := range map[string]tsv.Schema{"spec-check": CheckSchema, "spans": SpansSchema,
-		"inventory": InventorySchema, "inventory-index": InventoryIndexSchema} {
+		"inventory": InventorySchema, "inventory-index": InventoryIndexSchema,
+		"task-spec-check": TaskSpecCheckSchema, "tasks": tasksSchema} {
 		block, ok := blocks[name]
 		if !ok {
 			t.Errorf("docs/spec/ has no block %s", name)
