@@ -5,7 +5,7 @@ Author: Sonnet 5.5. Initial plan 6233490565, plan review 6233654484 (approve-wit
 response 6233745458 before any edit. The Operator's "Approve #401 coupled scope" (comment 6233711446) keeps both goal
 classes in the issue: A the owner-role predicate in `AnswerAccepted`, B the trusted data feed through `Position` and
 `OpenQuestions`. Maximum 850 changed lines / 16 files (whole branch against current `origin/main`), cycle cap 1, no
-panel. Evidence: [test runs and compiled mutants](../../runs/T-b3s3/).
+panel. Evidence: [test runs and compiled mutants](../../runs/T-b3s3/test-runs.md).
 
 ## Delivered (before review)
 
