@@ -16,6 +16,7 @@ here directly, in the shape above.
 
 ## Log
 
+- **2026-10-17** — **T-8bwd** — Define the handoff items' rules and implementation ownership for `M2e` ([#387](https://github.com/pharzam/layup/issues/387); [detail](T-8bwd.md))
 - **2026-10-17** — **T-4wyg** — Row 62c of `M2e`: The full spec check ([#351](https://github.com/pharzam/layup/issues/351); [the plan](../plan/README.md#the-tasks-of-m2e)); [detail](T-4wyg.md)
 - **2026-10-16** — **T-4cep** — Admit the canonical code-owner setup completion and enable the prepared Operator-run migration, with real-git refusal variants and independent review ([#384](https://github.com/pharzam/layup/issues/384); [detail](T-4cep.md)).
 - **2026-10-16** — **T-9et9** — Row 63a of `M2e`: The basic layup/rules ([#352](https://github.com/pharzam/layup/issues/352); [the plan](../plan/README.md#the-tasks-of-m2e)); [detail](T-9et9.md)

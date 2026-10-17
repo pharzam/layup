@@ -1,177 +1,79 @@
-# T-8bwd — the handoff items' rules and implementation ownership for M2e
+# T-8bwd — the handoff item contracts and implementation ownership
 
-Issue [#387](https://github.com/pharzam/layup/issues/387). Documentation only;
-no production code changes. Author: SWE-2 Max (Devin CLI). Plan
-[comment-6220167894](https://github.com/pharzam/layup/issues/387#issuecomment-6220167894);
-independent plan review
-[comment-6220326750](https://github.com/pharzam/layup/issues/387#issuecomment-6220326750):
-`approve-with-conditions`, maximum 1,000 changed lines / 14 files against the
-current `main` (`d5e199f` at confirmation, merged and then `d09b1c0` before the
-stable finish), cycle cap 1, no panel, one goal class; the author's answer is
-[comment-6220408093](https://github.com/pharzam/layup/issues/387#issuecomment-6220408093).
-Evidence: [`runs/T-8bwd/`](../../runs/T-8bwd/) (`items.sh`, `baseline-red.txt`,
-`green.txt`).
+Issue [#387](https://github.com/pharzam/layup/issues/387), PR [#398](https://github.com/pharzam/layup/pull/398).
+One specification artifact, serving REQ-005/F-0003#45. Authors: SWE-2 Max;
+Codex coordinated evidence, main integration and close-out. Initial plan6220167894,
+plan review6220326750 (approve-with-conditions), author answer6220408093 before edits.
+Maximum1,000 changed lines/14files, cycle cap1, goals1, no panel remain unchanged.
+The measurement basis is current main, confirmed in the plan review.
+Evidence: [the one-off checker and controls](../../runs/T-8bwd/).
 
-## What was done
+## Delivered
 
-1. **`docs/spec/loop.md`** — the new section "The items a caller computes"
-   maps each of the fourteen handoff items to its input, its rule, the package
-   and plan-table row that computes it, and its milestone; pins the field-line
-   forms of the plan, the plan review and the review record; states that
-   `internal/handoff` computes `schema` and `artifacts`, that `internal/run`
-   computes `question-row` and `answer-row` from the result (`RecordHandoff`,
-   row 66d) and that every other item is the caller's computed result, a
-   missing result being false; records the question/answer comments as composed
-   by `internal/run` from the `question`/`answer` rows and posted on the task's
-   issue by the step-loop machinery; marks `patch-per-kind`, `register-rows`,
-   `heading-ids` and the `tests-red-green` producer as `M2f`/`M2g` in the
-   transition table and "Not in M2e"; keeps the `M2e` contract of
-   `tests-red-green` as row 66e's typed per-test results with no `M2e`
-   producer, so no `M2e` build-task handoff can be valid; adds the acceptance
-   row "The item computers of the task loop".
-2. **`docs/plan/README.md`** — new row 66l (`T-4pje`, #396, the item
-   computers of the task loop), `After` `61, 62c, 63a, 66d`; rows 66f, 66k and
-   67 take `66l` in `After`; row 66d's scope names `question-row` and
-   `answer-row`; the `M2f`/`M2g` milestone cells name the items and producer
-   their specification tasks take.
-3. **`docs/spec/packages.md`** — the `internal/run` cell names row 66l's
-   item computers and separates them from row 66k's wire.
-4. **Registration** — `T-4pje`/#396 opened by the App after a duplicate
-   check (`docs/tasks/` files, branch list, issue search); backlog lines for
-   `T-8bwd` and `T-4pje`; #396 gets its own plan and plan review before any
-   implementation.
-5. **`docs/tests/traceability.md` and PRD-0001 §12** — deliberately not
-   edited: their conventions register named tests and the tasks that deliver
-   them (the acceptance-table row names of `loop.md` are not individually
-   listed; `M2e/uat/role-handoffs` is a test ID, not a row name). Row 66l's own
-   landing names its tests; this task lands none, so no row and no §12 Task
-   cell is written here.
+The single operative section in `loop.md` maps all fourteen handoff items to
+inputs, rules, owning implementation and milestone. Field lines and the
+`tests:`/`findings:` block markers have one pinned grammar, required cardinality,
+block boundaries, zero-test spec-task form and normative malformed cases.
+`internal/handoff` computes schema/artifacts; the existing result recorder owns
+question-row/answer-row. Other results are computed by their declared callers;
+a missing result is false. #396 owns the six new item computers and question/
+answer body composition; #367 owns their posting and step-loop wiring.
+The plan and package table identify those owners and dependencies.
 
-## Decisions and rejected alternatives
+The typed per-test result remains #361's M2e contract; its runtime producer and
+ID-to-test mapping are later work. No M2e build-task handoff is claimed valid.
+Patch-per-kind, register-rows and heading-ids retain the specified later-milestone
+owners. Existing Operator-approved goal counts are unchanged. #396 gets its own
+initial plan and independently judged goal count; this task does not approve it.
+The evidence checker is one-off, with no hook, CI job or production gate.
+PRD Test cells/traceability name tests; this documentation task adds none there.
 
-- **Owner of the item computers and the question/answer composer:** a new
-  row 66l, the plan review's decision. Rejected: assigning the computers to
-  the existing rows 66f, 66h and 66k — each would add an independent parser or
-  builder to a row whose O-214 goal count of two is already spent on its own
-  classes, and would conflate statuses, Shape and the wire with computing
-  comment contents. Rejected: a second new row for the composer — it shares
-  the comment-parse machinery and the records the computers read.
-- **Comment form:** field lines — a lowercase key at column 0, `: `, the
-  value to end of line, `—` the empty value — the form `set` and the answer
-  lines already use. Rejected: a fenced TSV or a markdown table for the plan,
-  plan review or review record — a second grammar for fields that
-  `architecture.md` §9 and the loop already name; the verdict words are those
-  `review-record-lint.sh` and `engineering-discipline.md` read, and a target's
-  comment is a different artifact from LAYUP's own review record (a
-  `| Field | Value |` table), which the note states.
-- **Question/answer comment writer:** `internal/run` composes the body from
-  the `question`/`answer` rows and the step loop posts it on the task's issue.
-  Rejected: the session writing the body — two writers of one comment would
-  fight the single-writer rule of the session comment files, and a restart
-  could not recompose the same bytes from the records.
-- **`tests-red-green`:** row 66e's typed per-test results stay the `M2e`
-  contract; the producing gate run and the ID-to-file map are `M2g`'s. No
-  `M2e` run claims a valid build-task handoff.
-- **Contradictory wording:** `architecture.md` §8's "the checks parse fixed
-  verdict fields" is met by the pinned `verdict:` field; the plan-review words
-  are the check's own (`review-record-lint.sh`, RR8), so `loop.md` is the one
-  operative home of the exact field names and values.
+## Evidence and review
 
-## Checks so far (pre-review)
+The missing mapping produced44 initial assertions; the completed artifact passes.
+Independent controls expose duplicate mappings, missing Task/Demo ownership,
+missing owner tokens, wrong milestones and changed verdict words, with original
+bytes restored. The current-main union passed all10 local checks, five selected
+Go document-reader integration packages, the item checker and standalone gitleaks.
+The earlier unfiltered integration attempt was interrupted, never credited.
+No whole-module integration/e2e run is claimed for this documentation-only change.
+Final combined-head CI remains a required landing condition, recorded on the issue.
 
-- `runs/T-8bwd/items.sh`: baseline at `d5e199f` — 44 assertion failures, the
-  mapping section absent ([`baseline-red.txt`](../../runs/T-8bwd/baseline-red.txt));
-  after the edits — exit 0 with the one deliberate note on `tests-red-green`
-  ([`green.txt`](../../runs/T-8bwd/green.txt)). One-off evidence; no hook, no
-  CI job, no `run-discipline-tests` wiring.
-- Text checks: `adr-lint.sh`, `prd-lint.sh`, `link-lint.sh` (2,781 links),
-  `run-discipline-tests.sh` (138 passed), `setup-check.sh`, `git diff --check` — all OK.
-- `go build ./...`, `go vet ./...` — clean.
-- Unit: `go test ./internal/handoff ./internal/records ./internal/run ./internal/tsv` — ok.
-- Document-reader integration (explicit `-run`, exit 0): `internal/run`'s
-  `TestTheParameterTableEqualsTheSpecification`, `TestTheSchemaOfTasksEqualsItsBlock`,
-  `TestTheSchemaOfParametersEqualsItsBlock`, `TestTheTextBlocksOfRunMd`;
-  `internal/handoff`'s `TestTheSchemaEqualsItsBlock`,
-  `TestTheDefaultRowsAreTheTableOfTheSpecification`,
-  `TestTheListsAreThoseOfTheSpecification`; `internal/records`'
-  `TestTheSchemasEqualTheirBlocks` and `TestEverySchemaBlockIsBuiltOrNotYetBuilt`;
-  `internal/tsv`'s `TestEverySchemaBlockIsBuiltOrNotYetBuilt`; `cmd/layup`'s
-  `TestPackageRules`.
-- **Interrupted, not a result:** one `go test -tags=integration ./internal/run`
-  run was started unfiltered, competed with the serialized full-integration
-  run and was stopped before it reported; it is recorded here as interrupted
-  and counts as neither pass nor fail. No full-module or e2e run was made by
-  this task.
+Round1, record6221128932, found two material grammar gaps; its table is intermediate
+material and its raw findings remain. The author answered6221153143 before fixing
+the block boundaries, marker grammar, empty-list form and acceptance examples.
+Round2, record6233114681, onac84165dabe795ff8fa9a8e0055daad277ddfbdb,
+cycle1/cap1: **nothing material in scope**. Main3c9c4be (#351) was merged before
+that round. No source fix followed; this last commit is bookkeeping only.
+Complete current-main size: 492 changed lines/10 files, within1,000/14.
 
-## The producing-document audit and its repairs
+Notes N1–N6: literal marker/CRLF behavior stays fail-closed; #396's own plan pins
+normalization. The section finder is now known to be unexported, so #396 exports
+and reuses the predicate per the approved ownership choice; the later heading-ID
+contract stays later work. Composer/poster ownership remains explicit. Dependency
+notifications went to #362/#367/#368. The typed-results ownership-cell exception
+remains disclosed. Temporary checker files stay one-off and unwired. No new
+operative rule or scope was introduced through these dispositions.
 
-The pre-first-freeze audit
-([comment-6220740712](https://github.com/pharzam/layup/issues/387#issuecomment-6220740712))
-found three in-scope defects in the committed artifact `356f161`; the author's
-answer is
-[comment-6220818955](https://github.com/pharzam/layup/issues/387#issuecomment-6220818955):
+## Resource record
 
-1. The section's opening sentence assigned `question-row`/`answer-row` to
-   `internal/handoff`; `internal/run.RecordHandoff` (handoffpost.go:287)
-   computes them. Sentence corrected (R10); the table already named the right
-   owners.
-2. `items.sh` check 1 used membership joins, so a duplicated mapping row
-   stayed green. Repaired to exact equality: a `uniq -d` duplicate diagnostic
-   plus the per-item member diagnostics.
-3. `items.sh` check 3 grepped the whole plan row, so an item appearing only
-   in the Tests cell satisfied the owner anchor. Repaired to grep only the
-   owner's Task and Demo cells (columns 4 and 5). The `tests-red-green`/66e
-   exception (C1) is unchanged.
+Reported subset only. SWE P/O/C = prompt/output/cached; C is inside P. Sonnet
+I/O/Cw/Cr = uncached input/output/cache creation/read; thinking is inside O.
 
-Controls in this worktree, run on the committed artifact and restored:
-duplicating the `plan-fields` row — old exit 0, repaired exit 1 naming
-`plan-fields` and its anchors; `plan-fields` only in row 66l's Tests cell —
-old exit 0, repaired exit 1 naming owner row 66l; each restored copy exit 0.
-Runs recorded in [`runs/T-8bwd/adversarial.txt`](../../runs/T-8bwd/adversarial.txt).
+| Part | Expected tier | Model | Effort | Reported tokens | Elapsed |
+| --- | --- | --- | --- | --- | --- |
+| Plan/build/repairs, unique retained union | reasoning/execution | SWE-2 Max | not reported | P14564221/O84120/C14058651 | not reported |
+| Independent plan review and same-context correction | reasoning | Sonnet5.5 | not reported | I72/O31331/Cw128723/Cr3209850 | 301511ms |
+| Code round1 | reasoning | Sonnet5.5 | not reported | I36/O11939/Cw79441/Cr1104706 | 217607ms |
+| Code round2 | reasoning | Sonnet5.5 | not reported | I80/O31899/Cw131333/Cr3151815 | 407567ms |
+| Root claim/pre-review/final-freeze checks | — | deterministic | — | not applicable | 289087.370ms |
+| Coordination/producing audit/integration/close-out | reasoning/execution | Codex GPT-6 family | not reported | not reported | not reported |
+| **Total reported subset** | | | | 22529566 tokens; cached counted once | 1215772.370ms |
 
-The #396 boundary note
-([comment-6220700567](https://github.com/pharzam/layup/issues/396#issuecomment-6220700567))
-is registered: the `findings-located` parse is the input the step loop's
-caller boundary reads for the uphill rule of `architecture.md` §11 — the
-parser is row 66l's, the wiring stays #367's; no O-214 count changes and
-nothing is claimed implemented.
-
-## Review — round 1
-
-[Record](https://github.com/pharzam/layup/issues/387#issuecomment-6221128932):
-Claude Sonnet 5.5 on Claude Code, a fresh session, `e48ef43` at cycle 0 of cap
-1 — `not mergeable, findings recorded`, two material findings, both in the
-pinned grammar this task adds. The author's answer is
-[comment-6221153143](https://github.com/pharzam/layup/issues/387#issuecomment-6221153143).
-
-- **findings-part-undefined** — repaired: the grammar gains block markers. A
-  marker is a line that is exactly `tests:` or `findings:`; its block is the
-  run of `- ` lines directly under it, ending at the first non-`- ` line; a
-  malformed `- ` line inside makes the item false, one outside is ignored
-  prose; each required field and marker appears exactly once; order is free.
-  The count of material findings is the block's bullet count; `nothing-material`
-  requires the verdict and an empty `findings:` block, `findings-located`
-  requires the marker once and at least one located finding.
-- **tests-key-form** — repaired under the same rule: `tests:` is a marker, not
-  a `key: value` field; zero bullets is the valid form of a specification
-  task's plan, and `tests: —` is not the marker. `tests-red-green` keeps
-  reading an empty list as false for a build task.
-- Rejected alternatives: `tests: —` as a scalar empty form beside the block
-  (two spellings of empty, `—` colliding with the scalar empty value); a
-  fenced or table form for either part (a second grammar class); reading the
-  findings part by position with no marker (the ambiguity the finding names).
-- Notes: the no-owner-row-token gap of check 3 is guarded (permissible under
-  C10) and control C of
-  [`adversarial.txt`](../../runs/T-8bwd/adversarial.txt) demonstrates it;
-  semantic prose checks are declined (no independent anchor — the section is
-  the anchor); the plan fields' producer/caller boundary is declared only
-  (66l parses, 66k's wiring consumes). The earlier restore incident is
-  recorded in `adversarial.txt`.
-- Round 2 waits for #351's landing and merge per the coordinator and covers
-  this fix plus the then-current `main`; it is not requested here.
-
-## Open
-
-The independent review round 2 (after #351 lands), the verdict, the resource
-record, the completed-log line and the merge are close-out and are not
-written yet.
+SWE union132 retained metric rows includes overlaps only once; the interrupted
+build export was unavailable, with missing usage/time not inferred. The requested
+models did not reach the named reasoning tier; reviewer independence and actual
+model use remain explicit. The final reviewer disclosed its own harness overflow
+files and the checker's transient files; no earlier review/private transcript or
+sibling-task read was found. Direct producer exits were retained. Final CI and
+unreported coordination are excluded from these subset totals.
