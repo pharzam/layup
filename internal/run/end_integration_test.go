@@ -27,8 +27,13 @@ const register = "pattern\texception\tsource\nAGENTS.md\t—\tbaseline\ndocs/gua
 // of the target, with the stand-in forge, the base and a records commit with
 // the register: attempt 1 of T-ab12 is started.
 func sessionWorld(t *testing.T) (*world, *Sessions, *standInForge, worldAt) {
+	return sessionWorldWith(t, nil)
+}
+
+// sessionWorldWith is sessionWorld whose baseline, the target's first tree, also holds files by path.
+func sessionWorldWith(t *testing.T, files map[string]string) (*world, *Sessions, *standInForge, worldAt) {
 	t.Helper()
-	w := newWorld(t)
+	w := newWorldWith(t, files)
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	clone := filepath.Join(t.TempDir(), "clone")
 	gitOut(t, "/", "clone", "-q", "-b", "main", "file://"+w.bare, clone)

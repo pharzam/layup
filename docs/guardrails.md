@@ -977,7 +977,14 @@ These traps are not domain-specific: they hurt every project's test suite.
   `..` and no empty part read or removed a file outside its directory when a parent was a
   link (`result/`, `DIR/work/OWNER`, a link of the records base). Task `T-eahr` (#277),
   round 1. **The check:** `Lstat` each directory above the file, or ask the tree for the
-  path (a path below a link has no entry), before you read or remove it.
+  path (a path below a link has no entry), before you read or remove it. The same trap
+  met a **write** in task `T-6zj3` (#361): `applyFrozen` wrote the frozen test files with
+  `MkdirAll` and `WriteFile` after `fs.ValidPath`, and a checkout whose parent directory or
+  file was a symbolic link let the write overwrite a file outside it (found by the
+  producing-code audit, compiled assertion: the outside bytes went from `original` to
+  `frozen`). For a write, `Lstat` every existing part of the path, refuse a link (the file
+  itself too, and one that points inside the checkout), and make this check for the whole
+  list before the first file is written.
 - ❌ **A record that no test read through the real check.** S12 in phase 2 wrote its row
   `module` as the answer `S01-name`, which phase 2 does not have; every step passed, and
   the first run of the real `layup setup verify` refused it (check `sources`). Task
@@ -1102,6 +1109,15 @@ These traps are not domain-specific: they hurt every project's test suite.
   field that a run must carry, build the object under test in at least one behavioural test through the constructor
   that the run uses (here `state.sessions()` on a `Config` with the App's slug), and run that test against the mutant
   that removes the assignment; a test that only reads the copied field, or sets it itself, proves nothing about the run.
+
+- ❌ **A display name used as a routing key.** `DefaultOwners()` of `internal/run` gave the owner of a
+  question as `Systems Architect`, while `routing.tsv` and the step table key a role by its ID
+  (`systems-architect`); the route of a question would have matched no routing row. It is silent because
+  the route was tested alone, no caller used it with the register yet, and each value is right in its own
+  file. Task `T-6zj3` (#361), found when its plan read the two sources side by side. **The check:** turn
+  the name into the ID by one rule (`RoutingRole`: lower case, spaces as hyphens), and test that each
+  default owner that the step table has as a role comes out as exactly that ID, with the roles read
+  from `session.StepTable()`, never typed in the test.
 
 ### Reference-sweep pitfalls
 

@@ -9,6 +9,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -16,6 +17,7 @@ import (
 	"time"
 
 	"github.com/pharzam/layup/internal/forge"
+	"github.com/pharzam/layup/internal/git"
 	"github.com/pharzam/layup/internal/records"
 	"github.com/pharzam/layup/internal/session"
 	"github.com/pharzam/layup/internal/tsv"
@@ -101,8 +103,10 @@ type TaskSpec struct {
 	Admit         func(version string) error
 	End           func(id string, d session.Dir, r session.Run, err error) error
 	Push          func(id string, d session.Dir, r session.Run) error
-	probe         *probeOf // a probe session's (row 38), nil for a task session
-	phase         *phaseOf // a session of a phase's (row 42a), nil for a task session
+	Context       *PromptContext // the prompt file of a task step and its input files, nil for a fixed prompt
+	Frozen        []FrozenFile   // the frozen test files, committed in the clone at the start of an attempt
+	probe         *probeOf       // a probe session's (row 38), nil for a task session
+	phase         *phaseOf       // a session of a phase's (row 42a), nil for a task session
 }
 
 func (s *Sessions) fns() {
@@ -228,6 +232,9 @@ func (s *Sessions) TaskSession(ctx context.Context, spec TaskSpec) (string, erro
 			if spec.phase != nil { // and the session's own input files
 				spec.Prompt = spec.phase.text(root)
 			}
+			if spec.Context != nil { // a task step's prompt file names the session's own input files
+				spec.Prompt = spec.Context.Text(root)
+			}
 			if d, err = s.make(id, spec); err != nil {
 				if !existed && s.exists(root) {
 					d, made = session.Dir{Root: root}, true
@@ -238,7 +245,12 @@ func (s *Sessions) TaskSession(ctx context.Context, spec TaskSpec) (string, erro
 			if spec.phase != nil {
 				return id, session.MakeInput(d, spec.phase.input)
 			}
-			return id, nil
+			if spec.Context != nil {
+				if err := session.MakeInput(d, spec.Context.Input); err != nil {
+					return id, err
+				}
+			}
+			return id, s.applyFrozen(d, id, spec.Frozen)
 		},
 		Attempt: func(string) error {
 			rows, err := s.readTable(ctx, eventsPath(spec.Task), records.ReadEvents)
@@ -392,4 +404,66 @@ func (s *Sessions) startRow(ctx context.Context, id string, spec TaskSpec, versi
 	}
 	return s.commit(ctx, map[string][]byte{"sessions.tsv": sessions, eventsPath(spec.Task): events},
 		fmt.Sprintf("layup run: the start of %s, attempt %d of %s", id, spec.Attempt, spec.Task))
+}
+
+// frozenMessage is the message of the commit that puts the frozen test files in
+// the clone of an attempt.
+const frozenMessage = "layup: the frozen tests"
+
+// applyFrozen writes the frozen test files in the session's clone and commits
+// them there, at the start of an attempt (loop.md, The attempts), so that the
+// head's tree holds their frozen bytes: the base lacks the tests that an earlier
+// attempt wrote. The commit's author is the session's own identity, at the run's
+// time. A file that is already as frozen at the base needs no commit.
+func (s *Sessions) applyFrozen(d session.Dir, id string, files []FrozenFile) error {
+	if len(files) == 0 {
+		return nil
+	}
+	// Every path is checked before any file is written: a link is never followed.
+	for _, f := range files {
+		if !fs.ValidPath(f.Path) || f.Path == "." {
+			return fmt.Errorf("the frozen test file %q is no path of the target", f.Path)
+		}
+		if err := noLink(d.Repo, f.Path); err != nil {
+			return err
+		}
+	}
+	for _, f := range files {
+		dst := filepath.Join(d.Repo, filepath.FromSlash(f.Path))
+		if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
+			return err
+		}
+		if err := os.WriteFile(dst, f.Data, 0o644); err != nil {
+			return err
+		}
+	}
+	if err := git.Add(d.Repo); err != nil {
+		return err
+	}
+	if staged, err := git.Staged(d.Repo); err != nil || !staged {
+		return err
+	}
+	return git.Commit(d.Repo, frozenMessage, git.Identity{Name: "layup session " + id, Email: id + "@sessions.layup.invalid", Time: s.Now()})
+}
+
+// noLink refuses a path whose existing part below root holds a symbolic link, in
+// a parent or as the file itself: MkdirAll and WriteFile follow a link, so a
+// clean spelling does not keep the write inside the checkout (guardrails §2). A
+// part that does not exist yet is made by the write, and ends the walk.
+func noLink(root, rel string) error {
+	cur := root
+	for i, part := range strings.Split(rel, "/") {
+		cur = filepath.Join(cur, part)
+		info, err := os.Lstat(cur)
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		if info.Mode()&os.ModeSymlink != 0 {
+			return fmt.Errorf("the frozen test file %s: %s is a symbolic link in the checkout, which is not followed", rel, strings.Join(strings.Split(rel, "/")[:i+1], "/"))
+		}
+	}
+	return nil
 }
