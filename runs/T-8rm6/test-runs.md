@@ -305,3 +305,19 @@ now returns those stored App comments with their actual fake IDs and App identit
 matching the existing intake-comment precedent. The unchanged done-before
 assertion is the falsifier; no production or assertion change. This is still the
 authorized three-test-file compatibility repair before the cap2 freeze/review.
+
+The db64986 CI stopped in integration before end-to-end: existing
+TestTheStepMarkersFails/no_route saw git worktree add exit128 rather than the
+expected missing-pair refusal. Job117423193230/run39041996729. Direct local
+repeat of TestTheStepMarkersFails on the same head exited0 in30.866s; the failed
+CI is retained, not relabelled green. Only the E2E-tagged shared fixture and
+evidence changed from a60079d to db64986, so the integration compilation inputs
+of that repair did not change. Investigation is #406; proposed revealed/off-path
+classification still needs the independent review's agreement.
+
+Main #401 landed at0d85e86 after all12 checks passed on its final73cd8d4 head.
+Merged that main into this branch as07fe944, preserving both guardrails lessons,
+both PRD change-log rows and both completed-log entries. These ordinary-text
+unions are part of the upcoming whole-head cap2 review, not an unreviewed
+shared-index exception. Hook checks passed on the merged head. The next CI reads
+the full union; no E2E green or final cap2 verdict is claimed ahead of it.
