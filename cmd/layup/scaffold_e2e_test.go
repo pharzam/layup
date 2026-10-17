@@ -82,7 +82,7 @@ func TestTheStepsOfTheScaffold(t *testing.T) {
 	// The rows that each restart makes, in order: the four steps before the steps of Intake, those of Intake, the three of the
 	// Scaffold, and forge-check: last at the first start, and after lease once the Scaffold is done.
 	front := []string{"forge", "clone", "version", "lease"}
-	intake := []string{"probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers", "answers-review", "follow-up", "follow-up-answers"}
+	intake := []string{"probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers", "answers-review", "follow-up", "follow-up-answers", "revision"}
 	scaffold := []string{"setup", "verify", "scaffold-push"}
 	stage1, stage2 := slices.Concat(front, intake[:10]), slices.Concat(front, intake, scaffold)
 	atFirst, atLater := slices.Concat(stage2, []string{"forge-check"}), slices.Concat(front, []string{"forge-check"}, intake, scaffold)
@@ -102,8 +102,8 @@ func TestTheStepsOfTheScaffold(t *testing.T) {
 	}
 	port, owner := setup.MarkerID("docs/ops.md", angled("port")), setup.MarkerID("docs/ops.md", angled("owner"))
 	questions := questionsOf(t, w)
-	if len(questions) != 7 || !strings.HasPrefix(rows["markers"][1], "2 markers") || !strings.HasPrefix(rows["batch"][1], "7 questions") {
-		t.Fatalf("stage 1: the markers row %q, the batch row %q, %d questions; want two markers and seven questions: G1, the three fields, S01-stack and the two markers\n%q", rows["markers"], rows["batch"], len(questions), questions)
+	if len(questions) != 8 || !strings.HasPrefix(rows["markers"][1], "2 markers") || !strings.HasPrefix(rows["batch"][1], "8 questions") {
+		t.Fatalf("stage 1: the markers row %q, the batch row %q, %d questions; want two markers and eight questions: G1, the four fields, S01-stack and the two markers\n%q", rows["markers"], rows["batch"], len(questions), questions)
 	}
 
 	// Stage 2: the answers, then the restart that ends Intake, runs setup and verify, and waits at scaffold-push.
@@ -117,6 +117,8 @@ func TestTheStepsOfTheScaffold(t *testing.T) {
 			text = "10.0"
 		case "appetite.hours":
 			text = "40.0"
+		case "success-criteria":
+			text = "the setup completes"
 		case "S01-stack":
 			text = "go"
 		case port:

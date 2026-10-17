@@ -36,7 +36,7 @@ func TestStartAndRestartCallStepAtTheStartOfEachStep(t *testing.T) {
 		t.Errorf("the steps of Start %q; want those of run.md", got)
 	}
 	phase := []string{"forge", "clone", "version", "lease", "probe", "phase"}
-	intake := []string{"probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers", "answers-review", "follow-up", "follow-up-answers", "setup", "verify", "scaffold-push"}
+	intake := []string{"probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers", "answers-review", "follow-up", "follow-up-answers", "revision", "setup", "verify", "scaffold-push"}
 	first := append(append([]string{"forge", "clone", "version", "lease"}, intake...), "forge-check")
 	later := append([]string{"forge", "clone", "version", "lease", "forge-check"}, intake...)
 	for _, c := range []struct {

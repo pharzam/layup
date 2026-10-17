@@ -68,7 +68,8 @@ func TestValidIntakeRecordsAreRead(t *testing.T) {
 		"questions": {readQuestions, table(questionsHead, askedRow, intentRow, open, unanswered, closed,
 			strings.Replace(rule1, "Q-001", "Q-006", 1), strings.Replace(coverage1, "Q-001", "Q-007", 1), strings.Replace(followup1, "Q-001	follow-up", "Q-008	follow-up", 1),
 			strings.Replace(stack1, "Q-001", "Q-009", 1), strings.Replace(marker1, "Q-001", "Q-010", 1),
-			field(questionsHead, field(questionsHead, strings.Replace(marker1, "Q-001", "Q-011", 1), "start", "—"), "end", "—"))},
+			field(questionsHead, field(questionsHead, strings.Replace(marker1, "Q-001", "Q-011", 1), "start", "—"), "end", "—"),
+			strings.Replace(strings.Replace(intent1, "Q-001", "Q-012", 1), "band.U", "success-criteria", 1))},
 		"answers":         {readAnswers, table(answersHeader, answerRow)},
 		"answers-review":  {readAnswersReview, table(reviewHeader, reviewRow, "Q-002\topen\tThe band is not below U.\tS-1a2b3c4d")},
 		"budget":          {readBudget, table(budgetHeader, "band.B\t50.0\tQ-002", "band.U\t200.0\tQ-003", "appetite.hours\t40.0\tQ-004")},
@@ -161,6 +162,7 @@ func TestIntakeRecordsRefuseEachBrokenRule(t *testing.T) {
 		c{"questions: a setup question in the idea owner's block", readQuestions, table(questionsHead, field(questionsHead, stack1, "block", "idea-owner")), "block"},
 		c{"answers-review: a session that is not S- and 8 hexadecimal characters", readAnswersReview, table(reviewHeader, field(reviewHeader, reviewRow, "session", "S-1a2b3c4z")), "session"},
 		c{"budget: a name that is not of the block", readBudget, table(budgetHeader, "appetite.money\t200.0\tQ-003"), "name"},
+		c{"budget: the success criteria are no name of the budget", readBudget, table(budgetHeader, "success-criteria\t5.0\tQ-003"), "name"},
 	)
 	for _, k := range cases {
 		refusedAt(t, k.name, k.read, k.data, k.column)
