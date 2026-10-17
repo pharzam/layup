@@ -1,6 +1,7 @@
 package run
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
@@ -74,68 +75,109 @@ func TestCheckRevision(t *testing.T) {
 		name   string
 		rows   [][]string
 		before [][]string // nil for the fixture's draft
+		qs     [][]string // question rows added to the fixture's
+		as     [][]string // answer rows added to the fixture's
+		cq     string     // the criteria question, "Q-002" when empty
 		want   string     // "" for a pass, else a word of the finding
 	}{
-		{"the draft kept, no citation needed", good, nil, ""},
+		{"the draft kept, no citation needed", good, nil, nil, nil, "", ""},
 		{"an answer's fact with the fact of its quote", file(
 			"requirement\tThe tool does 1.\t1\tIt does 1.",
 			"non-functional\tThe tool keeps 2.\t2\tIt keeps 2.",
-			"success-criterion\tThe tool meets 3.\t3 Q-001\tIt meets 3."), nil, ""},
+			"success-criterion\tThe tool meets 3.\t3 Q-001\tIt meets 3."), nil, nil, nil, "", ""},
 		{"a row covering an answer's fact, the quote's fact missing", file(
 			"requirement\tThe tool does 1.\t1\tIt does 1.",
 			"non-functional\tThe tool keeps 2.\t2\tIt keeps 2.",
 			"success-criterion\tThe tool meets 3.\t3\tIt meets 3.",
-			"requirement\tThe answer of Q-001.\tQ-001\t—"), nil, "Q-001"},
+			"requirement\tThe answer of Q-001.\tQ-001\t—"), nil, nil, nil, "", "Q-001"},
 		{"a Q-NNN that is no fact of the answers", file(
 			"requirement\tThe tool does 1.\t1\tIt does 1.",
 			"non-functional\tThe tool keeps 2.\t2\tIt keeps 2.",
-			"success-criterion\tThe tool meets 3.\t3 Q-003\tIt meets 3."), nil, "Q-003"},
+			"success-criterion\tThe tool meets 3.\t3 Q-003\tIt meets 3."), nil, nil, nil, "", "Q-003"},
 		{"a Q-NNN of no answer, its quote's fact covered", file(
 			"requirement\tThe tool does 1.\t1 Q-003\tIt does 1.",
 			"non-functional\tThe tool keeps 2.\t2\tIt keeps 2.",
-			"success-criterion\tThe tool meets 3.\t3\tIt meets 3."), nil, "Q-003"},
+			"success-criterion\tThe tool meets 3.\t3\tIt meets 3."), nil, nil, nil, "", "Q-003"},
 		{"the success-criteria answer covered by the session", file(
 			"requirement\tThe tool does 1.\t1\tIt does 1.",
 			"non-functional\tThe tool keeps 2.\t2\tIt keeps 2.",
 			"success-criterion\tThe tool meets 3.\t3\tIt meets 3.",
-			"success-criterion\tThe answer of Q-002.\tQ-002\tfast."), nil, "Q-002"},
+			"success-criterion\tThe answer of Q-002.\tQ-002\tfast."), nil, nil, nil, "", "Q-002"},
 		{"a need fact covered by no row", file(
 			"non-functional\tThe tool keeps 2.\t2\tIt keeps 2.",
-			"success-criterion\tThe tool meets 3.\t3\tIt meets 3."), nil, "need"},
+			"success-criterion\tThe tool meets 3.\t3\tIt meets 3."), nil, nil, nil, "", "need"},
 		{"a measure fact with no success criterion", file(
 			"requirement\tThe tool does 1.\t1\tIt does 1.",
 			"non-functional\tThe tool keeps 2.\t2\tIt keeps 2.",
-			"requirement\tThe tool does 3.\t3\tIt does 3."), nil, "measure"},
+			"requirement\tThe tool does 3.\t3\tIt does 3."), nil, nil, nil, "", "measure"},
 		{"a row covering no fact", file(
 			"requirement\tThe tool does 1.\t1\tIt does 1.",
 			"non-functional\tThe tool keeps 2.\t2\tIt keeps 2.",
 			"success-criterion\tThe tool meets 3.\t3\tIt meets 3.",
-			"requirement\tNothing.\t—\t—"), nil, "covers"},
+			"requirement\tNothing.\t—\t—"), nil, nil, nil, "", "covers"},
 		{"a changed class set with no answer's fact", file(
 			"requirement\tThe tool does 1.\t1\tIt does 1.",
 			"non-functional\tThe tool keeps 2.\t2\tIt keeps 2.",
 			"requirement\tThe tool does 3.\t3\tIt does 3.",
-			"success-criterion\tThe tool meets 3.\t3\tIt meets 3."), nil, "3"},
+			"success-criterion\tThe tool meets 3.\t3\tIt meets 3."), nil, nil, nil, "", "3"},
 		{"a changed class set named by an answer's fact", file(
 			"requirement\tThe tool does 1.\t1\tIt does 1.",
 			"non-functional\tThe tool keeps 2.\t2\tIt keeps 2.",
 			"requirement\tThe tool does 3.\t3 Q-001\tIt does 3.",
-			"success-criterion\tThe tool meets 3.\t3\tIt meets 3."), nil, ""},
+			"success-criterion\tThe tool meets 3.\t3\tIt meets 3."), nil, nil, nil, "", ""},
 		{"a context fact newly covered, no citation needed", file(
 			"requirement\tThe tool does 1.\t1\tIt does 1.",
 			"non-functional\tThe tool keeps 2.\t2\tIt keeps 2.",
 			"success-criterion\tThe tool meets 3.\t3\tIt meets 3.",
-			"requirement\tThe context of 4.\t4\tIt rests on 4."), nil, ""},
+			"requirement\tThe context of 4.\t4\tIt rests on 4."), nil, nil, nil, "", ""},
 		{"a context fact dropped, no citation needed", file(
 			"requirement\tThe tool does 1.\t1\tIt does 1.",
 			"non-functional\tThe tool keeps 2.\t2\tIt keeps 2.",
-			"success-criterion\tThe tool meets 3.\t3\tIt meets 3."), covered4, ""},
+			"success-criterion\tThe tool meets 3.\t3\tIt meets 3."), covered4, nil, nil, "", ""},
+		// A follow-up's quote is that of the question it asks again
+		// (records.md, the block questions): a row covering its answer's fact
+		// names the quote's fact the same.
+		{"the answer of a follow-up, the fact of its question's quote missing", file(
+			"requirement\tThe tool does 1.\t1\tIt does 1.",
+			"non-functional\tThe tool keeps 2.\t2\tIt keeps 2.",
+			"success-criterion\tThe tool meets 3.\t3\tIt meets 3.",
+			"requirement\tThe answer of Q-004.\tQ-004\t—"), nil,
+			[][]string{{"Q-004", "follow-up", "Q-001", "idea-owner", "before-delivery", "follow-up", "", "", "What covers fact 3?", "2026-10-11T10:10:00Z", "layup run", "2026-10-11T10:12:00Z", "answered"}},
+			[][]string{{"Q-004", "it is covered.", "809", "303", "2026-10-11T10:12:00Z"}}, "", "the fact 3 of its quote"},
+		{"the answer of a follow-up with the fact of its question's quote", file(
+			"requirement\tThe tool does 1.\t1\tIt does 1.",
+			"non-functional\tThe tool keeps 2.\t2\tIt keeps 2.",
+			"requirement\tThe answer of Q-004.\t3 Q-004\tIt rests on it.",
+			"success-criterion\tThe tool meets 3.\t3\tIt meets 3."), nil,
+			[][]string{{"Q-004", "follow-up", "Q-001", "idea-owner", "before-delivery", "follow-up", "", "", "What covers fact 3?", "2026-10-11T10:10:00Z", "layup run", "2026-10-11T10:12:00Z", "answered"}},
+			[][]string{{"Q-004", "it is covered.", "809", "303", "2026-10-11T10:12:00Z"}}, "", ""},
+		// The criteria are the code's rows in either spelling: the follow-up
+		// whose answer gives them, and the question it asks again, are both
+		// refused to the session.
+		{"a criteria follow-up covered by the session", file(
+			"requirement\tThe tool does 1.\t1\tIt does 1.",
+			"non-functional\tThe tool keeps 2.\t2\tIt keeps 2.",
+			"success-criterion\tThe tool meets 3.\t3\tIt meets 3.",
+			"requirement\tThe answer of Q-005.\tQ-005\t—"), nil,
+			[][]string{{"Q-005", "follow-up", "Q-002", "idea-owner", "before-delivery", "follow-up", "", "", "The criteria?", "2026-10-11T10:10:00Z", "layup run", "2026-10-11T10:12:00Z", "answered"}},
+			[][]string{{"Q-005", "steady", "809", "303", "2026-10-11T10:12:00Z"}}, "Q-005", "Q-005"},
+		{"the question a criteria follow-up asks again, covered by the session", file(
+			"requirement\tThe tool does 1.\t1\tIt does 1.",
+			"non-functional\tThe tool keeps 2.\t2\tIt keeps 2.",
+			"success-criterion\tThe tool meets 3.\t3\tIt meets 3.",
+			"requirement\tThe earlier answer of Q-002.\tQ-002\t—"), nil,
+			[][]string{{"Q-005", "follow-up", "Q-002", "idea-owner", "before-delivery", "follow-up", "", "", "The criteria?", "2026-10-11T10:10:00Z", "layup run", "2026-10-11T10:12:00Z", "answered"}},
+			[][]string{{"Q-005", "steady", "809", "303", "2026-10-11T10:12:00Z"}}, "Q-005", "Q-002"},
 	} {
 		old := before
 		if c.before != nil {
 			old = c.before
 		}
-		err := checkRevision(c.rows, spans, questions, answers, old, "Q-002")
+		cq := c.cq
+		if cq == "" {
+			cq = "Q-002"
+		}
+		err := checkRevision(c.rows, spans, append(slices.Clone(questions), c.qs...), append(slices.Clone(answers), c.as...), old, cq)
 		if c.want == "" && err != nil {
 			t.Errorf("%s: %v; want a pass", c.name, err)
 		}
@@ -202,5 +244,36 @@ func TestKeepOfRevision(t *testing.T) {
 			"success-criterion\tThe tool meets 3.\t3\tIt meets 3.\n"+
 			"requirement\tThe answer of Q-001.\tQ-001\t—\n")); err == nil || !strings.Contains(err.Error(), "Q-001") {
 		t.Errorf("a file that drops the quote's fact: %v; want a refusal naming Q-001", err)
+	}
+	// An R-NNN is the position of its row, never an identity kept from the
+	// draft before (records.md, the block draft): a revision that reorders the
+	// rows writes the IDs of the new order, and a row of coverage.tsv or an
+	// answer's text that names an R-NNN names that earlier draft's row.
+	files, err = keep("S-ccccdddd", []byte(
+		"kind\tstatement\tcovers\tcriterion\n"+
+			"success-criterion\tThe tool meets 3.\t3\tIt meets 3.\n"+
+			"non-functional\tThe tool keeps 2.\t2\tIt keeps 2.\n"+
+			"requirement\tThe tool does 1.\t1\tIt does 1.\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	rows, err = records.ReadDraft(files["spec/draft.tsv"])
+	if err != nil {
+		t.Fatal(err)
+	}
+	want = []string{
+		"R-001 success-criterion The tool meets 3. 3 It meets 3. S-ccccdddd",
+		"R-002 non-functional The tool keeps 2. 2 It keeps 2. S-ccccdddd",
+		"R-003 requirement The tool does 1. 1 It does 1. S-ccccdddd",
+		"R-004 success-criterion The delivery's success criteria. Q-002 fast S-ccccdddd",
+		"R-005 success-criterion The delivery's success criteria. Q-002 cheap S-ccccdddd",
+	}
+	if len(rows) != len(want) {
+		t.Fatalf("the reordered draft %v; want %v", rows, want)
+	}
+	for i := range want {
+		if strings.Join(rows[i], " ") != want[i] {
+			t.Errorf("row %d of the reorder: %q; want %q", i+1, rows[i], want[i])
+		}
 	}
 }

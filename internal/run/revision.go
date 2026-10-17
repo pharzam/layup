@@ -53,12 +53,14 @@ func factOfQuote(start, end string, spans [][]string) string {
 // (docs/spec/loop.md, The revision of the draft): the rules of the draft
 // check, widened so a covers token may be the ID of a fact of the answers — a
 // Q-NNN with a row of intake/answers.tsv; a row that covers an answer's fact
-// also names the fact of the answer's quote; a fact whose set of covering
-// kinds changed from the draft before it is covered by a row that names a
-// fact of the answers; and no row covers the question of the intent field
-// success-criteria, whose rows the code appends. rows are the session's, as
-// draftFile reads them: kind, statement, covers, criterion; before are the
-// draft's rows, as records.ReadDraft gives them.
+// also names the fact of the answer's quote (a follow-up's quote is that of
+// the question it asks again); a fact whose set of covering kinds changed
+// from the draft before it is covered by a row that names a fact of the
+// answers; and no row covers the question of the intent field
+// success-criteria — nor the question a criteria follow-up asks again — whose
+// rows the code appends. rows are the session's, as draftFile reads them:
+// kind, statement, covers, criterion; before are the draft's rows, as
+// records.ReadDraft gives them.
 func checkRevision(rows, spans, questions, answers, before [][]string, criteriaQ string) error {
 	class := map[string]string{}
 	var facts []string
@@ -72,10 +74,30 @@ func checkRevision(rows, spans, questions, answers, before [][]string, criteriaQ
 	for _, a := range answers {
 		answered[a[0]] = true
 	}
+	byID := map[string][]string{}
+	refOf := map[string]string{} // the question each follow-up asks again
+	for _, q := range questions {
+		byID[q[0]] = q
+		if q[1] == "follow-up" {
+			refOf[q[0]] = q[2]
+		}
+	}
 	quoteFact := map[string]string{} // the fact of each question's quote
 	for _, q := range questions {
-		if q[6] != "" {
-			quoteFact[q[0]] = factOfQuote(q[6], q[7], spans)
+		start, end := q[6], q[7]
+		// A row that holds no quote of its own takes the quote of the
+		// question its ref names (a follow-up's is that of the question it
+		// asks again, records.md the block questions), as many hops as the
+		// rows give at most.
+		for o, hops := q, 0; start == "" && hops < len(questions); hops++ {
+			o = byID[o[2]]
+			if o == nil {
+				break
+			}
+			start, end = o[6], o[7]
+		}
+		if start != "" {
+			quoteFact[q[0]] = factOfQuote(start, end, spans)
 		}
 	}
 	covered, criterion := map[string]bool{}, map[string]bool{}
@@ -91,7 +113,7 @@ func checkRevision(rows, spans, questions, answers, before [][]string, criteriaQ
 				if !answered[n] {
 					return fmt.Errorf("row %d: covers names %s, which is no fact of the answers", i+1, n)
 				}
-				if n == criteriaQ {
+				if n == criteriaQ || n == refOf[criteriaQ] {
 					return fmt.Errorf("row %d: covers names %s, the answer of the success criteria, whose rows the code appends", i+1, n)
 				}
 				if f := quoteFact[n]; f != "" && !slices.Contains(covers, f) {
@@ -201,7 +223,8 @@ the requirement, the non-functional and the success-criterion kinds; a row's
 covers names the numbers of the span table's facts, or the ID Q-NNN of an
 answer's question when the row rests on the answer. A row that covers an
 answer's Q-NNN also names the fact of the answer's quote (the fact of the
-span that holds the question's quote). A fact whose covering kinds you change
+span that holds the question's quote; a follow-up's quote is that of the
+question it asks again). A fact whose covering kinds you change
 rests on an answer: one row that covers it names its Q-NNN. The success
 criteria of the intent answer are none of yours — code writes their rows.
 Write the output file as tab-separated values, with the header line
