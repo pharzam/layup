@@ -85,3 +85,13 @@ exit 1
 ```
 
 Gates of the fixes of round 1, head `640d0c6`: `go build ./...`, `go vet ./...`, `go vet -tags=integration ./...`, `go vet -tags=e2e ./cmd/layup/`, `gofmt -l .` (no file), `go test -count=1 ./...`, the five text checks, `nested-checkout-check` and `git diff --check origin/main HEAD`: exit 0 each. `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 45m ./...`: exit 0, 15:30:12Z to 15:50:51Z, every package `ok`.
+
+Finding 1 of round 2 (the prompt and the full input predict different facts records for an executable or a linked `F-NNNN` entry), red before the fix, head `b4c3fb4` plus the extraction `targetTreeAt` and the test, started 2026-10-18T17:11:42Z: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 20m ./internal/run -run 'TestThePromptAndTheFullInputPredictTheSameFactsRecords'`:
+
+```
+an_executable_file -> specinput_integration_test.go:314: the prompt: record F-0008, next F-0009; want F-0003 and F-0004
+a_link -> specinput_integration_test.go:314: the prompt: record F-0008, next F-0009; want F-0003 and F-0004
+(also line 321: the full input: PSBRecords [F-0004], Records [F-0003]; and line 327: the rule covers fails: the Facts cell of REQ-001 cites F-0009#1, which is no fact of the inventory or the answers)
+the control (regular files only) and the gitlink pass (a gitlink is a commit entry, not a blob, to both)
+exit 1
+```

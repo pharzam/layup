@@ -280,3 +280,53 @@ func TestTheSpecimenPassesTheFullCheckAndThePrdLintThroughTheProductionInput(t *
 		t.Errorf("prd-lint: accepted %v, %v, %v", ok, lines, err)
 	}
 }
+
+// loop.md, The instruction of a task step: the prompt of the specification and the input of the full
+// check predict the facts records of one tree by one contract (the regular files of docs/facts/, as
+// the numbered-facts reader takes them). The ID that the prompt tells the specification to cite
+// is the one the input holds, the record that it names is among the input's records, and the
+// citations of that prompt pass the rule covers; an executable file or a link is no record for either.
+func TestThePromptAndTheFullInputPredictTheSameFactsRecords(t *testing.T) {
+	gitlink := strings.Repeat("1", 40)
+	setup := entry{"100644", "docs/facts/F-0003-setup-answers.md", "1. **x:** a\n"}
+	for _, c := range []struct {
+		name         string
+		extra        []entry
+		record, next string
+	}{
+		{"regular files only (the control)", []entry{{"100644", "docs/facts/F-0008-extra.md", "x\n"}}, "F-0008", "F-0009"},
+		{"an executable file", []entry{{"100755", "docs/facts/F-0008-extra.md", "x\n"}}, "F-0003", "F-0004"},
+		{"a link", []entry{{"120000", "docs/facts/F-0008-extra.md", "F-0003-setup-answers.md"}}, "F-0003", "F-0004"},
+		{"a gitlink", []entry{{"160000", "docs/facts/F-0008-extra.md", gitlink}}, "F-0003", "F-0004"},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			entries := append([]entry{{"100644", "docs/prd/PRD-0001-x.md", cavPRD}, setup}, c.extra...)
+			dir, head := treeOf(t, entries...)
+			tree, err := targetTreeAt(dir, head)
+			if err != nil {
+				t.Fatal(err)
+			}
+			record, next, err := factsRecords(tree.Paths)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if "F-"+record != c.record || "F-"+next != c.next {
+				t.Errorf("the prompt: record F-%s, next F-%s; want %s and %s", record, next, c.record, c.next)
+			}
+			in, err := cavTreeInput(t, dir, head)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !slices.Equal(in.PSBRecords, []string{"F-" + next}) || !slices.Contains(in.Records, "F-"+record) || in.Records[len(in.Records)-1] != "F-"+record {
+				t.Errorf("the full input: PSBRecords %v, Records %v; want the prompt's next F-%s and the record F-%s as the highest", in.PSBRecords, in.Records, next, record)
+			}
+			prd := strings.Replace(cavPRD, "F-0007#1", "F-"+next+"#1, F-"+record, 1)
+			in.PRDs = map[string][]byte{"PRD-0001-x.md": []byte(prd)}
+			for _, row := range spec.CheckFull(in) {
+				if row[0] == "covers" && row[1] == "fail" {
+					t.Errorf("the rule covers fails on the citations of the prompt: %s", row[2])
+				}
+			}
+		})
+	}
+}
