@@ -131,11 +131,11 @@ func Render(rec Record, pre []byte) ([]byte, []spec.Finding) {
 	return nil, []spec.Finding{{Rule: "kind", Detail: fmt.Sprintf("the kind %q is neither prd nor facts", rec.Kind)}}
 }
 
-// validPath reports whether p is a path of a tree that git can name by
+// ValidPath reports whether p is a path of a tree that git can name by
 // itself: relative, in its clean form, with no part that leaves the tree or
 // reaches into .git. git show REV:../x reads relative to the working
 // directory, so a spelling that a reader finds clean can still leave the tree.
-func validPath(p string) bool {
+func ValidPath(p string) bool {
 	if p == "" || p != path.Clean(p) || strings.HasPrefix(p, "/") || strings.HasPrefix(p, ":") || strings.ContainsAny(p, "\\\x00") {
 		return false
 	}
@@ -164,7 +164,7 @@ func Judge(reg []Entry, touched []Touched, records []Record, pre map[string][]by
 	for _, rec := range records {
 		_, hasPre := pre[rec.Path]
 		switch {
-		case !validPath(rec.Path), rec.Path == GuardrailsPath, rec.Kind != PRD && rec.Kind != Facts, rec.Kind == PRD && !hasPre:
+		case !ValidPath(rec.Path), rec.Path == GuardrailsPath, rec.Kind != PRD && rec.Kind != Facts, rec.Kind == PRD && !hasPre:
 			return errorOf(ReasonInput, rec.Path)
 		}
 		if _, twice := byPath[rec.Path]; twice {
@@ -225,7 +225,7 @@ func entryAt(r Repo, rev, p string) (git.TreeEntry, bool, error) {
 // between them, or a failing call of git.
 func Basic(r Repo, in Input) Result {
 	for _, rec := range in.Records {
-		if !validPath(rec.Path) {
+		if !ValidPath(rec.Path) {
 			return errorOf(ReasonInput, rec.Path)
 		}
 	}
