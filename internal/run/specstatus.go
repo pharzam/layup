@@ -5,7 +5,9 @@ package run
 // plan of M2e). The schema, the writer and the check itself are internal/spec's.
 
 import (
+	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -116,5 +118,50 @@ type SpecInput struct {
 	Copy             []byte
 }
 
-// SpecAt gives the status layup/spec of a head, running the full check once.
-func (s *Sessions) SpecAt(context.Context, SpecInput) (Status, error) { return Status{}, nil }
+// SpecAt gives the status layup/spec of a head. A head that has a table in
+// spec-check.tsv is never checked again. Otherwise the input is built by specInput
+// (row 66p) and judged by spec.CheckFull once, and the ten rows are appended with
+// spec.WriteSpecCheck in one fenced records commit before the status is given. A
+// refusal of the head's own tree (a source "target:") is the status error with no
+// row written; a refusal of a record (a source "records:") or of the base and head
+// is a Go error, and nothing is written.
+func (s *Sessions) SpecAt(ctx context.Context, in SpecInput) (Status, error) {
+	rows, found, err := s.SpecTable(ctx, in.Task, in.Head)
+	if err != nil {
+		return Status{}, err
+	}
+	if found {
+		return SpecStatus(rows), nil
+	}
+	input, err := s.specInput(ctx, in.Base, in.Head, in.Copy)
+	var se *SourceError
+	if errors.As(err, &se) && strings.HasPrefix(se.Source, "target:") {
+		first, _, _ := strings.Cut(strings.TrimSpace(se.Err.Error()), "\n")
+		return Status{SpecContext, "error", fit("error: " + se.Field + ": " + first)}, nil
+	}
+	if err != nil {
+		return Status{}, err
+	}
+	rows = spec.CheckFull(input)
+	var added bytes.Buffer
+	if err := spec.WriteSpecCheck(&added, in.Head, rows); err != nil {
+		return Status{}, err
+	}
+	data, err := s.Store.ReadFile(ctx, specPath(in.Task))
+	if err != nil {
+		return Status{}, err
+	}
+	if data == nil {
+		data = added.Bytes()
+	} else {
+		_, body, _ := bytes.Cut(added.Bytes(), []byte("\n"))
+		data = append(data[:len(data):len(data)], body...)
+	}
+	if _, err := readSpecTable(data); err != nil {
+		return Status{}, fmt.Errorf("%s: %w", specPath(in.Task), err)
+	}
+	if err := s.commit(ctx, map[string][]byte{specPath(in.Task): data}, "layup run: the spec check of "+in.Head+" of "+in.Task); err != nil {
+		return Status{}, err
+	}
+	return SpecStatus(rows), nil
+}

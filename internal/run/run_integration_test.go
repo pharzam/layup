@@ -47,7 +47,8 @@ type fakeGitHub struct {
 	noActivity bool                        // the read of the activity answers 404 (row 57a)
 	perms      map[string]string           // the permissions of the installation; the three of M2a when nil (task T-cak3)
 	statuses   map[string][]map[string]any // the commit statuses of each SHA, newest first (row 66f)
-	failStatus int                         // the next posts of a status that answer 500
+	failStatus int                         // the next posts of a status that answer 500, after okStatus have passed
+	okStatus   int
 }
 
 func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
@@ -134,7 +135,9 @@ func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
 		}
 		json.NewEncoder(w).Encode(list)
 	case strings.HasPrefix(call, "POST /repos/acme/target/statuses/"):
-		if f.failStatus > 0 {
+		if f.okStatus > 0 {
+			f.okStatus--
+		} else if f.failStatus > 0 {
 			f.failStatus--
 			http.Error(w, `{"message":"Server Error"}`, 500)
 			return

@@ -6,12 +6,14 @@ package run
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"slices"
 	"strings"
 
 	"github.com/pharzam/layup/internal/forge"
+	"github.com/pharzam/layup/internal/gate"
 	"github.com/pharzam/layup/internal/records"
 	"github.com/pharzam/layup/internal/rules"
 )
@@ -191,5 +193,45 @@ type StatusPost struct {
 	Posted bool
 }
 
-// PostStatuses computes the four statuses of a head and posts each through PostStatus.
-func (s *Sessions) PostStatuses(context.Context, HeadInput) ([]StatusPost, error) { return nil, nil }
+// PostStatuses computes the four statuses of a head and posts each through
+// PostStatus, in the order gates, spec, rules, verify, one after the other: a
+// failure stops the call and keeps the earlier posts, and the next call posts the
+// rest (loop.md, REQ-007). It gives each status with the SHA it is posted on. A
+// scratch tree of the gates that cannot be removed does not stop the call: the
+// error is returned after the four.
+func (s *Sessions) PostStatuses(ctx context.Context, in HeadInput) ([]StatusPost, error) {
+	var out []StatusPost
+	var late error
+	post := func(sha string, st Status) error {
+		posted, err := s.PostStatus(ctx, sha, st)
+		if err == nil {
+			out = append(out, StatusPost{sha, st, posted})
+		}
+		return err
+	}
+	st, err := s.GatesAt(ctx, GatesInput{Task: in.Task, Base: in.Base, Head: in.Head, Step: in.Step, Out: in.Out})
+	var cleanup *gate.CleanupError
+	if errors.As(err, &cleanup) {
+		late, err = err, nil
+	}
+	if err == nil {
+		err = post(in.Head, st)
+	}
+	if err == nil {
+		if st, err = s.SpecAt(ctx, SpecInput{Task: in.Task, Base: in.Base, Head: in.Head, Copy: in.Copy}); err == nil {
+			err = post(in.Head, st)
+		}
+	}
+	if err == nil {
+		if st, err = s.RulesAt(ctx, RulesInput{Task: in.Task, Base: in.Base, Head: in.Head, PreRev: in.PreRev, RegisterRev: in.RegisterRev, Records: in.Records}); err == nil {
+			err = post(in.Head, st)
+		}
+	}
+	if err == nil {
+		var sha string
+		if sha, st, err = s.VerifyAt(ctx, VerifyInput{Task: in.Task, Base: in.Base, Head: in.Head, Session: in.Session, Waiting: in.Waiting, Harnesses: in.Harnesses, Models: in.Models}); err == nil {
+			err = post(sha, st)
+		}
+	}
+	return out, errors.Join(err, late)
+}

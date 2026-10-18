@@ -5,8 +5,10 @@ package run
 import (
 	"bytes"
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -204,14 +206,7 @@ func TestTheRulesStatusReadsTheRegisterOfTheRecordsCommit(t *testing.T) {
 func TestTheVerifyStatusFollowsTheVerifierFromTheRecords(t *testing.T) {
 	l := statusWorldOfARun(t)
 	ctx := context.Background()
-	s, harnesses, models := pairWorld(t, "qa-engineer\treasoning\t1\tclaude\tm1\nqa-engineer\treasoning\t2\tdevin\tm1\n")
-	files := map[string][]byte{}
-	for _, p := range []string{"harnesses.tsv", "routing.tsv"} {
-		files[p] = s.Store.(*standinStore).files[p]
-	}
-	if err := l.r.commit(ctx, files, "the registers"); err != nil {
-		t.Fatal(err)
-	}
+	harnesses, models := commitRegisters(t, l)
 	// The verifier is a session of devin that reviews the base; its record is nothing material at that head.
 	text := record(l.a.base, "nothing material in scope")
 	id := l.comment(1, "verification", "devin", text)
@@ -225,5 +220,159 @@ func TestTheVerifyStatusFollowsTheVerifierFromTheRecords(t *testing.T) {
 	}
 	if ok, err := l.r.PostStatus(ctx, sha, st); err != nil || ok {
 		t.Errorf("the same verdict again: %v, %v; want not posted", ok, err)
+	}
+}
+
+// commitRegisters commits the probes and the routing of three harnesses to the records, and gives the registers.
+func commitRegisters(t *testing.T, l *loopRun) (harnesses, models [][]string) {
+	t.Helper()
+	s, harnesses, models := pairWorld(t, "qa-engineer\treasoning\t1\tclaude\tm1\nqa-engineer\treasoning\t2\tdevin\tm1\n")
+	files := map[string][]byte{}
+	for _, p := range []string{"harnesses.tsv", "routing.tsv"} {
+		files[p] = s.Store.(*standinStore).files[p]
+	}
+	if err := l.r.commit(context.Background(), files, "the registers"); err != nil {
+		t.Fatal(err)
+	}
+	return harnesses, models
+}
+
+// specRecords commits the records of a target after Intake, which the full check reads.
+func specRecords(t *testing.T, l *loopRun) {
+	t.Helper()
+	if err := l.r.commit(context.Background(), cavFiles(t), "the records of Intake"); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestTheSpecStatusOfAHeadThatTouchesNoSpecificationIsClearAndIsRebuiltFromItsTable(t *testing.T) {
+	l := statusWorldOfARun(t)
+	ctx := context.Background()
+	specRecords(t, l)
+	head := childCommit(t, l.r.Clone, l.a.base, map[string]string{"x.go": "package x\n"})
+	in := SpecInput{Task: "T-ab12", Base: l.a.base, Head: head}
+	st, err := l.r.SpecAt(ctx, in)
+	want := Status{SpecContext, "success", "clear: no specification yet"}
+	if err != nil || st != want {
+		t.Fatalf("SpecAt = %+v, %v; want %+v", st, err, want)
+	}
+	rows, found, err := l.r.SpecTable(ctx, "T-ab12", head)
+	if err != nil || !found || len(rows) != 10 || rows[9][0] != "ran" {
+		t.Fatalf("SpecTable = %v, %v, %v; want the ten rows of the head, ran last", rows, found, err)
+	}
+	// A second head is appended to the table, and the first head's rows stay.
+	head2 := childCommit(t, l.r.Clone, head, map[string]string{"y.go": "package x\n"})
+	if st2, err := l.r.SpecAt(ctx, SpecInput{Task: "T-ab12", Base: l.a.base, Head: head2}); err != nil || st2 != st {
+		t.Fatalf("SpecAt of a second head = %+v, %v", st2, err)
+	}
+	if rows, found, err := l.r.SpecTable(ctx, "T-ab12", head); err != nil || !found || len(rows) != 10 {
+		t.Fatalf("the first head after the second: %d rows, %v, %v; want its ten rows kept", len(rows), found, err)
+	}
+	// A record the check reads is broken: a second run would be a Go error, so the status comes from the table.
+	if err := l.r.commit(ctx, map[string][]byte{"questions.tsv": []byte("not a table")}, "break a record"); err != nil {
+		t.Fatal(err)
+	}
+	if st2, err := l.r.SpecAt(ctx, in); err != nil || st2 != st {
+		t.Errorf("the second SpecAt = %+v, %v; want %+v from the table, with no second run", st2, err, st)
+	}
+	if ok, err := l.r.PostStatus(ctx, head, st); err != nil || !ok {
+		t.Errorf("PostStatus: %v, %v", ok, err)
+	}
+	if ok, err := l.r.PostStatus(ctx, head, st); err != nil || ok {
+		t.Errorf("the second PostStatus: %v, %v; want not posted", ok, err)
+	}
+}
+
+func TestATargetSourceOfTheFullCheckIsAPostedErrorAndARecordsSourceIsAGoError(t *testing.T) {
+	l := statusWorldOfARun(t)
+	ctx := context.Background()
+	specRecords(t, l)
+	// Two numbered facts records at the head are a refusal of the tree: a posted error, no row.
+	head := childCommit(t, l.r.Clone, l.a.base, map[string]string{"docs/facts/F-0001-numbered-facts.md": "1. a\n", "docs/facts/F-0002-numbered-facts.md": "1. b\n"})
+	st, err := l.r.SpecAt(ctx, SpecInput{Task: "T-ab12", Base: l.a.base, Head: head})
+	if err != nil || st.State != "error" || !strings.HasPrefix(st.Description, "error: PSBRecords: ") {
+		t.Errorf("a target source: %+v, %v; want error, error: PSBRecords: …", st, err)
+	}
+	if _, found, err := l.r.SpecTable(ctx, "T-ab12", head); err != nil || found {
+		t.Errorf("SpecTable: found=%v, %v; want no row for an unreadable tree", found, err)
+	}
+	// A record that its reader refuses is the run's own plumbing: a Go error, nothing written.
+	if err := l.r.commit(ctx, map[string][]byte{"questions.tsv": []byte("not a table")}, "break a record"); err != nil {
+		t.Fatal(err)
+	}
+	head2 := childCommit(t, l.r.Clone, l.a.base, map[string]string{"x.go": "package x\n"})
+	st, err = l.r.SpecAt(ctx, SpecInput{Task: "T-ab12", Base: l.a.base, Head: head2})
+	var se *SourceError
+	if !errors.As(err, &se) || !strings.HasPrefix(se.Source, "records:") || st != (Status{}) {
+		t.Errorf("a records source: %+v, %v; want a Go SourceError of records: and no status", st, err)
+	}
+	if _, found, _ := l.r.SpecTable(ctx, "T-ab12", head2); found {
+		t.Error("a row was written for a head whose records could not be read")
+	}
+	if _, err := l.r.SpecAt(ctx, SpecInput{Task: "T-ab12", Base: "main", Head: head2}); err == nil {
+		t.Error("a base that is no full SHA: no error")
+	}
+}
+
+// fourStatusWorld is a head whose gates have a not-active kind, a base with the records of
+// Intake and the registers, and a verifier of devin that found nothing material at the base.
+func fourStatusWorld(t *testing.T) (*loopRun, HeadInput) {
+	t.Helper()
+	l, base, head := gateWorld(t, "fine\tactive\tsh\ttrue\t./*.go\t—\nlint\tactive\tno-such-tool-for-layup\ttrue\t./*.go\t—\n")
+	harnesses, models := commitRegisters(t, l)
+	id := l.comment(1, "verification", "devin", record(l.a.base, "nothing material in scope"))
+	specRecords(t, l) // after the comment: it replaces tasks.tsv, which the post of a comment reads
+	return l, HeadInput{Task: "T-ab12", Base: base, Head: head, RegisterRev: l.a.records, Session: id, Harnesses: harnesses, Models: models}
+}
+
+// The demo of row 66f: the four statuses of a head, each from its own records, posted once for
+// an unchanged state, with a not-active kind a failure that is read back from the forge.
+func TestTheFourStatusesOfAHead(t *testing.T) {
+	l, in := fourStatusWorld(t)
+	ctx := context.Background()
+	want := []StatusPost{
+		{in.Head, Status{GatesContext, "failure", "lint: not-active: tool not found: no-such-tool-for-layup"}, true},
+		{in.Head, Status{SpecContext, "success", "clear: no specification yet"}, true},
+		{in.Head, Status{RulesContext, "success", "no rule path"}, true},
+		{l.a.base, Status{VerifyContext, "success", "nothing material in scope"}, true},
+	}
+	got, err := l.r.PostStatuses(ctx, in)
+	if err != nil || !reflect.DeepEqual(got, want) {
+		t.Fatalf("PostStatuses = %+v, %v; want %+v", got, err, want)
+	}
+	for i := range want {
+		want[i].Posted = false
+	}
+	if again, err := l.r.PostStatuses(ctx, in); err != nil || !reflect.DeepEqual(again, want) {
+		t.Fatalf("the second PostStatuses = %+v, %v; want the same four, none posted", again, err)
+	}
+	for sha, n := range map[string]int{in.Head: 3, l.a.base: 1} {
+		if got := statusesOf(l.w, sha); len(got) != n {
+			t.Errorf("%d statuses on %s; want %d, once each", len(got), sha[:7], n)
+		}
+	}
+	read, err := l.r.Forge.Statuses(ctx, in.Head)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if st, ok := appStatus(read, GatesContext, 9001); !ok || st.State != "failure" {
+		t.Errorf("the gates status read back: %+v, %v; want a failure for the not-active kind", st, ok)
+	}
+}
+
+func TestAFailedPostOfOneContextLeavesTheEarlierPostsAndTheNextCallPostsTheRest(t *testing.T) {
+	l, in := fourStatusWorld(t)
+	ctx := context.Background()
+	l.w.fake.okStatus, l.w.fake.failStatus = 1, 1
+	got, err := l.r.PostStatuses(ctx, in)
+	if err == nil || len(got) != 1 || got[0].Status.Context != GatesContext || !got[0].Posted {
+		t.Fatalf("PostStatuses = %+v, %v; want the gates post made and an error at the spec post", got, err)
+	}
+	if n := len(statusesOf(l.w, in.Head)); n != 1 {
+		t.Fatalf("%d statuses after the failure; want the one earlier post, kept", n)
+	}
+	got, err = l.r.PostStatuses(ctx, in)
+	if err != nil || len(got) != 4 || got[0].Posted || !got[1].Posted || !got[2].Posted || !got[3].Posted {
+		t.Errorf("the next call = %+v, %v; want gates not posted again and the other three posted", got, err)
 	}
 }
