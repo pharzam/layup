@@ -79,7 +79,7 @@ the task started from, and requests no review. A draft is only visible; a
 pull request "reaches human review" when a review is requested or it is marked
 ready (the reading of `F-0003#58`, which the approval brief asks the Operator to
 confirm). The review record of the verifier is posted on the **issue**, and the
-body of the pull request is edited to link it, which makes the target's own
+body of the pull request is edited to link it (the edit: row 66q, task `T-08rj`; not built until it lands), which makes the target's own
 `review-record` check run again. **Reason:** the target's checks parse the
 issue's comments and the body, so the loop writes them in the forms that those
 checks read.
