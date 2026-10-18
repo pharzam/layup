@@ -316,3 +316,52 @@ func renderedPRD(t *testing.T, forged string) string {
 	}
 	return string(prd)
 }
+
+// A verified head that is itself a merge commit carries the verdict as any other: what counts is how it got the verdict (the plan
+// review of #363, condition 4). The attempt starts at the merge, so that the verifier's own bound event is outside the change.
+func TestAVerifiedHeadThatIsAMergeCommitCarriesTheVerdict(t *testing.T) {
+	ctx := context.Background()
+	s := newShip(t)
+	clone := s.r.Clone
+	gitOut(t, clone, "switch", "-q", "-c", "side", s.V)
+	commitIn(s.loopRun, map[string]string{"side.txt": "side\n"})
+	gitOut(t, clone, "switch", "-q", "main")
+	commitIn(s.loopRun, map[string]string{"main.txt": "main\n"})
+	gitOut(t, clone, "merge", "-q", "--no-ff", "-m", "merge side", "side")
+	merge := strings.TrimSpace(gitOut(t, clone, "rev-parse", "HEAD"))
+	if parents := strings.Fields(gitOut(t, clone, "log", "-1", "--format=%P", merge)); len(parents) != 2 {
+		t.Fatalf("the verified head %s has the parents %v; want a merge commit", merge, parents)
+	}
+	n, err := s.r.StartAttempt(ctx, "T-ab12", merge)
+	if err != nil || n != 2 {
+		t.Fatalf("StartAttempt = %d, %v", n, err)
+	}
+	text := record(merge, "nothing material in scope")
+	vspec := harness(t, s.a, planWork("plan.md", text, "comment\t1\tresult/plan.md\t"+commentSum(text)+"\t—"))
+	vspec.Role, vspec.Attempt, vspec.Pair.Harness, vspec.Base = roleOfStep("verification"), 2, "devin", merge
+	verifier, err := s.r.TaskSession(ctx, vspec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.r.PostComment(ctx, "T-ab12", verifier, "plan.md"); err != nil {
+		t.Fatal(err)
+	}
+	s.in.Verifier = verifier
+	spec := harness(t, s.a, closing())
+	spec.Role, spec.Attempt, spec.Base, spec.Pair.Harness = roleOfStep("close-out"), 2, merge, "claude"
+	spec.Push = func(id string, d session.Dir, r session.Run) error { return s.r.PushCloseOut(ctx, id, s.in) }
+	id, err := s.r.TaskSession(ctx, spec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	head := s.bound(id)
+	if head == "" || s.refusalOf(id) != "" {
+		t.Fatalf("the close-out on a merge commit: bound %q, refused %q; want it accepted", head, s.refusalOf(id))
+	}
+	if got, err := s.r.CarryVerify(ctx, s.in, id); err != nil || got != head {
+		t.Errorf("CarryVerify = %q, %v; want the close-out head %s", got, err, head)
+	}
+	if posted := statusesOf(s.w, head); len(posted) != 1 || posted[0]["description"] != "verified head "+merge+" plus the close-out" {
+		t.Errorf("the statuses: %v; want verified head %s plus the close-out", posted, merge)
+	}
+}

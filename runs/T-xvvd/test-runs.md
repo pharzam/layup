@@ -1,10 +1,10 @@
 # T-xvvd test runs
 
-The stubs were committed alone (68c2e94: `PullBody` returns "", `checkTitle` nil, `OpenPullRequest`, `Ready`, `MarkReady`, `MergeTask`, `RecordMerged`, `PushCloseOut`, `CheckRendered` and `CarryVerify` return their zero values, `withPR` and `explainHead` an error, `mergeMaps` and `treeSeams` empty reads; the behaviour-preserving extractions `pushChecked` and `setup.ActionsApp` keep the behaviour, and `Sessions.Web` is an inert field). The integration level of `internal/run` was run on that commit (the push and tree characterization tests execute; the log is below). The tests were then written and run against the stubs, red, below. The code and the tests are committed together.
+The stubs were committed alone (68c2e94: `PullBody` returns "", `checkTitle` nil, `OpenPullRequest`, `Ready`, `MarkReady`, `MergeTask`, `RecordMerged`, `PushCloseOut`, `CheckRendered` and `CarryVerify` return their zero values, `withPR` and `explainHead` an error, `mergeMaps` an empty read; the behaviour-preserving extractions `pushChecked` and `setup.ActionsApp` keep the behaviour, and `Sessions.Web` is an inert field). The integration level of `internal/run` was run on that commit (the push and tree characterization tests execute; the log is below). The tests were then written and run against the stubs, red, below. The code and the tests are committed together.
 
 ## Red against the stubs
 
-Each line below is an assertion of a test, none a build error and none a panic. The unit run is `go test -count=1 -v ./internal/run` at 16:20:30Z to 16:20:44Z (exit 1, 26 failing tests, every one of them new; the tests of the earlier rows all pass). The integration run is `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -v -tags=integration -timeout 40m ./internal/run -run '<the 14 new tests>'` at 16:20:44Z to 16:24:24Z (exit 1, 15 failing tests; the 16th line of its summary is an earlier test, `TestAVerifierOfAnotherTaskOrRoleOrNoneIsAnError`, that the pattern also matched, and it passes).
+Each line below is an assertion of a test, none a build error and none a panic. The unit run is `go test -count=1 -v ./internal/run` at 16:20:30Z to 16:20:44Z (exit 1, 26 failing tests, every one of them new; the tests of the earlier rows all pass). The integration run is `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -v -tags=integration -timeout 40m ./internal/run -run '<the 14 new tests>'` at 16:20:44Z to 16:24:24Z (exit 1, 15 failing tests; a 16th line of its summary is an earlier test, `TestAVerifierOfAnotherTaskOrRoleOrNoneIsAnError`, that the pattern also matched, and it passes).
 
 ### Unit
 
@@ -55,6 +55,15 @@ Each line below is an assertion of a test, none a build error and none a panic. 
 --- FAIL: TestTheRenderedCommitCarriesAndTheCloseOutAfterItIsAccepted
 --- FAIL: TestARenderedCommitThatIsNotAPermittedChildOfTheVerifiedHeadDoesNotCarry
 --- FAIL: TestARenderedCommitOffTheRecordsIsNotAccepted
+```
+
+### Added after the first red run
+
+`TestAVerifiedHeadThatIsAMergeCommitCarriesTheVerdict` (condition 4: a verified head that is a merge commit carries the verdict) was written after the run above and run against the same stubs, in a copy of the tree of 68c2e94 with the two inert declarations, at about 16:50Z, exit 1:
+
+```
+--- FAIL: TestAVerifiedHeadThatIsAMergeCommitCarriesTheVerdict
+    ship_integration_test.go:359: the close-out on a merge commit: bound "", refused ""; want it accepted
 ```
 
 ## Green negatives beside red controls
