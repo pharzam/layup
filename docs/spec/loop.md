@@ -1346,6 +1346,55 @@ exact bytes the caller supplies and does not repair or infer one. `ran` fails a
 missing row, and a rule that did not run — whose own row is a `fail` with the
 detail `did not run: <what>` — fails `ran` as `did not run: <rule>` (NFR-004).
 
+**Decided here** (task `T-cav3`, #412, row 66p; the input of the full check): code
+builds the `FullInput` of a head, `Sessions.specInput(base, head, copy)` in
+`internal/run`, each field from one named source, and a caller's literal of a field is
+never read. The records are read at the run's records base at the call, not at the
+snapshot of the head's session; saving the table once for a head, and so not
+rebuilding the input at a restart, is row 66f's, which calls the builder.
+
+| Field | Source | A missing source |
+| ----- | ------ | ---------------- |
+| `Changed` | `target:` the paths of `git diff --name-only` between `base` and `head` in the run's clone | an error |
+| `SpecFiles` | `target:` the regular `.md` files (type blob, mode `100644`) directly in `docs/spec/` at `head`, by base name (the selector of `spec-sections`, row 66n) | an empty map |
+| `PRDs` | `target:` the regular files directly in `docs/prd/` at `head` whose base name starts with `PRD-` and ends in `.md`, by base name | an empty map |
+| `PSB` | `records:start/problem-statement.md`, the bytes that the spans index | an error |
+| `Spans`, `Questions`, `Answers` | `records:spec/spans.tsv`, `records:questions.tsv`, `records:intake/answers.tsv`, each by its reader | an error |
+| `Index` | `records:spec/inventory.tsv` by `ReadInventoryIndex`; written at the first bet | not an error: `nil` is "before the first bet"; a file with a header and no row is an error |
+| `Versions` | `records:spec/inventory-<n>.tsv`, the exact bytes, for each `n` of `Index`; the builder never verifies a hash (the rule `inventory` does) | an error |
+| `Register` | `records:tasks.tsv`, the raw bytes; not read by `ReadRegister`, which refuses a task with no requirement, the case the rule `tasks` reports | an error |
+| `Merged` | the tasks of the register whose `records:tasks/<task>/events.tsv` holds an event `merged` | no file is not merged; a refused file is an error |
+| `PSBRecords` | the numbered facts record (below) | none is empty |
+| `AnswersRecord` | none: `""` | not applicable |
+| `Copy` | the caller's (the bet's copy, row 66j) and passed through unchanged | `nil` keeps the `fail` row of `classes` and the `ran` row |
+
+- **`PSBRecords`.** The numbered facts record of the problem statement is the file
+  `docs/facts/F-NNNN-numbered-facts.md` at `head`, a regular blob (mode `100644`)
+  directly in `docs/facts/`. Its producer is row 66j: the rendered commit of the first
+  bet writes it, and `NNNN` is one more than the highest `F-NNNN` of `docs/facts/` at
+  the base of the rendered commit. The builder reads it: no such file at `head` gives
+  an empty `PSBRecords`; exactly one gives `["F-NNNN"]`; two or more are an error whose
+  source is `target:`. The correspondence: the fact `n` of `F-NNNN#n` is the line
+  `n. ` of that record, which `RenderFacts` writes with the fact ID of the confirmed
+  inventory as its number, and that ID is the number `n` of the span in
+  `spec/spans.tsv`. **The present limitation:** before the first bet no such file
+  exists, so every `F-NNNN#n` citation fails `covers`, and the policy above for a head
+  before the bet (the per-rule judgement, `success` only when each other rule is
+  `pass`) stands unchanged; this is no blanket failure, and the pinned `prd-lint` also
+  needs one `F-NNNN` for each requirement.
+- **`AnswersRecord`.** It stays `""`. The answers record of the setup (S04) numbers
+  `S01-stack` first and only the answered questions after it, so its fact `N` is not
+  `Q-00N`; with it the check would resolve a wrong citation. A target PRD cites an
+  answer as a bare `Q-NNN`, which resolves through `intake/answers.tsv`; the pinned
+  `prd-lint` still needs an `F-NNNN` citation for the requirement.
+- **Errors.** The builder writes nothing, and on any error returns the zero input. A
+  `base` or `head` that is not a full SHA is refused before any read, as a `SourceError`
+  whose `Source` is `base` or `head`, a caller's error; any other `SourceError` has the
+  source `records:<path>` (a Go error of the run) or `target:<what>@<sha>` (a
+  posted `error` of the status), and the status is row 66f's. A failed read of a
+  file that may be absent (`spec/inventory.tsv`, an `events.tsv`) is an error; only its
+  absence is not.
+
 ## REQ-012 — The parameter change
 
 Every value that the Operator or the idea owner can set is a row of
@@ -1564,6 +1613,7 @@ the milestone covers it end to end.
 | The route of a question and the acceptance of an answer | unit; integration | A question goes to the owner role of its kind when its `needs_human` word is `no` and its label is one of the four, and to the Operator for `yes`, for any other word and for any other label; a replaced owner map routes by its roles; the items `question-row` and `answer-row` are computed from the result, whatever the caller passes; an answer is accepted by the next attempt that ends `completed` and cites its ID in the status row, with no question of that attempt citing it, and by no other attempt, and only when its session is of the owner role (the rule of "A question during the work": an answer of a developer, of the owner of another kind, of a session with no start row, to a human question or to questions of more than one owner role is refused, and the owner role's is accepted, from `sessions.tsv` and through `Position`); with the real `git`, a question session, the session of the owner role and the next attempt give the records from which the route and the acceptance are read. |
 | The comment items of the task loop (row 66l, `T-4pje`) | unit; integration (the kept copy, the records and the forge) | `plan-fields`, `verdict-field`, `findings-located` and `nothing-material` are computed from the kept copy of a comment and, for the last, the verifier's recorded `base`: each item is true or false by its own rule in the table of the items (a plan-review copy that parses with `verdict: reject` is false), and a handoff listing the item is `valid` or `invalid <item>` by the computed result, never by a caller's literal of either value. |
 | The tree items of the task loop (row 66n, `T-yeav`) | unit; integration (a real `git` tree) | `spec-sections` and `rendering-equal` are computed from the `docs/spec/` files or the tree at the head, never from the caller's literal of either value: a handoff of a developer (specification) or of the rendered task is `valid` or `invalid <item>` by the tree at the `bound` head or at the head that code sets, a head that a session handoff supplies is not read, an item that the row of the pair does not list is not computed, and a failed call of `git` or of the register is an error with no event. |
+| The input of the full spec check (row 66p, `T-cav3`) | unit; integration (a real `git` tree and the records of a target after Intake and the Scaffold) | `specInput` builds each field of `FullInput` from its named record or from the tree at the head: a missing required record, a record its reader refuses or a failed `git` call is an error with the zero input and no write, an absent `spec/inventory.tsv` is "before the first bet", `PSBRecords` is read from the one numbered facts file at the head (none is empty, two are an error), `AnswersRecord` is `""`, and the copy is the caller's. |
 | The question and answer comments (row 66o, `T-gyvo`) | unit; integration (the committed rows of a real end) | The question and answer comments are composed from their rows, byte for byte, with the row's `n` in the ID, and refused with no bytes for a row or a start row off the reader's schema, types or rules, a row of another kind, an ID off its form, or a body that `CheckCommentBody` refuses; posting them is the step loop's (row 66k). |
 | The transition table | unit | The default rows are the thirteen of the table (the twelve of `architecture.md` §8 and the row of the target's architecture task, which §8 names a task and gives no row); a replacement table is refused for a missing default pair, a kind or an item not in the lists, and a row of code's own handoff (`code (rendered task)`) that lists `schema`, while another row keeps its `schema`, and the steps that are `layup run`'s own acts need no row. |
 | The replacement of the transition table at the boundary | integration | With the stand-in forge and real git: `set transitions <sha256>` names a copy of a comment of the control issue; the new table is the bytes of that copy, written with the row `transitions` in one records commit, so its SHA-256 is the row's value; the old table stays in Git history and the next task keeps the new one; a hash of no copy or of a copy of another issue, a body that is no table (a code fence, a carriage return) and a table that fails the check each refuse with the item `bound` (`value` for a value that is no SHA-256) and write nothing. |
