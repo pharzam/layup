@@ -206,11 +206,12 @@ func followedResult(t *testing.T, text, status, sum string, withQuestion bool) [
 			rows[m[1][:strings.Index(m[1], "<TAB>")]] = m[1]
 		}
 	}
-	r := strings.NewReplacer("<TAB>", "\t", "<n>", "1", "<status>", status, "<reason>", "done", "<path>", "docs/tasks/T-ab12.md", "<sha256>", sha64,
+	r := strings.NewReplacer("<TAB>", "\t", "<n>", "1", "<status>", status, "<reason>", "done", "<sha256>", sha64,
 		"<text>", "May it?", "<label>", "interface-contract", "<needs_human>", "no", "<record>", "docs/spec/forge.md")
 	lines := []string{rows["kind"], rows["status"]}
-	if strings.Contains(text, "required outputs") {
-		lines = append(lines, rows["artifact"])
+	for i, path := range outputsOf(text) { // one artifact row for each required output, with the hash of its file
+		row := strings.NewReplacer("<path>", path, "<sha256>", sumOf([]byte(outputContent(path))), "<n>", fmt.Sprint(i+1)).Replace(rows["artifact"])
+		lines = append(lines, row)
 	}
 	if c, ok := rows["comment"]; ok {
 		lines = append(lines, c)
@@ -220,6 +221,43 @@ func followedResult(t *testing.T, text, status, sum string, withQuestion bool) [
 	}
 	out := regexp.MustCompile(`<the SHA-256 of [^>]*>`).ReplaceAllString(strings.Join(lines, "\n")+"\n", sum)
 	return []byte(r.Replace(out))
+}
+
+var (
+	outputsSentence = regexp.MustCompile(`The required outputs for the result file are ([^\n]*)`)
+	docPath         = regexp.MustCompile(`docs/[A-Za-z0-9_./-]*[A-Za-z0-9_]\.md`)
+)
+
+// outputsOf gives the files that the text of a step names as its required outputs
+// (the variable ones, "each file ... that you wrote", name no path).
+func outputsOf(text string) []string {
+	m := outputsSentence.FindStringSubmatch(text)
+	if m == nil {
+		return nil
+	}
+	return docPath.FindAllString(m[1], -1)
+}
+
+// outputContent is the bytes that a harness commits for a required output.
+func outputContent(path string) string { return "the content of " + path + "\n" }
+
+// checkOutputs says whether the artifact rows of a result are exactly the wanted
+// paths, each with the hash of its file.
+func checkOutputs(rows [][]string, want []string) error {
+	var got []string
+	for _, r := range rows {
+		if r[0] != "artifact" {
+			continue
+		}
+		got = append(got, r[2])
+		if r[3] != sumOf([]byte(outputContent(r[2]))) {
+			return fmt.Errorf("the artifact %s has the hash %s, not that of its file", r[2], r[3])
+		}
+	}
+	if !slices.Equal(got, want) {
+		return fmt.Errorf("the artifacts are %v; want %v", got, want)
+	}
+	return nil
 }
 
 // The result rows that the instructions quote are read by the reader of the block result.
@@ -428,7 +466,7 @@ func specimenInput(t *testing.T, prd string) spec.FullInput {
 	if err := WriteRegister(reg, []Task{{ID: "T-ab12", Issue: 3, Kind: "specification", Requirements: []string{"REQ-001"}, Opened: time0}}); err != nil {
 		t.Fatal(err)
 	}
-	return spec.FullInput{Changed: []string{"docs/prd/PRD-0001-x.md"}, PSBRecords: []string{"F-0004"}, AnswersRecord: "F-0003",
+	return spec.FullInput{Changed: []string{"docs/prd/PRD-0001-x.md"}, PSBRecords: []string{"F-0004"}, Records: []string{"F-0003"},
 		PRDs: map[string][]byte{"PRD-0001-x.md": []byte(prd)}, SpecFiles: map[string][]byte{"loop.md": []byte("## REQ-001 — Alpha\n\nThe text.\n")},
 		PSB: []byte(strings.Repeat("x", 100)), Spans: [][]string{{"0", "10", "1", "need", "", "s1"}, {"10", "20", "2", "measure", "", "s2"}},
 		Questions: [][]string{}, Answers: [][]string{}, Register: []byte(reg.String())}
@@ -456,6 +494,37 @@ func TestTheSpecimenOfTheSpecificationInstructionPassesTheFullCheck(t *testing.T
 }
 
 // The verifier reviews from the base of the last attempt, not the first.
+// The ID of the next numbered facts record, and the records of docs/facts/ that prd-lint reads
+// (its pattern: F-NNNN, anything, .md), have one home.
+func TestTheFactsRecordsAreThoseOfPrdLintAndTheNextIDIsOneMore(t *testing.T) {
+	names := []string{"F-0001-a.md", "F-0003-setup-answers.md", "README.md", "F-00044-x.md", "F-0002.md", "problem-statement-brief.md", "F-0009-x.txt", "f-0010-x.md"}
+	ids := factRecordIDs(names)
+	if want := []string{"F-0001", "F-0002", "F-0003", "F-0004"}; !slices.Equal(ids, want) {
+		t.Errorf("factRecordIDs = %v; want %v", ids, want)
+	}
+	if got := nextFactsID(ids); got != "F-0005" {
+		t.Errorf("nextFactsID = %s; want one more than the highest", got)
+	}
+	if got := nextFactsID(nil); got != "F-0001" {
+		t.Errorf("nextFactsID of no record = %s; want F-0001", got)
+	}
+	in := spec.FullInput{}
+	completeFactsRecords(&in, names)
+	if !slices.Equal(in.Records, ids) || !slices.Equal(in.PSBRecords, []string{"F-0005"}) {
+		t.Errorf("before the bet: Records %v, PSBRecords %v; want the records and the predicted ID", in.Records, in.PSBRecords)
+	}
+	in = spec.FullInput{PSBRecords: []string{"F-0007"}}
+	completeFactsRecords(&in, append(names, "F-0007-numbered-facts.md"))
+	if !slices.Equal(in.PSBRecords, []string{"F-0007"}) {
+		t.Errorf("with a numbered facts file: PSBRecords %v; want it unchanged", in.PSBRecords)
+	}
+	in = spec.FullInput{Index: [][]string{{"1", sha64, "M2e"}}}
+	completeFactsRecords(&in, names)
+	if in.PSBRecords != nil {
+		t.Errorf("after the first bet with no numbered facts file: PSBRecords %v; want none (the prediction is for the head before the bet)", in.PSBRecords)
+	}
+}
+
 func TestTheChangeOfTheVerifierStartsAtTheBaseOfTheLastAttempt(t *testing.T) {
 	events := [][]string{{"1", "attempt", "1", "", "aaaa", "", "", ""}, {"2", "bound", "1", "S-1", "aaaa", "bbbb", "", ""}, {"3", "attempt", "2", "", "cccc", "", "", ""}, {"4", "handoff", "2", "S-2", "", "", "", ""}}
 	if got, ok := attemptBase(events); !ok || got != "cccc" {
@@ -463,5 +532,32 @@ func TestTheChangeOfTheVerifierStartsAtTheBaseOfTheLastAttempt(t *testing.T) {
 	}
 	if got, ok := attemptBase(events[1:2]); ok {
 		t.Errorf("attemptBase of a task with no attempt = %q, %v; want none", got, ok)
+	}
+}
+
+// Every required output of a step is a row of the result, with its real hash:
+// the close-out has both of its files, and a result without one is refused.
+func TestTheResultNamesEveryRequiredOutputWithItsHash(t *testing.T) {
+	want := map[string][]string{"plan-of-a-task": nil, "plan-review": nil, "verification": nil, "specification": {"docs/tasks/T-ab12.md"},
+		"shape-architecture": {"docs/tasks/T-ab12.md"}, "implement": {"docs/tasks/T-ab12.md"}, "close-out": {"docs/tasks/T-ab12.md", "docs/tasks/completed.md"}}
+	for _, c := range goldenCases {
+		text := promptText(t, c.step, c.kind)
+		if got := outputsOf(text); !slices.Equal(got, want[c.step]) {
+			t.Errorf("%s: the required outputs of the text are %v; want %v", c.step, got, want[c.step])
+			continue
+		}
+		rows, err := records.ReadResult(followedResult(t, text, "completed", sha64, false))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := checkOutputs(rows, want[c.step]); err != nil {
+			t.Errorf("%s: %v", c.step, err)
+		}
+		for i := range want[c.step] { // the contract is not met by a result that lacks one output
+			rest := slices.Concat(want[c.step][:i], want[c.step][i+1:])
+			if checkOutputs(rows, rest) == nil {
+				t.Errorf("%s: a result with the artifact %s is taken for one without it", c.step, want[c.step][i])
+			}
+		}
 	}
 }

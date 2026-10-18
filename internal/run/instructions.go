@@ -88,7 +88,7 @@ The line head: is written as shown, once. The value of verdict: is exactly one o
 In the result file write the row "comment<TAB>1<TAB>result/review-record.md<TAB><the SHA-256 of {comment}><TAB>—".
 `,
 	"close-out": `Close out the task {task} (kind {kind}, issue {issue}). From the verdict among the handoffs listed above and the ledger (sessions.tsv and telemetry.tsv, listed above), write the task's verdict, its line of the completed log and its resource record. Make one commit that changes only docs/tasks/{task}.md and docs/tasks/completed.md; push nothing.
-The required outputs for the result file are those two files.
+The required outputs for the result file are docs/tasks/{task}.md and docs/tasks/completed.md.
 `,
 }
 

@@ -29,7 +29,7 @@ rule-files:
 
 The work of this step:
 Close out the task T-ab12 (kind build, issue 701). From the verdict among the handoffs listed above and the ledger (sessions.tsv and telemetry.tsv, listed above), write the task's verdict, its line of the completed log and its resource record. Make one commit that changes only docs/tasks/T-ab12.md and docs/tasks/completed.md; push nothing.
-The required outputs for the result file are those two files.
+The required outputs for the result file are docs/tasks/T-ab12.md and docs/tasks/completed.md.
 
 Write the result file /s/S-aaaaaaaa/result/result.tsv: UTF-8 text with no byte-order mark, one row per line, each line ended by a line feed, the last too, and no blank line. Separate the cells of a row with one tab character each, never with spaces. The first line is "kind<TAB>n<TAB>value<TAB>sha256<TAB>reason". The single character — (U+2014) is the empty cell; no cell holds a tab or a line break. The rows of each kind are numbered 1, 2, 3 and so on, with no gap.
 Write exactly one status row, "status<TAB>1<TAB><status><TAB>—<TAB><reason>": <status> is completed when the work of this step is done, needs_context when a question stops it, and blocked or failed otherwise; <reason> is one line and not empty.

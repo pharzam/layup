@@ -8,6 +8,7 @@ package run
 import (
 	"context"
 	"fmt"
+	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -189,6 +190,17 @@ func specTree(clone, base, head string, in *spec.FullInput) error {
 	if err != nil {
 		return fail("PSBRecords", "docs/facts", err)
 	}
+	entries, err := git.LsTree(clone, head, "docs/facts")
+	if err != nil {
+		return fail("Records", "docs/facts", err)
+	}
+	var names []string
+	for _, e := range entries {
+		if e.Type == "blob" && e.Mode == "100644" && path.Dir(e.Path) == "docs/facts" {
+			names = append(names, path.Base(e.Path))
+		}
+	}
+	completeFactsRecords(in, names)
 	return nil
 }
 

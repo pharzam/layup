@@ -363,6 +363,23 @@ func TestPromptFileRefusalsHaveTheirControls(t *testing.T) {
 		l.records(map[string][]byte{p: shapeFiles[p]})
 	}
 	passes("the specification with its records", call("T-sp01", "specification", nil))
+	// Each required record, removed from a records tree that has all of them, is a refusal that names it; restored, the same call passes;
+	// a record that its reader refuses is an error that names it (the brief has no reader).
+	store := l.r.Store.(*recordsStore)
+	for _, p := range []string{"spec/draft.tsv", "spec/spans.tsv", "start/problem-statement.md", "intake/answers.tsv"} {
+		orig := []byte(keptRecord(t, l.w, p))
+		if err := store.Remove(ctx, []string{p}, "remove "+p); err != nil {
+			t.Fatal(err)
+		}
+		refused("the removed "+p, call("T-sp01", "specification", nil), "the records have no "+p)
+		l.records(map[string][]byte{p: orig})
+		passes("the restored "+p, call("T-sp01", "specification", nil))
+		if !strings.HasSuffix(p, ".md") {
+			l.records(map[string][]byte{p: []byte("not a table\n")})
+			refused("a refused "+p, call("T-sp01", "specification", nil), p+": ")
+			l.records(map[string][]byte{p: orig})
+		}
+	}
 	l.records(map[string][]byte{"spec/draft.tsv": []byte(strings.Replace(draftTSV, "requirement", "wish", 1))})
 	refused("a draft with a bad kind", call("T-sp01", "specification", nil), "spec/draft.tsv: ")
 	l.records(map[string][]byte{"spec/draft.tsv": []byte(draftTSV)})
@@ -397,6 +414,15 @@ func TestPromptFileRefusalsHaveTheirControls(t *testing.T) {
 		t.Fatalf("TaskSession: %q, %v", id, err)
 	}
 	passes("close-out with the ledger", call("T-ab12", "close-out", nil))
+	for _, p := range []string{"telemetry.tsv", "sessions.tsv"} { // the other table of the ledger is there
+		orig := []byte(keptRecord(t, l.w, p))
+		if err := store.Remove(ctx, []string{p}, "remove "+p); err != nil {
+			t.Fatal(err)
+		}
+		refused("close-out without "+p, call("T-ab12", "close-out", nil), "the records have no "+p)
+		l.records(map[string][]byte{p: orig})
+		passes("close-out with "+p+" restored", call("T-ab12", "close-out", nil))
+	}
 	l.records(map[string][]byte{"telemetry.tsv": []byte("not telemetry\n")})
 	refused("a refused telemetry table", call("T-ab12", "close-out", nil), "telemetry.tsv: ")
 }
@@ -493,6 +519,65 @@ func TestTheSpecimenOfTheSpecificationInstructionIsAcceptedByThePinnedPrdLint(t 
 		ok, lines, err := spec.WaitingSpecAccepted(script, filepath.Join(root, "docs", "prd"))
 		if err != nil || ok != c.want {
 			t.Errorf("%s: accepted %v, %v, %v; want %v", c.name, ok, lines, err, c.want)
+		}
+	}
+}
+
+// A harness that follows the text of the steps that write no comment, with the
+// outputs that the text requires, committed and hashed: the result crosses the real
+// session boundary, for a finished step and for a step that a question stops.
+func TestAHarnessThatFollowsTheInstructionGivesValidResultsForTheOtherStepsAndAStoppingQuestion(t *testing.T) {
+	l := shapeWorld(t)
+	ctx := context.Background()
+	l.records(shapeFiles)
+	for _, c := range []struct{ step, task string }{{"specification", "T-sp01"}, {"shape-architecture", "T-ar01"}, {"implement", "T-ab12"}, {"close-out", "T-ab12"}} {
+		for _, status := range []string{"completed", "needs_context"} {
+			t.Run(c.step+"/"+status, func(t *testing.T) {
+				n, err := l.r.StartAttempt(ctx, c.task, l.a.base)
+				if err != nil {
+					t.Fatal(err)
+				}
+				in := PromptIn{Task: c.task, Step: c.step, Base: l.a.base}
+				if c.task == "T-ar01" {
+					in.Options = dbResult
+				}
+				pc, err := l.prod().PromptFile(ctx, in)
+				if err != nil {
+					t.Fatal(err)
+				}
+				text := string(pc.Text("/x"))
+				outputs := outputsOf(text)
+				if c.step == "close-out" && len(outputs) != 2 {
+					t.Fatalf("the close-out text names the outputs %v; want its task file and the completed log", outputs)
+				}
+				result := followedResult(t, text, status, sha64, status == "needs_context")
+				var sh strings.Builder
+				for _, o := range outputs {
+					sh.WriteString("mkdir -p '" + filepath.Dir(o) + "' && printf '" + octal(outputContent(o)) + "' > '" + o + "' && ")
+				}
+				sh.WriteString("git add -A && git commit -qm work && printf '" + octal(string(result)) + "' > ../result/result.tsv")
+				spec := harness(t, l.a, sh.String())
+				spec.Pair.Context = 100000
+				spec.Task, spec.Role, spec.Attempt, spec.Context = c.task, roleOfStep(c.step), n, pc
+				id, err := l.r.TaskSession(ctx, spec)
+				if err != nil {
+					t.Fatalf("TaskSession: %q, %v", id, err)
+				}
+				kept := keptRecord(t, l.w, "tasks/"+c.task+"/results/"+id+".tsv")
+				rows, err := records.ReadResult([]byte(kept))
+				if kept != string(result) || err != nil {
+					t.Fatalf("the committed result differs from the followed one (%v):\n%s", err, kept)
+				}
+				if err := checkOutputs(rows, outputs); err != nil {
+					t.Error(err)
+				}
+				if qs := QuestionsOf(rows); (len(qs) == 1) != (status == "needs_context") {
+					t.Errorf("questions %+v for the status %s", qs, status)
+				}
+				if events := keptRecord(t, l.w, "tasks/"+c.task+"/events.tsv"); strings.Contains(events, "\trefused\t"+strconv.Itoa(n)+"\t"+id+"\t") {
+					t.Errorf("the session %s was refused:\n%s", id, events)
+				}
+			})
 		}
 	}
 }

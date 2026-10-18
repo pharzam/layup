@@ -268,7 +268,7 @@ target or of the records branch with its SHA-256, which the ledger keeps.
 | `shape-architecture` | `systems-architect` | `architecture` | `docs/spec/`, `docs/adr/`, the task file, commits | none | the task file and each file written |
 | `implement` | `software-developer` | `build` | tests and change, the task file, commits | none | the task file and each file written |
 | `verification` | `qa-engineer` | any | nothing, no commit | `review-record.md`, `ParseReviewRecord` and `NothingMaterialOK` | one `comment` row |
-| `close-out` | `software-developer` | any | one commit of the task file and `completed.md` | none | those two files |
+| `close-out` | `software-developer` | any | one commit of the task file and `completed.md` | none | the task file and `completed.md` |
 
 The step `specification` takes a task of kind `specification`, `shape-architecture` one of kind `architecture` and `implement` one of kind `build`; any other step takes any kind, and a pair that disagrees is an error that names the step, the task and the kind. A comment file is written in the pinned form of [The items a caller computes](#the-items-a-caller-computes) (the target's own forms, never LAYUP's `| Field | Value |` table), and the instruction shows it with its placeholders so that a test fills them and runs the real parser on it. The shared text names every rule of the block `result` that a model must meet: the actual tab, UTF-8 with no byte-order mark, the line feed at the end of each line, no blank row, the empty cell, the numbering without gap, a status row with a non-empty reason, a hash of 64 lowercase hexadecimal characters, a question that names a record, and the artifact rows for the required outputs only.
 
@@ -346,7 +346,7 @@ In the result file write the row "comment<TAB>1<TAB>result/review-record.md<TAB>
 
 ```text instruction-close-out
 Close out the task {task} (kind {kind}, issue {issue}). From the verdict among the handoffs listed above and the ledger (sessions.tsv and telemetry.tsv, listed above), write the task's verdict, its line of the completed log and its resource record. Make one commit that changes only docs/tasks/{task}.md and docs/tasks/completed.md; push nothing.
-The required outputs for the result file are those two files.
+The required outputs for the result file are docs/tasks/{task}.md and docs/tasks/completed.md.
 ```
 
 ```text instruction-result
@@ -371,7 +371,7 @@ The Intake records go to both Shape kinds because the `covers` column of the dra
 
 **The requirement IDs (R10, binds 66r; condition 3 of the plan review of #364, comment 6249724875).** The correspondence is by kind, from the pinned revised draft: the row `R-NNN` of kind `requirement` is `REQ-NNN` and the row of kind `non-functional` is `NFR-NNN`, the same three digits; a row of kind `success-criterion` is no requirement ID. The `requirements` of **both** initial rows of `tasks.tsv` (the specification task and the target's architecture task) are exactly the set of those IDs over all the rows of the pinned draft, in the order of the draft. The number a row has in the pinned draft is the number of its PRD identity: a later revision of the draft changes no ID that a PRD row holds, and the PRD, not the draft, is the identity from the merge. Row 66r writes the rows by this correspondence and tests the item `spec-sections` for them, with a missing-section refusal; this branch writes the sentence and opens no task. The later architecture tasks of row 66j, and the option constraints, use the same IDs.
 
-**The specification output (R10, binds 66j and 66k).** The instruction asks for what the existing checks read, so a head that waits for its bet is accepted: one five-cell row for each requirement ID with empty MoSCoW and Phase cells, one acceptance row, one matrix row and one section of `docs/spec/` for each ID, one success row for each `success-criterion` row of the draft, and Facts cells whose tokens the checks resolve. A fact is cited as `F-<record>#<n>`, the record being the numbered facts record of the problem statement, `docs/facts/F-NNNN-numbered-facts.md` of the decision of #412 (`T-cav3`), and `n` the number of the fact in `spec/spans.tsv`, which `RenderFacts` writes as the line `n.`; a fact of the answers is cited as `Q-NNN`. The record does not exist until the rendered commit of the first bet (row 66j), and its `NNNN` is one more than the highest `F-NNNN` of `docs/facts/` at the base of that commit, which equals the base of the specification task; so the prompt gives that number as `{facts}`, and, as the pinned `prd-lint` resolves a cell only when one of its tokens names an existing record, the cell also cites `{record}`. The consumers bind to it: row 66j renders the record under `{facts}`. The builder of the input of the full check (`T-cav3`, [The full spec check](#req-012--the-full-spec-check)) leaves `PSBRecords` and `AnswersRecord` empty while the record is absent, so `covers` fails these cells on a head before the first bet: a limit that `T-cav3` records and this task does not lift. The specimen test of this task shows that the forms pass every rule when the caller gives `PSBRecords` `[F-<facts>]` and `AnswersRecord` `F-<record>`; whether the step loop gives them for a head before the bet is a decision of row 66k, listed in its row. The rendering stays row 66j's.
+**The specification output (R10, binds 66j and 66k).** The instruction asks for what the existing checks read, so a head that waits for its bet is accepted: one five-cell row for each requirement ID with empty MoSCoW and Phase cells, one acceptance row, one matrix row and one section of `docs/spec/` for each ID, one success row for each `success-criterion` row of the draft, and Facts cells whose tokens the checks resolve. A fact is cited as `F-<record>#<n>`, the record being the numbered facts record of the problem statement, `docs/facts/F-NNNN-numbered-facts.md` of the decision of #412 (`T-cav3`), and `n` the number of the fact in `spec/spans.tsv`, which `RenderFacts` writes as the line `n.`; a fact of the answers is cited as `Q-NNN`. The record does not exist until the rendered commit of the first bet (row 66j), and its `NNNN` is one more than the highest `F-NNNN` of `docs/facts/` at the base of that commit, which equals the base of the specification task; so the prompt gives that number as `{facts}`, and, as the pinned `prd-lint` resolves a cell only when one of its tokens names an existing record, the cell also cites `{record}`. The consumers bind to it: row 66j renders the record under `{facts}` with the same function, and the input of the full check gives `PSBRecords` the predicted ID before the bet and `Records` the records of `docs/facts/`, so a bare `{record}` and `F-{facts}#n` both resolve ([The full spec check](#req-012--the-full-spec-check)). The specimen test builds its input through `specRecords` and `specTree` and runs the full check and the pinned `prd-lint` on it. The rendering stays row 66j's.
 
 **The errors.** `PromptFile` writes nothing at any stage, and every error returns no context, so no session starts on a partial prompt.
 
@@ -1469,8 +1469,12 @@ the changed paths decide nothing. A fact token is record-bound:
 records are `F-0001` and `F-0003`, two records of the one file, so the input is
 a list), `F-<the answers' record>#N` resolves to `Q-00N`, a bare `Q-NNN` is the
 answers' fact itself, and a bare `F-NNNN` names a record, resolves to no
-numbered fact and is no failure of `covers` — the pinned `prd-lint` already
-requires the record file to exist; any other token fails `covers`. `measures`
+numbered fact and is no failure of `covers` when the head holds the record as a
+direct file `F-NNNN*.md` of `docs/facts/` (the set `prd-lint` reads, `FullInput.Records`);
+`F-NNNN#n` of such a record that numbers no fact, and a record the head lacks, fail;
+any other token fails `covers`. **Decided here** (task `T-c6sx`, #416, round 1, R10): this is
+what lets a specification that waits for its bet pass `covers` while the pinned `prd-lint`
+needs an existing `F-NNNN` in each Facts cell. `measures`
 reads only a `Fact` cell of a table under a `## … Success metrics` heading, never
 an acceptance criterion's prose; the exemption of `needs` and `measures` is a
 fact a token under a `waits for a bet` heading names — the heading text matches
@@ -1504,7 +1508,8 @@ rebuilding the input at a restart, is row 66f's, which calls the builder.
 | `Versions` | `records:spec/inventory-<n>.tsv`, the exact bytes, for each `n` of `Index`; the builder never verifies a hash (the rule `inventory` does) | an error |
 | `Register` | `records:tasks.tsv`, the raw bytes; not read by `ReadRegister`, which refuses a task with no requirement, the case the rule `tasks` reports | an error |
 | `Merged` | the tasks of the register whose `records:tasks/<task>/events.tsv` holds an event `merged` | no file is not merged; a refused file is an error |
-| `PSBRecords` | the numbered facts record (below) | none is empty |
+| `PSBRecords` | the numbered facts record (below); before the first bet and with no such file, the predicted ID | none is the predicted ID before the bet, else empty |
+| `Records` | `target:` the direct regular files of `docs/facts/` at `head` named `F-NNNN*.md`, by record ID (`T-c6sx`) | an empty list |
 | `AnswersRecord` | none: `""` | not applicable |
 | `Copy` | the caller's (the bet's copy, row 66j) and passed through unchanged | `nil` keeps the `fail` row of `classes` and the `ran` row |
 
@@ -1517,11 +1522,13 @@ rebuilding the input at a restart, is row 66f's, which calls the builder.
   source is `target:`. The correspondence: the fact `n` of `F-NNNN#n` is the line
   `n. ` of that record, which `RenderFacts` writes with the fact ID of the confirmed
   inventory as its number, and that ID is the number `n` of the span in
-  `spec/spans.tsv`. **The present limitation:** before the first bet no such file
-  exists, so every `F-NNNN#n` citation fails `covers`, and the policy above for a head
-  before the bet (the per-rule judgement, `success` only when each other rule is
-  `pass`) stands unchanged; this is no blanket failure, and the pinned `prd-lint` also
-  needs one `F-NNNN` for each requirement.
+  `spec/spans.tsv`. **The predicted ID** (`T-c6sx`, #416): with an empty `Index` and no numbered facts file
+  at `head`, `PSBRecords` is the ID one more than the highest `F-NNNN` of `docs/facts/` at
+  `head`, so the citations `F-NNNN#n` of the specification that waits for its bet resolve. The
+  prediction holds: no task writes `docs/facts/` (a rule path), nothing merges before the bet,
+  and row 66j computes the ID of its record at the same head with the same function
+  (`nextFactsID`, which the instruction of the specification also uses for `{facts}`). After
+  the first bet the file exists or the list stays empty, as `T-cav3` decided.
 - **`AnswersRecord`.** It stays `""`. The answers record of the setup (S04) numbers
   `S01-stack` first and only the answered questions after it, so its fact `N` is not
   `Q-00N`; with it the check would resolve a wrong citation. A target PRD cites an

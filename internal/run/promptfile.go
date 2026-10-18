@@ -300,24 +300,21 @@ func noInstruction(step string) error {
 	return fmt.Errorf("the step %s has no instruction in M2e", step)
 }
 
-var factsRecord = regexp.MustCompile(`^docs/facts/F-([0-9]{4})-[^/]*$`)
-
-// factsRecords gives the number NNNN of the highest F-NNNN record of docs/facts/ in
-// the paths and the next number after it: the record that the Facts cells of the specification cite
-// because it exists, and the one that the rendered commit of the first bet will
-// write (loop.md, The instruction of a task step).
+// factsRecords gives the numbers NNNN of the highest record of docs/facts/ in the paths and of
+// the next one: the record that the Facts cells of the specification cite because it exists, and
+// the one that the rendered commit of the first bet will write.
 func factsRecords(paths []string) (record, facts string, err error) {
-	top := -1
+	var names []string
 	for _, p := range paths {
-		if m := factsRecord.FindStringSubmatch(p); m != nil {
-			n, _ := strconv.Atoi(m[1])
-			top = max(top, n)
+		if path.Dir(p) == "docs/facts" {
+			names = append(names, path.Base(p))
 		}
 	}
-	if top < 0 {
+	ids := factRecordIDs(names)
+	if len(ids) == 0 {
 		return "", "", fmt.Errorf("the target has no record in docs/facts/ at the base: the Facts cells of the specification would cite none")
 	}
-	return fmt.Sprintf("%04d", top), fmt.Sprintf("%04d", top+1), nil
+	return ids[len(ids)-1][len("F-"):], nextFactsID(ids)[len("F-"):], nil
 }
 
 // decisionRecords adds the decision record of each ADR-NNNN that a section of the
@@ -582,4 +579,43 @@ func (s *Sessions) taskInputs(ctx context.Context, in PromptIn, kind string) (ta
 		}
 	}
 	return x, nil
+}
+
+// factRecordName is the name of a record of docs/facts/ as the pinned prd-lint reads it:
+// F-NNNN, anything, .md.
+var factRecordName = regexp.MustCompile(`^(F-[0-9]{4}).*\.md$`)
+
+// factRecordIDs gives the record IDs (F-NNNN) of the base names of the direct entries of
+// docs/facts/, sorted, each once.
+func factRecordIDs(names []string) []string {
+	var ids []string
+	for _, n := range names {
+		if m := factRecordName.FindStringSubmatch(n); m != nil && !slices.Contains(ids, m[1]) {
+			ids = append(ids, m[1])
+		}
+	}
+	slices.Sort(ids)
+	return ids
+}
+
+// nextFactsID is the ID that follows the highest of ids: the record that the rendered commit
+// of the first bet writes (loop.md, The instruction of a task step). It is the one home of
+// that rule: the prompt of the specification and the input of the full check call it.
+func nextFactsID(ids []string) string {
+	top := 0
+	for _, id := range ids {
+		n, _ := strconv.Atoi(id[len("F-"):])
+		top = max(top, n)
+	}
+	return fmt.Sprintf("F-%04d", top+1)
+}
+
+// completeFactsRecords sets the records of docs/facts/ in the input of the full check and,
+// before the first bet (no index) with no numbered facts file, the predicted problem
+// statement record, so that the citations of a specification that waits for its bet resolve.
+func completeFactsRecords(in *spec.FullInput, names []string) {
+	in.Records = factRecordIDs(names)
+	if len(in.Index) == 0 && len(in.PSBRecords) == 0 {
+		in.PSBRecords = []string{nextFactsID(in.Records)}
+	}
 }
