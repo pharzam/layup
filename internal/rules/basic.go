@@ -437,7 +437,7 @@ func RenderingEqual(r Repo, head, preRev string, paths []string, records []Recor
 	}
 	byPath := map[string]Record{}
 	for _, rec := range records {
-		if !recordInputOK(rec) {
+		if !recordInputOK(rec) || (rec.Kind == PRD && preRev == "") {
 			return false, nil
 		}
 		byPath[rec.Path] = rec

@@ -255,3 +255,20 @@ func TestAFailedReadOfTheTreeIsAnErrorAndWritesNoEvent(t *testing.T) {
 		t.Errorf("the control, the store read again: %s; want valid", got)
 	}
 }
+
+func TestASpecBlobThatCannotBeReadIsAnErrorAndWritesNoEvent(t *testing.T) {
+	l, s, id, head := specWorld(t, treeSection)
+	n := len(l.events())
+	blob := strings.TrimSpace(gitOut(t, l.r.Clone, "rev-parse", head+":docs/spec/loop.md"))
+	loose := filepath.Join(l.r.Clone, ".git", "objects", blob[:2], blob[2:])
+	if _, err := os.Stat(loose); err != nil {
+		t.Fatalf("the blob is not a loose object (%v); the test cannot remove it alone", err)
+	}
+	if err := os.Remove(loose); err != nil {
+		t.Fatal(err)
+	}
+	// The listing of the tree still succeeds: only the read of the blob fails.
+	if v, err := s.RecordHandoff(context.Background(), specInput(id, head, true)); err == nil || v.Valid || len(l.events()) != n {
+		t.Errorf("a blob that cannot be read: %+v, %v, %d new events; want an error and none", v, err, len(l.events())-n)
+	}
+}

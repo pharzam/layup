@@ -127,7 +127,7 @@ func TestRenderingEqualRefusesEachBadInputAndItsControlPasses(t *testing.T) {
 		{"a path that is a pathspec", true, badPath(":x")},
 		{"the guardrails file", true, badPath(GuardrailsPath)},
 		{"a kind that is none", true, func(_ *fake, c *rcall) { c.recs[0].Kind = "other" }},
-		{"a PRD with no PreRev", false, func(_ *fake, c *rcall) { c.pre = "" }},
+		{"a PRD with no PreRev", true, func(_ *fake, c *rcall) { c.pre = "" }},
 		{"a PreRev that is the head", false, func(_ *fake, c *rcall) { c.pre = "head" }},
 		{"a PreRev that is another name of the head", false, func(_ *fake, c *rcall) { c.pre = "alias" }},
 		{"a PreRev that is no ancestor", false, func(f *fake, _ *rcall) { f.anc["p>h"] = false }},

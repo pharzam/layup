@@ -159,3 +159,7 @@ Exit status read directly; the whole integration level ran in the background wit
 ## Merge of main (3b58b3a, #410 T-gyvo)
 
 `git merge origin/main`, no Go file conflicted. Conflicts, all in documents, each kept on both sides: plan rows 66n (mine) and 66o (main's); the two loop.md acceptance rows likewise; the traceability rows of both tasks; the PRD change-log rows of both; and the REQ-005 cells of PRD §12 (Task `T-4pje, T-yeav, T-gyvo`, the Test cell with both additions, merged by cell from the common base). After the merge, at 10:05Z to 10:07Z: build, vet, `go test ./...` and the five text checks exit 0; the named integration tests of `internal/run` and `internal/rules` exit 0 (23 s, 1 s); `git diff --check` exit 0.
+
+## Round 1 fixes (GPT-6.1 Sol, comment 6248663528)
+
+F1, an empty `PreRev` of a PRD record reached git: red first, against 8c37fa9, `rendering_test.go:158: a PRD with no PreRev: 1 calls of git before the refusal; want none` (the row marked static). Fix: `RenderingEqual` refuses a PRD record with an empty `PreRev` in its static validation. F2, the spec blob read error had no test: `TestASpecBlobThatCannotBeReadIsAnErrorAndWritesNoEvent` (the loose blob object removed, the tree kept) passes with the code as it is (no production change); mutant "the `git.Show` error of `specFilesAt` is discarded" is killed by it (exit 1, restore matched `b0bdf4dfcfe4`).
