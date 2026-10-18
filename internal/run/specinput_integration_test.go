@@ -306,7 +306,7 @@ func TestThePromptAndTheFullInputPredictTheSameFactsRecords(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			record, next, err := factsRecords(tree.Paths)
+			record, next, err := factsRecords(tree.Facts)
 			if err != nil {
 				t.Fatal(err)
 			}

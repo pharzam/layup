@@ -68,9 +68,11 @@ type kept struct {
 	Data []byte
 }
 
-// targetTree is the target at the base: its paths, in order, and a read of one.
+// targetTree is the target at the base: its paths, in order, the base names of the regular
+// direct files of docs/facts/ (factsNames), and a read of one path.
 type targetTree struct {
 	Paths []string
+	Facts []string
 	Read  func(path string) ([]byte, error)
 }
 
@@ -174,7 +176,7 @@ func buildPrompt(src promptSrc) (*PromptContext, error) {
 		kind: src.Kind, issue: src.Issue, base: src.Base, extras: src.Extras}
 	if src.Step.Step == "specification" {
 		var err error
-		if c.record, c.facts, err = factsRecords(src.Tree.Paths); err != nil {
+		if c.record, c.facts, err = factsRecords(src.Tree.Facts); err != nil {
 			return nil, err
 		}
 	}
@@ -300,16 +302,10 @@ func noInstruction(step string) error {
 	return fmt.Errorf("the step %s has no instruction in M2e", step)
 }
 
-// factsRecords gives the numbers NNNN of the highest record of docs/facts/ in the paths and of
+// factsRecords gives the numbers NNNN of the highest record of docs/facts/ in the names (factsNames) and of
 // the next one: the record that the Facts cells of the specification cite because it exists, and
 // the one that the rendered commit of the first bet will write.
-func factsRecords(paths []string) (record, facts string, err error) {
-	var names []string
-	for _, p := range paths {
-		if path.Dir(p) == "docs/facts" {
-			names = append(names, path.Base(p))
-		}
-	}
+func factsRecords(names []string) (record, facts string, err error) {
 	ids := factRecordIDs(names)
 	if len(ids) == 0 {
 		return "", "", fmt.Errorf("the target has no record in docs/facts/ at the base: the Facts cells of the specification would cite none")
@@ -527,13 +523,27 @@ func targetTreeAt(clone, rev string) (targetTree, error) {
 	if err != nil {
 		return targetTree{}, err
 	}
-	t := targetTree{Read: func(p string) ([]byte, error) { return git.Show(clone, rev, p) }}
+	t := targetTree{Read: func(p string) ([]byte, error) { return git.Show(clone, rev, p) }, Facts: factsNames(entries)}
 	for _, e := range entries {
 		if e.Type == "blob" {
 			t.Paths = append(t.Paths, e.Path)
 		}
 	}
 	return t, nil
+}
+
+// factsNames gives the base names of the files of docs/facts/ that count as records: the regular
+// files (mode 100644) directly in it, as the reader of the numbered facts takes them. It is the
+// one home of that selection: the prompt of the specification (factsRecords) and the input of the
+// full check (specTree) both call it, so that they predict the same records of one tree.
+func factsNames(entries []git.TreeEntry) []string {
+	var names []string
+	for _, e := range entries {
+		if e.Type == "blob" && e.Mode == "100644" && path.Dir(e.Path) == "docs/facts" {
+			names = append(names, path.Base(e.Path))
+		}
+	}
+	return names
 }
 
 // taskInputs reads the inputs that come with the task, as inputsWanted says for

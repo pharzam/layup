@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"path"
 	"slices"
 	"strings"
 	"testing"
@@ -21,7 +22,13 @@ func memTree(files map[string]string) targetTree {
 		paths = append(paths, p)
 	}
 	slices.Sort(paths)
-	return targetTree{Paths: paths, Read: func(p string) ([]byte, error) {
+	var facts []string
+	for _, p := range paths {
+		if path.Dir(p) == "docs/facts" {
+			facts = append(facts, path.Base(p))
+		}
+	}
+	return targetTree{Paths: paths, Facts: facts, Read: func(p string) ([]byte, error) {
 		if s, ok := files[p]; ok {
 			return []byte(s), nil
 		}
