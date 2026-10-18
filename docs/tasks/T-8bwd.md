@@ -16,8 +16,9 @@ inputs, rules, owning implementation and milestone. Field lines and the
 block boundaries, zero-test spec-task form and normative malformed cases.
 `internal/handoff` computes schema/artifacts; the existing result recorder owns
 question-row/answer-row. Other results are computed by their declared callers;
-a missing result is false. #396 owns the six new item computers and question/
-answer body composition; #367 owns their posting and step-loop wiring.
+a missing result is false. #396 owns the four comment items, #404 the two tree
+items and #405 the question/answer body composition; #367 owns their posting
+and step-loop wiring.
 The plan and package table identify those owners and dependencies.
 
 The typed per-test result remains #361's M2e contract; its runtime producer and
