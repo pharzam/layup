@@ -89,4 +89,4 @@ Gates of the fix:
 - `go vet ./...`: exit 0 (1 s)
 - `go vet -tags=integration ./internal/run/`: exit 0 (1 s)
 - `go test -count=1 ./...`: exit 0 (18 s)
-- `go test -count=1 -tags=integration -timeout 15m -run TheTreeFieldsOfTheFullInput|NumberedFactsFileAtTheHead|FailedReadOfTheTreeIsASourceError|TheSpecFilesAreTheRegular|TheFullInputOfAHeadAfterIntake|ReadRequired|AHandoffOfTheTreeItems ./internal/run/`: exit 0 (64 s)
+- `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 15m -run 'TheTreeFieldsOfTheFullInput|NumberedFactsFileAtTheHead|FailedReadOfTheTreeIsASourceError|TheSpecFilesAreTheRegular|TheFullInputOfAHeadAfterIntake|ReadRequired|AHandoffOfTheTreeItems' ./internal/run/`: exit 0 (73 s), rerun with the expression single-quoted (round 2).
