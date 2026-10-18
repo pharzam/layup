@@ -110,3 +110,7 @@ A test that passes at the stub is a green negative; it is listed, never counted 
 The command was `TMPDIR=/home/layup/.cache/layup-session/tmp-green <the test binary of 68c2e94> -test.count=1 -test.timeout 45m` in `internal/run` (the binary built with `go test -c -tags=integration`), so that the push and tree characterization tests (`push_integration_test.go`, `forgecheck_integration_test.go`) execute on the extraction `pushChecked`.
 
 It started at 16:01:47Z and ended at 16:24:28Z (22 minutes 41 seconds) with `PASS` and exit 0: the characterization of the extraction holds.
+
+## Round 1 fix: the integration level of internal/run
+
+`TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 45m ./internal/run/` on 2e7b323, from about 17:22:40Z to 17:58:28Z (2148.119 s), `ok`, exit 0. The three tests of the pull request (`-run 'TestTheDraftPullRequestOfABoundHead|TestAPullRequestFromDraftToMerge|TestTheFourSuccessesMarkTheDraftReadyAndMergeAtTheHeadSHA'`) had passed alone at 17:22:33Z.
