@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/pharzam/layup/internal/handoff"
+	"github.com/pharzam/layup/internal/rules"
 )
 
 func TestSectionsOfNoRequirementIDAreFalse(t *testing.T) {
@@ -95,9 +96,29 @@ func TestTheTreeItemsAreComputedOnlyWhereTheRowListsThem(t *testing.T) {
 	if v, err := w.s.RecordHandoff(context.Background(), in); err != nil || v.Detail != "valid" {
 		t.Fatalf("a row without the item: %+v, %v; want valid with no read", v, err)
 	}
-	// The same row, replaced by one that lists spec-sections: computed there, and false with no head.
+	// A code-written row without rendering-equal reads no tree either: this
+	// handoff has a head, and the records and artifact that would reach git.
 	rows, err := handoff.ReadTable(w.store.files["transitions.tsv"])
 	if err != nil {
+		t.Fatal(err)
+	}
+	for i := range rows {
+		if rows[i].From == "code (rendered task)" {
+			rows[i].Items = []string{"artifacts"}
+		}
+	}
+	var plain strings.Builder
+	if err := handoff.WriteTable(&plain, rows); err != nil {
+		t.Fatal(err)
+	}
+	w.store.files["transitions.tsv"] = []byte(plain.String())
+	code := renderedHandoff(both)
+	code.Head, code.Render = h40, []rules.Record{{Path: "docs/facts/numbered.md", Kind: rules.Facts}}
+	if v, err := w.s.RecordHandoff(context.Background(), code); err != nil || v.Detail != "valid" {
+		t.Fatalf("a code-written row without the item: %+v, %v; want valid with no read", v, err)
+	}
+	// The same row, replaced by one that lists spec-sections: computed there, and false with no head.
+	if rows, err = handoff.ReadTable(w.store.files["transitions.tsv"]); err != nil {
 		t.Fatal(err)
 	}
 	for i := range rows {

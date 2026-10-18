@@ -114,6 +114,7 @@ func TestRenderingEqualRefusesEachBadInputAndItsControlPasses(t *testing.T) {
 		mut    func(*fake, *rcall)
 	}{
 		{"no artifact", true, func(_ *fake, c *rcall) { c.paths = nil }},
+		{"no artifact and no record", true, func(_ *fake, c *rcall) { c.paths, c.recs = nil, nil }},
 		{"an artifact repeated", true, func(_ *fake, c *rcall) { c.paths = []string{factsPath, factsPath} }},
 		{"an artifact with no record", true, func(_ *fake, c *rcall) { c.paths = []string{factsPath, "docs/x.md"} }},
 		{"more artifacts than records", true, func(_ *fake, c *rcall) { c.paths = append(c.paths, "docs/x.md") }},
