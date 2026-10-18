@@ -257,7 +257,19 @@ func questionsComment(header string, rows [][]string, quote func([]string) (stri
 
 // readRecord reads the record path by read; a missing record is an error.
 func (r *state) readRecord(ctx context.Context, path string, read func([]byte) ([][]string, error)) ([][]string, error) {
-	data, err := r.store.ReadFile(ctx, path)
+	return readRequired(ctx, r.store, path, read)
+}
+
+// fileReader is the part of a records store that reads one file.
+type fileReader interface {
+	ReadFile(ctx context.Context, path string) ([]byte, error)
+}
+
+// readRequired reads the record path of store by read; a missing record
+// (nil bytes) is an error, and so is a read that fails or a reader that refuses
+// (task T-cav3, #412: the one reader of a required record).
+func readRequired(ctx context.Context, store fileReader, path string, read func([]byte) ([][]string, error)) ([][]string, error) {
+	data, err := store.ReadFile(ctx, path)
 	if err != nil {
 		return nil, err
 	}
