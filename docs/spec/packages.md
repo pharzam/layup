@@ -301,7 +301,7 @@ the caller (`internal/run`): the comment items `plan-fields`, `verdict-field`,
 and `tests-red-green` from typed per-test results whose producing run is `M2g`'s.
 The comment computers are row 66l's (task `T-4pje`), the tree reads row 66n's (task
 `T-yeav`) and the composers row 66o's (task `T-gyvo`); the wire that calls them is
-the step loop's (row 66k). The caller passes their results in the value it hands to the
+the step loop's (row 66k and its size children 66v to 66ab). The caller passes their results in the value it hands to the
 check; the check verifies that each required item has a result and that it is
 true.
 

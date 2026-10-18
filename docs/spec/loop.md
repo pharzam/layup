@@ -632,7 +632,7 @@ after the block's end is ignored prose; `verdict: nothing material in scope`
 with a non-empty `findings:` block makes `nothing-material` false, and
 `not mergeable, findings recorded` with an empty one makes `findings-located`
 false. The parsed plan fields likewise feed the task's tier and context read:
-the parse is row 66l's, the consuming wiring the step loop's (row 66k) — a
+the parse is row 66l's, the consuming wiring the step loop's (row 66k and its size children) — a
 declaration of the boundary, nothing of it claimed built. An item is true only
 for the comment kind it reads (a `plan-fields` listed on a review-record row is
 false), the four comment items are computed from the kept copy and overwrite the
@@ -642,15 +642,15 @@ or that code writes, has them false.
 **The question and answer comments** are composed (composition only, no post) by
 `internal/run` (row 66o, `T-gyvo`, #405) from the result's `question` and `answer` rows — first line and body as [a question during
 the work](#the-checks-of-a-handoff) pins — and posted on the task's issue by the
-post→copy machinery of the step loop (**row 66k**, #367, whose comments of a task
-session it is); they are plain comments of the App, not artifacts of a handoff.
+post→copy machinery of the step loop (**row 66z**, `T-r7b9`, #426, a size child of row
+66k, #367, split by its plan review); they are plain comments of the App, not artifacts of a handoff.
 The parsed review record is also the input of the caller boundary that keeps
 the loop uphill while a material finding is open (`architecture.md` §11):
 row 66l's parse exposes the review's verdict, head and located findings and a
 predicate that fails uphill — a record that does not parse, a verdict other than
 `nothing material in scope`, or a bullet in the block is an open material
 finding, so `material` or `not mergeable, findings recorded` with an empty block
-never reads as none open — the step loop's wiring of it stays row 66k's (#367),
+never reads as none open — the step loop's wiring of it is row 66z's (#426, a size child of row 66k),
 and nothing of either is claimed built here.
 
 **The deferrals are recorded, not hidden.** `patch-per-kind`, `register-rows` and
@@ -1713,7 +1713,7 @@ the milestone covers it end to end.
 | The comment items of the task loop (row 66l, `T-4pje`) | unit; integration (the kept copy, the records and the forge) | `plan-fields`, `verdict-field`, `findings-located` and `nothing-material` are computed from the kept copy of a comment and, for the last, the verifier's recorded `base`: each item is true or false by its own rule in the table of the items (a plan-review copy that parses with `verdict: reject` is false), and a handoff listing the item is `valid` or `invalid <item>` by the computed result, never by a caller's literal of either value. |
 | The tree items of the task loop (row 66n, `T-yeav`) | unit; integration (a real `git` tree) | `spec-sections` and `rendering-equal` are computed from the `docs/spec/` files or the tree at the head, never from the caller's literal of either value: a handoff of a developer (specification) or of the rendered task is `valid` or `invalid <item>` by the tree at the `bound` head or at the head that code sets, a head that a session handoff supplies is not read, an item that the row of the pair does not list is not computed, and a failed call of `git` or of the register is an error with no event. |
 | The input of the full spec check (row 66p, `T-cav3`) | unit; integration (a real `git` tree and the records of a target after Intake and the Scaffold) | `specInput` builds each field of `FullInput` from its named record or from the tree at the head: a missing required record, a record its reader refuses or a failed `git` call is an error with the zero input and no write, an absent `spec/inventory.tsv` is "before the first bet", `PSBRecords` is read from the one numbered facts file at the head (none is empty, two are an error), `AnswersRecord` is `""`, and the copy is the caller's. |
-| The question and answer comments (row 66o, `T-gyvo`) | unit; integration (the committed rows of a real end) | The question and answer comments are composed from their rows, byte for byte, with the row's `n` in the ID, and refused with no bytes for a row or a start row off the reader's schema, types or rules, a row of another kind, an ID off its form, or a body that `CheckCommentBody` refuses; posting them is the step loop's (row 66k). |
+| The question and answer comments (row 66o, `T-gyvo`) | unit; integration (the committed rows of a real end) | The question and answer comments are composed from their rows, byte for byte, with the row's `n` in the ID, and refused with no bytes for a row or a start row off the reader's schema, types or rules, a row of another kind, an ID off its form, or a body that `CheckCommentBody` refuses; posting them is the step loop's (row 66z, #426, a size child of row 66k). |
 | The transition table | unit | The default rows are the thirteen of the table (the twelve of `architecture.md` §8 and the row of the target's architecture task, which §8 names a task and gives no row); a replacement table is refused for a missing default pair, a kind or an item not in the lists, and a row of code's own handoff (`code (rendered task)`) that lists `schema`, while another row keeps its `schema`, and the steps that are `layup run`'s own acts need no row. |
 | The replacement of the transition table at the boundary | integration | With the stand-in forge and real git: `set transitions <sha256>` names a copy of a comment of the control issue; the new table is the bytes of that copy, written with the row `transitions` in one records commit, so its SHA-256 is the row's value; the old table stays in Git history and the next task keeps the new one; a hash of no copy or of a copy of another issue, a body that is no table (a code fence, a carriage return) and a table that fails the check each refuse with the item `bound` (`value` for a value that is no SHA-256) and write nothing. |
 | `layup spec check`, the full check (inventory) | unit | Each rule of the table fails on its input and passes on its fixture; before the first bet a task that touches neither the PRD nor `docs/spec/` is `clear`; `did not run` is a failure. |
@@ -1781,6 +1781,8 @@ owners (#336, `M2f` or earlier). A bet that raises `U` or the appetite, which `a
 triggers and their procedure, which Shape's round with no progress and the loops of
 failures wait for (`M3d`). The milestone plan, the build tasks and their merge order,
 the execution of the named tests of a plan (the producer of `tests-red-green`), the
+execution of a frozen-test amendment in the loop (the Operator's decision on #367,
+comment 6252712313, as it needs that producer; the predicates of row 66e stay as built), the
 items `heading-ids` and `register-rows` of its handoffs, and Accept (`M2g`). The smart-if that
 gives the kind and `needs_human` of a question (`M3a`). The panel of Shape and the
 stall triggers (`M3`, `M3d`). The lessons and `layup learn`, the Retrospective's
