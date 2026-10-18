@@ -102,7 +102,7 @@ of `internal/run`):
   exists: `<type>: <description>`, `<type>` one of `feat`, `fix`, `docs`, `refactor`, `perf`, `test`,
   `build`, `ci`, `chore`, `revert`, and a description of one line that matches `^[a-z].+[^.]$` with no
   control character. **The task ID is not in the title** (it begins with a capital, which the check
-  refuses, and the workflow keeps the ID in the commit subjects and the body); this replaces the
+  refuses, and the workflow keeps the ID in the commit subjects, with the issue reference and the records link in the body); this replaces the
   earlier `<type>: <task ID> <description>` read from a setup record that does not exist. The caller
   (rows 66h, 66k) gives the two words; a title off the form is refused before any call.
 - **The body** is `Closes #<issue>`, a blank line and `The records commit this task started from:
