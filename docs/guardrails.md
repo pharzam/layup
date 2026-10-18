@@ -1311,6 +1311,13 @@ failure modes worth keeping.
   empty value as `—`), requires the parsed row to equal the input, then applies the
   row rules; and each refusal has a one-token valid control.
 
+- ❌ **An issue number that names a pull request.** Issues and pull requests share one number space, and
+  `PATCH /issues/{n}` of a pull request's number closes the pull request, so a call meant for an issue can act
+  on a pull request; the answer holds a `pull_request` object, and the effect has already happened. GitHub's
+  pages do not say it. It is silent when the caller checks only `state`. **The check:** read the answer of
+  `CloseIssue` for `pull_request` and make it a forge error, say in `forge.md` that the check comes after the
+  effect, and test it with an issue answer that holds the object. Learned in `T-xyws` (#423).
+
 ## 3. Validation — how you check you are not fooling yourself
 
 A result is **untrusted** until it passes the checks below, and the pass is a
