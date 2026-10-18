@@ -77,3 +77,16 @@ its two mutants are the red evidence.
 - Text checks at that head, exit 0 each: `adr-lint` (4 s), `prd-lint` (0 s), `link-lint` (40 s, 2825 links),
   `run-discipline-tests` (17 s, 138 passed), `nested-checkout-check` (1 s), `setup-check` (69 s, after `git add`),
   `git diff --check origin/main HEAD` (1 s).
+
+## Round 1, finding 1 (a PRD name that holds a line feed)
+
+Red, before the change (the regex `^PRD-.*\.md$` at head 32e1853, the case `docs/prd/PRD-0002-\nextra.md` added):
+`specinput_integration_test.go:55: PRDs [PRD-0001-x.md]; want PRD-0001-x.md and the PRD whose name holds a line feed, with their bytes (...)`.
+Green after `isPRDName` (HasPrefix, HasSuffix): the tree tests `-tags=integration` ok (6.6 s).
+
+Gates of the fix:
+- `go build ./...`: exit 0 (6 s)
+- `go vet ./...`: exit 0 (1 s)
+- `go vet -tags=integration ./internal/run/`: exit 0 (1 s)
+- `go test -count=1 ./...`: exit 0 (18 s)
+- `go test -count=1 -tags=integration -timeout 15m -run TheTreeFieldsOfTheFullInput|NumberedFactsFileAtTheHead|FailedReadOfTheTreeIsASourceError|TheSpecFilesAreTheRegular|TheFullInputOfAHeadAfterIntake|ReadRequired|AHandoffOfTheTreeItems ./internal/run/`: exit 0 (64 s)

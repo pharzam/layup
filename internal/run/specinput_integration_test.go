@@ -41,7 +41,7 @@ func TestTheTreeFieldsOfTheFullInputAreTheRegularFilesOfTheHead(t *testing.T) {
 	gitlink := strings.Repeat("1", 40)
 	dir, head := treeOf(t,
 		entry{"100644", "docs/spec/a.md", treeSection}, entry{"100644", "docs/spec/sub/b.md", "x\n"}, entry{"120000", "docs/spec/l.md", "a.md"},
-		entry{"100644", "docs/prd/PRD-0001-x.md", cavPRD}, entry{"100644", "docs/prd/README.md", "r\n"}, entry{"100644", "docs/prd/sub/PRD-0002-y.md", "y\n"},
+		entry{"100644", "docs/prd/PRD-0001-x.md", cavPRD}, entry{"100644", "docs/prd/README.md", "r\n"}, entry{"100644", "docs/prd/PRD-0002-\nextra.md", "nl\n"}, entry{"100644", "docs/prd/sub/PRD-0002-y.md", "y\n"},
 		entry{"100755", "docs/prd/PRD-0003-z.md", "z\n"}, entry{"160000", "docs/prd/PRD-0004-g.md", gitlink}, entry{"100644", "docs/prd/PRD-0005-x.txt", "t\n"},
 		entry{"100644", "docs/facts/F-0003-setup-answers.md", "1. **x:** a\n"}, entry{"100644", "docs/facts/problem-statement-brief.md", "b\n"})
 	in, err := cavTreeInput(t, dir, head)
@@ -51,10 +51,10 @@ func TestTheTreeFieldsOfTheFullInputAreTheRegularFilesOfTheHead(t *testing.T) {
 	if got := slices.Sorted(maps.Keys(in.SpecFiles)); !reflect.DeepEqual(got, []string{"a.md"}) || string(in.SpecFiles["a.md"]) != treeSection {
 		t.Errorf("SpecFiles %v; want only a.md with its bytes", got)
 	}
-	if got := slices.Sorted(maps.Keys(in.PRDs)); !reflect.DeepEqual(got, []string{"PRD-0001-x.md"}) || string(in.PRDs["PRD-0001-x.md"]) != cavPRD {
-		t.Errorf("PRDs %v; want only PRD-0001-x.md with its bytes (not README.md, a nested, executable, linked or .txt file)", got)
+	if got := slices.Sorted(maps.Keys(in.PRDs)); !reflect.DeepEqual(got, []string{"PRD-0001-x.md", "PRD-0002-\nextra.md"}) || string(in.PRDs["PRD-0001-x.md"]) != cavPRD || string(in.PRDs["PRD-0002-\nextra.md"]) != "nl\n" {
+		t.Errorf("PRDs %v; want PRD-0001-x.md and the PRD whose name holds a line feed, with their bytes (not README.md, a nested, executable, linked or .txt file)", got)
 	}
-	if want := strings.Fields(gitOut(t, dir, "ls-tree", "-r", "--name-only", head)); !reflect.DeepEqual(in.Changed, want) {
+	if want := strings.Split(strings.TrimRight(gitOut(t, dir, "ls-tree", "-r", "-z", "--name-only", head), "\x00"), "\x00"); !reflect.DeepEqual(in.Changed, want) {
 		t.Errorf("Changed %v; want the paths of the diff %v", in.Changed, want)
 	}
 	if in.PSBRecords != nil {

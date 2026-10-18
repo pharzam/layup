@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/pharzam/layup/internal/forge"
 	"github.com/pharzam/layup/internal/git"
@@ -178,7 +179,7 @@ func specTree(clone, base, head string, in *spec.FullInput) error {
 	if in.SpecFiles, err = specFilesAt(clone, head); err != nil {
 		return fail("SpecFiles", "docs/spec", err)
 	}
-	if in.PRDs, err = filesAt(clone, head, "docs/prd", func(b string) bool { return prdName.MatchString(b) }); err != nil {
+	if in.PRDs, err = filesAt(clone, head, "docs/prd", isPRDName); err != nil {
 		return fail("PRDs", "docs/prd", err)
 	}
 	facts, err := filesAt(clone, head, "docs/facts", isNumberedFacts)
@@ -191,5 +192,5 @@ func specTree(clone, base, head string, in *spec.FullInput) error {
 	return nil
 }
 
-// prdName is the name of a PRD file, the selector of the full check (PRD-*.md).
-var prdName = regexp.MustCompile(`^PRD-.*\.md$`)
+// isPRDName is the selector of the PRD files of the full check (PRD-*.md); a name may hold any byte.
+func isPRDName(b string) bool { return strings.HasPrefix(b, "PRD-") && strings.HasSuffix(b, ".md") }
