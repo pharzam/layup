@@ -201,3 +201,5 @@ F2: the cases `p.go:1 rx: t` (accepted) and `p.go:1 r:x: t` (refused) are in `Te
 | `strings.ContainsAny(rule, " :")` to `strings.ContainsAny(rule, " ")` | 0, 0 | killed | `TestFindingsLocatedNeedsALocatedFinding`: a colon inside the rule: true; want false |
 
 The copy was restored byte-exact and its control is green. With it the table holds 35 mutants, all killed.
+
+Gates at the head 67f1d1c: build, vet, `gofmt -l`, `go vet -tags=e2e`, the five text checks, `nested-checkout-check.sh`, `git diff --check origin/main HEAD` and `go test ./...` all exit 0; the whole integration level (`-timeout 30m`, root) exits 0, 07:52:47Z to 08:22:04Z (a loaded host, load average above 6).
