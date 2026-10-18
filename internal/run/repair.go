@@ -97,7 +97,10 @@ func (s *Sessions) RepairPushes(ctx context.Context, task string) (Repair, error
 		if base == "" {
 			return out, errors.New("the events of " + task + " have no attempt " + e[2])
 		}
-		out.Attempt, err = s.StartAttempt(ctx, task, base)
+		attempt, err = s.StartAttempt(ctx, task, base)
+		if err == nil {
+			out.Attempt = attempt
+		}
 		return out, err
 	}
 	return out, nil

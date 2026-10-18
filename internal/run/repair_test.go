@@ -225,3 +225,54 @@ func TestTheNewAttemptStartsAtTheLostAttemptsBase(t *testing.T) {
 		t.Errorf("events %q; want attempt 2 at the base %s of attempt 1", e, baseSHA)
 	}
 }
+
+// A replacement attempt that was not committed is not reported as written (round 1 of
+// #422, finding 1): with both fenced commits refused, Repair.Attempt is 0 beside the
+// error, and the retry commits attempt 2 once.
+func TestAReplacementThatWasNotCommittedIsNotReportedAsWritten(t *testing.T) {
+	rows := evs([][]string{attemptEv(1, baseSHA)}, pushed(pushSess, 1), [][]string{evRow("refused", 1, pushSess, "", "", "push-lost")})
+	store, sessions := repairWorld(t, rows, nil)
+	store.refuse = 2
+	got, err := sessions.RepairPushes(context.Background(), "T-ab12")
+	if err == nil || len(store.commits) != 0 || count(kinds(t, store), "attempt") != 1 {
+		t.Fatalf("both commits refused: Repair %+v, %v, %d commits, events %v; want the error and no attempt", got, err, len(store.commits), kinds(t, store))
+	}
+	if got.Attempt != 0 {
+		t.Errorf("Repair.Attempt = %d with no replacement committed; want 0", got.Attempt)
+	}
+	got, err = sessions.RepairPushes(context.Background(), "T-ab12")
+	if err != nil || got.Attempt != 2 || count(kinds(t, store), "attempt") != 2 || len(store.commits) != 1 {
+		t.Fatalf("the retry: Repair %+v, %v, events %v, %d commits; want attempt 2 committed once", got, err, kinds(t, store), len(store.commits))
+	}
+	if got, err = sessions.RepairPushes(context.Background(), "T-ab12"); err != nil || got.Attempt != 0 || len(store.commits) != 1 {
+		t.Errorf("a third call: Repair %+v, %v, %d commits; want nothing more", got, err, len(store.commits))
+	}
+}
+
+// A sessions.tsv that the reader refuses stops the repost and the repair of a task:
+// the error names the path, and nothing is committed or posted (round 1 of #422,
+// finding 3). The Sessions has no forge, so a post would panic. A green negative on
+// the code as it stands: its red mutant is the read's error returned as nil, nil
+// (runs/T-syxm/mutants.md, M23).
+func TestARefusedSessionsTableStopsTheRepostAndTheRepair(t *testing.T) {
+	rows := evs([][]string{attemptEv(1, baseSHA)}, pushed(pushSess, 1), [][]string{evRow("bound", 1, pushSess, "", pushedSHA, "task/T-ab12/1")})
+	for _, c := range []struct {
+		name string
+		call func(*Sessions) ([]string, error)
+	}{
+		{"RepostComments", func(s *Sessions) ([]string, error) { return s.RepostComments(context.Background(), "T-ab12") }},
+		{"RepairTask", func(s *Sessions) ([]string, error) {
+			r, err := s.RepairTask(context.Background(), "T-ab12")
+			return r.Posted, err
+		}},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			store, sessions := repairWorld(t, rows, nil)
+			store.files["sessions.tsv"] = []byte("not a sessions table\n")
+			posted, err := c.call(sessions)
+			if err == nil || !strings.Contains(err.Error(), "sessions.tsv:") || len(posted) != 0 || len(store.commits) != 0 {
+				t.Errorf("%s: posted %v, %v, %d commits; want an error that names sessions.tsv, nothing posted, no commit", c.name, posted, err, len(store.commits))
+			}
+		})
+	}
+}
