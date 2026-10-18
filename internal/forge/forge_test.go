@@ -39,6 +39,10 @@ func (standIn) PullRequest(context.Context, PullRequestQuery) (PullRequest, bool
 	return PullRequest{}, false, nil
 }
 func (standIn) Merge(context.Context, int, string) (string, error) { return "", nil }
+func (standIn) ClosePullRequest(context.Context, int) (PullRequest, error) {
+	return PullRequest{}, nil
+}
+func (standIn) CloseIssue(context.Context, int) error { return nil }
 
 var _ Forge = standIn{}
 

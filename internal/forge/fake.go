@@ -270,4 +270,15 @@ func (f *Fake) Merge(_ context.Context, number int, sha string) (string, error) 
 	return pr.MergeSHA, nil
 }
 
+// ClosePullRequest is a stub (task T-xyws).
+func (f *Fake) ClosePullRequest(context.Context, int) (PullRequest, error) {
+	return PullRequest{}, nil
+}
+
+// CloseIssue is a stub (task T-xyws).
+func (f *Fake) CloseIssue(context.Context, int) error { return nil }
+
+// IssueState is a stub (task T-xyws).
+func (f *Fake) IssueState(int) (state, reason string, ok bool) { return "", "", false }
+
 var _ Forge = (*Fake)(nil)
