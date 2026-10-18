@@ -515,17 +515,25 @@ func (s *Sessions) PromptFile(ctx context.Context, in PromptIn) (*PromptContext,
 	if src.Rules, err = rules.ReadRegister(regData.Data); err != nil {
 		return nil, fmt.Errorf("rule-paths.tsv: %w", err)
 	}
-	entries, err := git.LsTree(s.Clone, in.Base, ".")
-	if err != nil {
+	if src.Tree, err = targetTreeAt(s.Clone, in.Base); err != nil {
 		return nil, err
 	}
+	return buildPrompt(src)
+}
+
+// targetTreeAt reads the tree of rev in the clone: its blobs and a read of one.
+func targetTreeAt(clone, rev string) (targetTree, error) {
+	entries, err := git.LsTree(clone, rev, ".")
+	if err != nil {
+		return targetTree{}, err
+	}
+	t := targetTree{Read: func(p string) ([]byte, error) { return git.Show(clone, rev, p) }}
 	for _, e := range entries {
 		if e.Type == "blob" {
-			src.Tree.Paths = append(src.Tree.Paths, e.Path)
+			t.Paths = append(t.Paths, e.Path)
 		}
 	}
-	src.Tree.Read = func(p string) ([]byte, error) { return git.Show(s.Clone, in.Base, p) }
-	return buildPrompt(src)
+	return t, nil
 }
 
 // taskInputs reads the inputs that come with the task, as inputsWanted says for
