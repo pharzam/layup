@@ -108,3 +108,13 @@ func (s *Sessions) SpecTable(ctx context.Context, task, head string) ([][]string
 	}
 	return mine, len(mine) > 0, nil
 }
+
+// A SpecInput names the head whose layup/spec is asked: the task, the base, the
+// head, and the text of the latest bet's copy (row 66j's; none before the first bet).
+type SpecInput struct {
+	Task, Base, Head string
+	Copy             []byte
+}
+
+// SpecAt gives the status layup/spec of a head, running the full check once.
+func (s *Sessions) SpecAt(context.Context, SpecInput) (Status, error) { return Status{}, nil }

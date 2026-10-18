@@ -7,6 +7,7 @@ package run
 import (
 	"context"
 	"fmt"
+	"io"
 	"slices"
 	"strings"
 
@@ -167,3 +168,28 @@ func (s *Sessions) RulesAt(ctx context.Context, in RulesInput) (Status, error) {
 	}
 	return RulesStatus(rules.Basic(rules.Git(s.Clone), rules.Input{Base: in.Base, Head: in.Head, RegisterRev: rev, PreRev: in.PreRev, Records: in.Records})), nil
 }
+
+// A HeadInput is what the caller knows of a head whose four statuses are asked:
+// the inputs of GatesAt, SpecAt, RulesAt and VerifyAt.
+type HeadInput struct {
+	Task, Base, Head    string
+	Copy                []byte
+	Step                func(i, n int, kind string) func()
+	Out                 io.Writer
+	PreRev, RegisterRev string
+	Records             []rules.Record
+	Session             string
+	Waiting             bool
+	Harnesses, Models   [][]string
+}
+
+// A StatusPost is one status of PostStatuses: the SHA it is posted on, the status,
+// and whether it was posted (false when the App's status was already at it).
+type StatusPost struct {
+	SHA    string
+	Status Status
+	Posted bool
+}
+
+// PostStatuses computes the four statuses of a head and posts each through PostStatus.
+func (s *Sessions) PostStatuses(context.Context, HeadInput) ([]StatusPost, error) { return nil, nil }
