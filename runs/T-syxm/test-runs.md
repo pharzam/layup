@@ -135,3 +135,24 @@ Observed outcomes against the plan's predictions:
   `TaskSession: "S-…", the records push was refused; the lease names the run 0123456789abcdef`: the world of the session tests wrote no lease, and the comment reads it before the post (the plan review's Q8, and the plan's S2, moved the register but not the lease). `TestTheScriptsOfLAYUP` (`internal/verify`) failed only because the `git archive` copy has no `.git` to clone; it is not a failure of the change. Fixed in ac05f6a: `sessionWorldWith` writes the lease (moved from `commentWorld`).
 - The full integration level at ac05f6a, in a `git clone` of the worktree: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 45m ./...`, 2026-10-18T19:23:40Z to 19:57:06Z, **exit 0** (`internal/run` 1923.7 s, `internal/verify` 92.2 s, `internal/git` 8.4 s). `TestProcessTimesTheFirstOutput` did not fail.
 - At ac05f6a in the worktree: `go build ./...`, `go vet ./...`, `go vet -tags=integration ./...`, `go vet -tags=e2e ./cmd/layup/`, `go vet -tags=uat ./internal/run/`, `gofmt -l .` (no output), `go test -count=1 ./...` (19:26:01Z to 19:26:22Z) and `go test -count=1 -tags=e2e ./cmd/layup/` (193.3 s) all exit 0; `adr-lint`, `prd-lint`, `link-lint`, `run-discipline-tests`, `nested-checkout-check`, `setup-check` and `git diff --check` exit 0.
+
+## Round 1 fix cycle (#422, head 9260f17), test first
+
+Finding 1, `Repair.Attempt` after a failed `StartAttempt`.
+- Red, at 9260f17 plus the new test `TestAReplacementThatWasNotCommittedIsNotReportedAsWritten` (2026-10-18T20:43:24Z, the time of the output file):
+  `go test -count=1 ./internal/run/ -run TestAReplacementThatWasNot`, exit 1; the first failing assertion, verbatim:
+  `repair_test.go:241: Repair.Attempt = 2 with no replacement committed; want 0`. The earlier assertion (the error, no commit, one attempt event) held.
+- Fix (`internal/run/repair.go`): `out.Attempt` is set only when `StartAttempt` returned no error.
+- Green: the same command, exit 0; the retry commits attempt 2 once and a third call commits nothing.
+
+Finding 3, a refused `sessions.tsv`. `TestARefusedSessionsTableStopsTheRepostAndTheRepair` (RepostComments and RepairTask) is **a green negative**: green on the
+code as it stands (`go test -count=1 ./internal/run/ -run 'TestARefusedSessions|TestAReplacementThatWasNot'`, exit 0, written before any code change), with its red mutant M23
+(`runs/T-syxm/mutants.md`): build, vet and vet-int exit 0, the unit test exit 1 at `repair_test.go:274: RepostComments: posted [], <nil>, 0 commits; want an error that names sessions.tsv, ...`.
+
+Finding 2, the artifact selection. `commentsOf(w, body)` counts by the exact body, `commentByID` and `editComment(w, id, body)` select by the returned `p.ID`; an unrelated comment (ID 7001) is
+put before the artifact in `TestAnEditedCommentMakesTheSecondCopyAndTheNewHandoffNamesIt`. This is **a green negative** on the new helpers; its red mutant M25 puts the old selection
+back (first comment that is no summary): the test exits 1 at `handoffpost_integration_test.go:206: after the edit the unrelated comment is map[body:edited by a person ...`. The posting, copy, hash and adoption assertions are kept.
+- Green: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 90m -run '^(<the ten tests of handoffpost_integration_test.go>)$' ./internal/run/`,
+  2026-10-18T20:46:53Z to 20:48:29Z, exit 0 (94.3 s).
+- Gates at 7640a2c (to 20:51:56Z), all exit 0: `go build ./...`, `go vet ./...`, `go vet -tags=integration ./...`, `go vet -tags=e2e ./cmd/layup/`, `go vet -tags=uat ./internal/run/`, `gofmt -l .` (no output),
+  `go test -count=1 ./...`, the five text lints, `nested-checkout-check`, `setup-check`, `git diff --check origin/main HEAD`.
