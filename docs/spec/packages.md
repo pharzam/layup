@@ -296,7 +296,8 @@ and `internal/cli` does not change.
 `internal/handoff` holds the form and the table. Every other item is computed by
 the caller (`internal/run`): the comment items `plan-fields`, `verdict-field`,
 `nothing-material` and `findings-located` from the kept copy of a comment,
-`spec-sections` and `rendering-equal` with `internal/spec` and `internal/rules`,
+`spec-sections` and `rendering-equal` with `internal/spec` (`HasSection`) and
+`internal/rules` (`RenderingEqual`, which shares `RecordRendered` with `Judge`),
 and `tests-red-green` from typed per-test results whose producing run is `M2g`'s.
 The comment computers are row 66l's (task `T-4pje`), the tree reads row 66n's (task
 `T-yeav`) and the composers row 66o's (task `T-gyvo`); the wire that calls them is

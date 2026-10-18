@@ -198,6 +198,14 @@ func TestRenderingEqualGivesAnErrorForEachFailedCallOfGit(t *testing.T) {
 		{"the ancestry fails", func(f *fake, _ *rcall) { f.errs["IsAncestor"] = boom }, boom},
 		{"the tree fails", func(f *fake, _ *rcall) { f.errs["LsTree"] = boom }, boom},
 		{"the show fails", func(f *fake, _ *rcall) { f.errs["Show"] = boom }, boom},
+		{"the tree of the head fails, with no PRD", func(f *fake, c *rcall) {
+			c.paths, c.recs = []string{factsPath}, []Record{factsRecord}
+			f.errs["LsTree"] = boom
+		}, boom},
+		{"the show of the head fails, with no PRD", func(f *fake, c *rcall) {
+			c.paths, c.recs = []string{factsPath}, []Record{factsRecord}
+			f.errs["Show"] = boom
+		}, boom},
 	} {
 		f, call := renderScene(t), goodCall()
 		c.mut(f, &call)
