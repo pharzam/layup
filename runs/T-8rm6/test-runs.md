@@ -321,3 +321,26 @@ both PRD change-log rows and both completed-log entries. These ordinary-text
 unions are part of the upcoming whole-head cap2 review, not an unreviewed
 shared-index exception. Hook checks passed on the merged head. The next CI reads
 the full union; no E2E green or final cap2 verdict is claimed ahead of it.
+
+## Cap-3 fix of the review of #365 (F2, F3)
+
+F3, an empty draft: the integration test TestTheRevisionOfAnEmptyDraft commits an
+empty spec/draft.tsv (header only) on the records after the answers and runs the
+restart. Red, before any change to revision.go, 2026-10-18T06:12:51Z to 06:13:13Z:
+`panic: runtime error: index out of range [0] with length 0`, at revision.go:304
+(`before[0][5]`). Green after `revised := len(before) > 0`, 06:12:26Z to 06:12:48Z:
+`ok github.com/pharzam/layup/internal/run 8.138s`. An earlier draft of the test,
+which covered a fact 3 that this world lacks, panicked at the same line (06:06:15Z).
+
+F2, the count of the restart: docs/spec/scaffold.md says 22 steps (`5/22`, `22/22`)
+and names `revision` before `setup`; `grep -n '/21\|21 steps' docs/spec/scaffold.md`
+finds nothing, and `git grep` of docs/ finds no other stale count.
+
+Gates on the fix, 06:13:16Z to 06:14:26Z: `go build ./...`, `go vet ./...`,
+`go vet -tags=integration ./...`, `go test ./...` and the integration run
+`-run TestTheRevision` exit 0; the five discipline checks and `git diff --check` exit 0.
+The full integration level `go test -count=1 -tags=integration -timeout 20m ./...`
+(06:15:45Z to 06:36:27Z) failed only in internal/run, by the 20-minute timeout of the
+host while TestTheStepScaffoldPushWaitsAndRecordsTheAppliesOfTheOperator ran; the other
+packages were ok. Alone, `go test -count=1 -tags=integration -timeout 30m ./internal/run/`
+(06:36:44Z to 07:03:31Z) exited 0 (`ok internal/run 1604.681s`).

@@ -277,7 +277,9 @@ func (r *state) revisionStep(ctx context.Context) Step {
 	for _, s := range sessions {
 		baseOf[s[0]] = s[8]
 	}
-	revised := true
+	// An empty draft names no session that read the answers: it is not
+	// revised until a session row exists.
+	revised := len(before) > 0
 	for _, row := range before {
 		base := baseOf[row[5]]
 		if base == "" {

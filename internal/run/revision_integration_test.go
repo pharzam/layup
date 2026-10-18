@@ -570,3 +570,32 @@ func TestTheRevisionStopsAtTheCap(t *testing.T) {
 		t.Errorf("a criteria row of a refused revision is a record:\n%s", draft)
 	}
 }
+
+// An empty draft is a valid record (every fact of the problem statement may
+// be context) and holds no session row to show the answers were read: the
+// step runs its session and appends the criteria rows, and does not index a
+// row that is not there (docs/spec/loop.md, The revision of the draft; the
+// cap-3 review of #365, F3).
+func TestTheRevisionOfAnEmptyDraft(t *testing.T) {
+	w := newWorld(t)
+	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
+	allDone(t, "the restart", Restart(context.Background(), w.config("0.1.0-dev")), intakeSteps...)
+	intakeAnswers(t, w, "fast; cheap", "")
+	pushRecords(t, w.bare, map[string]string{"spec/draft.tsv": "id\tkind\tstatement\tcovers\tcriterion\tsession\n"}, "records: an empty draft")
+	os.WriteFile(filepath.Join(w.dir, "bin", "revision.tsv"), []byte(
+		"kind\tstatement\tcovers\tcriterion\n"+
+			"requirement\tThe statement of fact 1.\t1\tThe criterion of fact 1.\n"+
+			"requirement\tThe statement of fact 2.\t2\tThe criterion of fact 2.\n"), 0o644)
+	sessions := sessionsOf(t, w)
+	rows := beforeSetup(t, Restart(context.Background(), w.config("0.1.0-dev")))
+	allDone(t, "the restart with the answers", rows, throughRevision...)
+	if d := rowOf(rows, "revision").Detail; d != "the draft revised, 4 rows of which 2 the success criteria, in spec/draft.tsv" {
+		t.Errorf("the detail of revision %q", d)
+	}
+	if n := sessionsOf(t, w); n != sessions+1 {
+		t.Errorf("%d rows of sessions.tsv of product-owner after the run; want the one session", n-sessions)
+	}
+	if got := len(draftOf(t, w)); got != 4 {
+		t.Errorf("%d rows in the kept draft; want 4", got)
+	}
+}

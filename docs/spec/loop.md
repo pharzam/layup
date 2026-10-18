@@ -1185,10 +1185,13 @@ revision — a row of `intake/coverage.tsv`, an answer's text that names one —
 names that earlier draft's row, the draft the revision session reads
 ([`records.md`](records.md#nfr-001--the-records-of-intake), the block `draft`).
 **Done before** (task `T-8rm6`): the revised draft is
-there when every row's `session` is a session that started on a records base
-holding `intake/answers.tsv`, and the step is done before — with the
-session's comment reposted from the record when the control issue lacks it,
-the batch's precedent. The revised draft is the input of the specification task.
+there when it has at least one row and every row's `session` is a session that
+started on a records base holding `intake/answers.tsv`, and the step is done
+before, with the session's comment reposted from the record when the control
+issue lacks it, the batch's precedent. An empty draft (every fact of the problem
+statement is `context`) holds no session row, so it is not revised until a
+session row exists: the step runs its session and appends the criteria rows.
+The revised draft is the input of the specification task.
 
 ### The rendered commit and the confirmed inventory
 
