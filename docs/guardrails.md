@@ -1310,6 +1310,26 @@ failure modes worth keeping.
   function that takes a raw row reads it as a one-row table with `tsv.Read` (the
   empty value as `—`), requires the parsed row to equal the input, then applies the
   row rules; and each refusal has a one-token valid control.
+- ❌ **An instruction whose shown form the parser does not read.** A prompt that
+  tells a model to write a comment, a result file or a table is a producer, and the
+  parser of the loop is its reader: a form that the text shows with a slightly different
+  shape (a `tests:` marker with its first bullet on the same line, an acceptance table
+  whose requirement ID has no backticks, which the pinned `prd-lint` calls a malformed
+  row) is refused only when a real model follows it. Task `T-c6sx` (#416), found by its
+  plan review and by the first run of its specimen. **The check:** the test fills the
+  placeholders of the form that the text shows and runs the real parser or check on the
+  result (the comment parsers, `records.ReadResult` on the rows the text quotes, the
+  full check and the pinned `prd-lint` on a specimen of the specification), with a
+  control that removes one part and fails; the helper invents no grammar that the text
+  lacks, and the oracle of the composed bytes is a golden file that no flag rewrites.
+
+- ❌ **An issue number that names a pull request.** Issues and pull requests share one number space, and
+  `PATCH /issues/{n}` of a pull request's number closes the pull request, so a call meant for an issue can act
+  on a pull request; the answer holds a `pull_request` object, and the effect has already happened. GitHub's
+  pages do not say it. It is silent when the caller checks only `state`. **The check:** read the answer of
+  `CloseIssue` for `pull_request` and make it a forge error, say in `forge.md` that the check comes after the
+  effect, and test it with an issue answer that holds the object. Learned in `T-xyws` (#423).
+
 - ❌ **A repair read from the position of the interrupted run, and a destination that tests already count.** Two commits
   (`refused push-lost`, then `attempt`) left a restart that finds the refusal and no attempt, so a repair that fires only in
   the run that wrote the refusal never starts one; and `git ls-remote` matches its pattern against the tail of a ref name, so
