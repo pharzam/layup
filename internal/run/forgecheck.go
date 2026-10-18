@@ -57,6 +57,16 @@ type forgeCheckJob struct {
 	clean    func(string) string
 	landing  func(head, last string) error // asked of a head that is another commit than the last: nil, it is the code-owner commit
 	note     func(string)                  // a line of the step's own
+	// merges gives the merge commits of the tasks: the SHA of each that a merged event records, and of each that the forge
+	// shows merged and no event records, by the task; nil is none (the tree check below). parents gives the parents of a commit.
+	merges  func() (recorded, unrecorded map[string]string, err error)
+	parents func(sha string) ([]string, error)
+}
+
+// explainHead walks the first parents from head: each commit must be a merge of recorded or unrecorded, and the walk
+// passes at a commit for which bottom holds, once a merge was accepted. It gives a line for each unrecorded merge.
+func explainHead(head, last string, parents func(string) ([]string, error), recorded, unrecorded map[string]string, bottom func(string) bool) ([]string, error) {
+	return nil, errors.New("not built")
 }
 
 // firstLine is the text up to its first line feed.
@@ -567,4 +577,12 @@ func rulesetID(output []byte) (int64, error) {
 		return 0, noID
 	}
 	return id, nil
+}
+
+// mergeMaps reads the merges of the tasks of the register: the merge commit of each event merged, by its task, and the merge
+// commit of each task with a pull request and no event merged whose pull request the forge shows merged.
+func mergeMaps(ctx context.Context, store interface {
+	ReadFile(ctx context.Context, path string) ([]byte, error)
+}, f forge.Forge) (recorded, unrecorded map[string]string, err error) {
+	return nil, nil, nil
 }
