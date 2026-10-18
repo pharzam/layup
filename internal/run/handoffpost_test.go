@@ -782,3 +782,25 @@ func TestAStoreErrorReturnsAnErrorAndWritesNoHandoff(t *testing.T) {
 		t.Errorf("a store that fails: %+v, %v; %d events, %d commits; want an error and no write", v, err, len(w.eventsNow(t))-n, len(w.store.commits)-commits)
 	}
 }
+
+func TestTheKeptFileThatIsNotTheNamedHashIsNoComment(t *testing.T) {
+	for _, c := range commentItems {
+		w := newHandoffWorld(t)
+		posted(t, w, planSess, c.bad)
+		kept := KeptPath("T-ab12", planSess, "plan.md")
+		if v, err := w.s.RecordHandoff(context.Background(), c.input(nil)); err != nil || v.Detail != "invalid "+c.item+" comment 701-1" {
+			t.Fatalf("%s, the unchanged bad copy: %+v, %v", c.item, v, err)
+		}
+		// The result row, the copy and the forge still name the bad bytes; only the kept file changes.
+		w.store.files[kept] = []byte(c.good)
+		if v, err := w.s.RecordHandoff(context.Background(), c.input(map[string]bool{c.item: true})); err != nil || v.Valid || v.Detail != "invalid "+c.item+" comment 701-1" {
+			t.Errorf("%s, kept bytes that are not the named hash: %+v, %v; want invalid", c.item, v, err)
+		}
+		// The control: the good bytes named by the row are valid.
+		w = newHandoffWorld(t)
+		posted(t, w, planSess, c.good)
+		if v, err := w.s.RecordHandoff(context.Background(), c.input(nil)); err != nil || v.Detail != "valid comment 701-1" {
+			t.Errorf("%s, the unchanged good copy: %+v, %v", c.item, v, err)
+		}
+	}
+}

@@ -224,6 +224,8 @@ func TestFindingsLocatedNeedsALocatedFinding(t *testing.T) {
 		{"a signed line", one("p.go:+1 r: t"), false},
 		{"no line", one("p.go r: t"), false},
 		{"a rule of two words", one("p.go:1 my rule: t"), false},
+		{"a colon inside the rule", one("p.go:1 r:x: t"), false},
+		{"a rule with a hyphen and a letter, the control", one("p.go:1 rx: t"), true},
 		{"an empty rule", one("p.go:1 : t"), false},
 		{"no colon after the rule", one("p.go:1 r t"), false},
 		{"an empty text", one("p.go:1 r: "), false},

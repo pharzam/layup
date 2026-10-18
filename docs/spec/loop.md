@@ -532,7 +532,8 @@ names the row that posts them.
 every other item is the caller's result, and **decided here** (task `T-8bwd`,
 #387; the assignment of rows is the decision of the plan review of #387, an
 `approve-with-conditions`) each item below is computed by the named package in
-the named row — row 66l (`T-4pje`, #396), the item computers of the task loop —
+the named row — rows 66l (`T-4pje`, #396: the four comment items), 66n (`T-yeav`, #404: the
+tree items) and 66o (`T-gyvo`, #405: the composers), the item computers of the task loop —
 by the rule text of the table. The forms the loop's sessions write in the three
 comment artifacts are pinned here in one grammar, so two implementers read one
 form.
@@ -597,7 +598,7 @@ of the block. These are the forms the loop's sessions write for a target;
 | `plan-fields` | the plan comment's kept copy: it parses in the pinned form — the four fields each once, the `tests:` marker once, and each `- ` line of its block a `- <id> <path>`; an empty block is valid | `internal/run` (row 66l, `T-4pje`) | M2e |
 | `verdict-field` | the plan-review copy: its `verdict:` is `approve` or `approve-with-conditions` (`reject` is false) | `internal/run` (row 66l, `T-4pje`) | M2e |
 | `tests-red-green` | typed per-test results — the ID, the base verdict, the head verdict and the source hash of each listed test: each fails at the base and passes at the head, and its source hash is the frozen list's | `internal/run` from typed values (row 66e — #361's typed boundary); the producer — the gate run of the task's test kind and the mapping of an ID to its file — is the specification task of `M2g`'s | M2e item, `M2g` producer |
-| `spec-sections` | the `docs/spec/` files at the head and the task's requirement IDs: a non-empty section whose heading holds each ID — the `sections` predicate of the full check over the task's IDs | `internal/spec`, wired by `internal/run` (row 66n, `T-yeav`, #404); the section finder rides the `sections` machinery of the full check (#351) where it is exported, else lands in row 66l | M2e |
+| `spec-sections` | the `docs/spec/` files at the head and the task's requirement IDs: a non-empty section whose heading holds each ID — the `sections` predicate of the full check over the task's IDs | `internal/spec`, wired by `internal/run` (row 66n, `T-yeav`, #404); the section finder rides the `sections` machinery of the full check (#351), which row 66n exports | M2e |
 | `patch-per-kind` | the batch's known-bad patches: `layup gate` passes on the head and fails on each patch of a kind the batch touches | the rule-batch tasks of `M2f` | M2f |
 | `register-rows` | the milestone plan's rows artifact: each `Must` requirement has a task, each predecessor is a task, no cycle | the milestone-plan task of `M2g` | M2g |
 | `rendering-equal` | the tree at the head and code's rendering of the named copy: byte-equal — `internal/spec`'s `RenderPRD` and `RenderFacts` for a specification copy, `internal/rules`' `Render` for a record copy | `internal/spec` and `internal/rules`, wired by `internal/run` (row 66n, `T-yeav`, #404) | M2e |

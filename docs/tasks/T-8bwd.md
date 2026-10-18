@@ -49,7 +49,7 @@ that round. No source fix followed; this last commit is bookkeeping only.
 Complete current-main size: 492 changed lines/10 files, within1,000/14.
 
 Notes N1–N6: literal marker/CRLF behavior stays fail-closed; #396's own plan pins
-normalization. The section finder is now known to be unexported, so #396 exports
+normalization. The section finder is now known to be unexported, so #404 (T-yeav) exports
 and reuses the predicate per the approved ownership choice; the later heading-ID
 contract stays later work. Composer/poster ownership remains explicit. Dependency
 notifications went to #362/#367/#368. The typed-results ownership-cell exception

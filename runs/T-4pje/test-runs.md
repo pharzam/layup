@@ -180,3 +180,24 @@ Each mutant changes one expression of `internal/run/commentform.go` or `handoffp
 | the five text checks, `nested-checkout-check.sh`, `git diff --check` | 0 | 07:16 |
 
 An earlier whole-level run at the head cfd4519 failed: the tests of the authors, the frozen list and the prompt file wrote comments of no form (fixed in 8b403ff, then rerun green above), and its 20-minute timeout fell on a host under load.
+
+## Round 1 fixes (F1 and F2), 2026-10-18
+
+F1, red before the code (`TestTheKeptFileThatIsNotTheNamedHashIsNoComment`, kept file changed to the good bytes while the result row, the copy and the forge name the bad ones):
+
+```
+plan-fields, kept bytes that are not the named hash: {Valid:true Detail:valid comment 701-1}, <nil>; want invalid
+verdict-field, kept bytes that are not the named hash: {Valid:true Detail:valid comment 701-1}, <nil>; want invalid
+findings-located, kept bytes that are not the named hash: {Valid:true Detail:valid comment 701-1}, <nil>; want invalid
+nothing-material, kept bytes that are not the named hash: {Valid:true Detail:valid comment 701-1}, <nil>; want invalid
+```
+
+Green after the fix: the kept bytes are parsed only when their SHA-256 is the hash of the result's comment row.
+
+F2: the cases `p.go:1 rx: t` (accepted) and `p.go:1 r:x: t` (refused) are in `TestFindingsLocatedNeedsALocatedFinding`; they passed on the head, as the reviewer found, so the mutant is the falsifier.
+
+| Mutant | Build and vet | Result | Failing assertion |
+| --- | --- | --- | --- |
+| `strings.ContainsAny(rule, " :")` to `strings.ContainsAny(rule, " ")` | 0, 0 | killed | `TestFindingsLocatedNeedsALocatedFinding`: a colon inside the rule: true; want false |
+
+The copy was restored byte-exact and its control is green. With it the table holds 35 mutants, all killed.

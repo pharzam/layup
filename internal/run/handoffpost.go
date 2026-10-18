@@ -292,7 +292,7 @@ func (s *Sessions) RecordHandoff(ctx context.Context, in HandoffInput) (handoff.
 		items = map[string]bool{}
 	}
 	items["question-row"], items["answer-row"] = QuestionRowOK(result), AnswerRowOK(result)
-	if err := s.commentItems(ctx, in, start, items); err != nil {
+	if err := s.commentItems(ctx, in, start, result, items); err != nil {
 		return handoff.Verdict{}, err
 	}
 	// A list of tests at a handoff to the verifier: tests-red-green is computed
@@ -347,11 +347,12 @@ func (s *Sessions) RecordHandoff(ctx context.Context, in HandoffInput) (handoff.
 // commentItems sets the four items that the kept copy of a comment gives
 // (loop.md, The items a caller computes; task T-4pje): each is false, whatever
 // the caller passed, unless the copy is of the kind that the item reads and
-// parses its pinned form. A handoff that code wrote has no copy, and a copy that
+// parses its pinned form, and the kept file is the one that the result names by
+// its hash. A handoff that code wrote has no copy, and a copy that
 // the store lacks gives false; a failing read is an error and nothing is written.
 // nothing-material reads the head that the verifier's session started at, the base
 // of its start row.
-func (s *Sessions) commentItems(ctx context.Context, in HandoffInput, start []string, items map[string]bool) error {
+func (s *Sessions) commentItems(ctx context.Context, in HandoffInput, start []string, result [][]string, items map[string]bool) error {
 	items["plan-fields"], items["verdict-field"], items["findings-located"], items["nothing-material"] = false, false, false, false
 	if in.CodeWritten || in.File == "" {
 		return nil
@@ -359,6 +360,17 @@ func (s *Sessions) commentItems(ctx context.Context, in HandoffInput, start []st
 	data, err := s.Store.ReadFile(ctx, KeptPath(in.Task, in.Session, in.File))
 	if err != nil || data == nil {
 		return err
+	}
+	// The bytes read are the bytes whose hash the artifact check verifies: the
+	// comment row's, in the result (a kept file of other bytes is no comment).
+	named := ""
+	for _, r := range result {
+		if r[0] == "comment" && r[2] == "result/"+in.File {
+			named = r[3]
+		}
+	}
+	if named == "" || digest(data) != named {
+		return nil
 	}
 	switch in.Kind {
 	case "plan":
