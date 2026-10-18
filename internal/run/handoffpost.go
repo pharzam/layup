@@ -18,6 +18,7 @@ import (
 	"github.com/pharzam/layup/internal/forge"
 	"github.com/pharzam/layup/internal/handoff"
 	"github.com/pharzam/layup/internal/records"
+	"github.com/pharzam/layup/internal/rules"
 )
 
 // Posted is a comment that holds an artifact: its ID, the number of its copy in
@@ -67,25 +68,31 @@ func postedOf(row []string) Posted {
 	return Posted{ID: id, Seen: seen, SHA: row[copySHA]}
 }
 
-// taskIssue gives the issue of a task from the register.
-func (s *Sessions) taskIssue(ctx context.Context, task string) (int, error) {
+// taskRow gives the row of a task in the register.
+func (s *Sessions) taskRow(ctx context.Context, task string) (Task, error) {
 	data, err := s.Store.ReadFile(ctx, tasksPath)
 	if err != nil {
-		return 0, err
+		return Task{}, err
 	}
 	if data == nil {
-		return 0, fmt.Errorf("the records have no %s", tasksPath)
+		return Task{}, fmt.Errorf("the records have no %s", tasksPath)
 	}
 	tasks, err := ReadRegister(data)
 	if err != nil {
-		return 0, fmt.Errorf("%s: %w", tasksPath, err)
+		return Task{}, fmt.Errorf("%s: %w", tasksPath, err)
 	}
 	for _, t := range tasks {
 		if t.ID == task {
-			return t.Issue, nil
+			return t, nil
 		}
 	}
-	return 0, fmt.Errorf("%s has no row of %s", tasksPath, task)
+	return Task{}, fmt.Errorf("%s has no row of %s", tasksPath, task)
+}
+
+// taskIssue gives the issue of a task from the register.
+func (s *Sessions) taskIssue(ctx context.Context, task string) (int, error) {
+	t, err := s.taskRow(ctx, task)
+	return t.Issue, err
 }
 
 // refuseFile writes the event refused, handoff, of a session whose file cannot
@@ -235,6 +242,8 @@ type HandoffInput struct {
 	Items         map[string]bool
 	CodeWritten   bool
 	Freeze        *Freeze
+	Head, PreRev  string
+	Render        []rules.Record
 }
 
 // RecordHandoff checks a handoff against the table of the records and writes

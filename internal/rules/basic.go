@@ -360,3 +360,11 @@ func preImages(r Repo, in Input, base, head string) (map[string][]byte, Result) 
 	}
 	return pre, Result{}
 }
+
+// RecordRendered is the per-record rule of Judge (task T-yeav, #404): STUB.
+func RecordRendered(rec Record, t Touched, pre []byte) string { return ReasonNotEqual }
+
+// RenderingEqual is the item rendering-equal (task T-yeav, #404): STUB.
+func RenderingEqual(r Repo, head, preRev string, paths []string, records []Record) (bool, error) {
+	return false, nil
+}

@@ -741,6 +741,9 @@ func (c *fullCheck) hasSection(id string) bool {
 	return false
 }
 
+// HasSection is the predicate of sections for one ID (task T-yeav, #404): STUB.
+func HasSection(files map[string][]byte, id string) bool { return false }
+
 // tasks: every task of the register names a requirement — the column
 // requirements is never —.
 func (c *fullCheck) tasks() verdict {
