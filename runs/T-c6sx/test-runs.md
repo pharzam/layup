@@ -116,3 +116,20 @@ Green controls inside `TestPromptFileRefusalsHaveTheirControls` at the stub: the
 unresolvable base fails by the later `git ls-tree`, not by "has no instruction", which is what makes the early
 refusal observable: at the stub the three refused steps fail by that same `git ls-tree` line), and `plan-review` of a
 build task.
+
+## The gates
+
+Head `39e02ef` (the code is that of `b98ccc9`), the host clock in UTC; every exit status read directly.
+
+| Command, as run | Exit | Time |
+| --- | --- | --- |
+| `go build ./...` | 0 | 13:22:30Z |
+| `go vet ./...` | 0 | 13:22:30Z |
+| `gofmt -l .` | no file | 13:22:30Z |
+| `go vet -tags=e2e ./cmd/layup/` | 0 | 13:22:30Z |
+| `go vet -tags=integration ./...` | 0 | 13:22:30Z |
+| `go test -count=1 ./...` | 0 | about 1.5 min |
+| `sh docs/adr/adr-lint.sh`, `sh docs/prd/prd-lint.sh`, `sh docs/links/link-lint.sh`, `sh docs/tests/run-discipline-tests.sh`, `sh docs/setup/setup-check.sh` (after `git add`), `sh docs/tests/nested-checkout-check.sh`, `git diff --check origin/main HEAD` | 0 each | about 13:25Z |
+| `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./...` | 1: every package `ok`, and `internal/run` timed out at 30m on a loaded host (load average 5 to 10, other sessions' tests) | 13:22:42Z to 13:54:20Z |
+| the same, `./internal/run` alone, `-timeout 45m -v` | 1: `TestTheAnswersToTheFollowUpWriteTheBudget` (51.8 s) and `TestAnUnparsedAnswerToTheFollowUpLeavesItsQuestionOpen` (60.2 s, then a panic) failed under load, tests of Intake that this task does not touch; the two pass alone: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 20m ./internal/run -run 'TestTheAnswersToTheFollowUpWriteTheBudget\|TestAnUnparsedAnswerToTheFollowUpLeavesItsQuestionOpen'` exit 0, 59.6 s | 13:55Z to 14:16:15Z |
+| the same, `./internal/run` alone, `-timeout 60m -v` | 0, 1498.5 s, no test failed | 14:17:48Z to 14:42:48Z |
