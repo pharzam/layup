@@ -16,6 +16,7 @@ import (
 	"path"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/pharzam/layup/internal/git"
@@ -166,7 +167,17 @@ func buildPrompt(src promptSrc) (*PromptContext, error) {
 	if len(src.Step.Kinds) == 0 {
 		return nil, fmt.Errorf("the step %s has no record kinds: it has no prompt file", src.Step.Step)
 	}
-	c := &PromptContext{Input: map[string][]byte{}, task: src.Task, step: src.Step.Step, findings: src.Findings}
+	if _, ok := stepInstructions[src.Step.Step]; !ok {
+		return nil, noInstruction(src.Step.Step)
+	}
+	c := &PromptContext{Input: map[string][]byte{}, task: src.Task, step: src.Step.Step, findings: src.Findings,
+		kind: src.Kind, issue: src.Issue, base: src.Base, extras: src.Extras}
+	if src.Step.Step == "specification" {
+		var err error
+		if c.record, c.facts, err = factsRecords(src.Tree.Paths); err != nil {
+			return nil, err
+		}
+	}
 	seen := map[string]bool{}
 	names := map[string]string{} // file name under input/ -> the records path
 	record := func(kind session.Kind, k kept) error {
@@ -210,6 +221,9 @@ func buildPrompt(src promptSrc) (*PromptContext, error) {
 			if err = record(kind, src.Register); err == nil && src.Plan != nil {
 				err = record(kind, *src.Plan)
 			}
+			if err == nil && src.Extras.Frozen != nil {
+				err = record(kind, *src.Extras.Frozen)
+			}
 		case session.KindRequirements:
 			for _, id := range src.Requirements {
 				for _, p := range underDir(prdDir) {
@@ -235,10 +249,21 @@ func buildPrompt(src promptSrc) (*PromptContext, error) {
 					}
 				}
 			}
+			for _, k := range src.Extras.Shape {
+				if err = record(kind, k); err != nil {
+					break
+				}
+			}
 		case session.KindDecisionRecords:
-			err = decisionRecords(src, underDir, target, kind)
+			if err = decisionRecords(src, underDir, target, kind); err == nil {
+				for _, k := range src.Extras.Options {
+					if err = record(kind, k); err != nil {
+						break
+					}
+				}
+			}
 		case session.KindHandoffsAndAnswers:
-			for _, k := range append(slices.Clone(src.Handoffs), src.Answers...) {
+			for _, k := range slices.Concat(src.Handoffs, src.Answers, src.Extras.Ledger) {
 				if err = record(kind, k); err != nil {
 					break
 				}
@@ -257,6 +282,31 @@ func buildPrompt(src promptSrc) (*PromptContext, error) {
 		}
 	}
 	return c, nil
+}
+
+// noInstruction is the refusal of a step that has no instruction in M2e.
+func noInstruction(step string) error {
+	return fmt.Errorf("the step %s has no instruction in M2e", step)
+}
+
+var factsRecord = regexp.MustCompile(`^docs/facts/F-([0-9]{4})-[^/]*$`)
+
+// factsRecords gives the number NNNN of the highest F-NNNN record of docs/facts/ in
+// the paths and the next number after it: the record that the Facts cells of the specification cite
+// because it exists, and the one that the rendered commit of the first bet will
+// write (loop.md, The instruction of a task step).
+func factsRecords(paths []string) (record, facts string, err error) {
+	top := -1
+	for _, p := range paths {
+		if m := factsRecord.FindStringSubmatch(p); m != nil {
+			n, _ := strconv.Atoi(m[1])
+			top = max(top, n)
+		}
+	}
+	if top < 0 {
+		return "", "", fmt.Errorf("the target has no record in docs/facts/ at the base: the Facts cells of the specification would cite none")
+	}
+	return fmt.Sprintf("%04d", top), fmt.Sprintf("%04d", top+1), nil
 }
 
 // decisionRecords adds the decision record of each ADR-NNNN that a section of the
@@ -317,6 +367,12 @@ func (c *PromptContext) Text(root string) []byte {
 		if n == 0 {
 			b.WriteString("- none\n")
 		}
+		if kind == session.KindDecisionRecords && len(c.extras.Survivors) > 0 {
+			b.WriteString("the survivors of the filter:\n")
+			for _, sv := range c.extras.Survivors {
+				fmt.Fprintf(&b, "- %s: %s\n", sv.Decision, strings.Join(sv.Options, " "))
+			}
+		}
 		if kind == session.KindHandoffsAndAnswers && len(c.findings) > 0 {
 			b.WriteString("findings of the last attempt:\n")
 			for _, f := range c.findings {
@@ -331,6 +387,10 @@ func (c *PromptContext) Text(root string) []byte {
 			}
 		}
 	}
+	v := map[string]string{"task": c.task, "kind": c.kind, "issue": strconv.Itoa(c.issue), "result": path.Join(root, "result", "result.tsv"),
+		"comment": path.Join(root, "result", commentFiles[c.step]), "head": c.base, "from": c.extras.From,
+		"labels": labelList(DefaultOwners()), "facts": c.facts, "record": c.record}
+	b.WriteString("\nThe work of this step:\n" + fill(stepInstructions[c.step], v) + "\n" + fill(resultInstruction, v))
 	return []byte(b.String())
 }
 
@@ -362,6 +422,9 @@ func (s *Sessions) PromptFile(ctx context.Context, in PromptIn) (*PromptContext,
 	if row.Step == "" {
 		return nil, fmt.Errorf("the step table has no step %q", in.Step)
 	}
+	if _, ok := stepInstructions[in.Step]; !ok {
+		return nil, noInstruction(in.Step) // before every read
+	}
 	register, err := s.readRecord(ctx, tasksPath)
 	if err != nil {
 		return nil, err
@@ -370,15 +433,34 @@ func (s *Sessions) PromptFile(ctx context.Context, in PromptIn) (*PromptContext,
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", tasksPath, err)
 	}
-	src := promptSrc{Step: row, Task: in.Task, Register: register, Findings: in.Findings}
-	if i := slices.IndexFunc(tasks, func(t Task) bool { return t.ID == in.Task }); i >= 0 {
-		src.Requirements = tasks[i].Requirements
-	} else {
+	src := promptSrc{Step: row, Task: in.Task, Register: register, Findings: in.Findings, Base: in.Base}
+	i := slices.IndexFunc(tasks, func(t Task) bool { return t.ID == in.Task })
+	if i < 0 {
 		return nil, fmt.Errorf("%s has no row of %s", tasksPath, in.Task)
+	}
+	src.Requirements, src.Kind, src.Issue = tasks[i].Requirements, tasks[i].Kind, tasks[i].Issue
+	if err := checkStepKind(in.Step, src.Kind); err != nil {
+		return nil, fmt.Errorf("%w: the task %s is of kind %s", err, in.Task, src.Kind)
+	}
+	if _, takes, _ := inputsWanted(in.Step, src.Kind); takes != (len(in.Options) > 0) {
+		return nil, fmt.Errorf("the options of the task %s: the step %s of a task of kind %s takes %s, and %d decisions are given", in.Task, in.Step, src.Kind,
+			map[bool]string{true: "the options of its decisions", false: "none"}[takes], len(in.Options))
 	}
 	events, err := s.readTable(ctx, eventsPath(in.Task), records.ReadEvents)
 	if err != nil {
 		return nil, err
+	}
+	if in.Step == "verification" {
+		i := slices.IndexFunc(events, func(e []string) bool { return e[1] == "attempt" })
+		for j := i + 1; i >= 0 && j < len(events); j++ {
+			if events[j][1] == "attempt" {
+				i = j
+			}
+		}
+		if i < 0 {
+			return nil, fmt.Errorf("the task %s has no attempt", in.Task)
+		}
+		src.Extras.From = events[i][4]
 	}
 	sessions, err := s.readTable(ctx, "sessions.tsv", records.ReadSessions)
 	if err != nil {
@@ -417,6 +499,12 @@ func (s *Sessions) PromptFile(ctx context.Context, in PromptIn) (*PromptContext,
 			}
 		}
 	}
+	extras, err := s.taskInputs(ctx, in, src.Kind)
+	if err != nil {
+		return nil, err
+	}
+	extras.From = src.Extras.From
+	src.Extras = extras
 	regData, err := s.readRecord(ctx, "rule-paths.tsv")
 	if err != nil {
 		return nil, err
@@ -437,7 +525,55 @@ func (s *Sessions) PromptFile(ctx context.Context, in PromptIn) (*PromptContext,
 	return buildPrompt(src)
 }
 
-// taskInputs reads the inputs that come with the task (stub).
+// taskInputs reads the inputs that come with the task, as inputsWanted says for
+// the step (loop.md, The records each step receives): the frozen list when it
+// exists, the revised draft and its facts, the options with their survivors and
+// the ledger, each by its reader, which fails closed.
 func (s *Sessions) taskInputs(ctx context.Context, in PromptIn, kind string) (taskExtras, error) {
-	return taskExtras{}, nil
+	var x taskExtras
+	if data, err := s.Store.ReadFile(ctx, testsPath(in.Task)); err != nil {
+		return x, err
+	} else if data != nil {
+		if _, err := ReadTests(data); err != nil {
+			return x, fmt.Errorf("%s: %w", testsPath(in.Task), err)
+		}
+		x.Frozen = &kept{testsPath(in.Task), data}
+	}
+	shape, options, ledger := inputsWanted(in.Step, kind)
+	readers := map[string]func([]byte) ([][]string, error){"spec/draft.tsv": records.ReadDraft, "spec/spans.tsv": records.ReadSpans,
+		"start/problem-statement.md": nil, "intake/answers.tsv": records.ReadAnswers, "sessions.tsv": records.ReadSessions, "telemetry.tsv": records.ReadTelemetry}
+	var paths []string
+	if shape {
+		paths = []string{"spec/draft.tsv", "spec/spans.tsv", "start/problem-statement.md", "intake/answers.tsv"}
+	}
+	if ledger {
+		paths = append(paths, "sessions.tsv", "telemetry.tsv")
+	}
+	for _, p := range paths {
+		k, err := s.readRecord(ctx, p)
+		if err != nil {
+			return x, err
+		}
+		if read := readers[p]; read != nil {
+			if _, err := read(k.Data); err != nil {
+				return x, fmt.Errorf("%s: %w", p, err)
+			}
+		}
+		if ledger {
+			x.Ledger = append(x.Ledger, k)
+		} else {
+			x.Shape = append(x.Shape, k)
+		}
+	}
+	if options {
+		var err error
+		x.Options, x.Survivors, err = optionsKept(in.Options, func(p string) ([]byte, error) {
+			k, err := s.readRecord(ctx, p)
+			return k.Data, err
+		})
+		if err != nil {
+			return x, err
+		}
+	}
+	return x, nil
 }

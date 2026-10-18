@@ -304,7 +304,7 @@ In docs/prd/ write the product requirements document of the target, with one row
 
 | Requirement | Acceptance criterion |
 | ----------- | -------------------- |
-| REQ-<NNN> | <the acceptance criterion> |
+| `REQ-<NNN>` | <the acceptance criterion> |
 
 ## 9. Success metrics
 | Metric | Fact |
@@ -315,7 +315,7 @@ In docs/prd/ write the product requirements document of the target, with one row
 | --- | ----- | --------- | --- | ---- | ---- |
 | REQ-<NNN> | F-{facts}#<n> F-{record} | — | — | — | — |
 
-Write NFR-<NNN> in place of REQ-<NNN> for a row of kind non-functional. Leave the MoSCoW and Phase cells empty (not —): code fills them at the bet. In a Facts cell, cite each fact that the row covers: F-{facts}#<n> for the fact n of spec/spans.tsv, and Q-<NNN> for a fact of intake/answers.tsv; always cite F-{record}, the existing record, too. Write one acceptance row and one matrix row for each requirement ID, and one success row for each success-criterion row of the draft, citing the facts it covers.
+Write NFR-<NNN> in place of REQ-<NNN> for a row of kind non-functional, and keep the backticks around the ID in the acceptance table. Leave the MoSCoW and Phase cells empty (not —): code fills them at the bet. In a Facts cell, cite each fact that the row covers: F-{facts}#<n> for the fact n of spec/spans.tsv, and Q-<NNN> for a fact of intake/answers.tsv; always cite F-{record}, the existing record, too. Write one acceptance row and one matrix row for each requirement ID, and one success row for each success-criterion row of the draft, citing the facts it covers.
 In docs/spec/ write, for each requirement ID, a section whose heading holds the ID as a whole word, for example "## REQ-<NNN> — <title>", with a non-empty text under it.
 Write docs/tasks/{task}.md, the task's file, in the form of the target's docs/tasks/. Write nothing under docs/facts/: code renders it at the first bet.
 The required outputs for the result file are docs/tasks/{task}.md and each file of docs/prd/ and docs/spec/ that you wrote.

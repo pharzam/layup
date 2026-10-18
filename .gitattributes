@@ -244,3 +244,12 @@ docs/setup/facts.sha256 text eol=lf
 # `git check-attr text`: internal/catalog/testdata/test/kinds.tsv `unset`,
 # internal/catalog/catalog.go `unspecified`.
 internal/catalog/*/** -text
+
+# --- the golden prompt files: bytes that the prompt test compares (T-c6sx, #416) -
+#
+# Each file under internal/run/testdata/prompts/ is the exact prompt file of one
+# task step, and the unit test compares the composed bytes with it. With
+# `core.autocrlf=true` a checkout would put a carriage return at the end of each
+# line and the test would fail on a tree that is right. `-text` turns the
+# conversion off in both directions.
+internal/run/testdata/prompts/** -text
