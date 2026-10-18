@@ -58,6 +58,7 @@ type Sessions struct {
 	Forge         forge.Forge
 	Control       int
 	App           string // the slug of the App, to tell its own comment (row 66d)
+	Bot           int64  // the numeric ID of the App's bot, to tell its own status (row 66f)
 	Prices        [][]string
 	newID         func() (string, error)
 	sweep         func(host, target string) error
