@@ -1109,7 +1109,7 @@ of defence and `layup/rules` the second; both read the same register.
   task that the loop brought up to date with the base.
 - A verified task whose base then moves carries its verdict over a clean merge of
   the base that changes no file it touches (the target's own rule); otherwise the
-  task is closed and redone as a new task with its own issue, which takes the old
+  task is closed and redone (the closes: [`forge.md`](forge.md#the-calls-of-m2e), row 66w, task `T-xyws`; the redo: row 66x) as a new task with its own issue, which takes the old
   task's row and predecessor links (`architecture.md` §8). The redone task has an
   `closed` event on the old one and a `rebased` event on the new one
   ([the records](records.md#nfr-001--the-records-of-the-task-loop)).
