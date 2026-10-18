@@ -169,3 +169,14 @@ Each mutant changes one expression of `internal/run/commentform.go` or `handoffp
 | caller literal false honored (only the true literal reaches plan-fields) | killed | TestTheCommentItemsAreComputedFromTheKeptCopy, TestAnItemOfAnotherCommentKindIsFalse |
 
 34 mutants, 34 killed, 0 excluded by a build or vet failure. Control after restore: green, files byte-identical: True.
+
+## Gates at the head 8b403ff (each exit status read directly)
+
+| Gate | Exit | Time (UTC, 2026-10-18) |
+| --- | --- | --- |
+| `go build ./...`, `go vet ./...`, `gofmt -l .`, `go vet -tags=e2e ./cmd/layup/` | 0, 0, none listed, 0 | 07:16 |
+| `go test -count=1 ./...` (unit) | 0 | 07:35:30 to 07:35:40 |
+| `go test -count=1 -tags=integration -timeout 30m ./...` (whole level, root) | 0 (`internal/run` 1,146 s on a loaded host) | 07:15:21 to 07:35:19 |
+| the five text checks, `nested-checkout-check.sh`, `git diff --check` | 0 | 07:16 |
+
+An earlier whole-level run at the head cfd4519 failed: the tests of the authors, the frozen list and the prompt file wrote comments of no form (fixed in 8b403ff, then rerun green above), and its 20-minute timeout fell on a host under load.
