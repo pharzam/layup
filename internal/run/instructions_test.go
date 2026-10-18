@@ -454,3 +454,14 @@ func TestTheSpecimenOfTheSpecificationInstructionPassesTheFullCheck(t *testing.T
 		t.Errorf("a specimen without its acceptance criteria fails %v; want criteria among them", failed)
 	}
 }
+
+// The verifier reviews from the base of the last attempt, not the first.
+func TestTheChangeOfTheVerifierStartsAtTheBaseOfTheLastAttempt(t *testing.T) {
+	events := [][]string{{"1", "attempt", "1", "", "aaaa", "", "", ""}, {"2", "bound", "1", "S-1", "aaaa", "bbbb", "", ""}, {"3", "attempt", "2", "", "cccc", "", "", ""}, {"4", "handoff", "2", "S-2", "", "", "", ""}}
+	if got, ok := attemptBase(events); !ok || got != "cccc" {
+		t.Errorf("attemptBase = %q, %v; want the base of attempt 2", got, ok)
+	}
+	if got, ok := attemptBase(events[1:2]); ok {
+		t.Errorf("attemptBase of a task with no attempt = %q, %v; want none", got, ok)
+	}
+}

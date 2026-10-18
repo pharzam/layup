@@ -284,6 +284,17 @@ func buildPrompt(src promptSrc) (*PromptContext, error) {
 	return c, nil
 }
 
+// attemptBase gives the base of the last event attempt of a task: the commit that the
+// change of the verifier starts from.
+func attemptBase(events [][]string) (string, bool) {
+	for i := len(events) - 1; i >= 0; i-- {
+		if events[i][1] == "attempt" {
+			return events[i][4], true
+		}
+	}
+	return "", false
+}
+
 // noInstruction is the refusal of a step that has no instruction in M2e.
 func noInstruction(step string) error {
 	return fmt.Errorf("the step %s has no instruction in M2e", step)
@@ -451,16 +462,11 @@ func (s *Sessions) PromptFile(ctx context.Context, in PromptIn) (*PromptContext,
 		return nil, err
 	}
 	if in.Step == "verification" {
-		i := slices.IndexFunc(events, func(e []string) bool { return e[1] == "attempt" })
-		for j := i + 1; i >= 0 && j < len(events); j++ {
-			if events[j][1] == "attempt" {
-				i = j
-			}
-		}
-		if i < 0 {
+		from, ok := attemptBase(events)
+		if !ok {
 			return nil, fmt.Errorf("the task %s has no attempt", in.Task)
 		}
-		src.Extras.From = events[i][4]
+		src.Extras.From = from
 	}
 	sessions, err := s.readTable(ctx, "sessions.tsv", records.ReadSessions)
 	if err != nil {
