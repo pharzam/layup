@@ -264,7 +264,11 @@ request, not a new record.
   error; `handoffs-and-answers` are the copies of each valid handoff with a comment, and the
   result files that hold an `answer` row, then, as text, the findings of the last attempt and no
   diff; `rule-files` are the files of the target at the base that the rule-path register of the
-  records matches. A target item is read at the base; a records item is copied under the
+  records matches. **Decided here** (task `T-c6sx`, #416, row 66s): the frozen list `tests.tsv` of the task, when it exists,
+  joins `issue-and-plan` after the plan; the revised draft and its facts join `requirements` and the
+  options tables join `decision-records` for a Shape task, with the survivors as text under them; the
+  ledger joins `handoffs-and-answers` for the close-out ([The instruction of a task
+  step](#the-instruction-of-a-task-step) holds the table); the order of the items that exist does not change. A target item is read at the base; a records item is copied under the
   session's `input/` by its file name (two records of one name are refused), and the text names
   it at `<session directory>/input/<name>`. The SHA-256 that the ledger keeps, as the paragraph below says, is
   the one in the prompt file itself, which the start row's `records` commit rebuilds. **Later wiring:**
@@ -279,6 +283,140 @@ those sections name, the task's handoffs and the answers to its questions, and
 the target's rule files; code builds the list from the records and writes the
 links, so a session reads the files and not a summary. Each item is a path of the
 target or of the records branch with its SHA-256, which the ledger keeps.
+
+### The instruction of a task step
+
+**Decided here** (task `T-c6sx`, #416, row 66s; the plan review is the comment 6249930540 of #416, whose conditions 2 to 7 are taken as written; the Operator set the goal count at 2, comment 6249938546): the prompt file of a step of a task is the list of links above and, after it, the step's fixed instruction. The lists give the harness its inputs; the instruction gives it the work, the outputs and the form of its files, so a model with no other context can write a result that the loop accepts.
+
+- **The frame.** `Text` keeps the header line, the sentence that tells the harness to read, and the five lists, in their order, each existing item in its place relative to the others; the new items below join their own kind. After the lists, code writes a blank line, the line `The work of this step:`, the block of the step with its placeholders filled, a blank line and the block `instruction-result` filled. A target item or a records item that is new makes the bytes of a list longer, so the golden files, not a byte prefix, are the oracle of the composition.
+- **The home of each text.** The eight blocks below are the text of record, with one home each. `internal/run` keeps each as a constant and a test compares it with its block byte for byte (as it does for `probe-prompt`); the golden files of the prompt of each step compare the composed bytes, and no flag rewrites a golden file.
+- **The placeholders** are filled by code and never by a session; a prompt that keeps a `{` placeholder is a defect. `{task}`, `{kind}` and `{issue}` are the row of the task in `tasks.tsv`. `{result}` is the absolute `<session directory>/result/result.tsv`, and `{comment}` the absolute `<session directory>/result/<file>`, the file being `plan.md`, `plan-review.md` or `review-record.md` (the constants `PlanFile`, `PlanReviewFile` and `ReviewRecordFile`, which row 66r's driver passes as the file of the handoff). `{head}` is the base of the session's start row, the head that the item `nothing-material` reads. `{from}` is the base of the task's last `attempt` event. `{labels}` are the keys of the default owner map, sorted, joined by `, `. `{record}` and `{facts}` (the specification only) are the highest `F-NNNN` of `docs/facts/` at the base and the next number after it.
+- **The steps.** A step has an instruction exactly when this table has a row; `shape-activation-batch` and `plan-of-a-milestone` are the milestones M2f and M2g, and `answer-to-a-question`, its posting and its tier are row 66k's (the boundary is in the plan): `PromptFile` refuses the three by name, before every read, with `the step <step> has no instruction in M2e`.
+
+| Step | Role | Kind of the task | Writes in the repository | Comment file, read by | Required outputs for the result |
+| ---- | ---- | ---------------- | ------------------------ | --------------------- | ------------------------------- |
+| `plan-of-a-task` | `software-engineer` | any | nothing, no commit | `plan.md`, `ParsePlanComment` | one `comment` row |
+| `plan-review` | `qa-engineer` | any | nothing, no commit | `plan-review.md`, `ParsePlanReview` | one `comment` row |
+| `specification` | `product-owner` | `specification` | `docs/prd/`, `docs/spec/`, the task file, commits | none | the task file and each file written |
+| `shape-architecture` | `systems-architect` | `architecture` | `docs/spec/`, `docs/adr/`, the task file, commits | none | the task file and each file written |
+| `implement` | `software-developer` | `build` | tests and change, the task file, commits | none | the task file and each file written |
+| `verification` | `qa-engineer` | any | nothing, no commit | `review-record.md`, `ParseReviewRecord` and `NothingMaterialOK` | one `comment` row |
+| `close-out` | `software-developer` | any | one commit of the task file and `completed.md` | none | the task file and `completed.md` |
+
+The step `specification` takes a task of kind `specification`, `shape-architecture` one of kind `architecture` and `implement` one of kind `build`; any other step takes any kind, and a pair that disagrees is an error that names the step, the task and the kind. A comment file is written in the pinned form of [The items a caller computes](#the-items-a-caller-computes) (the target's own forms, never LAYUP's `| Field | Value |` table), and the instruction shows it with its placeholders so that a test fills them and runs the real parser on it. The shared text names every rule of the block `result` that a model must meet: the actual tab, UTF-8 with no byte-order mark, the line feed at the end of each line, no blank row, the empty cell, the numbering without gap, a status row with a non-empty reason, a hash of 64 lowercase hexadecimal characters, a question that names a record, and the artifact rows for the required outputs only.
+
+```text instruction-plan-of-a-task
+Plan the task {task} (kind {kind}, issue {issue}) from the files listed above: the issue row, the requirements, the decision records, the handoffs and findings, and the rule files. Change no file of the repository and make no commit.
+Write the plan as the file {comment}, in this form, each line starting at the first column and ended by a line feed:
+size: <small or large>
+open questions: <one line, or —>
+new interfaces: <one line, or —>
+new dependencies: <one line, or —>
+tests:
+- <id> <path>
+The word after size: is exactly small or large. The character — is for the three list fields only, and a field with nothing after the colon and the space is wrong. The line tests: stands alone, once. Under it, write one line "- <id> <path>" for each test of the plan: exactly two words, each ID unique in the list, each path relative to the repository, clean and inside it (no space, no .., no leading /). A task of kind specification or architecture lists no test: write no line under tests:. A task of kind build lists at least one test.
+In the result file write the row "comment<TAB>1<TAB>result/plan.md<TAB><the SHA-256 of {comment}><TAB>—".
+```
+
+```text instruction-plan-review
+Review the plan of the task {task} (kind {kind}, issue {issue}), the newest plan among the handoffs listed above, against the issue row, the requirements, the decision records and the rule files: its coverage of the requirements, its list of tests, and its fit with the decision records and the rule files. Change no file of the repository and make no commit.
+Write the review as the file {comment}, in this form, the first line starting at the first column and ended by a line feed:
+verdict: <approve, approve-with-conditions or reject>
+The line verdict: is written once, and its value is exactly one of the three words approve, approve-with-conditions and reject. After it, write the conditions or the reasons as plain lines that do not start with "verdict: ". This is the form the target reads; it is not the table "| Field | Value |" of LAYUP's own reviews, which you must not write.
+In the result file write the row "comment<TAB>1<TAB>result/plan-review.md<TAB><the SHA-256 of {comment}><TAB>—".
+```
+
+```text instruction-specification
+Write the specification of the task {task} (kind {kind}, issue {issue}) from the revised draft and its facts listed above: spec/draft.tsv, spec/spans.tsv, start/problem-statement.md and intake/answers.tsv. Commit your work in this repository in one or more commits; push nothing.
+The IDs. The row R-NNN of kind requirement in spec/draft.tsv is the requirement REQ-NNN, and the row R-NNN of kind non-functional is NFR-NNN, with the same three digits. A row of kind success-criterion is no requirement and has no such ID. Keep the IDs as the draft listed above numbers them; never renumber one.
+In docs/prd/ write the product requirements document of the target, with one row for each requirement ID, in these forms (every line starts at the first column):
+
+| REQ | Statement | MoSCoW | Phase | Facts |
+| --- | --------- | ------ | ----- | ----- |
+| REQ-<NNN> | <the requirement> |  |  | F-{facts}#<n> F-{record} |
+
+| Requirement | Acceptance criterion |
+| ----------- | -------------------- |
+| `REQ-<NNN>` | <the acceptance criterion> |
+
+## 9. Success metrics
+| Metric | Fact |
+| ------ | ---- |
+| <the success criterion> | F-{facts}#<n> |
+
+| REQ | Facts | Guardrail | ADR | Task | Test |
+| --- | ----- | --------- | --- | ---- | ---- |
+| REQ-<NNN> | F-{facts}#<n> F-{record} | — | — | — | — |
+
+Write NFR-<NNN> in place of REQ-<NNN> for a row of kind non-functional, and keep the backticks around the ID in the acceptance table. Leave the MoSCoW and Phase cells empty (not —): code fills them at the bet. In a Facts cell, cite each fact that the row covers: F-{facts}#<n> for the fact n of spec/spans.tsv, and Q-<NNN> for a fact of intake/answers.tsv; always cite F-{record}, the existing record, too. Write one acceptance row and one matrix row for each requirement ID, and one success row for each success-criterion row of the draft, citing the facts it covers.
+In docs/spec/ write, for each requirement ID, a section whose heading holds the ID as a whole word, for example "## REQ-<NNN> — <title>", with a non-empty text under it.
+Write docs/tasks/{task}.md, the task's file, in the form of the target's docs/tasks/. Write nothing under docs/facts/: code renders it at the first bet.
+The required outputs for the result file are docs/tasks/{task}.md and each file of docs/prd/ and docs/spec/ that you wrote.
+```
+
+```text instruction-shape-architecture
+Write the architecture of the target for the task {task} (kind {kind}, issue {issue}) from the options tables of its decisions and the survivors of the filter, both listed above under decision-records, with the revised draft and its facts. Commit your work in this repository in one or more commits; push nothing.
+For each decision that has one survivor, write that option as decided. For each decision that has more than one survivor, write a section with the heading "Decision pending the bet" that lists its survivors and decides nothing. Never choose among survivors, and never write an option that is not a survivor.
+Write the architecture under docs/spec/ and the decision records under docs/adr/, in the form of the rule files listed above, and write docs/tasks/{task}.md, the task's file, in the form of the target's docs/tasks/.
+The required outputs for the result file are docs/tasks/{task}.md and each file of docs/spec/ and docs/adr/ that you wrote.
+```
+
+```text instruction-implement
+Implement the task {task} (kind {kind}, issue {issue}) as its plan says: the plan and its review are among the handoffs listed above. For each test the plan lists, write the failing test first, watch it fail for the right reason, then write the change. Answer each finding listed under the findings of the last attempt. When tests.tsv is listed above, change none of the test files it names. Keep docs/tasks/{task}.md, the task's file, current. Commit your work in this repository in one or more commits; push nothing.
+The required outputs for the result file are docs/tasks/{task}.md and each file you wrote or changed.
+```
+
+```text instruction-verification
+Verify the change of the task {task} (kind {kind}, issue {issue}) from {from} to {head}, the commit your repository is at: review the changes from {from} to {head} against the plan, the requirements, the decision records, the rule files and the frozen list tests.tsv, as listed above. Change no file of the repository and make no commit.
+Write the review record as the file {comment}, in this form, each line starting at the first column and ended by a line feed:
+head: {head}
+verdict: <material, nothing material in scope or not mergeable, findings recorded>
+findings:
+- <path>:<line> <rule>: <text>
+The line head: is written as shown, once. The value of verdict: is exactly one of the three strings material, nothing material in scope and not mergeable, findings recorded. The line findings: stands alone, once. Under it write one line for each material finding: <path> is relative to the repository, clean and inside it (no space, no .., no leading /), <line> is a positive integer, <rule> is one word with no colon, and <text> is not empty. For nothing material in scope write no line under findings:. This is the form the target reads; it is not the table "| Field | Value |" of LAYUP's own reviews, which you must not write.
+In the result file write the row "comment<TAB>1<TAB>result/review-record.md<TAB><the SHA-256 of {comment}><TAB>—".
+```
+
+```text instruction-close-out
+Close out the task {task} (kind {kind}, issue {issue}). From the verdict among the handoffs listed above and the ledger (sessions.tsv and telemetry.tsv, listed above), write the task's verdict, its line of the completed log and its resource record. Make one commit that changes only docs/tasks/{task}.md and docs/tasks/completed.md; push nothing.
+The required outputs for the result file are docs/tasks/{task}.md and docs/tasks/completed.md.
+```
+
+```text instruction-result
+Write the result file {result}: UTF-8 text with no byte-order mark, one row per line, each line ended by a line feed, the last too, and no blank line. Separate the cells of a row with one tab character each, never with spaces. The first line is "kind<TAB>n<TAB>value<TAB>sha256<TAB>reason". The single character — (U+2014) is the empty cell; no cell holds a tab or a line break. The rows of each kind are numbered 1, 2, 3 and so on, with no gap.
+Write exactly one status row, "status<TAB>1<TAB><status><TAB>—<TAB><reason>": <status> is completed when the work of this step is done, needs_context when a question stops it, and blocked or failed otherwise; <reason> is one line and not empty.
+For each required output that the work above names, write the row "artifact<TAB><n><TAB><path><TAB><sha256><TAB>—": <path> is relative to the repository, and <sha256> is 64 lowercase hexadecimal characters, the SHA-256 of that file at your last commit. A file that this prompt only asks you to read is no output.
+When a question stops the work, write one row for each question, "question<TAB><n><TAB><text><TAB>—<TAB><label> <needs_human> <record>": <label> is one of {labels}; <needs_human> is yes or no; at least one <record> names a file the question concerns, more are separated by one space, and there is no space at either end of the cell.
+A comment file is plain Markdown with no code fence. Push nothing. Then end.
+```
+
+**The records each step receives.** Every new item is a byte copy under `input/` with its SHA-256, inside one of the five kinds (no sixth kind: `ContextKinds` does not change), after the items that exist; a file is read by its reader, which fails closed.
+
+| Input | Records path | Kind, after | Steps | Reader |
+| ----- | ------------ | ----------- | ----- | ------ |
+| the frozen list | `tasks/<task>/tests.tsv`, when it exists | `issue-and-plan`, after the plan | all | `ReadTests`; absent is no item |
+| the revised draft and its facts | `spec/draft.tsv`, `spec/spans.tsv`, `start/problem-statement.md`, `intake/answers.tsv`, in this order | `requirements`, after the target items | all but `close-out`, for a task of kind `specification` or `architecture` | `ReadDraft`, `ReadSpans`, `ReadAnswers`; the brief as bytes; a missing file is an error |
+| the options | `spec/options/<decision>.tsv` for each decision of the caller's map, sorted | `decision-records`, after the ADRs | all but `close-out`, for a task of kind `architecture` | `spec.ReadOptions` |
+| the survivors | text: `the survivors of the filter:` and a line `- <decision>: <option> ...` for each decision, under the decision records | `decision-records` | as the options | the caller's map, checked against the tables |
+| the ledger | `sessions.tsv` and `telemetry.tsv` | `handoffs-and-answers`, after the answers | `close-out` | `ReadSessions`, `ReadTelemetry`; both tables whole (a known limit: code keeps no table of one task) |
+
+The Intake records go to both Shape kinds because the `covers` column of the draft names span numbers and `Q-NNN` facts, and the constraints of an options table name `R-NNN`, `F-<n>` and `Q-NNN`; neither can be read without the four files. **The options (R10, binds 66h, 66r and 66j).** `PromptIn.Options` maps each decision to the `spec.Result` of its table and is required, and not empty, for a step that takes the options (an architecture task, any step but `close-out`), and refused for any other. *Before the bet* the caller (row 66h's filter, passed by row 66r's driver) gives each decision's result unchanged: every option of the table and every survivor, the survivors listed in the prompt and none chosen. *After the bet* the caller (row 66j opens the task of the chosen option; row 66r passes it) gives the same options and only the option that the bet chose as the one survivor; that narrowed choice is no filter result. `PromptFile` reads each table and refuses a result whose option names are not the table's, in order, a result with no survivor and a survivor that is not an option; whether the set of decisions is complete is the caller's, as `SessionStore` has no call that lists a directory. **The base names.** The existing refusal of two records of one base name applies to the records that one prompt holds, and names both; a decision named `draft`, `spans`, `answers`, `tests` or `tasks` collides with a record of its own prompt and is refused. That no real run meets it is a contract of row 66h, whose step must refuse those decision names (`optionsKeep` is not on this main: a required contract, not a reuse).
+
+**The requirement IDs (R10, binds 66r; condition 3 of the plan review of #364, comment 6249724875).** The correspondence is by kind, from the pinned revised draft: the row `R-NNN` of kind `requirement` is `REQ-NNN` and the row of kind `non-functional` is `NFR-NNN`, the same three digits; a row of kind `success-criterion` is no requirement ID. The `requirements` of **both** initial rows of `tasks.tsv` (the specification task and the target's architecture task) are exactly the set of those IDs over all the rows of the pinned draft, in the order of the draft. The number a row has in the pinned draft is the number of its PRD identity: a later revision of the draft changes no ID that a PRD row holds, and the PRD, not the draft, is the identity from the merge. Row 66r writes the rows by this correspondence and tests the item `spec-sections` for them, with a missing-section refusal; this branch writes the sentence and opens no task. The later architecture tasks of row 66j, and the option constraints, use the same IDs.
+
+**The specification output (R10, binds 66j and 66k).** The instruction asks for what the existing checks read, so a head that waits for its bet is accepted: one five-cell row for each requirement ID with empty MoSCoW and Phase cells, one acceptance row, one matrix row and one section of `docs/spec/` for each ID, one success row for each `success-criterion` row of the draft, and Facts cells whose tokens the checks resolve. A fact is cited as `F-<record>#<n>`, the record being the numbered facts record of the problem statement, `docs/facts/F-NNNN-numbered-facts.md` of the decision of #412 (`T-cav3`), and `n` the number of the fact in `spec/spans.tsv`, which `RenderFacts` writes as the line `n.`; a fact of the answers is cited as `Q-NNN`. The record does not exist until the rendered commit of the first bet (row 66j), and its `NNNN` is one more than the highest `F-NNNN` of `docs/facts/` at the base of that commit, which equals the base of the specification task; so the prompt gives that number as `{facts}`, and, as the pinned `prd-lint` resolves a cell only when one of its tokens names an existing record, the cell also cites `{record}`. The consumers bind to it: row 66j renders the record under `{facts}` with the same function, and the input of the full check gives `PSBRecords` the predicted ID before the bet and `Records` the records of `docs/facts/`, so a bare `{record}` and `F-{facts}#n` both resolve ([The full spec check](#req-012--the-full-spec-check)). The specimen test builds its input through `specRecords` and `specTree` and runs the full check and the pinned `prd-lint` on it. The rendering stays row 66j's.
+
+**The errors.** `PromptFile` writes nothing at any stage, and every error returns no context, so no session starts on a partial prompt.
+
+| Stage | Case | Error |
+| ----- | ---- | ----- |
+| 0, before every read | a step with no row in the step table; a step with no instruction | `the step table has no step "<s>"`; `the step <s> has no instruction in M2e` |
+| 1 | no row of the task; the step and the kind disagree; options missing for a step that takes them, or given for one that does not | `<tasks.tsv> has no row of <t>`; `the step <s> is not a step of the task <t>, of kind <k>`; `the options of the task <t> are ...` |
+| 2 | `verification` with no `attempt` event | `the task <t> has no attempt` |
+| 3 | a Shape input, the ledger or an options table missing or refused; a result that disagrees with its table; the specification of a target with no record in `docs/facts/` | `the records have no <path>`; `<path>: <reader error>`; `decision <d>: ...`; `the target has no record in docs/facts/` |
+| 5 | two records of one base name | `two records are named <name>: <a> and <b>` |
+
+**The session base** (that the context was built for the base and the task that the session starts with) is checked at the start of a session, and is row 66r's (issue #415), not this task's.
 
 ## REQ-005 — The handoff
 
@@ -1274,9 +1412,11 @@ own judgement of it.
   `options` of the row of `bets.tsv`. **What the architecture task writes before the
   bet:** the decisions that have one survivor, written as decided, and, for each
   decision with more survivors, a section `Decision pending the bet` that lists the
-  survivors and decides nothing. **After the bet**, code opens one task of kind
+  survivors and decides nothing. Its prompt file holds each options table and the
+  survivors that the caller's filter gives ([The instruction of a task step](#the-instruction-of-a-task-step), task `T-c6sx`). **After the bet**, code opens one task of kind
   `architecture` for each settled decision, with the chosen option in its prompt
-  file, which writes it into the target's architecture; it merges in the merge order
+  file (the options table and the chosen option as the only survivor, [The instruction of a task
+  step](#the-instruction-of-a-task-step)), which writes it into the target's architecture; it merges in the merge order
   below, after the specification.
 - **Every option dropped:** the architect session writes new options once; if they
   are dropped too, the round made no progress. `layup run` posts a comment on the
@@ -1445,7 +1585,7 @@ Known limit of task `T-8rm6` (rule: #409): an empty draft whose revision keeps n
 (no need, constraint or measure fact and no criterion) is not told from the draft
 session's own empty draft, so the step runs its session again at each restart until
 the milestone cap.
-The revised draft is the input of the specification task.
+The revised draft, with its facts, is the input of the specification task and of the target's architecture task ([The instruction of a task step](#the-instruction-of-a-task-step)).
 
 ### The rendered commit and the confirmed inventory
 
@@ -1538,8 +1678,12 @@ the changed paths decide nothing. A fact token is record-bound:
 records are `F-0001` and `F-0003`, two records of the one file, so the input is
 a list), `F-<the answers' record>#N` resolves to `Q-00N`, a bare `Q-NNN` is the
 answers' fact itself, and a bare `F-NNNN` names a record, resolves to no
-numbered fact and is no failure of `covers` — the pinned `prd-lint` already
-requires the record file to exist; any other token fails `covers`. `measures`
+numbered fact and is no failure of `covers` when the head holds the record as a
+direct file `F-NNNN*.md` of `docs/facts/` (the set `prd-lint` reads, `FullInput.Records`);
+`F-NNNN#n` of such a record that numbers no fact, and a record the head lacks, fail;
+any other token fails `covers`. **Decided here** (task `T-c6sx`, #416, round 1, R10): this is
+what lets a specification that waits for its bet pass `covers` while the pinned `prd-lint`
+needs an existing `F-NNNN` in each Facts cell. `measures`
 reads only a `Fact` cell of a table under a `## … Success metrics` heading, never
 an acceptance criterion's prose; the exemption of `needs` and `measures` is a
 fact a token under a `waits for a bet` heading names — the heading text matches
@@ -1573,7 +1717,8 @@ rebuilding the input at a restart, is row 66f's, which calls the builder.
 | `Versions` | `records:spec/inventory-<n>.tsv`, the exact bytes, for each `n` of `Index`; the builder never verifies a hash (the rule `inventory` does) | an error |
 | `Register` | `records:tasks.tsv`, the raw bytes; not read by `ReadRegister`, which refuses a task with no requirement, the case the rule `tasks` reports | an error |
 | `Merged` | the tasks of the register whose `records:tasks/<task>/events.tsv` holds an event `merged` | no file is not merged; a refused file is an error |
-| `PSBRecords` | the numbered facts record (below) | none is empty |
+| `PSBRecords` | the numbered facts record (below); before the first bet and with no such file, the predicted ID | none is the predicted ID before the bet, else empty |
+| `Records` | `target:` the direct regular files of `docs/facts/` at `head` named `F-NNNN*.md`, by record ID (`T-c6sx`) | an empty list |
 | `AnswersRecord` | none: `""` | not applicable |
 | `Copy` | the caller's (the bet's copy, row 66j) and passed through unchanged | `nil` keeps the `fail` row of `classes` and the `ran` row |
 
@@ -1586,11 +1731,13 @@ rebuilding the input at a restart, is row 66f's, which calls the builder.
   source is `target:`. The correspondence: the fact `n` of `F-NNNN#n` is the line
   `n. ` of that record, which `RenderFacts` writes with the fact ID of the confirmed
   inventory as its number, and that ID is the number `n` of the span in
-  `spec/spans.tsv`. **The present limitation:** before the first bet no such file
-  exists, so every `F-NNNN#n` citation fails `covers`, and the policy above for a head
-  before the bet (the per-rule judgement, `success` only when each other rule is
-  `pass`) stands unchanged; this is no blanket failure, and the pinned `prd-lint` also
-  needs one `F-NNNN` for each requirement.
+  `spec/spans.tsv`. **The predicted ID** (`T-c6sx`, #416): with an empty `Index` and no numbered facts file
+  at `head`, `PSBRecords` is the ID one more than the highest `F-NNNN` of `docs/facts/` at
+  `head`, so the citations `F-NNNN#n` of the specification that waits for its bet resolve. The
+  prediction holds: no task writes `docs/facts/` (a rule path), nothing merges before the bet,
+  and row 66j computes the ID of its record at the same head with the same function
+  (`nextFactsID`, which the instruction of the specification also uses for `{facts}`). After
+  the first bet the file exists or the list stays empty, as `T-cav3` decided.
 - **`AnswersRecord`.** It stays `""`. The answers record of the setup (S04) numbers
   `S01-stack` first and only the answered questions after it, so its fact `N` is not
   `Q-00N`; with it the check would resolve a wrong citation. A target PRD cites an

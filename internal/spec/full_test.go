@@ -312,6 +312,17 @@ func TestCoversBindsEachTokenToItsRecord(t *testing.T) {
 	in.PRDs = prd("F-0004") // a bare cite of the answers' record resolves to no numbered fact
 	rows = CheckFull(in)
 	wantResult(t, rows, "covers", resPass)
+
+	// A record that the head holds in docs/facts/ (the setup record, which prd-lint
+	// reads) is accepted bare; its facts are no spans and no answers, and an unknown record is no record.
+	in.Records = []string{"F-0005"}
+	for _, c := range []struct {
+		cite string
+		pass bool
+	}{{"F-0005", true}, {"F-0005#1", false}, {"F-0009", false}, {"F-0005, F-0001#1", true}} {
+		in.PRDs = prd(c.cite)
+		wantResult(t, CheckFull(in), "covers", map[bool]string{true: resPass, false: resFail}[c.pass])
+	}
 }
 
 // needs: an in-scope need or constraint with no requirement and no waiting

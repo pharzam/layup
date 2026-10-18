@@ -1318,6 +1318,18 @@ failure modes worth keeping.
   function that takes a raw row reads it as a one-row table with `tsv.Read` (the
   empty value as `—`), requires the parsed row to equal the input, then applies the
   row rules; and each refusal has a one-token valid control.
+- ❌ **An instruction whose shown form the parser does not read.** A prompt that
+  tells a model to write a comment, a result file or a table is a producer, and the
+  parser of the loop is its reader: a form that the text shows with a slightly different
+  shape (a `tests:` marker with its first bullet on the same line, an acceptance table
+  whose requirement ID has no backticks, which the pinned `prd-lint` calls a malformed
+  row) is refused only when a real model follows it. Task `T-c6sx` (#416), found by its
+  plan review and by the first run of its specimen. **The check:** the test fills the
+  placeholders of the form that the text shows and runs the real parser or check on the
+  result (the comment parsers, `records.ReadResult` on the rows the text quotes, the
+  full check and the pinned `prd-lint` on a specimen of the specification), with a
+  control that removes one part and fails; the helper invents no grammar that the text
+  lacks, and the oracle of the composed bytes is a golden file that no flag rewrites.
 
 ## 3. Validation — how you check you are not fooling yourself
 

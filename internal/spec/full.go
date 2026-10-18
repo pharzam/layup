@@ -62,6 +62,7 @@ const (
 // "before the first bet", never of a read that failed.
 type FullInput struct {
 	Changed       []string          // the paths the head changes against the base, repo-relative
+	Records       []string          // the record IDs of the direct docs/facts/ entries at the head that prd-lint reads (F-NNNN*.md); a bare token naming one is no failure of covers
 	PSBRecords    []string          // the record IDs that number the problem statement's facts (LAYUP's own are F-0001 and F-0003, two records of the one file)
 	AnswersRecord string            // the record ID of the answers, whose fact N answers Q-00N (LAYUP's is F-0004)
 	PRDs          map[string][]byte // the head's docs/prd/PRD-*.md, by base name
@@ -269,7 +270,7 @@ func (c *fullCheck) resolveFact(tok string) (id string, ok bool) {
 	}
 	rec, num := m[1], m[2]
 	if num == "" {
-		if rec == c.in.AnswersRecord || slices.Contains(c.in.PSBRecords, rec) {
+		if rec == c.in.AnswersRecord || slices.Contains(c.in.PSBRecords, rec) || slices.Contains(c.in.Records, rec) {
 			return "", true
 		}
 		return "", false
