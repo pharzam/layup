@@ -231,6 +231,16 @@ func TestABodyThatCheckCommentBodyRefusesGivesAnErrorAndNoBytes(t *testing.T) {
 		if !errors.As(err, &ref) || ref.Reason != "handoff" || got != nil {
 			t.Errorf("one character over of %s: %q, %v; want a HandoffRefusal and no bytes", who, got, err)
 		}
+		// Text that is not valid UTF-8 is a body CheckCommentBody refuses, not a schema error;
+		// "a-b" is its valid control.
+		if got, err := compose("a-b"); err != nil || got == nil {
+			t.Errorf("the control of %s: %q, %v", who, got, err)
+		}
+		ref = HandoffRefusal{}
+		got, err = compose("a\xffb")
+		if !errors.As(err, &ref) || ref.Reason != "handoff" || got != nil {
+			t.Errorf("invalid UTF-8 of %s: %q, %v; want a HandoffRefusal and no bytes", who, got, err)
+		}
 	}
 }
 

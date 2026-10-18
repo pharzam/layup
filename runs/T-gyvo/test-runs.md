@@ -76,3 +76,15 @@ All statuses are direct. Times are `date -u` after each command.
 ## Merge of main (cf2b319, with #407 and #365)
 
 `git merge origin/main` (never a rebase) at the merge commit 1f23149. Six conflicted files, resolved by hand: `docs/plan/README.md` (main's rows 66n, 66o and 67 kept; the test levels of row 66o made "unit; integration (the committed rows of a real end)"), `docs/spec/loop.md` (main's composer paragraph and the 66l and 66n rows kept; the row of 66o says what the code does), `docs/spec/packages.md` (main's sentence kept, it already names row 66o), `docs/tasks/backlog.md` (main's lines kept), `docs/prd/PRD-0001-layup.md` and `docs/tests/traceability.md` (both sides kept). No Go file conflicted, but `internal/run` changed on main, so the gates were re-run on the merged tree: `go build`, `go vet`, `go vet -tags=integration ./internal/run`, `go vet -tags=e2e ./cmd/layup/`, `gofmt -l`, `go test -count=1 ./...` exit 0; the five text checks and `git diff --check origin/main HEAD` exit 0; the whole integration level (`-tags=integration -timeout 30m ./...`, which holds the named tests) started 09:02:25, exit 0 at 09:28:19, no FAIL.
+
+## Round 1, finding F1: invalid UTF-8 text is a handoff refusal
+
+Test first: the body-refusal test gained, for each composer, a valid control (text `a-b`) and the text `a\xffb`, which must give no bytes and an error that `errors.As` reads as a `HandoffRefusal` with reason `handoff`. Red on the head fc2c3f7, `go test -count=1 ./internal/run -run TestABodyThatCheckCommentBody`, exit 1 at 09:42:21:
+
+```
+qacomment_test.go:242: invalid UTF-8 of q: "", the result row: line 2, column "value": not valid UTF-8; want a HandoffRefusal and no bytes
+qacomment_test.go:242: invalid UTF-8 of a: "", the result row: line 2, column "value": not valid UTF-8; want a HandoffRefusal and no bytes
+```
+
+Fix: `composedID` checks `utf8.ValidString(row[2])` before the reader's read and returns `CheckCommentBody`'s refusal; every other malformed input still goes through `readerForm` unchanged. Unit green, exit 0 at 09:42:49.
+Mutant M22 (on a copy; the check made unreachable with `&& len(row) > 99`; built, vetted with both tags): killed by `TestABodyThatCheckCommentBodyRefusesGivesAnErrorAndNoBytes` (the two lines above), restored hash-equal, control `go test ./internal/run` exit 0, 09:43:45.

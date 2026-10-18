@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/pharzam/layup/internal/records"
 	"github.com/pharzam/layup/internal/tsv"
@@ -49,6 +50,11 @@ func AnswerComment(start, row []string, questionID string) ([]byte, error) {
 func composedID(start, row []string, kind string) (string, error) {
 	if err := readerForm(records.SessionsSchema, start, records.CheckSession); err != nil {
 		return "", fmt.Errorf("the start row: %w", err)
+	}
+	// Text that is not valid UTF-8 is a body that CheckCommentBody refuses (a
+	// HandoffRefusal), before the reader's schema check would call it a bad field.
+	if len(row) > 2 && !utf8.ValidString(row[2]) {
+		return "", CheckCommentBody([]byte(row[2]))
 	}
 	if err := readerForm(records.ResultSchema, row, records.CheckResultRow); err != nil {
 		return "", fmt.Errorf("the result row: %w", err)
