@@ -1,0 +1,81 @@
+# Red run of the named tests against the compiling stubs (6fccd51), T-4pje
+# unit: go test -count=1 -v ./internal/run, started 2026-10-18T06:19Z; integration: -tags=integration, 2026-10-18T06:20:34Z
+# Each test below failed on a semantic assertion (a value or a detail), none on a compile error.
+
+unit FAIL TestThePlanCommentParsesInThePinnedForm (4 failing assertions)
+    commentform_test.go:55: ParsePlanComment = {Size: OpenQuestions:[] NewInterfaces:[] NewDependencies:[]}, [], false; want small, no lists, [{t1 internal/a_test.go} {t2 internal/b_test.go}]
+    commentform_test.go:60: a plan in another order = {Size: OpenQuestions:[] NewInterfaces:[] NewDependencies:[]}, [], false
+
+unit FAIL TestAPlanFieldTwiceOrAbsentIsNoPlan (1 failing assertions)
+    commentform_test.go:78: the control: false for "size: small\nopen questions: —\nnew interfaces: —\nnew dependencies: —\ntests:\n- t1 internal/a_test.go\n- t2 internal/b_test.go\n"; want true
+
+unit FAIL TestTheTestsMarkerOnceWithBulletsOfTwoWords (5 failing assertions)
+    commentform_test.go:83: two words: false for "size: small\nopen questions: —\nnew interfaces: —\nnew dependencies: —\ntests:\n- t1 a.go\n"; want true
+    commentform_test.go:83: the same path twice: false for "size: small\nopen questions: —\nnew interfaces: —\nnew dependencies: —\ntests:\n- t1 a.go\n- t2 a.go\n"; want true
+
+unit FAIL TestAPlanListFieldIsOneLineOfText (3 failing assertions)
+    commentform_test.go:107: a text with a comma = [], false; want the one element "a, b"
+    commentform_test.go:110: — = [], false; want the empty list and the execution tier
+
+unit FAIL TestAFieldValueIgnoresOneCarriageReturn (4 failing assertions)
+    commentform_test.go:118: one \r after the size: false for "size: small\r\nopen questions: —\nnew interfaces: —\nnew dependencies: —\ntests:\n- t1 internal/a_test.go\n- t2 internal/b_test.go\n"; want true
+    commentform_test.go:118: trailing spaces after the size: false for "size: small  \nopen questions: —\nnew interfaces: —\nnew dependencies: —\ntests:\n- t1 internal/a_test.go\n- t2 internal/b_test.go\n"; want tr
+
+unit FAIL TestAMarkerOrBulletWithACarriageReturnIsNotRead (2 failing assertions)
+    commentform_test.go:132: a test bullet, the control: false for "size: small\nopen questions: —\nnew interfaces: —\nnew dependencies: —\ntests:\n- t1 internal/a_test.go\n- t2 internal/b_test.go\n"; want true
+    commentform_test.go:137: a finding, the control: false for "head: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nverdict: material\nfindings:\n- internal/a.go:1 r: text\n"; want true
+
+unit FAIL TestAFieldWithNothingAfterTheColonIsMalformed (2 failing assertions)
+    commentform_test.go:146: the control: false for "size: small\nopen questions: —\nnew interfaces: —\nnew dependencies: —\ntests:\n- t1 internal/a_test.go\n- t2 internal/b_test.go\n"; want true
+    commentform_test.go:152: a verdict, the control: false for "verdict: approve\n"; want true
+
+unit FAIL TestTheLineReaderIgnoresAFencedBlock (10 failing assertions)
+    commentform_test.go:156: a second size in a backtick fence: false for "size: small\nopen questions: —\nnew interfaces: —\nnew dependencies: —\ntests:\n- t1 internal/a_test.go\n- t2 internal/b_test.go\n```\nsize
+    commentform_test.go:156: a second size in a tilde fence: false for "size: small\nopen questions: —\nnew interfaces: —\nnew dependencies: —\ntests:\n- t1 internal/a_test.go\n- t2 internal/b_test.go\n~~~\nsize: l
+
+unit FAIL TestACommentThatFailsItsFormIsFalseEverywhere (1 failing assertions)
+    commentform_test.go:179: the control record is not valid
+
+unit FAIL TestVerdictFieldIsApproveOrApproveWithConditions (5 failing assertions)
+    commentform_test.go:197: approve: false for "verdict: approve\n"; want true
+    commentform_test.go:197: approve-with-conditions: false for "x\nverdict: approve-with-conditions\n"; want true
+
+unit FAIL TestFindingsLocatedNeedsALocatedFinding (5 failing assertions)
+    commentform_test.go:216: one finding: false for "head: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nverdict: material\nfindings:\n- internal/a.go:12 r-x: a text: with a colon\n"; want true
+    commentform_test.go:216: line 1: false for "head: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nverdict: material\nfindings:\n- p.go:1 r: t\n"; want true
+
+unit FAIL TestNothingMaterialNeedsTheVerdictTheHeadAndAnEmptyBlock (2 failing assertions)
+    commentform_test.go:268: the control: false; want true
+    commentform_test.go:268: 64 hexadecimal characters: false; want true
+
+unit FAIL TestOpenMaterialFailsUphill (8 failing assertions)
+    commentform_test.go:289: nothing material and a finding: false; want true
+    commentform_test.go:289: material and an empty block: false; want true
+
+unit FAIL TestAnEmptyOrInvalidCommentParsesToNothing (1 failing assertions)
+    commentform_test.go:314: the control plan is not read
+
+unit FAIL TestTheCommentItemsAreComputedFromTheKeptCopy (16 failing assertions)
+    handoffpost_test.go:628: plan-fields with "size: small\r\nopen questions: —\nnew interfaces: —\nnew dependencies: —\ntests:\n# The plan\r\n\r\nno final newline, trailing  \t" and map[]: {Valid:false Detail:inva
+    handoffpost_test.go:628: plan-fields with "size: small\r\nopen questions: —\nnew interfaces: —\nnew dependencies: —\ntests:\n# The plan\r\n\r\nno final newline, trailing  \t" and map[plan-fields:false]: {Valid:
+
+unit FAIL TestAnItemOfAnotherCommentKindIsFalse (1 failing assertions)
+    handoffpost_test.go:666: a plan copy of the kind plan: {Valid:false Detail:invalid plan-fields comment 701-1}, <nil>; want valid comment 701-1
+
+unit FAIL TestNothingMaterialReadsTheBaseOfTheVerifierStartRow (2 failing assertions)
+    handoffpost_test.go:704: the head is the base: {Valid:false Detail:invalid nothing-material comment 701-1}, <nil>; want valid comment 701-1
+    handoffpost_test.go:704: the head is not the base: {Valid:true Detail:valid comment 701-1}, <nil>; want invalid nothing-material comment 701-1
+
+unit FAIL TestACodeWrittenHandoffHasNoCommentItem (4 failing assertions)
+    handoffpost_test.go:736: plan-fields of a handoff that code wrote: {Valid:true Detail:valid}, <nil>; want invalid plan-fields
+    handoffpost_test.go:736: verdict-field of a handoff that code wrote: {Valid:true Detail:valid}, <nil>; want invalid verdict-field
+
+unit FAIL TestAKeptCopyTheStoreLacksOrCannotReadMakesTheItemsFalse (12 failing assertions)
+    handoffpost_test.go:756: absent copy, plan-fields: {Valid:true Detail:valid comment 701-1}, <nil>; want invalid plan-fields and the event written
+    handoffpost_test.go:756: absent copy, verdict-field: {Valid:true Detail:valid comment 701-1}, <nil>; want invalid verdict-field and the event written
+
+unit FAIL TestAStoreErrorReturnsAnErrorAndWritesNoHandoff (1 failing assertions)
+    handoffpost_test.go:781: a store that fails: {Valid:true Detail:valid comment 701-1}, <nil>; 1 events, 1 commits; want an error and no write
+
+integration FAIL TestTheCommentChecksOfTheTaskLoop (1 failing assertions)
+    handoffpost_integration_test.go:456: RecordHandoff = {Valid:true Detail:valid comment 602-1}, <nil>; want invalid verdict-field comment 602-1

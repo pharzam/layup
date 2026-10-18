@@ -1,0 +1,10 @@
+# Demo of row 66l: TestTheCommentChecksOfTheTaskLoop (integration, real git, the httptest forge), 2026-10-18T06:23Z
+--- PASS: TestTheCommentChecksOfTheTaskLoop (34.22s)
+    --- PASS: TestTheCommentChecksOfTheTaskLoop/nothing_material_at_the_verifier's_base,_the_caller_says_false (4.87s)
+    --- PASS: TestTheCommentChecksOfTheTaskLoop/nothing_material_at_another_head,_the_caller_says_true (5.88s)
+    --- PASS: TestTheCommentChecksOfTheTaskLoop/nothing_material_with_a_finding,_the_caller_says_true (5.13s)
+    --- PASS: TestTheCommentChecksOfTheTaskLoop/findings_located,_the_caller_says_false (4.63s)
+    --- PASS: TestTheCommentChecksOfTheTaskLoop/a_plan_of_the_form,_the_caller_says_false (4.42s)
+    --- PASS: TestTheCommentChecksOfTheTaskLoop/a_plan_that_is_not_of_the_form,_the_caller_says_true (4.68s)
+    --- PASS: TestTheCommentChecksOfTheTaskLoop/a_plan_review_that_rejects,_the_caller_says_true (4.61s)
+ok  	github.com/pharzam/layup/internal/run	61.716s

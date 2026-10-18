@@ -220,8 +220,9 @@ func (s *Sessions) copyComment(ctx context.Context, c forge.Comment, issue int, 
 // comment, the other artifacts that the caller found, and the results of the
 // items that need a program, a gate run or a read of a commit. An item the
 // caller does not pass is false; schema, artifacts, question-row and
-// answer-row are computed here, and a value of the caller's for one of them is
-// never read. Freeze is the list of tests of a handoff to the verifier with their
+// answer-row are computed here, and so are plan-fields, verdict-field,
+// findings-located and nothing-material from the kept copy of the comment (task
+// T-4pje), and a value of the caller's for one of them is never read. Freeze is the list of tests of a handoff to the verifier with their
 // results (task T-6zj3, #361): when it is given, tests-red-green is computed
 // from it too, and the first valid handoff writes tasks/<task>/tests.tsv in the
 // commit of its event.
@@ -247,9 +248,11 @@ func (s *Sessions) RecordHandoff(ctx context.Context, in HandoffInput) (handoff.
 	s.fns()
 	attempt := in.Attempt
 	var result [][]string
+	var start []string
 	schemaOK := false
 	if !in.CodeWritten {
-		start, err := s.startRowOf(ctx, in.Session)
+		var err error
+		start, err = s.startRowOf(ctx, in.Session)
 		if err != nil {
 			return handoff.Verdict{}, err
 		}
@@ -289,6 +292,9 @@ func (s *Sessions) RecordHandoff(ctx context.Context, in HandoffInput) (handoff.
 		items = map[string]bool{}
 	}
 	items["question-row"], items["answer-row"] = QuestionRowOK(result), AnswerRowOK(result)
+	if err := s.commentItems(ctx, in, start, items); err != nil {
+		return handoff.Verdict{}, err
+	}
 	// A list of tests at a handoff to the verifier: tests-red-green is computed
 	// from the typed results (the caller's own value is never read), and the list
 	// is written in the commit of the event (loop.md, The frozen test list).
@@ -336,6 +342,34 @@ func (s *Sessions) RecordHandoff(ctx context.Context, in HandoffInput) (handoff.
 		}
 	}
 	return v, s.commit(ctx, files, fmt.Sprintf("layup run: the handoff %s to %s of %s, %s", in.From, in.To, in.Task, v.Detail))
+}
+
+// commentItems sets the four items that the kept copy of a comment gives
+// (loop.md, The items a caller computes; task T-4pje): each is false, whatever
+// the caller passed, unless the copy is of the kind that the item reads and
+// parses its pinned form. A handoff that code wrote has no copy, and a copy that
+// the store lacks gives false; a failing read is an error and nothing is written.
+// nothing-material reads the head that the verifier's session started at, the base
+// of its start row.
+func (s *Sessions) commentItems(ctx context.Context, in HandoffInput, start []string, items map[string]bool) error {
+	items["plan-fields"], items["verdict-field"], items["findings-located"], items["nothing-material"] = false, false, false, false
+	if in.CodeWritten || in.File == "" {
+		return nil
+	}
+	data, err := s.Store.ReadFile(ctx, KeptPath(in.Task, in.Session, in.File))
+	if err != nil || data == nil {
+		return err
+	}
+	switch in.Kind {
+	case "plan":
+		items["plan-fields"] = PlanFieldsOK(data)
+	case "plan-review":
+		items["verdict-field"] = VerdictFieldOK(data)
+	case "review-record":
+		items["findings-located"] = FindingsLocatedOK(data)
+		items["nothing-material"] = NothingMaterialOK(data, start[sessionBase])
+	}
+	return nil
 }
 
 // commentArtifact gives the comment artifact of in.File and the files of the
