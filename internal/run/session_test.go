@@ -18,10 +18,12 @@ import (
 type standinStore struct {
 	files   map[string][]byte
 	commits []map[string][]byte
-	refuse  int      // the next pushes that are refused
-	holder  string   // the run that the lease names
-	ops     []string // each commit (by its events' last kind) and each push of a head, in order
-	pushErr error    // what PushHead gives
+	refuse  int               // the next pushes that are refused
+	holder  string            // the run that the lease names
+	ops     []string          // each commit (by its events' last kind) and each push of a head, in order
+	pushErr error             // what PushHead gives
+	heads   map[string]string // the commit that each branch of the target holds
+	headErr error             // what BranchHead gives
 }
 
 func (s *standinStore) ReadLease(context.Context) (LeaseRow, error) {
@@ -50,6 +52,12 @@ func (s *standinStore) Started(context.Context) (time.Time, error) { return sess
 func (s *standinStore) PushHead(_ context.Context, sha, branch string) error {
 	s.ops = append(s.ops, "push "+sha+" "+branch)
 	return s.pushErr
+}
+
+func (s *standinStore) BranchHead(_ context.Context, branch string) (string, bool, error) {
+	s.ops = append(s.ops, "read "+branch)
+	sha, ok := s.heads[branch]
+	return sha, ok, s.headErr
 }
 
 const aSHA = "0123456789abcdef0123456789abcdef01234567"

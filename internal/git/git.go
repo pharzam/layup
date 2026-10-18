@@ -434,14 +434,28 @@ func Push(dir, url, commit, branch string, auth Auth) error {
 	return doAuth(dir, auth, args)
 }
 
-// doAuth runs git in dir with the environment of auth.
+// doAuth runs git in dir with the environment of auth, and drops its output.
 func doAuth(dir string, auth Auth, args []string) error {
+	_, err := callAuth(dir, auth, args)
+	return err
+}
+
+// callAuth runs git in dir with the environment of auth, and gives its
+// output: a token is a header of the call's environment, never an argument.
+func callAuth(dir string, auth Auth, args []string) ([]byte, error) {
 	extra, err := auth.env()
 	if err != nil {
-		return &FailedError{Args: args, Code: -1, Err: err}
+		return nil, &FailedError{Args: args, Code: -1, Err: err}
 	}
-	_, err = call(dir, environ(extra...), args...)
-	return err
+	return call(dir, environ(extra...), args...)
+}
+
+// RemoteHead gives the commit of the branch of the repository at url, with the
+// token of auth when it has one: found is false for a branch that the remote
+// does not have (task T-syxm, packages.md, The calls of M2e). This stub reads
+// nothing yet.
+func RemoteHead(url, branch string, auth Auth) (sha string, found bool, err error) {
+	return "", false, nil
 }
 
 // ErrNotACommit is the refusal of FetchSession for a SHA that names no commit

@@ -36,6 +36,10 @@ type SessionStore interface {
 	// refuses (not a fast-forward, or refused by the remote) is
 	// errPushRefused (row 37b).
 	PushHead(ctx context.Context, sha, branch string) error
+	// BranchHead gives the commit that branch of the target holds, found
+	// false for a branch the target does not have, with the installation
+	// token (task T-syxm, row 66v); a read that fails is an error.
+	BranchHead(ctx context.Context, branch string) (sha string, found bool, err error)
 	// Started gives the time of Start, the first commit of the records
 	// branch, for the budget of milestone 0 (row 42b).
 	Started(ctx context.Context) (time.Time, error)

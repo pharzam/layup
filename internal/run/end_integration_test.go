@@ -53,6 +53,14 @@ func sessionWorldWith(t *testing.T, files map[string]string) (*world, *Sessions,
 	if err := r.commit(context.Background(), map[string][]byte{"rule-paths.tsv": []byte(register)}, "the register"); err != nil {
 		t.Fatal(err)
 	}
+	// The task register: the comment of a task session is on the task's issue (task T-syxm).
+	rows, err := registerFiles(nil, nil, Task{ID: "T-ab12", Issue: taskIssue, Kind: "build", Requirements: []string{"REQ-005"}, Size: "small", Opened: time.Now().UTC().Truncate(time.Second)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := r.commit(context.Background(), rows, "tasks: register T-ab12"); err != nil {
+		t.Fatal(err)
+	}
 	return w, r, f, worldAt{base, store.pushed}
 }
 

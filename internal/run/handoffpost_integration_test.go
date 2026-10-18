@@ -13,8 +13,7 @@ import (
 	"github.com/pharzam/layup/internal/records"
 )
 
-// commentWorld is sessionWorld with the adapter for the forge, the register
-// that opens T-ab12 on issue 3, and the lease held by the run: the world of a
+// commentWorld is sessionWorld (its register opens T-ab12 on issue 3) with the adapter for the forge, and the lease held by the run: the world of a
 // restart that posts a comment and records a handoff.
 func commentWorld(t *testing.T) (*world, *Sessions, worldAt) {
 	return commentWorldWith(t, nil)
@@ -26,13 +25,6 @@ func commentWorldWith(t *testing.T, baseline map[string]string) (*world, *Sessio
 	w, r, _, base := sessionWorldWith(t, baseline)
 	r.Forge, r.App = w.config("0.1.0-dev").Forge, "layup-agent"
 	ctx := context.Background()
-	files, err := registerFiles(nil, nil, Task{ID: "T-ab12", Issue: taskIssue, Kind: "build", Requirements: []string{"REQ-005"}, Size: "small", Opened: time.Now().UTC().Truncate(time.Second)})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := r.commit(ctx, files, "tasks: register T-ab12"); err != nil {
-		t.Fatal(err)
-	}
 	if err := r.Store.WriteLease(ctx, LeaseRow{Run: r.RunID, Host: "host-1", Version: "0.1.0-dev", Started: time.Now().UTC().Truncate(time.Second), Heartbeat: 1, State: "held"}, "lease"); err != nil {
 		t.Fatal(err)
 	}
