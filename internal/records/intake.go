@@ -129,7 +129,8 @@ var (
 	meaningKinds  = []string{"two-readings", "unmeasurable", "missing-intent", "new-work", "fit", "no-design", "decision"}
 	coverageKinds = []string{"uncovered", "unsupported", "class"}
 	ruleKinds     = []string{"G1", "G2", "G3", "G4", "G5"}
-	intentFields  = []string{"band.B", "band.U", "appetite.hours"} // a later milestone adds its names here first
+	intentFields  = []string{"band.B", "band.U", "appetite.hours", "success-criteria"} // a later milestone adds its names here first
+	budgetNames   = []string{"band.B", "band.U", "appetite.hours"}                     // the names of budget.tsv, a subset of the form's (task T-8rm6, #365)
 	qForm         = regexp.MustCompile(`^Q-(00[1-9]|0[1-9][0-9]|[1-9][0-9]{2,})$`)
 	mForm         = regexp.MustCompile(`^M-(00[1-9]|0[1-9][0-9]|[1-9][0-9]{2,})$`)
 	cForm         = regexp.MustCompile(`^C-(00[1-9]|0[1-9][0-9]|[1-9][0-9]{2,})$`)
@@ -403,8 +404,8 @@ func CheckBudget(r []string) error {
 	if c := missing(f, budgetRequired); c != "" {
 		return &RowError{c, "this column never holds the empty value"}
 	}
-	if !slices.Contains(intentFields, f["name"]) {
-		return &RowError{"name", "the name is one of " + strings.Join(intentFields, ", ")}
+	if !slices.Contains(budgetNames, f["name"]) {
+		return &RowError{"name", "the name is one of " + strings.Join(budgetNames, ", ")}
 	}
 	return nil
 }

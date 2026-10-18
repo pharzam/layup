@@ -226,7 +226,7 @@ source enum(command|register|forge|run) - `command` for a flag's value and for `
 ```tsv-schema approvers records:approvers.tsv
 id int key the forge's numeric user ID; a login is never a key, as a login can change
 role enum(operator|idea-owner|approver) key the role; the Operator and the idea owner can be one account, with one row per role
-login text - the login when the row was written
+login text - the login when the row was written; for a row an intake point line named, the line's spelling of it — the key is the account's numeric ID, never this spelling (task `T-8rm6`)
 since time - when the row was written
 source text - `start` for the rows of the Start command; else the ID of the comment that named the approver (`M2e`, intake.md, Not in M2c)
 ```
@@ -496,7 +496,7 @@ detail  text  -  for fail, the first broken place: a byte offset or a span's sta
 `records:spec/check.tsv`.
 
 ```tsv-schema draft records:spec/draft.tsv
-id         id(R-NNN)  key  the requirement's or success criterion's ID in the draft, from R-001, in the order of the rows
+id         id(R-NNN)  key  the requirement's or success criterion's ID in the draft, from R-001, in the order of the rows — the position of its row in this draft, never an identity kept from a draft before it: the revision writes the IDs of the new order, and a record written before it names that earlier draft's row (task `T-8rm6`)
 kind       enum(requirement|non-functional|success-criterion)  -  a requirement (a need), a non-functional requirement (a constraint), or a success criterion (a measure)
 statement  text       -    the statement
 covers     list(text)  -   the facts that it covers, each a positive number of a fact of spec/spans.tsv or the ID `Q-NNN` of a fact of the answers (M2e: the revision of the draft persists the answer facts a requirement covers, task `T-3q0b`; the initial draft of M2c names only span facts, which its own check enforces)
@@ -508,7 +508,7 @@ session    id(S-xxxxxxxx)  -  the session that wrote the row
 id           id(C-NNN)  key  the item's ID, from C-001, in the order of the rows
 kind         enum(uncovered|unsupported|class)  -  a fact that nothing covers, a requirement that no fact supports, or a fact whose class the review doubts
 fact         int        -    the fact's number; `—` for `unsupported`
-requirement  id(R-NNN)  -    the requirement of the draft; `—` for `uncovered` and `class`
+requirement  id(R-NNN)  -    the requirement of the draft — the draft of the completeness session, which the revision session still reads; the revised draft renumbers by the rule of the `id` of `spec/draft.tsv` (task `T-8rm6`); `—` for `uncovered` and `class`
 question     text       -    the question for the idea owner
 session      id(S-xxxxxxxx)  -  the session that wrote the row
 ```
@@ -516,7 +516,7 @@ session      id(S-xxxxxxxx)  -  the session that wrote the row
 ```tsv-schema questions records:questions.tsv
 id        id(Q-NNN)  key  the question's ID, from Q-001, in the order of the merge; never renumbered
 source    enum(rule|meaning|coverage|intent|follow-up|setup)  -  where the question comes from; setup is the Operator's question of M2d (scaffold.md, The answers of the setup; task `T-4c5c`)
-ref       text       -    its source row: the ID of the rule gap in intake/psb.tsv (a Q-NNN of that table, which the batch's ID replaces), M-NNN, C-NNN, the field of the intent form (band.B, band.U, appetite.hours), the Q-NNN of the batch that a follow-up asks again, or for a setup question (M2d) its setup ID, S01-stack or a marker's M-<x8> (M- and 8 lowercase hexadecimal characters, the id of its row of intake/markers.tsv)
+ref       text       -    its source row: the ID of the rule gap in intake/psb.tsv (a Q-NNN of that table, which the batch's ID replaces), M-NNN, C-NNN, the field of the intent form (band.B, band.U, appetite.hours, success-criteria), the Q-NNN of the batch that a follow-up asks again, or for a setup question (M2d) its setup ID, S01-stack or a marker's M-<x8> (M- and 8 lowercase hexadecimal characters, the id of its row of intake/markers.tsv)
 block     enum(idea-owner|operator)  -  the block of the batch that asks it; a setup question is asked in the operator's block (task `T-4c5c`)
 phase     enum(before-delivery)  -  the phase of the question (Early Question Share, architecture.md §12); a later milestone adds its phases
 kind      text       -    the kind of the gap (a rule G1 to G5, a kind of meaning, a kind of coverage, intent, follow-up, or setup)

@@ -365,7 +365,8 @@ and record the intake in it; they apply the forge settings later
    the appetite and the band of §12, the approver of each planned approval point
    except the acceptance of a requirement, which is always the idea owner's (PSB
    §8); a login named there is added to `approvers.tsv` with the role
-   "approver", never "idea owner"), and the setup questions, the proposed marker sources and the
+   "approver", never "idea owner", unless its account already holds a row — the
+   row's key is the account's numeric ID, never the login), and the setup questions, the proposed marker sources and the
    parameters for the Operator (the owner map of §9, the smart-if provider and
    authority of §10).
 6. The idea owner and the Operator answer, each in one comment, one line per

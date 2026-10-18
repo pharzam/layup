@@ -179,7 +179,7 @@ func (l *loopRun) handoffOf(id, from, to, kind, item string) handoff.Verdict {
 
 func (l *loopRun) plan(attempt int, harnessID, text string) string {
 	l.t.Helper()
-	id := l.comment(attempt, "plan-of-a-task", harnessID, text)
+	id := l.comment(attempt, "plan-of-a-task", harnessID, planText+text) // a plan of the pinned form, then the text
 	if v := l.handoffOf(id, "task plan", "plan review", "plan", "plan-fields"); !v.Valid {
 		l.t.Fatalf("the plan handoff: %+v", v)
 	}
@@ -188,7 +188,7 @@ func (l *loopRun) plan(attempt int, harnessID, text string) string {
 
 func (l *loopRun) review(attempt int, harnessID, text string) string {
 	l.t.Helper()
-	id := l.comment(attempt, "plan-review", harnessID, text)
+	id := l.comment(attempt, "plan-review", harnessID, "verdict: approve\n"+text)
 	if v := l.handoffOf(id, "plan review", "developer", "plan-review", "verdict-field"); !v.Valid {
 		l.t.Fatalf("the plan review handoff: %+v", v)
 	}
@@ -455,7 +455,8 @@ func TestWithoutAnAmendmentAChangedTestIsNotFrozenAgain(t *testing.T) {
 		}},
 		{"a verifier's record that started before the plan", func(l *loopRun) {
 			ctx := context.Background()
-			spec := harness(l.t, l.a, planWork("plan.md", "record\n", "comment\t1\tresult/plan.md\t"+commentSum("record\n")+"\t—"))
+			rec := record(l.a.base, "nothing material in scope")
+			spec := harness(l.t, l.a, planWork("plan.md", rec, "comment\t1\tresult/plan.md\t"+commentSum(rec)+"\t—"))
 			spec.Role, spec.Attempt, spec.Pair.Harness = roleOfStep("verification"), 2, "devin"
 			vid, err := l.r.TaskSession(ctx, spec)
 			if err != nil {

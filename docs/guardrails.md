@@ -449,6 +449,16 @@ check that catches it.
   under the id of its raw text. Learned in `T-tetz`
   ([#270](https://github.com/pharzam/layup/issues/270)).
 
+- ❌ **A path rule that passes a bullet it should refuse.** The register's `path` rule
+  (`rules.ValidPath`) refuses `..`, a leading `/` and `.git`, but not a carriage return,
+  and the free text of a finding is any text. A `- ` line of a plan or a review record
+  that ends in `\r` (a CRLF checkout) therefore passed the path rule and the finding
+  grammar and read as a valid bullet whose path or text held a hidden `\r`. It is silent
+  because a fixture is written with `\n`. **The check:** the comment grammar refuses a
+  bullet that holds a `\r` itself, a marker line with a `\r` is no marker, and a test pairs
+  each such line with the same line without the `\r`. Learned in `T-4pje`
+  ([#396](https://github.com/pharzam/layup/issues/396)).
+
 ### Writing a lesson back
 
 A trap caught once should not be re-derived by the next task, so a lesson does not
@@ -1118,6 +1128,14 @@ These traps are not domain-specific: they hurt every project's test suite.
   the name into the ID by one rule (`RoutingRole`: lower case, spaces as hyphens), and test that each
   default owner that the step table has as a role comes out as exactly that ID, with the roles read
   from `session.StepTable()`, never typed in the test.
+
+- ❌ **A required intake field changes only the integration fixtures.** Adding
+  success criteria and the revision step in #365 left the CI-only end-to-end
+  worlds on the old question counts, setup-question index and scripted outputs.
+  **The check:** inspect fixtures under every build tag when a required field or
+  step changes; preserve their behavior assertions, supply the new answer and
+  scripted output, and require the full CI ladder before landing. A local
+  integration pass does not stand for the CI-only end-to-end level.
 
 - ❌ **A doc comment that names a role the code never reads.** `AnswerAccepted` said an answer is "of a session of
   the owner role", took only `events`, `results` and the answer ID, and so accepted the answer of a developer session

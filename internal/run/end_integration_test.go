@@ -317,7 +317,8 @@ func planWork(name, text string, rows ...string) string {
 	return "printf '" + octal(text) + "' > ../result/" + name + " && printf '" + octal(out) + "' > ../result/result.tsv"
 }
 
-const planText = "# The plan\r\n\r\nno final newline, trailing  \t"
+// planText is a valid plan whose bytes keep a \r, a blank line and a last line with no end.
+const planText = "size: small\r\nopen questions: —\nnew interfaces: —\nnew dependencies: —\ntests:\n# The plan\r\n\r\nno final newline, trailing  \t"
 
 func keptFiles(t *testing.T, w *world, id string) string {
 	t.Helper()

@@ -157,7 +157,10 @@ func (w *handoffWorld) copies(t *testing.T) [][]string {
 	return rows
 }
 
-const planBody = "# The plan\r\n\r\nno final newline, trailing  \t"
+// planBody is a valid plan whose bytes keep a \r, a blank line and a last line with no end.
+const planBody = "size: small\r\nopen questions: —\nnew interfaces: —\nnew dependencies: —\ntests:\n# The plan\r\n\r\nno final newline, trailing  \t"
+
+const editedBody = planBody + "\nedited after the copy\n"
 
 func TestTheCommentIsPostedFromTheKeptBytes(t *testing.T) {
 	w := newHandoffWorld(t)
@@ -385,16 +388,16 @@ func TestACommentThatWasNeverPostedIsInvalidArtifactsWithNoCopy(t *testing.T) {
 func TestAnEditedCommentIsANewCopyAndTheFirstHandoffIsInvalid(t *testing.T) {
 	w := newHandoffWorld(t)
 	posted(t, w, planSess, planBody)
-	w.f.edit(taskIssue, 701, "edited after the copy\n")
+	w.f.edit(taskIssue, 701, editedBody)
 	v, err := w.s.RecordHandoff(context.Background(), planInput())
 	if err != nil || v.Valid || v.Detail != "invalid artifacts comment 701-1" {
 		t.Fatalf("RecordHandoff = %+v, %v; want invalid artifacts naming the first copy", v, err)
 	}
 	rows := w.copies(t)
-	if len(rows) != 2 || rows[0][1] != "1" || rows[0][8] != commentSum(planBody) || rows[1][1] != "2" || rows[1][8] != commentSum("edited after the copy\n") {
+	if len(rows) != 2 || rows[0][1] != "1" || rows[0][8] != commentSum(planBody) || rows[1][1] != "2" || rows[1][8] != commentSum(editedBody) {
 		t.Fatalf("copies.tsv %q; want the first copy kept and the edit as seen 2", rows)
 	}
-	if string(w.store.files["copies/701-1.md"]) != planBody || string(w.store.files["copies/701-2.md"]) != "edited after the copy\n" {
+	if string(w.store.files["copies/701-1.md"]) != planBody || string(w.store.files["copies/701-2.md"]) != editedBody {
 		t.Error("the copy files are not the two bodies")
 	}
 	last := w.store.commits[len(w.store.commits)-1]
@@ -402,7 +405,7 @@ func TestAnEditedCommentIsANewCopyAndTheFirstHandoffIsInvalid(t *testing.T) {
 		t.Errorf("the commit holds %d files; want the new copy and the event in one", len(last))
 	}
 	// A new handoff names the new copy: a session whose file is the edited text.
-	w.session(t, reviewSess, 1, "developer", "edited after the copy\n")
+	w.session(t, reviewSess, 1, "developer", editedBody)
 	if _, err := w.s.PostComment(context.Background(), "T-ab12", reviewSess, "plan.md"); err != nil || w.f.count("Comment") != 1 {
 		t.Fatalf("the post of the edited text: %v, %d posts; want the copy seen 2 adopted, no post", err, w.f.count("Comment"))
 	}
@@ -421,27 +424,6 @@ func TestAnEditedCommentIsANewCopyAndTheFirstHandoffIsInvalid(t *testing.T) {
 	}
 	if rows := w.copies(t); len(rows) != 3 || rows[2][1] != "3" {
 		t.Errorf("copies.tsv %q; want seen 3 for the text that came back", rows)
-	}
-}
-
-func TestAnItemThatTheCallerDoesNotPassIsFalse(t *testing.T) {
-	for _, c := range []struct {
-		name  string
-		items map[string]bool
-		want  string
-	}{
-		{"none", nil, "invalid plan-fields comment 701-1"},
-		{"false", map[string]bool{"plan-fields": false}, "invalid plan-fields comment 701-1"},
-		{"another item only", map[string]bool{"verdict-field": true}, "invalid plan-fields comment 701-1"},
-		{"true", map[string]bool{"plan-fields": true}, "valid comment 701-1"},
-	} {
-		w := newHandoffWorld(t)
-		posted(t, w, planSess, planBody)
-		in := planInput()
-		in.Items = c.items
-		if v, err := w.s.RecordHandoff(context.Background(), in); err != nil || v.Detail != c.want {
-			t.Errorf("%s: %+v, %v; want %s", c.name, v, err, c.want)
-		}
 	}
 }
 
@@ -596,8 +578,8 @@ func TestAHandoffIsNotRecordedTwice(t *testing.T) {
 	}
 	// A different outcome of the same session is a new event.
 	in := planInput()
-	in.Items = nil
-	if v, err := w.s.RecordHandoff(context.Background(), in); err != nil || v.Detail != "invalid plan-fields comment 701-1" || len(w.eventsNow(t)) != n+1 {
+	in.To = "nobody"
+	if v, err := w.s.RecordHandoff(context.Background(), in); err != nil || v.Detail != "invalid pair comment 701-1" || len(w.eventsNow(t)) != n+1 {
 		t.Errorf("another outcome: %+v, %v; want a new event", v, err)
 	}
 }
@@ -613,5 +595,212 @@ func TestAHandoffOfASessionWithoutAStartRowIsAnError(t *testing.T) {
 	in.Task = "T-cd34"
 	if _, err := w.s.RecordHandoff(context.Background(), in); err == nil || len(w.store.commits) != 0 {
 		t.Errorf("a session of another task: %v, %d commits; want an error and no write", err, len(w.store.commits))
+	}
+}
+
+// The four comment items of the task loop (task T-4pje, #396): computed from
+// the kept copy, never from the caller's value.
+
+// commentItem is an item with the pair that lists it, the kind of its comment and
+// a body that holds it and one that does not.
+type commentItem struct{ item, kind, from, to, good, bad string }
+
+var commentItems = []commentItem{
+	{"plan-fields", "plan", "task plan", "plan review", planBody, "size: small\n"},
+	{"verdict-field", "plan-review", "plan review", "developer", "verdict: approve\n", "verdict: reject\n"},
+	{"findings-located", "review-record", "verifier", "developer", record(hexA, "material", located), record(hexA, "material")},
+	{"nothing-material", "review-record", "verifier", "close-out", record(aSHA, "nothing material in scope"), record(hexB, "nothing material in scope")},
+}
+
+func (c commentItem) input(items map[string]bool) HandoffInput {
+	return HandoffInput{Task: "T-ab12", Session: planSess, From: c.from, To: c.to, File: "plan.md", Kind: c.kind, Items: items}
+}
+
+func TestTheCommentItemsAreComputedFromTheKeptCopy(t *testing.T) {
+	for _, c := range commentItems {
+		for _, body := range []struct {
+			text, want string
+		}{{c.good, "valid comment 701-1"}, {c.bad, "invalid " + c.item + " comment 701-1"}} {
+			for _, items := range []map[string]bool{nil, {c.item: true}, {c.item: false}, {"another": true}} {
+				w := newHandoffWorld(t)
+				posted(t, w, planSess, body.text)
+				if v, err := w.s.RecordHandoff(context.Background(), c.input(items)); err != nil || v.Detail != body.want {
+					t.Errorf("%s with %q and %v: %+v, %v; want %s", c.item, body.text, items, v, err, body.want)
+				}
+			}
+		}
+	}
+}
+
+func TestAnItemOfAnotherCommentKindIsFalse(t *testing.T) {
+	both := planBody + "\nverdict: approve\n"
+	listing := func(w *handoffWorld, from string, items ...string) {
+		rows, err := handoff.ReadTable(w.store.files["transitions.tsv"])
+		if err != nil {
+			t.Fatal(err)
+		}
+		for i := range rows {
+			if rows[i].From == from {
+				rows[i].Items = items
+			}
+		}
+		var b strings.Builder
+		if err := handoff.WriteTable(&b, rows); err != nil {
+			t.Fatal(err)
+		}
+		w.store.files["transitions.tsv"] = []byte(b.String())
+	}
+	for _, c := range []struct {
+		name, kind, from, to string
+		want                 string
+	}{
+		{"a plan copy of the kind plan", "plan", "task plan", "plan review", "valid comment 701-1"},
+		{"a plan copy of the kind plan-review", "plan-review", "plan review", "developer", "invalid plan-fields comment 701-1"},
+		{"a plan copy of the kind review-record", "review-record", "verifier", "close-out", "invalid plan-fields comment 701-1"},
+	} {
+		w := newHandoffWorld(t)
+		posted(t, w, planSess, both)
+		listing(w, c.from, "schema", "artifacts", "plan-fields")
+		in := HandoffInput{Task: "T-ab12", Session: planSess, From: c.from, To: c.to, File: "plan.md", Kind: c.kind}
+		if v, err := w.s.RecordHandoff(context.Background(), in); err != nil || v.Detail != c.want {
+			t.Errorf("%s: %+v, %v; want %s", c.name, v, err, c.want)
+		}
+	}
+	// A kind that is none of the three is no comment, and its items are false.
+	w := newHandoffWorld(t)
+	posted(t, w, planSess, both)
+	listing(w, "task plan", "schema", "plan-fields")
+	in := planInput()
+	in.Kind = "task-file"
+	if v, err := w.s.RecordHandoff(context.Background(), in); err != nil || v.Valid {
+		t.Errorf("a kind that is no comment: %+v, %v; want invalid", v, err)
+	}
+}
+
+func TestNothingMaterialReadsTheBaseOfTheVerifierStartRow(t *testing.T) {
+	c := commentItems[3]
+	for _, k := range []struct {
+		name, head, want string
+	}{
+		{"the head is the base", hexB, "valid comment 701-1"},
+		{"the head is not the base", aSHA, "invalid nothing-material comment 701-1"},
+	} {
+		w := newHandoffWorld(t)
+		w.session(t, planSess, 1, "qa-engineer", record(k.head, "nothing material in scope"))
+		w.sess[len(w.sess)-1][sessionBase] = hexB
+		var err error
+		if w.store.files["sessions.tsv"], err = table(records.SessionsSchema, w.sess); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := w.s.PostComment(context.Background(), "T-ab12", planSess, "plan.md"); err != nil {
+			t.Fatal(err)
+		}
+		for _, e := range w.eventsNow(t) {
+			if e[1] == "bound" {
+				t.Fatalf("the fixture holds a bound event %q; the head is the start row's base alone", e)
+			}
+		}
+		if v, err := w.s.RecordHandoff(context.Background(), c.input(map[string]bool{"nothing-material": k.head == aSHA})); err != nil || v.Detail != k.want {
+			t.Errorf("%s: %+v, %v; want %s", k.name, v, err, k.want)
+		}
+	}
+	// A session with no start row is an error, never an item that is false.
+	w := newHandoffWorld(t)
+	in := c.input(nil)
+	in.Session = "S-9f9f9f9f"
+	if _, err := w.s.RecordHandoff(context.Background(), in); err == nil || len(w.store.commits) != 0 {
+		t.Errorf("a verifier with no start row: %v, %d commits; want an error and no write", err, len(w.store.commits))
+	}
+}
+
+func TestACodeWrittenHandoffHasNoCommentItem(t *testing.T) {
+	for _, c := range commentItems {
+		w := newHandoffWorld(t)
+		posted(t, w, planSess, c.good) // a copy that the session and the file name, and that code must not read
+		rows, err := handoff.ReadTable(w.store.files["transitions.tsv"])
+		if err != nil {
+			t.Fatal(err)
+		}
+		for i := range rows {
+			if rows[i].From == "code (rendered task)" {
+				rows[i].Artifacts, rows[i].Items = []string{"rendering"}, []string{c.item}
+			}
+		}
+		var b strings.Builder
+		if err := handoff.WriteTable(&b, rows); err != nil {
+			t.Fatal(err)
+		}
+		w.store.files["transitions.tsv"] = []byte(b.String())
+		in := HandoffInput{Task: "T-ab12", Session: planSess, Attempt: 1, From: "code (rendered task)", To: "verifier", CodeWritten: true, File: "plan.md", Kind: c.kind, Items: map[string]bool{c.item: true},
+			Artifacts: []handoff.Artifact{{Kind: "rendering", Named: strings.Repeat("c", 64), Found: strings.Repeat("c", 64)}}}
+		if v, err := w.s.RecordHandoff(context.Background(), in); err != nil || v.Detail != "invalid "+c.item {
+			t.Errorf("%s of a handoff that code wrote: %+v, %v; want invalid %s", c.item, v, err, c.item)
+		}
+	}
+}
+
+func TestAKeptCopyTheStoreLacksOrCannotReadMakesTheItemsFalse(t *testing.T) {
+	for _, c := range []struct {
+		name string
+		kept []byte
+	}{{"absent", nil}, {"empty", []byte{}}, {"not UTF-8", []byte("\xff\xfe")}} {
+		for _, it := range commentItems {
+			w := newHandoffWorld(t)
+			posted(t, w, planSess, it.good)
+			if c.kept == nil {
+				delete(w.store.files, KeptPath("T-ab12", planSess, "plan.md"))
+			} else {
+				w.store.files[KeptPath("T-ab12", planSess, "plan.md")] = c.kept
+			}
+			n := len(w.eventsNow(t))
+			if v, err := w.s.RecordHandoff(context.Background(), it.input(map[string]bool{it.item: true})); err != nil || v.Detail != "invalid "+it.item+" comment 701-1" || len(w.eventsNow(t)) != n+1 {
+				t.Errorf("%s copy, %s: %+v, %v; want invalid %s and the event written", c.name, it.item, v, err, it.item)
+			}
+		}
+	}
+}
+
+// failRead is a store whose read of one path fails.
+type failRead struct {
+	SessionStore
+	path string
+}
+
+func (f failRead) ReadFile(ctx context.Context, p string) ([]byte, error) {
+	if p == f.path {
+		return nil, errors.New("the read of the kept copy failed")
+	}
+	return f.SessionStore.ReadFile(ctx, p)
+}
+
+func TestAStoreErrorReturnsAnErrorAndWritesNoHandoff(t *testing.T) {
+	w := newHandoffWorld(t)
+	posted(t, w, planSess, planBody)
+	n, commits := len(w.eventsNow(t)), len(w.store.commits)
+	w.s.Store = failRead{w.store, KeptPath("T-ab12", planSess, "plan.md")}
+	if v, err := w.s.RecordHandoff(context.Background(), planInput()); err == nil || v.Valid || len(w.eventsNow(t)) != n || len(w.store.commits) != commits {
+		t.Errorf("a store that fails: %+v, %v; %d events, %d commits; want an error and no write", v, err, len(w.eventsNow(t))-n, len(w.store.commits)-commits)
+	}
+}
+
+func TestTheKeptFileThatIsNotTheNamedHashIsNoComment(t *testing.T) {
+	for _, c := range commentItems {
+		w := newHandoffWorld(t)
+		posted(t, w, planSess, c.bad)
+		kept := KeptPath("T-ab12", planSess, "plan.md")
+		if v, err := w.s.RecordHandoff(context.Background(), c.input(nil)); err != nil || v.Detail != "invalid "+c.item+" comment 701-1" {
+			t.Fatalf("%s, the unchanged bad copy: %+v, %v", c.item, v, err)
+		}
+		// The result row, the copy and the forge still name the bad bytes; only the kept file changes.
+		w.store.files[kept] = []byte(c.good)
+		if v, err := w.s.RecordHandoff(context.Background(), c.input(map[string]bool{c.item: true})); err != nil || v.Valid || v.Detail != "invalid "+c.item+" comment 701-1" {
+			t.Errorf("%s, kept bytes that are not the named hash: %+v, %v; want invalid", c.item, v, err)
+		}
+		// The control: the good bytes named by the row are valid.
+		w = newHandoffWorld(t)
+		posted(t, w, planSess, c.good)
+		if v, err := w.s.RecordHandoff(context.Background(), c.input(nil)); err != nil || v.Detail != "valid comment 701-1" {
+			t.Errorf("%s, the unchanged good copy: %+v, %v", c.item, v, err)
+		}
 	}
 }

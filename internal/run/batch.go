@@ -28,15 +28,25 @@ var psbGapsSchema = psb.GapsSchema
 const batchHeader = "LAYUP Intake: the batch of questions"
 
 // The fields of the intent form, in their order, and their fixed questions
-// (architecture.md §12).
+// (architecture.md §12). budgetFields is the subset whose answers are the
+// decimals of budget.tsv; the success criteria are a list of words, no name of
+// the budget (task T-8rm6, #365).
 var (
-	intentFields    = []string{"band.B", "band.U", "appetite.hours"}
+	intentFields    = []string{"band.B", "band.U", "appetite.hours", "success-criteria"}
+	budgetFields    = []string{"band.B", "band.U", "appetite.hours"}
 	intentQuestions = map[string]string{
-		"band.B":         "B, in USD: below it the delivery goes on without asking you. A decimal, below U.",
-		"band.U":         "U, in USD: the upper edge of the band, the money appetite of the delivery. A decimal, above B.",
-		"appetite.hours": "The wall-clock appetite of the delivery, in hours. A decimal.",
+		"band.B":           "B, in USD: below it the delivery goes on without asking you. A decimal, below U.",
+		"band.U":           "U, in USD: the upper edge of the band, the money appetite of the delivery. A decimal, above B.",
+		"appetite.hours":   "The wall-clock appetite of the delivery, in hours. A decimal.",
+		"success-criteria": "The success criteria of the delivery, in your own words, separated by `;` — a criterion holds no `;`.",
 	}
 )
+
+// approvalPoints is the set of the planned approval points the batch's comment
+// lists, in the order the rows are written (docs/spec/loop.md, The approvers
+// and the success criteria, Decided here; task T-8rm6, #365): setup; bet;
+// activation; retrospective; early-retrospective; audit.
+var approvalPoints = []string{"setup", "bet", "activation", "retrospective", "early-retrospective", "audit"}
 
 // batchRecords are the records that the batch merges: the problem statement;
 // intake/psb.tsv by psbGapsSchema (id, rule, line, excerpt, question); and
@@ -228,6 +238,14 @@ func questionsComment(header string, rows [][]string, quote func([]string) (stri
 		}
 		if asked == 0 {
 			fmt.Fprintf(&b, "No question for %s.\n\n", block.owner)
+		} else if block.id == "idea-owner" {
+			// The approvers' naming is the idea owner's (docs/spec/loop.md,
+			// The approvers and the success criteria; task T-8rm6, #365).
+			b.WriteString("Name the approver of each planned point, one line `<point>: <login>` for each you name (a point you do not name is yours):\n")
+			for _, p := range approvalPoints {
+				fmt.Fprintf(&b, "- `%s`\n", p)
+			}
+			b.WriteString("\n")
 		}
 	}
 	b.WriteString("Answer each block in one comment, one line per question ID: `Q-NNN: <answer>`.\n")

@@ -298,7 +298,7 @@ from the batch, and its source row stays in its own record (**decided here**:
 the quote's offsets and the kind are compared; a rule gap's quote is its line,
 trimmed of its line break). Each kept question gets an ID `Q-NNN` from `Q-001`, in the order of the
 merge; a question of the batch is never renumbered. **Decided here** (task
-`T-8r3u`): a question with no quote is never dropped, as the three fields of the
+`T-8r3u`): a question with no quote is never dropped, as the four fields of the
 intent form share the kind `intent` and have none; a rule gap's line is trimmed
 of a CR before its line feed too. In `M2c` a repeat of quote and kind is within
 one source, as the kinds of the sources differ. **Decided here** (task `T-4c5c`):
@@ -317,8 +317,14 @@ decisions 6, 9 and 10 of #206):
    `Q-NNN: <question>` and, on the next line, its quote in backquotes; then the
    intent form, one line per field, as `architecture.md` §12 gives it: the band
    `B` (go on without asking) and `U` (the upper edge, which is the money
-   appetite of the delivery), decimals in USD with `B` below `U`, and the
-   delivery's wall-clock appetite in hours, a decimal.
+   appetite of the delivery), decimals in USD with `B` below `U`, the
+   delivery's wall-clock appetite in hours, a decimal, and the success criteria
+   in the idea owner's own words, separated by `;` (`M2e`, task `T-8rm6`). The
+   block ends with the naming of the approvers: one line `<point>: <login>`
+   for each planned approval point the idea owner names — `setup`, `bet`,
+   `activation`, `retrospective`, `early-retrospective`, `audit` — and a point
+   not named is the idea owner's ([`loop.md`](loop.md#the-approvers-and-the-success-criteria),
+   task `T-8rm6`).
 2. **For the Operator:** the setup questions: `S01-stack`, and one for each
    marker, as `Q-NNN: the value of <marker> at <file>:<line>` and, when the
    marker has a proposal, the line `proposed: <value>` and its quote in
@@ -463,15 +469,18 @@ fact (`M2e`).
 **Decided here** (decision 11 of #206): when each step of Start is done, the
 restart runs the steps of Intake after `probe`, in place of the row `phase`:
 `rule-gaps`, `meaning`, `numbering`, `spans`, `draft`, `completeness`, `batch`,
-`answers`, `answers-review`, `follow-up`, `follow-up-answers`. The record of each
+`answers`, `answers-review`, `follow-up`, `follow-up-answers`, `revision`. The record of each
 step is: `intake/psb.tsv`; `intake/meaning.tsv`; `spec/spans.tsv` (by `numbering`);
 `spec/check.tsv` (by `spans`); `spec/draft.tsv`; `intake/coverage.tsv`;
 the comment of the batch (its rows of `questions.tsv`); the rows of
-`intake/answers.tsv` of the batch's questions; `intake/answers-review.tsv`; the
+`intake/answers.tsv` of the batch's questions, with the rows of `approvers.tsv`
+the batch's point lines named; `intake/answers-review.tsv`; the
 follow-up comment (its rows of `questions.tsv`), or, when nothing is left to
-ask (no question `asked` or `open`, and the three fields of the intent form
-parse), that state of the records, from which the step posts nothing; the rows of `intake/answers.tsv` of the follow-up's questions.
-Each step whose record exists is
+ask (no question `asked` or `open`, and the three fields of the intent form that
+`budget.tsv` records parse), that state of the records, from which the step posts nothing; the rows of `intake/answers.tsv` of the follow-up's questions, with the rows of `approvers.tsv` its point lines named; the revised `spec/draft.tsv`.
+Each step whose record exists — the record of `revision` being the *revised*
+`spec/draft.tsv`, told from the session's own draft by the done-before rule of
+[`loop.md`](loop.md#the-revision-of-the-draft) — is
 `done` with "done before" and runs nothing, but `numbering` and `spans` while the
 last `spec/check.tsv` has a `fail` row: a restart runs `numbering` again (The
 span check; note 1 of #210); a step whose input is not there yet
@@ -483,7 +492,8 @@ adds its name to the enum, with its Go schema, and the step to the restart's
 order, in one change, as `M2b` did for `probe` ([`run.md`](run.md#the-command));
 the first, `rule-gaps`, replaces the row `phase` (the tasks of `M2c`,
 [`plan/README.md`](../plan/README.md#the-tasks-of-m2c); task `T-2r8u`). `M2d` adds the step `markers` between `completeness`
-and `batch`, and the steps of the Scaffold after `follow-up-answers`
+and `batch`, `M2e` adds `revision` after `follow-up-answers` (task `T-8rm6`,
+[`loop.md`](loop.md#the-revision-of-the-draft)), and the steps of the Scaffold follow it
 ([`scaffold.md`](scaffold.md#the-steps-of-the-scaffold)).
 
 ## NFR-003 — No value without evidence at Intake
@@ -524,6 +534,8 @@ release, the code of `M2b` and `M2a` included.
 | The cap of milestone 0 reached | the step is `fail` ("the cap of milestone 0"); no session starts |
 | A known row of `telemetry.tsv` (`reported` or `computed`) whose `currency` is not `USD` | the step is `fail` ("the cap of milestone 0"), the detail naming the row's session and its currency, as the sum cannot be compared with `MONEY`; no session starts (**decided here**, task `T-ybd5`) |
 | A comment with answer lines by an account that is not an approver, or in the other block's role | recorded as input; it answers nothing |
+| An output of the revision that its check refuses | the finding is posted on the session, and a new attempt runs with it in the prompt, until the output keeps or the cap of milestone 0 stops the step (task `T-8rm6`) |
+| A line `<point>: <login>` in a comment that is no counted answer of the idea owner's block, or whose login the forge does not know | recorded as input; it names no approver (task `T-8rm6`) |
 | An answer of the intent form that does not parse (a `B` not below `U` is an unparsed answer of `B` and of `U`) | the field is asked again in the follow-up; still unparsed after it, its question is `open` and `budget.tsv` is not written |
 | A question still open after the follow-up | open in `questions.tsv`; Intake is done |
 
@@ -533,10 +545,7 @@ The setup questions of steps S01 and S10, the proposed marker sources with their
 quotes and their check (`M2d`, decision 9 of #206;
 [`scaffold.md`](scaffold.md#req-002--the-setup-questions-in-the-one-batch)), with
 the step `markers` between `completeness` and `batch`; the file of the raw fact
-under `docs/facts/` (`M2d`); the success criteria in the intent form, the
-approver of each approval point and the role `approver` (`M2e`, [`loop.md`](loop.md#the-approvers-and-the-success-criteria));
-the revision of the draft with the answers, the check that a requirement that
-covers an answer's fact names the quote's fact (`architecture.md` §7 step 5),
+under `docs/facts/` (`M2d`);
 the first bet, the rendered commit and the confirmed inventory (`M2e`, [`loop.md`](loop.md#the-revision-of-the-draft)); the
 owner map (phase 3); the smart-if provider and its authority (`M3a`); the
 actions of the band `B` and `U` and the accepted bounds of an unknown part
