@@ -180,12 +180,8 @@ func (s *Sessions) PostComment(ctx context.Context, task, session, file string) 
 			return s.copyComment(ctx, c, issue, copies, sum)
 		}
 	}
-	lease, err := s.Store.ReadLease(ctx)
-	if err != nil {
+	if err := s.holdsLease(ctx); err != nil {
 		return Posted{}, err
-	}
-	if lease.Run != s.RunID || lease.State != "held" {
-		return Posted{}, &LostError{Holder: lease.Run}
 	}
 	id, err := s.Forge.Comment(ctx, issue, string(data))
 	if err != nil {
@@ -380,20 +376,9 @@ func (s *Sessions) commentItems(ctx context.Context, in HandoffInput, start []st
 	if in.CodeWritten || in.File == "" {
 		return nil
 	}
-	data, err := s.Store.ReadFile(ctx, KeptPath(in.Task, in.Session, in.File))
-	if err != nil || data == nil {
+	data, ok, err := s.keptComment(ctx, in.Task, in.Session, in.File, result)
+	if err != nil || !ok {
 		return err
-	}
-	// The bytes read are the bytes whose hash the artifact check verifies: the
-	// comment row's, in the result (a kept file of other bytes is no comment).
-	named := ""
-	for _, r := range result {
-		if r[0] == "comment" && r[2] == "result/"+in.File {
-			named = r[3]
-		}
-	}
-	if named == "" || digest(data) != named {
-		return nil
 	}
 	switch in.Kind {
 	case "plan":
@@ -403,6 +388,40 @@ func (s *Sessions) commentItems(ctx context.Context, in HandoffInput, start []st
 	case "review-record":
 		items["findings-located"] = FindingsLocatedOK(data)
 		items["nothing-material"] = NothingMaterialOK(data, start[sessionBase])
+	}
+	return nil
+}
+
+// keptComment gives the kept copy of the file of a comment of a session, and
+// whether it is the file that the result names by its hash: the bytes read are
+// the bytes whose hash the artifact check verifies (a kept file of other bytes is
+// no comment). A copy that the store lacks gives false.
+func (s *Sessions) keptComment(ctx context.Context, task, session, file string, result [][]string) ([]byte, bool, error) {
+	data, err := s.Store.ReadFile(ctx, KeptPath(task, session, file))
+	if err != nil || data == nil {
+		return nil, false, err
+	}
+	named := ""
+	for _, r := range result {
+		if r[0] == "comment" && r[2] == "result/"+file {
+			named = r[3]
+		}
+	}
+	if named == "" || digest(data) != named {
+		return nil, false, nil
+	}
+	return data, true, nil
+}
+
+// holdsLease gives a *LostError when the lease is not held by this run: the
+// read that fences a post of the forge.
+func (s *Sessions) holdsLease(ctx context.Context) error {
+	lease, err := s.Store.ReadLease(ctx)
+	if err != nil {
+		return err
+	}
+	if lease.Run != s.RunID || lease.State != "held" {
+		return &LostError{Holder: lease.Run}
 	}
 	return nil
 }

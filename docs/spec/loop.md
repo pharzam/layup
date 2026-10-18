@@ -104,9 +104,10 @@ one author harness (`architecture.md` §8, "Attempts"). **Decided here:**
   next number, the base that the caller gives) only when a row failed, and gives the
   findings back (`ErrNoFailure` otherwise, and nothing is written); the prompt file of the
   attempt carries them and no diff ([The tier and the context](#the-tier-and-the-context-of-a-task)).
-  **Later wiring:** the call that notices the failure at step 5 and the rows of
-  `gates.tsv` that keep the findings across a restart are #362's and #367's; until then
-  the caller gives the table, and the findings are the caller's to give again.
+  **Later wiring:** the rows of `gates.tsv` that keep the table across a restart are
+  written and read by task `T-q0kr` (#362: `GatesTable` gives the `gate.Table` back, from
+  which `GateFindings` is computed); the call that notices the failure at step 5 and
+  resumes the loop from it stays #367's, and until then the caller gives the table.
 - Once the task's test list is frozen ([The frozen test list](#the-frozen-test-list)),
   code puts the frozen test files at the start of each new attempt, so that their
   hashes stay; the harness that wrote them is an author of every later attempt.
@@ -177,7 +178,8 @@ step (`plan-review` and `verification` of the step table: `qa-engineer`, `reason
 admitted by the rule of [Admission](session.md#admission) and whose harness is none of the
 authors, and `ReviewerPair` gives it with the authors read; with none the error holds both
 `ErrNoHarnessOutsideAuthors`, whose text `no harness outside the authors` is the description
-after `not-active: `, and `route.ErrNoPair`. The status that posts it is row 66f's.
+after `not-active: `, and `route.ErrNoPair`. **Decided here** (task `T-q0kr`, #362): `layup/verify` is posted `failure` at the
+head with that description, and never `pending` or `success`.
 
 ### The tier and the context of a task
 
@@ -886,6 +888,30 @@ statuses for one SHA and context. The description is one line of at most 140
 characters that names the reason (`pass`, `clear: no product path`, `not-active:
 tool not found: <tool>`, `waits for its turn`).
 
+**Decided here** (R10, task `T-q0kr`, #362, row 66f; `internal/run`):
+
+- **The description is cut by one function.** A CR or LF becomes a space, and a text of more
+  than 140 characters (counted in characters, as `SetStatus` counts) is cut to 139 and ends in
+  `…`, so `SetStatus` never refuses a description. The forms are under each context below.
+- **Unchanged** means the state **and** the description. `layup run` reads the statuses of the
+  SHA (`Statuses`, newest first), takes the newest of the context whose creator is the App's
+  bot (the numeric ID that Start read; a bot ID that is not known is an error, never a match
+  of any creator), and posts only when there is none or it differs in state or description.
+  A status of another creator is ignored. The lease is read just before the post, and a lost
+  lease posts nothing.
+- **What is recorded.** The tables of `layup/gates` and `layup/spec` of a head are records
+  (`gates.tsv`, `spec-check.tsv`), written once, before the post; after a stop the status is
+  rebuilt from the table with no new run. `layup/rules` and `layup/verify` are computed again
+  from git and the records. That a status was posted is read from the forge and never
+  recorded, since a record of our own post would trust it.
+- **Failures, by stage.** A failure of the check's input (`*gate.InputError`, a `target:` source
+  of the full check, a rule check that gives `error`) is posted as `error`, with nothing
+  recorded. A failure of the run's own plumbing (the records, a record that its reader refuses,
+  the lease, the forge) is a Go error. The guarantee is that of the stage reached, with no
+  rollback: a table committed stays committed when its post fails, and the next call reads
+  that table, runs nothing and posts; a call that posts several contexts stops at the first
+  failure and leaves the earlier posts as they are, and the next call posts the rest.
+
 **The permissions** of the App beyond those of `M2a` are pull requests `write` and
 commit statuses `write`, both in `architecture.md` §3 and ADR-0014 decision 3, and
 checks `read`, which the native jobs need (a job of GitHub Actions is a check run, and
@@ -915,7 +941,32 @@ The status is `success` only when every kind counts as a pass. **Decided here:**
 `layup run` in a scratch work tree with the base's gate files (FT4), and the
 table is committed as `tasks/<task>/gates.tsv` with the head SHA as a key (the
 block `task-gates`); the head's own gate files never judge the head. A run that
-the tool could not make (git, the scratch tree) is `error`.
+the tool could not make because of its input (a `*gate.InputError`: a revision, the
+manifest at the base, git or `sh`) is `error`, with no row written.
+
+**Decided here** (R10, task `T-q0kr`, #362):
+
+- **The description.** `pass` when every row is `pass`; `clear: <reason>` of the first `clear`
+  row when every row is `pass` or `clear`; otherwise `failure` with
+  `<kind>: <result>: <reason>` of the first row, in the order of the manifest, that is neither
+  of the two (this covers `not-active` and the `fail` of a `pending` kind with a product
+  path); `error: <first line>` for an input error. A table with no row is `error`, never a pass.
+- **A scratch tree that cannot be made** is not `error`: `layup gate` gives the rows that need
+  the tree the result `not-active` and keeps the diff result of a `pending` kind
+  ([`gate.md`](gate.md)), so the rows are written and the status is `failure`. A scratch tree
+  that cannot be removed (`*gate.CleanupError`) comes with the whole table: the rows are
+  written and the status is posted, and the error is then returned to the caller.
+- **The rows of a head are the table's rows.** They are written once, in one fenced records
+  commit, and a head that has rows is never run again. The reader refuses (a Go error, and
+  nothing is overwritten): a head whose rows are not contiguous, two bases in the rows of a
+  head, a `reason` that is `—` for a row that is not `pass` or that is not `—` for a `pass`,
+  and a table that is not complete, namely rows whose kinds and states are not exactly those
+  of `docs/gates.tsv` at the table's base, in its order. A head's rows are given to
+  `GateFindings` by `GatesTable`.
+- **The output and the progress of the run are kept.** `layup run` passes the step and the
+  output of `gate.Run` through: the kind that runs and that the run lives are shown, and
+  the held output of a command is written after its step, as `layup gate` writes it. The
+  output has no record: the table is the durable record.
 
 ### layup/spec
 
@@ -927,6 +978,22 @@ only the rules `classes` and `inventory` are, before it, on the specification
 task's head); `failure` with the first failing rule in the description otherwise;
 `error` when the check could not run.
 
+**Decided here** (R10, task `T-q0kr`, #362; the sources of the input are decided in
+[The full spec check](#req-012--the-full-spec-check) by task `T-cav3`, #412):
+
+- **The description.** `pass` when no row is `fail` or `clear`; `clear: <detail>` of the first
+  `clear` row (`no specification yet`, `before the first bet`) when none is `fail`;
+  otherwise `failure` with `<rule>: <detail>` of the first `fail` row, in the order of
+  the rules (`ran` last); `error: <what>` when the input of the check could not be read.
+- **The table of a head** is the ten rows of `CheckFull`, written once with
+  `spec.WriteSpecCheck`, by the schema `spec.TaskSpecCheckSchema`, in one fenced records
+  commit before the post. The reader refuses what that of `gates.tsv` refuses (rows that are
+  not contiguous, and a table that does not hold the ten rules in order, a `clear` head's
+  too), and a table that is not complete never gives `success`.
+- **A source that cannot be read.** The input builder gives a `target:` source error when the
+  head's own tree or files cannot be used (a git read of the head): it is posted as `error`
+  and writes no row, and a later call reads again. A `records:` source error (a record that
+  the run keeps, or its reader) is a Go error and posts nothing.
 ### layup/rules
 
 The **basic rule** (`architecture.md` §6; the batch part is `M2f`'s): `layup/rules`
@@ -984,13 +1051,45 @@ of defence and `layup/rules` the second; both read the same register.
   `error` with `register`, `input`, `base` or `git`; it is a check that could not run
   and never a pass. A record is `input` when its path is not relative and clean, holds
   a `..` or `.git` part, a backslash or a NUL, or is the path of the guardrails; when two
-  records name one path, a kind is neither of the two, or a PRD has no pre-image. The
-  status, its description and its posting once for an unchanged state are row 66f's.
+  records name one path, a kind is neither of the two, or a PRD has no pre-image.
+
+**Decided here** (R10, task `T-q0kr`, #362; the status):
+
+- **The status** is the state of the result, and its description is the reason, or
+  `<reason>: <path>` when the result has a path.
+- **The register commit** is never the head's and never the run's changing records base. For
+  a head that a session pushed, it is the `records` column of the start row of the session
+  that has the `bound` event of that head (a session of the task; the sessions of one head
+  must agree on the commit, else it is an error), as the check before the push reads it. For a
+  head that code produced (the rendered commit has no bound session), the caller names the commit,
+  as a full SHA, and a head that has a bound session refuses the caller's. A head with neither is an error.
+- **A check that could not run** (`error`) is posted as `error` and is never a pass.
 
 ### layup/verify
 
 `layup/verify` follows the verifier (`architecture.md` §8 step 6). **Decided here:**
 
+- **Decided here** (R10, task `T-q0kr`, #362): the caller names the verifier's session; the
+  order of the checks and the descriptions are these.
+  1. No admitted harness outside the authors (`ReviewerPair`): `failure`,
+     `not-active: no harness outside the authors`, at the head. Any other error of the
+     pair is a Go error.
+  2. The caller says that the verifier waits for its turn: `pending`, `waits for its
+     turn`, at the head. In `M2e` no producer says so.
+  3. The session must be a session of the task, of the role of the step `verification`, and
+     the head it reviewed is the `base` of its start row; else it is a Go error, a caller's
+     fault. A session whose recorded harness is an author of the change, or whose
+     harness and model are not admitted (the probe passed, the model is used), is not
+     independent: `failure`, `not-active: the verifier is not independent`, at the
+     reviewed head, though another admitted harness exists.
+  4. No event `result` or `refused` yet: `pending`, `verifier running`, at the reviewed head.
+  5. A `refused` event, a result that is not `done`, a result with no kept copy whose
+     SHA-256 is the one its `comment` row names, or a copy that is no review record:
+     `failure`, `no review record`.
+  6. `success`, `nothing material in scope`, only for a copy that passes `nothing-material`
+     at the reviewed head; a record of another head is `failure`, `review record of another
+     head`; otherwise `failure`, `material: <n> findings` (n the number of its bullets).
+  A status of a verifier is posted on the head it reviewed.
 - `pending` with the description `waits for its turn` while a build task is not
   next in the merge order or not up to date with the base (a wait state of
   `architecture.md` §11; the merge order is `M2g`'s, so in `M2e` the only tasks are
@@ -1703,7 +1802,7 @@ of the answer, and `spec/inventory.tsv`; for `loop`, the rows of `tasks.tsv`,
 - **A write is read before it is repeated.** Before `layup run` posts a comment,
   opens a pull request, posts a status or merges, it reads the forge: a comment whose
   SHA-256 is in `copies.tsv` is not posted again, an open pull request of the branch
-  is not opened again, a status already at the state is not posted again, and a
+  is not opened again, a status already at the state and the description is not posted again, and a
   merged pull request is recorded with its `merged` event.
 - **The branch of a session that has a `push` and no result.** A `push` event with
   no `bound` and no `refused` after it is a forge write whose result is not

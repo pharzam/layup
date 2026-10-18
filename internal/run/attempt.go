@@ -2,9 +2,9 @@ package run
 
 // This file holds the new attempt that a failure of step 5 starts, with its
 // findings (docs/spec/loop.md, The attempts; task T-6zj3, #361, row 66e of the
-// plan of M2e). The call that notices the failure, the statuses that report it
-// (#362) and the durability of the findings across a restart (gates.tsv, #362)
-// are later wiring: the caller gives the table and the findings.
+// plan of M2e). The call that notices the failure is later wiring (#367): the
+// caller gives the table, which GatesTable (gates.tsv, task T-q0kr) rebuilds after
+// a restart, and the findings.
 
 import (
 	"context"

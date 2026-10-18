@@ -30,7 +30,6 @@ same summary, dated — rather than deleting it or checking it off.
 - **<ID>** — <one-sentence summary> ([<ADR or doc link>](...); [detail](<id>.md))
 -->
 - **T-sdtb** — Row 59b of `M2d`: the demo of M2d (uat) ([#284](https://github.com/pharzam/layup/issues/284); [the plan](../plan/README.md#the-tasks-of-m2d))
-- **T-q0kr** — Row 66f of `M2e`: The four statuses ([#362](https://github.com/pharzam/layup/issues/362); [the plan](../plan/README.md#the-tasks-of-m2e))
 - **T-xvvd** — Row 66g of `M2e`: The pull request and the merge ([#363](https://github.com/pharzam/layup/issues/363); [the plan](../plan/README.md#the-tasks-of-m2e))
 - **T-3f94** — Row 66h of `M2e`: The step shape ([#364](https://github.com/pharzam/layup/issues/364); [the plan](../plan/README.md#the-tasks-of-m2e))
 - **T-2vva** — Row 66j of `M2e`: The step bet ([#366](https://github.com/pharzam/layup/issues/366); [the plan](../plan/README.md#the-tasks-of-m2e))
