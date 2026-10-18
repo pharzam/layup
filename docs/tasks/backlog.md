@@ -35,7 +35,6 @@ same summary, dated — rather than deleting it or checking it off.
 - **T-3f94** — Row 66h of `M2e`: The step shape ([#364](https://github.com/pharzam/layup/issues/364); [the plan](../plan/README.md#the-tasks-of-m2e))
 - **T-2vva** — Row 66j of `M2e`: The step bet ([#366](https://github.com/pharzam/layup/issues/366); [the plan](../plan/README.md#the-tasks-of-m2e))
 - **T-9nbf** — Row 66k of `M2e`: The step loop and the restart ([#367](https://github.com/pharzam/layup/issues/367); [the plan](../plan/README.md#the-tasks-of-m2e))
-- **T-4pje** — Row 66l of `M2e`: The comment items of the task loop ([#396](https://github.com/pharzam/layup/issues/396); [the plan](../plan/README.md#the-tasks-of-m2e))
 - **T-yeav** — Row 66n of `M2e`: The tree items of the task loop ([#404](https://github.com/pharzam/layup/issues/404); [the plan](../plan/README.md#the-tasks-of-m2e))
 - **T-gyvo** — Row 66o of `M2e`: The question and answer comments ([#405](https://github.com/pharzam/layup/issues/405); [the plan](../plan/README.md#the-tasks-of-m2e))
 - **T-3xvc** — Row 67 of `M2e`: The e2e of the specification task ([#368](https://github.com/pharzam/layup/issues/368); [the plan](../plan/README.md#the-tasks-of-m2e))
