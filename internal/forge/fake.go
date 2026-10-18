@@ -270,4 +270,9 @@ func (f *Fake) Merge(_ context.Context, number int, sha string) (string, error) 
 	return pr.MergeSHA, nil
 }
 
+// EditBody is a stub of task T-08rj: it edits nothing yet.
+func (f *Fake) EditBody(_ context.Context, number int, body string) (PullRequest, error) {
+	return PullRequest{}, nil
+}
+
 var _ Forge = (*Fake)(nil)

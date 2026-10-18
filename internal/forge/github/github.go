@@ -545,6 +545,11 @@ func (a *Adapter) Merge(ctx context.Context, number int, sha string) (string, er
 	return out.SHA, nil
 }
 
+// EditBody is a stub of task T-08rj: it sends nothing yet.
+func (a *Adapter) EditBody(ctx context.Context, number int, body string) (forge.PullRequest, error) {
+	return forge.PullRequest{}, nil
+}
+
 // graphqlURL gives the URL of the GraphQL API of a REST api: <api>/graphql, and
 // for a GitHub Enterprise Server api that ends in /api/v3, /api/graphql.
 func graphqlURL(api string) string {
