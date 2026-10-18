@@ -716,6 +716,7 @@ func TestNothingMaterialReadsTheBaseOfTheVerifierStartRow(t *testing.T) {
 func TestACodeWrittenHandoffHasNoCommentItem(t *testing.T) {
 	for _, c := range commentItems {
 		w := newHandoffWorld(t)
+		posted(t, w, planSess, c.good) // a copy that the session and the file name, and that code must not read
 		rows, err := handoff.ReadTable(w.store.files["transitions.tsv"])
 		if err != nil {
 			t.Fatal(err)
@@ -730,7 +731,7 @@ func TestACodeWrittenHandoffHasNoCommentItem(t *testing.T) {
 			t.Fatal(err)
 		}
 		w.store.files["transitions.tsv"] = []byte(b.String())
-		in := HandoffInput{Task: "T-ab12", Attempt: 1, From: "code (rendered task)", To: "verifier", CodeWritten: true, File: "plan.md", Kind: c.kind, Items: map[string]bool{c.item: true},
+		in := HandoffInput{Task: "T-ab12", Session: planSess, Attempt: 1, From: "code (rendered task)", To: "verifier", CodeWritten: true, File: "plan.md", Kind: c.kind, Items: map[string]bool{c.item: true},
 			Artifacts: []handoff.Artifact{{Kind: "rendering", Named: strings.Repeat("c", 64), Found: strings.Repeat("c", 64)}}}
 		if v, err := w.s.RecordHandoff(context.Background(), in); err != nil || v.Detail != "invalid "+c.item {
 			t.Errorf("%s of a handoff that code wrote: %+v, %v; want invalid %s", c.item, v, err, c.item)
