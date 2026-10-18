@@ -3,6 +3,7 @@ package run
 import (
 	"context"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/pharzam/layup/internal/records"
@@ -200,5 +201,25 @@ func TestAVerifierOfAnotherTaskOrRoleOrNoneIsAnError(t *testing.T) {
 	w := newVerifyWorld(t, "devin")
 	if _, _, err := w.s.VerifyAt(context.Background(), w.in); err != nil {
 		t.Errorf("the control, a verifier of the task and the role: %v", err)
+	}
+}
+
+func TestAMalformedOwnedResultIsAGoErrorAndAnAbsentCopyIsNot(t *testing.T) {
+	w := newVerifyWorld(t, "devin")
+	w.end(t, "done", record(headA, "nothing material in scope"))
+	if _, st := w.verify(t); st.State != "success" {
+		t.Fatalf("the control: %+v", st)
+	}
+	path := "tasks/T-ab12/results/" + verifier + ".tsv"
+	good := w.store.files[path]
+	w.store.files[path] = []byte("not a result table\n")
+	_, _, err := w.s.VerifyAt(context.Background(), w.in)
+	if err == nil || !strings.Contains(err.Error(), path) {
+		t.Errorf("a malformed result file: %v; want a Go error naming %s", err, path)
+	}
+	w.store.files[path] = good
+	delete(w.store.files, KeptPath("T-ab12", verifier, "review.md"))
+	if _, st := w.verify(t); st != (Status{VerifyContext, "failure", "no review record"}) {
+		t.Errorf("an absent kept copy: %+v; want no review record, not an error", st)
 	}
 }

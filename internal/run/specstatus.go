@@ -9,8 +9,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
+	"github.com/pharzam/layup/internal/forge"
 	"github.com/pharzam/layup/internal/spec"
 	"github.com/pharzam/layup/internal/tsv"
 )
@@ -26,14 +28,15 @@ func specRuleList() []string {
 }
 
 // specComplete says whether the rows (rule, result, detail) of a head hold every
-// rule of the block once, in its order, a clear head's table too.
+// rule of the block once, in its order, a clear head's table too, each with a result
+// that the schema names (an absent result is no pass).
 func specComplete(rows [][]string) bool {
 	list := specRuleList()
 	if len(rows) != len(list) {
 		return false
 	}
 	for i, r := range rows {
-		if len(r) != 3 || r[0] != list[i] {
+		if len(r) != 3 || r[0] != list[i] || !slices.Contains([]string{"pass", "fail", "clear"}, r[1]) {
 			return false
 		}
 	}
@@ -126,6 +129,9 @@ type SpecInput struct {
 // row written; a refusal of a record (a source "records:") or of the base and head
 // is a Go error, and nothing is written.
 func (s *Sessions) SpecAt(ctx context.Context, in SpecInput) (Status, error) {
+	if !forge.FullSHA(in.Base) || !forge.FullSHA(in.Head) {
+		return Status{}, fmt.Errorf("the base and the head of layup/spec are full SHAs")
+	}
 	rows, found, err := s.SpecTable(ctx, in.Task, in.Head)
 	if err != nil {
 		return Status{}, err

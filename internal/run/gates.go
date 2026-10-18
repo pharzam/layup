@@ -199,13 +199,34 @@ func (s *Sessions) GatesTable(ctx context.Context, task, head string) (gate.Tabl
 	return t, true, nil
 }
 
-// gateProgress is the step of a run with no step of the caller: one line when a
-// kind starts and one when it ends, with the count and the time it took.
+// gateBeat is the time between two lines of a kind that runs on.
+var gateBeat = 10 * time.Second
+
+// gateProgress is the step of a run with no step of the caller: a line when a
+// kind starts, one every gateBeat while it runs, and one when it ends with the
+// time it took. The beats stop before the end line, so none comes among the held
+// output that gate.Run writes after it (docs/spec/README.md, progress).
 func gateProgress(out io.Writer) func(i, n int, kind string) func() {
 	return func(i, n int, kind string) func() {
 		start := time.Now()
 		fmt.Fprintf(out, "layup run: gate [%d/%d] %s…\n", i, n, kind)
+		stop, stopped := make(chan struct{}), make(chan struct{})
+		go func() {
+			defer close(stopped)
+			tick := time.NewTicker(gateBeat)
+			defer tick.Stop()
+			for {
+				select {
+				case <-stop:
+					return
+				case <-tick.C:
+					fmt.Fprintf(out, "layup run: gate [%d/%d] %s still running (%s)\n", i, n, kind, time.Since(start).Round(time.Millisecond))
+				}
+			}
+		}()
 		return func() {
+			close(stop)
+			<-stopped
 			fmt.Fprintf(out, "layup run: gate [%d/%d] %s done (%s)\n", i, n, kind, time.Since(start).Round(time.Millisecond))
 		}
 	}

@@ -1,9 +1,11 @@
 package run
 
 import (
+	"bytes"
 	"context"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/pharzam/layup/internal/gate"
 )
@@ -212,3 +214,89 @@ func TestASpecTableIsReadByItsRules(t *testing.T) {
 }
 
 func cloneLines(l []string) []string { return append([]string(nil), l...) }
+
+func TestASpecRowWithNoResultIsNoSuccess(t *testing.T) {
+	rows := specRows(nil)
+	if got := SpecStatus(rows); got.State != "success" {
+		t.Fatalf("the control, every result recognised: %+v", got)
+	}
+	for _, i := range []int{0, 5, 9} {
+		bad := specRows(nil)
+		bad[i] = []string{bad[i][0], "", ""}
+		if got := SpecStatus(bad); got.State != "error" {
+			t.Errorf("the result of %s absent: %+v; want error", bad[i][0], got)
+		}
+	}
+	store := &standinStore{holder: "0123456789abcdef", files: map[string][]byte{}}
+	var b strings.Builder
+	b.WriteString("head\trule\tresult\tdetail\n")
+	for _, r := range specRows(nil) {
+		res := r[1]
+		if r[0] == "ran" {
+			res = "—"
+		}
+		b.WriteString(headA + "\t" + r[0] + "\t" + res + "\t—\n")
+	}
+	store.files[specPath("T-ab12")] = []byte(b.String())
+	if _, _, err := newSessions(store).SpecTable(context.Background(), "T-ab12", headA); err == nil {
+		t.Error("a saved table whose ran has no result was read")
+	}
+}
+
+func TestSpecAtRefusesABadBaseOrHeadBeforeTheSavedRows(t *testing.T) {
+	store := &standinStore{holder: "0123456789abcdef", files: map[string][]byte{}}
+	var b strings.Builder
+	b.WriteString("head\trule\tresult\tdetail\n")
+	for _, r := range specRows(nil) {
+		b.WriteString(headA + "\t" + r[0] + "\tpass\t—\n")
+	}
+	store.files[specPath("T-ab12")] = []byte(b.String())
+	s := newSessions(store)
+	if st, err := s.SpecAt(context.Background(), SpecInput{Task: "T-ab12", Base: baseX, Head: headA}); err != nil || st != (Status{SpecContext, "success", "pass"}) {
+		t.Fatalf("the control, a cached head and full SHAs: %+v, %v", st, err)
+	}
+	for name, in := range map[string]SpecInput{"a base that is no full SHA": {Base: "main", Head: headA}, "a head that is no full SHA": {Base: baseX, Head: "HEAD"}} {
+		in.Task = "T-ab12"
+		if st, err := s.SpecAt(context.Background(), in); err == nil {
+			t.Errorf("%s: %+v, no error", name, st)
+		}
+	}
+}
+
+// A saved gates table that omits a kind, or that was run at another base, is an error of the callers, not a status.
+func TestGatesAtRefusesAnIncompleteSavedTableAndAnotherBase(t *testing.T) {
+	store := &standinStore{holder: "0123456789abcdef", files: map[string][]byte{}}
+	s := newSessions(store)
+	s.manifestAt = func(string) ([]byte, error) { return []byte(manifest), nil }
+	both := gateLine(headA, "build", baseX, "active", "pass", "—") + gateLine(headA, "docs", baseX, "pending", "clear", "pending: no product path")
+	store.files[gatesPath("T-ab12")] = []byte(gatesHeader + both)
+	in := GatesInput{Task: "T-ab12", Base: baseX, Head: headA}
+	if st, err := s.GatesAt(context.Background(), in); err != nil || st != (Status{GatesContext, "success", "clear: pending: no product path"}) {
+		t.Fatalf("the control, a complete table of the base: %+v, %v", st, err)
+	}
+	if st, err := s.GatesAt(context.Background(), GatesInput{Task: "T-ab12", Base: baseY, Head: headA}); err == nil {
+		t.Errorf("a table run at another base: %+v, no error", st)
+	}
+	store.files[gatesPath("T-ab12")] = []byte(gatesHeader + gateLine(headA, "build", baseX, "active", "pass", "—"))
+	if st, err := s.GatesAt(context.Background(), in); err == nil {
+		t.Errorf("a table that omits a kind: %+v, no error", st)
+	}
+}
+
+func TestTheDefaultProgressOfAKindBeatsAndStopsBeforeTheOutput(t *testing.T) {
+	saved := gateBeat
+	t.Cleanup(func() { gateBeat = saved })
+	gateBeat = 5 * time.Millisecond
+	var out bytes.Buffer
+	done := gateProgress(&out)(1, 2, "slow")
+	time.Sleep(60 * time.Millisecond)
+	done()
+	got := out.String()
+	if n := strings.Count(got, "still running"); n < 3 || !strings.Contains(got, "[1/2] slow") {
+		t.Errorf("progress %q; want the start line and at least three beats naming the kind", got)
+	}
+	time.Sleep(30 * time.Millisecond)
+	if out.String() != got {
+		t.Error("a line was written after the kind ended, where the held output goes")
+	}
+}

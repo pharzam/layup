@@ -154,3 +154,47 @@ TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integra
 13:41:34Z to 14:10:53Z, `ok  github.com/pharzam/layup/internal/run 1756.847s`, exit 0. The other 21 packages passed in the first run.
 
 The five text checks (`sh docs/adr/adr-lint.sh`, `sh docs/prd/prd-lint.sh`, `sh docs/links/link-lint.sh`, `sh docs/tests/run-discipline-tests.sh`, `sh docs/setup/setup-check.sh`), `sh docs/tests/nested-checkout-check.sh` and `git diff --check origin/main HEAD`: exit 0 each (the last after removing the trailing spaces of the red log).
+
+
+## Round 1 (GPT-6.1 Sol, material, F1 to F5), fixed test first
+
+The tests of F1 to F4 were written first, with an inert `var gateBeat` so they compile, and run before any fix (14:28:39Z):
+
+```
+go test -count=1 -run 'TestASpecRowWithNoResultIsNoSuccess|TestSpecAtRefusesABadBaseOrHead|TestGatesAtRefusesAnIncompleteSavedTable|TestTheDefaultProgressOfAKind|TestAMalformedOwnedResultIsAGoError' .     exit 1
+--- FAIL: TestASpecRowWithNoResultIsNoSuccess (0.00s)
+    gates_test.go:227: the result of covers absent: {Context:layup/spec State:success Description:pass}; want error
+    gates_test.go:227: the result of inventory absent: {Context:layup/spec State:success Description:pass}; want error
+    gates_test.go:227: the result of ran absent: {Context:layup/spec State:success Description:pass}; want error
+    gates_test.go:242: a saved table whose ran has no result was read
+--- FAIL: TestSpecAtRefusesABadBaseOrHeadBeforeTheSavedRows (0.01s)
+    gates_test.go:261: a base that is no full SHA: {Context:layup/spec State:success Description:pass}, no error
+--- FAIL: TestTheDefaultProgressOfAKindBeatsAndStopsBeforeTheOutput (0.09s)
+    gates_test.go:296: progress "layup run: gate [1/2] slow…\nlayup run: gate [1/2] slow done (60ms)\n"; want the start line and at least three beats naming the kind
+--- FAIL: TestAMalformedOwnedResultIsAGoErrorAndAnAbsentCopyIsNot (0.00s)
+    verifystatus_test.go:218: a malformed result file: <nil>; want a Go error naming tasks/T-ab12/results/S-e0000001.tsv
+```
+
+The tests of F5 (`TestGatesAtRefusesAnIncompleteSavedTableAndAnotherBase`, `TestACleanupErrorKeepsTheRowsAndIsReturnedWithTheStatus`, `TestACleanupErrorOfTheGatesStopsNoPostAndIsReturnedByPostStatuses`, `TestTheSessionsOfTheRunPostAsTheApp`) pass on the code of the head `c546014`, as the review's mutants survived; their red is the mutants M30 to M33 below, each killed. Their first run failed in set-up only (the lease was written twice), which was fixed.
+
+After the fixes: `go build ./...`, `go vet ./...`, `go vet -tags=integration ./...` exit 0; `go test -count=1 ./...` every package ok; and
+
+```
+TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 20m -run 'TestTheGatesBlockEqualsItsGoSchema|TestTheGatesStatusIsPostedOnce|TestAFailedPostIsRecovered|TestAPendingKindWithAProductPath|TestABaseWithNoManifest|TestTheRulesStatusReadsTheRegister|TestTheVerifyStatusFollowsTheVerifier|TestTheSpecStatusOfAHeadThatTouches|TestATargetSourceOfTheFullCheck|TestTheFourStatusesOfAHead|TestAFailedPostOfOneContext|TestACleanupError|TestTheSessionsOfTheRunPostAsTheApp' ./internal/run/
+```
+
+14:36:56Z to 14:38:29Z, `ok  github.com/pharzam/layup/internal/run 73.629s`, exit 0.
+
+### Mutants of the fix (same script and columns)
+
+| # | Mutant | File | Build | Vet | Test | First failing assertion | SHA-256 before, mutated, after |
+| - | ------ | ---- | ----- | --- | ---- | ----------------------- | ------------------------------ |
+| M30 | the completeness check of a saved gates table is bypassed | gates.go | exit 0 | exit 0 | exit 1 (killed) | TestGatesAtRefusesAnIncompleteSavedTableAndAnotherBase: gates_test.go:282: a table that omits a kind: {Context:layup/gates State:success Description:pass}, no error | 273dd5cd>ef7b948e>273dd5cd |
+| M31 | the saved-base refusal is dropped | gates.go | exit 0 | exit 0 | exit 1 (killed) | TestGatesAtRefusesAnIncompleteSavedTableAndAnotherBase: gates_test.go:278: a table run at another base: {Context:layup/gates State:success Description:clear: pending: | 273dd5cd>5a0bb558>273dd5cd |
+| M32 | the cleanup error is not returned | gates.go | exit 0 | exit 0 | exit 1 (killed) | TestACleanupErrorKeepsTheRowsAndIsReturnedWithTheStatus: statuses_integration_test.go:411: the error <nil> is no gate.CleanupError | 273dd5cd>f3c28805>273dd5cd |
+| M33 | the constructor forgets the bot (killed through a post, not the field) | meaning.go | exit 0 | exit 0 | exit 1 (killed) | TestTheSessionsOfTheRunPostAsTheApp: statuses_integration_test.go:446: PostStatus: false, the ID of the App's bot is not known: no status can be to | 54dbdeed>46d35da2>54dbdeed |
+| M34 | an absent result of a saved spec row is accepted | specstatus.go | exit 0 | exit 0 | exit 1 (killed) | TestASpecRowWithNoResultIsNoSuccess: gates_test.go:227: the result of covers absent: {Context:layup/spec State:success Description:pass}; want erro | d5fbcf06>7d839db0>d5fbcf06 |
+| M35 | SpecAt validates the SHAs after the saved rows | specstatus.go | exit 0 | exit 0 | exit 1 (killed) | TestSpecAtRefusesABadBaseOrHeadBeforeTheSavedRows: gates_test.go:261: a base that is no full SHA: {Context:layup/spec State:success Description:pass}, no error | d5fbcf06>6c9f765b>d5fbcf06 |
+| M36 | the error of a malformed result is swallowed | verifystatus.go | exit 0 | exit 0 | exit 1 (killed) | TestAMalformedOwnedResultIsAGoErrorAndAnAbsentCopyIsNot: verifystatus_test.go:218: a malformed result file: <nil>; want a Go error naming tasks/T-ab12/results/S-e00000 | 268c0342>9dd50b17>268c0342 |
+| M37 | the default progress has no beat | gates.go | exit 0 | exit 0 | exit 1 (killed) | TestTheDefaultProgressOfAKindBeatsAndStopsBeforeTheOutput: gates_test.go:296: progress "layup run: gate [1/2] slow…\nlayup run: gate [1/2] slow done (60ms)\n"; want the  | 273dd5cd>2bdee1fe>273dd5cd |
+| M38 | the beats go on after the kind ends | gates.go | exit 0 | exit 0 | exit 1 (killed) | TestTheDefaultProgressOfAKindBeatsAndStopsBeforeTheOutput: gates_test.go:300: a line was written after the kind ended, where the held output goes | 273dd5cd>8b54c91f>273dd5cd |

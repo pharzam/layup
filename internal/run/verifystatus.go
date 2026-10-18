@@ -83,7 +83,7 @@ func (s *Sessions) VerifyAt(ctx context.Context, in VerifyInput) (string, Status
 	}
 	result, err := records.ReadResult(data)
 	if err != nil {
-		return reviewed, noRecord, nil
+		return "", Status{}, fmt.Errorf("tasks/%s/results/%s.tsv: %w", in.Task, in.Session, err)
 	}
 	file := ""
 	for _, r := range result {

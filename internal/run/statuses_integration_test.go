@@ -6,12 +6,14 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
 
+	"github.com/pharzam/layup/internal/gate"
 	"github.com/pharzam/layup/internal/tsv"
 )
 
@@ -317,8 +319,13 @@ func TestATargetSourceOfTheFullCheckIsAPostedErrorAndARecordsSourceIsAGoError(t 
 // fourStatusWorld is a head whose gates have a not-active kind, a base with the records of
 // Intake and the registers, and a verifier of devin that found nothing material at the base.
 func fourStatusWorld(t *testing.T) (*loopRun, HeadInput) {
+	return fourStatusWorldOf(t, "fine\tactive\tsh\ttrue\t./*.go\t—\nlint\tactive\tno-such-tool-for-layup\ttrue\t./*.go\t—\n")
+}
+
+// fourStatusWorldOf is fourStatusWorld with the kinds of the manifest.
+func fourStatusWorldOf(t *testing.T, kinds string) (*loopRun, HeadInput) {
 	t.Helper()
-	l, base, head := gateWorld(t, "fine\tactive\tsh\ttrue\t./*.go\t—\nlint\tactive\tno-such-tool-for-layup\ttrue\t./*.go\t—\n")
+	l, base, head := gateWorld(t, kinds)
 	harnesses, models := commitRegisters(t, l)
 	id := l.comment(1, "verification", "devin", record(l.a.base, "nothing material in scope"))
 	specRecords(t, l) // after the comment: it replaces tasks.tsv, which the post of a comment reads
@@ -374,5 +381,71 @@ func TestAFailedPostOfOneContextLeavesTheEarlierPostsAndTheNextCallPostsTheRest(
 	got, err = l.r.PostStatuses(ctx, in)
 	if err != nil || len(got) != 4 || got[0].Posted || !got[1].Posted || !got[2].Posted || !got[3].Posted {
 		t.Errorf("the next call = %+v, %v; want gates not posted again and the other three posted", got, err)
+	}
+}
+
+// A scratch tree that cannot be removed (a directory of mode 500 with a file) is a gate.CleanupError.
+const cleanupKind = "perm\tactive\tsh\tmkdir sub && touch sub/f && chmod 500 sub\t./*.go\t—\n"
+
+func cleanupAfter(t *testing.T, err error) {
+	t.Helper()
+	var ce *gate.CleanupError
+	if !errors.As(err, &ce) {
+		t.Fatalf("the error %v is no gate.CleanupError", err)
+	}
+	t.Cleanup(func() {
+		filepath.WalkDir(ce.Path, func(p string, d os.DirEntry, _ error) error {
+			if d != nil && d.IsDir() {
+				os.Chmod(p, 0o755)
+			}
+			return nil
+		})
+		os.RemoveAll(ce.Path)
+	})
+}
+
+func TestACleanupErrorKeepsTheRowsAndIsReturnedWithTheStatus(t *testing.T) {
+	l, base, head := gateWorld(t, cleanupKind)
+	ctx := context.Background()
+	st, err := l.r.GatesAt(ctx, GatesInput{Task: "T-ab12", Base: base, Head: head, Out: io.Discard})
+	cleanupAfter(t, err)
+	if st != (Status{GatesContext, "success", "pass"}) {
+		t.Errorf("the status with the cleanup error: %+v; want the status of the table", st)
+	}
+	if _, found, err := l.r.GatesTable(ctx, "T-ab12", head); err != nil || !found {
+		t.Errorf("the rows after the cleanup error: found=%v, %v; want them kept", found, err)
+	}
+}
+
+func TestACleanupErrorOfTheGatesStopsNoPostAndIsReturnedByPostStatuses(t *testing.T) {
+	l, in := fourStatusWorldOf(t, cleanupKind)
+	got, err := l.r.PostStatuses(context.Background(), in)
+	cleanupAfter(t, err)
+	if len(got) != 4 || !got[0].Posted || got[0].Status.Context != GatesContext || got[0].Status.State != "success" {
+		t.Errorf("PostStatuses = %+v; want the four posts made, gates first", got)
+	}
+	if n := len(statusesOf(l.w, in.Head)); n != 3 {
+		t.Errorf("%d statuses on the head; want 3", n)
+	}
+	if _, found, _ := l.r.GatesTable(context.Background(), "T-ab12", in.Head); !found {
+		t.Error("the rows of the head were not kept")
+	}
+}
+
+// The statuses are posted as the App through the Sessions that a run builds (state.sessions()), not a literal.
+func TestTheSessionsOfTheRunPostAsTheApp(t *testing.T) {
+	l := statusWorldOfARun(t)
+	st := &state{cfg: l.w.config("0.1.0-dev"), store: l.r.Store.(*recordsStore), target: l.r.Clone, defaultBranch: l.r.Branch, botID: 9001,
+		start: [][]string{{"issue.control", "2", "run"}}}
+	s := st.sessions()
+	s.Now = l.r.Now
+	s.RunID = l.r.RunID // the lease of the test world is held by it
+	sha := strings.Repeat("7", 40)
+	want := Status{GatesContext, "success", "pass"}
+	if ok, err := s.PostStatus(context.Background(), sha, want); err != nil || !ok {
+		t.Fatalf("PostStatus: %v, %v", ok, err)
+	}
+	if ok, err := s.PostStatus(context.Background(), sha, want); err != nil || ok {
+		t.Errorf("the second PostStatus: %v, %v; want the App's own status found, none posted", ok, err)
 	}
 }
