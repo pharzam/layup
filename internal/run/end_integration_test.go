@@ -61,6 +61,10 @@ func sessionWorldWith(t *testing.T, files map[string]string) (*world, *Sessions,
 	if err := r.commit(context.Background(), rows, "tasks: register T-ab12"); err != nil {
 		t.Fatal(err)
 	}
+	// The run holds the lease: the post of a comment is fenced by a read of it (task T-syxm).
+	if err := r.Store.WriteLease(context.Background(), LeaseRow{Run: r.RunID, Host: "host-1", Version: "0.1.0-dev", Started: time.Now().UTC().Truncate(time.Second), Heartbeat: 1, State: "held"}, "lease"); err != nil {
+		t.Fatal(err)
+	}
 	return w, r, f, worldAt{base, store.pushed}
 }
 

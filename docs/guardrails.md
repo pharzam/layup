@@ -1310,6 +1310,15 @@ failure modes worth keeping.
   function that takes a raw row reads it as a one-row table with `tsv.Read` (the
   empty value as `—`), requires the parsed row to equal the input, then applies the
   row rules; and each refusal has a one-token valid control.
+- ❌ **A repair read from the position of the interrupted run, and a destination that tests already count.** Two commits
+  (`refused push-lost`, then `attempt`) left a restart that finds the refusal and no attempt, so a repair that fires only in
+  the run that wrote the refusal never starts one; and `git ls-remote` matches its pattern against the tail of a ref name, so
+  a branch `x/refs/heads/task/T-ab12/2` answers a read of `task/T-ab12/2`. Moving a comment to another issue also changed what
+  every test that counts, edits by index or adopts comments on that issue sees, which no list of changed assertions had
+  named. Task `T-syxm` (#422). **The check:** a repair derives its work from the records alone (a rule that holds after any
+  prefix of the writes, with a test that seeds the middle state and runs it twice), a read of a ref keeps only the line of
+  the exact name, and a plan that moves an output lists every test that reads its destination, not the assertions that
+  name the old one.
 
 ## 3. Validation — how you check you are not fooling yourself
 
