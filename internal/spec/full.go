@@ -709,20 +709,25 @@ func (c *fullCheck) sections() verdict {
 				delivered = false
 			}
 		}
-		if delivered && !c.hasSection(r.id) {
+		if delivered && !HasSection(c.in.SpecFiles, r.id) {
 			return failv(fmt.Sprintf("the delivered requirement %s has no non-empty docs/spec/ section whose heading holds its ID", r.id))
 		}
 	}
 	return pass()
 }
 
-// hasSection reports whether a docs/spec/ file holds a section whose heading
-// contains the ID, with at least one non-blank line before the next heading.
-func (c *fullCheck) hasSection(id string) bool {
+// HasSection reports whether a docs/spec/ file of files, by name, holds a
+// section whose heading contains the ID, with at least one non-blank line
+// before the next heading. It is the one predicate of sections and of the
+// handoff item spec-sections (task T-yeav, #404); no ID is no section.
+func HasSection(files map[string][]byte, id string) bool {
+	if id == "" {
+		return false
+	}
 	re := regexp.MustCompile(`(^|[^0-9A-Za-z])` + regexp.QuoteMeta(id) + `([^0-9A-Za-z]|$)`)
-	for _, name := range slices.Sorted(maps.Keys(c.in.SpecFiles)) {
+	for _, name := range slices.Sorted(maps.Keys(files)) {
 		open, body := false, false
-		for _, l := range strings.Split(string(c.in.SpecFiles[name]), "\n") {
+		for _, l := range strings.Split(string(files[name]), "\n") {
 			if headingLine.MatchString(l) {
 				if open && body {
 					return true

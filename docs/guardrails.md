@@ -1145,6 +1145,18 @@ These traps are not domain-specific: they hurt every project's test suite.
   itself) and a test runs two ledgers that differ only in that role; give the two maps of such a function different
   named types, so that a swap does not compile.
 
+- ❌ **A tree reader that lists recursively takes links, gitlinks and nested files for files.** `git ls-tree -r`
+  lists a symlink as a `blob` of mode `120000` whose bytes are its target text, a file below the directory by its
+  full path, and a gitlink as type `commit`; a reader that keeps every blob under `docs/spec` would read all three
+  as spec files. It is silent because the control, a regular file at depth one, passes. **The check:** filter on
+  depth, type and mode, and give each shape a case where the section sits only in that shape, so a wrongly included
+  file flips the verdict. Learned in `T-yeav` (#404).
+- ❌ **An error test whose fixture fails at the first call.** Five failing calls of git were injected into a call that
+  also rendered a PRD, so the pre-image read failed first and the mutant that swallowed the later read of the head's
+  tree survived. It is silent because every row of the table was an error. **The check:** give each call its own row
+  where the earlier calls succeed (here, a facts-only call), and keep the mutant that swallows that call.
+  Learned in `T-yeav` (#404).
+
 ### Reference-sweep pitfalls
 
 A change that edits references or a rule's wording across the tree has three silent

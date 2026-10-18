@@ -18,6 +18,7 @@ import (
 	"github.com/pharzam/layup/internal/forge"
 	"github.com/pharzam/layup/internal/handoff"
 	"github.com/pharzam/layup/internal/records"
+	"github.com/pharzam/layup/internal/rules"
 )
 
 // Posted is a comment that holds an artifact: its ID, the number of its copy in
@@ -67,25 +68,31 @@ func postedOf(row []string) Posted {
 	return Posted{ID: id, Seen: seen, SHA: row[copySHA]}
 }
 
-// taskIssue gives the issue of a task from the register.
-func (s *Sessions) taskIssue(ctx context.Context, task string) (int, error) {
+// taskRow gives the row of a task in the register.
+func (s *Sessions) taskRow(ctx context.Context, task string) (Task, error) {
 	data, err := s.Store.ReadFile(ctx, tasksPath)
 	if err != nil {
-		return 0, err
+		return Task{}, err
 	}
 	if data == nil {
-		return 0, fmt.Errorf("the records have no %s", tasksPath)
+		return Task{}, fmt.Errorf("the records have no %s", tasksPath)
 	}
 	tasks, err := ReadRegister(data)
 	if err != nil {
-		return 0, fmt.Errorf("%s: %w", tasksPath, err)
+		return Task{}, fmt.Errorf("%s: %w", tasksPath, err)
 	}
 	for _, t := range tasks {
 		if t.ID == task {
-			return t.Issue, nil
+			return t, nil
 		}
 	}
-	return 0, fmt.Errorf("%s has no row of %s", tasksPath, task)
+	return Task{}, fmt.Errorf("%s has no row of %s", tasksPath, task)
+}
+
+// taskIssue gives the issue of a task from the register.
+func (s *Sessions) taskIssue(ctx context.Context, task string) (int, error) {
+	t, err := s.taskRow(ctx, task)
+	return t.Issue, err
 }
 
 // refuseFile writes the event refused, handoff, of a session whose file cannot
@@ -222,7 +229,12 @@ func (s *Sessions) copyComment(ctx context.Context, c forge.Comment, issue int, 
 // caller does not pass is false; schema, artifacts, question-row and
 // answer-row are computed here, and so are plan-fields, verdict-field,
 // findings-located and nothing-material from the kept copy of the comment (task
-// T-4pje), and a value of the caller's for one of them is never read. Freeze is the list of tests of a handoff to the verifier with their
+// T-4pje), and spec-sections and rendering-equal from the tree at a head (task
+// T-yeav, #404), and a value of the caller's for one of them is never read. The
+// head of a session's handoff is the SHA of its bound event; Head is the head
+// of a handoff that code wrote (CodeWritten), and is read for no other. Render
+// holds the typed records of the artifacts of kind rendering, by Path, and
+// PreRev names the revision a PRD record is rendered from. Freeze is the list of tests of a handoff to the verifier with their
 // results (task T-6zj3, #361): when it is given, tests-red-green is computed
 // from it too, and the first valid handoff writes tasks/<task>/tests.tsv in the
 // commit of its event.
@@ -235,6 +247,8 @@ type HandoffInput struct {
 	Items         map[string]bool
 	CodeWritten   bool
 	Freeze        *Freeze
+	Head, PreRev  string
+	Render        []rules.Record
 }
 
 // RecordHandoff checks a handoff against the table of the records and writes
@@ -292,7 +306,20 @@ func (s *Sessions) RecordHandoff(ctx context.Context, in HandoffInput) (handoff.
 		items = map[string]bool{}
 	}
 	items["question-row"], items["answer-row"] = QuestionRowOK(result), AnswerRowOK(result)
+	before, err := s.readTable(ctx, eventsPath(in.Task), records.ReadEvents)
+	if err != nil {
+		return handoff.Verdict{}, err
+	}
 	if err := s.commentItems(ctx, in, start, result, items); err != nil {
+		return handoff.Verdict{}, err
+	}
+	// spec-sections and rendering-equal are computed from the tree at a head
+	// that code holds, whatever the caller passed (task T-yeav, #404).
+	var row handoff.Row
+	if i := slices.IndexFunc(rows, func(r handoff.Row) bool { return r.From == in.From && r.To == in.To }); i >= 0 {
+		row = rows[i]
+	}
+	if err := s.treeItems(ctx, in, row, before, items); err != nil {
 		return handoff.Verdict{}, err
 	}
 	// A list of tests at a handoff to the verifier: tests-red-green is computed
@@ -319,10 +346,6 @@ func (s *Sessions) RecordHandoff(ctx context.Context, in HandoffInput) (handoff.
 		maps.Copy(files, copyFiles)
 	}
 	v := handoff.Check(rows, h)
-	before, err := s.readTable(ctx, eventsPath(in.Task), records.ReadEvents)
-	if err != nil {
-		return handoff.Verdict{}, err
-	}
 	for _, e := range before {
 		if e[1] == "handoff" && e[3] == in.Session && e[6] == v.Detail {
 			if len(files) > 0 {
