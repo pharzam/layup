@@ -195,10 +195,10 @@ func TestTheStepForgeCheckChecksTheForgeAndCommitsItsTableAtEachRestart(t *testi
 	tables := func() int {
 		return len(strings.Fields(gitOut(t, w.bare, "log", "--format=%H", "--grep=^layup run: the forge check$", "refs/heads/layup-records")))
 	}
-	// restart runs a restart and checks which rows it makes, in which order, and the notes of progress: a row's note is its place of the 21 rows
+	// restart runs a restart and checks which rows it makes, in which order, and the notes of progress: a row's note is its place of the 22 rows
 	// that a restart with Start done plans, after the 1/6 forge and 2/6 clone of one with Start not done.
-	first := []string{"forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers", "answers-review", "follow-up", "follow-up-answers", "setup", "verify", "scaffold-push", "forge-check"}
-	later := []string{"forge", "clone", "version", "lease", "forge-check", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers", "answers-review", "follow-up", "follow-up-answers", "setup", "verify", "scaffold-push"}
+	first := []string{"forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers", "answers-review", "follow-up", "follow-up-answers", "revision", "setup", "verify", "scaffold-push", "forge-check"}
+	later := []string{"forge", "clone", "version", "lease", "forge-check", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers", "answers-review", "follow-up", "follow-up-answers", "revision", "setup", "verify", "scaffold-push"}
 	var progress []string
 	cfg.Step = func(i, n int, name string) { progress = append(progress, fmt.Sprintf("%d/%d %s", i, n, name)) }
 	restart := func(want Step, names []string) []Step {
@@ -213,7 +213,7 @@ func TestTheStepForgeCheckChecksTheForgeAndCommitsItsTableAtEachRestart(t *testi
 			got = append(got, row.Name)
 		}
 		for i, name := range names {
-			total := 21
+			total := 22
 			if i < 2 {
 				total = 6
 			}
@@ -267,7 +267,7 @@ func TestTheStepForgeCheckChecksTheForgeAndCommitsItsTableAtEachRestart(t *testi
 	// At a later start each step of Intake and of the Scaffold is done before, but the two that give the detail of a finished Intake.
 	doneBefore := map[string]string{"rule-gaps": "done before", "meaning": "done before", "numbering": "done before", "spans": "done before", "draft": "done before", "completeness": "done before",
 		"markers": "done before", "batch": "done before", "answers": "done before", "answers-review": "done before", "follow-up": "nothing to ask again; Intake is done",
-		"follow-up-answers": "no follow-up; Intake is done", "setup": "done before", "verify": "done before", "scaffold-push": "done before"}
+		"follow-up-answers": "no follow-up; Intake is done", "revision": "done before", "setup": "done before", "verify": "done before", "scaffold-push": "done before"}
 	for name, detail := range doneBefore {
 		if got := rowOf(rows, name); got.Result != "done" || got.Detail != detail {
 			t.Errorf("at a later start the step %s is %+v; want done, %q", name, got, detail)

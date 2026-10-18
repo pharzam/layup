@@ -90,7 +90,7 @@ func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
 		}
 		w.Write([]byte("[]"))
 	case strings.HasPrefix(call, "GET /users/"):
-		ids := map[string]int{"pharzam": 101, "carol": 303, "layup-agent[bot]": 9001}
+		ids := map[string]int{"pharzam": 101, "carol": 303, "layup-agent[bot]": 9001, "dave": 707}
 		login := strings.TrimPrefix(r.URL.Path, "/users/")
 		if id, ok := ids[login]; ok {
 			json.NewEncoder(w).Encode(map[string]any{"id": id, "login": login})
@@ -269,8 +269,17 @@ case "$p" in
 		ls=$(printf '%s\n' "$p" | sed -n 's/^The list of markers: //p')
 		[ "$(head -n 1 "$ls")" = "$(printf 'id\tfile\tline\tmarker\tvalue\tstart\tend\tsession')" ] || exit 4
 	fi
+	# The revision (row 66i, task T-8rm6): each attempt's prompt is kept for the
+	# test (the finding of a refused attempt is in the next one).
+	if [ "$(basename "$out")" = revision.tsv ]; then
+		printf '%s\n' "$p" > "$(dirname "$0")/revision-prompt.txt"
+	fi
 	if [ -f "$f" ]; then
 		cat "$f" > "$out"
+	elif [ "$(basename "$out")" = revision.tsv ]; then
+		dr=$(printf '%s\n' "$p" | sed -n 's/^The draft before the revision: //p')
+		# The record's row is the session's with id first and session last.
+		LC_ALL=C awk -F '\t' 'BEGIN { OFS = "\t" } NR == 1 { print "kind", "statement", "covers", "criterion" } NR > 1 { print $2, $3, $4, $5 }' "$dr" > "$out"
 	elif [ "$(basename "$out")" = answers-review.tsv ]; then
 		qs=$(printf '%s\n' "$p" | sed -n 's/^The questions: //p')
 		LC_ALL=C awk -F '\t' 'BEGIN { printf "question\tstate\treason\n" } NR > 1 && $13 == "answered" { printf "%s\tclosed\tthe answer is clear\n", $1 }' "$qs" > "$out"
@@ -748,7 +757,7 @@ func TestTheStepRuleGaps(t *testing.T) {
 	cfg.Step = func(i, n int, name string) { progress = append(progress, fmt.Sprintf("%d/%d %s", i, n, name)) }
 	rows := Restart(context.Background(), cfg)
 	allDone(t, "the restart", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers")
-	if want := []string{"1/6 forge", "2/6 clone", "3/21 version", "4/21 lease", "5/21 probe", "6/21 rule-gaps", "7/21 meaning", "8/21 numbering", "9/21 spans", "10/21 draft", "11/21 completeness", "12/21 markers", "13/21 batch", "14/21 answers"}; strings.Join(progress, ", ") != strings.Join(want, ", ") {
+	if want := []string{"1/6 forge", "2/6 clone", "3/22 version", "4/22 lease", "5/22 probe", "6/22 rule-gaps", "7/22 meaning", "8/22 numbering", "9/22 spans", "10/22 draft", "11/22 completeness", "12/22 markers", "13/22 batch", "14/22 answers"}; strings.Join(progress, ", ") != strings.Join(want, ", ") {
 		t.Errorf("the progress %q, want %q", progress, want)
 	}
 	// What layup psb check prints on the same file (internal/cli/cli.go):
@@ -1233,7 +1242,7 @@ func TestTheStepAnswers(t *testing.T) {
 	rows = Restart(context.Background(), w.config("0.1.0-dev"))
 	// The review (row 47b) closes each answer, and the follow-up asks nothing.
 	rows = beforeSetup(t, rows)
-	allDone(t, "the restart with the answers", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers", "answers-review", "follow-up", "follow-up-answers")
+	allDone(t, "the restart with the answers", rows, "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers", "answers-review", "follow-up", "follow-up-answers", "revision")
 	if d := rowOf(rows, "follow-up").Detail; d != "nothing to ask again; Intake is done" {
 		t.Errorf("the detail of follow-up %q", d)
 	}

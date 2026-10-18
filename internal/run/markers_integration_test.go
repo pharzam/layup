@@ -265,7 +265,7 @@ func TestTheFollowUpAsksTheMarkersAgain(t *testing.T) {
 		case q[1] == "setup" && q[2] == "S01-stack":
 			fmt.Fprintf(&operator, "%s: go\n", q[0])
 		case q[1] == "intent":
-			fmt.Fprintf(&idea, "%s: %s\n", q[0], map[string]string{"band.B": "5.0", "band.U": "10.0", "appetite.hours": "40.0"}[q[2]])
+			fmt.Fprintf(&idea, "%s: %s\n", q[0], map[string]string{"band.B": "5.0", "band.U": "10.0", "appetite.hours": "40.0", "success-criteria": "it does its work"}[q[2]])
 		case q[1] != "setup":
 			fmt.Fprintf(&idea, "%s: the answer to %s\n", q[0], q[0])
 		}

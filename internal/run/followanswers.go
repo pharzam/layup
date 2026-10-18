@@ -59,13 +59,13 @@ func budgetAfterFollowUp(questions, answers, budget [][]string) ([][]string, []s
 	}
 	rows := func() [][]string {
 		var out [][]string
-		for _, f := range intentFields {
+		for _, f := range budgetFields {
 			out = append(out, []string{f, pick[f].v, pick[f].source})
 		}
 		return out
 	}
 	if budget == nil {
-		for _, f := range intentFields {
+		for _, f := range budgetFields {
 			id := batch[f]
 			if fu, asked := follow[id]; asked {
 				if _, answered := answerOf[fu]; answered {
@@ -95,7 +95,7 @@ func budgetAfterFollowUp(questions, answers, budget [][]string) ([][]string, []s
 		pick[r[0]] = value{r[1], r[2]}
 	}
 	var asked []string
-	for _, f := range intentFields {
+	for _, f := range budgetFields {
 		fu, ok := follow[batch[f]]
 		if !ok {
 			continue
@@ -176,6 +176,14 @@ func (r *state) followUpAnswersStep(ctx context.Context) Step {
 	if len(waiting) > 0 {
 		return done(name, "waiting: no answer yet to the follow-up in the block "+strings.Join(waiting, " and the block "))
 	}
+	// The approvers' naming is still open in the window of the follow-up (task
+	// T-8rm6, #365): the same counted copies, bound as the batch's window, and
+	// the same append — a login that holds a row by now is no new row.
+	bound, named := pointBindings(copies, r.approvers, questions[0][9], strconv.Itoa(issue))
+	newApprovers, err := approverRows(ctx, r.cfg.Forge.UserID, bound, named, r.approvers)
+	if err != nil {
+		return fail(name, err)
+	}
 	all := append(slices.Clone(answers), got...)
 	when := map[string]string{}
 	for _, a := range got {
@@ -232,8 +240,22 @@ func (r *state) followUpAnswersStep(ctx context.Context) Step {
 			said = "budget.tsv kept"
 		}
 	}
+	if len(newApprovers) > 0 {
+		held := append(slices.Clone(r.approvers), newApprovers...)
+		if files["approvers.tsv"], err = table(records.ApproversSchema, held); err != nil {
+			return fail(name, err)
+		}
+		if _, err := records.ReadApprovers(files["approvers.tsv"]); err != nil {
+			return fail(name, err)
+		}
+	}
 	if err := r.write(ctx, files, "layup run: the answers to the follow-up"); err != nil {
 		return fail(name, err)
 	}
-	return done(name, fmt.Sprintf("%d answers to the follow-up, in intake/answers.tsv; %s; Intake is done", len(got), said))
+	r.approvers = append(r.approvers, newApprovers...)
+	more := ""
+	if len(newApprovers) > 0 {
+		more = fmt.Sprintf("; approvers.tsv: %d approver row(s)", len(newApprovers))
+	}
+	return done(name, fmt.Sprintf("%d answers to the follow-up, in intake/answers.tsv; %s%s; Intake is done", len(got), said, more))
 }

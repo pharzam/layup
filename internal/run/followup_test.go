@@ -75,14 +75,17 @@ func TestKeepOfTheReview(t *testing.T) {
 // The follow-up asks again each question still asked, each open one, and each
 // field of the intent form that does not parse (a B not below U is an
 // unparsed answer of both); one row per question.
-func TestFollowUpRows(t *testing.T) {
-	ids := func(rows [][]string) string {
-		var out []string
-		for _, r := range rows {
-			out = append(out, r[0]+"<"+r[2])
-		}
-		return strings.Join(out, " ")
+// idsJoin joins a follow-up's rows as "Q-NNN<ref" pairs.
+func idsJoin(rows [][]string) string {
+	var out []string
+	for _, r := range rows {
+		out = append(out, r[0]+"<"+r[2])
 	}
+	return strings.Join(out, " ")
+}
+
+func TestFollowUpRows(t *testing.T) {
+	ids := idsJoin
 	for _, c := range []struct {
 		name      string
 		questions [][]string
@@ -116,6 +119,32 @@ func TestFollowUpRows(t *testing.T) {
 	all[2][11], all[2][12] = "2026-10-11T10:05:00Z", "closed"
 	if rows := followUpRows(all, followAnswers("9.5", "10.0", "40.0"), "t"); rows != nil {
 		t.Errorf("nothing to ask: %q; want no row", rows)
+	}
+}
+
+// A field of the intent form that is no name of the budget — the success
+// criteria — is not asked again for its answer parsing no decimal; an open or
+// a still-asked one is asked like any question.
+func TestTheCriteriaFieldIsAskedOnlyByState(t *testing.T) {
+	criteria := func(state, answered string) []string {
+		if state == "asked" {
+			answered = ""
+		}
+		return []string{"Q-007", "intent", "success-criteria", "idea-owner", "before-delivery", "intent", "", "", "The criteria?", "2026-10-11T10:00:00Z", "layup run", answered, state}
+	}
+	answers := append(slices.Clone(followAnswers("9.5", "10.0", "40.0")),
+		[]string{"Q-007", "fast; cheap", "802", "303", "2026-10-11T10:05:00Z"})
+	for _, c := range []struct {
+		name, state, answered, want string
+	}{
+		{"answered, its words no decimal", "closed", "2026-10-11T10:05:00Z", "Q-008<Q-003"},
+		{"open, asked again by its state", "open", "2026-10-11T10:05:00Z", "Q-008<Q-003 Q-009<Q-007"},
+		{"still asked, asked again", "asked", "", "Q-008<Q-003 Q-009<Q-007"},
+	} {
+		questions := append(slices.Clone(followQuestions("closed", "closed", "closed", "closed", "closed")), criteria(c.state, c.answered))
+		if rows := followUpRows(questions, answers, "2026-10-11T11:00:00Z"); idsJoin(rows) != c.want {
+			t.Errorf("%s: %v; want %s", c.name, rows, c.want)
+		}
 	}
 }
 
@@ -155,7 +184,9 @@ func TestTheFollowUpOfASetupQuestion(t *testing.T) {
 		t.Fatalf("the follow-up rows %q; want the rule gap, S01-stack and the marker, each in the block of its question", rows)
 	}
 	c := followUpComment(questions, rows, []byte(batchPSB), batchFixture(t).Markers)
-	want := "\n## For the idea owner\n\nQ-009: Which stack?\n\n## For the Operator\n\nQ-010: " + workpkg.S01Questions[0].Text + "\n\n" +
+	pointForm := "Name the approver of each planned point, one line `<point>: <login>` for each you name (a point you do not name is yours):\n" +
+		"- `setup`\n- `bet`\n- `activation`\n- `retrospective`\n- `early-retrospective`\n- `audit`\n"
+	want := "\n## For the idea owner\n\nQ-009: Which stack?\n\n" + pointForm + "\n## For the Operator\n\nQ-010: " + workpkg.S01Questions[0].Text + "\n\n" +
 		"Q-011: " + marker + "\nproposed: Carol\n`We use Go and TLA and XYZ.`\n\n"
 	if !strings.Contains(c, want) {
 		t.Errorf("the comment has no %q:\n%s", want, c)
