@@ -155,3 +155,7 @@ Exit status read directly; the whole integration level ran in the background wit
 | `go vet -tags=e2e ./cmd/layup/` | 0 | 09:29:48Z |
 | `go test -count=1 -tags=integration -timeout 30m ./...` (whole level; `internal/run` 1644.6 s, `internal/rules` 11.7 s) | 0 | 09:29:21Z to 09:58:08Z |
 | `adr-lint`, `prd-lint`, `link-lint`, `run-discipline-tests`, `setup-check`, `nested-checkout-check` | 0 each | 09:29:52Z to 09:31:55Z (re-run after the evidence files, below) |
+
+## Merge of main (3b58b3a, #410 T-gyvo)
+
+`git merge origin/main`, no Go file conflicted. Conflicts, all in documents, each kept on both sides: plan rows 66n (mine) and 66o (main's); the two loop.md acceptance rows likewise; the traceability rows of both tasks; the PRD change-log rows of both; and the REQ-005 cells of PRD §12 (Task `T-4pje, T-yeav, T-gyvo`, the Test cell with both additions, merged by cell from the common base). After the merge, at 10:05Z to 10:07Z: build, vet, `go test ./...` and the five text checks exit 0; the named integration tests of `internal/run` and `internal/rules` exit 0 (23 s, 1 s); `git diff --check` exit 0.

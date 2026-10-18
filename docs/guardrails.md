@@ -1286,6 +1286,15 @@ failure modes worth keeping.
   take the backup fresh from the frozen head, verify what each restore
   wrote (content or hash against the head's file), and re-run a green
   control on the restored tree before crediting a single mutant.
+- ❌ **A row checker used as if it were the reader.** `records.CheckSession` and
+  `records.CheckResultRow` check the rules of a row that the reader has already passed by
+  its schema and types; a raw slice with a tab or a line feed in a field, an attempt
+  `02` or a task `bad` passes them, and `tsv.Write` repairs such a field with a space
+  instead of refusing it, so a composer that wrote and re-read its row would compose
+  repaired bytes. Task `T-gyvo` (#405), found by its plan review. **The check:** a
+  function that takes a raw row reads it as a one-row table with `tsv.Read` (the
+  empty value as `—`), requires the parsed row to equal the input, then applies the
+  row rules; and each refusal has a one-token valid control.
 
 ## 3. Validation — how you check you are not fooling yourself
 
