@@ -518,11 +518,22 @@ comment and the answer's comment are composed by code from their rows — first 
 `<session>: <role> session of <task>, attempt <n>: question <q-id>`, and for the
 answer `answer <a-id> of <q-id>` in the place of `question <q-id>`, where `<q-id>`
 and `<a-id>` are `<S-xxxxxxxx>.<n>`, the session that wrote the row and the row's
-`n` (the form of the answer ID), then the row's text — posted on the task's issue
+`n` (the form of the answer ID), then, after one blank line, the row's text with
+no final newline — posted on the task's issue
 and copied by the same machinery as a session's comment: a plain comment of the
 App, **not** an artifact of a handoff, and `commentKind` keeps its three kinds. A
 restart recomposes the same bytes from the row, so the adoption of a comment of
-the App that exists applies. [The items a caller computes](#the-items-a-caller-computes)
+the App that exists applies. **Decided here** (task `T-gyvo`, #405, row 66o, under
+its plan review): the text follows one blank line and the body has no final
+newline, because the pinned form named a first line and the text but not the
+separator or the end; `n` is the result's column `n`, never the text or the
+reason; the answer's `<q-id>` is named by the caller and checked by the form of
+an ID, neither read from the row's reason nor resolved against the records. The
+composers take the session's start row and one row of its result, as the
+records' readers give them, and give an error and no bytes for a start row or a
+row that fails the reader's schema and types or its rules (with no repair of a
+byte), for a row of another kind, and for a body that `CheckCommentBody` refuses
+(a `HandoffRefusal`). [The items a caller computes](#the-items-a-caller-computes)
 names the row that posts them.
 
 ### The items a caller computes
@@ -600,7 +611,8 @@ false. The parsed plan fields likewise feed the task's tier and context read:
 the parse is row 66l's, the consuming wiring the step loop's (row 66k) — a
 declaration of the boundary, nothing of it claimed built.
 
-**The question and answer comments** are composed by `internal/run` from the
+**The question and answer comments** are composed by `internal/run` (row 66o,
+`T-gyvo`, #405; composition only, no post) from the
 result's `question` and `answer` rows — first line and body as [a question during
 the work](#the-checks-of-a-handoff) pins — and posted on the task's issue by the
 post→copy machinery of the step loop (**row 66k**, #367, whose comments of a task
@@ -1472,7 +1484,7 @@ the milestone covers it end to end.
 | A handoff is valid only by its table (inventory) | unit | A handoff with a wrong schema, an artifact that is not in the commits, a hash that differs, a required item that is false, and a pair with no row is each invalid, naming the item; a field that an agent writes never makes one valid; a comment artifact whose body at the forge differs from its copy is invalid. |
 | The artifact that is a comment (`gov-issue-68`) | unit; integration | With the stand-in forge (the `httptest` forge for the integration part), for each of the kinds `plan`, `plan-review` and `review-record`: the session's file, the comment that code posts from its bytes, the copy and its row, the `handoff` event with the comment ID that code read, the three equal hashes; an edited comment is a new copy and the first handoff is invalid; a result that holds a comment ID is refused; a `comment` row is checked against the session's `result/` file, its file is kept byte for byte in the commit of the result, and an `artifact` row against the head; a run that stops after the end, between the post and the copy, or before the post, posts once from the records; a lost lease posts nothing. |
 | The route of a question and the acceptance of an answer | unit; integration | A question goes to the owner role of its kind when its `needs_human` word is `no` and its label is one of the four, and to the Operator for `yes`, for any other word and for any other label; a replaced owner map routes by its roles; the items `question-row` and `answer-row` are computed from the result, whatever the caller passes; an answer is accepted by the next attempt that ends `completed` and cites its ID in the status row, with no question of that attempt citing it, and by no other attempt, and only when its session is of the owner role (the rule of "A question during the work": an answer of a developer, of the owner of another kind, of a session with no start row, to a human question or to questions of more than one owner role is refused, and the owner role's is accepted, from `sessions.tsv` and through `Position`); with the real `git`, a question session, the session of the owner role and the next attempt give the records from which the route and the acceptance are read. |
-| The item computers of the task loop | unit; integration (a real `git` tree for `spec-sections` and `rendering-equal`) | Each item is computed from the kept copy of a comment, the `docs/spec/` files or the tree at a head: a copy that parses the pinned form makes the item true and one that does not makes it false, and a handoff listing the item is `valid` or `invalid <item>` by the computed result, never by a caller's literal; the question and answer comments are composed from their rows and posted on the task's issue. |
+| The item computers of the task loop | unit; integration (a real `git` tree for `spec-sections` and `rendering-equal`) | Each item is computed from the kept copy of a comment, the `docs/spec/` files or the tree at a head: a copy that parses the pinned form makes the item true and one that does not makes it false, and a handoff listing the item is `valid` or `invalid <item>` by the computed result, never by a caller's literal; the question and answer comments are composed from their rows (row 66o: unit; integration on the rows of a real end) and posted on the task's issue by row 66k. |
 | The transition table | unit | The default rows are the thirteen of the table (the twelve of `architecture.md` §8 and the row of the target's architecture task, which §8 names a task and gives no row); a replacement table is refused for a missing default pair, a kind or an item not in the lists, and a row of code's own handoff (`code (rendered task)`) that lists `schema`, while another row keeps its `schema`, and the steps that are `layup run`'s own acts need no row. |
 | The replacement of the transition table at the boundary | integration | With the stand-in forge and real git: `set transitions <sha256>` names a copy of a comment of the control issue; the new table is the bytes of that copy, written with the row `transitions` in one records commit, so its SHA-256 is the row's value; the old table stays in Git history and the next task keeps the new one; a hash of no copy or of a copy of another issue, a body that is no table (a code fence, a carriage return) and a table that fails the check each refuse with the item `bound` (`value` for a value that is no SHA-256) and write nothing. |
 | `layup spec check`, the full check (inventory) | unit | Each rule of the table fails on its input and passes on its fixture; before the first bet a task that touches neither the PRD nor `docs/spec/` is `clear`; `did not run` is a failure. |
