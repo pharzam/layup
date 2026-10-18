@@ -26,6 +26,7 @@ type Fake struct {
 	AppBot      Status // the creator (ID and login) that SetStatus gives a status
 
 	issues   int
+	closed   map[int]string // an issue closed by CloseIssue, to its reason (task T-xyws)
 	comments map[int][]Comment
 	prs      []*fakePR
 	heads    map[string]string
@@ -270,15 +271,62 @@ func (f *Fake) Merge(_ context.Context, number int, sha string) (string, error) 
 	return pr.MergeSHA, nil
 }
 
-// ClosePullRequest is a stub (task T-xyws).
-func (f *Fake) ClosePullRequest(context.Context, int) (PullRequest, error) {
-	return PullRequest{}, nil
+// ClosePullRequest closes a pull request. A closed one stays closed, and a merged
+// one changes nothing: it is given with Merged true, as the forge answers (forge.md,
+// The calls of M2e, The closes; task T-xyws). Number below 1 is refused before the
+// failure of the call.
+func (f *Fake) ClosePullRequest(_ context.Context, number int) (PullRequest, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if number < 1 {
+		return PullRequest{}, &Error{Call: "ClosePullRequest", Message: "the pull request number is not valid"}
+	}
+	if err := f.err("ClosePullRequest"); err != nil {
+		return PullRequest{}, err
+	}
+	pr := f.pr(number)
+	if pr == nil {
+		return PullRequest{}, &Error{Call: "ClosePullRequest", Status: 404, Message: "Not Found"}
+	}
+	pr.State = "closed"
+	return pr.PullRequest, nil
 }
 
-// CloseIssue is a stub (task T-xyws).
-func (f *Fake) CloseIssue(context.Context, int) error { return nil }
+// CloseIssue closes an issue as not planned; a repeat changes nothing.
+func (f *Fake) CloseIssue(_ context.Context, number int) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if number < 1 {
+		return &Error{Call: "CloseIssue", Message: "the issue number is not valid"}
+	}
+	if err := f.err("CloseIssue"); err != nil {
+		return err
+	}
+	if number > f.issues {
+		return &Error{Call: "CloseIssue", Status: 404, Message: "Not Found"}
+	}
+	if f.closed == nil {
+		f.closed = map[int]string{}
+	}
+	if _, done := f.closed[number]; !done {
+		f.closed[number] = "not_planned"
+	}
+	return nil
+}
 
-// IssueState is a stub (task T-xyws).
-func (f *Fake) IssueState(int) (state, reason string, ok bool) { return "", "", false }
+// IssueState gives the state of an issue and, when closed, its reason: open with an
+// empty reason, or closed with the reason that CloseIssue gave; ok is false for a
+// number that is none. A test reads what a close changed with it.
+func (f *Fake) IssueState(number int) (state, reason string, ok bool) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if number < 1 || number > f.issues {
+		return "", "", false
+	}
+	if r, done := f.closed[number]; done {
+		return "closed", r, true
+	}
+	return "open", "", true
+}
 
 var _ Forge = (*Fake)(nil)

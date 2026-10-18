@@ -545,13 +545,48 @@ func (a *Adapter) Merge(ctx context.Context, number int, sha string) (string, er
 	return out.SHA, nil
 }
 
-// ClosePullRequest is a stub (task T-xyws).
-func (a *Adapter) ClosePullRequest(context.Context, int) (forge.PullRequest, error) {
-	return forge.PullRequest{}, nil
+// ClosePullRequest closes a pull request: the state alone, so nothing else of it can
+// change. The answer is read, never trusted: a state other than closed is a forge
+// error. A closed or a merged one is given as the forge answers (forge.md, The calls
+// of M2e, The closes; task T-xyws).
+func (a *Adapter) ClosePullRequest(ctx context.Context, number int) (forge.PullRequest, error) {
+	if number < 1 {
+		return forge.PullRequest{}, &forge.Error{Call: "ClosePullRequest", Message: "the pull request number is not valid"}
+	}
+	var out pullWire
+	if _, err := a.do(ctx, "ClosePullRequest", "PATCH", fmt.Sprintf("%s%s/pulls/%d", a.cfg.API, a.repo(), number), byToken,
+		[]byte(`{"state":"closed"}`), 200, &out); err != nil {
+		return forge.PullRequest{}, err
+	}
+	if out.State != "closed" {
+		return forge.PullRequest{}, &forge.Error{Call: "ClosePullRequest", Status: 200, Message: fmt.Sprintf("the pull request is not closed: its state is %q", out.State)}
+	}
+	return out.pull(), nil
 }
 
-// CloseIssue is a stub (task T-xyws).
-func (a *Adapter) CloseIssue(context.Context, int) error { return nil }
+// CloseIssue closes an issue as not planned: the state and the reason alone. The
+// answer is read: a state other than closed, or a pull request (the numbers share
+// one space, and that close has already taken effect), is a forge error.
+func (a *Adapter) CloseIssue(ctx context.Context, number int) error {
+	if number < 1 {
+		return &forge.Error{Call: "CloseIssue", Message: "the issue number is not valid"}
+	}
+	var out struct {
+		State       string          `json:"state"`
+		PullRequest json.RawMessage `json:"pull_request"`
+	}
+	if _, err := a.do(ctx, "CloseIssue", "PATCH", fmt.Sprintf("%s%s/issues/%d", a.cfg.API, a.repo(), number), byToken,
+		[]byte(`{"state":"closed","state_reason":"not_planned"}`), 200, &out); err != nil {
+		return err
+	}
+	if out.State != "closed" {
+		return &forge.Error{Call: "CloseIssue", Status: 200, Message: fmt.Sprintf("the issue is not closed: its state is %q", out.State)}
+	}
+	if len(out.PullRequest) > 0 && string(out.PullRequest) != "null" {
+		return &forge.Error{Call: "CloseIssue", Status: 200, Message: "the number is a pull request"}
+	}
+	return nil
+}
 
 // graphqlURL gives the URL of the GraphQL API of a REST api: <api>/graphql, and
 // for a GitHub Enterprise Server api that ends in /api/v3, /api/graphql.
