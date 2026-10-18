@@ -41,3 +41,6 @@ func (s *Sessions) GatesTable(context.Context, string, string) (gate.Table, bool
 
 // GatesAt gives the status layup/gates of a head, running the gate once.
 func (s *Sessions) GatesAt(context.Context, GatesInput) (Status, error) { return Status{}, nil }
+
+// gatesComplete says whether the rows of a head hold exactly the kinds and states of the manifest, in its order.
+func gatesComplete([][]string, []byte) error { return nil }

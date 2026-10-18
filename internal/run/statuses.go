@@ -44,3 +44,8 @@ type RulesInput struct {
 
 // RulesAt gives the status layup/rules of a head.
 func (s *Sessions) RulesAt(context.Context, RulesInput) (Status, error) { return Status{}, nil }
+
+// registerRevOf gives the commit whose rule-path register judges the head.
+func registerRevOf(task, head string, events, sessions [][]string, given string) (string, error) {
+	return "", nil
+}

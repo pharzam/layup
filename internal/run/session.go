@@ -69,6 +69,7 @@ type Sessions struct {
 	process       func(s session.Spec) (session.Run, error)
 	environ       func(d session.Dir, h session.Harness) ([]string, error)
 	exists        func(path string) bool
+	manifestAt    func(base string) ([]byte, error) // docs/gates.tsv at a base, nil for none (row 66f)
 }
 
 // Pair is the admitted pair of a session, as internal/route reads the harness
