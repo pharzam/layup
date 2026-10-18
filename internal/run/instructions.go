@@ -6,6 +6,8 @@ package run
 // the task loop accept. The text of record is the block of loop.md, and a test
 // compares each constant with its block byte for byte, as it does for the probe.
 
+import "github.com/pharzam/layup/internal/spec"
+
 // The names of the comment files of a task session, which row 66r's driver passes
 // as the file of the handoff (loop.md, The instruction of a task step).
 const (
@@ -36,3 +38,20 @@ type taskExtras struct {
 	Survivors              []survivor
 	From                   string
 }
+
+// inputsWanted says which inputs of the task a step receives (stub).
+func inputsWanted(step, kind string) (shape, options, ledger bool) { return }
+
+// checkStepKind refuses a step that is not a step of a task of the kind (stub).
+func checkStepKind(step, kind string) error { return nil }
+
+// optionsKept checks the results of the filter against the tables (stub).
+func optionsKept(opts map[string]spec.Result, read func(string) ([]byte, error)) ([]kept, []survivor, error) {
+	return nil, nil, nil
+}
+
+// labelList gives the labels of an owner map (stub).
+func labelList(owners map[string]string) string { return "" }
+
+// fill replaces each {name} of text by its value (stub).
+func fill(text string, vars map[string]string) string { return text }

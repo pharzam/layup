@@ -59,6 +59,7 @@ func baseSrc(t *testing.T, step string) promptSrc {
 			"AGENTS.md":                   "rules\n",
 			"docs/rules/a.md":             "rule a\n",
 			"docs/other.md":               "other\n",
+			"docs/facts/F-0003.md":        "facts\n",
 		}),
 		Findings: []Finding{{Rule: "gate:static", Text: "command failed"}},
 	}
