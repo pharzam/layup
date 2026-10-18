@@ -4,8 +4,8 @@ package run
 // (docs/spec/loop.md, The independence of the reviewers; docs/architecture.md
 // §9, Routing; task T-6zj3, #361, row 66e of the plan of M2e): the authors are
 // computed from the records and the ancestry of the commits, never from a field
-// that an agent writes. The status that posts `not-active` is #362's; the
-// authors that an Operator's stall answer makes (a diff passed to an attempt)
+// that an agent writes. The status that posts `not-active` is VerifyAt's (task
+// T-q0kr, #362); the authors that an Operator's stall answer makes (a diff passed to an attempt)
 // have no record before M3d, and are added there.
 
 import (
@@ -132,35 +132,51 @@ func (s *Sessions) PairFor(ctx context.Context, role, tier string, harnesses, mo
 	if err != nil {
 		return nil, nil, err
 	}
-	probes, err := s.readTable(ctx, "harnesses.tsv", records.ReadHarnesses)
+	admitted, err := s.admission(ctx, harnesses, models)
 	if err != nil {
 		return nil, nil, err
 	}
-	last := map[string]string{} // the version of each harness's last row
-	for _, r := range probes {
-		last[r[1]] = r[2]
-	}
-	row := func(harness string) []string {
-		for _, h := range harnesses {
-			if h[regHarness] == harness {
-				return h
-			}
-		}
-		return nil
-	}
 	harness, model, err := route.Pair(routing, role, tier, func(h, m string) bool {
-		v, probed := last[h]
-		return !slices.Contains(except, h) && probed && row(h) != nil && route.Admitted(probes, models, h, v, m)
+		return !slices.Contains(except, h) && admitted(h, m)
 	})
 	if err != nil {
 		return nil, nil, err
 	}
 	for _, m := range models {
 		if m[0] == harness && m[1] == model {
-			return row(harness), m, nil
+			return registerRow(harnesses, harness), m, nil
 		}
 	}
 	return nil, nil, route.ErrNoPair // not reached: Admitted holds only for a row of models
+}
+
+// registerRow gives the row of a harness in the harness register, nil for none.
+func registerRow(harnesses [][]string, harness string) []string {
+	for _, h := range harnesses {
+		if h[regHarness] == harness {
+			return h
+		}
+	}
+	return nil
+}
+
+// admission gives the test of a pair of a harness and a model that PairFor and
+// the status layup/verify share: the harness is in the register and its last
+// probe, at the version of its last row of records:harnesses.tsv, passed, and the
+// model's row of models has use yes (route.Admitted).
+func (s *Sessions) admission(ctx context.Context, harnesses, models [][]string) (func(harness, model string) bool, error) {
+	probes, err := s.readTable(ctx, "harnesses.tsv", records.ReadHarnesses)
+	if err != nil {
+		return nil, err
+	}
+	last := map[string]string{} // the version of each harness's last row
+	for _, r := range probes {
+		last[r[1]] = r[2]
+	}
+	return func(h, m string) bool {
+		v, probed := last[h]
+		return probed && registerRow(harnesses, h) != nil && route.Admitted(probes, models, h, v, m)
+	}, nil
 }
 
 // ReviewerPair gives the pair of a plan review or a verification of the task's

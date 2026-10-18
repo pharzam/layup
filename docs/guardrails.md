@@ -1156,6 +1156,14 @@ These traps are not domain-specific: they hurt every project's test suite.
   tree survived. It is silent because every row of the table was an error. **The check:** give each call its own row
   where the earlier calls succeed (here, a facts-only call), and keep the mutant that swallows that call.
   Learned in `T-yeav` (#404).
+- ❌ **A saved table that parses is taken for a complete one.** A `gates.tsv` or `spec-check.tsv` with a header
+  alone, or with a kind or a rule omitted, passes its schema, and a status made from only the rows it holds reads
+  as a pass (a loop over no failing row is a success). It is silent because every row present is `pass`. **The
+  check:** a status is made from a table only after a check against the list that fixes it (the manifest at the
+  base, the rules of the block, in order), and a test omits one kind and one rule, with a control that holds
+  all. A second trap of the same task: a helper that copies a struct by hand (`afterRestart`) drops a field added
+  later (here the bot ID), so the restart cannot tell its own status; assert the field on the copy.
+  Learned in `T-q0kr` (#362).
 
 ### Reference-sweep pitfalls
 

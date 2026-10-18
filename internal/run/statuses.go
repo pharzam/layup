@@ -6,8 +6,12 @@ package run
 
 import (
 	"context"
+	"fmt"
+	"slices"
+	"strings"
 
 	"github.com/pharzam/layup/internal/forge"
+	"github.com/pharzam/layup/internal/records"
 	"github.com/pharzam/layup/internal/rules"
 )
 
@@ -19,33 +23,147 @@ const (
 	VerifyContext = "layup/verify"
 )
 
+var statusContexts = []string{GatesContext, SpecContext, RulesContext, VerifyContext}
+
 // A Status is a commit status to post: its context, one of the four states and
 // a description of one line.
 type Status struct{ Context, State, Description string }
 
-// fit gives the description as one line of at most forge.MaxDescription characters.
-func fit(s string) string { return s }
+// fit gives the description as one line of at most forge.MaxDescription
+// characters: a CR or LF becomes a space, and a longer text is cut to one
+// character less and ends in an ellipsis, so SetStatus never refuses it.
+func fit(s string) string {
+	s = strings.NewReplacer("\r", " ", "\n", " ").Replace(s)
+	if r := []rune(s); len(r) > forge.MaxDescription {
+		return string(r[:forge.MaxDescription-1]) + "…"
+	}
+	return s
+}
 
-// appStatus gives the newest status of the context whose creator is the bot.
-func appStatus(forge.HeadChecks, string, int64) (forge.Status, bool) { return forge.Status{}, false }
+// appStatus gives the newest status of the context whose creator is the bot
+// (HeadChecks holds the statuses newest first). A status of another creator is
+// never the App's.
+func appStatus(c forge.HeadChecks, context string, bot int64) (forge.Status, bool) {
+	for _, st := range c.Statuses {
+		if st.Context == context && st.CreatorID == bot {
+			return st, true
+		}
+	}
+	return forge.Status{}, false
+}
 
 // PostStatus posts st on the head sha unless the App's newest status of the
-// context already has its state and description. It tells whether it posted.
-func (s *Sessions) PostStatus(context.Context, string, Status) (bool, error) { return false, nil }
+// context already has its state and description (loop.md, REQ-007). The SHA, the
+// context, the state and the bot are checked before any request; the lease is
+// read just before the post, and a lost lease posts nothing. It tells whether it
+// posted.
+func (s *Sessions) PostStatus(ctx context.Context, sha string, st Status) (bool, error) {
+	if !forge.FullSHA(sha) {
+		return false, fmt.Errorf("the status of %q: the SHA is not a full object ID", sha)
+	}
+	if !slices.Contains(statusContexts, st.Context) {
+		return false, fmt.Errorf("the context %q is none of the four of layup run", st.Context)
+	}
+	st.Description = fit(st.Description)
+	if err := forge.ValidStatus(st.State, st.Description); err != nil {
+		return false, err
+	}
+	if s.Bot == 0 {
+		return false, fmt.Errorf("the ID of the App's bot is not known: no status can be told to be the App's")
+	}
+	checks, err := s.Forge.Statuses(ctx, sha)
+	if err != nil {
+		return false, err
+	}
+	if cur, ok := appStatus(checks, st.Context, s.Bot); ok && cur.State == st.State && cur.Description == st.Description {
+		return false, nil
+	}
+	if err := s.holdsLease(ctx); err != nil {
+		return false, err
+	}
+	if err := s.Forge.SetStatus(ctx, sha, st.Context, st.State, st.Description); err != nil {
+		return false, err
+	}
+	return true, nil
+}
 
-// RulesStatus gives the status of layup/rules for the result of the basic rule.
-func RulesStatus(rules.Result) Status { return Status{} }
+// RulesStatus gives the status of layup/rules for the result of the basic rule:
+// its state, and the reason, with the path when the result has one. A result with
+// no state is an error, never a pass.
+func RulesStatus(r rules.Result) Status {
+	switch r.State {
+	case rules.Success, rules.Failure, rules.Error:
+	default:
+		return Status{RulesContext, "error", "error: no result"}
+	}
+	d := r.Reason
+	if r.Path != "" {
+		d += ": " + r.Path
+	}
+	return Status{RulesContext, string(r.State), fit(d)}
+}
 
-// A RulesInput is what the caller knows of the head whose layup/rules is asked.
+// A RulesInput is what the caller knows of the head whose layup/rules is asked:
+// the task, the base, the head, the rendered records and the revision a PRD is
+// rendered from, as rules.Input takes them, and RegisterRev, the commit of the
+// register for a head that code produced.
 type RulesInput struct {
 	Task, Base, Head, PreRev, RegisterRev string
 	Records                               []rules.Record
 }
 
-// RulesAt gives the status layup/rules of a head.
-func (s *Sessions) RulesAt(context.Context, RulesInput) (Status, error) { return Status{}, nil }
-
-// registerRevOf gives the commit whose rule-path register judges the head.
+// registerRevOf gives the commit whose rule-path register judges the head: the
+// records column of the start row of the session of the task that has the event
+// bound of the head (sessions of one head must agree), or the commit that the
+// caller gives for a head that no session pushed. Never the head's own register,
+// and never a commit that the caller gives for a head that has a bound session.
 func registerRevOf(task, head string, events, sessions [][]string, given string) (string, error) {
-	return "", nil
+	found := ""
+	for _, e := range events {
+		if e[1] != "bound" || e[5] != head {
+			continue
+		}
+		i := slices.IndexFunc(sessions, func(r []string) bool { return r[sessionID] == e[3] })
+		if i < 0 {
+			return "", fmt.Errorf("the event bound of %s has no start row in sessions.tsv", e[3])
+		}
+		if sessions[i][sessionTask] != task {
+			continue
+		}
+		rec := sessions[i][sessionRecords]
+		if found != "" && found != rec {
+			return "", fmt.Errorf("the sessions bound to %s name two records commits", head)
+		}
+		found = rec
+	}
+	switch {
+	case found != "" && given != "":
+		return "", fmt.Errorf("%s has a bound session: the register commit is the one of its start row", head)
+	case found != "":
+		return found, nil
+	case !forge.FullSHA(given):
+		return "", fmt.Errorf("%s has no bound session of %s, and the register commit %q is no full SHA", head, task, given)
+	}
+	return given, nil
+}
+
+// RulesAt gives the status layup/rules of a head: rules.Basic over the base and
+// the head, by the register of the commit that registerRevOf names.
+func (s *Sessions) RulesAt(ctx context.Context, in RulesInput) (Status, error) {
+	if !forge.FullSHA(in.Base) || !forge.FullSHA(in.Head) {
+		return Status{}, fmt.Errorf("the base and the head of layup/rules are full SHAs")
+	}
+	events, err := s.readTable(ctx, eventsPath(in.Task), records.ReadEvents)
+	if err != nil {
+		return Status{}, err
+	}
+	sessions, err := s.readTable(ctx, "sessions.tsv", records.ReadSessions)
+	if err != nil {
+		return Status{}, err
+	}
+	rev, err := registerRevOf(in.Task, in.Head, events, sessions, in.RegisterRev)
+	if err != nil {
+		return Status{}, err
+	}
+	return RulesStatus(rules.Basic(rules.Git(s.Clone), rules.Input{Base: in.Base, Head: in.Head, RegisterRev: rev, PreRev: in.PreRev, Records: in.Records})), nil
 }
