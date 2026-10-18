@@ -64,3 +64,11 @@ The reader-boundary mutants (M12, M13, M14, M15, M16, M19, M21) and the body mut
 
 ## Step 5: gates
 
+All statuses are direct. Times are `date -u` after each command.
+
+- `go build ./...`, `go vet ./...`, `go vet -tags=e2e ./cmd/layup/`, `go vet -tags=integration ./...`: exit 0 (08:02). `gofmt -l .`: empty.
+- `go test ./...` in the hook of each commit: exit 0.
+- `go test -count=1 -tags=integration ./cmd/layup/` (`TestPackageRules` after the edit of `packages.md`): exit 0, 08:02:40.
+- The whole integration level, `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./...`, started 07:57:59 on the head 2d9d3fb (the document commit fc5ab73 changes no Go file; `cmd/layup` was re-run above after it): exit 0 at 08:24:19, about 26 min on the loaded host; no package FAIL.
+- `sh docs/adr/adr-lint.sh`, `sh docs/prd/prd-lint.sh`, `sh docs/links/link-lint.sh`, `sh docs/tests/run-discipline-tests.sh` (138 passed), `sh docs/setup/setup-check.sh` (after `git add`), `git diff --check origin/main HEAD`: exit 0 (08:03).
+- E2E stays CI-only (`go vet -tags=e2e ./cmd/layup/` exit 0 is the local proof it compiles).
