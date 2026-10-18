@@ -215,7 +215,9 @@ The same API and version header as [The calls of M2a](#the-calls-of-m2a) (task
 - **A comparison reads, never trusts.** The ready and merge rule reads `Statuses` (a check run: the newest of each name, `filter=latest`)
   just before each of `MarkReady` and `Merge`; a context counts only when it is
   `success`, its creator is the App, and it is the newest status of that context at
-  the head. A required check of another source with the same name does not count.
+  the head **of any creator** (**decided here**, task `T-xvvd`, #363: the reading of "the newest status" for the
+  ready rule is the newest of all sources, so a newer status of another source blocks; the posting of a
+  status in `internal/run` keeps its own selection, the newest status of the App). A required check of another source with the same name does not count.
 - **The stand-in** is `forge.Fake` (**decided here**, task `T-cr8j`; it settles the
   home that #373 asked about): a non-test file of `internal/forge`, standard library
   only, in memory, which gives the whole interface; a test sets its permissions,

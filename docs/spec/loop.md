@@ -50,7 +50,7 @@ holds the rule.
 | 1 | the issue | `layup run` | the requirement IDs and the Definition of Done of the task's row | the row of `tasks.tsv` names each requirement ID and each predecessor | [The task register](#the-task-register) |
 | 2 | the plan and its review | a plan session; a plan-review session on another harness | the issue, the specification sections of the requirement IDs | the plan has its four fixed fields and lists its tests by ID; the review has the verdict field `approve` or `approve-with-conditions` | [The transition table](#the-transition-table) |
 | 3 | the developer | a developer session | the plan, the findings of the last attempt | the typed result ([`session.md`](session.md#req-005--the-result-of-a-session)); the tests of the plan fail at the base and pass at the head | [The checks of a handoff](#the-checks-of-a-handoff) |
-| 4 | the draft pull request | `layup run` | the branch of the attempt | no rule-path change ([`architecture.md`](../architecture.md) §6, prevention layer 2); the title in the target's form; the body links the issue and the records commit the task started from | [The pull request](#the-pull-request) |
+| 4 | the draft pull request | `layup run` | the branch of the attempt | no rule-path change ([`architecture.md`](../architecture.md) §6, prevention layer 2); the title in the form of the `pr-title` check; the body links the issue and the records commit the task started from | [The pull request](#the-pull-request) |
 | 5 | the checks | the target's CI, `layup gate`, `layup spec check`, `layup/rules` | each new head | the four statuses | [The four `layup/` statuses](#req-007--the-four-layup-statuses) |
 | 6 | the verifier | a verifier session on a harness that is not an author | the head, read-only | the review record in the target's form, with a `file:line` for each finding | [The independence of the reviewers](#the-independence-of-the-reviewers) |
 | 7 | the close-out | a close-out session | the verdict, the ledger | the commit changes only the task file and the completed log | [The merge at the head SHA and the close-out commit](#the-merge-at-the-head-sha-and-the-close-out-commit) |
@@ -72,8 +72,8 @@ the merge order of build tasks is `M2g`'s.
 ### The pull request
 
 **Decided here.** `layup run` opens the pull request as a draft, with a title
-of the form `<type>: <task ID> <description>` (the target's own convention,
-read from the setup record), a body that links the issue (`Closes #N`, or
+of the form `<type>: <description>` (the form of the checked-in `pr-title` check,
+decided below), a body that links the issue (`Closes #N`, or
 `Refs #N` for a task that does not close it) and links the records commit that
 the task started from, and requests no review. A draft is only visible; a
 pull request "reaches human review" when a review is requested or it is marked
@@ -83,6 +83,50 @@ body of the pull request is edited to link it, which makes the target's own
 `review-record` check run again. **Reason:** the target's checks parse the
 issue's comments and the body, so the loop writes them in the forms that those
 checks read.
+
+**Decided here** (R10, task `T-xvvd`, #363, row 66g of the plan; the plan review
+of #363, conditions 1 and 2; the function `OpenPullRequest` of `internal/run`):
+
+- **The inputs come from the records, never from the caller.** The task is a row of
+  the register (its issue and its `pr`). The head is the SHA of the last event `bound`
+  of the attempt, and the session of that event gives the start row. **The records
+  commit that the task started from** is the `records` column of that start row, the
+  snapshot that the check before the push and `layup/rules` read; it is never the
+  run's changing records base, and a later session's snapshot is never put in its place.
+  The branch is `task/<task>/<attempt>` and the base is the default branch.
+- **Read before write.** The pull request of the branch is read first (`PullRequest`
+  by the branch). An open one is used, and the register's `pr` is set to its number
+  when it differs; a merged one is returned untouched (the merge step records it); a
+  closed one that is not merged is a Go error, the redo of a task being row 66k's.
+  Only a branch with no pull request is opened, under the lease.
+- **The register.** The number is recorded by one fenced records commit that replaces
+  the row of the task in `tasks.tsv` with `pr` set (a row is replaced by a later commit,
+  [the task register](#the-task-register)). A stop after the draft opened leaves a draft
+  and no `pr`; the next call finds the draft by its branch and writes the number.
+- **The title** is the form of the checked-in `pr-title` workflow, the only check of the
+  title that exists: `<type>: <description>` with `<type>` one of `feat`, `fix`, `docs`,
+  `refactor`, `perf`, `test`, `build`, `ci`, `chore` and `revert`, and a description of
+  one line that begins with a lowercase letter `a` to `z`, has at least two more
+  characters and does not end with a full stop (`^[a-z].+[^.]$`), with no control
+  character. **The task ID is not in the title:** a task ID begins with a capital, the
+  check refuses it, and the checked-in workflow says that the ID stays in the commit
+  subjects and the body. The caller (rows 66h and 66k) gives the type and the description;
+  code refuses a title off the form before any call of the forge. The workflow is not
+  changed to admit the ID. The earlier text of this section, `<type>: <task ID> <description>`
+  read from a setup record, named a record that does not exist; this replaces it.
+- **The body** is, byte for byte, `Closes #<issue>`, a blank line, and the line
+  `The records commit this task started from: <web>/<owner>/<name>/commit/<records>`, with
+  no final line feed; `<web>` is the `web` of the forge register. `Closes #N` comes
+  first, so the first issue reference that carries a closing keyword, which the target's
+  `review-record` job reads, is the task's issue. Every M2e task has its own issue, so
+  M2e writes `Closes`; the rule above for a task that does not close its issue is kept.
+  The composer takes further lines after these two, for the edit below.
+- **The edit of the body to link the review record is row 66q's** (task `T-08rj`, #413;
+  the plan review of #363, condition 1). It needs a seventh method of `internal/forge`
+  (`forge.md`, [the calls of M2e](forge.md#the-calls-of-m2e)), which is outside the cell of row
+  66g, and it follows 66g because it calls the body composer of 66g. It is **not built**
+  by row 66g; the sentence above that the body is edited stays the requirement, with row
+  66q as its owner. Row 66q comes before the first operational consumer, rows 66h and 66k.
 
 ### The attempts
 
@@ -996,6 +1040,54 @@ did not run (`F-0003#58`, `NFR-004`):
    `failure`, which blocks both.
 4. The merge is the call of the next section.
 
+**Decided here** (R10, task `T-xvvd`, #363; the plan review of #363, conditions 5 and 6; the
+functions `Ready`, `MarkReady` and `MergeTask` of `internal/run`):
+
+- **The reading is a pure read.** `Ready` takes a full SHA, reads `Statuses` of it and
+  `EffectiveRules` of the default branch (the rule is read anew at each call), writes
+  nothing, and gives a reason or none. A read that fails, or a rule parameter that is
+  malformed, is a Go error and never a pass.
+- **The four contexts** are taken in the order `layup/gates`, `layup/spec`, `layup/rules`,
+  `layup/verify`. The **newest status of a context at the head** is the newest of any
+  creator (the forge gives them newest first), and it counts only when its creator is the
+  App and its state is `success`. This is **a second selection**, kept apart from the one of
+  posting: the posting of a status (`PostStatus`) compares with the newest status of the
+  *App* and ignores another creator's, so that the App never posts twice for an unchanged
+  state; the ready rule asks whether the *newest* status is the App's `success`, so a
+  newer status of another source blocks and cannot cause a merge. The cost is that another
+  writer of the same context can delay a merge and never cause one. The reasons are
+  `<context>: no status` (the App has none), `<context>: a status of another source is newer` and
+  `<context>: <state>`.
+- **The native jobs.** Each rule of the type `required_status_checks` holds a list of
+  `{context, integration_id}`; a rule whose parameter is not that list, or an entry with no
+  context that is a non-empty string or no `integration_id` that is a whole number of 1
+  or more, is malformed (a Go error, whatever the other entries are). The jobs are the
+  contexts whose `integration_id` is that of GitHub Actions, `setup.ActionsApp` (15368),
+  its one home. For each job the check runs of that name made by the App with that ID
+  (the newest of each name, as the adapter reads them with `filter=latest`; there is no
+  second reading of "latest") must be at least one, and each must be `completed` with the
+  conclusion `success`. The reasons are `job <name>: no check run` and
+  `job <name>: <status> <conclusion>`. A run of another App with the name does not count.
+- **A ruleset that requires no job of GitHub Actions is not ready**, with the reason `no
+  required job of GitHub Actions`: it fails closed (`NFR-004`), and the setup always
+  requires one job of each kind. This is a new decision of this task.
+- **`MarkReady`** reads the pull request by the number in the register and refuses the
+  head that is not the pull request's head (`the head moved to <sha>`); a pull request that
+  is not open is not ready. It calls the forge only when `Ready` holds and the pull request is
+  a draft, under the lease; a pull request that is already ready needs no call.
+- **`MergeTask`** is the one function of the merge. It reads the pull request first; a
+  merged one only gets its `merged` event (below). A head other than the pull request's
+  gives `the head moved to <sha>` and no write. It marks ready as above and then reads the
+  statuses and the jobs **again** just before the merge, so a status that changed after the
+  marking blocks the merge. It merges at the head SHA it read, under the lease.
+- **A refused merge (409) performs its read.** The forge's 409 is the sign of a head that
+  moved. Code then reads the pull request again and, for the new head, `Ready`: the new head's
+  statuses. The call returns the reason `the head moved to <sha>` (with the reason that the new
+  head is not ready, when it is not), makes **no second mutation** from the old read, and writes
+  no event; the caller's next call starts from the new head. A 409 whose pull request still
+  has the head that was sent is a Go error. Any other error of the merge is a Go error, the
+  merged state is unknown, and the next call reads the pull request first.
+
 ### The merge at the head SHA and the close-out commit
 
 **Decided here** (F-37; decision 6 of #333):
@@ -1004,7 +1096,10 @@ did not run (`F-0003#58`, `NFR-004`):
   writes the target's close-out (the verdict, the line of the completed log, the
   resource record from the ledger) as one last commit. Code checks that this
   commit changes only the task file `docs/tasks/<task>.md` and
-  `docs/tasks/completed.md` of the target, the paths from the setup record, and
+  `docs/tasks/completed.md` of the target, the two literal paths (**decided here**, task `T-xvvd`,
+  #363: no setup record holds them, and the paths do not widen: a backlog edit that the
+  target needs is in the head that the verifier reviewed, before the close-out; admitting
+  `docs/tasks/backlog.md` to the last commit is the Operator's decision), and
   that its parent is a head that carries the verdict (defined in
   [layup/verify](#layupverify): the verified head, the head after the rendered commit
   of the first bet, or the head after a clean merge of the base). A commit that changes another
@@ -1027,6 +1122,45 @@ did not run (`F-0003#58`, `NFR-004`):
 - **A tested tool** (F-37): the close-out check and the merge call are one
   function each in `internal/run`, with a stand-in forge, so the steps that land a
   target task are a Go test, not a script.
+
+**Decided here** (R10, task `T-xvvd`, #363; the plan review of #363, conditions 3, 4 and 9;
+the functions `PushCloseOut`, `CheckRendered` and `CarryVerify` of `internal/run`):
+
+- **The close-out check is the push hook of the close-out session.** It runs the checks
+  of any task session first (the end passed, the base is an ancestor, the register, the
+  rule paths) and then three more, each refused as a developer's would be, with the
+  diff as a payload: **`scope`** when the head is not one commit on the session's base, when
+  it changes a path other than the two, or when a path is not a regular file (a mode other than `100644`,
+  a link, or a deletion); **`verdict`** when the parent does not carry the verdict. A
+  Go error of a git read or of `VerifyAt` writes nothing.
+- **The parent carries the verdict** when it is the *verified head*, the head that the named
+  verifier's review record passed at (`VerifyAt` gives `success` and the head is the `base` of
+  that verifier's start row), or the rendered commit above it that `CheckRendered` accepts.
+  The verifier is a session of the task, named by the caller, and a session of another task is a
+  Go error. A parent that is itself a merge commit is no reason for refusal: what counts is how
+  it got its verdict. A head that came from the verified head by a clean merge of the base is
+  **not** carried here: that carry-over is row 66k's, and until then such a parent is refused
+  as `verdict`.
+- **`CheckRendered`** accepts the rendered commit when its only parent is the verified head,
+  its changed paths are exactly the paths of the rendered records, each is a regular file
+  (mode `100644`), and `RenderingEqual` holds with the **pre-image of a PRD pinned to the
+  verified head** (never a revision that the caller names; `RenderingEqual` itself accepts
+  any ancestor). It checks no review: the verified head is the review's. Row 66j calls it
+  before its push; its input is the rendered records and the commit, and no session is
+  needed (the rendered commit is produced by code and has no `bound` event).
+- **`CarryVerify`** posts `layup/verify` `success` on the new head, with the description
+  `verified head <sha> plus the close-out` (or `plus the rendered commit`), after it checks
+  the whole edge again, as the push did: the head is the close-out session's `bound` SHA, never
+  the caller's (a session of the named task and of the role of the close-out), or the
+  rendered commit that `CheckRendered` accepts; the commit count, the paths, the modes and
+  the parent's carry. The other three contexts run on the new head as on any head. It posts through
+  `PostStatus`, so a second call posts nothing.
+- **The `merged` event** is written by `MergeTask` (or by `RecordMerged`, which row 66k
+  calls on a restart) as one fenced records commit: `merged`, the merge commit's SHA, and
+  the number of the pull request, the session `—`. Its attempt is that of the `bound` events
+  whose SHA is the head that was merged; several events of one attempt are one, and events
+  of different attempts or none are a Go error and no event (the attempt is never guessed).
+  A second call finds the event and writes nothing.
 
 ### The gate jobs read the base
 
@@ -1108,7 +1242,7 @@ head above the setup head (a non-operative summary; the conditions are there). T
 The tree check of a later start compares the default branch with the head of
 `setup/tree.tsv` (and with the code-owner commit of a target set up before the code-owner rule, [`scaffold.md`](scaffold.md#the-tree-check))
 only until the first merge after the setup
-([`scaffold.md`](scaffold.md#at-each-later-start)). The check of this section is row 66g's and is specified here, not built. **Decided here:** from the
+([`scaffold.md`](scaffold.md#at-each-later-start)). The check of this section is built by row 66g (task `T-xvvd`, #363). **Decided here:** from the
 first merge of a task, the check is that the head of the default branch is the
 commit of a `merged` event of `tasks/<task>/events.tsv` (the event that `layup run`
 writes with the merge commit's SHA when the merge call answers), or a descendant
@@ -1124,6 +1258,32 @@ branch in any other way (the ruleset forbids it, so this is a read-back's
 second line) makes `forge-check` `fail` with the detail `tree: <sha> is not a
 recorded merge`. **Reason:** after the first merge the head is no longer the
 verified setup tree, and the one thing that may move the branch is a task.
+
+**Decided here** (R10, task `T-xvvd`, #363; the plan review of #363, conditions 7 and 9; the function
+`explainHead` and the reading of the merges in `internal/run`):
+
+- **The switch.** The check below applies only when at least one merge of a task is
+  known: a `merged` event of any task of the register, or a task of the register with a
+  pull request that the forge shows merged (its merge commit's SHA is set). With none known,
+  the rule of the setup is applied as it was, byte for byte: the head is the last commit of
+  `setup/tree.tsv` or the code-owner commit. A register or a task's `events.tsv` that is
+  absent is no merge (the first task has none yet); one that is present and that its reader
+  refuses is a `fail` of the row `tree` that names it. A read of the forge that fails is a
+  `fail` of the row too. These reads are made inside the check, so the table is still committed;
+  a failure to read the records of the setup, which the step reads before the table, ends the
+  step with no table, as before.
+- **The walk.** From the head of the default branch, along the first parents: each
+  commit must be a recorded merge (the merge commit of a `merged` event) or a merge that the
+  forge shows for a task whose event is not yet recorded; the walk then steps to its first parent.
+  It passes at the bottom, the last commit of `setup/tree.tsv` or the code-owner commit above it
+  (the judgment of the setup, unchanged), **only** when at least one task merge was accepted
+  above it: after the first merge the head being the setup head is a rollback, and it fails. Any
+  other commit, a walk longer than the number of known merges plus one, or a parent that cannot
+  be read, is a `fail`. A descendant of a merge through other commits is no pass: ancestry alone
+  would admit a push to the branch.
+- **The detail.** A pass keeps the detail `—`; the step prints one line `tree: <sha> merge of <task>,
+  not yet recorded` for each unrecorded merge on the walk. A fail gives the detail
+  `<head> is not a recorded merge`, which the step prints as `tree: <head> is not a recorded merge`.
 
 ## REQ-012 — Shape
 
@@ -1720,9 +1880,9 @@ the milestone covers it end to end.
 | `layup/gates` (inventory, `later-gate-status`) | unit; integration | Each row combination maps to the status by the table, `not-active` is never a success, a `pending` kind with a product path is `failure`; with the stand-in forge, the status is posted once for an unchanged state. |
 | `layup/rules`, the basic rule | unit | A change to a rule path fails; a rendered record equal to code's rendering passes; one that differs by a byte fails; the register is read at the base. |
 | `layup/verify` and the independence | unit | The authors of a plan review and of a verification from the ledger; no harness outside them is `failure` `not-active`; a waiting verifier is `pending`. |
-| The ready and merge rule (inventory, `later-gate-status`) | integration | With the stand-in forge, a pull request whose head has one context not `success`, no status, a status of another source, or an `error`, or a required job of GitHub Actions with no check run or a conclusion other than `success`, is not marked ready and does not merge; with the four `success` it is marked ready and merged at the head SHA, and a moved head is refused. |
-| The close-out commit and the rendered commit | integration | A close-out that changes only the task file and the completed log, on a parent that carries the verdict, is accepted and `layup/verify` is set on the new head; one that changes another file, or whose parent does not carry the verdict, is refused; the rendered commit of the first bet gets the same carry-over, and the close-out after it is accepted. |
-| The steps after the Scaffold | integration | A restart resumes the `loop` step from the records and the forge: a comment, a pull request, a status or a merge that exists is not made again; a `push` with no result is bound when the branch holds its SHA and `refused` with `push-lost` when it does not; a task session's comment is on the task's issue; a merge whose `merged` event was lost passes `forge-check` with its detail and `loop` records the event; `shape` with a decision that has no survivor is not "done before" and a restart stops there. |
+| The ready and merge rule (inventory, `later-gate-status`) | integration | With the stand-in forge, a pull request whose head has one context not `success`, no status, a status of another source, or an `error`, or a required job of GitHub Actions with no check run or a conclusion other than `success` (a ruleset that requires none, or a malformed required check, included), is not marked ready and does not merge; with the four `success` it is marked ready and merged at the head SHA, and a moved head is refused, its statuses are read again in the same call and no second merge is sent from the old read. |
+| The close-out commit and the rendered commit | integration | A close-out that changes only the task file and the completed log, on a parent that carries the verdict, is accepted and `layup/verify` is set on the new head; one that changes another file, or whose parent does not carry the verdict, is refused (`scope` or `verdict`, with the diff as a payload); an ordinary child of the verified head, a session of another task and a rendered commit above an unverified head do not carry; the rendered commit of the first bet gets the same carry-over, with no bound session and its pre-image pinned to the verified head, and the close-out after it is accepted. |
+| The steps after the Scaffold | integration | A restart resumes the `loop` step from the records and the forge: a comment, a pull request, a status or a merge that exists is not made again; a `push` with no result is bound when the branch holds its SHA and `refused` with `push-lost` when it does not; a task session's comment is on the task's issue; a merge whose `merged` event was lost passes `forge-check` with its detail (the tree check of task `T-xvvd`: a walk of the first parents through recorded and shown merges, and the setup head alone is no pass after the first merge) and `loop` records the event; `shape` with a decision that has no survivor is not "done before" and a restart stops there. |
 | The bet step is atomic to its last act | integration | A stop after the inventory version and before the row of `bets.tsv` resumes inside `bet`: the rendered commit and each `architecture` task are not made twice, and the row is written last; a decision whose chosen option names no requirement is refused. |
 | The tier and the context of a task (`session.md` deferral) | unit | The tier from the four fields of a plan (`large`, any non-empty list: reasoning; else execution), moved by the progress position (uphill to reasoning, downhill to execution); the prompt file lists the issue and plan, the rows and sections of the requirement IDs, the decision records they name, the handoffs and answers, and the rule files, in that order, each with its SHA-256. |
 | The questions left open and the band (`intake.md` deferral) | integration | With the stand-in forge: an `open` and an `asked` question are asked of the owner role; an intent answer that parses (`B` below `U`) writes `budget.tsv` with the question as `source` and replaces a value that exists; one that does not parse leaves the question `open` and the run in its wait; a question still `open` at the brief is shown in "rabbit holes". |
