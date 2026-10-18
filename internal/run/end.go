@@ -155,6 +155,9 @@ func (s *Sessions) comment(ctx context.Context, id string) error {
 	return err
 }
 
+// firstLinePrefix is the start of the first line of a session's comment.
+func firstLinePrefix(start []string) string { return "" }
+
 func prefix(p string, list []string) []string {
 	out := make([]string, len(list))
 	for i, v := range list {
