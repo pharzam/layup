@@ -21,13 +21,20 @@ import (
 // base name: not a file below it, a link, a gitlink, an executable or a file
 // of another extension (git ls-tree is recursive and lists a link as a blob).
 func specFilesAt(clone, head string) (map[string][]byte, error) {
-	entries, err := git.LsTree(clone, head, "docs/spec")
+	return filesAt(clone, head, "docs/spec", func(base string) bool { return strings.HasSuffix(base, ".md") })
+}
+
+// filesAt gives the regular files (type blob, mode 100644) directly in dir of
+// head whose base name keep accepts, by base name, with their exact bytes
+// (task T-cav3, #412: the one selector of the files of a directory at a head).
+func filesAt(clone, head, dir string, keep func(base string) bool) (map[string][]byte, error) {
+	entries, err := git.LsTree(clone, head, dir)
 	if err != nil {
 		return nil, err
 	}
 	files := map[string][]byte{}
 	for _, e := range entries {
-		if e.Type != "blob" || e.Mode != "100644" || path.Dir(e.Path) != "docs/spec" || !strings.HasSuffix(e.Path, ".md") {
+		if e.Type != "blob" || e.Mode != "100644" || path.Dir(e.Path) != dir || !keep(path.Base(e.Path)) {
 			continue
 		}
 		if files[path.Base(e.Path)], err = git.Show(clone, head, e.Path); err != nil {
