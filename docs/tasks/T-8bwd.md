@@ -16,8 +16,9 @@ inputs, rules, owning implementation and milestone. Field lines and the
 block boundaries, zero-test spec-task form and normative malformed cases.
 `internal/handoff` computes schema/artifacts; the existing result recorder owns
 question-row/answer-row. Other results are computed by their declared callers;
-a missing result is false. #396 owns the six new item computers and question/
-answer body composition; #367 owns their posting and step-loop wiring.
+a missing result is false. #396 owns the four comment items, #404 the two tree
+items and #405 the question/answer body composition; #367 owns their posting
+and step-loop wiring.
 The plan and package table identify those owners and dependencies.
 
 The typed per-test result remains #361's M2e contract; its runtime producer and
@@ -48,7 +49,7 @@ that round. No source fix followed; this last commit is bookkeeping only.
 Complete current-main size: 492 changed lines/10 files, within1,000/14.
 
 Notes N1–N6: literal marker/CRLF behavior stays fail-closed; #396's own plan pins
-normalization. The section finder is now known to be unexported, so #396 exports
+normalization. The section finder is now known to be unexported, so #404 (T-yeav) exports
 and reuses the predicate per the approved ownership choice; the later heading-ID
 contract stays later work. Composer/poster ownership remains explicit. Dependency
 notifications went to #362/#367/#368. The typed-results ownership-cell exception

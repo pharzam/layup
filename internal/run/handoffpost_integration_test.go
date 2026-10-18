@@ -98,14 +98,16 @@ func keptRecord(t *testing.T, w *world, path string) string {
 func TestThePlanThePlanReviewAndTheReviewRecordArePostedFromTheKeptCopy(t *testing.T) {
 	for _, c := range []struct {
 		kind, role, from, to, item string
+		text                       func(worldAt) string
 	}{
-		{"plan", "software-engineer", "task plan", "plan review", "plan-fields"},
-		{"plan-review", "qa-engineer", "plan review", "developer", "verdict-field"},
-		{"review-record", "qa-engineer", "verifier", "close-out", "nothing-material"},
+		{"plan", "software-engineer", "task plan", "plan review", "plan-fields", func(worldAt) string { return planText }},
+		{"plan-review", "qa-engineer", "plan review", "developer", "verdict-field", func(worldAt) string { return "verdict: approve-with-conditions\r\nno final newline" }},
+		{"review-record", "qa-engineer", "verifier", "close-out", "nothing-material", func(b worldAt) string { return record(b.base, "nothing material in scope") }},
 	} {
 		t.Run(c.kind, func(t *testing.T) {
 			w, r, base := commentWorld(t)
-			id := commentSession(t, r, base, c.role, planText)
+			body := c.text(base)
+			id := commentSession(t, r, base, c.role, body)
 			if n := len(commentsOf(w)); n != 0 {
 				t.Fatalf("the session's end left %d comments on the task's issue; want none (code posts after the result)", n)
 			}
@@ -116,17 +118,17 @@ func TestThePlanThePlanReviewAndTheReviewRecordArePostedFromTheKeptCopy(t *testi
 				t.Fatalf("PostComment: %v", err)
 			}
 			cs := commentsOf(w)
-			if len(cs) != 1 || cs[0]["body"] != planText {
+			if len(cs) != 1 || cs[0]["body"] != body {
 				t.Fatalf("the comments of the task's issue %v; want one with the bytes of the file", cs)
 			}
-			if p.Seen != 1 || p.SHA != commentSum(planText) || cs[0]["id"] != int(p.ID) {
+			if p.Seen != 1 || p.SHA != commentSum(body) || cs[0]["id"] != int(p.ID) {
 				t.Errorf("Posted %+v for the comment %v", p, cs[0]["id"])
 			}
 			copies := keptRecord(t, w, "copies.tsv")
-			if !strings.Contains(copies, fmt.Sprintf("\n%d\t1\t%d\t9001\tlayup-agent[bot]\tlayup-agent\t", p.ID, taskIssue)) || !strings.Contains(copies, "\t"+commentSum(planText)+"\t") {
+			if !strings.Contains(copies, fmt.Sprintf("\n%d\t1\t%d\t9001\tlayup-agent[bot]\tlayup-agent\t", p.ID, taskIssue)) || !strings.Contains(copies, "\t"+commentSum(body)+"\t") {
 				t.Errorf("copies.tsv:\n%s", copies)
 			}
-			if got := keptRecord(t, w, fmt.Sprintf("copies/%d-1.md", p.ID)); got != planText {
+			if got := keptRecord(t, w, fmt.Sprintf("copies/%d-1.md", p.ID)); got != body {
 				t.Errorf("the copy %q; want the bytes of the file", got)
 			}
 			v, err := r2.RecordHandoff(ctx, HandoffInput{Task: "T-ab12", Session: id, From: c.from, To: c.to, File: "plan.md", Kind: c.kind, Items: map[string]bool{c.item: true}})
@@ -137,7 +139,7 @@ func TestThePlanThePlanReviewAndTheReviewRecordArePostedFromTheKeptCopy(t *testi
 			if events := keptRecord(t, w, "tasks/T-ab12/events.tsv"); !strings.Contains(events, "\thandoff\t1\t"+id+"\t—\t—\t"+want+"\t") {
 				t.Errorf("the events:\n%s", events)
 			}
-			if kept := keptRecord(t, w, "tasks/T-ab12/results/"+id+"/plan.md"); kept != planText {
+			if kept := keptRecord(t, w, "tasks/T-ab12/results/"+id+"/plan.md"); kept != body {
 				t.Errorf("the kept file %q", kept)
 			}
 			// The records read through the real checks (guardrails §2: a record that no test read).
@@ -244,7 +246,7 @@ func TestALostLeaseDuringTheCommentPostsNothing(t *testing.T) {
 func TestTheLimitOfACommentThroughTheAdapter(t *testing.T) {
 	w, r, base := commentWorld(t)
 	ctx := context.Background()
-	at := strings.Repeat("€", MaxCommentChars) // 65,536 characters, 196,608 bytes
+	at := planText + strings.Repeat("€", MaxCommentChars-len([]rune(planText))) // 65,536 characters
 	id := commentSession(t, r, base, "software-engineer", at)
 	p, err := afterRestart(r).PostComment(ctx, "T-ab12", id, "plan.md")
 	if cs := commentsOf(w); err != nil || len(cs) != 1 || cs[0]["body"] != at || p.SHA != commentSum(at) {
@@ -414,4 +416,45 @@ func startRows(t *testing.T, w *world) [][]string {
 		t.Fatal(err)
 	}
 	return rows
+}
+
+// The demo of row 66l (group (a)): a handoff that lists a comment item is valid or
+// invalid by what code reads from the kept copy and from the verifier's recorded
+// base, whatever the caller says, through the records and the forge.
+func TestTheCommentChecksOfTheTaskLoop(t *testing.T) {
+	for _, c := range []struct {
+		name, role, from, to, kind, item string
+		text                             func(base worldAt) string
+		claim                            bool
+		want                             string
+	}{
+		{"nothing material at the verifier's base, the caller says false", "qa-engineer", "verifier", "close-out", "review-record", "nothing-material",
+			func(b worldAt) string { return record(b.base, "nothing material in scope") }, false, "valid"},
+		{"nothing material at another head, the caller says true", "qa-engineer", "verifier", "close-out", "review-record", "nothing-material",
+			func(b worldAt) string { return record(hexB, "nothing material in scope") }, true, "invalid nothing-material"},
+		{"nothing material with a finding, the caller says true", "qa-engineer", "verifier", "close-out", "review-record", "nothing-material",
+			func(b worldAt) string { return record(b.base, "nothing material in scope", located) }, true, "invalid nothing-material"},
+		{"findings located, the caller says false", "qa-engineer", "verifier", "developer", "review-record", "findings-located",
+			func(b worldAt) string { return record(b.base, "material", located) }, false, "valid"},
+		{"a plan of the form, the caller says false", "software-engineer", "task plan", "plan review", "plan", "plan-fields",
+			func(worldAt) string { return planText }, false, "valid"},
+		{"a plan that is not of the form, the caller says true", "software-engineer", "task plan", "plan review", "plan", "plan-fields",
+			func(worldAt) string { return "size: small\n" }, true, "invalid plan-fields"},
+		{"a plan review that rejects, the caller says true", "qa-engineer", "plan review", "developer", "plan-review", "verdict-field",
+			func(worldAt) string { return "verdict: reject\n" }, true, "invalid verdict-field"},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			_, r, base := commentWorld(t)
+			ctx := context.Background()
+			id := commentSession(t, r, base, c.role, c.text(base))
+			p, err := afterRestart(r).PostComment(ctx, "T-ab12", id, "plan.md")
+			if err != nil {
+				t.Fatal(err)
+			}
+			v, err := afterRestart(r).RecordHandoff(ctx, HandoffInput{Task: "T-ab12", Session: id, From: c.from, To: c.to, File: "plan.md", Kind: c.kind, Items: map[string]bool{c.item: c.claim}})
+			if want := fmt.Sprintf("%s comment %d-1", c.want, p.ID); err != nil || v.Detail != want {
+				t.Errorf("RecordHandoff = %+v, %v; want %s", v, err, want)
+			}
+		})
+	}
 }

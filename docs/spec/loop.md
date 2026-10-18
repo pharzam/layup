@@ -532,7 +532,8 @@ names the row that posts them.
 every other item is the caller's result, and **decided here** (task `T-8bwd`,
 #387; the assignment of rows is the decision of the plan review of #387, an
 `approve-with-conditions`) each item below is computed by the named package in
-the named row — row 66l (`T-4pje`, #396), the item computers of the task loop —
+the named row — rows 66l (`T-4pje`, #396: the four comment items), 66n (`T-yeav`, #404: the
+tree items) and 66o (`T-gyvo`, #405: the composers), the item computers of the task loop —
 by the rule text of the table. The forms the loop's sessions write in the three
 comment artifacts are pinned here in one grammar, so two implementers read one
 form.
@@ -540,23 +541,40 @@ form.
 **The fields and the blocks of a comment.** A plan, a plan review or a review
 record is parsed by lines, and two line forms count — a field and a block
 marker; every other line is ignored. A field is a line whose key starts at
-column 0, lowercase, and is followed by `: `, and whose value runs to the end
-of the line with trailing spaces and a final `\r` ignored (the forge and a
-checkout can carry CRLF); `—` (U+2014) is the empty value of a field. A block
-marker is a line that is exactly a marker word and `:` — `tests:` in a plan,
-`findings:` in a review record, never a value after the colon — and its block
-is the run of `- ` lines directly under it, ending at the first line that does
-not start `- `; a `- ` line inside the run that does not match the block's
-bullet form is malformed and makes the item false, and a `- ` line outside
-every block is ignored prose. A line inside a fenced code block is not read.
+column 0, made of lowercase words separated by one space, and is followed by
+`: `, and whose value runs to the end of the line with trailing spaces and one
+final `\r` ignored (the forge and a checkout can carry CRLF); `—` (U+2014) is
+the empty value of a field, the `key: ` line of a required field with nothing after
+the space is malformed (it is not `—`), and a `key:` line without the space is no
+field. A
+block marker is a line that is exactly a marker word and `:` — `tests:` in a
+plan, `findings:` in a review record, never a value after the colon: `tests:\r`
+and `tests: x` are not markers (the second is a field) — and its block is the
+run of `- ` lines directly under it, ending at the first line that does not
+start `- `; a `- ` line inside the run that does not match the block's bullet
+form is malformed and makes the item false, as is one whose text holds a
+`\r` (a path that is clean can still hold one), and a `- ` line outside every
+block is ignored prose. A line inside a fenced code block is not read: a fence
+opens at a line at column 0 of three or more backticks or three or more
+tildes (the rest of the line is an info string), and closes at a line of only
+that character, as many as the opener or more — a closing line with a `\r`
+does not close — and a fence never closed runs to the end of the comment.
 Each required field and each required marker appears exactly once — twice or
 not at all makes the item false — other field lines are ignored, and field and
-block order is free. **The plan** holds each of `size:`, `open questions:`,
+block order is free. The parse is of the whole comment: a comment that fails
+any part of its kind's form makes every item read from it false (a bad `head:`
+makes `findings-located` false as well), a body that is empty or not valid
+UTF-8 parses to nothing, and a comment is read only for the items of its own
+kind. **The plan** holds each of `size:`, `open questions:`,
 `new interfaces:` and `new dependencies:` once — `size:` is `small` or `large`
-and each of the other three is a one-line text or `—` — and the `tests:`
-marker once, its block holding a line `- <id> <path>` for each listed test:
-the ID is one word, unique in the list, and the path is relative, clean and
-inside the tree (the register's own `path` rule of `internal/rules`). The
+and each of the other three is a one-line text or `—`, read as an empty list for
+`—` and otherwise as one element, the whole text, with no separator invented
+(the tier reads emptiness only; a consumer that needs the elements pins its
+separator then) — and the `tests:` marker once, its block holding a line
+`- <id> <path>` for each listed test: exactly two words, the ID unique in the
+list, and the path relative, clean and inside the tree (the register's own
+`path` rule of `internal/rules`, exported as `ValidPath`; a path with a space
+is malformed here). The
 block may hold no line — that is the form of a specification task's plan,
 which lists no tests — and `tests: —` is not the marker. **The plan review**
 holds `verdict:` once, one of `approve`, `approve-with-conditions` and `reject`
@@ -565,8 +583,10 @@ once — 40 or 64 lowercase hexadecimal characters, as the check already accepts
 for commits — `verdict:` once — one of `material`, `nothing material in scope`
 and `not mergeable, findings recorded` (the words `engineering-discipline.md`
 fixes for a round) — and the `findings:` marker once, its block holding a line
-`- <path>:<line> <rule>: <text>` per finding, `line` an integer of 1 or more
-and `rule` one word; the count of material findings is the number of bullets
+`- <path>:<line> <rule>: <text>` per finding — the first space ends
+`<path>:<line>`, the last `:` of that word separates the `line`, an integer of
+1 or more, the path passes the same `path` rule, the `rule` is one word without
+a `:`, and the `<text>` is not empty; the count of material findings is the number of bullets
 of the block. These are the forms the loop's sessions write for a target;
 `review-record-lint.sh` reads a different, LAYUP-own form (the
 `| Field | Value |` table), and neither document is read as the other's check.
@@ -575,15 +595,15 @@ of the block. These are the forms the loop's sessions write for a target;
 | ---- | ---------------------- | ----------- | --------- |
 | `schema` | the result file and its records: the typed result passes the block `result` and its rules | `internal/handoff` `Check` (row 61, done) | M2e |
 | `artifacts` | the commits and the copies: each named artifact is there with its hash, a comment by its three equal hashes | `internal/handoff` `Check` (row 61, done) | M2e |
-| `plan-fields` | the plan comment's kept copy: it parses in the pinned form — the four fields each once, the `tests:` marker once, and each `- ` line of its block a `- <id> <path>`; an empty block is valid | `internal/run` (row 66l) | M2e |
-| `verdict-field` | the plan-review copy: its `verdict:` is `approve` or `approve-with-conditions` (`reject` is false) | `internal/run` (row 66l) | M2e |
+| `plan-fields` | the plan comment's kept copy: it parses in the pinned form — the four fields each once, the `tests:` marker once, and each `- ` line of its block a `- <id> <path>`; an empty block is valid | `internal/run` (row 66l, `T-4pje`) | M2e |
+| `verdict-field` | the plan-review copy: its `verdict:` is `approve` or `approve-with-conditions` (`reject` is false) | `internal/run` (row 66l, `T-4pje`) | M2e |
 | `tests-red-green` | typed per-test results — the ID, the base verdict, the head verdict and the source hash of each listed test: each fails at the base and passes at the head, and its source hash is the frozen list's | `internal/run` from typed values (row 66e — #361's typed boundary); the producer — the gate run of the task's test kind and the mapping of an ID to its file — is the specification task of `M2g`'s | M2e item, `M2g` producer |
-| `spec-sections` | the `docs/spec/` files at the head and the task's requirement IDs: a non-empty section whose heading holds each ID — the `sections` predicate of the full check over the task's IDs | `internal/spec`, wired by `internal/run` (row 66l); the section finder rides the `sections` machinery of the full check (#351) where it is exported, else lands in row 66l | M2e |
+| `spec-sections` | the `docs/spec/` files at the head and the task's requirement IDs: a non-empty section whose heading holds each ID — the `sections` predicate of the full check over the task's IDs | `internal/spec`, wired by `internal/run` (row 66n, `T-yeav`, #404); the section finder rides the `sections` machinery of the full check (#351), which row 66n exports | M2e |
 | `patch-per-kind` | the batch's known-bad patches: `layup gate` passes on the head and fails on each patch of a kind the batch touches | the rule-batch tasks of `M2f` | M2f |
 | `register-rows` | the milestone plan's rows artifact: each `Must` requirement has a task, each predecessor is a task, no cycle | the milestone-plan task of `M2g` | M2g |
-| `rendering-equal` | the tree at the head and code's rendering of the named copy: byte-equal — `internal/spec`'s `RenderPRD` and `RenderFacts` for a specification copy, `internal/rules`' `Render` for a record copy | `internal/spec` and `internal/rules`, wired by `internal/run` (row 66l) | M2e |
-| `nothing-material` | the review-record copy and the head code holds for the verifier's session — from the records and the forge, never a field of the result: `verdict:` is `nothing material in scope`, `head:` equals that head, and the `findings:` marker is present with an empty block | `internal/run` (row 66l; the same parse serves `layup/verify` of row 66f) | M2e |
-| `findings-located` | the review-record copy: the `findings:` marker once, every `- ` line of its block a `- <path>:<line> <rule>: <text>` finding, and at least one finding — an empty block is false, an empty list is never a pass | `internal/run` (row 66l) | M2e |
+| `rendering-equal` | the tree at the head and code's rendering of the named copy: byte-equal — `internal/spec`'s `RenderPRD` and `RenderFacts` for a specification copy, `internal/rules`' `Render` for a record copy | `internal/spec` and `internal/rules`, wired by `internal/run` (row 66n, `T-yeav`, #404) | M2e |
+| `nothing-material` | the review-record copy and the head code holds for the verifier's session — the `base` of that session's start row in `sessions.tsv` (`records.md`; its clone is made at that commit, `session.md`), never a field of the result and not the session's `bound` event, which exists only after a passed push: `verdict:` is `nothing material in scope`, `head:` equals that head, and the `findings:` marker is present with an empty block | `internal/run` (row 66l, `T-4pje`; the same parse serves `layup/verify` of row 66f) | M2e |
+| `findings-located` | the review-record copy: the `findings:` marker once, every `- ` line of its block a `- <path>:<line> <rule>: <text>` finding, and at least one finding — an empty block is false, an empty list is never a pass | `internal/run` (row 66l, `T-4pje`) | M2e |
 | `heading-ids` | the `docs/spec/` files at the head and the milestone's requirement IDs: a heading holds each ID — the `sections` predicate over the milestone's IDs | the milestone-plan task of `M2g` | M2g |
 | `question-row` | the result: at least one `question` row and each names at least one record | `internal/run` (row 66d, done) | M2e |
 | `answer-row` | the result: at least one `answer` row and each cites at least one record | `internal/run` (row 66d, done) | M2e |
@@ -598,17 +618,25 @@ with a non-empty `findings:` block makes `nothing-material` false, and
 `not mergeable, findings recorded` with an empty one makes `findings-located`
 false. The parsed plan fields likewise feed the task's tier and context read:
 the parse is row 66l's, the consuming wiring the step loop's (row 66k) — a
-declaration of the boundary, nothing of it claimed built.
+declaration of the boundary, nothing of it claimed built. An item is true only
+for the comment kind it reads (a `plan-fields` listed on a review-record row is
+false), the four comment items are computed from the kept copy and overwrite the
+caller's value whether it is `true` or `false`, and a handoff with no kept copy,
+or that code writes, has them false.
 
-**The question and answer comments** are composed by `internal/run` from the
-result's `question` and `answer` rows — first line and body as [a question during
+**The question and answer comments** are composed (composition only, no post) by
+`internal/run` (row 66o, `T-gyvo`, #405) from the result's `question` and `answer` rows — first line and body as [a question during
 the work](#the-checks-of-a-handoff) pins — and posted on the task's issue by the
 post→copy machinery of the step loop (**row 66k**, #367, whose comments of a task
 session it is); they are plain comments of the App, not artifacts of a handoff.
 The parsed review record is also the input of the caller boundary that keeps
 the loop uphill while a material finding is open (`architecture.md` §11):
-row 66l's parse exposes the located findings, the step loop's wiring of it
-stays row 66k's (#367), and nothing of either is claimed built here.
+row 66l's parse exposes the review's verdict, head and located findings and a
+predicate that fails uphill — a record that does not parse, a verdict other than
+`nothing material in scope`, or a bullet in the block is an open material
+finding, so `material` or `not mergeable, findings recorded` with an empty block
+never reads as none open — the step loop's wiring of it stays row 66k's (#367),
+and nothing of either is claimed built here.
 
 **The deferrals are recorded, not hidden.** `patch-per-kind`, `register-rows` and
 `heading-ids` name checks whose inputs — a rule batch's patches, a milestone
@@ -1521,7 +1549,9 @@ the milestone covers it end to end.
 | A handoff is valid only by its table (inventory) | unit | A handoff with a wrong schema, an artifact that is not in the commits, a hash that differs, a required item that is false, and a pair with no row is each invalid, naming the item; a field that an agent writes never makes one valid; a comment artifact whose body at the forge differs from its copy is invalid. |
 | The artifact that is a comment (`gov-issue-68`) | unit; integration | With the stand-in forge (the `httptest` forge for the integration part), for each of the kinds `plan`, `plan-review` and `review-record`: the session's file, the comment that code posts from its bytes, the copy and its row, the `handoff` event with the comment ID that code read, the three equal hashes; an edited comment is a new copy and the first handoff is invalid; a result that holds a comment ID is refused; a `comment` row is checked against the session's `result/` file, its file is kept byte for byte in the commit of the result, and an `artifact` row against the head; a run that stops after the end, between the post and the copy, or before the post, posts once from the records; a lost lease posts nothing. |
 | The route of a question and the acceptance of an answer | unit; integration | A question goes to the owner role of its kind when its `needs_human` word is `no` and its label is one of the four, and to the Operator for `yes`, for any other word and for any other label; a replaced owner map routes by its roles; the items `question-row` and `answer-row` are computed from the result, whatever the caller passes; an answer is accepted by the next attempt that ends `completed` and cites its ID in the status row, with no question of that attempt citing it, and by no other attempt, and only when its session is of the owner role (the rule of "A question during the work": an answer of a developer, of the owner of another kind, of a session with no start row, to a human question or to questions of more than one owner role is refused, and the owner role's is accepted, from `sessions.tsv` and through `Position`); with the real `git`, a question session, the session of the owner role and the next attempt give the records from which the route and the acceptance are read. |
-| The item computers of the task loop | unit; integration (a real `git` tree for `spec-sections` and `rendering-equal`) | Each item is computed from the kept copy of a comment, the `docs/spec/` files or the tree at a head: a copy that parses the pinned form makes the item true and one that does not makes it false, and a handoff listing the item is `valid` or `invalid <item>` by the computed result, never by a caller's literal; the question and answer comments are composed from their rows and posted on the task's issue. |
+| The comment items of the task loop (row 66l, `T-4pje`) | unit; integration (the kept copy, the records and the forge) | `plan-fields`, `verdict-field`, `findings-located` and `nothing-material` are computed from the kept copy of a comment and, for the last, the verifier's recorded `base`: each item is true or false by its own rule in the table of the items (a plan-review copy that parses with `verdict: reject` is false), and a handoff listing the item is `valid` or `invalid <item>` by the computed result, never by a caller's literal of either value. |
+| The tree items of the task loop (row 66n, `T-yeav`) | unit; integration (a real `git` tree) | `spec-sections` and `rendering-equal` are computed from the `docs/spec/` files or the tree at the head, with the same rule on the caller's literal. |
+| The question and answer comments (row 66o, `T-gyvo`) | unit | The question and answer comments are composed from their rows; posting them is the step loop's (row 66k). |
 | The transition table | unit | The default rows are the thirteen of the table (the twelve of `architecture.md` §8 and the row of the target's architecture task, which §8 names a task and gives no row); a replacement table is refused for a missing default pair, a kind or an item not in the lists, and a row of code's own handoff (`code (rendered task)`) that lists `schema`, while another row keeps its `schema`, and the steps that are `layup run`'s own acts need no row. |
 | The replacement of the transition table at the boundary | integration | With the stand-in forge and real git: `set transitions <sha256>` names a copy of a comment of the control issue; the new table is the bytes of that copy, written with the row `transitions` in one records commit, so its SHA-256 is the row's value; the old table stays in Git history and the next task keeps the new one; a hash of no copy or of a copy of another issue, a body that is no table (a code fence, a carriage return) and a table that fails the check each refuse with the item `bound` (`value` for a value that is no SHA-256) and write nothing. |
 | `layup spec check`, the full check (inventory) | unit | Each rule of the table fails on its input and passes on its fixture; before the first bet a task that touches neither the PRD nor `docs/spec/` is `clear`; `did not run` is a failure. |
