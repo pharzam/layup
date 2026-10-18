@@ -257,7 +257,8 @@ of `M2a`, `M2b`, `M2c` and `M2e`; the build task that made `internal/handoff` (t
 - `internal/run`: the task loop: the register and the transition table, the
   handoff and its events, the attempts, the statuses, the ready and merge rule, the
   close-out check and the merge at the head SHA, Shape and the bet, the parameter
-  change and the Retrospective step, and the Go schemas of `tasks`,
+  change and the Retrospective step, the instructions of the task steps and their
+  inputs ([`loop.md`](loop.md#the-instruction-of-a-task-step)), and the Go schemas of `tasks`,
   `task-gates`, `task-tests`, `bets`, `parameters` and `retrospectives` (`internal/handoff` owns that of
   `transitions`). Its row in [the table of M2a](#the-table-of-m2a) is changed in place:
   its May import cell gains `internal/handoff` and `internal/gate`. It starts

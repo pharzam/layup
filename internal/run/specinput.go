@@ -189,6 +189,11 @@ func specTree(clone, base, head string, in *spec.FullInput) error {
 	if err != nil {
 		return fail("PSBRecords", "docs/facts", err)
 	}
+	entries, err := git.LsTree(clone, head, "docs/facts")
+	if err != nil {
+		return fail("Records", "docs/facts", err)
+	}
+	completeFactsRecords(in, factsNames(entries))
 	return nil
 }
 
