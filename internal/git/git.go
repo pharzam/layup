@@ -137,10 +137,8 @@ func LsRemote(url, ref string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	for _, line := range strings.Split(string(out), "\n") {
-		if id, name, ok := strings.Cut(line, "\t"); ok && name == ref {
-			return id, nil
-		}
+	if id, ok := refLine(out, ref); ok {
+		return id, nil
 	}
 	return "", &FailedError{Args: args, Err: fmt.Errorf("the output has no line for %s", ref)}
 }
@@ -452,10 +450,44 @@ func callAuth(dir string, auth Auth, args []string) ([]byte, error) {
 
 // RemoteHead gives the commit of the branch of the repository at url, with the
 // token of auth when it has one: found is false for a branch that the remote
-// does not have (task T-syxm, packages.md, The calls of M2e). This stub reads
-// nothing yet.
+// does not have (exit 2 of ls-remote, or no line of exactly refs/heads/BRANCH,
+// as ls-remote matches its pattern against the tail of a ref name). The ID on
+// that line must be a full object ID, else the answer is a *FailedError of Code
+// 0 and never an absence. An empty branch, one that holds ':' and one that starts
+// with '-' are refused before git starts (task T-syxm, packages.md, The calls of
+// M2e).
 func RemoteHead(url, branch string, auth Auth) (sha string, found bool, err error) {
-	return "", false, nil
+	ref := "refs/heads/" + branch
+	args := []string{"ls-remote", "--exit-code", "--", url, ref}
+	if branch == "" || strings.Contains(branch, ":") || strings.HasPrefix(branch, "-") {
+		return "", false, &FailedError{Args: args, Code: -1, Err: errors.New("not a branch")}
+	}
+	out, err := callAuth("", auth, args)
+	var failed *FailedError
+	if errors.As(err, &failed) && failed.Code == 2 {
+		return "", false, nil
+	}
+	if err != nil {
+		return "", false, err
+	}
+	id, ok := refLine(out, ref)
+	switch {
+	case !ok:
+		return "", false, nil
+	case !fullObjectID(id):
+		return "", false, &FailedError{Args: args, Err: fmt.Errorf("the line for %s holds %q, which is no full object ID", ref, id)}
+	}
+	return id, true, nil
+}
+
+// refLine gives the ID on the line of exactly the ref name in the output of ls-remote.
+func refLine(out []byte, ref string) (string, bool) {
+	for _, line := range strings.Split(string(out), "\n") {
+		if id, name, ok := strings.Cut(line, "\t"); ok && name == ref {
+			return id, true
+		}
+	}
+	return "", false
 }
 
 // ErrNotACommit is the refusal of FetchSession for a SHA that names no commit

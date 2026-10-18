@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -50,10 +51,27 @@ func commentSession(t *testing.T, r *Sessions, base worldAt, role, text string) 
 	return id
 }
 
-func commentsOf(w *world) []map[string]any {
+// sessionComment is the form of the first line of the comment of a task session, which
+// the end of a session posts on the task's issue beside the artifacts (task T-syxm).
+var sessionComment = regexp.MustCompile(`^S-[0-9a-f]{8}: [a-z-]+ session of T-ab12, attempt \d+: `)
+
+// commentsOf gives the artifact comments of the task's issue: its comments but the
+// comments of the sessions, which summariesOf gives.
+func commentsOf(w *world) []map[string]any { return issueComments(w, false) }
+
+// summariesOf gives the comments of the sessions on the task's issue.
+func summariesOf(w *world) []map[string]any { return issueComments(w, true) }
+
+func issueComments(w *world, summaries bool) []map[string]any {
 	w.fake.mu.Lock()
 	defer w.fake.mu.Unlock()
-	return append([]map[string]any(nil), w.fake.comments[taskIssue]...)
+	var out []map[string]any
+	for _, c := range w.fake.comments[taskIssue] {
+		if body, _ := c["body"].(string); sessionComment.MatchString(body) == summaries {
+			out = append(out, c)
+		}
+	}
+	return out
 }
 
 // copiesOfIssue counts the rows of copies.tsv that copy a comment of the task's issue
@@ -73,10 +91,19 @@ func copiesOfIssue(t *testing.T, w *world) int {
 	return n
 }
 
+// editComment changes the body of the i-th artifact comment of the task's issue.
 func editComment(w *world, i int, body string) {
 	w.fake.mu.Lock()
 	defer w.fake.mu.Unlock()
-	w.fake.comments[taskIssue][i]["body"] = body
+	for _, c := range w.fake.comments[taskIssue] {
+		if b, _ := c["body"].(string); !sessionComment.MatchString(b) {
+			if i == 0 {
+				c["body"] = body
+				return
+			}
+			i--
+		}
+	}
 }
 
 func keptRecord(t *testing.T, w *world, path string) string {
@@ -100,8 +127,8 @@ func TestThePlanThePlanReviewAndTheReviewRecordArePostedFromTheKeptCopy(t *testi
 			w, r, base := commentWorld(t)
 			body := c.text(base)
 			id := commentSession(t, r, base, c.role, body)
-			if n := len(commentsOf(w)); n != 0 {
-				t.Fatalf("the session's end left %d comments on the task's issue; want none (code posts after the result)", n)
+			if n := len(commentsOf(w)); n != 0 || len(summariesOf(w)) != 1 {
+				t.Fatalf("the session's end left %d artifact comments and %d summaries on the task's issue; want none and its own (code posts the artifact after the result)", n, len(summariesOf(w)))
 			}
 			r2 := afterRestart(r)
 			ctx := context.Background()
