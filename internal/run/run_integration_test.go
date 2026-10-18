@@ -49,12 +49,16 @@ type fakeGitHub struct {
 	statuses   map[string][]map[string]any // the commit statuses of each SHA, newest first (row 66f)
 	failStatus int                         // the next posts of a status that answer 500, after okStatus have passed
 	okStatus   int
+	reqs       []string                    // every request, "METHOD /path", in order (row 66g)
+	checkRuns  map[string][]map[string]any // the latest check runs of each SHA (row 66g)
+	pulls      pullRoutes                  // the pull requests (row 66g)
 }
 
 func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	call := r.Method + " " + r.URL.Path
+	f.reqs = append(f.reqs, call)
 	switch {
 	case call == "GET /repos/acme/target/installation":
 		perms := map[string]string{"contents": "write", "issues": "write", "metadata": "read"}
@@ -160,7 +164,13 @@ func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
 		}
 		json.NewEncoder(w).Encode(list)
 	case strings.HasPrefix(call, "GET /repos/acme/target/commits/") && strings.HasSuffix(call, "/check-runs"):
-		json.NewEncoder(w).Encode(map[string]any{"check_runs": []any{}})
+		sha := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/repos/acme/target/commits/"), "/check-runs")
+		runs := f.checkRuns[sha]
+		if runs == nil {
+			runs = []map[string]any{}
+		}
+		json.NewEncoder(w).Encode(map[string]any{"check_runs": runs})
+	case f.pulls.serve(f, w, r):
 	default:
 		http.Error(w, `{"message":"Not Found"}`, 404)
 	}

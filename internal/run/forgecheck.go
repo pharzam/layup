@@ -20,6 +20,7 @@ import (
 
 	"github.com/pharzam/layup/internal/forge"
 	"github.com/pharzam/layup/internal/git"
+	"github.com/pharzam/layup/internal/records"
 	"github.com/pharzam/layup/internal/tsv"
 )
 
@@ -63,10 +64,40 @@ type forgeCheckJob struct {
 	parents func(sha string) ([]string, error)
 }
 
-// explainHead walks the first parents from head: each commit must be a merge of recorded or unrecorded, and the walk
-// passes at a commit for which bottom holds, once a merge was accepted. It gives a line for each unrecorded merge.
+// errNotMerge is the walk of the tree that ends at a commit no merge explains.
+var errNotMerge = errors.New("not a recorded merge")
+
+// explainHead walks the first parents from head (docs/spec/loop.md, The tree after the first merge): each commit must be the merge
+// commit of a task, recorded by an event merged or shown merged by the forge with no event yet, and the walk steps to its first
+// parent. It passes at a commit for which bottom holds (the last commit of the setup or the code-owner commit above it), only when a
+// merge was accepted above it: the setup head alone, after the first merge, is a rollback. It gives a line for each merge that is not
+// yet recorded. A commit that no merge explains, a root, or a walk longer than the known merges plus one is errNotMerge; a parent that
+// cannot be read is that error.
 func explainHead(head, last string, parents func(string) ([]string, error), recorded, unrecorded map[string]string, bottom func(string) bool) ([]string, error) {
-	return nil, errors.New("not built")
+	var notes []string
+	accepted := 0
+	c := head
+	for i := 0; i <= len(recorded)+len(unrecorded)+1; i++ {
+		if _, ok := recorded[c]; ok {
+			accepted++
+		} else if task, ok := unrecorded[c]; ok {
+			accepted++
+			notes = append(notes, fmt.Sprintf("tree: %s merge of %s, not yet recorded", c, task))
+		} else if accepted > 0 && bottom(c) {
+			return notes, nil
+		} else {
+			return nil, errNotMerge
+		}
+		ps, err := parents(c)
+		if err != nil {
+			return nil, err
+		}
+		if len(ps) == 0 {
+			return nil, errNotMerge
+		}
+		c = ps[0]
+	}
+	return nil, errNotMerge
 }
 
 // firstLine is the text up to its first line feed.
@@ -130,7 +161,12 @@ func (j forgeCheckJob) checks(tree, applied []byte) [][]string {
 	case repoErr != nil:
 		row("tree", "the forge: "+repoErr.Error(), false)
 	default:
-		detail, ok := j.treeHead(head, last)
+		recorded, unrecorded, err := j.knownMerges()
+		if err != nil {
+			row("tree", "the merges: "+err.Error(), false)
+			break
+		}
+		detail, ok := j.treeHead(head, last, recorded, unrecorded)
 		row("tree", detail, ok)
 	}
 	areaErr := lastErr
@@ -178,11 +214,34 @@ func (j forgeCheckJob) checks(tree, applied []byte) [][]string {
 	return rows
 }
 
-// treeHead judges the head of the default branch (docs/spec/scaffold.md, The tree check): the last commit of
-// setup/tree.tsv passes; so does the code-owner commit of a target set up before the code-owner rule, which only the
-// check of the job can tell (never asked of no head), and then the step says so on its own line while the table keeps
-// its empty detail. Any other head fails, with the reason of the check when it was asked.
-func (j forgeCheckJob) treeHead(head, last string) (string, bool) {
+// knownMerges gives the merge commits of the tasks: none when the job reads none (the tree check of the setup).
+func (j forgeCheckJob) knownMerges() (recorded, unrecorded map[string]string, err error) {
+	if j.merges == nil {
+		return nil, nil, nil
+	}
+	return j.merges()
+}
+
+// treeHead judges the head of the default branch (docs/spec/scaffold.md, The tree check; docs/spec/loop.md, The tree after the first
+// merge). With no merge of a task known, the last commit of setup/tree.tsv passes; so does the code-owner commit of a target set up
+// before the code-owner rule, which only the check of the job can tell (never asked of no head), and then the step says so on its own
+// line while the table keeps its empty detail; any other head fails, with the reason of the check when it was asked. From the first
+// merge known, the head must be explained by a walk of merges (explainHead), and the step prints a line for each merge not yet recorded.
+func (j forgeCheckJob) treeHead(head, last string, recorded, unrecorded map[string]string) (string, bool) {
+	if head != "" && len(recorded)+len(unrecorded) > 0 {
+		notes, err := explainHead(head, last, j.parents, recorded, unrecorded, func(c string) bool { return c == last || j.landing(c, last) == nil })
+		if err != nil {
+			detail := head + " is not a recorded merge"
+			if !errors.Is(err, errNotMerge) {
+				detail += ": " + err.Error()
+			}
+			return detail, false
+		}
+		for _, n := range notes {
+			j.note(n)
+		}
+		return "", true
+	}
 	if head == last {
 		return "", true
 	}
@@ -470,8 +529,9 @@ func (r *state) forgeCheckStep(ctx context.Context) Step {
 		return fail(name, err)
 	}
 	area := filepath.Join(host, "work", r.cfg.Owner, r.cfg.Name)
+	merges, parents := r.treeSeams(ctx)
 	return forgeCheckJob{
-		branch: r.defaultBranch, app: r.cfg.Register.AppID, run: r.cfg.RunID, now: r.cfg.Clock.Now, clean: r.clean,
+		branch: r.defaultBranch, app: r.cfg.Register.AppID, run: r.cfg.RunID, now: r.cfg.Clock.Now, clean: r.clean, merges: merges, parents: parents,
 		records: func() ([]byte, []byte, error) {
 			tree, err := r.store.ReadFile(ctx, "setup/tree.tsv")
 			if err != nil {
@@ -579,10 +639,56 @@ func rulesetID(output []byte) (int64, error) {
 	return id, nil
 }
 
-// mergeMaps reads the merges of the tasks of the register: the merge commit of each event merged, by its task, and the merge
-// commit of each task with a pull request and no event merged whose pull request the forge shows merged.
+// mergeMaps reads the merges of the tasks of the register (docs/spec/loop.md, The tree after the first merge): the merge commit of
+// each event merged, by its task, and the merge commit of each task that has a pull request and no event merged whose pull request
+// the forge shows merged with a merge commit. No register is no merge; a record that its reader refuses and a read of the forge that
+// fails are errors.
 func mergeMaps(ctx context.Context, store interface {
 	ReadFile(ctx context.Context, path string) ([]byte, error)
 }, f forge.Forge) (recorded, unrecorded map[string]string, err error) {
-	return nil, nil, nil
+	recorded, unrecorded = map[string]string{}, map[string]string{}
+	data, err := store.ReadFile(ctx, tasksPath)
+	if err != nil || data == nil {
+		return recorded, unrecorded, err
+	}
+	tasks, err := ReadRegister(data)
+	if err != nil {
+		return nil, nil, fmt.Errorf("%s: %w", tasksPath, err)
+	}
+	for _, t := range tasks {
+		raw, err := store.ReadFile(ctx, eventsPath(t.ID))
+		if err != nil {
+			return nil, nil, err
+		}
+		var events [][]string
+		if raw != nil {
+			if events, err = records.ReadEvents(raw); err != nil {
+				return nil, nil, fmt.Errorf("%s: %w", eventsPath(t.ID), err)
+			}
+		}
+		merged := false
+		for _, e := range events {
+			if e[1] == "merged" {
+				recorded[e[5]], merged = t.ID, true
+			}
+		}
+		if merged || t.PR == 0 {
+			continue
+		}
+		pr, found, err := f.PullRequest(ctx, forge.PullRequestQuery{Number: t.PR})
+		if err != nil {
+			return nil, nil, fmt.Errorf("the pull request %d of %s: %w", t.PR, t.ID, err)
+		}
+		if found && pr.Merged && pr.MergeSHA != "" {
+			unrecorded[pr.MergeSHA] = t.ID
+		}
+	}
+	return recorded, unrecorded, nil
+}
+
+// treeSeams gives the two reads of the tree check of the run: the merges of the tasks, from the records and the forge, and the
+// parents of a commit of the run's clone.
+func (r *state) treeSeams(ctx context.Context) (func() (map[string]string, map[string]string, error), func(string) ([]string, error)) {
+	return func() (map[string]string, map[string]string, error) { return mergeMaps(ctx, r.store, r.cfg.Forge) },
+		func(sha string) ([]string, error) { return git.Parents(r.target, sha) }
 }
