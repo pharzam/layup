@@ -114,7 +114,9 @@ The same API and version header as [The calls of M2a](#the-calls-of-m2a)
 | `Comment` | `POST /repos/{owner}/{repo}/issues/{n}/comments`, the body `{"body": …}` | the comment's ID; a status other than 201 is a forge error naming `Comment` |
 
 `M2b` posts the comment of a probe and of a task session on the control issue
-([`session.md`](session.md#a-comment-for-a-session)).
+([`session.md`](session.md#a-comment-for-a-session)); from `M2e` the comment of a task
+session is on the task's issue, and the control issue keeps the comments of the probes and of
+the phases (task `T-syxm`).
 
 ## The calls of M2d
 
