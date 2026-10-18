@@ -183,4 +183,6 @@ here directly, in the shape above.
 
 - **2026-10-16** — **T-q5k4** — The handoff in the loop: kept comment artifacts, fenced post/copy and restart adoption, record-bound handoffs, question routing and answer acceptance resolving #377. Test-first regression repairs production App identity; full integration passes. Two independent rounds find no remaining material code defect; exact-size approval and final CI gate landing ([#360](https://github.com/pharzam/layup/issues/360); [detail](T-q5k4.md)).
 
+- **2026-10-17** — **T-8rm6** — Point approvers by numeric account ID, success criteria and the checked draft revision with restart/retry behavior; #397 repairs the required marker-fixture answer without weakening assertions. Delivered: ended at cap 3 by the Operator's end 3 (round 4), F5 fixed and F4 a known limit with #409; landing waits for the Operator's approval of the landing figure ([#365](https://github.com/pharzam/layup/issues/365); [detail](T-8rm6.md)).
+
 - **2026-10-17** — **T-b3s3** — Answer acceptance checks every asking question's owner against the answering session's trusted role; OpenQuestions/Position carry the checked input. Full integration and pre-closeout CI pass; independent round finds nothing material in scope ([#401](https://github.com/pharzam/layup/issues/401); [detail](T-b3s3.md)).

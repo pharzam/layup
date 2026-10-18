@@ -28,7 +28,7 @@ import (
 // RunStepsSchema is the form of the table that layup run prints: the block
 // run-steps of docs/spec/run.md (The command).
 var RunStepsSchema = tsv.Schema{Name: "run-steps", Location: "stdout", Columns: []tsv.Column{
-	{Name: "step", Type: "enum(forge|plan|baseline|root-push|read-back|records|issues|watch|clone|version|lease|probe|phase|rule-gaps|meaning|numbering|spans|draft|completeness|markers|batch|answers|answers-review|follow-up|follow-up-answers|setup|verify|scaffold-push|forge-check)", Key: true},
+	{Name: "step", Type: "enum(forge|plan|baseline|root-push|read-back|records|issues|watch|clone|version|lease|probe|phase|rule-gaps|meaning|numbering|spans|draft|completeness|markers|batch|answers|answers-review|follow-up|follow-up-answers|revision|setup|verify|scaffold-push|forge-check)", Key: true},
 	{Name: "result", Type: "enum(done|fail)"},
 	{Name: "detail", Type: "text"},
 }}
@@ -132,7 +132,7 @@ func Restart(ctx context.Context, cfg Config) []Step {
 	startDone := r.startDone()
 	tail := []func(context.Context) Step{r.versionStep, r.takeStep, r.probeStep, r.phaseStep}
 	if startDone {
-		intake := []func(context.Context) Step{r.probeStep, r.ruleGapsStep, r.meaningStep, r.numberingStep, r.spansStep, r.draftStep, r.completenessStep, r.markersStep, r.batchStep, r.answersStep, r.answersReviewStep, r.followUpStep, r.followUpAnswersStep, r.setupStep, r.verifyStep, r.scaffoldPushStep}
+		intake := []func(context.Context) Step{r.probeStep, r.ruleGapsStep, r.meaningStep, r.numberingStep, r.spansStep, r.draftStep, r.completenessStep, r.markersStep, r.batchStep, r.answersStep, r.answersReviewStep, r.followUpStep, r.followUpAnswersStep, r.revisionStep, r.setupStep, r.verifyStep, r.scaffoldPushStep}
 		tail = append(append([]func(context.Context) Step{r.versionStep, r.takeStep}, intake...), r.forgeCheckStep)
 		if r.scaffoldDone {
 			tail = append([]func(context.Context) Step{r.versionStep, r.takeStep, r.forgeCheckStep}, intake...)
@@ -205,7 +205,7 @@ func restartNames(startDone, scaffoldDone bool) []string {
 	if !startDone {
 		return []string{"forge", "clone", "version", "lease", "probe", "phase"}
 	}
-	steps := []string{"probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers", "answers-review", "follow-up", "follow-up-answers", "setup", "verify", "scaffold-push"}
+	steps := []string{"probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers", "answers-review", "follow-up", "follow-up-answers", "revision", "setup", "verify", "scaffold-push"}
 	if scaffoldDone {
 		return append([]string{"forge", "clone", "version", "lease", "forge-check"}, steps...)
 	}

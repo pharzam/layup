@@ -193,9 +193,15 @@ func (f *fakeForge) serve(w http.ResponseWriter, r *http.Request) {
 		}
 		enc.Encode(append(list, f.people...))
 	case call == "GET /repos/acme/target/issues/2/comments":
-		enc.Encode([]map[string]any{{"id": 501, "user": map[string]any{"id": 777, "login": "layup-watch[bot]"},
+		comments := []map[string]any{{"id": 501, "user": map[string]any{"id": 777, "login": "layup-watch[bot]"},
 			"performed_via_github_app": map[string]any{"slug": "layup-watch"},
-			"created_at":               "2026-10-08T12:00:00Z", "updated_at": "2026-10-08T12:00:00Z", "body": "watching\n"}})
+			"created_at":               "2026-10-08T12:00:00Z", "updated_at": "2026-10-08T12:00:00Z", "body": "watching\n"}}
+		for i, body := range f.posted {
+			comments = append(comments, map[string]any{"id": 601 + i, "user": map[string]any{"id": 9001, "login": "layup-agent[bot]"},
+				"performed_via_github_app": map[string]any{"slug": "layup-agent"},
+				"created_at":               "2026-10-08T13:00:00Z", "updated_at": "2026-10-08T13:00:00Z", "body": body})
+		}
+		enc.Encode(comments)
 	default:
 		http.Error(w, `{"message":"Not Found"}`, 404)
 	}
@@ -271,6 +277,10 @@ case "$p" in
 	*/answers-review.tsv)
 		qs=$(printf '%s\n' "$p" | sed -n 's/^The questions: //p')
 		LC_ALL=C awk -F '\t' 'BEGIN { printf "question\tstate\treason\n" } NR > 1 && $13 == "answered" { printf "%s\tclosed\tthe answer is clear\n", $1 }' "$qs" > "$out" ;;
+	*/revision.tsv)
+		draft=$(printf '%s\n' "$p" | sed -n 's/^The draft before the revision: //p')
+		LC_ALL=C awk -F '\t' 'BEGIN { printf "kind\tstatement\tcovers\tcriterion\n" }
+			NR > 1 { printf "%s\t%s\t%s\t%s\n", $2, $3, $4, $5 }' "$draft" > "$out" ;;
 	*/draft.tsv) LC_ALL=C awk -F '\t' 'BEGIN { printf "kind\tstatement\tcovers\tcriterion\n" }
 		NR > 1 && $4 == "need" { printf "requirement\tThe statement of fact %s.\t%s\tThe criterion of fact %s.\n", $3, $3, $3 }' "$sp" > "$out" ;;
 	*) LC_ALL=C awk 'BEGIN { printf "start\tend\tfact\tclass\treason\n"; o = 0; n = 0 }

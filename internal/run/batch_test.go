@@ -70,10 +70,11 @@ func TestMergeQuestions(t *testing.T) {
 		"Q-007 intent band.B intent — — layup run",
 		"Q-008 intent band.U intent — — layup run",
 		"Q-009 intent appetite.hours intent — — layup run",
-		"Q-010 setup S01-stack setup — — layup run",
-		"Q-011 setup M-0a1b2c3d setup 4 30 S-33333333",
-		"Q-012 setup M-4e5f6a7b setup — — S-33333333",
-		"Q-013 setup M-8c9d0e1f setup 4 30 S-33333333", // the quote and the kind of Q-011: kept
+		"Q-010 intent success-criteria intent — — layup run",
+		"Q-011 setup S01-stack setup — — layup run",
+		"Q-012 setup M-0a1b2c3d setup 4 30 S-33333333",
+		"Q-013 setup M-4e5f6a7b setup — — S-33333333",
+		"Q-014 setup M-8c9d0e1f setup 4 30 S-33333333", // the quote and the kind of Q-012: kept
 	}
 	var got []string
 	for _, r := range rows {
@@ -97,12 +98,12 @@ func TestMergeQuestions(t *testing.T) {
 	}
 	// The question of S01-stack is the text of S01 of phase 1; a marker's is "the value of
 	// <marker> at <file>:<line>", as the specification writes it.
-	if rows[9][8] != workpkg.S01Questions[0].Text {
-		t.Errorf("the question of S01-stack %q; want %q", rows[9][8], workpkg.S01Questions[0].Text)
+	if rows[10][8] != workpkg.S01Questions[0].Text {
+		t.Errorf("the question of S01-stack %q; want %q", rows[10][8], workpkg.S01Questions[0].Text)
 	}
 	for i, want := range []string{"the value of " + angled("owner") + " at docs/a.md:2", "the value of " + angled("port") + " at docs/b.md:1", "the value of " + angled("host") + " at docs/b.md:5"} {
-		if rows[10+i][8] != want {
-			t.Errorf("the question of marker %d %q; want %q", i+1, rows[10+i][8], want)
+		if rows[11+i][8] != want {
+			t.Errorf("the question of marker %d %q; want %q", i+1, rows[11+i][8], want)
 		}
 	}
 	table, err := table(records.QuestionsSchema, rows)
@@ -126,8 +127,8 @@ func TestMergeQuestionsAsksTheStackWithNoMarker(t *testing.T) {
 		t.Fatal(err)
 	}
 	last := rows[len(rows)-1]
-	if last[1] != "setup" || last[2] != "S01-stack" || last[3] != "operator" || last[0] != "Q-009" {
-		t.Errorf("the last row %q; want Q-009, setup, S01-stack, operator", last)
+	if last[1] != "setup" || last[2] != "S01-stack" || last[3] != "operator" || last[0] != "Q-010" {
+		t.Errorf("the last row %q; want Q-010, setup, S01-stack, operator", last)
 	}
 	setups := 0
 	for _, r := range rows {
@@ -159,11 +160,15 @@ func TestTheCommentOfTheBatch(t *testing.T) {
 		"\nQ-003: How fast?\n`It is fast.`\n",
 		"\nQ-006: Which fact supports R-001?\n\n",
 		"\nQ-007: " + intentQuestions["band.B"] + "\n",
-		"\nQ-009: " + intentQuestions["appetite.hours"] + "\n",
-		"\nQ-009: " + intentQuestions["appetite.hours"] + "\n\n## For the Operator\n\nQ-010: " + workpkg.S01Questions[0].Text + "\n\n",
-		"\nQ-011: the value of " + angled("owner") + " at docs/a.md:2\nproposed: Carol\n`We use Go and TLA and XYZ.`\n\n",
-		"\nQ-012: the value of " + angled("port") + " at docs/b.md:1\n\n",
-		"\nQ-013: the value of " + angled("host") + " at docs/b.md:5\nproposed: Go\n`We use Go and TLA and XYZ.`\n",
+		"\nQ-010: " + intentQuestions["success-criteria"] + "\n",
+		// The lines of the planned points the idea owner names (loop.md, The
+		// approvers and the success criteria): the form and each name.
+		"`<point>: <login>`",
+		"- `setup`", "- `bet`", "- `activation`", "- `retrospective`", "- `early-retrospective`", "- `audit`",
+		"\n- `audit`\n\n## For the Operator\n\nQ-011: " + workpkg.S01Questions[0].Text + "\n\n",
+		"\nQ-012: the value of " + angled("owner") + " at docs/a.md:2\nproposed: Carol\n`We use Go and TLA and XYZ.`\n\n",
+		"\nQ-013: the value of " + angled("port") + " at docs/b.md:1\n\n",
+		"\nQ-014: the value of " + angled("host") + " at docs/b.md:5\nproposed: Go\n`We use Go and TLA and XYZ.`\n",
 		"`Q-NNN: <answer>`",
 		"`Q-NNN: accept`", "`Q-NNN: <value>`", "`Q-NNN: gap`",
 	} {
@@ -200,7 +205,7 @@ func TestTheBlocksOfAComment(t *testing.T) {
 		t.Errorf("the comment of the idea owner's questions alone:\n%s", c)
 	}
 	c = questionsComment("H", operator[:1], quote, about, []byte(batchPSB))
-	if !strings.Contains(c, "\n## For the idea owner\n\nNo question for the idea owner.\n\n## For the Operator\n\nQ-010: ") || strings.Contains(c, "`Q-NNN: accept`") {
+	if !strings.Contains(c, "\n## For the idea owner\n\nNo question for the idea owner.\n\n## For the Operator\n\nQ-011: ") || strings.Contains(c, "`Q-NNN: accept`") {
 		t.Errorf("the comment of S01-stack alone:\n%s", c)
 	}
 	c = questionsComment("H", operator, quote, about, []byte(batchPSB))
