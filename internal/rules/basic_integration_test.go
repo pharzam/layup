@@ -373,3 +373,50 @@ func TestTheGuardrailsExceptionInARealRepo(t *testing.T) {
 	h = w.commit("the guardrails as a link")
 	want(t, "the guardrails as a link", w.judge(w.in(b, h)), Failure, ReasonRulePath, GuardrailsPath)
 }
+
+// The item rendering-equal reads a real tree (task T-yeav, #404): the mode of
+// each entry, and a pre-image that is a real earlier commit.
+func TestRenderingEqualReadsARealTreeWithLinksAndModes(t *testing.T) {
+	for name, c := range map[string]struct {
+		mode, data string
+		want       bool
+	}{
+		"a regular file (the control)": {"100644", factsWant, true},
+		"a link to the rendering":      {"120000", factsWant, false},
+		"an executable":                {"100755", factsWant, false},
+		"a submodule":                  {"160000", "", false},
+	} {
+		w, b := baseOf(t)
+		w.branch("h", b)
+		if c.mode == "160000" {
+			w.cacheinfo("160000", "1111111111111111111111111111111111111111", factsPath)
+		} else {
+			w.cache(c.mode, factsPath, c.data)
+		}
+		h := w.commit(name)
+		if ok, err := RenderingEqual(Git(w.dir), h, "", []string{factsPath}, []Record{factsRecord}); ok != c.want || err != nil {
+			t.Errorf("%s: %v, %v; want %v", name, ok, err, c.want)
+		}
+	}
+	w, b := baseOf(t)
+	w.write(prdPath, prdPre)
+	pre := w.commit("the PRD before the bet")
+	w.write(prdPath, string(prdRendered(t)))
+	h := w.commit("the PRD rendered")
+	call := func(head, preRev string) (bool, error) {
+		return RenderingEqual(Git(w.dir), head, preRev, []string{prdPath}, []Record{prdRecord})
+	}
+	if ok, err := call(h, pre); !ok || err != nil {
+		t.Errorf("a PRD of its earlier revision: %v, %v; want true", ok, err)
+	}
+	for name, c := range map[string][2]string{"the head as its own pre-image": {h, h}, "the base, which holds no PRD": {h, b}} {
+		if ok, err := call(c[0], c[1]); ok || err != nil {
+			t.Errorf("%s: %v, %v; want false and no error", name, ok, err)
+		}
+	}
+	for name, c := range map[string][2]string{"a PreRev that is no revision": {h, "nope"}, "a head that is no revision": {"nope", pre}} {
+		if ok, err := call(c[0], c[1]); ok || err == nil {
+			t.Errorf("%s: %v, %v; want false and an error", name, ok, err)
+		}
+	}
+}

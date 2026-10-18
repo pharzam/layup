@@ -427,60 +427,6 @@ func TestAnEditedCommentIsANewCopyAndTheFirstHandoffIsInvalid(t *testing.T) {
 	}
 }
 
-func TestTheProgramItemsOfTheCallerAreHandedToTheCheck(t *testing.T) {
-	h64 := strings.Repeat("c", 64)
-	h40 := strings.Repeat("d", 40)
-	// code (rendered task): no session, no schema; rendering-equal is the caller's.
-	for _, c := range []struct {
-		name  string
-		items map[string]bool
-		want  string
-	}{
-		{"rendering-equal true", map[string]bool{"rendering-equal": true}, "valid"},
-		{"rendering-equal false", map[string]bool{"rendering-equal": false}, "invalid rendering-equal"},
-		{"rendering-equal not passed", nil, "invalid rendering-equal"},
-	} {
-		w := newHandoffWorld(t)
-		in := HandoffInput{Task: "T-ab12", Attempt: 1, From: "code (rendered task)", To: "verifier", CodeWritten: true, Items: c.items,
-			Artifacts: []handoff.Artifact{{Kind: "rendering", Named: h64, Found: h64}}}
-		v, err := w.s.RecordHandoff(context.Background(), in)
-		if err != nil || v.Detail != c.want {
-			t.Errorf("%s: %+v, %v; want %s", c.name, v, err, c.want)
-			continue
-		}
-		ev := w.eventsNow(t)
-		if last := ev[len(ev)-1]; last[1] != "handoff" || last[3] != "" || last[2] != "1" || last[6] != c.want {
-			t.Errorf("%s: the event %q; want a handoff of attempt 1 with no session", c.name, last)
-		}
-	}
-	// developer (specification) -> verifier: spec-sections is the caller's.
-	for _, c := range []struct {
-		name  string
-		items map[string]bool
-		want  string
-	}{
-		{"spec-sections true", map[string]bool{"spec-sections": true}, "valid"},
-		{"spec-sections false", map[string]bool{"spec-sections": false}, "invalid spec-sections"},
-		{"not passed", nil, "invalid spec-sections"},
-	} {
-		w := newHandoffWorld(t)
-		w.session(t, planSess, 1, "developer", "")
-		in := HandoffInput{Task: "T-ab12", Session: planSess, From: "developer (specification)", To: "verifier", Items: c.items,
-			Artifacts: []handoff.Artifact{{Kind: "commits", Named: h40, Found: h40}, {Kind: "task-file", Named: h64, Found: h64}}}
-		if v, err := w.s.RecordHandoff(context.Background(), in); err != nil || v.Detail != c.want {
-			t.Errorf("%s: %+v, %v; want %s", c.name, v, err, c.want)
-		}
-	}
-	// An artifact the caller names whose hash differs from the one code found is invalid.
-	w := newHandoffWorld(t)
-	w.session(t, planSess, 1, "developer", "")
-	in := HandoffInput{Task: "T-ab12", Session: planSess, From: "developer (specification)", To: "verifier", Items: map[string]bool{"spec-sections": true},
-		Artifacts: []handoff.Artifact{{Kind: "commits", Named: h40, Found: strings.Repeat("e", 40)}, {Kind: "task-file", Named: h64, Found: h64}}}
-	if v, err := w.s.RecordHandoff(context.Background(), in); err != nil || v.Detail != "invalid artifacts" {
-		t.Errorf("a hash that differs: %+v, %v; want invalid artifacts", v, err)
-	}
-}
-
 func TestAClaimOfTheCallerForWhatCodeComputesIsNotRead(t *testing.T) {
 	all := map[string]bool{"schema": true, "artifacts": true, "question-row": true, "answer-row": true, "plan-fields": true}
 	// A result file that the block refuses.

@@ -162,9 +162,7 @@ func errorOf(reason, p string) Result { return Result{Error, reason, p} }
 func Judge(reg []Entry, touched []Touched, records []Record, pre map[string][]byte) Result {
 	byPath := map[string]Record{}
 	for _, rec := range records {
-		_, hasPre := pre[rec.Path]
-		switch {
-		case !ValidPath(rec.Path), rec.Path == GuardrailsPath, rec.Kind != PRD && rec.Kind != Facts, rec.Kind == PRD && !hasPre:
+		if _, hasPre := pre[rec.Path]; !recordInputOK(rec) || (rec.Kind == PRD && !hasPre) {
 			return errorOf(ReasonInput, rec.Path)
 		}
 		if _, twice := byPath[rec.Path]; twice {
@@ -178,20 +176,11 @@ func Judge(reg []Entry, touched []Touched, records []Record, pre map[string][]by
 			continue
 		}
 		rec, named := byPath[t.Path]
-		switch {
-		case !named:
+		if !named {
 			return failure(ReasonRulePath, t.Path)
-		case !t.Present:
-			return failure(ReasonNotEqual, t.Path)
-		case t.Type != "blob" || t.Mode != "100644":
-			return failure(ReasonNotARegularFile, t.Path)
 		}
-		want, findings := Render(rec, pre[t.Path])
-		switch {
-		case len(findings) > 0:
-			return failure(ReasonNoRendering, t.Path)
-		case !bytes.Equal(t.Data, want):
-			return failure(ReasonNotEqual, t.Path)
+		if reason := RecordRendered(rec, t, pre[t.Path]); reason != "" {
+			return failure(reason, t.Path)
 		}
 		rendered++
 	}
@@ -199,6 +188,48 @@ func Judge(reg []Entry, touched []Touched, records []Record, pre map[string][]by
 		return Result{Success, ReasonRenderedRecord, ""}
 	}
 	return Result{Success, ReasonNoRulePath, ""}
+}
+
+// recordInputOK reports whether a record is one that can be judged: a path of
+// a tree that is not the guardrails file, and a kind that is a PRD or facts.
+func recordInputOK(rec Record) bool {
+	return ValidPath(rec.Path) && rec.Path != GuardrailsPath && (rec.Kind == PRD || rec.Kind == Facts)
+}
+
+// RecordRendered is the per-record rule that Judge applies to a path the head
+// changes and that the handoff item rendering-equal applies to a path the head
+// names (task T-yeav, #404): the head holds a regular file there (mode 100644)
+// whose bytes are exactly Render's, with no finding. It gives the closed reason
+// of the failure, "" for none. pre is the file a PRD is rendered from.
+func RecordRendered(rec Record, t Touched, pre []byte) string {
+	switch {
+	case !t.Present:
+		return ReasonNotEqual
+	case t.Type != "blob" || t.Mode != "100644":
+		return ReasonNotARegularFile
+	}
+	want, findings := Render(rec, pre)
+	switch {
+	case len(findings) > 0:
+		return ReasonNoRendering
+	case !bytes.Equal(t.Data, want):
+		return ReasonNotEqual
+	}
+	return ""
+}
+
+// fileAt gives what rev holds at p: whether there is an entry, its mode and
+// type, and the bytes of a regular file.
+func fileAt(r Repo, rev, p string) (Touched, error) {
+	e, ok, err := entryAt(r, rev, p)
+	if err != nil {
+		return Touched{}, err
+	}
+	t := Touched{Path: p, Present: ok, Mode: e.Mode, Type: e.Type}
+	if ok && e.Type == "blob" && e.Mode == "100644" {
+		t.Data, err = r.Show(rev, p)
+	}
+	return t, err
 }
 
 // entryAt gives the entry at exactly p in rev, and whether there is one: the
@@ -266,15 +297,8 @@ func Basic(r Repo, in Input) Result {
 	for _, p := range names {
 		t := Touched{Path: p}
 		if p == GuardrailsPath || named[p] {
-			e, ok, err := entryAt(r, head, p)
-			if err != nil {
+			if t, err = fileAt(r, head, p); err != nil {
 				return errorOf(ReasonGit, "")
-			}
-			t.Present, t.Mode, t.Type = ok, e.Mode, e.Type
-			if ok && e.Type == "blob" && e.Mode == "100644" {
-				if t.Data, err = r.Show(head, p); err != nil {
-					return errorOf(ReasonGit, "")
-				}
 			}
 		}
 		if p == GuardrailsPath {
@@ -318,7 +342,8 @@ func readRegisterAt(r Repo, rev string) ([]Entry, Result) {
 // preImages reads, for each PRD record, the file at in.PreRev that it is
 // rendered from. The commit is the base or lies between the base and the
 // head, and is never the head: rendering from the head's own bytes could not
-// fail on a byte that is no rendering. The zero Result is no refusal.
+// fail on a byte that is no rendering. An empty base is no link to the base. The
+// zero Result is no refusal.
 func preImages(r Repo, in Input, base, head string) (map[string][]byte, Result) {
 	pre := map[string][]byte{}
 	var prds []string
@@ -338,6 +363,9 @@ func preImages(r Repo, in Input, base, head string) (map[string][]byte, Result) 
 		return nil, errorOf(ReasonInput, "")
 	}
 	for _, link := range [][2]string{{base, rev}, {rev, head}} {
+		if link[0] == "" { // a handoff has no base: the pre-image is the head's ancestor only
+			continue
+		}
 		ok, err := r.IsAncestor(link[0], link[1])
 		if err != nil {
 			return nil, errorOf(ReasonGit, "")
@@ -361,10 +389,86 @@ func preImages(r Repo, in Input, base, head string) (map[string][]byte, Result) 
 	return pre, Result{}
 }
 
-// RecordRendered is the per-record rule of Judge (task T-yeav, #404): STUB.
-func RecordRendered(rec Record, t Touched, pre []byte) string { return ReasonNotEqual }
+// failing is a Repo that keeps the first error of any call, so that a failure
+// that preImages maps to a reason is still an error to RenderingEqual.
+type failing struct {
+	Repo
+	err error
+}
 
-// RenderingEqual is the item rendering-equal (task T-yeav, #404): STUB.
+func (f *failing) note(err error) error {
+	if f.err == nil {
+		f.err = err
+	}
+	return err
+}
+
+func (f *failing) RevParse(rev string) (string, error) {
+	s, err := f.Repo.RevParse(rev)
+	return s, f.note(err)
+}
+
+func (f *failing) Show(rev, p string) ([]byte, error) {
+	b, err := f.Repo.Show(rev, p)
+	return b, f.note(err)
+}
+
+func (f *failing) LsTree(rev, p string) ([]git.TreeEntry, error) {
+	e, err := f.Repo.LsTree(rev, p)
+	return e, f.note(err)
+}
+
+func (f *failing) IsAncestor(base, head string) (bool, error) {
+	ok, err := f.Repo.IsAncestor(base, head)
+	return ok, f.note(err)
+}
+
+// RenderingEqual reports whether the head holds, at each of the paths, the
+// rendering of its record: the handoff item rendering-equal (loop.md, The items
+// a caller computes; task T-yeav, #404). The paths and the records match one to
+// one. A PRD record is rendered from the file at preRev, a revision that
+// resolves, is not the head and is an ancestor of it; the bytes are never the
+// caller's. Every refusal of the input or of the tree is (false, nil), the
+// static ones before any call of git; a failed call of git, the resolution of
+// the head or of preRev included, is (false, err).
 func RenderingEqual(r Repo, head, preRev string, paths []string, records []Record) (bool, error) {
-	return false, nil
+	if len(paths) == 0 || len(paths) != len(records) {
+		return false, nil
+	}
+	byPath := map[string]Record{}
+	for _, rec := range records {
+		if !recordInputOK(rec) {
+			return false, nil
+		}
+		byPath[rec.Path] = rec
+	}
+	seen := map[string]bool{}
+	for _, p := range paths {
+		if _, ok := byPath[p]; !ok || seen[p] {
+			return false, nil
+		}
+		seen[p] = true
+	}
+	g := &failing{Repo: r}
+	h, err := g.RevParse(head)
+	if err != nil {
+		return false, err
+	}
+	pre, bad := preImages(g, Input{PreRev: preRev, Records: records}, "", h)
+	if g.err != nil {
+		return false, g.err
+	}
+	if bad.State != "" {
+		return false, nil
+	}
+	for _, p := range paths {
+		t, err := fileAt(g, h, p)
+		if err != nil {
+			return false, err
+		}
+		if RecordRendered(byPath[p], t, pre[p]) != "" {
+			return false, nil
+		}
+	}
+	return true, nil
 }

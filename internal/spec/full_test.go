@@ -696,3 +696,51 @@ func TestParseReqLine(t *testing.T) {
 		}
 	}
 }
+
+// HasSection (task T-yeav, #404): the one predicate that sections and the
+// handoff item spec-sections both call.
+func TestHasSectionNeedsANonEmptySectionWhoseHeadingHoldsTheID(t *testing.T) {
+	files := func(text string) map[string][]byte { return map[string][]byte{"a.md": []byte(text)} }
+	if !HasSection(files("## REQ-005 — x\nbody\n"), "REQ-005") {
+		t.Fatal("the control, a heading and a body line, is no section")
+	}
+	for name, text := range map[string]string{
+		"no body line":            "## REQ-005 — x\n",
+		"only blank lines":        "## REQ-005 — x\n\n  \n",
+		"the body is the next":    "## REQ-005 — x\n## Next\nbody\n",
+		"the ID in the body":      "## Other\nREQ-005 is here\n",
+		"plain text, no heading":  "REQ-005 — x\nbody\n",
+		"an unrelated heading ID": "## REQ-006 — x\nbody\n",
+	} {
+		if HasSection(files(text), "REQ-005") {
+			t.Errorf("%s: a section", name)
+		}
+	}
+}
+
+func TestHasSectionReadsTheIDAtItsBoundaries(t *testing.T) {
+	has := func(heading, id string) bool {
+		return HasSection(map[string][]byte{"a.md": []byte(heading + "\nbody\n")}, id)
+	}
+	for _, c := range []struct {
+		heading, id string
+		want        bool
+	}{
+		{"## REQ-005 — x", "REQ-00", false}, {"## REQ-0051 — x", "REQ-005", false}, {"## XREQ-005 — x", "REQ-005", false},
+		{"## REQ-00 — x", "REQ-00", true}, {"## (REQ-005)", "REQ-005", true}, {"## REQ-005", "REQ-005", true},
+	} {
+		if got := has(c.heading, c.id); got != c.want {
+			t.Errorf("%q holds %q: %v, want %v", c.heading, c.id, got, c.want)
+		}
+	}
+}
+
+func TestHasSectionOfNoIDOrNoFilesIsFalse(t *testing.T) {
+	files := map[string][]byte{"a.md": []byte("## REQ-005 — x\nbody\n")}
+	if HasSection(files, "") || HasSection(nil, "REQ-005") || HasSection(map[string][]byte{}, "REQ-005") {
+		t.Error("no ID, or no file, is a section")
+	}
+	if !HasSection(files, "REQ-005") {
+		t.Error("the control, the real ID, is no section")
+	}
+}
