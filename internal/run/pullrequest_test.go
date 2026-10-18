@@ -174,3 +174,29 @@ func TestWithPRSetsTheNumberOfOneTaskAndKeepsTheOthers(t *testing.T) {
 		t.Errorf("a task outside the register: %+v, no error", got)
 	}
 }
+
+// The head of the pull request is the attempt's last bound head: a branch that moved after the event bound is refused for a new
+// draft and for an open one, and nothing is registered (round 1, finding 2).
+func TestABranchHeadThatIsNotTheBoundHeadIsRefusedAndNothingIsRegistered(t *testing.T) {
+	ctx := context.Background()
+	in := PullInput{Task: "T-ab12", Attempt: 1, Type: "feat", Description: "add the draft"}
+	// A new draft, the branch at head3 while the last bound event names head1.
+	w := newPRWorld(t)
+	w.f.SetHead("task/T-ab12/1", head3)
+	if pr, err := w.s.OpenPullRequest(ctx, in); err == nil || !strings.Contains(err.Error(), "moved") || w.prOf(t) != 0 {
+		t.Errorf("a new draft at a moved head: %+v, %v with pr %d; want a moved-head error and no number", pr, err, w.prOf(t))
+	}
+	// An open pull request whose head moved after the bound event.
+	w = newPRWorld(t)
+	open, _ := w.f.Fake.OpenDraft(ctx, "task/T-ab12/1", "main", "feat: x", "b")
+	w.f.MoveHead(open.Number, head3)
+	if pr, err := w.s.OpenPullRequest(ctx, in); err == nil || !strings.Contains(err.Error(), "moved") || w.prOf(t) != 0 || len(w.st.commits) != 0 {
+		t.Errorf("an open pull request at a moved head: %+v, %v with pr %d; want a moved-head error and no write", pr, err, w.prOf(t))
+	}
+	// The control: the heads agree, the pull request is used and registered.
+	w = newPRWorld(t)
+	open, _ = w.f.Fake.OpenDraft(ctx, "task/T-ab12/1", "main", "feat: x", "b")
+	if pr, err := w.s.OpenPullRequest(ctx, in); err != nil || pr.Number != open.Number || w.prOf(t) != open.Number {
+		t.Errorf("an open pull request at the bound head: %+v, %v with pr %d; want it used and registered", pr, err, w.prOf(t))
+	}
+}
