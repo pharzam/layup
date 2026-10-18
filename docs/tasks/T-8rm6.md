@@ -2,7 +2,7 @@
 
 Issue [#365](https://github.com/pharzam/layup/issues/365), PR [#399](https://github.com/pharzam/layup/pull/399).
 Also closes the one-answer marker-fixture repair [#397](https://github.com/pharzam/layup/issues/397).
-Serves REQ-005 and F-0003. Author SWE-2 Max; Codex performed producing-code
+Serves REQ-012 and F-0003. Author SWE-2 Max; Codex performed producing-code
 and evidence audits, main integration and close-out. Plan6219011001;
 independent plan confirmation6219108719; author answer6219173043 before code.
 Initial maximum1500 changed lines/24files, cap1, goals2, no panel.
@@ -52,13 +52,22 @@ The previous2,364/28 request is withdrawn; the new exact complete figure and
 any one-time R12 ruling are recorded on the issue;
 no estimate, reserve or implicit approval replaces that ruling.
 
+Later rounds: round 3 (Sonnet 5.5) ended `not mergeable`, F1-F3; the Operator set
+cap 3 (6246378213); the fix c7db4f7 repaired F2 (the restart counts 22 steps) and F3
+(the empty draft). Round 4 (Claude Opus 5.5 `max` on OpenCode, 6247229055) found F1,
+F4 and F5 (R1 tracked as #408) and ended `not mergeable, findings recorded`. The
+Operator chose end 3 (6247381864), a fix with no further round: F5 fixed (the test
+is in the traceability and PRD-0001 rows) and F4 a known limit of the task, its
+rule #409 (see loop.md, Done before). Delivered; the merge waits for the Operator's
+one approval of the landing figure.
+
 Final notes disposition (no code correction or additional review round):
 N1 retain the first-byte implementation and test; the imprecise spec citation is
 non-material and no new operative sentence is introduced after the final freeze.
 N2 retain the identical intake summary and its link to the canonical loop list;
-no divergent rule exists. N3 the context-only empty-draft input is outside this
-DoD; retain the review's disclosed limitation and track the revealed defect
-as #402 rather than adding a post-cap guard. N4 the planned named no-result
+no divergent rule exists. N3 the context-only empty-draft input was outside the
+DoD and tracked as #402; it is now fixed by F3 of round 3 (an empty draft is not
+revised until a session row exists; test TestTheRevisionOfAnEmptyDraft). N4 the planned named no-result
 test was not delivered; shared PhaseError handling is tested elsewhere, and the
 review found no failing acceptance behavior. This coverage limit is explicit.
 N5 these helper callers remain #366's responsibility; no runtime claim is made.
@@ -77,6 +86,11 @@ read, with thinking inside output. Missing exports and elapsed values are not in
 | Final code round | reasoning | Sonnet5.5 | not reported | I72/O26025/Cw123785/Cr2776856 | 497168ms |
 | Root full integration, one failed and two passed | — | deterministic | — | not applicable | 2880308.440ms |
 | Root audits, coordination, main merges, focused checks and close-out | reasoning/execution | Codex GPT-6 family | not reported | not reported | not reported |
+| Cap-3 fix (F2, F3) | execution | Claude Sonnet 5.5 | not reported | 88,483 tokens | 59 min (2026-10-18 06:04Z-07:03Z) |
+| Round 3 | reasoning | Claude Sonnet 5.5 | not reported | not recorded | not recorded |
+| Round 4 | reasoning | Claude Opus 5.5, variant max, on OpenCode | max | 15,436,326 tokens with cache, USD 7.01 | 33 min (2026-10-18T07:05:06Z-07:38:10Z) |
+| Orchestration | reasoning | Claude Opus 5.5 on Claude Code | not reported | not separately recorded | not recorded |
+| This close-out | execution | Claude Sonnet 5.5 | not reported | not known to the author | 2026-10-18 07:58Z-08:01Z |
 | **Total reported subset** | | | | 36448092 tokens; cache counted once | 3994221.440ms |
 
 The SWE original build export is missing; unique retained increments exclude

@@ -1191,6 +1191,10 @@ before, with the session's comment reposted from the record when the control
 issue lacks it, the batch's precedent. An empty draft (every fact of the problem
 statement is `context`) holds no session row, so it is not revised until a
 session row exists: the step runs its session and appends the criteria rows.
+Known limit of task `T-8rm6` (rule: #409): an empty draft whose revision keeps no row
+(no need, constraint or measure fact and no criterion) is not told from the draft
+session's own empty draft, so the step runs its session again at each restart until
+the milestone cap.
 The revised draft is the input of the specification task.
 
 ### The rendered commit and the confirmed inventory

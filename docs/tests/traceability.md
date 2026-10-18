@@ -274,4 +274,4 @@ the first.
 | `M4c/uat/two-stacks` | uat | REQ-014 | F-0003#67 | — | — | M4c | planned |
 | `TestThePointBindings`, `TestTheApproverRows`, `TestAnAccountARowAlreadyServesIsNamedByAnotherSpelling`, `TestThePointIsServedByTheResolvedAccount`, `TestTheApproverOfEachPoint`, `TestTheSuccessCriteriaOfTheAnswer` (`internal/run/answers_test.go`) | unit | REQ-012 | F-0003#51, F-0003#54 | — | ADR-0019 | T-8rm6 | green |
 | `TestCheckRevision`, `TestTheFactOfAQuote`, `TestKeepOfRevision` (`internal/run/revision_test.go`) | unit | REQ-012 | F-0003#51, F-0003#54 | — | ADR-0019 | T-8rm6 | green |
-| `TestTheRevisionOfTheDraft`, `TestTheRevisionRefusedThenKept`, `TestTheRevisionReadsTheFollowUp`, `TestTheRevisionStopsAtTheCap` (`internal/run/revision_integration_test.go`) | integration | REQ-012 | F-0003#51, F-0003#54 | — | ADR-0019 | T-8rm6 | green |
+| `TestTheRevisionOfTheDraft`, `TestTheRevisionRefusedThenKept`, `TestTheRevisionReadsTheFollowUp`, `TestTheRevisionStopsAtTheCap`, `TestTheRevisionOfAnEmptyDraft` (`internal/run/revision_integration_test.go`) | integration | REQ-012 | F-0003#51, F-0003#54 | — | ADR-0019 | T-8rm6 | green |
