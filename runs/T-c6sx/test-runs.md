@@ -83,3 +83,5 @@ TestTheNumberedFactsFileAtTheHeadIsTheProblemStatementRecord -> specinput_integr
 TestTheSpecimenPassesTheFullCheckAndThePrdLintThroughTheProductionInput -> specinput_integration_test.go:270: the rule covers fails on the specimen through the production input: the Facts cell of REQ-001 cites F-0004#1, which is no fact of the inventory or the answers
 exit 1
 ```
+
+Gates of the fixes of round 1, head `640d0c6`: `go build ./...`, `go vet ./...`, `go vet -tags=integration ./...`, `go vet -tags=e2e ./cmd/layup/`, `gofmt -l .` (no file), `go test -count=1 ./...`, the five text checks, `nested-checkout-check` and `git diff --check origin/main HEAD`: exit 0 each. `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 45m ./...`: exit 0, 15:30:12Z to 15:50:51Z, every package `ok`.
