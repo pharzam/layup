@@ -66,6 +66,34 @@ Each line below is an assertion of a test, none a build error and none a panic. 
     ship_integration_test.go:359: the close-out on a merge commit: bound "", refused ""; want it accepted
 ```
 
+### The failing assertions of the two main red blocks (round 1, finding 5)
+
+The original run printed test names only (`-v` output of the lines above was not kept). These two are a **replay of 2026-10-18, not the original run**: the tree of the stubs commit 68c2e94 (`git archive`) in a scratch directory, with the test files of 54d319c laid over it and a shim file that declares `errNotMerge` (the later tests need it; it touches neither test), run at 2026-10-18T17:17:52Z as `go test -count=1 -run 'TestAStopAfterTheDraftOpensNoSecondDraft|TestTheRecordsCommitIsTheBoundSessionsAndNotALaterOnes' ./internal/run` (exit 1). It shows that the tests fail at the stubs for the right reason; it cannot show the order of the original work.
+
+```
+--- FAIL: TestAStopAfterTheDraftOpensNoSecondDraft (0.00s)
+    pullrequest_test.go:82: the call with a register that cannot be written: <nil>; want that error
+--- FAIL: TestTheRecordsCommitIsTheBoundSessionsAndNotALaterOnes (0.00s)
+    pullrequest_test.go:107: attempt 1: the body ""; want the link to the records commit aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa of its own session
+    pullrequest_test.go:107: attempt 2: the body ""; want the link to the records commit bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb of its own session
+```
+
+The merge-head control above was added after the implementation (191d473 is at 16:31:09Z, the run at about 16:50Z): its stub replay proves that the test is sensitive to the missing behaviour, not that it was written first.
+
+## Round 1, finding 2: the head of the pull request is the bound head
+
+`TestABranchHeadThatIsNotTheBoundHeadIsRefusedAndNothingIsRegistered` (a new draft, and a reused open pull request, whose branch head is `head3` while the last event `bound` names `head1`; a control where the heads agree) was written before the check. Committed alone as bc98321.
+
+Red, `go test -count=1 -run TestABranchHeadThatIsNotTheBoundHeadIsRefusedAndNothingIsRegistered ./internal/run` at 17:16:01Z to 17:16:17Z, exit 1:
+
+```
+--- FAIL: TestABranchHeadThatIsNotTheBoundHeadIsRefusedAndNothingIsRegistered (0.00s)
+    pullrequest_test.go:187: a new draft at a moved head: {Number:1 NodeID:PR_fake1 State:open Draft:true Merged:false HeadSHA:3333333333333333333333333333333333333333 MergeSHA:}, <nil> with pr 1; want a moved-head error and no number
+    pullrequest_test.go:194: an open pull request at a moved head: {Number:1 NodeID:PR_fake1 State:open Draft:true Merged:false HeadSHA:3333333333333333333333333333333333333333 MergeSHA:}, <nil> with pr 1; want a moved-head error and no write
+```
+
+The control (the heads agree) did not fail. Green, after the check in `OpenPullRequest`, `go test -count=1 -v -run 'TestABranchHeadThatIsNotTheBoundHeadIsRefusedAndNothingIsRegistered' ./internal/run` at 2026-10-18T17:19:30Z, exit 0 (`--- PASS`). Mutants 29 and 30 of `mutants.md` are killed by it.
+
 ## Green negatives beside red controls
 
 A test that passes at the stub is a green negative; it is listed, never counted as a red run, and each stands beside the red control of its own table.

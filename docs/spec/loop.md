@@ -92,7 +92,9 @@ of `internal/run`):
   from** is its `records` column (the snapshot of the push check and of `layup/rules`), never the
   run's changing base and never a later session's. The branch is `task/<task>/<attempt>`.
 - **Read before write.** The pull request of the branch is read first: an open one is used, a merged
-  one is returned untouched, a closed one that is not merged is a Go error (the redo is row 66k's).
+  one is returned untouched, a closed one that is not merged is a Go error (the redo is row 66k's). The
+  head of the open or the new draft must be the bound SHA: if the branch moved after the event `bound`,
+  the call is a Go error (the head moved) and registers nothing (a draft just opened stays, as above).
   Only a branch with none is opened, under the lease. The number is then written by one fenced
   records commit that replaces the task's row in `tasks.tsv` with `pr` set; a stop after the draft
   opened leaves a draft, which the next call finds by its branch.
@@ -110,7 +112,8 @@ of `internal/run`):
 - **The edit of the body to link the review record is row 66q's** (task `T-08rj`, #413): it needs a
   seventh method of `internal/forge` ([the calls of M2e](forge.md#the-calls-of-m2e)), outside the cell
   of row 66g, and it calls this task's composer. It is **not built** here; the requirement above
-  stays, with row 66q as its owner, before the first consumer, rows 66h and 66k.
+  stays, with row 66q as its owner, before the first consumer, rows 66h and 66k (the plan lists 66q among the
+  predecessors of 66h, and 66k waits through 66h).
 
 ### The attempts
 

@@ -790,8 +790,8 @@ a verifier session check them as for any task.
    with its typed result (§4).
 4. The handoff check (below), the rule-path and workflow checks (§4, §6); then
    `layup run` pushes the branch and opens a **draft** pull request that links
-   the issue, with a title in the target's form (`<type>: <task ID>
-   <description>`), and requests no review (Sol-2).
+   the issue, with a title in the target's form (`<type>:
+   <description>`, the task ID in the commits and the body), and requests no review (Sol-2).
 5. The target's CI, `layup gate`, `layup spec check` and `layup/rules` report, on
    each new head (the close-out's included). A failure goes back to the developer
    as a finding, in a new attempt. Two failures are expected and do not go back:
