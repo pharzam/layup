@@ -75,16 +75,21 @@ FAIL
 ### Reading
 
 Every failing line is a semantic failure of the stub (a zero value and a nil error, no request), not a compile error. The
-cases of condition 3 of the plan review are red: the second issue close and `IssueState` of an open issue and of an unknown
-number (`TestFakeClosesAnIssueAsNotPlannedAndKeepsItAfterASecondClose`), the merged pull request
+cases of condition 3 of the plan review are red: the second issue close and `IssueState` of an open issue
+(`TestFakeClosesAnIssueAsNotPlannedAndKeepsItAfterASecondClose`), the merged pull request
 (`...ChangesNothingAndGivesItMerged`, `...GivesAMergedPullRequestAsTheForgeAnswersIt`), the statuses 200 of the
 semantic errors (rows "answer that is open" and "is a pull request"), and the 401 and the rate limit with a token primed
 first.
 
 **Green negatives** (the stub satisfies them, so they prove nothing alone; each has its red control above): the
 "made 0 requests" half of `TestTheClosesRefuseANumberBelow1BeforeAnyRequest` (control: the refusal lines of the same test,
-which are red); the refusal of `Merge` of a closed pull request in `TestFakeClosesAPullRequest...` (control: its line 314);
-the second `CloseIssue` returning no error in F2 (control: the `IssueState` lines).
+which are red); the second `CloseIssue` returning no error in F2 (control: the `IssueState` lines); `IssueState` of an unknown
+number in F2, since the stub's `"", "", false` is what the case expects (its mutation evidence is CM14 of `mutants.md`).
+
+**Unreached in this run:** the refusal of `Merge` of a closed pull request in `TestFakeClosesAPullRequest...`. F1 stops
+at `t.Fatalf` on its line 314 before it, so the run proves nothing of it, red or green.
+
+*Corrected after round 1 (findings 2 and 3 of comment 6253669149): the raw log above is unchanged; this reading is.*
 
 The line numbers of the integration run are those before `gofmt -w` wrapped two lines of the added tests.
 
