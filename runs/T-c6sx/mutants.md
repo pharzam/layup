@@ -38,24 +38,47 @@ killed by the test that gives `labelList` another map (condition 7).
 | M21 | 0 | 0 | 1 (unit) | instructions_test.go:87: Text differs from testdata/prompts/specification.txt: got 5757 bytes, want 5757; first difference at byte 2819: got "3#<n> F-0003 \|\n\n\| Requirement \| Acceptan", want "4#<n> F-0003 \|\n\n\| Requirement  | ad675b51b351c8962d50f5ab7fe2237d5775adf5c8f7afc990cc59bfc3704e69 | c53dcfd3906838edaa1f2b97e4d9179d1689d073941faa4e0b6c7b7134f17c09 |
 | M22 | 0 | 0 | 1 (unit) | instructions_test.go:87: Text differs from testdata/prompts/close-out.txt: got 3655 bytes, want 3655; first difference at byte 1285: got "telemetry.tsv 4692305d77aea295bf6112ac97", want "sessions.tsv e63bc74763f411275824ff25e0a" | ad675b51b351c8962d50f5ab7fe2237d5775adf5c8f7afc990cc59bfc3704e69 | 6a162d221bd24d4aa86b18e722d31da540a2d41b55779643367419806fd805c4 |
 
-- M1: the instruction written before the lists; restored byte for byte: True; control `go test -count=1 ./internal/run` exit 0
-- M2: {result} as the relative result/result.tsv; restored byte for byte: True; control `go test -count=1 ./internal/run` exit 0
-- M3: {head} from the attempt base, not PromptIn.Base; restored byte for byte: True; control `go test -count=1 ./internal/run` exit 0
-- M4: the review record told to write plan.md; restored byte for byte: True; control `go test -count=1 ./internal/run` exit 0
-- M5: the Shape inputs only at the developer step; restored byte for byte: True; control `go test -count=1 ./internal/run` exit 0
-- M6: the survivors text dropped; restored byte for byte: True; control `go test -count=1 ./internal/run` exit 0
-- M7: a survivor outside the table accepted; restored byte for byte: True; control `go test -count=1 ./internal/run` exit 0
-- M8: a result with no survivor accepted; restored byte for byte: True; control `go test -count=1 ./internal/run` exit 0
-- M9: the draft copied without ReadDraft; restored byte for byte: True; control `go test -count=1 ./internal/run` exit 0
-- M10: a missing tests.tsv is an error; restored byte for byte: True; control `go test -count=1 ./internal/run` exit 0
-- M11: the kind check skipped; restored byte for byte: True; control `go test -count=1 ./internal/run` exit 0
-- M12: no early refusal of a step with no instruction; restored byte for byte: True; control `go test -count=1 ./internal/run` exit 0
-- M14: the ledger omitted from the close-out; restored byte for byte: True; control `go test -count=1 ./internal/run` exit 0
-- M15: the label list hard-coded to today's owner map; restored byte for byte: True; control `go test -count=1 ./internal/run` exit 0
-- M16: spans.tsv before draft.tsv; restored byte for byte: True; control `go test -count=1 ./internal/run` exit 0
-- M17: tests: shown with the bullet on its line; restored byte for byte: True; control `go test -count=1 ./internal/run` exit 0
-- M18: the verifier reviews from the first attempt; restored byte for byte: True; control `go test -count=1 ./internal/run` exit 0
-- M19: the frozen list before the plan; restored byte for byte: True; control `go test -count=1 ./internal/run` exit 0
-- M20: a decision name that is no path word accepted; restored byte for byte: True; control `go test -count=1 ./internal/run` exit 0
-- M21: the next facts number off by one; restored byte for byte: True; control `go test -count=1 ./internal/run` exit 0
-- M22: the ledger in the wrong order; restored byte for byte: True; control `go test -count=1 ./internal/run` exit 0
+
+## Round 1: the mutants of the required inputs and of the citation contract
+
+Same method, same script. First the reader-bypass and missing-record mutants of finding 3 on the head `cbb40b0`
+(the tests before the round), then all of them and the new rules (M30 to M35) on the head `2b01ec7`.
+M25 and M29 were already killed by the old tests; M23, M24, M26, M27 and M28 passed every old test.
+
+On `cbb40b0`:
+
+| # | build | vet | test | failing assertion (first line) | sha256 before | sha256 after |
+| - | ----- | --- | ---- | ------------------------------ | ------------- | ------------ |
+| M23 | 0 | 0 | 0 (integration) | SURVIVED: all tests pass | ad675b51b351c8962d50f5ab7fe2237d5775adf5c8f7afc990cc59bfc3704e69 | ccf8b15a58e885005554269e969a126af9b9c9a0e8bd6b771f1aa4636f138bfd |
+| M24 | 0 | 0 | 0 (integration) | SURVIVED: all tests pass | ad675b51b351c8962d50f5ab7fe2237d5775adf5c8f7afc990cc59bfc3704e69 | 984fc9a7c6cd140e4f529a09cdbccb4033bb56e1e5c8291bd86d36750bfe56bb |
+| M25 | 0 | 0 | 1 (integration) | promptfile_integration_test.go:392: close-out with no ledger: the records have no telemetry.tsv; want an error holding "the records have no sessions.tsv" | ad675b51b351c8962d50f5ab7fe2237d5775adf5c8f7afc990cc59bfc3704e69 | dfaa6e38899f6cbbe7e43ca75bd0cc020c30f38eabe7dd9c47c8103d88e3c179 |
+| M26 | 0 | 0 | 0 (integration) | SURVIVED: all tests pass | ad675b51b351c8962d50f5ab7fe2237d5775adf5c8f7afc990cc59bfc3704e69 | 8c4e5ef8f0e99c6b839dc8d0790a0555dbb2ffe88f70f668fe23883fbf12f9ba |
+| M27 | 0 | 0 | 0 (integration) | SURVIVED: all tests pass | ad675b51b351c8962d50f5ab7fe2237d5775adf5c8f7afc990cc59bfc3704e69 | 2d25799a1b02ec0e2d370e6c775ef59cf51ac9eba6af2b57368368806aa0d978 |
+| M28 | 0 | 0 | 0 (integration) | SURVIVED: all tests pass | ad675b51b351c8962d50f5ab7fe2237d5775adf5c8f7afc990cc59bfc3704e69 | c66f967028ed69a3454badd681cf15c3f388f6be71af5837249d3ca90f8a0f5e |
+| M29 | 0 | 0 | 1 (integration) | promptfile_integration_test.go:401: a refused telemetry table: <nil>; want an error holding "telemetry.tsv: " | ad675b51b351c8962d50f5ab7fe2237d5775adf5c8f7afc990cc59bfc3704e69 | 64f02121d5472e550b3c0d999124bfdb8b1535f042a4b117fbb19dad39272176 |
+
+On `2b01ec7`:
+
+| # | build | vet | test | failing assertion (first line) | sha256 before | sha256 after |
+| - | ----- | --- | ---- | ------------------------------ | ------------- | ------------ |
+| M23 | 0 | 0 | 1 (integration) | promptfile_integration_test.go:374: the removed start/problem-statement.md: <nil>; want an error holding "the records have no start/problem-statement.md" | 0a524319e09f21f0293947a02b4bfcee9a87aeaf0bc8e6c49abb42caad9fce7b | 618941576430ee5d6fca240d7eb3b8905f8b756f865bf0e8a8181b77985e371c |
+| M24 | 0 | 0 | 1 (integration) | promptfile_integration_test.go:422: close-out without telemetry.tsv: <nil>; want an error holding "the records have no telemetry.tsv" | 0a524319e09f21f0293947a02b4bfcee9a87aeaf0bc8e6c49abb42caad9fce7b | bb96f77deb6d399028c705c09c1cf8a30a27e1184284781687200a7a62a76b2b |
+| M25 | 0 | 0 | 1 (integration) | promptfile_integration_test.go:409: close-out with no ledger: the records have no telemetry.tsv; want an error holding "the records have no sessions.tsv" | 0a524319e09f21f0293947a02b4bfcee9a87aeaf0bc8e6c49abb42caad9fce7b | f30a610ad2649ee6808d2d83001d0e2d52812f900927375651416bf8c31775ad |
+| M26 | 0 | 0 | 1 (integration) | promptfile_integration_test.go:379: a refused spec/spans.tsv: <nil>; want an error holding "spec/spans.tsv: " | 0a524319e09f21f0293947a02b4bfcee9a87aeaf0bc8e6c49abb42caad9fce7b | b276762aa7848fc5ebd1f760314a69d297384ab74e4045f72ca252f255190495 |
+| M27 | 0 | 0 | 1 (integration) | promptfile_integration_test.go:379: a refused intake/answers.tsv: <nil>; want an error holding "intake/answers.tsv: " | 0a524319e09f21f0293947a02b4bfcee9a87aeaf0bc8e6c49abb42caad9fce7b | e4fae12a6b51ba6391bef0764339fbaed35146f494b51430e3c8c23ea2f0f3d7 |
+| M28 | 0 | 0 | 0 (integration) | SURVIVED: all tests pass | 0a524319e09f21f0293947a02b4bfcee9a87aeaf0bc8e6c49abb42caad9fce7b | 904680b2da75a47269b8f4dc2cf8a111bd2e2ae228b764744df8d48a8f9ed099 |
+| M29 | 0 | 0 | 1 (integration) | promptfile_integration_test.go:427: a refused telemetry table: <nil>; want an error holding "telemetry.tsv: " | 0a524319e09f21f0293947a02b4bfcee9a87aeaf0bc8e6c49abb42caad9fce7b | b4185fb48b0f2ffb36c99cd175faa6b3b317d3f26cc7e5c104df63475ba2c922 |
+| M30 | 0 | 0 | 1 (unit) | instructions_test.go:481: the rule covers fails on the specimen: the Facts cell of REQ-001 cites F-0003, which is no fact of the inventory or the answers | faa3cd726f05ecda1671992d6f11a33cc4a99298726662da05dfcb95a67b7a0d | 5d73754eaec4f33c0c5d59f42402a27fd9256480464bf9bf3a0ad81c74e7529b |
+| M31 | 0 | 0 | 1 (unit) | instructions_test.go:87: Text differs from testdata/prompts/specification.txt: got 5757 bytes, want 5757; first difference at byte 2819: got "3#<n> F-0003 \|\n\n\| Requirement \| Acceptan", want "4#<n> F-0003 \|\n\n\| Requirement  | 0a524319e09f21f0293947a02b4bfcee9a87aeaf0bc8e6c49abb42caad9fce7b | db435d191fbf7442f89299ec2d118ba56a42e298f3f2a98ab01fc89ea6aed554 |
+| M32 | 0 | 0 | 1 (unit) | instructions_test.go:524: after the first bet with no numbered facts file: PSBRecords [F-0005]; want none (the prediction is for the head before the bet) | 0a524319e09f21f0293947a02b4bfcee9a87aeaf0bc8e6c49abb42caad9fce7b | 5b3da234464ad61b695a652c458a2b6c8da5956437612e5002ce1f6655c303ad |
+| M33 | 0 | 0 | 1 (unit) | instructions_test.go:503: factRecordIDs = [F-0001 F-0002 F-0003 F-0004 F-0009]; want [F-0001 F-0002 F-0003 F-0004] | 0a524319e09f21f0293947a02b4bfcee9a87aeaf0bc8e6c49abb42caad9fce7b | 43602e57874f46ac89761fce3c99e2cbc7da106220cfa6350d9f8a3cd1d7612c |
+| M34 | 0 | 0 | 1 (unit) | instructions_test.go:519: with a numbered facts file: PSBRecords [F-0008]; want it unchanged | 0a524319e09f21f0293947a02b4bfcee9a87aeaf0bc8e6c49abb42caad9fce7b | a2d4bc02d86a66e072371e531baba27d3608de53d84d625eecd8fbcd6fcbac61 |
+| M35 | 0 | 0 | 1 (unit) | instructions_test.go:514: before the bet: Records [], PSBRecords [F-0001]; want the records and the predicted ID | 0a524319e09f21f0293947a02b4bfcee9a87aeaf0bc8e6c49abb42caad9fce7b | f40cbf258e0aabd26f94408b97a54f727130bb398d08849db9bf67ee19242c6a |
+
+Restores: each checked by hash against the head's file, followed by a green control of `go test -count=1 ./internal/run`
+(exit 0 for every mutant). M23 to M35 killed except M28, which survives and is equivalent: `PromptFile` reads
+`sessions.tsv` by `ReadSessions` at stage 2 for every step, before `taskInputs` reads it again, so a table that the
+reader refuses never reaches the second read (the case `a refused sessions table` of
+`TestPromptFileRefusalsHaveTheirControls` shows the refusal comes from that earlier read).
+
+Restore check of every mutant above (M1, M2, M3, M4, M5, M6, M7, M8, M9, M10, M11, M12, M14, M15, M16, M17, M18, M19, M20, M21, M22; M7, M22, M23 to M29 counted once for each run): the file restored byte for byte by hash (True) and the control `go test -count=1 ./internal/run` exit 0. The line of each run is in the output of the script, kept outside the tree.

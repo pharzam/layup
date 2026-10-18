@@ -425,6 +425,8 @@ func TestPromptFileRefusalsHaveTheirControls(t *testing.T) {
 	}
 	l.records(map[string][]byte{"telemetry.tsv": []byte("not telemetry\n")})
 	refused("a refused telemetry table", call("T-ab12", "close-out", nil), "telemetry.tsv: ")
+	l.records(map[string][]byte{"sessions.tsv": []byte("not sessions\n")}) // refused by the read of stage 2, before the ledger is read
+	refused("a refused sessions table", call("T-ab12", "close-out", nil), "sessions.tsv: ")
 }
 
 // The harness reads only prompt.md: it writes the comment file in the form that
