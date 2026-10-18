@@ -1,6 +1,8 @@
-# Red run of the named tests against the compiling stubs (6fccd51), T-4pje
-# unit: go test -count=1 -v ./internal/run, started 2026-10-18T06:19Z; integration: -tags=integration, 2026-10-18T06:20:34Z
-# Each test below failed on a semantic assertion (a value or a detail), none on a compile error.
+# T-4pje test runs
+
+## Red
+
+The named tests against the compiling stubs (6fccd51): unit run of ./internal/run at 2026-10-18T06:19Z, integration run (-tags=integration) at 06:20:34Z. Each test failed on a semantic assertion, none on a compile error; the lines show the first two failing assertions of each.
 
 unit FAIL TestThePlanCommentParsesInThePinnedForm (4 failing assertions)
     commentform_test.go:55: ParsePlanComment = {Size: OpenQuestions:[] NewInterfaces:[] NewDependencies:[]}, [], false; want small, no lists, [{t1 internal/a_test.go} {t2 internal/b_test.go}]
@@ -79,3 +81,91 @@ unit FAIL TestAStoreErrorReturnsAnErrorAndWritesNoHandoff (1 failing assertions)
 
 integration FAIL TestTheCommentChecksOfTheTaskLoop (1 failing assertions)
     handoffpost_integration_test.go:456: RecordHandoff = {Valid:true Detail:valid comment 602-1}, <nil>; want invalid verdict-field comment 602-1
+
+## Green
+
+Green run of the named unit tests on the implementation, 2026-10-18T06:27:03Z
+
+```
+--- PASS: TestThePlanCommentParsesInThePinnedForm (0.00s)
+--- PASS: TestAPlanFieldTwiceOrAbsentIsNoPlan (0.00s)
+--- PASS: TestTheTestsMarkerOnceWithBulletsOfTwoWords (0.00s)
+--- PASS: TestAPlanListFieldIsOneLineOfText (0.00s)
+--- PASS: TestAFieldValueIgnoresOneCarriageReturn (0.00s)
+--- PASS: TestAMarkerOrBulletWithACarriageReturnIsNotRead (0.00s)
+--- PASS: TestAFieldWithNothingAfterTheColonIsMalformed (0.00s)
+--- PASS: TestTheLineReaderIgnoresAFencedBlock (0.00s)
+--- PASS: TestACommentThatFailsItsFormIsFalseEverywhere (0.00s)
+--- PASS: TestVerdictFieldIsApproveOrApproveWithConditions (0.00s)
+--- PASS: TestFindingsLocatedNeedsALocatedFinding (0.00s)
+--- PASS: TestNothingMaterialNeedsTheVerdictTheHeadAndAnEmptyBlock (0.00s)
+--- PASS: TestOpenMaterialFailsUphill (0.00s)
+--- PASS: TestAnEmptyOrInvalidCommentParsesToNothing (0.00s)
+--- PASS: TestTheCommentItemsAreComputedFromTheKeptCopy (0.04s)
+--- PASS: TestAnItemOfAnotherCommentKindIsFalse (0.01s)
+--- PASS: TestNothingMaterialReadsTheBaseOfTheVerifierStartRow (0.00s)
+--- PASS: TestACodeWrittenHandoffHasNoCommentItem (0.00s)
+--- PASS: TestAKeptCopyTheStoreLacksOrCannotReadMakesTheItemsFalse (0.03s)
+--- PASS: TestAStoreErrorReturnsAnErrorAndWritesNoHandoff (0.00s)
+PASS
+ok  	github.com/pharzam/layup/internal/run	0.112s
+```
+
+## Demo
+
+Demo of row 66l: TestTheCommentChecksOfTheTaskLoop (integration, real git, the httptest forge), 2026-10-18T06:23Z
+
+```
+--- PASS: TestTheCommentChecksOfTheTaskLoop (34.22s)
+    --- PASS: TestTheCommentChecksOfTheTaskLoop/nothing_material_at_the_verifier's_base,_the_caller_says_false (4.87s)
+    --- PASS: TestTheCommentChecksOfTheTaskLoop/nothing_material_at_another_head,_the_caller_says_true (5.88s)
+    --- PASS: TestTheCommentChecksOfTheTaskLoop/nothing_material_with_a_finding,_the_caller_says_true (5.13s)
+    --- PASS: TestTheCommentChecksOfTheTaskLoop/findings_located,_the_caller_says_false (4.63s)
+    --- PASS: TestTheCommentChecksOfTheTaskLoop/a_plan_of_the_form,_the_caller_says_false (4.42s)
+    --- PASS: TestTheCommentChecksOfTheTaskLoop/a_plan_that_is_not_of_the_form,_the_caller_says_true (4.68s)
+    --- PASS: TestTheCommentChecksOfTheTaskLoop/a_plan_review_that_rejects,_the_caller_says_true (4.61s)
+ok  	github.com/pharzam/layup/internal/run	61.716s
+```
+
+## Mutants
+
+Each mutant changes one expression of `internal/run/commentform.go` or `handoffpost.go` in a copy, must pass `go build ./...` and `go vet ./internal/run` (a mutant that fails either is not run and is excluded), and is killed when `go test ./internal/run` fails a test. The copy is restored byte-exact after each (checked) and the control is green before and after.
+
+| Mutant | Result | Failing tests (first four) |
+| --- | --- | --- |
+| field-\r unstripped | killed | TestAFieldValueIgnoresOneCarriageReturn, TestAnEditedCommentIsANewCopyAndTheFirstHandoffIsInvalid, TestAnItemOfAnotherCommentKindIsFalse, TestTheCommentItemsAreComputedFromTheKeptCopy +1 |
+| trailing spaces unstripped | killed | TestAFieldValueIgnoresOneCarriageReturn, TestAFieldWithNothingAfterTheColonIsMalformed |
+| tests:\r accepted as marker | killed | TestAMarkerOrBulletWithACarriageReturnIsNotRead |
+| tests: x accepted as marker | killed | TestAMarkerOrBulletWithACarriageReturnIsNotRead, TestTheTestsMarkerOnceWithBulletsOfTwoWords |
+| plan bullet \r accepted | killed | TestAMarkerOrBulletWithACarriageReturnIsNotRead |
+| finding bullet \r accepted | killed | TestAMarkerOrBulletWithACarriageReturnIsNotRead |
+| fence skip dropped | killed | TestTheLineReaderIgnoresAFencedBlock, TestVerdictFieldIsApproveOrApproveWithConditions |
+| CRLF closer accepted | killed | TestTheLineReaderIgnoresAFencedBlock |
+| closer of any count | killed | TestTheLineReaderIgnoresAFencedBlock |
+| closer of any character | killed | TestTheLineReaderIgnoresAFencedBlock |
+| verdict-field accepts reject | killed | TestTheCommentItemsAreComputedFromTheKeptCopy, TestVerdictFieldIsApproveOrApproveWithConditions |
+| line >= 0 | killed | TestFindingsLocatedNeedsALocatedFinding |
+| tests bullet of two or more words | killed | TestTheTestsMarkerOnceWithBulletsOfTwoWords |
+| duplicate test IDs | killed | TestTheTestsMarkerOnceWithBulletsOfTwoWords |
+| test path not checked | killed | TestTheTestsMarkerOnceWithBulletsOfTwoWords |
+| empty field value read | killed | TestAFieldWithNothingAfterTheColonIsMalformed |
+| field twice read | killed | TestAPlanFieldTwiceOrAbsentIsNoPlan |
+| marker twice read | killed | TestAPlanFieldTwiceOrAbsentIsNoPlan, TestFindingsLocatedNeedsALocatedFinding |
+| lists split on commas | killed | TestAPlanListFieldIsOneLineOfText |
+| size unchecked | killed | TestAFieldValueIgnoresOneCarriageReturn, TestThePlanCommentParsesInThePinnedForm |
+| invalid UTF-8 read | killed | TestAnEmptyOrInvalidCommentParsesToNothing |
+| head not checked (non-strict parse) | killed | TestACommentThatFailsItsFormIsFalseEverywhere, TestFindingsLocatedNeedsALocatedFinding, TestNothingMaterialNeedsTheVerdictTheHeadAndAnEmptyBlock |
+| finding rule of two words | killed | TestFindingsLocatedNeedsALocatedFinding |
+| nothing-material ignores the head | killed | TestNothingMaterialNeedsTheVerdictTheHeadAndAnEmptyBlock, TestNothingMaterialReadsTheBaseOfTheVerifierStartRow, TestTheCommentItemsAreComputedFromTheKeptCopy |
+| nothing-material ignores the block | killed | TestNothingMaterialNeedsTheVerdictTheHeadAndAnEmptyBlock |
+| findings-located accepts an empty block | killed | TestFindingsLocatedNeedsALocatedFinding, TestTheCommentItemsAreComputedFromTheKeptCopy |
+| OpenMaterial = findings only | killed | TestOpenMaterialFailsUphill |
+| head compared to another column | killed | TestNothingMaterialReadsTheBaseOfTheVerifierStartRow |
+| kind dispatch removed | killed | TestAnItemOfAnotherCommentKindIsFalse |
+| caller literal honored (reset removed) | killed | TestACodeWrittenHandoffHasNoCommentItem, TestAKeptCopyTheStoreLacksOrCannotReadMakesTheItemsFalse |
+| missing kept copy read as valid | killed | TestAKeptCopyTheStoreLacksOrCannotReadMakesTheItemsFalse |
+| store error swallowed | killed | TestAStoreErrorReturnsAnErrorAndWritesNoHandoff |
+| code-written handoff reads a copy | killed | TestACodeWrittenHandoffHasNoCommentItem |
+| caller literal false honored (only the true literal reaches plan-fields) | killed | TestTheCommentItemsAreComputedFromTheKeptCopy, TestAnItemOfAnotherCommentKindIsFalse |
+
+34 mutants, 34 killed, 0 excluded by a build or vet failure. Control after restore: green, files byte-identical: True.

@@ -543,8 +543,9 @@ marker; every other line is ignored. A field is a line whose key starts at
 column 0, made of lowercase words separated by one space, and is followed by
 `: `, and whose value runs to the end of the line with trailing spaces and one
 final `\r` ignored (the forge and a checkout can carry CRLF); `—` (U+2014) is
-the empty value of a field, a `key: ` line with nothing after the space is
-malformed (it is not `—`), and a `key:` line without the space is no field. A
+the empty value of a field, the `key: ` line of a required field with nothing after
+the space is malformed (it is not `—`), and a `key:` line without the space is no
+field. A
 block marker is a line that is exactly a marker word and `:` — `tests:` in a
 plan, `findings:` in a review record, never a value after the colon: `tests:\r`
 and `tests: x` are not markers (the second is a field) — and its block is the
