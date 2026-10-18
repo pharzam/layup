@@ -1,18 +1,21 @@
-# T-cav3 test runs (red, then green)
+# T-cav3 test runs (red, then green, then the gates)
 
-Recorded at 2026-10-18T11:04Z from the clock after the step. Commands run in the worktree
-`.worktree/T-cav3`, `-count=1`; the integration level with
+Recorded from the clock (2026-10-18T11:28Z for this file's rewrite; the figures are those of the runs).
+Commands run in `.worktree/T-cav3` with `-count=1`; the integration level with
 `TMPDIR=/home/layup/.cache/layup-session/tmp-green`.
 
-## Red: the compiling stubs, every named test
+## Step S2: the extractions (stubs committed alone)
 
-The stubs are `specInput`, `specRecords` and `specTree` returning the zero input and
-`nil`, `isNumberedFacts` returning false and `psbRecordsOf` returning `nil, nil`. The
-`filesAt` and `readRequired` extractions were already in (the commit of the stubs), with
-the characterization tests of the tree items run green on them first (integration,
-`-run 'TreeItems|SpecSections|RenderingEqual|Spec|Batch|Answers'`, 95.9 s, ok).
+`filesAt` and `readRequired` were extracted with `specFilesAt` and `state.readRecord` as
+one-line wrappers, with the compiling stubs of the builder. Characterization on that commit:
+`go test ./...` ok, and the integration tests of the tree items and of the batch and the answers
+(`-run 'TreeItems|SpecSections|RenderingEqual|Spec|Batch|Answers'`, 95.9 s) ok.
 
-### Unit level (the final test file; the verdict of each test)
+## Red: the stubs, every named test
+
+The stubs return the zero input and `nil` (`isNumberedFacts` false, `psbRecordsOf` `nil, nil`).
+
+Unit (`internal/run/specinput_test.go`), verdict at the stub:
 
 ```
 --- FAIL: TestEachRecordFieldOfTheFullInputIsItsRecord (0.00s)
@@ -26,72 +29,51 @@ the characterization tests of the tree items run green on them first (integratio
 --- FAIL: TestAnAnswersCitationIsAQuestionIDNotARecordLine (0.00s)
 --- FAIL: TestANonFullSHAIsRefusedBeforeAnyRead (0.00s)
 --- FAIL: TestOnlyTheNumberedFactsFileNamesAProblemStatementRecord (0.00s)
-FAIL
-FAIL	github.com/pharzam/layup/internal/run	0.075s
-FAIL
 ```
 
-The reason of each red (the first red run, same stub): a field is empty where its record has
-rows (`PSB 0 bytes, Spans [], Questions 0, Answers [], Register 0 bytes, Merged []`); a missing
-or refused record gives `<nil>; want a SourceError with the source records:<path>` for each of
-the five required paths, the six failed reads and the six refused records; the index gives
-`Index [], Versions 0`; a non-full SHA gives `<nil>; want a SourceError with the source base`
-(and `head`); `isNumberedFacts("F-0007-numbered-facts.md") = false`.
-
-Two tests are **green at the stub on purpose**, each beside its red control, and are not
-counted as reds: `TestNoInventoryIndexIsBeforeTheFirstBet` (U4; its control is
-`TestEachVersionOfTheIndexIsItsExactBytes`, which reads an index) and the clear-table case
-of the demo (I2, below; its control is the judged table of the same test). The case `covers`
-of `TestAnAnswersCitationIsAQuestionIDNotARecordLine` is red at the stub for the reason of
-the review (condition 3): a zero input lacks `Spans`, so `covers` is
-`did not run: spec/spans.tsv`; the controls (bare `Q-002` passes, `F-0001` named as a
-record passes on its fact 2) make the case distinguish the wrong answers mapping, which is
-killed by mutant M1.
-
-### Integration level, the tree half
+Integration, tree half and demo:
 
 ```
 --- FAIL: TestTheTreeFieldsOfTheFullInputAreTheRegularFilesOfTheHead (0.28s)
 --- FAIL: TestTheNumberedFactsFileAtTheHeadIsTheProblemStatementRecord (0.53s)
 --- FAIL: TestAFailedReadOfTheTreeIsASourceErrorOfTheTarget (0.53s)
-FAIL
-FAIL	github.com/pharzam/layup/internal/run	1.365s
-FAIL
-```
-
-Reasons (first red run): `SpecFiles []`, `PRDs []`, `Changed []` for a head with the
-files; `PSBRecords []; want [F-0007]`; two files `<nil>; want a SourceError with the
-source target:docs/facts@<sha>`; a head the clone lacks `<nil>; want a SourceError`;
-and each of the three later blobs that cannot be read (after the earlier reads
-succeed) `<nil>; want a SourceError`.
-
-### Integration level, the demo (`TestTheFullInputOfAHeadAfterIntakeAndTheScaffold`)
-
-```
 --- FAIL: TestTheFullInputOfAHeadAfterIntakeAndTheScaffold (80.78s)
-    Changed []; want [docs/facts/F-0007-numbered-facts.md docs/prd/PRD-0001-x.md docs/spec/a.md]
-    SpecFiles 0, PRDs 0, PSBRecords [], AnswersRecord ""; want a.md, PRD-0001-x.md, [F-0007] and the empty answers record
-    PSB 0 bytes, Spans 0, Questions 0, Answers 0; want each the record of the run
-    Register 0 bytes, Merged [], Index [], Copy ""; want the register, [T-aaaa], none and none
-    covers on the head: [covers clear no specification yet]; want pass (the PRD cites F-0007#1, the span fact)
-    no copy: Copy "", Index [], Versions 0, <nil>; want the caller's copy, the index and the exact version
-FAIL
-FAIL	github.com/pharzam/layup/internal/run	80.788s
-FAIL
-exit 1
+    Changed []; SpecFiles 0, PRDs 0, PSBRecords []; PSB 0 bytes, Spans 0; Register 0 bytes, Merged [];
+    covers on the head: [covers clear no specification yet]; no copy: Index [], Versions 0
 ```
 
-The case of the head that changes no specification (`base..base`) is green at the stub (the
-zero input has no change, so the table is the clear one) and is the reason that the same
-test also asserts the judged table of the head that changes the specification: its control.
+Reasons: every field is empty where its record has rows; a missing, failed or refused record
+gives `<nil>; want a SourceError with the source records:<path>` (five required paths, six
+failed reads, six refused records); a non-full SHA gives `<nil>`; `isNumberedFacts` is false for
+`F-0007-numbered-facts.md`; a head with files gives `SpecFiles []`, `PRDs []`, `Changed []`; two numbered
+facts files give `<nil>; want a SourceError target:docs/facts@<sha>`; a head the clone lacks and
+each of three later unreadable blobs (after the earlier reads succeeded) give `<nil>`.
 
-## Green: the code
+**Green at the stub, on purpose, beside their red controls (not counted as reds):**
+`TestNoInventoryIndexIsBeforeTheFirstBet` (control `TestEachVersionOfTheIndexIsItsExactBytes`),
+and the clear-table case of the demo (`base..base`; its control is the judged table of the same
+test). `TestAnAnswersCitationIsAQuestionIDNotARecordLine` is red at the stub because a zero input
+lacks `Spans` (`covers` is `did not run: spec/spans.tsv`), not because of the answers mapping; its
+controls (bare `Q-002` passes, `F-0001` named passes on its fact 2) make it distinguish the wrong
+mapping, which mutant M1 shows. `TestReadRequiredKeepsTheStoreError...` was added after mutants
+M18 and M19 survived (see `mutants.md`); it was green on the extraction by construction, and
+its two mutants are the red evidence.
 
-```
-go test -count=1 ./internal/run/                     ok
-go test -count=1 -tags=integration (tree half, 3 tests)   ok  1.0 s
-go test -count=1 -tags=integration -run TheFullInputOfAHeadAfterIntake ./internal/run/   ok  56.3 s
-```
+## Green
 
-The full gates (build, vet, gofmt, the whole unit and integration levels, the linters) are
-in the section "Gates" below.
+`go test -count=1 ./internal/run/` ok; the tree half of the integration level ok (1.0 s); the demo
+`TestTheFullInputOfAHeadAfterIntakeAndTheScaffold` ok (56.3 s).
+
+## Gates
+- `go build ./...`: exit 0 (2 s)
+- `go vet ./...`: exit 0 (0 s)
+- `go vet -tags=integration ./...`: exit 0 (4 s)
+- `go vet -tags=e2e ./cmd/layup/`: exit 0 (0 s)
+- `gofmt -l .`: 0 files listed (exit 0)
+- `go test -count=1 ./...`: exit 0 (9 s)
+- `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./...`:
+  exit 0, 11:27:57Z to 11:55:39Z (internal/run 1572.7 s, catalog 47.2 s, setup 71.2 s, verify 72.7 s), at the
+  head 5716475 (the later commits change no Go file).
+- Text checks at that head, exit 0 each: `adr-lint` (4 s), `prd-lint` (0 s), `link-lint` (40 s, 2825 links),
+  `run-discipline-tests` (17 s, 138 passed), `nested-checkout-check` (1 s), `setup-check` (69 s, after `git add`),
+  `git diff --check origin/main HEAD` (1 s).
