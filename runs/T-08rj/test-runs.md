@@ -1,5 +1,7 @@
 # T-08rj - the test runs of Step A (the forge call)
 
+(Trailing blanks of the blank lines inside the quoted output are stripped; nothing else is changed.)
+
 Every command was run directly in `.worktree/T-08rj`, never piped; the exit status is the one `go` gave
 and the times are `date -u` read around the run. The red runs are against the compiling stubs of commit
 `32118c3` (`Body` declared and set by nothing, `EditBody` returning the zero pull request with no request),
@@ -45,11 +47,11 @@ unchanged `prJSON` comparisons of the existing tests.
 start 2026-10-18T13:09:20Z
 --- FAIL: TestEditBodyPatchesTheBodyAloneAndGivesThePullRequest (0.00s)
     github_integration_test.go:1275: the request body = map[]; want map[body:Closes #7
-        
+
         The records commit: abc] (the body alone: the title, the state and the base cannot change)
     github_integration_test.go:1278: PATCH /repos/acme/target/pulls/5 requests = 0; want 1
     github_integration_test.go:1281: EditBody = {Number:0 NodeID: State: Draft:false Merged:false HeadSHA: MergeSHA: Body:}; want {Number:5 NodeID:PR_node5 State:open Draft:false Merged:false HeadSHA:1111111111111111111111111111111111111111 MergeSHA: Body:Closes #7
-        
+
         The records commit: abc} (the answer is decoded, with its body)
 --- FAIL: TestEditBodyGivesAForgeErrorForAnyOtherStatus (0.00s)
     github_integration_test.go:1295: EditBody with 422 = <nil>; want the call EditBody, the status 422 and the first line
