@@ -1156,6 +1156,13 @@ These traps are not domain-specific: they hurt every project's test suite.
   tree survived. It is silent because every row of the table was an error. **The check:** give each call its own row
   where the earlier calls succeed (here, a facts-only call), and keep the mutant that swallows that call.
   Learned in `T-yeav` (#404).
+- ❌ **A record row that names a file is not the record ID a check wants.** The full check wants the `F-NNNN` IDs
+  whose `#n` is the numbered fact `n`, and the setup record holds only paths (`brief.copy` is a raw, unnumbered
+  file; the answers record numbers `S01-stack` first, so its fact 2 is not `Q-002`). Reading an ID from the closest
+  row would resolve a wrong citation and pass it. It is silent because the fixture that cites the right line passes.
+  **The check:** name the one source (here the file `docs/facts/F-NNNN-numbered-facts.md` at the head, which row 66j
+  produces), leave the field empty until it exists, and give the test a fixture where the wrong mapping resolves to a
+  real fact. Learned in `T-cav3` (#412).
 
 ### Reference-sweep pitfalls
 

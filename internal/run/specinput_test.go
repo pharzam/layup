@@ -313,3 +313,40 @@ func (c *countRead) ReadFile(ctx context.Context, p string) ([]byte, error) {
 	c.n++
 	return c.SessionStore.ReadFile(ctx, p)
 }
+
+// readRequired keeps what state.readRecord did: the store's error as it is,
+// a missing record (nil bytes, not empty bytes) with its diagnostic, and a
+// reader's error with the path in front.
+func TestReadRequiredKeepsTheStoreErrorTheMissingDiagnosticAndTheReaderPath(t *testing.T) {
+	boom := errors.New("the store failed")
+	read := func(b []byte) ([][]string, error) {
+		if string(b) == "bad" {
+			return nil, errors.New("line 2: a bad row")
+		}
+		return [][]string{{string(b)}}, nil
+	}
+	store := &standinStore{files: map[string][]byte{"a": []byte("ok"), "empty": {}, "bad": []byte("bad")}}
+	ctx := context.Background()
+	if rows, err := readRequired(ctx, store, "a", read); err != nil || !reflect.DeepEqual(rows, [][]string{{"ok"}}) {
+		t.Errorf("a record there: %v, %v; want its rows", rows, err)
+	}
+	if _, err := readRequired(ctx, store, "empty", read); err != nil {
+		t.Errorf("an empty record that is there: %v; want no error (only nil bytes are missing)", err)
+	}
+	if _, err := readRequired(ctx, store, "none", read); err == nil || err.Error() != "the records have no none" {
+		t.Errorf("a missing record: %v; want \"the records have no none\"", err)
+	}
+	if _, err := readRequired(ctx, store, "bad", read); err == nil || err.Error() != "bad: line 2: a bad row" {
+		t.Errorf("a record its reader refuses: %v; want the path in front of the reader's error", err)
+	}
+	if _, err := readRequired(ctx, failReadWith{store, boom}, "a", read); !errors.Is(err, boom) || err != boom {
+		t.Errorf("a store that fails: %v; want its own error, unwrapped", err)
+	}
+}
+
+type failReadWith struct {
+	SessionStore
+	err error
+}
+
+func (f failReadWith) ReadFile(context.Context, string) ([]byte, error) { return nil, f.err }

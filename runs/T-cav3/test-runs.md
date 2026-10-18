@@ -31,56 +31,12 @@ FAIL	github.com/pharzam/layup/internal/run	0.075s
 FAIL
 ```
 
-The lines of the first red run, with the same stub (the fixture of the questions was then
-corrected, which changes no red here), show the reasons:
-
-```
---- FAIL: TestEachRecordFieldOfTheFullInputIsItsRecord (0.00s)
-    the input: PSB 0 bytes, Spans [], Questions 0, Answers [], Register 0 bytes, Merged []; want each its record
---- FAIL: TestAMissingRecordOfTheFullInputIsAnError (0.00s)
-    start/problem-statement.md: <nil>; want a SourceError with the source "records:start/problem-statement.md"
-    spec/spans.tsv: <nil>; want a SourceError with the source "records:spec/spans.tsv"
-    questions.tsv: <nil>; want a SourceError with the source "records:questions.tsv"
-    intake/answers.tsv: <nil>; want a SourceError with the source "records:intake/answers.tsv"
-    tasks.tsv: <nil>; want a SourceError with the source "records:tasks.tsv"
---- FAIL: TestAFailedReadOfARecordIsAnErrorEvenWhereItsAbsenceIsNot (0.00s)
-    start/problem-statement.md: <nil>; want a SourceError with the source "records:start/problem-statement.md"
-    spec/spans.tsv: <nil>; want a SourceError with the source "records:spec/spans.tsv"
-    tasks.tsv: <nil>; want a SourceError with the source "records:tasks.tsv"
-    spec/inventory.tsv: <nil>; want a SourceError with the source "records:spec/inventory.tsv"
-    spec/inventory-2.tsv: <nil>; want a SourceError with the source "records:spec/inventory-2.tsv"
-    tasks/T-bbbb/events.tsv: <nil>; want a SourceError with the source "records:tasks/T-bbbb/events.tsv"
---- FAIL: TestARecordThatItsReaderRefusesIsAnError (0.00s)
-    spec/spans.tsv: <nil>; want a SourceError with the source "records:spec/spans.tsv"
-    questions.tsv: <nil>; want a SourceError with the source "records:questions.tsv"
-    intake/answers.tsv: <nil>; want a SourceError with the source "records:intake/answers.tsv"
-    tasks.tsv: <nil>; want a SourceError with the source "records:tasks.tsv"
-    spec/inventory.tsv: <nil>; want a SourceError with the source "records:spec/inventory.tsv"
-    tasks/T-aaaa/events.tsv: <nil>; want a SourceError with the source "records:tasks/T-aaaa/events.tsv"
---- FAIL: TestEachVersionOfTheIndexIsItsExactBytes (0.00s)
-    Index [], Versions 0, <nil>; want two rows and the exact bytes of both versions
---- FAIL: TestMergedIsTheTasksWithAMergedEvent (0.00s)
-    Merged [], <nil>; want [T-aaaa] (T-bbbb has only a session event, T-cccc no events file)
-    Merged []; want [T-aaaa T-cccc] in the order of the register
---- FAIL: TestTheRegisterIsItsBytesAndNotJudged (0.00s)
-    Register "", <nil>; want the bytes and no error
---- FAIL: TestAnAnswersCitationIsAQuestionIDNotARecordLine (0.00s)
-    covers for Q-002: [covers fail did not run: spec/spans.tsv]; want pass
-    covers for F-0001#2: [covers fail did not run: spec/spans.tsv]; want fail
-    covers for F-0001-setup-answers#2: [covers fail did not run: spec/spans.tsv]; want fail
-    the control, F-0001 named as the record of the problem statement: [covers fail did not run: spec/spans.tsv]; want covers pass on its fact 2
---- FAIL: TestANonFullSHAIsRefusedBeforeAnyRead (0.00s)
-    base: <nil>; want a SourceError with the source "base"
-    head: <nil>; want a SourceError with the source "head"
-    upper case: <nil>; want a SourceError with the source "head"
---- FAIL: TestOnlyTheNumberedFactsFileNamesAProblemStatementRecord (0.00s)
-    isNumberedFacts("F-0007-numbered-facts.md") = false; want true
-    psbRecordsOf([F-0007-numbered-facts.md]) = [], <nil>; want [F-0007], error false
-    psbRecordsOf([F-0007-numbered-facts.md F-0009-numbered-facts.md]) = [], <nil>; want [], error true
-FAIL
-FAIL	github.com/pharzam/layup/internal/run	0.043s
-FAIL
-```
+The reason of each red (the first red run, same stub): a field is empty where its record has
+rows (`PSB 0 bytes, Spans [], Questions 0, Answers [], Register 0 bytes, Merged []`); a missing
+or refused record gives `<nil>; want a SourceError with the source records:<path>` for each of
+the five required paths, the six failed reads and the six refused records; the index gives
+`Index [], Versions 0`; a non-full SHA gives `<nil>; want a SourceError with the source base`
+(and `head`); `isNumberedFacts("F-0007-numbered-facts.md") = false`.
 
 Two tests are **green at the stub on purpose**, each beside its red control, and are not
 counted as reds: `TestNoInventoryIndexIsBeforeTheFirstBet` (U4; its control is
