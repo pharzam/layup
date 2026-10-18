@@ -150,13 +150,15 @@ func (s *Sessions) comment(ctx context.Context, id string) error {
 	if class == "" {
 		return nil
 	}
-	line := fmt.Sprintf("%s: %s session of %s, attempt %s: %s%s\n", id, start[sessionRole], start[sessionTask], start[sessionAttempt], class, refused)
+	line := firstLinePrefix(start) + class + refused + "\n"
 	_, err = s.Forge.Comment(ctx, s.Control, line)
 	return err
 }
 
 // firstLinePrefix is the start of the first line of a session's comment.
-func firstLinePrefix(start []string) string { return "" }
+func firstLinePrefix(start []string) string {
+	return fmt.Sprintf("%s: %s session of %s, attempt %s: ", start[sessionID], start[sessionRole], start[sessionTask], start[sessionAttempt])
+}
 
 func prefix(p string, list []string) []string {
 	out := make([]string, len(list))
