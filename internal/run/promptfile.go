@@ -22,6 +22,7 @@ import (
 	"github.com/pharzam/layup/internal/records"
 	"github.com/pharzam/layup/internal/rules"
 	"github.com/pharzam/layup/internal/session"
+	"github.com/pharzam/layup/internal/spec"
 )
 
 // An Item is one link of a prompt file: its kind, whether it is a file of the
@@ -39,6 +40,9 @@ type Item struct {
 type PromptIn struct {
 	Task, Step, Base string
 	Findings         []Finding
+	// Options are the results of the filter of each decision of an architecture
+	// task (loop.md, The instruction of a task step).
+	Options map[string]spec.Result
 }
 
 // A PromptContext is the prompt file of a step and the input files it names.
@@ -49,6 +53,12 @@ type PromptContext struct {
 	task     string
 	step     string
 	findings []Finding
+	kind     string
+	issue    int
+	base     string
+	facts    string
+	record   string
+	extras   taskExtras
 }
 
 // A kept is a file of the records, by its path.
@@ -75,6 +85,10 @@ type promptSrc struct {
 	Rules        []rules.Entry
 	Tree         targetTree
 	Findings     []Finding
+	Kind         string
+	Issue        int
+	Base         string
+	Extras       taskExtras
 }
 
 const (
@@ -421,4 +435,9 @@ func (s *Sessions) PromptFile(ctx context.Context, in PromptIn) (*PromptContext,
 	}
 	src.Tree.Read = func(p string) ([]byte, error) { return git.Show(s.Clone, in.Base, p) }
 	return buildPrompt(src)
+}
+
+// taskInputs reads the inputs that come with the task (stub).
+func (s *Sessions) taskInputs(ctx context.Context, in PromptIn, kind string) (taskExtras, error) {
+	return taskExtras{}, nil
 }
