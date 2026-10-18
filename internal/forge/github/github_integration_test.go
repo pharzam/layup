@@ -1249,3 +1249,130 @@ func TestNoTokenIsInTheMessageOfAnErrorOfM2e(t *testing.T) {
 	}
 	noToken(t, err.Error())
 }
+
+// prBodyJSON is a pull request as the forge gives it with its body: a string, or
+// null (GitHub's page, "Create a pull request": body is a string or null;
+// runs/T-08rj/api-sources.md). prJSON is left as it is, so its frozen comparisons stay.
+func prBodyJSON(number int, body any) map[string]any {
+	m := prJSON(number, false, false)
+	m["body"] = body
+	return m
+}
+
+func TestEditBodyPatchesTheBodyAloneAndGivesThePullRequest(t *testing.T) {
+	f, _, a, _ := setup(t)
+	const body = "Closes #7\n\nThe records commit: abc"
+	var got map[string]any
+	handle(f, "PATCH "+pulls+"/5", func(w http.ResponseWriter, r *http.Request) {
+		decode(t, r, &got)
+		json.NewEncoder(w).Encode(prBodyJSON(5, body))
+	})
+	pr, err := a.EditBody(context.Background(), 5, body)
+	if err != nil {
+		t.Error(err)
+	}
+	if want := map[string]any{"body": body}; !reflect.DeepEqual(got, want) {
+		t.Errorf("the request body = %v; want %v (the body alone: the title, the state and the base cannot change)", got, want)
+	}
+	if n := f.requests["PATCH "+pulls+"/5"]; n != 1 {
+		t.Errorf("PATCH %s/5 requests = %d; want 1", pulls, n)
+	}
+	if want := (forge.PullRequest{Number: 5, NodeID: "PR_node5", State: "open", HeadSHA: headSHA, Body: body}); pr != want {
+		t.Errorf("EditBody = %+v; want %+v (the answer is decoded, with its body)", pr, want)
+	}
+}
+
+func TestEditBodyGivesAForgeErrorForAnyOtherStatus(t *testing.T) {
+	for _, status := range []int{422, 403, 404} {
+		f, _, a, _ := setup(t)
+		handle(f, "PATCH "+pulls+"/5", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(status)
+			io.WriteString(w, `{"message":"Validation Failed\nsecond line"}`)
+		})
+		_, err := a.EditBody(context.Background(), 5, "x")
+		var fe *forge.Error
+		if !errors.As(err, &fe) || fe.Call != "EditBody" || fe.Status != status || fe.Message != "Validation Failed" {
+			t.Errorf("EditBody with %d = %v; want the call EditBody, the status %d and the first line", status, err, status)
+		}
+	}
+}
+
+func TestEditBodyRefusesANumberBelow1BeforeAnyRequest(t *testing.T) {
+	f, _, a, _ := setup(t)
+	for _, n := range []int{0, -1} {
+		handle(f, fmt.Sprintf("PATCH %s/%d", pulls, n), func(w http.ResponseWriter, r *http.Request) {
+			json.NewEncoder(w).Encode(prBodyJSON(5, "x")) // a call that got through would succeed
+		})
+		_, err := a.EditBody(context.Background(), n, "x")
+		var fe *forge.Error
+		if !errors.As(err, &fe) || fe.Call != "EditBody" || fe.Status != 0 {
+			t.Errorf("EditBody(%d) = %v; want a refusal of the call EditBody with the status 0", n, err)
+		}
+	}
+	if n := len(f.requests); n != 0 {
+		t.Errorf("a refused edit made %d requests: %v", n, f.requests)
+	}
+}
+
+func TestPullRequestGivesTheBodyByNumberAndByBranchAndANullBodyIsEmpty(t *testing.T) {
+	f, _, a, _ := setup(t)
+	const body = "Closes #7\n\nThe records commit: abc"
+	handle(f, "GET "+pulls+"/5", func(w http.ResponseWriter, r *http.Request) { json.NewEncoder(w).Encode(prBodyJSON(5, body)) })
+	handle(f, "GET "+pulls+"/6", func(w http.ResponseWriter, r *http.Request) { json.NewEncoder(w).Encode(prBodyJSON(6, nil)) })
+	handle(f, "GET "+pulls, func(w http.ResponseWriter, r *http.Request) {
+		item := listItemJSON(7, false, nil, testMergeSHA)
+		item["body"] = body
+		null := listItemJSON(8, false, nil, testMergeSHA)
+		null["body"] = nil
+		if r.URL.Query().Get("head") == "acme:null" {
+			json.NewEncoder(w).Encode([]map[string]any{null})
+			return
+		}
+		json.NewEncoder(w).Encode([]map[string]any{item})
+	})
+	ctx := context.Background()
+	if pr, _, err := a.PullRequest(ctx, forge.PullRequestQuery{Number: 5}); err != nil || pr.Body != body {
+		t.Errorf("by number: Body = %q, %v; want %q", pr.Body, err, body)
+	}
+	if pr, _, err := a.PullRequest(ctx, forge.PullRequestQuery{Branch: "task/T-aaaa/1"}); err != nil || pr.Body != body {
+		t.Errorf("by branch (the list): Body = %q, %v; want %q", pr.Body, err, body)
+	}
+	if pr, found, err := a.PullRequest(ctx, forge.PullRequestQuery{Number: 6}); err != nil || !found || pr.Body != "" {
+		t.Errorf("by number with body null: %+v, %v, %v; want the empty body", pr, found, err)
+	}
+	if pr, found, err := a.PullRequest(ctx, forge.PullRequestQuery{Branch: "null"}); err != nil || !found || pr.Number != 8 || pr.Body != "" {
+		t.Errorf("by branch with body null: %+v, %v, %v; want the pull request 8 and the empty body", pr, found, err)
+	}
+}
+
+// A5 primes no token: the first request makes the first one, the 401 makes the second.
+func TestEditBodySharesTheHandlingOfA401AndOfARateLimit(t *testing.T) {
+	f, c, a, lines := setup(t)
+	path := "PATCH " + pulls + "/5"
+	handle(f, path, func(w http.ResponseWriter, r *http.Request) { json.NewEncoder(w).Encode(prBodyJSON(5, "x")) })
+	ctx := context.Background()
+	f.reject[path] = []int{401}
+	if pr, err := a.EditBody(ctx, 5, "x"); err != nil || pr.Body != "x" {
+		t.Errorf("EditBody after a 401 = %+v, %v; want one new token and one retry", pr, err)
+	}
+	if n := f.requests[path]; n != 2 {
+		t.Errorf("PATCH requests = %d; want 2 (one 401, one retry)", n)
+	}
+	if f.tokens != 2 {
+		t.Errorf("tokens made = %d; want 2 (the first request, and the new one after the 401)", f.tokens)
+	}
+	f.reject[path] = []int{429}
+	f.headers[path] = http.Header{"Retry-After": []string{"25"}}
+	if _, err := a.EditBody(ctx, 5, "x"); err != nil {
+		t.Errorf("EditBody after a rate limit = %v", err)
+	}
+	if len(c.sleeps) != 3 || len(*lines) != 3 || !strings.HasPrefix((*lines)[0], "EditBody: the rate limit") {
+		t.Errorf("the wait: sleeps %v, lines %v; want three waits of at most ten seconds, a line of the call each", c.sleeps, *lines)
+	}
+	f.reject[path] = []int{500}
+	_, err := a.EditBody(ctx, 5, "x")
+	if err == nil {
+		t.Fatal("a 500 gave no error")
+	}
+	noToken(t, err.Error())
+}

@@ -326,6 +326,7 @@ type pullWire struct {
 	State    string  `json:"state"`
 	Draft    bool    `json:"draft"`
 	Merged   bool    `json:"merged"`
+	Body     *string `json:"body"`
 	MergedAt *string `json:"merged_at"`
 	MergeSHA *string `json:"merge_commit_sha"`
 	Head     struct {
@@ -340,6 +341,9 @@ func (w pullWire) pull() forge.PullRequest {
 	// is no merge commit: the field is the merge commit's SHA only when it is merged.
 	if pr.Merged && w.MergeSHA != nil {
 		pr.MergeSHA = *w.MergeSHA
+	}
+	if w.Body != nil { // a null body is the empty string
+		pr.Body = *w.Body
 	}
 	return pr
 }
@@ -545,9 +549,22 @@ func (a *Adapter) Merge(ctx context.Context, number int, sha string) (string, er
 	return out.SHA, nil
 }
 
-// EditBody is a stub of task T-08rj: it sends nothing yet.
+// EditBody replaces the body of a pull request (PATCH /pulls/{n} with the field
+// body alone, so the title, the state and the base cannot change) and gives the
+// pull request. A number below 1 is refused before any request.
 func (a *Adapter) EditBody(ctx context.Context, number int, body string) (forge.PullRequest, error) {
-	return forge.PullRequest{}, nil
+	if number < 1 {
+		return forge.PullRequest{}, &forge.Error{Call: "EditBody", Message: "the pull request number is not valid"}
+	}
+	in, err := json.Marshal(map[string]string{"body": body})
+	if err != nil {
+		return forge.PullRequest{}, err
+	}
+	var out pullWire
+	if _, err := a.do(ctx, "EditBody", "PATCH", fmt.Sprintf("%s%s/pulls/%d", a.cfg.API, a.repo(), number), byToken, in, 200, &out); err != nil {
+		return forge.PullRequest{}, err
+	}
+	return out.pull(), nil
 }
 
 // graphqlURL gives the URL of the GraphQL API of a REST api: <api>/graphql, and
