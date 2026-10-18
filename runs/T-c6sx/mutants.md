@@ -74,6 +74,8 @@ On `2b01ec7`:
 | M33 | 0 | 0 | 1 (unit) | instructions_test.go:503: factRecordIDs = [F-0001 F-0002 F-0003 F-0004 F-0009]; want [F-0001 F-0002 F-0003 F-0004] | 0a524319e09f21f0293947a02b4bfcee9a87aeaf0bc8e6c49abb42caad9fce7b | 43602e57874f46ac89761fce3c99e2cbc7da106220cfa6350d9f8a3cd1d7612c |
 | M34 | 0 | 0 | 1 (unit) | instructions_test.go:519: with a numbered facts file: PSBRecords [F-0008]; want it unchanged | 0a524319e09f21f0293947a02b4bfcee9a87aeaf0bc8e6c49abb42caad9fce7b | a2d4bc02d86a66e072371e531baba27d3608de53d84d625eecd8fbcd6fcbac61 |
 | M35 | 0 | 0 | 1 (unit) | instructions_test.go:514: before the bet: Records [], PSBRecords [F-0001]; want the records and the predicted ID | 0a524319e09f21f0293947a02b4bfcee9a87aeaf0bc8e6c49abb42caad9fce7b | f40cbf258e0aabd26f94408b97a54f727130bb398d08849db9bf67ee19242c6a |
+| M36 | 0 | 0 | 1 (integration) | specinput_integration_test.go:314: the prompt: record F-0008, next F-0009; want F-0003 and F-0004 (`factsNames` without the mode 100644) | 20178ee884eeb6bf939a777b12e687af622f25c54021bafc12ee6fc6e3f9ab29 | 5751a124fd81289b6812c2eb0621261fd8dfd7e3136862c56aa546e07f039546 |
+| M37 | 0 | 0 | 1 (integration) | specinput_integration_test.go:311: the target has no record in docs/facts/ at the base: the Facts cells of the specification would cite none (`targetTreeAt` without `Facts: factsNames(entries)`) | 20178ee884eeb6bf939a777b12e687af622f25c54021bafc12ee6fc6e3f9ab29 | 92e35a11e1f17bc0bb5fc644dec7cc87cab3cf3027d7f6efbb8077cbc3207f5e |
 
 Restores: each checked by hash against the head's file, followed by a green control of `go test -count=1 ./internal/run`
 (exit 0 for every mutant). M23 to M35 killed except M28, which survives and is equivalent: `PromptFile` reads
@@ -82,3 +84,5 @@ reader refuses never reaches the second read (the case `a refused sessions table
 `TestPromptFileRefusalsHaveTheirControls` shows the refusal comes from that earlier read).
 
 Restore check of every mutant above (M1, M2, M3, M4, M5, M6, M7, M8, M9, M10, M11, M12, M14, M15, M16, M17, M18, M19, M20, M21, M22; M7, M22, M23 to M29 counted once for each run): the file restored byte for byte by hash (True) and the control `go test -count=1 ./internal/run` exit 0. The line of each run is in the output of the script, kept outside the tree.
+
+Round 2, finding 1 (head `b33dfe3`, run by hand on the working tree, restored by `git checkout` and checked by hash): M36 and M37 are in `internal/run/promptfile.go`, the only home of the selection. Unit level `go test -count=1 ./internal/run` exit 0 for both (the case is an integration one); `TestThePromptAndTheFullInputPredictTheSameFactsRecords` exit 1 for both; each restored byte for byte by hash.

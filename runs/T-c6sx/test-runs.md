@@ -95,3 +95,5 @@ a_link -> specinput_integration_test.go:314: the prompt: record F-0008, next F-0
 the control (regular files only) and the gitlink pass (a gitlink is a commit entry, not a blob, to both)
 exit 1
 ```
+
+Finding 1 of round 2, green after the fix (head `b33dfe3`), started 2026-10-18T17:13:07Z: the same command with `-run 'TestThePromptAndTheFullInputPredictTheSameFactsRecords|TestTheTreeFieldsOfTheFullInput|TestTheNumberedFacts|TestTheSpecimenPasses'`: exit 0, the four tests and every case passed (the control, the executable file, the link and the gitlink).
