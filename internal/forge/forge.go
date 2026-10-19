@@ -76,6 +76,12 @@ type Forge interface {
 	// number below 1 is refused before any request (forge.md, The calls of M2e;
 	// task T-08rj).
 	EditBody(ctx context.Context, number int, body string) (PullRequest, error)
+	// ClosePullRequest closes a pull request by its number and gives it as the
+	// forge answers; one already closed, or merged, is no error (forge.md, The
+	// calls of M2e; task T-xyws).
+	ClosePullRequest(ctx context.Context, number int) (PullRequest, error)
+	// CloseIssue closes an issue as not planned; one already closed is no error.
+	CloseIssue(ctx context.Context, number int) error
 }
 
 // Installation is the installation of the App on the repository.

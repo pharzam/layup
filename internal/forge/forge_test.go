@@ -42,6 +42,10 @@ func (standIn) Merge(context.Context, int, string) (string, error) { return "", 
 func (standIn) EditBody(context.Context, int, string) (PullRequest, error) {
 	return PullRequest{}, nil
 }
+func (standIn) ClosePullRequest(context.Context, int) (PullRequest, error) {
+	return PullRequest{}, nil
+}
+func (standIn) CloseIssue(context.Context, int) error { return nil }
 
 var _ Forge = standIn{}
 
@@ -392,5 +396,109 @@ func TestFakeCanTakeAnEditAndStillGiveAnError(t *testing.T) {
 	f.FailAfter = ""
 	if _, err := f.EditBody(ctx, 0, "x"); err == nil {
 		t.Errorf("a refusal below 1 gave no error")
+	}
+}
+
+// The closes (task T-xyws, #423; forge.md, The calls of M2e).
+
+func TestFakeClosesAPullRequestAndReadsItClosedByNumberAndByBranch(t *testing.T) {
+	f := NewFake()
+	f.SetHead("task/T-aaaa/1", sha1a)
+	ctx := context.Background()
+	opened, _ := f.OpenDraft(ctx, "task/T-aaaa/1", "main", "feat: T-aaaa x", "Closes #1")
+	f.MarkReady(ctx, opened.NodeID)
+	pr, err := f.ClosePullRequest(ctx, opened.Number)
+	if err != nil || pr.Number != opened.Number || pr.State != "closed" || pr.Merged {
+		t.Fatalf("ClosePullRequest(%d) = %+v, %v; want Number %d, State closed, Merged false", opened.Number, pr, err, opened.Number)
+	}
+	byNumber, found, err := f.PullRequest(ctx, PullRequestQuery{Number: opened.Number})
+	if err != nil || !found || byNumber.State != "closed" || byNumber.Merged {
+		t.Errorf("PullRequest by number after the close = %+v, %v, %v; want State closed, Merged false", byNumber, found, err)
+	}
+	byBranch, found, err := f.PullRequest(ctx, PullRequestQuery{Branch: "task/T-aaaa/1"})
+	if err != nil || !found || byBranch.State != "closed" {
+		t.Errorf("PullRequest by branch after the close = %+v, %v, %v; want State closed", byBranch, found, err)
+	}
+	again, err := f.ClosePullRequest(ctx, opened.Number) // a repeat is no error
+	if err != nil || again.State != "closed" || again.Merged {
+		t.Errorf("a second ClosePullRequest = %+v, %v; want State closed, Merged false, no error", again, err)
+	}
+	if _, err := f.Merge(ctx, opened.Number, sha1a); err == nil {
+		t.Errorf("a closed pull request merged")
+	}
+}
+
+func TestFakeCloseOfAMergedPullRequestChangesNothingAndGivesItMerged(t *testing.T) {
+	f := NewFake()
+	f.SetHead("b", sha1a)
+	ctx := context.Background()
+	opened, _ := f.OpenDraft(ctx, "b", "main", "t", "")
+	f.MarkReady(ctx, opened.NodeID)
+	sha, err := f.Merge(ctx, opened.Number, sha1a)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pr, err := f.ClosePullRequest(ctx, opened.Number)
+	if err != nil || pr.Number != opened.Number || !pr.Merged || pr.State != "closed" || pr.MergeSHA != sha {
+		t.Errorf("ClosePullRequest of a merged pull request = %+v, %v; want Number %d, Merged true, State closed, MergeSHA %q, no error", pr, err, opened.Number, sha)
+	}
+	got, _, _ := f.PullRequest(ctx, PullRequestQuery{Number: opened.Number})
+	if !got.Merged || got.MergeSHA != sha {
+		t.Errorf("PullRequest after the close of a merged one = %+v; want Merged true and the merge commit kept", got)
+	}
+}
+
+func TestFakeClosesAnIssueAsNotPlannedAndKeepsItAfterASecondClose(t *testing.T) {
+	f := NewFake()
+	ctx := context.Background()
+	n, _ := f.OpenIssue(ctx, "t", "b")
+	if st, reason, ok := f.IssueState(n); st != "open" || reason != "" || !ok {
+		t.Errorf("IssueState of an open issue = %q, %q, %v; want open, an empty reason, true", st, reason, ok)
+	}
+	if err := f.CloseIssue(ctx, n); err != nil {
+		t.Fatalf("CloseIssue(%d) = %v", n, err)
+	}
+	if st, reason, ok := f.IssueState(n); st != "closed" || reason != "not_planned" || !ok {
+		t.Errorf("IssueState after the close = %q, %q, %v; want closed, not_planned, true", st, reason, ok)
+	}
+	if err := f.CloseIssue(ctx, n); err != nil { // a repeat is no error
+		t.Errorf("a second CloseIssue = %v, want no error", err)
+	}
+	if st, reason, ok := f.IssueState(n); st != "closed" || reason != "not_planned" || !ok {
+		t.Errorf("IssueState after a second close = %q, %q, %v; want closed, not_planned, true", st, reason, ok)
+	}
+	for _, bad := range []int{n + 1, 0, -1} {
+		if st, reason, ok := f.IssueState(bad); st != "" || reason != "" || ok {
+			t.Errorf("IssueState(%d) = %q, %q, %v; want an empty state and reason, false", bad, st, reason, ok)
+		}
+	}
+}
+
+func TestFakeRefusesACloseBelow1BeforeItsFailureAndGivesTheForgeErrors(t *testing.T) {
+	f := NewFake()
+	ctx := context.Background()
+	f.OpenDraft(ctx, "b", "main", "t", "")
+	f.OpenIssue(ctx, "t", "b")
+	calls := []struct {
+		call string
+		do   func(n int) error
+	}{
+		{"ClosePullRequest", func(n int) error { _, err := f.ClosePullRequest(ctx, n); return err }},
+		{"CloseIssue", func(n int) error { return f.CloseIssue(ctx, n) }},
+	}
+	for _, c := range calls {
+		f.Fail = c.call
+		for _, n := range []int{0, -1} { // a refusal comes before the failure of the call
+			if e := new(Error); !errors.As(c.do(n), &e) || e.Call != c.call || e.Status != 0 {
+				t.Errorf("%s(%d) with Fail = %v, want a refusal of that call with the status 0", c.call, n, c.do(n))
+			}
+		}
+		if e := new(Error); !errors.As(c.do(1), &e) || e.Call != c.call || e.Status != 502 {
+			t.Errorf("%s(1) with Fail = %v, want the forge error of status 502", c.call, c.do(1))
+		}
+		f.Fail = ""
+		if e := new(Error); !errors.As(c.do(99), &e) || e.Call != c.call || e.Status != 404 {
+			t.Errorf("%s(99) = %v, want a forge error of status 404", c.call, c.do(99))
+		}
 	}
 }

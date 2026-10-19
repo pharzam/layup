@@ -42,16 +42,23 @@ type fakeGitHub struct {
 	failOpen   int    // the number of the issue whose opening fails, or 0
 	failNote   string // a comment whose body holds this fails once, or ""
 	comments   map[int][]map[string]any
-	posted     []string          // the bodies of the comments that the run posted, on any issue (row 43b)
-	rules      map[string]string // the JSON list that the rules of a branch answer, by the branch (row 57a); [] when none
-	noActivity bool              // the read of the activity answers 404 (row 57a)
-	perms      map[string]string // the permissions of the installation; the three of M2a when nil (task T-cak3)
+	posted     []string                    // the bodies of the comments that the run posted, on any issue (row 43b)
+	rules      map[string]string           // the JSON list that the rules of a branch answer, by the branch (row 57a); [] when none
+	noActivity bool                        // the read of the activity answers 404 (row 57a)
+	perms      map[string]string           // the permissions of the installation; the three of M2a when nil (task T-cak3)
+	statuses   map[string][]map[string]any // the commit statuses of each SHA, newest first (row 66f)
+	failStatus int                         // the next posts of a status that answer 500, after okStatus have passed
+	okStatus   int
+	reqs       []string                    // every request, "METHOD /path", in order (row 66g)
+	checkRuns  map[string][]map[string]any // the latest check runs of each SHA (row 66g)
+	pulls      pullRoutes                  // the pull requests (row 66g)
 }
 
 func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	call := r.Method + " " + r.URL.Path
+	f.reqs = append(f.reqs, call)
 	switch {
 	case call == "GET /repos/acme/target/installation":
 		perms := map[string]string{"contents": "write", "issues": "write", "metadata": "read"}
@@ -131,6 +138,39 @@ func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
 			list = []map[string]any{}
 		}
 		json.NewEncoder(w).Encode(list)
+	case strings.HasPrefix(call, "POST /repos/acme/target/statuses/"):
+		if f.okStatus > 0 {
+			f.okStatus--
+		} else if f.failStatus > 0 {
+			f.failStatus--
+			http.Error(w, `{"message":"Server Error"}`, 500)
+			return
+		}
+		var in struct{ State, Context, Description string }
+		json.NewDecoder(r.Body).Decode(&in)
+		sha := strings.TrimPrefix(r.URL.Path, "/repos/acme/target/statuses/")
+		if f.statuses == nil {
+			f.statuses = map[string][]map[string]any{}
+		}
+		f.statuses[sha] = append([]map[string]any{{"context": in.Context, "state": in.State, "description": in.Description,
+			"creator": map[string]any{"id": 9001, "login": "layup-agent[bot]"}}}, f.statuses[sha]...)
+		w.WriteHeader(201)
+		json.NewEncoder(w).Encode(map[string]any{"id": len(f.statuses[sha])})
+	case strings.HasPrefix(call, "GET /repos/acme/target/commits/") && strings.HasSuffix(call, "/statuses"):
+		sha := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/repos/acme/target/commits/"), "/statuses")
+		list := f.statuses[sha]
+		if list == nil {
+			list = []map[string]any{}
+		}
+		json.NewEncoder(w).Encode(list)
+	case strings.HasPrefix(call, "GET /repos/acme/target/commits/") && strings.HasSuffix(call, "/check-runs"):
+		sha := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/repos/acme/target/commits/"), "/check-runs")
+		runs := f.checkRuns[sha]
+		if runs == nil {
+			runs = []map[string]any{}
+		}
+		json.NewEncoder(w).Encode(map[string]any{"check_runs": runs})
+	case f.pulls.serve(f, w, r):
 	default:
 		http.Error(w, `{"message":"Not Found"}`, 404)
 	}

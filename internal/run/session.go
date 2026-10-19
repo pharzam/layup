@@ -58,6 +58,8 @@ type Sessions struct {
 	Forge         forge.Forge
 	Control       int
 	App           string // the slug of the App, to tell its own comment (row 66d)
+	Bot           int64  // the numeric ID of the App's bot, to tell its own status (row 66f)
+	Web           string // the web address of the forge, for a link in a pull request's body (row 66g)
 	Prices        [][]string
 	newID         func() (string, error)
 	sweep         func(host, target string) error
@@ -68,6 +70,7 @@ type Sessions struct {
 	process       func(s session.Spec) (session.Run, error)
 	environ       func(d session.Dir, h session.Harness) ([]string, error)
 	exists        func(path string) bool
+	manifestAt    func(base string) ([]byte, error) // docs/gates.tsv at a base, nil for none (row 66f)
 }
 
 // Pair is the admitted pair of a session, as internal/route reads the harness

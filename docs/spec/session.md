@@ -63,8 +63,10 @@ session of a phase of `M2c` adds `input/`,
 - `tmp/`: empty when the directory is made; the session's `TMPDIR`, and the
   `HOME` of the version check (step 2), so it may hold what the version
   command wrote when the process starts.
-- `prompt.md`: the prompt, the caller's text (the fixed text of [the
-  probe](#the-probe), or the task of a session).
+- `prompt.md`: the prompt, the caller's text: the fixed text of [the
+  probe](#the-probe), or, for a step of a task, the prompt file of
+  [`loop.md`](loop.md#the-instruction-of-a-task-step) (the list of links and the
+  step's instruction).
 - `result/`: where the session writes its result file.
 - `stdout`, `stderr`: the two outputs of the process.
 
@@ -258,7 +260,10 @@ before routing, `loop.md`) are the table's own words, not keys of the routing
 register, which takes a role and a tier of `reasoning` or `execution`; the Operator
 can replace the matrix per target, and this is its default. The builder of the prompt file, and the resolution of the two words,
 are `internal/run`'s (`PromptFile` and `ResolveStep`, task `T-6zj3`, [`loop.md`](loop.md#the-tier-and-the-context-of-a-task)); both
-values return copies.
+values return copies. **Decided here** (task `T-c6sx`, #416, row 66s): seven of the task steps have a fixed instruction after the
+list (`plan-of-a-task`, `plan-review`, `specification`, `shape-architecture`, `implement`, `verification` and `close-out`), and the
+three others (`shape-activation-batch`, `plan-of-a-milestone` and `answer-to-a-question`) are refused by name; the list gains
+records items inside the same five kinds and no sixth kind ([`loop.md`](loop.md#the-instruction-of-a-task-step)).
 
 ### The limit of a session
 

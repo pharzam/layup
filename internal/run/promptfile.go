@@ -16,12 +16,14 @@ import (
 	"path"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/pharzam/layup/internal/git"
 	"github.com/pharzam/layup/internal/records"
 	"github.com/pharzam/layup/internal/rules"
 	"github.com/pharzam/layup/internal/session"
+	"github.com/pharzam/layup/internal/spec"
 )
 
 // An Item is one link of a prompt file: its kind, whether it is a file of the
@@ -39,6 +41,9 @@ type Item struct {
 type PromptIn struct {
 	Task, Step, Base string
 	Findings         []Finding
+	// Options are the results of the filter of each decision of an architecture
+	// task (loop.md, The instruction of a task step).
+	Options map[string]spec.Result
 }
 
 // A PromptContext is the prompt file of a step and the input files it names.
@@ -49,6 +54,12 @@ type PromptContext struct {
 	task     string
 	step     string
 	findings []Finding
+	kind     string
+	issue    int
+	base     string
+	facts    string
+	record   string
+	extras   taskExtras
 }
 
 // A kept is a file of the records, by its path.
@@ -57,9 +68,11 @@ type kept struct {
 	Data []byte
 }
 
-// targetTree is the target at the base: its paths, in order, and a read of one.
+// targetTree is the target at the base: its paths, in order, the base names of the regular
+// direct files of docs/facts/ (factsNames), and a read of one path.
 type targetTree struct {
 	Paths []string
+	Facts []string
 	Read  func(path string) ([]byte, error)
 }
 
@@ -75,6 +88,10 @@ type promptSrc struct {
 	Rules        []rules.Entry
 	Tree         targetTree
 	Findings     []Finding
+	Kind         string
+	Issue        int
+	Base         string
+	Extras       taskExtras
 }
 
 const (
@@ -152,7 +169,17 @@ func buildPrompt(src promptSrc) (*PromptContext, error) {
 	if len(src.Step.Kinds) == 0 {
 		return nil, fmt.Errorf("the step %s has no record kinds: it has no prompt file", src.Step.Step)
 	}
-	c := &PromptContext{Input: map[string][]byte{}, task: src.Task, step: src.Step.Step, findings: src.Findings}
+	if _, ok := stepInstructions[src.Step.Step]; !ok {
+		return nil, noInstruction(src.Step.Step)
+	}
+	c := &PromptContext{Input: map[string][]byte{}, task: src.Task, step: src.Step.Step, findings: src.Findings,
+		kind: src.Kind, issue: src.Issue, base: src.Base, extras: src.Extras}
+	if src.Step.Step == "specification" {
+		var err error
+		if c.record, c.facts, err = factsRecords(src.Tree.Facts); err != nil {
+			return nil, err
+		}
+	}
 	seen := map[string]bool{}
 	names := map[string]string{} // file name under input/ -> the records path
 	record := func(kind session.Kind, k kept) error {
@@ -196,6 +223,9 @@ func buildPrompt(src promptSrc) (*PromptContext, error) {
 			if err = record(kind, src.Register); err == nil && src.Plan != nil {
 				err = record(kind, *src.Plan)
 			}
+			if err == nil && src.Extras.Frozen != nil {
+				err = record(kind, *src.Extras.Frozen)
+			}
 		case session.KindRequirements:
 			for _, id := range src.Requirements {
 				for _, p := range underDir(prdDir) {
@@ -221,10 +251,21 @@ func buildPrompt(src promptSrc) (*PromptContext, error) {
 					}
 				}
 			}
+			for _, k := range src.Extras.Shape {
+				if err = record(kind, k); err != nil {
+					break
+				}
+			}
 		case session.KindDecisionRecords:
-			err = decisionRecords(src, underDir, target, kind)
+			if err = decisionRecords(src, underDir, target, kind); err == nil {
+				for _, k := range src.Extras.Options {
+					if err = record(kind, k); err != nil {
+						break
+					}
+				}
+			}
 		case session.KindHandoffsAndAnswers:
-			for _, k := range append(slices.Clone(src.Handoffs), src.Answers...) {
+			for _, k := range slices.Concat(src.Handoffs, src.Answers, src.Extras.Ledger) {
 				if err = record(kind, k); err != nil {
 					break
 				}
@@ -243,6 +284,33 @@ func buildPrompt(src promptSrc) (*PromptContext, error) {
 		}
 	}
 	return c, nil
+}
+
+// attemptBase gives the base of the last event attempt of a task: the commit that the
+// change of the verifier starts from.
+func attemptBase(events [][]string) (string, bool) {
+	for i := len(events) - 1; i >= 0; i-- {
+		if events[i][1] == "attempt" {
+			return events[i][4], true
+		}
+	}
+	return "", false
+}
+
+// noInstruction is the refusal of a step that has no instruction in M2e.
+func noInstruction(step string) error {
+	return fmt.Errorf("the step %s has no instruction in M2e", step)
+}
+
+// factsRecords gives the numbers NNNN of the highest record of docs/facts/ in the names (factsNames) and of
+// the next one: the record that the Facts cells of the specification cite because it exists, and
+// the one that the rendered commit of the first bet will write.
+func factsRecords(names []string) (record, facts string, err error) {
+	ids := factRecordIDs(names)
+	if len(ids) == 0 {
+		return "", "", fmt.Errorf("the target has no record in docs/facts/ at the base: the Facts cells of the specification would cite none")
+	}
+	return ids[len(ids)-1][len("F-"):], nextFactsID(ids)[len("F-"):], nil
 }
 
 // decisionRecords adds the decision record of each ADR-NNNN that a section of the
@@ -303,6 +371,12 @@ func (c *PromptContext) Text(root string) []byte {
 		if n == 0 {
 			b.WriteString("- none\n")
 		}
+		if kind == session.KindDecisionRecords && len(c.extras.Survivors) > 0 {
+			b.WriteString("the survivors of the filter:\n")
+			for _, sv := range c.extras.Survivors {
+				fmt.Fprintf(&b, "- %s: %s\n", sv.Decision, strings.Join(sv.Options, " "))
+			}
+		}
 		if kind == session.KindHandoffsAndAnswers && len(c.findings) > 0 {
 			b.WriteString("findings of the last attempt:\n")
 			for _, f := range c.findings {
@@ -317,6 +391,10 @@ func (c *PromptContext) Text(root string) []byte {
 			}
 		}
 	}
+	v := map[string]string{"task": c.task, "kind": c.kind, "issue": strconv.Itoa(c.issue), "result": path.Join(root, "result", "result.tsv"),
+		"comment": path.Join(root, "result", commentFiles[c.step]), "head": c.base, "from": c.extras.From,
+		"labels": labelList(DefaultOwners()), "facts": c.facts, "record": c.record}
+	b.WriteString("\nThe work of this step:\n" + fill(stepInstructions[c.step], v) + "\n" + fill(resultInstruction, v))
 	return []byte(b.String())
 }
 
@@ -348,6 +426,9 @@ func (s *Sessions) PromptFile(ctx context.Context, in PromptIn) (*PromptContext,
 	if row.Step == "" {
 		return nil, fmt.Errorf("the step table has no step %q", in.Step)
 	}
+	if _, ok := stepInstructions[in.Step]; !ok {
+		return nil, noInstruction(in.Step) // before every read
+	}
 	register, err := s.readRecord(ctx, tasksPath)
 	if err != nil {
 		return nil, err
@@ -356,15 +437,29 @@ func (s *Sessions) PromptFile(ctx context.Context, in PromptIn) (*PromptContext,
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", tasksPath, err)
 	}
-	src := promptSrc{Step: row, Task: in.Task, Register: register, Findings: in.Findings}
-	if i := slices.IndexFunc(tasks, func(t Task) bool { return t.ID == in.Task }); i >= 0 {
-		src.Requirements = tasks[i].Requirements
-	} else {
+	src := promptSrc{Step: row, Task: in.Task, Register: register, Findings: in.Findings, Base: in.Base}
+	i := slices.IndexFunc(tasks, func(t Task) bool { return t.ID == in.Task })
+	if i < 0 {
 		return nil, fmt.Errorf("%s has no row of %s", tasksPath, in.Task)
+	}
+	src.Requirements, src.Kind, src.Issue = tasks[i].Requirements, tasks[i].Kind, tasks[i].Issue
+	if err := checkStepKind(in.Step, src.Kind); err != nil {
+		return nil, fmt.Errorf("%w: the task %s is of kind %s", err, in.Task, src.Kind)
+	}
+	if _, takes, _ := inputsWanted(in.Step, src.Kind); takes != (len(in.Options) > 0) {
+		return nil, fmt.Errorf("the options of the task %s: the step %s of a task of kind %s takes %s, and %d decisions are given", in.Task, in.Step, src.Kind,
+			map[bool]string{true: "the options of its decisions", false: "none"}[takes], len(in.Options))
 	}
 	events, err := s.readTable(ctx, eventsPath(in.Task), records.ReadEvents)
 	if err != nil {
 		return nil, err
+	}
+	if in.Step == "verification" {
+		from, ok := attemptBase(events)
+		if !ok {
+			return nil, fmt.Errorf("the task %s has no attempt", in.Task)
+		}
+		src.Extras.From = from
 	}
 	sessions, err := s.readTable(ctx, "sessions.tsv", records.ReadSessions)
 	if err != nil {
@@ -403,6 +498,12 @@ func (s *Sessions) PromptFile(ctx context.Context, in PromptIn) (*PromptContext,
 			}
 		}
 	}
+	extras, err := s.taskInputs(ctx, in, src.Kind)
+	if err != nil {
+		return nil, err
+	}
+	extras.From = src.Extras.From
+	src.Extras = extras
 	regData, err := s.readRecord(ctx, "rule-paths.tsv")
 	if err != nil {
 		return nil, err
@@ -410,15 +511,129 @@ func (s *Sessions) PromptFile(ctx context.Context, in PromptIn) (*PromptContext,
 	if src.Rules, err = rules.ReadRegister(regData.Data); err != nil {
 		return nil, fmt.Errorf("rule-paths.tsv: %w", err)
 	}
-	entries, err := git.LsTree(s.Clone, in.Base, ".")
-	if err != nil {
+	if src.Tree, err = targetTreeAt(s.Clone, in.Base); err != nil {
 		return nil, err
 	}
+	return buildPrompt(src)
+}
+
+// targetTreeAt reads the tree of rev in the clone: its blobs and a read of one.
+func targetTreeAt(clone, rev string) (targetTree, error) {
+	entries, err := git.LsTree(clone, rev, ".")
+	if err != nil {
+		return targetTree{}, err
+	}
+	t := targetTree{Read: func(p string) ([]byte, error) { return git.Show(clone, rev, p) }, Facts: factsNames(entries)}
 	for _, e := range entries {
 		if e.Type == "blob" {
-			src.Tree.Paths = append(src.Tree.Paths, e.Path)
+			t.Paths = append(t.Paths, e.Path)
 		}
 	}
-	src.Tree.Read = func(p string) ([]byte, error) { return git.Show(s.Clone, in.Base, p) }
-	return buildPrompt(src)
+	return t, nil
+}
+
+// factsNames gives the base names of the files of docs/facts/ that count as records: the regular
+// files (mode 100644) directly in it, as the reader of the numbered facts takes them. It is the
+// one home of that selection: the prompt of the specification (factsRecords) and the input of the
+// full check (specTree) both call it, so that they predict the same records of one tree.
+func factsNames(entries []git.TreeEntry) []string {
+	var names []string
+	for _, e := range entries {
+		if e.Type == "blob" && e.Mode == "100644" && path.Dir(e.Path) == "docs/facts" {
+			names = append(names, path.Base(e.Path))
+		}
+	}
+	return names
+}
+
+// taskInputs reads the inputs that come with the task, as inputsWanted says for
+// the step (loop.md, The records each step receives): the frozen list when it
+// exists, the revised draft and its facts, the options with their survivors and
+// the ledger, each by its reader, which fails closed.
+func (s *Sessions) taskInputs(ctx context.Context, in PromptIn, kind string) (taskExtras, error) {
+	var x taskExtras
+	if data, err := s.Store.ReadFile(ctx, testsPath(in.Task)); err != nil {
+		return x, err
+	} else if data != nil {
+		if _, err := ReadTests(data); err != nil {
+			return x, fmt.Errorf("%s: %w", testsPath(in.Task), err)
+		}
+		x.Frozen = &kept{testsPath(in.Task), data}
+	}
+	shape, options, ledger := inputsWanted(in.Step, kind)
+	readers := map[string]func([]byte) ([][]string, error){"spec/draft.tsv": records.ReadDraft, "spec/spans.tsv": records.ReadSpans,
+		"start/problem-statement.md": nil, "intake/answers.tsv": records.ReadAnswers, "sessions.tsv": records.ReadSessions, "telemetry.tsv": records.ReadTelemetry}
+	var paths []string
+	if shape {
+		paths = []string{"spec/draft.tsv", "spec/spans.tsv", "start/problem-statement.md", "intake/answers.tsv"}
+	}
+	if ledger {
+		paths = append(paths, "sessions.tsv", "telemetry.tsv")
+	}
+	for _, p := range paths {
+		k, err := s.readRecord(ctx, p)
+		if err != nil {
+			return x, err
+		}
+		if read := readers[p]; read != nil {
+			if _, err := read(k.Data); err != nil {
+				return x, fmt.Errorf("%s: %w", p, err)
+			}
+		}
+		if ledger {
+			x.Ledger = append(x.Ledger, k)
+		} else {
+			x.Shape = append(x.Shape, k)
+		}
+	}
+	if options {
+		var err error
+		x.Options, x.Survivors, err = optionsKept(in.Options, func(p string) ([]byte, error) {
+			k, err := s.readRecord(ctx, p)
+			return k.Data, err
+		})
+		if err != nil {
+			return x, err
+		}
+	}
+	return x, nil
+}
+
+// factRecordName is the name of a record of docs/facts/ as the pinned prd-lint reads it:
+// F-NNNN, anything, .md.
+var factRecordName = regexp.MustCompile(`^(F-[0-9]{4}).*\.md$`)
+
+// factRecordIDs gives the record IDs (F-NNNN) of the base names of the direct entries of
+// docs/facts/, sorted, each once.
+func factRecordIDs(names []string) []string {
+	var ids []string
+	for _, n := range names {
+		if m := factRecordName.FindStringSubmatch(n); m != nil && !slices.Contains(ids, m[1]) {
+			ids = append(ids, m[1])
+		}
+	}
+	slices.Sort(ids)
+	return ids
+}
+
+// nextFactsID is the ID that follows the highest of ids: the record that the rendered commit
+// of the first bet writes (loop.md, The instruction of a task step). It is the one home of
+// that rule: the prompt of the specification and the input of the full check call it.
+func nextFactsID(ids []string) string {
+	top := 0
+	for _, id := range ids {
+		n, _ := strconv.Atoi(id[len("F-"):])
+		top = max(top, n)
+	}
+	return fmt.Sprintf("F-%04d", top+1)
+}
+
+// completeFactsRecords sets the records of docs/facts/ in the input of the full check and,
+// before the first bet (no index) with no numbered facts file, the predicted problem
+// statement record, so that the citations of a specification that waits for its bet resolve.
+func completeFactsRecords(in *spec.FullInput, names []string) {
+	in.Records = factRecordIDs(names)
+	if len(in.Index) == 0 && len(in.PSBRecords) == 0 {
+		in.PSBRecords = []string{nextFactsID(in.Records)}
+	}
 }
