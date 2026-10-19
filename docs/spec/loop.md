@@ -134,14 +134,14 @@ of `internal/run`):
   ID, that `seen` and the task's issue; its file must parse as a review record whose `head` is the verifier's
   `base`, which tells it from a plan review of the same role. **Reason:** the link fails closed (NFR-004);
   whether a record's verdict allows a merge is not decided here.
-- **The records commit of the body is the one of the opening.** It is the `records` of the start row of the
-  session of the **first** event `bound` of the attempt whose SHA is the verifier's `base`, which is the session
-  that produced the reviewed head. A verifier or a close-out that leaves the head unchanged binds the same SHA
-  again with a later snapshot of its own, so "the session bound at that SHA" is not one session and the last
-  one is the wrong one. **Reason:** the body keeps the link of `OpenPullRequest` through later reviews, the
-  close-out and a restart (plan review of #363, Q3). **Limit:** a head that two developer sessions bound before
-  the draft was opened is linked at the first one's snapshot, and the draft at the last one's; the edit then
-  shows the first.
+- **The records commit of the body is the one of the opening.** `OpenPullRequest` takes the session of the
+  **last** event `bound` of the attempt, and the edit takes the same one through the same selection (`lastBound`),
+  limited to the events before the verifier's own event `session`: the draft is opened before the verifier starts.
+  A verifier or a close-out that leaves the head unchanged binds the same SHA again with a snapshot of its own,
+  which is why the selection stops at the verifier's start. If that bound head is not the verifier's `base`, or the
+  verifier has no event `session`, the call is a Go error and publishes no other snapshot. **Reason:** the body
+  keeps the link of `OpenPullRequest` through later reviews, the close-out and a restart (plan review of #363, Q3),
+  also when two developer sessions bound the same head at two snapshots.
 - **The pull request is the attempt's.** `Task.PR` has no attempt, and a new attempt leaves it on the older
   pull request until `OpenPullRequest` replaces it. The call reads the pull request of the branch
   `task/<task>/<attempt>`, and edits only when it is found, its number is the register's `pr` and its head SHA

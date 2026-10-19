@@ -68,8 +68,12 @@ func withPR(tasks []Task, id string, n int) ([]Task, error) {
 }
 
 // lastBound gives the SHA and the session of the last event bound of the attempt, "" for none.
-func lastBound(events [][]string, attempt int) (sha, session string) {
+// A before above 0 stops at the events with a smaller n: the selection that the link of the review record shares (row 66q).
+func lastBound(events [][]string, attempt, before int) (sha, session string) {
 	for _, e := range events {
+		if n, _ := strconv.Atoi(e[0]); before > 0 && n >= before {
+			break
+		}
 		if a, _ := strconv.Atoi(e[2]); e[1] == "bound" && a == attempt {
 			sha, session = e[5], e[3]
 		}
@@ -100,7 +104,7 @@ func (s *Sessions) OpenPullRequest(ctx context.Context, in PullInput) (forge.Pul
 	if err != nil {
 		return forge.PullRequest{}, err
 	}
-	head, session := lastBound(events, in.Attempt)
+	head, session := lastBound(events, in.Attempt, 0)
 	if head == "" {
 		return forge.PullRequest{}, fmt.Errorf("attempt %d of %s has no event bound: no head to open a pull request for", in.Attempt, in.Task)
 	}

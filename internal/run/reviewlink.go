@@ -23,8 +23,8 @@ func reviewLine(web, repo string, issue int, comment int64) string {
 // links the review record of the verifier's session; it gives whether it edited.
 // Every input is from the records (loop.md, The link of the review record in the
 // body): the comment is the one of the verifier's latest handoff, which must be
-// valid, and the records commit is the one of the session that first bound the
-// reviewed head. The pull request of the attempt's branch must be the register's
+// valid, and the records commit is the one of the last session that bound a head before the
+// verifier started, as the opening took it. The pull request of the attempt's branch must be the register's
 // and at the reviewed head, and open; a body that is already the composed one is
 // not edited; the lease is read just before the edit; the answer is read.
 func (s *Sessions) LinkReviewRecord(ctx context.Context, task, verifier string) (bool, error) {
@@ -44,7 +44,7 @@ func (s *Sessions) LinkReviewRecord(ctx context.Context, task, verifier string) 
 	if err != nil {
 		return false, err
 	}
-	newest, detail, producer := 0, "", ""
+	newest, detail, started := 0, "", 0
 	for _, e := range events {
 		a, _ := strconv.Atoi(e[2])
 		switch {
@@ -52,8 +52,8 @@ func (s *Sessions) LinkReviewRecord(ctx context.Context, task, verifier string) 
 			newest = a
 		case e[1] == "handoff" && e[3] == verifier:
 			detail = e[6]
-		case e[1] == "bound" && a == attempt && e[5] == base && producer == "":
-			producer = e[3]
+		case e[1] == "session" && e[3] == verifier && started == 0:
+			started, _ = strconv.Atoi(e[0])
 		}
 	}
 	if attempt != newest {
@@ -100,8 +100,10 @@ func (s *Sessions) LinkReviewRecord(ctx context.Context, task, verifier string) 
 	if rec.Head != base {
 		return false, fmt.Errorf("the review record in %s is of the head %s, not of the verifier's base %s", copied[copyBody], rec.Head, base)
 	}
-	if producer == "" {
-		return false, fmt.Errorf("attempt %d of %s has no event bound at the head %s", attempt, task, base)
+	// The opening took the last bound session; the verifier and the close-out bind the same head again later.
+	opened, producer := lastBound(events, attempt, started)
+	if started == 0 || opened != base {
+		return false, fmt.Errorf("the last head bound in attempt %d of %s before the session %s is %q, not the reviewed %s", attempt, task, verifier, opened, base)
 	}
 	row, err := s.startRowOf(ctx, producer)
 	if err != nil {

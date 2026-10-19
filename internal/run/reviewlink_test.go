@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -250,6 +251,33 @@ type linkRefusal struct {
 	want     string
 }
 
+// U4b. Two developer sessions bound the same head at two snapshots before the draft was opened: the opening linked the last,
+// and the edit keeps it (the finding of round 1). A verifier that starts with no event session is an unresolved association.
+func TestTheEditKeepsTheSnapshotOfTheLastBoundSessionBeforeTheVerifier(t *testing.T) {
+	w := newLinkWorld(t)
+	dev2 := sessionRow("S-d0000002", "T-ab12", "implement", "claude")
+	dev2[sessionBase], dev2[sessionRecords] = head1, strings.Repeat("d", 40)
+	w.sessions = append(w.sessions, dev2)
+	at := "2026-10-18T10:00:00Z"
+	w.events = [][]string{w.events[0], w.events[1], w.events[2],
+		{"4", "session", "1", "S-d0000002", "", "", "", at}, {"5", "bound", "1", "S-d0000002", "", head1, "task/T-ab12/1", at},
+		{"6", "session", "1", lkVer, "", "", "", at}, {"7", "bound", "1", lkVer, "", head1, "task/T-ab12/1", at},
+		{"8", "handoff", "1", lkVer, "", "", "valid comment 601-1", at}}
+	w.write(t)
+	if edited, err := w.link(); err != nil || !edited || w.bodyOf(t, w.pr) != wantBody(strings.Repeat("d", 40)) {
+		t.Errorf("LinkReviewRecord = %v, %v with the body %q; want the snapshot of the second developer", edited, err, w.bodyOf(t, w.pr))
+	}
+	w = newLinkWorld(t)
+	w.events = append(w.events[:3:3], w.events[4:]...) // no event session of the verifier
+	for i := range w.events {
+		w.events[i][0] = strconv.Itoa(i + 1)
+	}
+	w.write(t)
+	if edited, err := w.link(); err == nil || edited || len(w.f.calls) != 0 {
+		t.Errorf("a verifier with no event session: %v, %v with the calls %v; want an error and no call", edited, err, w.f.calls)
+	}
+}
+
 // U5. Each refusal of the records is a Go error before any forge call, and its one-token control passes.
 func TestEachRecordThatFailsRefusesTheLinkBeforeAnyCall(t *testing.T) {
 	var rows []linkRefusal
@@ -294,7 +322,7 @@ func TestEachRecordThatFailsRefusesTheLinkBeforeAnyCall(t *testing.T) {
 	add("the register names no pull request", "no pull request in the register",
 		func(w *linkWorld) { w.pr = 0 },
 		func(w *linkWorld) { w.pr = w.pr1.Number })
-	add("no session bound the reviewed head", "no event bound at the head",
+	add("no session bound the reviewed head", "not the reviewed",
 		func(w *linkWorld) { w.events[2][5], w.events[4][5] = shaOld, shaOld },
 		func(w *linkWorld) { w.events[2][5], w.events[4][5] = head1, head1 })
 	for _, r := range rows {
