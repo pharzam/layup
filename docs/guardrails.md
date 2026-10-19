@@ -1187,6 +1187,11 @@ These traps are not domain-specific: they hurt every project's test suite.
   shares one. **The check:** the stand-in keeps and gives each field the call changes (and an edit that takes effect and
   gives an error), and a test binds one head by two sessions at two snapshots and asserts the producer's. Learned in
   `T-08rj` (#413).
+- ❌ **A value read back from a forge body that a person can edit is not a stable association.** The edit of row 66q takes
+  the opening records commit from the body it replaces, and a hand edit that names another genuine commit of a session of
+  the head is accepted. It is silent because every test edits the body only to remove the line or to invent a commit.
+  **The check:** write the association where code owns it (the registration of the pull request), or state the limit; a
+  test that names a second genuine value. Ruled a known limit in `T-08rj` (#413).
 
 ### Reference-sweep pitfalls
 
