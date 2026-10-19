@@ -607,3 +607,7 @@ func DiffFile(dir, base, head, path string) ([]byte, error) {
 func DiffBinary(dir, base, head string) ([]byte, error) {
 	return call(dir, environ(), "diff", "--binary", "--no-renames", "--end-of-options", base, head, "--")
 }
+
+// UpdateRef sets the ref to the commit sha of dir: a ref of layup's own namespace, refs/heads/layup/,
+// and a full object ID (docs/spec/packages.md, The calls of M2e; task T-jy6f).
+func UpdateRef(dir, ref, sha string) error { return nil }

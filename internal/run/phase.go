@@ -99,7 +99,7 @@ func (s *Sessions) PhaseSession(ctx context.Context, p PhaseSpec) (string, error
 	if err := s.milestoneCap(ctx, pairOf(p.Harness, p.Model).Cap); err != nil {
 		return "", err
 	}
-	task, err := s.probeTaskID(ctx)
+	task, err := s.taskID(ctx)
 	if err != nil {
 		return "", err
 	}

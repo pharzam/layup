@@ -157,27 +157,39 @@ type ProbeSpec struct {
 	Sweep   bool
 }
 
-// probeTaskID draws the probe's own task ID, T- and four random characters,
-// again until no row of sessions.tsv holds it.
-func (s *Sessions) probeTaskID(ctx context.Context) (string, error) {
-	rows, err := s.readTable(ctx, "sessions.tsv", records.ReadSessions)
-	if err != nil {
-		return "", err
-	}
+// drawTaskID draws a task ID, T- and four random characters, again until taken
+// says that a row holds it.
+func drawTaskID(random func([]byte) (int, error), taken func(string) bool) (string, error) {
 	const chars = "0123456789abcdefghijklmnopqrstuvwxyz"
 	for {
 		b := make([]byte, 4)
-		if _, err := rand.Read(b); err != nil {
+		if _, err := random(b); err != nil {
 			return "", err
 		}
 		id := "T-"
 		for _, c := range b {
 			id += string(chars[int(c)%len(chars)])
 		}
-		if !slices.ContainsFunc(rows, func(r []string) bool { return r[sessionTask] == id }) {
+		if !taken(id) {
 			return id, nil
 		}
 	}
+}
+
+// taskID draws the ID of a probe, of a session of a phase or of a Shape task, again until
+// no row of sessions.tsv holds it as a task.
+func (s *Sessions) taskID(ctx context.Context) (string, error) {
+	rows, err := s.readTable(ctx, "sessions.tsv", records.ReadSessions)
+	if err != nil {
+		return "", err
+	}
+	random := s.random
+	if random == nil {
+		random = rand.Read
+	}
+	return drawTaskID(random, func(id string) bool {
+		return slices.ContainsFunc(rows, func(r []string) bool { return r[sessionTask] == id })
+	})
 }
 
 // Probe runs the probe of one harness and gives its result: passed, failed,
@@ -189,7 +201,7 @@ func (s *Sessions) Probe(ctx context.Context, p ProbeSpec) (string, error) {
 	if model == nil {
 		return "", fmt.Errorf("the harness %s has no model of use yes", p.Harness[regHarness])
 	}
-	task, err := s.probeTaskID(ctx)
+	task, err := s.taskID(ctx)
 	if err != nil {
 		return "", err
 	}
