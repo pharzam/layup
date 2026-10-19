@@ -237,3 +237,36 @@ ok  	github.com/pharzam/layup/internal/run	14.273s
 exit=0
 end 2026-10-19T08:02:09Z
 ```
+
+## Green, the integration level on the merge head
+
+Command: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 90m ./...` at the head `94934f9`
+(the merge of `origin/main` at `d9852d2`, row 66v, then the fix of finding 1 and the runs). No test failed, and none needed a repair for
+the merge (row 66v's refusal of a session of a task with no register row did not touch these tests, which register T-ab12).
+
+```
+start 2026-10-19T08:18:37Z
+ok  	github.com/pharzam/layup/cmd/layup	4.368s
+ok  	github.com/pharzam/layup/internal/catalog	34.474s
+ok  	github.com/pharzam/layup/internal/cli	15.919s
+ok  	github.com/pharzam/layup/internal/forge	0.306s
+ok  	github.com/pharzam/layup/internal/forge/github	1.500s
+ok  	github.com/pharzam/layup/internal/gate	1.271s
+ok  	github.com/pharzam/layup/internal/git	5.970s
+ok  	github.com/pharzam/layup/internal/handoff	0.022s
+ok  	github.com/pharzam/layup/internal/ledger	0.015s
+ok  	github.com/pharzam/layup/internal/psb	0.037s
+ok  	github.com/pharzam/layup/internal/records	0.043s
+ok  	github.com/pharzam/layup/internal/route	0.016s
+ok  	github.com/pharzam/layup/internal/rules	7.489s
+ok  	github.com/pharzam/layup/internal/run	1398.661s
+ok  	github.com/pharzam/layup/internal/session	8.214s
+ok  	github.com/pharzam/layup/internal/setup	44.610s
+ok  	github.com/pharzam/layup/internal/spec	0.377s
+ok  	github.com/pharzam/layup/internal/standin	1.099s
+ok  	github.com/pharzam/layup/internal/tsv	0.019s
+ok  	github.com/pharzam/layup/internal/verify	57.885s
+ok  	github.com/pharzam/layup/internal/work	0.025s
+exit=0
+end 2026-10-19T08:42:40Z
+```
