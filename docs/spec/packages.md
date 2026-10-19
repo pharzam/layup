@@ -256,7 +256,7 @@ of `M2a`, `M2b`, `M2c` and `M2e`; the build task that made `internal/handoff` (t
   part stays `M2f`'s.
 - `internal/run`: the task loop: the register and the transition table, the
   handoff and its events, the attempts, the statuses, the ready and merge rule, the
-  close-out check and the merge at the head SHA (task `T-xvvd`, #363, row 66g; it exports `setup.ActionsApp`, the one home of the ID of GitHub Actions, from `internal/setup`), the link of the review record from the body of the pull request (task `T-08rj`, #413, row 66q), Shape and the bet, the parameter
+  close-out check and the merge at the head SHA (task `T-xvvd`, #363, row 66g; it exports `setup.ActionsApp`, the one home of the ID of GitHub Actions, from `internal/setup`), the link of the review record from the body of the pull request (task `T-08rj`, #413, row 66q), the Shape tasks through the task loop to their verified heads (task `T-jy6f`, #415, row 66r), Shape and the bet, the parameter
   change and the Retrospective step, the instructions of the task steps and their
   inputs ([`loop.md`](loop.md#the-instruction-of-a-task-step)), and the Go schemas of `tasks`,
   `task-gates`, `task-tests`, `bets`, `parameters` and `retrospectives` (`internal/handoff` owns that of
@@ -475,6 +475,7 @@ takes a token.
 | Call | The command, after the `-c` values below | Used by |
 | ---- | ---------------------------------------- | ------- |
 | `RemoteHead` | `git ls-remote --exit-code -- URL refs/heads/BRANCH`; with a token, as `Fetch` and `Push`; it gives the SHA of the exact line `refs/heads/BRANCH` | the read of the branch of a `push` at a restart (`RepairTask`) |
+| `UpdateRef` | `git update-ref REF SHA` | the scratch branch `layup/base/<task>/<attempt>` of `layup run`'s clone, at the base of a session that is not on the default branch (task `T-jy6f`) |
 
 - Exit 2 of `git`, and an output with no line for exactly `refs/heads/BRANCH`
   (`ls-remote` matches a pattern against the tail of a ref name), are "no such
@@ -482,6 +483,7 @@ takes a token.
   `FailedError` with `Code` 0. An empty `BRANCH`, one that holds `:` and one that starts
   with `-` are refused before `git` starts (`Code` -1). Any other failure is a
   `FailedError`. The call keeps the token in the environment, as `Push` does.
+- `UpdateRef` refuses, before `git` starts (`Code` -1), a `REF` that does not start with `refs/heads/layup/` or holds a character outside letters, digits, dot, underscore, dash and slash, a `..`, a `//`, an end in `/` or `.lock`, and a `SHA` that is not a full object ID; it moves a ref of `layup`'s own namespace only, and it gives no ref of the target.
 
 Start makes its clone with `Init` and `Fetch`, and the restart with `Clone`. The
 first records commit is an orphan commit in a scratch work tree, as S15 makes it
