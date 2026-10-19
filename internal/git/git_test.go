@@ -573,3 +573,35 @@ func TestParentsRefusesAnOutputOfAnotherForm(t *testing.T) {
 		t.Errorf("no output: %v; want a *FailedError with code 0", err)
 	}
 }
+
+// UpdateRef moves a ref of layup's own namespace only: any other ref, and a SHA that is not a full object ID,
+// are refused before git starts (packages.md, The calls of M2e; task T-jy6f).
+func TestUpdateRefRefusesItsInputBeforeGitStarts(t *testing.T) {
+	for name, c := range map[string]struct{ ref, sha string }{
+		"a ref of the default branch":    {"refs/heads/main", fullID},
+		"a ref outside heads":            {"refs/layup/sessions/S-1", fullID},
+		"a tag":                          {"refs/tags/layup/x", fullID},
+		"a ref that leaves the prefix":   {"refs/heads/layup/../main", fullID},
+		"a ref with a colon":             {"refs/heads/layup/a:b", fullID},
+		"a ref with a space":             {"refs/heads/layup/a b", fullID},
+		"a ref that ends in a slash":     {"refs/heads/layup/a/", fullID},
+		"a ref that ends in .lock":       {"refs/heads/layup/a.lock", fullID},
+		"an empty name below the prefix": {"refs/heads/layup/", fullID},
+		"a SHA that is a branch name":    {"refs/heads/layup/a", "main"},
+		"an empty SHA":                   {"refs/heads/layup/a", ""},
+	} {
+		calls := stub(t, "", nil)
+		err := UpdateRef("r", c.ref, c.sha)
+		var failed *FailedError
+		if !errors.As(err, &failed) || failed.Code != -1 || len(*calls) != 0 {
+			t.Errorf("%s: %v, %d starts of git; want a *FailedError of code -1 and none", name, err, len(*calls))
+		}
+	}
+	calls := stub(t, "", nil)
+	if err := UpdateRef("r", "refs/heads/layup/base/T-ab12/1", fullID); err != nil {
+		t.Fatal(err)
+	}
+	if got := only(t, calls); got.dir != "r" || !strings.HasSuffix(strings.Join(got.args, " "), "update-ref refs/heads/layup/base/T-ab12/1 "+fullID) {
+		t.Errorf("UpdateRef started %q in %q; want update-ref REF SHA in r", got.args, got.dir)
+	}
+}

@@ -206,7 +206,7 @@ func TestTheDemoOfM2b(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	task, err := s.probeTaskID(ctx)
+	task, err := s.taskID(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}

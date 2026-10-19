@@ -69,6 +69,54 @@ when it writes the row, and refuses a row that breaks one. At most
 `build.parallel` build tasks run at once (a parameter, `architecture.md` §10);
 the merge order of build tasks is `M2g`'s.
 
+**The opening of a Shape task** (**decided here**, R10, task `T-jy6f`, #415, row 66r; plan review conditions 2, 5 and 7).
+`(*state).openShapeTask(ctx, kind)` opens the specification task or the target's architecture task, once, in this order, and
+every refusal before the issue writes nothing:
+
+1. `tasks.tsv` and `transitions.tsv` are read; a row of that kind is returned as it is (no issue, no draw, no commit), and a file
+   its reader refuses is an error naming the path.
+2. The permissions of the loop are checked before any write of the forge, the issue included (`forge.md`, the calls of M2e).
+3. `spec/draft.tsv` is read by its reader, and the requirement IDs are derived from it (below); none is an error.
+4. The candidate task is made with its drawn ID (`T-` and four characters that no row of `sessions.tsv` and no row of `tasks.tsv`
+   holds), and the commit that will register it is built and refused in a dry run, with `registerFiles` and `parameterFiles`, the
+   functions that `registerTask` calls, before the forge is written.
+5. The lease is read, then the issue is opened with the fixed text below, then `registerTask` writes the row.
+
+**Reason:** a refusal that a deterministic check can foresee must not leave an issue behind. **Known limit:** no call of the forge
+lists issues, so a stop between the issue and the row opens a second issue at the next run; the first stays on the forge.
+The first attempt is not started here: it is the first position of the driver.
+
+**The requirement IDs of a Shape task** (**decided here**, R10; narrows "never changed" above to what the opening needs). The
+correspondence of the draft's rows to the IDs, `REQ-NNN` and `NFR-NNN`, and the exact set of both rows are those of [The instruction of a
+task step](#the-instruction-of-a-task-step), the one home of that rule; `finalIDs` is its code, and rows 66h and 66j use it. The
+architecture task is not given the `non-functional` rows alone, since a draft with no constraint would give an empty list, which
+`tasks.tsv` refuses, and the decisions of the options are not known at the opening. The `sections` rule counts a requirement as delivered
+when every task that names it has merged, so naming it in both rows is safe. The issue names the SHA-256 of `spec/draft.tsv` and the
+records commit it was read at, so the set is pinned. What the opening needs is that a later opening reuses the existing row and keeps its
+requirement IDs; a later records commit may still replace the row to set `pr`.
+
+The issue is titled `LAYUP task <ID>: the specification` or `LAYUP task <ID>: the target's architecture`, and its body is the
+block of the kind with the placeholders filled by code (a test compares each constant with its block byte for byte). **Decided here:**
+the Definition of Done is the text of the block itself, since no reusable text of it exists, and it holds no path of a session.
+
+```text shape-issue-specification
+LAYUP task {task}: the specification of the target.
+
+Requirement IDs: {ids}
+Pinned draft: spec/draft.tsv, SHA-256 {sha}, read at the records commit {records}.
+
+Definition of Done: docs/prd/ holds a row of the requirement table, an acceptance row and a matrix row for each requirement ID, with the MoSCoW and Phase cells empty; docs/spec/ holds a section for each requirement ID; docs/tasks/{task}.md is the task's file. The head passes the four layup/ statuses, and a verifier on a harness outside the authors finds nothing material in scope.
+```
+
+```text shape-issue-architecture
+LAYUP task {task}: the target's architecture.
+
+Requirement IDs: {ids}
+Pinned draft: spec/draft.tsv, SHA-256 {sha}, read at the records commit {records}.
+
+Definition of Done: docs/spec/ and docs/adr/ hold each decision that has one survivor as decided, and a section "Decision pending the bet" for each decision that has more than one; docs/tasks/{task}.md is the task's file. The head passes the four layup/ statuses, and a verifier on a harness outside the authors finds nothing material in scope.
+```
+
 ### The pull request
 
 **Decided here.** `layup run` opens the pull request as a draft, with a title
@@ -452,7 +500,7 @@ A comment file is plain Markdown with no code fence. Push nothing. Then end.
 
 The Intake records go to both Shape kinds because the `covers` column of the draft names span numbers and `Q-NNN` facts, and the constraints of an options table name `R-NNN`, `F-<n>` and `Q-NNN`; neither can be read without the four files. **The options (R10, binds 66h, 66r and 66j).** `PromptIn.Options` maps each decision to the `spec.Result` of its table and is required, and not empty, for a step that takes the options (an architecture task, any step but `close-out`), and refused for any other. *Before the bet* the caller (row 66h's filter, passed by row 66r's driver) gives each decision's result unchanged: every option of the table and every survivor, the survivors listed in the prompt and none chosen. *After the bet* the caller (row 66j opens the task of the chosen option; row 66r passes it) gives the same options and only the option that the bet chose as the one survivor; that narrowed choice is no filter result. `PromptFile` reads each table and refuses a result whose option names are not the table's, in order, a result with no survivor and a survivor that is not an option; whether the set of decisions is complete is the caller's, as `SessionStore` has no call that lists a directory. **The base names.** The existing refusal of two records of one base name applies to the records that one prompt holds, and names both; a decision named `draft`, `spans`, `answers`, `tests` or `tasks` collides with a record of its own prompt and is refused. That no real run meets it is a contract of row 66h, whose step must refuse those decision names (`optionsKeep` is not on this main: a required contract, not a reuse).
 
-**The requirement IDs (R10, binds 66r; condition 3 of the plan review of #364, comment 6249724875).** The correspondence is by kind, from the pinned revised draft: the row `R-NNN` of kind `requirement` is `REQ-NNN` and the row of kind `non-functional` is `NFR-NNN`, the same three digits; a row of kind `success-criterion` is no requirement ID. The `requirements` of **both** initial rows of `tasks.tsv` (the specification task and the target's architecture task) are exactly the set of those IDs over all the rows of the pinned draft, in the order of the draft. The number a row has in the pinned draft is the number of its PRD identity: a later revision of the draft changes no ID that a PRD row holds, and the PRD, not the draft, is the identity from the merge. Row 66r writes the rows by this correspondence and tests the item `spec-sections` for them, with a missing-section refusal; this branch writes the sentence and opens no task. The later architecture tasks of row 66j, and the option constraints, use the same IDs.
+**The requirement IDs (R10, binds 66r; condition 3 of the plan review of #364, comment 6249724875).** The correspondence is by kind, from the pinned revised draft: the row `R-NNN` of kind `requirement` is `REQ-NNN` and the row of kind `non-functional` is `NFR-NNN`, the same three digits; a row of kind `success-criterion` is no requirement ID. The `requirements` of **both** initial rows of `tasks.tsv` (the specification task and the target's architecture task) are exactly the set of those IDs over all the rows of the pinned draft, in the order of the draft. The number a row has in the pinned draft is the number of its PRD identity: a later revision of the draft changes no ID that a PRD row holds, and the PRD, not the draft, is the identity from the merge. Task `T-jy6f` (row 66r) writes the rows by this correspondence and tests the item `spec-sections` for them, with a missing-section refusal; task `T-c6sx` (row 66s) wrote the sentence and opened no task. The later architecture tasks of row 66j, and the option constraints, use the same IDs.
 
 **The specification output (R10, binds 66j and 66k).** The instruction asks for what the existing checks read, so a head that waits for its bet is accepted: one five-cell row for each requirement ID with empty MoSCoW and Phase cells, one acceptance row, one matrix row and one section of `docs/spec/` for each ID, one success row for each `success-criterion` row of the draft, and Facts cells whose tokens the checks resolve. A fact is cited as `F-<record>#<n>`, the record being the numbered facts record of the problem statement, `docs/facts/F-NNNN-numbered-facts.md` of the decision of #412 (`T-cav3`), and `n` the number of the fact in `spec/spans.tsv`, which `RenderFacts` writes as the line `n.`; a fact of the answers is cited as `Q-NNN`. The record does not exist until the rendered commit of the first bet (row 66j), and its `NNNN` is one more than the highest `F-NNNN` of `docs/facts/` at the base of that commit, which equals the base of the specification task; so the prompt gives that number as `{facts}`, and, as the pinned `prd-lint` resolves a cell only when one of its tokens names an existing record, the cell also cites `{record}`. The consumers bind to it: row 66j renders the record under `{facts}` with the same function, and the input of the full check gives `PSBRecords` the predicted ID before the bet and `Records` the records of `docs/facts/`, so a bare `{record}` and `F-{facts}#n` both resolve ([The full spec check](#req-012--the-full-spec-check)). The specimen test builds its input through `specRecords` and `specTree` and runs the full check and the pinned `prd-lint` on it. The rendering stays row 66j's.
 
@@ -466,7 +514,7 @@ The Intake records go to both Shape kinds because the `covers` column of the dra
 | 3 | a Shape input, the ledger or an options table missing or refused; a result that disagrees with its table; the specification of a target with no record in `docs/facts/` | `the records have no <path>`; `<path>: <reader error>`; `decision <d>: ...`; `the target has no record in docs/facts/` |
 | 5 | two records of one base name | `two records are named <name>: <a> and <b>` |
 
-**The session base** (that the context was built for the base and the task that the session starts with) is checked at the start of a session, and is row 66r's (issue #415), not this task's.
+**The session base** (that the context was built for the base and the task that the session starts with) is checked at the start of a session by `TaskSession`, before the sweep and before anything is made (**decided here**, task `T-jy6f`, #415, row 66r; [`session.md`](session.md#the-start-of-a-session)): a context of another task, or built at another base, is refused, so the `head` of a verifier's prompt is the base of its start row, which `nothing-material` reads.
 
 ## REQ-005 — The handoff
 
@@ -2000,6 +2048,57 @@ of the answer, and `spec/inventory.tsv`; for `loop`, the rows of `tasks.tsv`,
   push-lost`) is a new comment, and the old one stays.
 - The lease, the fencing and the exit codes are those of [`run.md`](run.md); a lost
   lease stops the run before any write of a step.
+
+### The driver of a Shape task
+
+**Decided here** (R10, task `T-jy6f`, #415, row 66r; plan review conditions 3 and 4 of 6250262119 and plan amendment 1).
+`(*Sessions).AdvanceShapeTask(ctx, ShapeTaskInput)` takes one Shape task from its register row to a verified head, in the records and
+the forge alone. It calls `RepairTask` first, then reads the task's records and acts on the first position of the table of
+[The task loop](#req-005--the-task-loop) that they show not done, then reads again. It gives `Advance{Task, Verified, Wait, Stop}`: a
+verified head, a wait for the Operator, or a stop. A stop and a wait repeat on the next call, which reads the same records: there is no
+automatic retry. `loopPosition` is a pure function of the events, the rows of `sessions.tsv`, the status of each kept result and the
+parsed review records of the valid handoffs, so each position is told from the records alone, and a stage whose session has ended is
+**finished from its kept files** and never run again:
+
+| Position | Records show | Act |
+| -------- | ------------ | --- |
+| attempt | no event `attempt` | `StartAttempt` at the base of the run |
+| plan, plan review, developer | no session of the stage, or its last session has no event `result` (a stopped run) | the milestone cap, the pair, the prompt file, `TaskSession` |
+| finish | the last session of the stage ended `done` with the status `completed` and has no event `handoff` | `PostComment`, then `RecordHandoff`; both read before they write, so an interrupted post or handoff resumes |
+| to the verifier | the developer's session is bound and has no handoff | `RecordHandoff` with the commits and the task file |
+| ship | the handoff is valid and no verifier session of the attempt has the bound head as its base | the draft pull request, the four statuses, the acceptance of a specification that waits for its bet, then the verifier |
+| verdict | the verifier's handoff is valid | `LinkReviewRecord`, the four statuses with `layup/verify`, then the verified head, the next attempt or a wait |
+
+- **Which sessions push.** A task session of a step that reads (`plan-of-a-task`, `plan-review`, `verification`) has no push: a
+  session that commits nothing has its head equal to its base, which would pass every check and be bound, and a first `bound` would then
+  say nothing about the developer. The rule is in `TaskSession`, by the step of the prompt file, so a caller cannot forget it.
+  **Rejected:** a no-op push supplied by the driver (not the production path); the role as the key (the plan role is also the owner role
+  of an environment question). Only the developer's session is ever bound; a session that has a `push` and no `bound`, or none of them
+  after it ended `completed`, is a stop (the repair of a push is `RepairTask`'s).
+- **The plan review and the verifier**, both of the role `qa-engineer`, are told apart by the order of the events, never the clock: a
+  session that starts after the last valid plan handoff and before the first `push` of the task is the plan review; one that starts after a
+  `bound` of the developer's session of its attempt, with that SHA as its base, is a verifier. Any other `qa-engineer` session is a stop.
+- **The base of a verifier** is the bound head, which is not on the default branch. Before the verifier's session the driver sets the
+  branch `layup/base/<task>/<attempt>` of the run's clone to the bound head (`git.UpdateRef`, which refuses a ref outside
+  `refs/heads/layup/`), and the session clones that branch instead of the default one; the default branch is never moved.
+- **The cycle cap of a Shape task is 1.** A Shape task cannot touch a gate: `.github/` and the check scripts are rule paths, refused
+  before any push, and the cap is 1 unless the change touches a gate (`docs/engineering-discipline.md`). The rounds with findings are the
+  valid handoffs `verifier → developer` of the task; a gate failure starts an attempt and counts no round. `nothing material in scope` is
+  the verified head. `material` posts the status `layup/verify` as a failure at the reviewed head and, if the rounds number the cap or
+  fewer, starts the next attempt at the base of this one, with the findings of that record; otherwise it is a wait
+  (`waiting for the Operator: <task>: the review-cycle cap 1 is reached with findings open`). `not mergeable, findings recorded` is
+  always a wait, and never another cycle. The findings of an attempt are those of the record of the attempt before it, else the rows of its
+  head's gate table; never an older record.
+- **After the four statuses of a head,** an `error` or a failure of `layup/spec` or `layup/rules`, or `not-active` of `layup/verify`
+  (posted before the stop, `NFR-004`), is a stop, and no attempt starts; otherwise a failure of `layup/gates` starts the next attempt
+  with the findings of its table. Their retry is row 66k's.
+- **A specification that waits for its bet** is accepted by code before the verifier runs: the pinned `prd-lint.sh` of the target at the base is
+  run on the `docs/prd/` and `docs/facts/` of the bound head by `spec.WaitingSpecAccepted`; a head that is not accepted is a stop that names
+  the lines that are not an empty MoSCoW or Phase cell. **Reason:** that failure is the target's own job, not a `layup/` status, so no
+  status carries it to an attempt, and the head must be judged before the verifier is asked.
+- **A developer session that ended with the status `completed` and no `push`** is a stop (`<task>: the session <id> ended with no push`):
+  the push hook did not run, and its resume is the step loop's. Every other end that is not `completed` (a refusal, another class or
+  status) is a stop that names the session.
 
 ## NFR-004 — A check that did not run
 

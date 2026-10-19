@@ -56,6 +56,14 @@ session of a phase of `M2c` adds `input/`,
   `M2b`](packages.md#the-calls-of-internalgit)). **Decided here:** the clone
   takes only the default branch, so it holds no records branch, and it has no
   remote, so no command of the session reaches a remote through it.
+  **Decided here** (task `T-jy6f`, #415, plan amendment 1): a base that is not on the default
+  branch, the bound head that a verifier reviews, is made reachable before the session
+  starts: the task loop sets the branch `layup/base/<task>/<attempt>` of `layup run`'s clone to
+  the base (`UpdateRef`), and the session clones that branch instead of the default one;
+  the default branch is never moved. `TaskSession` also refuses, before the sweep and before
+  anything is made, a prompt file built for another task or at another base than the
+  session's (`the prompt file is of the task A, the session's task is B`; `the prompt file of T
+  was built at base A, the session's base is B`).
 - `home/`: the session's `HOME`; at the start it holds `home/.gitconfig`
   (the author `layup session <session>`, the e-mail
   `<session>@sessions.layup.invalid`; `.invalid` is reserved, RFC 2606, so no
@@ -408,7 +416,7 @@ branch), which announces the forge write (fencing, [`run.md`](run.md#the-lease-a
 then `Push` of the SHA to `task/<task>/<attempt>` with the installation token,
 never with force; then, after the forge accepts it, a records commit adds the
 event `bound`. A refused push binds nothing: an event `refused` with the detail
-`push-refused`. The session never pushes. **Decided here** (task `T-e3sy`,
+`push-refused`. The session never pushes. **Decided here** (task `T-jy6f`, #415): a task session of a step that only reads, `plan-of-a-task`, `plan-review` or `verification`, has no push hook: its head is its base, which would pass the checks and be bound, and a bound head would then say nothing about the developer. **Decided here** (task `T-e3sy`,
 condition 1 of the plan review of #167): a refused push is one that `Push`
 reports as its code 1, not a fast-forward or refused by the remote; a push that
 fails otherwise (the remote cannot be reached) is the run's own error, and no

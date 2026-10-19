@@ -66,6 +66,7 @@ type Sessions struct {
 	Web           string // the web address of the forge, for a link in a pull request's body (row 66g)
 	Prices        [][]string
 	newID         func() (string, error)
+	random        func([]byte) (int, error) // the bytes of a drawn task ID; crypto/rand when nil
 	sweep         func(host, target string) error
 	make          func(id string, spec TaskSpec) (session.Dir, error)
 	remove        func(path string) error
@@ -111,9 +112,19 @@ type TaskSpec struct {
 	End           func(id string, d session.Dir, r session.Run, err error) error
 	Push          func(id string, d session.Dir, r session.Run) error
 	Context       *PromptContext // the prompt file of a task step and its input files, nil for a fixed prompt
+	Branch        string         // the branch of the run's clone that the session clones; the run's default branch when empty
 	Frozen        []FrozenFile   // the frozen test files, committed in the clone at the start of an attempt
 	probe         *probeOf       // a probe session's (row 38), nil for a task session
 	phase         *phaseOf       // a session of a phase's (row 42a), nil for a task session
+}
+
+// cloneBranch is the branch a session clones: the task loop's own when it gave one (plan
+// amendment 1 of #415), else the run's default branch.
+func cloneBranch(def, own string) string {
+	if own != "" {
+		return own
+	}
+	return def
 }
 
 func (s *Sessions) fns() {
@@ -121,7 +132,7 @@ func (s *Sessions) fns() {
 		s.newID, s.sweep, s.remove = session.NewID, session.Sweep, os.RemoveAll
 		s.version, s.rules, s.process, s.environ = session.Version, session.CheckRuleFiles, session.Process, session.Environ
 		s.make = func(id string, spec TaskSpec) (session.Dir, error) {
-			return session.Make(s.Host, s.Target, id, s.Clone, s.Branch, spec.Task, spec.Attempt, spec.Base, spec.Prompt, spec.Pair.Session)
+			return session.Make(s.Host, s.Target, id, s.Clone, cloneBranch(s.Branch, spec.Branch), spec.Task, spec.Attempt, spec.Base, spec.Prompt, spec.Pair.Session)
 		}
 	}
 	if s.environ == nil {
@@ -207,6 +218,16 @@ func (s *Sessions) commit(ctx context.Context, files map[string][]byte, message 
 // a lost lease among them, removes the directory too.
 func (s *Sessions) TaskSession(ctx context.Context, spec TaskSpec) (string, error) {
 	s.fns()
+	// The prompt file was built for a task and a base: a session of another task or at another base is refused
+	// before the sweep, so nothing is made or written (loop.md, The session base).
+	if c := spec.Context; c != nil {
+		if c.task != spec.Task {
+			return "", fmt.Errorf("the prompt file is of the task %s, the session's task is %s", c.task, spec.Task)
+		}
+		if c.base != spec.Base {
+			return "", fmt.Errorf("the prompt file of %s was built at base %s, the session's base is %s", c.task, c.base, spec.Base)
+		}
+	}
 	if spec.probe == nil || spec.probe.sweep {
 		if err := s.sweep(s.Host, s.Target); err != nil {
 			return "", err
@@ -318,6 +339,9 @@ func (s *Sessions) TaskSession(ctx context.Context, spec TaskSpec) (string, erro
 	steps.Push = func(id string, r session.Run) error { return s.pushTask(ctx, id) }
 	if spec.Push != nil {
 		steps.Push = func(id string, r session.Run) error { return spec.Push(id, d, r) }
+	}
+	if spec.Context != nil && spec.Push == nil && readOnlyStep(spec.Context.step) { // a step that reads has no push, and no head to bind
+		steps.Push = nil
 	}
 	if spec.probe != nil || spec.phase != nil { // a probe and a session of a phase have no attempt and no push
 		steps.Attempt, steps.Push = nil, nil

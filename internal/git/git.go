@@ -607,3 +607,15 @@ func DiffFile(dir, base, head, path string) ([]byte, error) {
 func DiffBinary(dir, base, head string) ([]byte, error) {
 	return call(dir, environ(), "diff", "--binary", "--no-renames", "--end-of-options", base, head, "--")
 }
+
+// updateRefName is the form of a ref that UpdateRef sets: below refs/heads/layup/, plain characters.
+var updateRefName = regexp.MustCompile(`^refs/heads/layup/[A-Za-z0-9._/-]+$`)
+
+// UpdateRef sets the ref to the commit sha of dir: a ref of layup's own namespace, refs/heads/layup/, and a
+// full object ID, else it is refused before git starts (docs/spec/packages.md, The calls of M2e; task T-jy6f).
+func UpdateRef(dir, ref, sha string) error {
+	if !updateRefName.MatchString(ref) || strings.Contains(ref, "..") || strings.Contains(ref, "//") || strings.HasSuffix(ref, "/") || strings.HasSuffix(ref, ".lock") {
+		return &FailedError{Args: []string{"update-ref", ref}, Code: -1, Err: errors.New("not a ref of refs/heads/layup/")}
+	}
+	return doAt(dir, sha, "update-ref", ref, sha)
+}

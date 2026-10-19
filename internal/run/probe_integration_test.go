@@ -4,10 +4,15 @@ package run
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/pharzam/layup/internal/git"
+	"github.com/pharzam/layup/internal/records"
+	"github.com/pharzam/layup/internal/session"
 )
 
 // probeHarness gives a harness register row whose scripts are the test's own:
@@ -139,5 +144,56 @@ func TestATaskSessionProbesItsVersionFirst(t *testing.T) {
 	rows := harnessRows(t, w)
 	if len(rows) != 2 || rows[0][2] != "2.0.0" || rows[0][4] != "passed" || rows[1][2] != "3.0.0" || rows[1][4] != "failed" {
 		t.Errorf("harnesses.tsv %q; want the probe of each version", rows)
+	}
+}
+
+// Plan amendment 1 of #415 and round 1 of its review: a session at a base that is not on the default branch clones the scratch branch,
+// and so does the probe that its admission runs when the harness reports a version that no probe passed (1.0.0 recorded, 2.0.0 reported).
+func TestTheAdmissionProbeOfASessionClonesTheBranchOfItsBase(t *testing.T) {
+	clone := t.TempDir()
+	user := []string{"-c", "user.name=review", "-c", "user.email=review@example.invalid"}
+	gitOut(t, clone, "init", "-q", "-b", "main")
+	gitOut(t, clone, append(user, "commit", "-q", "--allow-empty", "-m", "base")...)
+	base := strings.TrimSpace(gitOut(t, clone, "rev-parse", "HEAD"))
+	gitOut(t, clone, "switch", "-q", "-c", "developer")
+	os.WriteFile(filepath.Join(clone, "work.txt"), []byte("work\n"), 0o600)
+	gitOut(t, clone, "add", "work.txt")
+	gitOut(t, clone, append(user, "commit", "-q", "-m", "work")...)
+	head := strings.TrimSpace(gitOut(t, clone, "rev-parse", "HEAD"))
+	gitOut(t, clone, "switch", "-q", "main")
+	const scratch = "layup/base/T-ab12/1"
+	if err := git.UpdateRef(clone, "refs/heads/"+scratch, head); err != nil {
+		t.Fatal(err)
+	}
+	h := probeHarness(t, "fake", "echo 2.0.0", "")
+	cloned := errors.New("the admission probe cloned its requested base")
+	for _, c := range []struct{ name, base, branch string }{
+		{"the default base (control)", base, ""},
+		{"a base on the scratch branch", head, scratch},
+	} {
+		old, err := table(records.HarnessesSchema, [][]string{{"S-b0000001", "fake", "1.0.0", "m1", "passed", "—", "AGENTS.md", "m1", "2026-10-09T12:00:00Z"}})
+		if err != nil {
+			t.Fatal(err)
+		}
+		s := newSessions(&standinStore{files: map[string][]byte{"harnesses.tsv": old}, holder: "0123456789abcdef"})
+		s.Host, s.Clone = t.TempDir(), clone
+		s.fns()
+		realMake := s.make
+		s.make = func(id string, spec TaskSpec) (session.Dir, error) {
+			d, err := realMake(id, spec)
+			if err == nil && spec.Role == "probe" {
+				return d, cloned // the probe got as far as its clone of the base
+			}
+			return d, err
+		}
+		ctx := context.Background()
+		if _, err := s.StartAttempt(ctx, "T-ab12", base); err != nil {
+			t.Fatal(err)
+		}
+		_, err = s.TaskSession(ctx, TaskSpec{Task: "T-ab12", Attempt: 1, Role: "qa-engineer", Base: c.base, Branch: c.branch, Records: base, Prompt: []byte("the verifier\n"),
+			Pair: pairOf(h, probeModels[0]), Admit: s.Admit(ctx, ProbeSpec{Harness: h, Models: probeModels, Base: c.base, Records: base, Branch: c.branch})})
+		if !errors.Is(err, cloned) {
+			t.Errorf("%s: %v; want the admission probe to clone its base", c.name, err)
+		}
 	}
 }

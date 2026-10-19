@@ -1361,6 +1361,21 @@ failure modes worth keeping.
   the exact name, and a plan that moves an output lists every test that reads its destination, not the assertions that
   name the old one.
 
+- ❌ **A session that only reads, bound by the push hook.** `TaskSession` gave every task session the push hook,
+  so a plan, a plan review or a verifier that committed nothing had its head equal to its base, which passes
+  every check, and was pushed and bound; the first `bound` of a task then said nothing about the developer, and
+  the review of a head could be taken for its author. It is silent because the session's result is valid and no
+  event is out of place. **The check:** decide the push by the step of the prompt file inside `TaskSession`, not in a
+  caller (`readOnlyStep`), and test it on a harness that commits in each step that reads: only the developer is
+  bound. The same call must refuse a prompt file of another task or base before it sweeps; and a base that is
+  not on the default branch (a verifier's head) needs a branch of the run's clone to be cloned from, or the
+  start fails. Learned in `T-jy6f`, #415.
+- ❌ **A refused start that no stage can see.** A task session whose start is refused writes the event `refused`
+  and no start row, so a driver that tells a stage from the rows of `sessions.tsv` found none and started it again,
+  a hundred times. It is silent in a unit test of the position, which builds only sessions that started.
+  **The check:** read the events for a `refused` whose session has no start row, and stop on it; run the driver
+  against a start that is refused. Learned in `T-jy6f`, #415.
+
 ## 3. Validation — how you check you are not fooling yourself
 
 A result is **untrusted** until it passes the checks below, and the pass is a
