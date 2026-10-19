@@ -1376,6 +1376,8 @@ failure modes worth keeping.
   **The check:** read the events for a `refused` whose session has no start row, and stop on it; run the driver
   against a start that is refused. Learned in `T-jy6f`, #415.
 
+- ❌ **A new kind of a shared source, read by the steps that run before the new step.** The step `shape` asks its questions as rows of `questions.tsv` with the source `follow-up` and the kind `shape`, as its plan chose, and the plan listed the readers of the budget but not those of the source. The steps `follow-up` and `follow-up-answers` of Intake run on every restart before `shape`, and each read every row of the source `follow-up` as Intake's: the first Shape row made `follow-up-answers` wait for an answer to a question of Intake, and the run never came back to `shape`. No test of the plan failed: each was written for the step alone. It is silent until the second restart. **The check:** when a row, a kind or a state is added to a record that earlier steps read, `git grep -n` its source value in the code that is no test, and give each reader a case that holds the new row beside its own (`TestOnlyTheRowsOfIntakeAreItsFollowUp`); the test of the new step is not that case. Learned in `T-3f94`.
+
 ## 3. Validation — how you check you are not fooling yourself
 
 A result is **untrusted** until it passes the checks below, and the pass is a

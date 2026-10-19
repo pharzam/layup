@@ -146,3 +146,52 @@ FAIL	github.com/pharzam/layup/cmd/layup	31.712s
 exit=1
 end 2026-10-19T16:59:28Z
 ```
+
+## S9 - the compiled mutants of row 66h
+
+Run 2026-10-19 from 17:41Z to 17:58Z by `mutants.py` (in the session's scratchpad) in a copy of the worktree at the committed green head `b653076`
+(the copy also holds the documents and the one comment of `steps.go` that the next commit adds; no code differs). Each mutant is one edit of one
+file, taken from a fresh backup (a copy made in a new directory at that mutant's start), built (`go build ./...`) and vetted
+(`go vet -tags=integration` of `internal/run`, `internal/records` and `internal/verify`), then run with the test command of its row; a mutant that
+does not build or vet counts as not run. The file is restored from the backup, its SHA-256 is checked to equal the hash before, and the same test
+command is run on the restored file as the control (the column after the first failing assertion; 0 is green). The statuses are the exit
+statuses of `go` read directly. `unit` is `go test -count=1 ./internal/run/ ./internal/records/ ./internal/verify/`; the others are
+`TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 20m -run '<tests>' ./internal/run/`. The hashes are the
+first 12 hexadecimal characters of the SHA-256 of the file before and during the mutation; the assertion is cut at 150 characters.
+
+A first pass counted every mutant as `FAILED` at the build: the copy has no `.git`, and `go build` wanted the VCS status. No mutant had run; the pass was
+repeated with `GOFLAGS=-buildvcs=false`. The first form of M32 left a variable unused and did not build (guardrails, "a mutant that does not build"); its row
+is the second form, run alone at the end. Numbering: M1 to M7, M9 to M16 and M22 to M26 are the plan's; M17 to M21 went to row 66r with the driver; M8 is
+"the facts of the spans are not read", since the inventory's `out` facts have no code in M2e (the rule is decided in `loop.md`, the reader is row 66j's);
+M27 to M32 were added for the head given by the driver, the copy of the comment, the filter of Intake's steps, the kind `shape`, the field `success-criteria`
+and the final ID.
+
+| # | mutant | build | vet | test | first failing assertion | control | tests | sha256 before | sha256 during | restore |
+| - | ------ | ----- | --- | ---- | ----------------------- | ------- | ----- | ------------- | ------------- | ------- |
+| M1 | leftOpen takes closed too | ok | ok | 1 | TestTheQuestionsLeftOpenAreTheOpenAndTheUnansweredAsked: shapequestions_test.go:37: leftOpen = [Q-001 Q-002 Q-004 Q-006]; want [Q-001 Q-002 Q-006] (th | 0 | unit | 0275114802c2 | bc195c60744b | same |
+| M2 | an asked question whose follow-up is answered is asked again | ok | ok | 1 | TestTheQuestionsLeftOpenAreTheOpenAndTheUnansweredAsked: shapequestions_test.go:37: leftOpen = [Q-001 Q-002 Q-003 Q-006]; want [Q-001 Q-002 Q-006] (th | 0 | unit | 0275114802c2 | 1abc9b711cea | same |
+| M3 | a question that Shape already asks is asked again | ok | ok | 1 | TestTheQuestionsLeftOpenAreTheOpenAndTheUnansweredAsked: shapequestions_test.go:37: leftOpen = [Q-001 Q-002 Q-005 Q-006]; want [Q-001 Q-002 Q-006] (th | 0 | unit | 0275114802c2 | 5b7e4e84b85c | same |
+| M4 | the source of budget.tsv is the batch's question (the Shape rows are not read) | ok | ok | 1 | TestAnIntentAnswerThatParsesWritesBudgetWithShapesQuestionAsSource: shapequestions_test.go:105: budget missing: []; want [[band.B 5.0 Q-005] [band.U 1 | 0 | unit | 0275114802c2 | d8caed567b39 | same |
+| M5 | B not below U accepted on a replace | ok | ok | 1 | TestBudgetAfterFollowUp: followanswers_test.go:88: written, a budget of one row: "band.B  ; band.U  ; appetite.hours 50.0 Q-005", open []; want "appet | 0 | unit | 3ba07dee95c4 | fef5e6a4f08d | same |
+| M6 | the wait is skipped for an open intent field | ok | ok | 1 | TestAnUnparsedIntentAnswerLeavesTheQuestionOpenAndALaterCorrectionIsTheAnswerToANewRow: shapequestions_test.go:146: the wait = []; want [Q-001] | 0 | unit | 0275114802c2 | 4948daaf4e9e | same |
+| M7 | the question that a Shape row asks again keeps its state | ok | ok | 1 | TestAnIntentAnswerThatParsesWritesBudgetWithShapesQuestionAsSource: shapequestions_test.go:109: budget missing: the state of Q-001 = open; want answer | 0 | unit | 0275114802c2 | a4b6ed376010 | same |
+| M8 | the facts of the spans are not read | ok | ok | 1 | TestTheConstraintsThatApplyAreListedByCodeFromTheRecordsAndTheTarget: options_test.go:57: constraintsOf = [{NFR-002 p99 under 200 ms} {Inv-1 } {Inv-2 | 0 | unit | 9a79d576c223 | 425fbd8f2222 | same |
+| M9 | a record with no status is skipped, not an error | ok | ok | 1 | TestTheConstraintsThatApplyAreListedByCodeFromTheRecordsAndTheTarget: options_test.go:62: a record with no status line: err = <nil>; want "docs/adr/00 | 0 | unit | 9a79d576c223 | 58eb1c2548af | same |
+| M10 | a superseded record applies | ok | ok | 1 | TestTheConstraintsThatApplyAreListedByCodeFromTheRecordsAndTheTarget: options_test.go:57: constraintsOf = [{NFR-002 p99 under 200 ms} {F-2 } {F-3 } {I | 0 | unit | 9a79d576c223 | e1d63dbf53eb | same |
+| M11 | a table with one option is kept | ok | ok | 1 | TestTheOutputOfTheOptionsSessionIsCheckedBeforeItIsKept: options_test.go:82: one option: err = <nil>; want "decision db has fewer than two options" | 0 | unit | 9a79d576c223 | b06c1081afd0 | same |
+| M12 | the table of round 1 is not kept | ok | ok | 1 | TestTheRewriteMustHoldExactlyTheDecisionsItReplaces: options_test.go:144: rewriteFiles = map[spec/options/cache.tsv:[111 112 116 105 111 110 9 99 111 | 0 | unit | 9a79d576c223 | 50a37dc3db95 | same |
+| M13 | the rewrite runs a second time | ok | ok | 1 | TestEveryOptionDroppedAsksOneRewriteAndASecondDropStops: options_test.go:109: the rewrite dropped too: rewrite [cache], stop []; want no second rewrit | 0 | unit | 9a79d576c223 | 1f737a4753f5 | same |
+| M14 | the rewrite is skipped (the stop at round 1) | ok | ok | 1 | TestEveryOptionDroppedAsksOneRewriteAndASecondDropStops: options_test.go:105: round 1, cache dropped: rewrite [], stop [cache]; want the rewrite of ca | 0 | unit | 9a79d576c223 | ba8cfef3501c | same |
+| M15 | the comment with no survivor is posted without the read | ok | ok | 1 | TestTheRewriteAndTheRoundWithNoProgress: shape_integration_test.go:240: a restart: {Name:shape Result:done Detail:waiting for the Operator: shape: no | 0 | TestTheRewriteAndTheRound | 9a79d576c223 | 4103ff090174 | same |
+| M16 | shape is done before with a decision that has no survivor | ok | ok | 1 | TestTheRewriteAndTheRoundWithNoProgress: shape_integration_test.go:240: a restart: {Name:shape Result:done Detail:done before}, head moved: false, 1 c | 0 | TestTheRewriteAndTheRound | 4bc3bddba925 | 1b07818825ca | same |
+| M22 | shape is a row before the Scaffold is done | ok | ok | 1 | TestStartAndRestartCallStepAtTheStartOfEachStep: command_test.go:52: the steps of a restart with Start done and the Scaffold not done: forge-check las | 0 | unit | d444364e8531 | a90acf185efb | same |
+| M23 | the architecture task starts at the run's base | ok | ok | 1 | TestTheStepShape: shape_integration_test.go:280: noPRD true: the step = {Name:shape Result:fail Detail:T-3cbu: layup/spec failed: covers: did not run: | 0 | TestTheStepShape | 4bc3bddba925 | ed4ba88189d7 | same |
+| M24 | the base guard of the architecture task is skipped | ok | ok | 1 | TestTheArchitectureTaskStartsAtTheVerifiedHeadOfTheSpecification: shape_test.go:21: archStart(an attempt at X) stop = "", <nil>; want "T-ar01: its bas | 0 | unit | 4bc3bddba925 | 50f2f75cebb6 | same |
+| M25 | runStage passes scratch false | ok | ok | 1 | TestTheArchitectureHeadOfATargetWithNoPRDPassesLayupSpec: shapeloop_integration_test.go:610: noPRD true: the architecture task: {Task: Verified:false | 0 | TestTheArchitectureHeadOfATarget | af88db2f9a9c | 48bc8abc5baa | same |
+| M26 | the architecture task starts before the specification is verified | ok | ok | 1 | TestTheArchitectureTaskStartsAtTheVerifiedHeadOfTheSpecification: shape_test.go:28: archStart(the specification in a wait) = "", "", T-sp01: the task | 0 | unit | 4bc3bddba925 | 3eee15257d8b | same |
+| M27 | the driver gives no head | ok | ok | 1 | TestTheArchitectureHeadOfATargetWithNoPRDPassesLayupSpec: shapeloop_integration_test.go:602: noPRD true: the specification: {Task:T-jcg6 Verified:true | 0 | TestTheArchitectureHeadOfATarget | af88db2f9a9c | d1fe88fd29cd | same |
+| M28 | the comment of the questions is not copied | ok | ok | 1 | TestTheQuestionsLeftOpenAreAskedAndTheIntentAnswerWritesBudget: shape_integration_test.go:146: the restart: wait [Q-002 Q-003 Q-004], <nil>, 1 comment | 0 | TestTheQuestionsLeftOpenAreAsked | 0275114802c2 | afbc6045a13f | same |
+| M29 | Intake's follow-up reads the Shape rows | ok | ok | 1 | TestOnlyTheRowsOfIntakeAreItsFollowUp: shapequestions_test.go:75: intakeFollowUps = [[Q-002 follow-up Q-001 idea-owner before-delivery follow-up   tex | 0 | unit | d268f8e6a98d | 08c3e127f8e6 | same |
+| M30 | the kind shape is refused for a follow-up | ok | ok | 1 | TestAShapeRowAsksAgainInTheBlockOfItsQuestion: shapequestions_test.go:54: the row Q-003: column kind: kind is a kind of the question's source | 0 | unit | e00a8eee9ed0 | d58e16897862 | same |
+| M31 | success-criteria blocks the step | ok | ok | 1 | TestOnlyTheBudgetFieldsBlockAndAShapeRowStillAskedBlocks: shapequestions_test.go:185: intentWait = [Q-001 Q-002 Q-004]; want [Q-001 Q-002]: an open fi | 0 | unit | 0275114802c2 | f0f698c1b26a | same |
+| M32 | a requirement is named by its draft ID | ok | ok | 1 | TestTheConstraintsThatApplyAreListedByCodeFromTheRecordsAndTheTarget: options_test.go:57: constraintsOf = [{R-002 p99 under 200 ms} {F-2 } {F-3 } {Inv | 0 | unit | 9a79d576c223 | 10c797315341 | same |

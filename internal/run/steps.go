@@ -200,7 +200,8 @@ func (r *state) lost() error {
 // Intake take its place (docs/spec/intake.md, The steps of Intake; row 43a,
 // task T-qk66, adds the first, rule-gaps), and the steps of the Scaffold follow
 // them: forge-check last, or, once the Scaffold is done, between lease and
-// probe (docs/spec/scaffold.md, At each later start; task T-2j13).
+// probe (docs/spec/scaffold.md, At each later start; task T-2j13), and then
+// shape follows scaffold-push (task T-3f94, row 66h).
 func restartNames(startDone, scaffoldDone bool) []string {
 	if !startDone {
 		return []string{"forge", "clone", "version", "lease", "probe", "phase"}
