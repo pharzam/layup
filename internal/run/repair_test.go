@@ -276,3 +276,28 @@ func TestARefusedSessionsTableStopsTheRepostAndTheRepair(t *testing.T) {
 		})
 	}
 }
+
+// An events.tsv that the reader refuses stops RepairPushes and RepostComments: each
+// returns the read's error, which names the path, and writes and reads nothing else
+// (round 2 of #422, finding 1). A green negative on the code as it stands: its red
+// mutants are the two events reads taken as empty (runs/T-syxm/mutants.md, M26 and
+// M27).
+func TestARefusedEventsTableStopsTheRepairAndTheRepost(t *testing.T) {
+	rows := evs([][]string{attemptEv(1, baseSHA)}, pushed(pushSess, 1))
+	for _, c := range []struct {
+		name string
+		call func(*Sessions) error
+	}{
+		{"RepairPushes", func(s *Sessions) error { _, err := s.RepairPushes(context.Background(), "T-ab12"); return err }},
+		{"RepostComments", func(s *Sessions) error { _, err := s.RepostComments(context.Background(), "T-ab12"); return err }},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			store, sessions := repairWorld(t, rows, map[string]string{taskOne: pushedSHA})
+			store.files["tasks/T-ab12/events.tsv"] = []byte("not an events table\n")
+			err := c.call(sessions)
+			if err == nil || !strings.Contains(err.Error(), "events.tsv:") || len(store.commits) != 0 || len(store.ops) != 0 {
+				t.Errorf("%s: %v, %d commits, %d branch reads; want an error that names events.tsv, no commit, no read", c.name, err, len(store.commits), len(store.ops))
+			}
+		})
+	}
+}

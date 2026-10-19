@@ -156,3 +156,26 @@ back (first comment that is no summary): the test exits 1 at `handoffpost_integr
   2026-10-18T20:46:53Z to 20:48:29Z, exit 0 (94.3 s).
 - Gates at 7640a2c (to 20:51:56Z), all exit 0: `go build ./...`, `go vet ./...`, `go vet -tags=integration ./...`, `go vet -tags=e2e ./cmd/layup/`, `go vet -tags=uat ./internal/run/`, `gofmt -l .` (no output),
   `go test -count=1 ./...`, the five text lints, `nested-checkout-check`, `setup-check`, `git diff --check origin/main HEAD`.
+
+## End 3 fix (#422, comment 6260569452), test first
+
+Round 2, finding 1: the refused-events path had no protecting repair test. `TestARefusedEventsTableStopsTheRepairAndTheRepost` (`RepairPushes` and `RepostComments`, an `events.tsv` of one unparseable line)
+is **a green negative**: written before any code change, green on the code as it stands, red on its mutants M26 and M27 (`runs/T-syxm/mutants.md`), which are the red evidence.
+- Green on the unchanged code, `go test -count=1 ./internal/run/ -run TestARefusedEventsTable`, 2026-10-19T05:46:40Z (start; the run took 0.016 s), exit 0, `ok  github.com/pharzam/layup/internal/run`.
+- Red, M26 (both events reads of `RepairPushes` swallowed): build, vet and vet-int exit 0; the same command, exit 1; `--- FAIL: TestARefusedEventsTableStopsTheRepairAndTheRepost/RepairPushes (0.00s)`,
+  `repair_test.go:299: RepairPushes: <nil>, 0 commits, 0 branch reads; want an error that names events.tsv, no commit, no read`.
+- Red, M27 (the events read of `RepostComments` swallowed): the same, `.../RepostComments`, the same assertion with `RepostComments`.
+- Not a kill: swallowing only the first events read of `RepairPushes` leaves the test green, since the second read of the function returns the same error; not counted.
+- Green after the restore (SHA 1e3303f4... checked), the same command, exit 0, ended 2026-10-19T05:47:40Z. No production code changed.
+
+## The full integration level at the merge head 9260f17, a failure
+
+`TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -tags integration -timeout 90m ./...` on the merge head 9260f17, 2026-10-18T20:28:40Z to 21:02:29Z, **exit 1**. Every package passed except
+`internal/run` (`FAIL ... 1961.629s`), with two failing tests, both load flakes of this host and not of the change:
+- `TestAProseSessionWhoseCommentFailsLeavesNoFileInTheRecords` (55.80 s): the `fastClock` flake logged on #291 (comment 6255116905): `internal/run/run_integration_test.go:173` multiplies the real elapsed time by 600,
+  so about 48 s under host load crosses the 8-hour cap.
+- `TestTheFullInputOfAHeadAfterIntakeAndTheScaffold` (52.71 s): `specinput_integration_test.go:142: git push -q .../acme/target.git layup-setup:main: exit status 128`, a push to a directory that was missing under load.
+
+Both tests alone at 7f1ba6d (the head of the fix cycle, a merge-free tree of the same code), 2026-10-18T21:03:14Z to 21:04:16Z, **exit 0**: `--- PASS: TestAProseSessionWhoseCommentFailsLeavesNoFileInTheRecords (10.14s)`,
+`--- PASS: TestTheFullInputOfAHeadAfterIntakeAndTheScaffold (50.00s)`, `ok  github.com/pharzam/layup/internal/run  60.163s`. The full level has therefore **not** been green in one run at the merge head;
+its only green full run is at ac05f6a (above), and the merge head's failures are the two flakes with the green alone-runs.
