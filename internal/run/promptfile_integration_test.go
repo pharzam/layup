@@ -84,7 +84,7 @@ func TestAPromptFileIsBuiltFromTheRecordsOfARealTaskAndTheSessionReadsTheFiles(t
 		t.Fatalf("TaskSession: %q, %v", id, err)
 	}
 	head := l.bound(id)
-	prompt := gitOut(t, l.w.bare, "show", head+":seen-prompt.txt")
+	prompt := gitOut(t, l.r.Clone, "show", head+":seen-prompt.txt")
 	root := filepath.Join(l.r.Host, "sessions", id)
 	if abs, err := filepath.Abs(root); err == nil {
 		root = abs
@@ -289,18 +289,11 @@ func TestEachStepsPromptFileFromARealRecordsTree(t *testing.T) {
 		if err != nil {
 			t.Fatalf("%s: TaskSession: %q, %v", c.step, id, err)
 		}
-		head := ""
-		events, err := records.ReadEvents([]byte(keptRecord(t, l.w, "tasks/"+c.task+"/events.tsv")))
-		if err != nil {
-			t.Fatal(err)
-		}
-		for _, e := range events {
-			if e[1] == "bound" && e[3] == id {
-				head = e[5]
-			}
-		}
+		// The head is the one that the end of the session fetched into the run's clone: a step that only reads has no push, so no bound
+		// (task T-jy6f).
+		head := strings.TrimSpace(gitOut(t, l.r.Clone, "rev-parse", "refs/layup/sessions/"+id))
 		root, _ := filepath.Abs(filepath.Join(l.r.Host, "sessions", id))
-		prompt := gitOut(t, l.w.bare, "show", head+":seen-prompt.txt")
+		prompt := gitOut(t, l.r.Clone, "show", head+":seen-prompt.txt")
 		if prompt != string(pc.Text(root)) {
 			t.Errorf("%s: the prompt that the session read differs from Text(root):\n%s", c.step, prompt)
 		}
@@ -308,7 +301,7 @@ func TestEachStepsPromptFileFromARealRecordsTree(t *testing.T) {
 			t.Errorf("the prompt of %s holds no line \"The work of this step:\" followed by its instruction", c.step)
 		}
 		for _, it := range pc.Items {
-			if it.Where == "records" && sumOf([]byte(gitOut(t, l.w.bare, "show", head+":seen-input/"+filepath.Base(it.Path)))) != it.SHA {
+			if it.Where == "records" && sumOf([]byte(gitOut(t, l.r.Clone, "show", head+":seen-input/"+filepath.Base(it.Path)))) != it.SHA {
 				t.Errorf("%s: the input %s is not at its hash", c.step, it.Path)
 			}
 		}
