@@ -246,3 +246,10 @@ func TestTheGuardrailsOfATarget(t *testing.T) {
 		"fact: F-0001#2 is not a fact of the F-0001 record",
 	})
 }
+
+// The invariants that the step shape lists (task T-3f94, #364): the IDs of the entries, in the order of the file, each once.
+func TestTheInvariantsAreTheEntriesOfGuardrails(t *testing.T) {
+	text := "# Guardrails\n\n- **Inv-1** — a rule.\n  - **Inv-9** — indented, no entry\n- **Inv-2** — a rule.\n\n## Notes\n\n- **Inv-10** — after a heading.\n- **Inv-1** — again.\n- Inv-3 is not bold\n"
+	same(t, "the entries", InvariantIDs([]byte(text)), []string{"Inv-1", "Inv-2", "Inv-10"})
+	same(t, "no entry", InvariantIDs([]byte("# Guardrails\n")), nil)
+}

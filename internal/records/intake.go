@@ -294,7 +294,7 @@ func CheckQuestion(r []string) error {
 	case "intent":
 		refOK, kindOK, askerOK = slices.Contains(intentFields, f["ref"]), f["kind"] == "intent", f["asker"] == "layup run"
 	case "follow-up":
-		refOK, kindOK, askerOK = qForm.MatchString(f["ref"]), f["kind"] == "follow-up", f["asker"] == "layup run"
+		refOK, kindOK, askerOK = qForm.MatchString(f["ref"]), f["kind"] == "follow-up" || f["kind"] == "shape", f["asker"] == "layup run"
 	case "setup":
 		// S01-stack has no source row and is asked by layup run; a marker's question has the
 		// session of its row of intake/markers.tsv (docs/spec/scaffold.md, The answers of the setup).

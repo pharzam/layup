@@ -285,12 +285,7 @@ func (r *state) followUpStep(ctx context.Context) Step {
 	if err != nil {
 		return fail(name, err)
 	}
-	var held [][]string
-	for _, q := range questions {
-		if q[1] == "follow-up" {
-			held = append(held, q)
-		}
-	}
+	held := intakeFollowUps(questions)
 	if held != nil {
 		comments, err := r.cfg.Forge.Comments(ctx, issue)
 		if err != nil {
@@ -332,4 +327,12 @@ func (r *state) followUpStep(ctx context.Context) Step {
 
 // intakeFollowUps gives the rows of the follow-up of Intake: the rows of source follow-up that are not asked by the step
 // shape (kind shape, task T-3f94).
-func intakeFollowUps(questions [][]string) [][]string { return nil }
+func intakeFollowUps(questions [][]string) [][]string {
+	var out [][]string
+	for _, q := range questions {
+		if q[1] == "follow-up" && !isShapeRow(q) {
+			out = append(out, q)
+		}
+	}
+	return out
+}

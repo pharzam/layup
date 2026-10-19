@@ -278,7 +278,15 @@ var guardrailsEntry = regexp.MustCompile(`^- \*\*Inv-([0-9]+)\*\*`)
 
 // InvariantIDs gives the IDs (Inv-<n>) of the entries of a guardrails.md, in its order (task T-3f94, #364: the invariants
 // that the step shape lists as constraints).
-func InvariantIDs(data []byte) []string { return nil }
+func InvariantIDs(data []byte) []string {
+	var out []string
+	for _, line := range strings.Split(string(data), "\n") {
+		if m := guardrailsEntry.FindStringSubmatch(line); m != nil && !slices.Contains(out, "Inv-"+m[1]) {
+			out = append(out, "Inv-"+m[1])
+		}
+	}
+	return out
+}
 
 // guardrailsFindings is check guardrails in a target's form (D8 of #89): an
 // entry is a bullet "- **Inv-N**" up to the next entry, a heading or the end
