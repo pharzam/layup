@@ -344,7 +344,7 @@ that the missing check of the base reaches `make` (the first failing line is the
 ## Round 1 (comment 6267186962): the fix cycle
 
 The record of the round is `not mergeable, findings recorded` at cycle 0 of cap 1. Findings 1, 3 and 4 of the record are fixed below; its
-finding 2 (the budget) is met by not adding a file and by folding `mutants.md` into this file; its notes are applied (the single home of the
+finding 2 (the budget) is NOT met by this cycle: folding `mutants.md` into this file did not lower the count, which was 26 files before and after (see round 2, below); its notes are applied (the single home of the
 requirement mapping and the task names in `loop.md`, issue #432 above).
 
 ### Finding 1 - the admission probe loses the scratch branch
@@ -401,8 +401,7 @@ end 2026-10-19T12:31:29Z
 Run 2026-10-19 from 12:33:54Z to 12:39:53Z on the head `9b0ebee`, by the same runner and with the rules of the first table (the control is the same test
 command on the restored file, exit 0; the files were restored by hash). The first run of SM18 with the old test command (12:33:55Z) still passed, since
 that test has no gate failure; the row above is SM18 with the combined case, and it is **killed**. SM29 drops the branch on the probe, SM30 settles nothing
-before the next attempt and SM31 runs a plan or plan review again after it ended. The result of S7 is therefore 29 of 31 runs killed (SM1 to SM18, SM20 to
-SM31 and SM19a not a run); only **SM19b** is not killed, with the reason given in the S7 table.
+before the next attempt and SM31 runs a plan or plan review again after it ended. The sweep above has no measured hashes; round 2 repeated it with them (below), and its count replaces the one that stood here.
 
 ### Round 1 - the full integration level on the final head
 
@@ -416,3 +415,62 @@ ok  	github.com/pharzam/layup/internal/run	1600.540s
 exit=0
 end 2026-10-19T13:11:18Z
 ```
+
+## Round 2 (comment from the Operator, cap 2): the fix cycle
+
+Round 2 reads `fa7a476` as `not mergeable, findings recorded` at cycle 1 of cap 1; the Operator chose one more cycle (cap 2). Its findings:
+
+- **Finding 1, the budget.** The statement above, that finding 2 of round 1 was met, was false: the diff was 26 files (over 25) before the fold and 26 after it.
+  The file count is 26 before the close-out, over the reviewed maximum of 25, and the landing figure (files and lines, the close-out included) goes to
+  the Operator as one exact measure. This cycle adds no file.
+- **Finding 2, a bound of a session outside the developer role.** Red, on the unit test `TestABoundOfASessionOutsideTheDeveloperRoleStopsTheStep`
+  (the ordinary completed-verifier ledger is the control and passes; the same ledger with the verifier's own push and bound, and the same for the plan and
+  the plan review, returned the verified head):
+
+```
+start 2026-10-19T13:55:18Z
+--- FAIL: TestABoundOfASessionOutsideTheDeveloperRoleStopsTheStep (0.00s)
+    shapeloop_test.go:232: a bound of the verifier: {Pos:10 Session:S-v1 Msg: Attempt:1 Base:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa Head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb}; want the stop that names S-v1
+    shapeloop_test.go:232: a bound of the plan: {Pos:10 Session:S-v1 Msg: Attempt:1 Base:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa Head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb}; want the stop that names S-p1
+    shapeloop_test.go:232: a bound of the plan review: {Pos:10 Session:S-v1 Msg: Attempt:1 Base:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa Head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb}; want the stop that names S-r1
+FAIL
+FAIL	github.com/pharzam/layup/internal/run	0.009s
+FAIL
+exit=1
+end 2026-10-19T13:55:31Z
+```
+
+  Green after the check in `loopPosition` (a `bound` whose session is not of the developer role stops the step, before any stage):
+
+```
+start 2026-10-19T13:55:36Z
+ok  	github.com/pharzam/layup/internal/run	0.389s
+ok  	github.com/pharzam/layup/internal/git	0.033s
+exit=0
+end 2026-10-19T13:55:47Z
+```
+
+- **Finding 3, the hashes.** SM18 (with the combined case), SM29, SM30 and SM31 are repeated with the new mutant SM33 (the check removed), by the runner of the
+  first sweep, on the head `e3b11b2`, 2026-10-19T13:56:39Z to 2026-10-19T14:02:18Z. For each, the build and vet statuses, the test status
+  and the first failing assertion are below, and then the SHA-256 of the whole source file before the mutation, with the mutation, and after the restore, with
+  the equality of the first and the last; the control is the same test command on the restored file (exit 0 for each).
+
+| # | mutant | build/vet/test | first failing assertion | control |
+| - | ------ | -------------- | ----------------------- | ------- |
+| SM18 | not-active does not stop | 0/0/1 | shapeloop_integration_test.go:482: 2 attempts; want one: the gate failure starts none when the verifier cannot run | 0 |
+| SM29 | the admission probe drops the branch | 0/0/1 | probe_integration_test.go:196: a base on the scratch branch: git switch -c task/T-hcie/1 8b58ba6ab488290838d26a0e031be217ca1c1ec5: exit status 128: fatal: unable to read tree (8b58ba6ab488290838d26a0e031be217ca1c1ec5); want the admission pr | 0 |
+| SM30 | the verdict not settled before the next attempt | 0/0/1 | shapeloop_integration_test.go:443: the end of the first attempt: 2 attempts after the failed post; want 1 (no attempt starts before the failure is posted) | 0 |
+| SM31 | a plan or plan review that ended is run again | 0/0/1 | shapeloop_integration_test.go:277: AdvanceShapeTask(T-6j6a) = {Task: Verified:false Wait: Stop:}, the cap of milestone 0: the time since Start passes 8.0 hours; want the verified head | 0 |
+| SM33 | a bound of a session outside the developer role not seen | 0/0/1 | shapeloop_test.go:232: a bound of the verifier: {Pos:10 Session:S-v1 Msg: Attempt:1 Base:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa Head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb}; want the stop that names S-v1 | 0 |
+
+| # | sha256 before | sha256 during (mutated) | sha256 after the restore | before = after |
+| - | ------------- | ----------------------- | ------------------------ | -------------- |
+| SM18 | `a1fc3c879c557d54f80c80572f59a791036a3086cb62c4757f4cdad64367712c` | `7e03a254cdec9754afeb2e6522a35c52e86c4fe014db06656d78e2dda492756e` | `a1fc3c879c557d54f80c80572f59a791036a3086cb62c4757f4cdad64367712c` | equal |
+| SM29 | `2cbf939eb1ad6e41bb4dc2571c2c76515ba2985db0a0a10c556d2115e3f9c207` | `d93f290491be01ca79c2817f0eaa87a7221026ae41f54751cc350e01e4ec3056` | `2cbf939eb1ad6e41bb4dc2571c2c76515ba2985db0a0a10c556d2115e3f9c207` | equal |
+| SM30 | `a1fc3c879c557d54f80c80572f59a791036a3086cb62c4757f4cdad64367712c` | `3944cf84c397c1326874de59f05c82f2c5347e6f1f0405ba27fd6d344acfcebf` | `a1fc3c879c557d54f80c80572f59a791036a3086cb62c4757f4cdad64367712c` | equal |
+| SM31 | `a1fc3c879c557d54f80c80572f59a791036a3086cb62c4757f4cdad64367712c` | `37999572542a0c03dd96d875f7a0de9cbd2e31e5bdba395980a8aaad46e46e61` | `a1fc3c879c557d54f80c80572f59a791036a3086cb62c4757f4cdad64367712c` | equal |
+| SM33 | `a1fc3c879c557d54f80c80572f59a791036a3086cb62c4757f4cdad64367712c` | `c2db02be353c55567a9126d9eedc03842cd39141cb0584e60fd2b545f98aece2` | `a1fc3c879c557d54f80c80572f59a791036a3086cb62c4757f4cdad64367712c` | equal |
+
+**The count, recounted.** The mutants of S7 are SM1 to SM28 and SM19 (a first form that did not build, SM19a, and a second, SM19b), SM29 to SM31 and SM33.
+Killed: SM1 to SM17 and SM20 to SM28 (26) in the first sweep, SM18 (with the combined case), SM29, SM30, SM31 and SM33 (5): **31 killed**. Not killed:
+**SM19b** alone, equivalent on the paths this driver produces (S7). SM19a did not build and is not a run. (SM32 was a duplicate of SM26 and was never run.)
