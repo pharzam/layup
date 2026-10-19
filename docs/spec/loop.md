@@ -1916,15 +1916,38 @@ of the answer, and `spec/inventory.tsv`; for `loop`, the rows of `tasks.tsv`,
   merged pull request is recorded with its `merged` event.
 - **The branch of a session that has a `push` and no result.** A `push` event with
   no `bound` and no `refused` after it is a forge write whose result is not
-  recorded ([`session.md`](session.md#the-push-and-the-bind)). **Decided here:** the
-  `loop` step, before it acts on that session, reads the branch `task/<task>/<attempt>`
-  of the forge: when it holds the SHA of the `push` event, the step writes the missing
-  `bound` event; when it does not, it writes `refused` with the detail `push-lost`
-  and starts a new attempt.
+  recorded ([`session.md`](session.md#the-push-and-the-bind)). **Decided here**
+  (task `T-syxm`, row 66v): `(*Sessions).RepairTask(ctx, task)`, in the records and
+  the forge alone (never `bets.tsv`), repairs a task's sessions before a driver reads
+  the task's position, and each driver of a task calls it first: the driver of the
+  Shape tasks (`AdvanceShapeTask`, so the step `shape`, with no bet) and the act of
+  `loop`. A stop of the driver on an unresolved push stays as a guard that the hook
+  makes unreachable. For each such `push`, it reads the branch of the push event
+  (`task/<task>/<attempt>`) of the forge. A head equal to the SHA of the `push`, byte
+  for byte, writes the missing `bound`. Any other result writes `refused` with the
+  detail `push-lost`: the branch is absent, or holds another SHA, a descendant of the
+  pushed one included (code also advances branches, so being the only writer proves
+  no equality). A read that fails is an error and writes nothing. A `push` of an
+  attempt that is no longer the latest gets the same `bound` or `refused` and no new
+  attempt. **The replacement rule:** after those writes, when the latest attempt (the
+  largest `attempt` event) is still open (no `closed` and no `rebased` of it) and holds
+  an event `refused` with the detail `push-lost`, one new attempt starts at that
+  attempt's base (`StartAttempt`). The new attempt holds no such event, so the rule
+  starts one attempt however many pushes were lost and however often the repair runs,
+  and a restart between the commit of `refused` and the commit of `attempt` still
+  starts it. The hook then reposts the comments of the task's sessions (next item).
+  Each stage keeps what an earlier stage committed.
 - **The comments of a session** ([`session.md`](session.md#a-comment-for-a-session)):
   from `M2e` the comment of a task session is posted on the task's issue and no
   longer on the control issue, with the same first line; the control issue keeps the
-  comments of the probes and of the phase sessions.
+  comments of the probes and of the phase sessions. The issue is the register's
+  (`tasks.tsv`): a missing register, a missing row or a register that its reader
+  refuses is an error, and no comment is posted anywhere (no fallback to the control
+  issue). Before it posts, `layup run` reads the issue's comments, and a comment of
+  its own App with the same bytes is not posted again; the lease is read right before
+  the post. The hook posts the missing line of each session of the task that has a
+  `result`, from the events. A line changed by a repair (`…: done, refused
+  push-lost`) is a new comment, and the old one stays.
 - The lease, the fencing and the exit codes are those of [`run.md`](run.md); a lost
   lease stops the run before any write of a step.
 

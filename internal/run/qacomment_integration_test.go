@@ -44,7 +44,7 @@ func qaRowOf(rows [][]string, kind, n string) []string {
 func TestTheQuestionAndAnswerCommentsAreComposedFromTheRowsOfARealEnd(t *testing.T) {
 	w, f, id, start, rows := qaWorld(t)
 	prefix := id + ": developer session of T-ab12, attempt 1: "
-	if got := f.posted[2]; len(got) != 1 || got[0] != prefix+"done\n" {
+	if got := f.posted[taskIssue]; len(got) != 1 || got[0] != prefix+"done\n" {
 		t.Fatalf("the end posted %q; want %q", got, prefix+"done\n")
 	}
 	head := gitOut(t, w.bare, "rev-parse", "layup-records")
@@ -69,8 +69,8 @@ func TestTheQuestionAndAnswerCommentsAreComposedFromTheRowsOfARealEnd(t *testing
 	if second, err := AnswerComment(start, qaRowOf(again, "answer", "1"), "S-0a1b2c3d.2"); err != nil || string(second) != want {
 		t.Errorf("after a second read: %q, %v; want %q", second, err, want)
 	}
-	if len(f.posted[2]) != 1 || gitOut(t, w.bare, "rev-parse", "layup-records") != head {
-		t.Errorf("composing posted %q or moved the records; want neither", f.posted[2])
+	if len(f.posted[taskIssue]) != 1 || gitOut(t, w.bare, "rev-parse", "layup-records") != head {
+		t.Errorf("composing posted %q or moved the records; want neither", f.posted[taskIssue])
 	}
 }
 

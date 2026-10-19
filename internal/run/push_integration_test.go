@@ -60,7 +60,7 @@ func TestARulePathChangeIsRefusedWithItsDiff(t *testing.T) {
 	if changed := strings.Fields(gitOut(t, w.bare, "show", "--format=", "--name-only", commit)); len(changed) != 2 || changed[0] != "payloads/"+sum || changed[1] != "tasks/T-ab12/events.tsv" {
 		t.Errorf("the commit of the payload changed %q; want the payload and the events", changed)
 	}
-	if c := f.posted[2]; len(c) != 1 || !strings.HasSuffix(c[0], ": done, refused rule-path\n") {
+	if c := f.posted[taskIssue]; len(c) != 1 || !strings.HasSuffix(c[0], ": done, refused rule-path\n") {
 		t.Errorf("the comment %q", c)
 	}
 	// Nothing is pushed: the task branch is not on the target.
@@ -224,7 +224,7 @@ func TestACleanHeadIsPushedThenBound(t *testing.T) {
 	if got := refusals(t, w, id); len(got) != 0 {
 		t.Errorf("the refusals %q", got)
 	}
-	if c := f.posted[2]; len(c) != 1 || c[0] != id+": developer session of T-ab12, attempt 1: done\n" {
+	if c := f.posted[taskIssue]; len(c) != 1 || c[0] != id+": developer session of T-ab12, attempt 1: done\n" {
 		t.Errorf("the comment %q", c)
 	}
 }
@@ -253,7 +253,7 @@ func TestARefusedPushBindsNothing(t *testing.T) {
 	if events := show(t, w.bare, "layup-records", "tasks/T-ab12/events.tsv"); strings.Contains(events, "\tbound\t") || !strings.Contains(events, "\tpush\t1\t"+id+"\t") {
 		t.Errorf("the events:\n%s\nwant push and no bound", events)
 	}
-	if c := f.posted[2]; len(c) != 1 || c[0] != id+": developer session of T-ab12, attempt 1: done, refused push-refused\n" {
+	if c := f.posted[taskIssue]; len(c) != 1 || c[0] != id+": developer session of T-ab12, attempt 1: done, refused push-refused\n" {
 		t.Errorf("the comment %q", c)
 	}
 }

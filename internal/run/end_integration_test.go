@@ -53,6 +53,18 @@ func sessionWorldWith(t *testing.T, files map[string]string) (*world, *Sessions,
 	if err := r.commit(context.Background(), map[string][]byte{"rule-paths.tsv": []byte(register)}, "the register"); err != nil {
 		t.Fatal(err)
 	}
+	// The task register: the comment of a task session is on the task's issue (task T-syxm).
+	rows, err := registerFiles(nil, nil, Task{ID: "T-ab12", Issue: taskIssue, Kind: "build", Requirements: []string{"REQ-005"}, Size: "small", Opened: time.Now().UTC().Truncate(time.Second)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := r.commit(context.Background(), rows, "tasks: register T-ab12"); err != nil {
+		t.Fatal(err)
+	}
+	// The run holds the lease: the post of a comment is fenced by a read of it (task T-syxm).
+	if err := r.Store.WriteLease(context.Background(), LeaseRow{Run: r.RunID, Host: "host-1", Version: "0.1.0-dev", Started: time.Now().UTC().Truncate(time.Second), Heartbeat: 1, State: "held"}, "lease"); err != nil {
+		t.Fatal(err)
+	}
 	return w, r, f, worldAt{base, store.pushed}
 }
 
@@ -105,8 +117,8 @@ func TestTheResultIsCommittedWithItsTelemetryRow(t *testing.T) {
 	if !strings.Contains(events, "\tresult\t1\t"+id+"\t—\t—\tdone\t") || strings.Contains(events, "refused") {
 		t.Errorf("the events:\n%s", events)
 	}
-	if got := f.posted[2]; len(got) != 1 || got[0] != id+": developer session of T-ab12, attempt 1: done\n" {
-		t.Errorf("the comments on the control issue %q", got)
+	if got := f.posted[taskIssue]; len(got) != 1 || got[0] != id+": developer session of T-ab12, attempt 1: done\n" {
+		t.Errorf("the comments on the task's issue %q", got)
 	}
 	if _, err := os.Stat(filepath.Join(r.Host, "sessions", id)); !os.IsNotExist(err) {
 		t.Errorf("the session directory after the call: %v; want it removed", err)
@@ -126,7 +138,7 @@ func TestAnArtifactThatDiffersIsRefusedAndKept(t *testing.T) {
 	if gitOut(t, w.bare, "ls-tree", "--name-only", "layup-records", "tasks/T-ab12/results/"+id+".tsv") == "" {
 		t.Error("the result of a differing artifact is not committed; want it kept")
 	}
-	if got := f.posted[2]; len(got) != 1 || got[0] != id+": developer session of T-ab12, attempt 1: done, refused artifact\n" {
+	if got := f.posted[taskIssue]; len(got) != 1 || got[0] != id+": developer session of T-ab12, attempt 1: done, refused artifact\n" {
 		t.Errorf("the comment %q", got)
 	}
 }
@@ -164,7 +176,7 @@ func TestAHeadThatCannotBeReadIsRefusedBranch(t *testing.T) {
 	if gitOut(t, w.bare, "ls-tree", "-r", "--name-only", "layup-records", "tasks/T-ab12/results") != "" {
 		t.Error("a results/ file of a head that cannot be read")
 	}
-	if got := f.posted[2]; len(got) != 1 || !strings.HasSuffix(got[0], ": done, refused branch\n") {
+	if got := f.posted[taskIssue]; len(got) != 1 || !strings.HasSuffix(got[0], ": done, refused branch\n") {
 		t.Errorf("the comment %q", got)
 	}
 }
@@ -197,7 +209,7 @@ func TestAResultOfAClosedAttemptIsRefused(t *testing.T) {
 	if gitOut(t, w.bare, "ls-tree", "-r", "--name-only", "layup-records", "tasks/T-ab12/results") != "" {
 		t.Error("a results/ file of a closed attempt")
 	}
-	if got := f.posted[2]; len(got) != 1 || !strings.HasSuffix(got[0], ": done, refused closed-attempt\n") {
+	if got := f.posted[taskIssue]; len(got) != 1 || !strings.HasSuffix(got[0], ": done, refused closed-attempt\n") {
 		t.Errorf("the comment %q", got)
 	}
 }
@@ -250,7 +262,7 @@ func TestTheCommentNamesARefusalOfThePushHook(t *testing.T) {
 	if err != nil {
 		t.Fatalf("TaskSession: %q, %v", id, err)
 	}
-	if got := f.posted[2]; len(got) != 1 || got[0] != id+": developer session of T-ab12, attempt 1: done, refused base\n" {
+	if got := f.posted[taskIssue]; len(got) != 1 || got[0] != id+": developer session of T-ab12, attempt 1: done, refused base\n" {
 		t.Errorf("the comment %q; want it after the push hook's refusal", got)
 	}
 }
@@ -267,7 +279,7 @@ func TestTheCommentOfASecondSessionIsItsOwn(t *testing.T) {
 	if err != nil {
 		t.Fatalf("the second session: %v", err)
 	}
-	if got := f.posted[2]; len(got) != 2 || got[1] != id+": developer session of T-ab12, attempt 1: done\n" {
+	if got := f.posted[taskIssue]; len(got) != 2 || got[1] != id+": developer session of T-ab12, attempt 1: done\n" {
 		t.Errorf("the comments %q; want the second one its own", got)
 	}
 }
@@ -347,8 +359,8 @@ func TestTheCommentRowOfASessionIsKeptWithTheResultInOneCommit(t *testing.T) {
 	if events := show(t, w.bare, "layup-records", "tasks/T-ab12/events.tsv"); strings.Contains(events, "refused") {
 		t.Errorf("the events:\n%s", events)
 	}
-	if len(f.posted) != 1 || len(f.posted[2]) != 1 {
-		t.Errorf("the session's end posted %v; want only the comment of the session on the control issue", f.posted)
+	if len(f.posted) != 1 || len(f.posted[taskIssue]) != 1 {
+		t.Errorf("the session's end posted %v; want only the comment of the session on the task's issue", f.posted)
 	}
 }
 

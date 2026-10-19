@@ -416,7 +416,7 @@ event follows `push`, as the forge's answer is unknown. A `push` with no
 `bound` and no `refused` after it, from that error or from a lost lease at the
 commit of `bound`, is a forge write whose result is not recorded: the next
 reader of that session (the task loop of `M2e`) reads the target's branch
-before it acts on it. The push runs from `layup run`'s clone, with the head
+before it acts on it: `RepairTask` ([`loop.md`](loop.md#req-005--the-steps-of-the-loop-after-the-scaffold)) binds it when the head of the branch is the SHA of the `push` and refuses it as `push-lost` when it is not, and then starts one new attempt (task `T-syxm`). The push runs from `layup run`'s clone, with the head
 that the end fetched.
 
 ### A comment for a session
@@ -433,8 +433,12 @@ the session, those of the checks before a push and of the push too, from what
 the events hold, so it names the refusals of the end and of those checks
 (**decided here**, round 1 of #165); a session whose end recorded nothing has no
 comment, and a lost lease stops the run before it (round 2 of #165). The call is the forge's `Comment`
-([`forge.md`](forge.md#the-calls-of-m2b), O-189). The task loop of `M2e` moves
-a task's comments to the task's issue. The comment of a session of a phase of
+([`forge.md`](forge.md#the-calls-of-m2b), O-189). **Decided here** (task `T-syxm`): from
+`M2e` the comment of a task session is on the task's issue (`tasks.tsv`), with no
+fallback to the control issue; the forge's `Comments` is read before the post, and
+a comment of the App with the same bytes is not posted again; the lease is read
+right before the post; a session with no `result` event has no comment, before any
+read of the register. A comment that was not posted is posted again from the events. The comment of a session of a phase of
 `M2c` is in [`intake.md`](intake.md#the-sessions-of-intake) (task `T-gmey`).
 
 ## REQ-005 — The result of a session
@@ -667,6 +671,8 @@ gives no usage report (3000.11.3), so its rows use `none`.
 | A session's records commit with no `rule-paths.tsv`, or one that its reader refuses | the result is refused (`rule-paths`), and nothing is pushed |
 | A push of a session's head that `git` refuses (not a fast-forward, or refused by the remote) | the event `refused`, `push-refused`; nothing is bound |
 | A push of a session's head that fails otherwise (the remote cannot be reached) | the run's own error; no event follows `push` |
+| A `push` with no `bound` and no `refused` whose branch is absent or holds another SHA at a restart | the event `refused`, `push-lost`, then one new attempt (task `T-syxm`); a branch that cannot be read is the run's own error |
+| A task session whose comment cannot be placed (no register, no row of the task, a register that is refused) | the run's own error; no comment is posted (task `T-syxm`) |
 | A records push that is refused | the run stops, as [`run.md`](run.md#the-lease-and-fencing) |
 
 ## NFR-005 — No harness in the engine checks
