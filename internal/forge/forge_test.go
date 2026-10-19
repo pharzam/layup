@@ -39,6 +39,9 @@ func (standIn) PullRequest(context.Context, PullRequestQuery) (PullRequest, bool
 	return PullRequest{}, false, nil
 }
 func (standIn) Merge(context.Context, int, string) (string, error) { return "", nil }
+func (standIn) EditBody(context.Context, int, string) (PullRequest, error) {
+	return PullRequest{}, nil
+}
 func (standIn) ClosePullRequest(context.Context, int) (PullRequest, error) {
 	return PullRequest{}, nil
 }
@@ -298,6 +301,101 @@ func TestFakeFailsTheNamedCall(t *testing.T) {
 		t.Errorf("Merge at a SHA that is none gave no error")
 	} else if e := new(Error); errors.As(err, &e) && e.Status != 0 {
 		t.Errorf("a refusal has the status %d, want 0: it is made before any request", e.Status)
+	}
+}
+
+func TestFakeKeepsTheBodyOfADraftAndEditsIt(t *testing.T) {
+	f := NewFake()
+	f.SetHead("task/T-aaaa/1", sha1a)
+	ctx := context.Background()
+	pr, err := f.OpenDraft(ctx, "task/T-aaaa/1", "main", "t", "Closes #1")
+	if err != nil || pr.Body != "Closes #1" {
+		t.Fatalf("OpenDraft = %+v, %v, want the body it was given", pr, err)
+	}
+	byNumber := func() PullRequest {
+		t.Helper()
+		got, found, err := f.PullRequest(ctx, PullRequestQuery{Number: pr.Number})
+		if err != nil || !found {
+			t.Fatalf("PullRequest by number = %+v, %v, %v", got, found, err)
+		}
+		return got
+	}
+	byBranch := func() PullRequest {
+		t.Helper()
+		got, found, err := f.PullRequest(ctx, PullRequestQuery{Branch: "task/T-aaaa/1"})
+		if err != nil || !found {
+			t.Fatalf("PullRequest by branch = %+v, %v, %v", got, found, err)
+		}
+		return got
+	}
+	if got := byNumber(); got.Body != "Closes #1" {
+		t.Errorf("PullRequest by number: Body = %q; want %q", got.Body, "Closes #1")
+	}
+	if got := byBranch(); got.Body != "Closes #1" {
+		t.Errorf("PullRequest by branch: Body = %q; want %q", got.Body, "Closes #1")
+	}
+	edited, err := f.EditBody(ctx, pr.Number, "x")
+	if err != nil || edited.Number != pr.Number || edited.Body != "x" || edited.HeadSHA != sha1a || !edited.Draft {
+		t.Fatalf("EditBody = %+v, %v; want Number %d, Body %q and the rest of the pull request unchanged", edited, err, pr.Number, "x")
+	}
+	if got := byNumber(); got.Body != "x" {
+		t.Errorf("by number after the edit: Body = %q; want %q", got.Body, "x")
+	}
+	if got := byBranch(); got.Body != "x" {
+		t.Errorf("by branch after the edit: Body = %q; want %q", got.Body, "x")
+	}
+	// the forge edits a closed or merged pull request too: the refusal is the caller's
+	f.MarkReady(ctx, pr.NodeID)
+	if _, err := f.Merge(ctx, pr.Number, sha1a); err != nil {
+		t.Fatal(err)
+	}
+	if edited, err := f.EditBody(ctx, pr.Number, "after the merge"); err != nil || !edited.Merged || edited.Body != "after the merge" {
+		t.Errorf("EditBody of a merged pull request = %+v, %v; want it edited and still merged", edited, err)
+	}
+}
+
+func TestFakeRefusesAnEditBelow1BeforeItsFailureAndGivesTheForgeErrors(t *testing.T) {
+	f := NewFake()
+	ctx := context.Background()
+	f.OpenDraft(ctx, "b", "main", "t", "")
+	f.Fail = "EditBody"
+	for _, n := range []int{0, -1} {
+		_, err := f.EditBody(ctx, n, "x")
+		if e := new(Error); !errors.As(err, &e) || e.Call != "EditBody" || e.Status != 0 {
+			t.Errorf("EditBody(%d) with Fail = %v; want a refusal of the call EditBody with the status 0 (a 404 or a 502 is not one)", n, err)
+		}
+	}
+	f.Fail = ""
+	_, err := f.EditBody(ctx, 99, "x")
+	if e := new(Error); !errors.As(err, &e) || e.Call != "EditBody" || e.Status != 404 {
+		t.Errorf("EditBody(99) = %v; want a forge error of status 404", err)
+	}
+	f.Fail = "EditBody"
+	_, err = f.EditBody(ctx, 1, "x")
+	if e := new(Error); !errors.As(err, &e) || e.Call != "EditBody" || e.Status != 502 {
+		t.Errorf("EditBody(1) with Fail = %v; want the forge error of status 502", err)
+	}
+	f.Fail = ""
+	if got, _, _ := f.PullRequest(ctx, PullRequestQuery{Number: 1}); got.Body != "" {
+		t.Errorf("a refused or failed edit changed the body to %q", got.Body)
+	}
+}
+
+func TestFakeCanTakeAnEditAndStillGiveAnError(t *testing.T) {
+	f := NewFake()
+	ctx := context.Background()
+	f.OpenDraft(ctx, "b", "main", "t", "old")
+	f.FailAfter = "EditBody"
+	_, err := f.EditBody(ctx, 1, "new")
+	if e := new(Error); !errors.As(err, &e) || e.Call != "EditBody" || e.Status != 502 {
+		t.Errorf("EditBody with FailAfter = %v; want the forge error of status 502", err)
+	}
+	if got, _, _ := f.PullRequest(ctx, PullRequestQuery{Number: 1}); got.Body != "new" {
+		t.Errorf("after the error: Body = %q; want %q (the edit took effect)", got.Body, "new")
+	}
+	f.FailAfter = ""
+	if _, err := f.EditBody(ctx, 0, "x"); err == nil {
+		t.Errorf("a refusal below 1 gave no error")
 	}
 }
 

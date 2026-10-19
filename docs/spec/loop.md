@@ -79,7 +79,7 @@ the task started from, and requests no review. A draft is only visible; a
 pull request "reaches human review" when a review is requested or it is marked
 ready (the reading of `F-0003#58`, which the approval brief asks the Operator to
 confirm). The review record of the verifier is posted on the **issue**, and the
-body of the pull request is edited to link it, which makes the target's own
+body of the pull request is edited to link it (the edit: row 66q, task `T-08rj`, [below](#the-link-of-the-review-record-in-the-body)), which makes the target's own
 `review-record` check run again. **Reason:** the target's checks parse the
 issue's comments and the body, so the loop writes them in the forms that those
 checks read.
@@ -109,11 +109,61 @@ of `internal/run`):
   <web>/<owner>/<name>/commit/<records>`, with no final line feed (`<web>` is the forge register's
   `web`). `Closes #N` comes first, so the issue that the target's `review-record` job reads is the
   task's. Every M2e task has its own issue, so M2e writes `Closes`. The composer takes further lines.
-- **The edit of the body to link the review record is row 66q's** (task `T-08rj`, #413): it needs a
-  seventh method of `internal/forge` ([the calls of M2e](forge.md#the-calls-of-m2e)), outside the cell
-  of row 66g, and it calls this task's composer. It is **not built** here; the requirement above
-  stays, with row 66q as its owner, before the first consumer, rows 66h and 66k (the plan lists 66q among the
-  predecessors of 66h, and 66k waits through 66h).
+- **The edit of the body to link the review record is row 66q's** (task `T-08rj`, #413), decided
+  [below](#the-link-of-the-review-record-in-the-body). It uses the seventh method of `internal/forge`
+  ([the calls of M2e](forge.md#the-calls-of-m2e)) and this task's composer, whose further lines it fills.
+  The step that calls it is row 66k's, after row 66h.
+
+#### The link of the review record in the body
+
+**Decided here** (R10, task `T-08rj`, #413, row 66q; plan review conditions 1 to 6;
+`(*Sessions).LinkReviewRecord(ctx, task, verifier)` of `internal/run`, which gives whether it edited):
+
+- **The body** is the composer's body with its further lines `""` and `The review record:
+  <web>/<owner>/<name>/issues/<issue>#issuecomment-<id>`, and no final line feed: the lines of the draft
+  unchanged, then the blank line, then the link (the form of `setup.go`'s link of a comment). `Closes #N`
+  stays the first line, so the issue that the target's `review-record` job reads is the task's, and the
+  job runs again on the event `edited`. **Reason:** one composer, so the draft and the edited body cannot drift.
+- **The inputs are from the records, never from the caller.** The verifier's start row is the session's
+  (its task, its role the one of the step `verification`, its attempt the newest `attempt` event of the
+  task). **The comment** is the one of the **latest** event `handoff` of that session, which must be
+  `valid comment <ID>-<seen>`: the latest is chosen first and then required valid, so an earlier valid
+  handoff is never used after a later invalid one (a different outcome of the same session is a new event, and
+  an edit of the comment can make it invalid). A valid handoff to the developer, for a material review, links as
+  well as a handoff to the close-out: both are valid review records. The copy is the row of `copies.tsv` with that
+  ID, that `seen` and the task's issue; its file must parse as a review record whose `head` is the verifier's
+  `base`, which tells it from a plan review of the same role. **Reason:** the link fails closed (NFR-004);
+  whether a record's verdict allows a merge is not decided here.
+- **The records commit of the body is the one of the opening, read from the body.** `OpenPullRequest` writes the
+  records commit of the last bound session into the draft's body, and no later bind changes that line: a verifier or
+  a close-out that leaves the head unchanged binds the same SHA again at a snapshot of its own, so no choice among the
+  events (the first, the last, the last before the verifier) names the opening for every verifier, a second one and a
+  restart included. The edit therefore keeps the commit that the body it replaces links (`bodyRecords`, the inverse
+  of `PullBody`), provided that some session which bound the reviewed head in this attempt started at that commit. A
+  body with no such line, or a commit that no such session holds, is a Go error and nothing is edited: the call never
+  publishes a snapshot that it chose itself. **Reason:** the body is the one stable record of the snapshot of the
+  opening (a new record or event was not needed), and the check against the sessions of the head keeps a mistyped or
+  invented commit from being published. A person's edit that keeps the line is replaced whole; one that removes it is
+  refused. **Known limit** (ruled by the Operator, #413): a person's edit that names another genuine records commit of a
+  session that bound the same reviewed head, or that puts such a line before the opening one, is accepted and that commit
+  is published; it is still a real commit of a session of the head. A durable association (the snapshot written at the
+  registration of the pull request, in row 66g's code) is not built in M2e.
+- **The pull request is the attempt's.** `Task.PR` has no attempt, and a new attempt leaves it on the older
+  pull request until `OpenPullRequest` replaces it. The call reads the pull request of the branch
+  `task/<task>/<attempt>`, and edits only when it is found, its number is the register's `pr` and its head SHA
+  is the verifier's `base`: a newer attempt that exists while the register names the older pull request is a
+  Go error, and the older pull request is never edited. A pull request that is not `open` is a Go error naming
+  the state (what a closed one means is row 66k's).
+- **Read before write.** A body equal to the composed one is no edit (`false`, no call). Any other body is
+  replaced whole, also one that a person edited and that keeps the line of the records commit: the body is code's
+  artifact in the form that the target's checks read. **The lease** is read immediately before the edit, `*LostError` when it is not held, and a failed
+  read is an error; as for a post, a takeover between the read and the edit remains, and the edit is harmless
+  there, because both runs write the same bytes from the same records.
+- **The answer is read, never trusted.** The body that the forge gives back must be the composed one, else a
+  Go error. An edit that took effect and gave an error is repeated by no one: the next call reads the body,
+  finds it equal and makes no second edit.
+- **No record is written**, on a retry either: the body is a function of records that exist, so the edit
+  decides nothing (NFR-001).
 
 ### The attempts
 
@@ -2001,6 +2051,7 @@ the milestone covers it end to end.
 | `layup/rules`, the basic rule | unit | A change to a rule path fails; a rendered record equal to code's rendering passes; one that differs by a byte fails; the register is read at the base. |
 | `layup/verify` and the independence | unit | The authors of a plan review and of a verification from the ledger; no harness outside them is `failure` `not-active`; a waiting verifier is `pending`. |
 | The ready and merge rule (inventory, `later-gate-status`) | integration | With the stand-in forge, a pull request whose head has one context not `success`, no status, a status of another source, or an `error`, or a required job of GitHub Actions with no check run or a conclusion other than `success` (a ruleset that requires none, or a malformed required check, included), is not marked ready and does not merge; with the four `success` it is marked ready and merged at the head SHA, and a moved head is refused, its statuses are read again in the same call and no second merge is sent from the old read. |
+| The body of the pull request links the review record (row 66q, `T-08rj`) | unit; integration (the `httptest` forge, the real `git`) | After a review record is posted and its handoff recorded, one edit replaces the body with the composer's body and the link of the comment, from the records only: the latest handoff of the verifier must be valid (an earlier valid one after a later invalid one is refused), the snapshot is the producing session's when the verifier bound the same head with another, a newer attempt with the register on the older pull request edits nothing, an equal body, a lost lease, a closed pull request and a forge error edit nothing or give an error, an edit that took effect and gave an error is not repeated, and a second call after a close-out and a restart makes no second edit. |
 | The close-out commit and the rendered commit | integration | A close-out that changes only the task file and the completed log, on a parent that carries the verdict, is accepted and `layup/verify` is set on the new head; one that changes another file, or whose parent does not carry the verdict, is refused (`scope` or `verdict`, with the diff as a payload); an ordinary child of the verified head, a session of another task and a rendered commit above an unverified head do not carry; the rendered commit of the first bet gets the same carry-over, with no bound session and its pre-image pinned to the verified head, and the close-out after it is accepted. |
 | The steps after the Scaffold | integration | A restart resumes the `loop` step from the records and the forge: a comment, a pull request, a status or a merge that exists is not made again; a `push` with no result is bound when the branch holds its SHA and `refused` with `push-lost` when it does not; a task session's comment is on the task's issue; a merge whose `merged` event was lost passes `forge-check` with its detail (the tree check of task `T-xvvd`: a walk of the first parents through recorded and shown merges, and the setup head alone is no pass after the first merge) and `loop` records the event; `shape` with a decision that has no survivor is not "done before" and a restart stops there. |
 | The bet step is atomic to its last act | integration | A stop after the inventory version and before the row of `bets.tsv` resumes inside `bet`: the rendered commit and each `architecture` task are not made twice, and the row is written last; a decision whose chosen option names no requirement is refused. |

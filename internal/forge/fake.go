@@ -17,6 +17,7 @@ type Fake struct {
 	mu sync.Mutex
 
 	Fail        string            // the name of the call that gives a forge error
+	FailAfter   string            // the name of the call that takes effect and then gives a forge error (EditBody only)
 	Declared    []Capability      // nil declares the six
 	Permissions map[string]string // of the installation
 	Repo        Repository
@@ -175,7 +176,7 @@ func (f *Fake) OpenDraft(_ context.Context, head, base, title, body string) (Pul
 		return PullRequest{}, err
 	}
 	n := len(f.prs) + 1
-	pr := &fakePR{branch: head, PullRequest: PullRequest{Number: n, NodeID: fmt.Sprintf("PR_fake%d", n), State: "open", Draft: true, HeadSHA: f.heads[head]}}
+	pr := &fakePR{branch: head, PullRequest: PullRequest{Number: n, NodeID: fmt.Sprintf("PR_fake%d", n), State: "open", Draft: true, HeadSHA: f.heads[head], Body: body}}
 	f.prs = append(f.prs, pr)
 	return pr.PullRequest, nil
 }
@@ -269,6 +270,31 @@ func (f *Fake) Merge(_ context.Context, number int, sha string) (string, error) 
 	pr.Merged, pr.State = true, "closed"
 	pr.MergeSHA = fmt.Sprintf("%040x", 0xabc000+number)
 	return pr.MergeSHA, nil
+}
+
+// EditBody replaces the body of a pull request, also of a closed or merged one, as
+// the forge does: a caller that must refuse such an edit reads the state first. A
+// number below 1 is refused before Fail is read, as the adapter refuses it before any
+// request. FailAfter names the call that takes effect and then gives the forge error,
+// which is how a caller meets an edit whose answer was lost.
+func (f *Fake) EditBody(_ context.Context, number int, body string) (PullRequest, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if number < 1 {
+		return PullRequest{}, &Error{Call: "EditBody", Message: "the pull request number is not valid"}
+	}
+	if err := f.err("EditBody"); err != nil {
+		return PullRequest{}, err
+	}
+	pr := f.pr(number)
+	if pr == nil {
+		return PullRequest{}, &Error{Call: "EditBody", Status: 404, Message: "Not Found"}
+	}
+	pr.Body = body
+	if f.FailAfter == "EditBody" {
+		return PullRequest{}, &Error{Call: "EditBody", Status: 502, Message: "Bad Gateway"}
+	}
+	return pr.PullRequest, nil
 }
 
 // ClosePullRequest closes a pull request. A closed one stays closed, and a merged

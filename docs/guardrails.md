@@ -1179,6 +1179,19 @@ These traps are not domain-specific: they hurt every project's test suite.
   **The check:** name the one source (here the file `docs/facts/F-NNNN-numbered-facts.md` at the head, which row 66j
   produces), leave the field empty until it exists, and give the test a fixture where the wrong mapping resolves to a
   real fact. Learned in `T-cav3` (#412).
+- ❌ **A stand-in that keeps fewer fields than the interface gives cannot prove a body, and a SHA does not name one session.**
+  `Fake.OpenDraft` dropped the body it was given, so a test of an edit of the body could not read what the call changed. Also,
+  the verifier of an unchanged head binds the same SHA that the developer bound, at a later records snapshot, so "the session
+  bound at that SHA" is two sessions and the last is the wrong one; a fixture that reuses one snapshot hides it. It is silent
+  because the body assertion is green on a stand-in that keeps nothing, and the snapshot assertion is green when every session
+  shares one. **The check:** the stand-in keeps and gives each field the call changes (and an edit that takes effect and
+  gives an error), and a test binds one head by two sessions at two snapshots and asserts the producer's. Learned in
+  `T-08rj` (#413).
+- ❌ **A value read back from a forge body that a person can edit is not a stable association.** The edit of row 66q takes
+  the opening records commit from the body it replaces, and a hand edit that names another genuine commit of a session of
+  the head is accepted. It is silent because every test edits the body only to remove the line or to invent a commit.
+  **The check:** write the association where code owns it (the registration of the pull request), or state the limit; a
+  test that names a second genuine value. Ruled a known limit in `T-08rj` (#413).
 
 ### Reference-sweep pitfalls
 

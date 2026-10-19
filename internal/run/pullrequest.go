@@ -52,8 +52,24 @@ func checkTitle(typ, description string) error {
 // line, the line that links the records commit, and each further line, with no
 // final line feed. The edit that links the review record (row 66q) is one more line.
 func PullBody(issue int, web, repo, records string, more ...string) string {
-	lines := []string{"Closes #" + strconv.Itoa(issue), "", "The records commit this task started from: " + strings.TrimRight(web, "/") + "/" + repo + "/commit/" + records}
+	lines := []string{"Closes #" + strconv.Itoa(issue), "", recordsLine(web, repo) + records}
 	return strings.Join(append(lines, more...), "\n")
+}
+
+// recordsLine is the line of the body that links the records commit, up to the commit itself.
+func recordsLine(web, repo string) string {
+	return "The records commit this task started from: " + strings.TrimRight(web, "/") + "/" + repo + "/commit/"
+}
+
+// bodyRecords gives the records commit that a body links, the inverse of PullBody: the snapshot the draft was opened with, which
+// stays in the body of the pull request through later binds, a restart and the edit of row 66q. ok is false for a body with no such line.
+func bodyRecords(body, web, repo string) (commit string, ok bool) {
+	for _, l := range strings.Split(body, "\n") {
+		if c, found := strings.CutPrefix(l, recordsLine(web, repo)); found && c != "" && strings.Trim(c, "0123456789abcdef") == "" {
+			return c, true
+		}
+	}
+	return "", false
 }
 
 // withPR gives the register with the pr of the task set; the table given is not changed.
