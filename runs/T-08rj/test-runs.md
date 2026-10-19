@@ -248,7 +248,7 @@ exit=0
 end 2026-10-19T09:09:17Z
 ```
 
-## Green, the integration level on the merge head
+## Green, the integration level on the merge head (before round 2's fix; superseded for `internal/run` by the next section)
 
 Command: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 90m ./...` at the head `94934f9`
 (the merge of `origin/main` at `d9852d2`, row 66v, then the fix of finding 1 and the runs). No test failed, and none needed a repair for
@@ -279,4 +279,19 @@ ok  	github.com/pharzam/layup/internal/verify	57.885s
 ok  	github.com/pharzam/layup/internal/work	0.025s
 exit=0
 end 2026-10-19T08:42:40Z
+```
+
+## Green, the integration tests of the link and of the pull request after the fix of round 2
+
+The fix touches `reviewlink.go`, `pullrequest.go` (the line and `bodyRecords`; `lastBound` is as it was), their tests and `loop.md`
+only, so the full level above stands for the other packages and this run covers `internal/run`.
+
+Command: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -run 'Pull|Draft|ReviewRecord|TestTheLinkSurvives|TestAnEditRefused|Merge|OpenPullRequest' -timeout 90m ./internal/run/`
+at the head of commit `d7585ad` (output cut to its last five lines; `go test -count=1 ./...`, the unit level, printed only `ok` lines):
+
+```
+start 2026-10-19T09:27:32Z
+ok  	github.com/pharzam/layup/internal/run	104.885s
+exit=0
+end 2026-10-19T09:29:19Z
 ```
