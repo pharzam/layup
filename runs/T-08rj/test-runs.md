@@ -218,3 +218,36 @@ ok  	github.com/pharzam/layup/internal/run	20.368s
 exit=0
 end 2026-10-19T06:08:34Z
 ```
+
+## Green, the integration level on the head of Step B
+
+Command: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 90m ./...` at the head `adddebe`
+(the unit level, `go test ./...`, ran green in the pre-commit hook of each commit). A first run was stopped by hand after 90 seconds
+to trim a test file; this is the whole run on the final tests.
+
+```
+start 2026-10-19T06:31:11Z
+ok  	github.com/pharzam/layup/cmd/layup	5.924s
+ok  	github.com/pharzam/layup/internal/catalog	53.373s
+ok  	github.com/pharzam/layup/internal/cli	26.311s
+ok  	github.com/pharzam/layup/internal/forge	0.516s
+ok  	github.com/pharzam/layup/internal/forge/github	2.565s
+ok  	github.com/pharzam/layup/internal/gate	1.771s
+ok  	github.com/pharzam/layup/internal/git	7.970s
+ok  	github.com/pharzam/layup/internal/handoff	0.039s
+ok  	github.com/pharzam/layup/internal/ledger	0.020s
+ok  	github.com/pharzam/layup/internal/psb	0.069s
+ok  	github.com/pharzam/layup/internal/records	0.091s
+ok  	github.com/pharzam/layup/internal/route	0.029s
+ok  	github.com/pharzam/layup/internal/rules	11.609s
+ok  	github.com/pharzam/layup/internal/run	2106.566s
+ok  	github.com/pharzam/layup/internal/session	8.910s
+ok  	github.com/pharzam/layup/internal/setup	71.218s
+ok  	github.com/pharzam/layup/internal/spec	0.550s
+ok  	github.com/pharzam/layup/internal/standin	1.944s
+ok  	github.com/pharzam/layup/internal/tsv	0.032s
+ok  	github.com/pharzam/layup/internal/verify	95.232s
+ok  	github.com/pharzam/layup/internal/work	0.041s
+exit=0
+end 2026-10-19T07:07:16Z
+```
