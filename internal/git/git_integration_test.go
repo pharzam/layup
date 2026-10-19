@@ -972,3 +972,29 @@ func TestParentsAndTheWholeTree(t *testing.T) {
 		t.Errorf("Parents of a commit that is not there: no error")
 	}
 }
+
+// UpdateRef (task T-jy6f): the scratch branch of layup's own namespace is made at the commit and is moved by a second call;
+// a ref of the default branch is refused and the branch stays where it was.
+func TestUpdateRefSetsABranchOfLayupsNamespaceAndNoOther(t *testing.T) {
+	home := isolate(t)
+	dir := t.TempDir()
+	first := commitTree(t, dir, map[string]string{"a.txt": "a\n"})
+	write(t, dir, map[string]string{"a.txt": "b\n"})
+	must(t, Add(dir))
+	must(t, Commit(dir, "chore: two", who))
+	second, err := RevParse(dir, "HEAD")
+	must(t, err)
+	const ref = "refs/heads/layup/base/T-ab12/1"
+	for _, sha := range []string{first, second} {
+		must(t, UpdateRef(dir, ref, sha))
+		if got := strings.TrimSpace(gitOK(t, dir, plain(home), "rev-parse", ref)); got != sha {
+			t.Errorf("the ref holds %s; want %s", got, sha)
+		}
+	}
+	if err := UpdateRef(dir, "refs/heads/main", first); err == nil {
+		t.Error("UpdateRef of the default branch = nil; want a refusal")
+	}
+	if got := strings.TrimSpace(gitOK(t, dir, plain(home), "rev-parse", "main")); got != second {
+		t.Errorf("main holds %s; want it unmoved at %s", got, second)
+	}
+}

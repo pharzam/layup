@@ -3,20 +3,137 @@ package run
 // This file holds the opening of a Shape task (docs/spec/loop.md, The task register; task T-jy6f,
 // #415, row 66r of the plan of M2e).
 
-import "context"
+import (
+	"context"
+	"errors"
+	"fmt"
+	"strings"
+	"time"
+
+	"github.com/pharzam/layup/internal/records"
+)
+
+// shapeIssueBlocks is the body of the issue of each kind of Shape task: the blocks shape-issue-<kind> of
+// loop.md, with the placeholders {task}, {ids}, {sha} and {records}.
+var shapeIssueBlocks = map[string]string{
+	"specification": `LAYUP task {task}: the specification of the target.
+
+Requirement IDs: {ids}
+Pinned draft: spec/draft.tsv, SHA-256 {sha}, read at the records commit {records}.
+
+Definition of Done: docs/prd/ holds a row of the requirement table, an acceptance row and a matrix row for each requirement ID, with the MoSCoW and Phase cells empty; docs/spec/ holds a section for each requirement ID; docs/tasks/{task}.md is the task's file. The head passes the four layup/ statuses, and a verifier on a harness outside the authors finds nothing material in scope.
+`,
+	"architecture": `LAYUP task {task}: the target's architecture.
+
+Requirement IDs: {ids}
+Pinned draft: spec/draft.tsv, SHA-256 {sha}, read at the records commit {records}.
+
+Definition of Done: docs/spec/ and docs/adr/ hold each decision that has one survivor as decided, and a section "Decision pending the bet" for each decision that has more than one; docs/tasks/{task}.md is the task's file. The head passes the four layup/ statuses, and a verifier on a harness outside the authors finds nothing material in scope.
+`,
+}
+
+// shapeIssueTitles is the part of the title that follows "LAYUP task <ID>: ".
+var shapeIssueTitles = map[string]string{"specification": "the specification", "architecture": "the target's architecture"}
 
 // finalID gives the stable requirement ID of a row R-NNN of the draft by its kind: REQ-NNN for a
-// requirement, NFR-NNN for a non-functional row; a success criterion has none.
-func finalID(id, kind string) (string, bool) { return "", false }
+// requirement, NFR-NNN for a non-functional row, the same number; a success criterion has none.
+func finalID(id, kind string) (string, bool) {
+	n, ok := strings.CutPrefix(id, "R-")
+	switch {
+	case !ok:
+		return "", false
+	case kind == "requirement":
+		return "REQ-" + n, true
+	case kind == "non-functional":
+		return "NFR-" + n, true
+	}
+	return "", false
+}
 
 // finalIDs gives the IDs of every row of the draft that has one, in the order of the draft.
-func finalIDs(draft [][]string) []string { return nil }
+func finalIDs(draft [][]string) []string {
+	var out []string
+	for _, r := range draft {
+		if id, ok := finalID(r[0], r[1]); ok {
+			out = append(out, id)
+		}
+	}
+	return out
+}
 
 // shapeIssueTitle is the title of the issue of a Shape task.
-func shapeIssueTitle(id, kind string) string { return "" }
+func shapeIssueTitle(id, kind string) string {
+	return "LAYUP task " + id + ": " + shapeIssueTitles[kind]
+}
 
-// shapeIssueText is the body of the issue of a Shape task: the block of its kind in loop.md.
-func shapeIssueText(id, kind string, ids []string, sum, records string) string { return "" }
+// shapeIssueText is the body of the issue of a Shape task: the block of its kind in loop.md, filled.
+func shapeIssueText(id, kind string, ids []string, sum, records string) string {
+	return strings.NewReplacer("{task}", id, "{ids}", strings.Join(ids, " "), "{sha}", sum, "{records}", records).Replace(shapeIssueBlocks[kind])
+}
 
-// openShapeTask opens the Shape task of the kind once (loop.md, The opening of a Shape task).
-func (r *state) openShapeTask(ctx context.Context, kind string) (Task, error) { return Task{}, nil }
+// openShapeTask opens the Shape task of the kind once (loop.md, The opening of a Shape task): an
+// existing row of the kind is returned as it is; else the permissions, the draft and the commit that
+// will register the task are checked before the lease is read and the issue is opened.
+func (r *state) openShapeTask(ctx context.Context, kind string) (Task, error) {
+	var files [3][]byte
+	for i, p := range []string{tasksPath, transitionsPath, parametersPath} {
+		var err error
+		if files[i], err = r.store.ReadFile(ctx, p); err != nil {
+			return Task{}, err
+		}
+	}
+	tasks, transitions, parameters := files[0], files[1], files[2]
+	if tasks != nil {
+		register, err := ReadRegister(tasks)
+		if err != nil {
+			return Task{}, fmt.Errorf("%s: %w", tasksPath, err)
+		}
+		for _, t := range register {
+			if t.Kind == kind {
+				return t, nil
+			}
+		}
+	}
+	if s := r.loopPermissionsStep(); s.Result == "fail" {
+		return Task{}, errors.New(s.Detail)
+	}
+	const draftPath = "spec/draft.tsv"
+	draft, err := r.store.ReadFile(ctx, draftPath)
+	if err != nil {
+		return Task{}, err
+	}
+	if draft == nil {
+		return Task{}, fmt.Errorf("the records have no %s", draftPath)
+	}
+	rows, err := records.ReadDraft(draft)
+	if err != nil {
+		return Task{}, fmt.Errorf("%s: %w", draftPath, err)
+	}
+	ids := finalIDs(rows)
+	if len(ids) == 0 {
+		return Task{}, fmt.Errorf("%s has no row of kind requirement or non-functional", draftPath)
+	}
+	s := r.sessions()
+	id, err := s.taskID(ctx)
+	if err != nil {
+		return Task{}, err
+	}
+	t := Task{ID: id, Kind: kind, Requirements: ids, Opened: r.cfg.Clock.Now().UTC().Truncate(time.Second)}
+	// The commit that will register the task is built and refused here, with a placeholder for the issue,
+	// before the forge is written; registerTask builds it again with the issue.
+	dry := t
+	dry.Issue = 1
+	if _, err := registerFiles(tasks, transitions, dry); err != nil {
+		return Task{}, err
+	}
+	if _, err := parameterFiles(parameters, r.value, t.Opened); err != nil {
+		return Task{}, err
+	}
+	if err := s.holdsLease(ctx); err != nil {
+		return Task{}, err
+	}
+	if t.Issue, err = r.cfg.Forge.OpenIssue(ctx, shapeIssueTitle(id, kind), shapeIssueText(id, kind, ids, digest(draft), r.store.Base())); err != nil {
+		return Task{}, err
+	}
+	return t, r.registerTask(ctx, t)
+}

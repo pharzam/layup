@@ -102,3 +102,19 @@ func TestADrawnIDIsDrawnAgainWhileASessionHoldsIt(t *testing.T) {
 		t.Errorf("taskID = %q, %v; want T-1111, the second draw", id, err)
 	}
 }
+
+// loop.md, The opening of a Shape task: the draw avoids the register's tasks as well, so a probe or a phase session never takes
+// the ID of a task of the register.
+func TestADrawnIDIsDrawnAgainWhileTheRegisterHoldsIt(t *testing.T) {
+	store := storeWithSessions(t)
+	var reg strings.Builder
+	if err := WriteRegister(&reg, []Task{{ID: "T-0000", Issue: 4, Kind: "specification", Requirements: []string{"REQ-001"}, Opened: time0}}); err != nil {
+		t.Fatal(err)
+	}
+	store.files["tasks.tsv"] = []byte(reg.String())
+	s := newSessions(store)
+	s.random = drawFrom([4]byte{0, 0, 0, 0}, [4]byte{1, 1, 1, 1})
+	if id, err := s.taskID(context.Background()); err != nil || id != "T-1111" {
+		t.Errorf("taskID = %q, %v; want T-1111, the second draw", id, err)
+	}
+}

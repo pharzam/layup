@@ -388,3 +388,43 @@ func TestThePushAndTheBindInOrder(t *testing.T) {
 		t.Errorf("an error of the push: %v, the events %q; want the error and the event push alone", err, events(t, store, "T-ab12"))
 	}
 }
+
+// loop.md, The driver of a Shape task: a task session of a step that reads has no push.
+func TestAReadOnlyStepHasNoPush(t *testing.T) {
+	for _, step := range []string{"plan-of-a-task", "plan-review", "verification"} {
+		if !readOnlyStep(step) {
+			t.Errorf("readOnlyStep(%s) = false; want true", step)
+		}
+	}
+	for _, step := range []string{"specification", "shape-architecture", "implement", "close-out"} {
+		if readOnlyStep(step) {
+			t.Errorf("readOnlyStep(%s) = true; want false, a step that writes pushes", step)
+		}
+	}
+}
+
+// session.md, The start of a session: a prompt file built for another task or at another base is refused before
+// the sweep, so nothing is made or written.
+func TestATaskSessionRefusesAPromptFileOfAnotherTaskOrBase(t *testing.T) {
+	other := strings.Repeat("c", 40)
+	for _, c := range []struct {
+		name string
+		pc   *PromptContext
+		want string
+	}{
+		{"another task", &PromptContext{task: "T-cd34", base: aSHA}, "the prompt file is of the task T-cd34, the session's task is T-ab12"},
+		{"another base", &PromptContext{task: "T-ab12", base: other}, "the prompt file of T-ab12 was built at base " + other + ", the session's base is " + aSHA},
+	} {
+		var calls []string
+		store := withAttempt()
+		r, spec := task(store, &calls)
+		spec.Context = c.pc
+		_, err := r.TaskSession(context.Background(), spec)
+		if err == nil || err.Error() != c.want {
+			t.Errorf("%s: %v; want %q", c.name, err, c.want)
+		}
+		if len(calls) != 0 || len(store.commits) != 0 {
+			t.Errorf("%s: the calls %q and %d commits; want nothing swept, made or written", c.name, calls, len(store.commits))
+		}
+	}
+}

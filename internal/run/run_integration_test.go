@@ -52,6 +52,7 @@ type fakeGitHub struct {
 	reqs       []string                    // every request, "METHOD /path", in order (row 66g)
 	checkRuns  map[string][]map[string]any // the latest check runs of each SHA (row 66g)
 	pulls      pullRoutes                  // the pull requests (row 66g)
+	issueTexts [][2]string                 // the title and the body of each issue opened (task T-jy6f)
 }
 
 func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
@@ -110,6 +111,9 @@ func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, `{"message":"Server Error"}`, 500)
 			return
 		}
+		var in struct{ Title, Body string }
+		json.NewDecoder(r.Body).Decode(&in)
+		f.issueTexts = append(f.issueTexts, [2]string{in.Title, in.Body})
 		f.issues++
 		w.WriteHeader(201)
 		json.NewEncoder(w).Encode(map[string]any{"number": f.issues})

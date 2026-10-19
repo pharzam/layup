@@ -176,19 +176,29 @@ func drawTaskID(random func([]byte) (int, error), taken func(string) bool) (stri
 	}
 }
 
-// taskID draws the ID of a probe, of a session of a phase or of a Shape task, again until
-// no row of sessions.tsv holds it as a task.
+// taskID draws the ID of a probe, of a session of a phase or of a Shape task, again until no
+// row of sessions.tsv and no row of tasks.tsv holds it, so a probe never takes a task's ID.
 func (s *Sessions) taskID(ctx context.Context) (string, error) {
 	rows, err := s.readTable(ctx, "sessions.tsv", records.ReadSessions)
 	if err != nil {
 		return "", err
+	}
+	register, err := s.Store.ReadFile(ctx, tasksPath)
+	if err != nil {
+		return "", err
+	}
+	var tasks []Task
+	if register != nil {
+		if tasks, err = ReadRegister(register); err != nil {
+			return "", fmt.Errorf("%s: %w", tasksPath, err)
+		}
 	}
 	random := s.random
 	if random == nil {
 		random = rand.Read
 	}
 	return drawTaskID(random, func(id string) bool {
-		return slices.ContainsFunc(rows, func(r []string) bool { return r[sessionTask] == id })
+		return slices.ContainsFunc(rows, func(r []string) bool { return r[sessionTask] == id }) || slices.ContainsFunc(tasks, func(t Task) bool { return t.ID == id })
 	})
 }
 

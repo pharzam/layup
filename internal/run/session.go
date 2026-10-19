@@ -218,6 +218,16 @@ func (s *Sessions) commit(ctx context.Context, files map[string][]byte, message 
 // a lost lease among them, removes the directory too.
 func (s *Sessions) TaskSession(ctx context.Context, spec TaskSpec) (string, error) {
 	s.fns()
+	// The prompt file was built for a task and a base: a session of another task or at another base is refused
+	// before the sweep, so nothing is made or written (loop.md, The session base).
+	if c := spec.Context; c != nil {
+		if c.task != spec.Task {
+			return "", fmt.Errorf("the prompt file is of the task %s, the session's task is %s", c.task, spec.Task)
+		}
+		if c.base != spec.Base {
+			return "", fmt.Errorf("the prompt file of %s was built at base %s, the session's base is %s", c.task, c.base, spec.Base)
+		}
+	}
 	if spec.probe == nil || spec.probe.sweep {
 		if err := s.sweep(s.Host, s.Target); err != nil {
 			return "", err
@@ -329,6 +339,9 @@ func (s *Sessions) TaskSession(ctx context.Context, spec TaskSpec) (string, erro
 	steps.Push = func(id string, r session.Run) error { return s.pushTask(ctx, id) }
 	if spec.Push != nil {
 		steps.Push = func(id string, r session.Run) error { return spec.Push(id, d, r) }
+	}
+	if spec.Context != nil && spec.Push == nil && readOnlyStep(spec.Context.step) { // a step that reads has no push, and no head to bind
+		steps.Push = nil
 	}
 	if spec.probe != nil || spec.phase != nil { // a probe and a session of a phase have no attempt and no push
 		steps.Attempt, steps.Push = nil, nil
