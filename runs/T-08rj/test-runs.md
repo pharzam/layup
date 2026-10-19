@@ -122,67 +122,31 @@ Command: `go test -count=1 -run '<the 13 tests>' ./internal/run/`
 
 ```
 start 2026-10-19T06:06:35Z
---- FAIL: TestTheBodyWithAReviewRecordEndsInTheLinkOfItsComment (0.00s)
-    reviewlink_test.go:181: the body = "Closes #3\n\nThe records commit this task started from: https://github.example/acme/target/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\n"; want "Closes #3\n\nThe records commit this ta...
-    reviewlink_test.go:184: reviewLine with a web address that ends in a slash = ""
---- FAIL: TestTheBodyIsEditedOnceToLinkTheReviewRecord (0.00s)
+--- FAIL: TestTheBodyWithAReviewRecordEndsInTheLinkOfItsComment
+    reviewlink_test.go:181: the body = "Closes #3\n\nThe records commit this task started from: https://github.example/acme/target/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\n"; want "Closes #3\n\n   [+1 more failing lines]
+--- FAIL: TestTheBodyIsEditedOnceToLinkTheReviewRecord
     reviewlink_test.go:193: LinkReviewRecord = false, <nil>; want true, nil
---- FAIL: TestAnEqualBodyIsNotEdited (0.00s)
+--- FAIL: TestAnEqualBodyIsNotEdited
     reviewlink_test.go:215: LinkReviewRecord = false, <nil> with the calls []; want false, nil and one PullRequest
---- FAIL: TestTheRecordsLinkIsTheProducingSessionsNotTheCloseOutsNorTheVerifiers (0.00s)
+--- FAIL: TestTheRecordsLinkIsTheProducingSessionsNotTheCloseOutsNorTheVerifiers
     reviewlink_test.go:242: after a person's edit: false, <nil>, body "a person's text"; want the whole body replaced
---- FAIL: TestEachRecordThatFailsRefusesTheLinkBeforeAnyCall (0.01s)
-    reviewlink_test.go:313: the session is of another task: err = <nil>; want one that says "not of T-ab12"
-    reviewlink_test.go:320: the session is of another task: the control with the one token repaired = false, <nil>; want true, nil
-    reviewlink_test.go:313: the session is a developer's: err = <nil>; want one that says "not of the verification"
-    reviewlink_test.go:320: the session is a developer's: the control with the one token repaired = false, <nil>; want true, nil
-    reviewlink_test.go:313: a newer attempt exists: err = <nil>; want one that says "newest attempt"
-    reviewlink_test.go:320: a newer attempt exists: the control with the one token repaired = false, <nil>; want true, nil
-    reviewlink_test.go:313: the session has no handoff: err = <nil>; want one that says "has no handoff"
-    reviewlink_test.go:320: the session has no handoff: the control with the one token repaired = false, <nil>; want true, nil
-    reviewlink_test.go:313: the latest handoff is invalid after an earlier valid one: err = <nil>; want one that says "latest handoff"
-    reviewlink_test.go:320: the latest handoff is invalid after an earlier valid one: the control with the one token repaired = false, <nil>; want true, nil
-    reviewlink_test.go:313: the latest handoff names no comment: err = <nil>; want one that says "latest handoff"
-    reviewlink_test.go:320: the latest handoff names no comment: the control with the one token repaired = false, <nil>; want true, nil
-    reviewlink_test.go:313: the copy is not in copies.tsv: err = <nil>; want one that says "no copy of the comment"
-    reviewlink_test.go:320: the copy is not in copies.tsv: the control with the one token repaired = false, <nil>; want true, nil
-    reviewlink_test.go:313: the copy is of another issue: err = <nil>; want one that says "no copy of the comment"
-    reviewlink_test.go:320: the copy is of another issue: the control with the one token repaired = false, <nil>; want true, nil
-    reviewlink_test.go:313: the copy is a plan review: err = <nil>; want one that says "not a review record"
-    reviewlink_test.go:320: the copy is a plan review: the control with the one token repaired = false, <nil>; want true, nil
-    reviewlink_test.go:313: the record is of another head: err = <nil>; want one that says "is of the head"
-    reviewlink_test.go:320: the record is of another head: the control with the one token repaired = false, <nil>; want true, nil
-    reviewlink_test.go:313: the register names no pull request: err = <nil>; want one that says "no pull request in the register"
-    reviewlink_test.go:320: the register names no pull request: the control with the one token repaired = false, <nil>; want true, nil
-    reviewlink_test.go:313: no session bound the reviewed head: err = <nil>; want one that says "no event bound at the head"
-    reviewlink_test.go:320: no session bound the reviewed head: the control with the one token repaired = false, <nil>; want true, nil
---- FAIL: TestALostLeaseEditsNothing (0.00s)
+--- FAIL: TestEachRecordThatFailsRefusesTheLinkBeforeAnyCall
+    reviewlink_test.go:313: the session is of another task: err = <nil>; want one that says "not of T-ab12"   [+23 more failing lines]
+--- FAIL: TestALostLeaseEditsNothing
     reviewlink_test.go:332: LinkReviewRecord = false, <nil> with the calls []; want *LostError and no EditBody
---- FAIL: TestAClosedOrMergedPullRequestIsNotEdited (0.00s)
-    reviewlink_test.go:343: a closed pull request: err = <nil>; want one that says "is closed"
-    reviewlink_test.go:353: a merged pull request: err = <nil>; want one that says "is closed"
---- FAIL: TestAFailedEditIsAnErrorAndAnEditThatTookEffectIsNotRepeated (0.00s)
-    reviewlink_test.go:365: a failed edit: err = <nil>; want one that says "EditBody: status 502"
-    reviewlink_test.go:371: the next call = false, <nil> with the calls []; want one edit
-    reviewlink_test.go:377: an edit that took effect: err = <nil>; want one that says "EditBody: status 502"
-    reviewlink_test.go:379: an edit that took effect: edited false, body "Closes #3\n\nThe records commit this task started from: https://github.example/acme/target/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"; want the body e...
---- FAIL: TestAFailedReadOfThePullRequestEditsNothing (0.00s)
+--- FAIL: TestAClosedOrMergedPullRequestIsNotEdited
+    reviewlink_test.go:343: a closed pull request: err = <nil>; want one that says "is closed"   [+1 more failing lines]
+--- FAIL: TestAFailedEditIsAnErrorAndAnEditThatTookEffectIsNotRepeated
+    reviewlink_test.go:365: a failed edit: err = <nil>; want one that says "EditBody: status 502"   [+3 more failing lines]
+--- FAIL: TestAFailedReadOfThePullRequestEditsNothing
     reviewlink_test.go:392: a failed read: err = <nil>; want one that says "PullRequest: status 502"
---- FAIL: TestAFailedStoreReadIsAnErrorWithNoForgeCall (0.00s)
-    reviewlink_test.go:405: a failed read of tasks.tsv: false, <nil> with the calls []; want the store's error and no call
-    reviewlink_test.go:405: a failed read of sessions.tsv: false, <nil> with the calls []; want the store's error and no call
-    reviewlink_test.go:405: a failed read of tasks/T-ab12/events.tsv: false, <nil> with the calls []; want the store's error and no call
-    reviewlink_test.go:405: a failed read of copies.tsv: false, <nil> with the calls []; want the store's error and no call
-    reviewlink_test.go:405: a failed read of copies/601-1.md: false, <nil> with the calls []; want the store's error and no call
-    reviewlink_test.go:411: a failed read of the lease: false, <nil> with the calls []; want the store's error and no edit
-    reviewlink_test.go:416: a copy whose file is missing: err <nil>, calls []; want an error and no call
---- FAIL: TestAnAnswerWithAnotherBodyIsAnError (0.00s)
+--- FAIL: TestAFailedStoreReadIsAnErrorWithNoForgeCall
+    reviewlink_test.go:405: a failed read of tasks.tsv: false, <nil> with the calls []; want the store's error and no call   [+6 more failing lines]
+--- FAIL: TestAnAnswerWithAnotherBodyIsAnError
     reviewlink_test.go:425: another body: err = <nil>; want one that says "gave another body"
---- FAIL: TestANewerAttemptWithTheRegisterOnTheOlderPullRequestEditsNothing (0.00s)
-    reviewlink_test.go:457: no pull request of the branch: err = <nil>; want one that says "no pull request"
-    reviewlink_test.go:468: the register names the older pull request: err = <nil>; want one that says "not the register's"
-    reviewlink_test.go:476: with the register on 2: false, <nil>; want true, nil
---- FAIL: TestAPullRequestWhoseHeadMovedIsNotEdited (0.00s)
+--- FAIL: TestANewerAttemptWithTheRegisterOnTheOlderPullRequestEditsNothing
+    reviewlink_test.go:457: no pull request of the branch: err = <nil>; want one that says "no pull request"   [+2 more failing lines]
+--- FAIL: TestAPullRequestWhoseHeadMovedIsNotEdited
     reviewlink_test.go:491: a moved head: err = <nil>; want one that says "not the reviewed"
 FAIL
 FAIL	github.com/pharzam/layup/internal/run	0.107s
@@ -191,8 +155,8 @@ exit=1
 end 2026-10-19T06:06:50Z
 ```
 
-All 13 tests fail at the stub, each on the assertion of the behavior it names (`edited = false; want true`, `err = nil; want ...`,
-and for the rows of U5 both the refusal and its one-token control). U3 and the control rows pass nothing at the stub.
+All 13 tests fail at the stub on the assertion of the behavior they name; only the first failing line of each is kept here
+(U5 holds one refusal and one control line for each of its 11 rows).
 
 ## Red, the integration tests (I1 to I3)
 
@@ -223,8 +187,6 @@ Command: `go test -count=1 -v -run '<the 13 tests>' ./internal/run/` (the patter
 
 ```
 start 2026-10-19T06:07:50Z
---- PASS: TestALostLeaseStopsTheComment (0.00s)
---- PASS: TestALostLeaseOpensMarksAndMergesNothing (0.00s)
 --- PASS: TestTheBodyWithAReviewRecordEndsInTheLinkOfItsComment (0.00s)
 --- PASS: TestTheBodyIsEditedOnceToLinkTheReviewRecord (0.00s)
 --- PASS: TestAnEqualBodyIsNotEdited (0.00s)
@@ -238,8 +200,6 @@ start 2026-10-19T06:07:50Z
 --- PASS: TestAnAnswerWithAnotherBodyIsAnError (0.00s)
 --- PASS: TestANewerAttemptWithTheRegisterOnTheOlderPullRequestEditsNothing (0.00s)
 --- PASS: TestAPullRequestWhoseHeadMovedIsNotEdited (0.00s)
---- PASS: TestALostLeaseStopsTheStart (0.00s)
---- PASS: TestALostLeasePostsNoStatus (0.00s)
 PASS
 ok  	github.com/pharzam/layup/internal/run	0.128s
 exit=0

@@ -243,32 +243,24 @@ func TestTheRecordsLinkIsTheProducingSessionsNotTheCloseOutsNorTheVerifiers(t *t
 	}
 }
 
+// A linkRefusal breaks one token of the world; fix repairs it, and the call then edits.
 type linkRefusal struct {
-	name string
-	// brk makes the one fault; fix repairs that one token and the call then edits.
+	name     string
 	brk, fix func(w *linkWorld)
 	want     string
 }
 
-// U5. Each linkRefusal of the records is a Go error before any forge call, and its one-token control passes.
+// U5. Each refusal of the records is a Go error before any forge call, and its one-token control passes.
 func TestEachRecordThatFailsRefusesTheLinkBeforeAnyCall(t *testing.T) {
-	sessionCol := func(w *linkWorld, col int, v string) func() {
-		old := w.sessions[1][col]
-		w.sessions[1][col] = v
-		return func() { w.sessions[1][col] = old }
-	}
-	var restore func()
-	setCol := func(col int, v string) (func(w *linkWorld), func(w *linkWorld)) {
-		return func(w *linkWorld) { restore = sessionCol(w, col, v) }, func(w *linkWorld) { restore() }
-	}
 	var rows []linkRefusal
 	add := func(name, want string, brk, fix func(w *linkWorld)) {
 		rows = append(rows, linkRefusal{name, brk, fix, want})
 	}
-	b, f := setCol(sessionTask, "T-zz99")
-	add("the session is of another task", "not of T-ab12", b, f)
-	b, f = setCol(sessionRole, roleOfStep("implement"))
-	add("the session is a developer's", "not of the verification", b, f)
+	add("the session is of another task", "not of T-ab12",
+		func(w *linkWorld) { w.sessions[1][sessionTask] = "T-zz99" }, func(w *linkWorld) { w.sessions[1][sessionTask] = "T-ab12" })
+	add("the session is a developer's", "not of the verification",
+		func(w *linkWorld) { w.sessions[1][sessionRole] = roleOfStep("implement") },
+		func(w *linkWorld) { w.sessions[1][sessionRole] = roleOfStep("verification") })
 	add("a newer attempt exists", "newest attempt",
 		func(w *linkWorld) {
 			w.events = append(w.events, []string{"7", "attempt", "2", "", head1, "", "", "2026-10-18T10:30:00Z"})
