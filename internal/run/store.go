@@ -189,6 +189,19 @@ func (s *recordsStore) PushHead(ctx context.Context, sha, branch string) error {
 	return nil
 }
 
+// BranchHead gives the commit that branch of the target holds, found false for a
+// branch it does not have: the same lock and the same token as PushHead (task
+// T-syxm, packages.md, The calls of M2e).
+func (s *recordsStore) BranchHead(ctx context.Context, branch string) (string, bool, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	a, err := s.auth(ctx)
+	if err != nil {
+		return "", false, err
+	}
+	return git.RemoteHead(s.url, branch, a)
+}
+
 // Commit makes a records commit of files on the base and pushes it.
 func (s *recordsStore) Commit(ctx context.Context, files map[string][]byte, message string) error {
 	return s.commit(ctx, files, message, "")

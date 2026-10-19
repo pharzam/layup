@@ -6,6 +6,7 @@ import (
 	"context"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/pharzam/layup/internal/session"
 	"github.com/pharzam/layup/internal/spec"
@@ -171,6 +172,15 @@ func TestACloseOutOnAParentThatDoesNotCarryTheVerdictIsRefusedAsVerdict(t *testi
 // A session of another task is a fault of the caller: an error, nothing written, nothing pushed.
 func TestAVerifierOfAnotherTaskIsAnErrorAndNothingIsPushed(t *testing.T) {
 	s := newShip(t)
+	// The other task is registered: a task session posts its summary to the issue of its task (row 66v).
+	files, err := registerFiles(mustRead(t, s.r, "tasks.tsv"), nil, Task{ID: "T-cd34", Issue: 9, Kind: "build", Requirements: []string{"REQ-005"}, Size: "small", Opened: time.Now().UTC().Truncate(time.Second)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	delete(files, "transitions.tsv")
+	if err := s.r.commit(context.Background(), files, "tasks: register T-cd34"); err != nil {
+		t.Fatal(err)
+	}
 	if _, err := s.r.StartAttempt(context.Background(), "T-cd34", s.a.base); err != nil {
 		t.Fatal(err)
 	}
