@@ -403,3 +403,16 @@ command on the restored file, exit 0; the files were restored by hash). The firs
 that test has no gate failure; the row above is SM18 with the combined case, and it is **killed**. SM29 drops the branch on the probe, SM30 settles nothing
 before the next attempt and SM31 runs a plan or plan review again after it ended. The result of S7 is therefore 29 of 31 runs killed (SM1 to SM18, SM20 to
 SM31 and SM19a not a run); only **SM19b** is not killed, with the reason given in the S7 table.
+
+### Round 1 - the full integration level on the final head
+
+Command: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 90m ./...`, on the head `2d2fd3b` (the code and
+tests of the fix cycle; only this record follows). The unit level, the e2e level, `go vet` (both forms), `gofmt -l` and the lints were run on it too, all exit 0.
+
+```
+start 2026-10-19T12:43:57Z
+ok  	github.com/pharzam/layup/internal/git	6.258s
+ok  	github.com/pharzam/layup/internal/run	1600.540s
+exit=0
+end 2026-10-19T13:11:18Z
+```
