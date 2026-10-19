@@ -36,7 +36,10 @@ ADR-0007, recorded, not budgeted. Tokens as the harness reported them.
 | --- | --- | --- | --- | --- | --- |
 | Plan | reasoning | Claude Opus 5.5 | not recorded | not kept | not kept (posted 2026-10-18T12:57:03Z) |
 | Plan review | reasoning | GPT-6.1 Sol | xhigh | 183,423 | 2026-10-18T12:57:12Z to 13:04:43Z |
-| Code, three fix cycles and the end 3 fix | execution | Claude Sonnet 5.5 | not recorded | not reported by the harness | 2026-10-19T10:12Z (first commit) to about 15:30Z |
+| Implementation | execution | Claude Sonnet 5.5 | not recorded | 548,904 | 120 min |
+| Fix of round 1 | execution | Claude Sonnet 5.5 | not recorded | 584,219 | 45 min |
+| Fix of round 2 | execution | Claude Sonnet 5.5 | not recorded | 604,503 | 40 min |
+| Fix of end 3 and close-out | execution | Claude Sonnet 5.5 | not recorded | 639,055 | 42 min |
 | Review round 1 | reasoning | GPT-6.1 Sol | xhigh | 265,594 | 2026-10-19T12:15:56Z to 12:26:51Z |
 | Review round 2 | reasoning | GPT-6.1 Sol | xhigh | 224,559 | 13:13:07Z to 13:24:38Z |
 | Review round 3 | reasoning | GPT-6.1 Sol | xhigh | 224,455 | 14:35:49Z to 14:43:24Z |
