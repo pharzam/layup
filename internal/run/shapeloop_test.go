@@ -219,3 +219,17 @@ func TestTheFindingsOfTheNextAttemptAreTheLastRoundsOrTheGatesTable(t *testing.T
 		t.Errorf("findingsOf for attempt 3 = %+v, %q; want no finding of the older record and the gate head %s", found, head, shG)
 	}
 }
+
+// loop.md, The driver of a Shape task: only the developer's session is ever bound; a bound of a session of another role stops the step,
+// and the same ledger without it is the verified head.
+func TestABoundOfASessionOutsideTheDeveloperRoleStopsTheStep(t *testing.T) {
+	if got := upTo("specification", 15).at(); got.Pos != posVerified {
+		t.Fatalf("the control: %+v; want the verified head", got)
+	}
+	for _, c := range []struct{ name, session string }{{"the verifier", "S-v1"}, {"the plan", "S-p1"}, {"the plan review", "S-r1"}} {
+		b := upTo("specification", 15).ev("push", "1", c.session, "", shH, "task/T-sp01/1").ev("bound", "1", c.session, "", shH, "task/T-sp01/1")
+		if got := b.at(); got.Pos != posStop || !strings.Contains(got.Msg, c.session+" has a bound and is not of the developer role") {
+			t.Errorf("a bound of %s: %+v; want the stop that names %s", c.name, got, c.session)
+		}
+	}
+}

@@ -263,6 +263,12 @@ func loopPosition(v loopView) loopStep {
 	}
 	step := loopStep{Attempt: attempt, Base: base}
 	stop := func(msg string) loopStep { step.Pos, step.Msg = posStop, msg; return step }
+	// Only the developer's session is ever bound (a session that reads has no push): a bound of any other stops the step.
+	for _, e := range v.Events {
+		if e[1] == "bound" && v.role(e[3]) != stepRole(devStep(v.Kind)) {
+			return stop(fmt.Sprintf("%s: the session %s has a bound and is not of the developer role", v.Task, e[3]))
+		}
+	}
 	// A start that was refused has an event refused and no start row: no stage would ever see it.
 	since := 0
 	for i, e := range v.Events {
