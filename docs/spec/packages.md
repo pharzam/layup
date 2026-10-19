@@ -256,7 +256,7 @@ of `M2a`, `M2b`, `M2c` and `M2e`; the build task that made `internal/handoff` (t
   part stays `M2f`'s.
 - `internal/run`: the task loop: the register and the transition table, the
   handoff and its events, the attempts, the statuses, the ready and merge rule, the
-  close-out check and the merge at the head SHA, Shape and the bet, the parameter
+  close-out check and the merge at the head SHA (task `T-xvvd`, #363, row 66g; it exports `setup.ActionsApp`, the one home of the ID of GitHub Actions, from `internal/setup`), Shape and the bet, the parameter
   change and the Retrospective step, the instructions of the task steps and their
   inputs ([`loop.md`](loop.md#the-instruction-of-a-task-step)), and the Go schemas of `tasks`,
   `task-gates`, `task-tests`, `bets`, `parameters` and `retrospectives` (`internal/handoff` owns that of

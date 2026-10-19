@@ -22,6 +22,7 @@ type standinStore struct {
 	holder  string   // the run that the lease names
 	ops     []string // each commit (by its events' last kind) and each push of a head, in order
 	pushErr error    // what PushHead gives
+	failure error    // what Commit gives while it is set, a failure that Fenced does not retry (row 66g)
 }
 
 func (s *standinStore) ReadLease(context.Context) (LeaseRow, error) {
@@ -32,6 +33,9 @@ func (s *standinStore) ReadFile(_ context.Context, path string) ([]byte, error) 
 	return s.files[path], nil
 }
 func (s *standinStore) Commit(_ context.Context, files map[string][]byte, _ string) error {
+	if s.failure != nil {
+		return s.failure
+	}
 	if s.refuse > 0 {
 		s.refuse--
 		return ErrRefused
