@@ -522,14 +522,16 @@ func (s *Sessions) startSession(ctx context.Context, in ShapeTaskInput, kind, st
 	if err != nil {
 		return err
 	}
-	ts := TaskSpec{Task: in.Task, Attempt: attempt, Role: stepRole(step), Base: base, Records: rec, Pair: p, Context: pc,
-		Admit: s.Admit(ctx, ProbeSpec{Harness: pair, Models: in.Models, Base: base, Records: rec})}
+	branch := ""
 	if scratch {
-		ts.Branch = fmt.Sprintf("layup/base/%s/%d", in.Task, attempt)
-		if err := git.UpdateRef(s.Clone, "refs/heads/"+ts.Branch, base); err != nil {
+		branch = fmt.Sprintf("layup/base/%s/%d", in.Task, attempt)
+		if err := git.UpdateRef(s.Clone, "refs/heads/"+branch, base); err != nil {
 			return err
 		}
 	}
+	// The admission may run a probe at the same base, so it clones the same branch.
+	ts := TaskSpec{Task: in.Task, Attempt: attempt, Role: stepRole(step), Base: base, Branch: branch, Records: rec, Pair: p, Context: pc,
+		Admit: s.Admit(ctx, ProbeSpec{Harness: pair, Models: in.Models, Base: base, Records: rec, Branch: branch})}
 	_, err = s.TaskSession(ctx, ts)
 	return err
 }

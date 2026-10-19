@@ -155,6 +155,7 @@ type ProbeSpec struct {
 	Base    string
 	Records string
 	Sweep   bool
+	Branch  string // the branch of the run's clone that the probe's session clones, "" for the default one (task T-jy6f)
 }
 
 // drawTaskID draws a task ID, T- and four random characters, again until taken
@@ -221,7 +222,7 @@ func (s *Sessions) Probe(ctx context.Context, p ProbeSpec) (string, error) {
 	}
 	token := hex.EncodeToString(tok)
 	pair := pairOf(p.Harness, model)
-	spec := TaskSpec{Task: task, Attempt: 1, Role: "probe", Base: p.Base, Records: p.Records, Pair: pair,
+	spec := TaskSpec{Task: task, Attempt: 1, Role: "probe", Base: p.Base, Branch: p.Branch, Records: p.Records, Pair: pair,
 		probe: &probeOf{token: token, models: p.Models, sweep: p.Sweep}}
 	spec.Admit = func(version string) error {
 		rows, err := s.readTable(ctx, "harnesses.tsv", records.ReadHarnesses)
