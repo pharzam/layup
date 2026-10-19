@@ -185,3 +185,14 @@ its only green full run is at ac05f6a (above), and the merge head's failures are
 In a `git clone` of the worktree at bf6d7ac (the code of the final head; bbe2689 adds documents only): `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags integration -timeout 90m ./...`,
 2026-10-19T05:49:22Z to 06:21:42Z, **exit 0**, every package `ok` (`internal/run` 1832.049 s, `internal/setup` 68.557 s, `internal/verify` 71.237 s). Neither load flake of the merge head failed in this run.
 Also exit 0 at bbe2689: `go build ./...`, `go vet ./...`, `go vet -tags=integration ./...`, `gofmt -l .` (no output), `go test ./...`, the five text lints, `nested-checkout-check`, `setup-check`, `git diff --check origin/main HEAD`.
+
+## The full integration level at the merge of `main` (4a2119d), one failure from the merge
+
+In a `git clone` of the worktree at 4a2119d (the merge of `origin/main` at c735788, row 66g): `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags integration -timeout 90m ./...`, 2026-10-19T06:29:25Z to 07:07:54Z, **exit 1**. Every package `ok` but `internal/run` (2210.763 s), with one failure:
+
+- `TestAVerifierOfAnotherTaskIsAnErrorAndNothingIsPushed` (6.43 s): `ship_integration_test.go:181: the session of another task: tasks.tsv has no row of T-cd34`. The test came from row 66g, which opens a task session of `T-cd34` with no row in the register. This branch posts a task session's summary to the issue of its task (`taskIssue`, `internal/run/handoffpost.go:93`), so an unregistered task is refused, as the plan of this task says. Not a load flake: the merge put the two together.
+
+The fix is in the test alone: it registers `T-cd34` (issue 9) before the attempt, the way `TestARestartRepairsAShapePushBeforeAnyBet` registers its task. The test asks the same thing as before (a verifier of another task is an error and nothing is pushed).
+
+After the fix, all nine tests of `ship_integration_test.go`, by name: `go test -count=1 -tags integration -run '^(…the nine names…)$' -v ./internal/run/`, 2026-10-19T07:11:36Z to 07:13:19Z, exit 0, 9 `--- PASS`, `ok github.com/pharzam/layup/internal/run`. `go vet -tags integration ./internal/run/` and `gofmt -l` are clean. The rest of the level passed at 4a2119d above, and the fix changes no other file.
+
