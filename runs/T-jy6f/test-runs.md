@@ -474,3 +474,16 @@ end 2026-10-19T13:55:47Z
 **The count, recounted.** The mutants of S7 are SM1 to SM28 and SM19 (a first form that did not build, SM19a, and a second, SM19b), SM29 to SM31 and SM33.
 Killed: SM1 to SM17 and SM20 to SM28 (26) in the first sweep, SM18 (with the combined case), SM29, SM30, SM31 and SM33 (5): **31 killed**. Not killed:
 **SM19b** alone, equivalent on the paths this driver produces (S7). SM19a did not build and is not a run. (SM32 was a duplicate of SM26 and was never run.)
+
+### Round 2 - the full integration level on the final code head
+
+Command: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 90m ./...`, on the code head `e3b11b2` (only this record
+and the record of the mutants follow it). The unit level, the e2e level, `go vet` (both forms), `gofmt -l` and the lints were run on it too, all exit 0.
+
+```
+start 2026-10-19T14:06:34Z
+ok  	github.com/pharzam/layup/internal/git	6.953s
+ok  	github.com/pharzam/layup/internal/run	1600.286s
+exit=0
+end 2026-10-19T14:33:53Z
+```
