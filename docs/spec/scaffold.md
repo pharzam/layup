@@ -820,7 +820,7 @@ correction of "are then done before", which the rules of
 [`intake.md`](intake.md#the-steps-of-intake) contradict): `follow-up` says
 "nothing to ask again; Intake is done" and `follow-up-answers` "no follow-up;
 Intake is done". The progress of a restart with Start done counts 22 steps in
-both chains, after the `1/6 forge` and `2/6 clone` of a restart with Start not
+both chains before the Scaffold is done, and 23 once it is (the row `shape`, task `T-3f94`), after the `1/6 forge` and `2/6 clone` of a restart with Start not
 done: `5/22 forge-check` at a later start and `22/22 forge-check` at the first
 start.
 
@@ -917,7 +917,7 @@ before" when `setup/record.tsv` exists, and `forge-check` at a later start
 lease and exits 0. When `forge-check` at the tail is done, the run releases the
 lease and exits 0; at a later start the check is not the last row, and the run goes
 on through the steps that are done before and releases the lease after its last row
-([At each later start](#at-each-later-start)). The next phase is Shape (`M2e`).
+([At each later start](#at-each-later-start)). The next phase is Shape (`M2e`): once the Scaffold is done, the row `shape` follows `scaffold-push` (task `T-3f94`), and the restart then plans 23 steps.
 
 The block `run-steps` is built: each build task that adds a step adds its name
 to the enum, with its Go schema, and the step to the restart's order, in one
