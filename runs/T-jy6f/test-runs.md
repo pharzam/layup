@@ -249,3 +249,38 @@ has no PRD, holds none: its `layup/spec` is a failure and the driver stops (`<ta
 The two Shape tasks start from the same base, so the architecture task cannot see the specification task's PRD. The tests give the
 target a PRD and a section in its first tree. This is reported on #415 for the plan of rows 66h and 66k; it is off the path of this
 row's Definition of Done.
+
+## S9 - the full integration level
+
+Command (both runs): `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 90m ./...`
+
+**Run 1**, on the head `2b19ae7` plus the record of the mutants. One failure, in an existing test whose premise this task changes:
+
+```
+start 2026-10-19T11:17:46Z
+ok  	github.com/pharzam/layup/internal/git	6.431s
+--- FAIL: TestEachStepsPromptFileFromARealRecordsTree (3.03s)
+    promptfile_integration_test.go:303: git show :seen-prompt.txt: exit status 128
+FAIL
+FAIL	github.com/pharzam/layup/internal/run	1559.080s
+FAIL
+exit=1
+end 2026-10-19T11:44:29Z
+```
+
+`TestEachStepsPromptFileFromARealRecordsTree` read the file that a session committed from its **bound** head. A step that only reads
+(`plan-of-a-task`, `plan-review`, `verification`) now has no push and so no `bound`, which is the rule of this task (loop.md, The driver
+of a Shape task). The test now reads the head from the ref that the end of the session fetched into the run's clone
+(`refs/layup/sessions/<id>`), for all seven steps; it asserts what it asserted. This is the second of the three honest moves of
+`docs/engineering-discipline.md` ("update the requirement the test encodes, with a written reason"): the requirement is the push rule
+of loop.md and session.md, written in the first commit of this branch.
+
+**Run 2**, on the head `9223f1c` (the fix of that test), nothing else changed:
+
+```
+start 2026-10-19T11:46:14Z
+ok  	github.com/pharzam/layup/internal/git	5.912s
+ok  	github.com/pharzam/layup/internal/run	1578.775s
+exit=0
+end 2026-10-19T12:13:10Z
+```
