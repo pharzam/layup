@@ -77,6 +77,7 @@ specification)
   if [ -e $ctl/bad-prd ]; then sed -i 's/^| REQ-001 | Alpha |  |  |/| REQ-001 | Alpha | Maybe | 1 |/' docs/prd/PRD-0001-x.md; fi
   printf 'the task file %s\n' $(date +%s%N) > docs/tasks/$task.md
   if [ -e $ctl/gofile ]; then echo 'package x' > x.go; rm $ctl/gofile; fi
+  if [ -e $ctl/spec-fail ]; then printf '\n| REQ-009 | x | Must | 1 | F-0003 |\n' >> docs/prd/PRD-0001-x.md; fi
   if [ -e $ctl/no-commit ]; then printf "$res_head" > ../result/result.tsv; exit 0; fi
   artifacts docs/tasks/$task.md docs/prd/PRD-0001-x.md $(ls docs/spec/*.md 2>/dev/null) x.go ;;
 shape-architecture)
@@ -99,12 +100,17 @@ esac
 }
 
 func newDrvWorld(t *testing.T, perms map[string]string) *drvWorld {
+	return newDrvWorldWith(t, perms, gatesTSV)
+}
+
+// newDrvWorldWith is newDrvWorld whose target holds the manifest of the gates given.
+func newDrvWorldWith(t *testing.T, perms map[string]string, gates string) *drvWorld {
 	t.Helper()
 	lint, err := os.ReadFile("../../docs/prd/prd-lint.sh")
 	if err != nil {
 		t.Fatal(err)
 	}
-	w := newWorldWith(t, map[string]string{"AGENTS.md": "the agent rules\n", "docs/facts/F-0003-answers.md": "the answers\n", "docs/gates.tsv": gatesTSV,
+	w := newWorldWith(t, map[string]string{"AGENTS.md": "the agent rules\n", "docs/facts/F-0003-answers.md": "the answers\n", "docs/gates.tsv": gates,
 		"docs/prd/prd-lint.sh": string(lint),
 		// A target that already has a PRD and its section: the full check of layup/spec judges a head that touches docs/spec/,
 		// and the architecture head of a target with no PRD fails it with "no PRD" (a finding of T-jy6f, reported on #415).

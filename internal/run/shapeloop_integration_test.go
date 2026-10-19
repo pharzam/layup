@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -488,6 +489,101 @@ func TestAGateFailureWithNoIndependentVerifierStopsAndStartsNoAttempt(t *testing
 	for _, want := range []string{GatesContext + " failure", VerifyContext + " failure"} {
 		if !slices.Contains(got2, want) {
 			t.Errorf("the statuses of the head = %v; want %q", got2, want)
+		}
+	}
+}
+
+// registerAfterBound answers a read of sessions.tsv, once the task has a bound, with the records commit of the developer's sessions set to rev: the
+// head is then judged by the register of that commit, which a push check made at the start of the session could not have seen (a rule-path change
+// cannot be pushed, so layup/rules cannot fail on a head of the loop's own making; this is the seeded state of the review of #415, finding 2).
+type registerAfterBound struct {
+	SessionStore
+	task, rev string
+}
+
+func (r *registerAfterBound) ReadFile(ctx context.Context, path string) ([]byte, error) {
+	data, err := r.SessionStore.ReadFile(ctx, path)
+	if path != "sessions.tsv" || err != nil || data == nil {
+		return data, err
+	}
+	if ev, _ := r.SessionStore.ReadFile(ctx, eventsPath(r.task)); !strings.Contains(string(ev), "\tbound\t") {
+		return data, nil
+	}
+	rows, err := records.ReadSessions(data)
+	if err != nil {
+		return nil, err
+	}
+	for _, row := range rows {
+		if row[sessionRole] == stepRole("specification") {
+			row[sessionRecords] = r.rev
+		}
+	}
+	return table(records.SessionsSchema, rows)
+}
+
+// sideCommit makes a commit in the clone, on no ref, of a tree that holds the files, and gives its SHA.
+func sideCommit(t *testing.T, clone string, files map[string]string) string {
+	t.Helper()
+	run := func(stdin string, env []string, args ...string) string {
+		cmd := exec.Command("git", args...)
+		cmd.Dir, cmd.Stdin = clone, strings.NewReader(stdin)
+		cmd.Env = append(os.Environ(), append(env, "GIT_AUTHOR_NAME=t", "GIT_AUTHOR_EMAIL=t@x.invalid", "GIT_COMMITTER_NAME=t", "GIT_COMMITTER_EMAIL=t@x.invalid")...)
+		out, err := cmd.Output()
+		if err != nil {
+			t.Fatalf("git %v: %v", args, err)
+		}
+		return strings.TrimSpace(string(out))
+	}
+	index := filepath.Join(t.TempDir(), "index")
+	for p, text := range files {
+		blob := run(text, nil, "hash-object", "-w", "--stdin")
+		run("", []string{"GIT_INDEX_FILE=" + index}, "update-index", "--add", "--cacheinfo", "100644,"+blob+","+p)
+	}
+	tree := run("", []string{"GIT_INDEX_FILE=" + index}, "write-tree")
+	return run("a side commit\n", nil, "commit-tree", tree)
+}
+
+// plan.md:147 and loop.md: a failure of layup/spec or layup/rules, and the status error of the gates, each stop the step; no verifier starts and
+// no attempt follows. The control is the same world with no fault, which reaches the verified head.
+func TestAFailedStatusOfTheHeadStopsTheStepWithNoVerifierAndNoNewAttempt(t *testing.T) {
+	for _, c := range []struct {
+		name, want string
+		gates      string
+		prep       func(d *drvWorld)
+		tweak      func(d *drvWorld, task string) func(*Sessions)
+	}{
+		{"no fault (control)", "", gatesTSV, nil, nil},
+		{"a failed layup/spec", ": layup/spec failed: criteria: ", gatesTSV, func(d *drvWorld) { d.ctlWrite("spec-fail", "") }, nil},
+		{"a failed layup/rules", ": layup/rules failed: ", gatesTSV, nil, func(d *drvWorld, task string) func(*Sessions) {
+			rev := sideCommit(t, d.r.target, map[string]string{"rule-paths.tsv": register + "docs/tasks/\t—\tarchitecture\n"})
+			return func(s *Sessions) { s.Store = &registerAfterBound{SessionStore: s.Store, task: task, rev: rev} }
+		}},
+		{"a gate status of error", ": layup/gates is error: ", "kind\tstate\ttool\tcommand\tscope\tconfig\n", nil, nil},
+	} {
+		d := newDrvWorldWith(t, loopPerms, c.gates)
+		if c.prep != nil {
+			c.prep(d)
+		}
+		spec, _ := d.open()
+		var tweak func(*Sessions)
+		if c.tweak != nil {
+			tweak = c.tweak(d, spec)
+		}
+		got, err := d.advance(spec, tweak)
+		if c.want == "" {
+			if err != nil || !got.Verified {
+				t.Errorf("%s: %+v, %v; want the verified head", c.name, got, err)
+			}
+			continue
+		}
+		if err != nil || !strings.HasPrefix(got.Stop, spec) || !strings.Contains(got.Stop, c.want) {
+			t.Errorf("%s: %+v, %v; want a stop holding %q", c.name, got, err, c.want)
+		}
+		if n := strings.Count(strings.Join(d.kinds(spec), " "), "attempt"); n != 1 {
+			t.Errorf("%s: %d attempts; want one: a stop starts no attempt", c.name, n)
+		}
+		if n := len(slices.DeleteFunc(d.sessionsOf(spec), func(r []string) bool { return r[sessionRole] != stepRole("verification") })); n != 1 {
+			t.Errorf("%s: %d qa sessions; want the plan review only, no verifier", c.name, n)
 		}
 	}
 }
