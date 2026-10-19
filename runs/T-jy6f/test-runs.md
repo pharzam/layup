@@ -247,7 +247,7 @@ The full check of `layup/spec` judges every head that touches `docs/prd/` or `do
 **did not run: no PRD** when the head has none. The architecture task's head touches `docs/spec/` and, on a target whose default branch
 has no PRD, holds none: its `layup/spec` is a failure and the driver stops (`<task>: layup/spec failed: covers: did not run: no PRD`).
 The two Shape tasks start from the same base, so the architecture task cannot see the specification task's PRD. The tests give the
-target a PRD and a section in its first tree. This is reported on #415 for the plan of rows 66h and 66k; it is off the path of this
+target a PRD and a section in its first tree. This is issue #432, owned by row 66h; it is off the path of this
 row's Definition of Done.
 
 ## S9 - the full integration level
@@ -284,3 +284,122 @@ ok  	github.com/pharzam/layup/internal/run	1578.775s
 exit=0
 end 2026-10-19T12:13:10Z
 ```
+
+## S7 - the compiled mutants of row 66r (the file `mutants.md` of the first head, folded in here by the fix cycle)
+
+Run 2026-10-19 from 10:57:57Z to 11:13:42Z by `mutants.py` (in the session's scratchpad), on the committed green head `2b19ae7`
+(commit `feat: T-jy6f the Shape tasks through the task loop to their verified heads`). Each mutant is one edit of one file, taken from a
+fresh backup of the file (a copy made in a new directory at that mutant's start, never a fixed path), built (`go build ./...`) and
+vetted (`go vet -tags=integration ./internal/run/ ./internal/git/`), then run with the test command of its row; a mutant that does not
+build or vet counts as not run. The file is restored from the backup, its SHA-256 is checked to equal the hash before, and **the same test
+command is run on the restored file as the control** (the column after the test status; 0 is green). The statuses are the exit statuses of
+`go` read directly. `unit` is `go test -count=1 ./internal/run/ ./internal/git/`; the others are
+`TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 20m -run '<tests>' ./internal/run/`. The
+hashes are the first 12 hexadecimal characters of the SHA-256 of the file before and during the mutation.
+
+| # | mutant | build | vet | test | first failing assertion | control | tests | sha256 before | sha256 during | restore |
+| - | ------ | ----- | --- | ---- | ----------------------- | ------- | ----- | ------------- | ------------- | ------- |
+| SM1 | permissions not checked before the issue | 0 | 0 | 1 | `shapetask_integration_test.go:232: 1 issues opened and the records head moved: false; want none and no commit` | 0 | `'^(TestAShapeTaskIsOpenedOnlyWithTheLoopPermissions)$'` | 3d7607898ae6 | 78f5d23ba790 | restored | 2026-10-19T10:57:57Z
+| SM2 | a success criterion kept as a requirement | 0 | 0 | 1 | `shapetask_test.go:16: finalIDs = [REQ-001 NFR-002 REQ-003 REQ-004]; want [REQ-001 NFR-002 REQ-004]` | 0 | `unit` | 3d7607898ae6 | 8831a310eee0 | restored | 2026-10-19T10:58:26Z
+| SM3 | a non-functional row mapped to REQ | 0 | 0 | 1 | `shapetask_test.go:16: finalIDs = [REQ-001 REQ-002 REQ-004]; want [REQ-001 NFR-002 REQ-004]` | 0 | `unit` | 3d7607898ae6 | eb1d18e8f342 | restored | 2026-10-19T10:58:48Z
+| SM4 | the draw ignores tasks.tsv | 0 | 0 | 1 | `probe_test.go:118: taskID = "T-0000", <nil>; want T-1111, the second draw` | 0 | `unit` | c1f2906627ac | 276029ee5005 | restored | 2026-10-19T10:59:10Z
+| SM5 | an opened task is not reused | 0 | 0 | 1 | `shapetask_integration_test.go:302: the specification T-9ut9 then T-7516, 5 issues; want the first reused and 4 issues in all, the 2 of Start and one for each task` | 0 | `'^(TestAnOpenedShapeTaskIsReusedAndOpensNoSecondIssue)$'` | 3d7607898ae6 | 16e13bf8df78 | restored | 2026-10-19T10:59:31Z
+| SM6 | the dry run of registerFiles skipped | 0 | 0 | 1 | `shapetask_integration_test.go:286: a table of transitions the dry run refuses: 1 issues opened; want none` | 0 | `'^(TestARefusedOpeningWritesNoIssue)$'` | 3d7607898ae6 | 28e4f15eb67a | restored | 2026-10-19T11:00:01Z
+| SM7 | the dry run of parameterFiles skipped | 0 | 0 | 1 | `shapetask_integration_test.go:286: a file of parameters the dry run refuses: 1 issues opened; want none` | 0 | `'^(TestARefusedOpeningWritesNoIssue)$'` | 3d7607898ae6 | d3d511d9e664 | restored | 2026-10-19T11:00:44Z
+| SM8 | the lease not read before the issue | 0 | 0 | 1 | `shapetask_integration_test.go:283: a lost lease: <nil>; want an error holding "lease"` | 0 | `'^(TestARefusedOpeningWritesNoIssue)$'` | 3d7607898ae6 | e5f773349cc0 | restored | 2026-10-19T11:01:28Z
+| SM9 | readOnlyStep without verification | 0 | 0 | 1 | `session_test.go:396: readOnlyStep(verification) = false; want true` | 0 | `unit` | b0c27a7e09eb | 7605fecc42f0 | restored | 2026-10-19T11:02:11Z
+| SM10 | the push rule removed in TaskSession | 0 | 0 | 1 | `shapeloop_integration_test.go:85: AdvanceShapeTask(T-ljze) = {Task:T-ljze Verified:false Wait: Stop:T-ljze: the session S-7a86d837 is neither the plan review nor a verifier}, <nil>; want the verified head` | 0 | `'^(TestTheShapeTasksGoThroughTheLoopToTheirVerifiedHeads)$'` | 492cf0ededaa | 4c129d4f5031 | restored | 2026-10-19T11:02:32Z
+| SM11 | the guard compares the task only | 0 | 0 | 1 | `session_test.go:424: another base: mkdir : no such file or directory; want "the prompt file of T-ab12 was built at base cccccccccccccccccccccccccccccccccccccccc, the session's base is 0123456789abcdef0123456789abcdef01234567"` | 0 | `unit` | 492cf0ededaa | 690eaf4acd13 | restored | 2026-10-19T11:03:23Z
+| SM12 | the guard after the sweep | 0 | 0 | 1 | `session_test.go:427: another task: the calls ["sweep"] and 0 commits; want nothing swept, made or written` | 0 | `unit` | 492cf0ededaa | 01e8e09671e2 | restored | 2026-10-19T11:03:43Z
+| SM13 | the verifier taken as the plan review | 0 | 0 | 1 | `shapeloop_test.go:94: specification, 13 facts: position 4 (""); want 8` | 0 | `unit` | b0c27a7e09eb | 9d465f2f83c0 | restored | 2026-10-19T11:04:03Z
+| SM14 | the cycle cap read as 2 | 0 | 0 | 1 | `shapeloop_test.go:173: the second material round: {Pos:11 Session:S-v2 Msg: Attempt:2 Base:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa Head:cccccccccccccccccccccccccccccccccccccccc}; want the wait at the cap` | 0 | `unit` | b0c27a7e09eb | 9f37532ab3ab | restored | 2026-10-19T11:04:24Z
+| SM15 | not mergeable starts an attempt | 0 | 0 | 1 | `shapeloop_test.go:187: not mergeable: {Pos:11 Session:S-v1 Msg: Attempt:1 Base:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa Head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb}; want the wait` | 0 | `unit` | b0c27a7e09eb | de234b4d2b2f | restored | 2026-10-19T11:04:43Z
+| SM16 | a push with no result treated as no push | 0 | 0 | 1 | `shapeloop_test.go:133: a push with no result: 13 "T-sp01: the session S-d1 ended with no push (its resume is the step loop's)"; want 13 holding "a push with no result"` | 0 | `unit` | b0c27a7e09eb | 878e20bcf8c2 | restored | 2026-10-19T11:05:03Z
+| SM17 | a second developer session in the attempt | 0 | 0 | 1 | `shapeloop_test.go:94: specification, 9 facts: position 6 (""); want 13` | 0 | `unit` | b0c27a7e09eb | d2886f5328f8 | restored | 2026-10-19T11:05:26Z
+| SM18 | not-active does not stop | 0 | 0 | 0 | — | 0 | `'^(TestAVerifierWithNoIndependentHarnessPostsNotActiveBeforeTheStop)$'` | b0c27a7e09eb | 327ba5ed8576 | restored | 2026-10-19T11:05:46Z
+| SM19a | (the first form did not build: an unused variable; not run) | 1 | 1 | — | — | — | unit | — | — | — |
+| SM19b | the verifier taken for any base of the attempt | 0 | 0 | 0 | — | 0 | `unit` | b0c27a7e09eb | ba397356e357 | restored | 2026-10-19T11:13:21Z
+| SM20 | the cap of milestone 0 not asked | 0 | 0 | 1 | `shapeloop_integration_test.go:396: AdvanceShapeTask with milestone 0 over its time = <nil>; want ledger.ErrMilestoneCap` | 0 | `'^(TestTheCapOfMilestoneZeroIsAskedBeforeEachSession)$'` | b0c27a7e09eb | 02036b6e8a62 | restored | 2026-10-19T11:06:31Z
+| SM21 | the findings of the last round dropped | 0 | 0 | 1 | `shapeloop_test.go:206: findingsOf after a material round = [], ""; want its finding and no gate head` | 0 | `unit` | b0c27a7e09eb | 090af48bdcc8 | restored | 2026-10-19T11:07:09Z
+| SM22 | UpdateRef accepts any ref | 0 | 0 | 1 | `git_test.go:597: a ref outside heads: <nil>, 1 starts of git; want a *FailedError of code -1 and none` | 0 | `unit` | d35dd1ea277b | 8d26cbf1fec8 | restored | 2026-10-19T11:07:29Z
+| SM23 | the verifier clones the default branch | 0 | 0 | 1 | `shapeloop_integration_test.go:85: AdvanceShapeTask(T-llwk) = {Task: Verified:false Wait: Stop:}, git switch -c task/T-llwk/1 75c21b9c31f63c8ad2dca94e9e49ecd0efbf3831: exit status 128: fatal: unable to read tree (75c21b9c31f63c8ad2dca94e9e49ecd0efbf3831); want the verified head` | 0 | `'^(TestTheShapeTasksGoThroughTheLoopToTheirVerifiedHeads)$'` | b0c27a7e09eb | dcd4ce62b4bd | restored | 2026-10-19T11:07:53Z
+| SM24 | the acceptance of a waiting specification skipped | 0 | 0 | 1 | `shapeloop_integration_test.go:353: AdvanceShapeTask = {Task:T-rjit Verified:true Wait: Stop:}, <nil>; want the stop that names prd-lint` | 0 | `'^(TestASpecificationThatPrdLintDoesNotAcceptStopsBeforeTheVerifier)$'` | b0c27a7e09eb | 6156edd99b73 | restored | 2026-10-19T11:08:46Z
+| SM25 | an ended stage is run again | 0 | 0 | 1 | `shapeloop_test.go:94: specification, 3 facts: position 2 (""); want 3` | 0 | `unit` | b0c27a7e09eb | 9d6a277e7cf8 | restored | 2026-10-19T11:09:29Z
+| SM26 | the verdict not posted before the wait | 0 | 0 | 1 | `shapeloop_integration_test.go:176: the newest status of 0c73c30 = [map[context:layup/verify creator:map[id:9001 login:layup-agent[bot]] description:waits for its turn state:pending] map[context:layup/rules creator:map[id:9001 login:layup-agent[bot]] description:no rule path state:success] map[contex` | 0 | `'^(TestAMaterialRoundStartsOneAttemptAndTheSecondWaitsAtTheCap)$'` | b0c27a7e09eb | 4cc95b7c7893 | restored | 2026-10-19T11:09:49Z
+| SM27 | a refused start not seen | 0 | 0 | 1 | `shapeloop_test.go:133: a start that was refused: 2 ""; want 13 holding "the start of the session S-x1 was refused (context 1175 1000)"` | 0 | `unit` | b0c27a7e09eb | a19c9c658a26 | restored | 2026-10-19T11:10:44Z
+| SM28 | an interrupted post of the review record reruns the verifier | 0 | 0 | 1 | `shapeloop_integration_test.go:273: AdvanceShapeTask(T-qv8n) = {Task: Verified:false Wait: Stop:}, the cap of milestone 0: the time since Start passes 8.0 hours; want the verified head` | 0 | `'^(TestAnInterruptedStageIsFinishedFromItsKeptFilesAndRunsNoSecondSession)$'` | b0c27a7e09eb | 8c5951e6fbd4 | restored | 2026-10-19T11:11:06Z
+
+**Result of this first sweep.** 26 of the 28 runs are killed (SM1 to SM17 and SM20 to SM28); SM19a did not build and is not a run. Two mutants were **not killed**:
+
+- **SM18** (`not-active` does not stop in the list of statuses): green at first. The path that follows reaches `ReviewerPair`, which gives the same stop
+  text, so the output was the same for a head with no gate failure. Round 1 asked for the combined case; it is added and SM18 is killed (round 1, below).
+- **SM19b** (the verifiers of the attempt are not narrowed to the bound head): green, and the reviewer accepts it as equivalent on the paths this driver
+  produces. The classification of a `qa-engineer` session as a verifier already requires its base to be a bound SHA of a developer's session of its own
+  attempt, and an attempt binds one head in every path the driver takes. It stays as a guard.
+
+SM1 is killed by the check of the permissions made twice: the opening fails the second time, in `registerTask`, after the issue is
+opened. SM8 is killed by the case of the lost lease. SM11 is killed by the first message of the guard that it keeps, and its run proves
+that the missing check of the base reaches `make` (the first failing line is the call of the stand-in, which the guard stops before).
+
+## Round 1 (comment 6267186962): the fix cycle
+
+The record of the round is `not mergeable, findings recorded` at cycle 0 of cap 1. Findings 1, 3 and 4 of the record are fixed below; its
+finding 2 (the budget) is met by not adding a file and by folding `mutants.md` into this file; its notes are applied (the single home of the
+requirement mapping and the task names in `loop.md`, issue #432 above).
+
+### Finding 1 - the admission probe loses the scratch branch
+
+Red (a version that no probe passed, 1.0.0 recorded and 2.0.0 reported, at a base only the scratch branch holds), against `ProbeSpec.Branch`
+declared and used by nothing. The control at the default base passes (a green negative):
+`go test -count=1 -tags=integration -run '^TestTheAdmissionProbeOfASessionClonesTheBranchOfItsBase$' ./internal/run/`
+
+```
+start 2026-10-19T12:28:05Z
+--- FAIL: TestTheAdmissionProbeOfASessionClonesTheBranchOfItsBase (0.34s)
+    probe_integration_test.go:196: a base on the scratch branch: git switch -c task/T-bvcs/1 8e694d23e8c96197206840dca70a32c1ececca47: exit status 128: fatal: unable to read tree (8e694d23e8c96197206840dca70a32c1ececca47); want the admission probe to clone its base
+FAIL
+FAIL	github.com/pharzam/layup/internal/run	0.357s
+FAIL
+exit=1
+end 2026-10-19T12:28:24Z
+```
+
+Green after the fix (`Probe` sets `Branch: p.Branch` on its `TaskSpec`; `startSession` gives `Admit` the branch):
+
+```
+start 2026-10-19T12:28:49Z
+ok  	github.com/pharzam/layup/internal/run	0.374s
+exit=0
+end 2026-10-19T12:29:08Z
+```
+
+### Findings 3 and 4 - the recovery cases and the combined refusal
+
+The new cases are green negatives at the code, which already did what they require; their **semantic failing controls** are the mutants below.
+`TestAnInterruptedStageIsFinishedFromItsKeptFilesAndRunsNoSecondSession` gained the plan-review case and counts the sessions by role and the
+comments of the plan, the plan review and the review record; `TestAFailedPostOfTheVerdictStatusIsPostedBeforeTheAttemptOrTheWait` injects a failed
+post of the failure of `layup/verify` at the end of the first attempt and at the terminal wait; `TestAGateFailureWithNoIndependentVerifierStopsAndStartsNoAttempt`
+has a gate failure and no independent verifier. Command and result on the code of `45005ed`:
+
+```
+start 2026-10-19T12:29:47Z
+--- PASS: TestAnInterruptedStageIsFinishedFromItsKeptFilesAndRunsNoSecondSession (47.89s)
+--- PASS: TestAFailedPostOfTheVerdictStatusIsPostedBeforeTheAttemptOrTheWait (29.06s)
+--- PASS: TestAGateFailureWithNoIndependentVerifierStopsAndStartsNoAttempt (7.41s)
+ok  	github.com/pharzam/layup/internal/run	84.367s
+exit=0
+end 2026-10-19T12:31:29Z
+```
+
+| # | mutant | build | vet | test | first failing assertion | control | tests |
+| - | ------ | ----- | --- | ---- | ----------------------- | ------- | ----- |
+| SM29 | the admission probe drops the branch | 0 | 0 | 1 | `probe_integration_test.go:196: a base on the scratch branch: git switch -c task/T-lxll/1 40054b992fe7df7d547afd54e294e370a60b0270: exit status 128: fatal: unable to read tree (40054b992fe7df7d547afd54e294e370a60b0270); want the admission probe to clone its base` | 0 | `'^(TestTheAdmissionProbeOfASessionClonesTheBranchOfItsBase)$'` |
+| SM30 | the verdict not settled before the next attempt | 0 | 0 | 1 | `shapeloop_integration_test.go:443: the end of the first attempt: 2 attempts after the failed post; want 1 (no attempt starts before the failure is posted)` | 0 | `'^(TestAFailedPostOfTheVerdictStatusIsPostedBeforeTheAttemptOrTheWait)$'` |
+| SM31 | a plan or plan review that ended is run again | 0 | 0 | 1 | `shapeloop_integration_test.go:277: AdvanceShapeTask(T-e764) = {Task: Verified:false Wait: Stop:}, the cap of milestone 0: the time since Start passes 8.0 hours; want the verified head` | 0 | `'^(TestAnInterruptedStageIsFinishedFromItsKeptFilesAndRunsNoSecondSession)$'` |
+| SM18 | not-active does not stop | 0 | 0 | 1 | `shapeloop_integration_test.go:482: 2 attempts; want one: the gate failure starts none when the verifier cannot run` | 0 | `'^(TestAVerifierWithNoIndependentHarnessPostsNotActiveBeforeTheStop|TestAGateFailureWithNoIndependentVerifierStopsAndStartsNoAttempt)$'` |
+
+Run 2026-10-19 from 12:33:54Z to 12:39:53Z on the head `9b0ebee`, by the same runner and with the rules of the first table (the control is the same test
+command on the restored file, exit 0; the files were restored by hash). The first run of SM18 with the old test command (12:33:55Z) still passed, since
+that test has no gate failure; the row above is SM18 with the combined case, and it is **killed**. SM29 drops the branch on the probe, SM30 settles nothing
+before the next attempt and SM31 runs a plan or plan review again after it ended. The result of S7 is therefore 29 of 31 runs killed (SM1 to SM18, SM20 to
+SM31 and SM19a not a run); only **SM19b** is not killed, with the reason given in the S7 table.
