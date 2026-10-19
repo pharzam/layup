@@ -142,9 +142,12 @@ of `internal/run`):
   of `PullBody`), provided that some session which bound the reviewed head in this attempt started at that commit. A
   body with no such line, or a commit that no such session holds, is a Go error and nothing is edited: the call never
   publishes a snapshot that it chose itself. **Reason:** the body is the one stable record of the snapshot of the
-  opening (a new record or event was not needed), and the check against the sessions of the head keeps a forged or
-  mistyped line from being published. A person's edit that keeps the line is replaced whole; one that removes it is
-  refused.
+  opening (a new record or event was not needed), and the check against the sessions of the head keeps a mistyped or
+  invented commit from being published. A person's edit that keeps the line is replaced whole; one that removes it is
+  refused. **Known limit** (ruled by the Operator, #413): a person's edit that names another genuine records commit of a
+  session that bound the same reviewed head, or that puts such a line before the opening one, is accepted and that commit
+  is published; it is still a real commit of a session of the head. A durable association (the snapshot written at the
+  registration of the pull request, in row 66g's code) is not built in M2e.
 - **The pull request is the attempt's.** `Task.PR` has no attempt, and a new attempt leaves it on the older
   pull request until `OpenPullRequest` replaces it. The call reads the pull request of the branch
   `task/<task>/<attempt>`, and edits only when it is found, its number is the register's `pr` and its head SHA
