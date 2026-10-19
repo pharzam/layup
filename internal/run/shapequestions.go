@@ -186,7 +186,7 @@ func (r *state) shapeQuestions(ctx context.Context) ([]string, error) {
 			}
 			copies = append(copies, answerCopy{Row: row, Body: string(body)})
 		}
-		got, _ := collectAnswers(pending, r.approvers, copies, strconv.Itoa(issue))
+		got := collectRounds(pending, r.approvers, copies, strconv.Itoa(issue))
 		if len(got) > 0 {
 			bound, named := pointBindings(copies, r.approvers, pending[0][9], strconv.Itoa(issue))
 			newApprovers, err := approverRows(ctx, r.cfg.Forge.UserID, bound, named, r.approvers)
@@ -271,16 +271,8 @@ func shapeAsked(questions [][]string) [][]string {
 // shapePosted makes sure that each round of the rows that are asked has its comment on the Intake issue and its copy in the records:
 // the comment is posted when no comment of the App has its body, under the lease, and copied whenever it is found.
 func (r *state) shapePosted(ctx context.Context, issue int, questions [][]string, psb []byte, markers [][]string) error {
-	rounds := map[string][][]string{} // the rows of each round by their asked
-	var order []string
-	for _, q := range shapeAsked(questions) {
-		if _, ok := rounds[q[9]]; !ok {
-			order = append(order, q[9])
-		}
-		rounds[q[9]] = append(rounds[q[9]], q)
-	}
-	for _, asked := range order {
-		body := shapeComment(questions, rounds[asked], psb, markers)
+	for _, round := range shapeRounds(questions) {
+		body := shapeComment(questions, round, psb, markers)
 		find := func() (forge.Comment, bool, error) {
 			comments, err := r.cfg.Forge.Comments(ctx, issue)
 			for _, c := range comments {
@@ -312,4 +304,47 @@ func (r *state) shapePosted(ctx context.Context, issue int, questions [][]string
 		}
 	}
 	return nil
+}
+
+// shapeRounds gives, for each round with a row still asked, the complete rows of the round (answered rows included), in the order of
+// questions.tsv: the comment of a round is the same whatever part of it is answered.
+func shapeRounds(questions [][]string) [][][]string {
+	var order []string
+	rows, pending := map[string][][]string{}, map[string]bool{}
+	for _, q := range questions {
+		if !isShapeRow(q) {
+			continue
+		}
+		if _, ok := rows[q[9]]; !ok {
+			order = append(order, q[9])
+		}
+		rows[q[9]] = append(rows[q[9]], q)
+		pending[q[9]] = pending[q[9]] || q[12] == "asked"
+	}
+	var out [][][]string
+	for _, asked := range order {
+		if pending[asked] {
+			out = append(out, rows[asked])
+		}
+	}
+	return out
+}
+
+// collectRounds gives the answers to the rows pending, collected for each round with its own asked time: a comment written before a
+// round was asked answers nothing of it.
+func collectRounds(pending, approvers [][]string, copies []answerCopy, issue string) [][]string {
+	var order []string
+	rounds := map[string][][]string{}
+	for _, q := range pending {
+		if _, ok := rounds[q[9]]; !ok {
+			order = append(order, q[9])
+		}
+		rounds[q[9]] = append(rounds[q[9]], q)
+	}
+	var got [][]string
+	for _, asked := range order {
+		a, _ := collectAnswers(rounds[asked], approvers, copies, issue)
+		got = append(got, a...)
+	}
+	return got
 }

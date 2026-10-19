@@ -314,11 +314,7 @@ func TestTheStepShape(t *testing.T) {
 		if files := gitOut(t, d.r.target, "diff", "--name-only", heads[0], d.boundOf(arch)[0]); strings.Contains(files, "docs/prd/") {
 			t.Errorf("noPRD %v: the files of the architecture task = %q; want none of docs/prd/", noPRD, files)
 		}
-		for _, p := range d.promptsOf(arch) {
-			if strings.Contains(p, "The verifier") && !strings.Contains(p, heads[0]) {
-				t.Errorf("noPRD %v: the prompt of a session of the architecture task does not name the base %s", noPRD, heads[0])
-			}
-		}
+		d.verifierRange(arch, heads[0])
 		// A second run writes nothing.
 		head, posts, patches := recordsHead(t, d.w), d.requests("POST /repos/"), d.requests("PATCH ")
 		d.restart()
@@ -346,5 +342,90 @@ func TestTheStepWaitsOnTheIntentFormAndFailsClosedWhenNothingIsOpen(t *testing.T
 	d.push(map[string][]byte{"questions.tsv": cavTable(t, records.QuestionsSchema, [][]string{qrow("Q-001", "band.B", "answered"), qrow("Q-002", "band.U", "answered"), qrow("Q-003", "appetite.hours", "answered")})}, "the questions answered, no budget")
 	if got := d.r.shapeStep(ctx); got.Result != "fail" || got.Detail != "budget.tsv is not written and no question of the intent form is open" {
 		t.Errorf("the step with no budget.tsv and nothing open = %+v; want the fail that names it", got)
+	}
+}
+
+// verifierRange asserts that a verifier of the task was told the range from the base to its head: the prompts of the step verification are
+// chosen by their step line, at least one is inspected, and each names the exact base.
+func (d *drvWorld) verifierRange(task, from string) {
+	d.t.Helper()
+	n := 0
+	for _, p := range d.promptsOf(task) {
+		if strings.HasPrefix(p, "Prompt file of the step verification of the task "+task+".") {
+			n++
+			if !strings.Contains(p, "from "+from+" to ") {
+				d.t.Errorf("the verifier of %s was not told the range from %s:\n%s", task, from, p)
+			}
+		}
+	}
+	if n == 0 {
+		d.t.Errorf("no prompt of a verifier of %s was kept; want at least one to inspect", task)
+	}
+}
+
+// F4: the architecture task is opened only after the specification has a verified head: a specification in a wait or at a stop leaves
+// no issue, no row and no session of the architecture task.
+func TestASpecificationThatWaitsOrStopsLeavesTheArchitectureTaskUnopened(t *testing.T) {
+	for _, c := range []struct{ name, arrange, want string }{
+		{"a wait", "verdict", "waiting for the Operator: "},
+		{"a stop", "no-section", "the handoff"},
+	} {
+		d := newDrvWorldOpts(t, loopPerms, drvOpts{})
+		d.settled()
+		d.ctlWrite("commit", "")
+		ctx := context.Background()
+		spec, err := d.r.openShapeTask(ctx, "specification")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if c.arrange == "verdict" {
+			d.ctlWrite("verdicts-"+spec.ID, "not mergeable, findings recorded\n")
+		} else {
+			d.ctlWrite(c.arrange, "")
+		}
+		issues := d.w.fake.issues
+		_, wait, err := d.r.tasksStage(ctx, dbResult)
+		if got := wait; c.arrange == "verdict" && (err != nil || !strings.HasPrefix(got, c.want)) || c.arrange != "verdict" && (err == nil || !strings.Contains(err.Error(), c.want)) {
+			t.Fatalf("%s: wait %q, err %v; want %q", c.name, wait, err, c.want)
+		}
+		tasks := d.register()
+		if len(tasks) != 1 || tasks[0].ID != spec.ID || d.w.fake.issues != issues {
+			t.Errorf("%s: the register holds %v and the forge %d issues (was %d); want the specification alone and no new issue", c.name, tasks, d.w.fake.issues, issues)
+		}
+		for _, row := range func() [][]string {
+			rows, _ := records.ReadSessions([]byte(keptRecord(t, d.w, "sessions.tsv")))
+			return rows
+		}() {
+			if row[sessionTask] != spec.ID {
+				t.Errorf("%s: a session of %s; want the sessions of the specification alone", c.name, row[sessionTask])
+			}
+		}
+	}
+}
+
+// F1 of round 1: a partial answer keeps the comment of its round: repeated restarts post and copy it once.
+func TestAPartialAnswerKeepsTheCommentOfItsRound(t *testing.T) {
+	d := newDrvWorldOpts(t, loopPerms, drvOpts{noOption: true})
+	d.push(map[string][]byte{
+		"questions.tsv":      cavTable(t, records.QuestionsSchema, [][]string{qrow("Q-001", "band.B", "open"), qrow("Q-002", "band.U", "open"), qrow("Q-003", "appetite.hours", "open")}),
+		"intake/markers.tsv": cavTable(t, records.MarkersSchema, nil), "intake/answers.tsv": cavTable(t, records.AnswersSchema, nil),
+	}, "an Intake that left the intent form open")
+	ctx := context.Background()
+	if _, err := d.r.shapeQuestions(ctx); err != nil {
+		t.Fatal(err)
+	}
+	addComment(d.w, 1, 901, 303, "carol", "2030-01-01T00:00:00Z", "Q-004: 5.0\n")
+	for i := 0; i < 3; i++ {
+		d.restart()
+		wait, err := d.r.shapeQuestions(ctx)
+		if want := []string{"Q-002", "Q-003"}; err != nil || !slices.Equal(wait, want) {
+			t.Fatalf("restart %d: wait %v, %v; want %v", i, wait, err, want)
+		}
+	}
+	if n := len(d.appComments(shapeQuestionsHeader)); n != 1 {
+		t.Errorf("%d comments of the round after a partial answer and three restarts; want one", n)
+	}
+	if n := strings.Count(keptRecord(t, d.w, "copies.tsv"), "\n601\t"); n != 1 {
+		t.Errorf("the comment is copied %d times; want once", n)
 	}
 }

@@ -633,6 +633,7 @@ func TestTheArchitectureHeadOfATargetWithNoPRDPassesLayupSpec(t *testing.T) {
 				t.Errorf("the statuses of the head of the architecture task = %v; want %q", states, want)
 			}
 		}
+		d.verifierRange(arch, first.Head)
 		if files := gitOut(t, d.r.target, "diff", "--name-only", first.Head, head); strings.Contains(files, "docs/prd/") || !strings.Contains(files, "docs/spec/architecture.md") {
 			t.Errorf("the files of the architecture task from the specification's head = %q; want its own changes, none of docs/prd/", files)
 		}

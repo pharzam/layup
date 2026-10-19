@@ -224,3 +224,50 @@ runs every package is `ok`, `internal/run` in 1655 s and 1649 s; none of the kno
 
 The narrowed green runs during the build (the tests of this row, then the forge-check restart test with its 23 rows, then the binary's Scaffold test) are the runs
 before the full ones: `TestTheStepForgeCheckChecksTheForgeAndCommitsItsTableAtEachRestart` and `TestTheTextBlocksOfRunMd` ok in 84 s, `TestTheStepsOfTheScaffold` (e2e) ok in 34 s.
+
+## Round 1 of the review (6274608879): the red lines of the five findings, before the code
+
+Findings F1 to F5, the cap 1. The tests below were written and run against the head `60b3668` (with two inert declarations, `shapeRounds` and `collectRounds`,
+returning nothing) before any fix. Commands run directly; times by `date -u`.
+
+`go test -count=1 ./internal/run/` (F1 unit, F2, F3):
+```
+start 2026-10-19T18:44:53Z
+--- FAIL: TestTheOutputOfTheOptionsSessionIsCheckedBeforeItIsKept (0.00s)
+    options_test.go:75: the decision draft: err = <nil>; want it refused as reserved
+    options_test.go:78: the rewrite of the decision draft: err = nil; want a refusal
+    options_test.go:75: the decision spans: err = <nil>; want it refused as reserved
+    options_test.go:78: the rewrite of the decision spans: err = nil; want a refusal
+    options_test.go:75: the decision answers: err = <nil>; want it refused as reserved
+    options_test.go:78: the rewrite of the decision answers: err = nil; want a refusal
+    options_test.go:75: the decision tests: err = <nil>; want it refused as reserved
+    options_test.go:78: the rewrite of the decision tests: err = nil; want a refusal
+    options_test.go:75: the decision tasks: err = <nil>; want it refused as reserved
+    options_test.go:78: the rewrite of the decision tasks: err = nil; want a refusal
+--- FAIL: TestThePromptsListTheConstraintsAndTheFiles (0.00s)
+    options_test.go:171: the prompt of the options session lacks "none of the names draft, spans, answers, tests and tasks":
+    options_test.go:176: the prompt of the rewrite session lacks "none of the names draft, spans, answers, tests and tasks":
+--- FAIL: TestTheCommentOfARoundIsMadeOfItsCompleteRowsAnsweredOnesIncluded (0.00s)
+    shapequestions_test.go:200: shapeRounds = []; want the rounds of 10:00 (Q-003 answered, Q-004 asked) and of 12:00 (Q-005, Q-006), and none for 13:00
+--- FAIL: TestAnswersUseEachPendingRoundsAskedTime (0.00s)
+    shapequestions_test.go:215: a comment of 11:00: []; want the answer to Q-005 (asked 10:00) and none to Q-008 (asked 12:00)
+    shapequestions_test.go:219: a comment of 11:00 and a correction of 13:00: []; want the answer of 13:00 to Q-008
+FAIL	github.com/pharzam/layup/internal/run	0.435s
+exit=1
+end 2026-10-19T18:45:05Z
+```
+`TMPDIR=... go test -count=1 -tags=integration -timeout 20m -run 'TestAPartialAnswerKeeps|TestASpecificationThatWaits|TestTheStepShape$|TestTheArchitectureHeadOfATarget' ./internal/run/`
+(F1 on the production path: the review's falsifier, two comments for one round):
+```
+start 2026-10-19T18:45:05Z
+--- FAIL: TestAPartialAnswerKeepsTheCommentOfItsRound (3.10s)
+    shape_integration_test.go:426: 2 comments of the round after a partial answer and three restarts; want one
+FAIL	github.com/pharzam/layup/internal/run	83.662s
+exit=1
+end 2026-10-19T18:46:47Z
+```
+Green negatives at `60b3668`, each beside the mutant that kills it (below): the F4 assertions (`verifierRange` in `TestTheStepShape` and in
+`TestTheArchitectureHeadOfATargetWithNoPRDPassesLayupSpec`, selected by the step line of the prompt; and `TestASpecificationThatWaitsOrStopsLeavesTheArchitectureTaskUnopened`
+for a wait and a stop) pass on the code, whose order is right; M36 breaks that order and they fail. F5 is text: `loop.md` named the constraints `R-NNN` at two places
+and `scaffold.md` promised `5/22 forge-check` at a later start; both now say `NFR-NNN` with a pointer to the one home, and `5/23` (a grep for `22` finds only the
+first-start chain, which is `22/22`).

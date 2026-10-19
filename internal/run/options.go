@@ -96,6 +96,9 @@ const (
 	tableHeader   = "option\tconstraint\tresult\tevidence\n"
 )
 
+// reservedDecisions are the names that the prompts of the task steps use for an input file; no decision has one.
+var reservedDecisions = []string{"draft", "spans", "answers", "tests", "tasks"}
+
 // splitOptions checks the output of an options session and splits it into the table of each decision, in the form of the block
 // options. It refuses an output with another header, no decision, a name that is no word of lowercase letters, digits and -, a table
 // that the reader of the block refuses, and a decision with fewer than two options.
@@ -115,6 +118,8 @@ func splitOptions(data []byte) (map[string][]byte, error) {
 			return nil, fmt.Errorf("line %d holds no tab", i+2)
 		case !decisionName.MatchString(decision):
 			return nil, fmt.Errorf("line %d: the decision %q is not a word of lowercase letters, digits and -", i+2, decision)
+		case slices.Contains(reservedDecisions, decision):
+			return nil, fmt.Errorf("line %d: the decision %q is reserved (the name of an input file of the task prompts)", i+2, decision)
 		}
 		if tables[decision] == nil {
 			tables[decision] = &strings.Builder{}
@@ -265,7 +270,7 @@ Find each architecture decision that the draft needs. For each decision write at
 tab-separated values, with the header line
 "decision<TAB>option<TAB>constraint<TAB>result<TAB>evidence"
 and one row for each option and each constraint of the list below.
-- The decision and the option are each a word of lowercase letters, digits and -.
+- The decision and the option are each a word of lowercase letters, digits and -. The decision is none of the names draft, spans, answers, tests and tasks.
 - The constraint is an ID of the list below. An option has a row for every constraint of the list, and may have rows for others.
 - The result is pass or fail. For a pass the evidence is the path of a file or a link that shows it, never a dash. For a fail the
   evidence is a dash, and nothing else.
@@ -288,7 +293,7 @@ options, at least two, that meet the constraints of the list below. The tables t
 Write the output file in the form of the tables, as tab-separated values with the header line
 "decision<TAB>option<TAB>constraint<TAB>result<TAB>evidence"
 and one row for each option and each constraint of the list, for these decisions and for no other. A pass has a path or a link as its
-evidence, a fail has a dash. The decision and the option are each a word of lowercase letters, digits and -.
+evidence, a fail has a dash. The decision and the option are each a word of lowercase letters, digits and -. The decision is none of the names draft, spans, answers, tests and tasks.
 
 The constraints that apply, by their IDs:
 {list}

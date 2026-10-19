@@ -69,6 +69,18 @@ func TestTheOutputOfTheOptionsSessionIsCheckedBeforeItIsKept(t *testing.T) {
 	if err != nil || len(got) != 2 || string(got["db"]) != dbTable || string(got["cache"]) != cacheTable {
 		t.Fatalf("splitOptions(two decisions) = %v, %v; want the two tables, byte for byte", got, err)
 	}
+	// F3: a name that the task prompts use for an input file is refused, each name alone, and db is the control.
+	for _, name := range []string{"draft", "spans", "answers", "tests", "tasks"} {
+		if _, err := splitOptions(out(name, dbTable)); err == nil || !strings.Contains(err.Error(), `"`+name+`" is reserved`) {
+			t.Errorf("the decision %s: err = %v; want it refused as reserved", name, err)
+		}
+		if _, err := rewriteFiles(map[string][]byte{name: []byte(cacheTable)}, out(name, dbTable)); err == nil {
+			t.Errorf("the rewrite of the decision %s: err = nil; want a refusal", name)
+		}
+	}
+	if _, err := splitOptions(out("db", dbTable)); err != nil {
+		t.Errorf("the decision db: %v; want kept", err)
+	}
 	one := optHead + "pg\tInv-1\tpass\tdocs/a.md\n"
 	for _, c := range []struct{ name, data, want string }{
 		{"one option", string(out("db", one)), "decision db has fewer than two options"},
@@ -154,12 +166,12 @@ func TestThePromptsListTheConstraintsAndTheFiles(t *testing.T) {
 	cs := []spec.Constraint{{ID: "NFR-002", Text: "p99 under 200 ms"}, {ID: "Inv-1"}}
 	in := map[string]string{"draft.tsv": "/s/input/draft.tsv", "spans.tsv": "/s/input/spans.tsv", "problem-statement.md": "/s/input/ps.md", "answers.tsv": "/s/input/answers.tsv", "dropped-cache.tsv": "/s/input/dropped-cache.tsv", "reasons.txt": "/s/input/reasons.txt"}
 	first, second := string(optionsPrompt(cs)(in, "/s/result/options.tsv")), string(rewritePrompt(cs)(in, "/s/result/options.tsv"))
-	for _, want := range []string{"The output file: /s/result/options.tsv\n", "The draft: /s/input/draft.tsv\n", "- NFR-002: p99 under 200 ms\n", "- Inv-1\n", "decision<TAB>option<TAB>constraint<TAB>result<TAB>evidence", "at least two options"} {
+	for _, want := range []string{"The output file: /s/result/options.tsv\n", "The draft: /s/input/draft.tsv\n", "- NFR-002: p99 under 200 ms\n", "- Inv-1\n", "decision<TAB>option<TAB>constraint<TAB>result<TAB>evidence", "at least two options", "none of the names draft, spans, answers, tests and tasks"} {
 		if !strings.Contains(first, want) {
 			t.Errorf("the prompt of the options session lacks %q:\n%s", want, first)
 		}
 	}
-	for _, want := range []string{"The output file: /s/result/options.tsv\n", "The reasons: /s/input/reasons.txt\n", "- NFR-002: p99 under 200 ms\n", "cache: /s/input/dropped-cache.tsv\n", "decision<TAB>option"} {
+	for _, want := range []string{"The output file: /s/result/options.tsv\n", "The reasons: /s/input/reasons.txt\n", "- NFR-002: p99 under 200 ms\n", "cache: /s/input/dropped-cache.tsv\n", "decision<TAB>option", "none of the names draft, spans, answers, tests and tasks"} {
 		if !strings.Contains(second, want) {
 			t.Errorf("the prompt of the rewrite session lacks %q:\n%s", want, second)
 		}

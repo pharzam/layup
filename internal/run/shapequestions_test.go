@@ -185,3 +185,37 @@ func TestOnlyTheBudgetFieldsBlockAndAShapeRowStillAskedBlocks(t *testing.T) {
 		t.Errorf("intentWait = %v; want [Q-001 Q-002]: an open field, and one that a Shape row asks; not success-criteria, not a question of another source", got)
 	}
 }
+
+// F1 of round 1 of #364: the comment of a round is made of its complete rows, whatever part of them is answered.
+func TestTheCommentOfARoundIsMadeOfItsCompleteRowsAnsweredOnesIncluded(t *testing.T) {
+	q := [][]string{qr("Q-001", "intent", "band.B", "intent", "open"), qr("Q-002", "intent", "band.U", "intent", "open"),
+		qr("Q-003", "follow-up", "Q-001", "shape", "answered"), qr("Q-004", "follow-up", "Q-002", "shape", "asked"), qr("Q-005", "follow-up", "Q-001", "shape", "asked")}
+	q[4][9] = "2026-10-12T12:00:00Z"
+	q = append(q, qr("Q-006", "follow-up", "Q-002", "shape", "answered"))
+	q[5][9] = "2026-10-12T12:00:00Z"
+	q = append(q, qr("Q-007", "follow-up", "Q-002", "shape", "answered"))
+	q[6][9] = "2026-10-12T13:00:00Z" // a round with every row answered has no pending work
+	rounds := shapeRounds(q)
+	if len(rounds) != 2 || len(rounds[0]) != 2 || rounds[0][0][0] != "Q-003" || rounds[0][1][0] != "Q-004" || len(rounds[1]) != 2 || rounds[1][0][0] != "Q-005" {
+		t.Errorf("shapeRounds = %v; want the rounds of 10:00 (Q-003 answered, Q-004 asked) and of 12:00 (Q-005, Q-006), and none for 13:00", rounds)
+	}
+}
+
+// F2: each round is collected with its own asked time.
+func TestAnswersUseEachPendingRoundsAskedTime(t *testing.T) {
+	old, newer := qr("Q-005", "follow-up", "Q-001", "shape", "asked"), qr("Q-008", "follow-up", "Q-002", "shape", "asked")
+	old[9], newer[9] = "2026-10-12T10:00:00Z", "2026-10-12T12:00:00Z"
+	approvers := [][]string{{"303", "idea-owner", "carol", "2026-10-08T12:00:00Z", "start"}}
+	copyOf := func(id, at, body string) answerCopy {
+		return answerCopy{Row: []string{id, "1", "1", "303", "", "", at, "", "", "f"}, Body: body}
+	}
+	pending := [][]string{old, newer}
+	got := collectRounds(pending, approvers, []answerCopy{copyOf("901", "2026-10-12T11:00:00Z", "Q-005: 5.0\nQ-008: 9.0\n")}, "1")
+	if len(got) != 1 || got[0][0] != "Q-005" {
+		t.Errorf("a comment of 11:00: %v; want the answer to Q-005 (asked 10:00) and none to Q-008 (asked 12:00)", got)
+	}
+	got = collectRounds(pending, approvers, []answerCopy{copyOf("901", "2026-10-12T11:00:00Z", "Q-008: 9.0\n"), copyOf("902", "2026-10-12T13:00:00Z", "Q-008: 10.0\n")}, "1")
+	if len(got) != 1 || got[0][0] != "Q-008" || got[0][1] != "10.0" {
+		t.Errorf("a comment of 11:00 and a correction of 13:00: %v; want the answer of 13:00 to Q-008", got)
+	}
+}
