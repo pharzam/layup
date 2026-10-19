@@ -195,3 +195,32 @@ and the final ID.
 | M30 | the kind shape is refused for a follow-up | ok | ok | 1 | TestAShapeRowAsksAgainInTheBlockOfItsQuestion: shapequestions_test.go:54: the row Q-003: column kind: kind is a kind of the question's source | 0 | unit | e00a8eee9ed0 | d58e16897862 | same |
 | M31 | success-criteria blocks the step | ok | ok | 1 | TestOnlyTheBudgetFieldsBlockAndAShapeRowStillAskedBlocks: shapequestions_test.go:185: intentWait = [Q-001 Q-002 Q-004]; want [Q-001 Q-002]: an open fi | 0 | unit | 0275114802c2 | f0f698c1b26a | same |
 | M32 | a requirement is named by its draft ID | ok | ok | 1 | TestTheConstraintsThatApplyAreListedByCodeFromTheRecordsAndTheTarget: options_test.go:57: constraintsOf = [{R-002 p99 under 200 ms} {F-2 } {F-3 } {Inv | 0 | unit | 9a79d576c223 | 10c797315341 | same |
+
+## S4 to S8 - the green runs and the gates, at the head `dde36cb` (the commits `b653076` and `dde36cb`)
+
+Every command was run directly (`runlog.sh`, the exit status of the command itself). The start and the end are `date -u` read before and after.
+
+| command | start | end | exit |
+| ------- | ----- | --- | ---- |
+| `go build ./...` | 2026-10-19T18:30:52Z | 2026-10-19T18:30:54Z | 0 |
+| `go vet ./...` | 2026-10-19T18:30:54Z | 2026-10-19T18:30:54Z | 0 |
+| `go vet -tags=integration ./...` | 2026-10-19T18:30:54Z | 2026-10-19T18:30:57Z | 0 |
+| `go vet -tags=e2e ./...` | 2026-10-19T18:30:57Z | 2026-10-19T18:30:59Z | 0 |
+| `gofmt -l .` | 2026-10-19T18:30:59Z | 2026-10-19T18:31:00Z | 0 |
+| `go test -count=1 ./...` | 2026-10-19T18:31:00Z | 2026-10-19T18:31:10Z | 0 |
+| `git diff --check` | 2026-10-19T18:31:10Z | 2026-10-19T18:31:10Z | 0 |
+| `sh docs/adr/adr-lint.sh` | 2026-10-19T18:31:22Z | 2026-10-19T18:31:24Z | 0 |
+| `sh docs/prd/prd-lint.sh` | 2026-10-19T18:31:24Z | 2026-10-19T18:31:24Z | 0 |
+| `sh docs/links/link-lint.sh` | 2026-10-19T18:31:24Z | 2026-10-19T18:31:36Z | 0 |
+| `sh docs/tests/run-discipline-tests.sh` | 2026-10-19T18:31:36Z | 2026-10-19T18:31:41Z | 0 |
+| `sh docs/setup/setup-check.sh` | 2026-10-19T18:31:41Z | 2026-10-19T18:32:05Z | 0 |
+| `sh docs/tests/nested-checkout-check.sh` | 2026-10-19T18:32:05Z | 2026-10-19T18:32:06Z | 0 |
+| `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=e2e -timeout 60m ./...` | 2026-10-19T17:59:56Z | 2026-10-19T18:01:59Z | 0 |
+| `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 90m ./...` (the full level, the head `dde36cb`) | 2026-10-19T18:02:03Z | 2026-10-19T18:30:29Z | 0 |
+
+The full integration level also ran on the head `b653076` (the same code; `dde36cb` adds the documents, one comment and the mutant record): 2026-10-19T17:13:02Z to 2026-10-19T17:41:19Z, exit 0. In both
+runs every package is `ok`, `internal/run` in 1655 s and 1649 s; none of the known load flakes (`TestProcessTimesTheFirstOutput`, the fast clock of
+`TestAProseSessionWhoseCommentFailsLeavesNoFileInTheRecords`) failed, so no package was run a second time.
+
+The narrowed green runs during the build (the tests of this row, then the forge-check restart test with its 23 rows, then the binary's Scaffold test) are the runs
+before the full ones: `TestTheStepForgeCheckChecksTheForgeAndCommitsItsTableAtEachRestart` and `TestTheTextBlocksOfRunMd` ok in 84 s, `TestTheStepsOfTheScaffold` (e2e) ok in 34 s.
