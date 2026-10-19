@@ -57,6 +57,7 @@ Rounds (GPT-6.1 Sol, xhigh, on Codex; cap 1):
 - Round 2, comment 6255109180, on 7f1ba6d: **not mergeable, findings recorded**. The three round 1 findings are settled. Finding 1 (material): no test of a refused `events.tsv` in `RepairPushes` and `RepostComments`. Finding 2 (material): the close-out did not fit the landing budget.
 - The cap allows no third round. The Operator chose **end 3** (comment 6260569452, 2026-10-19T05:44Z): finding 1 fixed with no further round, then this close-out, and finding 2 settled by one Operator approval of the exact landing figure.
 - The fix of finding 1, with no round: `TestARefusedEventsTableStopsTheRepairAndTheRepost`, written first, green on the code and red on its mutants M26 and M27 (a third variant, the first read of `RepairPushes` alone, is not a kill: its second read returns the same error). No production code changed. No reviewer has read this commit.
+- The merge of `main` at c735788 (4a2119d, row 66g): index lines and the fields of one test type. Its full integration run failed one test of row 66g that opens a task session of an unregistered task, which this branch refuses; the test now registers that task (99572ca, test only, no round). The runs are in [`test-runs.md`](../../runs/T-syxm/test-runs.md).
 
 **Verdict: not mergeable until the Operator approves the exact landing figure.** Finding 1 is fixed and unread by any round (end 3); finding 2, the budget, is open and is not the author's to close: the maximum is 1,650 lines over 28 files with the close-out inside, and the figure against the current `main` goes to the Operator on the issue. Harness exception: ADR-0026's routing rule names `claude`, `devin` and `opencode`; Codex was used for the plan review and both rounds on the Operator's message of 2026-10-13.
 
@@ -73,3 +74,4 @@ ADR-0007, recorded, not budgeted. Tokens are as the harness reported them.
 | Fix of round 1 | execution | Claude Sonnet 5.5 | not recorded | 96,158 | not recorded |
 | Review round 2 | reasoning | GPT-6.1 Sol (Codex CLI) | xhigh | 183,806 | 2026-10-18T20:54:21Z to 21:02:09Z |
 | Fix of end 3 and close-out | execution | Claude Sonnet 5.5 | not recorded | 87,972 | 38 min, 2026-10-19T05:45Z to 06:23Z, the full integration level included |
+| Merge of `main` and its test fix | reasoning | Claude Opus 5.5 (the coordinator) | not recorded | not reported by the harness | 2026-10-19T06:24Z to 07:15Z, the full integration level included |
