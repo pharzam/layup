@@ -179,3 +179,9 @@ is **a green negative**: written before any code change, green on the code as it
 Both tests alone at 7f1ba6d (the head of the fix cycle, a merge-free tree of the same code), 2026-10-18T21:03:14Z to 21:04:16Z, **exit 0**: `--- PASS: TestAProseSessionWhoseCommentFailsLeavesNoFileInTheRecords (10.14s)`,
 `--- PASS: TestTheFullInputOfAHeadAfterIntakeAndTheScaffold (50.00s)`, `ok  github.com/pharzam/layup/internal/run  60.163s`. The full level has therefore **not** been green in one run at the merge head;
 its only green full run is at ac05f6a (above), and the merge head's failures are the two flakes with the green alone-runs.
+
+## The full integration level at bf6d7ac (the end 3 fix), green
+
+In a `git clone` of the worktree at bf6d7ac (the code of the final head; bbe2689 adds documents only): `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags integration -timeout 90m ./...`,
+2026-10-19T05:49:22Z to 06:21:42Z, **exit 0**, every package `ok` (`internal/run` 1832.049 s, `internal/setup` 68.557 s, `internal/verify` 71.237 s). Neither load flake of the merge head failed in this run.
+Also exit 0 at bbe2689: `go build ./...`, `go vet ./...`, `go vet -tags=integration ./...`, `gofmt -l .` (no output), `go test ./...`, the five text lints, `nested-checkout-check`, `setup-check`, `git diff --check origin/main HEAD`.
