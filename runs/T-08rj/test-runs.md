@@ -98,99 +98,118 @@ end 2026-10-18T13:10:11Z
 
 # Step B - the link of the review record (row 66q)
 
-Every command was run directly in `.worktree/T-08rj`, with its exit status read directly; the times are `date -u` read
-around each run. The red runs are against the compiling stub of commit `f30ba1c` (`LinkReviewRecord` returns false, nil and
-reads nothing; `reviewLine` returns ""), with the final tests of Step B. Lines are cut at 230 characters. The unit tests U1
-to U13 and the integration tests I1 to I3 are named in `docs/tests/traceability.md`. The integration red run was taken
-before the one assertion of the web address that kills RM11 was added to I1.
+The first record of Step B (2026-10-19, 06:02 to 07:08Z) wrote placeholders in place of its test selectors, so its commands cannot
+be reproduced; round 1 (finding 2) found it. It is replaced, not corrected: the runs below are new, with their own `date -u`
+times, taken after the fix of finding 1 and the merge of `origin/main` at `d9852d2`. None of the older times is reused.
+The selectors are exact, and the exit status is the one `go` gave.
+
+- Unit selector U: `^(TestTheBodyWithAReviewRecordEndsInTheLinkOfItsComment|TestTheBodyIsEditedOnceToLinkTheReviewRecord|TestAnEqualBodyIsNotEdited|TestTheRecordsLinkIsTheProducingSessionsNotTheCloseOutsNorTheVerifiers|TestTheEditKeepsTheSnapshotOfTheLastBoundSessionBeforeTheVerifier|TestEachRecordThatFailsRefusesTheLinkBeforeAnyCall|TestALostLeaseEditsNothing|TestAClosedOrMergedPullRequestIsNotEdited|TestAFailedEditIsAnErrorAndAnEditThatTookEffectIsNotRepeated|TestAFailedReadOfThePullRequestEditsNothing|TestAFailedStoreReadIsAnErrorWithNoForgeCall|TestAnAnswerWithAnotherBodyIsAnError|TestANewerAttemptWithTheRegisterOnTheOlderPullRequestEditsNothing|TestAPullRequestWhoseHeadMovedIsNotEdited)$`
+- Integration selector I: `^(TestTheReviewRecordIsLinkedFromTheBodyAfterItsPost|TestTheLinkSurvivesTheCloseOutAndARestart|TestAnEditRefusedByTheForgeIsAForgeErrorOfEditBody)$`
 
 Differences from the plan, found at S6 (the reconciliation against the landed 66g, PR #421, merge `c735788`):
 
-- `PullBody(issue, web, repo, records, more ...string)` already takes further lines, so there is no `review` parameter to add:
-  the link is `more = "", reviewLine(...)`, and U1 is red only through the stub of `reviewLine`.
-- `Task.PR` is written by `registerPR` and `holdsLease` is in `handoffpost.go`; both are as planned. `Sessions.Web` is set by
-  `state.sessions()` from `cfg.Register.Web` (`internal/run/meaning.go:139`).
-- Row 66g's text (`loop.md`) already excludes the body edit and names row 66q as its owner; row 66q (After `64, 66g`) and the
-  After cells of 66h and 66k (`66q`) are on main.
-- The review's conditions 1 to 3 changed the design of Stage 0: the snapshot is the first session that bound the reviewed
-  head (not "the session bound at that SHA"); the latest handoff is chosen and then required valid; the pull request is read by
-  the attempt's branch and must be the register's, at the reviewed head.
+- `PullBody(issue, web, repo, records, more ...string)` already takes further lines, so there is no `review` parameter: the link is
+  `more = "", reviewLine(...)`.
+- `Task.PR` is written by `registerPR`, `holdsLease` is in `handoffpost.go`, `Sessions.Web` is set by `state.sessions()`
+  (`internal/run/meaning.go`); row 66g already excludes the body edit, and row 66q and the After cells of 66h and 66k are on main.
+- The snapshot is the one of the opening: the last bound session before the verifier's own event `session`, through the
+  `lastBound` that `OpenPullRequest` uses (round 1, finding 1; the plan's "first session" and the review's condition 1 both
+  gave way to it). The latest handoff is chosen and then required valid; the pull request is read by the attempt's branch.
 
-## Red, the unit tests (U1 to U13)
+## Finding 1, red on the code before the fix
 
-Command: `go test -count=1 -run '<the 13 tests>' ./internal/run/`
+Command: `go test -count=1 -run '^TestTheEditKeepsTheSnapshotOfTheLastBoundSessionBeforeTheVerifier$' ./internal/run/` on the code of `363bbfc` (the first-bound
+selection, the head reviewed in round 1) with the new test added to the tree:
 
 ```
-start 2026-10-19T06:06:35Z
+start 2026-10-19T07:56:46Z
+--- FAIL: TestTheEditKeepsTheSnapshotOfTheLastBoundSessionBeforeTheVerifier (0.00s)
+    reviewlink_test.go:267: LinkReviewRecord = true, <nil> with the body "Closes #3\n\nThe records commit this task started from: https://github.example/acme/target/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\nThe review record: https://github.example/acme/target/issues/3#issuecomment-601"; wa
+FAIL
+FAIL	github.com/pharzam/layup/internal/run	0.011s
+FAIL
+exit=1
+end 2026-10-19T07:57:01Z
+```
+
+(The second part of that test, a verifier with no event `session`, was added to the same test in the same step.)
+
+## Red at the stub, the unit tests
+
+The stub is the `reviewlink.go` of commit `f30ba1c` (`LinkReviewRecord` returns false, nil; `reviewLine` returns ""), put in place
+by `-overlay` so that the tree is not touched (`$SP/stub/overlay.json` maps `internal/run/reviewlink.go` to `git show f30ba1c:internal/run/reviewlink.go`).
+
+Command: `go test -count=1 -overlay $SP/stub/overlay.json -run '^(TestTheBodyWithAReviewRecordEndsInTheLinkOfItsComment|TestTheBodyIsEditedOnceToLinkTheReviewRecord|TestAnEqualBodyIsNotEdited|TestTheRecordsLinkIsTheProducingSessionsNotTheCloseOutsNorTheVerifiers|TestTheEditKeepsTheSnapshotOfTheLastBoundSessionBeforeTheVerifier|TestEachRecordThatFailsRefusesTheLinkBeforeAnyCall|TestALostLeaseEditsNothing|TestAClosedOrMergedPullRequestIsNotEdited|TestAFailedEditIsAnErrorAndAnEditThatTookEffectIsNotRepeated|TestAFailedReadOfThePullRequestEditsNothing|TestAFailedStoreReadIsAnErrorWithNoForgeCall|TestAnAnswerWithAnotherBodyIsAnError|TestANewerAttemptWithTheRegisterOnTheOlderPullRequestEditsNothing|TestAPullRequestWhoseHeadMovedIsNotEdited)$' ./internal/run/` (U above)
+
+```
+start 2026-10-19T08:00:55Z
 --- FAIL: TestTheBodyWithAReviewRecordEndsInTheLinkOfItsComment
-    reviewlink_test.go:181: the body = "Closes #3\n\nThe records commit this task started from: https://github.example/acme/target/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\n"; want "Closes #3\n\n   [+1 more failing lines]
+    reviewlink_test.go:182: the body = "Closes #3\n\nThe records commit this task started from: https://github.example/acme/target/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\n"; want "Clo
 --- FAIL: TestTheBodyIsEditedOnceToLinkTheReviewRecord
-    reviewlink_test.go:193: LinkReviewRecord = false, <nil>; want true, nil
+    reviewlink_test.go:194: LinkReviewRecord = false, <nil>; want true, nil
 --- FAIL: TestAnEqualBodyIsNotEdited
-    reviewlink_test.go:215: LinkReviewRecord = false, <nil> with the calls []; want false, nil and one PullRequest
+    reviewlink_test.go:216: LinkReviewRecord = false, <nil> with the calls []; want false, nil and one PullRequest
 --- FAIL: TestTheRecordsLinkIsTheProducingSessionsNotTheCloseOutsNorTheVerifiers
-    reviewlink_test.go:242: after a person's edit: false, <nil>, body "a person's text"; want the whole body replaced
+    reviewlink_test.go:243: after a person's edit: false, <nil>, body "a person's text"; want the whole body replaced
+--- FAIL: TestTheEditKeepsTheSnapshotOfTheLastBoundSessionBeforeTheVerifier
+    reviewlink_test.go:268: LinkReviewRecord = false, <nil> with the body "Closes #3\n\nThe records commit this task started from: https://github.example/acme/target/commit/aaaaaaaaaaaaaaaaaaaaa
 --- FAIL: TestEachRecordThatFailsRefusesTheLinkBeforeAnyCall
-    reviewlink_test.go:313: the session is of another task: err = <nil>; want one that says "not of T-ab12"   [+23 more failing lines]
+    reviewlink_test.go:333: the session is of another task: err = <nil>; want one that says "not of T-ab12"
 --- FAIL: TestALostLeaseEditsNothing
-    reviewlink_test.go:332: LinkReviewRecord = false, <nil> with the calls []; want *LostError and no EditBody
+    reviewlink_test.go:352: LinkReviewRecord = false, <nil> with the calls []; want *LostError and no EditBody
 --- FAIL: TestAClosedOrMergedPullRequestIsNotEdited
-    reviewlink_test.go:343: a closed pull request: err = <nil>; want one that says "is closed"   [+1 more failing lines]
+    reviewlink_test.go:363: a closed pull request: err = <nil>; want one that says "is closed"
 --- FAIL: TestAFailedEditIsAnErrorAndAnEditThatTookEffectIsNotRepeated
-    reviewlink_test.go:365: a failed edit: err = <nil>; want one that says "EditBody: status 502"   [+3 more failing lines]
+    reviewlink_test.go:385: a failed edit: err = <nil>; want one that says "EditBody: status 502"
 --- FAIL: TestAFailedReadOfThePullRequestEditsNothing
-    reviewlink_test.go:392: a failed read: err = <nil>; want one that says "PullRequest: status 502"
+    reviewlink_test.go:412: a failed read: err = <nil>; want one that says "PullRequest: status 502"
 --- FAIL: TestAFailedStoreReadIsAnErrorWithNoForgeCall
-    reviewlink_test.go:405: a failed read of tasks.tsv: false, <nil> with the calls []; want the store's error and no call   [+6 more failing lines]
+    reviewlink_test.go:425: a failed read of tasks.tsv: false, <nil> with the calls []; want the store's error and no call
 --- FAIL: TestAnAnswerWithAnotherBodyIsAnError
-    reviewlink_test.go:425: another body: err = <nil>; want one that says "gave another body"
+    reviewlink_test.go:445: another body: err = <nil>; want one that says "gave another body"
 --- FAIL: TestANewerAttemptWithTheRegisterOnTheOlderPullRequestEditsNothing
-    reviewlink_test.go:457: no pull request of the branch: err = <nil>; want one that says "no pull request"   [+2 more failing lines]
+    reviewlink_test.go:477: no pull request of the branch: err = <nil>; want one that says "no pull request"
 --- FAIL: TestAPullRequestWhoseHeadMovedIsNotEdited
-    reviewlink_test.go:491: a moved head: err = <nil>; want one that says "not the reviewed"
+    reviewlink_test.go:511: a moved head: err = <nil>; want one that says "not the reviewed"
 FAIL
-FAIL	github.com/pharzam/layup/internal/run	0.107s
+FAIL	github.com/pharzam/layup/internal/run	0.031s
 FAIL
 exit=1
-end 2026-10-19T06:06:50Z
+end 2026-10-19T08:01:06Z
 ```
 
-All 13 tests fail at the stub on the assertion of the behavior they name; only the first failing line of each is kept here
-(U5 holds one refusal and one control line for each of its 11 rows).
+14 of 14 fail; the first failing line of each is kept.
 
-## Red, the integration tests (I1 to I3)
+## Red at the stub, the integration tests
 
-Command: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -run '<the 3 tests>' -timeout 30m ./internal/run/`
+Command: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -overlay $SP/stub/overlay.json -run '^(TestTheReviewRecordIsLinkedFromTheBodyAfterItsPost|TestTheLinkSurvivesTheCloseOutAndARestart|TestAnEditRefusedByTheForgeIsAForgeErrorOfEditBody)$' -timeout 30m ./internal/run/` (I above)
 
 ```
-start 2026-10-19T06:06:50Z
---- FAIL: TestTheReviewRecordIsLinkedFromTheBodyAfterItsPost (6.35s)
+start 2026-10-19T08:01:06Z
+--- FAIL: TestTheReviewRecordIsLinkedFromTheBodyAfterItsPost
     reviewlink_integration_test.go:94: LinkReviewRecord = false, <nil>; want true, nil
---- FAIL: TestTheLinkSurvivesTheCloseOutAndARestart (7.18s)
-    reviewlink_integration_test.go:130: after the close-out and a restart: false, <nil> with 0 PATCH; want false, nil and the one
---- FAIL: TestAnEditRefusedByTheForgeIsAForgeErrorOfEditBody (5.71s)
-    reviewlink_integration_test.go:144: LinkReviewRecord = false, <nil>; want EditBody: status 403
+--- FAIL: TestTheLinkSurvivesTheCloseOutAndARestart
+    reviewlink_integration_test.go:133: after the close-out and a restart: false, <nil> with 0 PATCH; want false, nil and the one
+--- FAIL: TestAnEditRefusedByTheForgeIsAForgeErrorOfEditBody
+    reviewlink_integration_test.go:147: LinkReviewRecord = false, <nil>; want EditBody: status 403
 FAIL
-FAIL	github.com/pharzam/layup/internal/run	19.310s
+FAIL	github.com/pharzam/layup/internal/run	13.933s
 FAIL
 exit=1
-end 2026-10-19T06:07:32Z
+end 2026-10-19T08:01:37Z
 ```
 
-Two earlier red runs failed for the wrong reason and were fixed in the tests before this one: the verifier's session could not
-start at the developer's head (a session clones the run's `main` alone; the test moves it onto the head, as the loop would), and
-the verifier and the developer shared one records snapshot (the test now starts the verifier at the current records head).
+## Green
 
-## Green, the link tests
-
-Command: `go test -count=1 -v -run '<the 13 tests>' ./internal/run/` (the pattern also runs three older tests whose names begin alike)
+Command: `go test -count=1 -v -run '^(TestTheBodyWithAReviewRecordEndsInTheLinkOfItsComment|TestTheBodyIsEditedOnceToLinkTheReviewRecord|TestAnEqualBodyIsNotEdited|TestTheRecordsLinkIsTheProducingSessionsNotTheCloseOutsNorTheVerifiers|TestTheEditKeepsTheSnapshotOfTheLastBoundSessionBeforeTheVerifier|TestEachRecordThatFailsRefusesTheLinkBeforeAnyCall|TestALostLeaseEditsNothing|TestAClosedOrMergedPullRequestIsNotEdited|TestAFailedEditIsAnErrorAndAnEditThatTookEffectIsNotRepeated|TestAFailedReadOfThePullRequestEditsNothing|TestAFailedStoreReadIsAnErrorWithNoForgeCall|TestAnAnswerWithAnotherBodyIsAnError|TestANewerAttemptWithTheRegisterOnTheOlderPullRequestEditsNothing|TestAPullRequestWhoseHeadMovedIsNotEdited)$' ./internal/run/`
 
 ```
-start 2026-10-19T06:07:50Z
+start 2026-10-19T08:01:37Z
 --- PASS: TestTheBodyWithAReviewRecordEndsInTheLinkOfItsComment (0.00s)
 --- PASS: TestTheBodyIsEditedOnceToLinkTheReviewRecord (0.00s)
 --- PASS: TestAnEqualBodyIsNotEdited (0.00s)
 --- PASS: TestTheRecordsLinkIsTheProducingSessionsNotTheCloseOutsNorTheVerifiers (0.00s)
+--- PASS: TestTheEditKeepsTheSnapshotOfTheLastBoundSessionBeforeTheVerifier (0.00s)
 --- PASS: TestEachRecordThatFailsRefusesTheLinkBeforeAnyCall (0.02s)
 --- PASS: TestALostLeaseEditsNothing (0.00s)
 --- PASS: TestAClosedOrMergedPullRequestIsNotEdited (0.00s)
@@ -201,53 +220,20 @@ start 2026-10-19T06:07:50Z
 --- PASS: TestANewerAttemptWithTheRegisterOnTheOlderPullRequestEditsNothing (0.00s)
 --- PASS: TestAPullRequestWhoseHeadMovedIsNotEdited (0.00s)
 PASS
-ok  	github.com/pharzam/layup/internal/run	0.128s
+ok  	github.com/pharzam/layup/internal/run	0.047s
 exit=0
-end 2026-10-19T06:07:51Z
+end 2026-10-19T08:01:38Z
 ```
 
-Command: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -v -tags=integration -run '<the 3 tests>' -timeout 30m ./internal/run/`
+Command: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -v -tags=integration -run '^(TestTheReviewRecordIsLinkedFromTheBodyAfterItsPost|TestTheLinkSurvivesTheCloseOutAndARestart|TestAnEditRefusedByTheForgeIsAForgeErrorOfEditBody)$' -timeout 30m ./internal/run/`
 
 ```
-start 2026-10-19T06:07:51Z
---- PASS: TestTheReviewRecordIsLinkedFromTheBodyAfterItsPost (6.51s)
---- PASS: TestTheLinkSurvivesTheCloseOutAndARestart (7.69s)
---- PASS: TestAnEditRefusedByTheForgeIsAForgeErrorOfEditBody (6.10s)
+start 2026-10-19T08:01:38Z
+--- PASS: TestTheReviewRecordIsLinkedFromTheBodyAfterItsPost (4.44s)
+--- PASS: TestTheLinkSurvivesTheCloseOutAndARestart (5.67s)
+--- PASS: TestAnEditRefusedByTheForgeIsAForgeErrorOfEditBody (4.13s)
 PASS
-ok  	github.com/pharzam/layup/internal/run	20.368s
+ok  	github.com/pharzam/layup/internal/run	14.273s
 exit=0
-end 2026-10-19T06:08:34Z
-```
-
-## Green, the integration level on the head of Step B
-
-Command: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 90m ./...` at the head `adddebe`
-(the unit level, `go test ./...`, ran green in the pre-commit hook of each commit). A first run was stopped by hand after 90 seconds
-to trim a test file; this is the whole run on the final tests.
-
-```
-start 2026-10-19T06:31:11Z
-ok  	github.com/pharzam/layup/cmd/layup	5.924s
-ok  	github.com/pharzam/layup/internal/catalog	53.373s
-ok  	github.com/pharzam/layup/internal/cli	26.311s
-ok  	github.com/pharzam/layup/internal/forge	0.516s
-ok  	github.com/pharzam/layup/internal/forge/github	2.565s
-ok  	github.com/pharzam/layup/internal/gate	1.771s
-ok  	github.com/pharzam/layup/internal/git	7.970s
-ok  	github.com/pharzam/layup/internal/handoff	0.039s
-ok  	github.com/pharzam/layup/internal/ledger	0.020s
-ok  	github.com/pharzam/layup/internal/psb	0.069s
-ok  	github.com/pharzam/layup/internal/records	0.091s
-ok  	github.com/pharzam/layup/internal/route	0.029s
-ok  	github.com/pharzam/layup/internal/rules	11.609s
-ok  	github.com/pharzam/layup/internal/run	2106.566s
-ok  	github.com/pharzam/layup/internal/session	8.910s
-ok  	github.com/pharzam/layup/internal/setup	71.218s
-ok  	github.com/pharzam/layup/internal/spec	0.550s
-ok  	github.com/pharzam/layup/internal/standin	1.944s
-ok  	github.com/pharzam/layup/internal/tsv	0.032s
-ok  	github.com/pharzam/layup/internal/verify	95.232s
-ok  	github.com/pharzam/layup/internal/work	0.041s
-exit=0
-end 2026-10-19T07:07:16Z
+end 2026-10-19T08:02:09Z
 ```
