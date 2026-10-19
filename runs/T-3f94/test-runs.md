@@ -286,3 +286,9 @@ on a copy of the head `8771b8e`; M34's first form did not build (`asked` unused)
 | M34 | every round is collected with the first asked time | ok | ok | 1 | TestAnswersUseEachPendingRoundsAskedTime: shapequestions_test.go:215: a comment of 11:00: [[Q-005 5.0 901 303 2026-10-12T11:00:00Z] [Q-008 9 | 0 | unit | 486fe05bd5d0 | 82cdcdc08af1 | same |
 | M35 | a reserved decision name is kept | ok | ok | 1 | TestTheOutputOfTheOptionsSessionIsCheckedBeforeItIsKept: options_test.go:75: the decision draft: err = <nil>; want it refused as reserved | 0 | unit | 24ec224aec35 | b0e4e4025a00 | same |
 | M36 | the architecture task is opened before the specification's wait or stop returns | ok | ok | 1 | TestASpecificationThatWaitsOrStopsLeavesTheArchitectureTaskUnopened: shape_integration_test.go:393: a wait: the register holds [{T-b153 3 sp | 0 | TestASpecificationThatWaits | 4bc3bddba925 | b7f2e499aa67 | same |
+
+## Round 1 fix: the gates on the code head `8771b8e` (the head `f3880af` adds this record's mutant section only)
+
+Build, both vets and the e2e vet, `gofmt -l .`, `go test -count=1 ./...`, the three lints, `run-discipline-tests`, `setup-check`, `nested-checkout-check` and `git diff --check`:
+all exit 0 (2026-10-19 about 18:5xZ, `runlog.sh`). `go test -count=1 -tags=e2e -timeout 60m ./...`: 2026-10-19T19:07:10Z to 2026-10-19T19:09:10Z, exit 0.
+`TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 90m ./...`: 2026-10-19T19:09:12Z to 2026-10-19T19:37:48Z, exit 0; every package ok, `internal/run` in 1659 s, no flake.
