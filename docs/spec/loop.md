@@ -134,14 +134,17 @@ of `internal/run`):
   ID, that `seen` and the task's issue; its file must parse as a review record whose `head` is the verifier's
   `base`, which tells it from a plan review of the same role. **Reason:** the link fails closed (NFR-004);
   whether a record's verdict allows a merge is not decided here.
-- **The records commit of the body is the one of the opening.** `OpenPullRequest` takes the session of the
-  **last** event `bound` of the attempt, and the edit takes the same one through the same selection (`lastBound`),
-  limited to the events before the verifier's own event `session`: the draft is opened before the verifier starts.
-  A verifier or a close-out that leaves the head unchanged binds the same SHA again with a snapshot of its own,
-  which is why the selection stops at the verifier's start. If that bound head is not the verifier's `base`, or the
-  verifier has no event `session`, the call is a Go error and publishes no other snapshot. **Reason:** the body
-  keeps the link of `OpenPullRequest` through later reviews, the close-out and a restart (plan review of #363, Q3),
-  also when two developer sessions bound the same head at two snapshots.
+- **The records commit of the body is the one of the opening, read from the body.** `OpenPullRequest` writes the
+  records commit of the last bound session into the draft's body, and no later bind changes that line: a verifier or
+  a close-out that leaves the head unchanged binds the same SHA again at a snapshot of its own, so no choice among the
+  events (the first, the last, the last before the verifier) names the opening for every verifier, a second one and a
+  restart included. The edit therefore keeps the commit that the body it replaces links (`bodyRecords`, the inverse
+  of `PullBody`), provided that some session which bound the reviewed head in this attempt started at that commit. A
+  body with no such line, or a commit that no such session holds, is a Go error and nothing is edited: the call never
+  publishes a snapshot that it chose itself. **Reason:** the body is the one stable record of the snapshot of the
+  opening (a new record or event was not needed), and the check against the sessions of the head keeps a forged or
+  mistyped line from being published. A person's edit that keeps the line is replaced whole; one that removes it is
+  refused.
 - **The pull request is the attempt's.** `Task.PR` has no attempt, and a new attempt leaves it on the older
   pull request until `OpenPullRequest` replaces it. The call reads the pull request of the branch
   `task/<task>/<attempt>`, and edits only when it is found, its number is the register's `pr` and its head SHA
@@ -149,8 +152,8 @@ of `internal/run`):
   Go error, and the older pull request is never edited. A pull request that is not `open` is a Go error naming
   the state (what a closed one means is row 66k's).
 - **Read before write.** A body equal to the composed one is no edit (`false`, no call). Any other body is
-  replaced whole, also one that a person edited: the body is code's artifact in the form that the target's
-  checks read. **The lease** is read immediately before the edit, `*LostError` when it is not held, and a failed
+  replaced whole, also one that a person edited and that keeps the line of the records commit: the body is code's
+  artifact in the form that the target's checks read. **The lease** is read immediately before the edit, `*LostError` when it is not held, and a failed
   read is an error; as for a post, a takeover between the read and the edit remains, and the edit is harmless
   there, because both runs write the same bytes from the same records.
 - **The answer is read, never trusted.** The body that the forge gives back must be the composed one, else a

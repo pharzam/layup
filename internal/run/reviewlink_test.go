@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -218,7 +217,7 @@ func TestAnEqualBodyIsNotEdited(t *testing.T) {
 }
 
 // U4. A close-out that binds the same head later, at the snapshot recC, does not change the link; a restart (new Sessions on
-// the same records) makes no edit; a body that a person edited is replaced whole.
+// the same records) makes no edit; a body that a person edited, with the line of the records commit kept, is replaced whole.
 func TestTheRecordsLinkIsTheProducingSessionsNotTheCloseOutsNorTheVerifiers(t *testing.T) {
 	w := newLinkWorld(t)
 	if _, err := w.link(); err != nil {
@@ -236,7 +235,7 @@ func TestTheRecordsLinkIsTheProducingSessionsNotTheCloseOutsNorTheVerifiers(t *t
 	if edited, err := w.link(); err != nil || edited {
 		t.Errorf("after the close-out and a restart: %v, %v; want false, nil (the link kept the snapshot of the producing session)", edited, err)
 	}
-	if _, err := w.f.Fake.EditBody(context.Background(), w.pr, "a person's text"); err != nil {
+	if _, err := w.f.Fake.EditBody(context.Background(), w.pr, "a person's text\n\n"+PullBody(3, prWeb, "acme/target", recA)+"\nmore"); err != nil {
 		t.Fatal(err)
 	}
 	if edited, err := w.link(); err != nil || !edited || w.bodyOf(t, w.pr) != wantBody(recA) {
@@ -251,12 +250,14 @@ type linkRefusal struct {
 	want     string
 }
 
-// U4b. Two developer sessions bound the same head at two snapshots before the draft was opened: the opening linked the last,
-// and the edit keeps it (the finding of round 1). A verifier that starts with no event session is an unresolved association.
-func TestTheEditKeepsTheSnapshotOfTheLastBoundSessionBeforeTheVerifier(t *testing.T) {
+// U4b. Two developer sessions bound the same head at two snapshots before the draft was opened: the opening linked the last (the
+// body of the draft names it), and the edit keeps it. A later verifier at the unchanged head, a restart and a second comment
+// keep it too (round 2). A body that names no snapshot of a session that bound the head is an unresolved association.
+func TestTheEditKeepsTheSnapshotThatTheDraftWasOpenedWith(t *testing.T) {
 	w := newLinkWorld(t)
+	d2 := strings.Repeat("d", 40)
 	dev2 := sessionRow("S-d0000002", "T-ab12", "implement", "claude")
-	dev2[sessionBase], dev2[sessionRecords] = head1, strings.Repeat("d", 40)
+	dev2[sessionBase], dev2[sessionRecords] = head1, d2
 	w.sessions = append(w.sessions, dev2)
 	at := "2026-10-18T10:00:00Z"
 	w.events = [][]string{w.events[0], w.events[1], w.events[2],
@@ -264,17 +265,30 @@ func TestTheEditKeepsTheSnapshotOfTheLastBoundSessionBeforeTheVerifier(t *testin
 		{"6", "session", "1", lkVer, "", "", "", at}, {"7", "bound", "1", lkVer, "", head1, "task/T-ab12/1", at},
 		{"8", "handoff", "1", lkVer, "", "", "valid comment 601-1", at}}
 	w.write(t)
-	if edited, err := w.link(); err != nil || !edited || w.bodyOf(t, w.pr) != wantBody(strings.Repeat("d", 40)) {
-		t.Errorf("LinkReviewRecord = %v, %v with the body %q; want the snapshot of the second developer", edited, err, w.bodyOf(t, w.pr))
+	w.f.Fake.EditBody(context.Background(), w.pr, PullBody(3, prWeb, "acme/target", d2)) // the draft as it was opened
+	if edited, err := w.link(); err != nil || !edited || w.bodyOf(t, w.pr) != wantBody(d2) {
+		t.Fatalf("LinkReviewRecord = %v, %v with the body %q; want the snapshot of the second developer", edited, err, w.bodyOf(t, w.pr))
 	}
-	w = newLinkWorld(t)
-	w.events = append(w.events[:3:3], w.events[4:]...) // no event session of the verifier
-	for i := range w.events {
-		w.events[i][0] = strconv.Itoa(i + 1)
-	}
+	// A second verifier at the unchanged head, a distinct valid comment, and a restart.
+	ver2 := sessionRow("S-e0000002", "T-ab12", "verification", "devin")
+	ver2[sessionBase], ver2[sessionRecords] = head1, strings.Repeat("e", 40)
+	w.sessions = append(w.sessions, ver2)
+	w.events = append(w.events, []string{"9", "session", "1", "S-e0000002", "", "", "", at}, []string{"10", "bound", "1", "S-e0000002", "", head1, "task/T-ab12/1", at},
+		[]string{"11", "handoff", "1", "S-e0000002", "", "", "valid comment 602-1", at})
+	w.copies = append(w.copies, []string{"602", "1", "3", "9001", "layup-agent[bot]", "layup-agent", at, at, commentSum(lkRecord), "copies/602-1.md"})
 	w.write(t)
-	if edited, err := w.link(); err == nil || edited || len(w.f.calls) != 0 {
-		t.Errorf("a verifier with no event session: %v, %v with the calls %v; want an error and no call", edited, err, w.f.calls)
+	w.st.files["copies/602-1.md"] = []byte(lkRecord)
+	w.s = newSessions(w.st)
+	w.s.Forge, w.s.Web = w.f, prWeb
+	edited, err := w.s.LinkReviewRecord(context.Background(), "T-ab12", "S-e0000002")
+	if want := PullBody(3, prWeb, "acme/target", d2, "", reviewLine(prWeb, "acme/target", 3, 602)); err != nil || !edited || w.bodyOf(t, w.pr) != want {
+		t.Errorf("the second verifier: %v, %v with the body %q; want %q", edited, err, w.bodyOf(t, w.pr), want)
+	}
+	// The body names a records commit that no session of the head holds.
+	w.f.Fake.EditBody(context.Background(), w.pr, "Closes #3\n\nThe records commit this task started from: "+prWeb+"/acme/target/commit/"+strings.Repeat("9", 40))
+	before := w.f.count("EditBody")
+	if edited, err := w.s.LinkReviewRecord(context.Background(), "T-ab12", "S-e0000002"); err == nil || edited || w.f.count("EditBody") != before {
+		t.Errorf("an unresolved association: %v, %v; want an error and no edit", edited, err)
 	}
 }
 
@@ -322,7 +336,7 @@ func TestEachRecordThatFailsRefusesTheLinkBeforeAnyCall(t *testing.T) {
 	add("the register names no pull request", "no pull request in the register",
 		func(w *linkWorld) { w.pr = 0 },
 		func(w *linkWorld) { w.pr = w.pr1.Number })
-	add("no session bound the reviewed head", "not the reviewed",
+	add("no session bound the reviewed head", "no event bound at the head",
 		func(w *linkWorld) { w.events[2][5], w.events[4][5] = shaOld, shaOld },
 		func(w *linkWorld) { w.events[2][5], w.events[4][5] = head1, head1 })
 	for _, r := range rows {
@@ -480,7 +494,7 @@ func TestANewerAttemptWithTheRegisterOnTheOlderPullRequestEditsNothing(t *testin
 	}
 	// The pull request of attempt 2 exists, and the register still names attempt 1's.
 	w.f.Fake.SetHead("task/T-ab12/2", head2)
-	pr2, err := w.f.Fake.OpenDraft(context.Background(), "task/T-ab12/2", "main", "feat: y", "Closes #3")
+	pr2, err := w.f.Fake.OpenDraft(context.Background(), "task/T-ab12/2", "main", "feat: y", PullBody(3, prWeb, "acme/target", recB))
 	if err != nil {
 		t.Fatal(err)
 	}

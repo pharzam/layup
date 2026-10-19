@@ -52,8 +52,24 @@ func checkTitle(typ, description string) error {
 // line, the line that links the records commit, and each further line, with no
 // final line feed. The edit that links the review record (row 66q) is one more line.
 func PullBody(issue int, web, repo, records string, more ...string) string {
-	lines := []string{"Closes #" + strconv.Itoa(issue), "", "The records commit this task started from: " + strings.TrimRight(web, "/") + "/" + repo + "/commit/" + records}
+	lines := []string{"Closes #" + strconv.Itoa(issue), "", recordsLine(web, repo) + records}
 	return strings.Join(append(lines, more...), "\n")
+}
+
+// recordsLine is the line of the body that links the records commit, up to the commit itself.
+func recordsLine(web, repo string) string {
+	return "The records commit this task started from: " + strings.TrimRight(web, "/") + "/" + repo + "/commit/"
+}
+
+// bodyRecords gives the records commit that a body links, the inverse of PullBody: the snapshot the draft was opened with, which
+// stays in the body of the pull request through later binds, a restart and the edit of row 66q. ok is false for a body with no such line.
+func bodyRecords(body, web, repo string) (commit string, ok bool) {
+	for _, l := range strings.Split(body, "\n") {
+		if c, found := strings.CutPrefix(l, recordsLine(web, repo)); found && c != "" && strings.Trim(c, "0123456789abcdef") == "" {
+			return c, true
+		}
+	}
+	return "", false
 }
 
 // withPR gives the register with the pr of the task set; the table given is not changed.
@@ -68,12 +84,8 @@ func withPR(tasks []Task, id string, n int) ([]Task, error) {
 }
 
 // lastBound gives the SHA and the session of the last event bound of the attempt, "" for none.
-// A before above 0 stops at the events with a smaller n: the selection that the link of the review record shares (row 66q).
-func lastBound(events [][]string, attempt, before int) (sha, session string) {
+func lastBound(events [][]string, attempt int) (sha, session string) {
 	for _, e := range events {
-		if n, _ := strconv.Atoi(e[0]); before > 0 && n >= before {
-			break
-		}
 		if a, _ := strconv.Atoi(e[2]); e[1] == "bound" && a == attempt {
 			sha, session = e[5], e[3]
 		}
@@ -104,7 +116,7 @@ func (s *Sessions) OpenPullRequest(ctx context.Context, in PullInput) (forge.Pul
 	if err != nil {
 		return forge.PullRequest{}, err
 	}
-	head, session := lastBound(events, in.Attempt, 0)
+	head, session := lastBound(events, in.Attempt)
 	if head == "" {
 		return forge.PullRequest{}, fmt.Errorf("attempt %d of %s has no event bound: no head to open a pull request for", in.Attempt, in.Task)
 	}
