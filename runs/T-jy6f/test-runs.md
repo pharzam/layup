@@ -487,3 +487,47 @@ ok  	github.com/pharzam/layup/internal/run	1600.286s
 exit=0
 end 2026-10-19T14:33:53Z
 ```
+
+## Round 3: the end 3 fix (tests only)
+
+Round 3 (cycle 2 of cap 2) found the status refusals of the driver untested; the Operator chose end 3, a fix with no further round (6269982316).
+Finding 1 (the budget) is the Operator's figure, below; finding 2 is fixed here, by tests alone, and no production code changed.
+
+**Finding 2.** `TestAFailedStatusOfTheHeadStopsTheStepWithNoVerifierAndNoNewAttempt` gives the driver a failed `layup/spec` (a requirement row of the
+PRD with no criterion), a failed `layup/rules` and a gate status `error` (a manifest with no kind). Each asserts the stop, one attempt and no verifier, and the
+world with no fault is the control and reaches the verified head. A rule-path change cannot be pushed, so `layup/rules` cannot fail on a head the loop makes: the
+case seeds the state, by answering a read of `sessions.tsv`, once the developer is bound, with the records commit of a side commit whose register covers `docs/tasks/`.
+The tests passed at once, so they are **green negatives**:
+
+```
+start 2026-10-19T14:46:46Z
+=== RUN   TestAFailedStatusOfTheHeadStopsTheStepWithNoVerifierAndNoNewAttempt
+layup run: gate [1/1] fine…
+layup run: gate [1/1] fine done (0s)
+layup run: gate [1/1] fine…
+layup run: gate [1/1] fine done (0s)
+layup run: gate [1/1] fine…
+layup run: gate [1/1] fine done (0s)
+--- PASS: TestAFailedStatusOfTheHeadStopsTheStepWithNoVerifierAndNoNewAttempt (31.52s)
+PASS
+ok  	github.com/pharzam/layup/internal/run	31.535s
+exit=0
+end 2026-10-19T14:47:36Z
+```
+
+Their failing controls are three compiled mutants, run by the runner of S7 on the head `d61cec1`, 2026-10-19T14:48:11Z to 2026-10-19T14:52:38Z, with the same method
+(build, vet, test, the control on the restored file, and the hashes of the whole file):
+
+| # | mutant | build/vet/test | first failing assertion | control |
+| - | ------ | -------------- | ----------------------- | ------- |
+| SM34 | the layup/spec refusal removed | 0/0/1 | shapeloop_integration_test.go:580: a failed layup/spec: {Task:T-yzzc Verified:false Wait: Stop:T-yzzc: the pinned prd-lint does not accept the head as a specification that waits for its bet: ["FAIL  P | 0 |
+| SM35 | the layup/rules refusal removed | 0/0/1 | shapeloop_integration_test.go:580: a failed layup/rules: {Task:T-myhv Verified:true Wait: Stop:}, <nil>; want a stop holding ": layup/rules failed: " | 0 |
+| SM36 | the gate error refusal removed | 0/0/1 | shapeloop_integration_test.go:580: a gate status of error: {Task:T-7vsd Verified:true Wait: Stop:}, <nil>; want a stop holding ": layup/gates is error: " | 0 |
+
+| # | sha256 before | sha256 during (mutated) | sha256 after the restore | before = after |
+| - | ------------- | ----------------------- | ------------------------ | -------------- |
+| SM34 | `a1fc3c879c557d54f80c80572f59a791036a3086cb62c4757f4cdad64367712c` | `8e77a90f125984557030f85ee1c314d6afd666e51d33a8a1fc6078d3663188f8` | `a1fc3c879c557d54f80c80572f59a791036a3086cb62c4757f4cdad64367712c` | equal |
+| SM35 | `a1fc3c879c557d54f80c80572f59a791036a3086cb62c4757f4cdad64367712c` | `aabe9e10a3df71775605e309640f9b096402e8b61e0108d6c5ef2f06c31d76be` | `a1fc3c879c557d54f80c80572f59a791036a3086cb62c4757f4cdad64367712c` | equal |
+| SM36 | `a1fc3c879c557d54f80c80572f59a791036a3086cb62c4757f4cdad64367712c` | `b4e5cdc2077fd192f131127876c041403cf1b3df339eb6752e25b29eef7ca894` | `a1fc3c879c557d54f80c80572f59a791036a3086cb62c4757f4cdad64367712c` | equal |
+
+**The count, recounted again.** 34 killed (the 31 of round 2 and SM34, SM35 and SM36); not killed: **SM19b** alone; SM19a did not build and is not a run.
