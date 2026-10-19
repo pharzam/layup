@@ -12,6 +12,12 @@ import (
 // adrsAt gives the decision records of the files of docs/adr/ (by base name) with their status lines.
 func adrsAt(files map[string][]byte) ([]spec.ADR, error) { return nil, nil }
 
+// constraintsOf gives the constraints that apply from the rows of the draft and of the spans, the text of the target's guardrails.md
+// and the files of its docs/adr/ by base name.
+func constraintsOf(draft, spans [][]string, guardrails []byte, adrs map[string][]byte) ([]spec.Constraint, error) {
+	return nil, nil
+}
+
 // constraintsAt gives the constraints that apply, from the records and from the target at base.
 func (r *state) constraintsAt(ctx context.Context, base string) ([]spec.Constraint, error) {
 	return nil, nil
@@ -39,4 +45,10 @@ func optionsPrompt(cs []spec.Constraint) func(input map[string]string, output st
 // rewritePrompt is the prompt of the rewrite session.
 func rewritePrompt(cs []spec.Constraint) func(input map[string]string, output string) []byte {
 	return func(map[string]string, string) []byte { return nil }
+}
+
+// noSurvivors gives, from the results of the filter, the decisions with no survivor that have no table of round 1 (the one
+// rewrite is due) and those that have one (the round made no progress: the stop), each sorted.
+func noSurvivors(round1 map[string][]byte, res map[string]spec.Result) (rewrite, stop []string) {
+	return nil, nil
 }

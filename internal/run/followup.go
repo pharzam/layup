@@ -329,3 +329,7 @@ func (r *state) followUpStep(ctx context.Context) Step {
 	}
 	return done(name, fmt.Sprintf("%d questions asked again, in questions.tsv and the comment of the follow-up", len(rows)))
 }
+
+// intakeFollowUps gives the rows of the follow-up of Intake: the rows of source follow-up that are not asked by the step
+// shape (kind shape, task T-3f94).
+func intakeFollowUps(questions [][]string) [][]string { return nil }
