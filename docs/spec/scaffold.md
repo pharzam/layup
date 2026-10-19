@@ -674,7 +674,7 @@ head; the admission is a function of the records and of the objects, so it needs
 same commit by the same function. **Known limits:** a change of the Operator's login in `approvers.tsv` after the push makes the bytes differ, so
 the next check fails and names them; the check judges the commit, not who pushed it (the forge's activity names the pusher, and `layup audit` of
 `M2f` reads it); the admission holds until the first merge of a task, after which [the tree after the first merge](loop.md#the-tree-after-the-first-merge)
-(row 66g, not built when this text was written) is the rule, and nothing here claims that check is built.
+(row 66g, task `T-xvvd`, #363) is the rule: it applies from the first known merge of a task, and from then on the setup head alone is no pass.
 
 ### The read-back
 

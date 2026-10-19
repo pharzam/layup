@@ -52,6 +52,15 @@ func passed(events [][]string, id string) bool {
 // written as payloads/<sha256>, which the event names after the reason. Each
 // refusal is one records commit through Fenced, and nothing is pushed.
 func (s *Sessions) pushTask(ctx context.Context, id string) error {
+	return s.pushChecked(ctx, id, nil)
+}
+
+// pushChecked is pushTask with one more check that a caller may add after the
+// others pass: extra gets the start row, the base, the head and the changed
+// paths, and gives the reason of a refusal ("" for none) or the run's own error
+// (the close-out check of row 66g, task T-xvvd, #363). A reason is refused as the
+// others are, with the diff from the base to the head as the payload.
+func (s *Sessions) pushChecked(ctx context.Context, id string, extra func(start []string, base, head string, names []string) (string, error)) error {
 	start, err := s.startRowOf(ctx, id)
 	if err != nil {
 		return err
@@ -109,6 +118,11 @@ func (s *Sessions) pushTask(ctx context.Context, id string) error {
 		}
 	}
 	reason, _ := rules.Check(names, reg, change)
+	if reason == "" && extra != nil {
+		if reason, err = extra(start, base, head, names); err != nil {
+			return err
+		}
+	}
 	if reason == "" {
 		return s.pushAndBind(ctx, start, id, head)
 	}

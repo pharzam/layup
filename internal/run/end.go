@@ -235,7 +235,7 @@ func (s *Sessions) appendEvents(ctx context.Context, task string, attempt int, i
 	for _, k := range kinds {
 		kind, detail, _ := strings.Cut(k, " ")
 		sha := ""
-		if kind == "push" || kind == "bound" { // "push <sha> <branch>"
+		if kind == "push" || kind == "bound" || kind == "merged" { // "push <sha> <branch>", "merged <sha> <number>"
 			sha, detail, _ = strings.Cut(detail, " ")
 		}
 		after = append(after, []string{strconv.Itoa(len(after) + 1), kind, strconv.Itoa(attempt), id, "", sha, detail, s.Now().UTC().Format(timeForm)})

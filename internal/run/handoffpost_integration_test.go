@@ -31,7 +31,7 @@ func commentWorldWith(t *testing.T, baseline map[string]string) (*world, *Sessio
 // afterRestart gives the Sessions of a restart: the same records, forge and run, no
 // state of the first (the session directory is gone).
 func afterRestart(r *Sessions) *Sessions {
-	return &Sessions{Store: r.Store, RunID: r.RunID, Host: r.Host, Target: r.Target, Clone: r.Clone, Branch: r.Branch, Now: time.Now, Forge: r.Forge, Control: r.Control, App: r.App, Bot: r.Bot}
+	return &Sessions{Store: r.Store, RunID: r.RunID, Host: r.Host, Target: r.Target, Clone: r.Clone, Branch: r.Branch, Now: time.Now, Forge: r.Forge, Control: r.Control, App: r.App, Bot: r.Bot, Web: r.Web}
 }
 
 // commentSession runs a session of the role that writes result/plan.md with text

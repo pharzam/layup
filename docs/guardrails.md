@@ -1164,6 +1164,14 @@ These traps are not domain-specific: they hurt every project's test suite.
   all. A second trap of the same task: a helper that copies a struct by hand (`afterRestart`) drops a field added
   later (here the bot ID), so the restart cannot tell its own status; assert the field on the copy.
   Learned in `T-q0kr` (#362).
+- ❌ **A refusal that "pushed nothing" is tested against a branch that already exists.** The verifier's own push had
+  made `task/<task>/1` at the verified head, so "the branch exists" was true before the close-out and after its
+  refusal. It is silent because the assertion is green for a refusal and for a push alike. **The check:** read the tip
+  of the branch before the session and assert it is unchanged. Two traps of the same task: a stand-in store whose
+  injected failure `Fenced` retries (`refuse = 1`) does not stop a register write, so give it a failure that
+  escapes the retry; and a helper that opens the object under test (the draft) makes every test of the next stage
+  fail with one line at a stub, so the tests of the ready and merge rule open the draft through the forge and the
+  register directly. Learned in `T-xvvd` (#363).
 - ❌ **A record row that names a file is not the record ID a check wants.** The full check wants the `F-NNNN` IDs
   whose `#n` is the numbered fact `n`, and the setup record holds only paths (`brief.copy` is a raw copy to which S06
   assigns no numbered record; the answers record numbers `S01-stack` first, so its fact 2 is not `Q-002`). Reading an ID from the closest

@@ -63,6 +63,7 @@ type Sessions struct {
 	Control       int
 	App           string // the slug of the App, to tell its own comment (row 66d)
 	Bot           int64  // the numeric ID of the App's bot, to tell its own status (row 66f)
+	Web           string // the web address of the forge, for a link in a pull request's body (row 66g)
 	Prices        [][]string
 	newID         func() (string, error)
 	sweep         func(host, target string) error

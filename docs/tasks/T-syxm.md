@@ -72,4 +72,4 @@ ADR-0007, recorded, not budgeted. Tokens are as the harness reported them.
 | Review round 1 | reasoning | GPT-6.1 Sol (Codex CLI) | xhigh | not kept: its run directory was removed before they were read | not kept |
 | Fix of round 1 | execution | Claude Sonnet 5.5 | not recorded | 96,158 | not recorded |
 | Review round 2 | reasoning | GPT-6.1 Sol (Codex CLI) | xhigh | 183,806 | 2026-10-18T20:54:21Z to 21:02:09Z |
-| Fix of end 3 and close-out | execution | Claude Sonnet 5.5 | not recorded | not reported by the harness | about 5 min, 2026-10-19T05:45Z to 05:50Z, before the final checks |
+| Fix of end 3 and close-out | execution | Claude Sonnet 5.5 | not recorded | 87,972 | 38 min, 2026-10-19T05:45Z to 06:23Z, the full integration level included |
