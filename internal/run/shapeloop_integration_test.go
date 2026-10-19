@@ -245,6 +245,10 @@ func TestAnInterruptedStageIsFinishedFromItsKeptFilesAndRunsNoSecondSession(t *t
 			d.w.fake.failNote = "size: small"
 			return nil
 		}},
+		{"the post of the plan review", func(d *drvWorld) func(*Sessions) {
+			d.w.fake.failNote = "verdict: approve"
+			return nil
+		}},
 		{"the post of the review record", func(d *drvWorld) func(*Sessions) {
 			d.w.fake.failNote = "findings:"
 			return nil
@@ -271,11 +275,17 @@ func TestAnInterruptedStageIsFinishedFromItsKeptFilesAndRunsNoSecondSession(t *t
 			continue
 		}
 		d.mustVerify(spec)
-		if after := len(d.sessionsOf(spec)); after != 4 {
-			t.Errorf("%s: %d sessions in all; want 4, one for each stage", c.name, after)
+		roles := map[string]int{}
+		for _, r := range d.sessionsOf(spec) {
+			roles[r[sessionRole]]++
 		}
-		if n := countPosts(d, "findings:"); n != 1 {
-			t.Errorf("%s: %d review records on the issue; want one", c.name, n)
+		if roles[stepRole("plan-of-a-task")] != 1 || roles[stepRole("verification")] != 2 || roles[stepRole("specification")] != 1 || len(d.sessionsOf(spec)) != 4 {
+			t.Errorf("%s: the sessions by role %v; want one plan, one plan review and one verifier (qa-engineer 2), one developer and no second of a stage", c.name, roles)
+		}
+		for _, sub := range []string{"size: small", "verdict: approve", "findings:"} {
+			if n := countPosts(d, sub); n != 1 {
+				t.Errorf("%s: %d comments hold %q; want one (the plan, the plan review and the review record are each posted once)", c.name, n, sub)
+			}
 		}
 	}
 }
@@ -397,5 +407,87 @@ func TestTheCapOfMilestoneZeroIsAskedBeforeEachSession(t *testing.T) {
 	}
 	if gitOut(t, d.w.bare, "ls-tree", "--name-only", "layup-records", "sessions.tsv") != "" {
 		t.Error("a session started; want none")
+	}
+}
+
+// statusFault fails the post of the failure status of layup/verify that is the failOn-th, once.
+type statusFault struct {
+	forge.Forge
+	failOn, n int
+}
+
+func (f *statusFault) SetStatus(ctx context.Context, sha, name, state, description string) error {
+	if name == VerifyContext && state == "failure" {
+		if f.n++; f.n == f.failOn {
+			return errors.New("the forge did not take the status")
+		}
+	}
+	return f.Forge.SetStatus(ctx, sha, name, state, description)
+}
+
+// Review condition 4: when the post of the failure of a material review fails, at the end of an attempt or before the terminal wait, the
+// next run posts it before the next attempt starts or the wait is given, and adds no session and no comment.
+func TestAFailedPostOfTheVerdictStatusIsPostedBeforeTheAttemptOrTheWait(t *testing.T) {
+	for _, c := range []struct {
+		name     string
+		failOn   int
+		attempts int // the attempts when the first call stops
+	}{{"the end of the first attempt", 1, 1}, {"the terminal wait", 2, 2}} {
+		d := newDrvWorld(t, loopPerms)
+		spec, _ := d.open()
+		d.ctlWrite("verdicts-"+spec, "material\nmaterial\n")
+		if _, err := d.advance(spec, func(s *Sessions) { s.Forge = &statusFault{Forge: s.Forge, failOn: c.failOn} }); err == nil {
+			t.Fatalf("%s: the first call = nil; want the failed post", c.name)
+		}
+		if n := strings.Count(strings.Join(d.kinds(spec), " "), "attempt"); n != c.attempts {
+			t.Errorf("%s: %d attempts after the failed post; want %d (no attempt starts before the failure is posted)", c.name, n, c.attempts)
+		}
+		heads := d.boundOf(spec)
+		if st := statusesOf(d.w, heads[len(heads)-1]); st[0]["state"] != "pending" {
+			t.Errorf("%s: the newest status of the reviewed head is %v; want it still pending, the failure not posted", c.name, st[0])
+		}
+		sessions, comments := len(d.sessionsOf(spec)), countPosts(d, "findings:")
+		got, err := d.advance(spec, nil)
+		if err != nil || !strings.Contains(got.Wait, "the review-cycle cap 1 is reached") {
+			t.Fatalf("%s: the second call = %+v, %v; want the wait at the cap", c.name, got, err)
+		}
+		heads = d.boundOf(spec)
+		for _, h := range heads {
+			if st := statusesOf(d.w, h); st[0]["state"] != "failure" || st[0]["context"] != VerifyContext {
+				t.Errorf("%s: the newest status of %s is %v; want the failure of layup/verify", c.name, h[:7], st[0])
+			}
+		}
+		if c.failOn == 2 && (len(d.sessionsOf(spec)) != sessions || countPosts(d, "findings:") != comments) {
+			t.Errorf("%s: a session or a comment was added by the call that recovered", c.name)
+		}
+		if c.failOn == 1 && (len(d.sessionsOf(spec)) != 6 || countPosts(d, "findings:") != 2 || len(heads) != 2) {
+			t.Errorf("%s: %d sessions, %d review records, %d heads; want 6, 2 and 2", c.name, len(d.sessionsOf(spec)), countPosts(d, "findings:"), len(heads))
+		}
+	}
+}
+
+// loop.md, layup/verify: with a gate failure and no harness outside the authors, the status not-active is posted and the driver stops; it
+// starts no second attempt, as the failure of a gate alone would.
+func TestAGateFailureWithNoIndependentVerifierStopsAndStartsNoAttempt(t *testing.T) {
+	d := newDrvWorld(t, loopPerms)
+	pushRecords(t, d.w.bare, map[string]string{"routing.tsv": "role\ttier\tposition\tharness\tmodel\nsoftware-engineer\treasoning\t1\tclaude\tm1\nproduct-owner\treasoning\t1\tdevin\tm1\nsystems-architect\treasoning\t1\tdevin\tm1\nqa-engineer\treasoning\t1\tdevin\tm1\n"}, "routing")
+	d.r = restarted(t, d.w)
+	d.ctlWrite("gofile", "")
+	spec, _ := d.open()
+	got, err := d.advance(spec, nil)
+	if err != nil || got.Stop != spec+": not-active: no harness outside the authors" {
+		t.Fatalf("AdvanceShapeTask = %+v, %v; want the stop for not-active", got, err)
+	}
+	if n := strings.Count(strings.Join(d.kinds(spec), " "), "attempt"); n != 1 {
+		t.Errorf("%d attempts; want one: the gate failure starts none when the verifier cannot run", n)
+	}
+	var got2 []string
+	for _, st := range statusesOf(d.w, d.boundOf(spec)[0]) {
+		got2 = append(got2, st["context"].(string)+" "+st["state"].(string))
+	}
+	for _, want := range []string{GatesContext + " failure", VerifyContext + " failure"} {
+		if !slices.Contains(got2, want) {
+			t.Errorf("the statuses of the head = %v; want %q", got2, want)
+		}
 	}
 }
