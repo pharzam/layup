@@ -234,6 +234,12 @@ func followUpRows(questions, answers [][]string, asked string) [][]string {
 // quote and, for a marker, the value that the session proposed (the rows of
 // intake/markers.tsv; task T-4c5c, #276).
 func followUpComment(questions, rows [][]string, psb []byte, markers [][]string) string {
+	return askedAgainComment(followUpHeader, questions, rows, psb, markers)
+}
+
+// askedAgainComment is the comment of rows that ask questions again, under header: the follow-up's, and the step shape's
+// (task T-3f94, #364).
+func askedAgainComment(header string, questions, rows [][]string, psb []byte, markers [][]string) string {
 	asked := map[string][]string{}
 	for _, q := range questions {
 		asked[q[0]] = q
@@ -250,7 +256,7 @@ func followUpComment(questions, rows [][]string, psb []byte, markers [][]string)
 		}
 		return false, ""
 	}
-	return questionsComment(followUpHeader, rows, quote, about, psb)
+	return questionsComment(header, rows, quote, about, psb)
 }
 
 // followUpStep is the step follow-up of Intake: with follow-up rows in

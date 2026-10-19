@@ -36,6 +36,7 @@ type ShapeTaskInput struct {
 type Advance struct {
 	Task       string
 	Verified   bool
+	Head       string // the bound head that the verifier found nothing material in
 	Wait, Stop string
 }
 
