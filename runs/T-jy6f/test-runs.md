@@ -531,3 +531,15 @@ Their failing controls are three compiled mutants, run by the runner of S7 on th
 | SM36 | `a1fc3c879c557d54f80c80572f59a791036a3086cb62c4757f4cdad64367712c` | `b4e5cdc2077fd192f131127876c041403cf1b3df339eb6752e25b29eef7ca894` | `a1fc3c879c557d54f80c80572f59a791036a3086cb62c4757f4cdad64367712c` | equal |
 
 **The count, recounted again.** 34 killed (the 31 of round 2 and SM34, SM35 and SM36); not killed: **SM19b** alone; SM19a did not build and is not a run.
+
+### Round 3 - the full integration level on the final code head
+
+Command: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 90m ./...`, on the head `630e02a` (the tests and this record; no production code changed in this cycle). The unit level, the e2e level, `go vet` (both forms), `gofmt -l` and the lints were run on it too, all exit 0.
+
+```
+start 2026-10-19T14:56:17Z
+ok  	github.com/pharzam/layup/internal/git	6.006s
+ok  	github.com/pharzam/layup/internal/run	1621.911s
+exit=0
+end 2026-10-19T15:23:56Z
+```
