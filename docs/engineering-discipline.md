@@ -291,8 +291,10 @@ the rounds is:
   frozen head that no fix followed. Its verdict is `nothing material in scope`
   when nothing material in scope remains, and `not mergeable, findings recorded`
   on any of three routes: the cap below is reached with something material still
-  open; a finding's materiality or classification stands disputed; or the budget
-  overran without the operator's approval. Only the first needs the cap.
+  open; a finding's materiality or classification stands disputed; or the landing
+  figure exceeds the `Budget maximum` plus its tolerance in either dimension and
+  the Operator has not approved that exact landing figure on the issue. Only the
+  first needs the cap.
 - **A merge of `main` is the one other thing that may land.** A rebase would
   rewrite the frozen head the verdict names, so a branch under a frozen-head
   verdict integrates by merging `origin/main` into itself — see
@@ -305,10 +307,9 @@ the rounds is:
   script, a hook, CI or branch protection). The plan-review confirmation declares
   the cap; where it is silent, the cap is 1. On the cap, with something material
   still in scope, the verdict is `not mergeable, findings recorded`.
-- **The Operator ends the work at the cap.** The author posts the open findings
-  on the issue, and the Operator chooses one of four ends. The verdict of the
-  last round stays `not mergeable, findings recorded` until the Operator
-  chooses.
+- **The ends at the cap.** With material findings still open at the cap, the
+  author posts them on the issue. The Operator chooses one of four ends, except
+  where end 3 applies by default below.
   1. *One more cycle.* A `## Plan review` comment records the new `Cycle cap`
      as a table row (`| Cycle cap | N |`), and the verdict of the last round is
      edited to `material`, with the reason, so that
@@ -320,12 +321,30 @@ the rounds is:
      each known limit.
   3. *A fix with no further round.* The fix of the last round lands, and the
      task record names it as a fix that no round read. The last verdict stays
-     `not mergeable, findings recorded`; the Operator's comment permits the merge.
-     This end is the one exception to "A fix re-freezes" and "The last round
-     carries the verdict" above, and to the `Verdict` field of
-     [What a round records](#what-a-round-records): only the Operator's comment
-     makes it. No further fix and no further round follow that round; the
-     close-out bookkeeping and a merge of `main` land as before.
+     `not mergeable, findings recorded`.
+
+     At the cap with material findings still open, this end applies without an
+     Operator comment when every open material finding is a records finding.
+     A records finding is one whose fix restores a named source or a record’s
+     form, and changes nothing else. Examples are a traceability row or Test
+     cell made to name a test that exists, an index line, record columns made
+     to match their schema, and trailing white space.
+
+     A fix that changes an exit code, an assertion, a verdict, a check’s input
+     (as defined in the budget rule below), a test, product code, the
+     specification, or a sentence that grants or limits an authority is not a
+     records finding. Its end stays the Operator’s. A disputed classification
+     also stays the Operator’s.
+
+     The author records `end 3 by ADR-0028` with the findings and their fixes
+     on the issue. The Operator can overrule it there before the merge. Either
+     this default or the Operator’s comment permits the merge.
+
+     This end is the one exception to “A fix re-freezes”, “The last round
+     carries the verdict”, and the `Verdict` field of
+     [What a round records](#what-a-round-records). After that fix, no further
+     fix or round follows; the close-out bookkeeping and a merge of `main`
+     land as before.
   4. *A split.* One successor issue carries the branch's work as it stands, on a
      branch of its own with a first freeze of its own, plus a child issue for
      each open finding the successor does not take. Where it takes them all, it
@@ -340,7 +359,8 @@ the rounds is:
   settles disputed materiality.
 - **A finding is classified before it is fixed.** *In the change* — introduced
   by this branch, or pre-existing on the path the Definition of Done names — is
-  fixed here inside the budget, else it becomes a child issue. *Revealed* —
+  fixed here when the resulting landing figure is permitted by the budget rule
+  below; otherwise it becomes a child issue. *Revealed* —
   pre-existing and off that path — opens a new issue, a blocker if it is a
   silent false green and normal if it fails loudly; it blocks this merge only
   if this branch made it reachable. The last round lists the accepted
@@ -353,22 +373,46 @@ the rounds is:
 - **The budget is R12's bound.** The plan states it and the plan review sets
   the maximum — [R12](issue-workflow.md#r12--slice-and-prioritize) says so. The
   unit is lines added plus lines removed on the whole branch diff, plus files
-  touched, measured against a named base SHA. An overrun is a finding reported on the issue,
-  never a revision; the growth becomes a child issue unless the operator approves
-  it once, on the issue. An overrun the operator has not approved blocks the
-  merge: the last round carries it as a finding and returns
-  `not mergeable, findings recorded`. That route does not run through the cap —
-  an unapproved overrun blocks a merge whether or not anything else is open. **Once** counts per issue, so a successor
-  issue starts with an approval of its own; nothing forbids that, and what the
-  rule relies on is that the successor's plan review sets its maximum with the
-  carried size already measured — a discipline, not a mechanism. An approval is **one number, named once,
-  and it is the figure at landing** — the reviewed head plus the close-out
-  bookkeeping (the completed-log line, the verdict, and any resource record).
-  It reaches that figure and no further: there is no **ceiling**, no multiple and
-  no kind of growth an approval covers in advance. Three review rounds wrote three
-  such reaches and a later round falsified each, so the reach does not
-  exist. Growth past the figure is absorbed, routed to a child issue where the
-  finding is non-material, or ends at the cap.
+  touched, measured against a named base SHA.
+
+  Two kinds of change leave the count. Evidence records under `runs/<task>/`
+  leave it, lines and files: Markdown, TSV and text files that record runs,
+  times and outputs. A file under `runs/` that a check, a test or a script
+  executes or reads as its input (for example `runs/T-gd8q/checks.sh`, or a file
+  that such a script reads) still counts, lines and file. Executable tests and
+  their inputs stay in the count.
+
+  "Input" means the data that a script or a test runs on: executable content,
+  fixtures, expected outputs and configuration used to run or exercise behaviour.
+  A record that a check only reads to audit its form, its citations or its
+  evidence is not an input. A file serving both purposes remains an input.
+
+  The close-out bookkeeping also leaves the count: the completed-log line, the
+  backlog line it removes, and the verdict and resource record of the task's own
+  file. Where a file holds bookkeeping and other changes, only the bookkeeping
+  lines leave the count. The file still counts as touched.
+
+  A landing figure above the `Budget maximum` by no more than the tolerance is
+  approved in advance. The tolerance is 20 % of the maximum’s lines, at least
+  60 lines and at most 500, plus 4 files. Before the merge, the author posts the
+  figure, the maximum and the margin on the issue. The Operator can overrule
+  that delegated decision there before the merge.
+
+  The tolerance is one fixed bound, the same for every task. It is not a
+  multiple, does not grow with the findings, and is not a second approval.
+
+  A figure past the tolerance is a finding reported on the issue, never a
+  revision. The growth becomes a child issue unless the Operator approves one
+  exact landing figure, once, on the issue. That approval reaches the named
+  figure and no further. An unapproved overrun blocks the merge: the last round
+  carries it as a finding and returns `not mergeable, findings recorded`. This
+  route does not run through the cap.
+
+  **Once** counts per issue. A successor issue starts with an approval of its
+  own, and its plan review sets its maximum with the carried size already
+  measured. This is a discipline, not a mechanism. Growth past the approved
+  figure is absorbed, routed to a child issue where the finding is non-material,
+  or ends at the cap.
 
 ### Who may review
 
