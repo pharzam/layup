@@ -1,3 +1,0 @@
-ok  	github.com/pharzam/layup/internal/run	114.286s
-exit=0
-2026-10-20T14:57:34Z

@@ -63,3 +63,147 @@ Direct statuses (`echo "exit=$?"` after the command, no pipe); the times are `da
   as the push of code. They were corrected in the tests (second run of the three: ok) with no change of code.
 - The full integration level, started 2026-10-20T15:13:19Z: `internal/run` failed one test, `TestTheStepForgeCheckChecksTheForgeAndCommitsItsTableAtEachRestart` (the notes of progress count 24 rows, not 23, once the Scaffold is done: the expected change of the plan,
   `forgecheck_integration_test.go`), which was corrected; the final run is recorded at the end of this file.
+
+## Appendix - the transcripts of the red runs (the output cut at 330 characters a line; the gate noise of the scripted harness left out)
+
+### red-unit-1
+```
+2026-10-20T14:57:05Z
+--- FAIL: TestABetsTableRefusesEachBrokenRule (0.00s)
+    bet_test.go:39: a second first bet: err = <nil>; want line 3, column "kind"
+    bet_test.go:39: a later bet before the first: err = <nil>; want line 2, column "kind"
+    bet_test.go:39: no brief hash: err = <nil>; want line 2, column "brief_sha256"
+    bet_test.go:39: a bet with no appetite: err = <nil>; want line 2, column "appetite_usd"
+    bet_test.go:39: a no-bet with an appetite: err = <nil>; want line 2, column "appetite_usd"
+    bet_test.go:44: control: 0 rows, <nil>; want 3 and no error
+--- FAIL: TestTheBetRowIsItsAnswerAndItsBrief (0.00s)
+    bet_test.go:57: betRow = []; want ["1" "first" "901" "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1" "40.0" "30.5" "905" "db=pg web=go" "bet" "77" "2026-10-08T14:00:00Z"]
+    bet_test.go:62: betRow of a no-bet = []; want ["1" "first" "901" "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1" "" "" "905" "" "no-bet" "77" "2026-10-08T14:00:00Z"]
+--- FAIL: TestTheOptionLinesAreTheColumnOptions (0.00s)
+    bet_test.go:69: optionsColumn = []; want [db=pg web=go]
+--- FAIL: TestThePhaseTagsAreTheFirstColumnOfSection9 (0.00s)
+    bet_test.go:80: tags = []; want [1 alpha 3]
+--- FAIL: TestTheAnswerIsTheEarliestFirstCopyOfTheApproverAfterTheBrief (0.00s)
+    bet_test.go:111: betAnswer = {Reqs:map[] Facts:map[] Options:map[] Verdict: Milestone:}, [], false; want the copy 99 with the option db=pg
+--- FAIL: TestTheSettledDecisionsAreTheOptionLines (0.00s)
+    bet_test.go:126: settled = []; want [db] (web had one survivor)
+--- FAIL: TestTheRequirementsOfAnOptionAreItsMappedRows (0.00s)
+    bet_test.go:139: ids = [], <nil>; want [NFR-002 REQ-004] once each (NFR-009 is no requirement of the draft)
+    bet_test.go:147: rows ["F-3" "Inv-1" "ADR-0001" "Q-002"]: err = <nil>; want the decision db: its option pg names no requirement
+    bet_test.go:147: rows ["R-005"]: err = <nil>; want the decision db: its option pg names no requirement
+    bet_test.go:147: rows []: err = <nil>; want the decision db: its option pg names no requirement
+--- FAIL: TestTheRenderedRecordsAreOnePRDAndTheFactsFile (0.00s)
+    bet_test.go:169: paths = []; want the facts record F-0005 and the PRD
+--- FAIL: TestTheNextVersionOfTheInventory (0.00s)
+    bet_test.go:201: the first version: 0 files, 0 rows, <nil>
+--- FAIL: TestBetFollowsShapeOnlyOnceTheScaffoldIsDone (0.00s)
+    bet_test.go:220: the last rows = [scaffold-push shape]; want shape, bet
+FAIL
+FAIL	github.com/pharzam/layup/internal/run	0.184s
+--- FAIL: TestAPushAndABoundOfCodeHaveNoSession (0.00s)
+    session_test.go:374: a push and a bound with no session: line 5, column "session": session is the empty value exactly for attempt, closed, rebased, merged and a refused whose reason is pair (a handoff has one unless code wrote it for a rendered task); want read
+FAIL
+FAIL	github.com/pharzam/layup/internal/records	0.010s
+FAIL
+exit=1
+2026-10-20T14:57:07Z
+```
+
+### red-unit-2
+```
+$ go test -count=1 ./internal/run/ ./internal/records/
+start 2026-10-20T15:08:26Z
+exit=1
+end 2026-10-20T15:08:27Z
+--- FAIL: TestABetsTableRefusesEachBrokenRule (0.00s)
+    bet_test.go:39: a second first bet: err = <nil>; want line 3, column "kind"
+    bet_test.go:39: a later bet before the first: err = <nil>; want line 2, column "kind"
+    bet_test.go:39: no brief hash: err = <nil>; want line 2, column "brief_sha256"
+    bet_test.go:39: a bet with no appetite: err = <nil>; want line 2, column "appetite_usd"
+    bet_test.go:39: a no-bet with an appetite: err = <nil>; want line 2, column "appetite_usd"
+    bet_test.go:44: control: 0 rows, <nil>; want 3 and no error
+--- FAIL: TestTheBetRowIsItsAnswerAndItsBrief (0.00s)
+    bet_test.go:57: betRow = []; want ["1" "first" "901" "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1" "40.0" "30.5" "905" "db=pg web=go" "bet" "77" "2026-10-08T14:00:00Z"]
+    bet_test.go:62: betRow of a no-bet = []; want ["1" "first" "901" "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1" "" "" "905" "" "no-bet" "77" "2026-10-08T14:00:00Z"]
+--- FAIL: TestTheOptionLinesAreTheColumnOptions (0.00s)
+    bet_test.go:69: optionsColumn = []; want [db=pg web=go]
+--- FAIL: TestThePhaseTagsAreTheFirstColumnOfSection9 (0.00s)
+    bet_test.go:80: tags = []; want [1 alpha 3]
+--- FAIL: TestTheAnswerIsTheEarliestFirstCopyOfTheApproverAfterTheBrief (0.00s)
+    bet_test.go:111: betAnswer = {Reqs:map[] Facts:map[] Options:map[] Verdict: Milestone:}, [], false; want the copy 99 with the option db=pg
+--- FAIL: TestTheSettledDecisionsAreTheOptionLines (0.00s)
+    bet_test.go:126: settled = []; want [db] (web had one survivor)
+--- FAIL: TestTheRequirementsOfAnOptionAreItsMappedRows (0.00s)
+    bet_test.go:139: ids = [], <nil>; want [NFR-002 REQ-004] once each (NFR-009 is no requirement of the draft)
+    bet_test.go:147: rows ["F-3" "Inv-1" "ADR-0001" "Q-002"]: err = <nil>; want the decision db: its option pg names no requirement
+    bet_test.go:147: rows ["R-005"]: err = <nil>; want the decision db: its option pg names no requirement
+    bet_test.go:147: rows []: err = <nil>; want the decision db: its option pg names no requirement
+--- FAIL: TestTheRenderedRecordsAreOnePRDAndTheFactsFile (0.00s)
+    bet_test.go:169: paths = []; want the facts record F-0005 and the PRD
+--- FAIL: TestTheNextVersionOfTheInventory (0.00s)
+    bet_test.go:201: the first version: 0 files, 0 rows, <nil>
+--- FAIL: TestBetFollowsShapeOnlyOnceTheScaffoldIsDone (0.00s)
+    bet_test.go:220: the last rows = [scaffold-push shape]; want shape, bet
+--- FAIL: TestACodeBoundWithNoSessionIsSkippedByItsReaders (0.00s)
+    bet_test.go:235: lastBound = bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, ""; want the last bound of a session
+    bet_test.go:240: registerRevOf of the rendered commit = "", the event bound of  has no start row in sessions.tsv; want the commit that the caller gives
+    bet_test.go:243: authorsFrom with a bound of code: the event bound of  has no start row in sessions.tsv; want none
+    bet_test.go:249: loopPosition with a bound of code = {Pos:13 Session: Msg:T-aaaa: the session  has a bound and is not of the developer role Attempt:1 Base:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa Head: Ask:{Stage:0 Session: Row:[] Question: Owner: Base: Msg:}}; want no stop
+    bet_test.go:252: renderedBound = false, false; want true with the bound of code and false without
+FAIL
+FAIL	github.com/pharzam/layup/internal/run	0.176s
+--- FAIL: TestAPushAndABoundOfCodeHaveNoSession (0.00s)
+    session_test.go:374: a push and a bound with no session: line 5, column "session": session is the empty value exactly for attempt, closed, rebased, merged and a refused whose reason is pair (a handoff has one unless code wrote it for a rendered task); want read
+FAIL
+FAIL	github.com/pharzam/layup/internal/records	0.011s
+FAIL
+```
+
+### red-integration-1
+```
+$ TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 60m ./internal/run/ -run "TestTheBetsBlock|TestTheStepBet$|TestBriefLinesUnset|TestOnlyTheApprover|TestADecisionWhose|TestANoBet|TestALaterBet|TestTheBetStepIsAtomic|TestShapeStaysDone"
+start 2026-10-20T15:08:34Z
+exit=1
+end 2026-10-20T15:09:06Z
+--- FAIL: TestTheBetStepIsAtomicToItsLastAct (26.66s)
+    --- FAIL: TestTheBetStepIsAtomicToItsLastAct/version (3.75s)
+        bet_integration_test.go:346: the stopped step = {Name:bet Result:done Detail:not wired}; want the stop
+    --- FAIL: TestTheBetStepIsAtomicToItsLastAct/pushevent (3.80s)
+        bet_integration_test.go:346: the stopped step = {Name:bet Result:done Detail:not wired}; want the stop
+    --- FAIL: TestTheBetStepIsAtomicToItsLastAct/pushed (3.80s)
+        bet_integration_test.go:346: the stopped step = {Name:bet Result:done Detail:not wired}; want the stop
+    --- FAIL: TestTheBetStepIsAtomicToItsLastAct/bound (3.84s)
+        bet_integration_test.go:346: the stopped step = {Name:bet Result:done Detail:not wired}; want the stop
+    --- FAIL: TestTheBetStepIsAtomicToItsLastAct/carry (3.86s)
+        bet_integration_test.go:346: the stopped step = {Name:bet Result:done Detail:not wired}; want the stop
+    --- FAIL: TestTheBetStepIsAtomicToItsLastAct/issue (3.83s)
+        bet_integration_test.go:346: the stopped step = {Name:bet Result:done Detail:not wired}; want the stop
+    --- FAIL: TestTheBetStepIsAtomicToItsLastAct/task (3.77s)
+        bet_integration_test.go:346: the stopped step = {Name:bet Result:done Detail:not wired}; want the stop
+--- FAIL: TestTheBetsBlockEqualsItsGoSchema (0.00s)
+    bet_integration_test.go:92: the block bets and BetsSchema: schema bets: the number of columns: the block has "11"; the Go schema has "0"
+--- FAIL: TestTheStepBet (3.54s)
+    bet_integration_test.go:106: the step = {Name:bet Result:done Detail:not wired}; want the wait for the answer
+--- FAIL: TestANoBetWritesItsRowAndWaits (3.55s)
+    bet_integration_test.go:300: the step = {Name:bet Result:done Detail:not wired}; want {Name:bet Result:done Detail:waiting for the Operator: no bet}
+--- FAIL: TestADecisionWhoseOptionNamesNoRequirementIsRefusedBeforeAnyWrite (3.62s)
+    bet_integration_test.go:280: run 0: {Name:bet Result:done Detail:not wired}; want the refusal
+--- FAIL: TestShapeStaysDoneAfterTheRenderedPush (3.62s)
+    bet_integration_test.go:402: the step = {Name:bet Result:done Detail:not wired}
+--- FAIL: TestALaterBetFailsClosed (3.65s)
+    bet_integration_test.go:323: the step = {Name:bet Result:done Detail:not wired}; want a fail naming row 66t and no write
+--- FAIL: TestOnlyTheApproverOfTheBetAnswersAndALookupThatFailsChoosesNoOne (3.68s)
+    bet_integration_test.go:247: with dave named: {Name:bet Result:done Detail:not wired}; want the idea owner's answer to answer nothing
+--- FAIL: TestBriefLinesUnsetWaitsWithNoSession (3.69s)
+    bet_integration_test.go:225: the step = {Name:bet Result:done Detail:not wired} after 0 sessions; want the wait for the Operator, no session and no post
+FAIL
+FAIL	github.com/pharzam/layup/internal/run	30.373s
+FAIL
+```
+
+### characterization
+```
+ok  	github.com/pharzam/layup/internal/run	114.286s
+exit=0
+2026-10-20T14:57:34Z
+```
