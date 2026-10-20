@@ -38,7 +38,7 @@ into whatever single function decides what follows the statuses of a bound head"
   `headFindings`, extracted from it (the gate-table part, behaviour kept). It needs real git for the rules, so its test is I1's prompt file.
 - The existing `TestAFailedStatusOfTheHeadStopsTheStepWithNoVerifierAndNoNewAttempt` asserted the stops of 66r for a failed spec or rules. Those two cases
   are the behaviour this row changes, and move to the new tests; the error cases and the control stay.
-- 66k's After cell: the R10 commit `006738d` of `T-9nbf` already names 66aa; this change does not touch the cell (no edit of 66k's row).
+- 66k's After cell: 66aa is added to it here (round 1 of the review, F1), because the registration edit of `T-9nbf` has not landed; the cell keeps its order and style.
 
 ## S3 - the red runs
 
@@ -100,7 +100,7 @@ given findings and the kind), then the driver: `judgeStatuses` gives a failure o
 ## S5 and S6 - the mutants and the registration
 
 The compiled mutants are in `runs/T-tnxn/mutants.md` (18 mutants, all built and vetted, all killed, every restore matched its SHA-256). The plan row 66aa, the Task and Test cells of
-REQ-005 and REQ-007 in PRD-0001 section 12 and the traceability rows are in the commit `d1f9709`. The row does not touch the After cell of 66k (`T-9nbf`'s R10 commit names 66aa).
+REQ-005 and REQ-007 in PRD-0001 section 12 and the traceability rows are in the commit `d1f9709`. The After cell of 66k (row 409) names 66aa from the fix of round 1.
 
 ## S7 - the gates
 
@@ -117,3 +117,17 @@ The head is `b3988ed` (the Go files are those of the green commit `b46c02a`). Ea
 
 The full integration level shares the scratchpad directory of the orchestrating session with a parallel build, and its file `full.start` was overwritten by that run at 06:16:14Z; the start time above is the one I read from it
 at 05:59:11Z, before that happened, and the result files (`full.exit`, `full.end`, `full.raw`) are those written when this run ended at 07:05:56Z, the other run being still alive. The raw output is kept in the session's scratchpad as `tnxn-final/full-integration.raw`.
+
+## Round 1 fix (F1: 66aa in the After cell of 66k)
+
+The reviewer's falsifier `rg -n '^\| 66k \|.*\|[^|]*66aa[^|]*\| 1 \|$' docs/plan/README.md` now exits 0 (it exited 1 before). The fix touches no Go, so no new full integration run; the one of S7 stands.
+
+| Command | Result |
+| ------- | ------ |
+| `sh docs/tests/run-discipline-tests.sh` | exit 0 |
+| `sh docs/links/link-lint.sh` | exit 0 |
+| `sh docs/setup/setup-check.sh` | exit 0 |
+| `git diff --check` | exit 0 |
+| `sh docs/tasks/task-state.sh` | exit 0 |
+| `go build ./...` | exit 0 |
+| `go test -count=1 ./...` | exit 0 |
