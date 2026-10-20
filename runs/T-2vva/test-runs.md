@@ -267,3 +267,19 @@ The tests were written first and run against the code of `eb04324`; the code fol
 - `go build ./...`, `go vet ./...`, `go vet -tags=integration ./...`, `go vet -tags=e2e ./...`: exit 0; `gofmt -l .`: empty; `go test -count=1 ./...` and `go test -count=1 -tags=e2e ./...`: ok.
 - The full integration level, `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 90m ./...`: 2026-10-20T17:05:49Z to 17:08:51Z, exit=0.
 - The six lints (`adr-lint`, `prd-lint`, `link-lint`, `run-discipline-tests`, `nested-checkout-check`, `setup-check`) and `git diff --check origin/main HEAD`: OK.
+
+## The freeze check of the round-3 head (late evidence; origin/main `a6c1d77`)
+
+The command, run on the clean committed head before this record, its output written outside the worktree (`/home/layup/.cache/layup-session/T-2vva-freeze-r3.txt`): `sh docs/tests/freeze-check.sh --task T-2vva --base origin/main --budget 3400/35`
+
+```
+ok K1: white space
+ok K2: registration of new tests
+ok K3: test selectors
+ok K4: restore evidence of mutants
+FAIL K5: -:0: projection: figure 2496/42, maximum 3400/35, margin 904/-7 (the figure at landing is still measured at landing)
+ok K6: conditions table
+exit=1
+```
+
+K5 fails on the files only (42 against 35, with the default allowance of the close-out); the Operator decides that figure. K1 to K4 and K6 pass.
