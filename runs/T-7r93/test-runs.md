@@ -39,3 +39,18 @@ After the merge of `origin/main` (`0f0890b`), the record's Status is `Accepted`,
 - **F2.** The pre-freeze check needs the conditions table of this task's plan review: `runs/T-7r93/conditions.md` holds its five conditions.
 
 The acceptance check of condition 1 tested `^Proposed$`. Since the Operator accepted the record, it fails in that form. Its accepted form, `grep -q "^Accepted$"` with the index row ending `| Accepted |`, is the check from here. At 2026-10-20T17:05:50Z on the fix tree, the Proposed form exited `1` and the Accepted form exited `0`.
+
+## The pre-freeze check on the fix head
+
+`sh docs/tests/freeze-check.sh --task T-7r93 --base origin/main --budget 200/5`, at 2026-10-20T17:06:56Z, on a clean committed head, exited `1`:
+
+```
+ok K1: white space
+ok K2: registration of new tests
+ok K3: test selectors
+ok K4: restore evidence of mutants
+FAIL K5: -:0: projection: figure 183/6, maximum 200/5, margin 17/-1 (the figure at landing is still measured at landing)
+ok K6: conditions table
+```
+
+K5 is the file count. The conditions table that F2 asked for is a sixth file at landing, against the maximum of five, and ADR-0028 is not in effect yet. So the figure at landing goes to the Operator, once, with its exact number.
