@@ -46,7 +46,7 @@ fixtures under [`tests/`](tests/).
 | `prd-lint` | `docs/prd/` discipline, via [`prd-lint.sh`](../prd/prd-lint.sh). |
 | `discipline-tests` | Each discipline linter against its good and bad fixtures, and the fixtures of the commands [`task-state.sh`](../tasks/task-state.sh) and [`task-labels.sh`](../tasks/task-labels.sh), which are not linters, via [`run-discipline-tests.sh`](../tests/run-discipline-tests.sh). |
 | `link-lint` | Every in-tree Markdown link and heading anchor, via [`link-lint.sh`](../links/link-lint.sh). |
-| `nested-checkout-check` | The linters skip a nested checkout, via [`nested-checkout-check.sh`](../tests/nested-checkout-check.sh). |
+| `nested-checkout-check` | The linters skip a nested checkout, via [`nested-checkout-check.sh`](../tests/nested-checkout-check.sh), and the fixtures of [`freeze-check.sh`](../tests/freeze-check.sh), via [`freeze-check/run-all.sh`](../tests/freeze-check/run-all.sh). |
 | `setup-check` | The setup of this repository and its evidence, via [`setup-check.sh`](../setup/setup-check.sh) and its fixtures. |
 | `lint` | `gofmt` and `go vet` over the Go code. |
 | `tests` | The test ladder, cheap to expensive: unit, integration, end-to-end (see [`test-levels.md`](../tests/test-levels.md)). |
