@@ -39,4 +39,3 @@ After the merge of `origin/main` (`0f0890b`), the record's Status is `Accepted`,
 - **F2.** The pre-freeze check needs the conditions table of this task's plan review: `runs/T-7r93/conditions.md` holds its five conditions.
 
 The acceptance check of condition 1 tested `^Proposed$`. Since the Operator accepted the record, it fails in that form. Its accepted form, `grep -q "^Accepted$"` with the index row ending `| Accepted |`, is the check from here. At 2026-10-20T17:05:50Z on the fix tree, the Proposed form exited `1` and the Accepted form exited `0`.
-
