@@ -91,3 +91,25 @@ Stage A scope verification:
 | `git status --short --untracked-files=all` | 2026-10-20T18:44:36Z | 2026-10-20T18:44:36Z | 0 | `?? runs/T-3ff9/checks.sh`; `?? runs/T-3ff9/test-runs.md` |
 
 Tracked files are unchanged. The only pending files are the two S1 artifacts named in the commit plan. Commit and hook execution are left to the coordinating session under the Stage A instruction.
+
+## Stage B: S2 and S3
+
+Tested the uncommitted Stage B documents on `9c19effc8ed2d457bb255964b354b56c57e6c41e`; the task check is unchanged from S1. The binding inputs are the supplied reviewed plan, amendment 1 and Operator option-1 decision on #447. [semantic.md](semantic.md) is the author's clause comparison; independent semantic review remains pending. [conditions.md](conditions.md) maps the three review conditions; [mentions.tsv](mentions.tsv) records the reference sweep. Read-only inspection and editing commands were not timed; no test result is inferred from them.
+
+Output lines in the table are folded with semicolons; all statuses and UTC endpoints were read directly around the command.
+
+| Command | Start (UTC) | End (UTC) | Exit | Output |
+| --- | --- | --- | --- | --- |
+| `sh runs/T-3ff9/checks.sh` | 2026-10-20T18:48:04Z | 2026-10-20T18:48:04Z | 0 | `ok: unit; ok: evidence; ok: executable-inputs; ok: tests-count; ok: input-definition; ok: inspection-and-dual-use; ok: input-defined-once; ok: bookkeeping; ok: mixed-files; ok: delegation; ok: tolerance; ok: budget-post-and-overrule; ok: fixed-bound; ok: exact-approval; ok: budget-block; ok: successor; ok: growth; ok: verdict-budget; ok: finding-budget; ok: cap-intro; ok: unread-fix-and-verdict; ok: default-end-3; ok: records-definition; ok: records-examples; ok: records-exclusions; ok: operator-end; ok: end-post-and-overrule; ok: end-exception; ok: retired old-verdict; ok: retired old-finding; ok: retired old-budget; ok: retired old-cap; ok: retired old-approval; ok: retired old-end-3; ok: end-1-preserved; ok: end-2-preserved; ok: end-4-preserved; ok: entry-point; ok: retired old-entry-point; ok: dod-pointer; ok: dod-gap; ok: retired old-dod-budget; ok: plan-pointer; ok: retired old-plan-budget; ok: cap-pointer; ok: ceiling-pointer; ok: revealed-pointer; ok: retired old-ceiling; ok: retired old-cap-row; ok: retired old-revealed-budget; ok: 0007-record-task-resource-use-status; ok: 0007-record-task-resource-use-only-status-changed; ok: 0007-record-task-resource-use index; ok: 0026-keep-the-bootstrap-review-rules-as-the-standing-gate-status; ok: 0026-keep-the-bootstrap-review-rules-as-the-standing-gate-only-status-changed; ok: 0026-keep-the-bootstrap-review-rules-as-the-standing-gate index; ok: index-only-status-cells-changed; ok: parser and K5 scope unchanged` |
+| `sh docs/adr/adr-lint.sh` | 2026-10-20T18:50:11Z | 2026-10-20T18:50:11Z | 0 | `adr-lint: OK` |
+| `sh docs/prd/prd-lint.sh` | 2026-10-20T18:50:11Z | 2026-10-20T18:50:11Z | 0 | `prd-lint: OK` |
+| `sh docs/links/link-lint.sh` | 2026-10-20T18:50:11Z | 2026-10-20T18:50:25Z | 0 | `link-lint: OK  2971 links resolved` |
+| `git diff --check` | 2026-10-20T18:50:25Z | 2026-10-20T18:50:25Z | 0 | `No output.` |
+
+All 58 task checks are green after the S1 red run (exit 1 at the unchanged baseline). The green includes the input definition and its end-3 reference, both condition-3 sentences, pointers, Status/index edits and preservation controls. No check was weakened or changed. ADR bodies, K5, its fixtures and the review-record parser remain unchanged.
+
+Inspection found `origin/main` at `df9bfacf33054741564dbf0254a741f0d4be1e0f` (PR #448), ahead of the reviewed baseline `f45fffc78070d96c9ab3aab15bbbf1e4e31272bc`. This stage does not integrate branches or claim a final landing figure. The coordinating stages must use the current-main base at landing. T-3ff9 counts all evidence and close-out under its baseline 650/20 maximum and cap 1; its own proposed tolerance and default end 3 do not authorize its landing. K5 retains the whole-diff plus 70/2 projection until #449; any failure must remain recorded as a failure.
+
+Stage B leaves only the files in its commit plan. The staging instruction delegates commits to the coordinating session; no commit, hook run, freeze-check, task close-out or independent round is claimed here. The remaining clean-head validation and freeze-check belong to Stage C.
+
+Final Stage B whitespace check after writing the records: `git diff --check`, 2026-10-20T18:51:39Z to 2026-10-20T18:51:40Z, exit 0, no output. Scope inspection found exactly the 13 files in the commit plan; each has one final newline and no trailing whitespace. The conditions table has exactly three rows; its path/line spans and S1 commit resolve in the prospective committed tree.
