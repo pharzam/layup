@@ -455,3 +455,48 @@ func TestTheBetBriefBlocksOfLoopMd(t *testing.T) {
 		}
 	}
 }
+
+// F1 of round 1: a run stopped between the candidate and the promotion, and the fixed input changes before the recovery: the old candidate
+// is not promoted over the new basis; a new session writes the brief again with the finding. (The control is the test of the stop above.)
+func TestAChangedFixedInputBeforeTheRecoveryStartsANewAttempt(t *testing.T) {
+	d := shapedWorld(t)
+	d.ctlBrief(1, briefProblem, briefAppetite("5"), briefHoles, "")
+	d.ctlBrief(2, briefProblem, briefAppetite("5"), briefHoles, "")
+	d.r.cfg.Forge = &flakyForge{Forge: d.r.cfg.Forge, failPost: true}
+	if _, _, err := d.r.betBrief(context.Background(), "1", "first"); err == nil || len(d.candidates()) != 1 {
+		t.Fatalf("a stop at the comment: %v, candidates %v; want the error and the candidate", err, d.candidates())
+	}
+	old := keptRecord(t, d.w, d.candidates()[0])
+	lines := strings.Split(keptRecord(t, d.w, "spec/spans.tsv"), "\n")
+	i := slices.IndexFunc(lines, func(l string) bool { return strings.Contains(l, "\tneed\t") })
+	lines[i] += " (revised)"
+	d.push(map[string][]byte{"spec/spans.tsv": []byte(strings.Join(lines, "\n"))}, "a fact's text changed before the recovery")
+	brief, _, err := d.r.betBrief(context.Background(), "1", "first")
+	if err != nil || string(brief) == old || d.briefSessions() != 2 || !strings.Contains(d.briefPrompt(2), "fixed:") || !strings.Contains(string(brief), " (revised)") {
+		t.Errorf("the recovery = %d bytes, %v after %d sessions; want a new brief of the new text and the finding fixed: in the second prompt", len(brief), err, d.briefSessions())
+	}
+}
+
+// F2 of round 1: the reader of the basis refuses a kept brief that is malformed (the first call is the valid control).
+func TestBriefBasisRefusesAMalformedKeptBrief(t *testing.T) {
+	d := shapedWorld(t)
+	d.ctlBrief(1, briefProblem, briefAppetite("5"), briefHoles, "")
+	if _, _, err := d.r.betBrief(context.Background(), "1", "first"); err != nil {
+		t.Fatal(err)
+	}
+	good := keptRecord(t, d.w, "bets/1/brief.md")
+	d.restart()
+	if b, err := d.r.briefBasis(context.Background(), "1"); err != nil || b.Appetite.USD != "5" {
+		t.Fatalf("control: briefBasis = %+v, %v; want the appetite and no error", b, err)
+	}
+	for name, brief := range map[string]string{
+		"only the appetite":        "## The appetite\nappetite: USD 5, 12 hours\n",
+		"no facts heading":         strings.Replace(good, "## The facts\n", "", 1),
+		"architecture change yes?": strings.Replace(good, "architecture change: no", "architecture change: perhaps", 1),
+	} {
+		d.push(map[string][]byte{"bets/1/brief.md": []byte(brief)}, name)
+		if _, err := d.r.briefBasis(context.Background(), "1"); err == nil {
+			t.Errorf("%s: briefBasis = no error; want the malformed brief refused", name)
+		}
+	}
+}

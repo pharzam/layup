@@ -359,17 +359,24 @@ func TestTheBasisTableRefusesEachBrokenRule(t *testing.T) {
 		edit func([][]string) [][]string
 		want string
 	}{
-		"a — class":                    {set(6, 2, "—"), `line 8, column "value": a fact's class is need, constraint, measure or context`},
-		"a decision with no survivor":  {func(r [][]string) [][]string { r[5] = []string{"dropped", "web=go", "Inv-1: fail"}; return r }, `line 7, column "id": the decision web has no survivor`},
-		"a fact twice":                 {func(r [][]string) [][]string { return append(r, []string{"fact", "1", "need"}) }, `line 14: the key (kind "fact", id "1") repeats the key of line 8`},
-		"a dropped option with —":      {set(4, 2, "—"), `line 6, column "value": a dropped option holds its reasons, not —`},
-		"a survivor with a value":      {set(2, 2, "x"), `line 4, column "value": a survivor holds —`},
-		"a head that is no SHA":        {set(10, 2, "abc"), `line 12, column "value": a head is 40 lowercase hexadecimal characters`},
-		"a requirement of another row": {set(0, 2, "R-009"), `line 2, column "value": the row of the draft for REQ-001 is R-001`},
-		"an option with no decision":   {set(2, 1, "pg"), `line 4, column "id": a survivor or a dropped option is <decision>=<option>`},
-		"an open question not a Q-NNN": {set(9, 1, "5"), `line 11, column "id": an open question is a Q-NNN`},
-		"no head":                      {func(r [][]string) [][]string { return r[:10] }, "the basis has 0 head rows, want two or more"},
-		"no requirement":               {func(r [][]string) [][]string { return r[2:] }, "the basis has no requirement row"},
+		"a — class":                     {set(6, 2, "—"), `line 8, column "value": a fact's class is need, constraint, measure or context`},
+		"a decision with no survivor":   {func(r [][]string) [][]string { r[5] = []string{"dropped", "web=go", "Inv-1: fail"}; return r }, `line 7, column "id": the decision web has no survivor`},
+		"a fact twice":                  {func(r [][]string) [][]string { return append(r, []string{"fact", "1", "need"}) }, `line 14: the key (kind "fact", id "1") repeats the key of line 8`},
+		"a dropped option with —":       {set(4, 2, "—"), `line 6, column "value": a dropped option holds its reasons, not —`},
+		"a survivor with a value":       {set(2, 2, "x"), `line 4, column "value": a survivor holds —`},
+		"a head that is no SHA":         {set(10, 2, "abc"), `line 12, column "value": a head is 40 lowercase hexadecimal characters`},
+		"a requirement of another row":  {set(0, 2, "R-009"), `line 2, column "value": the row of the draft for REQ-001 is R-001`},
+		"an option with no decision":    {set(2, 1, "pg"), `line 4, column "id": a survivor or a dropped option is <decision>=<option>`},
+		"an open question not a Q-NNN":  {set(9, 1, "5"), `line 11, column "id": an open question is a Q-NNN`},
+		"no head":                       {func(r [][]string) [][]string { return r[:10] }, "the basis has 0 head rows, want two or more"},
+		"no requirement":                {func(r [][]string) [][]string { return r[2:] }, "the basis has no requirement row"},
+		"no fact":                       {func(r [][]string) [][]string { return append(r[:6:6], r[9:]...) }, "the basis has no fact row"},
+		"exactly one head":              {func(r [][]string) [][]string { return r[:11] }, "the basis has 1 head rows, want two or more"},
+		"a requirement that is no ID":   {set(0, 1, "REQ1"), `line 2, column "id": a requirement is REQ-NNN or NFR-NNN`},
+		"a fact that is no number":      {set(6, 1, "x1"), `line 8, column "id": a fact is a number or a Q-NNN`},
+		"a head of no task":             {set(10, 1, "T-xx"), `line 12, column "id": a head is of a task T-xxxx`},
+		"an option that is empty":       {set(2, 1, "db="), `line 4, column "id": a survivor or a dropped option is <decision>=<option>`},
+		"an open question with a value": {set(9, 2, "x"), `line 11, column "value": an open question holds —`},
 	} {
 		if _, err := read(c.edit); err == nil || !strings.Contains(err.Error(), c.want) {
 			t.Errorf("%s: err = %v; want %q", name, err, c.want)
@@ -425,3 +432,37 @@ func sameSet(a, b map[string]bool) bool {
 }
 
 func quotedText(s string) string { return `"` + strings.NewReplacer("\n", `\n`).Replace(s) + `"` }
+
+// F1 of round 1: a stored candidate is reused only if it holds the fixed parts of the inputs as they stand now, each in its place.
+func TestACandidateWithoutTheFixedPartsOfTheInputsIsRefused(t *testing.T) {
+	k := keeperFx(t)
+	judged := func(k briefKeeper, edit func(briefParts) briefParts) []spec.Finding {
+		return k.judge(assemble(edit(k.parts), problemFx, appetiteFx, holesFx))
+	}
+	same := func(p briefParts) briefParts { return p }
+	if fs := judged(k, same); len(fs) != 0 {
+		t.Fatalf("control: a candidate of the current parts: findings %v; want none", fs)
+	}
+	dropLine := func(s string) string { return s[strings.Index(s, "\n")+1:] }
+	for name, edit := range map[string]func(briefParts) briefParts{
+		"a requirement part removed": func(p briefParts) briefParts { p.requirements = ""; return p },
+		"a requirement's content changed": func(p briefParts) briefParts {
+			p.requirements = strings.Replace(p.requirements, "Alpha", "Gamma", 1)
+			return p
+		},
+		"the facts removed":          func(p briefParts) briefParts { p.facts = ""; return p },
+		"a fact removed":             func(p briefParts) briefParts { p.facts = dropLine(p.facts); return p },
+		"the open questions removed": func(p briefParts) briefParts { p.open = ""; return p },
+		"an open question removed":   func(p briefParts) briefParts { p.open = dropLine(p.open); return p },
+		"the solution part changed":  func(p briefParts) briefParts { p.solution = strings.Replace(p.solution, "pg", "pgx", 1); return p },
+	} {
+		if fs := judged(k, edit); len(fs) == 0 || fs[0].Rule != "fixed" {
+			t.Errorf("%s: findings %v; want the first of the rule fixed", name, fs)
+		}
+	}
+	// The old candidate, the new facts: a fact came in after the candidate was made.
+	k.parts.facts += "- 9 (need): A fact that came after the candidate.\n"
+	if fs := k.judge(assemble(partsFx(t), problemFx, appetiteFx, holesFx)); len(fs) == 0 || fs[0].Rule != "fixed" {
+		t.Errorf("an old candidate and the new facts: findings %v; want the first of the rule fixed", fs)
+	}
+}
