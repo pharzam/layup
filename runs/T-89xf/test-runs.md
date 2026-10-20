@@ -135,7 +135,7 @@ FAIL
 
 ### run-integration-late-tests (stub tree: the stubs of the first red run, the git calls and the records rule real)
 
-- Command: `go test -count=1 -tags=integration -timeout 20m -run '^(TestACarryWhoseStatusFailedIsPostedAtTheRestart|TestTheNewIssueIsComposedFromTheInputsTheRecordsKeep|TestTheDriverStartsTheFirstAttemptOfARedoneTaskAtTheRebasedBase|TestAFailedGitReadIsAnErrorNeverARedo|TestAMergeThatTouchesATaskPathOrLeavesTheDefaultIsNotCarried|TestARestartAfterEachActOfTheRedoCompletesItOnce|TestADisjointMovedBaseIsMergedAndCarriesTheVerdict)$' ./internal/run/`
+- Command: `go test -count=1 -tags=integration -timeout 20m -run '^(TestACarryWhoseStatusFailedIsPostedAtTheRestart|TestTheNewIssueIsComposedFromTheInputsTheRecordsKeep|TestAFailedGitReadIsAnErrorNeverARedo|TestAMergeThatTouchesATaskPathOrLeavesTheDefaultIsNotCarried|TestARestartAfterEachActOfTheRedoCompletesItOnce|TestADisjointMovedBaseIsMergedAndCarriesTheVerdict)$' ./internal/run/`
 - Start: 2026-10-20T19:05:38Z, end: 2026-10-20T19:05:42Z (`date -u`, after the step)
 - Exit status (direct, not piped): 1
 - First failing assertions (from the saved output):
@@ -292,3 +292,5 @@ F9 and F10, run against the code of b9ed9b0 (the test of F9 holds the heartbeat 
 FAIL	github.com/pharzam/layup/internal/run	7.256s
 FAIL
 ```
+
+Note: `TestTheDriverStartsTheFirstAttemptOfARedoneTaskAtTheRebasedBase` was run red in the block "late tests" above and was removed at the close-out to keep the size inside the budget; the driver entries of `TestARestartAfterEachActOfTheRedoCompletesItOnce` assert the same base and kill the same mutants (M27, M41), and its name was taken out of the selector of that block.
