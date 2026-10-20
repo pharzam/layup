@@ -24,12 +24,15 @@ type Repair struct {
 }
 
 // RepairTask repairs the sessions of task before a driver reads its position:
-// the pushes first, so that a refusal reaches the comment, then the comments.
+// the pushes first, so that a refusal reaches the comment, then the pull request of an older attempt (O22, row 66x), then the comments.
 // Each stage keeps what an earlier stage committed; a stage that fails stops the
 // repair with what it wrote so far, and the next run repeats it from the records.
 func (s *Sessions) RepairTask(ctx context.Context, task string) (Repair, error) {
 	out, err := s.RepairPushes(ctx, task)
 	if err != nil {
+		return out, err
+	}
+	if err := s.closeOlderPulls(ctx, task); err != nil {
 		return out, err
 	}
 	out.Posted, err = s.RepostComments(ctx, task)

@@ -53,6 +53,7 @@ type fakeGitHub struct {
 	checkRuns  map[string][]map[string]any // the latest check runs of each SHA (row 66g)
 	pulls      pullRoutes                  // the pull requests (row 66g)
 	issueTexts [][2]string                 // the title and the body of each issue opened (task T-jy6f)
+	issueState map[int]string              // the state and the reason of each issue closed, "closed not_planned" (task T-89xf)
 }
 
 func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
@@ -117,6 +118,18 @@ func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
 		f.issues++
 		w.WriteHeader(201)
 		json.NewEncoder(w).Encode(map[string]any{"number": f.issues})
+	case r.Method == "PATCH" && strings.HasPrefix(r.URL.Path, "/repos/acme/target/issues/"):
+		n, _ := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/repos/acme/target/issues/"))
+		var in struct {
+			State  string `json:"state"`
+			Reason string `json:"state_reason"`
+		}
+		json.NewDecoder(r.Body).Decode(&in)
+		if f.issueState == nil {
+			f.issueState = map[int]string{}
+		}
+		f.issueState[n] = in.State + " " + in.Reason
+		json.NewEncoder(w).Encode(map[string]any{"number": n, "state": in.State})
 	case strings.HasPrefix(call, "POST /repos/acme/target/issues/") && strings.HasSuffix(call, "/comments"):
 		var in struct{ Body string }
 		json.NewDecoder(r.Body).Decode(&in)

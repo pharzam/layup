@@ -186,7 +186,7 @@ func TestSeveralLostPushesOfTheOpenAttemptGiveOneAttempt(t *testing.T) {
 // The latest attempt may be closed or rebased without another attempt event; the
 // refusal is written and no attempt starts (the existing meaning of an open attempt).
 func TestAClosedOrRebasedLatestAttemptGetsNoReplacement(t *testing.T) {
-	for _, closing := range [][]string{evRow("closed", 1, "", "", "", "closed"), evRow("rebased", 1, "", pushedSHA, "", "moved")} {
+	for _, closing := range [][]string{evRow("closed", 1, "", "", "", "T-cd34"), evRow("rebased", 1, "", pushedSHA, "", "T-cd34")} {
 		t.Run(closing[1], func(t *testing.T) {
 			rows := evs([][]string{attemptEv(1, baseSHA)}, pushed(pushSess, 1), [][]string{closing})
 			s, r := repairWorld(t, rows, nil)

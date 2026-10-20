@@ -619,3 +619,58 @@ func UpdateRef(dir, ref, sha string) error {
 	}
 	return doAt(dir, sha, "update-ref", ref, sha)
 }
+
+// MergeBase gives the best common ancestor of the commits a and b, both full object IDs; commits with none are an error (task T-89xf,
+// packages.md, The calls of M2e).
+func MergeBase(dir, a, b string) (string, error) {
+	args := []string{"merge-base", a, b}
+	if !fullObjectID(a) || !fullObjectID(b) {
+		return "", &FailedError{Args: args, Code: -1, Err: errors.New("not a full object ID")}
+	}
+	out, err := call(dir, environ(), args...)
+	if err != nil {
+		return "", err
+	}
+	id := strings.TrimSpace(string(out))
+	if !fullObjectID(id) {
+		return "", &FailedError{Args: args, Code: 0, Err: fmt.Errorf("the output %q is no object ID", id)}
+	}
+	return id, nil
+}
+
+// Merge merges the commit d into the commit x in a scratch work tree, with a merge commit by who at the time of who, and gives the
+// commit: one input gives one commit (NFR-005). clean is false for a merge that conflicts (exit 1 of git with unmerged entries), which
+// leaves no commit and no work tree; every other failure, including a failed read of the unmerged entries, is an error. x and d are full
+// object IDs and the message is not empty (task T-89xf, packages.md, The calls of M2e).
+func Merge(dir, x, d, message string, who Identity) (sha string, clean bool, err error) {
+	args := []string{"merge", "--no-ff", "--no-edit", "-m", message, "--end-of-options", d}
+	if !fullObjectID(x) || !fullObjectID(d) || message == "" {
+		return "", false, &FailedError{Args: args, Code: -1, Err: errors.New("not full object IDs and a message")}
+	}
+	tmp, err := os.MkdirTemp("", "layup-merge-")
+	if err != nil {
+		return "", false, err
+	}
+	defer os.RemoveAll(tmp)
+	tree := filepath.Join(tmp, "tree")
+	if err := WorktreeAdd(dir, tree, x); err != nil {
+		return "", false, err
+	}
+	defer WorktreeRemove(dir, tree)
+	_, err = call(tree, commitEnv(who), args...)
+	var failed *FailedError
+	if errors.As(err, &failed) && failed.Code == 1 {
+		out, lerr := call(tree, environ(), "ls-files", "-u", "-z")
+		if lerr != nil {
+			return "", false, lerr
+		}
+		if len(out) == 0 {
+			return "", false, err
+		}
+		return "", false, nil
+	} else if err != nil {
+		return "", false, err
+	}
+	sha, err = RevParse(tree, "HEAD")
+	return sha, err == nil, err
+}

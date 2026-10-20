@@ -40,6 +40,11 @@ type SessionStore interface {
 	// false for a branch the target does not have, with the installation
 	// token (task T-syxm, row 66v); a read that fails is an error.
 	BranchHead(ctx context.Context, branch string) (sha string, found bool, err error)
+	// FetchBranch fetches branch of the target into the run's clone, as the ref refs/heads/<branch>, with the installation token, and
+	// gives its commit (task T-89xf, row 66x); a fetch that fails is an error.
+	FetchBranch(ctx context.Context, branch string) (sha string, err error)
+	// ReadFiles gives each file at or under dir in the run's records base, by its path below dir.
+	ReadFiles(ctx context.Context, dir string) (map[string][]byte, error)
 	// Started gives the time of Start, the first commit of the records
 	// branch, for the budget of milestone 0 (row 42b).
 	Started(ctx context.Context) (time.Time, error)
