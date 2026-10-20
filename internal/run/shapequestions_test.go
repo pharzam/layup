@@ -219,3 +219,38 @@ func TestAnswersUseEachPendingRoundsAskedTime(t *testing.T) {
 		t.Errorf("a comment of 11:00 and a correction of 13:00: %v; want the answer of 13:00 to Q-008", got)
 	}
 }
+
+// F6 of round 2: the band pair arrives over separate reads. An invalid pair reopens both original questions, the one answered in an
+// earlier read included, keeps the answered Shape rows and their answers, and offers both correction rows; the valid pair is the control.
+func TestABandPairThatArrivesInPartsAndIsInvalidReopensBothQuestions(t *testing.T) {
+	for _, c := range []struct {
+		name, b, u string
+		valid      bool
+	}{{"valid control", "5.0", "10.0", true}, {"invalid pair", "10.0", "5.0", false}} {
+		q := [][]string{qr("Q-001", "intent", "band.B", "intent", "open"), qr("Q-002", "intent", "band.U", "intent", "open"), qr("Q-003", "intent", "appetite.hours", "intent", "answered"),
+			qr("Q-004", "follow-up", "Q-001", "shape", "asked"), qr("Q-005", "follow-up", "Q-002", "shape", "asked")}
+		a := [][]string{ans("Q-003", "40.0")}
+		q, budget := applyShapeAnswers(q, a, nil, [][]string{ans("Q-004", c.b)}) // the first read: B alone
+		if budget != nil || states(q)["Q-001"] != "answered" {
+			t.Fatalf("%s: after B alone: budget %v, Q-001 %s; want no budget and Q-001 answered", c.name, budget, states(q)["Q-001"])
+		}
+		a = append(a, ans("Q-004", c.b))
+		q, budget = applyShapeAnswers(q, a, nil, [][]string{ans("Q-005", c.u)}) // the later read: U
+		st := states(q)
+		if st["Q-004"] != "answered" || st["Q-005"] != "answered" {
+			t.Errorf("%s: the Shape rows are %s, %s; want both answered", c.name, st["Q-004"], st["Q-005"])
+		}
+		if c.valid {
+			if budget == nil || st["Q-001"] != "answered" || st["Q-002"] != "answered" || len(leftOpen(q)) != 0 {
+				t.Errorf("%s: budget %v, states %v, left open %v; want the budget written, both answered, none left", c.name, budget, st, leftOpen(q))
+			}
+			continue
+		}
+		if want := []string{"Q-001", "Q-002"}; budget != nil || st["Q-001"] != "open" || st["Q-002"] != "open" || !slices.Equal(leftOpen(q), want) {
+			t.Errorf("%s: budget %v, Q-001 %s, Q-002 %s, left open %v; want no budget, both open, %v", c.name, budget, st["Q-001"], st["Q-002"], leftOpen(q), want)
+		}
+		if rows := shapeRows(q, leftOpen(q), "2026-10-12T11:00:00Z"); len(rows) != 2 || rows[0][2] != "Q-001" || rows[1][2] != "Q-002" {
+			t.Errorf("%s: the correction rows = %v; want one for each band question", c.name, rows)
+		}
+	}
+}

@@ -292,3 +292,15 @@ on a copy of the head `8771b8e`; M34's first form did not build (`asked` unused)
 Build, both vets and the e2e vet, `gofmt -l .`, `go test -count=1 ./...`, the three lints, `run-discipline-tests`, `setup-check`, `nested-checkout-check` and `git diff --check`:
 all exit 0 (2026-10-19 about 18:5xZ, `runlog.sh`). `go test -count=1 -tags=e2e -timeout 60m ./...`: 2026-10-19T19:07:10Z to 2026-10-19T19:09:10Z, exit 0.
 `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 90m ./...`: 2026-10-19T19:09:12Z to 2026-10-19T19:37:48Z, exit 0; every package ok, `internal/run` in 1659 s, no flake.
+
+## End 3 (6283050932): finding F6 of round 2 (6275860744)
+
+Red, on the head `112e945` (the test only): `go test -count=1 -run TestABandPair ./internal/run/`, 2026-10-20T04:01:19Z to 2026-10-20T04:01:31Z, exit 1:
+```
+--- FAIL: TestABandPairThatArrivesInPartsAndIsInvalidReopensBothQuestions (0.00s)
+    shapequestions_test.go:250: invalid pair: budget [], Q-001 answered, Q-002 open, left open [Q-002]; want no budget, both open, [Q-001 Q-002]
+    shapequestions_test.go:253: invalid pair: the correction rows = [[Q-006 follow-up Q-002 idea-owner before-delivery shape   text of Q-002 2026-10-12T11:00:00Z layup run  asked]]; want one for each 
+```
+The valid control (B=5.0 then U=10.0) of the same test passes at `112e945`. Green after the fix (`go test -count=1 ./internal/run/ ./internal/records/`): 2026-10-20T04:01:37Z to 2026-10-20T04:01:48Z, exit 0.
+Mutant M37 (only an original whose answer arrived in this read reopens), fresh backup, hash before `edcdf8acd6c0`, during `c40cbcf73a9a`, restore the same, 2026-10-20T04:01:55Z to 04:02:27Z, built and vetted, test exit 1, control exit 0:
+`TestABandPairThatArrivesInPartsAndIsInvalidReopensBothQuestions: shapequestions_test.go:250: invalid pair: ... Q-001 answered, Q-002 open, left open [Q-002]; want ... both open, [Q-001 Q-002]`. The mutants are 32 in all.

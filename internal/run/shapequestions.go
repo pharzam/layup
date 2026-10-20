@@ -91,12 +91,12 @@ func applyShapeAnswers(questions, answers, budget, got [][]string) (updated, new
 	for _, q := range questions {
 		if t, ok := when[q[0]]; ok && isShapeRow(q) {
 			set(q[0], t, "answered")
-			if slices.Contains(open, q[2]) {
-				set(q[2], "", "open")
-			} else {
-				set(q[2], t, "answered")
-			}
+			set(q[2], t, "answered")
 		}
+	}
+	// Every original question that the rule returns reopens, one answered in an earlier read too; the Shape rows and answers stay.
+	for _, id := range open {
+		set(id, "", "open")
 	}
 	return updated, newBudget
 }
