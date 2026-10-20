@@ -367,7 +367,85 @@ check_k3() {
 }
 
 check_k4() {
-	printf 'ok K4: restore evidence of mutants\n'
+	: > "$tmp/k4_skip"
+	: > "$tmp/k4_fail"
+	for mf in "runs/$task"/*.md; do
+		[ -f "$mf" ] || continue
+		[ -r "$mf" ] || { printf 'freeze-check: cannot read %s\n' "$mf"; exit 2; }
+		tr -d '\r' < "$mf" | awk -v md="$mf" -v fskip="$tmp/k4_skip" -v ffail="$tmp/k4_fail" '
+			function clean_val(v) {
+				gsub(/^[[:space:]`]+|[[:space:]`]+$/, "", v)
+				return v
+			}
+			function is_hex(v) {
+				return (length(v) >= 12 && v ~ /^[0-9a-fA-F]+$/)
+			}
+			!/^\|/ {
+				in_tbl = 0; c_before = 0; c_during = 0; c_after = 0; c_restore = 0
+				next
+			}
+			!in_tbl {
+				in_tbl = 1; c_before = 0; c_during = 0; c_after = 0; c_restore = 0
+				nc = split($0, c, "|")
+				for (i = 2; i <= nc; i++) {
+					h = tolower(c[i]); gsub(/^[[:space:]]+|[[:space:]]+$/, "", h)
+					if (h == "") continue
+					if (h ~ /before[[:space:]]*=[[:space:]]*after/ || h ~ /^restore/ || (h ~ /restore/ && h !~ /after/)) c_restore = i
+					else if (h ~ /before/) c_before = i
+					else if (h ~ /during/) c_during = i
+					else if (h ~ /after/) c_after = i
+				}
+				next
+			}
+			/^\|[-: |]+$/ { next }
+			{
+				nc = split($0, c, "|")
+				id = clean_val(c[2])
+				if (id !~ /^S?M[0-9]+[A-Za-z]?$/) next
+				if (!(id in seen_id)) {
+					seen_id[id] = 1
+					id_order[++nid] = id
+					id_line[id] = FNR
+				}
+				vb = (c_before > 0 && c_before <= nc ? clean_val(c[c_before]) : "")
+				vd = (c_during > 0 && c_during <= nc ? clean_val(c[c_during]) : "")
+				va = (c_after > 0 && c_after <= nc ? clean_val(c[c_after]) : "")
+				vr = (c_restore > 0 && c_restore <= nc ? clean_val(c[c_restore]) : "")
+				if (is_hex(vb) && is_hex(va) && vb == va) {
+					id_ok[id] = 1
+				} else if (is_hex(vb) && is_hex(vd) && vb != vd && (vr == "True" || vr == "equal" || vr == "restored")) {
+					id_ok[id] = 1
+				}
+				for (i = 3; i <= nc; i++) {
+					low = tolower(c[i])
+					if (match(low, /(^|[^a-z0-9_])(not run|dropped|superseded)([^a-z0-9_]|$)/)) {
+						w = substr(low, RSTART, RLENGTH)
+						gsub(/^[^a-z]+|[^a-z]+$/, "", w)
+						id_skip[id] = w
+						id_skip_line[id] = FNR
+					}
+				}
+			}
+			END {
+				for (k = 1; k <= nid; k++) {
+					id = id_order[k]
+					if (id_ok[id]) continue
+					if (id in id_skip) {
+						printf "skip K4: %s:%d: %s (%s)\n", md, id_skip_line[id], id, id_skip[id] >> fskip
+					} else {
+						printf "FAIL K4: %s:%d: %s has no restore evidence\n", md, id_line[id], id >> ffail
+					}
+				}
+			}
+		'
+	done
+	[ -s "$tmp/k4_skip" ] && cat "$tmp/k4_skip"
+	if [ -s "$tmp/k4_fail" ]; then
+		cat "$tmp/k4_fail"
+		failed=1
+	else
+		printf 'ok K4: restore evidence of mutants\n'
+	fi
 }
 
 check_k5() {
