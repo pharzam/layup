@@ -105,7 +105,10 @@ evidence_error() {
 : > "$tmp/evidence"
 while IFS= read -r ev; do
 	[ -n "$ev" ] || continue
-	case /$ev/ in */../*|*/./*|*//*) evidence_error 'path traversal is not allowed' ;; esac
+	case /$ev/ in
+	*/../*|*/./*) evidence_error 'path traversal is not allowed' ;;
+	*//*) evidence_error 'empty path components are not allowed' ;;
+	esac
 	case $ev in
 	runs/"$task"/*) ;;
 	*) evidence_error "must be under runs/$task/" ;;
@@ -117,6 +120,11 @@ while IFS= read -r ev; do
 	if ! git cat-file -e "$base:$ev" 2>/dev/null && ! git cat-file -e "HEAD:$ev" 2>/dev/null; then
 		evidence_error 'is absent from both base and HEAD'
 	fi
+	for ev_rev in "$base" HEAD; do
+		if ev_kind=$(git cat-file -t "$ev_rev:$ev" 2>/dev/null); then
+			[ "$ev_kind" = blob ] || evidence_error "must name a file at $ev_rev"
+		fi
+	done
 	grep -Fxq -- "$ev" "$tmp/evidence" || printf '%s\n' "$ev" >> "$tmp/evidence"
 done <<EOF_EVIDENCE
 $evidence
