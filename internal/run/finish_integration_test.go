@@ -504,6 +504,76 @@ func TestACloseOutThatEndedWithNoPushResumesAfterTheCloneIsMadeAnew(t *testing.T
 	}
 }
 
+// stoppedAtThePush leaves a close-out session that ended completed with no push, and gives its ID.
+func (f *finishing) stoppedAtThePush() string {
+	f.t.Helper()
+	stop := func(s *Sessions) {
+		s.Store = &faultStore{SessionStore: s.Store, fail: func(m string) error {
+			if strings.Contains(m, "layup run: the push of ") {
+				return errors.New("the records branch did not answer")
+			}
+			return nil
+		}}
+	}
+	if _, err := f.finish(stop); err == nil {
+		f.t.Fatal("the first call gave no error; want the stop at the push")
+	}
+	return f.closers(f.arch)[0][sessionID]
+}
+
+// I12d (finding 5 of round 2): the clone of another target whose name is the one a set-aside copy would take (acme/target.prev) is neither read, nor
+// renamed, nor removed by the restart of acme/target, whose candidate survives; the place of the recovery is gone after the restart.
+func TestARestartOfATargetTouchesNoOtherTargetsCloneAndKeepsItsOwnCandidate(t *testing.T) {
+	t.Parallel()
+	f := newFinishing(t, "claude", "codex")
+	id := f.stoppedAtThePush()
+	other := f.r.target + ".prev"
+	gitOut(t, filepath.Dir(other), "clone", "-q", f.w.bare, filepath.Base(other))
+	if err := os.WriteFile(filepath.Join(other, "mine.txt"), []byte("another target's file\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	head := gitOut(t, other, "rev-parse", "HEAD")
+	f.restart()
+	if data, err := os.ReadFile(filepath.Join(other, "mine.txt")); err != nil || string(data) != "another target's file\n" || gitOut(t, other, "rev-parse", "HEAD") != head {
+		t.Fatalf("the clone of acme/target.prev after the restart of acme/target: %q, %v; want its file and its HEAD unchanged", data, err)
+	}
+	got, err := f.finish(nil)
+	if c := f.closers(f.arch); err != nil || !got.Merged || len(c) != 1 || c[0][sessionID] != id {
+		t.Errorf("FinishTask = %+v, %v with the close-out sessions %v; want Merged and the one session %s", got, err, c, id)
+	}
+	if _, err := os.Stat(filepath.Join(f.r.cfg.Dir, "recovery", f.r.cfg.Owner, f.r.cfg.Name)); !os.IsNotExist(err) {
+		t.Errorf("the place of the recovery after the restart: %v; want it gone", err)
+	}
+}
+
+// noToken makes the installation token unavailable.
+type noToken struct{ forge.Forge }
+
+func (noToken) Token(context.Context) (forge.Token, error) {
+	return forge.Token{}, errors.New("the forge did not answer")
+}
+
+// I12e: a restart that stops after the old clone is set aside and before the new one holds its heads (the forge does not answer) leaves the kept heads
+// where the next restart finds them; green at the first form of the fix as well as at this one (a green negative beside I12d).
+func TestARestartThatStopsAfterTheSetAsideStillFindsTheKeptHeads(t *testing.T) {
+	t.Parallel()
+	f := newFinishing(t, "claude", "codex")
+	id := f.stoppedAtThePush()
+	r := &state{cfg: f.w.config("1.0.0")}
+	if s := r.forgeStep(context.Background(), false); s.Result != "done" {
+		t.Fatalf("the forge step: %+v", s)
+	}
+	r.cfg.Forge = noToken{r.cfg.Forge}
+	if s := r.cloneStep(context.Background()); s.Result != "fail" {
+		t.Fatalf("the clone step with no answer from the forge = %+v; want fail", s)
+	}
+	f.restart()
+	got, err := f.finish(nil)
+	if c := f.closers(f.arch); err != nil || !got.Merged || len(c) != 1 || c[0][sessionID] != id {
+		t.Errorf("FinishTask = %+v, %v with the close-out sessions %v; want Merged and the one session %s", got, err, c, id)
+	}
+}
+
 // I12b: a kept head that is in no clone, and that no restart brought, is an error that names the session, not a second session.
 func TestACloseOutWhoseKeptHeadIsGoneIsAnErrorAndNoSecondSession(t *testing.T) {
 	t.Parallel()

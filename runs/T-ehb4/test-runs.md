@@ -149,3 +149,20 @@ ok K6: conditions table
 ```
 
 K5 of this script still counts the files of `runs/` (3 files here: test-runs.md, mutants.md and conditions.md) and the 70 lines and 2 files of the close-out allowance. Measured as ADR-0028 reads it (`git diff --numstat origin/main HEAD` without `runs/`): 1,920 lines (1,838 added, 82 removed) over 22 files, with the close-out of 2 more files (the task file and the completed log) 24 files against the maximum of 22: the lines fit, the files exceed the maximum by 2. The cut is the Operator's. Run with `--budget 2300/32`, K1 to K6 are ok.
+
+## Round 3 - the two findings of round 2 (review.md of issue425-r2)
+
+### Red
+
+The head is `49855aa`, the tests uncommitted. Command: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./internal/run/ -run '^(TestARestartOfATargetTouchesNoOtherTargetsCloneAndKeepsItsOwnCandidate|TestARestartThatStopsAfterTheSetAsideStillFindsTheKeptHeads)$'` (start 2026-10-20T20:56:55Z, end 2026-10-20T20:56:59Z, exit=1).
+
+| Test | First failing assertion |
+| ---- | ----------------------- |
+| `TestARestartOfATargetTouchesNoOtherTargetsCloneAndKeepsItsOwnCandidate` | `finish_integration_test.go:538: the clone of acme/target.prev after the restart of acme/target: "", open .../targets/acme/target.prev/mine.txt: no such file or directory; want its file and its HEAD unchanged` |
+
+`TestARestartThatStopsAfterTheSetAsideStillFindsTheKeptHeads` is green at `49855aa` (a green negative: the first form of the fix already finds a clone set aside by an earlier restart); it guards the interrupted migration of the new form, and its mutant shows it. A first form of it used a cancelled context, which the clone step does not honour; the forge's token call fails instead.
+Finding 6 (the specification) has no test: it is a clause-by-clause reading of `docs/spec/run.md` step 2 and D5.
+
+### Green
+
+The same command on the fix (`cloneStep` sets the old clone aside in `DIR/recovery/OWNER/NAME/`, which is no target's clone; `docs/spec/run.md` step 2 and D5 of `loop.md` state one contract), start 2026-10-20T20:57:58Z, end 2026-10-20T20:58:03Z, exit=0: ok.

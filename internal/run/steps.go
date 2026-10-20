@@ -723,10 +723,18 @@ func (r *state) cloneStep(ctx context.Context) Step {
 	const name = "clone"
 	r.target = filepath.Join(r.cfg.Dir, "targets", r.cfg.Owner, r.cfg.Name)
 	// The heads that the ended sessions kept in the old clone (refs/layup/sessions/) are fetched into the new one, so that a session that ended before its
-	// push is finished by that push, not run again (task T-ehb4). The old clone is set aside until then; one that an earlier restart left is the older.
-	prev := r.target + ".prev"
+	// push is finished by that push, not run again (task T-ehb4). The old clone is set aside in DIR/recovery/OWNER/NAME, a place that is no target's clone
+	// (the clones are below DIR/targets/), and only a path made here is renamed or removed; one that an earlier, interrupted restart made is the older, and stays.
+	prev := filepath.Join(r.cfg.Dir, "recovery", r.cfg.Owner, r.cfg.Name)
 	if _, err := os.Stat(prev); os.IsNotExist(err) {
-		if err := os.Rename(r.target, prev); err != nil && !os.IsNotExist(err) {
+		if _, err := os.Stat(r.target); err == nil {
+			if err := os.MkdirAll(filepath.Dir(prev), 0o755); err != nil {
+				return fail(name, err)
+			}
+			if err := os.Rename(r.target, prev); err != nil {
+				return fail(name, err)
+			}
+		} else if !os.IsNotExist(err) {
 			return fail(name, err)
 		}
 	} else if err != nil {
