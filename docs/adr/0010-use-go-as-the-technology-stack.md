@@ -4,7 +4,7 @@ Date: 2026-09-23
 
 ## Status
 
-Accepted
+Accepted. Amended by [ADR-0027](0027-bound-the-integration-level-at-20-minutes-in-ci.md)
 
 ## Context
 

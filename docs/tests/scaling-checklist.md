@@ -44,8 +44,10 @@ endpoint answered that day.
 
 **Rule:** keep the cheap [test levels](test-levels.md) in the
 [commit hook](../../.githooks/pre-commit) and push the slow ones to
-[CI](../ci/); every test — and the hook's whole run — stays within
-`-timeout 10m`.
+[CI](../ci/); the hook's whole run stays within `-timeout 10m`, and each test
+binary stays within its level's bound (`-timeout 10m`; `-timeout 20m` per test
+binary for the integration level in CI,
+[ADR-0027](../adr/0027-bound-the-integration-level-at-20-minutes-in-ci.md)).
 
 **Why it matters:** a hook that takes minutes gets skipped or disabled, which
 throws away the fast local feedback the ladder exists to give. A CI run with no
@@ -85,8 +87,11 @@ contains a fixed wait/sleep instead of waiting on the actual condition it needs.
   still passes.
 - [ ] Every test is deterministic — no unmocked clock, network, or randomness
   reaches it.
-- [ ] Every test, and the hook's whole run, fits within `-timeout 10m`; cheap
-  levels run in the hook, slow ones in CI.
+- [ ] The hook's whole run fits within `-timeout 10m`, and each test binary fits
+  within its level's bound (`-timeout 10m`; `-timeout 20m` per test binary for
+  the integration level in CI,
+  [ADR-0027](../adr/0027-bound-the-integration-level-at-20-minutes-in-ci.md));
+  cheap levels run in the hook, slow ones in CI.
 - [ ] Every test is tagged by [level](test-levels.md) (unit/integration/E2E) so
   one level can run on its own.
 - [ ] Every assertion targets a stable interface, not a brittle selector or a
