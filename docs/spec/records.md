@@ -50,6 +50,7 @@ or payload of one task is under `tasks/<task>/`.
 | `spec/check.tsv` | the table of the span check | 7 | `layup run` | 2 (`M2c`) | the block `spec-check`, [below](#nfr-001--the-records-of-intake) |
 | `spec/draft.tsv` | the requirement draft of Intake | 7 | `layup run` | 2 (`M2c`) | [below](#nfr-001--the-records-of-intake) |
 | `spec/inventory-<n>.tsv`, `spec/inventory.tsv` | a version of the confirmed inventory, and the index with its SHA-256 | 7 | `layup run` | 2 (`M2e`) | [below](#nfr-001--the-records-of-the-task-loop) |
+| `spec/reopenings.tsv` | the facts that the bet re-classed, each with its token, its allocated requirement ID and its reserved task (task `T-4naq`) | 8 | `layup run` | 2 (`M2e`) | the block `reopenings`, [below](#nfr-001--the-records-of-the-task-loop) |
 | `spec/options/<decision>.tsv` | the options of one architecture decision, each constraint with its pass or fail and its evidence | 8 | `layup run` | 2 (`M2e`) | [below](#nfr-001--the-records-of-the-task-loop) |
 | `spec/options/round-1/<decision>.tsv` | the table of round 1 of a decision that the one rewrite replaced, in the block `options` (task `T-3f94`) | 8 | `layup run` | 2 (`M2e`) | [below](#nfr-001--the-records-of-the-task-loop) |
 | `bets.tsv` | each bet: the brief, the answer, the verdict | 8 | `layup run` | 2 (`M2e`) | [below](#nfr-001--the-records-of-the-task-loop) |
@@ -648,7 +649,7 @@ Milestone `M2e` (task `T-xs4y`, #333): the records that `layup run` writes for t
 task loop, the handoffs, Shape and the bet ([`loop.md`](loop.md)). Each is a file of
 the records branch, which only the App updates (the rulesets of `M2d`). The owners
 are `internal/run` for `tasks`, `task-gates`, `task-tests`, `bets`,
-`parameters` and `retrospectives`, `internal/handoff` for `transitions` (it checks the table), `internal/spec` for `inventory`, `inventory-index`, `options` and
+`reopenings`, `parameters` and `retrospectives`, `internal/handoff` for `transitions` (it checks the table), `internal/spec` for `inventory`, `inventory-index`, `options` and
 `task-spec-check`; their tasks compare each with its Go schema and move its name from
 `notYetBuilt` ([`README.md`](README.md#the-schema-block)). `internal/spec` also
 holds a second Go value of `tasks`, to read the register for the full check —
@@ -749,6 +750,21 @@ class  enum(need|constraint|measure|context)  -  the confirmed class (a change t
 scope  enum(in|out)                     -    `out` for a fact that the bet's answer marked out of scope
 copy   int                              -    the comment ID of the bet's or the decision's copy that gave this version
 ```
+
+```tsv-schema reopenings records:spec/reopenings.tsv
+n            int      key  the version of the confirmed inventory that the row was made from; 1 in `M2e`
+fact         text     key  the fact's number in `spec/spans.tsv`, or its `Q-NNN`
+class        enum(need|constraint|measure)  -  its class in version n, which differs from its class at Intake
+token        text     -    its citation: `F-NNNN#<fact>` of the numbered facts record for a number, `Q-NNN` for a fact of the answers
+requirement  text     -    the requirement ID that code allocated: `REQ-NNN` for a `need`, `NFR-NNN` for a `constraint`; `—` for a `measure`
+task         id(T-xxxx)  -  the task ID that code reserved for the task that reopens the fact
+copy         int      -    the `copy` column of version n: the comment ID of the bet's copy
+```
+
+**Decided here** (task `T-4naq`, #428, row 66ab; the owner is `internal/run`, `ReopeningsSchema` and `ReadReopenings`): the reader checks, after the types and with the line and the
+column in the error, that no column but `requirement` holds `—`; that `n` is 1 or more and the rows of one `n` are together; that `token` is `F-NNNN#<fact>` for a `fact` that is a number
+and the `fact` itself for a `Q-NNN`; that `requirement` is `—` exactly for a `measure`, begins `REQ-` for a `need` and `NFR-` for a `constraint`, and is three digits or more; and that no requirement and no
+`task` is held by two rows. The comparison with the inventory, the spans and the register is the caller's, at each call ([`loop.md`](loop.md#the-specification-task-that-a-changed-class-reopens)).
 
 ```tsv-schema parameters records:parameters.tsv
 name      text    key  the parameter's name (`architecture.md` §10), for example `brief.lines`

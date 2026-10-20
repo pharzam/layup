@@ -19,7 +19,7 @@ var built = []string{"answers", "answers-review", "approvers", "bet-basis", "bet
 // A later section adds the names of its new blocks; otherwise it only becomes
 // shorter: a rule for the reviewer of each owner task; a test cannot read the
 // list of its base (docs/spec/README.md, The schema block).
-var notYetBuilt = []string{}
+var notYetBuilt = []string{"reopenings"}
 
 // Each block of docs/spec/ has the form of the README, and is in exactly one
 // of the two lists; each listed name is a block. A block that a later section
