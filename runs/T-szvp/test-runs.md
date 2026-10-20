@@ -4,7 +4,8 @@
 
 Stage A recorded the expected red. Stage B removes the numbered checker
 exception, and the identical check is green. All local checks below pass.
-No committed-head freeze or hosted result is claimed in this stage.
+Stage C records the supplied successful hosted run and an exit-0 pre-freeze
+check on the clean committed Stage B head. Independent review remains pending.
 
 ## Stage A — removal check, red (R8)
 
@@ -275,3 +276,75 @@ Final whitespace check after writing the evidence and condition records:
 | Command | UTC start | UTC end | Exit | Result |
 | --- | --- | --- | --- | --- |
 | `git diff --check` | 2026-10-20T23:47:15Z | 2026-10-20T23:47:15Z | 0 | No output; evidence context lines have trailing whitespace removed. |
+
+## Stage C — hosted evidence and clean-head pre-freeze check
+
+The worktree began clean at `8903e77b298059a7bdc159d36afbc0fbbfbdcd47`,
+after the coordinator committed and pushed Stage B (`68931a1`, `8903e77`).
+`origin/main` resolved locally to
+`f9d46b0f441202254e8ea6ca16fe4ad8ec860858`. The clean-head and reference
+inspection ran from 2026-10-20T23:57:29Z to 2026-10-20T23:57:29Z, exit 0:
+`git rev-parse HEAD origin/main` printed those two full hashes, and
+`git status --porcelain --untracked-files=all` printed nothing.
+
+### Hosted result supplied by the coordinator
+
+The binding Stage C input reports that [PR #456](https://github.com/pharzam/layup/pull/456)'s
+[CI run 39517390208](https://github.com/pharzam/layup/actions/runs/39517390208)
+succeeded. Its `nested-checkout-check` log contains:
+
+```text
+restored from main: docs/tests/freeze-check.sh
+restored from main: docs/tests/freeze-check/run.sh
+restored from main: docs/tests/freeze-check/run-all.sh
+freeze-check: 85 passed, 0 failed
+```
+
+The coordinator also reports no "kept as written" line. These are supplied
+hosted observations, not a local fixture run or a fresh log retrieval by this
+session. Hosted start/end times, the tested merge SHA, job URL and the other six
+restore lines were not supplied; no values for them are inferred.
+
+An attempted read-only retrieval first used an unsupported JSON field, then
+failed to connect after that field was corrected. Both failures are recorded:
+
+| Command | UTC start | UTC end | Exit | Result |
+| --- | --- | --- | --- | --- |
+| `gh run view 39517390208 --repo pharzam/layup --json url,headSha,event,status,conclusion,createdAt,startedTime,updatedAt,jobs` | 2026-10-20T23:57:42Z | 2026-10-20T23:57:43Z | 1 | Unknown JSON field: startedTime; no hosted data read. |
+| `gh run view 39517390208 --repo pharzam/layup --json url,headSha,event,status,conclusion,createdAt,startedAt,updatedAt,jobs` | 2026-10-20T23:57:46Z | 2026-10-20T23:57:46Z | 1 | Error connecting to api.github.com; no hosted data read. |
+
+### Pre-freeze check
+
+Before editing this record, ran the exact Stage C invocation on the clean head:
+
+```sh
+sh docs/tests/freeze-check.sh --task T-szvp --base origin/main --budget 250/8 --evidence runs/T-szvp/conditions.md --evidence runs/T-szvp/test-runs.md > /home/layup/.cache/layup-session/tmp-green/szvp-fc.txt 2>&1
+```
+
+`TMPDIR` was set to `/home/layup/.cache/layup-session/tmp-green`, so the check's
+temporary files also stayed outside the worktree. Start and end times were
+captured with `date -u +%FT%TZ` immediately around the command.
+
+| Command | UTC start | UTC end | Exit | Result |
+| --- | --- | --- | --- | --- |
+| Exact pre-freeze invocation above | 2026-10-20T23:57:35Z | 2026-10-20T23:57:35Z | 0 | K1–K6 pass; complete output below. |
+| `git diff d27b331 HEAD -- .github/workflows/ci.yml` | 2026-10-20T23:58:00Z | 2026-10-20T23:58:00Z | 0 | Committed Stage B endpoint has only the planned suite-comment hunk already shown in Stage B. Restore step matches the pre-exception baseline. |
+| `git diff --check` | 2026-10-20T23:58:38Z | 2026-10-20T23:58:38Z | 0 | No output; Stage C evidence has no whitespace errors. Status shows only this evidence file modified. |
+
+Complete pre-freeze output:
+
+```text
+ok K1: white space
+ok K2: registration of new tests
+ok K3: test selectors
+ok K4: restore evidence of mutants
+ok K5: projection: figure 124/6, maximum 250/8, tolerance 60/4, limit 310/12, margin 186/6 (the figure at landing is still measured at landing)
+ok K6: conditions table
+```
+
+The two declared evidence records are excluded under ADR-0028; the executable
+task checks remain counted. The projection is for this committed head, before
+close-out. This stage changes only this evidence record, adds no task detail or
+completed-log entry, and names no frozen SHA. After the coordinator commits the
+record, the resulting clean head still needs its pre-freeze rerun before freeze
+and independent review, within cycle cap 2.
