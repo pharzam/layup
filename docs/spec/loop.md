@@ -1929,6 +1929,70 @@ decision that has more than one survivor; (4) `CheckCommentBody`, so that a kept
   still open and the verified heads. `betBrief`'s companion `briefBasis(milestone)` reads it with the brief, and gives the basis
   without filtering again, and the appetite from the kept brief's line; a basis or a brief that is missing or malformed is an error (a brief is malformed by the rules of its headings, appetite line and architecture line; the limit and the links are not asked again).
 
+### The step bet
+
+Row 66j (task `T-2vva`, #366; the brief is row 66u's, the rendered task of a later bet is row 66t's, moved to `M2g` as a whole by the Operator on #417).
+Everything below is **decided here** (R10) unless it cites another section. The step reads the records and the forge at each run, holds nothing, and each
+stage keeps what an earlier stage wrote; it is `done before` when `bets.tsv` holds the row of its milestone with the verdict `bet`.
+
+1. **Read.** `bets.tsv` is read by `ReadBets` (the block `bets`; a refusal names the line and the column, and nothing is written). The Shape tasks are the first
+   register row of the kind `specification` and the first of the kind `architecture`; each must have a verified head (`verifiedStep`, which reads and drives
+   nothing). **The milestone** is the first row's tag of the table under `## 9.` of the PRD at the verified head of the specification (`phaseTagsOf`), a
+   temporary convention of `M2e` that does not say that a phase and a milestone are the same thing; it must be one path part, and it is pinned by `bets/<milestone>/`.
+   **The kind** is `first` when no row exists. A row of that milestone with the verdict `bet` is `done before`; one with `no-bet` is the row `done`, `waiting for the
+   Operator: no bet`, at every restart, and no later step runs on it. Any other state of `bets.tsv` is the kind `later`, which `M2e` does not build: the step fails,
+   `a later bet's rendered task is row 66t's (M2g)`, and writes nothing (the contract of `M2e`, fail closed).
+2. **The brief.** `betBrief(milestone, "first")` of [the brief of the first bet](#the-brief-of-the-first-bet). `ErrBriefLinesUnset` and `ErrBriefOverLimit` are the row
+   `done`, `waiting for the Operator: <the error>`, with no session; any other error is a `fail`.
+3. **The post.** `CheckCommentBody` runs on the kept brief again, then `postOnIssue` posts it on the Intake issue (`issue.intake`, the milestone's issue) and copies it:
+   the copy by hash, the comment of the App that has the bytes, the lease, the post, the read-back and the copy, the core that `PostComment` and `postBody` share.
+4. **The answer.** Every comment of the issue that is not the App's is copied first. The approver is `approverFor(…, "bet", …)` over `pointBindings` (a lookup error is the
+   step's error, never a fallback). **The answer is the earliest copy by numeric comment ID** that is of the issue, is the first copy (seen 1) and no App's, is by the
+   approver's account, was created strictly after the brief's copy, and for which `ParseAnswer` gives no finding, with the requirement IDs, the facts, the survivors and the
+   options of the kept basis (`briefBasis`) and the phase tags of §9. Any other comment is human input that answers nothing: the Operator's, the idea owner's when an
+   approver is named, an edit, one before the brief, one with a finding. With no answer the row is `done`, `waiting: the answer of the bet on the brief <comment>`.
+5. **The settled decisions** are the option lines of the answer for the decisions that have more than one survivor in the basis; an option line for a decision with one
+   survivor answers nothing new and opens no task. **Validate before any write** (before the inventory, the rendering and the tasks; the copies already exist): for a `bet`,
+   the constraint values of the chosen option's rows are mapped to requirement IDs (`REQ-NNN` and `NFR-NNN` kept when the register row names them, `R-NNN` mapped by
+   `finalID` with its kind in `spec/draft.tsv`, `F-`, `Q-`, `Inv-` and `ADR-` values are no requirement), and a decision whose set is empty fails, `the decision <d>: its
+   option <o> names no requirement` (an architecture decision serves a requirement), at every restart.
+6. **The version.** For a `bet`, `spec/inventory-<n>.tsv` and `spec/inventory.tsv` are written in one fenced records commit by `NextInventory`, after the sha256 of
+   version `n-1` is checked against the index. They are skipped when the latest version's rows name this answer's copy. The facts are those of the basis: a fact of
+   `spec/spans.tsv` has the class of Intake and its text from the span, and **a fact of the answers (`Q-NNN`) has the class of its quote's fact, else `context`, and the
+   answer as its text** (decided here; the approver may change the class with a line `fact <id>: <class>`). A class that the answer changes is recorded and nothing else:
+   the new specification task that a changed class reopens, and the representation "waits for a bet", are row 66k's (the Operator on #366).
+7. **The rendered commit** (the first bet): the next record ID is `nextFactsID` over the records of `docs/facts/` at the verified head `H` (the one home, which the instruction
+   of the specification uses for `{facts}`). `H` holds exactly one `docs/prd/PRD-*.md` and no numbered facts record, or the step fails. The commit is made on a work tree at `H`
+   by `rules.Render`: the PRD (pre-image `H`) and `docs/facts/<ID>-numbered-facts.md` (`RenderFacts` exactly: no table, no index row and no line of `facts.sha256`, which
+   would be a rule-path change that is no rendered record; a known limit), with the App's identity at the time the answer's copy was made, so one input gives one commit
+   ID, and the message `layup run: the rendered commit of the bet <milestone> (copy <comment>)`. `CheckRendered` runs before the push. **The push is code's**: the event `push R
+   task/<task>/<attempt>` with the session `—`, the push, the event `bound`, with the session `—` (`records.CheckEvent` admits that for these two kinds). A restart makes the same
+   commit and finds the events: `bound` skips, a `push` with no `bound` pushes the same SHA again (an equal fast-forward is a no-op), a branch that holds neither `H` nor
+   `R` is `errPushRefused`, a fail. **The consumers of `bound`** that key on a session skip a `bound` with no session (the repairs of a push, `loopPosition`, the authors, the
+   register snapshot of a head, the last bound of an attempt), and the driver of a Shape task does not settle a verified head again once the rendered commit is bound, since the
+   pull request's head is `R`. Then `CarryVerify` posts `layup/verify` `success`, `verified head <H> plus the rendered commit`, once. The other three contexts on `R` and the
+   close-out are row 66k's.
+8. **The architecture tasks.** For each settled decision in name order, if no task of the kind `architecture` after the first holds the binding
+   `tasks/<task>/options/<decision>.tsv`, one is opened by the opening of a Shape task, parameterized (the order of [the task register](#the-task-register), with no reuse by
+   kind): `requirements` as step 5, `predecessors` the two Shape tasks, the issue `LAYUP task <ID>: the architecture of the decision <d>` and the block below. The register commit
+   writes the row and the binding (the chosen option's rows, the block `options`) together, and the candidate row, the parameters and the binding bytes are checked before the
+   issue. The known window between the issue and the row is that of the opening of a Shape task. Row 66k reads the binding when it runs the task (`PromptIn.Options` is the chosen option as the only survivor).
+9. **`bets.tsv` last**, in one fenced records commit: `brief` and `brief_sha256` of the posted copy, the appetite of the kept brief (`—` for `no-bet`), `answer`, `options`
+   as `<decision>=<option>` sorted by decision (`—` for none), the verdict, the approver's account and `decided`, the time the answer's copy was made, so a restart writes the same row.
+   For `no bet` stages 6 to 8 do not run.
+
+```text bet-issue-architecture
+LAYUP task {task}: the architecture of the decision {decision}.
+
+Requirement IDs: {ids}
+Chosen option: {option}, recorded in tasks/{task}/options/{decision}.tsv of the records.
+
+Definition of Done: docs/spec/ and docs/adr/ hold the decision {decision} as decided with the option {option}, and nothing of the other options; docs/tasks/{task}.md is the task's file. The head passes the four layup/ statuses, and a verifier on a harness outside the authors finds nothing material in scope.
+```
+
+**Known limits.** The brief's "no recommendation" for two survivors rests on code's presentation and the option-word rule (row 66u). The milestone is the §9 tag convention above.
+A bet that changes a class does not reopen the specification here (row 66k).
+
 ### The approvers and the success criteria
 
 Deferred by `M2c` ([`intake.md`](intake.md#not-in-m2c)). **Decided here**
@@ -2046,7 +2110,7 @@ At the first bet, code adds the **rendered commit** to the specification's head
   violation, the filename refusal `err()` sends to stderr, a stray line — or an
   empty output refuses the head, and any other exit is an error, not a verdict.
 - At a later bet, code renders the change as a rendered task of its own, with a
-  plan ("render from copy N") that a plan-review and a verifier session check.
+  plan ("render from copy N") that a plan-review and a verifier session check (row 66t, moved to `M2g`; `M2e` fails closed at a later bet, [the step bet](#the-step-bet)).
 
 ## REQ-012 — The full spec check
 
