@@ -82,7 +82,7 @@ func TestThePhaseTagsAreTheFirstColumnOfSection9(t *testing.T) {
 	for name, in := range map[string]string{
 		"no separator row": "## 9. Rollout & phases\n\n| Phase | Name | Ships |\n| 1 | A | x |\n| alpha | B | y |\n",
 		"a truncated row":  "## 9. Rollout & phases\n\n| Phase | Name | Ships |\n| --- | --- | --- |\n| 1 | A | x |\n| alpha |\n",
-		"another header":   "## 9. Rollout & phases\n\n| Metric | Fact |\n| --- | --- |\n| faster | F-1 |\n",
+		"another header":   "## 9. Rollout & phases\n\n| Metric | Fact | Notes |\n| --- | --- | --- |\n| faster | F-1 | n |\n",
 		"an empty tag":     "## 9. Rollout & phases\n\n| Phase | Name | Ships |\n| --- | --- | --- |\n|  | A | x |\n",
 		"a fourth cell":    "## 9. Rollout & phases\n\n| Phase | Name | Ships |\n| --- | --- | --- |\n| 1 | A | x | y |\n",
 	} {
