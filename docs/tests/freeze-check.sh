@@ -461,6 +461,12 @@ check_k5() {
 	fig_f=$(($2 + cl_f))
 	mar_l=$((max_l - fig_l))
 	mar_f=$((max_f - fig_f))
+	if [ "$fig_l" -gt "$max_l" ] || [ "$fig_f" -gt "$max_f" ]; then
+		printf 'FAIL K5: -:0: projection: figure %d/%d, maximum %d/%d, margin %d/%d (the figure at landing is still measured at landing)\n' \
+			"$fig_l" "$fig_f" "$max_l" "$max_f" "$mar_l" "$mar_f"
+		failed=1
+		return
+	fi
 	printf 'ok K5: projection: figure %d/%d, maximum %d/%d, margin %d/%d (the figure at landing is still measured at landing)\n' \
 		"$fig_l" "$fig_f" "$max_l" "$max_f" "$mar_l" "$mar_f"
 }
