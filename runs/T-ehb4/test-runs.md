@@ -198,3 +198,7 @@ The code was written before the tests were run (the order of this finding broke 
 | `TestACleanupInterruptedAfterAPartialDeleteLosesNoHead` | `finish_integration_test.go:639: the clone step of the restart: {Name:clone Result:fail Detail:git for-each-ref ... fatal: not a git repository ...}` |
 
 The restart that follows the failed cleanup discarded the current clone, which held the imported head, and then read the damaged place. Case (a) removes write permission on the objects directories of the old clone (as the review did), so that the removal deletes the rest and stops; case (b) deletes `HEAD`, `refs` and `config` of the old clone as well, as an interrupted removal would.
+
+### Green and the gates
+
+Green: the same command as the red one, with the tests of finding 5, on `eb0e718` (start 2026-10-20T21:33:41Z, end 2026-10-20T21:33:46Z, exit=0): ok. The code is frozen at `eb0e718`; later commits add tables and records only; `origin/main` had not moved. Full integration level: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./...` (head `bc96d13`, start 2026-10-20T21:37:17Z, end 2026-10-20T21:40:57Z, exit=0), 21 packages ok. build, vet with no tag, `integration` and `e2e`, gofmt, `go test -count=1 ./...` (21 ok), `go test -count=1 -tags=e2e ./...` (start 2026-10-20T21:40:59Z, end 2026-10-20T21:42:06Z, exit=0), the six lints and `git diff --check origin/main HEAD`: exit=0 each.
