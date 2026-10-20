@@ -179,3 +179,14 @@ The merge `1ff6bcc` resolved one conflict in `docs/guardrails.md`, keeping both 
 - End: `2026-10-20T14:33:14Z`
 - Load average before the run: `0.53 0.86 3.08`
 - Exit status: `0` (`internal/run` 122.310 s)
+
+## The merge of `origin/main` (`699d868`, #437) and its new tests (cycle 2, the Operator's end 1, 6293538629)
+
+The merge `432e185` was clean. #437 added 18 top-level integration tests in `internal/run/betbrief_integration_test.go`. The same audit as commit B (helpers followed transitively; `t.Setenv`, `t.Chdir`, or a write of a package variable of `run`) finds none of them serial. Each gets `t.Parallel()` as its first statement. The serial set is unchanged: the same 15 tests that `internal/run/main_integration_test.go` lists. The package now holds 290 top-level integration tests: 275 parallel and 15 serial.
+
+`gofmt -l internal/run` printed nothing, and `go vet -tags=integration ./internal/run/` exited 0.
+
+| Run | Command | Start | End | Load before | Exit | `internal/run` |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | `TMPDIR=/home/layup/.cache/layup-session/tmp-green nice -n 19 go test -count=1 -tags=integration -timeout 30m ./...` | 2026-10-20T14:43:25Z | 2026-10-20T14:45:39Z | 0.08 1.32 2.70 | 0 | 130.849 s |
+| 2 | the same | 2026-10-20T14:45:39Z | 2026-10-20T14:47:51Z | 13.12 5.23 3.89 | 0 | 130.834 s |
