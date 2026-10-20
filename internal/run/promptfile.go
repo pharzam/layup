@@ -84,6 +84,9 @@ type promptSrc struct {
 	Plan         *kept
 	Handoffs     []kept
 	Answers      []kept
+	Asking       []kept   // the results of the sessions that asked, for the step answer-to-a-question
+	Questions    []string // their question IDs, in order
+	AnswerIDs    []string // the answers of the attempt before, which this attempt cites
 	Requirements []string
 	Rules        []rules.Entry
 	Tree         targetTree

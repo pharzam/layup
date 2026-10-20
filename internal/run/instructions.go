@@ -92,6 +92,13 @@ The required outputs for the result file are docs/tasks/{task}.md and docs/tasks
 `,
 }
 
+// answerInstruction is the instruction of the step answer-to-a-question, the block instruction-answer-to-a-question of loop.md (row 66z).
+const answerInstruction = ""
+
+// answersInstruction is the block instruction-answers of loop.md: it follows the result text of a step when the attempt before has an
+// answer of its owner role (row 66z).
+const answersInstruction = ""
+
 // resultInstruction is the text shared by all the steps: the form of the result file,
 // the block instruction-result of loop.md.
 const resultInstruction = `Write the result file {result}: UTF-8 text with no byte-order mark, one row per line, each line ended by a line feed, the last too, and no blank line. Separate the cells of a row with one tab character each, never with spaces. The first line is "kind<TAB>n<TAB>value<TAB>sha256<TAB>reason". The single character — (U+2014) is the empty cell; no cell holds a tab or a line break. The rows of each kind are numbered 1, 2, 3 and so on, with no gap.

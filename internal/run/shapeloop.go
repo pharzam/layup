@@ -64,6 +64,7 @@ const (
 	posNextAttempt             // the verdict is material and the cap allows one more attempt
 	posWait                    // wait for the Operator
 	posStop                    // a case the driver does not go on from
+	posQuestion                // a session of the attempt asked a question: the stages of questionloop.go
 )
 
 // loopView is what the position is told from: the events and the rows of sessions.tsv of the task, the
@@ -75,6 +76,11 @@ type loopView struct {
 	Sessions   [][]string
 	Status     map[string]string
 	Records    map[string]ReviewRecord
+	// The question in the loop (row 66z) is told from the typed rows of each result that ended done, the rows of copies.tsv
+	// and the issue of the task.
+	Results map[string][][]string
+	Copies  [][]string
+	Issue   int
 }
 
 // loopStep is a position with what its act needs: the session it concerns, the message of a stop or a wait,
@@ -84,6 +90,7 @@ type loopStep struct {
 	Session, Msg string
 	Attempt      int
 	Base, Head   string
+	Ask          qStep // the stage of the question, for posQuestion
 }
 
 const nothingMaterial = "nothing material in scope"
@@ -516,6 +523,12 @@ func (s *Sessions) AdvanceShapeTask(ctx context.Context, in ShapeTaskInput) (Adv
 // first: the scratch branch layup/base/<task>/<attempt> of the run's clone is set to it, and the session clones that
 // branch (plan amendment 1 of #415).
 func (s *Sessions) startSession(ctx context.Context, in ShapeTaskInput, kind, step string, attempt int, base string, pair, model []string, findings []Finding, scratch bool) error {
+	return s.startAs(ctx, in, kind, step, stepRole(step), attempt, base, pair, model, findings, scratch)
+}
+
+// startAs is startSession for a session whose role is not the step table's: the answer session is of the owner role of the question
+// (row 66z), the table's word for it being owner-of-its-kind.
+func (s *Sessions) startAs(ctx context.Context, in ShapeTaskInput, kind, step, role string, attempt int, base string, pair, model []string, findings []Finding, scratch bool) error {
 	p := pairOf(pair, model)
 	if err := s.milestoneCap(ctx, p.Cap); err != nil {
 		return err
@@ -537,7 +550,7 @@ func (s *Sessions) startSession(ctx context.Context, in ShapeTaskInput, kind, st
 		}
 	}
 	// The admission may run a probe at the same base, so it clones the same branch.
-	ts := TaskSpec{Task: in.Task, Attempt: attempt, Role: stepRole(step), Base: base, Branch: branch, Records: rec, Pair: p, Context: pc,
+	ts := TaskSpec{Task: in.Task, Attempt: attempt, Role: role, Base: base, Branch: branch, Records: rec, Pair: p, Context: pc,
 		Admit: s.Admit(ctx, ProbeSpec{Harness: pair, Models: in.Models, Base: base, Records: rec, Branch: branch})}
 	_, err = s.TaskSession(ctx, ts)
 	return err

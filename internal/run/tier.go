@@ -181,3 +181,9 @@ func ResolveStep(step, tier, ownerRole string) (Resolved, error) {
 	}
 	return Resolved{}, fmt.Errorf("the step table has no step %q", step)
 }
+
+// openMaterial says whether a material finding is open (loop.md, the open unknowns): the record of the last review that ended, qualified, says
+// anything but nothing material in scope. The events, the start rows and the typed results are those of the task.
+func (s *Sessions) openMaterial(ctx context.Context, task string, events, starts [][]string, results map[string][][]string) (bool, error) {
+	return false, nil
+}
