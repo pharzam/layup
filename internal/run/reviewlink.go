@@ -7,6 +7,7 @@ package run
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -113,7 +114,7 @@ func (s *Sessions) LinkReviewRecord(ctx context.Context, task, verifier string) 
 		return false, fmt.Errorf("the branch %s has no pull request", branch)
 	case pr.Number != t.PR:
 		return false, fmt.Errorf("the pull request %d of the branch %s is not the register's %d", pr.Number, branch, t.PR)
-	case pr.HeadSHA != base:
+	case pr.HeadSHA != base && !slices.ContainsFunc(events, func(e []string) bool { return e[1] == "bound" && e[3] == "" && e[5] == pr.HeadSHA }): // the rendered commit of the bet is the head of the pull request
 		return false, fmt.Errorf("the head of the pull request %d is %s, not the reviewed %s", pr.Number, pr.HeadSHA, base)
 	case pr.State != "open":
 		return false, fmt.Errorf("the pull request %d is %s: only an open one is edited", pr.Number, pr.State)

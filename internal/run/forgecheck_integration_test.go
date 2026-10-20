@@ -196,7 +196,7 @@ func TestTheStepForgeCheckChecksTheForgeAndCommitsItsTableAtEachRestart(t *testi
 	tables := func() int {
 		return len(strings.Fields(gitOut(t, w.bare, "log", "--format=%H", "--grep=^layup run: the forge check$", "refs/heads/layup-records")))
 	}
-	// restart runs a restart and checks which rows it makes, in which order, and the notes of progress: a row's note is its place of the 22 rows (23 once the Scaffold is done)
+	// restart runs a restart and checks which rows it makes, in which order, and the notes of progress: a row's note is its place of the 22 rows (24 once the Scaffold is done)
 	// that a restart with Start done plans, after the 1/6 forge and 2/6 clone of one with Start not done.
 	first := []string{"forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers", "answers-review", "follow-up", "follow-up-answers", "revision", "setup", "verify", "scaffold-push", "forge-check"}
 	later := []string{"forge", "clone", "version", "lease", "forge-check", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers", "answers-review", "follow-up", "follow-up-answers", "revision", "setup", "verify", "scaffold-push", "shape"}
@@ -214,9 +214,9 @@ func TestTheStepForgeCheckChecksTheForgeAndCommitsItsTableAtEachRestart(t *testi
 			got = append(got, row.Name)
 		}
 		for i, name := range names {
-			total := 22 // 23 once the Scaffold is done: the step shape follows scaffold-push (task T-3f94)
+			total := 22 // 24 once the Scaffold is done: the step shape follows scaffold-push (task T-3f94), and the step bet follows shape (task T-2vva)
 			if len(names) >= 5 && names[4] == "forge-check" {
-				total = 23
+				total = 24
 			}
 			if i < 2 {
 				total = 6

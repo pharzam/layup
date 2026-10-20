@@ -19,14 +19,17 @@ import (
 // internal/run (files internal/run/*_integration_test.go, build tag
 // integration) is serial if, directly or through any helper it calls, it calls
 // t.Setenv or t.Chdir, or assigns a package-level variable of package run
-// (today only verifyRun, internal/run/verify.go:29). Every other top-level
+// (today verifyRun, internal/run/verify.go:29, and betStopAt, internal/run/bet.go). Every other top-level
 // integration test gets t.Parallel() as its first statement. Subtests are not
 // changed.
 //
-// The 15 serial top-level integration tests are:
+// The 18 serial top-level integration tests are:
 //   - TestAFrozenFileThatIsALinkIsRefusedAndWritesNothingOutside (frozen_integration_test.go): t.Setenv of HOME in checkout
 //   - TestAFrozenFileThroughALinkInsideTheCheckoutIsRefused (frozen_integration_test.go): t.Setenv of HOME in checkout
 //   - TestAFrozenFileThroughAParentLinkIsRefusedAndWritesNothingOutside (frozen_integration_test.go): t.Setenv of HOME in checkout
+//   - TestARecoveryKeepsTheAnswerAlreadyApplied (bet_integration_test.go): writes betStopAt
+//   - TestARenderedPushToAnotherBranchTipIsRefused (bet_integration_test.go): writes betStopAt
+//   - TestTheBetStepIsAtomicToItsLastAct (bet_integration_test.go): writes betStopAt
 //   - TestAPlainCheckoutGetsTheFrozenFilesInOneCommit (frozen_integration_test.go): t.Setenv of HOME in checkout
 //   - TestARefusedFrozenListWritesNoFile (frozen_integration_test.go): t.Setenv of HOME in checkout
 //   - TestAPushIntoTheTargetOfAWorldStartsNoMaintenance (run_integration_test.go): t.Setenv of GIT_TRACE2_EVENT

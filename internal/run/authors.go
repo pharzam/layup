@@ -70,7 +70,7 @@ func authorsFrom(r Review, task string, sessions, events, tests [][]string, inDi
 		return out, nil
 	}
 	for _, e := range events {
-		if e[1] != "bound" {
+		if e[1] != "bound" || e[3] == "" { // a bound of code has no session
 			continue
 		}
 		i := slices.IndexFunc(sessions, func(s []string) bool { return s[sessionID] == e[3] })

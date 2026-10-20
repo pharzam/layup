@@ -123,7 +123,7 @@ type RulesInput struct {
 func registerRevOf(task, head string, events, sessions [][]string, given string) (string, error) {
 	found := ""
 	for _, e := range events {
-		if e[1] != "bound" || e[5] != head {
+		if e[1] != "bound" || e[3] == "" || e[5] != head {
 			continue
 		}
 		i := slices.IndexFunc(sessions, func(r []string) bool { return r[sessionID] == e[3] })
