@@ -169,3 +169,13 @@ The frames between `newWorldWith` and the test (`sessionWorldWith` and the helpe
 | `sh docs/tests/run-discipline-tests.sh` | `2026-10-20T14:13:07Z` | `2026-10-20T14:13:10Z` | `3` | `10.97 10.16 8.51` | `705` | `0` |
 | `sh docs/setup/setup-check.sh` | `2026-10-20T14:13:10Z` | `2026-10-20T14:13:31Z` | `21` | `10.18 10.01 8.47` | `705` | `0` |
 | `git diff --check origin/main HEAD` | `2026-10-20T14:13:31Z` | `2026-10-20T14:13:31Z` | `0` | `7.42 9.39 8.30` | `705` | `0` |
+
+## The merge of `origin/main` (`1ef5980`, #443) into the branch
+
+The merge `1ff6bcc` resolved one conflict in `docs/guardrails.md`, keeping both sides: main's per-level bound and its link to #439, and this branch's serial rule. The whole integration level ran on the merge head:
+
+- Command: `TMPDIR=/home/layup/.cache/layup-session/tmp-green nice -n 19 go test -count=1 -tags=integration -timeout 30m ./...`
+- Start: `2026-10-20T14:31:09Z`
+- End: `2026-10-20T14:33:14Z`
+- Load average before the run: `0.53 0.86 3.08`
+- Exit status: `0` (`internal/run` 122.310 s)
