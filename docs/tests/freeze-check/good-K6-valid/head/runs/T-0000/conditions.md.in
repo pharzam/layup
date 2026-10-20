@@ -1,0 +1,5 @@
+# Conditions
+
+| Condition | Evidence |
+| --- | --- |
+| 1. All forms | `internal/x/a_test.go`, `internal/x/a_test.go:1`, `internal/x/a_test.go:1-5`, `TestAlpha`, `8f46ad9` |

@@ -1,0 +1,15 @@
+# Test runs
+
+- `go test ./internal/x/ -run '^TestAlpha$'`: exit 0
+
+| # | mutant | sha256 before | sha256 during | restore |
+| - | ------ | ------------- | ------------- | ------- |
+| SM1 | form b restored | 3d7607898ae6 | 78f5d23ba790 | restored | 2026-10-19T10:57:57Z
+
+| # | mutant | build/vet/test | first failing assertion | control |
+| - | ------ | -------------- | ----------------------- | ------- |
+| SM18 | separate result row | 0/0/1 | a_test.go:5 | 0 |
+
+| # | sha256 before | sha256 during (mutated) | sha256 after the restore | before = after |
+| - | ------------- | ----------------------- | ------------------------ | -------------- |
+| SM18 | `a1fc3c879c557d54` | `7e03a254cdec9754` | `a1fc3c879c557d54` | equal |
