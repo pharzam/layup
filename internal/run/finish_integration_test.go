@@ -574,6 +574,75 @@ func TestARestartThatStopsAfterTheSetAsideStillFindsTheKeptHeads(t *testing.T) {
 	}
 }
 
+// recoveryPlace is where a restart sets the old clone aside.
+func (f *finishing) recoveryPlace() string {
+	return filepath.Join(f.r.cfg.Dir, "recovery", f.r.cfg.Owner, f.r.cfg.Name)
+}
+
+// failsTheCleanup makes the removal of the old clone fail partway: the directories of its objects lose their write permission, as the review of round 3 did; the
+// returned function gives it back, wherever the clone is by then.
+func (f *finishing) failsTheCleanup() (restore func()) {
+	f.t.Helper()
+	chmod := func(root string, mode os.FileMode) {
+		filepath.WalkDir(filepath.Join(root, ".git", "objects"), func(p string, d os.DirEntry, err error) error {
+			if err == nil && d.IsDir() {
+				os.Chmod(p, mode)
+			}
+			return nil
+		})
+	}
+	chmod(f.r.target, 0o555)
+	restore = func() { chmod(f.r.target, 0o755); chmod(f.recoveryPlace(), 0o755) }
+	f.t.Cleanup(restore)
+	return restore
+}
+
+// interruptedCleanup stops a restart after the old clone's heads are in the new one and before its removal is done, and gives the fault back.
+func (f *finishing) interruptedCleanup() {
+	f.t.Helper()
+	restore := f.failsTheCleanup()
+	r := &state{cfg: f.w.config("1.0.0")}
+	if s := r.forgeStep(context.Background(), false); s.Result != "done" {
+		f.t.Fatalf("the forge step: %+v", s)
+	}
+	if s := r.cloneStep(context.Background()); s.Result != "fail" {
+		f.t.Fatalf("the clone step with a cleanup that fails = %+v; want fail", s)
+	}
+	restore()
+}
+
+// I12f (finding 7 of round 3, case a): the removal of the old clone fails after its heads were imported; once the fault is gone, the next restart still
+// finishes the candidate through its checked push, with the one producing session.
+func TestACleanupThatFailsAfterTheImportLosesNoHead(t *testing.T) {
+	t.Parallel()
+	f := newFinishing(t, "claude", "codex")
+	id := f.stoppedAtThePush()
+	f.interruptedCleanup()
+	f.restart()
+	got, err := f.finish(nil)
+	if c := f.closers(f.arch); err != nil || !got.Merged || len(c) != 1 || c[0][sessionID] != id {
+		t.Errorf("FinishTask = %+v, %v with the close-out sessions %v; want Merged and the one session %s", got, err, c, id)
+	}
+}
+
+// I12g (case b): the removal was interrupted after it deleted part of the old clone, which is no repository any more; the next restart reads nothing of it.
+func TestACleanupInterruptedAfterAPartialDeleteLosesNoHead(t *testing.T) {
+	t.Parallel()
+	f := newFinishing(t, "claude", "codex")
+	id := f.stoppedAtThePush()
+	f.interruptedCleanup()
+	for _, p := range []string{"HEAD", "refs", "config"} {
+		if err := os.RemoveAll(filepath.Join(f.recoveryPlace(), ".git", p)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	f.restart()
+	got, err := f.finish(nil)
+	if c := f.closers(f.arch); err != nil || !got.Merged || len(c) != 1 || c[0][sessionID] != id {
+		t.Errorf("FinishTask = %+v, %v with the close-out sessions %v; want Merged and the one session %s", got, err, c, id)
+	}
+}
+
 // I12b: a kept head that is in no clone, and that no restart brought, is an error that names the session, not a second session.
 func TestACloseOutWhoseKeptHeadIsGoneIsAnErrorAndNoSecondSession(t *testing.T) {
 	t.Parallel()

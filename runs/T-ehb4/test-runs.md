@@ -185,3 +185,16 @@ ok K6: conditions table
 ```
 
 Without `runs/` (ADR-0028): 1926 added, 84 removed, 2010 lines over 23 files, with the close-out of 2 more files still to come.
+
+## Round 4 - finding 7 of round 3 (review.md of issue425-r3)
+
+### Red
+
+The code was written before the tests were run (the order of this finding broke the rule), so the red run is in a copy of the head `42153e8` made with `git archive` outside the worktree, to which the new test file was copied. Command: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./internal/run/ -run '^(TestACleanupThatFailsAfterTheImportLosesNoHead|TestACleanupInterruptedAfterAPartialDeleteLosesNoHead)$'` (start 2026-10-20T21:33:23Z, end 2026-10-20T21:33:27Z, exit=1).
+
+| Test | First failing assertion |
+| ---- | ----------------------- |
+| `TestACleanupThatFailsAfterTheImportLosesNoHead` | `finish_integration_test.go:621: the clone step of the restart: {Name:clone Result:fail Detail:git for-each-ref --format=%(refname) refs/layup/sessions/: exit status 128: fatal: not a git repository (or any parent up to mount point /)}` |
+| `TestACleanupInterruptedAfterAPartialDeleteLosesNoHead` | `finish_integration_test.go:639: the clone step of the restart: {Name:clone Result:fail Detail:git for-each-ref ... fatal: not a git repository ...}` |
+
+The restart that follows the failed cleanup discarded the current clone, which held the imported head, and then read the damaged place. Case (a) removes write permission on the objects directories of the old clone (as the review did), so that the removal deletes the rest and stops; case (b) deletes `HEAD`, `refs` and `config` of the old clone as well, as an interrupted removal would.

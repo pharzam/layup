@@ -214,7 +214,13 @@ so a person reads it with no tool. A plain `git clone` carries the branch as
    The old clone is set aside in `DIR/recovery/OWNER/NAME/`, a place that is no
    target's clone, and no path that this step did not make is renamed or removed;
    after the new clone those refs are fetched into it and the place is removed. A
-   place that an earlier, interrupted restart left is the older and is used again.
+   place that an earlier, interrupted restart left is the older and is used again,
+   unless its mark `DIR/recovery.imported/OWNER/NAME` exists: the step writes
+   and syncs that file after the fetch and before it removes the old clone, and a
+   restart that finds it only finishes the removal (it reads nothing of the
+   damaged place and does not discard the current clone, which holds the heads;
+   it sets the current clone aside as any other). A removal that fails is the
+   failure of the step.
    An old clone that cannot be listed or fetched is the failure of the step (the
    restart stops, `fail`), never a clone without the refs. It reads `start.tsv`, `approvers.tsv` and `lease.tsv`; `lease.H` and
    `watch.T` of the restart are those of `start.tsv` (task `T-ax3r`). It also
