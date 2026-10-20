@@ -28,6 +28,30 @@ testing.(*T).checkParallel(...)
 testing.(*T).Setenv(0x39e81ebe0d88?, {0xc56c78?, 0x40?}, {0x39e81ee8dd00?, 0x4ab56d?})
 ```
 
+### S1a, reproduced against a named tree (the fix of finding F1 of round 1)
+
+The tree of the run above was a scratch copy that was not kept, so its base and its patch cannot be shown. This run reproduces it on a named tree. It does not stand in for the run above.
+
+- Tree: commit A, `9ac5aada65842f6a1107f3415015147c9b9e5c12`, with the HOME change undone: `newWorldWith` sets `t.Setenv("HOME", t.TempDir())` again (`internal/run/run_integration_test.go:232`), and `internal/run/main_integration_test.go` is removed. Every `t.Parallel()` of commit A stays. It was made in a detached worktree of `9ac5aad` with `git rm internal/run/main_integration_test.go` and one line inserted after `func newWorldWith(t *testing.T, files map[string]string) *world {`.
+- Command: `TMPDIR=/home/layup/.cache/layup-session/tmp-green nice -n 19 go test -count=1 -tags=integration -timeout 30m ./internal/run/`
+- Start: `2026-10-20T14:28:27Z`
+- End: `2026-10-20T14:28:37Z`
+- Exit status: `1`
+
+The panic, with the caller that names the HOME assignment of the world:
+
+```
+panic: testing: test using t.Setenv, t.Chdir, or cryptotest.SetGlobalRandom can not use t.Parallel [recovered, repanicked]
+testing.(*T).Setenv(0xf3da5012008?, {0xc56c78?, 0x500000005?}, {0xf3da4f42120?, 0x3900000030?})
+	/home/layup/.local/share/mise/installs/go/1.26.9/src/testing/testing.go:1852 +0x65
+github.com/pharzam/layup/internal/run.newWorldWith(0xf3da5012008, 0x0)
+	/home/layup/.cache/layup-session/tmp-green/t05f4-s1a/internal/run/run_integration_test.go:232 +0x5b
+github.com/pharzam/layup/internal/run.TestTheDraftPullRequestOfABoundHead(0xf3da5012008)
+	/home/layup/.cache/layup-session/tmp-green/t05f4-s1a/internal/run/pullmerge_integration_test.go:125 +0x39
+```
+
+The frames between `newWorldWith` and the test (`sessionWorldWith` and the helpers above it) are cut. So the conflict is the per-test `HOME` of the world under `t.Parallel()`, which commit A moves into `TestMain`.
+
 ### S1b — Commit A (`9ac5aad`): `verifyRun` tests running in parallel (3 of 3 red)
 
 #### Commit A, run 1

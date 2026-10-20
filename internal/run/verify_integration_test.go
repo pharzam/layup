@@ -102,7 +102,7 @@ func TestTheTreeOfTheSetupRefusesWhatTheRunnerNeverMakes(t *testing.T) {
 
 // goEnv makes the go program of the gates of layup setup verify run on this host's
 // build cache, with no download and no setting of the host, as internal/cli's test
-// of the setup does; it comes before the world, which changes HOME.
+// of the setup does; the HOME of the package is set once, by TestMain.
 func goEnv(t *testing.T) {
 	t.Helper()
 	cache, err := exec.Command("go", "env", "GOCACHE").Output()
