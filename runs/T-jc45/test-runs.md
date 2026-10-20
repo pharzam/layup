@@ -24,3 +24,21 @@ In `.github/workflows/ci.yml:316`, the `integration` step of job `tests (unit â†
 For contrast, the two preceding CI passes under the same command measured:
 - `0246d9c72ecae7c3509a7522990cbf39706f3fd4`, run `39389141724`: `ok  	github.com/pharzam/layup/internal/run	519.198s`
 - `51d949b3fd2e7dd1a1d275585988fab0cc651055` (PR #436 head), run `39421233368`: `ok  	github.com/pharzam/layup/internal/run	493.632s`
+
+## Local checks (head `8646392`)
+
+Each command was run directly (never piped through `tail` or `grep`), with `date -u` read before and after each step:
+
+| Command | Start | End | Exit |
+| --- | --- | --- | --- |
+| `sh docs/adr/adr-lint.sh` | 2026-10-20T13:39:18Z | 2026-10-20T13:39:18Z | exit 0 |
+| `sh docs/prd/prd-lint.sh` | 2026-10-20T13:39:18Z | 2026-10-20T13:39:18Z | exit 0 |
+| `sh docs/links/link-lint.sh` | 2026-10-20T13:39:18Z | 2026-10-20T13:39:31Z | exit 0 |
+| `sh docs/tests/run-discipline-tests.sh` | 2026-10-20T13:39:31Z | 2026-10-20T13:39:34Z | exit 0 |
+| `sh docs/tests/nested-checkout-check.sh` | 2026-10-20T13:39:34Z | 2026-10-20T13:39:34Z | exit 0 |
+| `sh docs/setup/setup-check.sh` | 2026-10-20T13:39:34Z | 2026-10-20T13:39:55Z | exit 0 |
+| `git diff --check origin/main HEAD` | 2026-10-20T13:39:55Z | 2026-10-20T13:39:55Z | exit 0 |
+
+## The green (CI on the PR head)
+
+Filled by the coordinator after the PR's CI runs on the pushed head, with the tested SHA, the CI integration command (`go test -tags=integration -timeout 20m ./...`, permitting each test binary up to 20 minutes while unit and end-to-end retain `-timeout 10m`), the measured uncached `internal/run` duration below the limit, and all 13 PR check runs (the 12 required contexts of `docs/setup/branch-protection.json` plus `task-state labels`).
