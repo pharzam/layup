@@ -2326,3 +2326,67 @@ workflow, task close-out or completed-log file changed in this stage.
 | Run | Command | UTC start | UTC end | Exit | Observation |
 | --- | --- | --- | --- | --- | --- |
 | I-diff | `git diff --check` | 2026-10-20T22:35:49Z | 2026-10-20T22:35:49Z | 0 | No whitespace diagnostics in the Stage I documentation changes. |
+
+## Stage K — validate the merge of current main before landing
+
+After close-out `48b4c61dcd5326220a210853a6dbe0bfa5104481`, landing was
+refused because main had advanced to
+`ebbb581ba089a1a83d2cf5c5a5a0cc44edf7fac8` (T-ehb4, #455).
+The coordinating session merged `origin/main` cleanly as
+`778c2465e41a3556f9659df002906736d038490f`, committed at
+2026-10-20T23:17:31Z. Its parents are that close-out head and that main head,
+in that order. No merge command was run in this stage.
+
+All six required commands below ran on that clean committed merge head,
+before this evidence append. `origin/main` and
+`git merge-base HEAD origin/main` both resolve to
+`ebbb581ba089a1a83d2cf5c5a5a0cc44edf7fac8`.
+The five declared records retain their inspected evidence role.
+UTC start/end times were read directly with `date -u +%FT%TZ`; each command's
+exit status was captured directly. `TMPDIR` was set to
+`/home/layup/.cache/layup-session/tmp-green`; scratch logs and temporary files
+stayed there. Long commands showed their step and an eight-second heartbeat.
+
+The shared files are `docs/guardrails.md` and `docs/tasks/completed.md`.
+Read-only committed-line comparison ran from 2026-10-20T23:18:30Z to
+2026-10-20T23:18:30Z, exit 0, against their common ancestor
+`4259e05f113dec28b60ada61fa245b5f94f72980`. All 26 nonblank guardrail
+lines added by T-c826 remain, including the numbered CI exception, restored
+runners, complete-output migration lesson, committed-blob and rename checks,
+and unmerged-base lesson. The exact T-c826 completed-log line is unchanged and
+occurs once. Main's new guardrail and T-ehb4 completed-log line also remain.
+`git diff 48b4c61 HEAD -- docs/guardrails.md docs/tasks/completed.md`
+shows only main's additions in these two files, with no removal of this branch's
+text. Neither shared file was edited in this stage.
+
+| Run | Command | UTC start | UTC end | Exit | Observation |
+| --- | --- | --- | --- | --- | --- |
+| K-suite | `sh docs/tests/freeze-check/run-all.sh` | 2026-10-20T23:18:18Z | 2026-10-20T23:18:27Z | 0 | 85 passed, 0 failed; coverage and CRLF floors pass. |
+| K-links | `sh docs/links/link-lint.sh` | 2026-10-20T23:18:27Z | 2026-10-20T23:18:41Z | 0 | link-lint: OK; 3029 links resolved. |
+| K-setup | `sh docs/setup/setup-check.sh` | 2026-10-20T23:18:41Z | 2026-10-20T23:19:03Z | 0 | All 12 setup checks and kit-linters pass; 138 discipline cases pass, ADR/PRD lints pass, 3029 links resolve. |
+| K-discipline | `sh docs/tests/run-discipline-tests.sh` | 2026-10-20T23:19:03Z | 2026-10-20T23:19:07Z | 0 | 138 passed, 0 failed. |
+| K-diff | `git diff --check origin/main HEAD` | 2026-10-20T23:19:07Z | 2026-10-20T23:19:07Z | 0 | No whitespace diagnostics in the committed branch diff against current main. |
+| K-freeze | `sh docs/tests/freeze-check.sh --task T-c826 --base origin/main --budget 1300/170 --evidence runs/T-c826/ci-exception.md --evidence runs/T-c826/conditions.md --evidence runs/T-c826/mutants.md --evidence runs/T-c826/real-heads.md --evidence runs/T-c826/test-runs.md > /home/layup/.cache/layup-session/tmp-green/c826-fc6.txt 2>&1` | 2026-10-20T23:19:07Z | 2026-10-20T23:19:07Z | 0 | All K1–K6 pass; complete captured output below. |
+
+Complete freeze-check output, captured in
+`/home/layup/.cache/layup-session/tmp-green/c826-fc6.txt`:
+
+```text
+ok K1: white space
+ok K2: registration of new tests
+ok K3: test selectors
+ok K4: restore evidence of mutants
+ok K5: projection: figure 1080/163, maximum 1300/170, tolerance 260/4, limit 1560/174, margin 480/11 (the figure at landing is still measured at landing)
+ok K6: conditions table
+```
+
+Stage K outcome: all six required commands exit 0. The merged head's K5
+projection is figure **1080/163**, maximum **1300/170**, tolerance **260/4**,
+limit **1560/174**, margin **480/11**. This is the pre-freeze projection;
+the landing figure still requires its canonical bookkeeping audit.
+The merge-scoped independent round on the two shared files remains for the
+coordinating session; it consumes no cycle. This stage adds only this record.
+
+| Run | Command | UTC start | UTC end | Exit | Observation |
+| --- | --- | --- | --- | --- | --- |
+| K-record-diff | `git diff --check` | 2026-10-20T23:19:31Z | 2026-10-20T23:19:31Z | 0 | No whitespace diagnostics in the Stage K evidence append. |
