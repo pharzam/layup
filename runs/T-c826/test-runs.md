@@ -1737,3 +1737,181 @@ The mutation ledger quotes each named failure, its checker/harness statuses and
 restoration hashes; other failing cases are intentionally omitted there. Real-head
 replays and their consumer inspections are in real-heads.md. These records are
 observational evidence and are not fixture/configuration inputs.
+
+## Stage D — gates on the committed head and pre-freeze projection
+
+Tested clean committed HEAD: `ecf98718028c99e3997d111f682f1ed3b87d917e`
+(Stage C commits `7cdf80f`, `34ff09b`, `ecf9871`). Named base `origin/main`
+resolved to `d27b33180a1aa82c23f3ab66e757e06de356eb35`; it was not fetched or
+changed during this stage. The worktree remained clean through both checker
+invocations. Only this evidence record was appended afterward. No task detail,
+completed-log line, checker, runner, workflow, task check or conditions record
+was changed.
+
+Each local command below has its UTC endpoints read directly with
+`date -u +%FT%TZ` and its direct subprocess exit status. Output was captured
+without a pipeline. All temporary repositories and scratch output used
+`TMPDIR=/home/layup/.cache/layup-session/tmp-green/T-c826-stage-d`.
+The two explicitly redirected checker outputs were captured at the named paths
+outside the worktree. The gate driver printed each step and an eight-second
+heartbeat while a command was still running.
+
+### Hosted green after implementation
+
+[PR 453, run 39500930110, job 118897922221](https://github.com/pharzam/layup/actions/runs/39500930110/job/118897922221)
+is the hosted green paired with Stage B's red run 39497659349 above.
+The connected GitHub tools independently returned all nine jobs of run
+39500930110 as completed/success, including Go tests, lint, security and setup.
+The nested-checkout job's restore, nested-checkout and freeze-suite steps all
+concluded success. The supplied stage input separately reports that
+`review-record` waits for the independent round; this is not a claim of an
+all-checks green or a completed review.
+
+The hosted checkout is synthetic merge
+`a037930c65445302e1faf88ca7c0fe32619e7afd`, merging branch head
+`ecf98718028c99e3997d111f682f1ed3b87d917e` into base
+`d27b33180a1aa82c23f3ab66e757e06de356eb35`, as the decoded checkout log states.
+The decoded job log starts at `2026-10-20T21:30:38.8247449Z`; its last line is
+`2026-10-20T21:30:53.6102549Z`. The hosted nested-checkout command starts at
+`2026-10-20T21:30:42.4853427Z` and reports 10 behaved cases at
+`2026-10-20T21:30:42.8176936Z`; the hosted freeze suite starts at
+`2026-10-20T21:30:42.8312654Z` and reports 81 passed, 0 failed at
+`2026-10-20T21:30:53.3403200Z`. Both steps succeeded (exit 0 inferred from
+GitHub's successful step conclusions; the log does not print numeric exits).
+
+The read-only `github_fetch_workflow_run_jobs` and
+`github_fetch_workflow_job_logs` calls were made between direct local UTC
+reads `2026-10-20T21:42:35Z` and `2026-10-20T21:43:02Z`.
+Both returned `isError: false`; these tool calls have no shell exit status.
+Selected decoded log lines preserve the actual keep and every restoration:
+
+```text
+2026-10-20T21:30:41.1717356Z HEAD is now at a037930 Merge ecf98718028c99e3997d111f682f1ed3b87d917e into d27b33180a1aa82c23f3ab66e757e06de356eb35
+2026-10-20T21:30:42.4054744Z restored from main: docs/adr/adr-lint.sh
+2026-10-20T21:30:42.4072385Z restored from main: docs/prd/prd-lint.sh
+2026-10-20T21:30:42.4088726Z restored from main: docs/links/link-lint.sh
+2026-10-20T21:30:42.4105392Z restored from main: docs/tests/run-discipline-tests.sh
+2026-10-20T21:30:42.4121226Z restored from main: docs/ci/pr-link-lint.sh
+2026-10-20T21:30:42.4136765Z restored from main: docs/ci/review-record-lint.sh
+2026-10-20T21:30:42.4137556Z kept as written for PR 453: docs/tests/freeze-check.sh
+2026-10-20T21:30:42.4153306Z restored from main: docs/tests/freeze-check/run.sh
+2026-10-20T21:30:42.4168924Z restored from main: docs/tests/freeze-check/run-all.sh
+2026-10-20T21:30:42.4853427Z ##[group]Run sh docs/tests/nested-checkout-check.sh
+2026-10-20T21:30:42.8176936Z nested-checkout-check: OK  10 cases behaved
+2026-10-20T21:30:42.8312654Z ##[group]Run sh docs/tests/freeze-check/run-all.sh
+2026-10-20T21:30:53.3403200Z freeze-check: 81 passed, 0 failed
+```
+
+### Local commands on ecf9871
+
+| Command | UTC start | UTC end | Exit | Observation |
+| --- | --- | --- | --- | --- |
+| `sh docs/adr/adr-lint.sh` | 2026-10-20T21:42:31Z | 2026-10-20T21:42:32Z | 0 | adr-lint: OK |
+| `sh docs/prd/prd-lint.sh` | 2026-10-20T21:42:32Z | 2026-10-20T21:42:32Z | 0 | prd-lint: OK |
+| `sh docs/links/link-lint.sh` | 2026-10-20T21:42:32Z | 2026-10-20T21:42:44Z | 0 | link-lint: OK  2995 links resolved |
+| `sh docs/tests/run-discipline-tests.sh` | 2026-10-20T21:42:44Z | 2026-10-20T21:42:47Z | 0 | run-discipline-tests: 138 passed, 0 failed |
+| `sh docs/tests/nested-checkout-check.sh` | 2026-10-20T21:42:47Z | 2026-10-20T21:42:47Z | 0 | nested-checkout-check: OK  10 cases behaved |
+| `sh docs/tests/freeze-check/run-all.sh` | 2026-10-20T21:42:47Z | 2026-10-20T21:42:55Z | 0 | freeze-check: 81 passed, 0 failed |
+| `bash --posix docs/tests/freeze-check/run-all.sh` | 2026-10-20T21:42:55Z | 2026-10-20T21:43:03Z | 0 | freeze-check: 81 passed, 0 failed |
+| `sh docs/setup/setup-check.sh` | 2026-10-20T21:43:03Z | 2026-10-20T21:43:25Z | 0 | All setup checks OK, including ci; 138 discipline cases pass and all kit linters pass. |
+| `sh runs/T-c826/checks.sh` | 2026-10-20T21:43:25Z | 2026-10-20T21:43:25Z | 0 | All 12 non-number-specific assertions pass; prints pending for the optional actual PR-number argument. |
+| `git diff --check origin/main HEAD` | 2026-10-20T21:43:25Z | 2026-10-20T21:43:25Z | 0 | No diagnostics. |
+| `sh docs/tests/freeze-check.sh --task T-c826 --base origin/main --budget 1300/170 > /home/layup/.cache/layup-session/tmp-green/c826-fc.txt 2>&1` | 2026-10-20T21:43:25Z | 2026-10-20T21:43:25Z | 1 | K1–K4 pass; K5 fails on the gross figure; K6 fails at conditions.md:9. Full output below. |
+| `sh docs/tests/freeze-check.sh --task T-c826 --base origin/main --budget 1300/170 --evidence runs/T-c826/test-runs.md --evidence runs/T-c826/mutants.md --evidence runs/T-c826/real-heads.md --evidence runs/T-c826/conditions.md --evidence runs/T-c826/ci-exception.md > /home/layup/.cache/layup-session/tmp-green/c826-fc-net.txt 2>&1` | 2026-10-20T21:43:25Z | 2026-10-20T21:43:26Z | 1 | K1–K5 pass; K6 fails at conditions.md:9. Full output below. |
+| `sh runs/T-c826/checks.sh 453` | 2026-10-20T21:43:26Z | 2026-10-20T21:43:26Z | 0 | All 13 assertions pass, including actual migration PR 453. |
+
+The no-argument task-check invocation is the exact Stage D request. Its pending
+message concerns the optional number-specific assertion, so the additional
+invocation with `453` verifies that assertion explicitly.
+
+### Requested checker invocation, without declarations
+
+Complete output from
+`/home/layup/.cache/layup-session/tmp-green/c826-fc.txt`, exit **1**:
+
+```text
+ok K1: white space
+ok K2: registration of new tests
+ok K3: test selectors
+ok K4: restore evidence of mutants
+FAIL K5: -:0: projection: figure 4110/150, maximum 1300/170, tolerance 260/4, limit 1560/174, margin -2550/24 (the figure at landing is still measured at landing)
+FAIL K6: runs/T-c826/conditions.md:9: Evidence cell has no code span
+```
+
+### ADR-0028 classification and declared-evidence invocation
+
+Inspected the five records and their repository consumers before the explicit
+`--evidence` invocation. `test-runs.md` records commands, times and diagnostics;
+`mutants.md` records mutation observations and restoration hashes;
+`real-heads.md` records historical replay results and consumer inspections;
+`conditions.md` maps review conditions to evidence; and `ci-exception.md` records
+authorization and CI observations. They are not execution data, configuration,
+fixtures or expected outputs. The task check reads operative documents and
+committed runner objects, not these records as execution inputs. The checker
+reads task Markdown to audit selectors and mutation evidence (K3/K4), and the
+conditions table to audit citations (K6). These evidence audits do not make the
+records execution inputs under the canonical definition. The declaration is the
+author's classification of inspected consumers, not proof about unknown consumers.
+
+| Excluded evidence record | Added plus removed lines at ecf9871 |
+| --- | --- |
+| `runs/T-c826/test-runs.md` | 1739 |
+| `runs/T-c826/mutants.md` | 1377 |
+| `runs/T-c826/real-heads.md` | 88 |
+| `runs/T-c826/conditions.md` | 11 |
+| `runs/T-c826/ci-exception.md` | 37 |
+| Total excluded | 3252 lines / 5 files |
+
+The executable `runs/T-c826/checks.sh` remains counted: **84 lines / 1 file**.
+No execution input or close-out bookkeeping was excluded. K5 deliberately uses
+`git diff --no-renames --numstat origin/main HEAD`; its gross figure is
+**4110 lines / 150 files**, and its net figure is **858 lines / 145 files**.
+The earlier Stage C scope estimate of 844/143 used rename folding. The difference
+is the unchanged renamed ARGS file (1 line at each endpoint) and fixture body
+(6 lines at each endpoint), which K5 counts as delete/add: another 14 lines and
+2 touched files. The figures here follow the branch's own checker consistently.
+
+| Measure | Lines | Files |
+| --- | --- | --- |
+| Figure, evidence out and execution inputs in | 858 | 145 |
+| Reviewed maximum | 1300 | 170 |
+| Tolerance | 260 | 4 |
+| Limit, maximum plus tolerance | 1560 | 174 |
+| Margin, limit minus figure | 702 | 29 |
+
+The figure is 442 lines and 25 files below the reviewed maximum. The append to
+this evidence record also leaves the count under ADR-0028. This remains a
+projection against the named base, not the final landing audit.
+
+Complete declared-evidence output from
+`/home/layup/.cache/layup-session/tmp-green/c826-fc-net.txt`, exit **1**:
+
+```text
+ok K1: white space
+ok K2: registration of new tests
+ok K3: test selectors
+ok K4: restore evidence of mutants
+ok K5: projection: figure 858/145, maximum 1300/170, tolerance 260/4, limit 1560/174, margin 702/29 (the figure at landing is still measured at landing)
+FAIL K6: runs/T-c826/conditions.md:9: Evidence cell has no code span
+```
+
+### Stage outcome
+
+All ten requested gates exit 0; both 81-case suites and the actual-number task
+check are green. Both committed-head pre-freeze invocations exit 1. Declaring
+eligible evidence resolves K5's gross overrun, but **K6 still fails** because the
+Evidence cell on committed `runs/T-c826/conditions.md:9` has no code span.
+The checker is therefore not green and this head has not passed pre-freeze.
+The stage author leaves the defect unchanged because Stage D expressly permits
+only this evidence-record append. A later authorized stage must correct the
+condition citation, commit it and rerun pre-freeze on the clean committed head.
+No independent review or close-out is claimed here.
+
+Final evidence-append verification:
+
+| Command | UTC start | UTC end | Exit | Observation |
+| --- | --- | --- | --- | --- |
+| `git diff --check` | 2026-10-20T21:44:57Z | 2026-10-20T21:44:57Z | 0 | No diagnostics after appending the Stage D evidence. |
+
+Read-only scope checks also confirm that the committed record is an unchanged
+prefix, this record is the only modified file, and no untracked file exists.
