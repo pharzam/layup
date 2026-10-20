@@ -10,7 +10,7 @@ func TestContentOfPRDsGivesTheWordsOfTheRows(t *testing.T) {
 	prd := "# PRD-0001\n\n| REQ | Statement | MoSCoW | Phase | Facts |\n| --- | --------- | ------ | ----- | ----- |\n" +
 		"| REQ-001 | Alpha |  |  | F-0003#1 |\n| NFR-002 | p99 \\| under 200 ms |  |  | F-0003#2 |\n\n" +
 		"| Requirement | Acceptance criterion |\n| ----------- | -------------------- |\n| `REQ-001` | a check |\n| `NFR-002` | measured |\n\n" +
-		"## 9. Success metrics\n| Metric | Fact |\n| ------ | ---- |\n| faster | F-0003#3 |\n| cheaper | F-0003#4 |\n"
+		"## 8. Success metrics\n| Metric | Fact |\n| ------ | ---- |\n| faster | F-0003#3 |\n| cheaper | F-0003#4 |\n"
 	got := ContentOfPRDs(map[string][]byte{"PRD-0001-x.md": []byte(prd)})
 	if got.Statements["REQ-001"] != "Alpha" || got.Statements["NFR-002"] != "p99 | under 200 ms" || len(got.Statements) != 2 {
 		t.Errorf("Statements = %v; want REQ-001 Alpha and NFR-002 with its escaped bar", got.Statements)

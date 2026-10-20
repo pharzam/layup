@@ -790,7 +790,7 @@ These traps are not domain-specific: they hurt every project's test suite.
   and is a task ([#439](https://github.com/pharzam/layup/issues/439) for `internal/run`). A top-level integration test of `internal/run` (files
   `internal/run/*_integration_test.go`, build tag `integration`) is serial if, directly or through
   any helper it calls, it calls `t.Setenv` or `t.Chdir`, or assigns a package-level variable of
-  package `run` (today only `verifyRun`, `internal/run/verify.go:29`). Every other top-level
+  package `run` (today `verifyRun`, `internal/run/verify.go:29`, and `betStopAt`, `internal/run/bet.go`). Every other top-level
   integration test gets `t.Parallel()` as its first statement. Subtests are not changed; a test
   that must replace a package variable such as `verifyRun` stays serial.
 - ❌ **A `git` verb that reads its standard input when its argument is empty.**
@@ -1422,6 +1422,16 @@ failure modes worth keeping.
   output as a candidate in `Keep` and promote it after; test with a spend that fits without the session's row and fails with it (a green negative beside a
   red case). A session whose output files `ReadOutputFiles` refuses ends `no-result`, not `refused file`, so a loop that retries on the second does not retry the first.
   Learned in `T-h65e`, #418.
+
+- ❌ **An event of code read as a session's.** The rendered commit of the first bet is pushed by code, so its `push` and `bound` have no session,
+  and every reader that scanned the `bound` events of a task and looked its session up broke on it: the driver of a Shape task stopped (a `bound` of
+  a role that is not the developer's), the repair of a push turned the `push` into `refused push-lost` and started an attempt, the authors, the
+  register snapshot of a head and the last bound of an attempt failed or returned the wrong head, and the link of the review record refused the
+  pull request whose head had moved to the rendered commit. It is silent because no test had an event with no session until the step was built.
+  **The check:** when a new writer adds an event that an old reader meets, list the readers of that kind (`grep '"bound"'`), give each a guard
+  and a red case, and run the step that precedes the new one (`shape` before `bet`) after the new writer, since a restart runs it first. Also:
+  an instruction that a session follows must show the sections that a later reader of the file looks for (the rendering of the bet needs
+  `## 6.`, `## 7.`, `**Non-goals.**` and the phases of `## 9.`), or the reader's fixture hides the gap. Learned in `T-2vva`, #366.
 
 ## 3. Validation — how you check you are not fooling yourself
 

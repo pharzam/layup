@@ -411,15 +411,22 @@ func briefText(name string, lines, room int, finding string) func(input map[stri
 // verifiedHead gives the bound head and the base of the open attempt of a Shape task whose position is verified; it reads the records
 // and drives nothing.
 func (s *Sessions) verifiedHead(ctx context.Context, task string) (head, base string, err error) {
+	st, err := s.verifiedStep(ctx, task)
+	return st.Head, st.Base, err
+}
+
+// verifiedStep gives the position of a Shape task that has a verified head (Head, Base, Attempt, and Session the verifier's), read from the
+// records and never driven; any other position is an error.
+func (s *Sessions) verifiedStep(ctx context.Context, task string) (loopStep, error) {
 	s.fns()
 	v, err := s.shapeView(ctx, task)
 	if err != nil {
-		return "", "", err
+		return loopStep{}, err
 	}
 	if st := loopPosition(v); st.Pos == posVerified {
-		return st.Head, st.Base, nil
+		return st, nil
 	}
-	return "", "", fmt.Errorf("%s: Shape has no verified head for it", task)
+	return loopStep{}, fmt.Errorf("%s: Shape has no verified head for it", task)
 }
 
 // briefInputs is everything a fresh build of the brief reads, before any session.

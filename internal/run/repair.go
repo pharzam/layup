@@ -53,7 +53,7 @@ func (s *Sessions) RepairPushes(ctx context.Context, task string) (Repair, error
 		return out, err
 	}
 	for i, e := range events {
-		if e[1] != "push" || resolved(events[i+1:], e[3]) {
+		if e[1] != "push" || e[3] == "" || resolved(events[i+1:], e[3]) { // a push of code has no session: its step resolves it
 			continue
 		}
 		id, branch, pushed := e[3], e[6], e[5]

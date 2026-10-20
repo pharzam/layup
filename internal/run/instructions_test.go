@@ -448,7 +448,7 @@ func specimenBlocks(text string) [][]string {
 func specimen(t *testing.T, drop int) string {
 	t.Helper()
 	text := promptText(t, "specification", "specification")
-	r := strings.NewReplacer("<NNN>", "001", "<the requirement>", "Alpha", "<the acceptance criterion>", "a check", "<the success criterion>", "faster")
+	r := strings.NewReplacer("<NNN>", "001", "<the requirement>", "Alpha", "<the acceptance criterion>", "a check", "<the success criterion>", "faster", "<the phase tag>", "1", "<the name of the phase>", "The core", "<what ships in it>", "everything")
 	var out []string
 	for i, b := range specimenBlocks(text) {
 		if i == drop {
@@ -478,8 +478,8 @@ func specimenInput(t *testing.T, prd string) spec.FullInput {
 }
 
 func TestTheSpecimenOfTheSpecificationInstructionPassesTheFullCheck(t *testing.T) {
-	if len(specimenBlocks(promptText(t, "specification", "specification"))) != 4 {
-		t.Fatalf("the specification instruction shows %d forms; want the requirements, the criteria, the success metrics and the matrix", len(specimenBlocks(promptText(t, "specification", "specification"))))
+	if len(specimenBlocks(promptText(t, "specification", "specification"))) != 5 {
+		t.Fatalf("the specification instruction shows %d forms; want the requirements, the criteria, the success metrics, the matrix and the phases", len(specimenBlocks(promptText(t, "specification", "specification"))))
 	}
 	for _, row := range spec.CheckFull(specimenInput(t, specimen(t, -1))) {
 		if row[1] == "fail" {

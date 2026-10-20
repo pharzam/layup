@@ -82,9 +82,16 @@ func (d *drvWorld) setParameter(name, value string) {
 
 // shapedWorld is a run after Shape: both Shape tasks at their verified heads, db with two survivors, brief.lines 60, and the harness of
 // the claude row reporting its cost.
-func shapedWorld(t *testing.T) *drvWorld {
+func shapedWorld(t *testing.T) *drvWorld { return shapedWorldWith(t, survivorDB, "", "60") }
+
+// shapedWorldWith is shapedWorld with the options table of the architect, the PRD that the specification session writes (the specimen
+// of the instruction when empty) and the value of brief.lines.
+func shapedWorldWith(t *testing.T, options, prd, lines string) *drvWorld {
 	t.Helper()
 	d := newDrvWorldOpts(t, loopPerms, drvOpts{noOption: true})
+	if prd != "" {
+		d.ctlWrite("prd.md", prd)
+	}
 	// The clock of the world runs 600 times faster than the real one, so the 8 hours of the cap of milestone 0 are 48 seconds, and a host under
 	// load would end a test at that cap by the clock. The hours are widened; the money cap stays 50.
 	start := keptRecord(t, d.w, "start/start.tsv")
@@ -93,12 +100,12 @@ func shapedWorld(t *testing.T) *drvWorld {
 	}
 	d.push(map[string][]byte{"start/start.tsv": []byte(strings.Replace(start, "intake.cap\t50.0,8.0\t", "intake.cap\t50.0,4000.0\t", 1))}, "the hours of the cap of milestone 0 widened")
 	d.settled()
-	d.ctlOptions(1, survivorDB)
+	d.ctlOptions(1, options)
 	d.ctlWrite("commit", "")
 	if got := d.r.shapeStep(context.Background()); got.Result != "done" || !strings.Contains(got.Detail, " verified") {
 		t.Fatalf("the step shape = %+v; want both tasks verified", got)
 	}
-	d.setParameter("brief.lines", "60")
+	d.setParameter("brief.lines", lines)
 	d.harnesses[0][regBilling], d.harnesses[0][regUsage] = "api", "claude-result"
 	d.restart()
 	return d
