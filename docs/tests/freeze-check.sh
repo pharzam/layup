@@ -214,7 +214,156 @@ check_k2() {
 }
 
 check_k3() {
-	printf 'ok K3: test selectors\n'
+	: > "$tmp/k3_tests"
+	git ls-files '*_test.go' | while IFS= read -r tf; do
+		[ -f "$tf" ] || continue
+		tdir=$(dirname -- "$tf")
+		tr -d '\r' < "$tf" | awk -v d="$tdir" '
+			!in_pkg && /^\/\/go:build / {
+				t = $0; sub(/^\/\/go:build[[:space:]]+/, "", t); gsub(/[[:space:]]+$/, "", t)
+				tag = t; next
+			}
+			!in_pkg && /^\/\/ \+build / && tag == "" {
+				t = $0; sub(/^\/\/ \+build[[:space:]]+/, "", t); gsub(/[[:space:]]+$/, "", t)
+				tag = t; next
+			}
+			/^package / { in_pkg = 1 }
+			/^func Test[A-Za-z0-9_]+\(/ {
+				nm = $0; sub(/^func /, "", nm); sub(/\(.*/, "", nm)
+				if (nm != "TestMain")
+					printf "%s\t%s\t%s\n", d, (tag == "" ? "-" : tag), nm
+			}
+		'
+	done > "$tmp/k3_tests"
+	: > "$tmp/k3_out"
+	for mf in "runs/$task"/*.md; do
+		[ -f "$mf" ] || continue
+		[ -r "$mf" ] || { printf 'freeze-check: cannot read %s\n' "$mf"; exit 2; }
+		tr -d '\r' < "$mf" > "$tmp/k3_md"
+		awk -v md="$mf" '
+			FILENAME == ARGV[1] {
+				split($0, a, "\t")
+				tn++; t_dir[tn] = a[1]; t_tag[tn] = a[2]; t_fn[tn] = a[3]
+				next
+			}
+			function pkg_match(p, d,    pre) {
+				sub(/^\.\//, "", p); sub(/\/$/, "", p)
+				if (p == "") p = "."
+				if (p == "...") return 1
+				if (p ~ /\/\.\.\.$/) {
+					pre = substr(p, 1, length(p) - 4)
+					return (d == pre || substr(d, 1, length(pre) + 1) == pre "/")
+				}
+				return (d == p)
+			}
+			function tag_match(tags, ft) {
+				if (ft == "-") return 1
+				return (index("," tags ",", "," ft ",") > 0)
+			}
+			function check_cmd(cmd, ln,    rpos, after, qend, sel, pre, post, rest, nt, toks, i, tok, tags, np, pkgs, anchored, s, na, alts, a, j, k, ok) {
+				if (!match(cmd, /(^|[[:space:]])go[[:space:]]+test([[:space:]]|$)/)) return
+				if (!match(cmd, /[[:space:]]-run([[:space:]=]|$)/)) return
+				rpos = RSTART
+				pre = substr(cmd, 1, rpos - 1)
+				after = substr(cmd, rpos + 1)
+				sub(/^-run[[:space:]]*=?/, "", after)
+				if (substr(after, 1, 1) == "\"") {
+					printf "FAIL K3: %s:%d: quote the selector with single quotes\n", md, ln
+					return
+				}
+				if (substr(after, 1, 1) != "\047") {
+					printf "FAIL K3: %s:%d: quote the selector with single quotes\n", md, ln
+					return
+				}
+				after = substr(after, 2)
+				qend = index(after, "\047")
+				if (qend == 0) {
+					printf "FAIL K3: %s:%d: unsupported selector form\n", md, ln
+					return
+				}
+				sel = substr(after, 1, qend - 1)
+				post = substr(after, qend + 1)
+				if (post != "" && substr(post, 1, 1) !~ /[[:space:]]/) {
+					printf "FAIL K3: %s:%d: unsupported selector form\n", md, ln
+					return
+				}
+				rest = pre " " post
+				if (!match(rest, /(^|[[:space:]])go[[:space:]]+test([[:space:]]|$)/)) {
+					printf "FAIL K3: %s:%d: unsupported selector form\n", md, ln
+					return
+				}
+				rest = substr(rest, RSTART + RLENGTH)
+				nt = split(rest, toks, /[[:space:]]+/)
+				tags = ""; np = 0
+				for (i = 1; i <= nt; i++) {
+					tok = toks[i]
+					if (tok == "") continue
+					if (tok ~ /^-tags=/) { tags = substr(tok, 7); continue }
+					if (tok == "-tags") { if (i == nt) { printf "FAIL K3: %s:%d: unsupported selector form\n", md, ln; return }; tags = toks[++i]; continue }
+					if (tok ~ /^-(count|timeout)=/ || tok == "-v" || tok == "-short" || tok == "-race") continue
+					if (tok == "-count" || tok == "-timeout") { if (i == nt) { printf "FAIL K3: %s:%d: unsupported selector form\n", md, ln; return }; i++; continue }
+					if (tok == "." || tok == "..." || tok ~ /^\.\//) { pkgs[++np] = tok; continue }
+					printf "FAIL K3: %s:%d: unsupported selector form\n", md, ln
+					return
+				}
+				if (np == 0) {
+					printf "FAIL K3: %s:%d: unsupported selector form\n", md, ln
+					return
+				}
+				if (sel ~ /^[A-Za-z0-9_]+(\|[A-Za-z0-9_]+)*$/) {
+					anchored = 0; s = sel
+				} else if (sel ~ /^\^[A-Za-z0-9_]+\$(\|\^[A-Za-z0-9_]+\$)*$/) {
+					anchored = 1; s = sel; gsub(/\^|\$/, "", s)
+				} else if (sel ~ /^\^\([A-Za-z0-9_]+(\|[A-Za-z0-9_]+)*\)\$$/) {
+					anchored = 1; s = substr(sel, 3, length(sel) - 4)
+				} else {
+					printf "FAIL K3: %s:%d: unsupported selector form: \047%s\047\n", md, ln, sel
+					return
+				}
+				na = split(s, alts, "|")
+				for (a = 1; a <= na; a++) {
+					ok = 0
+					for (j = 1; j <= tn; j++) {
+						if (!tag_match(tags, t_tag[j])) continue
+						for (k = 1; k <= np; k++) {
+							if (pkg_match(pkgs[k], t_dir[j])) {
+								if ((anchored && t_fn[j] == alts[a]) || (!anchored && index(t_fn[j], alts[a]) > 0)) {
+									ok = 1; break
+								}
+							}
+						}
+						if (ok) break
+					}
+					if (!ok) {
+						printf "FAIL K3: %s:%d: selector %s matches no test in the named packages\n", md, ln, alts[a]
+					}
+				}
+			}
+			{
+				line = $0; has_span = 0
+				while ((p1 = index(line, "`")) > 0) {
+					line = substr(line, p1 + 1)
+					p2 = index(line, "`")
+					if (p2 == 0) break
+					sp = substr(line, 1, p2 - 1)
+					if (sp ~ /(^|[[:space:]])go[[:space:]]+test([[:space:]]|$)/ && sp ~ /[[:space:]]-run([[:space:]=]|$)/) {
+						has_span = 1
+						check_cmd(sp, FNR)
+					}
+					line = substr(line, p2 + 1)
+				}
+				if (!has_span && $0 !~ /`/ && $0 ~ /(^|[[:space:]])go[[:space:]]+test([[:space:]]|$)/ && $0 ~ /[[:space:]]-run([[:space:]=]|$)/) {
+					check_cmd($0, FNR)
+				}
+			}
+		' "$tmp/k3_tests" "$tmp/k3_md" >> "$tmp/k3_out"
+	done
+	if [ -s "$tmp/k3_out" ]; then
+		cat "$tmp/k3_out"
+		failed=1
+	else
+		printf 'ok K3: test selectors\n'
+	fi
 }
 
 check_k4() {
