@@ -97,9 +97,10 @@ file.
 These read only text, so they need no toolchain. Install the hooks once per clone
 by running `sh .githooks/install.sh` (it pins `core.hooksPath` to the relative
 `.githooks`); the first four, and the setup checks `adapted` and `markers`, then
-run before every commit, and in CI; `nested-checkout-check.sh` needs `git`, so it
-runs in CI only; the full `setup-check.sh` needs `git` too, and runs in CI;
-and `git diff --check` you run yourself. Keep
+run before every commit, and in CI; `nested-checkout-check.sh` and
+`freeze-check/run-all.sh` need `git`, so they run in CI only; the full
+`setup-check.sh` needs `git` too, and runs in CI; `freeze-check.sh` needs `git`
+and you run it before each freeze; and `git diff --check` you run yourself. Keep
 [`.gitattributes`](.gitattributes): it holds these scripts at line-feed endings,
 without which none of them runs on a Windows checkout.
 
@@ -109,6 +110,8 @@ sh docs/prd/prd-lint.sh
 sh docs/links/link-lint.sh
 sh docs/tests/run-discipline-tests.sh
 sh docs/tests/nested-checkout-check.sh
+sh docs/tests/freeze-check/run-all.sh
+sh docs/tests/freeze-check.sh --task T-xxxx --base REV --budget LINES/FILES
 sh docs/setup/setup-check.sh
 git diff --check
 ```
