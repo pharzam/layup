@@ -780,9 +780,11 @@ These traps are not domain-specific: they hurt every project's test suite.
   package, while CI ran all three levels in 3 min 22 s (`T-4c5c`, #276). **The check:** run
   the level with `-timeout 30m`; when a package stops at the limit, read `uptime`, run that
   package alone with `-v`, record both runs, and edit no test for the stop. A package that
-  needs more than 10 minutes alone on an idle host breaks
+  needs more than its level's per-test-binary bound alone on an idle host (10 minutes, or 20
+  minutes for the integration level in CI under
+  [ADR-0027](adr/0027-bound-the-integration-level-at-20-minutes-in-ci.md)) breaks
   [the rule of the scaling checklist](tests/scaling-checklist.md#fast-enough-for-hook-and-ci),
-  and is a task.
+  and is a task ([#439](https://github.com/pharzam/layup/issues/439) for `internal/run`).
 - ❌ **A `git` verb that reads its standard input when its argument is empty.**
   `git commit-tree TREE -p PARENT -m ''` finds an empty message and reads the message
   from its standard input, as it does with no `-m`; with a standard input that stays
@@ -799,8 +801,11 @@ These traps are not domain-specific: they hurt every project's test suite.
   weaken a passing old test.
 - ❌ **Tests that slow down as the project grows.** A suite that creeps past the
   hook's patience gets skipped, and a skipped gate is no gate. The check: keep the
-  cheap levels fast and cheap-first, push slow ones to CI, and bound each with
-  `-timeout 10m` — see [`tests/scaling-checklist.md`](tests/scaling-checklist.md).
+  cheap levels fast and cheap-first, push slow ones to CI, and bound each test
+  binary within its level's limit (`-timeout 10m`, or `-timeout 20m` for the
+  integration level in CI under
+  [ADR-0027](adr/0027-bound-the-integration-level-at-20-minutes-in-ci.md)) — see
+  [`tests/scaling-checklist.md`](tests/scaling-checklist.md).
 - ❌ **A specification that fixes one input state at a time.** A step that reads
   an input file a human writes (an answers file, a list of rows) meets rows in
   states that the happy path never makes: rows given early, copied from an
