@@ -5,7 +5,8 @@
 # Usage:
 #   sh docs/tests/freeze-check.sh --task T-xxxx --base REV --budget LINES/FILES [--closeout LINES/FILES] [--no-conditions]
 #
-# Reads git and text of the task worktree; K6 reads its table and the paths it
+# Reads git and text of the task worktree, which must be clean (no change, no
+# untracked file: exit 2); K6 reads its table and the paths it
 # cites at HEAD.
 # Prints one line per check:
 #   ok K<n>: <what>
@@ -67,6 +68,23 @@ git rev-parse --verify --quiet "$base^{commit}" >/dev/null 2>&1 || {
 	exit 2
 }
 
+# The check reads the committed head: a worktree with a change or an untracked
+# file is refused, so no local file supplies evidence. A tracked file that cannot
+# be read shows as changed, and is named as unreadable.
+dirty=$(git status --porcelain --untracked-files=all) || { printf 'freeze-check: git status failed\n'; exit 2; }
+if [ -n "$dirty" ]; then
+	printf '%s\n' "$dirty" | while IFS= read -r st; do
+		sp=${st#???}
+		if [ -e "$sp" ] && [ ! -d "$sp" ] && [ ! -r "$sp" ]; then
+			printf 'freeze-check: cannot read %s\n' "$sp"
+			exit 3
+		fi
+	done
+	[ $? -eq 3 ] && exit 2
+	printf 'freeze-check: the worktree has changes or untracked files; commit them first (the check reads the committed head)\n'
+	exit 2
+fi
+
 tmp=$(mktemp -d) || exit 2
 trap 'rm -rf "${tmp:?}"' EXIT INT TERM
 failed=0
@@ -116,13 +134,11 @@ check_k2() {
 		failed=1
 		return
 	fi
-	[ -r docs/tests/traceability.md ] || { printf 'freeze-check: cannot read docs/tests/traceability.md\n'; exit 2; }
-	tr -d '\r' < docs/tests/traceability.md > "$tmp/k2_tr" || { printf 'freeze-check: cannot read docs/tests/traceability.md\n'; exit 2; }
+	tr -d '\r' < docs/tests/traceability.md > "$tmp/k2_tr"
 	has_prd=0
 	if [ -f docs/prd/PRD-0001-layup.md ]; then
 		has_prd=1
-		[ -r docs/prd/PRD-0001-layup.md ] || { printf 'freeze-check: cannot read docs/prd/PRD-0001-layup.md\n'; exit 2; }
-		tr -d '\r' < docs/prd/PRD-0001-layup.md > "$tmp/k2_prd" || { printf 'freeze-check: cannot read docs/prd/PRD-0001-layup.md\n'; exit 2; }
+		tr -d '\r' < docs/prd/PRD-0001-layup.md > "$tmp/k2_prd"
 	else
 		: > "$tmp/k2_prd"
 	fi
@@ -209,7 +225,7 @@ check_k2() {
 				}
 			}
 		}
-	' "$tmp/k2_tr" "$tmp/k2_prd" "$tmp/k2_added" > "$tmp/k2_out" || { printf 'freeze-check: K2 could not read its inputs\n'; exit 2; }
+	' "$tmp/k2_tr" "$tmp/k2_prd" "$tmp/k2_added" > "$tmp/k2_out"
 	if [ -s "$tmp/k2_out" ]; then
 		cat "$tmp/k2_out"
 		failed=1
@@ -351,9 +367,15 @@ check_k3() {
 			# the lines of a paragraph, and a span still open at the end of a line
 			# goes on at the next one; the text outside the spans is read too, so
 			# a backtick elsewhere on a line hides no command.
-			/^[[:space:]]*```/ { infence = !infence; inspan = 0; buf = ""; next }
+			# A backtick that no later one closes in its paragraph opens no span:
+			# what it buffered is read as plain text at the paragraph end.
+			function flush() {
+				if (inspan && cmdlike(buf)) check_cmd(buf, bufln)
+				inspan = 0; buf = ""
+			}
+			/^[[:space:]]*```/ { flush(); infence = !infence; next }
 			infence { if (cmdlike($0)) check_cmd($0, FNR); next }
-			/^[[:space:]]*$/ { inspan = 0; buf = ""; next }
+			/^[[:space:]]*$/ { flush(); next }
 			{
 				line = $0; rest = ""
 				if (inspan) {
@@ -376,6 +398,7 @@ check_k3() {
 				rest = rest line
 				if (cmdlike(rest)) check_cmd(rest, FNR)
 			}
+			END { flush() }
 		' "$tmp/k3_tests" "$tmp/k3_md" >> "$tmp/k3_out"
 	done
 	if [ -s "$tmp/k3_out" ]; then
