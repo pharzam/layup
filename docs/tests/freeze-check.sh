@@ -5,7 +5,8 @@
 # Usage:
 #   sh docs/tests/freeze-check.sh --task T-xxxx --base REV --budget LINES/FILES [--closeout LINES/FILES] [--no-conditions]
 #
-# Reads git and text at HEAD of the task worktree.
+# Reads git and text of the task worktree; K6 reads its table and the paths it
+# cites at HEAD.
 # Prints one line per check:
 #   ok K<n>: <what>
 #   FAIL K<n>: <file>:<line>: <reason>
@@ -115,11 +116,13 @@ check_k2() {
 		failed=1
 		return
 	fi
-	tr -d '\r' < docs/tests/traceability.md > "$tmp/k2_tr"
+	[ -r docs/tests/traceability.md ] || { printf 'freeze-check: cannot read docs/tests/traceability.md\n'; exit 2; }
+	tr -d '\r' < docs/tests/traceability.md > "$tmp/k2_tr" || { printf 'freeze-check: cannot read docs/tests/traceability.md\n'; exit 2; }
 	has_prd=0
 	if [ -f docs/prd/PRD-0001-layup.md ]; then
 		has_prd=1
-		tr -d '\r' < docs/prd/PRD-0001-layup.md > "$tmp/k2_prd"
+		[ -r docs/prd/PRD-0001-layup.md ] || { printf 'freeze-check: cannot read docs/prd/PRD-0001-layup.md\n'; exit 2; }
+		tr -d '\r' < docs/prd/PRD-0001-layup.md > "$tmp/k2_prd" || { printf 'freeze-check: cannot read docs/prd/PRD-0001-layup.md\n'; exit 2; }
 	else
 		: > "$tmp/k2_prd"
 	fi
@@ -206,7 +209,7 @@ check_k2() {
 				}
 			}
 		}
-	' "$tmp/k2_tr" "$tmp/k2_prd" "$tmp/k2_added" > "$tmp/k2_out"
+	' "$tmp/k2_tr" "$tmp/k2_prd" "$tmp/k2_added" > "$tmp/k2_out" || { printf 'freeze-check: K2 could not read its inputs\n'; exit 2; }
 	if [ -s "$tmp/k2_out" ]; then
 		cat "$tmp/k2_out"
 		failed=1
@@ -341,22 +344,37 @@ check_k3() {
 					}
 				}
 			}
+			function cmdlike(x) {
+				return (x ~ /(^|[[:space:]])go[[:space:]]+test([[:space:]]|$)/ && x ~ /[[:space:]]-run([[:space:]=]|$)/)
+			}
+			# A fenced line is read as it stands; inline spans are paired across
+			# the lines of a paragraph, and a span still open at the end of a line
+			# goes on at the next one; the text outside the spans is read too, so
+			# a backtick elsewhere on a line hides no command.
+			/^[[:space:]]*```/ { infence = !infence; inspan = 0; buf = ""; next }
+			infence { if (cmdlike($0)) check_cmd($0, FNR); next }
+			/^[[:space:]]*$/ { inspan = 0; buf = ""; next }
 			{
-				line = $0; has_span = 0
+				line = $0; rest = ""
+				if (inspan) {
+					p1 = index(line, "`")
+					if (p1 == 0) { buf = buf " " line; next }
+					buf = buf " " substr(line, 1, p1 - 1)
+					line = substr(line, p1 + 1); inspan = 0
+					if (cmdlike(buf)) check_cmd(buf, bufln)
+					buf = ""
+				}
 				while ((p1 = index(line, "`")) > 0) {
+					rest = rest substr(line, 1, p1 - 1) " "
 					line = substr(line, p1 + 1)
 					p2 = index(line, "`")
-					if (p2 == 0) break
+					if (p2 == 0) { inspan = 1; buf = line; bufln = FNR; line = ""; break }
 					sp = substr(line, 1, p2 - 1)
-					if (sp ~ /(^|[[:space:]])go[[:space:]]+test([[:space:]]|$)/ && sp ~ /[[:space:]]-run([[:space:]=]|$)/) {
-						has_span = 1
-						check_cmd(sp, FNR)
-					}
+					if (cmdlike(sp)) check_cmd(sp, FNR)
 					line = substr(line, p2 + 1)
 				}
-				if (!has_span && $0 !~ /`/ && $0 ~ /(^|[[:space:]])go[[:space:]]+test([[:space:]]|$)/ && $0 ~ /[[:space:]]-run([[:space:]=]|$)/) {
-					check_cmd($0, FNR)
-				}
+				rest = rest line
+				if (cmdlike(rest)) check_cmd(rest, FNR)
 			}
 		' "$tmp/k3_tests" "$tmp/k3_md" >> "$tmp/k3_out"
 	done
@@ -418,14 +436,19 @@ check_k4() {
 				} else if (is_hex(vb) && is_hex(vd) && vb != vd && (vr == "True" || vr == "equal" || vr == "restored")) {
 					id_ok[id] = 1
 				}
+				# An exemption needs an explicit disposition, never a word that describes
+				# the mutant: "not run" in a cell, or a cell that begins
+				# with "dropped" or "superseded"; a cell KILLED says it ran.
+				killed = 0; w = ""
 				for (i = 3; i <= nc; i++) {
-					low = tolower(c[i])
-					if (match(low, /(^|[^a-z0-9_])(not run|dropped|superseded)([^a-z0-9_]|$)/)) {
-						w = substr(low, RSTART, RLENGTH)
-						gsub(/^[^a-z]+|[^a-z]+$/, "", w)
-						id_skip[id] = w
-						id_skip_line[id] = FNR
-					}
+					low = tolower(c[i]); gsub(/^[[:space:]`*(]+|[[:space:]`*)]+$/, "", low)
+					if (low == "killed") killed = 1
+					if (match(low, /(^|[^a-z0-9_])not run([^a-z0-9_]|$)/)) w = "not run"
+					else if (low ~ /^(dropped|superseded)([^a-z0-9_]|$)/) { w = low; sub(/[^a-z].*/, "", w) }
+				}
+				if (w != "" && !killed) {
+					id_skip[id] = w
+					id_skip_line[id] = FNR
 				}
 			}
 			END {
@@ -478,15 +501,17 @@ check_k6() {
 		printf 'skip K6: --no-conditions\n'
 		return
 	fi
+	# The table and every path it cites are read at HEAD, so a file left
+	# untracked or edited in the worktree supplies no evidence.
 	cond_file="runs/$task/conditions.md"
-	if [ ! -f "$cond_file" ]; then
+	if ! git cat-file -e "HEAD:$cond_file" 2>/dev/null; then
 		printf 'FAIL K6: %s:0: missing file\n' "$cond_file"
 		failed=1
 		return
 	fi
-	[ -r "$cond_file" ] || { printf 'freeze-check: cannot read %s\n' "$cond_file"; exit 2; }
+	git show "HEAD:$cond_file" > "$tmp/k6_cond" || { printf 'freeze-check: cannot read %s at HEAD\n' "$cond_file"; exit 2; }
 	cut -f3 "$tmp/k3_tests" | sort -u > "$tmp/k6_tests"
-	tr -d '\r' < "$cond_file" | awk '
+	tr -d '\r' < "$tmp/k6_cond" | awk '
 		!/^\|/ { in_c = 0; next }
 		!in_c {
 			if ($0 ~ /^\|[[:space:]]*Condition[[:space:]]*\|[[:space:]]*Evidence[[:space:]]*\|[[:space:]]*$/) {
@@ -532,7 +557,7 @@ check_k6() {
 			if ! grep -Fxq -- "$sp" "$tmp/k6_tests"; then
 				printf 'FAIL K6: %s:%s: test %s does not exist\n' "$cond_file" "$ln" "$sp" >> "$tmp/k6_out"
 			fi
-		elif printf '%s\n' "$sp" | grep -Eq '^[0-9a-f]{7,40}$' && [ ! -e "$sp" ]; then
+		elif printf '%s\n' "$sp" | grep -Eq '^[0-9a-f]{7,40}$' && ! git cat-file -e "HEAD:$sp" 2>/dev/null; then
 			if ! git cat-file -e "$sp^{commit}" 2>/dev/null; then
 				printf 'FAIL K6: %s:%s: commit %s does not exist\n' "$cond_file" "$ln" "$sp" >> "$tmp/k6_out"
 			fi
@@ -544,15 +569,15 @@ check_k6() {
 				p=${sp%:*}; n1=${sp##*:}; n2=$n1
 			fi
 			if [ "$n1" -gt 0 ]; then
-				if [ ! -f "$p" ]; then
+				if [ "$(git cat-file -t "HEAD:$p" 2>/dev/null)" != blob ]; then
 					printf 'FAIL K6: %s:%s: path %s does not exist\n' "$cond_file" "$ln" "$p" >> "$tmp/k6_out"
 				else
-					tot=$(awk 'END { print NR + 0 }' "$p")
+					tot=$(git show "HEAD:$p" | awk 'END { print NR + 0 }')
 					if [ "$n1" -lt 1 ] || [ "$n2" -lt "$n1" ] || [ "$n2" -gt "$tot" ]; then
 						printf 'FAIL K6: %s:%s: line range in %s is past the end of %s\n' "$cond_file" "$ln" "$sp" "$p" >> "$tmp/k6_out"
 					fi
 				fi
-			elif [ ! -f "$p" ] && [ ! -d "$p" ]; then
+			elif ! git cat-file -e "HEAD:$p" 2>/dev/null; then
 				printf 'FAIL K6: %s:%s: path %s does not exist\n' "$cond_file" "$ln" "$p" >> "$tmp/k6_out"
 			fi
 		fi
