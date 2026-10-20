@@ -1,7 +1,8 @@
-# T-c826 S1 test runs
+# T-c826 test runs
 
-Stage A of amendment 1. No checker, runner, workflow or canonical-text implementation
-is included. The binding review sets 1,300 lines / 170 files, close-out inside,
+Stage A below records amendment 1 before checker, runner, workflow or canonical-text
+implementation. Stage B records the numbered workflow exception; the checker
+remains unchanged. The binding review sets 1,300 lines / 170 files, close-out inside,
 and cap 2. The supplied Operator decisions authorize two goal classes in one task
 and the checker-only, numbered-PR exception; removal issue #452 (T-szvp).
 
@@ -1351,3 +1352,139 @@ ok: restoration still reads the default branch of this repository
 ok: default branch still comes from the repository event
 FAIL: exception comment names the task, literal PR and removal issue
 ```
+
+## Stage B — S2 numbered CI exception
+
+Tested HEAD: `c456dc0df4d4ab9e32e6ad1c31a19deeb50aa700` (committed
+Stage A), with only the workflow and evidence records changed during this stage.
+The binding Stage B input identifies PR #453 as the PR that closes #449 and
+supplies R4 approvals 6301028661 and 6301084598. Removal issue: #452 (T-szvp).
+The read-only forge query below failed to connect; no fresh PR-body verification
+or hosted CI result is claimed here. The coordinating session will push this
+stage and record the PR's required red `nested-checkout-check` run before S3.
+
+The same direct timestamp/status method as Stage A was used. Scratch logs and
+disposable fixture repositories were confined to
+`/home/layup/.cache/layup-session/tmp-green/T-c826-stage-b` via `TMPDIR`.
+The setup command printed a running step and a heartbeat every five seconds.
+No repository commit or push was attempted.
+
+| Command | Start UTC | End UTC | Exit | Observed result |
+| --- | --- | --- | --- | --- |
+| `git rev-parse HEAD` | 2026-10-20T21:02:31Z | 2026-10-20T21:02:31Z | 0 | Confirmed the committed Stage A HEAD above. |
+| `gh pr view 453 --repo pharzam/layup --json number,body,url` | 2026-10-20T21:02:31Z | 2026-10-20T21:02:31Z | 1 | Network failure: error connecting to api.github.com; supplied PR identity used, body verification deferred to coordinator. |
+| `sh runs/T-c826/checks.sh 453` | 2026-10-20T21:02:31Z | 2026-10-20T21:02:31Z | 1 | Before workflow edits: all numbered-exception assertions red; baseline runner, path-list and default-source controls green. Canonical margin remains red for S4. |
+| `sh runs/T-c826/checks.sh 453` | 2026-10-20T21:03:01Z | 2026-10-20T21:03:01Z | 1 | Intermediate edit: four failures, including margin, event/number environment bindings and the exception comment. The scoped assertions caught those fields in an earlier job; moved them into nested-checkout-check. |
+| `sh docs/setup/setup-check.sh` | 2026-10-20T21:03:01Z | 2026-10-20T21:03:24Z | 0 | Intermediate workflow: all setup checks OK, including ci; 138 discipline tests passed and all kit linters OK. Does not establish that event bindings were in the right job. |
+| `sh docs/tests/freeze-check/run-all.sh` | 2026-10-20T21:03:01Z | 2026-10-20T21:03:09Z | 1 | Unchanged checker and runners: freeze-check: 7 passed, 74 failed. EXPECT mismatches reproduce Stage A; no fixture-construction error. |
+| `sh runs/T-c826/checks.sh 453` | 2026-10-20T21:03:51Z | 2026-10-20T21:03:51Z | 1 | Final workflow: all 12 CI/preservation assertions pass. Sole failure is the canonical margin sentence, intentionally reserved for S4. |
+| `sh docs/setup/setup-check.sh` | 2026-10-20T21:03:51Z | 2026-10-20T21:04:15Z | 0 | Final workflow: setup-check: ci OK; all other setup checks OK, 138 discipline tests passed, all kit linters OK; exit 0. |
+
+### PR-number assertions before implementation
+
+```text
+FAIL: canonical margin sentence in the tolerance section
+ok: unchanged runner: docs/tests/freeze-check/run.sh
+ok: unchanged runner: docs/tests/freeze-check/run-all.sh
+ok: all nine baseline paths stay in the restore list
+FAIL: kept checker requires the pull_request event
+FAIL: one literal PR number and only the checker path can be kept
+FAIL: exception matches the supplied actual migration PR
+FAIL: event guard receives the actual GitHub event name
+FAIL: number guard receives the actual pull request number
+FAIL: only the guarded checker skips restoration; both runners and other paths restore for every event
+ok: restoration still reads the default branch of this repository
+ok: default branch still comes from the repository event
+FAIL: exception comment names the task, literal PR and removal issue
+```
+
+### Assertions after correcting the workflow scope
+
+```text
+FAIL: canonical margin sentence in the tolerance section
+ok: unchanged runner: docs/tests/freeze-check/run.sh
+ok: unchanged runner: docs/tests/freeze-check/run-all.sh
+ok: all nine baseline paths stay in the restore list
+ok: kept checker requires the pull_request event
+ok: one literal PR number and only the checker path can be kept
+ok: exception matches the supplied actual migration PR
+ok: event guard receives the actual GitHub event name
+ok: number guard receives the actual pull request number
+ok: only the guarded checker skips restoration; both runners and other paths restore for every event
+ok: restoration still reads the default branch of this repository
+ok: default branch still comes from the repository event
+ok: exception comment names the task, literal PR and removal issue
+```
+
+The intermediate assertions were not credited as green; the final invocation
+above reads the corrected `nested-checkout-check` restore step. The workflow
+comment names both R4 approvals. Its only keep condition requires event
+`pull_request`, literal number `453` and path `docs/tests/freeze-check.sh`.
+All nine paths remain in the original restore list. Both runners and every
+other listed script retain the default-branch restoration and log message.
+
+### Final full setup result
+
+```text
+setup-check: pin OK
+setup-check: kit-history OK
+setup-check: facts OK
+setup-check: onboarding OK
+setup-check: glossary OK
+setup-check: guardrails OK
+setup-check: markers OK
+setup-check: adapted OK
+setup-check: ci OK
+setup-check: protection OK
+setup-check: identity OK
+setup-check: procedure OK
+run-discipline-tests: 138 passed, 0 failed
+adr-lint: OK
+prd-lint: OK
+link-lint: OK  2991 links resolved
+setup-check: kit-linters OK
+```
+
+### Local red suite and preservation
+
+The suite still reports `freeze-check: 7 passed, 74 failed` (exit 1), using the
+unchanged checker through the unchanged runner. For example, the actual K5 line
+in `bad-K1-blank-eof` remains:
+
+```text
+ok K5: projection: figure 72/3, maximum 100/10, margin 28/7 (the figure at landing is still measured at landing)
+```
+
+The corresponding S1 EXPECT requires figure 2/1, tolerance 60/4, limit 160/14
+and margin 158/13. Evidence cases still encounter the unsupported `--evidence`
+option; no validator is credited by this red result. This local run is not the
+required hosted red run. The next-stage evidence must include its URL, tested
+SHA, checker identity, suite failure and these log lines:
+
+```text
+kept as written for PR 453: docs/tests/freeze-check.sh
+restored from main: docs/tests/freeze-check/run.sh
+restored from main: docs/tests/freeze-check/run-all.sh
+```
+
+SHA-256 comparisons before and after the workflow edit confirmed that the checker,
+both runners, `runs/T-c826/checks.sh` and `docs/setup/setup-check.sh` were unchanged:
+
+| Unchanged file | SHA-256 before and after S2 |
+| --- | --- |
+| `docs/tests/freeze-check.sh` | `a847cc17bffd2ea5957f65159068d595e43b34ac5a43adc5113c06355a522b63` |
+| `docs/tests/freeze-check/run.sh` | `9443c510830f705fdc3f81732270db9f406cb0302cb2f27e18b414392899a4b0` |
+| `docs/tests/freeze-check/run-all.sh` | `b892114bdc1719b724c46ba2242941e1f8bcf00d3945ce95877dd265e7a26bb8` |
+| `runs/T-c826/checks.sh` | `a42c1ca3c241e4ae5f9192058c0e46efb73d5e3bfefd3246518e1f6a5b2aedef` |
+| `docs/setup/setup-check.sh` | `caad7e8587a75164dc8966cb6afe791f896f9eeea88cebb9aa76d1dce34f75a6` |
+
+### Final whitespace and scope check
+
+| Command | Start UTC | End UTC | Exit | Observed result |
+| --- | --- | --- | --- | --- |
+| `git diff --check` | 2026-10-20T21:05:12Z | 2026-10-20T21:05:12Z | 0 | No diagnostics. |
+
+Only `.github/workflows/ci.yml`, `runs/T-c826/conditions.md` and this record
+are modified. Each has no trailing spaces and exactly one final newline. The
+checker, both runners, task check and setup check retain their recorded hashes.
+No task file, completed-log line or fixture was changed in Stage B.
