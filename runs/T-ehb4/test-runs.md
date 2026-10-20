@@ -170,3 +170,18 @@ The same command on the fix (`cloneStep` sets the old clone aside in `DIR/recove
 ### Round 3 - the gates
 
 The code is frozen at `b74fb19`; later commits add tables and records only. `origin/main` had not moved. Full integration level: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./...` (head `5473bd4`, start 2026-10-20T21:02:02Z, end 2026-10-20T21:05:44Z, exit=0), 21 packages ok. `go build ./...`, `go vet ./...` with no tag, `integration` and `e2e`, `gofmt -l .` (empty), `go test -count=1 ./...` (21 ok), `go test -count=1 -tags=e2e ./...` (start 2026-10-20T21:05:47Z, end 2026-10-20T21:06:54Z, exit=0), the six lints and `git diff --check origin/main HEAD`: exit=0 each.
+
+### Round 3 - the freeze check
+
+Command: `sh docs/tests/freeze-check.sh --task T-ehb4 --base origin/main --budget 2300/22` on the clean committed head `99f85f4` (output in `/home/layup/.cache/layup-session/T-ehb4-freeze3.txt`), exit=1 on K5 alone, which counts the files of `runs/` and the old close-out allowance:
+
+```text
+ok K1: white space
+ok K2: registration of new tests
+ok K3: test selectors
+ok K4: restore evidence of mutants
+FAIL K5: -:0: projection: figure 2349/28, maximum 2300/22, margin -49/-6 (the figure at landing is still measured at landing)
+ok K6: conditions table
+```
+
+Without `runs/` (ADR-0028): 1926 added, 84 removed, 2010 lines over 23 files, with the close-out of 2 more files still to come.
