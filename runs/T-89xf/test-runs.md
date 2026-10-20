@@ -175,3 +175,35 @@ ok K6: conditions table
 ## The up-to-date helper, for the fold with K4 (T-ehb4, pushed at 08c5ec6, `upToDate` in `internal/run/finish.go`)
 
 K3's helper is `(*Sessions).UpToDate(ctx, head) (current bool, def string, err error)` in `internal/run/baseup.go`. It fetches the default branch with `SessionStore.FetchBranch` (so it writes the ref `refs/heads/<default>` of the run's clone) and gives whether that head is an ancestor of `head`, with the head it fetched. `head` is the tip of the open attempt, `TipOf(events, attempt)`, the last event `bound` of any session: the verified head, the rendered commit, a merge of this task, or a close-out head. It does not look for the head that carries the verdict; `BringUpToDate` and `carries` decide that. The helper it replaces or is replaced by must therefore be given the carried head, as K4's D1 does. Whichever of K3 and K4 lands second merges main and folds the two into one home (condition 4 of the plan review of #425).
+
+## Round 1 of #424 (the review a7c9d9f): red transcripts, before the code of the fixes
+
+### round 1, findings 1 to 3: red against the code of a7c9d9f (merged with main d27b331)
+
+- Command: `go test -count=1 -tags=integration -run ^(TestAnInterruptedCarryIsAdoptedWhenTheDefaultMovesAgain|TestOpenPullRequestAdoptsTheSamePullRequestAfterACarry|TestASecondRedoOfAShapeTaskKeepsTheOriginalPin)$ ./internal/run/`
+- Start: 2026-10-20T19:52:28Z, end: 2026-10-20T19:52:29Z (`date -u`, after the step)
+- Exit status (direct, not piped): 1
+- First failing assertions (from the saved output):
+
+```text
+--- FAIL: TestASecondRedoOfAShapeTaskKeepsTheOriginalPin (0.82s)
+    baseup_integration_test.go:1137: the second replacement issue = "LAYUP task T-zzzz: the target's architecture.\n\nRequirement IDs: REQ-005\nPinned draft: spec/draft.tsv, SHA-256 3e54755b5e4a5c19315a0a7213ac667aff194600ffaf84bcef7a5dd62d53c10a, read at the records commit 69fbce353d92933515bad196652b040517aa24e1.\n\nDefinition of Done: docs/spec/ and docs/adr/ hold each decision that has one survivor as decided, and a section \"Decision pending the bet\" for each decision that has more than one; docs/tasks/T-zzzz.md is the task's file. The head passes the four layup/ statuses, and a verifier on a harness outside the authors finds nothing material in scope.\n", <nil>; want the original pin "SHA-256 534bfca4b311333b887811de908c81e41fd1be78692bc32d3244812b748e2239, read at the records commit c0413aa959eea78ce766903e84b4d5d4e9dad6a8"
+--- FAIL: TestOpenPullRequestAdoptsTheSamePullRequestAfterACarry (0.89s)
+    baseup_integration_test.go:1075: OpenPullRequest 1 = {Number:0 NodeID: State: Draft:false Merged:false HeadSHA: MergeSHA: Body:}, the head of the pull request 1 of task/T-ab12/1 moved: f533a00226d812e46ec6e44dbe2f3dc03286777e, not the bound 485b63a9e7f3ecbb3a1081a8259ade516307c0ed; want pull request 1 at f533a00226d812e46ec6e44dbe2f3dc03286777e
+--- FAIL: TestAnInterruptedCarryIsAdoptedWhenTheDefaultMovesAgain (0.91s)
+    baseup_integration_test.go:1036: restart 1 = {Task: Verified:false Head: Wait: Stop: Replaced:}, the push of the session's head was refused: task/T-ab12/1 holds "c17609d55c19ee0b48a7fefaf86b9b4f3f7dba4d", not the head 397b28d55af35fa50129cb40fcd4f9e2ac02b64b or its merge 72d30dda0bdf803b76e411b9b5eba1db41a13abc; want a merge of D2 over the adopted c17609d55c19ee0b48a7fefaf86b9b4f3f7dba4d
+--
+FAIL	github.com/pharzam/layup/internal/run	0.917s
+FAIL
+```
+
+### round 1, finding 4: the tests that characterize the code of a7c9d9f (green there; their mutants are in mutants.md)
+
+- Command: `go test -count=1 -tags=integration -run ^(TestTheCarryGoesOverTheRenderedFirstParent|TestARestartAfterEachActOfTheRedoCompletesItOnce)$ ./internal/run/`
+- Start: 2026-10-20T19:52:29Z, end: 2026-10-20T19:52:33Z (`date -u`, after the step)
+- Exit status (direct, not piped): 0
+- First failing assertions (from the saved output):
+
+```text
+```
+

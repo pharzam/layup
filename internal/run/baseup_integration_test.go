@@ -598,6 +598,18 @@ func TestARestartAfterEachActOfTheRedoCompletesItOnce(t *testing.T) {
 				t.Fatalf("stop %s, restart %d: %+v, %v; want the task replaced", c.stop, i+1, got, err)
 			}
 		}
+		// Cleanup is done before the first attempt of the new task; the driver then starts exactly one, at the rebased base.
+		if st := m.w.fake.pulls.issueState[3]; st != "closed not_planned" || !m.w.fake.pullOf(1).closed || len(m.kindsOf(got.Replaced, "attempt")) != 0 {
+			t.Fatalf("stop %s: before the first attempt the old issue is %q, the old pull request closed %v, attempts %d; want cleanup done and no attempt", c.stop, st, m.w.fake.pullOf(1).closed, len(m.kindsOf(got.Replaced, "attempt")))
+		}
+		for i := 0; i < 2; i++ {
+			if adv, err := m.s2().AdvanceShapeTask(context.Background(), m.driverIn(got.Replaced)); err != nil || !strings.Contains(adv.Stop, "no admitted pair") {
+				t.Fatalf("stop %s, driver entry %d on the new task: %+v, %v; want the stop for the pair after the attempt", c.stop, i+1, adv, err)
+			}
+		}
+		if att := m.kindsOf(got.Replaced, "attempt"); len(att) != 1 || att[0][4] != strings.TrimSpace(gitOut(t, m.w.bare, "rev-parse", "refs/heads/main")) || len(m.kindsOf(got.Replaced, "rebased")) != 1 {
+			t.Errorf("stop %s: attempts %v, rebased %d; want one attempt at the rebased base and one rebased", c.stop, att, len(m.kindsOf(got.Replaced, "rebased")))
+		}
 		tasks := m.tasks()
 		if len(tasks) != 2 || tasks[0].ID != got.Replaced || len(m.kindsOf("T-ab12", "closed")) != 1 || len(m.kindsOf(got.Replaced, "rebased")) != 1 {
 			t.Errorf("stop %s: the register %+v, closed %d, rebased %d; want one replacement", c.stop, tasks, len(m.kindsOf("T-ab12", "closed")), len(m.kindsOf(got.Replaced, "rebased")))
@@ -988,5 +1000,193 @@ func TestAHeadThatDoesNotCarryTheVerdictIsNotMerged(t *testing.T) {
 	}
 	if recordsHead(t, m.w) != head || len(m.writes(n)) != 0 || m.tip() != later {
 		t.Errorf("the records moved (%v), the forge was written (%v) or the branch moved to %s; want none", recordsHead(t, m.w) != head, m.writes(n), m.tip())
+	}
+}
+
+// s2 gives fresh Sessions of the production constructor; driverIn is what the shared driver is given for the task.
+func (m *moved) s2() *Sessions { return m.prodBot() }
+
+func (m *moved) driverIn(task string) ShapeTaskInput {
+	st := m.s.Store.(*recordsStore)
+	return ShapeTaskInput{Task: task, Base: m.B, Records: st.Base}
+}
+
+func lostBound(files map[string][]byte) bool {
+	e, ok := files[eventsPath("T-ab12")]
+	return ok && strings.Count(string(e), "\tbound\t") > 1
+}
+
+// I1 of round 1 (late test): the push of M1 was made and its bound lost; the default moves again before the restart. The restart adopts
+// M1 (its bound, its status), then merges D2 into it, twice over with no second write.
+func TestAnInterruptedCarryIsAdoptedWhenTheDefaultMovesAgain(t *testing.T) {
+	t.Parallel()
+	m := newMoved(t, taskPaths)
+	m.moveBase(basePaths)
+	s := m.prodBot()
+	s.Store = &baseStoreFault{SessionStore: s.Store, failIf: lostBound}
+	if _, err := m.bring(s); !errors.Is(err, errStop) {
+		t.Fatalf("BringUpToDate with the bound lost: %v; want the stop", err)
+	}
+	m1 := m.tip()
+	d2 := m.moveBase(map[string]string{"v.txt": "again\n"})
+	var got Advance
+	for i := 0; i < 2; i++ {
+		var err error
+		if got, err = m.bring(m.prodBot()); err != nil || !got.Verified || got.Head == m1 {
+			t.Fatalf("restart %d = %+v, %v; want a merge of D2 over the adopted %s", i+1, got, err, m1)
+		}
+	}
+	if parents, err := git.Parents(m.r.Clone, got.Head); err != nil || !slices.Equal(parents, []string{m1, d2}) || m.tip() != got.Head {
+		t.Errorf("the parents of %s = %v, %v; the branch %s; want [%s %s] and the branch at the merge", got.Head, parents, err, m.tip(), m1, d2)
+	}
+	for _, sha := range []string{m1, got.Head} {
+		n := 0
+		for _, e := range m.eventsOfTask("T-ab12") {
+			if e[1] == "bound" && e[3] == "" && e[5] == sha {
+				n++
+			}
+		}
+		if n != 1 || len(statusesOf(m.w, sha)) != 1 {
+			t.Errorf("%s: %d bound events and %d statuses; want one and one", sha, n, len(statusesOf(m.w, sha)))
+		}
+	}
+	head, n := recordsHead(t, m.w), m.nreqs()
+	if _, err := m.bring(m.prodBot()); err != nil || recordsHead(t, m.w) != head || len(m.writes(n)) != 0 {
+		t.Errorf("a third call: %v; writes %v; want none", err, m.writes(n))
+	}
+}
+
+// I2 of round 1 (late test): the pull request opened before the carry is adopted at the merge, again and again, with no draft and no
+// register change; a head that moved with no explanation is still refused.
+func TestOpenPullRequestAdoptsTheSamePullRequestAfterACarry(t *testing.T) {
+	t.Parallel()
+	m := newMoved(t, taskPaths)
+	pr := m.pr()
+	m.moveBase(basePaths)
+	got, err := m.bring(m.s)
+	if err != nil || !got.Verified || got.Head == m.X {
+		t.Fatalf("BringUpToDate = %+v, %v; want the carry", got, err)
+	}
+	m.w.fake.movePull(pr.Number, got.Head) // the push of the merge moved the head of the pull request
+	head, n := recordsHead(t, m.w), m.nreqs()
+	for i := 0; i < 3; i++ {
+		again, err := m.s.OpenPullRequest(context.Background(), PullInput{Task: "T-ab12", Attempt: 1, Type: "feat", Description: "the work of the task"})
+		if err != nil || again.Number != pr.Number || again.HeadSHA != got.Head {
+			t.Fatalf("OpenPullRequest %d = %+v, %v; want pull request %d at %s", i+1, again, err, pr.Number, got.Head)
+		}
+	}
+	if recordsHead(t, m.w) != head || len(m.writes(n)) != 0 {
+		t.Errorf("the register or the forge changed: records moved %v, writes %v; want neither", recordsHead(t, m.w) != head, m.writes(n))
+	}
+	m.w.fake.movePull(pr.Number, strings.Repeat("e", 40))
+	if bad, err := m.s.OpenPullRequest(context.Background(), PullInput{Task: "T-ab12", Attempt: 1, Type: "feat", Description: "the work of the task"}); err == nil {
+		t.Errorf("a head that moved with no explanation: %+v, nil; want an error", bad)
+	}
+}
+
+// I3 of round 1 (late test): the pin of the draft of a Shape task is the one of the original issue, through any chain of redos.
+func TestASecondRedoOfAShapeTaskKeepsTheOriginalPin(t *testing.T) {
+	t.Parallel()
+	m := newMovedAs(t, map[string]string{"a.txt": "task\n"}, "architecture", false)
+	ctx := context.Background()
+	pin := ""
+	{
+		rows, err := records.ReadSessions([]byte(keptRecord(t, m.w, "sessions.tsv")))
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, r := range rows {
+			if r[sessionTask] == "T-ab12" {
+				pin = r[sessionRecords]
+				break
+			}
+		}
+	}
+	original := "SHA-256 " + digest([]byte("the draft of Intake\n")) + ", read at the records commit " + pin
+	m.moveBase(map[string]string{"a.txt": "base\n"})
+	first, err := m.bring(m.s)
+	if err != nil || first.Replaced == "" {
+		t.Fatalf("the first redo: %+v, %v", first, err)
+	}
+	if text := m.w.fake.issueTexts[len(m.w.fake.issueTexts)-1][1]; !strings.Contains(text, original) {
+		t.Errorf("the first replacement issue lacks the original pin %q:\n%s", original, text)
+	}
+	// A later draft, then the first session of the replacement reads it.
+	if err := m.r.commit(ctx, map[string][]byte{"spec/draft.tsv": []byte("a later draft\n")}, "a later draft"); err != nil {
+		t.Fatal(err)
+	}
+	rows, err := records.ReadSessions([]byte(keptRecord(t, m.w, "sessions.tsv")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	row := sessionRow("S-d0000009", first.Replaced, "plan-of-a-task", "claude")
+	row[sessionRecords] = m.r.Store.(*recordsStore).pushed
+	data, err := table(records.SessionsSchema, append(rows, row))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := m.r.commit(ctx, map[string][]byte{"sessions.tsv": data}, "a session of the replacement"); err != nil {
+		t.Fatal(err)
+	}
+	rowB, err := m.s.taskRow(ctx, first.Replaced)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, body, err := m.s.redoIssue(ctx, rowB, "T-zzzz", nil)
+	if err != nil || !strings.Contains(body, original) {
+		t.Errorf("the second replacement issue = %q, %v; want the original pin %q", body, err, original)
+	}
+}
+
+// I4a of round 1 (a characterization on the code of the head, with its mutant): the carry over a rendered first parent.
+func TestTheCarryGoesOverTheRenderedFirstParent(t *testing.T) {
+	t.Parallel()
+	m := newMoved(t, taskPaths)
+	ctx := context.Background()
+	clone := m.r.Clone
+	gitOut(t, clone, "switch", "-q", "--detach", m.X)
+	for p, d := range map[string]string{treePRDPath: renderedPRD(t, ""), treeFacts: treeFactsAt} {
+		os.MkdirAll(filepath.Dir(filepath.Join(clone, p)), 0o755)
+		os.WriteFile(filepath.Join(clone, p), []byte(d), 0o644)
+	}
+	gitOut(t, clone, "add", "-A")
+	gitOut(t, clone, "commit", "-q", "-m", "the rendered commit")
+	rendered := strings.TrimSpace(gitOut(t, clone, "rev-parse", "HEAD"))
+	gitOut(t, clone, "switch", "-q", "main")
+	gitOut(t, clone, "push", "-q", "file://"+m.w.bare, rendered+":refs/heads/task/T-ab12/1")
+	for _, kind := range []string{"push", "bound"} {
+		data, err := m.r.appendEvents(ctx, "T-ab12", 1, "", []string{kind + " " + rendered + " task/T-ab12/1"})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := m.r.commit(ctx, map[string][]byte{eventsPath("T-ab12"): data}, "the rendered commit "+kind); err != nil {
+			t.Fatal(err)
+		}
+	}
+	m.in.Rendered = &RenderedInput{Head: rendered, Render: treeRecs}
+	d := m.moveBase(basePaths)
+	got, err := m.bring(m.prodBot())
+	if err != nil || !got.Verified || got.Head == rendered {
+		t.Fatalf("BringUpToDate = %+v, %v; want a merge over the rendered commit", got, err)
+	}
+	if parents, err := git.Parents(clone, got.Head); err != nil || !slices.Equal(parents, []string{rendered, d}) || m.tip() != got.Head {
+		t.Errorf("the parents of %s = %v, %v, the branch %s; want [%s %s] and the branch at the merge", got.Head, parents, err, m.tip(), rendered, d)
+	}
+	pushes, bounds := 0, 0
+	for _, e := range m.eventsOfTask("T-ab12") {
+		if e[3] == "" && e[5] == got.Head {
+			if e[1] == "push" {
+				pushes++
+			} else if e[1] == "bound" {
+				bounds++
+			}
+		}
+	}
+	if st := statusesOf(m.w, got.Head); pushes != 1 || bounds != 1 || len(st) != 1 || st[0]["description"] != "verified head "+m.X+" plus a clean merge of the base" {
+		t.Errorf("push events %d, bound events %d, statuses %v; want one, one and the carry of %s", pushes, bounds, st, m.X)
+	}
+	head, n := recordsHead(t, m.w), m.nreqs()
+	if again, err := m.bring(m.prodBot()); err != nil || again != got || recordsHead(t, m.w) != head || len(m.writes(n)) != 0 {
+		t.Errorf("the repeat call = %+v, %v; writes %v; want the same answer and no write", again, err, m.writes(n))
 	}
 }
