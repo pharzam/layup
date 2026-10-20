@@ -261,3 +261,9 @@ The tests were written first and run against the code of `eb04324`; the code fol
 - Finding 2, red (`TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./internal/run/ -run '^TestARecoveryKeepsTheAnswerAlreadyApplied$'`, 2026-10-20T17:02:31Z to 17:02:38Z, exit=1): `bets.tsv = [[1 first ... 7071 db=sqlite web=go bet 707 ...]]; want the answer 7070, db=pg web=go and the approver 303`; `the index = [[1 ...] [2 ...]], version 2 true; want one version`; `3 tasks; want one for db with the option pg`.
 - Green: `phaseTagsOf` requires a separator of three cells, each `:?-+:?`; `appliedAnswer` and `restoreAnswer` take the answer, its first copy and its author's approver row from the latest version of the inventory when it is of this milestone, before the binding is resolved. The unit level passed, and the integration run of `TestARecoveryKeepsTheAnswerAlreadyApplied`, `TestTheStepBet`, `TestOnlyTheApproverOfTheBetAnswersAndALookupThatFailsChoosesNoOne`, `TestTheBetStepIsAtomicToItsLastAct` and `TestARenderedPushToAnotherBranchTipIsRefused` passed.
 - `main_integration_test.go` lists 17 serial tests, with the recovery test and the branch-tip test.
+
+## Final gates after the fixes of round 2, on the head `b03c3b0` plus this record (origin/main `a6c1d77`)
+
+- `go build ./...`, `go vet ./...`, `go vet -tags=integration ./...`, `go vet -tags=e2e ./...`: exit 0; `gofmt -l .`: empty; `go test -count=1 ./...` and `go test -count=1 -tags=e2e ./...`: ok.
+- The full integration level, `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 90m ./...`: 2026-10-20T17:05:49Z to 17:08:51Z, exit=0.
+- The six lints (`adr-lint`, `prd-lint`, `link-lint`, `run-discipline-tests`, `nested-checkout-check`, `setup-check`) and `git diff --check origin/main HEAD`: OK.
