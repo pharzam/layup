@@ -1,0 +1,7 @@
+1
+ok K1: white space
+ok K2: registration of new tests
+ok K3: test selectors
+ok K4: restore evidence of mutants
+ok K5: projection: figure 80/3, maximum 100/10, margin 20/7 (the figure at landing is still measured at landing)
+FAIL K6: runs/T-0000/conditions.md:5: path internal/x/no_such.go does not exist

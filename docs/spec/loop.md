@@ -1781,6 +1781,154 @@ touch the approved batches. An architecture task whose base is a specification's
 specification that is closed and redone also closes and redoes the architecture task, which starts again at the new verified head,
 because its branch holds the old head's commits.
 
+### The brief of the first bet
+
+Row 66u (task `T-h65e`, #418, a size child of row 66j). The entry point `betBrief(milestone, kind)` of `internal/run` keeps
+`bets/<milestone>/brief.md` only when the brief passes every check of its bet; row 66j (the step `bet`) calls it, posts the brief and
+parses the answer. Everything below is **decided here** (R10, note 6198919867 of #333, which the step table of
+[`session.md`](session.md#the-step-table-and-the-kinds-of-a-steps-context) leaves open: it names no record for the step `bet-brief`).
+
+- **The first bet only.** The kind is `first`; `later` is an error, because no row of M2e builds the brief of a later bet. The milestone is
+  one path part, `^[A-Za-z0-9._-]+$` and not `.` or `..`. These two checks come first and read nothing. Then a kept `brief.md` is returned
+  as done before, with no check and no write; this comes before every precondition of a fresh build. A fresh build refuses a `bets.tsv`
+  that exists, because its reader is row 66j's.
+- **The inputs**, read in this order by their readers before any session; a record that is missing or refused is an error that names the
+  path and the line, and nothing is written. The records go to the session byte for byte as files of `input/`: `problem-statement.md`
+  (`start/problem-statement.md`), `spans.tsv`, `draft.tsv`, `questions.tsv`, `answers.tsv` (`intake/answers.tsv`) and `budget.tsv`.
+  `bets.tsv` is not an input. `brief.lines` is read from `parameters.tsv`; `—` is unset.
+- **The verified specification.** The Shape tasks are the first register row of the kind `specification` and the first of the kind
+  `architecture` (a later row of the kind is another task). Each must have a verified head: the position `posVerified` of the driver of a
+  Shape task, read and never driven (`shapeView` and `loopPosition`), whose head is the bound head of the developer. Its row has a pull
+  request, which the forge gives as found with that head; a pull request not found, or whose head moved, is an error before any session.
+- **The pinned draft.** `spec/draft.tsv` of the records is the draft that the Shape tasks were opened on: Intake is done, and the row of
+  the specification task lists `finalIDs(draft)` (the requirements column), which is checked equal. The content of the requirements is
+  **the PRD at the verified head of the specification task** (`docs/prd/PRD-*.md`, read by `filesAt`): the statement and the acceptance
+  criterion of each requirement ID of the register row, and each success metric. The PRD must hold exactly the requirement IDs of the
+  register row, each with a statement and a criterion. The brief shows the PRD's words, so a statement or a criterion that differs from the
+  draft's cannot reach the approver under an ID that agrees. **Reason:** the approver answers one line per requirement ID of the
+  specification that row 66j parses the answer against, and a session may word the PRD better than the draft.
+- **The five texts that code writes**, also files of `input/`; each line is one line, and a `](` or `][` in a text that code copies is
+  written `] (` or `] [` so that no copied text is a link:
+  - `requirements.md`: `### The requirements`, then for each requirement ID in the order of the register row `- <ID>: <statement> Criterion:
+    <criterion>`; then `### The success criteria` and one line `- <metric>` for each success metric of the PRD, or `- none`.
+  - `solution.md`: `### The verified heads` and one line `- <task> (<kind>): [pull request #<n>](https://github.com/<owner>/<name>/pull/<n>),
+    head <sha>` for the specification task and then the architecture task; then, for each decision in name order, `### Decision <d>` and one
+    line for each option in the order of the filter: `- <option> (a survivor)` or `- <option> (dropped: <reason>; <reason>)`, and, for a
+    decision with one survivor, `- <option> (the one survivor, decided at Shape)`. A decision with no survivor is an error.
+  - `open.md`: `### The questions still open` and one line `- <Q-NNN>: <question>` for each question still open, or `- none`. A question
+    is still open when it is not a follow-up and its state is `open`, or `asked` with no answered follow-up; this is `leftOpen` of
+    [the questions left open](#the-questions-left-open) without its last clause (no Shape row asks it yet), which would hide the questions
+    that Shape asked and that stay open.
+  - `facts.md`: one line `- <number or Q-NNN> (<class>): <text>` per fact: the span facts first, in the order of `spec/spans.tsv`, with
+    the `text` column; then one fact per answer, by its ID, with the answer's text and its class `answerFactClass`.
+  - `links.md`: the allowed link targets, one for each line, in order.
+- **The class of the fact of an answer** (`answerFactClass`): the class of the span fact that holds the first byte of the question's quote;
+  a follow-up, and Shape's row, takes the quote of the question it asks again (its `ref`); a question with no quote, or a quote outside
+  every fact, is `context`. The approver confirms or changes it with a line `fact <id>: <class>`.
+- **The links.** A link of the brief resolves exactly when its target is in this set, computed and never invented: for each Shape task,
+  the URL `https://github.com/<owner>/<name>/pull/<n>`, and, for each path of `git diff --name-only <base> <head>` (the base of the
+  attempt) that `git ls-tree <head>` lists as a regular blob of `[A-Za-z0-9._/-]`, the URL
+  `https://github.com/<owner>/<name>/blob/<head>/<path>`. The forge of phase 2 is GitHub.
+
+**The session.** One `PhaseSession` of the step `bet-brief`, role `product-owner`, on `PhasePair`. Its prompt is the first block below;
+the finding of a refusal is the second. Its output is the directory `brief` with the files `problem.md`, `appetite.md` and
+`rabbit-holes.md`, read by `ReadOutputFiles`. **Code assembles the brief**; the session writes no heading, no option and no solution:
+
+```text
+## The problem
+<requirements.md><problem.md>
+## The appetite
+<appetite.md>
+## The solution
+<solution.md>
+## The rabbit holes and the no-gos
+<open.md>architecture change: no
+<rabbit-holes.md>
+## The facts
+<facts.md>
+```
+
+Each file ends in a line feed (code adds the last). The first bet has `architecture change: no`. **Reason:** a session that writes the
+whole brief and is checked part by part against code's bytes re-copies text, and the prose of its solution part goes unchecked; the
+presentation of every choice is code's.
+
+```text bet-brief
+You write three parts of the brief of the bet of milestone {milestone}, for LAYUP. Change no file in this repository and make no commit.
+
+Code writes the other parts of the brief and puts yours between them. Read these files:
+- The problem statement: {problem}
+- The fact spans: {spans}
+- The draft: {draft}
+- The questions: {questions}
+- The answers: {answers}
+- The budget: {budget}
+- The requirements and the success criteria, which code writes: {requirements}
+- The solution, which code writes: {solution}
+- The questions still open, which code writes: {open}
+- The facts, which code writes: {facts}
+- The links you may use, which code writes: {links}
+
+Write these three files of Markdown in the directory {output}, and no other file there:
+- problem.md: the problem of this milestone in plain prose for the idea owner, from the problem statement and the requirements.
+- appetite.md: the money and the time you ask for, with the line "appetite: USD <n>, <n> hours" exactly once, each <n> a decimal such as 12.5, and the reasons in a few lines.
+- rabbit-holes.md: the rabbit holes and the no-gos of this milestone in plain prose, one line each.
+
+The whole brief is at most {lines} lines, and your three files together have {room} lines at most. Code checks the brief after you, refuses it and asks you again for each of these:
+- A line that starts with "## " in any file: code writes the headings.
+- A line that starts with "architecture change:" or "approve batch " in any file: code writes the first, and this bet has no batch.
+- A link in any form but [text](target), or a target that is not a line of the links file.
+- An option of a decision with more than one survivor, named anywhere in your files. Code lists the options in the solution part. You recommend none of them, not by name and not by a phrase such as "the first one": the idea owner chooses.
+- No appetite line, or two. A money cap above U of the budget, hours above appetite.hours of the budget, or a money cap that with the spend of the milestone so far is above U.
+- A brief of more than 65536 characters.
+
+{refused}Then end.
+```
+
+```text bet-brief-refused
+The check refused the last brief: {finding}
+Write the three files again.
+```
+
+**The order of the checks** of `briefKeep`, which refuses the output as a `refused file` on the first finding of a stage, with the findings
+of that stage joined as `rule: detail; …`: (1) each of the three files has no line that starts with `## `, `architecture change:` or
+`approve batch `; (2) `spec.CheckBrief` on the assembled brief with `brief.lines`, the links and no verified batch; (3) the option-word
+rule: no word of the brief outside code's parts equals, in lower case and bounded by characters outside `[a-z0-9-]`, an option of a
+decision that has more than one survivor; (4) `CheckCommentBody`, so that a kept brief can always be posted. A pass keeps one file,
+`bets/<milestone>/attempts/<session>.md`, the **candidate**, in the one records commit of the session's end with its telemetry row.
+
+- **The requirement and what is checked.** The brief recommends no option, directly or indirectly (Shape and The bet, above: two survivors give a brief with no recommendation). Code's
+  presentation of the options, and the option-word rule, are partial evidence for it. Prose that recommends without naming an option
+  ("the first one") is not found by the rule and is **noncompliant** all the same; the rule is not the requirement. The rule checks only the
+  decisions with more than one survivor.
+- **Before the first session**, with no session started: `brief.lines` unset is `ErrBriefLinesUnset`; the parts of code alone (the five
+  headings and the lines of code) above `brief.lines` is `ErrBriefOverLimit`. Row 66j maps both to `done waiting for the Operator: …`.
+- **The appetite is judged after the session's telemetry**, which `endPhase` commits after `Keep` has run: so `Keep` cannot read it. After
+  `PhaseSession` returns, the run reads `telemetry.tsv` of the records, which holds the session's own row, takes the known money of its rows
+  (`ledger.KnownMoney`: every `reported` or `computed` row in exact decimals, probes included; unknown rows add nothing; a known row not in
+  USD is an error that wraps `ErrMilestoneCap`) and calls `spec.CheckAppetite(nil, caps, band.U, appetite.hours, known)` on the line of the
+  candidate; at the first bet every row since Start is milestone 0. A finding is a refusal, like a refused file. The cap of milestone 0 is
+  asked before each attempt (`PhaseSession`), and bounds the retry. A cap above `band.U`, and a cap below `band.B`, are checked through
+  this caller; the second bet of 0.6 `U` is the check's own case with prior caps, which this first-bet caller does not pass (its caller is
+  row 66t's, the later bet, in M2g).
+- **The promotion.** A candidate that passes both is kept by one fenced records commit of `bets/<milestone>/brief.md`, the candidate's
+  bytes, and `bets/<milestone>/basis.tsv`: `layup run: the brief of the bet <milestone> (session <id>)`. The write is the run's `write`
+  through `Fenced`: a lease that is lost is a `*LostError` and promotes nothing, and the candidate stands. The stop between the candidate and the
+  promotion that the integration test makes is the control comment of the session's end failing (`endPhase` returns it after the candidate's commit).
+- **The retry.** A `refused file` of the checks, or a finding of the appetite, starts the next attempt with `bet-brief-refused`. A session
+  whose output files `ReadOutputFiles` refuses (a missing file, an unlisted entry) ends `no-result`, not `refused file`; the shared phase
+  machinery is unchanged, so that session's telemetry stands, `betBrief` returns the `*PhaseError`, and the next run starts a new session.
+  A comment that fails after the candidate's commit also leaves the candidate in the records for the recovery.
+- **The recovery** reads before it writes. A `brief.md` that exists is done before. Else the latest candidate under
+  `bets/<milestone>/attempts/` (the last row of `sessions.tsv` that has one) is judged again, from its stored bytes alone (the session's
+  files are removed after it): the checks (2) to (4) on the assembled brief, with code's parts found in it by their exact bytes and removed
+  before the option-word rule, each part in its place as the inputs stand now (a candidate made on other inputs is refused with the rule `fixed`), and the appetite on the telemetry as it now stands. A pass is promoted with no new session; a refusal starts
+  a session with its finding. The control comment of a session whose candidate the appetite refused says `done`, because its own class was
+  done; the finding is in the next prompt.
+- **The basis.** `basis.tsv` (the block `bet-basis`, [`records.md`](records.md#nfr-001--the-records-of-the-task-loop)) keeps what row 66j
+  needs after the inventory write: the requirement IDs, the survivors and the dropped options, the facts with their classes, the questions
+  still open and the verified heads. `betBrief`'s companion `briefBasis(milestone)` reads it with the brief, and gives the basis
+  without filtering again, and the appetite from the kept brief's line; a basis or a brief that is missing or malformed is an error (a brief is malformed by the rules of its headings, appetite line and architecture line; the limit and the links are not asked again).
+
 ### The approvers and the success criteria
 
 Deferred by `M2c` ([`intake.md`](intake.md#not-in-m2c)). **Decided here**
@@ -2368,6 +2516,7 @@ the milestone covers it end to end.
 | The task register and the Retrospective | unit | A row with a predecessor that is not a task, a cycle of predecessors, or `—` in `requirements` is refused; the Retrospective step writes its event and no session starts. |
 | The Shape filter (inventory) | unit | An option with a failed row, a missing row or a pass with no evidence is dropped; one survivor is chosen; two survivors give a brief with no recommendation, and an answer line `option <decision>: <option>` naming a dropped option or an unknown decision is refused and one naming a survivor is recorded in `bets.tsv`; every option dropped asks one rewrite, and a second full drop is a round with no progress. |
 | The bet and its brief (inventory) | unit | The five headings, `brief.lines` unset is refused, a link that does not resolve is refused, two bets of 0.6 `U` each (the second brief), a cap above `band.U`, hours above `appetite.hours` and caps plus the spend of milestone 0 above `band.U` are each refused, and a cap below `band.B` passes, an answer by an account with no allowed role answers nothing, and the answer is copied. |
+| The brief of the first bet (row 66u) | unit; integration | Code assembles the brief from the PRD at the verified head, the survivors and dropped options, the facts with their class and text, and the questions still open; the brief is refused for each rule of its checks (a heading, a link outside the set, an option word, a cap above `band.U`, the session's own spend) and kept when it passes; a refused brief is tried again with its finding; a stop before the promotion promotes the candidate with no new session; `brief.lines` unset starts no session; the basis is read back without filtering again. |
 | The rendered commit (inventory) | unit | The commit may change only the MoSCoW and Phase columns, the non-goals and the numbered facts record; `layup/rules` passes a rendered record only when it equals code's rendering of the named copy. |
 | The parameter change (inventory) | unit | A `set` is refused for a form that is not one line, a wrong role, an unknown name, a value of no type or out of bound, and the one that passes is applied as one replaced row, its default, bound and role kept; a set at or below the comment that its row records is superseded and is no change; a `prd-lint` head is accepted only when each failure line names an empty MoSCoW or Phase cell. |
 | The parameter change at the boundary | integration | With the stand-in forge and real git: `layup run` writes `parameters.tsv` with its six rows in the commit of the first task (a table that exists is kept, one that its reader refuses refuses the task); a `set` is copied and, at the boundary, applied as one records commit when its author has the role of the row, and changes nothing before it; each refusal (`form`, `author`, `name`, `value`, `bound`) is reported with its item, changes nothing and is judged again at the next boundary; a set that is applied is not applied again, the later of two wins in the order of the comment IDs, and an edit of a comment is no set; a set of a Start row is recorded with the note that the run reads `start.tsv`; the write is fenced by the lease. The call between steps is row 66k's. |

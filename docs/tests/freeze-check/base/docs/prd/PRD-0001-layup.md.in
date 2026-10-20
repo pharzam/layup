@@ -1,0 +1,10 @@
+# PRD-0001
+
+## 12. Requirements traceability matrix
+
+| REQ | Facts | Guardrail | ADR | Task | Test |
+| --- | ----- | --------- | --- | ---- | ---- |
+| REQ-001 | F-0001#1 | — | ADR-0001 | T-0000 | TestAlpha, TestBeta, TestCommentFlow, TestHandoffFlow, TestPositionFlow, TestQuestionFlow, TestIntegOnly, TestCommentInteg, TestHandoffInteg, TestPositionInteg, TestQuestionInteg |
+| REQ-002 | F-0001#2 | — | ADR-0001 | T-0000 | TestOtherPkg |
+
+## 13. Change log

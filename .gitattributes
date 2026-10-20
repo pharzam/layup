@@ -150,6 +150,9 @@ docs/links/tests/bad-crlf-expect/** eol=crlf
 docs/tasks/tests/good-crlf/** eol=crlf
 # The labeller's case of the same suite (T-dm8m, #185): CRLF throughout.
 docs/tasks/tests/good-labels-crlf/** eol=crlf
+# The pre-freeze check's CRLF cases (T-b6fn, #440): CRLF throughout.
+docs/tests/freeze-check/good-crlf-all/** text eol=crlf
+docs/tests/freeze-check/bad-crlf-conditions/** text eol=crlf
 
 # --- executable text: line feeds, or it will not run -------------------------
 #
@@ -205,6 +208,10 @@ docs/setup/setup-check.sh          text eol=lf
 docs/tasks/task-state.sh           text eol=lf
 # Its labeller (T-dm8m, #185), beside it: a sixteenth executable.
 docs/tasks/task-labels.sh          text eol=lf
+# The pre-freeze check and its fixture runner (T-b6fn, #440).
+docs/tests/freeze-check.sh         text eol=lf
+docs/tests/freeze-check/run.sh     text eol=lf
+docs/tests/freeze-check/run-all.sh text eol=lf
 
 # --- a fixture whose trailing whitespace IS the test -------------------------
 #
@@ -219,6 +226,8 @@ docs/tasks/task-labels.sh          text eol=lf
 docs/setup/tests/facts/bad-answers-blank/** -whitespace
 docs/setup/tests/facts/bad-blank-tab/** -whitespace
 docs/setup/tests/markers/bad-blank-question/** -whitespace
+docs/tests/freeze-check/bad-K1-trailing-space/** -whitespace
+docs/tests/freeze-check/bad-K1-blank-eof/** -whitespace
 
 # --- the raw facts files: bytes that their hashes hold (#48) -------------------
 #

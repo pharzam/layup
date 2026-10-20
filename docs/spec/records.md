@@ -53,6 +53,9 @@ or payload of one task is under `tasks/<task>/`.
 | `spec/options/<decision>.tsv` | the options of one architecture decision, each constraint with its pass or fail and its evidence | 8 | `layup run` | 2 (`M2e`) | [below](#nfr-001--the-records-of-the-task-loop) |
 | `spec/options/round-1/<decision>.tsv` | the table of round 1 of a decision that the one rewrite replaced, in the block `options` (task `T-3f94`) | 8 | `layup run` | 2 (`M2e`) | [below](#nfr-001--the-records-of-the-task-loop) |
 | `bets.tsv` | each bet: the brief, the answer, the verdict | 8 | `layup run` | 2 (`M2e`) | [below](#nfr-001--the-records-of-the-task-loop) |
+| `bets/<milestone>/brief.md` | the kept brief of a bet (task `T-h65e`): the candidate that passed every check, written by the promotion of `betBrief` with its `basis.tsv`; a rule with no block ([`loop.md`](loop.md#the-brief-of-the-first-bet)) | 8 | `layup run` | 2 (`M2e`) | a rule, no block |
+| `bets/<milestone>/attempts/<session>.md` | a candidate brief of one `bet-brief` session, kept with its telemetry row; the promotion or the recovery judges it again | 8 | `layup run` | 2 (`M2e`) | a rule, no block |
+| `bets/<milestone>/basis.tsv` | the basis of a kept brief: requirements, options, facts, open questions and verified heads | 8 | `layup run` | 2 (`M2e`) | the block `bet-basis`, [below](#nfr-001--the-records-of-the-task-loop) |
 | `batches.tsv` | each rule batch: head SHA, rule-file hash, approval | 6 | `layup run` | 2 | later |
 | `payloads/<sha256>` | a payload by its SHA-256: a known-bad patch, a refused diff, a stall package | 4, 6, 11 | `layup run` | 2 | a rule, no block: [below](#nfr-001--the-records-of-a-session) |
 | `tasks.tsv` | the task register | 8 | `layup run` | 2 (`M2e`) | [below](#nfr-001--the-records-of-the-task-loop) |
@@ -719,6 +722,17 @@ verdict       enum(bet|no-bet)  -  the answer's last line, `bet` or `no bet` wri
 approver      int       -    the answering account's numeric ID, a row of `approvers.tsv`
 decided       time      -    when `layup run` copied the answer
 ```
+
+```tsv-schema bet-basis records:bets/<milestone>/basis.tsv
+kind   enum(requirement|survivor|dropped|fact|open|head)  key  the kind of the row
+id     text  key   a `requirement`: the final ID `REQ-NNN` or `NFR-NNN`; a `survivor` or a `dropped` option: `<decision>=<option>` (neither part empty, no space); a `fact`: its number in `spec/spans.tsv` or its `Q-NNN`; an `open` question: its `Q-NNN`; a `head`: the ID of a Shape task, `T-xxxx`
+value  text  -     a `requirement`: the row `R-NNN` of the draft with the same digits; a `survivor` or an `open`: `—`; a `dropped`: the reasons joined by `; `, never `—`; a `fact`: its class, one of `need|constraint|measure|context`; a `head`: the verified head, 40 lowercase hexadecimal characters
+```
+
+**Decided here** (task `T-h65e`, R10; the owner is `internal/run`, which holds the Go schema `BetBasisSchema`): a basis holds at least
+one `requirement`, one `fact` and two `head` rows, and each decision of a `survivor` or a `dropped` row has at least one `survivor`.
+A row that breaks its kind's rule, a key twice and a basis that lacks a required kind are refused by the reader. The basis is written
+with the brief in one commit and read back by `briefBasis`; row 66j reads it, and filters nothing again.
 
 ```tsv-schema inventory-index records:spec/inventory.tsv
 n       int      key  the version, from 1

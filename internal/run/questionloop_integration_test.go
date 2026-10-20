@@ -112,6 +112,7 @@ func askedAndAnswered(t *testing.T) (d *drvWorld, task, asker, owner string) {
 // the task's issue, its handoff recorded, the answer session of the owner role run read-only at the base of the asking session, its answer
 // posted, the handoff back recorded and the next attempt started, whose plan cites the answer and is accepted by it.
 func TestANeedsContextEndIsAnsweredByTheOwnerRoleAndTheNextAttemptStarts(t *testing.T) {
+	t.Parallel()
 	d, task, asker, owner := askedAndAnswered(t)
 	if _, err := os.Stat(filepath.Join(d.r.target, "bets.tsv")); err == nil {
 		t.Error("a bets.tsv exists; the question must be reachable with no bet")
@@ -161,6 +162,7 @@ func TestANeedsContextEndIsAnsweredByTheOwnerRoleAndTheNextAttemptStarts(t *test
 // developer committed). The answer session starts at that head, not at the base of the attempt, and the task goes on to the verified head; the open
 // material finding is read from the verifiers that were bound, so the verifier that asked (no review record) leaves nothing open and nothing uphill.
 func TestAVerifierThatAsksIsAnsweredAtTheHeadItWasBoundTo(t *testing.T) {
+	t.Parallel()
 	d := newAskWorld(t)
 	task, _ := d.open()
 	d.ctlWrite("ask-verification", askArch)
@@ -201,6 +203,7 @@ func TestAVerifierThatAsksIsAnsweredAtTheHeadItWasBoundTo(t *testing.T) {
 // verifier by its position and head binding and its output is not a qualified review record (it ended needs_context, with no record), so no finding is
 // clear: openMaterial is true through the production constructor, and no older record stands in its place.
 func TestTheQuestionOfAVerifierAtItsBoundHeadLeavesTheFindingOpenWhileItWaits(t *testing.T) {
+	t.Parallel()
 	d := newAskWorld(t)
 	task, _ := d.open()
 	d.ctlWrite("ask-verification", askHuman)
@@ -256,6 +259,7 @@ func (d *drvWorld) sessionBase(task, session string) string {
 // I6 (Q6, Q7): the prompt of the answer session holds the question IDs and the result of the asking session, and the prompts of attempt 2 hold the
 // ID of the answer; the prompts of attempt 1 (the plan that asked) hold no answer block.
 func TestTheAnswerPromptHoldsTheQuestionsAndTheNextPromptsTheAnswerIDs(t *testing.T) {
+	t.Parallel()
 	d, task, asker, owner := askedAndAnswered(t)
 	prompts := d.promptsOf(task) // the plan that asked, the answer session, then the plan, the plan review, the developer, the verifier of attempt 2
 	if len(prompts) != 6 {
@@ -277,6 +281,7 @@ func TestTheAnswerPromptHoldsTheQuestionsAndTheNextPromptsTheAnswerIDs(t *testin
 // I7: the result that a harness writes by the answer instruction crosses the real session boundary and its handoff owner role to asking role is
 // valid, by the item answer-row that code computes from the result.
 func TestAHarnessThatFollowsTheAnswerInstructionGivesAValidAnswerHandoff(t *testing.T) {
+	t.Parallel()
 	d, task, _, owner := askedAndAnswered(t)
 	kept := keptRecord(t, d.w, "tasks/"+task+"/results/"+owner+".tsv")
 	rows, err := records.ReadResult([]byte(kept))
@@ -291,6 +296,7 @@ func TestAHarnessThatFollowsTheAnswerInstructionGivesAValidAnswerHandoff(t *test
 // I2 and I3 (Q10, Q13): a question that goes to a human, and questions of more than one owner role, each end in the wait with the ID of the first
 // question and start no answer session; the comments of the questions are posted once and a second call waits again, writing nothing.
 func TestAHumanRoutedQuestionAndAMixedOwnerQuestionWaitForTheOperator(t *testing.T) {
+	t.Parallel()
 	for _, c := range []struct {
 		name, rows string
 		comments   int
@@ -326,6 +332,7 @@ func TestAHumanRoutedQuestionAndAMixedOwnerQuestionWaitForTheOperator(t *testing
 // I4 (Q3, Q9, condition 3): an interruption after each act of the question, then a restart, writes each comment, handoff, answer session and attempt
 // once; a session that started and has no result is run again (the stale start row stays).
 func TestARestartAtEachStageOfTheQuestionWritesEachThingOnce(t *testing.T) {
+	t.Parallel()
 	for _, c := range []struct {
 		name   string
 		fault  func(d *drvWorld) func(*Sessions)
@@ -387,6 +394,7 @@ func failCommit(text string, n int) func(*Sessions) {
 // I5 (O11, condition 5): an open material finding of the last qualified review record keeps a task whose list is frozen uphill, through the
 // Sessions of the production constructor; a later record of nothing material clears it, and the tier follows the position.
 func TestAnOpenMaterialFindingKeepsTheTaskUphill(t *testing.T) {
+	t.Parallel()
 	l := newLoop(t, nil)
 	ctx := context.Background()
 	s := l.prod()

@@ -20,6 +20,7 @@ import (
 // The outputs of the Operator's applies are read by their names; a name that is a directory, or
 // that cannot be read, is an error that names it; a directory that does not exist has none.
 func TestTheAppliesOfTheOperatorAreReadByTheirNames(t *testing.T) {
+	t.Parallel()
 	dir := filepath.Join(t.TempDir(), "applies", "acme", "target")
 	if got, err := readApplies(dir); err != nil || len(got) != 0 {
 		t.Errorf("a directory that does not exist: %q, %v; want no output", got, err)

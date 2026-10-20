@@ -67,6 +67,15 @@ case $step in
   n=$(cat $ctl/n-options 2>/dev/null || echo 0); n=$((n+1)); echo $n > $ctl/n-options
   [ -e $ctl/options-fail-$n ] && exit 3
   cat $ctl/options-$n > "$out" ;;
+"You write three parts of the brief"*) # the brief session of the first bet: the directory brief-<n> of ctl/ is the n-th output
+  n=$(cat $ctl/n-brief 2>/dev/null || echo 0); n=$((n+1)); echo $n > $ctl/n-brief
+  { printf '%s\n' "$line"; cat; } > $ctl/brief-prompt-$n
+  [ -e $ctl/brief-fail-$n ] && exit 3
+  out=$(sed -n 's/^Write these three files of Markdown in the directory \(.*\), and no other file there:$/\1/p' $ctl/brief-prompt-$n)
+  cp -r "$(dirname "$(sed -n 's/^- The fact spans: //p' $ctl/brief-prompt-$n)")" $ctl/brief-input-$n
+  mkdir -p "$out"; cp $ctl/brief-$n/* "$out"/
+  [ -e $ctl/brief-drop-$n ] && rm -f "$out/$(cat $ctl/brief-drop-$n)"
+  if [ -e $ctl/cost-$n ]; then printf '{"type":"result","total_cost_usd":%s,"modelUsage":{"m1":{"inputTokens":1,"outputTokens":1,"cacheReadInputTokens":0,"cacheCreationInputTokens":0}}}\n' "$(cat $ctl/cost-$n)"; fi ;;
 plan-of-a-task) comment plan.md 'size: small
 open questions: —
 new interfaces: —
@@ -254,6 +263,7 @@ func (d *drvWorld) kinds(task string) []string {
 // I1 (R10, plan review conditions 2 and 5): no issue is opened before the permissions of the loop; with them, two issues and
 // two rows with the exact set, and the body of each issue is the fixed text of its kind.
 func TestAShapeTaskIsOpenedOnlyWithTheLoopPermissions(t *testing.T) {
+	t.Parallel()
 	d := newDrvWorld(t, nil)
 	head, before := recordsHead(t, d.w), d.requests("POST /repos/acme/target/issues")
 	if _, err := d.r.openShapeTask(context.Background(), "specification"); err == nil || !strings.Contains(err.Error(), "lacks the permissions of the task loop: ") {
@@ -286,6 +296,7 @@ func TestAShapeTaskIsOpenedOnlyWithTheLoopPermissions(t *testing.T) {
 // Review condition 2: a draft with no requirement, a commit that the dry run refuses (a table of transitions, a parameter
 // file), and a lost lease each open no issue.
 func TestARefusedOpeningWritesNoIssue(t *testing.T) {
+	t.Parallel()
 	for _, c := range []struct {
 		name  string
 		prep  func(d *drvWorld)
@@ -322,6 +333,7 @@ func TestARefusedOpeningWritesNoIssue(t *testing.T) {
 // loop.md, the opening: an opened task is returned unchanged, so a second call opens no second issue and a restart that
 // stopped between two tasks opens the other one only.
 func TestAnOpenedShapeTaskIsReusedAndOpensNoSecondIssue(t *testing.T) {
+	t.Parallel()
 	d := newDrvWorld(t, loopPerms)
 	first, err := d.r.openShapeTask(context.Background(), "specification")
 	if err != nil {
@@ -340,6 +352,7 @@ func TestAnOpenedShapeTaskIsReusedAndOpensNoSecondIssue(t *testing.T) {
 // Known limit (plan Q14): no call of the forge lists issues, so a stop between the issue and the row leaves an issue that the
 // next run does not find; it opens a second one.
 func TestAStopBetweenTheIssueAndTheRowOpensASecondIssue(t *testing.T) {
+	t.Parallel()
 	d := newDrvWorld(t, loopPerms)
 	held := keptRecord(t, d.w, "lease.tsv")
 	d.r.cfg.Forge = &stealingForge{Forge: d.r.cfg.Forge, steal: func() {
@@ -380,6 +393,7 @@ func (f *stealingForge) OpenIssue(ctx context.Context, title, body string) (int,
 
 // loop.md, the issue text: each constant is its block of loop.md, byte for byte.
 func TestTheShapeIssueBlocksOfLoopMd(t *testing.T) {
+	t.Parallel()
 	doc, err := os.ReadFile("../../docs/spec/loop.md")
 	if err != nil {
 		t.Fatal(err)

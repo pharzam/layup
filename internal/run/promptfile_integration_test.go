@@ -42,6 +42,7 @@ func copyAll() string {
 // the calls of #360, the register, the rule-path register) and the target at
 // the base, and the session reads the files that it names, each at its hash.
 func TestAPromptFileIsBuiltFromTheRecordsOfARealTaskAndTheSessionReadsTheFiles(t *testing.T) {
+	t.Parallel()
 	l := newLoop(t, targetFiles)
 	ctx := context.Background()
 	planID := l.plan(1, "claude", "the plan\n")
@@ -118,6 +119,7 @@ func TestAPromptFileIsBuiltFromTheRecordsOfARealTaskAndTheSessionReadsTheFiles(t
 // The start row holds the size of that prompt; a context that does not fit
 // refuses the start with both numbers (architecture.md §9).
 func TestAPromptThatDoesNotFitRefusesTheStartWithBothNumbers(t *testing.T) {
+	t.Parallel()
 	l := newLoop(t, targetFiles)
 	ctx := context.Background()
 	l.attempt(2)
@@ -146,6 +148,7 @@ func TestAPromptThatDoesNotFitRefusesTheStartWithBothNumbers(t *testing.T) {
 // list is uphill; a frozen list with no open question is downhill; a question
 // of the last attempt makes it uphill again until an answer is accepted.
 func TestThePlanAndTheRecordsGiveTheTierOfARetry(t *testing.T) {
+	t.Parallel()
 	l := newLoop(t, nil)
 	ctx := context.Background()
 	s := l.prod()
@@ -189,6 +192,7 @@ func TestThePlanAndTheRecordsGiveTheTierOfARetry(t *testing.T) {
 // the answer row: the owner role of the question moves the task downhill, any
 // other role leaves it uphill (loop.md, A question during the work, T-b3s3).
 func TestAnAnswerOfAWrongRoleSessionLeavesThePositionUphill(t *testing.T) {
+	t.Parallel()
 	const ask = "kind\tn\tvalue\tsha256\treason\nstatus\t1\tneeds_context\t—\tasks\n"
 	const answer = "kind\tn\tvalue\tsha256\treason\nstatus\t1\tcompleted\t—\tanswered\nanswer\t1\tYes\t—\tdocs/spec/forge.md\n"
 	for _, c := range []struct {
@@ -265,6 +269,7 @@ func (l *loopRun) records(files map[string][]byte) {
 // the prompt file of a real records tree reads that file and the input files,
 // each at its hash, and the file ends with the instruction of the step.
 func TestEachStepsPromptFileFromARealRecordsTree(t *testing.T) {
+	t.Parallel()
 	l := shapeWorld(t)
 	ctx := context.Background()
 	l.records(shapeFiles)
@@ -314,6 +319,7 @@ func TestEachStepsPromptFileFromARealRecordsTree(t *testing.T) {
 // Each refusal of PromptFile has its control: the same call with the input made
 // right goes through, so the refusal is the case's and no other read's.
 func TestPromptFileRefusalsHaveTheirControls(t *testing.T) {
+	t.Parallel()
 	l := shapeWorld(t)
 	ctx := context.Background()
 	call := func(task, step string, opts map[string]spec.Result) error {
@@ -428,6 +434,7 @@ func TestPromptFileRefusalsHaveTheirControls(t *testing.T) {
 // that the text quotes; the handoff is then valid, the verifier's by the head that
 // code holds for its start row.
 func TestAHarnessThatFollowsTheInstructionGivesValidHandoffs(t *testing.T) {
+	t.Parallel()
 	for _, c := range []struct {
 		step, file, kind, from, to, item, verdict string
 	}{
@@ -475,6 +482,7 @@ func TestAHarnessThatFollowsTheInstructionGivesValidHandoffs(t *testing.T) {
 // The blocks of loop.md are the text of record of the instructions (as probe-prompt
 // is of the probe): each constant is its block, byte for byte.
 func TestTheInstructionBlocksOfLoopMd(t *testing.T) {
+	t.Parallel()
 	doc, err := os.ReadFile("../../docs/spec/loop.md")
 	if err != nil {
 		t.Fatal(err)
@@ -506,6 +514,7 @@ func TestTheInstructionBlocksOfLoopMd(t *testing.T) {
 // loop.md, The specification output: the specimen that follows the forms of the
 // instruction is a specification that waits for its bet, by the pinned prd-lint of the target.
 func TestTheSpecimenOfTheSpecificationInstructionIsAcceptedByThePinnedPrdLint(t *testing.T) {
+	t.Parallel()
 	script, err := filepath.Abs("../../docs/prd/prd-lint.sh")
 	if err != nil {
 		t.Fatal(err)
@@ -531,6 +540,7 @@ func TestTheSpecimenOfTheSpecificationInstructionIsAcceptedByThePinnedPrdLint(t 
 // outputs that the text requires, committed and hashed: the result crosses the real
 // session boundary, for a finished step and for a step that a question stops.
 func TestAHarnessThatFollowsTheInstructionGivesValidResultsForTheOtherStepsAndAStoppingQuestion(t *testing.T) {
+	t.Parallel()
 	l := shapeWorld(t)
 	ctx := context.Background()
 	l.records(shapeFiles)

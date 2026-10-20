@@ -42,6 +42,7 @@ func qaRowOf(rows [][]string, kind, n string) []string {
 // written here with the session ID, never taken from the composer, and the
 // first line starts like the comment that End posted.
 func TestTheQuestionAndAnswerCommentsAreComposedFromTheRowsOfARealEnd(t *testing.T) {
+	t.Parallel()
 	w, f, id, start, rows := qaWorld(t)
 	prefix := id + ": developer session of T-ab12, attempt 1: "
 	if got := f.posted[taskIssue]; len(got) != 1 || got[0] != prefix+"done\n" {
@@ -75,6 +76,7 @@ func TestTheQuestionAndAnswerCommentsAreComposedFromTheRowsOfARealEnd(t *testing
 }
 
 func TestARowOfARealResultThatIsNoQuestionOrAnswerIsRefused(t *testing.T) {
+	t.Parallel()
 	_, _, _, start, rows := qaWorld(t)
 	if got, err := QuestionComment(start, qaRowOf(rows, "question", "1")); err != nil || !strings.HasSuffix(string(got), "\n\nFirst?") {
 		t.Fatalf("the control, a question row: %q, %v", got, err)

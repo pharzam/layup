@@ -1,0 +1,5 @@
+# Test runs
+
+- `TMPDIR=/tmp go test -count=1 -tags=integration -timeout 30m ./internal/x/ -run 'Comment|Handoff|Position|Question'`: exit 0
+- `go test ./internal/x/ -run '^(TestAlpha|TestBeta)$'`: exit 0
+- `go test ./... -run '^TestAlpha$|^TestOtherPkg$'`: exit 0

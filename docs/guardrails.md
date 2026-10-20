@@ -777,14 +777,22 @@ These traps are not domain-specific: they hurt every project's test suite.
   prints the goroutines that still ran, which reads like a crash. On the host of the sessions
   (2 CPUs, a load average of about 6 when several sessions run their suites) the integration
   level of `internal/run` took 486 s alone and was stopped at 600 s inside a run of every
-  package, while CI ran all three levels in 3 min 22 s (`T-4c5c`, #276). **The check:** run
+  package, while CI ran all three levels in 3 min 22 s (`T-4c5c`, #276). Since `T-05f4` (#439) the
+  integration tests of `internal/run` run in parallel (baseline 396 s, median 125 s, ratio 0.32);
+  when a test that replaces `verifyRun` ran in parallel, `TestTheStepSetupRunsS01ToS14` was red in
+  3 of 3 runs. **The check:** run
   the level with `-timeout 30m`; when a package stops at the limit, read `uptime`, run that
   package alone with `-v`, record both runs, and edit no test for the stop. A package that
   needs more than its level's per-test-binary bound alone on an idle host (10 minutes, or 20
   minutes for the integration level in CI under
   [ADR-0027](adr/0027-bound-the-integration-level-at-20-minutes-in-ci.md)) breaks
   [the rule of the scaling checklist](tests/scaling-checklist.md#fast-enough-for-hook-and-ci),
-  and is a task ([#439](https://github.com/pharzam/layup/issues/439) for `internal/run`).
+  and is a task ([#439](https://github.com/pharzam/layup/issues/439) for `internal/run`). A top-level integration test of `internal/run` (files
+  `internal/run/*_integration_test.go`, build tag `integration`) is serial if, directly or through
+  any helper it calls, it calls `t.Setenv` or `t.Chdir`, or assigns a package-level variable of
+  package `run` (today only `verifyRun`, `internal/run/verify.go:29`). Every other top-level
+  integration test gets `t.Parallel()` as its first statement. Subtests are not changed; a test
+  that must replace a package variable such as `verifyRun` stays serial.
 - ❌ **A `git` verb that reads its standard input when its argument is empty.**
   `git commit-tree TREE -p PARENT -m ''` finds an empty message and reads the message
   from its standard input, as it does with no `-m`; with a standard input that stays
@@ -963,6 +971,25 @@ These traps are not domain-specific: they hurt every project's test suite.
   its inputs, its runner strips them from `EXPECT`, and the suite has a case
   named `*crlf*`, CRLF throughout and pinned `eol=crlf` in `.gitattributes`,
   so `run-discipline-tests.sh` checks that it keeps them.
+- ❌ **A check of the records that passes its own fixtures and fails the records
+  of `main`.** `freeze-check.sh` (`T-b6fn`, #440) first passed all 42 of its
+  fixtures, then failed T-r7b9 as merged. A §12 Test cell of `PRD-0001` may name
+  a test's file in place of the test ("… and its 13 siblings of
+  `questionloop_test.go`"). Round 1 found more: a word of a mutant's description
+  ("the rule dropped") read as a disposition; a backtick elsewhere on a line hid
+  a `go test` command; an inline span that crosses a line break was paired
+  wrongly; an unreadable input passed; and an untracked file supplied evidence.
+  Round 2 found that the fix of the span hid a command after a backtick that
+  nothing closed, that an uncommitted edit of a tracked file still supplied a
+  test name, and that one rule had no case that failed when the rule alone was
+  removed. **The check:** run a new check of the records on two or three merged
+  tasks of `main` before the freeze, and give each true and false reading found
+  there its own fixture. Refuse a worktree with a change or an untracked file,
+  so the inputs are the committed head. Pair backticks across the lines of a
+  paragraph, read an unclosed one as plain text, and read fenced lines as they
+  stand. Remove each condition of a rule in turn and see a case fail. Write a
+  command template in prose without `go test … -run <pattern>`, which
+  `freeze-check.sh` K3 refuses as a selector.
 - ❌ **A fake whose child cannot see `SIGINT`.** A shell script that starts a
   child with `&` gives it `SIGINT` and `SIGQUIT` ignored (POSIX, with job
   control off), and a shell cannot trap a signal ignored at its entry; `trap ''`
@@ -1387,6 +1414,14 @@ failure modes worth keeping.
 - ❌ **A first-match loop over the statuses of a head that lets a failure hide an error.** The driver judged the four statuses in the order of their posts and returned at the first one that stopped it. When the failure of `layup/spec` and `layup/rules` became a retry instead of a stop, the same loop would have started an attempt for a spec failure and never looked at a later `layup/rules` error, which has to stop it (`NFR-004`). It is silent because every status alone is judged right and the mixed head is no fixture. **The check:** decide a stop over all the posts before any retry (`judgeStatuses` returns the stop whatever else failed), test a head with a failure *before* an error, and make a fault knob of a scripted harness fire once, or the driver retries a persistent fault until its bound on the acts. Learned in `T-tnxn`, #427.
 
 - ❌ **A package's integration time read only on the host, not in CI's log.** Row 66z (`T-r7b9`, #436) passed `internal/run`'s integration binary in 412.797 s on the session host and in 493.632 s on its PR head in CI (run 39421233368), and the push run of its merge timed out at 600.012 s on `main` (run 39422675099), with PR #437's head timing out at 600.014 s in CI (run 39425720339) while completing in 482.275 s on the host. It is silent because the PR checks pass and the merge does not wait on `main`'s push run. **The check:** read a package's integration time in CI's log at each landing, not only on the host. Learned in `T-jc45`, #442.
+
+- ❌ **A check that reads the ledger inside `Keep` omits the session's own row.** `endPhase` runs the step's `Keep` and only then commits the
+  telemetry row of the session, so a check of the appetite (the caps plus the money spent) made in `Keep` judged the brief without the money that its own
+  session cost, and the plan of the brief of the first bet (#418) had put it there. It is silent because the prior spend alone fits, and every unit test of
+  the check passes. **The check:** judge what depends on the session's spend after `PhaseSession` returns, from the records as they now stand; keep the
+  output as a candidate in `Keep` and promote it after; test with a spend that fits without the session's row and fails with it (a green negative beside a
+  red case). A session whose output files `ReadOutputFiles` refuses ends `no-result`, not `refused file`, so a loop that retries on the second does not retry the first.
+  Learned in `T-h65e`, #418.
 
 ## 3. Validation — how you check you are not fooling yourself
 

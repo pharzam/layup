@@ -1,0 +1,9 @@
+# Mutants
+
+| # | Mutant | sha256 before | sha256 during | sha256 after |
+| - | --- | --- | --- | --- |
+| M1 | form a | 2a94b62a561392c7 | 6cff13de187b6d10 | 2a94b62a561392c7 |
+
+| # | Mutant | Hash before | during | after | Restore ok |
+| - | ------ | ----------- | ------ | ----- | ---------- |
+| M2 | form b True | 9e06c6913f9eefa4 | b8463974d533b99d | — | True |

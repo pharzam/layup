@@ -1,0 +1,9 @@
+# Mutants
+
+| # | mutant | build | test |
+| - | ------ | ----- | ---- |
+| M2 | the option-word rule dropped | ok | KILLED |
+| M3 | dropped as a duplicate of M2 | — | — |
+| M4 | (did not build; not run) | — | — |
+| M5 | dropped the guard of the head | ok | KILLED |
+| M6 | the guard of the head dropped | 0 | 1 |

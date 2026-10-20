@@ -129,6 +129,7 @@ func keptRecord(t *testing.T, w *world, path string) string {
 // that code posts from its bytes after a restart, the copy and its row, the
 // handoff event with the ID that code read, the three equal hashes.
 func TestThePlanThePlanReviewAndTheReviewRecordArePostedFromTheKeptCopy(t *testing.T) {
+	t.Parallel()
 	for _, c := range []struct {
 		kind, role, from, to, item string
 		text                       func(worldAt) string
@@ -187,6 +188,7 @@ func TestThePlanThePlanReviewAndTheReviewRecordArePostedFromTheKeptCopy(t *testi
 }
 
 func TestAnEditedCommentMakesTheSecondCopyAndTheNewHandoffNamesIt(t *testing.T) {
+	t.Parallel()
 	w, r, base := commentWorld(t)
 	ctx := context.Background()
 	id := commentSession(t, r, base, "software-engineer", planText)
@@ -233,6 +235,7 @@ func (s *failOnCopy) Commit(ctx context.Context, files map[string][]byte, messag
 }
 
 func TestAStopBetweenThePostAndTheCopyDoesNotPostTwice(t *testing.T) {
+	t.Parallel()
 	w, r, base := commentWorld(t)
 	ctx := context.Background()
 	id := commentSession(t, r, base, "software-engineer", planText)
@@ -254,6 +257,7 @@ func TestAStopBetweenThePostAndTheCopyDoesNotPostTwice(t *testing.T) {
 }
 
 func TestAStopBeforeThePostPostsFromTheKeptCopyAtTheRestart(t *testing.T) {
+	t.Parallel()
 	w, r, base := commentWorld(t)
 	id := commentSession(t, r, base, "software-engineer", planText)
 	w.fake.mu.Lock()
@@ -271,6 +275,7 @@ func TestAStopBeforeThePostPostsFromTheKeptCopyAtTheRestart(t *testing.T) {
 }
 
 func TestALostLeaseDuringTheCommentPostsNothing(t *testing.T) {
+	t.Parallel()
 	w, r, base := commentWorld(t)
 	ctx := context.Background()
 	id := commentSession(t, r, base, "software-engineer", planText)
@@ -286,6 +291,7 @@ func TestALostLeaseDuringTheCommentPostsNothing(t *testing.T) {
 }
 
 func TestTheLimitOfACommentThroughTheAdapter(t *testing.T) {
+	t.Parallel()
 	w, r, base := commentWorld(t)
 	ctx := context.Background()
 	at := planText + strings.Repeat("€", MaxCommentChars-len([]rune(planText))) // 65,536 characters
@@ -338,6 +344,7 @@ func resultsOf(t *testing.T, w *world, ids ...string) map[string][][]string {
 // A question goes to its owner role and its answer is accepted by the next
 // attempt that cites it, from the records that the end of each session wrote.
 func TestTheQuestionOfASessionIsRoutedAndItsAnswerAcceptedFromTheRecords(t *testing.T) {
+	t.Parallel()
 	w, r, base := commentWorld(t)
 	ctx := context.Background()
 	run := func(role string, attempt int, body string) string {
@@ -395,6 +402,7 @@ func TestTheQuestionOfASessionIsRoutedAndItsAnswerAcceptedFromTheRecords(t *test
 // slug (round 1 of #360, finding 1: it did not, so the adoption of the App's own
 // comment was skipped and the restart posted twice).
 func TestTheSessionsOfTheRunAdoptTheCommentOfALostCopyAndPostOnce(t *testing.T) {
+	t.Parallel()
 	w, r, base := commentWorld(t)
 	ctx := context.Background()
 	id := commentSession(t, r, base, "software-engineer", planText)
@@ -419,6 +427,7 @@ func TestTheSessionsOfTheRunAdoptTheCommentOfALostCopyAndPostOnce(t *testing.T) 
 // records; the acceptance alone reads the role of the answering session from
 // sessions.tsv (loop.md, A question during the work, T-b3s3).
 func TestAnAnswerOfADeveloperSessionIsNotAcceptedFromTheRecords(t *testing.T) {
+	t.Parallel()
 	w, r, base := commentWorld(t)
 	ctx := context.Background()
 	run := func(role string, attempt int, body string) string {
@@ -464,6 +473,7 @@ func startRows(t *testing.T, w *world) [][]string {
 // invalid by what code reads from the kept copy and from the verifier's recorded
 // base, whatever the caller says, through the records and the forge.
 func TestTheCommentChecksOfTheTaskLoop(t *testing.T) {
+	t.Parallel()
 	for _, c := range []struct {
 		name, role, from, to, kind, item string
 		text                             func(base worldAt) string

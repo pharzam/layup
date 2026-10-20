@@ -133,6 +133,7 @@ func treeOf(t *testing.T, entries ...entry) (string, string) {
 }
 
 func TestTheSpecFilesAreTheRegularMdBlobsOfDocsSpecAtTheHead(t *testing.T) {
+	t.Parallel()
 	gitlink := strings.Repeat("1", 40)
 	for _, c := range []struct {
 		name string
@@ -170,6 +171,7 @@ func TestTheSpecFilesAreTheRegularMdBlobsOfDocsSpecAtTheHead(t *testing.T) {
 // The demo of row 66n (group (b)): a handoff that lists a tree item is valid
 // or invalid by the tree, whatever the caller says, for each item and each tree.
 func TestAHandoffOfTheTreeItemsIsValidOrInvalidByTheTreeNotByTheCaller(t *testing.T) {
+	t.Parallel()
 	for _, c := range []struct{ name, text, want string }{
 		{"the section is at the bound head", treeSection, "valid"},
 		{"a heading with no body", treeHeading, "invalid spec-sections"},
@@ -195,6 +197,7 @@ func TestAHandoffOfTheTreeItemsIsValidOrInvalidByTheTreeNotByTheCaller(t *testin
 }
 
 func TestASessionHandoffIgnoresASuppliedHeadAndTheCloneHead(t *testing.T) {
+	t.Parallel()
 	// The section is at the bound head only: a later commit of the clone, and a
 	// Head that the caller supplies, hold none.
 	l, s, id, head := specWorld(t, treeSection)
@@ -218,6 +221,7 @@ func TestASessionHandoffIgnoresASuppliedHeadAndTheCloneHead(t *testing.T) {
 }
 
 func TestARenderedTaskHandoffNeedsAPreImageThatIsNotTheHead(t *testing.T) {
+	t.Parallel()
 	_, s, pre, head := renderWorld(t, "")
 	if got := verdict(t, s, renderInput(head, head, true)); got != "invalid rendering-equal" {
 		t.Errorf("the head as its own pre-image: %s; want invalid rendering-equal", got)
@@ -231,6 +235,7 @@ func TestARenderedTaskHandoffNeedsAPreImageThatIsNotTheHead(t *testing.T) {
 }
 
 func TestAFailedReadOfTheTreeIsAnErrorAndWritesNoEvent(t *testing.T) {
+	t.Parallel()
 	// A head the clone lacks.
 	l, s, _, head := renderWorld(t, "")
 	n := len(l.events())
@@ -257,6 +262,7 @@ func TestAFailedReadOfTheTreeIsAnErrorAndWritesNoEvent(t *testing.T) {
 }
 
 func TestASpecBlobThatCannotBeReadIsAnErrorAndWritesNoEvent(t *testing.T) {
+	t.Parallel()
 	l, s, id, head := specWorld(t, treeSection)
 	n := len(l.events())
 	blob := strings.TrimSpace(gitOut(t, l.r.Clone, "rev-parse", head+":docs/spec/loop.md"))

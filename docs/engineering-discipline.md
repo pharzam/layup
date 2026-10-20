@@ -229,7 +229,13 @@ an "issue" is a GitHub issue; the issue and pull-request templates are under
 ## Reviewing until findings decay
 
 After the code works, **freeze the head**: name the commit, and land nothing on
-the branch after it except a fix to a finding. Then run **one** independent
+the branch after it except a fix to a finding. Before the first freeze and after
+each fix, the author commits and runs [`tests/freeze-check.sh`](tests/freeze-check.sh),
+which refuses a worktree with a change or an untracked file, and records its
+output in `runs/<task>/test-runs.md` (a written rule; CI runs only
+its fixtures in [`tests/freeze-check/run-all.sh`](tests/freeze-check/run-all.sh),
+and K6 proves only that the cited evidence exists, not that it satisfies a
+condition or that the table is complete). Then run **one** independent
 blind review round on that commit, with the lens correctness and acceptance
 criteria. The reviewer is fresh — it does not see your reasoning — and a second
 round runs only after a fix, on the new frozen head
@@ -436,7 +442,8 @@ under these names:
   reviewed,
 - `Reviewer` — the model and version, or the person,
 - `Lens`, `Briefed on`, `Barred from` — the question asked, what the reviewer
-  was handed, and what the brief excluded,
+  was handed (see [Reviewing until findings decay](#reviewing-until-findings-decay)),
+  and what the brief excluded,
 - `Independence claimed` — the [levels](#who-may-review) held, and those not
   reached,
 - `Cycle` — `0` on this branch's first frozen head for this issue, `k` for the

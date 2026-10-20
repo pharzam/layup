@@ -1,0 +1,14 @@
+# Test runs
+
+- `go test ./internal/x/ -run '^TestAlpha$'`: exit 0
+
+| # | mutant | sha256 before | sha256 during | restore |
+| - | ------ | ------------- | ------------- | ------- |
+| SM1 | ok row | 3d7607898ae6 | 78f5d23ba790 | restored |
+| SM19a | did not build; not run | — | — | — |
+| SM29 | dropped row | — | — | — |
+| SM30 | superseded row | — | — | — |
+
+| # | mutant | build | vet | test |
+| - | ------ | ----- | --- | ---- |
+| SM31 | missing hashes | 0 | 0 | 1 |
