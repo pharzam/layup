@@ -1915,3 +1915,39 @@ Final evidence-append verification:
 
 Read-only scope checks also confirm that the committed record is an unchanged
 prefix, this record is the only modified file, and no untracked file exists.
+
+## Stage F — clean-head pre-freeze after Stage E
+
+All four commands below ran on clean committed head
+`b11d8d494b780b33233850ae3f091df37eff37fa`, containing Stage E fixes
+`569229b` and `b11d8d4`, against `origin/main` at
+`d27b33180a1aa82c23f3ab66e757e06de356eb35`.
+The worktree remained clean through all four runs; this append followed them.
+Times come directly from `date -u +%FT%TZ`; exits are the observed command
+statuses. `TMPDIR` was set to
+`/home/layup/.cache/layup-session/tmp-green`, which also holds captured output.
+
+| Command | UTC start | UTC end | Exit | Observation |
+| --- | --- | --- | --- | --- |
+| `sh docs/tests/freeze-check.sh --task T-c826 --base origin/main --budget 1300/170 --evidence runs/T-c826/ci-exception.md --evidence runs/T-c826/conditions.md --evidence runs/T-c826/mutants.md --evidence runs/T-c826/real-heads.md --evidence runs/T-c826/test-runs.md > /home/layup/.cache/layup-session/tmp-green/c826-fc3.txt 2>&1` | 2026-10-20T21:50:16Z | 2026-10-20T21:50:17Z | 0 | K1–K6 pass; complete output below. |
+| `sh docs/tests/freeze-check/run-all.sh` | 2026-10-20T21:50:17Z | 2026-10-20T21:50:25Z | 0 | freeze-check: 81 passed, 0 failed. |
+| `sh docs/links/link-lint.sh` | 2026-10-20T21:50:25Z | 2026-10-20T21:50:37Z | 0 | link-lint: OK  2997 links resolved. |
+| `sh docs/setup/setup-check.sh` | 2026-10-20T21:50:37Z | 2026-10-20T21:51:02Z | 0 | Every setup check passes, including ci; 138 discipline cases pass and all kit linters pass. |
+
+Complete freeze-check output, captured before any worktree edit in
+`/home/layup/.cache/layup-session/tmp-green/c826-fc3.txt`, exit **0**:
+
+```text
+ok K1: white space
+ok K2: registration of new tests
+ok K3: test selectors
+ok K4: restore evidence of mutants
+ok K5: projection: figure 871/146, maximum 1300/170, tolerance 260/4, limit 1560/174, margin 689/28 (the figure at landing is still measured at landing)
+ok K6: conditions table
+```
+
+The declared-evidence projection is **871 lines / 146 files**, below the
+reviewed maximum of **1300 / 170**. Tolerance is **260 / 4**, limit is
+**1560 / 174**, and margin is **689 / 28**. K6 now accepts the condition
+citations. This is the clean-head pre-freeze result; it does not claim an
+independent review or close-out.
