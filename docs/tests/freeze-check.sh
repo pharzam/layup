@@ -179,6 +179,14 @@ check_k2() {
 			next
 		}
 		FILENAME == ARGV[3] {
+			# New tests need the PRD and its section 12, whatever they cover.
+			if (FNR == 1) {
+				if (!has_prd) {
+					printf "FAIL K2: docs/prd/PRD-0001-layup.md:0: missing PRD file\n"
+				} else if (prd_rows == 0) {
+					printf "FAIL K2: docs/prd/PRD-0001-layup.md:0: missing §12 table\n"
+				}
+			}
 			split($0, f, "\t")
 			tfile = f[1]; tln = f[2]; tname = f[3]
 			found_tr = 0; reqs = ""
@@ -198,20 +206,7 @@ check_k2() {
 				next
 			}
 			if (reqs == "") next
-			if (!has_prd) {
-				if (!prd_missing_printed) {
-					printf "FAIL K2: docs/prd/PRD-0001-layup.md:0: missing PRD file\n"
-					prd_missing_printed = 1
-				}
-				next
-			}
-			if (prd_rows == 0) {
-				if (!s12_missing_printed) {
-					printf "FAIL K2: docs/prd/PRD-0001-layup.md:0: missing §12 table\n"
-					s12_missing_printed = 1
-				}
-				next
-			}
+			if (!has_prd || prd_rows == 0) next
 			nr = split(reqs, rlist, " ")
 			delete seen_r
 			for (j = 1; j <= nr; j++) {
@@ -585,13 +580,15 @@ check_k6() {
 				printf 'FAIL K6: %s:%s: commit %s does not exist\n' "$cond_file" "$ln" "$sp" >> "$tmp/k6_out"
 			fi
 		else
-			p=$sp; n1=0; n2=0
+			p=$sp; n1=0; n2=0; has_rng=0
 			if printf '%s\n' "$sp" | grep -Eq '^.+:[0-9]+-[0-9]+$'; then
-				p=${sp%:*}; rng=${sp##*:}; n1=${rng%-*}; n2=${rng#*-}
+				p=${sp%:*}; rng=${sp##*:}; n1=${rng%-*}; n2=${rng#*-}; has_rng=1
 			elif printf '%s\n' "$sp" | grep -Eq '^.+:[0-9]+$'; then
-				p=${sp%:*}; n1=${sp##*:}; n2=$n1
+				p=${sp%:*}; n1=${sp##*:}; n2=$n1; has_rng=1
 			fi
-			if [ "$n1" -gt 0 ]; then
+			if [ "$has_rng" -eq 1 ] && [ "$n1" -lt 1 ]; then
+				printf 'FAIL K6: %s:%s: line range in %s starts before line 1\n' "$cond_file" "$ln" "$sp" >> "$tmp/k6_out"
+			elif [ "$has_rng" -eq 1 ]; then
 				if [ "$(git cat-file -t "HEAD:$p" 2>/dev/null)" != blob ]; then
 					printf 'FAIL K6: %s:%s: path %s does not exist\n' "$cond_file" "$ln" "$p" >> "$tmp/k6_out"
 				else
