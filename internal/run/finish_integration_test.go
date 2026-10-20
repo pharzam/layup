@@ -423,6 +423,23 @@ func TestAVerifiedSpecificationBroughtCurrentAboveItsRenderedCommitIsClosedOutFr
 	}
 }
 
+// I19: a bound of code that does not carry the verdict (a commit of the default branch, as a defect or a forger could write it) is refused with the error that
+// names it, before the base is asked about it and before any close-out session starts.
+func TestATipThatDoesNotCarryTheVerdictIsRefusedBeforeAnySession(t *testing.T) {
+	t.Parallel()
+	f := newFinishing(t, "claude", "codex")
+	f.moveMain()
+	other := strings.TrimSpace(gitOut(t, f.w.bare, "rev-parse", "refs/heads/main"))
+	if err := f.r.sessions().codeEvent(context.Background(), f.arch, 1, "bound", other, "task/"+f.arch+"/1"); err != nil {
+		t.Fatal(err)
+	}
+	writes := f.writes()
+	got, err := f.finish(nil)
+	if err == nil || !strings.Contains(err.Error(), other+" does not carry the verdict of the verified head") || len(f.closers(f.arch)) != 0 || f.writes() != writes {
+		t.Errorf("FinishTask = %+v, %v with %d sessions and %d writes more; want the error that %s does not carry the verdict, and nothing started", got, err, len(f.closers(f.arch)), f.writes()-writes, other)
+	}
+}
+
 // I9 (D9): a default branch that moved past the base of the attempt is a Go error and writes nothing; the base that is the tip passes.
 func TestADefaultBranchThatMovedStopsTheCloseOutBeforeAnyWrite(t *testing.T) {
 	t.Parallel()
