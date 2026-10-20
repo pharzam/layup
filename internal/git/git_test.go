@@ -605,3 +605,65 @@ func TestUpdateRefRefusesItsInputBeforeGitStarts(t *testing.T) {
 		t.Errorf("UpdateRef started %q in %q; want update-ref REF SHA in r", got.args, got.dir)
 	}
 }
+
+// The merge calls refuse a revision that is not a full object ID, and an empty message, before git starts (task T-89xf).
+func TestMergeAndMergeBaseRefuseANonObjectIDBeforeGitStarts(t *testing.T) {
+	calls := stub(t, "", nil)
+	for name, call := range map[string]func() error{
+		"a base that is an option":       func() error { _, err := MergeBase("r", "--all", fullID); return err },
+		"a second commit that is a name": func() error { _, err := MergeBase("r", fullID, "main"); return err },
+		"a head that is an option":       func() error { _, _, err := Merge("r", "--abort", fullID, "m", who); return err },
+		"a base that is a name":          func() error { _, _, err := Merge("r", fullID, "main", "m", who); return err },
+		"an empty message":               func() error { _, _, err := Merge("r", fullID, fullID, "", who); return err },
+	} {
+		var failed *FailedError
+		if err := call(); !errors.As(err, &failed) || failed.Code != -1 {
+			t.Errorf("%s: %v; want a *FailedError of Code -1", name, err)
+		}
+	}
+	if len(*calls) != 0 {
+		t.Errorf("%d starts of git; want none (a green negative of the refusal)", len(*calls))
+	}
+}
+
+// A conflict is exit 1 of the merge with unmerged entries; any other failure, and a failed read of the entries, is an error (task T-89xf,
+// condition 6 of the plan review).
+func TestMergeTellsAConflictFromEveryOtherFailure(t *testing.T) {
+	other := "1111111111111111111111111111111111111111"
+	for _, c := range []struct {
+		name      string
+		mergeCode int
+		lsOut     string
+		lsErr     error
+		wantClean bool
+		wantErr   bool
+	}{
+		{"a conflict", 1, "100644 abc 1\ta\x00", nil, false, false},
+		{"exit 1 with no unmerged entry", 1, "", nil, false, true},
+		{"exit 128", 128, "", nil, false, true},
+		{"a failed read of the entries", 1, "", errors.New("boom"), false, true},
+		{"a merge that is clean", 0, "", nil, true, false},
+	} {
+		var mergeErr error
+		if c.mergeCode != 0 {
+			mergeErr = exec.Command("sh", "-c", fmt.Sprintf("exit %d", c.mergeCode)).Run()
+		}
+		saved := run
+		run = func(dir string, args, env []string) ([]byte, []byte, error) {
+			switch {
+			case slices.Contains(args, "merge"):
+				return nil, []byte("stub\n"), mergeErr
+			case slices.Contains(args, "ls-files"):
+				return []byte(c.lsOut), nil, c.lsErr
+			case slices.Contains(args, "rev-parse"):
+				return []byte(other + "\n"), nil, nil
+			}
+			return nil, nil, nil
+		}
+		sha, clean, err := Merge("r", fullID, other, "m", who)
+		run = saved
+		if clean != c.wantClean || (err != nil) != c.wantErr || (c.wantClean && sha != other) || (!c.wantClean && sha != "") {
+			t.Errorf("%s: sha %q, clean %v, err %v; want clean %v, an error %v", c.name, sha, clean, err, c.wantClean, c.wantErr)
+		}
+	}
+}

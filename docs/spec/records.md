@@ -66,6 +66,8 @@ or payload of one task is under `tasks/<task>/`.
 | `tasks/<task>/tests.tsv` | the frozen test list | 11 | `layup run` | 2 (`M2e`, K38) | [below](#nfr-001--the-records-of-the-task-loop) |
 | `tasks/<task>/results/<session>/<file>` | a file that a `comment` row of the typed result names (the plan, the plan review or the review record), copied byte for byte at the records commit of the result, so that a stop before the post loses nothing | 8 | `layup run` | 2 (`M2e`) | a rule, no block: [`loop.md`](loop.md#the-artifact-that-is-a-comment) |
 | `tasks/<task>/options/<decision>.tsv` | the binding of an architecture task opened by the bet (task `T-2vva`): the rows of the chosen option of the decision, in the block `options`, written in the commit that registers the task | 8 | `layup run` | 2 (`M2e`) | the block `options`, [below](#nfr-001--the-records-of-the-task-loop) |
+| `tasks/<task>/pin.txt` | the opening pin of a Shape task (task `T-89xf`): the SHA-256 of `spec/draft.tsv` (64 hexadecimal characters) and the records commit its issue was opened with (40), a space between and a line feed, captured once with the body of the issue and written in the commit that registers the task and copied to the replacement by a redo ([`loop.md`](loop.md#a-task-whose-base-moved-the-carry-and-the-redo)) | 8 | `layup run` | 2 (`M2e`) | a rule, no block |
+| `tasks/<task>/redo.txt` | the intent of a redo (task `T-89xf`, row 66x): the new task's ID, a space, the base of the new task and a line feed, written before the first act of the forge ([`loop.md`](loop.md#a-task-whose-base-moved-the-carry-and-the-redo)) | 8 | `layup run` | 2 (`M2e`) | a rule, no block |
 | `tasks/<task>/gates.tsv` | the table of `layup gate` for each head of the task | 6, 8 | `layup run` | 2 (`M2e`) | [below](#nfr-001--the-records-of-the-task-loop), the block `task-gates` |
 | `tasks/<task>/spec-check.tsv` | the table of the full `layup spec check` for each head of the task | 7, 8 | `layup run` | 2 (`M2e`) | [below](#nfr-001--the-records-of-the-task-loop) |
 | `acceptance.tsv` | one row per review of a requirement | 8, 12 | `layup run` | 2 | later |
@@ -369,10 +371,10 @@ reason text - why `no`, with its source; `—` when `yes`
 n int key the event's number, from 1, in the order of the events
 kind enum(attempt|session|refused|result|push|bound|closed|rebased|handoff|merged) - the event
 attempt int - the attempt that the event concerns, 1 or more
-session id(S-xxxxxxxx) - the session; `—` for `attempt`, `closed`, `rebased` and `merged`, and for a `refused` whose reason is `pair`, which comes before a session; a `handoff` has its session, and `—` when code wrote it for a rendered task; the `push` and the `bound` of the rendered commit of the first bet have `—` too, since code makes that commit (task `T-2vva`, [`loop.md`](loop.md#the-step-bet))
+session id(S-xxxxxxxx) - the session; `—` for `attempt`, `closed`, `rebased` and `merged`, and for a `refused` whose reason is `pair`, which comes before a session; a `handoff` has its session, and `—` when code wrote it for a rendered task; the `push` and the `bound` of the rendered commit of the first bet, and of the merge of the base into a verified head (task `T-89xf`), have `—` too, since code makes that commit (task `T-2vva`, [`loop.md`](loop.md#the-step-bet))
 base sha1 - the base commit, for `attempt` and `rebased`; `—` otherwise
 sha sha1 - the commit, for `push`, `bound` and `merged` (the merge commit); `—` otherwise
-detail text - one line: for `result`, the class of the end; for `refused`, the reason, and after one space its value where it has one: the path of a rule file, the two numbers of the context, the size of the prompt, or the SHA-256 of the payload of a refused diff (`payloads/<sha256>`, task `T-z027`; the reasons of a close-out commit that task `T-xvvd`, #363, adds are `scope` and `verdict`, [`loop.md`](loop.md#the-merge-at-the-head-sha-and-the-close-out-commit)); for `push` and `bound`, the branch `task/<task>/<attempt>`, with the row's attempt; `—` for `attempt` and `session`; for `closed` and `rebased`, as `M2e` sets; for `handoff`, `valid` or `invalid <item>` and, for an artifact that is a comment, after a space `comment <ID>-<seen>`; for `merged`, the number of the pull request
+detail text - one line: for `result`, the class of the end; for `refused`, the reason, and after one space its value where it has one: the path of a rule file, the two numbers of the context, the size of the prompt, or the SHA-256 of the payload of a refused diff (`payloads/<sha256>`, task `T-z027`; the reasons of a close-out commit that task `T-xvvd`, #363, adds are `scope` and `verdict`, [`loop.md`](loop.md#the-merge-at-the-head-sha-and-the-close-out-commit)); for `push` and `bound`, the branch `task/<task>/<attempt>`, with the row's attempt; `—` for `attempt` and `session`; for `closed`, the ID of the task that redoes it, and for `rebased`, the ID of the task it replaces, each `T-` and four characters (`CheckEvent`, task `T-89xf`); for `handoff`, `valid` or `invalid <item>` and, for an artifact that is a comment, after a space `comment <ID>-<seen>`; for `merged`, the number of the pull request
 time time - when `layup run` recorded the event
 ```
 
@@ -658,7 +660,7 @@ build task changes the block and its Go value in one change. The three that
 `invalid <item>` and, for a comment, after a space `comment <ID>-<seen>` (the key of the row of `copies.tsv`), and `merged`, with
 the merge commit's SHA in `sha` and the pull request's number as its detail (`session` is `—` for `merged`, and for the `handoff` of a rendered task, which code writes); the
 kinds `closed` and `rebased` exist, and `M2e` sets their detail: that of `closed`
-names the task that redoes it, and that of `rebased` the task it replaces) and `copies` (the copy
+names the task that redoes it, and that of `rebased` the task it replaces, each as a task ID, task `T-89xf`) and `copies` (the copy
 of a comment that is an artifact of a handoff, [`loop.md`](loop.md#the-artifact-that-is-a-comment)).
 
 ```tsv-schema tasks records:tasks.tsv

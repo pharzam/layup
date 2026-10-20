@@ -22,14 +22,16 @@ type ghPull struct {
 	body, head   string
 	draft        bool
 	merged       bool
+	closed       bool // closed by a person or by a PATCH of the state (task T-89xf)
 	mergeSHA     string
 }
 
 type pullRoutes struct {
-	list      []*ghPull
-	afterMark func() // runs when a pull request leaves the draft state, under the lock of the fake
-	noDraft   bool   // a request to open a pull request that is not a draft arrived
-	denyPatch int    // the status that an edit of a pull request gets instead of the edit (row 66q)
+	list       []*ghPull
+	afterMark  func()         // runs when a pull request leaves the draft state, under the lock of the fake
+	noDraft    bool           // a request to open a pull request that is not a draft arrived
+	denyPatch  int            // the status that an edit of a pull request gets instead of the edit (row 66q)
+	issueState map[int]string // the state and the reason of each issue closed by a PATCH, "closed not_planned" (task T-89xf)
 }
 
 func bareGit(dir string, args ...string) (string, error) {
@@ -40,7 +42,11 @@ func bareGit(dir string, args ...string) (string, error) {
 }
 
 func (p *ghPull) wire() map[string]any {
-	w := map[string]any{"number": p.number, "node_id": p.node, "state": "open", "draft": p.draft, "merged": p.merged, "merged_at": nil,
+	state := "open"
+	if p.closed {
+		state = "closed"
+	}
+	w := map[string]any{"number": p.number, "node_id": p.node, "state": state, "draft": p.draft, "merged": p.merged, "merged_at": nil,
 		"merge_commit_sha": "9999999999999999999999999999999999999999", "head": map[string]any{"sha": p.head}, "body": p.body}
 	if p.merged {
 		w["state"], w["merged_at"], w["merge_commit_sha"] = "closed", "2026-10-18T12:00:00Z", p.mergeSHA
@@ -71,6 +77,18 @@ func (p *pullRoutes) serve(f *fakeGitHub, w http.ResponseWriter, r *http.Request
 		json.NewEncoder(w).Encode(v)
 	}
 	switch {
+	case r.Method == "PATCH" && strings.HasPrefix(r.URL.Path, "/repos/acme/target/issues/"):
+		n, _ := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/repos/acme/target/issues/"))
+		var in struct {
+			State  string `json:"state"`
+			Reason string `json:"state_reason"`
+		}
+		json.NewDecoder(r.Body).Decode(&in)
+		if p.issueState == nil {
+			p.issueState = map[int]string{}
+		}
+		p.issueState[n] = in.State + " " + in.Reason
+		reply(200, map[string]any{"number": n, "state": in.State})
 	case r.Method == "POST" && r.URL.Path == base:
 		var in struct {
 			Title, Head, Base, Body string
@@ -107,15 +125,20 @@ func (p *pullRoutes) serve(f *fakeGitHub, w http.ResponseWriter, r *http.Request
 		reply(200, p.list[n-1].wire())
 	case r.Method == "PATCH" && strings.HasPrefix(r.URL.Path, base+"/"):
 		n, _ := strconv.Atoi(strings.TrimPrefix(r.URL.Path, base+"/"))
-		var in struct{ Body *string }
+		var in struct{ Body, State *string }
 		json.NewDecoder(r.Body).Decode(&in)
 		switch {
 		case p.denyPatch != 0:
 			reply(p.denyPatch, map[string]string{"message": "Resource not accessible by integration"})
-		case n < 1 || n > len(p.list) || in.Body == nil:
+		case n < 1 || n > len(p.list) || (in.Body == nil && in.State == nil):
 			reply(404, map[string]string{"message": "Not Found"})
 		default:
-			p.list[n-1].body = *in.Body
+			if in.Body != nil {
+				p.list[n-1].body = *in.Body
+			}
+			if in.State != nil && *in.State == "closed" {
+				p.list[n-1].closed = true
+			}
 			reply(200, p.list[n-1].wire())
 		}
 	case r.Method == "POST" && r.URL.Path == "/graphql":

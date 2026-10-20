@@ -167,10 +167,19 @@ func (r *state) openTask(ctx context.Context, o openSpec) (Task, error) {
 	if _, err := parameterFiles(parameters, r.value, t.Opened); err != nil {
 		return Task{}, err
 	}
+	// The opening inputs are captured once: the issue and, for a Shape task, the kept pin (for the redo, task T-89xf) are made from these
+	// values, whatever the records do before the issue is opened (a heartbeat moves the base).
+	sum, opening := digest(draft), r.store.Base()
+	if o.reuse {
+		if extra == nil {
+			extra = map[string][]byte{}
+		}
+		extra[pinPath(id)] = pinBytes(sum, opening)
+	}
 	if err := s.holdsLease(ctx); err != nil {
 		return Task{}, err
 	}
-	if t.Issue, err = r.cfg.Forge.OpenIssue(ctx, o.title(id), o.body(id, ids, digest(draft), r.store.Base())); err != nil {
+	if t.Issue, err = r.cfg.Forge.OpenIssue(ctx, o.title(id), o.body(id, ids, sum, opening)); err != nil {
 		return Task{}, err
 	}
 	if o.afterIssue != nil {

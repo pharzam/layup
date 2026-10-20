@@ -120,6 +120,16 @@ func (s *Sessions) OpenPullRequest(ctx context.Context, in PullInput) (forge.Pul
 	if head == "" {
 		return forge.PullRequest{}, fmt.Errorf("attempt %d of %s has no event bound: no head to open a pull request for", in.Attempt, in.Task)
 	}
+	// The head of the pull request is the tip of the branch: the session's bound head, or a merge of the base that code made above it
+	// (task T-89xf); the session still supplies the records commit of the body. Any other move of the branch is an error below.
+	want := head
+	if tip := TipOf(events, in.Attempt); tip != "" && tip != head {
+		if ok, err := s.producedFrom(events, in.Attempt, tip, head); err != nil {
+			return forge.PullRequest{}, err
+		} else if ok {
+			want = tip
+		}
+	}
 	start, err := s.startRowOf(ctx, session)
 	if err != nil {
 		return forge.PullRequest{}, err
@@ -146,8 +156,8 @@ func (s *Sessions) OpenPullRequest(ctx context.Context, in PullInput) (forge.Pul
 			return forge.PullRequest{}, err
 		}
 	}
-	if pr.HeadSHA != head {
-		return forge.PullRequest{}, fmt.Errorf("the head of the pull request %d of %s moved: %s, not the bound %s", pr.Number, branch, pr.HeadSHA, head)
+	if pr.HeadSHA != want {
+		return forge.PullRequest{}, fmt.Errorf("the head of the pull request %d of %s moved: %s, not the bound %s", pr.Number, branch, pr.HeadSHA, want)
 	}
 	if task.PR == pr.Number {
 		return pr, nil
