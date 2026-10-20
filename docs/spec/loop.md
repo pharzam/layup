@@ -339,8 +339,21 @@ request, not a new record.
 - **The open unknowns that the records give in `M2e`** are the question rows of the last attempt
   that ended `needs_context`, until an answer that started after it is accepted by the next
   attempt (`AnswerAccepted`, with the rule of the owner role in [The checks of a
-  handoff](#the-checks-of-a-handoff), "A question during the work"). The open material findings (their
-  form is #387's) and the open escalations (`M3`) are added when they exist.
+  handoff](#the-checks-of-a-handoff), "A question during the work"). The open escalations (`M3`) are
+  added when they exist. **Decided here** (R10, task `T-r7b9`, #426, row 66z; plan review 6262463499, condition 5):
+  an open material finding keeps the task uphill: `Position` is `Downhill` only when the list is frozen, there is no
+  open question **and** `openMaterial` is false. `openMaterial` selects the **last** session of the role `qa-engineer` by the order
+  of the events of its start whose typed result ended `done` and holds a `comment` row of `result/review-record.md`
+  (the file of the verifier; a plan review writes `plan-review.md`, so a plan review is never read as a review record), and
+  qualifies its record before it can clear anything: with **no** such session nothing is open; a session whose result is
+  recorded and whose handoff is not yet recorded (a completed review awaiting its handoff) is open; a handoff that is not `valid` is open;
+  a kept copy that is missing, whose SHA-256 is not the one that the result names (`keptComment`), that does not
+  parse (`ParseReviewRecord`) or whose `head:` is not the base of the session's start row is open; otherwise
+  `OpenMaterial` of the parsed record decides. A later record that is invalid, mismatched or unreadable therefore never clears a
+  finding of an earlier one, and no older clean record is used in its place. A failed read is an error, not an answer.
+  **Known limit:** every step of a Shape task has the fixed tier `reasoning` in the step table, so the driver of a Shape task
+  asks no tier of `TierOf`; `Position` is called by the drivers of the build tasks (`M2g`), and it is tested here through the
+  production constructor.
 - **`by-class` and `owner-of-its-kind`** ([`session.md`](session.md#the-step-table-and-the-kinds-of-a-steps-context))
   are resolved by `ResolveStep`: `by-class` becomes the tier of `TierOf`, `owner-of-its-kind`
   becomes the routing role of the owner map's role. The key of `routing.tsv` is the role ID of
@@ -386,10 +399,10 @@ target or of the records branch with its SHA-256, which the ledger keeps.
 
 **Decided here** (task `T-c6sx`, #416, row 66s; the plan review is the comment 6249930540 of #416, whose conditions 2 to 7 are taken as written; the Operator set the goal count at 2, comment 6249938546): the prompt file of a step of a task is the list of links above and, after it, the step's fixed instruction. The lists give the harness its inputs; the instruction gives it the work, the outputs and the form of its files, so a model with no other context can write a result that the loop accepts.
 
-- **The frame.** `Text` keeps the header line, the sentence that tells the harness to read, and the five lists, in their order, each existing item in its place relative to the others; the new items below join their own kind. After the lists, code writes a blank line, the line `The work of this step:`, the block of the step with its placeholders filled, a blank line and the block `instruction-result` filled. A target item or a records item that is new makes the bytes of a list longer, so the golden files, not a byte prefix, are the oracle of the composition.
-- **The home of each text.** The eight blocks below are the text of record, with one home each. `internal/run` keeps each as a constant and a test compares it with its block byte for byte (as it does for `probe-prompt`); the golden files of the prompt of each step compare the composed bytes, and no flag rewrites a golden file.
-- **The placeholders** are filled by code and never by a session; a prompt that keeps a `{` placeholder is a defect. `{task}`, `{kind}` and `{issue}` are the row of the task in `tasks.tsv`. `{result}` is the absolute `<session directory>/result/result.tsv`, and `{comment}` the absolute `<session directory>/result/<file>`, the file being `plan.md`, `plan-review.md` or `review-record.md` (the constants `PlanFile`, `PlanReviewFile` and `ReviewRecordFile`, which row 66r's driver passes as the file of the handoff). `{head}` is the base of the session's start row, the head that the item `nothing-material` reads. `{from}` is the base of the task's last `attempt` event. `{labels}` are the keys of the default owner map, sorted, joined by `, `. `{record}` and `{facts}` (the specification only) are the highest `F-NNNN` of `docs/facts/` at the base and the next number after it.
-- **The steps.** A step has an instruction exactly when this table has a row; `shape-activation-batch` and `plan-of-a-milestone` are the milestones M2f and M2g, and `answer-to-a-question`, its posting and its tier are row 66k's (the boundary is in the plan): `PromptFile` refuses the three by name, before every read, with `the step <step> has no instruction in M2e`.
+- **The frame.** `Text` keeps the header line, the sentence that tells the harness to read, and the five lists, in their order, each existing item in its place relative to the others; the new items below join their own kind. After the lists, code writes a blank line, the line `The work of this step:`, the block of the step with its placeholders filled, a blank line and the block `instruction-result` filled; **decided here** (task `T-r7b9`, row 66z) code then writes, only when the attempt before the open one has an accepted-eligible answer (the answer session of the owner role of [A question during the work](#the-checks-of-a-handoff), ended `done` with the status `completed`, with its answers), a blank line and the block `instruction-answers` filled, so the golden file of every other prompt is unchanged byte for byte. A target item or a records item that is new makes the bytes of a list longer, so the golden files, not a byte prefix, are the oracle of the composition.
+- **The home of each text.** The blocks below (the seven steps with a fixed instruction, `answer-to-a-question`, the shared `instruction-result` and the conditional `instruction-answers`) are the text of record, with one home each. `internal/run` keeps each as a constant and a test compares it with its block byte for byte (as it does for `probe-prompt`); the golden files of the prompt of each step compare the composed bytes, and no flag rewrites a golden file.
+- **The placeholders** are filled by code and never by a session; a prompt that keeps a `{` placeholder is a defect. `{task}`, `{kind}` and `{issue}` are the row of the task in `tasks.tsv`. `{result}` is the absolute `<session directory>/result/result.tsv`, and `{comment}` the absolute `<session directory>/result/<file>`, the file being `plan.md`, `plan-review.md` or `review-record.md` (the constants `PlanFile`, `PlanReviewFile` and `ReviewRecordFile`, which row 66r's driver passes as the file of the handoff). `{head}` is the base of the session's start row, the head that the item `nothing-material` reads. `{from}` is the base of the task's last `attempt` event. `{labels}` are the keys of the default owner map, sorted, joined by `, `. `{record}` and `{facts}` (the specification only) are the highest `F-NNNN` of `docs/facts/` at the base and the next number after it. `{questions}` (`answer-to-a-question` only) are the IDs `<session>.<n>` of the question rows of the sessions that asked in the open attempt, in the order of [A question during the work](#the-checks-of-a-handoff), joined by one space; `{answers}` (`instruction-answers` only) are the IDs of the answer rows of the answer session of the attempt before, in the order of their rows, joined by one space.
+- **The steps.** A step has an instruction exactly when this table has a row; `shape-activation-batch` and `plan-of-a-milestone` are the milestones M2f and M2g: `PromptFile` refuses the two by name, before every read, with `the step <step> has no instruction in M2e`. **Decided here** (R10, task `T-r7b9`, #426, row 66z): `answer-to-a-question` has an instruction, the block `instruction-answer-to-a-question` below, and it leaves the refused steps; its posting and its place in the loop are in [A question during the work](#the-checks-of-a-handoff), and its tier is the step table's `reasoning`.
 
 | Step | Role | Kind of the task | Writes in the repository | Comment file, read by | Required outputs for the result |
 | ---- | ---- | ---------------- | ------------------------ | --------------------- | ------------------------------- |
@@ -400,6 +413,7 @@ target or of the records branch with its SHA-256, which the ledger keeps.
 | `implement` | `software-developer` | `build` | tests and change, the task file, commits | none | the task file and each file written |
 | `verification` | `qa-engineer` | any | nothing, no commit | `review-record.md`, `ParseReviewRecord` and `NothingMaterialOK` | one `comment` row |
 | `close-out` | `software-developer` | any | one commit of the task file and `completed.md` | none | the task file and `completed.md` |
+| `answer-to-a-question` | the owner role of the question | any | nothing, no commit | none | none: the `answer` rows |
 
 The step `specification` takes a task of kind `specification`, `shape-architecture` one of kind `architecture` and `implement` one of kind `build`; any other step takes any kind, and a pair that disagrees is an error that names the step, the task and the kind. A comment file is written in the pinned form of [The items a caller computes](#the-items-a-caller-computes) (the target's own forms, never LAYUP's `| Field | Value |` table), and the instruction shows it with its placeholders so that a test fills them and runs the real parser on it. The shared text names every rule of the block `result` that a model must meet: the actual tab, UTF-8 with no byte-order mark, the line feed at the end of each line, no blank row, the empty cell, the numbering without gap, a status row with a non-empty reason, a hash of 64 lowercase hexadecimal characters, a question that names a record, and the artifact rows for the required outputs only.
 
@@ -480,12 +494,21 @@ Close out the task {task} (kind {kind}, issue {issue}). From the verdict among t
 The required outputs for the result file are docs/tasks/{task}.md and docs/tasks/completed.md.
 ```
 
+```text instruction-answer-to-a-question
+Answer the questions that the sessions of the last attempt of the task {task} (kind {kind}, issue {issue}) asked: {questions}. The question rows are in the result files of those sessions, listed above under handoffs-and-answers; the IDs above are in the order of the questions, each a session and the n of its row. Read the files each question concerns, the requirements, the decision records and the rule files. Change no file of the repository and make no commit.
+Write one row of the kind answer for each question, in that order, and no other row of that kind: "answer<TAB><n><TAB><the answer, one line><TAB>—<TAB><record>". The first answer row answers the first question, the second answer row the second, and so on. At least one <record> names a file the answer rests on, more are separated by one space, and there is no space at either end of the cell. Write the status row completed when every question is answered.
+```
+
 ```text instruction-result
 Write the result file {result}: UTF-8 text with no byte-order mark, one row per line, each line ended by a line feed, the last too, and no blank line. Separate the cells of a row with one tab character each, never with spaces. The first line is "kind<TAB>n<TAB>value<TAB>sha256<TAB>reason". The single character — (U+2014) is the empty cell; no cell holds a tab or a line break. The rows of each kind are numbered 1, 2, 3 and so on, with no gap.
 Write exactly one status row, "status<TAB>1<TAB><status><TAB>—<TAB><reason>": <status> is completed when the work of this step is done, needs_context when a question stops it, and blocked or failed otherwise; <reason> is one line and not empty.
 For each required output that the work above names, write the row "artifact<TAB><n><TAB><path><TAB><sha256><TAB>—": <path> is relative to the repository, and <sha256> is 64 lowercase hexadecimal characters, the SHA-256 of that file at your last commit. A file that this prompt only asks you to read is no output.
 When a question stops the work, write one row for each question, "question<TAB><n><TAB><text><TAB>—<TAB><label> <needs_human> <record>": <label> is one of {labels}; <needs_human> is yes or no; at least one <record> names a file the question concerns, more are separated by one space, and there is no space at either end of the cell.
 A comment file is plain Markdown with no code fence. Push nothing. Then end.
+```
+
+```text instruction-answers
+The sessions of the last attempt asked questions, and the owner role answered them; the answers are listed above under handoffs-and-answers. Their IDs are {answers}. Write each of these IDs as a word of the reason of the status row, and write none of them in a question row.
 ```
 
 **The records each step receives.** Every new item is a byte copy under `input/` with its SHA-256, inside one of the five kinds (no sixth kind: `ContextKinds` does not change), after the items that exist; a file is read by its reader, which fails closed.
@@ -497,6 +520,7 @@ A comment file is plain Markdown with no code fence. Push nothing. Then end.
 | the options | `spec/options/<decision>.tsv` for each decision of the caller's map, sorted | `decision-records`, after the ADRs | all but `close-out`, for a task of kind `architecture` | `spec.ReadOptions` |
 | the survivors | text: `the survivors of the filter:` and a line `- <decision>: <option> ...` for each decision, under the decision records | `decision-records` | as the options | the caller's map, checked against the tables |
 | the ledger | `sessions.tsv` and `telemetry.tsv` | `handoffs-and-answers`, after the answers | `close-out` | `ReadSessions`, `ReadTelemetry`; both tables whole (a known limit: code keeps no table of one task) |
+| the asking results | `tasks/<task>/results/<session>.tsv` of each asking session of the open attempt (**decided here**, task `T-r7b9`) | `handoffs-and-answers`, after the answers | `answer-to-a-question` | `records.ReadResult` |
 
 The Intake records go to both Shape kinds because the `covers` column of the draft names span numbers and `Q-NNN` facts, and the constraints of an options table name `NFR-NNN` (the final ID of a draft row `R-NNN`, see the requirement IDs of a Shape task), `F-<n>` and `Q-NNN`; neither can be read without the four files. **The options (R10, binds 66h, 66r and 66j).** `PromptIn.Options` maps each decision to the `spec.Result` of its table and is required, and not empty, for a step that takes the options (an architecture task, any step but `close-out`), and refused for any other. *Before the bet* the caller (row 66h's filter, passed by row 66r's driver) gives each decision's result unchanged: every option of the table and every survivor, the survivors listed in the prompt and none chosen. *After the bet* the caller (row 66j opens the task of the chosen option; row 66r passes it) gives the same options and only the option that the bet chose as the one survivor; that narrowed choice is no filter result. `PromptFile` reads each table and refuses a result whose option names are not the table's, in order, a result with no survivor and a survivor that is not an option; whether the set of decisions is complete is the caller's, as `SessionStore` has no call that lists a directory. **The base names.** The existing refusal of two records of one base name applies to the records that one prompt holds, and names both; a decision named `draft`, `spans`, `answers`, `tests` or `tasks` collides with a record of its own prompt and is refused. That no real run meets it is a contract of row 66h, whose step must refuse those decision names (`optionsKeep` is not on this main: a required contract, not a reuse).
 
@@ -807,6 +831,50 @@ byte), for a row of another kind, and for a body that `CheckCommentBody` refuses
 (a `HandoffRefusal`). [The items a caller computes](#the-items-a-caller-computes)
 names the row that posts them.
 
+**The question in the loop.** **Decided here** (R10, task `T-r7b9`, #426, row 66z; plan review 6262463499, conditions 2 to 5 and
+Q2 to Q10; the Operator's goal count 4, comment 6262588622). The post, the route, the answer and the next attempt are a position of
+the driver of a Shape task ([The driver of a Shape task](#the-driver-of-a-shape-task)), in the records and the forge alone and never
+`bets.tsv`, so a question is reachable during Shape before any bet. The driver calls `RepairTask` first, as before.
+
+- **The asking sessions.** The *asking sessions* of the latest attempt A are the sessions of A that ended `done` with the status
+  `needs_context` and started before the first such result of A. Any session of A that started after that result is the *answer
+  session*: the driver starts nothing else in A, so an owner session that itself ends `needs_context` is no asking session, and it is
+  the stop of P5 below. The *questions* are one list over the asking sessions in the order of their start events, and over the rows of
+  each result in the order of its file; the *question ID* is `<session>.<n>` of the row, so two sessions whose rows are both `n` 1 are
+  two questions. A status other than `completed` and `needs_context` (`blocked`, `failed`, `decision_needed`) keeps the stop of the
+  driver (`the session <id> of <step> ended <status>`).
+- **Which stages can ask, and how each resumes.** Any task session of A can ask: the plan, the plan review, the developer and the
+  verifier. The answer is not accepted by A: after the stages below the driver starts the attempt A+1 at the base of A, and the
+  stage that asked is then the first stage the records show not done. For the plan and the plan review the sessions that ended
+  `needs_context` in an earlier attempt are not the last session of their stage (the stage runs again, with the answer in its prompt
+  file); for the developer and the verifier the stage is tied to its attempt, so the developer runs again at A+1 (a verifier's
+  question discards the push of A, which A+1 makes again, **decided here**: the verifier of A+1 starts only after the new bound head,
+  as before). A plan question is therefore followed by a completed plan and its review, never by the developer at once.
+- **The stages**, each derived from the records and repeated safely; after each act the driver reads the records again:
+
+  | # | The records show | The act |
+  | - | ---------------- | ------- |
+  | P1 | an asking session with no event `handoff` | `RecordHandoff{asking role → owner role}`; one with an event `handoff` that is not `valid` is a **stop** `<task>: the handoff asking role → owner role is <detail>`, on every restart |
+  | P2 | a question row whose composed comment (`QuestionComment`) has no copy on the task's issue | post it and copy it (the read before the write of [the comments of a session](#req-005--the-steps-of-the-loop-after-the-scaffold): the copy, then the App's comment of the same bytes, then the lease, then the post and its copy) |
+  | P3 | no answer session, and the questions are not all of one owner role (`answerOwner`: a human route, a label with no role, more than one owner role) | `Advance{Wait: "waiting for the Operator: <task>: question <id>"}`, the first question; no session starts |
+  | P4 | no answer session, or the last one has no event `result` (a stopped run) | the milestone cap, `ResolveStep("answer-to-a-question", "", owner)`, `PairFor`, the prompt file, `TaskSession` under attempt A, read-only |
+  | P5 | the answer session ended other than `done` with `completed`, or its answer rows are not one for each question | **stop** `<task>: the session <id> of answer-to-a-question ended <status>`, or `<task>: the answer <id> answers no question`, or `<task>: the question <id> has no answer` |
+  | P6 | an answer row whose composed comment (`AnswerComment`, the question ID of the same position) has no copy | post it and copy it |
+  | P7 | the answer session with no event `handoff` | `RecordHandoff{owner role → asking role}`; one that is not `valid` is a **stop** |
+  | P8 | all of the above done | `StartAttempt` at the base of A |
+
+- **The base of the answer session** is the base of the start row of the **last asking session** of A (a verifier's is its bound head),
+  both for the prompt file and for the session, so the owner reads the tree the asker read. The asking results are inputs of the
+  prompt file (the records table above), and the placeholder `{questions}` is the question IDs.
+- **The answers.** The answer rows of the answer session, in the order of their rows, answer the questions in the order of the list:
+  the n-th row answers the n-th question, and `AnswerComment` gets that question's ID. The number of the answer rows is the number of the
+  questions: fewer is the stop `the question <id> has no answer` (the first unanswered), more is `the answer <id> answers no
+  question`. The correspondence is for the comment's first line only; it creates no acceptance binding, which stays the attempt-level
+  `AnswerAccepted` (above, and `M3c`'s columns).
+- **A wait and a stop repeat on the next call**, which reads the same records, and nothing retries by itself. The resolution of a
+  question that goes to a human or to more than one owner role, and the Operator's answer, are later text's and are not decided here;
+  the clause of `M3c` about acceptance columns is not a resolver of them.
+
 ### The items a caller computes
 
 `internal/handoff` computes `schema` and `artifacts`, and `internal/run` computes
@@ -899,7 +967,7 @@ after the block's end is ignored prose; `verdict: nothing material in scope`
 with a non-empty `findings:` block makes `nothing-material` false, and
 `not mergeable, findings recorded` with an empty one makes `findings-located`
 false. The parsed plan fields likewise feed the task's tier and context read:
-the parse is row 66l's, the consuming wiring the step loop's (row 66k) — a
+the parse is row 66l's, the consuming wiring the step loop's (row 66k and its size children) — a
 declaration of the boundary, nothing of it claimed built. An item is true only
 for the comment kind it reads (a `plan-fields` listed on a review-record row is
 false), the four comment items are computed from the kept copy and overwrite the
@@ -909,15 +977,15 @@ or that code writes, has them false.
 **The question and answer comments** are composed (composition only, no post) by
 `internal/run` (row 66o, `T-gyvo`, #405) from the result's `question` and `answer` rows — first line and body as [a question during
 the work](#the-checks-of-a-handoff) pins — and posted on the task's issue by the
-post→copy machinery of the step loop (**row 66k**, #367, whose comments of a task
-session it is); they are plain comments of the App, not artifacts of a handoff.
+post→copy machinery of the step loop (**row 66z**, `T-r7b9`, #426, a size child of row
+66k, #367, split by its plan review); they are plain comments of the App, not artifacts of a handoff.
 The parsed review record is also the input of the caller boundary that keeps
 the loop uphill while a material finding is open (`architecture.md` §11):
 row 66l's parse exposes the review's verdict, head and located findings and a
 predicate that fails uphill — a record that does not parse, a verdict other than
 `nothing material in scope`, or a bullet in the block is an open material
 finding, so `material` or `not mergeable, findings recorded` with an empty block
-never reads as none open — the step loop's wiring of it stays row 66k's (#367),
+never reads as none open — the step loop's wiring of it is row 66z's (#426, a size child of row 66k),
 and nothing of either is claimed built here.
 
 **The deferrals are recorded, not hidden.** `patch-per-kind`, `register-rows` and
@@ -2147,15 +2215,17 @@ parsed review records of the valid handoffs, so each position is told from the r
 | to the verifier | the developer's session is bound and has no handoff | `RecordHandoff` with the commits and the task file |
 | ship | the handoff is valid and no verifier session of the attempt has the bound head as its base | the draft pull request, the four statuses, the acceptance of a specification that waits for its bet, then the verifier |
 | verdict | the verifier's handoff is valid | `LinkReviewRecord`, the four statuses with `layup/verify`, then the verified head, the next attempt or a wait |
+| question | the latest attempt has a session that ended `done` with the status `needs_context` and no attempt follows | the stage P1 to P8 of [A question during the work](#the-checks-of-a-handoff): one act, then a fresh read; the position comes before the stages of the plan, the plan review, the developer and the verifier, and replaces the stop for that status (**decided here**, task `T-r7b9`, row 66z) |
 
-- **Which sessions push.** A task session of a step that reads (`plan-of-a-task`, `plan-review`, `verification`) has no push: a
+- **Which sessions push.** A task session of a step that reads (`plan-of-a-task`, `plan-review`, `verification` and, from row 66z, `answer-to-a-question`) has no push: a
   session that commits nothing has its head equal to its base, which would pass every check and be bound, and a first `bound` would then
   say nothing about the developer. The rule is in `TaskSession`, by the step of the prompt file, so a caller cannot forget it.
   **Rejected:** a no-op push supplied by the driver (not the production path); the role as the key (the plan role is also the owner role
   of an environment question). Only the developer's session is ever bound; a session that has a `push` and no `bound`, or none of them
   after it ended `completed`, is a stop (the repair of a push is `RepairTask`'s).
 - **The plan review and the verifier**, both of the role `qa-engineer`, are told apart by the order of the events, never the clock: a
-  session that starts after the last valid plan handoff and before the first `push` of the task is the plan review; one that starts after a
+  session that starts after the last valid plan handoff (a handoff of a comment: **decided here**, task `T-r7b9`, a question or an answer handoff of
+  a session of the plan role is no plan handoff) and before the first `push` of the task is the plan review; one that starts after a
   `bound` of the developer's session of its attempt, with that SHA as its base, is a verifier. Any other `qa-engineer` session is a stop.
 - **The base of a session** may be off the default branch: the bound head that a verifier reviews, or the specification's verified head
   that is the architecture task's base (plan amendment 1 of #364, #432). Before **each** session of a Shape task the driver sets the
@@ -2176,6 +2246,11 @@ parsed review records of the valid handoffs, so each position is told from the r
   run on the `docs/prd/` and `docs/facts/` of the bound head by `spec.WaitingSpecAccepted`; a head that is not accepted is a stop that names
   the lines that are not an empty MoSCoW or Phase cell. **Reason:** that failure is the target's own job, not a `layup/` status, so no
   status carries it to an attempt, and the head must be judged before the verifier is asked.
+- **A question is a position of the driver, not a stop** (**decided here**, task `T-r7b9`, #415 and #426): a session of the latest attempt that ended `done`
+  with the status `needs_context` is the position *question*, which the stages of [A question during the work](#the-checks-of-a-handoff) take, in the
+  same loop and after the same `RepairTask`; the sessions that asked in an attempt that a later attempt follows are not the last session of the plan
+  or of the plan review, and the answer session of an attempt is a session of none of the four stages. Only the statuses `blocked`, `failed` and `decision_needed` are the stop
+  `the session <id> of <step> ended <status>`.
 - **A developer session that ended with the status `completed` and no `push`** is a stop (`<task>: the session <id> ended with no push`):
   the push hook did not run, and its resume is the step loop's. Every other end that is not `completed` (a refusal, another class or
   status) is a stop that names the session.
@@ -2222,7 +2297,8 @@ the milestone covers it end to end.
 | The comment items of the task loop (row 66l, `T-4pje`) | unit; integration (the kept copy, the records and the forge) | `plan-fields`, `verdict-field`, `findings-located` and `nothing-material` are computed from the kept copy of a comment and, for the last, the verifier's recorded `base`: each item is true or false by its own rule in the table of the items (a plan-review copy that parses with `verdict: reject` is false), and a handoff listing the item is `valid` or `invalid <item>` by the computed result, never by a caller's literal of either value. |
 | The tree items of the task loop (row 66n, `T-yeav`) | unit; integration (a real `git` tree) | `spec-sections` and `rendering-equal` are computed from the `docs/spec/` files or the tree at the head, never from the caller's literal of either value: a handoff of a developer (specification) or of the rendered task is `valid` or `invalid <item>` by the tree at the `bound` head or at the head that code sets, a head that a session handoff supplies is not read, an item that the row of the pair does not list is not computed, and a failed call of `git` or of the register is an error with no event. |
 | The input of the full spec check (row 66p, `T-cav3`) | unit; integration (a real `git` tree and the records of a target after Intake and the Scaffold) | `specInput` builds each field of `FullInput` from its named record or from the tree at the head: a missing required record, a record its reader refuses or a failed `git` call is an error with the zero input and no write, an absent `spec/inventory.tsv` is "before the first bet", `PSBRecords` is read from the one numbered facts file at the head (none is empty, two are an error), `AnswersRecord` is `""`, and the copy is the caller's. |
-| The question and answer comments (row 66o, `T-gyvo`) | unit; integration (the committed rows of a real end) | The question and answer comments are composed from their rows, byte for byte, with the row's `n` in the ID, and refused with no bytes for a row or a start row off the reader's schema, types or rules, a row of another kind, an ID off its form, or a body that `CheckCommentBody` refuses; posting them is the step loop's (row 66k). |
+| The question and answer comments (row 66o, `T-gyvo`) | unit; integration (the committed rows of a real end) | The question and answer comments are composed from their rows, byte for byte, with the row's `n` in the ID, and refused with no bytes for a row or a start row off the reader's schema, types or rules, a row of another kind, an ID off its form, or a body that `CheckCommentBody` refuses; posting them is the step loop's (row 66z, a size child of row 66k). |
+| A question during the work, in the loop (row 66z, `T-r7b9`) | unit; integration (the records, the `httptest` forge, real `git`, scripted harnesses, `state.sessions()`) | A session that ends `needs_context` during Shape, with no bet, has its question posted and copied on the task's issue, its handoff recorded, and, when all its questions go to one owner role, the answer session `answer-to-a-question` of that role (read-only, at the base of the last asking session) and the answer comment posted and copied, the handoff back recorded and the next attempt started; a human-routed question and questions of more than one owner role end in the wait `waiting for the Operator: <task>: question <id>` with no answer session; the stages are told from the records and repeated safely (a restart after each act writes each comment, handoff, session and attempt once), an invalid recorded handoff stays a stop, an answer session that fails, asks again or answers too few or too many rows is a stop, and the plan and plan review that asked run again after the answer; an open material finding of the last qualified review record keeps `Position` uphill. |
 | The transition table | unit | The default rows are the thirteen of the table (the twelve of `architecture.md` §8 and the row of the target's architecture task, which §8 names a task and gives no row); a replacement table is refused for a missing default pair, a kind or an item not in the lists, and a row of code's own handoff (`code (rendered task)`) that lists `schema`, while another row keeps its `schema`, and the steps that are `layup run`'s own acts need no row. |
 | The replacement of the transition table at the boundary | integration | With the stand-in forge and real git: `set transitions <sha256>` names a copy of a comment of the control issue; the new table is the bytes of that copy, written with the row `transitions` in one records commit, so its SHA-256 is the row's value; the old table stays in Git history and the next task keeps the new one; a hash of no copy or of a copy of another issue, a body that is no table (a code fence, a carriage return) and a table that fails the check each refuse with the item `bound` (`value` for a value that is no SHA-256) and write nothing. |
 | `layup spec check`, the full check (inventory) | unit | Each rule of the table fails on its input and passes on its fixture; before the first bet a task that touches neither the PRD nor `docs/spec/` is `clear`; `did not run` is a failure. |
