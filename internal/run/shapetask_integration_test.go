@@ -91,7 +91,7 @@ specification)
   if [ -e $ctl/bad-prd ]; then sed -i 's/^| REQ-001 | Alpha |  |  |/| REQ-001 | Alpha | Maybe | 1 |/' docs/prd/PRD-0001-x.md; fi
   printf 'the task file %s\n' $(date +%s%N) > docs/tasks/$task.md
   if [ -e $ctl/gofile ]; then echo 'package x' > x.go; rm $ctl/gofile; fi
-  if [ -e $ctl/spec-fail ]; then printf '\n| REQ-009 | x | Must | 1 | F-0003 |\n' >> docs/prd/PRD-0001-x.md; fi
+  if [ -e $ctl/spec-fail ]; then printf '\n| REQ-009 | x | Must | 1 | F-0003 |\n' >> docs/prd/PRD-0001-x.md; rm $ctl/spec-fail; fi
   if [ -e $ctl/no-commit ]; then printf "$res_head" > ../result/result.tsv; exit 0; fi
   artifacts docs/tasks/$task.md docs/prd/PRD-0001-x.md $(ls docs/spec/*.md 2>/dev/null) x.go ;;
 shape-architecture)

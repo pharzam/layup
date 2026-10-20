@@ -150,25 +150,34 @@ func registerRevOf(task, head string, events, sessions [][]string, given string)
 	return given, nil
 }
 
-// RulesAt gives the status layup/rules of a head: rules.Basic over the base and
-// the head, by the register of the commit that registerRevOf names.
+// RulesAt gives the status layup/rules of a head: RulesStatus of RulesResult.
 func (s *Sessions) RulesAt(ctx context.Context, in RulesInput) (Status, error) {
+	r, err := s.RulesResult(ctx, in)
+	if err != nil {
+		return Status{}, err
+	}
+	return RulesStatus(r), nil
+}
+
+// RulesResult gives the result of rules.Basic over the base and the head, by the register of
+// the commit that registerRevOf names.
+func (s *Sessions) RulesResult(ctx context.Context, in RulesInput) (rules.Result, error) {
 	if !forge.FullSHA(in.Base) || !forge.FullSHA(in.Head) {
-		return Status{}, fmt.Errorf("the base and the head of layup/rules are full SHAs")
+		return rules.Result{}, fmt.Errorf("the base and the head of layup/rules are full SHAs")
 	}
 	events, err := s.readTable(ctx, eventsPath(in.Task), records.ReadEvents)
 	if err != nil {
-		return Status{}, err
+		return rules.Result{}, err
 	}
 	sessions, err := s.readTable(ctx, "sessions.tsv", records.ReadSessions)
 	if err != nil {
-		return Status{}, err
+		return rules.Result{}, err
 	}
 	rev, err := registerRevOf(in.Task, in.Head, events, sessions, in.RegisterRev)
 	if err != nil {
-		return Status{}, err
+		return rules.Result{}, err
 	}
-	return RulesStatus(rules.Basic(rules.Git(s.Clone), rules.Input{Base: in.Base, Head: in.Head, RegisterRev: rev, PreRev: in.PreRev, Records: in.Records})), nil
+	return rules.Basic(rules.Git(s.Clone), rules.Input{Base: in.Base, Head: in.Head, RegisterRev: rev, PreRev: in.PreRev, Records: in.Records}), nil
 }
 
 // A HeadInput is what the caller knows of a head whose four statuses are asked:

@@ -237,6 +237,37 @@ one author harness (`architecture.md` §8, "Attempts"). **Decided here:**
   written and read by task `T-q0kr` (#362: `GatesTable` gives the `gate.Table` back, from
   which `GateFindings` is computed); the call that notices the failure at step 5 and
   resumes the loop from it stays #367's, and until then the caller gives the table.
+- **Decided here** (R10, task `T-tnxn`, #427, row 66aa; plan review conditions 1 to 7 of 6262459454): the failures of
+  `layup/spec` and `layup/rules` start a new attempt as the failure of `layup/gates` does. Three classes, each
+  able to fail while the others pass: the spec findings, the rules finding and the expected-failure exclusion.
+  - **The spec findings** are the `fail` rows of the head's table (`tasks/<task>/spec-check.tsv`, read by `SpecTable`),
+    in the order of the rules, the row `ran` included (a failed `ran` is a recorded failure, not a status error). Each has the
+    rule `spec:<rule>`, the row's detail as its text, and no file and no line. A `clear` row is none.
+  - **The rules finding** is the result of the basic rule when its state is `failure`: the rule `rules:<reason>`, the
+    path as its file with line 0, and the description of `RulesStatus` as its text (the same words as the status; the
+    complete path stays in `File`, as the description can be cut). `success` gives none.
+  - **Errors come first.** An `error` of any of the four statuses, `not-active` of `layup/verify`, and a Go error
+    are decided before any retry, and no attempt starts even when another check has findings. `CheckFindings` gives
+    a stop for a head whose `layup/spec` has no row (the status `error` that `SpecAt` posts for a head whose own tree
+    is refused, which writes none) and for a `layup/rules` of state `error`; a table that has rows but not the ten rules
+    in order is refused by its reader: a Go error, never a stop or a finding.
+  - **The inputs of a restart.** The findings are rebuilt from the records, and no record is added: the spec rows
+    from `spec-check.tsv`; the rules result by `rules.Basic` over the attempt's base and the head, with the register
+    commit that `registerRevOf` names, which is the `records` column of the start row of the session bound to the head, never
+    the run's current records commit. A Shape head has no rendering input (`PreRev` and `Records` are empty); a later
+    caller that gives either must take it from the same recorded source on a restart.
+  - **One attempt for all failures.** `NextAttempt` takes the gate table and the given findings, the gates first,
+    then the spec, then the rules (the order of the contexts), and `ErrNoFailure` is returned only when both are empty. The attempt starts
+    at the base of the attempt that failed.
+  - **The expected failures of `architecture.md` §8 step 5** start no attempt. (a) **A rule batch before its approval**,
+    in `M2e` (no approval exists before `M2f`): for a task of the register kind `batch`, a failure of `layup/rules` is no
+    finding and the rows of `layup/gates` whose state is `pending` are none; the rows of an `active` kind stay findings,
+    and so does every row of any other kind. Its evidence is the scratch run of `M2f`. The exclusion is made at the retry
+    boundary, over `GateFindings`' translation, which is not repeated. (b) **A specification that waits for its bet**:
+    its failure is the pinned `prd-lint`, which no `layup/` status runs. Before the first bet `layup/spec` clears `classes` and
+    `inventory`, and the PRD is no rule path in phase 1 (see `layup/rules` below), so that failure yields no finding by
+    construction. Its acceptance before the verifier is the driver's ([The driver of a Shape task](#the-driver-of-a-shape-task)),
+    the Operator's ruling of 2026-10-19 on #427; the native job's readiness is the close-out's (row 66y).
 - Once the task's test list is frozen ([The frozen test list](#the-frozen-test-list)),
   code puts the frozen test files at the start of each new attempt, so that their
   hashes stay; the harness that wrote them is an author of every later attempt.
@@ -264,6 +295,8 @@ one author harness (`architecture.md` §8, "Attempts"). **Decided here:**
   and the cycle cap of the target for the review rounds of step 6; an attempt
   that ends with no commit is an `attempt` row with no `push` row, and the next
   attempt starts as above.
+  The loops of the failures of `layup/spec` and `layup/rules` are covered by the same limit (decided here, task `T-tnxn`):
+  they are bounded only by the budget cap and by the acts of one call of the driver, and count no review round.
 
 ### The independence of the reviewers
 
@@ -2317,9 +2350,19 @@ parsed review records of the valid handoffs, so each position is told from the r
   (`waiting for the Operator: <task>: the review-cycle cap 1 is reached with findings open`). `not mergeable, findings recorded` is
   always a wait, and never another cycle. The findings of an attempt are those of the record of the attempt before it, else the rows of its
   head's gate table; never an older record.
-- **After the four statuses of a head,** an `error` or a failure of `layup/spec` or `layup/rules`, or `not-active` of `layup/verify`
-  (posted before the stop, `NFR-004`), is a stop, and no attempt starts; otherwise a failure of `layup/gates` starts the next attempt
-  with the findings of its table. Their retry is row 66k's.
+- **After the four statuses of a head,** an `error` of any of them, or `not-active` of `layup/verify` (posted before the stop,
+  `NFR-004`), is a stop, and no attempt starts. Otherwise a failure of `layup/gates`, `layup/spec` or `layup/rules` starts the next
+  attempt at the base of this one, with the findings of the gate's table, then those of `layup/spec`, then that of `layup/rules`
+  ([The attempts](#the-attempts)); a stop or a Go error of the check findings comes before it. **Decided here** (R10, task `T-tnxn`, #427,
+  row 66aa): the decision is the act `ship`, the single function that decides what follows the statuses of a bound head. It is
+  not a position of its own: a stop between the post of the statuses and `StartAttempt` leaves the records as they were (the
+  verifier has not started and the attempt is still the latest), the next call reads the same position (`ship`) and the statuses
+  already posted, and starts exactly one attempt. The next developer's prompt file is built from the records of the failed
+  head, the gate table and then the check findings (`CheckFindings`), so the findings are never kept apart from them.
+  **Reasons:** retry classification belongs with the checks of the current bound head; `RepairTask` runs once at the entry of
+  `AdvanceShapeTask`, before its first position is selected, and repairs the sessions of the task (it can start an attempt and post
+  comments), so the retry is not placed there. The driver is reached during Shape through the step `shape` (row 66h) and after
+  the bet through the step `loop` (row 66k), with no `bets.tsv` read.
 - **A specification that waits for its bet** is accepted by code before the verifier runs: the pinned `prd-lint.sh` of the target at the base is
   run on the `docs/prd/` and `docs/facts/` of the bound head by `spec.WaitingSpecAccepted`; a head that is not accepted is a stop that names
   the lines that are not an empty MoSCoW or Phase cell. **Reason:** that failure is the target's own job, not a `layup/` status, so no
@@ -2376,6 +2419,7 @@ the milestone covers it end to end.
 | `layup spec check`, the full check (inventory) | unit | Each rule of the table fails on its input and passes on its fixture; before the first bet a task that touches neither the PRD nor `docs/spec/` is `clear`; `did not run` is a failure. |
 | `layup/gates` (inventory, `later-gate-status`) | unit; integration | Each row combination maps to the status by the table, `not-active` is never a success, a `pending` kind with a product path is `failure`; with the stand-in forge, the status is posted once for an unchanged state. |
 | `layup/rules`, the basic rule | unit | A change to a rule path fails; a rendered record equal to code's rendering passes; one that differs by a byte fails; the register is read at the base. |
+| The findings of `layup/spec` and `layup/rules` start a new attempt (row 66aa, `T-tnxn`) | unit; integration (the `httptest` forge, real git, scripted harnesses) | The fail rows of a head's table are findings `spec:<rule>` in the order of the rules, the failure of the basic rule is `rules:<reason>` with its path, a pass, a clear row and an error are none; the next attempt takes the gate findings, then the given ones; an expected failure of a batch task is none and an active gate row is one; a stop or a Go error comes before any retry. Through `state.sessions()`, a failed `layup/spec` or `layup/rules` at the head of a Shape task starts one new attempt at the same base whose prompt file holds the findings, a restart after the failed statuses starts exactly one, and the specification that waits for its bet starts none. |
 | `layup/verify` and the independence | unit | The authors of a plan review and of a verification from the ledger; no harness outside them is `failure` `not-active`; a waiting verifier is `pending`. |
 | The ready and merge rule (inventory, `later-gate-status`) | integration | With the stand-in forge, a pull request whose head has one context not `success`, no status, a status of another source, or an `error`, or a required job of GitHub Actions with no check run or a conclusion other than `success` (a ruleset that requires none, or a malformed required check, included), is not marked ready and does not merge; with the four `success` it is marked ready and merged at the head SHA, and a moved head is refused, its statuses are read again in the same call and no second merge is sent from the old read. |
 | The body of the pull request links the review record (row 66q, `T-08rj`) | unit; integration (the `httptest` forge, the real `git`) | After a review record is posted and its handoff recorded, one edit replaces the body with the composer's body and the link of the comment, from the records only: the latest handoff of the verifier must be valid (an earlier valid one after a later invalid one is refused), the snapshot is the producing session's when the verifier bound the same head with another, a newer attempt with the register on the older pull request edits nothing, an equal body, a lost lease, a closed pull request and a forge error edit nothing or give an error, an edit that took effect and gave an error is not repeated, and a second call after a close-out and a restart makes no second edit. |
