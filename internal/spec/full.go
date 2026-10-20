@@ -76,6 +76,7 @@ type FullInput struct {
 	Copy          []byte            // the text of the latest bet's or decision's copy (the answer's lines)
 	Register      []byte            // the bytes of tasks.tsv
 	Merged        []string          // the IDs of the register's tasks whose pull request merged
+	Reopening     []string          // the facts the bet re-classed that needs and measures exempt at this head (loop.md, the full spec check)
 }
 
 // CheckFull gives the ten rows of the table tasks/<task>/spec-check.tsv:

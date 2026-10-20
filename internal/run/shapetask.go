@@ -85,6 +85,7 @@ func (r *state) openShapeTask(ctx context.Context, kind string) (Task, error) {
 // row of the kind is returned as it is (the Shape tasks), the requirement IDs (the draft's when none), the predecessors, the title and the
 // body of the issue, the files of the same commit that the task needs (its binding), and a call between the issue and the row.
 type openSpec struct {
+	id           string // the reserved ID of the task, drawn when empty
 	kind         string
 	reuse        bool
 	ids          []string

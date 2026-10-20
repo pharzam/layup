@@ -60,6 +60,7 @@ type PromptContext struct {
 	facts              string
 	record             string
 	extras             taskExtras
+	reopen             []string // the row of the task in spec/reopenings.tsv
 	questions, answers []string // the question IDs of the answer step, the answer IDs this attempt cites (row 66z)
 }
 
@@ -96,6 +97,7 @@ type promptSrc struct {
 	Issue        int
 	Base         string
 	Extras       taskExtras
+	Reopen       []string // the row of the task in spec/reopenings.tsv, nil for a task that no class reopens
 }
 
 const (
