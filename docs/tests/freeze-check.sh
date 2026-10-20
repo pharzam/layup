@@ -66,10 +66,17 @@ git rev-parse --verify --quiet "$base^{commit}" >/dev/null 2>&1 || {
 	exit 2
 }
 
+tmp=$(mktemp -d) || exit 2
+trap 'rm -rf "${tmp:?}"' EXIT INT TERM
 failed=0
 
 check_k1() {
-	printf 'ok K1: white space\n'
+	if git diff --check "$base" HEAD > "$tmp/k1" 2>&1; then
+		printf 'ok K1: white space\n'
+		return
+	fi
+	failed=1
+	awk '!/^\+/ && /^[^:]+:[0-9]+:/ { print "FAIL K1: " $0; n++ } END { if (!n) print "FAIL K1: -:0: git diff --check failed" }' "$tmp/k1"
 }
 
 check_k2() {
