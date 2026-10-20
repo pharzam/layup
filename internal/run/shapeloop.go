@@ -274,7 +274,7 @@ func loopPosition(v loopView) loopStep {
 	stop := func(msg string) loopStep { step.Pos, step.Msg = posStop, msg; return step }
 	// Only the developer's session is ever bound (a session that reads has no push): a bound of any other stops the step.
 	for _, e := range v.Events {
-		if e[1] == "bound" && v.role(e[3]) != stepRole(devStep(v.Kind)) {
+		if e[1] == "bound" && e[3] != "" && v.role(e[3]) != stepRole(devStep(v.Kind)) { // a bound of code has no session
 			return stop(fmt.Sprintf("%s: the session %s has a bound and is not of the developer role", v.Task, e[3]))
 		}
 	}
@@ -507,6 +507,9 @@ func (s *Sessions) AdvanceShapeTask(ctx context.Context, in ShapeTaskInput) (Adv
 		case posShip:
 			stop, err = s.ship(ctx, in, v, st)
 		case posVerified, posNextAttempt:
+			if st.Pos == posVerified && renderedBound(v.Events, st.Attempt) { // the rendered commit is the pull request's head: the verified head was settled before
+				return Advance{Task: in.Task, Verified: true, Head: st.Head}, nil
+			}
 			if stop, err = s.settleVerdict(ctx, in, v, st); err == nil && stop == "" && st.Pos == posNextAttempt {
 				_, err = s.StartAttempt(ctx, in.Task, st.Base)
 			}

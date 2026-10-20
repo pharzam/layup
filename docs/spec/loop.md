@@ -1944,7 +1944,7 @@ stage keeps what an earlier stage wrote; it is `done before` when `bets.tsv` hol
 1. **Read.** `bets.tsv` is read by `ReadBets` (the block `bets`; a refusal names the line and the column, and nothing is written). The Shape tasks are the first
    register row of the kind `specification` and the first of the kind `architecture`; each must have a verified head (`verifiedStep`, which reads and drives
    nothing). **The milestone** is the first row's tag of the table under `## 9.` of the PRD at the verified head of the specification (`phaseTagsOf`), a
-   temporary convention of `M2e` that does not say that a phase and a milestone are the same thing; it must be one path part, and it is pinned by `bets/<milestone>/`.
+   temporary convention of `M2e` that does not say that a phase and a milestone are the same thing; it must be one path part, and it is pinned by `bets/<milestone>/`. **Plan amendment 1 of #366** (the coordinator, R10): the specification instruction asks for that table, `## 9. Rollout & phases` with `| Phase | Name | Ships |` and one row or more, and moves the success metrics to `## 8.` as the baseline's PRD form has them (the reader finds the table by the name of its heading); it asks for `## 6. Functional requirements`, `## 7. Non-functional requirements` and a paragraph that starts `**Non-goals.**` too, the places where the rendering of the bet reads and writes (decided here: without them `RenderPRD` finds no row and drops the marks out of scope).
    **The kind** is `first` when no row exists. A row of that milestone with the verdict `bet` is `done before`; one with `no-bet` is the row `done`, `waiting for the
    Operator: no bet`, at every restart, and no later step runs on it. Any other state of `bets.tsv` is the kind `later`, which `M2e` does not build: the step fails,
    `a later bet's rendered task is row 66t's (M2g)`, and writes nothing (the contract of `M2e`, fail closed).
@@ -1983,7 +1983,7 @@ stage keeps what an earlier stage wrote; it is `done before` when `bets.tsv` hol
    kind): `requirements` as step 5, `predecessors` the two Shape tasks, the issue `LAYUP task <ID>: the architecture of the decision <d>` and the block below. The register commit
    writes the row and the binding (the chosen option's rows, the block `options`) together, and the candidate row, the parameters and the binding bytes are checked before the
    issue. The known window between the issue and the row is that of the opening of a Shape task. Row 66k reads the binding when it runs the task (`PromptIn.Options` is the chosen option as the only survivor).
-9. **`bets.tsv` last**, in one fenced records commit: `brief` and `brief_sha256` of the posted copy, the appetite of the kept brief (`—` for `no-bet`), `answer`, `options`
+9. **`bets.tsv` last**, in one fenced records commit: `brief` and `brief_sha256` of the posted copy, the appetite of the kept brief (`—` for `no-bet`; the decimals of the brief's line, `5` written `5.0`), `answer`, `options`
    as `<decision>=<option>` sorted by decision (`—` for none), the verdict, the approver's account and `decided`, the time the answer's copy was made, so a restart writes the same row.
    For `no bet` stages 6 to 8 do not run.
 

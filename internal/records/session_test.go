@@ -364,3 +364,15 @@ func TestResultRefusesEachBrokenRule(t *testing.T) {
 	two := append(resultRows(), "status\t2\tfailed\t—\tagain")
 	refusedAt(t, "two status rows", readResult, table(resultHeader, two...), "n")
 }
+
+// T-2vva (row 66j): the rendered commit of the first bet is made by code, so its push and its bound have no session; a session event
+// and a refused still need theirs.
+func TestAPushAndABoundOfCodeHaveNoSession(t *testing.T) {
+	rows := eventRows()
+	rows[3], rows[4] = field(eventsHeader, rows[3], "session", "—"), field(eventsHeader, rows[4], "session", "—")
+	if _, err := ReadEvents(table(eventsHeader, rows...)); err != nil {
+		t.Errorf("a push and a bound with no session: %v; want read", err)
+	}
+	refusedAt(t, "a refused with no session whose reason is not pair", readEvents, table(eventsHeader, event(7, "detail", "context 3 2")...), "session")
+	refusedAt(t, "a session event with no session", readEvents, table(eventsHeader, event(2, "session", "—")...), "session")
+}

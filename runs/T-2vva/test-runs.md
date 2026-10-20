@@ -25,3 +25,41 @@ Read at `origin/main` = `699d868` (the branch was at `699d868` with no work; the
 | tests: `drvWorld`, `shapedWorld`, `mustVerify`-style helpers, `ctlBrief` | `shapetask_integration_test.go`, `betbrief_integration_test.go` | reused; no second world |
 
 No landed form makes a step impossible. The consumers of `bound` are the one unplanned cost; they are small guards, each with a test.
+
+## S1b - plan amendment 1 (comment 6293953072) and the instruction
+
+The Operator's coordinator selected (A): the `instruction-specification` block (`loop.md`, `instructions.go`, `testdata/prompts/specification.txt`) now shows `## 6.`, `## 7.`,
+`## 8. Success metrics`, the matrix, `## 9. Rollout & phases`, and asks for a `**Non-goals.**` paragraph. The last two additions beyond the amendment (the headings 6 and 7 and the
+paragraph) are **decided here**: `RenderPRD` finds the rows of the requirements in `## 6.`/`## 7.` and the paragraph it appends to, and the specimen of the instruction had none of them.
+`TestTheNewInputsAreInTheirKindsAfterTheExistingItems` and the specimen test (now five forms) follow; `internal/spec/prdcontent_test.go` cites `## 8.`.
+The merge of `origin/main` at `99ff862` (#444, T-05f4) was made as a plain merge (`eb506cc`; its message is git's default, the hook accepted it).
+
+## S2 - the inert stubs and the extractions (`423bf25`)
+
+The commit hook ran `go test ./...` (exit 0). The characterization net of the two extractions (`postOnIssue` from `postBody`; `verifiedStep` out of `verifiedHead`), run on `423bf25`:
+`TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -tags=integration -timeout 30m -count=1 ./internal/run/ -run 'Comment|Post|Register|Revision|Brief|Shape'`, start
+2026-10-20T14:55:38Z, `ok ... 114.286s`, exit=0, end 2026-10-20T14:57:34Z (`characterization.txt`).
+
+## S3 - the red runs, before the code (not committed alone: the hook runs `go test`, guardrails.md:101)
+
+Direct statuses (`echo "exit=$?"` after the command, no pipe); the times are `date -u` taken after each step. The files hold the command, the times and the output.
+
+- Unit, first set (`red-unit-1.txt`, 2026-10-20T14:57:05Z to 14:57:07Z, exit=1): U1 `TestABetsTableRefusesEachBrokenRule` (`err = <nil>; want line 3, column "kind"` for each of the five cases;
+  the control `0 rows; want 3`), U2 `betRow = []; want [...]`, U5 `optionsColumn = []`, U6 `tags = []; want [1 alpha 3]`, U3 `betAnswer = {...}, [], false; want the copy 99`, U13 `settled = []; want [db]`,
+  U14 `ids = []; want [NFR-002 REQ-004]` and the three refusals, U11 `paths = []`, the version test `0 files, 0 rows`, U15 `the last rows = [scaffold-push shape]; want shape, bet`, and U12 in `internal/records`
+  (`line 5, column "session": session is the empty value exactly for ...; want read`). The negatives (`phaseTagsOf` of no section, `settledDecisions` of no option line, `betAnswer` of copies that answer nothing,
+  the `bet` row absent where the Scaffold is not done, the refusals of `session`/`refused` in U12) are green at the stub by design, beside their red twins.
+- Unit, the readers of an event bound of code (`red-unit-2.txt`, 2026-10-20T15:08:26Z to 15:08:27Z, exit=1): `lastBound = bbbb..., ""; want the last bound of a session`; `registerRevOf ... the event bound of  has no
+  start row in sessions.tsv`; `authorsFrom ... the same`; `loopPosition ... the session  has a bound and is not of the developer role`; `renderedBound = false, false; want true ... and false without`. The guards of
+  `RepairPushes`, `LinkReviewRecord` and the driver are red in the integration tests below (the stop at the push event, and `TestShapeStaysDoneAfterTheRenderedPush`).
+- Integration (`red-integration-1.txt`: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 60m ./internal/run/ -run "TestTheBetsBlock|TestTheStepBet$|TestBriefLinesUnset|TestOnlyTheApprover|TestADecisionWhose|TestANoBet|TestALaterBet|TestTheBetStepIsAtomic|TestShapeStaysDone"`,
+  2026-10-20T15:08:34Z to 15:09:06Z, exit=1): every test failed at its first assertion against `betStep` that answered `done not wired` (`the step = {Name:bet Result:done Detail:not wired}; want the wait for the answer`),
+  and `TestTheBetsBlockEqualsItsGoSchema` with `the number of columns: the block has "11"; the Go schema has "0"`. The red is the stub's, not a typo of the test: the same worlds are green below.
+
+## S4 - green
+
+- Unit: `go test -count=1 ./...` green after the code (the hook of the commit). The first integration run of the new tests (2026-10-20T15:12:03Z to 15:12:43Z, exit=1) had three failures, **all errors of the tests, not of the code**: `TestALaterBetFailsClosed`
+  wrote an empty field for `—` in its fixture; `TestADecisionWhose...` and `TestANoBetWritesItsRowAndWaits` compared the branch of the specification task with "none" while it holds the verified head, and counted the session's `push`
+  as the push of code. They were corrected in the tests (second run of the three: ok) with no change of code.
+- The full integration level, started 2026-10-20T15:13:19Z: `internal/run` failed one test, `TestTheStepForgeCheckChecksTheForgeAndCommitsItsTableAtEachRestart` (the notes of progress count 24 rows, not 23, once the Scaffold is done: the expected change of the plan,
+  `forgecheck_integration_test.go`), which was corrected; the final run is recorded at the end of this file.

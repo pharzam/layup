@@ -86,7 +86,7 @@ func withPR(tasks []Task, id string, n int) ([]Task, error) {
 // lastBound gives the SHA and the session of the last event bound of the attempt, "" for none.
 func lastBound(events [][]string, attempt int) (sha, session string) {
 	for _, e := range events {
-		if a, _ := strconv.Atoi(e[2]); e[1] == "bound" && a == attempt {
+		if a, _ := strconv.Atoi(e[2]); e[1] == "bound" && e[3] != "" && a == attempt {
 			sha, session = e[5], e[3]
 		}
 	}

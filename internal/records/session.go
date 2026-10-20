@@ -254,7 +254,7 @@ func CheckEvent(r []string) error {
 		return &RowError{"attempt", "the attempt is 1 or more"}
 	case f["session"] != "" && !sessionForm.MatchString(f["session"]):
 		return &RowError{"session", "a session ID is S- and 8 lowercase hexadecimal characters"}
-	case kind != "handoff" && noSession != (f["session"] == ""):
+	case kind != "handoff" && kind != "push" && kind != "bound" && noSession != (f["session"] == ""):
 		return &RowError{"session", "session is the empty value exactly for attempt, closed, rebased, merged and a refused whose reason is pair (a handoff has one unless code wrote it for a rendered task)"}
 	case (kind == "attempt" || kind == "rebased") != (f["base"] != ""):
 		return &RowError{"base", "base is given exactly for attempt and rebased"}
