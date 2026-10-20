@@ -1,0 +1,338 @@
+# Test runs of T-r7b9 (#426)
+
+Every run is a direct command with its own exit status, never piped. Times are read from `date -u` after the step.
+
+## S0, the reconciliation with what landed (main at 7919c71, merged into this branch by fast-forward)
+
+Plan 6262327790 and review 6262463499 cite 66r's names as planned contracts. Each is checked against main (`internal/run`):
+
+| Planned (plan 6262327790, 66r's plan 6250184301) | Landed form | Where | Effect on this child |
+| --- | --- | --- | --- |
+| `(*Sessions).AdvanceShapeTask`, `ShapeTaskInput{Task, Base; Records; Harnesses, Models; Options}` | as planned (`Records func() string`, `Options map[string]spec.Result`) | `shapeloop.go:27`, `:460` | none |
+| `Advance{Task; Verified; Wait, Stop}` | `Advance{Task, Verified, Head, Wait, Stop}`; **no progress field** | `shapeloop.go:36` | the hook is not a function that returns an `Advance` (see D1) |
+| `loopPosition` (pure) | `loopPosition(v loopView) loopStep`, positions `posAttempt` .. `posStop`; `loopView` holds the events, the rows of `sessions.tsv`, `Status` and the parsed review `Records` | `shapeloop.go:255`, `:72` | the view is widened for the question stages (D2) |
+| `readOnlyStep` | `readOnlyStep(step)`, three steps; used by `TaskSession` (`session.go:343`) | `shapeloop.go:762` | gains `answer-to-a-question` (U6) |
+| the stop `<task>: the session <id> of <step> ended <status>` | as planned, from `loopView.outcome`: any `done` result whose status is not `completed`, `needs_context` included | `shapeloop.go:166` | the stop for `needs_context` is where the hook goes (D1) |
+| completed-stage recovery (`finishStage`) | as planned: post and handoff both read before they write | `shapeloop.go:591` | reused as the model of the question stages |
+| `RepairTask` first | `AdvanceShapeTask` calls it first | `shapeloop.go:462`, `repair.go:30` | preserved: the question position is after it |
+| the test seam | `drvWorld` and the scripted harness (`shapetask_integration_test.go`), the driver tests call `state.sessions()` | `shapetask_integration_test.go:44` | reused for I1 to I4 |
+| `findingsOf` / an existing review-record selector (S0 case in the plan) | `findingsOf` exists but is attempt-bound and reads `loopView.Records` of the Shape driver; `Position` has no register row | `shapeloop.go:238` | **not** reused for `openMaterial` (D4) |
+| the tier selection of the driver (review condition 5: "extend I5 through the driver's actual tier selection") | **none**: `runStage` and `ship` take the tier from the step table (`ResolveStep(step, "", "")`), and every Shape step is fixed `reasoning`; `Position` and `TierOf` have no caller in non-test code | `shapeloop.go:555`, `tier.go:50`, `:105` | I5 goes through the production `Position` and `TierOf` (D5) |
+
+The other predecessors are as the plan read them (66m `answer.go:68`, `:98`; 66o `qacomment.go:25`, `:37`; 66l `commentform.go:198`, `:257`;
+66d `question.go`, `handoffpost.go:143`, `:257`, `:418`; 66s `instructions.go`, `promptfile.go:301`, `:429`; 66v `repair.go:30`; 66e `session.go:187`, `:219`, `authors.go:130`, `tier.go:50`, `:163`).
+The rows 66r, 66s and 66v are on main; row 66z is not (the R10 commit `006738d` of `T-9nbf` is not merged), so this branch adds row 66z.
+
+**Divergences from the plan, each inside the plan's scope (a different form of the same behaviour), none a new goal:**
+
+- **D1. The hook is a position and an act of the driver's loop, not `AdvanceQuestion(ctx, in) (Advance, error)`.** 66r's driver is a loop of one act and a fresh read
+  (`maxActs` 100); `Advance` has no progress field. So the hook is the position `posQuestion` with `askStage(ctx, in, v, st) (stop, wait string, err error)`:
+  an act is progress (the loop reads again), no applicable work is not a position, a wait is `Advance{Wait}`, a stop is `Advance{Stop}`. Review condition 2 (report an act, no work,
+  a wait and a stop) is met by that shape; `RepairTask` stays the first call (`shapeloop.go:462`). The statuses `blocked`, `failed` and `decision_needed` keep the stop.
+- **D2. `loopView` gains `Results`, `Copies` and `Issue`** (the typed rows of each `done` result, the copies of the task's issue), which `shapeView` already reads or can read;
+  `questionPosition` is a pure function of the view, so U1 to U4 and U7 are unit tests.
+- **D3. The plan stage and the plan review have no attempt filter in 66r's `loopPosition`** (`plans`, `reviews` are the sessions of the role over all attempts), so a plan that asked would stay
+  the last session of its stage and stop the loop after the answer. The sessions that ended `needs_context` in an earlier attempt are therefore skipped from those lists, and the plan review is told apart
+  from a verifier by a **comment** handoff only (a question or answer handoff of a plan-role session, whose detail has no `comment`, is no plan handoff). Review condition 3.
+- **D4. `openMaterial` is its own selector over events, `sessions.tsv`, the typed results and the kept copy** (`Position` has no register row to build a `loopView`), with the qualification of condition 5.
+- **D5. No tier selection exists in the Shape driver** (last row of the table). I5 is the production `Sessions.Position` (from `state.sessions()`) followed by `TierOf`; there is no caller to wire, and the spec text says so as a known limit.
+
+## S2, the inert stubs and the extractions (commit 103a318), all green
+
+The stubs: `questionPosition` returns no stage, `askStage` does nothing, `openMaterial` returns false, the two instruction constants are empty and in no map, `readOnlyStep` is
+unchanged, nothing calls them; `postBody` is the real extraction of `PostComment` (the issue lookup to the read-back, `handoffpost.go`), `startAs` is `startSession` with the role given.
+
+- `go build ./...` exit 0; `go vet ./...` exit 0; `go vet -tags=integration ./...` exit 0; `go vet -tags=e2e ./...` exit 0.
+- `go test -count=1 ./...`: start 2026-10-20T05:04:30Z, end 2026-10-20T05:04:48Z, exit 0.
+- `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./internal/run/ -run 'Comment|Handoff|Position|Question'`:
+  start 2026-10-20T05:04:48Z, end 2026-10-20T05:13:48Z, exit 0 (`internal/run` 498.891 s; the host was loaded by two other agents' runs). These are the characterization tests of the extraction
+  (`handoffpost_test.go`, `handoffpost_integration_test.go`, `qacomment_*`, the position tests): green before and after it.
+
+## S3, the semantic red run against the stubs (commit 103a318 plus the new and changed tests, uncommitted then)
+
+The tests: `internal/run/questionloop_test.go` (new), `internal/run/questionloop_integration_test.go` (new), `internal/run/testdata/prompts/answer-to-a-question.txt` (new golden file, built
+from the block of `loop.md`), and the changed `instructions_test.go`, `shapeloop_test.go` (the one case of `needs_context`) and `promptfile_integration_test.go` (the refusal list loses
+`answer-to-a-question`; `TestTheInstructionBlocksOfLoopMd` also reads every `instruction-*` block of `loop.md`, review condition 6).
+
+### Unit, run 1: start 2026-10-20T05:11:18Z, end 2026-10-20T05:11:39Z, exit 1
+
+`go test -count=1 ./internal/run/ -run 'TestTheQuestionPositionIs|TestAnInvalidRecordedHandoff|TestAHumanQuestion|TestQuestionsOfTwoOwnerRoles|TestTheNthAnswer|TestAnOwnerSessionThatDoesNotAnswer|TestAnAskingSessionIs|TestTheStageThatAsked|TestTheAnswerStepIsReadOnly|TestTheLastQualifiedReview|TestTheAnswersToCite|TestThePromptFileOfEachStepIsItsGoldenFile|TestNoPlaceholder|TestAStageThatEndedIsFinished'`
+
+```
+--- FAIL: TestThePromptFileOfEachStepIsItsGoldenFile (0.01s)
+    --- FAIL: TestThePromptFileOfEachStepIsItsGoldenFile/answer-to-a-question (0.00s)
+        instructions_test.go:86: buildPrompt(answer-to-a-question): the step answer-to-a-question has no instruction in M2e
+--- FAIL: TestNoPlaceholderIsLeftInAnyPrompt (0.00s)
+    instructions_test.go:103: buildPrompt(answer-to-a-question): the step answer-to-a-question has no instruction in M2e
+--- FAIL: TestTheAnswersToCiteAreWrittenOnlyWhenTheLastAskingAttemptHasThem (0.00s)
+    instructions_test.go:590: the prompt with answers lacks "Their IDs are S-dddddddd.1 S-dddddddd.2."
+    instructions_test.go:590: the prompt with answers lacks "question row"
+--- FAIL: TestTheQuestionPositionIsTheFirstStageTheRecordsShowNotDone (0.00s)
+    questionloop_test.go:158: after 0 facts: stage 0, session "", owner "", base "", question ""; want stage 1, "S-0a1b2c3d", "", "", ""
+    questionloop_test.go:158: after 1 facts: stage 0, session "", owner "", base "", question ""; want stage 2, "S-0a1b2c3d", "", "", ""
+    questionloop_test.go:158: after 2 facts: stage 0, session "", owner "", base "", question ""; want stage 4, "", "software-architect", "aaaaaaa", ""
+    questionloop_test.go:158: after 3 facts: stage 0, session "", owner "", base "", question ""; want stage 4, "", "software-architect", "aaaaaaa", ""
+    questionloop_test.go:158: after 4 facts: stage 0, session "", owner "", base "", question ""; want stage 5, "S-2c3d4e5f", "", "", "S-0a1b2c3d.1"
+    questionloop_test.go:158: after 5 facts: stage 0, session "", owner "", base "", question ""; want stage 6, "S-2c3d4e5f", "", "", ""
+    questionloop_test.go:158: after 6 facts: stage 0, session "", owner "", base "", question ""; want stage 7, "", "", "", ""
+    questionloop_test.go:166: the row of the stage P2 = []; want the question row
+--- FAIL: TestAnInvalidRecordedHandoffStaysAStop (0.00s)
+    questionloop_test.go:183: the question's handoff, read 1: stage 0, ""; want the stop "T-sp01: the handoff asking role → owner role is invalid question-row"
+    questionloop_test.go:183: the question's handoff, read 2: stage 0, ""; want the stop "T-sp01: the handoff asking role → owner role is invalid question-row"
+    questionloop_test.go:183: the answer's handoff, read 1: stage 0, ""; want the stop "T-sp01: the handoff owner role → asking role is invalid answer-row"
+    questionloop_test.go:183: the answer's handoff, read 2: stage 0, ""; want the stop "T-sp01: the handoff owner role → asking role is invalid answer-row"
+--- FAIL: TestAHumanQuestionIsAWaitWithNoAnswerSession (0.00s)
+    questionloop_test.go:194: a human question before its post: stage 0; want the post (P2)
+    questionloop_test.go:198: a human question: stage 0, "", owner ""; want the wait "waiting for the Operator: T-sp01: question S-0a1b2c3d.1"
+    questionloop_test.go:201: the control, a question of an owner role: stage 0; want the answer session
+--- FAIL: TestQuestionsOfTwoOwnerRolesAreAWait (0.00s)
+    questionloop_test.go:212: two owner roles: stage 0, ""; want the wait "waiting for the Operator: T-sp01: question S-0a1b2c3d.1"
+    questionloop_test.go:216: the control, two questions of one owner role: stage 0, owner ""; want the answer session
+--- FAIL: TestTheNthAnswerNamesTheNthQuestionAndAMissingOrExtraAnswerStops (0.00s)
+    questionloop_test.go:235: two answers, none posted: stage 0, question "", row []; want the post of the answer 1 for S-0a1b2c3d.1
+    questionloop_test.go:239: the first answer posted: stage 0, question ""; want the post of the answer 2 for S-1b2c3d4e.1 (two questions of n 1)
+    questionloop_test.go:247: one answer for two questions: stage 0, ""; want the stop "T-sp01: the question S-1b2c3d4e.1 has no answer"
+    questionloop_test.go:247: no answer row: stage 0, ""; want the stop "T-sp01: the question S-0a1b2c3d.1 has no answer"
+    questionloop_test.go:247: three answers for two questions: stage 0, ""; want the stop "T-sp01: the answer S-2c3d4e5f.3 answers no question"
+--- FAIL: TestAnOwnerSessionThatDoesNotAnswerStops (0.01s)
+    questionloop_test.go:271: failed: stage 0, ""; want the stop "T-sp01: the session S-2c3d4e5f of answer-to-a-question ended wall"
+    questionloop_test.go:271: status failed: stage 0, ""; want the stop "T-sp01: the session S-2c3d4e5f of answer-to-a-question ended failed"
+    questionloop_test.go:271: asks again: stage 0, ""; want the stop "T-sp01: the session S-2c3d4e5f of answer-to-a-question ended needs_context"
+    questionloop_test.go:271: a wrong role: stage 0, ""; want the stop "T-sp01: the session S-2c3d4e5f started after the question is of the role software-developer, not of the owner role software-architect"
+--- FAIL: TestAnAskingSessionIsThePositionQuestionAndOtherStatusesStayStops (0.00s)
+    questionloop_test.go:280: a plan that asked: position 13 ("T-sp01: the session S-0a1b2c3d of the plan ended needs_context"), stage 0; want the question at the handoff
+--- FAIL: TestTheStageThatAskedRunsAgainInTheNextAttempt (0.00s)
+    questionloop_test.go:295: a plan that asked, attempt 2: position 13 ("T-sp01: the session S-p1 of the plan ended needs_context"); want the plan again
+    questionloop_test.go:298: a plan review that asked, attempt 2: position 13 ("T-sp01: the session S-r1 of the plan review ended needs_context"); want the plan review again
+    questionloop_test.go:307: an owner handoff of the plan role: position 13 ("T-sp01: the session S-r1 is neither the plan review nor a verifier"); want the developer, the plan review unchanged
+--- FAIL: TestTheAnswerStepIsReadOnly (0.00s)
+    questionloop_test.go:314: readOnlyStep(answer-to-a-question) = false; want true
+--- FAIL: TestTheLastQualifiedReviewRecordIsTheSourceOfAnOpenMaterialFinding (0.00s)
+    questionloop_test.go:428: line 1: no header row
+--- FAIL: TestAStageThatEndedIsFinishedAndAStageThatStoppedIsRunAgain (0.01s)
+    shapeloop_test.go:136: a plan whose status is needs_context: 13 "T-sp01: the session S-p1 of the plan ended needs_context"; want 14 holding ""
+FAIL
+FAIL	github.com/pharzam/layup/internal/run	0.197s
+FAIL
+```
+
+The first failing assertion of the one run that the first run could not reach (`TestTheLastQualifiedReviewRecord...` failed on a fixture defect of mine, `line 1: no header row` for a world with no
+session; the fixture was corrected and the test run again):
+
+### Unit, run 2 (the material source): start 2026-10-20T05:11:55Z, end 2026-10-20T05:12:17Z, exit 1
+
+`go test -count=1 ./internal/run/ -run 'TestTheLastQualifiedReview'`
+
+```
+--- FAIL: TestTheLastQualifiedReviewRecordIsTheSourceOfAnOpenMaterialFinding (0.02s)
+    questionloop_test.go:432: a material record: open = false, <nil>; want true
+    questionloop_test.go:432: a later material record opens an earlier clean one (the last, not the first): open = false, <nil>; want true
+    questionloop_test.go:432: a completed review awaiting its handoff: open = false, <nil>; want true
+    questionloop_test.go:432: an invalid handoff: open = false, <nil>; want true
+    questionloop_test.go:432: a missing kept file: open = false, <nil>; want true
+    questionloop_test.go:432: a hash that is not the result's: open = false, <nil>; want true
+    questionloop_test.go:432: another head: open = false, <nil>; want true
+    questionloop_test.go:432: a form that does not parse: open = false, <nil>; want true
+    questionloop_test.go:432: an unqualified later record never lets the older clean one stand: open = false, <nil>; want true
+    questionloop_test.go:439: a failed read of the kept file: open = false, <nil>; want an error
+FAIL
+FAIL	github.com/pharzam/layup/internal/run	0.055s
+FAIL
+```
+
+### Integration, run 3: start 2026-10-20T05:12:26Z, end 2026-10-20T05:14:28Z, exit 1
+
+`TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./internal/run/ -run 'TestANeedsContextEnd|TestTheAnswerPromptHolds|TestAHarnessThatFollowsTheAnswer|TestAHumanRoutedQuestionAnd|TestARestartAtEachStage|TestAnOpenMaterialFinding|TestTheInstructionBlocksOfLoopMd'`
+
+```
+--- FAIL: TestTheInstructionBlocksOfLoopMd (0.01s)
+    promptfile_integration_test.go:487: 9 texts in the code; want the eight steps, the shared result text and the conditional answers text
+    promptfile_integration_test.go:493: loop.md has the block instruction-answer-to-a-question and the code has no text for it
+    promptfile_integration_test.go:501: loop.md has the block instruction-answers: true; it is equal to the code: false
+--- FAIL: TestANeedsContextEndIsAnsweredByTheOwnerRoleAndTheNextAttemptStarts (7.10s)
+    questionloop_integration_test.go:102: AdvanceShapeTask = {Task:T-a19d Verified:false Head: Wait: Stop:T-a19d: the session S-5b9d24f6 of the plan ended needs_context}, <nil>; want the verified head after the answer
+--- FAIL: TestTheAnswerPromptHoldsTheQuestionsAndTheNextPromptsTheAnswerIDs (6.59s)
+    questionloop_integration_test.go:102: AdvanceShapeTask = {Task:T-gx6l Verified:false Head: Wait: Stop:T-gx6l: the session S-494868dc of the plan ended needs_context}, <nil>; want the verified head after the answer
+--- FAIL: TestAHarnessThatFollowsTheAnswerInstructionGivesAValidAnswerHandoff (6.80s)
+    questionloop_integration_test.go:102: AdvanceShapeTask = {Task:T-6l2r Verified:false Head: Wait: Stop:T-6l2r: the session S-dfb13eb1 of the plan ended needs_context}, <nil>; want the verified head after the answer
+--- FAIL: TestAHumanRoutedQuestionAndAMixedOwnerQuestionWaitForTheOperator (6.54s)
+    questionloop_integration_test.go:233: a human-routed question: AdvanceShapeTask = {Task:T-wap3 Verified:false Head: Wait: Stop:T-wap3: the session S-892ff335 of the plan ended needs_context}, <nil>; want the wait "waiting for the Operator: T-wap3: question S-892ff335.1"
+--- FAIL: TestARestartAtEachStageOfTheQuestionWritesEachThingOnce (51.91s)
+    questionloop_integration_test.go:274: the post of the question: the first call = nil; want the interruption
+    questionloop_integration_test.go:274: the copy of the question (adoption): the first call = nil; want the interruption
+    questionloop_integration_test.go:274: the handoff to the owner role: the first call = nil; want the interruption
+    questionloop_integration_test.go:274: the end of the answer session: the first call = nil; want the interruption
+    questionloop_integration_test.go:274: the post of the answer: the first call = nil; want the interruption
+    questionloop_integration_test.go:274: the copy of the answer (adoption): the first call = nil; want the interruption
+    questionloop_integration_test.go:274: the handoff back to the asking role: the first call = nil; want the interruption
+    questionloop_integration_test.go:274: the start of the next attempt: the first call = nil; want the interruption
+--- FAIL: TestAnOpenMaterialFindingKeepsTheTaskUphill (9.98s)
+    questionloop_integration_test.go:335: an open material finding: downhill, execution; want uphill, reasoning
+FAIL
+FAIL	github.com/pharzam/layup/internal/run	89.058s
+FAIL
+```
+
+### What the reds are, and the green negatives
+
+- Every test above fails on the behaviour it names, not on a build or a fixture error: the driver returns the 66r stop `the session <id> of the plan ended needs_context` where the demo wants the
+  verified head (I1, I6, I7) or the wait (I2, I3); no interruption occurs because nothing ran past the stop (I4: its first assertion is the interruption that the stage after the stop would take, so its
+  eight cases are each red for the missing act, and the green negative of the same restart is the duplicate counts, which hold only after the acts exist); the position is `downhill` with a material
+  finding (I5); `loop.md` has two blocks that the code does not know (the block test); the prompt of the answer step has no instruction (`the step answer-to-a-question has no instruction in M2e`, U8).
+- **Green negatives**, passing against the stubs and kept as controls beside their red tests (they pin what must not change): U1 `no asking session: no stage`; U5 `no review`, `a clean record, valid handoff`,
+  `a later clean record clears an earlier material one` and `a plan review is no review record`; U6 `readOnlyStep(implement) = false`; the loop test `a developer that asked, attempt 2 = the developer`
+  (the attempt filter of 66r already does it) and `blocked`, `failed`, `decision_needed` stay stops; the changed case `a plan whose status is blocked`; `TestTheAnswersToCite...` first half (the prompt with no answers is
+  byte for byte the golden file of `implement`); I5 `a frozen list and no review: downhill` (the control of the position); the seven existing golden files.
+- **Red controls**: U1 each of the seven stages; U2 and U3 the waits (their control, a question of one owner role, is red too: `stage 0; want the answer session`); I1 is the red control of `owner sessions = 0` of I2 and I3.
+
+## S4, green (the code, in the order of the plan: `openMaterial` and `Position`; the prompt and the blocks; `questionPosition` and `askStage`; the hook in the driver)
+
+- `go test -count=1 ./internal/run/` (unit), after the code: exit 0 (0.6 s). Every test of S3 passes, the golden file of `answer-to-a-question` byte for byte.
+- Integration, the same command as run 3: start 2026-10-20T05:17:37Z, end 2026-10-20T05:22:59Z, exit 0 (`internal/run` 298.556 s).
+- `TestTheAnswerSessionStartsAtTheBaseOfTheLastAskingSession` was written **after** the code (review condition 3 names the base; the first plan had no test for it). It is green at once; its evidence is mutant M28, which it kills.
+- One defect of the first draft of the code, found by the unit test before the integration run: none (the unit tests were green at the first run); the integration tests were green at the first run.
+
+## S7 so far, and the resume point (host move, 2026-10-20)
+
+Recorded at the head before this section: `go build`, `go vet` (plain, integration, e2e tags), `gofmt -l`, `go test -count=1 ./...`, the six lint scripts, `git diff --check origin/main` all exit 0;
+`go test -count=1 -tags=e2e ./...` start 2026-10-20T06:20:01Z, end 2026-10-20T06:23:55Z, exit 0. The first full integration run (06:16:14Z to 07:05:56Z) wrote its output to a
+scratch name that another agent's run shared; its output was truncated (no `internal/run` line), so it is **not evidence**. A rerun under the unique name `scratchpad/T-r7b9/T-r7b9-full-integration.txt` was stopped by the host move: not recorded.
+
+The work resumed on the new host (LayupZAM) on 2026-10-20; the gates of the merge head follow.
+
+## S7, the gates on the merge head (origin/main 0246d9c merged, host LayupZAM)
+
+The merge (`chore: T-r7b9 merge origin/main at 0246d9c`) conflicted only in index lines: the REQ-005 Task and Test cells and the 2026-10-20 change-log line of PRD-0001, row 66k's After cell and the rows 66z/66aa of `docs/plan/README.md`, the `internal/run` row of `docs/spec/packages.md`, and the traceability rows. Both sides were kept; `docs/guardrails.md` merged without a conflict.
+
+Each command is direct, its own exit status; times from `date -u` after the step.
+
+| Command | Start | End | Exit |
+| --- | --- | --- | --- |
+| `go build ./...` | 2026-10-20T10:10:56Z | 2026-10-20T10:10:57Z | 0 |
+| `go vet ./...` | 2026-10-20T10:10:57Z | 2026-10-20T10:10:57Z | 0 |
+| `go vet -tags=integration ./...` | 2026-10-20T10:10:57Z | 2026-10-20T10:10:59Z | 0 |
+| `go vet -tags=e2e ./...` | 2026-10-20T10:10:59Z | 2026-10-20T10:11:00Z | 0 |
+| `gofmt -l` | 2026-10-20T10:11:00Z | 2026-10-20T10:11:00Z | out='' |
+| `go test -count=1 ./...` | 2026-10-20T10:11:00Z | 2026-10-20T10:11:03Z | 0 |
+| `go test -count=1 -tags=e2e ./...` | 2026-10-20T10:11:03Z | 2026-10-20T10:12:32Z | 0 |
+| `sh docs/adr/adr-lint.sh` | 2026-10-20T10:12:32Z | 2026-10-20T10:12:34Z | 0 |
+| `sh docs/prd/prd-lint.sh` | 2026-10-20T10:12:34Z | 2026-10-20T10:12:34Z | 0 |
+| `sh docs/links/link-lint.sh` | 2026-10-20T10:12:34Z | 2026-10-20T10:13:04Z | 0 |
+| `sh docs/tests/run-discipline-tests.sh` | 2026-10-20T10:13:04Z | 2026-10-20T10:13:11Z | 0 |
+| `sh docs/setup/setup-check.sh` | 2026-10-20T10:13:11Z | 2026-10-20T10:14:01Z | 0 |
+| `sh docs/tests/nested-checkout-check.sh` | 2026-10-20T10:14:01Z | 2026-10-20T10:14:02Z | 0 |
+| `git diff --check` | 2026-10-20T10:14:02Z | 2026-10-20T10:14:02Z | 0 |
+| `sh docs/tasks/task-state.sh` | 2026-10-20T10:14:02Z | 2026-10-20T10:14:10Z | 0 |
+| `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 90m ./...` (full integration level) | 2026-10-20T10:14:14Z | 2026-10-20T10:30:52Z | 0 |
+
+The full integration level passed at the first run: every package `ok`, `internal/run` 991.564 s, no flake (neither `TestProcessTimesTheFirstOutput` nor the fastClock cap of #291 failed), output in `/home/layup/.cache/layup-session/T-r7b9-full-integration.txt`.
+
+## Round 1 (review 6289084862; Operator decisions 6289096719)
+
+The fix is test first: the new cases and fixtures were written, run on the head `d218424` (the code unchanged; nothing needed an inert stub), then the code, then green, then the compiled mutants
+(`mutants.md`, Y1 to Y10). Each command is direct, its own exit status written to a file and read after; times from `date -u` after the step.
+
+### F1, red on d218424
+
+- **Unit.** `go test -count=1 ./internal/run/ -run 'TestTheLastQualifiedReview'`, start 2026-10-20T10:46:30Z, end 2026-10-20T10:46:33Z, **exit 1**. First failing assertion:
+  `questionloop_test.go:494: an unbound session of the role qa-engineer after a material record is no verifier: open = false, <nil>; want true`. The five new cases were red together, each for the reason it names
+  (`open = false, <nil>; want true`): the unbound session after a material record (reviewer's case a), the verifier that ended `needs_context` with a plain `valid` handoff after a material record (case b), the later
+  verifier with no row for `review-record.md` after an older clean record (case c), a verifier that has not ended after an older clean record, and a plain `valid` handoff that names no comment after a material record.
+  The control (`a later qualified clean verifier clears an older material one`) and every older case of the table were green in the same run: the fixture now binds the verifier by an event `bound`, as production does.
+- **Integration, the verifier that asks and waits.** `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./internal/run/ -run 'TestTheQuestionOfAVerifierAtItsBoundHead'`,
+  start 2026-10-20T10:47:39Z, end 2026-10-20T10:47:48Z, **exit 1**. First failing assertion: `questionloop_integration_test.go:225: openMaterial with a verifier that asked and no qualified record = false, <nil>; want true`.
+  The case is the production regression of Operator decision F4: a verifier asks a human-routed question at the head it was bound to (not the base of the attempt: the test fails first if the two are equal), the driver
+  waits, and the verifier that asked has no qualified record, so the finding is open.
+- **Integration, the verifier that asks and is answered** (`TestAVerifierThatAsksIsAnsweredAtTheHeadItWasBoundTo`): on d218424 it is **green** (start 2026-10-20T10:47:06Z, end 2026-10-20T10:47:18Z, exit 0 after its fixture was
+  corrected; the first run, 10:46:46Z to 10:46:58Z, exit 1, failed on my fixture, which took the plan review for the verifier). It asserts that the answer session starts at the verifier's bound head, not at the base of the attempt, that
+  `AnswerAccepted` accepts the answer and that `openMaterial` is false after attempt 2's clean verifier. The code of 66z already did this (`questionPosition` takes the base of the last asking session), so this one cannot be red on d218424;
+  it stays as the green control of the red test above, and M28 still kills the base mutant of the unit level.
+- The fixture of I5 (`record` in `questionloop_integration_test.go`) changed: its verifier is now bound to the head of a developer's session of its attempt and starts at that head, as the selector requires.
+
+### F1, green after the fix (`4dce578`)
+
+- `go test -count=1 ./internal/run/ -run 'TestTheLastQualifiedReview'`: start 2026-10-20T10:55:11Z, end 2026-10-20T10:55:12Z, exit 0.
+- `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./internal/run/ -run 'TestAnOpenMaterialFindingKeepsTheTaskUphill|TestAVerifierThatAsks|TestTheQuestionOfAVerifier'`:
+  start 2026-10-20T10:55:12Z, end 2026-10-20T10:55:32Z, exit 0 (I5, the answered regression and the waiting regression).
+- Four cases were added after the fix to kill mutants (a bound after the start, a bound of another attempt, a bound of a session that is no developer, a `needs_context` verifier with a valid comment handoff): they are green on the fix and
+  have no red run on d218424 of their own; each is the killer of a mutant in `mutants.md` (Y3 to Y5, Y7).
+
+### F2, decided
+
+Operator decision 6289096719 (finding 2): the production consumer of `Position` then `TierOf`, and the semantic test that fails when it ignores an open material finding, belong to row 66k (#367, `T-9nbf`). I5 stays as the test of
+`Position` and the tier it moves through the production constructor; the known limit in `docs/spec/loop.md` (the open unknowns) names the decision and 66k, and the plan row 66k names the obligation. No consumer is built here.
+Condition 5's caller-wiring clause is released for this task by that decision alone, and D5 above is amended by it.
+
+### F4, the accepted R8 exception
+
+`TestTheAnswerSessionStartsAtTheBaseOfTheLastAskingSession` was written after the code (S4 above) and passed at once. The Operator accepted the exception (6289096719, finding 4): the test stays with this chronology. The compensating
+evidence is the red run of the production regression above (`TestTheQuestionOfAVerifierAtItsBoundHead...`, first failing assertion recorded), the green control of the answer at the bound head, and M28.
+
+### Round 1, the gates on the head b588f09 (origin/main 0246d9c, not moved; docs-only commits follow this section)
+
+| Command | Start | End | Exit |
+| --- | --- | --- | --- |
+| `go build ./...` | 2026-10-20T10:59:54Z | 2026-10-20T10:59:55Z | exit 0 |
+| `go vet ./...` | 2026-10-20T10:59:55Z | 2026-10-20T10:59:55Z | exit 0 |
+| `go vet -tags=integration ./...` | 2026-10-20T10:59:55Z | 2026-10-20T10:59:56Z | exit 0 |
+| `go vet -tags=e2e ./...` | 2026-10-20T10:59:56Z | 2026-10-20T10:59:57Z | exit 0 |
+| `gofmt -l` | 2026-10-20T10:59:57Z | 2026-10-20T10:59:57Z | out='' |
+| `go test -count=1 ./...` | 2026-10-20T10:59:57Z | 2026-10-20T11:00:00Z | exit 0 |
+| `go test -count=1 -tags=e2e ./...` | 2026-10-20T11:00:00Z | 2026-10-20T11:01:28Z | exit 0 |
+| `sh docs/adr/adr-lint.sh` | 2026-10-20T11:01:28Z | 2026-10-20T11:01:31Z | exit 0 |
+| `sh docs/prd/prd-lint.sh` | 2026-10-20T11:01:31Z | 2026-10-20T11:01:31Z | exit 0 |
+| `sh docs/links/link-lint.sh` | 2026-10-20T11:01:31Z | 2026-10-20T11:02:03Z | exit 0 |
+| `sh docs/tests/run-discipline-tests.sh` | 2026-10-20T11:02:03Z | 2026-10-20T11:02:10Z | exit 0 |
+| `sh docs/setup/setup-check.sh` | 2026-10-20T11:02:10Z | 2026-10-20T11:03:00Z | exit 0 |
+| `sh docs/tests/nested-checkout-check.sh` | 2026-10-20T11:03:00Z | 2026-10-20T11:03:01Z | exit 0 |
+| `git diff --check` | 2026-10-20T11:03:01Z | 2026-10-20T11:03:01Z | exit 0 |
+| `sh docs/tasks/task-state.sh` | 2026-10-20T11:03:01Z | 2026-10-20T11:03:10Z | exit 0 |
+| `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 90m ./...` (the full integration level, alone, in the background) | 2026-10-20T11:03:15Z | 2026-10-20T11:19:46Z | 0 |
+
+The full integration level passed at the first run: every package `ok`, `internal/run` 988.617 s, no flake, output in `/home/layup/.cache/layup-session/T-r7b9-full-integration-r1.txt`.
+
+## Round 2 (review 6289957559; cap raised to 2 in 6289990772)
+
+### F5, answer correspondence by column n: red on 9bb845e, then green
+
+- **Red on `9bb845e` (before `questionloop.go` was changed).** `go test -count=1 ./internal/run/ -run '^TestTheAnswerColumnNSelectsItsQuestionInAnyRowOrder$'`, start `2026-10-20T11:46:03Z`, end `2026-10-20T11:46:04Z`, **exit 1**:
+  ```
+  --- FAIL: TestTheAnswerColumnNSelectsItsQuestionInAnyRowOrder (0.00s)
+      questionloop_test.go:263: answer S-2c3d4e5f.2: stage 5, row [answer 2 There. — docs/spec/forge.md], question "S-0a1b2c3d.1"; want the post of answer 2 for S-1b2c3d4e.1
+      questionloop_test.go:263: answer S-2c3d4e5f.1: stage 5, row [answer 1 Yes. — docs/spec/forge.md], question "S-1b2c3d4e.1"; want the post of answer 1 for S-0a1b2c3d.1
+      questionloop_test.go:269: both permuted answers posted for their own questions: stage 5; want the handoff back (P7)
+  FAIL
+  ```
+- **Green after the fix (`92c1958`).**
+  - `go test -count=1 ./internal/run/ -run 'TestTheAnswerColumnNSelectsItsQuestionInAnyRowOrder|TestTheNthAnswerNamesTheNthQuestionAndAMissingOrExtraAnswerStops|TestThePromptFileOfEachStepIsItsGoldenFile'`, start `2026-10-20T11:47:05Z`, end `2026-10-20T11:47:07Z`, **exit 0**.
+  - `go test -count=1 -tags=integration ./internal/run/ -run '^TestTheInstructionBlocksOfLoopMd$'`, start `2026-10-20T11:47:07Z`, end `2026-10-20T11:47:08Z`, **exit 0**.
+
+### F6, the Q9 composition stops: compiled removal mutants on a copy of the tree
+
+- The composition-stop branches (`questionloop.go:148` and `:204`) already existed before `TestAnUncomposableQuestionRowStaysAStop` and `TestAnUncomposableAnswerRowStaysAStop` were added (`76587a4`), so there is no historical red-before-code run; the sensitivity evidence is the compiled removal mutants Z1 and Z2 in `runs/T-r7b9/mutants.md`, built and run on a copy of the tree (`/tmp/T-r7b9-mutant-r2`, `2026-10-20T11:50:44Z` to `2026-10-20T11:50:51Z`).
+- On the real code (`76587a4`): `go test -count=1 ./internal/run/ -run 'TestAnUncomposableQuestionRowStaysAStop|TestAnUncomposableAnswerRowStaysAStop'`, start `2026-10-20T11:49:31Z`, end `2026-10-20T11:49:32Z`, **exit 0**.
+- On removal mutant Z1 (question composition stop removed, sha256 `893566c22161da1b542d401b25f8848e6b63dc31e6b4b5c0cd0a4b2fbb5d2ff3`): build/vet/vet-int `0/0/0`, `go test -count=1 ./internal/run/` **exit 1** (`TestAnUncomposableQuestionRowStaysAStop`: `read 1: stage 2 (""), askStage=("", "", handoff: the file of a comment has 65619 characters, over 65536); want the repeatable stop "T-sp01: the question S-0a1b2c3d.1 cannot be composed: handoff: the file of a comment has 65619 characters, over 65536" with no post`).
+- On removal mutant Z2 (answer composition stop removed, sha256 `a98c8add17c38197fee8e25edcd5f42b85f22732be62ecaba1a55bd85fe06682`): build/vet/vet-int `0/0/0`, `go test -count=1 ./internal/run/` **exit 1** (`TestAnUncomposableAnswerRowStaysAStop`: `read 1: stage 5 (""), askStage=("", "", handoff: the file of a comment has 65634 characters, over 65536); want the repeatable stop "T-sp01: the answer S-2c3d4e5f.1 cannot be composed: handoff: the file of a comment has 65634 characters, over 65536" with no post`).
+
+### Round 2, the gates on the head e5363ca (origin/main 0246d9c, not moved; this docs-only commit follows)
+
+| Command | Start | End | Exit |
+| --- | --- | --- | --- |
+| `go build ./...` | 2026-10-20T11:54:22Z | 2026-10-20T11:54:22Z | exit 0 |
+| `go vet ./...` | 2026-10-20T11:54:22Z | 2026-10-20T11:54:22Z | exit 0 |
+| `go vet -tags=integration ./...` | 2026-10-20T11:54:22Z | 2026-10-20T11:54:22Z | exit 0 |
+| `go vet -tags=e2e ./...` | 2026-10-20T11:54:22Z | 2026-10-20T11:54:23Z | exit 0 |
+| `gofmt -l .` | 2026-10-20T11:54:23Z | 2026-10-20T11:54:23Z | exit 0, out='' |
+| `go test -count=1 ./...` | 2026-10-20T11:54:23Z | 2026-10-20T11:54:24Z | exit 0 |
+| `go test -count=1 -tags=e2e ./...` | 2026-10-20T11:54:24Z | 2026-10-20T11:55:29Z | exit 0 |
+| `sh docs/adr/adr-lint.sh` | 2026-10-20T11:55:29Z | 2026-10-20T11:55:30Z | exit 0 |
+| `sh docs/prd/prd-lint.sh` | 2026-10-20T11:55:30Z | 2026-10-20T11:55:30Z | exit 0 |
+| `sh docs/links/link-lint.sh` | 2026-10-20T11:55:30Z | 2026-10-20T11:55:42Z | exit 0 |
+| `sh docs/tests/run-discipline-tests.sh` | 2026-10-20T11:55:42Z | 2026-10-20T11:55:45Z | exit 0 |
+| `sh docs/setup/setup-check.sh` | 2026-10-20T11:55:45Z | 2026-10-20T11:56:06Z | exit 0 |
+| `sh docs/tests/nested-checkout-check.sh` | 2026-10-20T11:56:06Z | 2026-10-20T11:56:06Z | exit 0 |
+| `sh docs/tasks/task-state.sh` | 2026-10-20T11:56:06Z | 2026-10-20T11:56:13Z | exit 0 |
+| `git diff --check origin/main HEAD` | 2026-10-20T11:56:13Z | 2026-10-20T11:56:13Z | exit 0 |
+| `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 90m ./...` (the full integration level, alone, in the background) | 2026-10-20T11:56:27Z | 2026-10-20T12:03:22Z | exit 0 |
+
+The full integration level passed at the first run: every package `ok`, `internal/run` 412.797 s, no flake, output in `/home/layup/.cache/layup-session/T-r7b9-full-integration-r2.txt`.

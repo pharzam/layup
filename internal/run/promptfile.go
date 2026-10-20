@@ -49,17 +49,18 @@ type PromptIn struct {
 // A PromptContext is the prompt file of a step and the input files it names.
 // Input holds the records items by their file name, for session.MakeInput.
 type PromptContext struct {
-	Items    []Item
-	Input    map[string][]byte
-	task     string
-	step     string
-	findings []Finding
-	kind     string
-	issue    int
-	base     string
-	facts    string
-	record   string
-	extras   taskExtras
+	Items              []Item
+	Input              map[string][]byte
+	task               string
+	step               string
+	findings           []Finding
+	kind               string
+	issue              int
+	base               string
+	facts              string
+	record             string
+	extras             taskExtras
+	questions, answers []string // the question IDs of the answer step, the answer IDs this attempt cites (row 66z)
 }
 
 // A kept is a file of the records, by its path.
@@ -84,6 +85,9 @@ type promptSrc struct {
 	Plan         *kept
 	Handoffs     []kept
 	Answers      []kept
+	Asking       []kept   // the results of the sessions that asked, for the step answer-to-a-question
+	Questions    []string // their question IDs, in order
+	AnswerIDs    []string // the answers of the attempt before, which this attempt cites
 	Requirements []string
 	Rules        []rules.Entry
 	Tree         targetTree
@@ -173,7 +177,7 @@ func buildPrompt(src promptSrc) (*PromptContext, error) {
 		return nil, noInstruction(src.Step.Step)
 	}
 	c := &PromptContext{Input: map[string][]byte{}, task: src.Task, step: src.Step.Step, findings: src.Findings,
-		kind: src.Kind, issue: src.Issue, base: src.Base, extras: src.Extras}
+		kind: src.Kind, issue: src.Issue, base: src.Base, extras: src.Extras, questions: src.Questions, answers: src.AnswerIDs}
 	if src.Step.Step == "specification" {
 		var err error
 		if c.record, c.facts, err = factsRecords(src.Tree.Facts); err != nil {
@@ -265,7 +269,7 @@ func buildPrompt(src promptSrc) (*PromptContext, error) {
 				}
 			}
 		case session.KindHandoffsAndAnswers:
-			for _, k := range slices.Concat(src.Handoffs, src.Answers, src.Extras.Ledger) {
+			for _, k := range slices.Concat(src.Handoffs, src.Answers, src.Asking, src.Extras.Ledger) {
 				if err = record(kind, k); err != nil {
 					break
 				}
@@ -393,8 +397,12 @@ func (c *PromptContext) Text(root string) []byte {
 	}
 	v := map[string]string{"task": c.task, "kind": c.kind, "issue": strconv.Itoa(c.issue), "result": path.Join(root, "result", "result.tsv"),
 		"comment": path.Join(root, "result", commentFiles[c.step]), "head": c.base, "from": c.extras.From,
-		"labels": labelList(DefaultOwners()), "facts": c.facts, "record": c.record}
+		"labels": labelList(DefaultOwners()), "facts": c.facts, "record": c.record,
+		"questions": strings.Join(c.questions, " "), "answers": strings.Join(c.answers, " ")}
 	b.WriteString("\nThe work of this step:\n" + fill(stepInstructions[c.step], v) + "\n" + fill(resultInstruction, v))
+	if len(c.answers) > 0 { // the attempt before has an answer of its owner role: this attempt cites it (loop.md, The instruction of a task step)
+		b.WriteString("\n" + fill(answersInstruction, v))
+	}
 	return []byte(b.String())
 }
 
@@ -466,9 +474,14 @@ func (s *Sessions) PromptFile(ctx context.Context, in PromptIn) (*PromptContext,
 		return nil, err
 	}
 	role := map[string]string{}
+	view := loopView{Task: in.Task, Events: events, Status: map[string]string{}, Results: map[string][][]string{}}
 	for _, r := range sessions {
 		role[r[sessionID]] = r[sessionRole]
+		if r[sessionTask] == in.Task {
+			view.Sessions = append(view.Sessions, r)
+		}
 	}
+	raw := map[string][]byte{} // the result files that ended done, by session
 	for _, e := range events {
 		switch _, comment := validHandoff(e[6]); {
 		case e[1] == "handoff" && comment:
@@ -493,10 +506,34 @@ func (s *Sessions) PromptFile(ctx context.Context, in PromptIn) (*PromptContext,
 			if err != nil {
 				return nil, fmt.Errorf("%s: %w", p, err)
 			}
+			view.Results[e[3]], view.Status[e[3]], raw[e[3]] = rows, statusOf(rows), data
 			if slices.ContainsFunc(rows, func(r []string) bool { return r[0] == "answer" }) {
 				src.Answers = append(src.Answers, kept{p, data})
 			}
 		}
+	}
+	// The question in the loop (row 66z): the answer step gets the results of the sessions that asked and their question IDs, and a step of the
+	// attempt after an answered one gets the IDs of the answers it cites.
+	latest := 0
+	for _, e := range events {
+		if n, _ := strconv.Atoi(e[2]); e[1] == "attempt" && n > latest {
+			latest = n
+		}
+	}
+	if in.Step == "answer-to-a-question" {
+		asking, _ := view.asking(strconv.Itoa(latest))
+		for _, id := range asking {
+			src.Asking = append(src.Asking, kept{"tasks/" + in.Task + "/results/" + id + ".tsv", raw[id]})
+		}
+		for _, q := range view.questions(asking) {
+			src.Questions = append(src.Questions, q.ID)
+		}
+		if len(src.Questions) == 0 {
+			return nil, fmt.Errorf("the task %s has no question to answer in its attempt %d", in.Task, latest)
+		}
+	}
+	if latest > 1 {
+		src.AnswerIDs = view.answersOf(latest - 1)
 	}
 	extras, err := s.taskInputs(ctx, in, src.Kind)
 	if err != nil {

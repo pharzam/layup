@@ -52,13 +52,18 @@ func stepSrc(t *testing.T, step, kind string) promptSrc {
 	if ledger {
 		src.Extras.Ledger = []kept{{"sessions.tsv", []byte("sessions\n")}, {"telemetry.tsv", []byte("telemetry\n")}}
 	}
+	if step == "answer-to-a-question" {
+		src.Asking = []kept{{"tasks/T-ab12/results/S-cccccccc.tsv", []byte("asked\n")}}
+		src.Questions = []string{"S-cccccccc.1", "S-cccccccc.2"}
+	}
 	return src
 }
 
-// The seven steps with an instruction, each with the kind of task it is shown for.
+// The eight steps with an instruction, each with the kind of task it is shown for (row 66z adds answer-to-a-question).
 var goldenCases = []struct{ step, kind string }{
 	{"plan-of-a-task", "specification"}, {"plan-review", "architecture"}, {"specification", "specification"},
 	{"shape-architecture", "architecture"}, {"implement", "build"}, {"verification", "build"}, {"close-out", "build"},
+	{"answer-to-a-question", "specification"},
 }
 
 func promptText(t *testing.T, step, kind string) string {
@@ -559,5 +564,36 @@ func TestTheResultNamesEveryRequiredOutputWithItsHash(t *testing.T) {
 				t.Errorf("%s: a result with the artifact %s is taken for one without it", c.step, want[c.step][i])
 			}
 		}
+	}
+}
+
+// U9 (loop.md, The instruction of a task step; row 66z): the block instruction-answers follows the result text only when the prompt is given
+// the answers that the attempt before has; the prompt without any is byte for byte the one of every existing golden file (the green negative).
+func TestTheAnswersToCiteAreWrittenOnlyWhenTheLastAskingAttemptHasThem(t *testing.T) {
+	src := stepSrc(t, "implement", "build")
+	without, err := buildPrompt(src)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want, err := promptGoldens.ReadFile("testdata/prompts/implement.txt")
+	if err != nil || string(without.Text(rootDir)) != string(want) {
+		t.Fatalf("the prompt with no answers differs from its golden file (%v)", err)
+	}
+	src.AnswerIDs = []string{"S-dddddddd.1", "S-dddddddd.2"}
+	with, err := buildPrompt(src)
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(with.Text(rootDir))
+	for _, sub := range []string{"Their IDs are S-dddddddd.1 S-dddddddd.2.", "status row", "question row"} {
+		if !strings.Contains(text, sub) {
+			t.Errorf("the prompt with answers lacks %q", sub)
+		}
+	}
+	if !strings.HasPrefix(text, string(without.Text(rootDir))) {
+		t.Error("the prompt with answers does not start with the prompt without them: the block must follow the result text")
+	}
+	if m := leftover.FindString(text); m != "" {
+		t.Errorf("the prompt with answers keeps the placeholder %s", m)
 	}
 }
