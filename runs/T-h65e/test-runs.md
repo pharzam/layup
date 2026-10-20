@@ -197,3 +197,18 @@ The work resumed on the new host (LayupZAM) after the shutdown; the merge confli
 | `sh docs/tasks/task-state.sh` (T-h65e: in progress) | 10:31:46 | 10:31:54 | 0 |
 
 The full integration level: every package `ok`; `internal/run` took 1074.685 s (a host under the load of other sessions' tests); no flake, so no rerun was needed (`TestProcessTimesTheFirstOutput` and the `fastClock` cap of #291 passed). Raw outputs: `/home/layup/.cache/layup-session/T-h65e-full-integration.txt` and `T-h65e-gates.txt`, `T-h65e-gates2.txt` in the same directory.
+
+## Round 1 (#418, comment 6289116981): F1 to F4
+
+Red on `645123a` (commit `8cc825e`, made with `--no-verify` because its tests are red; direct exit 1 each):
+
+| Command | Start-end (UTC) | First failing assertion |
+|---|---|---|
+| `go test -count=1 ./internal/run/ -run 'TestACandidateWithout\|TestTheBasisTableRefuses'` | 10:46:30-10:46:33 | F1: `betbrief_test.go:460: an open question removed: findings []; want the first of the rule fixed` (and 7 more cases, and the old candidate with the new facts) |
+| `... -tags=integration ... -run 'TestAChangedFixedInput\|TestBriefBasisRefuses'` | 10:46:49-10:47:15 | F2: `only the appetite: briefBasis = no error` (and the two others); F1 stopped-run case first failed for the wrong reason (a class change made `db` lose its survivor), changed to a fact's text |
+| `... -run 'TestAChangedFixedInput'` | 10:47:31-10:47:46 | F1: `the recovery = 773 bytes, <nil> after 1 sessions; want a new brief of the new text` |
+
+The seven F3 cases are green negatives on `645123a`; their red control is the mutants M34 and M35 (`mutants.md`), which survived before and are killed now. F4 is a sentence in `loop.md`, with no test.
+Green (`f6350b3`): unit `./internal/run/` ok and, with the targeted integration tests (the two new ones, `TestAStopBefore...`, `TestTheBasisRoundTrips...`, `TestTheBriefIsKept...`), exit 0 at 10:48:17-10:49:24. Mutants M34 to M39: all killed, `mutants.md`.
+
+Gates on the head `f6350b3` plus the mutants record (exit read directly; times UTC, 2026-10-20): build, the three vets, `gofmt -l`, `go test ./...` 10:53:14-10:53:20, all 0; full integration (alone, `internal/run` 1082.135 s, no flake) 10:53:20-11:11:24, 0; e2e 11:11:32-11:13:01, 0; the six scripts 11:13:01-11:14:32, 0; `git diff --check` 0; `task-state.sh` 11:14:32-11:14:41, 0.
