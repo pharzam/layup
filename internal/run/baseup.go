@@ -5,6 +5,7 @@ package run
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"strconv"
@@ -85,6 +86,14 @@ func (s *Sessions) BringUpToDate(ctx context.Context, in CarryInput) (Advance, e
 	x := TipOf(events, attempt)
 	if x == "" {
 		return Advance{}, fmt.Errorf("attempt %d of %s has no event bound: no head to bring up to date", attempt, task)
+	}
+	if adopted, err := s.adoptPushed(ctx, in, events, attempt, x); err != nil {
+		return Advance{}, err
+	} else if adopted != "" { // a merge that was pushed and never bound: it is the tip now, whatever the default branch has become
+		x = adopted
+		if events, err = s.readTable(ctx, eventsPath(task), records.ReadEvents); err != nil {
+			return Advance{}, err
+		}
 	}
 	current, d, err := s.UpToDate(ctx, x)
 	if err != nil {
@@ -190,13 +199,7 @@ func (s *Sessions) carryMerge(ctx context.Context, in CarryInput, events [][]str
 	has := func(kind string) bool {
 		return slices.ContainsFunc(events, func(e []string) bool { return e[1] == kind && e[3] == "" && e[5] == m && e[6] == branch })
 	}
-	event := func(kind string) error {
-		data, err := s.appendEvents(ctx, task, attempt, "", []string{kind + " " + m + " " + branch})
-		if err != nil {
-			return err
-		}
-		return s.commit(ctx, map[string][]byte{eventsPath(task): data}, "layup run: the "+kind+" of the merge of the base to "+branch)
-	}
+	event := func(kind string) error { return s.codeEvent(ctx, task, attempt, kind, m, branch) }
 	if !has("bound") {
 		if !has("push") {
 			if err := event("push"); err != nil {
@@ -224,4 +227,70 @@ func (s *Sessions) carryMerge(ctx context.Context, in CarryInput, events [][]str
 		return Advance{}, err
 	}
 	return Advance{Task: task, Verified: true, Head: m}, nil
+}
+
+// codeEvent commits the event push or bound of the commit sha of code (session —) to the branch, in one fenced records commit.
+func (s *Sessions) codeEvent(ctx context.Context, task string, attempt int, kind, sha, branch string) error {
+	data, err := s.appendEvents(ctx, task, attempt, "", []string{kind + " " + sha + " " + branch})
+	if err != nil {
+		return err
+	}
+	return s.commit(ctx, map[string][]byte{eventsPath(task): data}, "layup run: the "+kind+" of the merge of the base to "+branch)
+}
+
+// adoptPushed resolves an outstanding push of a merge before another merge is computed: when an event push of code has no bound and the
+// branch of the forge holds that commit, the push was made and its bound was lost. The commit must be a merge whose first parent is the
+// tip x and that the carry rule accepts; its bound is then written, its status posted, and it is given as the new tip. A branch that holds
+// x (the push was not made) or no announced commit leaves everything as it is; any other head of the branch is an error.
+func (s *Sessions) adoptPushed(ctx context.Context, in CarryInput, events [][]string, attempt int, x string) (string, error) {
+	var announced []string
+	for _, e := range events {
+		if a, _ := strconv.Atoi(e[2]); e[1] == "push" && e[3] == "" && a == attempt && !slices.ContainsFunc(events, func(b []string) bool { return b[1] == "bound" && b[3] == "" && b[5] == e[5] }) {
+			announced = append(announced, e[5])
+		}
+	}
+	if len(announced) == 0 {
+		return "", nil
+	}
+	branch := fmt.Sprintf("task/%s/%d", in.Task, attempt)
+	tip, found, err := s.Store.BranchHead(ctx, branch)
+	if err != nil || !found || tip == x || !slices.Contains(announced, tip) {
+		return "", err
+	}
+	v, ok, err := s.verified(ctx, in)
+	if err != nil {
+		return "", err
+	}
+	parents, err := git.Parents(s.Clone, tip)
+	if err != nil {
+		return "", err
+	}
+	in.Merge = tip
+	if carried, err := s.carries(in, v, tip); err != nil || !ok || !carried || len(parents) != 2 || parents[0] != x {
+		return "", errors.Join(err, fmt.Errorf("%s holds the announced %s, which is not a merge of the base over %s that carries the verdict", branch, tip, x))
+	}
+	if err := s.codeEvent(ctx, in.Task, attempt, "bound", tip, branch); err != nil {
+		return "", err
+	}
+	if _, err := s.CarryVerify(ctx, in, ""); err != nil {
+		return "", err
+	}
+	return tip, nil
+}
+
+// producedFrom tells whether the tip is reached from the head by merges of code alone: each commit from the tip down is the commit of an
+// event bound with no session and a merge, and its first parent is the next, down to the head.
+func (s *Sessions) producedFrom(events [][]string, attempt int, tip, head string) (bool, error) {
+	code := commitsOfCode(events, attempt)
+	for cur := tip; cur != head; {
+		if !slices.Contains(code, cur) {
+			return false, nil
+		}
+		parents, err := git.Parents(s.Clone, cur)
+		if err != nil || len(parents) != 2 {
+			return false, err
+		}
+		cur = parents[0]
+	}
+	return true, nil
 }

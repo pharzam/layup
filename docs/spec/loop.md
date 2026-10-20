@@ -135,7 +135,11 @@ checks read.
 **Decided here** (R10, task `T-xvvd`, #363, row 66g; plan review conditions 1 and 2; `OpenPullRequest`
 of `internal/run`):
 
-- **The inputs are from the records.** The head is the SHA of the last event `bound` of the attempt;
+- **The inputs are from the records.** The head is the SHA of the last event `bound` of the attempt that has a session; the head that the pull
+  request must have is the **tip** of the branch, `TipOf` (the last `bound` of any session): the same, or a merge of the base that code made above it
+  (task `T-89xf`: every commit from the tip down to the head is the commit of an event `bound` with no session and a merge, and its first parent is the
+  next), so a pull request carried over a merge is adopted at the merge, again and again, with no draft and no change of the register, and any other
+  move of the branch is the error below;
   the session of that event gives the start row, and **the records commit that the task started
   from** is its `records` column (the snapshot of the push check and of `layup/rules`), never the
   run's changing base and never a later session's. The branch is `task/<task>/<attempt>`.
@@ -1507,8 +1511,12 @@ nothing, never a redo.
    rendered commit's push, row 66j; `RepairPushes` skips them: their step resolves them). The order: the event `push` (one fenced records
    commit), the lease, `PushHead`, the event `bound`, then `CarryVerify`. The branch must hold `X` (to push) or `M` (pushed, to bind), else
    it is `errPushRefused`. A restart makes `M` again (the same `X` and `D` give the same SHA) and finds the events and the branch.
-   **When `D` moved** between the `push` and the restart, `M'` differs: the announced `M` was never pushed (the branch holds `X`), and `M'`
-   gets its own `push`; a `push` with no `bound` is harmless to every reader, which looks only at `bound`.
+   **An outstanding push is resolved first** (`adoptPushed`, round 1 of #424): before another merge is computed, an event `push` of code with
+   no `bound` is read against the branch of the forge. A branch that holds the announced `M` (the push was made and its `bound` was lost) is
+   adopted whatever `D` has become: `M` must be a merge whose first parent is the tip and that the carry rule accepts, its `bound` is written and
+   its status posted, and the comparison then goes on from `M`, so a default branch that moved again gets a merge of `D2` over `M`. A branch that
+   still holds the tip leaves the announced `M` unpushed: the next merge `M'` gets its own `push`, and a `push` with no `bound` is harmless to every
+   reader, which looks only at `bound`. Any other head of the branch is an error.
 7. **The carry rule (`mergeEdge`).** A merge commit `M` with the parents `[p1, p2]` is carried when: `p1` carries (the verified head, the
    accepted rendered commit, an earlier accepted merge, or the one-commit close-out head of such a head that `scopeOK` accepts, the
    close-out only under a merge), `p2` is an ancestor of the default head, and with `mb = MergeBase(p1, p2)`,
@@ -1537,7 +1545,8 @@ nothing, never a redo.
    cleared, the issue and `opened` are new, and each task that named the old one names the new one. The bytes of each
    `tasks/<old>/options/<decision>.tsv` are copied to the new ID. The issue text is the composer of the kind with the new ID and the
    inputs the records keep: the decision and option of the binding for a bet's architecture task; for a Shape task the draft as the first
-   session of the old task read it (its `records` column), never a later draft or bet. Attempts, sessions and the frozen list are not carried.
+   session of the first task of the chain of redos read it (the event `rebased` of each task names the task it replaces, down to the one that has
+   none; its `records` column), so the pin of the original issue survives any number of redos, never a later draft or bet. Attempts, sessions and the frozen list are not carried.
    The first attempt of the new task starts at the `base` of its event `rebased`, in the driver.
 10. **The older attempt's pull request** (O22). `RepairTask` closes, for an open attempt `A > 1`, the open pull request of each older
     attempt's branch, only when the register's `pr` is the pull request of the branch of `A` (so a new attempt that has no pull request

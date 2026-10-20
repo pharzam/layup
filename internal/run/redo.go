@@ -148,9 +148,27 @@ func (s *Sessions) redoIssue(ctx context.Context, row Task, id string, bindings 
 		if err != nil {
 			return "", "", err
 		}
-		i := slices.IndexFunc(sessions, func(r []string) bool { return r[sessionTask] == row.ID })
+		// The pin is the original issue's: down the chain of redos (the event rebased names the task replaced) to the first task.
+		root := row.ID
+		for i := 0; i < 64; i++ {
+			events, err := s.readTable(ctx, eventsPath(root), records.ReadEvents)
+			if err != nil {
+				return "", "", err
+			}
+			next := ""
+			for _, e := range events {
+				if e[1] == "rebased" {
+					next = e[6]
+				}
+			}
+			if next == "" {
+				break
+			}
+			root = next
+		}
+		i := slices.IndexFunc(sessions, func(r []string) bool { return r[sessionTask] == root })
 		if i < 0 {
-			return "", "", fmt.Errorf("%s has no session: no draft that it read", row.ID)
+			return "", "", fmt.Errorf("%s has no session: no draft that it read", root)
 		}
 		at := sessions[i][sessionRecords]
 		draft, err := git.Show(s.Clone, at, "spec/draft.tsv")

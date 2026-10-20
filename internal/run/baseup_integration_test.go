@@ -1078,6 +1078,27 @@ func TestOpenPullRequestAdoptsTheSamePullRequestAfterACarry(t *testing.T) {
 	if recordsHead(t, m.w) != head || len(m.writes(n)) != 0 {
 		t.Errorf("the register or the forge changed: records moved %v, writes %v; want neither", recordsHead(t, m.w) != head, m.writes(n))
 	}
+	// A commit of code that is no merge above the merge is no explanation of a move of the head.
+	clone := m.r.Clone
+	gitOut(t, clone, "switch", "-q", "--detach", got.Head)
+	os.WriteFile(filepath.Join(clone, "z.txt"), []byte("z\n"), 0o644)
+	gitOut(t, clone, "add", "-A")
+	gitOut(t, clone, "commit", "-q", "-m", "a commit of code")
+	z := strings.TrimSpace(gitOut(t, clone, "rev-parse", "HEAD"))
+	gitOut(t, clone, "switch", "-q", "main")
+	for _, kind := range []string{"push", "bound"} {
+		data, err := m.r.appendEvents(context.Background(), "T-ab12", 1, "", []string{kind + " " + z + " task/T-ab12/1"})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := m.r.commit(context.Background(), map[string][]byte{eventsPath("T-ab12"): data}, "a commit of code "+kind); err != nil {
+			t.Fatal(err)
+		}
+	}
+	m.w.fake.movePull(pr.Number, z)
+	if bad, err := m.s.OpenPullRequest(context.Background(), PullInput{Task: "T-ab12", Attempt: 1, Type: "feat", Description: "the work of the task"}); err == nil {
+		t.Errorf("a head that moved to a commit of code that is no merge: %+v, nil; want an error", bad)
+	}
 	m.w.fake.movePull(pr.Number, strings.Repeat("e", 40))
 	if bad, err := m.s.OpenPullRequest(context.Background(), PullInput{Task: "T-ab12", Attempt: 1, Type: "feat", Description: "the work of the task"}); err == nil {
 		t.Errorf("a head that moved with no explanation: %+v, nil; want an error", bad)
