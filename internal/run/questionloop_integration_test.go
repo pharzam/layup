@@ -8,12 +8,14 @@ package run
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
 
+	"github.com/pharzam/layup/internal/git"
 	"github.com/pharzam/layup/internal/records"
 )
 
@@ -152,6 +154,77 @@ func TestANeedsContextEndIsAnsweredByTheOwnerRoleAndTheNextAttemptStarts(t *test
 	events, results, roles := d.ledgerOf(task)
 	if by, ok := AnswerAccepted(events, results, roles, Owners(DefaultOwners()), owner+".1"); !ok || roles[by] != stepRole("plan-of-a-task") {
 		t.Errorf("AnswerAccepted(%s.1) = %q, %v; want the plan session of attempt 2", owner, by, ok)
+	}
+}
+
+// I8 (round 1, finding 4; Operator decision 6289096719): a verifier asks a question at the head it was bound to, which is not the base of the attempt (the
+// developer committed). The answer session starts at that head, not at the base of the attempt, and the task goes on to the verified head; the open
+// material finding is read from the verifiers that were bound, so the verifier that asked (no review record) leaves nothing open and nothing uphill.
+func TestAVerifierThatAsksIsAnsweredAtTheHeadItWasBoundTo(t *testing.T) {
+	d := newAskWorld(t)
+	task, _ := d.open()
+	d.ctlWrite("ask-verification", askArch)
+	if got, err := d.advance(task, nil); err != nil || !got.Verified {
+		t.Fatalf("AdvanceShapeTask = %+v, %v; want the verified head after the answer", got, err)
+	}
+	events, results, roles := d.ledgerOf(task)
+	owners := d.byRole(task, "software-architect")
+	asker, attemptBase := "", ""
+	for _, id := range d.byRole(task, stepRole("verification")) { // the plan review has the same role: the session that asked is the verifier
+		if statusOf(results[id]) == "needs_context" {
+			asker = id
+		}
+	}
+	if asker == "" || len(owners) != 1 {
+		t.Fatalf("the verifier that asked is %q and there are %d answer sessions; want one verifier and one answer session", asker, len(owners))
+	}
+	for _, e := range d.eventsOf(task) {
+		if e[1] == "attempt" && e[2] == "1" {
+			attemptBase = e[4]
+		}
+	}
+	if d.sessionBase(task, asker) == attemptBase {
+		t.Fatalf("the verifier that asked started at the base of the attempt %.7s; the case needs the head it was bound to", attemptBase)
+	}
+	if got := d.sessionBase(task, owners[0]); got != d.sessionBase(task, asker) {
+		t.Errorf("the answer session started at %.7s; want the head %.7s of the verifier that asked (not the base %.7s of the attempt)", got, d.sessionBase(task, asker), attemptBase)
+	}
+	if open, err := d.r.sessions().openMaterial(context.Background(), task, events, d.sessionsOf(task), results); err != nil || open {
+		t.Errorf("openMaterial after the verifier of attempt 2 cleared the work = %v, %v; want false", open, err)
+	}
+	if by, ok := AnswerAccepted(events, results, roles, Owners(DefaultOwners()), owners[0]+".1"); !ok || roles[by] == "" {
+		t.Errorf("AnswerAccepted(%s.1) = %q, %v; want the answer accepted by the next attempt", owners[0], by, ok)
+	}
+}
+
+// I9 (round 1, finding 1; condition 5): a verifier that asked at the head it was bound to, a question that waits for the Operator. The verifier is the latest
+// verifier by its position and head binding and its output is not a qualified review record (it ended needs_context, with no record), so no finding is
+// clear: openMaterial is true through the production constructor, and no older record stands in its place.
+func TestTheQuestionOfAVerifierAtItsBoundHeadLeavesTheFindingOpenWhileItWaits(t *testing.T) {
+	d := newAskWorld(t)
+	task, _ := d.open()
+	d.ctlWrite("ask-verification", askHuman)
+	got, err := d.advance(task, nil)
+	if err != nil || !strings.HasPrefix(got.Wait, "waiting for the Operator: "+task+": question ") || got.Verified || got.Stop != "" {
+		t.Fatalf("AdvanceShapeTask = %+v, %v; want the wait for the Operator", got, err)
+	}
+	events, results, _ := d.ledgerOf(task)
+	asker, attemptBase := "", ""
+	for _, id := range d.byRole(task, stepRole("verification")) {
+		if statusOf(results[id]) == "needs_context" {
+			asker = id
+		}
+	}
+	for _, e := range events {
+		if e[1] == "attempt" && e[2] == "1" {
+			attemptBase = e[4]
+		}
+	}
+	if asker == "" || d.sessionBase(task, asker) == attemptBase {
+		t.Fatalf("the verifier that asked is %q at %.7s, the base of the attempt is %.7s; want a verifier bound to another head", asker, d.sessionBase(task, asker), attemptBase)
+	}
+	if open, err := d.r.sessions().openMaterial(context.Background(), task, events, d.sessionsOf(task), results); err != nil || !open {
+		t.Errorf("openMaterial with a verifier that asked and no qualified record = %v, %v; want true", open, err)
 	}
 }
 
@@ -326,29 +399,40 @@ func TestAnOpenMaterialFindingKeepsTheTaskUphill(t *testing.T) {
 		return p
 	}
 	large := Plan{Size: "large"}
-	l.frozenAt("claude")
+	dev1 := l.frozenAt("claude")
 	if p := position(); p != Downhill || TierOf(large, p) != "execution" {
 		t.Fatalf("a frozen list and no review: %s, %s; want downhill, execution (the control)", p, TierOf(large, p))
 	}
-	l.record(1, "head: "+l.a.base+"\nverdict: material\nfindings:\n- docs/spec/forge.md:3 spec: the section is thin\n", "developer")
+	l.record(1, dev1, "head: HEAD\nverdict: material\nfindings:\n- docs/spec/forge.md:3 spec: the section is thin\n", "developer")
 	if p := position(); p != Uphill || TierOf(large, p) != "reasoning" {
 		t.Errorf("an open material finding: %s, %s; want uphill, reasoning", p, TierOf(large, p))
 	}
-	l.record(2, "head: "+l.a.base+"\nverdict: nothing material in scope\nfindings:\n", "close-out")
+	l.record(2, "", "head: HEAD\nverdict: nothing material in scope\nfindings:\n", "close-out")
 	if p := position(); p != Downhill || TierOf(large, p) != "execution" {
 		t.Errorf("a later record of nothing material: %s, %s; want downhill, execution", p, TierOf(large, p))
 	}
 }
 
-// record runs a verifier session that writes the text as its review record, posts it and records its handoff to the role.
-func (l *loopRun) record(attempt int, text, to string) string {
+// record runs a verifier session, bound to the head of the developer's session dev of the attempt (a new one when dev is empty), that writes the text as its review record, posts it and records its handoff to the role.
+func (l *loopRun) record(attempt int, dev, text, to string) string {
 	l.t.Helper()
 	ctx := context.Background()
 	if attempt > 1 {
 		l.attempt(attempt)
 	}
+	// The verifier is bound to a head by its position: a developer's session of the attempt is bound, and the verifier starts at that head
+	// (the text gives HEAD for it).
+	if dev == "" {
+		dev = l.dev(attempt, "claude", map[string]string{fmt.Sprintf("work%d.txt", attempt): "work\n"}, okResult)
+	}
+	head := l.bound(dev)
+	text = strings.ReplaceAll(text, "HEAD", head)
 	spec := harness(l.t, l.a, planWork("review-record.md", text, "comment\t1\tresult/review-record.md\t"+commentSum(text)+"\t—"))
-	spec.Role, spec.Attempt, spec.Pair.Harness = stepRole("verification"), attempt, "devin"
+	spec.Role, spec.Attempt, spec.Pair.Harness, spec.Base = stepRole("verification"), attempt, "devin", head
+	spec.Branch = fmt.Sprintf("layup/base/T-ab12/v%d", attempt) // as the driver does for a session at a head: a branch of the run's clone at it
+	if err := git.UpdateRef(l.r.Clone, "refs/heads/"+spec.Branch, head); err != nil {
+		l.t.Fatal(err)
+	}
 	id, err := l.r.TaskSession(ctx, spec)
 	if err != nil {
 		l.t.Fatalf("TaskSession: %q, %v", id, err)

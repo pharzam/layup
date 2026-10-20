@@ -325,7 +325,8 @@ func TestTheAnswerStepIsReadOnly(t *testing.T) {
 // The open material finding (condition 5; loop.md, the open unknowns): the record of the last review that ended, qualified.
 type materialWorld struct {
 	*handoffWorld
-	n int
+	n     int
+	bound bool // the developer's session and its bound are recorded
 }
 
 const reviewRecord = "head: " + aSHA + "\nverdict: %s\nfindings:\n%s"
@@ -334,9 +335,39 @@ const reviewRecord = "head: " + aSHA + "\nverdict: %s\nfindings:\n%s"
 // hash that the result names (empty: the hash of the text); handoff is the detail of its handoff, "" for none.
 func (m *materialWorld) review(t *testing.T, text, named, handoff string) string {
 	t.Helper()
+	m.bindDeveloper(t)
+	return m.qa(t, aSHA, text, named, handoff)
+}
+
+// bindDeveloper records, once, the developer's session of attempt 1 and its event bound at aSHA: the position and head binding that makes a session of
+// the role qa-engineer that starts after it at aSHA a verifier (loopView.qaKind).
+func (m *materialWorld) bindDeveloper(t *testing.T) {
+	t.Helper()
+	if m.bound {
+		return
+	}
+	m.bound = true
+	m.session(t, "S-de5a10aa", 1, stepRole("implement"), "")
+	m.events = append(m.events, []string{strconv.Itoa(len(m.events) + 1), "bound", "1", "S-de5a10aa", "", aSHA, "task/T-ab12/1", "2026-10-09T11:00:00Z"})
+	m.store.files["tasks/T-ab12/events.tsv"], _ = table(records.EventsSchema, m.events)
+}
+
+// boundAt records an event bound of the session at the SHA, in the attempt.
+func (m *materialWorld) boundAt(t *testing.T, attempt, session, sha string) {
+	t.Helper()
+	m.events = append(m.events, []string{strconv.Itoa(len(m.events) + 1), "bound", attempt, session, "", sha, "task/T-ab12/" + attempt, "2026-10-09T11:00:00Z"})
+	m.store.files["tasks/T-ab12/events.tsv"], _ = table(records.EventsSchema, m.events)
+}
+
+// qa adds a session of the role qa-engineer at the base: with a comment row of review-record.md, the text kept as its file and the handoff, as review
+// says. A session whose base is no bound head of the developer (unbound) is no verifier.
+func (m *materialWorld) qa(t *testing.T, base, text, named, handoff string) string {
+	t.Helper()
 	m.n++
 	id := fmt.Sprintf("S-4e5f60%02x", m.n)
 	m.session(t, id, 1, "qa-engineer", "")
+	m.sess[len(m.sess)-1][sessionBase] = base
+	m.store.files["sessions.tsv"], _ = table(records.SessionsSchema, m.sess)
 	if named == "" {
 		named = commentSum(text)
 	}
@@ -375,6 +406,9 @@ func (m *materialWorld) open(t *testing.T) (bool, error) {
 }
 
 func clean() string { return fmt.Sprintf(reviewRecord, "nothing material in scope", "") }
+
+// cleanAt is a record of nothing material for the head.
+func cleanAt(head string) string { return strings.Replace(clean(), aSHA, head, 1) }
 func material() string {
 	return fmt.Sprintf(reviewRecord, "material", "- docs/spec/forge.md:3 spec: the section is thin\n")
 }
@@ -425,8 +459,58 @@ func TestTheLastQualifiedReviewRecordIsTheSourceOfAnOpenMaterialFinding(t *testi
 			m.review(t, clean(), "", valid)
 			m.review(t, clean(), commentSum("other"), valid)
 		}, true},
+		// Round 1, finding 1 (6289084862): the source is the latest verifier by its position and head binding, qualified after the selection.
+		{"an unbound session of the role qa-engineer after a material record is no verifier", func(t *testing.T, m *materialWorld) {
+			m.review(t, material(), "", valid)
+			other := strings.Repeat("e", 40)
+			m.qa(t, other, cleanAt(other), "", valid)
+		}, true},
+		{"a bound that comes after the start of the session does not make it a verifier", func(t *testing.T, m *materialWorld) {
+			m.review(t, material(), "", valid)
+			other := strings.Repeat("e", 40)
+			m.qa(t, other, cleanAt(other), "", valid)
+			m.boundAt(t, "1", "S-de5a10aa", other)
+		}, true},
+		{"a bound of another attempt does not make it a verifier", func(t *testing.T, m *materialWorld) {
+			m.review(t, material(), "", valid)
+			other := strings.Repeat("e", 40)
+			m.boundAt(t, "2", "S-de5a10aa", other)
+			m.qa(t, other, cleanAt(other), "", valid)
+		}, true},
+		{"a bound of a session that is no developer does not make it a verifier", func(t *testing.T, m *materialWorld) {
+			first := m.review(t, material(), "", valid)
+			other := strings.Repeat("e", 40)
+			m.boundAt(t, "1", first, other)
+			m.qa(t, other, cleanAt(other), "", valid)
+		}, true},
+		{"a verifier that asked (needs_context, a plain valid handoff) after a material record", func(t *testing.T, m *materialWorld) {
+			m.review(t, material(), "", valid)
+			id := m.review(t, clean(), "", "valid")
+			m.store.files["tasks/T-ab12/results/"+id+".tsv"] = []byte(resultTop + "status\t1\tneeds_context\t—\tasks\ncomment\t1\tresult/review-record.md\t" + commentSum(clean()) + "\t—\n")
+		}, true},
+		{"a later verifier with no row for review-record.md after an older clean record", func(t *testing.T, m *materialWorld) {
+			m.review(t, clean(), "", valid)
+			id := m.review(t, clean(), "", valid)
+			m.store.files["tasks/T-ab12/results/"+id+".tsv"] = []byte(resultTop + "status\t1\tcompleted\t—\tr\n")
+		}, true},
+		{"a verifier that has not ended, after an older clean record", func(t *testing.T, m *materialWorld) {
+			m.review(t, clean(), "", valid)
+			m.bindDeveloper(t)
+			m.session(t, "S-4e5f60ff", 1, "qa-engineer", "")
+			m.events = m.events[:len(m.events)-1] // no result event
+			m.store.files["tasks/T-ab12/events.tsv"], _ = table(records.EventsSchema, m.events)
+		}, true},
+		{"a handoff that names no comment (a plain valid) after an older material record", func(t *testing.T, m *materialWorld) {
+			m.review(t, material(), "", valid)
+			m.review(t, clean(), "", "valid")
+		}, true},
+		{"a later qualified clean verifier clears an older material one (the control)", func(t *testing.T, m *materialWorld) {
+			m.review(t, material(), "", valid)
+			m.qa(t, aSHA, clean(), "", valid)
+		}, false},
 		{"a plan review is no review record", func(t *testing.T, m *materialWorld) {
-			id := m.review(t, material(), "", valid)
+			other := strings.Repeat("e", 40) // a plan review has no bound before its start: no verifier
+			id := m.qa(t, other, material(), "", valid)
 			m.store.files["tasks/T-ab12/results/"+id+".tsv"] = []byte(resultTop + "status\t1\tcompleted\t—\tr\ncomment\t1\tresult/plan-review.md\t" + commentSum(material()) + "\t—\n")
 		}, false},
 	} {
