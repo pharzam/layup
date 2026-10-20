@@ -80,7 +80,137 @@ check_k1() {
 }
 
 check_k2() {
-	printf 'ok K2: registration of new tests\n'
+	git diff -U0 "$base" HEAD -- '*_test.go' | tr -d '\r' | awk '
+		/^\+\+\+ b\// { f = substr($0, 7); next }
+		/^@@ -[0-9,]+ \+[0-9]+/ {
+			s = $0; sub(/^@@ -[0-9,]+ \+/, "", s); sub(/[, ].*/, "", s)
+			ln = s + 0; next
+		}
+		/^-func Test[A-Za-z0-9_]+\(/ {
+			nm = $0; sub(/^-func /, "", nm); sub(/\(.*/, "", nm)
+			rem[f SUBSEP nm] = 1; next
+		}
+		/^\+/ && !/^\+\+\+/ {
+			if ($0 ~ /^\+func Test[A-Za-z0-9_]+\(/) {
+				nm = $0; sub(/^\+func /, "", nm); sub(/\(.*/, "", nm)
+				if (nm != "TestMain") {
+					n++; af[n] = f; al[n] = ln; an[n] = nm
+				}
+			}
+			ln++
+		}
+		END {
+			for (i = 1; i <= n; i++) {
+				if (!((af[i] SUBSEP an[i]) in rem))
+					print af[i] "\t" al[i] "\t" an[i]
+			}
+		}
+	' > "$tmp/k2_added"
+	if [ ! -s "$tmp/k2_added" ]; then
+		printf 'ok K2: registration of new tests\n'
+		return
+	fi
+	if [ ! -f docs/tests/traceability.md ]; then
+		printf 'FAIL K2: docs/tests/traceability.md:0: missing traceability file\n'
+		failed=1
+		return
+	fi
+	tr -d '\r' < docs/tests/traceability.md > "$tmp/k2_tr"
+	has_prd=0
+	if [ -f docs/prd/PRD-0001-layup.md ]; then
+		has_prd=1
+		tr -d '\r' < docs/prd/PRD-0001-layup.md > "$tmp/k2_prd"
+	else
+		: > "$tmp/k2_prd"
+	fi
+	awk -v has_prd="$has_prd" '
+		function has_word(txt, w,    r) {
+			r = "(^|[^A-Za-z0-9_])" w "([^A-Za-z0-9_]|$)"
+			return (txt ~ r)
+		}
+		function has_span_word(txt, w,    s, i, sp) {
+			s = txt
+			while ((i = index(s, "`")) > 0) {
+				s = substr(s, i + 1)
+				i = index(s, "`")
+				if (i == 0) break
+				sp = substr(s, 1, i - 1)
+				if (has_word(sp, w)) return 1
+				s = substr(s, i + 1)
+			}
+			return 0
+		}
+		FILENAME == ARGV[1] {
+			if ($0 ~ /^\|/ && $0 !~ /^\|[[:space:]]*Test ID[[:space:]]*\|/ && $0 !~ /^\|[-: |]+$/) {
+				tr_n++
+				split($0, c, "|")
+				tr_c1[tr_n] = c[2]
+				tr_c3[tr_n] = c[4]
+			}
+			next
+		}
+		FILENAME == ARGV[2] {
+			if ($0 ~ /^## 12([^0-9]|$)/) { in12 = 1; next }
+			if (in12 && $0 ~ /^## /) { in12 = 0; next }
+			if (in12 && $0 ~ /^\|/ && $0 !~ /^\|[[:space:]]*REQ[[:space:]]*\|/ && $0 !~ /^\|[-: |]+$/) {
+				split($0, c, "|")
+				id = c[2]; gsub(/^[[:space:]]+|[[:space:]]+$/, "", id)
+				if (id != "") { prd_cell[id] = c[7]; prd_rows++ }
+			}
+			next
+		}
+		FILENAME == ARGV[3] {
+			split($0, f, "\t")
+			tfile = f[1]; tln = f[2]; tname = f[3]
+			found_tr = 0; reqs = ""
+			for (i = 1; i <= tr_n; i++) {
+				if (has_span_word(tr_c1[i], tname)) {
+					found_tr = 1
+					s = tr_c3[i]
+					while (match(s, /(REQ|NFR)-[0-9]+/)) {
+						id = substr(s, RSTART, RLENGTH)
+						reqs = (reqs == "" ? id : reqs " " id)
+						s = substr(s, RSTART + RLENGTH)
+					}
+				}
+			}
+			if (!found_tr) {
+				printf "FAIL K2: %s:%s: %s is not in docs/tests/traceability.md\n", tfile, tln, tname
+				next
+			}
+			if (reqs == "") next
+			if (!has_prd) {
+				if (!prd_missing_printed) {
+					printf "FAIL K2: docs/prd/PRD-0001-layup.md:0: missing PRD file\n"
+					prd_missing_printed = 1
+				}
+				next
+			}
+			if (prd_rows == 0) {
+				if (!s12_missing_printed) {
+					printf "FAIL K2: docs/prd/PRD-0001-layup.md:0: missing §12 table\n"
+					s12_missing_printed = 1
+				}
+				next
+			}
+			nr = split(reqs, rlist, " ")
+			delete seen_r
+			for (j = 1; j <= nr; j++) {
+				r = rlist[j]
+				if (r in seen_r) continue
+				seen_r[r] = 1
+				if (!(r in prd_cell) || !has_word(prd_cell[r], tname)) {
+					printf "FAIL K2: %s:%s: %s is not in docs/prd/PRD-0001-layup.md §12 %s Test cell\n", tfile, tln, tname, r
+				}
+			}
+		}
+	' "$tmp/k2_tr" "$tmp/k2_prd" "$tmp/k2_added" > "$tmp/k2_out"
+	if [ -s "$tmp/k2_out" ]; then
+		cat "$tmp/k2_out"
+		failed=1
+	else
+		printf 'ok K2: registration of new tests\n'
+	fi
 }
 
 check_k3() {
