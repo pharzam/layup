@@ -78,7 +78,7 @@ func TestAMergedPullRequestWithNoEventGetsItsMergedEvent(t *testing.T) {
 	}
 }
 
-// U3: a merged pull request with its event writes nothing and reads nothing for a repair; U2 is its control.
+// U3: a merged pull request with its event writes nothing and reads nothing for a repair, though a push of a session is unresolved; U2 is its control.
 func TestAMergedPullRequestWithItsEventWritesNothing(t *testing.T) {
 	t.Parallel()
 	w, pr := finishWorld(t)
@@ -86,7 +86,8 @@ func TestAMergedPullRequestWithItsEventWritesNothing(t *testing.T) {
 	if _, r, err := w.s.MergeTask(context.Background(), "T-ab12", head2); err != nil || !r.Ready {
 		t.Fatalf("MergeTask = %+v, %v", r, err)
 	}
-	w.events = events(t, w.st, "T-ab12")
+	w.events = append(events(t, w.st, "T-ab12"), []string{"8", "push", "2", "S-d0000002", "", head2, "task/T-ab12/2", "2026-10-18T10:05:00Z"})
+	w.write(t)
 	commits, ops := len(w.st.commits), len(w.st.ops)
 	got, err := finish(w)
 	if err != nil || got != (Advance{Task: "T-ab12", Merged: true, Head: head2}) || pr.Number != 1 {

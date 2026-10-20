@@ -79,7 +79,7 @@ func (s *Sessions) FinishTask(ctx context.Context, in FinishInput) (Advance, err
 	cin := CarryInput{Task: task, Verifier: st.Session, Harnesses: in.Harnesses, Models: in.Models}
 	hin, carried := HeadInput{Task: task, Base: st.Base}, st.Head
 	if v.Kind == "specification" {
-		rendered, err := s.renderedHead(ctx, in, v, cin, attempt, st.Head)
+		rendered, err := s.renderedHead(ctx, in, v, attempt, st.Head)
 		if err != nil {
 			return Advance{}, err
 		}
@@ -114,8 +114,8 @@ type renderedHead struct {
 	RenderedBet
 }
 
-// renderedHead gives the event bound of code in the attempt, which CheckRendered accepts above the verified head, with the inputs of D10.
-func (s *Sessions) renderedHead(ctx context.Context, in FinishInput, v loopView, cin CarryInput, attempt int, verified string) (renderedHead, error) {
+// renderedHead gives the event bound of code in the attempt, which CarryVerify checks above the verified head before it posts, with the inputs of D10.
+func (s *Sessions) renderedHead(ctx context.Context, in FinishInput, v loopView, attempt int, verified string) (renderedHead, error) {
 	var out renderedHead
 	for _, e := range v.Events {
 		if n, _ := strconv.Atoi(e[2]); e[1] == "bound" && e[3] == "" && n == attempt {
@@ -129,12 +129,7 @@ func (s *Sessions) renderedHead(ctx context.Context, in FinishInput, v loopView,
 	if out.RenderedBet, err = in.Bet(ctx, verified); err != nil {
 		return out, err
 	}
-	cin.Rendered = &RenderedInput{Head: out.Head, Render: out.Records}
-	ok, err := s.CheckRendered(ctx, cin)
-	if err == nil && !ok {
-		err = fmt.Errorf("%s: %s is not a permitted rendered commit above the verified head %s", v.Task, out.Head, verified)
-	}
-	return out, err
+	return out, nil
 }
 
 // attemptPull gives the pull request of the branch of the task's latest attempt, the attempt and the events: its number must be the register's.

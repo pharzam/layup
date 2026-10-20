@@ -1488,7 +1488,7 @@ check of D9 on `C`; (8) for the rendered commit, `CarryVerify(in, "")` and the t
   and not merged"}`. It writes nothing: no repair, no records commit, no forge call but reads; no redo is inferred from it (the redo is row 66x's). The wait repeats at each restart,
   and a pull request that a fresh read finds closed during the call (after the repair, or when `MergeTask` says it is not open) gives the same wait.
 - **D3, the carried head and the three checks.** `C` is `V` for a task of another kind than the specification, and for the specification task the event `bound` with session `—` of
-  `A` (the rendered commit `R`, pushed by the step bet), which `CheckRendered` accepts with the typed inputs of D10; no such `bound` is a Go error (the step bet finishes it).
+  `A` (the rendered commit `R`, pushed by the step bet), which `CarryVerify` checks again before it posts (`renderedOK`, the check of `CheckRendered`) with the typed inputs of D10; no such `bound` is a Go error (the step bet finishes it).
   `PostChecks` posts `layup/gates`, `layup/spec` and `layup/rules` of a head, in that order, as `PostStatuses` does (an extraction: the same order and the same delayed error of a scratch tree
   that cannot be removed), and `PostStatuses` calls it before `layup/verify`. `FinishTask` posts at `R` and at `H'` with `PostChecks` and never with `VerifyAt`: the authors of `base..H'` include the close-out session's
   harness, so `VerifyAt` could post `not-active` at `H'` after the `success` of `CarryVerify`; `layup/verify` of a carried head comes from `CarryVerify` alone. **The inputs of a head are pinned
