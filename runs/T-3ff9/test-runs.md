@@ -113,3 +113,36 @@ Inspection found `origin/main` at `df9bfacf33054741564dbf0254a741f0d4be1e0f` (PR
 Stage B leaves only the files in its commit plan. The staging instruction delegates commits to the coordinating session; no commit, hook run, freeze-check, task close-out or independent round is claimed here. The remaining clean-head validation and freeze-check belong to Stage C.
 
 Final Stage B whitespace check after writing the records: `git diff --check`, 2026-10-20T18:51:39Z to 2026-10-20T18:51:40Z, exit 0, no output. Scope inspection found exactly the 13 files in the commit plan; each has one final newline and no trailing whitespace. The conditions table has exactly three rows; its path/line spans and S1 commit resolve in the prospective committed tree.
+
+## Stage C: committed-head gates and pre-freeze check
+
+Tested HEAD `43c1bd4ceb04a46f790b9d845128c3b65979964d` against `origin/main` at `df9bfacf33054741564dbf0254a741f0d4be1e0f` after the clean merge of #448. The worktree stayed clean through all nine commands, including freeze-check; output and timing metadata were written outside it. No document or check was changed. Read-only instruction and repository inspection was not timed; no test result is inferred from it.
+
+UTC endpoints below came from `date -u +%FT%TZ` around each command; exit statuses came directly from its process. Long runs printed progress every ten seconds. Outputs are folded or summarized, except the complete freeze-check output below.
+
+| Command | Start (UTC) | End (UTC) | Exit | Output |
+| --- | --- | --- | --- | --- |
+| `sh runs/T-3ff9/checks.sh` | 2026-10-20T18:54:11Z | 2026-10-20T18:54:11Z | 0 | 58 task checks passed; no failures. |
+| `sh docs/adr/adr-lint.sh` | 2026-10-20T18:54:11Z | 2026-10-20T18:54:12Z | 0 | adr-lint: OK |
+| `sh docs/prd/prd-lint.sh` | 2026-10-20T18:54:12Z | 2026-10-20T18:54:12Z | 0 | prd-lint: OK |
+| `sh docs/links/link-lint.sh` | 2026-10-20T18:54:12Z | 2026-10-20T18:54:25Z | 0 | link-lint: OK  2983 links resolved |
+| `sh docs/tests/run-discipline-tests.sh` | 2026-10-20T18:54:25Z | 2026-10-20T18:54:28Z | 0 | run-discipline-tests: 138 passed, 0 failed |
+| `sh docs/tests/freeze-check/run-all.sh` | 2026-10-20T18:54:28Z | 2026-10-20T18:54:34Z | 0 | freeze-check: 62 passed, 0 failed |
+| `sh docs/setup/setup-check.sh` | 2026-10-20T18:54:34Z | 2026-10-20T18:54:54Z | 0 | setup-check: pin OK; setup-check: kit-history OK; setup-check: facts OK; setup-check: onboarding OK; setup-check: glossary OK; setup-check: guardrails OK; setup-check: markers OK; setup-check: adapted OK; setup-check: ci OK; setup-check: protection OK; setup-check: identity OK; setup-check: procedure OK; run-discipline-tests: 138 passed, 0 failed; adr-lint: OK; prd-lint: OK; link-lint: OK  2983 links resolved; setup-check: kit-linters OK |
+| `git diff --check origin/main HEAD` | 2026-10-20T18:54:54Z | 2026-10-20T18:54:54Z | 0 | No output. |
+| `sh docs/tests/freeze-check.sh --task T-3ff9 --base origin/main --budget 650/20 > /home/layup/.cache/layup-session/tmp-green/t3ff9-fc.txt 2>&1` | 2026-10-20T18:54:54Z | 2026-10-20T18:54:55Z | 0 | Complete output below; saved first to the external file named in the command. |
+
+```text
+ok K1: white space
+ok K2: registration of new tests
+ok K3: test selectors
+ok K4: restore evidence of mutants
+ok K5: projection: figure 516/16, maximum 650/20, margin 134/4 (the figure at landing is still measured at landing)
+ok K6: conditions table
+```
+
+Committed whole-diff numstat: 400 added + 46 removed = 446 lines over 14 files, including all evidence. Unchanged K5 adds its default 70/2, giving 516/16 against 650/20 and margin 134/4. This is a pre-freeze projection, not the final landing figure; subsequent records and actual close-out still count for this task. No proposed tolerance or default end 3 is used.
+
+The Stage A task check was red (exit 1); Stage B and this committed-head run are green (exit 0). Every Stage C gate passed; no fix is required. This stage appends only this record and delegates its commit to the coordinating session. No independent review, close-out or post-record committed-head check is claimed.
+
+Final record whitespace check: `git diff --check`, 2026-10-20T18:55:29Z to 2026-10-20T18:55:29Z, exit 0, no output.
