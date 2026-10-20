@@ -173,10 +173,27 @@ exit=0
 end 2026-10-20T06:35:07Z
 ```
 
-## Resume point (the host was shut down, 2026-10-20)
+## The gates on the head after the host move (merge `origin/main` at 0246d9c, 2026-10-20)
 
-- Done and committed: S1 (docs), S2 (stubs, extractions), S3 (red runs), S4 to S6 (green), S7 (33 mutants killed, `mutants.md`), the docs and registration of S8 except the close-out; the head merges `origin/main` (up to date).
-- Not recorded: the gates of S9 on the final head. The full integration level (`TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 90m ./...`) was started at about 07:55Z and killed by the shutdown with no result; the unit level, the three vets, gofmt and the lints of that command were not read back either.
-- Next: run build, the three vets, gofmt, `go test ./...`, the full integration level (alone, about 30 to 45 minutes), `go test -count=1 -tags=e2e ./...`, the six lints and `git diff --check`, record them here, then gitleaks alone and push.sh.
-- Not started: the close-out (task file, completed line, backlog line, resource record), which comes after the review round. Size against main: 2,308 lines over 22 files before this section; budget 2,600 over 26.
-- Scratch of this task is in `scratchpad/T-h65e-w/`; the mutant script is `mutants.py` there.
+The work resumed on the new host (LayupZAM) after the shutdown; the merge conflicted in the shared index lines (the plan rows 66j, 66k, 66u and 66aa, the PRD-0001 change-log row, the traceability rows) and in `docs/guardrails.md` (two new pitfall entries appended at the same place: main's first, then this task's; the Coordinator allowed keeping both), all resolved by keeping both sides.
+
+| Command | Start (UTC) | End (UTC) | Exit |
+|---|---|---|---|
+| `go build ./...` | 10:10:24 | 10:10:25 | 0 |
+| `go vet ./...` | 10:10:25 | 10:10:25 | 0 |
+| `go vet -tags=integration ./...` | 10:10:25 | 10:10:29 | 0 |
+| `go vet -tags=e2e ./...` | 10:10:29 | 10:10:31 | 0 |
+| `gofmt -l .` (no output) | 10:10:31 | 10:10:32 | 0 |
+| `go test -count=1 ./...` | 10:10:32 | 10:10:34 | 0 |
+| `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 90m ./...` (alone) | 10:10:37 | 10:28:41 | 0 |
+| `go test -count=1 -tags=e2e ./...` | 10:28:50 | 10:30:19 | 0 |
+| `sh docs/adr/adr-lint.sh` | 10:30:19 | 10:30:21 | 0 |
+| `sh docs/prd/prd-lint.sh` | 10:30:21 | 10:30:21 | 0 |
+| `sh docs/links/link-lint.sh` (2886 links) | 10:30:21 | 10:30:52 | 0 |
+| `sh docs/tests/run-discipline-tests.sh` (138 passed) | 10:30:52 | 10:30:58 | 0 |
+| `sh docs/setup/setup-check.sh` | 10:30:58 | 10:31:45 | 0 |
+| `sh docs/tests/nested-checkout-check.sh` (10 cases) | 10:31:45 | 10:31:46 | 0 |
+| `git diff --check` | 10:31:46 | 10:31:46 | 0 |
+| `sh docs/tasks/task-state.sh` (T-h65e: in progress) | 10:31:46 | 10:31:54 | 0 |
+
+The full integration level: every package `ok`; `internal/run` took 1074.685 s (a host under the load of other sessions' tests); no flake, so no rerun was needed (`TestProcessTimesTheFirstOutput` and the `fastClock` cap of #291 passed). Raw outputs: `/home/layup/.cache/layup-session/T-h65e-full-integration.txt` and `T-h65e-gates.txt`, `T-h65e-gates2.txt` in the same directory.
