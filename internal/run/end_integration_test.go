@@ -193,11 +193,10 @@ func TestAResultOfAClosedAttemptIsRefused(t *testing.T) {
 	spec := harness(t, base, work(helloSum))
 	ctx := context.Background()
 	spec.End = func(id string, d session.Dir, run session.Run, err error) error {
-		data, aErr := r.appendEvents(ctx, "T-ab12", 1, "", []string{"closed —"})
+		data, aErr := r.appendEvents(ctx, "T-ab12", 1, "", []string{"closed T-cd34"})
 		if aErr != nil {
 			return aErr
 		}
-		data = []byte(strings.Replace(string(data), "\tclosed\t1\t—\t—\t—\t—\t", "\tclosed\t1\t—\t—\t—\tby the test\t", 1))
 		if cErr := r.commit(ctx, map[string][]byte{"tasks/T-ab12/events.tsv": data}, "closed by the test"); cErr != nil {
 			return cErr
 		}

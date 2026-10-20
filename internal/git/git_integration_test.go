@@ -998,3 +998,63 @@ func TestUpdateRefSetsABranchOfLayupsNamespaceAndNoOther(t *testing.T) {
 		t.Errorf("main holds %s; want it unmoved at %s", got, second)
 	}
 }
+
+// A merge of two commits that touch different files is one commit with the two parents in order, the same ID twice, and no work tree
+// left; a merge that conflicts is no commit, no error and no work tree; two commits with no common ancestor have no merge base
+// (task T-89xf).
+func TestMergeMakesOneDeterministicMergeCommitOrReportsAConflict(t *testing.T) {
+	home := isolate(t)
+	dir := t.TempDir()
+	base := commitTree(t, dir, map[string]string{"a.txt": "a\n"})
+	side := func(name string, files map[string]string) string {
+		gitOK(t, dir, plain(home), "checkout", "-q", "-b", name, base)
+		write(t, dir, files)
+		must(t, Add(dir))
+		must(t, Commit(dir, "work "+name, who))
+		id, err := RevParse(dir, "HEAD")
+		must(t, err)
+		return id
+	}
+	x, d := side("x", map[string]string{"t.txt": "t\n"}), side("d", map[string]string{"u.txt": "u\n"})
+	if mb, err := MergeBase(dir, x, d); err != nil || mb != base {
+		t.Errorf("MergeBase = %q, %v; want %s", mb, err, base)
+	}
+	first, clean, err := Merge(dir, x, d, "layup run: the merge", who)
+	if err != nil || !clean {
+		t.Fatalf("Merge = %q, %v, %v; want a clean merge", first, clean, err)
+	}
+	if again, clean, err := Merge(dir, x, d, "layup run: the merge", who); err != nil || !clean || again != first {
+		t.Errorf("the second Merge = %q, %v, %v; want the same commit %s", again, clean, err, first)
+	}
+	if parents, err := Parents(dir, first); err != nil || !slices.Equal(parents, []string{x, d}) {
+		t.Errorf("the parents of the merge = %v, %v; want [%s %s]", parents, err, x, d)
+	}
+	if names, err := DiffNames(dir, x, first); err != nil || !slices.Equal(names, []string{"u.txt"}) {
+		t.Errorf("DiffNames(x, merge) = %v, %v; want [u.txt]", names, err)
+	}
+	if obj := gitOK(t, dir, plain(home), "cat-file", "-p", first); !strings.Contains(obj, "committer LAYUP test <test@layup.invalid> 1767225600 +0000\n") {
+		t.Errorf("the merge commit:\n%s\nwant the committer and the time of who", obj)
+	}
+	gitOK(t, dir, plain(home), "checkout", "-q", "-b", "cx", base)
+	write(t, dir, map[string]string{"a.txt": "x\n"})
+	must(t, Add(dir))
+	must(t, Commit(dir, "cx", who))
+	cx, _ := RevParse(dir, "HEAD")
+	gitOK(t, dir, plain(home), "checkout", "-q", "-b", "cd", base)
+	write(t, dir, map[string]string{"a.txt": "d\n"})
+	must(t, Add(dir))
+	must(t, Commit(dir, "cd", who))
+	cd, _ := RevParse(dir, "HEAD")
+	if sha, clean, err := Merge(dir, cx, cd, "m", who); sha != "" || clean || err != nil {
+		t.Errorf("Merge of a conflict = %q, %v, %v; want no commit, not clean and no error", sha, clean, err)
+	}
+	if list := strings.Fields(gitOK(t, dir, plain(home), "worktree", "list", "--porcelain")); strings.Count(strings.Join(list, " "), "worktree ") != 1 {
+		t.Errorf("work trees after the merges: %v; want the main one only", list)
+	}
+	other := t.TempDir()
+	root := commitTree(t, other, map[string]string{"z.txt": "z\n"})
+	gitOK(t, dir, plain(home), "fetch", "-q", "--", other, "HEAD:refs/heads/other")
+	if mb, err := MergeBase(dir, x, root); err == nil {
+		t.Errorf("MergeBase of unrelated commits = %q; want an error", mb)
+	}
+}

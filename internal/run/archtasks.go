@@ -83,6 +83,15 @@ Chosen option: {option}, recorded in tasks/{task}/options/{decision}.tsv of the 
 Definition of Done: docs/spec/ and docs/adr/ hold the decision {decision} as decided with the option {option}, and nothing of the other options; docs/tasks/{task}.md is the task's file. The head passes the four layup/ statuses, and a verifier on a harness outside the authors finds nothing material in scope.
 `
 
+// archIssueTitle and archIssueBody are the title and the body of the issue of an architecture task of a decision, with the option chosen.
+func archIssueTitle(id, decision string) string {
+	return "LAYUP task " + id + ": the architecture of the decision " + decision
+}
+
+func archIssueBody(id, decision, option string, ids []string) string {
+	return strings.NewReplacer("{task}", id, "{decision}", decision, "{ids}", strings.Join(ids, " "), "{option}", option).Replace(archIssueBlock)
+}
+
 // decisionTasks gives, for each decision that has a binding, the task that holds it.
 func (r *state) decisionTasks(ctx context.Context) (map[string]string, error) {
 	tasks, err := r.readRegisterRows(ctx)
@@ -127,10 +136,8 @@ func (r *state) archStage(ctx context.Context, settled []string, answer spec.Ans
 			return fmt.Errorf("the binding of %s: %w", d, err)
 		}
 		if _, err := r.openTask(ctx, openSpec{kind: "architecture", ids: ids, predecessors: predecessors,
-			title: func(id string) string { return "LAYUP task " + id + ": the architecture of the decision " + d },
-			body: func(id string, ids []string, _, _ string) string {
-				return strings.NewReplacer("{task}", id, "{decision}", d, "{ids}", strings.Join(ids, " "), "{option}", option).Replace(archIssueBlock)
-			},
+			title:      func(id string) string { return archIssueTitle(id, d) },
+			body:       func(id string, ids []string, _, _ string) string { return archIssueBody(id, d, option, ids) },
 			extra:      func(id string) map[string][]byte { return map[string][]byte{bindingPath(id, d): binding} },
 			afterIssue: func() error { return betStopAt("issue") }}); err != nil {
 			return err

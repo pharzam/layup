@@ -31,6 +31,7 @@ type CarryInput struct {
 	Task, Verifier    string
 	Harnesses, Models [][]string
 	Rendered          *RenderedInput
+	Merge             string // the merge commit of the default branch that BringUpToDate made, "" for none (task T-89xf, row 66x)
 }
 
 // closeOutPaths gives the two paths that the close-out commit may change: the task
@@ -149,15 +150,45 @@ func (s *Sessions) scopeOK(task, base, head string, names []string) (bool, error
 	return true, nil
 }
 
-// carries tells whether the parent carries the verdict of the verified head v: it is v, or the rendered commit that renderedOK accepts.
+// carries tells whether the parent carries the verdict of the verified head v: it is v, the rendered commit that renderedOK accepts, or a
+// merge commit that mergeEdge accepts whose first parent carries (an iterative walk down the first parents), the first parent being also
+// the close-out head of such a head under a merge (task T-89xf, loop.md, A task whose base moved).
 func (s *Sessions) carries(in CarryInput, v, parent string) (bool, error) {
-	if parent == v {
-		return true, nil
+	afterMerge := false
+	for {
+		if parent == v {
+			return true, nil
+		}
+		if in.Rendered != nil && parent == in.Rendered.Head {
+			return s.renderedOK(in.Rendered, v)
+		}
+		if !forge.FullSHA(parent) {
+			return false, nil
+		}
+		parents, err := git.Parents(s.Clone, parent)
+		if err != nil {
+			return false, err
+		}
+		switch {
+		case len(parents) == 2:
+			if ok, err := s.mergeEdge(parents[0], parents[1], parent); err != nil || !ok {
+				return false, err
+			}
+			afterMerge = true
+		case len(parents) == 1 && afterMerge:
+			names, err := git.DiffNames(s.Clone, parents[0], parent)
+			if err != nil {
+				return false, err
+			}
+			if ok, err := s.scopeOK(in.Task, parents[0], parent, names); err != nil || !ok {
+				return false, err
+			}
+			afterMerge = false
+		default:
+			return false, nil
+		}
+		parent = parents[0]
 	}
-	if in.Rendered != nil && parent == in.Rendered.Head {
-		return s.renderedOK(in.Rendered, v)
-	}
-	return false, nil
 }
 
 // PushCloseOut is the push hook of the close-out session: the checks of any task
@@ -207,7 +238,16 @@ func (s *Sessions) CarryVerify(ctx context.Context, in CarryInput, session strin
 		return "", fmt.Errorf("the verifier %s did not find nothing material in scope: no verdict to carry", in.Verifier)
 	}
 	var head, what string
-	if session == "" {
+	if session == "" && in.Merge != "" {
+		parents, err := git.Parents(s.Clone, in.Merge)
+		if err != nil {
+			return "", err
+		}
+		if ok, err := s.carries(in, v, in.Merge); err != nil || !ok || len(parents) != 2 {
+			return "", errors.Join(err, fmt.Errorf("%s is not a clean merge of the base above the verified head %s", in.Merge, v))
+		}
+		head, what = in.Merge, "a clean merge of the base"
+	} else if session == "" {
 		if in.Rendered == nil {
 			return "", errors.New("no session and no rendered commit are named")
 		}
@@ -246,4 +286,35 @@ func (s *Sessions) CarryVerify(ctx context.Context, in CarryInput, session strin
 		return "", err
 	}
 	return head, nil
+}
+
+// mergeEdge tells whether the commit m is a clean merge of the second parent p2, a commit of the default branch, into the first parent p1, by
+// the rule of loop.md, A task whose base moved: with mb the merge base, T = DiffNames(mb, p1) the files the task touches and P = DiffNames(mb, p2),
+// T and P are disjoint, m differs from p1 only in P and from p2 only in T. That proves the combined tree from the commit alone; whether p1 carries
+// the verdict is the caller's.
+func (s *Sessions) mergeEdge(p1, p2, m string) (bool, error) {
+	def, err := git.RevParse(s.Clone, "refs/heads/"+s.Branch)
+	if err != nil {
+		return false, err
+	}
+	if ok, err := git.IsAncestor(s.Clone, p2, def); err != nil || !ok {
+		return false, err
+	}
+	mb, err := git.MergeBase(s.Clone, p1, p2)
+	if err != nil {
+		return false, err
+	}
+	var t, p, a, b []string
+	for _, r := range []struct {
+		out        *[]string
+		from, head string
+	}{{&t, mb, p1}, {&p, mb, p2}, {&a, p1, m}, {&b, p2, m}} {
+		if *r.out, err = git.DiffNames(s.Clone, r.from, r.head); err != nil {
+			return false, err
+		}
+	}
+	within := func(sub, set []string) bool {
+		return !slices.ContainsFunc(sub, func(x string) bool { return !slices.Contains(set, x) })
+	}
+	return !slices.ContainsFunc(t, func(x string) bool { return slices.Contains(p, x) }) && within(a, p) && within(b, t), nil
 }

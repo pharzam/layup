@@ -1439,6 +1439,14 @@ failure modes worth keeping.
   an instruction that a session follows must show the sections that a later reader of the file looks for (the rendering of the bet needs
   `## 6.`, `## 7.`, `**Non-goals.**` and the phases of `## 9.`), or the reader's fixture hides the gap. Learned in `T-2vva`, #366.
 
+- ❌ **A merge that a check would accept by its result diffs, and a decision that a restart recomputes.** The carry of a verdict over a merge of the
+  base looked provable from "the two diffs from the parents to the merge are disjoint", but a merge that takes the base's version of a file both
+  parents changed has the diffs `{a}` and `{}` and changes a task path; the sound rule names the branch-change sets `T` and `P` from the merge base and
+  checks `T ∩ P = ∅`, `p1 → M ⊆ P` and `p2 → M ⊆ T`. Likewise a redo whose decision is recomputed at each restart can close the old issue and then decide
+  otherwise. **The check:** give a fabricated-commit counterexample to every proof that reads a commit alone, and write the decision to the records before
+  the first act of the forge so the restart resumes it before comparing; read the lease right before every write of the forge, the closes included.
+  Learned in `T-89xf`, #424.
+
 ## 3. Validation — how you check you are not fooling yourself
 
 A result is **untrusted** until it passes the checks below, and the pass is a

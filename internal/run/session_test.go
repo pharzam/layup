@@ -16,15 +16,17 @@ import (
 // standinStore is a records branch in memory: its files at the run's base,
 // each commit of the run, and the pushes that git refuses before one passes.
 type standinStore struct {
-	files   map[string][]byte
-	commits []map[string][]byte
-	refuse  int               // the next pushes that are refused
-	holder  string            // the run that the lease names
-	ops     []string          // each commit (by its events' last kind) and each push of a head, in order
-	pushErr error             // what PushHead gives
-	heads   map[string]string // the commit that each branch of the target holds
-	headErr error             // what BranchHead gives
-	failure error             // what Commit gives while it is set, a failure that Fenced does not retry (row 66g)
+	files    map[string][]byte
+	commits  []map[string][]byte
+	refuse   int               // the next pushes that are refused
+	holder   string            // the run that the lease names
+	ops      []string          // each commit (by its events' last kind) and each push of a head, in order
+	pushErr  error             // what PushHead gives
+	heads    map[string]string // the commit that each branch of the target holds
+	headErr  error             // what BranchHead gives
+	failure  error             // what Commit gives while it is set, a failure that Fenced does not retry (row 66g)
+	fetched  string            // what FetchBranch gives (task T-89xf)
+	fetchErr error
 }
 
 func (s *standinStore) ReadLease(context.Context) (LeaseRow, error) {
@@ -62,6 +64,21 @@ func (s *standinStore) BranchHead(_ context.Context, branch string) (string, boo
 	s.ops = append(s.ops, "read "+branch)
 	sha, ok := s.heads[branch]
 	return sha, ok, s.headErr
+}
+
+func (s *standinStore) FetchBranch(_ context.Context, branch string) (string, error) {
+	s.ops = append(s.ops, "fetch "+branch)
+	return s.fetched, s.fetchErr
+}
+
+func (s *standinStore) ReadFiles(_ context.Context, dir string) (map[string][]byte, error) {
+	out := map[string][]byte{}
+	for p, d := range s.files {
+		if rest, ok := strings.CutPrefix(p, dir+"/"); ok {
+			out[rest] = d
+		}
+	}
+	return out, nil
 }
 
 const aSHA = "0123456789abcdef0123456789abcdef01234567"

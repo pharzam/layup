@@ -135,12 +135,16 @@ checks read.
 **Decided here** (R10, task `T-xvvd`, #363, row 66g; plan review conditions 1 and 2; `OpenPullRequest`
 of `internal/run`):
 
-- **The inputs are from the records.** The head is the SHA of the last event `bound` of the attempt;
+- **The inputs are from the records.** The head is the SHA of the last event `bound` of the attempt that has a session; the head that the pull
+  request must have is the **tip** of the branch, `TipOf` (the last `bound` of any session): the same, or a merge of the base that code made above it
+  (task `T-89xf`: every commit from the tip down is the commit of an event `bound` with no session and a merge whose first parent is the
+  next, down to the head or to the rendered commit of the first bet, the one commit of code with one parent, which sits directly on the head), so a pull request carried over a merge is adopted at the merge, again and again, with no draft and no change of the register, and any other
+  move of the branch is the error below;
   the session of that event gives the start row, and **the records commit that the task started
   from** is its `records` column (the snapshot of the push check and of `layup/rules`), never the
   run's changing base and never a later session's. The branch is `task/<task>/<attempt>`.
 - **Read before write.** The pull request of the branch is read first: an open one is used, a merged
-  one is returned untouched, a closed one that is not merged is a Go error (the redo is row 66k's). The
+  one is returned untouched, a closed one that is not merged is a Go error (the wait and the redo are `BringUpToDate`'s, row 66x). The
   head of the open or the new draft must be the bound SHA: if the branch moved after the event `bound`,
   the call is a Go error (the head moved) and registers nothing (a draft just opened stays, as above).
   Only a branch with none is opened, under the lease. The number is then written by one fenced
@@ -201,7 +205,7 @@ of `internal/run`):
   `task/<task>/<attempt>`, and edits only when it is found, its number is the register's `pr` and its head SHA
   is the verifier's `base`: a newer attempt that exists while the register names the older pull request is a
   Go error, and the older pull request is never edited. A pull request that is not `open` is a Go error naming
-  the state (what a closed one means is row 66k's).
+  the state (what a closed one means is `BringUpToDate`'s, row 66x).
 - **Read before write.** A body equal to the composed one is no edit (`false`, no call). Any other body is
   replaced whole, also one that a person edited and that keeps the line of the records commit: the body is code's
   artifact in the form that the target's checks read. **The lease** is read immediately before the edit, `*LostError` when it is not held, and a failed
@@ -1353,11 +1357,12 @@ of defence and `layup/rules` the second; both read the same register.
   task that the loop brought up to date with the base.
 - A verified task whose base then moves carries its verdict over a clean merge of
   the base that changes no file it touches (the target's own rule); otherwise the
-  task is closed and redone (the closes: [`forge.md`](forge.md#the-calls-of-m2e), row 66w, task `T-xyws`; the redo: row 66x) as a new task with its own issue, which takes the old
+  task is closed and redone (the closes: [`forge.md`](forge.md#the-calls-of-m2e), row 66w, task `T-xyws`) as a new task with its own issue, which takes the old
   task's row and predecessor links (`architecture.md` §8). The redone task has an
   `closed` event on the old one and a `rebased` event on the new one
   ([the records](records.md#nfr-001--the-records-of-the-task-loop)). The files a task touches are those of `git diff --name-only` from
-  the base of its attempt to its head; for the architecture task, from the specification's verified head (REQ-012 — Shape).
+  the merge base of its head and the default branch to its head (the architecture task's attempt starts at the specification's verified head, REQ-012 — Shape).
+  The carry and the redo are [A task whose base moved](#a-task-whose-base-moved-the-carry-and-the-redo) (row 66x, task `T-89xf`).
 
 ### The ready and merge rule
 
@@ -1456,8 +1461,10 @@ did not run (`F-0003#58`, `NFR-004`):
 - **A base carries the verdict** when it is the *verified head* (the `base` of the named verifier's
   start row, for which `VerifyAt` gives `success`) or the rendered commit above it that `CheckRendered`
   accepts. A verifier of another task is a Go error. A verified head that is itself a merge commit is
-  no reason to refuse: what counts is how it got its verdict. A head that came from the verified
-  head by a clean merge of the base is **not** carried here (row 66k's) and is refused as `verdict`.
+  no reason to refuse: what counts is how it got its verdict. **Decided here** (R10, task `T-89xf`, row 66x): a head that came from
+  the verified head by a clean merge of the base that `BringUpToDate` made is carried, by the rule of
+  [A task whose base moved](#a-task-whose-base-moved-the-carry-and-the-redo) (`mergeEdge`, which `carries` calls for the parent of a
+  close-out and `CarryVerify` for the merge); any other merge commit is refused as `verdict`.
 - **`CheckRendered`** accepts the rendered commit when its only parent is the verified head, it changes
   exactly the paths of the rendered records as regular files, and `RenderingEqual` holds with the
   **pre-image of a PRD pinned to the verified head** (`RenderingEqual` alone accepts any ancestor). It
@@ -1471,6 +1478,82 @@ did not run (`F-0003#58`, `NFR-004`):
   as one fenced records commit: the merge commit's SHA, the pull request's number, session `—`. Its
   attempt is that of the `bound` events of the merged head; none, or several attempts, is a Go error
   and no event (never guessed). A second call writes nothing.
+
+### A task whose base moved: the carry and the redo
+
+**Decided here** (R10, task `T-89xf`, #424, row 66x; plan review conditions 1 to 8 of 6262560771, the Operator's decisions of
+6262587821, and conditions 1, 5 and 8 of the plan review of #367). `(*Sessions).BringUpToDate(ctx, CarryInput) (Advance, error)`
+leaves a verified task in exactly one recoverable end state: its head current with the default branch, carrying `layup/verify`, or
+the task redone. The loop-permission check is its caller's (row 66k). It gives `Advance{Task, Verified, Head}` for the first,
+`Advance{Task, Replaced}` for the second, and a `Wait` or a `Stop` for the cases below; a git read that fails is an error that writes
+nothing, never a redo.
+
+1. **The tip and the default head.** The tip `X` of the open attempt `A` (the largest `attempt` event) is the SHA of its last event
+   `bound`, of any session: the `bound` of code has none (`TipOf`; `lastBound` still skips them). The default head `D` is fetched by
+   `SessionStore.FetchBranch` (`git.Fetch` under the store's lock and token; `refs/heads/<default>` of the run's clone). The base of
+   `A` must be an ancestor of `D`; else it is an error (fail closed).
+2. **The up-to-date predicate has one home** (condition 4 of the plan review of #425, row 66y):
+   `(*Sessions).UpToDate(ctx, head) (current bool, def string, err error)` fetches `D` and gives whether `D` is an ancestor of `head`.
+   A head brought current by a merge of this section is current; testing ancestry against the verified head alone is wrong, and so is
+   selecting only the verified head or the rendered commit. Row 66y takes the head to close out from `TipOf` and asks `UpToDate`.
+3. **Up to date** (`D` is an ancestor of `X`): no write and no request. When `X` is a merge commit that this section made, the carry
+   is posted again (`CarryVerify` is idempotent), since a stop between the `bound` and the status leaves it undone.
+4. **Not up to date.** With `mb = MergeBase(X, D)`, `T = DiffNames(mb, X)` (the files the task touches) and
+   `P = DiffNames(mb, D)`: `T ∩ P = ∅` leads to `git.Merge(X, D)`; a clean merge is the carry, a conflict or an overlap is the redo.
+   Any other failure of git (including the read that classifies a conflict) is an error. A closed pull request that is not merged,
+   with no redo decided, is `Wait` `waiting for the Operator: <task>: the pull request <n> is closed and not merged`; a merged one is
+   a `Stop` (`RecordMerged`, row 66y, records it). The verdict must be `success` (`verified`) before either.
+5. **The merge commit.** `git.Merge(dir, x, d, message, who)` runs `git merge --no-ff --no-edit` in a scratch work tree at `x`,
+   with the author and the committer of the App and, as the time, the later committer time of `x` and `d`, so one input gives one SHA.
+   Exit 1 with unmerged entries is `clean=false` (the work tree is removed); every other failure is a `FailedError`. The commit is
+   kept by the ref `refs/heads/layup/merge/<task>-<attempt>`. Before it is used, the commit is checked by `mergeEdge`.
+6. **The push of the merge is announced.** The events `push <M> <branch>` and `bound <M> <branch>` with session `—` (the form of the
+   rendered commit's push, row 66j; `RepairPushes` skips them: their step resolves them). The order: the event `push` (one fenced records
+   commit), the lease, `PushHead`, the event `bound`, then `CarryVerify`. The branch must hold `X` (to push) or `M` (pushed, to bind), else
+   it is `errPushRefused`. A restart makes `M` again (the same `X` and `D` give the same SHA) and finds the events and the branch.
+   **An outstanding push is resolved first** (`adoptPushed`, round 1 of #424): before another merge is computed, an event `push` of code with
+   no `bound` is read against the branch of the forge. A branch that holds the announced `M` (the push was made and its `bound` was lost) is
+   adopted whatever `D` has become: `M` must be a merge whose first parent is the tip and that the carry rule accepts, its `bound` is written and
+   its status posted, and the comparison then goes on from `M`, so a default branch that moved again gets a merge of `D2` over `M`. A branch that
+   still holds the tip leaves the announced `M` unpushed: the next merge `M'` gets its own `push`, and a `push` with no `bound` is harmless to every
+   reader, which looks only at `bound`. Any other head of the branch (a push from outside) is `errPushRefused`, before any comparison, merge or redo,
+   and writes nothing.
+7. **The carry rule (`mergeEdge`).** A merge commit `M` with the parents `[p1, p2]` is carried when: `p1` carries (the verified head, the
+   accepted rendered commit, an earlier accepted merge, or the one-commit close-out head of such a head that `scopeOK` accepts, the
+   close-out only under a merge), `p2` is an ancestor of the default head, and with `mb = MergeBase(p1, p2)`,
+   `T = DiffNames(mb, p1)` and `P = DiffNames(mb, p2)`: `T ∩ P = ∅`, `DiffNames(p1, M) ⊆ P` and `DiffNames(p2, M) ⊆ T`. Disjoint
+   *result* diffs are not enough: a merge that takes the base's version of a file both parents changed has the diffs `{a}` and `{}` and
+   changes a task path. The rule proves the combined tree from the commit alone. `CarryInput` gains `Merge`; `CarryVerify` with no session
+   and `Merge` posts `verified head <sha> plus a clean merge of the base`, after checking the edge again. `PushCloseOut` on `M` composes
+   unchanged, since `carries` accepts `M`.
+8. **The redo.** A task whose branch holds the rendered commit (a `bound` of code with one parent) is a `Stop`
+   `waiting for the Operator: <task>: a redo would drop the rendered commit` in `M2e` (the Operator's decision on #424; the follow-on is
+   row 66t's, `M2g`). Otherwise, in this order:
+   1. **Preflight, no write.** The pull requests of the attempts' branches are read (a merged one is an error), the new ID is drawn by
+      `taskID`, and every file of the combined commit is built and read by its own reader (`ReadRegister`, `ReadEvents`, `ReadOptions`).
+   2. **The intent.** One fenced commit writes `tasks/<old>/redo.txt`: `<new ID> <D>` and a line feed, before any act of the forge. A
+      restart reads it before any comparison, so a decision that flips afterwards cannot leave the old issue closed with no redo.
+   3. Each pull request of the old task that is open is closed, the lease read right before each close; one that `ClosePullRequest`
+      gives merged is an error `<old>: the pull request <n> merged after its redo`. Then `CloseIssue(old)`, then `OpenIssue`, each after
+      the lease is read; a lost lease stops before the act.
+   4. **One fenced records commit** holds `tasks.tsv` (the row replaced in place), the event `closed` of the old task (attempt `A`, detail
+      the new ID), the event `rebased` of the new task (attempt 1, base `D`, detail the old ID) and the bindings. Last, so no act waits for a
+      repair after it.
+   Recovery: every act before the commit repeats from the intent (a repeated close is a `200`, `forge.md`). **Known limit:** a stop after
+   `OpenIssue` and before the commit opens a second issue at the restart; the records hold one redo, and the first issue stays open on the
+   forge, as in [The opening of a Shape task](#the-task-register).
+9. **What the new row takes.** The row stays in place; the kind, the requirement IDs, the size and the predecessors are kept, the `pr` is
+   cleared, the issue and `opened` are new, and each task that named the old one names the new one. The bytes of each
+   `tasks/<old>/options/<decision>.tsv` are copied to the new ID. The issue text is the composer of the kind with the new ID and the
+   inputs the records keep: the decision and option of the binding for a bet's architecture task; for a Shape task its **opening pin**: the SHA-256 of
+   `spec/draft.tsv` and the records commit that its issue was opened with (`openShapeTask` keeps them in `tasks/<task>/pin.txt`, in the commit that
+   registers the task: `<sha256> <records commit>`, a 64 and a 40 hexadecimal characters, and a line feed, captured once for the issue and the pin together), which the combined commit of a redo copies to the new task by value, so any
+   number of redos keeps the pin of the original issue, and a later draft, a later snapshot or the first session's records change nothing. A Shape task with no pin, or with one that is not two full hashes,
+   is an error before any write, never a pin guessed from another record. Attempts, sessions and the frozen list are not carried.
+   The first attempt of the new task starts at the `base` of its event `rebased`, in the driver.
+10. **The older attempt's pull request** (O22). `RepairTask` closes, for an open attempt `A > 1`, the open pull request of each older
+    attempt's branch, only when the register's `pr` is the pull request of the branch of `A` (so a new attempt that has no pull request
+    leaves the older one open). A task without such an attempt needs no forge.
 
 ### The gate jobs read the base
 
@@ -2439,7 +2522,8 @@ of the answer, and `spec/inventory.tsv`; for `loop`, the rows of `tasks.tsv`,
   attempt's base (`StartAttempt`). The new attempt holds no such event, so the rule
   starts one attempt however many pushes were lost and however often the repair runs,
   and a restart between the commit of `refused` and the commit of `attempt` still
-  starts it. The hook then reposts the comments of the task's sessions (next item).
+  starts it. The hook then closes the older attempts' pull requests and reposts the comments of the task's sessions (next item;
+  the close is O22 of [A task whose base moved](#a-task-whose-base-moved-the-carry-and-the-redo), row 66x).
   Each stage keeps what an earlier stage committed.
 - **The comments of a session** ([`session.md`](session.md#a-comment-for-a-session)):
   from `M2e` the comment of a task session is posted on the task's issue and no
@@ -2468,7 +2552,7 @@ parsed review records of the valid handoffs, so each position is told from the r
 
 | Position | Records show | Act |
 | -------- | ------------ | --- |
-| attempt | no event `attempt` | `StartAttempt` at the base the caller gives: the base of the run for the specification, the specification's verified head for the architecture |
+| attempt | no event `attempt` | `StartAttempt` at the base the caller gives: the base of the run for the specification, the specification's verified head for the architecture; the `base` of the event `rebased` of a task that a redo made ([A task whose base moved](#a-task-whose-base-moved-the-carry-and-the-redo)) |
 | plan, plan review, developer | no session of the stage, or its last session has no event `result` (a stopped run) | the milestone cap, the pair, the prompt file, `TaskSession` |
 | finish | the last session of the stage ended `done` with the status `completed` and has no event `handoff` | `PostComment`, then `RecordHandoff`; both read before they write, so an interrupted post or handoff resumes |
 | to the verifier | the developer's session is bound and has no handoff | `RecordHandoff` with the commits and the task file |
@@ -2592,6 +2676,7 @@ the milestone covers it end to end.
 | The parameter change at the boundary | integration | With the stand-in forge and real git: `layup run` writes `parameters.tsv` with its six rows in the commit of the first task (a table that exists is kept, one that its reader refuses refuses the task); a `set` is copied and, at the boundary, applied as one records commit when its author has the role of the row, and changes nothing before it; each refusal (`form`, `author`, `name`, `value`, `bound`) is reported with its item, changes nothing and is judged again at the next boundary; a set that is applied is not applied again, the later of two wins in the order of the comment IDs, and an edit of a comment is no set; a set of a Start row is recorded with the note that the run reads `start.tsv`; the write is fenced by the lease. The call between steps is row 66k's. |
 | The frozen test list | unit | The list freezes at the first valid handoff to the verifier, a changed source hash is a finding, an amendment freezes it again, and a test that does not fail at the base makes the handoff invalid. |
 | The gate jobs read the base (F-22) | integration | A pull request that edits `docs/gates.tsv` to pass a failing kind is judged by the base's file and fails; the catalog workflow reads the base; a pull request of a `batch/<point>` branch reads its own head's gate files and a pull request of any other branch does not; a change of a `config` path of the manifest waits for the code owner (shown on a real repository in the demo). The setup (task `T-jew3`, unit and integration): `.github/CODEOWNERS` of the four path classes with the Operator's login is in the tree of a new target, the ruleset sets `require_code_owner_review` with no required approval, and a target set up before the rule gets the update by its recorded ruleset ID, which keeps what the file never held ([`scaffold.md`](scaffold.md#the-code-owner-rule)). |
+| A task whose base moved (row 66x, `T-89xf`) | unit; integration (the `httptest` forge, real git) | A task whose base moved with no overlap is merged by code, the merge is pushed as code, and `layup/verify` is carried over it (a fabricated merge that takes the base's version of a file both changed, or whose second parent is off the default branch, is not carried); a task that overlaps the base, or whose merge conflicts, is redone as one new task under the old row with the order close the pull request, close the issue, open the issue, one records commit, and a restart after each act completes it once; a failed git read, a lost lease and a merged pull request are errors; the older attempt's pull request is closed once. |
 | The task loop with the stand-in forge (inventory) | integration | With the httptest forge, fake harness programs and the real git: a gate failure goes back to the developer as a new attempt; the close-out commit is refused when it changes a file other than the task file and the completed log; the pull request body links the records commit; the merge is at the head SHA. |
 | The specification task, end to end (inventory) | e2e | In CI on a local fake forge, with scripted harnesses and scripted approver comments: Shape, the first bet, and the specification task merged with the four `layup/` statuses green. |
 | The demo (inventory) | uat | On a real test target, the idea owner reads a bet brief of five parts within the line limit and answers it with one comment; the specification task merges after the first bet, with each handoff valid, the rendered commit holding the MoSCoW and Phase columns, and the four `layup/` checks green. |

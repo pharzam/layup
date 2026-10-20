@@ -39,6 +39,7 @@ type Advance struct {
 	Verified   bool
 	Head       string // the bound head that the verifier found nothing material in
 	Wait, Stop string
+	Replaced   string // the ID of the task that redoes this one (task T-89xf, row 66x)
 }
 
 // shapeCycleCap is the review-cycle cap of a Shape task: the target's rule is 1, and 2 for a change of a
@@ -497,7 +498,7 @@ func (s *Sessions) AdvanceShapeTask(ctx context.Context, in ShapeTaskInput) (Adv
 		case posQuestion:
 			stop, wait, err = s.askStage(ctx, in, v, st)
 		case posAttempt:
-			_, err = s.StartAttempt(ctx, in.Task, in.Base)
+			_, err = s.StartAttempt(ctx, in.Task, firstBase(v.Events, in.Base))
 		case posPlan, posReview, posDeveloper:
 			stop, err = s.runStage(ctx, in, v, st)
 		case posPlanFinish, posReviewFinish, posVerifierFinish:
