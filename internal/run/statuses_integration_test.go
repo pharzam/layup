@@ -14,6 +14,8 @@ import (
 	"testing"
 
 	"github.com/pharzam/layup/internal/gate"
+	"github.com/pharzam/layup/internal/rules"
+	"github.com/pharzam/layup/internal/spec"
 	"github.com/pharzam/layup/internal/tsv"
 )
 
@@ -202,6 +204,76 @@ func TestTheRulesStatusReadsTheRegisterOfTheRecordsCommit(t *testing.T) {
 	}
 	if _, err := l.r.RulesAt(ctx, RulesInput{Task: "T-ab12", Base: l.a.base, Head: bound, RegisterRev: l.a.records}); err == nil {
 		t.Error("a commit of the caller for a head that has a bound session: no error")
+	}
+}
+
+// Plan review condition 4 of #427 (row 66aa): the findings of a restart are recomputed, never recorded, so the result of the basic rule for a
+// head that a session pushed is the one of the register at the records commit of that session's start row, whatever the records hold now.
+// U7: the known results, with the current records commit advanced to a register that makes x.go a rule path.
+func TestTheRulesResultOfAPushedHeadStaysThatOfItsBoundSessionWhenTheRecordsMoveOn(t *testing.T) {
+	l := statusWorldOfARun(t)
+	ctx := context.Background()
+	id := l.dev(1, "claude", map[string]string{"x.go": "package x\n"}, okResult)
+	bound := l.bound(id)
+	l.records(map[string][]byte{"rule-paths.tsv": []byte(register + "x.go\t—\tarchitecture\n")})
+	now := l.r.Store.(*recordsStore).Base()
+	if now == l.a.records {
+		t.Fatal("the records commit did not move")
+	}
+	if st, err := l.r.RulesAt(ctx, RulesInput{Task: "T-ab12", Base: l.a.base, Head: bound}); err != nil || st != (Status{RulesContext, "success", "no rule path"}) {
+		t.Errorf("RulesAt of the pushed head after the records moved on = %+v, %v; want success, no rule path (the register of its session)", st, err)
+	}
+	if _, err := l.r.RulesAt(ctx, RulesInput{Task: "T-ab12", Base: l.a.base, Head: bound, RegisterRev: now}); err == nil {
+		t.Error("the current records commit given for a head that has a bound session: no error")
+	}
+	// The same file in a head that no session pushed is judged by the commit that the caller names: the new register fails it.
+	other := childCommit(t, l.r.Clone, l.a.base, map[string]string{"x.go": "package x\n"})
+	if st, err := l.r.RulesAt(ctx, RulesInput{Task: "T-ab12", Base: l.a.base, Head: other, RegisterRev: now}); err != nil || st != (Status{RulesContext, "failure", "rule path: x.go"}) {
+		t.Errorf("RulesAt of an unpushed head by the current register = %+v, %v; want failure, rule path: x.go", st, err)
+	}
+	// RulesResult, which RulesAt takes the status of, gives the same results.
+	if r, err := l.r.RulesResult(ctx, RulesInput{Task: "T-ab12", Base: l.a.base, Head: bound}); err != nil || r != (rules.Result{State: rules.Success, Reason: rules.ReasonNoRulePath}) {
+		t.Errorf("RulesResult of the pushed head = %+v, %v; want success, no rule path", r, err)
+	}
+	if r, err := l.r.RulesResult(ctx, RulesInput{Task: "T-ab12", Base: l.a.base, Head: other, RegisterRev: now}); err != nil || r != (rules.Result{State: rules.Failure, Reason: rules.ReasonRulePath, Path: "x.go"}) {
+		t.Errorf("RulesResult of an unpushed head = %+v, %v; want failure, rule path, x.go", r, err)
+	}
+}
+
+// U6 on the records (plan review conditions 3 and 5): CheckFindings reads the spec table of the head and the rules result by the register of the
+// records commit, and the kind of the task from the register. A head with no row is a stop, a table the reader refuses is a Go error.
+func TestCheckFindingsReadsTheSpecTableTheRulesResultAndTheKindOfTheTask(t *testing.T) {
+	l := statusWorldOfARun(t)
+	ctx := context.Background()
+	head := childCommit(t, l.r.Clone, l.a.base, map[string]string{"AGENTS.md": "changed\n"})
+	in := HeadInput{Task: "T-ab12", Base: l.a.base, Head: head, RegisterRev: l.a.records}
+	if got, err := l.r.CheckFindings(ctx, in); err != nil || got.Stop != "layup/spec is error: no row of the spec check for the head" || len(got.Findings) != 0 {
+		t.Errorf("CheckFindings of a head with no row = %+v, %v; want the stop for the spec status error", got, err)
+	}
+	var table bytes.Buffer
+	if err := spec.WriteSpecCheck(&table, head, specTableRows(map[int]string{1: "fail"})); err != nil {
+		t.Fatal(err)
+	}
+	l.records(map[string][]byte{specPath("T-ab12"): table.Bytes()})
+	rule := specRuleList()[1]
+	want := []Finding{{Rule: "spec:" + rule, Text: "detail of " + rule}, {Rule: "rules:rule path", File: "AGENTS.md", Text: "rule path: AGENTS.md"}}
+	if got, err := l.r.CheckFindings(ctx, in); err != nil || got.Stop != "" || !reflect.DeepEqual(got.Findings, want) {
+		t.Errorf("CheckFindings = %+v, %v; want %+v", got, err, want)
+	}
+	// The kind batch: the rules failure is expected before an approval exists, the spec failure is not.
+	files, err := registerFiles(nil, nil, Task{ID: "T-ab12", Issue: taskIssue, Kind: "batch", Requirements: []string{"REQ-005"}, Size: "small", Opened: sessionAt})
+	if err != nil {
+		t.Fatal(err)
+	}
+	l.records(files)
+	if got, err := l.r.CheckFindings(ctx, in); err != nil || got.Stop != "" || !reflect.DeepEqual(got.Findings, want[:1]) {
+		t.Errorf("CheckFindings of a batch task = %+v, %v; want the spec finding alone", got, err)
+	}
+	// A table with a rule missing is refused by its reader: an error, never a stop and never a finding.
+	short := bytes.Join(bytes.SplitAfter(table.Bytes(), []byte("\n"))[:9], nil)
+	l.records(map[string][]byte{specPath("T-ab12"): short})
+	if got, err := l.r.CheckFindings(ctx, in); err == nil || got.Stop != "" || len(got.Findings) != 0 {
+		t.Errorf("CheckFindings of an incomplete table = %+v, %v; want a Go error", got, err)
 	}
 }
 

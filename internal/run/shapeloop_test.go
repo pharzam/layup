@@ -233,3 +233,35 @@ func TestABoundOfASessionOutsideTheDeveloperRoleStopsTheStep(t *testing.T) {
 		}
 	}
 }
+
+// U8: the judgement of the four statuses of a bound head (task T-tnxn, #427): an error or a not-active verifier stops before any retry, whatever else
+// failed; a failure of layup/spec or layup/rules is a check to retry with, and one of layup/gates a gate failure.
+func TestAFailedSpecOrRulesStatusIsACheckToRetryAndAnErrorStopsFirst(t *testing.T) {
+	post := func(context, state, d string) StatusPost { return StatusPost{Status: Status{context, state, d}} }
+	ok := []StatusPost{post(GatesContext, "success", "pass"), post(SpecContext, "success", "pass"), post(RulesContext, "success", "no rule path"), post(VerifyContext, "pending", "waiting")}
+	with := func(i int, p StatusPost) []StatusPost {
+		out := append([]StatusPost(nil), ok...)
+		out[i] = p
+		return out
+	}
+	for _, c := range []struct {
+		name          string
+		posts         []StatusPost
+		stop          string
+		gates, checks bool
+	}{
+		{"all pass", ok, "", false, false},
+		{"layup/spec failed", with(1, post(SpecContext, "failure", "criteria: x")), "", false, true},
+		{"layup/rules failed", with(2, post(RulesContext, "failure", "rule path: a")), "", false, true},
+		{"layup/gates failed", with(0, post(GatesContext, "failure", "exits")), "", true, false},
+		{"gates and spec failed", append(with(0, post(GatesContext, "failure", "exits"))[:1:1], with(1, post(SpecContext, "failure", "criteria: x"))[1:]...), "", true, true},
+		{"layup/gates error beside a spec failure", append(with(0, post(GatesContext, "error", "no manifest"))[:1:1], with(1, post(SpecContext, "failure", "criteria: x"))[1:]...), "T-sp01: layup/gates is error: no manifest", false, false},
+		{"layup/rules error after a spec failure", append(with(1, post(SpecContext, "failure", "criteria: x"))[:2:2], with(2, post(RulesContext, "error", "register"))[2:]...), "T-sp01: layup/rules is error: register", false, false},
+		{"not-active after a rules failure", append(with(2, post(RulesContext, "failure", "rule path: a"))[:3:3], post(VerifyContext, "failure", "not-active: no harness")), "T-sp01: not-active: no harness", false, false},
+	} {
+		stop, gates, checks := judgeStatuses("T-sp01", c.posts)
+		if stop != c.stop || gates != c.gates || checks != c.checks {
+			t.Errorf("%s: judgeStatuses = %q, gates %v, checks %v; want %q, %v, %v", c.name, stop, gates, checks, c.stop, c.gates, c.checks)
+		}
+	}
+}
