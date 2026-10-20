@@ -171,3 +171,7 @@ ok K4: restore evidence of mutants
 ok K5: projection: figure 2474/30, maximum 2800/30, margin 326/0 (the figure at landing is still measured at landing)
 ok K6: conditions table
 ```
+
+## The up-to-date helper, for the fold with K4 (T-ehb4, pushed at 08c5ec6, `upToDate` in `internal/run/finish.go`)
+
+K3's helper is `(*Sessions).UpToDate(ctx, head) (current bool, def string, err error)` in `internal/run/baseup.go`. It fetches the default branch with `SessionStore.FetchBranch` (so it writes the ref `refs/heads/<default>` of the run's clone) and gives whether that head is an ancestor of `head`, with the head it fetched. `head` is the tip of the open attempt, `TipOf(events, attempt)`, the last event `bound` of any session: the verified head, the rendered commit, a merge of this task, or a close-out head. It does not look for the head that carries the verdict; `BringUpToDate` and `carries` decide that. The helper it replaces or is replaced by must therefore be given the carried head, as K4's D1 does. Whichever of K3 and K4 lands second merges main and folds the two into one home (condition 4 of the plan review of #425).
