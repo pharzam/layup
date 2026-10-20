@@ -34,6 +34,7 @@ Write the specification of the task T-ab12 (kind specification, issue 701) from 
 The IDs. The row R-NNN of kind requirement in spec/draft.tsv is the requirement REQ-NNN, and the row R-NNN of kind non-functional is NFR-NNN, with the same three digits. A row of kind success-criterion is no requirement and has no such ID. Keep the IDs as the draft listed above numbers them; never renumber one.
 In docs/prd/ write the product requirements document of the target, with one row for each requirement ID, in these forms (every line starts at the first column):
 
+## 6. Functional requirements
 | REQ | Statement | MoSCoW | Phase | Facts |
 | --- | --------- | ------ | ----- | ----- |
 | REQ-<NNN> | <the requirement> |  |  | F-0004#<n> F-0003 |
@@ -42,7 +43,7 @@ In docs/prd/ write the product requirements document of the target, with one row
 | ----------- | -------------------- |
 | `REQ-<NNN>` | <the acceptance criterion> |
 
-## 9. Success metrics
+## 8. Success metrics
 | Metric | Fact |
 | ------ | ---- |
 | <the success criterion> | F-0004#<n> |
@@ -51,7 +52,12 @@ In docs/prd/ write the product requirements document of the target, with one row
 | --- | ----- | --------- | --- | ---- | ---- |
 | REQ-<NNN> | F-0004#<n> F-0003 | — | — | — | — |
 
-Write NFR-<NNN> in place of REQ-<NNN> for a row of kind non-functional, and keep the backticks around the ID in the acceptance table. Leave the MoSCoW and Phase cells empty (not —): code fills them at the bet. In a Facts cell, cite each fact that the row covers: F-0004#<n> for the fact n of spec/spans.tsv, and Q-<NNN> for a fact of intake/answers.tsv; always cite F-0003, the existing record, too. Write one acceptance row and one matrix row for each requirement ID, and one success row for each success-criterion row of the draft, citing the facts it covers.
+## 9. Rollout & phases
+| Phase | Name | Ships |
+| ----- | ---- | ----- |
+| <the phase tag> | <the name of the phase> | <what ships in it> |
+
+Put the row of a requirement of kind non-functional, written NFR-<NNN> in place of REQ-<NNN>, in the same form under the heading "## 7. Non-functional requirements", and write a paragraph that starts with **Non-goals.** (the non-goals of the target, or none), to which code appends the facts that the bet marks out of scope. Keep the backticks around the ID in the acceptance table. Leave the MoSCoW and Phase cells empty (not —): code fills them at the bet. In the phases table write one row for each phase of the target (at least one): its tag, the tag that the bet's answer gives a requirement, its name and what ships in it. In a Facts cell, cite each fact that the row covers: F-0004#<n> for the fact n of spec/spans.tsv, and Q-<NNN> for a fact of intake/answers.tsv; always cite F-0003, the existing record, too. Write one acceptance row and one matrix row for each requirement ID, and one success row for each success-criterion row of the draft, citing the facts it covers.
 In docs/spec/ write, for each requirement ID, a section whose heading holds the ID as a whole word, for example "## REQ-<NNN> — <title>", with a non-empty text under it.
 Write docs/tasks/T-ab12.md, the task's file, in the form of the target's docs/tasks/. Write nothing under docs/facts/: code renders it at the first bet.
 The required outputs for the result file are docs/tasks/T-ab12.md and each file of docs/prd/ and docs/spec/ that you wrote.

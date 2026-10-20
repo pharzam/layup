@@ -1,0 +1,39 @@
+2026-10-20T14:57:05Z
+--- FAIL: TestABetsTableRefusesEachBrokenRule (0.00s)
+    bet_test.go:39: a second first bet: err = <nil>; want line 3, column "kind"
+    bet_test.go:39: a later bet before the first: err = <nil>; want line 2, column "kind"
+    bet_test.go:39: no brief hash: err = <nil>; want line 2, column "brief_sha256"
+    bet_test.go:39: a bet with no appetite: err = <nil>; want line 2, column "appetite_usd"
+    bet_test.go:39: a no-bet with an appetite: err = <nil>; want line 2, column "appetite_usd"
+    bet_test.go:44: control: 0 rows, <nil>; want 3 and no error
+--- FAIL: TestTheBetRowIsItsAnswerAndItsBrief (0.00s)
+    bet_test.go:57: betRow = []; want ["1" "first" "901" "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1" "40.0" "30.5" "905" "db=pg web=go" "bet" "77" "2026-10-08T14:00:00Z"]
+    bet_test.go:62: betRow of a no-bet = []; want ["1" "first" "901" "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1" "" "" "905" "" "no-bet" "77" "2026-10-08T14:00:00Z"]
+--- FAIL: TestTheOptionLinesAreTheColumnOptions (0.00s)
+    bet_test.go:69: optionsColumn = []; want [db=pg web=go]
+--- FAIL: TestThePhaseTagsAreTheFirstColumnOfSection9 (0.00s)
+    bet_test.go:80: tags = []; want [1 alpha 3]
+--- FAIL: TestTheAnswerIsTheEarliestFirstCopyOfTheApproverAfterTheBrief (0.00s)
+    bet_test.go:111: betAnswer = {Reqs:map[] Facts:map[] Options:map[] Verdict: Milestone:}, [], false; want the copy 99 with the option db=pg
+--- FAIL: TestTheSettledDecisionsAreTheOptionLines (0.00s)
+    bet_test.go:126: settled = []; want [db] (web had one survivor)
+--- FAIL: TestTheRequirementsOfAnOptionAreItsMappedRows (0.00s)
+    bet_test.go:139: ids = [], <nil>; want [NFR-002 REQ-004] once each (NFR-009 is no requirement of the draft)
+    bet_test.go:147: rows ["F-3" "Inv-1" "ADR-0001" "Q-002"]: err = <nil>; want the decision db: its option pg names no requirement
+    bet_test.go:147: rows ["R-005"]: err = <nil>; want the decision db: its option pg names no requirement
+    bet_test.go:147: rows []: err = <nil>; want the decision db: its option pg names no requirement
+--- FAIL: TestTheRenderedRecordsAreOnePRDAndTheFactsFile (0.00s)
+    bet_test.go:169: paths = []; want the facts record F-0005 and the PRD
+--- FAIL: TestTheNextVersionOfTheInventory (0.00s)
+    bet_test.go:201: the first version: 0 files, 0 rows, <nil>
+--- FAIL: TestBetFollowsShapeOnlyOnceTheScaffoldIsDone (0.00s)
+    bet_test.go:220: the last rows = [scaffold-push shape]; want shape, bet
+FAIL
+FAIL	github.com/pharzam/layup/internal/run	0.184s
+--- FAIL: TestAPushAndABoundOfCodeHaveNoSession (0.00s)
+    session_test.go:374: a push and a bound with no session: line 5, column "session": session is the empty value exactly for attempt, closed, rebased, merged and a refused whose reason is pair (a handoff has one unless code wrote it for a rendered task); want read
+FAIL
+FAIL	github.com/pharzam/layup/internal/records	0.010s
+FAIL
+exit=1
+2026-10-20T14:57:07Z
