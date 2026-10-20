@@ -230,3 +230,9 @@ written first, run against the code of `894320a` with the stub `renderedPushed` 
 - Green: the same tests, 2026-10-20T16:18:24Z to 16:19:13Z, exit=0, after `renderedPushed` (the push or the bound of code in the attempt), `phaseTagsOf` (the header `Phase | Name | Ships`, the separator row, rows of three cells) and the check of the branch tip before the
   pending push (`errPushRefused` unless it is the verified head or the rendered commit).
 - Finding 2c: `closeOutOn` runs a close-out session (TaskSession, the harness `close-out`, `PushCloseOut` with the records of this world's own bet) on the rendered commit that `TestTheStepBet` produced; it is accepted, bound, and `CarryVerify` carries the verdict. It is green at once, since the consumer was already right; its falsifier is a mutant of the consumer, not run here.
+
+## Final gates after the fixes of round 1, on the head `bef3388` (origin/main `a6c1d77` merged)
+
+- `go build ./...`, `go vet ./...`, `go vet -tags=integration ./...`, `go vet -tags=e2e ./...`: exit 0; `gofmt -l .`: empty; `go test -count=1 ./...` and `go test -count=1 -tags=e2e ./...`: ok.
+- The full integration level, `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 90m ./...`: 2026-10-20T16:36:34Z to 16:39:31Z, exit=0.
+- `adr-lint`, `prd-lint`, `link-lint` (2958 links), `run-discipline-tests` (138 passed), `nested-checkout-check`, `setup-check`, `git diff --check origin/main HEAD`: all OK.
