@@ -1488,3 +1488,252 @@ Only `.github/workflows/ci.yml`, `runs/T-c826/conditions.md` and this record
 are modified. Each has no trailing spaces and exactly one final newline. The
 checker, both runners, task check and setup check retain their recorded hashes.
 No task file, completed-log line or fixture was changed in Stage B.
+
+## Stage C — S2 hosted red evidence, before checker implementation
+
+The supplied CI evidence was corroborated by reading GitHub job 118887031319's
+steps and decoded log through the connected GitHub tools before editing the
+checker. [Run 39497659349, nested-checkout-check](https://github.com/pharzam/layup/actions/runs/39497659349/job/118887031319)
+concluded **failure**. Checkout tested merge SHA
+`1470b85f4f34cc30c40e804c7ab204e03d56c7ca`, merging Stage B head
+`fc3a65a84e6f7b62353a8a1081769dda70266553` into
+`d27b33180a1aa82c23f3ab66e757e06de356eb35`. The kept checker has SHA-256
+`a847cc17bffd2ea5957f65159068d595e43b34ac5a43adc5113c06355a522b63`.
+
+The log directly records these results (hosted times are log timestamps, not
+local `date` measurements):
+
+```text
+2026-10-20T21:07:12.1826151Z restored from main: docs/adr/adr-lint.sh
+2026-10-20T21:07:12.1845169Z restored from main: docs/prd/prd-lint.sh
+2026-10-20T21:07:12.1855071Z restored from main: docs/links/link-lint.sh
+2026-10-20T21:07:12.1870459Z restored from main: docs/tests/run-discipline-tests.sh
+2026-10-20T21:07:12.1890997Z restored from main: docs/ci/pr-link-lint.sh
+2026-10-20T21:07:12.1911758Z restored from main: docs/ci/review-record-lint.sh
+2026-10-20T21:07:12.1912679Z kept as written for PR 453: docs/tests/freeze-check.sh
+2026-10-20T21:07:12.1932099Z restored from main: docs/tests/freeze-check/run.sh
+2026-10-20T21:07:12.1947524Z restored from main: docs/tests/freeze-check/run-all.sh
+2026-10-20T21:07:12.5889937Z Run sh docs/tests/freeze-check/run-all.sh
+2026-10-20T21:07:22.6598294Z freeze-check: 7 passed, 74 failed
+2026-10-20T21:07:22.6612549Z Process completed with exit code 1.
+```
+
+The restore and nested-checkout fixture steps succeeded; the freeze suite step
+failed. This is the intended complete-output mismatch against the unchanged
+checker, rather than a checkout, YAML or environment failure. No hosted green is
+claimed in this uncommitted build stage; the coordinating session must obtain it
+after committing and pushing this implementation.
+
+## Stage C local verification log
+
+Source: Stage B parent `fc3a65a84e6f7b62353a8a1081769dda70266553` plus
+this stage's uncommitted checker and documentation. The checker SHA-256 is
+`04c5918711f4f07e5fdd423424cbf14b99a43aefd77e76603c183b98cc96e2cf`.
+The canonical sentence assertion was observed red before the documentation edit;
+all S1 expectations remained unchanged. Both green suites report **81 passed,
+0 failed**, under `sh` and `bash --posix` respectively. No fixture, runner,
+workflow, setup-check, review-record parser or task-check source changed in Stage C.
+Existing attributes preserve the CRLF fixtures; no new attribute is needed.
+
+All command rows below record actual direct subprocess exits, with UTC endpoints
+read immediately before and after using `date -u +%FT%TZ`. Output is captured
+without a pipeline. `$W` denotes this worktree and `$C` denotes
+`/home/layup/.cache/layup-session/tmp-green/T-c826-stage-c`; paths in commands
+are abbreviated only for readability. Every run inherits `TMPDIR=$C`.
+Checker mutants run the full unchanged suite from a fresh copy of `docs/tests`
+under `$C/Mxx`, because run.sh has no alternate-checker hook. Each restored
+control runs its named case after a verified byte-for-byte restore. Task-assertion
+copies use the original read-only Git directory only for `git show` of the two
+baseline runners. Scratch drivers and disposable trees stay outside the worktree; this record holds observations only.
+
+The mutation driver stopped once before constructing M37: a requested workflow
+edit matched six jobs, so its uniqueness assertion refused the edit. No test ran
+for that attempt and no kill is credited. The resumed driver scopes edits to
+`nested-checkout-check`; M53–M66 record its actual assertion runs. M51 and M52
+are the two independent limit-addition mutants. Labels retain their actual run IDs.
+
+| Run | Command | Working directory | Start UTC | End UTC | Exit | Observed result |
+| --- | --- | --- | --- | --- | --- | --- |
+| before-docs | `sh runs/T-c826/checks.sh 453` | `$W` | 2026-10-20T21:17:20Z | 2026-10-20T21:17:21Z | 1 | FAIL: canonical margin sentence; every other task assertion passed. |
+| s3-suite | `sh docs/tests/freeze-check/run-all.sh` | `$W` | 2026-10-20T21:17:47Z | 2026-10-20T21:17:55Z | 0 | freeze-check: 81 passed, 0 failed |
+| s5-task-check | `sh runs/T-c826/checks.sh 453` | `$W` | 2026-10-20T21:18:31Z | 2026-10-20T21:18:31Z | 0 | All 13 task assertions passed with actual PR 453. |
+| s5-sh-suite | `sh docs/tests/freeze-check/run-all.sh` | `$W` | 2026-10-20T21:18:31Z | 2026-10-20T21:18:39Z | 0 | freeze-check: 81 passed, 0 failed |
+| s5-bash-suite | `bash --posix docs/tests/freeze-check/run-all.sh` | `$W` | 2026-10-20T21:19:01Z | 2026-10-20T21:19:09Z | 0 | freeze-check: 81 passed, 0 failed |
+| M01-syntax | `sh -n $C/M01/docs/tests/freeze-check.sh` | `$C/M01` | 2026-10-20T21:20:04Z | 2026-10-20T21:20:04Z | 0 | Valid POSIX shell syntax; no diagnostics. |
+| M01-mutant | `sh docs/tests/freeze-check/run-all.sh` | `$C/M01` | 2026-10-20T21:20:04Z | 2026-10-20T21:20:11Z | 1 | freeze-check: 73 passed, 8 failed; good-K5-evidence-kinds failed as recorded in mutants.md. |
+| M01-restored | `sh docs/tests/freeze-check/run.sh docs/tests/freeze-check/good-K5-evidence-kinds` | `$C/M01` | 2026-10-20T21:20:11Z | 2026-10-20T21:20:11Z | 0 | Restored hash matched; named control green. |
+| M02-syntax | `sh -n $C/M02/docs/tests/freeze-check.sh` | `$C/M02` | 2026-10-20T21:20:12Z | 2026-10-20T21:20:12Z | 0 | Valid POSIX shell syntax; no diagnostics. |
+| M02-mutant | `sh docs/tests/freeze-check/run-all.sh` | `$C/M02` | 2026-10-20T21:20:12Z | 2026-10-20T21:20:20Z | 1 | freeze-check: 80 passed, 1 failed; good-K5-evidence-kinds failed as recorded in mutants.md. |
+| M02-restored | `sh docs/tests/freeze-check/run.sh docs/tests/freeze-check/good-K5-evidence-kinds` | `$C/M02` | 2026-10-20T21:20:20Z | 2026-10-20T21:20:20Z | 0 | Restored hash matched; named control green. |
+| M03-syntax | `sh -n $C/M03/docs/tests/freeze-check.sh` | `$C/M03` | 2026-10-20T21:20:20Z | 2026-10-20T21:20:20Z | 0 | Valid POSIX shell syntax; no diagnostics. |
+| M03-mutant | `sh docs/tests/freeze-check/run-all.sh` | `$C/M03` | 2026-10-20T21:20:20Z | 2026-10-20T21:20:29Z | 1 | freeze-check: 80 passed, 1 failed; good-K5-evidence-kinds failed as recorded in mutants.md. |
+| M03-restored | `sh docs/tests/freeze-check/run.sh docs/tests/freeze-check/good-K5-evidence-kinds` | `$C/M03` | 2026-10-20T21:20:29Z | 2026-10-20T21:20:29Z | 0 | Restored hash matched; named control green. |
+| M04-syntax | `sh -n $C/M04/docs/tests/freeze-check.sh` | `$C/M04` | 2026-10-20T21:20:29Z | 2026-10-20T21:20:29Z | 0 | Valid POSIX shell syntax; no diagnostics. |
+| M04-mutant | `sh docs/tests/freeze-check/run-all.sh` | `$C/M04` | 2026-10-20T21:20:29Z | 2026-10-20T21:20:37Z | 1 | freeze-check: 80 passed, 1 failed; good-K5-evidence-kinds failed as recorded in mutants.md. |
+| M04-restored | `sh docs/tests/freeze-check/run.sh docs/tests/freeze-check/good-K5-evidence-kinds` | `$C/M04` | 2026-10-20T21:20:37Z | 2026-10-20T21:20:37Z | 0 | Restored hash matched; named control green. |
+| M05-syntax | `sh -n $C/M05/docs/tests/freeze-check.sh` | `$C/M05` | 2026-10-20T21:20:37Z | 2026-10-20T21:20:37Z | 0 | Valid POSIX shell syntax; no diagnostics. |
+| M05-mutant | `sh docs/tests/freeze-check/run-all.sh` | `$C/M05` | 2026-10-20T21:20:37Z | 2026-10-20T21:20:46Z | 1 | freeze-check: 74 passed, 7 failed; good-K5-evidence-kinds failed as recorded in mutants.md. |
+| M05-restored | `sh docs/tests/freeze-check/run.sh docs/tests/freeze-check/good-K5-evidence-kinds` | `$C/M05` | 2026-10-20T21:20:46Z | 2026-10-20T21:20:46Z | 0 | Restored hash matched; named control green. |
+| M06-syntax | `sh -n $C/M06/docs/tests/freeze-check.sh` | `$C/M06` | 2026-10-20T21:20:46Z | 2026-10-20T21:20:46Z | 0 | Valid POSIX shell syntax; no diagnostics. |
+| adr | `sh docs/adr/adr-lint.sh` | `$W` | 2026-10-20T21:20:50Z | 2026-10-20T21:20:51Z | 0 | adr-lint: OK |
+| prd | `sh docs/prd/prd-lint.sh` | `$W` | 2026-10-20T21:20:51Z | 2026-10-20T21:20:51Z | 0 | prd-lint: OK |
+| M06-mutant | `sh docs/tests/freeze-check/run-all.sh` | `$C/M06` | 2026-10-20T21:20:46Z | 2026-10-20T21:20:54Z | 1 | freeze-check: 74 passed, 7 failed; good-K5-evidence-kinds failed as recorded in mutants.md. |
+| M06-restored | `sh docs/tests/freeze-check/run.sh docs/tests/freeze-check/good-K5-evidence-kinds` | `$C/M06` | 2026-10-20T21:20:54Z | 2026-10-20T21:20:55Z | 0 | Restored hash matched; named control green. |
+| M07-syntax | `sh -n $C/M07/docs/tests/freeze-check.sh` | `$C/M07` | 2026-10-20T21:20:55Z | 2026-10-20T21:20:55Z | 0 | Valid POSIX shell syntax; no diagnostics. |
+| M07-mutant | `sh docs/tests/freeze-check/run-all.sh` | `$C/M07` | 2026-10-20T21:20:55Z | 2026-10-20T21:21:03Z | 1 | freeze-check: 78 passed, 3 failed; good-K5-evidence-inputs failed as recorded in mutants.md. |
+| M07-restored | `sh docs/tests/freeze-check/run.sh docs/tests/freeze-check/good-K5-evidence-inputs` | `$C/M07` | 2026-10-20T21:21:03Z | 2026-10-20T21:21:03Z | 0 | Restored hash matched; named control green. |
+| M08-syntax | `sh -n $C/M08/docs/tests/freeze-check.sh` | `$C/M08` | 2026-10-20T21:21:03Z | 2026-10-20T21:21:03Z | 0 | Valid POSIX shell syntax; no diagnostics. |
+| links | `sh docs/links/link-lint.sh` | `$W` | 2026-10-20T21:20:51Z | 2026-10-20T21:21:03Z | 0 | link-lint: OK  2992 links resolved |
+| discipline | `sh docs/tests/run-discipline-tests.sh` | `$W` | 2026-10-20T21:21:03Z | 2026-10-20T21:21:06Z | 0 | run-discipline-tests: 138 passed, 0 failed |
+| M08-mutant | `sh docs/tests/freeze-check/run-all.sh` | `$C/M08` | 2026-10-20T21:21:03Z | 2026-10-20T21:21:11Z | 1 | freeze-check: 76 passed, 5 failed; good-K5-evidence-added failed as recorded in mutants.md. |
+| M08-restored | `sh docs/tests/freeze-check/run.sh docs/tests/freeze-check/good-K5-evidence-added` | `$C/M08` | 2026-10-20T21:21:11Z | 2026-10-20T21:21:11Z | 0 | Restored hash matched; named control green. |
+| M09-syntax | `sh -n $C/M09/docs/tests/freeze-check.sh` | `$C/M09` | 2026-10-20T21:21:11Z | 2026-10-20T21:21:11Z | 0 | Valid POSIX shell syntax; no diagnostics. |
+| M09-mutant | `sh docs/tests/freeze-check/run-all.sh` | `$C/M09` | 2026-10-20T21:21:11Z | 2026-10-20T21:21:19Z | 1 | freeze-check: 80 passed, 1 failed; good-K5-evidence-deleted failed as recorded in mutants.md. |
+| M09-restored | `sh docs/tests/freeze-check/run.sh docs/tests/freeze-check/good-K5-evidence-deleted` | `$C/M09` | 2026-10-20T21:21:19Z | 2026-10-20T21:21:19Z | 0 | Restored hash matched; named control green. |
+| M10-syntax | `sh -n $C/M10/docs/tests/freeze-check.sh` | `$C/M10` | 2026-10-20T21:21:19Z | 2026-10-20T21:21:19Z | 0 | Valid POSIX shell syntax; no diagnostics. |
+| M10-mutant | `sh docs/tests/freeze-check/run-all.sh` | `$C/M10` | 2026-10-20T21:21:19Z | 2026-10-20T21:21:27Z | 1 | freeze-check: 75 passed, 6 failed; good-K5-evidence-modified failed as recorded in mutants.md. |
+| M10-restored | `sh docs/tests/freeze-check/run.sh docs/tests/freeze-check/good-K5-evidence-modified` | `$C/M10` | 2026-10-20T21:21:27Z | 2026-10-20T21:21:27Z | 0 | Restored hash matched; named control green. |
+| M11-syntax | `sh -n $C/M11/docs/tests/freeze-check.sh` | `$C/M11` | 2026-10-20T21:21:27Z | 2026-10-20T21:21:27Z | 0 | Valid POSIX shell syntax; no diagnostics. |
+| setup | `sh docs/setup/setup-check.sh` | `$W` | 2026-10-20T21:21:06Z | 2026-10-20T21:21:27Z | 0 | setup-check: kit-linters OK |
+| whitespace | `git diff --check` | `$W` | 2026-10-20T21:21:27Z | 2026-10-20T21:21:27Z | 0 | No diagnostics. |
+| M11-mutant | `sh docs/tests/freeze-check/run-all.sh` | `$C/M11` | 2026-10-20T21:21:27Z | 2026-10-20T21:21:36Z | 1 | freeze-check: 79 passed, 2 failed; good-K5-evidence-modified failed as recorded in mutants.md. |
+| M11-restored | `sh docs/tests/freeze-check/run.sh docs/tests/freeze-check/good-K5-evidence-modified` | `$C/M11` | 2026-10-20T21:21:36Z | 2026-10-20T21:21:36Z | 0 | Restored hash matched; named control green. |
+| M12-syntax | `sh -n $C/M12/docs/tests/freeze-check.sh` | `$C/M12` | 2026-10-20T21:21:36Z | 2026-10-20T21:21:36Z | 0 | Valid POSIX shell syntax; no diagnostics. |
+| M12-mutant | `sh docs/tests/freeze-check/run-all.sh` | `$C/M12` | 2026-10-20T21:21:36Z | 2026-10-20T21:21:44Z | 1 | freeze-check: 79 passed, 2 failed; bad-usage-evidence-other-task failed as recorded in mutants.md. |
+| M12-restored | `sh docs/tests/freeze-check/run.sh docs/tests/freeze-check/bad-usage-evidence-other-task` | `$C/M12` | 2026-10-20T21:21:44Z | 2026-10-20T21:21:44Z | 0 | Restored hash matched; named control green. |
+| M13-syntax | `sh -n $C/M13/docs/tests/freeze-check.sh` | `$C/M13` | 2026-10-20T21:21:44Z | 2026-10-20T21:21:44Z | 0 | Valid POSIX shell syntax; no diagnostics. |
+| T-3ff9-clone | `git clone --quiet --shared --no-checkout $W $C/replay-T-3ff9` | `$W` | 2026-10-20T21:21:49Z | 2026-10-20T21:21:49Z | 0 | Disposable clone operation succeeded. |
+| T-3ff9-checkout | `git checkout --quiet --detach 0dfac539061cda59b233ab222dca76d111c72db8` | `$C/replay-T-3ff9` | 2026-10-20T21:21:49Z | 2026-10-20T21:21:49Z | 0 | Disposable clone operation succeeded. |
+| T-3ff9-consumers | `git grep -n -F runs/T-3ff9 -- ':!runs/T-3ff9/*.md' ':!runs/T-3ff9/*.tsv'` | `$C/replay-T-3ff9` | 2026-10-20T21:21:49Z | 2026-10-20T21:21:49Z | 0 | Task-record citations found; no execution consumer at the named task paths. |
+| T-3ff9-records | `git show 0dfac539061cda59b233ab222dca76d111c72db8:runs/T-3ff9/test-runs.md 0dfac539061cda59b233ab222dca76d111c72db8:runs/T-3ff9/conditions.md 0dfac539061cda59b233ab222dca76d111c72db8:runs/T-3ff9/semantic.md 0dfac539061cda59b233ab222dca76d111c72db8:runs/T-3ff9/mentions.tsv` | `$C/replay-T-3ff9` | 2026-10-20T21:21:49Z | 2026-10-20T21:21:49Z | 0 | Committed contents inspected for evidence role and consumers. |
+| T-3ff9-check-source | `git show 0dfac539061cda59b233ab222dca76d111c72db8:runs/T-3ff9/checks.sh` | `$C/replay-T-3ff9` | 2026-10-20T21:21:49Z | 2026-10-20T21:21:49Z | 0 | Committed contents inspected for evidence role and consumers. |
+| T-3ff9-gross | `git diff --no-renames --numstat df9bfacf33054741564dbf0254a741f0d4be1e0f HEAD` | `$C/replay-T-3ff9` | 2026-10-20T21:21:49Z | 2026-10-20T21:21:49Z | 0 | Committed numstat captured; arithmetic in real-heads.md. |
+| T-3ff9-projection | `sh $W/docs/tests/freeze-check.sh --task T-3ff9 --base df9bfacf33054741564dbf0254a741f0d4be1e0f --budget 650/20 --evidence runs/T-3ff9/test-runs.md --evidence runs/T-3ff9/conditions.md --evidence runs/T-3ff9/semantic.md --evidence runs/T-3ff9/mentions.tsv` | `$C/replay-T-3ff9` | 2026-10-20T21:21:49Z | 2026-10-20T21:21:50Z | 0 | ok K5: projection: figure 318/12, maximum 650/20, tolerance 130/4, limit 780/24, margin 462/12 (the figure at landing is still measured at landing) |
+| T-b6fn-clone | `git clone --quiet --shared --no-checkout $W $C/replay-T-b6fn` | `$W` | 2026-10-20T21:21:50Z | 2026-10-20T21:21:50Z | 0 | Disposable clone operation succeeded. |
+| T-b6fn-checkout | `git checkout --quiet --detach 78386339e297ed1e1a4bd8ff35d2af5189bbfd6f` | `$C/replay-T-b6fn` | 2026-10-20T21:21:50Z | 2026-10-20T21:21:50Z | 0 | Disposable clone operation succeeded. |
+| T-b6fn-consumers | `git grep -n -F runs/T-b6fn -- ':!runs/T-b6fn/*.md' ':!runs/T-b6fn/*.tsv'` | `$C/replay-T-b6fn` | 2026-10-20T21:21:50Z | 2026-10-20T21:21:50Z | 0 | Task-record citations found; no execution consumer at the named task paths. |
+| T-b6fn-records | `git show 78386339e297ed1e1a4bd8ff35d2af5189bbfd6f:runs/T-b6fn/test-runs.md 78386339e297ed1e1a4bd8ff35d2af5189bbfd6f:runs/T-b6fn/conditions.md 78386339e297ed1e1a4bd8ff35d2af5189bbfd6f:runs/T-b6fn/real-heads.md` | `$C/replay-T-b6fn` | 2026-10-20T21:21:50Z | 2026-10-20T21:21:50Z | 0 | Committed contents inspected for evidence role and consumers. |
+| T-b6fn-gross | `git diff --no-renames --numstat 99ff86235b726f8842120dafb2356b1aff035238 HEAD` | `$C/replay-T-b6fn` | 2026-10-20T21:21:50Z | 2026-10-20T21:21:50Z | 0 | Committed numstat captured; arithmetic in real-heads.md. |
+| T-b6fn-projection | `sh $W/docs/tests/freeze-check.sh --task T-b6fn --base 99ff86235b726f8842120dafb2356b1aff035238 --budget 1300/170 --evidence runs/T-b6fn/test-runs.md --evidence runs/T-b6fn/conditions.md --evidence runs/T-b6fn/real-heads.md` | `$C/replay-T-b6fn` | 2026-10-20T21:21:50Z | 2026-10-20T21:21:51Z | 1 | FAIL K5: -:0: projection: figure 2023/235, maximum 1300/170, tolerance 260/4, limit 1560/174, margin -463/-61 (the figure at landing is still measured at landing) |
+| M13-mutant | `sh docs/tests/freeze-check/run-all.sh` | `$C/M13` | 2026-10-20T21:21:44Z | 2026-10-20T21:21:53Z | 1 | freeze-check: 80 passed, 1 failed; bad-usage-evidence-task-prefix failed as recorded in mutants.md. |
+| M13-restored | `sh docs/tests/freeze-check/run.sh docs/tests/freeze-check/bad-usage-evidence-task-prefix` | `$C/M13` | 2026-10-20T21:21:53Z | 2026-10-20T21:21:53Z | 0 | Restored hash matched; named control green. |
+| M14-syntax | `sh -n $C/M14/docs/tests/freeze-check.sh` | `$C/M14` | 2026-10-20T21:21:53Z | 2026-10-20T21:21:53Z | 0 | Valid POSIX shell syntax; no diagnostics. |
+| M14-mutant | `sh docs/tests/freeze-check/run-all.sh` | `$C/M14` | 2026-10-20T21:21:53Z | 2026-10-20T21:22:01Z | 1 | freeze-check: 80 passed, 1 failed; bad-usage-evidence-traversal failed as recorded in mutants.md. |
+| M14-restored | `sh docs/tests/freeze-check/run.sh docs/tests/freeze-check/bad-usage-evidence-traversal` | `$C/M14` | 2026-10-20T21:22:01Z | 2026-10-20T21:22:01Z | 0 | Restored hash matched; named control green. |
+| M15-syntax | `sh -n $C/M15/docs/tests/freeze-check.sh` | `$C/M15` | 2026-10-20T21:22:01Z | 2026-10-20T21:22:01Z | 0 | Valid POSIX shell syntax; no diagnostics. |
+| M15-mutant | `sh docs/tests/freeze-check/run-all.sh` | `$C/M15` | 2026-10-20T21:22:01Z | 2026-10-20T21:22:10Z | 1 | freeze-check: 80 passed, 1 failed; bad-usage-evidence-suffix failed as recorded in mutants.md. |
+| M15-restored | `sh docs/tests/freeze-check/run.sh docs/tests/freeze-check/bad-usage-evidence-suffix` | `$C/M15` | 2026-10-20T21:22:10Z | 2026-10-20T21:22:10Z | 0 | Restored hash matched; named control green. |
+| M16-syntax | `sh -n $C/M16/docs/tests/freeze-check.sh` | `$C/M16` | 2026-10-20T21:22:10Z | 2026-10-20T21:22:10Z | 0 | Valid POSIX shell syntax; no diagnostics. |
+| M16-mutant | `sh docs/tests/freeze-check/run-all.sh` | `$C/M16` | 2026-10-20T21:22:10Z | 2026-10-20T21:22:18Z | 1 | freeze-check: 80 passed, 1 failed; bad-usage-evidence-missing failed as recorded in mutants.md. |
+| M16-restored | `sh docs/tests/freeze-check/run.sh docs/tests/freeze-check/bad-usage-evidence-missing` | `$C/M16` | 2026-10-20T21:22:18Z | 2026-10-20T21:22:18Z | 0 | Restored hash matched; named control green. |
+| M17-syntax | `sh -n $C/M17/docs/tests/freeze-check.sh` | `$C/M17` | 2026-10-20T21:22:18Z | 2026-10-20T21:22:18Z | 0 | Valid POSIX shell syntax; no diagnostics. |
+| M17-mutant | `sh docs/tests/freeze-check/run-all.sh` | `$C/M17` | 2026-10-20T21:22:18Z | 2026-10-20T21:22:27Z | 1 | freeze-check: 80 passed, 1 failed; good-K5-evidence-literal failed as recorded in mutants.md. |
+| M17-restored | `sh docs/tests/freeze-check/run.sh docs/tests/freeze-check/good-K5-evidence-literal` | `$C/M17` | 2026-10-20T21:22:27Z | 2026-10-20T21:22:27Z | 0 | Restored hash matched; named control green. |
+| M18-syntax | `sh -n $C/M18/docs/tests/freeze-check.sh` | `$C/M18` | 2026-10-20T21:22:27Z | 2026-10-20T21:22:27Z | 0 | Valid POSIX shell syntax; no diagnostics. |
+| M18-mutant | `sh docs/tests/freeze-check/run-all.sh` | `$C/M18` | 2026-10-20T21:22:27Z | 2026-10-20T21:22:35Z | 1 | freeze-check: 80 passed, 1 failed; good-K5-evidence-duplicate failed as recorded in mutants.md. |
+| M18-restored | `sh docs/tests/freeze-check/run.sh docs/tests/freeze-check/good-K5-evidence-duplicate` | `$C/M18` | 2026-10-20T21:22:35Z | 2026-10-20T21:22:36Z | 0 | Restored hash matched; named control green. |
+| M19-syntax | `sh -n $C/M19/docs/tests/freeze-check.sh` | `$C/M19` | 2026-10-20T21:22:36Z | 2026-10-20T21:22:36Z | 0 | Valid POSIX shell syntax; no diagnostics. |
+| M19-mutant | `sh docs/tests/freeze-check/run-all.sh` | `$C/M19` | 2026-10-20T21:22:36Z | 2026-10-20T21:22:44Z | 1 | freeze-check: 21 passed, 60 failed; good-K5-line-limit failed as recorded in mutants.md. |
+| M19-restored | `sh docs/tests/freeze-check/run.sh docs/tests/freeze-check/good-K5-line-limit` | `$C/M19` | 2026-10-20T21:22:44Z | 2026-10-20T21:22:44Z | 0 | Restored hash matched; named control green. |
+| M20-syntax | `sh -n $C/M20/docs/tests/freeze-check.sh` | `$C/M20` | 2026-10-20T21:22:44Z | 2026-10-20T21:22:44Z | 0 | Valid POSIX shell syntax; no diagnostics. |
+| M20-mutant | `sh docs/tests/freeze-check/run-all.sh` | `$C/M20` | 2026-10-20T21:22:44Z | 2026-10-20T21:22:53Z | 1 | freeze-check: 78 passed, 3 failed; good-K5-percentage failed as recorded in mutants.md. |
+| M20-restored | `sh docs/tests/freeze-check/run.sh docs/tests/freeze-check/good-K5-percentage` | `$C/M20` | 2026-10-20T21:22:53Z | 2026-10-20T21:22:53Z | 0 | Restored hash matched; named control green. |
+| M21-syntax | `sh -n $C/M21/docs/tests/freeze-check.sh` | `$C/M21` | 2026-10-20T21:22:53Z | 2026-10-20T21:22:53Z | 0 | Valid POSIX shell syntax; no diagnostics. |
+| M21-mutant | `sh docs/tests/freeze-check/run-all.sh` | `$C/M21` | 2026-10-20T21:22:53Z | 2026-10-20T21:23:01Z | 1 | freeze-check: 80 passed, 1 failed; good-K5-ceiling failed as recorded in mutants.md. |
+| M21-restored | `sh docs/tests/freeze-check/run.sh docs/tests/freeze-check/good-K5-ceiling` | `$C/M21` | 2026-10-20T21:23:01Z | 2026-10-20T21:23:01Z | 0 | Restored hash matched; named control green. |
+| M22-syntax | `sh -n $C/M22/docs/tests/freeze-check.sh` | `$C/M22` | 2026-10-20T21:23:01Z | 2026-10-20T21:23:01Z | 0 | Valid POSIX shell syntax; no diagnostics. |
+| M22-mutant | `sh docs/tests/freeze-check/run-all.sh` | `$C/M22` | 2026-10-20T21:23:01Z | 2026-10-20T21:23:10Z | 1 | freeze-check: 80 passed, 1 failed; good-K5-truncation failed as recorded in mutants.md. |
+| M22-restored | `sh docs/tests/freeze-check/run.sh docs/tests/freeze-check/good-K5-truncation` | `$C/M22` | 2026-10-20T21:23:10Z | 2026-10-20T21:23:10Z | 0 | Restored hash matched; named control green. |
+| M23-syntax | `sh -n $C/M23/docs/tests/freeze-check.sh` | `$C/M23` | 2026-10-20T21:23:10Z | 2026-10-20T21:23:10Z | 0 | Valid POSIX shell syntax; no diagnostics. |
+| M23-mutant | `sh docs/tests/freeze-check/run-all.sh` | `$C/M23` | 2026-10-20T21:23:10Z | 2026-10-20T21:23:19Z | 1 | freeze-check: 18 passed, 63 failed; good-K5-file-limit failed as recorded in mutants.md. |
+| M23-restored | `sh docs/tests/freeze-check/run.sh docs/tests/freeze-check/good-K5-file-limit` | `$C/M23` | 2026-10-20T21:23:19Z | 2026-10-20T21:23:19Z | 0 | Restored hash matched; named control green. |
+| M24-syntax | `sh -n $C/M24/docs/tests/freeze-check.sh` | `$C/M24` | 2026-10-20T21:23:19Z | 2026-10-20T21:23:19Z | 0 | Valid POSIX shell syntax; no diagnostics. |
+| M24-mutant | `sh docs/tests/freeze-check/run-all.sh` | `$C/M24` | 2026-10-20T21:23:19Z | 2026-10-20T21:23:27Z | 1 | freeze-check: 80 passed, 1 failed; bad-K5-over-lines failed as recorded in mutants.md. |
+| M24-restored | `sh docs/tests/freeze-check/run.sh docs/tests/freeze-check/bad-K5-over-lines` | `$C/M24` | 2026-10-20T21:23:27Z | 2026-10-20T21:23:27Z | 0 | Restored hash matched; named control green. |
+| M25-syntax | `sh -n $C/M25/docs/tests/freeze-check.sh` | `$C/M25` | 2026-10-20T21:23:27Z | 2026-10-20T21:23:27Z | 0 | Valid POSIX shell syntax; no diagnostics. |
+| M25-mutant | `sh docs/tests/freeze-check/run-all.sh` | `$C/M25` | 2026-10-20T21:23:27Z | 2026-10-20T21:23:36Z | 1 | freeze-check: 80 passed, 1 failed; good-K5-line-limit failed as recorded in mutants.md. |
+| M25-restored | `sh docs/tests/freeze-check/run.sh docs/tests/freeze-check/good-K5-line-limit` | `$C/M25` | 2026-10-20T21:23:36Z | 2026-10-20T21:23:36Z | 0 | Restored hash matched; named control green. |
+| M26-syntax | `sh -n $C/M26/docs/tests/freeze-check.sh` | `$C/M26` | 2026-10-20T21:23:36Z | 2026-10-20T21:23:36Z | 0 | Valid POSIX shell syntax; no diagnostics. |
+| M26-mutant | `sh docs/tests/freeze-check/run-all.sh` | `$C/M26` | 2026-10-20T21:23:36Z | 2026-10-20T21:23:44Z | 1 | freeze-check: 80 passed, 1 failed; bad-K5-over-files failed as recorded in mutants.md. |
+| M26-restored | `sh docs/tests/freeze-check/run.sh docs/tests/freeze-check/bad-K5-over-files` | `$C/M26` | 2026-10-20T21:23:44Z | 2026-10-20T21:23:45Z | 0 | Restored hash matched; named control green. |
+| M27-syntax | `sh -n $C/M27/docs/tests/freeze-check.sh` | `$C/M27` | 2026-10-20T21:23:45Z | 2026-10-20T21:23:45Z | 0 | Valid POSIX shell syntax; no diagnostics. |
+| M27-mutant | `sh docs/tests/freeze-check/run-all.sh` | `$C/M27` | 2026-10-20T21:23:45Z | 2026-10-20T21:23:53Z | 1 | freeze-check: 80 passed, 1 failed; good-K5-file-limit failed as recorded in mutants.md. |
+| M27-restored | `sh docs/tests/freeze-check/run.sh docs/tests/freeze-check/good-K5-file-limit` | `$C/M27` | 2026-10-20T21:23:53Z | 2026-10-20T21:23:53Z | 0 | Restored hash matched; named control green. |
+| M28-syntax | `sh -n $C/M28/docs/tests/freeze-check.sh` | `$C/M28` | 2026-10-20T21:23:53Z | 2026-10-20T21:23:53Z | 0 | Valid POSIX shell syntax; no diagnostics. |
+| M28-mutant | `sh docs/tests/freeze-check/run-all.sh` | `$C/M28` | 2026-10-20T21:23:53Z | 2026-10-20T21:24:02Z | 1 | freeze-check: 18 passed, 63 failed; good-K5-line-limit failed as recorded in mutants.md. |
+| M28-restored | `sh docs/tests/freeze-check/run.sh docs/tests/freeze-check/good-K5-line-limit` | `$C/M28` | 2026-10-20T21:24:02Z | 2026-10-20T21:24:02Z | 0 | Restored hash matched; named control green. |
+| M29-syntax | `sh -n $C/M29/docs/tests/freeze-check.sh` | `$C/M29` | 2026-10-20T21:24:02Z | 2026-10-20T21:24:02Z | 0 | Valid POSIX shell syntax; no diagnostics. |
+| M29-mutant | `sh docs/tests/freeze-check/run-all.sh` | `$C/M29` | 2026-10-20T21:24:02Z | 2026-10-20T21:24:11Z | 1 | freeze-check: 18 passed, 63 failed; good-K5-file-limit failed as recorded in mutants.md. |
+| M29-restored | `sh docs/tests/freeze-check/run.sh docs/tests/freeze-check/good-K5-file-limit` | `$C/M29` | 2026-10-20T21:24:11Z | 2026-10-20T21:24:11Z | 0 | Restored hash matched; named control green. |
+| M30-syntax | `sh -n $C/M30/docs/tests/freeze-check.sh` | `$C/M30` | 2026-10-20T21:24:11Z | 2026-10-20T21:24:11Z | 0 | Valid POSIX shell syntax; no diagnostics. |
+| M30-mutant | `sh docs/tests/freeze-check/run-all.sh` | `$C/M30` | 2026-10-20T21:24:11Z | 2026-10-20T21:24:19Z | 1 | freeze-check: 18 passed, 63 failed; good-K5-no-closeout failed as recorded in mutants.md. |
+| M30-restored | `sh docs/tests/freeze-check/run.sh docs/tests/freeze-check/good-K5-no-closeout` | `$C/M30` | 2026-10-20T21:24:19Z | 2026-10-20T21:24:20Z | 0 | Restored hash matched; named control green. |
+| M31-syntax | `sh -n $C/M31/docs/tests/freeze-check.sh` | `$C/M31` | 2026-10-20T21:24:20Z | 2026-10-20T21:24:20Z | 0 | Valid POSIX shell syntax; no diagnostics. |
+| M31-mutant | `sh docs/tests/freeze-check/run-all.sh` | `$C/M31` | 2026-10-20T21:24:20Z | 2026-10-20T21:24:28Z | 1 | freeze-check: 18 passed, 63 failed; good-K5-no-closeout failed as recorded in mutants.md. |
+| M31-restored | `sh docs/tests/freeze-check/run.sh docs/tests/freeze-check/good-K5-no-closeout` | `$C/M31` | 2026-10-20T21:24:28Z | 2026-10-20T21:24:28Z | 0 | Restored hash matched; named control green. |
+| M32-syntax | `sh -n $C/M32/docs/tests/freeze-check.sh` | `$C/M32` | 2026-10-20T21:24:28Z | 2026-10-20T21:24:28Z | 0 | Valid POSIX shell syntax; no diagnostics. |
+| M32-mutant | `sh docs/tests/freeze-check/run-all.sh` | `$C/M32` | 2026-10-20T21:24:28Z | 2026-10-20T21:24:37Z | 1 | freeze-check: 80 passed, 1 failed; bad-usage-closeout failed as recorded in mutants.md. |
+| M32-restored | `sh docs/tests/freeze-check/run.sh docs/tests/freeze-check/bad-usage-closeout` | `$C/M32` | 2026-10-20T21:24:37Z | 2026-10-20T21:24:37Z | 0 | Restored hash matched; named control green. |
+| M33-syntax | `sh -n $C/M33/docs/tests/freeze-check.sh` | `$C/M33` | 2026-10-20T21:24:37Z | 2026-10-20T21:24:37Z | 0 | Valid POSIX shell syntax; no diagnostics. |
+| M51-syntax | `sh -n docs/tests/freeze-check.sh` | `$C/M51` | 2026-10-20T21:24:41Z | 2026-10-20T21:24:41Z | 0 | Valid POSIX shell syntax; no diagnostics. |
+| M33-mutant | `sh docs/tests/freeze-check/run-all.sh` | `$C/M33` | 2026-10-20T21:24:37Z | 2026-10-20T21:24:45Z | 1 | freeze-check: 80 passed, 1 failed; bad-usage-evidence-no-value failed as recorded in mutants.md. |
+| M33-restored | `sh docs/tests/freeze-check/run.sh docs/tests/freeze-check/bad-usage-evidence-no-value` | `$C/M33` | 2026-10-20T21:24:45Z | 2026-10-20T21:24:45Z | 0 | Restored hash matched; named control green. |
+| M34-mutant | `sh runs/T-c826/checks.sh 453` | `$C/M34` | 2026-10-20T21:24:45Z | 2026-10-20T21:24:45Z | 1 | Named task assertion failed; canonical margin sentence failed as recorded in mutants.md. |
+| M34-restored | `sh runs/T-c826/checks.sh 453` | `$C/M34` | 2026-10-20T21:24:45Z | 2026-10-20T21:24:46Z | 0 | Restored hash matched; named control green. |
+| M35-syntax | `sh -n $C/M35/docs/tests/freeze-check/run.sh` | `$C/M35` | 2026-10-20T21:24:46Z | 2026-10-20T21:24:46Z | 0 | Valid POSIX shell syntax; no diagnostics. |
+| M35-mutant | `sh runs/T-c826/checks.sh 453` | `$C/M35` | 2026-10-20T21:24:46Z | 2026-10-20T21:24:46Z | 1 | Named task assertion failed; unchanged runner: docs/tests/freeze-check/run.sh failed as recorded in mutants.md. |
+| M35-restored | `sh runs/T-c826/checks.sh 453` | `$C/M35` | 2026-10-20T21:24:46Z | 2026-10-20T21:24:46Z | 0 | Restored hash matched; named control green. |
+| M36-syntax | `sh -n $C/M36/docs/tests/freeze-check/run-all.sh` | `$C/M36` | 2026-10-20T21:24:46Z | 2026-10-20T21:24:46Z | 0 | Valid POSIX shell syntax; no diagnostics. |
+| M36-mutant | `sh runs/T-c826/checks.sh 453` | `$C/M36` | 2026-10-20T21:24:46Z | 2026-10-20T21:24:46Z | 1 | Named task assertion failed; unchanged runner: docs/tests/freeze-check/run-all.sh failed as recorded in mutants.md. |
+| M36-restored | `sh runs/T-c826/checks.sh 453` | `$C/M36` | 2026-10-20T21:24:46Z | 2026-10-20T21:24:46Z | 0 | Restored hash matched; named control green. |
+| M51-mutant | `sh docs/tests/freeze-check/run-all.sh` | `$C/M51` | 2026-10-20T21:24:41Z | 2026-10-20T21:24:49Z | 1 | freeze-check: 18 passed, 63 failed; good-K5-line-limit failed as recorded in mutants.md. |
+| M51-restored | `sh docs/tests/freeze-check/run.sh docs/tests/freeze-check/good-K5-line-limit` | `$C/M51` | 2026-10-20T21:24:49Z | 2026-10-20T21:24:49Z | 0 | Restored hash matched; named control green. |
+| M52-syntax | `sh -n docs/tests/freeze-check.sh` | `$C/M52` | 2026-10-20T21:24:49Z | 2026-10-20T21:24:49Z | 0 | Valid POSIX shell syntax; no diagnostics. |
+| M52-mutant | `sh docs/tests/freeze-check/run-all.sh` | `$C/M52` | 2026-10-20T21:24:49Z | 2026-10-20T21:24:58Z | 1 | freeze-check: 18 passed, 63 failed; good-K5-file-limit failed as recorded in mutants.md. |
+| M52-restored | `sh docs/tests/freeze-check/run.sh docs/tests/freeze-check/good-K5-file-limit` | `$C/M52` | 2026-10-20T21:24:58Z | 2026-10-20T21:24:58Z | 0 | Restored hash matched; named control green. |
+| M53-mutant | `sh runs/T-c826/checks.sh 453` | `$C/M53` | 2026-10-20T21:25:15Z | 2026-10-20T21:25:15Z | 1 | Named task assertion failed; all nine baseline paths failed as recorded in mutants.md. |
+| M53-restored | `sh runs/T-c826/checks.sh 453` | `$C/M53` | 2026-10-20T21:25:15Z | 2026-10-20T21:25:15Z | 0 | Restored hash matched; named control green. |
+| M54-mutant | `sh runs/T-c826/checks.sh 453` | `$C/M54` | 2026-10-20T21:25:15Z | 2026-10-20T21:25:15Z | 1 | Named task assertion failed; all nine baseline paths failed as recorded in mutants.md. |
+| M54-restored | `sh runs/T-c826/checks.sh 453` | `$C/M54` | 2026-10-20T21:25:15Z | 2026-10-20T21:25:15Z | 0 | Restored hash matched; named control green. |
+| M55-mutant | `sh runs/T-c826/checks.sh 453` | `$C/M55` | 2026-10-20T21:25:15Z | 2026-10-20T21:25:15Z | 1 | Named task assertion failed; all nine baseline paths failed as recorded in mutants.md. |
+| M55-restored | `sh runs/T-c826/checks.sh 453` | `$C/M55` | 2026-10-20T21:25:15Z | 2026-10-20T21:25:15Z | 0 | Restored hash matched; named control green. |
+| M56-mutant | `sh runs/T-c826/checks.sh 453` | `$C/M56` | 2026-10-20T21:25:15Z | 2026-10-20T21:25:15Z | 1 | Named task assertion failed; kept checker requires the pull_request event failed as recorded in mutants.md. |
+| M56-restored | `sh runs/T-c826/checks.sh 453` | `$C/M56` | 2026-10-20T21:25:15Z | 2026-10-20T21:25:15Z | 0 | Restored hash matched; named control green. |
+| M57-mutant | `sh runs/T-c826/checks.sh 453` | `$C/M57` | 2026-10-20T21:25:15Z | 2026-10-20T21:25:15Z | 1 | Named task assertion failed; one literal PR number and only the checker path failed as recorded in mutants.md. |
+| M57-restored | `sh runs/T-c826/checks.sh 453` | `$C/M57` | 2026-10-20T21:25:15Z | 2026-10-20T21:25:15Z | 0 | Restored hash matched; named control green. |
+| M58-mutant | `sh runs/T-c826/checks.sh 453` | `$C/M58` | 2026-10-20T21:25:15Z | 2026-10-20T21:25:15Z | 1 | Named task assertion failed; one literal PR number and only the checker path failed as recorded in mutants.md. |
+| M58-restored | `sh runs/T-c826/checks.sh 453` | `$C/M58` | 2026-10-20T21:25:15Z | 2026-10-20T21:25:16Z | 0 | Restored hash matched; named control green. |
+| M59-mutant | `sh runs/T-c826/checks.sh 453` | `$C/M59` | 2026-10-20T21:25:16Z | 2026-10-20T21:25:16Z | 1 | Named task assertion failed; exception matches the supplied actual migration PR failed as recorded in mutants.md. |
+| M59-restored | `sh runs/T-c826/checks.sh 453` | `$C/M59` | 2026-10-20T21:25:16Z | 2026-10-20T21:25:16Z | 0 | Restored hash matched; named control green. |
+| M60-mutant | `sh runs/T-c826/checks.sh 453` | `$C/M60` | 2026-10-20T21:25:16Z | 2026-10-20T21:25:16Z | 1 | Named task assertion failed; event guard receives the actual GitHub event name failed as recorded in mutants.md. |
+| M60-restored | `sh runs/T-c826/checks.sh 453` | `$C/M60` | 2026-10-20T21:25:16Z | 2026-10-20T21:25:16Z | 0 | Restored hash matched; named control green. |
+| M61-mutant | `sh runs/T-c826/checks.sh 453` | `$C/M61` | 2026-10-20T21:25:16Z | 2026-10-20T21:25:16Z | 1 | Named task assertion failed; number guard receives the actual pull request number failed as recorded in mutants.md. |
+| M61-restored | `sh runs/T-c826/checks.sh 453` | `$C/M61` | 2026-10-20T21:25:16Z | 2026-10-20T21:25:16Z | 0 | Restored hash matched; named control green. |
+| M62-mutant | `sh runs/T-c826/checks.sh 453` | `$C/M62` | 2026-10-20T21:25:16Z | 2026-10-20T21:25:16Z | 1 | Named task assertion failed; only the guarded checker skips restoration failed as recorded in mutants.md. |
+| M62-restored | `sh runs/T-c826/checks.sh 453` | `$C/M62` | 2026-10-20T21:25:16Z | 2026-10-20T21:25:16Z | 0 | Restored hash matched; named control green. |
+| M63-mutant | `sh runs/T-c826/checks.sh 453` | `$C/M63` | 2026-10-20T21:25:16Z | 2026-10-20T21:25:16Z | 1 | Named task assertion failed; only the guarded checker skips restoration failed as recorded in mutants.md. |
+| M63-restored | `sh runs/T-c826/checks.sh 453` | `$C/M63` | 2026-10-20T21:25:16Z | 2026-10-20T21:25:16Z | 0 | Restored hash matched; named control green. |
+| M64-mutant | `sh runs/T-c826/checks.sh 453` | `$C/M64` | 2026-10-20T21:25:16Z | 2026-10-20T21:25:16Z | 1 | Named task assertion failed; restoration still reads the default branch of this repository failed as recorded in mutants.md. |
+| M64-restored | `sh runs/T-c826/checks.sh 453` | `$C/M64` | 2026-10-20T21:25:16Z | 2026-10-20T21:25:16Z | 0 | Restored hash matched; named control green. |
+| M65-mutant | `sh runs/T-c826/checks.sh 453` | `$C/M65` | 2026-10-20T21:25:16Z | 2026-10-20T21:25:16Z | 1 | Named task assertion failed; default branch still comes from the repository event failed as recorded in mutants.md. |
+| M65-restored | `sh runs/T-c826/checks.sh 453` | `$C/M65` | 2026-10-20T21:25:16Z | 2026-10-20T21:25:16Z | 0 | Restored hash matched; named control green. |
+| M66-mutant | `sh runs/T-c826/checks.sh 453` | `$C/M66` | 2026-10-20T21:25:16Z | 2026-10-20T21:25:16Z | 1 | Named task assertion failed; exception comment names the task, literal PR and removal issue failed as recorded in mutants.md. |
+| M66-restored | `sh runs/T-c826/checks.sh 453` | `$C/M66` | 2026-10-20T21:25:16Z | 2026-10-20T21:25:16Z | 0 | Restored hash matched; named control green. |
+| final-task-check | `sh runs/T-c826/checks.sh 453` | `$W` | 2026-10-20T21:27:05Z | 2026-10-20T21:27:05Z | 0 | All 13 task assertions passed with actual PR 453. |
+| final-suite | `sh docs/tests/freeze-check/run-all.sh` | `$W` | 2026-10-20T21:27:05Z | 2026-10-20T21:27:14Z | 0 | freeze-check: 81 passed, 0 failed |
+| final-whitespace | `git diff --check` | `$W` | 2026-10-20T21:27:36Z | 2026-10-20T21:27:36Z | 0 | No diagnostics. |
+| final-links | `sh docs/links/link-lint.sh` | `$W` | 2026-10-20T21:27:35Z | 2026-10-20T21:27:48Z | 0 | link-lint: OK  2995 links resolved |
+| final-audit | `python3 $C/final-audit.py` | `$W` | 2026-10-20T21:28:01Z | 2026-10-20T21:28:01Z | 0 | Working diff against d27b331, excluding only the five evidence records: 844 lines / 143 files. This is a scope check, not a committed-head freeze or landing audit. |
+
+The final audit confirms that only the ten planned files changed and that the two
+runners, task check, workflow, setup-check and review-record parser retain their
+committed hashes. Against d27b331 the working diff, excluding only the five
+evidence records, is **844 lines / 143 files**, below the reviewed 1300/170 bound.
+No task file or completed-log line is written. This is a working-tree scope check;
+clean committed-head freeze, hosted green and independent review remain later.
+
+The complete baseline red mismatches are recorded in Stage A; hosted red is above.
+The mutation ledger quotes each named failure, its checker/harness statuses and
+restoration hashes; other failing cases are intentionally omitted there. Real-head
+replays and their consumer inspections are in real-heads.md. These records are
+observational evidence and are not fixture/configuration inputs.
