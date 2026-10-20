@@ -294,3 +294,19 @@ FAIL
 ```
 
 Note: `TestTheDriverStartsTheFirstAttemptOfARedoneTaskAtTheRebasedBase` was run red in the block "late tests" above and was removed at the close-out to keep the size inside the budget; the driver entries of `TestARestartAfterEachActOfTheRedoCompletesItOnce` assert the same base and kill the same mutants (M27, M41), and its name was taken out of the selector of that block.
+
+## Gates on the final code head of round 3 (late evidence)
+
+- Main `d27b331` had not moved; K4 (T-ehb4) had not landed, so the up-to-date predicate stays `UpToDate` (`internal/run/baseup.go`) and K4 folds the two. `go build ./...`, `go vet ./...` and with `-tags=integration` and `-tags=e2e`, `gofmt -l .`, `go test -count=1 ./...`: exit 0 each.
+- Full integration level, `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./...`: exit 0, 21 packages ok, `internal/run` 203.3 s (`/home/layup/.cache/layup-session/T-89xf-full-integration.txt`); `go test -count=1 -tags=e2e ./...`: exit 0; the six lints and `git diff --check origin/main HEAD`: exit 0.
+- Size excluding `runs/T-89xf` (ADR-0028), before the close-out: 2773 lines over 27 files. K5 counts `runs/` and fails as expected.
+- `sh docs/tests/freeze-check.sh --task T-89xf --base origin/main --budget 2800/30` (`/home/layup/.cache/layup-session/T-89xf-freeze.txt`), exit 1 for K5 alone:
+
+```text
+ok K1: white space
+ok K2: registration of new tests
+ok K3: test selectors
+ok K4: restore evidence of mutants
+FAIL K5: -:0: projection: figure 3215/32, maximum 2800/30, margin -415/-2 (the figure at landing is still measured at landing)
+ok K6: conditions table
+```
