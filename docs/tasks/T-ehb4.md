@@ -1,0 +1,36 @@
+# T-ehb4 — the close-out and the merge of a verified task
+
+Issue [#425](https://github.com/pharzam/layup/issues/425), row 66y of M2e (K4, a size child of row 66k, [#367](https://github.com/pharzam/layup/issues/367)). Serves REQ-005, REQ-007 and NFR-001 (F-0003#45, F-0003#47).
+Plan 6262348152 (Opus 5.5); plan review 6262459073 (GPT-6.1 Sol, seven conditions, Q1 to Q13); the Operator's decisions 6262588229 (goal count 3); the S0 note 6264869454 (the scratch base of plan amendment 1 of #415); the registration of the children 6252887262.
+Evidence: [test runs](../../runs/T-ehb4/test-runs.md), [mutants](../../runs/T-ehb4/mutants.md) and [conditions](../../runs/T-ehb4/conditions.md).
+
+## Delivered and boundaries
+
+- [x] **`FinishTask`** (`internal/run/finish.go`) takes a verified task to its recorded merge in the records and the forge alone: the pull request of the open attempt read first (closed and not merged is the wait of the Operator with no write; merged gets its event, with no replacement attempt), the repair and its typed handback (`Advance.Attempt`), the verified head told over the events up to the verifier's last handoff, the up-to-date check, the statuses of the rendered commit with the inputs rebuilt by `renderedBet`, the close-out session at the tier of `TierOf` and its checked push, `layup/verify` carried to the new head, the three other statuses by `PostChecks`, and the merge at the head SHA (the merged head is the pull request's).
+- [x] **Recovery across a restart.** A completed close-out is finished by its own push after the clone is made anew: `cloneStep` sets the old clone aside in `DIR/recovery/OWNER/NAME`, fetches its `refs/layup/sessions/` (`git.Refs`), marks the import complete (`DIR/recovery.imported/OWNER/NAME`) before it removes the old clone, and a marked place is only finished.
+- [x] **The answer copy** for every head after the bet (`FinishInput.Copy`, `ShapeTaskInput.Copy`, `betCopy`); a closure found on the path of a refused merge is the wait of the Operator (`afterRefusal`); `resolvePushes` is split out of `RepairPushes`.
+- [x] **One predicate.** Row 66x landed first (`4259e05`): `FinishTask` asks `UpToDate` of `baseup.go` of the carried head, and this task's own `upToDate` was deleted (condition 4 of the plan review).
+- [x] **Records and docs.** `loop.md` (D1 to D10), `run.md` step 2, `packages.md`, row 66y, PRD-0001 §12 cells, `traceability.md`, one entry of `guardrails.md` §2.
+  Not delivered: the scheduler and the restart composition (row 66k), the reopened specification task (row 66ab), the redo of a task that holds the rendered commit (row 66t), a ref of a session head that no clone and no restart holds (an error that names the session, never a second one).
+
+## Verification and verdict
+
+Tests and code were committed together (the hook runs `go test`); the red transcripts of the first version are in `runs/T-ehb4/test-runs.md` before the code commit, and so are those of each round. The compiled mutants (hashes, controls) are in `runs/T-ehb4/mutants.md`: 40 of 40 of the code of round 1, 5 of the place of the recovery, 4 of the mark of a complete import, 2 of the head merged outside and of the folded predicate; the first run of the first set had four that did not build and one that survived, repaired. Late evidence is labelled where it is: the tests of an unbound push of a merged task, of a failed read of the kept heads, of the mark and of the head merged outside were written after their code or are shown by their mutants. The full integration level was green on the final code head (exit 0, 21 packages), and so were e2e, the six lints and gitleaks. The freeze check passes K1 to K4 and K6 and fails K5 only because it still counts `runs/` (ADR-0028 takes it out of the figure).
+
+Round 1 (GPT-6.1 Sol, xhigh, Codex), comment 6300012564: **material** (F1 to F4: a completed close-out run again after a restart, the answer copy of the architecture close-out, a merged task starting an attempt, a closure at the refused merge), fixed. Round 2, comment 6300896759: **not mergeable, findings recorded** (F5, the recovery path that could remove another target's clone; F6, the restart specification) at cap 1; the Operator raised the cap to 2 (6301277015); fixed. Round 3, comment 6301672318: **not mergeable, findings recorded** (F7: an interrupted cleanup lost the imported head) at cap 2; the Operator raised the cap to 3 (6301954508); fixed. Round 4, comment 6302556928: F8 (a pull request merged outside was reported at the close-out head) and F9 (the exception of R8); the Operator chose end 3 for F8 and accepted F9's R8 exception (6302892665): F8 was fixed test-first with no further round; the fix of F7 had been written before its tests (their red run is in a copy of the old head), the exception accepted. The merge of `origin/main` at 4259e05 and the fold of the predicates were made in one commit.
+**Verdict: not mergeable, findings recorded; F8 fixed under the Operator's end 3, F9's R8 exception accepted.** The Operator's goal count is 3. Harness exception: ADR-0026's routing rule names `claude`, `devin` and `opencode`; Codex is used on the Operator's message of 2026-10-13.
+
+## Resource record
+
+ADR-0007, recorded, not budgeted. Tokens as the harness reported them.
+
+| Part | Tier | Model | Effort | Tokens | Elapsed |
+| --- | --- | --- | --- | --- | --- |
+| Plan | reasoning | Claude Opus 5.5 | not recorded | not kept | not kept (6262348152) |
+| Plan review | reasoning | GPT-6.1 Sol | xhigh | not kept | not kept (6262459073) |
+| Implementation and the fixes of rounds 1–3 | execution | Claude Sonnet 5.5 (subagent) | not recorded | 627,263 (cumulative, reported at the round-3 fix) | 2026-10-20T18:45Z to 21:42Z |
+| Review round 1 | reasoning | GPT-6.1 Sol | xhigh | 296,597 | 2026-10-20T19:38:44Z to 19:50:02Z |
+| Review round 2 | reasoning | GPT-6.1 Sol | xhigh | 251,325 | 2026-10-20T20:27:23Z to 20:34:54Z |
+| Review round 3 | reasoning | GPT-6.1 Sol | xhigh | 231,568 | 2026-10-20T21:10:21Z to 21:16:29Z |
+| Review round 4 | reasoning | GPT-6.1 Sol | xhigh | 255,115 | 2026-10-20T21:44:30Z to 21:55:09Z |
+| Fix of round 4, the merge and fold, close-out | execution | Claude Sonnet 5.5 (subagent) | not recorded | not kept at writing | 2026-10-20T22:10:14Z to 2026-10-20T22:24:06Z |
