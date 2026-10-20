@@ -56,3 +56,13 @@ had R2 and G7 that did not build or apply and R5 that survived; the mutants were
 | R5 | the header of the phase table not checked (`internal/run/bet.go`) | ok | ok | KILLED | bet_test.go:90: malformed another header: tags = ["faster"]; want none | green | a1b15db626c8 | 8d8e0e5ff664 | a1b15db626c8 |
 | G6 | LinkReviewRecord refuses the rendered commit as the head (`internal/run/reviewlink.go`) | ok | ok | KILLED | bet_integration_test.go:459: LinkReviewRecord with the rendered commit as the head of the pull request: the head of the pull request 1 is fd56fab8a50f71d700b24d6fdf453333dd99ff91, not the reviewed 03642778ae022489febced9e9f494a061fcf6ed9; want none | green | 327e9d7bc32d | e05f6c63a694 | 327e9d7bc32d |
 | G7 | the driver settles the verified head again after the rendered commit (`internal/run/shapeloop.go`) | ok | ok | KILLED | bet_integration_test.go:401: shape after the stop = {Name:shape Result:fail Detail:the head of the pull request 1 is ed7497277727323841a86c1d5295507eac9474c8, not the reviewed c3cccf385025851e4066d125ee099c2a8cefc082}; want done before | green | 1565e690c790 | cd7527e8cc3e | 1565e690c790 |
+
+## Round 2 of #366: the mutants of the fixes (late evidence)
+
+Made after the fixes, on the committed head `b03c3b0`, by the same script and in the same way. S1 drops the check of the form of the cells of the separator row, S2 accepts a separator of other than three cells, A1 does not restore the answer that the inventory names.
+
+| # | mutant (file) | build | vet | result | first failing assertion | control | sha256 before | sha256 during | sha256 after |
+| - | ------------- | ----- | --- | ------ | ----------------------- | ------- | ------------- | ------------- | ------------ |
+| S1 | the cells of the separator row not checked for their form (`internal/run/bet.go`) | ok | ok | KILLED | bet_test.go:94: malformed a separator of colons: tags = ["alpha"]; want none | green | 1fcd894c12e3 | f559cc518dad | 1fcd894c12e3 |
+| S2 | the separator row of other than three cells accepted (`internal/run/bet.go`) | ok | ok | KILLED | bet_test.go:94: malformed a separator of two cells: tags = ["alpha"]; want none | green | 1fcd894c12e3 | ce39037c7eba | 1fcd894c12e3 |
+| A1 | the answer that the inventory names not restored (`internal/run/bet.go`) | ok | ok | KILLED | bet_integration_test.go:598: bets.tsv = [[1 first 617 cf485ea7633b4bd1e130c96873e1795cd7fa6f3cecc837b3586d4129346b1929 5.0 12.0 7071 db=sqlite web=go bet 707 2026-10-08T12:43:53Z]], <nil>; want the answer 7070, db=pg web=go and the approver 303 | green | 1fcd894c12e3 | 756d92adabb7 | 1fcd894c12e3 |

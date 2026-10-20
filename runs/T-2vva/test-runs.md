@@ -252,3 +252,12 @@ exit=1
 ```
 
 K5 fails on the files, 42 against 35: the budget the plan review set is 3,400 lines over 35 files, close-out inside, and the branch is at 2,336 lines over 42 files before the close-out. It is recorded as it is, not trimmed; the Operator decides that figure. K2, K3, K4 and K6 pass: the records had to be put in the forms the check reads (the file names of the new tests in the Test cells of the PRD, single-quoted anchored selectors, one column for each of the three hashes of a mutant, `runs/T-2vva/conditions.md`).
+
+## Round 2 of #366 (comment 6296445019): the fixes, test-first
+
+The tests were written first and run against the code of `eb04324`; the code followed; the transcripts are copied here after the commit `b03c3b0` (the hook runs `go test`, so tests and code were committed together). The mutants after the fixes are late evidence.
+
+- Finding 1, red (`go test -count=1 ./internal/run/`, 2026-10-20T17:02:29Z to 17:02:31Z, exit=1): `TestThePhaseTagsAreTheFirstColumnOfSection9`: `malformed a separator of one cell: tags = ["alpha"]; want none`, and the same for two cells, four cells and `| : | : | : |`. The control (a valid table with the separator cells `---`, `:---` and `---:`) passed.
+- Finding 2, red (`TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./internal/run/ -run '^TestARecoveryKeepsTheAnswerAlreadyApplied$'`, 2026-10-20T17:02:31Z to 17:02:38Z, exit=1): `bets.tsv = [[1 first ... 7071 db=sqlite web=go bet 707 ...]]; want the answer 7070, db=pg web=go and the approver 303`; `the index = [[1 ...] [2 ...]], version 2 true; want one version`; `3 tasks; want one for db with the option pg`.
+- Green: `phaseTagsOf` requires a separator of three cells, each `:?-+:?`; `appliedAnswer` and `restoreAnswer` take the answer, its first copy and its author's approver row from the latest version of the inventory when it is of this milestone, before the binding is resolved. The unit level passed, and the integration run of `TestARecoveryKeepsTheAnswerAlreadyApplied`, `TestTheStepBet`, `TestOnlyTheApproverOfTheBetAnswersAndALookupThatFailsChoosesNoOne`, `TestTheBetStepIsAtomicToItsLastAct` and `TestARenderedPushToAnotherBranchTipIsRefused` passed.
+- `main_integration_test.go` lists 17 serial tests, with the recovery test and the branch-tip test.
