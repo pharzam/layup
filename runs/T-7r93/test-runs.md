@@ -23,3 +23,12 @@ sh -c 'set -- docs/adr/0028-*.md; test -f "$1" && grep -q "^Proposed$" "$1" && g
 - `git diff --check`: exit 0.
 
 `adr-lint` warns that nothing outside `docs/adr/` links the record yet. The warning is not fatal, and the task file of the close-out links it.
+
+## The Operator's decision (6296168934), and the record made Accepted
+
+After the merge of `origin/main` (`0f0890b`), the record's Status is `Accepted`, its figures are those of the Operator (20 %, at least 60 and at most 500 lines, plus 4 files), its index row is `Accepted`, and ADR-0026's Status line is `Accepted. Amended by ADR-0028` (index: `Accepted; amended`, as ADR-0010's row).
+- `sh docs/adr/adr-lint.sh`: 2026-10-20T16:47:17Z, exit 0
+- `sh docs/prd/prd-lint.sh`: 2026-10-20T16:47:18Z, exit 0
+- `sh docs/links/link-lint.sh`: 2026-10-20T16:47:18Z, exit 0
+- `sh docs/tests/run-discipline-tests.sh`: 2026-10-20T16:47:31Z, exit 0
+- `sh docs/setup/setup-check.sh`: 2026-10-20T16:47:34Z, exit 0
