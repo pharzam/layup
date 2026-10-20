@@ -21,11 +21,11 @@ Divergences from the plan, all decided in loop.md (A task whose base moved): the
 
 ## Semantic red runs, against the stubs (nothing committed)
 
-The stubs: `git.Merge`/`git.MergeBase` return zero values, `FetchBranch`, `BringUpToDate`, `UpToDate`, `TipOf`, `mergeEdge`, `redoRegister`, `redoFiles`, `intentBytes`, `parseIntent`, `closeOlderPulls` inert, `firstBase` returns its default. Each block gives the command, `date -u` start and end (taken after the step), the direct exit status and the first failing assertions. The first integration red run saw the git calls and the records rule still stubbed (they were written during it); the tests added or changed after it (the status repost, the issue composer, the driver base, the failed pull request read, the merge time, the intent resumed with a pull request closed meanwhile) were run red again on a copy of the tree with the run-package stubs (block "late tests"). Green negatives at the stubs, named: the refusals of `TestAMergeThatTouchesATaskPathOrLeavesTheDefaultIsNotCarried` (its control, a real merge, is red), the refusal count of `TestMergeAndMergeBaseRefuseANonObjectIDBeforeGitStarts` (`calls = 0`), the case "a conflict" of `TestMergeTellsAConflictFromEveryOtherFailure`, the no-request assertions of the failed-read, closed-pull-request and rendered-stop tests, and the second assertion of `TestTheFirstAttemptOfARedoneTaskStartsAtTheRebasedBase`. The wrong-reason first run of the carry test (a harness failure: the base commit not fetched) was fixed in the test before the record below.
+The stubs: `git.Merge`/`git.MergeBase` return zero values, `FetchBranch`, `BringUpToDate`, `UpToDate`, `TipOf`, `mergeEdge`, `redoRegister`, `redoFiles`, `intentBytes`, `parseIntent`, `closeOlderPulls` inert, `firstBase` returns its default. Each block gives the command, `date -u` start and end (taken after the step), the direct exit status and the first failing assertions. The first integration red run saw the git calls and the records rule still stubbed (they were written during it); the tests added or changed after it (the status repost, the issue composer, the driver base, the failed pull request read, the merge time, the intent resumed with a pull request closed meanwhile) were run red again on a copy of the tree with the run-package stubs (block "late tests"). Green negatives at the stubs, named: the refusals of `TestAMergeThatTouchesATaskPathOrLeavesTheDefaultIsNotCarried` (its control, a real merge, is red), the refusal count of `TestMergeAndMergeBaseRefuseANonObjectIDBeforeGitStarts` (`calls = 0`), the case "a conflict" of `TestMergeTellsAConflictFromEveryOtherFailure`, the no-request assertions of the failed-read, closed-pull-request and rendered-stop tests, and the second assertion of `TestTheFirstAttemptOfARedoneTaskStartsAtTheRebasedBase`. The unit tests of the replacement were first in `internal/run/redo_test.go` (the red lines below name it) and moved to `internal/run/repair_test.go` to keep the file count in the budget. The wrong-reason first run of the carry test (a harness failure: the base commit not fetched) was fixed in the test before the record below.
 
 ### records-U1
 
-- Command: `go test -count=1 -run ^TestTheDetailOfClosedAndRebasedIsATaskID$ ./internal/records/`
+- Command: `go test -count=1 -run '^TestTheDetailOfClosedAndRebasedIsATaskID$' ./internal/records/`
 - Start: 2026-10-20T18:59:20Z, end: 2026-10-20T18:59:20Z (`date -u`, after the step)
 - Exit status (direct, not piped): 1
 - First failing assertions (from the saved output):
@@ -40,7 +40,7 @@ FAIL
 
 ### git-unit
 
-- Command: `go test -count=1 -run ^(TestMergeAndMergeBaseRefuseANonObjectIDBeforeGitStarts|TestMergeTellsAConflictFromEveryOtherFailure)$ ./internal/git/`
+- Command: `go test -count=1 -run '^(TestMergeAndMergeBaseRefuseANonObjectIDBeforeGitStarts|TestMergeTellsAConflictFromEveryOtherFailure)$' ./internal/git/`
 - Start: 2026-10-20T18:59:20Z, end: 2026-10-20T18:59:20Z (`date -u`, after the step)
 - Exit status (direct, not piped): 1
 - First failing assertions (from the saved output):
@@ -58,7 +58,7 @@ FAIL
 
 ### git-integration
 
-- Command: `go test -count=1 -tags=integration -run ^TestMergeMakesOneDeterministicMergeCommitOrReportsAConflict$ ./internal/git/`
+- Command: `go test -count=1 -tags=integration -run '^TestMergeMakesOneDeterministicMergeCommitOrReportsAConflict$' ./internal/git/`
 - Start: 2026-10-20T18:59:20Z, end: 2026-10-20T18:59:20Z (`date -u`, after the step)
 - Exit status (direct, not piped): 1
 - First failing assertions (from the saved output):
@@ -73,7 +73,7 @@ FAIL
 
 ### run-unit
 
-- Command: `go test -count=1 -run ^(TestTheReplacementTakesTheOldRowAndClearsItsPullRequest|TestEachTaskThatNamesTheOldTaskNamesTheNewOne|TestTheRedoIsOneCommitOfTheRegisterTheTwoEventsAndTheBindings|TestTheIntentOfARedoIsReadBackOrRefused|TestTheFirstAttemptOfARedoneTaskStartsAtTheRebasedBase)$ ./internal/run/`
+- Command: `go test -count=1 -run '^(TestTheReplacementTakesTheOldRowAndClearsItsPullRequest|TestEachTaskThatNamesTheOldTaskNamesTheNewOne|TestTheRedoIsOneCommitOfTheRegisterTheTwoEventsAndTheBindings|TestTheIntentOfARedoIsReadBackOrRefused|TestTheFirstAttemptOfARedoneTaskStartsAtTheRebasedBase)$' ./internal/run/`
 - Start: 2026-10-20T18:59:26Z, end: 2026-10-20T18:59:28Z (`date -u`, after the step)
 - Exit status (direct, not piped): 1
 - First failing assertions (from the saved output):
@@ -97,7 +97,7 @@ FAIL
 
 ### run-integration
 
-- Command: `go test -count=1 -tags=integration -timeout 20m -run ^(TestAnUpToDateVerifiedTaskIsLeftAsItIs|TestADisjointMovedBaseIsMergedAndCarriesTheVerdict|TestAMergeThatTouchesATaskPathOrLeavesTheDefaultIsNotCarried|TestAFailedGitReadIsAnErrorNeverARedo|TestAnOverlappingMovedBaseRedoesTheTask|TestAConflictingMergeOfDisjointPathsRedoesTheTask|TestARestartAfterEachActOfTheRedoCompletesItOnce|TestAPullRequestMergedAfterItsRedoStops|TestAClosedUnmergedPullRequestWithNoRedoIsAWait|TestALostLeaseOpensNoIssueAndWritesNothingAfterIt|TestARedoThatWouldDropTheRenderedCommitIsAStop|TestTheOlderAttemptsPullRequestIsClosedOnce|TestAPushedMergeCommitIsAdoptedOnARestart|TestAMergeAnnouncedAndNotPushedIsMadeAgainWhenTheBaseMovesAgain|TestTheCloseOutHeadIsMergedWhenTheBaseLeavesItsFilesAndRedoneWhenItDoesNot)$ ./internal/run/`
+- Command: `go test -count=1 -tags=integration -timeout 20m -run '^(TestAnUpToDateVerifiedTaskIsLeftAsItIs|TestADisjointMovedBaseIsMergedAndCarriesTheVerdict|TestAMergeThatTouchesATaskPathOrLeavesTheDefaultIsNotCarried|TestAFailedGitReadIsAnErrorNeverARedo|TestAnOverlappingMovedBaseRedoesTheTask|TestAConflictingMergeOfDisjointPathsRedoesTheTask|TestARestartAfterEachActOfTheRedoCompletesItOnce|TestAPullRequestMergedAfterItsRedoStops|TestAClosedUnmergedPullRequestWithNoRedoIsAWait|TestALostLeaseOpensNoIssueAndWritesNothingAfterIt|TestARedoThatWouldDropTheRenderedCommitIsAStop|TestTheOlderAttemptsPullRequestIsClosedOnce|TestAPushedMergeCommitIsAdoptedOnARestart|TestAMergeAnnouncedAndNotPushedIsMadeAgainWhenTheBaseMovesAgain|TestTheCloseOutHeadIsMergedWhenTheBaseLeavesItsFilesAndRedoneWhenItDoesNot)$' ./internal/run/`
 - Start: 2026-10-20T18:59:36Z, end: 2026-10-20T18:59:42Z (`date -u`, after the step)
 - Exit status (direct, not piped): 1
 - First failing assertions (from the saved output):
@@ -120,7 +120,7 @@ FAIL
 
 ### run-integration-I4-rerun
 
-- Command: `go test -count=1 -tags=integration -run ^TestAMergeThatTouchesATaskPathOrLeavesTheDefaultIsNotCarried$ ./internal/run/`
+- Command: `go test -count=1 -tags=integration -run '^TestAMergeThatTouchesATaskPathOrLeavesTheDefaultIsNotCarried$' ./internal/run/`
 - Start: 2026-10-20T19:00:15Z, end: 2026-10-20T19:00:19Z (`date -u`, after the step)
 - Exit status (direct, not piped): 1
 - First failing assertions (from the saved output):
@@ -135,7 +135,7 @@ FAIL
 
 ### run-integration-late-tests (stub tree: the stubs of the first red run, the git calls and the records rule real)
 
-- Command: `go test -count=1 -tags=integration -timeout 20m -run ^(TestACarryWhoseStatusFailedIsPostedAtTheRestart|TestTheNewIssueIsComposedFromTheInputsTheRecordsKeep|TestTheDriverStartsTheFirstAttemptOfARedoneTaskAtTheRebasedBase|TestAFailedGitReadIsAnErrorNeverARedo|TestAMergeThatTouchesATaskPathOrLeavesTheDefaultIsNotCarried|TestARestartAfterEachActOfTheRedoCompletesItOnce|TestADisjointMovedBaseIsMergedAndCarriesTheVerdict)$ ./internal/run/`
+- Command: `go test -count=1 -tags=integration -timeout 20m -run '^(TestACarryWhoseStatusFailedIsPostedAtTheRestart|TestTheNewIssueIsComposedFromTheInputsTheRecordsKeep|TestTheDriverStartsTheFirstAttemptOfARedoneTaskAtTheRebasedBase|TestAFailedGitReadIsAnErrorNeverARedo|TestAMergeThatTouchesATaskPathOrLeavesTheDefaultIsNotCarried|TestARestartAfterEachActOfTheRedoCompletesItOnce|TestADisjointMovedBaseIsMergedAndCarriesTheVerdict)$' ./internal/run/`
 - Start: 2026-10-20T19:05:38Z, end: 2026-10-20T19:05:42Z (`date -u`, after the step)
 - Exit status (direct, not piped): 1
 - First failing assertions (from the saved output):
