@@ -394,7 +394,9 @@ the rounds is:
 
   A landing figure above the `Budget maximum` by no more than the tolerance is
   approved in advance. The tolerance is 20 % of the maximum’s lines, at least
-  60 lines and at most 500, plus 4 files. Before the merge, the author posts the
+  60 lines and at most 500, plus 4 files.
+  The margin is the maximum plus the tolerance, minus the landing figure, calculated separately in lines and in files.
+  Before the merge, the author posts the
   figure, the maximum and the margin on the issue. The Operator can overrule
   that delegated decision there before the merge.
 

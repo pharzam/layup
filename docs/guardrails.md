@@ -51,7 +51,9 @@ Whether a named gate really runs the path is a review judgement.
   that check the work (`F-0001#3`). Trap: a change that edits the check that
   judges it. The CI restore step (`guardrails.md` §2, "A check the change
   supplies is not a control") covers each check script a workflow runs, except
-  `docs/tests/nested-checkout-check.sh`. Check `ci` (cause `restore`) fails when a
+  `docs/tests/nested-checkout-check.sh` and, temporarily for PR 453 only,
+  `docs/tests/freeze-check.sh` (T-c826, removal in T-szvp #452).
+  Check `ci` (cause `restore`) fails when a
   job names a `docs/...sh` script outside its Restore step, in any form, and the
   Restore step does not name it (a script run through a relative
   `working-directory:` is not seen). Neither covers the workflow file itself, which a branch can
@@ -542,15 +544,21 @@ success without having done its job.
   (`dirname $0`), so running the default branch's copy *where it sits* lints the
   wrong tree and reports OK. That was measured too, while building the fix.
   **The check:** every job in [`ci.yml`](../.github/workflows/ci.yml) restores the
-  check scripts from the default branch **in place** before running them, so the
-  branch's copy is never the judge.
+  check scripts from the default branch **in place** before running them. The
+  nested-checkout driver remains an exception; T-c826 (#449) also has the approved
+  checker-only exception for pull_request PR 453, removed in T-szvp (#452).
+  Both freeze-check runners and every other listed script still restore for
+  every event, including PR 453.
   **Bound on the damage, and it is not nil:** a `pull_request` event runs the
   workflow as the branch has it, so a branch that edits `ci.yml` removes the
   restore step — closed only by review of `.github/**`, which wants a `CODEOWNERS`
   entry and a second human the forge knows about. Restoring also stops a bypass,
   not a merge: once a weakened check lands it *is* the default branch's copy. And
-  a change that *improves* a check is judged by the older copy, so it lands in two
-  steps. These checks are a control against forgetting, not against an operator
+  a change that *improves* a check is judged by the older copy. A suite comparing
+  complete output cannot migrate changed diagnostics merely by splitting commits
+  or landing cases later: it needs compatibility across the landing boundary or
+  an explicitly approved bounded exception, as T-c826 measured. Keep the runner
+  restored in either route. These checks are a control against forgetting, not against an operator
   who edits the check.
 - ❌ **A reason that copies an error into a result table.** A row's reason that
   holds the text of an error of `git` (for example `fatal: '<path>' already

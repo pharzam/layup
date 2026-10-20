@@ -49,6 +49,25 @@ discipline linters — lives here, so their tests can too.
 | [`nested-checkout-check.sh`](nested-checkout-check.sh) | A second executable: builds a throwaway repository holding a nested checkout and proves `link-lint` never reads it. Needs `git`, so CI runs it and the hook does not. |
 | [`freeze-check.sh`](freeze-check.sh) | The third: checks a task worktree before a freeze (white space, test registration, `-run` selectors, mutant restore evidence, landing budget projection and the conditions table); its fixtures run via [`freeze-check/run-all.sh`](freeze-check/run-all.sh) in CI. |
 
+For a clean committed worktree, run
+`sh docs/tests/freeze-check.sh --task T-xxxx --base REV --budget LINES/FILES`.
+Repeat `--evidence PATH` for each inspected Markdown, TSV or text evidence record
+under that exact task's `runs/` directory; paths are literal and duplicates count
+once. Added, modified and deleted records are resolved at the committed endpoints.
+Every unlisted path stays counted. Declarations supply classification, rather than
+proving it: inspect consumers using the canonical
+[input definition](../engineering-discipline.md#reviewing-until-findings-decay).
+Auditing a record alone does not make it input; execution data and dual-use files
+remain counted. K5 removes declared records, adds no synthetic close-out allowance,
+and reports figure, maximum, tolerance, limit and margin in lines and files. Its
+line tolerance uses whole-line division by five, bounded by 60 and 500; file
+tolerance is 4. Equality with either limit passes. The landing audit still measures
+the actual figure and mixed-file bookkeeping.
+
+T-c826's migration assertions run with `sh runs/T-c826/checks.sh 453`, supplying
+the actual PR number. They check the canonical margin sentence, unchanged runners
+and the numbered checker-only CI exception, pending its removal in T-szvp (#452).
+
 ## How the pieces fit
 
 1. **[`test-levels.md`](test-levels.md)** defines the ladder and the command

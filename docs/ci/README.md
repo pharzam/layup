@@ -46,7 +46,7 @@ fixtures under [`tests/`](tests/).
 | `prd-lint` | `docs/prd/` discipline, via [`prd-lint.sh`](../prd/prd-lint.sh). |
 | `discipline-tests` | Each discipline linter against its good and bad fixtures, and the fixtures of the commands [`task-state.sh`](../tasks/task-state.sh) and [`task-labels.sh`](../tasks/task-labels.sh), which are not linters, via [`run-discipline-tests.sh`](../tests/run-discipline-tests.sh). |
 | `link-lint` | Every in-tree Markdown link and heading anchor, via [`link-lint.sh`](../links/link-lint.sh). |
-| `nested-checkout-check` | The linters skip a nested checkout, via [`nested-checkout-check.sh`](../tests/nested-checkout-check.sh), and the fixtures of [`freeze-check.sh`](../tests/freeze-check.sh), via [`freeze-check/run-all.sh`](../tests/freeze-check/run-all.sh). |
+| `nested-checkout-check` | The linters skip a nested checkout, via [`nested-checkout-check.sh`](../tests/nested-checkout-check.sh), and the fixtures of [`freeze-check.sh`](../tests/freeze-check.sh), via [`freeze-check/run-all.sh`](../tests/freeze-check/run-all.sh). Both freeze-check runners always restore from main; only pull_request PR 453 keeps its checker as written (T-c826 #449, removal in T-szvp #452). |
 | `setup-check` | The setup of this repository and its evidence, via [`setup-check.sh`](../setup/setup-check.sh) and its fixtures. |
 | `lint` | `gofmt` and `go vet` over the Go code. |
 | `tests` | The test ladder, cheap to expensive: unit, integration, end-to-end (see [`test-levels.md`](../tests/test-levels.md)). |
@@ -56,14 +56,21 @@ fixtures under [`tests/`](tests/).
 | `review-record` | The linked issue carries a plan, a plan review with its budget and cycle cap, and a parseable review record per round whose chronology holds (see [What a round records](../engineering-discipline.md#what-a-round-records)), via [`review-record-lint.sh`](review-record-lint.sh). |
 
 **Each discipline job restores its check scripts from the default branch before
-it runs them**, with one exception: the job `nested-checkout-check` runs the
+it runs them**. The job `nested-checkout-check` runs the
 branch's own `nested-checkout-check.sh`, for the reason that a comment in
-[`ci.yml`](../../.github/workflows/ci.yml) gives. The Go jobs `lint`, `tests` and
+[`ci.yml`](../../.github/workflows/ci.yml) gives. A second, temporary exception
+keeps only `docs/tests/freeze-check.sh` as written when the event is `pull_request`
+and its number is 453 (T-c826 #449; R4 approvals 6301028661 and 6301084598).
+Both runners and every other restore-list script still restore for every event;
+every other PR and main retain the checker restore. T-szvp (#452) removes the
+exception. The Go jobs `lint`, `tests` and
 `security` run the pull request's own Go code and tests. Without the restore, a pull request that replaces a linter with `exit 0` passes
 that linter's own required check, and a pull request that also replaces
 `run-discipline-tests.sh` turns the whole required set green over a real defect.
-Both were measured. Thus a check that a pull request adds runs in CI only after
-it merges. The limit that remains is that the workflow file itself comes from the
+Both were measured. Outside an approved exception, CI judges a changed check
+using the default branch's copy until it merges. A suite comparing complete
+output needs compatibility across that boundary or a bounded exception to migrate
+diagnostics. The limit that remains is that the workflow file itself comes from the
 pull request, so a branch that edits `ci.yml` removes the step; only review of
 `.github/**` closes that, and [`docs/guardrails.md`](../guardrails.md) states all
 three residual limits. A `CODEOWNERS` entry over `.github/**`, `.githooks/**` and
