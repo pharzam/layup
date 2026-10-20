@@ -199,7 +199,9 @@ check_k2() {
 				r = rlist[j]
 				if (r in seen_r) continue
 				seen_r[r] = 1
-				if (!(r in prd_cell) || !has_word(prd_cell[r], tname)) {
+				# A cell may name the test, or the file that holds it ("its 13 siblings of questionloop_test.go").
+				bf = tfile; sub(/.*\//, "", bf); gsub(/\./, "\\.", bf)
+				if (!(r in prd_cell) || (!has_word(prd_cell[r], tname) && !has_word(prd_cell[r], bf))) {
 					printf "FAIL K2: %s:%s: %s is not in docs/prd/PRD-0001-layup.md §12 %s Test cell\n", tfile, tln, tname, r
 				}
 			}
