@@ -236,3 +236,19 @@ written first, run against the code of `894320a` with the stub `renderedPushed` 
 - `go build ./...`, `go vet ./...`, `go vet -tags=integration ./...`, `go vet -tags=e2e ./...`: exit 0; `gofmt -l .`: empty; `go test -count=1 ./...` and `go test -count=1 -tags=e2e ./...`: ok.
 - The full integration level, `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 90m ./...`: 2026-10-20T16:36:34Z to 16:39:31Z, exit=0.
 - `adr-lint`, `prd-lint`, `link-lint` (2958 links), `run-discipline-tests` (138 passed), `nested-checkout-check`, `setup-check`, `git diff --check origin/main HEAD`: all OK.
+
+## The freeze check of the round-2 head (late evidence; origin/main `a6c1d77` merged)
+
+The command, run on the clean committed head before this record: `sh docs/tests/freeze-check.sh --task T-2vva --base origin/main --budget 3400/35`, its output written outside the worktree (`/home/layup/.cache/layup-session/T-2vva-freeze-r2.txt`):
+
+```
+ok K1: white space
+ok K2: registration of new tests
+ok K3: test selectors
+ok K4: restore evidence of mutants
+FAIL K5: -:0: projection: figure 2336/42, maximum 3400/35, margin 1064/-7 (the figure at landing is still measured at landing)
+ok K6: conditions table
+exit=1
+```
+
+K5 fails on the files, 42 against 35: the budget the plan review set is 3,400 lines over 35 files, close-out inside, and the branch is at 2,336 lines over 42 files before the close-out. It is recorded as it is, not trimmed; the Operator decides that figure. K2, K3, K4 and K6 pass: the records had to be put in the forms the check reads (the file names of the new tests in the Test cells of the PRD, single-quoted anchored selectors, one column for each of the three hashes of a mutant, `runs/T-2vva/conditions.md`).
