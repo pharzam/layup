@@ -538,7 +538,7 @@ func TestAnOverlappingMovedBaseRedoesTheTask(t *testing.T) {
 	if intent := keptRecord(t, m.w, "tasks/T-ab12/redo.txt"); intent != fresh+" "+base+"\n" {
 		t.Errorf("redo.txt = %q; want the new ID and its base", intent)
 	}
-	if st := m.w.fake.issueState[3]; st != "closed not_planned" || !m.w.fake.pullOf(1).closed {
+	if st := m.w.fake.pulls.issueState[3]; st != "closed not_planned" || !m.w.fake.pullOf(1).closed {
 		t.Errorf("the old issue %q and the old pull request closed %v; want closed as not planned, and closed", st, m.w.fake.pullOf(1).closed)
 	}
 	if title := m.w.fake.issueTexts[len(m.w.fake.issueTexts)-1][0]; !strings.Contains(title, fresh) {
@@ -603,7 +603,7 @@ func TestARestartAfterEachActOfTheRedoCompletesItOnce(t *testing.T) {
 		if opened := len(m.w.fake.issueTexts) - before; opened != c.issues {
 			t.Errorf("stop %s: %d issues opened; want %d", c.stop, opened, c.issues)
 		}
-		if st := m.w.fake.issueState[3]; st != "closed not_planned" || !m.w.fake.pullOf(1).closed {
+		if st := m.w.fake.pulls.issueState[3]; st != "closed not_planned" || !m.w.fake.pullOf(1).closed {
 			t.Errorf("stop %s: the old issue %q, the old pull request closed %v", c.stop, st, m.w.fake.pullOf(1).closed)
 		}
 		if tasks[0].Issue == 3 {

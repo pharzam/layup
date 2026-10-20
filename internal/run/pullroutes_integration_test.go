@@ -27,10 +27,11 @@ type ghPull struct {
 }
 
 type pullRoutes struct {
-	list      []*ghPull
-	afterMark func() // runs when a pull request leaves the draft state, under the lock of the fake
-	noDraft   bool   // a request to open a pull request that is not a draft arrived
-	denyPatch int    // the status that an edit of a pull request gets instead of the edit (row 66q)
+	list       []*ghPull
+	afterMark  func()         // runs when a pull request leaves the draft state, under the lock of the fake
+	noDraft    bool           // a request to open a pull request that is not a draft arrived
+	denyPatch  int            // the status that an edit of a pull request gets instead of the edit (row 66q)
+	issueState map[int]string // the state and the reason of each issue closed by a PATCH, "closed not_planned" (task T-89xf)
 }
 
 func bareGit(dir string, args ...string) (string, error) {
@@ -76,6 +77,18 @@ func (p *pullRoutes) serve(f *fakeGitHub, w http.ResponseWriter, r *http.Request
 		json.NewEncoder(w).Encode(v)
 	}
 	switch {
+	case r.Method == "PATCH" && strings.HasPrefix(r.URL.Path, "/repos/acme/target/issues/"):
+		n, _ := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/repos/acme/target/issues/"))
+		var in struct {
+			State  string `json:"state"`
+			Reason string `json:"state_reason"`
+		}
+		json.NewDecoder(r.Body).Decode(&in)
+		if p.issueState == nil {
+			p.issueState = map[int]string{}
+		}
+		p.issueState[n] = in.State + " " + in.Reason
+		reply(200, map[string]any{"number": n, "state": in.State})
 	case r.Method == "POST" && r.URL.Path == base:
 		var in struct {
 			Title, Head, Base, Body string
