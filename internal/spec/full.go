@@ -293,12 +293,14 @@ func (c *fullCheck) resolveFact(tok string) (id string, ok bool) {
 // it stands (as the pinned producer reads them), the criteria table, the
 // success rows and the waits-for-a-bet extent.
 type prdData struct {
-	ok       bool
-	reqs     []prdReq
-	criteria map[string]string // requirement ID → its acceptance criterion
-	success  map[string]bool   // raw Fact tokens of the success-criterion rows
-	waits    map[string]bool   // raw cite tokens under a `waits for a bet` heading
-	cited    []citedTok        // every fact token cited, with its site
+	ok         bool
+	reqs       []prdReq
+	criteria   map[string]string // requirement ID → its acceptance criterion
+	statements map[string]string // requirement ID → the Statement cell of its row
+	metrics    []string          // the first cell of each row of a success-metrics table
+	success    map[string]bool   // raw Fact tokens of the success-criterion rows
+	waits      map[string]bool   // raw cite tokens under a `waits for a bet` heading
+	cited      []citedTok        // every fact token cited, with its site
 }
 
 type citedTok struct{ tok, site string }
@@ -323,10 +325,13 @@ type PRDContent struct {
 }
 
 // ContentOfPRDs reads the words of the PRD files, by the same parse as the full check.
-func ContentOfPRDs(prds map[string][]byte) PRDContent { return PRDContent{} }
+func ContentOfPRDs(prds map[string][]byte) PRDContent {
+	p := parsePRDs(prds)
+	return PRDContent{Statements: p.statements, Criteria: p.criteria, Metrics: p.metrics}
+}
 
 func parsePRDs(prds map[string][]byte) prdData {
-	p := prdData{ok: len(prds) > 0, criteria: map[string]string{}, success: map[string]bool{}, waits: map[string]bool{}}
+	p := prdData{ok: len(prds) > 0, criteria: map[string]string{}, statements: map[string]string{}, success: map[string]bool{}, waits: map[string]bool{}}
 	for _, name := range slices.Sorted(maps.Keys(prds)) {
 		p.parse(name, string(prds[name]))
 	}
@@ -379,6 +384,7 @@ func (p *prdData) parse(name, text string) {
 		if len(cells) == 5 && reqIDCell.MatchString(cells[0]) {
 			r := prdReq{id: cells[0], mo: cells[2], phase: cells[3], facts: factTokens(cells[4]), file: name}
 			p.reqs = append(p.reqs, r)
+			p.statements[r.id] = cells[1]
 			for _, tok := range r.facts {
 				p.cited = append(p.cited, citedTok{tok, "the Facts cell of " + r.id})
 			}
@@ -392,6 +398,7 @@ func (p *prdData) parse(name, text string) {
 			}
 		case "success":
 			if factCol >= 0 && factCol < len(cells) {
+				p.metrics = append(p.metrics, cells[0])
 				for _, tok := range factTokens(cells[factCol]) {
 					p.success[tok] = true
 					p.cited = append(p.cited, citedTok{tok, "a success-criterion row"})

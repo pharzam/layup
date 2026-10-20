@@ -67,6 +67,15 @@ case $step in
   n=$(cat $ctl/n-options 2>/dev/null || echo 0); n=$((n+1)); echo $n > $ctl/n-options
   [ -e $ctl/options-fail-$n ] && exit 3
   cat $ctl/options-$n > "$out" ;;
+"You write three parts of the brief"*) # the brief session of the first bet: the directory brief-<n> of ctl/ is the n-th output
+  n=$(cat $ctl/n-brief 2>/dev/null || echo 0); n=$((n+1)); echo $n > $ctl/n-brief
+  { printf '%s\n' "$line"; cat; } > $ctl/brief-prompt-$n
+  [ -e $ctl/brief-fail-$n ] && exit 3
+  out=$(sed -n 's/^Write these three files of Markdown in the directory \(.*\), and no other file there:$/\1/p' $ctl/brief-prompt-$n)
+  cp -r "$(dirname "$(sed -n 's/^- The fact spans: //p' $ctl/brief-prompt-$n)")" $ctl/brief-input-$n
+  mkdir -p "$out"; cp $ctl/brief-$n/* "$out"/
+  [ -e $ctl/brief-drop-$n ] && rm -f "$out/$(cat $ctl/brief-drop-$n)"
+  if [ -e $ctl/cost-$n ]; then printf '{"type":"result","total_cost_usd":%s,"modelUsage":{"m1":{"inputTokens":1,"outputTokens":1,"cacheReadInputTokens":0,"cacheCreationInputTokens":0}}}\n' "$(cat $ctl/cost-$n)"; fi ;;
 plan-of-a-task) comment plan.md 'size: small
 open questions: —
 new interfaces: —
