@@ -6,5 +6,5 @@ skip K4: runs/T-0000/test-runs.md:8: SM19a (not run)
 skip K4: runs/T-0000/test-runs.md:9: SM29 (dropped)
 skip K4: runs/T-0000/test-runs.md:10: SM30 (superseded)
 FAIL K4: runs/T-0000/test-runs.md:14: SM31 has no restore evidence
-ok K5: projection: figure 81/3, maximum 100/10, margin 19/7 (the figure at landing is still measured at landing)
+ok K5: projection: figure 11/1, maximum 100/10, tolerance 60/4, limit 160/14, margin 149/13 (the figure at landing is still measured at landing)
 ok K6: conditions table

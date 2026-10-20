@@ -3,5 +3,5 @@ ok K1: white space
 FAIL K2: docs/prd/PRD-0001-layup.md:0: missing PRD file
 ok K3: test selectors
 ok K4: restore evidence of mutants
-ok K5: projection: figure 82/5, maximum 100/10, margin 18/5 (the figure at landing is still measured at landing)
+ok K5: projection: figure 12/3, maximum 100/10, tolerance 60/4, limit 160/14, margin 148/11 (the figure at landing is still measured at landing)
 ok K6: conditions table
