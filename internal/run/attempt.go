@@ -11,6 +11,7 @@ import (
 	"errors"
 
 	"github.com/pharzam/layup/internal/gate"
+	"github.com/pharzam/layup/internal/rules"
 )
 
 // A Finding is one thing that goes back to the developer, in the fixed form of
@@ -40,11 +41,52 @@ func GateFindings(t gate.Table) []Finding {
 	return out
 }
 
-// NextAttemptInput is what a failure of step 5 gives: the task, the base commit
-// the new attempt starts from, and the table of the gate of the failing head.
+// SpecFindings gives the findings of layup/spec from the rows (rule, result, detail) of a
+// head's table: each fail row, in the order of the rules, as spec:<rule> with its detail
+// (loop.md, The attempts; task T-tnxn, #427, row 66aa). A clear row is none.
+func SpecFindings(rows [][]string) []Finding { return nil }
+
+// RulesFindings gives the finding of layup/rules: the failure of the basic rule, as
+// rules:<reason> with its path as the file and the text of the status. A success and an
+// error give none.
+func RulesFindings(r rules.Result) []Finding { return nil }
+
+// expectedFailure says whether the failure of a context is one of the two that
+// architecture.md §8 step 5 does not send back, in M2e: for a task of the kind batch, the
+// failure of layup/rules and the pending kinds of layup/gates.
+func expectedFailure(kind, context string) bool { return false }
+
+// RetryGateFindings is GateFindings for the retry boundary: the rows of a pending kind are
+// no finding for a task whose failure of layup/gates is expected, an active row always is.
+func RetryGateFindings(kind string, t gate.Table) []Finding { return GateFindings(t) }
+
+// A CheckResult is what the records of layup/spec and layup/rules give for a head: the
+// findings to retry with, or a stop that comes before any retry.
+type CheckResult struct {
+	Findings []Finding
+	Stop     string
+}
+
+// checkResultOf classifies the rows of a head's spec table (found: it has any) and the
+// result of the basic rule, for a task of the kind: a stop for a head without a row and for
+// a rules error, else the findings of both.
+func checkResultOf(kind string, rows [][]string, found bool, r rules.Result) CheckResult {
+	return CheckResult{}
+}
+
+// CheckFindings reads the records of a head whose statuses were posted (the spec table, the
+// register commit of its bound session) and classifies them. A read that fails is an error.
+func (s *Sessions) CheckFindings(ctx context.Context, in HeadInput) (CheckResult, error) {
+	return CheckResult{}, nil
+}
+
+// NextAttemptInput is what a failure of step 5 gives: the task and its kind, the base
+// commit the new attempt starts from, the table of the gate of the failing head, and the
+// findings of the other checks.
 type NextAttemptInput struct {
-	Task, Base string
-	Table      gate.Table
+	Task, Kind, Base string
+	Table            gate.Table
+	Findings         []Finding
 }
 
 // An Attempt is the attempt that a failure started: its number and the findings

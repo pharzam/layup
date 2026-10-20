@@ -568,12 +568,9 @@ func (s *Sessions) runStage(ctx context.Context, in ShapeTaskInput, v loopView, 
 	case posDeveloper:
 		var gateHead string
 		if findings, gateHead = findingsOf(v, st.Attempt); gateHead != "" {
-			table, found, tErr := s.GatesTable(ctx, in.Task, gateHead)
-			if tErr != nil {
-				return "", tErr
-			}
-			if found {
-				findings = GateFindings(table)
+			var stop string
+			if findings, stop, err = s.headFindings(ctx, v.Task, v.Kind, st.Base, gateHead); err != nil || stop != "" {
+				return stop, err
 			}
 		}
 		fallthrough
@@ -584,6 +581,20 @@ func (s *Sessions) runStage(ctx context.Context, in ShapeTaskInput, v loopView, 
 		return pairStop(in.Task, step, err)
 	}
 	return "", s.startSession(ctx, in, v.Kind, step, st.Attempt, st.Base, h, m, findings, true)
+}
+
+// headFindings gives the findings that the developer of the next attempt is given from the head that failed
+// its checks and was never judged by a review: the rows of the head's gate table that did not pass, then the findings
+// of the other checks. A stop of those checks comes before the findings.
+func (s *Sessions) headFindings(ctx context.Context, task, kind, base, head string) ([]Finding, string, error) {
+	table, found, err := s.GatesTable(ctx, task, head)
+	if err != nil {
+		return nil, "", err
+	}
+	if !found {
+		return nil, "", nil
+	}
+	return RetryGateFindings(kind, table), "", nil
 }
 
 // finishStage posts the comment of a session that ended and records its handoff; both read before they write, so
@@ -654,18 +665,9 @@ func (s *Sessions) ship(ctx context.Context, in ShapeTaskInput, v loopView, st l
 	if err != nil {
 		return "", err
 	}
-	gates := false
-	for _, p := range posts {
-		switch name, state, d := p.Status.Context, p.Status.State, p.Status.Description; {
-		case state == "error":
-			return fmt.Sprintf("%s: %s is error: %s", in.Task, name, d), nil
-		case state == "failure" && (name == SpecContext || name == RulesContext):
-			return fmt.Sprintf("%s: %s failed: %s", in.Task, name, d), nil
-		case state == "failure" && name == VerifyContext && len(d) > len("not-active: ") && d[:len("not-active: ")] == "not-active: ":
-			return fmt.Sprintf("%s: %s", in.Task, d), nil
-		case state == "failure" && name == GatesContext:
-			gates = true
-		}
+	stop, gates, _ := judgeStatuses(in.Task, posts)
+	if stop != "" {
+		return stop, nil
 	}
 	if gates {
 		table, found, err := s.GatesTable(ctx, in.Task, st.Head)
@@ -695,6 +697,24 @@ func (s *Sessions) ship(ctx context.Context, in ShapeTaskInput, v loopView, st l
 		return pairStop(in.Task, "verification", err)
 	}
 	return "", s.startSession(ctx, in, v.Kind, "verification", st.Attempt, st.Head, h, m, nil, true)
+}
+
+// judgeStatuses judges the four statuses posted at a bound head: the first stop (an error, a failure of layup/spec or
+// layup/rules, or the status not-active of layup/verify), else whether layup/gates failed and whether a check did.
+func judgeStatuses(task string, posts []StatusPost) (stop string, gates, checks bool) {
+	for _, p := range posts {
+		switch name, state, d := p.Status.Context, p.Status.State, p.Status.Description; {
+		case state == "error":
+			return fmt.Sprintf("%s: %s is error: %s", task, name, d), false, false
+		case state == "failure" && (name == SpecContext || name == RulesContext):
+			return fmt.Sprintf("%s: %s failed: %s", task, name, d), false, false
+		case state == "failure" && name == VerifyContext && len(d) > len("not-active: ") && d[:len("not-active: ")] == "not-active: ":
+			return fmt.Sprintf("%s: %s", task, d), false, false
+		case state == "failure" && name == GatesContext:
+			gates = true
+		}
+	}
+	return "", gates, false
 }
 
 // waitingSpecAccepted runs the pinned prd-lint of the target (its script at the base) on the docs/prd/ and docs/facts/
