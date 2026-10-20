@@ -46,3 +46,16 @@ before the edit, and the test that killed it (all the tests of the row when none
 
 An earlier run on `16857d6` was stopped at M15: M9 and M11 did not build ("declared and not used", so not run, and were rewritten to keep building), and M14 was a false kill by the
 clock of the world (see `test-runs.md`). All 33 mutants of this table were run again from the start on `9ae1a36`; every one builds, vets, is killed, and its file is restored with the same SHA-256.
+
+## Round 1 (head `f6350b3`): the mutants of the fixes
+
+Run 2026-10-20T10:50:32Z to 10:52:00Z by the same script on the head `f6350b3`; M34 is the reviewer's mutant of F3 (`count["fact"] == 0 && false`). Each builds, vets, is killed, and is restored with the same SHA-256 (the green control is the killer run again).
+
+| # | mutant | result | first failing assertion | control | sha256 before / during / after |
+| - | ------ | ------ | ----------------------- | ------- | ------------------------------ |
+| M34 | the refusal of a basis with no fact dropped (`internal/run/betbasis.go`) | KILLED | TestTheBasisTableRefusesEachBrokenRule: betbrief_test.go:382: no fact: err = <nil>; want "the basis has no fact row" | green | `c56a9a9c359c` / `1920ccb5827d` / `c56a9a9c359c` |
+| M35 | the refusal of a basis with one head dropped (`internal/run/betbasis.go`) | KILLED | TestTheBasisTableRefusesEachBrokenRule: betbrief_test.go:382: exactly one head: err = <nil>; want "the basis has 1 head rows, want two or more" | green | `c56a9a9c359c` / `672dcc640701` / `c56a9a9c359c` |
+| M36 | the fixed parts of a candidate are not required (`internal/run/betbrief.go`) | KILLED | TestACandidateWithoutTheFixedPartsOfTheInputsIsRefused: betbrief_test.go:460: the open questions removed: findings []; want the first of the rule fixe | green | `4d1288dbd055` / `035961a219d5` / `4d1288dbd055` |
+| M37 | the facts part is not required at the end (`internal/run/betbrief.go`) | KILLED | TestACandidateWithoutTheFixedPartsOfTheInputsIsRefused: betbrief_test.go:460: the facts removed: findings []; want the first of the rule fixed | green | `4d1288dbd055` / `7f8c91d9e990` / `4d1288dbd055` |
+| M38 | the requirements part is not required at the start (`internal/run/betbrief.go`) | KILLED | TestACandidateWithoutTheFixedPartsOfTheInputsIsRefused: betbrief_test.go:460: a requirement part removed: findings []; want the first of the rule fixe | green | `4d1288dbd055` / `6680c137312b` / `4d1288dbd055` |
+| M39 | briefBasis ignores the structural findings of the kept brief (`internal/run/betbrief.go`) | KILLED | TestBriefBasisRefusesAMalformedKeptBrief: betbrief_integration_test.go:499: only the appetite: briefBasis = no error; want the malformed brief refused | green | `4d1288dbd055` / `59a4d6395da3` / `4d1288dbd055` |
