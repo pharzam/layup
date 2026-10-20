@@ -333,7 +333,8 @@ func TestPromptFileRefusalsHaveTheirControls(t *testing.T) {
 		}
 	}
 	// Stage 0: a step with no instruction is refused before every read, even for a base that no read could resolve.
-	for _, step := range []string{"shape-activation-batch", "plan-of-a-milestone", "answer-to-a-question"} {
+	// Expected change (row 66z, #426): answer-to-a-question has its instruction and leaves the refused steps.
+	for _, step := range []string{"shape-activation-batch", "plan-of-a-milestone"} {
 		_, err := l.prod().PromptFile(ctx, PromptIn{Task: "T-ab12", Step: step, Base: "0000000000000000000000000000000000000000"})
 		if err == nil || err.Error() != "the step "+step+" has no instruction in M2e" {
 			t.Errorf("the step %s: %v", step, err)
@@ -478,12 +479,20 @@ func TestTheInstructionBlocksOfLoopMd(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := map[string]string{"instruction-result": resultInstruction}
+	want := map[string]string{"instruction-result": resultInstruction, "instruction-answers": answersInstruction}
 	for step, text := range stepInstructions {
 		want["instruction-"+step] = text
 	}
-	if len(want) != 8 {
-		t.Errorf("%d texts in the code; want the seven steps and the shared result text", len(want))
+	if len(want) != 10 {
+		t.Errorf("%d texts in the code; want the eight steps, the shared result text and the conditional answers text", len(want))
+	}
+	// Review condition 6 of #426: a block of the document that the code does not know is as wrong as a constant that differs.
+	for _, line := range strings.Split(string(doc), "\n") {
+		if name, ok := strings.CutPrefix(line, "```text instruction-"); ok {
+			if _, known := want["instruction-"+name]; !known {
+				t.Errorf("loop.md has the block instruction-%s and the code has no text for it", name)
+			}
+		}
 	}
 	for name, text := range want {
 		_, block, ok := strings.Cut(string(doc), "\n```text "+name+"\n")

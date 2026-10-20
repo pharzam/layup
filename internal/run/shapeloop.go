@@ -65,6 +65,7 @@ const (
 	posNextAttempt             // the verdict is material and the cap allows one more attempt
 	posWait                    // wait for the Operator
 	posStop                    // a case the driver does not go on from
+	posQuestion                // a session of the attempt asked a question: the stages of questionloop.go
 )
 
 // loopView is what the position is told from: the events and the rows of sessions.tsv of the task, the
@@ -76,6 +77,11 @@ type loopView struct {
 	Sessions   [][]string
 	Status     map[string]string
 	Records    map[string]ReviewRecord
+	// The question in the loop (row 66z) is told from the typed rows of each result that ended done, the rows of copies.tsv
+	// and the issue of the task.
+	Results map[string][][]string
+	Copies  [][]string
+	Issue   int
 }
 
 // loopStep is a position with what its act needs: the session it concerns, the message of a stop or a wait,
@@ -85,6 +91,7 @@ type loopStep struct {
 	Session, Msg string
 	Attempt      int
 	Base, Head   string
+	Ask          qStep // the stage of the question, for posQuestion
 }
 
 const nothingMaterial = "nothing material in scope"
@@ -139,8 +146,8 @@ func (v loopView) qaKind(s []string) (review, verifier bool) {
 	}
 	plan, push := -1, len(v.Events)
 	for i, e := range v.Events {
-		if ok, _ := validHandoff(e[6]); e[1] == "handoff" && ok && v.role(e[3]) == stepRole("plan-of-a-task") {
-			plan = i
+		if ok, comment := validHandoff(e[6]); e[1] == "handoff" && ok && comment && v.role(e[3]) == stepRole("plan-of-a-task") {
+			plan = i // a handoff of a comment: the question and the answer handoffs of a session of this role are none
 		}
 		if e[1] == "push" && i < push {
 			push = i
@@ -283,9 +290,16 @@ func loopPosition(v loopView) loopStep {
 			return stop(fmt.Sprintf("%s: the start of the session %s was refused (%s)", v.Task, e[3], e[6]))
 		}
 	}
+	if q := questionPosition(v, attempt); q.Stage != qNone { // a session of this attempt asked: the stages of questionloop.go
+		step.Pos, step.Ask = posQuestion, q
+		return step
+	}
 	var plans, reviews, devs, verifiers []string
 	for _, s := range v.Sessions {
 		id, a := s[sessionID], s[sessionAttempt]
+		if v.answerSession(s) || (a != strconv.Itoa(attempt) && v.Status[id] == "needs_context") {
+			continue // the answer session of an attempt, and a session that asked in an earlier attempt: its stage runs again in this one
+		}
 		switch s[sessionRole] {
 		case stepRole("plan-of-a-task"):
 			plans = append(plans, id)
@@ -401,7 +415,7 @@ func (s *Sessions) shapeView(ctx context.Context, task string) (loopView, error)
 	if err != nil {
 		return loopView{}, err
 	}
-	v := loopView{Task: task, Kind: t.Kind, Status: map[string]string{}, Records: map[string]ReviewRecord{}}
+	v := loopView{Task: task, Kind: t.Kind, Status: map[string]string{}, Records: map[string]ReviewRecord{}, Results: map[string][][]string{}, Issue: t.Issue}
 	if v.Events, err = s.readTable(ctx, eventsPath(task), records.ReadEvents); err != nil {
 		return v, err
 	}
@@ -422,6 +436,7 @@ func (s *Sessions) shapeView(ctx context.Context, task string) (loopView, error)
 		if err != nil {
 			return v, err
 		}
+		v.Results[e[3]] = rows
 		for _, r := range rows {
 			if r[0] == "status" {
 				v.Status[e[3]] = r[2]
@@ -432,6 +447,7 @@ func (s *Sessions) shapeView(ctx context.Context, task string) (loopView, error)
 	if err != nil {
 		return v, err
 	}
+	v.Copies = copies
 	for _, sess := range v.Sessions {
 		id := sess[sessionID]
 		detail, found := v.lastHandoff(id)
@@ -469,7 +485,7 @@ func (s *Sessions) AdvanceShapeTask(ctx context.Context, in ShapeTaskInput) (Adv
 			return Advance{}, err
 		}
 		st := loopPosition(v)
-		var stop string
+		var stop, wait string
 		switch st.Pos {
 		case posStop:
 			return Advance{Task: in.Task, Stop: st.Msg}, nil
@@ -478,6 +494,8 @@ func (s *Sessions) AdvanceShapeTask(ctx context.Context, in ShapeTaskInput) (Adv
 				return Advance{}, err
 			}
 			return Advance{Task: in.Task, Wait: st.Msg}, nil
+		case posQuestion:
+			stop, wait, err = s.askStage(ctx, in, v, st)
 		case posAttempt:
 			_, err = s.StartAttempt(ctx, in.Task, in.Base)
 		case posPlan, posReview, posDeveloper:
@@ -503,6 +521,8 @@ func (s *Sessions) AdvanceShapeTask(ctx context.Context, in ShapeTaskInput) (Adv
 		switch {
 		case stop != "":
 			return Advance{Task: in.Task, Stop: stop}, nil
+		case wait != "":
+			return Advance{Task: in.Task, Wait: wait}, nil
 		case errors.As(err, &refusal), errors.As(err, &posting):
 			// The refusal is recorded; the next position names it.
 		case err != nil:
@@ -517,6 +537,12 @@ func (s *Sessions) AdvanceShapeTask(ctx context.Context, in ShapeTaskInput) (Adv
 // first: the scratch branch layup/base/<task>/<attempt> of the run's clone is set to it, and the session clones that
 // branch (plan amendment 1 of #415).
 func (s *Sessions) startSession(ctx context.Context, in ShapeTaskInput, kind, step string, attempt int, base string, pair, model []string, findings []Finding, scratch bool) error {
+	return s.startAs(ctx, in, kind, step, stepRole(step), attempt, base, pair, model, findings, scratch)
+}
+
+// startAs is startSession for a session whose role is not the step table's: the answer session is of the owner role of the question
+// (row 66z), the table's word for it being owner-of-its-kind.
+func (s *Sessions) startAs(ctx context.Context, in ShapeTaskInput, kind, step, role string, attempt int, base string, pair, model []string, findings []Finding, scratch bool) error {
 	p := pairOf(pair, model)
 	if err := s.milestoneCap(ctx, p.Cap); err != nil {
 		return err
@@ -538,7 +564,7 @@ func (s *Sessions) startSession(ctx context.Context, in ShapeTaskInput, kind, st
 		}
 	}
 	// The admission may run a probe at the same base, so it clones the same branch.
-	ts := TaskSpec{Task: in.Task, Attempt: attempt, Role: stepRole(step), Base: base, Branch: branch, Records: rec, Pair: p, Context: pc,
+	ts := TaskSpec{Task: in.Task, Attempt: attempt, Role: role, Base: base, Branch: branch, Records: rec, Pair: p, Context: pc,
 		Admit: s.Admit(ctx, ProbeSpec{Harness: pair, Models: in.Models, Base: base, Records: rec, Branch: branch})}
 	_, err = s.TaskSession(ctx, ts)
 	return err
@@ -804,5 +830,5 @@ func (s *Sessions) settleVerdict(ctx context.Context, in ShapeTaskInput, v loopV
 
 // readOnlyStep reports whether the session of a step only reads: it has no push.
 func readOnlyStep(step string) bool {
-	return step == "plan-of-a-task" || step == "plan-review" || step == "verification"
+	return step == "plan-of-a-task" || step == "plan-review" || step == "verification" || step == "answer-to-a-question"
 }

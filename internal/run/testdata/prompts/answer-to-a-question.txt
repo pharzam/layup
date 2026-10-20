@@ -1,0 +1,41 @@
+Prompt file of the step answer-to-a-question of the task T-ab12.
+Read each file at its path: its SHA-256 follows it. A path that starts with / is a copy of a file of the run's records; any other path is a file of the target, relative to your working directory.
+
+issue-and-plan:
+- /s/S-aaaaaaaa/input/tasks.tsv 299e5653428469c74c66c8063cb1357c5c28b73d38e98e2c34c12d9fc8b08e90
+- /s/S-aaaaaaaa/input/701-1.md 2d619c7869a25a069e8d9fe28202d200c8bef01cba077934e702217e8a678b59
+- /s/S-aaaaaaaa/input/tests.tsv 11d5bbdbcdf1fa5aff71bba2bd6f088fb00d00ff9927db0bb482d0b1e10fc578
+
+requirements:
+- docs/prd/PRD-0001.md 937a536b787a2e0a725b22dd2732f348eb8563a9ab3542b4a44da56609cdee68
+- docs/spec/loop.md 65ccec686a56d97fa4a556297ede1e7a83eae7acce0ba8ec0a3396deaba54f2e
+- /s/S-aaaaaaaa/input/draft.tsv 7eb2ca55b87a4d45d66a63f76db11f9b4aa9106472a62b5865060f9fd8eadaaa
+- /s/S-aaaaaaaa/input/spans.tsv 40f6abc9b35d0641a4288bc142c3ef868bd3e05322089bdc2b568cb5a1c00895
+- /s/S-aaaaaaaa/input/problem-statement.md 13d68660d0fd520791f490f93d9449d34d51a061e70b0205f66c37ba8318f3ed
+- /s/S-aaaaaaaa/input/answers.tsv 77ecb9d6aaae1fb8c9bb001b9ffcf5cb5eee50011ef44341fc99a8fa2fca7eb3
+
+decision-records:
+- docs/adr/0019-phase-loop.md 93433c88c1632148fb75d132ac49a661361bd412d5663f1001ba25ac1b30c8ff
+- docs/adr/0020-route.md 4d66daf6b9c955ea2feea5ecd0e1d3eaeb86f389e6f85f2720f8da4b042c6ec7
+- docs/adr/0021-smart-if.md 822c42fc9790e8866b3826a7f289ccf6b351dc2f7464689f22310922ed02bfb1
+
+handoffs-and-answers:
+- /s/S-aaaaaaaa/input/702-1.md dbf25df15801bf8aeb66fe3b0f99eddba4e2d0265e86570f8fda7f349726b8bc
+- /s/S-aaaaaaaa/input/S-bbbbbbbb.tsv 6959b4fff6c9960b2ebbc289573e00e9c7097597e84b3c45759f36fef9778736
+- /s/S-aaaaaaaa/input/S-cccccccc.tsv b6e626593412f93ffd2bd93c71617650fcb92ffcfa5331545e9e85496c245913
+findings of the last attempt:
+- gate:static: command failed
+
+rule-files:
+- AGENTS.md a73e36ec19ff2a725608408e2b396eadd2ac6046cfa31e010f8d62daab565165
+- docs/rules/a.md 1ed5f7c4bd0d52c69b29af102469935a79798bb799316ab8bad8291fcb3bef03
+
+The work of this step:
+Answer the questions that the sessions of the last attempt of the task T-ab12 (kind specification, issue 701) asked: S-cccccccc.1 S-cccccccc.2. The question rows are in the result files of those sessions, listed above under handoffs-and-answers; the IDs above are in the order of the questions, each a session and the n of its row. Read the files each question concerns, the requirements, the decision records and the rule files. Change no file of the repository and make no commit.
+Write one row of the kind answer for each question, and no other row of that kind: "answer<TAB><n><TAB><the answer, one line><TAB>—<TAB><record>". The answer row of column n = 1 answers the first question of the list above, the row of column n = 2 the second, and so on. At least one <record> names a file the answer rests on, more are separated by one space, and there is no space at either end of the cell. Write the status row completed when every question is answered.
+
+Write the result file /s/S-aaaaaaaa/result/result.tsv: UTF-8 text with no byte-order mark, one row per line, each line ended by a line feed, the last too, and no blank line. Separate the cells of a row with one tab character each, never with spaces. The first line is "kind<TAB>n<TAB>value<TAB>sha256<TAB>reason". The single character — (U+2014) is the empty cell; no cell holds a tab or a line break. The rows of each kind are numbered 1, 2, 3 and so on, with no gap.
+Write exactly one status row, "status<TAB>1<TAB><status><TAB>—<TAB><reason>": <status> is completed when the work of this step is done, needs_context when a question stops it, and blocked or failed otherwise; <reason> is one line and not empty.
+For each required output that the work above names, write the row "artifact<TAB><n><TAB><path><TAB><sha256><TAB>—": <path> is relative to the repository, and <sha256> is 64 lowercase hexadecimal characters, the SHA-256 of that file at your last commit. A file that this prompt only asks you to read is no output.
+When a question stops the work, write one row for each question, "question<TAB><n><TAB><text><TAB>—<TAB><label> <needs_human> <record>": <label> is one of architecture-boundary, domain-or-business, environment-or-infrastructure, interface-contract; <needs_human> is yes or no; at least one <record> names a file the question concerns, more are separated by one space, and there is no space at either end of the cell.
+A comment file is plain Markdown with no code fence. Push nothing. Then end.

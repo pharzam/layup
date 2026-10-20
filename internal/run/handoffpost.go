@@ -159,6 +159,15 @@ func (s *Sessions) PostComment(ctx context.Context, task, session, file string) 
 		}
 		return Posted{}, err
 	}
+	return s.postBody(ctx, task, data)
+}
+
+// postBody posts the bytes of a comment as a comment of the task's issue and copies it: the part of PostComment after the file
+// is read and its body checked, so a body that code composes (the question and answer comments, row 66z) goes the same way. A
+// comment that has a copy of these bytes on the issue, or that the App has already posted with these bytes, is not posted
+// again; the one post is fenced by a read of the lease, and the copy by Fenced.
+func (s *Sessions) postBody(ctx context.Context, task string, data []byte) (Posted, error) {
+	s.fns()
 	issue, err := s.taskIssue(ctx, task)
 	if err != nil {
 		return Posted{}, err
