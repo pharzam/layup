@@ -52,5 +52,21 @@ end-to-end   2026-10-20T13:53:57Z  Run go test -tags=e2e -timeout 10m ./...
 
 - The integration step permitted each test binary up to 20 minutes. `internal/run` passed uncached in **588.190 s**, below the 1,200 s limit. That is the same product code that timed out at 600 s on `2866a3f`: this head changes no Go file.
 - Unit and end-to-end kept `-timeout 10m` and passed.
-- 13 check runs: 12 `success` and `review-record` `failure`. The failure was expected: the first review record of #442 comes after this head, and the check is read again on the frozen head.
+- The 13 check runs on `79169f4` (the 12 required contexts of `docs/setup/branch-protection.json` plus `task-state labels`). `review-record` failed as expected, because the first record of #442 came after this head. The all-green state is read again on the final head before the merge and recorded in the task file:
+
+  | Check run | Conclusion |
+  | --- | --- |
+  | `task-state labels` | success |
+  | `security (govulncheck v1.8.0, go vet, and gitleaks)` | success |
+  | `lint (gofmt, go vet)` | success |
+  | `conventional-title` | success |
+  | `discipline-tests (linter fixtures)` | success |
+  | `tests (unit → integration → e2e)` | success |
+  | `link-lint (in-tree links and anchors)` | success |
+  | `nested-checkout-check (the linters skip a nested checkout)` | success |
+  | `adr-lint (docs/adr discipline)` | success |
+  | `prd-lint (docs/prd discipline)` | success |
+  | `setup-check (the Armature setup and its evidence)` | success |
+  | `pr-link (PR body links an issue)` | success |
+  | `review-record (the issue carries a parseable record)` | failure |
 - Recorded by the coordinator (Claude Opus 5.5), from `gh run view 39432743311 --log` and `gh api repos/pharzam/layup/commits/79169f4…/check-runs`.
