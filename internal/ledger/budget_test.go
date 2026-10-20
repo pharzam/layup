@@ -66,3 +66,22 @@ func TestMilestoneCap(t *testing.T) {
 		}
 	}
 }
+
+// KnownMoney (task T-h65e, #418): characterization of the extraction from MilestoneCap, green at the stub: the sum of the known rows in
+// exact decimals, the probes' included, an unknown row adding nothing, and the refusals of MilestoneCap's rows.
+func TestKnownMoneyIsTheSumOfTheKnownRows(t *testing.T) {
+	rows := [][]string{telemetryRow("S-00000001", "1.25", "USD", "reported"), telemetryRow("S-00000002", "0.75", "USD", "computed"),
+		telemetryRow("S-00000003", "", "", "unknown"), telemetryRow("S-b0000001", "0.1", "USD", "reported")}
+	if got, err := KnownMoney(rows); err != nil || got != "2.1" {
+		t.Errorf("KnownMoney = %q, %v; want 2.1", got, err)
+	}
+	if got, err := KnownMoney(nil); err != nil || got != "0.0" {
+		t.Errorf("KnownMoney of no row = %q, %v; want 0.0", got, err)
+	}
+	if _, err := KnownMoney(append(rows, telemetryRow("S-00000004", "0.10", "EUR", "computed"))); !errors.Is(err, ErrMilestoneCap) {
+		t.Errorf("a known row not in USD: err = %v; want ErrMilestoneCap", err)
+	}
+	if _, err := KnownMoney([][]string{{"short"}}); err == nil {
+		t.Error("a row of another width: err = nil; want a refusal")
+	}
+}
