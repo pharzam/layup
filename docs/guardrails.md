@@ -79,6 +79,12 @@ Whether a named gate really runs the path is a review judgement.
 The traps below hurt this project. Each has the trap, why it is silent, and the
 check that catches it.
 
+- ❌ **“Input” makes an evidence exclusion read two ways.** In `T-3ff9`, treating
+  every audited record as an input would defeat ADR-0028's evidence exclusion
+  and records-finding examples. It is silent because each reading fits the word.
+  **The check:** use the Operator-clarified definition in
+  [Reviewing until findings decay](engineering-discipline.md#reviewing-until-findings-decay)
+  for both the count and end 3; do not infer input status from a check's read alone.
 - ❌ **A shell function overwrites its caller's variable.** POSIX `sh` has no
   local variables, so a loop variable in a check function can replace the loop
   variable of the main loop in `setup-check.sh`. The first try of a fix in
@@ -657,9 +663,9 @@ success without having done its job.
   before the freeze: the new base SHA, the figure against it and the figure against
   the old base, and the tasks that landed between (`git log --merges OLD..NEW`); and
   ask the Operator to rule that the bound is read against the new base, as the plan
-  review names the old one and an overrun against the named base is a finding
-  ([the budget](engineering-discipline.md#reviewing-until-findings-decay)); the task file names the base that the
-  ruling gives.
+  review names the old one; the disposition of any overrun follows
+  [the budget](engineering-discipline.md#reviewing-until-findings-decay). The task
+  file names the base that the ruling gives.
 
 - ❌ **The pinned `prd-lint` fails on two streams.** Its awk `print` goes to
   stdout and its `err()` — the filename refusal — goes to stderr, so a reader of
