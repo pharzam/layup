@@ -148,7 +148,6 @@ func TestTheProbeIsAPassOnlyForGitHubsRefusalOfTheProbeRef(t *testing.T) {
 // The step on the real step runner: after the apply of the Operator it checks the forge and commits the table, whatever
 // the result, at each restart; a work area that is missing is built again, one that is there is used as it is.
 func TestTheStepForgeCheckChecksTheForgeAndCommitsItsTableAtEachRestart(t *testing.T) {
-	t.Parallel()
 	saved := verifyRun
 	t.Cleanup(func() { verifyRun = saved })
 	w := scaffoldWorld(t, proseFiles())

@@ -69,7 +69,6 @@ func notes(w *world) []string {
 // of another repository, and, once the Operator has pushed and applied, commits setup/rulesets.txt in
 // one commit of that path alone; a later restart finds it done before.
 func TestTheStepScaffoldPushWaitsAndRecordsTheAppliesOfTheOperator(t *testing.T) {
-	t.Parallel()
 	saved := verifyRun
 	t.Cleanup(func() { verifyRun = saved })
 	w := scaffoldWorld(t, proseFiles())

@@ -134,7 +134,6 @@ func TestAFailedReadOfTheTreeIsASourceErrorOfTheTarget(t *testing.T) {
 // the Scaffold, and a head that descends from the scaffolded main, each field
 // of the FullInput is its record or its file, and CheckFull judges the head.
 func TestTheFullInputOfAHeadAfterIntakeAndTheScaffold(t *testing.T) {
-	t.Parallel()
 	saved := verifyRun
 	t.Cleanup(func() { verifyRun = saved })
 	w := scaffoldWorld(t, proseFiles())
