@@ -165,3 +165,36 @@ The T-r7b9 line is the placeholder template of §"The fixes of round 1". The 45 
 | `go test ./...` | `2026-10-20T15:49:56Z` | `0` | ok  	github.com/pharzam/layup/internal/work	(cached) |
 
 The check on this branch, on its clean head at 2026-10-20T15:48:58Z, prints `ok` for K1, K2, K3, K4 and K6, and `FAIL K5` with the figure 2159/212. That is the budget, which is the Operator's figure at landing.
+
+## The fix of round 3, under the Operator's end 3 (6295306362): a fix that no round read
+
+| Finding | Fixture | Fix |
+| --- | --- | --- |
+| F10: K6 accepted a citation of line 0 | `bad-K6-line-zero` (`:0`), `bad-K6-range-zero` (`:0-3`); the `:1` control is in `good-K6-valid` | whether a range was given is kept apart from its bounds, and a range that starts before line 1 fails |
+| F11: K2 skipped the missing-PRD and missing-§12 refusals for a test that covers no requirement | `bad-K2-no-prd-frame-test`, `bad-K2-no-s12-frame-test` (Covers `—`), `bad-K2-no-prd-mapped-test`, `bad-K2-no-s12-mapped-test` (Covers `REQ-001`) | new tests need the PRD and its §12 whatever they cover: the refusal runs once, before the per-test lookups, whose dead copies were removed |
+
+| Run | Commit | Time (UTC) | Exit | Result |
+| --- | --- | --- | --- | --- |
+| Red | `8044c7d` | `2026-10-20T16:04:33Z` | `1` | `58 passed, 4 failed`: the two frame-test cases and the two line-zero cases (the two mapped cases passed, as that path held) |
+| Green | `65960dc` | `2026-10-20T16:05:13Z` | `0` | `62 passed, 0 failed`, under `sh` and `bash --posix` |
+
+Mutants, one rule removed at a time on a copy, each killed:
+- the missing-PRD refusal: 60 passed, 2 failed;
+- the missing-§12 refusal: 60 passed, 2 failed;
+- the line-1 bound: 60 passed, 2 failed.
+
+The merged tasks of `main` give what they gave after round 2: T-05f4 exit 0, and T-r7b9 its one placeholder line.
+
+| Command | Start (UTC) | Exit | Last line |
+| --- | --- | --- | --- |
+| `sh docs/adr/adr-lint.sh` | `2026-10-20T16:06:37Z` | `0` | adr-lint: OK |
+| `sh docs/prd/prd-lint.sh` | `2026-10-20T16:06:38Z` | `0` | prd-lint: OK |
+| `sh docs/links/link-lint.sh` | `2026-10-20T16:06:38Z` | `0` | link-lint: OK  2948 links resolved |
+| `sh docs/tests/run-discipline-tests.sh` | `2026-10-20T16:06:51Z` | `0` | run-discipline-tests: 138 passed, 0 failed |
+| `sh docs/tests/nested-checkout-check.sh` | `2026-10-20T16:06:54Z` | `0` | nested-checkout-check: OK  10 cases behaved |
+| `sh docs/tests/freeze-check/run-all.sh` | `2026-10-20T16:06:54Z` | `0` | freeze-check: 62 passed, 0 failed |
+| `bash --posix docs/tests/freeze-check/run-all.sh` | `2026-10-20T16:06:59Z` | `0` | freeze-check: 62 passed, 0 failed |
+| `sh docs/setup/setup-check.sh` | `2026-10-20T16:07:05Z` | `0` | setup-check: kit-linters OK |
+| `go build ./...` | `2026-10-20T16:07:26Z` | `0` |  |
+| `go vet ./...` | `2026-10-20T16:07:26Z` | `0` |  |
+| `go test ./...` | `2026-10-20T16:07:27Z` | `0` | ok  	github.com/pharzam/layup/internal/work	(cached) |
