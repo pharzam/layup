@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/pharzam/layup/internal/forge"
+	"github.com/pharzam/layup/internal/session"
 	"github.com/pharzam/layup/internal/tsv"
 )
 
@@ -186,9 +187,16 @@ func TestTheReopeningIsNotTheSpecificationReusedByKind(t *testing.T) {
 	t.Parallel()
 	w := newReopening(t)
 	w.merge()
+	// A task of the register that names a higher requirement than the draft does: the numbers go on from it (one number space for the register too).
+	if err := w.r.registerTask(context.Background(), Task{ID: "T-bld1", Issue: 90, Kind: "build", Requirements: []string{"REQ-009"}, Opened: time0}); err != nil {
+		t.Fatal(err)
+	}
 	got, err := w.open()
 	if err != nil || len(got) != 4 {
 		t.Fatalf("openReopenings = %v, %v; want four tasks", got, err)
+	}
+	if rows := w.rows(t); rows[0][reoRequirement] != "NFR-010" || rows[1][reoRequirement] != "REQ-011" || rows[3][reoRequirement] != "REQ-012" {
+		t.Errorf("the requirements %v; want NFR-010, REQ-011 and REQ-012, after the REQ-009 of the register", rows)
 	}
 	n := 0
 	for _, tk := range w.register() {
@@ -357,6 +365,9 @@ func TestAHarnessThatFollowsTheReopenedInstructionGivesAValidHandoffAndAGreenSpe
 	if err != nil {
 		t.Fatal(err)
 	}
+	if items := itemsOf(pc, session.KindRequirements); !slices.Contains(items, "spec/reopenings.tsv") || !slices.Contains(items, "docs/prd/PRD-0001-x.md") {
+		t.Errorf("the requirements of the prompt = %v; want the record of the reopenings and the PRD, which holds no row of %s", items, b.Requirements[0])
+	}
 	line := shownLine(string(pc.Text("/x")), "need")
 	w.ctlWrite("reopen-"+b.ID, line)
 	w.ctlWrite("reopen-section-"+b.ID, b.Requirements[0])
@@ -386,5 +397,37 @@ func TestAHarnessThatFollowsTheReopenedInstructionGivesAValidHandoffAndAGreenSpe
 	}
 	if ok, lines, err := w.r.sessions().waitingSpecAccepted(in.Base, got.Head); err != nil || !ok {
 		t.Errorf("the pinned prd-lint at the head: %v, %q, %v; want it accepted", ok, lines, err)
+	}
+}
+
+// Condition 4 of the plan review: a task of the register that holds a reserved ID must agree with the reservation, and the rows of the record must
+// agree with the version; else nothing is opened.
+func TestARegisteredTaskThatDisagreesWithItsReservationIsRefused(t *testing.T) {
+	t.Parallel()
+	w := newReopening(t)
+	w.merge()
+	rows := [][]string{{"1", "1", "constraint", "F-0004#1", "NFR-002", "T-rsv1", "7004"}, {"1", "2", "need", "F-0004#2", "REQ-003", "T-rsv2", "7004"},
+		{"1", "Q-002", "measure", "Q-002", "", "T-rsv3", "7004"}, {"1", "Q-003", "need", "Q-003", "REQ-004", "T-rsv4", "7004"}}
+	data, err := table(ReopeningsSchema, rows)
+	if err != nil {
+		t.Fatal(err)
+	}
+	w.push(map[string][]byte{reopeningsPath: data}, "a reservation")
+	w.restart()
+	if err := w.r.registerTask(context.Background(), Task{ID: "T-rsv1", Issue: 91, Kind: "specification", Requirements: []string{"REQ-009"}, Predecessors: []string{w.spec}, Opened: time0}); err != nil {
+		t.Fatal(err)
+	}
+	issues := w.issues()
+	if got, err := w.open(); err == nil || !strings.Contains(err.Error(), "T-rsv1") || len(got) != 0 || w.issues() != issues {
+		t.Errorf("openReopenings = %v, %v; %d issues; want an error that names T-rsv1 and no issue", got, err, w.issues()-issues)
+	}
+	rows[1][reoClass], rows[1][reoRequirement] = "constraint", "NFR-003"
+	if data, err = table(ReopeningsSchema, rows); err != nil {
+		t.Fatal(err)
+	}
+	w.push(map[string][]byte{reopeningsPath: data}, "another reservation")
+	w.restart()
+	if got, err := w.open(); err == nil || !strings.Contains(err.Error(), "class") || len(got) != 0 || w.issues() != issues {
+		t.Errorf("openReopenings with a class the version does not give = %v, %v; want the refusal of the class and no issue", got, err)
 	}
 }

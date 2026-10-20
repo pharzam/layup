@@ -345,6 +345,11 @@ func (r *state) numberedRecordAt(commit string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	return numberedRecord(files, commit)
+}
+
+// numberedRecord gives the record of the one numbered facts file; none or two is an error.
+func numberedRecord(files map[string][]byte, commit string) (string, error) {
 	recs, err := psbRecordsOf(files)
 	if err != nil {
 		return "", fmt.Errorf("%s: %w", commit, err)

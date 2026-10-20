@@ -448,3 +448,16 @@ func TestTheReopeningSetOfTheFullInputIsReadFromTheRecords(t *testing.T) {
 		t.Errorf("before the first bet: %v; want none", err)
 	}
 }
+
+// The numbered facts record of the merge commit is the one file; none and two are errors.
+func TestTheNumberedFactsRecordOfTheMergeCommitIsTheOneFile(t *testing.T) {
+	if rec, err := numberedRecord(map[string][]byte{"F-0004-numbered-facts.md": nil}, sha40); err != nil || rec != "F-0004" {
+		t.Errorf("one file: %q, %v; want F-0004", rec, err)
+	}
+	if rec, err := numberedRecord(map[string][]byte{}, sha40); err == nil || rec != "" || !strings.Contains(err.Error(), "no numbered facts record") {
+		t.Errorf("none: %q, %v; want the error that names the missing record", rec, err)
+	}
+	if _, err := numberedRecord(map[string][]byte{"F-0004-numbered-facts.md": nil, "F-0005-numbered-facts.md": nil}, sha40); err == nil {
+		t.Error("two files: no error")
+	}
+}
