@@ -92,7 +92,7 @@ func (s *Sessions) FinishTask(ctx context.Context, in FinishInput) (Advance, err
 		cin.Rendered, carried = &RenderedInput{Head: rendered.Head, Render: rendered.Records}, rendered.Head
 		hin.Copy, hin.Records, hin.PreRev = rendered.Copy, rendered.Records, st.Head
 	}
-	if ok, err := s.upToDate(ctx, st.Base, carried); err != nil {
+	if ok, _, err := s.UpToDate(ctx, carried); err != nil { // the one predicate of a current head (baseup.go), asked of the head that carries the verdict
 		return Advance{}, err
 	} else if !ok {
 		return Advance{}, fmt.Errorf("%s: the base moved (row 66x's)", task)
@@ -394,25 +394,6 @@ func notReady(task, head string, r Readiness) Advance {
 		return Advance{Task: task, Stop: fmt.Sprintf("%s: not ready at %s: %s", task, head, r.Reason)}
 	}
 	return Advance{Task: task, Wait: fmt.Sprintf("waiting: %s: not ready at %s: %s", task, head, r.Reason)}
-}
-
-// upToDate tells whether the default branch's head, read from the forge, is the attempt's base or an ancestor of head, the head that carries the
-// verdict (D9; row 66x consumes it with the head after its clean merge of the base). A failed read is an error, never a moved base.
-func (s *Sessions) upToDate(ctx context.Context, base, head string) (bool, error) {
-	tip, found, err := s.Store.BranchHead(ctx, s.Branch)
-	switch {
-	case err != nil:
-		return false, err
-	case !found:
-		return false, fmt.Errorf("the default branch %s is not on the forge", s.Branch)
-	case tip == base:
-		return true, nil
-	}
-	ok, err := git.IsAncestor(s.Clone, tip, head)
-	if err != nil {
-		return false, fmt.Errorf("the default branch %s holds %s, not the base %s, and the run's clone cannot tell whether it is an ancestor of %s: %w", s.Branch, tip, base, head, err)
-	}
-	return ok, nil
 }
 
 // renderedBet rebuilds the typed inputs of the rendered head of the first bet from the records and the verified head (D10), as the step bet built

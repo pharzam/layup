@@ -2,7 +2,6 @@ package run
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -247,25 +246,6 @@ func TestNotReadyIsAWaitAndAMovedHeadIsAStop(t *testing.T) {
 	}
 	if got, want := closedWait("T-ab12", "task/T-ab12/2", 7), "waiting for the Operator: T-ab12: the pull request #7 of task/T-ab12/2 is closed and not merged"; got != want {
 		t.Errorf("closedWait = %q; want %q", got, want)
-	}
-}
-
-// U8 (D9): the default branch's head equal to the base is up to date with no git read; a head that is not on the forge and a failed read are errors,
-// never a moved base.
-func TestTheDefaultHeadMustBeTheBaseOrAnAncestorOfTheCarriedHead(t *testing.T) {
-	t.Parallel()
-	w, _ := finishWorld(t)
-	w.st.heads = map[string]string{"main": shaOld}
-	if ok, err := w.s.upToDate(context.Background(), shaOld, head2); err != nil || !ok {
-		t.Errorf("upToDate with the tip at the base = %v, %v; want true", ok, err)
-	}
-	w.st.heads = nil
-	if ok, err := w.s.upToDate(context.Background(), shaOld, head2); err == nil || ok {
-		t.Errorf("upToDate with no default branch = %v, %v; want an error", ok, err)
-	}
-	w.st.heads, w.st.headErr = map[string]string{"main": shaOld}, errors.New("the forge did not answer")
-	if ok, err := w.s.upToDate(context.Background(), shaOld, head2); err == nil || ok {
-		t.Errorf("upToDate with a failed read = %v, %v; want an error", ok, err)
 	}
 }
 
