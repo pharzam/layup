@@ -47,9 +47,9 @@ before the edit, and the test that killed it (all the tests of the row when none
 An earlier run on `16857d6` was stopped at M15: M9 and M11 did not build ("declared and not used", so not run, and were rewritten to keep building), and M14 was a false kill by the
 clock of the world (see `test-runs.md`). All 33 mutants of this table were run again from the start on `9ae1a36`; every one builds, vets, is killed, and its file is restored with the same SHA-256.
 
-## Round 1 (head `f6350b3`): the mutants of the fixes
+## Rounds 1 and 2 (heads `f6350b3` and `5b6cd90`): the mutants of the fixes
 
-Run 2026-10-20T10:50:32Z to 10:52:00Z by the same script on the head `f6350b3`; M34 is the reviewer's mutant of F3 (`count["fact"] == 0 && false`). Each builds, vets, is killed, and is restored with the same SHA-256 (the green control is the killer run again).
+Run 2026-10-20T10:50:32Z to 10:52:00Z on `f6350b3` (M34 to M39; M34 is the reviewer's mutant of F3, `count["fact"] == 0 && false`) and 12:00:46Z to 12:01:06Z on `5b6cd90` (M40, the F5 mutant `data == nil && false` at `betbrief.go:441`, also killed on `555b959` at 11:58:52Z-11:59:06Z with hashes `4d1288dbd055` / `7c378f2e8fdf` / `4d1288dbd055`, and M41, the F6 mutant `strings.TrimSpace(statement) == "" && false`). Each builds, vets, is killed, and is restored with the same SHA-256 (the green control is the killer run again).
 
 | # | mutant | result | first failing assertion | control | sha256 before / during / after |
 | - | ------ | ------ | ----------------------- | ------- | ------------------------------ |
@@ -59,3 +59,5 @@ Run 2026-10-20T10:50:32Z to 10:52:00Z by the same script on the head `f6350b3`; 
 | M37 | the facts part is not required at the end (`internal/run/betbrief.go`) | KILLED | TestACandidateWithoutTheFixedPartsOfTheInputsIsRefused: betbrief_test.go:460: the facts removed: findings []; want the first of the rule fixed | green | `4d1288dbd055` / `7f8c91d9e990` / `4d1288dbd055` |
 | M38 | the requirements part is not required at the start (`internal/run/betbrief.go`) | KILLED | TestACandidateWithoutTheFixedPartsOfTheInputsIsRefused: betbrief_test.go:460: a requirement part removed: findings []; want the first of the rule fixe | green | `4d1288dbd055` / `6680c137312b` / `4d1288dbd055` |
 | M39 | briefBasis ignores the structural findings of the kept brief (`internal/run/betbrief.go`) | KILLED | TestBriefBasisRefusesAMalformedKeptBrief: betbrief_integration_test.go:499: only the appetite: briefBasis = no error; want the malformed brief refused | green | `4d1288dbd055` / `59a4d6395da3` / `4d1288dbd055` |
+| M40 | the refusal of a missing record in readBrief dropped (`internal/run/betbrief.go`) | KILLED | TestAFreshBuildRefusesWhatItCannotBuildBefore: betbrief_integration_test.go:315: no problem-statement.md: err = the session S-229e0f74: no-result: the output file problem.md is missing after 1 sessions, head moved true; want the m | green | `35e08c135ab5` / `9933573b5203` / `35e08c135ab5` |
+| M41 | the refusal of an empty or blank PRD statement dropped (`internal/run/betbrief.go`) | KILLED | TestTheRequirementsPartUsesTheRegisteredFinalIDs: betbrief_test.go:176: an empty statement cell: err = <nil>; want "the requirement REQ-001 has no statement in the PRD at the verified head" | green | `35e08c135ab5` / `aed646f93279` / `35e08c135ab5` |
