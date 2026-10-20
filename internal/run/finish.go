@@ -289,12 +289,15 @@ func (s *Sessions) mergeAt(ctx context.Context, cin CarryInput, hin HeadInput, s
 		return Advance{}, err
 	}
 	_, r, err := s.MergeTask(ctx, cin.Task, step.Head)
-	if err != nil || r.Ready {
-		return notReady(cin.Task, step.Head, r), err
+	if err != nil {
+		return Advance{}, err
 	}
 	pr, attempt, events, err := s.attemptPull(ctx, cin.Task)
 	if err != nil {
 		return Advance{}, err
+	}
+	if r.Ready { // merged, by this call or outside: the head that was merged is the pull request's, not always the close-out's
+		return Advance{Task: cin.Task, Merged: true, Head: pr.HeadSHA}, nil
 	}
 	if adv, done, err := s.terminalPull(ctx, cin.Task, attempt, pr, events); done || err != nil {
 		return adv, err

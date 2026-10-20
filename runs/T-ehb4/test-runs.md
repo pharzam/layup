@@ -217,3 +217,17 @@ ok K6: conditions table
 ```
 
 Without `runs/T-ehb4`: 2050 added, 84 removed, 2134 lines over 23 files, the close-out of 2 more files still to come.
+
+## Round 5 - finding 8 of round 4 (end 3 of the Operator, 6302892665)
+
+### Red
+
+Strict red on the unchanged code `c68e1a3`, the new test file alone, in the worktree. Command: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./internal/run/ -run '^(TestAPullRequestMergedOutsideBeforeTheClosingPushIsMergedAtItsOwnHead)$'` (start 2026-10-20T22:10:33Z, end 2026-10-20T22:10:37Z, exit=1).
+
+| Test | First failing assertion |
+| ---- | ----------------------- |
+| `TestAPullRequestMergedOutsideBeforeTheClosingPushIsMergedAtItsOwnHead` | `finish_integration_test.go:689: the call that finds the pull request merged = {Task:T-holl Verified:false Merged:true Head:b367bf6c... Attempt:0}, <nil>; want Merged at the head 04e995b8... that was merged` (Head is the close-out head that was never merged) |
+
+### Green
+
+The fix: `mergeAt` gives the head of the pull request that the forge holds after `MergeTask` (`Head: pr.HeadSHA`), not the close-out head. The same command, the new test and the integration set of the round 1 to 4 tests, start 2026-10-20T22:10:44Z, end 2026-10-20T22:10:56Z, exit=0: ok.

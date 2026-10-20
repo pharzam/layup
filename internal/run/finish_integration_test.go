@@ -643,6 +643,60 @@ func TestACleanupInterruptedAfterAPartialDeleteLosesNoHead(t *testing.T) {
 	}
 }
 
+// mergesBeforeThePush merges the pull request outside, at the head it has, just before the first push of a head, as a person does.
+type mergesBeforeThePush struct {
+	SessionStore
+	merge func()
+	done  bool
+}
+
+func (m *mergesBeforeThePush) PushHead(ctx context.Context, sha, branch string) error {
+	if !m.done {
+		m.done = true
+		m.merge()
+	}
+	return m.SessionStore.PushHead(ctx, sha, branch)
+}
+
+// mergePull merges the pull request in the stand-in forge at its own head, as the merge route does, and gives the head.
+func (f *finishing) mergePull(number int) string {
+	f.t.Helper()
+	f.w.fake.mu.Lock()
+	defer f.w.fake.mu.Unlock()
+	pr := f.w.fake.pulls.list[number-1]
+	tree, e1 := bareGit(f.w.bare, "rev-parse", pr.head+"^{tree}")
+	main, e2 := bareGit(f.w.bare, "rev-parse", "refs/heads/main")
+	merge, e3 := bareGit(f.w.bare, "commit-tree", tree, "-p", main, "-p", pr.head, "-m", "Merge pull request")
+	if _, e4 := bareGit(f.w.bare, "update-ref", "refs/heads/main", merge); e1 != nil || e2 != nil || e3 != nil || e4 != nil {
+		f.t.Fatal("the merge commit could not be made")
+	}
+	pr.draft, pr.merged, pr.mergeSHA = false, true, merge
+	return pr.head
+}
+
+// I16 (finding 8 of round 4): the pull request is merged outside at the verified head just before the close-out's push; the call that finds it merged and
+// the call after it both give Merged with the head that was merged, not the close-out head that was never merged.
+func TestAPullRequestMergedOutsideBeforeTheClosingPushIsMergedAtItsOwnHead(t *testing.T) {
+	t.Parallel()
+	f := newFinishing(t, "claude", "codex")
+	v := f.boundOf(f.arch)[0]
+	pr := f.pr(f.arch)
+	var merged string
+	first, err := f.finish(func(s *Sessions) {
+		s.Store = &mergesBeforeThePush{SessionStore: s.Store, merge: func() { merged = f.mergePull(pr) }}
+	})
+	if err != nil || !first.Merged || first.Head != v || merged != v {
+		t.Fatalf("the call that finds the pull request merged = %+v, %v; want Merged at the head %s that was merged", first, err, v)
+	}
+	again, err := f.finish(nil)
+	if err != nil || !again.Merged || again.Head != v {
+		t.Errorf("the repeat = %+v, %v; want Merged at %s", again, err, v)
+	}
+	if m := f.mergedEvents(f.arch); len(m) != 1 {
+		t.Errorf("the events merged: %v; want one", m)
+	}
+}
+
 // I12b: a kept head that is in no clone, and that no restart brought, is an error that names the session, not a second session.
 func TestACloseOutWhoseKeptHeadIsGoneIsAnErrorAndNoSecondSession(t *testing.T) {
 	t.Parallel()
