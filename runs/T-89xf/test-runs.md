@@ -206,3 +206,20 @@ FAIL
 
 ```text
 ```
+
+## Gates on the code head of round 1 (late evidence)
+
+- Code head: the commit `fix: T-89xf round 1`; main `d27b331` merged before it. `go build ./...`, `go vet ./...` and with `-tags=integration` and `-tags=e2e`, `gofmt -l .`, `go test -count=1 ./...`: exit 0 each.
+- Full integration level, `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./...`, on the code head: exit 0, 21 packages ok, `internal/run` 308.6 s (`/home/layup/.cache/layup-session/T-89xf-full-integration.txt`). `go test -count=1 -tags=e2e ./...`: exit 0.
+- The six lints and `git diff --check origin/main HEAD`: exit 0.
+- Size: excluding `runs/` (ADR-0028) the diff against `origin/main` is 2527 lines over 26 files; with the close-out projection of 70/2 the figure is inside 2800/30. The freeze check of this tree still counts `runs/` in K5 (its figure 2872/31, margin -72/-1), so K5 fails on the tool's old count; K1 to K4 and K6 pass.
+- `sh docs/tests/freeze-check.sh --task T-89xf --base origin/main --budget 2800/30` (output at `/home/layup/.cache/layup-session/T-89xf-freeze.txt`), exit 1 for K5 alone:
+
+```text
+ok K1: white space
+ok K2: registration of new tests
+ok K3: test selectors
+ok K4: restore evidence of mutants
+FAIL K5: -:0: projection: figure 2872/31, maximum 2800/30, margin -72/-1 (the figure at landing is still measured at landing)
+ok K6: conditions table
+```
