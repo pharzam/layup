@@ -20,6 +20,7 @@ import (
 // The Go value of the block retrospectives equals its block of
 // docs/spec/records.md.
 func TestTheSchemaOfRetrospectivesEqualsItsBlock(t *testing.T) {
+	t.Parallel()
 	blocks, err := tsv.ReadBlocks(os.DirFS("../../docs/spec"))
 	if err != nil {
 		t.Fatal(err)
@@ -36,6 +37,7 @@ func TestTheSchemaOfRetrospectivesEqualsItsBlock(t *testing.T) {
 // One records commit holds the event of the milestone and nothing else; on a
 // restart the row exists and the step writes nothing.
 func TestTheRetrospectiveIsOneCommitAndDoneBeforeOnARestart(t *testing.T) {
+	t.Parallel()
 	w := registerWorld(t, loopPerms)
 	r := restarted(t, w)
 	ctx := context.Background()

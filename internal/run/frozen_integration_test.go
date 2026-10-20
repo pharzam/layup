@@ -214,6 +214,7 @@ func (l *loopRun) frozenAt(harnessID string) string {
 }
 
 func TestTheTestsBlockEqualsItsGoSchema(t *testing.T) {
+	t.Parallel()
 	blocks, err := tsv.ReadBlocks(os.DirFS("../../docs/spec"))
 	if err != nil {
 		t.Fatal(err)
@@ -231,6 +232,7 @@ func TestTheTestsBlockEqualsItsGoSchema(t *testing.T) {
 // verifier freezes the list, in the commit of its event, with the hash of each
 // source at the head that the session was bound to.
 func TestTheFrozenListHoldsTheHashesOfTheFilesAtTheBoundHead(t *testing.T) {
+	t.Parallel()
 	l := newLoop(t, nil)
 	id := l.dev(1, "claude", map[string]string{"a_test.go": aOne, "b_test.go": bOne}, okResult)
 	if l.testsFile() != "" {
@@ -263,6 +265,7 @@ func TestTheFrozenListHoldsTheHashesOfTheFilesAtTheBoundHead(t *testing.T) {
 // A session that was never bound (its push was refused) has no head: the run's
 // own error, and neither the event nor the list is written.
 func TestASessionWithNoBoundHeadFreezesNothing(t *testing.T) {
+	t.Parallel()
 	l := newLoop(t, nil)
 	id := l.dev(1, "claude", map[string]string{"a_test.go": aOne, ".github/workflows/ci.yml": "on: push\n"}, okResult)
 	if l.bound(id) != "" {
@@ -280,6 +283,7 @@ func TestASessionWithNoBoundHeadFreezesNothing(t *testing.T) {
 // loop.md: a test that fails at the head, or passes at the base, makes the
 // handoff invalid, so the list is never frozen on a test that proves nothing.
 func TestAListedTestThatIsNotRedThenGreenMakesTheHandoffInvalidAndFreezesNothing(t *testing.T) {
+	t.Parallel()
 	l := newLoop(t, nil)
 	id := l.dev(1, "claude", map[string]string{"a_test.go": aOne}, okResult)
 	for _, c := range []struct {
@@ -302,6 +306,7 @@ func TestAListedTestThatIsNotRedThenGreenMakesTheHandoffInvalidAndFreezesNothing
 }
 
 func TestAnInvalidHandoffFreezesNothing(t *testing.T) {
+	t.Parallel()
 	l := newLoop(t, nil)
 	id := l.dev(1, "claude", map[string]string{"a_test.go": aOne}, okResult)
 	head := l.bound(id)
@@ -320,6 +325,7 @@ func TestAnInvalidHandoffFreezesNothing(t *testing.T) {
 // the handoff is as the table says, and the list is still never frozen on a
 // test that proves nothing.
 func TestATableWithoutTestsRedGreenNeverFreezesOnAFailingTest(t *testing.T) {
+	t.Parallel()
 	l := newLoop(t, nil)
 	rows := handoff.Default()
 	for i := range rows {
@@ -346,6 +352,7 @@ func TestATableWithoutTestsRedGreenNeverFreezesOnAFailingTest(t *testing.T) {
 
 // Another valid handoff, with nothing changed, writes the list no more.
 func TestASecondValidHandoffDoesNotWriteTheListAgain(t *testing.T) {
+	t.Parallel()
 	l := newLoop(t, nil)
 	l.frozenAt("claude")
 	before := keptRecord(t, l.w, "tasks/T-ab12/tests.tsv")
@@ -367,6 +374,7 @@ func TestASecondValidHandoffDoesNotWriteTheListAgain(t *testing.T) {
 // "test changed", and its handoff to the verifier is invalid: the test is not
 // counted as passed.
 func TestAChangedFrozenSourceIsAFindingAndTheHandoffIsInvalid(t *testing.T) {
+	t.Parallel()
 	l := newLoop(t, nil)
 	first := l.frozenAt("claude")
 	before := keptRecord(t, l.w, "tasks/T-ab12/tests.tsv")
@@ -436,13 +444,20 @@ func amendmentFlow(t *testing.T, fixed bool) {
 	}
 }
 
-func TestAnAmendmentFreezesTheListAgainAndTheFindingCloses(t *testing.T) { amendmentFlow(t, false) }
+func TestAnAmendmentFreezesTheListAgainAndTheFindingCloses(t *testing.T) {
+	t.Parallel()
+	amendmentFlow(t, false)
+}
 
 // The two freezings, the plan and its review all fall in one second: the order
 // is the events', never the clock's (guardrails §2).
-func TestTwoFreezesInTheSameSecondAreOrderedByTheEvents(t *testing.T) { amendmentFlow(t, true) }
+func TestTwoFreezesInTheSameSecondAreOrderedByTheEvents(t *testing.T) {
+	t.Parallel()
+	amendmentFlow(t, true)
+}
 
 func TestWithoutAnAmendmentAChangedTestIsNotFrozenAgain(t *testing.T) {
+	t.Parallel()
 	for _, c := range []struct {
 		name string
 		run  func(l *loopRun)
@@ -497,6 +512,7 @@ func (lostStore) ReadLease(context.Context) (LeaseRow, error) {
 
 // A lost lease writes nothing: neither the event nor the list.
 func TestALostLeaseWritesNoFrozenList(t *testing.T) {
+	t.Parallel()
 	l := newLoop(t, nil)
 	id := l.dev(1, "claude", map[string]string{"a_test.go": aOne}, okResult)
 	n := len(l.events())
@@ -515,6 +531,7 @@ func TestALostLeaseWritesNoFrozenList(t *testing.T) {
 // A restart that records the same handoff again writes neither a second event
 // nor a second list.
 func TestARestartRecordsTheSameHandoffOnceAndTheListStays(t *testing.T) {
+	t.Parallel()
 	l := newLoop(t, nil)
 	id := l.dev(1, "claude", map[string]string{"a_test.go": aOne}, okResult)
 	freeze := &Freeze{Tests: []TestResult{green("TestA", "a_test.go")}}
@@ -534,6 +551,7 @@ func TestARestartRecordsTheSameHandoffOnceAndTheListStays(t *testing.T) {
 // loop.md, the attempts: code puts the frozen test files at the start of each
 // new attempt and commits them, so that their hashes stay in the head.
 func TestTheFrozenFilesAreInTheNextAttemptAtTheirHashes(t *testing.T) {
+	t.Parallel()
 	l := newLoop(t, nil)
 	l.fixed()
 	l.frozenAt("claude")
@@ -557,6 +575,7 @@ func TestTheFrozenFilesAreInTheNextAttemptAtTheirHashes(t *testing.T) {
 }
 
 func TestNoListPutsNoFileInAnAttempt(t *testing.T) {
+	t.Parallel()
 	l := newLoop(t, nil)
 	id := l.dev(1, "claude", map[string]string{"c.txt": "work\n"}, okResult)
 	log := strings.Fields(gitOut(t, l.w.bare, "log", "--format=%H", l.a.base+".."+l.bound(id)))
@@ -568,6 +587,7 @@ func TestNoListPutsNoFileInAnAttempt(t *testing.T) {
 // The frozen bytes are found by their hash among the heads that were bound: a
 // list whose hash no head holds is no list that can be applied.
 func TestAFrozenListWhoseHashNoHeadHoldsIsRefused(t *testing.T) {
+	t.Parallel()
 	l := newLoop(t, nil)
 	l.frozenAt("claude")
 	rows := l.tests()

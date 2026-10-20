@@ -229,7 +229,6 @@ func newWorld(t *testing.T) *world { return newWorldWith(t, nil) }
 // newWorldWith makes a world whose baseline also holds files, by path (task
 // T-4c5c, #276: the step markers scans the pinned tree, which is the baseline's).
 func newWorldWith(t *testing.T, files map[string]string) *world {
-	t.Setenv("HOME", t.TempDir())
 	w := &world{t: t, dir: t.TempDir(), web: t.TempDir(),
 		clock: fastClock{begin: time.Date(2026, 10, 8, 12, 0, 0, 0, time.UTC), real: time.Now()}}
 	src := t.TempDir()
@@ -440,6 +439,7 @@ func beforeSetup(t *testing.T, rows []Step) []Step {
 // restart gets a new config, and a clock that began at 12:00:00 again let two
 // restarts of one run write the same lease row, second for second (T-0p5p).
 func TestTheClockOfAWorldDoesNotGoBack(t *testing.T) {
+	t.Parallel()
 	w := newWorld(t)
 	first := w.config("0.1.0-dev")
 	time.Sleep(20 * time.Millisecond) // 12 seconds of the clock
@@ -487,6 +487,7 @@ func TestAPushIntoTheTargetOfAWorldStartsNoMaintenance(t *testing.T) {
 // repository, Start makes the first records commit with the pin, the briefs,
 // approvers.tsv, start.tsv and the lease row.
 func TestStartMakesTheFirstRecordsCommit(t *testing.T) {
+	t.Parallel()
 	w := newWorld(t)
 	rows := w.start(w.config("0.1.0-dev"))
 	allDone(t, "Start", rows, "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
@@ -560,6 +561,7 @@ func TestStartMakesTheFirstRecordsCommit(t *testing.T) {
 }
 
 func TestARestartWithAnotherVersionFailsAtVersion(t *testing.T) {
+	t.Parallel()
 	w := newWorld(t)
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	rows := Restart(context.Background(), w.config("0.2.0"))
@@ -574,6 +576,7 @@ func TestARestartWithAnotherVersionFailsAtVersion(t *testing.T) {
 // A run that stopped at opening: the restart takes the lease over from the
 // stopped run and runs step 7 again for that issue.
 func TestARestartAfterARunThatStoppedAtOpening(t *testing.T) {
+	t.Parallel()
 	w := newWorld(t)
 	w.fake.failOpen = 2
 	rows := w.start(w.config("0.1.0-dev"))
@@ -617,6 +620,7 @@ func TestARestartAfterARunThatStoppedAtOpening(t *testing.T) {
 // Rows 6 and 8 of the input states, with the real git: --new on a repository
 // with a commit, and a restart whose start.tsv its reader refuses.
 func TestTheInputStatesWithGit(t *testing.T) {
+	t.Parallel()
 	w := newWorld(t)
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	rows := Start(context.Background(), w.config("0.1.0-dev"))
@@ -635,6 +639,7 @@ func TestTheInputStatesWithGit(t *testing.T) {
 }
 
 func TestTheTextBlocksOfRunMd(t *testing.T) {
+	t.Parallel()
 	spec, err := os.ReadFile("../../docs/spec/run.md")
 	if err != nil {
 		t.Fatal(err)
@@ -695,6 +700,7 @@ func pushRecords(t *testing.T, bare string, files map[string]string, message str
 // which does not change the lease row, after the restart's clone; the
 // takeover is made on the commit of the last read, so it is not refused.
 func TestATakeoverAfterACommitThatTheCloneDidNotSee(t *testing.T) {
+	t.Parallel()
 	w := newWorld(t)
 	w.fake.failOpen = 2
 	w.start(w.config("0.1.0-dev"))
@@ -720,6 +726,7 @@ func TestATakeoverAfterACommitThatTheCloneDidNotSee(t *testing.T) {
 // the next beat is refused, the lease names the other run, and the wait of
 // step 8 ends with fail.
 func TestALostBeatEndsTheWatch(t *testing.T) {
+	t.Parallel()
 	w := newWorld(t)
 	w.fake.comments = map[int][]map[string]any{} // no notice comes
 	cfg := w.config("0.1.0-dev")
@@ -757,6 +764,7 @@ func TestALostBeatEndsTheWatch(t *testing.T) {
 // that gained rows, with the steps of Start that the restart runs again, so
 // that start.tsv is written again; and a register that lost one.
 func TestARestartWithAHarnessRegisterThatChanged(t *testing.T) {
+	t.Parallel()
 	w := newWorld(t)
 	w.fake.failOpen = 2
 	cfg := w.config("0.1.0-dev")
@@ -792,6 +800,7 @@ func TestARestartWithAHarnessRegisterThatChanged(t *testing.T) {
 // as intake/psb.tsv, in place of the row phase, and releases the lease; a
 // second restart finds the record and runs nothing, so the blob is the same.
 func TestTheStepRuleGaps(t *testing.T) {
+	t.Parallel()
 	w := newWorld(t)
 	cfg := w.config("0.1.0-dev")
 	cfg.PSB = []byte("# The problem\n\nThe service is fast.\n")
@@ -828,6 +837,7 @@ func TestTheStepRuleGaps(t *testing.T) {
 // Start is done only when the watch is written too: a start.tsv whose watch is
 // still — gives the row phase, which runs the watch again (row 43a).
 func TestARestartWhoseWatchIsNotWrittenRunsPhase(t *testing.T) {
+	t.Parallel()
 	w := newWorld(t)
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	start := show(t, w.bare, "refs/heads/layup-records", "start/start.tsv")
@@ -841,6 +851,7 @@ func TestARestartWhoseWatchIsNotWrittenRunsPhase(t *testing.T) {
 // intake/meaning.tsv holds its row with code's offsets, and the lease is
 // released; a second restart finds the record and runs nothing.
 func TestTheStepMeaning(t *testing.T) {
+	t.Parallel()
 	w := newWorld(t)
 	os.WriteFile(filepath.Join(w.dir, "bin", "meaning.tsv"), []byte("kind\tquote\tquestion\nunmeasurable\tThe service is fast.\tHow fast?\n"), 0o644)
 	cfg := w.config("0.1.0-dev")
@@ -876,6 +887,7 @@ func TestTheStepMeaning(t *testing.T) {
 // systems-architect, meaning is fail (pair) and no session starts. Each fail
 // leaves the lease held (run.md, the known limit).
 func TestTheStepMeaningFails(t *testing.T) {
+	t.Parallel()
 	for _, c := range []struct{ name, meaning, detail string }{
 		{"a quote that occurs twice", "kind\tquote\tquestion\nunmeasurable\tfast\tHow fast?\n", `: refused file: row 1: the quote "fast" occurs 2 times`},
 		{"no route", "", "pair: no admitted pair"},
@@ -929,6 +941,7 @@ func rowOf(rows []Step, name string) Step {
 // span check of the records commits its table; the lease is released, and a
 // second restart finds both records and runs nothing.
 func TestTheStepsNumberingAndSpans(t *testing.T) {
+	t.Parallel()
 	w := newWorld(t)
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	rows := Restart(context.Background(), w.config("0.1.0-dev"))
@@ -965,6 +978,7 @@ func TestTheStepsNumberingAndSpans(t *testing.T) {
 // the lease held; the next restart (after the takeover) runs numbering again
 // with a new session, and spans passes, both records replaced.
 func TestAFailedSpanCheckRunsNumberingAgain(t *testing.T) {
+	t.Parallel()
 	w := newWorld(t)
 	// Two spans over byte 10 of "# The problem\n\nbyte for byte\n".
 	bad := filepath.Join(w.dir, "bin", "spans.tsv")
@@ -1006,6 +1020,7 @@ func TestAFailedSpanCheckRunsNumberingAgain(t *testing.T) {
 // With no route for product-owner, numbering is fail (pair) and no session of
 // product-owner starts.
 func TestNumberingWithNoPair(t *testing.T) {
+	t.Parallel()
 	w := newWorld(t)
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	cfg := w.config("0.1.0-dev")
@@ -1024,6 +1039,7 @@ func TestNumberingWithNoPair(t *testing.T) {
 // spec/draft.tsv holds its rows with their IDs, and the lease is released; a
 // second restart finds the record and runs nothing.
 func TestTheStepDraft(t *testing.T) {
+	t.Parallel()
 	w := newWorld(t)
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	rows := Restart(context.Background(), w.config("0.1.0-dev"))
@@ -1049,6 +1065,7 @@ func TestTheStepDraft(t *testing.T) {
 // The demo of row 45a: a draft whose covers names no fact is refused: draft is
 // fail, naming the session, and nothing of the file is committed.
 func TestADraftThatCoversNoFactIsRefused(t *testing.T) {
+	t.Parallel()
 	w := newWorld(t)
 	os.WriteFile(filepath.Join(w.dir, "bin", "draft.tsv"), []byte("kind\tstatement\tcovers\tcriterion\nrequirement\tS.\t1\tC.\nrequirement\tS.\t2\tC.\nrequirement\tS.\t9\tC.\n"), 0o644)
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
@@ -1067,6 +1084,7 @@ func TestADraftThatCoversNoFactIsRefused(t *testing.T) {
 // role's first pair is on that harness; its file is intake/coverage.tsv, and a
 // second restart finds the record and runs nothing.
 func TestTheStepCompleteness(t *testing.T) {
+	t.Parallel()
 	w := newWorld(t)
 	os.WriteFile(filepath.Join(w.dir, "bin", "coverage.tsv"), []byte("kind\tfact\trequirement\tquestion\nclass\t1\t—\tIs fact 1 a need?\n"), 0o644)
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
@@ -1093,6 +1111,7 @@ func TestTheStepCompleteness(t *testing.T) {
 // harness, completeness is fail, the last row (no batch), no session of
 // qa-engineer starts, and the lease is held.
 func TestTheCompletenessReviewWithNoOtherHarness(t *testing.T) {
+	t.Parallel()
 	for _, c := range []struct {
 		name   string
 		routes int
@@ -1122,6 +1141,7 @@ func TestTheCompletenessReviewWithNoOtherHarness(t *testing.T) {
 // A review's file that names a fact of no span is refused: completeness is
 // fail, naming the session, and no intake/coverage.tsv is committed.
 func TestACoverageFileThatNamesNoFactIsRefused(t *testing.T) {
+	t.Parallel()
 	w := newWorld(t)
 	os.WriteFile(filepath.Join(w.dir, "bin", "coverage.tsv"), []byte("kind\tfact\trequirement\tquestion\nuncovered\t9\t—\tWhat of 9?\n"), 0o644)
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
@@ -1155,6 +1175,7 @@ func intakeComments(w *world) []string {
 // blocks, after the records commit of questions.tsv; a second restart finds
 // both and posts nothing.
 func TestTheStepBatch(t *testing.T) {
+	t.Parallel()
 	w := newWorld(t)
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	rows := Restart(context.Background(), w.config("0.1.0-dev"))
@@ -1195,6 +1216,7 @@ func TestTheStepBatch(t *testing.T) {
 // leaves the record and no comment: the next restart posts the comment from
 // the record, with no new commit of questions.tsv.
 func TestABatchWithNoCommentIsPostedFromTheRecord(t *testing.T) {
+	t.Parallel()
 	// A world with markers, so the comment has the proposals that intake/markers.tsv holds (row 53).
 	w, rows := markersToBatch(t, proposals())
 	allDone(t, "the restart", rows, intakeSteps...)
@@ -1242,6 +1264,7 @@ func addComment(w *world, n int, id, author int, login, created, body string) {
 // copies the comments that are not the App's and writes intake/answers.tsv,
 // the answered states and budget.tsv; a third restart finds the record.
 func TestTheStepAnswers(t *testing.T) {
+	t.Parallel()
 	w := newWorld(t)
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	rows := Restart(context.Background(), w.config("0.1.0-dev"))
@@ -1336,6 +1359,7 @@ func TestTheStepAnswers(t *testing.T) {
 // missing question, the two unparsed fields and the open one; the next
 // restart finds the records and posts nothing.
 func TestTheReviewOfTheAnswersAndTheFollowUp(t *testing.T) {
+	t.Parallel()
 	w := newWorld(t)
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	allDone(t, "the restart", Restart(context.Background(), w.config("0.1.0-dev")), "forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers")
@@ -1465,6 +1489,7 @@ func intakeToFollowUp(t *testing.T, b, u, h string, open ...string) (*world, [][
 // replaces the hours in budget.tsv with the follow-up as its source, and
 // Intake ends; a third restart finds the record.
 func TestTheAnswersToTheFollowUpReplaceAValueOfTheBudget(t *testing.T) {
+	t.Parallel()
 	w, questions, rows := intakeToFollowUp(t, "5.0", "10.0", "40.0", "appetite.hours")
 	if d := rowOf(rows, "follow-up-answers").Detail; d != "waiting: no answer yet to the follow-up in the block idea-owner" {
 		t.Fatalf("the detail of follow-up-answers %q; want waiting", d)
@@ -1506,6 +1531,7 @@ func TestTheAnswersToTheFollowUpReplaceAValueOfTheBudget(t *testing.T) {
 // With the batch's B not below U, budget.tsv is first written from the
 // answers to the follow-up, each value with the question that gives it.
 func TestTheAnswersToTheFollowUpWriteTheBudget(t *testing.T) {
+	t.Parallel()
 	w, questions, _ := intakeToFollowUp(t, "10.0", "9.5", "40.0")
 	var follow [][]string
 	for _, q := range questions {
@@ -1532,6 +1558,7 @@ func TestTheAnswersToTheFollowUpWriteTheBudget(t *testing.T) {
 // budget.tsv unwritten and its question of the intent form open; Intake is
 // done.
 func TestAnUnparsedAnswerToTheFollowUpLeavesItsQuestionOpen(t *testing.T) {
+	t.Parallel()
 	w, questions, _ := intakeToFollowUp(t, "10.0", "9.5", "40.0")
 	var follow [][]string
 	for _, q := range questions {
