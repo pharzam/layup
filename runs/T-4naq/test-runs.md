@@ -24,3 +24,121 @@ Two things in the brief differ from the issue: it names the comments of #425 (K4
 | the `merged` event (`records.ReadEvents`) | `ready.go:257` writes it; column 5 is the merge commit, column 6 the pull request | none |
 
 No step of the plan is impossible, and the plan, the review and the decisions settle every decision this task makes, with one exception that I record and settle by the plan review's own rule (condition 4, "an existing task row must agree with the reservation"): a restart that finds a register row of a reserved task ID compares its kind, requirements and predecessors with the reservation and stops on a difference.
+
+## S3. The red run (against the stubs of `d491aa3`, before the code)
+
+Every command was run alone, with its own status, output to a file and not through a pipe. The tests are in the working tree and uncommitted: the hook refuses a red commit (`guardrails.md` §2), so they are committed with the code. The first failing assertions are quoted from the outputs.
+
+### unitrun
+
+- Command: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 ./internal/run/ -run '^(TestTheReclassedFactsAreTheVersionRowsWhoseClassDiffersFromIntake|TestTheNextRequirementIDIsOneMoreThanEveryKnownID|TestAReopeningsTableRefusesEachBrokenRule|TestTheRowsOfTheRecordAreBoundToTheSelection|TestALaterVersionIsRefused|TestTheExemptFactsFollowTheStatesOfTheTwoTasks|TestADrawAvoidsAnUnopenedReservationAndItsOwnBatch|TestTheReopenedSpecificationPromptIsItsGoldenFile|TestEveryStepOfAReopenedTaskSeesThePRDAndItsRow|TestTheReopenedPromptPinsTheNumberedRecord|TestTheReopenedFormPassesTheFullCheck|TestTheReopeningSetOfTheFullInputIsReadFromTheRecords)$'`
+- Start to end: 23:34:37 to 23:34:37Z (`date -u`), exit 1.
+
+First failing assertions, one test after the other:
+
+```text
+--- FAIL: TestTheReclassedFactsAreTheVersionRowsWhoseClassDiffersFromIntake (0.00s)
+    reopen_test.go:41: facts = [], <nil>; want [3 7 12 Q-002] (a need from context, a constraint from need, a measure from context, a fact of the answers; not an equal class, an out-of-scope fact or a context)
+    reopen_test.go:44: a fact of the version that Intake does not know: <nil>; want an error that names it
+--- FAIL: TestTheNextRequirementIDIsOneMoreThanEveryKnownID (0.00s)
+    reopen_test.go:62: all three sources: nextNumber = 0; want 6
+    reopen_test.go:62: the draft alone: nextNumber = 0; want 9
+    reopen_test.go:62: the register alone: nextNumber = 0; want 10
+    reopen_test.go:62: the reopenings alone: nextNumber = 0; want 11
+    reopen_test.go:62: none: nextNumber = 0; want 1
+    reopen_test.go:70: ids = []; want [[1 3 need F-0002#3 REQ-006 T-aaaa 9] [1 7 constraint F-0002#7 NFR-007 T-bbbb 9] [1 12 measure F-0002#12  T-cccc 9] [1 Q-002 need Q-002 REQ-008 T-dddd 9]] (REQ for a need, NFR for a constraint
+    reopen_test.go:73: the 1000th requirement = []; want REQ-1000
+--- FAIL: TestAReopeningsTableRefusesEachBrokenRule (0.00s)
+    reopen_test.go:83: the control: 0 rows, <nil>; want 2, a measure with the empty requirement
+--- FAIL: TestTheRowsOfTheRecordAreBoundToTheSelection (0.00s)
+    reopen_test.go:115: allocate gave 0 rows; want 2
+--- FAIL: TestALaterVersionIsRefused (0.00s)
+    reopen_test.go:164: the control: [], <nil>; want the row of version 1
+--- FAIL: TestTheExemptFactsFollowTheStatesOfTheTwoTasks (0.00s)
+    reopen_test.go:208: before the allocation, any head: [], <nil>; want [7 12]
+    reopen_test.go:208: the head of A: [], <nil>; want [12]
+    reopen_test.go:208: the head of B: [], <nil>; want [7]
+    reopen_test.go:208: the head of another task: [], <nil>; want [7 12]
+    reopen_test.go:208: after A has merged, another head: [], <nil>; want [12]
+    reopen_test.go:208: a merged task of no fact: [], <nil>; want [7 12]
+--- FAIL: TestADrawAvoidsAnUnopenedReservationAndItsOwnBatch (0.00s)
+    reopen_test.go:223: taskID = "T-0000", <nil>; want T-1111, the draw after the one that the reservation holds
+    reopen_test.go:227: taskIDs = [], <nil>; want T-1111, T-2222 and T-3333: a draw again for the one of the batch and for the reservation
+--- FAIL: TestTheReopenedSpecificationPromptIsItsGoldenFile (0.00s)
+    reopen_test.go:269: need: Text differs from its golden file: got 6005 bytes, want 4852; first difference at byte 578: got "/s/S-aaaaaaaa/input/draft.tsv 7eb2ca55b8", want "docs/prd/PRD-0001.md 937a536b787a2e0a725"
+    reopen_test.go:269: measure: Text differs from its golden file: got 6449 bytes, want 5206; first difference at byte 2037: got "specification of the task T-ab12 (kind s", want "requirement that waits for a bet, for th"
+--- FAIL: TestEveryStepOfAReopenedTaskSeesThePRDAndItsRow (0.00s)
+    reopen_test.go:288: plan-of-a-task: the requirements = [spec/draft.tsv spec/spans.tsv start/problem-statement.md intake/answers.tsv spec/reopenings.tsv]; want the PRD with no row of REQ-006, the record of the reopenings and no
+    reopen_test.go:288: plan-review: the requirements = [spec/draft.tsv spec/spans.tsv start/problem-statement.md intake/answers.tsv spec/reopenings.tsv]; want the PRD with no row of REQ-006, the record of the reopenings and no se
+    reopen_test.go:288: specification: the requirements = [spec/draft.tsv spec/spans.tsv start/problem-statement.md intake/answers.tsv spec/reopenings.tsv]; want the PRD with no row of REQ-006, the record of the reopenings and no
+    reopen_test.go:291: specification: holds the reopened instruction: false
+    reopen_test.go:288: verification: the requirements = [spec/draft.tsv spec/spans.tsv start/problem-statement.md intake/answers.tsv spec/reopenings.tsv]; want the PRD with no row of REQ-006, the record of the reopenings and no s
+--- FAIL: TestTheReopenedPromptPinsTheNumberedRecord (0.00s)
+    reopen_test.go:321: another record in the token: <nil>; want an error holding "F-0005"
+    reopen_test.go:321: no numbered record: <nil>; want an error holding "numbered facts record"
+    reopen_test.go:321: two numbered records: <nil>; want an error holding "2 numbered facts records"
+    reopen_test.go:325: the control: <nil>; want the line with the token and the numbered record
+--- FAIL: TestTheReopenedFormPassesTheFullCheck (0.00s)
+    reopen_test.go:367: the instruction shows no line for a need
+--- FAIL: TestTheReopeningSetOfTheFullInputIsReadFromTheRecords (0.00s)
+    reopen_test.go:437: no record yet: Reopening = [], <nil>; want [1]
+    reopen_test.go:437: another task, the task of the fact not merged: Reopening = [], <nil>; want [1]
+    reopen_test.go:443: a record the reader refuses: <nil>; want an error that names spec/reopenings.tsv
+```
+
+### unitspec
+
+- Command: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 ./internal/spec/ -run '^TestAReclassedFactIsExemptFromNeedsAndMeasuresWhileItIsListed$'`
+- Start to end: 23:34:37 to 23:34:37Z (`date -u`), exit 1.
+
+First failing assertions, one test after the other:
+
+```text
+--- FAIL: TestAReclassedFactIsExemptFromNeedsAndMeasuresWhileItIsListed (0.00s)
+    full_test.go:772: the rule needs: result "fail", want "pass" (detail "the need fact 8 has no requirement")
+    full_test.go:773: the rule measures: result "fail", want "pass" (detail "the measure fact 9 has no success-criterion row")
+    full_test.go:776: the rule needs: result "fail", want "pass" (detail "the need fact 8 has no requirement")
+    full_test.go:780: the rule measures: result "fail", want "pass" (detail "the measure fact 9 has no success-criterion row")
+```
+
+### integ
+
+- Command: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./internal/run/ -run '^(TestAReclassedFactOpensOneSpecificationTaskAfterTheSpecificationMerges|TestNothingOpensBeforeTheMergedEvent|TestARestartAfterTheAllocationOpensOneTaskWithTheSameIDs|TestAStopBetweenTheIssueAndTheRowOpensASecondIssueAndOneRow|TestTheReopeningIsNotTheSpecificationReusedByKind|TestTheRenderedHeadOfAReclassingBetPassesLayupSpec|TestALostLeaseOpensNoIssue|TestTheReopenedTasksPassTheFullCheckOneAfterTheOther|TestTheReopeningsBlockAndTheNewTextBlocksEqualTheCode|TestAHarnessThatFollowsTheReopenedInstructionGivesAValidHandoffAndAGreenSpecStatus|TestTheInstructionBlocksOfLoopMd|TestEverySchemaBlockIsBuiltOrNotYetBuilt)$'`
+- Start to end: 23:34:37 to 23:35:01Z (`date -u`), exit 1.
+
+First failing assertions, one test after the other:
+
+```text
+--- FAIL: TestARestartAfterTheAllocationOpensOneTaskWithTheSameIDs (4.66s)
+    reopen_integration_test.go:147: the stop: <nil>, 0 rows, 0 issues, 3 tasks; want the stop with the allocation and nothing else
+--- FAIL: TestAStopBetweenTheIssueAndTheRowOpensASecondIssueAndOneRow (4.80s)
+    reopen_integration_test.go:171: the stop: <nil>, 22 issues, 3 tasks; want the stop after one issue, no row and the allocation
+--- FAIL: TestALostLeaseOpensNoIssue (4.95s)
+    reopen_integration_test.go:240: openReopenings = <nil>; 0 issues, 3 tasks; want a LostError, no issue and no task
+--- FAIL: TestTheInstructionBlocksOfLoopMd (0.00s)
+    promptfile_integration_test.go:509: loop.md has the block instruction-specification-reopened: true; it is equal to the code: false
+--- FAIL: TestTheReopeningsBlockAndTheNewTextBlocksEqualTheCode (0.00s)
+    reopen_integration_test.go:328: the block reopenings and ReopeningsSchema: schema reopenings: the number of columns: the block has "7"; the Go schema has "0"
+    reopen_integration_test.go:338: loop.md has the block reopen-issue: true; it is equal to the code: false
+    reopen_integration_test.go:338: loop.md has the block instruction-specification-reopened: true; it is equal to the code: false
+--- FAIL: TestTheReopenedTasksPassTheFullCheckOneAfterTheOther (7.03s)
+    reopen_integration_test.go:252: openReopenings = [], <nil>; want four tasks
+--- FAIL: TestNothingOpensBeforeTheMergedEvent (7.06s)
+    reopen_integration_test.go:134: the control, after merged: [], <nil>; want four tasks
+--- FAIL: TestAReclassedFactOpensOneSpecificationTaskAfterTheSpecificationMerges (7.09s)
+    reopen_integration_test.go:86: openReopenings = [], <nil>; want four tasks
+--- FAIL: TestTheReopeningIsNotTheSpecificationReusedByKind (7.13s)
+    reopen_integration_test.go:191: openReopenings = [], <nil>; want four tasks
+--- FAIL: TestAHarnessThatFollowsTheReopenedInstructionGivesAValidHandoffAndAGreenSpecStatus (7.15s)
+    reopen_integration_test.go:351: openReopenings = [], <nil>; want four tasks
+--- FAIL: TestTheRenderedHeadOfAReclassingBetPassesLayupSpec (7.84s)
+    reopen_integration_test.go:219: FinishTask of the specification = {Task:T-raoj Verified:false Merged:false Head: Attempt:0 Wait:waiting: T-raoj: not ready at bfa7eb39b13c41866e27417a86ed343d6fb9c4d4: layup/spec: failure Stop:
+```
+
+### Reading of the red
+
+- Every unit test and every integration test above fails at the stub on its own assertion: an empty selection, the number 0, no rows, no exemption, the standard prompt in place of the golden file, no record, a stop that does not stop. Two are not red at the stub and are labelled so: `TestNothingOpensBeforeTheMergedEvent` is a **green negative** beside its red control (the same test after the event, and `TestAReclassedFactOpensOneSpecificationTaskAfterTheSpecificationMerges`, which fail on `openReopenings = [], <nil>; want four tasks`); the sub-check `a task with no row of reopenings` of `TestEveryStepOfAReopenedTaskSeesThePRDAndItsRow` (the standard prompt) is a characterization that passes at the stub and fails when the variant is selected for every task (mutant M11).
+- The red of `TestTheRenderedHeadOfAReclassingBetPassesLayupSpec` is the exemption itself: `FinishTask` waits with `layup/spec: failure` at the rendered head, the deadlock of Q1.
+- `TestAHarnessThatFollowsTheReopenedInstructionGivesAValidHandoffAndAGreenSpecStatus` and `TestTheReopenedTasksPassTheFullCheckOneAfterTheOther` stop at their first step at the stub (`openReopenings = [], <nil>; want four tasks`), because both need the tasks first; their own assertions are reached by the green run and by the mutants M12, M13 and M15.
+- `TestTheInstructionBlocksOfLoopMd` and `TestTheReopeningsBlockAndTheNewTextBlocksEqualTheCode` fail on the empty constants and the schema with no column (`the block has "7"; the Go schema has "0"`).
+- Two corrections of the tests were made after the first red run and before this one, none of the assertions: a guard against a panic on an empty result (a red must not abort the run), and the ADR files of the tree of the prompt test.

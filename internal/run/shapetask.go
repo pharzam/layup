@@ -141,9 +141,12 @@ func (r *state) openTask(ctx context.Context, o openSpec) (Task, error) {
 		return Task{}, fmt.Errorf("%s has no row of kind requirement or non-functional", draftPath)
 	}
 	s := r.sessions()
-	id, err := s.taskID(ctx)
-	if err != nil {
-		return Task{}, err
+	id := o.id
+	if id == "" {
+		var err error
+		if id, err = s.taskID(ctx); err != nil {
+			return Task{}, err
+		}
 	}
 	t := Task{ID: id, Kind: o.kind, Requirements: ids, Predecessors: o.predecessors, Opened: r.cfg.Clock.Now().UTC().Truncate(time.Second)}
 	// The commit that will register the task is built and refused here, with a placeholder for the issue,

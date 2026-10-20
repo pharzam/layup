@@ -487,12 +487,12 @@ func TestTheInstructionBlocksOfLoopMd(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := map[string]string{"instruction-result": resultInstruction, "instruction-answers": answersInstruction}
+	want := map[string]string{"instruction-result": resultInstruction, "instruction-answers": answersInstruction, "instruction-specification-reopened": reopenedInstruction}
 	for step, text := range stepInstructions {
 		want["instruction-"+step] = text
 	}
-	if len(want) != 10 {
-		t.Errorf("%d texts in the code; want the eight steps, the shared result text and the conditional answers text", len(want))
+	if len(want) != 11 {
+		t.Errorf("%d texts in the code; want the eight steps, the shared result text, the conditional answers text and the reopened specification", len(want))
 	}
 	// Review condition 6 of #426: a block of the document that the code does not know is as wrong as a constant that differs.
 	for _, line := range strings.Split(string(doc), "\n") {

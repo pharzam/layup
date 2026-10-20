@@ -58,6 +58,11 @@ func psbRecordsOf(files map[string][]byte) ([]string, error) {
 // records base at the call, the tree of the run's clone, and the caller's copy.
 // It writes nothing, and on any error gives the zero input.
 func (s *Sessions) specInput(ctx context.Context, base, head string, copy []byte) (spec.FullInput, error) {
+	return s.specInputFor(ctx, "", base, head, copy)
+}
+
+// specInputFor is specInput for the head of the task, whose reopened facts the full check exempts (row 66ab); "" is a head of no task.
+func (s *Sessions) specInputFor(ctx context.Context, task, base, head string, copy []byte) (spec.FullInput, error) {
 	for _, c := range []struct{ field, sha string }{{"base", base}, {"head", head}} {
 		if !forge.FullSHA(c.sha) {
 			return spec.FullInput{}, &SourceError{c.field, c.field, fmt.Errorf("%q is not a full SHA", c.sha)}
@@ -65,6 +70,9 @@ func (s *Sessions) specInput(ctx context.Context, base, head string, copy []byte
 	}
 	var in spec.FullInput
 	if err := s.specRecords(ctx, &in); err != nil {
+		return spec.FullInput{}, err
+	}
+	if err := s.specReopening(ctx, &in, task); err != nil {
 		return spec.FullInput{}, err
 	}
 	if err := specTree(s.Clone, base, head, &in); err != nil {

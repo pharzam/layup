@@ -502,7 +502,7 @@ func (c *fullCheck) needs() verdict {
 	covered := c.citedSet()
 	var facts []string
 	for f, class := range c.u.class {
-		if (class == "need" || class == "constraint") && !c.u.out[f] && !covered[f] && !c.waitsCover(f) {
+		if (class == "need" || class == "constraint") && !c.u.out[f] && !covered[f] && !c.waitsCover(f) && !slices.Contains(c.in.Reopening, f) {
 			facts = append(facts, f)
 		}
 	}
@@ -533,7 +533,7 @@ func (c *fullCheck) measures() verdict {
 	}
 	var facts []string
 	for f, class := range c.u.class {
-		if class == "measure" && !c.u.out[f] && !cited[f] && !c.waitsCover(f) {
+		if class == "measure" && !c.u.out[f] && !cited[f] && !c.waitsCover(f) && !slices.Contains(c.in.Reopening, f) {
 			facts = append(facts, f)
 		}
 	}

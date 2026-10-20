@@ -755,3 +755,32 @@ func TestHasSectionOfNoIDOrNoFilesIsFalse(t *testing.T) {
 		t.Error("the control, the real ID, is no section")
 	}
 }
+
+// U7 (task T-4naq, row 66ab; loop.md, The full spec check): the facts that FullInput.Reopening lists are exempt from needs and measures, those
+// rules only, and only they: the same input without the list fails, and an uncovered fact that is not listed still fails.
+func TestAReclassedFactIsExemptFromNeedsAndMeasuresWhileItIsListed(t *testing.T) {
+	bare := func(in FullInput) FullInput { // fact 8 is a need and fact 9 a measure, and the waits section names neither
+		in.Index, in.Versions = inventoryOfSpans(t, []string{"9", "measure", "in", "9"})
+		in.PRDs = map[string][]byte{"PRD-0001-x.md": []byte(strings.Replace(testPRD, "covers F-0001#8.", "states no fact.", 1))}
+		return in
+	}
+	in := bare(baseInput(t))
+	wantFail(t, CheckFull(in), "needs", "8")
+	wantFail(t, CheckFull(in), "measures", "9")
+	in.Reopening = []string{"8", "9"}
+	rows := CheckFull(in)
+	wantResult(t, rows, "needs", resPass)
+	wantResult(t, rows, "measures", resPass)
+	wantResult(t, rows, "ran", resPass)
+	in.Reopening = []string{"8"}
+	wantResult(t, CheckFull(in), "needs", resPass)
+	wantFail(t, CheckFull(in), "measures", "9")
+	in.Reopening = []string{"9"}
+	wantFail(t, CheckFull(in), "needs", "8")
+	wantResult(t, CheckFull(in), "measures", resPass)
+	// The other rules judge it as before: a listed fact does not excuse a requirement without a criterion.
+	in = bare(baseInput(t))
+	in.Reopening = []string{"8", "9"}
+	in.PRDs = map[string][]byte{"PRD-0001-x.md": []byte(strings.Replace(string(in.PRDs["PRD-0001-x.md"]), "| `REQ-002` | a check of it |\n", "", 1))}
+	wantFail(t, CheckFull(in), "criteria", "REQ-002")
+}

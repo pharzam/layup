@@ -85,6 +85,13 @@ tests:
 plan-review) comment plan-review.md "verdict: $(cat $ctl/plan-verdict 2>/dev/null || echo approve)
 "; extra ;;
 specification)
+  if [ -e $ctl/reopen-$task ]; then # a reopened task (row 66ab): the line that its prompt shows under the heading, and the section of its requirement
+    mkdir -p docs/spec docs/tasks; prd=$(ls docs/prd/PRD-*.md)
+    printf '\n## Waits for a bet\n\n%s\n' "$(cat $ctl/reopen-$task)" >> $prd
+    printf '## %s — Reopened\n\nThe text.\n' "$(cat $ctl/reopen-section-$task)" > docs/spec/reopened-$task.md
+    printf 'the task file %s\n' $(date +%s%N) > docs/tasks/$task.md
+    artifacts docs/tasks/$task.md $prd docs/spec/reopened-$task.md; exit 0
+  fi
   mkdir -p docs/prd docs/spec docs/tasks
   { cat $ctl/prd.md; printf '\n<!-- %s -->\n' $(date +%s%N); } > docs/prd/PRD-0001-x.md
   if [ -e $ctl/no-section ]; then rm -f docs/spec/alpha.md; else printf '## REQ-001 — Alpha\n\nThe text. %s\n' $(date +%s%N) > docs/spec/alpha.md; fi
