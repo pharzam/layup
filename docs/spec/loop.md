@@ -1833,7 +1833,7 @@ decision that has more than one survivor; (4) `CheckCommentBody`, so that a kept
   candidate; at the first bet every row since Start is milestone 0. A finding is a refusal, like a refused file. The cap of milestone 0 is
   asked before each attempt (`PhaseSession`), and bounds the retry. A cap above `band.U`, and a cap below `band.B`, are checked through
   this caller; the second bet of 0.6 `U` is the check's own case with prior caps, which this first-bet caller does not pass (its caller is
-  row 66k's, the later bet).
+  row 66t's, the later bet, in M2g).
 - **The promotion.** A candidate that passes both is kept by one fenced records commit of `bets/<milestone>/brief.md`, the candidate's
   bytes, and `bets/<milestone>/basis.tsv`: `layup run: the brief of the bet <milestone> (session <id>)`. The write is the run's `write`
   through `Fenced`: a lease that is lost is a `*LostError` and promotes nothing, and the candidate stands. The stop between the candidate and the
@@ -1845,13 +1845,13 @@ decision that has more than one survivor; (4) `CheckCommentBody`, so that a kept
 - **The recovery** reads before it writes. A `brief.md` that exists is done before. Else the latest candidate under
   `bets/<milestone>/attempts/` (the last row of `sessions.tsv` that has one) is judged again, from its stored bytes alone (the session's
   files are removed after it): the checks (2) to (4) on the assembled brief, with code's parts found in it by their exact bytes and removed
-  before the option-word rule, and the appetite on the telemetry as it now stands. A pass is promoted with no new session; a refusal starts
+  before the option-word rule, each part in its place as the inputs stand now (a candidate made on other inputs is refused with the rule `fixed`), and the appetite on the telemetry as it now stands. A pass is promoted with no new session; a refusal starts
   a session with its finding. The control comment of a session whose candidate the appetite refused says `done`, because its own class was
   done; the finding is in the next prompt.
 - **The basis.** `basis.tsv` (the block `bet-basis`, [`records.md`](records.md#nfr-001--the-records-of-the-task-loop)) keeps what row 66j
   needs after the inventory write: the requirement IDs, the survivors and the dropped options, the facts with their classes, the questions
   still open and the verified heads. `betBrief`'s companion `briefBasis(milestone)` reads it with the brief, and gives the basis
-  without filtering again, and the appetite from the kept brief's line; a basis or a brief that is missing or malformed is an error.
+  without filtering again, and the appetite from the kept brief's line; a basis or a brief that is missing or malformed is an error (a brief is malformed by the rules of its headings, appetite line and architecture line; the limit and the links are not asked again).
 
 ### The approvers and the success criteria
 

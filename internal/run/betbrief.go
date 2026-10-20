@@ -296,6 +296,9 @@ func (k briefKeeper) overLimit() error {
 // judge makes the checks that an assembled brief passes, from its bytes alone (the session's files are gone when a candidate is
 // judged again): the checker of the brief, the option-word rule and the body of a comment. The first stage that finds gives its findings.
 func (k briefKeeper) judge(assembled string) []spec.Finding {
+	if fs := k.fixedParts(assembled); len(fs) > 0 {
+		return fs
+	}
 	if _, fs := spec.CheckBrief([]byte(assembled), k.lines, k.links, nil); len(fs) > 0 {
 		return fs
 	}
@@ -307,6 +310,27 @@ func (k briefKeeper) judge(assembled string) []spec.Finding {
 		return []spec.Finding{{Rule: refusal.Reason, Detail: refusal.Value}}
 	}
 	return nil
+}
+
+// fixedParts requires each part of code in its place, as the inputs stand now: a candidate of an earlier call, made on other inputs, is not
+// promoted over a basis built from these.
+func (k briefKeeper) fixedParts(assembled string) []spec.Finding {
+	p := k.parts
+	var fs []spec.Finding
+	for _, c := range []struct {
+		what string
+		ok   bool
+	}{
+		{"requirements", strings.HasPrefix(assembled, "## The problem\n"+p.requirements)},
+		{"solution", strings.Contains(assembled, "## The solution\n"+p.solution+"## The rabbit holes and the no-gos\n")},
+		{"open questions", strings.Contains(assembled, "## The rabbit holes and the no-gos\n"+p.open+"architecture change: no\n")},
+		{"facts", strings.HasSuffix(assembled, "## The facts\n"+p.facts)},
+	} {
+		if !c.ok {
+			fs = append(fs, spec.Finding{Rule: "fixed", Detail: "the brief lacks the " + c.what + " part of the inputs as they stand"})
+		}
+	}
+	return fs
 }
 
 // optionWords is the option-word rule (a partial evidence that the brief recommends no option, not the requirement itself): outside the
@@ -739,7 +763,13 @@ func (r *state) briefBasis(ctx context.Context, name string) (BriefBasis, error)
 			b.Heads[id] = value
 		}
 	}
-	parsed, _ := spec.CheckBrief(brief, nil, nil, nil)
+	parsed, fs := spec.CheckBrief(brief, nil, nil, nil)
+	// The lookups are absent here (no limit, no links, no verified batches), so only the structural rules count.
+	if i := slices.IndexFunc(fs, func(f spec.Finding) bool {
+		return f.Rule == "heading" || f.Rule == "appetite" || f.Rule == "architecture"
+	}); i >= 0 {
+		return b, fmt.Errorf("the kept brief %s is malformed: %s: %s", briefPath(name), fs[i].Rule, fs[i].Detail)
+	}
 	if parsed.USD == "" || parsed.Hours == "" {
 		return b, fmt.Errorf("the kept brief %s has no appetite line", briefPath(name))
 	}
