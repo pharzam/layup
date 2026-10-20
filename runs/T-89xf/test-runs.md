@@ -180,7 +180,7 @@ K3's helper is `(*Sessions).UpToDate(ctx, head) (current bool, def string, err e
 
 ### round 1, findings 1 to 3: red against the code of a7c9d9f (merged with main d27b331)
 
-- Command: `go test -count=1 -tags=integration -run ^(TestAnInterruptedCarryIsAdoptedWhenTheDefaultMovesAgain|TestOpenPullRequestAdoptsTheSamePullRequestAfterACarry|TestASecondRedoOfAShapeTaskKeepsTheOriginalPin)$ ./internal/run/`
+- Command: `go test -count=1 -tags=integration -run '^(TestAnInterruptedCarryIsAdoptedWhenTheDefaultMovesAgain|TestOpenPullRequestAdoptsTheSamePullRequestAfterACarry|TestASecondRedoOfAShapeTaskKeepsTheOriginalPin)$' ./internal/run/`
 - Start: 2026-10-20T19:52:28Z, end: 2026-10-20T19:52:29Z (`date -u`, after the step)
 - Exit status (direct, not piped): 1
 - First failing assertions (from the saved output):
@@ -199,11 +199,10 @@ FAIL
 
 ### round 1, finding 4: the tests that characterize the code of a7c9d9f (green there; their mutants are in mutants.md)
 
-- Command: `go test -count=1 -tags=integration -run ^(TestTheCarryGoesOverTheRenderedFirstParent|TestARestartAfterEachActOfTheRedoCompletesItOnce)$ ./internal/run/`
+- Command: `go test -count=1 -tags=integration -run '^(TestTheCarryGoesOverTheRenderedFirstParent|TestARestartAfterEachActOfTheRedoCompletesItOnce)$' ./internal/run/`
 - Start: 2026-10-20T19:52:29Z, end: 2026-10-20T19:52:33Z (`date -u`, after the step)
 - Exit status (direct, not piped): 0
 - First failing assertions (from the saved output):
 
 ```text
 ```
-
