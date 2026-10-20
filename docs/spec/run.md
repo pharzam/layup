@@ -207,8 +207,22 @@ so a person reads it with no tool. A plain `git clone` carries the branch as
    approver login is looked up: the approvers are read from `approvers.tsv`; the
    ID of the App's bot is read, as in step 1 above (task `T-ax3r`).
 2. **`clone`**: it rebuilds `DIR/targets/OWNER/NAME/` from the forge (a fresh
-   `Clone` of the default branch and `layup-records`); nothing in the old clone is
-   read. It reads `start.tsv`, `approvers.tsv` and `lease.tsv`; `lease.H` and
+   `Clone` of the default branch and `layup-records`). One thing of the old clone
+   is read, and nothing else: the refs `refs/layup/sessions/` that the ended
+   sessions of the task loop kept (task `T-ehb4`; the rule and its reason are
+   [D5 of the close-out](loop.md#the-merge-at-the-head-sha-and-the-close-out-commit)).
+   The old clone is set aside in `DIR/recovery/OWNER/NAME/`, a place that is no
+   target's clone, and no path that this step did not make is renamed or removed;
+   after the new clone those refs are fetched into it and the place is removed. A
+   place that an earlier, interrupted restart left is the older and is used again,
+   unless its mark `DIR/recovery.imported/OWNER/NAME` exists: the step writes
+   and syncs that file after the fetch and before it removes the old clone, and a
+   restart that finds it only finishes the removal (it reads nothing of the
+   damaged place and does not discard the current clone, which holds the heads;
+   it sets the current clone aside as any other). A removal that fails is the
+   failure of the step.
+   An old clone that cannot be listed or fetched is the failure of the step (the
+   restart stops, `fail`), never a clone without the refs. It reads `start.tsv`, `approvers.tsv` and `lease.tsv`; `lease.H` and
    `watch.T` of the restart are those of `start.tsv` (task `T-ax3r`). It also
    reads `setup/forge-check.tsv`, which says whether the Scaffold is done
    ([`scaffold.md`](scaffold.md#at-each-later-start), task `T-2j13`).

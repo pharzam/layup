@@ -30,14 +30,18 @@ type ShapeTaskInput struct {
 	Records           func() string
 	Harnesses, Models [][]string
 	Options           map[string]spec.Result
+	Copy              []byte // the copy of the answer of the confirmed bet, which the full check of every head after it reads (row 66y); nil before the first bet
 }
 
 // Advance is where the driver stopped: a verified head, a wait for the Operator, or a stop. A stop and a
-// wait repeat on the next call, which reads the same records.
+// wait repeat on the next call, which reads the same records. FinishTask (row 66y) gives Merged, with Head the merged head, or
+// Attempt, the attempt that its repair started.
 type Advance struct {
 	Task       string
 	Verified   bool
-	Head       string // the bound head that the verifier found nothing material in
+	Merged     bool
+	Head       string // the bound head that the verifier found nothing material in, or the merged head
+	Attempt    int    // the attempt that a repair started, 0 for none
 	Wait, Stop string
 	Replaced   string // the ID of the task that redoes this one (task T-89xf, row 66x)
 }
@@ -541,12 +545,13 @@ func (s *Sessions) AdvanceShapeTask(ctx context.Context, in ShapeTaskInput) (Adv
 // first: the scratch branch layup/base/<task>/<attempt> of the run's clone is set to it, and the session clones that
 // branch (plan amendment 1 of #415).
 func (s *Sessions) startSession(ctx context.Context, in ShapeTaskInput, kind, step string, attempt int, base string, pair, model []string, findings []Finding, scratch bool) error {
-	return s.startAs(ctx, in, kind, step, stepRole(step), attempt, base, pair, model, findings, scratch)
+	return s.startAs(ctx, in, kind, step, stepRole(step), attempt, base, pair, model, findings, scratch, nil)
 }
 
 // startAs is startSession for a session whose role is not the step table's: the answer session is of the owner role of the question
-// (row 66z), the table's word for it being owner-of-its-kind.
-func (s *Sessions) startAs(ctx context.Context, in ShapeTaskInput, kind, step, role string, attempt int, base string, pair, model []string, findings []Finding, scratch bool) error {
+// (row 66z), the table's word for it being owner-of-its-kind. push is the session's push hook, nil for the checks of any task session
+// (the close-out of row 66y has its own).
+func (s *Sessions) startAs(ctx context.Context, in ShapeTaskInput, kind, step, role string, attempt int, base string, pair, model []string, findings []Finding, scratch bool, push func(id string, d session.Dir, r session.Run) error) error {
 	p := pairOf(pair, model)
 	if err := s.milestoneCap(ctx, p.Cap); err != nil {
 		return err
@@ -569,7 +574,7 @@ func (s *Sessions) startAs(ctx context.Context, in ShapeTaskInput, kind, step, r
 	}
 	// The admission may run a probe at the same base, so it clones the same branch.
 	ts := TaskSpec{Task: in.Task, Attempt: attempt, Role: role, Base: base, Branch: branch, Records: rec, Pair: p, Context: pc,
-		Admit: s.Admit(ctx, ProbeSpec{Harness: pair, Models: in.Models, Base: base, Records: rec, Branch: branch})}
+		Admit: s.Admit(ctx, ProbeSpec{Harness: pair, Models: in.Models, Base: base, Records: rec, Branch: branch}), Push: push}
 	_, err = s.TaskSession(ctx, ts)
 	return err
 }
@@ -692,7 +697,7 @@ func (s *Sessions) toVerifier(ctx context.Context, v loopView, st loopStep) erro
 
 // head gives the four statuses of the bound head with the verifier of the session (none: it waits for its turn).
 func (s *Sessions) head(ctx context.Context, in ShapeTaskInput, st loopStep, session string) ([]StatusPost, error) {
-	return s.PostStatuses(ctx, HeadInput{Task: in.Task, Base: st.Base, Head: st.Head, Session: session, Waiting: session == "", Harnesses: in.Harnesses, Models: in.Models})
+	return s.PostStatuses(ctx, HeadInput{Task: in.Task, Base: st.Base, Head: st.Head, Copy: in.Copy, Session: session, Waiting: session == "", Harnesses: in.Harnesses, Models: in.Models})
 }
 
 // shapeDescription is the description of the title of the pull request of each kind.

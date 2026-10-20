@@ -17,6 +17,7 @@ import (
 
 	"github.com/pharzam/layup/internal/git"
 	"github.com/pharzam/layup/internal/records"
+	"github.com/pharzam/layup/internal/rules"
 	"github.com/pharzam/layup/internal/spec"
 )
 
@@ -25,6 +26,15 @@ import (
 type betInput struct {
 	Required, Tags, Facts []string
 	Survivors             map[string][]string
+}
+
+// input gives what an answer to the brief of this basis is parsed against, with the phase tags of the PRD.
+func (b BriefBasis) input(tags []string) betInput {
+	in := betInput{Required: b.Requirements, Tags: tags, Survivors: b.Survivors}
+	for _, f := range b.Facts {
+		in.Facts = append(in.Facts, f.Number)
+	}
+	return in
 }
 
 // separatorCell is a cell of the separator row of a table: hyphens, with a colon at either end or both.
@@ -230,16 +240,9 @@ func (r *state) bet(ctx context.Context) (string, error) {
 			return "", err
 		}
 	}
-	var copies []answerCopy
-	for _, row := range r.copies {
-		if row[copyIssue] != strconv.Itoa(issue) {
-			continue
-		}
-		body, err := r.store.ReadFile(ctx, row[copyBody])
-		if err != nil {
-			return "", err
-		}
-		copies = append(copies, answerCopy{Row: row, Body: string(body)})
+	copies, err := r.answerCopies(ctx, issue)
+	if err != nil {
+		return "", err
 	}
 	briefCopy, ok := copyNamed(r.copies, issue, posted.SHA)
 	if !ok {
@@ -257,10 +260,7 @@ func (r *state) bet(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	in := betInput{Required: basis.Requirements, Tags: tags, Survivors: basis.Survivors}
-	for _, f := range basis.Facts {
-		in.Facts = append(in.Facts, f.Number)
-	}
+	in := basis.input(tags)
 	var answer spec.Answer
 	var copyRow, approver []string
 	if applied, err := r.appliedAnswer(ctx, milestone); err != nil {
@@ -323,34 +323,13 @@ func (r *state) bet(ctx context.Context) (string, error) {
 		}
 	}
 	// 5. The version of the inventory.
-	spans, err := r.readRecord(ctx, "spec/spans.tsv", records.ReadSpans)
+	facts, texts, err := r.factsOf(ctx)
 	if err != nil {
 		return "", err
 	}
-	answers, err := r.readRecord(ctx, "intake/answers.tsv", records.ReadAnswers)
+	index, versions, err := r.inventoryOf(ctx)
 	if err != nil {
 		return "", err
-	}
-	var facts []spec.InventoryFact
-	texts := map[string]string{}
-	for _, f := range factRows(spans, questions, answers) {
-		facts, texts[f[0]] = append(facts, spec.InventoryFact{ID: f[0], Class: f[1], Text: f[2]}), f[2]
-	}
-	index, err := r.store.ReadFile(ctx, "spec/inventory.tsv")
-	if err != nil {
-		return "", err
-	}
-	versions := map[int][]byte{}
-	if index != nil {
-		rows, err := spec.ReadInventoryIndex(index)
-		if err != nil {
-			return "", fmt.Errorf("spec/inventory.tsv: %w", err)
-		}
-		for n := range rows {
-			if versions[n+1], err = r.store.ReadFile(ctx, fmt.Sprintf("spec/inventory-%d.tsv", n+1)); err != nil {
-				return "", err
-			}
-		}
 	}
 	copyID, _ := strconv.Atoi(copyRow[copyComment])
 	files, version, err := nextVersion(index, versions, facts, answer, copyID)
@@ -397,20 +376,7 @@ func (r *state) readRegisterRows(ctx context.Context) ([]Task, error) {
 // renderedStage makes the rendered commit of the first bet on the verified head, pushes it as code, and carries layup/verify to it;
 // each act is skipped when its event exists. It gives the commit.
 func (r *state) renderedStage(ctx context.Context, s *Sessions, task string, st loopStep, milestone string, answer spec.Answer, copyRow []string, version [][]string, texts map[string]string) (string, error) {
-	prds, err := filesAt(r.target, st.Head, "docs/prd", isPRDName)
-	if err != nil {
-		return "", err
-	}
-	existing, err := filesAt(r.target, st.Head, "docs/facts", isNumberedFacts)
-	if err != nil {
-		return "", err
-	}
-	entries, err := git.LsTree(r.target, st.Head, "docs/facts")
-	if err != nil {
-		return "", err
-	}
-	id := nextFactsID(factRecordIDs(factsNames(entries)))
-	files, recs, err := renderedFiles(prds, existing, id, answer, version, texts)
+	files, recs, err := r.renderedAt(st.Head, answer, version, texts)
 	if err != nil {
 		return "", err
 	}
@@ -476,6 +442,83 @@ func (r *state) renderedStage(ctx context.Context, s *Sessions, task string, st 
 		return "", err
 	}
 	return commit, betStopAt("carry")
+}
+
+// renderedAt gives the files of the rendered commit on the verified head and their records: the PRD and the numbered facts record under the
+// next record ID of that head (renderedFiles).
+func (r *state) renderedAt(head string, answer spec.Answer, version [][]string, texts map[string]string) (map[string][]byte, []rules.Record, error) {
+	prds, err := filesAt(r.target, head, "docs/prd", isPRDName)
+	if err != nil {
+		return nil, nil, err
+	}
+	existing, err := filesAt(r.target, head, "docs/facts", isNumberedFacts)
+	if err != nil {
+		return nil, nil, err
+	}
+	entries, err := git.LsTree(r.target, head, "docs/facts")
+	if err != nil {
+		return nil, nil, err
+	}
+	return renderedFiles(prds, existing, nextFactsID(factRecordIDs(factsNames(entries))), answer, version, texts)
+}
+
+// answerCopies gives the copies of the comments of the issue with their bodies.
+func (r *state) answerCopies(ctx context.Context, issue int) ([]answerCopy, error) {
+	var copies []answerCopy
+	for _, row := range r.copies {
+		if row[copyIssue] != strconv.Itoa(issue) {
+			continue
+		}
+		body, err := r.store.ReadFile(ctx, row[copyBody])
+		if err != nil {
+			return nil, err
+		}
+		copies = append(copies, answerCopy{Row: row, Body: string(body)})
+	}
+	return copies, nil
+}
+
+// factsOf gives the facts of the inventory from the records of Intake, each with its class, and their texts by ID.
+func (r *state) factsOf(ctx context.Context) ([]spec.InventoryFact, map[string]string, error) {
+	spans, err := r.readRecord(ctx, "spec/spans.tsv", records.ReadSpans)
+	if err != nil {
+		return nil, nil, err
+	}
+	questions, err := r.readRecord(ctx, "questions.tsv", records.ReadQuestions)
+	if err != nil {
+		return nil, nil, err
+	}
+	answers, err := r.readRecord(ctx, "intake/answers.tsv", records.ReadAnswers)
+	if err != nil {
+		return nil, nil, err
+	}
+	var facts []spec.InventoryFact
+	texts := map[string]string{}
+	for _, f := range factRows(spans, questions, answers) {
+		facts, texts[f[0]] = append(facts, spec.InventoryFact{ID: f[0], Class: f[1], Text: f[2]}), f[2]
+	}
+	return facts, texts, nil
+}
+
+// inventoryOf gives the index of the confirmed inventory and the bytes of each version it names; nil for no index.
+func (r *state) inventoryOf(ctx context.Context) ([]byte, map[int][]byte, error) {
+	index, err := r.store.ReadFile(ctx, "spec/inventory.tsv")
+	if err != nil {
+		return nil, nil, err
+	}
+	versions := map[int][]byte{}
+	if index != nil {
+		rows, err := spec.ReadInventoryIndex(index)
+		if err != nil {
+			return nil, nil, fmt.Errorf("spec/inventory.tsv: %w", err)
+		}
+		for n := range rows {
+			if versions[n+1], err = r.store.ReadFile(ctx, fmt.Sprintf("spec/inventory-%d.tsv", n+1)); err != nil {
+				return nil, nil, err
+			}
+		}
+	}
+	return index, versions, nil
 }
 
 // commitFiles makes the commit of files on a work tree at parent, by who at the time of who, and gives its ID; the work tree is removed.

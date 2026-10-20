@@ -233,6 +233,8 @@ func (s *Sessions) afterRefusal(ctx context.Context, task string, number int, he
 		return "", Readiness{}, fmt.Errorf("the pull request %d of %s is not on the forge after a refused merge", number, task)
 	case pr.Merged:
 		return pr.MergeSHA, Readiness{Ready: true}, s.RecordMerged(ctx, task, pr)
+	case pr.State != "open": // closed and not merged: the caller reads it as it reads any pull request that is not open (row 66y)
+		return "", Readiness{Reason: "the pull request is not open"}, nil
 	case pr.HeadSHA == head:
 		return "", Readiness{}, fmt.Errorf("the merge of the pull request %d at %s was refused and its head did not move: %w", number, head, refusal)
 	}

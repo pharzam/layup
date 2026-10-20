@@ -171,6 +171,9 @@ func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
 		sha := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/repos/acme/target/commits/"), "/check-runs")
 		runs := f.checkRuns[sha]
 		if runs == nil {
+			runs = f.checkRuns["*"] // the runs of every SHA that has none of its own (task T-ehb4)
+		}
+		if runs == nil {
 			runs = []map[string]any{}
 		}
 		json.NewEncoder(w).Encode(map[string]any{"check_runs": runs})
