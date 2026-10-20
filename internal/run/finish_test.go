@@ -318,3 +318,31 @@ func TestAMergedPullRequestIsRecordedAndStartsNoReplacementAttempt(t *testing.T)
 		t.Errorf("a second call = %+v, %v with %d commits more; want Merged and nothing written", again, err, len(w.st.commits)-commits)
 	}
 }
+
+// U12 (finding 3): a merged pull request whose head was pushed by a session with no bound yet gets that bound, and then its event merged, still with no
+// replacement attempt: the resolution of the pushes establishes the binding of the merged head.
+func TestAMergedPullRequestWhosePushWasNeverBoundGetsItsBoundAndItsMergedEvent(t *testing.T) {
+	t.Parallel()
+	w, pr := finishWorld(t)
+	w.events[5] = []string{"6", "push", "2", "S-d0000002", "", head2, "task/T-ab12/2", "2026-10-18T10:00:00Z"}
+	w.write(t)
+	w.st.heads = map[string]string{"task/T-ab12/2": head2}
+	if _, err := w.f.Fake.MarkReady(context.Background(), pr.NodeID); err != nil {
+		t.Fatal(err)
+	}
+	merge, err := w.f.Fake.Merge(context.Background(), pr.Number, head2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := finish(w)
+	if err != nil || got != (Advance{Task: "T-ab12", Merged: true, Head: head2}) {
+		t.Fatalf("FinishTask = %+v, %v; want Merged at %s", got, err, head2)
+	}
+	kinds := ""
+	for _, e := range events(t, w.st, "T-ab12")[5:] {
+		kinds += e[1] + ":" + e[5] + " "
+	}
+	if want := "push:" + head2 + " bound:" + head2 + " merged:" + merge + " "; kinds != want {
+		t.Errorf("the events from the sixth: %q; want %q: the bound, then the merged, and no attempt", kinds, want)
+	}
+}

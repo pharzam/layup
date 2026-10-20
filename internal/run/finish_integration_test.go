@@ -526,6 +526,27 @@ func TestACloseOutWhoseKeptHeadIsGoneIsAnErrorAndNoSecondSession(t *testing.T) {
 	}
 }
 
+// I12c: a read of the refs of the clone that fails is the error of the read, not the absence of the kept head, and starts no second session.
+func TestAFailedReadOfTheKeptHeadsIsTheErrorOfTheReadAndNotAnAbsence(t *testing.T) {
+	t.Parallel()
+	f := newFinishing(t, "claude", "codex")
+	stop := func(s *Sessions) {
+		s.Store = &faultStore{SessionStore: s.Store, fail: func(m string) error {
+			if strings.Contains(m, "layup run: the push of ") {
+				return errors.New("the records branch did not answer")
+			}
+			return nil
+		}}
+	}
+	if _, err := f.finish(stop); err == nil {
+		t.Fatal("the first call gave no error; want the stop at the push")
+	}
+	_, err := f.finish(func(s *Sessions) { s.Clone = filepath.Join(t.TempDir(), "gone") })
+	if err == nil || strings.Contains(err.Error(), "is not in the run's clone") || len(f.closers(f.arch)) != 1 {
+		t.Errorf("FinishTask = %v with %d sessions; want the error of the failed read and no second session", err, len(f.closers(f.arch)))
+	}
+}
+
 // I14 (finding 2 of round 1): the architecture task that the bet opened, based on the rendered commit and verified with the answer's copy, is closed out: the
 // full check of its new head reads the same copy, so that classes and ran pass, and it merges; without the copy the head is not ready.
 func TestAnArchitectureCloseOutAfterTheBetCarriesTheAnswerCopy(t *testing.T) {
