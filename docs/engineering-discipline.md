@@ -230,8 +230,9 @@ an "issue" is a GitHub issue; the issue and pull-request templates are under
 
 After the code works, **freeze the head**: name the commit, and land nothing on
 the branch after it except a fix to a finding. Before the first freeze and after
-each fix, the author runs [`tests/freeze-check.sh`](tests/freeze-check.sh) and
-records its output in `runs/<task>/test-runs.md` (a written rule; CI runs only
+each fix, the author commits and runs [`tests/freeze-check.sh`](tests/freeze-check.sh),
+which refuses a worktree with a change or an untracked file, and records its
+output in `runs/<task>/test-runs.md` (a written rule; CI runs only
 its fixtures in [`tests/freeze-check/run-all.sh`](tests/freeze-check/run-all.sh),
 and K6 proves only that the cited evidence exists, not that it satisfies a
 condition or that the table is complete). Then run **one** independent
