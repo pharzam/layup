@@ -1,0 +1,4 @@
+2
+ok K1: white space
+ok K2: registration of new tests
+freeze-check: cannot read internal/x/a_test.go

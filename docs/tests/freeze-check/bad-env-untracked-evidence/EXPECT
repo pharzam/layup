@@ -1,0 +1,2 @@
+2
+freeze-check: the worktree has changes or untracked files; commit them first (the check reads the committed head)

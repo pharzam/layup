@@ -1,0 +1,5 @@
+# Mutants
+
+| # | mutant | sha256 before | sha256 during | restore |
+| - | ------ | ------------- | ------------- | ------- |
+| M1 | a mutant that changed nothing | 3d7607898ae6 | 3d7607898ae6 | True |
