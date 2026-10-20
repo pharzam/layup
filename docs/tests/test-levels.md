@@ -55,7 +55,10 @@ real interface or workflow** — the seams a unit test stubs out. It uses the re
 collaborator (a real datastore, a real adapter) rather than a stand-in, so it is
 slower than a unit test and runs after it.
 
-- **Command:** `go test -tags=integration ./...`
+- **Command:** `go test -tags=integration ./...` (the bare command keeps Go's
+  10-minute default; CI runs `go test -tags=integration -timeout 20m ./...`).
+- **Timeout:** `-timeout 20m` per test binary in CI
+  ([ADR-0027](../adr/0027-bound-the-integration-level-at-20-minutes-in-ci.md)).
 - **Where:** CI only (job `tests`).
 - **Rule:** every interface or workflow has an integration test (see
   [`template-integration.md`](template-integration.md)).
@@ -130,9 +133,10 @@ LAYUP's values, set once here; every template in this section uses them:
 | Value | Meaning |
 |-------------|---------|
 | `go test ./...` | Run the unit level. |
-| `go test -tags=integration ./...` | Run the integration level. |
+| `go test -tags=integration ./...` | Run the integration level (the bare command keeps Go's `-timeout 10m` default; CI passes `-timeout 20m`, [ADR-0027](../adr/0027-bound-the-integration-level-at-20-minutes-in-ci.md)). |
 | `go test -tags=e2e ./...` | Run the E2E level. |
 | `go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./... && go vet ./... && gitleaks git --redact` | Run the security scan step. |
-| `-timeout 10m` | The per-test (or per-suite) time limit before a hang is a failure. |
+| `-timeout 10m` | The per-test-binary time limit for the unit and E2E levels before a hang is a failure ([ADR-0010](../adr/0010-use-go-as-the-technology-stack.md)). |
+| `-timeout 20m` | The per-test-binary time limit for the integration level in CI before a hang is a failure ([ADR-0027](../adr/0027-bound-the-integration-level-at-20-minutes-in-ci.md)). |
 | `*_test.go beside the code; root tests/ for end-to-end fixtures` | Where product tests live — beside the Go code, and the root [`tests/`](../../tests/) for cross-package end-to-end fixtures. |
 | `govulncheck v1.8.0, go vet, and gitleaks` | The tool that runs the security checks (secret scan, dependency scan, static analysis). |

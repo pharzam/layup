@@ -780,9 +780,11 @@ These traps are not domain-specific: they hurt every project's test suite.
   package, while CI ran all three levels in 3 min 22 s (`T-4c5c`, #276). **The check:** run
   the level with `-timeout 30m`; when a package stops at the limit, read `uptime`, run that
   package alone with `-v`, record both runs, and edit no test for the stop. A package that
-  needs more than 10 minutes alone on an idle host breaks
+  needs more than its level's per-test-binary bound alone on an idle host (10 minutes, or 20
+  minutes for the integration level in CI under
+  [ADR-0027](adr/0027-bound-the-integration-level-at-20-minutes-in-ci.md)) breaks
   [the rule of the scaling checklist](tests/scaling-checklist.md#fast-enough-for-hook-and-ci),
-  and is a task.
+  and is a task ([#439](https://github.com/pharzam/layup/issues/439) for `internal/run`).
 - ❌ **A `git` verb that reads its standard input when its argument is empty.**
   `git commit-tree TREE -p PARENT -m ''` finds an empty message and reads the message
   from its standard input, as it does with no `-m`; with a standard input that stays
@@ -799,8 +801,11 @@ These traps are not domain-specific: they hurt every project's test suite.
   weaken a passing old test.
 - ❌ **Tests that slow down as the project grows.** A suite that creeps past the
   hook's patience gets skipped, and a skipped gate is no gate. The check: keep the
-  cheap levels fast and cheap-first, push slow ones to CI, and bound each with
-  `-timeout 10m` — see [`tests/scaling-checklist.md`](tests/scaling-checklist.md).
+  cheap levels fast and cheap-first, push slow ones to CI, and bound each test
+  binary within its level's limit (`-timeout 10m`, or `-timeout 20m` for the
+  integration level in CI under
+  [ADR-0027](adr/0027-bound-the-integration-level-at-20-minutes-in-ci.md)) — see
+  [`tests/scaling-checklist.md`](tests/scaling-checklist.md).
 - ❌ **A specification that fixes one input state at a time.** A step that reads
   an input file a human writes (an answers file, a list of rows) meets rows in
   states that the happy path never makes: rows given early, copied from an
@@ -1380,6 +1385,16 @@ failure modes worth keeping.
 - ❌ **A new kind of a shared source, read by the steps that run before the new step.** The step `shape` asks its questions as rows of `questions.tsv` with the source `follow-up` and the kind `shape`, as its plan chose, and the plan listed the readers of the budget but not those of the source. The steps `follow-up` and `follow-up-answers` of Intake run on every restart before `shape`, and each read every row of the source `follow-up` as Intake's: the first Shape row made `follow-up-answers` wait for an answer to a question of Intake, and the run never came back to `shape`. No test of the plan failed: each was written for the step alone. It is silent until the second restart. **The check:** when a row, a kind or a state is added to a record that earlier steps read, `git grep -n` its source value in the code that is no test, and give each reader a case that holds the new row beside its own (`TestOnlyTheRowsOfIntakeAreItsFollowUp`); the test of the new step is not that case. Learned in `T-3f94`.
 
 - ❌ **A first-match loop over the statuses of a head that lets a failure hide an error.** The driver judged the four statuses in the order of their posts and returned at the first one that stopped it. When the failure of `layup/spec` and `layup/rules` became a retry instead of a stop, the same loop would have started an attempt for a spec failure and never looked at a later `layup/rules` error, which has to stop it (`NFR-004`). It is silent because every status alone is judged right and the mixed head is no fixture. **The check:** decide a stop over all the posts before any retry (`judgeStatuses` returns the stop whatever else failed), test a head with a failure *before* an error, and make a fault knob of a scripted harness fire once, or the driver retries a persistent fault until its bound on the acts. Learned in `T-tnxn`, #427.
+
+- ❌ **A package's integration time read only on the host, not in CI's log.** Row 66z (`T-r7b9`, #436) passed `internal/run`'s integration binary in 412.797 s on the session host and in 493.632 s on its PR head in CI (run 39421233368), and the push run of its merge timed out at 600.012 s on `main` (run 39422675099), with PR #437's head timing out at 600.014 s in CI (run 39425720339) while completing in 482.275 s on the host. It is silent because the PR checks pass and the merge does not wait on `main`'s push run. **The check:** read a package's integration time in CI's log at each landing, not only on the host. Learned in `T-jc45`, #442.
+
+- ❌ **A check that reads the ledger inside `Keep` omits the session's own row.** `endPhase` runs the step's `Keep` and only then commits the
+  telemetry row of the session, so a check of the appetite (the caps plus the money spent) made in `Keep` judged the brief without the money that its own
+  session cost, and the plan of the brief of the first bet (#418) had put it there. It is silent because the prior spend alone fits, and every unit test of
+  the check passes. **The check:** judge what depends on the session's spend after `PhaseSession` returns, from the records as they now stand; keep the
+  output as a candidate in `Keep` and promote it after; test with a spend that fits without the session's row and fails with it (a green negative beside a
+  red case). A session whose output files `ReadOutputFiles` refuses ends `no-result`, not `refused file`, so a loop that retries on the second does not retry the first.
+  Learned in `T-h65e`, #418.
 
 ## 3. Validation — how you check you are not fooling yourself
 

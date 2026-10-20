@@ -262,7 +262,8 @@ retrospective lessons of phase 4) has none: a session of Intake or of the Scaffo
 reads the `input/` files of its own section ([`intake.md`](intake.md#the-sessions-of-intake),
 [`scaffold.md`](scaffold.md#the-prose-rows)); the records that go into the prompt of
 the bet brief and of the retrospective lessons are those of their own sections
-(`loop.md`, "The bet"; `architecture.md` §13), not kinds of this table; the
+(`loop.md`, "The bet"; `architecture.md` §13), not kinds of this table: the step `bet-brief`, its inputs and its output are in
+[`loop.md`](loop.md#the-brief-of-the-first-bet); the
 Retrospective of `M2e` has no session. The values `by-class` (the tier is the task's
 class, `architecture.md` §9) and `owner-of-its-kind` (the owner map resolves the role
 before routing, `loop.md`) are the table's own words, not keys of the routing

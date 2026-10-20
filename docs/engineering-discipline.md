@@ -758,7 +758,10 @@ runs in the [`pre-commit` hook](#git-hooks); the whole ladder runs in
 [CI](#continuous-integration). Each level has its own command — `go test ./...`,
 `go test -tags=integration ./...`, `go test -tags=e2e ./...`, and
 `go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./... && go vet ./... && gitleaks git --redact`
-for the parallel security track — with `-timeout 10m` bounding a hanging test.
+for the parallel security track — with `-timeout 10m` per test binary bounding a
+hanging test on the unit and E2E levels ([ADR-0010](adr/0010-use-go-as-the-technology-stack.md))
+and `-timeout 20m` per test binary on the integration level in CI
+([ADR-0027](adr/0027-bound-the-integration-level-at-20-minutes-in-ci.md)).
 A Go test under the tag `uat` is no rung of the ladder: a person runs it with
 real credentials ([`tests/test-levels.md`](tests/test-levels.md)).
 Unit and integration tests are `*_test.go` files beside the code they test; the
