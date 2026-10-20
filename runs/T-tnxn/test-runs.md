@@ -96,3 +96,24 @@ given findings and the kind), then the driver: `judgeStatuses` gives a failure o
 
 - `go test -count=1 ./internal/run/` (unit): `ok`, exit=0 (the same command as the red run).
 - The integration command of the red run, unchanged: start 2026-10-20T05:24:16Z, end 2026-10-20T05:27:53Z, exit=0, `ok github.com/pharzam/layup/internal/run 184.094s`.
+
+## S5 and S6 - the mutants and the registration
+
+The compiled mutants are in `runs/T-tnxn/mutants.md` (18 mutants, all built and vetted, all killed, every restore matched its SHA-256). The plan row 66aa, the Task and Test cells of
+REQ-005 and REQ-007 in PRD-0001 section 12 and the traceability rows are in the commit `d1f9709`. The row does not touch the After cell of 66k (`T-9nbf`'s R10 commit names 66aa).
+
+## S7 - the gates
+
+The head is `b3988ed` (the Go files are those of the green commit `b46c02a`). Each command was run alone and its exit status read directly.
+
+| Command | Result |
+| ------- | ------ |
+| `go build ./...`; `go vet ./...`; `go vet -tags=integration ./...`; `go vet -tags=e2e ./...`; `gofmt -l .` (2026-10-20T05:59:24Z to 06:00:13Z) | exit 0 each; gofmt lists no file |
+| `go test -count=1 ./...` (the same span) | exit 0 |
+| `go test -count=1 -tags=e2e ./...` (06:00:18Z to 06:04:29Z) | exit 0 |
+| `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 90m ./...` (start 2026-10-20T05:59:11Z, end 07:05:56Z) | exit 0; every package `ok`, `internal/run` 3897.761s; none of the known load flakes (`TestProcessTimesTheFirstOutput`, the fastClock cap of #291) failed |
+| `sh docs/adr/adr-lint.sh`, `sh docs/prd/prd-lint.sh`, `sh docs/links/link-lint.sh`, `sh docs/tests/run-discipline-tests.sh`, `sh docs/setup/setup-check.sh`, `sh docs/tests/nested-checkout-check.sh`, `git diff --check` | exit 0 each (138 discipline tests passed, 2875 links resolved) |
+| `sh docs/tasks/task-state.sh` | exit 0 |
+
+The full integration level shares the scratchpad directory of the orchestrating session with a parallel build, and its file `full.start` was overwritten by that run at 06:16:14Z; the start time above is the one I read from it
+at 05:59:11Z, before that happened, and the result files (`full.exit`, `full.end`, `full.raw`) are those written when this run ended at 07:05:56Z, the other run being still alive. The raw output is kept in the session's scratchpad as `tnxn-final/full-integration.raw`.
