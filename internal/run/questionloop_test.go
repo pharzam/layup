@@ -238,6 +238,10 @@ func TestTheNthAnswerNamesTheNthQuestionAndAMissingOrExtraAnswerStops(t *testing
 	if got := second.stage(); got.Stage != qPostAnswer || got.Question != qa2+".1" || got.Row[1] != "2" {
 		t.Errorf("the first answer posted: stage %d, question %q; want the post of the answer 2 for %s.1 (two questions of n 1)", got.Stage, got.Question, qa2)
 	}
+	both := qTwoAsking(t, answerRow1+answerRow2).copied(qow, "answer", 1, qa1+".1").copied(qow, "answer", 2, qa2+".1")
+	if got := both.stage(); got.Stage != qHandoffAnswer {
+		t.Errorf("both answers posted, each for its own question: stage %d; want the handoff back (P7)", got.Stage)
+	}
 	for _, c := range []struct{ name, answers, want string }{
 		{"one answer for two questions", answerRow1, "T-sp01: the question " + qa2 + ".1 has no answer"},
 		{"no answer row", "", "T-sp01: the question " + qa1 + ".1 has no answer"},
