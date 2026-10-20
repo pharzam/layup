@@ -100,7 +100,9 @@ by running `sh .githooks/install.sh` (it pins `core.hooksPath` to the relative
 run before every commit, and in CI; `nested-checkout-check.sh` and
 `freeze-check/run-all.sh` need `git`, so they run in CI only; the full
 `setup-check.sh` needs `git` too, and runs in CI; `freeze-check.sh` needs `git`
-and you run it before each freeze; and `git diff --check` you run yourself. Keep
+and you run it before each freeze using the invocation and evidence declarations in
+[Reviewing until findings decay](docs/engineering-discipline.md#reviewing-until-findings-decay);
+and `git diff --check` you run yourself. Keep
 [`.gitattributes`](.gitattributes): it holds these scripts at line-feed endings,
 without which none of them runs on a Windows checkout.
 
@@ -111,7 +113,6 @@ sh docs/links/link-lint.sh
 sh docs/tests/run-discipline-tests.sh
 sh docs/tests/nested-checkout-check.sh
 sh docs/tests/freeze-check/run-all.sh
-sh docs/tests/freeze-check.sh --task T-xxxx --base REV --budget LINES/FILES
 sh docs/setup/setup-check.sh
 git diff --check
 ```

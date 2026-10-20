@@ -49,11 +49,10 @@ discipline linters — lives here, so their tests can too.
 | [`nested-checkout-check.sh`](nested-checkout-check.sh) | A second executable: builds a throwaway repository holding a nested checkout and proves `link-lint` never reads it. Needs `git`, so CI runs it and the hook does not. |
 | [`freeze-check.sh`](freeze-check.sh) | The third: checks a task worktree before a freeze (white space, test registration, `-run` selectors, mutant restore evidence, landing budget projection and the conditions table); its fixtures run via [`freeze-check/run-all.sh`](freeze-check/run-all.sh) in CI. |
 
-For a clean committed worktree, run
-`sh docs/tests/freeze-check.sh --task T-xxxx --base REV --budget LINES/FILES`.
-Repeat `--evidence PATH` for each inspected Markdown, TSV or text evidence record
-under that exact task's `runs/` directory; paths are literal and duplicates count
-once. Added, modified and deleted records are resolved at the committed endpoints.
+For the clean committed-worktree invocation and evidence declarations, follow
+[Reviewing until findings decay](../engineering-discipline.md#reviewing-until-findings-decay).
+Declared paths are literal and duplicates count once. Added, modified and deleted
+records are resolved at the committed endpoints.
 Every unlisted path stays counted. Declarations supply classification, rather than
 proving it: inspect consumers using the canonical
 [input definition](../engineering-discipline.md#reviewing-until-findings-decay).
