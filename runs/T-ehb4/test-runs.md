@@ -166,3 +166,7 @@ Finding 6 (the specification) has no test: it is a clause-by-clause reading of `
 ### Green
 
 The same command on the fix (`cloneStep` sets the old clone aside in `DIR/recovery/OWNER/NAME/`, which is no target's clone; `docs/spec/run.md` step 2 and D5 of `loop.md` state one contract), start 2026-10-20T20:57:58Z, end 2026-10-20T20:58:03Z, exit=0: ok.
+
+### Round 3 - the gates
+
+The code is frozen at `b74fb19`; later commits add tables and records only. `origin/main` had not moved. Full integration level: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./...` (head `5473bd4`, start 2026-10-20T21:02:02Z, end 2026-10-20T21:05:44Z, exit=0), 21 packages ok. `go build ./...`, `go vet ./...` with no tag, `integration` and `e2e`, `gofmt -l .` (empty), `go test -count=1 ./...` (21 ok), `go test -count=1 -tags=e2e ./...` (start 2026-10-20T21:05:47Z, end 2026-10-20T21:06:54Z, exit=0), the six lints and `git diff --check origin/main HEAD`: exit=0 each.
