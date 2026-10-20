@@ -1547,8 +1547,8 @@ nothing, never a redo.
    `tasks/<old>/options/<decision>.tsv` are copied to the new ID. The issue text is the composer of the kind with the new ID and the
    inputs the records keep: the decision and option of the binding for a bet's architecture task; for a Shape task its **opening pin**: the SHA-256 of
    `spec/draft.tsv` and the records commit that its issue was opened with (`openShapeTask` keeps them in `tasks/<task>/pin.txt`, in the commit that
-   registers the task: `<sha256> <records commit>` and a line feed), which the combined commit of a redo copies to the new task by value, so any
-   number of redos keeps the pin of the original issue, and a later draft, a later snapshot or the first session's records change nothing. A Shape task with no pin
+   registers the task: `<sha256> <records commit>`, a 64 and a 40 hexadecimal characters, and a line feed, captured once for the issue and the pin together), which the combined commit of a redo copies to the new task by value, so any
+   number of redos keeps the pin of the original issue, and a later draft, a later snapshot or the first session's records change nothing. A Shape task with no pin, or with one that is not two full hashes,
    is an error before any write, never a pin guessed from another record. Attempts, sessions and the frozen list are not carried.
    The first attempt of the new task starts at the `base` of its event `rebased`, in the driver.
 10. **The older attempt's pull request** (O22). `RepairTask` closes, for an open attempt `A > 1`, the open pull request of each older

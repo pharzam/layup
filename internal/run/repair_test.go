@@ -446,7 +446,7 @@ func TestTheFirstAttemptOfARedoneTaskStartsAtTheRebasedBase(t *testing.T) {
 
 // F7 of round 2 (late test): the pin is inherited by value, so no length of the chain of redos changes it and none ends in a silent root.
 func TestThePinIsInheritedThroughAnyChainOfRedos(t *testing.T) {
-	pin := []byte("3e54755b5e4a5c1931 f6638ba270a7d7cd1722efb03fd7cb27f84f1e16\n")
+	pin := pinBytes(strings.Repeat("3e", 32), strings.Repeat("f6", 20))
 	tasks := redoRows()
 	old := "T-old1"
 	for i := 0; i < 70; i++ {
@@ -471,13 +471,20 @@ func TestThePinIsInheritedThroughAnyChainOfRedos(t *testing.T) {
 }
 
 func TestThePinIsReadBackOrRefused(t *testing.T) {
-	sum, rec, err := parsePin(pinBytes("3e54755b", "f6638ba2"))
-	if err != nil || sum != "3e54755b" || rec != "f6638ba2" || string(pinBytes("a", "b")) != "a b\n" {
-		t.Errorf("parsePin(pinBytes) = %q, %q, %v", sum, rec, err)
+	sum, rec := strings.Repeat("3e", 32), strings.Repeat("f6", 20)
+	gotSum, gotRec, err := parsePin(pinBytes(sum, rec))
+	if err != nil || gotSum != sum || gotRec != rec || string(pinBytes(sum, rec)) != sum+" "+rec+"\n" {
+		t.Errorf("parsePin(pinBytes) = %q, %q, %v", gotSum, gotRec, err)
 	}
-	for _, bad := range []string{"", "a\n", "a b", "a b c\n", "a  b\n", "a b\n\n"} {
-		if sum, rec, err := parsePin([]byte(bad)); err == nil {
-			t.Errorf("parsePin(%q) = %q, %q, nil; want an error", bad, sum, rec)
+	for _, bad := range []string{"", "a\n", "a b", "a b c\n", "a  b\n", "a b\n\n", "not-a-digest not-a-commit\n", sum[:63] + " " + rec + "\n", sum + " " + rec[:39] + "\n",
+		strings.Repeat("g", 64) + " " + rec + "\n", sum + " " + strings.ToUpper(rec) + "\n", sum + "\t" + rec + "\n", sum + " " + rec[:20] + "\t" + rec[20:] + "\n", sum + " " + rec + "\n" + sum + " " + rec + "\n"} {
+		if gs, gr, err := parsePin([]byte(bad)); err == nil {
+			t.Errorf("parsePin(%q) = %q, %q, nil; want an error", bad, gs, gr)
 		}
+	}
+	p := redoPlanOf()
+	p.Pin = []byte("not-a-digest not-a-commit\n")
+	if files, err := redoFiles(p); err == nil {
+		t.Errorf("redoFiles with a malformed pin: %d files, nil; want an error", len(files))
 	}
 }

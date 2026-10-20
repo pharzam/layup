@@ -93,6 +93,9 @@ func redoFiles(p redoPlan) (map[string][]byte, error) {
 		files[path] = data
 	}
 	if p.Pin != nil {
+		if _, _, err := parsePin(p.Pin); err != nil {
+			return nil, fmt.Errorf("%s: %w", pinPath(p.Old), err)
+		}
 		files[pinPath(p.New)] = p.Pin
 	}
 	for name, data := range p.Bindings {
@@ -310,12 +313,12 @@ func pinPath(task string) string { return "tasks/" + task + "/pin.txt" }
 
 func pinBytes(sum, records string) []byte { return []byte(sum + " " + records + "\n") }
 
-var pinForm = regexp.MustCompile(`^([^ \n]+) ([^ \n]+)\n$`)
+var pinForm = regexp.MustCompile(`^([0-9a-f]{64}) ([0-9a-f]{40})\n$`)
 
 func parsePin(data []byte) (sum, records string, err error) {
 	m := pinForm.FindSubmatch(data)
 	if m == nil {
-		return "", "", fmt.Errorf("a pin is the SHA-256 of the draft, a space, the records commit and a line feed; got %q", data)
+		return "", "", fmt.Errorf("a pin is the SHA-256 of the draft (64 hexadecimal characters), a space, the records commit (40) and a line feed; got %q", data)
 	}
 	return string(m[1]), string(m[2]), nil
 }

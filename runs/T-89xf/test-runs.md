@@ -268,3 +268,27 @@ ok K4: restore evidence of mutants
 FAIL K5: -:0: projection: figure 3111/32, maximum 2800/30, margin -311/-2 (the figure at landing is still measured at landing)
 ok K6: conditions table
 ```
+
+## Round 3 of #424 (the review b9ed9b0): red transcripts, before the code of the fixes
+
+F9 and F10, run against the code of b9ed9b0 (the test of F9 holds the heartbeat between the capture of the pin and the open of the issue by a wrapper of the token of the records store). The full output is `/home/layup/.cache/layup-session/k3/r5.txt`; the F10 cases of `TestThePinIsReadBackOrRefused` and `TestAMalformedOpeningPinRefusesTheRedoBeforeAnyWrite` fail for each malformed form. Evidence added after the code is labelled late.
+
+### round 3, F9 and F10: red against the code of b9ed9b0
+
+- Command: `go test -count=1 -tags=integration -run '^(TestTheOpeningPinIsCapturedOnceWhateverTheRecordsDoBeforeTheIssue|TestAMalformedOpeningPinRefusesTheRedoBeforeAnyWrite|TestThePinIsReadBackOrRefused)$' ./internal/run/`
+- Start: 2026-10-20T21:32:50Z, end: 2026-10-20T21:32:59Z (`date -u`, after the step)
+- Exit status (direct, not piped): 1
+- First failing assertions (from the saved output):
+
+```text
+--- FAIL: TestThePinIsReadBackOrRefused (0.00s)
+    repair_test.go:482: parsePin("not-a-digest not-a-commit\n") = "not-a-digest", "not-a-commit", nil; want an error
+--
+--- FAIL: TestTheOpeningPinIsCapturedOnceWhateverTheRecordsDoBeforeTheIssue (0.34s)
+    baseup_integration_test.go:1389: tasks/T-33ej/pin.txt = "b95428303e68cc271142ed228363ab48fe4ee76bd9fa37abf64ce5d6f52a5e33 8a1bd83a29448c644802492cc52f78958dc23158\n"; want the pin of the issue, "b95428303e68cc271142ed228363ab48fe4ee76bd9fa37abf64ce5d6f52a5e33 2cc589335de624994cc4b741cf4cd1c5fa060e3b\n"
+--- FAIL: TestAMalformedOpeningPinRefusesTheRedoBeforeAnyWrite (7.25s)
+    baseup_integration_test.go:1406: the pin "not-a-digest not-a-commit\n": {Task:T-ab12 Verified:false Head: Wait: Stop: Replaced:T-gpkd}, <nil>; writes [PATCH /repos/acme/target/issues/3 POST /repos/acme/target/issues]; want an error and no write
+--
+FAIL	github.com/pharzam/layup/internal/run	7.256s
+FAIL
+```

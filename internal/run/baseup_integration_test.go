@@ -38,8 +38,8 @@ func newMoved(t *testing.T, taskFiles map[string]string) *moved {
 	return newMovedAs(t, taskFiles, "architecture", true)
 }
 
-// newMovedAs makes the world of a task of the kind: with the binding of a decision, or with the draft of Intake in the records its first
-// session read (a Shape task).
+// newMovedAs makes the world of a task of the kind: with the binding of a decision, or with the draft of Intake and the opening pin of its
+// issue (a Shape task; the pin names the records commit one snapshot before the first session's).
 func newMovedAs(t *testing.T, taskFiles map[string]string, kind string, binding bool) *moved {
 	t.Helper()
 	ctx := context.Background()
@@ -905,8 +905,9 @@ func TestACarryWhoseStatusFailedIsPostedAtTheRestart(t *testing.T) {
 	}
 }
 
-// The new issue is composed from the inputs the records keep: the decision and the option of the binding, or the draft as the first session
-// of the old task read it, never a later one; a kind with no composer is refused before any write.
+// The new issue is composed from the inputs the records keep: the decision and the option of the binding, or the opening pin of a Shape
+// task (the draft's digest and the records commit its issue was opened with), never a later draft; a kind with no composer is refused
+// before any write.
 func TestTheNewIssueIsComposedFromTheInputsTheRecordsKeep(t *testing.T) {
 	t.Parallel()
 	for _, c := range []struct {
@@ -1340,4 +1341,77 @@ func (m *moved) render() string {
 	}
 	m.in.Rendered = &RenderedInput{Head: rendered, Render: treeRecs}
 	return rendered
+}
+
+// F9 of round 3 (late test): a heartbeat advances the records between the capture of the opening inputs and the open of the issue: the
+// pin that is kept and the pin in the body of the issue are the same, and a replacement inherits them.
+func TestTheOpeningPinIsCapturedOnceWhateverTheRecordsDoBeforeTheIssue(t *testing.T) {
+	t.Parallel()
+	d := newDrvWorld(t, loopPerms)
+	st := d.r.store
+	armed := true
+	inner := st.auth
+	st.auth = func(ctx context.Context) (git.Auth, error) {
+		if armed { // the first use of the token after the arming is the read of the lease before OpenIssue: a heartbeat commit comes first
+			armed = false
+			st.mu.Unlock()
+			row, err := st.leaseAt(st.Base())
+			if err == nil {
+				row.Heartbeat++
+				err = st.WriteLease(ctx, row, "lease: heartbeat")
+			}
+			st.mu.Lock()
+			if err != nil {
+				return git.Auth{}, err
+			}
+		}
+		return inner(ctx)
+	}
+	before := st.Base()
+	task, err := d.r.openShapeTask(context.Background(), "specification")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if armed || st.Base() == before {
+		t.Fatal("the heartbeat did not run between the capture and the issue")
+	}
+	var text string
+	for _, it := range d.w.fake.issueTexts {
+		if strings.Contains(it[0], task.ID) {
+			text = it[1]
+		}
+	}
+	m := regexp.MustCompile(`SHA-256 ([0-9a-f]{64}), read at the records commit ([0-9a-f]{40})\.`).FindStringSubmatch(text)
+	if m == nil {
+		t.Fatalf("the issue names no pin:\n%s", text)
+	}
+	if got := keptRecord(t, d.w, pinPath(task.ID)); got != m[1]+" "+m[2]+"\n" {
+		t.Errorf("%s = %q; want the pin of the issue, %q", pinPath(task.ID), got, m[1]+" "+m[2]+"\n")
+	}
+}
+
+// F10 of round 3 (late test): a pin whose digest or commit is not a full hexadecimal hash is refused before any write; a valid one passes.
+func TestAMalformedOpeningPinRefusesTheRedoBeforeAnyWrite(t *testing.T) {
+	t.Parallel()
+	sum, rec := strings.Repeat("a", 64), strings.Repeat("b", 40)
+	for _, bad := range []string{"not-a-digest not-a-commit\n", sum[:63] + " " + rec + "\n", sum + " " + rec[:39] + "\n", strings.Repeat("g", 64) + " " + rec + "\n",
+		sum + " " + strings.Repeat("G", 40) + "\n", sum + "\t" + rec + "\n", sum + " " + rec[:20] + "\t" + rec[20:] + "\n", sum + " " + rec} {
+		m := newMovedAs(t, map[string]string{"a.txt": "task\n"}, "architecture", false)
+		if err := m.r.commit(context.Background(), map[string][]byte{pinPath("T-ab12"): []byte(bad)}, "a pin"); err != nil {
+			t.Fatal(err)
+		}
+		m.moveBase(map[string]string{"a.txt": "base\n"})
+		head, n := recordsHead(t, m.w), m.nreqs()
+		if got, err := m.bring(m.s); err == nil || recordsHead(t, m.w) != head || len(m.writes(n)) != 0 {
+			t.Errorf("the pin %q: %+v, %v; writes %v; want an error and no write", bad, got, err, m.writes(n))
+		}
+	}
+	m := newMovedAs(t, map[string]string{"a.txt": "task\n"}, "architecture", false)
+	if err := m.r.commit(context.Background(), map[string][]byte{pinPath("T-ab12"): pinBytes(sum, rec)}, "a pin"); err != nil {
+		t.Fatal(err)
+	}
+	m.moveBase(map[string]string{"a.txt": "base\n"})
+	if got, err := m.bring(m.s); err != nil || got.Replaced == "" {
+		t.Errorf("a valid pin: %+v, %v; want the redo", got, err)
+	}
 }
