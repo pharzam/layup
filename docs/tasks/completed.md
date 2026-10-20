@@ -16,6 +16,7 @@ here directly, in the shape above.
 
 ## Log
 
+- **2026-10-21** — **T-c826** — K5 projects the landing figure under ADR-0028 with declared evidence exclusions, tolerance, limit and margins; the PR #453 checker-only CI exception retains both restored runners and is removed by #452; round 2 nothing material in scope ([#449](https://github.com/pharzam/layup/issues/449); [detail](T-c826.md)).
 - **2026-10-17** — **T-6zj3** — Row 66e of `M2e`: The attempts, the independence and the frozen tests ([#361](https://github.com/pharzam/layup/issues/361); [the plan](../plan/README.md#the-tasks-of-m2e)); [detail](T-6zj3.md)
 - **2026-10-17** — **T-8bwd** — Define the handoff items' rules and implementation ownership for `M2e` ([#387](https://github.com/pharzam/layup/issues/387); [detail](T-8bwd.md))
 - **2026-10-17** — **T-4wyg** — Row 62c of `M2e`: The full spec check ([#351](https://github.com/pharzam/layup/issues/351); [the plan](../plan/README.md#the-tasks-of-m2e)); [detail](T-4wyg.md)
