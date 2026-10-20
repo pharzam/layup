@@ -66,3 +66,12 @@ Made after the fixes, on the committed head `b03c3b0`, by the same script and in
 | S1 | the cells of the separator row not checked for their form (`internal/run/bet.go`) | ok | ok | KILLED | bet_test.go:94: malformed a separator of colons: tags = ["alpha"]; want none | green | 1fcd894c12e3 | f559cc518dad | 1fcd894c12e3 |
 | S2 | the separator row of other than three cells accepted (`internal/run/bet.go`) | ok | ok | KILLED | bet_test.go:94: malformed a separator of two cells: tags = ["alpha"]; want none | green | 1fcd894c12e3 | ce39037c7eba | 1fcd894c12e3 |
 | A1 | the answer that the inventory names not restored (`internal/run/bet.go`) | ok | ok | KILLED | bet_integration_test.go:598: bets.tsv = [[1 first 617 cf485ea7633b4bd1e130c96873e1795cd7fa6f3cecc837b3586d4129346b1929 5.0 12.0 7071 db=sqlite web=go bet 707 2026-10-08T12:43:53Z]], <nil>; want the answer 7070, db=pg web=go and the approver 303 | green | 1fcd894c12e3 | 756d92adabb7 | 1fcd894c12e3 |
+
+## Round 3 of #366: the mutants of the three refusals of U1 (late evidence)
+
+Made after the cases were added, on the committed head `3a7408b`, by the same script and in the same way. T1 disables the check of an empty verdict (`internal/run/bets.go`), T2 the check of the hours of the appetite; each alone builds, vets and is killed by its cases of `TestABetsTableRefusesEachBrokenRule`.
+
+| # | mutant (file) | build | vet | result | first failing assertion | control | sha256 before | sha256 during | sha256 after |
+| - | ------------- | ----- | --- | ------ | ----------------------- | ------- | ------------- | ------------- | ------------ |
+| T1 | the check of an empty verdict disabled (`internal/run/bets.go`) | ok | ok | KILLED | bet_test.go:42: an empty verdict with the appetite: err = <nil>; want line 2, column "verdict" with the reason "this column never holds the empty value" | green | 35ecafefbf37 | 2ef36e02e88a | 35ecafefbf37 |
+| T2 | the check of the hours of the appetite disabled (`internal/run/bets.go`) | ok | ok | KILLED | bet_test.go:42: a bet with dollars and no hours: err = <nil>; want line 2, column "appetite_hours" with the reason "the appetite is the empty value exactly for a no-bet" | green | 35ecafefbf37 | 77aba91e7fb9 | 35ecafefbf37 |
