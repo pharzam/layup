@@ -78,3 +78,44 @@ ok K6: conditions table
 ```
 
 K5 is a true finding. The branch is over its maximum (the script is 575 lines against the 320 of the plan, the fixtures 840 against 520), and the overrun is reported on #440 for the Operator's figure at landing.
+
+## The fixes of round 1 (cycle 1 of cap 2; by Claude Opus 5.5)
+
+Round 1 (GPT-6.1 Sol) found five material findings. Each of F1 to F4 has a fixture written red before its code:
+
+| Finding | Fixture | Fix |
+| --- | --- | --- |
+| F1: an unreadable traceability or PRD file passed K2 | `bad-env-K2-unreadable`, `bad-env-K2-unreadable-prd` (`run.sh` makes the listed paths mode 000 after the commit, and refuses the case as root) | a read check before each input, and the status of the K2 parser propagated: exit 2, "cannot read …" |
+| F2: a word of a mutant's description ("rule dropped") exempted a killed mutant | `bad-K4-dropped-in-description` (a hash-less killed row fails; "dropped as a duplicate" and "not run" still skip) | an exemption only from "not run" in a cell, or a cell that begins with "dropped" or "superseded"; a cell `KILLED` overrides both |
+| F3: a backtick elsewhere on a line hid a `go test` command | `bad-K3-backtick-outside` | the text outside the spans is read, and fenced lines are read as they stand. The case's line ends in a comment, so it fails "unsupported selector form", one of the two failures the finding's falsifier names |
+| F3, found while fixing it: an inline span that crosses a line break was paired wrongly (T-r7b9's `mutants.md:5-6` as merged) | `bad-K3-span-across-lines` (a bad selector in such a span was missed), `good-K3-span-across-lines` | spans are paired across the lines of a paragraph, and the joined span is checked at its first line |
+| F4: an untracked file supplied K6's evidence | `bad-K6-untracked-evidence` (`run.sh` lays `work/` over the tree after the commit, untracked) | K6 reads its table and every cited path at `HEAD` (`git cat-file`, `git show`) |
+| F5: the lesson not written back | — | `docs/guardrails.md` §2, "A check of the records that passes its own fixtures and fails the records of `main`" |
+
+| Run | Commit or tree | Time (UTC) | Exit | Result |
+| --- | --- | --- | --- | --- |
+| Red of F1–F4 | `6b0ed68` | `2026-10-20T15:24:43Z` | `1` | `44 passed, 5 failed`: the five new cases |
+| Red of the span cases | `0bb67fc` | `2026-10-20T15:30:26Z` | `1` | `45 passed, 6 failed`: the five above and `bad-K3-span-across-lines` |
+| Green | `0d3fdd1` | `2026-10-20T15:27:59Z` and after | `0` | `51 passed, 0 failed`, under `sh` and `bash --posix` |
+
+`bad-K3-backtick-outside` was red with an `EXPECT` that wanted "matches no test". The fix gives "unsupported selector form" for that line, because of its trailing `# see` comment, and the `EXPECT` was set to that in `0d3fdd1`.
+
+**Merged tasks of `main`**, with `--no-conditions --closeout 0/0`:
+- T-05f4 at `99ff862` (base `699d868`): exit 0.
+- T-r7b9 at `2866a3f` (base `0246d9c`): one line, `FAIL K3: runs/T-r7b9/mutants.md:5: quote the selector with single quotes`. The prose template `go test … -run <pattern>` there spans two lines, and the K3 grammar refuses a placeholder selector, as the round noted for T-h65e. The old pairing missed that line. The new pitfall says how to write such a template.
+
+## The gates after the fixes
+
+| Command | Start (UTC) | Exit | Last line |
+| --- | --- | --- | --- |
+| `sh docs/adr/adr-lint.sh` | `2026-10-20T15:31:06Z` | `0` | adr-lint: OK |
+| `sh docs/prd/prd-lint.sh` | `2026-10-20T15:31:07Z` | `0` | prd-lint: OK |
+| `sh docs/links/link-lint.sh` | `2026-10-20T15:31:07Z` | `0` | link-lint: OK  2948 links resolved |
+| `sh docs/tests/run-discipline-tests.sh` | `2026-10-20T15:31:19Z` | `0` | run-discipline-tests: 138 passed, 0 failed |
+| `sh docs/tests/nested-checkout-check.sh` | `2026-10-20T15:31:22Z` | `0` | nested-checkout-check: OK  10 cases behaved |
+| `sh docs/tests/freeze-check/run-all.sh` | `2026-10-20T15:31:23Z` | `0` | freeze-check: 51 passed, 0 failed |
+| `bash --posix docs/tests/freeze-check/run-all.sh` | `2026-10-20T15:31:28Z` | `0` | freeze-check: 51 passed, 0 failed |
+| `sh docs/setup/setup-check.sh` | `2026-10-20T15:31:32Z` | `0` | setup-check: kit-linters OK |
+| `go build ./...` | `2026-10-20T15:31:54Z` | `0` |  |
+| `go vet ./...` | `2026-10-20T15:31:54Z` | `0` |  |
+| `go test ./...` | `2026-10-20T15:31:54Z` | `0` | ok  	github.com/pharzam/layup/internal/work	(cached) |
