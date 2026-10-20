@@ -156,3 +156,20 @@ ok  	github.com/pharzam/layup/internal/tsv	0.088s
 exit=0
 end 2026-10-20T05:45:46Z
 ```
+
+### The clock of the world and the hours of the cap of milestone 0 (a defect of the arrangement, found by the first run of the mutants)
+
+`fastClock` of the world runs 600 times faster than the real one, so the 8 hours of `intake.cap` (50.0,8.0) are 48 seconds of real time. In the first run of the mutants on
+`16857d6` (killed at M15 and run again below) the mutant M14 reported "the cap of milestone 0: the time since Start passes 8.0 hours" on the **first** call of
+`TestAStopBeforeThePromotionPromotesWithNoSession`, which the mutant does not touch: a host under the load of other sessions' tests took more than 48 seconds from the Start of
+the world to the call. That was a false kill, and the same exposure could fail the tests at green. `shapedWorld` now widens the hours of `start/start.tsv` to 4000.0 before
+Shape (the money cap stays 50.0, which `TestTheCapOfMilestoneZeroEndsTheRetry` uses). The list of the integration tests ran again on the head with the change:
+
+```
+$ TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./internal/run/ ./internal/tsv/ -run '<the list above>'
+start 2026-10-20T06:25:24Z
+ok  	github.com/pharzam/layup/internal/run	550.230s
+ok  	github.com/pharzam/layup/internal/tsv	0.059s
+exit=0
+end 2026-10-20T06:35:07Z
+```

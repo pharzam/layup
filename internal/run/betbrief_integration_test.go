@@ -85,6 +85,13 @@ func (d *drvWorld) setParameter(name, value string) {
 func shapedWorld(t *testing.T) *drvWorld {
 	t.Helper()
 	d := newDrvWorldOpts(t, loopPerms, drvOpts{noOption: true})
+	// The clock of the world runs 600 times faster than the real one, so the 8 hours of the cap of milestone 0 are 48 seconds, and a host under
+	// load would end a test at that cap by the clock. The hours are widened; the money cap stays 50.
+	start := keptRecord(t, d.w, "start/start.tsv")
+	if !strings.Contains(start, "intake.cap\t50.0,8.0\t") {
+		t.Fatalf("start.tsv holds no intake.cap of 50.0,8.0:\n%s", start)
+	}
+	d.push(map[string][]byte{"start/start.tsv": []byte(strings.Replace(start, "intake.cap\t50.0,8.0\t", "intake.cap\t50.0,4000.0\t", 1))}, "the hours of the cap of milestone 0 widened")
 	d.settled()
 	d.ctlOptions(1, survivorDB)
 	d.ctlWrite("commit", "")

@@ -1378,6 +1378,14 @@ failure modes worth keeping.
 
 - ❌ **A new kind of a shared source, read by the steps that run before the new step.** The step `shape` asks its questions as rows of `questions.tsv` with the source `follow-up` and the kind `shape`, as its plan chose, and the plan listed the readers of the budget but not those of the source. The steps `follow-up` and `follow-up-answers` of Intake run on every restart before `shape`, and each read every row of the source `follow-up` as Intake's: the first Shape row made `follow-up-answers` wait for an answer to a question of Intake, and the run never came back to `shape`. No test of the plan failed: each was written for the step alone. It is silent until the second restart. **The check:** when a row, a kind or a state is added to a record that earlier steps read, `git grep -n` its source value in the code that is no test, and give each reader a case that holds the new row beside its own (`TestOnlyTheRowsOfIntakeAreItsFollowUp`); the test of the new step is not that case. Learned in `T-3f94`.
 
+- ❌ **A check that reads the ledger inside `Keep` omits the session's own row.** `endPhase` runs the step's `Keep` and only then commits the
+  telemetry row of the session, so a check of the appetite (the caps plus the money spent) made in `Keep` judged the brief without the money that its own
+  session cost, and the plan of the brief of the first bet (#418) had put it there. It is silent because the prior spend alone fits, and every unit test of
+  the check passes. **The check:** judge what depends on the session's spend after `PhaseSession` returns, from the records as they now stand; keep the
+  output as a candidate in `Keep` and promote it after; test with a spend that fits without the session's row and fails with it (a green negative beside a
+  red case). A session whose output files `ReadOutputFiles` refuses ends `no-result`, not `refused file`, so a loop that retries on the second does not retry the first.
+  Learned in `T-h65e`, #418.
+
 ## 3. Validation — how you check you are not fooling yourself
 
 A result is **untrusted** until it passes the checks below, and the pass is a

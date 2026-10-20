@@ -1802,7 +1802,9 @@ decision that has more than one survivor; (4) `CheckCommentBody`, so that a kept
   this caller; the second bet of 0.6 `U` is the check's own case with prior caps, which this first-bet caller does not pass (its caller is
   row 66k's, the later bet).
 - **The promotion.** A candidate that passes both is kept by one fenced records commit of `bets/<milestone>/brief.md`, the candidate's
-  bytes, and `bets/<milestone>/basis.tsv`: `layup run: the brief of the bet <milestone> (session <id>)`.
+  bytes, and `bets/<milestone>/basis.tsv`: `layup run: the brief of the bet <milestone> (session <id>)`. The write is the run's `write`
+  through `Fenced`: a lease that is lost is a `*LostError` and promotes nothing, and the candidate stands. The stop between the candidate and the
+  promotion that the integration test makes is the control comment of the session's end failing (`endPhase` returns it after the candidate's commit).
 - **The retry.** A `refused file` of the checks, or a finding of the appetite, starts the next attempt with `bet-brief-refused`. A session
   whose output files `ReadOutputFiles` refuses (a missing file, an unlisted entry) ends `no-result`, not `refused file`; the shared phase
   machinery is unchanged, so that session's telemetry stands, `betBrief` returns the `*PhaseError`, and the next run starts a new session.
