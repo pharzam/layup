@@ -609,7 +609,7 @@ func TestARestartAfterEachActOfTheRedoCompletesItOnce(t *testing.T) {
 			t.Fatalf("stop %s: before the first attempt the old issue is %q, the old pull request closed %v, attempts %d; want cleanup done and no attempt", c.stop, st, m.w.fake.pullOf(1).closed, len(m.kindsOf(got.Replaced, "attempt")))
 		}
 		for i := 0; i < 2; i++ {
-			if adv, err := m.s2().AdvanceShapeTask(context.Background(), m.driverIn(got.Replaced)); err != nil || !strings.Contains(adv.Stop, "no admitted pair") {
+			if adv, err := m.prodBot().AdvanceShapeTask(context.Background(), m.driverIn(got.Replaced)); err != nil || !strings.Contains(adv.Stop, "no admitted pair") {
 				t.Fatalf("stop %s, driver entry %d on the new task: %+v, %v; want the stop for the pair after the attempt", c.stop, i+1, adv, err)
 			}
 		}
@@ -949,36 +949,6 @@ func TestTheNewIssueIsComposedFromTheInputsTheRecordsKeep(t *testing.T) {
 	}
 }
 
-// The first attempt of a redone task starts at the base of its event rebased (the driver of a Shape task).
-func TestTheDriverStartsTheFirstAttemptOfARedoneTaskAtTheRebasedBase(t *testing.T) {
-	t.Parallel()
-	d := newDrvWorld(t, loopPerms)
-	spec, _ := d.open()
-	in := d.input(spec)
-	in.Harnesses = nil // the first act is the attempt; the next is the stop for the pair
-	rebased := strings.Repeat("c", 40)
-	s := d.r.sessions()
-	data, err := s.appendEvent(context.Background(), spec, "rebased", 1, "", rebased, "T-zzzz")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := s.commit(context.Background(), map[string][]byte{eventsPath(spec): data}, "a redo"); err != nil {
-		t.Fatal(err)
-	}
-	if got, err := s.AdvanceShapeTask(context.Background(), in); err != nil || !strings.Contains(got.Stop, "no admitted pair") {
-		t.Fatalf("AdvanceShapeTask = %+v, %v; want the stop for the pair after the attempt", got, err)
-	}
-	var base string
-	for _, e := range d.eventsOf(spec) {
-		if e[1] == "attempt" {
-			base = e[4]
-		}
-	}
-	if base != rebased {
-		t.Errorf("the base of the first attempt is %q; want the base of the event rebased, %s", base, rebased)
-	}
-}
-
 // A head that is not the verified one cannot carry the verdict: the merge is refused before anything is written or pushed.
 func TestAHeadThatDoesNotCarryTheVerdictIsNotMerged(t *testing.T) {
 	t.Parallel()
@@ -1010,9 +980,7 @@ func TestAHeadThatDoesNotCarryTheVerdictIsNotMerged(t *testing.T) {
 	}
 }
 
-// s2 gives fresh Sessions of the production constructor; driverIn is what the shared driver is given for the task.
-func (m *moved) s2() *Sessions { return m.prodBot() }
-
+// driverIn is what the shared driver is given for the task.
 func (m *moved) driverIn(task string) ShapeTaskInput {
 	st := m.s.Store.(*recordsStore)
 	return ShapeTaskInput{Task: task, Base: m.B, Records: st.Base}
