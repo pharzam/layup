@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"regexp"
 	"slices"
 	"sort"
 	"strconv"
@@ -25,6 +26,9 @@ type betInput struct {
 	Required, Tags, Facts []string
 	Survivors             map[string][]string
 }
+
+// separatorCell is a cell of the separator row of a table: hyphens, with a colon at either end or both.
+var separatorCell = regexp.MustCompile(`^:?-+:?$`)
 
 // phaseTagsOf gives the first column of the table under the heading "## 9." of a PRD: the phase tags of the target (the section
 // "Rollout & phases" of the baseline's PRD form; the specification instruction asks for it). The table is the first one of the section and
@@ -56,8 +60,11 @@ scan:
 	if len(rows) < 3 || !slices.Equal(rows[0], []string{"Phase", "Name", "Ships"}) {
 		return nil
 	}
+	if len(rows[1]) != 3 {
+		return nil
+	}
 	for _, c := range rows[1] {
-		if len(c) == 0 || strings.Trim(c, "-: ") != "" {
+		if !separatorCell.MatchString(c) {
 			return nil
 		}
 	}
@@ -246,13 +253,6 @@ func (r *state) bet(ctx context.Context) (string, error) {
 	if len(questions) > 0 {
 		asked = questions[0][9]
 	}
-	bound, _ := pointBindings(copies, r.approvers, asked, strconv.Itoa(issue))
-	approver, err := approverFor(ctx, r.cfg.Forge.UserID, "bet", bound, r.approvers)
-	if err != nil {
-		return "", err
-	} else if approver == nil {
-		return "", errors.New("approvers.tsv holds no idea owner to answer the bet")
-	}
 	basis, err := r.briefBasis(ctx, milestone)
 	if err != nil {
 		return "", err
@@ -261,9 +261,26 @@ func (r *state) bet(ctx context.Context) (string, error) {
 	for _, f := range basis.Facts {
 		in.Facts = append(in.Facts, f.Number)
 	}
-	answer, copyRow, ok := betAnswer(copies, briefCopy, approver, in)
-	if !ok {
-		return fmt.Sprintf("waiting: the answer of the bet on the brief %d", posted.ID), nil
+	var answer spec.Answer
+	var copyRow, approver []string
+	if applied, err := r.appliedAnswer(ctx, milestone); err != nil {
+		return "", err
+	} else if applied != "" {
+		// The inventory names the answer of this bet: a later comment or a later binding of the approver does not replace it.
+		if answer, copyRow, approver, err = r.restoreAnswer(applied, copies, in); err != nil {
+			return "", err
+		}
+	} else {
+		bound, _ := pointBindings(copies, r.approvers, asked, strconv.Itoa(issue))
+		if approver, err = approverFor(ctx, r.cfg.Forge.UserID, "bet", bound, r.approvers); err != nil {
+			return "", err
+		} else if approver == nil {
+			return "", errors.New("approvers.tsv holds no idea owner to answer the bet")
+		}
+		var ok bool
+		if answer, copyRow, ok = betAnswer(copies, briefCopy, approver, in); !ok {
+			return fmt.Sprintf("waiting: the answer of the bet on the brief %d", posted.ID), nil
+		}
 	}
 	answer.Milestone = milestone
 	write := func(bet []string, message string) error {
@@ -483,4 +500,53 @@ func (r *state) commitFiles(parent string, files map[string][]byte, message stri
 		return "", err
 	}
 	return git.RevParse(tree, "HEAD")
+}
+
+// appliedAnswer gives the comment ID of the answer that the latest version of the inventory names, when that version is the one of this
+// bet's milestone: the answer is applied, and a restart goes on with it. It gives "" when the bet has no version yet.
+func (r *state) appliedAnswer(ctx context.Context, milestone string) (string, error) {
+	data, err := r.store.ReadFile(ctx, "spec/inventory.tsv")
+	if err != nil || data == nil {
+		return "", err
+	}
+	index, err := spec.ReadInventoryIndex(data)
+	if err != nil {
+		return "", fmt.Errorf("spec/inventory.tsv: %w", err)
+	}
+	if len(index) == 0 || index[len(index)-1][2] != milestone {
+		return "", nil
+	}
+	path := fmt.Sprintf("spec/inventory-%s.tsv", index[len(index)-1][0])
+	version, err := r.store.ReadFile(ctx, path)
+	if err != nil {
+		return "", err
+	} else if version == nil {
+		return "", fmt.Errorf("the records have no %s", path)
+	}
+	rows, err := spec.ReadInventory(version)
+	if err != nil || len(rows) == 0 {
+		return "", fmt.Errorf("%s: %v", path, errors.Join(err, errors.New("no row")))
+	}
+	return rows[0][3], nil
+}
+
+// restoreAnswer gives the answer of the copy that the inventory names (its first copy), the copy's row and the row of approvers.tsv of the
+// account that wrote it; the answer must still parse against the kept basis.
+func (r *state) restoreAnswer(applied string, copies []answerCopy, in betInput) (spec.Answer, []string, []string, error) {
+	for _, c := range copies {
+		if c.Row[copyComment] != applied || c.Row[copySeen] != "1" {
+			continue
+		}
+		a, fs := spec.ParseAnswer([]byte(c.Body), in.Required, in.Tags, in.Facts, in.Survivors)
+		if len(fs) > 0 {
+			return a, nil, nil, fmt.Errorf("the answer %s that the inventory names does not parse: %s", applied, findings(fs))
+		}
+		for _, ap := range r.approvers {
+			if ap[0] == c.Row[copyAuthorID] {
+				return a, c.Row, ap, nil
+			}
+		}
+		return a, nil, nil, fmt.Errorf("the author %s of the answer %s is no row of approvers.tsv", c.Row[copyAuthorID], applied)
+	}
+	return spec.Answer{}, nil, nil, fmt.Errorf("the copies hold no first copy of the answer %s that the inventory names", applied)
 }

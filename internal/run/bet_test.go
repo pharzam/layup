@@ -80,15 +80,22 @@ func TestThePhaseTagsAreTheFirstColumnOfSection9(t *testing.T) {
 		t.Errorf("tags = %q; want [1 alpha 3]", got)
 	}
 	for name, in := range map[string]string{
-		"no separator row": "## 9. Rollout & phases\n\n| Phase | Name | Ships |\n| 1 | A | x |\n| alpha | B | y |\n",
-		"a truncated row":  "## 9. Rollout & phases\n\n| Phase | Name | Ships |\n| --- | --- | --- |\n| 1 | A | x |\n| alpha |\n",
-		"another header":   "## 9. Rollout & phases\n\n| Metric | Fact | Notes |\n| --- | --- | --- |\n| faster | F-1 | n |\n",
-		"an empty tag":     "## 9. Rollout & phases\n\n| Phase | Name | Ships |\n| --- | --- | --- |\n|  | A | x |\n",
-		"a fourth cell":    "## 9. Rollout & phases\n\n| Phase | Name | Ships |\n| --- | --- | --- |\n| 1 | A | x | y |\n",
+		"no separator row":          "## 9. Rollout & phases\n\n| Phase | Name | Ships |\n| 1 | A | x |\n| alpha | B | y |\n",
+		"a truncated row":           "## 9. Rollout & phases\n\n| Phase | Name | Ships |\n| --- | --- | --- |\n| 1 | A | x |\n| alpha |\n",
+		"a separator of one cell":   "## 9. Rollout & phases\n\n| Phase | Name | Ships |\n| --- |\n| alpha | Core | Everything |\n",
+		"a separator of two cells":  "## 9. Rollout & phases\n\n| Phase | Name | Ships |\n| --- | --- |\n| alpha | Core | Everything |\n",
+		"a separator of four cells": "## 9. Rollout & phases\n\n| Phase | Name | Ships |\n| --- | --- | --- | --- |\n| alpha | Core | Everything |\n",
+		"a separator of colons":     "## 9. Rollout & phases\n\n| Phase | Name | Ships |\n| : | : | : |\n| alpha | Core | Everything |\n",
+		"another header":            "## 9. Rollout & phases\n\n| Metric | Fact | Notes |\n| --- | --- | --- |\n| faster | F-1 | n |\n",
+		"an empty tag":              "## 9. Rollout & phases\n\n| Phase | Name | Ships |\n| --- | --- | --- |\n|  | A | x |\n",
+		"a fourth cell":             "## 9. Rollout & phases\n\n| Phase | Name | Ships |\n| --- | --- | --- |\n| 1 | A | x | y |\n",
 	} {
 		if got := phaseTagsOf([]byte(in)); len(got) != 0 {
 			t.Errorf("malformed %s: tags = %q; want none", name, got)
 		}
+	}
+	if got := phaseTagsOf([]byte("## 9. Rollout & phases\n\n| Phase | Name | Ships |\n| --- | :--- | ---: |\n| alpha | Core | Everything |\n")); !slices.Equal(got, []string{"alpha"}) {
+		t.Errorf("control: tags = %q; want the table with its three forms of separator cell accepted", got)
 	}
 	for name, in := range map[string]string{"no section": "## 8. x\n| 1 | a |\n", "no table": "## 9. Rollout\n\nprose\n", "a header only": "## 9. Rollout\n\n| Phase | Name |\n| --- | --- |\n"} {
 		if got := phaseTagsOf([]byte(in)); len(got) != 0 {

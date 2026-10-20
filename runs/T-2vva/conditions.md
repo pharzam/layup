@@ -18,3 +18,5 @@ One row per condition of the plan review (comment 6250697855), the plan amendmen
 | 6295520491 2: coverage (G6, G7, the reasons, the close-out) | `TestShapeStaysDoneAfterTheRenderedPush`, `TestABetsTableRefusesEachBrokenRule`, `TestTheStepBet`, `runs/T-2vva/mutants.md` |
 | 6295520491 3: malformed phase tables | `TestThePhaseTagsAreTheFirstColumnOfSection9`, `internal/run/bet.go` |
 | 6295520491 4: the branch-tip refusal | `TestARenderedPushToAnotherBranchTipIsRefused`, `internal/run/bet.go` |
+| 6296445019 1: the separator row of the phase table | `TestThePhaseTagsAreTheFirstColumnOfSection9`, `internal/run/bet.go` |
+| 6296445019 2: a recovery keeps the answer already applied | `TestARecoveryKeepsTheAnswerAlreadyApplied`, `internal/run/bet.go` |

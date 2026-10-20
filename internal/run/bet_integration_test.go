@@ -257,21 +257,27 @@ func TestBriefLinesUnsetWaitsWithNoSession(t *testing.T) {
 	}
 }
 
+// bindApprover makes the idea owner (the account 303) name login (the account id, a row of approvers.tsv) as the approver of the bet.
+func (d *drvWorld) bindApprover(login string, id int) {
+	d.t.Helper()
+	var copies [][]string
+	if d.has("copies.tsv") {
+		copies, _ = records.ReadCopies([]byte(keptRecord(d.t, d.w, "copies.tsv")))
+	}
+	approvers, _ := records.ReadApprovers([]byte(keptRecord(d.t, d.w, "approvers.tsv")))
+	body := "bet: " + login + "\n"
+	copies = append(copies, []string{"6400", "1", "1", "303", "carol", "", "2026-10-08T12:45:00Z", "2026-10-08T12:46:00Z", digest([]byte(body)), "copies/6400-1.md"})
+	approvers = append(approvers, []string{fmt.Sprint(id), "approver", login, "2026-10-08T12:45:00Z", "6400"})
+	pushRecords(d.t, d.w.bare, map[string]string{"copies.tsv": string(cavTable(d.t, records.CopiesSchema, copies)), "copies/6400-1.md": body,
+		"approvers.tsv": string(cavTable(d.t, records.ApproversSchema, approvers))}, "the idea owner names the approver of the bet")
+}
+
 // I4: an approver that the idea owner names is the only one who answers, and a lookup that fails chooses nobody.
 func TestOnlyTheApproverOfTheBetAnswersAndALookupThatFailsChoosesNoOne(t *testing.T) {
 	t.Parallel()
 	d := betWorld(t, betOptionsTable)
 	d.bet()
-	var copies, approvers [][]string
-	if d.has("copies.tsv") {
-		copies, _ = records.ReadCopies([]byte(keptRecord(t, d.w, "copies.tsv")))
-	}
-	approvers, _ = records.ReadApprovers([]byte(keptRecord(t, d.w, "approvers.tsv")))
-	body := "bet: dave\n"
-	copies = append(copies, []string{"6400", "1", "1", "303", "carol", "", "2026-10-08T12:45:00Z", "2026-10-08T12:46:00Z", digest([]byte(body)), "copies/6400-1.md"})
-	approvers = append(approvers, []string{"707", "approver", "dave", "2026-10-08T12:45:00Z", "6400"})
-	pushRecords(t, d.w.bare, map[string]string{"copies.tsv": string(cavTable(t, records.CopiesSchema, copies)), "copies/6400-1.md": body,
-		"approvers.tsv": string(cavTable(t, records.ApproversSchema, approvers))}, "the idea owner names the approver of the bet")
+	d.bindApprover("dave", 707)
 	d.reply(7010, 303, "carol", "2026-10-08T14:00:00Z", betAnswerText) // the idea owner, with an approver named
 	d.restart()
 	if got := d.bet(); got.Result != "done" || !strings.HasPrefix(got.Detail, "waiting: the answer") {
@@ -560,5 +566,41 @@ func (d *drvWorld) closeOutOn(t *testing.T, task string, st loopStep, r, h strin
 	}
 	if got, err := s.CarryVerify(ctx, in, id); err != nil || got != head {
 		t.Errorf("CarryVerify of the close-out on the rendered commit = %q, %v; want %s", got, err, head)
+	}
+}
+
+// Round 2 of #366, finding 2: a restart keeps the answer that the inventory already names. After version 1 (the answer of the idea owner, db=pg), the idea
+// owner names dave and dave answers db=sqlite; the bet is finished with the first answer, its choice and its approver, and with one version.
+func TestARecoveryKeepsTheAnswerAlreadyApplied(t *testing.T) {
+	d := betWorld(t, betOptionsTable)
+	d.bet()
+	d.reply(7070, 303, "carol", "2026-10-08T14:00:00Z", betAnswerText)
+	d.restart()
+	restore := stopAt("version")
+	got := d.bet()
+	restore()
+	if got.Result != "fail" || !strings.Contains(got.Detail, errStopped.Error()) || !d.has("spec/inventory-1.tsv") {
+		t.Fatalf("the stopped step = %+v; want the stop after version 1", got)
+	}
+	d.bindApprover("dave", 707)
+	d.reply(7071, 707, "dave", "2026-10-08T14:05:00Z", strings.Replace(betAnswerText, "option db: pg", "option db: sqlite", 1))
+	_, branch := d.specBranch()
+	d.follow(branch)
+	d.restart()
+	if shape := d.r.shapeStep(context.Background()); shape.Result != "done" || shape.Detail != "done before" {
+		t.Fatalf("shape after the stop = %+v", shape)
+	}
+	if got = d.bet(); got.Result != "done" || !strings.HasPrefix(got.Detail, "the bet 1: ") {
+		t.Fatalf("the step after the stop = %+v; want the bet made", got)
+	}
+	bets, err := ReadBets([]byte(keptRecord(t, d.w, "bets.tsv")))
+	if err != nil || len(bets) != 1 || bets[0][betAnswerID] != "7070" || bets[0][betOptions] != "db=pg web=go" || bets[0][betApprover] != "303" {
+		t.Errorf("bets.tsv = %v, %v; want the answer 7070, db=pg web=go and the approver 303", bets, err)
+	}
+	if idx, _ := spec.ReadInventoryIndex([]byte(keptRecord(t, d.w, "spec/inventory.tsv"))); len(idx) != 1 || d.has("spec/inventory-2.tsv") {
+		t.Errorf("the index = %v, version 2 %v; want one version", idx, d.has("spec/inventory-2.tsv"))
+	}
+	if tasks := d.register(); len(tasks) != 3 || !strings.Contains(keptRecord(t, d.w, bindingPath(tasks[2].ID, "db")), "pg\t") {
+		t.Errorf("%d tasks; want one for db with the option pg", len(tasks))
 	}
 }

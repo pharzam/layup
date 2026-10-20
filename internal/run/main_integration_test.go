@@ -23,10 +23,12 @@ import (
 // integration test gets t.Parallel() as its first statement. Subtests are not
 // changed.
 //
-// The 16 serial top-level integration tests are:
+// The 17 serial top-level integration tests are:
 //   - TestAFrozenFileThatIsALinkIsRefusedAndWritesNothingOutside (frozen_integration_test.go): t.Setenv of HOME in checkout
 //   - TestAFrozenFileThroughALinkInsideTheCheckoutIsRefused (frozen_integration_test.go): t.Setenv of HOME in checkout
 //   - TestAFrozenFileThroughAParentLinkIsRefusedAndWritesNothingOutside (frozen_integration_test.go): t.Setenv of HOME in checkout
+//   - TestARecoveryKeepsTheAnswerAlreadyApplied (bet_integration_test.go): writes betStopAt
+//   - TestARenderedPushToAnotherBranchTipIsRefused (bet_integration_test.go): writes betStopAt
 //   - TestTheBetStepIsAtomicToItsLastAct (bet_integration_test.go): writes betStopAt
 //   - TestAPlainCheckoutGetsTheFrozenFilesInOneCommit (frozen_integration_test.go): t.Setenv of HOME in checkout
 //   - TestARefusedFrozenListWritesNoFile (frozen_integration_test.go): t.Setenv of HOME in checkout
