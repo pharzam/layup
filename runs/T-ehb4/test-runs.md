@@ -92,3 +92,18 @@ The code is frozen at `02a5f0f`; the commits after it hold only records and tabl
 - The full integration level: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./...` (head `02a5f0f`, start 2026-10-20T19:20:25Z, end 2026-10-20T19:23:41Z, exit=0), output in `/home/layup/.cache/layup-session/T-ehb4-full-integration.txt`: 21 packages ok, `internal/run` and `cmd/layup` among them.
 - The end-to-end level: `go test -count=1 -tags=e2e ./...` (start 2026-10-20T19:34:36Z, end 2026-10-20T19:35:45Z, exit=0): ok.
 - `sh docs/adr/adr-lint.sh`, `sh docs/prd/prd-lint.sh`, `sh docs/links/link-lint.sh`, `sh docs/tests/run-discipline-tests.sh`, `sh docs/setup/setup-check.sh`, `sh docs/tests/nested-checkout-check.sh`: exit=0 each. `bash docs/tasks/task-state.sh`: exit=0, `T-ehb4 #425 stalled` before the push (the branch has no pull request and no push since the claim).
+
+## The freeze check
+
+Command: `sh docs/tests/freeze-check.sh --task T-ehb4 --base origin/main --budget 2300/22`, run on the clean committed head `3437207` (the output is kept outside the worktree, in `/home/layup/.cache/layup-session/T-ehb4-freeze.txt`), exit=0:
+
+```text
+ok K1: white space
+ok K2: registration of new tests
+ok K3: test selectors
+ok K4: restore evidence of mutants
+ok K5: projection: figure 1801/22, maximum 2300/22, margin 499/0 (the figure at landing is still measured at landing)
+ok K6: conditions table
+```
+
+The figure is the added plus removed lines of `git diff --numstat origin/main HEAD` with the 70 lines and 2 files that the check keeps for the close-out; the close-out of this row is not written here.
