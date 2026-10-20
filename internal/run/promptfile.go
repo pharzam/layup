@@ -418,6 +418,16 @@ func (s *Sessions) readRecord(ctx context.Context, p string) (kept, error) {
 	return kept{p, data}, nil
 }
 
+// copyPathOf gives the path of the kept copy that a valid comment handoff names.
+func copyPathOf(e []string) string { return "copies/" + strings.Fields(e[6])[2] + ".md" }
+
+// planHandoff tells whether the event is a valid comment handoff of a session of the plan role, the plan of a task (row 66y shares
+// it with the tier of the close-out).
+func planHandoff(e []string, role map[string]string) bool {
+	_, comment := validHandoff(e[6])
+	return e[1] == "handoff" && comment && role[e[3]] == stepRole("plan-of-a-task")
+}
+
 // PromptFile builds the prompt file of a step of a task from the records and
 // the target at in.Base. The plan is the kept copy of the last valid handoff
 // with a comment from a session of the plan role; the handoffs are the copies of
@@ -485,12 +495,12 @@ func (s *Sessions) PromptFile(ctx context.Context, in PromptIn) (*PromptContext,
 	for _, e := range events {
 		switch _, comment := validHandoff(e[6]); {
 		case e[1] == "handoff" && comment:
-			k, err := s.readRecord(ctx, "copies/"+strings.Fields(e[6])[2]+".md")
+			k, err := s.readRecord(ctx, copyPathOf(e))
 			if err != nil {
 				return nil, err
 			}
 			src.Handoffs = append(src.Handoffs, k)
-			if role[e[3]] == stepRole("plan-of-a-task") {
+			if planHandoff(e, role) {
 				src.Plan = &k
 			}
 		case e[1] == "result" && e[6] == "done":

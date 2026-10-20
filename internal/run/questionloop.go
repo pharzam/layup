@@ -262,7 +262,7 @@ func (s *Sessions) runOwner(ctx context.Context, in ShapeTaskInput, v loopView, 
 	if err != nil {
 		return pairStop(in.Task, step, err)
 	}
-	return "", s.startAs(ctx, in, v.Kind, step, res.Role, st.Attempt, st.Ask.Base, h, m, nil, true)
+	return "", s.startAs(ctx, in, v.Kind, step, res.Role, st.Attempt, st.Ask.Base, h, m, nil, true, nil)
 }
 
 // answersOf gives the IDs of the answers that the attempt after attempt has to cite: those of the answer session of the owner role of the

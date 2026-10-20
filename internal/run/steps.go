@@ -722,6 +722,38 @@ func (r *state) leaseStep(ctx context.Context) Step {
 func (r *state) cloneStep(ctx context.Context) Step {
 	const name = "clone"
 	r.target = filepath.Join(r.cfg.Dir, "targets", r.cfg.Owner, r.cfg.Name)
+	// The heads that the ended sessions kept in the old clone (refs/layup/sessions/) are fetched into the new one, so that a session that ended before its
+	// push is finished by that push, not run again (task T-ehb4). The old clone is set aside in DIR/recovery/OWNER/NAME, a place that is no target's clone
+	// (the clones are below DIR/targets/), and only a path made here is renamed or removed; one that an earlier, interrupted restart made is the older, and stays.
+	prev := filepath.Join(r.cfg.Dir, "recovery", r.cfg.Owner, r.cfg.Name)
+	// A marker (DIR/recovery.imported/OWNER/NAME, written and synced before the old clone is removed) says that the heads are in the current clone and only the
+	// removal of the old one is pending: a restart that finds it finishes that removal, reads nothing of the damaged place, and then sets the current clone
+	// aside as any other (it holds the heads), so it is never discarded before its heads are kept.
+	mark := filepath.Join(r.cfg.Dir, "recovery.imported", r.cfg.Owner, r.cfg.Name)
+	if _, err := os.Stat(mark); err == nil {
+		if err := os.RemoveAll(prev); err != nil {
+			return fail(name, err)
+		}
+		if err := os.Remove(mark); err != nil {
+			return fail(name, err)
+		}
+	} else if !os.IsNotExist(err) {
+		return fail(name, err)
+	}
+	if _, err := os.Stat(prev); os.IsNotExist(err) {
+		if _, err := os.Stat(r.target); err == nil {
+			if err := os.MkdirAll(filepath.Dir(prev), 0o755); err != nil {
+				return fail(name, err)
+			}
+			if err := os.Rename(r.target, prev); err != nil {
+				return fail(name, err)
+			}
+		} else if !os.IsNotExist(err) {
+			return fail(name, err)
+		}
+	} else if err != nil {
+		return fail(name, err)
+	}
 	if err := os.RemoveAll(r.target); err != nil {
 		return fail(name, err)
 	}
@@ -733,6 +765,9 @@ func (r *state) cloneStep(ctx context.Context) Step {
 		return fail(name, err)
 	}
 	if err := git.Clone(r.url(), r.target, a); err != nil {
+		return fail(name, err)
+	}
+	if err := keepSessionHeads(prev, mark, r.target); err != nil {
 		return fail(name, err)
 	}
 	const rev = "refs/remotes/origin/layup-records"
@@ -872,4 +907,59 @@ func (r *state) ruleGapsStep(ctx context.Context) Step {
 		return fail(name, err)
 	}
 	return done(name, fmt.Sprintf("%d rule gaps, in intake/psb.tsv", len(gaps)))
+}
+
+// keepSessionHeads fetches the refs refs/layup/sessions/ of the old clone, set aside at prev, into the new one, marks the import complete (the file mark,
+// synced with its directory, before anything is removed) and removes the old clone and then the mark: a prev that is not there is nothing to keep, and a read
+// or a fetch that fails is an error that leaves it, unmarked, to be imported again.
+func keepSessionHeads(prev, mark, target string) error {
+	if _, err := os.Stat(prev); os.IsNotExist(err) {
+		return nil
+	} else if err != nil {
+		return err
+	}
+	refs, err := git.Refs(prev, "refs/layup/sessions/")
+	if err != nil {
+		return err
+	}
+	for _, ref := range refs {
+		if err := git.Fetch(target, prev, ref, git.Auth{}); err != nil {
+			return err
+		}
+	}
+	if err := writeMark(mark); err != nil {
+		return err
+	}
+	if err := os.RemoveAll(prev); err != nil {
+		return err
+	}
+	return os.Remove(mark)
+}
+
+// writeMark makes the file and syncs it and its directory, so that the mark outlives a stop of the host.
+func writeMark(path string) error {
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return err
+	}
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	if _, err := f.WriteString("the heads are in the current clone\n"); err != nil {
+		f.Close()
+		return err
+	}
+	if err := f.Sync(); err != nil {
+		f.Close()
+		return err
+	}
+	if err := f.Close(); err != nil {
+		return err
+	}
+	d, err := os.Open(filepath.Dir(path))
+	if err != nil {
+		return err
+	}
+	defer d.Close()
+	return d.Sync()
 }

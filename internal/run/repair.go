@@ -49,6 +49,20 @@ func (s *Sessions) RepairTask(ctx context.Context, task string) (Repair, error) 
 // the rule starts one however many pushes were lost and however often it runs,
 // and finds a refusal that an interrupted run left.
 func (s *Sessions) RepairPushes(ctx context.Context, task string) (Repair, error) {
+	out, err := s.resolvePushes(ctx, task)
+	if err != nil {
+		return out, err
+	}
+	events, err := s.readTable(ctx, eventsPath(task), records.ReadEvents)
+	if err != nil {
+		return out, err
+	}
+	return s.replaceLost(ctx, task, events, out)
+}
+
+// resolvePushes writes the bound or the refused push-lost of each push of task that has none (the first part of RepairPushes), and starts no attempt:
+// FinishTask uses it alone for a pull request that is merged (row 66y).
+func (s *Sessions) resolvePushes(ctx context.Context, task string) (Repair, error) {
 	s.fns()
 	var out Repair
 	events, err := s.readTable(ctx, eventsPath(task), records.ReadEvents)
@@ -82,10 +96,12 @@ func (s *Sessions) RepairPushes(ctx context.Context, task string) (Repair, error
 			out.Lost = append(out.Lost, id)
 		}
 	}
-	events, err = s.readTable(ctx, eventsPath(task), records.ReadEvents)
-	if err != nil {
-		return out, err
-	}
+	return out, nil
+}
+
+// replaceLost starts one new attempt at the base of the open attempt that holds a refused push-lost (the second part of RepairPushes).
+func (s *Sessions) replaceLost(ctx context.Context, task string, events [][]string, out Repair) (Repair, error) {
+	var err error
 	for _, e := range events {
 		attempt, _ := strconv.Atoi(e[2])
 		if e[1] != "refused" || e[6] != "push-lost" || !openAttempt(events, e[3], attempt) {
