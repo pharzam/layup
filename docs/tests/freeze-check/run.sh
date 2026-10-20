@@ -6,7 +6,9 @@
 # `base`) and the case's head/ overlay (commit 2, `HEAD`), stripping the `.in`
 # suffix from each stored input file. Runs freeze-check.sh with the case's ARGS
 # and compares exit status + stdout with EXPECT (first line the expected exit
-# status). Exits 0 on match, 2 on mismatch or usage error.
+# status). A case may also hold work/ (files laid over the tree after the commit,
+# untracked) and UNREADABLE (paths made unreadable after the commit). Exits 0 on
+# match, 2 on mismatch or usage error.
 
 set -u
 
@@ -21,7 +23,7 @@ want_st=$(tr -d '\r' < "$case_dir/EXPECT" | sed -n '1p')
 case $name in
 good-*)
 	[ "$want_st" = 0 ] || { printf 'run: %s: good-* EXPECT must start with 0\n' "$name" >&2; exit 2; } ;;
-bad-usage-*|bad-not-a-worktree*|bad-base-not-a-commit*)
+bad-usage-*|bad-not-a-worktree*|bad-base-not-a-commit*|bad-env-*)
 	[ "$want_st" = 2 ] || { printf 'run: %s: frame bad-* EXPECT must start with 2\n' "$name" >&2; exit 2; } ;;
 bad-*)
 	[ "$want_st" = 1 ] || { printf 'run: %s: bad-* EXPECT must start with 1\n' "$name" >&2; exit 2; } ;;
@@ -72,6 +74,24 @@ git -C "$repo" add -A \
 case $name in
 bad-not-a-worktree*) rm -rf "${repo:?}/.git" ;;
 esac
+
+# work/ holds files laid over the tree after the commit, untracked: a check that
+# reads the commit must not see them.
+overlay "$case_dir/work" || exit 2
+# UNREADABLE lists paths made unreadable after the commit. As root a mode cannot
+# take the read away, so the case cannot be exercised: that is an error, not a pass.
+if [ -f "$case_dir/UNREADABLE" ]; then
+	while IFS= read -r _u; do
+		[ -n "$_u" ] || continue
+		chmod 000 "$repo/$_u" || exit 2
+		if [ -r "$repo/$_u" ]; then
+			printf 'run: %s: %s stays readable (root?), so the case cannot run\n' "$name" "$_u" >&2
+			exit 2
+		fi
+	done <<EOF_U
+$(tr -d '\r' < "$case_dir/UNREADABLE")
+EOF_U
+fi
 
 args=$(tr -d '\r' < "$case_dir/ARGS")
 # shellcheck disable=SC2086

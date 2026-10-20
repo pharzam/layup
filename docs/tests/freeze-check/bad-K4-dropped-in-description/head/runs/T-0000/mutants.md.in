@@ -1,0 +1,7 @@
+# Mutants
+
+| # | mutant | build | test |
+| - | ------ | ----- | ---- |
+| M2 | the option-word rule dropped | ok | KILLED |
+| M3 | dropped as a duplicate of M2 | — | — |
+| M4 | (did not build; not run) | — | — |
