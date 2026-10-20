@@ -1007,6 +1007,13 @@ These traps are not domain-specific: they hurt every project's test suite.
   turn and see a case fail. Write a
   command template in prose without `go test … -run <pattern>`, which
   `freeze-check.sh` K3 refuses as a selector.
+- ❌ **A freeze comparison against main that the branch has not merged.**
+  `freeze-check.sh --base origin/main` compares committed endpoint trees. If the
+  branch is behind `main`, it counts `main`'s new files as branch deletions and
+  includes other differences from `main` in the branch's figure. T-c826 (#449)
+  met this in Stage H: K5 reported 4172/192 before the merge and 975/161 after it.
+  **The check:** merge current `origin/main` into the task branch before the
+  clean-head freeze run; record both resolved SHAs with the result.
 - ❌ **A fake whose child cannot see `SIGINT`.** A shell script that starts a
   child with `&` gives it `SIGINT` and `SIGQUIT` ignored (POSIX, with job
   control off), and a shell cannot trap a signal ignored at its entry; `trap ''`

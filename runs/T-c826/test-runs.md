@@ -2217,7 +2217,7 @@ scratch. Each long-running command printed its step and an eight-second heartbea
 
 | Run | Command | UTC start | UTC end | Exit | Observation |
 | --- | --- | --- | --- | --- | --- |
-| H-freeze | `sh docs/tests/freeze-check.sh --task T-c826 --base origin/main --budget 1300/170 --evidence runs/T-c826/ci-exception.md --evidence runs/T-c826/conditions.md --evidence runs/T-c826/mutants.md --evidence runs/T-c826/real-heads.md --evidence runs/T-c826/test-runs.md > /home/layup/.cache/layup-session/tmp-green/c826-fc4.txt 2>&1` | 2026-10-20T22:29:49Z | 2026-10-20T22:29:50Z | 1 | FAIL K5; K1–K4 and K6 pass. Complete output below. |
+| H-freeze | `sh docs/tests/freeze-check.sh --task T-c826 --base origin/main --budget 1300/170 --evidence runs/T-c826/ci-exception.md --evidence runs/T-c826/conditions.md --evidence runs/T-c826/mutants.md --evidence runs/T-c826/real-heads.md --evidence runs/T-c826/test-runs.md > /home/layup/.cache/layup-session/tmp-green/c826-fc4.txt 2>&1` | 2026-10-20T22:29:49Z | 2026-10-20T22:29:50Z | 1 | Base mismatch: unmerged main changes inflated K5; K1–K4 and K6 pass. Complete output below; cause and rerun in Stage I. |
 | H-suite-sh | `sh docs/tests/freeze-check/run-all.sh` | 2026-10-20T22:29:50Z | 2026-10-20T22:29:59Z | 0 | 85 passed, 0 failed. |
 | H-suite-bash-posix | `bash --posix docs/tests/freeze-check/run-all.sh` | 2026-10-20T22:29:59Z | 2026-10-20T22:30:07Z | 0 | 85 passed, 0 failed. |
 | H-adr | `sh docs/adr/adr-lint.sh` | 2026-10-20T22:30:07Z | 2026-10-20T22:30:08Z | 0 | adr-lint: OK. |
@@ -2257,12 +2257,72 @@ ok: default branch still comes from the repository event
 ok: exception comment names the task, literal PR and removal issue
 ```
 
-Stage H outcome: **failed**. The required freeze-check exit 0 was not met:
-K5 reports figure **4172/192**, maximum **1300/170**, tolerance **260/4**,
-limit **1560/174** and margin **-2612/-18**. All eight remaining commands exit 0.
-No fix, budget change, base change, task close-out or completed-log edit was made.
-This append records the failure; it does not claim a successful freeze.
+Stage H outcome: **failed because the branch had not merged the comparison
+base**, rather than because of a checker defect. The required freeze-check exit 0
+was not met: the endpoint diff counted main's new files as branch deletions.
+The historical K5 output above remains unchanged: figure **4172/192**, maximum
+**1300/170**, tolerance **260/4**, limit **1560/174**, margin **-2612/-18**.
+All eight remaining commands exit 0. No fix, budget change, base change, task
+close-out or completed-log edit was made in Stage H. Stage I records the cause
+and the successful rerun after merging main.
 
 | Run | Command | UTC start | UTC end | Exit | Observation |
 | --- | --- | --- | --- | --- | --- |
 | H-record-diff | `git diff --check` | 2026-10-20T22:31:13Z | 2026-10-20T22:31:13Z | 0 | No whitespace diagnostics in the evidence append. |
+
+## Stage I — correct the base diagnosis and rerun on the merged head
+
+Stage H compared the branch to `origin/main` after main had moved to
+`4259e05f113dec28b60ada61fa245b5f94f72980` (T-89xf, #454), without merging it.
+The cause of the reported 4172/192 figure was the base, not the checker code:
+`git diff origin/main HEAD` compares endpoint trees, so main's additions appeared
+as branch deletions. Read-only inspection of
+`git diff --numstat 4259e05 0fbdefb -- runs/T-89xf/test-runs.md` confirms
+`0 312 runs/T-89xf/test-runs.md` (312 lines counted as removed).
+The Stage H observation and outcome above are corrected; its actual exit 1 and
+complete diagnostic are retained.
+
+The coordinator merged main cleanly as
+`c5ebeb4e9d73806a5be683b63e281918a2615ef7`. Both branches touched
+`docs/guardrails.md`; no checker change was needed. The freeze command below ran
+on that clean committed head, before either Stage I documentation edit, against
+`origin/main` resolved to `4259e05f113dec28b60ada61fa245b5f94f72980`.
+`git merge-base HEAD origin/main` returns that same main SHA.
+The declared evidence records retain their previously inspected evidence role.
+
+UTC timestamps were read directly with `date -u +%FT%TZ`, and each exit status
+was captured directly after its command. `TMPDIR` was set to
+`/home/layup/.cache/layup-session/tmp-green`; all scratch output stayed there.
+Long commands showed their step and an eight-second heartbeat. The suite,
+link lint and setup check ran after the guardrail lesson was added; they used
+the scripts from the same merged head.
+
+| Run | Command | UTC start | UTC end | Exit | Observation |
+| --- | --- | --- | --- | --- | --- |
+| I-freeze | `sh docs/tests/freeze-check.sh --task T-c826 --base origin/main --budget 1300/170 --evidence runs/T-c826/ci-exception.md --evidence runs/T-c826/conditions.md --evidence runs/T-c826/mutants.md --evidence runs/T-c826/real-heads.md --evidence runs/T-c826/test-runs.md > /home/layup/.cache/layup-session/tmp-green/c826-fc5.txt 2>&1` | 2026-10-20T22:34:28Z | 2026-10-20T22:34:29Z | 0 | All K1–K6 pass; full output below. |
+| I-suite | `sh docs/tests/freeze-check/run-all.sh` | 2026-10-20T22:34:43Z | 2026-10-20T22:34:51Z | 0 | 85 passed, 0 failed. |
+| I-links | `sh docs/links/link-lint.sh` | 2026-10-20T22:34:51Z | 2026-10-20T22:35:05Z | 0 | link-lint: OK; 3013 links resolved. |
+| I-setup | `sh docs/setup/setup-check.sh` | 2026-10-20T22:35:05Z | 2026-10-20T22:35:28Z | 0 | All 12 setup checks and kit-linters pass; 138 discipline cases pass, ADR/PRD lints pass, 3013 links resolve. |
+
+Complete freeze-check output, captured in
+`/home/layup/.cache/layup-session/tmp-green/c826-fc5.txt`:
+
+```text
+ok K1: white space
+ok K2: registration of new tests
+ok K3: test selectors
+ok K4: restore evidence of mutants
+ok K5: projection: figure 975/161, maximum 1300/170, tolerance 260/4, limit 1560/174, margin 585/13 (the figure at landing is still measured at landing)
+ok K6: conditions table
+```
+
+Stage I outcome: all four required commands exit 0. On the merged committed
+head, K5 reports figure **975/161**, maximum **1300/170**, tolerance **260/4**,
+limit **1560/174**, margin **585/13**. This is the measured head's projection;
+it does not include the seven-line guardrail addition made afterward. The new
+lesson in guardrails §2 explains the unmerged-base trap. No checker, runner,
+workflow, task close-out or completed-log file changed in this stage.
+
+| Run | Command | UTC start | UTC end | Exit | Observation |
+| --- | --- | --- | --- | --- | --- |
+| I-diff | `git diff --check` | 2026-10-20T22:35:49Z | 2026-10-20T22:35:49Z | 0 | No whitespace diagnostics in the Stage I documentation changes. |
