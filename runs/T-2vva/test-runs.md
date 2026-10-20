@@ -283,3 +283,9 @@ exit=1
 ```
 
 K5 fails on the files only (42 against 35, with the default allowance of the close-out); the Operator decides that figure. K1 to K4 and K6 pass.
+
+## Final gates after the fix of round 3, on the head `3a7408b` plus the record of its mutants (origin/main `f45fffc` merged)
+
+- `go build ./...`, `go vet ./...`, `go vet -tags=integration ./...`, `go vet -tags=e2e ./...`: exit 0; `gofmt -l .`: empty; `go test -count=1 ./...` and `go test -count=1 -tags=e2e ./...`: ok.
+- The full integration level, `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 90m ./...`: 2026-10-20T18:15:14Z to 18:18:18Z, exit=0.
+- The six lints and `git diff --check origin/main HEAD`: OK.
