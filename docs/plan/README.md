@@ -592,8 +592,8 @@ are known limits by the Operator's rulings.
 
 - **The inventory is not complete.** A fresh review of a task's sections can find
   more defects; the task settles them in its own pull request.
-- **The expected lines are estimates.** Each task's plan review sets its budget;
-  a task that grows past its budget goes back to its issue as a new slice or a
-  child issue (R12).
+- **The expected lines are estimates.**
+  [Reviewing until findings decay](../engineering-discipline.md#reviewing-until-findings-decay)
+  defines the budget and the authority over a landing figure.
 - **The milestones of phases 2 to 4 are coarse.** Each one is fixed by its own
   specification task, which can change its scope and its order.
