@@ -122,6 +122,7 @@ func (d *drvWorld) candidates() []string {
 // I1, the demo (R11): one session of the step bet-brief, its input files equal to the records, the brief and its basis kept in one
 // commit, the roles and the candidate tied by the session ID.
 func TestTheBriefIsKeptFromOneSessionOfTheRun(t *testing.T) {
+	t.Parallel()
 	d := shapedWorld(t)
 	d.ctlBrief(1, briefProblem, briefAppetite("5"), briefHoles, "")
 	before := len(d.sessionRows())
@@ -172,6 +173,7 @@ func TestTheBriefIsKeptFromOneSessionOfTheRun(t *testing.T) {
 
 // I2: a refused brief is tried again with its finding, and the refused session's telemetry stands.
 func TestARefusedBriefIsTriedAgainWithItsFinding(t *testing.T) {
+	t.Parallel()
 	d := shapedWorld(t)
 	d.ctlBrief(1, "Text\n## The solution\n", briefAppetite("5"), briefHoles, "")
 	d.ctlBrief(2, briefProblem, briefAppetite("5"), briefHoles, "")
@@ -191,6 +193,7 @@ func TestARefusedBriefIsTriedAgainWithItsFinding(t *testing.T) {
 // Condition 3 of the plan review: a missing output file ends the session no-result, not refused file; its telemetry stands, the call
 // returns the error, and the next run starts a new session. A semantic refusal is the case of the test above.
 func TestAMissingOutputFileEndsNoResultAndTheNextRunStartsAgain(t *testing.T) {
+	t.Parallel()
 	d := shapedWorld(t)
 	d.ctlBrief(1, briefProblem, briefAppetite("5"), briefHoles, "")
 	d.ctlWrite("brief-drop-1", "appetite.md")
@@ -213,6 +216,7 @@ func TestAMissingOutputFileEndsNoResultAndTheNextRunStartsAgain(t *testing.T) {
 // I3 (condition 4 of the plan review of #366): the appetite is judged after the telemetry of the brief session. The money of the world
 // before the call is unknown, so attempt 1 (caps 8 plus its own 3.0 against U 10) is refused only through its own reported spend.
 func TestTheAppetiteIsJudgedAfterTheBriefSessionsTelemetry(t *testing.T) {
+	t.Parallel()
 	d := shapedWorld(t)
 	if known, err := ledger.KnownMoney(mustTelemetry(t, d)); err != nil || known != "0.0" {
 		t.Fatalf("the known money before the call = %q, %v; want 0.0 (a green negative: the 8 alone fits U 10)", known, err)
@@ -244,6 +248,7 @@ func mustTelemetry(t *testing.T, d *drvWorld) [][]string {
 // candidate's commit) leaves the candidate; a fresh state promotes it with no new session and writes the brief and its basis in one
 // commit. The promotion write is r.write, through Fenced: a lost lease is a *LostError and promotes nothing.
 func TestAStopBeforeThePromotionPromotesWithNoSession(t *testing.T) {
+	t.Parallel()
 	d := shapedWorld(t)
 	d.ctlBrief(1, briefProblem, briefAppetite("5"), briefHoles, "")
 	d.r.cfg.Forge = &flakyForge{Forge: d.r.cfg.Forge, failPost: true}
@@ -263,6 +268,7 @@ func TestAStopBeforeThePromotionPromotesWithNoSession(t *testing.T) {
 
 // I5: a kept brief is done before: no write, no forge write, no session.
 func TestAKeptBriefIsDoneBeforeWithNoWrite(t *testing.T) {
+	t.Parallel()
 	d := shapedWorld(t)
 	d.ctlBrief(1, briefProblem, briefAppetite("5"), briefHoles, "")
 	first, _, err := d.r.betBrief(context.Background(), "1", "first")
@@ -288,6 +294,7 @@ func (d *drvWorld) setPrecondition() {
 
 // I6: brief.lines unset starts no session, and nothing is written.
 func TestBriefLinesUnsetStartsNoSession(t *testing.T) {
+	t.Parallel()
 	d := shapedWorld(t)
 	d.setParameter("brief.lines", "")
 	head := recordsHead(t, d.w)
@@ -301,6 +308,7 @@ func TestBriefLinesUnsetStartsNoSession(t *testing.T) {
 
 // The parts of code over brief.lines wait before any session, and a fresh build refuses a bets.tsv that exists.
 func TestAFreshBuildRefusesWhatItCannotBuildBefore(t *testing.T) {
+	t.Parallel()
 	d := shapedWorld(t)
 	d.setParameter("brief.lines", "10")
 	if _, _, err := d.r.betBrief(context.Background(), "1", "first"); !errors.Is(err, ErrBriefOverLimit) || d.briefSessions() != 0 {
@@ -325,6 +333,7 @@ func TestAFreshBuildRefusesWhatItCannotBuildBefore(t *testing.T) {
 
 // I7: the cap of milestone 0 ends the retry: attempt 1 is refused and reports 60 USD, above the cap of 50, so attempt 2 does not start.
 func TestTheCapOfMilestoneZeroEndsTheRetry(t *testing.T) {
+	t.Parallel()
 	d := shapedWorld(t)
 	d.ctlBrief(1, "Text\n## The solution\n", briefAppetite("5"), briefHoles, "60.0")
 	d.ctlBrief(2, briefProblem, briefAppetite("5"), briefHoles, "")
@@ -338,6 +347,7 @@ func TestTheCapOfMilestoneZeroEndsTheRetry(t *testing.T) {
 // I8: the links are the pull requests and the changed files of the verified heads; a pull request whose head moved is an error before
 // any session.
 func TestTheLinkSetIsTheChangedFilesAndPullRequestsOfTheVerifiedHeads(t *testing.T) {
+	t.Parallel()
 	d := shapedWorld(t)
 	tasks := d.register()
 	spHead := d.boundOf(tasks[0].ID)[0]
@@ -362,6 +372,7 @@ func TestTheLinkSetIsTheChangedFilesAndPullRequestsOfTheVerifiedHeads(t *testing
 
 // A Shape task whose position is not verified is an error that names it, before any session: the brief reads the records and drives nothing.
 func TestAShapeTaskWithNoVerifiedHeadIsAnErrorBeforeAnySession(t *testing.T) {
+	t.Parallel()
 	d := newDrvWorldOpts(t, loopPerms, drvOpts{noOption: true})
 	d.settled()
 	specTask, _ := d.open()
@@ -375,6 +386,7 @@ func TestAShapeTaskWithNoVerifiedHeadIsAnErrorBeforeAnySession(t *testing.T) {
 // I9 (loop.md, The bet: two survivors give a brief with no recommendation): code presents both survivors with no mark, and a session
 // that names an option is refused with its finding.
 func TestTwoSurvivorsGiveABriefWithNoRecommendation(t *testing.T) {
+	t.Parallel()
 	d := shapedWorld(t)
 	d.ctlBrief(1, briefProblem, briefAppetite("5"), "I would use pg here.\n", "")
 	d.ctlBrief(2, briefProblem, briefAppetite("5"), briefHoles, "")
@@ -389,6 +401,7 @@ func TestTwoSurvivorsGiveABriefWithNoRecommendation(t *testing.T) {
 
 // I10 (loop.md, The bet): a question still open is shown in the rabbit holes, with the text of the question.
 func TestAQuestionStillOpenIsShownInTheRabbitHoles(t *testing.T) {
+	t.Parallel()
 	d := shapedWorld(t)
 	qs := append(d.questions(), []string{"Q-005", "intent", "success-criteria", "idea-owner", "before-delivery", "intent", "", "", "The question Q-005", "2026-10-08T12:30:00Z", "layup run", "", "open"})
 	data, err := table(records.QuestionsSchema, qs)
@@ -407,6 +420,7 @@ func TestAQuestionStillOpenIsShownInTheRabbitHoles(t *testing.T) {
 // fresh state with the original requirements, survivors, facts, heads and appetite, after the facts' classes changed and another
 // architecture task appeared, with nothing filtered again.
 func TestTheBasisRoundTripsThroughBriefBasisInAFreshState(t *testing.T) {
+	t.Parallel()
 	d := shapedWorld(t)
 	d.ctlBrief(1, briefProblem, briefAppetite("5"), briefHoles, "")
 	if _, _, err := d.r.betBrief(context.Background(), "1", "first"); err != nil {
@@ -439,6 +453,7 @@ func TestTheBasisRoundTripsThroughBriefBasisInAFreshState(t *testing.T) {
 
 // I11: the block bet-basis equals its Go schema.
 func TestTheBetBasisBlockEqualsItsGoSchema(t *testing.T) {
+	t.Parallel()
 	blocks, err := tsv.ReadBlocks(os.DirFS("../../docs/spec"))
 	if err != nil {
 		t.Fatal(err)
@@ -450,6 +465,7 @@ func TestTheBetBasisBlockEqualsItsGoSchema(t *testing.T) {
 
 // I12: the two text blocks of loop.md are the constants of the code, byte for byte (beside TestTheTextBlocksOfRunMd).
 func TestTheBetBriefBlocksOfLoopMd(t *testing.T) {
+	t.Parallel()
 	loop, err := os.ReadFile("../../docs/spec/loop.md")
 	if err != nil {
 		t.Fatal(err)
@@ -466,6 +482,7 @@ func TestTheBetBriefBlocksOfLoopMd(t *testing.T) {
 // F1 of round 1: a run stopped between the candidate and the promotion, and the fixed input changes before the recovery: the old candidate
 // is not promoted over the new basis; a new session writes the brief again with the finding. (The control is the test of the stop above.)
 func TestAChangedFixedInputBeforeTheRecoveryStartsANewAttempt(t *testing.T) {
+	t.Parallel()
 	d := shapedWorld(t)
 	d.ctlBrief(1, briefProblem, briefAppetite("5"), briefHoles, "")
 	d.ctlBrief(2, briefProblem, briefAppetite("5"), briefHoles, "")
@@ -486,6 +503,7 @@ func TestAChangedFixedInputBeforeTheRecoveryStartsANewAttempt(t *testing.T) {
 
 // F2 of round 1: the reader of the basis refuses a kept brief that is malformed (the first call is the valid control).
 func TestBriefBasisRefusesAMalformedKeptBrief(t *testing.T) {
+	t.Parallel()
 	d := shapedWorld(t)
 	d.ctlBrief(1, briefProblem, briefAppetite("5"), briefHoles, "")
 	if _, _, err := d.r.betBrief(context.Background(), "1", "first"); err != nil {

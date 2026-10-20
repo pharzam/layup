@@ -50,6 +50,7 @@ func (d *drvWorld) seededRules(task, attempt string, withRegister bool) func(*Se
 // I1, the demo: a head that fails layup/spec starts a new attempt at the same base, whose developer's prompt file holds the finding; the red
 // control is the stop of #415, which this row replaces.
 func TestASpecFailureDuringShapeStartsANewAttemptWithItsFindings(t *testing.T) {
+	t.Parallel()
 	d := newDrvWorld(t, loopPerms)
 	d.ctlWrite("spec-fail", "")
 	spec, _ := d.open()
@@ -77,6 +78,7 @@ func TestASpecFailureDuringShapeStartsANewAttemptWithItsFindings(t *testing.T) {
 
 // I2 (plan review condition 6): a failed layup/rules starts a new attempt whose prompt file holds the exact finding with its full path.
 func TestARulesFailureStartsANewAttemptWithItsPath(t *testing.T) {
+	t.Parallel()
 	d := newDrvWorld(t, loopPerms)
 	spec, _ := d.open()
 	got, err := d.advance(spec, d.seededRules(spec, "1", true))
@@ -99,6 +101,7 @@ func TestARulesFailureStartsANewAttemptWithItsPath(t *testing.T) {
 // I3: a restart between the post of the failed statuses and the start of the attempt starts exactly one attempt, posts no status twice at
 // the failed head and context, and a run after that adds none (plan review note 2).
 func TestARestartAfterTheFailedStatusesStartsExactlyOneAttempt(t *testing.T) {
+	t.Parallel()
 	d := newDrvWorld(t, loopPerms)
 	d.ctlWrite("spec-fail", "")
 	spec, _ := d.open()
@@ -149,6 +152,7 @@ func TestARestartAfterTheFailedStatusesStartsExactlyOneAttempt(t *testing.T) {
 // I4, a green negative (its red control is I1): the specification that waits for its bet, whose pinned prd-lint is accepted by code (an empty
 // MoSCoW or Phase cell only), starts no attempt, and no layup/ status fails. The gate table of the head causes no retry.
 func TestTheSpecificationThatWaitsForItsBetStartsNoAttempt(t *testing.T) {
+	t.Parallel()
 	d := newDrvWorld(t, loopPerms)
 	spec, _ := d.open()
 	d.mustVerify(spec)
@@ -172,6 +176,7 @@ func TestTheSpecificationThatWaitsForItsBetStartsNoAttempt(t *testing.T) {
 
 // Plan review condition 3: a stop comes before the retry, whatever else failed. Each case fails layup/spec once, and then a status is an error.
 func TestAStatusErrorBesideASpecFailureStopsAndStartsNoAttempt(t *testing.T) {
+	t.Parallel()
 	for _, c := range []struct {
 		name, want, gates string
 		rules             bool

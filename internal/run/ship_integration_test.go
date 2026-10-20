@@ -87,6 +87,7 @@ func (s *ship) branchTip() string {
 }
 
 func TestTheCloseOutCommitCarriesTheVerdict(t *testing.T) {
+	t.Parallel()
 	s := newShip(t)
 	ctx := context.Background()
 	id, err := s.closeOut(s.V, s.in, closing())
@@ -113,6 +114,7 @@ func TestTheCloseOutCommitCarriesTheVerdict(t *testing.T) {
 // Every refusal is written as the others are: the event refused with its reason and the SHA-256 of the diff after a space, the
 // diff in payloads/, nothing pushed and nothing bound.
 func TestACloseOutThatChangesMoreThanTheTwoFilesIsRefusedAsScope(t *testing.T) {
+	t.Parallel()
 	two := "docs/tasks/T-ab12.md"
 	for _, c := range []struct{ name, work string }{
 		{"another file", fileWork(map[string]string{taskFile: "t\n", "x.go": "package x\n"}, okResult)},
@@ -145,6 +147,7 @@ func TestACloseOutThatChangesMoreThanTheTwoFilesIsRefusedAsScope(t *testing.T) {
 }
 
 func TestACloseOutOnAParentThatDoesNotCarryTheVerdictIsRefusedAsVerdict(t *testing.T) {
+	t.Parallel()
 	// An ordinary child of the verified head: the close-out sits on it, and only the verified head carries.
 	s := newShip(t)
 	child := commitIn(s.loopRun, map[string]string{"x.go": "package x\n"})
@@ -171,6 +174,7 @@ func TestACloseOutOnAParentThatDoesNotCarryTheVerdictIsRefusedAsVerdict(t *testi
 
 // A session of another task is a fault of the caller: an error, nothing written, nothing pushed.
 func TestAVerifierOfAnotherTaskIsAnErrorAndNothingIsPushed(t *testing.T) {
+	t.Parallel()
 	s := newShip(t)
 	// The other task is registered: a task session posts its summary to the issue of its task (row 66v).
 	files, err := registerFiles(mustRead(t, s.r, "tasks.tsv"), nil, Task{ID: "T-cd34", Issue: 9, Kind: "build", Requirements: []string{"REQ-005"}, Size: "small", Opened: time.Now().UTC().Truncate(time.Second)})
@@ -204,6 +208,7 @@ func TestAVerifierOfAnotherTaskIsAnErrorAndNothingIsPushed(t *testing.T) {
 // CarryVerify checks the edge again, whatever pushed the head: a session that was bound by the push of any other task session is
 // not a close-out (the plan review of #363, condition 3).
 func TestCarryVerifyChecksTheWholeEdgeAndPostsNothingForAHeadThatIsNoCloseOut(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	s := newShip(t)
 	// A session of the role of the close-out that the ordinary push bound: a child of the verified head that changes a product file.
@@ -238,6 +243,7 @@ func renderedShip(t *testing.T) (*ship, string) {
 }
 
 func TestTheRenderedCommitCarriesAndTheCloseOutAfterItIsAccepted(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	s, rendered := renderedShip(t)
 	if ok, err := s.r.CheckRendered(ctx, s.in); err != nil || !ok {
@@ -263,6 +269,7 @@ func TestTheRenderedCommitCarriesAndTheCloseOutAfterItIsAccepted(t *testing.T) {
 }
 
 func TestARenderedCommitThatIsNotAPermittedChildOfTheVerifiedHeadDoesNotCarry(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	// The verifier found something: the rendered commit has no verified parent.
 	s, _ := renderedShip(t)
@@ -283,6 +290,7 @@ func TestARenderedCommitThatIsNotAPermittedChildOfTheVerifiedHeadDoesNotCarry(t 
 }
 
 func TestARenderedCommitOffTheRecordsIsNotAccepted(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	for _, c := range []struct {
 		name string
@@ -330,6 +338,7 @@ func renderedPRD(t *testing.T, forged string) string {
 // A verified head that is itself a merge commit carries the verdict as any other: what counts is how it got the verdict (the plan
 // review of #363, condition 4). The attempt starts at the merge, so that the verifier's own bound event is outside the change.
 func TestAVerifiedHeadThatIsAMergeCommitCarriesTheVerdict(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	s := newShip(t)
 	clone := s.r.Clone

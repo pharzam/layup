@@ -22,6 +22,7 @@ import (
 // on the state of a restart.
 
 func TestTheSchemaOfParametersEqualsItsBlock(t *testing.T) {
+	t.Parallel()
 	blocks, err := tsv.ReadBlocks(os.DirFS("../../docs/spec"))
 	if err != nil {
 		t.Fatal(err)
@@ -38,6 +39,7 @@ func TestTheSchemaOfParametersEqualsItsBlock(t *testing.T) {
 // The table of the code equals the table of loop.md ("The parameters of M2e"): the owner's test that the spec asks for,
 // and the six rows of the plan review's C3, each with a source for each of its other cells.
 func TestTheParameterTableEqualsTheSpecification(t *testing.T) {
+	t.Parallel()
 	data, err := os.ReadFile("../../docs/spec/loop.md")
 	if err != nil {
 		t.Fatal(err)
@@ -177,6 +179,7 @@ func progressLines(w *world, word string) []string {
 }
 
 func TestTheFirstTaskWritesTheDefaultParametersFromStartTsv(t *testing.T) {
+	t.Parallel()
 	w := newWorld(t)
 	cfg := w.config("1.0.0")
 	cfg.LeaseH, cfg.WatchT, cfg.IntakeCap = 7, 3, "20.0,4.0"
@@ -212,6 +215,7 @@ func TestTheFirstTaskWritesTheDefaultParametersFromStartTsv(t *testing.T) {
 }
 
 func TestAnExistingParametersFileThatItsReaderRefusesRefusesTheTaskAndWritesNothing(t *testing.T) {
+	t.Parallel()
 	w := registerWorld(t, loopPerms)
 	pushRecords(t, w.bare, map[string]string{"parameters.tsv": "name\tvalue\nbrief.lines\t7\n"}, "a table by hand")
 	r := restarted(t, w)
@@ -226,6 +230,7 @@ func TestAnExistingParametersFileThatItsReaderRefusesRefusesTheTaskAndWritesNoth
 }
 
 func TestAnExistingParametersFileIsKeptByTheFirstTask(t *testing.T) {
+	t.Parallel()
 	w := registerWorld(t, loopPerms)
 	r := restarted(t, w)
 	rows, err := DefaultParameters(parameterTable, r.value, w.clock.Now().Truncate(time.Second))
@@ -252,6 +257,7 @@ func TestAnExistingParametersFileIsKeptByTheFirstTask(t *testing.T) {
 }
 
 func TestASetIsCopiedAndAppliedAtTheBoundaryAsOneRecordsCommit(t *testing.T) {
+	t.Parallel()
 	w, r := loopWorld(t)
 	say(w, 9101, operatorID, "pharzam", "set brief.lines 7 because the idea owner reads seven lines")
 	r = restarted(t, w) // a restart: no state of the first run
@@ -295,6 +301,7 @@ func TestASetIsCopiedAndAppliedAtTheBoundaryAsOneRecordsCommit(t *testing.T) {
 }
 
 func TestASetOfAStartParameterIsRecordedAndSaysThatThisRunDoesNotReadIt(t *testing.T) {
+	t.Parallel()
 	w, _ := loopWorld(t)
 	say(w, 9101, operatorID, "pharzam", "set lease.H 9 because the Operator wants a longer lease")
 	r := restarted(t, w)
@@ -318,6 +325,7 @@ func TestASetOfAStartParameterIsRecordedAndSaysThatThisRunDoesNotReadIt(t *testi
 }
 
 func TestARefusedSetChangesNothingAndIsReportedWithItsItem(t *testing.T) {
+	t.Parallel()
 	w, _ := loopWorld(t)
 	for _, c := range []struct {
 		id, author int
@@ -387,6 +395,7 @@ func TestARefusedSetChangesNothingAndIsReportedWithItsItem(t *testing.T) {
 // C2 of the plan review: a set is applied at most once, a superseded one never again, in the order of the comments'
 // IDs, not of the forge's list.
 func TestASetThatIsAppliedIsNotAppliedAgainAndTheLaterOfTwoWins(t *testing.T) {
+	t.Parallel()
 	w, _ := loopWorld(t)
 	say(w, 9102, operatorID, "pharzam", "set build.parallel 4 because the host has four cores")
 	say(w, 9101, operatorID, "pharzam", "set build.parallel 2 because the host has two cores") // listed after, but the earlier comment
@@ -432,6 +441,7 @@ func TestASetThatIsAppliedIsNotAppliedAgainAndTheLaterOfTwoWins(t *testing.T) {
 }
 
 func TestAnEditOfACommentIsNoSet(t *testing.T) {
+	t.Parallel()
 	w, _ := loopWorld(t)
 	say(w, 9110, operatorID, "pharzam", "thanks, that reads well")
 	if applied, refused, err := restarted(t, w).parametersBoundary(context.Background()); err != nil || len(applied)+len(refused) != 0 {
@@ -463,6 +473,7 @@ func customTable(t *testing.T) []byte {
 }
 
 func TestSetTransitionsReplacesTheTableInOneCommitAndTheOldTableStaysInHistory(t *testing.T) {
+	t.Parallel()
 	w, _ := loopWorld(t)
 	table := customTable(t)
 	say(w, 9201, ideaOwnerID, "carol", string(table)) // the author of the comment that holds the table is not checked
@@ -502,6 +513,7 @@ func TestSetTransitionsReplacesTheTableInOneCommitAndTheOldTableStaysInHistory(t
 }
 
 func TestASetOfTransitionsThatFailsItsCheckWritesNothing(t *testing.T) {
+	t.Parallel()
 	w, r := loopWorld(t)
 	without := handoff.Default()
 	without = append(without[:3:3], without[4:]...)
@@ -557,6 +569,7 @@ func TestASetOfTransitionsThatFailsItsCheckWritesNothing(t *testing.T) {
 
 // The boundary writes through the fence of the lease, as the register does (row 66a).
 func TestTheBoundaryIsFencedByTheLease(t *testing.T) {
+	t.Parallel()
 	w, _ := loopWorld(t)
 	say(w, 9101, operatorID, "pharzam", "set build.parallel 2 because two cores")
 	r := restarted(t, w)

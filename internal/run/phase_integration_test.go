@@ -111,6 +111,7 @@ func tree(t *testing.T, w *world) []string {
 // records commit; it has its own task ID, a start row and no event; then its
 // comment; its directory is removed.
 func TestASessionOfAPhaseCommitsItsRecordsAndItsTelemetryRow(t *testing.T) {
+	t.Parallel()
 	seen := filepath.Join(t.TempDir(), "seen")
 	w, r, f, a, h := phaseWorld(t, `cp "$in" `+seen+` && printf 'kind\tvalue\nnote\tread\n' > "$out"`)
 	before := show(t, w.bare, "layup-records", "sessions.tsv")
@@ -167,6 +168,7 @@ func TestASessionOfAPhaseCommitsItsRecordsAndItsTelemetryRow(t *testing.T) {
 // or that its check refuses: the step's error names the session; the end
 // commits the telemetry row alone, and nothing of the file.
 func TestAnOutputFileThatIsRefusedIsNoRecord(t *testing.T) {
+	t.Parallel()
 	for _, c := range []struct{ name, body, comment, reason string }{
 		{"missing", `true`, "no-result", "no-result"},
 		{"a link", `ln -s /etc/hostname "$out"`, "no-result", "no-result"},
@@ -197,6 +199,7 @@ func TestAnOutputFileThatIsRefusedIsNoRecord(t *testing.T) {
 // Row 1 of Input states: with no admitted pair for the role, no session
 // starts: ErrNoPair, and no records commit.
 func TestNoAdmittedPairStartsNoSession(t *testing.T) {
+	t.Parallel()
 	w, r, _, _, h := phaseWorld(t, `true`)
 	commits := gitOut(t, w.bare, "rev-list", "--count", "layup-records")
 	for _, c := range []struct {
@@ -228,6 +231,7 @@ func TestNoAdmittedPairStartsNoSession(t *testing.T) {
 // no record and removes its directory; the step's error names the session
 // and the refusal.
 func TestARefusedStartOfASessionOfAPhaseIsNoRecord(t *testing.T) {
+	t.Parallel()
 	w, r, f, a, h := phaseWorld(t, `true`)
 	spec := phaseSpec(t, w, r, a, h)
 	spec.Harness = append([]string{}, h...)
@@ -252,6 +256,7 @@ func TestARefusedStartOfASessionOfAPhaseIsNoRecord(t *testing.T) {
 // A comment that fails after a refused file keeps the session's reason: the
 // step's error names the session and the forge (round 1 of #215, note 5).
 func TestACommentThatFailsKeepsTheReasonOfTheSession(t *testing.T) {
+	t.Parallel()
 	w, r, f, a, h := phaseWorld(t, `printf 'kind\tvalue\nnote\tbad\n' > "$out"`)
 	f.fail = "Comment"
 	id, err := r.PhaseSession(context.Background(), phaseSpec(t, w, r, a, h))
@@ -266,6 +271,7 @@ func TestACommentThatFailsKeepsTheReasonOfTheSession(t *testing.T) {
 // (intake.cap 50.0,8.0 of the world), or when the hours since Start pass its
 // hours; no records commit and no session directory.
 func TestTheCapOfMilestoneZeroStartsNoSession(t *testing.T) {
+	t.Parallel()
 	for _, c := range []struct {
 		name, cap string
 		later     time.Duration
@@ -349,6 +355,7 @@ func filesSpec(t *testing.T, w *world, r *Sessions, a worldAt, harness []string)
 // A session of a phase whose output is files commits all of them, with the
 // telemetry row, in one records commit, byte for byte.
 func TestASessionOfAPhaseWithFilesCommitsThemInOneRecordsCommit(t *testing.T) {
+	t.Parallel()
 	w, r, f, a, h := phaseWorld(t, `mkdir -p "$out/docs" && printf '# Readme\n' > "$out/README.md" && printf '# Glossary\r\n' > "$out/docs/glossary.md"`)
 	id, err := r.PhaseSession(context.Background(), filesSpec(t, w, r, a, h))
 	if err != nil {
@@ -374,6 +381,7 @@ func TestASessionOfAPhaseWithFilesCommitsThemInOneRecordsCommit(t *testing.T) {
 // checked first (the cases of the reader are in internal/session), and the end
 // commits the telemetry row alone, whichever file is the cause (docs/spec/scaffold.md, Input states: "nothing of it is committed").
 func TestAnOutputOfFilesThatIsRefusedIsNoRecord(t *testing.T) {
+	t.Parallel()
 	good := `mkdir -p "$out/docs" && printf 'g\n' > "$out/docs/glossary.md" && `
 	for _, c := range []struct{ name, body, comment string }{
 		{"a file that no name covers", good + `printf 'r\n' > "$out/README.md" && printf 'x\n' > "$out/extra.md"`, "no-result"},
@@ -407,6 +415,7 @@ func TestAnOutputOfFilesThatIsRefusedIsNoRecord(t *testing.T) {
 // repo/ on its task branch at Base: the prose session of the step setup gets
 // the work area's target at the head of layup-setup (task T-eahr).
 func TestASessionOfAPhaseRunsOnTheCloneAndTheBranchOfItsSessions(t *testing.T) {
+	t.Parallel()
 	seen := filepath.Join(t.TempDir(), "seen")
 	w, r, _, a, h := phaseWorld(t, `{ git rev-parse --abbrev-ref HEAD; git rev-parse HEAD; cat docs/setup/armature.pin; git branch --list; } > `+seen+` && mkdir -p "$out" && printf 'x\n' > "$out/README.md"`)
 	other := t.TempDir()

@@ -777,14 +777,22 @@ These traps are not domain-specific: they hurt every project's test suite.
   prints the goroutines that still ran, which reads like a crash. On the host of the sessions
   (2 CPUs, a load average of about 6 when several sessions run their suites) the integration
   level of `internal/run` took 486 s alone and was stopped at 600 s inside a run of every
-  package, while CI ran all three levels in 3 min 22 s (`T-4c5c`, #276). **The check:** run
+  package, while CI ran all three levels in 3 min 22 s (`T-4c5c`, #276). Since `T-05f4` (#439) the
+  integration tests of `internal/run` run in parallel (baseline 396 s, median 125 s, ratio 0.32);
+  when a test that replaces `verifyRun` ran in parallel, `TestTheStepSetupRunsS01ToS14` was red in
+  3 of 3 runs. **The check:** run
   the level with `-timeout 30m`; when a package stops at the limit, read `uptime`, run that
   package alone with `-v`, record both runs, and edit no test for the stop. A package that
   needs more than its level's per-test-binary bound alone on an idle host (10 minutes, or 20
   minutes for the integration level in CI under
   [ADR-0027](adr/0027-bound-the-integration-level-at-20-minutes-in-ci.md)) breaks
   [the rule of the scaling checklist](tests/scaling-checklist.md#fast-enough-for-hook-and-ci),
-  and is a task ([#439](https://github.com/pharzam/layup/issues/439) for `internal/run`).
+  and is a task ([#439](https://github.com/pharzam/layup/issues/439) for `internal/run`). A top-level integration test of `internal/run` (files
+  `internal/run/*_integration_test.go`, build tag `integration`) is serial if, directly or through
+  any helper it calls, it calls `t.Setenv` or `t.Chdir`, or assigns a package-level variable of
+  package `run` (today only `verifyRun`, `internal/run/verify.go:29`). Every other top-level
+  integration test gets `t.Parallel()` as its first statement. Subtests are not changed; a test
+  that must replace a package variable such as `verifyRun` stays serial.
 - ❌ **A `git` verb that reads its standard input when its argument is empty.**
   `git commit-tree TREE -p PARENT -m ''` finds an empty message and reads the message
   from its standard input, as it does with no `-m`; with a standard input that stays

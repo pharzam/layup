@@ -145,6 +145,7 @@ func draftOf(t *testing.T, w *world) [][]string {
 // a restart after a stop between the commit and the post reposts the
 // session's comment from the record, byte for byte.
 func TestTheRevisionOfTheDraft(t *testing.T) {
+	t.Parallel()
 	w, rows := markersToBatch(t, proposals())
 	allDone(t, "the restart", rows, intakeSteps...)
 	questions := intakeAnswers(t, w, "fast; cheap", "bet: dave\naudit: pharzam\nretrospective: mallory\n")
@@ -314,6 +315,7 @@ func TestTheRevisionOfTheDraft(t *testing.T) {
 // is the cap of milestone 0, asked before each attempt: docs/spec/intake.md,
 // The budget of Intake).
 func TestTheRevisionRefusedThenKept(t *testing.T) {
+	t.Parallel()
 	w := newWorld(t)
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	allDone(t, "the restart", Restart(context.Background(), w.config("0.1.0-dev")), intakeSteps...)
@@ -375,6 +377,7 @@ func TestTheRevisionRefusedThenKept(t *testing.T) {
 // the follow-up asks again, or the check refuses it, and a point line of the
 // follow-up's window still names an approver, whose row the step appends.
 func TestTheRevisionReadsTheFollowUp(t *testing.T) {
+	t.Parallel()
 	w, _ := markersToBatch(t, proposals())
 	questions, err := records.ReadQuestions([]byte(show(t, w.bare, "refs/heads/layup-records", "questions.tsv")))
 	if err != nil {
@@ -536,6 +539,7 @@ func TestTheRevisionReadsTheFollowUp(t *testing.T) {
 // the step is fail with the cap's refusal (docs/spec/intake.md, The budget of
 // Intake; row 66i).
 func TestTheRevisionStopsAtTheCap(t *testing.T) {
+	t.Parallel()
 	w := newWorld(t)
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	allDone(t, "the restart", Restart(context.Background(), w.config("0.1.0-dev")), intakeSteps...)
@@ -577,6 +581,7 @@ func TestTheRevisionStopsAtTheCap(t *testing.T) {
 // row that is not there (docs/spec/loop.md, The revision of the draft; the
 // cap-3 review of #365, F3).
 func TestTheRevisionOfAnEmptyDraft(t *testing.T) {
+	t.Parallel()
 	w := newWorld(t)
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	allDone(t, "the restart", Restart(context.Background(), w.config("0.1.0-dev")), intakeSteps...)

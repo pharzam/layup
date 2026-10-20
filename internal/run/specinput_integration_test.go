@@ -38,6 +38,7 @@ func cavTreeInput(t *testing.T, dir, head string) (spec.FullInput, error) {
 }
 
 func TestTheTreeFieldsOfTheFullInputAreTheRegularFilesOfTheHead(t *testing.T) {
+	t.Parallel()
 	gitlink := strings.Repeat("1", 40)
 	dir, head := treeOf(t,
 		entry{"100644", "docs/spec/a.md", treeSection}, entry{"100644", "docs/spec/sub/b.md", "x\n"}, entry{"120000", "docs/spec/l.md", "a.md"},
@@ -66,6 +67,7 @@ func TestTheTreeFieldsOfTheFullInputAreTheRegularFilesOfTheHead(t *testing.T) {
 }
 
 func TestTheNumberedFactsFileAtTheHeadIsTheProblemStatementRecord(t *testing.T) {
+	t.Parallel()
 	gitlink := strings.Repeat("1", 40)
 	named := func(e ...entry) []entry { return append([]entry{{"100644", "docs/prd/PRD-0001-x.md", cavPRD}}, e...) }
 	for _, c := range []struct {
@@ -102,6 +104,7 @@ func TestTheNumberedFactsFileAtTheHeadIsTheProblemStatementRecord(t *testing.T) 
 }
 
 func TestAFailedReadOfTheTreeIsASourceErrorOfTheTarget(t *testing.T) {
+	t.Parallel()
 	// A head the clone lacks fails at the diff.
 	dir, _ := treeOf(t, entry{"100644", "docs/spec/a.md", treeSection})
 	in, err := cavTreeInput(t, dir, strings.Repeat("a", 40))
@@ -258,6 +261,7 @@ func TestTheFullInputOfAHeadAfterIntakeAndTheScaffold(t *testing.T) {
 // AnswersRecord of the test's own): the full check passes every rule, and the pinned
 // prd-lint accepts the head as a specification that waits for its bet.
 func TestTheSpecimenPassesTheFullCheckAndThePrdLintThroughTheProductionInput(t *testing.T) {
+	t.Parallel()
 	prd := specimen(t, -1)
 	dir, head := treeOf(t, entry{"100644", "docs/prd/PRD-0001-x.md", prd}, entry{"100644", "docs/spec/a.md", "## REQ-001 — Alpha\n\nThe text.\n"},
 		entry{"100644", "docs/facts/F-0003-setup-answers.md", "1. **x:** a\n"})
@@ -287,6 +291,7 @@ func TestTheSpecimenPassesTheFullCheckAndThePrdLintThroughTheProductionInput(t *
 // is the one the input holds, the record that it names is among the input's records, and the
 // citations of that prompt pass the rule covers; an executable file or a link is no record for either.
 func TestThePromptAndTheFullInputPredictTheSameFactsRecords(t *testing.T) {
+	t.Parallel()
 	gitlink := strings.Repeat("1", 40)
 	setup := entry{"100644", "docs/facts/F-0003-setup-answers.md", "1. **x:** a\n"}
 	for _, c := range []struct {

@@ -82,6 +82,7 @@ func (l *linkShip) want() string {
 
 // I1, the demo: one PATCH after the comment's POST, the exact bytes, and no second edit on a second call.
 func TestTheReviewRecordIsLinkedFromTheBodyAfterItsPost(t *testing.T) {
+	t.Parallel()
 	l := newLinkShip(t)
 	if l.records(l.dev) == l.records(l.verifier) {
 		t.Fatal("the developer and the verifier share a snapshot: the case of two snapshots at one head is not made")
@@ -120,6 +121,7 @@ func TestTheReviewRecordIsLinkedFromTheBodyAfterItsPost(t *testing.T) {
 // I2. The link survives the close-out and a restart: a close-out session binds the head at a third snapshot, a new production
 // Sessions edits nothing, and the records line of the body is still the opening's.
 func TestTheLinkSurvivesTheCloseOutAndARestart(t *testing.T) {
+	t.Parallel()
 	l := newLinkShip(t)
 	if _, err := l.prod.LinkReviewRecord(context.Background(), "T-ab12", l.verifier); err != nil {
 		t.Fatal(err)
@@ -140,6 +142,7 @@ func TestTheLinkSurvivesTheCloseOutAndARestart(t *testing.T) {
 
 // I3. An edit that the forge refuses is a forge error of EditBody and the body stays.
 func TestAnEditRefusedByTheForgeIsAForgeErrorOfEditBody(t *testing.T) {
+	t.Parallel()
 	l := newLinkShip(t)
 	l.w.fake.pulls.denyPatch = 403
 	edited, err := l.prod.LinkReviewRecord(context.Background(), "T-ab12", l.verifier)
