@@ -2205,3 +2205,64 @@ The initial whitespace failure and verification-driver assertion are failures, n
 | G-scope | `python3 /home/layup/.cache/layup-session/tmp-green/T-c826-stage-g/final-scope.py` | 2026-10-20T22:26:53Z | 2026-10-20T22:26:53Z | 0 | All 21 changed paths match the three-commit plan; unchanged HEAD/index, runners, checks.sh, workflow and close-out files. All planned files have one final newline and no trailing whitespace. |
 
 Stage G outcome: both material findings have their cases and fixes, all 85 fixtures pass, four named mutants fail for the intended reasons and their restored controls pass, and all relevant lints/setup/task checks pass. The whitespace failure is corrected. The coordinator can commit the test, checker and documentation/record slices in that order. Clean-head pre-freeze and the next independent round remain for the following stages.
+
+## Stage H — clean-head runs after round 1 fixes
+
+Tested clean committed head: `0fbdefb77055e1124fe23831c6977f9acbd35ff4` on `T-c826`.
+Base: `origin/main`, resolved to `4259e05f113dec28b60ada61fa245b5f94f72980`.
+All nine commands ran before this record was edited. UTC start/end values were
+read directly with `date -u +%FT%TZ`; exit statuses were read from each command.
+`TMPDIR=/home/layup/.cache/layup-session/tmp-green` confined temporary files to
+scratch. Each long-running command printed its step and an eight-second heartbeat.
+
+| Run | Command | UTC start | UTC end | Exit | Observation |
+| --- | --- | --- | --- | --- | --- |
+| H-freeze | `sh docs/tests/freeze-check.sh --task T-c826 --base origin/main --budget 1300/170 --evidence runs/T-c826/ci-exception.md --evidence runs/T-c826/conditions.md --evidence runs/T-c826/mutants.md --evidence runs/T-c826/real-heads.md --evidence runs/T-c826/test-runs.md > /home/layup/.cache/layup-session/tmp-green/c826-fc4.txt 2>&1` | 2026-10-20T22:29:49Z | 2026-10-20T22:29:50Z | 1 | FAIL K5; K1–K4 and K6 pass. Complete output below. |
+| H-suite-sh | `sh docs/tests/freeze-check/run-all.sh` | 2026-10-20T22:29:50Z | 2026-10-20T22:29:59Z | 0 | 85 passed, 0 failed. |
+| H-suite-bash-posix | `bash --posix docs/tests/freeze-check/run-all.sh` | 2026-10-20T22:29:59Z | 2026-10-20T22:30:07Z | 0 | 85 passed, 0 failed. |
+| H-adr | `sh docs/adr/adr-lint.sh` | 2026-10-20T22:30:07Z | 2026-10-20T22:30:08Z | 0 | adr-lint: OK. |
+| H-links | `sh docs/links/link-lint.sh` | 2026-10-20T22:30:08Z | 2026-10-20T22:30:20Z | 0 | link-lint: OK; 3001 links resolved. |
+| H-discipline | `sh docs/tests/run-discipline-tests.sh` | 2026-10-20T22:30:20Z | 2026-10-20T22:30:23Z | 0 | 138 passed, 0 failed. |
+| H-setup | `sh docs/setup/setup-check.sh` | 2026-10-20T22:30:23Z | 2026-10-20T22:30:45Z | 0 | All 12 setup checks and kit-linters pass; 138 discipline cases pass, ADR/PRD lints pass, 3001 links resolve. |
+| H-task-check | `sh runs/T-c826/checks.sh` | 2026-10-20T22:30:45Z | 2026-10-20T22:30:45Z | 0 | 12 assertions pass; no PR argument supplied, so exact migration-PR identity remains pending in this invocation. Complete output below. |
+| H-diff | `git diff --check origin/main HEAD` | 2026-10-20T22:30:45Z | 2026-10-20T22:30:45Z | 0 | No whitespace diagnostics for the committed diff. |
+
+Complete freeze-check output, captured in
+`/home/layup/.cache/layup-session/tmp-green/c826-fc4.txt`:
+
+```text
+ok K1: white space
+ok K2: registration of new tests
+ok K3: test selectors
+ok K4: restore evidence of mutants
+FAIL K5: -:0: projection: figure 4172/192, maximum 1300/170, tolerance 260/4, limit 1560/174, margin -2612/-18 (the figure at landing is still measured at landing)
+ok K6: conditions table
+```
+
+Complete task-check output for the requested invocation without a PR argument:
+
+```text
+ok: canonical margin sentence in the tolerance section
+ok: unchanged runner: docs/tests/freeze-check/run.sh
+ok: unchanged runner: docs/tests/freeze-check/run-all.sh
+ok: all nine baseline paths stay in the restore list
+ok: kept checker requires the pull_request event
+ok: one literal PR number and only the checker path can be kept
+pending: supply the actual migration PR number before S2
+ok: event guard receives the actual GitHub event name
+ok: number guard receives the actual pull request number
+ok: only the guarded checker skips restoration; both runners and other paths restore for every event
+ok: restoration still reads the default branch of this repository
+ok: default branch still comes from the repository event
+ok: exception comment names the task, literal PR and removal issue
+```
+
+Stage H outcome: **failed**. The required freeze-check exit 0 was not met:
+K5 reports figure **4172/192**, maximum **1300/170**, tolerance **260/4**,
+limit **1560/174** and margin **-2612/-18**. All eight remaining commands exit 0.
+No fix, budget change, base change, task close-out or completed-log edit was made.
+This append records the failure; it does not claim a successful freeze.
+
+| Run | Command | UTC start | UTC end | Exit | Observation |
+| --- | --- | --- | --- | --- | --- |
+| H-record-diff | `git diff --check` | 2026-10-20T22:31:13Z | 2026-10-20T22:31:13Z | 0 | No whitespace diagnostics in the evidence append. |
