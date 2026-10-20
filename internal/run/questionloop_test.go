@@ -493,6 +493,11 @@ func TestTheLastQualifiedReviewRecordIsTheSourceOfAnOpenMaterialFinding(t *testi
 			id := m.review(t, clean(), "", valid)
 			m.store.files["tasks/T-ab12/results/"+id+".tsv"] = []byte(resultTop + "status\t1\tcompleted\t—\tr\n")
 		}, true},
+		{"a verifier that asked (needs_context) with a valid handoff that names a comment, after a material record", func(t *testing.T, m *materialWorld) {
+			m.review(t, material(), "", valid)
+			id := m.review(t, clean(), "", valid)
+			m.store.files["tasks/T-ab12/results/"+id+".tsv"] = []byte(resultTop + "status\t1\tneeds_context\t—\tasks\ncomment\t1\tresult/review-record.md\t" + commentSum(clean()) + "\t—\n")
+		}, true},
 		{"a verifier that has not ended, after an older clean record", func(t *testing.T, m *materialWorld) {
 			m.review(t, clean(), "", valid)
 			m.bindDeveloper(t)
