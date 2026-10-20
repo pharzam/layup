@@ -143,7 +143,7 @@ record by number here, and let the index table below do the linking.
 | [0004](0004-ship-agent-entry-points.md)         | Ship agent entry points       | Accepted; amended |
 | [0005](0005-route-work-by-model-tier.md)        | Route work by model tier      | Accepted; amended |
 | [0006](0006-convene-a-panel-to-generate-options.md) | Convene a panel to generate options | Accepted; amended |
-| [0007](0007-record-task-resource-use.md)        | Record each task's resource use | Accepted |
+| [0007](0007-record-task-resource-use.md)        | Record each task's resource use | Accepted; amended |
 | [0008](0008-require-one-reading-in-decision-driving-text.md) | Require one reading in decision-driving text | Accepted |
 | [0009](0009-pin-armature-at-a-recorded-commit.md) | Pin Armature at a recorded commit | Accepted |
 | [0010](0010-use-go-as-the-technology-stack.md) | Use Go as the technology stack | Accepted; amended |
@@ -162,7 +162,7 @@ record by number here, and let the index table below do the linking.
 | [0023](0023-stop-a-stall-at-a-limit-and-diagnose-it-with-a-fresh-context.md) | Stop a stall at a limit and diagnose it with a fresh context | Accepted |
 | [0024](0024-record-every-sessions-cost-and-stop-at-the-milestone-cap.md) | Record every session's cost and stop at the milestone cap | Accepted |
 | [0025](0025-learn-routing-from-the-records-at-each-retrospective.md) | Learn routing from the records at each retrospective | Accepted |
-| [0026](0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md) | Keep the bootstrap review rules as the standing gate | Accepted |
+| [0026](0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md) | Keep the bootstrap review rules as the standing gate | Accepted; amended |
 | [0027](0027-bound-the-integration-level-at-20-minutes-in-ci.md) | Bound the integration level at 20 minutes in CI | Accepted |
 | [0028](0028-delegate-two-bounded-landing-decisions.md) | Delegate two bounded landing decisions | Accepted |
 
