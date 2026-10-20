@@ -251,3 +251,20 @@ The findings F5 to F8 of the review; F8 (the three requirement rows of the PRD) 
     baseup_integration_test.go:1126: the first replacement issue lacks the original pin "SHA-256 534bfca4b311333b887811de908c81e41fd1be78692bc32d3244812b748e2239, read at the records commit 3b93b4f3d25676d72fef33a4b9bf8bc30c81f405":
 --
 ```
+
+## Gates on the code head of round 2 (late evidence)
+
+- Code head `2a8a433` (the fix commit; the later commits are the mutants record). Main had not moved (`d27b331`). `go build ./...`, `go vet ./...` and with `-tags=integration` and `-tags=e2e`, `gofmt -l .`, `go test -count=1 ./...`: exit 0 each.
+- Full integration level, `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./...`: exit 0, 21 packages ok, `internal/run` 188.5 s (`/home/layup/.cache/layup-session/T-89xf-full-integration.txt`). `go test -count=1 -tags=e2e ./...`: exit 0.
+- The six lints and `git diff --check origin/main HEAD`: exit 0.
+- Size excluding `runs/T-89xf` (ADR-0028): 2715 lines over 27 files against `origin/main`; with the close-out projection of 70/2 it is 2785/29. K5 counts `runs/` (figure 3111/32) and fails as expected.
+- `sh docs/tests/freeze-check.sh --task T-89xf --base origin/main --budget 2800/30` (`/home/layup/.cache/layup-session/T-89xf-freeze.txt`), exit 1 for K5 alone:
+
+```text
+ok K1: white space
+ok K2: registration of new tests
+ok K3: test selectors
+ok K4: restore evidence of mutants
+FAIL K5: -:0: projection: figure 3111/32, maximum 2800/30, margin -311/-2 (the figure at landing is still measured at landing)
+ok K6: conditions table
+```
