@@ -52,8 +52,8 @@ Direct statuses (`echo "exit=$?"` after the command, no pipe); the times are `da
 - Unit, the readers of an event bound of code (`red-unit-2.txt`, 2026-10-20T15:08:26Z to 15:08:27Z, exit=1): `lastBound = bbbb..., ""; want the last bound of a session`; `registerRevOf ... the event bound of  has no
   start row in sessions.tsv`; `authorsFrom ... the same`; `loopPosition ... the session  has a bound and is not of the developer role`; `renderedBound = false, false; want true ... and false without`. The guards of
   `RepairPushes`, `LinkReviewRecord` and the driver have **no guard-specific red run**: the integration red below stops at `not wired` and proves none of them. Their only evidence is the compiled mutants (G2, G6, G7), which are late evidence (made after the implementation); round 1 found this claim too strong and the first version of the record said otherwise.
-- Integration (`red-integration-1.txt`: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 60m ./internal/run/ -run 'TestTheBetsBlock|TestTheStepBet$|TestBriefLinesUnset|TestOnlyTheApprover|TestADecisionWhose|TestANoBet|TestALaterBet|TestTheBetStepIsAtomic|TestShapeStaysDone'`,
-  2026-10-20T15:08:34Z to 15:09:06Z, exit=1): every test failed at its first assertion against `betStep` that answered `done not wired` (`the step = {Name:bet Result:done Detail:not wired}; want the wait for the answer`),
+- Integration (`red-integration-1.txt`: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 60m ./internal/run/ -run '^(TestTheBetsBlockEqualsItsGoSchema|TestTheStepBet|TestBriefLinesUnsetWaitsWithNoSession|TestOnlyTheApproverOfTheBetAnswersAndALookupThatFailsChoosesNoOne|TestADecisionWhoseOptionNamesNoRequirementIsRefusedBeforeAnyWrite|TestANoBetWritesItsRowAndWaits|TestALaterBetFailsClosed|TestTheBetStepIsAtomicToItsLastAct|TestShapeStaysDoneAfterTheRenderedPush)$'`,
+  2026-10-20T15:08:34Z to 15:09:06Z, exit=1; the run used the unanchored prefixes of these names, which match the same tests, and the command is written here in its anchored form): every test failed at its first assertion against `betStep` that answered `done not wired` (`the step = {Name:bet Result:done Detail:not wired}; want the wait for the answer`),
   and `TestTheBetsBlockEqualsItsGoSchema` with `the number of columns: the block has "11"; the Go schema has "0"`. The red is the stub's, not a typo of the test: the same worlds are green below.
 
 ## S4 - green
@@ -161,7 +161,7 @@ FAIL
 
 ### red-integration-1
 ```
-$ TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 60m ./internal/run/ -run 'TestTheBetsBlock|TestTheStepBet$|TestBriefLinesUnset|TestOnlyTheApprover|TestADecisionWhose|TestANoBet|TestALaterBet|TestTheBetStepIsAtomic|TestShapeStaysDone'
+$ TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 60m ./internal/run/ -run '^(TestTheBetsBlockEqualsItsGoSchema|TestTheStepBet|TestBriefLinesUnsetWaitsWithNoSession|TestOnlyTheApproverOfTheBetAnswersAndALookupThatFailsChoosesNoOne|TestADecisionWhoseOptionNamesNoRequirementIsRefusedBeforeAnyWrite|TestANoBetWritesItsRowAndWaits|TestALaterBetFailsClosed|TestTheBetStepIsAtomicToItsLastAct|TestShapeStaysDoneAfterTheRenderedPush)$'
 start 2026-10-20T15:08:34Z
 exit=1
 end 2026-10-20T15:09:06Z
