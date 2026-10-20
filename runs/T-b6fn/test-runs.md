@@ -119,3 +119,49 @@ Round 1 (GPT-6.1 Sol) found five material findings. Each of F1 to F4 has a fixtu
 | `go build ./...` | `2026-10-20T15:31:54Z` | `0` |  |
 | `go vet ./...` | `2026-10-20T15:31:54Z` | `0` |  |
 | `go test ./...` | `2026-10-20T15:31:54Z` | `0` | ok  	github.com/pharzam/layup/internal/work	(cached) |
+
+## The fixes of round 2 (cycle 2 of cap 2; by Claude Opus 5.5)
+
+| Finding | Fixture | Fix |
+| --- | --- | --- |
+| F6: a backtick that nothing closed hid a command (a regression of round 1's fix) | `bad-K3-unclosed-span-paragraph`, `bad-K3-unclosed-span-eof` | what an unclosed backtick buffered is read as plain text at a blank line, a fence and the end of the file |
+| F7: an uncommitted edit of a tracked file supplied a test name | `bad-env-dirty-worktree` | the check refuses (exit 2) a worktree with a change or an untracked file, so every input is the committed head. `bad-K6-untracked-evidence` became `bad-env-untracked-evidence`, refused the same way |
+| F8: an unreadable test file was skipped | `bad-env-K3-unreadable-test` | the same refusal names an unreadable tracked file ("cannot read …"). The inner read guards of round 1's fix in K2 could no longer be reached and were removed; `bad-env-K2-unreadable` and `bad-env-K2-unreadable-prd` now end at the refusal |
+| F9: form (b)'s "before differs from during" had no killing case | `bad-K4-form-b-equal-hashes` | none needed: with `vb != vd` removed the case fails (run.sh exit 2, 2026-10-20T15:44:36Z), and with it the case passes |
+
+A mutation pass over the new rules, each condition removed alone on a copy:
+- the flush of an unclosed span: 54 passed, 2 failed;
+- the refusal of a dirty worktree: 51 passed, 5 failed;
+- the unreadable test (`! -r` turned to `! -e`): 53 passed, 3 failed.
+
+It found two rules of K4 that no case killed: the `KILLED` override, and "dropped" anchored at the start of a cell. Rows M5 (`dropped the guard of the head | ok | KILLED`) and M6 (`the guard of the head dropped | 0 | 1`) were added to `bad-K4-dropped-in-description`. Each of the two mutants then gives 55 passed and 1 failed.
+
+| Run | Commit or tree | Time (UTC) | Exit | Result |
+| --- | --- | --- | --- | --- |
+| Red of F6–F8 | `2ed1cc0` | `2026-10-20T15:44:43Z` | `1` | `51 passed, 5 failed`: the five new F6–F8 cases (the F9 case passes, as its rule held) |
+| Green | `0cba006` | `2026-10-20T15:45:56Z` and after | `0` | `56 passed, 0 failed`, under `sh` and `bash --posix` |
+
+**Merged tasks of `main`**, with `--no-conditions --closeout 0/0`, in detached worktrees, the output written outside them:
+- T-r7b9 at `2866a3f` (base `0246d9c`), 2026-10-20T15:50:04Z: exit 1, 1 FAIL lines: FAIL K3: x1;
+- T-05f4 at `99ff862` (base `699d868`), 2026-10-20T15:50:05Z: exit 0, 0 FAIL lines:
+- T-h65e at `699d868` (base `0246d9c`), 2026-10-20T15:50:05Z: exit 1, 46 FAIL lines: FAIL K3: x1;FAIL K3: x3;FAIL K4: x41;FAIL K5: x1;
+
+The T-r7b9 line is the placeholder template of §"The fixes of round 1". The 45 K3 and K4 lines of T-h65e are the refusals that round 2 judged true under the bounded grammar: placeholder and escaped selectors, and three hashes in one cell. Its K5 line reflects the budget given here (2700/26); that task landed on the Operator's approved figure.
+
+## The gates after round 2's fixes
+
+| Command | Start (UTC) | Exit | Last line |
+| --- | --- | --- | --- |
+| `sh docs/adr/adr-lint.sh` | `2026-10-20T15:49:09Z` | `0` | adr-lint: OK |
+| `sh docs/prd/prd-lint.sh` | `2026-10-20T15:49:10Z` | `0` | prd-lint: OK |
+| `sh docs/links/link-lint.sh` | `2026-10-20T15:49:11Z` | `0` | link-lint: OK  2948 links resolved |
+| `sh docs/tests/run-discipline-tests.sh` | `2026-10-20T15:49:22Z` | `0` | run-discipline-tests: 138 passed, 0 failed |
+| `sh docs/tests/nested-checkout-check.sh` | `2026-10-20T15:49:25Z` | `0` | nested-checkout-check: OK  10 cases behaved |
+| `sh docs/tests/freeze-check/run-all.sh` | `2026-10-20T15:49:25Z` | `0` | freeze-check: 56 passed, 0 failed |
+| `bash --posix docs/tests/freeze-check/run-all.sh` | `2026-10-20T15:49:30Z` | `0` | freeze-check: 56 passed, 0 failed |
+| `sh docs/setup/setup-check.sh` | `2026-10-20T15:49:35Z` | `0` | setup-check: kit-linters OK |
+| `go build ./...` | `2026-10-20T15:49:56Z` | `0` |  |
+| `go vet ./...` | `2026-10-20T15:49:56Z` | `0` |  |
+| `go test ./...` | `2026-10-20T15:49:56Z` | `0` | ok  	github.com/pharzam/layup/internal/work	(cached) |
+
+The check on this branch, on its clean head at 2026-10-20T15:48:58Z, prints `ok` for K1, K2, K3, K4 and K6, and `FAIL K5` with the figure 2159/212. That is the budget, which is the Operator's figure at landing.
