@@ -207,3 +207,9 @@ ok  	github.com/pharzam/layup/internal/run	114.286s
 exit=0
 2026-10-20T14:57:34Z
 ```
+
+## Final gates on the head `5735e4e` (origin/main `99ff862` merged)
+
+- `go build ./...`, `go vet ./...`, `go vet -tags=integration ./...`, `go vet -tags=e2e ./...`: exit 0; `gofmt -l .`: empty; `go test -count=1 ./...`: ok; `go test -count=1 -tags=e2e ./...`: ok.
+- The full integration level, `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 90m ./...`: 2026-10-20T15:50:50Z to 15:54:11Z, exit=0 (`/home/layup/.cache/layup-session/T-2vva-full-integration.txt`). No load flake occurred.
+- `adr-lint`, `prd-lint`, `link-lint`, `run-discipline-tests` (138 passed), `nested-checkout-check`, `setup-check`, `git diff --check origin/main HEAD`: all OK.
