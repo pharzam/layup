@@ -1,0 +1,2 @@
+2
+freeze-check: --evidence runs/T-0000/base-tree.md: must name a file at base

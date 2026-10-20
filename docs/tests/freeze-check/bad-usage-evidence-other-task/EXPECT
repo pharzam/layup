@@ -1,0 +1,2 @@
+2
+freeze-check: --evidence runs/T-0001/report.md: must be under runs/T-0000/

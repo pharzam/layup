@@ -230,9 +230,12 @@ an "issue" is a GitHub issue; the issue and pull-request templates are under
 
 After the code works, **freeze the head**: name the commit, and land nothing on
 the branch after it except a fix to a finding. Before the first freeze and after
-each fix, the author commits and runs [`tests/freeze-check.sh`](tests/freeze-check.sh),
-which refuses a worktree with a change or an untracked file, and records its
-output in `runs/<task>/test-runs.md` (a written rule; CI runs only
+each fix, the author commits and runs [`sh docs/tests/freeze-check.sh`](tests/freeze-check.sh)
+with `--task T-xxxx --base REV --budget LINES/FILES` and one `--evidence PATH`
+per inspected Markdown, TSV or text evidence record under that exact task's
+`runs/` directory (execution inputs remain counted under the budget definition
+below). The script refuses a worktree with a change or an untracked file;
+the author records its output in `runs/<task>/test-runs.md` (a written rule; CI runs only
 its fixtures in [`tests/freeze-check/run-all.sh`](tests/freeze-check/run-all.sh),
 and K6 proves only that the cited evidence exists, not that it satisfies a
 condition or that the table is complete). Then run **one** independent
@@ -394,7 +397,9 @@ the rounds is:
 
   A landing figure above the `Budget maximum` by no more than the tolerance is
   approved in advance. The tolerance is 20 % of the maximum’s lines, at least
-  60 lines and at most 500, plus 4 files. Before the merge, the author posts the
+  60 lines and at most 500, plus 4 files.
+  The margin is the maximum plus the tolerance, minus the landing figure, calculated separately in lines and in files.
+  Before the merge, the author posts the
   figure, the maximum and the margin on the issue. The Operator can overrule
   that delegated decision there before the merge.
 

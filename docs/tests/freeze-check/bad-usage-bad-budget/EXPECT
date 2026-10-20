@@ -1,2 +1,2 @@
 2
-freeze-check: usage: freeze-check.sh --task T-xxxx --base REV --budget LINES/FILES [--closeout LINES/FILES] [--no-conditions]
+freeze-check: usage: freeze-check.sh --task T-xxxx --base REV --budget LINES/FILES [--evidence PATH] [--no-conditions]

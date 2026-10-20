@@ -1,0 +1,2 @@
+2
+freeze-check: --evidence runs/T-0000/missing.md: is absent from both base and HEAD

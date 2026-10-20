@@ -3,5 +3,5 @@ ok K1: white space
 ok K2: registration of new tests
 ok K3: test selectors
 ok K4: restore evidence of mutants
-ok K5: projection: figure 75/3, maximum 100/10, margin 25/7 (the figure at landing is still measured at landing)
+ok K5: projection: figure 5/1, maximum 100/10, tolerance 60/4, limit 160/14, margin 155/13 (the figure at landing is still measured at landing)
 skip K6: --no-conditions
