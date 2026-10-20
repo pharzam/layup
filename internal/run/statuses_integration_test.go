@@ -22,6 +22,7 @@ import (
 // The block task-gates is the Go value GatesSchema (the owner's comparison that
 // moves it from notYetBuilt to built).
 func TestTheGatesBlockEqualsItsGoSchema(t *testing.T) {
+	t.Parallel()
 	blocks, err := tsv.ReadBlocks(os.DirFS(filepath.Join("..", "..", "docs", "spec")))
 	if err != nil {
 		t.Fatal(err)
@@ -78,6 +79,7 @@ func statusesOf(w *world, sha string) []map[string]any {
 }
 
 func TestTheGatesStatusIsPostedOnceFromTheRecordedTableAndItsOutputIsKept(t *testing.T) {
+	t.Parallel()
 	count := filepath.Join(t.TempDir(), "count")
 	l, base, head := gateWorld(t, "fine\tactive\tsh\techo ran >> "+count+"; echo held-output-of-fine\t./*.go\t—\ndocs\tpending\tsh\ttrue\t./*.md\t—\n")
 	ctx := context.Background()
@@ -119,6 +121,7 @@ func TestTheGatesStatusIsPostedOnceFromTheRecordedTableAndItsOutputIsKept(t *tes
 }
 
 func TestAFailedPostIsRecoveredFromTheSavedTableWithoutRunningTheGateAgain(t *testing.T) {
+	t.Parallel()
 	count := filepath.Join(t.TempDir(), "count")
 	l, base, head := gateWorld(t, "bad\tactive\tsh\techo ran >> "+count+"; exit 3\t./*.go\t—\n")
 	ctx := context.Background()
@@ -154,6 +157,7 @@ func TestAFailedPostIsRecoveredFromTheSavedTableWithoutRunningTheGateAgain(t *te
 }
 
 func TestAPendingKindWithAProductPathAndANotActiveKindAreFailures(t *testing.T) {
+	t.Parallel()
 	for name, c := range map[string]struct{ kinds, want string }{
 		"a pending kind and a product path that changed": {"boundary\tpending\tsh\ttrue\t./*.go\t—\n", "boundary: fail: pending: product path changed: x.go"},
 		"a tool that is not found":                       {"lint\tactive\tno-such-tool-for-layup\ttrue\t./*.go\t—\n", "lint: not-active: tool not found: no-such-tool-for-layup"},
@@ -170,6 +174,7 @@ func TestAPendingKindWithAProductPathAndANotActiveKindAreFailures(t *testing.T) 
 }
 
 func TestABaseWithNoManifestIsAPostedErrorAndWritesNoRow(t *testing.T) {
+	t.Parallel()
 	l := statusWorldOfARun(t)
 	head := childCommit(t, l.r.Clone, l.a.base, map[string]string{"x.go": "package x\n"})
 	st, err := l.r.GatesAt(context.Background(), GatesInput{Task: "T-ab12", Base: l.a.base, Head: head})
@@ -185,6 +190,7 @@ func TestABaseWithNoManifestIsAPostedErrorAndWritesNoRow(t *testing.T) {
 }
 
 func TestTheRulesStatusReadsTheRegisterOfTheRecordsCommit(t *testing.T) {
+	t.Parallel()
 	l := statusWorldOfARun(t)
 	ctx := context.Background()
 	// A head that code produced edits a rule path and the register at the root; the caller names the records commit.
@@ -211,6 +217,7 @@ func TestTheRulesStatusReadsTheRegisterOfTheRecordsCommit(t *testing.T) {
 // head that a session pushed is the one of the register at the records commit of that session's start row, whatever the records hold now.
 // U7: the known results, with the current records commit advanced to a register that makes x.go a rule path.
 func TestTheRulesResultOfAPushedHeadStaysThatOfItsBoundSessionWhenTheRecordsMoveOn(t *testing.T) {
+	t.Parallel()
 	l := statusWorldOfARun(t)
 	ctx := context.Background()
 	id := l.dev(1, "claude", map[string]string{"x.go": "package x\n"}, okResult)
@@ -243,6 +250,7 @@ func TestTheRulesResultOfAPushedHeadStaysThatOfItsBoundSessionWhenTheRecordsMove
 // U6 on the records (plan review conditions 3 and 5): CheckFindings reads the spec table of the head and the rules result by the register of the
 // records commit, and the kind of the task from the register. A head with no row is a stop, a table the reader refuses is a Go error.
 func TestCheckFindingsReadsTheSpecTableTheRulesResultAndTheKindOfTheTask(t *testing.T) {
+	t.Parallel()
 	l := statusWorldOfARun(t)
 	ctx := context.Background()
 	head := childCommit(t, l.r.Clone, l.a.base, map[string]string{"AGENTS.md": "changed\n"})
@@ -278,6 +286,7 @@ func TestCheckFindingsReadsTheSpecTableTheRulesResultAndTheKindOfTheTask(t *test
 }
 
 func TestTheVerifyStatusFollowsTheVerifierFromTheRecords(t *testing.T) {
+	t.Parallel()
 	l := statusWorldOfARun(t)
 	ctx := context.Background()
 	harnesses, models := commitRegisters(t, l)
@@ -320,6 +329,7 @@ func specRecords(t *testing.T, l *loopRun) {
 }
 
 func TestTheSpecStatusOfAHeadThatTouchesNoSpecificationIsClearAndIsRebuiltFromItsTable(t *testing.T) {
+	t.Parallel()
 	l := statusWorldOfARun(t)
 	ctx := context.Background()
 	specRecords(t, l)
@@ -358,6 +368,7 @@ func TestTheSpecStatusOfAHeadThatTouchesNoSpecificationIsClearAndIsRebuiltFromIt
 }
 
 func TestATargetSourceOfTheFullCheckIsAPostedErrorAndARecordsSourceIsAGoError(t *testing.T) {
+	t.Parallel()
 	l := statusWorldOfARun(t)
 	ctx := context.Background()
 	specRecords(t, l)
@@ -407,6 +418,7 @@ func fourStatusWorldOf(t *testing.T, kinds string) (*loopRun, HeadInput) {
 // The demo of row 66f: the four statuses of a head, each from its own records, posted once for
 // an unchanged state, with a not-active kind a failure that is read back from the forge.
 func TestTheFourStatusesOfAHead(t *testing.T) {
+	t.Parallel()
 	l, in := fourStatusWorld(t)
 	ctx := context.Background()
 	want := []StatusPost{
@@ -440,6 +452,7 @@ func TestTheFourStatusesOfAHead(t *testing.T) {
 }
 
 func TestAFailedPostOfOneContextLeavesTheEarlierPostsAndTheNextCallPostsTheRest(t *testing.T) {
+	t.Parallel()
 	l, in := fourStatusWorld(t)
 	ctx := context.Background()
 	l.w.fake.okStatus, l.w.fake.failStatus = 1, 1
@@ -477,6 +490,7 @@ func cleanupAfter(t *testing.T, err error) {
 }
 
 func TestACleanupErrorKeepsTheRowsAndIsReturnedWithTheStatus(t *testing.T) {
+	t.Parallel()
 	l, base, head := gateWorld(t, cleanupKind)
 	ctx := context.Background()
 	st, err := l.r.GatesAt(ctx, GatesInput{Task: "T-ab12", Base: base, Head: head, Out: io.Discard})
@@ -490,6 +504,7 @@ func TestACleanupErrorKeepsTheRowsAndIsReturnedWithTheStatus(t *testing.T) {
 }
 
 func TestACleanupErrorOfTheGatesStopsNoPostAndIsReturnedByPostStatuses(t *testing.T) {
+	t.Parallel()
 	l, in := fourStatusWorldOf(t, cleanupKind)
 	got, err := l.r.PostStatuses(context.Background(), in)
 	cleanupAfter(t, err)
@@ -506,6 +521,7 @@ func TestACleanupErrorOfTheGatesStopsNoPostAndIsReturnedByPostStatuses(t *testin
 
 // The statuses are posted as the App through the Sessions that a run builds (state.sessions()), not a literal.
 func TestTheSessionsOfTheRunPostAsTheApp(t *testing.T) {
+	t.Parallel()
 	l := statusWorldOfARun(t)
 	st := &state{cfg: l.w.config("0.1.0-dev"), store: l.r.Store.(*recordsStore), target: l.r.Clone, defaultBranch: l.r.Branch, botID: 9001,
 		start: [][]string{{"issue.control", "2", "run"}}}

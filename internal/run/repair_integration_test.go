@@ -136,6 +136,7 @@ func line(id, tail string) string {
 }
 
 func TestARestartBindsAPushThatTheForgeAccepted(t *testing.T) {
+	t.Parallel()
 	w, r, base := commentWorld(t)
 	id := stopped(t, r, base, "T-ab12", true)
 	got, err := afterRestart(r).RepairTask(context.Background(), "T-ab12")
@@ -148,6 +149,7 @@ func TestARestartBindsAPushThatTheForgeAccepted(t *testing.T) {
 }
 
 func TestARestartRefusesALostPushAndStartsOneAttempt(t *testing.T) {
+	t.Parallel()
 	w, r, base := commentWorld(t)
 	id := stopped(t, r, base, "T-ab12", false)
 	got, err := afterRestart(r).RepairTask(context.Background(), "T-ab12")
@@ -161,6 +163,7 @@ func TestARestartRefusesALostPushAndStartsOneAttempt(t *testing.T) {
 
 // Shape runs before any bet: the register holds a task of kind specification and the records no bets.tsv.
 func TestARestartRepairsAShapePushBeforeAnyBet(t *testing.T) {
+	t.Parallel()
 	w, r, base := commentWorld(t)
 	ctx := context.Background()
 	files, err := registerFiles(mustRead(t, r, "tasks.tsv"), nil, Task{ID: "T-sp01", Issue: 4, Kind: "specification", Requirements: []string{"REQ-005"}, Size: "small", Opened: time.Now().UTC().Truncate(time.Second)})
@@ -197,6 +200,7 @@ func mustRead(t *testing.T, r *Sessions, path string) []byte {
 
 // A stop between the commit of refused and the commit of attempt: the next runs start one attempt, and no more.
 func TestARestartBetweenPushLostAndTheAttemptStartsExactlyOne(t *testing.T) {
+	t.Parallel()
 	w, r, base := commentWorld(t)
 	ctx := context.Background()
 	stopped(t, r, base, "T-ab12", false)
@@ -222,6 +226,7 @@ func TestARestartBetweenPushLostAndTheAttemptStartsExactlyOne(t *testing.T) {
 
 // A commit pushed onto the branch after the push: the head is a descendant of the SHA, not the SHA.
 func TestAMovedBranchHeadIsPushLost(t *testing.T) {
+	t.Parallel()
 	w, r, base := commentWorld(t)
 	stopped(t, r, base, "T-ab12", true)
 	pushedSHA := strings.TrimSpace(gitOut(t, w.bare, "rev-parse", "refs/heads/task/T-ab12/1"))
@@ -236,6 +241,7 @@ func TestAMovedBranchHeadIsPushLost(t *testing.T) {
 }
 
 func TestATaskSessionsCommentIsOnItsIssue(t *testing.T) {
+	t.Parallel()
 	w, r, base := commentWorld(t)
 	id := commentSession(t, r, base, "developer", "a note\n")
 	if got, want := summaries(w, taskIssue), []string{line(id, "done")}; !slices.Equal(got, want) {
@@ -247,6 +253,7 @@ func TestATaskSessionsCommentIsOnItsIssue(t *testing.T) {
 }
 
 func TestASessionCommentThatTheAppPostedIsNotPostedAgain(t *testing.T) {
+	t.Parallel()
 	w, r, base := commentWorld(t)
 	commentSession(t, r, base, "developer", "a note\n")
 	got, err := afterRestart(r).RepairTask(context.Background(), "T-ab12")
@@ -256,6 +263,7 @@ func TestASessionCommentThatTheAppPostedIsNotPostedAgain(t *testing.T) {
 }
 
 func TestAMissingSessionCommentIsPostedAgainFromTheRecords(t *testing.T) {
+	t.Parallel()
 	w, r, base := commentWorld(t)
 	w.fake.mu.Lock()
 	w.fake.failNote = " session of T-ab12, attempt 1: done"
@@ -275,6 +283,7 @@ func TestAMissingSessionCommentIsPostedAgainFromTheRecords(t *testing.T) {
 
 // With no usable row of the task in the register, no comment is posted, on any issue.
 func TestNoRegisterRowOrABrokenRegisterPostsNowhere(t *testing.T) {
+	t.Parallel()
 	for _, tt := range []struct{ name, want string }{{"no row", "has no row of T-ab12"}, {"refused", "tasks.tsv:"}, {"absent", "no tasks.tsv"}} {
 		t.Run(tt.name, func(t *testing.T) {
 			w, r, base := commentWorld(t)
@@ -316,6 +325,7 @@ func TestNoRegisterRowOrABrokenRegisterPostsNowhere(t *testing.T) {
 // Each guard of the post holds on both paths: the session's own and the hook's repost. The comment
 // is missing in the second path (the forge refused it once), then the guard is in place.
 func TestTheGuardsOfThePostHoldOnBothPaths(t *testing.T) {
+	t.Parallel()
 	guards := []struct {
 		name string
 		arm  func(s *Sessions) // puts the guard in s
@@ -363,6 +373,7 @@ func TestTheGuardsOfThePostHoldOnBothPaths(t *testing.T) {
 
 // Only the App's own comment of the same bytes counts as posted: the same text by a person, or by another App, does not suppress it.
 func TestTheSameTextFromAPersonOrAnotherAppDoesNotSuppressTheSummary(t *testing.T) {
+	t.Parallel()
 	w, r, base := commentWorld(t)
 	w.fake.mu.Lock()
 	w.fake.failNote = " session of T-ab12, attempt 1: done"

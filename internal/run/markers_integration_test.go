@@ -69,6 +69,7 @@ var intakeSteps = []string{"forge", "clone", "version", "lease", "probe", "rule-
 // holds a row for each marker, in the order of S10's stop table, with code's
 // offsets; a second restart finds the record and starts no session.
 func TestTheStepMarkers(t *testing.T) {
+	t.Parallel()
 	w, rows := markersToBatch(t, proposals())
 	allDone(t, "the restart", rows, intakeSteps...)
 	if d := rowOf(rows, "markers").Detail; d != "3 markers, 2 with a proposal, in intake/markers.tsv" {
@@ -113,6 +114,7 @@ func TestTheStepMarkers(t *testing.T) {
 // With no marker in the pinned tree the step writes a table with no row and
 // starts no session; the batch then asks S01-stack alone in the Operator's block.
 func TestTheStepMarkersWithNoMarker(t *testing.T) {
+	t.Parallel()
 	w := newWorld(t)
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	rows := Restart(context.Background(), w.config("0.1.0-dev"))
@@ -133,6 +135,7 @@ func TestTheStepMarkersWithNoMarker(t *testing.T) {
 // stays held. With no pair for systems-architect the step is fail (pair) and no
 // session starts for it.
 func TestTheStepMarkersFails(t *testing.T) {
+	t.Parallel()
 	k := markerKeys()
 	head := "id\tvalue\tquote\n"
 	for _, c := range []struct{ name, file, detail string }{
@@ -191,6 +194,7 @@ func TestTheStepMarkersFails(t *testing.T) {
 // and its quote, and the rule of the answers has the forms of a marker's
 // answer. S01-stack is asked as well as the rule gap of G1.
 func TestTheStepBatchAsksTheSetupQuestions(t *testing.T) {
+	t.Parallel()
 	w, rows := markersToBatch(t, proposals())
 	allDone(t, "the restart", rows, intakeSteps...)
 	table, err := records.ReadQuestions([]byte(show(t, w.bare, "refs/heads/layup-records", "questions.tsv")))
@@ -253,6 +257,7 @@ func TestTheStepBatchAsksTheSetupQuestions(t *testing.T) {
 // Operator's block, each with the quote of its first question and, for a marker
 // with a proposal, the line proposed:; the idea owner's block says it asks none.
 func TestTheFollowUpAsksTheMarkersAgain(t *testing.T) {
+	t.Parallel()
 	w, _ := markersToBatch(t, proposals())
 	table, err := records.ReadQuestions([]byte(show(t, w.bare, "refs/heads/layup-records", "questions.tsv")))
 	if err != nil {

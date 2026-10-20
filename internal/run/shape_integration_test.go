@@ -124,6 +124,7 @@ func (f *flakyForge) Comments(ctx context.Context, issue int) ([]forge.Comment, 
 // copied; a post that fails after the rows, and a read that fails after the post, are recovered with one comment; the answers set the
 // states, an unparsed intent value waits and is asked again, and the correction writes budget.tsv with Shape's question as the source.
 func TestTheQuestionsLeftOpenAreAskedAndTheIntentAnswerWritesBudget(t *testing.T) {
+	t.Parallel()
 	d := newDrvWorldOpts(t, loopPerms, drvOpts{noOption: true})
 	d.push(map[string][]byte{
 		"questions.tsv": cavTable(t, records.QuestionsSchema, [][]string{qrow("Q-001", "S01-stack", "open"), qrow("Q-002", "band.B", "open"), qrow("Q-003", "band.U", "open"),
@@ -211,6 +212,7 @@ func (d *drvWorld) sessionsStarted() int {
 // I2 (loop.md, The round, the rewrite and the stop): round 1 all dropped, one rewrite, all dropped again, then one comment, the row
 // waiting for the Operator, and a second run that writes and starts nothing.
 func TestTheRewriteAndTheRoundWithNoProgress(t *testing.T) {
+	t.Parallel()
 	d := newDrvWorldOpts(t, loopPerms, drvOpts{noOption: true})
 	d.settled()
 	d.ctlOptions(1, droppedDB)
@@ -243,6 +245,7 @@ func TestTheRewriteAndTheRoundWithNoProgress(t *testing.T) {
 
 // I3: a stop during the rewrite keeps nothing; the restart runs the rewrite again, once, and the copy of round 1 is made once.
 func TestAStopDuringTheRewriteRunsItAgainOnce(t *testing.T) {
+	t.Parallel()
 	d := newDrvWorldOpts(t, loopPerms, drvOpts{noOption: true})
 	d.settled()
 	d.ctlOptions(1, droppedDB)
@@ -269,6 +272,7 @@ func TestAStopDuringTheRewriteRunsItAgainOnce(t *testing.T) {
 // specification task and then the architecture task to their verified heads, on a target with no PRD (#432) and on one with a PRD; a
 // second run writes nothing.
 func TestTheStepShape(t *testing.T) {
+	t.Parallel()
 	for _, noPRD := range []bool{true, false} {
 		d := newDrvWorldOpts(t, loopPerms, drvOpts{noPRD: noPRD, noOption: true})
 		d.settled()
@@ -327,6 +331,7 @@ func TestTheStepShape(t *testing.T) {
 // The wait of the step is the row waiting: the intent form, the last row; with no budget.tsv and no intent question left to wait for,
 // the step fails closed (loop.md, The questions left open: the wait).
 func TestTheStepWaitsOnTheIntentFormAndFailsClosedWhenNothingIsOpen(t *testing.T) {
+	t.Parallel()
 	d := newDrvWorldOpts(t, loopPerms, drvOpts{noOption: true})
 	d.push(map[string][]byte{
 		"questions.tsv":      cavTable(t, records.QuestionsSchema, [][]string{qrow("Q-001", "band.B", "open"), qrow("Q-002", "band.U", "open"), qrow("Q-003", "appetite.hours", "open")}),
@@ -366,6 +371,7 @@ func (d *drvWorld) verifierRange(task, from string) {
 // F4: the architecture task is opened only after the specification has a verified head: a specification in a wait or at a stop leaves
 // no issue, no row and no session of the architecture task.
 func TestASpecificationThatWaitsOrStopsLeavesTheArchitectureTaskUnopened(t *testing.T) {
+	t.Parallel()
 	for _, c := range []struct{ name, arrange, want string }{
 		{"a wait", "verdict", "waiting for the Operator: "},
 		{"a stop", "no-section", "the handoff"},
@@ -405,6 +411,7 @@ func TestASpecificationThatWaitsOrStopsLeavesTheArchitectureTaskUnopened(t *test
 
 // F1 of round 1: a partial answer keeps the comment of its round: repeated restarts post and copy it once.
 func TestAPartialAnswerKeepsTheCommentOfItsRound(t *testing.T) {
+	t.Parallel()
 	d := newDrvWorldOpts(t, loopPerms, drvOpts{noOption: true})
 	d.push(map[string][]byte{
 		"questions.tsv":      cavTable(t, records.QuestionsSchema, [][]string{qrow("Q-001", "band.B", "open"), qrow("Q-002", "band.U", "open"), qrow("Q-003", "appetite.hours", "open")}),

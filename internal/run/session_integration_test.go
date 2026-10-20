@@ -18,6 +18,7 @@ import (
 // repository, a task session's start row is pushed before its fake harness
 // starts; the harness's first act is to read layup-records of the target.
 func TestTheStartRowIsPushedBeforeTheProcess(t *testing.T) {
+	t.Parallel()
 	w := newWorld(t)
 	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	clone := filepath.Join(t.TempDir(), "clone")

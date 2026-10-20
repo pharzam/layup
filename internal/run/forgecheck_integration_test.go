@@ -97,6 +97,7 @@ func withAnotherCreation(t *testing.T, rules string) string {
 // is given here as none); a refusal of another ref, one with another text, a remote that cannot be reached and a push that is accepted
 // are not; the commit is empty on top of the head, by the identity that is given, and on no branch of the clone.
 func TestTheProbeIsAPassOnlyForGitHubsRefusalOfTheProbeRef(t *testing.T) {
+	t.Parallel()
 	who := git.Identity{Name: "layup-agent[bot]", Email: "9001+layup-agent[bot]@users.noreply.github.com", Time: time.Date(2026, 10, 13, 12, 0, 0, 0, time.UTC)}
 	for _, c := range []struct {
 		name, hook, result, detail string
@@ -375,6 +376,7 @@ func TestTheStepForgeCheckChecksTheForgeAndCommitsItsTableAtEachRestart(t *testi
 // passes the row, and each of the heads that follows fails it with the reason of the check; a setup record that has the row
 // S13 codeowners.sha256 refuses even the canonical commit. The repository is the run's clone of the check.
 func TestTheTreeRowOnRealObjects(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	gitOut(t, dir, "init", "-q", "-b", "main")
 	manifest := "kind\tstate\ttool\tcommand\tscope\tconfig\nstatic\tactive\tgo\tgo vet ./...\t./*.go\t—\nlayout\tpending\t—\t—\t./*.go\tdocs/gates/x.txt tools/cfg.yml\n"

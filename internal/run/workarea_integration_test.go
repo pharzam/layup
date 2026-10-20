@@ -75,6 +75,7 @@ const originURL = "https://github.invalid/acme/target.git"
 var answersRows = [][]string{{"S01-stack", "go", "operator", "https://github.invalid/acme/target/issues/1#issuecomment-5", ""}, {"Q-001", "PostgreSQL", "idea-owner", "https://github.invalid/acme/target/issues/1#issuecomment-6", ""}}
 
 func TestTheWorkAreaIsBuiltFromTheRecords(t *testing.T) {
+	t.Parallel()
 	bare, ids := forgeRepo(t, "main", map[string]string{"README.md": "# Target\n", "docs/a.md": "a\n"})
 	dir := filepath.Join(t.TempDir(), "work", "acme", "target")
 	writeFile(t, filepath.Join(dir, "stale.txt"), "old") // a work area of an earlier run, which is removed
@@ -108,6 +109,7 @@ func TestTheWorkAreaIsBuiltFromTheRecords(t *testing.T) {
 
 // With no vision brief the area has none; a second build gives the same head and a clean tree.
 func TestTheWorkAreaIsBuiltAgainFromScratch(t *testing.T) {
+	t.Parallel()
 	bare, ids := forgeRepo(t, "main", map[string]string{"README.md": "# Target\n"})
 	clone := runClone(t, bare)
 	dir := filepath.Join(t.TempDir(), "work", "acme", "target")
@@ -136,6 +138,7 @@ func TestTheWorkAreaIsBuiltAgainFromScratch(t *testing.T) {
 // has main at the root commit, the row of order 0 of setup/tree.tsv, and its
 // files, not the files of the branch's tip.
 func TestTheWorkAreaTargetIsAtTheRootCommitOfTheTree(t *testing.T) {
+	t.Parallel()
 	bare, ids := forgeRepo(t, "main", map[string]string{"README.md": "# Root\n"}, map[string]string{"docs/pin": "pin\n"}, map[string]string{"docs/glossary.md": "g\n"})
 	dir := filepath.Join(t.TempDir(), "work", "acme", "target")
 	src := workSource{Brief: []byte("b\n"), Tree: treeRows(t, bare, ids)}
@@ -156,6 +159,7 @@ func TestTheWorkAreaTargetIsAtTheRootCommitOfTheTree(t *testing.T) {
 
 // With no setup/tree.tsv the default branch must hold the one commit that Start read back.
 func TestTheWorkAreaRefusesMoreThanTheRootCommitWithNoTree(t *testing.T) {
+	t.Parallel()
 	bare, _ := forgeRepo(t, "main", map[string]string{"README.md": "# Root\n"}, map[string]string{"docs/pin": "pin\n"})
 	dir := filepath.Join(t.TempDir(), "work", "acme", "target")
 	err := buildWorkArea(dir, workSource{Brief: []byte("b\n")}, runClone(t, bare), "main", originURL)
@@ -166,6 +170,7 @@ func TestTheWorkAreaRefusesMoreThanTheRootCommitWithNoTree(t *testing.T) {
 
 // The root commit of the tree must be in the clone.
 func TestTheWorkAreaRefusesARootThatTheCloneLacks(t *testing.T) {
+	t.Parallel()
 	bare, ids := forgeRepo(t, "main", map[string]string{"README.md": "# Root\n"})
 	other, otherIDs := forgeRepo(t, "main", map[string]string{"README.md": "# Another\n"})
 	_ = ids
@@ -179,6 +184,7 @@ func TestTheWorkAreaRefusesARootThatTheCloneLacks(t *testing.T) {
 // The runner reads refs/heads/main (S03, S04): the branch of target/ is main
 // whatever the forge's default branch is called.
 func TestTheTargetIsOnMainWhateverTheDefaultBranchIs(t *testing.T) {
+	t.Parallel()
 	bare, ids := forgeRepo(t, "trunk", map[string]string{"README.md": "# Root\n"})
 	dir := filepath.Join(t.TempDir(), "work", "acme", "target")
 	if err := buildWorkArea(dir, workSource{Brief: []byte("b\n")}, runClone(t, bare), "trunk", originURL); err != nil {
@@ -200,6 +206,7 @@ func TestTheTargetIsOnMainWhateverTheDefaultBranchIs(t *testing.T) {
 // whose path leaves inputs/files (docs/spec/scaffold.md, The work area): the
 // records are LAYUP's own, and a path with .. is no path of the target.
 func TestTheWorkAreaRefusesAFilePathThatLeavesItsDirectory(t *testing.T) {
+	t.Parallel()
 	for _, path := range []string{"..", "../escape.md", "docs/../../escape.md", "/etc/passwd", "docs//glossary.md", "", ".", "docs/./glossary.md"} {
 		dir := filepath.Join(t.TempDir(), "work", "acme", "target")
 		err := buildWorkArea(dir, workSource{Brief: []byte("b"), Files: map[string][]byte{path: []byte("x")}}, "/no/such/clone", "main", originURL)
@@ -215,6 +222,7 @@ func TestTheWorkAreaRefusesAFilePathThatLeavesItsDirectory(t *testing.T) {
 // A link at DIR/work or at DIR/work/OWNER would take the removal of the area outside DIR
 // (docs/spec/scaffold.md, The work area): the build is refused, and the files outside stay.
 func TestTheWorkAreaIsNotBuiltThroughALink(t *testing.T) {
+	t.Parallel()
 	bare, _ := forgeRepo(t, "main", map[string]string{"README.md": "# Target\n"})
 	clone := runClone(t, bare)
 	for _, link := range []string{"work/acme", "work"} {
