@@ -231,3 +231,9 @@ Strict red on the unchanged code `c68e1a3`, the new test file alone, in the work
 ### Green
 
 The fix: `mergeAt` gives the head of the pull request that the forge holds after `MergeTask` (`Head: pr.HeadSHA`), not the close-out head. The same command, the new test and the integration set of the round 1 to 4 tests, start 2026-10-20T22:10:44Z, end 2026-10-20T22:10:56Z, exit=0: ok.
+
+### Round 5 - the merge of main, the fold and the gates
+
+`origin/main` (4259e05, row 66x landed) was merged (`abd8166`). Conflicts: `internal/git/git.go`, `internal/git/git_test.go` (both sides appended: kept both), `internal/run/pullroutes_integration_test.go` (the field `closed` and the fields of the route: both kept), `docs/spec/loop.md` (D-text of this row and the section of row 66x: both kept), `docs/spec/packages.md` (the cell of `internal/run`: both additions kept), `docs/tests/traceability.md` and `docs/prd/PRD-0001-layup.md` (rows of both sides, each row of section 12 merged cell by cell); no `+` line of either side was dropped. The fold of the two predicates was made in the same commit as the merge (a deviation from the order asked): `FinishTask` calls `UpToDate(ctx, carried)` of `baseup.go` and `upToDate` of `finish.go` and its unit test `TestTheDefaultHeadMustBeTheBaseOrAnAncestorOfTheCarriedHead` were deleted; D9 of `loop.md` names the one predicate.
+
+Full integration level: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./...` (head `bfba9ec`, start 2026-10-20T22:17:47Z, end 2026-10-20T22:21:09Z, exit=0), 21 packages ok. build, vet with no tag, `integration` and `e2e`, gofmt, `go test -count=1 ./...` (21 ok), `go test -count=1 -tags=e2e ./...` (start 2026-10-20T22:21:16Z, end 2026-10-20T22:22:21Z, exit=0), the six lints and `git diff --check origin/main HEAD`: exit=0 each. The code is frozen at `1fc7253` plus the merge and the fold (`abd8166`).
