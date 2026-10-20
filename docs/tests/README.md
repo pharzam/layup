@@ -51,17 +51,18 @@ discipline linters — lives here, so their tests can too.
 
 For the clean committed-worktree invocation and evidence declarations, follow
 [Reviewing until findings decay](../engineering-discipline.md#reviewing-until-findings-decay).
+A declaration names a file at each committed endpoint where it exists.
 Declared paths are literal and duplicates count once. Added, modified and deleted
-records are resolved at the committed endpoints.
-Every unlisted path stays counted. Declarations supply classification, rather than
-proving it: inspect consumers using the canonical
+records are resolved at the committed endpoints. K5 counts a rename as a deletion
+plus an addition.
+Every unlisted path stays counted. Declarations supply the author's
+classification; inspect consumers using the canonical
 [input definition](../engineering-discipline.md#reviewing-until-findings-decay).
-Auditing a record alone does not make it input; execution data and dual-use files
-remain counted. K5 removes declared records, adds no synthetic close-out allowance,
+K5 removes declared records, adds no synthetic close-out allowance,
 and reports figure, maximum, tolerance, limit and margin in lines and files. Its
-line tolerance uses whole-line division by five, bounded by 60 and 500; file
-tolerance is 4. Equality with either limit passes. The landing audit still measures
-the actual figure and mixed-file bookkeeping.
+line tolerance truncates to whole lines; the canonical
+[budget rule](../engineering-discipline.md#reviewing-until-findings-decay)
+defines the tolerance, inclusive limit and landing audit.
 
 T-c826's migration assertions run with `sh runs/T-c826/checks.sh 453`, supplying
 the actual PR number. They check the canonical margin sentence, unchanged runners

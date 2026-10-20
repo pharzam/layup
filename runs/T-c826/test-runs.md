@@ -1951,3 +1951,257 @@ reviewed maximum of **1300 / 170**. Tolerance is **260 / 4**, limit is
 **1560 / 174**, and margin is **689 / 28**. K6 now accepts the condition
 citations. This is the clean-head pre-freeze result; it does not claim an
 independent review or close-out.
+
+## Stage G — round 1 fixes (cycle 1 of cap 2)
+
+Round 1 is the supplied Claude Opus 5.5 review, comment
+[6303062417](https://github.com/pharzam/layup/issues/449#issuecomment-6303062417),
+material on F1 and F2 at `fdb8d626008762b2e13cbab5fe53c4d5d3226700`.
+This stage started on that head with a clean worktree. It writes the fixes and
+records for the coordinator's ordered test/fix/docs commits. No commit,
+pre-freeze invocation, task detail or completed-log entry is made in this stage.
+Both runners and `runs/T-c826/checks.sh` remain unchanged.
+All scratch files, captured outputs and temporary fixture repositories are under
+`/home/layup/.cache/layup-session/tmp-green`; `TMPDIR` selects that directory.
+Times below are direct reads of `date -u +%FT%TZ`; exits are the direct child
+statuses, not the exit of a pipeline or of the recording helper.
+
+### Cases before code
+
+- **F1, HEAD tree:** `bad-usage-evidence-directory-head` declares a `.md`
+  directory containing a 61-line unlisted script. The current checker accepts
+  it and excludes the script, printing figure 0/0 and exiting 0. The fixed
+  expectation is exit 2 before any K1–K6 output.
+- **F1, base tree:** `bad-usage-evidence-directory-base` replaces a directory
+  at base with a one-line record at HEAD, declaring that path. The base tree's
+  unlisted script must not be subtracted. It currently also prints figure 0/0
+  and exits 0, against the expected exit 2.
+- **F2, rename into evidence:** `good-K5-evidence-renamed` deletes the baseline's
+  three-line `test-runs.md` and adds the identical `moved.md`, declaring only
+  the destination. The original checker already passes: figure 3/1, margin
+  57/3 at maximum 0/0. This is a green regression control, not claimed as red.
+  M69 removes only `--no-renames` on the gross diff. The case then fails on
+  figure -3/0 and margin 63/4, with checker exit 0 and harness exit 2. Restoring
+  the flag restores the named green control before any Stage G checker edit.
+- **Note 3, diagnostic:** `bad-usage-evidence-trailing-slash` expects an empty
+  path-component diagnostic instead of calling the trailing slash traversal.
+  Its observed pre-fix mismatch has checker exit 2 and harness exit 2.
+
+The added base-tree input uses the existing shared `base/` fixture, `.in`
+overlays and `ABSENT.in`, without runner metadata. It changes the deterministic
+base commit from `8f46ad9` to `1d1b4a0512eff698c4107a45939f9f8c38f060aa`.
+The first suite therefore also failed `good-K6-valid`, which cited the old
+base commit. That unrelated failure is not credited as red evidence for F1.
+`G-base-sha` reconstructs the shared base using the runner's overlay, identity
+and fixed dates. Updating only that case's commit citation to `1d1b4a0` restores
+its original valid-commit assertion; its EXPECT is unchanged. The corrected
+pre-code suite has exactly the two intended F1 failures: **82 passed, 2 failed**.
+
+Observed commands through the first green suite and mutation controls:
+
+| Run | Command | UTC start | UTC end | Exit |
+| --- | --- | --- | --- | --- |
+| G-red | `sh docs/tests/freeze-check/run-all.sh` | 2026-10-20T22:21:22Z | 2026-10-20T22:21:31Z | 1 |
+| G-base-sha | `python3 /home/layup/.cache/layup-session/tmp-green/T-c826-stage-g/base-sha.py` | 2026-10-20T22:21:58Z | 2026-10-20T22:21:58Z | 0 |
+| G-red-corrected | `sh docs/tests/freeze-check/run-all.sh` | 2026-10-20T22:22:03Z | 2026-10-20T22:22:11Z | 1 |
+| M69-syntax | `sh -n /home/layup/.cache/layup-session/tmp-green/T-c826-stage-g/M69/docs/tests/freeze-check.sh` | 2026-10-20T22:22:22Z | 2026-10-20T22:22:22Z | 0 |
+| M69-mutant | `sh /home/layup/.cache/layup-session/tmp-green/T-c826-stage-g/M69/docs/tests/freeze-check/run.sh /home/layup/.cache/layup-session/tmp-green/T-c826-stage-g/M69/docs/tests/freeze-check/good-K5-evidence-renamed` | 2026-10-20T22:22:22Z | 2026-10-20T22:22:23Z | 2 |
+| M69-restored | `sh /home/layup/.cache/layup-session/tmp-green/T-c826-stage-g/M69/docs/tests/freeze-check/run.sh /home/layup/.cache/layup-session/tmp-green/T-c826-stage-g/M69/docs/tests/freeze-check/good-K5-evidence-renamed` | 2026-10-20T22:22:23Z | 2026-10-20T22:22:23Z | 0 |
+| G-red-trailing-slash | `sh docs/tests/freeze-check/run.sh docs/tests/freeze-check/bad-usage-evidence-trailing-slash` | 2026-10-20T22:22:46Z | 2026-10-20T22:22:46Z | 2 |
+| G-green | `sh docs/tests/freeze-check/run-all.sh` | 2026-10-20T22:22:55Z | 2026-10-20T22:23:04Z | 0 |
+| M67-syntax | `sh -n /home/layup/.cache/layup-session/tmp-green/T-c826-stage-g/M67/docs/tests/freeze-check.sh` | 2026-10-20T22:23:19Z | 2026-10-20T22:23:19Z | 0 |
+| M67-mutant | `sh /home/layup/.cache/layup-session/tmp-green/T-c826-stage-g/M67/docs/tests/freeze-check/run.sh /home/layup/.cache/layup-session/tmp-green/T-c826-stage-g/M67/docs/tests/freeze-check/bad-usage-evidence-directory-head` | 2026-10-20T22:23:19Z | 2026-10-20T22:23:20Z | 2 |
+| M67-restored | `sh /home/layup/.cache/layup-session/tmp-green/T-c826-stage-g/M67/docs/tests/freeze-check/run.sh /home/layup/.cache/layup-session/tmp-green/T-c826-stage-g/M67/docs/tests/freeze-check/bad-usage-evidence-directory-head` | 2026-10-20T22:23:20Z | 2026-10-20T22:23:20Z | 0 |
+| M68-syntax | `sh -n /home/layup/.cache/layup-session/tmp-green/T-c826-stage-g/M68/docs/tests/freeze-check.sh` | 2026-10-20T22:23:20Z | 2026-10-20T22:23:20Z | 0 |
+| M68-mutant | `sh /home/layup/.cache/layup-session/tmp-green/T-c826-stage-g/M68/docs/tests/freeze-check/run.sh /home/layup/.cache/layup-session/tmp-green/T-c826-stage-g/M68/docs/tests/freeze-check/bad-usage-evidence-directory-base` | 2026-10-20T22:23:20Z | 2026-10-20T22:23:20Z | 2 |
+| M68-restored | `sh /home/layup/.cache/layup-session/tmp-green/T-c826-stage-g/M68/docs/tests/freeze-check/run.sh /home/layup/.cache/layup-session/tmp-green/T-c826-stage-g/M68/docs/tests/freeze-check/bad-usage-evidence-directory-base` | 2026-10-20T22:23:20Z | 2026-10-20T22:23:20Z | 0 |
+| M70-syntax | `sh -n /home/layup/.cache/layup-session/tmp-green/T-c826-stage-g/M70/docs/tests/freeze-check.sh` | 2026-10-20T22:23:20Z | 2026-10-20T22:23:20Z | 0 |
+| M70-mutant | `sh /home/layup/.cache/layup-session/tmp-green/T-c826-stage-g/M70/docs/tests/freeze-check/run.sh /home/layup/.cache/layup-session/tmp-green/T-c826-stage-g/M70/docs/tests/freeze-check/bad-usage-evidence-trailing-slash` | 2026-10-20T22:23:20Z | 2026-10-20T22:23:20Z | 2 |
+| M70-restored | `sh /home/layup/.cache/layup-session/tmp-green/T-c826-stage-g/M70/docs/tests/freeze-check/run.sh /home/layup/.cache/layup-session/tmp-green/T-c826-stage-g/M70/docs/tests/freeze-check/bad-usage-evidence-trailing-slash` | 2026-10-20T22:23:20Z | 2026-10-20T22:23:20Z | 0 |
+
+Complete corrected pre-code suite output:
+
+```text
+ok    bad-K1-blank-eof
+ok    bad-K1-trailing-space
+ok    bad-K2-missing-file
+ok    bad-K2-missing-prd
+ok    bad-K2-missing-traceability
+ok    bad-K2-no-prd-frame-test
+ok    bad-K2-no-prd-mapped-test
+ok    bad-K2-no-s12-frame-test
+ok    bad-K2-no-s12-mapped-test
+ok    bad-K2-prd-other-file
+ok    bad-K2-two-missing
+ok    bad-K3-backtick-outside
+ok    bad-K3-double-quoted
+ok    bad-K3-no-match
+ok    bad-K3-other-package
+ok    bad-K3-other-tag
+ok    bad-K3-span-across-lines
+ok    bad-K3-subtest
+ok    bad-K3-unclosed-span-eof
+ok    bad-K3-unclosed-span-paragraph
+ok    bad-K3-unquoted
+ok    bad-K3-unsupported-form
+ok    bad-K4-dropped-in-description
+ok    bad-K4-form-a-different
+ok    bad-K4-form-b-equal-hashes
+ok    bad-K4-result-only
+ok    bad-K4-two-hashes-no-restore
+ok    bad-K5-over-files
+ok    bad-K5-over-lines
+ok    bad-K6-empty-table
+ok    bad-K6-line-past-end
+ok    bad-K6-line-zero
+ok    bad-K6-missing-commit
+ok    bad-K6-missing-file
+ok    bad-K6-missing-path
+ok    bad-K6-missing-test
+ok    bad-K6-mixed-valid-invalid
+ok    bad-K6-no-span
+ok    bad-K6-range-zero
+ok    bad-base-not-a-commit
+ok    bad-crlf-conditions
+ok    bad-env-K2-unreadable-prd
+ok    bad-env-K2-unreadable
+ok    bad-env-K3-unreadable-test
+ok    bad-env-dirty-worktree
+ok    bad-env-untracked-evidence
+ok    bad-not-a-worktree
+ok    bad-usage-bad-budget
+ok    bad-usage-closeout
+FAIL  bad-usage-evidence-directory-base
+      run: bad-usage-evidence-directory-base: exit 0 (wanted 2); diff (-EXPECT +got):
+      --- /home/layup/.cache/layup-session/tmp-green/tmp.XxVftHtVeK/expect	2026-10-21 01:22:08.172232035 +0300
+      +++ /home/layup/.cache/layup-session/tmp-green/tmp.XxVftHtVeK/got	2026-10-21 01:22:08.170864025 +0300
+      @@ -1,2 +1,7 @@
+      -2
+      -freeze-check: --evidence runs/T-0000/base-tree.md: must name a file at base
+      +0
+      +ok K1: white space
+      +ok K2: registration of new tests
+      +ok K3: test selectors
+      +ok K4: restore evidence of mutants
+      +ok K5: projection: figure 0/0, maximum 0/0, tolerance 60/4, limit 60/4, margin 60/4 (the figure at landing is still measured at landing)
+      +ok K6: conditions table
+FAIL  bad-usage-evidence-directory-head
+      run: bad-usage-evidence-directory-head: exit 0 (wanted 2); diff (-EXPECT +got):
+      --- /home/layup/.cache/layup-session/tmp-green/tmp.8vberUnnMc/expect	2026-10-21 01:22:08.293864358 +0300
+      +++ /home/layup/.cache/layup-session/tmp-green/tmp.8vberUnnMc/got	2026-10-21 01:22:08.293780883 +0300
+      @@ -1,2 +1,7 @@
+      -2
+      -freeze-check: --evidence runs/T-0000/d.md: must name a file at HEAD
+      +0
+      +ok K1: white space
+      +ok K2: registration of new tests
+      +ok K3: test selectors
+      +ok K4: restore evidence of mutants
+      +ok K5: projection: figure 0/0, maximum 0/0, tolerance 60/4, limit 60/4, margin 60/4 (the figure at landing is still measured at landing)
+      +ok K6: conditions table
+ok    bad-usage-evidence-missing
+ok    bad-usage-evidence-no-value
+ok    bad-usage-evidence-other-task
+ok    bad-usage-evidence-suffix
+ok    bad-usage-evidence-task-prefix
+ok    bad-usage-evidence-traversal
+ok    bad-usage-missing-budget
+ok    bad-usage-no-args
+ok    bad-usage-unknown-flag
+ok    good-K1-clean
+ok    good-K2-prd-by-file
+ok    good-K2-registered
+ok    good-K3-alternatives
+ok    good-K3-span-across-lines
+ok    good-K4-forms
+ok    good-K5-at-max
+ok    good-K5-ceiling
+ok    good-K5-evidence-added
+ok    good-K5-evidence-deleted
+ok    good-K5-evidence-duplicate
+ok    good-K5-evidence-inputs
+ok    good-K5-evidence-kinds
+ok    good-K5-evidence-literal
+ok    good-K5-evidence-modified
+ok    good-K5-evidence-renamed
+ok    good-K5-file-limit
+ok    good-K5-line-limit
+ok    good-K5-no-closeout
+ok    good-K5-percentage
+ok    good-K5-truncation
+ok    good-K6-no-conditions
+ok    good-K6-valid
+ok    good-crlf-all
+freeze-check: 82 passed, 2 failed
+```
+
+Complete pre-code diagnostic mismatch:
+
+```text
+run: bad-usage-evidence-trailing-slash: exit 2 (wanted 2); diff (-EXPECT +got):
+--- /home/layup/.cache/layup-session/tmp-green/tmp.501FIUMVb6/expect	2026-10-21 01:22:46.279283441 +0300
++++ /home/layup/.cache/layup-session/tmp-green/tmp.501FIUMVb6/got	2026-10-21 01:22:46.278603956 +0300
+@@ -1,2 +1,2 @@
+ 2
+-freeze-check: --evidence runs/T-0000/: empty path components are not allowed
++freeze-check: --evidence runs/T-0000/: path traversal is not allowed
+```
+
+### Fix and mutation outcome
+
+The validator now requires `git cat-file -t` to return `blob` at each committed
+endpoint where the declaration exists; a tree is refused with exit 2 before
+results print. Existing absent-at-both-endpoints and path/suffix checks remain.
+This adds an object-kind check, with no executable-mode or symlink restriction.
+Both F1 cases and every prior case pass: **85 passed, 0 failed**.
+M67 removes HEAD validation alone; M68 removes base validation alone. Each
+reproduces its named false acceptance and returns harness exit 2. M70 restores
+only the incorrect diagnostic and fails its exact-output assertion. All syntax
+checks and all four restored controls pass. Fresh source/mutant/restored
+SHA-256 values and the exact mismatches are in [mutants.md](mutants.md#stage-g--round-1-fixes-m67m70).
+
+### Round 1 notes
+
+| Note | Disposition and reason |
+| --- | --- |
+| 1. One home per rule | Applied. The test README links the canonical input definition and budget rule instead of restating the input carve-out and tolerance constants/inclusive limit. It retains K5's whole-line truncation, literal selection, duplicate handling, committed endpoints and output behavior. The CI README links the guardrail's migration lesson. The test README also adds the F1 file-kind and F2 delete-plus-add rename clauses; the existing freeze-check pitfall records both lessons. |
+| 2. Leading zeros in budget | Accepted as a revealed, pre-existing defect outside this task's DoD, as the reviewer agrees. The parser is unchanged here; normal follow-up must refuse leading zeros. The supplied review gives no follow-up issue number, so this record does not claim an issue was opened. |
+| 3. Empty/multiline guard and trailing slash | The diagnostic fix is applied with a pre-code mismatch, green case and M70 kill. Decline runner changes to encode empty/multiline ARGS: amendment 1 and plan-review condition 2 keep both runners unchanged; the guard is retained as defense in depth. No figure or validator coverage is claimed for removing that guard. |
+| 4. PR identity | Applied by read-only `github_get_pr_info` for `pharzam/layup`, PR 453. The response names head T-c826 at fdb8d626008762b2e13cbab5fe53c4d5d3226700, base main at d27b33180a1aa82c23f3ab66e757e06de356eb35, and the body contains its own line `Closes #449`. This resolves the earlier inability to verify the body. Final hosted pr-link evidence belongs to the coordinator's later CI/close-out stage; no final-CI pass is claimed here. |
+| 5. T-szvp removal list | The checklist below is preserved for the coordinator. Decline posting an external issue comment in this repository-change stage: it returns a local commit plan, and no direct instruction authorizes that issue-thread message. Read-only `github_fetch_issue` confirms #452 is open and its body does not yet include the checklist. |
+
+Removal checklist for [T-szvp (#452)](https://github.com/pharzam/layup/issues/452):
+
+- `.github/workflows/ci.yml`: the R4/removal and approval comments, event/PR
+  environment values, checker-only keep/continue branch, and suite comment.
+- `docs/ci/README.md`: the job row and temporary exception explanation.
+- `docs/guardrails.md`: the Inv-3 exception and restore-pitfall exception text.
+- `docs/tests/README.md`: the T-c826 migration-check invocation and exception text.
+- `runs/T-c826/checks.sh`: the exception-specific assertions.
+
+The forge observations above are read-only connector responses in this stage,
+not shell test commands or evidence of a later hosted run. No issue was changed.
+
+### Stage G validation
+
+| Run | Command | UTC start | UTC end | Exit | Observation |
+| --- | --- | --- | --- | --- | --- |
+| G-syntax | `sh -n docs/tests/freeze-check.sh` | 2026-10-20T22:25:25Z | 2026-10-20T22:25:25Z | 0 | POSIX shell syntax accepted. |
+| G-task-check | `sh runs/T-c826/checks.sh 453` | 2026-10-20T22:25:25Z | 2026-10-20T22:25:25Z | 0 | All 13 assertions pass with actual PR number 453. |
+| G-adr | `sh docs/adr/adr-lint.sh` | 2026-10-20T22:25:25Z | 2026-10-20T22:25:26Z | 0 | adr-lint: OK. |
+| G-prd | `sh docs/prd/prd-lint.sh` | 2026-10-20T22:25:26Z | 2026-10-20T22:25:26Z | 0 | prd-lint: OK. |
+| G-links | `sh docs/links/link-lint.sh` | 2026-10-20T22:25:26Z | 2026-10-20T22:25:40Z | 0 | 3001 links resolved. |
+| G-discipline | `sh docs/tests/run-discipline-tests.sh` | 2026-10-20T22:25:40Z | 2026-10-20T22:25:43Z | 0 | 138 passed, 0 failed. |
+| G-nested | `sh docs/tests/nested-checkout-check.sh` | 2026-10-20T22:25:43Z | 2026-10-20T22:25:44Z | 0 | All 10 cases behaved. |
+| G-setup-fixtures | `sh docs/setup/tests/run.sh` | 2026-10-20T22:25:44Z | 2026-10-20T22:25:47Z | 0 | 48 passed, 0 failed. |
+| G-setup | `sh docs/setup/setup-check.sh` | 2026-10-20T22:25:47Z | 2026-10-20T22:26:10Z | 0 | Every setup check passes, including ci, discipline cases and kit linters. |
+| G-diff | `git diff --check` | 2026-10-20T22:26:10Z | 2026-10-20T22:26:10Z | 2 | One extra blank line at EOF in this record; removed before the final recheck. |
+
+The initial whitespace failure and verification-driver assertion are failures, not green evidence. Only this record's final empty line required correction. The substantive checker, fixture and documentation checks above passed; the final whitespace and scope checks follow. No pre-freeze run is included.
+
+| Run | Command | UTC start | UTC end | Exit | Observation |
+| --- | --- | --- | --- | --- | --- |
+| G-final-diff | `git diff --check` | 2026-10-20T22:26:22Z | 2026-10-20T22:26:22Z | 0 | No whitespace diagnostics. |
+| G-scope | `python3 /home/layup/.cache/layup-session/tmp-green/T-c826-stage-g/final-scope.py` | 2026-10-20T22:26:53Z | 2026-10-20T22:26:53Z | 0 | All 21 changed paths match the three-commit plan; unchanged HEAD/index, runners, checks.sh, workflow and close-out files. All planned files have one final newline and no trailing whitespace. |
+
+Stage G outcome: both material findings have their cases and fixes, all 85 fixtures pass, four named mutants fail for the intended reasons and their restored controls pass, and all relevant lints/setup/task checks pass. The whitespace failure is corrected. The coordinator can commit the test, checker and documentation/record slices in that order. Clean-head pre-freeze and the next independent round remain for the following stages.

@@ -67,10 +67,9 @@ exception. The Go jobs `lint`, `tests` and
 `security` run the pull request's own Go code and tests. Without the restore, a pull request that replaces a linter with `exit 0` passes
 that linter's own required check, and a pull request that also replaces
 `run-discipline-tests.sh` turns the whole required set green over a real defect.
-Both were measured. Outside an approved exception, CI judges a changed check
-using the default branch's copy until it merges. A suite comparing complete
-output needs compatibility across that boundary or a bounded exception to migrate
-diagnostics. The limit that remains is that the workflow file itself comes from the
+Both were measured. The restore's migration lesson is recorded in
+[the guardrail “A check the change supplies is not a control”](../guardrails.md#2-known-pitfalls--the-traps-specific-to-this-domain).
+The limit that remains is that the workflow file itself comes from the
 pull request, so a branch that edits `ci.yml` removes the step; only review of
 `.github/**` closes that, and [`docs/guardrails.md`](../guardrails.md) states all
 three residual limits. A `CODEOWNERS` entry over `.github/**`, `.githooks/**` and

@@ -999,9 +999,12 @@ These traps are not domain-specific: they hurt every project's test suite.
   removed. **The check:** run a new check of the records on two or three merged
   tasks of `main` before the freeze, and give each true and false reading found
   there its own fixture. Refuse a worktree with a change or an untracked file,
-  so the inputs are the committed head. Pair backticks across the lines of a
-  paragraph, read an unclosed one as plain text, and read fenced lines as they
-  stand. Remove each condition of a rule in turn and see a case fail. Write a
+  so the inputs are the committed head. A record suffix can name a directory;
+  check for a blob at each committed endpoint before excluding its literal path.
+  Keep a rename-into-evidence case to catch folding in the gross figure.
+  Pair backticks across the lines of a paragraph, read an unclosed one as plain
+  text, and read fenced lines as they stand. Remove each condition of a rule in
+  turn and see a case fail. Write a
   command template in prose without `go test … -run <pattern>`, which
   `freeze-check.sh` K3 refuses as a selector.
 - ❌ **A fake whose child cannot see `SIGINT`.** A shell script that starts a

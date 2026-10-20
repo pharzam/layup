@@ -1,6 +1,6 @@
 # T-c826 independent mutation evidence
 
-All **52** variants are killed by their named assertions: 35 checker variants
+The original S5 sweep's **52** variants are killed by their named assertions: 35 checker variants
 run the entire 81-case suite, and 17 documentation/CI/preservation variants run
 the unchanged PR-numbered task check. No runner metadata, executable-mode,
 symlink, pin, blob-comparison or restore-replay rule is introduced.
@@ -1375,3 +1375,130 @@ FAIL: exception comment names the task, literal PR and removal issue
 ```
 
 `M66-restored`: 2026-10-20T21:25:16Z to 2026-10-20T21:25:16Z, exit 0; restored SHA-256 equals Before and After in the table.
+
+## Stage G — round 1 fixes (M67–M70)
+
+Four additional variants are killed (56 variants total across both sweeps).
+M69 tests the existing rename rule on the unmodified checker at frozen head
+`fdb8d626008762b2e13cbab5fe53c4d5d3226700`, after the new cases were written
+and before the Stage G code. M67, M68 and M70 test the fixed checker.
+Each variant copies the current test tree to its own fresh scratch directory,
+changes only the named checker statement, passes `sh -n`, and runs the unchanged
+case harness. Harness exit 2 is a full-output/status mismatch. Each fresh backup
+is restored, its SHA-256 must equal Before and the source checker, and the same
+case then exits 0. The commands and direct UTC timestamps are in
+[test-runs.md](test-runs.md#stage-g--round-1-fixes-cycle-1-of-cap-2).
+
+| ID | Rule changed alone | Named case | Before SHA-256 | During SHA-256 | After SHA-256 | Verdict |
+| --- | --- | --- | --- | --- | --- | --- |
+| M67 | Skip HEAD object-kind validation | `bad-usage-evidence-directory-head` | d316f5e82ae1a6ae951915bfa926e75e6a8dd0d209286592fd090f456bc1abcc | cd55b52259f4738ca2a7b94307cca5b832e6c1810e4bd318acfcf83abd8f0c61 | d316f5e82ae1a6ae951915bfa926e75e6a8dd0d209286592fd090f456bc1abcc | KILLED; mutant exit 2, restored exit 0 |
+| M68 | Skip base object-kind validation | `bad-usage-evidence-directory-base` | d316f5e82ae1a6ae951915bfa926e75e6a8dd0d209286592fd090f456bc1abcc | f94e2170c487aa94f87329260c969eb4354e8144bb7690b25ea531dcbdb3ecf1 | d316f5e82ae1a6ae951915bfa926e75e6a8dd0d209286592fd090f456bc1abcc | KILLED; mutant exit 2, restored exit 0 |
+| M69 | Remove --no-renames from the gross diff only | `good-K5-evidence-renamed` | 04c5918711f4f07e5fdd423424cbf14b99a43aefd77e76603c183b98cc96e2cf | 8cf1e3e0a599ccbae6863c86468c55ecaddd41c3c8590bab96b48960cbc64eb6 | 04c5918711f4f07e5fdd423424cbf14b99a43aefd77e76603c183b98cc96e2cf | KILLED; mutant exit 2, restored exit 0 |
+| M70 | Restore the wrong trailing-slash diagnostic | `bad-usage-evidence-trailing-slash` | d316f5e82ae1a6ae951915bfa926e75e6a8dd0d209286592fd090f456bc1abcc | 6242c5288d6c732426f87adecb84a97ca432baf5143ed796979be6ed5f5853b9 | d316f5e82ae1a6ae951915bfa926e75e6a8dd0d209286592fd090f456bc1abcc | KILLED; mutant exit 2, restored exit 0 |
+
+### M67 — Skip HEAD object-kind validation
+
+Single edit to `docs/tests/freeze-check.sh`:
+
+```diff
+-for ev_rev in "$base" HEAD; do
++for ev_rev in "$base"; do
+```
+
+Observed mismatch, 2026-10-20T22:23:19Z to 2026-10-20T22:23:20Z, harness exit 2:
+
+```text
+run: bad-usage-evidence-directory-head: exit 0 (wanted 2); diff (-EXPECT +got):
+--- /home/layup/.cache/layup-session/tmp-green/tmp.SakuOlLBZj/expect	2026-10-21 01:23:20.021930410 +0300
++++ /home/layup/.cache/layup-session/tmp-green/tmp.SakuOlLBZj/got	2026-10-21 01:23:20.021071857 +0300
+@@ -1,2 +1,7 @@
+-2
+-freeze-check: --evidence runs/T-0000/d.md: must name a file at HEAD
++0
++ok K1: white space
++ok K2: registration of new tests
++ok K3: test selectors
++ok K4: restore evidence of mutants
++ok K5: projection: figure 0/0, maximum 0/0, tolerance 60/4, limit 60/4, margin 60/4 (the figure at landing is still measured at landing)
++ok K6: conditions table
+```
+
+Restored control: 2026-10-20T22:23:20Z to 2026-10-20T22:23:20Z, exit 0; Before = After, as measured above.
+
+### M68 — Skip base object-kind validation
+
+Single edit to `docs/tests/freeze-check.sh`:
+
+```diff
+-for ev_rev in "$base" HEAD; do
++for ev_rev in HEAD; do
+```
+
+Observed mismatch, 2026-10-20T22:23:20Z to 2026-10-20T22:23:20Z, harness exit 2:
+
+```text
+run: bad-usage-evidence-directory-base: exit 0 (wanted 2); diff (-EXPECT +got):
+--- /home/layup/.cache/layup-session/tmp-green/tmp.v0dbA5jHsL/expect	2026-10-21 01:23:20.427832036 +0300
++++ /home/layup/.cache/layup-session/tmp-green/tmp.v0dbA5jHsL/got	2026-10-21 01:23:20.427078467 +0300
+@@ -1,2 +1,7 @@
+-2
+-freeze-check: --evidence runs/T-0000/base-tree.md: must name a file at base
++0
++ok K1: white space
++ok K2: registration of new tests
++ok K3: test selectors
++ok K4: restore evidence of mutants
++ok K5: projection: figure 0/0, maximum 0/0, tolerance 60/4, limit 60/4, margin 60/4 (the figure at landing is still measured at landing)
++ok K6: conditions table
+```
+
+Restored control: 2026-10-20T22:23:20Z to 2026-10-20T22:23:20Z, exit 0; Before = After, as measured above.
+
+### M69 — Remove --no-renames from the gross diff only
+
+Single edit to `docs/tests/freeze-check.sh`:
+
+```diff
+-git diff --no-renames --numstat "$base" HEAD > "$tmp/k5_gross"
++git diff --numstat "$base" HEAD > "$tmp/k5_gross"
+```
+
+Observed mismatch, 2026-10-20T22:22:22Z to 2026-10-20T22:22:23Z, harness exit 2:
+
+```text
+run: good-K5-evidence-renamed: exit 0 (wanted 0); diff (-EXPECT +got):
+--- /home/layup/.cache/layup-session/tmp-green/tmp.FXznD9Hpp7/expect	2026-10-21 01:22:23.041194126 +0300
++++ /home/layup/.cache/layup-session/tmp-green/tmp.FXznD9Hpp7/got	2026-10-21 01:22:23.039903950 +0300
+@@ -3,5 +3,5 @@
+ ok K2: registration of new tests
+ ok K3: test selectors
+ ok K4: restore evidence of mutants
+-ok K5: projection: figure 3/1, maximum 0/0, tolerance 60/4, limit 60/4, margin 57/3 (the figure at landing is still measured at landing)
++ok K5: projection: figure -3/0, maximum 0/0, tolerance 60/4, limit 60/4, margin 63/4 (the figure at landing is still measured at landing)
+ ok K6: conditions table
+```
+
+Restored control: 2026-10-20T22:22:23Z to 2026-10-20T22:22:23Z, exit 0; Before = After, as measured above.
+
+### M70 — Restore the wrong trailing-slash diagnostic
+
+Single edit to `docs/tests/freeze-check.sh`:
+
+```diff
+-evidence_error 'empty path components are not allowed'
++evidence_error 'path traversal is not allowed'
+```
+
+Observed mismatch, 2026-10-20T22:23:20Z to 2026-10-20T22:23:20Z, harness exit 2:
+
+```text
+run: bad-usage-evidence-trailing-slash: exit 2 (wanted 2); diff (-EXPECT +got):
+--- /home/layup/.cache/layup-session/tmp-green/tmp.uuPi8a3kpe/expect	2026-10-21 01:23:20.769054041 +0300
++++ /home/layup/.cache/layup-session/tmp-green/tmp.uuPi8a3kpe/got	2026-10-21 01:23:20.768054038 +0300
+@@ -1,2 +1,2 @@
+ 2
+-freeze-check: --evidence runs/T-0000/: empty path components are not allowed
++freeze-check: --evidence runs/T-0000/: path traversal is not allowed
+```
+
+Restored control: 2026-10-20T22:23:20Z to 2026-10-20T22:23:20Z, exit 0; Before = After, as measured above.
