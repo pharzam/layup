@@ -307,6 +307,13 @@ func TestAFreshBuildRefusesWhatItCannotBuildBefore(t *testing.T) {
 		t.Errorf("brief.lines 10: err = %v after %d sessions; want ErrBriefOverLimit and none", err, d.briefSessions())
 	}
 	d.setParameter("brief.lines", "60")
+	if err := d.r.store.Remove(context.Background(), []string{"start/problem-statement.md"}, "no problem statement"); err != nil {
+		t.Fatal(err)
+	}
+	head := recordsHead(t, d.w)
+	if _, _, err := d.r.betBrief(context.Background(), "1", "first"); err == nil || !strings.Contains(err.Error(), "the records have no start/problem-statement.md") || d.briefSessions() != 0 || recordsHead(t, d.w) != head {
+		t.Errorf("no problem-statement.md: err = %v after %d sessions, head moved %v; want the missing path refused, no session and no write", err, d.briefSessions(), recordsHead(t, d.w) != head)
+	}
 	d.setPrecondition()
 	if _, _, err := d.r.betBrief(context.Background(), "1", "first"); err == nil || !strings.Contains(err.Error(), "bets.tsv") || d.briefSessions() != 0 {
 		t.Errorf("a bets.tsv: err = %v after %d sessions; want a refusal that names bets.tsv and none", err, d.briefSessions())
