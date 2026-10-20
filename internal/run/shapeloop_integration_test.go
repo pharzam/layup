@@ -498,7 +498,7 @@ func TestAGateFailureWithNoIndependentVerifierStopsAndStartsNoAttempt(t *testing
 // cannot be pushed, so layup/rules cannot fail on a head of the loop's own making; this is the seeded state of the review of #415, finding 2).
 type registerAfterBound struct {
 	SessionStore
-	task, rev string
+	task, rev, attempt string // attempt: the one whose sessions are rewritten ("" for all)
 }
 
 func (r *registerAfterBound) ReadFile(ctx context.Context, path string) ([]byte, error) {
@@ -514,7 +514,7 @@ func (r *registerAfterBound) ReadFile(ctx context.Context, path string) ([]byte,
 		return nil, err
 	}
 	for _, row := range rows {
-		if row[sessionRole] == stepRole("specification") {
+		if row[sessionRole] == stepRole("specification") && (r.attempt == "" || row[sessionAttempt] == r.attempt) {
 			row[sessionRecords] = r.rev
 		}
 	}
@@ -543,33 +543,19 @@ func sideCommit(t *testing.T, clone string, files map[string]string) string {
 	return run("a side commit\n", nil, "commit-tree", tree)
 }
 
-// plan.md:147 and loop.md: a failure of layup/spec or layup/rules, and the status error of the gates, each stop the step; no verifier starts and
-// no attempt follows. The control is the same world with no fault, which reaches the verified head.
-func TestAFailedStatusOfTheHeadStopsTheStepWithNoVerifierAndNoNewAttempt(t *testing.T) {
+// plan.md:147 and loop.md: the status error of the gates stops the step; no verifier starts and no attempt follows. The control is the same world with no
+// fault, which reaches the verified head. The failures of layup/spec and layup/rules start an attempt (checkretry_integration_test.go).
+func TestAnErrorStatusOfTheHeadStopsTheStepWithNoVerifierAndNoNewAttempt(t *testing.T) {
 	for _, c := range []struct {
 		name, want string
 		gates      string
-		prep       func(d *drvWorld)
-		tweak      func(d *drvWorld, task string) func(*Sessions)
 	}{
-		{"no fault (control)", "", gatesTSV, nil, nil},
-		{"a failed layup/spec", ": layup/spec failed: criteria: ", gatesTSV, func(d *drvWorld) { d.ctlWrite("spec-fail", "") }, nil},
-		{"a failed layup/rules", ": layup/rules failed: ", gatesTSV, nil, func(d *drvWorld, task string) func(*Sessions) {
-			rev := sideCommit(t, d.r.target, map[string]string{"rule-paths.tsv": register + "docs/tasks/\t—\tarchitecture\n"})
-			return func(s *Sessions) { s.Store = &registerAfterBound{SessionStore: s.Store, task: task, rev: rev} }
-		}},
-		{"a gate status of error", ": layup/gates is error: ", "kind\tstate\ttool\tcommand\tscope\tconfig\n", nil, nil},
+		{"no fault (control)", "", gatesTSV},
+		{"a gate status of error", ": layup/gates is error: ", "kind\tstate\ttool\tcommand\tscope\tconfig\n"},
 	} {
 		d := newDrvWorldWith(t, loopPerms, c.gates)
-		if c.prep != nil {
-			c.prep(d)
-		}
 		spec, _ := d.open()
-		var tweak func(*Sessions)
-		if c.tweak != nil {
-			tweak = c.tweak(d, spec)
-		}
-		got, err := d.advance(spec, tweak)
+		got, err := d.advance(spec, nil)
 		if c.want == "" {
 			if err != nil || !got.Verified {
 				t.Errorf("%s: %+v, %v; want the verified head", c.name, got, err)

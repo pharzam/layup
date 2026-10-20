@@ -13,6 +13,7 @@ import (
 	"slices"
 	"strconv"
 
+	"github.com/pharzam/layup/internal/gate"
 	"github.com/pharzam/layup/internal/git"
 	"github.com/pharzam/layup/internal/handoff"
 	"github.com/pharzam/layup/internal/records"
@@ -594,12 +595,9 @@ func (s *Sessions) runStage(ctx context.Context, in ShapeTaskInput, v loopView, 
 	case posDeveloper:
 		var gateHead string
 		if findings, gateHead = findingsOf(v, st.Attempt); gateHead != "" {
-			table, found, tErr := s.GatesTable(ctx, in.Task, gateHead)
-			if tErr != nil {
-				return "", tErr
-			}
-			if found {
-				findings = GateFindings(table)
+			var stop string
+			if findings, stop, err = s.headFindings(ctx, v.Task, v.Kind, st.Base, gateHead); err != nil || stop != "" {
+				return stop, err
 			}
 		}
 		fallthrough
@@ -610,6 +608,33 @@ func (s *Sessions) runStage(ctx context.Context, in ShapeTaskInput, v loopView, 
 		return pairStop(in.Task, step, err)
 	}
 	return "", s.startSession(ctx, in, v.Kind, step, st.Attempt, st.Base, h, m, findings, true)
+}
+
+// headFindings gives the findings that the developer of the next attempt is given from the head that failed
+// its checks and was never judged by a review: the rows of the head's gate table that did not pass, then the findings
+// of the other checks. A stop of those checks comes before the findings.
+func (s *Sessions) headFindings(ctx context.Context, task, kind, base, head string) ([]Finding, string, error) {
+	table, found, err := s.GatesTable(ctx, task, head)
+	if err != nil {
+		return nil, "", err
+	}
+	var out []Finding
+	if found {
+		out = RetryGateFindings(kind, table)
+	}
+	check, err := s.CheckFindings(ctx, HeadInput{Task: task, Base: base, Head: head})
+	if err != nil || check.Stop != "" {
+		return nil, taskStop(task, check.Stop), err
+	}
+	return append(out, check.Findings...), "", nil
+}
+
+// taskStop prefixes the stop of a check with the task, and keeps "" for none.
+func taskStop(task, stop string) string {
+	if stop == "" {
+		return ""
+	}
+	return task + ": " + stop
 }
 
 // finishStage posts the comment of a session that ended and records its handoff; both read before they write, so
@@ -670,8 +695,9 @@ func (s *Sessions) head(ctx context.Context, in ShapeTaskInput, st loopStep, ses
 var shapeDescription = map[string]string{"specification": "the specification of the target", "architecture": "the architecture of the target"}
 
 // ship opens the draft pull request of the bound head, posts its four statuses and judges them, accepts a
-// specification that waits for its bet, and starts the verifier. An error, a failure of layup/spec or layup/rules, or
-// the status not-active is a stop, and no attempt starts; a failure of layup/gates starts the next attempt.
+// specification that waits for its bet, and starts the verifier. An error or the status not-active is a stop, and no
+// attempt starts; a failure of layup/gates, layup/spec or layup/rules starts the next attempt with the findings of all three.
+// It reads the same records again at a restart, so a stop between the statuses and the attempt starts exactly one.
 func (s *Sessions) ship(ctx context.Context, in ShapeTaskInput, v loopView, st loopStep) (string, error) {
 	if _, err := s.OpenPullRequest(ctx, PullInput{Task: in.Task, Attempt: st.Attempt, Type: "docs", Description: shapeDescription[v.Kind]}); err != nil {
 		return "", err
@@ -680,26 +706,26 @@ func (s *Sessions) ship(ctx context.Context, in ShapeTaskInput, v loopView, st l
 	if err != nil {
 		return "", err
 	}
-	gates := false
-	for _, p := range posts {
-		switch name, state, d := p.Status.Context, p.Status.State, p.Status.Description; {
-		case state == "error":
-			return fmt.Sprintf("%s: %s is error: %s", in.Task, name, d), nil
-		case state == "failure" && (name == SpecContext || name == RulesContext):
-			return fmt.Sprintf("%s: %s failed: %s", in.Task, name, d), nil
-		case state == "failure" && name == VerifyContext && len(d) > len("not-active: ") && d[:len("not-active: ")] == "not-active: ":
-			return fmt.Sprintf("%s: %s", in.Task, d), nil
-		case state == "failure" && name == GatesContext:
-			gates = true
+	stop, gates, checks := judgeStatuses(in.Task, posts)
+	if stop != "" {
+		return stop, nil
+	}
+	var check CheckResult
+	if checks {
+		if check, err = s.CheckFindings(ctx, HeadInput{Task: in.Task, Base: st.Base, Head: st.Head}); err != nil || check.Stop != "" {
+			return taskStop(in.Task, check.Stop), err
 		}
 	}
-	if gates {
-		table, found, err := s.GatesTable(ctx, in.Task, st.Head)
-		if err != nil {
-			return "", err
+	if gates || checks {
+		var table gate.Table
+		found := true
+		if gates {
+			if table, found, err = s.GatesTable(ctx, in.Task, st.Head); err != nil {
+				return "", err
+			}
 		}
-		if _, nErr := s.NextAttempt(ctx, NextAttemptInput{Task: in.Task, Base: st.Base, Table: table}); !found || errors.Is(nErr, ErrNoFailure) {
-			return fmt.Sprintf("%s: layup/gates failed and its table has no failed row", in.Task), nil
+		if _, nErr := s.NextAttempt(ctx, NextAttemptInput{Task: in.Task, Kind: v.Kind, Base: st.Base, Table: table, Findings: check.Findings}); !found || errors.Is(nErr, ErrNoFailure) {
+			return fmt.Sprintf("%s: a layup/ status failed and the records hold no failed row of it", in.Task), nil
 		} else if nErr != nil {
 			return "", nErr
 		}
@@ -721,6 +747,24 @@ func (s *Sessions) ship(ctx context.Context, in ShapeTaskInput, v loopView, st l
 		return pairStop(in.Task, "verification", err)
 	}
 	return "", s.startSession(ctx, in, v.Kind, "verification", st.Attempt, st.Head, h, m, nil, true)
+}
+
+// judgeStatuses judges the four statuses posted at a bound head: the first stop (an error, or the status not-active of
+// layup/verify) comes before everything, else whether layup/gates failed and whether layup/spec or layup/rules did.
+func judgeStatuses(task string, posts []StatusPost) (stop string, gates, checks bool) {
+	for _, p := range posts {
+		switch name, state, d := p.Status.Context, p.Status.State, p.Status.Description; {
+		case state == "error":
+			return fmt.Sprintf("%s: %s is error: %s", task, name, d), false, false
+		case state == "failure" && name == VerifyContext && len(d) > len("not-active: ") && d[:len("not-active: ")] == "not-active: ":
+			return fmt.Sprintf("%s: %s", task, d), false, false
+		case state == "failure" && name == GatesContext:
+			gates = true
+		case state == "failure" && (name == SpecContext || name == RulesContext):
+			checks = true
+		}
+	}
+	return "", gates, checks
 }
 
 // waitingSpecAccepted runs the pinned prd-lint of the target (its script at the base) on the docs/prd/ and docs/facts/
