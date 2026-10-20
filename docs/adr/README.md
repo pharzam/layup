@@ -146,7 +146,7 @@ record by number here, and let the index table below do the linking.
 | [0007](0007-record-task-resource-use.md)        | Record each task's resource use | Accepted |
 | [0008](0008-require-one-reading-in-decision-driving-text.md) | Require one reading in decision-driving text | Accepted |
 | [0009](0009-pin-armature-at-a-recorded-commit.md) | Pin Armature at a recorded commit | Accepted |
-| [0010](0010-use-go-as-the-technology-stack.md) | Use Go as the technology stack | Accepted |
+| [0010](0010-use-go-as-the-technology-stack.md) | Use Go as the technology stack | Accepted; amended |
 | [0011](0011-structure-the-core-engine-as-a-go-cli-over-repository-files.md) | Structure the core engine as a Go CLI over repository files | Accepted |
 | [0012](0012-build-layup-in-bootstrap-mode.md) | Build LAYUP in bootstrap mode | Superseded by ADR-0026 |
 | [0013](0013-orchestrate-a-target-from-outside-with-layup-run.md) | Orchestrate a target from outside with `layup run` | Accepted |
@@ -163,6 +163,7 @@ record by number here, and let the index table below do the linking.
 | [0024](0024-record-every-sessions-cost-and-stop-at-the-milestone-cap.md) | Record every session's cost and stop at the milestone cap | Accepted |
 | [0025](0025-learn-routing-from-the-records-at-each-retrospective.md) | Learn routing from the records at each retrospective | Accepted |
 | [0026](0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md) | Keep the bootstrap review rules as the standing gate | Accepted |
+| [0027](0027-bound-the-integration-level-at-20-minutes-in-ci.md) | Bound the integration level at 20 minutes in CI | Accepted |
 
 <!-- Add one row per ADR as you write them. Keep the newest at the bottom. -->
 
