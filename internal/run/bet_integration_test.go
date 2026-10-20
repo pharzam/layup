@@ -415,6 +415,15 @@ func TestShapeStaysDoneAfterTheRenderedPush(t *testing.T) {
 	if got := d.bet(); got.Result != "done" || !strings.HasPrefix(got.Detail, "the bet 1: ") {
 		t.Fatalf("the step = %+v", got)
 	}
+	// The link of the review record, asked directly, accepts the pull request whose head is the rendered commit (the guard of LinkReviewRecord).
+	specID, _ := d.specBranch()
+	st, err := d.r.sessions().verifiedStep(context.Background(), specID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := d.r.sessions().LinkReviewRecord(context.Background(), specID, st.Session); err != nil {
+		t.Errorf("LinkReviewRecord with the rendered commit as the head of the pull request: %v; want none", err)
+	}
 	head, posts, patches, sessions := recordsHead(t, d.w), d.requests("POST /repos/"), d.requests("PATCH "), len(d.sessionRows())
 	d.restart()
 	if got := d.r.shapeStep(context.Background()); got.Result != "done" || got.Detail != "done before" || recordsHead(t, d.w) != head || d.requests("POST /repos/") != posts || d.requests("PATCH ") != patches || len(d.sessionRows()) != sessions {
