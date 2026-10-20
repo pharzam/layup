@@ -3,7 +3,7 @@
 # freeze-check.sh — pre-freeze check of a task worktree (T-b6fn, #440).
 #
 # Usage:
-#   sh docs/tests/freeze-check.sh --task T-xxxx --base REV --budget LINES/FILES [--closeout LINES/FILES] [--no-conditions]
+#   sh docs/tests/freeze-check.sh --task T-xxxx --base REV --budget LINES/FILES [--evidence PATH] [--no-conditions]
 #
 # Reads git and text of the task worktree, which must be clean (no change, no
 # untracked file: exit 2); K6 reads its table and the paths it
@@ -22,14 +22,14 @@
 set -u
 
 usage() {
-	printf 'freeze-check: usage: freeze-check.sh --task T-xxxx --base REV --budget LINES/FILES [--closeout LINES/FILES] [--no-conditions]\n'
+	printf 'freeze-check: usage: freeze-check.sh --task T-xxxx --base REV --budget LINES/FILES [--evidence PATH] [--no-conditions]\n'
 	exit 2
 }
 
 task=''
 base=''
 budget=''
-closeout=70/2
+evidence=''
 no_conditions=0
 
 while [ $# -gt 0 ]; do
@@ -43,9 +43,14 @@ while [ $# -gt 0 ]; do
 	--budget)
 		[ $# -ge 2 ] || usage
 		budget=$2; shift 2 ;;
-	--closeout)
+	--evidence)
 		[ $# -ge 2 ] || usage
-		closeout=$2; shift 2 ;;
+		# One literal path per line; a newline cannot be a declaration.
+		case $2 in ''|*'
+'*) usage ;; esac
+		evidence=$evidence$2'
+'
+		shift 2 ;;
 	--no-conditions)
 		no_conditions=1; shift ;;
 	*)
@@ -55,7 +60,6 @@ done
 
 [ -n "$task" ] && [ -n "$base" ] && [ -n "$budget" ] || usage
 printf '%s\n' "$budget" | grep -Eq '^[0-9]+/[0-9]+$' || usage
-printf '%s\n' "$closeout" | grep -Eq '^[0-9]+/[0-9]+$' || usage
 
 top=$(git rev-parse --show-toplevel 2>/dev/null) && [ -n "$top" ] || {
 	printf 'freeze-check: not a git work tree\n'
@@ -88,6 +92,35 @@ fi
 tmp=$(mktemp -d) || exit 2
 trap 'rm -rf "${tmp:?}"' EXIT INT TERM
 failed=0
+
+# Declarations are the author's classification, not proof of a record's role.
+# Inspect consumers first, using engineering-discipline.md's definition of input:
+# auditing form, citations or evidence alone does not make a record an input;
+# executable content, fixtures, expected outputs, configuration and dual-use
+# files stay counted. K5 does not infer mixed-file close-out bookkeeping.
+evidence_error() {
+	printf 'freeze-check: --evidence %s: %s\n' "$ev" "$1"
+	exit 2
+}
+: > "$tmp/evidence"
+while IFS= read -r ev; do
+	[ -n "$ev" ] || continue
+	case /$ev/ in */../*|*/./*|*//*) evidence_error 'path traversal is not allowed' ;; esac
+	case $ev in
+	runs/"$task"/*) ;;
+	*) evidence_error "must be under runs/$task/" ;;
+	esac
+	case $ev in
+	*.md|*.tsv|*.txt) ;;
+	*) evidence_error 'must end in .md, .tsv or .txt' ;;
+	esac
+	if ! git cat-file -e "$base:$ev" 2>/dev/null && ! git cat-file -e "HEAD:$ev" 2>/dev/null; then
+		evidence_error 'is absent from both base and HEAD'
+	fi
+	grep -Fxq -- "$ev" "$tmp/evidence" || printf '%s\n' "$ev" >> "$tmp/evidence"
+done <<EOF_EVIDENCE
+$evidence
+EOF_EVIDENCE
 
 check_k1() {
 	if git diff --check "$base" HEAD > "$tmp/k1" 2>&1; then
@@ -494,24 +527,39 @@ check_k4() {
 check_k5() {
 	max_l=${budget%/*}
 	max_f=${budget#*/}
-	cl_l=${closeout%/*}
-	cl_f=${closeout#*/}
-	set -- $(git diff --numstat "$base" HEAD | awk '
+	# Disable rename folding so each declared endpoint contributes independently.
+	git diff --no-renames --numstat "$base" HEAD > "$tmp/k5_gross"
+	: > "$tmp/k5_evidence"
+	while IFS= read -r ev; do
+		git diff --no-renames --numstat "$base" HEAD -- ":(literal)$ev" >> "$tmp/k5_evidence"
+	done < "$tmp/evidence"
+	set -- $(awk '
 		{ a = ($1 == "-" ? 0 : $1); r = ($2 == "-" ? 0 : $2); l += a + r; f += 1 }
 		END { printf "%d %d\n", l + 0, f + 0 }
-	')
-	fig_l=$(($1 + cl_l))
-	fig_f=$(($2 + cl_f))
-	mar_l=$((max_l - fig_l))
-	mar_f=$((max_f - fig_f))
-	if [ "$fig_l" -gt "$max_l" ] || [ "$fig_f" -gt "$max_f" ]; then
-		printf 'FAIL K5: -:0: projection: figure %d/%d, maximum %d/%d, margin %d/%d (the figure at landing is still measured at landing)\n' \
-			"$fig_l" "$fig_f" "$max_l" "$max_f" "$mar_l" "$mar_f"
+	' "$tmp/k5_gross")
+	fig_l=$1
+	fig_f=$2
+	set -- $(awk '
+		{ a = ($1 == "-" ? 0 : $1); r = ($2 == "-" ? 0 : $2); l += a + r; f += 1 }
+		END { printf "%d %d\n", l + 0, f + 0 }
+	' "$tmp/k5_evidence")
+	fig_l=$((fig_l - $1))
+	fig_f=$((fig_f - $2))
+	tol_l=$((max_l / 5))
+	[ "$tol_l" -ge 60 ] || tol_l=60
+	[ "$tol_l" -le 500 ] || tol_l=500
+	tol_f=4
+	lim_l=$((max_l + tol_l))
+	lim_f=$((max_f + tol_f))
+	mar_l=$((lim_l - fig_l))
+	mar_f=$((lim_f - fig_f))
+	k5='ok K5: projection'
+	if [ "$fig_l" -gt "$lim_l" ] || [ "$fig_f" -gt "$lim_f" ]; then
+		k5='FAIL K5: -:0: projection'
 		failed=1
-		return
 	fi
-	printf 'ok K5: projection: figure %d/%d, maximum %d/%d, margin %d/%d (the figure at landing is still measured at landing)\n' \
-		"$fig_l" "$fig_f" "$max_l" "$max_f" "$mar_l" "$mar_f"
+	printf '%s: figure %d/%d, maximum %d/%d, tolerance %d/%d, limit %d/%d, margin %d/%d (the figure at landing is still measured at landing)\n' \
+		"$k5" "$fig_l" "$fig_f" "$max_l" "$max_f" "$tol_l" "$tol_f" "$lim_l" "$lim_f" "$mar_l" "$mar_f"
 }
 
 check_k6() {
