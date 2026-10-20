@@ -121,6 +121,7 @@ func (p *pullShip) merges() []string {
 const pullsPath = "/repos/acme/target/pulls"
 
 func TestTheDraftPullRequestOfABoundHead(t *testing.T) {
+	t.Parallel()
 	l := newLoop(t, nil)
 	l.r.Bot = 9001
 	ctx := context.Background()
@@ -158,6 +159,7 @@ func TestTheDraftPullRequestOfABoundHead(t *testing.T) {
 }
 
 func TestTheReadyAndMergeRuleBlocksEachCaseAndNothingIsMarkedOrMerged(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	for _, c := range []struct {
 		name string
@@ -207,6 +209,7 @@ func TestTheReadyAndMergeRuleBlocksEachCaseAndNothingIsMarkedOrMerged(t *testing
 }
 
 func TestTheFourSuccessesMarkTheDraftReadyAndMergeAtTheHeadSHA(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	p := newPullShip(t)
 	base := p.mainSHA()
@@ -237,6 +240,7 @@ func TestTheFourSuccessesMarkTheDraftReadyAndMergeAtTheHeadSHA(t *testing.T) {
 
 // A status that changes after the mark blocks the merge: the statuses are read again just before it.
 func TestAStatusThatChangesAfterTheMarkBlocksTheMerge(t *testing.T) {
+	t.Parallel()
 	p := newPullShip(t)
 	p.green(p.head)
 	p.w.fake.pulls.afterMark = func() {
@@ -254,6 +258,7 @@ func TestAStatusThatChangesAfterTheMarkBlocksTheMerge(t *testing.T) {
 // The head moves after the last read: the forge answers 409. The call reads the pull request, then the statuses of the new head,
 // sends no second merge, and writes no event; the next call merges the new head (the plan review of #363, condition 6).
 func TestAHeadThatMovesAfterTheLastReadIsRefusedAndTheNewHeadIsReadBeforeAnotherCall(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	p := newPullShip(t)
 	p.attempt(2)
@@ -288,6 +293,7 @@ func TestAHeadThatMovesAfterTheLastReadIsRefusedAndTheNewHeadIsReadBeforeAnother
 // the tree check passes it with its line, and passes it with none once the event is written. A commit pushed to the branch in any
 // other way, and the setup head after the merge, fail it.
 func TestAMergeNotYetRecordedPassesTheTreeCheck(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	p := newPullShip(t)
 	base := p.mainSHA()
@@ -339,6 +345,7 @@ func TestAMergeNotYetRecordedPassesTheTreeCheck(t *testing.T) {
 // four successes and the job, the merge at the head SHA with its event, and the tree check that passes the merge before and after
 // its event is recorded.
 func TestAPullRequestFromDraftToMergeAndTheTreeAfterIt(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	s := newShip(t)
 	id, err := s.closeOut(s.V, s.in, closing())

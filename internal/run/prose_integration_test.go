@@ -16,6 +16,7 @@ import (
 // finding 1 of round 1): it finds each form of each phrase of check adapted in any letter case and across a line end, a stem with any
 // ASCII letters after it and an open end with more letters, and no whole word inside a longer one, in .md files only.
 func TestTheSearchCommandOfTheProsePromptFindsWhatCheckAdaptedFinds(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	cmd := regexp.MustCompile(`(?m)^for f in \$\(find .* -name '\*\.md'\); do .*; done$`).FindString(string(proseText(proseTarget, map[string]string{"stop.tsv": "/s/input/stop.tsv"}, dir)))
 	if cmd == "" {

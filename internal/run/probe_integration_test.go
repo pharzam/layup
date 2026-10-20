@@ -46,6 +46,7 @@ func harnessRows(t *testing.T, w *world) [][]string {
 }
 
 func TestTheStepProbe(t *testing.T) {
+	t.Parallel()
 	w, r, f, a := sessionWorld(t)
 	ctx := context.Background()
 	harnesses := [][]string{probeHarness(t, "fake", "echo 1.0.0", ""), {"none", "", "1", "x", "stdin", "x", "", "", "R.md", "", "none", "api", ""}}
@@ -99,6 +100,7 @@ func TestTheStepProbe(t *testing.T) {
 }
 
 func TestAProbeThatFailsAndARefusedProbe(t *testing.T) {
+	t.Parallel()
 	w, r, f, a := sessionWorld(t)
 	ctx := context.Background()
 	harnesses := [][]string{probeHarness(t, "fake", "echo 1.0.0", "ffffffffffffffff"), probeHarness(t, "gone", "exit 1", "")}
@@ -120,6 +122,7 @@ func TestAProbeThatFailsAndARefusedProbe(t *testing.T) {
 // A task session on a version with no probe runs the probe first; one whose
 // probe fails is refused (probe).
 func TestATaskSessionProbesItsVersionFirst(t *testing.T) {
+	t.Parallel()
 	w, r, _, a := sessionWorld(t)
 	ctx := context.Background()
 	for _, c := range []struct {
@@ -150,6 +153,7 @@ func TestATaskSessionProbesItsVersionFirst(t *testing.T) {
 // Plan amendment 1 of #415 and round 1 of its review: a session at a base that is not on the default branch clones the scratch branch,
 // and so does the probe that its admission runs when the harness reports a version that no probe passed (1.0.0 recorded, 2.0.0 reported).
 func TestTheAdmissionProbeOfASessionClonesTheBranchOfItsBase(t *testing.T) {
+	t.Parallel()
 	clone := t.TempDir()
 	user := []string{"-c", "user.name=review", "-c", "user.email=review@example.invalid"}
 	gitOut(t, clone, "init", "-q", "-b", "main")

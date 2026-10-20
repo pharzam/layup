@@ -22,6 +22,7 @@ import (
 
 // The Go value of the block tasks equals its block of docs/spec/records.md.
 func TestTheSchemaOfTasksEqualsItsBlock(t *testing.T) {
+	t.Parallel()
 	blocks, err := tsv.ReadBlocks(os.DirFS("../../docs/spec"))
 	if err != nil {
 		t.Fatal(err)
@@ -73,6 +74,7 @@ func firstTask() Task {
 }
 
 func TestTheLoopWritesNothingWhenThePermissionsAreMissing(t *testing.T) {
+	t.Parallel()
 	w := registerWorld(t, nil) // the three permissions of M2a: Start and the restart go on
 	r := restarted(t, w)
 	head := recordsHead(t, w)
@@ -106,6 +108,7 @@ func TestTheLoopWritesNothingWhenThePermissionsAreMissing(t *testing.T) {
 }
 
 func TestTheFirstTaskIsOneRecordsCommitOfTheRegisterAndTheDefaultTable(t *testing.T) {
+	t.Parallel()
 	w := registerWorld(t, loopPerms)
 	r := restarted(t, w)
 	before := recordsHead(t, w)
@@ -150,6 +153,7 @@ func TestTheFirstTaskIsOneRecordsCommitOfTheRegisterAndTheDefaultTable(t *testin
 }
 
 func TestASecondTaskWritesOnlyTheRegisterAndKeepsTheOperatorsTable(t *testing.T) {
+	t.Parallel()
 	w := registerWorld(t, loopPerms)
 	r := restarted(t, w)
 	if err := r.registerTask(context.Background(), firstTask()); err != nil {
@@ -182,6 +186,7 @@ func TestASecondTaskWritesOnlyTheRegisterAndKeepsTheOperatorsTable(t *testing.T)
 }
 
 func TestARefusedTaskWritesNothing(t *testing.T) {
+	t.Parallel()
 	noReq := firstTask()
 	noReq.Requirements = nil
 	self := firstTask()
@@ -227,6 +232,7 @@ func TestARefusedTaskWritesNothing(t *testing.T) {
 }
 
 func TestTheRegisterWriteIsFencedByTheLease(t *testing.T) {
+	t.Parallel()
 	// refuseOnce makes the bare repository refuse the next push, once, as a head that moved is refused.
 	refuseOnce := func(t *testing.T, w *world) {
 		hook := "#!/bin/sh\nif [ -f refuse-once ]; then rm refuse-once; echo refused >&2; exit 1; fi\n"

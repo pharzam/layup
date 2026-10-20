@@ -76,6 +76,7 @@ var oneRoundEvents = []string{"attempt", "session", "result", "handoff", "sessio
 // pull request, the four statuses and the verifier to a verified head. The sessions that only read commit, and are bound to
 // nothing; a draft that changed after the opening changes no registered ID; a second call writes nothing.
 func TestTheShapeTasksGoThroughTheLoopToTheirVerifiedHeads(t *testing.T) {
+	t.Parallel()
 	d := newDrvWorld(t, loopPerms)
 	d.ctlWrite("commit", "")
 	spec, arch := d.open()
@@ -132,6 +133,7 @@ func TestTheShapeTasksGoThroughTheLoopToTheirVerifiedHeads(t *testing.T) {
 // A gate failure starts a new attempt from the same base with the table's findings, counts no review round, and is
 // followed to a verified head.
 func TestAGateFailureOfAShapeTaskStartsANewAttempt(t *testing.T) {
+	t.Parallel()
 	d := newDrvWorld(t, loopPerms)
 	d.ctlWrite("gofile", "")
 	spec, _ := d.open()
@@ -160,6 +162,7 @@ func TestAGateFailureOfAShapeTaskStartsANewAttempt(t *testing.T) {
 // One material round starts the next attempt with the finding in the prompt, the second waits at the cap of 1; each failed
 // verdict is posted at its reviewed head before the attempt or the wait; a second call waits again, with no session.
 func TestAMaterialRoundStartsOneAttemptAndTheSecondWaitsAtTheCap(t *testing.T) {
+	t.Parallel()
 	d := newDrvWorld(t, loopPerms)
 	spec, _ := d.open()
 	d.ctlWrite("verdicts-"+spec, "material\nmaterial\n")
@@ -188,6 +191,7 @@ func TestAMaterialRoundStartsOneAttemptAndTheSecondWaitsAtTheCap(t *testing.T) {
 }
 
 func TestNotMergeableStartsNoAttempt(t *testing.T) {
+	t.Parallel()
 	d := newDrvWorld(t, loopPerms)
 	spec, _ := d.open()
 	d.ctlWrite("verdicts-"+spec, "not mergeable, findings recorded\n")
@@ -206,6 +210,7 @@ func TestNotMergeableStartsNoAttempt(t *testing.T) {
 // loop.md, layup/verify: with no harness outside the authors, the status not-active is posted before the stop, once, and no
 // verifier starts.
 func TestAVerifierWithNoIndependentHarnessPostsNotActiveBeforeTheStop(t *testing.T) {
+	t.Parallel()
 	d := newDrvWorld(t, loopPerms)
 	pushRecords(t, d.w.bare, map[string]string{"routing.tsv": "role\ttier\tposition\tharness\tmodel\nsoftware-engineer\treasoning\t1\tclaude\tm1\nproduct-owner\treasoning\t1\tdevin\tm1\nsystems-architect\treasoning\t1\tdevin\tm1\nqa-engineer\treasoning\t1\tdevin\tm1\n"}, "routing")
 	d.r = restarted(t, d.w)
@@ -238,6 +243,7 @@ func TestAVerifierWithNoIndependentHarnessPostsNotActiveBeforeTheStop(t *testing
 // Review conditions 3 and 6: a stage whose session ended and whose post, handoff or body edit was interrupted is finished from
 // the kept files, and never run again.
 func TestAnInterruptedStageIsFinishedFromItsKeptFilesAndRunsNoSecondSession(t *testing.T) {
+	t.Parallel()
 	for _, c := range []struct {
 		name  string
 		setup func(d *drvWorld) func(*Sessions)
@@ -341,6 +347,7 @@ func (e *editFault) EditBody(ctx context.Context, n int, body string) (forge.Pul
 
 // A specification that lacks the section of a registered ID has an invalid handoff, opens no pull request and stops.
 func TestAMissingSectionMakesTheHandoffInvalidAndStops(t *testing.T) {
+	t.Parallel()
 	d := newDrvWorld(t, loopPerms)
 	d.ctlWrite("no-section", "")
 	spec, _ := d.open()
@@ -356,6 +363,7 @@ func TestAMissingSectionMakesTheHandoffInvalidAndStops(t *testing.T) {
 // A push that the developer never made (no commit) stops; a head that prd-lint does not accept as a waiting specification stops
 // before the verifier, naming the line.
 func TestASpecificationThatPrdLintDoesNotAcceptStopsBeforeTheVerifier(t *testing.T) {
+	t.Parallel()
 	d := newDrvWorld(t, loopPerms)
 	d.ctlWrite("bad-prd", "")
 	spec, _ := d.open()
@@ -369,6 +377,7 @@ func TestASpecificationThatPrdLintDoesNotAcceptStopsBeforeTheVerifier(t *testing
 }
 
 func TestADeveloperThatCommitsNothingMakesAnInvalidHandoffAndStops(t *testing.T) {
+	t.Parallel()
 	d := newDrvWorld(t, loopPerms)
 	d.ctlWrite("no-commit", "")
 	spec, _ := d.open()
@@ -381,6 +390,7 @@ func TestADeveloperThatCommitsNothingMakesAnInvalidHandoffAndStops(t *testing.T)
 // A restart after the row starts the first attempt once: a call that stops for want of a pair leaves the attempt, and the next
 // call goes on from it.
 func TestARestartAfterTheRowStartsTheFirstAttemptOnce(t *testing.T) {
+	t.Parallel()
 	d := newDrvWorld(t, loopPerms)
 	spec, _ := d.open()
 	in := d.input(spec)
@@ -398,6 +408,7 @@ func TestARestartAfterTheRowStartsTheFirstAttemptOnce(t *testing.T) {
 
 // The cap of milestone 0 is asked before each session starts.
 func TestTheCapOfMilestoneZeroIsAskedBeforeEachSession(t *testing.T) {
+	t.Parallel()
 	d := newDrvWorld(t, loopPerms)
 	spec, _ := d.open()
 	_, err := d.advance(spec, func(s *Sessions) {
@@ -429,6 +440,7 @@ func (f *statusFault) SetStatus(ctx context.Context, sha, name, state, descripti
 // Review condition 4: when the post of the failure of a material review fails, at the end of an attempt or before the terminal wait, the
 // next run posts it before the next attempt starts or the wait is given, and adds no session and no comment.
 func TestAFailedPostOfTheVerdictStatusIsPostedBeforeTheAttemptOrTheWait(t *testing.T) {
+	t.Parallel()
 	for _, c := range []struct {
 		name     string
 		failOn   int
@@ -470,6 +482,7 @@ func TestAFailedPostOfTheVerdictStatusIsPostedBeforeTheAttemptOrTheWait(t *testi
 // loop.md, layup/verify: with a gate failure and no harness outside the authors, the status not-active is posted and the driver stops; it
 // starts no second attempt, as the failure of a gate alone would.
 func TestAGateFailureWithNoIndependentVerifierStopsAndStartsNoAttempt(t *testing.T) {
+	t.Parallel()
 	d := newDrvWorld(t, loopPerms)
 	pushRecords(t, d.w.bare, map[string]string{"routing.tsv": "role\ttier\tposition\tharness\tmodel\nsoftware-engineer\treasoning\t1\tclaude\tm1\nproduct-owner\treasoning\t1\tdevin\tm1\nsystems-architect\treasoning\t1\tdevin\tm1\nqa-engineer\treasoning\t1\tdevin\tm1\n"}, "routing")
 	d.r = restarted(t, d.w)
@@ -546,6 +559,7 @@ func sideCommit(t *testing.T, clone string, files map[string]string) string {
 // plan.md:147 and loop.md: the status error of the gates stops the step; no verifier starts and no attempt follows. The control is the same world with no
 // fault, which reaches the verified head. The failures of layup/spec and layup/rules start an attempt (checkretry_integration_test.go).
 func TestAnErrorStatusOfTheHeadStopsTheStepWithNoVerifierAndNoNewAttempt(t *testing.T) {
+	t.Parallel()
 	for _, c := range []struct {
 		name, want string
 		gates      string
@@ -579,6 +593,7 @@ func TestAnErrorStatusOfTheHeadStopsTheStepWithNoVerifierAndNoNewAttempt(t *test
 // either base, as before. The driver gives the verified head, and every session of the architecture task, the plan and the
 // developer included, clones the scratch branch of that base.
 func TestTheArchitectureHeadOfATargetWithNoPRDPassesLayupSpec(t *testing.T) {
+	t.Parallel()
 	for _, noPRD := range []bool{false, true} {
 		d := newDrvWorldOpts(t, loopPerms, drvOpts{noPRD: noPRD})
 		d.ctlWrite("commit", "")

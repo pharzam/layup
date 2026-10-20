@@ -34,6 +34,7 @@ func refusals(t *testing.T, w *world, id string) []string {
 // The demo of row 37a: a session head that changes a rule path is refused
 // before any push, with its diff as a payload.
 func TestARulePathChangeIsRefusedWithItsDiff(t *testing.T) {
+	t.Parallel()
 	w, r, f, a := sessionWorld(t)
 	// Two files change, so the payload is the diff of the head, not of the
 	// rule path alone.
@@ -70,6 +71,7 @@ func TestARulePathChangeIsRefusedWithItsDiff(t *testing.T) {
 }
 
 func TestAWorkflowChangeIsRefused(t *testing.T) {
+	t.Parallel()
 	w, r, _, a := sessionWorld(t)
 	id, err := r.TaskSession(context.Background(), harness(t, a, change(".github/workflows/ci.yml", "on: push\\n")))
 	if err != nil {
@@ -81,6 +83,7 @@ func TestAWorkflowChangeIsRefused(t *testing.T) {
 }
 
 func TestAHeadThatDoesNotDescendFromTheBaseIsRefused(t *testing.T) {
+	t.Parallel()
 	w, r, _, a := sessionWorld(t)
 	body := `git checkout -q --orphan other && printf 'x\n' > x.md && git add -A && git commit -qm other && git branch -qf task/T-ab12/1 other &&
 printf '` + strings.ReplaceAll(resultHead, "\t", `\t`) + `' > ../result/result.tsv`
@@ -94,6 +97,7 @@ printf '` + strings.ReplaceAll(resultHead, "\t", `\t`) + `' > ../result/result.t
 }
 
 func TestAddedLinesInSection2OfTheGuardrailsPass(t *testing.T) {
+	t.Parallel()
 	w, r, _, a := sessionWorld(t)
 	g := "# G\n\n## 2. Known pitfalls\n\n- one\n\n## 3. Next\n"
 	gitOut(t, r.Clone, "checkout", "-q", "main")
@@ -115,6 +119,7 @@ printf '` + strings.ReplaceAll(resultHead, "\t", `\t`) + `' > ../result/result.t
 // A head that deletes docs/guardrails.md changes a rule path: the exception
 // holds only for added lines, so the result is refused (rule-path).
 func TestAHeadThatDeletesTheGuardrailsIsRefused(t *testing.T) {
+	t.Parallel()
 	w, r, _, a := sessionWorld(t)
 	gitOut(t, r.Clone, "checkout", "-q", "main")
 	writeFile(t, filepath.Join(r.Clone, "docs", "guardrails.md"), "# G\n\n## 2. Known pitfalls\n\n- one\n")
@@ -135,6 +140,7 @@ printf '` + strings.ReplaceAll(resultHead, "\t", `\t`) + `' > ../result/result.t
 // A head whose docs/guardrails.md is a gitlink, to a commit that the clone
 // lacks, changes a rule path: an entry that is no file keeps an empty head.
 func TestAHeadWhoseGuardrailsIsAGitlinkIsRefused(t *testing.T) {
+	t.Parallel()
 	w, r, _, a := sessionWorld(t)
 	gitOut(t, r.Clone, "checkout", "-q", "main")
 	writeFile(t, filepath.Join(r.Clone, "docs", "guardrails.md"), "# G\n\n## 2. Known pitfalls\n\n- one\n")
@@ -154,6 +160,7 @@ printf '` + strings.ReplaceAll(resultHead, "\t", `\t`) + `' > ../result/result.t
 }
 
 func TestARecordsCommitWithNoRegisterRefuses(t *testing.T) {
+	t.Parallel()
 	for _, broken := range []bool{false, true} {
 		w, r, _, a := sessionWorld(t)
 		a.records = a.base // a commit of main: no rule-paths.tsv
@@ -176,6 +183,7 @@ func TestARecordsCommitWithNoRegisterRefuses(t *testing.T) {
 // A session whose result is refused by its end is not checked: a refused
 // artifact and a rule-path change give the one refusal of the end.
 func TestASessionRefusedAtItsEndIsNotChecked(t *testing.T) {
+	t.Parallel()
 	w, r, _, a := sessionWorld(t)
 	body := `mkdir -p docs/rules && printf 'r\n' > docs/rules/x.md && git add -A && git commit -qm rule && ` + work(strings.Repeat("0", 64))
 	id, err := r.TaskSession(context.Background(), harness(t, a, body))
@@ -200,6 +208,7 @@ func writeFile(t *testing.T, path, text string) {
 // The demo of row 37b: a clean session head is bound only after the forge
 // accepts its push.
 func TestACleanHeadIsPushedThenBound(t *testing.T) {
+	t.Parallel()
 	w, r, f, a := sessionWorld(t)
 	id, err := r.TaskSession(context.Background(), harness(t, a, change("src/app.txt", "work\\n")))
 	if err != nil {
@@ -232,6 +241,7 @@ func TestACleanHeadIsPushedThenBound(t *testing.T) {
 // A refused push binds nothing: the target holds task/T-ab12/1 at a commit
 // of another history, so the push is not a fast-forward.
 func TestARefusedPushBindsNothing(t *testing.T) {
+	t.Parallel()
 	w, r, f, a := sessionWorld(t)
 	other := t.TempDir()
 	gitOut(t, other, "init", "-q", "-b", "x")

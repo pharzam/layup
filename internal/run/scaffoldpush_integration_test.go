@@ -20,6 +20,7 @@ import (
 // The outputs of the Operator's applies are read by their names; a name that is a directory, or
 // that cannot be read, is an error that names it; a directory that does not exist has none.
 func TestTheAppliesOfTheOperatorAreReadByTheirNames(t *testing.T) {
+	t.Parallel()
 	dir := filepath.Join(t.TempDir(), "applies", "acme", "target")
 	if got, err := readApplies(dir); err != nil || len(got) != 0 {
 		t.Errorf("a directory that does not exist: %q, %v; want no output", got, err)
@@ -68,6 +69,7 @@ func notes(w *world) []string {
 // of another repository, and, once the Operator has pushed and applied, commits setup/rulesets.txt in
 // one commit of that path alone; a later restart finds it done before.
 func TestTheStepScaffoldPushWaitsAndRecordsTheAppliesOfTheOperator(t *testing.T) {
+	t.Parallel()
 	saved := verifyRun
 	t.Cleanup(func() { verifyRun = saved })
 	w := scaffoldWorld(t, proseFiles())

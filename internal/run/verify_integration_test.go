@@ -47,6 +47,7 @@ func setupRepo(t *testing.T, steps ...string) string {
 // layup-setup above it, oldest first, by its first parents, with its tree and the step
 // of its message: the order of the commits (S14 comes before S11), not of the steps.
 func TestTheTreeOfTheSetupIsTheCommitsOfLayupSetupAboveMain(t *testing.T) {
+	t.Parallel()
 	dir := setupRepo(t, "S04", "S05", "S14", "S11")
 	data, err := setupTree(dir)
 	if err != nil {
@@ -73,6 +74,7 @@ func TestTheTreeOfTheSetupIsTheCommitsOfLayupSetupAboveMain(t *testing.T) {
 }
 
 func TestTheTreeOfTheSetupRefusesWhatTheRunnerNeverMakes(t *testing.T) {
+	t.Parallel()
 	bad := func(message string) string {
 		dir := setupRepo(t, "S04")
 		writeFile(t, filepath.Join(dir, "x.txt"), "x\n")
@@ -242,6 +244,7 @@ func TestTheStepVerifyCommitsTheRecordsOfTheSetup(t *testing.T) {
 // verify.sha256 and rule-paths.sha256, each hash that of its file, and the register holds a
 // path. A file that is missing, a row that is missing or a hash that is not its file's is an error.
 func TestTheFilesOfOutAreTheRecordsOfTheSetup(t *testing.T) {
+	t.Parallel()
 	sum := func(text string) string { return fmt.Sprintf("%x", sha256.Sum256([]byte(text))) }
 	var reg, none bytes.Buffer
 	if err := tsv.Write(&reg, setup.RulePathsSchema, [][]string{{".github/", "—", "baseline"}}); err != nil {

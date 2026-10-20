@@ -189,6 +189,7 @@ func setupSessions(w *world) int {
 // restart builds the work area again to the same head and starts no session, and
 // a restart with setup/record.tsv in the records finds the step done before.
 func TestTheStepSetupRunsS01ToS14(t *testing.T) {
+	t.Parallel()
 	w := scaffoldWorld(t, proseFiles())
 	rows := toSetup(t, w, "go")
 	if last := rowOf(rows, "setup"); last != (Step{"setup", "done", "S01 to S14 done, in the work area"}) {
@@ -277,6 +278,7 @@ func TestTheStepSetupRunsS01ToS14(t *testing.T) {
 // restart is fail (pair) and starts no session; and a restart with the text put right
 // starts a new session and ends done.
 func TestAProseTextWhoseCheckFailsIsRemovedAndANewSessionStarts(t *testing.T) {
+	t.Parallel()
 	files := proseFiles()
 	files["docs/glossary.md"] = "# Glossary\n\n| Term | Meaning |\n| ---- | ------- |\n| Target | the product repository (`F-0099#1`) |\n" // a citation that resolves to no fact
 	w := scaffoldWorld(t, files)
@@ -326,6 +328,7 @@ func TestAProseTextWhoseCheckFailsIsRemovedAndANewSessionStarts(t *testing.T) {
 // A prose session that ends after its records commit (its comment on the control issue is refused): the step is fail,
 // and the files of that session are removed from the records, as for any fail that follows a session.
 func TestAProseSessionWhoseCommentFailsLeavesNoFileInTheRecords(t *testing.T) {
+	t.Parallel()
 	w := scaffoldWorld(t, proseFiles())
 	w.fake.failNote = " session of setup: "
 	rows := toSetup(t, w, "go")
@@ -345,6 +348,7 @@ func TestAProseSessionWhoseCommentFailsLeavesNoFileInTheRecords(t *testing.T) {
 // is fail and names it, and no setup commit is kept: layup-setup does not exist. With
 // a stack that the catalog does not have S01 is fail with its own reason, and the same.
 func TestTheRealRunnerOnTheStackAnswersOfTheStepSetup(t *testing.T) {
+	t.Parallel()
 	for _, c := range []struct {
 		name    string
 		answers [][]string
