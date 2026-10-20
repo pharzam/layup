@@ -100,3 +100,22 @@ FAIL K6: runs/T-r7b9/conditions.md:0: missing file
   - F7: K2 reports `TestAVerifierThatAsksIsAnsweredAtTheHeadItWasBoundTo` (`:163`) and `TestTheQuestionOfAVerifierAtItsBoundHeadLeavesTheFindingOpenWhileItWaits` (`:203`) missing from `docs/tests/traceability.md` (and reports the sibling tests that `PRD-0001-layup.md` §12 `REQ-005` Test cell abbreviated as "and its ten siblings" / "and the five tests beside it").
   - F8: K1 reports `FAIL K1: runs/T-r7b9/test-runs.md:293: new blank line at EOF.`.
   - K3 and K4 pass on `#426`'s records (`ok K3: test selectors`, `ok K4: restore evidence of mutants`).
+
+## 4. #426 again, after the fix of K2 (`5cf545b`)
+
+The run of §3 also printed 16 `FAIL K2 … not in docs/prd/PRD-0001-layup.md §12 REQ-005 Test cell` lines. Those were false positives. The merged `main` names those tests by their file ("TestTheQuestionPositionIsTheFirstStageTheRecordsShowNotDone and its 13 siblings of questionloop_test.go"), and the same check on T-r7b9 as merged (`0246d9c..2866a3f`) failed K2 the same way. K2 now accepts a Test cell that names the test or the basename of its file (cases `good-K2-prd-by-file` and `bad-K2-prd-other-file`). On T-r7b9 as merged it prints `ok K2`. The rerun on the round-2 head:
+
+- Command (in a detached worktree of `9bb845e7252186388ee63feb38547db86de2ba5c`): `sh docs/tests/freeze-check.sh --task T-r7b9 --base 0246d9c72ecae7c3509a7522990cbf39706f3fd4 --budget 2500/27`
+- Start: `2026-10-20T15:09:26Z`, exit `1`
+
+```
+FAIL K1: runs/T-r7b9/test-runs.md:293: new blank line at EOF.
+FAIL K2: internal/run/questionloop_integration_test.go:163: TestAVerifierThatAsksIsAnsweredAtTheHeadItWasBoundTo is not in docs/tests/traceability.md
+FAIL K2: internal/run/questionloop_integration_test.go:203: TestTheQuestionOfAVerifierAtItsBoundHeadLeavesTheFindingOpenWhileItWaits is not in docs/tests/traceability.md
+ok K3: test selectors
+ok K4: restore evidence of mutants
+ok K5: projection: figure 2145/23, maximum 2500/27, margin 355/4 (the figure at landing is still measured at landing)
+FAIL K6: runs/T-r7b9/conditions.md:0: missing file
+```
+
+**Catch: yes, and only the named defects.** F7 (the two tests missing from `traceability.md`) is the pair of K2 lines, and F8 (the blank line at the end of `test-runs.md`) is the K1 line. K6 fails only because conditions tables did not exist then.
