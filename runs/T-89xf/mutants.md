@@ -2,7 +2,7 @@
 
 Each mutant is applied to a copy of the tree (`/home/layup/.cache/layup-session/k3/mut-tree`, never the worktree), built, vetted and run with the tests named for it; the file is then restored from the worktree, its SHA-256 (first 12 hex characters) checked against the value before, and the killing tests run again as the green control. The harness is `/home/layup/.cache/layup-session/k3/mutants.py`. Exit statuses are build/vet/test. All 41 are killed; none is called equivalent.
 
-M1 to M33 are the first set (the first run left M2, M6, M29 and M33 alive or unbuilt; two tests were strengthened and two mutants repaired). **M34 to M41 are late evidence**: they guard the fixes of round 1 of #424 (finding 1: M34, M35; finding 2: M36, M37; finding 3: M38; finding 4: M39, M40, M41 and the driver entries) and were run after the code of the fixes, on the head that follows `1ee…`'s fix commit. The whole table was run again on that head.
+M1 to M33 are the first set (the first run left M2, M6, M29 and M33 alive or unbuilt; two tests were strengthened and two mutants repaired). **M34 to M41 are late evidence**: they guard the fixes of round 1 of #424 (finding 1: M34, M35; finding 2: M36, M37; finding 3: M38; finding 4: M39, M40, M41 and the driver entries) and were run after the code of the fixes, on the head of the fix commit. The whole table was run again on that head.
 
 | # | Mutant | File | SHA-256 before | mutated | after | build/vet/test exit | First failing assertion | Time (UTC) | Result | Green control |
 | - | ------ | ---- | -------------- | ------- | ----- | ------------------- | ----------------------- | ---------- | ------ | ------------- |
