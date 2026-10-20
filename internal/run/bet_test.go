@@ -134,9 +134,12 @@ func TestTheSettledDecisionsAreTheOptionLines(t *testing.T) {
 func TestTheRequirementsOfAnOptionAreItsMappedRows(t *testing.T) {
 	draft := [][]string{{"R-002", "non-functional"}, {"R-004", "requirement"}, {"R-005", "success-criterion"}}
 	row := func(c string) []string { return []string{"pg", c, "pass", "docs/x.md"} }
-	got, err := archRequirements("db", "pg", [][]string{row("R-004"), row("R-002"), row("NFR-002"), row("F-3"), row("Inv-1"), row("NFR-009")}, draft)
+	got, err := archRequirements("db", "pg", [][]string{row("R-004"), row("R-002"), row("F-3"), row("Inv-1"), row("NFR-009")}, draft)
 	if err != nil || !slices.Equal(got, []string{"NFR-002", "REQ-004"}) {
-		t.Errorf("ids = %q, %v; want [NFR-002 REQ-004] once each (NFR-009 is no requirement of the draft)", got, err)
+		t.Errorf("ids = %q, %v; want [NFR-002 REQ-004], R-002 being a non-functional row (NFR-009 is no requirement of the draft)", got, err)
+	}
+	if got, err := archRequirements("db", "pg", [][]string{row("NFR-002"), row("R-002"), row("NFR-002")}, draft); err != nil || !slices.Equal(got, []string{"NFR-002"}) {
+		t.Errorf("explicit and mapped: ids = %q, %v; want [NFR-002] once", got, err)
 	}
 	for _, none := range [][]string{{"F-3", "Inv-1", "ADR-0001", "Q-002"}, {"R-005"}, nil} {
 		var rows [][]string
