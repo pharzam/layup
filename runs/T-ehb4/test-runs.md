@@ -252,3 +252,7 @@ Strict red on the unchanged code `c75505f`, the test file alone changed. Command
 ### Green
 
 The fix: `FinishTask` takes as the head that carries the verdict the last event `bound` of code of the attempt (the rendered commit, or K3's merge above V or above R), `V` with none; checks it with `carries`; asks `UpToDate` of it; and `renderedHead` finds R by its own record (the bound of code with the one parent V). The same command with the two new tests and the integration set of the earlier rounds, start 2026-10-20T22:38:43Z, end 2026-10-20T22:38:57Z, exit=0: ok. `TestTheRenderedHeadGetsItsStatusesAndTheCloseOutGoesOnIt` now meets the records of another rendering at the check `carries`, which names the verified head too, and its assertion was widened to that text.
+
+### Round 6 - the gates
+
+The code is frozen at \`b0bfde5\`; later commits add a test, tables and records only (\`origin/main\` had not moved). Full integration level: \`TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./...\` (head \`53e8588\`, start 2026-10-20T22:44:08Z, end 2026-10-20T22:47:44Z, exit=0), 21 packages ok. build, vet with no tag, \`integration\` and \`e2e\`, gofmt, \`go test -count=1 ./...\` (21 ok), \`go test -count=1 -tags=e2e ./...\` (start 2026-10-20T22:47:46Z, end 2026-10-20T22:48:51Z, exit=0), the six lints and \`git diff --check origin/main HEAD\`: exit=0 each.
