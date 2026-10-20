@@ -183,20 +183,29 @@ func questionPosition(v loopView, attempt int) qStep {
 			rows = append(rows, r)
 		}
 	}
-	switch {
-	case len(rows) < len(qs):
-		return stop("the question %s has no answer", qs[len(rows)].ID)
-	case len(rows) > len(qs):
-		return stop("the answer %s.%s answers no question", last, rows[len(qs)][1])
+	have := make([]bool, len(qs))
+	for _, r := range rows {
+		n, err := strconv.Atoi(r[1])
+		if err != nil || n < 1 || n > len(qs) || have[n-1] {
+			return stop("the answer %s.%s answers no question", last, r[1])
+		}
+		have[n-1] = true
+	}
+	for i, ok := range have {
+		if !ok {
+			return stop("the question %s has no answer", qs[i].ID)
+		}
 	}
 	start := v.startRow(last)
-	for k, r := range rows { // P6
-		body, err := AnswerComment(start, r, qs[k].ID)
+	for _, r := range rows { // P6
+		n, _ := strconv.Atoi(r[1])
+		qid := qs[n-1].ID
+		body, err := AnswerComment(start, r, qid)
 		if err != nil {
 			return stop("the answer %s.%s cannot be composed: %v", last, r[1], err)
 		}
 		if _, ok := copyNamed(v.Copies, v.Issue, digest(body)); !ok {
-			return qStep{Stage: qPostAnswer, Session: last, Row: r, Question: qs[k].ID}
+			return qStep{Stage: qPostAnswer, Session: last, Row: r, Question: qid}
 		}
 	}
 	detail, found := v.lastHandoff(last) // P7

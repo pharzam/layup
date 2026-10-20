@@ -253,6 +253,23 @@ func TestTheNthAnswerNamesTheNthQuestionAndAMissingOrExtraAnswerStops(t *testing
 	}
 }
 
+// Round 2, finding 5 (condition 4): the question an answer row answers is selected by the row's column n (1-based into the ordered
+// question list), not by its position in the file, so permuting valid answer rows keeps each answer ID's question ID.
+func TestTheAnswerColumnNSelectsItsQuestionInAnyRowOrder(t *testing.T) {
+	b := qTwoAsking(t, answerRow2+answerRow1)
+	for _, want := range []struct{ n, qid string }{{"2", qa2 + ".1"}, {"1", qa1 + ".1"}} {
+		got := b.stage()
+		if got.Stage != qPostAnswer || got.Session != qow || got.Row[1] != want.n || got.Question != want.qid {
+			t.Errorf("answer %s.%s: stage %d, row %v, question %q; want the post of answer %s for %s", qow, want.n, got.Stage, got.Row, got.Question, want.n, want.qid)
+		}
+		n, _ := strconv.Atoi(got.Row[1])
+		b.copied(qow, "answer", n, got.Question)
+	}
+	if got := qTwoAsking(t, answerRow2+answerRow1).copied(qow, "answer", 2, qa2+".1").copied(qow, "answer", 1, qa1+".1").stage(); got.Stage != qHandoffAnswer {
+		t.Errorf("both permuted answers posted for their own questions: stage %d; want the handoff back (P7)", got.Stage)
+	}
+}
+
 // U7 (Q9): an answer session that ends other than done with completed, asks a question back or is not of the owner role is a stop that names
 // it, and its own question is no new asking session (the stop repeats; no handoff is asked for).
 func TestAnOwnerSessionThatDoesNotAnswerStops(t *testing.T) {
