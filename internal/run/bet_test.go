@@ -27,16 +27,16 @@ const btHeader = "milestone\tkind\tbrief\tbrief_sha256\tappetite_usd\tappetite_h
 
 // U1: the rules of the owner of bets, each with its line, its column and its reason; the control is a valid table.
 func TestABetsTableRefusesEachBrokenRule(t *testing.T) {
-	for _, c := range []struct{ name, table, want string }{
-		{"a second first bet", btRow("1", "first", "40.0", "30.0", "bet") + btRow("2", "first", "40.0", "30.0", "bet"), `line 3, column "kind"`},
-		{"a later bet before the first", btRow("2", "later", "40.0", "30.0", "bet"), `line 2, column "kind"`},
-		{"no brief hash", strings.Replace(btRow("1", "first", "40.0", "30.0", "bet"), btSHA[:64], "—", 1), `line 2, column "brief_sha256"`},
-		{"a bet with no appetite", strings.Replace(btRow("1", "first", "—", "30.0", "bet"), "—", "—", 1), `line 2, column "appetite_usd"`},
-		{"a no-bet with an appetite", btRow("1", "first", "40.0", "30.0", "no-bet"), `line 2, column "appetite_usd"`},
+	for _, c := range []struct{ name, table, want, reason string }{
+		{"a second first bet", btRow("1", "first", "40.0", "30.0", "bet") + btRow("2", "first", "40.0", "30.0", "bet"), `line 3, column "kind"`, "a second row of the kind first"},
+		{"a later bet before the first", btRow("2", "later", "40.0", "30.0", "bet"), `line 2, column "kind"`, "a later bet comes after the first"},
+		{"no brief hash", strings.Replace(btRow("1", "first", "40.0", "30.0", "bet"), btSHA[:64], "—", 1), `line 2, column "brief_sha256"`, "this column never holds the empty value"},
+		{"a bet with no appetite", strings.Replace(btRow("1", "first", "—", "30.0", "bet"), "—", "—", 1), `line 2, column "appetite_usd"`, "the appetite is the empty value exactly for a no-bet"},
+		{"a no-bet with an appetite", btRow("1", "first", "40.0", "30.0", "no-bet"), `line 2, column "appetite_usd"`, "the appetite is the empty value exactly for a no-bet"},
 	} {
 		_, err := ReadBets([]byte(btHeader + c.table))
-		if err == nil || !strings.Contains(err.Error(), c.want) {
-			t.Errorf("%s: err = %v; want %s", c.name, err, c.want)
+		if err == nil || !strings.Contains(err.Error(), c.want) || !strings.Contains(err.Error(), c.reason) {
+			t.Errorf("%s: err = %v; want %s with the reason %q", c.name, err, c.want, c.reason)
 		}
 	}
 	rows, err := ReadBets([]byte(btHeader + btRow("1", "first", "40.0", "30.0", "bet") + btRow("2", "later", "10.0", "5.0", "bet") + strings.Replace(strings.Replace(btRow("3", "later", "40.0", "30.0", "no-bet"), "40.0", "—", 1), "30.0", "—", 1)))
@@ -78,6 +78,17 @@ func TestThePhaseTagsAreTheFirstColumnOfSection9(t *testing.T) {
 	prd := "## 8. Success metrics\n\n| 9 | not here |\n\n## 9. Rollout & phases\n\nThe tags.\n\n| Phase | Name | Ships |\n| ----- | ---- | ----- |\n| 1 | A | x |\n| alpha | B | y |\n| 3 | C | z |\n\n## 10. Risks\n\n| 4 | D | w |\n"
 	if got := phaseTagsOf([]byte(prd)); !slices.Equal(got, []string{"1", "alpha", "3"}) {
 		t.Errorf("tags = %q; want [1 alpha 3]", got)
+	}
+	for name, in := range map[string]string{
+		"no separator row": "## 9. Rollout & phases\n\n| Phase | Name | Ships |\n| alpha | B | y |\n",
+		"a truncated row":  "## 9. Rollout & phases\n\n| Phase | Name | Ships |\n| --- | --- | --- |\n| 1 | A | x |\n| alpha |\n",
+		"another header":   "## 9. Rollout & phases\n\n| Metric | Fact |\n| --- | --- |\n| faster | F-1 |\n",
+		"an empty tag":     "## 9. Rollout & phases\n\n| Phase | Name | Ships |\n| --- | --- | --- |\n|  | A | x |\n",
+		"a fourth cell":    "## 9. Rollout & phases\n\n| Phase | Name | Ships |\n| --- | --- | --- |\n| 1 | A | x | y |\n",
+	} {
+		if got := phaseTagsOf([]byte(in)); len(got) != 0 {
+			t.Errorf("malformed %s: tags = %q; want none", name, got)
+		}
 	}
 	for name, in := range map[string]string{"no section": "## 8. x\n| 1 | a |\n", "no table": "## 9. Rollout\n\nprose\n", "a header only": "## 9. Rollout\n\n| Phase | Name |\n| --- | --- |\n"} {
 		if got := phaseTagsOf([]byte(in)); len(got) != 0 {
@@ -251,7 +262,8 @@ func TestACodeBoundWithNoSessionIsSkippedByItsReaders(t *testing.T) {
 	if st := loopPosition(loopView{Task: "T-aaaa", Kind: "specification", Events: [][]string{events[0], events[2]}}); st.Pos == posStop {
 		t.Errorf("loopPosition with a bound of code = %+v; want no stop", st)
 	}
-	if !renderedBound(events, 1) || renderedBound(events[:2], 1) {
-		t.Errorf("renderedBound = %v, %v; want true with the bound of code and false without", renderedBound(events, 1), renderedBound(events[:2], 1))
+	push := [][]string{events[0], {"2", "push", "1", "", "", shaR, "task/T-aaaa/1", at}}
+	if !renderedPushed(events, 1) || renderedPushed(events[:2], 1) || !renderedPushed(push, 1) || renderedPushed(push, 2) {
+		t.Errorf("renderedPushed = %v, %v, %v, %v; want true for the bound or the push of code, false without and for another attempt", renderedPushed(events, 1), renderedPushed(events[:2], 1), renderedPushed(push, 1), renderedPushed(push, 2))
 	}
 }

@@ -12,7 +12,9 @@ import (
 	"testing"
 
 	"github.com/pharzam/layup/internal/forge"
+	"github.com/pharzam/layup/internal/git"
 	"github.com/pharzam/layup/internal/records"
+	"github.com/pharzam/layup/internal/session"
 	"github.com/pharzam/layup/internal/spec"
 	"github.com/pharzam/layup/internal/tsv"
 )
@@ -58,6 +60,27 @@ func (d *drvWorld) branchHead(branch string) string {
 		return ""
 	}
 	return strings.TrimSpace(out)
+}
+
+// follow moves the pull request of the specification task to the tip of its branch on the forge, as a push to the branch does.
+func (d *drvWorld) follow(branch string) {
+	d.t.Helper()
+	if tip := d.branchHead(branch); tip != "" {
+		d.w.fake.movePull(d.register()[0].PR, tip)
+	}
+}
+
+// reading counts the requests of the forge that name the object.
+func (d *drvWorld) reading(sha string) int {
+	d.w.fake.mu.Lock()
+	defer d.w.fake.mu.Unlock()
+	n := 0
+	for _, r := range d.w.fake.reqs {
+		if strings.Contains(r, sha) {
+			n++
+		}
+	}
+	return n
 }
 
 func stopAt(stage string) func() {
@@ -137,6 +160,11 @@ func TestTheStepBet(t *testing.T) {
 	if got.Result != "done" || !strings.HasPrefix(got.Detail, "the bet 1: ") {
 		t.Fatalf("the step = %+v; want the bet made", got)
 	}
+	st0, err := d.r.sessions().verifiedStep(ctx, specID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	answer0, _ := spec.ParseAnswer([]byte(betAnswerText), []string{"REQ-001"}, []string{"1"}, []string{"1", "2", "Q-002", "Q-003", "Q-004"}, map[string][]string{"db": {"pg", "sqlite"}, "web": {"go"}})
 	// The row, last.
 	bets, err := ReadBets([]byte(keptRecord(t, d.w, "bets.tsv")))
 	if err != nil || len(bets) != 1 {
@@ -213,6 +241,9 @@ func TestTheStepBet(t *testing.T) {
 	if again := d.bet(); again.Result != "done" || again.Detail != "done before" || recordsHead(t, d.w) != head || d.requests("POST /repos/") != posts || d.requests("PATCH ") != patches {
 		t.Errorf("a second run = %+v; head moved %v, POST %d (was %d); want done before and no write", again, recordsHead(t, d.w) != head, d.requests("POST /repos/"), posts)
 	}
+	// I7, from the producer to the consumer: a close-out session on the rendered commit that this step made is accepted, and its head carries the
+	// verdict. It comes last: the driver of a Shape task after a close-out is the step loop's (row 66k).
+	d.closeOutOn(t, specID, st0, r, h, answer0)
 }
 
 // I3: brief.lines unset is a wait for the Operator and starts no session.
@@ -283,7 +314,7 @@ func TestADecisionWhoseOptionNamesNoRequirementIsRefusedBeforeAnyWrite(t *testin
 			d.restart()
 		}
 	}
-	if d.has("spec/inventory.tsv") || d.has("bets.tsv") || d.branchHead(branch) != d.boundOf(specID)[0] || len(d.register()) != 2 || renderedBound(d.eventsOf(specID), 1) || slices.ContainsFunc(d.eventsOf(specID), func(e []string) bool { return e[1] == "push" && e[3] == "" }) {
+	if d.has("spec/inventory.tsv") || d.has("bets.tsv") || d.branchHead(branch) != d.boundOf(specID)[0] || len(d.register()) != 2 || renderedPushed(d.eventsOf(specID), 1) || slices.ContainsFunc(d.eventsOf(specID), func(e []string) bool { return e[1] == "push" && e[3] == "" }) {
 		t.Errorf("the refusal left a write: inventory %v, bets %v, branch %q, %d tasks", d.has("spec/inventory.tsv"), d.has("bets.tsv"), d.branchHead(branch), len(d.register()))
 	}
 }
@@ -348,8 +379,9 @@ func TestTheBetStepIsAtomicToItsLastAct(t *testing.T) {
 			if d.has("bets.tsv") {
 				t.Fatalf("bets.tsv is written after a stop at %s", stage)
 			}
-			// The event push announces the forge write: after the stop at it the branch is still at the verified head, and after the stop at the push it is at the commit with no bound.
 			specID, branch := d.specBranch()
+			d.follow(branch) // the pull request follows the branch, as on the forge
+			// The event push announces the forge write: after the stop at it the branch is still at the verified head, and after the stop at the push it is at the commit with no bound.
 			code := func(kind string) bool {
 				return slices.ContainsFunc(d.eventsOf(specID), func(e []string) bool { return e[1] == kind && e[3] == "" })
 			}
@@ -415,8 +447,10 @@ func TestShapeStaysDoneAfterTheRenderedPush(t *testing.T) {
 	if got := d.bet(); got.Result != "done" || !strings.HasPrefix(got.Detail, "the bet 1: ") {
 		t.Fatalf("the step = %+v", got)
 	}
+	specID0, branch0 := d.specBranch()
+	d.follow(branch0) // the pull request's head is the rendered commit
 	// The link of the review record, asked directly, accepts the pull request whose head is the rendered commit (the guard of LinkReviewRecord).
-	specID, _ := d.specBranch()
+	specID := specID0
 	st, err := d.r.sessions().verifiedStep(context.Background(), specID)
 	if err != nil {
 		t.Fatal(err)
@@ -424,9 +458,9 @@ func TestShapeStaysDoneAfterTheRenderedPush(t *testing.T) {
 	if _, err := d.r.sessions().LinkReviewRecord(context.Background(), specID, st.Session); err != nil {
 		t.Errorf("LinkReviewRecord with the rendered commit as the head of the pull request: %v; want none", err)
 	}
-	head, posts, patches, sessions := recordsHead(t, d.w), d.requests("POST /repos/"), d.requests("PATCH "), len(d.sessionRows())
+	head, posts, patches, sessions, reads := recordsHead(t, d.w), d.requests("POST /repos/"), d.requests("PATCH "), len(d.sessionRows()), d.reading(d.boundOf(specID0)[0])
 	d.restart()
-	if got := d.r.shapeStep(context.Background()); got.Result != "done" || got.Detail != "done before" || recordsHead(t, d.w) != head || d.requests("POST /repos/") != posts || d.requests("PATCH ") != patches || len(d.sessionRows()) != sessions {
+	if got := d.r.shapeStep(context.Background()); got.Result != "done" || got.Detail != "done before" || d.reading(d.boundOf(specID0)[0]) != reads || recordsHead(t, d.w) != head || d.requests("POST /repos/") != posts || d.requests("PATCH ") != patches || len(d.sessionRows()) != sessions {
 		t.Errorf("shape after the rendered push = %+v; want done before and no write, no session", got)
 	}
 }
@@ -442,5 +476,89 @@ func TestTheArchitectureIssueBlockOfLoopMd(t *testing.T) {
 	block, _, _ = strings.Cut(block, "```\n")
 	if !ok || block != archIssueBlock {
 		t.Errorf("loop.md has the block bet-issue-architecture: %v; it is equal to the code: %v", ok, block == archIssueBlock)
+	}
+}
+
+// A rendered push that finds a branch that is neither the verified head nor the rendered commit is refused: the tip stays, no binding and
+// no row of bets.tsv is written (loop.md, The step bet).
+func TestARenderedPushToAnotherBranchTipIsRefused(t *testing.T) {
+	for _, tip := range []string{"an ancestor of the verified head", "a missing branch"} {
+		t.Run(tip, func(t *testing.T) {
+			d := betWorld(t, betOptionsTable)
+			d.bet()
+			d.reply(7060, 303, "carol", "2026-10-08T14:00:00Z", betAnswerText)
+			d.restart()
+			restore := stopAt("pushevent")
+			d.bet()
+			restore()
+			specID, branch := d.specBranch()
+			want := ""
+			if tip == "an ancestor of the verified head" {
+				want = strings.TrimSpace(gitOut(t, d.w.bare, "rev-parse", d.boundOf(specID)[0]+"^"))
+				gitOut(t, d.w.bare, "update-ref", "refs/heads/"+branch, want)
+			} else {
+				gitOut(t, d.w.bare, "update-ref", "-d", "refs/heads/"+branch)
+			}
+			d.restart()
+			if got := d.bet(); got.Result != "fail" || !strings.Contains(got.Detail, errPushRefused.Error()) {
+				t.Fatalf("the step = %+v; want a fail with %q", got, errPushRefused)
+			}
+			if d.branchHead(branch) != want || d.has("bets.tsv") || len(d.register()) != 2 || slices.ContainsFunc(d.eventsOf(specID), func(e []string) bool { return e[1] == "bound" && e[3] == "" }) {
+				t.Errorf("the branch at %q (want %q), bets.tsv %v, %d tasks; want the tip kept, no row, no binding and no bound", d.branchHead(branch), want, d.has("bets.tsv"), len(d.register()))
+			}
+		})
+	}
+}
+
+// closeOutOn runs a close-out session on the rendered commit r, whose push hook is the close-out check of the carry-over input built from
+// the records that this world holds, and checks that it is accepted and carries layup/verify.
+func (d *drvWorld) closeOutOn(t *testing.T, task string, st loopStep, r, h string, answer spec.Answer) {
+	t.Helper()
+	ctx := context.Background()
+	read := func(path string, f func([]byte) ([][]string, error)) [][]string {
+		rows, err := f([]byte(keptRecord(t, d.w, path)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return rows
+	}
+	texts := map[string]string{}
+	var facts []spec.InventoryFact
+	for _, f := range factRows(read("spec/spans.tsv", records.ReadSpans), read("questions.tsv", records.ReadQuestions), read("intake/answers.tsv", records.ReadAnswers)) {
+		facts, texts[f[0]] = append(facts, spec.InventoryFact{ID: f[0], Class: f[1], Text: f[2]}), f[2]
+	}
+	prds, err := filesAt(d.r.target, h, "docs/prd", isPRDName)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, recs, err := renderedFiles(prds, nil, "F-0004", answer, read("spec/inventory-1.tsv", spec.ReadInventory), texts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	in := CarryInput{Task: task, Verifier: st.Session, Harnesses: d.harnesses, Models: d.models, Rendered: &RenderedInput{Head: r, Render: recs}}
+	s := d.r.sessions()
+	scratch := "layup/base/" + task + "/1"
+	if err := git.UpdateRef(d.r.target, "refs/heads/"+scratch, r); err != nil {
+		t.Fatal(err)
+	}
+	id, err := s.TaskSession(ctx, TaskSpec{Task: task, Attempt: 1, Role: stepRole("close-out"), Base: r, Branch: scratch, Records: d.r.store.Base(),
+		Prompt: []byte("Prompt file of the step close-out of the task " + task + ".\n"), Pair: pairOf(d.harnesses[0], d.models[0]), Admit: func(string) error { return nil },
+		Push: func(id string, _ session.Dir, _ session.Run) error { return s.PushCloseOut(ctx, id, in) }})
+	if err != nil {
+		t.Fatalf("the close-out session on the rendered commit: %v", err)
+	}
+	var head string
+	for _, e := range d.eventsOf(task) {
+		if e[3] == id && e[1] == "refused" {
+			t.Fatalf("the close-out on the rendered commit was refused: %s", e[6])
+		} else if e[3] == id && e[1] == "bound" {
+			head = e[5]
+		}
+	}
+	if head == "" || d.branchHead("task/"+task+"/1") != head {
+		t.Fatalf("the close-out is bound to %q and the branch is at %s; want it pushed and bound", head, d.branchHead("task/"+task+"/1"))
+	}
+	if got, err := s.CarryVerify(ctx, in, id); err != nil || got != head {
+		t.Errorf("CarryVerify of the close-out on the rendered commit = %q, %v; want %s", got, err, head)
 	}
 }

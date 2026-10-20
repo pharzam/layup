@@ -31,7 +31,7 @@ No landed form makes a step impossible. The consumers of `bound` are the one unp
 The Operator's coordinator selected (A): the `instruction-specification` block (`loop.md`, `instructions.go`, `testdata/prompts/specification.txt`) now shows `## 6.`, `## 7.`,
 `## 8. Success metrics`, the matrix, `## 9. Rollout & phases`, and asks for a `**Non-goals.**` paragraph. The last two additions beyond the amendment (the headings 6 and 7 and the
 paragraph) are **decided here**: `RenderPRD` finds the rows of the requirements in `## 6.`/`## 7.` and the paragraph it appends to, and the specimen of the instruction had none of them.
-`TestTheNewInputsAreInTheirKindsAfterTheExistingItems` and the specimen test (now five forms) follow; `internal/spec/prdcontent_test.go` cites `## 8.`.
+`TestTheNewInputsAreInTheirKindsAfterTheExistingItems` and the specimen test (now five forms) follow; `internal/spec/prdcontent_test.go` still cited `## 9. Success metrics` in this first version (the reader finds the table by its heading's name, so it passed); round 1 moved it to `## 8.`.
 The merge of `origin/main` at `99ff862` (#444, T-05f4) was made as a plain merge (`eb506cc`; its message is git's default, the hook accepted it).
 
 ## S2 - the inert stubs and the extractions (`423bf25`)
@@ -51,7 +51,7 @@ Direct statuses (`echo "exit=$?"` after the command, no pipe); the times are `da
   the `bet` row absent where the Scaffold is not done, the refusals of `session`/`refused` in U12) are green at the stub by design, beside their red twins.
 - Unit, the readers of an event bound of code (`red-unit-2.txt`, 2026-10-20T15:08:26Z to 15:08:27Z, exit=1): `lastBound = bbbb..., ""; want the last bound of a session`; `registerRevOf ... the event bound of  has no
   start row in sessions.tsv`; `authorsFrom ... the same`; `loopPosition ... the session  has a bound and is not of the developer role`; `renderedBound = false, false; want true ... and false without`. The guards of
-  `RepairPushes`, `LinkReviewRecord` and the driver are red in the integration tests below (the stop at the push event, and `TestShapeStaysDoneAfterTheRenderedPush`).
+  `RepairPushes`, `LinkReviewRecord` and the driver have **no guard-specific red run**: the integration red below stops at `not wired` and proves none of them. Their only evidence is the compiled mutants (G2, G6, G7), which are late evidence (made after the implementation); round 1 found this claim too strong and the first version of the record said otherwise.
 - Integration (`red-integration-1.txt`: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 60m ./internal/run/ -run "TestTheBetsBlock|TestTheStepBet$|TestBriefLinesUnset|TestOnlyTheApprover|TestADecisionWhose|TestANoBet|TestALaterBet|TestTheBetStepIsAtomic|TestShapeStaysDone"`,
   2026-10-20T15:08:34Z to 15:09:06Z, exit=1): every test failed at its first assertion against `betStep` that answered `done not wired` (`the step = {Name:bet Result:done Detail:not wired}; want the wait for the answer`),
   and `TestTheBetsBlockEqualsItsGoSchema` with `the number of columns: the block has "11"; the Go schema has "0"`. The red is the stub's, not a typo of the test: the same worlds are green below.
@@ -213,3 +213,20 @@ exit=0
 - `go build ./...`, `go vet ./...`, `go vet -tags=integration ./...`, `go vet -tags=e2e ./...`: exit 0; `gofmt -l .`: empty; `go test -count=1 ./...`: ok; `go test -count=1 -tags=e2e ./...`: ok.
 - The full integration level, `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 90m ./...`: 2026-10-20T15:50:50Z to 15:54:11Z, exit=0 (`/home/layup/.cache/layup-session/T-2vva-full-integration.txt`). No load flake occurred.
 - `adr-lint`, `prd-lint`, `link-lint`, `run-discipline-tests` (138 passed), `nested-checkout-check`, `setup-check`, `git diff --check origin/main HEAD`: all OK.
+
+## Round 1 of #366 (comment 6295520491): the fixes, test-first
+
+The evidence below was made **after** the implementation of the first version, and the two runs of mutants after it are **late evidence**, not red evidence. The red runs of the four findings are real: the tests were
+written first, run against the code of `894320a` with the stub `renderedPushed` (always false) and the old `phaseTagsOf`, and then the code was written.
+
+- Unit, red (2026-10-20T16:16:37Z to 16:16:39Z, exit=1): `TestThePhaseTagsAreTheFirstColumnOfSection9` (`malformed a truncated row: tags = ["1" "alpha"]; want none`, `another header: tags = ["faster"]`, `a fourth cell: tags = ["1"]`,
+  `no separator row: tags = ["alpha"]`; finding 3) and `TestACodeBoundWithNoSessionIsSkippedByItsReaders` (`renderedPushed = false, false, false, false; want true for the bound or the push of code, ...`; finding 1). The reasons that U1 now asserts
+  were green at once (the code had them); their evidence is the reason mutant U1 below, a late one.
+- Integration, red (2026-10-20T16:16:44Z to 16:17:34Z, exit=1):
+  - finding 1: `TestTheBetStepIsAtomicToItsLastAct/pushed`: `shape after the stop = {... Result:fail Detail:the head of the pull request 1 is d9e1..., not the reviewed d7b4...}; want done before`, with the pull request moved to the branch tip by `movePull`;
+  - finding 4: `TestARenderedPushToAnotherBranchTipIsRefused` for an ancestor of the verified head and for a missing branch: `the step = {... Result:done Detail:the bet 1: ...}; want a fail with "the push of the session's head was refused"`;
+  - finding 2a: `TestShapeStaysDoneAfterTheRenderedPush`: `shape after the rendered push = {... done before}; want done before and no write, no session` (the reads of the settled head counted; G7);
+  - `TestTheStepBet` failed in its second run after the close-out (`Shape has no verified head`): a close-out on the rendered commit is followed by the driver of the step loop (row 66k), so the close-out check is made last in the test.
+- Green: the same tests, 2026-10-20T16:18:24Z to 16:19:13Z, exit=0, after `renderedPushed` (the push or the bound of code in the attempt), `phaseTagsOf` (the header `Phase | Name | Ships`, the separator row, rows of three cells) and the check of the branch tip before the
+  pending push (`errPushRefused` unless it is the verified head or the rendered commit).
+- Finding 2c: `closeOutOn` runs a close-out session (TaskSession, the harness `close-out`, `PushCloseOut` with the records of this world's own bet) on the rendered commit that `TestTheStepBet` produced; it is accepted, bound, and `CarryVerify` carries the verdict. It is green at once, since the consumer was already right; its falsifier is a mutant of the consumer, not run here.

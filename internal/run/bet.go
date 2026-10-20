@@ -26,33 +26,47 @@ type betInput struct {
 	Survivors             map[string][]string
 }
 
-// phaseTagsOf gives the first column of the first table under the heading "## 9." of a PRD: the phase tags of the target (the section
-// "Rollout & phases" of the template; the specification instruction asks for it).
+// phaseTagsOf gives the first column of the table under the heading "## 9." of a PRD: the phase tags of the target (the section
+// "Rollout & phases" of the baseline's PRD form; the specification instruction asks for it). The table is the first one of the section and
+// has the header Phase | Name | Ships, a separator row and rows of three cells with a tag; any other form gives no tag.
 func phaseTagsOf(prd []byte) []string {
-	var tags []string
-	in, header := false, false
+	var rows [][]string
+	in, started := false, false
+scan:
 	for _, raw := range strings.Split(string(prd), "\n") {
 		l := strings.TrimSpace(raw)
 		switch {
 		case strings.HasPrefix(l, "## "):
 			if in {
-				return tags
+				break scan
 			}
 			in = strings.HasPrefix(l, "## 9.")
 		case !in:
-		case strings.HasPrefix(l, "|"):
-			cells := strings.Split(strings.Trim(l, "|"), "|")
-			first := strings.TrimSpace(cells[0])
-			switch {
-			case !header:
-				header = true
-			case strings.Trim(first, "-: ") == "":
-			default:
-				tags = append(tags, first)
+		case strings.HasPrefix(l, "|") && strings.HasSuffix(l, "|") && len(l) > 1:
+			started = true
+			cells := strings.Split(l[1:len(l)-1], "|")
+			for i := range cells {
+				cells[i] = strings.TrimSpace(cells[i])
 			}
-		case header:
-			return tags
+			rows = append(rows, cells)
+		case started:
+			break scan
 		}
+	}
+	if len(rows) < 3 || !slices.Equal(rows[0], []string{"Phase", "Name", "Ships"}) {
+		return nil
+	}
+	for _, c := range rows[1] {
+		if len(c) == 0 || strings.Trim(c, "-: ") != "" {
+			return nil
+		}
+	}
+	var tags []string
+	for _, r := range rows[2:] {
+		if len(r) != 3 || r[0] == "" {
+			return nil
+		}
+		tags = append(tags, r[0])
 	}
 	return tags
 }
@@ -93,11 +107,12 @@ func betAnswer(copies []answerCopy, brief, approver []string, in betInput) (spec
 // follow ("version", "pushevent", "pushed", "bound", "carry", "issue", "task"), and an error it gives stops the step there.
 var betStopAt = func(stage string) error { return nil }
 
-// renderedBound reports whether the attempt has an event bound of code, with no session: the rendered commit of the first bet.
-func renderedBound(events [][]string, attempt int) bool {
+// renderedPushed reports whether the attempt has an event push or bound of code, with no session: the rendered commit of the first bet is
+// pushed or its push is pending, and the step bet, not the driver of the Shape task, finishes it.
+func renderedPushed(events [][]string, attempt int) bool {
 	return slices.ContainsFunc(events, func(e []string) bool {
 		a, _ := strconv.Atoi(e[2])
-		return e[1] == "bound" && e[3] == "" && a == attempt
+		return (e[1] == "push" || e[1] == "bound") && e[3] == "" && a == attempt
 	})
 }
 
@@ -419,6 +434,13 @@ func (r *state) renderedStage(ctx context.Context, s *Sessions, task string, st 
 			if err := betStopAt("pushevent"); err != nil {
 				return "", err
 			}
+		}
+		// Only the verified head (the push is to come) and the rendered commit (the push was made) are the branch's tips that this step goes on from.
+		switch tip, found, err := s.Store.BranchHead(ctx, branch); {
+		case err != nil:
+			return "", err
+		case !found || (tip != st.Head && tip != commit):
+			return "", fmt.Errorf("%w: %s holds %q, not the verified head %s or the rendered commit %s", errPushRefused, branch, tip, st.Head, commit)
 		}
 		if err := s.Store.PushHead(ctx, commit, branch); err != nil {
 			return "", err

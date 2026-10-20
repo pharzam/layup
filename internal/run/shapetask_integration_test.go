@@ -94,6 +94,9 @@ specification)
   if [ -e $ctl/spec-fail ]; then printf '\n| REQ-009 | x | Must | 1 | F-0003 |\n' >> docs/prd/PRD-0001-x.md; rm $ctl/spec-fail; fi
   if [ -e $ctl/no-commit ]; then printf "$res_head" > ../result/result.tsv; exit 0; fi
   artifacts docs/tasks/$task.md docs/prd/PRD-0001-x.md $(ls docs/spec/*.md 2>/dev/null) x.go ;;
+close-out) # the close-out of the rendered commit of the bet (task T-2vva): the task file and the completed log, in one commit
+  mkdir -p docs/tasks; printf 'task\n' > docs/tasks/$task.md; printf 'log\n' > docs/tasks/completed.md
+  artifacts docs/tasks/$task.md docs/tasks/completed.md ;;
 shape-architecture)
   mkdir -p docs/spec docs/adr docs/tasks
   printf '## Decision pending the bet\n\nA\n' > docs/spec/architecture.md

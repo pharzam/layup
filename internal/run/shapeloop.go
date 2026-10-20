@@ -507,7 +507,7 @@ func (s *Sessions) AdvanceShapeTask(ctx context.Context, in ShapeTaskInput) (Adv
 		case posShip:
 			stop, err = s.ship(ctx, in, v, st)
 		case posVerified, posNextAttempt:
-			if st.Pos == posVerified && renderedBound(v.Events, st.Attempt) { // the rendered commit is the pull request's head: the verified head was settled before
+			if st.Pos == posVerified && renderedPushed(v.Events, st.Attempt) { // the rendered commit is the pull request's head: the verified head was settled before
 				return Advance{Task: in.Task, Verified: true, Head: st.Head}, nil
 			}
 			if stop, err = s.settleVerdict(ctx, in, v, st); err == nil && stop == "" && st.Pos == posNextAttempt {
