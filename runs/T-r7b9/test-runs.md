@@ -313,3 +313,26 @@ The full integration level passed at the first run: every package `ok`, `interna
 - On the real code (`76587a4`): `go test -count=1 ./internal/run/ -run 'TestAnUncomposableQuestionRowStaysAStop|TestAnUncomposableAnswerRowStaysAStop'`, start `2026-10-20T11:49:31Z`, end `2026-10-20T11:49:32Z`, **exit 0**.
 - On removal mutant Z1 (question composition stop removed, sha256 `893566c22161da1b542d401b25f8848e6b63dc31e6b4b5c0cd0a4b2fbb5d2ff3`): build/vet/vet-int `0/0/0`, `go test -count=1 ./internal/run/` **exit 1** (`TestAnUncomposableQuestionRowStaysAStop`: `read 1: stage 2 (""), askStage=("", "", handoff: the file of a comment has 65619 characters, over 65536); want the repeatable stop "T-sp01: the question S-0a1b2c3d.1 cannot be composed: handoff: the file of a comment has 65619 characters, over 65536" with no post`).
 - On removal mutant Z2 (answer composition stop removed, sha256 `a98c8add17c38197fee8e25edcd5f42b85f22732be62ecaba1a55bd85fe06682`): build/vet/vet-int `0/0/0`, `go test -count=1 ./internal/run/` **exit 1** (`TestAnUncomposableAnswerRowStaysAStop`: `read 1: stage 5 (""), askStage=("", "", handoff: the file of a comment has 65634 characters, over 65536); want the repeatable stop "T-sp01: the answer S-2c3d4e5f.1 cannot be composed: handoff: the file of a comment has 65634 characters, over 65536" with no post`).
+
+### Round 2, the gates on the head e5363ca (origin/main 0246d9c, not moved; this docs-only commit follows)
+
+| Command | Start | End | Exit |
+| --- | --- | --- | --- |
+| `go build ./...` | 2026-10-20T11:54:22Z | 2026-10-20T11:54:22Z | exit 0 |
+| `go vet ./...` | 2026-10-20T11:54:22Z | 2026-10-20T11:54:22Z | exit 0 |
+| `go vet -tags=integration ./...` | 2026-10-20T11:54:22Z | 2026-10-20T11:54:22Z | exit 0 |
+| `go vet -tags=e2e ./...` | 2026-10-20T11:54:22Z | 2026-10-20T11:54:23Z | exit 0 |
+| `gofmt -l .` | 2026-10-20T11:54:23Z | 2026-10-20T11:54:23Z | exit 0, out='' |
+| `go test -count=1 ./...` | 2026-10-20T11:54:23Z | 2026-10-20T11:54:24Z | exit 0 |
+| `go test -count=1 -tags=e2e ./...` | 2026-10-20T11:54:24Z | 2026-10-20T11:55:29Z | exit 0 |
+| `sh docs/adr/adr-lint.sh` | 2026-10-20T11:55:29Z | 2026-10-20T11:55:30Z | exit 0 |
+| `sh docs/prd/prd-lint.sh` | 2026-10-20T11:55:30Z | 2026-10-20T11:55:30Z | exit 0 |
+| `sh docs/links/link-lint.sh` | 2026-10-20T11:55:30Z | 2026-10-20T11:55:42Z | exit 0 |
+| `sh docs/tests/run-discipline-tests.sh` | 2026-10-20T11:55:42Z | 2026-10-20T11:55:45Z | exit 0 |
+| `sh docs/setup/setup-check.sh` | 2026-10-20T11:55:45Z | 2026-10-20T11:56:06Z | exit 0 |
+| `sh docs/tests/nested-checkout-check.sh` | 2026-10-20T11:56:06Z | 2026-10-20T11:56:06Z | exit 0 |
+| `sh docs/tasks/task-state.sh` | 2026-10-20T11:56:06Z | 2026-10-20T11:56:13Z | exit 0 |
+| `git diff --check origin/main HEAD` | 2026-10-20T11:56:13Z | 2026-10-20T11:56:13Z | exit 0 |
+| `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 90m ./...` (the full integration level, alone, in the background) | 2026-10-20T11:56:27Z | 2026-10-20T12:03:22Z | exit 0 |
+
+The full integration level passed at the first run: every package `ok`, `internal/run` 412.797 s, no flake, output in `/home/layup/.cache/layup-session/T-r7b9-full-integration-r2.txt`.
