@@ -186,6 +186,32 @@ func TestAnInvalidRecordedHandoffStaysAStop(t *testing.T) {
 	}
 }
 
+// Round 2, finding 6 (Q9): a valid typed question row whose composed comment exceeds MaxCommentChars is a repeatable stop with no post.
+func TestAnUncomposableQuestionRowStaysAStop(t *testing.T) {
+	const want = "T-sp01: the question " + qa1 + ".1 cannot be composed: handoff: the file of a comment has 65619 characters, over 65536"
+	b := flow(t, 1, "question\t1\t"+strings.Repeat("a", MaxCommentChars)+"\t—\tinterface-contract no docs/spec/forge.md\n")
+	for i := 0; i < 2; i++ {
+		got := b.stage()
+		stop, wait, err := (&Sessions{}).askStage(context.Background(), ShapeTaskInput{Task: "T-sp01"}, b.v, b.at())
+		if got.Stage != qStop || got.Msg != want || stop != want || wait != "" || err != nil {
+			t.Errorf("read %d: stage %d (%q), askStage=(%q, %q, %v); want the repeatable stop %q with no post", i+1, got.Stage, got.Msg, stop, wait, err, want)
+		}
+	}
+}
+
+// Round 2, finding 6 (Q9): a valid typed answer row whose composed comment exceeds MaxCommentChars is a repeatable stop with no post.
+func TestAnUncomposableAnswerRowStaysAStop(t *testing.T) {
+	const want = "T-sp01: the answer " + qow + ".1 cannot be composed: handoff: the file of a comment has 65634 characters, over 65536"
+	b := flow(t, 3, qArch).finish(qow, "1", "completed", "answer\t1\t"+strings.Repeat("a", MaxCommentChars)+"\t—\tdocs/spec/forge.md\n")
+	for i := 0; i < 2; i++ {
+		got := b.stage()
+		stop, wait, err := (&Sessions{}).askStage(context.Background(), ShapeTaskInput{Task: "T-sp01"}, b.v, b.at())
+		if got.Stage != qStop || got.Msg != want || stop != want || wait != "" || err != nil {
+			t.Errorf("read %d: stage %d (%q), askStage=(%q, %q, %v); want the repeatable stop %q with no post", i+1, got.Stage, got.Msg, stop, wait, err, want)
+		}
+	}
+}
+
 // U2 (Q10, Q13): a question that goes to a human is a wait with the ID of the first question and no answer session; the comment of the
 // question is posted before it. Control: the same question that needs no human has its answer session (U1).
 func TestAHumanQuestionIsAWaitWithNoAnswerSession(t *testing.T) {
