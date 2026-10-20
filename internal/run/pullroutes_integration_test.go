@@ -22,6 +22,7 @@ type ghPull struct {
 	body, head   string
 	draft        bool
 	merged       bool
+	closed       bool // closed by a person, not merged (task T-ehb4)
 	mergeSHA     string
 }
 
@@ -30,6 +31,7 @@ type pullRoutes struct {
 	afterMark func() // runs when a pull request leaves the draft state, under the lock of the fake
 	noDraft   bool   // a request to open a pull request that is not a draft arrived
 	denyPatch int    // the status that an edit of a pull request gets instead of the edit (row 66q)
+	follow    bool   // the head of a pull request is the tip of its branch at each request, as the forge's is (task T-ehb4)
 }
 
 func bareGit(dir string, args ...string) (string, error) {
@@ -45,6 +47,9 @@ func (p *ghPull) wire() map[string]any {
 	if p.merged {
 		w["state"], w["merged_at"], w["merge_commit_sha"] = "closed", "2026-10-18T12:00:00Z", p.mergeSHA
 	}
+	if p.closed && !p.merged {
+		w["state"] = "closed"
+	}
 	return w
 }
 
@@ -53,6 +58,13 @@ func (f *fakeGitHub) movePull(number int, sha string) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.pulls.list[number-1].head = sha
+}
+
+// closePull closes the pull request without a merge, as a person does.
+func (f *fakeGitHub) closePull(number int) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.pulls.list[number-1].closed = true
 }
 
 func (f *fakeGitHub) pullOf(number int) *ghPull {
@@ -69,6 +81,14 @@ func (p *pullRoutes) serve(f *fakeGitHub, w http.ResponseWriter, r *http.Request
 	reply := func(code int, v any) {
 		w.WriteHeader(code)
 		json.NewEncoder(w).Encode(v)
+	}
+	for _, pr := range p.list {
+		if !p.follow || pr.merged {
+			continue
+		}
+		if tip, err := bareGit(f.bare, "rev-parse", "refs/heads/"+pr.branch); err == nil {
+			pr.head = tip
+		}
 	}
 	switch {
 	case r.Method == "POST" && r.URL.Path == base:
