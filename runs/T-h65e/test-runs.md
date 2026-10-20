@@ -25,16 +25,15 @@ No landed form makes a step impossible or changes the scope: stop condition not 
 
 ## S2 - the inert declarations and the extractions (`4dd75e4`)
 
-Direct statuses; the commit hook ran `go test ./...` of the unit level (exit 0) before the commit. The integration subset of the plan was run twice at once by a
-mistake of the launch (the first was backgrounded inside the shell and survived); both runs are the same command and both are `ok`:
+Direct statuses; the commit hook ran `go test ./...` of the unit level (exit 0) before the commit. The first record of the integration subset used scratch file names that the
+other agents of the host share and two overlapping runs, so its times could not be confirmed; it was **run again** on a `git archive` of `4dd75e4`, with names of this task:
 
 ```
 $ TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -tags=integration -timeout 30m -count=1 ./internal/run/ -run 'Phase|Revision|Shape|Questions'
-start 2026-10-20T05:02:03Z (first) and 2026-10-20T05:02:55Z (second)
-ok  	github.com/pharzam/layup/internal/run	383.799s
-ok  	github.com/pharzam/layup/internal/run	393.581s
-exit=0 (both)
-end 2026-10-20T05:09:31Z
+start 2026-10-20T07:38:05Z
+ok  	github.com/pharzam/layup/internal/run	245.781s
+exit=0
+end 2026-10-20T07:42:49Z
 ```
 `go test -count=1 ./internal/ledger/` (the net of `MilestoneCap`, which `KnownMoney` was extracted from): `ok`, exit 0, in the hook run.
 
