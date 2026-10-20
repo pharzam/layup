@@ -134,3 +134,18 @@ The head is `646691b` (`origin/main` d27b331 merged), the tests below uncommitte
 - The code is frozen at `dcea749`; the head `7cc2f8a` and the later ones add tests, tables and records only. `origin/main` (d27b331) was merged first (`646691b`) and had not moved at the gates.
 - Full integration level: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./...` (start 2026-10-20T20:19:14Z, end 2026-10-20T20:22:24Z, exit=0), 21 packages ok, on the head `f4c7da1`; an earlier run on `dcea749` (19:58:49Z to 20:02:15Z) was exit=0 too.
 - `go build ./...`, `go vet ./...` with no tag, `integration` and `e2e`, `gofmt -l .` (empty), `go test -count=1 ./...` (21 ok), `go test -count=1 -tags=e2e ./...` (start 2026-10-20T20:22:31Z, end 2026-10-20T20:23:36Z, exit=0), the six lints, `bash docs/tasks/task-state.sh` and `git diff --check origin/main HEAD`: exit=0 each.
+
+### Round 2 - the freeze check
+
+Command: `sh docs/tests/freeze-check.sh --task T-ehb4 --base origin/main --budget 2300/22`, on the clean committed head `a38488a` (output kept in `/home/layup/.cache/layup-session/T-ehb4-freeze2.txt`), exit=1 on K5 alone:
+
+```text
+ok K1: white space
+ok K2: registration of new tests
+ok K3: test selectors
+ok K4: restore evidence of mutants
+FAIL K5: -:0: projection: figure 2209/27, maximum 2300/22, margin 91/-5 (the figure at landing is still measured at landing)
+ok K6: conditions table
+```
+
+K5 of this script still counts the files of `runs/` (3 files here: test-runs.md, mutants.md and conditions.md) and the 70 lines and 2 files of the close-out allowance. Measured as ADR-0028 reads it (`git diff --numstat origin/main HEAD` without `runs/`): 1,920 lines (1,838 added, 82 removed) over 22 files, with the close-out of 2 more files (the task file and the completed log) 24 files against the maximum of 22: the lines fit, the files exceed the maximum by 2. The cut is the Operator's. Run with `--budget 2300/32`, K1 to K6 are ok.
