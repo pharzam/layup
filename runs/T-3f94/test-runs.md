@@ -299,7 +299,7 @@ Red, on the head `112e945` (the test only): `go test -count=1 -run TestABandPair
 ```
 --- FAIL: TestABandPairThatArrivesInPartsAndIsInvalidReopensBothQuestions (0.00s)
     shapequestions_test.go:250: invalid pair: budget [], Q-001 answered, Q-002 open, left open [Q-002]; want no budget, both open, [Q-001 Q-002]
-    shapequestions_test.go:253: invalid pair: the correction rows = [[Q-006 follow-up Q-002 idea-owner before-delivery shape   text of Q-002 2026-10-12T11:00:00Z layup run  asked]]; want one for each 
+    shapequestions_test.go:253: invalid pair: the correction rows = [[Q-006 follow-up Q-002 idea-owner before-delivery shape   text of Q-002 2026-10-12T11:00:00Z layup run  asked]]; want one for each
 ```
 The valid control (B=5.0 then U=10.0) of the same test passes at `112e945`. Green after the fix (`go test -count=1 ./internal/run/ ./internal/records/`): 2026-10-20T04:01:37Z to 2026-10-20T04:01:48Z, exit 0.
 Mutant M37 (only an original whose answer arrived in this read reopens), fresh backup, hash before `edcdf8acd6c0`, during `c40cbcf73a9a`, restore the same, 2026-10-20T04:01:55Z to 04:02:27Z, built and vetted, test exit 1, control exit 0:
