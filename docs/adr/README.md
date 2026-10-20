@@ -164,6 +164,7 @@ record by number here, and let the index table below do the linking.
 | [0025](0025-learn-routing-from-the-records-at-each-retrospective.md) | Learn routing from the records at each retrospective | Accepted |
 | [0026](0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md) | Keep the bootstrap review rules as the standing gate | Accepted |
 | [0027](0027-bound-the-integration-level-at-20-minutes-in-ci.md) | Bound the integration level at 20 minutes in CI | Accepted |
+| [0028](0028-delegate-two-bounded-landing-decisions.md) | Delegate two bounded landing decisions | Proposed |
 
 <!-- Add one row per ADR as you write them. Keep the newest at the bottom. -->
 
