@@ -289,3 +289,19 @@ K5 fails on the files only (42 against 35, with the default allowance of the clo
 - `go build ./...`, `go vet ./...`, `go vet -tags=integration ./...`, `go vet -tags=e2e ./...`: exit 0; `gofmt -l .`: empty; `go test -count=1 ./...` and `go test -count=1 -tags=e2e ./...`: ok.
 - The full integration level, `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 90m ./...`: 2026-10-20T18:15:14Z to 18:18:18Z, exit=0.
 - The six lints and `git diff --check origin/main HEAD`: OK.
+
+## The freeze check of the head of round 3's fix (late evidence; origin/main `f45fffc`)
+
+The command, run on the clean committed head, its output written outside the worktree (`/home/layup/.cache/layup-session/T-2vva-freeze-r4.txt`): `sh docs/tests/freeze-check.sh --task T-2vva --base origin/main --budget 3400/35 --closeout 120/2`
+
+```
+ok K1: white space
+ok K2: registration of new tests
+ok K3: test selectors
+ok K4: restore evidence of mutants
+FAIL K5: -:0: projection: figure 2580/42, maximum 3400/35, margin 820/-7 (the figure at landing is still measured at landing)
+ok K6: conditions table
+exit=1
+```
+
+K5 fails on the files only (42 against 35); the Operator approves the exact figure at landing. K1 to K4 and K6 pass.
