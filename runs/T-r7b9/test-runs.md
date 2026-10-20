@@ -226,3 +226,44 @@ Each command is direct, its own exit status; times from `date -u` after the step
 | `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 90m ./...` (full integration level) | 2026-10-20T10:14:14Z | 2026-10-20T10:30:52Z | 0 |
 
 The full integration level passed at the first run: every package `ok`, `internal/run` 991.564 s, no flake (neither `TestProcessTimesTheFirstOutput` nor the fastClock cap of #291 failed), output in `/home/layup/.cache/layup-session/T-r7b9-full-integration.txt`.
+
+## Round 1 (review 6289084862; Operator decisions 6289096719)
+
+The fix is test first: the new cases and fixtures were written, run on the head `d218424` (the code unchanged; nothing needed an inert stub), then the code, then green, then the compiled mutants
+(`mutants.md`, Y1 to Y10). Each command is direct, its own exit status written to a file and read after; times from `date -u` after the step.
+
+### F1, red on d218424
+
+- **Unit.** `go test -count=1 ./internal/run/ -run 'TestTheLastQualifiedReview'`, start 2026-10-20T10:46:30Z, end 2026-10-20T10:46:33Z, **exit 1**. First failing assertion:
+  `questionloop_test.go:494: an unbound session of the role qa-engineer after a material record is no verifier: open = false, <nil>; want true`. The five new cases were red together, each for the reason it names
+  (`open = false, <nil>; want true`): the unbound session after a material record (reviewer's case a), the verifier that ended `needs_context` with a plain `valid` handoff after a material record (case b), the later
+  verifier with no row for `review-record.md` after an older clean record (case c), a verifier that has not ended after an older clean record, and a plain `valid` handoff that names no comment after a material record.
+  The control (`a later qualified clean verifier clears an older material one`) and every older case of the table were green in the same run: the fixture now binds the verifier by an event `bound`, as production does.
+- **Integration, the verifier that asks and waits.** `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./internal/run/ -run 'TestTheQuestionOfAVerifierAtItsBoundHead'`,
+  start 2026-10-20T10:47:39Z, end 2026-10-20T10:47:48Z, **exit 1**. First failing assertion: `questionloop_integration_test.go:225: openMaterial with a verifier that asked and no qualified record = false, <nil>; want true`.
+  The case is the production regression of Operator decision F4: a verifier asks a human-routed question at the head it was bound to (not the base of the attempt: the test fails first if the two are equal), the driver
+  waits, and the verifier that asked has no qualified record, so the finding is open.
+- **Integration, the verifier that asks and is answered** (`TestAVerifierThatAsksIsAnsweredAtTheHeadItWasBoundTo`): on d218424 it is **green** (start 2026-10-20T10:47:06Z, end 2026-10-20T10:47:18Z, exit 0 after its fixture was
+  corrected; the first run, 10:46:46Z to 10:46:58Z, exit 1, failed on my fixture, which took the plan review for the verifier). It asserts that the answer session starts at the verifier's bound head, not at the base of the attempt, that
+  `AnswerAccepted` accepts the answer and that `openMaterial` is false after attempt 2's clean verifier. The code of 66z already did this (`questionPosition` takes the base of the last asking session), so this one cannot be red on d218424;
+  it stays as the green control of the red test above, and M28 still kills the base mutant of the unit level.
+- The fixture of I5 (`record` in `questionloop_integration_test.go`) changed: its verifier is now bound to the head of a developer's session of its attempt and starts at that head, as the selector requires.
+
+### F1, green after the fix (`4dce578`)
+
+- `go test -count=1 ./internal/run/ -run 'TestTheLastQualifiedReview'`: start 2026-10-20T10:55:11Z, end 2026-10-20T10:55:12Z, exit 0.
+- `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./internal/run/ -run 'TestAnOpenMaterialFindingKeepsTheTaskUphill|TestAVerifierThatAsks|TestTheQuestionOfAVerifier'`:
+  start 2026-10-20T10:55:12Z, end 2026-10-20T10:55:32Z, exit 0 (I5, the answered regression and the waiting regression).
+- Four cases were added after the fix to kill mutants (a bound after the start, a bound of another attempt, a bound of a session that is no developer, a `needs_context` verifier with a valid comment handoff): they are green on the fix and
+  have no red run on d218424 of their own; each is the killer of a mutant in `mutants.md` (Y3 to Y5, Y7).
+
+### F2, decided
+
+Operator decision 6289096719 (finding 2): the production consumer of `Position` then `TierOf`, and the semantic test that fails when it ignores an open material finding, belong to row 66k (#367, `T-9nbf`). I5 stays as the test of
+`Position` and the tier it moves through the production constructor; the known limit in `docs/spec/loop.md` (the open unknowns) names the decision and 66k, and the plan row 66k names the obligation. No consumer is built here.
+Condition 5's caller-wiring clause is released for this task by that decision alone, and D5 above is amended by it.
+
+### F4, the accepted R8 exception
+
+`TestTheAnswerSessionStartsAtTheBaseOfTheLastAskingSession` was written after the code (S4 above) and passed at once. The Operator accepted the exception (6289096719, finding 4): the test stays with this chronology. The compensating
+evidence is the red run of the production regression above (`TestTheQuestionOfAVerifierAtItsBoundHead...`, first failing assertion recorded), the green control of the answer at the bound head, and M28.
