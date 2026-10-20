@@ -154,4 +154,3 @@ FAIL
 --- FAIL: TestAMergeThatTouchesATaskPathOrLeavesTheDefaultIsNotCarried (1.54s)
     baseup_integration_test.go:404: the control merge: CarryVerify = "", no session and no rendered commit are named; want it carried
 ```
-

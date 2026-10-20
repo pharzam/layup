@@ -532,7 +532,9 @@ func TestAnOverlappingMovedBaseRedoesTheTask(t *testing.T) {
 	commit := strings.TrimSpace(gitOut(t, m.w.bare, "log", "-1", "--format=%H", "layup-records", "--", "tasks/"+fresh+"/events.tsv"))
 	changed := strings.Fields(gitOut(t, m.w.bare, "show", "--format=", "--name-only", commit))
 	slices.Sort(changed)
-	if want := []string{"tasks.tsv", "tasks/T-ab12/events.tsv", "tasks/" + fresh + "/events.tsv", "tasks/" + fresh + "/options/db.tsv"}; !slices.Equal(changed, want) {
+	want := []string{"tasks.tsv", "tasks/T-ab12/events.tsv", "tasks/" + fresh + "/events.tsv", "tasks/" + fresh + "/options/db.tsv"}
+	slices.Sort(want) // the new ID is drawn at random
+	if !slices.Equal(changed, want) {
 		t.Errorf("the commit that holds the rebased event changed %v; want %v", changed, want)
 	}
 	if intent := keptRecord(t, m.w, "tasks/T-ab12/redo.txt"); intent != fresh+" "+base+"\n" {
