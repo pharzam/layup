@@ -29,6 +29,40 @@ func column(name string) int {
 	return -1
 }
 
+// knownSum is the sum of money of each row of telemetry whose money_status is reported or computed, the probes' included, in exact
+// decimals; a row whose status is unknown adds nothing.
+func knownSum(telemetry [][]string) (*big.Rat, error) {
+	session, status, amount, currency := column("session"), column("money_status"), column("money"), column("currency")
+	sum := new(big.Rat)
+	for _, r := range telemetry {
+		if len(r) != len(records.TelemetrySchema.Columns) {
+			return nil, fmt.Errorf("a row of telemetry.tsv of %d columns", len(r))
+		}
+		if r[status] != "reported" && r[status] != "computed" {
+			continue
+		}
+		if r[currency] != "USD" {
+			return nil, fmt.Errorf("%w: the session %s has money in %s, not USD", ErrMilestoneCap, r[session], r[currency])
+		}
+		m, ok := new(big.Rat).SetString(r[amount])
+		if !ok {
+			return nil, fmt.Errorf("the money %q of the session %s is not a decimal", r[amount], r[session])
+		}
+		sum.Add(sum, m)
+	}
+	return sum, nil
+}
+
+// KnownMoney gives the known money of the rows of telemetry as the text of a decimal (task T-h65e, #418: the appetite of the first
+// bet reads it, and MilestoneCap does): the rule of MilestoneCap, with the errors of its rows.
+func KnownMoney(telemetry [][]string) (string, error) {
+	sum, err := knownSum(telemetry)
+	if err != nil {
+		return "", err
+	}
+	return decimal(sum)
+}
+
 // MilestoneCap gives nil when a new session of Intake may start under the cap
 // capValue of milestone 0 (intake.cap of start.tsv, MONEY,HOURS: US dollars
 // and hours), else an error that wraps ErrMilestoneCap. The known money is the
@@ -49,23 +83,9 @@ func MilestoneCap(capValue string, telemetry [][]string, sessionCap string, star
 	if !okMoney || !okHours {
 		return fmt.Errorf("intake.cap %q is not MONEY,HOURS", capValue)
 	}
-	session, status, amount, currency := column("session"), column("money_status"), column("money"), column("currency")
-	sum := new(big.Rat)
-	for _, r := range telemetry {
-		if len(r) != len(records.TelemetrySchema.Columns) {
-			return fmt.Errorf("a row of telemetry.tsv of %d columns", len(r))
-		}
-		if r[status] != "reported" && r[status] != "computed" {
-			continue
-		}
-		if r[currency] != "USD" {
-			return fmt.Errorf("%w: the session %s has money in %s, not USD", ErrMilestoneCap, r[session], r[currency])
-		}
-		m, ok := new(big.Rat).SetString(r[amount])
-		if !ok {
-			return fmt.Errorf("the money %q of the session %s is not a decimal", r[amount], r[session])
-		}
-		sum.Add(sum, m)
+	sum, err := knownSum(telemetry)
+	if err != nil {
+		return err
 	}
 	known, err := decimal(sum)
 	if err != nil {

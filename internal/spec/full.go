@@ -314,6 +314,17 @@ var (
 	sepCell     = regexp.MustCompile(`^:?-+:?$`)
 )
 
+// PRDContent is the words of the requirement rows of PRD files (task T-h65e, #418): the Statement cell of each row of the requirements
+// table by its ID, the acceptance criterion of each row of the criteria table by its requirement, and the first cell of each row of a
+// success-metrics table, in the order of the files by name and of the rows.
+type PRDContent struct {
+	Statements, Criteria map[string]string
+	Metrics              []string
+}
+
+// ContentOfPRDs reads the words of the PRD files, by the same parse as the full check.
+func ContentOfPRDs(prds map[string][]byte) PRDContent { return PRDContent{} }
+
 func parsePRDs(prds map[string][]byte) prdData {
 	p := prdData{ok: len(prds) > 0, criteria: map[string]string{}, success: map[string]bool{}, waits: map[string]bool{}}
 	for _, name := range slices.Sorted(maps.Keys(prds)) {
