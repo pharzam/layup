@@ -32,6 +32,9 @@ func TestABetsTableRefusesEachBrokenRule(t *testing.T) {
 		{"a later bet before the first", btRow("2", "later", "40.0", "30.0", "bet"), `line 2, column "kind"`, "a later bet comes after the first"},
 		{"no brief hash", strings.Replace(btRow("1", "first", "40.0", "30.0", "bet"), btSHA[:64], "—", 1), `line 2, column "brief_sha256"`, "this column never holds the empty value"},
 		{"a bet with no appetite", strings.Replace(btRow("1", "first", "—", "30.0", "bet"), "—", "—", 1), `line 2, column "appetite_usd"`, "the appetite is the empty value exactly for a no-bet"},
+		{"a bet with dollars and no hours", btRow("1", "first", "40.0", "—", "bet"), `line 2, column "appetite_hours"`, "the appetite is the empty value exactly for a no-bet"},
+		{"a no-bet with hours and no dollars", btRow("1", "first", "—", "30.0", "no-bet"), `line 2, column "appetite_hours"`, "the appetite is the empty value exactly for a no-bet"},
+		{"an empty verdict with the appetite", btRow("1", "first", "40.0", "30.0", "—"), `line 2, column "verdict"`, "this column never holds the empty value"},
 		{"a no-bet with an appetite", btRow("1", "first", "40.0", "30.0", "no-bet"), `line 2, column "appetite_usd"`, "the appetite is the empty value exactly for a no-bet"},
 	} {
 		_, err := ReadBets([]byte(btHeader + c.table))
