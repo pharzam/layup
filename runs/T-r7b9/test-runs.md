@@ -191,3 +191,16 @@ FAIL
 - Integration, the same command as run 3: start 2026-10-20T05:17:37Z, end 2026-10-20T05:22:59Z, exit 0 (`internal/run` 298.556 s).
 - `TestTheAnswerSessionStartsAtTheBaseOfTheLastAskingSession` was written **after** the code (review condition 3 names the base; the first plan had no test for it). It is green at once; its evidence is mutant M28, which it kills.
 - One defect of the first draft of the code, found by the unit test before the integration run: none (the unit tests were green at the first run); the integration tests were green at the first run.
+
+## S7 so far, and the resume point (host move, 2026-10-20)
+
+Recorded at the head before this section: `go build`, `go vet` (plain, integration, e2e tags), `gofmt -l`, `go test -count=1 ./...`, the six lint scripts, `git diff --check origin/main` all exit 0;
+`go test -count=1 -tags=e2e ./...` start 2026-10-20T06:20:01Z, end 2026-10-20T06:23:55Z, exit 0. The first full integration run (06:16:14Z to 07:05:56Z) wrote its output to a
+scratch name that another agent's run shared; its output was truncated (no `internal/run` line), so it is **not evidence**. A rerun under the unique name `scratchpad/T-r7b9/T-r7b9-full-integration.txt` was stopped by the host move: not recorded.
+
+Resume point:
+1. Next slice: S7. Run `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 90m ./...` under a T-r7b9-prefixed scratch name (about 50 min), and record start, end and exit.
+2. Recorded: S0, S1 (docs), S2 (stubs; green), S3 (red runs 1 to 3), S4 (green), S5 (30 mutants, 30 killed at 8c2a05b). Not recorded: the full integration level; the close-out (task file, completed.md, backlog.md, resource record) is not written, as ordered.
+3. Row 66z is in docs/plan/README.md, and 66z is in row 66k's After cell (`task-state.sh` exits 0, T-r7b9 `in progress`); expect a one-line conflict with T-tnxn (66aa) there, keep both labels.
+4. Then `~/.local/bin/gitleaks git --no-banner` alone, on exit 0 `sh /home/layup/.cache/layup-session/harness/2026-10-16-m2e/push.sh T-r7b9`; no pull request.
+5. Budget at this head: see `git diff --shortstat origin/main...HEAD` (about 1,750 lines over 22 files, limit 2,500 over 27, close-out inside).
