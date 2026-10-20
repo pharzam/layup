@@ -127,3 +127,10 @@ The head is `646691b` (`origin/main` d27b331 merged), the tests below uncommitte
 | `TestAnArchitectureCloseOutAfterTheBetCarriesTheAnswerCopy` | `finish_integration_test.go:541: betCopy = "", <nil>; want the answer's copy` |
 
 `TestACloseOutWhoseKeptHeadIsGoneIsReplacedByANewSession` of round 1 is replaced by the first two tests of finding 1: it required two producing sessions, which condition 3 of the plan review forbids.
+
+### Round 2 - green and the gates
+
+- Green: the same commands as above on the fixes, exit=0: the unit set (12 tests) and the integration set (15 tests) of `/home/layup/.cache/layup-session/T-ehb4-un.txt` and `-in.txt` ran in the mutant controls (exit 0 in each of 40 controls) and in the full integration level. `TestAMergedPullRequestWhosePushWasNeverBoundGetsItsBoundAndItsMergedEvent` and `TestAFailedReadOfTheKeptHeadsIsTheErrorOfTheReadAndNotAnAbsence` have no red transcript: they were written after the code (late evidence), and their mutants M36 and M34 show what they hold.
+- The code is frozen at `dcea749`; the head `7cc2f8a` and the later ones add tests, tables and records only. `origin/main` (d27b331) was merged first (`646691b`) and had not moved at the gates.
+- Full integration level: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./...` (start 2026-10-20T20:19:14Z, end 2026-10-20T20:22:24Z, exit=0), 21 packages ok, on the head `f4c7da1`; an earlier run on `dcea749` (19:58:49Z to 20:02:15Z) was exit=0 too.
+- `go build ./...`, `go vet ./...` with no tag, `integration` and `e2e`, `gofmt -l .` (empty), `go test -count=1 ./...` (21 ok), `go test -count=1 -tags=e2e ./...` (start 2026-10-20T20:22:31Z, end 2026-10-20T20:23:36Z, exit=0), the six lints, `bash docs/tasks/task-state.sh` and `git diff --check origin/main HEAD`: exit=0 each.
