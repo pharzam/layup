@@ -234,6 +234,12 @@ func followUpRows(questions, answers [][]string, asked string) [][]string {
 // quote and, for a marker, the value that the session proposed (the rows of
 // intake/markers.tsv; task T-4c5c, #276).
 func followUpComment(questions, rows [][]string, psb []byte, markers [][]string) string {
+	return askedAgainComment(followUpHeader, questions, rows, psb, markers)
+}
+
+// askedAgainComment is the comment of rows that ask questions again, under header: the follow-up's, and the step shape's
+// (task T-3f94, #364).
+func askedAgainComment(header string, questions, rows [][]string, psb []byte, markers [][]string) string {
 	asked := map[string][]string{}
 	for _, q := range questions {
 		asked[q[0]] = q
@@ -250,7 +256,7 @@ func followUpComment(questions, rows [][]string, psb []byte, markers [][]string)
 		}
 		return false, ""
 	}
-	return questionsComment(followUpHeader, rows, quote, about, psb)
+	return questionsComment(header, rows, quote, about, psb)
 }
 
 // followUpStep is the step follow-up of Intake: with follow-up rows in
@@ -279,12 +285,7 @@ func (r *state) followUpStep(ctx context.Context) Step {
 	if err != nil {
 		return fail(name, err)
 	}
-	var held [][]string
-	for _, q := range questions {
-		if q[1] == "follow-up" {
-			held = append(held, q)
-		}
-	}
+	held := intakeFollowUps(questions)
 	if held != nil {
 		comments, err := r.cfg.Forge.Comments(ctx, issue)
 		if err != nil {
@@ -322,4 +323,16 @@ func (r *state) followUpStep(ctx context.Context) Step {
 		return fail(name, err)
 	}
 	return done(name, fmt.Sprintf("%d questions asked again, in questions.tsv and the comment of the follow-up", len(rows)))
+}
+
+// intakeFollowUps gives the rows of the follow-up of Intake: the rows of source follow-up that are not asked by the step
+// shape (kind shape, task T-3f94).
+func intakeFollowUps(questions [][]string) [][]string {
+	var out [][]string
+	for _, q := range questions {
+		if q[1] == "follow-up" && !isShapeRow(q) {
+			out = append(out, q)
+		}
+	}
+	return out
 }

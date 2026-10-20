@@ -28,7 +28,7 @@ import (
 // RunStepsSchema is the form of the table that layup run prints: the block
 // run-steps of docs/spec/run.md (The command).
 var RunStepsSchema = tsv.Schema{Name: "run-steps", Location: "stdout", Columns: []tsv.Column{
-	{Name: "step", Type: "enum(forge|plan|baseline|root-push|read-back|records|issues|watch|clone|version|lease|probe|phase|rule-gaps|meaning|numbering|spans|draft|completeness|markers|batch|answers|answers-review|follow-up|follow-up-answers|revision|setup|verify|scaffold-push|forge-check)", Key: true},
+	{Name: "step", Type: "enum(forge|plan|baseline|root-push|read-back|records|issues|watch|clone|version|lease|probe|phase|rule-gaps|meaning|numbering|spans|draft|completeness|markers|batch|answers|answers-review|follow-up|follow-up-answers|revision|setup|verify|scaffold-push|forge-check|shape)", Key: true},
 	{Name: "result", Type: "enum(done|fail)"},
 	{Name: "detail", Type: "text"},
 }}
@@ -135,7 +135,7 @@ func Restart(ctx context.Context, cfg Config) []Step {
 		intake := []func(context.Context) Step{r.probeStep, r.ruleGapsStep, r.meaningStep, r.numberingStep, r.spansStep, r.draftStep, r.completenessStep, r.markersStep, r.batchStep, r.answersStep, r.answersReviewStep, r.followUpStep, r.followUpAnswersStep, r.revisionStep, r.setupStep, r.verifyStep, r.scaffoldPushStep}
 		tail = append(append([]func(context.Context) Step{r.versionStep, r.takeStep}, intake...), r.forgeCheckStep)
 		if r.scaffoldDone {
-			tail = append([]func(context.Context) Step{r.versionStep, r.takeStep, r.forgeCheckStep}, intake...)
+			tail = append(append([]func(context.Context) Step{r.versionStep, r.takeStep, r.forgeCheckStep}, intake...), r.shapeStep)
 		}
 	}
 	rows = append(rows, r.steps(ctx, restartNames(startDone, r.scaffoldDone), len(rows), tail)...)
@@ -200,14 +200,15 @@ func (r *state) lost() error {
 // Intake take its place (docs/spec/intake.md, The steps of Intake; row 43a,
 // task T-qk66, adds the first, rule-gaps), and the steps of the Scaffold follow
 // them: forge-check last, or, once the Scaffold is done, between lease and
-// probe (docs/spec/scaffold.md, At each later start; task T-2j13).
+// probe (docs/spec/scaffold.md, At each later start; task T-2j13), and then
+// shape follows scaffold-push (task T-3f94, row 66h).
 func restartNames(startDone, scaffoldDone bool) []string {
 	if !startDone {
 		return []string{"forge", "clone", "version", "lease", "probe", "phase"}
 	}
 	steps := []string{"probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers", "answers-review", "follow-up", "follow-up-answers", "revision", "setup", "verify", "scaffold-push"}
 	if scaffoldDone {
-		return append([]string{"forge", "clone", "version", "lease", "forge-check"}, steps...)
+		return append(append([]string{"forge", "clone", "version", "lease", "forge-check"}, steps...), "shape")
 	}
 	return append(append([]string{"forge", "clone", "version", "lease"}, steps...), "forge-check")
 }

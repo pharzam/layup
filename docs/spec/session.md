@@ -57,7 +57,8 @@ session of a phase of `M2c` adds `input/`,
   takes only the default branch, so it holds no records branch, and it has no
   remote, so no command of the session reaches a remote through it.
   **Decided here** (task `T-jy6f`, #415, plan amendment 1): a base that is not on the default
-  branch, the bound head that a verifier reviews, is made reachable before the session
+  branch, the bound head that a verifier reviews or the specification's verified head that is
+  the architecture task's base (task `T-3f94`, #364, plan amendment 1), is made reachable before each session
   starts: the task loop sets the branch `layup/base/<task>/<attempt>` of `layup run`'s clone to
   the base (`UpdateRef`), and the session clones that branch instead of the default one;
   the default branch is never moved. `TaskSession` also refuses, before the sweep and before

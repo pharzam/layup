@@ -36,6 +36,7 @@ type ShapeTaskInput struct {
 type Advance struct {
 	Task       string
 	Verified   bool
+	Head       string // the bound head that the verifier found nothing material in
 	Wait, Stop string
 }
 
@@ -491,7 +492,7 @@ func (s *Sessions) AdvanceShapeTask(ctx context.Context, in ShapeTaskInput) (Adv
 				_, err = s.StartAttempt(ctx, in.Task, st.Base)
 			}
 			if err == nil && stop == "" && st.Pos == posVerified {
-				return Advance{Task: in.Task, Verified: true}, nil
+				return Advance{Task: in.Task, Verified: true, Head: st.Head}, nil
 			}
 		default:
 			return Advance{}, fmt.Errorf("%s: the position %d is no step of the driver", in.Task, st.Pos)
@@ -582,7 +583,7 @@ func (s *Sessions) runStage(ctx context.Context, in ShapeTaskInput, v loopView, 
 	if err != nil {
 		return pairStop(in.Task, step, err)
 	}
-	return "", s.startSession(ctx, in, v.Kind, step, st.Attempt, st.Base, h, m, findings, false)
+	return "", s.startSession(ctx, in, v.Kind, step, st.Attempt, st.Base, h, m, findings, true)
 }
 
 // finishStage posts the comment of a session that ended and records its handoff; both read before they write, so

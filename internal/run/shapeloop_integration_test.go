@@ -587,3 +587,55 @@ func TestAFailedStatusOfTheHeadStopsTheStepWithNoVerifierAndNoNewAttempt(t *test
 		}
 	}
 }
+
+// I8 (plan amendment 1 of #364, #432): the architecture task starts at the specification task's verified head. On a target with no
+// PRD its head passes the full check of layup/spec (the PRD is in its base); with a PRD in the first tree the same run passes from
+// either base, as before. The driver gives the verified head, and every session of the architecture task, the plan and the
+// developer included, clones the scratch branch of that base.
+func TestTheArchitectureHeadOfATargetWithNoPRDPassesLayupSpec(t *testing.T) {
+	for _, noPRD := range []bool{false, true} {
+		d := newDrvWorldOpts(t, loopPerms, drvOpts{noPRD: noPRD})
+		d.ctlWrite("commit", "")
+		spec, arch := d.open()
+		first, err := d.advance(spec, nil)
+		if err != nil || !first.Verified || (noPRD && first.Head != d.boundOf(spec)[0]) {
+			t.Fatalf("noPRD %v: the specification: %+v, %v; want a verified head that is its bound head", noPRD, first, err)
+		}
+		in := d.input(arch)
+		if noPRD {
+			in.Base = first.Head
+		}
+		got, err := d.r.sessions().AdvanceShapeTask(context.Background(), in)
+		if err != nil || !got.Verified || got.Stop != "" {
+			t.Fatalf("noPRD %v: the architecture task: %+v, %v; want the verified head", noPRD, got, err)
+		}
+		if !noPRD {
+			continue
+		}
+		for _, e := range d.eventsOf(arch) {
+			if e[1] == "attempt" && e[4] != first.Head {
+				t.Errorf("the attempt %s of the architecture task starts at %s; want the head %s of the specification", e[2], e[4], first.Head)
+			}
+		}
+		head := d.boundOf(arch)[0]
+		table := keptRecord(t, d.w, "tasks/"+arch+"/spec-check.tsv")
+		for _, rule := range []string{"covers", "ran"} {
+			if !strings.Contains(table, head+"\t"+rule+"\tpass\t") {
+				t.Errorf("the rule %s of the head of the architecture task is not a pass:\n%s", rule, table)
+			}
+		}
+		var states []string
+		for _, s := range statusesOf(d.w, head) {
+			states = append(states, s["context"].(string)+" "+s["state"].(string))
+		}
+		for _, want := range []string{SpecContext + " success", RulesContext + " success"} {
+			if !slices.Contains(states, want) {
+				t.Errorf("the statuses of the head of the architecture task = %v; want %q", states, want)
+			}
+		}
+		d.verifierRange(arch, first.Head)
+		if files := gitOut(t, d.r.target, "diff", "--name-only", first.Head, head); strings.Contains(files, "docs/prd/") || !strings.Contains(files, "docs/spec/architecture.md") {
+			t.Errorf("the files of the architecture task from the specification's head = %q; want its own changes, none of docs/prd/", files)
+		}
+	}
+}

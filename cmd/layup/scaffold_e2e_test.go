@@ -85,7 +85,7 @@ func TestTheStepsOfTheScaffold(t *testing.T) {
 	intake := []string{"probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers", "answers-review", "follow-up", "follow-up-answers", "revision"}
 	scaffold := []string{"setup", "verify", "scaffold-push"}
 	stage1, stage2 := slices.Concat(front, intake[:10]), slices.Concat(front, intake, scaffold)
-	atFirst, atLater := slices.Concat(stage2, []string{"forge-check"}), slices.Concat(front, []string{"forge-check"}, intake, scaffold)
+	atFirst, atLater := slices.Concat(stage2, []string{"forge-check"}), slices.Concat(front, []string{"forge-check"}, intake, scaffold, []string{"shape"})
 	area := filepath.Join(w.dir, "work", "acme", "target")
 	leaseIs := func(state string) {
 		t.Helper()
@@ -260,7 +260,7 @@ func TestTheStepsOfTheScaffold(t *testing.T) {
 	if r.code != 0 || !slices.Equal(names, atLater) || rows["forge-check"] != [2]string{"done", "the forge check passed"} {
 		t.Fatalf("stage 5, a later start: exit %d, the rows %q\n%s\n%s", r.code, names, r.stdout, r.stderr)
 	}
-	own := map[string]string{"follow-up": "nothing to ask again; Intake is done", "follow-up-answers": "no follow-up; Intake is done"}
+	own := map[string]string{"follow-up": "nothing to ask again; Intake is done", "follow-up-answers": "no follow-up; Intake is done", "shape": "waiting for the Operator: shape: no survivor"}
 	for _, name := range names[5:] {
 		want, ok := own[name]
 		if !ok && name != "probe" {
@@ -404,6 +404,9 @@ func startScaffoldWorld(t *testing.T, binary string) (runWorld, result) {
 			files["bin/harness"] = strings.Replace(files["bin/harness"], anchor, anchor+text, 1)
 		}
 		insert("\tcase \"$out\" in\n", "\t*/markers.tsv) printf 'id\\tvalue\\tquote\\n' > \"$out\" ;;\n")
+		// The options of Shape (task T-3f94, row 66h): two options of one decision that both fail the invariant Inv-1, in the first round
+		// and in the rewrite, so the step shape ends in its wait, with no survivor.
+		insert("\tcase \"$out\" in\n", "\t*/options.tsv) printf 'decision\\toption\\tconstraint\\tresult\\tevidence\\ndb\\tpg\\tInv-1\\tfail\\t\\342\\200\\224\\ndb\\tsqlite\\tInv-1\\tfail\\t\\342\\200\\224\\n' > \"$out\" ;;\n")
 		insert("\tsp=$(printf '%s\\n' \"$p\" | sed -n 's/^The span table: //p')\n", proseSession)
 		for path, text := range prose {
 			files["bin/files/"+path] = text

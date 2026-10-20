@@ -51,6 +51,7 @@ or payload of one task is under `tasks/<task>/`.
 | `spec/draft.tsv` | the requirement draft of Intake | 7 | `layup run` | 2 (`M2c`) | [below](#nfr-001--the-records-of-intake) |
 | `spec/inventory-<n>.tsv`, `spec/inventory.tsv` | a version of the confirmed inventory, and the index with its SHA-256 | 7 | `layup run` | 2 (`M2e`) | [below](#nfr-001--the-records-of-the-task-loop) |
 | `spec/options/<decision>.tsv` | the options of one architecture decision, each constraint with its pass or fail and its evidence | 8 | `layup run` | 2 (`M2e`) | [below](#nfr-001--the-records-of-the-task-loop) |
+| `spec/options/round-1/<decision>.tsv` | the table of round 1 of a decision that the one rewrite replaced, in the block `options` (task `T-3f94`) | 8 | `layup run` | 2 (`M2e`) | [below](#nfr-001--the-records-of-the-task-loop) |
 | `bets.tsv` | each bet: the brief, the answer, the verdict | 8 | `layup run` | 2 (`M2e`) | [below](#nfr-001--the-records-of-the-task-loop) |
 | `batches.tsv` | each rule batch: head SHA, rule-file hash, approval | 6 | `layup run` | 2 | later |
 | `payloads/<sha256>` | a payload by its SHA-256: a known-bad patch, a refused diff, a stall package | 4, 6, 11 | `layup run` | 2 | a rule, no block: [below](#nfr-001--the-records-of-a-session) |
@@ -516,10 +517,10 @@ session      id(S-xxxxxxxx)  -  the session that wrote the row
 ```tsv-schema questions records:questions.tsv
 id        id(Q-NNN)  key  the question's ID, from Q-001, in the order of the merge; never renumbered
 source    enum(rule|meaning|coverage|intent|follow-up|setup)  -  where the question comes from; setup is the Operator's question of M2d (scaffold.md, The answers of the setup; task `T-4c5c`)
-ref       text       -    its source row: the ID of the rule gap in intake/psb.tsv (a Q-NNN of that table, which the batch's ID replaces), M-NNN, C-NNN, the field of the intent form (band.B, band.U, appetite.hours, success-criteria), the Q-NNN of the batch that a follow-up asks again, or for a setup question (M2d) its setup ID, S01-stack or a marker's M-<x8> (M- and 8 lowercase hexadecimal characters, the id of its row of intake/markers.tsv)
+ref       text       -    its source row: the ID of the rule gap in intake/psb.tsv (a Q-NNN of that table, which the batch's ID replaces), M-NNN, C-NNN, the field of the intent form (band.B, band.U, appetite.hours, success-criteria), the Q-NNN of the batch that a follow-up asks again (a Shape row asks again a question left open, task `T-3f94`), or for a setup question (M2d) its setup ID, S01-stack or a marker's M-<x8> (M- and 8 lowercase hexadecimal characters, the id of its row of intake/markers.tsv)
 block     enum(idea-owner|operator)  -  the block of the batch that asks it; a setup question is asked in the operator's block (task `T-4c5c`)
 phase     enum(before-delivery)  -  the phase of the question (Early Question Share, architecture.md §12); a later milestone adds its phases
-kind      text       -    the kind of the gap (a rule G1 to G5, a kind of meaning, a kind of coverage, intent, follow-up, or setup)
+kind      text       -    the kind of the gap (a rule G1 to G5, a kind of meaning, a kind of coverage, intent, follow-up, or setup); `shape` for a row of source `follow-up` that the step `shape` asks (task `T-3f94`)
 start     int        -    the byte offset of its quote; `—` for a question with no quote (an absence, the intent form, an `unsupported` requirement of the draft, S01-stack, a marker with no proposal, a follow-up, whose quote is that of the question it asks again, task `T-vwu3`); the quote of a marker with a proposal is the proposal's (task `T-4c5c`)
 end       int        -    the byte offset after its quote; `—` exactly when start is `—`
 question  text       -    the question as the batch asks it

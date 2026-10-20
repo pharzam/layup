@@ -60,8 +60,13 @@ func (d *drvWorld) ctlWrite(name, text string) {
 // harnessSteps is what the scripted harness does at each step; a test names a file of ctl/ to change it.
 func harnessSteps(ctl string) string {
 	return `ctl=` + ctl + `
-keep
+case "$line" in "Prompt file"*) keep ;; esac
 case $step in
+"You write the options"*|"You rewrite the options"*) # the options sessions of Shape: the file options-<n> of ctl/ is the n-th output
+  out=$(sed -n 's/^The output file: //p')
+  n=$(cat $ctl/n-options 2>/dev/null || echo 0); n=$((n+1)); echo $n > $ctl/n-options
+  [ -e $ctl/options-fail-$n ] && exit 3
+  cat $ctl/options-$n > "$out" ;;
 plan-of-a-task) comment plan.md 'size: small
 open questions: —
 new interfaces: —
@@ -105,16 +110,34 @@ func newDrvWorld(t *testing.T, perms map[string]string) *drvWorld {
 
 // newDrvWorldWith is newDrvWorld whose target holds the manifest of the gates given.
 func newDrvWorldWith(t *testing.T, perms map[string]string, gates string) *drvWorld {
+	return newDrvWorldOpts(t, perms, drvOpts{gates: gates})
+}
+
+// drvOpts changes the world: noPRD makes a target with no PRD and no section in its first tree (the case of #432), noOptions leaves
+// the records without the options of Shape.
+type drvOpts struct {
+	gates           string
+	noPRD, noOption bool
+}
+
+func newDrvWorldOpts(t *testing.T, perms map[string]string, o drvOpts) *drvWorld {
 	t.Helper()
 	lint, err := os.ReadFile("../../docs/prd/prd-lint.sh")
 	if err != nil {
 		t.Fatal(err)
 	}
-	w := newWorldWith(t, map[string]string{"AGENTS.md": "the agent rules\n", "docs/facts/F-0003-answers.md": "the answers\n", "docs/gates.tsv": gates,
-		"docs/prd/prd-lint.sh": string(lint),
+	gates := o.gates
+	if gates == "" {
+		gates = gatesTSV
+	}
+	target := map[string]string{"AGENTS.md": "the agent rules\n", "docs/facts/F-0003-answers.md": "the answers\n", "docs/gates.tsv": gates,
+		"docs/prd/prd-lint.sh": string(lint), "docs/guardrails.md": "# Guardrails\n\n- **Inv-1** — a rule. Check: no check yet\n"}
+	if !o.noPRD {
 		// A target that already has a PRD and its section: the full check of layup/spec judges a head that touches docs/spec/,
-		// and the architecture head of a target with no PRD fails it with "no PRD" (a finding of T-jy6f, reported on #415).
-		"docs/prd/PRD-0001-x.md": specimen(t, -1), "docs/spec/alpha.md": "## REQ-001 — Alpha\n\nThe text.\n"})
+		// and the architecture head of a target with no PRD fails it with "no PRD" unless it starts at the specification's head (#432).
+		target["docs/prd/PRD-0001-x.md"], target["docs/spec/alpha.md"] = specimen(t, -1), "## REQ-001 — Alpha\n\nThe text.\n"
+	}
+	w := newWorldWith(t, target)
 	allDone(t, "Start", w.start(w.config("1.0.0")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
 	w.fake.mu.Lock()
 	w.fake.perms = perms
@@ -147,11 +170,13 @@ func newDrvWorldWith(t *testing.T, perms map[string]string, gates string) *drvWo
 		}
 	}
 	for _, p := range []string{"spec/draft.tsv", "spec/options/db.tsv"} {
-		files[p] = string(shapeFiles[p])
+		if p != "spec/options/db.tsv" || !o.noOption {
+			files[p] = string(shapeFiles[p])
+		}
 	}
 	files["lease.tsv"] = "run\thost\tversion\tstarted\theartbeat\tstate\n0123456789abcdef\thost-1\t1.0.0\t2026-10-08T12:00:00Z\t1\theld\n"
 	pushRecords(t, w.bare, files, "the records of Shape")
-	d.r = restarted(t, w)
+	d.restart()
 	return d
 }
 
