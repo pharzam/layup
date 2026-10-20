@@ -61,8 +61,8 @@ func TierOf(p Plan, pos Position) string {
 // M2e: the question rows of the last attempt that ended needs_context, unless an
 // answer of an owner role's session that started after it is accepted by the
 // next attempt (AnswerAccepted, which also asks the session of the owner role of
-// roles and owners). The open material findings (their form is
-// #387's) and the open escalations (M3) are added when they exist.
+// roles and owners). The open material findings are counted by Position
+// (openMaterial, row 66z) and the open escalations (M3) are added when they exist.
 func OpenQuestions(events [][]string, results map[string][][]string, roles Roles, owners Owners) int {
 	last := -1
 	for i, e := range events {
@@ -101,7 +101,8 @@ func OpenQuestions(events [][]string, results map[string][][]string, roles Roles
 }
 
 // Position gives the progress position of a task from its records: downhill
-// when its test list is frozen and it has no open question, else uphill.
+// when its test list is frozen, it has no open question and no open material
+// finding (openMaterial), else uphill.
 func (s *Sessions) Position(ctx context.Context, task string) (Position, error) {
 	frozen, err := s.readTests(ctx, task)
 	if err != nil {
@@ -129,7 +130,13 @@ func (s *Sessions) Position(ctx context.Context, task string) (Position, error) 
 		return "", err
 	}
 	if frozen != nil && OpenQuestions(events, results, sessionRoles(starts), Owners(DefaultOwners())) == 0 {
-		return Downhill, nil
+		open, err := s.openMaterial(ctx, task, events, starts, results)
+		if err != nil {
+			return "", err
+		}
+		if !open {
+			return Downhill, nil
+		}
 	}
 	return Uphill, nil
 }
@@ -182,8 +189,45 @@ func ResolveStep(step, tier, ownerRole string) (Resolved, error) {
 	return Resolved{}, fmt.Errorf("the step table has no step %q", step)
 }
 
-// openMaterial says whether a material finding is open (loop.md, the open unknowns): the record of the last review that ended, qualified, says
-// anything but nothing material in scope. The events, the start rows and the typed results are those of the task.
+// openMaterial says whether a material finding is open (loop.md, the open unknowns): the typed record of the last review is read after it is
+// qualified. The last review is the last session by the order of the events of its start, of the role qa-engineer, that ended done and whose
+// result holds a comment row of result/review-record.md (a plan review writes plan-review.md, so it is never read as a record). With none,
+// nothing is open. A review whose handoff is not recorded yet or is not valid, whose kept copy is missing or is not the file the result names
+// by its hash (keptComment), that does not parse, or whose head is not the base of the session's start row is open: it never clears a finding
+// of an older record, and no older record stands in its place. Otherwise OpenMaterial of the record decides. A failed read is an error.
 func (s *Sessions) openMaterial(ctx context.Context, task string, events, starts [][]string, results map[string][][]string) (bool, error) {
-	return false, nil
+	roles := sessionRoles(starts)
+	last := ""
+	for _, e := range events {
+		if e[1] != "session" || roles[e[3]] != stepRole("verification") {
+			continue
+		}
+		if _, done := resultEnd(events, e[3]); done && slices.ContainsFunc(results[e[3]], func(r []string) bool { return r[0] == "comment" && r[2] == "result/"+ReviewRecordFile }) {
+			last = e[3]
+		}
+	}
+	if last == "" {
+		return false, nil
+	}
+	detail, found := "", false
+	for _, e := range events {
+		if e[1] == "handoff" && e[3] == last {
+			detail, found = e[6], true
+		}
+	}
+	if valid, _ := validHandoff(detail); !found || !valid {
+		return true, nil
+	}
+	data, ok, err := s.keptComment(ctx, task, last, ReviewRecordFile, results[last])
+	if err != nil {
+		return false, err
+	}
+	if !ok {
+		return true, nil
+	}
+	rec, parsed := ParseReviewRecord(data)
+	if i := slices.IndexFunc(starts, func(r []string) bool { return r[sessionID] == last }); i < 0 || rec.Head != starts[i][sessionBase] {
+		return true, nil
+	}
+	return OpenMaterial(rec, parsed), nil
 }

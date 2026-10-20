@@ -116,7 +116,10 @@ func TestAStageThatEndedIsFinishedAndAStageThatStoppedIsRunAgain(t *testing.T) {
 		{"the plan session with no result", upTo("specification", 2), posPlan, ""},
 		{"the verifier ended and posted nothing yet", upTo("specification", 14), posVerifierFinish, ""},
 		{"a plan session that ended wall", upTo("specification", 2).end("S-p1", "1", "wall", ""), posStop, "ended wall"},
-		{"a plan whose status is needs_context", upTo("specification", 2).end("S-p1", "1", "done", "needs_context"), posStop, "ended needs_context"},
+		// Expected change (row 66z, #426): a session that ended needs_context is the position question, not a stop; the other statuses stay stops
+		// (TestAnAskingSessionIsThePositionQuestionAndOtherStatusesStayStops).
+		{"a plan whose status is needs_context", upTo("specification", 2).end("S-p1", "1", "done", "needs_context"), posQuestion, ""},
+		{"a plan whose status is blocked", upTo("specification", 2).end("S-p1", "1", "done", "blocked"), posStop, "ended blocked"},
 		{"a refused session", upTo("specification", 2).ev("refused", "1", "S-p1", "", "", "artifact"), posStop, "was refused (artifact)"},
 		{"an invalid plan handoff", upTo("specification", 3).ev("handoff", "1", "S-p1", "", "", "invalid plan-fields"), posStop, "task plan → plan review is invalid plan-fields"},
 		{"a plan review that rejects", upTo("specification", 6).ev("handoff", "1", "S-r1", "", "", "invalid verdict-field"), posStop, "plan review → developer is invalid verdict-field"},

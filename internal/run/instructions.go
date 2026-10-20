@@ -87,17 +87,21 @@ findings:
 The line head: is written as shown, once. The value of verdict: is exactly one of the three strings material, nothing material in scope and not mergeable, findings recorded. The line findings: stands alone, once. Under it write one line for each material finding: <path> is relative to the repository, clean and inside it (no space, no .., no leading /), <line> is a positive integer, <rule> is one word with no colon, and <text> is not empty. For nothing material in scope write no line under findings:. This is the form the target reads; it is not the table "| Field | Value |" of LAYUP's own reviews, which you must not write.
 In the result file write the row "comment<TAB>1<TAB>result/review-record.md<TAB><the SHA-256 of {comment}><TAB>—".
 `,
+	"answer-to-a-question": answerInstruction,
 	"close-out": `Close out the task {task} (kind {kind}, issue {issue}). From the verdict among the handoffs listed above and the ledger (sessions.tsv and telemetry.tsv, listed above), write the task's verdict, its line of the completed log and its resource record. Make one commit that changes only docs/tasks/{task}.md and docs/tasks/completed.md; push nothing.
 The required outputs for the result file are docs/tasks/{task}.md and docs/tasks/completed.md.
 `,
 }
 
 // answerInstruction is the instruction of the step answer-to-a-question, the block instruction-answer-to-a-question of loop.md (row 66z).
-const answerInstruction = ""
+const answerInstruction = `Answer the questions that the sessions of the last attempt of the task {task} (kind {kind}, issue {issue}) asked: {questions}. The question rows are in the result files of those sessions, listed above under handoffs-and-answers; the IDs above are in the order of the questions, each a session and the n of its row. Read the files each question concerns, the requirements, the decision records and the rule files. Change no file of the repository and make no commit.
+Write one row of the kind answer for each question, in that order, and no other row of that kind: "answer<TAB><n><TAB><the answer, one line><TAB>—<TAB><record>". The first answer row answers the first question, the second answer row the second, and so on. At least one <record> names a file the answer rests on, more are separated by one space, and there is no space at either end of the cell. Write the status row completed when every question is answered.
+`
 
 // answersInstruction is the block instruction-answers of loop.md: it follows the result text of a step when the attempt before has an
 // answer of its owner role (row 66z).
-const answersInstruction = ""
+const answersInstruction = `The sessions of the last attempt asked questions, and the owner role answered them; the answers are listed above under handoffs-and-answers. Their IDs are {answers}. Write each of these IDs as a word of the reason of the status row, and write none of them in a question row.
+`
 
 // resultInstruction is the text shared by all the steps: the form of the result file,
 // the block instruction-result of loop.md.
