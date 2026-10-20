@@ -41,4 +41,16 @@ Each command was run directly (never piped through `tail` or `grep`), with `date
 
 ## The green (CI on the PR head)
 
-Filled by the coordinator after the PR's CI runs on the pushed head, with the tested SHA, the CI integration command (`go test -tags=integration -timeout 20m ./...`, permitting each test binary up to 20 minutes while unit and end-to-end retain `-timeout 10m`), the measured uncached `internal/run` duration below the limit, and all 13 PR check runs (the 12 required contexts of `docs/setup/branch-protection.json` plus `task-state labels`).
+PR #443 at head `79169f4428582db17600716b10ea2e6f49271583`, CI run `39432743311`, job `tests (unit → integration → e2e)`. The log lines are quoted from that run:
+
+```
+unit         2026-10-20T13:42:39Z  Run go test -timeout 10m ./...
+integration  2026-10-20T13:43:10Z  Run go test -tags=integration -timeout 20m ./...
+integration  2026-10-20T13:53:57Z  ok  	github.com/pharzam/layup/internal/run	588.190s
+end-to-end   2026-10-20T13:53:57Z  Run go test -tags=e2e -timeout 10m ./...
+```
+
+- The integration step permitted each test binary up to 20 minutes. `internal/run` passed uncached in **588.190 s**, below the 1,200 s limit. That is the same product code that timed out at 600 s on `2866a3f`: this head changes no Go file.
+- Unit and end-to-end kept `-timeout 10m` and passed.
+- 13 check runs: 12 `success` and `review-record` `failure`. The failure was expected: the first review record of #442 comes after this head, and the check is read again on the frozen head.
+- Recorded by the coordinator (Claude Opus 5.5), from `gh run view 39432743311 --log` and `gh api repos/pharzam/layup/commits/79169f4…/check-runs`.
