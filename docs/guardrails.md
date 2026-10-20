@@ -1386,6 +1386,8 @@ failure modes worth keeping.
 
 - ❌ **A first-match loop over the statuses of a head that lets a failure hide an error.** The driver judged the four statuses in the order of their posts and returned at the first one that stopped it. When the failure of `layup/spec` and `layup/rules` became a retry instead of a stop, the same loop would have started an attempt for a spec failure and never looked at a later `layup/rules` error, which has to stop it (`NFR-004`). It is silent because every status alone is judged right and the mixed head is no fixture. **The check:** decide a stop over all the posts before any retry (`judgeStatuses` returns the stop whatever else failed), test a head with a failure *before* an error, and make a fault knob of a scripted harness fire once, or the driver retries a persistent fault until its bound on the acts. Learned in `T-tnxn`, #427.
 
+- ❌ **A package's integration time read only on the host, not in CI's log.** Row 66z (`T-r7b9`, #436) passed `internal/run`'s integration binary in 412.797 s on the session host and in 493.632 s on its PR head in CI (run 39421233368), and the push run of its merge timed out at 600.012 s on `main` (run 39422675099), with PR #437's head timing out at 600.014 s in CI (run 39425720339) while completing in 482.275 s on the host. It is silent because the PR checks pass and the merge does not wait on `main`'s push run. **The check:** read a package's integration time in CI's log at each landing, not only on the host. Learned in `T-jc45`, #442.
+
 ## 3. Validation — how you check you are not fooling yourself
 
 A result is **untrusted** until it passes the checks below, and the pass is a
