@@ -102,7 +102,7 @@ Round 1 (GPT-6.1 Sol) found five material findings. Each of F1 to F4 has a fixtu
 
 **Merged tasks of `main`**, with `--no-conditions --closeout 0/0`:
 - T-05f4 at `99ff862` (base `699d868`): exit 0.
-- T-r7b9 at `2866a3f` (base `0246d9c`): one line, `FAIL K3: runs/T-r7b9/mutants.md:5: quote the selector with single quotes`. The prose template `go test … -run <pattern>` there spans two lines, and the K3 grammar refuses a placeholder selector, as the round noted for T-h65e. The old pairing missed that line. The new pitfall says how to write such a template.
+- T-r7b9 at `2866a3f` (base `0246d9c`): one line, `FAIL K3: runs/T-r7b9/mutants.md:5: quote the selector with single quotes`. The prose template there, a command whose selector is a placeholder, spans two lines, and the K3 grammar refuses a placeholder selector, as the round noted for T-h65e. The old pairing missed that line. The new pitfall says how to write such a template.
 
 ## The gates after the fixes
 
