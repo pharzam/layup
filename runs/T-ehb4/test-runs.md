@@ -237,3 +237,18 @@ The fix: `mergeAt` gives the head of the pull request that the forge holds after
 `origin/main` (4259e05, row 66x landed) was merged (`abd8166`). Conflicts: `internal/git/git.go`, `internal/git/git_test.go` (both sides appended: kept both), `internal/run/pullroutes_integration_test.go` (the field `closed` and the fields of the route: both kept), `docs/spec/loop.md` (D-text of this row and the section of row 66x: both kept), `docs/spec/packages.md` (the cell of `internal/run`: both additions kept), `docs/tests/traceability.md` and `docs/prd/PRD-0001-layup.md` (rows of both sides, each row of section 12 merged cell by cell); no `+` line of either side was dropped. The fold of the two predicates was made in the same commit as the merge (a deviation from the order asked): `FinishTask` calls `UpToDate(ctx, carried)` of `baseup.go` and `upToDate` of `finish.go` and its unit test `TestTheDefaultHeadMustBeTheBaseOrAnAncestorOfTheCarriedHead` were deleted; D9 of `loop.md` names the one predicate.
 
 Full integration level: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./...` (head `bfba9ec`, start 2026-10-20T22:17:47Z, end 2026-10-20T22:21:09Z, exit=0), 21 packages ok. build, vet with no tag, `integration` and `e2e`, gofmt, `go test -count=1 ./...` (21 ok), `go test -count=1 -tags=e2e ./...` (start 2026-10-20T22:21:16Z, end 2026-10-20T22:22:21Z, exit=0), the six lints and `git diff --check origin/main HEAD`: exit=0 each. The code is frozen at `1fc7253` plus the merge and the fold (`abd8166`).
+
+## Round 6 - finding 10 of round 5 (cap 5, the scoped round 6 follows)
+
+### Red
+
+Strict red on the unchanged code `c75505f`, the test file alone changed. Command: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./internal/run/ -run '^(TestAVerifiedTaskBroughtCurrentByAMergeIsClosedOutFromTheMerge|TestAVerifiedSpecificationBroughtCurrentAboveItsRenderedCommitIsClosedOutFromTheMerge)$'` (start 2026-10-20T22:38:00Z, end 2026-10-20T22:38:07Z, exit=1).
+
+| Test | First failing assertion |
+| ---- | ----------------------- |
+| `TestAVerifiedTaskBroughtCurrentByAMergeIsClosedOutFromTheMerge` | `finish_integration_test.go:390: FinishTask = {...}, T-zjl4: the base moved (row 66x's); want Merged at the head of the close-out` |
+| `TestAVerifiedSpecificationBroughtCurrentAboveItsRenderedCommitIsClosedOutFromTheMerge` | `finish_integration_test.go:416: FinishTask = {...}, 63333940... is not a permitted rendered commit above the verified head b3dde440...; want Merged at the head of the close-out` (the merge was taken for the rendered commit) |
+
+### Green
+
+The fix: `FinishTask` takes as the head that carries the verdict the last event `bound` of code of the attempt (the rendered commit, or K3's merge above V or above R), `V` with none; checks it with `carries`; asks `UpToDate` of it; and `renderedHead` finds R by its own record (the bound of code with the one parent V). The same command with the two new tests and the integration set of the earlier rounds, start 2026-10-20T22:38:43Z, end 2026-10-20T22:38:57Z, exit=0: ok. `TestTheRenderedHeadGetsItsStatusesAndTheCloseOutGoesOnIt` now meets the records of another rendering at the check `carries`, which names the verified head too, and its assertion was widened to that text.

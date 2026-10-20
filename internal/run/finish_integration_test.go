@@ -360,6 +360,69 @@ func (f *finishing) moveMain() {
 	gitOut(f.t, f.r.target, "fetch", "-q", f.w.bare, "main")
 }
 
+// bringsCurrent moves the default branch by a file no task touches and brings the task up to date with BringUpToDate of row 66x, which merges it above the
+// head that carries the verdict (rendered is that head's input for a task that holds the rendered commit); it gives the merge commit.
+func (f *finishing) bringsCurrent(task string, rendered *RenderedInput) string {
+	f.t.Helper()
+	f.moveMain()
+	verifier := ""
+	for _, r := range f.sessionsOf(task) {
+		if r[sessionRole] == stepRole("verification") {
+			verifier = r[sessionID]
+		}
+	}
+	got, err := f.r.sessions().BringUpToDate(context.Background(), CarryInput{Task: task, Verifier: verifier, Harnesses: f.harnesses, Models: f.models, Rendered: rendered})
+	if err != nil || !got.Verified || got.Head == "" {
+		f.t.Fatalf("BringUpToDate = %+v, %v; want the merge above the head that carries the verdict", got, err)
+	}
+	return got.Head
+}
+
+// I17 (finding 10 of round 5): the verified architecture task that row 66x brought current by a merge of the default branch is closed out and merged from that
+// merge, which is its tip, not from the verified head the base has left behind.
+func TestAVerifiedTaskBroughtCurrentByAMergeIsClosedOutFromTheMerge(t *testing.T) {
+	t.Parallel()
+	f := newFinishing(t, "claude", "codex")
+	m := f.bringsCurrent(f.arch, nil)
+	got, err := f.finish(nil)
+	h := f.closedHead(f.arch)
+	if err != nil || !got.Merged || got.Head != h || h == "" {
+		t.Fatalf("FinishTask = %+v, %v; want Merged at the head of the close-out", got, err)
+	}
+	if c := f.closers(f.arch); len(c) != 1 || c[0][sessionBase] != m {
+		t.Errorf("the close-out sessions %v; want one on the merge %s", c, m)
+	}
+	if parents := strings.Fields(gitOut(t, f.w.bare, "rev-list", "--parents", "-n1", h)); len(parents) != 2 || parents[1] != m {
+		t.Errorf("the close-out head has the parents %v; want the merge %s", parents, m)
+	}
+}
+
+// I18: the same for the specification task, whose merge is above its rendered commit R: R is found by its own record (its one parent is the verified head)
+// and keeps its pinned inputs, and the close-out goes on the merge.
+func TestAVerifiedSpecificationBroughtCurrentAboveItsRenderedCommitIsClosedOutFromTheMerge(t *testing.T) {
+	t.Parallel()
+	f, v, r := newBetFinishing(t)
+	rb, err := f.r.renderedBet(context.Background(), v)
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := f.bringsCurrent(f.spec, &RenderedInput{Head: r, Render: rb.Records})
+	if parents := strings.Fields(gitOut(t, f.w.bare, "rev-list", "--parents", "-n1", m)); len(parents) != 3 || parents[1] != r {
+		t.Fatalf("the merge %s has the parents %v; want the rendered commit %s first", m, parents, r)
+	}
+	got, err := f.finishTask(f.spec, f.harnesses, nil)
+	h := f.closedHead(f.spec)
+	if err != nil || !got.Merged || got.Head != h || h == "" {
+		t.Fatalf("FinishTask = %+v, %v; want Merged at the head of the close-out", got, err)
+	}
+	if c := f.closers(f.spec); len(c) != 1 || c[0][sessionBase] != m {
+		t.Errorf("the close-out sessions %v; want one on the merge %s", c, m)
+	}
+	if st := headStates(f.drvWorld, r); !slices.Contains(st, SpecContext+" success") || !slices.Contains(st, VerifyContext+" success") {
+		t.Errorf("the statuses at the rendered commit: %v; want its own checks and the carry", st)
+	}
+}
+
 // I9 (D9): a default branch that moved past the base of the attempt is a Go error and writes nothing; the base that is the tip passes.
 func TestADefaultBranchThatMovedStopsTheCloseOutBeforeAnyWrite(t *testing.T) {
 	t.Parallel()
@@ -445,7 +508,7 @@ func TestTheRenderedHeadGetsItsStatusesAndTheCloseOutGoesOnIt(t *testing.T) {
 	in.Bet = func(context.Context, string) (RenderedBet, error) {
 		return RenderedBet{Copy: rb.Copy, Records: rb.Records[:1]}, nil
 	}
-	if _, err := d.r.sessions().FinishTask(context.Background(), in); err == nil || !strings.Contains(err.Error(), "is not a permitted rendered commit above the verified head "+v) || f.writes() != writes {
+	if _, err := d.r.sessions().FinishTask(context.Background(), in); err == nil || !strings.Contains(err.Error(), "the verified head "+v) || f.writes() != writes {
 		t.Errorf("FinishTask with the records of another rendering = %v with %d writes more; want the refusal of the rendered commit and no write", err, f.writes()-writes)
 	}
 	got, err := f.finishTask(spec, d.harnesses, nil)

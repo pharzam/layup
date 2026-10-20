@@ -89,8 +89,18 @@ func (s *Sessions) FinishTask(ctx context.Context, in FinishInput) (Advance, err
 		if err != nil {
 			return Advance{}, err
 		}
-		cin.Rendered, carried = &RenderedInput{Head: rendered.Head, Render: rendered.Records}, rendered.Head
+		cin.Rendered = &RenderedInput{Head: rendered.Head, Render: rendered.Records}
 		hin.Copy, hin.Records, hin.PreRev = rendered.Copy, rendered.Records, st.Head
+	}
+	// The head that carries the verdict is the last event bound of code of the attempt: the rendered commit, or the merge of the default branch that row 66x made
+	// above the verified head or above the rendered commit; with none it is the verified head. It is checked to carry the verdict before it is asked about the base.
+	if codes := commitsOfCode(v.Events, attempt); len(codes) > 0 {
+		carried = codes[len(codes)-1]
+		if ok, err := s.carries(cin, st.Head, carried); err != nil {
+			return Advance{}, err
+		} else if !ok {
+			return Advance{}, fmt.Errorf("%s: %s does not carry the verdict of the verified head %s", task, carried, st.Head)
+		}
 	}
 	if ok, _, err := s.UpToDate(ctx, carried); err != nil { // the one predicate of a current head (baseup.go), asked of the head that carries the verdict
 		return Advance{}, err
@@ -106,7 +116,7 @@ func (s *Sessions) FinishTask(ctx context.Context, in FinishInput) (Advance, err
 			return Advance{}, err
 		}
 		at := hin
-		at.Head, at.RegisterRev = carried, reg
+		at.Head, at.RegisterRev = cin.Rendered.Head, reg
 		if _, err := s.PostChecks(ctx, at); err != nil {
 			return Advance{}, err
 		}
@@ -120,22 +130,23 @@ type renderedHead struct {
 	RenderedBet
 }
 
-// renderedHead gives the event bound of code in the attempt, which CarryVerify checks above the verified head before it posts, with the inputs of D10.
+// renderedHead gives the rendered commit of the attempt, found by its own record: the event bound of code whose one parent is the verified head (a merge of
+// the default branch, which row 66x makes above it, has two parents and is never taken for it), with the inputs of D10.
 func (s *Sessions) renderedHead(ctx context.Context, in FinishInput, v loopView, attempt int, verified string) (renderedHead, error) {
 	var out renderedHead
-	for _, e := range v.Events {
-		if n, _ := strconv.Atoi(e[2]); e[1] == "bound" && e[3] == "" && n == attempt {
-			out.Head = e[5]
+	for _, c := range commitsOfCode(v.Events, attempt) {
+		if parents, err := git.Parents(s.Clone, c); err != nil {
+			return out, err
+		} else if len(parents) == 1 && parents[0] == verified {
+			out.Head = c
 		}
 	}
 	if out.Head == "" || in.Bet == nil {
 		return out, fmt.Errorf("%s: the specification task has no rendered commit bound in attempt %d, or no inputs of it: the step bet finishes it", v.Task, attempt)
 	}
 	var err error
-	if out.RenderedBet, err = in.Bet(ctx, verified); err != nil {
-		return out, err
-	}
-	return out, nil
+	out.RenderedBet, err = in.Bet(ctx, verified)
+	return out, err
 }
 
 // attemptPull gives the pull request of the branch of the task's latest attempt, the attempt and the events: its number must be the register's.
