@@ -205,6 +205,10 @@ docs/setup/setup-check.sh          text eol=lf
 docs/tasks/task-state.sh           text eol=lf
 # Its labeller (T-dm8m, #185), beside it: a sixteenth executable.
 docs/tasks/task-labels.sh          text eol=lf
+# The pre-freeze check and its fixture runner (T-b6fn, #440).
+docs/tests/freeze-check.sh         text eol=lf
+docs/tests/freeze-check/run.sh     text eol=lf
+docs/tests/freeze-check/run-all.sh text eol=lf
 
 # --- a fixture whose trailing whitespace IS the test -------------------------
 #

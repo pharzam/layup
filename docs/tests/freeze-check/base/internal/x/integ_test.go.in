@@ -1,0 +1,11 @@
+//go:build integration
+
+package x
+
+import "testing"
+
+func TestIntegOnly(t *testing.T) {}
+func TestCommentInteg(t *testing.T) {}
+func TestHandoffInteg(t *testing.T) {}
+func TestPositionInteg(t *testing.T) {}
+func TestQuestionInteg(t *testing.T) {}
