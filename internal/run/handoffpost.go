@@ -172,6 +172,13 @@ func (s *Sessions) postBody(ctx context.Context, task string, data []byte) (Post
 	if err != nil {
 		return Posted{}, err
 	}
+	return s.postOnIssue(ctx, issue, data)
+}
+
+// postOnIssue is the core of postBody for an issue that is not a task's (task T-2vva: the brief of the bet goes to the milestone's issue):
+// the copy by hash, the comment of the App that has the bytes, the lease, the post, the read-back and the copy.
+func (s *Sessions) postOnIssue(ctx context.Context, issue int, data []byte) (Posted, error) {
+	s.fns()
 	sum := digest(data)
 	copies, err := s.readTable(ctx, "copies.tsv", records.ReadCopies)
 	if err != nil {
