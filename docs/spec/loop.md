@@ -1481,8 +1481,8 @@ reads before each write, holds nothing and returns at the first merge, wait, sto
 `task/<task>/<A>` (D8); (2) a pull request closed and not merged is the wait of D2, with no write of any kind and before any repair; (3) a merged one with its event `merged`
 is `Merged` and writes nothing, and one without it gets the repair of D7 and then `RecordMerged` (the lost event, O16); (4) `RepairTask` (D7); (5) the verified head
 `V` and its verifier `X` come from `loopPosition` over the events up to the last handoff of a session of the verification role (the close-out's own sessions, their
-bound and their refusals come after it), and the position must be the verified one, else the Go error `<task>: attempt <A> has no verified head`; (6) the up-to-date
-check of D9; (7) the carried head `C` of D3; (8) for the rendered commit, `CarryVerify(in, "")` and the three checks at `R`; (9) the close-out session (D4, D5); (10)
+bound and their refusals come after it), and the position must be the verified one, else the Go error `<task>: attempt <A> has no verified head`; (6) the carried head `C` of D3; (7) the up-to-date
+check of D9 on `C`; (8) for the rendered commit, `CarryVerify(in, "")` and the three checks at `R`; (9) the close-out session (D4, D5); (10)
 `CarryVerify(in, id)` and the three checks at `H'`, the close-out's bound head; (11) `MergeTask(task, H')` (D6).
 - **D2, a pull request closed and not merged** (Q11 of #367, Q7 of the plan) is `Advance{Wait: "waiting for the Operator: <task>: the pull request #<n> of task/<task>/<A> is closed
   and not merged"}`. It writes nothing: no repair, no records commit, no forge call but reads; no redo is inferred from it (the redo is row 66x's). The wait repeats at each restart,
@@ -1502,7 +1502,7 @@ check of D9; (7) the carried head `C` of D3; (8) for the rendered commit, `Carry
   by the order of the events decides (never the clock), so a session that was rerun is not the one read. None, or one with no `result` and no `refused`, starts a session (a rerun; the milestone cap is asked first). A
   `refused` event of a session with no start row after that handoff is the stop `<task>: the start of the session <id> was refused (<reason>)`; a `refused` of one with a start row is `<task>: the session <id> was refused (<reason>)`;
   a result other than `done`, or a status other than `completed`, is `<task>: the session <id> of close-out ended <status>`. None of them is tried again. **A session that ended `done`, `completed` and has no `push`, `bound`
-  or `refused`** (the end commits before the push hook runs) resumes its checked push from the kept head `refs/layup/sessions/<id>`, with `PushCloseOut`, and starts no session; a `push` with no `bound` is `RepairTask`'s (D7).
+  or `refused`** (the end commits before the push hook runs) resumes its checked push from the kept head `refs/layup/sessions/<id>`, with `PushCloseOut`, and starts no session, unless that ref no longer reads (the run's clone is made anew at a restart, and the kept head went with it), when a new session replaces it; a `push` with no `bound` is `RepairTask`'s (D7) and, if it is still there, a stop.
   A `bound` is `H'`.
 - **D6, not ready.** `MergeTask` is called with `H'`. A merge gives `Advance{Merged, Head: H'}`. A head that moved (`the head moved to <sha>`) is the stop `<task>: not ready at <H'>: <reason>`, and a pull request that is no longer open is D2's
   wait or, merged, the recorded merge; every other reason (a context not `success`, a job pending or failed, no required job) is the wait `waiting: <task>: not ready at <H'>: <reason>`, which a restart reads again. **Rejected:** a wait only for
@@ -2524,7 +2524,7 @@ parsed review records of the valid handoffs, so each position is told from the r
   say nothing about the developer. The rule is in `TaskSession`, by the step of the prompt file, so a caller cannot forget it.
   **Rejected:** a no-op push supplied by the driver (not the production path); the role as the key (the plan role is also the owner role
   of an environment question). Only the developer's session is ever bound; a session that has a `push` and no `bound`, or none of them
-  after it ended `completed`, is a stop (the repair of a push is `RepairTask`'s).
+  after it ended `completed`, is a stop (the repair of a push is `RepairTask`'s). The close-out session of row 66y is bound too, after the verifier's last handoff: `FinishTask` tells the verified head over the events up to that handoff.
 - **The plan review and the verifier**, both of the role `qa-engineer`, are told apart by the order of the events, never the clock: a
   session that starts after the last valid plan handoff (a handoff of a comment: **decided here**, task `T-r7b9`, a question or an answer handoff of
   a session of the plan role is no plan handoff) and before the first `push` of the task is the plan review; one that starts after a

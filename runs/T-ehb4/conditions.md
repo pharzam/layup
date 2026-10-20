@@ -1,0 +1,18 @@
+# T-ehb4: the conditions of the plan review of #425 and of its decisions, and their evidence
+
+One row per condition of the plan review (comment 6262459073), the Operator's decisions (6262588229), the S0 note (6264869454) and conditions 1, 2 and 8 of the parent's review (6252684822). This table is check K6's input; K6 proves that each cited span exists, not that it meets the condition.
+
+| Condition | Evidence |
+| --- | --- |
+| 6262459073 1: the goal count 3, recorded before code; the exception claim not made | `docs/plan/README.md`, `247f181` |
+| 6262459073 2: the read-only terminal check before the repair, the wait with no write, the changed attempt handed back, a closure seen during the call | `internal/run/finish.go:44-62`, `internal/run/finish.go:276-297`, `TestAClosedUnmergedPullRequestOfTheOpenAttemptIsAWaitWithNoWrite`, `TestAClosedUnmergedPullRequestIsAWaitWithNoWriteAndARepairThatStartsAnAttemptIsAHandback`, `TestAPullRequestClosedDuringTheCallIsTheWaitOfTheOperator` |
+| 6262459073 3: the close-out recovery table: no result, completed with no push, push with no bound, refused before its start row, the last of several sessions | `internal/run/finish.go:328-367`, `TestTheCloseOutSessionOfThePositionIsTheLastOneAfterTheCutAtTheCarriedBase`, `TestACloseOutThatEndedWithNoPushResumesItsCheckedPush`, `TestACloseOutWhoseKeptHeadIsGoneIsReplacedByANewSession`, `TestACloseOutOutsideItsScopeIsRefusedAndNotRetried` |
+| 6262459073 4: the up-to-date predicate with one home, the verified head distinct from the head that carries its verdict | `internal/run/finish.go:391-406`, `docs/spec/loop.md:1513-1514`, `TestTheDefaultHeadMustBeTheBaseOrAnAncestorOfTheCarriedHead`, `TestADefaultBranchThatMovedStopsTheCloseOutBeforeAnyWrite` |
+| 6262459073 5: the status inputs pinned for the rendered head and for the close-out head; `PostChecks` keeps the order and the delayed cleanup error | `internal/run/finish.go:80-105`, `internal/run/statuses.go:209-250`, `TestTheRenderedHeadGetsItsStatusesAndTheCloseOutGoesOnIt`, `TestNoVerifyIsComputedAtTheCloseOutHead` |
+| 6262459073 6: the red and the mutation distinguish the paths: the driver's verified position as the setup, a stop in the sequence of statuses, the mark, the merge and the merged event | `runs/T-ehb4/test-runs.md`, `runs/T-ehb4/mutants.md`, `TestARestartAfterEachWriteAdoptsIt`, `TestAVerifiedTaskIsClosedOutCarriedAndMergedAtItsHead` |
+| 6262459073 7: `Position` and `ResolveStep` errors handled, the tier by `TierOf(plan, position)`, S2 inert and extractions only, the choices recorded with their reasons | `internal/run/finish.go:229-248`, `internal/run/finish.go:369-371`, `TestTheCloseOutStepIsResolvedAtTierOfThePlanAndThePosition`, `6bdf16b`, `cae4328`, `docs/spec/loop.md:1475-1516` |
+| 6262588229: the goal count is 3, kept in this issue at the maximum of 2,300 lines over 22 files | `docs/plan/README.md`, `runs/T-ehb4/test-runs.md` |
+| 6264869454: the close-out at the carried head uses the scratch branch of plan amendment 1 of #415, with no second mechanism | `internal/run/shapeloop.go:552-585`, `internal/run/finish.go:229-248`, `TestAVerifiedTaskIsClosedOutCarriedAndMergedAtItsHead` |
+| 6252684822 1: the child registered with its own row, edges and gate | `docs/plan/README.md`, `247f181` |
+| 6252684822 2: recovery reachable before a failing step: `RepairTask` is called by this driver | `internal/run/finish.go:54-62`, `TestAClosedUnmergedPullRequestIsAWaitWithNoWriteAndARepairThatStartsAnAttemptIsAHandback` |
+| 6252684822 8: `TierOf(plan, position)` before `ResolveStep`, not `PlanTier` | `internal/run/finish.go:369-371`, `TestTheCloseOutStepIsResolvedAtTierOfThePlanAndThePosition` |
