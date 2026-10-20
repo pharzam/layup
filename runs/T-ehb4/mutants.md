@@ -1,7 +1,7 @@
 # T-ehb4: the compiled mutants
 
 Frozen head 02a5f0f. The tree is a copy made with `git archive` of that head, outside the worktree (three copies, `/home/layup/.cache/layup-session/T-ehb4-mut1` to `-mut3`, each with its share of the mutants); the backup of `internal/run/finish.go` was taken fresh from it before each mutant, and each restore was copied from that backup and checked by SHA-256 (first 16 hex).
-Each mutant must pass `go build ./...`, `go vet ./internal/run/` and `go vet -tags=integration ./internal/run/` (a failure would count as not run); it then runs the named tests of this row (unit: `go test -count=1 ./internal/run/ -run '^(...)$'`; integration: `go test -count=1 -tags=integration -timeout 30m ./internal/run/ -run '^(...)$'`, with the names of `runs/T-ehb4/test-runs.md`). Exit statuses are those of `go`, taken directly. After the restore the same tests run again as the green control.
+Each mutant must pass `go build ./...`, `go vet ./internal/run/` and `go vet -tags=integration ./internal/run/` (a failure would count as not run); it then runs the named tests of this row, the unit tests and then the integration tests listed in `runs/T-ehb4/test-runs.md` (section S3), by the same two commands as there. Exit statuses are those of `go`, taken directly. After the restore the same tests run again as the green control.
 
 **Result: 31 of 31 mutants built, vetted and were killed; every restore matched its hash: True.**
 
