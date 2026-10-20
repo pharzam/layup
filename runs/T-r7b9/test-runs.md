@@ -198,9 +198,31 @@ Recorded at the head before this section: `go build`, `go vet` (plain, integrati
 `go test -count=1 -tags=e2e ./...` start 2026-10-20T06:20:01Z, end 2026-10-20T06:23:55Z, exit 0. The first full integration run (06:16:14Z to 07:05:56Z) wrote its output to a
 scratch name that another agent's run shared; its output was truncated (no `internal/run` line), so it is **not evidence**. A rerun under the unique name `scratchpad/T-r7b9/T-r7b9-full-integration.txt` was stopped by the host move: not recorded.
 
-Resume point:
-1. Next slice: S7. Run `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 90m ./...` under a T-r7b9-prefixed scratch name (about 50 min), and record start, end and exit.
-2. Recorded: S0, S1 (docs), S2 (stubs; green), S3 (red runs 1 to 3), S4 (green), S5 (30 mutants, 30 killed at 8c2a05b). Not recorded: the full integration level; the close-out (task file, completed.md, backlog.md, resource record) is not written, as ordered.
-3. Row 66z is in docs/plan/README.md, and 66z is in row 66k's After cell (`task-state.sh` exits 0, T-r7b9 `in progress`); expect a one-line conflict with T-tnxn (66aa) there, keep both labels.
-4. Then `~/.local/bin/gitleaks git --no-banner` alone, on exit 0 `sh /home/layup/.cache/layup-session/harness/2026-10-16-m2e/push.sh T-r7b9`; no pull request.
-5. Budget at this head: see `git diff --shortstat origin/main...HEAD` (about 1,750 lines over 22 files, limit 2,500 over 27, close-out inside).
+The work resumed on the new host (LayupZAM) on 2026-10-20; the gates of the merge head follow.
+
+## S7, the gates on the merge head (origin/main 0246d9c merged, host LayupZAM)
+
+The merge (`chore: T-r7b9 merge origin/main at 0246d9c`) conflicted only in index lines: the REQ-005 Task and Test cells and the 2026-10-20 change-log line of PRD-0001, row 66k's After cell and the rows 66z/66aa of `docs/plan/README.md`, the `internal/run` row of `docs/spec/packages.md`, and the traceability rows. Both sides were kept; `docs/guardrails.md` merged without a conflict.
+
+Each command is direct, its own exit status; times from `date -u` after the step.
+
+| Command | Start | End | Exit |
+| --- | --- | --- | --- |
+| `go build ./...` | 2026-10-20T10:10:56Z | 2026-10-20T10:10:57Z | 0 |
+| `go vet ./...` | 2026-10-20T10:10:57Z | 2026-10-20T10:10:57Z | 0 |
+| `go vet -tags=integration ./...` | 2026-10-20T10:10:57Z | 2026-10-20T10:10:59Z | 0 |
+| `go vet -tags=e2e ./...` | 2026-10-20T10:10:59Z | 2026-10-20T10:11:00Z | 0 |
+| `gofmt -l` | 2026-10-20T10:11:00Z | 2026-10-20T10:11:00Z | out='' |
+| `go test -count=1 ./...` | 2026-10-20T10:11:00Z | 2026-10-20T10:11:03Z | 0 |
+| `go test -count=1 -tags=e2e ./...` | 2026-10-20T10:11:03Z | 2026-10-20T10:12:32Z | 0 |
+| `sh docs/adr/adr-lint.sh` | 2026-10-20T10:12:32Z | 2026-10-20T10:12:34Z | 0 |
+| `sh docs/prd/prd-lint.sh` | 2026-10-20T10:12:34Z | 2026-10-20T10:12:34Z | 0 |
+| `sh docs/links/link-lint.sh` | 2026-10-20T10:12:34Z | 2026-10-20T10:13:04Z | 0 |
+| `sh docs/tests/run-discipline-tests.sh` | 2026-10-20T10:13:04Z | 2026-10-20T10:13:11Z | 0 |
+| `sh docs/setup/setup-check.sh` | 2026-10-20T10:13:11Z | 2026-10-20T10:14:01Z | 0 |
+| `sh docs/tests/nested-checkout-check.sh` | 2026-10-20T10:14:01Z | 2026-10-20T10:14:02Z | 0 |
+| `git diff --check` | 2026-10-20T10:14:02Z | 2026-10-20T10:14:02Z | 0 |
+| `sh docs/tasks/task-state.sh` | 2026-10-20T10:14:02Z | 2026-10-20T10:14:10Z | 0 |
+| `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 90m ./...` (full integration level) | 2026-10-20T10:14:14Z | 2026-10-20T10:30:52Z | 0 |
+
+The full integration level passed at the first run: every package `ok`, `internal/run` 991.564 s, no flake (neither `TestProcessTimesTheFirstOutput` nor the fastClock cap of #291 failed), output in `/home/layup/.cache/layup-session/T-r7b9-full-integration.txt`.
