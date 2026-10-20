@@ -26,7 +26,7 @@ sh -c 'set -- docs/adr/0028-*.md; test -f "$1" && grep -q "^Proposed$" "$1" && g
 
 ## The Operator's decision (6296168934), and the record made Accepted
 
-After the merge of `origin/main` (`0f0890b`), the record's Status is `Accepted`, its figures are those of the Operator (20 %, at least 60 and at most 500 lines, plus 4 files), its index row is `Accepted`, and ADR-0026's Status line is `Accepted. Amended by ADR-0028` (index: `Accepted; amended`, as ADR-0010's row).
+After the merge of `origin/main` (`0f0890b`), the record's Status is `Accepted`, its figures are those of the Operator (20 %, at least 60 and at most 500 lines, plus 4 files), and its index row is `Accepted`. ADR-0026's Status line is left to the follow-up task that changes the operative text, as the plan put it: editing it here would be a sixth file against the plan review's maximum of five.
 - `sh docs/adr/adr-lint.sh`: 2026-10-20T16:47:17Z, exit 0
 - `sh docs/prd/prd-lint.sh`: 2026-10-20T16:47:18Z, exit 0
 - `sh docs/links/link-lint.sh`: 2026-10-20T16:47:18Z, exit 0

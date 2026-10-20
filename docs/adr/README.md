@@ -162,7 +162,7 @@ record by number here, and let the index table below do the linking.
 | [0023](0023-stop-a-stall-at-a-limit-and-diagnose-it-with-a-fresh-context.md) | Stop a stall at a limit and diagnose it with a fresh context | Accepted |
 | [0024](0024-record-every-sessions-cost-and-stop-at-the-milestone-cap.md) | Record every session's cost and stop at the milestone cap | Accepted |
 | [0025](0025-learn-routing-from-the-records-at-each-retrospective.md) | Learn routing from the records at each retrospective | Accepted |
-| [0026](0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md) | Keep the bootstrap review rules as the standing gate | Accepted; amended |
+| [0026](0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md) | Keep the bootstrap review rules as the standing gate | Accepted |
 | [0027](0027-bound-the-integration-level-at-20-minutes-in-ci.md) | Bound the integration level at 20 minutes in CI | Accepted |
 | [0028](0028-delegate-two-bounded-landing-decisions.md) | Delegate two bounded landing decisions | Accepted |
 

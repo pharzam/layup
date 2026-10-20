@@ -4,7 +4,7 @@ Date: 2026-10-07
 
 ## Status
 
-Accepted. Amended by [ADR-0028](0028-delegate-two-bounded-landing-decisions.md)
+Accepted
 
 ## Context
 
