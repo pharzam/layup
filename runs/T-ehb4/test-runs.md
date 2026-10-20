@@ -256,3 +256,16 @@ The fix: `FinishTask` takes as the head that carries the verdict the last event 
 ### Round 6 - the gates
 
 The code is frozen at `b0bfde5`; later commits add a test, tables and records only (`origin/main` had not moved). Full integration level: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./...` (head `53e8588`, start 2026-10-20T22:44:08Z, end 2026-10-20T22:47:44Z, exit=0), 21 packages ok. build, vet with no tag, `integration` and `e2e`, gofmt, `go test -count=1 ./...` (21 ok), `go test -count=1 -tags=e2e ./...` (start 2026-10-20T22:47:46Z, end 2026-10-20T22:48:51Z, exit=0), the six lints and `git diff --check origin/main HEAD`: exit=0 each.
+
+### Round 6 - the freeze check
+
+Command: `sh docs/tests/freeze-check.sh --task T-ehb4 --base origin/main --budget 2300/22` on the clean committed head `a4cd947` (output in `/home/layup/.cache/layup-session/T-ehb4-freeze6.txt`), exit=1 on K5 alone, which counts the files of `runs/`:
+
+```text
+ok K1: white space
+ok K2: registration of new tests
+ok K3: test selectors
+ok K4: restore evidence of mutants
+FAIL K5: -:0: projection: figure 2738/30, maximum 2300/22, margin -438/-8 (the figure at landing is still measured at landing)
+ok K6: conditions table
+```
