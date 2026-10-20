@@ -172,3 +172,11 @@ ok  	github.com/pharzam/layup/internal/tsv	0.059s
 exit=0
 end 2026-10-20T06:35:07Z
 ```
+
+## Resume point (the host was shut down, 2026-10-20)
+
+- Done and committed: S1 (docs), S2 (stubs, extractions), S3 (red runs), S4 to S6 (green), S7 (33 mutants killed, `mutants.md`), the docs and registration of S8 except the close-out; the head merges `origin/main` (up to date).
+- Not recorded: the gates of S9 on the final head. The full integration level (`TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 90m ./...`) was started at about 07:55Z and killed by the shutdown with no result; the unit level, the three vets, gofmt and the lints of that command were not read back either.
+- Next: run build, the three vets, gofmt, `go test ./...`, the full integration level (alone, about 30 to 45 minutes), `go test -count=1 -tags=e2e ./...`, the six lints and `git diff --check`, record them here, then gitleaks alone and push.sh.
+- Not started: the close-out (task file, completed line, backlog line, resource record), which comes after the review round. Size against main: 2,308 lines over 22 files before this section; budget 2,600 over 26.
+- Scratch of this task is in `scratchpad/T-h65e-w/`; the mutant script is `mutants.py` there.
