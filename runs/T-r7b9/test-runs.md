@@ -267,3 +267,27 @@ Condition 5's caller-wiring clause is released for this task by that decision al
 
 `TestTheAnswerSessionStartsAtTheBaseOfTheLastAskingSession` was written after the code (S4 above) and passed at once. The Operator accepted the exception (6289096719, finding 4): the test stays with this chronology. The compensating
 evidence is the red run of the production regression above (`TestTheQuestionOfAVerifierAtItsBoundHead...`, first failing assertion recorded), the green control of the answer at the bound head, and M28.
+
+### Round 1, the gates on the head b588f09 (origin/main 0246d9c, not moved; docs-only commits follow this section)
+
+| Command | Start | End | Exit |
+| --- | --- | --- | --- |
+| `go build ./...` | 2026-10-20T10:59:54Z | 2026-10-20T10:59:55Z | exit 0 |
+| `go vet ./...` | 2026-10-20T10:59:55Z | 2026-10-20T10:59:55Z | exit 0 |
+| `go vet -tags=integration ./...` | 2026-10-20T10:59:55Z | 2026-10-20T10:59:56Z | exit 0 |
+| `go vet -tags=e2e ./...` | 2026-10-20T10:59:56Z | 2026-10-20T10:59:57Z | exit 0 |
+| `gofmt -l` | 2026-10-20T10:59:57Z | 2026-10-20T10:59:57Z | out='' |
+| `go test -count=1 ./...` | 2026-10-20T10:59:57Z | 2026-10-20T11:00:00Z | exit 0 |
+| `go test -count=1 -tags=e2e ./...` | 2026-10-20T11:00:00Z | 2026-10-20T11:01:28Z | exit 0 |
+| `sh docs/adr/adr-lint.sh` | 2026-10-20T11:01:28Z | 2026-10-20T11:01:31Z | exit 0 |
+| `sh docs/prd/prd-lint.sh` | 2026-10-20T11:01:31Z | 2026-10-20T11:01:31Z | exit 0 |
+| `sh docs/links/link-lint.sh` | 2026-10-20T11:01:31Z | 2026-10-20T11:02:03Z | exit 0 |
+| `sh docs/tests/run-discipline-tests.sh` | 2026-10-20T11:02:03Z | 2026-10-20T11:02:10Z | exit 0 |
+| `sh docs/setup/setup-check.sh` | 2026-10-20T11:02:10Z | 2026-10-20T11:03:00Z | exit 0 |
+| `sh docs/tests/nested-checkout-check.sh` | 2026-10-20T11:03:00Z | 2026-10-20T11:03:01Z | exit 0 |
+| `git diff --check` | 2026-10-20T11:03:01Z | 2026-10-20T11:03:01Z | exit 0 |
+| `sh docs/tasks/task-state.sh` | 2026-10-20T11:03:01Z | 2026-10-20T11:03:10Z | exit 0 |
+| `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 90m ./...` (the full integration level, alone, in the background) | 2026-10-20T11:03:15Z | 2026-10-20T11:19:46Z | 0 |
+
+The full integration level passed at the first run: every package `ok`, `internal/run` 988.617 s, no flake, output in `/home/layup/.cache/layup-session/T-r7b9-full-integration-r1.txt`.
+
