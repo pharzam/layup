@@ -291,3 +291,25 @@ evidence is the red run of the production regression above (`TestTheQuestionOfAV
 
 The full integration level passed at the first run: every package `ok`, `internal/run` 988.617 s, no flake, output in `/home/layup/.cache/layup-session/T-r7b9-full-integration-r1.txt`.
 
+## Round 2 (review 6289957559; cap raised to 2 in 6289990772)
+
+### F5, answer correspondence by column n: red on 9bb845e, then green
+
+- **Red on `9bb845e` (before `questionloop.go` was changed).** `go test -count=1 ./internal/run/ -run '^TestTheAnswerColumnNSelectsItsQuestionInAnyRowOrder$'`, start `2026-10-20T11:46:03Z`, end `2026-10-20T11:46:04Z`, **exit 1**:
+  ```
+  --- FAIL: TestTheAnswerColumnNSelectsItsQuestionInAnyRowOrder (0.00s)
+      questionloop_test.go:263: answer S-2c3d4e5f.2: stage 5, row [answer 2 There. — docs/spec/forge.md], question "S-0a1b2c3d.1"; want the post of answer 2 for S-1b2c3d4e.1
+      questionloop_test.go:263: answer S-2c3d4e5f.1: stage 5, row [answer 1 Yes. — docs/spec/forge.md], question "S-1b2c3d4e.1"; want the post of answer 1 for S-0a1b2c3d.1
+      questionloop_test.go:269: both permuted answers posted for their own questions: stage 5; want the handoff back (P7)
+  FAIL
+  ```
+- **Green after the fix (`92c1958`).**
+  - `go test -count=1 ./internal/run/ -run 'TestTheAnswerColumnNSelectsItsQuestionInAnyRowOrder|TestTheNthAnswerNamesTheNthQuestionAndAMissingOrExtraAnswerStops|TestThePromptFileOfEachStepIsItsGoldenFile'`, start `2026-10-20T11:47:05Z`, end `2026-10-20T11:47:07Z`, **exit 0**.
+  - `go test -count=1 -tags=integration ./internal/run/ -run '^TestTheInstructionBlocksOfLoopMd$'`, start `2026-10-20T11:47:07Z`, end `2026-10-20T11:47:08Z`, **exit 0**.
+
+### F6, the Q9 composition stops: compiled removal mutants on a copy of the tree
+
+- The composition-stop branches (`questionloop.go:148` and `:204`) already existed before `TestAnUncomposableQuestionRowStaysAStop` and `TestAnUncomposableAnswerRowStaysAStop` were added (`76587a4`), so there is no historical red-before-code run; the sensitivity evidence is the compiled removal mutants Z1 and Z2 in `runs/T-r7b9/mutants.md`, built and run on a copy of the tree (`/tmp/T-r7b9-mutant-r2`, `2026-10-20T11:50:44Z` to `2026-10-20T11:50:51Z`).
+- On the real code (`76587a4`): `go test -count=1 ./internal/run/ -run 'TestAnUncomposableQuestionRowStaysAStop|TestAnUncomposableAnswerRowStaysAStop'`, start `2026-10-20T11:49:31Z`, end `2026-10-20T11:49:32Z`, **exit 0**.
+- On removal mutant Z1 (question composition stop removed, sha256 `893566c22161da1b542d401b25f8848e6b63dc31e6b4b5c0cd0a4b2fbb5d2ff3`): build/vet/vet-int `0/0/0`, `go test -count=1 ./internal/run/` **exit 1** (`TestAnUncomposableQuestionRowStaysAStop`: `read 1: stage 2 (""), askStage=("", "", handoff: the file of a comment has 65619 characters, over 65536); want the repeatable stop "T-sp01: the question S-0a1b2c3d.1 cannot be composed: handoff: the file of a comment has 65619 characters, over 65536" with no post`).
+- On removal mutant Z2 (answer composition stop removed, sha256 `a98c8add17c38197fee8e25edcd5f42b85f22732be62ecaba1a55bd85fe06682`): build/vet/vet-int `0/0/0`, `go test -count=1 ./internal/run/` **exit 1** (`TestAnUncomposableAnswerRowStaysAStop`: `read 1: stage 5 (""), askStage=("", "", handoff: the file of a comment has 65634 characters, over 65536); want the repeatable stop "T-sp01: the answer S-2c3d4e5f.1 cannot be composed: handoff: the file of a comment has 65634 characters, over 65536" with no post`).
