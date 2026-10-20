@@ -189,12 +189,16 @@ func ResolveStep(step, tier, ownerRole string) (Resolved, error) {
 	return Resolved{}, fmt.Errorf("the step table has no step %q", step)
 }
 
-// openMaterial says whether a material finding is open (loop.md, the open unknowns): the typed record of the last review is read after it is
-// qualified. The last review is the last session by the order of the events of its start, of the role qa-engineer, that ended done and whose
-// result holds a comment row of result/review-record.md (a plan review writes plan-review.md, so it is never read as a record). With none,
-// nothing is open. A review whose handoff is not recorded yet or is not valid, whose kept copy is missing or is not the file the result names
-// by its hash (keptComment), that does not parse, or whose head is not the base of the session's start row is open: it never clears a finding
-// of an older record, and no older record stands in its place. Otherwise OpenMaterial of the record decides. A failed read is an error.
+// openMaterial says whether a material finding is open (loop.md, the open unknowns): the typed record of the last verifier is read after it is
+// selected and qualified. The last verifier is the last session by the order of the events of its start, of the role qa-engineer, that is a
+// verifier by its position and head binding (verifierBound, the classification of loopView.qaKind): it started after an event bound of a developer's
+// session of its own attempt, at the SHA that is the base of its start row. A plan review has no such bound, so it is never selected, and a session
+// of the role that is bound to no head is no verifier. With none, nothing is open. The output of the selected verifier is qualified only after
+// that: it must have ended done with the status completed, hold a comment row of result/review-record.md and have a valid handoff that names a
+// comment; its kept copy must exist and be the file the result names by its hash (keptComment), parse, and its head must be the base of the start row.
+// Otherwise the finding is open: a verifier that has not ended or asked, whose record is missing, whose handoff is not recorded yet or not valid,
+// never clears a finding of an older record, and no older record stands in its place. Otherwise OpenMaterial of the record decides. A failed read is
+// an error.
 func (s *Sessions) openMaterial(ctx context.Context, task string, events, starts [][]string, results map[string][][]string) (bool, error) {
 	roles := sessionRoles(starts)
 	last := ""
@@ -202,12 +206,15 @@ func (s *Sessions) openMaterial(ctx context.Context, task string, events, starts
 		if e[1] != "session" || roles[e[3]] != stepRole("verification") {
 			continue
 		}
-		if _, done := resultEnd(events, e[3]); done && slices.ContainsFunc(results[e[3]], func(r []string) bool { return r[0] == "comment" && r[2] == "result/"+ReviewRecordFile }) {
+		if i := slices.IndexFunc(starts, func(r []string) bool { return r[sessionID] == e[3] }); i >= 0 && verifierBound(events, roles, starts[i]) {
 			last = e[3]
 		}
 	}
 	if last == "" {
 		return false, nil
+	}
+	if _, done := resultEnd(events, last); !done || statusOf(results[last]) != "completed" || !slices.ContainsFunc(results[last], func(r []string) bool { return r[0] == "comment" && r[2] == "result/"+ReviewRecordFile }) {
+		return true, nil
 	}
 	detail, found := "", false
 	for _, e := range events {
@@ -215,7 +222,7 @@ func (s *Sessions) openMaterial(ctx context.Context, task string, events, starts
 			detail, found = e[6], true
 		}
 	}
-	if valid, _ := validHandoff(detail); !found || !valid {
+	if valid, comment := validHandoff(detail); !found || !valid || !comment {
 		return true, nil
 	}
 	data, ok, err := s.keptComment(ctx, task, last, ReviewRecordFile, results[last])
@@ -230,4 +237,20 @@ func (s *Sessions) openMaterial(ctx context.Context, task string, events, starts
 		return true, nil
 	}
 	return OpenMaterial(rec, parsed), nil
+}
+
+// verifierBound says whether a session of the role of the verification is a verifier by its position and head binding: an event bound of a session of
+// a developer's role, of its attempt and at the base of its start row, comes before the event of its start. It is the classification of loopView.qaKind
+// told from the events and the roles alone, for the task of any kind.
+func verifierBound(events [][]string, roles Roles, start []string) bool {
+	developers := []string{stepRole("implement"), stepRole("specification"), stepRole("shape-architecture")}
+	for _, e := range events {
+		if e[1] == "session" && e[3] == start[sessionID] {
+			return false
+		}
+		if e[1] == "bound" && e[2] == start[sessionAttempt] && e[5] == start[sessionBase] && slices.Contains(developers, roles[e[3]]) {
+			return true
+		}
+	}
+	return false
 }
