@@ -20,22 +20,36 @@ const shapeQuestionsHeader = "LAYUP Shape: the questions left open"
 // isShapeRow reports whether a row of questions.tsv is asked by the step shape.
 func isShapeRow(q []string) bool { return q[1] == "follow-up" && q[5] == "shape" }
 
-// leftOpen gives the IDs of the questions to ask, in the order of questions.tsv: a question that is not a follow-up, that no Shape row
-// still asks, and whose state is open, or asked with no answered follow-up that asks it again.
-func leftOpen(questions [][]string) []string {
-	asking, again := map[string]bool{}, map[string]bool{}
+// stillOpen gives the IDs of the questions that are still open, in the order of questions.tsv: a question that is not a follow-up and whose
+// state is open, or asked with no answered follow-up that asks it again (task T-h65e, #418: the brief shows them).
+func stillOpen(questions [][]string) []string {
+	again := map[string]bool{}
 	for _, q := range questions {
-		if isShapeRow(q) && q[12] == "asked" {
-			asking[q[2]] = true
-		}
 		if q[1] == "follow-up" && q[12] == "answered" {
 			again[q[2]] = true
 		}
 	}
 	var out []string
 	for _, q := range questions {
-		if q[1] != "follow-up" && !asking[q[0]] && (q[12] == "open" || (q[12] == "asked" && !again[q[0]])) {
+		if q[1] != "follow-up" && (q[12] == "open" || (q[12] == "asked" && !again[q[0]])) {
 			out = append(out, q[0])
+		}
+	}
+	return out
+}
+
+// leftOpen gives the IDs of the questions to ask, in the order of questions.tsv: those still open that no Shape row still asks.
+func leftOpen(questions [][]string) []string {
+	asking := map[string]bool{}
+	for _, q := range questions {
+		if isShapeRow(q) && q[12] == "asked" {
+			asking[q[2]] = true
+		}
+	}
+	var out []string
+	for _, id := range stillOpen(questions) {
+		if !asking[id] {
+			out = append(out, id)
 		}
 	}
 	return out

@@ -1396,6 +1396,14 @@ failure modes worth keeping.
 
 - ❌ **A package's integration time read only on the host, not in CI's log.** Row 66z (`T-r7b9`, #436) passed `internal/run`'s integration binary in 412.797 s on the session host and in 493.632 s on its PR head in CI (run 39421233368), and the push run of its merge timed out at 600.012 s on `main` (run 39422675099), with PR #437's head timing out at 600.014 s in CI (run 39425720339) while completing in 482.275 s on the host. It is silent because the PR checks pass and the merge does not wait on `main`'s push run. **The check:** read a package's integration time in CI's log at each landing, not only on the host. Learned in `T-jc45`, #442.
 
+- ❌ **A check that reads the ledger inside `Keep` omits the session's own row.** `endPhase` runs the step's `Keep` and only then commits the
+  telemetry row of the session, so a check of the appetite (the caps plus the money spent) made in `Keep` judged the brief without the money that its own
+  session cost, and the plan of the brief of the first bet (#418) had put it there. It is silent because the prior spend alone fits, and every unit test of
+  the check passes. **The check:** judge what depends on the session's spend after `PhaseSession` returns, from the records as they now stand; keep the
+  output as a candidate in `Keep` and promote it after; test with a spend that fits without the session's row and fails with it (a green negative beside a
+  red case). A session whose output files `ReadOutputFiles` refuses ends `no-result`, not `refused file`, so a loop that retries on the second does not retry the first.
+  Learned in `T-h65e`, #418.
+
 ## 3. Validation — how you check you are not fooling yourself
 
 A result is **untrusted** until it passes the checks below, and the pass is a
