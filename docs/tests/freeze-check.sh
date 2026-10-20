@@ -476,7 +476,91 @@ check_k6() {
 		printf 'skip K6: --no-conditions\n'
 		return
 	fi
-	printf 'ok K6: conditions table\n'
+	cond_file="runs/$task/conditions.md"
+	if [ ! -f "$cond_file" ]; then
+		printf 'FAIL K6: %s:0: missing file\n' "$cond_file"
+		failed=1
+		return
+	fi
+	[ -r "$cond_file" ] || { printf 'freeze-check: cannot read %s\n' "$cond_file"; exit 2; }
+	cut -f3 "$tmp/k3_tests" | sort -u > "$tmp/k6_tests"
+	tr -d '\r' < "$cond_file" | awk '
+		!/^\|/ { in_c = 0; next }
+		!in_c {
+			if ($0 ~ /^\|[[:space:]]*Condition[[:space:]]*\|[[:space:]]*Evidence[[:space:]]*\|[[:space:]]*$/) {
+				in_c = 1; n_tbl++
+			}
+			next
+		}
+		/^\|[-: |]+$/ { next }
+		{
+			n_rows++
+			split($0, c, "|")
+			ev = c[3]; ns = 0
+			while ((p1 = index(ev, "`")) > 0) {
+				ev = substr(ev, p1 + 1)
+				p2 = index(ev, "`")
+				if (p2 == 0) break
+				sp = substr(ev, 1, p2 - 1)
+				if (sp != "") {
+					ns++
+					printf "SPAN\t%d\t%s\n", FNR, sp
+				}
+				ev = substr(ev, p2 + 1)
+			}
+			if (ns == 0) printf "NO_SPAN\t%d\t-\n", FNR
+		}
+		END {
+			if (n_tbl != 1 || n_rows == 0) print "BAD_TABLE\t1\t-"
+		}
+	' > "$tmp/k6_items"
+	if grep -q '^BAD_TABLE	' "$tmp/k6_items"; then
+		printf 'FAIL K6: %s:1: expected one | Condition | Evidence | table with at least one row\n' "$cond_file"
+		failed=1
+		return
+	fi
+	: > "$tmp/k6_out"
+	while IFS="$(printf '\t')" read -r kind ln sp; do
+		[ -n "$kind" ] || continue
+		if [ "$kind" = NO_SPAN ]; then
+			printf 'FAIL K6: %s:%s: Evidence cell has no code span\n' "$cond_file" "$ln" >> "$tmp/k6_out"
+			continue
+		fi
+		if printf '%s\n' "$sp" | grep -Eq '^Test[A-Za-z0-9_]+$'; then
+			if ! grep -Fxq -- "$sp" "$tmp/k6_tests"; then
+				printf 'FAIL K6: %s:%s: test %s does not exist\n' "$cond_file" "$ln" "$sp" >> "$tmp/k6_out"
+			fi
+		elif printf '%s\n' "$sp" | grep -Eq '^[0-9a-f]{7,40}$' && [ ! -e "$sp" ]; then
+			if ! git cat-file -e "$sp^{commit}" 2>/dev/null; then
+				printf 'FAIL K6: %s:%s: commit %s does not exist\n' "$cond_file" "$ln" "$sp" >> "$tmp/k6_out"
+			fi
+		else
+			p=$sp; n1=0; n2=0
+			if printf '%s\n' "$sp" | grep -Eq '^.+:[0-9]+-[0-9]+$'; then
+				p=${sp%:*}; rng=${sp##*:}; n1=${rng%-*}; n2=${rng#*-}
+			elif printf '%s\n' "$sp" | grep -Eq '^.+:[0-9]+$'; then
+				p=${sp%:*}; n1=${sp##*:}; n2=$n1
+			fi
+			if [ "$n1" -gt 0 ]; then
+				if [ ! -f "$p" ]; then
+					printf 'FAIL K6: %s:%s: path %s does not exist\n' "$cond_file" "$ln" "$p" >> "$tmp/k6_out"
+				else
+					tot=$(awk 'END { print NR + 0 }' "$p")
+					if [ "$n1" -lt 1 ] || [ "$n2" -lt "$n1" ] || [ "$n2" -gt "$tot" ]; then
+						printf 'FAIL K6: %s:%s: line range in %s is past the end of %s\n' "$cond_file" "$ln" "$sp" "$p" >> "$tmp/k6_out"
+					fi
+				fi
+			elif [ ! -f "$p" ] && [ ! -d "$p" ]; then
+				printf 'FAIL K6: %s:%s: path %s does not exist\n' "$cond_file" "$ln" "$p" >> "$tmp/k6_out"
+			fi
+		fi
+	done < "$tmp/k6_items"
+	if [ -s "$tmp/k6_out" ]; then
+		cat "$tmp/k6_out"
+		failed=1
+	else
+		printf 'ok K6: conditions table\n'
+	fi
 }
 
 check_k1
