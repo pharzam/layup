@@ -154,3 +154,20 @@ FAIL
 --- FAIL: TestAMergeThatTouchesATaskPathOrLeavesTheDefaultIsNotCarried (1.54s)
     baseup_integration_test.go:404: the control merge: CarryVerify = "", no session and no rendered commit are named; want it carried
 ```
+
+## Gates on the head b07115bb3ad18fda9cde5e4f96527692aca9dd54
+
+- `go build ./...`, `go vet ./...`, `go vet -tags=integration ./...`, `go vet -tags=e2e ./...`, `go test -count=1 ./...`: exit 0 each.
+- `go test -count=1 -tags=e2e ./...`: exit 0 (run on 99b6059).
+- The full integration level, `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./...`, on 99b6059 (the later commits move the unit tests of the replacement to `internal/run/repair_test.go` and add records): exit 0, 21 packages ok, `internal/run` 374 s (output in `/home/layup/.cache/layup-session/T-89xf-full-integration.txt`). main had not moved (`df9bfac`), so no merge head.
+- adr-lint, prd-lint, link-lint, run-discipline-tests, nested-checkout-check, setup-check: exit 0 each. `git diff --check origin/main HEAD`: exit 0.
+- `sh docs/tests/freeze-check.sh --task T-89xf --base origin/main --budget 2800/30` (output at `/home/layup/.cache/layup-session/T-89xf-freeze.txt`), exit 0:
+
+```text
+ok K1: white space
+ok K2: registration of new tests
+ok K3: test selectors
+ok K4: restore evidence of mutants
+ok K5: projection: figure 2474/30, maximum 2800/30, margin 326/0 (the figure at landing is still measured at landing)
+ok K6: conditions table
+```
