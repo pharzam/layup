@@ -476,6 +476,7 @@ takes a token.
 | ---- | ---------------------------------------- | ------- |
 | `RemoteHead` | `git ls-remote --exit-code -- URL refs/heads/BRANCH`; with a token, as `Fetch` and `Push`; it gives the SHA of the exact line `refs/heads/BRANCH` | the read of the branch of a `push` at a restart (`RepairTask`) |
 | `UpdateRef` | `git update-ref REF SHA` | the scratch branch `layup/base/<task>/<attempt>` of `layup run`'s clone, at the base of a session that is not on the default branch: a verifier's bound head, or the architecture task's base, the specification's verified head (tasks `T-jy6f`, `T-3f94`) |
+| `Refs` | `git for-each-ref --format=%(refname) PREFIX` | the refs `refs/layup/sessions/` of the old clone, which `cloneStep` of `layup run` fetches into the new one, and the check that the kept head of an ended session is in the clone (task `T-ehb4`); a `PREFIX` that does not start with `refs/`, or holds `:` or a space, is refused before `git` starts, and a failed read is an error, never an empty list |
 
 - Exit 2 of `git`, and an output with no line for exactly `refs/heads/BRANCH`
   (`ls-remote` matches a pattern against the tail of a ref name), are "no such

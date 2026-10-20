@@ -619,3 +619,22 @@ func UpdateRef(dir, ref, sha string) error {
 	}
 	return doAt(dir, sha, "update-ref", ref, sha)
 }
+
+// Refs gives the names of the refs of dir below prefix, a name that starts with refs/ and holds no ':' or space, in the order of git; none is an empty
+// list and a failed read is an error, never an absence (packages.md, The calls of M2e; task T-ehb4).
+func Refs(dir, prefix string) ([]string, error) {
+	if !strings.HasPrefix(prefix, "refs/") || strings.ContainsAny(prefix, ": \n") {
+		return nil, &FailedError{Args: []string{"for-each-ref", prefix}, Code: -1, Err: errors.New("not a prefix under refs/ with no ':' or space")}
+	}
+	out, err := call(dir, environ(), "for-each-ref", "--format=%(refname)", prefix)
+	if err != nil {
+		return nil, err
+	}
+	var refs []string
+	for _, l := range strings.Split(strings.TrimSpace(string(out)), "\n") {
+		if l != "" {
+			refs = append(refs, l)
+		}
+	}
+	return refs, nil
+}

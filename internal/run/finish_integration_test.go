@@ -55,6 +55,7 @@ func (f *finishing) finishTask(task string, harnesses [][]string, tweak func(*Se
 		tweak(s)
 	}
 	in := FinishInput{Task: task, Records: f.r.store.Base, Harnesses: harnesses, Models: f.models}
+	in.Copy = f.r.betCopy
 	if task == f.spec {
 		in.Bet = f.r.renderedBet
 	}
@@ -400,16 +401,16 @@ func TestACloseOutThatEndedWithNoPushResumesItsCheckedPush(t *testing.T) {
 	}
 }
 
-// I2 (conditions 5 and 6): the specification task's rendered commit gets the three statuses with its own inputs (the copy, the rendered records, the
-// verified head as the pre-image, the register of the developer's session), the close-out goes on it, and the new head gets the same inputs with the
-// register of the close-out session; the task merges at the head SHA.
-func TestTheRenderedHeadGetsItsStatusesAndTheCloseOutGoesOnIt(t *testing.T) {
-	t.Parallel()
+// newBetFinishing makes the world after the first bet: the specification task at its rendered commit r, the architecture task verified before the bet,
+// the route of the close-out and the required job. v is the specification's verified head.
+func newBetFinishing(t *testing.T) (f *finishing, v, r string) {
+	t.Helper()
 	d := betWorld(t, betOptionsTable)
 	if got := d.bet(); got.Result != "done" || !strings.HasPrefix(got.Detail, "waiting: the answer of the bet") {
 		t.Fatalf("the step bet = %+v; want the wait for the answer", got)
 	}
-	if _, err := d.r.renderedBet(context.Background(), d.boundOf(d.register()[0].ID)[0]); err == nil {
+	v = d.boundOf(d.register()[0].ID)[0]
+	if _, err := d.r.renderedBet(context.Background(), v); err == nil {
 		t.Error("renderedBet before the bet gave no error")
 	}
 	d.reply(7004, 303, "carol", "2026-10-08T14:03:00Z", betAnswerText)
@@ -420,9 +421,18 @@ func TestTheRenderedHeadGetsItsStatusesAndTheCloseOutGoesOnIt(t *testing.T) {
 		t.Fatalf("the step bet = %+v; want the bet made", got)
 	}
 	spec, branch := d.specBranch()
-	f := &finishing{drvWorld: d, spec: spec}
+	f = &finishing{drvWorld: d, spec: spec, arch: d.register()[1].ID}
 	f.job("completed", "success")
-	v, r := d.boundOf(spec)[0], d.branchHead(branch)
+	return f, v, d.branchHead(branch)
+}
+
+// I2 (conditions 5 and 6): the specification task's rendered commit gets the three statuses with its own inputs (the copy, the rendered records, the
+// verified head as the pre-image, the register of the developer's session), the close-out goes on it, and the new head gets the same inputs with the
+// register of the close-out session; the task merges at the head SHA.
+func TestTheRenderedHeadGetsItsStatusesAndTheCloseOutGoesOnIt(t *testing.T) {
+	t.Parallel()
+	f, v, r := newBetFinishing(t)
+	d, spec := f.drvWorld, f.spec
 	rb, err := d.r.renderedBet(context.Background(), v)
 	if err != nil || len(rb.Records) != 2 || !strings.HasPrefix(string(rb.Copy), "REQ-001: Must, phase 1\n") {
 		t.Fatalf("renderedBet = %d records, copy %q, %v; want the two rendered records and the answer's copy", len(rb.Records), rb.Copy, err)
@@ -465,9 +475,9 @@ func TestTheRenderedHeadGetsItsStatusesAndTheCloseOutGoesOnIt(t *testing.T) {
 	}
 }
 
-// I12 (D5): a close-out session that ended with no push, whose kept head is no longer in the run's clone (a restart makes a new clone), is replaced by a
-// new session, the last of which decides.
-func TestACloseOutWhoseKeptHeadIsGoneIsReplacedByANewSession(t *testing.T) {
+// I12 (D5, finding 1 of round 1): a close-out session that ended completed, whose push hook did not run, is finished by its own checked push after the
+// run's clone is made anew, as a restart makes it: the head it kept survives the new clone, and there is one producing session, however often it is called.
+func TestACloseOutThatEndedWithNoPushResumesAfterTheCloneIsMadeAnew(t *testing.T) {
 	t.Parallel()
 	f := newFinishing(t, "claude", "codex")
 	stop := func(s *Sessions) {
@@ -481,11 +491,91 @@ func TestACloseOutWhoseKeptHeadIsGoneIsReplacedByANewSession(t *testing.T) {
 	if _, err := f.finish(stop); err == nil {
 		t.Fatal("the first call gave no error; want the stop at the push")
 	}
-	gitOut(t, f.r.target, "update-ref", "-d", "refs/layup/sessions/"+f.closers(f.arch)[0][sessionID])
+	id := f.closers(f.arch)[0][sessionID]
+	f.restart()
 	got, err := f.finish(nil)
-	closers := f.closers(f.arch)
-	if h := f.closedHead(f.arch); err != nil || !got.Merged || got.Head != h || len(closers) != 2 {
-		t.Errorf("the second call = %+v, %v with %d close-out sessions; want Merged at the head of the second of two", got, err, len(closers))
+	h := f.closedHead(f.arch)
+	if err != nil || !got.Merged || got.Head != h || h == "" {
+		t.Fatalf("the call after the new clone = %+v, %v; want Merged at the head of the first session", got, err)
+	}
+	again, err := f.finish(nil)
+	if c := f.closers(f.arch); err != nil || !again.Merged || len(c) != 1 || c[0][sessionID] != id {
+		t.Errorf("the second call = %+v, %v with the close-out sessions %v; want Merged and the one session %s", again, err, c, id)
+	}
+}
+
+// I12b: a kept head that is in no clone, and that no restart brought, is an error that names the session, not a second session.
+func TestACloseOutWhoseKeptHeadIsGoneIsAnErrorAndNoSecondSession(t *testing.T) {
+	t.Parallel()
+	f := newFinishing(t, "claude", "codex")
+	stop := func(s *Sessions) {
+		s.Store = &faultStore{SessionStore: s.Store, fail: func(m string) error {
+			if strings.Contains(m, "layup run: the push of ") {
+				return errors.New("the records branch did not answer")
+			}
+			return nil
+		}}
+	}
+	if _, err := f.finish(stop); err == nil {
+		t.Fatal("the first call gave no error; want the stop at the push")
+	}
+	id := f.closers(f.arch)[0][sessionID]
+	gitOut(t, f.r.target, "update-ref", "-d", "refs/layup/sessions/"+id)
+	if _, err := f.finish(nil); err == nil || !strings.Contains(err.Error(), id) || len(f.closers(f.arch)) != 1 {
+		t.Errorf("FinishTask = %v with %d sessions; want the error that names %s and no second session", err, len(f.closers(f.arch)), id)
+	}
+}
+
+// I14 (finding 2 of round 1): the architecture task that the bet opened, based on the rendered commit and verified with the answer's copy, is closed out: the
+// full check of its new head reads the same copy, so that classes and ran pass, and it merges; without the copy the head is not ready.
+func TestAnArchitectureCloseOutAfterTheBetCarriesTheAnswerCopy(t *testing.T) {
+	t.Parallel()
+	f, _, r := newBetFinishing(t)
+	tasks := f.register()
+	if len(tasks) != 3 {
+		t.Fatalf("the register holds %d tasks; want the two of Shape and the one the bet opened", len(tasks))
+	}
+	arch := tasks[2].ID
+	copy, err := f.r.betCopy(context.Background())
+	if err != nil || !strings.HasPrefix(string(copy), "REQ-001: Must, phase 1\n") {
+		t.Fatalf("betCopy = %q, %v; want the answer's copy", copy, err)
+	}
+	in := f.input(arch)
+	in.Base, in.Copy = r, copy
+	if got, err := f.r.sessions().AdvanceShapeTask(context.Background(), in); err != nil || !got.Verified {
+		t.Fatalf("AdvanceShapeTask = %+v, %v; want the verified head on the rendered commit", got, err)
+	}
+	got, err := f.finishTask(arch, f.harnesses, nil)
+	h := f.closedHead(arch)
+	if err != nil || !got.Merged || got.Head != h || h == "" {
+		t.Fatalf("FinishTask = %+v, %v; want Merged at the head of the close-out (%v)", got, err, headStates(f.drvWorld, h))
+	}
+	if st := headStates(f.drvWorld, h); !slices.Contains(st, SpecContext+" success") {
+		t.Errorf("the statuses at the new head: %v; want layup/spec success", st)
+	}
+}
+
+// refusing409 closes the pull request when the merge is sent and answers 409, as a forge does for a head that changed in the same request.
+type refusing409 struct {
+	forge.Forge
+	close func()
+}
+
+func (c refusing409) Merge(context.Context, int, string) (string, error) {
+	c.close()
+	return "", &forge.Error{Call: "merge", Status: 409, Message: "Head branch was modified"}
+}
+
+// I15 (finding 4 of round 1): a pull request that is open at every read of the call, closed when the merge is sent, and found closed at the same head by the
+// read after the 409, is Q11's wait, with no error and no new attempt.
+func TestAPullRequestClosedAtTheRefusedMergeIsTheWaitOfTheOperator(t *testing.T) {
+	t.Parallel()
+	f := newFinishing(t, "claude", "codex")
+	pr := f.pr(f.arch)
+	got, err := f.finish(func(s *Sessions) { s.Forge = refusing409{s.Forge, func() { f.w.fake.closePull(pr) }} })
+	want := "waiting for the Operator: " + f.arch + ": the pull request #" + strconv.Itoa(pr) + " of task/" + f.arch + "/1 is closed and not merged"
+	if err != nil || got.Wait != want || got.Merged || got.Attempt != 0 || len(f.attempts(f.arch)) != 1 {
+		t.Errorf("FinishTask = %+v, %v with %d attempts; want the wait %q and no new attempt", got, err, len(f.attempts(f.arch)), want)
 	}
 }
 

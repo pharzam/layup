@@ -722,6 +722,16 @@ func (r *state) leaseStep(ctx context.Context) Step {
 func (r *state) cloneStep(ctx context.Context) Step {
 	const name = "clone"
 	r.target = filepath.Join(r.cfg.Dir, "targets", r.cfg.Owner, r.cfg.Name)
+	// The heads that the ended sessions kept in the old clone (refs/layup/sessions/) are fetched into the new one, so that a session that ended before its
+	// push is finished by that push, not run again (task T-ehb4). The old clone is set aside until then; one that an earlier restart left is the older.
+	prev := r.target + ".prev"
+	if _, err := os.Stat(prev); os.IsNotExist(err) {
+		if err := os.Rename(r.target, prev); err != nil && !os.IsNotExist(err) {
+			return fail(name, err)
+		}
+	} else if err != nil {
+		return fail(name, err)
+	}
 	if err := os.RemoveAll(r.target); err != nil {
 		return fail(name, err)
 	}
@@ -733,6 +743,9 @@ func (r *state) cloneStep(ctx context.Context) Step {
 		return fail(name, err)
 	}
 	if err := git.Clone(r.url(), r.target, a); err != nil {
+		return fail(name, err)
+	}
+	if err := keepSessionHeads(prev, r.target); err != nil {
 		return fail(name, err)
 	}
 	const rev = "refs/remotes/origin/layup-records"
@@ -872,4 +885,24 @@ func (r *state) ruleGapsStep(ctx context.Context) Step {
 		return fail(name, err)
 	}
 	return done(name, fmt.Sprintf("%d rule gaps, in intake/psb.tsv", len(gaps)))
+}
+
+// keepSessionHeads fetches the refs refs/layup/sessions/ of the old clone, set aside at prev, into the new one and removes the old: a prev that is
+// not there is nothing to keep, and a read or a fetch that fails is an error that leaves it.
+func keepSessionHeads(prev, target string) error {
+	if _, err := os.Stat(prev); os.IsNotExist(err) {
+		return nil
+	} else if err != nil {
+		return err
+	}
+	refs, err := git.Refs(prev, "refs/layup/sessions/")
+	if err != nil {
+		return err
+	}
+	for _, ref := range refs {
+		if err := git.Fetch(target, prev, ref, git.Auth{}); err != nil {
+			return err
+		}
+	}
+	return os.RemoveAll(prev)
 }

@@ -32,6 +32,7 @@ type FinishInput struct {
 	Records           func() string
 	Harnesses, Models [][]string
 	Bet               func(ctx context.Context, verified string) (RenderedBet, error)
+	Copy              func(ctx context.Context) ([]byte, error)
 }
 
 // maxCloseActs bounds the acts of the close-out in one call: the start of a session, the resume of its push, and the read that finds it bound.
@@ -48,7 +49,7 @@ func (s *Sessions) FinishTask(ctx context.Context, in FinishInput) (Advance, err
 	if err != nil {
 		return Advance{}, err
 	}
-	if adv, done, err := s.terminalPull(ctx, task, attempt, pr, events, false); done || err != nil {
+	if adv, done, err := s.terminalPull(ctx, task, attempt, pr, events); done || err != nil {
 		return adv, err
 	}
 	rep, err := s.RepairTask(ctx, task)
@@ -61,7 +62,7 @@ func (s *Sessions) FinishTask(ctx context.Context, in FinishInput) (Advance, err
 	if pr, attempt, events, err = s.attemptPull(ctx, task); err != nil {
 		return Advance{}, err
 	}
-	if adv, done, err := s.terminalPull(ctx, task, attempt, pr, events, true); done || err != nil {
+	if adv, done, err := s.terminalPull(ctx, task, attempt, pr, events); done || err != nil {
 		return adv, err
 	}
 	v, err := s.shapeView(ctx, task)
@@ -78,6 +79,11 @@ func (s *Sessions) FinishTask(ctx context.Context, in FinishInput) (Advance, err
 	}
 	cin := CarryInput{Task: task, Verifier: st.Session, Harnesses: in.Harnesses, Models: in.Models}
 	hin, carried := HeadInput{Task: task, Base: st.Base}, st.Head
+	if in.Copy != nil { // the full check of every head after the confirmed bet reads the pinned copy of the answer
+		if hin.Copy, err = in.Copy(ctx); err != nil {
+			return Advance{}, err
+		}
+	}
 	if v.Kind == "specification" {
 		rendered, err := s.renderedHead(ctx, in, v, attempt, st.Head)
 		if err != nil {
@@ -164,9 +170,10 @@ func (s *Sessions) attemptPull(ctx context.Context, task string) (forge.PullRequ
 	return pr, attempt, events, nil
 }
 
-// terminalPull gives the end of a pull request that is closed or merged: the wait of D2 for a closed one that was not merged, and, for a merged one,
-// Merged when its event is written, or, after the repair, the event.
-func (s *Sessions) terminalPull(ctx context.Context, task string, attempt int, pr forge.PullRequest, events [][]string, repaired bool) (Advance, bool, error) {
+// terminalPull gives the end of a pull request that is closed or merged: the wait of D2 for a closed one that was not merged and, for a merged one, Merged,
+// after its event: a merged pull request starts no attempt, so the pushes of the task are resolved (bound or refused, and nothing else) only to find the
+// attempt of the head it was merged at, and RecordMerged writes the event once.
+func (s *Sessions) terminalPull(ctx context.Context, task string, attempt int, pr forge.PullRequest, events [][]string) (Advance, bool, error) {
 	switch {
 	case pr.State == "closed" && !pr.Merged:
 		return Advance{Task: task, Wait: closedWait(task, fmt.Sprintf("task/%s/%d", task, attempt), pr.Number)}, true, nil
@@ -174,8 +181,9 @@ func (s *Sessions) terminalPull(ctx context.Context, task string, attempt int, p
 		return Advance{}, false, nil
 	case slices.ContainsFunc(events, func(e []string) bool { return e[1] == "merged" && e[5] == pr.MergeSHA }):
 		return Advance{Task: task, Merged: true, Head: pr.HeadSHA}, true, nil
-	case !repaired:
-		return Advance{}, false, nil
+	}
+	if _, err := s.resolvePushes(ctx, task); err != nil {
+		return Advance{}, true, err
 	}
 	if err := s.RecordMerged(ctx, task, pr); err != nil {
 		return Advance{}, true, err
@@ -192,9 +200,13 @@ func (s *Sessions) closeOut(ctx context.Context, in FinishInput, cin CarryInput,
 			return Advance{}, err
 		}
 		step := closeOutPosition(v, finishCut(v), attempt, carried)
-		if step.Pos == closeResume {
-			if _, err := git.RevParse(s.Clone, "refs/layup/sessions/"+step.Session); err != nil { // the run's clone is made anew at a restart (D5)
-				step.Pos = closeStart
+		if step.Pos == closeResume { // the head it kept is in the run's clone, or a restart fetched it there (D5); a read that fails is an error
+			refs, err := git.Refs(s.Clone, "refs/layup/sessions/"+step.Session)
+			if err != nil {
+				return Advance{}, err
+			}
+			if !slices.Contains(refs, "refs/layup/sessions/"+step.Session) {
+				return Advance{}, fmt.Errorf("%s: the close-out session %s ended with no push, and the head it kept is not in the run's clone", task, step.Session)
 			}
 		}
 		stop := ""
@@ -284,7 +296,7 @@ func (s *Sessions) mergeAt(ctx context.Context, cin CarryInput, hin HeadInput, s
 	if err != nil {
 		return Advance{}, err
 	}
-	if adv, done, err := s.terminalPull(ctx, cin.Task, attempt, pr, events, true); done || err != nil {
+	if adv, done, err := s.terminalPull(ctx, cin.Task, attempt, pr, events); done || err != nil {
 		return adv, err
 	}
 	return notReady(cin.Task, step.Head, r), nil
@@ -471,6 +483,48 @@ func (r *state) renderedBet(ctx context.Context, verified string) (RenderedBet, 
 	if err != nil {
 		return RenderedBet{}, err
 	}
-	i = slices.IndexFunc(copies, func(c answerCopy) bool { return c.Row[copyComment] == applied })
-	return RenderedBet{Copy: []byte(copies[i].Body), Records: recs}, nil
+	body, err := pinnedCopy(copies, applied)
+	return RenderedBet{Copy: body, Records: recs}, err
+}
+
+// betCopy gives the first copy of the answer that the latest version of the inventory names, for the full check of any head after the confirmed bet (D10);
+// nil when no row of bets.tsv holds a bet, a failed read or an answer that is not named is an error.
+func (r *state) betCopy(ctx context.Context) ([]byte, error) {
+	data, err := r.store.ReadFile(ctx, "bets.tsv")
+	if err != nil || data == nil {
+		return nil, err
+	}
+	bets, err := ReadBets(data)
+	if err != nil {
+		return nil, fmt.Errorf("bets.tsv: %w", err)
+	}
+	i := slices.IndexFunc(bets, func(b []string) bool { return b[betVerdict] == "bet" })
+	if i < 0 {
+		return nil, nil
+	}
+	issue, err := strconv.Atoi(r.value("issue.intake"))
+	if err != nil {
+		return nil, errors.New("start.tsv has no number of the Intake issue")
+	}
+	if r.copies, err = r.readRecord(ctx, "copies.tsv", records.ReadCopies); err != nil {
+		return nil, err
+	}
+	copies, err := r.answerCopies(ctx, issue)
+	if err != nil {
+		return nil, err
+	}
+	applied, err := r.appliedAnswer(ctx, bets[i][betMilestone])
+	if err != nil || applied == "" {
+		return nil, errors.Join(err, fmt.Errorf("the inventory names no answer of the bet %s", bets[i][betMilestone]))
+	}
+	return pinnedCopy(copies, applied)
+}
+
+// pinnedCopy gives the body of the first copy of the comment.
+func pinnedCopy(copies []answerCopy, comment string) ([]byte, error) {
+	i := slices.IndexFunc(copies, func(c answerCopy) bool { return c.Row[copyComment] == comment && c.Row[copySeen] == "1" })
+	if i < 0 {
+		return nil, fmt.Errorf("the copies hold no first copy of the answer %s", comment)
+	}
+	return []byte(copies[i].Body), nil
 }

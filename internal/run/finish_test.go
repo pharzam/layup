@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/pharzam/layup/internal/forge"
+	"github.com/pharzam/layup/internal/records"
 )
 
 // The close-out and the merge of a verified task, at the unit level (task T-ehb4, #425, row 66y; loop.md, The merge at the head SHA and
@@ -265,5 +266,55 @@ func TestTheDefaultHeadMustBeTheBaseOrAnAncestorOfTheCarriedHead(t *testing.T) {
 	w.st.heads, w.st.headErr = map[string]string{"main": shaOld}, errors.New("the forge did not answer")
 	if ok, err := w.s.upToDate(context.Background(), shaOld, head2); err == nil || ok {
 		t.Errorf("upToDate with a failed read = %v, %v; want an error", ok, err)
+	}
+}
+
+// U11 (finding 3 of round 1): a pull request merged outside, at the developer's head, while a close-out session's push of another head is unresolved, gets its
+// event merged for the attempt of that head, and the repair that resolves the push starts no attempt; a second call writes nothing.
+func TestAMergedPullRequestIsRecordedAndStartsNoReplacementAttempt(t *testing.T) {
+	t.Parallel()
+	w, pr := finishWorld(t)
+	rows, err := records.ReadSessions(w.st.files["sessions.tsv"])
+	if err != nil {
+		t.Fatal(err)
+	}
+	closer := sessionRow("S-c0000001", "T-ab12", "close-out", "claude")
+	closer[sessionAttempt], closer[sessionBase], closer[sessionRecords] = "2", head2, recB
+	if w.st.files["sessions.tsv"], err = table(records.SessionsSchema, append(rows, closer)); err != nil {
+		t.Fatal(err)
+	}
+	at := "2026-10-18T10:05:00Z"
+	w.events = append(w.events,
+		[]string{"7", "session", "2", "S-c0000001", "", "", "", at},
+		[]string{"8", "result", "2", "S-c0000001", "", "", "done", at},
+		[]string{"9", "push", "2", "S-c0000001", "", head3, "task/T-ab12/2", at})
+	w.write(t)
+	w.st.heads, w.s.App = map[string]string{"task/T-ab12/2": head2}, "layup-agent"
+	if _, err := w.f.Fake.MarkReady(context.Background(), pr.NodeID); err != nil {
+		t.Fatal(err)
+	}
+	merge, err := w.f.Fake.Merge(context.Background(), pr.Number, head2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := finish(w)
+	if err != nil || got != (Advance{Task: "T-ab12", Merged: true, Head: head2}) {
+		t.Fatalf("FinishTask = %+v, %v; want Merged at %s with no new attempt", got, err, head2)
+	}
+	n, merged := 0, 0
+	for _, e := range events(t, w.st, "T-ab12") {
+		switch {
+		case e[1] == "attempt":
+			n++
+		case e[1] == "merged" && e[2] == "2" && e[5] == merge:
+			merged++
+		}
+	}
+	if n != 2 || merged != 1 {
+		t.Errorf("%d attempts and %d events merged of attempt 2; want 2 and 1", n, merged)
+	}
+	commits := len(w.st.commits)
+	if again, err := finish(w); err != nil || !again.Merged || len(w.st.commits) != commits {
+		t.Errorf("a second call = %+v, %v with %d commits more; want Merged and nothing written", again, err, len(w.st.commits)-commits)
 	}
 }

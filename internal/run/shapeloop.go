@@ -30,6 +30,7 @@ type ShapeTaskInput struct {
 	Records           func() string
 	Harnesses, Models [][]string
 	Options           map[string]spec.Result
+	Copy              []byte // the copy of the answer of the confirmed bet, which the full check of every head after it reads (row 66y); nil before the first bet
 }
 
 // Advance is where the driver stopped: a verified head, a wait for the Operator, or a stop. A stop and a
@@ -695,7 +696,7 @@ func (s *Sessions) toVerifier(ctx context.Context, v loopView, st loopStep) erro
 
 // head gives the four statuses of the bound head with the verifier of the session (none: it waits for its turn).
 func (s *Sessions) head(ctx context.Context, in ShapeTaskInput, st loopStep, session string) ([]StatusPost, error) {
-	return s.PostStatuses(ctx, HeadInput{Task: in.Task, Base: st.Base, Head: st.Head, Session: session, Waiting: session == "", Harnesses: in.Harnesses, Models: in.Models})
+	return s.PostStatuses(ctx, HeadInput{Task: in.Task, Base: st.Base, Head: st.Head, Copy: in.Copy, Session: session, Waiting: session == "", Harnesses: in.Harnesses, Models: in.Models})
 }
 
 // shapeDescription is the description of the title of the pull request of each kind.

@@ -605,3 +605,29 @@ func TestUpdateRefRefusesItsInputBeforeGitStarts(t *testing.T) {
 		t.Errorf("UpdateRef started %q in %q; want update-ref REF SHA in r", got.args, got.dir)
 	}
 }
+
+// Refs lists the refs below a prefix, refuses a prefix outside refs/ before git starts, and gives a failed read as an error.
+func TestRefsListsTheRefsBelowAPrefixAndRefusesAnythingElse(t *testing.T) {
+	calls := stub(t, "refs/layup/sessions/S-a\nrefs/layup/sessions/S-b\n", nil)
+	got, err := Refs("r", "refs/layup/sessions/")
+	if err != nil || !slices.Equal(got, []string{"refs/layup/sessions/S-a", "refs/layup/sessions/S-b"}) {
+		t.Fatalf("Refs = %v, %v; want the two refs", got, err)
+	}
+	if c := only(t, calls); c.dir != "r" || !strings.HasSuffix(strings.Join(c.args, " "), "for-each-ref --format=%(refname) refs/layup/sessions/") {
+		t.Errorf("Refs started %q in %q; want for-each-ref with the format and the prefix", c.args, c.dir)
+	}
+	for _, bad := range []string{"heads/x", "-x", "refs/a:b", "refs/a b"} {
+		before := len(*calls)
+		if _, err := Refs("r", bad); err == nil || len(*calls) != before {
+			t.Errorf("Refs(%q) = %v with %d starts more; want a refusal before git starts", bad, err, len(*calls)-before)
+		}
+	}
+	stub(t, "", errors.New("fatal: not a git repository"))
+	if got, err := Refs("r", "refs/layup/"); err == nil || got != nil {
+		t.Errorf("Refs of a failed read = %v, %v; want the error and no list", got, err)
+	}
+	stub(t, "", nil)
+	if got, err := Refs("r", "refs/layup/"); err != nil || len(got) != 0 {
+		t.Errorf("Refs of an empty answer = %v, %v; want none and no error", got, err)
+	}
+}
