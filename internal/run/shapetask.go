@@ -167,6 +167,12 @@ func (r *state) openTask(ctx context.Context, o openSpec) (Task, error) {
 	if _, err := parameterFiles(parameters, r.value, t.Opened); err != nil {
 		return Task{}, err
 	}
+	if o.reuse { // a Shape task: the pin its issue is opened with is kept, for the redo (task T-89xf)
+		if extra == nil {
+			extra = map[string][]byte{}
+		}
+		extra[pinPath(id)] = pinBytes(digest(draft), r.store.Base())
+	}
 	if err := s.holdsLease(ctx); err != nil {
 		return Task{}, err
 	}

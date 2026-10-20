@@ -241,7 +241,7 @@ func (s *Sessions) codeEvent(ctx context.Context, task string, attempt int, kind
 // adoptPushed resolves an outstanding push of a merge before another merge is computed: when an event push of code has no bound and the
 // branch of the forge holds that commit, the push was made and its bound was lost. The commit must be a merge whose first parent is the
 // tip x and that the carry rule accepts; its bound is then written, its status posted, and it is given as the new tip. A branch that holds
-// x (the push was not made) or no announced commit leaves everything as it is; any other head of the branch is an error.
+// x (the push was not made) or no announced commit leaves everything as it is; any other head of the branch is errPushRefused.
 func (s *Sessions) adoptPushed(ctx context.Context, in CarryInput, events [][]string, attempt int, x string) (string, error) {
 	var announced []string
 	for _, e := range events {
@@ -254,8 +254,11 @@ func (s *Sessions) adoptPushed(ctx context.Context, in CarryInput, events [][]st
 	}
 	branch := fmt.Sprintf("task/%s/%d", in.Task, attempt)
 	tip, found, err := s.Store.BranchHead(ctx, branch)
-	if err != nil || !found || tip == x || !slices.Contains(announced, tip) {
+	if err != nil || !found || tip == x {
 		return "", err
+	}
+	if !slices.Contains(announced, tip) { // a head that no event explains: nothing is compared, merged or redone on it
+		return "", fmt.Errorf("%w: %s holds %s, not the head %s or an announced merge", errPushRefused, branch, tip, x)
 	}
 	v, ok, err := s.verified(ctx, in)
 	if err != nil {
@@ -278,8 +281,9 @@ func (s *Sessions) adoptPushed(ctx context.Context, in CarryInput, events [][]st
 	return tip, nil
 }
 
-// producedFrom tells whether the tip is reached from the head by merges of code alone: each commit from the tip down is the commit of an
-// event bound with no session and a merge, and its first parent is the next, down to the head.
+// producedFrom tells whether the tip is reached from the head by code alone: each commit from the tip down is the commit of an event bound
+// with no session and a merge whose first parent is the next, down to the head or to the rendered commit of the first bet, the one commit
+// of code with one parent, which sits directly on the head.
 func (s *Sessions) producedFrom(events [][]string, attempt int, tip, head string) (bool, error) {
 	code := commitsOfCode(events, attempt)
 	for cur := tip; cur != head; {
@@ -287,8 +291,14 @@ func (s *Sessions) producedFrom(events [][]string, attempt int, tip, head string
 			return false, nil
 		}
 		parents, err := git.Parents(s.Clone, cur)
-		if err != nil || len(parents) != 2 {
+		if err != nil {
 			return false, err
+		}
+		if len(parents) == 1 { // the rendered commit of the first bet: code made it, and it sits directly on the head
+			return parents[0] == head, nil
+		}
+		if len(parents) != 2 {
+			return false, nil
 		}
 		cur = parents[0]
 	}

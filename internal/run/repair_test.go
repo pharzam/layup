@@ -443,3 +443,41 @@ func TestTheFirstAttemptOfARedoneTaskStartsAtTheRebasedBase(t *testing.T) {
 		t.Errorf("firstBase(none) = %s; want the base the caller gives (a green negative)", got)
 	}
 }
+
+// F7 of round 2 (late test): the pin is inherited by value, so no length of the chain of redos changes it and none ends in a silent root.
+func TestThePinIsInheritedThroughAnyChainOfRedos(t *testing.T) {
+	pin := []byte("3e54755b5e4a5c1931 f6638ba270a7d7cd1722efb03fd7cb27f84f1e16\n")
+	tasks := redoRows()
+	old := "T-old1"
+	for i := 0; i < 70; i++ {
+		id := "T-" + strconv.FormatInt(int64(36*36*36+i), 36)
+		p := redoPlan{Tasks: tasks, Old: old, New: id, Issue: 100 + i, Attempt: 1, Base: redoNew, At: redoAt,
+			OldEvents: [][]string{{"1", "attempt", "1", "", redoOld, "", "", "2026-10-20T08:00:00Z"}}, Pin: pin}
+		files, err := redoFiles(p)
+		if err != nil {
+			t.Fatalf("redo %d: %v", i+1, err)
+		}
+		if got := string(files[pinPath(id)]); got != string(pin) {
+			t.Fatalf("redo %d: %s = %q; want the pin as it was", i+1, pinPath(id), got)
+		}
+		if tasks, err = ReadRegister(files["tasks.tsv"]); err != nil {
+			t.Fatal(err)
+		}
+		old = id
+	}
+	if files, err := redoFiles(redoPlan{Tasks: redoRows(), Old: "T-old1", New: "T-new1", Issue: 12, Attempt: 2, Base: redoNew, At: redoAt, OldEvents: redoPlanOf().OldEvents}); err != nil || files[pinPath("T-new1")] != nil {
+		t.Errorf("a plan with no pin: %v, %q; want no pin file", err, files[pinPath("T-new1")])
+	}
+}
+
+func TestThePinIsReadBackOrRefused(t *testing.T) {
+	sum, rec, err := parsePin(pinBytes("3e54755b", "f6638ba2"))
+	if err != nil || sum != "3e54755b" || rec != "f6638ba2" || string(pinBytes("a", "b")) != "a b\n" {
+		t.Errorf("parsePin(pinBytes) = %q, %q, %v", sum, rec, err)
+	}
+	for _, bad := range []string{"", "a\n", "a b", "a b c\n", "a  b\n", "a b\n\n"} {
+		if sum, rec, err := parsePin([]byte(bad)); err == nil {
+			t.Errorf("parsePin(%q) = %q, %q, nil; want an error", bad, sum, rec)
+		}
+	}
+}

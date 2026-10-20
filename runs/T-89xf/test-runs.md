@@ -223,3 +223,31 @@ ok K4: restore evidence of mutants
 FAIL K5: -:0: projection: figure 2872/31, maximum 2800/30, margin -72/-1 (the figure at landing is still measured at landing)
 ok K6: conditions table
 ```
+
+## Round 2 of #424 (the review 3f8ef98): red transcripts, before the code of the fixes
+
+The findings F5 to F8 of the review; F8 (the three requirement rows of the PRD) is a record and has no test. The eight tests below are run against the code of 3f8ef98 with inert stubs for the pin (`Pin` field of the plan, `pinPath`, `pinBytes`, `parsePin`); all eight fail. The full output is `/home/layup/.cache/layup-session/k3/r4.txt`.
+
+### round 2, findings F5 to F7: red against the code of 3f8ef98 (inert stubs: the plan field Pin, pinPath, pinBytes, parsePin)
+
+- Command: `go test -count=1 -tags=integration -run '^(TestAnUnexplainedHeadOfTheBranchRefusesTheRecoveryBeforeAnyWrite|TestOpenPullRequestAdoptsTheSamePullRequestAfterARenderedCarry|TestAShapeTaskIsOpenedWithItsPinInTheRecords|TestTheReplacementOfAShapeTaskInheritsTheOpeningPinExactly|TestAShapeTaskWithNoPinIsNotRedone|TestThePinIsInheritedThroughAnyChainOfRedos|TestThePinIsReadBackOrRefused|TestASecondRedoOfAShapeTaskKeepsTheOriginalPin)$' ./internal/run/`
+- Start: 2026-10-20T20:57:38Z, end: 2026-10-20T20:57:41Z (`date -u`, after the step)
+- Exit status (direct, not piped): 1
+- First failing assertions (from the saved output):
+
+```text
+--- FAIL: TestThePinIsInheritedThroughAnyChainOfRedos (0.00s)
+    repair_test.go:461: redo 1: tasks/T-1000/pin.txt = ""; want the pin as it was
+--- FAIL: TestThePinIsReadBackOrRefused (0.00s)
+    repair_test.go:476: parsePin(pinBytes) = "", "", <nil>
+--
+--- FAIL: TestAShapeTaskIsOpenedWithItsPinInTheRecords (0.35s)
+    handoffpost_integration_test.go:124: git show layup-records:tasks/T-uyst/pin.txt: exit status 128
+--
+--- FAIL: TestTheReplacementOfAShapeTaskInheritsTheOpeningPinExactly (0.72s)
+    handoffpost_integration_test.go:124: git show layup-records:tasks/T-krgg/pin.txt: exit status 128
+--
+--- FAIL: TestASecondRedoOfAShapeTaskKeepsTheOriginalPin (0.73s)
+    baseup_integration_test.go:1126: the first replacement issue lacks the original pin "SHA-256 534bfca4b311333b887811de908c81e41fd1be78692bc32d3244812b748e2239, read at the records commit 3b93b4f3d25676d72fef33a4b9bf8bc30c81f405":
+--
+```

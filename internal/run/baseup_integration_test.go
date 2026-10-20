@@ -7,6 +7,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -26,6 +27,8 @@ type moved struct {
 	*ship
 	B, X string
 	s    *Sessions
+	// the pin a Shape issue was opened with: the SHA-256 of the draft and the records commit before the first session's
+	pinSum, pinRec string
 }
 
 const movedBinding = "option\tconstraint\tresult\tevidence\ndb\tREQ-001\tpass\tdocs/spec/db.md\n"
@@ -53,10 +56,13 @@ func newMovedAs(t *testing.T, taskFiles map[string]string, kind string, binding 
 		t.Fatal(err)
 	}
 	files := map[string][]byte{tasksPath: []byte(reg.String())}
+	pinSum, pinRec := "", ""
 	if binding {
 		files[bindingPath("T-ab12", "db")] = []byte(movedBinding)
 	} else {
 		files["spec/draft.tsv"] = []byte("the draft of Intake\n")
+		pinSum, pinRec = digest([]byte("the draft of Intake\n")), l.r.Store.(*recordsStore).pushed // the issue was opened one snapshot before the first session
+		files[pinPath("T-ab12")] = []byte(pinSum + " " + pinRec + "\n")
 	}
 	if err := l.r.commit(ctx, files, "the kind and its inputs"); err != nil {
 		t.Fatal(err)
@@ -85,7 +91,7 @@ func newMovedAs(t *testing.T, taskFiles map[string]string, kind string, binding 
 	if n, err := s.r.Forge.OpenIssue(ctx, "LAYUP task T-ab12", "the issue of the task"); err != nil || n != taskIssue {
 		t.Fatalf("the issue of the task = %d, %v; want %d", n, err, taskIssue)
 	}
-	return &moved{ship: s, B: s.V, X: x, s: s.prodBot()}
+	return &moved{ship: s, B: s.V, X: x, s: s.prodBot(), pinSum: pinSum, pinRec: pinRec}
 }
 
 // moveBase commits files on the default branch of the forge, as another task's merge would, and gives the commit.
@@ -1110,20 +1116,7 @@ func TestASecondRedoOfAShapeTaskKeepsTheOriginalPin(t *testing.T) {
 	t.Parallel()
 	m := newMovedAs(t, map[string]string{"a.txt": "task\n"}, "architecture", false)
 	ctx := context.Background()
-	pin := ""
-	{
-		rows, err := records.ReadSessions([]byte(keptRecord(t, m.w, "sessions.tsv")))
-		if err != nil {
-			t.Fatal(err)
-		}
-		for _, r := range rows {
-			if r[sessionTask] == "T-ab12" {
-				pin = r[sessionRecords]
-				break
-			}
-		}
-	}
-	original := "SHA-256 " + digest([]byte("the draft of Intake\n")) + ", read at the records commit " + pin
+	original := "SHA-256 " + m.pinSum + ", read at the records commit " + m.pinRec
 	m.moveBase(map[string]string{"a.txt": "base\n"})
 	first, err := m.bring(m.s)
 	if err != nil || first.Replaced == "" {
@@ -1210,4 +1203,141 @@ func TestTheCarryGoesOverTheRenderedFirstParent(t *testing.T) {
 	if again, err := m.bring(m.prodBot()); err != nil || again != got || recordsHead(t, m.w) != head || len(m.writes(n)) != 0 {
 		t.Errorf("the repeat call = %+v, %v; writes %v; want the same answer and no write", again, err, m.writes(n))
 	}
+}
+
+// F5 of round 2 (late test): an announced merge that was not pushed, a push from outside and an overlapping change of the default
+// branch: the branch holds a head that no event explains, so each call refuses it before any write, and none is a redo.
+func TestAnUnexplainedHeadOfTheBranchRefusesTheRecoveryBeforeAnyWrite(t *testing.T) {
+	t.Parallel()
+	m := newMoved(t, map[string]string{"a.txt": "task\n"})
+	m.moveBase(basePaths)
+	s := m.prodBot()
+	s.Store = &baseStoreFault{SessionStore: s.Store, pushErr: errStop}
+	if _, err := m.bring(s); !errors.Is(err, errStop) || m.tip() != m.X {
+		t.Fatalf("BringUpToDate with the push lost: %v, the branch at %s; want the stop and the branch at %s", err, m.tip(), m.X)
+	}
+	clone := m.r.Clone
+	gitOut(t, clone, "switch", "-q", "--detach", m.X)
+	os.WriteFile(filepath.Join(clone, "ext.txt"), []byte("from outside\n"), 0o644)
+	gitOut(t, clone, "add", "-A")
+	gitOut(t, clone, "commit", "-q", "-m", "a push from outside")
+	ext := strings.TrimSpace(gitOut(t, clone, "rev-parse", "HEAD"))
+	gitOut(t, clone, "switch", "-q", "main")
+	gitOut(t, clone, "push", "-q", "file://"+m.w.bare, ext+":refs/heads/task/T-ab12/1")
+	m.moveBase(map[string]string{"a.txt": "base\n"}) // overlaps the task: a redo, were the head not refused
+	head, n := recordsHead(t, m.w), m.nreqs()
+	for i := 0; i < 2; i++ {
+		if got, err := m.bring(m.prodBot()); !errors.Is(err, errPushRefused) {
+			t.Fatalf("call %d = %+v, %v; want errPushRefused", i+1, got, err)
+		}
+		if recordsHead(t, m.w) != head || len(m.writes(n)) != 0 {
+			t.Fatalf("call %d wrote: records moved %v, forge writes %v; want none", i+1, recordsHead(t, m.w) != head, m.writes(n))
+		}
+	}
+}
+
+// F6 of round 2 (late test): the pull request opened before the rendered commit is adopted at the merge over it, twice, with no draft and
+// no change of the register.
+func TestOpenPullRequestAdoptsTheSamePullRequestAfterARenderedCarry(t *testing.T) {
+	t.Parallel()
+	m := newMoved(t, taskPaths)
+	pr := m.pr()
+	rendered := m.render()
+	m.w.fake.movePull(pr.Number, rendered)
+	m.moveBase(basePaths)
+	got, err := m.bring(m.prodBot())
+	if err != nil || !got.Verified || got.Head == rendered {
+		t.Fatalf("BringUpToDate = %+v, %v; want a merge over the rendered commit", got, err)
+	}
+	m.w.fake.movePull(pr.Number, got.Head)
+	head, n := recordsHead(t, m.w), m.nreqs()
+	for i := 0; i < 2; i++ {
+		again, err := m.s.OpenPullRequest(context.Background(), PullInput{Task: "T-ab12", Attempt: 1, Type: "feat", Description: "the work of the task"})
+		if err != nil || again.Number != pr.Number || again.HeadSHA != got.Head {
+			t.Fatalf("OpenPullRequest %d = %+v, %v; want pull request %d at %s", i+1, again, err, pr.Number, got.Head)
+		}
+	}
+	if recordsHead(t, m.w) != head || len(m.writes(n)) != 0 {
+		t.Errorf("the register or the forge changed: records moved %v, writes %v", recordsHead(t, m.w) != head, m.writes(n))
+	}
+}
+
+// F7 of round 2 (late tests): a Shape task is opened with its pin in the records, the replacement inherits it exactly, the first session
+// of the old task is no source of it, and a Shape task with no pin is refused before any write.
+func TestAShapeTaskIsOpenedWithItsPinInTheRecords(t *testing.T) {
+	t.Parallel()
+	d := newDrvWorld(t, loopPerms)
+	spec, _ := d.open()
+	var text string
+	for _, it := range d.w.fake.issueTexts {
+		if strings.Contains(it[0], spec) {
+			text = it[1]
+		}
+	}
+	m := regexp.MustCompile(`SHA-256 ([0-9a-f]{64}), read at the records commit ([0-9a-f]{40})\.`).FindStringSubmatch(text)
+	if m == nil {
+		t.Fatalf("the issue of %s names no pin:\n%s", spec, text)
+	}
+	sum, rec := m[1], m[2]
+	if got := keptRecord(t, d.w, pinPath(spec)); got != sum+" "+rec+"\n" {
+		t.Errorf("%s = %q; want the digest and the records commit of the issue, %q", pinPath(spec), got, sum+" "+rec+"\n")
+	}
+}
+
+func TestTheReplacementOfAShapeTaskInheritsTheOpeningPinExactly(t *testing.T) {
+	t.Parallel()
+	m := newMovedAs(t, map[string]string{"a.txt": "task\n"}, "architecture", false)
+	m.moveBase(map[string]string{"a.txt": "base\n"})
+	got, err := m.bring(m.s)
+	if err != nil || got.Replaced == "" {
+		t.Fatalf("the redo: %+v, %v", got, err)
+	}
+	want := m.pinSum + " " + m.pinRec + "\n"
+	if pin := keptRecord(t, m.w, pinPath(got.Replaced)); pin != want {
+		t.Errorf("%s = %q; want the opening pin %q", pinPath(got.Replaced), pin, want)
+	}
+	text := m.w.fake.issueTexts[len(m.w.fake.issueTexts)-1][1]
+	if o := "SHA-256 " + m.pinSum + ", read at the records commit " + m.pinRec + "."; !strings.Contains(text, o) || m.pinRec == m.r.Store.(*recordsStore).Base() {
+		t.Errorf("the replacement issue lacks %q:\n%s", o, text)
+	}
+}
+
+func TestAShapeTaskWithNoPinIsNotRedone(t *testing.T) {
+	t.Parallel()
+	m := newMovedAs(t, map[string]string{"a.txt": "task\n"}, "architecture", false)
+	if err := m.r.Store.(*recordsStore).Remove(context.Background(), []string{pinPath("T-ab12")}, "no pin"); err != nil {
+		t.Fatal(err)
+	}
+	m.moveBase(map[string]string{"a.txt": "base\n"})
+	head, n := recordsHead(t, m.w), m.nreqs()
+	if got, err := m.bring(m.s); err == nil || !strings.Contains(err.Error(), "no opening pin") || recordsHead(t, m.w) != head || len(m.writes(n)) != 0 {
+		t.Errorf("BringUpToDate = %+v, %v; want the refusal before any write", got, err)
+	}
+}
+
+// render makes the rendered commit of the first bet above X, as code does: pushed to the branch with the events push and bound of session —.
+func (m *moved) render() string {
+	m.t.Helper()
+	clone, ctx := m.r.Clone, context.Background()
+	gitOut(m.t, clone, "switch", "-q", "--detach", m.X)
+	for p, d := range map[string]string{treePRDPath: renderedPRD(m.t, ""), treeFacts: treeFactsAt} {
+		os.MkdirAll(filepath.Dir(filepath.Join(clone, p)), 0o755)
+		os.WriteFile(filepath.Join(clone, p), []byte(d), 0o644)
+	}
+	gitOut(m.t, clone, "add", "-A")
+	gitOut(m.t, clone, "commit", "-q", "-m", "the rendered commit")
+	rendered := strings.TrimSpace(gitOut(m.t, clone, "rev-parse", "HEAD"))
+	gitOut(m.t, clone, "switch", "-q", "main")
+	gitOut(m.t, clone, "push", "-q", "file://"+m.w.bare, rendered+":refs/heads/task/T-ab12/1")
+	for _, kind := range []string{"push", "bound"} {
+		data, err := m.r.appendEvents(ctx, "T-ab12", 1, "", []string{kind + " " + rendered + " task/T-ab12/1"})
+		if err != nil {
+			m.t.Fatal(err)
+		}
+		if err := m.r.commit(ctx, map[string][]byte{eventsPath("T-ab12"): data}, "the rendered commit "+kind); err != nil {
+			m.t.Fatal(err)
+		}
+	}
+	m.in.Rendered = &RenderedInput{Head: rendered, Render: treeRecs}
+	return rendered
 }

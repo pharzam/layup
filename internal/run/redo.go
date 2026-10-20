@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/pharzam/layup/internal/forge"
-	"github.com/pharzam/layup/internal/git"
 	"github.com/pharzam/layup/internal/records"
 	"github.com/pharzam/layup/internal/spec"
 )
@@ -60,6 +59,7 @@ type redoPlan struct {
 	At        time.Time         // the time of both events
 	OldEvents [][]string        // the events of the old task
 	Bindings  map[string][]byte // tasks/<old>/options/<decision>.tsv, by the name below tasks/<old>/options
+	Pin       []byte            // tasks/<old>/pin.txt of a Shape task, nil for another
 }
 
 // redoFiles gives the files of the combined records commit of a redo, each read back by its own reader: the register with the row replaced,
@@ -91,6 +91,9 @@ func redoFiles(p redoPlan) (map[string][]byte, error) {
 			return nil, fmt.Errorf("%s: %w", path, err)
 		}
 		files[path] = data
+	}
+	if p.Pin != nil {
+		files[pinPath(p.New)] = p.Pin
 	}
 	for name, data := range p.Bindings {
 		if _, err := spec.ReadOptions(data); err != nil {
@@ -126,7 +129,7 @@ func firstBase(events [][]string, def string) string {
 
 // redoIssue gives the title and the body of the new issue from what the records keep of the old task: the kind's composer with the new ID,
 // the requirement IDs of the row, the decision and the option of the binding of an architecture task that a bet opened, and, for a Shape task,
-// the draft as the first session of the old task read it (never a later draft). A kind with no composer is an error.
+// the opening pin of a Shape task (the digest of the draft and the records commit its issue was opened with, kept in tasks/<old>/pin.txt, and inherited by the replacement). A kind with no composer, or a Shape task with no pin, is an error.
 func (s *Sessions) redoIssue(ctx context.Context, row Task, id string, bindings map[string][]byte) (title, body string, err error) {
 	switch {
 	case row.Kind == "architecture" && len(bindings) > 1:
@@ -144,38 +147,18 @@ func (s *Sessions) redoIssue(ctx context.Context, row Task, id string, bindings 
 			return archIssueTitle(id, decision), archIssueBody(id, decision, rows[0][0], row.Requirements), nil
 		}
 	case row.Kind == "specification" || row.Kind == "architecture":
-		sessions, err := s.readTable(ctx, "sessions.tsv", records.ReadSessions)
+		pin, err := s.Store.ReadFile(ctx, pinPath(row.ID))
 		if err != nil {
 			return "", "", err
 		}
-		// The pin is the original issue's: down the chain of redos (the event rebased names the task replaced) to the first task.
-		root := row.ID
-		for i := 0; i < 64; i++ {
-			events, err := s.readTable(ctx, eventsPath(root), records.ReadEvents)
-			if err != nil {
-				return "", "", err
-			}
-			next := ""
-			for _, e := range events {
-				if e[1] == "rebased" {
-					next = e[6]
-				}
-			}
-			if next == "" {
-				break
-			}
-			root = next
+		if pin == nil {
+			return "", "", fmt.Errorf("%s has no opening pin (%s): its issue cannot be composed again", row.ID, pinPath(row.ID))
 		}
-		i := slices.IndexFunc(sessions, func(r []string) bool { return r[sessionTask] == root })
-		if i < 0 {
-			return "", "", fmt.Errorf("%s has no session: no draft that it read", root)
-		}
-		at := sessions[i][sessionRecords]
-		draft, err := git.Show(s.Clone, at, "spec/draft.tsv")
+		sum, at, err := parsePin(pin)
 		if err != nil {
-			return "", "", err
+			return "", "", fmt.Errorf("%s: %w", pinPath(row.ID), err)
 		}
-		return shapeIssueTitle(id, row.Kind), shapeIssueText(id, row.Kind, row.Requirements, digest(draft), at), nil
+		return shapeIssueTitle(id, row.Kind), shapeIssueText(id, row.Kind, row.Requirements, sum, at), nil
 	}
 	return "", "", fmt.Errorf("the kind %s of %s has no composer of an issue: a task of that kind is not redone in M2e", row.Kind, row.ID)
 }
@@ -223,7 +206,13 @@ func (s *Sessions) redo(ctx context.Context, in CarryInput, events [][]string, a
 	if err != nil {
 		return Advance{}, err
 	}
-	plan := redoPlan{Tasks: register, Old: task, New: id, Issue: 1, Attempt: attempt, Base: d, At: s.Now(), OldEvents: events, Bindings: bindings}
+	var pin []byte
+	if row.Kind != "architecture" || len(bindings) == 0 {
+		if pin, err = s.Store.ReadFile(ctx, pinPath(task)); err != nil {
+			return Advance{}, err
+		}
+	}
+	plan := redoPlan{Tasks: register, Old: task, New: id, Issue: 1, Attempt: attempt, Base: d, At: s.Now(), OldEvents: events, Bindings: bindings, Pin: pin}
 	if _, err := redoFiles(plan); err != nil {
 		return Advance{}, err
 	}
@@ -313,4 +302,20 @@ func (s *Sessions) closeOlderPulls(ctx context.Context, task string) error {
 		}
 	}
 	return nil
+}
+
+// pinPath is the file of the opening pin of a Shape task (records.md: tasks/<task>/pin.txt); pinBytes and parsePin are its bytes:
+// the SHA-256 of the draft and the records commit that the issue was opened with, a space between and a line feed.
+func pinPath(task string) string { return "tasks/" + task + "/pin.txt" }
+
+func pinBytes(sum, records string) []byte { return []byte(sum + " " + records + "\n") }
+
+var pinForm = regexp.MustCompile(`^([^ \n]+) ([^ \n]+)\n$`)
+
+func parsePin(data []byte) (sum, records string, err error) {
+	m := pinForm.FindSubmatch(data)
+	if m == nil {
+		return "", "", fmt.Errorf("a pin is the SHA-256 of the draft, a space, the records commit and a line feed; got %q", data)
+	}
+	return string(m[1]), string(m[2]), nil
 }
