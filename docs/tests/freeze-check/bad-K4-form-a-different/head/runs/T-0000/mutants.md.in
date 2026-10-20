@@ -1,0 +1,5 @@
+# Mutants
+
+| # | Mutant | sha256 before | sha256 after |
+| - | ------ | ------------- | ------------ |
+| M1 | mismatch | 0123456789abcdef | fedcba9876543210 |

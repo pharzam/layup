@@ -1,0 +1,7 @@
+# Test traceability
+
+| Test ID | Level | Covers (REQ/NFR) | Fact (F-NNNN#n) | Guardrail | ADR | Task | Status |
+|---------|-------|------------------|-----------------|-----------|-----|------|--------|
+| `TestAlpha`, `TestBeta`, `TestCommentFlow`, `TestHandoffFlow`, `TestPositionFlow`, `TestQuestionFlow` (`internal/x/a_test.go`) | unit | REQ-001 | F-0001#1 | — | ADR-0001 | T-0000 | green |
+| `TestIntegOnly`, `TestCommentInteg`, `TestHandoffInteg`, `TestPositionInteg`, `TestQuestionInteg` (`internal/x/integ_test.go`) | integration | REQ-001 | F-0001#1 | — | ADR-0001 | T-0000 | green |
+| `TestOtherPkg` (`internal/y/b_test.go`) | unit | REQ-002 | F-0001#2 | — | ADR-0001 | T-0000 | green |

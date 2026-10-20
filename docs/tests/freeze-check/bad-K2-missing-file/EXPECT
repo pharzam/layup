@@ -1,0 +1,7 @@
+1
+ok K1: white space
+FAIL K2: docs/tests/traceability.md:0: missing traceability file
+ok K3: test selectors
+ok K4: restore evidence of mutants
+ok K5: projection: figure 78/4, maximum 100/10, margin 22/6 (the figure at landing is still measured at landing)
+ok K6: conditions table

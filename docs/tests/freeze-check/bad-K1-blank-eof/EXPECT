@@ -1,0 +1,7 @@
+1
+FAIL K1: a.txt:2: new blank line at EOF.
+ok K2: registration of new tests
+ok K3: test selectors
+ok K4: restore evidence of mutants
+ok K5: projection: figure 72/3, maximum 100/10, margin 28/7 (the figure at landing is still measured at landing)
+ok K6: conditions table

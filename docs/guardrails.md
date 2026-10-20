@@ -971,6 +971,25 @@ These traps are not domain-specific: they hurt every project's test suite.
   its inputs, its runner strips them from `EXPECT`, and the suite has a case
   named `*crlf*`, CRLF throughout and pinned `eol=crlf` in `.gitattributes`,
   so `run-discipline-tests.sh` checks that it keeps them.
+- ❌ **A check of the records that passes its own fixtures and fails the records
+  of `main`.** `freeze-check.sh` (`T-b6fn`, #440) first passed all 42 of its
+  fixtures, then failed T-r7b9 as merged. A §12 Test cell of `PRD-0001` may name
+  a test's file in place of the test ("… and its 13 siblings of
+  `questionloop_test.go`"). Round 1 found more: a word of a mutant's description
+  ("the rule dropped") read as a disposition; a backtick elsewhere on a line hid
+  a `go test` command; an inline span that crosses a line break was paired
+  wrongly; an unreadable input passed; and an untracked file supplied evidence.
+  Round 2 found that the fix of the span hid a command after a backtick that
+  nothing closed, that an uncommitted edit of a tracked file still supplied a
+  test name, and that one rule had no case that failed when the rule alone was
+  removed. **The check:** run a new check of the records on two or three merged
+  tasks of `main` before the freeze, and give each true and false reading found
+  there its own fixture. Refuse a worktree with a change or an untracked file,
+  so the inputs are the committed head. Pair backticks across the lines of a
+  paragraph, read an unclosed one as plain text, and read fenced lines as they
+  stand. Remove each condition of a rule in turn and see a case fail. Write a
+  command template in prose without `go test … -run <pattern>`, which
+  `freeze-check.sh` K3 refuses as a selector.
 - ❌ **A fake whose child cannot see `SIGINT`.** A shell script that starts a
   child with `&` gives it `SIGINT` and `SIGQUIT` ignored (POSIX, with job
   control off), and a shell cannot trap a signal ignored at its entry; `trap ''`

@@ -1,0 +1,3 @@
+# Test runs
+
+- `go test ./internal/x/ -run '^TestOtherPkg$'`: exit 0

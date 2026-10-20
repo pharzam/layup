@@ -1,0 +1,2 @@
+2
+freeze-check: --base no-such-rev is not a commit

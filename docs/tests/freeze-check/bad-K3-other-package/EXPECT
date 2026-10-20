@@ -1,0 +1,7 @@
+1
+ok K1: white space
+ok K2: registration of new tests
+FAIL K3: runs/T-0000/test-runs.md:3: selector TestOtherPkg matches no test in the named packages
+ok K4: restore evidence of mutants
+ok K5: projection: figure 72/3, maximum 100/10, margin 28/7 (the figure at landing is still measured at landing)
+ok K6: conditions table
