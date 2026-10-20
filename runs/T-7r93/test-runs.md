@@ -1,6 +1,6 @@
 # T-7r93: the runs of the checks
 
-Task `T-7r93` (#441): a Proposed ADR, [ADR-0028](../../docs/adr/0028-delegate-two-bounded-landing-decisions.md).
+Task `T-7r93` (#441): an ADR, proposed and then accepted by the Operator, [ADR-0028](../../docs/adr/0028-delegate-two-bounded-landing-decisions.md).
 
 ## The acceptance check (condition 1 of the plan review 6292149530)
 
@@ -32,3 +32,11 @@ After the merge of `origin/main` (`0f0890b`), the record's Status is `Accepted`,
 - `sh docs/links/link-lint.sh`: 2026-10-20T16:47:18Z, exit 0
 - `sh docs/tests/run-discipline-tests.sh`: 2026-10-20T16:47:31Z, exit 0
 - `sh docs/setup/setup-check.sh`: 2026-10-20T16:47:34Z, exit 0
+
+## Round 1 (6296550840) and its fixes
+
+- **F1.** The Consequences named "the budget sentence of ADR-0007". An accepted body is immutable, so they now name the Status lines of ADR-0007 and ADR-0026 (`Accepted. Amended by ADR-0028`) with their index rows, and leave the operative text to `engineering-discipline.md` and the glossary.
+- **F2.** The pre-freeze check needs the conditions table of this task's plan review: `runs/T-7r93/conditions.md` holds its five conditions.
+
+The acceptance check of condition 1 tested `^Proposed$`. Since the Operator accepted the record, it fails in that form. Its accepted form, `grep -q "^Accepted$"` with the index row ending `| Accepted |`, is the check from here. At 2026-10-20T17:05:50Z on the fix tree, the Proposed form exited `1` and the Accepted form exited `0`.
+
