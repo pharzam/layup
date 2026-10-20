@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/pharzam/layup/internal/gate"
+	"github.com/pharzam/layup/internal/rules"
 	"github.com/pharzam/layup/internal/tsv"
 )
 
@@ -228,6 +229,13 @@ func TestTheRulesResultOfAPushedHeadStaysThatOfItsBoundSessionWhenTheRecordsMove
 	other := childCommit(t, l.r.Clone, l.a.base, map[string]string{"x.go": "package x\n"})
 	if st, err := l.r.RulesAt(ctx, RulesInput{Task: "T-ab12", Base: l.a.base, Head: other, RegisterRev: now}); err != nil || st != (Status{RulesContext, "failure", "rule path: x.go"}) {
 		t.Errorf("RulesAt of an unpushed head by the current register = %+v, %v; want failure, rule path: x.go", st, err)
+	}
+	// RulesResult, which RulesAt takes the status of, gives the same results.
+	if r, err := l.r.RulesResult(ctx, RulesInput{Task: "T-ab12", Base: l.a.base, Head: bound}); err != nil || r != (rules.Result{State: rules.Success, Reason: rules.ReasonNoRulePath}) {
+		t.Errorf("RulesResult of the pushed head = %+v, %v; want success, no rule path", r, err)
+	}
+	if r, err := l.r.RulesResult(ctx, RulesInput{Task: "T-ab12", Base: l.a.base, Head: other, RegisterRev: now}); err != nil || r != (rules.Result{State: rules.Failure, Reason: rules.ReasonRulePath, Path: "x.go"}) {
+		t.Errorf("RulesResult of an unpushed head = %+v, %v; want failure, rule path, x.go", r, err)
 	}
 }
 
