@@ -122,6 +122,8 @@ func requirementsPart(ids []string, prd spec.PRDContent) (string, error) {
 		switch {
 		case !ok:
 			return "", fmt.Errorf("the requirement %s of the register row has no row in the PRD at the verified head", id)
+		case strings.TrimSpace(statement) == "":
+			return "", fmt.Errorf("the requirement %s has no statement in the PRD at the verified head", id)
 		case prd.Criteria[id] == "":
 			return "", fmt.Errorf("the requirement %s has no acceptance criterion in the PRD at the verified head", id)
 		}

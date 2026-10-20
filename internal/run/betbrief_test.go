@@ -167,6 +167,8 @@ func TestTheRequirementsPartUsesTheRegisteredFinalIDs(t *testing.T) {
 		"a registered ID with no PRD row": {[]string{"REQ-001", "NFR-002", "REQ-009"}, func(*spec.PRDContent) {}, "the requirement REQ-009 of the register row has no row in the PRD at the verified head"},
 		"a PRD row the register lacks":    {[]string{"REQ-001"}, func(*spec.PRDContent) {}, "the PRD at the verified head holds NFR-002, which the register row does not"},
 		"a row with no criterion":         {[]string{"REQ-001", "NFR-002"}, func(p *spec.PRDContent) { delete(p.Criteria, "NFR-002") }, "the requirement NFR-002 has no acceptance criterion in the PRD at the verified head"},
+		"an empty statement cell":         {[]string{"REQ-001", "NFR-002"}, func(p *spec.PRDContent) { p.Statements["REQ-001"] = "" }, "the requirement REQ-001 has no statement in the PRD at the verified head"},
+		"a whitespace-only statement":     {[]string{"REQ-001", "NFR-002"}, func(p *spec.PRDContent) { p.Statements["REQ-001"] = "   " }, "the requirement REQ-001 has no statement in the PRD at the verified head"},
 	} {
 		p := prd()
 		c.edit(&p)
