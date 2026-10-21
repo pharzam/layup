@@ -282,7 +282,7 @@ func (s *Sessions) specReopening(ctx context.Context, in *spec.FullInput, task s
 			return fail(fmt.Errorf("%s: %w", reopeningsPath, err))
 		}
 	}
-	in.Pending = pendingOf(rows, task)
+	in.Pending = pendingOf(rows, task, in.Merged)
 	latest := 0
 	for _, r := range in.Index {
 		n, _ := strconv.Atoi(r[0])
@@ -525,7 +525,7 @@ func (r *state) reopeningRows(ctx context.Context, s *Sessions, register []Task,
 
 // pendingOf gives the stored identity of the reopening of the task, none for a task that no class reopens: the fact and the requirement ID that
 // code allocated for it, none for a measure. The head of the task must hold that pending line.
-func pendingOf(rows [][]string, task string) []spec.PendingReq {
+func pendingOf(rows [][]string, task string, merged []string) []spec.PendingReq {
 	if r := reopeningOf(rows, task); r != nil {
 		return []spec.PendingReq{{Fact: r[reoFact], Requirement: r[reoRequirement]}}
 	}

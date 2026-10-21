@@ -469,7 +469,7 @@ func TestTheNumberedFactsRecordOfTheMergeCommitIsTheOneFile(t *testing.T) {
 func TestThePendingIdentityIsTheStoredRowOfTheTask(t *testing.T) {
 	rows := [][]string{{"1", "3", "need", "F-0002#3", "REQ-006", "T-aaaa", "9"}, {"1", "12", "measure", "F-0002#12", "", "T-bbbb", "9"}}
 	for task, want := range map[string][]spec.PendingReq{"T-aaaa": {{Fact: "3", Requirement: "REQ-006"}}, "T-bbbb": {{Fact: "12"}}, "T-cccc": nil} {
-		if got := pendingOf(rows, task); !slices.Equal(got, want) {
+		if got := pendingOf(rows, task, nil); !slices.Equal(got, want) {
 			t.Errorf("pendingOf(%s) = %v; want %v", task, got, want)
 		}
 	}
