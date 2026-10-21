@@ -141,3 +141,39 @@ Findings of the first full run of the integration level on the new code (08:14:5
 | `sh docs/tasks/task-state.sh` | 08:32:45 to 08:32:54 | 0 (T-9nbf `in progress`) |
 
 The full integration level was run on the code head before the change of the e2e fake, which no integration test reads; the unit and integration levels of `cmd/layup` are in that run.
+
+## S8, final. The head `0db3555c` (the merge of `origin/main` at `c0f691e` included), each command alone, output to a file outside the worktree
+
+| Command | Start to end (Z) | Exit |
+| --- | --- | --- |
+| `go build ./...` | 08:36:25 to 08:36:25 | 0 |
+| `go vet ./...` | 08:36:25 to 08:36:25 | 0 |
+| `go vet -tags=integration ./...` | 08:36:25 to 08:36:26 | 0 |
+| `go vet -tags=e2e ./...` | 08:36:26 to 08:36:26 | 0 |
+| `go test -count=1 ./...` | 08:36:26 to 08:36:27 | 0 |
+| full integration | 08:36:27 to 08:40:34 | 0 |
+| `go test -count=1 -tags=e2e ./...` | 08:40:34 to 08:41:40 | 0 |
+| `sh docs/adr/adr-lint.sh` | 08:41:40 to 08:41:42 | 0 |
+| `sh docs/prd/prd-lint.sh` | 08:41:42 to 08:41:42 | 0 |
+| `sh docs/links/link-lint.sh` | 08:41:42 to 08:41:56 | 0 |
+| `sh docs/tests/run-discipline-tests.sh` | 08:41:56 to 08:41:59 | 0 |
+| `sh docs/tests/nested-checkout-check.sh` | 08:41:59 to 08:41:59 | 0 |
+| `sh docs/setup/setup-check.sh` | 08:41:59 to 08:42:22 | 0 |
+| `sh docs/tests/freeze-check/run-all.sh` | 08:42:22 to 08:42:31 | 0 |
+| `git diff --check origin/main HEAD` | 08:42:31 to 08:42:31 | 0 |
+| `sh docs/tasks/task-state.sh` | 08:42:31 to 08:42:39 | 0 |
+
+The full integration level is the command `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./...`, output in `/home/layup/.cache/layup-session/T-9nbf-full-integration.txt`. `gofmt -l .` listed 0 files.
+
+### The pre-freeze check
+
+`sh docs/tests/freeze-check.sh --task T-9nbf --base origin/main --budget 2600/28 --evidence runs/T-9nbf/test-runs.md --evidence runs/T-9nbf/mutants.md --evidence runs/T-9nbf/conditions.md`, run on the clean committed head 0db3555c at 08:35Z (output written to `/home/layup/.cache/layup-session/T-9nbf-freeze-check.txt` first), exit 0:
+
+```text
+ok K1: white space
+ok K2: registration of new tests
+ok K3: test selectors
+ok K4: restore evidence of mutants
+ok K5: projection: figure 1672/27, maximum 2600/28, tolerance 500/4, limit 3100/32, margin 1428/5 (the figure at landing is still measured at landing)
+ok K6: conditions table
+```
