@@ -307,3 +307,16 @@ The fixes are in `4aa800c`; the tests ran on the head `4aa800c` plus the record 
 ### The full integration level
 
 `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./...`, in the background, output only to `/home/layup/.cache/layup-session/T-4naq-full-integration.txt`: 2026-10-21T00:31:50Z to 2026-10-21T00:35:36Z, exit 0, 21 packages `ok`, on the code head `4aa800c` with `origin/main` at `f9d46b0` merged.
+
+### The freeze check after the fixes of round 1
+
+On the clean committed head, which has merged `origin/main` at `f9d46b0` (still its head at 00:40Z): `sh docs/tests/freeze-check.sh --task T-4naq --base origin/main --budget 2600/30 --evidence runs/T-4naq/test-runs.md --evidence runs/T-4naq/mutants.md --evidence runs/T-4naq/conditions.md`, output kept outside the worktree in `/home/layup/.cache/layup-session/T-4naq-freeze.txt`, exit 0 (the first run of it failed K1 on a blank line at the end of this record, which was fixed and committed):
+
+```text
+ok K1: white space
+ok K2: registration of new tests
+ok K3: test selectors
+ok K4: restore evidence of mutants
+ok K5: projection: figure 1963/25, maximum 2600/30, tolerance 500/4, limit 3100/34, margin 1137/9 (the figure at landing is still measured at landing)
+ok K6: conditions table
+```
