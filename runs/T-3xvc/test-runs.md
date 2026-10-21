@@ -78,3 +78,16 @@ ok K4: restore evidence of mutants
 ok K5: projection: figure 634/10, maximum 850/12, tolerance 170/4, limit 1020/16, margin 386/6 (the figure at landing is still measured at landing)
 ok K6: conditions table
 ```
+
+## The pre-freeze check of round 2 (after round 1 of #368)
+
+Same invocation and base `30e2c0d` (main unchanged on fetch) on the clean committed head `0f00e7f0`, 10:39:31 UTC, exit 0. The first two runs failed K2 until the traceability row and the PRD Test cells of the new probe test were added.
+
+```text
+ok K1: white space
+ok K2: registration of new tests
+ok K3: test selectors
+ok K4: restore evidence of mutants
+ok K5: projection: figure 675/10, maximum 850/12, tolerance 170/4, limit 1020/16, margin 345/6 (the figure at landing is still measured at landing)
+ok K6: conditions table
+```
