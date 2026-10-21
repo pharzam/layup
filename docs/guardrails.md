@@ -728,16 +728,16 @@ success without having done its job.
 
 - ❌ **`merge=union` is not a general merge fix.** It keeps ours, then theirs, for
   every conflicting hunk, so it fits only a file of independent added records whose
-  readers check presence, never order or uniqueness. A line added at the end of
-  `completed.md` comes out in reverse landing order, so the rule is to insert
-  directly under `## Log` (and below the separator in `traceability.md`): the branch
-  that merges last is "ours", and is on top. Two adjacent deletions both come back
-  (`backlog.md`, so no attribute there); two edits of one PRD §12 matrix row become
-  two rows, and `prd-lint` passes them, because its duplicate check covers only the
-  5-cell rows. Zero removed lines does not show that no record conflicts, so the
-  review exception names the preserved and unconflicting records too. The GitHub
-  result (its own merge and "Update branch"): unknown, see
-  `runs/T-5ve2/forge-merge.md`. **The check:** run
+  readers check presence, never order or uniqueness. Where a record goes, for
+  landing order, is in [`completed.md`](tasks/completed.md#how-to-keep-this-file-readable)
+  and in the [traceability intro](tests/traceability.md). Two adjacent deletions both
+  come back (`backlog.md`, so no attribute there); two edits of one PRD §12 matrix
+  row become two rows, and `prd-lint` passes them, because its duplicate check covers
+  only the 5-cell rows. Zero removed lines does not show that no record conflicts, so
+  the review exception names the preserved and unconflicting records too. **GitHub
+  does not honour the attribute:** its own merge reports a conflict and "Update
+  branch" answers HTTP 422 (`runs/T-5ve2/forge-merge.md`). Merge `origin/main`
+  locally, never with "Update branch" or a web conflict editor. **The check:** run
   `TestTheSharedIndexesMergeWithNoConflictInLandingOrder`. Learned in `T-5ve2`
   (#461).
 
