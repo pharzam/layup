@@ -40,14 +40,14 @@ ADR-0007, recorded, not budgeted. UTC, 2026-10-21, from the clock, `start.txt` a
 | --- | --- | --- | --- | --- | --- |
 | Plan | reasoning | Claude Opus 5.5 (Plan agent) | not recorded | not kept | not kept |
 | Plan review | reasoning | GPT-6.1 Sol, Codex CLI | xhigh | 199,127 | 11:25:24Z to 11:34:09Z |
-| S0 to S5: the red slice, the check, the comparator, the brief | execution | Claude Sonnet 5.5 (subagent) | not recorded | not reported | 11:36Z to 11:46Z |
+| S0 to S5: the red slice, the check, the comparator, the brief | execution | Claude Sonnet 5.5 (subagent) | not recorded | not reported | not kept; its commits 11:40:43Z to 11:48:36Z |
 | Round 1 | reasoning | GPT-6.1 Sol, Codex CLI | xhigh | 160,979 | 11:51:04Z to 12:01:28Z |
-| Fix of round 1 | execution | Claude Sonnet 5.5 (subagent) | not recorded | not reported | 12:02Z to 12:05Z |
+| Fix of round 1 | execution | Claude Sonnet 5.5 (subagent) | not recorded | not reported | not kept; its commit 12:03:38Z |
 | Round 2 | reasoning | GPT-6.1 Sol, Codex CLI | xhigh | 149,941 | 12:08:12Z to 12:16:04Z |
-| Fix of round 2 | execution | Claude Sonnet 5.5 (subagent) | not recorded | not reported | 12:17Z to 12:19Z |
+| Fix of round 2 | execution | Claude Sonnet 5.5 (subagent) | not recorded | not reported | not kept; its commit 12:18:41Z |
 | Round 3 | reasoning | GPT-6.1 Sol, Codex CLI | xhigh | 177,028 | 12:20:25Z to 12:28:32Z |
 | The release review (the uat) | reasoning | Claude Fable 5.1, OpenCode | max | 106,552,552 (USD 41.26) | 12:30:04Z to 12:53:29Z |
-| The comparator fix, the review record, S8 and S9 | execution | Claude Sonnet 5.5 (subagent) | not recorded | not reported | 13:05Z to 13:14Z |
+| The comparator fix, the review record, S8 and S9 | execution | Claude Sonnet 5.5 (subagent) | not recorded | not reported | not kept; its commits 13:06:34Z to 13:08:17Z |
 | Round 4 | reasoning | Claude Fable 5.1, OpenCode | max | 13,210,116 (USD 9.29) | 13:14:13Z to 13:32:49Z |
 | The notes of round 4 and the close-out | execution | Claude Sonnet 5.5 (subagent) | not recorded | not reported | 13:33Z to 13:35Z |
 | **Total** | | | | 120,449,743 reported (the numeric entries: 199,127 + 160,979 + 149,941 + 177,028 + 106,552,552 + 13,210,116); the author-tier rows and the plan have no figure | 11:25Z to 13:35Z, with gaps |
