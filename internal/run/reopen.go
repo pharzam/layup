@@ -201,7 +201,7 @@ func allocate(sel [][]string, n int, record string, next int, tasks []string) []
 
 // bindReopenings compares the rows of the record with the selection of the version: the same facts in the same order, each with the class and the
 // copy of the version and the token of the numbered facts record.
-func bindReopenings(rows, sel [][]string, record string) error {
+func bindReopenings(rows, sel [][]string, n int, record string) error {
 	if len(rows) != len(sel) {
 		return fmt.Errorf("%s has %d facts; the selection of the version has %d facts", reopeningsPath, len(rows), len(sel))
 	}
@@ -493,7 +493,7 @@ func (r *state) reopeningRows(ctx context.Context, s *Sessions, register []Task,
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", reopeningsPath, err)
 		}
-		return rows, bindReopenings(rows, sel, record)
+		return rows, bindReopenings(rows, sel, 1, record)
 	}
 	draft, err := r.readRecord(ctx, "spec/draft.tsv", records.ReadDraft)
 	if err != nil {
@@ -519,3 +519,6 @@ func (r *state) reopeningRows(ctx context.Context, s *Sessions, register []Task,
 	}
 	return rows, betStopAt("reopenings")
 }
+
+// pendingOf gives the stored identity of the reopening of the task, none for a task that no class reopens.
+func pendingOf(rows [][]string, task string) []spec.PendingReq { return nil }

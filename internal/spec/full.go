@@ -77,7 +77,12 @@ type FullInput struct {
 	Register      []byte            // the bytes of tasks.tsv
 	Merged        []string          // the IDs of the register's tasks whose pull request merged
 	Reopening     []string          // the facts the bet re-classed that needs and measures exempt at this head (loop.md, the full spec check)
+	Pending       []PendingReq      // the reopenings of the task whose head is judged: each must have its pending line under waits for a bet
 }
+
+// A PendingReq is the stored identity of the reopening of the task whose head is judged: the fact, and the requirement ID that code allocated
+// for it (none for a measure).
+type PendingReq struct{ Fact, Requirement string }
 
 // CheckFull gives the ten rows of the table tasks/<task>/spec-check.tsv:
 // rule, result, detail, in the block's order (the head column is the writer's,

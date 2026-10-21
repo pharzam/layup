@@ -114,7 +114,7 @@ func TestTheRowsOfTheRecordAreBoundToTheSelection(t *testing.T) {
 	if len(rows()) != 2 {
 		t.Fatalf("allocate gave %d rows; want 2", len(rows()))
 	}
-	if err := bindReopenings(rows(), sel, "F-0002"); err != nil {
+	if err := bindReopenings(rows(), sel, 1, "F-0002"); err != nil {
 		t.Fatalf("the control: %v", err)
 	}
 	for _, c := range []struct {
@@ -130,7 +130,7 @@ func TestTheRowsOfTheRecordAreBoundToTheSelection(t *testing.T) {
 		{"another copy", "copy", func(r [][]string) [][]string { r[1][reoCopy] = "10"; return r }},
 		{"another record in the token", "token", func(r [][]string) [][]string { r[0][reoToken] = "F-0005#3"; return r }},
 	} {
-		if err := bindReopenings(c.change(rows()), sel, "F-0002"); err == nil || !strings.Contains(err.Error(), c.want) {
+		if err := bindReopenings(c.change(rows()), sel, 1, "F-0002"); err == nil || !strings.Contains(err.Error(), c.want) {
 			t.Errorf("%s: %v; want an error holding %q", c.name, err, c.want)
 		}
 	}
