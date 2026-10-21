@@ -1877,7 +1877,9 @@ Product Owner role writes the **brief**, in five parts:
    milestone back to Shape.
 4. **The rabbit holes and the no-gos**, with the fixed line `architecture change:
    yes` or `architecture change: no`.
-5. At the first bet, **every fact with its class** (`architecture.md` §7 step 7).
+5. At the first bet, **every fact with its ID and its class** (`architecture.md` §7 step 7). The text of a fact stands in the brief, except
+   that the texts of the Operator's answers stand in a file the brief links ([the facts and questions left
+   out](#the-brief-of-the-first-bet), task `T-36xw`, #471).
 
 Code checks the five headings, the line limit, that at least one link is
 there and that each link resolves; the brief names the head SHA and the
@@ -1953,7 +1955,8 @@ parses the answer. Everything below is **decided here** (R10, note 6198919867 of
   register row, each with a statement and a criterion. The brief shows the PRD's words, so a statement or a criterion that differs from the
   draft's cannot reach the approver under an ID that agrees. **Reason:** the approver answers one line per requirement ID of the
   specification that row 66j parses the answer against, and a session may word the PRD better than the draft.
-- **The five texts that code writes**, also files of `input/`; each line is one line, and a `](` or `][` in a text that code copies is
+- **The five texts that code writes**, also files of `input/`; each line is one line (a TSV field holds no line break, [`README.md`](README.md); `plain` does not remove one, it only
+  escapes link syntax), and a `](` or `][` in a text that code copies is
   written `] (` or `] [` so that no copied text is a link:
   - `requirements.md`: `### The requirements`, then for each requirement ID in the order of the register row `- <ID>: <statement> Criterion:
     <criterion>`; then `### The success criteria` and one line `- <metric>` for each success metric of the PRD, or `- none`.
@@ -1961,20 +1964,46 @@ parses the answer. Everything below is **decided here** (R10, note 6198919867 of
     head <sha>` for the specification task and then the architecture task; then, for each decision in name order, `### Decision <d>` and one
     line for each option in the order of the filter: `- <option> (a survivor)` or `- <option> (dropped: <reason>; <reason>)`, and, for a
     decision with one survivor, `- <option> (the one survivor, decided at Shape)`. A decision with no survivor is an error.
-  - `open.md`: `### The questions still open` and one line `- <Q-NNN>: <question>` for each question still open, or `- none`. A question
+  - `open.md`: `### The questions still open` and one line `- <Q-NNN>: <question>` for each question still open that is not in the block
+    `operator`, then the one range line for the questions of that block still open ([the facts and questions left
+    out](#the-brief-of-the-first-bet)); `- none` only when no question is still open. A question
     is still open when it is not a follow-up and its state is `open`, or `asked` with no answered follow-up; this is `leftOpen` of
     [the questions left open](#the-questions-left-open) without its last clause (no Shape row asks it yet), which would hide the questions
     that Shape asked and that stay open.
   - `facts.md`: one line `- <number or Q-NNN> (<class>): <text>` per fact: the span facts first, in the order of `spec/spans.tsv`, with
-    the `text` column; then one fact per answer, by its ID, with the answer's text and its class `answerFactClass`.
+    the `text` column; then one fact per answer, by its ID, with the answer's text and its class `answerFactClass`, **except** the answers
+    of the questions of the block `operator`, which one line for each class stands for (the next item).
   - `links.md`: the allowed link targets, one for each line, in order.
+- **The facts and questions left out** (task `T-36xw`, #471; the Operator, 2026-10-21, at the plan review: option (b), by block). The brief of an
+  Intake of the size of M2d's (319 answers, 150 setup questions still open) must fit `brief.lines` with room for the session's text, so it does not
+  copy the texts of the Operator's answers.
+  - **The rule is by block** (the column `block` of `questions.tsv`, which a follow-up and a Shape row carry from the question they ask again).
+    Kept in the brief with ID, class and text: every span fact, every answer of a question outside the block `operator` (an answer whose question
+    `questions.tsv` lacks too: the rule fails toward showing), every question still open outside it. Left out: the answers of the block
+    `operator` and its questions still open.
+  - **The lines in their place.** After the lines kept, one line for each class present among the answers left out, in the order need,
+    constraint, measure, context: `- <ranges> (<class>): the answers of the Operator's questions; check the class of each against its text in
+    [the facts of the bet <m>](https://github.com/<owner>/<name>/blob/<sha>/bets/<m>/facts.md)`; and one for the questions left out: `- <ranges>:
+    the Operator's questions still open, each with its text in [the questions still open of the bet <m>](https://github.com/<owner>/<name>/blob/<sha>/bets/<m>/open.md)`.
+    `<ranges>` names **exactly** the set left out, in the order of the numbers: a run of consecutive numbers is `Q-015 to Q-169`, a single ID
+    stands alone, runs are joined by `, `; a gap, or an ID that the brief keeps, ends a run.
+  - **Every fact keeps its ID and class in the brief**, as its own line or inside a range, and its text is in the brief or at the link: the idea
+    owner checks every class (a `context` too: a short answer does not show that its class is right) and changes one with `fact <id>: <class>`.
+    `ParseAnswer` takes any ID of the basis, which holds every fact; a range is no ID.
+  - **The linked files** are Markdown with no TSV schema block (the layout is here and in [`records.md`](records.md)): `bets/<milestone>/facts.md` is `facts.md` of code for all the facts (one line `- <id> (<class>): <text>` each), and `bets/<milestone>/open.md` is `open.md` of code for all the questions still open. A file is written only when the brief leaves something out of it.
+  - **The annex commit.** After the two waits and the choice of the pair, before the first session, the run writes the files whose bytes differ from
+    the records in one fenced commit `layup run: the facts and questions of the bet <milestone>`; equal bytes write nothing, so a restart makes no commit.
+  - **The pin.** The SHA of the links is `git log -1 --format=%H --end-of-options <base> -- <the files of the brief>` on the records base
+    (`git.LastChange`): the last commit that changed them, not the tip, which every heartbeat moves. Their URLs join the set of the links. A changed
+    text left out changes the file, so the SHA, so the part of code, and a candidate made before is refused with the rule `fixed`.
 - **The class of the fact of an answer** (`answerFactClass`): the class of the span fact that holds the first byte of the question's quote;
   a follow-up, and Shape's row, takes the quote of the question it asks again (its `ref`); a question with no quote, or a quote outside
   every fact, is `context`. The approver confirms or changes it with a line `fact <id>: <class>`.
 - **The links.** A link of the brief resolves exactly when its target is in this set, computed and never invented: for each Shape task,
   the URL `https://github.com/<owner>/<name>/pull/<n>`, and, for each path of `git diff --name-only <base> <head>` (the base of the
   attempt) that `git ls-tree <head>` lists as a regular blob of `[A-Za-z0-9._/-]`, the URL
-  `https://github.com/<owner>/<name>/blob/<head>/<path>`. The forge of phase 2 is GitHub.
+  `https://github.com/<owner>/<name>/blob/<head>/<path>`; and the URL of each linked file of [the facts and questions left
+  out](#the-brief-of-the-first-bet) at its pinned SHA. The forge of phase 2 is GitHub.
 
 **The session.** One `PhaseSession` of the step `bet-brief`, role `product-owner`, on `PhasePair`. Its prompt is the first block below;
 the finding of a refusal is the second. Its output is the directory `brief` with the files `problem.md`, `appetite.md` and
@@ -2047,7 +2076,9 @@ decision that has more than one survivor; (4) `CheckCommentBody`, so that a kept
   ("the first one") is not found by the rule and is **noncompliant** all the same; the rule is not the requirement. The rule checks only the
   decisions with more than one survivor.
 - **Before the first session**, with no session started: `brief.lines` unset is `ErrBriefLinesUnset`; the parts of code alone (the five
-  headings and the lines of code) above `brief.lines` is `ErrBriefOverLimit`. Row 66j maps both to `done waiting for the Operator: …`.
+  headings and the lines of code, the lines of the facts and questions left out counted as the lines that stand in their place) above
+  `brief.lines` is `ErrBriefOverLimit`. Row 66j maps both to `done waiting for the Operator: …`. Both waits come before the annex commit
+  and write nothing. The count does not depend on the SHA of the links.
 - **The appetite is judged after the session's telemetry**, which `endPhase` commits after `Keep` has run: so `Keep` cannot read it. After
   `PhaseSession` returns, the run reads `telemetry.tsv` of the records, which holds the session's own row, takes the known money of its rows
   (`ledger.KnownMoney`: every `reported` or `computed` row in exact decimals, probes included; unknown rows add nothing; a known row not in
@@ -2064,10 +2095,10 @@ decision that has more than one survivor; (4) `CheckCommentBody`, so that a kept
   whose output files `ReadOutputFiles` refuses (a missing file, an unlisted entry) ends `no-result`, not `refused file`; the shared phase
   machinery is unchanged, so that session's telemetry stands, `betBrief` returns the `*PhaseError`, and the next run starts a new session.
   A comment that fails after the candidate's commit also leaves the candidate in the records for the recovery.
-- **The recovery** reads before it writes. A `brief.md` that exists is done before. Else the latest candidate under
+- **The recovery** reads before it writes, but for the one write of the annex before the judgement (the facts and questions left out). A `brief.md` that exists is done before. Else the latest candidate under
   `bets/<milestone>/attempts/` (the last row of `sessions.tsv` that has one) is judged again, from its stored bytes alone (the session's
   files are removed after it): the checks (2) to (4) on the assembled brief, with code's parts found in it by their exact bytes and removed
-  before the option-word rule, each part in its place as the inputs stand now (a candidate made on other inputs is refused with the rule `fixed`), and the appetite on the telemetry as it now stands. A pass is promoted with no new session; a refusal starts
+  before the option-word rule, each part in its place as the inputs stand now (a candidate made on other inputs is refused with the rule `fixed`; the inputs include the pinned SHA of the linked files, so a changed text left out of the brief refuses it, and an unrelated records commit does not), and the appetite on the telemetry as it now stands. A pass is promoted with no new session; a refusal starts
   a session with its finding. The control comment of a session whose candidate the appetite refused says `done`, because its own class was
   done; the finding is in the next prompt.
 - **The basis.** `basis.tsv` (the block `bet-basis`, [`records.md`](records.md#nfr-001--the-records-of-the-task-loop)) keeps what row 66j
@@ -2866,6 +2897,7 @@ the milestone covers it end to end.
 | The Shape filter (inventory) | unit | An option with a failed row, a missing row or a pass with no evidence is dropped; one survivor is chosen; two survivors give a brief with no recommendation, and an answer line `option <decision>: <option>` naming a dropped option or an unknown decision is refused and one naming a survivor is recorded in `bets.tsv`; every option dropped asks one rewrite, and a second full drop is a round with no progress. |
 | The bet and its brief (inventory) | unit | The five headings, `brief.lines` unset is refused, a link that does not resolve is refused, two bets of 0.6 `U` each (the second brief), a cap above `band.U`, hours above `appetite.hours` and caps plus the spend of milestone 0 above `band.U` are each refused, and a cap below `band.B` passes, an answer by an account with no allowed role answers nothing, and the answer is copied. |
 | The brief of the first bet (row 66u) | unit; integration | Code assembles the brief from the PRD at the verified head, the survivors and dropped options, the facts with their class and text, and the questions still open; the brief is refused for each rule of its checks (a heading, a link outside the set, an option word, a cap above `band.U`, the session's own spend) and kept when it passes; a refused brief is tried again with its finding; a stop before the promotion promotes the candidate with no new session; `brief.lines` unset starts no session; the basis is read back without filtering again. |
+| The facts and questions left out of the brief (row 66u, `T-36xw`) | unit; integration; e2e | An Intake of the size of M2d's (38 spans, 319 answers, 305 of the Operator's, 150 setup questions still open) gives parts of code of 78 lines, so a brief of `brief.lines` 100 has at least 20 lines for the session's text, and three files of 20 lines together pass `keep`; every fact has its ID and class in the brief, inside a range line of exact ranges for the Operator's answers (every class, a gap, a kept ID between left-out IDs, an unknown question, an idea owner's `context` answer) and with its text in the linked `facts.md`, and every question still open likewise against `open.md`; the inlined part alone over the limit waits before any session and writes no annex, also with Operator rows seeded; `facts.md` and `open.md` are written at one records commit before the session, a restart reuses the candidate at the same SHA, an unrelated records commit keeps the SHA, a changed answer or question left out changes it and refuses the candidate with `fixed`; `ParseAnswer` takes `fact <omitted-ID>: need` against the kept basis and the rendered facts record holds every fact's text; the brief of the e2e links the annex at a SHA whose records hold the file. |
 | The rendered commit (inventory) | unit | The commit may change only the MoSCoW and Phase columns, the non-goals and the numbered facts record; `layup/rules` passes a rendered record only when it equals code's rendering of the named copy. |
 | The parameter change (inventory) | unit | A `set` is refused for a form that is not one line, a wrong role, an unknown name, a value of no type or out of bound, and the one that passes is applied as one replaced row, its default, bound and role kept; a set at or below the comment that its row records is superseded and is no change; a `prd-lint` head is accepted only when each failure line names an empty MoSCoW or Phase cell. |
 | The parameter change at the boundary | integration | With the stand-in forge and real git: `layup run` writes `parameters.tsv` with its six rows in the commit of the first task (a table that exists is kept, one that its reader refuses refuses the task); a `set` is copied and, at the boundary, applied as one records commit when its author has the role of the row, and changes nothing before it; each refusal (`form`, `author`, `name`, `value`, `bound`) is reported with its item, changes nothing and is judged again at the next boundary; a set that is applied is not applied again, the later of two wins in the order of the comment IDs, and an edit of a comment is no set; a set of a Start row is recorded with the note that the run reads `start.tsv`; the write is fenced by the lease. The call between steps is row 66k's. |

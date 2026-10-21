@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strings"
 	"testing"
@@ -303,13 +304,14 @@ func (d *drvWorld) setPrecondition() {
 func TestBriefLinesUnsetStartsNoSession(t *testing.T) {
 	t.Parallel()
 	d := shapedWorld(t)
+	d.operatorRows("Use Go.", "The question Q-006") // an Intake that leaves something out of the brief: the annex is prepared only after the waits
 	d.setParameter("brief.lines", "")
 	head := recordsHead(t, d.w)
 	if _, _, err := d.r.betBrief(context.Background(), "1", "first"); !errors.Is(err, ErrBriefLinesUnset) {
 		t.Errorf("err = %v; want ErrBriefLinesUnset", err)
 	}
-	if d.briefSessions() != 0 || recordsHead(t, d.w) != head {
-		t.Errorf("%d sessions, head moved: %v; want none (a green negative beside the error)", d.briefSessions(), recordsHead(t, d.w) != head)
+	if d.briefSessions() != 0 || recordsHead(t, d.w) != head || d.has("bets/1/facts.md") || d.has("bets/1/open.md") {
+		t.Errorf("%d sessions, head moved: %v, facts.md %v, open.md %v; want none (a green negative beside the error)", d.briefSessions(), recordsHead(t, d.w) != head, d.has("bets/1/facts.md"), d.has("bets/1/open.md"))
 	}
 }
 
@@ -317,9 +319,10 @@ func TestBriefLinesUnsetStartsNoSession(t *testing.T) {
 func TestAFreshBuildRefusesWhatItCannotBuildBefore(t *testing.T) {
 	t.Parallel()
 	d := shapedWorld(t)
+	d.operatorRows("Use Go.", "The question Q-006") // both annex files would be needed: the wait writes neither
 	d.setParameter("brief.lines", "10")
-	if _, _, err := d.r.betBrief(context.Background(), "1", "first"); !errors.Is(err, ErrBriefOverLimit) || d.briefSessions() != 0 {
-		t.Errorf("brief.lines 10: err = %v after %d sessions; want ErrBriefOverLimit and none", err, d.briefSessions())
+	if _, _, err := d.r.betBrief(context.Background(), "1", "first"); !errors.Is(err, ErrBriefOverLimit) || d.briefSessions() != 0 || d.has("bets/1/facts.md") || d.has("bets/1/open.md") {
+		t.Errorf("brief.lines 10: err = %v after %d sessions, facts.md %v, open.md %v; want ErrBriefOverLimit, none and no annex", err, d.briefSessions(), d.has("bets/1/facts.md"), d.has("bets/1/open.md"))
 	}
 	d.setParameter("brief.lines", "60")
 	if err := d.r.store.Remove(context.Background(), []string{"start/problem-statement.md"}, "no problem statement"); err != nil {
@@ -530,5 +533,129 @@ func TestBriefBasisRefusesAMalformedKeptBrief(t *testing.T) {
 		if _, err := d.r.briefBasis(context.Background(), "1"); err == nil {
 			t.Errorf("%s: briefBasis = no error; want the malformed brief refused", name)
 		}
+	}
+}
+
+// operatorRows adds the Operator's Q-005, a setup question answered with answer, and Q-006, one still open with the text openText.
+func (d *drvWorld) operatorRows(answer, openText string) {
+	d.t.Helper()
+	open := qrow("Q-006", "S01-stack", "open")
+	open[8] = openText
+	qdata, err := table(records.QuestionsSchema, append(d.questions()[:4], qrow("Q-005", "S01-stack", "answered"), open))
+	if err != nil {
+		d.t.Fatal(err)
+	}
+	rows, err := records.ReadAnswers([]byte(keptRecord(d.t, d.w, "intake/answers.tsv")))
+	if err != nil {
+		d.t.Fatal(err)
+	}
+	adata, err := table(records.AnswersSchema, append(rows[:3:3], []string{"Q-005", answer, "802", "303", "2026-10-08T12:40:00Z"}))
+	if err != nil {
+		d.t.Fatal(err)
+	}
+	d.push(map[string][]byte{"questions.tsv": qdata, "intake/answers.tsv": adata}, "the Operator's answer and question")
+}
+
+// annex gives the last commit of the records that changed a linked file of the bet 1 and the number of such commits.
+func (d *drvWorld) annex() (sha string, commits int) {
+	d.t.Helper()
+	log := strings.Fields(gitOut(d.t, d.w.bare, "log", "--format=%H", "layup-records", "--", "bets/1/facts.md", "bets/1/open.md"))
+	if len(log) > 0 {
+		sha = log[0]
+	}
+	return sha, len(log)
+}
+
+// stopAtTheComment runs betBrief with the post of the control comment failing, so that a candidate stays and nothing is promoted.
+func (d *drvWorld) stopAtTheComment() {
+	d.t.Helper()
+	d.r.cfg.Forge = &flakyForge{Forge: d.r.cfg.Forge, failPost: true}
+	if _, _, err := d.r.betBrief(context.Background(), "1", "first"); err == nil || len(d.candidates()) == 0 {
+		d.t.Fatalf("a stop at the comment: %v, candidates %v; want the error and a candidate", err, d.candidates())
+	}
+}
+
+// I13, the demo (R11; task T-36xw, #471): the brief links the facts and questions left out at a pinned records commit written before the
+// session; a restart reuses the candidate at the same SHA, also after an unrelated records commit; the basis keeps every fact.
+func TestTheLinkedFactsAreKeptAtAPinnedRecordsCommitBeforeTheSession(t *testing.T) {
+	t.Parallel()
+	d := shapedWorld(t)
+	d.operatorRows("Use Go.", "The question Q-006")
+	d.ctlBrief(1, briefProblem, briefAppetite("5"), briefHoles, "")
+	d.stopAtTheComment()
+	sha, commits := d.annex()
+	if !regexp.MustCompile(`^[0-9a-f]{40}$`).MatchString(sha) || commits != 1 || d.briefSessions() != 1 {
+		t.Fatalf("the annex commit %q, %d annex commits, %d sessions; want one commit and one session", sha, commits, d.briefSessions())
+	}
+	spans, _ := records.ReadSpans([]byte(keptRecord(t, d.w, "spec/spans.tsv")))
+	answers, _ := records.ReadAnswers([]byte(keptRecord(t, d.w, "intake/answers.tsv")))
+	wantFacts, wantOpen := factsPart(spans, d.questions(), answers), openPart(d.questions())
+	if got := keptRecord(t, d.w, "bets/1/facts.md"); got != wantFacts || !strings.Contains(got, "- Q-005 (context): Use Go.\n") {
+		t.Errorf("bets/1/facts.md = %q; want %q", got, wantFacts)
+	}
+	if got := keptRecord(t, d.w, "bets/1/open.md"); got != wantOpen || !strings.Contains(got, "- Q-006: The question Q-006\n") {
+		t.Errorf("bets/1/open.md = %q; want %q", got, wantOpen)
+	}
+	if got := gitOut(t, d.w.bare, "show", "--format=%s", "--name-only", sha); got != "layup run: the facts and questions of the bet 1\n\nbets/1/facts.md\nbets/1/open.md\n" || gitOut(t, d.w.bare, "show", sha+":bets/1/facts.md") != wantFacts {
+		t.Errorf("the annex commit %s shows %q; want its subject, the two files only and the bytes of the records", sha, got)
+	}
+	factsURL, openURL := "https://github.com/acme/target/blob/"+sha+"/bets/1/facts.md", "https://github.com/acme/target/blob/"+sha+"/bets/1/open.md"
+	candidate := keptRecord(t, d.w, d.candidates()[0])
+	links, _ := os.ReadFile(filepath.Join(d.ctl, "brief-input-1", "links.md"))
+	for _, want := range []string{"[the facts of the bet 1](" + factsURL + ")", "[the questions still open of the bet 1](" + openURL + ")",
+		"- Q-005 (context): the answers of the Operator's questions;", "- Q-006: the Operator's questions still open,"} {
+		if !strings.Contains(candidate, want) {
+			t.Errorf("the candidate lacks %q:\n%s", want, candidate)
+		}
+	}
+	if !strings.Contains(string(links), factsURL+"\n") || !strings.Contains(string(links), openURL+"\n") || strings.Contains(candidate, "Use Go.") {
+		t.Errorf("input/links.md = %q, the candidate holds the text of an answer left out: %v; want both annex URLs and none", links, strings.Contains(candidate, "Use Go."))
+	}
+
+	// A restart after an unrelated records commit: the candidate is reused with no session and no annex commit, at the same SHA.
+	d.push(map[string][]byte{"unrelated.txt": []byte("a heartbeat\n")}, "an unrelated records commit")
+	brief, done, err := d.r.betBrief(context.Background(), "1", "first")
+	if now, n := d.annex(); err != nil || done || string(brief) != candidate || d.briefSessions() != 1 || n != 1 || now != sha {
+		t.Errorf("the restart = %d bytes, done %v, %v after %d sessions, %d annex commits, annex SHA %s; want the candidate, one session, one annex commit at %s", len(brief), done, err, d.briefSessions(), n, now, sha)
+	}
+
+	// The basis keeps every fact: a fact left out of the brief is a fact of the basis, and the answer can change it.
+	b, err := d.r.briefBasis(context.Background(), "1")
+	if err != nil || !slices.Contains(b.Facts, spec.Fact{Number: "Q-005", Class: "context"}) || !slices.Contains(b.Open, "Q-006") {
+		t.Fatalf("briefBasis = %+v, %v; want the fact Q-005 and the open question Q-006", b, err)
+	}
+	in := b.input([]string{"1"})
+	answer, findings := spec.ParseAnswer([]byte("REQ-001: Must, phase 1\nfact Q-005: need\noption db: pg\nbet\n"), in.Required, in.Tags, in.Facts, in.Survivors)
+	if len(findings) != 0 || answer.Facts["Q-005"] != (spec.FactAnswer{Class: "need"}) {
+		t.Errorf("ParseAnswer on `fact Q-005: need` = %+v, findings %v; want the change of the omitted fact", answer.Facts, findings)
+	}
+}
+
+// Condition 4 of the plan review of #471: a text left out of the brief that changes while a candidate stands changes the pinned SHA, and the
+// old candidate is refused with the rule fixed (the existing recovery test changes an inline span fact).
+func TestAChangedTextLeftOutOfTheBriefRefusesTheOldCandidate(t *testing.T) {
+	t.Parallel()
+	for name, change := range map[string]func(*drvWorld){
+		"an omitted answer":        func(d *drvWorld) { d.operatorRows("Use Rust.", "The question Q-006") },
+		"an omitted open question": func(d *drvWorld) { d.operatorRows("Use Go.", "The question Q-006, reworded") },
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			d := shapedWorld(t)
+			d.operatorRows("Use Go.", "The question Q-006")
+			d.ctlBrief(1, briefProblem, briefAppetite("5"), briefHoles, "")
+			d.ctlBrief(2, briefProblem, briefAppetite("5"), briefHoles, "")
+			d.stopAtTheComment()
+			sha, _ := d.annex()
+			old := keptRecord(t, d.w, d.candidates()[0])
+			change(d)
+			brief, _, err := d.r.betBrief(context.Background(), "1", "first")
+			if err != nil || string(brief) == old || d.briefSessions() != 2 || !strings.Contains(d.briefPrompt(2), "fixed:") {
+				t.Fatalf("the recovery = %d bytes, %v after %d sessions; want a new brief, and the finding fixed: in the second prompt", len(brief), err, d.briefSessions())
+			}
+			if now, n := d.annex(); now == sha || n != 2 || !strings.Contains(string(brief), "/blob/"+now+"/bets/1/") || strings.Contains(string(brief), sha) {
+				t.Errorf("the annex SHA %s (was %s) after %d annex commits; want a new commit, linked by the new brief and not the old SHA", now, sha, n)
+			}
+		})
 	}
 }

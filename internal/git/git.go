@@ -287,6 +287,15 @@ func CommitTime(dir, rev string) (time.Time, error) {
 	return time.Unix(n, 0).UTC(), nil
 }
 
+// LastChange gives the last commit that changed a path of paths, as seen from rev: the empty string when none did (task T-36xw, #471).
+func LastChange(dir, rev string, paths ...string) (string, error) {
+	if len(paths) == 0 {
+		return "", errors.New("git log: no path to look for")
+	}
+	out, err := call(dir, environ(), append([]string{"log", "-1", "--format=%H", "--end-of-options", rev, "--"}, paths...)...)
+	return strings.TrimSpace(string(out)), err
+}
+
 // LsFiles gives the paths of the tracked files.
 func LsFiles(dir string) ([]string, error) {
 	out, err := call(dir, environ(), "ls-files", "-z")

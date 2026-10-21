@@ -2,8 +2,12 @@ package run
 
 import (
 	"errors"
+	"fmt"
+	"maps"
 	"os"
+	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -466,5 +470,239 @@ func TestACandidateWithoutTheFixedPartsOfTheInputsIsRefused(t *testing.T) {
 	k.parts.facts += "- 9 (need): A fact that came after the candidate.\n"
 	if fs := k.judge(assemble(partsFx(t), problemFx, appetiteFx, holesFx)); len(fs) == 0 || fs[0].Rule != "fixed" {
 		t.Errorf("an old candidate and the new facts: findings %v; want the first of the rule fixed", fs)
+	}
+}
+
+// The facts and questions left out of the brief (task T-36xw, #471): the Operator's answers and open questions are ranges with a link.
+
+// minRoomForText is the room for the session's text that the Operator pre-registered (2026-10-21, decision 4 on #471).
+const minRoomForText = 20
+
+const (
+	annexSHAFx = "5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c"
+	factsURLFx = "https://github.com/acme/target/blob/" + annexSHAFx + "/bets/1/facts.md"
+	openURLFx  = "https://github.com/acme/target/blob/" + annexSHAFx + "/bets/1/open.md"
+)
+
+// mq gives a row of questions.tsv with a block, as the reader gives it.
+func mq(id, source, ref, block, start, end, state string) []string {
+	return []string{id, source, ref, block, "before-delivery", source, start, end, "The question " + id, "2026-10-12T09:00:00Z", "layup run", "", state}
+}
+
+func qid(n int) string { return fmt.Sprintf("Q-%03d", n) }
+
+// intakeFx is an Intake as the brief reads it.
+type intakeFx struct{ spans, questions, answers [][]string }
+
+// m2dIntake is an Intake of the size of the M2d target's (the counts of the plan of #471): 38 spans, 25 facts (10 need, 8 constraint, 3 measure,
+// 4 context); 319 answers, 14 of the idea owner's (Q-001..Q-011 meaning quoting a need or constraint, Q-012..Q-014 intent) and 305 of the
+// Operator's (Q-015..Q-169 setup, 150 open, Q-170..Q-319 the follow-ups of the open ones), 3 characters at the median and up to 279.
+func m2dIntake() intakeFx {
+	var f intakeFx
+	classes := strings.Fields("need constraint need constraint need constraint need constraint need constraint need need need need need measure measure measure constraint constraint constraint context context context context")
+	for n, class := range classes {
+		f.spans = append(f.spans, []string{strconv.Itoa(n * 100), strconv.Itoa(n*100 + 90), strconv.Itoa(n + 1), class, "", fmt.Sprintf("The fact %d.", n+1)})
+	}
+	for n := 0; n < 13; n++ {
+		f.spans = append(f.spans, []string{strconv.Itoa(5000 + n*100), strconv.Itoa(5000 + n*100 + 10), "", "", "a title", "# Heading"})
+	}
+	for n := 1; n <= 319; n++ {
+		q := mq(qid(n), "follow-up", qid(n-155), "operator", "", "", "answered")
+		switch {
+		case n <= 11:
+			q = mq(qid(n), "meaning", "M-001", "idea-owner", strconv.Itoa(n*100-98), strconv.Itoa(n*100-92), "answered")
+		case n <= 14:
+			q = mq(qid(n), "intent", "band.B", "idea-owner", "", "", "answered")
+		case n <= 169:
+			q = mq(qid(n), "setup", "M-1a2b3c4d", "operator", "", "", map[bool]string{true: "open", false: "closed"}[n <= 164])
+		}
+		text := "yes"
+		if n%50 == 0 {
+			text = strings.Repeat("a long answer ", 20)[:279]
+		}
+		f.questions, f.answers = append(f.questions, q), append(f.answers, []string{qid(n), text, "801", "1", "2026-10-12T09:00:00Z"})
+	}
+	return f
+}
+
+// m2dKeeper is the keeper of an Intake's brief: 18 requirements, 3 metrics and one decision of three options (one dropped).
+func m2dKeeper(t *testing.T, f intakeFx, lines int) briefKeeper {
+	t.Helper()
+	prd := spec.PRDContent{Statements: map[string]string{}, Criteria: map[string]string{}, Metrics: []string{"faster", "cheaper", "smaller"}}
+	var ids []string
+	for i := 1; i <= 18; i++ {
+		id := fmt.Sprintf("REQ-%03d", i)
+		if i > 10 {
+			id = fmt.Sprintf("NFR-%03d", i-10)
+		}
+		ids, prd.Statements[id], prd.Criteria[id] = append(ids, id), "Statement "+id, "Criterion "+id
+	}
+	req, err := requirementsPart(ids, prd)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return briefKeeper{multi: map[string][]string{"db": {"pg", "sqlite", "mysql"}}, lines: &lines, links: map[string]bool{prUrls[0]: true, prUrls[1]: true, factsURLFx: true, openURLFx: true},
+		parts: briefParts{requirements: req, solution: solutionPart("acme", "target", heads, map[string]spec.Result{"db": dbWeb()["db"]}),
+			open: briefOpenPart("1", f.questions, openURLFx), facts: briefFactsPart("1", f.spans, f.questions, f.answers, factsURLFx)}}
+}
+
+// Size test: an Intake of the size of M2d's fits brief.lines 100 with at least 20 lines of room (78 lines of code, so 22; 531 before the change).
+func TestAnIntakeOfTheM2dSizeFitsTheLimitWithRoomForTheText(t *testing.T) {
+	f := m2dIntake()
+	facts, operator, open := 0, 0, len(stillOpen(f.questions))
+	for _, s := range f.spans {
+		if s[2] != "" {
+			facts++
+		}
+	}
+	for _, q := range f.questions {
+		if q[3] == "operator" {
+			operator++
+		}
+	}
+	if len(f.spans) != 38 || facts != 25 || len(f.answers) != 319 || operator != 305 || open != 150 {
+		t.Fatalf("the fixture has %d spans, %d facts, %d answers, %d of the Operator's, %d open; want 38, 25, 319, 305, 150", len(f.spans), facts, len(f.answers), operator, open)
+	}
+	k := m2dKeeper(t, f, 100)
+	if err := k.overLimit(); err != nil {
+		t.Errorf("overLimit = %v; want none for an Intake of the size of M2d's", err)
+	}
+	if n := strings.Count(assemble(k.parts, "", "", ""), "\n"); n != 78 || 100-n < minRoomForText {
+		t.Errorf("the parts of code are %d lines; want 78, so at least %d lines of room", n, minRoomForText)
+	}
+	// Twenty authored lines of the session pass the keeper: 8 + 6 + 6, the appetite line among them.
+	lines := func(n int) string { return strings.Repeat("A line of the text.\n", n) }
+	files := map[string][]byte{"problem.md": []byte(lines(8)), "appetite.md": []byte("appetite: USD 8, 12 hours\n" + lines(5)), "rabbit-holes.md": []byte(lines(6))}
+	if kept, err := k.keep("1", "S-1a2b3c4d", files); err != nil || len(kept) != 1 {
+		t.Errorf("keep of 20 authored lines = %d files, %v; want kept", len(kept), err)
+	}
+}
+
+// partitionFx covers every class, a gap, a kept ID between left-out IDs, an unknown question (Q-040), an idea owner's answer of class
+// context (Q-021) and a follow-up of an Operator question (Q-041, a need).
+func partitionFx() intakeFx {
+	f := intakeFx{spans: [][]string{{"0", "10", "1", "need", "", "Need one."}, {"20", "40", "2", "constraint", "", "Constraint two."},
+		{"50", "60", "3", "measure", "", "Measure three."}, {"70", "80", "4", "context", "", "Context four."}}}
+	for _, r := range []struct{ id, source, ref, block, start, end, state string }{
+		{"Q-001", "meaning", "M-001", "idea-owner", "2", "5", "answered"}, {"Q-002", "intent", "band.B", "idea-owner", "", "", "answered"},
+		{"Q-010", "meaning", "M-002", "operator", "1", "4", "answered"}, {"Q-011", "meaning", "M-002", "operator", "1", "4", "answered"}, {"Q-012", "meaning", "M-002", "operator", "1", "4", "answered"},
+		{"Q-013", "meaning", "M-003", "operator", "22", "30", "answered"}, {"Q-015", "meaning", "M-004", "operator", "52", "58", "answered"}, {"Q-016", "meaning", "M-004", "operator", "52", "58", "answered"},
+		{"Q-020", "setup", "M-1", "operator", "", "", "answered"}, {"Q-021", "intent", "band.U", "idea-owner", "", "", "answered"}, {"Q-022", "setup", "M-1", "operator", "", "", "answered"},
+		{"Q-023", "setup", "M-1", "operator", "", "", "answered"}, {"Q-030", "setup", "M-1", "operator", "", "", "answered"}, {"Q-032", "setup", "M-1", "operator", "", "", "answered"},
+		{"Q-041", "follow-up", "Q-010", "operator", "", "", "answered"}, {"Q-050", "intent", "success-criteria", "idea-owner", "", "", "open"},
+		{"Q-051", "setup", "M-1", "operator", "", "", "open"}, {"Q-052", "setup", "M-1", "operator", "", "", "open"}, {"Q-053", "setup", "M-1", "operator", "", "", "open"},
+		{"Q-055", "setup", "M-1", "operator", "", "", "open"}, {"Q-999", "setup", "M-1", "operator", "", "", "answered"}, {"Q-1000", "setup", "M-1", "operator", "", "", "answered"},
+	} {
+		f.questions = append(f.questions, mq(r.id, r.source, r.ref, r.block, r.start, r.end, r.state))
+	}
+	for _, id := range strings.Fields("Q-001 Q-002 Q-010 Q-011 Q-012 Q-013 Q-015 Q-016 Q-020 Q-021 Q-022 Q-023 Q-030 Q-032 Q-040 Q-041 Q-999 Q-1000") {
+		f.answers = append(f.answers, []string{id, "answer " + id, "801", "1", "2026-10-12T09:00:00Z"})
+	}
+	return f
+}
+
+// The Operator's partition is the range-and-link form, the ranges name exactly the left-out set, and every fact is reachable.
+func TestTheOperatorsAnswersAreRangesWithALinkAndEveryFactIsReachable(t *testing.T) {
+	f := partitionFx()
+	got := briefFactsPart("1", f.spans, f.questions, f.answers, factsURLFx)
+	summary := func(ranges, class string) string {
+		return "- " + ranges + " (" + class + "): the answers of the Operator's questions; check the class of each against its text in [the facts of the bet 1](" + factsURLFx + ")\n"
+	}
+	want := "- 1 (need): Need one.\n- 2 (constraint): Constraint two.\n- 3 (measure): Measure three.\n- 4 (context): Context four.\n" +
+		"- Q-001 (need): answer Q-001\n- Q-002 (context): answer Q-002\n- Q-021 (context): answer Q-021\n- Q-040 (context): answer Q-040\n" +
+		summary("Q-010 to Q-012, Q-041", "need") + summary("Q-013", "constraint") + summary("Q-015 to Q-016", "measure") +
+		summary("Q-020, Q-022 to Q-023, Q-030, Q-032, Q-999 to Q-1000", "context")
+	if got != want {
+		t.Errorf("the facts part =\n%s\nwant\n%s", got, want)
+	}
+	omitted := map[string]string{} // by the block of the fixture, not by the code
+	for _, row := range factRows(f.spans, f.questions, f.answers) {
+		if slices.ContainsFunc(f.questions, func(q []string) bool { return q[0] == row[0] && q[3] == "operator" }) {
+			omitted[row[0]] = row[1]
+		}
+	}
+	inRange := map[string]string{} // the IDs the range lines name, expanded, with the class of their line
+	for _, m := range regexp.MustCompile(`(?m)^- (Q-[Q0-9, to-]+) \((\w+)\): the answers of the Operator's questions;`).FindAllStringSubmatch(got, -1) {
+		for _, item := range strings.Split(m[1], ", ") {
+			from, to, _ := strings.Cut(item, " to ")
+			first, _ := strconv.Atoi(from[2:])
+			last := first
+			if to != "" {
+				last, _ = strconv.Atoi(to[2:])
+			}
+			for n := first; n <= last; n++ {
+				inRange[qid(n)] = m[2]
+			}
+		}
+	}
+	if !maps.Equal(inRange, omitted) {
+		t.Errorf("the ranges name %v; want exactly the left-out set %v", inRange, omitted)
+	}
+	annex := factsPart(f.spans, f.questions, f.answers)
+	for _, row := range factRows(f.spans, f.questions, f.answers) {
+		line := "- " + row[0] + " (" + row[1] + "): " + row[2] + "\n"
+		if class, left := inRange[row[0]]; left != (!strings.Contains(got, line) && strings.Contains(annex, line)) || left && class != row[1] || !left && !strings.Contains(got, line) {
+			t.Errorf("fact %s: in a range %v; want exactly one of the brief's own line or a range of its class with its line in the linked file", row[0], left)
+		}
+	}
+	wantOpen := "### The questions still open\n- Q-050: The question Q-050\n- Q-051 to Q-053, Q-055: the Operator's questions still open, each with its text in [the questions still open of the bet 1](" + openURLFx + ")\n"
+	if g := briefOpenPart("1", f.questions, openURLFx); g != wantOpen {
+		t.Errorf("the open part =\n%s\nwant\n%s", g, wantOpen)
+	}
+	if g, w := briefOpenPart("1", slices.DeleteFunc(slices.Clone(f.questions), func(q []string) bool { return q[0] != "Q-051" }), openURLFx), "### The questions still open\n- Q-051: the Operator's questions still open, each with its text in [the questions still open of the bet 1]("+openURLFx+")\n"; g != w {
+		t.Errorf("an Operator question alone =\n%s\nwant\n%s (no - none)", g, w)
+	}
+	if g, w := briefOpenPart("1", nil, openURLFx), "### The questions still open\n- none\n"; g != w {
+		t.Errorf("no question =\n%s\nwant\n%s", g, w)
+	}
+	if g := briefFactsPart("1", spansFx, questionsFx(), answersFx(), factsURLFx); g != factsPart(spansFx, questionsFx(), answersFx()) {
+		t.Errorf("no Operator row: the facts part = %q; want the part of the records", g)
+	}
+}
+
+// The inlined part alone over the limit waits; the Operator's rows add one summary line only.
+func TestTheOverLimitWaitFiresWhenTheInlinedPartAloneIsOver(t *testing.T) {
+	f := m2dIntake()
+	for n := 26; n <= 60; n++ {
+		f.spans = append(f.spans, []string{strconv.Itoa(n * 1000), strconv.Itoa(n*1000 + 10), strconv.Itoa(n), "need", "", fmt.Sprintf("The fact %d.", n)})
+	}
+	err := m2dKeeper(t, f, 100).overLimit()
+	if want := "the parts of code are 113 lines, over brief.lines 100"; err == nil || err.Error() != want || !errors.Is(err, ErrBriefOverLimit) {
+		t.Errorf("60 span facts, 14 idea owner answers, 305 Operator answers: err = %v; want %q wrapping ErrBriefOverLimit", err, want)
+	}
+	var qs, as [][]string
+	for i, q := range f.questions {
+		if q[3] != "operator" {
+			qs, as = append(qs, q), append(as, f.answers[i])
+		}
+	}
+	f.questions, f.answers = qs, as
+	if err, want := m2dKeeper(t, f, 100).overLimit(), "the parts of code are 112 lines, over brief.lines 100"; err == nil || err.Error() != want {
+		t.Errorf("the control with no Operator row: err = %v; want %q", err, want)
+	}
+}
+
+// The ranges: exact, in the order of the numbers; a gap, or an ID that is not left out, ends a run.
+func TestTheLeftOutIDsAreNamedInExactRanges(t *testing.T) {
+	var long []string
+	for n := 15; n <= 169; n++ {
+		long = append(long, qid(n))
+	}
+	for name, c := range map[string]struct {
+		ids  []string
+		want string
+	}{
+		"none":                      {nil, ""},
+		"one contiguous run":        {long, "Q-015 to Q-169"},
+		"a single ID":               {[]string{"Q-007"}, "Q-007"},
+		"a run and a single":        {[]string{"Q-001", "Q-002", "Q-004"}, "Q-001 to Q-002, Q-004"},
+		"a gap splits a run":        {[]string{"Q-010", "Q-012", "Q-013", "Q-020"}, "Q-010, Q-012 to Q-013, Q-020"},
+		"an inline ID splits":       {slices.Concat(long[:5], long[6:9]), "Q-015 to Q-019, Q-021 to Q-023"},
+		"four digits sort by value": {[]string{"Q-1000", "Q-999", "Q-998"}, "Q-998 to Q-1000"},
+		"unsorted input":            {[]string{"Q-030", "Q-010", "Q-011"}, "Q-010 to Q-011, Q-030"},
+	} {
+		if got := idRanges(c.ids); got != c.want {
+			t.Errorf("%s: idRanges(%v) = %q; want %q", name, c.ids, got, c.want)
+		}
 	}
 }

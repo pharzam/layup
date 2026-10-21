@@ -153,6 +153,11 @@ func (s *recordsStore) Base() string {
 	return s.read
 }
 
+// LastChange gives the last commit of the records base that changed a path of paths (task T-36xw, #471).
+func (s *recordsStore) LastChange(ctx context.Context, paths ...string) (string, error) {
+	return git.LastChange(s.dir, s.Base(), paths...)
+}
+
 // Started gives the time of Start: the committer time of the root commit of
 // the run's records base, the first commit of the records branch
 // (docs/spec/intake.md, The budget of Intake; task T-ybd5).

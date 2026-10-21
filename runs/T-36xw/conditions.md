@@ -1,0 +1,19 @@
+# T-36xw: the conditions of the plan review of #471 and the Operator's decisions, and their evidence
+
+One row per condition of the plan review (comment 6319073363) and per decision of the Operator (comment 6319102451) on the plan of #471. This table is check K6's input; K6 proves that each cited file exists, not that it meets the condition.
+
+| Condition | Evidence |
+| --- | --- |
+| 6319073363 1: option (b), the open-question rule, the pinned files and the room of 20 lines settled in the spec before the first test; the CheckBrief sentence (on the issue, in the Operator's decisions, comment 6319102451, not in the spec) states that the implementation is unchanged | `docs/spec/loop.md:1977`, `docs/spec/loop.md:1993`, `docs/spec/loop.md:1998`, `internal/run/betbrief_test.go:479` |
+| 6319073363 2: the summary tells the idea owner to check the Operator answers' classes (`context` too) against the linked texts; §7, §8 and L-C1 updated; every fact keeps its ID, class, reachable text and one-line correction | `docs/architecture.md:643`, `docs/architecture.md:1587`, `docs/spec/loop.md:1990`, `internal/run/betbrief.go:287` |
+| 6319073363 3: the selection test requires the range-and-link form, covers every class, a gap, a kept ID between left-out IDs, an unknown question and an idea owner's `context` answer, and the ranges name exactly the left-out set; the size test passes 20 authored lines through `keep`; red recorded before the code | `internal/run/betbrief_test.go:605`, `internal/run/betbrief_test.go:583`, `internal/run/betbrief_test.go:550`, `runs/T-36xw/test-runs.md:1` |
+| 6319073363 4: recovery after a kept candidate; an unrelated records commit keeps the SHA; a changed omitted answer and a changed omitted open question each change the SHA and refuse with `fixed`; both wait controls seeded with Operator rows write no annex; bytes compared before an annex write | `internal/run/betbrief_integration_test.go:580`, `internal/run/betbrief_integration_test.go:636`, `internal/run/betbrief_integration_test.go:307`, `internal/run/betbrief_integration_test.go:322`, `internal/run/betbrief.go:730` |
+| 6319073363 5: `ParseAnswer` on `fact <omitted-ID>: need` against the kept basis; the rendered facts record compared line by line with the full records, the Operator's answers included | `internal/run/betbrief_integration_test.go:628`, `cmd/layup/loop_e2e_test.go:519` |
+| 6319073363 6: `LastChange`, its exact command and its caller registered in `packages.md` before the code | `docs/spec/packages.md:385`, `internal/git/git.go:291`, `internal/run/store.go:157` |
+| 6319073363 note 5: the two source explanations corrected (`plain` escapes link syntax and removes no line break; the new Markdown payloads have layout rules and no TSV block; `needs` is not claimed to prove that (a) is no smaller) | `docs/spec/loop.md:1958`, `docs/spec/loop.md:1993`, `docs/spec/records.md:60` |
+| 6319102451 1: option (b), by block; the Operator's answers as exact ID-range lines per class with their texts in `bets/<m>/facts.md` at a pinned records commit | `internal/run/betbrief.go:287`, `internal/run/betbrief.go:730` |
+| 6319102451 2: the same rule for the open part, one range line and `open.md` | `internal/run/betbrief.go:306`, `docs/spec/records.md:61` |
+| 6319102451 3: the architecture wording accepted with condition 2, no ADR | `docs/architecture.md:643` |
+| 6319102451 4: the room of at least 20 lines pre-registered in the size test | `internal/run/betbrief_test.go:479`, `internal/run/betbrief_test.go:550` |
+| 6319102451 5: no issue for the stale `open` setup questions; recorded as a known limit, not fixed here | `docs/spec/loop.md:1977` |
+| Demo (R11): the bet brief of an Intake of the M2d size fits 100 with room, every fact reachable | `runs/T-36xw/test-runs.md:1`, `internal/run/betbrief_test.go:550` |
