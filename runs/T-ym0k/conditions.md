@@ -16,7 +16,7 @@ One row per condition of the plan review (comment 6314912248), per decision D1 t
 | D3: `RemoteHead` in (7) | `runs/T-efmy/release-check.sh:71`, `runs/T-efmy/release-check.sh:220`, `runs/T-ym0k/release-check.txt:132` |
 | D4: the omission alarm of (6) | `runs/T-efmy/release-check.sh:190-208` |
 | D5: the comparator in the tree | `runs/T-ym0k/coverage-check.sh:1-20`, `runs/T-ym0k/coverage-check-test.sh:1-8` |
-| Q1: the reviewer, Claude Fable 5.1, then the eligible fallback | Claude Fable 5.1 on OpenCode, chosen by the selector (`runs/T-ym0k/selection.json`, `docs/tasks/T-ym0k.md:20`) |
-| Q2: the effort and the spend | Variant `max`; USD 41.26 and 106,552,552 tokens with cache (`runs/T-ym0k/test-runs.md`, `docs/tasks/T-ym0k.md:20`) |
+| Q1: the reviewer, Claude Fable 5.1, then the eligible fallback | Claude Fable 5.1 on OpenCode, chosen by the selector (`runs/T-ym0k/selection.txt`, `docs/tasks/T-ym0k.md:20`) |
+| Q2: the effort and the spend | Variant max; USD 41.26 and 106,552,552 tokens with cache (`runs/T-ym0k/test-runs.md`, `docs/tasks/T-ym0k.md:20`) |
 | Q3: the time limit | 12:30:04Z to 12:53:29Z, 23 min 25 s (`runs/T-ym0k/test-runs.md`, `docs/tasks/T-ym0k.md:20`) |
 | Q4: bounded fixes in this PR | The review has no defect, so no fix is needed (`docs/tasks/T-ym0k.md:22`) |
