@@ -586,16 +586,17 @@ func TestAnAttemptAfterTheBetWithNoRenderedCommitIsTheStopOfTheOperator(t *testi
 	if got, err := f.finishTask(f.spec, f.harnesses, nil); err != nil || got.Attempt != 2 {
 		t.Fatalf("FinishTask after the loss = %+v, %v; want the handback of attempt 2", got, err)
 	}
-	// F4: the attempt has no rendered commit and no pull request, and FinishTask has nothing to finish: an error, while the step bet is done.
-	if _, err := f.finishTask(f.spec, f.harnesses, nil); err == nil {
-		t.Fatal("FinishTask of the attempt with no rendered commit gave no error; the premise of F4 is gone")
+	// F4, the narrower evidence: attempt 2 has no pull request, so FinishTask fails at the read of the pull request, before it can ask for the rendered commit; the
+	// stop of Q2 is therefore the loop's, and it comes before any call of FinishTask or of a driver.
+	if _, err := f.finishTask(f.spec, f.harnesses, nil); err == nil || !strings.Contains(err.Error(), "is not on the forge") {
+		t.Fatalf("FinishTask of the attempt with no rendered commit = %v; want the error of the missing pull request", err)
 	}
 	want := Step{"loop", "fail", "waiting for the Operator: " + f.spec + ": an attempt after the bet has no rendered commit"}
 	for i := 0; i < 2; i++ {
-		f.restart()
 		sessions := len(f.sessionsOf(f.spec))
-		if got := f.loop(); got != want || len(f.sessionsOf(f.spec)) != sessions {
-			t.Fatalf("loop %d after the loss = %+v with %d sessions more; want %+v and no session of a driver", i+1, got, len(f.sessionsOf(f.spec))-sessions, want)
+		rows := f.tail() // a restart through the steps after the Scaffold: bet must hand over to loop (G1)
+		if len(rows) != 3 || rows[0] != (Step{"shape", "done", "done before"}) || rows[1] != (Step{"bet", "done", "done before"}) || rows[2] != want || len(f.sessionsOf(f.spec)) != sessions {
+			t.Fatalf("restart %d after the loss = %+v with %d sessions more; want shape and bet done before, then %+v and no session of a driver", i+1, rows, len(f.sessionsOf(f.spec))-sessions, want)
 		}
 	}
 	if len(f.attempts(f.spec)) != 2 || len(f.mergedEvents(f.spec)) != 0 {
@@ -677,5 +678,80 @@ func TestLoopBeforeTheBetFailsAndWritesNothing(t *testing.T) {
 	head := recordsHead(t, d.w)
 	if got := d.loop(); got.Result != "fail" || got.Detail != "bets.tsv holds no bet: the step bet comes first" || recordsHead(t, d.w) != head {
 		t.Errorf("loop before the bet = %+v; want the fail, and no write", got)
+	}
+}
+
+// lostAnswerOfPush makes the push of a head and loses the answer, as a network that went down after the forge took the push does.
+type lostAnswerOfPush struct{ SessionStore }
+
+func (l lostAnswerOfPush) PushHead(ctx context.Context, sha, branch string) error {
+	if err := l.SessionStore.PushHead(ctx, sha, branch); err != nil {
+		return err
+	}
+	return errors.New("the push was made and its answer was lost")
+}
+
+// Round 1 of #367, finding 1, and condition 5 of the plan review: a close-out push that the forge took and whose answer was lost is bound by the restart through
+// the steps after the Scaffold, whether the default branch stayed current or moved by a file the task does not touch; a second restart makes no write.
+func TestASuccessfulCloseOutPushWhoseAnswerWasLostIsBoundByTheRestart(t *testing.T) {
+	t.Parallel()
+	for _, moved := range []bool{false, true} {
+		f, _, rendered := newBetFinishing(t)
+		f.mergeSpecOutside(rendered)
+		arch := f.taskOf(f.arch)
+		b := f.register()[2].ID
+		if adv, err := f.r.sessions().BringUpToDate(ctx0, CarryInput{Task: f.arch, Verifier: f.verifierOf(f.arch), Harnesses: f.harnesses, Models: f.models}); err != nil || !adv.Verified {
+			t.Fatalf("moved %v: the carry over the merged specification = %+v, %v", moved, adv, err)
+		}
+		if _, err := f.finish(func(s *Sessions) { s.Store = lostAnswerOfPush{s.Store} }); err == nil || !strings.Contains(err.Error(), "its answer was lost") {
+			t.Fatalf("moved %v: the close-out with the answer of its push lost = %v", moved, err)
+		}
+		if moved {
+			f.moveMainWith(map[string]string{"elsewhere.txt": "moved after the close-out push\n"})
+		}
+		rows := f.tail()
+		if len(rows) != 3 || rows[2].Result != "done" || rows[2].Detail != "the loop merged "+arch.ID+", "+b {
+			t.Fatalf("moved %v: the restart = %+v; want the push bound and the two tasks merged", moved, rows)
+		}
+		if bound := slices.ContainsFunc(f.eventsOf(arch.ID), func(e []string) bool { return e[1] == "bound" && e[3] != "" && e[1] != "refused" }); !bound || slices.Contains(f.kinds(arch.ID), "refused") {
+			t.Errorf("moved %v: the events of %s: %v; want the push bound and none refused", moved, arch.ID, f.kinds(arch.ID))
+		}
+		head, writes := recordsHead(t, f.w), f.changes()
+		if again := f.tail(); again[2] != (Step{"loop", "done", "done before"}) || recordsHead(t, f.w) != head || f.changes() != writes {
+			t.Errorf("moved %v: a second restart = %+v with %d writes more; want done before and no write", moved, again, f.changes()-writes)
+		}
+	}
+}
+
+// Round 1 of #367, finding 3, and D9: the driver does not ask a reopened task for the specification that waits for its bet. The pinned prd-lint of the default
+// branch is made to fail, as the original's check would on a head it does not accept; the reopened task reaches its verifier, and a required job that fails
+// still blocks its merge.
+func TestAReopenedTaskReachesItsVerifierWithoutTheWaitingSpecCheckAndTheJobStillBlocksItsMerge(t *testing.T) {
+	t.Parallel()
+	w := newReopening(t)
+	w.merge()
+	tasks, err := w.open()
+	if err != nil || len(tasks) == 0 {
+		t.Fatalf("openReopenings = %v, %v", tasks, err)
+	}
+	task := tasks[0]
+	w.moveMainWith(map[string]string{"docs/prd/prd-lint.sh": "#!/bin/sh\nprintf 'FAIL  review: the check of the original waiting specification\\n'\nexit 1\n"})
+	in := w.input(task.ID)
+	in.Base = strings.TrimSpace(gitOut(t, w.w.bare, "rev-parse", "main"))
+	pc, err := w.r.sessions().PromptFile(ctx0, PromptIn{Task: task.ID, Step: "specification", Base: in.Base})
+	if err != nil {
+		t.Fatal(err)
+	}
+	w.ctlWrite("reopen-"+task.ID, shownLine(string(pc.Text("/x")), "need"))
+	w.ctlWrite("reopen-section-"+task.ID, task.Requirements[0])
+	if in.Copy, err = w.r.betCopy(ctx0); err != nil {
+		t.Fatal(err)
+	}
+	if adv, err := w.r.sessions().AdvanceShapeTask(ctx0, in); err != nil || !adv.Verified {
+		t.Fatalf("AdvanceShapeTask = %+v, %v; want the verified head, with no check of a waiting specification", adv, err)
+	}
+	w.job("completed", "failure")
+	if adv, err := w.r.actOn(ctx0, w.taskOf(task.ID), false); err != nil || adv.Merged || !strings.Contains(adv.Wait, "not ready") {
+		t.Errorf("the act with the required job failing = %+v, %v; want the wait of a head that is not ready", adv, err)
 	}
 }

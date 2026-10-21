@@ -102,7 +102,7 @@ specification)
   if [ -e $ctl/no-commit ]; then printf "$res_head" > ../result/result.tsv; exit 0; fi
   artifacts docs/tasks/$task.md docs/prd/PRD-0001-x.md $(ls docs/spec/*.md 2>/dev/null) x.go ;;
 close-out) # the close-out of the rendered commit of the bet (task T-2vva): the task file and the completed log, in one commit
-  mkdir -p docs/tasks; printf 'task\n' > docs/tasks/$task.md; printf 'log\n' > docs/tasks/completed.md
+  mkdir -p docs/tasks; printf 'task %s\n' $(date +%s%N) > docs/tasks/$task.md; printf 'log %s\n' $(date +%s%N) > docs/tasks/completed.md
   [ -e $ctl/closeout-extra ] && echo x > README.md
   artifacts docs/tasks/$task.md docs/tasks/completed.md ;;
 shape-architecture)

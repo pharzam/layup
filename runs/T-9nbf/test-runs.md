@@ -177,3 +177,27 @@ ok K4: restore evidence of mutants
 ok K5: projection: figure 1672/27, maximum 2600/28, tolerance 500/4, limit 3100/32, margin 1428/5 (the figure at landing is still measured at landing)
 ok K6: conditions table
 ```
+
+## Round 1 of #367 (6312207004): the findings, test first (late evidence, after the freeze at `30ca2a8`)
+
+Go 1.26.10 in every command. Each red ran before its code change.
+
+### Finding 1: a successful unresolved close-out push when the base moved
+
+- Test: `TestASuccessfulCloseOutPushWhoseAnswerWasLostIsBoundByTheRestart` (both cases, the base current and the base moved by a file the task does not touch, through `afterScaffold` and a second restart).
+- Command: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration . -run '^(TestASuccessfulCloseOutPushWhoseAnswerWasLostIsBoundByTheRestart|TestAnAttemptAfterTheBetWithNoRenderedCommitIsTheStopOfTheOperator|TestAReopenedTaskReachesItsVerifierWithoutTheWaitingSpecCheckAndTheJobStillBlocksItsMerge)$'` in `internal/run`.
+- 09:05:52 to 09:06:09Z, exit 1. First failing assertion (the current-base case passes, as the reviewer said): `moved true: the restart = [shape done done before, bet done done before, loop fail the push of the session's head was refused: task/T-.../1 holds "...", not the head ... or its merge ...]`.
+- Fix: in the act, a task whose view is verified has `resolvePushes` called and its view read again before `BringUpToDate`; `loop.md` item 3 states the order. Green after it, with one change of the scripted harness: the close-out step now writes a task file and a completed log that differ at each run (a second close-out at the merge that carries the head wrote the same bytes and was refused for its scope, an empty change; a real close-out at a new base has a change). The mutant M19 kills it.
+
+### Finding 2: G1 (D1 in the step `bet`)
+
+`TestAnAttemptAfterTheBetWithNoRenderedCommitIsTheStopOfTheOperator` now runs the recovered attempt through `afterScaffold` (two restarts), asserting the rows `shape` and `bet` `done before`, the exact stop and no new session. It passes at the code of `30ca2a8` (the reviewer's probe did too), so its redness is the mutant: G1 is killed (`runs/T-9nbf/mutants.md`; its earlier "equivalent" was wrong, since `bet` read `verifiedStep` before its row of `bets.tsv`).
+
+### Finding 3: G5 (the exemption of a reopened task in the driver)
+
+`TestAReopenedTaskReachesItsVerifierWithoutTheWaitingSpecCheckAndTheJobStillBlocksItsMerge` makes the pinned `prd-lint.sh` of the default branch fail; the reopened task reaches its verifier, and a failing required job still blocks its merge (the wait "not ready"). It passes at the code of `30ca2a8`; G5 is killed by it.
+
+### Notes
+
+- The comment of `loopPermissionsStep` (`register.go`) now says that the steps of the restart call the check (D6).
+- F4's direct assertion is narrowed and says so: with no pull request for attempt 2, `FinishTask` fails at `attemptPull` (`is not on the forge`), before the rendered-head error can be reached; the test asserts that error. The stop of Q2 is the loop's and comes before any call of `FinishTask`.

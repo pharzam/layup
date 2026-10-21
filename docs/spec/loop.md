@@ -2696,7 +2696,11 @@ pass, and holds nothing.
    verified and its attempt is the latest. `FinishTask`, the step `bet` (`verifiedStep`) and the dispatch of `loop` all use it.
 3. **The act on one task (D3), from the records and the forge, in this order.** A task with a `merged` event has nothing to do. A task with a `closed` event was redone: the register is read again. For a
    task with an attempt, the pull request of its latest attempt is read first, and one that is merged or closed is `FinishTask`'s (the merge is recorded, or the Operator is waited for) before any base
-   movement or repair. Else a task whose view is verified (item 2) gets `BringUpToDate` and, for a head that is current, `FinishTask`; a task that is not verified, and one that `FinishTask` handed back
+   movement or repair. Else a task whose view is verified (item 2) has the pushes of its sessions resolved first (the first part of `RepairTask`, `resolvePushes`: a push that the
+   branch holds is bound, any other is refused `push-lost`, and no attempt starts), because `BringUpToDate` takes its tip from the recorded bounds and a close-out push that the forge took,
+   whose answer was lost, would be found on the branch where it was not expected; the view is read again (a handback is still `FinishTask`'s `RepairTask`, and a closed pull request was
+   waited for before any of this, so it is written on never). Then it gets `BringUpToDate` and, for a head that is current, `FinishTask` (a close-out already bound under a base that
+   then moved is closed out again at the merge that carries it); a task that is not verified, and one that `FinishTask` handed back
    with `Attempt`, gets `AdvanceShapeTask`. `RepairTask` stays inside the two drivers: a call before `FinishTask` would write on a closed pull request, which D2 of the close-out forbids.
 4. **The order and the selection (D4).** The merge order is: the specification task of Shape; the tasks of `spec/reopenings.tsv`, in the order of its rows; the architecture task of Shape (the first task
    of that kind in the register); then the architecture tasks of the bet, in the order of the register. The first task in that order with no event `merged` is the only task acted on, and each of its

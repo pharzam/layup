@@ -362,7 +362,19 @@ func (r *state) actOn(ctx context.Context, t Task, original bool) (Advance, erro
 	case actFinish:
 		return s.FinishTask(ctx, fin)
 	case actBring:
-		st, _ := verifiedView(v)
+		// The pushes of the task's sessions are bound or refused before the tip for the base movement is chosen: BringUpToDate takes its tip from the
+		// recorded bounds, and a close-out push that the forge took and whose answer was lost would otherwise be found on the branch where it did not expect it.
+		if _, err := s.resolvePushes(ctx, t.ID); err != nil {
+			return Advance{}, err
+		}
+		if v, err = s.shapeView(ctx, t.ID); err != nil {
+			return Advance{}, err
+		}
+		attempt, _ = latestAttempt(v.Events)
+		st, ok := verifiedView(v)
+		if !ok {
+			return Advance{Task: t.ID}, nil // the next pass reads the records again
+		}
 		cin := CarryInput{Task: t.ID, Verifier: st.Session, Harnesses: r.cfg.Harnesses, Models: r.cfg.Models}
 		if original {
 			rendered, err := s.renderedHead(ctx, fin, v, attempt, st.Head)
