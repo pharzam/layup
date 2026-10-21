@@ -42,3 +42,13 @@ The code: `git.LastChange`, `(*recordsStore).LastChange`, and in `internal/run/b
 | Integration, git | `go test -count=1 -tags=integration -run 'TestLastChange$' ./internal/git/` | 15:08:21Z | 0 | `ok` |
 | Integration, run | `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m -run 'TestTheLinkedFactsAreKept\|TestAChangedTextLeftOut\|TestBriefLinesUnsetStartsNoSession\|TestAFreshBuildRefuses' ./internal/run/` | 15:08:21Z to 15:08:28Z | 0 | `ok` (4.3 s) |
 | End to end | `go test -count=1 -tags=e2e -timeout 10m -run 'TestTheSpecificationTaskEndToEnd$' ./cmd/layup/` | 15:08:31Z to 15:08:53Z | 0 | `ok` (21.6 s) |
+
+## 3. The change trimmed to the budget, and the gates on the final tree
+
+After the green of section 2 the change was over the budget (969 lines against 600 and a tolerance of 120), so the tests, the spec text and the comments were tightened (commit `chore: T-36xw trim the change to the budget`): the fixture classes are one list, the range check expands its ranges in place, the rendered-facts check of the integration test is left to the e2e (which compares the file line by line with the records), and the guardrails lesson is shorter. No assertion of the conditions was removed. The figure after the trim is 718 lines over 15 files, `runs/T-36xw` excluded. The results below are of the trimmed tree.
+
+| Level | Command | Times (UTC) | Exit | Result |
+| ----- | ------- | ----------- | ---- | ------ |
+| Unit | `go test -count=1 ./...` (the pre-commit hook of the trim commit) | 15:18Z | 0 | all packages `ok` |
+| Integration, full | `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./...` (output: `/home/layup/.cache/layup-session/T-36xw-full-integration.txt`) | 15:18:12Z to 15:22:30Z | 0 | 21 packages `ok`, no FAIL; `internal/run` 254.5 s, `internal/git` 1.1 s |
+| End to end, full | `go test -count=1 -tags=e2e -timeout 10m ./...` | 15:22:44Z to 15:24:11Z | 0 | all `ok` (`cmd/layup` with the stage 5 link and the rendered facts check) |
