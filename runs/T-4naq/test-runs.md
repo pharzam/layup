@@ -451,3 +451,12 @@ ok K4: restore evidence of mutants
 ok K5: projection: figure 2122/26, maximum 2600/30, tolerance 500/4, limit 3100/34, margin 978/8 (the figure at landing is still measured at landing)
 ok K6: conditions table
 ```
+
+## The merge of `main` at `192bae8` (Go 1.26.10, #457)
+
+The merge commit `51c54c1` conflicted only in the appended line of `docs/tasks/completed.md`; both sides are kept in landing order (O-219). It was run with Go 1.26.10 (`GOROOT=$HOME/.local/share/mise/installs/go/1.26.10`), by the coordinator (Claude Opus 5.5):
+
+| Command | Start | End | Exit |
+| --- | --- | --- | --- |
+| `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./...` | 2026-10-21T06:30:25Z | 2026-10-21T06:34:16Z | 0 (`internal/run` 227.948 s) |
+| `go test -count=1 -tags=e2e ./...` | 2026-10-21T06:34:16Z | 2026-10-21T06:35:22Z | 0 |
