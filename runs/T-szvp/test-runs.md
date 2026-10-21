@@ -348,3 +348,89 @@ close-out. This stage changes only this evidence record, adds no task detail or
 completed-log entry, and names no frozen SHA. After the coordinator commits the
 record, the resulting clean head still needs its pre-freeze rerun before freeze
 and independent review, within cycle cap 2.
+
+## Stage E — merge of origin/main before landing
+
+The coordinator merged `origin/main` after close-out `a79f905`. This stage
+began with a clean worktree at merge head
+`4b3cbc1d1c30b1fcb009ec7a8ca74f02e468038f`; its second parent and current
+`origin/main` are `192bae8b21cb3618f6a202e598c5509f19115534`. The merge
+integrates main's final #449 changes and the Go 1.26.10 update. No merge,
+commit or history rewrite was performed by this stage.
+
+### Merge preservation
+
+Compared both merge parents with the merged `docs/guardrails.md` and
+`docs/tasks/completed.md`. A deterministic audit also asserted a clean
+worktree and the exact merge/base identities above. It verified:
+
+- Every guardrail line from the task's first parent survives. The only change
+  from that parent is main's patch-version example, from `go 1.26.9` to
+  `go 1.26.10`. Inv-3 still names only the nested-checkout driver exception;
+  the restoration paragraph still says the checker, both runners and every
+  other listed script restore for every event.
+- T-xxr8's completed-log line exactly matches the second parent, and T-szvp's
+  line exactly matches the first parent. Each appears once, with T-xxr8 before
+  T-szvp. Every other nonblank line from main's completed log is preserved.
+
+| Command | UTC start | UTC end | Exit | Result |
+| --- | --- | --- | --- | --- |
+| `python3 /home/layup/.cache/layup-session/tmp-green/szvp-stage-e-merge-audit.py` | 2026-10-21T06:31:45Z | 2026-10-21T06:31:45Z | 0 | All merge-preservation assertions above pass. Audit script and output are scratch only. |
+
+### Validation on the clean merge head
+
+All commands below ran before editing this evidence record. `TMPDIR` was set
+to `/home/layup/.cache/layup-session/tmp-green`; all captured output and
+temporary files stayed there. UTC boundaries came from `date -u +%FT%TZ`
+immediately around each command. Commands still running after ten seconds
+printed progress every ten seconds.
+
+Exact freeze invocation:
+
+```sh
+sh docs/tests/freeze-check.sh --task T-szvp --base origin/main --budget 250/8 --evidence runs/T-szvp/conditions.md --evidence runs/T-szvp/test-runs.md > /home/layup/.cache/layup-session/tmp-green/szvp-fc2.txt 2>&1
+```
+
+| Command | UTC start | UTC end | Exit | Result |
+| --- | --- | --- | --- | --- |
+| `go version` | 2026-10-21T06:31:14Z | 2026-10-21T06:31:14Z | 0 | `go version go1.26.10 linux/amd64`. |
+| `sh runs/T-szvp/checks.sh` | 2026-10-21T06:31:14Z | 2026-10-21T06:31:15Z | 0 | No output; numbered exception absent and complete Restore step matches the pre-exception baseline. |
+| `sh runs/T-c826/checks.sh` | 2026-10-21T06:31:15Z | 2026-10-21T06:31:15Z | 0 | All six remaining assertions pass: margin, two unchanged runners, nine paths, source and default branch. |
+| `sh docs/tests/freeze-check/run-all.sh` | 2026-10-21T06:31:15Z | 2026-10-21T06:31:23Z | 0 | `freeze-check: 85 passed, 0 failed`. |
+| `sh docs/setup/setup-check.sh` | 2026-10-21T06:31:23Z | 2026-10-21T06:31:45Z | 0 | All setup checks pass, including `setup-check: ci OK`; discipline fixtures 138/0, ADR/PRD linters OK, link linter resolves 3038 links, kit-linters OK. |
+| `sh docs/links/link-lint.sh` | 2026-10-21T06:31:45Z | 2026-10-21T06:31:58Z | 0 | `link-lint: OK  3038 links resolved`. |
+| Exact freeze invocation above | 2026-10-21T06:31:58Z | 2026-10-21T06:31:59Z | 0 | K1–K6 pass; complete output below. |
+
+Complete clean-head freeze output (`szvp-fc2.txt`):
+
+```text
+ok K1: white space
+ok K2: registration of new tests
+ok K3: test selectors
+ok K4: restore evidence of mutants
+ok K5: projection: figure 189/8, maximum 250/8, tolerance 60/4, limit 310/12, margin 121/4 (the figure at landing is still measured at landing)
+ok K6: conditions table
+```
+
+The check measured 189 added-plus-removed lines over 8 counted files against
+current `origin/main`, with maximum 250/8, tolerance 60/4, inclusive limit
+310/12 and margin 121/4. The two declared evidence records remain excluded
+under ADR-0028; executable task checks remain counted. Close-out is already
+in this merge head.
+
+This stage changes only `runs/T-szvp/test-runs.md`. It leaves the clean-head
+check result attached to `4b3cbc1`, before this record is committed; it does
+not claim a freeze check of a later evidence commit. The coordinating session
+will commit the record and arrange the independent round scoped to the merge's
+overlapping files, `docs/guardrails.md` and `docs/tasks/completed.md`. Under the
+merge-of-main rule this round consumes no cycle; the cap remains 2. This author
+session supplies verification evidence, not that independent review or a new
+verdict.
+
+Final evidence check:
+
+| Command | UTC start | UTC end | Exit | Result |
+| --- | --- | --- | --- | --- |
+| `git diff --check` | 2026-10-21T06:33:02Z | 2026-10-21T06:33:02Z | 0 | No whitespace errors. |
+| `git status --short` | 2026-10-21T06:33:02Z | 2026-10-21T06:33:02Z | 0 | Only `runs/T-szvp/test-runs.md` is modified. |
+| `git diff --stat` | 2026-10-21T06:33:02Z | 2026-10-21T06:33:02Z | 0 | One evidence file changed; no operative files changed. |
