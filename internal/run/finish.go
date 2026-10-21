@@ -69,12 +69,8 @@ func (s *Sessions) FinishTask(ctx context.Context, in FinishInput) (Advance, err
 	if err != nil {
 		return Advance{}, err
 	}
-	cut, cv := finishCut(v), v
-	if cut >= 0 {
-		cv.Events = v.Events[:cut+1]
-	}
-	st := loopPosition(cv)
-	if cut < 0 || st.Pos != posVerified || st.Attempt != attempt {
+	st, ok := verifiedView(v)
+	if !ok || st.Attempt != attempt {
 		return Advance{}, fmt.Errorf("%s: attempt %d has no verified head", task, attempt)
 	}
 	cin := CarryInput{Task: task, Verifier: st.Session, Harnesses: in.Harnesses, Models: in.Models}
@@ -314,6 +310,17 @@ func (s *Sessions) mergeAt(ctx context.Context, cin CarryInput, hin HeadInput, s
 		return adv, err
 	}
 	return notReady(cin.Task, step.Head, r), nil
+}
+
+// verifiedView gives the position of a task over its events up to the last handoff of a verifier (what follows is the close-out's), and whether that
+// position is verified; the caller compares the attempt of the position with the latest one. It is the one cut of "verified" (loop.md, The step loop, item 2).
+func verifiedView(v loopView) (loopStep, bool) {
+	cut, cv := finishCut(v), v
+	if cut >= 0 {
+		cv.Events = v.Events[:cut+1]
+	}
+	st := loopPosition(cv)
+	return st, cut >= 0 && st.Pos == posVerified
 }
 
 // closePos is a position of the close-out session.
