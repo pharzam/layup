@@ -3,7 +3,9 @@
 Issue: [#457](https://github.com/pharzam/layup/issues/457). Baseline:
 `f9d46b0f441202254e8ea6ca16fe4ad8ec860858`. Times are UTC.
 The coordinating session supplied the host evidence; the sandbox runs below
-were measured in this worktree. No commit is made by this stage.
+were measured in this worktree. Stage A commits are `7f4e5ae` and `dcf93ea`.
+Stage B records the host reruns supplied by the coordinating session, which
+also makes the commits and runs the clean-head pre-freeze check.
 
 ## Plan amendment 1
 
@@ -125,7 +127,8 @@ Integration failed in `internal/forge/github`, `internal/git`, `internal/run`
 and `internal/setup`; E2E failed in `cmd/layup`. Each failed package panicked
 when `httptest` tried to open a local listening socket. These are failed
 runs, not green levels and not timeouts. The sandbox prohibits the sockets;
-acceptance criterion 1 still needs successful host integration and E2E runs.
+at the end of Stage A, acceptance criterion 1 still needed successful host
+integration and E2E runs. The Stage B host results below satisfy that criterion.
 
 The following excerpts retain all package result lines and failing test names,
 plus each panic line; goroutine stacks are omitted. Full local logs for both
@@ -224,17 +227,52 @@ ok  	github.com/pharzam/layup/internal/work	0.002s
 FAIL
 ```
 
-## Security green and freeze pending
+## Stage B host green
 
-The coordinating session will run the same govulncheck command on the host
-after this stage's commits; this stage claims no security green. Its output,
-exit and times, and the PR's green `security` job and run URL at a head before
-the freeze, remain to be recorded in the next stage. Host integration and E2E
-reruns must also unset the stale `GOROOT` or point it to Go 1.26.10.
+The coordinating session supplied these host results after the Stage A commits.
+Both `GOROOT` and `PATH` selected the Go 1.26.10 install. All commands exited
+0; build, vet and all three test levels passed, and govulncheck found no
+vulnerabilities. The times and last output lines below are supplied host
+evidence, not sandbox measurements. Elapsed seconds are the differences of
+the supplied whole-second timestamps; a zero does not imply zero runtime.
 
-The clean committed-tree freeze check, independent review, acceptance
-checklist and close-out remain for subsequent stages. They were not performed
-in Stage A, where commits are delegated to the coordinating session.
+| Command | Start (UTC) | End (UTC) | Elapsed (s) | Exit | Last line |
+| --- | --- | --- | --- | --- | --- |
+| `go version` | 2026-10-21T05:53:12Z | 2026-10-21T05:53:12Z | 0 | 0 | `go version go1.26.10 linux/amd64` |
+| `go build ./...` | 2026-10-21T05:53:12Z | 2026-10-21T05:53:12Z | 0 | 0 | (empty) |
+| `go vet ./...` | 2026-10-21T05:53:12Z | 2026-10-21T05:53:12Z | 0 | 0 | (empty) |
+| `go test -count=1 ./...` | 2026-10-21T05:53:12Z | 2026-10-21T05:53:13Z | 1 | 0 | `ok   github.com/pharzam/layup/internal/work 0.003s` |
+| `go test -count=1 -tags=integration -timeout 30m ./...` | 2026-10-21T05:53:13Z | 2026-10-21T05:56:35Z | 202 | 0 | `ok   github.com/pharzam/layup/internal/work 0.007s` |
+| `go test -count=1 -tags=e2e -timeout 10m ./...` | 2026-10-21T05:56:36Z | 2026-10-21T05:57:42Z | 66 | 0 | `ok   github.com/pharzam/layup/internal/work 0.002s` |
+| `go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./...` | 2026-10-21T05:57:42Z | 2026-10-21T05:57:47Z | 5 | 0 | `No vulnerabilities found.` |
+
+The test result lines retain their supplied values with tab separators rendered
+as spaces. The build and vet last-line cells were supplied empty.
+
+### GOROOT trap on the host
+
+The coordinating session's inherited `GOROOT` still pointed to Go 1.26.9,
+even though `PATH` selected Go 1.26.10. This first made the commit hook fail
+with `compile: version go1.26.9 does not match go tool version go1.26.10`.
+No hook exit code or timing was supplied. The host reruns above followed the
+correction: set both `GOROOT` and `PATH` to the 1.26.10 install. When changing
+the host Go version, check both settings; `go version` alone did not expose
+the stale compiler root in the Stage A attempts.
+
+## Freeze and CI pending
+
+The local host security scan is green. The PR's required `security` job result
+and run URL have not been supplied and remain to be recorded before the freeze.
+No CI green is inferred from the host scan.
+
+After committing these Stage B records, the coordinating session runs:
+
+```sh
+sh docs/tests/freeze-check.sh --task T-xxr8 --base origin/main --budget 100/6 --evidence runs/T-xxr8/conditions.md --evidence runs/T-xxr8/test-runs.md
+```
+
+This stage does not run that pre-freeze check. Its output, the independent
+review, acceptance checklist and close-out remain for subsequent stages.
 
 ## Discipline checks
 
@@ -258,7 +296,7 @@ fixtures 85 passed, 0 failed. The full setup check printed OK for all twelve
 checks and its kit linters. The fixture suite is not the task's clean-head
 freeze check, which remains pending.
 
-## Final scope verification
+## Stage A final scope verification
 
 A comparison against the baseline confirmed exactly the specified substitution
 in each of `go.mod`, `docs/spec/setup.md` and `docs/guardrails.md`; these are
@@ -267,7 +305,7 @@ the only changed tracked paths. The only new paths are this record and
 T-w89c task and completed-log entry, and the catalog are unchanged. No
 `checks.sh` was created or changed. This comparison exited 0.
 
-## Final record checks
+## Stage A final record checks
 
 Link lint was rerun after both records were complete. The two no-index
 comparisons include the new, untracked records, which ordinary diff omits.
@@ -285,3 +323,13 @@ empty output (the new file differs from the empty file); no whitespace
 diagnostic was emitted. A final direct byte check of all five planned files
 also passed: no trailing spaces or tabs, no carriage returns, and exactly
 one final newline, including this paragraph. That check exited 0.
+
+## Stage B record checks
+
+`sh docs/links/link-lint.sh` ran from `2026-10-21T05:59:12.194174Z` to
+`2026-10-21T05:59:25.867659Z` (13.673 seconds), exited 0, and printed
+`link-lint: OK  3029 links resolved`. The final `git diff --check` also
+exited 0. A direct byte and scope check passed: both changed records have
+exactly one final newline, no carriage returns or trailing whitespace, and
+only `runs/T-xxr8/conditions.md` and `runs/T-xxr8/test-runs.md` changed.
+No `checks.sh` was created or changed, and the pre-freeze check was not run.
