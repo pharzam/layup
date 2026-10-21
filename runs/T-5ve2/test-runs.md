@@ -13,3 +13,10 @@
 - Same command as the red. Read at 2026-10-21T11:58:56Z (`date -u`, taken after the run).
 - Exit status 0: `--- PASS: TestTheSharedIndexesMergeWithNoConflictInLandingOrder (0.14s)`, both subtests pass.
 - `sh docs/tests/run-discipline-tests.sh`: `138 passed, 0 failed`, so the eol rule (`run-discipline-tests.sh:172`, which reads only `eol=crlf` lines) is unaffected.
+
+## Gates (read at 2026-10-21T12:06:08Z, `date -u`, after the runs)
+
+- `go build ./...`, `go vet ./...` with no tag, `-tags=integration` and `-tags=e2e`, `gofmt -l cmd internal`: clean. Unit `go test -count=1 ./...`: all packages ok.
+- Full integration level, `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./...`: exit 0, 21 packages ok (output: /home/layup/.cache/layup-session/T-5ve2-full-integration.txt).
+- e2e level, same flags with `-tags=e2e`: exit 0.
+- The six lints (adr, prd, link, run-discipline-tests, nested-checkout, setup-check) and `freeze-check/run-all.sh` (85 passed): green. `git diff --check origin/main HEAD`: clean. task-state: T-5ve2 in progress.
