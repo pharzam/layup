@@ -185,7 +185,7 @@ Go 1.26.10 in every command. Each red ran before its code change.
 ### Finding 1: a successful unresolved close-out push when the base moved
 
 - Test: `TestASuccessfulCloseOutPushWhoseAnswerWasLostIsBoundByTheRestart` (both cases, the base current and the base moved by a file the task does not touch, through `afterScaffold` and a second restart).
-- Command: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration . -run '^(TestASuccessfulCloseOutPushWhoseAnswerWasLostIsBoundByTheRestart|TestAnAttemptAfterTheBetWithNoRenderedCommitIsTheStopOfTheOperator|TestAReopenedTaskReachesItsVerifierWithoutTheWaitingSpecCheckAndTheJobStillBlocksItsMerge)$'` in `internal/run`.
+- Command: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration ./internal/run/ -run '^(TestASuccessfulCloseOutPushWhoseAnswerWasLostIsBoundByTheRestart|TestAnAttemptAfterTheBetWithNoRenderedCommitIsTheStopOfTheOperator|TestAReopenedTaskReachesItsVerifierWithoutTheWaitingSpecCheckAndTheJobStillBlocksItsMerge)$'`.
 - 09:05:52 to 09:06:09Z, exit 1. First failing assertion (the current-base case passes, as the reviewer said): `moved true: the restart = [shape done done before, bet done done before, loop fail the push of the session's head was refused: task/T-.../1 holds "...", not the head ... or its merge ...]`.
 - Fix: in the act, a task whose view is verified has `resolvePushes` called and its view read again before `BringUpToDate`; `loop.md` item 3 states the order. Green after it, with one change of the scripted harness: the close-out step now writes a task file and a completed log that differ at each run (a second close-out at the merge that carries the head wrote the same bytes and was refused for its scope, an empty change; a real close-out at a new base has a change). The mutant M19 kills it.
 
@@ -226,15 +226,4 @@ M19 (finding 1), G1 (finding 2) and G5 (finding 3) are killed; G11 (the reread o
 | `sh docs/tests/freeze-check/run-all.sh` | 09:16:57 to 09:17:06 | 0 |
 | `git diff --check origin/main HEAD` | 09:17:06 to 09:17:06 | 0 |
 
-The full integration level: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./...`, on the code head (the commits after it change records and documents). The pre-freeze check, on the clean committed head 9dfea6da merged with `origin/main` at `c0f691e`, exit 0:
-
-```text
-ok K1: white space
-ok K2: registration of new tests
-FAIL K3: runs/T-9nbf/test-runs.md:188: selector TestASuccessfulCloseOutPushWhoseAnswerWasLostIsBoundByTheRestart matches no test in the named packages
-FAIL K3: runs/T-9nbf/test-runs.md:188: selector TestAnAttemptAfterTheBetWithNoRenderedCommitIsTheStopOfTheOperator matches no test in the named packages
-FAIL K3: runs/T-9nbf/test-runs.md:188: selector TestAReopenedTaskReachesItsVerifierWithoutTheWaitingSpecCheckAndTheJobStillBlocksItsMerge matches no test in the named packages
-ok K4: restore evidence of mutants
-ok K5: projection: figure 1773/28, maximum 2600/28, tolerance 500/4, limit 3100/32, margin 1327/4 (the figure at landing is still measured at landing)
-ok K6: conditions table
-```
+The full integration level: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./...`, on the code head (the commits after it change records and documents). The pre-freeze check follows.
