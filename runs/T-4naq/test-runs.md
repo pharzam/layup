@@ -440,3 +440,14 @@ F9 (round 3, comment 6308023513): the source-table row of `Pending` in `loop.md`
 - nested: 04:28:08 to 04:28:08Z, exit 0: `sh docs/tests/nested-checkout-check.sh`
 - setup: 04:28:08 to 04:28:31Z, exit 0: `sh docs/setup/setup-check.sh`
 - diffcheck: 04:28:54 to 04:28:54Z, exit 0: `git diff --check origin/main HEAD`
+
+The freeze check on the clean committed head, which has merged `origin/main` at `f9d46b0`: `sh docs/tests/freeze-check.sh --task T-4naq --base origin/main --budget 2600/30 --evidence runs/T-4naq/test-runs.md --evidence runs/T-4naq/mutants.md --evidence runs/T-4naq/conditions.md`, output kept outside the worktree in `/home/layup/.cache/layup-session/T-4naq-freeze.txt`, exit 0:
+
+```text
+ok K1: white space
+ok K2: registration of new tests
+ok K3: test selectors
+ok K4: restore evidence of mutants
+ok K5: projection: figure 2122/26, maximum 2600/30, tolerance 500/4, limit 3100/34, margin 978/8 (the figure at landing is still measured at landing)
+ok K6: conditions table
+```
