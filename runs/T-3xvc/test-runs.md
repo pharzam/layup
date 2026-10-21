@@ -57,3 +57,16 @@ Each fix reverted alone (`git apply -R` of its patch, `fix-copies.patch` sha256 
 | `adr-lint`, `prd-lint`, `link-lint`, `run-discipline-tests`, `nested-checkout-check`, `setup-check`, `freeze-check/run-all` | after 10:19:01 | 0 each |
 | `git diff --check origin/main HEAD` | after 10:19:01 | 0 |
 | `docs/tasks/task-state.sh` | after 10:19:01 | `T-3xvc #368 in progress` |
+
+## The pre-freeze check
+
+`sh docs/tests/freeze-check.sh --task T-3xvc --base 30e2c0d48b5a0f8c9e6132e9232ce81bf3779a49 --budget 850/12 --evidence runs/T-3xvc/test-runs.md --evidence runs/T-3xvc/mutants.md --evidence runs/T-3xvc/conditions.md` on the clean committed head `c826afa9` (main `30e2c0d` already in it), 10:21:25 UTC, exit 0. The first run failed K3 and K6 on the form of the evidence (selectors unquoted, code spans that were not paths); fixed in the evidence files, not in code.
+
+```text
+ok K1: white space
+ok K2: registration of new tests
+ok K3: test selectors
+ok K4: restore evidence of mutants
+ok K5: projection: figure 634/10, maximum 850/12, tolerance 170/4, limit 1020/16, margin 386/6 (the figure at landing is still measured at landing)
+ok K6: conditions table
+```
