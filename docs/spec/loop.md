@@ -392,12 +392,14 @@ request, not a new record.
   `head:` that is the base of the session's start row; otherwise it is open; and then `OpenMaterial` of the parsed record decides.
   The output of the latest verifier that is missing or invalid therefore never clears a finding of an earlier record, and no older clean
   record is used in its place. A failed read is an error, not an answer.
-  **Known limit (decided on #426, comment 6289096719, finding 2 of round 1):** every step of a Shape task has the fixed tier
-  `reasoning` in the step table, so the driver of a Shape task asks no tier of `TierOf`, and no production code yet calls `Position`
-  and then `TierOf`. The production consumer of `Position` → `TierOf`, and the semantic test that fails when that consumer ignores an
-  open material finding, belong to **row 66k** (#367, `T-9nbf`), where the routed tiers of the step loop first appear; this task
-  tests `Position` and the tier it moves through the production constructor (I5) and releases the caller-wiring clause of condition 5 by
-  that decision alone.
+  **Known limit (decided on #426, comment 6289096719, finding 2 of round 1; amended by the Operator on #367, comment 6307601453):** every
+  step of a Shape task has the fixed tier `reasoning` in the step table, so the driver of a Shape task asks no tier of `TierOf`. The
+  production consumer of `Position` → `TierOf` is the close-out of `FinishTask` (`closeOutStep`), which the step `loop` reaches (row 66k, `T-9nbf`);
+  its test is I12 of that row: the close-out of a task whose plan is `small` is routed at the reasoning tier because its position is
+  uphill, which the plan alone would not give. No Shape task freezes a test list (`toVerifier` passes no `Freeze`), so every position in
+  `M2e` is uphill, and the semantic test that fails when the consumer ignores an open material finding cannot be written until a
+  step has a frozen list: it belongs to **`M2g`'s `implement` step**, the first `by-class` step with one ([Not in M2e](#not-in-m2e)).
+  This task tests `Position` and the tier it moves through the production constructor (I5).
 - **`by-class` and `owner-of-its-kind`** ([`session.md`](session.md#the-step-table-and-the-kinds-of-a-steps-context))
   are resolved by `ResolveStep`: `by-class` becomes the tier of `TierOf`, `owner-of-its-kind`
   becomes the routing role of the owner map's role. The key of `routing.tsv` is the role ID of
@@ -2309,7 +2311,7 @@ a reopened task are 66k's.
 10. **The exemption of the full check** (Q1; the Operator on #428): [the full spec check](#req-012--the-full-spec-check).
 11. **Known limits.** A reopened task is not redone by a moved base in `M2e`: it has no opening pin, so `redoIssue` is an error before any write (the task is brought current by the
     clean merge of row 66x, or it waits). The drive of a reopened task by `FinishTask` and by the driver of a Shape task, which both take every task of the kind `specification` for the first one
-    (the rendered commit of the first bet, and the pinned `prd-lint` of a specification that waits for its bet), is row 66k's, which tells the two apart by `reopenedTasks`. A later
+    (the rendered commit of the first bet, and the pinned `prd-lint` of a specification that waits for its bet), is row 66k's, built: `FinishTask` and the driver tell the two apart by `reopenedTasks` ([The step loop](#the-step-loop), item 8). A later
     bet's reopening, and the new row of a table for a pending requirement, are `M2g`'s.
 
 ```text reopen-issue
@@ -2517,9 +2519,9 @@ of the loop: it copies the comments of the control issue, judges the first copy 
 each in the order of the comment IDs, and writes each change as one records commit, through the fence of the
 lease: `parameters.tsv` with the row replaced (its value, the reason as evidence, the
 comment, the time) and, for `transitions`, `transitions.tsv` in the same commit. Until the
-call, no read of the table sees the change. **The call is row 66k's** (`T-9nbf`, #367, the
-step `loop` and the order of the steps; rows 66h and 66j read the table after it): row 66b
-builds the function and shows it on the state of a restart, and no step calls it yet.
+call, no read of the table sees the change. **The call is row 66k's, and it is built there** (`T-9nbf`, #367): the steps `shape`, `bet` and
+`loop` call it before they act, after the check of the permissions of the loop, and `loop` calls it between two acts
+([The step loop](#the-step-loop), item 5); rows 66h and 66j read the table after it. Row 66b built the function.
 **A set is applied at most once and a superseded one never again** (the plan review of
 #358, C2): it is applied only when its comment ID is greater than the `comment` that its
 row records (`—` is none), the IDs of the comments of one forge growing with time; a set
@@ -2610,8 +2612,8 @@ schema in the build task, as `M2c` and `M2d` did.
   <T-y> verified` when this run wrote something, and with `done before` when it wrote nothing.
   A wait of a Shape task is the row `done` with the driver's `waiting for the Operator: …`; a
   stop is `fail`. With several survivors nothing is chosen (the bet decides, row 66j). The
-  Shape tasks stop at the verified head: the ready rule, the close-out and the merge are row
-  66k's.
+  Shape tasks stop at the verified head: the ready rule, the close-out and the merge are those of the step `loop`
+  (row 66k, below).
 - **`bet`** posts the brief, waits for the answer, copies it, writes the version of
   the inventory, pushes the rendered commit to the specification's branch (with its
   carry-over of `layup/verify`), opens the `architecture` tasks of the settled
@@ -2620,8 +2622,9 @@ schema in the build task, as `M2c` and `M2d` did.
   names none is refused, as an architecture decision serves a requirement), and writes
   the row of `bets.tsv` **last**. It is done when that row exists with its verdict, so
   a stop before it resumes inside `bet`, and no later step runs on a half-made bet.
-- **`loop`** merges the Shape tasks in the merge order after a bet (the specification
-  first, then the tasks it reopens with `openReopenings`, after which it reads the register again), then runs the tasks that the register holds; the build tasks are `M2g`'s.
+- **`loop`** (**decided here**, task `T-9nbf`, row 66k; [The step loop](#the-step-loop)) merges the Shape tasks and the tasks that the bet reopens in the merge
+  order after a bet (the specification first, then the tasks it reopens with `openReopenings`, after which it reads the register again, then the architecture
+  task of Shape, then those of the bet), one task at a time, each to its recorded merge; it follows `bet` in `run-steps`. The build tasks are `M2g`'s.
 
 The record of each step: for `shape`, the files of `spec/options/`, the rows and the
 `tasks/<task>/` files of its tasks; for `bet`, `bets.tsv`, the copies of the brief and
@@ -2678,6 +2681,49 @@ of the answer, and `spec/inventory.tsv`; for `loop`, the rows of `tasks.tsv`,
   push-lost`) is a new comment, and the old one stays.
 - The lease, the fencing and the exit codes are those of [`run.md`](run.md); a lost
   lease stops the run before any write of a step.
+
+### The step loop
+
+**Decided here** (R10, task `T-9nbf`, #367, row 66k; the plan review is the comment 6304893937 of #367, and the Operator's decisions on its Q1 and Q2 the comment 6307601453).
+The step `loop` composes the primitives of the size children 66v to 66ab and builds none of them. It reads `tasks.tsv`, `spec/reopenings.tsv`, the events of each task and the forge at every
+pass, and holds nothing.
+
+1. **After the bet, `loop` owns every task (D1).** `shape` and `bet` are `done` with `done before` when `bets.tsv` holds a row with the verdict `bet`; the file is read and checked by `ReadBets`
+   before any Shape task is read, and before such a row the two steps are what they were (their waits and failures stand). `M2e` builds the first bet only. **Reason:** once the first close-out
+   session is bound, the driver of a Shape task stops on a `bound` of a session that is not of the developer role, and the architecture task of Shape that a redo replaced starts at the default
+   branch and not at the specification's verified head (`archStart`): both steps would fail on a restart and `loop` would never be reached.
+2. **"Verified" is told once (D2).** `verifiedView(v)` is the position of a task over its events up to the last handoff of a verifier (what follows is the close-out's), and whether that position is
+   verified and its attempt is the latest. `FinishTask`, the step `bet` (`verifiedStep`) and the dispatch of `loop` all use it.
+3. **The act on one task (D3), from the records and the forge, in this order.** A task with a `merged` event has nothing to do. A task with a `closed` event was redone: the register is read again. For a
+   task with an attempt, the pull request of its latest attempt is read first, and one that is merged or closed is `FinishTask`'s (the merge is recorded, or the Operator is waited for) before any base
+   movement or repair. Else a task whose view is verified (item 2) gets `BringUpToDate` and, for a head that is current, `FinishTask`; a task that is not verified, and one that `FinishTask` handed back
+   with `Attempt`, gets `AdvanceShapeTask`. `RepairTask` stays inside the two drivers: a call before `FinishTask` would write on a closed pull request, which D2 of the close-out forbids.
+4. **The order and the selection (D4).** The merge order is: the specification task of Shape; the tasks of `spec/reopenings.tsv`, in the order of its rows; the architecture task of Shape (the first task
+   of that kind in the register); then the architecture tasks of the bet, in the order of the register. The first task in that order with no event `merged` is the only task acted on, and each of its
+   predecessors must have one, else the step is `fail` with `<task>: its predecessor <p> has not merged`. `openReopenings` is called whenever the event `merged` of the specification task exists, at
+   the start of the invocation too (**one reading, R13**: after a stop between the event and the opening, the call is made again, and it opens nothing twice), and the register and the record of the reopenings
+   are read again after it and after every `Replaced`. A kind that `M2e` does not run (`batch`, `plan`, `build`) fails closed with `<task>: the kind <kind> is not run in M2e`, and `rendered` names row 66t (`M2g`).
+5. **The permission, then the boundary (D5, D6).** Before it does anything, each of the steps `shape`, `bet` and `loop` checks the permissions of the loop on the installation (`loopPermissionsStep`; the check
+   that `BringUpToDate` leaves to its caller is `loop`'s), and a missing one is a `fail` of that step's row with the detail `forge: <what the installation lacks>`; then it calls `parametersBoundary`, and `loop` calls it
+   again between two acts (between the calls of a driver, never inside one: **one reading, R13**, a set takes effect at the next task transition). A `parameters.tsv` that is absent is skipped only while `tasks.tsv` is
+   absent too (before the first task, whose commit writes the file); absent after that, unreadable, refused by its reader, or a failed read is a `fail` with the detail `parameters: <reason>`. A refused `set` is
+   reported, changes nothing and fails nothing.
+6. **The row (D7).** `loop` is `done` with `done before` when this invocation acted on no task, and otherwise `done` with `the loop merged <T-x>, <T-y>`; an `Advance` with `Wait` is `done` with that text, and a
+   wait is the last row of the run; an `Advance` with `Stop`, a Go error and an unreadable record are `fail`. The mapping reads the fields of `Advance`, never its text. A verified head, a handback with `Attempt` and a
+   `Replaced` end no invocation: the next pass follows them.
+7. **No progress is a failure (D8).** The position of a task is its events and the rows of the register. A second act in a row on one task that leaves the position unchanged, with no merge and no replacement,
+   is `fail` with `<task>: the loop made no progress at <position>`.
+8. **A reopened task is not the original (D9).** The original specification task is the task of the kind `specification` that `spec/reopenings.tsv` does not name. Only it asks `FinishTask` for the rendered commit of the first bet
+   (`FinishInput.Bet`) and only it has its head accepted as a specification that waits for its bet (`waitingSpecAccepted`). A reopened task is judged by `layup/spec` (the exemption of row 66ab) and by the target's pinned
+   `prd-lint` at the ready rule: the exemption from the original's check is no exemption from the gate.
+9. **The options (D10).** An architecture task of the bet gets the option it is bound to as the only survivor: `bindingOptions` reads the binding `tasks/<task>/options/<decision>.tsv` for the option and
+   `spec/options/<decision>.tsv` for the options of the decision, so the result holds every option of the table and one survivor, and the one reader of the prompt file (`optionsKept`) checks it against the whole table as it
+   does for Shape. The architecture task of Shape, and the task that redoes it, get the results of the filter (`optionResults`, the read that `shape` makes), which matches their pinned issue. Every task after the bet gets the
+   first copy of the answer as `Copy` (`betCopy`), and the original specification task `FinishInput.Bet` (`renderedBet`).
+10. **A specification attempt after the bet with no rendered commit (Q2; the Operator on #367).** A lost close-out push of the original specification task starts a new attempt (the replacement rule), the step `bet`
+    is done, and nothing renders that attempt. When the latest attempt of that task has no push or bound of code, the act is the stop `waiting for the Operator: <task>: an attempt after the bet has no rendered commit`,
+    before any driver; it repeats at a restart, and its follow-on is row 66t's (`M2g`), as the Operator decided for a redo that would drop the rendered commit on #424.
+11. **Unsupported kinds (D11)** fail closed, item 4. The titles of the pull requests keep the words that the driver gives each kind.
 
 ### The driver of a Shape task
 
@@ -2744,6 +2790,8 @@ parsed review records of the valid handoffs, so each position is told from the r
   same loop and after the same `RepairTask`; the sessions that asked in an attempt that a later attempt follows are not the last session of the plan
   or of the plan review, and the answer session of an attempt is a session of none of the four stages. Only the statuses `blocked`, `failed` and `decision_needed` are the stop
   `the session <id> of <step> ended <status>`.
+- **After the bet** (row 66k, [The step loop](#the-step-loop), items 8 and 9): the driver is given the options of the task's binding and the first copy of the answer, and a reopened specification task is not asked for the specification
+  that waits for its bet.
 - **A developer session that ended with the status `completed` and no `push`** is a stop (`<task>: the session <id> ended with no push`):
   the push hook did not run, and its resume is the step loop's. Every other end that is not `completed` (a refusal, another class or
   status) is a stop that names the session.
@@ -2805,6 +2853,7 @@ the milestone covers it end to end.
 | The close-out commit and the rendered commit | integration | A close-out that changes only the task file and the completed log, on a parent that carries the verdict, is accepted and `layup/verify` is set on the new head; one that changes another file, or whose parent does not carry the verdict, is refused (`scope` or `verdict`, with the diff as a payload); an ordinary child of the verified head, a session of another task and a rendered commit above an unverified head do not carry; the rendered commit of the first bet gets the same carry-over, with no bound session and its pre-image pinned to the verified head, and the close-out after it is accepted. |
 | The close-out and the merge of a verified task (row 66y, `T-ehb4`) | unit; integration (the `httptest` forge, real git, scripted harnesses, `state.sessions()`) | A verified task goes through the close-out session at the tier of `TierOf(plan, position)`, its checked push, `layup/verify` carried to the new head, the three other statuses of the head (also at the rendered commit of the specification task, with the inputs pinned apart for each head) and the ready mark to the merge at the head SHA and the event `merged`, and a second call is `Merged` and writes nothing; a pull request closed and not merged is the wait `waiting for the Operator: …` with no write of any kind, even with a missing session comment and an unresolved push, and a repair that starts an attempt is the handback `Attempt`; a merge that the forge holds gets its lost event; a close-out that is refused, or failed, is a stop and is not tried again, one that ended with no push resumes its checked push, and one with no result runs again; not ready is a wait and a moved head a stop; a restart after each write adopts it and sends no second session, status, mark or merge; no `layup/verify` is computed at the close-out head. |
 | The steps after the Scaffold | integration | A restart resumes the `loop` step from the records and the forge: a comment, a pull request, a status or a merge that exists is not made again; a `push` with no result is bound when the branch holds its SHA and `refused` with `push-lost` when it does not; a task session's comment is on the task's issue; a merge whose `merged` event was lost passes `forge-check` with its detail (the tree check of task `T-xvvd`: a walk of the first parents through recorded and shown merges, and the setup head alone is no pass after the first merge) and `loop` records the event; `shape` with a decision that has no survivor is not "done before" and a restart stops there. |
+| The step loop (row 66k, `T-9nbf`) | unit; integration (the records, the `httptest` forge, real git, scripted harnesses, `state.sessions()`) | The merge order is the specification, the reopened tasks, the architecture task of Shape, then those of the bet, and a kind that `M2e` does not run fails closed; only the first task with no `merged` event is acted on and a task whose predecessor has not merged is not started; the register is read again after a replacement and a reopening; `done before` only when the invocation acted on no task, a wait is the last row and a stop is a `fail` by the fields of `Advance`; an act that makes no progress fails after the second; the restart names end with `loop` after the Scaffold. After the bet a restart reaches `loop` (`shape` and `bet` are `done before`, also after the close-out is bound and after the architecture task of Shape was redone); `loop` merges the specification, carries the architecture task of Shape over the merged base and merges it, and runs the architecture task of the bet with the chosen option as the only survivor in its prompt; a second `loop` makes no request and is `done before`; a merged pull request is recorded before any base movement, a closed one waits with no write, an interrupted restart adopts the comment, pull request, status and merge it finds; the parameter boundary is called before `shape`, `bet` and `loop` and between two acts, after the permission check, which fails the row of the step as `forge: …`; an absent `parameters.tsv` is skipped only before the first task; a reopened task is driven and merged with no rendered commit asked; the close-out is routed from the position and not from the plan; a specification attempt after the bet with no rendered commit is the stop of the Operator. |
 | The bet step is atomic to its last act | integration | A stop after the inventory version and before the row of `bets.tsv` resumes inside `bet`: the rendered commit and each `architecture` task are not made twice, and the row is written last; a decision whose chosen option names no requirement is refused. |
 | The tier and the context of a task (`session.md` deferral) | unit | The tier from the four fields of a plan (`large`, any non-empty list: reasoning; else execution), moved by the progress position (uphill to reasoning, downhill to execution); the prompt file lists the issue and plan, the rows and sections of the requirement IDs, the decision records they name, the handoffs and answers, and the rule files, in that order, each with its SHA-256. |
 | The questions left open and the band (`intake.md` deferral) | integration | With the stand-in forge: an `open` and an `asked` question are asked of the owner role; an intent answer that parses (`B` below `U`) writes `budget.tsv` with the question as `source` and replaces a value that exists; one that does not parse leaves the question `open` and the run in its wait; a question still `open` at the brief is shown in "rabbit holes". |
@@ -2819,7 +2868,7 @@ the milestone covers it end to end.
 | The frozen test list | unit | The list freezes at the first valid handoff to the verifier, a changed source hash is a finding, an amendment freezes it again, and a test that does not fail at the base makes the handoff invalid. |
 | The gate jobs read the base (F-22) | integration | A pull request that edits `docs/gates.tsv` to pass a failing kind is judged by the base's file and fails; the catalog workflow reads the base; a pull request of a `batch/<point>` branch reads its own head's gate files and a pull request of any other branch does not; a change of a `config` path of the manifest waits for the code owner (shown on a real repository in the demo). The setup (task `T-jew3`, unit and integration): `.github/CODEOWNERS` of the four path classes with the Operator's login is in the tree of a new target, the ruleset sets `require_code_owner_review` with no required approval, and a target set up before the rule gets the update by its recorded ruleset ID, which keeps what the file never held ([`scaffold.md`](scaffold.md#the-code-owner-rule)). |
 | A task whose base moved (row 66x, `T-89xf`) | unit; integration (the `httptest` forge, real git) | A task whose base moved with no overlap is merged by code, the merge is pushed as code, and `layup/verify` is carried over it (a fabricated merge that takes the base's version of a file both changed, or whose second parent is off the default branch, is not carried); a task that overlaps the base, or whose merge conflicts, is redone as one new task under the old row with the order close the pull request, close the issue, open the issue, one records commit, and a restart after each act completes it once; a failed git read, a lost lease and a merged pull request are errors; the older attempt's pull request is closed once. |
-| The task loop with the stand-in forge (inventory) | integration | With the httptest forge, fake harness programs and the real git: a gate failure goes back to the developer as a new attempt; the close-out commit is refused when it changes a file other than the task file and the completed log; the pull request body links the records commit; the merge is at the head SHA. |
+| The task loop with the stand-in forge (inventory) | integration | Through the step `loop` (row 66k), with the httptest forge, fake harness programs and the real git: a gate failure goes back to the developer as a new attempt; the close-out commit is refused when it changes a file other than the task file and the completed log; the pull request body links the records commit; the merge is at the head SHA. |
 | The specification task, end to end (inventory) | e2e | In CI on a local fake forge, with scripted harnesses and scripted approver comments: Shape, the first bet, and the specification task merged with the four `layup/` statuses green. |
 | The demo (inventory) | uat | On a real test target, the idea owner reads a bet brief of five parts within the line limit and answers it with one comment; the specification task merges after the first bet, with each handoff valid, the rendered commit holding the MoSCoW and Phase columns, and the four `layup/` checks green. |
 
@@ -2867,6 +2916,8 @@ failures wait for (`M3d`). The milestone plan, the build tasks and their merge o
 the execution of the named tests of a plan (the producer of `tests-red-green`), the
 execution of a frozen-test amendment in the loop (the Operator's decision on #367,
 comment 6252712313, as it needs that producer; the predicates of row 66e stay as built), the
+semantic test of the tier consumer that fails when an open material finding is ignored (the Operator's decision on #367, comment 6307601453; the `implement` step is the first
+`by-class` step with a frozen test list), the
 items `heading-ids` and `register-rows` of its handoffs, and Accept (`M2g`). The smart-if that
 gives the kind and `needs_human` of a question (`M3a`). The panel of Shape and the
 stall triggers (`M3`, `M3d`). The lessons and `layup learn`, the Retrospective's
