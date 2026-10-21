@@ -6,12 +6,16 @@
 # docs/spec/session.md, REQ-015 and REQ-017 — The review of the release of M2b),
 # and adapted again for the release of M2d (task T-5xjc, #283: D3 of its plan,
 # with conditions 1 and 4 of its plan review; docs/spec/scaffold.md, REQ-015
-# and REQ-017 — The review of the release of M2d).
+# and REQ-017 — The review of the release of M2d), and adapted again for the
+# release of M2e (task T-ym0k, #369: D2 to D4 of its plan, with conditions 1, 2
+# and 7 of its plan review; docs/spec/loop.md, REQ-015 and REQ-017 — The
+# review of the release of M2e).
 # Its output at 621af09 is runs/T-efmy/release-check.txt, from the script
 # before T-4tjy; its output at the release of M2b is
 # runs/T-4tjy/release-check.txt; the script is unchanged for the release of M2c
 # (runs/T-8byd/release-check.txt); its output at the release of M2d is
-# runs/T-5xjc/release-check.txt.
+# runs/T-5xjc/release-check.txt; its output at the release of M2e is
+# runs/T-ym0k/release-check.txt.
 #
 # Run it from the root of a clone of LAYUP with the commit of the release as
 # its argument, from a path outside that clone:
@@ -32,7 +36,9 @@
 #   (3) a call that starts a program, in a non-test Go file of cmd/ or
 #       internal/ out of testdata/, is not one of this list of a file and its
 #       program: git in internal/git/git.go; sh in internal/gate/scratch.go and
-#       internal/verify/scripts.go; the first word of a harness register row's
+#       internal/verify/scripts.go; sh with the form exec.Command("sh", script,
+#       prdDir) in internal/spec/prdlint.go (the pinned prd-lint, D2 of T-ym0k:
+#       the call, not the file, so a "-c" form or a second call fails); the first word of a harness register row's
 #       version command (words[0]) or command (s.Words[0]) in
 #       internal/session/process.go. The specification's "a new list names
 #       each program that the code starts" is read as a check that fails, the
@@ -62,10 +68,24 @@
 #       (7) reads a line at a time and skips a comment line; the import guard
 #       passes when it finds no import at all; a push by a program started with
 #       the text "git push" is check (3)'s. The other calls of internal/git
-#       that name a remote verb (LsRemote, Clone, Fetch, CloneLocal, AddRemote
-#       and FetchSession) are listed with their callers and fail nothing.
+#       that name a remote verb (LsRemote, RemoteHead, Clone, Fetch,
+#       CloneLocal, AddRemote and FetchSession) are listed with their callers
+#       and fail nothing.
+#   (6) lists the calls of the forge adapter, one row for each `.do(` in a
+#       non-test Go file of internal/forge/github, and fails when one `.do(`
+#       is not in the form a.do(ctx, "Operation", "METHOD", target, ... on one
+#       line (a variable operation or method, another receiver, two calls on
+#       one line), or when no `.do(` is found: the rows it lists are the
+#       parsed ones. The receiver is the name a alone: the byte before a.do
+#       must be a space, a tab or one of ( , ; = ! & | { : (or a.do starts the
+#       line), and anything else, any non-ASCII byte included (aa, x.a, or a
+#       name that starts with a letter outside ASCII), is another receiver and
+#       fails. The two expressions run with LC_ALL=C, so bytes are compared,
+#       not the characters of a locale. The limit, retained: that the form parses does not show
+#       that the operation name or the method fits what the call does, or that
+#       do is the only way to the network; the reviewer judges each row.
 # Checks (3), (4) and (7) print a list and fail on an entry out of their
-# allowance, which the reviewer judges; checks (5) and (6) only list.
+# allowance, which the reviewer judges; check (5) only lists.
 
 commit=${1:?usage: sh release-check.sh COMMIT}
 fail=0
@@ -98,8 +118,21 @@ sites=$(git grep -n -E 'exec\.Command|os\.StartProcess|syscall\.(Exec|ForkExec|S
 [ -n "$sites" ] || bad "no call that starts a program found"
 echo "$sites" | sed 's/^/  /'
 bad3=$(echo "$sites" | awk '
+	# The allowed call of prdlint.go is the exact call and nothing else on the
+	# line: no text of a comment before it, and no other start of a program
+	# (or comment text that names one) around it.
+	function allowedcall(l,   call, i, pre, post) {
+		call = "exec.Command(\"sh\", script, prdDir)"
+		i = index(l, call)
+		if (i == 0) return 0
+		pre = substr(l, 1, i - 1); post = substr(l, i + length(call))
+		sub(/^[^:]*:[0-9]+:/, "", pre)
+		if (pre ~ /\/\// || index(post, call) > 0) return 0
+		return (pre post) !~ /exec\.Command|os\.StartProcess|syscall\./
+	}
 	/^internal\/git\/git\.go:[0-9]+:.*exec\.Command\("git", / { next }
 	/^internal\/gate\/scratch\.go:[0-9]+:.*exec\.Command\("sh", / { next }
+	/^internal\/spec\/prdlint\.go:[0-9]+:/ && allowedcall($0) { next }
 	/^internal\/verify\/scripts\.go:[0-9]+:.*exec\.Command\("sh", / { next }
 	/^internal\/session\/process\.go:[0-9]+:.*exec\.CommandContext\(ctx, words\[0\], / { next }
 	/^internal\/session\/process\.go:[0-9]+:.*exec\.Command\(s\.Words\[0\], / { next }
@@ -155,7 +188,24 @@ echo "The scripts of the baseline that internal/verify runs:"
 git grep -n -E '"docs/[^"]*\.sh"' -- 'internal/verify/*.go' ':!*_test.go' | sed 's/^/  /'
 
 echo "== (6) The calls of the forge adapter (operation, method), in the non-test Go files of internal/forge/github"
-git grep -n -E 'a\.do\(ctx, "' -- 'internal/forge/github/*.go' ':!*_test.go' | sed -E 's/^([^:]*:[0-9]+):.*a\.do\(ctx, "([^"]*)", "([^"]*)", ([^,]*),.*/  \1: \2 \3 \4/'
+# The occurrences of ".do(" and the rows that parse: a difference is a call in
+# a form the rows cannot show. Two empty counts are not coverage.
+dosites=$(git grep -n -o -E '\.do\(' -- 'internal/forge/github/*.go' ':!*_test.go')
+dolines=$(git grep -n -E '\.do\(' -- 'internal/forge/github/*.go' ':!*_test.go')
+tb=$(printf '\t')
+bnd="[ $tb(,;=!&|{:]" # the characters that may stand before the receiver a
+dorows=$(echo "$dolines" | LC_ALL=C sed -n -E 's/^([^:]*:[0-9]+):(.*'"$bnd"')?a\.do\(ctx, "([^"]*)", "(GET|POST|PUT|PATCH|DELETE)", ([^,]*),.*/  \1: \3 \4 \5/p')
+[ -n "$dosites" ] || bad "no .do( call found in internal/forge/github"
+[ -z "$dorows" ] || echo "$dorows"
+nsites=$(echo "$dosites" | grep -c .)
+nrows=$(echo "$dorows" | grep -c .)
+echo "  $nsites .do( occurrences, $nrows rows parsed"
+if [ "$nsites" -ne "$nrows" ]; then
+	# The loop runs in a subshell of the pipe, so fail is set here.
+	echo "$dolines" | LC_ALL=C grep -v -E "$bnd"'a\.do\(ctx, "[^"]*", "(GET|POST|PUT|PATCH|DELETE)", [^,]*,' | while IFS= read -r l; do echo "FAIL: a .do( call that is not in the form a.do(ctx, \"Operation\", \"METHOD\", target, on one line: $l"; done
+	echo "$dosites" | cut -d: -f1,2 | sort | uniq -d | while IFS= read -r l; do echo "FAIL: a line with two .do( calls: $l"; done
+	bad "the .do( occurrences ($nsites) and the rows parsed ($nrows) differ"
+fi
 
 echo "== (7) The calls of internal/git that name a remote verb, and who calls them (non-test Go files of cmd/ and internal/ out of internal/git)"
 callfiles=$(git ls-files 'cmd/*.go' 'internal/*.go' | grep -v -E '_test\.go$|/testdata/|^internal/git/')
@@ -167,7 +217,7 @@ refs=$(for f in $callfiles; do
 		/^[ \t]*\/\// { next }
 		{
 			line = $0 " "
-			while (match(line, /git\.(LsRemote|Clone|Fetch|Push|CloneLocal|AddRemote|FetchSession)[^A-Za-z0-9_]/)) {
+			while (match(line, /git\.(LsRemote|RemoteHead|Clone|Fetch|Push|CloneLocal|AddRemote|FetchSession)[^A-Za-z0-9_]/)) {
 				call = substr(line, RSTART + 4, RLENGTH - 5)
 				print f ":" NR ": " call " in " (fn == "" ? "no function" : fn)
 				line = substr(line, RSTART + RLENGTH - 1)
