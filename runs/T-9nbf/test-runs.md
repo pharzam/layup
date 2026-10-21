@@ -227,3 +227,14 @@ M19 (finding 1), G1 (finding 2) and G5 (finding 3) are killed; G11 (the reread o
 | `git diff --check origin/main HEAD` | 09:17:06 to 09:17:06 | 0 |
 
 The full integration level: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./...`, on the code head (the commits after it change records and documents). The pre-freeze check follows.
+
+Run on the clean committed head `2941df0c`, merged with `origin/main` at `c0f691e`, exit 0:
+
+```text
+ok K1: white space
+ok K2: registration of new tests
+ok K3: test selectors
+ok K4: restore evidence of mutants
+ok K5: projection: figure 1773/28, maximum 2600/28, tolerance 500/4, limit 3100/32, margin 1327/4 (the figure at landing is still measured at landing)
+ok K6: conditions table
+```
