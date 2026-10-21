@@ -40,5 +40,5 @@ ADR-0007, recorded, not budgeted. Tokens as the harness reported them.
 | Build | execution | Claude Sonnet 5.5 (subagent) | not recorded | not kept | 2026-10-21T15:00:04Z to 15:45:25Z (first and last commit) |
 | Review round 1 | reasoning | Claude Fable 5.1 | max | 15,513,217 | 2026-10-21T15:26:54Z to 15:44:12Z |
 | Review round 2 | reasoning | Claude Fable 5.1 | max | 10,363,310 | 2026-10-21T15:47:23Z to 16:06:06Z |
-| Close-out | execution | Claude Sonnet 5.5 (subagent) | not recorded | not kept | 2026-10-21T16:07Z to 16:12Z |
+| Close-out | execution | Claude Sonnet 5.5 (subagent) | not recorded | not kept | not kept; its commit 2026-10-21T16:07:14Z |
 | **Total** | | | | 26,273,271 reported (the four numeric entries and both rounds) | not reported (the rows have no common start and end) |
