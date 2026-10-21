@@ -1,6 +1,6 @@
 # T-wqrk: the harness, as snapshots for review before the runs
 
-Revised 2026-10-21T12:34:28Z (`date -u`) after round 1 of #462. Passive copies of the local harness files, none of them in the repository, preserved so that the producing code of the trial is reviewed before the six paid runs (plan review condition 7). The live files are `/home/layup/.cache/layup-session/m2e-scratchpad/rounds`; the `.new` files are not yet in place (the shared-harness protocol: the coordinator gives notice, keeps a `.bak`, and moves them). The sections: the driver, the judge and its cases, the mutant script, both templates, the preparer and its diff, one prepared brief of each kind, and the sweep.
+Revised 2026-10-21T12:58:40Z (`date -u`) after round 2 of #462. Passive copies of the local harness files, none of them in the repository, preserved so that the producing code of the trial is reviewed before the six paid runs (plan review condition 7). The live files are `/home/layup/.cache/layup-session/m2e-scratchpad/rounds`; the `.new` files are not yet in place (the shared-harness protocol: the coordinator gives notice, keeps a `.bak`, and moves them). The sections: the driver, the judge and its cases, the mutant script, both templates, the preparer and its diff, one prepared brief of each kind, and the sweep.
 
 ### A. trial-T-wqrk.py (the driver and the fixture construction)
 
@@ -120,8 +120,10 @@ main()
 # Validity first: the first line of REVIEW.md is exactly "## Review record — round 2", it holds a "### Raw findings" line, and EXIT.TXT, if given,
 # reads "exit 0". Otherwise: "JUDGE: INVALID <reason>", exit 3 (neither a find nor a miss). Exit 2 for no file.
 # Cut: only the sections "### Raw findings" and "### Notes" are read. Unit: one finding or note (a list item at column 0 with its indented
-# lines, or a paragraph). A unit is a FIND when it holds 0026, fifteen/15 and twenty/20, and one sentence that holds a disagreement word
-# and fifteen/15/twenty/20/deadline/no record and no denial (no, nothing, none, never, without, n't, "not stale" and its kind).
+# lines, or a paragraph). A unit is a FIND when it holds 0026, fifteen/15 and twenty/20, and ONE sentence of it holds all of: 0026,
+# fifteen/15/no record, a word of disagreement, and no denial (no, nothing, none, never, without, n't, "not stale" and its kind) and no hedge
+# (incorrect, wrong, would be, could be, may be, if, whether, is fine, is correct, is consistent, agrees with). The sentence must name ADR-0026
+# itself; a diagnosis in a neighbouring sentence, or of another item, does not count.
 # Prints FOUND lines and then "JUDGE: FOUND" (exit 0) or "JUDGE: MISS" (exit 1).
 [ -f "${1:-}" ] || { echo "judge: no file" >&2; exit 2; }
 inv() { echo "JUDGE: INVALID $1"; exit 3; }
@@ -136,11 +138,12 @@ function flush(   i, n, s, t, u, w) {
 	n = split(t, s, /[.!?;] +/)
 	for (i = 1; i <= n; i++) {
 		u = s[i]; w = u; gsub(/no longer|no record/, " ", w)
-		if (u ~ diag && u ~ /fifteen|twenty|(^|[^0-9])(15|20)([^0-9]|$)|deadline|no record/ && w !~ /(^|[^a-z])(no|nothing|none|never|without)([^a-z]|$)|n.t / && w !~ neg) { print "FOUND in a unit at: " substr(u, 1, 150); f = 1; return }
+		if (u ~ /0026/ && u ~ /fifteen|(^|[^0-9])15([^0-9]|$)|no record/ && u ~ diag && w !~ /(^|[^a-z])(no|nothing|none|never|without)([^a-z]|$)|n.t / && w !~ neg && w !~ hedge) { print "FOUND in a unit at: " substr(u, 1, 150); f = 1; return }
 	}
 }
 BEGIN {
 	diag = "stale|still (says|states|gives|reads|has|names|uses|carries|keeps|shows|lists|mentions)|disagree|conflict|contradict|inconsisten|out of date|out-of-date|not (been )?updated|mismatch|differs from|no longer (match|agree)|does not (match|agree)|do not (match|agree)|old (value|number|figure|wording|deadline)|left (at|with|stating)"
+	hedge = "incorrect|wrong|would be|could be|may be|(^|[^a-z])(if|whether|might|unless)([^a-z]|$)|(is|are) (fine|correct|consistent)|(^|[^a-z])(agrees|agree with)"
 	neg = "not (stale|inconsisten|in conflict|conflict|contradict|out of date|a mismatch)"
 }
 /^### / { flush(); p = ($0 ~ /^### (Raw findings|Notes)[ \t]*$/); prevblank = 1; next }
@@ -246,6 +249,42 @@ None.
 
 1. I read `docs/adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md:39`. It gives fifteen minutes for a record, and the fix gives twenty.
    Separately, a README link to the old guide is stale.
+
+### What I checked and found sound
+
+Condition 1 is met.
+````
+
+### B. judge case neg-token.md
+
+````markdown
+## Review record — round 2
+
+### Raw findings
+
+None.
+
+### Notes
+
+1. ADR-0026 gives fifteen minutes for a record, and the fix gives twenty. Separately, the README has a stale deadline for its token.
+
+### What I checked and found sound
+
+Condition 1 is met.
+````
+
+### B. judge case neg-hedged.md
+
+````markdown
+## Review record — round 2
+
+### Raw findings
+
+None.
+
+### Notes
+
+1. Calling the fifteen- and twenty-minute deadline references in ADR-0026 stale would be incorrect.
 
 ### What I checked and found sound
 
@@ -362,7 +401,7 @@ Write plain English with short sentences, in the style of the repository's docum
 # prep-round.py CONFIG.json: clone at the frozen head, inputs and brief of a review round. Writes RUNDIR/layup/.review-in/.
 # T-wqrk: a round after a fix (round 2 or later) needs "fix_base" (a full SHA, an ancestor of "head", not the head). The script then
 # writes .review-in/fix.diff and fills the fix-round block and check 6 of the template. "passive" names records (runs/TASK/NAME.md, each
-# a tracked plain file that no script reads) that the diff and the search leave out; it is the only exclusion. An earlier verdict
+# a tracked plain file that no script or executable reads: named by its full path anywhere, or by its name from the same directory) that the diff and the search leave out; it is the only exclusion. An earlier verdict
 # (an "extra" named roundN.md) is always refused. PREP_TEMPLATE overrides the template path.
 import json, os, re, shutil, subprocess, sys
 S = "/home/layup/.cache/layup-session/m2e-scratchpad"
@@ -403,8 +442,9 @@ def write_fix_diff(L, RI, base, ex):
         if not ls: fail(p + " is not tracked")
         if ls[0] != "100644": fail(p + " is executable or not a plain file; it cannot be passive")  # G:exec
         r = subprocess.run(["git", "grep", "-l", "-F", "-e", os.path.basename(p), "--", ".", ":!" + p], cwd=L, capture_output=True, text=True)
-        for f in r.stdout.split():
-            if f.endswith(SCRIPT_EXT) or sh("git", "ls-files", "-s", "--", f, cwd=L).split()[0] == "100755": fail(p + " is read by " + f + "; it is consumed and cannot be passive")  # G:consumed
+        for f in r.stdout.split():  # a script or an executable that names the file by its full path, or by its name from the same directory, reads it
+            if not (f.endswith(SCRIPT_EXT) or sh("git", "ls-files", "-s", "--", f, cwd=L).split()[0] == "100755"): continue
+            if p in sh("git", "show", "HEAD:" + f, cwd=L) or os.path.dirname(f) == os.path.dirname(p): fail(p + " is read by " + f + "; it is consumed and cannot be passive")  # G:consumed
     open(RI + "/fix.diff", "w").write(sh("git", "diff", base, "HEAD", "--", ".", *[":!" + p for p in ex], cwd=L))
 def render_brief(tmpl, c):
     b = tmpl.replace("@FIXREAD@", fix_parts(c)[2]).replace("@FIXCHECK@", fix_parts(c)[3])
@@ -438,13 +478,13 @@ if __name__ == "__main__": main()
 
 ````diff
 --- /home/layup/.cache/layup-session/m2e-scratchpad/rounds/prep-round.py	2026-10-20 13:07:46.473367370 +0300
-+++ /home/layup/.cache/layup-session/m2e-scratchpad/rounds/prep-round.py.new	2026-10-21 15:32:28.665999914 +0300
-@@ -1,25 +1,73 @@
++++ /home/layup/.cache/layup-session/m2e-scratchpad/rounds/prep-round.py.new	2026-10-21 15:56:17.897243156 +0300
+@@ -1,25 +1,74 @@
  # prep-round.py CONFIG.json: clone at the frozen head, inputs and brief of a review round. Writes RUNDIR/layup/.review-in/.
 -import json, os, shutil, subprocess, sys
 +# T-wqrk: a round after a fix (round 2 or later) needs "fix_base" (a full SHA, an ancestor of "head", not the head). The script then
 +# writes .review-in/fix.diff and fills the fix-round block and check 6 of the template. "passive" names records (runs/TASK/NAME.md, each
-+# a tracked plain file that no script reads) that the diff and the search leave out; it is the only exclusion. An earlier verdict
++# a tracked plain file that no script or executable reads: named by its full path anywhere, or by its name from the same directory) that the diff and the search leave out; it is the only exclusion. An earlier verdict
 +# (an "extra" named roundN.md) is always refused. PREP_TEMPLATE overrides the template path.
 +import json, os, re, shutil, subprocess, sys
  S = "/home/layup/.cache/layup-session/m2e-scratchpad"
@@ -506,8 +546,9 @@ if __name__ == "__main__": main()
 +        if not ls: fail(p + " is not tracked")
 +        if ls[0] != "100644": fail(p + " is executable or not a plain file; it cannot be passive")  # G:exec
 +        r = subprocess.run(["git", "grep", "-l", "-F", "-e", os.path.basename(p), "--", ".", ":!" + p], cwd=L, capture_output=True, text=True)
-+        for f in r.stdout.split():
-+            if f.endswith(SCRIPT_EXT) or sh("git", "ls-files", "-s", "--", f, cwd=L).split()[0] == "100755": fail(p + " is read by " + f + "; it is consumed and cannot be passive")  # G:consumed
++        for f in r.stdout.split():  # a script or an executable that names the file by its full path, or by its name from the same directory, reads it
++            if not (f.endswith(SCRIPT_EXT) or sh("git", "ls-files", "-s", "--", f, cwd=L).split()[0] == "100755"): continue
++            if p in sh("git", "show", "HEAD:" + f, cwd=L) or os.path.dirname(f) == os.path.dirname(p): fail(p + " is read by " + f + "; it is consumed and cannot be passive")  # G:consumed
 +    open(RI + "/fix.diff", "w").write(sh("git", "diff", base, "HEAD", "--", ".", *[":!" + p for p in ex], cwd=L))
 +def render_brief(tmpl, c):
 +    b = tmpl.replace("@FIXREAD@", fix_parts(c)[2]).replace("@FIXCHECK@", fix_parts(c)[3])

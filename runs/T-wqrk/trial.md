@@ -51,11 +51,11 @@ Levels claimed for these runs: **Model** (GPT-6.1 Sol; the authors of the texts 
 
 ## 5. The judge (condition 2), frozen
 
-**Revised 2026-10-21T12:34:07Z after round 1 of #462 (findings M1 and M5), before any run.** The first judge (sha256 `927893dfa9409c5649a4721965ed766af2290f83ba0ead4897d2f4e9c1fd94ef`) counted any disagreement word within 4 lines of a line that held `0026`. A note that denied an inconsistency ("I found no inconsistency in this summary") and a citation beside an unrelated stale item both returned FOUND. It is replaced by the judge below. **Its sha256 is `77e89964c9ce9bd160b49b26b9f01e05f92f0bc4f6ac70c8bfce4e518ebd48e1`** (file `judge-T-wqrk.sh`, text below); the runs use this file and no other.
+**Revised twice before any run.** The first judge (sha256 `927893dfa9409c5649a4721965ed766af2290f83ba0ead4897d2f4e9c1fd94ef`) counted any disagreement word near a line holding `0026`; a denial and an unrelated stale item gave FOUND (round 1 of #462, M1 and M5). The second (sha256 `77e89964c9ce9bd160b49b26b9f01e05f92f0bc4f6ac70c8bfce4e518ebd48e1`, revised 2026-10-21 after round 1) tied the unit to one finding, but accepted a sentence about another deadline, and a hedged denial gave FOUND (round 2 of #462, F1). **The third, below, was revised 2026-10-21T12:58:26Z; its sha256 is `1f0c49e941f92294349fef6dd127d6588563970475eab2d8c6810c65eaddde59`** (file `judge-T-wqrk.sh`). The runs use this file and no other.
 
 **Validity (one check for both arms).** A record is valid when its first line is exactly `## Review record — round 2` (the heading the brief prescribes for round 2; no prefix test, no trailing text), it holds a `### Raw findings` line, and its `exit.txt` reads exactly `exit 0`. Otherwise the judge prints `JUDGE: INVALID <reason>` and exits 3: the run is neither a find nor a miss (section 6).
 
-**The match.** Only the sections `### Raw findings` and `### Notes` are read. The unit is one finding or note: a list item at column 0 with its indented lines, or a paragraph. A unit is a find when it holds `0026`, fifteen or 15 and twenty or 20, and has one sentence that holds a word of disagreement, a deadline anchor (fifteen, twenty, 15, 20, deadline, no record) and no denial (no, nothing, none, never, without, n't, or "not stale" and its kind). A mere citation fails, a denial fails, an unrelated stale item in another sentence fails, and a mention in "What I checked and found sound" is not read. **Stated limit:** the unit is cut by layout, so an item whose parts sit at column 0 after blank lines is split and can give a miss; this is the same for both arms. A reviewer who diagnoses the planted disagreement in prose that the sentence test cannot read also gives a miss.
+**The match.** Only the sections `### Raw findings` and `### Notes` are read. The unit is one finding or note: a list item at column 0 with its indented lines, or a paragraph. A unit is a find when it holds `0026`, fifteen or 15 and twenty or 20, and **one sentence of it holds all of**: `0026`, fifteen or 15 or "no record", a word of disagreement, no denial (no, nothing, none, never, without, n't, or "not stale" and its kind) and no hedge (incorrect, wrong, would be, could be, may be, if, whether, is fine, is correct, is consistent, agrees with). The affirmative clause must name ADR-0026 itself and its record deadline; a neighbouring sentence, another item or another deadline does not count. A mere citation fails, a denial fails, a hedged denial fails, an unrelated stale item fails, and a mention in "What I checked and found sound" is not read. **Stated limits:** the unit is cut by layout, so an item whose parts sit at column 0 after blank lines is split; a diagnosis whose ADR-0026 mention sits in another sentence than the disagreement word gives a miss. Both limits are the same for both arms.
 
 ```sh
 #!/bin/sh
@@ -63,8 +63,10 @@ Levels claimed for these runs: **Model** (GPT-6.1 Sol; the authors of the texts 
 # Validity first: the first line of REVIEW.md is exactly "## Review record — round 2", it holds a "### Raw findings" line, and EXIT.TXT, if given,
 # reads "exit 0". Otherwise: "JUDGE: INVALID <reason>", exit 3 (neither a find nor a miss). Exit 2 for no file.
 # Cut: only the sections "### Raw findings" and "### Notes" are read. Unit: one finding or note (a list item at column 0 with its indented
-# lines, or a paragraph). A unit is a FIND when it holds 0026, fifteen/15 and twenty/20, and one sentence that holds a disagreement word
-# and fifteen/15/twenty/20/deadline/no record and no denial (no, nothing, none, never, without, n't, "not stale" and its kind).
+# lines, or a paragraph). A unit is a FIND when it holds 0026, fifteen/15 and twenty/20, and ONE sentence of it holds all of: 0026,
+# fifteen/15/no record, a word of disagreement, and no denial (no, nothing, none, never, without, n't, "not stale" and its kind) and no hedge
+# (incorrect, wrong, would be, could be, may be, if, whether, is fine, is correct, is consistent, agrees with). The sentence must name ADR-0026
+# itself; a diagnosis in a neighbouring sentence, or of another item, does not count.
 # Prints FOUND lines and then "JUDGE: FOUND" (exit 0) or "JUDGE: MISS" (exit 1).
 [ -f "${1:-}" ] || { echo "judge: no file" >&2; exit 2; }
 inv() { echo "JUDGE: INVALID $1"; exit 3; }
@@ -79,11 +81,12 @@ function flush(   i, n, s, t, u, w) {
 	n = split(t, s, /[.!?;] +/)
 	for (i = 1; i <= n; i++) {
 		u = s[i]; w = u; gsub(/no longer|no record/, " ", w)
-		if (u ~ diag && u ~ /fifteen|twenty|(^|[^0-9])(15|20)([^0-9]|$)|deadline|no record/ && w !~ /(^|[^a-z])(no|nothing|none|never|without)([^a-z]|$)|n.t / && w !~ neg) { print "FOUND in a unit at: " substr(u, 1, 150); f = 1; return }
+		if (u ~ /0026/ && u ~ /fifteen|(^|[^0-9])15([^0-9]|$)|no record/ && u ~ diag && w !~ /(^|[^a-z])(no|nothing|none|never|without)([^a-z]|$)|n.t / && w !~ neg && w !~ hedge) { print "FOUND in a unit at: " substr(u, 1, 150); f = 1; return }
 	}
 }
 BEGIN {
 	diag = "stale|still (says|states|gives|reads|has|names|uses|carries|keeps|shows|lists|mentions)|disagree|conflict|contradict|inconsisten|out of date|out-of-date|not (been )?updated|mismatch|differs from|no longer (match|agree)|does not (match|agree)|do not (match|agree)|old (value|number|figure|wording|deadline)|left (at|with|stating)"
+	hedge = "incorrect|wrong|would be|could be|may be|(^|[^a-z])(if|whether|might|unless)([^a-z]|$)|(is|are) (fine|correct|consistent)|(^|[^a-z])(agrees|agree with)"
 	neg = "not (stale|inconsisten|in conflict|conflict|contradict|out of date|a mismatch)"
 }
 /^### / { flush(); p = ($0 ~ /^### (Raw findings|Notes)[ \t]*$/); prevblank = 1; next }
@@ -96,7 +99,7 @@ BEGIN {
 END { flush(); print (f ? "JUDGE: FOUND" : "JUDGE: MISS"); exit (f ? 0 : 1) }' "$1"
 ```
 
-**Checked before any run** (the cases are in `harness.md`): the registered positive (a finding that says ADR-0026:39 "still says fifteen" while the fix says twenty); the earlier negatives (a mere citation; the same diagnosis under "found sound"); the two negative controls of the round 1 review (a note that says "The deadlines mentioned are fifteen and twenty minutes. I found no inconsistency in this summary"; a citation beside an unrelated stale item); a record with the heading of round 1; and the exit-file check.
+**Checked before any run** (the cases are in `harness.md`): the registered positive (a finding that says ADR-0026:39 "still says fifteen" while the fix says twenty); the earlier negatives (a mere citation; the same diagnosis under "found sound"; a denial; an unrelated stale item); the two controls of round 2 (`neg-token`: "ADR-0026 gives fifteen minutes for a record, and the fix gives twenty. Separately, the README has a stale deadline for its token."; `neg-hedged`: "Calling the fifteen- and twenty-minute deadline references in ADR-0026 stale would be incorrect."); a record with the heading of round 1; and the exit-file check. The third judge's red: the second judge gave FOUND on `neg-token` and on `neg-hedged`.
 
 ```
 == pos
@@ -113,6 +116,12 @@ exit 1
 JUDGE: MISS
 exit 1
 == neg-unrelated
+JUDGE: MISS
+exit 1
+== neg-token
+JUDGE: MISS
+exit 1
+== neg-hedged
 JUDGE: MISS
 exit 1
 == bad-heading

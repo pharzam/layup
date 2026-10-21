@@ -18,3 +18,5 @@ One row per condition of the plan review (comment 6314145194), the Operator's de
 | Round 1 M3: each refusal case is otherwise valid and asserts its message; each guard removed fails its own case | `runs/T-wqrk/prep-test.sh`, `runs/T-wqrk/test-runs.md` |
 | Round 1 M4: exclusions are named records, never by suffix; operative Markdown stays visible | `runs/T-wqrk/prep-test.sh`, `runs/T-wqrk/harness.md` |
 | Round 1 M5: one exact heading test and one validity check for both arms | `runs/T-wqrk/trial.md`, `runs/T-wqrk/harness.md` |
+| Round 2 F1: the affirmative clause names ADR-0026 and its record deadline, with no denial or hedge; both controls give MISS; the judge frozen with its sha256 | `runs/T-wqrk/trial.md`, `runs/T-wqrk/harness.md` |
+| Round 2 F2: the consumer check reads full paths and same-directory names only; the suite exits 0 on the committed head in a clean clone; the guards still fail their own cases | `runs/T-wqrk/prep-test.sh`, `runs/T-wqrk/test-runs.md` |
