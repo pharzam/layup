@@ -91,3 +91,20 @@ ok K4: restore evidence of mutants
 ok K5: projection: figure 675/10, maximum 850/12, tolerance 170/4, limit 1020/16, margin 345/6 (the figure at landing is still measured at landing)
 ok K6: conditions table
 ```
+
+## Round 2 of #368 (one finding at cap 1; the Operator chose end 3: fix it, no further round)
+
+**Finding: C1 expected two merge requests, so zero and one both failed alike.** The scenario now takes its expected count from `wantMerges()` (two; zero when `failedJob` names a failing required job, the control C1), compared exactly by `mergeCountFinding`. Red first: the probe `TestTheCountOfMergeRequestsIsExact` against a stub that accepted every count: exit 1, `1 merge requests, 0 expected: finding ""` and three more rows (`red-count.txt`). Green: with the function written, the probe and the scenario pass (`ok 21.372s`). C1 rerun (`mutants.md`): C1a (fake answers `static` with failure) passes the zero assertion with 0 requests and then fails the happy-path rows; C1b (C1a with a product that ignores the conclusion of a required job) is killed by the zero assertion, `loop_e2e_test.go:470: stage 6: 2 merge requests in the log; want exactly 0`; build, vet, restore hashes and the green controls before and after as in the table.
+
+Checks, 10:5x UTC: build, vet (default, integration, e2e), gofmt, unit exit 0; `go test -count=1 -tags=e2e -timeout 10m ./...` exit 0 at 10:56:47, package `cmd/layup` **85.749s**; the six lints, `freeze-check/run-all` and `git diff --check origin/main HEAD` exit 0; main still `30e2c0d`. No product code changed since `357a757c`; the integration level was not rerun.
+
+Freeze check on the clean committed head `79811493`, base `30e2c0d`, exit 0:
+
+```text
+ok K1: white space
+ok K2: registration of new tests
+ok K3: test selectors
+ok K4: restore evidence of mutants
+ok K5: projection: figure 717/10, maximum 850/12, tolerance 170/4, limit 1020/16, margin 303/6 (the figure at landing is still measured at landing)
+ok K6: conditions table
+```
