@@ -421,3 +421,22 @@ ok K4: restore evidence of mutants
 ok K5: projection: figure 2122/26, maximum 2600/30, tolerance 500/4, limit 3100/34, margin 978/8 (the figure at landing is still measured at landing)
 ok K6: conditions table
 ```
+
+## Round 3 of #428: the text fix of F9
+
+F9 (round 3, comment 6308023513): the source-table row of `Pending` in `loop.md` and the comments of `FullInput.Pending`, `PendingReq` and `pendingMissing` said that `Pending` is the current task's reopening only, while `pendingOf` (`internal/run/reopen.go:540`) and `loop.md:2412` give the current task's row plus every merged reopening's, in the stored row order. The Operator chose a text-only fix (cap 3). The commit changes `docs/spec/loop.md` and `internal/spec/full.go` comments only: no code and no test. `origin/main` was still `f9d46b0`, so the full integration level was not run again (the code head `3806384` ran it at 04:09:58Z to 04:13:47Z, exit 0). Each command alone with its direct exit status:
+
+- build: 04:27:48 to 04:27:48Z, exit 0: `go build ./...`
+- vet: 04:27:48 to 04:27:49Z, exit 0: `go vet ./...`
+- vetint: 04:27:49 to 04:27:49Z, exit 0: `go vet -tags=integration ./...`
+- vete2e: 04:27:49 to 04:27:49Z, exit 0: `go vet -tags=e2e ./...`
+- gofmt: 04:27:49 to 04:27:49Z, exit 0: `sh -c out=$(gofmt -l .) && test -z "$out"`
+- unit: 04:27:49 to 04:27:50Z, exit 0: `go test -count=1 ./...`
+- blocks: 04:27:50 to 04:27:50Z, exit 0: `go test -count=1 -tags=integration ./internal/run/ -run '^(TestTheInstructionBlocksOfLoopMd|TestTheTextBlocksOfRunMd)$'`
+- adr: 04:27:50 to 04:27:52Z, exit 0: `sh docs/adr/adr-lint.sh`
+- prd: 04:27:52 to 04:27:52Z, exit 0: `sh docs/prd/prd-lint.sh`
+- link: 04:27:52 to 04:28:05Z, exit 0: `sh docs/links/link-lint.sh`
+- disc: 04:28:05 to 04:28:08Z, exit 0: `sh docs/tests/run-discipline-tests.sh`
+- nested: 04:28:08 to 04:28:08Z, exit 0: `sh docs/tests/nested-checkout-check.sh`
+- setup: 04:28:08 to 04:28:31Z, exit 0: `sh docs/setup/setup-check.sh`
+- diffcheck: 04:28:54 to 04:28:54Z, exit 0: `git diff --check origin/main HEAD`
