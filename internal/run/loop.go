@@ -32,6 +32,28 @@ func pick(order []Task, merged func(id string) bool) (Task, bool, error) { retur
 // originalSpec tells the specification task of Shape from a task that a changed class reopened.
 func originalSpec(t Task, reopened map[string]bool) bool { return t.Kind == "specification" }
 
+// An actKind is what the act on a task is, told from its records and the pull request of its latest attempt.
+type actKind int
+
+const (
+	actDrive  actKind = iota // AdvanceShapeTask
+	actNone                  // the task has merged
+	actReread                // the task was redone: the register is read again
+	actFinish                // the pull request is merged or closed: FinishTask records or waits
+	actBring                 // a verified head: BringUpToDate, then FinishTask
+)
+
+// dispatch tells the act on a task from its view; terminal is whether the pull request of its latest attempt is merged or closed.
+func dispatch(v loopView, terminal bool) actKind { return actDrive }
+
+// boundaryRule tells whether the parameter boundary is skipped, from the bytes of parameters.tsv and tasks.tsv (nil for an absent file): only before the first task.
+func boundaryRule(parameters, tasks []byte) (skip bool, err error) { return false, nil }
+
+// wrapBoundary is atBoundary over the permission check, the boundary and the step it wraps.
+func wrapBoundary(name string, permission func() Step, boundary func(context.Context) error, step func(context.Context) Step) func(context.Context) Step {
+	return step
+}
+
 // runLoop is the scheduler of the step loop over its environment.
 func runLoop(ctx context.Context, env loopEnv) Step { return Step{} }
 
