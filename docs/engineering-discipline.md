@@ -60,11 +60,9 @@ routing rule, check script or policy capture starts on its own
    Never leave the operator in the dark.
 
 5. **Review until findings decay.** After the code works, freeze the head and
-   run one independent blind review round on it — see
-   [Reviewing until findings decay](#reviewing-until-findings-decay). A fix
-   re-freezes, and one more round reads it; the cycle cap is 1, or 2 when the
-   change touches a gate, and the last round ends `nothing material in scope` or
-   `not mergeable, findings recorded`. A defect the change *revealed*, off the
+   run one independent blind review round on it. The
+   [review protocol](#reviewing-until-findings-decay) defines the cycles,
+   verdicts and ends at the cap. A defect the change *revealed*, off the
    path its Definition of Done names, opens an issue instead of entering the
    branch. A reviewer is a person **or** a fresh agent session; what the round
    must have is [independence](#who-may-review), not a particular kind of
@@ -328,23 +326,24 @@ the rounds is:
 
      At the cap with material findings still open, this end applies without an
      Operator comment when every open material finding is a records finding.
-     A records finding is one whose fix restores a named source or a record’s
+     A records finding is one whose fix restores a named source or a record's
      form, and changes nothing else. Examples are a traceability row or Test
      cell made to name a test that exists, an index line, record columns made
      to match their schema, and trailing white space.
 
-     A fix that changes an exit code, an assertion, a verdict, a check’s input
+     A fix that changes an exit code, an assertion, a verdict, a check's input
      (as defined in the budget rule below), a test, product code, the
      specification, or a sentence that grants or limits an authority is not a
-     records finding. Its end stays the Operator’s. A disputed classification
-     also stays the Operator’s.
+     records finding. Its end stays the Operator's. A disputed classification
+     also stays the Operator's.
 
      The author records `end 3 by ADR-0028` with the findings and their fixes
      on the issue. The Operator can overrule it there before the merge. Either
-     this default or the Operator’s comment permits the merge.
+     this default or the Operator's comment permits the merge. The shared
+     waiting rule in the budget below applies.
 
-     This end is the one exception to “A fix re-freezes”, “The last round
-     carries the verdict”, and the `Verdict` field of
+     This end is the one exception to "A fix re-freezes", "The last round
+     carries the verdict", and the `Verdict` field of
      [What a round records](#what-a-round-records). After that fix, no further
      fix or round follows; the close-out bookkeeping and a merge of `main`
      land as before.
@@ -396,12 +395,19 @@ the rounds is:
   lines leave the count. The file still counts as touched.
 
   A landing figure above the `Budget maximum` by no more than the tolerance is
-  approved in advance. The tolerance is 20 % of the maximum’s lines, at least
+  approved in advance. The tolerance is 20 % of the maximum's lines, at least
   60 lines and at most 500, plus 4 files.
   The margin is the maximum plus the tolerance, minus the landing figure, calculated separately in lines and in files.
   Before the merge, the author posts the
   figure, the maximum and the margin on the issue. The Operator can overrule
   that delegated decision there before the merge.
+
+  For a delegated figure or end, the author posts a new issue comment that
+  names it; the merge waits 10 minutes from that new comment's UTC posting
+  time when that posting time is from 05:00 inclusive to 19:00 exclusive UTC
+  (08:00 to 22:00 UTC+3), and may follow the new comment with no wait when its
+  posting time is from 19:00 inclusive to 05:00 exclusive UTC (22:00 to 08:00
+  UTC+3); an edit of an earlier comment posts nothing.
 
   The tolerance is one fixed bound, the same for every task. It is not a
   multiple, does not grow with the findings, and is not a second approval.

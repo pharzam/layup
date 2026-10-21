@@ -663,9 +663,10 @@ success without having done its job.
   let the workflow write it; never edit a `state:` label on the forge.
 
 - ❌ **A merge of `main` moves the base of the budget.** The plan review names a base
-  SHA, and the budget counts the lines added plus removed on the whole branch diff
-  against it. A branch on the forge takes `main` by a merge before its freeze, so the
-  diff against the old base also holds the tasks that landed meanwhile: in task
+  SHA; [the budget](engineering-discipline.md#reviewing-until-findings-decay)
+  defines the count against it. A branch on the forge takes `main` by a merge before
+  its freeze, so the diff against the old base also holds the tasks that landed
+  meanwhile: in task
   `T-jpkc` (#271) it was 1,508 lines over 23 files at the head that round 1 read,
   against a maximum of 850 over 14, while the task's own diff against the `main` that
   the branch had taken was 614 over 10, and round 1 gave `material` for the first
