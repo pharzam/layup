@@ -135,7 +135,7 @@ func Restart(ctx context.Context, cfg Config) []Step {
 		intake := []func(context.Context) Step{r.probeStep, r.ruleGapsStep, r.meaningStep, r.numberingStep, r.spansStep, r.draftStep, r.completenessStep, r.markersStep, r.batchStep, r.answersStep, r.answersReviewStep, r.followUpStep, r.followUpAnswersStep, r.revisionStep, r.setupStep, r.verifyStep, r.scaffoldPushStep}
 		tail = append(append([]func(context.Context) Step{r.versionStep, r.takeStep}, intake...), r.forgeCheckStep)
 		if r.scaffoldDone {
-			tail = append(append([]func(context.Context) Step{r.versionStep, r.takeStep, r.forgeCheckStep}, intake...), r.shapeStep, r.betStep)
+			tail = append(append([]func(context.Context) Step{r.versionStep, r.takeStep, r.forgeCheckStep}, intake...), r.afterScaffold()...)
 		}
 	}
 	rows = append(rows, r.steps(ctx, restartNames(startDone, r.scaffoldDone), len(rows), tail)...)
@@ -145,6 +145,11 @@ func Restart(ctx context.Context, cfg Config) []Step {
 		}
 	}
 	return rows
+}
+
+// afterScaffold gives the steps that follow the Scaffold, in order (loop.md, REQ-005 — The steps of the loop after the Scaffold).
+func (r *state) afterScaffold() []func(context.Context) Step {
+	return []func(context.Context) Step{r.shapeStep, r.betStep}
 }
 
 // startDone reports whether each step of Start is done, by the values of
