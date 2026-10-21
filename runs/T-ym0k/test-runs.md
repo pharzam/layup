@@ -76,3 +76,29 @@ Round 1 found that check (3) exempted a whole grep line that held the allowed ca
 **The fix:** check (3) allows a `prdlint.go` line only when it holds the exact call `exec.Command("sh", script, prdDir)` once, no `//` before it, and no other `exec.Command`, `os.StartProcess` or `syscall.` text in the rest of the line. Check (6) puts an identifier boundary (not a letter, digit, `_` or `.`) before `a.do` in the parsing and the diagnostic expressions.
 
 **Green:** the script over the clean release and m1 to m9 (each `FAIL` line read): the clean release exits 0; m1 to m6 fail on the same lines as before; m7 and m8 exit 1 with `FAIL: a call that starts a program, out of the list: internal/spec/prdlint.go:32:` and the mutated line; m9 exits 1 with `FAIL: a .do( call that is not in the form …: internal/forge/github/github.go:96: … aa.do(ctx, "Installation", …` and `occurrences (21) and the rows parsed (20) differ`. The clean release again (12:03:13 to 12:03:14): exit 0, `== PASS`, 140 lines, 17 references in check (7); `release-check.txt` is that output. The 17 cases of the comparator stay green.
+
+## After round 2 of #369 (12:17:45 to 12:18:29): the receiver `αa`
+
+Round 2 found that the boundary before `a.do` excluded only ASCII letters, digits, `_` and `.`, so a receiver named `αa` (a valid Go identifier) passed as `a.do`. Mutant m10 renames the receiver of `Installation` and its references from `a` to `αa` (`110b2403`, built first).
+
+**Red (12:17:45):** the script of the head `24f3db6` and the control each exit 0, `== PASS`, on m10.
+
+**The fix:** a positive boundary. The byte before `a.do` must be a space, a tab or one of `( , ; = ! & | { :`, or `a.do` starts the line; the parsing `sed` and the diagnostic `grep` use the same set, both under `LC_ALL=C` so that bytes are compared, and the header says so and states what is a refusal.
+
+**Green (12:18:01 to 12:18:20), each `FAIL` line read:** the clean release exit 0; m1 to m9 fail on the same lines as before; m10 exit 1 with `FAIL: a .do( call that is not in the form …: internal/forge/github/github.go:96: … αa.do(ctx, "Installation", …` and `occurrences (21) and the rows parsed (20) differ`.
+
+| Run | Control | Final |
+| --- | ------- | ----- |
+| clean release | exit 0 | exit 0 |
+| m1 `sh-c-in-prdlint` | exit 0 (red) | exit 1, (3) |
+| m2 `sh-in-spec-full` | exit 1, (3) | exit 1, (3) |
+| m3 `do-variable-op` | exit 0 (red) | exit 1, (6) |
+| m4 `push-in-run-push` | exit 1, (7) | exit 1, (7) |
+| m5 `do-variable-method` | exit 0 (red) | exit 1, (6) |
+| m6 `do-two-on-a-line` | exit 0 (red) | exit 1, (6) |
+| m7 `allowed-call-and-sh-c` | exit 0 (red) | exit 1, (3) |
+| m8 `sh-c-with-allowed-text-in-a-comment` | exit 0 (red) | exit 1, (3) |
+| m9 receiver `aa` | exit 0 (red) | exit 1, (6) |
+| m10 receiver `αa` | exit 0 (red) | exit 1, (6) |
+
+The clean release again (12:18:28 to 12:18:29): exit 0, `== PASS`, 140 lines; `release-check.txt` is that output. The 17 cases of the comparator stay green.

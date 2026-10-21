@@ -76,7 +76,12 @@
 #       is not in the form a.do(ctx, "Operation", "METHOD", target, ... on one
 #       line (a variable operation or method, another receiver, two calls on
 #       one line), or when no `.do(` is found: the rows it lists are the
-#       parsed ones. The limit, retained: that the form parses does not show
+#       parsed ones. The receiver is the name a alone: the byte before a.do
+#       must be a space, a tab or one of ( , ; = ! & | { : (or a.do starts the
+#       line), and anything else, any non-ASCII byte included (aa, x.a, or a
+#       name that starts with a letter outside ASCII), is another receiver and
+#       fails. The two expressions run with LC_ALL=C, so bytes are compared,
+#       not the characters of a locale. The limit, retained: that the form parses does not show
 #       that the operation name or the method fits what the call does, or that
 #       do is the only way to the network; the reviewer judges each row.
 # Checks (3), (4) and (7) print a list and fail on an entry out of their
@@ -187,7 +192,9 @@ echo "== (6) The calls of the forge adapter (operation, method), in the non-test
 # a form the rows cannot show. Two empty counts are not coverage.
 dosites=$(git grep -n -o -E '\.do\(' -- 'internal/forge/github/*.go' ':!*_test.go')
 dolines=$(git grep -n -E '\.do\(' -- 'internal/forge/github/*.go' ':!*_test.go')
-dorows=$(echo "$dolines" | sed -n -E 's/^([^:]*:[0-9]+):(.*[^A-Za-z0-9_.])?a\.do\(ctx, "([^"]*)", "(GET|POST|PUT|PATCH|DELETE)", ([^,]*),.*/  \1: \3 \4 \5/p')
+tb=$(printf '\t')
+bnd="[ $tb(,;=!&|{:]" # the characters that may stand before the receiver a
+dorows=$(echo "$dolines" | LC_ALL=C sed -n -E 's/^([^:]*:[0-9]+):(.*'"$bnd"')?a\.do\(ctx, "([^"]*)", "(GET|POST|PUT|PATCH|DELETE)", ([^,]*),.*/  \1: \3 \4 \5/p')
 [ -n "$dosites" ] || bad "no .do( call found in internal/forge/github"
 [ -z "$dorows" ] || echo "$dorows"
 nsites=$(echo "$dosites" | grep -c .)
@@ -195,7 +202,7 @@ nrows=$(echo "$dorows" | grep -c .)
 echo "  $nsites .do( occurrences, $nrows rows parsed"
 if [ "$nsites" -ne "$nrows" ]; then
 	# The loop runs in a subshell of the pipe, so fail is set here.
-	echo "$dolines" | grep -v -E '(^|[^A-Za-z0-9_.])a\.do\(ctx, "[^"]*", "(GET|POST|PUT|PATCH|DELETE)", [^,]*,' | while IFS= read -r l; do echo "FAIL: a .do( call that is not in the form a.do(ctx, \"Operation\", \"METHOD\", target, on one line: $l"; done
+	echo "$dolines" | LC_ALL=C grep -v -E "$bnd"'a\.do\(ctx, "[^"]*", "(GET|POST|PUT|PATCH|DELETE)", [^,]*,' | while IFS= read -r l; do echo "FAIL: a .do( call that is not in the form a.do(ctx, \"Operation\", \"METHOD\", target, on one line: $l"; done
 	echo "$dosites" | cut -d: -f1,2 | sort | uniq -d | while IFS= read -r l; do echo "FAIL: a line with two .do( calls: $l"; done
 	bad "the .do( occurrences ($nsites) and the rows parsed ($nrows) differ"
 fi
