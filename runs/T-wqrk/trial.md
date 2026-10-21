@@ -174,3 +174,33 @@ The driver, the judge, the fixture construction, both templates, the preparer di
 ## 8. Plan baseline corrections (condition 8)
 
 Check 3 of the old template already covers every document the change leaves stale, including untouched files; what the old brief lacks is a stated method of search. `review-record-lint.sh` checks nine reviewer fields (the author's `Fixes` is recorded apart) and their values and order, and it does not check what `Briefed on` says, so the gate text needs no lint change.
+
+## 9. The results (the trial ran 2026-10-21T13:19:27Z to 13:40:23Z; the Operator's decision b, comment 6317693581)
+
+Six valid runs (GPT-6.1 Sol, effort high, Codex, one at a time, alternating), all `exit 0`. The driver's log and the judge's raw output are in `test-runs.md` section 9. The judge is the frozen one (sha256 `d9e1e291489ae7e8257a1b6b7814fbc94bc36572f625cab16c06b5ad21fc111e`).
+
+| Run | Start to end (UTC) | Elapsed | Tokens | Judge | Hand reading (the coordinator) | Counts as a find |
+| --- | --- | --- | --- | --- | --- | --- |
+| old-1 | 13:19:27Z to 13:21:23Z | 1 min 56 s | 66,503 | MISS | diagnosed, confirmed | no (judge MISS, term 2) |
+| new-1 | 13:21:23Z to 13:26:16Z | 4 min 53 s | 128,623 | MISS | diagnosed, confirmed | no (judge MISS, term 2) |
+| old-2 | 13:26:16Z to 13:28:38Z | 2 min 22 s | 80,483 | MISS | diagnosed, confirmed | no (judge MISS, term 2) |
+| new-2 | 13:28:38Z to 13:31:39Z | 3 min 1 s | 111,817 | MISS | diagnosed, confirmed | no (judge MISS, term 2) |
+| old-3 | 13:31:39Z to 13:34:43Z | 3 min 4 s | 88,764 | FOUND | yes, confirmed | yes |
+| new-3 | 13:34:43Z to 13:40:23Z | 5 min 40 s | 130,901 | MISS | diagnosed, confirmed | no (judge MISS, term 2) |
+
+Tokens are the `tokens used` line of each run's `err.txt`.
+
+**The hand reading,** per run, with the quoted sentence (term 2 of comment 6316981250). Every run diagnoses ADR-0026:39 still giving fifteen minutes against the fix's twenty:
+
+- **old-1**, a note (line 21): "ADR-0026 still records “fifteen with no record” at `docs/adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md:39`. It names the canonical home that this branch updates." Its disposition is a close-out record, so it is a note, not material.
+- **new-1**, a note (finding 1): "ADR-0026 retains an unmarked restatement of the old deadline. Its accepted Decision §5 says fifteen minutes at `docs/adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md:39` … This disagrees with the fix, but does not establish a separate operative deadline."
+- **old-2**, a note (line 23): "`docs/adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md:39` retains fifteen minutes. It points to the canonical home changed here." It is not treated as a second operative deadline.
+- **new-2**, material (finding 1): "The fix gives twenty minutes at `docs/engineering-discipline.md:457`. ADR-0026’s accepted Decision, item 5, still specifies “fifteen with no record” at `docs/adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md:39`." Finding 1 calls it "an operative contradiction".
+- **old-3**, material (finding 1): "Accepted ADR-0026 still states “fifteen with no record” in its Decision (`docs/adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md:39`)." The heading reads "the deadline conflicts with accepted ADR-0026".
+- **new-3**, material (F1): "`docs/adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md:39` still states “the skip after five minutes with no output or fifteen with no record.” … This is an operative contradiction on the issue’s stated path."
+
+**The registered result (section 6).** Old: 1 of 3 finds (old-3), so **red holds**. New: 0 of 3, so **green fails**. The finds are the judge's FOUND results that the hand reading confirmed. The hand reading found 6 of 6 against 6 of 6 (old: note, note, material; new: note, material, material); it is reported, and it does **not** count (term 2: a judge MISS stays a miss). The judge under-counted five real diagnoses.
+
+**Conclusion.** No gain is shown. The plant was too easy: the old brief finds it as well, in all three runs. The new brief's runs cost more tokens (111,817 to 130,901 against 66,503 to 88,764) and more time (3 min 1 s to 5 min 40 s against 1 min 56 s to 3 min 4 s). The trial tests one planted case and says nothing on review in general (decision Q3).
+
+**The Operator's decision b (comment 6317693581).** The fix-round preparer and brief are delivered (installed in the shared harness at 2026-10-21T13:18:59Z, backups `*.bak-20261021T131859Z`). The gate-text change (the Method row of "Who may review" and the `Briefed on` clause) is **dropped**: `docs/engineering-discipline.md` is back at the text of `origin/main`.

@@ -24,6 +24,7 @@ change, reviewed as one.
 
 ## Log
 
+- **2026-10-21** — **T-wqrk** — A fix round's brief reads the fix diff and every home of the same rule: the fix-round preparer and brief and their tests are delivered, the trial shows no gain (old 1 of 3, new 0 of 3 on the frozen judge; the plant was too easy) and the gate rule is dropped; rounds 1 and 2 material, round 3 not mergeable at cap 2, the Operator's end 3 ([#462](https://github.com/pharzam/layup/issues/462); [detail](T-wqrk.md))
 - **2026-10-21** — **T-5ve2** — The shared index files merge without conflicts: `merge=union` for the completed log and the traceability table, the merge test, the narrow round exception, and the forge result (GitHub does not honour it); round 1 nothing material in scope ([#461](https://github.com/pharzam/layup/issues/461); [detail](T-5ve2.md))
 - **2026-10-21** — **T-c826** — K5 projects the landing figure under ADR-0028 with declared evidence exclusions, tolerance, limit and margins; the PR #453 checker-only CI exception retains both restored runners and is removed by #452; round 2 nothing material in scope ([#449](https://github.com/pharzam/layup/issues/449); [detail](T-c826.md)).
 - **2026-10-17** — **T-6zj3** — Row 66e of `M2e`: The attempts, the independence and the frozen tests ([#361](https://github.com/pharzam/layup/issues/361); [the plan](../plan/README.md#the-tasks-of-m2e)); [detail](T-6zj3.md)

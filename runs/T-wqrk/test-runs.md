@@ -168,3 +168,46 @@ exit 0
 ```
 
 Green: the repaired (fourth) judge, sha256 `d9e1e291489ae7e8257a1b6b7814fbc94bc36572f625cab16c06b5ad21fc111e`, the same commands, 2026-10-21T13:16:21ZZ (`date -u`). The positive returns FOUND, exit 0; the ten negatives (the six earlier, the four new) return MISS, exit 1; `bad-heading` and the exit-file `exit 124` return INVALID, exit 3; the positive with exit file `exit 0` returns FOUND, exit 0. The full output is in `trial.md` section 5. `mutants-T-wqrk.py` covers the preparer only, not the judge, so it is not a check of this repair.
+
+## 9. The trial, raw outputs (read 2026-10-21T13:49:45Z)
+
+The log of the driver, verbatim (12 lines, `reviews/T-wqrk-trial-log.txt`):
+
+```
+2026-10-21T13:19:27Z start old-1
+2026-10-21T13:21:23Z end old-1 exit exit 0
+2026-10-21T13:21:23Z start new-1
+2026-10-21T13:26:16Z end new-1 exit exit 0
+2026-10-21T13:26:16Z start old-2
+2026-10-21T13:28:38Z end old-2 exit exit 0
+2026-10-21T13:28:38Z start new-2
+2026-10-21T13:31:39Z end new-2 exit exit 0
+2026-10-21T13:31:39Z start old-3
+2026-10-21T13:34:43Z end old-3 exit exit 0
+2026-10-21T13:34:43Z start new-3
+2026-10-21T13:40:23Z end new-3 exit exit 0
+```
+
+The judge, rerun on each record with its `exit.txt`: `sh judge-T-wqrk.sh T-wqrk-trial-RUN/review.md T-wqrk-trial-RUN/exit.txt; echo "exit $?"` (sha256 `d9e1e291…`). The records are scratch and are not in the branch.
+
+```
+== old-1
+JUDGE: MISS
+exit 1
+== new-1
+JUDGE: MISS
+exit 1
+== old-2
+JUDGE: MISS
+exit 1
+== new-2
+JUDGE: MISS
+exit 1
+== old-3
+FOUND in a unit at: accepted adr-0026 still states “fifteen with no record” in its decision (`docs/adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md:39`)
+JUDGE: FOUND
+exit 0
+== new-3
+JUDGE: MISS
+exit 1
+```
