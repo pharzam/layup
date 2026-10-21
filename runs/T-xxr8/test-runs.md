@@ -5,7 +5,8 @@ Issue: [#457](https://github.com/pharzam/layup/issues/457). Baseline:
 The coordinating session supplied the host evidence; the sandbox runs below
 were measured in this worktree. Stage A commits are `7f4e5ae` and `dcf93ea`.
 Stage B records the host reruns supplied by the coordinating session, which
-also makes the commits and runs the clean-head pre-freeze check.
+also makes the commits. Stage C records the sandbox's clean-head freeze check
+and the hosted PR security result fetched through the GitHub connector.
 
 ## Plan amendment 1
 
@@ -259,20 +260,44 @@ correction: set both `GOROOT` and `PATH` to the 1.26.10 install. When changing
 the host Go version, check both settings; `go version` alone did not expose
 the stale compiler root in the Stage A attempts.
 
-## Freeze and CI pending
+## Stage C freeze check and hosted security
 
-The local host security scan is green. The PR's required `security` job result
-and run URL have not been supplied and remain to be recorded before the freeze.
-No CI green is inferred from the host scan.
-
-After committing these Stage B records, the coordinating session runs:
+Round 1 (6309308173) found F1 material: the frozen head had no record of the
+pre-freeze check. Before editing these records, Stage C ran the following
+command on the clean head `cb02a1a6211e4a227dc8e993876c948d7c73bdc4`:
 
 ```sh
-sh docs/tests/freeze-check.sh --task T-xxr8 --base origin/main --budget 100/6 --evidence runs/T-xxr8/conditions.md --evidence runs/T-xxr8/test-runs.md
+sh docs/tests/freeze-check.sh --task T-xxr8 --base origin/main --budget 100/6 --evidence runs/T-xxr8/conditions.md --evidence runs/T-xxr8/test-runs.md > /home/layup/.cache/layup-session/tmp-green/xxr8-fc.txt 2>&1
 ```
 
-This stage does not run that pre-freeze check. Its output, the independent
-review, acceptance checklist and close-out remain for subsequent stages.
+Start: `2026-10-21T06:07:36.183049Z`; end: `2026-10-21T06:07:36.897998Z`;
+measured elapsed: 0.715 seconds; exit status: **0**. Complete captured output:
+
+```text
+ok K1: white space
+ok K2: registration of new tests
+ok K3: test selectors
+ok K4: restore evidence of mutants
+ok K5: projection: figure 8/3, maximum 100/6, tolerance 60/4, limit 160/10, margin 152/7 (the figure at landing is still measured at landing)
+ok K6: conditions table
+```
+
+For [PR #459](https://github.com/pharzam/layup/pull/459), the GitHub Actions
+jobs API for [CI run 39552815927](https://github.com/pharzam/layup/actions/runs/39552815927)
+reports head `cb02a1a6211e4a227dc8e993876c948d7c73bdc4` and the
+[security job 119065633629](https://github.com/pharzam/layup/actions/runs/39552815927/job/119065633629),
+named `security (govulncheck v1.8.0, go vet, and gitleaks)`, as
+`status: completed`, `conclusion: success`. Its hosted start was
+`2026-10-21T06:00:45Z` and completion was `2026-10-21T06:01:47Z`
+(62 seconds by those timestamps). The dependency scan, static analysis and
+secret scan steps all concluded `success`. This is the hosted security result
+for acceptance criterion 2; it makes no claim that the whole CI run is complete.
+
+Source: `https://api.github.com/repos/pharzam/layup/actions/runs/39552815927/jobs`,
+fetched through the GitHub connector. The local `gh pr checks` attempt could
+not connect to `api.github.com` (exit 1); it supplied no hosted result.
+After the coordinator commits this records-only fix, the next clean-head
+check and review remain for the next stage.
 
 ## Discipline checks
 
@@ -294,7 +319,8 @@ Results: ADR and PRD lint OK; link lint resolved 3029 links; discipline
 fixtures 138 passed, 0 failed; nested checkout 10 cases behaved; freeze-check
 fixtures 85 passed, 0 failed. The full setup check printed OK for all twelve
 checks and its kit linters. The fixture suite is not the task's clean-head
-freeze check, which remains pending.
+freeze check; that check had not yet run at this point in Stage A. Stage C
+records it above.
 
 ## Stage A final scope verification
 
@@ -333,3 +359,13 @@ exited 0. A direct byte and scope check passed: both changed records have
 exactly one final newline, no carriage returns or trailing whitespace, and
 only `runs/T-xxr8/conditions.md` and `runs/T-xxr8/test-runs.md` changed.
 No `checks.sh` was created or changed, and the pre-freeze check was not run.
+
+## Stage C record checks
+
+`sh docs/links/link-lint.sh` ran from `2026-10-21T06:08:52.587608Z` to
+`2026-10-21T06:09:06.285641Z` (13.698 seconds), exited 0, and printed
+`link-lint: OK  3029 links resolved`. The final `git diff --check` exited 0.
+A direct byte and scope check passed: exactly the two task records changed,
+no untracked files exist, both records have exactly one final newline and no
+carriage returns or trailing whitespace, and the recorded freeze-check output
+equals the captured output. No `checks.sh` was created or changed.
