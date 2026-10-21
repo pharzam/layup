@@ -36,3 +36,29 @@ The mutants (the commit of each in the clone): m1 `sh-c-in-prdlint` (`exec.Comma
 - `naive2.sh`: exact rows, but read from the working index and tree (what `git ls-files` and `wc -l` give in the clone at the time), without the `Read` check. It misses 13 of the 17: it fails the good record of the commit when `HEAD` is another commit (condition 3: the index and COMMIT are not the same tree), and it cannot name a count, a duplicate, a `Read`, a row of two cells, or an empty list.
 
 Each is a red for the test file: the cases that expect exit 1 or a named line and do not get them are listed in the output (kept in the scratch directory).
+
+## Green 1: the final check (11:42:23 to 11:42:30, and 11:42:39 to 11:42:40)
+
+`runs/T-efmy/release-check.sh` is changed (D2 to D4): the allowance of check (3) is the exact call `exec.Command("sh", script, prdDir)` of `internal/spec/prdlint.go`; `RemoteHead` is in the regex and the list of check (7); check (6) counts every `.do(` occurrence (`git grep -o`) and the rows that parse, lists the rows it parsed, and fails on a call in another form, on a line of two calls, and on no occurrence at all. The claim, as the header states it: every `.do(` of the adapter is a row of the form `a.do(ctx, "Operation", "METHOD", target,` on one line, and the list is made of those rows; it does not claim that the operation or method fits what the call does, nor that `do` is the only way to the network.
+
+The clean release and each mutant (`sh run-all.sh final.sh final`), each `FAIL` line read:
+
+| Run | Final |
+| --- | ----- |
+| the clean release | exit 0, `== PASS` |
+| m1 | exit 1, `FAIL … internal/spec/prdlint.go:32: … exec.Command("sh", "-c", script)` (was red against the control) |
+| m2 | exit 1, `FAIL … internal/spec/full.go:834` (regression check) |
+| m3 | exit 1, `FAIL: a .do( call that is not in the form … internal/forge/github/github.go:771: … a.do(ctx, op, "PUT", …` and `the .do( occurrences (22) and the rows parsed (21) differ` (was red) |
+| m4 | exit 1, `FAIL: a reference to git.Push, out of its function: internal/run/push.go:193: Push in mutantPush` (regression check) |
+| m5 | exit 1, the same two lines of check (6), for line 771 `a.do(ctx, "Merge", m, …` (was red) |
+| m6 | exit 1, `FAIL: a line with two .do( calls: internal/forge/github/github.go:771` and `(23) … (22) differ` (was red) |
+
+The empty adapter (section (6) alone, 11:42:33): exit 1, `FAIL: no .do( call found in internal/forge/github`, `0 .do( occurrences, 0 rows parsed`. The output assertion of D3: the output of the clean release lists `internal/run/store.go:202: RemoteHead in BranchHead` (the control's does not).
+
+## Green 2: the release of `M2e` (11:42:39 to 11:42:40)
+
+`sh runs/T-efmy/release-check.sh 01d7da3082333efadb227afda14fd98715edf5c4` from a clean clone of the commit (Go 1.26.10): exit 0, `== PASS`. Its output is [`release-check.txt`](release-check.txt), 140 lines. Against the output at the release of `M2d` (`runs/T-5xjc/release-check.txt`, 116 lines): the sites of check (3) are the five and the sixth, `internal/spec/prdlint.go:32` (allowed by its exact form); `internal/handoff` and `internal/spec` join the packages of `go list -deps`; check (4) has the same six hits; the exported calls of `internal/git` and the references of check (7) grow (16 references, three of `git.Push` each in an allowed function, and `RemoteHead in BranchHead`); check (6) lists 21 rows for 21 occurrences (ten at M2d), the seven new writes among them (`OpenDraft`, `MarkReady`, `SetStatus`, `Merge`, `EditBody`, `ClosePullRequest`, `CloseIssue`).
+
+## Green 3: the comparator (11:41:38 to 11:41:39)
+
+`sh runs/T-ym0k/coverage-check-test.sh` with the comparator `runs/T-ym0k/coverage-check.sh`: the 17 cases pass (`all ok`), including the ones that `naive1.sh` and `naive2.sh` missed. `sh runs/T-ym0k/coverage-check.sh --list 01d7da3082333efadb227afda14fd98715edf5c4` from the worktree (HEAD is the task branch, not the release) gives 149 paths and 38,708 lines, the numbers of the plan; the same list, byte for byte, from the clone with `HEAD` at m3.
