@@ -1502,6 +1502,13 @@ failure modes worth keeping.
   every row of the milestone is clean. **The check:** blame the files of the release list at the release commit, map each surviving commit to its `Co-Authored-By` trailer and to the
   resource record of its task, count the lines of each model, and name the models of the unattributed group as unknown, not as eligible. Learned in `T-ym0k`, #369.
 
+- ❌ **A reader-facing limit chosen without sizing it against the real data.** The line limit of the bet brief (`brief.lines`, 100) was chosen for readability while the
+  brief copied every fact and every open question. Every unit fixture had 2 to 4 facts, so each test passed; on an Intake of the size of the M2d target's (38 spans, 319
+  answers, 150 setup questions still open) the parts of code alone were 531 lines, over the limit, and the bet could never start (`T-36xw`, #471). It is silent because a
+  fixture that is small enough to write by hand is far below the size at which a limit binds. **The check:** before choosing a limit that a reader sees, count the lower
+  bound of what it limits on the real records (here the lines of code's parts, by a formula that the test also pins), keep a fixture of that size in the tests, and require a
+  pre-registered room for the text that a session writes (at least 20 lines here). Learned in `T-36xw`, #471.
+
 ## 3. Validation — how you check you are not fooling yourself
 
 A result is **untrusted** until it passes the checks below, and the pass is a

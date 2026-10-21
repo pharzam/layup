@@ -1955,7 +1955,8 @@ parses the answer. Everything below is **decided here** (R10, note 6198919867 of
   register row, each with a statement and a criterion. The brief shows the PRD's words, so a statement or a criterion that differs from the
   draft's cannot reach the approver under an ID that agrees. **Reason:** the approver answers one line per requirement ID of the
   specification that row 66j parses the answer against, and a session may word the PRD better than the draft.
-- **The five texts that code writes**, also files of `input/`; each line is one line, and a `](` or `][` in a text that code copies is
+- **The five texts that code writes**, also files of `input/`; each line is one line (a TSV field holds no line break, [`README.md`](README.md); `plain` does not remove one, it only
+  escapes link syntax), and a `](` or `][` in a text that code copies is
   written `] (` or `] [` so that no copied text is a link:
   - `requirements.md`: `### The requirements`, then for each requirement ID in the order of the register row `- <ID>: <statement> Criterion:
     <criterion>`; then `### The success criteria` and one line `- <metric>` for each success metric of the PRD, or `- none`.

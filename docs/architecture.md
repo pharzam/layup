@@ -638,8 +638,12 @@ checks what can be checked byte for byte. The vision brief is solution input
    target's PRD and, per requirement, a technical specification section: a
    heading that holds the requirement ID, in a file under `docs/spec/`. The PRD's
    MoSCoW and Phase columns stay empty; the pull request waits.
-7. **The first bet** (§8) shows the idea owner every fact with its class and
-   text, and the requirements and success criteria. The idea owner answers one
+7. **The first bet** (§8) shows the idea owner every fact with its ID and class,
+   and the requirements and success criteria. The text of a fact stands in the brief, except
+   for the answers of the Operator's questions: the brief names them in exact ranges per class and links
+   their texts in a file at a pinned records commit, so that the brief fits its line limit on a real Intake
+   (`docs/spec/loop.md`, the facts and questions left out). The idea owner checks the class of every one of
+   them, a `context` class too, against the linked texts: a short answer does not show that its class is right. The idea owner answers one
    line per requirement ID: its priority (`Must`, `Should`, `Could`, `Won't`) and
    its milestone; one line per fact to change: "out of scope", or a new class
    (for example `need`). A new class reopens the draft for that fact in a new specification task after this
@@ -732,7 +736,7 @@ a verifier session check them as for any task.
   and wall-clock, inside the band, §12), the solution (the architecture, or a
   proposed change of it, which sends the milestone back to Shape), the rabbit
   holes and the no-gos, with the fixed line "architecture change: yes or no"; and,
-  at the first bet, every fact with its class (§7 step 7). Code checks the five headings, a line limit (a parameter), and that each
+  at the first bet, every fact with its ID and class, and its text in the brief or at a link that the brief gives (§7 step 7). Code checks the five headings, a line limit (a parameter), and that each
   link resolves; the brief names the head SHA and the rule-file hash of each
   verified batch that it asks to approve. `layup run` posts it on the milestone's
   issue. The approver of that planned point (the idea owner by default, from
@@ -1583,8 +1587,9 @@ such as ISO-01 is a scenario of the [research review](../runs/T-hbw8/slice-revie
   workflow from a protected repository would close this, and needs an organisation.
 - **L-C1. A fact classed wrongly.** The numbering session can class a need as
   context. The completeness review on another harness and the idea owner's
-  confirmation at each bet, which shows every fact with its class and text and
-  takes a new class by one line, are the two checks; a need that both miss has no requirement, and nothing
+  confirmation at each bet, which shows every fact with its ID and class (the
+  texts of the Operator's answers behind a link, which the idea owner reads to check their classes, `context` ones included) and takes a new class by one line
+  for any one fact, are the two checks; a need that both miss has no requirement, and nothing
   after them finds it.
 - **L-D1. Clarification Turnaround.** A question costs a new session of the owner
   role and a new attempt of the asking role; while a session start takes minutes,
