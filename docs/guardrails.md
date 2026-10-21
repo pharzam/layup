@@ -1423,7 +1423,7 @@ failure modes worth keeping.
   shape (a `tests:` marker with its first bullet on the same line, an acceptance table
   whose requirement ID has no backticks, which the pinned `prd-lint` calls a malformed
   row) is refused only when a real model follows it. Task `T-c6sx` (#416), found by its
-  plan review and by the first run of its specimen. **The check:** the test fills the
+  plan review and by the first run of its specimen. The same trap, a second time: the brief of the release review of `M2e` (`T-ym0k`, #369) said "with `in full`", the reviewer wrote it plain, and the comparator required the backticks. **The check:** the test fills the
   placeholders of the form that the text shows and runs the real parser or check on the
   result (the comment parsers, `records.ReadResult` on the rows the text quotes, the
   full check and the pinned `prd-lint` on a specimen of the specification), with a
