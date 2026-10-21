@@ -461,6 +461,20 @@ target or of the records branch with its SHA-256, which the ledger keeps.
 
 The step `specification` takes a task of kind `specification`, `shape-architecture` one of kind `architecture` and `implement` one of kind `build`; any other step takes any kind, and a pair that disagrees is an error that names the step, the task and the kind. A comment file is written in the pinned form of [The items a caller computes](#the-items-a-caller-computes) (the target's own forms, never LAYUP's `| Field | Value |` table), and the instruction shows it with its placeholders so that a test fills them and runs the real parser on it. The shared text names every rule of the block `result` that a model must meet: the actual tab, UTF-8 with no byte-order mark, the line feed at the end of each line, no blank row, the empty cell, the numbering without gap, a status row with a non-empty reason, a hash of 64 lowercase hexadecimal characters, a question that names a record, and the artifact rows for the required outputs only.
 
+**Decided here** (task `T-4naq`, #428, row 66ab; [the specification task that a changed class reopens](#the-specification-task-that-a-changed-class-reopens), item 9): the step `specification` of a task
+that has a row in `spec/reopenings.tsv` has the block below in place of `instruction-specification`, with `{fact}`, `{class}`, `{token}`, `{requirement}` and `{record}` filled by code from the row and from the tree at the base. The oracle of the
+composed bytes is a golden file for a `need` and one for a `measure`, and the test fills the placeholders of the lines it shows and runs the real full check and the pinned `prd-lint` on the result.
+
+```text instruction-specification-reopened
+Write the requirement that waits for a bet, for the task {task} (kind {kind}, issue {issue}), from the files listed above: the row of this task in spec/reopenings.tsv, the facts spec/spans.tsv, start/problem-statement.md and intake/answers.tsv, the revised draft spec/draft.tsv, the product requirements document in docs/prd/ and the specification in docs/spec/. The bet changed the class of the fact {fact} to {class}, and no requirement names it yet; the token {token} cites it. Commit your work in this repository in one or more commits; push nothing.
+Keep every line of the files that already exist, except the additions below, renumber nothing, and put no new row in any table. In the file of docs/prd/ write, under a heading "## Waits for a bet" (add it as the last heading of the file when the file has none), the line of your class, as plain text starting at the first column, never in a table:
+- need or constraint: "{requirement}: <the requirement, one sentence> Facts: {token} {record}. Acceptance criterion: <the acceptance criterion>." In docs/spec/ write a section whose heading holds {requirement} as a whole word, for example "## {requirement} — <title>", with a non-empty text under it.
+- measure: "Success criterion: <the success criterion> Fact: {token}." Write no section in docs/spec/.
+The class of this task is {class}: write the line of that class only.
+Write docs/tasks/{task}.md, the task's file, in the form of the target's docs/tasks/. Write nothing under docs/facts/.
+The required outputs for the result file are docs/tasks/{task}.md, the file of docs/prd/ that you wrote and, for a need or a constraint, each file of docs/spec/ that you wrote.
+```
+
 ```text instruction-plan-of-a-task
 Plan the task {task} (kind {kind}, issue {issue}) from the files listed above: the issue row, the requirements, the decision records, the handoffs and findings, and the rule files. Change no file of the repository and make no commit.
 Write the plan as the file {comment}, in this form, each line starting at the first column and ended by a line feed:
@@ -1903,7 +1917,7 @@ it on the milestone's issue.
   escalations (`M3`) and stalls (`M3d`). A requirement changes only at a bet, or by
   an escalation decision.
 
-**The merge order after a bet:** the specification (or the rendered task), the target's
+**The merge order after a bet:** the specification (or the rendered task), the tasks that a changed class reopens ([row 66ab](#the-specification-task-that-a-changed-class-reopens), in the order of `spec/reopenings.tsv`), the target's
 architecture tasks, the rule batches, then the build tasks (`layup run` merges the
 base into the branch of each next task, a Shape task included, as `architecture.md` §8
 says for the build tasks, because the branch rule is "up to date"); a bet that changes a class or a priority does not
@@ -2090,7 +2104,7 @@ stage keeps what an earlier stage wrote; it is `done before` when `bets.tsv` hol
    version `n-1` is checked against the index. They are skipped when the latest version's rows name this answer's copy. The facts are those of the basis: a fact of
    `spec/spans.tsv` has the class of Intake and its text from the span, and **a fact of the answers (`Q-NNN`) has the class of its quote's fact, else `context`, and the
    answer as its text** (decided here; the approver may change the class with a line `fact <id>: <class>`). A class that the answer changes is recorded and nothing else:
-   the new specification task that a changed class reopens, and the representation "waits for a bet", are row 66k's (the Operator on #366).
+   the new specification task that a changed class reopens, and the representation "waits for a bet", are row 66ab's (the Operator on #366; [the specification task that a changed class reopens](#the-specification-task-that-a-changed-class-reopens)).
 7. **The rendered commit** (the first bet): the next record ID is `nextFactsID` over the records of `docs/facts/` at the verified head `H` (the one home, which the instruction
    of the specification uses for `{facts}`). `H` holds exactly one `docs/prd/PRD-*.md` and no numbered facts record, or the step fails. The commit is made on a work tree at `H`
    by `rules.Render`: the PRD (pre-image `H`) and `docs/facts/<ID>-numbered-facts.md` (`RenderFacts` exactly: no table, no index row and no line of `facts.sha256`, which
@@ -2121,7 +2135,7 @@ Definition of Done: docs/spec/ and docs/adr/ hold the decision {decision} as dec
 ```
 
 **Known limits.** The brief's "no recommendation" for two survivors rests on code's presentation and the option-word rule (row 66u). The milestone is the §9 tag convention above.
-A bet that changes a class does not reopen the specification here (row 66k).
+A bet that changes a class does not reopen the specification here (row 66ab, [below](#the-specification-task-that-a-changed-class-reopens)).
 
 ### The approvers and the success criteria
 
@@ -2242,6 +2256,74 @@ At the first bet, code adds the **rendered commit** to the specification's head
 - At a later bet, code renders the change as a rendered task of its own, with a
   plan ("render from copy N") that a plan-review and a verifier session check (row 66t, moved to `M2g`; `M2e` fails closed at a later bet, [the step bet](#the-step-bet)).
 
+### The specification task that a changed class reopens
+
+Row 66ab (task `T-4naq`, #428; the plan review is the comment 6262491026 and the Operator's decisions the comment 6262589337 of #428). **Decided here** (R10) unless it cites another
+section. [The step bet](#the-step-bet) records a class that the answer changes and nothing else; this section opens the work that the class asks for
+(`architecture.md` §7 step 7). It is a primitive of `internal/run`, `(*state).openReopenings(ctx, spec)`, and `reopenedTasks(rows)`, the set of the tasks that
+`spec/reopenings.tsv` names. Row 66k calls the first after the event `merged` of the specification task, reads the register again, and puts the reopened tasks
+after the specification and before the architecture tasks in the merge order, in the order of the rows of `spec/reopenings.tsv`; the call, the order and the drive of
+a reopened task are 66k's.
+
+1. **When.** `openReopenings` reads the events of the task `spec`, the first row of the register of the kind `specification`. With no event `merged` it opens nothing and
+   writes nothing, not even a call of the forge. Then the index `spec/inventory.tsv` must hold exactly one version, whose sha256 is checked against the index first; an
+   absent index is an error, and a second version fails closed, `the reopening of the classes of a later bet is not built in M2e`, as the step bet refuses a later bet.
+2. **The selection** (Q2). The rows of version 1, in its order, whose scope is `in`, whose class is `need`, `constraint` or `measure`, and whose class **differs from
+   the class of the fact at Intake**: for a fact of `spec/spans.tsv` its class there, for a `Q-NNN` the class of the fact of its quote, else `context` (`factsOf`, the
+   inventory's own source). Comparing the version with Intake **selects**; it never **deduplicates**, which is the table of item 3. A fact changed from `need` to
+   `constraint` is selected though the PRD already covers it, because `architecture.md` §7 step 3 asks for a non-functional requirement for a constraint; a fact marked out of scope,
+   and a fact whose class the answer does not change, are not selected.
+3. **The record `spec/reopenings.tsv`** (the block `reopenings` of `records.md`; owner `internal/run`: `ReopeningsSchema`, `ReadReopenings`). One row for each selected fact;
+   **all the rows of a version are written in one fenced records commit before any call of the forge**, and a row is never changed. The columns are `n` (the
+   version, always 1 in `M2e`), `fact`, `class`, `token`, `requirement`, `task` and `copy`, and the reader's checks are in `records.md`. At every call, **the call with an empty selection included**, the rows are
+   **compared with the selection**: the same facts, in the same order, with the version, the class of version 1, its `copy` and the token of item 4; any difference is an error and
+   nothing is opened, so a row cannot be read as an identity of another version, fact, class or copy.
+4. **The token.** `F-NNNN#<n>` for the fact `n` of the spans, where `F-NNNN` is the one numbered facts record, a regular file `docs/facts/F-NNNN-numbered-facts.md`,
+   at the merge commit that the event `merged` names (none or two is an error): the record the specification's rendered commit wrote (`PSBRecords` of the full check),
+   pinned, never predicted as the instruction of the specification predicts it before the bet. A fact of the answers is its own token, `Q-NNN`.
+5. **The identities** (Q3, Q4, Q5; decided here). The row is the identity: the allocation of every row of the selection, in its order, is made once, in the commit of
+   item 3, and never again. A task ID is drawn as `drawTaskID` draws it, again until no row of `sessions.tsv`, of `tasks.tsv` or of `spec/reopenings.tsv` holds it and
+   none of the draws of the same batch is it. The requirement IDs have **one number space** for `REQ-` and `NFR-`: the next number is one more than the highest
+   `NNN` of every `REQ-NNN` and `NFR-NNN` among `finalIDs` of `spec/draft.tsv`, the `requirements` column of the register and the `requirement` column of
+   `spec/reopenings.tsv`, written with three digits at least; a `need` takes `REQ-` and the next number, a `constraint` `NFR-` and the next number, in the order of the rows. A
+   `measure` has **no ID**: its `requirement` is `—`, and its task names the requirements of the row of `spec` (the register row is never changed, so they are the same at every call).
+6. **The opening.** For each row, in order, whose `task` has no row in the register, the opening core `openTask` runs with the reserved ID, in its own order
+   ([the opening of a Shape task](#the-task-register), whose steps it keeps: the permissions, the dry `registerFiles` and `parameterFiles` on the real candidate, the lease, `OpenIssue` and
+   `registerTask`): the kind `specification`, the `requirements` of item 5, the `predecessors` `[spec]`, the issue of the block `reopen-issue`, **no reuse by kind** (the Shape
+   task of the kind is never returned for it) and no opening pin. A row whose task is registered is checked, not opened: its kind, requirements and predecessors are the
+   reservation's, else the call is an error that names the task. It gives the reopened tasks in the order of the rows.
+7. **Recovery.** A stop after the allocation commit and before an issue leaves the rows, and the restart opens one issue for each task. A stop after the registration
+   of a task writes nothing more for it. **Known limit** (the Operator on #428, as for the Shape tasks): a stop between `OpenIssue` and the register commit leaves the
+   first issue on the forge, and the restart opens a second under the same task ID and the same requirement IDs and writes one row; no call of the forge lists issues. A restart after the
+   opening leaves **one registered task** for each row.
+8. **The pending prose** (Q7). The requirement is written **under the heading `Waits for a bet`, as one line of plain text and never as a table row**, in the PRD of the target, so
+   that the pinned `prd-lint`, which reads the lines that start with `|` after white space, does not read it ([the full spec check](#req-012--the-full-spec-check) reads the
+   heading, whatever its level and case). A `need` or a `constraint`: `<ID>: <the requirement, one sentence> Facts: <token> F-<record>. Acceptance criterion: <the
+   criterion>.`, with a section `## <ID> — <title>` in `docs/spec/` (the item `spec-sections` reads the ID of the task's row); a `measure`: `Success criterion: <the criterion> Fact:
+   <token>.` and no section. It gets its row of the tables at the next bet (`architecture.md` §7 step 7).
+9. **The instruction and its inputs.** A task that has a row in `spec/reopenings.tsv` and the step `specification` get the block `instruction-specification-reopened`
+   in place of `instruction-specification`, filled with the row's `{fact}`, `{class}`, `{token}`, `{requirement}` (`—` for a `measure`) and `{record}`, the numbered
+   facts record of item 4, **found at the base of the session and required to be the token's**. Every step of such a task has `spec/reopenings.tsv` among the
+   `requirements`, after the draft items, and the **files of `docs/prd/` whether or not a table row holds the ID** (a pending requirement has none); the
+   plan, the plan review and the verification see the same list. Code reads the row of the task from the file, the session never.
+10. **The exemption of the full check** (Q1; the Operator on #428): [the full spec check](#req-012--the-full-spec-check).
+11. **Known limits.** A reopened task is not redone by a moved base in `M2e`: it has no opening pin, so `redoIssue` is an error before any write (the task is brought current by the
+    clean merge of row 66x, or it waits). The drive of a reopened task by `FinishTask` and by the driver of a Shape task, which both take every task of the kind `specification` for the first one
+    (the rendered commit of the first bet, and the pinned `prd-lint` of a specification that waits for its bet), is row 66k's, which tells the two apart by `reopenedTasks`. A later
+    bet's reopening, and the new row of a table for a pending requirement, are `M2g`'s.
+
+```text reopen-issue
+LAYUP task {task}: the {what} of the fact {fact}, re-classed by the bet as {class}.
+
+Requirement IDs: {ids}
+Reopened after the merge of the specification task {spec}: the row of the fact {fact} in spec/reopenings.tsv of the records, the token {token}.
+
+Definition of Done: docs/prd/ holds, under the heading "Waits for a bet" and not in a table, {line}; {sections}docs/tasks/{task}.md is the task's file. The head passes the four layup/ statuses, and a verifier on a harness outside the authors finds nothing material in scope.
+```
+
+Code fills `{what}` (`requirement` for a `need` or a `constraint`, `success criterion` for a `measure`), `{line}` (`one line that starts with {requirement}: and cites {token}`, or `one line that starts with Success
+criterion: and cites {token}`) and `{sections}` (`docs/spec/ holds a section whose heading holds {requirement}; ` or nothing); `{ids}` are the task's requirement IDs, `{spec}` the specification task, `{fact}`, `{class}` and `{token}` the row's.
+
 ## REQ-012 — The full spec check
 
 `layup spec check` is the command of the whole specification step
@@ -2254,8 +2336,8 @@ one table for each head:
 | Rule | Fails when |
 | ---- | ---------- |
 | `covers` | a `covers` ID does not resolve to a fact of the confirmed inventory or of the answers |
-| `needs` | a `need` or `constraint` fact has no requirement, and it has no out-of-scope mark and no requirement marked "waits for a bet" |
-| `measures` | a `measure` fact has no success-criterion row that cites its ID, and it has no out-of-scope mark and no requirement marked "waits for a bet" |
+| `needs` | a `need` or `constraint` fact has no requirement, and it has no out-of-scope mark, no requirement marked "waits for a bet" and no exemption (below) |
+| `measures` | a `measure` fact has no success-criterion row that cites its ID, and it has no out-of-scope mark, no requirement marked "waits for a bet" and no exemption (below) |
 | `criteria` | a requirement has no criterion |
 | `classes` | a MoSCoW or Phase value in the PRD differs from the latest copy of the bet |
 | `inventory` | the SHA-256 of a version of the inventory is wrong |
@@ -2314,9 +2396,24 @@ exact bytes the caller supplies and does not repair or infer one. `ran` fails a
 missing row, and a rule that did not run — whose own row is a `fail` with the
 detail `did not run: <what>` — fails `ran` as `did not run: <rule>` (NFR-004).
 
+**Decided here** (task `T-4naq`, #428, row 66ab; the Operator's decision 6262589337 on Q1 and condition 1 of the plan review): after the first bet every rule judges the latest
+version, so a fact that the bet re-classed into `need`, `constraint` or `measure` has no requirement at the rendered head of the specification, `needs` or `measures` fails
+there, and the specification could never merge, nor reopen anything. `needs` and `measures` therefore skip the facts of `FullInput.Reopening`, which `specInput` computes for the
+task whose head is judged (`SpecInput.Task`): **the re-classed facts** (the selection of [the specification task that a changed class
+reopens](#the-specification-task-that-a-changed-class-reopens), item 2: version 1 against Intake) **except those whose row of `spec/reopenings.tsv` names a task that has merged or
+the task whose head is judged**. The states: before the bet nothing is re-classed, and the set is empty; from the bet to the allocation every re-classed fact is exempt at every head, so
+the specification's rendered head passes and merges; from the allocation to the merge of a fact's task the fact is exempt at every head but the head of its own task, which **fails**
+`needs` or `measures` unless it holds the pending line of the fact under `waits for a bet` (a missing output is refused, never exempted); with two re-classed facts, the head of the first task holds only
+its own line and passes while the second's fact is exempt, and the head of the second, judged after the first has merged, has the first's line in its base and holds its own; from the merge of a fact's
+task the fact is no longer exempt, so a head that removes its line fails. The names are those of the universe (a number, or `Q-NNN`). A version that cannot be read gives an empty set, and
+the rules do not run, as for any head. **The own output is read by the stored identity** (round 1 of #428, F1): at the head of a reopened task (and, for a merged reopening, of every later head) `needs` (for a `need` or a
+`constraint`) and `measures` (for a `measure`) also require, from `FullInput.Pending` (the fact and the requirement ID of the row of the task and of each merged task in `spec/reopenings.tsv`), a line under the heading that
+cites the fact and, for a requirement, holds the allocated ID as a whole word; a requirement of the table that already covers the fact (a need changed to a constraint) or the old requirement's ID
+is not that output. **The pending output of a merged reopening stays required** (round 2 of #428, F6): `FullInput.Pending` also holds the identity of every reopening whose task has merged, so a later head of any task that removes its line fails, and one that keeps it passes. The detail is `the reopened <class> fact <f> has no pending requirement <ID> under waits for a bet` (`pending success criterion` for a measure).
+
 **Decided here** (task `T-cav3`, #412, row 66p; the input of the full check): code
 builds the `FullInput` of a head, `Sessions.specInput(base, head, copy)` in
-`internal/run`, each field from one named source, and a caller's literal of a field is
+`internal/run` (row 66ab adds the task whose head it is, for `Reopening`), each field from one named source, and a caller's literal of a field is
 never read. The records are read at the run's records base at the call, not at the
 snapshot of the head's session; saving the table once for a head, and so not
 rebuilding the input at a restart, is row 66f's, which calls the builder.
@@ -2336,6 +2433,8 @@ rebuilding the input at a restart, is row 66f's, which calls the builder.
 | `Records` | `target:` the direct regular files of `docs/facts/` at `head` named `F-NNNN*.md`, by record ID (`T-c6sx`) | an empty list |
 | `AnswersRecord` | none: `""` | not applicable |
 | `Copy` | the caller's (the bet's copy, row 66j) and passed through unchanged | `nil` keeps the `fail` row of `classes` and the `ran` row |
+| `Pending` | `records:spec/reopenings.tsv` and `Merged`: the row of the task whose head is judged, if a class reopened it, and the row of every task that has merged, in the order of the stored rows, each as its fact and allocated requirement ID (the output that the head must hold) | none, exactly when the task has no reopening of its own and no reopening has merged |
+| `Reopening` | `records:spec/reopenings.tsv` with the Intake records, the latest version and `Merged`, for the task whose head is judged (`SpecInput.Task`; the exemption above) | an absent `spec/reopenings.tsv` is no reopened task; a file its reader refuses is an error |
 
 - **`PSBRecords`.** The numbered facts record of the problem statement is the file
   `docs/facts/F-NNNN-numbered-facts.md` at `head`, a regular blob (mode `100644`)
@@ -2522,7 +2621,7 @@ schema in the build task, as `M2c` and `M2d` did.
   the row of `bets.tsv` **last**. It is done when that row exists with its verdict, so
   a stop before it resumes inside `bet`, and no later step runs on a half-made bet.
 - **`loop`** merges the Shape tasks in the merge order after a bet (the specification
-  first), then runs the tasks that the register holds; the build tasks are `M2g`'s.
+  first, then the tasks it reopens with `openReopenings`, after which it reads the register again), then runs the tasks that the register holds; the build tasks are `M2g`'s.
 
 The record of each step: for `shape`, the files of `spec/options/`, the rows and the
 `tasks/<task>/` files of its tasks; for `bet`, `bets.tsv`, the copies of the brief and
@@ -2691,6 +2790,7 @@ the milestone covers it end to end.
 | The comment items of the task loop (row 66l, `T-4pje`) | unit; integration (the kept copy, the records and the forge) | `plan-fields`, `verdict-field`, `findings-located` and `nothing-material` are computed from the kept copy of a comment and, for the last, the verifier's recorded `base`: each item is true or false by its own rule in the table of the items (a plan-review copy that parses with `verdict: reject` is false), and a handoff listing the item is `valid` or `invalid <item>` by the computed result, never by a caller's literal of either value. |
 | The tree items of the task loop (row 66n, `T-yeav`) | unit; integration (a real `git` tree) | `spec-sections` and `rendering-equal` are computed from the `docs/spec/` files or the tree at the head, never from the caller's literal of either value: a handoff of a developer (specification) or of the rendered task is `valid` or `invalid <item>` by the tree at the `bound` head or at the head that code sets, a head that a session handoff supplies is not read, an item that the row of the pair does not list is not computed, and a failed call of `git` or of the register is an error with no event. |
 | The input of the full spec check (row 66p, `T-cav3`) | unit; integration (a real `git` tree and the records of a target after Intake and the Scaffold) | `specInput` builds each field of `FullInput` from its named record or from the tree at the head: a missing required record, a record its reader refuses or a failed `git` call is an error with the zero input and no write, an absent `spec/inventory.tsv` is "before the first bet", `PSBRecords` is read from the one numbered facts file at the head (none is empty, two are an error), `AnswersRecord` is `""`, and the copy is the caller's. |
+| The specification task that a changed class reopens (row 66ab, `T-4naq`) | unit; integration (the records, the `httptest` forge, real git, scripted harnesses, `state.sessions()`) | After the specification's event `merged`, one specification task is opened for each fact that the bet re-classed into `need`, `constraint` or `measure` (a fact changed from `need` to `constraint` included, a fact out of scope or unchanged not), with the requirement IDs of one number space allocated once in `spec/reopenings.tsv` before any call of the forge, no reuse by kind and the specification as its predecessor; nothing is opened before the event, and a restart after the allocation or after the registration leaves the same IDs and one registered task for each row (the known window between the issue and the row leaves a second issue); a lost lease opens no issue; the reopened prompt carries the PRD, the row and the pinned numbered record, and a session that follows it gives a valid handoff and a green `layup/spec`; and a fact whose task has not merged is exempt from `needs` and `measures` at every head but its own task's, so the rendered head of the specification passes and a reopened task without its line fails. |
 | The question and answer comments (row 66o, `T-gyvo`) | unit; integration (the committed rows of a real end) | The question and answer comments are composed from their rows, byte for byte, with the row's `n` in the ID, and refused with no bytes for a row or a start row off the reader's schema, types or rules, a row of another kind, an ID off its form, or a body that `CheckCommentBody` refuses; posting them is the step loop's (row 66z, a size child of row 66k). |
 | A question during the work, in the loop (row 66z, `T-r7b9`) | unit; integration (the records, the `httptest` forge, real `git`, scripted harnesses, `state.sessions()`) | A session that ends `needs_context` during Shape, with no bet, has its question posted and copied on the task's issue, its handoff recorded, and, when all its questions go to one owner role, the answer session `answer-to-a-question` of that role (read-only, at the base of the last asking session) and the answer comment posted and copied (each answer row selecting its question by its column `n`), the handoff back recorded and the next attempt started; a human-routed question and questions of more than one owner role end in the wait `waiting for the Operator: <task>: question <id>` with no answer session; the stages are told from the records and repeated safely (a restart after each act writes each comment, handoff, session and attempt once), an invalid recorded handoff and a question or answer row that cannot be composed stay stops, an answer session that fails, asks again or answers too few or too many rows is a stop, and the plan and plan review that asked run again after the answer; an open material finding keeps `Position` uphill: the source is the last verifier, told by its position and head binding and qualified after its selection, so an unbound session of the role, a verifier that asked or has not ended, and a verifier with no review record, no valid comment handoff or a record of another head never clear a finding and never let an older clean record stand in their place; a verifier that asked at the head it was bound to (not the base of the attempt) is answered at that head. |
 | The transition table | unit | The default rows are the thirteen of the table (the twelve of `architecture.md` §8 and the row of the target's architecture task, which §8 names a task and gives no row); a replacement table is refused for a missing default pair, a kind or an item not in the lists, and a row of code's own handoff (`code (rendered task)`) that lists `schema`, while another row keeps its `schema`, and the steps that are `layup run`'s own acts need no row. |

@@ -60,6 +60,7 @@ type PromptContext struct {
 	facts              string
 	record             string
 	extras             taskExtras
+	reopen             []string // the row of the task in spec/reopenings.tsv
 	questions, answers []string // the question IDs of the answer step, the answer IDs this attempt cites (row 66z)
 }
 
@@ -96,6 +97,7 @@ type promptSrc struct {
 	Issue        int
 	Base         string
 	Extras       taskExtras
+	Reopen       []string // the row of the task in spec/reopenings.tsv, nil for a task that no class reopens
 }
 
 const (
@@ -177,10 +179,15 @@ func buildPrompt(src promptSrc) (*PromptContext, error) {
 		return nil, noInstruction(src.Step.Step)
 	}
 	c := &PromptContext{Input: map[string][]byte{}, task: src.Task, step: src.Step.Step, findings: src.Findings,
-		kind: src.Kind, issue: src.Issue, base: src.Base, extras: src.Extras, questions: src.Questions, answers: src.AnswerIDs}
+		kind: src.Kind, issue: src.Issue, base: src.Base, extras: src.Extras, questions: src.Questions, answers: src.AnswerIDs, reopen: src.Reopen}
 	if src.Step.Step == "specification" {
 		var err error
-		if c.record, c.facts, err = factsRecords(src.Tree.Facts); err != nil {
+		if src.Reopen != nil { // the numbered facts record is pinned, never predicted (loop.md, the specification task that a changed class reopens)
+			c.record, err = reopenRecord(src.Tree.Facts, src.Reopen[reoToken])
+		} else {
+			c.record, c.facts, err = factsRecords(src.Tree.Facts)
+		}
+		if err != nil {
 			return nil, err
 		}
 	}
@@ -249,6 +256,15 @@ func buildPrompt(src promptSrc) (*PromptContext, error) {
 						return nil, rerr
 					}
 					if len(sectionsOf(string(data), id)) > 0 {
+						if err := target(kind, p); err != nil {
+							return nil, err
+						}
+					}
+				}
+			}
+			if src.Reopen != nil { // a pending requirement has no table row: the PRD is read whole
+				for _, p := range underDir(prdDir) {
+					if isPRDName(path.Base(p)) {
 						if err := target(kind, p); err != nil {
 							return nil, err
 						}
@@ -399,7 +415,15 @@ func (c *PromptContext) Text(root string) []byte {
 		"comment": path.Join(root, "result", commentFiles[c.step]), "head": c.base, "from": c.extras.From,
 		"labels": labelList(DefaultOwners()), "facts": c.facts, "record": c.record,
 		"questions": strings.Join(c.questions, " "), "answers": strings.Join(c.answers, " ")}
-	b.WriteString("\nThe work of this step:\n" + fill(stepInstructions[c.step], v) + "\n" + fill(resultInstruction, v))
+	instruction := stepInstructions[c.step]
+	if c.step == "specification" && c.reopen != nil {
+		instruction = reopenedInstruction
+		v["fact"], v["class"], v["token"], v["requirement"] = c.reopen[reoFact], c.reopen[reoClass], c.reopen[reoToken], c.reopen[reoRequirement]
+		if v["requirement"] == "" {
+			v["requirement"] = "—"
+		}
+	}
+	b.WriteString("\nThe work of this step:\n" + fill(instruction, v) + "\n" + fill(resultInstruction, v))
 	if len(c.answers) > 0 { // the attempt before has an answer of its owner role: this attempt cites it (loop.md, The instruction of a task step)
 		b.WriteString("\n" + fill(answersInstruction, v))
 	}
@@ -550,6 +574,19 @@ func (s *Sessions) PromptFile(ctx context.Context, in PromptIn) (*PromptContext,
 		return nil, err
 	}
 	extras.From = src.Extras.From
+	if data, err := s.Store.ReadFile(ctx, reopeningsPath); err != nil {
+		return nil, err
+	} else if data != nil { // the row of the task, when a class reopened it: its instruction, its PRD and its record (row 66ab)
+		rows, err := ReadReopenings(data)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", reopeningsPath, err)
+		}
+		if src.Reopen = reopeningOf(rows, in.Task); src.Reopen != nil {
+			if shape, _, _ := inputsWanted(in.Step, src.Kind); shape {
+				extras.Shape = append(extras.Shape, kept{reopeningsPath, data})
+			}
+		}
+	}
 	src.Extras = extras
 	regData, err := s.readRecord(ctx, "rule-paths.tsv")
 	if err != nil {

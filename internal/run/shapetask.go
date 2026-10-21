@@ -85,6 +85,7 @@ func (r *state) openShapeTask(ctx context.Context, kind string) (Task, error) {
 // row of the kind is returned as it is (the Shape tasks), the requirement IDs (the draft's when none), the predecessors, the title and the
 // body of the issue, the files of the same commit that the task needs (its binding), and a call between the issue and the row.
 type openSpec struct {
+	id           string // the reserved ID of the task, drawn when empty
 	kind         string
 	reuse        bool
 	ids          []string
@@ -140,9 +141,12 @@ func (r *state) openTask(ctx context.Context, o openSpec) (Task, error) {
 		return Task{}, fmt.Errorf("%s has no row of kind requirement or non-functional", draftPath)
 	}
 	s := r.sessions()
-	id, err := s.taskID(ctx)
-	if err != nil {
-		return Task{}, err
+	id := o.id
+	if id == "" {
+		var err error
+		if id, err = s.taskID(ctx); err != nil {
+			return Task{}, err
+		}
 	}
 	t := Task{ID: id, Kind: o.kind, Requirements: ids, Predecessors: o.predecessors, Opened: r.cfg.Clock.Now().UTC().Truncate(time.Second)}
 	// The commit that will register the task is built and refused here, with a placeholder for the issue,
