@@ -287,6 +287,11 @@ func CommitTime(dir, rev string) (time.Time, error) {
 	return time.Unix(n, 0).UTC(), nil
 }
 
+// LastChange gives the last commit that changed a path of paths, as seen from rev: the empty string when none did (task T-36xw, #471).
+func LastChange(dir, rev string, paths ...string) (string, error) {
+	return "", nil
+}
+
 // LsFiles gives the paths of the tracked files.
 func LsFiles(dir string) ([]string, error) {
 	out, err := call(dir, environ(), "ls-files", "-z")

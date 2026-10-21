@@ -238,6 +238,27 @@ func factsPart(spans, questions, answers [][]string) string {
 	return b.String()
 }
 
+// operatorBlock reports whether the question id is asked in the block operator (task T-36xw, #471).
+func operatorBlock(id string, questions [][]string) bool { return false }
+
+// idRanges writes IDs as exact ranges (task T-36xw, #471).
+func idRanges(ids []string) string { return strings.Join(ids, ", ") }
+
+// briefFactsPart is the facts part of the brief (task T-36xw, #471).
+func briefFactsPart(milestone string, spans, questions, answers [][]string, url string) string {
+	return factsPart(spans, questions, answers)
+}
+
+// briefOpenPart is the open part of the brief (task T-36xw, #471).
+func briefOpenPart(milestone string, questions [][]string, url string) string {
+	return openPart(questions)
+}
+
+// annexPaths are the paths of the two linked files of a bet in the records.
+func annexPaths(milestone string) (facts, open string) {
+	return "bets/" + milestone + "/facts.md", "bets/" + milestone + "/open.md"
+}
+
 // linkSet is the set of the targets that a link of the brief may have: the pull request of each Shape task and the regular files that
 // its head changed, by their blob URL at that head.
 func linkSet(owner, name string, heads []headRef, blobs map[string][]string) map[string]bool {
