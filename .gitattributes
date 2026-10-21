@@ -262,3 +262,24 @@ internal/catalog/*/** -text
 # line and the test would fail on a tree that is right. `-text` turns the
 # conversion off in both directions.
 internal/run/testdata/prompts/** -text
+
+# --- the shared indexes: merge=union (T-5ve2, #461) ----------------------------
+#
+# Every task adds one record to each of these two files, so two branches insert
+# at one place and git reports a conflict that holds no decision. `merge=union`
+# keeps both sides, ours first: on the local `git merge origin/main` the branch
+# is "ours", so a record inserted directly under `## Log` (completed.md) or
+# directly below the table's separator (traceability.md) comes out with the
+# later-landing branch's record on top, most recent first. The rule that says
+# where to insert is in the head of each file; the test is
+# TestTheSharedIndexesMergeWithNoConflictInLandingOrder.
+#
+# Limits. Union keeps both versions of a line that both sides edited, so an
+# edit of an existing record is not safe here and gets git's ordinary review.
+# Never add this attribute to a file whose reader checks order or uniqueness,
+# or whose edits are deletions or in-place cell edits: backlog.md (two adjacent
+# deletions come back), the PRD (two edits of one matrix row become two rows,
+# and prd-lint passes), guardrails.md and the Go lists. A blank line shared by
+# both sides may be doubled or dropped; no reader reads blank lines.
+docs/tasks/completed.md    merge=union
+docs/tests/traceability.md merge=union

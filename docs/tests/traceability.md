@@ -24,8 +24,25 @@ lines) has `—` in Covers and in Fact, and its row names the frame (task `T-2yw
 #80). A row that covers more than one requirement gives the fact and the ADR of
 the first.
 
+A test of the repository's own merge configuration (`.gitattributes`), which
+proves no requirement of `PRD-0001`, has `—` in Covers and the fact of its task in
+Fact. It is registered here, with no DoD item named in Covers, because K2 of
+[`freeze-check.sh`](freeze-check.sh) needs only a row that names the test, and
+skips the PRD cells when a row gathers no requirement ID (task `T-5ve2`, #461).
+
+**Where a row goes.** This file is `merge=union` in
+[`.gitattributes`](../../.gitattributes): a new row goes directly below the
+table's separator, so that two branches inserting there merge with no conflict
+and the branch that merges last has its row on top. A delivering task still
+replaces its own planned row (an edit of that row), and a correction to a row is
+an edit too. Union keeps both versions of a row that both sides edited, and K2
+gathers the requirements of every matching row, so an edit is an ordinary change,
+reviewed as one, never the narrow exception of
+[Reviewing until findings decay](../engineering-discipline.md#reviewing-until-findings-decay).
+
 | Test ID | Level | Covers (REQ/NFR) | Fact (F-NNNN#n) | Guardrail | ADR | Task | Status |
 |---------|-------|------------------|-----------------|-----------|-----|------|--------|
+| `TestTheSharedIndexesMergeWithNoConflictInLandingOrder` (`internal/git/indexmerge_integration_test.go`) | integration | — | F-0003#47 | guardrails.md §2 | — | T-5ve2 | green |
 | `TestGolden` (`internal/psb/check_test.go`) | unit | REQ-001 | F-0003#41 | — | ADR-0011 | T-dq05, T-5zmw | green |
 | `TestCRLFGivesTheSameTable`, `TestALoneCarriageReturnBecomesASpace`, `TestG1ReadsTheValueOfAStack`, `TestEdgeCases`, `TestWriteTSVGivesTheErrorOfItsOutput` (`internal/psb/check_test.go`) | unit | REQ-001 | F-0003#41 | — | ADR-0011 | T-5zmw | green |
 | `TestPSBCheckRefusesAFileThatIsNotUTF8`, `TestPSBCheckGivesTwoWhenItCannotWriteTheTable` (`internal/cli/psb_test.go`) | unit | REQ-001, NFR-004 | F-0003#41 | — | ADR-0011 | T-5zmw | green |
