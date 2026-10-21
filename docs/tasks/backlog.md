@@ -31,7 +31,6 @@ same summary, dated — rather than deleting it or checking it off.
 -->
 - **T-sdtb** — Row 59b of `M2d`: the demo of M2d (uat) ([#284](https://github.com/pharzam/layup/issues/284); [the plan](../plan/README.md#the-tasks-of-m2d))
 - **T-2vva** — Row 66j of `M2e`: The step bet ([#366](https://github.com/pharzam/layup/issues/366); [the plan](../plan/README.md#the-tasks-of-m2e))
-- **T-9nbf** — Row 66k of `M2e`: The step loop and the restart ([#367](https://github.com/pharzam/layup/issues/367); [the plan](../plan/README.md#the-tasks-of-m2e))
 - **T-3xvc** — Row 67 of `M2e`: The e2e of the specification task ([#368](https://github.com/pharzam/layup/issues/368); [the plan](../plan/README.md#the-tasks-of-m2e))
 - **T-ym0k** — Row 68a of `M2e`: The review of the release of M2e ([#369](https://github.com/pharzam/layup/issues/369); [the plan](../plan/README.md#the-tasks-of-m2e))
 - **T-8s13** — Row 68b of `M2e`: The demo of M2e ([#370](https://github.com/pharzam/layup/issues/370); [the plan](../plan/README.md#the-tasks-of-m2e))
