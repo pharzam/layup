@@ -113,9 +113,21 @@ sites=$(git grep -n -E 'exec\.Command|os\.StartProcess|syscall\.(Exec|ForkExec|S
 [ -n "$sites" ] || bad "no call that starts a program found"
 echo "$sites" | sed 's/^/  /'
 bad3=$(echo "$sites" | awk '
+	# The allowed call of prdlint.go is the exact call and nothing else on the
+	# line: no text of a comment before it, and no other start of a program
+	# (or comment text that names one) around it.
+	function allowedcall(l,   call, i, pre, post) {
+		call = "exec.Command(\"sh\", script, prdDir)"
+		i = index(l, call)
+		if (i == 0) return 0
+		pre = substr(l, 1, i - 1); post = substr(l, i + length(call))
+		sub(/^[^:]*:[0-9]+:/, "", pre)
+		if (pre ~ /\/\// || index(post, call) > 0) return 0
+		return (pre post) !~ /exec\.Command|os\.StartProcess|syscall\./
+	}
 	/^internal\/git\/git\.go:[0-9]+:.*exec\.Command\("git", / { next }
 	/^internal\/gate\/scratch\.go:[0-9]+:.*exec\.Command\("sh", / { next }
-	/^internal\/spec\/prdlint\.go:[0-9]+:.*exec\.Command\("sh", script, prdDir\)/ { next }
+	/^internal\/spec\/prdlint\.go:[0-9]+:/ && allowedcall($0) { next }
 	/^internal\/verify\/scripts\.go:[0-9]+:.*exec\.Command\("sh", / { next }
 	/^internal\/session\/process\.go:[0-9]+:.*exec\.CommandContext\(ctx, words\[0\], / { next }
 	/^internal\/session\/process\.go:[0-9]+:.*exec\.Command\(s\.Words\[0\], / { next }
@@ -175,7 +187,7 @@ echo "== (6) The calls of the forge adapter (operation, method), in the non-test
 # a form the rows cannot show. Two empty counts are not coverage.
 dosites=$(git grep -n -o -E '\.do\(' -- 'internal/forge/github/*.go' ':!*_test.go')
 dolines=$(git grep -n -E '\.do\(' -- 'internal/forge/github/*.go' ':!*_test.go')
-dorows=$(echo "$dolines" | sed -n -E 's/^([^:]*:[0-9]+):.*a\.do\(ctx, "([^"]*)", "(GET|POST|PUT|PATCH|DELETE)", ([^,]*),.*/  \1: \2 \3 \4/p')
+dorows=$(echo "$dolines" | sed -n -E 's/^([^:]*:[0-9]+):(.*[^A-Za-z0-9_.])?a\.do\(ctx, "([^"]*)", "(GET|POST|PUT|PATCH|DELETE)", ([^,]*),.*/  \1: \3 \4 \5/p')
 [ -n "$dosites" ] || bad "no .do( call found in internal/forge/github"
 [ -z "$dorows" ] || echo "$dorows"
 nsites=$(echo "$dosites" | grep -c .)
@@ -183,7 +195,7 @@ nrows=$(echo "$dorows" | grep -c .)
 echo "  $nsites .do( occurrences, $nrows rows parsed"
 if [ "$nsites" -ne "$nrows" ]; then
 	# The loop runs in a subshell of the pipe, so fail is set here.
-	echo "$dolines" | grep -v -E 'a\.do\(ctx, "[^"]*", "(GET|POST|PUT|PATCH|DELETE)", [^,]*,' | while IFS= read -r l; do echo "FAIL: a .do( call that is not in the form a.do(ctx, \"Operation\", \"METHOD\", target, on one line: $l"; done
+	echo "$dolines" | grep -v -E '(^|[^A-Za-z0-9_.])a\.do\(ctx, "[^"]*", "(GET|POST|PUT|PATCH|DELETE)", [^,]*,' | while IFS= read -r l; do echo "FAIL: a .do( call that is not in the form a.do(ctx, \"Operation\", \"METHOD\", target, on one line: $l"; done
 	echo "$dosites" | cut -d: -f1,2 | sort | uniq -d | while IFS= read -r l; do echo "FAIL: a line with two .do( calls: $l"; done
 	bad "the .do( occurrences ($nsites) and the rows parsed ($nrows) differ"
 fi
