@@ -201,3 +201,7 @@ Go 1.26.10 in every command. Each red ran before its code change.
 
 - The comment of `loopPermissionsStep` (`register.go`) now says that the steps of the restart call the check (D6).
 - F4's direct assertion is narrowed and says so: with no pull request for attempt 2, `FinishTask` fails at `attemptPull` (`is not on the forge`), before the rendered-head error can be reached; the test asserts that error. The stop of Q2 is the loop's and comes before any call of `FinishTask`.
+
+### Mutants of the round (late evidence)
+
+M19 (finding 1), G1 (finding 2) and G5 (finding 3) are killed; G11 (the reread of the view after the pushes are resolved) is not, and is recorded as such. Every restore matched its hash and every control was green (`runs/T-9nbf/mutants.md`, 30 mutants, 29 killed). The line "2 not killed (G1 equivalent, G5 not reached)" in S6 above is superseded by it.

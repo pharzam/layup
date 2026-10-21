@@ -17,3 +17,6 @@ One row per condition of the plan review of revision 1 (comment 6304893937), the
 | 6252684822 4: the boundary and the permission order | `TestASetIsAppliedAtEachBoundaryOfTheTail`, `TestAMissingLoopPermissionFailsTheRowOfEachStepBeforeAnyWrite` |
 | 6252684822 6: the frozen-test amendment execution is M2g's (the text) | `docs/spec/loop.md` |
 | 6252684822 7: characterization with a red composition control; the interrupted restarts; bounded observation of the guard | `runs/T-9nbf/test-runs.md`, `TestARestartAfterEachWriteOfTheLoopAdoptsIt`, `TestAnActThatMakesNoProgressFails`, `TestASessionCommentOfATaskAfterTheBetIsOnItsIssue` |
+| Round 1 of #367 (6312207004) 1: a successful unresolved close-out push is bound by the restart when the base moved | `internal/run/loop.go`, `docs/spec/loop.md`, `TestASuccessfulCloseOutPushWhoseAnswerWasLostIsBoundByTheRestart` |
+| Round 1 of #367 2: G1 killed through the steps after the Scaffold | `TestAnAttemptAfterTheBetWithNoRenderedCommitIsTheStopOfTheOperator`, `runs/T-9nbf/mutants.md` |
+| Round 1 of #367 3: G5 killed by a failing pinned check on a reopened task | `TestAReopenedTaskReachesItsVerifierWithoutTheWaitingSpecCheckAndTheJobStillBlocksItsMerge`, `internal/run/shapeloop.go` |
