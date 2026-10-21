@@ -18,7 +18,7 @@ No landed form makes a step impossible. Baseline: `go test -count=1 -tags=e2e ./
 
 ## S4. The first run of `TestTheSpecificationTaskEndToEnd`, before any product fix (condition 5)
 
-`go test -count=1 -tags=e2e -run TestTheSpecificationTaskEndToEnd ./cmd/layup/`, 09:58:28, exit 1 (`red1.txt`). Stage 5 failed at the row `shape`: `waiting for the Operator: shape: no survivor`. This is a **fixture** failure and proves nothing of the demo: the world's constraints were the invariant `Inv-1` and also the accepted decision record `ADR-0001` of the baseline (`docs/adr/0001-pin-the-baseline.md`), for which the option `pg` had no row. The fixture was fixed (a row `db pg ADR-0001 pass docs/adr/0001-pin-the-baseline.md`).
+`go test -count=1 -tags=e2e -run 'TestTheSpecificationTaskEndToEnd' ./cmd/layup/`, 09:58:28, exit 1 (`red1.txt`). Stage 5 failed at the row `shape`: `waiting for the Operator: shape: no survivor`. This is a **fixture** failure and proves nothing of the demo: the world's constraints were the invariant `Inv-1` and also the accepted decision record `ADR-0001` of the baseline (`docs/adr/0001-pin-the-baseline.md`), for which the option `pg` had no row. The fixture was fixed (a row `db pg ADR-0001 pass docs/adr/0001-pin-the-baseline.md`).
 
 Three more fixture failures followed, each fixed in the test only: the success-criterion row that the setup answers put into the draft (`R-002`, covering `Q-005`) had no row in the generated PRD (the harness now reads the draft that the prompt lists); the fake's comment IDs of two issues collided (`the last copy of the comment 1001 is not of these bytes`); and the fake's `merge_method` field had no JSON tag.
 
