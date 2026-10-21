@@ -14,6 +14,14 @@ a changelog narrative. The git history and commit messages hold the blow-by-blow
 **A task that never had a backlog line** has no line to move: write its entry
 here directly, in the shape above.
 
+**Where the line goes.** Insert it directly under `## Log`, above the newest line,
+never at the end of the file. This file is `merge=union` in
+[`.gitattributes`](../../.gitattributes): when two branches each insert there,
+`git merge origin/main` keeps both lines, and the branch that merges last has its
+line on top, which is "most recent first". Union keeps both versions of a line
+that both sides edited, so a correction to a line already here is an ordinary
+change, reviewed as one.
+
 ## Log
 
 - **2026-10-21** — **T-c826** — K5 projects the landing figure under ADR-0028 with declared evidence exclusions, tolerance, limit and margins; the PR #453 checker-only CI exception retains both restored runners and is removed by #452; round 2 nothing material in scope ([#449](https://github.com/pharzam/layup/issues/449); [detail](T-c826.md)).

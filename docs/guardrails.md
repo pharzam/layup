@@ -726,6 +726,21 @@ success without having done its job.
   required field names from the discipline text, and audit actual tool inputs against
   the brief before recording context independence.
 
+- ❌ **`merge=union` is not a general merge fix.** It keeps ours, then theirs, for
+  every conflicting hunk, so it fits only a file of independent added records whose
+  readers check presence, never order or uniqueness. A line added at the end of
+  `completed.md` comes out in reverse landing order, so the rule is to insert
+  directly under `## Log` (and below the separator in `traceability.md`): the branch
+  that merges last is "ours", and is on top. Two adjacent deletions both come back
+  (`backlog.md`, so no attribute there); two edits of one PRD §12 matrix row become
+  two rows, and `prd-lint` passes them, because its duplicate check covers only the
+  5-cell rows. Zero removed lines does not show that no record conflicts, so the
+  review exception names the preserved and unconflicting records too. The GitHub
+  result (its own merge and "Update branch"): unknown, see
+  `runs/T-5ve2/forge-merge.md`. **The check:** run
+  `TestTheSharedIndexesMergeWithNoConflictInLandingOrder`. Learned in `T-5ve2`
+  (#461).
+
 ### Testing pitfalls
 
 These traps are not domain-specific: they hurt every project's test suite.
