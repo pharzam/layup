@@ -119,7 +119,7 @@ func (m *m2eRoutes) serve(f *fakeForge, w http.ResponseWriter, r *http.Request) 
 		for _, rule := range set.Rules {
 			for _, c := range rule.Parameters.Checks {
 				if rule.Type == "required_status_checks" && c.IntegrationID == 15368 {
-					runs = append(runs, map[string]any{"name": c.Context, "status": "completed", "conclusion": "success", "app": map[string]any{"id": 15368, "slug": "github-actions"}})
+					runs = append(runs, map[string]any{"name": c.Context, "status": "completed", "conclusion": jobConclusion(c.Context), "app": map[string]any{"id": 15368, "slug": "github-actions"}})
 				}
 			}
 		}
@@ -282,6 +282,32 @@ func eventsOfTask(t *testing.T, w runWorld, task string) [][]string {
 	return rows
 }
 
+// failedJob names the required job that the fake answers with a failure: none in the scenario, and the control C1 (NFR-004) sets it in a copy of the tree.
+const failedJob = ""
+
+func jobConclusion(job string) string {
+	if failedJob != "" && job == failedJob {
+		return "failure"
+	}
+	return "success"
+}
+
+// wantMerges is the number of merge requests the scenario expects: one for each task of Shape, and none when a required job is a failure.
+func wantMerges() int {
+	if failedJob != "" {
+		return 0
+	}
+	return 2
+}
+
+// mergeCountFinding gives the finding of a count of merge requests against the expected one, "" for none.
+func mergeCountFinding(got, want int) string {
+	if got == want {
+		return ""
+	}
+	return fmt.Sprintf("%d merge requests in the log; want exactly %d", got, want)
+}
+
 // notGreen gives the contexts of the four layup/ statuses whose newest status in the snapshot (newest first) is not the App's (creator 9001) and success.
 func notGreen(snapshot []map[string]any) (bad []string) {
 	for _, c := range []string{"layup/gates", "layup/spec", "layup/rules", "layup/verify"} {
@@ -436,12 +462,12 @@ func TestTheSpecificationTaskEndToEnd(t *testing.T) {
 		"created_at": "2026-10-08T14:00:00Z", "updated_at": "2026-10-08T14:00:00Z", "body": "REQ-001: Must, phase 1\nbet\n"})
 	w.forge.mu.Unlock()
 	r, rows = restart("stage 6", 0, slices.Concat(later, []string{"shape", "bet", "loop"}))
-	// Two merge requests, one for each task; none when a required job is not success (NFR-004, the control C1), and not one when the loop stops after the first.
+	// Two merge requests, one for each task, or exactly none under the control C1 (a required job is a failure, NFR-004): never one.
 	w.forge.mu.Lock()
 	merges := len(slices.DeleteFunc(slices.Clone(w.forge.reqs), func(l string) bool { return !strings.HasPrefix(l, "merge ") }))
 	w.forge.mu.Unlock()
-	if merges != 2 {
-		t.Errorf("stage 6: %d merge requests in the log; want 2, one for each task of Shape", merges)
+	if f := mergeCountFinding(merges, wantMerges()); f != "" {
+		t.Errorf("stage 6: %s", f)
 	}
 	if rows["shape"][1] != "done before" || !strings.HasPrefix(rows["bet"][1], "the bet 1: the rendered commit ") || rows["loop"] != [2]string{"done", "the loop merged " + spec.ID + ", " + arch.ID} {
 		t.Fatalf("stage 6: the rows %q\n%s\n%s", rows, r.stdout, r.stderr)
@@ -533,5 +559,20 @@ func TestTheMergeOracleRefusesStatusesPostedAfterTheMergeRequest(t *testing.T) {
 	other := map[string]any{"id": 5, "login": "x"}
 	if bad := notGreen(append([]map[string]any{st("layup/gates", "failure", app), st("layup/spec", "success", other)}, all...)); !slices.Equal(bad, []string{"layup/gates", "layup/spec"}) {
 		t.Errorf("a newer failure and a newer status of another creator: %q; want those two contexts", bad)
+	}
+}
+
+// The count of merge requests is exact: the control C1 accepts zero and refuses a single request, the scenario accepts two and refuses one (round 2 of #368).
+func TestTheCountOfMergeRequestsIsExact(t *testing.T) {
+	for _, c := range []struct {
+		got, want int
+		bad       bool
+	}{{0, 0, false}, {1, 0, true}, {2, 0, true}, {2, 2, false}, {1, 2, true}, {0, 2, true}} {
+		if f := mergeCountFinding(c.got, c.want); (f != "") != c.bad {
+			t.Errorf("%d merge requests, %d expected: finding %q; want a finding: %v", c.got, c.want, f, c.bad)
+		}
+	}
+	if failedJob == "" && wantMerges() != 2 {
+		t.Errorf("the scenario expects %d merge requests; want 2", wantMerges())
 	}
 }
