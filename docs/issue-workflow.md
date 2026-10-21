@@ -193,12 +193,12 @@ its own.
   the approach fits the [guardrails](guardrails.md) and the
   [ADRs](adr/), and **how big the result is allowed to get**. It does not approve
   the implementation, which does not exist yet. A reviewer who agreed to a plan's
-  shape has *not* thereby agreed to whatever size arrives under it: a step that
-  grows past the scale the plan implied goes back to the issue as a new slice or
-  a child sub-issue under [R11](#r11--single-goal-issues), not through on the
-  strength of the earlier confirmation. Where scale is a real risk, the plan says
-  the bound out loud — and an approach whose size cannot be bounded in advance is
-  itself a finding.
+  shape has *not* thereby agreed to whatever size arrives under it: growth past
+  the scale the plan implied follows
+  [the budget](engineering-discipline.md#reviewing-until-findings-decay), not
+  the strength of the earlier confirmation. Where scale is a real risk, the plan
+  says the bound out loud — and an approach whose size cannot be bounded in
+  advance is itself a finding.
 - **State the budget in the confirmation.** The plan-review comment carries a
   `Budget maximum` and a `Cycle cap` by those names, so a later reader — and
   [`review-record-lint`](ci/review-record-lint.sh) — can find them without
