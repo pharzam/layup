@@ -352,7 +352,8 @@ func TestANoBetWritesItsRowAndWaits(t *testing.T) {
 func TestALaterBetFailsClosed(t *testing.T) {
 	t.Parallel()
 	d := betWorld(t, betOptionsTable)
-	row := strings.Join([]string{"9", "first", "901", digest([]byte("x")), "5.0", "12.0", "905", "—", "bet", "303", "2026-10-08T14:00:00Z"}, "\t")
+	// A no-bet row of another milestone: a bet row would hand every task to the step loop (D1, row 66k), so the later bet is told by a first bet that was not made.
+	row := strings.Join([]string{"9", "first", "901", digest([]byte("x")), "—", "—", "905", "—", "no-bet", "303", "2026-10-08T14:00:00Z"}, "\t")
 	pushRecords(t, d.w.bare, map[string]string{"bets.tsv": "milestone\tkind\tbrief\tbrief_sha256\tappetite_usd\tappetite_hours\tanswer\toptions\tverdict\tapprover\tdecided\n" + row + "\n"}, "a bet of another milestone")
 	d.restart()
 	head := recordsHead(t, d.w)

@@ -238,10 +238,10 @@ func TestTheNextVersionOfTheInventory(t *testing.T) {
 	}
 }
 
-// U15: bet follows shape, and only once the Scaffold is done.
+// U15: bet follows shape, and only once the Scaffold is done (loop follows bet, row 66k).
 func TestBetFollowsShapeOnlyOnceTheScaffoldIsDone(t *testing.T) {
-	if got := restartNames(true, true); fmt.Sprint(got[len(got)-2:]) != "[shape bet]" {
-		t.Errorf("the last rows = %v; want shape, bet", got[len(got)-2:])
+	if got := restartNames(true, true); fmt.Sprint(got[len(got)-3:]) != "[shape bet loop]" {
+		t.Errorf("the last rows = %v; want shape, bet, loop", got[len(got)-3:])
 	}
 	for _, scaffold := range []bool{false} {
 		if got := restartNames(true, scaffold); slices.Contains(got, "bet") {

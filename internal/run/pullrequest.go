@@ -99,7 +99,7 @@ func lastBound(events [][]string, attempt int) (sha, session string) {
 // records commit of the body is the records column of the start row of the
 // session of that event. The pull request of the branch is read before anything
 // is opened: an open one is used, a merged one is returned untouched, a closed
-// one that is not merged is an error (the redo is row 66k's). A head of the open or new
+// one that is not merged is an error (the wait of the Operator is the step loop's, row 66k). A head of the open or new
 // pull request other than the bound SHA is an error too, and nothing is registered.
 func (s *Sessions) OpenPullRequest(ctx context.Context, in PullInput) (forge.PullRequest, error) {
 	if err := checkTitle(in.Type, in.Description); err != nil {

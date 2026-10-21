@@ -423,7 +423,7 @@ func (s *Sessions) verifiedStep(ctx context.Context, task string) (loopStep, err
 	if err != nil {
 		return loopStep{}, err
 	}
-	if st := loopPosition(v); st.Pos == posVerified {
+	if st, ok := verifiedView(v); ok {
 		return st, nil
 	}
 	return loopStep{}, fmt.Errorf("%s: Shape has no verified head for it", task)

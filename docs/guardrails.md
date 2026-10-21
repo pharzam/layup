@@ -1252,6 +1252,12 @@ These traps are not domain-specific: they hurt every project's test suite.
   the head is accepted. It is silent because every test edits the body only to remove the line or to invent a commit.
   **The check:** write the association where code owns it (the registration of the pull request), or state the limit; a
   test that names a second genuine value. Ruled a known limit in `T-08rj` (#413).
+- ❌ **A step that reads an earlier step's records with the earlier step's own cut stops on the records of the step after it.** The
+  driver of a Shape task stops on a `bound` whose session is not the developer's, and the close-out session of the merge is bound by the
+  software developer's role: after the first close-out, a restart failed at `shape` and `bet` and could never reach `loop`, while every
+  test of each step alone passed. It is silent because each step's tests stop before the next step's records exist. **The check:** one
+  function tells a task's position over the events up to the cut (`verifiedView`), every step that reads it uses it, and one test restarts
+  the whole tail of the steps (`afterScaffold`) on a world where the later step has already written. Learned in `T-9nbf` (#367).
 
 ### Reference-sweep pitfalls
 

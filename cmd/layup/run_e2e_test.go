@@ -112,7 +112,7 @@ func (f *fakeForge) serve(w http.ResponseWriter, r *http.Request) {
 	enc := json.NewEncoder(w)
 	switch {
 	case call == "GET /repos/acme/target/installation":
-		enc.Encode(map[string]any{"id": 7, "permissions": map[string]string{"contents": "write", "issues": "write", "metadata": "read"}})
+		enc.Encode(map[string]any{"id": 7, "permissions": map[string]string{"contents": "write", "issues": "write", "metadata": "read", "pull_requests": "write", "statuses": "write", "checks": "read"}})
 	case call == "POST /app/installations/7/access_tokens":
 		w.WriteHeader(201)
 		enc.Encode(map[string]any{"token": "ghs_e2e", "expires_at": "2099-01-01T00:00:00Z"})

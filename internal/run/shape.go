@@ -39,6 +39,11 @@ func archStart(specTask Advance, arch string, events [][]string) (base, stop str
 // the first stage that waits or fails, and is done before when it wrote nothing.
 func (r *state) shapeStep(ctx context.Context) Step {
 	const name = "shape"
+	if ok, err := r.betted(ctx); err != nil {
+		return fail(name, err)
+	} else if ok { // after the bet every task belongs to the step loop (D1)
+		return done(name, "done before")
+	}
 	before := r.store.Base()
 	wait, err := r.shapeQuestions(ctx)
 	if err != nil {

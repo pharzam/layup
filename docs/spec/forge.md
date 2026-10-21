@@ -213,7 +213,10 @@ The same API and version header as [The calls of M2a](#the-calls-of-m2a) (task
   the step `forge` of the loop (`loopPermissionsStep`): the loop's caller (row 66k)
   makes it before the loop's first write, the issue of a task included, and the
   register's own write refuses without it; a missing one is then a `fail` of the
-  step `forge` that names it, tested there by a red run. The Operator grants them
+  step `forge` that names it, tested there by a red run. **Decided here** (task `T-9nbf`, row 66k): the steps
+  `shape`, `bet` and `loop` make the check before they do anything, and a missing permission is a `fail` of
+  the row of the step that ran, with the detail `forge: <the missing ones>`, since `run-steps` keys on that step
+  ([`loop.md`](loop.md#the-step-loop), item 5). The Operator grants them
   (`gov-operator-setup-o112`).
 - **`PullRequest`** also serves the restart and the tree rule ([`loop.md`](loop.md#the-tree-after-the-first-merge)): the merged state and the merge commit of a task's pull request, and the pull request of a branch.
 - **The refusals before any request**, in the adapter and in `forge.Fake` alike: a SHA that is not a full object ID (40 lowercase hexadecimal characters: `forge.FullSHA`) in `SetStatus`, `Statuses` and `Merge`; a state outside the four or a description of more than 140 characters in `SetStatus`; a pull request number below 1 in `Merge`, `EditBody` and `ClosePullRequest`, and an issue number below 1 in `CloseIssue`; a query of `PullRequest` that names neither a number nor a branch, both, or a negative number.

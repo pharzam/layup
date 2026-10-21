@@ -249,8 +249,11 @@ func registerFiles(tasks, transitions []byte, t Task) (map[string][]byte, error)
 // loopPermissionsStep checks the permissions of the loop on the installation
 // that step forge read: the loop's caller makes it before its first write, the
 // issue of a task included (docs/spec/forge.md, The calls of M2e). A missing
-// permission is a fail of the step forge that names it; Start and the restart
-// only record the permissions. A state that read no installation holds none.
+// permission is a fail of the step forge that names it. Start and the restart
+// record the permissions and do not fail on them, but the steps shape, bet and
+// loop of the restart call this check before they do anything and fail their
+// own row with the detail forge: … (atBoundary, task T-9nbf, row 66k; D6). A
+// state that read no installation holds none.
 func (r *state) loopPermissionsStep() Step {
 	const name = "forge"
 	if missing := forge.CheckLoopPermissions(r.granted); len(missing) > 0 {

@@ -71,7 +71,7 @@ can leave up to twenty seconds with no line. Reason: a Start ends; the phase
 loop of later milestones adds its own rows, so the one-table rule holds.
 
 ```tsv-schema run-steps stdout
-step enum(forge|plan|baseline|root-push|read-back|records|issues|watch|clone|version|lease|probe|phase|rule-gaps|meaning|numbering|spans|draft|completeness|markers|batch|answers|answers-review|follow-up|follow-up-answers|revision|setup|verify|scaffold-push|forge-check|shape|bet) key the step, in the order of the two lists below
+step enum(forge|plan|baseline|root-push|read-back|records|issues|watch|clone|version|lease|probe|phase|rule-gaps|meaning|numbering|spans|draft|completeness|markers|batch|answers|answers-review|follow-up|follow-up-answers|revision|setup|verify|scaffold-push|forge-check|shape|bet|loop) key the step, in the order of the two lists below
 result enum(done|fail) - `done`, or `fail` with its reason in `detail`
 detail text - one line: what the step found, with no time, no path of the host and no SHA of a records commit (a records commit holds its time, so its SHA differs on a repeat)
 ```
@@ -251,7 +251,7 @@ so a person reads it with no tool. A plain `git clone` carries the branch as
    lease and exits 0. **Decided here** (task `T-2j13`): once the Scaffold is done
    (the rule is in [`scaffold.md`](scaffold.md#at-each-later-start)), the row
    `forge-check` comes between `lease` and `probe` and not at the end, and a row
-   of it that is not `pass` makes it the last row of the restart; **decided here** (task `T-3f94`, row 66h): then the row `shape` is the last of the chain, after `scaffold-push`, and, **decided here** (task `T-2vva`, row 66j), the row `bet` follows `shape` once the Scaffold is done. **Decided here** (task `T-qk66`): the rows after `clone` come from the
+   of it that is not `pass` makes it the last row of the restart; **decided here** (task `T-3f94`, row 66h): then the row `shape` is the last of the chain, after `scaffold-push`, and, **decided here** (task `T-2vva`, row 66j), the row `bet` follows `shape` once the Scaffold is done, and, **decided here** (task `T-9nbf`, row 66k), the row `loop` follows `bet`: it is the last row of the restart, and a restart that reaches it ends with `loop` `done` or `fail` ([`loop.md`](loop.md#the-step-loop)). **Decided here** (task `T-qk66`): the rows after `clone` come from the
    records that `clone` read, and the progress of `forge` and `clone` counts the
    rows of a restart with Start not done; `M2b`'s step `probe` comes
    before it. **Decided here:** `phase` is one

@@ -335,15 +335,36 @@ func rewritePrompt(cs []spec.Constraint) func(input map[string]string, output st
 	}
 }
 
+// defaultConstraints gives the head of the default branch and the constraints that apply at it.
+func (r *state) defaultConstraints(ctx context.Context) (string, []spec.Constraint, error) {
+	base, err := git.RevParse(r.target, "refs/remotes/origin/"+r.defaultBranch)
+	if err != nil {
+		return "", nil, err
+	}
+	cs, err := r.constraintsAt(ctx, base)
+	return base, cs, err
+}
+
+// optionResults gives the results of the filter of each decision's current table in the records, as the step shape makes them and no session runs: the options of
+// the architecture task of Shape and of the task that redoes it (loop.md, The step loop, item 9).
+func (r *state) optionResults(ctx context.Context) (map[string]spec.Result, error) {
+	_, cs, err := r.defaultConstraints(ctx)
+	if err != nil {
+		return nil, err
+	}
+	files, err := r.store.ReadFiles(ctx, "spec/options")
+	if err != nil {
+		return nil, err
+	}
+	current, _ := optionTables(files)
+	return filterAll(current, spec.IDs(cs))
+}
+
 // optionsStage is the second stage of the step: it has the options written, filtered and, when a decision has no survivor, rewritten
 // once; it gives the results of the filter, and, for a decision with no survivor after the rewrite, the detail of the stop (the
 // comment is posted once).
 func (r *state) optionsStage(ctx context.Context) (map[string]spec.Result, string, error) {
-	base, err := git.RevParse(r.target, "refs/remotes/origin/"+r.defaultBranch)
-	if err != nil {
-		return nil, "", err
-	}
-	cs, err := r.constraintsAt(ctx, base)
+	base, cs, err := r.defaultConstraints(ctx)
 	if err != nil {
 		return nil, "", err
 	}

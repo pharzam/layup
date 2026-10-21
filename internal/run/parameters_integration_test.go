@@ -18,8 +18,8 @@ import (
 )
 
 // The parameters on the real adapter, the httptest forge and real git (task T-dx1h, #358, row 66b of the plan of M2e).
-// No step `loop` exists yet (row 66k, #367, which owns the call between steps); a test calls what that step will call,
-// on the state of a restart.
+// The steps shape, bet and loop (row 66k, #367) call the boundary between steps (the tests of the calls are loop_integration_test.go's); a test here calls
+// what they call, on the state of a restart.
 
 func TestTheSchemaOfParametersEqualsItsBlock(t *testing.T) {
 	t.Parallel()
