@@ -1,0 +1,140 @@
+== (1) The commit and the tree
+HEAD 01d7da3082333efadb227afda14fd98715edf5c4
+== (2) TestPackageRules (cmd/layup, integration)
+ok  	github.com/pharzam/layup/cmd/layup	0.271s
+The packages of go list -deps ./... that are not in the standard library:
+  github.com/pharzam/layup/internal/tsv
+  github.com/pharzam/layup/internal/forge
+  github.com/pharzam/layup/internal/forge/github
+  github.com/pharzam/layup/internal/git
+  github.com/pharzam/layup/internal/gate
+  github.com/pharzam/layup/internal/psb
+  github.com/pharzam/layup/internal/records
+  github.com/pharzam/layup/internal/route
+  github.com/pharzam/layup/internal/handoff
+  github.com/pharzam/layup/internal/ledger
+  github.com/pharzam/layup/internal/spec
+  github.com/pharzam/layup/internal/rules
+  github.com/pharzam/layup/internal/session
+  github.com/pharzam/layup/internal/catalog
+  github.com/pharzam/layup/internal/work
+  github.com/pharzam/layup/internal/setup
+  github.com/pharzam/layup/internal/verify
+  github.com/pharzam/layup/internal/run
+  github.com/pharzam/layup/internal/cli
+  github.com/pharzam/layup/cmd/layup
+  github.com/pharzam/layup/internal/standin
+net, net/http and crypto/tls in go list -deps ./...: [net crypto/tls net/http ]
+The packages that import net, net/http or crypto/tls themselves:
+  github.com/pharzam/layup/internal/forge/github: net/http
+== (3) The calls that start a program, in the non-test Go files
+  internal/gate/scratch.go:190:	cmd := exec.Command("sh", "-c", command)
+  internal/git/git.go:87:	cmd := exec.Command("git", args...)
+  internal/session/process.go:33:	cmd := exec.CommandContext(ctx, words[0], words[1:]...)
+  internal/session/process.go:132:	cmd := exec.Command(s.Words[0], s.Words[1:]...)
+  internal/spec/prdlint.go:32:	cmd := exec.Command("sh", script, prdDir)
+  internal/verify/scripts.go:61:	cmd := exec.Command("sh", script)
+== (4) The git verbs that reach a remote, in the non-test Go files of internal/git
+  internal/git/git.go:417: fetch in Fetch
+  internal/git/git.go:428: push in Push
+  internal/git/git.go:515: remote in CloneLocal
+  internal/git/git.go:524: remote in AddRemote
+  internal/git/git.go:543: fetch in FetchSession
+  internal/git/git.go:582: fetch in FetchSession
+The exported calls of internal/git:
+  internal/git/git.go:120:func Version() (string, error) {
+  internal/git/git.go:127:func Supported(version string) bool {
+  internal/git/git.go:134:func LsRemote(url, ref string) (string, error) {
+  internal/git/git.go:148:func Clone(url, dir string, auth Auth) error {
+  internal/git/git.go:154:func CheckoutDetach(dir, commit string) error {
+  internal/git/git.go:159:func Init(dir string) error { return do("", "init", "-b", "main", "--", dir) }
+  internal/git/git.go:163:func Add(dir string, paths ...string) error {
+  internal/git/git.go:179:func Commit(dir, message string, who Identity) error {
+  internal/git/git.go:191:func CommitTree(dir, tree, parent, message string, who Identity) (string, error) {
+  internal/git/git.go:209:func SwitchCreate(dir, branch, commit string) error {
+  internal/git/git.go:225:func Branch(dir string) (string, error) {
+  internal/git/git.go:233:func ResetSoft(dir, commit string) error { return doAt(dir, commit, "reset", "--soft", commit) }
+  internal/git/git.go:238:func ResetHard(dir string) error { return do(dir, "reset", "--hard", "--quiet", "HEAD") }
+  internal/git/git.go:242:func Staged(dir string) (bool, error) {
+  internal/git/git.go:253:func SwitchOrphan(dir, branch string) error { return do(dir, "switch", "--orphan", branch) }
+  internal/git/git.go:256:func RevParse(dir, rev string) (string, error) {
+  internal/git/git.go:262:func RootCommits(dir, rev string) ([]string, error) {
+  internal/git/git.go:269:func Message(dir, rev string) (string, error) {
+  internal/git/git.go:278:func CommitTime(dir, rev string) (time.Time, error) {
+  internal/git/git.go:291:func LsFiles(dir string) ([]string, error) {
+  internal/git/git.go:297:func WorktreeAdd(dir, path, rev string) error {
+  internal/git/git.go:302:func WorktreeRemove(dir, path string) error {
+  internal/git/git.go:307:func Show(dir, rev, path string) ([]byte, error) {
+  internal/git/git.go:313:func DiffNames(dir, base, head string) ([]string, error) {
+  internal/git/git.go:319:func Apply(dir, patch string) error { return do(dir, "apply", "--", patch) }
+  internal/git/git.go:336:func LsTree(dir, rev, path string) ([]TreeEntry, error) {
+  internal/git/git.go:355:func Parents(dir, rev string) ([]string, error) {
+  internal/git/git.go:371:func BlobID(data []byte) string {
+  internal/git/git.go:379:func IsShallow(dir string) (bool, error) {
+  internal/git/git.go:416:func Fetch(dir, url, ref string, auth Auth) error {
+  internal/git/git.go:427:func Push(dir, url, commit, branch string, auth Auth) error {
+  internal/git/git.go:459:func RemoteHead(url, branch string, auth Auth) (sha string, found bool, err error) {
+  internal/git/git.go:507:func CloneLocal(src, dir, branch string) error {
+  internal/git/git.go:523:func AddRemote(dir, name, url string) error {
+  internal/git/git.go:541:func FetchSession(dir, session, sha, dst string) error {
+  internal/git/git.go:587:func IsAncestor(dir, base, head string) (bool, error) {
+  internal/git/git.go:601:func DiffFile(dir, base, head, path string) ([]byte, error) {
+  internal/git/git.go:607:func DiffBinary(dir, base, head string) ([]byte, error) {
+  internal/git/git.go:616:func UpdateRef(dir, ref, sha string) error {
+  internal/git/git.go:625:func Refs(dir, prefix string) ([]string, error) {
+  internal/git/git.go:644:func MergeBase(dir, a, b string) (string, error) {
+  internal/git/git.go:664:func Merge(dir, x, d, message string, who Identity) (sha string, clean bool, err error) {
+== (5) The commands that sh runs
+The entries that the binary embeds:
+  internal/catalog/embed.go:12://go:embed all:go
+The command of each kind of each entry, out of testdata (written into a target at S12):
+  internal/catalog/go/kinds.tsv: static (active): out=$(gofmt -l .) && test -z "$out" && go vet ./...
+  internal/catalog/go/kinds.tsv: layout (pending): —
+  internal/catalog/go/kinds.tsv: boundary (pending): —
+  internal/catalog/go/kinds.tsv: contract (pending): —
+  internal/catalog/go/kinds.tsv: test (active): go test -count=1 ./...
+The scripts of the baseline that internal/verify runs:
+  internal/verify/scripts.go:20:	discTests = "docs/tests/run-discipline-tests.sh"
+  internal/verify/scripts.go:21:	linkLint  = "docs/links/link-lint.sh"
+== (6) The calls of the forge adapter (operation, method), in the non-test Go files of internal/forge/github
+  internal/forge/github/github.go:96: Installation GET a.cfg.API+a.repo()+"/installation"
+  internal/forge/github/github.go:119: Token POST path
+  internal/forge/github/github.go:137: Repository GET a.cfg.API+a.repo()
+  internal/forge/github/github.go:149: Repository GET next
+  internal/forge/github/github.go:169: UserID GET a.cfg.API+"/users/"+url.PathEscape(login)
+  internal/forge/github/github.go:184: OpenIssue POST a.cfg.API+a.repo()+"/issues"
+  internal/forge/github/github.go:199: Comment POST fmt.Sprintf("%s%s/issues/%d/comments"
+  internal/forge/github/github.go:224: Comments GET next
+  internal/forge/github/github.go:270: EffectiveRules GET next
+  internal/forge/github/github.go:305: Activity GET a.cfg.API+a.repo()+"/activity?ref="+url.QueryEscape(ref)
+  internal/forge/github/github.go:358: OpenDraft POST a.cfg.API+a.repo()+"/pulls"
+  internal/forge/github/github.go:391: MarkReady POST graphqlURL(a.cfg.API)
+  internal/forge/github/github.go:422: SetStatus POST a.cfg.API+a.repo()+"/statuses/"+sha
+  internal/forge/github/github.go:445: Statuses GET next
+  internal/forge/github/github.go:476: Statuses GET next
+  internal/forge/github/github.go:507: PullRequest GET fmt.Sprintf("%s%s/pulls/%d"
+  internal/forge/github/github.go:514: PullRequest GET target
+  internal/forge/github/github.go:539: Merge PUT fmt.Sprintf("%s%s/pulls/%d/merge"
+  internal/forge/github/github.go:564: EditBody PATCH fmt.Sprintf("%s%s/pulls/%d"
+  internal/forge/github/github.go:579: ClosePullRequest PATCH fmt.Sprintf("%s%s/pulls/%d"
+  internal/forge/github/github.go:600: CloseIssue PATCH fmt.Sprintf("%s%s/issues/%d"
+  21 .do( occurrences, 21 rows parsed
+== (7) The calls of internal/git that name a remote verb, and who calls them (non-test Go files of cmd/ and internal/ out of internal/git)
+  internal/run/end.go:261: FetchSession in artifacts
+  internal/run/forgecheck.go:519: Push in pushProbe
+  internal/run/steps.go:365: LsRemote in baselineStep
+  internal/run/steps.go:370: Clone in baselineStep
+  internal/run/steps.go:445: Fetch in readBackStep
+  internal/run/steps.go:786: Clone in cloneStep
+  internal/run/steps.go:945: Fetch in keepSessionHeads
+  internal/run/store.go:50: Fetch in ReadLease
+  internal/run/store.go:182: Push in PushHead
+  internal/run/store.go:202: RemoteHead in BranchHead
+  internal/run/store.go:214: Fetch in FetchBranch
+  internal/run/store.go:310: Push in commitFiles
+  internal/run/workarea.go:81: CloneLocal in buildWorkArea
+  internal/run/workarea.go:102: AddRemote in buildWorkArea
+  internal/session/session.go:58: CloneLocal in Make
+  internal/setup/setup.go:231: LsRemote in no function
+  internal/setup/setup.go:232: Clone in no function
+== PASS

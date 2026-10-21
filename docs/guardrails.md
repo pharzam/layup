@@ -1423,7 +1423,7 @@ failure modes worth keeping.
   shape (a `tests:` marker with its first bullet on the same line, an acceptance table
   whose requirement ID has no backticks, which the pinned `prd-lint` calls a malformed
   row) is refused only when a real model follows it. Task `T-c6sx` (#416), found by its
-  plan review and by the first run of its specimen. **The check:** the test fills the
+  plan review and by the first run of its specimen. The same trap, a second time: the brief of the release review of `M2e` (`T-ym0k`, #369) said "with `in full`", the reviewer wrote it plain, and the comparator required the backticks. **The check:** the test fills the
   placeholders of the form that the text shows and runs the real parser or check on the
   result (the comment parsers, `records.ReadResult` on the rows the text quotes, the
   full check and the pinned `prd-lint` on a specimen of the specification), with a
@@ -1495,6 +1495,12 @@ failure modes worth keeping.
   otherwise. **The check:** give a fabricated-commit counterexample to every proof that reads a commit alone, and write the decision to the records before
   the first act of the forge so the restart resumes it before comparing; read the lease right before every write of the forge, the closes included.
   Learned in `T-89xf`, #424.
+
+- ❌ **The author set of a release taken from its milestone's rows.** Who "wrote none of the release" was first read from the rows of `M2e`, but the release is the code of
+  `main`: `go.mod:3` (`go 1.26.10`) came from `7f4e5aec` (`T-xxr8`, #457, outside `M2e`), whose task record names GPT-6.1 Sol as the implementer, so the reviewer that the
+  rows suggested was an author. The trailers also under-name (a subagent's work carries its coordinator's line, and the oldest commits carry none). It is silent because
+  every row of the milestone is clean. **The check:** blame the files of the release list at the release commit, map each surviving commit to its `Co-Authored-By` trailer and to the
+  resource record of its task, count the lines of each model, and name the models of the unattributed group as unknown, not as eligible. Learned in `T-ym0k`, #369.
 
 ## 3. Validation — how you check you are not fooling yourself
 
