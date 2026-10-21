@@ -50,8 +50,13 @@ or payload of one task is under `tasks/<task>/`.
 | `spec/check.tsv` | the table of the span check | 7 | `layup run` | 2 (`M2c`) | the block `spec-check`, [below](#nfr-001--the-records-of-intake) |
 | `spec/draft.tsv` | the requirement draft of Intake | 7 | `layup run` | 2 (`M2c`) | [below](#nfr-001--the-records-of-intake) |
 | `spec/inventory-<n>.tsv`, `spec/inventory.tsv` | a version of the confirmed inventory, and the index with its SHA-256 | 7 | `layup run` | 2 (`M2e`) | [below](#nfr-001--the-records-of-the-task-loop) |
+| `spec/reopenings.tsv` | the facts that the bet re-classed, each with its token, its allocated requirement ID and its reserved task (task `T-4naq`) | 8 | `layup run` | 2 (`M2e`) | the block `reopenings`, [below](#nfr-001--the-records-of-the-task-loop) |
 | `spec/options/<decision>.tsv` | the options of one architecture decision, each constraint with its pass or fail and its evidence | 8 | `layup run` | 2 (`M2e`) | [below](#nfr-001--the-records-of-the-task-loop) |
+| `spec/options/round-1/<decision>.tsv` | the table of round 1 of a decision that the one rewrite replaced, in the block `options` (task `T-3f94`) | 8 | `layup run` | 2 (`M2e`) | [below](#nfr-001--the-records-of-the-task-loop) |
 | `bets.tsv` | each bet: the brief, the answer, the verdict | 8 | `layup run` | 2 (`M2e`) | [below](#nfr-001--the-records-of-the-task-loop) |
+| `bets/<milestone>/brief.md` | the kept brief of a bet (task `T-h65e`): the candidate that passed every check, written by the promotion of `betBrief` with its `basis.tsv`; a rule with no block ([`loop.md`](loop.md#the-brief-of-the-first-bet)) | 8 | `layup run` | 2 (`M2e`) | a rule, no block |
+| `bets/<milestone>/attempts/<session>.md` | a candidate brief of one `bet-brief` session, kept with its telemetry row; the promotion or the recovery judges it again | 8 | `layup run` | 2 (`M2e`) | a rule, no block |
+| `bets/<milestone>/basis.tsv` | the basis of a kept brief: requirements, options, facts, open questions and verified heads | 8 | `layup run` | 2 (`M2e`) | the block `bet-basis`, [below](#nfr-001--the-records-of-the-task-loop) |
 | `batches.tsv` | each rule batch: head SHA, rule-file hash, approval | 6 | `layup run` | 2 | later |
 | `payloads/<sha256>` | a payload by its SHA-256: a known-bad patch, a refused diff, a stall package | 4, 6, 11 | `layup run` | 2 | a rule, no block: [below](#nfr-001--the-records-of-a-session) |
 | `tasks.tsv` | the task register | 8 | `layup run` | 2 (`M2e`) | [below](#nfr-001--the-records-of-the-task-loop) |
@@ -61,6 +66,9 @@ or payload of one task is under `tasks/<task>/`.
 | `tasks/<task>/results/<session>.tsv` | the typed result (handoff) of one session, after its check | 4, 8 | `layup run` | 2 (`M2b`) | [below](#nfr-001--the-records-of-a-session) |
 | `tasks/<task>/tests.tsv` | the frozen test list | 11 | `layup run` | 2 (`M2e`, K38) | [below](#nfr-001--the-records-of-the-task-loop) |
 | `tasks/<task>/results/<session>/<file>` | a file that a `comment` row of the typed result names (the plan, the plan review or the review record), copied byte for byte at the records commit of the result, so that a stop before the post loses nothing | 8 | `layup run` | 2 (`M2e`) | a rule, no block: [`loop.md`](loop.md#the-artifact-that-is-a-comment) |
+| `tasks/<task>/options/<decision>.tsv` | the binding of an architecture task opened by the bet (task `T-2vva`): the rows of the chosen option of the decision, in the block `options`, written in the commit that registers the task | 8 | `layup run` | 2 (`M2e`) | the block `options`, [below](#nfr-001--the-records-of-the-task-loop) |
+| `tasks/<task>/pin.txt` | the opening pin of a Shape task (task `T-89xf`): the SHA-256 of `spec/draft.tsv` (64 hexadecimal characters) and the records commit its issue was opened with (40), a space between and a line feed, captured once with the body of the issue and written in the commit that registers the task and copied to the replacement by a redo ([`loop.md`](loop.md#a-task-whose-base-moved-the-carry-and-the-redo)) | 8 | `layup run` | 2 (`M2e`) | a rule, no block |
+| `tasks/<task>/redo.txt` | the intent of a redo (task `T-89xf`, row 66x): the new task's ID, a space, the base of the new task and a line feed, written before the first act of the forge ([`loop.md`](loop.md#a-task-whose-base-moved-the-carry-and-the-redo)) | 8 | `layup run` | 2 (`M2e`) | a rule, no block |
 | `tasks/<task>/gates.tsv` | the table of `layup gate` for each head of the task | 6, 8 | `layup run` | 2 (`M2e`) | [below](#nfr-001--the-records-of-the-task-loop), the block `task-gates` |
 | `tasks/<task>/spec-check.tsv` | the table of the full `layup spec check` for each head of the task | 7, 8 | `layup run` | 2 (`M2e`) | [below](#nfr-001--the-records-of-the-task-loop) |
 | `acceptance.tsv` | one row per review of a requirement | 8, 12 | `layup run` | 2 | later |
@@ -364,10 +372,10 @@ reason text - why `no`, with its source; `—` when `yes`
 n int key the event's number, from 1, in the order of the events
 kind enum(attempt|session|refused|result|push|bound|closed|rebased|handoff|merged) - the event
 attempt int - the attempt that the event concerns, 1 or more
-session id(S-xxxxxxxx) - the session; `—` for `attempt`, `closed`, `rebased` and `merged`, and for a `refused` whose reason is `pair`, which comes before a session; a `handoff` has its session, and `—` when code wrote it for a rendered task
+session id(S-xxxxxxxx) - the session; `—` for `attempt`, `closed`, `rebased` and `merged`, and for a `refused` whose reason is `pair`, which comes before a session; a `handoff` has its session, and `—` when code wrote it for a rendered task; the `push` and the `bound` of the rendered commit of the first bet, and of the merge of the base into a verified head (task `T-89xf`), have `—` too, since code makes that commit (task `T-2vva`, [`loop.md`](loop.md#the-step-bet))
 base sha1 - the base commit, for `attempt` and `rebased`; `—` otherwise
 sha sha1 - the commit, for `push`, `bound` and `merged` (the merge commit); `—` otherwise
-detail text - one line: for `result`, the class of the end; for `refused`, the reason, and after one space its value where it has one: the path of a rule file, the two numbers of the context, the size of the prompt, or the SHA-256 of the payload of a refused diff (`payloads/<sha256>`, task `T-z027`); for `push` and `bound`, the branch `task/<task>/<attempt>`, with the row's attempt; `—` for `attempt` and `session`; for `closed` and `rebased`, as `M2e` sets; for `handoff`, `valid` or `invalid <item>` and, for an artifact that is a comment, after a space `comment <ID>-<seen>`; for `merged`, the number of the pull request
+detail text - one line: for `result`, the class of the end; for `refused`, the reason, and after one space its value where it has one: the path of a rule file, the two numbers of the context, the size of the prompt, or the SHA-256 of the payload of a refused diff (`payloads/<sha256>`, task `T-z027`; the reasons of a close-out commit that task `T-xvvd`, #363, adds are `scope` and `verdict`, [`loop.md`](loop.md#the-merge-at-the-head-sha-and-the-close-out-commit)); for `push` and `bound`, the branch `task/<task>/<attempt>`, with the row's attempt; `—` for `attempt` and `session`; for `closed`, the ID of the task that redoes it, and for `rebased`, the ID of the task it replaces, each `T-` and four characters (`CheckEvent`, task `T-89xf`); for `handoff`, `valid` or `invalid <item>` and, for an artifact that is a comment, after a space `comment <ID>-<seen>`; for `merged`, the number of the pull request
 time time - when `layup run` recorded the event
 ```
 
@@ -516,10 +524,10 @@ session      id(S-xxxxxxxx)  -  the session that wrote the row
 ```tsv-schema questions records:questions.tsv
 id        id(Q-NNN)  key  the question's ID, from Q-001, in the order of the merge; never renumbered
 source    enum(rule|meaning|coverage|intent|follow-up|setup)  -  where the question comes from; setup is the Operator's question of M2d (scaffold.md, The answers of the setup; task `T-4c5c`)
-ref       text       -    its source row: the ID of the rule gap in intake/psb.tsv (a Q-NNN of that table, which the batch's ID replaces), M-NNN, C-NNN, the field of the intent form (band.B, band.U, appetite.hours, success-criteria), the Q-NNN of the batch that a follow-up asks again, or for a setup question (M2d) its setup ID, S01-stack or a marker's M-<x8> (M- and 8 lowercase hexadecimal characters, the id of its row of intake/markers.tsv)
+ref       text       -    its source row: the ID of the rule gap in intake/psb.tsv (a Q-NNN of that table, which the batch's ID replaces), M-NNN, C-NNN, the field of the intent form (band.B, band.U, appetite.hours, success-criteria), the Q-NNN of the batch that a follow-up asks again (a Shape row asks again a question left open, task `T-3f94`), or for a setup question (M2d) its setup ID, S01-stack or a marker's M-<x8> (M- and 8 lowercase hexadecimal characters, the id of its row of intake/markers.tsv)
 block     enum(idea-owner|operator)  -  the block of the batch that asks it; a setup question is asked in the operator's block (task `T-4c5c`)
 phase     enum(before-delivery)  -  the phase of the question (Early Question Share, architecture.md §12); a later milestone adds its phases
-kind      text       -    the kind of the gap (a rule G1 to G5, a kind of meaning, a kind of coverage, intent, follow-up, or setup)
+kind      text       -    the kind of the gap (a rule G1 to G5, a kind of meaning, a kind of coverage, intent, follow-up, or setup); `shape` for a row of source `follow-up` that the step `shape` asks (task `T-3f94`)
 start     int        -    the byte offset of its quote; `—` for a question with no quote (an absence, the intent form, an `unsupported` requirement of the draft, S01-stack, a marker with no proposal, a follow-up, whose quote is that of the question it asks again, task `T-vwu3`); the quote of a marker with a proposal is the proposal's (task `T-4c5c`)
 end       int        -    the byte offset after its quote; `—` exactly when start is `—`
 question  text       -    the question as the batch asks it
@@ -641,7 +649,7 @@ Milestone `M2e` (task `T-xs4y`, #333): the records that `layup run` writes for t
 task loop, the handoffs, Shape and the bet ([`loop.md`](loop.md)). Each is a file of
 the records branch, which only the App updates (the rulesets of `M2d`). The owners
 are `internal/run` for `tasks`, `task-gates`, `task-tests`, `bets`,
-`parameters` and `retrospectives`, `internal/handoff` for `transitions` (it checks the table), `internal/spec` for `inventory`, `inventory-index`, `options` and
+`reopenings`, `parameters` and `retrospectives`, `internal/handoff` for `transitions` (it checks the table), `internal/spec` for `inventory`, `inventory-index`, `options` and
 `task-spec-check`; their tasks compare each with its Go schema and move its name from
 `notYetBuilt` ([`README.md`](README.md#the-schema-block)). `internal/spec` also
 holds a second Go value of `tasks`, to read the register for the full check —
@@ -653,7 +661,7 @@ build task changes the block and its Go value in one change. The three that
 `invalid <item>` and, for a comment, after a space `comment <ID>-<seen>` (the key of the row of `copies.tsv`), and `merged`, with
 the merge commit's SHA in `sha` and the pull request's number as its detail (`session` is `—` for `merged`, and for the `handoff` of a rendered task, which code writes); the
 kinds `closed` and `rebased` exist, and `M2e` sets their detail: that of `closed`
-names the task that redoes it, and that of `rebased` the task it replaces) and `copies` (the copy
+names the task that redoes it, and that of `rebased` the task it replaces, each as a task ID, task `T-89xf`) and `copies` (the copy
 of a comment that is an artifact of a handoff, [`loop.md`](loop.md#the-artifact-that-is-a-comment)).
 
 ```tsv-schema tasks records:tasks.tsv
@@ -719,6 +727,17 @@ approver      int       -    the answering account's numeric ID, a row of `appro
 decided       time      -    when `layup run` copied the answer
 ```
 
+```tsv-schema bet-basis records:bets/<milestone>/basis.tsv
+kind   enum(requirement|survivor|dropped|fact|open|head)  key  the kind of the row
+id     text  key   a `requirement`: the final ID `REQ-NNN` or `NFR-NNN`; a `survivor` or a `dropped` option: `<decision>=<option>` (neither part empty, no space); a `fact`: its number in `spec/spans.tsv` or its `Q-NNN`; an `open` question: its `Q-NNN`; a `head`: the ID of a Shape task, `T-xxxx`
+value  text  -     a `requirement`: the row `R-NNN` of the draft with the same digits; a `survivor` or an `open`: `—`; a `dropped`: the reasons joined by `; `, never `—`; a `fact`: its class, one of `need|constraint|measure|context`; a `head`: the verified head, 40 lowercase hexadecimal characters
+```
+
+**Decided here** (task `T-h65e`, R10; the owner is `internal/run`, which holds the Go schema `BetBasisSchema`): a basis holds at least
+one `requirement`, one `fact` and two `head` rows, and each decision of a `survivor` or a `dropped` row has at least one `survivor`.
+A row that breaks its kind's rule, a key twice and a basis that lacks a required kind are refused by the reader. The basis is written
+with the brief in one commit and read back by `briefBasis`; row 66j reads it, and filters nothing again.
+
 ```tsv-schema inventory-index records:spec/inventory.tsv
 n       int      key  the version, from 1
 sha256  sha256   -    the SHA-256 of `spec/inventory-<n>.tsv`
@@ -731,6 +750,21 @@ class  enum(need|constraint|measure|context)  -  the confirmed class (a change t
 scope  enum(in|out)                     -    `out` for a fact that the bet's answer marked out of scope
 copy   int                              -    the comment ID of the bet's or the decision's copy that gave this version
 ```
+
+```tsv-schema reopenings records:spec/reopenings.tsv
+n            int      key  the version of the confirmed inventory that the row was made from; 1 in `M2e`
+fact         text     key  the fact's number in `spec/spans.tsv`, or its `Q-NNN`
+class        enum(need|constraint|measure)  -  its class in version n, which differs from its class at Intake
+token        text     -    its citation: `F-NNNN#<fact>` of the numbered facts record for a number, `Q-NNN` for a fact of the answers
+requirement  text     -    the requirement ID that code allocated: `REQ-NNN` for a `need`, `NFR-NNN` for a `constraint`; `—` for a `measure`
+task         id(T-xxxx)  -  the task ID that code reserved for the task that reopens the fact
+copy         int      -    the `copy` column of version n: the comment ID of the bet's copy
+```
+
+**Decided here** (task `T-4naq`, #428, row 66ab; the owner is `internal/run`, `ReopeningsSchema` and `ReadReopenings`): the reader checks, after the types and with the line and the
+column in the error, that no column but `requirement` holds `—`; that `n` is 1 or more (the caller binds it to the version, 1 in `M2e`) and the rows of one `n` are together; that `class` is never `—`; that `token` is `F-NNNN#<fact>` for a `fact` that is a number
+and the `fact` itself for a `Q-NNN`; that `requirement` is `—` exactly for a `measure`, begins `REQ-` for a `need` and `NFR-` for a `constraint`, and is three digits or more; and that no requirement and no
+`task` is held by two rows. The comparison with the inventory, the spans and the register is the caller's, at each call ([`loop.md`](loop.md#the-specification-task-that-a-changed-class-reopens)).
 
 ```tsv-schema parameters records:parameters.tsv
 name      text    key  the parameter's name (`architecture.md` §10), for example `brief.lines`
@@ -757,7 +791,7 @@ in `transitions`, a row for each default pair of the table of `loop.md` (The tra
 order of the manifest and of the rule list — a `clear` head's table still holds every rule row; **decided here** (task `T-q0kr`, #362): the rows of one head are contiguous, in `task-gates` the `base` is the same on each row of a head and `reason` is `—` exactly for a `pass`, and a table is complete only when its kinds are those of `docs/gates.tsv` at its `base` (its states too), or its rules are the ten of the block, in order — `internal/run` reads both before a status is made from them; in `task-tests`, a list has at least one test, `frozen` is the same on each
 row of a freezing, and the list is written whole, by `internal/run`, in the records commit of the event `handoff` that freezes it ([`loop.md`](loop.md#the-frozen-test-list)); in `options`, a `pass` with `—` in `evidence` is a valid row (the
 filter drops the option) and `fail` has `—`; in `bets`, one row for a milestone that has
-a `first` kind, and a `later` row only after it; in `inventory`, no column holds `—` and a fact has one row; in `inventory-index`, `sha256` and `bet` never `—`, and a reader that takes the rows of version n−1 verifies its `sha256` against the version's bytes first — `layup/spec` check reads the hash (loop.md, The rendered commit and the confirmed inventory); the writer of the next version trusts that verification, it sees rows, not bytes; in `task-tests`, `source`, `sha256` and `harness` never `—`; in `bets`, `brief_sha256` and `verdict` never `—`, and `appetite_usd` and `appetite_hours` are `—` exactly when `verdict` is `no-bet`; in `parameters`, the key is the name and a change is the next commit's row; the rows are those of the table of `loop.md` (The parameters of M2e), in its order and no other, with its bound words, role and default, and `since` never `—`; a row with no `comment` is its own origin (a Start row has the value of `start.tsv`, of its type and within its bound, and `command` as `evidence`; any other row has no value and no `evidence`), and a row with a `comment` is a set (a `value` of its type and within its bound, and its reason as `evidence`, so the word `command` is a reason there); in `retrospectives`, `time` is never `—` (a non-key column would hold
+a `first` kind, the kind `first` once, and a `later` row only after it; in `inventory`, no column holds `—` and a fact has one row; in `inventory-index`, `sha256` and `bet` never `—`, and a reader that takes the rows of version n−1 verifies its `sha256` against the version's bytes first — `layup/spec` check reads the hash (loop.md, The rendered commit and the confirmed inventory); the writer of the next version trusts that verification, it sees rows, not bytes; in `task-tests`, `source`, `sha256` and `harness` never `—`; in `bets`, `brief_sha256` and `verdict` never `—`, and `appetite_usd` and `appetite_hours` are `—` exactly when `verdict` is `no-bet`; in `parameters`, the key is the name and a change is the next commit's row; the rows are those of the table of `loop.md` (The parameters of M2e), in its order and no other, with its bound words, role and default, and `since` never `—`; a row with no `comment` is its own origin (a Start row has the value of `start.tsv`, of its type and within its bound, and `command` as `evidence`; any other row has no value and no `evidence`), and a row with a `comment` is a set (a `value` of its type and within its bound, and its reason as `evidence`, so the word `command` is a reason there); in `retrospectives`, `time` is never `—` (a non-key column would hold
 it). The rows of `copies.tsv` that a handoff names are read by the key of the
 comment and its `seen`.
 

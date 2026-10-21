@@ -345,6 +345,7 @@ func TestAProseSessionWhoseCommentFailsLeavesNoFileInTheRecords(t *testing.T) {
 // is fail and names it, and no setup commit is kept: layup-setup does not exist. With
 // a stack that the catalog does not have S01 is fail with its own reason, and the same.
 func TestTheRealRunnerOnTheStackAnswersOfTheStepSetup(t *testing.T) {
+	t.Parallel()
 	for _, c := range []struct {
 		name    string
 		answers [][]string

@@ -72,6 +72,16 @@ type Forge interface {
 	// Merge merges a pull request at its head SHA, by a merge commit, and gives
 	// the merge commit's SHA; a head that moved is a forge error of status 409.
 	Merge(ctx context.Context, number int, sha string) (string, error)
+	// EditBody replaces the body of a pull request and gives the pull request; a
+	// number below 1 is refused before any request (forge.md, The calls of M2e;
+	// task T-08rj).
+	EditBody(ctx context.Context, number int, body string) (PullRequest, error)
+	// ClosePullRequest closes a pull request by its number and gives it as the
+	// forge answers; one already closed, or merged, is no error (forge.md, The
+	// calls of M2e; task T-xyws).
+	ClosePullRequest(ctx context.Context, number int) (PullRequest, error)
+	// CloseIssue closes an issue as not planned; one already closed is no error.
+	CloseIssue(ctx context.Context, number int) error
 }
 
 // Installation is the installation of the App on the repository.
@@ -146,6 +156,7 @@ type PullRequest struct {
 	Merged   bool
 	HeadSHA  string
 	MergeSHA string // the merge commit's SHA, when it is merged
+	Body     string // the body; empty when the forge gives none (null)
 }
 
 // PullRequestQuery names a pull request by its number, or by the branch it

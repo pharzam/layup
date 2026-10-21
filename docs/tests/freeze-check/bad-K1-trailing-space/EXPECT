@@ -1,0 +1,7 @@
+1
+FAIL K1: a.txt:1: trailing whitespace.
+ok K2: registration of new tests
+ok K3: test selectors
+ok K4: restore evidence of mutants
+ok K5: projection: figure 1/1, maximum 100/10, tolerance 60/4, limit 160/14, margin 159/13 (the figure at landing is still measured at landing)
+ok K6: conditions table

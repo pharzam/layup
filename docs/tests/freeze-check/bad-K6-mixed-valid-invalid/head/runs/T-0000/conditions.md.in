@@ -1,0 +1,5 @@
+# Conditions
+
+| Condition | Evidence |
+| --- | --- |
+| 1. Mixed | `internal/x/a_test.go:1`, `TestDoesNotExist` |

@@ -56,7 +56,7 @@ plan review is architecture and scope, never implementation approval.
 2. **Honor the guardrails.** Before you write code, read the acceptance criteria, [`docs/guardrails.md`](docs/guardrails.md), and the [ADRs](docs/adr/) the ticket references.
 3. **Test first.** Write the failing test, watch it fail for the right reason, then write the code.
 4. **Make long tasks visible.** Anything that can run over ten seconds shows which step runs and that it lives.
-5. **Review until findings decay.** Freeze the head, then run one independent blind round on it, by a model that differs from every author's. A fix re-freezes and one more round reads it; the cycle cap is 1, or 2 for a change to a gate, the Operator chooses the end at the cap, and the last round ends `nothing material in scope` or `not mergeable, findings recorded` — see [Reviewing until findings decay](docs/engineering-discipline.md#reviewing-until-findings-decay). A defect the change *revealed*, off the path its Definition of Done names, opens an issue instead of entering the branch. A reviewer is a person or a fresh agent session — the requirement is [independence](docs/engineering-discipline.md#who-may-review), not reviewer type — and summarised text gets a clause-by-clause semantic pass.
+5. **Review until findings decay.** Freeze the head, then run one independent blind round on it, by a model that differs from every author's. The [review protocol](docs/engineering-discipline.md#reviewing-until-findings-decay) defines the cycles, verdicts and ends at the cap. A defect the change *revealed*, off the path its Definition of Done names, opens an issue instead of entering the branch. A reviewer is a person or a fresh agent session — the requirement is [independence](docs/engineering-discipline.md#who-may-review), not reviewer type — and summarised text gets a clause-by-clause semantic pass.
 6. **Be honest, keep evidence.** Report a failure as a failure, and review the producing code before a costly action.
 7. **Keep the documentation current.** Every document the change leaves stale is fixed in the same pull request — and any lesson the task taught that the next reader could hit is written back into `guardrails.md` §2 (Known pitfalls).
 8. **Close out in the same PR.** Tick the boxes, write the verdict, record the task line in the completed log, and — for a task started under ADR-0007 — write the task's resource record (model, effort, tokens and elapsed time per gate part, recorded not budgeted).
@@ -97,8 +97,11 @@ file.
 These read only text, so they need no toolchain. Install the hooks once per clone
 by running `sh .githooks/install.sh` (it pins `core.hooksPath` to the relative
 `.githooks`); the first four, and the setup checks `adapted` and `markers`, then
-run before every commit, and in CI; `nested-checkout-check.sh` needs `git`, so it
-runs in CI only; the full `setup-check.sh` needs `git` too, and runs in CI;
+run before every commit, and in CI; `nested-checkout-check.sh` and
+`freeze-check/run-all.sh` need `git`, so they run in CI only; the full
+`setup-check.sh` needs `git` too, and runs in CI; `freeze-check.sh` needs `git`
+and you run it before each freeze using the invocation and evidence declarations in
+[Reviewing until findings decay](docs/engineering-discipline.md#reviewing-until-findings-decay);
 and `git diff --check` you run yourself. Keep
 [`.gitattributes`](.gitattributes): it holds these scripts at line-feed endings,
 without which none of them runs on a Windows checkout.
@@ -109,6 +112,7 @@ sh docs/prd/prd-lint.sh
 sh docs/links/link-lint.sh
 sh docs/tests/run-discipline-tests.sh
 sh docs/tests/nested-checkout-check.sh
+sh docs/tests/freeze-check/run-all.sh
 sh docs/setup/setup-check.sh
 git diff --check
 ```

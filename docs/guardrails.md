@@ -51,7 +51,8 @@ Whether a named gate really runs the path is a review judgement.
   that check the work (`F-0001#3`). Trap: a change that edits the check that
   judges it. The CI restore step (`guardrails.md` §2, "A check the change
   supplies is not a control") covers each check script a workflow runs, except
-  `docs/tests/nested-checkout-check.sh`. Check `ci` (cause `restore`) fails when a
+  `docs/tests/nested-checkout-check.sh`.
+  Check `ci` (cause `restore`) fails when a
   job names a `docs/...sh` script outside its Restore step, in any form, and the
   Restore step does not name it (a script run through a relative
   `working-directory:` is not seen). Neither covers the workflow file itself, which a branch can
@@ -79,6 +80,12 @@ Whether a named gate really runs the path is a review judgement.
 The traps below hurt this project. Each has the trap, why it is silent, and the
 check that catches it.
 
+- ❌ **“Input” makes an evidence exclusion read two ways.** In `T-3ff9`, treating
+  every audited record as an input would defeat ADR-0028's evidence exclusion
+  and records-finding examples. It is silent because each reading fits the word.
+  **The check:** use the Operator-clarified definition in
+  [Reviewing until findings decay](engineering-discipline.md#reviewing-until-findings-decay)
+  for both the count and end 3; do not infer input status from a check's read alone.
 - ❌ **A shell function overwrites its caller's variable.** POSIX `sh` has no
   local variables, so a loop variable in a check function can replace the loop
   variable of the main loop in `setup-check.sh`. The first try of a fix in
@@ -386,7 +393,7 @@ check that catches it.
   standard library, found in `go1.26.8` and fixed in `go1.26.9`, were published
   between the two runs. It is silent until a release day, as each run of the
   same tree can resolve another toolchain. **The check:** the `go` directive
-  names the full patch version (`go 1.26.9`), so CI builds what the commit
+  names the full patch version (`go 1.26.10`), so CI builds what the commit
   names, and govulncheck's "Fixed in" names the version to move to; the red returns at each security release of
   the line, and the directive moves with it. A host
   below it then downloads that toolchain under `GOTOOLCHAIN=auto`, or refuses
@@ -458,6 +465,12 @@ check that catches it.
   bullet that holds a `\r` itself, a marker line with a `\r` is no marker, and a test pairs
   each such line with the same line without the `\r`. Learned in `T-4pje`
   ([#396](https://github.com/pharzam/layup/issues/396)).
+
+- ❌ **An exemption that ends before the work it waits for.** The full check judges the latest version of the inventory, so a fact that the first bet
+  re-classed has no requirement at the head of the specification that merges; an exemption "until a task is registered" still fails the head of the first of
+  two reopened tasks for the fact of the second, and a head that is judged twice for one task is read from its saved table, so a test that changes only the
+  task's state judges nothing again. It is silent because each single fact passes. **The check:** the exemption is per fact, ends at the merge of the fact's
+  own task, and is never given at the head of that task; a test judges two facts in order with a head that is new for each judgment (`T-4naq`, #428).
 
 ### Writing a lesson back
 
@@ -536,15 +549,19 @@ success without having done its job.
   (`dirname $0`), so running the default branch's copy *where it sits* lints the
   wrong tree and reports OK. That was measured too, while building the fix.
   **The check:** every job in [`ci.yml`](../.github/workflows/ci.yml) restores the
-  check scripts from the default branch **in place** before running them, so the
-  branch's copy is never the judge.
+  check scripts from the default branch **in place** before running them. The
+  nested-checkout driver remains an exception. The checker, both freeze-check
+  runners and every other listed script restore for every event.
   **Bound on the damage, and it is not nil:** a `pull_request` event runs the
   workflow as the branch has it, so a branch that edits `ci.yml` removes the
   restore step — closed only by review of `.github/**`, which wants a `CODEOWNERS`
   entry and a second human the forge knows about. Restoring also stops a bypass,
   not a merge: once a weakened check lands it *is* the default branch's copy. And
-  a change that *improves* a check is judged by the older copy, so it lands in two
-  steps. These checks are a control against forgetting, not against an operator
+  a change that *improves* a check is judged by the older copy. A suite comparing
+  complete output cannot migrate changed diagnostics merely by splitting commits
+  or landing cases later: it needs compatibility across the landing boundary or
+  an explicitly approved bounded exception, as T-c826 measured. Keep the runner
+  restored in either route. These checks are a control against forgetting, not against an operator
   who edits the check.
 - ❌ **A reason that copies an error into a result table.** A row's reason that
   holds the text of an error of `git` (for example `fatal: '<path>' already
@@ -657,9 +674,9 @@ success without having done its job.
   before the freeze: the new base SHA, the figure against it and the figure against
   the old base, and the tasks that landed between (`git log --merges OLD..NEW`); and
   ask the Operator to rule that the bound is read against the new base, as the plan
-  review names the old one and an overrun against the named base is a finding
-  ([the budget](engineering-discipline.md#reviewing-until-findings-decay)); the task file names the base that the
-  ruling gives.
+  review names the old one; the disposition of any overrun follows
+  [the budget](engineering-discipline.md#reviewing-until-findings-decay). The task
+  file names the base that the ruling gives.
 
 - ❌ **The pinned `prd-lint` fails on two streams.** Its awk `print` goes to
   stdout and its `err()` — the filename refusal — goes to stderr, so a reader of
@@ -777,12 +794,22 @@ These traps are not domain-specific: they hurt every project's test suite.
   prints the goroutines that still ran, which reads like a crash. On the host of the sessions
   (2 CPUs, a load average of about 6 when several sessions run their suites) the integration
   level of `internal/run` took 486 s alone and was stopped at 600 s inside a run of every
-  package, while CI ran all three levels in 3 min 22 s (`T-4c5c`, #276). **The check:** run
+  package, while CI ran all three levels in 3 min 22 s (`T-4c5c`, #276). Since `T-05f4` (#439) the
+  integration tests of `internal/run` run in parallel (baseline 396 s, median 125 s, ratio 0.32);
+  when a test that replaces `verifyRun` ran in parallel, `TestTheStepSetupRunsS01ToS14` was red in
+  3 of 3 runs. **The check:** run
   the level with `-timeout 30m`; when a package stops at the limit, read `uptime`, run that
   package alone with `-v`, record both runs, and edit no test for the stop. A package that
-  needs more than 10 minutes alone on an idle host breaks
+  needs more than its level's per-test-binary bound alone on an idle host (10 minutes, or 20
+  minutes for the integration level in CI under
+  [ADR-0027](adr/0027-bound-the-integration-level-at-20-minutes-in-ci.md)) breaks
   [the rule of the scaling checklist](tests/scaling-checklist.md#fast-enough-for-hook-and-ci),
-  and is a task.
+  and is a task ([#439](https://github.com/pharzam/layup/issues/439) for `internal/run`). A top-level integration test of `internal/run` (files
+  `internal/run/*_integration_test.go`, build tag `integration`) is serial if, directly or through
+  any helper it calls, it calls `t.Setenv` or `t.Chdir`, or assigns a package-level variable of
+  package `run` (today `verifyRun`, `internal/run/verify.go:29`, and `betStopAt`, `internal/run/bet.go`). Every other top-level
+  integration test gets `t.Parallel()` as its first statement. Subtests are not changed; a test
+  that must replace a package variable such as `verifyRun` stays serial.
 - ❌ **A `git` verb that reads its standard input when its argument is empty.**
   `git commit-tree TREE -p PARENT -m ''` finds an empty message and reads the message
   from its standard input, as it does with no `-m`; with a standard input that stays
@@ -799,8 +826,11 @@ These traps are not domain-specific: they hurt every project's test suite.
   weaken a passing old test.
 - ❌ **Tests that slow down as the project grows.** A suite that creeps past the
   hook's patience gets skipped, and a skipped gate is no gate. The check: keep the
-  cheap levels fast and cheap-first, push slow ones to CI, and bound each with
-  `-timeout 10m` — see [`tests/scaling-checklist.md`](tests/scaling-checklist.md).
+  cheap levels fast and cheap-first, push slow ones to CI, and bound each test
+  binary within its level's limit (`-timeout 10m`, or `-timeout 20m` for the
+  integration level in CI under
+  [ADR-0027](adr/0027-bound-the-integration-level-at-20-minutes-in-ci.md)) — see
+  [`tests/scaling-checklist.md`](tests/scaling-checklist.md).
 - ❌ **A specification that fixes one input state at a time.** A step that reads
   an input file a human writes (an answers file, a list of rows) meets rows in
   states that the happy path never makes: rows given early, copied from an
@@ -958,6 +988,35 @@ These traps are not domain-specific: they hurt every project's test suite.
   its inputs, its runner strips them from `EXPECT`, and the suite has a case
   named `*crlf*`, CRLF throughout and pinned `eol=crlf` in `.gitattributes`,
   so `run-discipline-tests.sh` checks that it keeps them.
+- ❌ **A check of the records that passes its own fixtures and fails the records
+  of `main`.** `freeze-check.sh` (`T-b6fn`, #440) first passed all 42 of its
+  fixtures, then failed T-r7b9 as merged. A §12 Test cell of `PRD-0001` may name
+  a test's file in place of the test ("… and its 13 siblings of
+  `questionloop_test.go`"). Round 1 found more: a word of a mutant's description
+  ("the rule dropped") read as a disposition; a backtick elsewhere on a line hid
+  a `go test` command; an inline span that crosses a line break was paired
+  wrongly; an unreadable input passed; and an untracked file supplied evidence.
+  Round 2 found that the fix of the span hid a command after a backtick that
+  nothing closed, that an uncommitted edit of a tracked file still supplied a
+  test name, and that one rule had no case that failed when the rule alone was
+  removed. **The check:** run a new check of the records on two or three merged
+  tasks of `main` before the freeze, and give each true and false reading found
+  there its own fixture. Refuse a worktree with a change or an untracked file,
+  so the inputs are the committed head. A record suffix can name a directory;
+  check for a blob at each committed endpoint before excluding its literal path.
+  Keep a rename-into-evidence case to catch folding in the gross figure.
+  Pair backticks across the lines of a paragraph, read an unclosed one as plain
+  text, and read fenced lines as they stand. Remove each condition of a rule in
+  turn and see a case fail. Write a
+  command template in prose without `go test … -run <pattern>`, which
+  `freeze-check.sh` K3 refuses as a selector.
+- ❌ **A freeze comparison against main that the branch has not merged.**
+  `freeze-check.sh --base origin/main` compares committed endpoint trees. If the
+  branch is behind `main`, it counts `main`'s new files as branch deletions and
+  includes other differences from `main` in the branch's figure. T-c826 (#449)
+  met this in Stage H: K5 reported 4172/192 before the merge and 975/161 after it.
+  **The check:** merge current `origin/main` into the task branch before the
+  clean-head freeze run; record both resolved SHAs with the result.
 - ❌ **A fake whose child cannot see `SIGINT`.** A shell script that starts a
   child with `&` gives it `SIGINT` and `SIGQUIT` ignored (POSIX, with job
   control off), and a shell cannot trap a signal ignored at its entry; `trap ''`
@@ -1164,6 +1223,14 @@ These traps are not domain-specific: they hurt every project's test suite.
   all. A second trap of the same task: a helper that copies a struct by hand (`afterRestart`) drops a field added
   later (here the bot ID), so the restart cannot tell its own status; assert the field on the copy.
   Learned in `T-q0kr` (#362).
+- ❌ **A refusal that "pushed nothing" is tested against a branch that already exists.** The verifier's own push had
+  made `task/<task>/1` at the verified head, so "the branch exists" was true before the close-out and after its
+  refusal. It is silent because the assertion is green for a refusal and for a push alike. **The check:** read the tip
+  of the branch before the session and assert it is unchanged. Two traps of the same task: a stand-in store whose
+  injected failure `Fenced` retries (`refuse = 1`) does not stop a register write, so give it a failure that
+  escapes the retry; and a helper that opens the object under test (the draft) makes every test of the next stage
+  fail with one line at a stub, so the tests of the ready and merge rule open the draft through the forge and the
+  register directly. Learned in `T-xvvd` (#363).
 - ❌ **A record row that names a file is not the record ID a check wants.** The full check wants the `F-NNNN` IDs
   whose `#n` is the numbered fact `n`, and the setup record holds only paths (`brief.copy` is a raw copy to which S06
   assigns no numbered record; the answers record numbers `S01-stack` first, so its fact 2 is not `Q-002`). Reading an ID from the closest
@@ -1171,6 +1238,19 @@ These traps are not domain-specific: they hurt every project's test suite.
   **The check:** name the one source (here the file `docs/facts/F-NNNN-numbered-facts.md` at the head, which row 66j
   produces), leave the field empty until it exists, and give the test a fixture where the wrong mapping resolves to a
   real fact. Learned in `T-cav3` (#412).
+- ❌ **A stand-in that keeps fewer fields than the interface gives cannot prove a body, and a SHA does not name one session.**
+  `Fake.OpenDraft` dropped the body it was given, so a test of an edit of the body could not read what the call changed. Also,
+  the verifier of an unchanged head binds the same SHA that the developer bound, at a later records snapshot, so "the session
+  bound at that SHA" is two sessions and the last is the wrong one; a fixture that reuses one snapshot hides it. It is silent
+  because the body assertion is green on a stand-in that keeps nothing, and the snapshot assertion is green when every session
+  shares one. **The check:** the stand-in keeps and gives each field the call changes (and an edit that takes effect and
+  gives an error), and a test binds one head by two sessions at two snapshots and asserts the producer's. Learned in
+  `T-08rj` (#413).
+- ❌ **A value read back from a forge body that a person can edit is not a stable association.** The edit of row 66q takes
+  the opening records commit from the body it replaces, and a hand edit that names another genuine commit of a session of
+  the head is accepted. It is silent because every test edits the body only to remove the line or to invent a commit.
+  **The check:** write the association where code owns it (the registration of the pull request), or state the limit; a
+  test that names a second genuine value. Ruled a known limit in `T-08rj` (#413).
 
 ### Reference-sweep pitfalls
 
@@ -1310,6 +1390,84 @@ failure modes worth keeping.
   function that takes a raw row reads it as a one-row table with `tsv.Read` (the
   empty value as `—`), requires the parsed row to equal the input, then applies the
   row rules; and each refusal has a one-token valid control.
+- ❌ **An instruction whose shown form the parser does not read.** A prompt that
+  tells a model to write a comment, a result file or a table is a producer, and the
+  parser of the loop is its reader: a form that the text shows with a slightly different
+  shape (a `tests:` marker with its first bullet on the same line, an acceptance table
+  whose requirement ID has no backticks, which the pinned `prd-lint` calls a malformed
+  row) is refused only when a real model follows it. Task `T-c6sx` (#416), found by its
+  plan review and by the first run of its specimen. **The check:** the test fills the
+  placeholders of the form that the text shows and runs the real parser or check on the
+  result (the comment parsers, `records.ReadResult` on the rows the text quotes, the
+  full check and the pinned `prd-lint` on a specimen of the specification), with a
+  control that removes one part and fails; the helper invents no grammar that the text
+  lacks, and the oracle of the composed bytes is a golden file that no flag rewrites.
+
+- ❌ **An issue number that names a pull request.** Issues and pull requests share one number space, and
+  `PATCH /issues/{n}` of a pull request's number closes the pull request, so a call meant for an issue can act
+  on a pull request; the answer holds a `pull_request` object, and the effect has already happened. GitHub's
+  pages do not say it. It is silent when the caller checks only `state`. **The check:** read the answer of
+  `CloseIssue` for `pull_request` and make it a forge error, say in `forge.md` that the check comes after the
+  effect, and test it with an issue answer that holds the object. Learned in `T-xyws` (#423).
+
+- ❌ **A repair read from the position of the interrupted run, and a destination that tests already count.** Two commits
+  (`refused push-lost`, then `attempt`) left a restart that finds the refusal and no attempt, so a repair that fires only in
+  the run that wrote the refusal never starts one; and `git ls-remote` matches its pattern against the tail of a ref name, so
+  a branch `x/refs/heads/task/T-ab12/2` answers a read of `task/T-ab12/2`. Moving a comment to another issue also changed what
+  every test that counts, edits by index or adopts comments on that issue sees, which no list of changed assertions had
+  named. Task `T-syxm` (#422). **The check:** a repair derives its work from the records alone (a rule that holds after any
+  prefix of the writes, with a test that seeds the middle state and runs it twice), a read of a ref keeps only the line of
+  the exact name, and a plan that moves an output lists every test that reads its destination, not the assertions that
+  name the old one.
+
+- ❌ **A session that only reads, bound by the push hook.** `TaskSession` gave every task session the push hook,
+  so a plan, a plan review or a verifier that committed nothing had its head equal to its base, which passes
+  every check, and was pushed and bound; the first `bound` of a task then said nothing about the developer, and
+  the review of a head could be taken for its author. It is silent because the session's result is valid and no
+  event is out of place. **The check:** decide the push by the step of the prompt file inside `TaskSession`, not in a
+  caller (`readOnlyStep`), and test it on a harness that commits in each step that reads: only the developer is
+  bound. The same call must refuse a prompt file of another task or base before it sweeps; and a base that is
+  not on the default branch (a verifier's head) needs a branch of the run's clone to be cloned from, or the
+  start fails. Learned in `T-jy6f`, #415.
+- ❌ **A refused start that no stage can see.** A task session whose start is refused writes the event `refused`
+  and no start row, so a driver that tells a stage from the rows of `sessions.tsv` found none and started it again,
+  a hundred times. It is silent in a unit test of the position, which builds only sessions that started.
+  **The check:** read the events for a `refused` whose session has no start row, and stop on it; run the driver
+  against a start that is refused. Learned in `T-jy6f`, #415.
+- ❌ **A role-keyed stage list that an answer session joins.** The driver of a Shape task tells a stage from the role of a session, over every attempt, and the plan review from the last valid plan handoff. The owner role of a question can be the plan role, and its handoff back is valid, so the plan review became "neither a review nor a verifier" and the loop stopped; a plan that asked stayed the last session of its stage after the answer. A unit test of the position with only the asking session sees neither. **The check:** exclude the answer session from every stage list, skip a session that asked in an earlier attempt, count only the handoff of a comment as a plan handoff, and run a case where the owner has the plan role. Learned in `T-r7b9`, #426.
+
+- ❌ **A new kind of a shared source, read by the steps that run before the new step.** The step `shape` asks its questions as rows of `questions.tsv` with the source `follow-up` and the kind `shape`, as its plan chose, and the plan listed the readers of the budget but not those of the source. The steps `follow-up` and `follow-up-answers` of Intake run on every restart before `shape`, and each read every row of the source `follow-up` as Intake's: the first Shape row made `follow-up-answers` wait for an answer to a question of Intake, and the run never came back to `shape`. No test of the plan failed: each was written for the step alone. It is silent until the second restart. **The check:** when a row, a kind or a state is added to a record that earlier steps read, `git grep -n` its source value in the code that is no test, and give each reader a case that holds the new row beside its own (`TestOnlyTheRowsOfIntakeAreItsFollowUp`); the test of the new step is not that case. Learned in `T-3f94`.
+
+- ❌ **A first-match loop over the statuses of a head that lets a failure hide an error.** The driver judged the four statuses in the order of their posts and returned at the first one that stopped it. When the failure of `layup/spec` and `layup/rules` became a retry instead of a stop, the same loop would have started an attempt for a spec failure and never looked at a later `layup/rules` error, which has to stop it (`NFR-004`). It is silent because every status alone is judged right and the mixed head is no fixture. **The check:** decide a stop over all the posts before any retry (`judgeStatuses` returns the stop whatever else failed), test a head with a failure *before* an error, and make a fault knob of a scripted harness fire once, or the driver retries a persistent fault until its bound on the acts. Learned in `T-tnxn`, #427.
+- ❌ **A status computed at a head whose authors changed.** The close-out commit is one more author of the change, so `layup/verify` computed afresh at the new head (the status of any head: `PostStatuses` runs `VerifyAt`) counts the close-out session's harness among the authors and can post `not-active` over the `success` that `CarryVerify` carried there; each restart would then post the two in turn. It is silent because each post is right alone, and the merge only waits when the newest status it reads is not `success`. Two reads that the position needs also fail quietly at a head that code made: `loopPosition` stops on the close-out's own `bound` and on a start that was refused before its row, and the run's clone, made anew at each restart, no longer holds the head that an ended session kept. **The check:** post the three checks of a carried head with `PostChecks` and the verdict with `CarryVerify` alone, tell the verified head over the events up to the verifier's last handoff, and test a world where the close-out's harness leaves no harness outside the authors, with the computed `VerifyAt` as its red control (`TestNoVerifyIsComputedAtTheCloseOutHead`). Learned in `T-ehb4`, #425.
+
+- ❌ **A package's integration time read only on the host, not in CI's log.** Row 66z (`T-r7b9`, #436) passed `internal/run`'s integration binary in 412.797 s on the session host and in 493.632 s on its PR head in CI (run 39421233368), and the push run of its merge timed out at 600.012 s on `main` (run 39422675099), with PR #437's head timing out at 600.014 s in CI (run 39425720339) while completing in 482.275 s on the host. It is silent because the PR checks pass and the merge does not wait on `main`'s push run. **The check:** read a package's integration time in CI's log at each landing, not only on the host. Learned in `T-jc45`, #442.
+
+- ❌ **A check that reads the ledger inside `Keep` omits the session's own row.** `endPhase` runs the step's `Keep` and only then commits the
+  telemetry row of the session, so a check of the appetite (the caps plus the money spent) made in `Keep` judged the brief without the money that its own
+  session cost, and the plan of the brief of the first bet (#418) had put it there. It is silent because the prior spend alone fits, and every unit test of
+  the check passes. **The check:** judge what depends on the session's spend after `PhaseSession` returns, from the records as they now stand; keep the
+  output as a candidate in `Keep` and promote it after; test with a spend that fits without the session's row and fails with it (a green negative beside a
+  red case). A session whose output files `ReadOutputFiles` refuses ends `no-result`, not `refused file`, so a loop that retries on the second does not retry the first.
+  Learned in `T-h65e`, #418.
+
+- ❌ **An event of code read as a session's.** The rendered commit of the first bet is pushed by code, so its `push` and `bound` have no session,
+  and every reader that scanned the `bound` events of a task and looked its session up broke on it: the driver of a Shape task stopped (a `bound` of
+  a role that is not the developer's), the repair of a push turned the `push` into `refused push-lost` and started an attempt, the authors, the
+  register snapshot of a head and the last bound of an attempt failed or returned the wrong head, and the link of the review record refused the
+  pull request whose head had moved to the rendered commit. It is silent because no test had an event with no session until the step was built.
+  **The check:** when a new writer adds an event that an old reader meets, list the readers of that kind (`grep '"bound"'`), give each a guard
+  and a red case, and run the step that precedes the new one (`shape` before `bet`) after the new writer, since a restart runs it first. Also:
+  an instruction that a session follows must show the sections that a later reader of the file looks for (the rendering of the bet needs
+  `## 6.`, `## 7.`, `**Non-goals.**` and the phases of `## 9.`), or the reader's fixture hides the gap. Learned in `T-2vva`, #366.
+
+- ❌ **A merge that a check would accept by its result diffs, and a decision that a restart recomputes.** The carry of a verdict over a merge of the
+  base looked provable from "the two diffs from the parents to the merge are disjoint", but a merge that takes the base's version of a file both
+  parents changed has the diffs `{a}` and `{}` and changes a task path; the sound rule names the branch-change sets `T` and `P` from the merge base and
+  checks `T ∩ P = ∅`, `p1 → M ⊆ P` and `p2 → M ⊆ T`. Likewise a redo whose decision is recomputed at each restart can close the old issue and then decide
+  otherwise. **The check:** give a fabricated-commit counterexample to every proof that reads a commit alone, and write the decision to the records before
+  the first act of the forge so the restart resumes it before comparing; read the lease right before every write of the forge, the closes included.
+  Learned in `T-89xf`, #424.
 
 ## 3. Validation — how you check you are not fooling yourself
 

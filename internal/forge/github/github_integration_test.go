@@ -1249,3 +1249,314 @@ func TestNoTokenIsInTheMessageOfAnErrorOfM2e(t *testing.T) {
 	}
 	noToken(t, err.Error())
 }
+
+// prBodyJSON is a pull request as the forge gives it with its body: a string, or
+// null (GitHub's page, "Create a pull request": body is a string or null;
+// runs/T-08rj/api-sources.md). prJSON is left as it is, so its frozen comparisons stay.
+func prBodyJSON(number int, body any) map[string]any {
+	m := prJSON(number, false, false)
+	m["body"] = body
+	return m
+}
+
+func TestEditBodyPatchesTheBodyAloneAndGivesThePullRequest(t *testing.T) {
+	f, _, a, _ := setup(t)
+	const body = "Closes #7\n\nThe records commit: abc"
+	var got map[string]any
+	handle(f, "PATCH "+pulls+"/5", func(w http.ResponseWriter, r *http.Request) {
+		decode(t, r, &got)
+		json.NewEncoder(w).Encode(prBodyJSON(5, body))
+	})
+	pr, err := a.EditBody(context.Background(), 5, body)
+	if err != nil {
+		t.Error(err)
+	}
+	if want := map[string]any{"body": body}; !reflect.DeepEqual(got, want) {
+		t.Errorf("the request body = %v; want %v (the body alone: the title, the state and the base cannot change)", got, want)
+	}
+	if n := f.requests["PATCH "+pulls+"/5"]; n != 1 {
+		t.Errorf("PATCH %s/5 requests = %d; want 1", pulls, n)
+	}
+	if want := (forge.PullRequest{Number: 5, NodeID: "PR_node5", State: "open", HeadSHA: headSHA, Body: body}); pr != want {
+		t.Errorf("EditBody = %+v; want %+v (the answer is decoded, with its body)", pr, want)
+	}
+}
+
+func TestEditBodyGivesAForgeErrorForAnyOtherStatus(t *testing.T) {
+	for _, status := range []int{422, 403, 404} {
+		f, _, a, _ := setup(t)
+		handle(f, "PATCH "+pulls+"/5", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(status)
+			io.WriteString(w, `{"message":"Validation Failed\nsecond line"}`)
+		})
+		_, err := a.EditBody(context.Background(), 5, "x")
+		var fe *forge.Error
+		if !errors.As(err, &fe) || fe.Call != "EditBody" || fe.Status != status || fe.Message != "Validation Failed" {
+			t.Errorf("EditBody with %d = %v; want the call EditBody, the status %d and the first line", status, err, status)
+		}
+	}
+}
+
+func TestEditBodyRefusesANumberBelow1BeforeAnyRequest(t *testing.T) {
+	f, _, a, _ := setup(t)
+	for _, n := range []int{0, -1} {
+		handle(f, fmt.Sprintf("PATCH %s/%d", pulls, n), func(w http.ResponseWriter, r *http.Request) {
+			json.NewEncoder(w).Encode(prBodyJSON(5, "x")) // a call that got through would succeed
+		})
+		_, err := a.EditBody(context.Background(), n, "x")
+		var fe *forge.Error
+		if !errors.As(err, &fe) || fe.Call != "EditBody" || fe.Status != 0 {
+			t.Errorf("EditBody(%d) = %v; want a refusal of the call EditBody with the status 0", n, err)
+		}
+	}
+	if n := len(f.requests); n != 0 {
+		t.Errorf("a refused edit made %d requests: %v", n, f.requests)
+	}
+}
+
+func TestPullRequestGivesTheBodyByNumberAndByBranchAndANullBodyIsEmpty(t *testing.T) {
+	f, _, a, _ := setup(t)
+	const body = "Closes #7\n\nThe records commit: abc"
+	handle(f, "GET "+pulls+"/5", func(w http.ResponseWriter, r *http.Request) { json.NewEncoder(w).Encode(prBodyJSON(5, body)) })
+	handle(f, "GET "+pulls+"/6", func(w http.ResponseWriter, r *http.Request) { json.NewEncoder(w).Encode(prBodyJSON(6, nil)) })
+	handle(f, "GET "+pulls, func(w http.ResponseWriter, r *http.Request) {
+		item := listItemJSON(7, false, nil, testMergeSHA)
+		item["body"] = body
+		null := listItemJSON(8, false, nil, testMergeSHA)
+		null["body"] = nil
+		if r.URL.Query().Get("head") == "acme:null" {
+			json.NewEncoder(w).Encode([]map[string]any{null})
+			return
+		}
+		json.NewEncoder(w).Encode([]map[string]any{item})
+	})
+	ctx := context.Background()
+	if pr, _, err := a.PullRequest(ctx, forge.PullRequestQuery{Number: 5}); err != nil || pr.Body != body {
+		t.Errorf("by number: Body = %q, %v; want %q", pr.Body, err, body)
+	}
+	if pr, _, err := a.PullRequest(ctx, forge.PullRequestQuery{Branch: "task/T-aaaa/1"}); err != nil || pr.Body != body {
+		t.Errorf("by branch (the list): Body = %q, %v; want %q", pr.Body, err, body)
+	}
+	if pr, found, err := a.PullRequest(ctx, forge.PullRequestQuery{Number: 6}); err != nil || !found || pr.Body != "" {
+		t.Errorf("by number with body null: %+v, %v, %v; want the empty body", pr, found, err)
+	}
+	if pr, found, err := a.PullRequest(ctx, forge.PullRequestQuery{Branch: "null"}); err != nil || !found || pr.Number != 8 || pr.Body != "" {
+		t.Errorf("by branch with body null: %+v, %v, %v; want the pull request 8 and the empty body", pr, found, err)
+	}
+}
+
+// A5 primes no token: the first request makes the first one, the 401 makes the second.
+func TestEditBodySharesTheHandlingOfA401AndOfARateLimit(t *testing.T) {
+	f, c, a, lines := setup(t)
+	path := "PATCH " + pulls + "/5"
+	handle(f, path, func(w http.ResponseWriter, r *http.Request) { json.NewEncoder(w).Encode(prBodyJSON(5, "x")) })
+	ctx := context.Background()
+	f.reject[path] = []int{401}
+	if pr, err := a.EditBody(ctx, 5, "x"); err != nil || pr.Body != "x" {
+		t.Errorf("EditBody after a 401 = %+v, %v; want one new token and one retry", pr, err)
+	}
+	if n := f.requests[path]; n != 2 {
+		t.Errorf("PATCH requests = %d; want 2 (one 401, one retry)", n)
+	}
+	if f.tokens != 2 {
+		t.Errorf("tokens made = %d; want 2 (the first request, and the new one after the 401)", f.tokens)
+	}
+	f.reject[path] = []int{429}
+	f.headers[path] = http.Header{"Retry-After": []string{"25"}}
+	if _, err := a.EditBody(ctx, 5, "x"); err != nil {
+		t.Errorf("EditBody after a rate limit = %v", err)
+	}
+	if len(c.sleeps) != 3 || len(*lines) != 3 || !strings.HasPrefix((*lines)[0], "EditBody: the rate limit") {
+		t.Errorf("the wait: sleeps %v, lines %v; want three waits of at most ten seconds, a line of the call each", c.sleeps, *lines)
+	}
+	f.reject[path] = []int{500}
+	_, err := a.EditBody(ctx, 5, "x")
+	if err == nil {
+		t.Fatal("a 500 gave no error")
+	}
+	noToken(t, err.Error())
+}
+
+// The closes (task T-xyws, #423; forge.md, The calls of M2e).
+
+const issues = "/repos/acme/target/issues"
+
+// closedPRJSON is a pull request as PATCH /pulls/{number} answers a close.
+func closedPRJSON(number int, merged bool) map[string]any {
+	pr := prJSON(number, false, merged)
+	pr["state"] = "closed"
+	return pr
+}
+
+func issueJSON(number int, state, reason string) map[string]any {
+	return map[string]any{"number": number, "state": state, "state_reason": reason}
+}
+
+func totalRequests(f *fakeGitHub) int {
+	n := 0
+	for _, c := range f.requests {
+		n += c
+	}
+	return n
+}
+
+func TestClosePullRequestPatchesTheStateAloneAndGivesThePullRequest(t *testing.T) {
+	f, _, a, _ := setup(t)
+	var got map[string]any
+	handle(f, "PATCH "+pulls+"/5", func(w http.ResponseWriter, r *http.Request) {
+		decode(t, r, &got)
+		json.NewEncoder(w).Encode(closedPRJSON(5, false))
+	})
+	pr, err := a.ClosePullRequest(context.Background(), 5)
+	if n := f.requests["PATCH "+pulls+"/5"]; n != 1 {
+		t.Fatalf("PATCH %s/5 requests = %d; want 1 (err %v)", pulls, n, err)
+	}
+	if err != nil || pr.Number != 5 || pr.State != "closed" || pr.Merged || pr.HeadSHA != headSHA {
+		t.Errorf("ClosePullRequest = %+v, %v; want Number 5, State closed, Merged false, the head %s", pr, err, headSHA)
+	}
+	if want := map[string]any{"state": "closed"}; !reflect.DeepEqual(got, want) {
+		t.Errorf("the request body = %v, want %v alone (no title, body or base)", got, want)
+	}
+}
+
+func TestClosePullRequestGivesAMergedPullRequestAsTheForgeAnswersIt(t *testing.T) {
+	f, _, a, _ := setup(t)
+	answer := closedPRJSON(5, true)
+	answer["merge_commit_sha"] = mergeSHA
+	handle(f, "PATCH "+pulls+"/5", func(w http.ResponseWriter, r *http.Request) { json.NewEncoder(w).Encode(answer) })
+	for i := 1; i <= 2; i++ { // a repeat is a 200 too
+		pr, err := a.ClosePullRequest(context.Background(), 5)
+		if err != nil || !pr.Merged || pr.State != "closed" || pr.MergeSHA != mergeSHA {
+			t.Errorf("ClosePullRequest of a merged one, call %d = %+v, %v; want Merged true, State closed, MergeSHA %s, no error", i, pr, err, mergeSHA)
+		}
+	}
+}
+
+func TestCloseIssuePatchesTheStateAndTheReasonAlone(t *testing.T) {
+	f, _, a, _ := setup(t)
+	var got map[string]any
+	handle(f, "PATCH "+issues+"/7", func(w http.ResponseWriter, r *http.Request) {
+		decode(t, r, &got)
+		json.NewEncoder(w).Encode(issueJSON(7, "closed", "not_planned"))
+	})
+	err := a.CloseIssue(context.Background(), 7)
+	if n := f.requests["PATCH "+issues+"/7"]; n != 1 {
+		t.Fatalf("PATCH %s/7 requests = %d; want 1 (err %v)", issues, n, err)
+	}
+	if err != nil {
+		t.Errorf("CloseIssue = %v", err)
+	}
+	if want := map[string]any{"state": "closed", "state_reason": "not_planned"}; !reflect.DeepEqual(got, want) {
+		t.Errorf("the request body = %v, want %v alone", got, want)
+	}
+	if err := a.CloseIssue(context.Background(), 7); err != nil { // a repeat is a 200 too
+		t.Errorf("a second CloseIssue = %v, want no error", err)
+	}
+}
+
+func TestTheClosesRefuseANumberBelow1BeforeAnyRequest(t *testing.T) {
+	f, _, a, _ := setup(t)
+	for _, n := range []int{0, -1} {
+		handle(f, fmt.Sprintf("PATCH %s/%d", pulls, n), func(w http.ResponseWriter, r *http.Request) { json.NewEncoder(w).Encode(closedPRJSON(1, false)) })
+		handle(f, fmt.Sprintf("PATCH %s/%d", issues, n), func(w http.ResponseWriter, r *http.Request) {
+			json.NewEncoder(w).Encode(issueJSON(1, "closed", "not_planned"))
+		})
+		_, err := a.ClosePullRequest(context.Background(), n)
+		if e := new(forge.Error); !errors.As(err, &e) || e.Call != "ClosePullRequest" || e.Status != 0 {
+			t.Errorf("ClosePullRequest(%d) = %v, want a refusal of the call ClosePullRequest with the status 0", n, err)
+		}
+		err = a.CloseIssue(context.Background(), n)
+		if e := new(forge.Error); !errors.As(err, &e) || e.Call != "CloseIssue" || e.Status != 0 {
+			t.Errorf("CloseIssue(%d) = %v, want a refusal of the call CloseIssue with the status 0", n, err)
+		}
+	}
+	if n := totalRequests(f); n != 0 { // the authentication requests too
+		t.Errorf("the refused closes made %d requests: %v", n, f.requests)
+	}
+}
+
+func TestTheClosesGiveAForgeErrorForAnyOtherStatusOrAnAnswerThatIsNotClosed(t *testing.T) {
+	ctx := context.Background()
+	closePR := func(a *Adapter) error { _, err := a.ClosePullRequest(ctx, 5); return err }
+	closeIssue := func(a *Adapter) error { return a.CloseIssue(ctx, 7) }
+	rows := []struct {
+		name, call, key string
+		do              func(*Adapter) error
+		status          int
+		serve           func(w http.ResponseWriter, r *http.Request) // nil: the status is the test server's rejection
+		message         string
+	}{
+		{"pull 422", "ClosePullRequest", "PATCH " + pulls + "/5", closePR, 422, nil, "rejected by the test"},
+		{"pull 404", "ClosePullRequest", "PATCH " + pulls + "/5", closePR, 404, nil, "rejected by the test"},
+		{"pull 410", "ClosePullRequest", "PATCH " + pulls + "/5", closePR, 410, nil, "rejected by the test"},
+		{"pull 403 with no reset time", "ClosePullRequest", "PATCH " + pulls + "/5", closePR, 403, nil, "rejected by the test"},
+		{"issue 422", "CloseIssue", "PATCH " + issues + "/7", closeIssue, 422, nil, "rejected by the test"},
+		{"issue 404", "CloseIssue", "PATCH " + issues + "/7", closeIssue, 404, nil, "rejected by the test"},
+		{"issue 410", "CloseIssue", "PATCH " + issues + "/7", closeIssue, 410, nil, "rejected by the test"},
+		{"issue 403 with no reset time", "CloseIssue", "PATCH " + issues + "/7", closeIssue, 403, nil, "rejected by the test"},
+		{"a pull request answer that is open", "ClosePullRequest", "PATCH " + pulls + "/5", closePR, 200,
+			func(w http.ResponseWriter, r *http.Request) { json.NewEncoder(w).Encode(prJSON(5, false, false)) }, "not closed"},
+		{"an issue answer that is open", "CloseIssue", "PATCH " + issues + "/7", closeIssue, 200,
+			func(w http.ResponseWriter, r *http.Request) { json.NewEncoder(w).Encode(issueJSON(7, "open", "")) }, "not closed"},
+		{"an issue answer that is a pull request", "CloseIssue", "PATCH " + issues + "/7", closeIssue, 200,
+			func(w http.ResponseWriter, r *http.Request) {
+				answer := issueJSON(7, "closed", "not_planned")
+				answer["pull_request"] = map[string]any{"url": "https://api.github.com/repos/acme/target/pulls/7"}
+				json.NewEncoder(w).Encode(answer)
+			}, "the number is a pull request"},
+	}
+	for _, c := range rows {
+		f, _, a, _ := setup(t)
+		if c.serve == nil {
+			f.reject[c.key] = []int{c.status}
+			handle(f, c.key, func(w http.ResponseWriter, r *http.Request) { t.Errorf("%s: the rejected request got through", c.name) })
+		} else {
+			handle(f, c.key, c.serve)
+		}
+		err := c.do(a)
+		e := new(forge.Error)
+		if !errors.As(err, &e) || e.Call != c.call || e.Status != c.status || !strings.Contains(e.Message, c.message) {
+			t.Errorf("%s: err = %v; want the call %s, the status %d and the message %q", c.name, err, c.call, c.status, c.message)
+		}
+		if err != nil {
+			noToken(t, err.Error())
+		}
+	}
+}
+
+func TestTheClosesShareTheHandlingOfA401AndOfARateLimit(t *testing.T) {
+	ctx := context.Background()
+	for _, c := range []struct {
+		call, key string
+		do        func(*Adapter) error
+		answer    func(w http.ResponseWriter, r *http.Request)
+	}{
+		{"ClosePullRequest", "PATCH " + pulls + "/5", func(a *Adapter) error { _, err := a.ClosePullRequest(ctx, 5); return err },
+			func(w http.ResponseWriter, r *http.Request) { json.NewEncoder(w).Encode(closedPRJSON(5, false)) }},
+		{"CloseIssue", "PATCH " + issues + "/7", func(a *Adapter) error { return a.CloseIssue(ctx, 7) },
+			func(w http.ResponseWriter, r *http.Request) {
+				json.NewEncoder(w).Encode(issueJSON(7, "closed", "not_planned"))
+			}},
+	} {
+		f, clk, a, lines := setup(t)
+		handle(f, c.key, c.answer)
+		if err := c.do(a); err != nil { // a token first: setup makes none
+			t.Fatalf("%s: %v", c.call, err)
+		}
+		f.reject[c.key] = []int{401}
+		if err := c.do(a); err != nil {
+			t.Errorf("%s after a 401 = %v, want one new token and one retry", c.call, err)
+		}
+		if f.tokens != 2 {
+			t.Errorf("%s: tokens made = %d, want 2", c.call, f.tokens)
+		}
+		f.reject[c.key] = []int{429}
+		f.headers[c.key] = http.Header{"Retry-After": []string{"25"}}
+		if err := c.do(a); err != nil {
+			t.Errorf("%s after a rate limit = %v", c.call, err)
+		}
+		if len(clk.sleeps) != 3 || len(*lines) != 3 || !strings.HasPrefix((*lines)[0], c.call+": the rate limit") {
+			t.Errorf("%s: the wait: sleeps %v, lines %v, want three waits of at most ten seconds", c.call, clk.sleeps, *lines)
+		}
+	}
+}

@@ -65,6 +65,7 @@ func TestARecordsCommitRemovesFiles(t *testing.T) {
 // and a link in that directory is refused: the work area copies them, and a link
 // would reach a file of the host (task T-eahr).
 func TestTheFilesOfTheRecordsAreReadByTheirPaths(t *testing.T) {
+	t.Parallel()
 	w, r, _, _ := sessionWorld(t)
 	store := r.Store.(*recordsStore)
 	ctx := context.Background()
@@ -95,6 +96,7 @@ func TestTheFilesOfTheRecordsAreReadByTheirPaths(t *testing.T) {
 // A path below a link of the records base removes no file: the base's tree has no such
 // path, and the link would take the removal out of the work tree (task T-eahr).
 func TestARecordsCommitRemovesNoFileThroughALink(t *testing.T) {
+	t.Parallel()
 	w, r, _, _ := sessionWorld(t)
 	store := r.Store.(*recordsStore)
 	outside := t.TempDir()

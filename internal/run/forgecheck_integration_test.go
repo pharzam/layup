@@ -97,6 +97,7 @@ func withAnotherCreation(t *testing.T, rules string) string {
 // is given here as none); a refusal of another ref, one with another text, a remote that cannot be reached and a push that is accepted
 // are not; the commit is empty on top of the head, by the identity that is given, and on no branch of the clone.
 func TestTheProbeIsAPassOnlyForGitHubsRefusalOfTheProbeRef(t *testing.T) {
+	t.Parallel()
 	who := git.Identity{Name: "layup-agent[bot]", Email: "9001+layup-agent[bot]@users.noreply.github.com", Time: time.Date(2026, 10, 13, 12, 0, 0, 0, time.UTC)}
 	for _, c := range []struct {
 		name, hook, result, detail string
@@ -195,10 +196,10 @@ func TestTheStepForgeCheckChecksTheForgeAndCommitsItsTableAtEachRestart(t *testi
 	tables := func() int {
 		return len(strings.Fields(gitOut(t, w.bare, "log", "--format=%H", "--grep=^layup run: the forge check$", "refs/heads/layup-records")))
 	}
-	// restart runs a restart and checks which rows it makes, in which order, and the notes of progress: a row's note is its place of the 22 rows
+	// restart runs a restart and checks which rows it makes, in which order, and the notes of progress: a row's note is its place of the 22 rows (24 once the Scaffold is done)
 	// that a restart with Start done plans, after the 1/6 forge and 2/6 clone of one with Start not done.
 	first := []string{"forge", "clone", "version", "lease", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers", "answers-review", "follow-up", "follow-up-answers", "revision", "setup", "verify", "scaffold-push", "forge-check"}
-	later := []string{"forge", "clone", "version", "lease", "forge-check", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers", "answers-review", "follow-up", "follow-up-answers", "revision", "setup", "verify", "scaffold-push"}
+	later := []string{"forge", "clone", "version", "lease", "forge-check", "probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers", "answers-review", "follow-up", "follow-up-answers", "revision", "setup", "verify", "scaffold-push", "shape"}
 	var progress []string
 	cfg.Step = func(i, n int, name string) { progress = append(progress, fmt.Sprintf("%d/%d %s", i, n, name)) }
 	restart := func(want Step, names []string) []Step {
@@ -213,7 +214,10 @@ func TestTheStepForgeCheckChecksTheForgeAndCommitsItsTableAtEachRestart(t *testi
 			got = append(got, row.Name)
 		}
 		for i, name := range names {
-			total := 22
+			total := 22 // 24 once the Scaffold is done: the step shape follows scaffold-push (task T-3f94), and the step bet follows shape (task T-2vva)
+			if len(names) >= 5 && names[4] == "forge-check" {
+				total = 24
+			}
 			if i < 2 {
 				total = 6
 			}
@@ -372,6 +376,7 @@ func TestTheStepForgeCheckChecksTheForgeAndCommitsItsTableAtEachRestart(t *testi
 // passes the row, and each of the heads that follows fails it with the reason of the check; a setup record that has the row
 // S13 codeowners.sha256 refuses even the canonical commit. The repository is the run's clone of the check.
 func TestTheTreeRowOnRealObjects(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	gitOut(t, dir, "init", "-q", "-b", "main")
 	manifest := "kind\tstate\ttool\tcommand\tscope\tconfig\nstatic\tactive\tgo\tgo vet ./...\t./*.go\t—\nlayout\tpending\t—\t—\t./*.go\tdocs/gates/x.txt tools/cfg.yml\n"

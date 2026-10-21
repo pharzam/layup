@@ -4,7 +4,7 @@ package run
 // The result of a session, The open attempt, A comment for a session; row
 // 36b of the plan, task T-fsjp, #165): the result file, the artifacts at the
 // session's head, the open attempt, the telemetry row in the one records
-// commit, and the comment on the control issue.
+// commit, and the comment on the task's issue.
 
 import (
 	"context"
@@ -19,6 +19,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/pharzam/layup/internal/forge"
 	"github.com/pharzam/layup/internal/git"
 	"github.com/pharzam/layup/internal/ledger"
 	"github.com/pharzam/layup/internal/records"
@@ -122,11 +123,11 @@ func (s *Sessions) endTask(ctx context.Context, spec TaskSpec, id string, d sess
 	return s.commit(ctx, files, fmt.Sprintf("layup run: the end of %s, %s", id, class))
 }
 
-// comment posts the comment of the task session id on the control issue,
-// after every record of the session (the end's and the push hook's): its
-// first line names the class of its event result and each of its refusals,
-// as the events hold them. A session with no event result has no records of
-// its end, and no comment.
+// comment posts the comment of the task session id on the task's issue, after
+// every record of the session (the end's and the push hook's): its first line
+// names the class of its event result and each of its refusals, as the events
+// hold them. A session with no event result has no records of its end, and no
+// comment, and no read of the register (a probe reaches it so).
 func (s *Sessions) comment(ctx context.Context, id string) error {
 	start, err := s.startRowOf(ctx, id)
 	if err != nil {
@@ -136,11 +137,22 @@ func (s *Sessions) comment(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
+	line := sessionLine(start, events)
+	if line == "" {
+		return nil
+	}
+	_, err = s.postSessionComments(ctx, start[sessionTask], []string{line})
+	return err
+}
+
+// sessionLine is the comment of the session of the start row from the events of
+// its task: "" for a session with no event result.
+func sessionLine(start []string, events [][]string) string {
 	class, refused := "", ""
 	for _, e := range events {
 		reason, _, _ := strings.Cut(e[6], " ")
 		switch {
-		case e[3] != id:
+		case e[3] != start[sessionID]:
 		case e[1] == "result":
 			class = e[6]
 		case e[1] == "refused":
@@ -148,11 +160,40 @@ func (s *Sessions) comment(ctx context.Context, id string) error {
 		}
 	}
 	if class == "" {
-		return nil
+		return ""
 	}
-	line := firstLinePrefix(start) + class + refused + "\n"
-	_, err = s.Forge.Comment(ctx, s.Control, line)
-	return err
+	return firstLinePrefix(start) + class + refused + "\n"
+}
+
+// postSessionComments posts each line as a comment of the issue of task in the
+// register: a missing register, a missing row or a register that its reader refuses
+// is an error and nothing is posted (no fallback to the control issue). The comments
+// of the issue are read once; a line that the App's own comment already holds,
+// byte for byte, is not posted again; the lease is read right before each post.
+// It gives the lines that it posted.
+func (s *Sessions) postSessionComments(ctx context.Context, task string, lines []string) ([]string, error) {
+	issue, err := s.taskIssue(ctx, task)
+	if err != nil {
+		return nil, err
+	}
+	comments, err := s.Forge.Comments(ctx, issue)
+	if err != nil {
+		return nil, err
+	}
+	var posted []string
+	for _, line := range lines {
+		if s.App != "" && slices.ContainsFunc(comments, func(c forge.Comment) bool { return c.App == s.App && c.Body == line }) {
+			continue
+		}
+		if err := s.holdsLease(ctx); err != nil {
+			return posted, err
+		}
+		if _, err := s.Forge.Comment(ctx, issue, line); err != nil {
+			return posted, err
+		}
+		posted = append(posted, line)
+	}
+	return posted, nil
 }
 
 // firstLinePrefix is the start of the first line of a session's comment.
@@ -194,7 +235,7 @@ func (s *Sessions) appendEvents(ctx context.Context, task string, attempt int, i
 	for _, k := range kinds {
 		kind, detail, _ := strings.Cut(k, " ")
 		sha := ""
-		if kind == "push" || kind == "bound" { // "push <sha> <branch>"
+		if kind == "push" || kind == "bound" || kind == "merged" { // "push <sha> <branch>", "merged <sha> <number>"
 			sha, detail, _ = strings.Cut(detail, " ")
 		}
 		after = append(after, []string{strconv.Itoa(len(after) + 1), kind, strconv.Itoa(attempt), id, "", sha, detail, s.Now().UTC().Format(timeForm)})

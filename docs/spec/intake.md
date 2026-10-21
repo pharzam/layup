@@ -448,7 +448,7 @@ the follow-up does not parse. The answers, their states, the questions set
 `open` and `budget.tsv` are one records commit, and the step's detail says that
 Intake is done.
 **Decided here:** one follow-up round in `M2c`; a question still `asked` or
-`open` after it stays so in `questions.tsv`, and Shape (`M2e`, [`loop.md`](loop.md#the-questions-left-open)) reads it.
+`open` after it stays so in `questions.tsv`, and Shape (`M2e`, [`loop.md`](loop.md#the-questions-left-open)) reads it. Its rows (source `follow-up`, kind `shape`) are not Intake's follow-up: the steps `follow-up` and `follow-up-answers` ignore them (task `T-3f94`).
 **Reason:** `architecture.md` §5 step 6 asks again "in one comment", and a loop
 with no bound waits on a human with no end.
 

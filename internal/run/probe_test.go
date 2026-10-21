@@ -1,9 +1,12 @@
 package run
 
 import (
+	"context"
 	"errors"
+	"strings"
 	"testing"
 
+	"github.com/pharzam/layup/internal/records"
 	"github.com/pharzam/layup/internal/session"
 )
 
@@ -60,5 +63,58 @@ func TestTheRoutingRegistersDiffer(t *testing.T) {
 	c := [][]string{{"developer", "execution", "1", "claude", "m3"}, {"reviewer", "reasoning", "1", "claude", "m2"}}
 	if !routingDiffers(a, c) {
 		t.Error("another model in one row: the same; want them to differ")
+	}
+}
+
+// drawFrom is the random seam that gives each call the next bytes: the byte b is the character
+// number b of the alphabet of a task ID, so {0,0,0,0} is T-0000 and {1,1,1,1} is T-1111.
+func drawFrom(batches ...[4]byte) func([]byte) (int, error) {
+	i := 0
+	return func(b []byte) (int, error) {
+		copy(b, batches[i][:])
+		i++
+		return len(b), nil
+	}
+}
+
+// sessionRowOf is a row of sessions.tsv of the task.
+func sessionRowOf(id, task string) []string {
+	return []string{id, task, "1", "developer", "claude", "1.0", "m1", strings.Repeat("a", 40), strings.Repeat("b", 40), "12", "3", "1000", "", "1", "", ""}
+}
+
+func storeWithSessions(t *testing.T, rows ...[]string) *standinStore {
+	t.Helper()
+	store := &standinStore{holder: "0123456789abcdef", files: map[string][]byte{}}
+	data, err := table(records.SessionsSchema, rows)
+	if err != nil {
+		t.Fatal(err)
+	}
+	store.files["sessions.tsv"] = data
+	return store
+}
+
+// The characterization of the draw as it was extracted: an ID that a row of sessions.tsv holds is
+// drawn again (the draw of a probe and of a phase session; the register's rows join it in U2).
+func TestADrawnIDIsDrawnAgainWhileASessionHoldsIt(t *testing.T) {
+	s := newSessions(storeWithSessions(t, sessionRowOf("S-aaaaaaaa", "T-0000")))
+	s.random = drawFrom([4]byte{0, 0, 0, 0}, [4]byte{1, 1, 1, 1})
+	if id, err := s.taskID(context.Background()); err != nil || id != "T-1111" {
+		t.Errorf("taskID = %q, %v; want T-1111, the second draw", id, err)
+	}
+}
+
+// loop.md, The opening of a Shape task: the draw avoids the register's tasks as well, so a probe or a phase session never takes
+// the ID of a task of the register.
+func TestADrawnIDIsDrawnAgainWhileTheRegisterHoldsIt(t *testing.T) {
+	store := storeWithSessions(t)
+	var reg strings.Builder
+	if err := WriteRegister(&reg, []Task{{ID: "T-0000", Issue: 4, Kind: "specification", Requirements: []string{"REQ-001"}, Opened: time0}}); err != nil {
+		t.Fatal(err)
+	}
+	store.files["tasks.tsv"] = []byte(reg.String())
+	s := newSessions(store)
+	s.random = drawFrom([4]byte{0, 0, 0, 0}, [4]byte{1, 1, 1, 1})
+	if id, err := s.taskID(context.Background()); err != nil || id != "T-1111" {
+		t.Errorf("taskID = %q, %v; want T-1111, the second draw", id, err)
 	}
 }

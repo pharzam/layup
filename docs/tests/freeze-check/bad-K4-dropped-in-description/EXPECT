@@ -1,0 +1,11 @@
+1
+ok K1: white space
+ok K2: registration of new tests
+ok K3: test selectors
+skip K4: runs/T-0000/mutants.md:6: M3 (dropped)
+skip K4: runs/T-0000/mutants.md:7: M4 (not run)
+FAIL K4: runs/T-0000/mutants.md:5: M2 has no restore evidence
+FAIL K4: runs/T-0000/mutants.md:8: M5 has no restore evidence
+FAIL K4: runs/T-0000/mutants.md:9: M6 has no restore evidence
+ok K5: projection: figure 10/1, maximum 100/10, tolerance 60/4, limit 160/14, margin 150/13 (the figure at landing is still measured at landing)
+ok K6: conditions table

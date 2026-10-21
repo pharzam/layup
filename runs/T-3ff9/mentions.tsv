@@ -1,0 +1,20 @@
+Location	Classification	Disposition
+AGENTS.md:59	live summary	Replaced cycle/verdict/end restatement with canonical protocol pointer.
+docs/engineering-discipline.md:290	canonical rule	Aligned verdict budget route; other verdict routes retained.
+docs/engineering-discipline.md:310	canonical rule	Updated cap introduction and end 3; ends 1, 2 and 4 retained.
+docs/engineering-discipline.md:360	canonical rule	Fix disposition now uses permitted landing figure.
+docs/engineering-discipline.md:373	canonical rule	Implemented count, clarified input, tolerance and retained authority.
+docs/glossary.md:90; docs/glossary.md:92; docs/glossary.md:99	live summaries	Replaced cap, ceiling and in-change budget assertions with canonical pointers.
+docs/tests/dod-checklist.md:93; docs/plan/README.md:595	live summaries	Replaced held-budget and past-budget shorthand with canonical pointers.
+docs/guardrails.md:82; docs/guardrails.md:666	lesson and live summary	Added ambiguity lesson with pointer; replaced unconditional overrun finding assertion with pointer, retaining named-base procedure.
+docs/adr/0007-record-task-resource-use.md:7; docs/adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md:7; docs/adr/README.md:146; docs/adr/README.md:165	ADR relationships	Changed only Status lines and their index cells.
+docs/adr/0007-record-task-resource-use.md:41; docs/adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md:33	immutable historical bodies	Preserved; amendment relationship points to ADR-0028 rather than rewriting history.
+docs/adr/0028-delegate-two-bounded-landing-decisions.md:13; docs/adr/0028-delegate-two-bounded-landing-decisions.md:30	accepted source	Context describes old rules; Decision and Consequences are the source being implemented, not stale instructions.
+docs/adr/0012-build-layup-in-bootstrap-mode.md:45; docs/tasks/*.md; runs/T-*/	historical records	Prior gate, task budgets, rulings, review records and run evidence retained; new T-3ff9 records explicitly distinguish author evidence from pending independent review.
+docs/engineering-discipline.md:64; docs/engineering-discipline.md:204; docs/issue-workflow.md:203; docs/ci/README.md:56; docs/plan/README.md:39; docs/plan/README.md:104	compatible pointers and field names	No unconditional individual approval or different tolerance; unchanged.
+docs/glossary.md:91; docs/glossary.md:94; docs/glossary.md:97; docs/glossary.md:161	compatible definitions	Issue split, resources, frozen heads and size classes retain their meanings; no new size or end-3 authority asserted.
+docs/guardrails.md:26; docs/guardrails.md:847; docs/guardrails.md:875	pre-registration and historical lessons	Budget/cap fields and explicit cap-raise parser lesson unchanged; default end 3 does not raise the cap.
+docs/tests/freeze-check.sh:32; docs/tests/freeze-check/; docs/tasks/T-b6fn.md; runs/T-b6fn/	deferred mechanism and evidence	Existing whole-diff plus 70/2 K5 can overcount; unchanged here, owned by #449. Report failures honestly; no self-application of new delegation.
+docs/ci/review-record-lint.sh:222; docs/ci/review-record-lint.sh:257; docs/ci/review-record-lint.sh:265; docs/ci/tests/review-record/	compatible parser and fixtures	Budget presence, cycle count and verdict vocabulary/position unchanged; no size semantics enforced.
+docs/architecture.md:812; docs/architecture.md:1153; docs/spec/setup.md:793; docs/spec/loop.md:295; docs/spec/loop.md:1338; docs/spec/loop.md:2423; docs/adr/0023-stop-a-stall-at-a-limit-and-diagnose-it-with-a-fresh-context.md:43	target product rules	Target cycles and later stall handling are not the builder landing-budget rule; unchanged, outside this task.
+docs/facts/architectural-vision-brief.md:62; docs/architecture.md:1649; docs/tests/security-checklist.md:60; docs/prd/PRD-0001-layup.md; docs/tests/traceability.md	other meanings or test registration	Business authority, cost caps, security breadth and test names are not competing landing-budget/end rules; unchanged.

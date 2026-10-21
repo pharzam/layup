@@ -53,6 +53,18 @@ func sessionWorldWith(t *testing.T, files map[string]string) (*world, *Sessions,
 	if err := r.commit(context.Background(), map[string][]byte{"rule-paths.tsv": []byte(register)}, "the register"); err != nil {
 		t.Fatal(err)
 	}
+	// The task register: the comment of a task session is on the task's issue (task T-syxm).
+	rows, err := registerFiles(nil, nil, Task{ID: "T-ab12", Issue: taskIssue, Kind: "build", Requirements: []string{"REQ-005"}, Size: "small", Opened: time.Now().UTC().Truncate(time.Second)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := r.commit(context.Background(), rows, "tasks: register T-ab12"); err != nil {
+		t.Fatal(err)
+	}
+	// The run holds the lease: the post of a comment is fenced by a read of it (task T-syxm).
+	if err := r.Store.WriteLease(context.Background(), LeaseRow{Run: r.RunID, Host: "host-1", Version: "0.1.0-dev", Started: time.Now().UTC().Truncate(time.Second), Heartbeat: 1, State: "held"}, "lease"); err != nil {
+		t.Fatal(err)
+	}
 	return w, r, f, worldAt{base, store.pushed}
 }
 
@@ -83,6 +95,7 @@ const helloSum = "5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be
 // for byte as tasks/<task>/results/<session>.tsv, in the records commit that
 // holds its telemetry row; the comment is posted and the directory removed.
 func TestTheResultIsCommittedWithItsTelemetryRow(t *testing.T) {
+	t.Parallel()
 	w, r, f, base := sessionWorld(t)
 	id, err := r.TaskSession(context.Background(), harness(t, base, work(helloSum)))
 	if err != nil {
@@ -105,8 +118,8 @@ func TestTheResultIsCommittedWithItsTelemetryRow(t *testing.T) {
 	if !strings.Contains(events, "\tresult\t1\t"+id+"\t—\t—\tdone\t") || strings.Contains(events, "refused") {
 		t.Errorf("the events:\n%s", events)
 	}
-	if got := f.posted[2]; len(got) != 1 || got[0] != id+": developer session of T-ab12, attempt 1: done\n" {
-		t.Errorf("the comments on the control issue %q", got)
+	if got := f.posted[taskIssue]; len(got) != 1 || got[0] != id+": developer session of T-ab12, attempt 1: done\n" {
+		t.Errorf("the comments on the task's issue %q", got)
 	}
 	if _, err := os.Stat(filepath.Join(r.Host, "sessions", id)); !os.IsNotExist(err) {
 		t.Errorf("the session directory after the call: %v; want it removed", err)
@@ -114,6 +127,7 @@ func TestTheResultIsCommittedWithItsTelemetryRow(t *testing.T) {
 }
 
 func TestAnArtifactThatDiffersIsRefusedAndKept(t *testing.T) {
+	t.Parallel()
 	w, r, f, base := sessionWorld(t)
 	id, err := r.TaskSession(context.Background(), harness(t, base, work(strings.Repeat("0", 64))))
 	if err != nil {
@@ -126,12 +140,13 @@ func TestAnArtifactThatDiffersIsRefusedAndKept(t *testing.T) {
 	if gitOut(t, w.bare, "ls-tree", "--name-only", "layup-records", "tasks/T-ab12/results/"+id+".tsv") == "" {
 		t.Error("the result of a differing artifact is not committed; want it kept")
 	}
-	if got := f.posted[2]; len(got) != 1 || got[0] != id+": developer session of T-ab12, attempt 1: done, refused artifact\n" {
+	if got := f.posted[taskIssue]; len(got) != 1 || got[0] != id+": developer session of T-ab12, attempt 1: done, refused artifact\n" {
 		t.Errorf("the comment %q", got)
 	}
 }
 
 func TestNoValidResultIsNoResultFile(t *testing.T) {
+	t.Parallel()
 	w, r, _, base := sessionWorld(t)
 	id, err := r.TaskSession(context.Background(), harness(t, base, "exit 0"))
 	if err != nil {
@@ -150,6 +165,7 @@ func TestNoValidResultIsNoResultFile(t *testing.T) {
 }
 
 func TestAHeadThatCannotBeReadIsRefusedBranch(t *testing.T) {
+	t.Parallel()
 	w, r, f, base := sessionWorld(t)
 	// The session removes the ref of its own branch: no head to fetch.
 	body := work(helloSum) + " && git update-ref -d refs/heads/task/T-ab12/1"
@@ -164,7 +180,7 @@ func TestAHeadThatCannotBeReadIsRefusedBranch(t *testing.T) {
 	if gitOut(t, w.bare, "ls-tree", "-r", "--name-only", "layup-records", "tasks/T-ab12/results") != "" {
 		t.Error("a results/ file of a head that cannot be read")
 	}
-	if got := f.posted[2]; len(got) != 1 || !strings.HasSuffix(got[0], ": done, refused branch\n") {
+	if got := f.posted[taskIssue]; len(got) != 1 || !strings.HasSuffix(got[0], ": done, refused branch\n") {
 		t.Errorf("the comment %q", got)
 	}
 }
@@ -172,15 +188,15 @@ func TestAHeadThatCannotBeReadIsRefusedBranch(t *testing.T) {
 // A closed attempt seen at the end: the end hook commits an event closed of
 // the attempt first, as the task loop of M2e would, then ends the session.
 func TestAResultOfAClosedAttemptIsRefused(t *testing.T) {
+	t.Parallel()
 	w, r, f, base := sessionWorld(t)
 	spec := harness(t, base, work(helloSum))
 	ctx := context.Background()
 	spec.End = func(id string, d session.Dir, run session.Run, err error) error {
-		data, aErr := r.appendEvents(ctx, "T-ab12", 1, "", []string{"closed —"})
+		data, aErr := r.appendEvents(ctx, "T-ab12", 1, "", []string{"closed T-cd34"})
 		if aErr != nil {
 			return aErr
 		}
-		data = []byte(strings.Replace(string(data), "\tclosed\t1\t—\t—\t—\t—\t", "\tclosed\t1\t—\t—\t—\tby the test\t", 1))
 		if cErr := r.commit(ctx, map[string][]byte{"tasks/T-ab12/events.tsv": data}, "closed by the test"); cErr != nil {
 			return cErr
 		}
@@ -197,12 +213,13 @@ func TestAResultOfAClosedAttemptIsRefused(t *testing.T) {
 	if gitOut(t, w.bare, "ls-tree", "-r", "--name-only", "layup-records", "tasks/T-ab12/results") != "" {
 		t.Error("a results/ file of a closed attempt")
 	}
-	if got := f.posted[2]; len(got) != 1 || !strings.HasSuffix(got[0], ": done, refused closed-attempt\n") {
+	if got := f.posted[taskIssue]; len(got) != 1 || !strings.HasSuffix(got[0], ": done, refused closed-attempt\n") {
 		t.Errorf("the comment %q", got)
 	}
 }
 
 func TestAnArtifactThatTheHeadLacksIsRefused(t *testing.T) {
+	t.Parallel()
 	w, r, _, base := sessionWorld(t)
 	body := strings.Replace(work(helloSum), `artifact\t1\tout.txt`, `artifact\t1\tnone.txt`, 1)
 	id, err := r.TaskSession(context.Background(), harness(t, base, body))
@@ -217,6 +234,7 @@ func TestAnArtifactThatTheHeadLacksIsRefused(t *testing.T) {
 // A program that cannot start is the class start, with its telemetry row:
 // its end is its start, as it has no end of its own.
 func TestAProgramThatCannotStartHasItsRow(t *testing.T) {
+	t.Parallel()
 	w, r, _, base := sessionWorld(t)
 	spec := harness(t, base, "exit 0")
 	spec.Pair.Command = filepath.Join(t.TempDir(), "none")
@@ -236,6 +254,7 @@ func TestAProgramThatCannotStartHasItsRow(t *testing.T) {
 // a refusal that the push hook records (row 37a's base, here a stand-in) is
 // named in its first line.
 func TestTheCommentNamesARefusalOfThePushHook(t *testing.T) {
+	t.Parallel()
 	_, r, f, base := sessionWorld(t)
 	spec := harness(t, base, work(helloSum))
 	ctx := context.Background()
@@ -250,7 +269,7 @@ func TestTheCommentNamesARefusalOfThePushHook(t *testing.T) {
 	if err != nil {
 		t.Fatalf("TaskSession: %q, %v", id, err)
 	}
-	if got := f.posted[2]; len(got) != 1 || got[0] != id+": developer session of T-ab12, attempt 1: done, refused base\n" {
+	if got := f.posted[taskIssue]; len(got) != 1 || got[0] != id+": developer session of T-ab12, attempt 1: done, refused base\n" {
 		t.Errorf("the comment %q; want it after the push hook's refusal", got)
 	}
 }
@@ -258,6 +277,7 @@ func TestTheCommentNamesARefusalOfThePushHook(t *testing.T) {
 // A second session of the attempt: its comment names its own result only,
 // not the refusal of the first.
 func TestTheCommentOfASecondSessionIsItsOwn(t *testing.T) {
+	t.Parallel()
 	_, r, f, base := sessionWorld(t)
 	ctx := context.Background()
 	if _, err := r.TaskSession(ctx, harness(t, base, work(strings.Repeat("0", 64)))); err != nil {
@@ -267,7 +287,7 @@ func TestTheCommentOfASecondSessionIsItsOwn(t *testing.T) {
 	if err != nil {
 		t.Fatalf("the second session: %v", err)
 	}
-	if got := f.posted[2]; len(got) != 2 || got[1] != id+": developer session of T-ab12, attempt 1: done\n" {
+	if got := f.posted[taskIssue]; len(got) != 2 || got[1] != id+": developer session of T-ab12, attempt 1: done\n" {
 		t.Errorf("the comments %q; want the second one its own", got)
 	}
 }
@@ -275,6 +295,7 @@ func TestTheCommentOfASecondSessionIsItsOwn(t *testing.T) {
 // A usage format that is not of the list is the run's own error, not a row
 // with a false reason.
 func TestAUsageFormatOfNoListIsAnError(t *testing.T) {
+	t.Parallel()
 	_, r, _, base := sessionWorld(t)
 	spec := harness(t, base, work(helloSum))
 	spec.Pair.Usage = "other"
@@ -285,6 +306,7 @@ func TestAUsageFormatOfNoListIsAnError(t *testing.T) {
 
 // A stdout that cannot be read gives tokens unavailable, with its reason.
 func TestAStdoutThatCannotBeReadIsUnavailable(t *testing.T) {
+	t.Parallel()
 	w, r, _, base := sessionWorld(t)
 	spec := harness(t, base, work(helloSum)+" && rm ../stdout")
 	spec.Pair.Usage = "claude-result"
@@ -329,6 +351,7 @@ func keptFiles(t *testing.T, w *world, id string) string {
 // against the row's hash and kept byte for byte, in the one records commit of
 // the result; the session posts nothing (loop.md, The artifact that is a comment).
 func TestTheCommentRowOfASessionIsKeptWithTheResultInOneCommit(t *testing.T) {
+	t.Parallel()
 	w, r, f, base := sessionWorld(t)
 	row := "comment\t1\tresult/plan.md\t" + commentSum(planText) + "\t—"
 	id, err := r.TaskSession(context.Background(), harness(t, base, planWork("plan.md", planText, row)))
@@ -347,8 +370,8 @@ func TestTheCommentRowOfASessionIsKeptWithTheResultInOneCommit(t *testing.T) {
 	if events := show(t, w.bare, "layup-records", "tasks/T-ab12/events.tsv"); strings.Contains(events, "refused") {
 		t.Errorf("the events:\n%s", events)
 	}
-	if len(f.posted) != 1 || len(f.posted[2]) != 1 {
-		t.Errorf("the session's end posted %v; want only the comment of the session on the control issue", f.posted)
+	if len(f.posted) != 1 || len(f.posted[taskIssue]) != 1 {
+		t.Errorf("the session's end posted %v; want only the comment of the session on the task's issue", f.posted)
 	}
 }
 
@@ -356,6 +379,7 @@ func TestTheCommentRowOfASessionIsKeptWithTheResultInOneCommit(t *testing.T) {
 // refused, artifact (session.md, The result of a session): the result is still
 // committed, as for an artifact, and that row's file is not kept.
 func TestACommentFileThatFailsItsRowIsRefusedArtifactAndNotKept(t *testing.T) {
+	t.Parallel()
 	for _, c := range []struct{ name, body string }{
 		{"differs", planWork("plan.md", planText, "comment\t1\tresult/plan.md\t"+commentSum("another")+"\t—")},
 		{"missing", planWork("plan.md", planText, "comment\t1\tresult/none.md\t"+commentSum(planText)+"\t—")},
@@ -385,6 +409,7 @@ func TestACommentFileThatFailsItsRowIsRefusedArtifactAndNotKept(t *testing.T) {
 // a valid result: the class is no-result and nothing is kept (loop.md, "The
 // comment ID is never in the session's result").
 func TestAResultThatHoldsACommentIDIsNoResult(t *testing.T) {
+	t.Parallel()
 	for _, c := range []struct{ name, row string }{
 		{"in the reason", "comment\t1\tresult/plan.md\t" + commentSum(planText) + "\t6213845433-1"},
 		{"as the value", "comment\t1\t6213845433\t" + commentSum(planText) + "\t—"},

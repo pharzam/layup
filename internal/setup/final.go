@@ -146,10 +146,10 @@ func manifestKinds(target, rev string) (kinds, configs []string, err error) {
 	return kinds, configs, nil
 }
 
-// actionsApp is the ID of the GitHub Actions app, which runs the gate jobs:
+// ActionsApp is the ID of the GitHub Actions app, which runs the gate jobs:
 // each required check is pinned to it (D4 of #92; its evidence is V-21 of
 // docs/setup/record-T-n1hp.md, the body that GitHub read back).
-const actionsApp = 15368
+const ActionsApp = 15368
 
 // jsonText gives v as JSON with an indent of two spaces and a line feed at
 // its end, with no HTML escape.
@@ -194,7 +194,7 @@ func protectionBody(kinds []string) ([]byte, error) {
 		ForkSyncing    bool      `json:"allow_fork_syncing"`
 	}{Checks: checks{Strict: true, Checks: []check{}}, EnforceAdmins: true, Resolution: true}
 	for _, k := range kinds {
-		body.Checks.Checks = append(body.Checks.Checks, check{k, actionsApp})
+		body.Checks.Checks = append(body.Checks.Checks, check{k, ActionsApp})
 	}
 	return jsonText(body)
 }
@@ -228,7 +228,7 @@ func rulesetBody(kinds []string, appID int64) ([]byte, error) {
 	}
 	checks := []check{}
 	for _, k := range kinds {
-		checks = append(checks, check{k, actionsApp})
+		checks = append(checks, check{k, ActionsApp})
 	}
 	if appID != 0 {
 		for _, c := range layupChecks {

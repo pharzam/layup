@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -13,9 +14,8 @@ import (
 	"github.com/pharzam/layup/internal/records"
 )
 
-// commentWorld is sessionWorld with the adapter for the forge, the register
-// that opens T-ab12 on issue 3, and the lease held by the run: the world of a
-// restart that posts a comment and records a handoff.
+// commentWorld is sessionWorld (its register opens T-ab12 on issue 3, and the run holds the lease)
+// with the adapter for the forge: the world of a restart that posts a comment and records a handoff.
 func commentWorld(t *testing.T) (*world, *Sessions, worldAt) {
 	return commentWorldWith(t, nil)
 }
@@ -25,24 +25,13 @@ func commentWorldWith(t *testing.T, baseline map[string]string) (*world, *Sessio
 	t.Helper()
 	w, r, _, base := sessionWorldWith(t, baseline)
 	r.Forge, r.App = w.config("0.1.0-dev").Forge, "layup-agent"
-	ctx := context.Background()
-	files, err := registerFiles(nil, nil, Task{ID: "T-ab12", Issue: taskIssue, Kind: "build", Requirements: []string{"REQ-005"}, Size: "small", Opened: time.Now().UTC().Truncate(time.Second)})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := r.commit(ctx, files, "tasks: register T-ab12"); err != nil {
-		t.Fatal(err)
-	}
-	if err := r.Store.WriteLease(ctx, LeaseRow{Run: r.RunID, Host: "host-1", Version: "0.1.0-dev", Started: time.Now().UTC().Truncate(time.Second), Heartbeat: 1, State: "held"}, "lease"); err != nil {
-		t.Fatal(err)
-	}
 	return w, r, base
 }
 
 // afterRestart gives the Sessions of a restart: the same records, forge and run, no
 // state of the first (the session directory is gone).
 func afterRestart(r *Sessions) *Sessions {
-	return &Sessions{Store: r.Store, RunID: r.RunID, Host: r.Host, Target: r.Target, Clone: r.Clone, Branch: r.Branch, Now: time.Now, Forge: r.Forge, Control: r.Control, App: r.App, Bot: r.Bot}
+	return &Sessions{Store: r.Store, RunID: r.RunID, Host: r.Host, Target: r.Target, Clone: r.Clone, Branch: r.Branch, Now: time.Now, Forge: r.Forge, Control: r.Control, App: r.App, Bot: r.Bot, Web: r.Web}
 }
 
 // commentSession runs a session of the role that writes result/plan.md with text
@@ -58,10 +47,48 @@ func commentSession(t *testing.T, r *Sessions, base worldAt, role, text string) 
 	return id
 }
 
-func commentsOf(w *world) []map[string]any {
+// sessionComment is the form of the first line of the comment of a task session, which
+// the end of a session posts on the task's issue beside the artifacts (task T-syxm).
+var sessionComment = regexp.MustCompile(`^S-[0-9a-f]{8}: [a-z-]+ session of T-ab12, attempt \d+: `)
+
+// summariesOf gives the comments of the sessions on the task's issue.
+func summariesOf(w *world) []map[string]any {
 	w.fake.mu.Lock()
 	defer w.fake.mu.Unlock()
-	return append([]map[string]any(nil), w.fake.comments[taskIssue]...)
+	var out []map[string]any
+	for _, c := range w.fake.comments[taskIssue] {
+		if body, _ := c["body"].(string); sessionComment.MatchString(body) {
+			out = append(out, c)
+		}
+	}
+	return out
+}
+
+// commentsOf gives the comments of the task's issue whose body is exactly body: the
+// artifact that a test posted, never "the comments that are no summary", which an
+// unrelated comment would also be (round 1 of #422, finding 2).
+func commentsOf(w *world, body string) []map[string]any {
+	w.fake.mu.Lock()
+	defer w.fake.mu.Unlock()
+	var out []map[string]any
+	for _, c := range w.fake.comments[taskIssue] {
+		if b, _ := c["body"].(string); b == body {
+			out = append(out, c)
+		}
+	}
+	return out
+}
+
+// commentByID gives the comment of the task's issue that the forge numbered id, or nil.
+func commentByID(w *world, id int64) map[string]any {
+	w.fake.mu.Lock()
+	defer w.fake.mu.Unlock()
+	for _, c := range w.fake.comments[taskIssue] {
+		if c["id"] == int(id) {
+			return c
+		}
+	}
+	return nil
 }
 
 // copiesOfIssue counts the rows of copies.tsv that copy a comment of the task's issue
@@ -81,10 +108,16 @@ func copiesOfIssue(t *testing.T, w *world) int {
 	return n
 }
 
-func editComment(w *world, i int, body string) {
+// editComment changes the body of the comment of the task's issue that the forge
+// numbered id, the ID that PostComment returned, and no other.
+func editComment(w *world, id int64, body string) {
 	w.fake.mu.Lock()
 	defer w.fake.mu.Unlock()
-	w.fake.comments[taskIssue][i]["body"] = body
+	for _, c := range w.fake.comments[taskIssue] {
+		if c["id"] == int(id) {
+			c["body"] = body
+		}
+	}
 }
 
 func keptRecord(t *testing.T, w *world, path string) string {
@@ -96,6 +129,7 @@ func keptRecord(t *testing.T, w *world, path string) string {
 // that code posts from its bytes after a restart, the copy and its row, the
 // handoff event with the ID that code read, the three equal hashes.
 func TestThePlanThePlanReviewAndTheReviewRecordArePostedFromTheKeptCopy(t *testing.T) {
+	t.Parallel()
 	for _, c := range []struct {
 		kind, role, from, to, item string
 		text                       func(worldAt) string
@@ -108,8 +142,8 @@ func TestThePlanThePlanReviewAndTheReviewRecordArePostedFromTheKeptCopy(t *testi
 			w, r, base := commentWorld(t)
 			body := c.text(base)
 			id := commentSession(t, r, base, c.role, body)
-			if n := len(commentsOf(w)); n != 0 {
-				t.Fatalf("the session's end left %d comments on the task's issue; want none (code posts after the result)", n)
+			if n := len(commentsOf(w, body)); n != 0 || len(summariesOf(w)) != 1 {
+				t.Fatalf("the session's end left %d artifact comments and %d summaries on the task's issue; want none and its own (code posts the artifact after the result)", n, len(summariesOf(w)))
 			}
 			r2 := afterRestart(r)
 			ctx := context.Background()
@@ -117,12 +151,12 @@ func TestThePlanThePlanReviewAndTheReviewRecordArePostedFromTheKeptCopy(t *testi
 			if err != nil {
 				t.Fatalf("PostComment: %v", err)
 			}
-			cs := commentsOf(w)
-			if len(cs) != 1 || cs[0]["body"] != body {
-				t.Fatalf("the comments of the task's issue %v; want one with the bytes of the file", cs)
+			cs := commentsOf(w, body)
+			if c := commentByID(w, p.ID); len(cs) != 1 || c == nil || c["body"] != body {
+				t.Fatalf("the comments of the task's issue %v, the comment %d is %v; want one with the bytes of the file, the returned one", cs, p.ID, c)
 			}
-			if p.Seen != 1 || p.SHA != commentSum(body) || cs[0]["id"] != int(p.ID) {
-				t.Errorf("Posted %+v for the comment %v", p, cs[0]["id"])
+			if p.Seen != 1 || p.SHA != commentSum(body) {
+				t.Errorf("Posted %+v for the comment %d", p, p.ID)
 			}
 			copies := keptRecord(t, w, "copies.tsv")
 			if !strings.Contains(copies, fmt.Sprintf("\n%d\t1\t%d\t9001\tlayup-agent[bot]\tlayup-agent\t", p.ID, taskIssue)) || !strings.Contains(copies, "\t"+commentSum(body)+"\t") {
@@ -154,14 +188,24 @@ func TestThePlanThePlanReviewAndTheReviewRecordArePostedFromTheKeptCopy(t *testi
 }
 
 func TestAnEditedCommentMakesTheSecondCopyAndTheNewHandoffNamesIt(t *testing.T) {
+	t.Parallel()
 	w, r, base := commentWorld(t)
 	ctx := context.Background()
 	id := commentSession(t, r, base, "software-engineer", planText)
+	// An unrelated comment before the artifact: only the artifact is edited (round 1 of #422, finding 2).
+	const note = "a note by the Operator\n"
+	w.fake.mu.Lock()
+	w.fake.comments[taskIssue] = append(w.fake.comments[taskIssue], map[string]any{"id": 7001, "user": map[string]any{"id": 101, "login": "pharzam"},
+		"created_at": "2026-10-08T13:00:00Z", "updated_at": "2026-10-08T13:00:00Z", "body": note})
+	w.fake.mu.Unlock()
 	p, err := r.PostComment(ctx, "T-ab12", id, "plan.md")
 	if err != nil {
 		t.Fatal(err)
 	}
-	editComment(w, 0, "edited by a person\n")
+	editComment(w, p.ID, "edited by a person\n")
+	if n, a := commentByID(w, 7001), commentByID(w, p.ID); n == nil || n["body"] != note || a == nil || a["body"] != "edited by a person\n" || p.ID == 7001 {
+		t.Fatalf("after the edit the unrelated comment is %v and the artifact %d is %v; want the note unchanged and only the artifact edited", n, p.ID, a)
+	}
 	in := HandoffInput{Task: "T-ab12", Session: id, From: "task plan", To: "plan review", File: "plan.md", Kind: "plan", Items: map[string]bool{"plan-fields": true}}
 	v, err := r.RecordHandoff(ctx, in)
 	if want := fmt.Sprintf("invalid artifacts comment %d-1", p.ID); err != nil || v.Valid || v.Detail != want {
@@ -191,6 +235,7 @@ func (s *failOnCopy) Commit(ctx context.Context, files map[string][]byte, messag
 }
 
 func TestAStopBetweenThePostAndTheCopyDoesNotPostTwice(t *testing.T) {
+	t.Parallel()
 	w, r, base := commentWorld(t)
 	ctx := context.Background()
 	id := commentSession(t, r, base, "software-engineer", planText)
@@ -199,12 +244,12 @@ func TestAStopBetweenThePostAndTheCopyDoesNotPostTwice(t *testing.T) {
 	if _, err := stopped.PostComment(ctx, "T-ab12", id, "plan.md"); err == nil {
 		t.Fatal("the stop: no error")
 	}
-	if n := len(commentsOf(w)); n != 1 {
+	if n := len(commentsOf(w, planText)); n != 1 {
 		t.Fatalf("%d comments after the stop; want the one that was posted", n)
 	}
 	p, err := afterRestart(r).PostComment(ctx, "T-ab12", id, "plan.md")
-	if err != nil || len(commentsOf(w)) != 1 || p.Seen != 1 {
-		t.Errorf("the restart: %+v, %v, %d comments; want the comment copied, none posted", p, err, len(commentsOf(w)))
+	if err != nil || len(commentsOf(w, planText)) != 1 || p.Seen != 1 {
+		t.Errorf("the restart: %+v, %v, %d comments; want the comment copied, none posted", p, err, len(commentsOf(w, planText)))
 	}
 	if !strings.Contains(keptRecord(t, w, "copies.tsv"), fmt.Sprintf("\n%d\t1\t", p.ID)) {
 		t.Error("copies.tsv has no row of the comment")
@@ -212,23 +257,25 @@ func TestAStopBetweenThePostAndTheCopyDoesNotPostTwice(t *testing.T) {
 }
 
 func TestAStopBeforeThePostPostsFromTheKeptCopyAtTheRestart(t *testing.T) {
+	t.Parallel()
 	w, r, base := commentWorld(t)
 	id := commentSession(t, r, base, "software-engineer", planText)
 	w.fake.mu.Lock()
 	w.fake.failNote = "no final newline" // the first post of the plan fails once with a 500
 	w.fake.mu.Unlock()
-	if _, err := afterRestart(r).PostComment(context.Background(), "T-ab12", id, "plan.md"); err == nil || len(commentsOf(w)) != 0 {
-		t.Fatalf("a post that the forge refuses: %v, %d comments; want an error and none", err, len(commentsOf(w)))
+	if _, err := afterRestart(r).PostComment(context.Background(), "T-ab12", id, "plan.md"); err == nil || len(commentsOf(w, planText)) != 0 {
+		t.Fatalf("a post that the forge refuses: %v, %d comments; want an error and none", err, len(commentsOf(w, planText)))
 	}
 	if n := copiesOfIssue(t, w); n != 0 {
 		t.Errorf("%d copies of the task's issue exist for a post that failed", n)
 	}
-	if _, err := afterRestart(r).PostComment(context.Background(), "T-ab12", id, "plan.md"); err != nil || len(commentsOf(w)) != 1 || commentsOf(w)[0]["body"] != planText {
-		t.Errorf("the restart: %v, %d comments; want the post of the kept bytes", err, len(commentsOf(w)))
+	if _, err := afterRestart(r).PostComment(context.Background(), "T-ab12", id, "plan.md"); err != nil || len(commentsOf(w, planText)) != 1 || commentsOf(w, planText)[0]["body"] != planText {
+		t.Errorf("the restart: %v, %d comments; want the post of the kept bytes", err, len(commentsOf(w, planText)))
 	}
 }
 
 func TestALostLeaseDuringTheCommentPostsNothing(t *testing.T) {
+	t.Parallel()
 	w, r, base := commentWorld(t)
 	ctx := context.Background()
 	id := commentSession(t, r, base, "software-engineer", planText)
@@ -238,18 +285,19 @@ func TestALostLeaseDuringTheCommentPostsNothing(t *testing.T) {
 	}
 	_, err := afterRestart(r).PostComment(ctx, "T-ab12", id, "plan.md")
 	var lost *LostError
-	if !errors.As(err, &lost) || lost.Holder != "fedcba9876543210" || len(commentsOf(w)) != 0 {
-		t.Errorf("%v, %d comments; want a LostError naming the other run and no post", err, len(commentsOf(w)))
+	if !errors.As(err, &lost) || lost.Holder != "fedcba9876543210" || len(commentsOf(w, planText)) != 0 {
+		t.Errorf("%v, %d comments; want a LostError naming the other run and no post", err, len(commentsOf(w, planText)))
 	}
 }
 
 func TestTheLimitOfACommentThroughTheAdapter(t *testing.T) {
+	t.Parallel()
 	w, r, base := commentWorld(t)
 	ctx := context.Background()
 	at := planText + strings.Repeat("€", MaxCommentChars-len([]rune(planText))) // 65,536 characters
 	id := commentSession(t, r, base, "software-engineer", at)
 	p, err := afterRestart(r).PostComment(ctx, "T-ab12", id, "plan.md")
-	if cs := commentsOf(w); err != nil || len(cs) != 1 || cs[0]["body"] != at || p.SHA != commentSum(at) {
+	if cs := commentsOf(w, at); err != nil || len(cs) != 1 || cs[0]["body"] != at || p.SHA != commentSum(at) {
 		t.Fatalf("the body at the limit: %v, %d comments; want it posted and read back equal", err, len(cs))
 	}
 	v, err := afterRestart(r).RecordHandoff(ctx, HandoffInput{Task: "T-ab12", Session: id, From: "task plan", To: "plan review", File: "plan.md", Kind: "plan", Items: map[string]bool{"plan-fields": true}})
@@ -262,8 +310,8 @@ func TestTheLimitOfACommentThroughTheAdapter(t *testing.T) {
 	id2 := commentSession(t, r2, base2, "software-engineer", over)
 	_, err = afterRestart(r2).PostComment(ctx, "T-ab12", id2, "plan.md")
 	var refusal HandoffRefusal
-	if !errors.As(err, &refusal) || len(commentsOf(w2)) != 0 {
-		t.Fatalf("one character over: %v, %d comments; want a HandoffRefusal and no request", err, len(commentsOf(w2)))
+	if !errors.As(err, &refusal) || len(commentsOf(w2, over)) != 0 {
+		t.Fatalf("one character over: %v, %d comments; want a HandoffRefusal and no request", err, len(commentsOf(w2, over)))
 	}
 	if events := keptRecord(t, w2, "tasks/T-ab12/events.tsv"); !strings.Contains(events, "\trefused\t1\t"+id2+"\t—\t—\thandoff\t") {
 		t.Errorf("the events:\n%s", events)
@@ -296,6 +344,7 @@ func resultsOf(t *testing.T, w *world, ids ...string) map[string][][]string {
 // A question goes to its owner role and its answer is accepted by the next
 // attempt that cites it, from the records that the end of each session wrote.
 func TestTheQuestionOfASessionIsRoutedAndItsAnswerAcceptedFromTheRecords(t *testing.T) {
+	t.Parallel()
 	w, r, base := commentWorld(t)
 	ctx := context.Background()
 	run := func(role string, attempt int, body string) string {
@@ -353,6 +402,7 @@ func TestTheQuestionOfASessionIsRoutedAndItsAnswerAcceptedFromTheRecords(t *test
 // slug (round 1 of #360, finding 1: it did not, so the adoption of the App's own
 // comment was skipped and the restart posted twice).
 func TestTheSessionsOfTheRunAdoptTheCommentOfALostCopyAndPostOnce(t *testing.T) {
+	t.Parallel()
 	w, r, base := commentWorld(t)
 	ctx := context.Background()
 	id := commentSession(t, r, base, "software-engineer", planText)
@@ -360,12 +410,12 @@ func TestTheSessionsOfTheRunAdoptTheCommentOfALostCopyAndPostOnce(t *testing.T) 
 		start: [][]string{{"issue.control", "2", "run"}}}
 	stopped := st.sessions()
 	stopped.Store = &failOnCopy{SessionStore: stopped.Store}
-	if _, err := stopped.PostComment(ctx, "T-ab12", id, "plan.md"); err == nil || len(commentsOf(w)) != 1 {
-		t.Fatalf("the stop after the post: %v, %d comments; want an error and the one posted comment", err, len(commentsOf(w)))
+	if _, err := stopped.PostComment(ctx, "T-ab12", id, "plan.md"); err == nil || len(commentsOf(w, planText)) != 1 {
+		t.Fatalf("the stop after the post: %v, %d comments; want an error and the one posted comment", err, len(commentsOf(w, planText)))
 	}
 	p, err := st.sessions().PostComment(ctx, "T-ab12", id, "plan.md")
-	if err != nil || len(commentsOf(w)) != 1 || p.Seen != 1 {
-		t.Errorf("the restart: %+v, %v, %d comments on the task's issue; want the comment adopted and copied, none posted again", p, err, len(commentsOf(w)))
+	if err != nil || len(commentsOf(w, planText)) != 1 || p.Seen != 1 {
+		t.Errorf("the restart: %+v, %v, %d comments on the task's issue; want the comment adopted and copied, none posted again", p, err, len(commentsOf(w, planText)))
 	}
 	if n := copiesOfIssue(t, w); n != 1 {
 		t.Errorf("%d copies of the task's issue after the restart; want 1", n)
@@ -377,6 +427,7 @@ func TestTheSessionsOfTheRunAdoptTheCommentOfALostCopyAndPostOnce(t *testing.T) 
 // records; the acceptance alone reads the role of the answering session from
 // sessions.tsv (loop.md, A question during the work, T-b3s3).
 func TestAnAnswerOfADeveloperSessionIsNotAcceptedFromTheRecords(t *testing.T) {
+	t.Parallel()
 	w, r, base := commentWorld(t)
 	ctx := context.Background()
 	run := func(role string, attempt int, body string) string {
@@ -422,6 +473,7 @@ func startRows(t *testing.T, w *world) [][]string {
 // invalid by what code reads from the kept copy and from the verifier's recorded
 // base, whatever the caller says, through the records and the forge.
 func TestTheCommentChecksOfTheTaskLoop(t *testing.T) {
+	t.Parallel()
 	for _, c := range []struct {
 		name, role, from, to, kind, item string
 		text                             func(base worldAt) string

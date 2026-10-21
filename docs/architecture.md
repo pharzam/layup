@@ -643,7 +643,7 @@ checks what can be checked byte for byte. The vision brief is solution input
    line per requirement ID: its priority (`Must`, `Should`, `Could`, `Won't`) and
    its milestone; one line per fact to change: "out of scope", or a new class
    (for example `need`). A new class reopens the draft for that fact in a new specification task after this
-   one merges (step 6); its requirement is written under a PRD section "waits for
+   one merges (step 6; `docs/spec/loop.md`, the specification task that a changed class reopens); its requirement is written under a PRD section "waits for
    a bet", not as a table row, so `prd-lint` does
    not read it, and it gets its row and its line at the next bet. Priority is intent
    (`F-0003#54`), so code copies the comment (§3) and adds one **rendered commit**
@@ -672,7 +672,7 @@ PRD and `docs/spec/` (the head), the task register (§8) and the accepted and
 delivered requirements (§12). It fails when: a `covers` ID does not resolve to a
 fact of the confirmed inventory or of the answers; a need or constraint has no
 requirement, or a measure has no success-criterion row that cites its ID, and it
-has no out-of-scope mark and no requirement marked "waits for a bet"; a
+has no out-of-scope mark and no requirement marked "waits for a bet" (a fact that the bet re-classed is exempt from these two rules until the task that reopens it has merged, `docs/spec/loop.md`, the full spec check); a
 requirement has no acceptance criterion; a MoSCoW or Phase value in the PRD
 differs from the latest copy; a delivered
 requirement has no non-empty section in `docs/spec/` whose heading holds its ID
@@ -790,8 +790,8 @@ a verifier session check them as for any task.
    with its typed result (§4).
 4. The handoff check (below), the rule-path and workflow checks (§4, §6); then
    `layup run` pushes the branch and opens a **draft** pull request that links
-   the issue, with a title in the target's form (`<type>: <task ID>
-   <description>`), and requests no review (Sol-2).
+   the issue, with a title in the target's form (`<type>:
+   <description>`, the task ID in the commit subjects, the issue reference and the records link in the body), and requests no review (Sol-2).
 5. The target's CI, `layup gate`, `layup spec check` and `layup/rules` report, on
    each new head (the close-out's included). A failure goes back to the developer
    as a finding, in a new attempt. Two failures are expected and do not go back:

@@ -7,12 +7,15 @@ test to the thing it proves. LAYUP's stack is Go
 [`test-levels.md`](test-levels.md) names its command for each level; the
 `template-*.md` files are the pattern a new test record copies.
 
-This section is mostly *conventions*, plus two executable exceptions:
+This section is mostly *conventions*, plus three executable exceptions:
 [`run-discipline-tests.sh`](run-discipline-tests.sh), which runs the
 discipline linters against their fixtures (see
-[The discipline self-tests](#the-discipline-self-tests) below), and
+[The discipline self-tests](#the-discipline-self-tests) below),
 [`nested-checkout-check.sh`](nested-checkout-check.sh), which proves two of those
-linters read this repository's files and not a nested checkout's. The *product*
+linters read this repository's files and not a nested checkout's, and
+[`freeze-check.sh`](freeze-check.sh) (with its fixture runner
+[`freeze-check/run-all.sh`](freeze-check/run-all.sh)), which checks a task
+worktree before a freeze. The *product*
 tests are Go `*_test.go` files beside the code they test, and the root
 [`tests/`](../../tests/) directory holds cross-package end-to-end fixtures only.
 The discipline self-tests are the exceptions because their subject — the
@@ -23,9 +26,9 @@ discipline linters — lives here, so their tests can too.
 > This folder tells you how to test on this project: what the four kinds of test
 > are, how to write each one, what to check before you trust a test suite, and how
 > to prove that every requirement has a test behind it. It is mostly the rulebook
-> your real product tests follow; the two things here that actually run are
-> `run-discipline-tests.sh` and `nested-checkout-check.sh`, which test the
-> discipline linters.
+> your real product tests follow; the three things here that actually run are
+> `run-discipline-tests.sh`, `nested-checkout-check.sh` and `freeze-check.sh`,
+> which test the discipline linters and check a task worktree before a freeze.
 
 ## What's here
 
@@ -42,8 +45,30 @@ discipline linters — lives here, so their tests can too.
 | [`traceability-template.md`](traceability-template.md) | The format linking a test to a requirement, guardrail, or ADR. |
 | [`traceability.md`](traceability.md) | LAYUP's traceability table: one row per test, for every requirement of `PRD-0001`. |
 | [`example-fact-to-test.md`](example-fact-to-test.md) | A worked path: fact → requirement → guardrail → test, in LAYUP's conventions. |
-| [`run-discipline-tests.sh`](run-discipline-tests.sh) | One of the two executables here: runs each discipline linter against its good/bad fixtures and asserts the outcome. |
-| [`nested-checkout-check.sh`](nested-checkout-check.sh) | The other: builds a throwaway repository holding a nested checkout and proves `link-lint` never reads it. Needs `git`, so CI runs it and the hook does not. |
+| [`run-discipline-tests.sh`](run-discipline-tests.sh) | One of the three executables here: runs each discipline linter against its good/bad fixtures and asserts the outcome. |
+| [`nested-checkout-check.sh`](nested-checkout-check.sh) | A second executable: builds a throwaway repository holding a nested checkout and proves `link-lint` never reads it. Needs `git`, so CI runs it and the hook does not. |
+| [`freeze-check.sh`](freeze-check.sh) | The third: checks a task worktree before a freeze (white space, test registration, `-run` selectors, mutant restore evidence, landing budget projection and the conditions table); its fixtures run via [`freeze-check/run-all.sh`](freeze-check/run-all.sh) in CI. |
+
+For the clean committed-worktree invocation and evidence declarations, follow
+[Reviewing until findings decay](../engineering-discipline.md#reviewing-until-findings-decay).
+A declaration names a file at each committed endpoint where it exists.
+Declared paths are literal and duplicates count once. Added, modified and deleted
+records are resolved at the committed endpoints. K5 counts a rename as a deletion
+plus an addition.
+Every unlisted path stays counted. Declarations supply the author's
+classification; inspect consumers using the canonical
+[input definition](../engineering-discipline.md#reviewing-until-findings-decay).
+K5 removes declared records, adds no synthetic close-out allowance,
+and reports figure, maximum, tolerance, limit and margin in lines and files. Its
+line tolerance truncates to whole lines; the canonical
+[budget rule](../engineering-discipline.md#reviewing-until-findings-decay)
+defines the tolerance, inclusive limit and landing audit.
+
+T-c826's remaining assertions run with `sh runs/T-c826/checks.sh`. They check
+the canonical margin sentence, unchanged runners, all nine restore paths and the
+default-branch source. T-szvp's removal assertions run with
+`sh runs/T-szvp/checks.sh`: no numbered checker exception remains, and the complete
+Restore step matches its pre-exception form at `d27b331`.
 
 ## How the pieces fit
 

@@ -127,12 +127,7 @@ func (r *state) followUpAnswersStep(ctx context.Context) Step {
 	if err != nil {
 		return fail(name, err)
 	}
-	var follow [][]string
-	for _, q := range questions {
-		if q[1] == "follow-up" {
-			follow = append(follow, q)
-		}
-	}
+	follow := intakeFollowUps(questions)
 	if follow == nil {
 		return done(name, "no follow-up; Intake is done")
 	}

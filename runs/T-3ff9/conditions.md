@@ -1,0 +1,9 @@
+# T-3ff9 plan-review conditions
+
+The supplied review (comment 6298181777 on #447), amendment 1 and Operator option-1 decision govern these three rows. Evidence paths address the Stage B text to be committed; S1's SHA is already present. Independent review and clean-head validation remain for the coordinating stages.
+
+| Condition | Evidence |
+| --- | --- |
+| 1. K5 moves to a child before S1; no implementation, runner, fixture or parser change here. | [T-c826, #449](https://github.com/pharzam/layup/issues/449) was opened before S1, as supplied in amendment 1; S1 is `9c19eff`. `runs/T-3ff9/checks.sh:105` guards unchanged K5/parser scope; `runs/T-3ff9/test-runs.md:103` records its green run. `docs/tests/freeze-check.sh:32` retains the existing projection, which can overcount under the new rule until the child lands. |
+| 2. Resolve input once, restore both count qualifiers/examples, and apply it to both clauses and checks. | Operator chose option 1 before S1, as supplied with this stage. `docs/engineering-discipline.md:380` retains the runs qualifier and both examples; `docs/engineering-discipline.md:385` defines input once, including audit-only records and dual use; `docs/engineering-discipline.md:333` points end 3 to it. `runs/T-3ff9/checks.sh:43`, `runs/T-3ff9/checks.sh:45`, `runs/T-3ff9/checks.sh:46` and `runs/T-3ff9/checks.sh:68` cover both clauses; `runs/T-3ff9/semantic.md:9` and `runs/T-3ff9/semantic.md:34` compare them to their sources. |
+| 3. Align the other two budget sentences and include both in the check and semantic table. | `docs/engineering-discipline.md:294` uses maximum plus tolerance and exact approval in either dimension; `docs/engineering-discipline.md:360` routes fixes through the budget rule. `runs/T-3ff9/checks.sh:61` and `runs/T-3ff9/checks.sh:62` check them; `runs/T-3ff9/semantic.md:26` and `runs/T-3ff9/semantic.md:27` compare their meaning. |

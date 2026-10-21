@@ -16,12 +16,17 @@ import (
 // standinStore is a records branch in memory: its files at the run's base,
 // each commit of the run, and the pushes that git refuses before one passes.
 type standinStore struct {
-	files   map[string][]byte
-	commits []map[string][]byte
-	refuse  int      // the next pushes that are refused
-	holder  string   // the run that the lease names
-	ops     []string // each commit (by its events' last kind) and each push of a head, in order
-	pushErr error    // what PushHead gives
+	files    map[string][]byte
+	commits  []map[string][]byte
+	refuse   int               // the next pushes that are refused
+	holder   string            // the run that the lease names
+	ops      []string          // each commit (by its events' last kind) and each push of a head, in order
+	pushErr  error             // what PushHead gives
+	heads    map[string]string // the commit that each branch of the target holds
+	headErr  error             // what BranchHead gives
+	failure  error             // what Commit gives while it is set, a failure that Fenced does not retry (row 66g)
+	fetched  string            // what FetchBranch gives (task T-89xf)
+	fetchErr error
 }
 
 func (s *standinStore) ReadLease(context.Context) (LeaseRow, error) {
@@ -32,6 +37,9 @@ func (s *standinStore) ReadFile(_ context.Context, path string) ([]byte, error) 
 	return s.files[path], nil
 }
 func (s *standinStore) Commit(_ context.Context, files map[string][]byte, _ string) error {
+	if s.failure != nil {
+		return s.failure
+	}
 	if s.refuse > 0 {
 		s.refuse--
 		return ErrRefused
@@ -50,6 +58,27 @@ func (s *standinStore) Started(context.Context) (time.Time, error) { return sess
 func (s *standinStore) PushHead(_ context.Context, sha, branch string) error {
 	s.ops = append(s.ops, "push "+sha+" "+branch)
 	return s.pushErr
+}
+
+func (s *standinStore) BranchHead(_ context.Context, branch string) (string, bool, error) {
+	s.ops = append(s.ops, "read "+branch)
+	sha, ok := s.heads[branch]
+	return sha, ok, s.headErr
+}
+
+func (s *standinStore) FetchBranch(_ context.Context, branch string) (string, error) {
+	s.ops = append(s.ops, "fetch "+branch)
+	return s.fetched, s.fetchErr
+}
+
+func (s *standinStore) ReadFiles(_ context.Context, dir string) (map[string][]byte, error) {
+	out := map[string][]byte{}
+	for p, d := range s.files {
+		if rest, ok := strings.CutPrefix(p, dir+"/"); ok {
+			out[rest] = d
+		}
+	}
+	return out, nil
 }
 
 const aSHA = "0123456789abcdef0123456789abcdef01234567"
@@ -374,5 +403,45 @@ func TestThePushAndTheBindInOrder(t *testing.T) {
 	r := newSessions(store)
 	if err := r.pushAndBind(context.Background(), start, id, head); err == nil || len(events(t, store, "T-ab12")) != 1 {
 		t.Errorf("an error of the push: %v, the events %q; want the error and the event push alone", err, events(t, store, "T-ab12"))
+	}
+}
+
+// loop.md, The driver of a Shape task: a task session of a step that reads has no push.
+func TestAReadOnlyStepHasNoPush(t *testing.T) {
+	for _, step := range []string{"plan-of-a-task", "plan-review", "verification"} {
+		if !readOnlyStep(step) {
+			t.Errorf("readOnlyStep(%s) = false; want true", step)
+		}
+	}
+	for _, step := range []string{"specification", "shape-architecture", "implement", "close-out"} {
+		if readOnlyStep(step) {
+			t.Errorf("readOnlyStep(%s) = true; want false, a step that writes pushes", step)
+		}
+	}
+}
+
+// session.md, The start of a session: a prompt file built for another task or at another base is refused before
+// the sweep, so nothing is made or written.
+func TestATaskSessionRefusesAPromptFileOfAnotherTaskOrBase(t *testing.T) {
+	other := strings.Repeat("c", 40)
+	for _, c := range []struct {
+		name string
+		pc   *PromptContext
+		want string
+	}{
+		{"another task", &PromptContext{task: "T-cd34", base: aSHA}, "the prompt file is of the task T-cd34, the session's task is T-ab12"},
+		{"another base", &PromptContext{task: "T-ab12", base: other}, "the prompt file of T-ab12 was built at base " + other + ", the session's base is " + aSHA},
+	} {
+		var calls []string
+		store := withAttempt()
+		r, spec := task(store, &calls)
+		spec.Context = c.pc
+		_, err := r.TaskSession(context.Background(), spec)
+		if err == nil || err.Error() != c.want {
+			t.Errorf("%s: %v; want %q", c.name, err, c.want)
+		}
+		if len(calls) != 0 || len(store.commits) != 0 {
+			t.Errorf("%s: the calls %q and %d commits; want nothing swept, made or written", c.name, calls, len(store.commits))
+		}
 	}
 }

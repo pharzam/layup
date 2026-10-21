@@ -57,6 +57,7 @@ func failingTable(t *testing.T) gate.Table {
 // at the base, and the prompt of its session holds the findings and not the
 // diff of the attempt before.
 func TestAGateFailureStartsTheNextAttemptFromTheBaseWithItsFindings(t *testing.T) {
+	t.Parallel()
 	l := newLoop(t, nil)
 	ctx := context.Background()
 	l.dev(1, "claude", map[string]string{"x.go": "package x // marker-of-attempt-one\n"}, okResult)
@@ -95,6 +96,7 @@ func TestAGateFailureStartsTheNextAttemptFromTheBaseWithItsFindings(t *testing.T
 }
 
 func TestAnAttemptThatAQuestionEndedStillCountsInTheNumbering(t *testing.T) {
+	t.Parallel()
 	l := newLoop(t, nil)
 	asking := resultHead[:strings.Index(resultHead, "status")] + "status\t1\tneeds_context\t—\tasks\nquestion\t1\tMay it?\t—\tinterface-contract no docs/spec/forge.md\n"
 	l.dev(1, "claude", map[string]string{"q.txt": "q\n"}, asking)
@@ -106,6 +108,7 @@ func TestAnAttemptThatAQuestionEndedStillCountsInTheNumbering(t *testing.T) {
 
 // Nothing is written for a table that passed.
 func TestNoFailedRowStartsNoAttemptOnTheRealRecords(t *testing.T) {
+	t.Parallel()
 	l := newLoop(t, nil)
 	n := len(l.events())
 	pass := gate.Table{Base: l.a.base, Head: l.a.base, Rows: []gate.Row{{Kind: "fine", State: "active", Result: "pass", Reason: "—"}}}

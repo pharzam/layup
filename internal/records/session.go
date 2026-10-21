@@ -101,6 +101,7 @@ var (
 // The forms that the rules of the blocks give in words.
 var (
 	varForm    = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*=`)                    // NAME=VALUE of vars
+	taskForm   = regexp.MustCompile(`^T-[a-z0-9]{4}$`)                             // the detail of closed and rebased: a task ID
 	branchForm = regexp.MustCompile(`^task/T-[a-z0-9]{4}/(0|[1-9][0-9]*)$`)        // the branch of push and bound
 	ends       = []string{"done", "start", "crash", "no-result", "wall", "output"} // the classes of the end (session.md)
 	// The first words of the reason of a failed probe: the block's words and
@@ -254,7 +255,7 @@ func CheckEvent(r []string) error {
 		return &RowError{"attempt", "the attempt is 1 or more"}
 	case f["session"] != "" && !sessionForm.MatchString(f["session"]):
 		return &RowError{"session", "a session ID is S- and 8 lowercase hexadecimal characters"}
-	case kind != "handoff" && noSession != (f["session"] == ""):
+	case kind != "handoff" && kind != "push" && kind != "bound" && noSession != (f["session"] == ""):
 		return &RowError{"session", "session is the empty value exactly for attempt, closed, rebased, merged and a refused whose reason is pair (a handoff has one unless code wrote it for a rendered task)"}
 	case (kind == "attempt" || kind == "rebased") != (f["base"] != ""):
 		return &RowError{"base", "base is given exactly for attempt and rebased"}
@@ -268,6 +269,8 @@ func CheckEvent(r []string) error {
 		return &RowError{"detail", "the detail of a refused is its reason"}
 	case kind == "handoff" && !handoffDetail(detail):
 		return &RowError{"detail", "the detail of a handoff is valid or invalid <item> (an item of the table of loop.md, or pair), and after a space comment <ID>-<seen> for an artifact that is a comment"}
+	case (kind == "closed" || kind == "rebased") && !taskForm.MatchString(detail):
+		return &RowError{"detail", "the detail of a closed is the ID of the task that redoes it, and that of a rebased the ID of the task it replaces: T- and four characters"}
 	case kind == "merged" && !numberForm.MatchString(detail):
 		return &RowError{"detail", "the detail of a merged is the number of the pull request"}
 	case kind == "push" || kind == "bound":

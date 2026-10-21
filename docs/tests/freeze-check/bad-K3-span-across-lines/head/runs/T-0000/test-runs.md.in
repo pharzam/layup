@@ -1,0 +1,4 @@
+# Test runs
+
+Each mutant ran its tests (`go test -count=1 ./internal/x/
+-run '^TestNoSuch$'`), exit 1 each.

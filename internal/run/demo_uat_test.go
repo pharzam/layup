@@ -173,7 +173,7 @@ func TestTheDemoOfM2b(t *testing.T) {
 	// The probe of each registered harness passed at its version.
 	control, _ := strconv.Atoi(r.value("issue.control"))
 	s := &Sessions{Store: r.store, RunID: cfg.RunID, Host: cfg.Dir, Target: cfg.Owner + "/" + cfg.Name, Clone: r.target,
-		Branch: r.defaultBranch, Now: cfg.Clock.Now, Forge: cfg.Forge, Control: control, Prices: cfg.Prices}
+		Branch: r.defaultBranch, Now: cfg.Clock.Now, Forge: cfg.Forge, Control: control, App: cfg.Register.AppSlug, Prices: cfg.Prices}
 	held, err := s.readTable(ctx, "harnesses.tsv", records.ReadHarnesses)
 	if err != nil {
 		t.Fatal(err)
@@ -206,8 +206,25 @@ func TestTheDemoOfM2b(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	task, err := s.probeTaskID(ctx)
+	task, err := s.taskID(ctx)
 	if err != nil {
+		t.Fatal(err)
+	}
+	// The comment of a task session is on the task's issue (task T-syxm): the demo's task gets a row
+	// of the register, on the control issue, which is the one issue of the demo.
+	tasks, err := s.Store.ReadFile(ctx, tasksPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	transitions, err := s.Store.ReadFile(ctx, transitionsPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	reg, err := registerFiles(tasks, transitions, Task{ID: task, Issue: control, Kind: "build", Requirements: []string{"REQ-005"}, Size: "small", Opened: cfg.Clock.Now().UTC().Truncate(time.Second)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := r.write(ctx, reg, "layup run: the task of the demo of M2b"); err != nil {
 		t.Fatal(err)
 	}
 	if n, err := s.StartAttempt(ctx, task, base); err != nil || n != 1 {

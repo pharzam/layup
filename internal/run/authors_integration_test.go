@@ -19,6 +19,7 @@ const lessonResult = resultHead + "lesson\t1\twritten by opencode, reviewed by c
 // loop.md, The independence of the reviewers: the authors come from the
 // records and the ancestry of the commits, never from a field an agent writes.
 func TestTheAuthorsAreReadFromRealCommitsAndRealRecords(t *testing.T) {
+	t.Parallel()
 	l := newLoop(t, nil)
 	ctx := context.Background()
 	s := l.prod()
@@ -56,6 +57,7 @@ func TestTheAuthorsAreReadFromRealCommitsAndRealRecords(t *testing.T) {
 // The writer of the frozen tests is an author of every later verification, and
 // the harness of a later attempt is one by its commits.
 func TestTheWriterOfTheFrozenTestsIsAnAuthorOfALaterAttempt(t *testing.T) {
+	t.Parallel()
 	l := newLoop(t, nil)
 	l.frozenAt("claude")
 	l.attempt(2)
@@ -91,6 +93,7 @@ func (l *loopRun) routed(pairs ...string) ([][]string, [][]string) {
 }
 
 func TestTheReviewersPairComesFromTheRoutingOfTheRecordsOutsideTheAuthors(t *testing.T) {
+	t.Parallel()
 	l := newLoop(t, nil)
 	ctx := context.Background()
 	l.plan(1, "claude", "the plan\n")

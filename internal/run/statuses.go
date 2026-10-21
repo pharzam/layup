@@ -123,7 +123,7 @@ type RulesInput struct {
 func registerRevOf(task, head string, events, sessions [][]string, given string) (string, error) {
 	found := ""
 	for _, e := range events {
-		if e[1] != "bound" || e[5] != head {
+		if e[1] != "bound" || e[3] == "" || e[5] != head {
 			continue
 		}
 		i := slices.IndexFunc(sessions, func(r []string) bool { return r[sessionID] == e[3] })
@@ -150,25 +150,34 @@ func registerRevOf(task, head string, events, sessions [][]string, given string)
 	return given, nil
 }
 
-// RulesAt gives the status layup/rules of a head: rules.Basic over the base and
-// the head, by the register of the commit that registerRevOf names.
+// RulesAt gives the status layup/rules of a head: RulesStatus of RulesResult.
 func (s *Sessions) RulesAt(ctx context.Context, in RulesInput) (Status, error) {
+	r, err := s.RulesResult(ctx, in)
+	if err != nil {
+		return Status{}, err
+	}
+	return RulesStatus(r), nil
+}
+
+// RulesResult gives the result of rules.Basic over the base and the head, by the register of
+// the commit that registerRevOf names.
+func (s *Sessions) RulesResult(ctx context.Context, in RulesInput) (rules.Result, error) {
 	if !forge.FullSHA(in.Base) || !forge.FullSHA(in.Head) {
-		return Status{}, fmt.Errorf("the base and the head of layup/rules are full SHAs")
+		return rules.Result{}, fmt.Errorf("the base and the head of layup/rules are full SHAs")
 	}
 	events, err := s.readTable(ctx, eventsPath(in.Task), records.ReadEvents)
 	if err != nil {
-		return Status{}, err
+		return rules.Result{}, err
 	}
 	sessions, err := s.readTable(ctx, "sessions.tsv", records.ReadSessions)
 	if err != nil {
-		return Status{}, err
+		return rules.Result{}, err
 	}
 	rev, err := registerRevOf(in.Task, in.Head, events, sessions, in.RegisterRev)
 	if err != nil {
-		return Status{}, err
+		return rules.Result{}, err
 	}
-	return RulesStatus(rules.Basic(rules.Git(s.Clone), rules.Input{Base: in.Base, Head: in.Head, RegisterRev: rev, PreRev: in.PreRev, Records: in.Records})), nil
+	return rules.Basic(rules.Git(s.Clone), rules.Input{Base: in.Base, Head: in.Head, RegisterRev: rev, PreRev: in.PreRev, Records: in.Records}), nil
 }
 
 // A HeadInput is what the caller knows of a head whose four statuses are asked:
@@ -193,22 +202,24 @@ type StatusPost struct {
 	Posted bool
 }
 
-// PostStatuses computes the four statuses of a head and posts each through
-// PostStatus, in the order gates, spec, rules, verify, one after the other: a
-// failure stops the call and keeps the earlier posts, and the next call posts the
-// rest (loop.md, REQ-007). It gives each status with the SHA it is posted on. A
-// scratch tree of the gates that cannot be removed does not stop the call: the
-// error is returned after the four.
-func (s *Sessions) PostStatuses(ctx context.Context, in HeadInput) ([]StatusPost, error) {
+// PostChecks posts the first three statuses of a head, layup/gates, layup/spec and layup/rules, in that order, each through PostStatus.
+// It is PostStatuses without layup/verify, for a head that carries the verdict of another (row 66y, loop.md, The merge at the head
+// SHA): the verifier's authors there include the close-out session's harness, so VerifyAt could overwrite the carried success.
+// A failure stops the call and keeps the earlier posts; a scratch tree that cannot be removed is returned after the three.
+func (s *Sessions) PostChecks(ctx context.Context, in HeadInput) ([]StatusPost, error) {
 	var out []StatusPost
-	var late error
-	post := func(sha string, st Status) error {
+	late, err := s.postChecks(ctx, in, func(sha string, st Status) error {
 		posted, err := s.PostStatus(ctx, sha, st)
 		if err == nil {
 			out = append(out, StatusPost{sha, st, posted})
 		}
 		return err
-	}
+	})
+	return out, errors.Join(err, late)
+}
+
+// postChecks posts the three statuses through post and gives the delayed error of the scratch tree apart from the stop.
+func (s *Sessions) postChecks(ctx context.Context, in HeadInput, post func(sha string, st Status) error) (late, err error) {
 	st, err := s.GatesAt(ctx, GatesInput{Task: in.Task, Base: in.Base, Head: in.Head, Step: in.Step, Out: in.Out})
 	var cleanup *gate.CleanupError
 	if errors.As(err, &cleanup) {
@@ -227,8 +238,28 @@ func (s *Sessions) PostStatuses(ctx context.Context, in HeadInput) ([]StatusPost
 			err = post(in.Head, st)
 		}
 	}
+	return late, err
+}
+
+// PostStatuses computes the four statuses of a head and posts each through
+// PostStatus, in the order gates, spec, rules, verify, one after the other: a
+// failure stops the call and keeps the earlier posts, and the next call posts the
+// rest (loop.md, REQ-007). It gives each status with the SHA it is posted on. A
+// scratch tree of the gates that cannot be removed does not stop the call: the
+// error is returned after the four.
+func (s *Sessions) PostStatuses(ctx context.Context, in HeadInput) ([]StatusPost, error) {
+	var out []StatusPost
+	post := func(sha string, st Status) error {
+		posted, err := s.PostStatus(ctx, sha, st)
+		if err == nil {
+			out = append(out, StatusPost{sha, st, posted})
+		}
+		return err
+	}
+	late, err := s.postChecks(ctx, in, post)
 	if err == nil {
 		var sha string
+		var st Status
 		if sha, st, err = s.VerifyAt(ctx, VerifyInput{Task: in.Task, Base: in.Base, Head: in.Head, Session: in.Session, Waiting: in.Waiting, Harnesses: in.Harnesses, Models: in.Models}); err == nil {
 			err = post(sha, st)
 		}

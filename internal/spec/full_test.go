@@ -312,6 +312,17 @@ func TestCoversBindsEachTokenToItsRecord(t *testing.T) {
 	in.PRDs = prd("F-0004") // a bare cite of the answers' record resolves to no numbered fact
 	rows = CheckFull(in)
 	wantResult(t, rows, "covers", resPass)
+
+	// A record that the head holds in docs/facts/ (the setup record, which prd-lint
+	// reads) is accepted bare; its facts are no spans and no answers, and an unknown record is no record.
+	in.Records = []string{"F-0005"}
+	for _, c := range []struct {
+		cite string
+		pass bool
+	}{{"F-0005", true}, {"F-0005#1", false}, {"F-0009", false}, {"F-0005, F-0001#1", true}} {
+		in.PRDs = prd(c.cite)
+		wantResult(t, CheckFull(in), "covers", map[bool]string{true: resPass, false: resFail}[c.pass])
+	}
 }
 
 // needs: an in-scope need or constraint with no requirement and no waiting
@@ -743,4 +754,58 @@ func TestHasSectionOfNoIDOrNoFilesIsFalse(t *testing.T) {
 	if !HasSection(files, "REQ-005") {
 		t.Error("the control, the real ID, is no section")
 	}
+}
+
+// U7 (task T-4naq, row 66ab; loop.md, The full spec check): the facts that FullInput.Reopening lists are exempt from needs and measures, those
+// rules only, and only they: the same input without the list fails, and an uncovered fact that is not listed still fails.
+func TestAReclassedFactIsExemptFromNeedsAndMeasuresWhileItIsListed(t *testing.T) {
+	bare := func(in FullInput) FullInput { // fact 8 is a need and fact 9 a measure, and the waits section names neither
+		in.Index, in.Versions = inventoryOfSpans(t, []string{"9", "measure", "in", "9"})
+		in.PRDs = map[string][]byte{"PRD-0001-x.md": []byte(strings.Replace(testPRD, "covers F-0001#8.", "states no fact.", 1))}
+		return in
+	}
+	in := bare(baseInput(t))
+	wantFail(t, CheckFull(in), "needs", "8")
+	wantFail(t, CheckFull(in), "measures", "9")
+	in.Reopening = []string{"8", "9"}
+	rows := CheckFull(in)
+	wantResult(t, rows, "needs", resPass)
+	wantResult(t, rows, "measures", resPass)
+	wantResult(t, rows, "ran", resPass)
+	in.Reopening = []string{"8"}
+	wantResult(t, CheckFull(in), "needs", resPass)
+	wantFail(t, CheckFull(in), "measures", "9")
+	in.Reopening = []string{"9"}
+	wantFail(t, CheckFull(in), "needs", "8")
+	wantResult(t, CheckFull(in), "measures", resPass)
+	// The other rules judge it as before: a listed fact does not excuse a requirement without a criterion.
+	in = bare(baseInput(t))
+	in.Reopening = []string{"8", "9"}
+	in.PRDs = map[string][]byte{"PRD-0001-x.md": []byte(strings.Replace(string(in.PRDs["PRD-0001-x.md"]), "| `REQ-002` | a check of it |\n", "", 1))}
+	wantFail(t, CheckFull(in), "criteria", "REQ-002")
+}
+
+// F1 of round 1 (task T-4naq): the head of a reopened task must hold its own pending line, by the stored identity of the reopening (the fact and the
+// allocated requirement ID), though a requirement of the table already covers the fact (a need changed to a constraint). The control without Pending passes.
+func TestAReopenedFactNeedsItsOwnPendingLineEvenWhenARequirementCoversIt(t *testing.T) {
+	with := func(pending []PendingReq, line string) FullInput {
+		in := baseInput(t)
+		in.PRDs = map[string][]byte{"PRD-0001-x.md": []byte(testPRD + line + "\n")}
+		in.Pending = pending
+		return in
+	}
+	nfr := []PendingReq{{"4", "NFR-002"}} // fact 4 is a need that NFR-001 covers, changed to a constraint
+	wantResult(t, CheckFull(with(nil, "")), "needs", resPass)
+	wantFail(t, CheckFull(with(nfr, "")), "needs", "NFR-002")
+	wantResult(t, CheckFull(with(nfr, "NFR-002: a statement. Facts: F-0001#4 F-0001. Acceptance criterion: a check.")), "needs", resPass)
+	wantFail(t, CheckFull(with(nfr, "NFR-001: a statement. Facts: F-0001#4 F-0001. Acceptance criterion: a check.")), "needs", "NFR-002")  // the old requirement's ID
+	wantFail(t, CheckFull(with(nfr, "NFR-002: a statement. Facts: F-0001#5 F-0001. Acceptance criterion: a check.")), "needs", "NFR-002")  // another fact
+	wantFail(t, CheckFull(with(nfr, "NFR-0020: a statement. Facts: F-0001#4 F-0001. Acceptance criterion: a check.")), "needs", "NFR-002") // another ID
+	// A measure: fact 3 has its success row; its pending line is still required.
+	measure := []PendingReq{{"3", ""}}
+	wantResult(t, CheckFull(with(nil, "")), "measures", resPass)
+	wantFail(t, CheckFull(with(measure, "")), "measures", "3")
+	wantResult(t, CheckFull(with(measure, "Success criterion: it is fast. Fact: F-0001#3.")), "measures", resPass)
+	// The pending requirement of a need is the rule needs, that of a measure the rule measures.
+	wantResult(t, CheckFull(with(measure, "")), "needs", resPass)
 }

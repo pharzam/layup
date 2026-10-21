@@ -42,9 +42,10 @@ func qaRowOf(rows [][]string, kind, n string) []string {
 // written here with the session ID, never taken from the composer, and the
 // first line starts like the comment that End posted.
 func TestTheQuestionAndAnswerCommentsAreComposedFromTheRowsOfARealEnd(t *testing.T) {
+	t.Parallel()
 	w, f, id, start, rows := qaWorld(t)
 	prefix := id + ": developer session of T-ab12, attempt 1: "
-	if got := f.posted[2]; len(got) != 1 || got[0] != prefix+"done\n" {
+	if got := f.posted[taskIssue]; len(got) != 1 || got[0] != prefix+"done\n" {
 		t.Fatalf("the end posted %q; want %q", got, prefix+"done\n")
 	}
 	head := gitOut(t, w.bare, "rev-parse", "layup-records")
@@ -69,12 +70,13 @@ func TestTheQuestionAndAnswerCommentsAreComposedFromTheRowsOfARealEnd(t *testing
 	if second, err := AnswerComment(start, qaRowOf(again, "answer", "1"), "S-0a1b2c3d.2"); err != nil || string(second) != want {
 		t.Errorf("after a second read: %q, %v; want %q", second, err, want)
 	}
-	if len(f.posted[2]) != 1 || gitOut(t, w.bare, "rev-parse", "layup-records") != head {
-		t.Errorf("composing posted %q or moved the records; want neither", f.posted[2])
+	if len(f.posted[taskIssue]) != 1 || gitOut(t, w.bare, "rev-parse", "layup-records") != head {
+		t.Errorf("composing posted %q or moved the records; want neither", f.posted[taskIssue])
 	}
 }
 
 func TestARowOfARealResultThatIsNoQuestionOrAnswerIsRefused(t *testing.T) {
+	t.Parallel()
 	_, _, _, start, rows := qaWorld(t)
 	if got, err := QuestionComment(start, qaRowOf(rows, "question", "1")); err != nil || !strings.HasSuffix(string(got), "\n\nFirst?") {
 		t.Fatalf("the control, a question row: %q, %v", got, err)

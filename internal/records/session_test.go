@@ -161,8 +161,8 @@ func eventRows() []string {
 		"6\tattempt\t2\t—\t" + sha1A + "\t—\t—\t2026-10-09T12:11:00Z",
 		"7\trefused\t2\t—\t—\t—\tpair\t2026-10-09T12:11:01Z",
 		"8\trefused\t2\tS-0000000a\t—\t—\tcontext 300000 200000\t2026-10-09T12:11:02Z",
-		"9\tclosed\t2\t—\t—\t—\t—\t2026-10-09T12:12:00Z",
-		"10\trebased\t3\t—\t" + sha1A + "\t—\tmain moved\t2026-10-09T12:13:00Z",
+		"9\tclosed\t2\t—\t—\t—\tT-cd34\t2026-10-09T12:12:00Z",
+		"10\trebased\t3\t—\t" + sha1A + "\t—\tT-ab12\t2026-10-09T12:13:00Z",
 		"11\thandoff\t1\tS-1a2b3c4d\t—\t—\tvalid comment 6191163525-1\t2026-10-09T12:14:00Z",
 		"12\thandoff\t1\t—\t—\t—\tinvalid spec-sections\t2026-10-09T12:15:00Z",
 		"13\tmerged\t1\t—\t—\t" + sha1A + "\t334\t2026-10-09T12:16:00Z",
@@ -242,6 +242,20 @@ func TestEventsRefusesEachBrokenRule(t *testing.T) {
 		{"a merged whose pull request has a leading zero", event(13, "detail", "0334"), "detail"},
 	} {
 		refusedAt(t, c.name, readEvents, table(eventsHeader, c.rows...), c.column)
+	}
+}
+
+// The detail of closed is the ID of the task that redoes it, and that of rebased the ID of the task it replaces (task T-89xf, condition 8 of
+// the plan review of #367): a word, prose, an uppercase ID, a branch and the empty value are refused, and a task ID passes.
+func TestTheDetailOfClosedAndRebasedIsATaskID(t *testing.T) {
+	for _, n := range []int{9, 10} {
+		kind := map[int]string{9: "closed", 10: "rebased"}[n]
+		for _, bad := range []string{"—", "x", "main moved", "T-AB12", "T-ab1", "T-ab123", "task/T-ab12/1", "T-ab12 T-cd34"} {
+			refusedAt(t, "a "+kind+" with the detail "+bad, readEvents, table(eventsHeader, event(n, "detail", bad)...), "detail")
+		}
+		if _, err := ReadEvents(table(eventsHeader, event(n, "detail", "T-9z0a")...)); err != nil {
+			t.Errorf("a %s with a task ID: %v", kind, err)
+		}
 	}
 }
 
@@ -363,4 +377,16 @@ func TestResultRefusesEachBrokenRule(t *testing.T) {
 	}
 	two := append(resultRows(), "status\t2\tfailed\t—\tagain")
 	refusedAt(t, "two status rows", readResult, table(resultHeader, two...), "n")
+}
+
+// T-2vva (row 66j): the rendered commit of the first bet is made by code, so its push and its bound have no session; a session event
+// and a refused still need theirs.
+func TestAPushAndABoundOfCodeHaveNoSession(t *testing.T) {
+	rows := eventRows()
+	rows[3], rows[4] = field(eventsHeader, rows[3], "session", "—"), field(eventsHeader, rows[4], "session", "—")
+	if _, err := ReadEvents(table(eventsHeader, rows...)); err != nil {
+		t.Errorf("a push and a bound with no session: %v; want read", err)
+	}
+	refusedAt(t, "a refused with no session whose reason is not pair", readEvents, table(eventsHeader, event(7, "detail", "context 3 2")...), "session")
+	refusedAt(t, "a session event with no session", readEvents, table(eventsHeader, event(2, "session", "—")...), "session")
 }

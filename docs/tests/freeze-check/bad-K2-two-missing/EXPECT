@@ -1,0 +1,8 @@
+1
+ok K1: white space
+FAIL K2: internal/x/a_test.go:11: TestNewOne is not in docs/tests/traceability.md
+FAIL K2: internal/x/a_test.go:12: TestNewTwo is not in docs/tests/traceability.md
+ok K3: test selectors
+ok K4: restore evidence of mutants
+ok K5: projection: figure 2/1, maximum 100/10, tolerance 60/4, limit 160/14, margin 158/13 (the figure at landing is still measured at landing)
+ok K6: conditions table

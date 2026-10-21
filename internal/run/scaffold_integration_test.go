@@ -13,6 +13,7 @@ import (
 // docs/spec/records.md (the demo of #270; the block markers is compared in
 // internal/records).
 func TestTheSchemasOfTheScaffoldEqualTheirBlocks(t *testing.T) {
+	t.Parallel()
 	blocks, err := tsv.ReadBlocks(os.DirFS("../../docs/spec"))
 	if err != nil {
 		t.Fatal(err)

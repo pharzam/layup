@@ -573,3 +573,123 @@ func TestParentsRefusesAnOutputOfAnotherForm(t *testing.T) {
 		t.Errorf("no output: %v; want a *FailedError with code 0", err)
 	}
 }
+
+// UpdateRef moves a ref of layup's own namespace only: any other ref, and a SHA that is not a full object ID,
+// are refused before git starts (packages.md, The calls of M2e; task T-jy6f).
+func TestUpdateRefRefusesItsInputBeforeGitStarts(t *testing.T) {
+	for name, c := range map[string]struct{ ref, sha string }{
+		"a ref of the default branch":    {"refs/heads/main", fullID},
+		"a ref outside heads":            {"refs/layup/sessions/S-1", fullID},
+		"a tag":                          {"refs/tags/layup/x", fullID},
+		"a ref that leaves the prefix":   {"refs/heads/layup/../main", fullID},
+		"a ref with a colon":             {"refs/heads/layup/a:b", fullID},
+		"a ref with a space":             {"refs/heads/layup/a b", fullID},
+		"a ref that ends in a slash":     {"refs/heads/layup/a/", fullID},
+		"a ref that ends in .lock":       {"refs/heads/layup/a.lock", fullID},
+		"an empty name below the prefix": {"refs/heads/layup/", fullID},
+		"a SHA that is a branch name":    {"refs/heads/layup/a", "main"},
+		"an empty SHA":                   {"refs/heads/layup/a", ""},
+	} {
+		calls := stub(t, "", nil)
+		err := UpdateRef("r", c.ref, c.sha)
+		var failed *FailedError
+		if !errors.As(err, &failed) || failed.Code != -1 || len(*calls) != 0 {
+			t.Errorf("%s: %v, %d starts of git; want a *FailedError of code -1 and none", name, err, len(*calls))
+		}
+	}
+	calls := stub(t, "", nil)
+	if err := UpdateRef("r", "refs/heads/layup/base/T-ab12/1", fullID); err != nil {
+		t.Fatal(err)
+	}
+	if got := only(t, calls); got.dir != "r" || !strings.HasSuffix(strings.Join(got.args, " "), "update-ref refs/heads/layup/base/T-ab12/1 "+fullID) {
+		t.Errorf("UpdateRef started %q in %q; want update-ref REF SHA in r", got.args, got.dir)
+	}
+}
+
+// Refs lists the refs below a prefix, refuses a prefix outside refs/ before git starts, and gives a failed read as an error.
+func TestRefsListsTheRefsBelowAPrefixAndRefusesAnythingElse(t *testing.T) {
+	calls := stub(t, "refs/layup/sessions/S-a\nrefs/layup/sessions/S-b\n", nil)
+	got, err := Refs("r", "refs/layup/sessions/")
+	if err != nil || !slices.Equal(got, []string{"refs/layup/sessions/S-a", "refs/layup/sessions/S-b"}) {
+		t.Fatalf("Refs = %v, %v; want the two refs", got, err)
+	}
+	if c := only(t, calls); c.dir != "r" || !strings.HasSuffix(strings.Join(c.args, " "), "for-each-ref --format=%(refname) refs/layup/sessions/") {
+		t.Errorf("Refs started %q in %q; want for-each-ref with the format and the prefix", c.args, c.dir)
+	}
+	for _, bad := range []string{"heads/x", "-x", "refs/a:b", "refs/a b"} {
+		before := len(*calls)
+		if _, err := Refs("r", bad); err == nil || len(*calls) != before {
+			t.Errorf("Refs(%q) = %v with %d starts more; want a refusal before git starts", bad, err, len(*calls)-before)
+		}
+	}
+	stub(t, "", errors.New("fatal: not a git repository"))
+	if got, err := Refs("r", "refs/layup/"); err == nil || got != nil {
+		t.Errorf("Refs of a failed read = %v, %v; want the error and no list", got, err)
+	}
+	stub(t, "", nil)
+	if got, err := Refs("r", "refs/layup/"); err != nil || len(got) != 0 {
+		t.Errorf("Refs of an empty answer = %v, %v; want none and no error", got, err)
+	}
+}
+
+// The merge calls refuse a revision that is not a full object ID, and an empty message, before git starts (task T-89xf).
+func TestMergeAndMergeBaseRefuseANonObjectIDBeforeGitStarts(t *testing.T) {
+	calls := stub(t, "", nil)
+	for name, call := range map[string]func() error{
+		"a base that is an option":       func() error { _, err := MergeBase("r", "--all", fullID); return err },
+		"a second commit that is a name": func() error { _, err := MergeBase("r", fullID, "main"); return err },
+		"a head that is an option":       func() error { _, _, err := Merge("r", "--abort", fullID, "m", who); return err },
+		"a base that is a name":          func() error { _, _, err := Merge("r", fullID, "main", "m", who); return err },
+		"an empty message":               func() error { _, _, err := Merge("r", fullID, fullID, "", who); return err },
+	} {
+		var failed *FailedError
+		if err := call(); !errors.As(err, &failed) || failed.Code != -1 {
+			t.Errorf("%s: %v; want a *FailedError of Code -1", name, err)
+		}
+	}
+	if len(*calls) != 0 {
+		t.Errorf("%d starts of git; want none (a green negative of the refusal)", len(*calls))
+	}
+}
+
+// A conflict is exit 1 of the merge with unmerged entries; any other failure, and a failed read of the entries, is an error (task T-89xf,
+// condition 6 of the plan review).
+func TestMergeTellsAConflictFromEveryOtherFailure(t *testing.T) {
+	other := "1111111111111111111111111111111111111111"
+	for _, c := range []struct {
+		name      string
+		mergeCode int
+		lsOut     string
+		lsErr     error
+		wantClean bool
+		wantErr   bool
+	}{
+		{"a conflict", 1, "100644 abc 1\ta\x00", nil, false, false},
+		{"exit 1 with no unmerged entry", 1, "", nil, false, true},
+		{"exit 128", 128, "", nil, false, true},
+		{"a failed read of the entries", 1, "", errors.New("boom"), false, true},
+		{"a merge that is clean", 0, "", nil, true, false},
+	} {
+		var mergeErr error
+		if c.mergeCode != 0 {
+			mergeErr = exec.Command("sh", "-c", fmt.Sprintf("exit %d", c.mergeCode)).Run()
+		}
+		saved := run
+		run = func(dir string, args, env []string) ([]byte, []byte, error) {
+			switch {
+			case slices.Contains(args, "merge"):
+				return nil, []byte("stub\n"), mergeErr
+			case slices.Contains(args, "ls-files"):
+				return []byte(c.lsOut), nil, c.lsErr
+			case slices.Contains(args, "rev-parse"):
+				return []byte(other + "\n"), nil, nil
+			}
+			return nil, nil, nil
+		}
+		sha, clean, err := Merge("r", fullID, other, "m", who)
+		run = saved
+		if clean != c.wantClean || (err != nil) != c.wantErr || (c.wantClean && sha != other) || (!c.wantClean && sha != "") {
+			t.Errorf("%s: sha %q, clean %v, err %v; want clean %v, an error %v", c.name, sha, clean, err, c.wantClean, c.wantErr)
+		}
+	}
+}

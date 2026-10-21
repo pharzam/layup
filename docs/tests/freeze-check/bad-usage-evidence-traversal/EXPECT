@@ -1,0 +1,2 @@
+2
+freeze-check: --evidence runs/T-0000/../T-0000/conditions.md: path traversal is not allowed

@@ -137,10 +137,8 @@ func LsRemote(url, ref string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	for _, line := range strings.Split(string(out), "\n") {
-		if id, name, ok := strings.Cut(line, "\t"); ok && name == ref {
-			return id, nil
-		}
+	if id, ok := refLine(out, ref); ok {
+		return id, nil
 	}
 	return "", &FailedError{Args: args, Err: fmt.Errorf("the output has no line for %s", ref)}
 }
@@ -434,14 +432,62 @@ func Push(dir, url, commit, branch string, auth Auth) error {
 	return doAuth(dir, auth, args)
 }
 
-// doAuth runs git in dir with the environment of auth.
+// doAuth runs git in dir with the environment of auth, and drops its output.
 func doAuth(dir string, auth Auth, args []string) error {
+	_, err := callAuth(dir, auth, args)
+	return err
+}
+
+// callAuth runs git in dir with the environment of auth, and gives its
+// output: a token is a header of the call's environment, never an argument.
+func callAuth(dir string, auth Auth, args []string) ([]byte, error) {
 	extra, err := auth.env()
 	if err != nil {
-		return &FailedError{Args: args, Code: -1, Err: err}
+		return nil, &FailedError{Args: args, Code: -1, Err: err}
 	}
-	_, err = call(dir, environ(extra...), args...)
-	return err
+	return call(dir, environ(extra...), args...)
+}
+
+// RemoteHead gives the commit of the branch of the repository at url, with the
+// token of auth when it has one: found is false for a branch that the remote
+// does not have (exit 2 of ls-remote, or no line of exactly refs/heads/BRANCH,
+// as ls-remote matches its pattern against the tail of a ref name). The ID on
+// that line must be a full object ID, else the answer is a *FailedError of Code
+// 0 and never an absence. An empty branch, one that holds ':' and one that starts
+// with '-' are refused before git starts (task T-syxm, packages.md, The calls of
+// M2e).
+func RemoteHead(url, branch string, auth Auth) (sha string, found bool, err error) {
+	ref := "refs/heads/" + branch
+	args := []string{"ls-remote", "--exit-code", "--", url, ref}
+	if branch == "" || strings.Contains(branch, ":") || strings.HasPrefix(branch, "-") {
+		return "", false, &FailedError{Args: args, Code: -1, Err: errors.New("not a branch")}
+	}
+	out, err := callAuth("", auth, args)
+	var failed *FailedError
+	if errors.As(err, &failed) && failed.Code == 2 {
+		return "", false, nil
+	}
+	if err != nil {
+		return "", false, err
+	}
+	id, ok := refLine(out, ref)
+	switch {
+	case !ok:
+		return "", false, nil
+	case !fullObjectID(id):
+		return "", false, &FailedError{Args: args, Err: fmt.Errorf("the line for %s holds %q, which is no full object ID", ref, id)}
+	}
+	return id, true, nil
+}
+
+// refLine gives the ID on the line of exactly the ref name in the output of ls-remote.
+func refLine(out []byte, ref string) (string, bool) {
+	for _, line := range strings.Split(string(out), "\n") {
+		if id, name, ok := strings.Cut(line, "\t"); ok && name == ref {
+			return id, true
+		}
+	}
+	return "", false
 }
 
 // ErrNotACommit is the refusal of FetchSession for a SHA that names no commit
@@ -560,4 +606,90 @@ func DiffFile(dir, base, head, path string) ([]byte, error) {
 // files included: the payload of a refused diff.
 func DiffBinary(dir, base, head string) ([]byte, error) {
 	return call(dir, environ(), "diff", "--binary", "--no-renames", "--end-of-options", base, head, "--")
+}
+
+// updateRefName is the form of a ref that UpdateRef sets: below refs/heads/layup/, plain characters.
+var updateRefName = regexp.MustCompile(`^refs/heads/layup/[A-Za-z0-9._/-]+$`)
+
+// UpdateRef sets the ref to the commit sha of dir: a ref of layup's own namespace, refs/heads/layup/, and a
+// full object ID, else it is refused before git starts (docs/spec/packages.md, The calls of M2e; task T-jy6f).
+func UpdateRef(dir, ref, sha string) error {
+	if !updateRefName.MatchString(ref) || strings.Contains(ref, "..") || strings.Contains(ref, "//") || strings.HasSuffix(ref, "/") || strings.HasSuffix(ref, ".lock") {
+		return &FailedError{Args: []string{"update-ref", ref}, Code: -1, Err: errors.New("not a ref of refs/heads/layup/")}
+	}
+	return doAt(dir, sha, "update-ref", ref, sha)
+}
+
+// Refs gives the names of the refs of dir below prefix, a name that starts with refs/ and holds no ':' or space, in the order of git; none is an empty
+// list and a failed read is an error, never an absence (packages.md, The calls of M2e; task T-ehb4).
+func Refs(dir, prefix string) ([]string, error) {
+	if !strings.HasPrefix(prefix, "refs/") || strings.ContainsAny(prefix, ": \n") {
+		return nil, &FailedError{Args: []string{"for-each-ref", prefix}, Code: -1, Err: errors.New("not a prefix under refs/ with no ':' or space")}
+	}
+	out, err := call(dir, environ(), "for-each-ref", "--format=%(refname)", prefix)
+	if err != nil {
+		return nil, err
+	}
+	var refs []string
+	for _, l := range strings.Split(strings.TrimSpace(string(out)), "\n") {
+		if l != "" {
+			refs = append(refs, l)
+		}
+	}
+	return refs, nil
+}
+
+// MergeBase gives the best common ancestor of the commits a and b, both full object IDs; commits with none are an error (task T-89xf,
+// packages.md, The calls of M2e).
+func MergeBase(dir, a, b string) (string, error) {
+	args := []string{"merge-base", a, b}
+	if !fullObjectID(a) || !fullObjectID(b) {
+		return "", &FailedError{Args: args, Code: -1, Err: errors.New("not a full object ID")}
+	}
+	out, err := call(dir, environ(), args...)
+	if err != nil {
+		return "", err
+	}
+	id := strings.TrimSpace(string(out))
+	if !fullObjectID(id) {
+		return "", &FailedError{Args: args, Code: 0, Err: fmt.Errorf("the output %q is no object ID", id)}
+	}
+	return id, nil
+}
+
+// Merge merges the commit d into the commit x in a scratch work tree, with a merge commit by who at the time of who, and gives the
+// commit: one input gives one commit (NFR-005). clean is false for a merge that conflicts (exit 1 of git with unmerged entries), which
+// leaves no commit and no work tree; every other failure, including a failed read of the unmerged entries, is an error. x and d are full
+// object IDs and the message is not empty (task T-89xf, packages.md, The calls of M2e).
+func Merge(dir, x, d, message string, who Identity) (sha string, clean bool, err error) {
+	args := []string{"merge", "--no-ff", "--no-edit", "-m", message, "--end-of-options", d}
+	if !fullObjectID(x) || !fullObjectID(d) || message == "" {
+		return "", false, &FailedError{Args: args, Code: -1, Err: errors.New("not full object IDs and a message")}
+	}
+	tmp, err := os.MkdirTemp("", "layup-merge-")
+	if err != nil {
+		return "", false, err
+	}
+	defer os.RemoveAll(tmp)
+	tree := filepath.Join(tmp, "tree")
+	if err := WorktreeAdd(dir, tree, x); err != nil {
+		return "", false, err
+	}
+	defer WorktreeRemove(dir, tree)
+	_, err = call(tree, commitEnv(who), args...)
+	var failed *FailedError
+	if errors.As(err, &failed) && failed.Code == 1 {
+		out, lerr := call(tree, environ(), "ls-files", "-u", "-z")
+		if lerr != nil {
+			return "", false, lerr
+		}
+		if len(out) == 0 {
+			return "", false, err
+		}
+		return "", false, nil
+	} else if err != nil {
+		return "", false, err
+	}
+	sha, err = RevParse(tree, "HEAD")
+	return sha, err == nil, err
 }

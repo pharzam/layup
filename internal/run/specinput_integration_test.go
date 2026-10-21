@@ -38,6 +38,7 @@ func cavTreeInput(t *testing.T, dir, head string) (spec.FullInput, error) {
 }
 
 func TestTheTreeFieldsOfTheFullInputAreTheRegularFilesOfTheHead(t *testing.T) {
+	t.Parallel()
 	gitlink := strings.Repeat("1", 40)
 	dir, head := treeOf(t,
 		entry{"100644", "docs/spec/a.md", treeSection}, entry{"100644", "docs/spec/sub/b.md", "x\n"}, entry{"120000", "docs/spec/l.md", "a.md"},
@@ -57,8 +58,8 @@ func TestTheTreeFieldsOfTheFullInputAreTheRegularFilesOfTheHead(t *testing.T) {
 	if want := strings.Split(strings.TrimRight(gitOut(t, dir, "ls-tree", "-r", "-z", "--name-only", head), "\x00"), "\x00"); !reflect.DeepEqual(in.Changed, want) {
 		t.Errorf("Changed %v; want the paths of the diff %v", in.Changed, want)
 	}
-	if in.PSBRecords != nil {
-		t.Errorf("PSBRecords %v; want none (no numbered facts file, though the answers record and the brief are there)", in.PSBRecords)
+	if !reflect.DeepEqual(in.PSBRecords, []string{"F-0004"}) || !reflect.DeepEqual(in.Records, []string{"F-0003"}) {
+		t.Errorf("PSBRecords %v, Records %v; want the predicted ID F-0004 (no numbered facts file) and the setup record F-0003", in.PSBRecords, in.Records)
 	}
 	if string(in.PSB) != string(cavFiles(t)["start/problem-statement.md"]) {
 		t.Errorf("PSB %d bytes; want the problem statement of the records", len(in.PSB))
@@ -66,6 +67,7 @@ func TestTheTreeFieldsOfTheFullInputAreTheRegularFilesOfTheHead(t *testing.T) {
 }
 
 func TestTheNumberedFactsFileAtTheHeadIsTheProblemStatementRecord(t *testing.T) {
+	t.Parallel()
 	gitlink := strings.Repeat("1", 40)
 	named := func(e ...entry) []entry { return append([]entry{{"100644", "docs/prd/PRD-0001-x.md", cavPRD}}, e...) }
 	for _, c := range []struct {
@@ -74,10 +76,10 @@ func TestTheNumberedFactsFileAtTheHeadIsTheProblemStatementRecord(t *testing.T) 
 		want    []string
 		fail    bool
 	}{
-		{"none", named(), nil, false},
+		{"none", named(), []string{"F-0001"}, false},
 		{"one regular file", named(entry{"100644", "docs/facts/F-0007-numbered-facts.md", "1. **need:** one\n"}), []string{"F-0007"}, false},
 		{"a link, an executable file, a gitlink, a nested file", named(entry{"120000", "docs/facts/F-0007-numbered-facts.md", "x"}, entry{"100755", "docs/facts/F-0008-numbered-facts.md", "1. x\n"},
-			entry{"160000", "docs/facts/F-0009-numbered-facts.md", gitlink}, entry{"100644", "docs/facts/sub/F-0010-numbered-facts.md", "1. x\n"}), nil, false},
+			entry{"160000", "docs/facts/F-0009-numbered-facts.md", gitlink}, entry{"100644", "docs/facts/sub/F-0010-numbered-facts.md", "1. x\n"}), []string{"F-0001"}, false},
 		{"two files", named(entry{"100644", "docs/facts/F-0007-numbered-facts.md", "1. x\n"}, entry{"100644", "docs/facts/F-0009-numbered-facts.md", "1. x\n"}), nil, true},
 	} {
 		dir, head := treeOf(t, c.entries...)
@@ -95,13 +97,14 @@ func TestTheNumberedFactsFileAtTheHeadIsTheProblemStatementRecord(t *testing.T) 
 		}
 		// The consumer: the fact 1 of F-0007 is the span fact 1, so the citation covers.
 		rows := spec.CheckFull(in)
-		if got := rows[0][1]; (len(c.want) == 1) != (got == "pass") {
+		if got := rows[0][1]; (c.want[0] == "F-0007") != (got == "pass") {
 			t.Errorf("%s: covers is %v; want pass exactly with the record F-0007 (the citation F-0007#1)", c.name, rows[0])
 		}
 	}
 }
 
 func TestAFailedReadOfTheTreeIsASourceErrorOfTheTarget(t *testing.T) {
+	t.Parallel()
 	// A head the clone lacks fails at the diff.
 	dir, _ := treeOf(t, entry{"100644", "docs/spec/a.md", treeSection})
 	in, err := cavTreeInput(t, dir, strings.Repeat("a", 40))
@@ -250,5 +253,85 @@ func TestTheFullInputOfAHeadAfterIntakeAndTheScaffold(t *testing.T) {
 		if got := table[5]; got[0] != "inventory" || got[1] != "pass" {
 			t.Errorf("inventory with %s: %v; want pass (the version is its exact bytes)", c.name, got)
 		}
+	}
+}
+
+// The specimen of the specification instruction, on a real tree and the records of a
+// target, through the production input (specRecords and specTree: no PSBRecords and no
+// AnswersRecord of the test's own): the full check passes every rule, and the pinned
+// prd-lint accepts the head as a specification that waits for its bet.
+func TestTheSpecimenPassesTheFullCheckAndThePrdLintThroughTheProductionInput(t *testing.T) {
+	t.Parallel()
+	prd := specimen(t, -1)
+	dir, head := treeOf(t, entry{"100644", "docs/prd/PRD-0001-x.md", prd}, entry{"100644", "docs/spec/a.md", "## REQ-001 — Alpha\n\nThe text.\n"},
+		entry{"100644", "docs/facts/F-0003-setup-answers.md", "1. **x:** a\n"})
+	in, err := cavTreeInput(t, dir, head)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, row := range spec.CheckFull(in) {
+		if row[1] == "fail" {
+			t.Errorf("the rule %s fails on the specimen through the production input: %s", row[0], row[2])
+		}
+	}
+	root := t.TempDir()
+	for p, text := range map[string]string{"docs/prd/PRD-0001-x.md": prd, "docs/facts/F-0003-setup-answers.md": "1. **x:** a\n"} {
+		os.MkdirAll(filepath.Dir(filepath.Join(root, p)), 0o755)
+		os.WriteFile(filepath.Join(root, p), []byte(text), 0o644)
+	}
+	script, _ := filepath.Abs("../../docs/prd/prd-lint.sh")
+	if ok, lines, err := spec.WaitingSpecAccepted(script, filepath.Join(root, "docs", "prd")); err != nil || !ok {
+		t.Errorf("prd-lint: accepted %v, %v, %v", ok, lines, err)
+	}
+}
+
+// loop.md, The instruction of a task step: the prompt of the specification and the input of the full
+// check predict the facts records of one tree by one contract (the regular files of docs/facts/, as
+// the numbered-facts reader takes them). The ID that the prompt tells the specification to cite
+// is the one the input holds, the record that it names is among the input's records, and the
+// citations of that prompt pass the rule covers; an executable file or a link is no record for either.
+func TestThePromptAndTheFullInputPredictTheSameFactsRecords(t *testing.T) {
+	t.Parallel()
+	gitlink := strings.Repeat("1", 40)
+	setup := entry{"100644", "docs/facts/F-0003-setup-answers.md", "1. **x:** a\n"}
+	for _, c := range []struct {
+		name         string
+		extra        []entry
+		record, next string
+	}{
+		{"regular files only (the control)", []entry{{"100644", "docs/facts/F-0008-extra.md", "x\n"}}, "F-0008", "F-0009"},
+		{"an executable file", []entry{{"100755", "docs/facts/F-0008-extra.md", "x\n"}}, "F-0003", "F-0004"},
+		{"a link", []entry{{"120000", "docs/facts/F-0008-extra.md", "F-0003-setup-answers.md"}}, "F-0003", "F-0004"},
+		{"a gitlink", []entry{{"160000", "docs/facts/F-0008-extra.md", gitlink}}, "F-0003", "F-0004"},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			entries := append([]entry{{"100644", "docs/prd/PRD-0001-x.md", cavPRD}, setup}, c.extra...)
+			dir, head := treeOf(t, entries...)
+			tree, err := targetTreeAt(dir, head)
+			if err != nil {
+				t.Fatal(err)
+			}
+			record, next, err := factsRecords(tree.Facts)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if "F-"+record != c.record || "F-"+next != c.next {
+				t.Errorf("the prompt: record F-%s, next F-%s; want %s and %s", record, next, c.record, c.next)
+			}
+			in, err := cavTreeInput(t, dir, head)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !slices.Equal(in.PSBRecords, []string{"F-" + next}) || !slices.Contains(in.Records, "F-"+record) || in.Records[len(in.Records)-1] != "F-"+record {
+				t.Errorf("the full input: PSBRecords %v, Records %v; want the prompt's next F-%s and the record F-%s as the highest", in.PSBRecords, in.Records, next, record)
+			}
+			prd := strings.Replace(cavPRD, "F-0007#1", "F-"+next+"#1, F-"+record, 1)
+			in.PRDs = map[string][]byte{"PRD-0001-x.md": []byte(prd)}
+			for _, row := range spec.CheckFull(in) {
+				if row[0] == "covers" && row[1] == "fail" {
+					t.Errorf("the rule covers fails on the citations of the prompt: %s", row[2])
+				}
+			}
+		})
 	}
 }

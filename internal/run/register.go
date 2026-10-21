@@ -265,6 +265,12 @@ func (r *state) loopPermissionsStep() Step {
 // permissions first, and writes nothing when the task, the register or the
 // table is refused. The step of the caller (row 66k) is not named here.
 func (r *state) registerTask(ctx context.Context, t Task) error {
+	return r.registerTaskWith(ctx, t, nil)
+}
+
+// registerTaskWith is registerTask whose commit also holds the extra files (task T-2vva: the binding of an architecture task to its
+// option); a path that the commit already writes is refused.
+func (r *state) registerTaskWith(ctx context.Context, t Task, extra map[string][]byte) error {
 	if s := r.loopPermissionsStep(); s.Result == "fail" {
 		return fmt.Errorf("%s", s.Detail)
 	}
@@ -291,6 +297,12 @@ func (r *state) registerTask(ctx context.Context, t Task) error {
 		return err
 	}
 	maps.Copy(files, more)
+	for p, data := range extra {
+		if _, clash := files[p]; clash {
+			return fmt.Errorf("the extra file %s is a file of the commit that registers %s", p, t.ID)
+		}
+		files[p] = data
+	}
 	return Fenced(ctx, r.store, r.cfg.RunID, func(ctx context.Context) error {
 		return r.store.Commit(ctx, files, "tasks: register "+t.ID)
 	})

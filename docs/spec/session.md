@@ -56,6 +56,15 @@ session of a phase of `M2c` adds `input/`,
   `M2b`](packages.md#the-calls-of-internalgit)). **Decided here:** the clone
   takes only the default branch, so it holds no records branch, and it has no
   remote, so no command of the session reaches a remote through it.
+  **Decided here** (task `T-jy6f`, #415, plan amendment 1): a base that is not on the default
+  branch, the bound head that a verifier reviews or the specification's verified head that is
+  the architecture task's base (task `T-3f94`, #364, plan amendment 1), is made reachable before each session
+  starts: the task loop sets the branch `layup/base/<task>/<attempt>` of `layup run`'s clone to
+  the base (`UpdateRef`), and the session clones that branch instead of the default one;
+  the default branch is never moved. `TaskSession` also refuses, before the sweep and before
+  anything is made, a prompt file built for another task or at another base than the
+  session's (`the prompt file is of the task A, the session's task is B`; `the prompt file of T
+  was built at base A, the session's base is B`).
 - `home/`: the session's `HOME`; at the start it holds `home/.gitconfig`
   (the author `layup session <session>`, the e-mail
   `<session>@sessions.layup.invalid`; `.invalid` is reserved, RFC 2606, so no
@@ -63,8 +72,10 @@ session of a phase of `M2c` adds `input/`,
 - `tmp/`: empty when the directory is made; the session's `TMPDIR`, and the
   `HOME` of the version check (step 2), so it may hold what the version
   command wrote when the process starts.
-- `prompt.md`: the prompt, the caller's text (the fixed text of [the
-  probe](#the-probe), or the task of a session).
+- `prompt.md`: the prompt, the caller's text: the fixed text of [the
+  probe](#the-probe), or, for a step of a task, the prompt file of
+  [`loop.md`](loop.md#the-instruction-of-a-task-step) (the list of links and the
+  step's instruction).
 - `result/`: where the session writes its result file.
 - `stdout`, `stderr`: the two outputs of the process.
 
@@ -251,14 +262,19 @@ retrospective lessons of phase 4) has none: a session of Intake or of the Scaffo
 reads the `input/` files of its own section ([`intake.md`](intake.md#the-sessions-of-intake),
 [`scaffold.md`](scaffold.md#the-prose-rows)); the records that go into the prompt of
 the bet brief and of the retrospective lessons are those of their own sections
-(`loop.md`, "The bet"; `architecture.md` §13), not kinds of this table; the
+(`loop.md`, "The bet"; `architecture.md` §13), not kinds of this table: the step `bet-brief`, its inputs and its output are in
+[`loop.md`](loop.md#the-brief-of-the-first-bet); the
 Retrospective of `M2e` has no session. The values `by-class` (the tier is the task's
 class, `architecture.md` §9) and `owner-of-its-kind` (the owner map resolves the role
 before routing, `loop.md`) are the table's own words, not keys of the routing
 register, which takes a role and a tier of `reasoning` or `execution`; the Operator
 can replace the matrix per target, and this is its default. The builder of the prompt file, and the resolution of the two words,
 are `internal/run`'s (`PromptFile` and `ResolveStep`, task `T-6zj3`, [`loop.md`](loop.md#the-tier-and-the-context-of-a-task)); both
-values return copies.
+values return copies. **Decided here** (task `T-c6sx`, #416, row 66s): eight of the task steps have a fixed instruction after the
+list (`plan-of-a-task`, `plan-review`, `specification`, `shape-architecture`, `implement`, `verification`, `close-out` and, from row 66z
+(`T-r7b9`, #426), `answer-to-a-question`), and the
+two others (`shape-activation-batch` and `plan-of-a-milestone`) are refused by name; the list gains
+records items inside the same five kinds and no sixth kind ([`loop.md`](loop.md#the-instruction-of-a-task-step)).
 
 ### The limit of a session
 
@@ -403,7 +419,7 @@ branch), which announces the forge write (fencing, [`run.md`](run.md#the-lease-a
 then `Push` of the SHA to `task/<task>/<attempt>` with the installation token,
 never with force; then, after the forge accepts it, a records commit adds the
 event `bound`. A refused push binds nothing: an event `refused` with the detail
-`push-refused`. The session never pushes. **Decided here** (task `T-e3sy`,
+`push-refused`. The session never pushes. **Decided here** (task `T-jy6f`, #415): a task session of a step that only reads, `plan-of-a-task`, `plan-review` or `verification`, has no push hook: its head is its base, which would pass the checks and be bound, and a bound head would then say nothing about the developer. **Decided here** (task `T-e3sy`,
 condition 1 of the plan review of #167): a refused push is one that `Push`
 reports as its code 1, not a fast-forward or refused by the remote; a push that
 fails otherwise (the remote cannot be reached) is the run's own error, and no
@@ -411,7 +427,7 @@ event follows `push`, as the forge's answer is unknown. A `push` with no
 `bound` and no `refused` after it, from that error or from a lost lease at the
 commit of `bound`, is a forge write whose result is not recorded: the next
 reader of that session (the task loop of `M2e`) reads the target's branch
-before it acts on it. The push runs from `layup run`'s clone, with the head
+before it acts on it: `RepairTask` ([`loop.md`](loop.md#req-005--the-steps-of-the-loop-after-the-scaffold)) binds it when the head of the branch is the SHA of the `push` and refuses it as `push-lost` when it is not, and then starts one new attempt (task `T-syxm`). The push runs from `layup run`'s clone, with the head
 that the end fetched.
 
 ### A comment for a session
@@ -428,8 +444,12 @@ the session, those of the checks before a push and of the push too, from what
 the events hold, so it names the refusals of the end and of those checks
 (**decided here**, round 1 of #165); a session whose end recorded nothing has no
 comment, and a lost lease stops the run before it (round 2 of #165). The call is the forge's `Comment`
-([`forge.md`](forge.md#the-calls-of-m2b), O-189). The task loop of `M2e` moves
-a task's comments to the task's issue. The comment of a session of a phase of
+([`forge.md`](forge.md#the-calls-of-m2b), O-189). **Decided here** (task `T-syxm`): from
+`M2e` the comment of a task session is on the task's issue (`tasks.tsv`), with no
+fallback to the control issue; the forge's `Comments` is read before the post, and
+a comment of the App with the same bytes is not posted again; the lease is read
+right before the post; a session with no `result` event has no comment, before any
+read of the register. A comment that was not posted is posted again from the events. The comment of a session of a phase of
 `M2c` is in [`intake.md`](intake.md#the-sessions-of-intake) (task `T-gmey`).
 
 ## REQ-005 — The result of a session
@@ -662,6 +682,8 @@ gives no usage report (3000.11.3), so its rows use `none`.
 | A session's records commit with no `rule-paths.tsv`, or one that its reader refuses | the result is refused (`rule-paths`), and nothing is pushed |
 | A push of a session's head that `git` refuses (not a fast-forward, or refused by the remote) | the event `refused`, `push-refused`; nothing is bound |
 | A push of a session's head that fails otherwise (the remote cannot be reached) | the run's own error; no event follows `push` |
+| A `push` with no `bound` and no `refused` whose branch is absent or holds another SHA at a restart | the event `refused`, `push-lost`, then one new attempt (task `T-syxm`); a branch that cannot be read is the run's own error |
+| A task session whose comment cannot be placed (no register, no row of the task, a register that is refused) | the run's own error; no comment is posted (task `T-syxm`) |
 | A records push that is refused | the run stops, as [`run.md`](run.md#the-lease-and-fencing) |
 
 ## NFR-005 — No harness in the engine checks

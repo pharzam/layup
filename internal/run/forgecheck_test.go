@@ -2,15 +2,19 @@ package run
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/pharzam/layup/internal/forge"
 	"github.com/pharzam/layup/internal/git"
+	"github.com/pharzam/layup/internal/records"
 	"github.com/pharzam/layup/internal/tsv"
 )
 
@@ -298,10 +302,14 @@ type checkFake struct {
 	probedHead        string
 	activityRef       string
 	areaCalls         int
-	rulesRead         map[string]int // the reads of the effective rules of each branch
-	landingErr        error          // what the code-owner check answers: refused by default
-	landingCalls      [][2]string    // the head and the last commit of each call of the check
-	notes             []string       // the lines of the step's own
+	rulesRead         map[string]int      // the reads of the effective rules of each branch
+	landingErr        error               // what the code-owner check answers: refused by default
+	landingCalls      [][2]string         // the head and the last commit of each call of the check
+	notes             []string            // the lines of the step's own
+	recorded          map[string]string   // the merge commits that an event merged records, by the task (row 66g)
+	unrecorded        map[string]string   // the merge commits that the forge shows and no event records
+	mergesErr         error               // what the read of the merges answers
+	parentsOf         map[string][]string // the parents of a commit that the walk of the tree reads
 }
 
 // The IDs that the apply outputs of the fake give the two rulesets, and the rules as the forge returns them for a ruleset.
@@ -386,7 +394,14 @@ func (f *checkFake) job() forgeCheckJob {
 			f.landingCalls = append(f.landingCalls, [2]string{head, last})
 			return f.landingErr
 		},
-		note: func(s string) { f.notes = append(f.notes, s) },
+		note:   func(s string) { f.notes = append(f.notes, s) },
+		merges: func() (map[string]string, map[string]string, error) { return f.recorded, f.unrecorded, f.mergesErr },
+		parents: func(sha string) ([]string, error) {
+			if ps, ok := f.parentsOf[sha]; ok {
+				return ps, nil
+			}
+			return nil, fmt.Errorf("the commit %s is not in the clone", sha)
+		},
 	}
 }
 
@@ -674,4 +689,245 @@ func (f *checkFake) lastForTest(sha string) {
 	var t bytes.Buffer
 	tsv.Write(&t, SetupTreeSchema, [][]string{{"0", "1111111111111111111111111111111111111111", "2222222222222222222222222222222222222222", "root"}, {"1", sha, "3333333333333333333333333333333333333333", "S13"}})
 	f.treeText = t.String()
+}
+
+// The tree after the first merge (docs/spec/loop.md, The tree after the first merge; task T-xvvd, #363; the plan review of #363, condition 7).
+const (
+	mergeOne = "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1"
+	mergeTwo = "b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2"
+	plainOne = "c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3"
+)
+
+func chainParents(parents map[string][]string) func(string) ([]string, error) {
+	return func(sha string) ([]string, error) {
+		ps, ok := parents[sha]
+		if !ok {
+			return nil, fmt.Errorf("no commit %s", sha)
+		}
+		return ps, nil
+	}
+}
+
+func TestTheHeadIsExplainedOnlyByAChainOfMerges(t *testing.T) {
+	parents := map[string][]string{
+		mergeTwo: {mergeOne, plainOne}, mergeOne: {lastCommit, plainOne}, lastCommit: {"root"}, plainOne: {mergeOne}, "co": {lastCommit},
+		"above": {mergeTwo}, "bypass": {plainOne, mergeOne}, "cycleA": {"cycleB"}, "cycleB": {"cycleA"}, "orphan": nil,
+	}
+	both := map[string]string{mergeOne: "T-aa11", mergeTwo: "T-bb22"}
+	bottom := func(c string) bool { return c == lastCommit || c == "co" }
+	for _, c := range []struct {
+		name, head           string
+		recorded, unrecorded map[string]string
+		notes                []string
+		fails                bool
+	}{
+		{"two recorded merges above the setup head", mergeTwo, both, nil, nil, false},
+		{"an unrecorded merge on top of a recorded one, with its line", mergeTwo, map[string]string{mergeOne: "T-aa11"}, map[string]string{mergeTwo: "T-bb22"},
+			[]string{"tree: " + mergeTwo + " merge of T-bb22, not yet recorded"}, false},
+		{"the code-owner commit as the bottom", mergeOne, map[string]string{mergeOne: "T-aa11"}, nil, nil, false},
+		{"a plain commit above a recorded merge", "above", both, nil, nil, true},
+		{"a merge that no task owns", plainOne, map[string]string{mergeOne: "T-aa11"}, nil, nil, true},
+		{"the setup head after a merge is known: a rollback", lastCommit, both, nil, nil, true},
+		{"the first parent is a plain commit and the second a merge", "bypass", both, nil, nil, true},
+		{"a walk that never reaches the bottom", "cycleA", map[string]string{"cycleA": "T-aa11", "cycleB": "T-bb22"}, nil, nil, true},
+		{"a head with no parent", "orphan", map[string]string{"orphan": "T-aa11"}, nil, nil, true},
+	} {
+		notes, err := explainHead(c.head, lastCommit, chainParents(parents), c.recorded, c.unrecorded, bottom)
+		if (err != nil) != c.fails || !slices.Equal(notes, c.notes) {
+			t.Errorf("%s: explainHead = %q, %v; want notes %q and fails = %v", c.name, notes, err, c.notes, c.fails)
+		}
+		if c.fails && !errors.Is(err, errNotMerge) {
+			t.Errorf("%s: the error %v is not errNotMerge", c.name, err)
+		}
+	}
+	// A parent that cannot be read is a failure of the read, not of the chain.
+	_, err := explainHead(mergeTwo, lastCommit, chainParents(map[string][]string{}), both, nil, bottom)
+	if err == nil || errors.Is(err, errNotMerge) {
+		t.Errorf("a parent that cannot be read: %v; want an error that is not errNotMerge", err)
+	}
+}
+
+func treeWorld(head string) *checkFake {
+	f := newCheckFake()
+	f.repo.Heads["main"] = head
+	f.parentsOf = map[string][]string{mergeTwo: {mergeOne}, mergeOne: {lastCommit}, plainOne: {mergeOne}, lastCommit: {"root"}}
+	f.recorded = map[string]string{mergeOne: "T-aa11"}
+	return f
+}
+
+func TestTheTreeRowAcceptsAMergeNotYetRecordedWithItsLine(t *testing.T) {
+	f := treeWorld(mergeTwo)
+	f.unrecorded = map[string]string{mergeTwo: "T-bb22"}
+	got := f.job().do()
+	rows := f.rowsOf(t)
+	if got != (Step{"forge-check", "done", "the forge check passed"}) || rows[0][0] != "tree" || rows[0][1] != "pass" || rows[0][2] != "" {
+		t.Errorf("a merge not yet recorded: %+v, row %q; want done and a pass with no detail", got, rows[0])
+	}
+	if want := []string{"tree: " + mergeTwo + " merge of T-bb22, not yet recorded"}; !slices.Equal(f.notes, want) {
+		t.Errorf("the notes %q; want %q", f.notes, want)
+	}
+	// The control: the same merge recorded passes with no line.
+	f = treeWorld(mergeTwo)
+	f.recorded[mergeTwo] = "T-bb22"
+	if got := f.job().do(); got.Result != "done" || len(f.notes) != 0 {
+		t.Errorf("a recorded merge: %+v with the notes %q; want done and no line", got, f.notes)
+	}
+}
+
+func TestTheTreeRowFailsAHeadThatIsNoRecordedMerge(t *testing.T) {
+	for name, c := range map[string]struct {
+		head   string
+		change func(*checkFake)
+	}{
+		"a commit that reached the branch in another way": {plainOne, nil},
+		"the setup head after the first merge":            {lastCommit, nil},
+		"a head above the setup head with no merge known": {plainOne, func(f *checkFake) { f.recorded = nil }}, // the control of the other kind: the old rule
+	} {
+		f := treeWorld(c.head)
+		if c.change != nil {
+			c.change(f)
+		}
+		got := f.job().do()
+		rows := f.rowsOf(t)
+		if name == "a head above the setup head with no merge known" {
+			if !strings.HasPrefix(rows[0][2], "the head of main is "+c.head+", and setup/tree.tsv ends at") {
+				t.Errorf("%s: row %q; want the old words of the setup check", name, rows[0])
+			}
+			continue
+		}
+		if rows[0][1] != "fail" || rows[0][2] != c.head+" is not a recorded merge" || got != (Step{"forge-check", "fail", "tree: " + c.head + " is not a recorded merge"}) {
+			t.Errorf("%s: row %q, step %+v; want the fail %q", name, rows[0], got, c.head+" is not a recorded merge")
+		}
+	}
+}
+
+func TestTheTreeRowWithNoMergeKnownIsTheSetupCheckAndAReadOfTheMergesThatFailsIsAFail(t *testing.T) {
+	f := newCheckFake()
+	f.job().do()
+	if rows := f.rowsOf(t); rows[0][1] != "pass" {
+		t.Errorf("the setup head with no merge known: %q; want a pass", rows[0])
+	}
+	f = treeWorld(mergeTwo)
+	f.mergesErr = errors.New("tasks.tsv: line 3")
+	got := f.job().do()
+	rows := f.rowsOf(t)
+	if rows[0][1] != "fail" || !strings.Contains(rows[0][2], "tasks.tsv: line 3") || got.Result != "fail" || len(f.committed) != 1 {
+		t.Errorf("a read of the merges that fails: row %q, step %+v, %d tables; want a fail of the row that names it, with the table committed", rows[0], got, len(f.committed))
+	}
+	// The code-owner commit is the bottom of a chain of merges, and only when the setup's own check says so.
+	f = treeWorld(mergeOne)
+	f.parentsOf[mergeOne] = []string{"co"}
+	if f.job().do(); f.rowsOf(t)[0][1] != "fail" {
+		t.Error("a chain that ends at a commit the setup check refuses passed")
+	}
+	f = treeWorld(mergeOne)
+	f.parentsOf[mergeOne], f.landingErr = []string{"co"}, nil
+	if f.job().do(); f.rowsOf(t)[0][1] != "pass" || !slices.Contains(flatten(f.landingCalls), "co") {
+		t.Errorf("a chain that ends at the code-owner commit: %q, asked %v; want a pass, the setup check asked of co", f.rowsOf(t)[0], f.landingCalls)
+	}
+}
+
+func flatten(pairs [][2]string) []string {
+	var out []string
+	for _, p := range pairs {
+		out = append(out, p[0], p[1])
+	}
+	return out
+}
+
+// The merges of the tasks, as the step reads them from the records and the forge.
+func TestTheMergesAreReadFromTheEventsAndFromTheForgeForATaskWithNoEvent(t *testing.T) {
+	ctx := context.Background()
+	reg := func(t *testing.T, tasks ...Task) *standinStore {
+		t.Helper()
+		var b bytes.Buffer
+		if err := WriteRegister(&b, tasks); err != nil {
+			t.Fatal(err)
+		}
+		return &standinStore{files: map[string][]byte{tasksPath: b.Bytes()}}
+	}
+	task := func(id string, pr int) Task {
+		return Task{ID: id, Issue: 3, Kind: "build", Requirements: []string{"REQ-005"}, PR: pr, Opened: time.Date(2026, 10, 18, 9, 0, 0, 0, time.UTC)}
+	}
+	merged := func(t *testing.T, f *forge.Fake, branch string) string {
+		t.Helper()
+		f.SetHead(branch, head1)
+		pr, err := f.OpenDraft(ctx, branch, "main", "feat: x", "b")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := f.MarkReady(ctx, pr.NodeID); err != nil {
+			t.Fatal(err)
+		}
+		sha, err := f.Merge(ctx, pr.Number, head1)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return sha
+	}
+	eventsWith := func(t *testing.T, kind, sha, detail string) []byte {
+		t.Helper()
+		rows := [][]string{{"1", "attempt", "1", "", shaOld, "", "", "2026-10-18T10:00:00Z"}, {"2", kind, "1", "", "", sha, detail, "2026-10-18T10:00:00Z"}}
+		data, err := table(records.EventsSchema, rows)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return data
+	}
+
+	// Two tasks that the forge shows merged: each merge commit is its own task's.
+	f := forge.NewFake()
+	st := reg(t, task("T-aa11", 1), task("T-bb22", 2))
+	one, two := merged(t, f, "task/T-aa11/1"), merged(t, f, "task/T-bb22/1")
+	rec, unrec, err := mergeMaps(ctx, st, f)
+	if err != nil || len(rec) != 0 || !maps.Equal(unrec, map[string]string{one: "T-aa11", two: "T-bb22"}) {
+		t.Errorf("two merged pull requests: %v, %v, %v; want each merge commit with its own task, unrecorded", rec, unrec, err)
+	}
+	// A recorded merge is recorded and is not asked of the forge; a pull request that is open or closed unmerged is no merge; a task with no pull request is not asked.
+	f = forge.NewFake()
+	st = reg(t, task("T-aa11", 1), task("T-bb22", 2), task("T-cc33", 0))
+	st.files[eventsPath("T-aa11")] = eventsWith(t, "merged", head3, "1")
+	f.SetHead("task/T-bb22/1", head1)
+	if _, err := f.OpenDraft(ctx, "task/T-bb22/1", "main", "feat: x", "b"); err != nil { // number 1 is the other task's, which is never asked
+		t.Fatal(err)
+	}
+	if _, err := f.OpenDraft(ctx, "task/T-bb22/1", "main", "feat: x", "b"); err != nil { // number 2, open
+		t.Fatal(err)
+	}
+	spy := &spyForge{Fake: f}
+	rec, unrec, err = mergeMaps(ctx, st, spy)
+	if err != nil || !maps.Equal(rec, map[string]string{head3: "T-aa11"}) || len(unrec) != 0 {
+		t.Errorf("a recorded merge, an open pull request and a task with none: %v, %v, %v; want only the recorded merge", rec, unrec, err)
+	}
+	if spy.count("PullRequest") != 1 {
+		t.Errorf("%d reads of a pull request; want one, of the task with a pull request and no event", spy.count("PullRequest"))
+	}
+	closed := forge.PullRequest{Number: 2, State: "closed", HeadSHA: head1}
+	spy.found = &closed
+	if _, unrec, err := mergeMaps(ctx, st, spy); err != nil || len(unrec) != 0 {
+		t.Errorf("a pull request closed and not merged: %v, %v; want no merge", unrec, err)
+	}
+	nosha := forge.PullRequest{Number: 2, State: "closed", Merged: true, HeadSHA: head1}
+	spy.found = &nosha
+	if _, unrec, err := mergeMaps(ctx, st, spy); err != nil || len(unrec) != 0 {
+		t.Errorf("a merged pull request that gives no merge commit: %v, %v; want no merge", unrec, err)
+	}
+	// No register is no merge, and asks the forge nothing; a record that its reader refuses and a read of the forge that fails are errors.
+	spy = &spyForge{Fake: forge.NewFake()}
+	if rec, unrec, err := mergeMaps(ctx, &standinStore{files: map[string][]byte{}}, spy); err != nil || len(rec)+len(unrec) != 0 || len(spy.log) != 0 {
+		t.Errorf("no register: %v, %v, %v with the calls %v; want none and no call", rec, unrec, err, spy.log)
+	}
+	if _, _, err := mergeMaps(ctx, &standinStore{files: map[string][]byte{tasksPath: []byte("not a table")}}, spy); err == nil {
+		t.Error("a register that its reader refuses: no error")
+	}
+	st = reg(t, task("T-aa11", 1))
+	st.files[eventsPath("T-aa11")] = []byte("not a table")
+	if _, _, err := mergeMaps(ctx, st, spy); err == nil {
+		t.Error("an events.tsv that its reader refuses: no error")
+	}
+	st = reg(t, task("T-aa11", 1))
+	spy.Fake.Fail = "PullRequest"
+	if _, _, err := mergeMaps(ctx, st, spy); err == nil {
+		t.Error("a read of the forge that fails: no error")
+	}
 }

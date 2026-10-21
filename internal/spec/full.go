@@ -62,6 +62,7 @@ const (
 // "before the first bet", never of a read that failed.
 type FullInput struct {
 	Changed       []string          // the paths the head changes against the base, repo-relative
+	Records       []string          // the record IDs of the direct docs/facts/ entries at the head that prd-lint reads (F-NNNN*.md); a bare token naming one is no failure of covers
 	PSBRecords    []string          // the record IDs that number the problem statement's facts (LAYUP's own are F-0001 and F-0003, two records of the one file)
 	AnswersRecord string            // the record ID of the answers, whose fact N answers Q-00N (LAYUP's is F-0004)
 	PRDs          map[string][]byte // the head's docs/prd/PRD-*.md, by base name
@@ -75,7 +76,13 @@ type FullInput struct {
 	Copy          []byte            // the text of the latest bet's or decision's copy (the answer's lines)
 	Register      []byte            // the bytes of tasks.tsv
 	Merged        []string          // the IDs of the register's tasks whose pull request merged
+	Reopening     []string          // the facts the bet re-classed that needs and measures exempt at this head (loop.md, the full spec check)
+	Pending       []PendingReq      // the reopening of the task whose head is judged and every merged reopening, in the order of the stored rows: each must have its pending line under waits for a bet
 }
+
+// A PendingReq is the stored identity of a reopening whose pending line a head must hold, that of the task whose head is judged or of a task that
+// has merged: the fact, and the requirement ID that code allocated for it (none for a measure).
+type PendingReq struct{ Fact, Requirement string }
 
 // CheckFull gives the ten rows of the table tasks/<task>/spec-check.tsv:
 // rule, result, detail, in the block's order (the head column is the writer's,
@@ -269,7 +276,7 @@ func (c *fullCheck) resolveFact(tok string) (id string, ok bool) {
 	}
 	rec, num := m[1], m[2]
 	if num == "" {
-		if rec == c.in.AnswersRecord || slices.Contains(c.in.PSBRecords, rec) {
+		if rec == c.in.AnswersRecord || slices.Contains(c.in.PSBRecords, rec) || slices.Contains(c.in.Records, rec) {
 			return "", true
 		}
 		return "", false
@@ -292,12 +299,15 @@ func (c *fullCheck) resolveFact(tok string) (id string, ok bool) {
 // it stands (as the pinned producer reads them), the criteria table, the
 // success rows and the waits-for-a-bet extent.
 type prdData struct {
-	ok       bool
-	reqs     []prdReq
-	criteria map[string]string // requirement ID → its acceptance criterion
-	success  map[string]bool   // raw Fact tokens of the success-criterion rows
-	waits    map[string]bool   // raw cite tokens under a `waits for a bet` heading
-	cited    []citedTok        // every fact token cited, with its site
+	ok         bool
+	reqs       []prdReq
+	criteria   map[string]string // requirement ID → its acceptance criterion
+	statements map[string]string // requirement ID → the Statement cell of its row
+	metrics    []string          // the first cell of each row of a success-metrics table
+	success    map[string]bool   // raw Fact tokens of the success-criterion rows
+	waits      map[string]bool   // raw cite tokens under a `waits for a bet` heading
+	waitLines  []string          // the lines under a `waits for a bet` heading
+	cited      []citedTok        // every fact token cited, with its site
 }
 
 type citedTok struct{ tok, site string }
@@ -313,8 +323,22 @@ var (
 	sepCell     = regexp.MustCompile(`^:?-+:?$`)
 )
 
+// PRDContent is the words of the requirement rows of PRD files (task T-h65e, #418): the Statement cell of each row of the requirements
+// table by its ID, the acceptance criterion of each row of the criteria table by its requirement, and the first cell of each row of a
+// success-metrics table, in the order of the files by name and of the rows.
+type PRDContent struct {
+	Statements, Criteria map[string]string
+	Metrics              []string
+}
+
+// ContentOfPRDs reads the words of the PRD files, by the same parse as the full check.
+func ContentOfPRDs(prds map[string][]byte) PRDContent {
+	p := parsePRDs(prds)
+	return PRDContent{Statements: p.statements, Criteria: p.criteria, Metrics: p.metrics}
+}
+
 func parsePRDs(prds map[string][]byte) prdData {
-	p := prdData{ok: len(prds) > 0, criteria: map[string]string{}, success: map[string]bool{}, waits: map[string]bool{}}
+	p := prdData{ok: len(prds) > 0, criteria: map[string]string{}, statements: map[string]string{}, success: map[string]bool{}, waits: map[string]bool{}}
 	for _, name := range slices.Sorted(maps.Keys(prds)) {
 		p.parse(name, string(prds[name]))
 	}
@@ -340,6 +364,7 @@ func (p *prdData) parse(name, text string) {
 			continue
 		}
 		if inWaits {
+			p.waitLines = append(p.waitLines, l)
 			for _, tok := range citeTok.FindAllString(l, -1) {
 				p.waits[tok] = true
 				p.cited = append(p.cited, citedTok{tok, "a requirement marked waits for a bet"})
@@ -367,6 +392,7 @@ func (p *prdData) parse(name, text string) {
 		if len(cells) == 5 && reqIDCell.MatchString(cells[0]) {
 			r := prdReq{id: cells[0], mo: cells[2], phase: cells[3], facts: factTokens(cells[4]), file: name}
 			p.reqs = append(p.reqs, r)
+			p.statements[r.id] = cells[1]
 			for _, tok := range r.facts {
 				p.cited = append(p.cited, citedTok{tok, "the Facts cell of " + r.id})
 			}
@@ -380,6 +406,7 @@ func (p *prdData) parse(name, text string) {
 			}
 		case "success":
 			if factCol >= 0 && factCol < len(cells) {
+				p.metrics = append(p.metrics, cells[0])
 				for _, tok := range factTokens(cells[factCol]) {
 					p.success[tok] = true
 					p.cited = append(p.cited, citedTok{tok, "a success-criterion row"})
@@ -479,10 +506,13 @@ func (c *fullCheck) needs() verdict {
 	if c.u.notWhy != "" {
 		return noRun(c.u.notWhy)
 	}
+	if d := c.pendingMissing(false); d != "" {
+		return failv(d)
+	}
 	covered := c.citedSet()
 	var facts []string
 	for f, class := range c.u.class {
-		if (class == "need" || class == "constraint") && !c.u.out[f] && !covered[f] && !c.waitsCover(f) {
+		if (class == "need" || class == "constraint") && !c.u.out[f] && !covered[f] && !c.waitsCover(f) && !slices.Contains(c.in.Reopening, f) {
 			facts = append(facts, f)
 		}
 	}
@@ -505,6 +535,9 @@ func (c *fullCheck) measures() verdict {
 	if c.u.notWhy != "" {
 		return noRun(c.u.notWhy)
 	}
+	if d := c.pendingMissing(true); d != "" {
+		return failv(d)
+	}
 	cited := map[string]bool{}
 	for tok := range c.prd.success {
 		if id, ok := c.resolveFact(tok); ok && id != "" {
@@ -513,7 +546,7 @@ func (c *fullCheck) measures() verdict {
 	}
 	var facts []string
 	for f, class := range c.u.class {
-		if class == "measure" && !c.u.out[f] && !cited[f] && !c.waitsCover(f) {
+		if class == "measure" && !c.u.out[f] && !cited[f] && !c.waitsCover(f) && !slices.Contains(c.in.Reopening, f) {
 			facts = append(facts, f)
 		}
 	}
@@ -522,6 +555,38 @@ func (c *fullCheck) measures() verdict {
 		return failv(fmt.Sprintf("the measure fact %s has no success-criterion row", facts[0]))
 	}
 	return pass()
+}
+
+// pendingMissing gives the first reopening of Pending (the head's own task and every merged one) whose pending line is not under a `waits for a bet` heading, "" for none: a line
+// that cites the fact and, for a requirement, holds the ID that code allocated (a measure has none). It reads the stored identity, so a requirement of
+// the table that already covers the fact (a need changed to a constraint) is not the pending output. measure selects the measures.
+func (c *fullCheck) pendingMissing(measure bool) string {
+	for _, p := range c.in.Pending {
+		if (p.Requirement == "") != measure {
+			continue
+		}
+		found := false
+		for _, l := range c.prd.waitLines {
+			for _, tok := range citeTok.FindAllString(l, -1) {
+				if id, ok := c.resolveFact(tok); ok && id == p.Fact && (p.Requirement == "" || holdsWord(l, p.Requirement)) {
+					found = true
+				}
+			}
+		}
+		if !found {
+			what := "success criterion"
+			if p.Requirement != "" {
+				what = "requirement " + p.Requirement
+			}
+			return fmt.Sprintf("the reopened %s fact %s has no pending %s under waits for a bet", c.u.class[p.Fact], p.Fact, what)
+		}
+	}
+	return ""
+}
+
+// holdsWord reports whether the line holds the ID as a whole word.
+func holdsWord(line, id string) bool {
+	return regexp.MustCompile(`(^|[^0-9A-Za-z])` + regexp.QuoteMeta(id) + `([^0-9A-Za-z]|$)`).MatchString(line)
 }
 
 // waitsCover reports whether a waits-for-a-bet section names the fact.

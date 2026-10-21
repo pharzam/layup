@@ -1,0 +1,7 @@
+1
+ok K1: white space
+FAIL K2: internal/x/a_test.go:11: TestNew is not in docs/prd/PRD-0001-layup.md §12 REQ-001 Test cell
+ok K3: test selectors
+ok K4: restore evidence of mutants
+ok K5: projection: figure 4/3, maximum 100/10, tolerance 60/4, limit 160/14, margin 156/11 (the figure at landing is still measured at landing)
+ok K6: conditions table
