@@ -58,6 +58,14 @@ Each fix reverted alone (`git apply -R` of its patch, `fix-copies.patch` sha256 
 | `git diff --check origin/main HEAD` | after 10:19:01 | 0 |
 | `docs/tasks/task-state.sh` | after 10:19:01 | `T-3xvc #368 in progress` |
 
+## Round 1 of #368 (material: two test-oracle findings)
+
+**Finding 1, the statuses at the merge.** The fake now keeps, at each merge request, a snapshot of the statuses at the requested SHA (`atMerge`), and `loopMerged` asserts the four newest App statuses from that snapshot through `notGreen`. Red first: the probe test `TestTheMergeOracleRefusesStatusesPostedAfterTheMergeRequest` (a snapshot with only `layup/verify`, the other three posted after the request) against a stub `notGreen` that accepted everything: exit 1, `a snapshot with layup/verify alone: []; want the other three contexts` and `a newer failure and a newer status of another creator: []` (`red-oracle.txt`). Green: with `notGreen` written, the probe passes, and so does the real run (`ok 21.407s`, both tests together).
+
+**Finding 2, C1.** Stage 6 now asserts, before the comparison of the endpoint, that the log holds two merge requests. C1 rerun with the existing method (control green, build ok, vet ok, restore hash equal, control green after): killed by `loop_e2e_test.go:444: stage 6: 0 merge requests in the log; want 2, one for each task of Shape`, before the row comparison at `:447` (`mutants.md`). E2 is now also killed there (`1 merge requests`).
+
+Checks on the head `dd02f40a` plus this record: build, vet (default, integration, e2e), gofmt, unit, all exit 0 (10:35); `go test -count=1 -tags=e2e -timeout 10m ./...` exit 0 at 10:36:52, package `cmd/layup` **85.678s**; the six lints, `freeze-check/run-all` and `git diff --check origin/main HEAD` exit 0. No product code changed, so the integration level was not rerun.
+
 ## The pre-freeze check
 
 `sh docs/tests/freeze-check.sh --task T-3xvc --base 30e2c0d48b5a0f8c9e6132e9232ce81bf3779a49 --budget 850/12 --evidence runs/T-3xvc/test-runs.md --evidence runs/T-3xvc/mutants.md --evidence runs/T-3xvc/conditions.md` on the clean committed head `c826afa9` (main `30e2c0d` already in it), 10:21:25 UTC, exit 0. The first run failed K3 and K6 on the form of the evidence (selectors unquoted, code spans that were not paths); fixed in the evidence files, not in code.
