@@ -2876,6 +2876,28 @@ the milestone covers it end to end.
 | The specification task, end to end (inventory) | e2e | In CI on a local fake forge, with scripted harnesses and scripted approver comments: Shape, the first bet, and the specification task merged with the four `layup/` statuses green. |
 | The demo (inventory) | uat | On a real test target, the idea owner reads a bet brief of five parts within the line limit and answers it with one comment; the specification task merges after the first bet, with each handoff valid, the rendered commit holding the MoSCoW and Phase columns, and the four `layup/` checks green. |
 
+### The specification task, end to end
+
+**Decided here** (R10, task `T-3xvc`, #368, row 67; the plan review is the comment 6313077503 of #368). The e2e test `TestTheSpecificationTaskEndToEnd` of
+`cmd/layup` reads this contract and nothing else:
+
+- **The world.** The scaffold world with one decision `db` whose option `pg` passes the invariant and the accepted decision record of the baseline and whose option `sqlite` fails the invariant
+  (one survivor and one drop), three harnesses (the authors on one, the verifier outside them), the routing of the task steps, and the target's pinned `docs/prd/prd-lint.sh` in the baseline. The PRD
+  of the specification step is made from the forms of its instruction and the draft that its prompt lists.
+- **Seven runs of the binary.** `run --new` (nine rows); a restart to the batch; a restart after the answers and the Operator's `set brief.lines`, which waits at `scaffold-push`; the Operator's `commands.sh`;
+  a restart that ends at `forge-check` (the tail of a restart is chosen before the check runs); a restart that runs `shape` to the verified heads of both tasks and `bet` to its wait for the answer; a restart after the
+  idea owner's answer, which makes the bet and ends `loop done the loop merged <specification>, <architecture>` (the loop does not stop between the two tasks, D4), exit 0; and a repeat restart, `loop done done before`,
+  which makes no request of the forge other than a read and the issue of a token.
+- **The fake forge stands for the target's CI.** Each required job of GitHub Actions in the served ruleset has a check run of the Actions app, `completed` and `success`, at every head; the four `layup/` statuses at a head are
+  those of the binary alone. The routes are the e2e copy of the integration level's fake, kept in step by hand.
+- **What it asserts at the merge.** For each task: exactly one merge request, with the head `H` of the branch as its `sha`, after a ready mark; the newest status of each of the four contexts at `H` is the App's and `success`; the
+  first-parent merge commit `M` of the default branch has the second parent `H`; the event `merged` holds `M` and the pull request number; each `handoff` event is `valid`. For the first bet: one row of `bets.tsv` with the verdict `bet`, the inventory,
+  and a rendered commit that adds the numbered facts record and changes only the MoSCoW and Phase cells of the requirement's row, compared on the bytes of the PRD.
+- **The repair rule.** A defect that the run exposes on this path is fixed in the same pull request when it fits the budget of the task, with its test; a defect off the path opens an issue; a blocker over the budget becomes a child issue
+  and the row waits. Two defects on the path were fixed here: the step that copies a comment of the control issue wrote `copies.tsv` from the rows it had read at its start, and dropped the copies that the sessions of the Shape tasks had added since (the
+  first read of the Operator's `set` comes after the first task); and the four checks of a task brought current by a merge of the default branch judged the head against the base of the attempt, so the numbered facts record that the merge brought in was a
+  rule-path change of the architecture task (they now judge it against the default head that the merge took in).
+
 ### The demo and the release review
 
 Defined here, as acceptance contracts; the rows, their IDs, issues and the inputs
@@ -2889,8 +2911,8 @@ demo of `M2d` held five rules (`runs/T-sdtb/README.md`), this one passes when ea
 five rules holds on the target and fails when one is false: (1) each handoff of the
 task is a `handoff` event `valid`; (2) the rendered commit changes only the MoSCoW and
 Phase columns, the non-goals and the facts record; (3) the four `layup/` statuses are
-`success` at the merged head, read from the forge; (4) the merge is the recorded
-`merged` event at that head SHA; (5) a pull request that weakens its own gate is
+`success` at the merged head, read from the forge; (4) the merge request names
+that head `H` as its `sha`, and the recorded `merged` event holds the merge commit `M` (whose second parent is `H`) and the number of the pull request; (5) a pull request that weakens its own gate is
 refused. The evidence is kept under `runs/` by the slicing task's demo row, the Operator
 accepts the scenario in one word before the review, and a defect that the demo
 finds is a task of its own. **The inputs** it needs from the Operator (for the

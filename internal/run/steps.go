@@ -699,6 +699,19 @@ func (r *state) copy(ctx context.Context, c forge.Comment, issue int) error {
 	if !ok {
 		return nil
 	}
+	// A session copies the comments of its task into copies.tsv too: the rows this run read at its start are not the file (task T-3xvc, a lost update).
+	file, err := r.store.ReadFile(ctx, "copies.tsv")
+	if err != nil {
+		return err
+	}
+	if file != nil {
+		if r.copies, err = records.ReadCopies(file); err != nil {
+			return err
+		}
+		if row, body, ok = Copy(r.copies, c, issue, r.cfg.Clock.Now()); !ok {
+			return nil
+		}
+	}
 	data, err := table(records.CopiesSchema, append(slices.Clone(r.copies), row))
 	if err != nil {
 		return err
