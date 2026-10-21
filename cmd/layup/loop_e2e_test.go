@@ -455,8 +455,7 @@ func TestTheSpecificationTaskEndToEnd(t *testing.T) {
 		briefs() != 1 || !strings.Contains(record(t, w, "parameters.tsv"), "\nbrief.lines\t80\t") {
 		t.Fatalf("stage 5: the rows %q, %d briefs\n%s\n%s", rows, briefs(), r.stdout, r.stderr)
 	}
-	// Stage 5, task T-36xw (#471): the Operator's answers are ranges with a link to bets/1/facts.md at a pinned records commit, and the records at
-	// that commit hold the file.
+	// Stage 5, task T-36xw (#471): the Operator's answers are ranges with a link to bets/1/facts.md at a pinned records commit that holds the file.
 	posted := ""
 	w.forge.mu.Lock()
 	for _, c := range w.forge.intake {
@@ -469,11 +468,9 @@ func TestTheSpecificationTaskEndToEnd(t *testing.T) {
 	if linked == nil {
 		t.Fatalf("stage 5: the posted brief holds no link to blob/<sha>/bets/1/facts.md:\n%s", posted)
 	}
-	if atSHA, err := gitRun(w.bare, "show", linked[1]+":bets/1/facts.md"); err != nil || atSHA != record(t, w, "bets/1/facts.md") || atSHA == "" {
-		t.Errorf("stage 5: bets/1/facts.md at %s = %q, %v; want the file of the records", linked[1], atSHA, err)
-	}
-	if _, err := gitRun(w.bare, "merge-base", "--is-ancestor", linked[1], "refs/heads/layup-records"); err != nil {
-		t.Errorf("stage 5: the pinned commit %s is not on layup-records: %v", linked[1], err)
+	_, onRecords := gitRun(w.bare, "merge-base", "--is-ancestor", linked[1], "refs/heads/layup-records")
+	if atSHA, err := gitRun(w.bare, "show", linked[1]+":bets/1/facts.md"); err != nil || atSHA == "" || atSHA != record(t, w, "bets/1/facts.md") || onRecords != nil {
+		t.Errorf("stage 5: bets/1/facts.md at %s = %q, %v, on layup-records: %v; want the file of the records", linked[1], atSHA, err, onRecords == nil)
 	}
 
 	// Stage 6: the idea owner approves the brief; the restart goes on from the records to the merge of both tasks.
@@ -519,14 +516,12 @@ func TestTheSpecificationTaskEndToEnd(t *testing.T) {
 	if !regexp.MustCompile(`^A\tdocs/facts/F-\d{4}-numbered-facts\.md\nM\tdocs/prd/PRD-0001-x\.md\n$`).MatchString(diff) {
 		t.Fatalf("the rendered commit %q changes\n%s\nwant the PRD and a new numbered facts record", rendered, diff)
 	}
-	// Task T-36xw (condition 5 of the plan review of #471): the rendered facts record holds every fact with its text, the Operator's answers that
-	// the brief left out too, line by line against the records.
-	factsFile := regexp.MustCompile(`A\t(docs/facts/F-\d{4}-numbered-facts\.md)\n`).FindStringSubmatch(diff)[1]
-	renderedFacts, _ := gitRun(w.bare, "show", rendered+":"+factsFile)
+	// Task T-36xw (condition 5 of the plan review of #471): the rendered facts record holds every fact with its text, the Operator's too.
+	renderedFacts, _ := gitRun(w.bare, "show", rendered+":"+regexp.MustCompile(`A\t(docs/facts/F-\d{4}-numbered-facts\.md)\n`).FindStringSubmatch(diff)[1])
 	spansRows, _ := records.ReadSpans([]byte(record(t, w, "spec/spans.tsv")))
 	answerRows, _ := records.ReadAnswers([]byte(record(t, w, "intake/answers.tsv")))
 	questionRows, _ := records.ReadQuestions([]byte(record(t, w, "questions.tsv")))
-	want := map[string]string{}
+	want, operatorAnswers := map[string]string{}, 0
 	for _, row := range spansRows {
 		if row[2] != "" {
 			want[row[2]] = row[5]
@@ -534,16 +529,11 @@ func TestTheSpecificationTaskEndToEnd(t *testing.T) {
 	}
 	for _, row := range answerRows {
 		want[row[0]] = row[1]
-	}
-	operatorAnswers := 0
-	for _, q := range questionRows {
-		if _, answered := want[q[0]]; answered && q[3] == "operator" {
-			operatorAnswers++
-		}
+		operatorAnswers += map[bool]int{true: 1}[slices.ContainsFunc(questionRows, func(q []string) bool { return q[0] == row[0] && q[3] == "operator" })]
 	}
 	lines := strings.Split(strings.TrimSuffix(renderedFacts, "\n"), "\n")
 	if operatorAnswers == 0 || len(lines) != len(want) {
-		t.Errorf("the rendered facts record has %d lines, the records %d facts, %d answers of the Operator's; want equal counts and at least one answer of the Operator's", len(lines), len(want), operatorAnswers)
+		t.Errorf("the rendered facts record has %d lines, the records %d facts, %d answers of the Operator's; want equal counts and one answer of the Operator's at least", len(lines), len(want), operatorAnswers)
 	}
 	for id, text := range want {
 		if !slices.ContainsFunc(lines, func(l string) bool { return strings.HasPrefix(l, id+". **") && strings.HasSuffix(l, ":** "+text) }) {

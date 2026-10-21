@@ -1059,33 +1059,31 @@ func TestMergeMakesOneDeterministicMergeCommitOrReportsAConflict(t *testing.T) {
 	}
 }
 
-// LastChange gives the last commit that changed a path, not the tip: a later commit that touches another path does not move it; a path
-// that no commit touched gives the empty string; several paths give the latest of their last changes; a rev that names no commit is an
-// error (task T-36xw, #471: the brief pins the links of the facts left out at this commit).
+// LastChange gives the last commit that changed a path, not the tip; a path that no commit touched gives the empty string; several paths
+// give the latest of their last changes; a rev that names no commit is an error (task T-36xw, #471: the brief pins its links at it).
 func TestLastChange(t *testing.T) {
 	isolate(t)
 	dir := t.TempDir()
 	first := commitTree(t, dir, map[string]string{"a.txt": "a\n", "b.txt": "b\n"})
-	write(t, dir, map[string]string{"b.txt": "b2\n"})
-	must(t, Add(dir))
-	must(t, Commit(dir, "chore: two", who))
-	second, err := RevParse(dir, "HEAD")
-	must(t, err)
-	write(t, dir, map[string]string{"c.txt": "c\n"})
-	must(t, Add(dir))
-	must(t, Commit(dir, "chore: three", who))
-	third, err := RevParse(dir, "HEAD")
-	must(t, err)
+	var later []string
+	for _, file := range []string{"b.txt", "c.txt"} {
+		write(t, dir, map[string]string{file: file + "2\n"})
+		must(t, Add(dir))
+		must(t, Commit(dir, "chore: "+file, who))
+		id, err := RevParse(dir, "HEAD")
+		must(t, err)
+		later = append(later, id)
+	}
 	for name, c := range map[string]struct {
 		rev   string
 		paths []string
 		want  string
 	}{
 		"a path not touched since the first": {"HEAD", []string{"a.txt"}, first},
-		"a path changed by the second":       {"HEAD", []string{"b.txt"}, second},
-		"a path added by the tip":            {"HEAD", []string{"c.txt"}, third},
-		"several paths: the latest":          {"HEAD", []string{"a.txt", "b.txt"}, second},
-		"as seen from an older rev":          {second, []string{"c.txt", "b.txt"}, second},
+		"a path changed by the second":       {"HEAD", []string{"b.txt"}, later[0]},
+		"a path changed by the tip":          {"HEAD", []string{"c.txt"}, later[1]},
+		"several paths: the latest":          {"HEAD", []string{"a.txt", "b.txt"}, later[0]},
+		"as seen from an older rev":          {later[0], []string{"c.txt", "b.txt"}, later[0]},
 		"a path no commit touched":           {"HEAD", []string{"none.txt"}, ""},
 	} {
 		if got, err := LastChange(dir, c.rev, c.paths...); err != nil || got != c.want {

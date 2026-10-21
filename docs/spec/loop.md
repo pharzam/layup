@@ -1974,35 +1974,30 @@ parses the answer. Everything below is **decided here** (R10, note 6198919867 of
     the `text` column; then one fact per answer, by its ID, with the answer's text and its class `answerFactClass`, **except** the answers
     of the questions of the block `operator`, which one line for each class stands for (the next item).
   - `links.md`: the allowed link targets, one for each line, in order.
-- **The facts and questions left out** (task `T-36xw`, #471; decided by the Operator on 2026-10-21 at the plan review: option (b), by block).
-  The brief of an Intake of the size of M2d's (319 answers, 150 setup questions still open) must fit `brief.lines` with room for the
-  session's own text, so the brief does not copy the texts of the Operator's answers.
-  - **The rule is by block** (the column `block` of `questions.tsv`; a follow-up and a Shape row carry the block of the question they ask
-    again). Kept in the brief, each with its ID, class and text: every span fact; every answer whose question is not in the block `operator`
-    (an answer whose question is not in `questions.tsv` stays too: the rule fails toward showing); every question still open outside the
-    block `operator`. Left out: the answers of the questions of the block `operator`, and the questions still open of that block.
-  - **The lines in their place.** For the answers left out, one line for each class that is present, in the order need, constraint, measure,
-    context, after the lines kept: `- <ranges> (<class>): the answers of the Operator's questions; check the class of each against its text in
-    [the facts of the bet <m>](https://github.com/<owner>/<name>/blob/<sha>/bets/<m>/facts.md)`. For the questions left out, one line after the questions kept: `- <ranges>: the Operator's questions
-    still open, each with its text in [the questions still open of the bet <m>](https://github.com/<owner>/<name>/blob/<sha>/bets/<m>/open.md)`. `<ranges>` names **exactly** the set left out: the
-    IDs in the order of their numbers, a run of IDs whose numbers follow one another written `Q-015 to Q-169`, a single ID alone, runs
-    joined by `, `. A gap in the numbers, and an ID that the brief keeps, end a run.
-  - **Every fact keeps its ID and class in the brief**, as its own line or inside a range, and its text is in the brief or at the link, so
-    the idea owner can check every class (a `context` class too: a short answer does not show that its class is right) and change one with
-    a line `fact <id>: <class>`. `ParseAnswer` takes any ID of the basis, which holds every fact; a range is no ID.
-  - **The linked files** are Markdown, with no TSV schema block (the layout is here and in [`records.md`](records.md)):
-    `bets/<milestone>/facts.md` is exactly `facts.md` of code for all the facts (one line `- <id> (<class>): <text>` each, the texts
-    copied by `plain`, which writes `] (` for `](` and keeps no link in a text; a TSV field holds no line break, `README.md`), and
-    `bets/<milestone>/open.md` is the part `open.md` of code for all the questions still open (its first line `### The questions still open`).
-    A file is written only when the brief leaves something out of it.
-  - **The annex commit.** After the two waits and the choice of the pair, and before the first session, the run reads both files from the
-    records and writes the ones whose bytes differ in one fenced records commit `layup run: the facts and questions of the bet <milestone>`;
-    equal bytes write nothing, so a restart on the same inputs makes no commit.
-  - **The pin.** The SHA of the links is `git log -1 --format=%H --end-of-options <base> -- <the paths of the files written for the brief>`
-    on the records base (`git.LastChange`): the last commit that changed them, not the tip, which every heartbeat moves. The URLs
-    `https://github.com/<owner>/<name>/blob/<sha>/bets/<milestone>/facts.md` and `.../open.md` join the set of the links. A changed text of
-    an answer or a question left out changes the file, so the SHA, so the part of code, and a candidate made before is refused with the rule
-    `fixed`.
+- **The facts and questions left out** (task `T-36xw`, #471; the Operator, 2026-10-21, at the plan review: option (b), by block). The brief of an
+  Intake of the size of M2d's (319 answers, 150 setup questions still open) must fit `brief.lines` with room for the session's text, so it does not
+  copy the texts of the Operator's answers.
+  - **The rule is by block** (the column `block` of `questions.tsv`, which a follow-up and a Shape row carry from the question they ask again).
+    Kept in the brief with ID, class and text: every span fact, every answer of a question outside the block `operator` (an answer whose question
+    `questions.tsv` lacks too: the rule fails toward showing), every question still open outside it. Left out: the answers of the block
+    `operator` and its questions still open.
+  - **The lines in their place.** After the lines kept, one line for each class present among the answers left out, in the order need,
+    constraint, measure, context: `- <ranges> (<class>): the answers of the Operator's questions; check the class of each against its text in
+    [the facts of the bet <m>](https://github.com/<owner>/<name>/blob/<sha>/bets/<m>/facts.md)`; and one for the questions left out: `- <ranges>:
+    the Operator's questions still open, each with its text in [the questions still open of the bet <m>](https://github.com/<owner>/<name>/blob/<sha>/bets/<m>/open.md)`.
+    `<ranges>` names **exactly** the set left out, in the order of the numbers: a run of consecutive numbers is `Q-015 to Q-169`, a single ID
+    stands alone, runs are joined by `, `; a gap, or an ID that the brief keeps, ends a run.
+  - **Every fact keeps its ID and class in the brief**, as its own line or inside a range, and its text is in the brief or at the link: the idea
+    owner checks every class (a `context` too: a short answer does not show that its class is right) and changes one with `fact <id>: <class>`.
+    `ParseAnswer` takes any ID of the basis, which holds every fact; a range is no ID.
+  - **The linked files** are Markdown with no TSV schema block (the layout is here and in [`records.md`](records.md)): `bets/<milestone>/facts.md`
+    is `facts.md` of code for all the facts (one line `- <id> (<class>): <text>` each; `plain` escapes link syntax and removes no line break, which a TSV field does not hold, `README.md`), and
+    `bets/<milestone>/open.md` is `open.md` of code for all the questions still open. A file is written only when the brief leaves something out of it.
+  - **The annex commit.** After the two waits and the choice of the pair, before the first session, the run writes the files whose bytes differ from
+    the records in one fenced commit `layup run: the facts and questions of the bet <milestone>`; equal bytes write nothing, so a restart makes no commit.
+  - **The pin.** The SHA of the links is `git log -1 --format=%H --end-of-options <base> -- <the files of the brief>` on the records base
+    (`git.LastChange`): the last commit that changed them, not the tip, which every heartbeat moves. Their URLs join the set of the links. A changed
+    text left out changes the file, so the SHA, so the part of code, and a candidate made before is refused with the rule `fixed`.
 - **The class of the fact of an answer** (`answerFactClass`): the class of the span fact that holds the first byte of the question's quote;
   a follow-up, and Shape's row, takes the quote of the question it asks again (its `ref`); a question with no quote, or a quote outside
   every fact, is `context`. The approver confirms or changes it with a line `fact <id>: <class>`.
