@@ -205,3 +205,36 @@ Go 1.26.10 in every command. Each red ran before its code change.
 ### Mutants of the round (late evidence)
 
 M19 (finding 1), G1 (finding 2) and G5 (finding 3) are killed; G11 (the reread of the view after the pushes are resolved) is not, and is recorded as such. Every restore matched its hash and every control was green (`runs/T-9nbf/mutants.md`, 30 mutants, 29 killed). The line "2 not killed (G1 equivalent, G5 not reached)" in S6 above is superseded by it.
+
+### Gates of the round, on the head `9dfea6da` (late evidence; each command alone, output outside the worktree)
+
+| Command | Start to end (Z) | Exit |
+| --- | --- | --- |
+| `go build ./...` | 09:10:57 to 09:10:57 | 0 |
+| `go vet ./...` | 09:10:57 to 09:10:57 | 0 |
+| `go vet -tags=integration ./...` | 09:10:57 to 09:10:57 | 0 |
+| `go vet -tags=e2e ./...` | 09:10:57 to 09:10:58 | 0 |
+| `go test -count=1 ./...` | 09:10:58 to 09:10:59 | 0 |
+| full integration | 09:10:59 to 09:15:08 | 0 |
+| `go test -count=1 -tags=e2e ./...` | 09:15:08 to 09:16:14 | 0 |
+| `sh docs/adr/adr-lint.sh` | 09:16:14 to 09:16:16 | 0 |
+| `sh docs/prd/prd-lint.sh` | 09:16:16 to 09:16:16 | 0 |
+| `sh docs/links/link-lint.sh` | 09:16:16 to 09:16:30 | 0 |
+| `sh docs/tests/run-discipline-tests.sh` | 09:16:30 to 09:16:33 | 0 |
+| `sh docs/tests/nested-checkout-check.sh` | 09:16:33 to 09:16:33 | 0 |
+| `sh docs/setup/setup-check.sh` | 09:16:33 to 09:16:57 | 0 |
+| `sh docs/tests/freeze-check/run-all.sh` | 09:16:57 to 09:17:06 | 0 |
+| `git diff --check origin/main HEAD` | 09:17:06 to 09:17:06 | 0 |
+
+The full integration level: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./...`, on the code head (the commits after it change records and documents). The pre-freeze check, on the clean committed head 9dfea6da merged with `origin/main` at `c0f691e`, exit 0:
+
+```text
+ok K1: white space
+ok K2: registration of new tests
+FAIL K3: runs/T-9nbf/test-runs.md:188: selector TestASuccessfulCloseOutPushWhoseAnswerWasLostIsBoundByTheRestart matches no test in the named packages
+FAIL K3: runs/T-9nbf/test-runs.md:188: selector TestAnAttemptAfterTheBetWithNoRenderedCommitIsTheStopOfTheOperator matches no test in the named packages
+FAIL K3: runs/T-9nbf/test-runs.md:188: selector TestAReopenedTaskReachesItsVerifierWithoutTheWaitingSpecCheckAndTheJobStillBlocksItsMerge matches no test in the named packages
+ok K4: restore evidence of mutants
+ok K5: projection: figure 1773/28, maximum 2600/28, tolerance 500/4, limit 3100/32, margin 1327/4 (the figure at landing is still measured at landing)
+ok K6: conditions table
+```
