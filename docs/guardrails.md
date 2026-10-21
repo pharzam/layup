@@ -1258,6 +1258,11 @@ These traps are not domain-specific: they hurt every project's test suite.
   test of each step alone passed. It is silent because each step's tests stop before the next step's records exist. **The check:** one
   function tells a task's position over the events up to the cut (`verifiedView`), every step that reads it uses it, and one test restarts
   the whole tail of the steps (`afterScaffold`) on a world where the later step has already written. Learned in `T-9nbf` (#367).
+- ❌ **A record file written from the rows read at the start of the run drops what a session wrote since, and a check that judges a head against the base of its attempt blames the task for what a merge brought in.**
+  The step that copies the control issue's comments wrote `copies.tsv` from the rows it had read at its start, so the Operator's first `set` (read after the first task) dropped the copies of the Shape tasks'
+  comments and `bet` found no verified head; and the architecture task, brought current after the specification task merged, failed `layup/rules` on the numbered facts record that the merge brought in. Each
+  step's tests alone passed. It is silent because the integration worlds have no rendered facts record and no `set` between two tasks. **The check:** read a shared record again before it is extended, and judge
+  a head that a merge of the default branch carries against the default head that the merge took in; the end-to-end test of the whole path (`TestTheSpecificationTaskEndToEnd`). Learned in `T-3xvc` (#368).
 
 ### Reference-sweep pitfalls
 
