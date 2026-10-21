@@ -302,7 +302,17 @@ the rounds is:
   [Integrating branches](#integrating-branches). That merge re-freezes the head,
   consumes no cycle, and needs no new round while it is clean and changes no file
   the branch touched; where it does touch one, a round runs on the new head,
-  scoped to those files, and it consumes no cycle either.
+  scoped to those files, and it consumes no cycle either. **One exception, for
+  the two union indexes.** `docs/tasks/completed.md` and
+  `docs/tests/traceability.md`, the only `merge=union` paths of
+  [`.gitattributes`](../.gitattributes), do not count as touched files when the
+  merge only adds new records that came from `main`. That holds only when the
+  merge is clean, every existing record is preserved, no existing record has two
+  conflicting versions, the headings and instructions are unchanged, no mode or
+  path changes, and `git diff --numstat <old head> <merge> -- <file>` shows no
+  removed line. Record that diff and its two endpoints in the review record. Any
+  other overlap, an edit or a correction of an existing record, and every other
+  file keep the scoped round.
 - **The cycles are capped.** After the first freeze, fix-and-review cycles follow
   only up to the cap: the cycle cap is 1, and 2 when the change touches a gate (a check
   script, a hook, CI or branch protection). The plan-review confirmation declares
@@ -1051,7 +1061,8 @@ by the evidence under `runs/`.
 The **same PR that lands a task's work moves it from
 [`tasks/backlog.md`](tasks/backlog.md) to
 [`tasks/completed.md`](tasks/completed.md)** — delete its backlog line, where it
-has one, and add a dated entry to the completed log (most recent first). A task
+has one, and add a dated entry to the completed log (most recent first; where it goes is in
+[the log's own head](tasks/completed.md#how-to-keep-this-file-readable)). A task
 opened and finished between two landings never reaches the backlog; it is the
 arrival in the completed log that gate step 8 requires, not the move. This is
 not a separate
