@@ -217,12 +217,8 @@ jobs:
       # file from the pull request, so a branch that edits THIS FILE removes this
       # step. That is closed by review of `.github/**`, not by anything here.
       - name: Restore the checks from the default branch
-        # R4: T-c826 (#449), PR 453; remove in T-szvp (#452).
-        # Approvals: 6301028661 and 6301084598; keep only the checker.
         env:
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
-          EVENT_NAME: ${{ github.event_name }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           set -eu
           rm -rf .checks-from-default
@@ -235,10 +231,6 @@ jobs:
                    docs/tests/freeze-check.sh \
                    docs/tests/freeze-check/run.sh \
                    docs/tests/freeze-check/run-all.sh; do
-            if [ "$EVENT_NAME" = pull_request ] && [ "$PR_NUMBER" = 453 ] && [ "$f" = docs/tests/freeze-check.sh ]; then
-              printf 'kept as written for PR %s: %s\n' "$PR_NUMBER" "$f"
-              continue
-            fi
             if [ -f ".checks-from-default/$f" ]; then
               cp ".checks-from-default/$f" "$f"
               printf 'restored from %s: %s\n' "$DEFAULT_BRANCH" "$f"
@@ -264,8 +256,8 @@ jobs:
       - run: sh docs/tests/nested-checkout-check.sh
       # T-b6fn (#440) — runs the fixture suite of freeze-check.sh. Each case
       # builds a disposable git repository in mktemp -d with `git init` and two
-      # commits, which no hook step makes. Both runners always restore; PR 453
-      # keeps the checker as written under the guarded exception above.
+      # commits, which no hook step makes. The checker and both runners restore
+      # from the default branch for every event.
       - run: sh docs/tests/freeze-check/run-all.sh
 
   setup-check:

@@ -51,8 +51,7 @@ Whether a named gate really runs the path is a review judgement.
   that check the work (`F-0001#3`). Trap: a change that edits the check that
   judges it. The CI restore step (`guardrails.md` §2, "A check the change
   supplies is not a control") covers each check script a workflow runs, except
-  `docs/tests/nested-checkout-check.sh` and, temporarily for PR 453 only,
-  `docs/tests/freeze-check.sh` (T-c826, removal in T-szvp #452).
+  `docs/tests/nested-checkout-check.sh`.
   Check `ci` (cause `restore`) fails when a
   job names a `docs/...sh` script outside its Restore step, in any form, and the
   Restore step does not name it (a script run through a relative
@@ -545,10 +544,8 @@ success without having done its job.
   wrong tree and reports OK. That was measured too, while building the fix.
   **The check:** every job in [`ci.yml`](../.github/workflows/ci.yml) restores the
   check scripts from the default branch **in place** before running them. The
-  nested-checkout driver remains an exception; T-c826 (#449) also has the approved
-  checker-only exception for pull_request PR 453, removed in T-szvp (#452).
-  Both freeze-check runners and every other listed script still restore for
-  every event, including PR 453.
+  nested-checkout driver remains an exception. The checker, both freeze-check
+  runners and every other listed script restore for every event.
   **Bound on the damage, and it is not nil:** a `pull_request` event runs the
   workflow as the branch has it, so a branch that edits `ci.yml` removes the
   restore step — closed only by review of `.github/**`, which wants a `CODEOWNERS`

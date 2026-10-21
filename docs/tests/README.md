@@ -64,9 +64,11 @@ line tolerance truncates to whole lines; the canonical
 [budget rule](../engineering-discipline.md#reviewing-until-findings-decay)
 defines the tolerance, inclusive limit and landing audit.
 
-T-c826's migration assertions run with `sh runs/T-c826/checks.sh 453`, supplying
-the actual PR number. They check the canonical margin sentence, unchanged runners
-and the numbered checker-only CI exception, pending its removal in T-szvp (#452).
+T-c826's remaining assertions run with `sh runs/T-c826/checks.sh`. They check
+the canonical margin sentence, unchanged runners, all nine restore paths and the
+default-branch source. T-szvp's removal assertions run with
+`sh runs/T-szvp/checks.sh`: no numbered checker exception remains, and the complete
+Restore step matches its pre-exception form at `d27b331`.
 
 ## How the pieces fit
 
