@@ -394,7 +394,7 @@ check that catches it.
   standard library, found in `go1.26.8` and fixed in `go1.26.9`, were published
   between the two runs. It is silent until a release day, as each run of the
   same tree can resolve another toolchain. **The check:** the `go` directive
-  names the full patch version (`go 1.26.9`), so CI builds what the commit
+  names the full patch version (`go 1.26.10`), so CI builds what the commit
   names, and govulncheck's "Fixed in" names the version to move to; the red returns at each security release of
   the line, and the directive moves with it. A host
   below it then downloads that toolchain under `GOTOOLCHAIN=auto`, or refuses
