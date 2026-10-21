@@ -103,6 +103,14 @@ func (s *Sessions) FinishTask(ctx context.Context, in FinishInput) (Advance, err
 		} else if !ok {
 			return Advance{}, fmt.Errorf("%s: %s does not carry the verdict of the verified head %s", task, carried, st.Head)
 		}
+		// A head that carries a merge of the default branch changes, against the base of the attempt, the files that the default branch brought (the numbered facts
+		// record of the first bet is a rule path): the four checks judge it against the default head that the merge took in, which is an ancestor of the head
+		// (task T-3xvc, the architecture task of Shape after the specification task has merged).
+		if parents, err := git.Parents(s.Clone, carried); err != nil {
+			return Advance{}, err
+		} else if len(parents) == 2 && cin.Rendered == nil {
+			hin.Base = parents[1]
+		}
 	}
 	if ok, _, err := s.UpToDate(ctx, carried); err != nil { // the one predicate of a current head (baseup.go), asked of the head that carries the verdict
 		return Advance{}, err
