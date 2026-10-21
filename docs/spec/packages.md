@@ -382,6 +382,7 @@ that the steps, the checks and `layup gate` name.
 | `Message` | `git log -1 --format=%B --end-of-options REV --` | S03: the message of the root commit of a run that stopped (task `T-7s0y`); S15: the same for the records commit (task `T-d6q5`) |
 | `CommitTime` | `git log -1 --format=%ct --end-of-options REV --`, read as seconds since the epoch | `layup run`: the time of Start, the committer time of the first commit of the records branch, for the budget of milestone 0 (task `T-ybd5`) |
 | `IsShallow` | `git rev-parse --is-shallow-repository` | check `pin` (task `T-6x75`) |
+| `LastChange` | `git log -1 --format=%H --end-of-options REV -- PATH…`; no commit is the empty string | `M2e`, task `T-36xw` (#471): `betBrief` pins the links of the facts and questions left out of the brief at the last commit of the records base that changed their files ([`loop.md`](loop.md#the-brief-of-the-first-bet)); the caller is `(*recordsStore).LastChange` |
 | `LsFiles` | `git ls-files -z` | S10; checks `markers` and `adapted` |
 | `WorktreeAdd` | `git worktree add --detach -- PATH REV` | `layup gate`, step 2 of the run; `layup setup verify`: the scratch tree; a fixture run; S15: the scratch tree of the records commit (task `T-d6q5`) |
 | `WorktreeRemove` | `git worktree remove --force -- PATH` | `layup gate`, step 4 of the run; `layup setup verify`; a fixture run; S15 |
