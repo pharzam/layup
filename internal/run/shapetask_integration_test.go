@@ -110,7 +110,8 @@ shape-architecture)
   printf '## Decision pending the bet\n\nA\n' > docs/spec/architecture.md
   printf 'adr\n' > docs/adr/0001-db.md
   printf 'the task file %s\n' $(date +%s%N) > docs/tasks/$task.md
-  artifacts docs/tasks/$task.md docs/spec/architecture.md docs/adr/0001-db.md ;;
+  if [ -e $ctl/gofile-arch ]; then echo 'package x' > x.go; rm $ctl/gofile-arch; fi
+  artifacts docs/tasks/$task.md docs/spec/architecture.md docs/adr/0001-db.md x.go ;;
 verification)
   n=$(cat $ctl/n-$task 2>/dev/null || echo 0); n=$((n+1)); echo $n > $ctl/n-$task
   verdict=$(sed -n ${n}p $ctl/verdicts-$task 2>/dev/null); [ -n "$verdict" ] || verdict='nothing material in scope'

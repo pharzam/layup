@@ -80,7 +80,13 @@ func (s *Sessions) FinishTask(ctx context.Context, in FinishInput) (Advance, err
 			return Advance{}, err
 		}
 	}
+	reopened := false
 	if v.Kind == "specification" {
+		if reopened, err = s.reopenedTask(ctx, task); err != nil {
+			return Advance{}, err
+		}
+	}
+	if v.Kind == "specification" && !reopened { // the original asks for the rendered commit of the first bet; a reopened task has none (D9)
 		rendered, err := s.renderedHead(ctx, in, v, attempt, st.Head)
 		if err != nil {
 			return Advance{}, err
@@ -312,15 +318,16 @@ func (s *Sessions) mergeAt(ctx context.Context, cin CarryInput, hin HeadInput, s
 	return notReady(cin.Task, step.Head, r), nil
 }
 
-// verifiedView gives the position of a task over its events up to the last handoff of a verifier (what follows is the close-out's), and whether that
-// position is verified; the caller compares the attempt of the position with the latest one. It is the one cut of "verified" (loop.md, The step loop, item 2).
+// verifiedView gives the position of a task over its events up to the last handoff of a verifier (what follows is the close-out's), and whether that position is
+// verified and of the latest attempt. It is the one cut of "verified" (loop.md, The step loop, item 2).
 func verifiedView(v loopView) (loopStep, bool) {
 	cut, cv := finishCut(v), v
 	if cut >= 0 {
 		cv.Events = v.Events[:cut+1]
 	}
 	st := loopPosition(cv)
-	return st, cut >= 0 && st.Pos == posVerified
+	n, _ := latestAttempt(v.Events)
+	return st, cut >= 0 && st.Pos == posVerified && st.Attempt == n
 }
 
 // closePos is a position of the close-out session.

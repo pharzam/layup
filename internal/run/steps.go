@@ -28,7 +28,7 @@ import (
 // RunStepsSchema is the form of the table that layup run prints: the block
 // run-steps of docs/spec/run.md (The command).
 var RunStepsSchema = tsv.Schema{Name: "run-steps", Location: "stdout", Columns: []tsv.Column{
-	{Name: "step", Type: "enum(forge|plan|baseline|root-push|read-back|records|issues|watch|clone|version|lease|probe|phase|rule-gaps|meaning|numbering|spans|draft|completeness|markers|batch|answers|answers-review|follow-up|follow-up-answers|revision|setup|verify|scaffold-push|forge-check|shape|bet)", Key: true},
+	{Name: "step", Type: "enum(forge|plan|baseline|root-push|read-back|records|issues|watch|clone|version|lease|probe|phase|rule-gaps|meaning|numbering|spans|draft|completeness|markers|batch|answers|answers-review|follow-up|follow-up-answers|revision|setup|verify|scaffold-push|forge-check|shape|bet|loop)", Key: true},
 	{Name: "result", Type: "enum(done|fail)"},
 	{Name: "detail", Type: "text"},
 }}
@@ -89,7 +89,8 @@ type state struct {
 	stopBeat                       func() error       // ends the heartbeat and gives its error
 	cancel                         context.CancelFunc // ends the context of the steps
 	mu                             sync.Mutex
-	lostBeat                       error // a beat that was lost
+	lostBeat                       error           // a beat that was lost
+	sessionsHook                   func(*Sessions) // a test's fault for the Sessions that the step loop makes (loop.go)
 }
 
 // Start runs the steps of layup run --new (docs/spec/run.md, The steps of
@@ -149,7 +150,7 @@ func Restart(ctx context.Context, cfg Config) []Step {
 
 // afterScaffold gives the steps that follow the Scaffold, in order (loop.md, REQ-005 — The steps of the loop after the Scaffold).
 func (r *state) afterScaffold() []func(context.Context) Step {
-	return []func(context.Context) Step{r.shapeStep, r.betStep}
+	return []func(context.Context) Step{r.atBoundary("shape", r.shapeStep), r.atBoundary("bet", r.betStep), r.loopStep}
 }
 
 // startDone reports whether each step of Start is done, by the values of
@@ -206,14 +207,14 @@ func (r *state) lost() error {
 // task T-qk66, adds the first, rule-gaps), and the steps of the Scaffold follow
 // them: forge-check last, or, once the Scaffold is done, between lease and
 // probe (docs/spec/scaffold.md, At each later start; task T-2j13), and then
-// shape follows scaffold-push (task T-3f94, row 66h).
+// shape follows scaffold-push (task T-3f94, row 66h), bet follows shape (task T-2vva, row 66j) and loop follows bet (task T-9nbf, row 66k).
 func restartNames(startDone, scaffoldDone bool) []string {
 	if !startDone {
 		return []string{"forge", "clone", "version", "lease", "probe", "phase"}
 	}
 	steps := []string{"probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers", "answers-review", "follow-up", "follow-up-answers", "revision", "setup", "verify", "scaffold-push"}
 	if scaffoldDone {
-		return append(append([]string{"forge", "clone", "version", "lease", "forge-check"}, steps...), "shape", "bet")
+		return append(append([]string{"forge", "clone", "version", "lease", "forge-check"}, steps...), "shape", "bet", "loop")
 	}
 	return append(append([]string{"forge", "clone", "version", "lease"}, steps...), "forge-check")
 }

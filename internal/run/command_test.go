@@ -38,7 +38,7 @@ func TestStartAndRestartCallStepAtTheStartOfEachStep(t *testing.T) {
 	phase := []string{"forge", "clone", "version", "lease", "probe", "phase"}
 	intake := []string{"probe", "rule-gaps", "meaning", "numbering", "spans", "draft", "completeness", "markers", "batch", "answers", "answers-review", "follow-up", "follow-up-answers", "revision", "setup", "verify", "scaffold-push"}
 	first := append(append([]string{"forge", "clone", "version", "lease"}, intake...), "forge-check")
-	later := append(append([]string{"forge", "clone", "version", "lease", "forge-check"}, intake...), "shape", "bet")
+	later := append(append([]string{"forge", "clone", "version", "lease", "forge-check"}, intake...), "shape", "bet", "loop")
 	for _, c := range []struct {
 		startDone, scaffoldDone bool
 		want                    []string
@@ -46,7 +46,7 @@ func TestStartAndRestartCallStepAtTheStartOfEachStep(t *testing.T) {
 	}{
 		{false, false, phase, "with Start not done"}, {false, true, phase, "with Start not done, whatever the table"},
 		{true, false, first, "with Start done and the Scaffold not done: forge-check last, after scaffold-push"},
-		{true, true, later, "with the Scaffold done: forge-check between lease and probe, shape and bet last"},
+		{true, true, later, "with the Scaffold done: forge-check between lease and probe, shape, bet and loop last"},
 	} {
 		if got := restartNames(c.startDone, c.scaffoldDone); !reflect.DeepEqual(got, c.want) {
 			t.Errorf("the steps of a restart %s: %q; want %q", c.what, got, c.want)

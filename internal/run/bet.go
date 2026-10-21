@@ -137,6 +137,11 @@ func renderedPushed(events [][]string, attempt int) bool {
 // skipped when its record exists, and bets.tsv written last.
 func (r *state) betStep(ctx context.Context) Step {
 	const name = "bet"
+	if ok, err := r.betted(ctx); err != nil {
+		return fail(name, err)
+	} else if ok { // D1
+		return done(name, "done before")
+	}
 	res, err := r.bet(ctx)
 	switch {
 	case errors.Is(err, ErrBriefLinesUnset), errors.Is(err, ErrBriefOverLimit):

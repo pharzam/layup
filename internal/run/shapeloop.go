@@ -740,7 +740,14 @@ func (s *Sessions) ship(ctx context.Context, in ShapeTaskInput, v loopView, st l
 		}
 		return "", nil
 	}
+	reopened := false
 	if v.Kind == "specification" {
+		var err error
+		if reopened, err = s.reopenedTask(ctx, in.Task); err != nil {
+			return "", err
+		}
+	}
+	if v.Kind == "specification" && !reopened { // a reopened task is judged by layup/spec and by the target's prd-lint at the ready rule (D9)
 		ok, lines, err := s.waitingSpecAccepted(st.Base, st.Head)
 		if err != nil {
 			return "", err

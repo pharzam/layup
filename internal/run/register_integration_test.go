@@ -18,7 +18,7 @@ import (
 )
 
 // The task register on the real adapter, the httptest forge and real git (task T-cak3, #357, row 66a of the plan of M2e).
-// No step `loop` exists yet (row 66k); a test calls what that step will call, on the state of a restart.
+// The step `loop` (row 66k, task T-9nbf) calls what these tests call, on the state of a restart.
 
 // The Go value of the block tasks equals its block of docs/spec/records.md.
 func TestTheSchemaOfTasksEqualsItsBlock(t *testing.T) {
