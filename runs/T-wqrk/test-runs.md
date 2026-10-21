@@ -141,3 +141,28 @@ PASS a record that a script reads cannot be passive
 PASS a record that a script reads by its full path cannot be passive
 exit 0
 ```
+
+## 8. Round 3 of #462 (F1), end 3: the judge, red first
+
+The four controls were registered as files in `rounds/judge-cases/` before the judge was changed: `neg-token-same` and `neg-possible` are the two notes of round 3 F1, verbatim; `neg-question` is a question form; `neg-may` is a hedged "may have been left" form (the plain "may be stale" form already returned MISS on the old judge, so it is not a red control). Times are from `date -u`.
+
+Red: the CURRENT (third) judge, sha256 `1f0c49e941f92294349fef6dd127d6588563970475eab2d8c6810c65eaddde59`, run as `cd rounds; sh judge-T-wqrk.sh judge-cases/CASE.md; echo "exit $?"` for each case, started 13:15:18Z. All four return FOUND, exit 0, which is wrong (each must be MISS):
+
+```
+== neg-token-same
+FOUND in a unit at: adr-0026 gives fifteen minutes for a record, and the fix gives twenty, while the readme has a stale deadline for its token
+JUDGE: FOUND
+exit 0
+== neg-possible
+FOUND in a unit at: a possible mismatch between adr-0026’s fifteen-minute record deadline and the fix’s twenty minutes needs checking
+JUDGE: FOUND
+exit 0
+== neg-question
+FOUND in a unit at: is the fifteen-minute record deadline in adr-0026 stale now that the fix says twenty
+JUDGE: FOUND
+exit 0
+== neg-may
+FOUND in a unit at: the record deadline in adr-0026 may have been left at fifteen, while the fix says twenty
+JUDGE: FOUND
+exit 0
+```
