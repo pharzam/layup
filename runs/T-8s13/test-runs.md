@@ -16,8 +16,8 @@ Command (from the root of the worktree at `76dfb684` plus these two files): `sh 
 
 ## Green: the script counts
 
-The implementation took four runs, all of the same command (`sh runs/T-8s13/brief-bound-test.sh`): the first (2026-10-21T17:00:03Z, exit 1) failed the case of the follow-ups on a
-defect of the implementation (a quote compared as a string in awk, then a lookup in the wrong array); the fixtures were then corrected to be valid records (see the cross-check below).
+Runs of the same command while implementing: 2026-10-21T17:00:03Z and 17:00:08Z, exit 1, one `FAIL` each (the follow-up case: a quote compared as a string in awk, then a lookup in the
+wrong array, both defects of the implementation); 17:00:12Z, exit 0. The fixtures were then made valid records (see the cross-check below) and the test run again:
 
 Final run: start 2026-10-21T17:01:13Z, end 2026-10-21T17:01:13Z (`date -u`), exit 0, nine cases, nine `ok`, no `FAIL`:
 
