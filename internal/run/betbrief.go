@@ -5,6 +5,7 @@ package run
 // betBrief and posts the brief.
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -238,25 +239,153 @@ func factsPart(spans, questions, answers [][]string) string {
 	return b.String()
 }
 
-// operatorBlock reports whether the question id is asked in the block operator (task T-36xw, #471).
-func operatorBlock(id string, questions [][]string) bool { return false }
-
-// idRanges writes IDs as exact ranges (task T-36xw, #471).
-func idRanges(ids []string) string { return strings.Join(ids, ", ") }
-
-// briefFactsPart is the facts part of the brief (task T-36xw, #471).
-func briefFactsPart(milestone string, spans, questions, answers [][]string, url string) string {
-	return factsPart(spans, questions, answers)
+// operatorIDs gives the IDs of the questions that are asked in the block operator. A follow-up and a Shape row carry the block of the question
+// they ask again, so the column gives it; a question that questions.tsv does not hold is in no block, and its answer stays in the brief (the
+// rule fails toward showing; task T-36xw, #471).
+func operatorIDs(questions [][]string) map[string]bool {
+	out := map[string]bool{}
+	for _, q := range questions {
+		if q[3] == "operator" {
+			out[q[0]] = true
+		}
+	}
+	return out
 }
 
-// briefOpenPart is the open part of the brief (task T-36xw, #471).
+// idRanges writes IDs Q-NNN as exact ranges: in the order of their numbers, a run of numbers that follow one another as "Q-015 to Q-169", a
+// single ID alone, the runs joined by ", ". A gap in the numbers ends a run, and so does an ID that the caller leaves out of ids.
+func idRanges(ids []string) string {
+	type entry struct {
+		n  int
+		id string
+	}
+	entries := make([]entry, len(ids))
+	for i, id := range ids {
+		n, err := strconv.Atoi(strings.TrimPrefix(id, "Q-"))
+		if err != nil {
+			n = -1 // no number: never joins a run
+		}
+		entries[i] = entry{n, id}
+	}
+	slices.SortFunc(entries, func(a, b entry) int {
+		if a.n != b.n {
+			return a.n - b.n
+		}
+		return strings.Compare(a.id, b.id)
+	})
+	var parts []string
+	for i := 0; i < len(entries); {
+		j := i
+		for j+1 < len(entries) && entries[i].n >= 0 && entries[j+1].n == entries[j].n+1 {
+			j++
+		}
+		if j == i {
+			parts = append(parts, entries[i].id)
+		} else {
+			parts = append(parts, entries[i].id+" to "+entries[j].id)
+		}
+		i = j + 1
+	}
+	return strings.Join(parts, ", ")
+}
+
+// factClassOrder is the order of the lines that stand for the answers left out.
+var factClassOrder = []string{"need", "constraint", "measure", "context"}
+
+// leftOutFacts gives the IDs of the facts that the brief leaves out, by their class: the answers of the questions of the block operator.
+func leftOutFacts(spans, questions, answers [][]string) map[string][]string {
+	op, out := operatorIDs(questions), map[string][]string{}
+	for _, f := range factRows(spans, questions, answers) {
+		if op[f[0]] {
+			out[f[1]] = append(out[f[1]], f[0])
+		}
+	}
+	return out
+}
+
+// leftOutOpen gives the IDs of the questions still open that the brief leaves out: those of the block operator.
+func leftOutOpen(questions [][]string) []string {
+	op := operatorIDs(questions)
+	var out []string
+	for _, id := range stillOpen(questions) {
+		if op[id] {
+			out = append(out, id)
+		}
+	}
+	return out
+}
+
+// briefFactsPart is the facts part of the brief: every span fact and every answer outside the block operator with its ID, class and text,
+// then one line for each class of the answers of the Operator, naming them in exact ranges with the link to the file that holds their texts
+// (task T-36xw, #471; docs/spec/loop.md, The facts and questions left out).
+func briefFactsPart(milestone string, spans, questions, answers [][]string, url string) string {
+	left := leftOutFacts(spans, questions, answers)
+	op := operatorIDs(questions)
+	var b strings.Builder
+	for _, f := range factRows(spans, questions, answers) {
+		if !op[f[0]] {
+			fmt.Fprintf(&b, "- %s (%s): %s\n", f[0], f[1], plain(f[2]))
+		}
+	}
+	classes := slices.Clone(factClassOrder)
+	for _, c := range slices.Sorted(maps.Keys(left)) {
+		if !slices.Contains(classes, c) {
+			classes = append(classes, c)
+		}
+	}
+	for _, c := range classes {
+		if len(left[c]) > 0 {
+			fmt.Fprintf(&b, "- %s (%s): the answers of the Operator's questions; check the class of each against its text in [the facts of the bet %s](%s)\n",
+				idRanges(left[c]), c, milestone, url)
+		}
+	}
+	return b.String()
+}
+
+// briefOpenPart is the open part of the brief: each question still open outside the block operator with its text, then one line for the
+// Operator's, in exact ranges with the link to the file that holds their texts; "- none" only when no question is still open.
 func briefOpenPart(milestone string, questions [][]string, url string) string {
-	return openPart(questions)
+	var b strings.Builder
+	b.WriteString("### The questions still open\n")
+	text := map[string]string{}
+	for _, q := range questions {
+		text[q[0]] = q[8]
+	}
+	op, open := operatorIDs(questions), stillOpen(questions)
+	var left []string
+	for _, id := range open {
+		if op[id] {
+			left = append(left, id)
+		} else {
+			fmt.Fprintf(&b, "- %s: %s\n", id, plain(text[id]))
+		}
+	}
+	if len(left) > 0 {
+		fmt.Fprintf(&b, "- %s: the Operator's questions still open, each with its text in [the questions still open of the bet %s](%s)\n", idRanges(left), milestone, url)
+	}
+	if len(open) == 0 {
+		b.WriteString("- none\n")
+	}
+	return b.String()
 }
 
 // annexPaths are the paths of the two linked files of a bet in the records.
 func annexPaths(milestone string) (facts, open string) {
 	return "bets/" + milestone + "/facts.md", "bets/" + milestone + "/open.md"
+}
+
+// annexFiles are the files that the brief links, by path: the facts in full when the brief leaves an answer out, and the questions still
+// open in full when it leaves one out. The bytes are those of factsPart and openPart.
+func annexFiles(milestone string, spans, questions, answers [][]string) map[string][]byte {
+	files := map[string][]byte{}
+	factsPath, openPath := annexPaths(milestone)
+	if len(leftOutFacts(spans, questions, answers)) > 0 {
+		files[factsPath] = []byte(factsPart(spans, questions, answers))
+	}
+	if len(leftOutOpen(questions)) > 0 {
+		files[openPath] = []byte(openPart(questions))
+	}
+	return files
 }
 
 // linkSet is the set of the targets that a link of the brief may have: the pull request of each Shape task and the regular files that
@@ -459,6 +588,10 @@ type briefInputs struct {
 	heads        []headRef
 	facts        [][3]string
 	bandU, hours string
+	rows         map[string][][]string // the records that the parts are composed from
+	requirements string                // the requirements part
+	blobs        map[string][]string   // the files that each Shape head changed
+	annex        map[string][]byte     // the linked files of the facts and questions left out, by path
 }
 
 // readBrief reads a record that must exist, with its reader (none for a record of bytes alone).
@@ -480,7 +613,7 @@ func (r *state) readBrief(ctx context.Context, path string, read func([]byte) ([
 }
 
 // briefInputs reads the inputs of the brief in the order of loop.md, The brief of the first bet, and writes nothing.
-func (r *state) briefInputs(ctx context.Context) (*briefInputs, error) {
+func (r *state) briefInputs(ctx context.Context, milestone string) (*briefInputs, error) {
 	if bets, err := r.store.ReadFile(ctx, "bets.tsv"); err != nil {
 		return nil, err
 	} else if bets != nil {
@@ -522,11 +655,11 @@ func (r *state) briefInputs(ctx context.Context) (*briefInputs, error) {
 			in.keeper.lines = &n
 		}
 	}
-	return in, r.briefShape(ctx, in, rows)
+	return in, r.briefShape(ctx, in, rows, milestone)
 }
 
 // briefShape reads the Shape tasks, the PRD at the verified head, the options and the links, and composes the texts of code.
-func (r *state) briefShape(ctx context.Context, in *briefInputs, rows map[string][][]string) error {
+func (r *state) briefShape(ctx context.Context, in *briefInputs, rows map[string][][]string, milestone string) error {
 	data, err := r.store.ReadFile(ctx, tasksPath)
 	if err != nil {
 		return err
@@ -610,14 +743,58 @@ func (r *state) briefShape(ctx context.Context, in *briefInputs, rows map[string
 			}
 		}
 	}
-	in.keeper.links = linkSet(r.cfg.Owner, r.cfg.Name, in.heads, blobs)
-	in.keeper.parts = briefParts{requirements: requirements, solution: solutionPart(r.cfg.Owner, r.cfg.Name, in.heads, in.results),
-		open: openPart(rows["questions.tsv"]), facts: factsPart(rows["spans.tsv"], rows["questions.tsv"], rows["answers.tsv"])}
+	in.rows, in.requirements, in.blobs = rows, requirements, blobs
 	in.reqs, in.open, in.facts = specTask.Requirements, stillOpen(rows["questions.tsv"]), factRows(rows["spans.tsv"], rows["questions.tsv"], rows["answers.tsv"])
-	for name, text := range map[string]string{"requirements.md": requirements, "solution.md": in.keeper.parts.solution, "open.md": in.keeper.parts.open,
-		"facts.md": in.keeper.parts.facts, "links.md": strings.Join(slices.Sorted(maps.Keys(in.keeper.links)), "\n") + "\n"} {
-		in.inputs[name] = []byte(text)
+	in.annex = annexFiles(milestone, rows["spans.tsv"], rows["questions.tsv"], rows["answers.tsv"])
+	in.compose(r.cfg.Owner, r.cfg.Name, milestone, "") // the count of lines does not depend on the SHA of the links
+	return nil
+}
+
+// compose writes the parts of code, the set of the links and the input files of the session, with the links of the linked files at the SHA
+// (empty before the files are written: only the count of lines is read from that composition).
+func (in *briefInputs) compose(owner, name, milestone, sha string) {
+	in.keeper.links = linkSet(owner, name, in.heads, in.blobs)
+	factsPath, openPath := annexPaths(milestone)
+	url := func(p string) string { return "https://github.com/" + owner + "/" + name + "/blob/" + sha + "/" + p }
+	for p := range in.annex {
+		in.keeper.links[url(p)] = true
 	}
+	rows := in.rows
+	in.keeper.parts = briefParts{requirements: in.requirements, solution: solutionPart(owner, name, in.heads, in.results),
+		open: briefOpenPart(milestone, rows["questions.tsv"], url(openPath)), facts: briefFactsPart(milestone, rows["spans.tsv"], rows["questions.tsv"], rows["answers.tsv"], url(factsPath))}
+	for file, text := range map[string]string{"requirements.md": in.requirements, "solution.md": in.keeper.parts.solution, "open.md": in.keeper.parts.open,
+		"facts.md": in.keeper.parts.facts, "links.md": strings.Join(slices.Sorted(maps.Keys(in.keeper.links)), "\n") + "\n"} {
+		in.inputs[file] = []byte(text)
+	}
+}
+
+// pinAnnex writes the linked files of the facts and questions left out, those whose bytes the records do not hold, in one fenced records
+// commit, and composes the brief's parts with the links at the last commit that changed the files: the SHA of a restart on the same
+// inputs is the same, and a changed text gives a new one, which refuses an older candidate with the rule fixed.
+func (r *state) pinAnnex(ctx context.Context, in *briefInputs, milestone string) error {
+	sha := ""
+	if len(in.annex) > 0 {
+		paths, changed := slices.Sorted(maps.Keys(in.annex)), map[string][]byte{}
+		for _, p := range paths {
+			if kept, err := r.store.ReadFile(ctx, p); err != nil {
+				return err
+			} else if !bytes.Equal(kept, in.annex[p]) {
+				changed[p] = in.annex[p]
+			}
+		}
+		if len(changed) > 0 {
+			if err := r.write(ctx, changed, fmt.Sprintf("layup run: the facts and questions of the bet %s", milestone)); err != nil {
+				return err
+			}
+		}
+		var err error
+		if sha, err = r.store.LastChange(ctx, paths...); err != nil {
+			return err
+		} else if sha == "" {
+			return fmt.Errorf("the records base has no commit that changed %v", paths)
+		}
+	}
+	in.compose(r.cfg.Owner, r.cfg.Name, milestone, sha)
 	return nil
 }
 
@@ -696,7 +873,7 @@ func (r *state) betBrief(ctx context.Context, name, kind string) (brief []byte, 
 	if kept, err := r.store.ReadFile(ctx, briefPath(name)); err != nil || kept != nil {
 		return kept, kept != nil, err
 	}
-	in, err := r.briefInputs(ctx)
+	in, err := r.briefInputs(ctx, name)
 	if err != nil {
 		return nil, false, err
 	}
@@ -712,6 +889,9 @@ func (r *state) betBrief(ctx context.Context, name, kind string) (brief []byte, 
 	}
 	base, err := git.RevParse(r.target, "refs/remotes/origin/"+r.defaultBranch)
 	if err != nil {
+		return nil, false, err
+	}
+	if err := r.pinAnnex(ctx, in, name); err != nil {
 		return nil, false, err
 	}
 	c, err := r.latestCandidate(ctx, name)

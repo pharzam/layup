@@ -602,7 +602,6 @@ func TestTheM2dFixtureHasTheCountsOfTheTarget(t *testing.T) {
 // Size test (decision 4 of the Operator on #471): an Intake of the size of M2d's fits brief.lines 100 with at least 20 lines of room; the
 // plan counts 78 lines of code, so 22. Today the parts of code are 531 lines, over brief.lines 100.
 func TestAnIntakeOfTheM2dSizeFitsTheLimitWithRoomForTheText(t *testing.T) {
-	heldRed(t)
 	k := m2dKeeper(t, m2dIntake(), 100)
 	if err := k.overLimit(); err != nil {
 		t.Errorf("overLimit = %v; want none for an Intake of the size of M2d's", err)
@@ -667,7 +666,6 @@ func partitionFx() intakeFx {
 
 // The Operator's partition is the range-and-link form, and the ranges name exactly the left-out set (condition 3 of the plan review).
 func TestTheOperatorsAnswersAreRangesWithALinkAndEveryFactIsReachable(t *testing.T) {
-	heldRed(t)
 	f := partitionFx()
 	got := briefFactsPart("1", f.spans, f.questions, f.answers, factsURLFx)
 	summary := func(ranges, class string) string {
@@ -690,7 +688,7 @@ func TestTheOperatorsAnswersAreRangesWithALinkAndEveryFactIsReachable(t *testing
 		omitted[id] = "context"
 	}
 	inRange := map[string]string{}
-	rangeLine := regexp.MustCompile(`^- (Q-[0-9, to-]+) \((\w+)\): the answers of the Operator's questions;`)
+	rangeLine := regexp.MustCompile(`^- (Q-[Q0-9, to-]+) \((\w+)\): the answers of the Operator's questions;`)
 	for _, line := range strings.Split(got, "\n") {
 		if m := rangeLine.FindStringSubmatch(line); m != nil {
 			for _, id := range expandRanges(t, m[1]) {
@@ -706,7 +704,7 @@ func TestTheOperatorsAnswersAreRangesWithALinkAndEveryFactIsReachable(t *testing
 		line := "- " + row[0] + " (" + row[1] + "): "
 		switch class, left := inRange[row[0]]; {
 		case left:
-			if class != row[1] || !strings.Contains(annex, line+row[2]+"\n") || strings.Contains(got, line) {
+			if class != row[1] || !strings.Contains(annex, line+row[2]+"\n") || strings.Contains(got, line+row[2]+"\n") {
 				t.Errorf("fact %s is in a range of class %s; want class %s, its line in the linked file and none in the brief", row[0], class, row[1])
 			}
 		case !strings.Contains(got, line+row[2]+"\n"):
@@ -761,7 +759,6 @@ func expandRanges(t *testing.T, s string) []string {
 
 // The brief fails to fit when the inlined part alone is over the limit; the Operator's rows add one summary line only.
 func TestTheOverLimitWaitFiresWhenTheInlinedPartAloneIsOver(t *testing.T) {
-	heldRed(t)
 	f := m2dIntake()
 	for n := 26; n <= 60; n++ {
 		f.spans = append(f.spans, []string{strconv.Itoa(n * 1000), strconv.Itoa(n*1000 + 10), strconv.Itoa(n), "need", "", fmt.Sprintf("The fact %d.", n)})
@@ -786,7 +783,6 @@ func TestTheOverLimitWaitFiresWhenTheInlinedPartAloneIsOver(t *testing.T) {
 
 // The ranges: exact, in the order of the numbers, a run of two or more as "from to to", a gap or an ID that is not left out ends a run.
 func TestTheLeftOutIDsAreNamedInExactRanges(t *testing.T) {
-	heldRed(t)
 	var long []string
 	for n := 15; n <= 169; n++ {
 		long = append(long, qid(n))
@@ -808,11 +804,4 @@ func TestTheLeftOutIDsAreNamedInExactRanges(t *testing.T) {
 			t.Errorf("%s: idRanges(%v) = %q; want %q", name, c.ids, got, c.want)
 		}
 	}
-}
-
-// heldRed keeps the unit level of the pre-commit hook green between the red commit and the green commit of task T-36xw: the red run was made
-// without it (runs/T-36xw/test-runs.md), and the green commit removes this function and its four calls.
-func heldRed(t *testing.T) {
-	t.Helper()
-	t.Skip("red until the code of T-36xw; see runs/T-36xw/test-runs.md")
 }

@@ -155,7 +155,7 @@ func (s *recordsStore) Base() string {
 
 // LastChange gives the last commit of the records base that changed a path of paths (task T-36xw, #471).
 func (s *recordsStore) LastChange(ctx context.Context, paths ...string) (string, error) {
-	return "", nil
+	return git.LastChange(s.dir, s.Base(), paths...)
 }
 
 // Started gives the time of Start: the committer time of the root commit of

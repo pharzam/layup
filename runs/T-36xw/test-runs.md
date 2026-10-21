@@ -31,3 +31,14 @@ Command: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -ta
 ### 1.4 End to end, `cmd/layup`
 
 Command: `go test -count=1 -tags=e2e -timeout 10m -run 'TestTheSpecificationTaskEndToEnd$' ./cmd/layup/`, 15:05:19Z to 15:05:38Z, exit 1. First failing assertion: `stage 5: the posted brief holds no link to blob/<sha>/bets/1/facts.md`.
+
+## 2. Green: the code of the plan's section 4
+
+The code: `git.LastChange`, `(*recordsStore).LastChange`, and in `internal/run/betbrief.go` `operatorIDs`, `idRanges`, `leftOutFacts`, `leftOutOpen`, `briefFactsPart`, `briefOpenPart`, `annexFiles`, `(*briefInputs).compose` and `(*state).pinAnnex` (called by `betBrief` after the two waits and the pair). `heldRed` and its four calls are removed. One correction of a test between the red and the green: the character class of the range-line pattern of the selection test lacked `Q`, and its "none in the brief" check matched the prefix of the summary line of a single ID; both made the test blind to the ranges, not to the code, and the test still fails on the stubs (the ranges name `map[]`).
+
+| Level | Command | Times (UTC) | Exit | Result |
+| ----- | ------- | ----------- | ---- | ------ |
+| Unit | `go test -count=1 -v -run 'TestTheM2dFixture\|TestAnIntakeOfTheM2dSize\|TestTheOperatorsAnswers\|TestTheOverLimitWait\|TestTheLeftOutIDs' ./internal/run/` | 15:09:01Z | 0 | the five pass |
+| Integration, git | `go test -count=1 -tags=integration -run 'TestLastChange$' ./internal/git/` | 15:08:21Z | 0 | `ok` |
+| Integration, run | `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m -run 'TestTheLinkedFactsAreKept\|TestAChangedTextLeftOut\|TestBriefLinesUnsetStartsNoSession\|TestAFreshBuildRefuses' ./internal/run/` | 15:08:21Z to 15:08:28Z | 0 | `ok` (4.3 s) |
+| End to end | `go test -count=1 -tags=e2e -timeout 10m -run 'TestTheSpecificationTaskEndToEnd$' ./cmd/layup/` | 15:08:31Z to 15:08:53Z | 0 | `ok` (21.6 s) |
