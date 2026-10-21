@@ -52,3 +52,18 @@ After the green of section 2 the change was over the budget (969 lines against 6
 ## 4. Round 1 of #471, lessons for next time
 
 Note 3: the red commit carried `heldRed` (a `t.Skip`) because the pre-commit hook runs the unit level. The prescribed form (`docs/guardrails.md`, Testing pitfalls) is to paste the red output and commit the tests with the code; do that, not a skip. Note 5: `(*recordsStore).LastChange` reads `Base()` under the lock and runs `git log` outside it; the log of a fixed commit is deterministic, so the result is sound.
+
+## 5. The freeze check of the head `8d024a5a`, after the fix of round 1
+
+`sh docs/tests/freeze-check.sh --task T-36xw --base 84ecf3a58324c10c498f794e91274f22c11ab00e --budget 600/17 --evidence runs/T-36xw/test-runs.md --evidence runs/T-36xw/conditions.md`, 16:06:57Z, exit 0:
+
+```
+ok K1: white space
+ok K2: registration of new tests
+ok K3: test selectors
+ok K4: restore evidence of mutants
+ok K5: projection: figure 717/16, maximum 600/17, tolerance 120/4, limit 720/21, margin 3/5 (the figure at landing is still measured at landing)
+ok K6: conditions table
+```
+
+The output on the final head, with the close-out, is in the report of the close-out and on the issue.
