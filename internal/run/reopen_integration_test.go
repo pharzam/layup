@@ -28,9 +28,11 @@ type reopening struct {
 	rendered string
 }
 
-func newReopening(t *testing.T) *reopening {
+func newReopening(t *testing.T) *reopening { return newReopeningWith(t, reclassAnswer) }
+
+func newReopeningWith(t *testing.T, answer string) *reopening {
 	t.Helper()
-	f, _, r := newBetFinishingWith(t, reclassAnswer)
+	f, _, r := newBetFinishingWith(t, answer)
 	return &reopening{f, r}
 }
 
@@ -328,7 +330,7 @@ func TestTheReopenedTasksPassTheFullCheckOneAfterTheOther(t *testing.T) {
 	}
 	for _, c := range []struct{ name, head, want string }{
 		{"the second task, on a base with the first line and its own", headWith(lb, ld), "pass "},
-		{"the second task, on a base that lost the first line", headWith(strings.Replace(ld, "a statement", "another statement", 1)), "fail the need fact 2 has no requirement"},
+		{"the second task, on a base that lost the first line", headWith(strings.Replace(ld, "a statement", "another statement", 1)), "fail the reopened need fact 2 has no pending requirement REQ-003 under waits for a bet"},
 	} {
 		if got := needs(d.ID, c.head); got != c.want {
 			t.Errorf("%s: needs = %q; want %q", c.name, got, c.want)
@@ -360,6 +362,47 @@ func TestAReopenedConstraintThatARequirementCoversNeedsItsOwnPendingLine(t *test
 		if got := needs(a.ID, c.head); got != c.want {
 			t.Errorf("%s: needs = %q; want %q", c.name, got, c.want)
 		}
+	}
+	// F6 of round 2: once the reopening has merged, the pending line stays required at the head of another task, though REQ-001 covers the fact.
+	d := tasks[3]
+	data, err := w.r.sessions().appendEvents(context.Background(), a.ID, 1, "", []string{"merged " + headWith(line("NFR-002", "F-0004#1")) + " 98"})
+	if err == nil {
+		err = w.r.sessions().commit(context.Background(), map[string][]byte{eventsPath(a.ID): data}, "the constraint merged")
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+	ld := line(d.Requirements[0], "Q-003")
+	pendingNFR := "fail the reopened constraint fact 1 has no pending requirement NFR-002 under waits for a bet"
+	for _, c := range []struct{ name, head, want string }{
+		{"another task's head that keeps the merged line", headWith(line("NFR-002", "F-0004#1"), ld), "pass "},
+		{"another task's head that removes only the merged line", headWith(ld), pendingNFR},
+		{"another task's head that keeps the old requirement's citation only", headWith(line("REQ-001", "F-0004#1"), ld), pendingNFR},
+	} {
+		if got := needs(d.ID, c.head); got != c.want {
+			t.Errorf("%s: needs = %q; want %q", c.name, got, c.want)
+		}
+	}
+}
+
+// F7 of round 2: a reservation is compared with the selection at every call, the empty selection included; an empty selection with no reservation is
+// a quiet success that writes nothing.
+func TestAnEmptySelectionStillChecksAStoredReservation(t *testing.T) {
+	t.Parallel()
+	w := newReopeningWith(t, betAnswerText) // the answer changes no class
+	w.merge()
+	head, issues := recordsHead(t, w.w), w.issues()
+	if got, err := w.open(); err != nil || len(got) != 0 || recordsHead(t, w.w) != head || w.issues() != issues || w.has(reopeningsPath) {
+		t.Fatalf("the control, an empty selection with no reservation = %v, %v; want a quiet success that writes nothing", got, err)
+	}
+	data, err := table(ReopeningsSchema, [][]string{{"1", "1", "constraint", "F-0004#1", "NFR-002", "T-rsv1", "7004"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	w.push(map[string][]byte{reopeningsPath: data}, "a reservation that no fact of the version asks for")
+	w.restart()
+	if got, err := w.open(); err == nil || !strings.Contains(err.Error(), reopeningsPath) || len(got) != 0 || w.issues() != issues {
+		t.Errorf("an empty selection with a stored reservation = %v, %v; %d issues; want the refusal that names %s and no issue", got, err, w.issues()-issues, reopeningsPath)
 	}
 }
 
@@ -396,45 +439,56 @@ func TestAHarnessThatFollowsTheReopenedInstructionGivesAValidHandoffAndAGreenSpe
 	if err != nil || len(tasks) != 4 {
 		t.Fatalf("openReopenings = %v, %v; want four tasks", tasks, err)
 	}
-	b, ctx := tasks[1], context.Background() // the fact 2, a need: REQ-003
-	in := w.input(b.ID)
-	in.Base = main // the base of the driver is the default branch after the merge
-	pc, err := w.r.sessions().PromptFile(ctx, PromptIn{Task: b.ID, Step: "specification", Base: in.Base})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if items := itemsOf(pc, session.KindRequirements); !slices.Contains(items, "spec/reopenings.tsv") || !slices.Contains(items, "docs/prd/PRD-0001-x.md") {
-		t.Errorf("the requirements of the prompt = %v; want the record of the reopenings and the PRD, which holds no row of %s", items, b.Requirements[0])
-	}
-	line := shownLine(string(pc.Text("/x")), "need")
-	w.ctlWrite("reopen-"+b.ID, line)
-	w.ctlWrite("reopen-section-"+b.ID, b.Requirements[0])
-	if in.Copy, err = w.r.betCopy(ctx); err != nil {
-		t.Fatal(err)
-	}
-	got, err := w.r.sessions().AdvanceShapeTask(ctx, in)
-	if err != nil || !got.Verified {
-		t.Fatalf("AdvanceShapeTask = %+v, %v; want the verified head (handoff = %v)", got, err, w.kinds(b.ID))
-	}
-	for _, e := range w.eventsOf(b.ID) {
-		if e[1] == "handoff" && !strings.HasPrefix(e[6], "valid") || e[1] == "refused" {
-			t.Errorf("the event %v; want only valid handoffs", e)
+	ctx := context.Background()
+	mainPRD := gitOut(t, w.r.target, "show", main+":docs/prd/PRD-0001-x.md")
+	// F8 of round 2: the same scenario for a constraint (the fact 1, NFR-002, which REQ-001 already covers) and for a need (the fact 2, REQ-003).
+	for _, c := range []struct {
+		name, req, token string
+		task             Task
+	}{{"a constraint", "NFR-002", "F-0004#1", tasks[0]}, {"a need", "REQ-003", "F-0004#2", tasks[1]}} {
+		b := c.task
+		in := w.input(b.ID)
+		in.Base = main // the base of the driver is the default branch after the merge
+		pc, err := w.r.sessions().PromptFile(ctx, PromptIn{Task: b.ID, Step: "specification", Base: in.Base})
+		if err != nil {
+			t.Fatalf("%s: %v", c.name, err)
 		}
-	}
-	rows, found, err := w.r.sessions().SpecTable(ctx, b.ID, got.Head)
-	if err != nil || !found {
-		t.Fatalf("no spec table at the head: %v", err)
-	}
-	for _, r := range rows {
-		if r[1] == "fail" {
-			t.Errorf("the rule %s fails at the head: %s", r[0], r[2])
+		if items := itemsOf(pc, session.KindRequirements); !slices.Contains(items, "spec/reopenings.tsv") || !slices.Contains(items, "docs/prd/PRD-0001-x.md") {
+			t.Errorf("%s: the requirements of the prompt = %v; want the record of the reopenings and the PRD, which holds no row of %s", c.name, items, c.req)
 		}
-	}
-	if prd := gitOut(t, w.r.target, "show", got.Head+":docs/prd/PRD-0001-x.md"); !strings.Contains(prd, "\n## Waits for a bet\n\n"+line) {
-		t.Errorf("the PRD at the head lacks the line under the heading %q:\n%s", line, prd)
-	}
-	if ok, lines, err := w.r.sessions().waitingSpecAccepted(in.Base, got.Head); err != nil || !ok {
-		t.Errorf("the pinned prd-lint at the head: %v, %q, %v; want it accepted", ok, lines, err)
+		line := shownLine(string(pc.Text("/x")), "need")
+		if want := c.req + ": The system works. Facts: " + c.token + " F-0004. Acceptance criterion: a check of it."; line != want {
+			t.Fatalf("%s: the line the prompt shows = %q; want the stored identity and the pinned citation %q", c.name, line, want)
+		}
+		w.ctlWrite("reopen-"+b.ID, line)
+		w.ctlWrite("reopen-section-"+b.ID, c.req)
+		if in.Copy, err = w.r.betCopy(ctx); err != nil {
+			t.Fatal(err)
+		}
+		got, err := w.r.sessions().AdvanceShapeTask(ctx, in)
+		if err != nil || !got.Verified {
+			t.Fatalf("%s: AdvanceShapeTask = %+v, %v; want the verified head (handoff = %v)", c.name, got, err, w.kinds(b.ID))
+		}
+		for _, e := range w.eventsOf(b.ID) {
+			if e[1] == "handoff" && !strings.HasPrefix(e[6], "valid") || e[1] == "refused" {
+				t.Errorf("%s: the event %v; want only valid handoffs", c.name, e)
+			}
+		}
+		rows, found, err := w.r.sessions().SpecTable(ctx, b.ID, got.Head)
+		if err != nil || !found {
+			t.Fatalf("%s: no spec table at the head: %v", c.name, err)
+		}
+		for _, r := range rows {
+			if r[1] == "fail" {
+				t.Errorf("%s: the rule %s fails at the head: %s", c.name, r[0], r[2])
+			}
+		}
+		if prd := gitOut(t, w.r.target, "show", got.Head+":docs/prd/PRD-0001-x.md"); !strings.HasPrefix(prd, mainPRD) || !strings.Contains(prd, "\n## Waits for a bet\n\n"+line) {
+			t.Errorf("%s: the PRD at the head does not keep the PRD of the base and add %q under the heading:\n%s", c.name, line, prd)
+		}
+		if ok, lines, err := w.r.sessions().waitingSpecAccepted(in.Base, got.Head); err != nil || !ok {
+			t.Errorf("%s: the pinned prd-lint at the head: %v, %q, %v; want it accepted", c.name, ok, lines, err)
+		}
 	}
 }
 

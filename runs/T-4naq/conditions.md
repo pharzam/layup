@@ -20,3 +20,6 @@ One row per condition of the plan review (comment 6262491026), the Operator's de
 | Round 1 of #428, F2: an empty class is a located error, not a panic | `internal/run/reopen.go:84`, `TestAReopeningsTableRefusesEachBrokenRule` |
 | Round 1 of #428, F3: the reservation is bound to its version | `internal/run/reopen.go:210`, `TestTheRowsOfTheRecordAreBoundToTheSelection`, `TestARegisteredTaskThatDisagreesWithItsReservationIsRefused` |
 | Round 1 of #428, F4: the Task cells of REQ-005 and REQ-012 keep `T-ehb4` and `T-2vva` | `docs/prd/PRD-0001-layup.md` |
+| Round 2 of #428, F6: the pending output of a merged reopening stays required at every later head | `internal/run/reopen.go:536-548`, `internal/run/reopen.go:285`, `TestThePendingIdentityIsTheStoredRowOfTheTask`, `TestTheReopeningSetOfTheFullInputIsReadFromTheRecords`, `TestAReopenedConstraintThatARequirementCoversNeedsItsOwnPendingLine` |
+| Round 2 of #428, F7: a stored reservation is compared with an empty selection too | `internal/run/reopen.go:441-452`, `TestAnEmptySelectionStillChecksAStoredReservation` |
+| Round 2 of #428, F8: the constraint prompt, its golden file and its output scenario carry the stored NFR | `TestTheReopenedConstraintPromptCarriesItsStoredNFR`, `TestTheReopenedSpecificationPromptIsItsGoldenFile`, `TestAHarnessThatFollowsTheReopenedInstructionGivesAValidHandoffAndAGreenSpecStatus` |

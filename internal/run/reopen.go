@@ -435,8 +435,19 @@ func (r *state) openReopenings(ctx context.Context, specTask string) ([]Task, er
 		return nil, err
 	}
 	sel, err := reclassed(version, intake)
-	if err != nil || len(sel) == 0 {
+	if err != nil {
 		return nil, err
+	}
+	if len(sel) == 0 { // a stored reservation cannot match an empty selection: it is compared at every call, this one included
+		data, err := r.store.ReadFile(ctx, reopeningsPath)
+		if err != nil || data == nil {
+			return nil, err
+		}
+		rows, err := ReadReopenings(data)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", reopeningsPath, err)
+		}
+		return nil, bindReopenings(rows, sel, 1, "")
 	}
 	if _, err := s.Store.FetchBranch(ctx, s.Branch); err != nil {
 		return nil, err
@@ -523,11 +534,15 @@ func (r *state) reopeningRows(ctx context.Context, s *Sessions, register []Task,
 	return rows, betStopAt("reopenings")
 }
 
-// pendingOf gives the stored identity of the reopening of the task, none for a task that no class reopens: the fact and the requirement ID that
-// code allocated for it, none for a measure. The head of the task must hold that pending line.
+// pendingOf gives the stored identity of the reopenings whose pending line the head must hold: that of the task itself, and that of every reopening
+// that has merged (its line stays required at every later head, though a requirement of the table covers the fact), in the order of the rows. None
+// for a task that no class reopens when nothing has merged.
 func pendingOf(rows [][]string, task string, merged []string) []spec.PendingReq {
-	if r := reopeningOf(rows, task); r != nil {
-		return []spec.PendingReq{{Fact: r[reoFact], Requirement: r[reoRequirement]}}
+	var out []spec.PendingReq
+	for _, r := range rows {
+		if r[reoTask] == task || slices.Contains(merged, r[reoTask]) {
+			out = append(out, spec.PendingReq{Fact: r[reoFact], Requirement: r[reoRequirement]})
+		}
 	}
-	return nil
+	return out
 }

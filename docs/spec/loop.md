@@ -2275,7 +2275,7 @@ a reopened task are 66k's.
    and a fact whose class the answer does not change, are not selected.
 3. **The record `spec/reopenings.tsv`** (the block `reopenings` of `records.md`; owner `internal/run`: `ReopeningsSchema`, `ReadReopenings`). One row for each selected fact;
    **all the rows of a version are written in one fenced records commit before any call of the forge**, and a row is never changed. The columns are `n` (the
-   version, always 1 in `M2e`), `fact`, `class`, `token`, `requirement`, `task` and `copy`, and the reader's checks are in `records.md`. At every call the rows are
+   version, always 1 in `M2e`), `fact`, `class`, `token`, `requirement`, `task` and `copy`, and the reader's checks are in `records.md`. At every call, **the call with an empty selection included**, the rows are
    **compared with the selection**: the same facts, in the same order, with the version, the class of version 1, its `copy` and the token of item 4; any difference is an error and
    nothing is opened, so a row cannot be read as an identity of another version, fact, class or copy.
 4. **The token.** `F-NNNN#<n>` for the fact `n` of the spans, where `F-NNNN` is the one numbered facts record, a regular file `docs/facts/F-NNNN-numbered-facts.md`,
@@ -2409,7 +2409,7 @@ task the fact is no longer exempt, so a head that removes its line fails. The na
 the rules do not run, as for any head. **The own output is read by the stored identity** (round 1 of #428, F1): at the head of a reopened task `needs` (for a `need` or a
 `constraint`) and `measures` (for a `measure`) also require, from `FullInput.Pending` (the fact and the requirement ID of the row of the task in `spec/reopenings.tsv`), a line under the heading that
 cites the fact and, for a requirement, holds the allocated ID as a whole word; a requirement of the table that already covers the fact (a need changed to a constraint) or the old requirement's ID
-is not that output. The detail is `the reopened <class> fact <f> has no pending requirement <ID> under waits for a bet` (`pending success criterion` for a measure).
+is not that output. **The pending output of a merged reopening stays required** (round 2 of #428, F6): `FullInput.Pending` also holds the identity of every reopening whose task has merged, so a later head of any task that removes its line fails, and one that keeps it passes. The detail is `the reopened <class> fact <f> has no pending requirement <ID> under waits for a bet` (`pending success criterion` for a measure).
 
 **Decided here** (task `T-cav3`, #412, row 66p; the input of the full check): code
 builds the `FullInput` of a head, `Sessions.specInput(base, head, copy)` in

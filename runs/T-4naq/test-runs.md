@@ -147,7 +147,7 @@ First failing assertions, one test after the other:
 
 ### Tests written after the code
 
-`TestTheNumberedFactsRecordOfTheMergeCommitIsTheOneFile`, `TestARegisteredTaskThatDisagreesWithItsReservationIsRefused`, the register in `TestTheReopeningIsNotTheSpecificationReusedByKind` (a task of the register with the higher REQ-009) and the requirements assertion of the harness test (the PRD with no row and the record) were added after the first green run, to kill the mutants M37, M39, M5b and M23b, which no test killed before; they have no red run against the stubs and their red is the mutant of `mutants.md`.
+`TestTheNumberedFactsRecordOfTheMergeCommitIsTheOneFile`, `TestARegisteredTaskThatDisagreesWithItsReservationIsRefused`, the register in `TestTheReopeningIsNotTheSpecificationReusedByKind` (a task of the register with the higher REQ-009) and the requirements assertion of the harness test (the PRD with no row and the record) were added after the first green run, to kill the mutants M37, M39, M5b and M23b, which no test killed before; they have no red run against the stubs and their red is the mutant of `mutants.md`. The Operator accepted this R8 exception (finding F5 of round 1) in the comment 6307600855 of #428.
 
 ## S4. Green, and the gates
 
@@ -320,3 +320,61 @@ ok K4: restore evidence of mutants
 ok K5: projection: figure 1963/25, maximum 2600/30, tolerance 500/4, limit 3100/34, margin 1137/9 (the figure at landing is still measured at landing)
 ok K6: conditions table
 ```
+
+## Round 2 of #428: the red of F6, F7 and F8, before the fixes
+
+Round 2 (the comment 6305218412 on #428, GPT-6.1 Sol, head `9101153`) gave `not mergeable` with F6 to F8; the Operator raised the cap to 2 and accepted the R8 exception of F5 (comment 6307600855), so the late labels of F5 above stay as they are. The stub of round 2 is `ca5fc37` (`pendingOf` takes the merged tasks and reads none). The tests were run in the working tree against it **before** any line of the fixes, each command alone with its direct exit status, `TMPDIR=/home/layup/.cache/layup-session/tmp-green` set.
+
+### f6unit (F6, the identity that specInput carries and pendingOf gives)
+
+- Command: `go test -count=1 ./internal/run/ -run '^(TestThePendingIdentityIsTheStoredRowOfTheTask|TestTheReopeningSetOfTheFullInputIsReadFromTheRecords)$'`
+- Start to end: 03:54:02 to 03:54:04Z (`date -u`), exit 1.
+
+First failing assertions:
+
+```text
+--- FAIL: TestTheReopeningSetOfTheFullInputIsReadFromTheRecords (0.00s)
+    reopen_test.go:444: another task, the task of the fact merged: Reopening = [], Pending = [], <nil>; want [] and [{1 NFR-002}]
+--- FAIL: TestThePendingIdentityIsTheStoredRowOfTheTask (0.00s)
+    reopen_test.go:489: pendingOf(T-cccc, merged [T-aaaa]) = []; want [{3 REQ-006}]
+    reopen_test.go:489: pendingOf(T-bbbb, merged [T-aaaa]) = [{12 }]; want [{3 REQ-006} {12 }]
+    reopen_test.go:489: pendingOf(T-aaaa, merged [T-aaaa T-bbbb]) = [{3 REQ-006}]; want [{3 REQ-006} {12 }]
+```
+
+### f6int (F6 on the production path)
+
+- Command: `go test -count=1 -tags=integration -timeout 30m ./internal/run/ -run '^TestAReopenedConstraintThatARequirementCoversNeedsItsOwnPendingLine$'`
+- Start to end: 03:54:04 to 03:54:12Z (`date -u`), exit 1.
+
+First failing assertions:
+
+```text
+--- FAIL: TestAReopenedConstraintThatARequirementCoversNeedsItsOwnPendingLine (5.63s)
+    reopen_integration_test.go:383: another task's head that removes only the merged line: needs = "pass "; want "fail the reopened constraint fact 1 has no pending requirement NFR-002 under waits for a bet"
+    reopen_integration_test.go:383: another task's head that keeps the old requirement's citation only: needs = "pass "; want "fail the reopened constraint fact 1 has no pending requirement NFR-002 under waits for a bet"
+```
+
+### f7 (F7)
+
+- Command: `go test -count=1 -tags=integration -timeout 30m ./internal/run/ -run '^TestAnEmptySelectionStillChecksAStoredReservation$'`
+- Start to end: 03:54:12 to 03:54:17Z (`date -u`), exit 1.
+
+First failing assertions:
+
+```text
+--- FAIL: TestAnEmptySelectionStillChecksAStoredReservation (5.05s)
+    reopen_integration_test.go:405: an empty selection with a stored reservation = [], <nil>; 0 issues; want the refusal that names spec/reopenings.tsv and no issue
+```
+
+### f8 (F8, green on the code: no code change is needed)
+
+- Command: `go test -count=1 -tags=integration -timeout 30m ./internal/run/ -run '^(TestTheReopenedSpecificationPromptIsItsGoldenFile|TestTheReopenedConstraintPromptCarriesItsStoredNFR|TestAHarnessThatFollowsTheReopenedInstructionGivesAValidHandoffAndAGreenSpecStatus)$'`
+- Start to end: 03:54:17 to 03:54:26Z (`date -u`), exit 0.
+
+First failing assertions:
+
+```text
+ok  	github.com/pharzam/layup/internal/run	8.468s
+```
+
+F8 asks for tests, not for code: the constraint prompt, its golden file and the output scenario for a constraint pass on the code, so their red is the mutant of the reviewer (a constraint prompt that substitutes `REQ-999` for the allocated NFR), run in `mutants.md` (M61 and M62). The output scenario is now a loop over a constraint (the fact 1, NFR-002, which REQ-001 already covers) and a need.

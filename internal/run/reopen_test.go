@@ -241,6 +241,9 @@ func reopenSrc(t *testing.T, step, class string) promptSrc {
 	if class == "measure" {
 		row, src.Requirements = []string{"1", "12", "measure", "F-0004#12", "", "T-ab12", "9"}, []string{"REQ-005"}
 	}
+	if class == "constraint" {
+		row, src.Requirements = []string{"1", "7", "constraint", "F-0004#7", "NFR-002", "T-ab12", "9"}, []string{"NFR-002"}
+	}
 	src.Reopen = row
 	if step != "close-out" {
 		src.Extras.Shape = append(src.Extras.Shape, kept{reopeningsPath, []byte("reopenings\n")})
@@ -255,7 +258,7 @@ func reopenSrc(t *testing.T, step, class string) promptSrc {
 // U5: the prompt of the step specification of a reopened task is its golden file, for a need and for a measure; the golden files differ from
 // the standard one in the instruction and in the requirements (the PRD with no row of the ID, and the row of the record).
 func TestTheReopenedSpecificationPromptIsItsGoldenFile(t *testing.T) {
-	for _, class := range []string{"need", "measure"} {
+	for _, class := range []string{"need", "constraint", "measure"} {
 		c, err := buildPrompt(reopenSrc(t, "specification", class))
 		if err != nil {
 			t.Fatalf("%s: %v", class, err)
@@ -331,7 +334,7 @@ func TestTheReopenedPromptPinsTheNumberedRecord(t *testing.T) {
 
 // shownLine gives the line that a filled instruction shows for the class, with its placeholders filled.
 func shownLine(text, class string) string {
-	prefix := map[string]string{"need": "- need or constraint: \"", "measure": "- measure: \""}[class]
+	prefix := map[string]string{"need": "- need or constraint: \"", "constraint": "- need or constraint: \"", "measure": "- measure: \""}[class]
 	for _, l := range strings.Split(text, "\n") {
 		if rest, ok := strings.CutPrefix(l, prefix); ok {
 			line, _, _ := strings.Cut(rest, "\"")
@@ -434,7 +437,7 @@ func TestTheReopeningSetOfTheFullInputIsReadFromTheRecords(t *testing.T) {
 		{"no record yet", "", "T-cccc", []string{"1"}, nil},
 		{"its own task, not merged", fmt.Sprintf(row, "T-bbbb"), "T-bbbb", nil, []spec.PendingReq{{Fact: "1", Requirement: "NFR-002"}}},
 		{"another task, the task of the fact not merged", fmt.Sprintf(row, "T-bbbb"), "T-cccc", []string{"1"}, nil},
-		{"another task, the task of the fact merged", fmt.Sprintf(row, "T-aaaa"), "T-cccc", nil, nil},
+		{"another task, the task of the fact merged", fmt.Sprintf(row, "T-aaaa"), "T-cccc", nil, []spec.PendingReq{{Fact: "1", Requirement: "NFR-002"}}},
 	} {
 		s, in := build(c.reopenings)
 		if err := s.specReopening(ctx, &in, c.task); err != nil || !slices.Equal(in.Reopening, c.want) || !slices.Equal(in.Pending, c.pending) {
@@ -468,9 +471,51 @@ func TestTheNumberedFactsRecordOfTheMergeCommitIsTheOneFile(t *testing.T) {
 // F1 of round 1: the pending identity of a task is the fact and the allocated requirement of its row, none for a measure, nothing for another task.
 func TestThePendingIdentityIsTheStoredRowOfTheTask(t *testing.T) {
 	rows := [][]string{{"1", "3", "need", "F-0002#3", "REQ-006", "T-aaaa", "9"}, {"1", "12", "measure", "F-0002#12", "", "T-bbbb", "9"}}
-	for task, want := range map[string][]spec.PendingReq{"T-aaaa": {{Fact: "3", Requirement: "REQ-006"}}, "T-bbbb": {{Fact: "12"}}, "T-cccc": nil} {
-		if got := pendingOf(rows, task, nil); !slices.Equal(got, want) {
-			t.Errorf("pendingOf(%s) = %v; want %v", task, got, want)
+	for _, c := range []struct {
+		task   string
+		merged []string
+		want   []spec.PendingReq
+	}{
+		{"T-aaaa", nil, []spec.PendingReq{{Fact: "3", Requirement: "REQ-006"}}},
+		{"T-bbbb", nil, []spec.PendingReq{{Fact: "12"}}},
+		{"T-cccc", nil, nil},
+		// F6 of round 2: a merged reopening stays required at the head of every later task, with the own one after it in the order of the rows.
+		{"T-cccc", []string{"T-aaaa"}, []spec.PendingReq{{Fact: "3", Requirement: "REQ-006"}}},
+		{"T-bbbb", []string{"T-aaaa"}, []spec.PendingReq{{Fact: "3", Requirement: "REQ-006"}, {Fact: "12"}}},
+		{"T-aaaa", []string{"T-aaaa", "T-bbbb"}, []spec.PendingReq{{Fact: "3", Requirement: "REQ-006"}, {Fact: "12"}}},
+		{"T-cccc", []string{"T-zzzz"}, nil},
+	} {
+		if got := pendingOf(rows, c.task, c.merged); !slices.Equal(got, c.want) {
+			t.Errorf("pendingOf(%s, merged %v) = %v; want %v", c.task, c.merged, got, c.want)
+		}
+	}
+}
+
+// F8 of round 2: the prompt of a constraint task carries its stored NFR identity and its pinned citation at every step, in the line and in the section the
+// instruction asks for, and names no other ID; the PRD with no row and the record of the reopenings are among its requirements.
+func TestTheReopenedConstraintPromptCarriesItsStoredNFR(t *testing.T) {
+	for _, step := range []string{"plan-of-a-task", "plan-review", "specification", "verification"} {
+		c, err := buildPrompt(reopenSrc(t, step, "constraint"))
+		if err != nil {
+			t.Fatalf("%s: %v", step, err)
+		}
+		items, text := itemsOf(c, session.KindRequirements), string(c.Text(rootDir))
+		if !slices.Contains(items, "docs/prd/PRD-0001.md") || !slices.Contains(items, "spec/reopenings.tsv") {
+			t.Errorf("%s: the requirements = %v; want the PRD with no row of NFR-002 and the record of the reopenings", step, items)
+		}
+		if step != "specification" {
+			continue
+		}
+		for _, want := range []string{"NFR-002: <the requirement, one sentence> Facts: F-0004#7 F-0004. Acceptance criterion:", "\"## NFR-002 — <title>\"", "The class of this task is constraint:", "the fact 7 to constraint"} {
+			if !strings.Contains(text, want) {
+				t.Errorf("the constraint prompt does not hold %q", want)
+			}
+		}
+		if strings.Contains(text, "REQ-0") || strings.Contains(text, "REQ-9") {
+			t.Errorf("the constraint prompt names a REQ ID")
+		}
+		if line := shownLine(text, "constraint"); !strings.HasPrefix(line, "NFR-002: ") || !strings.HasSuffix(line, "Facts: F-0004#7 F-0004. Acceptance criterion: a check of it.") {
+			t.Errorf("the line the instruction shows for a constraint = %q", line)
 		}
 	}
 }
