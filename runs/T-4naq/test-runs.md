@@ -307,4 +307,3 @@ The fixes are in `4aa800c`; the tests ran on the head `4aa800c` plus the record 
 ### The full integration level
 
 `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./...`, in the background, output only to `/home/layup/.cache/layup-session/T-4naq-full-integration.txt`: 2026-10-21T00:31:50Z to 2026-10-21T00:35:36Z, exit 0, 21 packages `ok`, on the code head `4aa800c` with `origin/main` at `f9d46b0` merged.
-
