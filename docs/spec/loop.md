@@ -2929,6 +2929,19 @@ release of `M2e` by a reviewer of a model that wrote none of it, with the releas
 check of `runs/T-efmy/release-check.sh` on the release commit, before the demo, with
 a coverage table of the files read that a script compares with `git ls-files`.
 
+**Decided here** (R10, task `T-ym0k`, #369, row 68a; the plan review is the comment 6314912248 of #369). The check of the review is the script of `T-efmy`, adapted
+once more, and the comparison is a script in the tree:
+
+- **D1, the commit.** The release is the merge of row 67, `01d7da3082333efadb227afda14fd98715edf5c4` (PR #466, issue #368), named by its full ID in every run, because check (1)
+  of the script passes any name, such as `HEAD`.
+- **D2, the pinned linter.** Check (3) allows the exact call `exec.Command("sh", script, prdDir)` of `internal/spec/prdlint.go`, which [`packages.md`](packages.md#the-table-of-m2e)
+  lets `internal/spec` start, and not the file: a file-wide allowance would pass a `-c` form that reads a string as a program.
+- **D3, the remote verbs.** `RemoteHead` (`git ls-remote` with a token, called by `BranchHead`) joins the calls of `internal/git` that check (7) lists; it is a listing, not a failure.
+- **D4, the forge calls.** Check (6) counts each `.do(` of the adapter and the rows that parse, and fails when they differ or when there is none, because a call in another form
+  (a variable operation or method, two calls on one line) was silently missing from the list. It does not claim that the operation or the method fits the call: the reviewer judges each row.
+- **D5, the comparator.** `runs/T-ym0k/coverage-check.sh COMMIT RECORD` reads both halves from COMMIT (a temporary index made by `git read-tree`), so the clone it runs in does not matter, and it is
+  kept in the tree with its test so that a reader can rerun it. It is a script, not a `layup` command.
+
 ## Not in M2e
 
 The batch part of `layup/rules` (an approved rule batch, its approval hash, the
