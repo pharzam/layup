@@ -11,7 +11,7 @@ One row per condition of the plan review (comment 6314145194), the Operator's de
 | 6314145194 5: a search with old and new wording and variants; exclusions that hide no operative file | `runs/T-wqrk/harness.md`, `runs/T-wqrk/prep-test.sh` |
 | 6314145194 6: the shared-harness protocol for the template and preparer | `runs/T-wqrk/harness.md` |
 | 6314145194 7: the producing code reviewed before the six runs; versions preserved | `runs/T-wqrk/harness.md` |
-| 6314145194 8: the baseline claims corrected | `runs/T-wqrk/trial.md`, `docs/engineering-discipline.md` |
+| 6314145194 8: the baseline claims corrected | `runs/T-wqrk/trial.md` |
 | 6315292816 Q1 to Q3: Sol at high, 3 and 3 runs one at a time; "not red" stays "not red"; the limit accepted | `runs/T-wqrk/trial.md` |
 | Round 1 M1: the judge ties an affirmative diagnosis to this deadline; frozen with its sha256 | `runs/T-wqrk/trial.md`, `runs/T-wqrk/harness.md` |
 | Round 1 M2: the `earlier_record` opt-in removed; a fix-round config with `round1.md` is refused | `runs/T-wqrk/prep-test.sh`, `runs/T-wqrk/test-runs.md` |

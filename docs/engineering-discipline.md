@@ -446,7 +446,7 @@ Independence has four levels. A review claims only the ones it actually had:
 | Level | What it means | Required for |
 | ----- | ------------- | ------------ |
 | **Context** | A fresh session whose brief is the issue's problem statement, the acceptance criteria, the source documents and the diff — and **not** the author's reasoning or any earlier round's verdict. | Every review |
-| **Method** | A brief that names the round's lens and, for a round after a fix, the fix it reads. The round also reads every other file that states a rule the fix changes, which it finds by a key-term search that it runs and records itself; the brief hands it no list of those files. | Every review |
+| **Method** | A brief that names the round's lens and, for a round after a fix, the fix it reads. | Every review |
 | **Execution** | A separate run with its own record on the issue. | Every review |
 | **Model** | A model that differs from every author's model. | Every review |
 
@@ -508,8 +508,7 @@ under these names:
 - `Reviewer` — the model and version, or the person,
 - `Lens`, `Briefed on`, `Barred from` — the question asked, what the reviewer
   was handed (see [Reviewing until findings decay](#reviewing-until-findings-decay)),
-  and what the brief excluded; for a round after a fix, `Briefed on` also names the
-  search terms and the files the round read, as the [Method level](#who-may-review) asks,
+  and what the brief excluded,
 - `Independence claimed` — the [levels](#who-may-review) held, and those not
   reached,
 - `Cycle` — `0` on this branch's first frozen head for this issue, `k` for the
