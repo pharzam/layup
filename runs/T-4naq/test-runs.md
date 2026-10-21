@@ -277,3 +277,34 @@ First failing assertions:
 ```
 
 F2 is red as a panic of the reader (`nil pointer dereference` at the expression of the requirement), which ends that run of the test; the case is `no class`. The integration test of F3 is red because the reservation of the version 2 is not refused for its version: the error it gives is the disagreement of the registered `T-rsv1`, the phase before it, which comes after the binding in the correct code.
+
+## Round 1 of #428: green and the gates
+
+The fixes are in `4aa800c`; the tests ran on the head `4aa800c` plus the record commit that follows it (records only). Each command alone, with its direct exit status.
+
+- The tests of the fixes, green (unit level of the two packages, then the integration selection of the 14 integration tests of this task): 00:17:45Z to 00:17:46Z exit 0, and 00:18:18Z to 00:18:41Z exit 0, on the working tree that `4aa800c` committed (one expectation changed with the fix: the detail of the first failing head of `TestTheReopenedTasksPassTheFullCheckOneAfterTheOther` is now `the reopened need fact 2 has no pending requirement REQ-003 under waits for a bet`, because the stronger check of F1 comes first).
+
+### The gates
+
+| Gate | Start to end | Exit | Command |
+| ---- | ------------ | ---- | ------- |
+| build | 00:31:56 to 00:31:57Z | 0 | `go build ./...` |
+| vet | 00:31:57 to 00:31:57Z | 0 | `go vet ./...` |
+| vetint | 00:31:57 to 00:31:57Z | 0 | `go vet -tags=integration ./...` |
+| vete2e | 00:31:57 to 00:31:58Z | 0 | `go vet -tags=e2e ./...` |
+| gofmt | 00:31:58 to 00:31:58Z | 0 | `sh -c out=$(gofmt -l .) && test -z "$out"` |
+| unit | 00:31:58 to 00:31:59Z | 0 | `go test -count=1 ./...` |
+| adr | 00:31:59 to 00:32:00Z | 0 | `sh docs/adr/adr-lint.sh` |
+| prd | 00:32:00 to 00:32:00Z | 0 | `sh docs/prd/prd-lint.sh` |
+| link | 00:32:00 to 00:32:13Z | 0 | `sh docs/links/link-lint.sh` |
+| disc | 00:32:13 to 00:32:15Z | 0 | `sh docs/tests/run-discipline-tests.sh` |
+| nested | 00:32:15 to 00:32:15Z | 0 | `sh docs/tests/nested-checkout-check.sh` |
+| setup | 00:32:15 to 00:32:36Z | 0 | `sh docs/setup/setup-check.sh` |
+| diffcheck | 00:32:36 to 00:32:36Z | 0 | `git diff --check origin/main HEAD` |
+| taskstate | 00:32:36 to 00:32:45Z | 0 | `sh docs/tasks/task-state.sh` |
+| e2e | 00:36:03 to 00:37:10Z | 0 | `go test -count=1 -tags=e2e ./...` |
+
+### The full integration level
+
+`TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./...`, in the background, output only to `/home/layup/.cache/layup-session/T-4naq-full-integration.txt`: 2026-10-21T00:31:50Z to 2026-10-21T00:35:36Z, exit 0, 21 packages `ok`, on the code head `4aa800c` with `origin/main` at `f9d46b0` merged.
+
