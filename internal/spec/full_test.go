@@ -784,3 +784,28 @@ func TestAReclassedFactIsExemptFromNeedsAndMeasuresWhileItIsListed(t *testing.T)
 	in.PRDs = map[string][]byte{"PRD-0001-x.md": []byte(strings.Replace(string(in.PRDs["PRD-0001-x.md"]), "| `REQ-002` | a check of it |\n", "", 1))}
 	wantFail(t, CheckFull(in), "criteria", "REQ-002")
 }
+
+// F1 of round 1 (task T-4naq): the head of a reopened task must hold its own pending line, by the stored identity of the reopening (the fact and the
+// allocated requirement ID), though a requirement of the table already covers the fact (a need changed to a constraint). The control without Pending passes.
+func TestAReopenedFactNeedsItsOwnPendingLineEvenWhenARequirementCoversIt(t *testing.T) {
+	with := func(pending []PendingReq, line string) FullInput {
+		in := baseInput(t)
+		in.PRDs = map[string][]byte{"PRD-0001-x.md": []byte(testPRD + line + "\n")}
+		in.Pending = pending
+		return in
+	}
+	nfr := []PendingReq{{"4", "NFR-002"}} // fact 4 is a need that NFR-001 covers, changed to a constraint
+	wantResult(t, CheckFull(with(nil, "")), "needs", resPass)
+	wantFail(t, CheckFull(with(nfr, "")), "needs", "NFR-002")
+	wantResult(t, CheckFull(with(nfr, "NFR-002: a statement. Facts: F-0001#4 F-0001. Acceptance criterion: a check.")), "needs", resPass)
+	wantFail(t, CheckFull(with(nfr, "NFR-001: a statement. Facts: F-0001#4 F-0001. Acceptance criterion: a check.")), "needs", "NFR-002")  // the old requirement's ID
+	wantFail(t, CheckFull(with(nfr, "NFR-002: a statement. Facts: F-0001#5 F-0001. Acceptance criterion: a check.")), "needs", "NFR-002")  // another fact
+	wantFail(t, CheckFull(with(nfr, "NFR-0020: a statement. Facts: F-0001#4 F-0001. Acceptance criterion: a check.")), "needs", "NFR-002") // another ID
+	// A measure: fact 3 has its success row; its pending line is still required.
+	measure := []PendingReq{{"3", ""}}
+	wantResult(t, CheckFull(with(nil, "")), "measures", resPass)
+	wantFail(t, CheckFull(with(measure, "")), "measures", "3")
+	wantResult(t, CheckFull(with(measure, "Success criterion: it is fast. Fact: F-0001#3.")), "measures", resPass)
+	// The pending requirement of a need is the rule needs, that of a measure the rule measures.
+	wantResult(t, CheckFull(with(measure, "")), "needs", resPass)
+}

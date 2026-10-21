@@ -98,6 +98,7 @@ func TestAReopeningsTableRefusesEachBrokenRule(t *testing.T) {
 		{"no token", "1\t3\tneed\t—\tREQ-006\tT-aaaa\t9\n", `line 2, column "token": this column never holds the empty value`},
 		{"no task", "1\t3\tneed\tF-0002#3\tREQ-006\t—\t9\n", `line 2, column "task": this column never holds the empty value`},
 		{"no copy", "1\t3\tneed\tF-0002#3\tREQ-006\tT-aaaa\t—\n", `line 2, column "copy": this column never holds the empty value`},
+		{"no class", "1\t3\t—\tF-0002#3\tREQ-006\tT-aaaa\t9\n", `line 2, column "class": this column never holds the empty value`},
 		{"a version 0", "0\t3\tneed\tF-0002#3\tREQ-006\tT-aaaa\t9\n", `line 2, column "n": a version counts from 1`},
 		{"a version that is split", r1 + "2\t4\tneed\tF-0002#4\tREQ-007\tT-bbbb\t9\n" + "1\t5\tneed\tF-0002#5\tREQ-008\tT-cccc\t9\n", `line 4, column "n": the rows of the version 1 are not together`},
 	} {
@@ -128,6 +129,7 @@ func TestTheRowsOfTheRecordAreBoundToTheSelection(t *testing.T) {
 		{"another order", "fact 12", func(r [][]string) [][]string { r[0], r[1] = r[1], r[0]; return r }},
 		{"another class", "class", func(r [][]string) [][]string { r[0][reoClass] = "constraint"; return r }},
 		{"another copy", "copy", func(r [][]string) [][]string { r[1][reoCopy] = "10"; return r }},
+		{"another version", "version", func(r [][]string) [][]string { r[0][reoN] = "2"; return r }},
 		{"another record in the token", "token", func(r [][]string) [][]string { r[0][reoToken] = "F-0005#3"; return r }},
 	} {
 		if err := bindReopenings(c.change(rows()), sel, 1, "F-0002"); err == nil || !strings.Contains(err.Error(), c.want) {
@@ -427,15 +429,16 @@ func TestTheReopeningSetOfTheFullInputIsReadFromTheRecords(t *testing.T) {
 	for _, c := range []struct {
 		name, reopenings, task string
 		want                   []string
+		pending                []spec.PendingReq
 	}{
-		{"no record yet", "", "T-cccc", []string{"1"}},
-		{"its own task, not merged", fmt.Sprintf(row, "T-bbbb"), "T-bbbb", nil},
-		{"another task, the task of the fact not merged", fmt.Sprintf(row, "T-bbbb"), "T-cccc", []string{"1"}},
-		{"another task, the task of the fact merged", fmt.Sprintf(row, "T-aaaa"), "T-cccc", nil},
+		{"no record yet", "", "T-cccc", []string{"1"}, nil},
+		{"its own task, not merged", fmt.Sprintf(row, "T-bbbb"), "T-bbbb", nil, []spec.PendingReq{{Fact: "1", Requirement: "NFR-002"}}},
+		{"another task, the task of the fact not merged", fmt.Sprintf(row, "T-bbbb"), "T-cccc", []string{"1"}, nil},
+		{"another task, the task of the fact merged", fmt.Sprintf(row, "T-aaaa"), "T-cccc", nil, nil},
 	} {
 		s, in := build(c.reopenings)
-		if err := s.specReopening(ctx, &in, c.task); err != nil || !slices.Equal(in.Reopening, c.want) {
-			t.Errorf("%s: Reopening = %v, %v; want %v", c.name, in.Reopening, err, c.want)
+		if err := s.specReopening(ctx, &in, c.task); err != nil || !slices.Equal(in.Reopening, c.want) || !slices.Equal(in.Pending, c.pending) {
+			t.Errorf("%s: Reopening = %v, Pending = %v, %v; want %v and %v", c.name, in.Reopening, in.Pending, err, c.want, c.pending)
 		}
 	}
 	s, in := build(fmt.Sprintf(row, "T-bbbb"))
@@ -459,5 +462,15 @@ func TestTheNumberedFactsRecordOfTheMergeCommitIsTheOneFile(t *testing.T) {
 	}
 	if _, err := numberedRecord(map[string][]byte{"F-0004-numbered-facts.md": nil, "F-0005-numbered-facts.md": nil}, sha40); err == nil {
 		t.Error("two files: no error")
+	}
+}
+
+// F1 of round 1: the pending identity of a task is the fact and the allocated requirement of its row, none for a measure, nothing for another task.
+func TestThePendingIdentityIsTheStoredRowOfTheTask(t *testing.T) {
+	rows := [][]string{{"1", "3", "need", "F-0002#3", "REQ-006", "T-aaaa", "9"}, {"1", "12", "measure", "F-0002#12", "", "T-bbbb", "9"}}
+	for task, want := range map[string][]spec.PendingReq{"T-aaaa": {{Fact: "3", Requirement: "REQ-006"}}, "T-bbbb": {{Fact: "12"}}, "T-cccc": nil} {
+		if got := pendingOf(rows, task); !slices.Equal(got, want) {
+			t.Errorf("pendingOf(%s) = %v; want %v", task, got, want)
+		}
 	}
 }

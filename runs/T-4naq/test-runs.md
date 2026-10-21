@@ -200,3 +200,80 @@ ok K6: conditions table
 ```
 
 The figure is measured at landing; the figure above is the projection of K5 at the head named, with the evidence records of `runs/T-4naq/` out of the count (ADR-0028) and before the close-out.
+
+## Round 1 of #428: the red of F1, F2 and F3, before the fixes
+
+Round 1 (the comment on #428, reviewer GPT-6.1 Sol, head `977d2fb`) gave `material` with F1 to F5. The stubs of the fixes are the commit `d80a9bc` (the type `spec.PendingReq`, the field `FullInput.Pending`, `pendingOf` that gives nothing, the version in the signature of `bindReopenings` that nothing reads). The tests below were written and run against it, in the working tree, **before** any line of the fixes; the hook refuses a red commit, so they are committed with the fixes. Each command alone, `TMPDIR=/home/layup/.cache/layup-session/tmp-green` set, with its direct exit status.
+
+### f1spec (F1)
+
+- Command: `go test -count=1 ./internal/spec/ -run '^TestAReopenedFactNeedsItsOwnPendingLineEvenWhenARequirementCoversIt$'`
+- Start to end: 00:17:00 to 00:17:00Z (`date -u`), exit 1.
+
+First failing assertions:
+
+```text
+--- FAIL: TestAReopenedFactNeedsItsOwnPendingLineEvenWhenARequirementCoversIt (0.00s)
+    full_test.go:799: the rule needs: ("pass", ""), want fail with "NFR-002" in the detail
+    full_test.go:801: the rule needs: ("pass", ""), want fail with "NFR-002" in the detail
+    full_test.go:802: the rule needs: ("pass", ""), want fail with "NFR-002" in the detail
+    full_test.go:803: the rule needs: ("pass", ""), want fail with "NFR-002" in the detail
+    full_test.go:807: the rule measures: ("pass", ""), want fail with "3" in the detail
+```
+
+### f2 (F2 (a panic, not an error))
+
+- Command: `go test -count=1 ./internal/run/ -run '^TestAReopeningsTableRefusesEachBrokenRule$'`
+- Start to end: 00:17:00 to 00:17:02Z (`date -u`), exit 1.
+
+First failing assertions:
+
+```text
+--- FAIL: TestAReopeningsTableRefusesEachBrokenRule (0.00s)
+panic: runtime error: invalid memory address or nil pointer dereference [recovered, repanicked]
+```
+
+### f3 (F3)
+
+- Command: `go test -count=1 ./internal/run/ -run '^TestTheRowsOfTheRecordAreBoundToTheSelection$'`
+- Start to end: 00:17:02 to 00:17:02Z (`date -u`), exit 1.
+
+First failing assertions:
+
+```text
+--- FAIL: TestTheRowsOfTheRecordAreBoundToTheSelection (0.00s)
+    reopen_test.go:136: another version: <nil>; want an error holding "version"
+```
+
+### f1run (F1 (the identity that specInput carries))
+
+- Command: `go test -count=1 ./internal/run/ -run '^(TestTheReopeningSetOfTheFullInputIsReadFromTheRecords|TestThePendingIdentityIsTheStoredRowOfTheTask)$'`
+- Start to end: 00:17:02 to 00:17:02Z (`date -u`), exit 1.
+
+First failing assertions:
+
+```text
+--- FAIL: TestTheReopeningSetOfTheFullInputIsReadFromTheRecords (0.00s)
+    reopen_test.go:441: its own task, not merged: Reopening = [], Pending = [], <nil>; want [] and [{1 NFR-002}]
+--- FAIL: TestThePendingIdentityIsTheStoredRowOfTheTask (0.00s)
+    reopen_test.go:473: pendingOf(T-aaaa) = []; want [{3 REQ-006}]
+    reopen_test.go:473: pendingOf(T-bbbb) = []; want [{12 }]
+```
+
+### integ (F1 and F3 on the production path)
+
+- Command: `go test -count=1 -tags=integration -timeout 30m ./internal/run/ -run '^(TestAReopenedConstraintThatARequirementCoversNeedsItsOwnPendingLine|TestARegisteredTaskThatDisagreesWithItsReservationIsRefused|TestTheReopenedTasksPassTheFullCheckOneAfterTheOther)$'`
+- Start to end: 00:17:02 to 00:17:10Z (`date -u`), exit 1.
+
+First failing assertions:
+
+```text
+--- FAIL: TestAReopenedConstraintThatARequirementCoversNeedsItsOwnPendingLine (5.15s)
+    reopen_integration_test.go:361: no line, though REQ-001 covers the fact: needs = "pass "; want "fail the reopened constraint fact 1 has no pending requirement NFR-002 under waits for a bet"
+    reopen_integration_test.go:361: the token and the ID of the old requirement: needs = "pass "; want "fail the reopened constraint fact 1 has no pending requirement NFR-002 under waits for a bet"
+    reopen_integration_test.go:361: its ID and the token of another fact: needs = "pass "; want "fail the reopened constraint fact 1 has no pending requirement NFR-002 under waits for a bet"
+--- FAIL: TestARegisteredTaskThatDisagreesWithItsReservationIsRefused (5.46s)
+    reopen_integration_test.go:482: openReopenings with the version 2 = [], the task T-rsv1 of spec/reopenings.tsv is registered as specification for [REQ-009] after [T-erd2]; the reservation is a specification task for [NFR-002] after [T-e
+```
+
+F2 is red as a panic of the reader (`nil pointer dereference` at the expression of the requirement), which ends that run of the test; the case is `no class`. The integration test of F3 is red because the reservation of the version 2 is not refused for its version: the error it gives is the disagreement of the registered `T-rsv1`, the phase before it, which comes after the binding in the correct code.

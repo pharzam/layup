@@ -762,7 +762,7 @@ copy         int      -    the `copy` column of version n: the comment ID of the
 ```
 
 **Decided here** (task `T-4naq`, #428, row 66ab; the owner is `internal/run`, `ReopeningsSchema` and `ReadReopenings`): the reader checks, after the types and with the line and the
-column in the error, that no column but `requirement` holds `—`; that `n` is 1 or more and the rows of one `n` are together; that `token` is `F-NNNN#<fact>` for a `fact` that is a number
+column in the error, that no column but `requirement` holds `—`; that `n` is 1 or more (the caller binds it to the version, 1 in `M2e`) and the rows of one `n` are together; that `class` is never `—`; that `token` is `F-NNNN#<fact>` for a `fact` that is a number
 and the `fact` itself for a `Q-NNN`; that `requirement` is `—` exactly for a `measure`, begins `REQ-` for a `need` and `NFR-` for a `constraint`, and is three digits or more; and that no requirement and no
 `task` is held by two rows. The comparison with the inventory, the spans and the register is the caller's, at each call ([`loop.md`](loop.md#the-specification-task-that-a-changed-class-reopens)).
 

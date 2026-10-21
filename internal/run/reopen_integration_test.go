@@ -62,6 +62,48 @@ func (w *reopening) rows(t *testing.T) [][]string {
 	return rows
 }
 
+// headWith gives a commit above main that adds the lines under the heading "Waits for a bet" of the PRD, main itself for none: a head to judge.
+func (w *reopening) headWith(main string) func(lines ...string) string {
+	prd := gitOut(w.t, w.w.bare, "show", main+":docs/prd/PRD-0001-x.md")
+	return func(lines ...string) string {
+		if len(lines) == 0 {
+			return main // the head that adds nothing
+		}
+		text := prd + "\n## Waits for a bet\n\n" + strings.Join(lines, "")
+		h, err := w.r.commitFiles(main, map[string][]byte{"docs/prd/PRD-0001-x.md": []byte(text)}, "a head", w.r.who(time.Unix(1, 0)))
+		if err != nil {
+			w.t.Fatal(err)
+		}
+		return h
+	}
+}
+
+// needs gives the result and the detail of the rule needs for the head as the head of the task. SpecAt never judges a head again for one task, so a
+// test judges a head that is new for each judgment.
+func (w *reopening) needs(main string) func(task, head string) string {
+	return func(task, head string) string {
+		w.t.Helper()
+		ctx, s := context.Background(), w.r.sessions()
+		copyText, err := w.r.betCopy(ctx)
+		if err != nil {
+			w.t.Fatal(err)
+		}
+		if _, err := s.SpecAt(ctx, SpecInput{Task: task, Base: main, Head: head, Copy: copyText}); err != nil {
+			w.t.Fatal(err)
+		}
+		rows, _, err := s.SpecTable(ctx, task, head)
+		if err != nil {
+			w.t.Fatal(err)
+		}
+		for _, r := range rows {
+			if r[0] == "needs" {
+				return r[1] + " " + r[2]
+			}
+		}
+		return "no row"
+	}
+}
+
 // openWatch calls on at each OpenIssue, before it is made.
 type openWatch struct {
 	forge.Forge
@@ -261,46 +303,15 @@ func TestTheReopenedTasksPassTheFullCheckOneAfterTheOther(t *testing.T) {
 	}
 	b, d := tasks[1], tasks[3] // the facts 2 and Q-003, both needs
 	ctx, s := context.Background(), w.r.sessions()
-	prd := gitOut(t, w.w.bare, "show", main+":docs/prd/PRD-0001-x.md")
 	line := func(id, token string) string {
 		return id + ": a statement. Facts: " + token + " F-0004. Acceptance criterion: a check.\n"
 	}
-	headWith := func(lines ...string) string {
-		if len(lines) == 0 {
-			return main // the head that adds nothing
-		}
-		text := prd + "\n## Waits for a bet\n\n" + strings.Join(lines, "")
-		h, err := w.r.commitFiles(main, map[string][]byte{"docs/prd/PRD-0001-x.md": []byte(text)}, "a head", w.r.who(time.Unix(1, 0)))
-		if err != nil {
-			t.Fatal(err)
-		}
-		return h
-	}
-	copyText, err := w.r.betCopy(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	needs := func(task, head string) string {
-		t.Helper()
-		if _, err := s.SpecAt(ctx, SpecInput{Task: task, Base: main, Head: head, Copy: copyText}); err != nil {
-			t.Fatal(err)
-		}
-		rows, _, err := s.SpecTable(ctx, task, head)
-		if err != nil {
-			t.Fatal(err)
-		}
-		for _, r := range rows {
-			if r[0] == "needs" {
-				return r[1] + " " + r[2]
-			}
-		}
-		return "no row"
-	}
+	headWith, needs := w.headWith(main), w.needs(main)
 	lb, ld := line(b.Requirements[0], "F-0004#2"), line(d.Requirements[0], "Q-003")
 	for _, c := range []struct{ name, task, head, want string }{
 		{"the head of the first task, with its line", b.ID, headWith(lb), "pass "},
-		{"the head of the first task, without its line", b.ID, headWith(), "fail the need fact 2 has no requirement"},
-		{"the head of the second task, with the line of the first only", d.ID, headWith(lb), "fail the need fact Q-003 has no requirement"},
+		{"the head of the first task, without its line", b.ID, headWith(), "fail the reopened need fact 2 has no pending requirement REQ-003 under waits for a bet"},
+		{"the head of the second task, with the line of the first only", d.ID, headWith(lb), "fail the reopened need fact Q-003 has no pending requirement REQ-004 under waits for a bet"},
 		{"the head of the second task, with its line", d.ID, headWith(ld), "pass "},
 	} {
 		if got := needs(c.task, c.head); got != c.want {
@@ -320,6 +331,33 @@ func TestTheReopenedTasksPassTheFullCheckOneAfterTheOther(t *testing.T) {
 		{"the second task, on a base that lost the first line", headWith(strings.Replace(ld, "a statement", "another statement", 1)), "fail the need fact 2 has no requirement"},
 	} {
 		if got := needs(d.ID, c.head); got != c.want {
+			t.Errorf("%s: needs = %q; want %q", c.name, got, c.want)
+		}
+	}
+}
+
+// F1 of round 1: a fact that the table already covers, a need changed to a constraint (the fact 1, NFR-002), still needs its own pending line, by the
+// stored identity of its reopening; the old coverage, the token alone or another ID is not it.
+func TestAReopenedConstraintThatARequirementCoversNeedsItsOwnPendingLine(t *testing.T) {
+	t.Parallel()
+	w := newReopening(t)
+	main := w.merge()
+	tasks, err := w.open()
+	if err != nil || len(tasks) != 4 || tasks[0].Requirements[0] != "NFR-002" {
+		t.Fatalf("openReopenings = %v, %v; want four tasks, the first for NFR-002", tasks, err)
+	}
+	a := tasks[0]
+	headWith, needs := w.headWith(main), w.needs(main)
+	line := func(id, token string) string {
+		return id + ": a statement. Facts: " + token + " F-0004. Acceptance criterion: a check.\n"
+	}
+	for _, c := range []struct{ name, head, want string }{
+		{"no line, though REQ-001 covers the fact", headWith(), "fail the reopened constraint fact 1 has no pending requirement NFR-002 under waits for a bet"},
+		{"the line with its ID and its token", headWith(line("NFR-002", "F-0004#1")), "pass "},
+		{"the token and the ID of the old requirement", headWith(line("REQ-001", "F-0004#1")), "fail the reopened constraint fact 1 has no pending requirement NFR-002 under waits for a bet"},
+		{"its ID and the token of another fact", headWith(line("NFR-002", "F-0004#2")), "fail the reopened constraint fact 1 has no pending requirement NFR-002 under waits for a bet"},
+	} {
+		if got := needs(a.ID, c.head); got != c.want {
 			t.Errorf("%s: needs = %q; want %q", c.name, got, c.want)
 		}
 	}
@@ -429,5 +467,18 @@ func TestARegisteredTaskThatDisagreesWithItsReservationIsRefused(t *testing.T) {
 	w.restart()
 	if got, err := w.open(); err == nil || !strings.Contains(err.Error(), "class") || len(got) != 0 || w.issues() != issues {
 		t.Errorf("openReopenings with a class the version does not give = %v, %v; want the refusal of the class and no issue", got, err)
+	}
+	// F3 of round 1: a reservation of another version, with every other column right, is refused too.
+	rows[1][reoClass], rows[1][reoRequirement] = "need", "REQ-003"
+	for _, r := range rows {
+		r[reoN] = "2"
+	}
+	if data, err = table(ReopeningsSchema, rows); err != nil {
+		t.Fatal(err)
+	}
+	w.push(map[string][]byte{reopeningsPath: data}, "a reservation of the version 2")
+	w.restart()
+	if got, err := w.open(); err == nil || !strings.Contains(err.Error(), "version") || len(got) != 0 || w.issues() != issues {
+		t.Errorf("openReopenings with the version 2 = %v, %v; want the refusal of the version and no issue", got, err)
 	}
 }

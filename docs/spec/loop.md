@@ -2276,7 +2276,7 @@ a reopened task are 66k's.
 3. **The record `spec/reopenings.tsv`** (the block `reopenings` of `records.md`; owner `internal/run`: `ReopeningsSchema`, `ReadReopenings`). One row for each selected fact;
    **all the rows of a version are written in one fenced records commit before any call of the forge**, and a row is never changed. The columns are `n` (the
    version, always 1 in `M2e`), `fact`, `class`, `token`, `requirement`, `task` and `copy`, and the reader's checks are in `records.md`. At every call the rows are
-   **compared with the selection**: the same facts, in the same order, with the class of version 1, its `copy` and the token of item 4; any difference is an error and
+   **compared with the selection**: the same facts, in the same order, with the version, the class of version 1, its `copy` and the token of item 4; any difference is an error and
    nothing is opened, so a row cannot be read as an identity of another version, fact, class or copy.
 4. **The token.** `F-NNNN#<n>` for the fact `n` of the spans, where `F-NNNN` is the one numbered facts record, a regular file `docs/facts/F-NNNN-numbered-facts.md`,
    at the merge commit that the event `merged` names (none or two is an error): the record the specification's rendered commit wrote (`PSBRecords` of the full check),
@@ -2403,10 +2403,13 @@ task whose head is judged (`SpecInput.Task`): **the re-classed facts** (the sele
 reopens](#the-specification-task-that-a-changed-class-reopens), item 2: version 1 against Intake) **except those whose row of `spec/reopenings.tsv` names a task that has merged or
 the task whose head is judged**. The states: before the bet nothing is re-classed, and the set is empty; from the bet to the allocation every re-classed fact is exempt at every head, so
 the specification's rendered head passes and merges; from the allocation to the merge of a fact's task the fact is exempt at every head but the head of its own task, which **fails**
-`needs` or `measures` unless it holds the fact's token under `waits for a bet` (a missing output is refused, never exempted); with two re-classed facts, the head of the first task holds only
+`needs` or `measures` unless it holds the pending line of the fact under `waits for a bet` (a missing output is refused, never exempted); with two re-classed facts, the head of the first task holds only
 its own line and passes while the second's fact is exempt, and the head of the second, judged after the first has merged, has the first's line in its base and holds its own; from the merge of a fact's
 task the fact is no longer exempt, so a head that removes its line fails. The names are those of the universe (a number, or `Q-NNN`). A version that cannot be read gives an empty set, and
-the rules do not run, as for any head.
+the rules do not run, as for any head. **The own output is read by the stored identity** (round 1 of #428, F1): at the head of a reopened task `needs` (for a `need` or a
+`constraint`) and `measures` (for a `measure`) also require, from `FullInput.Pending` (the fact and the requirement ID of the row of the task in `spec/reopenings.tsv`), a line under the heading that
+cites the fact and, for a requirement, holds the allocated ID as a whole word; a requirement of the table that already covers the fact (a need changed to a constraint) or the old requirement's ID
+is not that output. The detail is `the reopened <class> fact <f> has no pending requirement <ID> under waits for a bet` (`pending success criterion` for a measure).
 
 **Decided here** (task `T-cav3`, #412, row 66p; the input of the full check): code
 builds the `FullInput` of a head, `Sessions.specInput(base, head, copy)` in
@@ -2430,6 +2433,7 @@ rebuilding the input at a restart, is row 66f's, which calls the builder.
 | `Records` | `target:` the direct regular files of `docs/facts/` at `head` named `F-NNNN*.md`, by record ID (`T-c6sx`) | an empty list |
 | `AnswersRecord` | none: `""` | not applicable |
 | `Copy` | the caller's (the bet's copy, row 66j) and passed through unchanged | `nil` keeps the `fail` row of `classes` and the `ran` row |
+| `Pending` | the row of the task whose head is judged in `records:spec/reopenings.tsv`: its fact and allocated requirement ID (the output that the head must hold) | none for a task that no class reopens |
 | `Reopening` | `records:spec/reopenings.tsv` with the Intake records, the latest version and `Merged`, for the task whose head is judged (`SpecInput.Task`; the exemption above) | an absent `spec/reopenings.tsv` is no reopened task; a file its reader refuses is an error |
 
 - **`PSBRecords`.** The numbered facts record of the problem statement is the file

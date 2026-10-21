@@ -81,7 +81,7 @@ func ReadReopenings(data []byte) ([][]string, error) {
 	for i, r := range rows {
 		line := i + 2
 		bad := func(column, reason string) error { return &tsv.Error{Line: line, Column: column, Reason: reason} }
-		for _, c := range []int{reoToken, reoTask, reoCopy} {
+		for _, c := range []int{reoClass, reoToken, reoTask, reoCopy} {
 			if r[c] == "" {
 				return nil, bad(ReopeningsSchema.Columns[c].Name, "this column never holds the empty value")
 			}
@@ -207,6 +207,8 @@ func bindReopenings(rows, sel [][]string, n int, record string) error {
 	}
 	for i, r := range rows {
 		switch s := sel[i]; {
+		case r[reoN] != strconv.Itoa(n):
+			return fmt.Errorf("%s gives the fact %s the version %s; the selection is of the version %d", reopeningsPath, s[0], r[reoN], n)
 		case r[reoFact] != s[0]:
 			return fmt.Errorf("%s names the fact %s at the row %d; the selection has the fact %s", reopeningsPath, r[reoFact], i+1, s[0])
 		case r[reoClass] != s[1]:
@@ -280,6 +282,7 @@ func (s *Sessions) specReopening(ctx context.Context, in *spec.FullInput, task s
 			return fail(fmt.Errorf("%s: %w", reopeningsPath, err))
 		}
 	}
+	in.Pending = pendingOf(rows, task)
 	latest := 0
 	for _, r := range in.Index {
 		n, _ := strconv.Atoi(r[0])
@@ -520,5 +523,11 @@ func (r *state) reopeningRows(ctx context.Context, s *Sessions, register []Task,
 	return rows, betStopAt("reopenings")
 }
 
-// pendingOf gives the stored identity of the reopening of the task, none for a task that no class reopens.
-func pendingOf(rows [][]string, task string) []spec.PendingReq { return nil }
+// pendingOf gives the stored identity of the reopening of the task, none for a task that no class reopens: the fact and the requirement ID that
+// code allocated for it, none for a measure. The head of the task must hold that pending line.
+func pendingOf(rows [][]string, task string) []spec.PendingReq {
+	if r := reopeningOf(rows, task); r != nil {
+		return []spec.PendingReq{{Fact: r[reoFact], Requirement: r[reoRequirement]}}
+	}
+	return nil
+}
