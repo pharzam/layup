@@ -1,6 +1,6 @@
 # T-ym0k: the conditions of the plan review of #369, and their evidence
 
-One row per condition of the plan review (comment 6314912248), per decision D1 to D5 and per question Q1 to Q4. This table is the input of the conditions check of the freeze. Lines are those of the head that carries this file. 
+One row per condition of the plan review (comment 6314912248), per decision D1 to D5 and per question Q1 to Q4. This table is the input of the conditions check of the freeze. Lines are those of the head that carries this file.
 
 | Condition | Evidence |
 | --- | --- |
