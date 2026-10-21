@@ -1057,3 +1057,267 @@ Committed starting head: cff8900583b5fe02d9b58c87c10dbd22ccd7619e
 Comparison base: abdbe996282b33080406223ae8ba19e5a3634360
 No clean-head pre-freeze or final landing audit is claimed by this working-tree projection.
 ```
+
+## Stage C: merge of main and clean-head pre-freeze check
+
+The coordinating session merged origin/main at
+be6a0c7c199c4036c62933b45d38055e16e80681 (including PR #458) into T-ebm4.
+The merge is 1c3ae2f1ac5019adc560e6c455064899727caf31, with parents
+a18c047 and be6a0c7. This stage starts on that clean committed head; this
+session made no commit or merge and changed no git metadata.
+
+The plan-review condition names current main at landing as the budget base.
+The pre-freeze run therefore uses origin/main, resolved below, rather than
+silently retaining the original abdbe996282b33080406223ae8ba19e5a3634360 base.
+The prior Stage B projection against that original base was 232/5; the
+clean-head K5 figure against current main is also 232/5. The maximum remains
+400/10, tolerance 80/4, limit 480/14 and margin 248/9. These are pre-freeze
+figures; the final landing audit and issue post belong to later stages.
+
+All four requested checks ran before this record was edited. The recorder
+called `date -u +%FT%TZ` immediately before and after each command, retained
+its actual exit status without a pipeline, and printed a heartbeat every ten
+seconds during longer runs. TMPDIR and all scratch output were under
+/home/layup/.cache/layup-session/tmp-green. The freeze-check command used the
+requested redirection; its complete K1-K6 output is reproduced below and
+remains in /home/layup/.cache/layup-session/tmp-green/ebm4-fc.txt.
+The four evidence declarations are unchanged, K6 is enabled, and checks.sh
+remains counted and unchanged. No task file or completed-log line is added
+in this stage. Only this run record is prepared for the coordinator's commit.
+
+### Stage C startup inspection ledger
+
+These read-only inspection groups preceded the recorder. Their UTC start and
+end were not captured and are not reported; no timestamps are inferred.
+They were not acceptance runs. The statuses below are the command tool's
+group statuses, not separately captured statuses for every command in a group.
+
+Group 1. Start: not reported. End: not reported. Exit status: 0.
+
+```sh
+pwd && git status --short && git log -5 --oneline && cat AGENTS.md && cat docs/engineering-discipline.md && cat docs/issue-workflow.md
+```
+
+Group 2. Start: not reported. End: not reported. Exit status: 0.
+
+```sh
+cat runs/T-ebm4/test-runs.md && cat runs/T-ebm4/conditions.md && cat runs/T-ebm4/checks.sh
+```
+
+Group 3. Start: not reported. End: not reported. Exit status: 1.
+
+```sh
+sed -n '290,470p' docs/engineering-discipline.md && sed -n '1,210p' docs/tests/freeze-check.sh && cat docs/adr/0028-delegate-records-only-ends-and-budget-tolerance.md
+```
+
+The last cat failed because that ADR path does not exist. The correct ADR
+path was discovered in group 4 and read in group 5. This inspection failure
+was not a freeze-check failure and changed nothing.
+
+Group 4. Start: not reported. End: not reported. Exit status: 0.
+
+```sh
+rg --files -g AGENTS.md -g '*0028*' && git rev-parse HEAD origin/main && git show -s --format=fuller 1c3ae2f && sed -n '1,180p' docs/links/link-lint.sh && sed -n '1,180p' docs/setup/setup-check.sh
+```
+
+Group 5. Start: not reported. End: not reported. Exit status: 0.
+
+```sh
+sed -n '290,455p' docs/engineering-discipline.md
+cat docs/adr/0028-delegate-two-bounded-landing-decisions.md
+cat runs/T-ebm4/conditions.md
+sed -n '1,42p' runs/T-ebm4/checks.sh
+sed -n '1,142p' docs/tests/freeze-check.sh
+sed -n '535,660p' docs/tests/freeze-check.sh
+tail -65 runs/T-ebm4/test-runs.md
+```
+
+### Stage C measured commands
+
+```sh
+git status --short --untracked-files=all
+```
+
+Start: 2026-10-21T07:47:10Z. End: 2026-10-21T07:47:10Z. Exit status: 0.
+
+```text
+```
+
+```sh
+git rev-parse HEAD origin/main
+```
+
+Start: 2026-10-21T07:47:10Z. End: 2026-10-21T07:47:10Z. Exit status: 0.
+
+```text
+1c3ae2f1ac5019adc560e6c455064899727caf31
+be6a0c7c199c4036c62933b45d38055e16e80681
+```
+
+```sh
+sh runs/T-ebm4/checks.sh
+```
+
+Start: 2026-10-21T07:47:10Z. End: 2026-10-21T07:47:10Z. Exit status: 0.
+
+```text
+ok: budget-unit
+ok: evidence-exclusion
+ok: executable-inputs
+ok: input-definition
+ok: audit-and-dual-use
+ok: bookkeeping
+ok: mixed-files
+ok: advance-approval
+ok: tolerance
+ok: margin
+ok: budget-post
+ok: fixed-tolerance
+ok: exact-approval
+ok: overrun-block
+ok: end-3-eligibility
+ok: records-definition
+ok: records-exclusions
+ok: disputed-end
+ok: end-3-post
+ok: end-3-authority
+ok: end-3-exception
+ok: canonical-straight-quotes
+ok: C1-new-comment-wait
+ok: C1-retired-wait
+ok: C1-one-shared-wait
+ok: end-1-preserved
+ok: end-2-preserved
+ok: end-4-preserved
+ok: gate-pointer
+ok: gate-retired-next-round
+ok: R12-budget-pointer
+ok: R12-retired-slicing
+ok: named-base-pointer
+ok: named-base-retired-count
+ok: C2-validation-preserved
+ok: size-class-pointer
+ok: size-class-retired-ceiling
+ok: issue-split-pointer
+ok: issue-split-example
+ok: issue-split-retired-overrun
+ok: issue-split-retired-example
+ok: material-pointer
+ok: material-retired-stop
+ok: frozen-head-pointer
+ok: frozen-head-retired-next-round
+ok: C3-Records finding-row
+ok: C3-records-bound
+ok: C3-records-collision
+ok: records-example
+ok: C3-Tolerance-row
+ok: tolerance-pointer
+ok: tolerance-collision
+ok: tolerance-example
+ok: C3-Input-row
+ok: input-pointer
+ok: input-collision
+ok: input-example
+ok: C3-Margin-row
+ok: margin-pointer
+ok: margin-collision
+ok: margin-example
+ok: C3-Coordinated Universal Time-row
+ok: C3-UTC-abbreviation
+ok: C3-UTC-description
+ok: C3-UTC-collision
+ok: C3-UTC-example
+ok: cap-example
+ok: cap-retired-example
+ok: ceiling-example
+ok: ceiling-retired-example
+ok: existing-checks-and-gates-preserved
+```
+
+```sh
+sh docs/links/link-lint.sh
+```
+
+Start: 2026-10-21T07:47:10Z. End: 2026-10-21T07:47:24Z. Exit status: 0.
+
+```text
+link-lint: OK  3064 links resolved
+```
+
+```sh
+sh docs/setup/setup-check.sh
+```
+
+Start: 2026-10-21T07:47:24Z. End: 2026-10-21T07:47:47Z. Exit status: 0.
+
+```text
+setup-check: pin OK
+setup-check: kit-history OK
+setup-check: facts OK
+setup-check: onboarding OK
+setup-check: glossary OK
+setup-check: guardrails OK
+setup-check: markers OK
+setup-check: adapted OK
+setup-check: ci OK
+setup-check: protection OK
+setup-check: identity OK
+setup-check: procedure OK
+
+run-discipline-tests: 138 passed, 0 failed
+adr-lint: OK
+prd-lint: OK
+link-lint: OK  3064 links resolved
+setup-check: kit-linters OK
+```
+
+```sh
+sh docs/tests/freeze-check.sh --task T-ebm4 --base origin/main --budget 400/10 --evidence runs/T-ebm4/conditions.md --evidence runs/T-ebm4/semantic.md --evidence runs/T-ebm4/test-runs.md --evidence runs/T-ebm4/mentions.tsv > /home/layup/.cache/layup-session/tmp-green/ebm4-fc.txt 2>&1
+```
+
+Start: 2026-10-21T07:47:47Z. End: 2026-10-21T07:47:48Z. Exit status: 0.
+
+```text
+ok K1: white space
+ok K2: registration of new tests
+ok K3: test selectors
+ok K4: restore evidence of mutants
+ok K5: projection: figure 232/5, maximum 400/10, tolerance 80/4, limit 480/14, margin 248/9 (the figure at landing is still measured at landing)
+ok K6: conditions table
+```
+
+All four requested checks exited 0. K6 audited the committed conditions table
+and its cited paths. The successful freeze-check read merge head 1c3ae2f;
+it does not claim to check the later evidence-only commit that this stage
+prepares. Independent review and close-out remain for subsequent stages.
+
+```sh
+git diff --check
+```
+
+Start: 2026-10-21T07:49:00Z. End: 2026-10-21T07:49:00Z. Exit status: 0.
+
+```text
+```
+
+```sh
+git status --short --untracked-files=all
+```
+
+Start: 2026-10-21T07:49:00Z. End: 2026-10-21T07:49:00Z. Exit status: 0.
+
+```text
+ M runs/T-ebm4/test-runs.md
+```
+
+```sh
+python3 /home/layup/.cache/layup-session/tmp-green/T-ebm4-stage-c-audit.py
+```
+
+Start: 2026-10-21T07:49:00Z. End: 2026-10-21T07:49:00Z. Exit status: 0.
+
+```text
+Only runs/T-ebm4/test-runs.md changed; checks.sh is unchanged.
+The run record uses straight quotes, no trailing white space and one final newline.
+No task file, completed-log line or scratch file was added to the worktree.
+```
