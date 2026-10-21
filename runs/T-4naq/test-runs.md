@@ -408,3 +408,16 @@ The fixes are in `3806384`; the tests ran on that head (the later commit changes
 ### The full integration level
 
 `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./...`, in the background, output only to `/home/layup/.cache/layup-session/T-4naq-full-integration.txt`: 2026-10-21T04:09:58Z to 2026-10-21T04:13:47Z, exit 0, 21 packages `ok`, on the code head `3806384` with `origin/main` at `f9d46b0` merged (`go.mod` names go 1.26.9 and the toolchain is go1.26.9).
+
+### The freeze check after the fixes of round 2
+
+On the clean committed head, which has merged `origin/main` at `f9d46b0` (fetched again after the fixes: it had not moved, and `go.mod` still names go 1.26.9): `sh docs/tests/freeze-check.sh --task T-4naq --base origin/main --budget 2600/30 --evidence runs/T-4naq/test-runs.md --evidence runs/T-4naq/mutants.md --evidence runs/T-4naq/conditions.md`, output kept outside the worktree in `/home/layup/.cache/layup-session/T-4naq-freeze.txt`, exit 0:
+
+```text
+ok K1: white space
+ok K2: registration of new tests
+ok K3: test selectors
+ok K4: restore evidence of mutants
+ok K5: projection: figure 2122/26, maximum 2600/30, tolerance 500/4, limit 3100/34, margin 978/8 (the figure at landing is still measured at landing)
+ok K6: conditions table
+```
