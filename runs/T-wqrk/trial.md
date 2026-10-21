@@ -37,51 +37,70 @@ The judge below accepts the second living home. A run that names only ADR-0012 (
 
 ## 3. The inputs, and the independence claim (condition 4)
 
-The reviewer reads `.review-in/issue.md`, `plan.md`, `plan-review.md` and `fix.diff`, and the repository at C1. **No `round1.md` and no earlier verdict is handed over, and no account of what the fix meant.** The plan review's condition 1 (the deadline is twenty minutes) stands in for the finding: the round says whether it is settled. The texts are synthetic (the driver holds them).
+The reviewer reads `.review-in/issue.md`, `plan.md`, `plan-review.md` and `fix.diff`, and the repository at C1. **No `round1.md` and no earlier verdict is handed over, and no account of what the fix meant.** The new preparer refuses any `round*.md` in `extra`, with no opt-in (round 1 finding M2), so the fix-round path itself carries none. The plan review's condition 1 (the deadline is twenty minutes) stands in for the finding: the round says whether it is settled. The texts are synthetic (the driver holds them).
 
-Levels claimed for these runs: **Model** (GPT-6.1 Sol; the authors of the texts are Claude Opus 5.5 and Claude Sonnet 5.5), **Execution** (a separate run for each, with its own record) and **Method** (the brief names the lens and the fix). **Context holds in part**: the plan and the plan review are handed over, as in every real round of this harness; the author's reasoning on the fix and any earlier verdict are not. The new template line 1 no longer says "no earlier review" unless that is so.
+Levels claimed for these runs: **Model** (GPT-6.1 Sol; the authors of the texts are Claude Opus 5.5 and Claude Sonnet 5.5), **Execution** (a separate run for each, with its own record) and **Method** (the brief names the lens and the fix). **Context holds in part**: the plan and the plan review are handed over, as in every real round of this harness; the author's reasoning on the fix and any earlier verdict are not. Line 1 of the template ("you have read no earlier review of this change") stays, because it is now always true.
 
 ## 4. The arms and the order
 
 - **old:** `round-brief.tmpl` as it stands before this task (sha256 prefix of the file in the driver's output), with the house-style `planextra`: "reads the fix `C0..HEAD` (`.review-in/fix.diff`), says whether condition 1 is settled, reads the whole change again for anything new the fix brought".
 - **new:** the same text plus the fix-round block and check 6 (`round-brief.tmpl.new`), filled by `prep-round.py.new`.
-- The same `fix.diff` is in both arms, written by the preparer's `write_fix_diff`.
+- The same `fix.diff` is in both arms, written by the preparer's `write_fix_diff`. The trial names no passive record, so the new block's pathspec is `.` and nothing is left out. In real rounds only named records (`runs/TASK/NAME.md`, a tracked plain file that no script reads) can be left out of the diff and the search; never by suffix (round 1 finding M4).
 - **Reviewer:** GPT-6.1 Sol on Codex, `run-codex-review.sh`, effort `high` (Operator decision Q1), one run at a time with `nice -n 19`, no network.
 - **Order:** old-1, new-1, old-2, new-2, old-3, new-3 (alternating, as the brief of this phase says; the plan review preferred three old runs first, and the alternation answers the same worry, a drift of the host or the model between the arms, by interleaving).
 
-## 5. The judge (condition 2), fixed in advance
+## 5. The judge (condition 2), frozen
 
-A run is a **find** when the `judge-T-wqrk.sh` below prints `JUDGE: FOUND`, a **miss** when it prints `JUDGE: MISS`. The script cuts the sections `### Raw findings` and `### Notes` and drops every other section. A line holding `0026` and the 4 lines either side of it (inside the same section) must together hold fifteen or 15, twenty or 20, and a word of disagreement. A mere citation fails, because it holds no word of disagreement, and a mention in "What I checked and found sound" is not read. It requires an explicit diagnosis of the planted disagreement, as a finding or as a note.
+**Revised 2026-10-21T12:34:07Z after round 1 of #462 (findings M1 and M5), before any run.** The first judge (sha256 `927893dfa9409c5649a4721965ed766af2290f83ba0ead4897d2f4e9c1fd94ef`) counted any disagreement word within 4 lines of a line that held `0026`. A note that denied an inconsistency ("I found no inconsistency in this summary") and a citation beside an unrelated stale item both returned FOUND. It is replaced by the judge below. **Its sha256 is `77e89964c9ce9bd160b49b26b9f01e05f92f0bc4f6ac70c8bfce4e518ebd48e1`** (file `judge-T-wqrk.sh`, text below); the runs use this file and no other.
+
+**Validity (one check for both arms).** A record is valid when its first line is exactly `## Review record — round 2` (the heading the brief prescribes for round 2; no prefix test, no trailing text), it holds a `### Raw findings` line, and its `exit.txt` reads exactly `exit 0`. Otherwise the judge prints `JUDGE: INVALID <reason>` and exits 3: the run is neither a find nor a miss (section 6).
+
+**The match.** Only the sections `### Raw findings` and `### Notes` are read. The unit is one finding or note: a list item at column 0 with its indented lines, or a paragraph. A unit is a find when it holds `0026`, fifteen or 15 and twenty or 20, and has one sentence that holds a word of disagreement, a deadline anchor (fifteen, twenty, 15, 20, deadline, no record) and no denial (no, nothing, none, never, without, n't, or "not stale" and its kind). A mere citation fails, a denial fails, an unrelated stale item in another sentence fails, and a mention in "What I checked and found sound" is not read. **Stated limit:** the unit is cut by layout, so an item whose parts sit at column 0 after blank lines is split and can give a miss; this is the same for both arms. A reviewer who diagnoses the planted disagreement in prose that the sentence test cannot read also gives a miss.
 
 ```sh
 #!/bin/sh
-# judge-T-wqrk.sh REVIEW.md: the pre-registered judge of the T-wqrk trial (runs/T-wqrk/trial.md).
-# Prints the lines that match and then one verdict line, FOUND or MISS. Exit 0 for FOUND, 1 for MISS, 2 for no file.
-# Cut: only the sections "### Raw findings" and "### Notes" are read; every other section is dropped.
-# Match: a line that holds 0026 (the ADR file or its number) and the 4 lines either side of it in the same section,
-# taken together, hold (a) fifteen or 15, (b) twenty or 20 and (c) a word of disagreement. A mere citation fails (b) or (c).
+# judge-T-wqrk.sh REVIEW.md [EXIT.TXT]: the pre-registered judge of the T-wqrk trial (runs/T-wqrk/trial.md), the same for both arms.
+# Validity first: the first line of REVIEW.md is exactly "## Review record — round 2", it holds a "### Raw findings" line, and EXIT.TXT, if given,
+# reads "exit 0". Otherwise: "JUDGE: INVALID <reason>", exit 3 (neither a find nor a miss). Exit 2 for no file.
+# Cut: only the sections "### Raw findings" and "### Notes" are read. Unit: one finding or note (a list item at column 0 with its indented
+# lines, or a paragraph). A unit is a FIND when it holds 0026, fifteen/15 and twenty/20, and one sentence that holds a disagreement word
+# and fifteen/15/twenty/20/deadline/no record and no denial (no, nothing, none, never, without, n't, "not stale" and its kind).
+# Prints FOUND lines and then "JUDGE: FOUND" (exit 0) or "JUDGE: MISS" (exit 1).
 [ -f "${1:-}" ] || { echo "judge: no file" >&2; exit 2; }
+inv() { echo "JUDGE: INVALID $1"; exit 3; }
+[ "$(head -n 1 "$1")" = "## Review record — round 2" ] || inv "first line is not exactly '## Review record — round 2'"
+grep -q '^### Raw findings' "$1" || inv "no '### Raw findings' line"
+if [ -n "${2:-}" ]; then [ "$(cat "$2" 2>/dev/null)" = "exit 0" ] || inv "exit file is not 'exit 0'"; fi
 awk '
-/^### / { p = ($0 ~ /^### (Raw findings|Notes)[ \t]*$/); n++; L[n] = "\001"; next }
-p { n++; L[n] = tolower($0) }
-END {
-	diag = "stale|still (says|states|gives|reads|has|names|uses|carries|keeps|shows|lists|mentions)|disagree|conflict|contradict|inconsisten|out of date|out-of-date|not (been )?updated|mismatch|differs from|no longer (match|agree)|does not (match|agree)|do not (match|agree)|old (value|number|figure|wording|deadline)|left (at|with|stating)"
+function flush(   i, n, s, t, u, w) {
+	if (blk == "") return
+	t = tolower(blk); blk = ""
+	if (t !~ /0026/ || t !~ /fifteen|(^|[^0-9])15([^0-9]|$)/ || t !~ /twenty|(^|[^0-9])20([^0-9]|$)/) return
+	n = split(t, s, /[.!?;] +/)
 	for (i = 1; i <= n; i++) {
-		if (L[i] == "\001" || L[i] !~ /0026/) continue
-		w = L[i]
-		for (j = i - 1; j >= 1 && j >= i - 4 && L[j] != "\001"; j--) w = L[j] " " w
-		for (j = i + 1; j <= n && j <= i + 4 && L[j] != "\001"; j++) w = w " " L[j]
-		if (w ~ /fifteen|(^|[^0-9])15([^0-9]|$)/ && w ~ /twenty|(^|[^0-9])20([^0-9]|$)/ && w ~ diag) { print "match at section line " i ": " substr(L[i], 1, 160); f = 1 }
+		u = s[i]; w = u; gsub(/no longer|no record/, " ", w)
+		if (u ~ diag && u ~ /fifteen|twenty|(^|[^0-9])(15|20)([^0-9]|$)|deadline|no record/ && w !~ /(^|[^a-z])(no|nothing|none|never|without)([^a-z]|$)|n.t / && w !~ neg) { print "FOUND in a unit at: " substr(u, 1, 150); f = 1; return }
 	}
-	print (f ? "JUDGE: FOUND" : "JUDGE: MISS"); exit (f ? 0 : 1)
-}' "$1"
+}
+BEGIN {
+	diag = "stale|still (says|states|gives|reads|has|names|uses|carries|keeps|shows|lists|mentions)|disagree|conflict|contradict|inconsisten|out of date|out-of-date|not (been )?updated|mismatch|differs from|no longer (match|agree)|does not (match|agree)|do not (match|agree)|old (value|number|figure|wording|deadline)|left (at|with|stating)"
+	neg = "not (stale|inconsisten|in conflict|conflict|contradict|out of date|a mismatch)"
+}
+/^### / { flush(); p = ($0 ~ /^### (Raw findings|Notes)[ \t]*$/); prevblank = 1; next }
+!p { next }
+{
+	if ($0 ~ /^[ \t]*$/) { prevblank = 1; blk = blk " "; next }
+	if ($0 !~ /^[ \t]/ && (prevblank || $0 ~ /^([0-9]+[.)]|[-*]) /)) flush()
+	blk = blk " " $0; prevblank = 0
+}
+END { flush(); print (f ? "JUDGE: FOUND" : "JUDGE: MISS"); exit (f ? 0 : 1) }' "$1"
 ```
 
-**Checked before any run** (the three cases are in `harness.md`): the positive case (a finding that says ADR-0026:39 "still says fifteen" while the fix says twenty) and two negatives (a note that cites ADR-0026:39 with both numbers and no disagreement; the same disagreement written under "What I checked and found sound").
+**Checked before any run** (the cases are in `harness.md`): the registered positive (a finding that says ADR-0026:39 "still says fifteen" while the fix says twenty); the earlier negatives (a mere citation; the same diagnosis under "found sound"); the two negative controls of the round 1 review (a note that says "The deadlines mentioned are fifteen and twenty minutes. I found no inconsistency in this summary"; a citation beside an unrelated stale item); a record with the heading of round 1; and the exit-file check.
 
 ```
 == pos
-match at section line 3: 1. **a summary of the deadline is stale.** `docs/adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md:39` still says
+FOUND in a unit at: **a summary of the deadline is stale.** `docs/adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md:39` still says    "fifteen with no reco
 JUDGE: FOUND
 exit 0
 == neg-cite
@@ -90,13 +109,29 @@ exit 1
 == neg-sound
 JUDGE: MISS
 exit 1
+== neg-denial
+JUDGE: MISS
+exit 1
+== neg-unrelated
+JUDGE: MISS
+exit 1
+== bad-heading
+JUDGE: INVALID first line is not exactly '## Review record — round 2'
+exit 3
+== pos with exit file 'exit 124'
+JUDGE: INVALID exit file is not 'exit 0'
+exit 3
+== pos with exit file 'exit 0'
+FOUND in a unit at: **a summary of the deadline is stale.** `docs/adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md:39` still says    "fifteen with no reco
+JUDGE: FOUND
+exit 0
 ```
 
 ## 6. Reading the result (pre-registered)
 
 - **Red** holds when at least 2 of the 3 valid old runs are misses. **Green** holds when all 3 valid new runs are finds.
 - If 2 or more old runs are finds, the result reads **"not red"**. It stays "not red", it goes to the coordinator, who returns to the Operator before landing (decision Q2). No second plant is chosen after the fact.
-- A **valid run** has `exit.txt` = `exit 0`, a non-empty `review.md` whose first line is `## Review record` and that holds a `### Raw findings` section, and was not cut by the 2400 s timeout. A missing record, a timeout or a failed start makes the run **invalid**: it is neither a find nor a miss. Each invalid run is reported with its cause. It is repeated once in the same arm; a second invalid run in the same slot leaves the trial incomplete, and that is reported.
+- A **valid run** is one the judge does not print `INVALID` for (section 5): the exact first line, a `### Raw findings` line and `exit 0`. A timeout (exit 124), a missing record or a failed start makes the run **invalid**: it is neither a find nor a miss. Each invalid run is reported with its cause. It is repeated once in the same arm; a second invalid run in the same slot leaves the trial incomplete, and that is reported.
 - Every run is reported, including runs that go against the result. No run is dropped, and none is repeated after its judge output is seen, except an invalid one by the rule above.
 - The reviewers' records are copied to `runs/T-wqrk/trial-old-N.md` and `trial-new-N.md`, with the judge output, start and end times from the host clock, and the timings.
 

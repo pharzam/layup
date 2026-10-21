@@ -1,6 +1,6 @@
 # T-wqrk: the harness, as snapshots for review before the runs
 
-Written 2026-10-21T12:05:25Z (`date -u`). Passive copies of the local harness files, none of them in the repository, preserved so that the producing code of the trial is reviewed before the six paid runs (plan review condition 7). The live files are `/home/layup/.cache/layup-session/m2e-scratchpad/rounds`; the `.new` files are not yet in place (the shared-harness protocol: the coordinator gives notice, keeps a `.bak`, and moves them). The sections: the driver (which builds the plant and the run directories), the judge and its three cases, both templates and the preparer with its diff, one prepared brief of each kind, and the sweep of the old and new wording.
+Revised 2026-10-21T12:34:28Z (`date -u`) after round 1 of #462. Passive copies of the local harness files, none of them in the repository, preserved so that the producing code of the trial is reviewed before the six paid runs (plan review condition 7). The live files are `/home/layup/.cache/layup-session/m2e-scratchpad/rounds`; the `.new` files are not yet in place (the shared-harness protocol: the coordinator gives notice, keeps a `.bak`, and moves them). The sections: the driver, the judge and its cases, the mutant script, both templates, the preparer and its diff, one prepared brief of each kind, and the sweep.
 
 ### A. trial-T-wqrk.py (the driver and the fixture construction)
 
@@ -112,30 +112,45 @@ def main():
 main()
 ````
 
-### B. judge-T-wqrk.sh
+### B. judge-T-wqrk.sh (frozen; sha256 in trial.md)
 
 ````sh
 #!/bin/sh
-# judge-T-wqrk.sh REVIEW.md: the pre-registered judge of the T-wqrk trial (runs/T-wqrk/trial.md).
-# Prints the lines that match and then one verdict line, FOUND or MISS. Exit 0 for FOUND, 1 for MISS, 2 for no file.
-# Cut: only the sections "### Raw findings" and "### Notes" are read; every other section is dropped.
-# Match: a line that holds 0026 (the ADR file or its number) and the 4 lines either side of it in the same section,
-# taken together, hold (a) fifteen or 15, (b) twenty or 20 and (c) a word of disagreement. A mere citation fails (b) or (c).
+# judge-T-wqrk.sh REVIEW.md [EXIT.TXT]: the pre-registered judge of the T-wqrk trial (runs/T-wqrk/trial.md), the same for both arms.
+# Validity first: the first line of REVIEW.md is exactly "## Review record — round 2", it holds a "### Raw findings" line, and EXIT.TXT, if given,
+# reads "exit 0". Otherwise: "JUDGE: INVALID <reason>", exit 3 (neither a find nor a miss). Exit 2 for no file.
+# Cut: only the sections "### Raw findings" and "### Notes" are read. Unit: one finding or note (a list item at column 0 with its indented
+# lines, or a paragraph). A unit is a FIND when it holds 0026, fifteen/15 and twenty/20, and one sentence that holds a disagreement word
+# and fifteen/15/twenty/20/deadline/no record and no denial (no, nothing, none, never, without, n't, "not stale" and its kind).
+# Prints FOUND lines and then "JUDGE: FOUND" (exit 0) or "JUDGE: MISS" (exit 1).
 [ -f "${1:-}" ] || { echo "judge: no file" >&2; exit 2; }
+inv() { echo "JUDGE: INVALID $1"; exit 3; }
+[ "$(head -n 1 "$1")" = "## Review record — round 2" ] || inv "first line is not exactly '## Review record — round 2'"
+grep -q '^### Raw findings' "$1" || inv "no '### Raw findings' line"
+if [ -n "${2:-}" ]; then [ "$(cat "$2" 2>/dev/null)" = "exit 0" ] || inv "exit file is not 'exit 0'"; fi
 awk '
-/^### / { p = ($0 ~ /^### (Raw findings|Notes)[ \t]*$/); n++; L[n] = "\001"; next }
-p { n++; L[n] = tolower($0) }
-END {
-	diag = "stale|still (says|states|gives|reads|has|names|uses|carries|keeps|shows|lists|mentions)|disagree|conflict|contradict|inconsisten|out of date|out-of-date|not (been )?updated|mismatch|differs from|no longer (match|agree)|does not (match|agree)|do not (match|agree)|old (value|number|figure|wording|deadline)|left (at|with|stating)"
+function flush(   i, n, s, t, u, w) {
+	if (blk == "") return
+	t = tolower(blk); blk = ""
+	if (t !~ /0026/ || t !~ /fifteen|(^|[^0-9])15([^0-9]|$)/ || t !~ /twenty|(^|[^0-9])20([^0-9]|$)/) return
+	n = split(t, s, /[.!?;] +/)
 	for (i = 1; i <= n; i++) {
-		if (L[i] == "\001" || L[i] !~ /0026/) continue
-		w = L[i]
-		for (j = i - 1; j >= 1 && j >= i - 4 && L[j] != "\001"; j--) w = L[j] " " w
-		for (j = i + 1; j <= n && j <= i + 4 && L[j] != "\001"; j++) w = w " " L[j]
-		if (w ~ /fifteen|(^|[^0-9])15([^0-9]|$)/ && w ~ /twenty|(^|[^0-9])20([^0-9]|$)/ && w ~ diag) { print "match at section line " i ": " substr(L[i], 1, 160); f = 1 }
+		u = s[i]; w = u; gsub(/no longer|no record/, " ", w)
+		if (u ~ diag && u ~ /fifteen|twenty|(^|[^0-9])(15|20)([^0-9]|$)|deadline|no record/ && w !~ /(^|[^a-z])(no|nothing|none|never|without)([^a-z]|$)|n.t / && w !~ neg) { print "FOUND in a unit at: " substr(u, 1, 150); f = 1; return }
 	}
-	print (f ? "JUDGE: FOUND" : "JUDGE: MISS"); exit (f ? 0 : 1)
-}' "$1"
+}
+BEGIN {
+	diag = "stale|still (says|states|gives|reads|has|names|uses|carries|keeps|shows|lists|mentions)|disagree|conflict|contradict|inconsisten|out of date|out-of-date|not (been )?updated|mismatch|differs from|no longer (match|agree)|does not (match|agree)|do not (match|agree)|old (value|number|figure|wording|deadline)|left (at|with|stating)"
+	neg = "not (stale|inconsisten|in conflict|conflict|contradict|out of date|a mismatch)"
+}
+/^### / { flush(); p = ($0 ~ /^### (Raw findings|Notes)[ \t]*$/); prevblank = 1; next }
+!p { next }
+{
+	if ($0 ~ /^[ \t]*$/) { prevblank = 1; blk = blk " "; next }
+	if ($0 !~ /^[ \t]/ && (prevblank || $0 ~ /^([0-9]+[.)]|[-*]) /)) flush()
+	blk = blk " " $0; prevblank = 0
+}
+END { flush(); print (f ? "JUDGE: FOUND" : "JUDGE: MISS"); exit (f ? 0 : 1) }' "$1"
 ````
 
 ### B. judge case pos.md
@@ -200,7 +215,92 @@ None.
 `docs/adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md:39` still says fifteen, while the fix says twenty, and that is stale.
 ````
 
-### C. round-brief.tmpl (the old brief)
+### B. judge case neg-denial.md
+
+````markdown
+## Review record — round 2
+
+### Raw findings
+
+None.
+
+### Notes
+
+1. `docs/adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md:39` is the second summary of reviewer selection. The deadlines mentioned are fifteen and twenty minutes. I found no inconsistency in this summary.
+
+### What I checked and found sound
+
+Condition 1 is met.
+````
+
+### B. judge case neg-unrelated.md
+
+````markdown
+## Review record — round 2
+
+### Raw findings
+
+None.
+
+### Notes
+
+1. I read `docs/adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md:39`. It gives fifteen minutes for a record, and the fix gives twenty.
+   Separately, a README link to the old guide is stale.
+
+### What I checked and found sound
+
+Condition 1 is met.
+````
+
+### B. judge case bad-heading.md
+
+````markdown
+## Review record — round 1
+
+| Field | Value |
+| --- | --- |
+| Verdict | material |
+
+### Raw findings
+
+1. **A summary of the deadline is stale.** `docs/adr/0026-keep-the-bootstrap-review-rules-as-the-standing-gate.md:39` still says
+   "fifteen with no record", but the fix sets the deadline to twenty minutes in `docs/engineering-discipline.md:457`.
+   Falsifier: the ADR line reads twenty. Fix: say twenty there, or replace the summary with a link.
+
+### Notes
+
+None.
+
+### What I checked and found sound
+
+The fix is one word.
+````
+
+### C. mutants-T-wqrk.py (removes each guard of the preparer in a scratch copy)
+
+````python
+#!/usr/bin/env python3
+# mutants-T-wqrk.py [PREPARER TEMPLATE]: removes each guard marked "# G:name" of the preparer in a scratch copy and runs prep-test.sh;
+# the guard's own named case must FAIL (and, for the record, prints every FAIL). Run in the T-wqrk worktree. Writes only to a temp dir.
+import os, re, subprocess, sys, tempfile
+S = "/home/layup/.cache/layup-session/m2e-scratchpad/rounds"
+P = sys.argv[1] if len(sys.argv) > 1 else S + "/prep-round.py.new"; TM = sys.argv[2] if len(sys.argv) > 2 else S + "/round-brief.tmpl.new"
+OWN = {"earlier": "an earlier verdict in extra", "missing": "round 2 without fix_base", "malformed": "a malformed fix_base", "shape": "a passive path outside",
+       "self": "a fix_base equal to the head", "ancestor": "a fix_base that is not an ancestor", "exec": "an executable record", "consumed": "a record that a script reads"}
+src = open(P).read().splitlines(keepends=True); bad = 0
+for g, own in OWN.items():
+    idx = [i for i, l in enumerate(src) if l.rstrip().endswith("# G:" + g)]; assert len(idx) == 1, (g, idx)
+    m = list(src); ind = re.match(r" *", m[idx[0]]).group(0); m[idx[0]] = ind + "pass  # guard " + g + " removed\n"
+    with tempfile.TemporaryDirectory() as d:
+        open(d + "/p.py", "w").write("".join(m))
+        r = subprocess.run(["sh", "runs/T-wqrk/prep-test.sh", d + "/p.py", TM], capture_output=True, text=True)
+    fails = [l[5:] for l in r.stdout.splitlines() if l.startswith("FAIL ")]
+    hit = any(own in f for f in fails); bad |= (not hit)
+    print("%-10s exit %d  own case fails: %-3s  all FAIL: %s" % (g, r.returncode, "yes" if hit else "NO", "; ".join(fails) or "none"))
+sys.exit(bad)
+````
+
+### D. round-brief.tmpl (the old brief)
 
 ````
 You are the reviewer of round @ROUND@ of task `@TASK@`, issue #@ISSUE@ of `pharzam/layup` (@WHAT@), in a fresh session. You are @REVIEWER@, a reasoning-tier model. The authors of the change are @AUTHORS@; you are none of them, and you have read no earlier review of this change.
@@ -228,10 +328,10 @@ Your final message is the record, in Markdown, and nothing else. Its first line 
 Write plain English with short sentences, in the style of the repository's documents.
 ````
 
-### C. round-brief.tmpl.new (the new brief)
+### D. round-brief.tmpl.new (the new brief)
 
 ````
-You are the reviewer of round @ROUND@ of task `@TASK@`, issue #@ISSUE@ of `pharzam/layup` (@WHAT@), in a fresh session. You are @REVIEWER@, a reasoning-tier model. The authors of the change are @AUTHORS@; you are none of them, and @EARLIER@
+You are the reviewer of round @ROUND@ of task `@TASK@`, issue #@ISSUE@ of `pharzam/layup` (@WHAT@), in a fresh session. You are @REVIEWER@, a reasoning-tier model. The authors of the change are @AUTHORS@; you are none of them, and you have read no earlier review of this change.
 
 ## What you may read
 
@@ -256,56 +356,64 @@ Your final message is the record, in Markdown, and nothing else. Its first line 
 Write plain English with short sentences, in the style of the repository's documents.
 ````
 
-### D. prep-round.py.new
+### E. prep-round.py.new
 
 ````python
 # prep-round.py CONFIG.json: clone at the frozen head, inputs and brief of a review round. Writes RUNDIR/layup/.review-in/.
-# T-wqrk: a round after a fix (round 2 or later) needs "fix_base" (a full SHA, an ancestor of "head"). The script then writes
-# .review-in/fix.diff and fills the fix-round block and check 6 of the template. "fix_exclude" lists passive run records
-# (runs/TASK/NAME.md only) left out of that diff; they are named in the block. A "round*.md" in "extra" is an earlier verdict:
-# it needs "earlier_record": true, and the brief then says that the reviewer was handed it. PREP_TEMPLATE overrides the template path.
+# T-wqrk: a round after a fix (round 2 or later) needs "fix_base" (a full SHA, an ancestor of "head", not the head). The script then
+# writes .review-in/fix.diff and fills the fix-round block and check 6 of the template. "passive" names records (runs/TASK/NAME.md, each
+# a tracked plain file that no script reads) that the diff and the search leave out; it is the only exclusion. An earlier verdict
+# (an "extra" named roundN.md) is always refused. PREP_TEMPLATE overrides the template path.
 import json, os, re, shutil, subprocess, sys
 S = "/home/layup/.cache/layup-session/m2e-scratchpad"
 KEYS = ("ROUND", "TASK", "ISSUE", "WHAT", "REVIEWER", "AUTHORS", "PLANEXTRA", "HEAD", "MAIN", "BUDGET", "CYCLE", "CAP", "HARNESS", "EXC")
-NO_EARLIER = "you have read no earlier review of this change."
-FIXREAD = ("- This round follows a fix. The fix is `git diff FIXBASE HEAD` (saved as `.review-in/fix.diff`EXCLUDED); read it first. "
+FIXREAD = ("- This round follows a fix. The fix is `git diff FIXBASE HEAD` (saved as `.review-in/fix.diff`); read it first. "
     "For each changed line that states a rule (a sentence, a number, a name, a code constant), choose its key terms, in the old wording and in the new, "
     "with the variants a reference takes (a number spelled out and in digits, an abbreviation, a section number, a link target, a constant). "
-    "Run `git grep -n -i -F -e TERM -- . ':!runs/*.md'` at this head for each term. The pathspec leaves out only the passive run records; "
-    "code, scripts, indexes, task files and decision records stay in. Every file that states the same rule is a home of it. "
+    "Run `git grep -n -i -F -e TERM -- .PATHSPEC` at this head for each term. LEFTOUT "
+    "Every file that states the same rule is a home of it. "
     "Read each home and say whether it agrees with the fix. Write the terms, the commands and the homes you read in `Briefed on` and in `### Commands and results`.\n")
 FIXCHECK = ("6. **Homes of a rule the fix changed:** for each home that disagrees with the fix, say whether it is an operative statement, a marked summary, a fixture or history. "
     "Judge it by the material test and by One home per rule: a conflicting restatement is a note unless it also meets the material test.\n")
+SCRIPT_EXT = (".sh", ".py", ".go", ".yml", ".yaml", ".mk")
 def sh(*a, **k): return subprocess.run(a, check=True, capture_output=True, text=True, **k).stdout
 def fail(m): sys.exit("prep-round: " + m)
-def earlier_text(c):
+def check_config(c):
     names = [n for n in c.get("extra", {}) if re.fullmatch(r"round\d+\.md", n)]
-    if not names: return NO_EARLIER
-    if not c.get("earlier_record"): fail("extra " + ", ".join(names) + " holds an earlier verdict; set earlier_record to true to hand it over")
-    return "you were handed an earlier round's record (" + ", ".join("`.review-in/" + n + "`" for n in names) + "), so your Context independence holds in part; your record must say so."
+    if names: fail("extra " + ", ".join(names) + " holds an earlier verdict; a round is never handed one")  # G:earlier
 def fix_parts(c):
-    """(fix_base, fix_exclude, FIXREAD text, FIXCHECK text) for a round after a fix; empty for round 1."""
+    """(fix_base, passive, FIXREAD text, FIXCHECK text) for a round after a fix; empty for round 1."""
     base = c.get("fix_base")
     if not base:
-        if int(c["round"]) > 1: fail("round " + str(c["round"]) + " follows a fix and needs fix_base, the previous frozen head")
+        if int(c["round"]) > 1: fail("round " + str(c["round"]) + " follows a fix and needs fix_base, the previous frozen head")  # G:missing
         return None, [], "", ""
-    if not re.fullmatch(r"[0-9a-f]{40}", base): fail("fix_base must be a full SHA")
-    ex = c.get("fix_exclude", [])
+    if not re.fullmatch(r"[0-9a-f]{40}", base): fail("fix_base must be a full SHA")  # G:malformed
+    ex = c.get("passive", [])
     for p in ex:
-        if not re.fullmatch("runs/" + re.escape(c["task"]) + r"/[A-Za-z0-9._-]+\.md", p): fail("fix_exclude takes only runs/" + c["task"] + "/NAME.md, not " + p)
-    note = "; left out as passive run records: " + ", ".join("`" + p + "`" for p in ex) if ex else ""
-    return base, ex, FIXREAD.replace("FIXBASE", base).replace("EXCLUDED", note), FIXCHECK
+        if not re.fullmatch("runs/" + re.escape(c["task"]) + r"/[A-Za-z0-9._-]+\.md", p): fail("passive takes only runs/" + c["task"] + "/NAME.md, not " + p)  # G:shape
+    left = ("The pathspec leaves out only these named passive run records: " + ", ".join("`" + p + "`" for p in ex) + ". Code, scripts, indexes, task files, decision records and every other file stay in."
+            if ex else "The pathspec leaves nothing out.")
+    return base, ex, FIXREAD.replace("FIXBASE", base).replace("LEFTOUT", left).replace("PATHSPEC", "".join(" ':!" + p + "'" for p in ex)), FIXCHECK
 def write_fix_diff(L, RI, base, ex):
-    if sh("git", "merge-base", base, "HEAD", cwd=L).strip() != base or sh("git", "rev-parse", "HEAD", cwd=L).strip() == base: fail("fix_base is not an earlier commit of the head")
+    head = sh("git", "rev-parse", "HEAD", cwd=L).strip()
+    if head == base: fail("fix_base is the head itself")  # G:self
+    if subprocess.run(["git", "merge-base", "--is-ancestor", base, head], cwd=L).returncode != 0: fail("fix_base is not an ancestor of the head")  # G:ancestor
+    for p in ex:
+        ls = sh("git", "ls-files", "-s", "--", p, cwd=L).split()
+        if not ls: fail(p + " is not tracked")
+        if ls[0] != "100644": fail(p + " is executable or not a plain file; it cannot be passive")  # G:exec
+        r = subprocess.run(["git", "grep", "-l", "-F", "-e", os.path.basename(p), "--", ".", ":!" + p], cwd=L, capture_output=True, text=True)
+        for f in r.stdout.split():
+            if f.endswith(SCRIPT_EXT) or sh("git", "ls-files", "-s", "--", f, cwd=L).split()[0] == "100755": fail(p + " is read by " + f + "; it is consumed and cannot be passive")  # G:consumed
     open(RI + "/fix.diff", "w").write(sh("git", "diff", base, "HEAD", "--", ".", *[":!" + p for p in ex], cwd=L))
 def render_brief(tmpl, c):
-    b = tmpl.replace("@EARLIER@", earlier_text(c)).replace("@FIXREAD@", fix_parts(c)[2]).replace("@FIXCHECK@", fix_parts(c)[3])
+    b = tmpl.replace("@FIXREAD@", fix_parts(c)[2]).replace("@FIXCHECK@", fix_parts(c)[3])
     for k in KEYS: b = b.replace("@" + k + "@", str(c[k.lower()]))
     assert "@" not in b.replace("@anthropic", ""), [l for l in b.splitlines() if "@" in l]
     return b
 def main():
     c = json.load(open(sys.argv[1]))
-    base, ex, _, _ = fix_parts(c); earlier_text(c)
+    check_config(c); base, ex, _, _ = fix_parts(c)
     R = c["rundir"]; os.makedirs(R, exist_ok=True); L = R + "/layup"
     if not os.path.isdir(L): sh("git", "clone", "-q", "--no-tags", "--single-branch", "-b", "main", "https://github.com/pharzam/layup.git", "layup", cwd=R)
     sh("git", "fetch", "-q", "origin", f"+refs/heads/{c['task']}:refs/remotes/origin/{c['task']}", "+refs/heads/main:refs/remotes/origin/main", cwd=L)
@@ -326,32 +434,32 @@ def main():
 if __name__ == "__main__": main()
 ````
 
-### D. prep-round.py: diff of the old file to the new
+### E. prep-round.py: diff of the old file to the new
 
 ````diff
 --- /home/layup/.cache/layup-session/m2e-scratchpad/rounds/prep-round.py	2026-10-20 13:07:46.473367370 +0300
-+++ /home/layup/.cache/layup-session/m2e-scratchpad/rounds/prep-round.py.new	2026-10-21 15:00:52.029827344 +0300
-@@ -1,25 +1,65 @@
++++ /home/layup/.cache/layup-session/m2e-scratchpad/rounds/prep-round.py.new	2026-10-21 15:32:28.665999914 +0300
+@@ -1,25 +1,73 @@
  # prep-round.py CONFIG.json: clone at the frozen head, inputs and brief of a review round. Writes RUNDIR/layup/.review-in/.
 -import json, os, shutil, subprocess, sys
-+# T-wqrk: a round after a fix (round 2 or later) needs "fix_base" (a full SHA, an ancestor of "head"). The script then writes
-+# .review-in/fix.diff and fills the fix-round block and check 6 of the template. "fix_exclude" lists passive run records
-+# (runs/TASK/NAME.md only) left out of that diff; they are named in the block. A "round*.md" in "extra" is an earlier verdict:
-+# it needs "earlier_record": true, and the brief then says that the reviewer was handed it. PREP_TEMPLATE overrides the template path.
++# T-wqrk: a round after a fix (round 2 or later) needs "fix_base" (a full SHA, an ancestor of "head", not the head). The script then
++# writes .review-in/fix.diff and fills the fix-round block and check 6 of the template. "passive" names records (runs/TASK/NAME.md, each
++# a tracked plain file that no script reads) that the diff and the search leave out; it is the only exclusion. An earlier verdict
++# (an "extra" named roundN.md) is always refused. PREP_TEMPLATE overrides the template path.
 +import json, os, re, shutil, subprocess, sys
  S = "/home/layup/.cache/layup-session/m2e-scratchpad"
 -c = json.load(open(sys.argv[1]))
 -R = c["rundir"]; os.makedirs(R, exist_ok=True); L = R + "/layup"
 +KEYS = ("ROUND", "TASK", "ISSUE", "WHAT", "REVIEWER", "AUTHORS", "PLANEXTRA", "HEAD", "MAIN", "BUDGET", "CYCLE", "CAP", "HARNESS", "EXC")
-+NO_EARLIER = "you have read no earlier review of this change."
-+FIXREAD = ("- This round follows a fix. The fix is `git diff FIXBASE HEAD` (saved as `.review-in/fix.diff`EXCLUDED); read it first. "
++FIXREAD = ("- This round follows a fix. The fix is `git diff FIXBASE HEAD` (saved as `.review-in/fix.diff`); read it first. "
 +    "For each changed line that states a rule (a sentence, a number, a name, a code constant), choose its key terms, in the old wording and in the new, "
 +    "with the variants a reference takes (a number spelled out and in digits, an abbreviation, a section number, a link target, a constant). "
-+    "Run `git grep -n -i -F -e TERM -- . ':!runs/*.md'` at this head for each term. The pathspec leaves out only the passive run records; "
-+    "code, scripts, indexes, task files and decision records stay in. Every file that states the same rule is a home of it. "
++    "Run `git grep -n -i -F -e TERM -- .PATHSPEC` at this head for each term. LEFTOUT "
++    "Every file that states the same rule is a home of it. "
 +    "Read each home and say whether it agrees with the fix. Write the terms, the commands and the homes you read in `Briefed on` and in `### Commands and results`.\n")
 +FIXCHECK = ("6. **Homes of a rule the fix changed:** for each home that disagrees with the fix, say whether it is an operative statement, a marked summary, a fixture or history. "
 +    "Judge it by the material test and by One home per rule: a conflicting restatement is a note unless it also meets the material test.\n")
++SCRIPT_EXT = (".sh", ".py", ".go", ".yml", ".yaml", ".mk")
  def sh(*a, **k): return subprocess.run(a, check=True, capture_output=True, text=True, **k).stdout
 -if not os.path.isdir(L): sh("git", "clone", "-q", "--no-tags", "--single-branch", "-b", "main", "https://github.com/pharzam/layup.git", "layup", cwd=R)
 -sh("git", "fetch", "-q", "origin", f"+refs/heads/{c['task']}:refs/remotes/origin/{c['task']}", "+refs/heads/main:refs/remotes/origin/main", cwd=L)
@@ -373,34 +481,42 @@ if __name__ == "__main__": main()
 -if c.get("opencode"): shutil.copy(S + "/opencode-review.json", L + "/opencode.json")
 -print(c["task"], "round", c["round"], sorted(os.listdir(RI)), sh("git", "status", "--short", cwd=L) or "clean")
 +def fail(m): sys.exit("prep-round: " + m)
-+def earlier_text(c):
++def check_config(c):
 +    names = [n for n in c.get("extra", {}) if re.fullmatch(r"round\d+\.md", n)]
-+    if not names: return NO_EARLIER
-+    if not c.get("earlier_record"): fail("extra " + ", ".join(names) + " holds an earlier verdict; set earlier_record to true to hand it over")
-+    return "you were handed an earlier round's record (" + ", ".join("`.review-in/" + n + "`" for n in names) + "), so your Context independence holds in part; your record must say so."
++    if names: fail("extra " + ", ".join(names) + " holds an earlier verdict; a round is never handed one")  # G:earlier
 +def fix_parts(c):
-+    """(fix_base, fix_exclude, FIXREAD text, FIXCHECK text) for a round after a fix; empty for round 1."""
++    """(fix_base, passive, FIXREAD text, FIXCHECK text) for a round after a fix; empty for round 1."""
 +    base = c.get("fix_base")
 +    if not base:
-+        if int(c["round"]) > 1: fail("round " + str(c["round"]) + " follows a fix and needs fix_base, the previous frozen head")
++        if int(c["round"]) > 1: fail("round " + str(c["round"]) + " follows a fix and needs fix_base, the previous frozen head")  # G:missing
 +        return None, [], "", ""
-+    if not re.fullmatch(r"[0-9a-f]{40}", base): fail("fix_base must be a full SHA")
-+    ex = c.get("fix_exclude", [])
++    if not re.fullmatch(r"[0-9a-f]{40}", base): fail("fix_base must be a full SHA")  # G:malformed
++    ex = c.get("passive", [])
 +    for p in ex:
-+        if not re.fullmatch("runs/" + re.escape(c["task"]) + r"/[A-Za-z0-9._-]+\.md", p): fail("fix_exclude takes only runs/" + c["task"] + "/NAME.md, not " + p)
-+    note = "; left out as passive run records: " + ", ".join("`" + p + "`" for p in ex) if ex else ""
-+    return base, ex, FIXREAD.replace("FIXBASE", base).replace("EXCLUDED", note), FIXCHECK
++        if not re.fullmatch("runs/" + re.escape(c["task"]) + r"/[A-Za-z0-9._-]+\.md", p): fail("passive takes only runs/" + c["task"] + "/NAME.md, not " + p)  # G:shape
++    left = ("The pathspec leaves out only these named passive run records: " + ", ".join("`" + p + "`" for p in ex) + ". Code, scripts, indexes, task files, decision records and every other file stay in."
++            if ex else "The pathspec leaves nothing out.")
++    return base, ex, FIXREAD.replace("FIXBASE", base).replace("LEFTOUT", left).replace("PATHSPEC", "".join(" ':!" + p + "'" for p in ex)), FIXCHECK
 +def write_fix_diff(L, RI, base, ex):
-+    if sh("git", "merge-base", base, "HEAD", cwd=L).strip() != base or sh("git", "rev-parse", "HEAD", cwd=L).strip() == base: fail("fix_base is not an earlier commit of the head")
++    head = sh("git", "rev-parse", "HEAD", cwd=L).strip()
++    if head == base: fail("fix_base is the head itself")  # G:self
++    if subprocess.run(["git", "merge-base", "--is-ancestor", base, head], cwd=L).returncode != 0: fail("fix_base is not an ancestor of the head")  # G:ancestor
++    for p in ex:
++        ls = sh("git", "ls-files", "-s", "--", p, cwd=L).split()
++        if not ls: fail(p + " is not tracked")
++        if ls[0] != "100644": fail(p + " is executable or not a plain file; it cannot be passive")  # G:exec
++        r = subprocess.run(["git", "grep", "-l", "-F", "-e", os.path.basename(p), "--", ".", ":!" + p], cwd=L, capture_output=True, text=True)
++        for f in r.stdout.split():
++            if f.endswith(SCRIPT_EXT) or sh("git", "ls-files", "-s", "--", f, cwd=L).split()[0] == "100755": fail(p + " is read by " + f + "; it is consumed and cannot be passive")  # G:consumed
 +    open(RI + "/fix.diff", "w").write(sh("git", "diff", base, "HEAD", "--", ".", *[":!" + p for p in ex], cwd=L))
 +def render_brief(tmpl, c):
-+    b = tmpl.replace("@EARLIER@", earlier_text(c)).replace("@FIXREAD@", fix_parts(c)[2]).replace("@FIXCHECK@", fix_parts(c)[3])
++    b = tmpl.replace("@FIXREAD@", fix_parts(c)[2]).replace("@FIXCHECK@", fix_parts(c)[3])
 +    for k in KEYS: b = b.replace("@" + k + "@", str(c[k.lower()]))
 +    assert "@" not in b.replace("@anthropic", ""), [l for l in b.splitlines() if "@" in l]
 +    return b
 +def main():
 +    c = json.load(open(sys.argv[1]))
-+    base, ex, _, _ = fix_parts(c); earlier_text(c)
++    check_config(c); base, ex, _, _ = fix_parts(c)
 +    R = c["rundir"]; os.makedirs(R, exist_ok=True); L = R + "/layup"
 +    if not os.path.isdir(L): sh("git", "clone", "-q", "--no-tags", "--single-branch", "-b", "main", "https://github.com/pharzam/layup.git", "layup", cwd=R)
 +    sh("git", "fetch", "-q", "origin", f"+refs/heads/{c['task']}:refs/remotes/origin/{c['task']}", "+refs/heads/main:refs/remotes/origin/main", cwd=L)
@@ -421,7 +537,7 @@ if __name__ == "__main__": main()
 +if __name__ == "__main__": main()
 ````
 
-### E. a prepared old brief (old-1)
+### F. a prepared old brief (old-1)
 
 ````
 You are the reviewer of round 2 of task `T-9qz4`, issue #9999 of `pharzam/layup` (the skip deadlines of a reviewer harness), in a fresh session. You are GPT-6.1 Sol (`gpt-6.1-sol`, effort high), a reasoning-tier model. The authors of the change are Claude Opus 5.5 (the plan) and Claude Sonnet 5.5 (the documents); you are none of them, and you have read no earlier review of this change.
@@ -449,7 +565,7 @@ Your final message is the record, in Markdown, and nothing else. Its first line 
 Write plain English with short sentences, in the style of the repository's documents.
 ````
 
-### E. a prepared new brief (new-1)
+### F. a prepared new brief (new-1)
 
 ````
 You are the reviewer of round 2 of task `T-9qz4`, issue #9999 of `pharzam/layup` (the skip deadlines of a reviewer harness), in a fresh session. You are GPT-6.1 Sol (`gpt-6.1-sol`, effort high), a reasoning-tier model. The authors of the change are Claude Opus 5.5 (the plan) and Claude Sonnet 5.5 (the documents); you are none of them, and you have read no earlier review of this change.
@@ -459,7 +575,7 @@ You are the reviewer of round 2 of task `T-9qz4`, issue #9999 of `pharzam/layup`
 - `.review-in/issue.md`: the issue on the forge.
 - `.review-in/plan.md` and `.review-in/plan-review.md`: the plan and the plan review that approved it with conditions. The plan review's conditions bind the change. `.review-in/fix.diff` is the fix `C0..HEAD`: this round reads it, says whether condition 1 of the plan review is settled, and reads the whole change again for anything new the fix brought. This is the last round the cap allows: the verdict is `nothing material in scope` or `not mergeable, findings recorded`, never `material`.
 - The repository in this directory at the frozen head `a5906ee579bdfe2c7ec92da7fa18f41c0ea8cc3d` (the branch), with `origin/main` at `01d7da3082333efadb227afda14fd98715edf5c4`. Start with `AGENTS.md`. The change is `git diff 01d7da3082333efadb227afda14fd98715edf5c4..HEAD` (the run records under `runs/T-9qz4/` are the author's claims, not proof).
-- This round follows a fix. The fix is `git diff a0fed3c442031e86a70e6b460c6c0df88a1fe93f HEAD` (saved as `.review-in/fix.diff`); read it first. For each changed line that states a rule (a sentence, a number, a name, a code constant), choose its key terms, in the old wording and in the new, with the variants a reference takes (a number spelled out and in digits, an abbreviation, a section number, a link target, a constant). Run `git grep -n -i -F -e TERM -- . ':!runs/*.md'` at this head for each term. The pathspec leaves out only the passive run records; code, scripts, indexes, task files and decision records stay in. Every file that states the same rule is a home of it. Read each home and say whether it agrees with the fix. Write the terms, the commands and the homes you read in `Briefed on` and in `### Commands and results`.
+- This round follows a fix. The fix is `git diff a0fed3c442031e86a70e6b460c6c0df88a1fe93f HEAD` (saved as `.review-in/fix.diff`); read it first. For each changed line that states a rule (a sentence, a number, a name, a code constant), choose its key terms, in the old wording and in the new, with the variants a reference takes (a number spelled out and in digits, an abbreviation, a section number, a link target, a constant). Run `git grep -n -i -F -e TERM -- .` at this head for each term. The pathspec leaves nothing out. Every file that states the same rule is a home of it. Read each home and say whether it agrees with the fix. Write the terms, the commands and the homes you read in `Briefed on` and in `### Commands and results`.
 
 You have no forge access and need none. Do not read outside this directory. You work in a sandbox with no network; the Go cache is `.gocache` and the temporary files are `.tmp`, which are not part of the change. Write nothing else to the tree. The sandbox has no local socket, so `httptest` integration tests may fail there with the base's own code: the integration level is the author's run and CI's; say which you ran.
 
@@ -479,7 +595,7 @@ Your final message is the record, in Markdown, and nothing else. Its first line 
 Write plain English with short sentences, in the style of the repository's documents.
 ````
 
-### E. the fix.diff of both
+### F. the fix.diff of both arms
 
 ````diff
 diff --git a/docs/engineering-discipline.md b/docs/engineering-discipline.md
@@ -497,9 +613,9 @@ index 2a8e306c..9b889062 100644
 
 ````
 
-## F. The sweep of the old and new wording (plan step 4, condition 5)
+## G. The sweep of the old and new wording (plan step 4, condition 5)
 
-Pre-registered search, run at the head of the branch and over the local harness. The pathspec leaves out only the passive run records (`runs/*.md`) and the per-task history files, so scripts and other operative files under `runs/` stay visible. The terms are the old wording ("no earlier review", "the fix it reads", "round after a fix"), the new wording (`fix.diff`, `FIXREAD`, `fix_base`) and the surrounding references (`prep-round`, `round-brief`, `planextra`).
+Pre-registered search, run at the head of the branch and over the local harness. The pathspec leaves out only the passive run records (`runs/*.md`) and the per-task history files, so scripts and other operative files under `runs/` stay visible. (This is the author's sweep of this task; the reviewer's own search in a fix round leaves out only the named records of `passive`, as the new block says.) The terms are the old wording ("no earlier review", "the fix it reads", "round after a fix"), the new wording (`fix.diff`, `FIXREAD`, `fix_base`) and the surrounding references (`prep-round`, `round-brief`, `planextra`).
 
 ```
 git grep -n -i -E 'no earlier review|earlier review|fix\.diff|the fix it reads|reads the fix|round after a fix|after a fix|prep-round|round-brief|planextra' -- . ':!runs/*.md' ':!docs/tasks/T-*'
@@ -510,10 +626,10 @@ grep -rIl -E 'no earlier review|fix\.diff|round-brief\.tmpl|prep-round' /home/la
 | --- | --- | --- |
 | `docs/engineering-discipline.md:439` (Method row), `:499` (`Briefed on`) | operative statement | changed in this task (step 6), in one home |
 | `docs/engineering-discipline.md:242`, `:318`, `README.md:37`, `docs/onboarding-for-engineers.md:179`, `docs/adr/0012-...:45`, `docs/adr/0026-...:11` and `:37`, `docs/glossary.md:171` | say a round runs after a fix, or that the next round "reads the fix" | not the rule of what a fix round reads; marked summaries and history; unchanged (`:318` is a reference, as the plan says) |
-| `docs/guardrails.md:723` | lesson on reading an earlier review | agrees with the new refusal of `round*.md` extras without `earlier_record`; unchanged |
+| `docs/guardrails.md:723` | lesson on reading an earlier review | agrees with the new refusal of any `round*.md` extra; unchanged |
 | `rounds/round-brief.tmpl`, `rounds/prep-round.py` (live) | operative code | replaced by the `.new` files by the coordinator, per the shared-harness protocol |
 | `harness/prep-round.sh`, `harness/2026-10-13-codex/prep-round-codex.py`, `m2e-scratchpad/T-8rm6/prep-r4.sh` | older preparers from 2026-10-12 and 2026-10-13, with their own templates (`@POSITION@`, `@FIXDIFF@`); not on the live path of the host (`prep-round.py` with `rounds/*.json`) | unchanged; named here as legacy |
 | `m2e-scratchpad/rounds/r*-N.json` | past configs; a round-2 config has no `fix_base`, so the new preparer refuses it until one is added | by design (condition 3); the coordinator adds `fix_base` to a new config |
 | copies of `docs/tasks/T-8bwd.md` and `runs/T-4wrw/review-round-1.md` in scratch trees | history | unchanged |
 
-(The blank context line of the diff above lost its one space of padding so that `git diff --check` passes; no other byte of a snapshot differs from its file.)
+(Blank context lines of the diffs lost their one space of padding so that `git diff --check` passes; no other byte of a snapshot differs from its file.)
