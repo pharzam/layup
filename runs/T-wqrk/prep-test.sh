@@ -9,9 +9,9 @@ T=$(mktemp -d) || exit 2; trap 'rm -rf "$T"' EXIT
 M=$(git rev-parse HEAD); git clone -q --bare "$(git rev-parse --show-toplevel)" "$T/o.git" || exit 2
 W="$T/w"; git clone -q "$T/o.git" "$W"; git -C "$W" config user.name t; git -C "$W" config user.email t@example.invalid
 git -C "$W" checkout -q -b T-pt01 "$M"; mkdir "$W/runs/T-pt01"; cd "$W/runs/T-pt01" || exit 2
-for f in rec.md rule.md data.md; do echo first > $f; done; chmod +x rule.md; echo 'cat data.md' > read.sh; echo first > ../../pt.txt
+for f in rec.md rule.md data.md full.md; do echo first > $f; done; echo 'cat runs/T-pt01/full.md' > ../../pt-full.sh; chmod +x rule.md; echo 'cat data.md' > read.sh; echo first > ../../pt.txt
 git -C "$W" add -A; git -C "$W" commit -q -m a; A=$(git -C "$W" rev-parse HEAD)
-for f in rec.md rule.md data.md ../../pt.txt; do echo second >> $f; done; git -C "$W" commit -q -am b
+for f in rec.md rule.md data.md full.md ../../pt.txt; do echo second >> $f; done; git -C "$W" commit -q -am b
 B=$(git -C "$W" rev-parse HEAD); git -C "$W" push -q origin T-pt01; git -C "$T/o.git" update-ref refs/heads/main "$M"; cd "$W" || exit 2
 mkdir "$T/bin"; printf '#!/bin/sh\necho "BODY $2"\n' > "$T/bin/gh"; chmod +x "$T/bin/gh"
 export PATH="$T/bin:$PATH" GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0="url.$T/o.git.insteadOf" GIT_CONFIG_VALUE_0=https://github.com/pharzam/layup.git
@@ -36,4 +36,5 @@ cfg 2 "$B" "$V"',"passive":["runs/T-pt01/rec.md"]'; prep; ok "a named passive re
 cfg 2 "$B" "$V"',"passive":["docs/engineering-discipline.md"]'; refused "a passive path outside runs/TASK/NAME.md is refused" "passive takes only"
 cfg 2 "$B" "$V"',"passive":["runs/T-pt01/rule.md"]'; refused "an executable record cannot be passive" "executable"
 cfg 2 "$B" "$V"',"passive":["runs/T-pt01/data.md"]'; refused "a record that a script reads cannot be passive" "consumed"
+cfg 2 "$B" "$V"',"passive":["runs/T-pt01/full.md"]'; refused "a record that a script reads by its full path cannot be passive" "consumed"
 exit $bad
