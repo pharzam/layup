@@ -139,7 +139,7 @@ func (s *Sessions) SpecAt(ctx context.Context, in SpecInput) (Status, error) {
 	if found {
 		return SpecStatus(rows), nil
 	}
-	input, err := s.specInput(ctx, in.Base, in.Head, in.Copy)
+	input, err := s.specInputFor(ctx, in.Task, in.Base, in.Head, in.Copy)
 	var se *SourceError
 	if errors.As(err, &se) && strings.HasPrefix(se.Source, "target:") {
 		first, _, _ := strings.Cut(strings.TrimSpace(se.Err.Error()), "\n")

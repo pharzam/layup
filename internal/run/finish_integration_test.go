@@ -485,6 +485,12 @@ func TestACloseOutThatEndedWithNoPushResumesItsCheckedPush(t *testing.T) {
 // the route of the close-out and the required job. v is the specification's verified head.
 func newBetFinishing(t *testing.T) (f *finishing, v, r string) {
 	t.Helper()
+	return newBetFinishingWith(t, betAnswerText)
+}
+
+// newBetFinishingWith is newBetFinishing whose idea owner answers the bet with the text given (row 66ab: an answer that re-classes facts).
+func newBetFinishingWith(t *testing.T, answer string) (f *finishing, v, r string) {
+	t.Helper()
 	d := betWorld(t, betOptionsTable)
 	if got := d.bet(); got.Result != "done" || !strings.HasPrefix(got.Detail, "waiting: the answer of the bet") {
 		t.Fatalf("the step bet = %+v; want the wait for the answer", got)
@@ -493,7 +499,7 @@ func newBetFinishing(t *testing.T) (f *finishing, v, r string) {
 	if _, err := d.r.renderedBet(context.Background(), v); err == nil {
 		t.Error("renderedBet before the bet gave no error")
 	}
-	d.reply(7004, 303, "carol", "2026-10-08T14:03:00Z", betAnswerText)
+	d.reply(7004, 303, "carol", "2026-10-08T14:03:00Z", answer)
 	routing := keptRecord(t, d.w, "routing.tsv") + "software-developer\treasoning\t1\tclaude\tm1\nsoftware-developer\texecution\t1\tcodex\tm1\n"
 	pushRecords(t, d.w.bare, map[string]string{"routing.tsv": routing}, "the route of the close-out")
 	d.restart()

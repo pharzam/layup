@@ -466,6 +466,12 @@ check that catches it.
   each such line with the same line without the `\r`. Learned in `T-4pje`
   ([#396](https://github.com/pharzam/layup/issues/396)).
 
+- ❌ **An exemption that ends before the work it waits for.** The full check judges the latest version of the inventory, so a fact that the first bet
+  re-classed has no requirement at the head of the specification that merges; an exemption "until a task is registered" still fails the head of the first of
+  two reopened tasks for the fact of the second, and a head that is judged twice for one task is read from its saved table, so a test that changes only the
+  task's state judges nothing again. It is silent because each single fact passes. **The check:** the exemption is per fact, ends at the merge of the fact's
+  own task, and is never given at the head of that task; a test judges two facts in order with a head that is new for each judgment (`T-4naq`, #428).
+
 ### Writing a lesson back
 
 A trap caught once should not be re-derived by the next task, so a lesson does not

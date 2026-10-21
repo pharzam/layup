@@ -1,0 +1,43 @@
+Prompt file of the step specification of the task T-ab12.
+Read each file at its path: its SHA-256 follows it. A path that starts with / is a copy of a file of the run's records; any other path is a file of the target, relative to your working directory.
+
+issue-and-plan:
+- /s/S-aaaaaaaa/input/tasks.tsv 299e5653428469c74c66c8063cb1357c5c28b73d38e98e2c34c12d9fc8b08e90
+- /s/S-aaaaaaaa/input/701-1.md 2d619c7869a25a069e8d9fe28202d200c8bef01cba077934e702217e8a678b59
+- /s/S-aaaaaaaa/input/tests.tsv 11d5bbdbcdf1fa5aff71bba2bd6f088fb00d00ff9927db0bb482d0b1e10fc578
+
+requirements:
+- docs/prd/PRD-0001.md 937a536b787a2e0a725b22dd2732f348eb8563a9ab3542b4a44da56609cdee68
+- /s/S-aaaaaaaa/input/draft.tsv 7eb2ca55b87a4d45d66a63f76db11f9b4aa9106472a62b5865060f9fd8eadaaa
+- /s/S-aaaaaaaa/input/spans.tsv 40f6abc9b35d0641a4288bc142c3ef868bd3e05322089bdc2b568cb5a1c00895
+- /s/S-aaaaaaaa/input/problem-statement.md 13d68660d0fd520791f490f93d9449d34d51a061e70b0205f66c37ba8318f3ed
+- /s/S-aaaaaaaa/input/answers.tsv 77ecb9d6aaae1fb8c9bb001b9ffcf5cb5eee50011ef44341fc99a8fa2fca7eb3
+- /s/S-aaaaaaaa/input/reopenings.tsv dcaffa2468fcd83282e1a747d67a7a9c86ebebaed4cc00c285b6c6ff0f22a85d
+
+decision-records:
+- none
+
+handoffs-and-answers:
+- /s/S-aaaaaaaa/input/702-1.md dbf25df15801bf8aeb66fe3b0f99eddba4e2d0265e86570f8fda7f349726b8bc
+- /s/S-aaaaaaaa/input/S-bbbbbbbb.tsv 6959b4fff6c9960b2ebbc289573e00e9c7097597e84b3c45759f36fef9778736
+findings of the last attempt:
+- gate:static: command failed
+
+rule-files:
+- AGENTS.md a73e36ec19ff2a725608408e2b396eadd2ac6046cfa31e010f8d62daab565165
+- docs/rules/a.md 1ed5f7c4bd0d52c69b29af102469935a79798bb799316ab8bad8291fcb3bef03
+
+The work of this step:
+Write the requirement that waits for a bet, for the task T-ab12 (kind specification, issue 701), from the files listed above: the row of this task in spec/reopenings.tsv, the facts spec/spans.tsv, start/problem-statement.md and intake/answers.tsv, the revised draft spec/draft.tsv, the product requirements document in docs/prd/ and the specification in docs/spec/. The bet changed the class of the fact 3 to need, and no requirement names it yet; the token F-0004#3 cites it. Commit your work in this repository in one or more commits; push nothing.
+Keep every line of the files that already exist, except the additions below, renumber nothing, and put no new row in any table. In the file of docs/prd/ write, under a heading "## Waits for a bet" (add it as the last heading of the file when the file has none), the line of your class, as plain text starting at the first column, never in a table:
+- need or constraint: "REQ-006: <the requirement, one sentence> Facts: F-0004#3 F-0004. Acceptance criterion: <the acceptance criterion>." In docs/spec/ write a section whose heading holds REQ-006 as a whole word, for example "## REQ-006 — <title>", with a non-empty text under it.
+- measure: "Success criterion: <the success criterion> Fact: F-0004#3." Write no section in docs/spec/.
+The class of this task is need: write the line of that class only.
+Write docs/tasks/T-ab12.md, the task's file, in the form of the target's docs/tasks/. Write nothing under docs/facts/.
+The required outputs for the result file are docs/tasks/T-ab12.md, the file of docs/prd/ that you wrote and, for a need or a constraint, each file of docs/spec/ that you wrote.
+
+Write the result file /s/S-aaaaaaaa/result/result.tsv: UTF-8 text with no byte-order mark, one row per line, each line ended by a line feed, the last too, and no blank line. Separate the cells of a row with one tab character each, never with spaces. The first line is "kind<TAB>n<TAB>value<TAB>sha256<TAB>reason". The single character — (U+2014) is the empty cell; no cell holds a tab or a line break. The rows of each kind are numbered 1, 2, 3 and so on, with no gap.
+Write exactly one status row, "status<TAB>1<TAB><status><TAB>—<TAB><reason>": <status> is completed when the work of this step is done, needs_context when a question stops it, and blocked or failed otherwise; <reason> is one line and not empty.
+For each required output that the work above names, write the row "artifact<TAB><n><TAB><path><TAB><sha256><TAB>—": <path> is relative to the repository, and <sha256> is 64 lowercase hexadecimal characters, the SHA-256 of that file at your last commit. A file that this prompt only asks you to read is no output.
+When a question stops the work, write one row for each question, "question<TAB><n><TAB><text><TAB>—<TAB><label> <needs_human> <record>": <label> is one of architecture-boundary, domain-or-business, environment-or-infrastructure, interface-contract; <needs_human> is yes or no; at least one <record> names a file the question concerns, more are separated by one space, and there is no space at either end of the cell.
+A comment file is plain Markdown with no code fence. Push nothing. Then end.
