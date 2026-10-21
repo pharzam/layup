@@ -112,7 +112,7 @@ def main():
 main()
 ````
 
-### B. judge-T-wqrk.sh (frozen; sha256 in trial.md)
+### B. judge-T-wqrk.sh (the fourth judge, frozen after round 3 of #462 by the Operator's end 3; sha256 in trial.md)
 
 ````sh
 #!/bin/sh
@@ -122,8 +122,10 @@ main()
 # Cut: only the sections "### Raw findings" and "### Notes" are read. Unit: one finding or note (a list item at column 0 with its indented
 # lines, or a paragraph). A unit is a FIND when it holds 0026, fifteen/15 and twenty/20, and ONE sentence of it holds all of: 0026,
 # fifteen/15/no record, a word of disagreement, and no denial (no, nothing, none, never, without, n't, "not stale" and its kind) and no hedge
-# (incorrect, wrong, would be, could be, may be, if, whether, is fine, is correct, is consistent, agrees with). The sentence must name ADR-0026
-# itself; a diagnosis in a neighbouring sentence, or of another item, does not count.
+# (incorrect, wrong, would be, could be, may/might/could, possible/possibly, needs checking, should be checked, verify whether, if, whether,
+# a question mark, is fine, is correct, is consistent, agrees with). Binding: ONE clause of that sentence (cut at while, but, whereas, although,
+# however, separately...) holds 0026, the deadline token AND the disagreement word, and names no other document (README, a token, a lease, another
+# ADR); a diagnosis in a neighbouring sentence or clause, or of another item or document, does not count. Third repair, after round 3 of #462 (F1).
 # Prints FOUND lines and then "JUDGE: FOUND" (exit 0) or "JUDGE: MISS" (exit 1).
 [ -f "${1:-}" ] || { echo "judge: no file" >&2; exit 2; }
 inv() { echo "JUDGE: INVALID $1"; exit 3; }
@@ -131,19 +133,27 @@ inv() { echo "JUDGE: INVALID $1"; exit 3; }
 grep -q '^### Raw findings' "$1" || inv "no '### Raw findings' line"
 if [ -n "${2:-}" ]; then [ "$(cat "$2" 2>/dev/null)" = "exit 0" ] || inv "exit file is not 'exit 0'"; fi
 awk '
+function bound(u,   k, m, c, ok) {
+	m = split(u, c, sep)
+	for (k = 1; k <= m; k++)
+		if (c[k] ~ /0026/ && c[k] ~ /fifteen|(^|[^0-9])15([^0-9]|$)|no record/ && c[k] ~ diag && c[k] !~ other) return 1
+	return 0
+}
 function flush(   i, n, s, t, u, w) {
 	if (blk == "") return
-	t = tolower(blk); blk = ""
+	t = tolower(blk); blk = ""; gsub(/\?/, " qmark?", t)
 	if (t !~ /0026/ || t !~ /fifteen|(^|[^0-9])15([^0-9]|$)/ || t !~ /twenty|(^|[^0-9])20([^0-9]|$)/) return
 	n = split(t, s, /[.!?;] +/)
 	for (i = 1; i <= n; i++) {
 		u = s[i]; w = u; gsub(/no longer|no record/, " ", w)
-		if (u ~ /0026/ && u ~ /fifteen|(^|[^0-9])15([^0-9]|$)|no record/ && u ~ diag && w !~ /(^|[^a-z])(no|nothing|none|never|without)([^a-z]|$)|n.t / && w !~ neg && w !~ hedge) { print "FOUND in a unit at: " substr(u, 1, 150); f = 1; return }
+		if (bound(u) && w !~ /(^|[^a-z])(no|nothing|none|never|without)([^a-z]|$)|n.t / && w !~ neg && w !~ hedge) { print "FOUND in a unit at: " substr(u, 1, 150); f = 1; return }
 	}
 }
 BEGIN {
 	diag = "stale|still (says|states|gives|reads|has|names|uses|carries|keeps|shows|lists|mentions)|disagree|conflict|contradict|inconsisten|out of date|out-of-date|not (been )?updated|mismatch|differs from|no longer (match|agree)|does not (match|agree)|do not (match|agree)|old (value|number|figure|wording|deadline)|left (at|with|stating)"
-	hedge = "incorrect|wrong|would be|could be|may be|(^|[^a-z])(if|whether|might|unless)([^a-z]|$)|(is|are) (fine|correct|consistent)|(^|[^a-z])(agrees|agree with)"
+	hedge = "incorrect|wrong|would be|could be|possib|qmark|needs? (to be )?(check|verif|confirm)|should be (check|verif|confirm)|to (check|verify|confirm)|(^|[^a-z])(verify|maybe|perhaps|may|might|could|if|whether|unless|unclear)([^a-z]|$)|(is|are) (fine|correct|consistent)|(^|[^a-z])(agrees|agree with)"
+	sep = "(^|[^a-z])(while|whilst|whereas|but|although|though|however|separately|meanwhile)([^a-z]|$)"
+	other = "readme|token|lease|adr-00(0[0-9]|1[0-9]|2[0-57-9])"
 	neg = "not (stale|inconsisten|in conflict|conflict|contradict|out of date|a mismatch)"
 }
 /^### / { flush(); p = ($0 ~ /^### (Raw findings|Notes)[ \t]*$/); prevblank = 1; next }
@@ -285,6 +295,78 @@ None.
 ### Notes
 
 1. Calling the fifteen- and twenty-minute deadline references in ADR-0026 stale would be incorrect.
+
+### What I checked and found sound
+
+Condition 1 is met.
+````
+
+### B. judge case neg-token-same.md
+
+````markdown
+## Review record — round 2
+
+### Raw findings
+
+None.
+
+### Notes
+
+1. ADR-0026 gives fifteen minutes for a record, and the fix gives twenty, while the README has a stale deadline for its token.
+
+### What I checked and found sound
+
+Condition 1 is met.
+````
+
+### B. judge case neg-possible.md
+
+````markdown
+## Review record — round 2
+
+### Raw findings
+
+None.
+
+### Notes
+
+1. A possible mismatch between ADR-0026’s fifteen-minute record deadline and the fix’s twenty minutes needs checking.
+
+### What I checked and found sound
+
+Condition 1 is met.
+````
+
+### B. judge case neg-question.md
+
+````markdown
+## Review record — round 2
+
+### Raw findings
+
+None.
+
+### Notes
+
+1. Is the fifteen-minute record deadline in ADR-0026 stale now that the fix says twenty?
+
+### What I checked and found sound
+
+Condition 1 is met.
+````
+
+### B. judge case neg-may.md
+
+````markdown
+## Review record — round 2
+
+### Raw findings
+
+None.
+
+### Notes
+
+1. The record deadline in ADR-0026 may have been left at fifteen, while the fix says twenty.
 
 ### What I checked and found sound
 

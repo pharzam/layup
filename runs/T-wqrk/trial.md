@@ -51,11 +51,11 @@ Levels claimed for these runs: **Model** (GPT-6.1 Sol; the authors of the texts 
 
 ## 5. The judge (condition 2), frozen
 
-**Revised twice before any run.** The first judge (sha256 `927893dfa9409c5649a4721965ed766af2290f83ba0ead4897d2f4e9c1fd94ef`) counted any disagreement word near a line holding `0026`; a denial and an unrelated stale item gave FOUND (round 1 of #462, M1 and M5). The second (sha256 `77e89964c9ce9bd160b49b26b9f01e05f92f0bc4f6ac70c8bfce4e518ebd48e1`, revised 2026-10-21 after round 1) tied the unit to one finding, but accepted a sentence about another deadline, and a hedged denial gave FOUND (round 2 of #462, F1). **The third, below, was revised 2026-10-21T12:58:26Z; its sha256 is `1f0c49e941f92294349fef6dd127d6588563970475eab2d8c6810c65eaddde59`** (file `judge-T-wqrk.sh`). The runs use this file and no other.
+**Revised three times before any run.** The first judge (sha256 `927893dfa9409c5649a4721965ed766af2290f83ba0ead4897d2f4e9c1fd94ef`) counted any disagreement word near a line holding `0026`; a denial and an unrelated stale item gave FOUND (round 1 of #462, M1 and M5). The second (sha256 `77e89964c9ce9bd160b49b26b9f01e05f92f0bc4f6ac70c8bfce4e518ebd48e1`, revised 2026-10-21 after round 1) tied the unit to one finding, but accepted a sentence about another deadline, and a hedged denial gave FOUND (round 2 of #462, F1). The third (sha256 `1f0c49e941f92294349fef6dd127d6588563970475eab2d8c6810c65eaddde59`, revised 12:58:26Z) bound the sentence to ADR-0026 but not the clause, and let hedged forms through (round 3 of #462, F1: two notes scored FOUND that diagnose nothing). **The fourth, below, is the frozen judge, repaired 2026-10-21 under the Operator's end 3 (comment 6316981250, term 1); its sha256 is `d9e1e291489ae7e8257a1b6b7814fbc94bc36572f625cab16c06b5ad21fc111e`** (file `judge-T-wqrk.sh`). It has had no review round (end 3). The runs use this file and no other.
 
 **Validity (one check for both arms).** A record is valid when its first line is exactly `## Review record — round 2` (the heading the brief prescribes for round 2; no prefix test, no trailing text), it holds a `### Raw findings` line, and its `exit.txt` reads exactly `exit 0`. Otherwise the judge prints `JUDGE: INVALID <reason>` and exits 3: the run is neither a find nor a miss (section 6).
 
-**The match.** Only the sections `### Raw findings` and `### Notes` are read. The unit is one finding or note: a list item at column 0 with its indented lines, or a paragraph. A unit is a find when it holds `0026`, fifteen or 15 and twenty or 20, and **one sentence of it holds all of**: `0026`, fifteen or 15 or "no record", a word of disagreement, no denial (no, nothing, none, never, without, n't, or "not stale" and its kind) and no hedge (incorrect, wrong, would be, could be, may be, if, whether, is fine, is correct, is consistent, agrees with). The affirmative clause must name ADR-0026 itself and its record deadline; a neighbouring sentence, another item or another deadline does not count. A mere citation fails, a denial fails, a hedged denial fails, an unrelated stale item fails, and a mention in "What I checked and found sound" is not read. **Stated limits:** the unit is cut by layout, so an item whose parts sit at column 0 after blank lines is split; a diagnosis whose ADR-0026 mention sits in another sentence than the disagreement word gives a miss. Both limits are the same for both arms.
+**The match.** Only the sections `### Raw findings` and `### Notes` are read. The unit is one finding or note: a list item at column 0 with its indented lines, or a paragraph. A unit is a find when it holds `0026`, fifteen or 15 and twenty or 20, and **one clause of one sentence holds all of** (a clause is cut at while, whilst, whereas, but, although, though, however, separately, meanwhile): `0026`, fifteen or 15 or "no record", a word of disagreement, and no other document (README, a token, a lease, another ADR); and **the sentence holds** no denial (no, nothing, none, never, without, n't, or "not stale" and its kind) and no hedge (incorrect, wrong, would be, could be, may, might, could, possible, possibly, maybe, perhaps, unclear, needs checking, should be checked, to check, verify, if, whether, unless, a question mark, is fine, is correct, is consistent, agrees with). The affirmative clause must name ADR-0026 itself with its record deadline and the disagreement word; a neighbouring sentence or clause, another item, another document or another deadline does not count. A mere citation fails, a denial fails, a hedged denial fails, an unrelated stale item fails, and a mention in "What I checked and found sound" is not read. **Stated limits:** the unit is cut by layout, so an item whose parts sit at column 0 after blank lines is split; a diagnosis whose ADR-0026 mention sits in another sentence or clause than the disagreement word gives a miss, and a hedge anywhere in the sentence rejects it. The judge can under-count and cannot be trusted to confirm: see the hand-confirmation rule in section 6. Both limits are the same for both arms.
 
 ```sh
 #!/bin/sh
@@ -65,8 +65,10 @@ Levels claimed for these runs: **Model** (GPT-6.1 Sol; the authors of the texts 
 # Cut: only the sections "### Raw findings" and "### Notes" are read. Unit: one finding or note (a list item at column 0 with its indented
 # lines, or a paragraph). A unit is a FIND when it holds 0026, fifteen/15 and twenty/20, and ONE sentence of it holds all of: 0026,
 # fifteen/15/no record, a word of disagreement, and no denial (no, nothing, none, never, without, n't, "not stale" and its kind) and no hedge
-# (incorrect, wrong, would be, could be, may be, if, whether, is fine, is correct, is consistent, agrees with). The sentence must name ADR-0026
-# itself; a diagnosis in a neighbouring sentence, or of another item, does not count.
+# (incorrect, wrong, would be, could be, may/might/could, possible/possibly, needs checking, should be checked, verify whether, if, whether,
+# a question mark, is fine, is correct, is consistent, agrees with). Binding: ONE clause of that sentence (cut at while, but, whereas, although,
+# however, separately...) holds 0026, the deadline token AND the disagreement word, and names no other document (README, a token, a lease, another
+# ADR); a diagnosis in a neighbouring sentence or clause, or of another item or document, does not count. Third repair, after round 3 of #462 (F1).
 # Prints FOUND lines and then "JUDGE: FOUND" (exit 0) or "JUDGE: MISS" (exit 1).
 [ -f "${1:-}" ] || { echo "judge: no file" >&2; exit 2; }
 inv() { echo "JUDGE: INVALID $1"; exit 3; }
@@ -74,19 +76,27 @@ inv() { echo "JUDGE: INVALID $1"; exit 3; }
 grep -q '^### Raw findings' "$1" || inv "no '### Raw findings' line"
 if [ -n "${2:-}" ]; then [ "$(cat "$2" 2>/dev/null)" = "exit 0" ] || inv "exit file is not 'exit 0'"; fi
 awk '
+function bound(u,   k, m, c, ok) {
+	m = split(u, c, sep)
+	for (k = 1; k <= m; k++)
+		if (c[k] ~ /0026/ && c[k] ~ /fifteen|(^|[^0-9])15([^0-9]|$)|no record/ && c[k] ~ diag && c[k] !~ other) return 1
+	return 0
+}
 function flush(   i, n, s, t, u, w) {
 	if (blk == "") return
-	t = tolower(blk); blk = ""
+	t = tolower(blk); blk = ""; gsub(/\?/, " qmark?", t)
 	if (t !~ /0026/ || t !~ /fifteen|(^|[^0-9])15([^0-9]|$)/ || t !~ /twenty|(^|[^0-9])20([^0-9]|$)/) return
 	n = split(t, s, /[.!?;] +/)
 	for (i = 1; i <= n; i++) {
 		u = s[i]; w = u; gsub(/no longer|no record/, " ", w)
-		if (u ~ /0026/ && u ~ /fifteen|(^|[^0-9])15([^0-9]|$)|no record/ && u ~ diag && w !~ /(^|[^a-z])(no|nothing|none|never|without)([^a-z]|$)|n.t / && w !~ neg && w !~ hedge) { print "FOUND in a unit at: " substr(u, 1, 150); f = 1; return }
+		if (bound(u) && w !~ /(^|[^a-z])(no|nothing|none|never|without)([^a-z]|$)|n.t / && w !~ neg && w !~ hedge) { print "FOUND in a unit at: " substr(u, 1, 150); f = 1; return }
 	}
 }
 BEGIN {
 	diag = "stale|still (says|states|gives|reads|has|names|uses|carries|keeps|shows|lists|mentions)|disagree|conflict|contradict|inconsisten|out of date|out-of-date|not (been )?updated|mismatch|differs from|no longer (match|agree)|does not (match|agree)|do not (match|agree)|old (value|number|figure|wording|deadline)|left (at|with|stating)"
-	hedge = "incorrect|wrong|would be|could be|may be|(^|[^a-z])(if|whether|might|unless)([^a-z]|$)|(is|are) (fine|correct|consistent)|(^|[^a-z])(agrees|agree with)"
+	hedge = "incorrect|wrong|would be|could be|possib|qmark|needs? (to be )?(check|verif|confirm)|should be (check|verif|confirm)|to (check|verify|confirm)|(^|[^a-z])(verify|maybe|perhaps|may|might|could|if|whether|unless|unclear)([^a-z]|$)|(is|are) (fine|correct|consistent)|(^|[^a-z])(agrees|agree with)"
+	sep = "(^|[^a-z])(while|whilst|whereas|but|although|though|however|separately|meanwhile)([^a-z]|$)"
+	other = "readme|token|lease|adr-00(0[0-9]|1[0-9]|2[0-57-9])"
 	neg = "not (stale|inconsisten|in conflict|conflict|contradict|out of date|a mismatch)"
 }
 /^### / { flush(); p = ($0 ~ /^### (Raw findings|Notes)[ \t]*$/); prevblank = 1; next }
@@ -99,7 +109,7 @@ BEGIN {
 END { flush(); print (f ? "JUDGE: FOUND" : "JUDGE: MISS"); exit (f ? 0 : 1) }' "$1"
 ```
 
-**Checked before any run** (the cases are in `harness.md`): the registered positive (a finding that says ADR-0026:39 "still says fifteen" while the fix says twenty); the earlier negatives (a mere citation; the same diagnosis under "found sound"; a denial; an unrelated stale item); the two controls of round 2 (`neg-token`: "ADR-0026 gives fifteen minutes for a record, and the fix gives twenty. Separately, the README has a stale deadline for its token."; `neg-hedged`: "Calling the fifteen- and twenty-minute deadline references in ADR-0026 stale would be incorrect."); a record with the heading of round 1; and the exit-file check. The third judge's red: the second judge gave FOUND on `neg-token` and on `neg-hedged`.
+**Checked before any run** (the cases are in `harness.md`): the registered positive (a finding that says ADR-0026:39 "still says fifteen" while the fix says twenty); the earlier negatives (`neg-cite`, `neg-sound`, `neg-denial`, `neg-unrelated`, `neg-token`, `neg-hedged`); the four controls registered for round 3 F1 (`neg-token-same` and `neg-possible`, the two notes of the round verbatim, `neg-question`, `neg-may`); a record with the heading of round 1; and the exit-file check. **Red first:** the third judge returned FOUND, exit 0, on all four new controls (13:15:18Z, recorded in `test-runs.md` section 8). **Green** (the fourth judge, run 2026-10-21T2026-10-21T13:16:21Z to 2026-10-21T13:16:21Z, `date -u`): the positive FOUND with exit 0, every negative MISS with exit 1, the invalid cases exit 3.
 
 ```
 == pos
@@ -124,6 +134,18 @@ exit 1
 == neg-hedged
 JUDGE: MISS
 exit 1
+== neg-token-same
+JUDGE: MISS
+exit 1
+== neg-possible
+JUDGE: MISS
+exit 1
+== neg-question
+JUDGE: MISS
+exit 1
+== neg-may
+JUDGE: MISS
+exit 1
 == bad-heading
 JUDGE: INVALID first line is not exactly '## Review record — round 2'
 exit 3
@@ -139,6 +161,7 @@ exit 0
 ## 6. Reading the result (pre-registered)
 
 - **Red** holds when at least 2 of the 3 valid old runs are misses. **Green** holds when all 3 valid new runs are finds.
+- **Hand confirmation (the Operator's end 3, comment 6316981250, term 2).** A judge FOUND is necessary, not sufficient. A run counts as a find only when the coordinator's hand reading of that run's record confirms an explicit diagnosis of the planted disagreement in ADR-0026's record deadline (the fifteen-minute deadline it still gives, against the twenty of `docs/engineering-discipline.md`). The reading is recorded per run, with the quoted sentence, before the arms are compared. A judge MISS stays a miss. The judge can then only under-count, never invent a find. Red and green below are read on the confirmed finds.
 - If 2 or more old runs are finds, the result reads **"not red"**. It stays "not red", it goes to the coordinator, who returns to the Operator before landing (decision Q2). No second plant is chosen after the fact.
 - A **valid run** is one the judge does not print `INVALID` for (section 5): the exact first line, a `### Raw findings` line and `exit 0`. A timeout (exit 124), a missing record or a failed start makes the run **invalid**: it is neither a find nor a miss. Each invalid run is reported with its cause. It is repeated once in the same arm; a second invalid run in the same slot leaves the trial incomplete, and that is reported.
 - Every run is reported, including runs that go against the result. No run is dropped, and none is repeated after its judge output is seen, except an invalid one by the rule above.

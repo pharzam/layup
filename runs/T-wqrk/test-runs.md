@@ -166,3 +166,5 @@ FOUND in a unit at: the record deadline in adr-0026 may have been left at fiftee
 JUDGE: FOUND
 exit 0
 ```
+
+Green: the repaired (fourth) judge, sha256 `d9e1e291489ae7e8257a1b6b7814fbc94bc36572f625cab16c06b5ad21fc111e`, the same commands, 2026-10-21T13:16:21ZZ (`date -u`). The positive returns FOUND, exit 0; the ten negatives (the six earlier, the four new) return MISS, exit 1; `bad-heading` and the exit-file `exit 124` return INVALID, exit 3; the positive with exit file `exit 0` returns FOUND, exit 0. The full output is in `trial.md` section 5. `mutants-T-wqrk.py` covers the preparer only, not the judge, so it is not a check of this repair.
