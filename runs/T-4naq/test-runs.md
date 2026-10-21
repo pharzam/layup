@@ -146,3 +146,42 @@ First failing assertions, one test after the other:
 ### Tests written after the code
 
 `TestTheNumberedFactsRecordOfTheMergeCommitIsTheOneFile`, `TestARegisteredTaskThatDisagreesWithItsReservationIsRefused`, the register in `TestTheReopeningIsNotTheSpecificationReusedByKind` (a task of the register with the higher REQ-009) and the requirements assertion of the harness test (the PRD with no row and the record) were added after the first green run, to kill the mutants M37, M39, M5b and M23b, which no test killed before; they have no red run against the stubs and their red is the mutant of `mutants.md`.
+
+## S4. Green, and the gates
+
+The code is in `ba39f3f` and `c2f03bd`; the tests below ran on the head `7406949` (the later commits change records only). Each command alone, with its direct exit status.
+
+### The tests of this task
+
+| Run | Start to end | Exit | Command |
+| --- | ------------ | ---- | ------- |
+| unitrun | 00:02:56 to 00:02:56Z | 0 | `go test -count=1 ./internal/run/ -run ^(TestTheReclassedFactsAreTheVersionRowsWhoseClassDiffersFromIntake\|TestTheNextRequirementIDIsOneMoreThanEveryKnownID\|TestAReopeningsTableRefusesEachBrokenRule\|TestTheRowsOfTheRecordAreBoundToTheSelection\|TestALaterVersionIsRefused\|TestTheExemptFactsFollowTheStatesOfTheTwoTasks\|TestADrawAvoidsAnUnopenedReservationAndItsOwnBatch\|TestTheReopenedSpecificationPromptIsItsGoldenFile\|TestEveryStepOfAReopenedTaskSeesThePRDAndItsRow\|TestTheReopenedPromptPinsTheNumberedRecord\|TestTheReopenedFormPassesTheFullCheck\|TestTheReopeningSetOfTheFullInputIsReadFromTheRecords\|TestTheNumberedFactsRecordOfTheMergeCommitIsTheOneFile)$` |
+| unitspec | 00:02:56 to 00:02:56Z | 0 | `go test -count=1 ./internal/spec/ -run ^TestAReclassedFactIsExemptFromNeedsAndMeasuresWhileItIsListed$` |
+| integ | 00:02:56 to 00:03:19Z | 0 | `go test -count=1 -tags=integration -timeout 30m ./internal/run/ ./internal/tsv/ -run ^(TestAReclassedFactOpensOneSpecificationTaskAfterTheSpecificationMerges\|TestNothingOpensBeforeTheMergedEvent\|TestARestartAfterTheAllocationOpensOneTaskWithTheSameIDs\|TestAStopBetweenTheIssueAndTheRowOpensASecondIssueAndOneRow\|TestTheReopeningIsNotTheSpecificationReusedByKind\|TestTheRenderedHeadOfAReclassingBetPassesLayupSpec\|TestALostLeaseOpensNoIssue\|TestTheReopenedTasksPassTheFullCheckOneAfterTheOther\|TestTheReopeningsBlockAndTheNewTextBlocksEqualTheCode\|TestAHarnessThatFollowsTheReopenedInstructionGivesAValidHandoffAndAGreenSpecStatus\|TestTheInstructionBlocksOfLoopMd\|TestEverySchemaBlockIsBuiltOrNotYetBuilt\|TestARegisteredTaskThatDisagreesWithItsReservationIsRefused)$` |
+
+### The gates
+
+| Gate | Start to end | Exit | Command |
+| ---- | ------------ | ---- | ------- |
+| build | 23:57:45 to 23:57:46Z | 0 | `go build ./...` |
+| vet | 23:57:46 to 23:57:46Z | 0 | `go vet ./...` |
+| vetint | 23:57:46 to 23:57:46Z | 0 | `go vet -tags=integration ./...` |
+| vete2e | 23:57:46 to 23:57:47Z | 0 | `go vet -tags=e2e ./...` |
+| gofmt | 23:57:47 to 23:57:47Z | 0 | `sh -c out=$(gofmt -l .) && test -z "$out"` |
+| unit | 23:57:47 to 23:57:48Z | 0 | `go test -count=1 ./...` |
+| adr | 23:57:48 to 23:57:49Z | 0 | `sh docs/adr/adr-lint.sh` |
+| prd | 23:57:49 to 23:57:49Z | 0 | `sh docs/prd/prd-lint.sh` |
+| link | 23:57:49 to 23:58:02Z | 0 | `sh docs/links/link-lint.sh` |
+| disc | 23:58:02 to 23:58:04Z | 0 | `sh docs/tests/run-discipline-tests.sh` |
+| nested | 23:58:04 to 23:58:04Z | 0 | `sh docs/tests/nested-checkout-check.sh` |
+| setup | 23:58:04 to 23:58:25Z | 0 | `sh docs/setup/setup-check.sh` |
+| diffcheck | 23:58:25 to 23:58:25Z | 2 | `git diff --check origin/main HEAD` |
+| taskstate | 23:58:25 to 23:58:33Z | 0 | `sh docs/tasks/task-state.sh` |
+| e2e | 00:01:38 to 00:02:43Z | 0 | `go test -count=1 -tags=e2e ./...` |
+
+- `diffcheck` ran first with exit 2 (`runs/T-4naq/mutants.md:66: new blank line at EOF`); the file was fixed and committed, and `git diff --check origin/main HEAD` then exited 0 (re-run in the freeze check below).
+- `taskstate` printed `T-4naq #428 stalled` only because the branch has had no push yet; the command lists every task and exits 0.
+
+### The full integration level
+
+`TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./...`, in the background, output only to `/home/layup/.cache/layup-session/T-4naq-full-integration.txt`: 2026-10-20T23:57:42Z to 2026-10-21T00:01:23Z, exit 0, 21 packages `ok`. An earlier full run on the first merge head `6c63a4f` (23:40:24Z to 23:44:11Z) also exited 0.
