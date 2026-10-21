@@ -5,6 +5,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -292,50 +293,57 @@ func TestTheStepsOfTheScaffold(t *testing.T) {
 // angled gives the marker of a name, with the angle quotes U+2039 and U+203A.
 func angled(name string) string { return string(rune(0x2039)) + name + string(rune(0x203A)) }
 
-var (
-	scaffoldOnce sync.Once
-	scaffoldDir  string // the directory of the second binary and its baseline; TestMain removes it
-	scaffoldBin  string
-	scaffoldErr  error
-)
+// A baselineBuild is one pinned binary with its baseline, built once; TestMain removes its directory.
+type baselineBuild struct {
+	once     sync.Once
+	dir, bin string
+	err      error
+}
+
+var scaffoldBuild, loopBuild baselineBuild // the second binary, and the third whose baseline also holds extra files (task T-3xvc)
 
 // buildScaffoldBinary makes the scaffold baseline once, as the integration level's scaffoldBaseline does (the
 // stand-in baseline of internal/standin, the link-lint.sh of this repository, a note of the kit in the backlog, a
 // guide whose link the deletion of the history breaks, two markers, one of them twice in a file, and two files that
 // check adapted flags, in one commit), and builds the binary with its pin, as buildRunBinary does for a README.
-func buildScaffoldBinary(t *testing.T) string {
+func buildScaffoldBinary(t *testing.T) string { return buildBaselineBinary(t, &scaffoldBuild, nil) }
+
+// buildBaselineBinary is buildScaffoldBinary for the build b, whose baseline also holds the files of extra, by path.
+func buildBaselineBinary(t *testing.T, b *baselineBuild, extra map[string]string) string {
 	t.Helper()
-	scaffoldOnce.Do(func() {
+	b.once.Do(func() {
 		dir, err := os.MkdirTemp("", "layup-scaffold-e2e-")
 		if err != nil {
-			scaffoldErr = err
+			b.err = err
 			return
 		}
-		scaffoldDir = dir
+		b.dir = dir
 		base := filepath.Join(dir, "baseline")
 		url, _, err := standin.Baseline(base)
 		if err != nil {
-			scaffoldErr = err
+			b.err = err
 			return
 		}
 		lint, err := os.ReadFile(filepath.Join("..", "..", "docs", "links", "link-lint.sh"))
 		if err != nil {
-			scaffoldErr = err
+			b.err = err
 			return
 		}
-		for p, text := range map[string]string{
+		files := map[string]string{
 			"docs/links/link-lint.sh": string(lint),
 			"docs/tasks/backlog.md":   "# Backlog\n\n- **T-0001**: a task of the baseline ([#1](" + url + "/issues/1))\n\n> a note of the kit\n> with a link ([#2](" + url + "/issues/2))\n\nKeep this line.\n",
 			"docs/guide.md":           "# Guide\n\nSee [the decision](decisions/D-0001-stand-in.md).\n",
 			"docs/ops.md":             "# Ops\n\nThe port is " + angled("port") + ".\nAgain " + angled("port") + ".\nThe owner is " + angled("owner") + ".\n",
 			"docs/how-to.md":          "# How to\n\nAdapt this to your project.\n",
 			"docs/glossary.md":        "# Glossary\n\nThe words of the kit.\n",
-		} {
+		}
+		maps.Copy(files, extra)
+		for p, text := range files {
 			if err := os.MkdirAll(filepath.Dir(filepath.Join(base, p)), 0o755); err == nil {
 				err = os.WriteFile(filepath.Join(base, p), []byte(text), 0o644)
 			}
 			if err != nil {
-				scaffoldErr = err
+				b.err = err
 				return
 			}
 		}
@@ -343,23 +351,23 @@ func buildScaffoldBinary(t *testing.T) string {
 		os.RemoveAll(filepath.Join(base, ".git"))
 		for _, args := range [][]string{{"init", "-q", "-b", "main"}, {"add", "-A"}, {"commit", "-q", "-m", "the stand-in baseline with the scaffold"}} {
 			if out, err := gitRun(base, args...); err != nil {
-				scaffoldErr = errors.New(out)
+				b.err = errors.New(out)
 				return
 			}
 		}
 		commit, _ := gitRun(base, "rev-parse", "HEAD")
-		scaffoldBin = filepath.Join(dir, "layup")
+		b.bin = filepath.Join(dir, "layup")
 		ld := "-X github.com/pharzam/layup/internal/cli.pinSource=" + url + " -X github.com/pharzam/layup/internal/cli.pinCommit=" + strings.TrimSpace(commit)
-		build := exec.Command("go", "build", "-ldflags", ld, "-o", scaffoldBin, ".")
+		build := exec.Command("go", "build", "-ldflags", ld, "-o", b.bin, ".")
 		build.Env = append(os.Environ(), "GOFLAGS=", "GOENV=off", "GOWORK=off", "GOTOOLCHAIN=local", "GOPROXY=off")
 		if out, err := build.CombinedOutput(); err != nil {
-			scaffoldErr = errors.New(string(out))
+			b.err = errors.New(string(out))
 		}
 	})
-	if scaffoldErr != nil {
-		t.Fatal(scaffoldErr)
+	if b.err != nil {
+		t.Fatal(b.err)
 	}
-	return scaffoldBin
+	return b.bin
 }
 
 // prose are the files that the world's harness writes for the F- rows of the stop table of the prose step of the setup
@@ -395,6 +403,11 @@ const proseSession = `	if printf '%s\n' "$p" | grep -q '^The output directory: '
 // answers a session of the step markers with no proposal (the baseline holds two markers) and the prose session of the
 // setup, and starts it.
 func startScaffoldWorld(t *testing.T, binary string) (runWorld, result) {
+	return startScaffoldWorldWith(t, binary, "db\\tpg\\tInv-1\\tfail\\t\\342\\200\\224\\ndb\\tsqlite\\tInv-1\\tfail\\t\\342\\200\\224\\n", nil)
+}
+
+// startScaffoldWorldWith is startScaffoldWorld with the rows of the options session (printf text) and a change of the files of the world (task T-3xvc).
+func startScaffoldWorldWith(t *testing.T, binary, options string, more func(files map[string]string)) (runWorld, result) {
 	t.Helper()
 	w := newRunWorldWith(t, func(files map[string]string) {
 		insert := func(anchor, text string) {
@@ -406,7 +419,7 @@ func startScaffoldWorld(t *testing.T, binary string) (runWorld, result) {
 		insert("\tcase \"$out\" in\n", "\t*/markers.tsv) printf 'id\\tvalue\\tquote\\n' > \"$out\" ;;\n")
 		// The options of Shape (task T-3f94, row 66h): two options of one decision that both fail the invariant Inv-1, in the first round
 		// and in the rewrite, so the step shape ends in its wait, with no survivor.
-		insert("\tcase \"$out\" in\n", "\t*/options.tsv) printf 'decision\\toption\\tconstraint\\tresult\\tevidence\\ndb\\tpg\\tInv-1\\tfail\\t\\342\\200\\224\\ndb\\tsqlite\\tInv-1\\tfail\\t\\342\\200\\224\\n' > \"$out\" ;;\n")
+		insert("\tcase \"$out\" in\n", "\t*/options.tsv) printf 'decision\\toption\\tconstraint\\tresult\\tevidence\\n"+options+"' > \"$out\" ;;\n")
 		insert("\tsp=$(printf '%s\\n' \"$p\" | sed -n 's/^The span table: //p')\n", proseSession)
 		for path, text := range prose {
 			files["bin/files/"+path] = text
@@ -418,6 +431,9 @@ func startScaffoldWorld(t *testing.T, binary string) (runWorld, result) {
 			"case \"$6\" in */out/ruleset-default.json | */out/ruleset-records.json) [ -f \"$6\" ] ;; *) false ;; esac || { echo \"gh: not the apply of a ruleset of acme/target: $*\" >&2; exit 2; }\n" +
 			"case \"$6\" in */out/ruleset-default.json) id=7001 ;; *) id=7002 ;; esac\n" +
 			"sed \"1s/^{/{\\\"source\\\":\\\"acme\\\\/target\\\",\\\"id\\\":$id,/\" \"$6\"\n"
+		if more != nil {
+			more(files)
+		}
 	})
 	// The forge refuses the push of the probe, as the ruleset of the default branch does, in the form that GitHub prints: GH013 and the ref,
 	// the line of the rules URL and the violated rule, and no name of a ruleset (task T-gkvi).

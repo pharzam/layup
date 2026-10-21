@@ -101,6 +101,10 @@ type fakeForge struct {
 	posted []string         // the bodies of the comments on the control issue
 	intake []string         // the bodies of the comments on the Intake issue, the App's (row 46)
 	people []map[string]any // the comments of persons on the Intake issue, scripted by a test (row 48)
+	// people2 are those on the control issue; reqs is every request, "METHOD /path", in order; m2e holds the calls of M2e (loop_e2e_test.go).
+	people2 []map[string]any
+	reqs    []string
+	m2e     m2eRoutes
 	// noRules names the branches whose rules the forge gives as none (row 58).
 	noRules map[string]bool
 }
@@ -109,6 +113,7 @@ func (f *fakeForge) serve(w http.ResponseWriter, r *http.Request) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	call := r.Method + " " + r.URL.Path
+	f.reqs = append(f.reqs, call)
 	enc := json.NewEncoder(w)
 	switch {
 	case call == "GET /repos/acme/target/installation":
@@ -201,7 +206,8 @@ func (f *fakeForge) serve(w http.ResponseWriter, r *http.Request) {
 				"performed_via_github_app": map[string]any{"slug": "layup-agent"},
 				"created_at":               "2026-10-08T13:00:00Z", "updated_at": "2026-10-08T13:00:00Z", "body": body})
 		}
-		enc.Encode(comments)
+		enc.Encode(append(comments, f.people2...))
+	case f.m2e.serve(f, w, r):
 	default:
 		http.Error(w, `{"message":"Not Found"}`, 404)
 	}
