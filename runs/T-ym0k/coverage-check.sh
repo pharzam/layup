@@ -12,7 +12,8 @@
 # COMMIT: git ls-files reads a temporary index made by git read-tree COMMIT, so
 # the index and the tree of the clone in which it runs are not read.
 # It exits 1, with one FAIL line for each, when the release has no file, the
-# table has no parsed row, a row is not `| `path` | N | `Read` |`, a row is
+# table has no parsed row, a row is not `| `path` | N | Read |` (Read with or
+# without backticks), a row is
 # missing, extra or duplicate, a count differs, the rows are in another order,
 # or a Read is not `in full`; exit 2 when COMMIT is not a commit.
 # Stated limit: it proves that the record names each file with the right count,
@@ -41,7 +42,7 @@ awk '
 	sec && /^#/ { sec = 0 }
 	sec && /^\|/ {
 		if ($0 ~ /^\| *-+ *\|/ || $0 ~ /^\| *Path *\|/) next
-		if ($0 !~ /^\| `[^`]+` \| [0-9]+ \| `[^`]+` \|[ \t]*$/) { print "U\t" $0; next }
+		if ($0 !~ /^\| `[^`]+` \| [0-9]+ \| +[^| ]([^|]*[^| ])? +\|[ \t]*$/) { print "U\t" $0; next }
 		split($0, c, "|")
 		for (i = 2; i <= 4; i++) gsub(/^[ \t]*`?|`?[ \t]*$/, "", c[i])
 		print "R\t" c[2] "\t" c[3] "\t" c[4] }' "$rec" > "$d/rows"

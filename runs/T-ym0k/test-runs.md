@@ -102,3 +102,20 @@ Round 2 found that the boundary before `a.do` excluded only ASCII letters, digit
 | m10 receiver `αa` | exit 0 (red) | exit 1, (6) |
 
 The clean release again (12:18:28 to 12:18:29): exit 0, `== PASS`, 140 lines; `release-check.txt` is that output. The 17 cases of the comparator stay green.
+
+## After the review: the comparator accepts a plain `in full` (13:05:30 to 13:05:38)
+
+The review record wrote its `Read` cells as plain `in full`, where the comparator required the backticks (the brief said "with `in full`"). **Red (13:05:30):** two cases added to `coverage-check-test.sh` first, a record whose `Read` cells are plain `in full` must pass (`FAIL … exit 1, wanted 0`: the rows were `unparsed row`), and a plain `partly` must be refused by name (`FAIL … no line with: not `in full`: internal/a/a.go`). **Fix:** the third cell is any non-empty text, with or without backticks, and the `in full` comparison is unchanged. **Green (13:05:31):** the 19 cases pass, the 17 earlier ones included; the unfilled `record-form.md` (an empty `Read` cell) is still 149 `unparsed row` lines.
+
+`sh runs/T-ym0k/coverage-check.sh 01d7da3082333efadb227afda14fd98715edf5c4 /home/layup/.cache/layup-session/reviews/issue369-release/review.md` on the unedited record (13:05:38):
+
+```
+ok: 149 rows of /home/layup/.cache/layup-session/reviews/issue369-release/review.md are the release at 01d7da3082333efadb227afda14fd98715edf5c4, each in full
+exit 0
+```
+
+## The review (the uat): 2026-10-21T12:30:04Z to 12:53:29Z
+
+Claude Fable 5.1 on OpenCode (`anthropic/claude-fable-5-1`, variant `max`), chosen by the reviewer selector among five candidates (GPT-6.1 Sol and Claude Opus 5.5 excluded as author families by blame; Fable first eligible; its probe 12:29:49Z to 12:29:56Z, exit 0, pass: "tool call seen, marker and count present"; [`selection.json`](selection.json)). Exit 0, USD 41.26, 106,552,552 tokens with cache. It ran in the prepared clone at `01d7da3` with `.review-in/`. The `release-check.sh` it read has the sha256 `2713c529cec981f16a8855e9752040893f8631bdbc436b7217703c2861dfb8bf` (the file of this branch at that time, byte for byte). The record is [`release-review.md`](release-review.md), copied unchanged, posted on #369 as comment 6316749856: `holds` for REQ-015 and REQ-017, 11 findings, none a defect.
+
+**The Coverage table against the commit (S7):** first run, exit 1 on form only (the `Read` cells were plain); after the fix above, exit 0 on the unedited record, 149 rows, none missing, extra, out of order or with another count. The table is not edited by the author.

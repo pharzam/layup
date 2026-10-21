@@ -32,6 +32,8 @@ doctor() { awk -v mode="$1" -v last="$(grep -c '^| `' "$2")" '
 		if (mode == "drop" && n == 2) next
 		if (mode == "count" && n == 2) sub(/\| 2 \|/, "| 3 |")
 		if (mode == "read" && n == 2) sub(/`in full`/, "`partly`")
+		if (mode == "plain") sub(/`in full`/, "in full")
+		if (mode == "plainbad" && n == 2) sub(/`in full`/, "partly")
 		if (mode == "cells" && n == 2) $0 = "| `internal/a/a.go` | 2 |"
 		if (mode == "empty") next
 		if (mode == "swap" && n == 2) { held = $0; next }
@@ -48,13 +50,15 @@ run() { # name, want exit, text of the named line ("" for none), commit, record
 	if [ "$rc" -ne "$2" ]; then echo "FAIL $1: exit $rc, wanted $2"; fails=$((fails + 1)); return; fi
 	case $out in *"$3"*) echo "ok   $1" ;; *) echo "FAIL $1: no line with: $3"; fails=$((fails + 1)) ;; esac
 }
-for m in drop count extra swap read dup cells empty nohead; do doctor $m "$t/good" > "$t/$m"; done
+for m in drop count extra swap read dup cells empty nohead plain plainbad; do doctor $m "$t/good" > "$t/$m"; done
 run "good record of A" 0 "" "$A" "$t/good"
 run "one row dropped" 1 "missing row: internal/a/a.go" "$A" "$t/drop"
 run "one count off by one" 1 "count: internal/a/a.go" "$A" "$t/count"
 run "one extra path" 1 "extra row: internal/z/z.go" "$A" "$t/extra"
 run "two rows swapped" 1 "out of order" "$A" "$t/swap"
 run "a Read that is not in full" 1 "not \`in full\`: internal/a/a.go" "$A" "$t/read"
+run "a Read of plain in full, without backticks" 0 "" "$A" "$t/plain"
+run "a plain Read that is not in full" 1 "not \`in full\`: internal/a/a.go" "$A" "$t/plainbad"
 run "a duplicate row" 1 "duplicate row: cmd/app/main.go" "$A" "$t/dup"
 run "a row of two cells" 1 "unparsed row" "$A" "$t/cells"
 run "an empty record table" 1 "empty record table" "$A" "$t/empty"
