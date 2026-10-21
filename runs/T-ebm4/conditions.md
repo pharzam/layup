@@ -1,15 +1,19 @@
 # T-ebm4 plan-review conditions
 
-Stage A records the amended test contract, not completion of the prose changes.
-The unchanged documents must fail the new assertions. The same check will run
-after the prose changes in the next stage.
+All three plan-review conditions are implemented under amendment 1 on #451.
+The unchanged Stage A check ran green in Stage B at 2026-10-21T07:36:20Z.
+The complete command, measured UTC boundaries, exit status and assertion output
+are in the run record. Independent review and the clean committed-head K1-K6
+run belong to later stages; neither is claimed by this table.
 
 | Condition | Evidence |
 | --- | --- |
-| 1. Require a new issue comment naming the figure or end; edits post nothing. The posting time selects the window. Prose implementation pending. | `runs/T-ebm4/checks.sh` asserts C1-new-comment-wait, C1-retired-wait and C1-one-shared-wait; `runs/T-ebm4/test-runs.md` records the red run. |
-| 2. Drop decision 8 and preserve the validation rule. No change to that section is planned. | `runs/T-ebm4/checks.sh` compares the complete validation section against the baseline in C2-validation-preserved; `runs/T-ebm4/test-runs.md` records the result. |
-| 3. Bound Records finding by "and changes nothing else" and add a complete UTC row. Prose implementation pending. | `runs/T-ebm4/checks.sh` asserts C3-records-bound and the UTC term, abbreviation, description, collision and example; `runs/T-ebm4/test-runs.md` records the red run. |
+| 1. Require a new issue comment naming the figure or end; edits post nothing. The posting time selects the window. Complete. | `docs/engineering-discipline.md` contains the exact amended shared wait and an end-3 pointer. `runs/T-ebm4/checks.sh` passed C1-new-comment-wait, C1-retired-wait and C1-one-shared-wait; `runs/T-ebm4/semantic.md` walks both boundaries and the edited-comment case; `runs/T-ebm4/test-runs.md` records the green run. |
+| 2. Drop decision 8 and preserve the complete validation section. Complete. | `docs/guardrails.md` retains the validation rule. `runs/T-ebm4/checks.sh` passed C2-validation-preserved against the baseline; `runs/T-ebm4/mentions.tsv` classifies its baseline line 1476 as validation; `runs/T-ebm4/test-runs.md` records the green run. |
+| 3. Bound Records finding by "and changes nothing else" and add a complete UTC row. Complete. | `docs/glossary.md` contains the bounded Records finding and Coordinated Universal Time rows. `runs/T-ebm4/checks.sh` passed C3-records-bound and every C3-UTC assertion; `runs/T-ebm4/semantic.md` compares the clauses and examples; `runs/T-ebm4/test-runs.md` records the green run. |
 
-These records are evidence, not execution inputs. The task check reads neither
-this table nor the test-run record as configuration or expected output. K6 will
-audit the table and its citations at the committed head; it remains enabled.
+Exactly four evidence records are declared: mentions.tsv, semantic.md,
+conditions.md and test-runs.md, all under runs/T-ebm4/. Their consumers are
+documented in the run and semantic records. The task check reads none as
+configuration or expected output. K6 remains enabled and will audit committed
+paths and this table's form at the freeze.

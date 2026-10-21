@@ -338,3 +338,722 @@ check_k5() {
 
 check_k6() {
 ```
+
+## Stage B: changes and green
+
+This stage implements the plan as amended on #451. The starting committed head
+is cff8900583b5fe02d9b58c87c10dbd22ccd7619e; the comparison base remains
+abdbe996282b33080406223ae8ba19e5a3634360. The task check is unchanged from Stage A.
+The coordinator will commit the Stage B files; this session changes no repository
+git metadata. No task file or completed-log line belongs to this stage.
+
+The recorder calls `date -u +%FT%TZ` before and after each command, keeps the
+subprocess's actual exit status, and writes output for test runs. Inspection
+commands retain command, times and status without duplicating their source text.
+Scratch scripts and raw search output are under
+/home/layup/.cache/layup-session/tmp-green. Acceptance-check subprocesses use that
+directory as TMPDIR, including any temporary fixture repositories. Commands
+running longer than ten seconds print a heartbeat.
+
+### Stage B startup inspection ledger
+
+The following read-only commands preceded the Stage B recorder. Each exited 0
+as reported by the command tool; UTC start and end were not captured and are
+not reported. They are inspection, not acceptance runs. No times are inferred
+from wall durations or file dates.
+
+```sh
+pwd
+git status --short
+cat AGENTS.md
+cat docs/engineering-discipline.md
+cat docs/issue-workflow.md
+rg --files -g AGENTS.md -g 'runs/T-ebm4/*' -g 'docs/tasks/T-ebm4.md'
+cat runs/T-ebm4/checks.sh runs/T-ebm4/test-runs.md runs/T-ebm4/conditions.md
+sed -n '260,470p' docs/engineering-discipline.md
+sed -n '470,800p' docs/engineering-discipline.md
+cat docs/glossary.md
+rg -n '^#|^##|T-ebm4|review|summar|budget|named base|named-base' docs/guardrails.md
+cat docs/adr/0028-*.md docs/adr/0026-*.md docs/adr/0007-*.md
+git log -3 --format=fuller
+cat runs/T-ebm4/conditions.md
+sed -n '285,440p' docs/engineering-discipline.md
+```
+
+One attempted recorder invocation used incorrect shell quoting and exited 2
+before the recorder ran. Start: not reported. End: not reported. No test ran and
+no source edit was made by that invocation. The corrected primary search below
+is the measured successful search used for the inventory.
+
+```sh
+python3 /home/layup/.cache/layup-session/tmp-green/T-ebm4-record.py \"git grep -n -iE 'budget|tolerance|ceiling|end 3|overrun' -- docs/ AGENTS.md > /home/layup/.cache/layup-session/tmp-green/T-ebm4-budget-mentions.txt\"
+```
+
+The four evidence records remain the declared mentions.tsv, semantic.md,
+conditions.md and test-runs.md. They record occurrences, comparisons, conditions
+and actual runs; none is expected output or configuration. The task check's
+consumer inspection and the K6 source inspection are recorded below. The
+path-specific consumer search exited 1 for no matches outside these records.
+K6 will remain enabled at the later clean committed-head pre-freeze run.
+
+### Stage B command
+
+```sh
+sed -n '1,360p' docs/guardrails.md
+```
+
+Start: 2026-10-21T07:33:54Z. End: 2026-10-21T07:33:54Z. Exit status: 0.
+
+### Stage B command
+
+```sh
+sed -n '711,1050p' docs/guardrails.md
+```
+
+Start: 2026-10-21T07:33:59Z. End: 2026-10-21T07:33:59Z. Exit status: 0.
+
+### Stage B command
+
+```sh
+sed -n '361,710p' docs/guardrails.md
+```
+
+Start: 2026-10-21T07:33:59Z. End: 2026-10-21T07:33:59Z. Exit status: 0.
+
+### Stage B command
+
+```sh
+sed -n '620,710p' docs/guardrails.md
+```
+
+Start: 2026-10-21T07:34:06Z. End: 2026-10-21T07:34:06Z. Exit status: 0.
+
+### Stage B command
+
+```sh
+sed -n '1051,1269p' docs/guardrails.md
+```
+
+Start: 2026-10-21T07:34:06Z. End: 2026-10-21T07:34:06Z. Exit status: 0.
+
+### Stage B command
+
+```sh
+sed -n '1270,1550p' docs/guardrails.md
+```
+
+Start: 2026-10-21T07:34:11Z. End: 2026-10-21T07:34:11Z. Exit status: 0.
+
+### Stage B command
+
+```sh
+sed -n '1,120p' docs/glossary.md
+```
+
+Start: 2026-10-21T07:34:11Z. End: 2026-10-21T07:34:11Z. Exit status: 0.
+
+### Stage B command
+
+```sh
+sed -n '1458,1510p' docs/guardrails.md
+```
+
+Start: 2026-10-21T07:34:28Z. End: 2026-10-21T07:34:28Z. Exit status: 0.
+
+### Stage B command
+
+```sh
+"git
+```
+
+Start: 2026-10-21T07:34:28Z. End: 2026-10-21T07:34:28Z. Exit status: 2.
+
+### Stage B command
+
+```sh
+sed -n '145,175p' docs/glossary.md
+```
+
+Start: 2026-10-21T07:34:28Z. End: 2026-10-21T07:34:28Z. Exit status: 0.
+
+### Stage B command
+
+```sh
+sed -n '1,110p' docs/glossary.md
+```
+
+Start: 2026-10-21T07:34:28Z. End: 2026-10-21T07:34:28Z. Exit status: 0.
+
+### Stage B command
+
+```sh
+git grep -n -iE "budget|tolerance|ceiling|end 3|overrun" -- docs/ AGENTS.md > /home/layup/.cache/layup-session/tmp-green/T-ebm4-budget-mentions.txt
+```
+
+Start: 2026-10-21T07:34:42Z. End: 2026-10-21T07:34:42Z. Exit status: 0.
+
+### Stage B command
+
+```sh
+sed -n '573,630p' docs/tests/freeze-check.sh
+```
+
+Start: 2026-10-21T07:34:42Z. End: 2026-10-21T07:34:42Z. Exit status: 0.
+
+### Stage B command
+
+```sh
+python3 /home/layup/.cache/layup-session/tmp-green/T-ebm4-audit.py
+```
+
+Start: 2026-10-21T07:34:57Z. End: 2026-10-21T07:34:57Z. Exit status: 0.
+
+### Stage B command
+
+```sh
+sh runs/T-ebm4/checks.sh
+```
+
+Start: 2026-10-21T07:36:20Z. End: 2026-10-21T07:36:20Z. Exit status: 0.
+
+```text
+ok: budget-unit
+ok: evidence-exclusion
+ok: executable-inputs
+ok: input-definition
+ok: audit-and-dual-use
+ok: bookkeeping
+ok: mixed-files
+ok: advance-approval
+ok: tolerance
+ok: margin
+ok: budget-post
+ok: fixed-tolerance
+ok: exact-approval
+ok: overrun-block
+ok: end-3-eligibility
+ok: records-definition
+ok: records-exclusions
+ok: disputed-end
+ok: end-3-post
+ok: end-3-authority
+ok: end-3-exception
+ok: canonical-straight-quotes
+ok: C1-new-comment-wait
+ok: C1-retired-wait
+ok: C1-one-shared-wait
+ok: end-1-preserved
+ok: end-2-preserved
+ok: end-4-preserved
+ok: gate-pointer
+ok: gate-retired-next-round
+ok: R12-budget-pointer
+ok: R12-retired-slicing
+ok: named-base-pointer
+ok: named-base-retired-count
+ok: C2-validation-preserved
+ok: size-class-pointer
+ok: size-class-retired-ceiling
+ok: issue-split-pointer
+ok: issue-split-example
+ok: issue-split-retired-overrun
+ok: issue-split-retired-example
+ok: material-pointer
+ok: material-retired-stop
+ok: frozen-head-pointer
+ok: frozen-head-retired-next-round
+ok: C3-Records finding-row
+ok: C3-records-bound
+ok: C3-records-collision
+ok: records-example
+ok: C3-Tolerance-row
+ok: tolerance-pointer
+ok: tolerance-collision
+ok: tolerance-example
+ok: C3-Input-row
+ok: input-pointer
+ok: input-collision
+ok: input-example
+ok: C3-Margin-row
+ok: margin-pointer
+ok: margin-collision
+ok: margin-example
+ok: C3-Coordinated Universal Time-row
+ok: C3-UTC-abbreviation
+ok: C3-UTC-description
+ok: C3-UTC-collision
+ok: C3-UTC-example
+ok: cap-example
+ok: cap-retired-example
+ok: ceiling-example
+ok: ceiling-retired-example
+ok: existing-checks-and-gates-preserved
+```
+
+### Stage B command
+
+```sh
+sed -n '167,186p' docs/onboarding-for-engineers.md
+```
+
+Start: 2026-10-21T07:36:40Z. End: 2026-10-21T07:36:40Z. Exit status: 0.
+
+### Stage B command
+
+```sh
+sed -n '750,790p' docs/engineering-discipline.md
+```
+
+Start: 2026-10-21T07:36:40Z. End: 2026-10-21T07:36:40Z. Exit status: 0.
+
+### Stage B command
+
+```sh
+rg -n 'T-ebm4/(mentions.tsv|semantic.md|conditions.md|test-runs.md)' --glob '!runs/T-ebm4/**' .
+```
+
+Start: 2026-10-21T07:36:40Z. End: 2026-10-21T07:36:40Z. Exit status: 1.
+
+### Stage B command
+
+```sh
+sed -n '630,670p' docs/tests/freeze-check.sh
+```
+
+Start: 2026-10-21T07:36:40Z. End: 2026-10-21T07:36:40Z. Exit status: 0.
+
+### Stage B command
+
+```sh
+sed -n '25,43p' README.md
+```
+
+Start: 2026-10-21T07:36:40Z. End: 2026-10-21T07:36:40Z. Exit status: 0.
+
+### Stage B command
+
+```sh
+git grep -n -iE "cycle cap|frozen head|verdict|re-freez|one more after|scale the plan implied" abdbe996282b33080406223ae8ba19e5a3634360 -- docs/ AGENTS.md README.md > /home/layup/.cache/layup-session/tmp-green/T-ebm4-review-mentions.txt
+```
+
+Start: 2026-10-21T07:36:40Z. End: 2026-10-21T07:36:40Z. Exit status: 0.
+
+### Stage B command
+
+```sh
+python3 /home/layup/.cache/layup-session/tmp-green/T-ebm4-supplement-summary.py
+```
+
+Start: 2026-10-21T07:36:59Z. End: 2026-10-21T07:36:59Z. Exit status: 0.
+
+### Stage B command
+
+```sh
+python3 /home/layup/.cache/layup-session/tmp-green/T-ebm4-inventory.py
+```
+
+Start: 2026-10-21T07:38:11Z. End: 2026-10-21T07:38:11Z. Exit status: 0.
+
+```text
+Wrote 1699 distinct baseline occurrences (913 primary, 789 supplementary, plus named context).
+add-after: 1
+keep-accepted-ADR: 55
+keep-canonical: 30
+keep-compatible: 57
+keep-executable-or-description: 338
+keep-fact: 14
+keep-gap: 1
+keep-historical: 982
+keep-other-meaning: 6
+keep-pitfall: 14
+keep-product: 149
+keep-product-context: 1
+keep-product-plan: 12
+keep-summary: 10
+keep-validation: 1
+normalize-quotes: 8
+replace: 18
+replace-example: 2
+```
+
+### Stage B command
+
+```sh
+python3 /home/layup/.cache/layup-session/tmp-green/T-ebm4-inventory.py
+```
+
+Start: 2026-10-21T07:41:31Z. End: 2026-10-21T07:41:31Z. Exit status: 0.
+
+```text
+Wrote 1699 distinct baseline occurrences (913 primary, 789 supplementary, plus named context).
+add-after: 1
+keep-accepted-ADR: 55
+keep-canonical: 30
+keep-compatible: 47
+keep-executable-or-description: 348
+keep-fact: 14
+keep-gap: 1
+keep-historical: 982
+keep-other-meaning: 6
+keep-pitfall: 14
+keep-product: 149
+keep-product-context: 1
+keep-product-plan: 12
+keep-summary: 10
+keep-validation: 1
+normalize-quotes: 8
+replace: 18
+replace-example: 2
+```
+
+### Stage B command
+
+```sh
+git diff -- docs/engineering-discipline.md docs/issue-workflow.md docs/guardrails.md docs/glossary.md
+```
+
+Start: 2026-10-21T07:41:31Z. End: 2026-10-21T07:41:31Z. Exit status: 0.
+
+### Stage B command
+
+```sh
+sh docs/prd/prd-lint.sh
+```
+
+Start: 2026-10-21T07:42:02Z. End: 2026-10-21T07:42:02Z. Exit status: 0.
+
+```text
+prd-lint: OK
+```
+
+### Stage B command
+
+```sh
+sh docs/adr/adr-lint.sh
+```
+
+Start: 2026-10-21T07:42:02Z. End: 2026-10-21T07:42:02Z. Exit status: 0.
+
+```text
+adr-lint: OK
+```
+
+### Stage B command
+
+```sh
+sh docs/tests/run-discipline-tests.sh
+```
+
+Start: 2026-10-21T07:42:02Z. End: 2026-10-21T07:42:04Z. Exit status: 0.
+
+```text
+
+run-discipline-tests: 138 passed, 0 failed
+```
+
+### Stage B command
+
+```sh
+sh docs/links/link-lint.sh
+```
+
+Start: 2026-10-21T07:42:02Z. End: 2026-10-21T07:42:15Z. Exit status: 0.
+
+```text
+link-lint: OK  3047 links resolved
+```
+
+### Stage B command
+
+```sh
+sh docs/setup/setup-check.sh
+```
+
+Start: 2026-10-21T07:42:02Z. End: 2026-10-21T07:42:24Z. Exit status: 0.
+
+```text
+setup-check: pin OK
+setup-check: kit-history OK
+setup-check: facts OK
+setup-check: onboarding OK
+setup-check: glossary OK
+setup-check: guardrails OK
+setup-check: markers OK
+setup-check: adapted OK
+setup-check: ci OK
+setup-check: protection OK
+setup-check: identity OK
+setup-check: procedure OK
+
+run-discipline-tests: 138 passed, 0 failed
+adr-lint: OK
+prd-lint: OK
+link-lint: OK  3047 links resolved
+setup-check: kit-linters OK
+```
+
+### Stage B command
+
+```sh
+git diff --check abdbe996282b33080406223ae8ba19e5a3634360 HEAD
+```
+
+Start: 2026-10-21T07:42:33Z. End: 2026-10-21T07:42:33Z. Exit status: 0.
+
+```text
+
+```
+
+### Stage B command
+
+```sh
+git diff --check
+```
+
+Start: 2026-10-21T07:42:33Z. End: 2026-10-21T07:42:33Z. Exit status: 0.
+
+```text
+
+```
+
+### Stage B command
+
+```sh
+sh docs/tests/nested-checkout-check.sh
+```
+
+Start: 2026-10-21T07:42:33Z. End: 2026-10-21T07:42:34Z. Exit status: 0.
+
+```text
+ok    1 control: clean tree
+ok    2 plain directory: its dead link is found
+ok    3 dead link inside the nested checkout is not read
+ok    4 dead link inside a linked worktree is not read
+ok    5 no checkout: nested dead link still not read
+ok    6 no checkout: plain directory still walked
+ok    7 vendored and gitignored: link-lint
+ok    8 symlink into the nested checkout is not read
+ok    9 a quoted filename is still read
+warning: adding embedded git repository: kit/.claude/worktrees/W
+hint: You've added another git repository inside your current repository.
+hint: Clones of the outer repository will not contain the contents of
+hint: the embedded repository and will not know how to obtain it.
+hint: If you meant to add a submodule, use:
+hint:
+hint: 	git submodule add <url> kit/.claude/worktrees/W
+hint:
+hint: If you added this path by mistake, you can remove it from the
+hint: index with:
+hint:
+hint: 	git rm --cached kit/.claude/worktrees/W
+hint:
+hint: See "git help submodule" for more information.
+hint: Disable this message with "git config set advice.addEmbeddedRepo false"
+warning: adding embedded git repository: kit/nested
+ok    10 vendored, a partial outer ignore: link-lint
+nested-checkout-check: OK  10 cases behaved
+```
+
+### Stage B command
+
+```sh
+sh docs/tests/freeze-check/run-all.sh
+```
+
+Start: 2026-10-21T07:42:33Z. End: 2026-10-21T07:42:42Z. Exit status: 0.
+
+```text
+ok    bad-K1-blank-eof
+ok    bad-K1-trailing-space
+ok    bad-K2-missing-file
+ok    bad-K2-missing-prd
+ok    bad-K2-missing-traceability
+ok    bad-K2-no-prd-frame-test
+ok    bad-K2-no-prd-mapped-test
+ok    bad-K2-no-s12-frame-test
+ok    bad-K2-no-s12-mapped-test
+ok    bad-K2-prd-other-file
+ok    bad-K2-two-missing
+ok    bad-K3-backtick-outside
+ok    bad-K3-double-quoted
+ok    bad-K3-no-match
+ok    bad-K3-other-package
+ok    bad-K3-other-tag
+ok    bad-K3-span-across-lines
+ok    bad-K3-subtest
+ok    bad-K3-unclosed-span-eof
+ok    bad-K3-unclosed-span-paragraph
+ok    bad-K3-unquoted
+ok    bad-K3-unsupported-form
+ok    bad-K4-dropped-in-description
+ok    bad-K4-form-a-different
+ok    bad-K4-form-b-equal-hashes
+ok    bad-K4-result-only
+ok    bad-K4-two-hashes-no-restore
+ok    bad-K5-over-files
+ok    bad-K5-over-lines
+ok    bad-K6-empty-table
+ok    bad-K6-line-past-end
+ok    bad-K6-line-zero
+ok    bad-K6-missing-commit
+ok    bad-K6-missing-file
+ok    bad-K6-missing-path
+ok    bad-K6-missing-test
+ok    bad-K6-mixed-valid-invalid
+ok    bad-K6-no-span
+ok    bad-K6-range-zero
+ok    bad-base-not-a-commit
+ok    bad-crlf-conditions
+ok    bad-env-K2-unreadable-prd
+ok    bad-env-K2-unreadable
+ok    bad-env-K3-unreadable-test
+ok    bad-env-dirty-worktree
+ok    bad-env-untracked-evidence
+ok    bad-not-a-worktree
+ok    bad-usage-bad-budget
+ok    bad-usage-closeout
+ok    bad-usage-evidence-directory-base
+ok    bad-usage-evidence-directory-head
+ok    bad-usage-evidence-missing
+ok    bad-usage-evidence-no-value
+ok    bad-usage-evidence-other-task
+ok    bad-usage-evidence-suffix
+ok    bad-usage-evidence-task-prefix
+ok    bad-usage-evidence-trailing-slash
+ok    bad-usage-evidence-traversal
+ok    bad-usage-missing-budget
+ok    bad-usage-no-args
+ok    bad-usage-unknown-flag
+ok    good-K1-clean
+ok    good-K2-prd-by-file
+ok    good-K2-registered
+ok    good-K3-alternatives
+ok    good-K3-span-across-lines
+ok    good-K4-forms
+ok    good-K5-at-max
+ok    good-K5-ceiling
+ok    good-K5-evidence-added
+ok    good-K5-evidence-deleted
+ok    good-K5-evidence-duplicate
+ok    good-K5-evidence-inputs
+ok    good-K5-evidence-kinds
+ok    good-K5-evidence-literal
+ok    good-K5-evidence-modified
+ok    good-K5-evidence-renamed
+ok    good-K5-file-limit
+ok    good-K5-line-limit
+ok    good-K5-no-closeout
+ok    good-K5-percentage
+ok    good-K5-truncation
+ok    good-K6-no-conditions
+ok    good-K6-valid
+ok    good-crlf-all
+freeze-check: 85 passed, 0 failed
+```
+
+### Stage B command
+
+```sh
+sh runs/T-ebm4/checks.sh
+```
+
+Start: 2026-10-21T07:44:17Z. End: 2026-10-21T07:44:17Z. Exit status: 0.
+
+```text
+ok: budget-unit
+ok: evidence-exclusion
+ok: executable-inputs
+ok: input-definition
+ok: audit-and-dual-use
+ok: bookkeeping
+ok: mixed-files
+ok: advance-approval
+ok: tolerance
+ok: margin
+ok: budget-post
+ok: fixed-tolerance
+ok: exact-approval
+ok: overrun-block
+ok: end-3-eligibility
+ok: records-definition
+ok: records-exclusions
+ok: disputed-end
+ok: end-3-post
+ok: end-3-authority
+ok: end-3-exception
+ok: canonical-straight-quotes
+ok: C1-new-comment-wait
+ok: C1-retired-wait
+ok: C1-one-shared-wait
+ok: end-1-preserved
+ok: end-2-preserved
+ok: end-4-preserved
+ok: gate-pointer
+ok: gate-retired-next-round
+ok: R12-budget-pointer
+ok: R12-retired-slicing
+ok: named-base-pointer
+ok: named-base-retired-count
+ok: C2-validation-preserved
+ok: size-class-pointer
+ok: size-class-retired-ceiling
+ok: issue-split-pointer
+ok: issue-split-example
+ok: issue-split-retired-overrun
+ok: issue-split-retired-example
+ok: material-pointer
+ok: material-retired-stop
+ok: frozen-head-pointer
+ok: frozen-head-retired-next-round
+ok: C3-Records finding-row
+ok: C3-records-bound
+ok: C3-records-collision
+ok: records-example
+ok: C3-Tolerance-row
+ok: tolerance-pointer
+ok: tolerance-collision
+ok: tolerance-example
+ok: C3-Input-row
+ok: input-pointer
+ok: input-collision
+ok: input-example
+ok: C3-Margin-row
+ok: margin-pointer
+ok: margin-collision
+ok: margin-example
+ok: C3-Coordinated Universal Time-row
+ok: C3-UTC-abbreviation
+ok: C3-UTC-description
+ok: C3-UTC-collision
+ok: C3-UTC-example
+ok: cap-example
+ok: cap-retired-example
+ok: ceiling-example
+ok: ceiling-retired-example
+ok: existing-checks-and-gates-preserved
+```
+
+### Stage B command
+
+```sh
+python3 /home/layup/.cache/layup-session/tmp-green/T-ebm4-final-audit.py
+```
+
+Start: 2026-10-21T07:44:17Z. End: 2026-10-21T07:44:18Z. Exit status: 0.
+
+```text
+Only the eight planned Stage B files differ; checks.sh is unchanged; close-out is deferred.
+All four evidence records have straight quotes, no trailing white space and one final newline.
+All 1,699 inventory locations exist at the baseline; both complete search outputs are covered.
+Counted: docs/engineering-discipline.md: +19 -13
+Counted: docs/glossary.md: +11 -6
+Counted: docs/guardrails.md: +4 -3
+Counted: docs/issue-workflow.md: +6 -6
+Counted: runs/T-ebm4/checks.sh: +164 -0
+Current working-tree branch projection: 232 lines over 5 files.
+Maximum 400/10; tolerance 80/4; limit 480/14; projected margin 248/9.
+Exactly the four declared audit evidence records leave this projection; the task check stays counted.
+Committed starting head: cff8900583b5fe02d9b58c87c10dbd22ccd7619e
+Comparison base: abdbe996282b33080406223ae8ba19e5a3634360
+No clean-head pre-freeze or final landing audit is claimed by this working-tree projection.
+```
