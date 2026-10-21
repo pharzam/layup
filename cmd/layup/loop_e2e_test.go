@@ -40,6 +40,7 @@ type pull struct {
 type m2eRoutes struct {
 	comments map[int][]map[string]any // by issue, the App's comments
 	statuses map[string][]map[string]any
+	atMerge  map[string][]map[string]any // the statuses of a SHA as they stood at the merge request for it, newest first
 	pulls    []*pull
 }
 
@@ -165,6 +166,10 @@ func (m *m2eRoutes) serve(f *fakeForge, w http.ResponseWriter, r *http.Request) 
 	case r.Method == "PUT" && strings.HasPrefix(path, pulls+"/") && strings.HasSuffix(path, "/merge"):
 		n, _ = strconv.Atoi(strings.TrimSuffix(strings.TrimPrefix(path, pulls+"/"), "/merge"))
 		f.reqs = append(f.reqs, fmt.Sprintf("merge %d %s", n, in.SHA))
+		if m.atMerge == nil {
+			m.atMerge = map[string][]map[string]any{}
+		}
+		m.atMerge[in.SHA] = slices.Clone(m.statuses[in.SHA])
 		switch {
 		case n < 1 || n > len(m.pulls):
 			reply(404, map[string]string{"message": "Not Found"})
@@ -277,6 +282,17 @@ func eventsOfTask(t *testing.T, w runWorld, task string) [][]string {
 	return rows
 }
 
+// notGreen gives the contexts of the four layup/ statuses whose newest status in the snapshot (newest first) is not the App's (creator 9001) and success.
+func notGreen(snapshot []map[string]any) (bad []string) {
+	for _, c := range []string{"layup/gates", "layup/spec", "layup/rules", "layup/verify"} {
+		i := slices.IndexFunc(snapshot, func(s map[string]any) bool { return s["context"] == c })
+		if i < 0 || snapshot[i]["state"] != "success" || snapshot[i]["creator"].(map[string]any)["id"] != 9001 {
+			bad = append(bad, c)
+		}
+	}
+	return bad
+}
+
 // loopMerged checks the merge of a task of Shape after the run, from the log of the forge, the bare repository and the records (condition 4 of the plan
 // review): H is the head of the branch that the merge request named, M the merge commit that it made.
 func loopMerged(t *testing.T, w runWorld, task layuprun.Task) (head string) {
@@ -300,11 +316,8 @@ func loopMerged(t *testing.T, w runWorld, task layuprun.Task) (head string) {
 	if !slices.Contains(pre, "mark PR_"+strconv.Itoa(task.PR)) || slices.Index(pre, "POST /repos/acme/target/statuses/"+head) < 0 {
 		t.Errorf("%s: no ready mark or no status at %s before the merge in the log", task.ID, head)
 	}
-	for _, c := range []string{"layup/gates", "layup/spec", "layup/rules", "layup/verify"} {
-		i := slices.IndexFunc(w.forge.m2e.statuses[head], func(s map[string]any) bool { return s["context"] == c })
-		if i < 0 || w.forge.m2e.statuses[head][i]["state"] != "success" || w.forge.m2e.statuses[head][i]["creator"].(map[string]any)["id"] != 9001 {
-			t.Errorf("%s: the newest status %s at %s is %v; want the App's, success", task.ID, c, head, w.forge.m2e.statuses[head])
-		}
+	if bad := notGreen(w.forge.m2e.atMerge[head]); len(bad) > 0 {
+		t.Errorf("%s: at the merge request the newest statuses at %s of %q were not the App's success: %v", task.ID, head, bad, w.forge.m2e.atMerge[head])
 	}
 	merge := ""
 	log, _ := gitRun(w.bare, "log", "--first-parent", "--merges", "--format=%H %P", "refs/heads/main")
@@ -423,6 +436,13 @@ func TestTheSpecificationTaskEndToEnd(t *testing.T) {
 		"created_at": "2026-10-08T14:00:00Z", "updated_at": "2026-10-08T14:00:00Z", "body": "REQ-001: Must, phase 1\nbet\n"})
 	w.forge.mu.Unlock()
 	r, rows = restart("stage 6", 0, slices.Concat(later, []string{"shape", "bet", "loop"}))
+	// Two merge requests, one for each task; none when a required job is not success (NFR-004, the control C1), and not one when the loop stops after the first.
+	w.forge.mu.Lock()
+	merges := len(slices.DeleteFunc(slices.Clone(w.forge.reqs), func(l string) bool { return !strings.HasPrefix(l, "merge ") }))
+	w.forge.mu.Unlock()
+	if merges != 2 {
+		t.Errorf("stage 6: %d merge requests in the log; want 2, one for each task of Shape", merges)
+	}
 	if rows["shape"][1] != "done before" || !strings.HasPrefix(rows["bet"][1], "the bet 1: the rendered commit ") || rows["loop"] != [2]string{"done", "the loop merged " + spec.ID + ", " + arch.ID} {
 		t.Fatalf("stage 6: the rows %q\n%s\n%s", rows, r.stdout, r.stderr)
 	}
@@ -493,5 +513,25 @@ func TestTheSpecificationTaskEndToEnd(t *testing.T) {
 	// No secret: no session exited 9 (the harness refuses a token in its environment), and no token is in the records.
 	if out, err := gitRun(w.bare, "grep", "-q", "ghs_", "refs/heads/layup-records"); err == nil {
 		t.Errorf("a token of the forge is in the records branch:\n%s", out)
+	}
+}
+
+// The oracle of the merge refuses a trace in which only layup/verify was posted before the merge request and the other three contexts after it: the snapshot
+// at the request holds one status (review round 1 of #368, finding 1).
+func TestTheMergeOracleRefusesStatusesPostedAfterTheMergeRequest(t *testing.T) {
+	app := map[string]any{"id": 9001, "login": "layup-agent[bot]"}
+	st := func(c, state string, creator map[string]any) map[string]any {
+		return map[string]any{"context": c, "state": state, "creator": creator}
+	}
+	if bad := notGreen([]map[string]any{st("layup/verify", "success", app)}); !slices.Equal(bad, []string{"layup/gates", "layup/spec", "layup/rules"}) {
+		t.Errorf("a snapshot with layup/verify alone: %q; want the other three contexts", bad)
+	}
+	all := []map[string]any{st("layup/verify", "success", app), st("layup/rules", "success", app), st("layup/spec", "success", app), st("layup/gates", "success", app)}
+	if bad := notGreen(all); len(bad) != 0 {
+		t.Errorf("a snapshot of the four contexts at success: %q; want none", bad)
+	}
+	other := map[string]any{"id": 5, "login": "x"}
+	if bad := notGreen(append([]map[string]any{st("layup/gates", "failure", app), st("layup/spec", "success", other)}, all...)); !slices.Equal(bad, []string{"layup/gates", "layup/spec"}) {
+		t.Errorf("a newer failure and a newer status of another creator: %q; want those two contexts", bad)
 	}
 }
