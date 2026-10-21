@@ -378,3 +378,33 @@ ok  	github.com/pharzam/layup/internal/run	8.468s
 ```
 
 F8 asks for tests, not for code: the constraint prompt, its golden file and the output scenario for a constraint pass on the code, so their red is the mutant of the reviewer (a constraint prompt that substitutes `REQ-999` for the allocated NFR), run in `mutants.md` (M61 and M62). The output scenario is now a loop over a constraint (the fact 1, NFR-002, which REQ-001 already covers) and a need.
+
+## Round 2 of #428: green and the gates
+
+The fixes are in `3806384`; the tests ran on that head (the later commit changes records only). Each command alone, with its direct exit status.
+
+- The tests of the fixes, green: unit level of the two packages 03:54:49Z to 03:54:49Z exit 0, and the integration selection (the 15 integration tests of this task) 03:55:20Z to 03:55:46Z exit 0. Two expectations changed with the fix of F6: the first failing head of `TestTheReopenedTasksPassTheFullCheckOneAfterTheOther` after the merge of the first task is now `the reopened need fact 2 has no pending requirement REQ-003 under waits for a bet` (the merged identity is read first), and the output scenario of the harness test now runs a constraint and a need.
+
+### The gates
+
+| Gate | Start to end | Exit | Command |
+| ---- | ------------ | ---- | ------- |
+| build | 04:10:02 to 04:10:02Z | 0 | `go build ./...` |
+| vet | 04:10:02 to 04:10:02Z | 0 | `go vet ./...` |
+| vetint | 04:10:02 to 04:10:03Z | 0 | `go vet -tags=integration ./...` |
+| vete2e | 04:10:03 to 04:10:03Z | 0 | `go vet -tags=e2e ./...` |
+| gofmt | 04:10:03 to 04:10:03Z | 0 | `sh -c out=$(gofmt -l .) && test -z "$out"` |
+| unit | 04:10:03 to 04:10:04Z | 0 | `go test -count=1 ./...` |
+| adr | 04:10:04 to 04:10:06Z | 0 | `sh docs/adr/adr-lint.sh` |
+| prd | 04:10:06 to 04:10:06Z | 0 | `sh docs/prd/prd-lint.sh` |
+| link | 04:10:06 to 04:10:18Z | 0 | `sh docs/links/link-lint.sh` |
+| disc | 04:10:18 to 04:10:21Z | 0 | `sh docs/tests/run-discipline-tests.sh` |
+| nested | 04:10:21 to 04:10:21Z | 0 | `sh docs/tests/nested-checkout-check.sh` |
+| setup | 04:10:21 to 04:10:42Z | 0 | `sh docs/setup/setup-check.sh` |
+| diffcheck | 04:10:42 to 04:10:42Z | 0 | `git diff --check origin/main HEAD` |
+| taskstate | 04:10:42 to 04:10:50Z | 0 | `sh docs/tasks/task-state.sh` |
+| e2e | 04:13:59 to 04:14:56Z | 0 | `go test -count=1 -tags=e2e ./...` |
+
+### The full integration level
+
+`TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./...`, in the background, output only to `/home/layup/.cache/layup-session/T-4naq-full-integration.txt`: 2026-10-21T04:09:58Z to 2026-10-21T04:13:47Z, exit 0, 21 packages `ok`, on the code head `3806384` with `origin/main` at `f9d46b0` merged (`go.mod` names go 1.26.9 and the toolchain is go1.26.9).
