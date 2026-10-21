@@ -185,3 +185,18 @@ The code is in `ba39f3f` and `c2f03bd`; the tests below ran on the head `7406949
 ### The full integration level
 
 `go test -count=1 -tags=integration -timeout 30m ./...`, in the background, output only to `/home/layup/.cache/layup-session/T-4naq-full-integration.txt`: 2026-10-20T23:57:42Z to 2026-10-21T00:01:23Z, exit 0, 21 packages `ok`. An earlier full run on the first merge head `6c63a4f` (23:40:24Z to 23:44:11Z) also exited 0.
+
+## The freeze check
+
+On the clean committed head `33b9a14`, which has merged `origin/main` at `f9d46b0`: `sh docs/tests/freeze-check.sh --task T-4naq --base origin/main --budget 2600/30 --evidence runs/T-4naq/test-runs.md --evidence runs/T-4naq/mutants.md --evidence runs/T-4naq/conditions.md`, output kept outside the worktree in `/home/layup/.cache/layup-session/T-4naq-freeze.txt`, exit 0:
+
+```text
+ok K1: white space
+ok K2: registration of new tests
+ok K3: test selectors
+ok K4: restore evidence of mutants
+ok K5: projection: figure 1810/25, maximum 2600/30, tolerance 500/4, limit 3100/34, margin 1290/9 (the figure at landing is still measured at landing)
+ok K6: conditions table
+```
+
+The figure is measured at landing; the figure above is the projection of K5 at the head named, with the evidence records of `runs/T-4naq/` out of the count (ADR-0028) and before the close-out.
