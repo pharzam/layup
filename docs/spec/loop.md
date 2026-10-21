@@ -2406,8 +2406,8 @@ the specification's rendered head passes and merges; from the allocation to the 
 `needs` or `measures` unless it holds the pending line of the fact under `waits for a bet` (a missing output is refused, never exempted); with two re-classed facts, the head of the first task holds only
 its own line and passes while the second's fact is exempt, and the head of the second, judged after the first has merged, has the first's line in its base and holds its own; from the merge of a fact's
 task the fact is no longer exempt, so a head that removes its line fails. The names are those of the universe (a number, or `Q-NNN`). A version that cannot be read gives an empty set, and
-the rules do not run, as for any head. **The own output is read by the stored identity** (round 1 of #428, F1): at the head of a reopened task `needs` (for a `need` or a
-`constraint`) and `measures` (for a `measure`) also require, from `FullInput.Pending` (the fact and the requirement ID of the row of the task in `spec/reopenings.tsv`), a line under the heading that
+the rules do not run, as for any head. **The own output is read by the stored identity** (round 1 of #428, F1): at the head of a reopened task (and, for a merged reopening, of every later head) `needs` (for a `need` or a
+`constraint`) and `measures` (for a `measure`) also require, from `FullInput.Pending` (the fact and the requirement ID of the row of the task and of each merged task in `spec/reopenings.tsv`), a line under the heading that
 cites the fact and, for a requirement, holds the allocated ID as a whole word; a requirement of the table that already covers the fact (a need changed to a constraint) or the old requirement's ID
 is not that output. **The pending output of a merged reopening stays required** (round 2 of #428, F6): `FullInput.Pending` also holds the identity of every reopening whose task has merged, so a later head of any task that removes its line fails, and one that keeps it passes. The detail is `the reopened <class> fact <f> has no pending requirement <ID> under waits for a bet` (`pending success criterion` for a measure).
 
@@ -2433,7 +2433,7 @@ rebuilding the input at a restart, is row 66f's, which calls the builder.
 | `Records` | `target:` the direct regular files of `docs/facts/` at `head` named `F-NNNN*.md`, by record ID (`T-c6sx`) | an empty list |
 | `AnswersRecord` | none: `""` | not applicable |
 | `Copy` | the caller's (the bet's copy, row 66j) and passed through unchanged | `nil` keeps the `fail` row of `classes` and the `ran` row |
-| `Pending` | the row of the task whose head is judged in `records:spec/reopenings.tsv`: its fact and allocated requirement ID (the output that the head must hold) | none for a task that no class reopens |
+| `Pending` | `records:spec/reopenings.tsv` and `Merged`: the row of the task whose head is judged, if a class reopened it, and the row of every task that has merged, in the order of the stored rows, each as its fact and allocated requirement ID (the output that the head must hold) | none, exactly when the task has no reopening of its own and no reopening has merged |
 | `Reopening` | `records:spec/reopenings.tsv` with the Intake records, the latest version and `Merged`, for the task whose head is judged (`SpecInput.Task`; the exemption above) | an absent `spec/reopenings.tsv` is no reopened task; a file its reader refuses is an error |
 
 - **`PSBRecords`.** The numbered facts record of the problem statement is the file
