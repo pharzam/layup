@@ -19,6 +19,7 @@ import (
 	"github.com/pharzam/layup/internal/handoff"
 	"github.com/pharzam/layup/internal/records"
 	"github.com/pharzam/layup/internal/route"
+	"github.com/pharzam/layup/internal/rules"
 	"github.com/pharzam/layup/internal/session"
 	"github.com/pharzam/layup/internal/spec"
 )
@@ -287,8 +288,27 @@ const (
 
 // The classes of an eligible end: a crash or no-result (uncertain), and a done refused for the artifact alone.
 const (
-	classUncertain, classArtifact = "uncertain", "artifact"
+	classUncertain, classArtifact, classRulePath = "uncertain", "artifact", "rule-path"
 )
+
+// rulePathFindings gives one finding for each path of a refused payload that the register matches (rules.Match, so the unconditional .sh clause counts),
+// in the order of the payload; an ordinary path gives none. The register is the one given, the current one (loop.md, The findings of a refused rule path;
+// task T-dtw6, #491). docs/guardrails.md is named with the exception of its own register row, whether or not the refused change passed it.
+func rulePathFindings(paths []string, reg []rules.Entry) []Finding {
+	var out []Finding
+	for _, p := range paths {
+		e, ok := rules.Match(reg, p)
+		if !ok {
+			continue
+		}
+		text := "a rule path that the last attempt changed, so its session was refused and nothing of it was pushed: change nothing of it"
+		if e.Exception != "" {
+			text = "a rule path that the last attempt changed, so its session was refused and nothing of it was pushed: only " + e.Exception + " may change it"
+		}
+		out = append(out, Finding{Rule: classRulePath, File: p, Text: text})
+	}
+	return out
+}
 
 // stageOf gives the stage of a session by its start row and its role, "" for none: an answer session has none, and neither has the
 // close-out or an owner role.

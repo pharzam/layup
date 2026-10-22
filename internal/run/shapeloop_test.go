@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/pharzam/layup/internal/rules"
 )
 
 // The position of a Shape task is told from the records alone (loop.md, The driver of a Shape task):
@@ -846,5 +848,48 @@ func TestReviewerLegacyBareRejectKeepsRecordedPair(t *testing.T) {
 	b.v.Verdicts = map[string]string{"S-r1": "reject"}
 	if got := b.at(); got.Pos != posStop || !strings.Contains(got.Msg, "plan review → developer is invalid verdict-field") {
 		t.Errorf("a legacy bare reject: %d %q; want the stop on plan review → developer", got.Pos, got.Msg)
+	}
+}
+
+// loop.md, The findings of a refused rule path (task T-dtw6, #491).
+
+const demoRegister = "pattern\texception\tsource\n.github/\t—\tbaseline\n.githooks/\t—\tbaseline\nAGENTS.md\t—\tbaseline\ndocs/engineering-discipline.md\t—\tbaseline\n" +
+	"docs/issue-workflow.md\t—\tbaseline\ndocs/ci/\t—\tbaseline\ndocs/setup/\t—\tarchitecture\ndocs/guardrails.md\tadded lines in section 2\tbaseline\n"
+
+func mustRegister(t *testing.T, text string) []rules.Entry {
+	t.Helper()
+	reg, err := rules.ReadRegister([]byte(text))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return reg
+}
+
+// Defect test: the findings keep the paths of the payload that the register matches, name the exception of docs/guardrails.md from the register's
+// own text, and use the register they are given (the current one).
+func TestRulePathFindingsKeepTheRulePathsOfThePayload(t *testing.T) {
+	reg := mustRegister(t, demoRegister)
+	paths := []string{"docs/tasks/T-x.md", "docs/engineering-discipline.md", "src/main.go", "docs/guardrails.md", "scripts/run.sh", "docs/setup/new-file.md"}
+	got := rulePathFindings(paths, reg)
+	var files []string
+	for _, f := range got {
+		files = append(files, f.File)
+		if f.Rule != "rule-path" || f.Line != 0 || f.Text == "" {
+			t.Errorf("the finding %+v; want the rule rule-path, no line and a text", f)
+		}
+		if guardrails := strings.Contains(f.Text, "added lines in section 2"); guardrails != (f.File == "docs/guardrails.md") {
+			t.Errorf("the finding of %s holds the exception: %v; want it only for docs/guardrails.md", f.File, guardrails)
+		}
+	}
+	if want := []string{"docs/engineering-discipline.md", "docs/guardrails.md", "scripts/run.sh", "docs/setup/new-file.md"}; !slices.Equal(files, want) {
+		t.Errorf("the findings name %q; want %q", files, want)
+	}
+	next := mustRegister(t, demoRegister+"docs/tasks/\t—\tarchitecture\n")
+	files = nil
+	for _, f := range rulePathFindings(paths, next) {
+		files = append(files, f.File)
+	}
+	if !slices.Contains(files, "docs/tasks/T-x.md") {
+		t.Errorf("the findings of a register that lists docs/tasks/ name %q; want docs/tasks/T-x.md among them", files)
 	}
 }
