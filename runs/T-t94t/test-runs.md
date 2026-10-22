@@ -82,3 +82,5 @@ Red, written before the code (`go test -count=1 ./internal/run` and the integrat
 | `TestReviewerLegacyBareRejectKeepsRecordedPair`, `TestReviewerLegacyBareRejectKeepsRecordedPairInTheLoop` | the stop reads `plan review → task plan is invalid verdict-field`; want `plan review → developer` |
 
 Green (2026-10-22T13:43:22Z): the position stops a readable reject with no reason (`Verdicts` is `reject`, no reasons) whatever the table, keeping the table as the Operator wrote it; the label is the planner pair only when the handoff is not an earlier binary's `invalid verdict-field`. Recovery is not broadened. The stale count in `commentform.go:4` is removed. The full gates follow in the commit of the close-out.
+
+End-3 gates: the integration packages touched (`go test -count=1 -tags=integration -timeout 30m ./internal/run ./internal/handoff`, `/home/layup/.cache/layup-session/T-t94t-integration-3.txt`) ok, exit 0, 2026-10-22T13:48:28Z (`internal/run` 242.1 s); unit ok at the commit hook; build, vet, gofmt, the six lints, `freeze-check/run-all.sh` and the freeze check clean in the close-out commit.
