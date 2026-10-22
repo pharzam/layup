@@ -8,7 +8,7 @@ Inert only: the fields `lostLease`, `viaLease` and `endTimeout` of `state`, `lea
 
 ## 2. Red (assertion failures on the base)
 
-Unit, `go test -count=1 -run '<the tests>' ./internal/run`, 2026-10-22T10:32:14Z, exit 1:
+Unit, the new tests by name, 2026-10-22T10:32:14Z, exit 1:
 
 | Test | First failing assertion |
 | --- | --- |
@@ -21,7 +21,7 @@ Unit, `go test -count=1 -run '<the tests>' ./internal/run`, 2026-10-22T10:32:14Z
 | `TestAHeartbeatErrorThatIsNotALossStillReleases` | both rows: the lease `held`; want released |
 | `TestTheReleaseOutlivesTheContextOfTheStepsAndIsBounded` | `a cancelled context of the steps stopped the release`; and no deadline named |
 
-Integration, `TMPDIR=... go test -count=1 -tags=integration -run '<the tests>' ./internal/run`, 2026-10-22T10:32:04Z to 10:32:14Z, exit 1:
+Integration, the new tests by name with the integration tag, 2026-10-22T10:32:04Z to 10:32:14Z, exit 1:
 
 | Test | First failing assertion |
 | --- | --- |
