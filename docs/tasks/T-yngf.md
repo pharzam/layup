@@ -29,7 +29,7 @@ Round 2 raised no finding. Its notes:
 - Note 5 (the acceptance row of `run.md` did not name a loss found by a session's write): applied as a document change.
 - Notes 6, 8 and 9 (the in-flight beat cancelled by the stop is the old rule of `leaseStep`; the landing figure; history that still says "held"): closed with no change. The landing figure is 640 lines over 20 files against the limit 600/20, so the Operator approves it at merge.
 - Note 7 (no plan row for `T-yngf`): no plan row.
-- Round 1's note 1 (the world's operator resolves `HEAD` in a directory with no `.git`, and git can walk up into an enclosing repository when `TMPDIR` is inside the checkout) is a revealed, off-path defect, not fixed here; the coordinator opens an issue for it.
+- Round 1's note 1 (the world's operator resolves `HEAD` in a directory with no `.git`, and git can walk up into an enclosing repository when `TMPDIR` is inside the checkout) is a revealed, off-path defect, not fixed here; it is [#482](https://github.com/pharzam/layup/issues/482).
 
 ## Verification and verdict
 
@@ -49,5 +49,5 @@ ADR-0007, recorded, not budgeted. Tokens as the harness reported them; build, fi
 | Review round 1 | reasoning | Claude Fable 5.1 (OpenCode, max) | max | 16,247,091 (USD 10.53) | 2026-10-22T10:43:54Z to 11:07:50Z |
 | Fix of F1 | execution | Claude Sonnet 5.5 (subagent) | not recorded | not kept | 2026-10-22T11:09:50Z to 11:17:46Z (merge of main to last commit) |
 | Review round 2 | reasoning | Claude Fable 5.1 (OpenCode, max) | max | 26,304,334 (USD 14.69) | 2026-10-22T11:20:08Z to 11:45:40Z |
-| Close-out | execution | Claude Sonnet 5.5 (subagent) | not recorded | not kept | not kept; its commit follows 76bdbc3 at 2026-10-22T11:49:30Z |
+| Close-out | execution | Claude Sonnet 5.5 (subagent) | not recorded | not kept | not kept; its commit 0c24610 carries an author and committer date set by hand to 2026-10-22T11:49:30Z, which is not a clock reading: the session committed at about 11:48Z by its own report |
 | **Total** | | | | 42,707,494 reported (the three numeric entries); the complete total is not reported | not reported |
