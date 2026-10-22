@@ -48,3 +48,11 @@ The rule: `retries`, `replacedOf`, `priorAttempt`, `stageOf`, `eligibleEnd` and 
 - Unit level, `go test -count=1 ./...`: exit 0 (all five red tests of section 2 and both guards pass).
 - Integration subset of section 2 plus `Position|Question`: `go test -count=1 -tags=integration ./internal/run -run '...'`, 08:36:12Z to 08:36:38Z, exit 0.
 - The full gates are listed in section 5.
+
+## 5. Gates
+
+- `go build ./...`, `go vet ./...` (no tag, `integration`, `e2e`), `gofmt -l`: clean.
+- Unit level: exit 0.
+- Full integration level, `go test -count=1 -tags=integration -timeout 30m ./...` (output in `/home/layup/.cache/layup-session/T-qjjd-full-integration.txt`), started 08:37Z, finished 08:44:03Z, exit 0 (`internal/run` 265.8 s).
+- `go test -count=1 -tags=e2e -timeout 10m ./...`: exit 0 (`cmd/layup` 77.1 s).
+- The six lints (adr, prd, link, discipline tests, nested-checkout, setup-check) and `sh docs/tests/freeze-check/run-all.sh` (85 passed, 0 failed): exit 0. `git diff --check origin/main HEAD`: clean.
