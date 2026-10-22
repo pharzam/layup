@@ -474,6 +474,8 @@ check that catches it.
 
 - ❌ **A contract that one step of a pipeline knows turns correct work into a finding.** The specification step was told to leave the MoSCoW and Phase cells blank and to write no numbered facts record, because code supplies both at the bet; the plan, its review and the verification of the same task were not told, so an approving review and a verifier asked for exactly those cells and that record. It is silent because each prompt is right alone. **The check:** a rule that a step must keep is stated, in one summary, in every step that judges the work, from one canonical home, and a test renders all the prompts of the kind (`T-paan`, #488).
 
+- ❌ **A wait that only a later milestone answers stops every demo at the first defect it meets.** The cap of the review cycle was 1 and its wait had no answer in the records until `M3d`, so the architecture task of the first target stood still after two rounds, though the verifier's findings were a contract defect of the prompts and not of the work. It is silent because the wait is correct and every test of it passes. **The check:** each wait of a milestone has an answer in the records (here the Operator's copied `cycle` command, one per task), or it is a stop; and a contract that the judging steps do not state is fixed in the prompts of all of them, not in one (`T-0xr7`, #493).
+
 ### Writing a lesson back
 
 A trap caught once should not be re-derived by the next task, so a lesson does not

@@ -2844,7 +2844,31 @@ parsed review records of the valid handoffs, so each position is told from the r
   fewer, starts the next attempt at the base of this one, with the findings of that record; otherwise it is a wait
   (`waiting for the Operator: <task>: the review-cycle cap 1 is reached with findings open`). `not mergeable, findings recorded` is
   always a wait, and never another cycle. The findings of an attempt are those of the record of the attempt before it that no retry replaced, else the rows of its
-  head's gate table; never an older record.
+  head's gate table; never an older record. The cap is 1, and 2 for a task that has the grant of the next bullet.
+- **One more cycle at the cap.** Decided here (R10, task `T-0xr7`, #493, the Operator's decisions of 2026-10-22). The Operator answers the wait
+  at the cap with a comment on the **control issue**, `cycle <task> because <reason>`: one line, once its trailing white space is trimmed, with one
+  space between the parts, a task ID of the form `T-xxxx`, and a reason that is neither empty nor `—`. A body whose first word is not `cycle` is
+  no command. **The copy is the record:** `parametersBoundary` already copies every comment of the control issue that is no App's, before `shape`,
+  `bet` and `loop` act, and the grant is read from `copies.tsv` and from the task's own events on every view; no row, file, comment or event kind
+  is added, and a restart reads the same grant. **The order of judgement** of a command, each refusal a progress line `cycle: refused comment <ID>:
+  <item>: <reason>` that writes no row, no file and no comment (as a refused `set`), and the same refusal again at the next boundary: (1) `form`;
+  (2) `author`: a first copy (seen 1), by no App, by an account of `approvers.tsv` in the role `operator`; (3) `issue`: the control issue;
+  (4) `task`: a task of `tasks.tsv`; (5) `cap`; (6) `bound`. A command is judged before it is filtered to a task, so that a malformed command, a
+  command with no such task and a command on another issue are each reported. **The cap, from the recorded history:** the cap round is the round
+  number `shapeCycleCap`+1 among the rounds with findings, in the order of the sessions (the second, while the cap is 1). A command is eligible only
+  if its comment ID is strictly greater than the ID in the handoff `valid comment <ID>-<seen>` of the cap round's record (the IDs of one forge grow
+  with time, as the supersession of a `set` relies on), and only if the verdict of that record is `material`: a task with fewer rounds, and a
+  task whose cap round is `not mergeable, findings recorded`, give the item `cap`, because that record is always a wait that grants no cycle and so
+  consumes no grant. Eligibility reads no position, so a grant that was accepted stays accepted after its attempt starts, and a command posted
+  before the cap round stays refused. **The bound is one grant per task:** the earliest eligible command is the grant; each later one is refused
+  with the item `bound`. With the grant the cap is 2: the next attempt starts at the base of the one before it with the findings of the cap round's
+  record, and a third round with findings is the wait `waiting for the Operator: <task>: the review-cycle cap 2 is reached with findings open`.
+  While the task has no grant the wait says so: `…the review-cycle cap 1 is reached with findings open; the Operator may grant one more cycle with
+  `cycle <task> because <reason>` on the control issue`. The plan-reject count and the retries are not raised, and the independence of the
+  verifier and the stop `not-active` are unchanged. A further grant, and the diagnosis and the stall package, are `M3d`'s. **Rejected:** `set
+  cycle.<task> 2 because …` (a per-task row family in the static `parameters.tsv`, and a judge of the parameters that reads the state of the tasks);
+  an answer on the task's issue in the grammar of `architecture.md` §11 (a new copier, and `M3d`'s grammar taken early); a new event `granted` (an
+  enum value, a fenced write and a second source of the same fact).
 - **After the four statuses of a head,** an `error` of any of them, or `not-active` of `layup/verify` (posted before the stop,
   `NFR-004`), is a stop, and no attempt starts. Otherwise a failure of `layup/gates`, `layup/spec` or `layup/rules` starts the next
   attempt at the base of this one, with the findings of the gate's table, then those of `layup/spec`, then that of `layup/rules`
@@ -2946,7 +2970,7 @@ parsed review records of the valid handoffs, so each position is told from the r
     the lost evidence of a reject never lets the rejected plan, or a plan with no review of its own, reach the developer. The amendment reader likewise counts an unread review as no approval.
     A bare reject is checked on the pair it was recorded on, so its stop reads `the handoff plan review → task plan is invalid reject-reasons`; the label `plan review → developer` stays for that pair's own failures, and for an earlier binary's `invalid verdict-field` of a reject that no recovery takes up. A reject with no reason is a stop even when the Operator's table admits its handoff as valid: `<task>: the plan review <session> rejected the plan and gave no reason (its handoff is valid on this table, and a reject with no reason stops)`.
   - **Rejected:** a reject that stays `invalid verdict-field` (it would fail the ratio of valid handoffs of `REQ-005` and the first rule of the demo for every reject); a count shared with the
-    code review's rounds (one early plan reject would spend the only round of the code review); an Operator command or a wait to resume (no autonomy, and no bound the records define).
+    code review's rounds (one early plan reject would spend the only round of the code review); an Operator command or a wait to resume for the plan-reject count (no autonomy, and no bound the records define; the grant of one more cycle at the cap of the code review is the bullet "One more cycle at the cap" of the driver of a Shape task, task `T-0xr7`).
 
 ## NFR-004 — A check that did not run
 
@@ -3102,7 +3126,7 @@ with it the item `patch-per-kind` of a rule-batch handoff) and
 the gate paths and the amendment of ADR-0017 and ADR-0019 decision 2 that records the use of code
 owners (#336, `M2f` or earlier). A bet that raises `U` or the appetite, which `architecture.md` §10 makes a rendered change of `budget.tsv` (a later milestone; in `M2e` a brief that does not fit is reshaped), and a command form of the full check for the PRD, `docs/spec/` and the register (a later task). The escalation screen of an answer (`M3`), the plan that the plan review rejects past its cap of rejects, and the stall package, the stall
 triggers and their procedure, which Shape's round with no progress and the loops of
-failures wait for (`M3d`). The milestone plan, the build tasks and their merge order,
+failures wait for (`M3d`), which replaces the wait at the cap of the review cycle and gives any cycle past the one that the Operator's command grants. The milestone plan, the build tasks and their merge order,
 the execution of the named tests of a plan (the producer of `tests-red-green`), the
 execution of a frozen-test amendment in the loop (the Operator's decision on #367,
 comment 6252712313, as it needs that producer; the predicates of row 66e stay as built), the
