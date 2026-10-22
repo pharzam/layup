@@ -317,7 +317,7 @@ row:
 
 | Class | When | Again? |
 | ----- | ---- | ------ |
-| `done` | exit 0 and a valid result file | — ; refused for `artifact` alone with the status `completed`: one new attempt of its own ([loop.md](loop.md#the-driver-of-a-shape-task)) |
+| `done` | exit 0 and a valid result file | — ; refused for `artifact` alone, or for `rule-path` alone, with the status `completed`: one new attempt of its own for each ([loop.md](loop.md#the-driver-of-a-shape-task)) |
 | `start` | the program is missing or cannot run | fails the same way again: never retried |
 | `crash` | a non-zero exit, or a signal that `layup run` did not send | uncertain: an eligible task-session end (of the plan, the plan review, the developer or the verifier) gets one new attempt; a probe, a phase session, the close-out and the answer session get none ([loop.md](loop.md#the-driver-of-a-shape-task)) |
 | `no-result` | exit 0 with no valid result file | uncertain: as `crash` (an eligible task-session end) |
@@ -406,6 +406,7 @@ for the next rule batch (`M2f`): the payload is the proposal, and `M2b` writes
 no other record of it (**decided here**, task `T-z027`). The `detail` of the
 event is the reason, one space, and the payload's SHA-256, for example
 `rule-path 3f2a…` (**decided here**, condition 3 of the plan review of #166).
+**Decided here** (task `T-dtw6`, #491): a task session refused for `rule-path` alone gets one new attempt, and its developer is told the paths read from the payload; the rule and the reader of the payload are in [`loop.md`](loop.md#the-driver-of-a-shape-task).
 **Decided here** (condition 2): a records commit of the session with no
 `rule-paths.tsv`, or one that its reader refuses, refuses the result
 (`rule-paths`), fail closed (a records commit or a `git` that cannot be read
