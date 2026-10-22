@@ -1,0 +1,11 @@
+kind	n	value	sha256	reason
+status	1	completed	—	Architecture written: SPEC-0002 with two decisions pending the bet, ADR-0010 resolving record placement, ADR-0011 to ADR-0015 for the five single-survivor decisions, task file T-am8b
+artifact	1	docs/tasks/T-am8b.md	4aff6823484fa89f53f151417d3450abe90ee06d20a3a6b25dd10b7cd7a324c5	—
+artifact	2	docs/spec/SPEC-0002-tally-architecture.md	f0f1d500c25742da54719006f112df4d4d1fbd2f818835a2c873c12ea51f7854	—
+artifact	3	docs/adr/0010-record-product-architecture-decisions.md	f27fe9809ef72a44525063800b8453fd15db4ccaab66379f1e359e687f3e8008	—
+artifact	4	docs/adr/0011-build-with-go-build-only.md	8c7bf8b58d11af7ac32afa4b9ab6375fa9fa3d5b02e5b2f2b18dfd952f4609ee	—
+artifact	5	docs/adr/0012-count-with-three-functions-over-a-teed-reader.md	39fc05a235a40b8930094782471c41570125c3f10561bf044a2bea7ad55779a3	—
+artifact	6	docs/adr/0013-parse-flags-by-hand.md	2ceeedfd00baf008c981d3ab8865fc06884d009a052d64097defb9a0261b1d53	—
+artifact	7	docs/adr/0014-stream-through-a-fixed-buffer.md	3ff0f4c2480e3f00410095af081f704677432b0a22dc9150fbbecdb0dae188bc	—
+artifact	8	docs/adr/0015-validate-utf-8-in-the-stream.md	c04faccd6dff2bc9962ecfcaffd1b4022a422aa8ed0fa6b20c6f342fa11842e9	—
+artifact	9	docs/adr/README.md	2f1cc2055f4a2f479aa947e09bb612126db63fe17c9fd2eb943029fe496c32e2	—

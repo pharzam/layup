@@ -1,0 +1,11 @@
+kind	n	value	sha256	reason
+status	1	completed	—	Five single-survivor decisions are recorded as ADR-0011 to ADR-0015, module layout and white-space class are pending the bet in SPEC-0002, and ADR-0010 resolves the record placement; the rule file docs/engineering-discipline.md (Architecture Decision Records) is left as it is although it still describes adr/ as constitutive records only
+artifact	1	docs/tasks/T-am8b.md	28dfe162a764570dc25096448a30728b483fba1d0c5ca7f717dce5b448ae11ec	—
+artifact	2	docs/spec/SPEC-0002-architecture.md	8b709070cf5e2cc24fdeec048b42fe555f7b528c17a7b2a3689f4946d4ede2ec	—
+artifact	3	docs/adr/0010-hold-product-architecture-decisions-here.md	a10b6aa857ebe1ff13ab155ef02e6a39561ed3cf446d187d602c7209f89c1d3f	—
+artifact	4	docs/adr/0011-build-with-go-build-only.md	c83ba5ed106837cc0132f92f69929f6aa2e252ec941eb05ba5f46276761d8a54	—
+artifact	5	docs/adr/0012-count-through-three-functions-over-a-teed-reader.md	b13e37c00db0e52f9270fbf1440b53253fca39973fe724f07b790f31986b85d6	—
+artifact	6	docs/adr/0013-parse-flags-by-hand.md	9c0762a7bf614a702c20e36e5ac71cf34262b3f8449b20bdfdf0901ef4b81768	—
+artifact	7	docs/adr/0014-stream-through-a-fixed-buffer.md	599a2876a36ab319c626e773adab71434fa8da88a962317c4bf7d974c9645897	—
+artifact	8	docs/adr/0015-validate-utf-8-in-the-stream-and-print-after-eof.md	a7f66d31ba6becd0cf941836943e0b4befcc9dce696dcd058ec3230e34878ae4	—
+artifact	9	docs/adr/README.md	3f679297093349d1eca1c69be70d62875e81988cb8b4aa53f57b8939b0ca0c69	—

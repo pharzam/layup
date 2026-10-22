@@ -167,7 +167,7 @@ func TestAMaterialRoundStartsOneAttemptAndTheSecondWaitsAtTheCap(t *testing.T) {
 	spec, _ := d.open()
 	d.ctlWrite("verdicts-"+spec, "material\nmaterial\n")
 	got, err := d.advance(spec, nil)
-	want := "waiting for the Operator: " + spec + ": the review-cycle cap 1 is reached with findings open"
+	want := "waiting for the Operator: " + spec + ": the review-cycle cap 1 is reached with findings open; the Operator may grant one more cycle with `cycle " + spec + " because <reason>` on the control issue"
 	if err != nil || got.Wait != want || got.Verified || got.Stop != "" {
 		t.Fatalf("AdvanceShapeTask = %+v, %v; want the wait %q", got, err, want)
 	}
@@ -1023,6 +1023,151 @@ func TestARefusedPayloadThatCannotBeReadStopsTheRunBeforeAnotherDeveloper(t *tes
 		d.mustVerify(spec)
 		if n := len(d.byRole(spec, stepRole("specification"))); n != 2 {
 			t.Errorf("%s: %d developer sessions after the read works; want 2", c.name, n)
+		}
+	}
+}
+
+// Task T-0xr7 (#493): the wait at the cap has its answer in the records. The Operator's comment `cycle <task> because <reason>` on the control issue is
+// copied by the boundary (the copy is the record), and the next call of the driver starts attempt 3 from the same base with the round-2 finding in the
+// developer's prompt, then follows it to a verified head. A second call writes nothing.
+func TestAGrantOnTheControlIssueIsCopiedAndTheTaskAtTheCapRunsOneMoreAttempt(t *testing.T) {
+	t.Parallel()
+	d := newDrvWorld(t, loopPerms)
+	spec, _ := d.open()
+	d.ctlWrite("verdicts-"+spec, "material\nmaterial\n") // the third round finds nothing material
+	if got, err := d.advance(spec, nil); err != nil || !strings.HasPrefix(got.Wait, "waiting for the Operator: "+spec+": the review-cycle cap 1 is reached") {
+		t.Fatalf("AdvanceShapeTask = %+v, %v; want the wait at the cap", got, err)
+	}
+	say(d.w, 9100, operatorID, "pharzam", "cycle "+spec+" because the finding of round 2 is real\n")
+	if err := d.r.boundary(ctx0); err != nil {
+		t.Fatal(err)
+	}
+	got, err := d.advance(spec, nil)
+	if err != nil || !got.Verified || got.Task != spec {
+		t.Fatalf("AdvanceShapeTask after the grant = %+v, %v; want the verified head", got, err)
+	}
+	if n := strings.Count(strings.Join(d.kinds(spec), " "), "attempt"); n != 3 {
+		t.Errorf("%d attempts; want three", n)
+	}
+	// The prompts: plan, plan review, developer 1, verifier 1, developer 2, verifier 2, developer 3, verifier 3.
+	if p := d.promptsOf(spec); len(p) != 8 || !strings.Contains(p[6], "spec docs/spec/alpha.md:1: the section is thin") {
+		t.Errorf("%d prompts; the developer's prompt of attempt 3 holds the finding of round 2: %v; want eight and the finding", len(p), len(p) == 8 && strings.Contains(p[6], "the section is thin"))
+	}
+	base := d.eventsOf(spec)
+	if again, err := d.advance(spec, nil); err != nil || !again.Verified || len(d.eventsOf(spec)) != len(base) {
+		t.Errorf("a second call = %+v, %v with %d events more; want the same verified head and no event", again, err, len(d.eventsOf(spec))-len(base))
+	}
+}
+
+// Task T-0xr7 (#493): the rule of the command has its one home in loop.md, and records.md says that a valid copied command is the grant (plan review,
+// condition 4).
+func TestTheCycleCommandHasItsHomeInLoopMdAndRecordsMd(t *testing.T) {
+	t.Parallel()
+	for file, wants := range map[string][]string{
+		"../../docs/spec/loop.md":    {"One more cycle at the cap", "cycle <task> because <reason>"},
+		"../../docs/spec/records.md": {"A valid copy of a `cycle` command is the grant"},
+	} {
+		doc, err := os.ReadFile(file)
+		if err != nil {
+			t.Fatal(err)
+		}
+		flat := strings.Join(strings.Fields(string(doc)), " ")
+		for _, want := range wants {
+			if !strings.Contains(flat, want) {
+				t.Errorf("%s does not hold %q", file, want)
+			}
+		}
+	}
+}
+
+// A refused command changes nothing and is reported with its item, each item reachable (plan review of #493, condition 4): a stranger (author), an
+// unknown task, a broken form, a comment of another issue, a comment before the cap round (cap), and a second grant (bound). The only commits of the
+// records are the copies; the task still waits; the one valid command is the grant.
+func TestARefusedGrantChangesNothingAndIsReportedWithItsItem(t *testing.T) {
+	t.Parallel()
+	d := newDrvWorld(t, loopPerms)
+	spec, _ := d.open()
+	d.ctlWrite("verdicts-"+spec, "material\nmaterial\n")
+	if got, err := d.advance(spec, nil); err != nil || got.Wait == "" {
+		t.Fatalf("AdvanceShapeTask = %+v, %v; want the wait at the cap", got, err)
+	}
+	before := recordsHead(t, d.w)
+	say(d.w, 9101, strangerID, "mallory", "cycle "+spec+" because I say so")
+	say(d.w, 9102, operatorID, "pharzam", "cycle T-zz99 because there is no such task")
+	say(d.w, 9103, operatorID, "pharzam", "cycle")
+	say(d.w, 5, operatorID, "pharzam", "cycle "+spec+" because this is before the cap round")
+	if err := d.r.copy(ctx0, forge.Comment{ID: 9104, AuthorID: operatorID, AuthorLogin: "pharzam", Created: d.w.clock.Now(), Updated: d.w.clock.Now(), Body: "cycle " + spec + " because on the Intake issue"}, 1); err != nil {
+		t.Fatal(err)
+	}
+	if err := d.r.boundary(ctx0); err != nil {
+		t.Fatal(err)
+	}
+	for item, id := range map[string]string{"author": "9101", "task": "9102", "form": "9103", "cap": "5", "issue": "9104"} {
+		if got := progressLines(d.w, "cycle: refused comment "+id+": "+item+": "); len(got) != 1 {
+			t.Errorf("the progress lines for the comment %s with the item %s: %q; want one", id, item, got)
+		}
+	}
+	commits := commitsSince(t, d.w, before)
+	if len(commits) == 0 {
+		t.Errorf("no commit of the records since the wait; want the copies of the commands")
+	}
+	for _, c := range commits {
+		for _, f := range strings.Split(c.files, ",") {
+			if !strings.HasPrefix(f, "copies") {
+				t.Errorf("the commit %q changes %s; want only copies", c.subject, f)
+			}
+		}
+	}
+	if got, err := d.advance(spec, nil); err != nil || !strings.Contains(got.Wait, "the review-cycle cap 1 is reached") || got.Verified {
+		t.Errorf("AdvanceShapeTask after the refused commands = %+v, %v; want the wait at the cap", got, err)
+	}
+	// The valid command is the grant, and a second one is refused with the item bound, once the attempt has started.
+	say(d.w, 9110, operatorID, "pharzam", "cycle "+spec+" because the finding is real")
+	say(d.w, 9111, operatorID, "pharzam", "cycle "+spec+" because once more")
+	d.ctlWrite("verdicts-"+spec, "material\nmaterial\nnothing material in scope\n")
+	if err := d.r.boundary(ctx0); err != nil {
+		t.Fatal(err)
+	}
+	if got := progressLines(d.w, "cycle: refused comment 9111: bound: "); len(got) != 1 {
+		t.Errorf("the progress lines for the second grant: %q; want one with the item bound", got)
+	}
+	if got := progressLines(d.w, "cycle: refused comment 9110"); len(got) != 0 {
+		t.Errorf("the progress lines for the grant: %q; want none", got)
+	}
+	d.mustVerify(spec)
+	if n := strings.Count(strings.Join(d.kinds(spec), " "), "attempt"); n != 3 {
+		t.Errorf("%d attempts; want three: one grant is one more cycle", n)
+	}
+}
+
+// A restart on either side of the commit of attempt 3 starts exactly one attempt: the grant is read from the copies and the events alone.
+func TestARestartBeforeOrAfterTheGrantedAttemptStartsExactlyOne(t *testing.T) {
+	t.Parallel()
+	for _, c := range []struct{ name, fail string }{{"before the attempt", "layup run: attempt 3 of"}, {"after the attempt", ", attempt 3 of "}} {
+		d := newDrvWorld(t, loopPerms)
+		spec, _ := d.open()
+		d.ctlWrite("verdicts-"+spec, "material\nmaterial\n")
+		if got, err := d.advance(spec, nil); err != nil || got.Wait == "" {
+			t.Fatalf("%s: AdvanceShapeTask = %+v, %v; want the wait", c.name, got, err)
+		}
+		say(d.w, 9100, operatorID, "pharzam", "cycle "+spec+" because the finding is real")
+		if err := d.r.boundary(ctx0); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := d.advance(spec, func(s *Sessions) {
+			s.Store = &faultStore{SessionStore: s.Store, fail: func(m string) error {
+				if strings.Contains(m, c.fail) {
+					return errors.New("the commit failed")
+				}
+				return nil
+			}}
+		}); err == nil {
+			t.Fatalf("%s: AdvanceShapeTask did not fail", c.name)
+		}
+		d.restart()
+		d.mustVerify(spec)
+		if got := d.attempts(spec); len(got) != 3 {
+			t.Errorf("%s: %d attempts; want exactly three", c.name, len(got))
 		}
 	}
 }
