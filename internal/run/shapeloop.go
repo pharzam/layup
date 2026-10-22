@@ -71,6 +71,7 @@ const (
 	posWait                    // wait for the Operator
 	posStop                    // a case the driver does not go on from
 	posQuestion                // a session of the attempt asked a question: the stages of questionloop.go
+	posRetry                   // the last session of the attempt ended crash or no-result: one new attempt at its base
 )
 
 // loopView is what the position is told from: the events and the rows of sessions.tsv of the task, the
@@ -246,10 +247,10 @@ func reviewRounds(v loopView) int {
 }
 
 // findingsOf gives the findings that the developer of an attempt is given: those of the review record of the
-// attempt before it, else none and the bound head of that attempt, whose table of the gates gives them. A record
+// attempt before it that no retry replaced, else none and the bound head of that attempt, whose table of the gates gives them. A record
 // of an older attempt is never used.
 func findingsOf(v loopView, attempt int) (found []Finding, gateHead string) {
-	prev := strconv.Itoa(attempt - 1)
+	prev := strconv.Itoa(priorAttempt(replacedOf(v), attempt))
 	for _, e := range v.Events {
 		if e[1] == "bound" && e[2] == prev {
 			gateHead = e[5]
@@ -262,6 +263,113 @@ func findingsOf(v loopView, attempt int) (found []Finding, gateHead string) {
 		}
 	}
 	return nil, gateHead
+}
+
+// Replaced names the attempts that a retry replaced: the attempt number to the session whose eligible end caused it.
+type Replaced map[string]string
+
+// The stages of a task session that a retry bounds: the plan, the plan review, the developer and the verifier.
+const (
+	stagePlan, stageReview, stageDeveloper, stageVerifier = "plan", "review", "developer", "verifier"
+)
+
+// stageOf gives the stage of a session by its start row and its role, "" for none: an answer session has none, and neither has the
+// close-out or an owner role.
+func (v loopView) stageOf(id string) string {
+	s := v.startRow(id)
+	if s == nil || v.answerSession(s) {
+		return ""
+	}
+	switch s[sessionRole] {
+	case stepRole("plan-of-a-task"):
+		return stagePlan
+	case stepRole(devStep(v.Kind)):
+		return stageDeveloper
+	case stepRole("verification"):
+		if review, verifier := v.qaKind(s); review {
+			return stageReview
+		} else if verifier {
+			return stageVerifier
+		}
+	}
+	return ""
+}
+
+// eligibleEnd gives the last session of the attempt and its stage when its end is crash or no-result, it was not refused and it has a
+// stage: the one end that a retry replaces (loop.md, The driver of a Shape task, "An uncertain end gets one new attempt"). "" for none.
+func (v loopView) eligibleEnd(attempt string) (id, stage string) {
+	for _, e := range v.Events {
+		if e[1] == "session" && e[2] == attempt {
+			id = e[3]
+		}
+	}
+	end := ""
+	for _, e := range v.Events {
+		switch {
+		case e[3] != id:
+		case e[1] == "refused":
+			return "", ""
+		case e[1] == "result":
+			end = e[6]
+		}
+	}
+	if id == "" || (end != "crash" && end != "no-result") {
+		return "", ""
+	}
+	return id, v.stageOf(id)
+}
+
+// retries walks the attempts in order. An attempt is replaced by a retry when its last session has an eligible end, no earlier replacement
+// was caused by an eligible end of the same stage (the bound is once per stage), it was not closed or rebased and holds no lost push, and the
+// next attempt was recorded after that end at the same base. It gives the replaced attempts, and for the latest attempt, when it meets the
+// rule and has no next attempt, the session whose end the next attempt would replace.
+func retries(v loopView) (rep Replaced, pending string) {
+	rep, spent, last := Replaced{}, map[string]bool{}, 0
+	for _, e := range v.Events {
+		if n, _ := strconv.Atoi(e[2]); e[1] == "attempt" && n > last {
+			last = n
+		}
+	}
+	for n := 1; n <= last; n++ {
+		a := strconv.Itoa(n)
+		id, stage := v.eligibleEnd(a)
+		if id == "" || stage == "" || spent[stage] {
+			continue
+		}
+		base, ended, next := "", -1, -1
+		for i, e := range v.Events {
+			switch {
+			case (e[1] == "closed" || e[1] == "rebased" || (e[1] == "refused" && e[6] == "push-lost")) && e[2] == a:
+				stage = ""
+			case e[1] == "attempt" && e[2] == a:
+				base = e[4]
+			case e[1] == "result" && e[3] == id:
+				ended = i
+			case e[1] == "attempt" && e[2] == strconv.Itoa(n+1) && next < 0:
+				next = i
+			}
+		}
+		switch {
+		case stage == "":
+		case next >= 0 && next > ended && v.Events[next][4] == base:
+			rep[a], spent[stage] = id, true
+		case n == last:
+			pending = id
+		}
+	}
+	return rep, pending
+}
+
+// replacedOf is the one rule of the replacement (loop.md, The driver of a Shape task, "An uncertain end gets one new attempt"), for the readers of "the attempt before".
+func replacedOf(v loopView) Replaced { rep, _ := retries(v); return rep }
+
+// priorAttempt is the nearest attempt before b that a retry did not replace, 0 for none: a retry stands for the attempt it replaces.
+func priorAttempt(rep Replaced, b int) int {
+	a := b - 1
+	for a > 0 && rep[strconv.Itoa(a)] != "" {
+		a--
+	}
+	return a
 }
 
 // loopPosition gives the first step of the table of loop.md, The task loop, that the records show not done.
@@ -299,10 +407,15 @@ func loopPosition(v loopView) loopStep {
 		step.Pos, step.Ask = posQuestion, q
 		return step
 	}
+	rep, pending := retries(v)
+	if pending != "" { // the last session of the attempt ended crash or no-result: one new attempt at the same base
+		step.Pos, step.Session = posRetry, pending
+		return step
+	}
 	var plans, reviews, devs, verifiers []string
 	for _, s := range v.Sessions {
 		id, a := s[sessionID], s[sessionAttempt]
-		if v.answerSession(s) || (a != strconv.Itoa(attempt) && v.Status[id] == "needs_context") {
+		if rep[a] == id || v.answerSession(s) || (a != strconv.Itoa(attempt) && v.Status[id] == "needs_context") {
 			continue // the answer session of an attempt, and a session that asked in an earlier attempt: its stage runs again in this one
 		}
 		switch s[sessionRole] {
@@ -503,6 +616,8 @@ func (s *Sessions) AdvanceShapeTask(ctx context.Context, in ShapeTaskInput) (Adv
 			stop, wait, err = s.askStage(ctx, in, v, st)
 		case posAttempt:
 			_, err = s.StartAttempt(ctx, in.Task, firstBase(v.Events, in.Base))
+		case posRetry:
+			_, err = s.StartAttempt(ctx, in.Task, st.Base)
 		case posPlan, posReview, posDeveloper:
 			stop, err = s.runStage(ctx, in, v, st)
 		case posPlanFinish, posReviewFinish, posVerifierFinish:

@@ -318,10 +318,10 @@ row:
 | Class | When | Again? |
 | ----- | ---- | ------ |
 | `done` | exit 0 and a valid result file | — |
-| `start` | the program is missing or cannot run | fails the same way again |
-| `crash` | a non-zero exit, or a signal that `layup run` did not send | uncertain |
-| `no-result` | exit 0 with no valid result file | uncertain |
-| `wall`, `output` | stopped at the wall-clock limit or an output cap | uncertain |
+| `start` | the program is missing or cannot run | fails the same way again: never retried |
+| `crash` | a non-zero exit, or a signal that `layup run` did not send | uncertain: an eligible task-session end (of the plan, the plan review, the developer or the verifier) gets one new attempt; a probe, a phase session, the close-out and the answer session get none ([loop.md](loop.md#the-driver-of-a-shape-task)) |
+| `no-result` | exit 0 with no valid result file | uncertain: as `crash` (an eligible task-session end) |
+| `wall`, `output` | stopped at the wall-clock limit or an output cap | uncertain: a stop in `M2e` |
 
 **Decided here** (task `T-bpxg`, condition 3 of the plan review of #162): a
 process may meet two rows, so the class is the first that holds in this order:
@@ -335,8 +335,10 @@ run`'s own and no class: the run reports it as its own. **Decided here** (task
 that is a link or is not a regular file is no valid result file, as for
 `repo/.git` (a session could link to any file of the host's user).
 
-A retry is not `M2b`'s: a new attempt is the task loop's (`M2e`), and its limit
-the stall procedure's (`M3d`).
+A retry is not `M2b`'s: the one new attempt of an eligible end of a task session is
+the task loop's (`M2e`, rule in [loop.md](loop.md#the-driver-of-a-shape-task));
+a probe or a phase session, the close-out and the answer session get none, and every
+further retry, its limit and its diagnosis are the stall procedure's (`M3d`).
 
 ## REQ-003 — Before a push
 

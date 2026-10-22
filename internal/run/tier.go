@@ -63,7 +63,7 @@ func TierOf(p Plan, pos Position) string {
 // next attempt (AnswerAccepted, which also asks the session of the owner role of
 // roles and owners). The open material findings are counted by Position
 // (openMaterial, row 66z) and the open escalations (M3) are added when they exist.
-func OpenQuestions(events [][]string, results map[string][][]string, roles Roles, owners Owners) int {
+func OpenQuestions(events [][]string, results map[string][][]string, roles Roles, owners Owners, rep Replaced) int {
 	last := -1
 	for i, e := range events {
 		if e[1] == "result" && e[6] == "done" && statusOf(results[e[3]]) == "needs_context" {
@@ -82,7 +82,7 @@ func OpenQuestions(events [][]string, results map[string][][]string, roles Roles
 			if r[0] != "answer" {
 				continue
 			}
-			if _, ok := AnswerAccepted(events, results, roles, owners, id+"."+r[1]); ok {
+			if _, ok := AnswerAccepted(events, results, roles, owners, id+"."+r[1], rep); ok {
 				return 0
 			}
 		}
@@ -129,7 +129,22 @@ func (s *Sessions) Position(ctx context.Context, task string) (Position, error) 
 	if err != nil {
 		return "", err
 	}
-	if frozen != nil && OpenQuestions(events, results, sessionRoles(starts), Owners(DefaultOwners())) == 0 {
+	row, err := s.taskRow(ctx, task)
+	if err != nil {
+		return "", err
+	}
+	view := loopView{Task: task, Kind: row.Kind, Events: events, Status: map[string]string{}}
+	for _, r := range starts {
+		if r[sessionTask] == task {
+			view.Sessions = append(view.Sessions, r)
+		}
+	}
+	for _, e := range events {
+		if e[1] == "result" && e[6] == "done" {
+			view.Status[e[3]] = statusOf(results[e[3]])
+		}
+	}
+	if frozen != nil && OpenQuestions(events, results, sessionRoles(starts), Owners(DefaultOwners()), replacedOf(view)) == 0 {
 		open, err := s.openMaterial(ctx, task, events, starts, results)
 		if err != nil {
 			return "", err

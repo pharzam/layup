@@ -640,3 +640,126 @@ func TestTheArchitectureHeadOfATargetWithNoPRDPassesLayupSpec(t *testing.T) {
 		}
 	}
 }
+
+// ctlSessions counts the sessions of the task of the role.
+func (d *drvWorld) ctlSessions(task, role string) int { return len(d.byRole(task, role)) }
+
+// loop.md, An uncertain end gets one new attempt (task T-qjjd, #475): a plan review that crashed gets attempt 2 at the base of attempt 1 and its
+// own new plan review, and the task goes on to the verified head; a second end of the same stage stops, whichever the classes of the two ends.
+func TestACrashedPlanReviewGetsOneNewAttemptAndASecondEndStops(t *testing.T) {
+	t.Parallel()
+	d := newDrvWorld(t, loopPerms)
+	d.ctlWrite("crash-plan-review", "1")
+	spec, _ := d.open()
+	d.mustVerify(spec)
+	if got := d.attempts(spec); len(got) != 2 || got[0] != got[1] {
+		t.Errorf("the bases of the attempts %v; want two attempts at one base", got)
+	}
+	if p, r := d.ctlSessions(spec, stepRole("plan-of-a-task")), d.ctlSessions(spec, stepRole("verification")); p != 1 || r != 3 {
+		t.Errorf("%d plan sessions and %d qa sessions; want one plan, two plan reviews and one verifier", p, r)
+	}
+	for _, c := range []struct{ name, crash, none, end string }{{"crash twice", "1 2", "", "crash"}, {"a crash and a no-result", "1", "2", "no-result"}, {"a no-result and a crash", "2", "1", "crash"}} {
+		w := newDrvWorld(t, loopPerms)
+		w.ctlWrite("crash-plan-review", c.crash)
+		if c.none != "" {
+			w.ctlWrite("noresult-plan-review", c.none)
+		}
+		task, _ := w.open()
+		got, err := w.advance(task, nil)
+		if err != nil || !strings.Contains(got.Stop, "of the plan review ended "+c.end) || got.Verified {
+			t.Errorf("%s: AdvanceShapeTask = %+v, %v; want the stop \"ended %s\"", c.name, got, err, c.end)
+		}
+		if n := len(w.attempts(task)); n != 2 {
+			t.Errorf("%s: %d attempts; want two, then the stop", c.name, n)
+		}
+	}
+}
+
+// A developer or a verifier that crashed is run again in a new attempt from the base of the task; the verifier's retry runs a new developer
+// (its own base was the developer's head), and the new verifier is none of the developers' harnesses.
+func TestACrashedDeveloperOrVerifierIsRunAgainInANewAttemptFromTheTaskBase(t *testing.T) {
+	t.Parallel()
+	for _, step := range []string{"specification", "verification"} {
+		d := newDrvWorld(t, loopPerms)
+		d.ctlWrite("crash-"+step, "1")
+		spec, _ := d.open()
+		d.mustVerify(spec)
+		if got := d.attempts(spec); len(got) != 2 || got[0] != got[1] {
+			t.Errorf("%s: the bases of the attempts %v; want two attempts at one base", step, got)
+		}
+		devs, authors := d.byRole(spec, stepRole("specification")), map[string]bool{}
+		wantDevs := 2
+		if len(devs) != wantDevs {
+			t.Errorf("%s: %d developer sessions; want %d", step, len(devs), wantDevs)
+		}
+		for _, r := range d.sessionsOf(spec) {
+			if r[sessionRole] == stepRole("specification") {
+				authors[r[sessionHarness]] = true
+			}
+		}
+		qa := d.byRole(spec, stepRole("verification"))
+		for _, r := range d.sessionsOf(spec) {
+			if r[sessionID] == qa[len(qa)-1] && authors[r[sessionHarness]] {
+				t.Errorf("%s: the last verifier ran on %s, the harness of a developer", step, r[sessionHarness])
+			}
+		}
+	}
+}
+
+// The findings of the round before a retry reach the developer of the attempt after it: a gate failure and a material verdict, each followed
+// by a developer that crashed, so that the third developer prompt is of the attempt after the replaced one.
+func TestTheFindingsReachTheDeveloperAcrossARetry(t *testing.T) {
+	t.Parallel()
+	for _, c := range []struct{ name, finding string }{{"a gate failure", "gate:fine"}, {"a material verdict", "docs/spec/alpha.md:1"}} {
+		d := newDrvWorld(t, loopPerms)
+		d.ctlWrite("crash-specification", "2")
+		spec, _ := d.open()
+		if c.name == "a gate failure" {
+			d.ctlWrite("gofile", "")
+		} else {
+			d.ctlWrite("verdicts-"+spec, "material\n")
+		}
+		d.mustVerify(spec)
+		p := d.promptsOf(spec)
+		third := slices.IndexFunc(p, func(s string) bool { return strings.Contains(s, c.finding) })
+		hold := 0
+		for _, s := range p {
+			if strings.Contains(s, c.finding) {
+				hold++
+			}
+		}
+		if hold < 2 || third < 0 || strings.Contains(p[2], c.finding) {
+			t.Errorf("%s: %d of %d prompts hold %q; want the prompt of the crashed developer of attempt 2 and of the developer of attempt 3, and not attempt 1's", c.name, hold, len(p), c.finding)
+		}
+	}
+}
+
+// A restart between the end and the new attempt, or between the new attempt and its first session, starts exactly one attempt: the state is rebuilt
+// from the records (restart), as a stopped run leaves them.
+func TestARestartBeforeOrAfterTheRetryAttemptStartsExactlyOne(t *testing.T) {
+	t.Parallel()
+	for _, c := range []struct{ name, fail string }{{"before the attempt", "layup run: attempt 2 of"}, {"after the attempt", ", attempt 2 of "}} {
+		d := newDrvWorld(t, loopPerms)
+		d.ctlWrite("crash-plan-review", "1")
+		spec, _ := d.open()
+		_, err := d.advance(spec, func(s *Sessions) {
+			s.Store = &faultStore{SessionStore: s.Store, fail: func(m string) error {
+				if strings.Contains(m, c.fail) {
+					return errors.New("the commit failed")
+				}
+				return nil
+			}}
+		})
+		if err == nil {
+			t.Fatalf("%s: AdvanceShapeTask did not fail", c.name)
+		}
+		d.restart()
+		d.mustVerify(spec)
+		if got := d.attempts(spec); len(got) != 2 {
+			t.Errorf("%s: %d attempts; want exactly two", c.name, len(got))
+		}
+		if r := d.ctlSessions(spec, stepRole("verification")); r != 3 {
+			t.Errorf("%s: %d qa sessions; want the crashed plan review, the new one and the verifier", c.name, r)
+		}
+	}
+}

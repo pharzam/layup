@@ -1,6 +1,7 @@
 package run
 
 import (
+	"maps"
 	"strconv"
 	"strings"
 	"testing"
@@ -266,5 +267,150 @@ func TestAFailedSpecOrRulesStatusIsACheckToRetryAndAnErrorStopsFirst(t *testing.
 		if stop != c.stop || gates != c.gates || checks != c.checks {
 			t.Errorf("%s: judgeStatuses = %q, gates %v, checks %v; want %q, %v, %v", c.name, stop, gates, checks, c.stop, c.gates, c.checks)
 		}
+	}
+}
+
+// A devRound adds the developer's session of the attempt n, pushed and bound at head; a verdict adds the verifier's session of the attempt n at base.
+func (b *viewBuilder) devRound(n, head string) *viewBuilder {
+	d := "S-d" + n
+	return b.start(d, roleSpec, n, shB).end(d, n, "done", "completed").ev("push", n, d, "", head, "task/T-sp01/"+n).ev("bound", n, d, "", head, "task/T-sp01/"+n).ev("handoff", n, d, "", "", "valid")
+}
+
+func (b *viewBuilder) verdict(n, base, verdict string, findings int) *viewBuilder {
+	v := "S-v" + n
+	return b.start(v, roleQA, n, base).end(v, n, "done", "completed").ev("handoff", n, v, "", "", "valid comment 20-1").copyOf(v, verdict, findings)
+}
+
+// loop.md, An uncertain end gets one new attempt (task T-qjjd, #475): the last session of the latest attempt, of one of the four
+// stages, ended crash or no-result and was not refused: the position is posRetry at the base of the attempt; with the new attempt
+// recorded, the stage runs again in it (the verifier's retry runs a developer, the verifier's own base being the developer's head).
+func TestAnEligibleEndOfAStageIsTheRetryPosition(t *testing.T) {
+	for _, st := range []struct {
+		name string
+		n    int
+		id   string
+		next position
+	}{{"the plan", 2, "S-p1", posPlan}, {"the plan review", 5, "S-r1", posReview}, {"the developer", 8, "S-d1", posDeveloper}, {"the verifier", 13, "S-v1", posDeveloper}} {
+		for _, class := range []string{"crash", "no-result"} {
+			b := upTo("specification", st.n).end(st.id, "1", class, "")
+			if got := b.at(); got.Pos != posRetry || got.Attempt != 1 || got.Base != shB || got.Session != st.id {
+				t.Errorf("%s ended %s: %+v; want the retry at attempt 1, base %s, of %s", st.name, class, got, shB[:7], st.id)
+			}
+			if got := b.ev("attempt", "2", "", shB, "", "").at(); got.Pos != st.next || got.Attempt != 2 {
+				t.Errorf("%s ended %s, attempt 2 recorded: %+v; want position %d in attempt 2", st.name, class, got, st.next)
+			}
+		}
+	}
+}
+
+// The replacement is told from the eligible end that caused it: each negative differs from the retry in one fact only.
+func TestAnAttemptIsReplacedOnlyByTheRetryOfItsEligibleEnd(t *testing.T) {
+	crashed := func() *viewBuilder { return upTo("specification", 5) }
+	again := func(b *viewBuilder) *viewBuilder { return b.ev("attempt", "2", "", shB, "", "") }
+	closeOut := func() *viewBuilder {
+		return upTo("specification", 15).start("S-c1", stepRole("close-out"), "1", shH).end("S-c1", "1", "crash", "")
+	}
+	asked := func(role string) *viewBuilder {
+		return upTo("specification", 2).end("S-p1", "1", "done", "needs_context").start("S-a1", role, "1", shB).end("S-a1", "1", "crash", "")
+	}
+	for _, c := range []struct {
+		name string
+		b    *viewBuilder
+		want Replaced
+	}{
+		{"a crash and its retry", again(crashed().end("S-r1", "1", "crash", "")), Replaced{"1": "S-r1"}},
+		{"a no-result and its retry", again(crashed().end("S-r1", "1", "no-result", "")), Replaced{"1": "S-r1"}},
+		{"a refused session", again(crashed().ev("refused", "1", "S-r1", "", "", "artifact").end("S-r1", "1", "crash", "")), nil},
+		{"a closed attempt", again(crashed().end("S-r1", "1", "crash", "").ev("closed", "1", "", "", "", "")), nil},
+		{"a rebased attempt", again(crashed().end("S-r1", "1", "crash", "").ev("rebased", "1", "", "", "", "")), nil},
+		{"a lost push", again(crashed().end("S-r1", "1", "crash", "").ev("refused", "1", "S-d0", "", "", "push-lost")), nil},
+		{"a successor at another base", crashed().end("S-r1", "1", "crash", "").ev("attempt", "2", "", shG, "", ""), nil},
+		{"a successor before the end", again(crashed()).end("S-r1", "1", "crash", ""), nil},
+		{"an end that is not the last session", again(crashed().end("S-r1", "1", "crash", "").start("S-r2", roleQA, "1", shB)), nil},
+		{"the close-out session", again(closeOut()), nil},
+		{"a crashed answer session of the plan role", again(asked(rolePlan)), nil},
+		{"a crashed answer session of the developer role", again(asked(roleSpec)), nil},
+		{"a wall", again(crashed().end("S-r1", "1", "wall", "")), nil},
+		{"an output", again(crashed().end("S-r1", "1", "output", "")), nil},
+		{"a start", again(crashed().end("S-r1", "1", "start", "")), nil},
+		{"a gate failure", again(upTo("specification", 12)), nil},
+		{"a material round", again(upTo("specification", 14).ev("handoff", "1", "S-v1", "", "", "valid comment 13-1").copyOf("S-v1", "material", 1)), nil},
+		{"the handback of an answer", again(upTo("specification", 2).end("S-p1", "1", "done", "needs_context")), nil},
+	} {
+		if got := replacedOf(c.b.v); !maps.Equal(got, c.want) {
+			t.Errorf("%s: replaced %v; want %v", c.name, got, c.want)
+		}
+	}
+}
+
+// A guard (green before and after): the ends that are not eligible stay stops, and a refusal is never skipped.
+func TestEndsThatAreNotEligibleStayStops(t *testing.T) {
+	for _, c := range []struct {
+		name string
+		b    *viewBuilder
+		msg  string
+	}{
+		{"a crash with a refusal", upTo("specification", 5).end("S-r1", "1", "crash", "").ev("refused", "1", "S-r1", "", "", "closed-attempt"), "was refused (closed-attempt)"},
+		{"a done with a refusal", upTo("specification", 5).end("S-r1", "1", "done", "completed").ev("refused", "1", "S-r1", "", "", "artifact"), "was refused (artifact)"},
+		{"a wall", upTo("specification", 5).end("S-r1", "1", "wall", ""), "S-r1 of the plan review ended wall"},
+		{"an output", upTo("specification", 5).end("S-r1", "1", "output", ""), "S-r1 of the plan review ended output"},
+		{"a start", upTo("specification", 5).end("S-r1", "1", "start", ""), "S-r1 of the plan review ended start"},
+	} {
+		if got := c.b.at(); got.Pos != posStop || !strings.Contains(got.Msg, c.msg) {
+			t.Errorf("%s: %d %q; want a stop holding %q", c.name, got.Pos, got.Msg, c.msg)
+		}
+	}
+}
+
+// The bound is once per stage, whatever the classes of the two ends; the end that spends a stage's retry is the eligible one that
+// caused the replacement, so a verifier's crash spends the verifier's retry and not the developer's.
+func TestTheBoundIsOncePerStageAcrossClasses(t *testing.T) {
+	for _, c := range [][2]string{{"crash", "no-result"}, {"no-result", "crash"}, {"crash", "crash"}} {
+		b := upTo("specification", 5).end("S-r1", "1", c[0], "").ev("attempt", "2", "", shB, "", "").start("S-r2", roleQA, "2", shB).end("S-r2", "2", c[1], "")
+		if got := b.at(); got.Pos != posStop || got.Msg != "T-sp01: the session S-r2 of the plan review ended "+c[1] {
+			t.Errorf("a plan review that ended %s, then %s: %d %q; want the stop \"ended %s\"", c[0], c[1], got.Pos, got.Msg, c[1])
+		}
+	}
+	// Another stage has its own retry.
+	b := upTo("specification", 5).end("S-r1", "1", "crash", "").ev("attempt", "2", "", shB, "", "").start("S-r2", roleQA, "2", shB).end("S-r2", "2", "done", "completed").
+		ev("handoff", "2", "S-r2", "", "", "valid comment 15-1").start("S-d2", roleSpec, "2", shB).end("S-d2", "2", "crash", "")
+	if got := b.at(); got.Pos != posRetry || got.Attempt != 2 {
+		t.Errorf("a developer crash after a retried plan review: %+v; want the retry in attempt 2", got)
+	}
+	// The reverse stage: attempt 1 holds a developer that ended done, which spends nothing.
+	v := upTo("specification", 13).end("S-v1", "1", "crash", "").ev("attempt", "2", "", shB, "", "").start("S-d2", roleSpec, "2", shB).end("S-d2", "2", "crash", "")
+	if got := v.at(); got.Pos != posRetry || got.Attempt != 2 || got.Base != shB {
+		t.Fatalf("a verifier crash, its retry, then the developer's first crash: %+v; want the retry in attempt 2", got)
+	}
+	if got := v.ev("attempt", "3", "", shB, "", "").start("S-d3", roleSpec, "3", shB).end("S-d3", "3", "crash", "").at(); got.Pos != posStop || !strings.Contains(got.Msg, "S-d3 of specification ended crash") {
+		t.Errorf("the developer's second crash: %d %q; want the stop", got.Pos, got.Msg)
+	}
+}
+
+// A retry counts no review round: a crash does not spend the cap, and a material round after one is still a round.
+func TestTheReviewCycleCapCountsNoRetry(t *testing.T) {
+	v1 := func() *viewBuilder {
+		return upTo("specification", 14).ev("handoff", "1", "S-v1", "", "", "valid comment 13-1").copyOf("S-v1", "material", 1)
+	}
+	b := v1().ev("attempt", "2", "", shB, "", "").start("S-d2", roleSpec, "2", shB).end("S-d2", "2", "crash", "").ev("attempt", "3", "", shB, "", "").devRound("3", shG).verdict("3", shG, "material", 1)
+	if got := b.at(); got.Pos != posWait || !strings.Contains(got.Msg, "the review-cycle cap 1 is reached") {
+		t.Errorf("two material rounds around a developer retry: %d %q; want the wait at the cap", got.Pos, got.Msg)
+	}
+	c := upTo("specification", 13).end("S-v1", "1", "crash", "").ev("attempt", "2", "", shB, "", "").devRound("2", shG).verdict("2", shG, "material", 1)
+	if got := c.at(); got.Pos != posNextAttempt {
+		t.Errorf("one material round after a verifier retry: %d %q; want the next attempt", got.Pos, got.Msg)
+	}
+}
+
+// Two consecutive replacements of different stages: the findings of the round before them reach the developer of the attempt after them.
+func TestTheFindingsPassOverTwoReplacedAttempts(t *testing.T) {
+	b := upTo("specification", 14).ev("handoff", "1", "S-v1", "", "", "valid comment 13-1").copyOf("S-v1", "material", 1).
+		ev("attempt", "2", "", shB, "", "").start("S-d2", roleSpec, "2", shB).end("S-d2", "2", "crash", "").
+		ev("attempt", "3", "", shB, "", "").devRound("3", shG).start("S-v3", roleQA, "3", shG).end("S-v3", "3", "crash", "").ev("attempt", "4", "", shB, "", "")
+	if found, head := findingsOf(b.v, 4); len(found) != 1 || head != "" {
+		t.Errorf("findingsOf for attempt 4 = %+v, %q; want the finding of S-v1 and no gate head", found, head)
+	}
+	if got := priorAttempt(replacedOf(b.v), 4); got != 1 {
+		t.Errorf("priorAttempt(4) = %d; want 1, passing over the attempts 3 and 2", got)
 	}
 }

@@ -88,14 +88,14 @@ func answerOwner(events [][]string, results map[string][][]string, asking string
 // and the typed result of each session (by its ID). The answer is a row of the
 // kind answer of a session of the owner role that ended done; it answers the
 // attempt that last ended needs_context before that session started; it is
-// accepted by the next attempt (the number after it, started after the answer
+// accepted by the next attempt (the first number after it that no retry replaced, started after the answer
 // and neither closed nor rebased) when one of its sessions ended done with the
 // status completed, its status row cites the ID, and none of its question rows
 // does. The session of the answer has to be of the owner role of the questions
 // it answers, by roles and owners (loop.md, A question during the work, the rule
 // of T-b3s3). The accepting actor is that session. Nothing is recorded: M3c adds
 // the columns (records.md).
-func AnswerAccepted(events [][]string, results map[string][][]string, roles Roles, owners Owners, answerID string) (string, bool) {
+func AnswerAccepted(events [][]string, results map[string][][]string, roles Roles, owners Owners, answerID string, rep Replaced) (string, bool) {
 	m := answerForm.FindStringSubmatch(answerID)
 	if m == nil {
 		return "", false
@@ -121,7 +121,11 @@ func AnswerAccepted(events [][]string, results map[string][][]string, roles Role
 	if want, ok := answerOwner(events, results, strconv.Itoa(asking), owners); !ok || roles[owner] != want {
 		return "", false
 	}
-	next := strconv.Itoa(asking + 1)
+	n := asking + 1
+	for rep[strconv.Itoa(n)] != "" { // an attempt that a retry replaced is passed over (loop.md, The driver of a Shape task, "An uncertain end gets one new attempt")
+		n++
+	}
+	next := strconv.Itoa(n)
 	began := slices.IndexFunc(events[end+1:], func(e []string) bool { return e[1] == "attempt" && e[2] == next })
 	if began < 0 {
 		return "", false

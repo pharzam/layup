@@ -508,7 +508,7 @@ func (s *Sessions) PromptFile(ctx context.Context, in PromptIn) (*PromptContext,
 		return nil, err
 	}
 	role := map[string]string{}
-	view := loopView{Task: in.Task, Events: events, Status: map[string]string{}, Results: map[string][][]string{}}
+	view := loopView{Task: in.Task, Kind: src.Kind, Events: events, Status: map[string]string{}, Results: map[string][][]string{}}
 	for _, r := range sessions {
 		role[r[sessionID]] = r[sessionRole]
 		if r[sessionTask] == in.Task {
@@ -566,8 +566,8 @@ func (s *Sessions) PromptFile(ctx context.Context, in PromptIn) (*PromptContext,
 			return nil, fmt.Errorf("the task %s has no question to answer in its attempt %d", in.Task, latest)
 		}
 	}
-	if latest > 1 {
-		src.AnswerIDs = view.answersOf(latest - 1)
+	if prior := priorAttempt(replacedOf(view), latest); prior > 0 { // the attempt before, passing over an attempt that a retry replaced
+		src.AnswerIDs = view.answersOf(prior)
 	}
 	extras, err := s.taskInputs(ctx, in, src.Kind)
 	if err != nil {
