@@ -31,3 +31,13 @@ Integration: the three tests below by name with the tag `integration`, exit 1, f
 | `TestAPlanReviewRefusedForAnArtifactRowGetsOneNewAttempt` | `AdvanceShapeTask = {... Stop:T-q9si: the session S-0a93a04d was refused (artifact)}, <nil>; want the verified head` |
 | `TestAVerifierRefusedForAnArtifactIsRunAgainInANewAttemptFromTheTaskBase` | the same stop, `was refused (artifact)`; want the verified head |
 | `TestARestartBeforeOrAfterTheArtifactRetryAttemptStartsExactlyOne` | `before the attempt: AdvanceShapeTask did not fail` (no attempt 2 is ever committed) |
+
+## 3. Green
+
+The change (`eligibleEnd` with the class `artifact`, `retries` keyed by stage and class, the sentence in the constant, `loop.md` and the 11 golden files) was committed with the tests, because the hook refuses a red commit (`f53ef58b`). Times are from `date -u` after each run.
+
+- Unit, `go test -count=1 ./...`: every package ok, 2026-10-22T10:14:04Z (the hook run at the commit).
+- The three new integration tests and the neighbours of the retry and the prompt file: ok, 10:14:19Z.
+- The full integration level, `go test -count=1 -tags=integration -timeout 30m ./...` (output in `/home/layup/.cache/layup-session/T-0sj8-full-integration.txt`): one failure, finished 10:18:53Z, exit 1: `TestTheRulesResultOfAPushedHeadStaysThatOfItsBoundSessionWhenTheRecordsMoveOn` (`statuses_integration_test.go:42`), the step `records` of Start: `git push` to a `file://` remote, `fatal: Could not read from remote repository`. The test touches none of the changed code; run alone three times (`-count=3`) it passed. The `internal/run` package was then run again in full (`.../T-0sj8-full-integration-rerun.txt`): ok in 256.9 s, exit 0. All other packages of the first run were ok.
+- E2E, `go test -count=1 -tags=e2e -timeout 10m ./...`: every package ok, `cmd/layup` 85.6 s, 10:24:57Z.
+- `go build ./...`, `go vet ./...` (no tag, `integration`, `e2e`) and `gofmt -l .`: clean.
