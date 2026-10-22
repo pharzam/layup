@@ -173,17 +173,10 @@ func Check(names []string, reg []Entry, guardrails Change) (reason, path string)
 	return "", ""
 }
 
-// PayloadPaths gives the paths that a refused payload changes, in the order of
-// its headers (docs/spec/loop.md, The findings of a refused rule path; task
-// T-dtw6, #491). The payload is the output of git diff --binary --no-renames,
-// so both sides of a header name one path. A line that starts at the first
-// column with "diff --git" is a candidate header and must be well formed: two
-// sides, a/P and b/P, each raw or quoted by git (C escapes, octal included),
-// that decode to one non-empty P; the first malformed candidate is an error.
-// Every other line (the metadata, the hunk lines, which all start with a space,
-// + or -, the base85 body of a binary patch and the blank lines) is ignored,
-// and a payload with no header is an error. The caller adds the name of the
-// payload to an error.
+// PayloadPaths gives the paths that a refused payload (git diff --binary --no-renames) changes, in the order of its headers (docs/spec/loop.md, The findings
+// of a refused rule path; task T-dtw6, #491). A line that starts at the first column with "diff --git" is a candidate header and must be well formed: the
+// sides a/P and b/P, each raw or quoted by git, that both decode to one non-empty P; the first malformed candidate is an error. Every other line (metadata,
+// hunk lines, the base85 body of a binary patch, blank lines) is ignored, and a payload with no header is an error. The caller adds the payload's name.
 func PayloadPaths(diff []byte) ([]string, error) {
 	var paths []string
 	for _, line := range strings.Split(string(diff), "\n") {
@@ -202,13 +195,13 @@ func PayloadPaths(diff []byte) ([]string, error) {
 	return paths, nil
 }
 
-// headerPath reads the two sides of a header after "diff --git": a space, then a/P and b/P separated by one space. A path may hold spaces, so each
-// space is tried as the separator and the first split whose two decoded sides are a/P and b/P of one P wins.
+// headerPath reads the sides of a header after "diff --git". A path may hold spaces, so each space is tried as the separator and the first split whose two
+// decoded sides are a/P and b/P of one P wins.
 func headerPath(rest string) (string, error) {
-	if !strings.HasPrefix(rest, " ") {
+	rest, ok := strings.CutPrefix(rest, " ")
+	if !ok {
 		return "", errors.New("no space after diff --git")
 	}
-	rest = rest[1:]
 	why := errors.New("not two sides")
 	for i := 0; i < len(rest); i++ {
 		if rest[i] != ' ' {
@@ -230,7 +223,7 @@ func headerPath(rest string) (string, error) {
 	return "", why
 }
 
-// side decodes one side of a header: raw, or quoted as git quotes a path, then the prefix, and the path left must be non-empty.
+// side decodes one side of a header: raw or quoted as git quotes a path, then the prefix; the path left must be non-empty.
 func side(s, prefix string) (string, error) {
 	if strings.HasPrefix(s, `"`) {
 		u, err := strconv.Unquote(s)

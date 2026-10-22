@@ -292,21 +292,19 @@ const (
 	classUncertain, classArtifact, classRulePath = "uncertain", "artifact", "rule-path"
 )
 
-// rulePathFindings gives one finding for each path of a refused payload that the register matches (rules.Match, so the unconditional .sh clause counts),
-// in the order of the payload; an ordinary path gives none. The register is the one given, the current one (loop.md, The findings of a refused rule path;
-// task T-dtw6, #491). docs/guardrails.md is named with the exception of its own register row, whether or not the refused change passed it.
+// rulePathFindings gives one finding for each path of a refused payload that the register given (the current one) matches, in the order of the payload;
+// docs/guardrails.md is named with the exception of its own register row, whether or not the refused change passed it (loop.md, The findings of a refused rule path).
 func rulePathFindings(paths []string, reg []rules.Entry) []Finding {
 	var out []Finding
 	for _, p := range paths {
-		e, ok := rules.Match(reg, p)
-		if !ok {
-			continue
+		if e, ok := rules.Match(reg, p); ok {
+			then := "change nothing of it"
+			if e.Exception != "" {
+				then = "only " + e.Exception + " may change it"
+			}
+			text := "a rule path that the last attempt changed, so its session was refused and nothing of it was pushed: " + then
+			out = append(out, Finding{Rule: classRulePath, File: p, Text: text})
 		}
-		text := "a rule path that the last attempt changed, so its session was refused and nothing of it was pushed: change nothing of it"
-		if e.Exception != "" {
-			text = "a rule path that the last attempt changed, so its session was refused and nothing of it was pushed: only " + e.Exception + " may change it"
-		}
-		out = append(out, Finding{Rule: classRulePath, File: p, Text: text})
 	}
 	return out
 }
@@ -314,12 +312,11 @@ func rulePathFindings(paths []string, reg []rules.Entry) []Finding {
 // refusalReason is the reason of a refusal detail: the word before the first space.
 func refusalReason(detail string) string { r, _, _ := strings.Cut(detail, " "); return r }
 
-// rulePathDetail is the detail that the push hook writes for a rule-path refusal: the reason and the SHA-256 of the payload (session.md, A workflow or
-// rule-path change; push.go refuse).
+// rulePathDetail is the detail of a rule-path refusal: the reason and the SHA-256 of the payload (push.go, refuse).
 var rulePathDetail = regexp.MustCompile(`^rule-path ([0-9a-f]{64})$`)
 
-// rulePathPaths reads, at the records boundary, the paths that the refused payload of a session changed: the one refusal of the session must have the
-// documented detail, the payload payloads/<sha> must exist and its diff must be readable. Any failure is the run's own error, and names the payload.
+// rulePathPaths reads, at the records boundary, the paths that the payload of the refusal of a session changed: the detail must be rule-path and the 64
+// hexadecimal digits, payloads/<sha> must exist and its diff must be readable. Any failure is the run's own error and names the payload.
 func rulePathPaths(v loopView, id string, read func(path string) ([]byte, error)) ([]string, error) {
 	detail := ""
 	for _, e := range v.Events {
@@ -333,13 +330,13 @@ func rulePathPaths(v loopView, id string, read func(path string) ([]byte, error)
 	}
 	name := "payloads/" + m[1]
 	data, err := read(name)
-	if err != nil {
-		return nil, fmt.Errorf("%s: %s: %w", v.Task, name, err)
+	if err == nil && data == nil {
+		err = errors.New("the payload is not in the records")
 	}
-	if data == nil {
-		return nil, fmt.Errorf("%s: %s: the payload of the refusal of %s is not in the records", v.Task, name, id)
+	var paths []string
+	if err == nil {
+		paths, err = rules.PayloadPaths(data)
 	}
-	paths, err := rules.PayloadPaths(data)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %s: %w", v.Task, name, err)
 	}
@@ -347,7 +344,7 @@ func rulePathPaths(v loopView, id string, read func(path string) ([]byte, error)
 }
 
 // rulePathReplaced gives the sessions whose rule-path refusal caused the replacement of an attempt in the run of replaced attempts just before attempt,
-// nearest first. A replaced attempt of another class is passed over; an attempt that no retry replaced ends the run.
+// nearest first: an attempt replaced for another class is passed over, an attempt that no retry replaced ends the run.
 func rulePathReplaced(v loopView, attempt int) []string {
 	rep, out := replacedOf(v), []string(nil)
 	for a := attempt - 1; a > 0 && rep[strconv.Itoa(a)] != ""; a-- {
@@ -358,8 +355,7 @@ func rulePathReplaced(v loopView, attempt int) []string {
 	return out
 }
 
-// rulePathGuidance gives the findings that the developer of attempt is told about the rule paths that the refused sessions before it changed, read from
-// their payloads and matched against the register given (the current one), each path once (loop.md, The findings of a refused rule path).
+// rulePathGuidance gives the findings that the developer of attempt is told: the paths of those payloads that the register given matches, each once.
 func rulePathGuidance(v loopView, attempt int, reg []rules.Entry, read func(path string) ([]byte, error)) ([]Finding, error) {
 	var out []Finding
 	for _, id := range rulePathReplaced(v, attempt) {
@@ -376,19 +372,17 @@ func rulePathGuidance(v loopView, attempt int, reg []rules.Entry, read func(path
 	return out, nil
 }
 
-// refusedPayloadReadable is the check at the records boundary before a retry attempt of the class rule-path is recorded: the payload must be readable, so
-// that a run that cannot tell the developer of the next attempt which paths to leave alone stops before another session starts (the Operator, 6346348137).
+// refusedPayloadReadable is the check before a retry attempt of the class rule-path is recorded: a payload that cannot be read stops the run before another
+// session starts (the Operator, 6346348137).
 func (s *Sessions) refusedPayloadReadable(ctx context.Context, v loopView, st loopStep) error {
-	id, _, class := v.eligibleEnd(strconv.Itoa(st.Attempt))
-	if class != classRulePath {
-		return nil
+	if id, _, class := v.eligibleEnd(strconv.Itoa(st.Attempt)); class == classRulePath {
+		_, err := rulePathPaths(v, id, func(p string) ([]byte, error) { return s.Store.ReadFile(ctx, p) })
+		return err
 	}
-	_, err := rulePathPaths(v, id, func(p string) ([]byte, error) { return s.Store.ReadFile(ctx, p) })
-	return err
+	return nil
 }
 
-// rulePathFindingsFor gives the guidance of the developer of the attempt with the current register of the records; it reads nothing when no refusal of the
-// class is behind the attempt.
+// rulePathFindingsFor gives the guidance of the developer of the attempt with the current register; it reads nothing when no refusal of the class is behind it.
 func (s *Sessions) rulePathFindingsFor(ctx context.Context, v loopView, attempt int) ([]Finding, error) {
 	if len(rulePathReplaced(v, attempt)) == 0 {
 		return nil, nil

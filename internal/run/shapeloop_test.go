@@ -1098,9 +1098,6 @@ func TestTheRulePathGuidanceSurvivesConsecutiveReplacementsOfOtherClasses(t *tes
 	}
 }
 
-// unreadable is a read that fails.
-func unreadable(p string) ([]byte, error) { return nil, errors.New("the read failed") }
-
 // Defect test (plan review condition 2): the records boundary requires the documented detail, an existing payload and a readable diff; the error
 // names payloads/<sha>.
 func TestTheRefusedPayloadIsReadAtTheRecordsBoundaryOrTheRunErrs(t *testing.T) {
@@ -1111,28 +1108,26 @@ func TestTheRefusedPayloadIsReadAtTheRecordsBoundaryOrTheRunErrs(t *testing.T) {
 		name, detail string
 		files        map[string][]byte
 		want         string
+		fail         bool
 	}{
-		{"a missing payload", "rule-path " + sha, nil, "payloads/" + sha},
-		{"an empty payload", "rule-path " + sha, map[string][]byte{"payloads/" + sha: {}}, "payloads/" + sha},
-		{"a payload with no header", "rule-path " + sha, map[string][]byte{"payloads/" + sha: []byte("index 1..2\n")}, "payloads/" + sha},
-		{"a detail with no sha", "rule-path", nil, "rule-path"},
-		{"a short sha", "rule-path " + sha[:63], nil, "rule-path " + sha[:63]},
-		{"an upper-case sha", "rule-path " + strings.ToUpper(sha), nil, "rule-path"},
-		{"a detail with a second word", "rule-path " + sha + " docs/x.md", nil, "rule-path"},
+		{"a missing payload", "rule-path " + sha, nil, "payloads/" + sha, false},
+		{"an empty payload", "rule-path " + sha, map[string][]byte{"payloads/" + sha: {}}, "payloads/" + sha, false},
+		{"a payload with no header", "rule-path " + sha, map[string][]byte{"payloads/" + sha: []byte("index 1..2\n")}, "payloads/" + sha, false},
+		{"a payload that cannot be read", "rule-path " + sha, nil, "payloads/" + sha, true},
+		{"a detail with no sha", "rule-path", nil, "rule-path", false},
+		{"a short sha", "rule-path " + sha[:63], nil, "rule-path " + sha[:63], false},
+		{"an upper-case sha", "rule-path " + strings.ToUpper(sha), nil, "rule-path", false},
+		{"a detail with a second word", "rule-path " + sha + " docs/x.md", nil, "rule-path", false},
 	} {
 		b := upTo("specification", 8)
 		artifactEnd(b, "S-d1", "1", "completed", c.detail)
 		b.ev("attempt", "2", "", shB, "", "")
-		if got, err := rulePathGuidance(b.v, 2, reg, readFrom(c.files)); err == nil || !strings.Contains(err.Error(), c.want) {
+		read := readFrom(c.files)
+		if c.fail {
+			read = func(string) ([]byte, error) { return nil, errors.New("the read failed") }
+		}
+		if got, err := rulePathGuidance(b.v, 2, reg, read); err == nil || !strings.Contains(err.Error(), c.want) {
 			t.Errorf("%s: %+v, %v; want an error that holds %q", c.name, got, err, c.want)
 		}
-	}
-}
-
-func TestAnUnreadablePayloadIsTheRunsOwnError(t *testing.T) {
-	sha := shaOf(demoPayload())
-	b := artifactEnd(upTo("specification", 8), "S-d1", "1", "completed", "rule-path "+sha).ev("attempt", "2", "", shB, "", "")
-	if got, err := rulePathGuidance(b.v, 2, mustRegister(t, demoRegister), unreadable); err == nil || !strings.Contains(err.Error(), "payloads/"+sha) {
-		t.Errorf("an unreadable payload: %+v, %v; want an error that holds payloads/%s", got, err, sha)
 	}
 }

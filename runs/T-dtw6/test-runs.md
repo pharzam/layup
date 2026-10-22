@@ -18,8 +18,7 @@ Defect tests (fail at db71ef5), `go test -count=1 ./internal/rules ./internal/ru
 | `TestARulePathRefusalHasItsOwnRetryPerStage` | `[0 1 2]: Pos 13 ... was refused (rule-path`; want the retry of the third end | the bound of the class (slice 4) |
 | `TestTheDemoRecordsOfTAm8bGiveAttempt2AndTheRenderedPromptNamesThePaths` | `Pos:13 ... S-06aeffc9 was refused (rule-path a506…)`; want the retry at `d03c865` | the demo's recovery (slice 4) |
 | `TestTheRulePathGuidanceSurvivesConsecutiveReplacementsOfOtherClasses` | `[], <nil>; want the two findings` | the guidance across replacements (slice 4) |
-| `TestTheRefusedPayloadIsReadAtTheRecordsBoundaryOrTheRunErrs` | 7 cases: `[], <nil>; want an error` | the records boundary (slice 4) |
-| `TestAnUnreadablePayloadIsTheRunsOwnError` | `[], <nil>; want an error that holds payloads/<sha>` | the records boundary (slice 4) |
+| `TestTheRefusedPayloadIsReadAtTheRecordsBoundaryOrTheRunErrs` | 8 cases (one is a read that fails): `[], <nil>; want an error` | the records boundary (slice 4) |
 
 Integration (`-tags=integration`, the tests below by name), exit 1, finished 2026-10-22T17:12:20Z:
 

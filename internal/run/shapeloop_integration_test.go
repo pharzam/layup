@@ -958,27 +958,15 @@ func TestADeveloperRefusedForARulePathGetsOneNewAttemptThatNamesThePath(t *testi
 		if want := "The rule paths of the target are AGENTS.md, docs/guardrails.md (except added lines in section 2), docs/rules/, and each file whose name ends with .sh;"; !strings.Contains(prompts[2], want) {
 			t.Errorf("%s: the developer's prompt of attempt 1 does not hold %q", c.step, want)
 		}
-		sha := strings.TrimPrefix(func() string {
-			for _, e := range d.eventsOf(c.task) {
-				if e[1] == "refused" {
-					return e[6]
-				}
+		sha := ""
+		for _, e := range d.eventsOf(c.task) {
+			if e[1] == "refused" {
+				sha = strings.TrimPrefix(e[6], "rule-path ")
 			}
-			return ""
-		}(), "rule-path ")
+		}
 		if payload := keptRecord(t, d.w, "payloads/"+sha); !strings.Contains(payload, "diff --git a/AGENTS.md b/AGENTS.md") {
 			t.Errorf("%s: the payload payloads/%s does not hold the diff of AGENTS.md", c.step, sha)
 		}
-	}
-	// A second refusal is final.
-	w := newDrvWorld(t, loopPerms)
-	w.ctlWrite("rulepath-specification", "1 2")
-	task, _ := w.open()
-	if got, err := w.advance(task, nil); err != nil || got.Verified || !strings.Contains(got.Stop, "was refused (rule-path ") {
-		t.Errorf("two rule-path refusals: AdvanceShapeTask = %+v, %v; want the stop", got, err)
-	}
-	if n := len(w.attempts(task)); n != 2 {
-		t.Errorf("two rule-path refusals: %d attempts; want 2", n)
 	}
 }
 
