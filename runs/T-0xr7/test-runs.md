@@ -6,7 +6,7 @@ The hook refuses a red commit (guardrails.md section 2), so the tests below are 
 
 ### The three rendered prompts (unit)
 
-Command: `go test -count=1 -run TestEachStepOfAnArchitectureTaskStatesThatTheSurvivorsAreTheBets ./internal/run/`
+Command: `go test -count=1 -run 'TestEachStepOfAnArchitectureTaskStatesThatTheSurvivorsAreTheBets' ./internal/run/`
 Start 2026-10-22T18:41:00Z, end 2026-10-22T18:41:00Z.
 
 ```
@@ -42,7 +42,7 @@ FAIL
 
 ### The copied command at the cap, the wait message, and the homes (integration)
 
-Command: `go test -count=1 -tags=integration -run TestAGrantOnTheControlIssue|TestAMaterialRoundStartsOneAttemptAndTheSecondWaitsAtTheCap|TestTheInstructionContractOfTheSurvivors|TestTheCycleCommandHasItsHome ./internal/run/`
+Command: `go test -count=1 -tags=integration -run 'TestAGrantOnTheControlIssue|TestAMaterialRoundStartsOneAttemptAndTheSecondWaitsAtTheCap|TestTheInstructionContractOfTheSurvivors|TestTheCycleCommandHasItsHome' ./internal/run/`
 Start 2026-10-22T18:41:00Z, end 2026-10-22T18:41:03Z.
 
 ```
@@ -64,7 +64,7 @@ FAIL
 
 ### The binary: the Operator's command after the wait (e2e)
 
-Command: `go test -count=1 -tags=e2e -run TestTheSpecificationTaskEndToEnd ./cmd/layup/`
+Command: `go test -count=1 -tags=e2e -run 'TestTheSpecificationTaskEndToEnd' ./cmd/layup/`
 Start 2026-10-22T18:41:03Z, end 2026-10-22T18:41:22Z.
 
 ```
