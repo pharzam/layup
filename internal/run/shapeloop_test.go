@@ -811,3 +811,40 @@ func TestReviewerBareRejectNamesActualPair(t *testing.T) {
 		t.Errorf("an invalid approve: %d %q; want the developer pair", got.Pos, got.Msg)
 	}
 }
+
+// End 3 of T-t94t (F4, F5 of round 2). F4: a readable reject without a reason is no approval even when a customized table admits its handoff to the
+// planner as valid. F5: a legacy bare reject keeps the pair it was recorded on.
+func TestReviewerCustomizedRejectRowCannotApproveBareReject(t *testing.T) {
+	with := func(verdict, detail string, reasons ...string) loopStep {
+		b := upTo("specification", 6).ev("handoff", "1", "S-r1", "", "", detail)
+		b.v.Verdicts = map[string]string{"S-r1": verdict}
+		if len(reasons) > 0 {
+			b.reject("S-r1", reasons...)
+		}
+		return b.at()
+	}
+	if got := with("reject", "valid comment 12-1"); got.Pos != posStop || !strings.Contains(got.Msg, "the plan review S-r1 rejected the plan and gave no reason") {
+		t.Errorf("a bare reject whose handoff is valid: %d %q; want the stop, never the developer", got.Pos, got.Msg)
+	}
+	for _, c := range []struct {
+		name, verdict, detail string
+		reasons               []string
+		want                  position
+	}{
+		{"an approve", "approve", "valid comment 12-1", nil, posDeveloper},
+		{"a reject with a reason", "reject", "valid comment 12-1", []string{"no steps"}, posReplan},
+		{"an unparseable copy", "", "valid comment 12-1", nil, posDeveloper},
+	} {
+		if got := with(c.verdict, c.detail, c.reasons...); got.Pos != c.want {
+			t.Errorf("the control %s: %d %q; want position %d", c.name, got.Pos, got.Msg, c.want)
+		}
+	}
+}
+
+func TestReviewerLegacyBareRejectKeepsRecordedPair(t *testing.T) {
+	b := upTo("specification", 6).ev("handoff", "1", "S-r1", "", "", "invalid verdict-field comment 12-1")
+	b.v.Verdicts = map[string]string{"S-r1": "reject"}
+	if got := b.at(); got.Pos != posStop || !strings.Contains(got.Msg, "plan review → developer is invalid verdict-field") {
+		t.Errorf("a legacy bare reject: %d %q; want the stop on plan review → developer", got.Pos, got.Msg)
+	}
+}

@@ -539,8 +539,11 @@ func loopPosition(v loopView) loopStep {
 		run, end   position
 	}{{plans, "the plan", "task plan → plan review", posPlan, posPlanFinish}, {reviews, "the plan review", "plan review → developer", posReview, posReviewFinish}} {
 		pair := c.pair
-		if c.end == posReviewFinish && len(c.ids) > 0 && v.Verdicts[c.ids[len(c.ids)-1]] == "reject" {
-			pair = "plan review → task plan" // a reject is checked on the pair to the planner
+		if c.end == posReviewFinish && len(c.ids) > 0 {
+			last := c.ids[len(c.ids)-1]
+			if detail, _ := v.lastHandoff(last); v.Verdicts[last] == "reject" && !strings.HasPrefix(detail, "invalid verdict-field") {
+				pair = "plan review → task plan" // a reject is checked on the pair to the planner; an earlier binary's failure keeps the developer pair
+			}
 		}
 		st, id, msg := v.stage(c.ids, c.step, pair)
 		step.Session = id
@@ -549,6 +552,8 @@ func loopPosition(v loopView) loopStep {
 		}
 		if c.end == posReviewFinish {
 			switch _, rejected := v.rejectOf(id, rep); {
+			case st == stDone && !rejected && v.Verdicts[id] == "reject": // a reject with no reason, whose handoff the Operator's table admitted: never an approval
+				return stop(fmt.Sprintf("%s: the plan review %s rejected the plan and gave no reason (its handoff is valid on this table, and a reject with no reason stops)", v.Task, id))
 			case st == stStop && v.legacyRejectOf(id, rep): // an earlier binary's invalid verdict-field of a reject: its handoff is recorded again
 				step.Pos = posReviewFinish
 				return step

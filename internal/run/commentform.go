@@ -1,8 +1,8 @@
 package run
 
 // This file holds the parse of the three comment forms of the task loop and the
-// four handoff items read from them (docs/spec/loop.md, The items a caller
-// computes: The fields and the blocks of a comment; task T-4pje, #396, row 66l of
+// handoff items read from them (docs/spec/loop.md, The items a caller
+// computes, the owning table of the items; The fields and the blocks of a comment; task T-4pje, #396, row 66l of
 // the plan of M2e). The step that wires the parse into the loop is row 66k's.
 
 import (

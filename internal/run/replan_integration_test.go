@@ -5,8 +5,11 @@ package run
 import (
 	"context"
 	"errors"
+	"slices"
 	"strings"
 	"testing"
+
+	"github.com/pharzam/layup/internal/handoff"
 )
 
 // A plan review that rejects the plan sends the task back to its planner (task T-t94t, #483; loop.md, The driver of a Shape task, "A rejected
@@ -300,5 +303,59 @@ func TestReviewerValidRejectLostCopyCannotAuthorizeDeveloper(t *testing.T) {
 				t.Errorf("%s, %s copy: %d attempts; want %d", c.name, lost, n, c.attempts)
 			}
 		}
+	}
+}
+
+// End 3 (F4): the Operator's customized row for the pair plan review to task plan lists only schema and artifacts, so a bare reject is a valid
+// handoff on it; the driver still stops before the developer and starts no attempt.
+func TestReviewerCustomizedRejectRowCannotApproveBareRejectInTheLoop(t *testing.T) {
+	t.Parallel()
+	d := newDrvWorld(t, loopPerms)
+	rows := slices.Clone(original13())
+	rows = append(rows, handoff.Row{From: "plan review", To: "task plan", Artifacts: []string{"plan-review"}, Items: []string{"schema", "artifacts"}})
+	pushRecords(t, d.w.bare, map[string]string{"transitions.tsv": string(transitionBytes(t, rows))}, "a customized table")
+	d.restart()
+	d.ctlWrite("plan-verdicts", "bare-reject\n")
+	spec, _ := d.open()
+	got, err := d.advance(spec, nil)
+	if err != nil || got.Verified || !strings.Contains(got.Stop, "rejected the plan and gave no reason") {
+		t.Fatalf("AdvanceShapeTask = %+v, %v; want the stop for a reject with no reason", got, err)
+	}
+	if bad := d.invalidHandoffs(spec); len(bad) != 0 {
+		t.Errorf("invalid handoffs %v; want the handoff valid on the customized table", bad)
+	}
+	if n, a := len(d.byRole(spec, stepRole("specification"))), len(d.attempts(spec)); n != 0 || a != 1 {
+		t.Errorf("%d developer sessions and %d attempts; want none and 1", n, a)
+	}
+}
+
+// End 3 (F5): a bare reject that an earlier binary recorded on the pair to the developer keeps that pair in its stop; no recovery happens.
+func TestReviewerLegacyBareRejectKeepsRecordedPairInTheLoop(t *testing.T) {
+	t.Parallel()
+	d := newDrvWorld(t, loopPerms)
+	pushRecords(t, d.w.bare, map[string]string{"transitions.tsv": string(transitionBytes(t, original13()))}, "the table of the first task")
+	d.restart()
+	d.ctlWrite("plan-verdicts", "bare-reject\n")
+	spec, _ := d.open()
+	d.advance(spec, func(s *Sessions) {
+		s.Store = &faultStore{SessionStore: s.Store, fail: func(m string) error {
+			if strings.Contains(m, "the handoff plan review to task plan") {
+				return errors.New("the commit failed")
+			}
+			return nil
+		}}
+	})
+	d.restart()
+	review := d.byRole(spec, stepRole("verification"))[0]
+	if _, err := d.r.sessions().RecordHandoff(context.Background(), HandoffInput{Task: spec, Session: review, From: "plan review", To: "developer", File: PlanReviewFile, Kind: "plan-review"}); err != nil {
+		t.Fatal(err)
+	}
+	d.restart()
+	got, err := d.advance(spec, nil)
+	if err != nil || got.Verified || !strings.Contains(got.Stop, "plan review → developer is invalid verdict-field comment ") {
+		t.Errorf("AdvanceShapeTask = %+v, %v; want the stop on plan review → developer", got, err)
+	}
+	if a := len(d.attempts(spec)); a != 1 {
+		t.Errorf("%d attempts; want 1, no recovery", a)
 	}
 }

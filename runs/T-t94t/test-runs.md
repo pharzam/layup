@@ -70,3 +70,15 @@ Red, written before the code (`go test -count=1 ./internal/run`, 2026-10-22T13:0
 Green: `readPlanReview` tells a checked verdict from an unread review (the view fields `Unread` and `Verdicts`), the driver stops on a valid handoff over an unread review, the label of the stage follows the verdict, and the amendment reader names an unreadable review with the rejecting ones. Unit, the new integration tests and the neighbours: ok, 2026-10-22T13:05:23Z. The full levels are recorded below.
 
 Round 1 gates: the full integration level (`/home/layup/.cache/layup-session/T-t94t-full-integration-2.txt`) every package ok, exit 0, 2026-10-22T13:10:14Z; e2e every package ok, 13:11:55Z; build, vet (no tag, `integration`, `e2e`), gofmt, the six lints and `freeze-check/run-all.sh` (85 passed) clean.
+
+## 5. End 3 (round 2: F4 and F5; the Operator chose end 3, no further round)
+
+Red, written before the code (`go test -count=1 ./internal/run` and the integration tests by name, 2026-10-22T13:42:55Z):
+
+| Test | First failing assertion |
+| --- | --- |
+| `TestReviewerCustomizedRejectRowCannotApproveBareReject` | a bare reject whose handoff is valid: position 6, the developer; want the stop. The three controls (an approve, a reject with a reason, an unparseable copy) are green. |
+| `TestReviewerCustomizedRejectRowCannotApproveBareRejectInTheLoop` (integration, a customized row 14 with `schema` and `artifacts`) | `Verified:true`; want the stop for a reject with no reason |
+| `TestReviewerLegacyBareRejectKeepsRecordedPair`, `TestReviewerLegacyBareRejectKeepsRecordedPairInTheLoop` | the stop reads `plan review → task plan is invalid verdict-field`; want `plan review → developer` |
+
+Green (2026-10-22T13:43:22Z): the position stops a readable reject with no reason (`Verdicts` is `reject`, no reasons) whatever the table, keeping the table as the Operator wrote it; the label is the planner pair only when the handoff is not an earlier binary's `invalid verdict-field`. Recovery is not broadened. The stale count in `commentform.go:4` is removed. The full gates follow in the commit of the close-out.
