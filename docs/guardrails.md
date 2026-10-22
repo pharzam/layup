@@ -472,6 +472,8 @@ check that catches it.
   task's state judges nothing again. It is silent because each single fact passes. **The check:** the exemption is per fact, ends at the merge of the fact's
   own task, and is never given at the head of that task; a test judges two facts in order with a head that is new for each judgment (`T-4naq`, #428).
 
+- ❌ **A contract that one step of a pipeline knows turns correct work into a finding.** The specification step was told to leave the MoSCoW and Phase cells blank and to write no numbered facts record, because code supplies both at the bet; the plan, its review and the verification of the same task were not told, so an approving review and a verifier asked for exactly those cells and that record. It is silent because each prompt is right alone. **The check:** a rule that a step must keep is stated, in one summary, in every step that judges the work, from one canonical home, and a test renders all the prompts of the kind (`T-paan`, #488).
+
 ### Writing a lesson back
 
 A trap caught once should not be re-derived by the next task, so a lesson does not

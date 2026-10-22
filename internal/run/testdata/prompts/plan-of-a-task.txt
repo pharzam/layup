@@ -31,6 +31,7 @@ rule-files:
 
 The work of this step:
 Plan the task T-ab12 (kind specification, issue 701) from the files listed above: the issue row, the requirements, the decision records, the handoffs and findings, and the rule files. Change no file of the repository and make no commit.
+The initial task of kind specification leaves the MoSCoW and Phase cells of the PRD blank (not —) until the first bet and writes no numbered facts record, because code supplies both at the rendered commit: never ask that task to supply them, correct a plan that promises them, and treat cells it filled or a facts record it wrote as defects. A reopened task of kind specification keeps the cells, lines and record that already exist.
 Write the plan as the file /s/S-aaaaaaaa/result/plan.md, in this form, each line starting at the first column and ended by a line feed:
 size: <small or large>
 open questions: <one line, or —>
