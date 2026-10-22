@@ -132,7 +132,7 @@ func TestTheStepMarkersWithNoMarker(t *testing.T) {
 
 // Input states: a file of the session that breaks a rule is refused, and the step
 // is fail, naming the session; nothing of the file is a record, and the lease
-// stays held. With no pair for systems-architect the step is fail (pair) and no
+// is released (T-yngf; it stayed held). With no pair for systems-architect the step is fail (pair) and no
 // session starts for it.
 func TestTheStepMarkersFails(t *testing.T) {
 	t.Parallel()
@@ -171,8 +171,8 @@ func TestTheStepMarkersFails(t *testing.T) {
 			if strings.Contains(gitOut(t, w.bare, "ls-tree", "-r", "--name-only", "refs/heads/layup-records"), "intake/markers.tsv") {
 				t.Error("a refused file is a record")
 			}
-			if !strings.Contains(show(t, w.bare, "refs/heads/layup-records", "lease.tsv"), "\theld\n") {
-				t.Error("the lease is not held after a fail")
+			if !strings.Contains(show(t, w.bare, "refs/heads/layup-records", "lease.tsv"), "\treleased\n") {
+				t.Error("the lease is not released after a fail") // T-yngf: was held, the known limit
 			}
 			// The review of meaning and the refused session, or, with no pair, none: the review of meaning is a record already.
 			want := 2
