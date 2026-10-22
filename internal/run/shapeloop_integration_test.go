@@ -763,3 +763,126 @@ func TestARestartBeforeOrAfterTheRetryAttemptStartsExactlyOne(t *testing.T) {
 		}
 	}
 }
+
+// refusedArtifacts counts the events refused artifact of the task.
+func (d *drvWorld) refusedArtifacts(task string) int {
+	n := 0
+	for _, e := range d.eventsOf(task) {
+		if e[1] == "refused" && e[6] == "artifact" {
+			n++
+		}
+	}
+	return n
+}
+
+// loop.md, An uncertain end gets one new attempt, the class artifact (task T-0sj8, #478): the plan review that wrote an artifact row for its own
+// comment file is refused for the artifact and gets attempt 2 at the same base, and the task goes on to the verified head. An artifact refusal has its
+// own retry (the Operator, 6338065517): with a crash of the same stage, in either order, the task has three attempts; a second end of one class stops.
+func TestAPlanReviewRefusedForAnArtifactRowGetsOneNewAttempt(t *testing.T) {
+	t.Parallel()
+	d := newDrvWorld(t, loopPerms)
+	d.ctlWrite("artifact-plan-review", "1")
+	spec, _ := d.open()
+	d.mustVerify(spec)
+	if got := d.attempts(spec); len(got) != 2 || got[0] != got[1] {
+		t.Errorf("the bases of the attempts %v; want two attempts at one base", got)
+	}
+	if n := d.refusedArtifacts(spec); n != 1 {
+		t.Errorf("%d events refused artifact; want 1", n)
+	}
+	if p, r := d.ctlSessions(spec, stepRole("plan-of-a-task")), d.ctlSessions(spec, stepRole("verification")); p != 1 || r != 3 {
+		t.Errorf("%d plan sessions and %d qa sessions; want one plan, two plan reviews and one verifier", p, r)
+	}
+	for _, c := range []struct{ name, crash, art string }{{"a crash, then an artifact refusal", "1", "2"}, {"an artifact refusal, then a crash", "2", "1"}} {
+		w := newDrvWorld(t, loopPerms)
+		w.ctlWrite("crash-plan-review", c.crash)
+		w.ctlWrite("artifact-plan-review", c.art)
+		task, _ := w.open()
+		w.mustVerify(task)
+		if got := w.attempts(task); len(got) != 3 || got[0] != got[1] || got[1] != got[2] {
+			t.Errorf("%s: the bases of the attempts %v; want three attempts at one base", c.name, got)
+		}
+		if r := w.ctlSessions(task, stepRole("verification")); r != 4 {
+			t.Errorf("%s: %d qa sessions; want three plan reviews and one verifier", c.name, r)
+		}
+	}
+	for _, c := range []struct{ name, crash, art, end string }{
+		{"two artifact refusals", "", "1 2", "was refused (artifact)"},
+		{"a crash, an artifact refusal, then a crash", "1 3", "2", "of the plan review ended crash"},
+		{"an artifact refusal, a crash, then an artifact refusal", "2", "1 3", "was refused (artifact)"},
+	} {
+		w := newDrvWorld(t, loopPerms)
+		if c.crash != "" {
+			w.ctlWrite("crash-plan-review", c.crash)
+		}
+		w.ctlWrite("artifact-plan-review", c.art)
+		task, _ := w.open()
+		got, err := w.advance(task, nil)
+		if err != nil || !strings.Contains(got.Stop, c.end) || got.Verified {
+			t.Errorf("%s: AdvanceShapeTask = %+v, %v; want the stop %q", c.name, got, err, c.end)
+		}
+	}
+}
+
+// A verifier refused for an artifact is run again from the base of the task, as a crashed one is: the retry runs a new developer, which counts no
+// review round, and the new verifier is none of the developers' harnesses.
+func TestAVerifierRefusedForAnArtifactIsRunAgainInANewAttemptFromTheTaskBase(t *testing.T) {
+	t.Parallel()
+	d := newDrvWorld(t, loopPerms)
+	d.ctlWrite("artifact-verification", "1")
+	spec, _ := d.open()
+	d.mustVerify(spec)
+	if got := d.attempts(spec); len(got) != 2 || got[0] != got[1] {
+		t.Errorf("the bases of the attempts %v; want two attempts at one base", got)
+	}
+	if n := d.refusedArtifacts(spec); n != 1 {
+		t.Errorf("%d events refused artifact; want 1", n)
+	}
+	if n := len(d.byRole(spec, stepRole("specification"))); n != 2 {
+		t.Errorf("%d developer sessions; want 2", n)
+	}
+	qa := d.byRole(spec, stepRole("verification"))
+	if len(qa) != 3 {
+		t.Errorf("%d qa sessions; want the plan review, the refused verifier and the new verifier", len(qa))
+	}
+	authors := map[string]bool{}
+	for _, r := range d.sessionsOf(spec) {
+		if r[sessionRole] == stepRole("specification") {
+			authors[r[sessionHarness]] = true
+		}
+	}
+	for _, r := range d.sessionsOf(spec) {
+		if r[sessionID] == qa[len(qa)-1] && authors[r[sessionHarness]] {
+			t.Errorf("the last verifier ran on %s, the harness of a developer", r[sessionHarness])
+		}
+	}
+}
+
+// A restart between the refusal and the new attempt, or between the new attempt and its first session, starts exactly one attempt.
+func TestARestartBeforeOrAfterTheArtifactRetryAttemptStartsExactlyOne(t *testing.T) {
+	t.Parallel()
+	for _, c := range []struct{ name, fail string }{{"before the attempt", "layup run: attempt 2 of"}, {"after the attempt", ", attempt 2 of "}} {
+		d := newDrvWorld(t, loopPerms)
+		d.ctlWrite("artifact-plan-review", "1")
+		spec, _ := d.open()
+		_, err := d.advance(spec, func(s *Sessions) {
+			s.Store = &faultStore{SessionStore: s.Store, fail: func(m string) error {
+				if strings.Contains(m, c.fail) {
+					return errors.New("the commit failed")
+				}
+				return nil
+			}}
+		})
+		if err == nil {
+			t.Fatalf("%s: AdvanceShapeTask did not fail", c.name)
+		}
+		d.restart()
+		d.mustVerify(spec)
+		if got := d.attempts(spec); len(got) != 2 {
+			t.Errorf("%s: %d attempts; want exactly two", c.name, len(got))
+		}
+		if r := d.ctlSessions(spec, stepRole("verification")); r != 3 {
+			t.Errorf("%s: %d qa sessions; want the refused plan review, the new one and the verifier", c.name, r)
+		}
+	}
+}

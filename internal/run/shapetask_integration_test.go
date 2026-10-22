@@ -30,6 +30,7 @@ comment() {
   printf '%s' "$2" > ../result/$1
   sum=$(sha256sum ../result/$1 | cut -d' ' -f1)
   printf "$res_head"'comment\t1\tresult/%s\t%s\t—\n' "$1" "$sum" > ../result/result.tsv
+  if [ -n "$art" ]; then printf 'artifact\t1\tresult/%s\t%s\t—\n' "$1" "$sum" >> ../result/result.tsv; fi # the demo's refusal (task T-0sj8)
 }
 artifacts() {
   git add -A && git commit -qm work
@@ -64,7 +65,9 @@ case "$line" in "Prompt file"*) keep
   # crash-<step> and noresult-<step> hold the numbers of the calls of that step that end exit 3, or exit 0 with no result file (task T-qjjd)
   n=$(cat $ctl/calls-$step 2>/dev/null || echo 0); n=$((n+1)); echo $n > $ctl/calls-$step
   for w in $(cat $ctl/crash-$step 2>/dev/null); do [ $w = $n ] && { echo "the harness failed" >&2; exit 3; }; done
-  for w in $(cat $ctl/noresult-$step 2>/dev/null); do [ $w = $n ] && exit 0; done ;; esac
+  for w in $(cat $ctl/noresult-$step 2>/dev/null); do [ $w = $n ] && exit 0; done
+  # artifact-<step> holds the numbers of the calls whose comment file is also named by an artifact row, which the check refuses (task T-0sj8, #478)
+  art=; for w in $(cat $ctl/artifact-$step 2>/dev/null); do [ $w = $n ] && art=1; done ;; esac
 case $step in
 "You write the options"*|"You rewrite the options"*) # the options sessions of Shape: the file options-<n> of ctl/ is the n-th output
   out=$(sed -n 's/^The output file: //p')

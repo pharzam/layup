@@ -317,7 +317,7 @@ row:
 
 | Class | When | Again? |
 | ----- | ---- | ------ |
-| `done` | exit 0 and a valid result file | — |
+| `done` | exit 0 and a valid result file | — ; refused for `artifact` alone with the status `completed`: one new attempt of its own ([loop.md](loop.md#the-driver-of-a-shape-task)) |
 | `start` | the program is missing or cannot run | fails the same way again: never retried |
 | `crash` | a non-zero exit, or a signal that `layup run` did not send | uncertain: an eligible task-session end (of the plan, the plan review, the developer or the verifier) gets one new attempt; a probe, a phase session, the close-out and the answer session get none ([loop.md](loop.md#the-driver-of-a-shape-task)) |
 | `no-result` | exit 0 with no valid result file | uncertain: as `crash` (an eligible task-session end) |

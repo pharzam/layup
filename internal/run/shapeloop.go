@@ -273,6 +273,11 @@ const (
 	stagePlan, stageReview, stageDeveloper, stageVerifier = "plan", "review", "developer", "verifier"
 )
 
+// The classes of an eligible end: a crash or no-result (uncertain), and a done refused for the artifact alone.
+const (
+	classUncertain, classArtifact = "uncertain", "artifact"
+)
+
 // stageOf gives the stage of a session by its start row and its role, "" for none: an answer session has none, and neither has the
 // close-out or an owner role.
 func (v loopView) stageOf(id string) string {
@@ -295,36 +300,45 @@ func (v loopView) stageOf(id string) string {
 	return ""
 }
 
-// eligibleEnd gives the last session of the attempt and its stage when its end is crash or no-result, it was not refused and it has a
-// stage: the one end that a retry replaces (loop.md, The driver of a Shape task, "An uncertain end gets one new attempt"). "" for none.
-func (v loopView) eligibleEnd(attempt string) (id, stage string) {
+// eligibleEnd gives the last session of the attempt, its stage and the class of its end, when the end is one that a retry replaces
+// (loop.md, The driver of a Shape task, "An uncertain end gets one new attempt"): "uncertain" for a crash or no-result with no refusal, and "artifact"
+// for a done with the status completed whose refusals are exactly one event, artifact. A session that has no stage has none. "" for none.
+func (v loopView) eligibleEnd(attempt string) (id, stage, class string) {
 	for _, e := range v.Events {
 		if e[1] == "session" && e[2] == attempt {
 			id = e[3]
 		}
 	}
-	end := ""
+	end, refusals, detail := "", 0, ""
 	for _, e := range v.Events {
 		switch {
 		case e[3] != id:
 		case e[1] == "refused":
-			return "", ""
+			refusals, detail = refusals+1, e[6]
 		case e[1] == "result":
 			end = e[6]
 		}
 	}
-	if id == "" || (end != "crash" && end != "no-result") {
-		return "", ""
+	switch {
+	case id == "":
+		return "", "", ""
+	case refusals == 0 && (end == "crash" || end == "no-result"):
+		class = classUncertain
+	case refusals == 1 && detail == "artifact" && end == "done" && v.Status[id] == "completed":
+		class = classArtifact
+	default:
+		return "", "", ""
 	}
-	return id, v.stageOf(id)
+	return id, v.stageOf(id), class
 }
 
 // retries walks the attempts in order. An attempt is replaced by a retry when its last session has an eligible end, no earlier replacement
-// was caused by an eligible end of the same stage (the bound is once per stage), it was not closed or rebased and holds no lost push, and the
+// was caused by an eligible end of the same stage and the same class (the bound is once per stage and class: crash and no-result share one retry,
+// an artifact refusal has its own), it was not closed or rebased and holds no lost push, and the
 // next attempt was recorded after that end at the same base. It gives the replaced attempts, and for the latest attempt, when it meets the
 // rule and has no next attempt, the session whose end the next attempt would replace.
 func retries(v loopView) (rep Replaced, pending string) {
-	rep, spent, last := Replaced{}, map[string]bool{}, 0
+	rep, spent, last := Replaced{}, map[[2]string]bool{}, 0
 	for _, e := range v.Events {
 		if n, _ := strconv.Atoi(e[2]); e[1] == "attempt" && n > last {
 			last = n
@@ -332,8 +346,8 @@ func retries(v loopView) (rep Replaced, pending string) {
 	}
 	for n := 1; n <= last; n++ {
 		a := strconv.Itoa(n)
-		id, stage := v.eligibleEnd(a)
-		if id == "" || stage == "" || spent[stage] {
+		id, stage, class := v.eligibleEnd(a)
+		if id == "" || stage == "" || spent[[2]string{stage, class}] {
 			continue
 		}
 		base, ended, next := "", -1, -1
@@ -352,7 +366,7 @@ func retries(v loopView) (rep Replaced, pending string) {
 		switch {
 		case stage == "":
 		case next >= 0 && next > ended && v.Events[next][4] == base:
-			rep[a], spent[stage] = id, true
+			rep[a], spent[[2]string{stage, class}] = id, true
 		case n == last:
 			pending = id
 		}
@@ -408,7 +422,7 @@ func loopPosition(v loopView) loopStep {
 		return step
 	}
 	rep, pending := retries(v)
-	if pending != "" { // the last session of the attempt ended crash or no-result: one new attempt at the same base
+	if pending != "" { // the last session of the attempt has an eligible end (crash, no-result or a refused artifact): one new attempt at the same base
 		step.Pos, step.Session = posRetry, pending
 		return step
 	}
