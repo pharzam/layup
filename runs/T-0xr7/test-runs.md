@@ -69,10 +69,16 @@ Start 2026-10-22T18:41:03Z, end 2026-10-22T18:41:22Z.
 
 ```
 --- FAIL: TestTheSpecificationTaskEndToEnd (18.50s)
-    loop_e2e_test.go:455: stage 5a: the shape row ["done" "waiting for the Operator: T-bsuu: the review-cycle cap 1 is reached with findings open"]; want the wait "waiting for the Operator: T-bsuu: the review-cycle cap 1 is reached with findings open; the Operator may grant one more cycle with `cycle T-bsuu because <reason>` on 
+    loop_e2e_test.go:455: stage 5a: the shape row ["done" "waiting for the Operator: T-bsuu: the review-cycle cap 1 is reached with findings open"]; want the wait "waiting for the Operator: T-bsuu: the review-cycle cap 1 is reached with findings open; the Operator may grant one more cycle with `cycle T-bsuu because <reason>` on
         step	result	detail
         forge	done	the installation token, the six capabilities and the permissions of M2a; a public repository, with layup-records
         clone	done	start.tsv, approvers.tsv and lease.tsv read
         version	done	LAYUP 0.1.0-dev
 ```
 
+## Green, on 7da43c52
+
+- Build, vet (no tag, integration, e2e), gofmt, unit level: exit 0.
+- Full integration level: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./...`, output in `/home/layup/.cache/layup-session/T-0xr7-full-integration.txt`. Start 2026-10-22T19:00:37Z, end 2026-10-22T19:04:54Z, exit 0 (21 packages ok).
+- E2e level: `go test -count=1 -tags=e2e ./cmd/layup/`. Start 2026-10-22T19:05:10Z, end 2026-10-22T19:06:41Z, exit 0 (`ok github.com/pharzam/layup/cmd/layup 89.786s`).
+- Lints: adr-lint OK, prd-lint OK, link-lint OK (3165 links), run-discipline-tests 138 passed, nested-checkout-check OK, setup-check OK.
