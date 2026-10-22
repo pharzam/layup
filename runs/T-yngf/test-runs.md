@@ -34,3 +34,13 @@ Integration, `TMPDIR=... go test -count=1 -tags=integration -run '<the tests>' .
 
 - Unit: `TestAFailedReleaseIsNamedAfterTheFailure/a_done_row` (the rule of a row `done` is as it was); `TestARunThatHoldsNothingReleasesNothing` (no lease, another run's lease, a released lease: no write tried).
 - Integration: `TestARestartThatRunsPhaseReleasesOnce` (one `lease: released` commit after a restart whose `phase` releases); `TestTwoRefusedReleasesMakeNoThirdAttempt` (a pre-receive hook refuses the release twice and would pass the third push: phase fails naming the loss, 2 pushes only, the lease stays `held`). On the base `phaseStep` makes no second attempt, so it is green; it binds the new end against a retry after a known loss.
+
+## 4. Green
+
+The code: `endLease` (join the heartbeat, read the lease, release on a context that the steps do not cancel, one-minute bound, error named after the failure), `noteLoss` (a typed `LostError` kept in `lostLease`, from a beat, a write and a release), in `internal/run/steps.go`. Commit 3d42b91e holds the tests and the code together because the hook refuses a red commit (guardrails §2).
+
+- Unit, `go test -race -count=3` on the nine new tests: exit 0. `go test -count=1 ./...`: exit 0.
+- Full integration, `TMPDIR=... go test -count=1 -tags=integration -timeout 30m ./...`, 2026-10-22T10:36:49Z to 10:40:50Z, exit 0 (`internal/run` 239.9 s); output in `/home/layup/.cache/layup-session/T-yngf-full-integration.txt`.
+- e2e, `go test -count=1 -tags=e2e -timeout 10m ./...`, 2026-10-22T10:36:59Z to 10:40:39Z: `cmd/layup` ok (121.7 s), the rest ok.
+- build, vet (no tag, integration, e2e) and gofmt clean; adr, prd, link, discipline, setup and nested-checkout lints OK; `freeze-check/run-all.sh` 85 passed.
+- The old-tests rule (condition 4): the requirement changed from "a failed restart leaves the lease held until the takeover" to "a failed restart releases it", because the held lease made the next restart wait `3 × lease.H`; the five assertions changed only in that expectation and its comment.
