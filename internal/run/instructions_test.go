@@ -597,3 +597,23 @@ func TestTheAnswersToCiteAreWrittenOnlyWhenTheLastAskingAttemptHasThem(t *testin
 		t.Errorf("the prompt with answers keeps the placeholder %s", m)
 	}
 }
+
+// The sentence of the block instruction-result (task T-0sj8, #478): a comment file of result/ is never an artifact, and a step whose work
+// makes no commit writes no artifact row. The plan review, which names its review file as an output and makes no commit, read the sentence
+// before it the other way (the demo of M2e).
+func TestTheResultInstructionSaysACommentFileIsNoArtifact(t *testing.T) {
+	const sentence = "A comment file of result/ is never an artifact: write no artifact row for it, and when the work above says to make no commit, write no artifact row at all."
+	if !strings.Contains(resultInstruction, sentence) {
+		t.Errorf("the constant resultInstruction does not hold %q", sentence)
+	}
+	for _, c := range goldenCases {
+		text := promptText(t, c.step, c.kind)
+		i, j := strings.Index(text, sentence), strings.Index(text, "A file that this prompt only asks you to read is no output.")
+		if i < 0 || j < 0 || i < j {
+			t.Errorf("the prompt of %s does not hold the sentence after the artifact sentence (at %d, after %d)", c.step, i, j)
+		}
+	}
+	if !strings.Contains(promptText(t, "plan-review", "architecture"), "make no commit") {
+		t.Error("the plan review no longer says to make no commit: the second clause of the sentence has no target")
+	}
+}

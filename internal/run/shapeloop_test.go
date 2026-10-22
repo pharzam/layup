@@ -2,6 +2,7 @@ package run
 
 import (
 	"maps"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -351,7 +352,8 @@ func TestEndsThatAreNotEligibleStayStops(t *testing.T) {
 		msg  string
 	}{
 		{"a crash with a refusal", upTo("specification", 5).end("S-r1", "1", "crash", "").ev("refused", "1", "S-r1", "", "", "closed-attempt"), "was refused (closed-attempt)"},
-		{"a done with a refusal", upTo("specification", 5).end("S-r1", "1", "done", "completed").ev("refused", "1", "S-r1", "", "", "artifact"), "was refused (artifact)"},
+		{"a done with a refusal of the branch", upTo("specification", 5).end("S-r1", "1", "done", "completed").ev("refused", "1", "S-r1", "", "", "branch"), "was refused (branch)"},
+		{"a done with a closed attempt", upTo("specification", 5).end("S-r1", "1", "done", "completed").ev("refused", "1", "S-r1", "", "", "closed-attempt"), "was refused (closed-attempt)"},
 		{"a wall", upTo("specification", 5).end("S-r1", "1", "wall", ""), "S-r1 of the plan review ended wall"},
 		{"an output", upTo("specification", 5).end("S-r1", "1", "output", ""), "S-r1 of the plan review ended output"},
 		{"a start", upTo("specification", 5).end("S-r1", "1", "start", ""), "S-r1 of the plan review ended start"},
@@ -412,5 +414,162 @@ func TestTheFindingsPassOverTwoReplacedAttempts(t *testing.T) {
 	}
 	if got := priorAttempt(replacedOf(b.v), 4); got != 1 {
 		t.Errorf("priorAttempt(4) = %d; want 1, passing over the attempts 3 and 2", got)
+	}
+}
+
+// retryPending is the session whose eligible end the next attempt would replace, "" for none.
+func retryPending(b *viewBuilder) string { _, pending := retries(b.v); return pending }
+
+// artifactEnd ends the session done, with the status given and the refusals given, each its own event refused.
+func artifactEnd(b *viewBuilder, id, attempt, status string, reasons ...string) *viewBuilder {
+	b.end(id, attempt, "done", status)
+	for _, r := range reasons {
+		b.ev("refused", attempt, id, "", "", r)
+	}
+	return b
+}
+
+// loop.md, An uncertain end gets one new attempt, the class artifact (task T-0sj8, #478): a session that ended done with the status completed
+// and one refusal, artifact, is an eligible end of each of the four stages, as a crash is.
+func TestARefusedArtifactIsAnEligibleEndOfEachStage(t *testing.T) {
+	for _, st := range []struct {
+		name string
+		n    int
+		id   string
+		next position
+	}{{"the plan", 2, "S-p1", posPlan}, {"the plan review", 5, "S-r1", posReview}, {"the developer", 8, "S-d1", posDeveloper}, {"the verifier", 13, "S-v1", posDeveloper}} {
+		b := artifactEnd(upTo("specification", st.n), st.id, "1", "completed", "artifact")
+		if got := b.at(); got.Pos != posRetry || got.Attempt != 1 || got.Base != shB || got.Session != st.id {
+			t.Errorf("%s refused for an artifact: %+v; want the retry at attempt 1, base %s, of %s", st.name, got, shB[:7], st.id)
+		}
+		if got := b.ev("attempt", "2", "", shB, "", "").at(); got.Pos != st.next || got.Attempt != 2 {
+			t.Errorf("%s refused for an artifact, attempt 2 recorded: %+v; want position %d in attempt 2", st.name, got, st.next)
+		}
+	}
+}
+
+// The demo's records (T-ut9g): the plan review of attempt 1 crashed, the one of attempt 2 at the same base ended done and refused artifact:
+// the next run gives attempt 3 at the base, with the session start rows and the valid plan handoff that make both sessions the plan review.
+func TestTheDemoRecordsOfTUt9gGiveAttempt3(t *testing.T) {
+	b := upTo("specification", 4).start("S-38157561", roleQA, "1", shB).end("S-38157561", "1", "crash", "").ev("attempt", "2", "", shB, "", "").
+		start("S-141cc16c", roleQA, "2", shB)
+	artifactEnd(b, "S-141cc16c", "2", "completed", "artifact")
+	if rep, pending := retries(b.v); !maps.Equal(rep, Replaced{"1": "S-38157561"}) || pending != "S-141cc16c" {
+		t.Fatalf("retries = %v, %q; want attempt 1 replaced and S-141cc16c pending", rep, pending)
+	}
+	if got := b.at(); got.Pos != posRetry || got.Attempt != 2 || got.Base != shB || got.Session != "S-141cc16c" {
+		t.Errorf("the demo's records: %+v; want the retry of S-141cc16c in attempt 2 at the base", got)
+	}
+	if got := b.ev("attempt", "3", "", shB, "", "").at(); got.Pos != posReview || got.Attempt != 3 || got.Base != shB {
+		t.Errorf("the demo's records and attempt 3: %+v; want the plan review of attempt 3 at the base", got)
+	}
+}
+
+// Each negative differs from the retry in one fact only; none is an eligible end, so none is pending and none is replaced.
+func TestARefusalOfAnotherKindOrStatusIsNoEligibleEnd(t *testing.T) {
+	asked := func(role string, reasons ...string) *viewBuilder {
+		return artifactEnd(upTo("specification", 2).end("S-p1", "1", "done", "needs_context").start("S-a1", role, "1", shB), "S-a1", "1", "completed", reasons...)
+	}
+	closeOut := func() *viewBuilder {
+		return artifactEnd(upTo("specification", 15).start("S-c1", stepRole("close-out"), "1", shH), "S-c1", "1", "completed", "artifact")
+	}
+	for _, c := range []struct {
+		name string
+		b    *viewBuilder
+	}{
+		{"closed-attempt", artifactEnd(upTo("specification", 5), "S-r1", "1", "completed", "closed-attempt")},
+		{"branch", artifactEnd(upTo("specification", 5), "S-r1", "1", "completed", "branch")},
+		{"push-lost", artifactEnd(upTo("specification", 5), "S-r1", "1", "completed", "push-lost")},
+		{"two refusal events, artifact first", artifactEnd(upTo("specification", 5), "S-r1", "1", "completed", "artifact", "branch")},
+		{"two refusal events, artifact last", artifactEnd(upTo("specification", 5), "S-r1", "1", "completed", "closed-attempt", "artifact")},
+		{"two refusal events of artifact", artifactEnd(upTo("specification", 5), "S-r1", "1", "completed", "artifact", "artifact")},
+		{"a crash", upTo("specification", 5).end("S-r1", "1", "crash", "").ev("refused", "1", "S-r1", "", "", "artifact")},
+		{"a no-result", upTo("specification", 5).end("S-r1", "1", "no-result", "").ev("refused", "1", "S-r1", "", "", "artifact")},
+		{"a wall", upTo("specification", 5).end("S-r1", "1", "wall", "").ev("refused", "1", "S-r1", "", "", "artifact")},
+		{"the status blocked", artifactEnd(upTo("specification", 5), "S-r1", "1", "blocked", "artifact")},
+		{"the status with no kept result", artifactEnd(upTo("specification", 5), "S-r1", "1", "", "artifact")},
+		{"the close-out session", closeOut()},
+		{"an answer session of the plan role", asked(rolePlan, "artifact")},
+		{"an answer session of the developer role", asked(roleSpec, "artifact")},
+	} {
+		if p := retryPending(c.b); p != "" {
+			t.Errorf("%s: %q is pending; want no eligible end", c.name, p)
+		}
+		if got := replacedOf(c.b.ev("attempt", "2", "", shB, "", "").v); got != nil && len(got) != 0 {
+			t.Errorf("%s: replaced %v; want none", c.name, got)
+		}
+	}
+}
+
+// Precedence (condition 2 of the plan review): the artifact class needs the status completed. A refused result of the status needs_context
+// keeps the question path, with no retry; the answer sessions of its attempt stay no stage, refused or not.
+func TestARefusedResultThatAsksAQuestionKeepsTheQuestionPath(t *testing.T) {
+	b := artifactEnd(upTo("specification", 2), "S-p1", "1", "needs_context", "artifact")
+	if got := b.at(); got.Pos != posQuestion {
+		t.Errorf("a plan refused for an artifact that asks: %d %q; want the question", got.Pos, got.Msg)
+	}
+	if p := retryPending(b); p != "" {
+		t.Errorf("a plan refused for an artifact that asks: %q is pending; want no retry", p)
+	}
+}
+
+// The separate bound (the Operator, 6338065517): crash and no-result share one retry per stage and an artifact refusal has its own, in either
+// order; a second end of the same class stops.
+func TestAnArtifactRefusalHasItsOwnRetryPerStageInEitherOrder(t *testing.T) {
+	end := func(b *viewBuilder, id, n, class string) *viewBuilder {
+		if class == "artifact" {
+			return artifactEnd(b, id, n, "completed", "artifact")
+		}
+		return b.end(id, n, class, "")
+	}
+	for _, c := range [][3]string{{"crash", "artifact", "crash"}, {"artifact", "crash", "artifact"}, {"no-result", "artifact", "no-result"}, {"artifact", "no-result", "artifact"}} {
+		b := end(upTo("specification", 5), "S-r1", "1", c[0]).ev("attempt", "2", "", shB, "", "").start("S-r2", roleQA, "2", shB)
+		end(b, "S-r2", "2", c[1])
+		if got := b.at(); got.Pos != posRetry || got.Attempt != 2 || got.Session != "S-r2" {
+			t.Fatalf("%s, then %s: %+v; want the retry of S-r2 in attempt 2", c[0], c[1], got)
+		}
+		b.ev("attempt", "3", "", shB, "", "")
+		if got := b.at(); got.Pos != posReview || got.Attempt != 3 {
+			t.Errorf("%s, then %s, attempt 3 recorded: %+v; want the plan review of attempt 3", c[0], c[1], got)
+		}
+		// The third end: the class of the first end is spent, and so is the class of the second.
+		for _, third := range []string{c[0], c[1]} {
+			x := &viewBuilder{loopView{Task: b.v.Task, Kind: b.v.Kind, Events: slices.Clone(b.v.Events), Sessions: slices.Clone(b.v.Sessions), Status: maps.Clone(b.v.Status), Records: b.v.Records}}
+			x.start("S-r3", roleQA, "3", shB)
+			end(x, "S-r3", "3", third)
+			if got := x.at(); got.Pos != posStop {
+				t.Errorf("%s, %s, then %s: %d %q; want the stop, each class has spent its retry", c[0], c[1], third, got.Pos, got.Msg)
+			}
+		}
+	}
+	// The same class twice stops at the second end.
+	b := artifactEnd(upTo("specification", 5), "S-r1", "1", "completed", "artifact").ev("attempt", "2", "", shB, "", "").start("S-r2", roleQA, "2", shB)
+	if got := artifactEnd(b, "S-r2", "2", "completed", "artifact").at(); got.Pos != posStop || !strings.Contains(got.Msg, "S-r2 was refused (artifact)") {
+		t.Errorf("two artifact refusals of one stage: %d %q; want the stop", got.Pos, got.Msg)
+	}
+	// Another stage has its own artifact retry.
+	d := artifactEnd(upTo("specification", 5), "S-r1", "1", "completed", "artifact").ev("attempt", "2", "", shB, "", "").start("S-r2", roleQA, "2", shB).end("S-r2", "2", "done", "completed").
+		ev("handoff", "2", "S-r2", "", "", "valid comment 15-1").start("S-d2", roleSpec, "2", shB)
+	if got := artifactEnd(d, "S-d2", "2", "completed", "artifact").at(); got.Pos != posRetry || got.Session != "S-d2" {
+		t.Errorf("a developer refused for an artifact after a retried plan review: %+v; want the retry", got)
+	}
+}
+
+// The verifier refused for an artifact: the retry is at the task base and runs a developer; it counts no review round, as a crash counts none.
+func TestAnArtifactRefusalOfTheVerifierCountsNoReviewRound(t *testing.T) {
+	r := artifactEnd(upTo("specification", 13), "S-v1", "1", "completed", "artifact")
+	if got := r.at(); got.Pos != posRetry || got.Base != shB || got.Session != "S-v1" {
+		t.Errorf("the verifier refused for an artifact: %+v; want the retry at the task base %s", got, shB[:7])
+	}
+	c := r.ev("attempt", "2", "", shB, "", "").devRound("2", shG).verdict("2", shG, "material", 1)
+	if got := c.at(); got.Pos != posNextAttempt {
+		t.Errorf("one material round after a verifier refused for an artifact: %d %q; want the next attempt", got.Pos, got.Msg)
+	}
+	if n := reviewRounds(c.v); n != 1 {
+		t.Errorf("reviewRounds = %d; want 1", n)
+	}
+	d := c.ev("attempt", "3", "", shB, "", "").devRound("3", shG).verdict("3", shG, "material", 1)
+	if got := d.at(); got.Pos != posWait || !strings.Contains(got.Msg, "the review-cycle cap 1 is reached") {
+		t.Errorf("two material rounds around the retry: %d %q; want the wait at the cap", got.Pos, got.Msg)
 	}
 }
