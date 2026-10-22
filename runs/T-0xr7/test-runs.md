@@ -106,3 +106,20 @@ FAIL
 
 Green, after the edit: unit level exit 0; `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration ./internal/run/ ./internal/records/`, start 2026-10-22T19:21:11Z, end 2026-10-22T19:25:19Z, exit 0 (`ok internal/run 245.265s`, `ok internal/records`).
 E2E after the edit: `go test -count=1 -tags=e2e ./cmd/layup/`, exit 0 (`ok cmd/layup 89.958s`), about 19:26Z.
+
+## End 3, finding 3 of round 2: a reason with leading white space is a form refusal
+
+Red, before the edit of `internal/run/cycle.go`: `go test -count=1 -run 'TestParseCycle|TestACommandIsJudged' ./internal/run/`
+Start 2026-10-22T19:43:03Z, end 2026-10-22T19:43:05Z, exit 1 (`cycle T-ab12 because <TAB>—` and `<TAB>reason` parsed as commands; the tab-padded dash granted a cycle at the cap):
+
+```
+--- FAIL: TestParseCycleReadsTheFormAndRefusesABrokenOne (0.00s)
+    cycle_test.go:64: parseCycle("cycle T-ab12 because \t—") = {Task:T-ab12 Reason:	—}, true, <nil>; want task "", isCycle true, error with "the form is"
+    cycle_test.go:64: parseCycle("cycle T-ab12 because \treason") = {Task:T-ab12 Reason:	reason}, true, <nil>; want task "", isCycle true, error with "the form is"
+--- FAIL: TestACommandIsJudgedByTheFormTheAuthorAndTheIssueInThatOrder (0.00s)
+    cycle_test.go:94: a tab-padded dash: the refusal <nil>; want the item "form"
+    cycle_test.go:97: a tab-padded dash: the grant 1, the position {Pos:11 ...}; want a grant exactly when the command passes, and the wait otherwise
+FAIL
+```
+
+Green: the same selector and `go test -count=1 -run 'Cycle|Grant|Command' ./internal/run/` exit 0, and the unit level exit 0.
