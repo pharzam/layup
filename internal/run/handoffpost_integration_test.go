@@ -383,7 +383,7 @@ func TestTheQuestionOfASessionIsRoutedAndItsAnswerAcceptedFromTheRecords(t *test
 		return ev, resultsOf(t, w, asking, owner, next)
 	}
 	if ev, res := read(); true {
-		if who, ok := AnswerAccepted(ev, res, roles(), Owners(DefaultOwners()), answer); ok {
+		if who, ok := AnswerAccepted(ev, res, roles(), Owners(DefaultOwners()), answer, nil); ok {
 			t.Errorf("accepted by %s with no cite", who)
 		}
 	}
@@ -391,7 +391,7 @@ func TestTheQuestionOfASessionIsRoutedAndItsAnswerAcceptedFromTheRecords(t *test
 	citing := run("developer", 2, resultWork("completed")+" && "+"printf '"+octal("kind\tn\tvalue\tsha256\treason\nstatus\t1\tcompleted\t—\tuses the answer "+answer+"\n")+"' > ../result/result.tsv")
 	ev, res := read()
 	res[citing] = resultsOf(t, w, citing)[citing]
-	if who, ok := AnswerAccepted(ev, res, roles(), Owners(DefaultOwners()), answer); !ok || who != citing {
+	if who, ok := AnswerAccepted(ev, res, roles(), Owners(DefaultOwners()), answer, nil); !ok || who != citing {
 		t.Errorf("AnswerAccepted = %q, %v; want accepted by %s", who, ok, citing)
 	}
 }
@@ -454,7 +454,7 @@ func TestAnAnswerOfADeveloperSessionIsNotAcceptedFromTheRecords(t *testing.T) {
 		t.Fatal(err)
 	}
 	roles := sessionRoles(startRows(t, w))
-	if who, ok := AnswerAccepted(ev, resultsOf(t, w, asking, wrong, next), roles, Owners(DefaultOwners()), id); ok {
+	if who, ok := AnswerAccepted(ev, resultsOf(t, w, asking, wrong, next), roles, Owners(DefaultOwners()), id, nil); ok {
 		t.Errorf("the answer of a developer session is accepted by %s", who)
 	}
 }
