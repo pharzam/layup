@@ -319,7 +319,7 @@ row:
 | ----- | ---- | ------ |
 | `done` | exit 0 and a valid result file | — |
 | `start` | the program is missing or cannot run | fails the same way again: never retried |
-| `crash` | a non-zero exit, or a signal that `layup run` did not send | uncertain: an eligible task-session end (of the plan, the plan review, the developer or the verifier) gets one new attempt; a probe, a phase session, the close-out and the answer session get none ([loop.md](loop.md#the-driver-of-a-shape-task)) |
+| `crash` | a non-zero exit, or a signal that `layup run` did not send | uncertain: an eligible task-session end (of the plan, the plan review, the developer or the verifier) gets one new attempt, and so does a `done` refused for `artifact` alone, with its own retry; a probe, a phase session, the close-out and the answer session get none ([loop.md](loop.md#the-driver-of-a-shape-task)) |
 | `no-result` | exit 0 with no valid result file | uncertain: as `crash` (an eligible task-session end) |
 | `wall`, `output` | stopped at the wall-clock limit or an output cap | uncertain: a stop in `M2e` |
 
