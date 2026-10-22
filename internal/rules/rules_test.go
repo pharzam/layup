@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"slices"
 	"strings"
 	"testing"
 )
@@ -140,5 +141,52 @@ func TestCheck(t *testing.T) {
 	noException := read(t, strings.Replace(register, "docs/guardrails.md\tadded lines in section 2", "docs/guardrails.md\t—", 1))
 	if reason, _ := Check([]string{"docs/guardrails.md"}, noException, in2); reason != "rule-path" {
 		t.Errorf("the guardrails with no exception in the register: %q, want rule-path", reason)
+	}
+}
+
+// The contract of PayloadPaths (docs/spec/loop.md, The findings of a refused rule path; task T-dtw6, #491): the diff is git diff --binary
+// --no-renames; a line that starts at the first column with diff --git is a candidate header and must be well formed; every other line (the
+// metadata, the hunks, the binary body, the blank lines) is ignored; a diff with no header is an error.
+func TestPayloadPathsReadsTheHeadersOfABinaryDiff(t *testing.T) {
+	const text = "index 1..2 100644\n--- a/p\n+++ b/p\n@@ -1 +1,3 @@\n-old\n+new\n+diff --git a/evil b/evil\n diff --git a/ctx b/ctx\n"
+	const binary = "new file mode 100644\nindex 0000000..1111111\nGIT binary patch\nliteral 12\nzcmZQz7zLvtFd70QH8(2YLsQ\n\nliteral 0\nHcmV?d00001\n\n"
+	for _, c := range []struct {
+		name, diff string
+		want       []string
+	}{
+		{"a plain path", "diff --git a/docs/x.md b/docs/x.md\n" + text, []string{"docs/x.md"}},
+		{"a path with spaces", "diff --git a/docs/my file.md b/docs/my file.md\n" + text, []string{"docs/my file.md"}},
+		{"a path with a space and b/", "diff --git a/a b/c b/a b/c\n" + text, []string{"a b/c"}},
+		{"octal escapes", "diff --git \"a/docs/caf\\303\\251.md\" \"b/docs/caf\\303\\251.md\"\n" + text, []string{"docs/café.md"}},
+		{"a tab and a quote", "diff --git \"a/t\\tq\\\"x\" \"b/t\\tq\\\"x\"\n" + text, []string{"t\tq\"x"}},
+		{"a deletion", "diff --git a/old.md b/old.md\ndeleted file mode 100644\nindex 1..0\n--- a/old.md\n+++ /dev/null\n@@ -1 +0,0 @@\n-x\n", []string{"old.md"}},
+		{"a binary file", "diff --git a/img.png b/img.png\n" + binary, []string{"img.png"}},
+		{"several files in order", "diff --git a/b.md b/b.md\n" + text + "diff --git a/img.png b/img.png\n" + binary + "diff --git a/a.sh b/a.sh\ndeleted file mode 100755\n", []string{"b.md", "img.png", "a.sh"}},
+	} {
+		got, err := PayloadPaths([]byte(c.diff))
+		if err != nil || !slices.Equal(got, c.want) {
+			t.Errorf("%s: PayloadPaths = %q, %v; want %q", c.name, got, err, c.want)
+		}
+	}
+}
+
+func TestPayloadPathsFailsClosedOnAnUnreadableHeader(t *testing.T) {
+	for _, c := range []struct{ name, diff string }{
+		{"an empty payload", ""},
+		{"a payload with no header", "index 1..2\n--- a/x\n+++ b/x\n@@ -1 +1 @@\n-a\n+b\n"},
+		{"unequal sides", "diff --git a/x b/y\n"},
+		{"unequal quoted sides", "diff --git \"a/x\\t\" \"b/y\\t\"\n"},
+		{"an unterminated quote", "diff --git \"a/x b/x\n"},
+		{"an escape that git never writes", "diff --git \"a/x\\q\" \"b/x\\q\"\n"},
+		{"a side with no prefix", "diff --git x y\n"},
+		{"one side only", "diff --git a/x\n"},
+		{"no side", "diff --git \n"},
+		{"an empty path", "diff --git a/ b/\n"},
+		{"a header with no space after git", "diff --gitx a/x b/x\n"},
+		{"a bad header after a good one", "diff --git a/x b/x\ndiff --git a/y b/z\n"},
+	} {
+		if got, err := PayloadPaths([]byte(c.diff)); err == nil {
+			t.Errorf("%s: PayloadPaths = %q, nil; want an error", c.name, got)
+		}
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -418,5 +419,32 @@ func TestRenderingEqualReadsARealTreeWithLinksAndModes(t *testing.T) {
 		if ok, err := call(c[0], c[1]); ok || err == nil {
 			t.Errorf("%s: %v, %v; want false and an error", name, ok, err)
 		}
+	}
+}
+
+// Task T-dtw6 (#491), plan review condition 2: PayloadPaths reads what the real producer of the payload writes, git diff --binary --no-renames
+// (git.DiffBinary): a changed file, a path with a space, a path git quotes with octal escapes, a deletion and a binary file.
+func TestPayloadPathsReadsTheRealDiffBinary(t *testing.T) {
+	w := newWorld(t)
+	w.write("x.md", "one\n")
+	w.write("gone.md", "bye\n")
+	w.write("a b.md", "space\n")
+	base := w.commit("base")
+	w.write("x.md", "two\n")
+	w.remove("gone.md")
+	w.write("a b.md", "space two\n")
+	w.write("café.md", "new\n")
+	w.write("img.bin", "\x00\x01binary\xff\x00")
+	head := w.commit("head")
+	diff, err := git.DiffBinary(w.dir, base, head)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(diff), "GIT binary patch") || !strings.Contains(string(diff), `"a/caf\303\251.md"`) {
+		t.Fatalf("the producer's diff holds no binary patch or no quoted header:\n%s", diff)
+	}
+	got, err := PayloadPaths(diff)
+	if want := []string{"a b.md", "café.md", "gone.md", "img.bin", "x.md"}; err != nil || !slices.Equal(got, want) {
+		t.Errorf("PayloadPaths = %q, %v; want %q", got, err, want)
 	}
 }
