@@ -617,3 +617,25 @@ func TestTheResultInstructionSaysACommentFileIsNoArtifact(t *testing.T) {
 		t.Error("the plan review no longer says to make no commit: the second clause of the sentence has no target")
 	}
 }
+
+// The second goal of task T-t94t (#483, the Operator's ruling 6340236265): the plan review is told the plan form of the target, that an empty
+// tests: list is the form of a specification or architecture task and no reason to reject, that LAYUP's own items are no part of that form, and
+// that a reject gives its reasons. The golden file alone would pass for any text; these sentences pin the meaning, in the rendered prompt and in
+// the constant, for the kinds of task.
+func TestThePlanReviewIsToldThePlanFormOfTheTarget(t *testing.T) {
+	for _, want := range []string{
+		"The plan form of the target is the four fields size, open questions, new interfaces and new dependencies, and the list tests:.",
+		"A plan of a task of kind specification or architecture lists no test, so an empty tests: list is the form of that plan and is never a reason to reject; a plan of a task of kind build lists at least one test.",
+		"A budget, a demo sentence and a goal count are LAYUP's own items and no part of the target's plan form: never reject a plan because it lacks one.",
+		"A review with the verdict reject gives at least one reason as a plain line, and a reject with no reason line is refused.",
+	} {
+		if !strings.Contains(stepInstructions["plan-review"], want) {
+			t.Errorf("the constant of plan-review does not hold %q", want)
+		}
+		for _, kind := range []string{"specification", "architecture", "build"} {
+			if !strings.Contains(promptText(t, "plan-review", kind), want) {
+				t.Errorf("the prompt of plan-review for a task of kind %s does not hold %q", kind, want)
+			}
+		}
+	}
+}

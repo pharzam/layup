@@ -228,7 +228,7 @@ func registerFiles(tasks, transitions []byte, t Task) (map[string][]byte, error)
 	} else {
 		rows, err := handoff.ReadTable(transitions)
 		if err == nil {
-			err = handoff.CheckTable(rows)
+			err = handoff.CheckTable(handoff.InForce(rows)) // the file is kept as it is
 		}
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", transitionsPath, err)

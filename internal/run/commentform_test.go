@@ -2,6 +2,7 @@ package run
 
 import (
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -315,4 +316,38 @@ func TestAnEmptyOrInvalidCommentParsesToNothing(t *testing.T) {
 	if !PlanFieldsOK([]byte(goodPlan)) {
 		t.Error("the control plan is not read")
 	}
+}
+
+// Task T-t94t (#483): the reasons of a plan review are its non-blank lines but the verdict line, and a reject gives the planner a reason or it is none.
+func TestTheReasonsOfAPlanReview(t *testing.T) {
+	for _, c := range []struct {
+		name, body string
+		want       []string
+	}{
+		{"one reason", "verdict: reject\nno ordered steps\n", []string{"no ordered steps"}},
+		{"blank lines, a CRLF and trailing spaces", "verdict: reject\r\n\r\nthe tests: list is empty  \r\n\n- the size has no base\n", []string{"the tests: list is empty", "- the size has no base"}},
+		{"the verdict line after a reason", "first\nverdict: reject\nsecond\n", []string{"first", "second"}},
+		{"no reason", "verdict: reject\n", nil},
+		{"only blank lines", "verdict: reject\n\n  \n", nil},
+	} {
+		if got := PlanReviewReasons([]byte(c.body)); !slices.Equal(got, c.want) {
+			t.Errorf("%s: %q; want %q", c.name, got, c.want)
+		}
+	}
+}
+
+func TestRejectReasonsIsTrueOnlyForARejectWithAReason(t *testing.T) {
+	runCases(t, RejectReasonsOK, []formCase{
+		{"a reject with a reason", "verdict: reject\nno ordered steps\n", true},
+		{"a reject with a reason before the verdict", "no ordered steps\nverdict: reject\n", true},
+		{"a bare reject", "verdict: reject\n", false},
+		{"a reject with blank lines only", "verdict: reject\n\n\n", false},
+		{"an approve with a line", "verdict: approve\nfine\n", false},
+		{"an approve-with-conditions with a line", "verdict: approve-with-conditions\nfix x\n", false},
+		{"a verdict twice", "verdict: reject\nverdict: reject\nwhy\n", false},
+		{"no verdict", "why\n", false},
+		{"an empty body", "", false},
+		{"not UTF-8", "verdict: reject\n\xff\n", false},
+		{"in a fence", "```\nverdict: reject\nwhy\n```\n", false},
+	})
 }

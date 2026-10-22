@@ -308,6 +308,7 @@ func (s *Sessions) RecordHandoff(ctx context.Context, in HandoffInput) (handoff.
 	}
 	rows, err := handoff.ReadTable(tdata)
 	if err == nil {
+		rows = handoff.InForce(rows) // a table written before a later pair had its row takes that row's default (loop.md, The transition table)
 		err = handoff.CheckTable(rows)
 	}
 	if err != nil {
@@ -379,7 +380,7 @@ func (s *Sessions) RecordHandoff(ctx context.Context, in HandoffInput) (handoff.
 	return v, s.commit(ctx, files, fmt.Sprintf("layup run: the handoff %s to %s of %s, %s", in.From, in.To, in.Task, v.Detail))
 }
 
-// commentItems sets the four items that the kept copy of a comment gives
+// commentItems sets the five items that the kept copy of a comment gives
 // (loop.md, The items a caller computes; task T-4pje): each is false, whatever
 // the caller passed, unless the copy is of the kind that the item reads and
 // parses its pinned form, and the kept file is the one that the result names by
@@ -388,7 +389,7 @@ func (s *Sessions) RecordHandoff(ctx context.Context, in HandoffInput) (handoff.
 // nothing-material reads the head that the verifier's session started at, the base
 // of its start row.
 func (s *Sessions) commentItems(ctx context.Context, in HandoffInput, start []string, result [][]string, items map[string]bool) error {
-	items["plan-fields"], items["verdict-field"], items["findings-located"], items["nothing-material"] = false, false, false, false
+	items["plan-fields"], items["verdict-field"], items["reject-reasons"], items["findings-located"], items["nothing-material"] = false, false, false, false, false
 	if in.CodeWritten || in.File == "" {
 		return nil
 	}
@@ -400,7 +401,7 @@ func (s *Sessions) commentItems(ctx context.Context, in HandoffInput, start []st
 	case "plan":
 		items["plan-fields"] = PlanFieldsOK(data)
 	case "plan-review":
-		items["verdict-field"] = VerdictFieldOK(data)
+		items["verdict-field"], items["reject-reasons"] = VerdictFieldOK(data), RejectReasonsOK(data)
 	case "review-record":
 		items["findings-located"] = FindingsLocatedOK(data)
 		items["nothing-material"] = NothingMaterialOK(data, start[sessionBase])

@@ -44,7 +44,7 @@ const (
 // "The transition table", in the order of the specification.
 var (
 	kinds = []string{"plan", "plan-review", "review-record", "task-file", "commits", "rows", "patch", "rendering", "question", "answer"}
-	items = []string{"schema", "artifacts", "plan-fields", "verdict-field", "tests-red-green", "spec-sections", "patch-per-kind", "register-rows", "rendering-equal", "nothing-material", "findings-located", "heading-ids", "question-row", "answer-row"}
+	items = []string{"schema", "artifacts", "plan-fields", "verdict-field", "tests-red-green", "spec-sections", "patch-per-kind", "register-rows", "rendering-equal", "nothing-material", "findings-located", "heading-ids", "question-row", "answer-row", "reject-reasons"}
 )
 
 // Kinds returns the kinds of artifact that a row may name.
@@ -53,10 +53,11 @@ func Kinds() []string { return slices.Clone(kinds) }
 // Items returns the names of the items that a row may name.
 func Items() []string { return slices.Clone(items) }
 
-// Default returns the thirteen rows that the binary embeds: the twelve of
-// docs/architecture.md §8 and the row of the target's architecture task, in the
-// order of docs/spec/loop.md, "The checks of a handoff". Each call gives its
-// own copy.
+// Default returns the fourteen rows that the binary embeds: the twelve of
+// docs/architecture.md §8, the row of the target's architecture task and the row
+// of a plan review that rejects (task T-t94t, #483; §8 gives no route to the
+// planner), in the order of docs/spec/loop.md, "The checks of a handoff". Each
+// call gives its own copy.
 func Default() []Row {
 	row := func(from, to string, artifacts, items []string) Row { return Row{from, to, artifacts, items} }
 	w := func(s ...string) []string { return s }
@@ -74,7 +75,29 @@ func Default() []Row {
 		row("specification", "milestone plan", w("task-file"), w("artifacts", "heading-ids")),
 		row("asking role", "owner role", w("question"), w("schema", "question-row")),
 		row("owner role", "asking role", w("answer"), w("schema", "answer-row")),
+		row("plan review", "task plan", w("plan-review"), w("schema", "artifacts", "reject-reasons")),
 	}
+}
+
+// laterPairs are the default pairs that a target's table may lack, because the target wrote it at its first task before the pair had a row
+// (loop.md, The transition table; the register never rewrites the file from the default): the pair "plan review, task plan" (task T-t94t). The
+// thirteen others are required of every table at every read.
+var laterPairs = [][2]string{{"plan review", "task plan"}}
+
+// InForce gives the rows that a read of the table checks and applies: the rows of the file and, for each later pair the file lacks, its default row.
+// It writes nothing, adds no other pair, and keeps a row of the file for a later pair as the file has it. A "set transitions" is not read through it:
+// the replacement is checked as it is (CheckTable), so it lists every default pair.
+func InForce(rows []Row) []Row {
+	out := slices.Clone(rows)
+	for _, p := range laterPairs {
+		if slices.ContainsFunc(rows, func(r Row) bool { return r.From == p[0] && r.To == p[1] }) {
+			continue
+		}
+		if i := slices.IndexFunc(Default(), func(r Row) bool { return r.From == p[0] && r.To == p[1] }); i >= 0 {
+			out = append(out, Default()[i])
+		}
+	}
+	return out
 }
 
 // WriteTable writes the table by Schema (the block transitions).

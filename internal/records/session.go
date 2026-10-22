@@ -113,7 +113,7 @@ var (
 	// <comment ID>-<seen>, after a space (task T-fn5s).
 	handoffForm = regexp.MustCompile(`^(valid|invalid ([a-z]+(-[a-z]+)*))( comment [1-9][0-9]*-[1-9][0-9]*)?$`)
 	// The items of the table of loop.md (The transition table), and pair for a pair with no row.
-	handoffItems = []string{"schema", "artifacts", "plan-fields", "verdict-field", "tests-red-green", "spec-sections", "patch-per-kind", "register-rows", "rendering-equal", "nothing-material", "findings-located", "heading-ids", "question-row", "answer-row", "pair"}
+	handoffItems = []string{"schema", "artifacts", "plan-fields", "verdict-field", "tests-red-green", "spec-sections", "patch-per-kind", "register-rows", "rendering-equal", "nothing-material", "findings-located", "heading-ids", "question-row", "answer-row", "reject-reasons", "pair"}
 	numberForm   = regexp.MustCompile(`^[1-9][0-9]*$`)  // the pull request of a merged
 	commentForm  = regexp.MustCompile(`^result/[^/]+$`) // the file of a comment row, one level of result/
 )

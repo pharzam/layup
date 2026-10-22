@@ -1,6 +1,7 @@
 package run
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"slices"
@@ -556,6 +557,7 @@ var commentItems = []commentItem{
 	{"verdict-field", "plan-review", "plan review", "developer", "verdict: approve\n", "verdict: reject\n"},
 	{"findings-located", "review-record", "verifier", "developer", record(hexA, "material", located), record(hexA, "material")},
 	{"nothing-material", "review-record", "verifier", "close-out", record(aSHA, "nothing material in scope"), record(hexB, "nothing material in scope")},
+	{"reject-reasons", "plan-review", "plan review", "task plan", "verdict: reject\nthe plan lists no ordered steps\n", "verdict: reject\n"},
 }
 
 func (c commentItem) input(items map[string]bool) HandoffInput {
@@ -747,6 +749,42 @@ func TestTheKeptFileThatIsNotTheNamedHashIsNoComment(t *testing.T) {
 		posted(t, w, planSess, c.good)
 		if v, err := w.s.RecordHandoff(context.Background(), c.input(nil)); err != nil || v.Detail != "valid comment 701-1" {
 			t.Errorf("%s, the unchanged good copy: %+v, %v", c.item, v, err)
+		}
+	}
+}
+
+// original13 is the table that a target wrote at its first task, before the pair plan review to task plan had a row.
+func original13() []handoff.Row {
+	return slices.DeleteFunc(handoff.Default(), func(r handoff.Row) bool { return r.From == "plan review" && r.To == "task plan" })
+}
+
+// Task T-t94t (#483): a reject that gives a reason is a valid handoff to the planner; anything else on that pair is invalid, a reject on the pair
+// to the developer is still invalid verdict-field, and the pair has its default row for a table that was written before it (InForce at this reader).
+func TestAReviewThatRejectsIsAValidHandoffToThePlan(t *testing.T) {
+	c := commentItems[4]
+	if c.item != "reject-reasons" {
+		t.Fatalf("commentItems[4] is %s", c.item)
+	}
+	for _, k := range []struct{ name, body, from, to, want string }{
+		{"a reject with a reason", c.good, "plan review", "task plan", "valid comment 701-1"},
+		{"a bare reject", "verdict: reject\n", "plan review", "task plan", "invalid reject-reasons comment 701-1"},
+		{"an approve", "verdict: approve\nfine\n", "plan review", "task plan", "invalid reject-reasons comment 701-1"},
+		{"a reject with a reason to the developer", c.good, "plan review", "developer", "invalid verdict-field comment 701-1"},
+	} {
+		for _, table := range []struct {
+			name string
+			rows []handoff.Row
+		}{{"the table of 14 rows", handoff.Default()}, {"the table of 13 rows", original13()}} {
+			w := newHandoffWorld(t)
+			w.store.files["transitions.tsv"] = transitionBytes(t, table.rows)
+			posted(t, w, planSess, k.body)
+			in := HandoffInput{Task: "T-ab12", Session: planSess, From: k.from, To: k.to, File: "plan.md", Kind: "plan-review", Items: map[string]bool{"reject-reasons": true, "verdict-field": true}}
+			if v, err := w.s.RecordHandoff(context.Background(), in); err != nil || v.Detail != k.want {
+				t.Errorf("%s, %s: %+v, %v; want %s", k.name, table.name, v, err, k.want)
+			}
+			if got := w.store.files["transitions.tsv"]; !bytes.Equal(got, transitionBytes(t, table.rows)) {
+				t.Errorf("%s, %s: the table was rewritten by a read", k.name, table.name)
+			}
 		}
 	}
 }
