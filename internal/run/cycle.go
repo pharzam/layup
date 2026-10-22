@@ -37,7 +37,7 @@ func parseCycle(body string) (cycleLine, bool, error) {
 	switch reason := strings.Join(f[min(3, len(f)):], " "); {
 	case strings.ContainsAny(text, "\r\n"):
 		return cycleLine{}, true, fmt.Errorf("%s: this comment has more than one line", form)
-	case len(f) < 4 || !cycleTask.MatchString(f[1]) || f[2] != "because":
+	case len(f) < 4 || !cycleTask.MatchString(f[1]) || f[2] != "because" || f[3] == "": // f[3] is empty after a second space
 		return cycleLine{}, true, fmt.Errorf("%s", form)
 	case reason == "" || reason == "—":
 		return cycleLine{}, true, fmt.Errorf("%s: the reason is not empty and not —", form)

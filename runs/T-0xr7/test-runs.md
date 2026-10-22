@@ -82,3 +82,27 @@ Start 2026-10-22T18:41:03Z, end 2026-10-22T18:41:22Z.
 - Full integration level: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./...`, output in `/home/layup/.cache/layup-session/T-0xr7-full-integration.txt`. Start 2026-10-22T19:00:37Z, end 2026-10-22T19:04:54Z, exit 0 (21 packages ok).
 - E2e level: `go test -count=1 -tags=e2e ./cmd/layup/`. Start 2026-10-22T19:05:10Z, end 2026-10-22T19:06:41Z, exit 0 (`ok github.com/pharzam/layup/cmd/layup 89.786s`).
 - Lints: adr-lint OK, prd-lint OK, link-lint OK (3165 links), run-discipline-tests 138 passed, nested-checkout-check OK, setup-check OK.
+
+## Round 1, finding 1: a padded reason is a form refusal
+
+Red, before the edit of `internal/run/cycle.go`: `go test -count=1 -run 'TestParseCycle|TestACommandIsJudged' ./internal/run/`
+Start 2026-10-22T19:20:40Z, end 2026-10-22T19:20:42Z, exit 1 (`cycle T-ab12 because  —` and `cycle T-ab12 because  reason` parsed as commands and, at the cap, granted a cycle):
+
+```
+--- FAIL: TestParseCycleReadsTheFormAndRefusesABrokenOne (0.00s)
+    cycle_test.go:62: parseCycle("cycle T-ab12 because  —") = {Task:T-ab12 Reason: —}, true, <nil>; want task "", isCycle true, error with "the form is"
+    cycle_test.go:62: parseCycle("cycle T-ab12 because  reason") = {Task:T-ab12 Reason: reason}, true, <nil>; want task "", isCycle true, error with "the form is"
+--- FAIL: TestACommandIsJudgedByTheFormTheAuthorAndTheIssueInThatOrder (0.00s)
+    cycle_test.go:91: a padded dash: the refusal <nil>; want the item "form"
+    cycle_test.go:94: a padded dash: the grant 1, the position {Pos:11 ...}; want a grant exactly when the command passes, and the wait otherwise
+    cycle_test.go:91: a padded reason: the refusal <nil>; want the item "form"
+    cycle_test.go:94: a padded reason: the grant 1, the position {Pos:11 ...}; want a grant exactly when the command passes, and the wait otherwise
+FAIL
+```
+
+## The limit of the demo archive
+
+`internal/run/testdata/t-am8b.txtar` is a records-view fixture: it feeds `shapeView` and `loopPosition`. The plan comment and its copy (`copies/6345823799-1.md`) are absent, so `PromptFile` is not exercised on it; the delivery of the findings into the developer's prompt is asserted by `TestAGrantOnTheControlIssueIsCopiedAndTheTaskAtTheCapRunsOneMoreAttempt` (integration). Nothing in the archive is edited.
+
+Green, after the edit: unit level exit 0; `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration ./internal/run/ ./internal/records/`, start 2026-10-22T19:21:11Z, end 2026-10-22T19:25:19Z, exit 0 (`ok internal/run 245.265s`, `ok internal/records`).
+E2E after the edit: `go test -count=1 -tags=e2e ./cmd/layup/`, exit 0 (`ok cmd/layup 89.958s`), about 19:26Z.

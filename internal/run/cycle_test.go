@@ -49,6 +49,9 @@ func TestParseCycleReadsTheFormAndRefusesABrokenOne(t *testing.T) {
 		{"cycle T-ab12 because the first\nsecond line", "", true, "more than one line"},
 		{"cycle T-ab12", "", true, "the form is"},
 		{"cycle T-ab12 because —", "", true, "not empty and not"},
+		{"cycle T-ab12 because  —", "", true, "the form is"},
+		{"cycle T-ab12 because  reason", "", true, "the form is"},
+		{"cycle T-ab12 because a reason with  inner spaces", "T-ab12", true, ""},
 		{"cycle T-AB12 because x", "", true, "T-xxxx"},
 		{"cycle because x y", "", true, "T-xxxx"},
 		{"cycles T-ab12 because x", "", false, ""},
@@ -70,6 +73,8 @@ func TestACommandIsJudgedByTheFormTheAuthorAndTheIssueInThatOrder(t *testing.T) 
 		item string // "" for a command that passes
 	}{
 		{"the Operator on the control issue", operatorSays(20, good), ""},
+		{"a padded dash", operatorSays(20, "cycle T-sp01 because  —"), "form"},
+		{"a padded reason", operatorSays(20, "cycle T-sp01 because  reason"), "form"},
 		{"a broken form", operatorSays(20, "cycle T-sp01"), "form"},
 		{"the idea owner only", aCopy(20, "1", ctlIssue, ownerID, "", good), "author"},
 		{"a stranger", aCopy(20, "1", ctlIssue, otherID, "", good), "author"},
