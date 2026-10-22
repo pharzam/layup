@@ -16,7 +16,7 @@ import (
 
 const nextRun = "fedcba9876543210"
 
-// readClock counts the waits of the lease (Take reads every readEvery) and nothing else.
+// readClock counts the sleeps of readEvery (10 s): the lease wait of Take, and the waits of watch and root-push, which have the same length and make no sleep in the restarts below.
 type readClock struct {
 	Clock
 	reads *atomic.Int32
@@ -134,19 +134,26 @@ func TestARestartThatLostTheLeaseToAnotherRunPublishesNoRelease(t *testing.T) {
 	}
 }
 
+// refuseTwice installs a pre-receive hook that refuses the first two pushes whose head subject starts with prefix and lets every other push pass, and gives the file that counts them.
+func refuseTwice(t *testing.T, w *world, prefix string) string {
+	t.Helper()
+	count := filepath.Join(t.TempDir(), "count")
+	hook := "#!/bin/sh\nwhile read old new ref; do\ncase \"$(git log -1 --format=%s \"$new\")\" in \"" + prefix + "\"*) ;; *) continue ;; esac\n" +
+		"echo x >> " + count + "\n[ \"$(wc -l < " + count + ")\" -le 2 ] && exit 1\ndone\nexit 0\n"
+	os.MkdirAll(filepath.Join(w.bare, "hooks"), 0o755)
+	if err := os.WriteFile(filepath.Join(w.bare, "hooks", "pre-receive"), []byte(hook), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	return count
+}
+
 // Two refusals of the release while the row names this run are a loss too, and no third push is tried, though it would succeed (the hook lets the third pass).
 func TestTwoRefusedReleasesMakeNoThirdAttempt(t *testing.T) {
 	t.Parallel()
 	w := newWorld(t)
 	w.fake.failOpen = 2
 	w.start(w.config("0.1.0-dev"))
-	count := filepath.Join(t.TempDir(), "count")
-	hook := "#!/bin/sh\nwhile read old new ref; do\n[ \"$(git log -1 --format=%s \"$new\")\" = \"lease: released\" ] || continue\n" +
-		"echo x >> " + count + "\n[ \"$(wc -l < " + count + ")\" -le 2 ] && exit 1\ndone\nexit 0\n"
-	os.MkdirAll(filepath.Join(w.bare, "hooks"), 0o755)
-	if err := os.WriteFile(filepath.Join(w.bare, "hooks", "pre-receive"), []byte(hook), 0o755); err != nil {
-		t.Fatal(err)
-	}
+	count := refuseTwice(t, w, "lease: released")
 	cfg := w.config("0.1.0-dev")
 	cfg.RunID = nextRun
 	rows := Restart(context.Background(), cfg)
@@ -155,6 +162,23 @@ func TestTwoRefusedReleasesMakeNoThirdAttempt(t *testing.T) {
 	if last.Name != "phase" || last.Result != "fail" || !strings.Contains(last.Detail, "the lease names the run "+nextRun) || strings.Count(string(data), "x") != 2 ||
 		!strings.Contains(leaseText(t, w), "\theld\n") || strings.Contains(recordsLog(t, w), "lease: released") {
 		t.Errorf("the last row %+v, %d refused pushes, the lease:\n%s\nwant phase fail naming the loss, 2 pushes, held", last, strings.Count(string(data), "x"), leaseText(t, w))
+	}
+}
+
+// Round 1, F1: a loss found by a fenced write outside r.write (here the probe's, through Sessions) is known too, so the end tries no release, though the third push would succeed.
+func TestALossFoundByAProbeWriteIsKnownAtTheEnd(t *testing.T) {
+	t.Parallel()
+	w := newWorld(t)
+	allDone(t, "Start", w.start(w.config("0.1.0-dev")), "forge", "plan", "baseline", "root-push", "read-back", "records", "issues", "watch", "lease")
+	count := refuseTwice(t, w, "layup run: the probe ")
+	cfg := w.config("0.1.0-dev")
+	cfg.RunID = nextRun
+	rows := Restart(context.Background(), cfg)
+	last := rows[len(rows)-1]
+	data, _ := os.ReadFile(count)
+	if last.Name != "probe" || last.Result != "fail" || !strings.Contains(last.Detail, "the lease names the run "+nextRun) || strings.Count(string(data), "x") != 2 ||
+		!strings.Contains(leaseText(t, w), "\theld\n") || strings.Contains(recordsLog(t, w), "lease: released") {
+		t.Errorf("the last row %+v, %d refused pushes, the lease:\n%s\nlog:\n%s\nwant probe fail naming the loss, 2 pushes, held, no release", last, strings.Count(string(data), "x"), leaseText(t, w), recordsLog(t, w))
 	}
 }
 

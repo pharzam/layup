@@ -198,7 +198,7 @@ func (r *state) scaffoldPushStep(ctx context.Context) Step {
 			}
 		},
 		commit: func(files map[string][]byte) error {
-			return Fenced(ctx, r.store, r.cfg.RunID, func(ctx context.Context) error { return r.store.Commit(ctx, files, appliesMessage) })
+			return r.fenced(ctx, func(ctx context.Context) error { return r.store.Commit(ctx, files, appliesMessage) })
 		},
 	}.do()
 }

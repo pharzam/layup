@@ -16,6 +16,7 @@ type endStore struct {
 	mu    sync.Mutex
 	store // the row, the messages that landed, the refusals
 	tried int
+	land  bool // a heartbeat lands although its context has ended: a beat in flight that completes
 	on    func(ctx context.Context, message string) error
 }
 
@@ -35,7 +36,7 @@ func (s *endStore) WriteLease(ctx context.Context, r LeaseRow, message string) e
 			return err
 		}
 	}
-	if err := ctx.Err(); err != nil {
+	if err := ctx.Err(); err != nil && !(s.land && strings.HasPrefix(message, "lease: heartbeat")) {
 		return err
 	}
 	s.mu.Lock()
@@ -160,7 +161,7 @@ func TestTheEndTriesAgainAfterAReleaseOfThePhaseThatFailed(t *testing.T) {
 func TestTheHeartbeatEndsBeforeTheRelease(t *testing.T) {
 	inFlight, proceed := make(chan struct{}), make(chan struct{})
 	var once, unblock sync.Once
-	s := &endStore{store: store{row: held(runB, 0)}, on: func(_ context.Context, m string) error {
+	s := &endStore{store: store{row: held(runB, 0)}, land: true, on: func(_ context.Context, m string) error {
 		if strings.HasPrefix(m, "lease: heartbeat") {
 			once.Do(func() { close(inFlight); <-proceed })
 		}
@@ -181,7 +182,7 @@ func TestTheHeartbeatEndsBeforeTheRelease(t *testing.T) {
 	<-finished
 	time.Sleep(20 * time.Millisecond)
 	row, log, _ := s.seen()
-	if row.State != "released" || len(log) == 0 || log[len(log)-1] != "lease: released" || r.lease.State != "released" {
+	if row.State != "released" || len(log) < 2 || log[0] != "lease: heartbeat 1" || log[len(log)-1] != "lease: released" || r.lease.State != "released" {
 		t.Errorf("the lease %+v, the last commits %q; want released, and the release the last write", row, log)
 	}
 }

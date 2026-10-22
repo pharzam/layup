@@ -70,6 +70,7 @@ type Sessions struct {
 	Bot           int64  // the numeric ID of the App's bot, to tell its own status (row 66f)
 	Web           string // the web address of the forge, for a link in a pull request's body (row 66g)
 	Prices        [][]string
+	Lost          func(error) // told of each error of a fenced write or of the lease read, to note a loss (task T-yngf); nil: none
 	newID         func() (string, error)
 	random        func([]byte) (int, error) // the bytes of a drawn task ID; crypto/rand when nil
 	sweep         func(host, target string) error
@@ -209,7 +210,15 @@ func (s *Sessions) StartAttempt(ctx context.Context, task, base string) (int, er
 }
 
 func (s *Sessions) commit(ctx context.Context, files map[string][]byte, message string) error {
-	return Fenced(ctx, s.Store, s.RunID, func(ctx context.Context) error { return s.Store.Commit(ctx, files, message) })
+	err := Fenced(ctx, s.Store, s.RunID, func(ctx context.Context) error { return s.Store.Commit(ctx, files, message) })
+	s.lost(err)
+	return err
+}
+
+func (s *Sessions) lost(err error) {
+	if s.Lost != nil {
+		s.Lost(err)
+	}
 }
 
 // TaskSession starts a task session through the one call of internal/session

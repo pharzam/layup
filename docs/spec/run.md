@@ -297,10 +297,11 @@ As `architecture.md` §2, with these values decided here:
   releases it through Fencing, on a context that the cancellation of the steps
   does not cancel and that ends after one minute. `phase` releases the lease
   itself, so a lease already `released` is not released again, and a release of
-  `phase` that failed is tried once more here. A loss is known once a beat or a
-  records write has had a `LostError`, which is also two refusals while the row
-  still names this run; after it the run tries no release. An error of the
-  release, a `LostError` found here too, is named after the failure of the last
+  `phase` that failed is tried once more here. A loss is known once a beat, a
+  fenced records write of the run or of its sessions, or the read that fences a
+  post of the forge, has had a `LostError`, which is also two refusals while the
+  row still names this run; after it the run tries no release. An error of the
+  release, a `LostError` found here too, is named once after the failure of the last
   row, `detail` `…; the lease: …`, and its result stays `fail`; a last row `done`
   becomes `fail` with `the lease: …`, as does an error of the heartbeat. An
   error of the heartbeat that is not a loss does not stop the release. The

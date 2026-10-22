@@ -615,7 +615,12 @@ func (r *state) writeStart(ctx context.Context, message string) error {
 
 // write makes a records commit through fencing.
 func (r *state) write(ctx context.Context, files map[string][]byte, message string) error {
-	err := Fenced(ctx, r.store, r.cfg.RunID, func(ctx context.Context) error { return r.store.commit(ctx, files, message, "") })
+	return r.fenced(ctx, func(ctx context.Context) error { return r.store.commit(ctx, files, message, "") })
+}
+
+// fenced is Fenced for this run's records writes: a loss it finds is remembered, so the end releases nothing after it (endLease; task T-yngf).
+func (r *state) fenced(ctx context.Context, write func(context.Context) error) error {
+	err := Fenced(ctx, r.store, r.cfg.RunID, write)
 	r.noteLoss(err)
 	return err
 }
