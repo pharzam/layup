@@ -1,7 +1,11 @@
 package run
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"errors"
 	"maps"
+	"reflect"
 	"slices"
 	"strconv"
 	"strings"
@@ -851,10 +855,147 @@ func TestReviewerLegacyBareRejectKeepsRecordedPair(t *testing.T) {
 	}
 }
 
-// loop.md, The findings of a refused rule path (task T-dtw6, #491).
+// loop.md, An uncertain end gets one new attempt, the class rule path (task T-dtw6, #491). Defect tests fail at db71ef5; the regression controls
+// (the ends that stay stops, the question precedence) already pass there, and pin the boundary of the class.
+
+// rulePathEnd ends the session done with the status given and the one refusal rule-path of the payload sha.
+func rulePathEnd(b *viewBuilder, id, attempt, status, sha string) *viewBuilder {
+	return artifactEnd(b, id, attempt, status, "rule-path "+sha)
+}
+
+// Defect test: a done session with the status completed and one refusal, rule-path, is an eligible end of each of the four stages.
+func TestARefusedRulePathIsAnEligibleEndOfEachStage(t *testing.T) {
+	for _, st := range []struct {
+		name string
+		n    int
+		id   string
+		next position
+	}{{"the plan", 2, "S-p1", posPlan}, {"the plan review", 5, "S-r1", posReview}, {"the developer", 8, "S-d1", posDeveloper}, {"the verifier", 13, "S-v1", posDeveloper}} {
+		b := rulePathEnd(upTo("specification", st.n), st.id, "1", "completed", sha64)
+		if got := b.at(); got.Pos != posRetry || got.Attempt != 1 || got.Base != shB || got.Session != st.id {
+			t.Errorf("%s refused for a rule path: %+v; want the retry at attempt 1, base %s, of %s", st.name, got, shB[:7], st.id)
+		}
+		if got := b.ev("attempt", "2", "", shB, "", "").at(); got.Pos != st.next || got.Attempt != 2 {
+			t.Errorf("%s refused for a rule path, attempt 2 recorded: %+v; want position %d in attempt 2", st.name, got, st.next)
+		}
+	}
+}
+
+// Regression controls (green before and after): each differs from the retry in one fact only, and stays a stop with nothing pending.
+func TestARefusalOfAnotherKindOrStatusIsNoRulePathRetry(t *testing.T) {
+	asked := func(role string, reasons ...string) *viewBuilder {
+		return artifactEnd(upTo("specification", 2).end("S-p1", "1", "done", "needs_context").start("S-a1", role, "1", shB), "S-a1", "1", "completed", reasons...)
+	}
+	rp := "rule-path " + sha64
+	for _, c := range []struct {
+		name string
+		b    *viewBuilder
+	}{
+		{"rule-paths with no payload", artifactEnd(upTo("specification", 5), "S-r1", "1", "completed", "rule-paths")},
+		{"rule-paths with a payload", artifactEnd(upTo("specification", 5), "S-r1", "1", "completed", "rule-paths "+sha64)},
+		{"a reason that extends rule-path", artifactEnd(upTo("specification", 5), "S-r1", "1", "completed", "rule-pathx "+sha64)},
+		{"workflow", artifactEnd(upTo("specification", 5), "S-r1", "1", "completed", "workflow "+sha64)},
+		{"base", artifactEnd(upTo("specification", 5), "S-r1", "1", "completed", "base")},
+		{"push-refused", artifactEnd(upTo("specification", 5), "S-r1", "1", "completed", "push-refused")},
+		{"rule-path, then artifact", artifactEnd(upTo("specification", 5), "S-r1", "1", "completed", rp, "artifact")},
+		{"artifact, then rule-path", artifactEnd(upTo("specification", 5), "S-r1", "1", "completed", "artifact", rp)},
+		{"two rule-path refusals", artifactEnd(upTo("specification", 5), "S-r1", "1", "completed", rp, rp)},
+		{"a crash", upTo("specification", 5).end("S-r1", "1", "crash", "").ev("refused", "1", "S-r1", "", "", rp)},
+		{"a wall", upTo("specification", 5).end("S-r1", "1", "wall", "").ev("refused", "1", "S-r1", "", "", rp)},
+		{"the status blocked", rulePathEnd(upTo("specification", 5), "S-r1", "1", "blocked", sha64)},
+		{"the status with no kept result", rulePathEnd(upTo("specification", 5), "S-r1", "1", "", sha64)},
+		{"the close-out session", rulePathEnd(upTo("specification", 15).start("S-c1", stepRole("close-out"), "1", shH), "S-c1", "1", "completed", sha64)},
+		{"an answer session of the plan role", asked(rolePlan, rp)},
+		{"an answer session of the developer role", asked(roleSpec, rp)},
+	} {
+		if p := retryPending(c.b); p != "" {
+			t.Errorf("%s: %q is pending; want no eligible end", c.name, p)
+		}
+		if got := c.b.at(); got.Pos == posRetry {
+			t.Errorf("%s: the retry position; want none", c.name)
+		}
+	}
+	b := rulePathEnd(upTo("specification", 2), "S-p1", "1", "needs_context", sha64)
+	if got := b.at(); got.Pos != posQuestion || retryPending(b) != "" {
+		t.Errorf("a plan refused for a rule path that asks: %d %q; want the question and no retry", got.Pos, got.Msg)
+	}
+}
+
+// Defect test: the three classes of one stage each have their own retry, in any order (four attempts); a repeated class stops; another stage
+// has its own retry of the class.
+func TestARulePathRefusalHasItsOwnRetryPerStage(t *testing.T) {
+	end := func(b *viewBuilder, id, n, class string) *viewBuilder {
+		switch class {
+		case "artifact":
+			return artifactEnd(b, id, n, "completed", "artifact")
+		case "rule-path":
+			return rulePathEnd(b, id, n, "completed", sha64)
+		}
+		return b.end(id, n, class, "")
+	}
+	classes := []string{"crash", "artifact", "rule-path"}
+	for _, p := range [][3]int{{0, 1, 2}, {0, 2, 1}, {1, 0, 2}, {1, 2, 0}, {2, 0, 1}, {2, 1, 0}} {
+		b := upTo("specification", 5)
+		for i, k := range p {
+			id, n := "S-r"+strconv.Itoa(i+1), strconv.Itoa(i+1)
+			if i > 0 {
+				b.ev("attempt", n, "", shB, "", "").start(id, roleQA, n, shB)
+			}
+			end(b, id, n, classes[k])
+		}
+		if got := b.at(); got.Pos != posRetry || got.Attempt != 3 {
+			t.Fatalf("%v: %+v; want the retry of the third end", p, got)
+		}
+		if got := b.ev("attempt", "4", "", shB, "", "").at(); got.Pos != posReview || got.Attempt != 4 {
+			t.Errorf("%v, attempt 4 recorded: %+v; want the plan review of attempt 4", p, got)
+		}
+		b.start("S-r4", roleQA, "4", shB)
+		if got := end(b, "S-r4", "4", "rule-path").at(); got.Pos != posStop || !strings.Contains(got.Msg, "S-r4 was refused (rule-path") {
+			t.Errorf("%v, a fourth end: %d %q; want the stop that names the refusal", p, got.Pos, got.Msg)
+		}
+	}
+	d := rulePathEnd(upTo("specification", 5), "S-r1", "1", "completed", sha64).ev("attempt", "2", "", shB, "", "").start("S-r2", roleQA, "2", shB).end("S-r2", "2", "done", "completed").
+		ev("handoff", "2", "S-r2", "", "", "valid comment 15-1").start("S-d2", roleSpec, "2", shB)
+	if got := rulePathEnd(d, "S-d2", "2", "completed", sha64).at(); got.Pos != posRetry || got.Session != "S-d2" {
+		t.Errorf("a developer refused for a rule path after a retried plan review: %+v; want the retry", got)
+	}
+}
+
+// The demo's records of T-am8b (#491): the plan, the plan review and the developer of attempt 1 at d03c865 (rows 1-10), the developer ended done with
+// the status completed and the push refused for rule-path. These helpers hold them for the tests below.
+const demoBase = "d03c8650303fbdff49986ef5478ed53d11219964"
 
 const demoRegister = "pattern\texception\tsource\n.github/\t—\tbaseline\n.githooks/\t—\tbaseline\nAGENTS.md\t—\tbaseline\ndocs/engineering-discipline.md\t—\tbaseline\n" +
 	"docs/issue-workflow.md\t—\tbaseline\ndocs/ci/\t—\tbaseline\ndocs/setup/\t—\tarchitecture\ndocs/guardrails.md\tadded lines in section 2\tbaseline\n"
+
+// demoPayload is a diff of 13 headers, the shape of the demo's payload c844bf5e…: two of them match the register.
+func demoPayload() []byte {
+	var b strings.Builder
+	for _, p := range []string{"docs/adr/0031-x.md", "docs/engineering-discipline.md", "docs/guardrails.md", "docs/spec/a.md", "docs/spec/b.md", "docs/spec/c.md", "docs/spec/d.md",
+		"docs/spec/e.md", "docs/spec/f.md", "docs/spec/g.md", "docs/tasks/T-am8b.md", "docs/tasks/backlog.md", "docs/tasks/completed.md"} {
+		b.WriteString("diff --git a/" + p + " b/" + p + "\nindex 1111111..2222222 100644\n--- a/" + p + "\n+++ b/" + p + "\n@@ -1 +1 @@\n-old\n+new\n")
+	}
+	return []byte(b.String())
+}
+
+func shaOf(b []byte) string { s := sha256.Sum256(b); return hex.EncodeToString(s[:]) }
+
+func demoView(sha string) *viewBuilder {
+	b := newView("architecture")
+	b.ev("attempt", "1", "", demoBase, "", "").start("S-7b0b85b1", rolePlan, "1", demoBase).end("S-7b0b85b1", "1", "done", "completed").ev("handoff", "1", "S-7b0b85b1", "", "", "valid comment 11-1").
+		start("S-cbc711fa", roleQA, "1", demoBase).end("S-cbc711fa", "1", "done", "completed").ev("handoff", "1", "S-cbc711fa", "", "", "valid comment 12-1").
+		start("S-06aeffc9", stepRole(devStep("architecture")), "1", demoBase)
+	rulePathEnd(b, "S-06aeffc9", "1", "completed", sha)
+	b.v.Task = "T-am8b"
+	for _, s := range b.v.Sessions {
+		s[sessionTask] = "T-am8b"
+	}
+	return b
+}
+
+func readFrom(files map[string][]byte) func(string) ([]byte, error) {
+	return func(p string) ([]byte, error) { return files[p], nil }
+}
 
 func mustRegister(t *testing.T, text string) []rules.Entry {
 	t.Helper()
@@ -891,5 +1032,107 @@ func TestRulePathFindingsKeepTheRulePathsOfThePayload(t *testing.T) {
 	}
 	if !slices.Contains(files, "docs/tasks/T-x.md") {
 		t.Errorf("the findings of a register that lists docs/tasks/ name %q; want docs/tasks/T-x.md among them", files)
+	}
+}
+
+// Defect test (plan review condition 3): the demo's records of T-am8b give attempt 2 at d03c865, and the RENDERED architecture prompt of its developer
+// names docs/engineering-discipline.md and docs/guardrails.md and no ordinary path; the plan and its review are not run again; the old rows and the
+// payload bytes are not changed ("no repair").
+func TestTheDemoRecordsOfTAm8bGiveAttempt2AndTheRenderedPromptNamesThePaths(t *testing.T) {
+	payload := demoPayload()
+	sha := shaOf(payload)
+	b := demoView(sha)
+	if len(b.v.Events) != 10 {
+		t.Fatalf("%d rows; want the demo's 10", len(b.v.Events))
+	}
+	rows, kept := slices.Clone(b.v.Events), slices.Clone(payload)
+	if got := b.at(); got.Pos != posRetry || got.Attempt != 1 || got.Base != demoBase || got.Session != "S-06aeffc9" {
+		t.Fatalf("the demo's records: %+v; want the retry of S-06aeffc9 at attempt 1, base %s", got, demoBase[:7])
+	}
+	if rep, pending := retries(b.v); len(rep) != 0 || pending != "S-06aeffc9" {
+		t.Errorf("retries = %v, %q; want S-06aeffc9 pending", rep, pending)
+	}
+	b.ev("attempt", "2", "", demoBase, "", "")
+	if got := b.at(); got.Pos != posDeveloper || got.Attempt != 2 || got.Base != demoBase {
+		t.Fatalf("after attempt 2: %+v; want the developer of attempt 2 at %s, with no plan or review run again", got, demoBase[:7])
+	}
+	found, err := rulePathGuidance(b.v, 2, mustRegister(t, demoRegister), readFrom(map[string][]byte{"payloads/" + sha: payload}))
+	if err != nil || len(found) != 2 || found[0].File != "docs/engineering-discipline.md" || found[1].File != "docs/guardrails.md" {
+		t.Fatalf("rulePathGuidance = %+v, %v; want the two paths of the register", found, err)
+	}
+	src := stepSrc(t, "shape-architecture", "architecture")
+	src.Rules, src.Findings = mustRegister(t, demoRegister), found
+	c, err := buildPrompt(src)
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(c.Text(rootDir))
+	for _, want := range []string{"\n- rule-path docs/engineering-discipline.md: ", "\n- rule-path docs/guardrails.md: "} {
+		if !strings.Contains(text, want) {
+			t.Errorf("the rendered architecture prompt does not hold %q", want)
+		}
+	}
+	if strings.Contains(text, "- rule-path docs/spec/a.md") || strings.Contains(text, "T-am8b.md: ") {
+		t.Error("the rendered prompt names an ordinary path of the payload")
+	}
+	if !reflect.DeepEqual(rows, b.v.Events[:10]) || !reflect.DeepEqual(kept, payload) {
+		t.Error("the rows of the demo or the payload bytes changed")
+	}
+}
+
+// Defect test: the guidance of a refusal is kept across consecutive replacements of other classes, and ends where an attempt that no retry replaced stands.
+func TestTheRulePathGuidanceSurvivesConsecutiveReplacementsOfOtherClasses(t *testing.T) {
+	payload := demoPayload()
+	files := readFrom(map[string][]byte{"payloads/" + shaOf(payload): payload})
+	reg := mustRegister(t, demoRegister)
+	b := rulePathEnd(upTo("specification", 8), "S-d1", "1", "completed", shaOf(payload)).ev("attempt", "2", "", shB, "", "").start("S-d2", roleSpec, "2", shB).end("S-d2", "2", "crash", "").ev("attempt", "3", "", shB, "", "")
+	for _, attempt := range []int{2, 3} {
+		if got, err := rulePathGuidance(b.v, attempt, reg, files); err != nil || len(got) != 2 {
+			t.Errorf("attempt %d when a crash replaced attempt 2 as well: %+v, %v; want the two findings", attempt, got, err)
+		}
+	}
+	// Attempt 2 stands (a material round of its own): the guidance of attempt 1 does not reach attempt 3.
+	c := rulePathEnd(upTo("specification", 8), "S-d1", "1", "completed", shaOf(payload)).ev("attempt", "2", "", shB, "", "").devRound("2", shG).verdict("2", shG, "material", 1).ev("attempt", "3", "", shB, "", "")
+	if got, err := rulePathGuidance(c.v, 3, reg, files); err != nil || len(got) != 0 {
+		t.Errorf("attempt 3 after a standing attempt 2: %+v, %v; want none", got, err)
+	}
+}
+
+// unreadable is a read that fails.
+func unreadable(p string) ([]byte, error) { return nil, errors.New("the read failed") }
+
+// Defect test (plan review condition 2): the records boundary requires the documented detail, an existing payload and a readable diff; the error
+// names payloads/<sha>.
+func TestTheRefusedPayloadIsReadAtTheRecordsBoundaryOrTheRunErrs(t *testing.T) {
+	good := demoPayload()
+	sha := shaOf(good)
+	reg := mustRegister(t, demoRegister)
+	for _, c := range []struct {
+		name, detail string
+		files        map[string][]byte
+		want         string
+	}{
+		{"a missing payload", "rule-path " + sha, nil, "payloads/" + sha},
+		{"an empty payload", "rule-path " + sha, map[string][]byte{"payloads/" + sha: {}}, "payloads/" + sha},
+		{"a payload with no header", "rule-path " + sha, map[string][]byte{"payloads/" + sha: []byte("index 1..2\n")}, "payloads/" + sha},
+		{"a detail with no sha", "rule-path", nil, "rule-path"},
+		{"a short sha", "rule-path " + sha[:63], nil, "rule-path " + sha[:63]},
+		{"an upper-case sha", "rule-path " + strings.ToUpper(sha), nil, "rule-path"},
+		{"a detail with a second word", "rule-path " + sha + " docs/x.md", nil, "rule-path"},
+	} {
+		b := upTo("specification", 8)
+		artifactEnd(b, "S-d1", "1", "completed", c.detail)
+		b.ev("attempt", "2", "", shB, "", "")
+		if got, err := rulePathGuidance(b.v, 2, reg, readFrom(c.files)); err == nil || !strings.Contains(err.Error(), c.want) {
+			t.Errorf("%s: %+v, %v; want an error that holds %q", c.name, got, err, c.want)
+		}
+	}
+}
+
+func TestAnUnreadablePayloadIsTheRunsOwnError(t *testing.T) {
+	sha := shaOf(demoPayload())
+	b := artifactEnd(upTo("specification", 8), "S-d1", "1", "completed", "rule-path "+sha).ev("attempt", "2", "", shB, "", "")
+	if got, err := rulePathGuidance(b.v, 2, mustRegister(t, demoRegister), unreadable); err == nil || !strings.Contains(err.Error(), "payloads/"+sha) {
+		t.Errorf("an unreadable payload: %+v, %v; want an error that holds payloads/%s", got, err, sha)
 	}
 }

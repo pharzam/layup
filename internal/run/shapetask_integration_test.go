@@ -33,6 +33,7 @@ comment() {
   if [ -n "$art" ]; then printf 'artifact\t1\tresult/%s\t%s\t—\n' "$1" "$sum" >> ../result/result.tsv; fi # the demo's refusal (task T-0sj8)
 }
 artifacts() {
+  if [ -n "$rp" ]; then echo "changed $(date +%s%N)" >> AGENTS.md; fi
   git add -A && git commit -qm work
   printf "$res_head" > ../result/result.tsv; n=0
   for p in "$@"; do [ -e "$p" ] || continue; n=$((n+1)); printf 'artifact\t%s\t%s\t%s\t—\n' $n "$p" "$(sha256sum "$p" | cut -d' ' -f1)" >> ../result/result.tsv; done
@@ -67,7 +68,9 @@ case "$line" in "Prompt file"*) keep
   for w in $(cat $ctl/crash-$step 2>/dev/null); do [ $w = $n ] && { echo "the harness failed" >&2; exit 3; }; done
   for w in $(cat $ctl/noresult-$step 2>/dev/null); do [ $w = $n ] && exit 0; done
   # artifact-<step> holds the numbers of the calls whose comment file is also named by an artifact row, which the check refuses (task T-0sj8, #478)
-  art=; for w in $(cat $ctl/artifact-$step 2>/dev/null); do [ $w = $n ] && art=1; done ;; esac
+  art=; for w in $(cat $ctl/artifact-$step 2>/dev/null); do [ $w = $n ] && art=1; done
+  # rulepath-<step> holds the numbers of the calls whose commit also changes AGENTS.md, a rule path, which the push check refuses (task T-dtw6, #491)
+  rp=; for w in $(cat $ctl/rulepath-$step 2>/dev/null); do [ $w = $n ] && rp=1; done ;; esac
 case $step in
 "You write the options"*|"You rewrite the options"*) # the options sessions of Shape: the file options-<n> of ctl/ is the n-th output
   out=$(sed -n 's/^The output file: //p')
