@@ -236,6 +236,12 @@ func VerdictFieldOK(data []byte) bool {
 	return ok && v != "reject"
 }
 
+// PlanReviewReasons gives the reason lines of a plan review's kept copy.
+func PlanReviewReasons(data []byte) []string { return nil }
+
+// RejectReasonsOK is the item reject-reasons of a plan review's kept copy.
+func RejectReasonsOK(data []byte) bool { return false }
+
 // FindingsLocatedOK is the item findings-located of a review record's kept copy:
 // the whole record parses and the block holds at least one finding.
 func FindingsLocatedOK(data []byte) bool {

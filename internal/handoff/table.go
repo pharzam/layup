@@ -77,6 +77,9 @@ func Default() []Row {
 	}
 }
 
+// InForce gives the rows that a read of the table checks and applies.
+func InForce(rows []Row) []Row { return slices.Clone(rows) }
+
 // WriteTable writes the table by Schema (the block transitions).
 func WriteTable(w io.Writer, rows []Row) error {
 	out := make([][]string, len(rows))

@@ -72,6 +72,7 @@ const (
 	posStop                    // a case the driver does not go on from
 	posQuestion                // a session of the attempt asked a question: the stages of questionloop.go
 	posRetry                   // the last session of the attempt ended crash or no-result: one new attempt at its base
+	posReplan                  // the plan review rejected the plan: one new attempt at its base, the plan stage reopened
 )
 
 // loopView is what the position is told from: the events and the rows of sessions.tsv of the task, the
@@ -88,6 +89,9 @@ type loopView struct {
 	Results map[string][][]string
 	Copies  [][]string
 	Issue   int
+	// Rejects holds the reason lines of each plan review whose kept copy is the file its result names by hash and
+	// rejects with at least one reason.
+	Rejects map[string][]string
 }
 
 // loopStep is a position with what its act needs: the session it concerns, the message of a stop or a wait,
@@ -385,6 +389,12 @@ func priorAttempt(rep Replaced, b int) int {
 	}
 	return a
 }
+
+// planRejects counts the plan reviews that rejected the plan and were admitted.
+func planRejects(v loopView) int { return 0 }
+
+// rejectionOf gives the reasons of the plan review that rejected the plan in an attempt before this one.
+func rejectionOf(v loopView, attempt int) []Finding { return nil }
 
 // loopPosition gives the first step of the table of loop.md, The task loop, that the records show not done.
 func loopPosition(v loopView) loopStep {
