@@ -42,5 +42,5 @@ ADR-0007, recorded, not budgeted. Tokens as the harness reported them; build, fi
 | Review round 1 | reasoning | GPT-6 Astra (Codex) | xhigh | 146,234 | 2026-10-22T14:48:43Z to 14:56:00Z |
 | Fix of M1 | execution | Claude Sonnet 5.5 (subagent) | not recorded | not kept | 2026-10-22T14:57:12Z to 14:58:34Z (first to last commit) |
 | Review round 2 | reasoning | GPT-6 Astra (Codex) | xhigh | 187,596 | 2026-10-22T15:00:08Z to 15:12:16Z |
-| Close-out | execution | Claude Sonnet 5.5 (subagent) | not recorded | not kept | not kept; its commit follows f2d847f at about 2026-10-22T15:13:24Z |
+| Close-out | execution | Claude Sonnet 5.5 (subagent) | not recorded | not kept | not kept; its commit 6020c52 at 2026-10-22T15:14:12Z |
 | **Total** | | | | 460,220 reported (the three numeric entries); the complete total is not reported | not reported |
