@@ -171,7 +171,7 @@ func validHandoff(detail string) (valid, comment bool) {
 // the new plan is its review.
 //
 // A plan review that rejected the plan is a valid handoff to the planner (task T-t94t); it is no review of an amendment, and rejecting names the sessions
-// whose kept copy rejects (rejectingReviews).
+// whose kept copy rejects or cannot be read (rejectingReviews).
 func amendmentPending(events, sessions [][]string, rejecting map[string]bool) bool {
 	role := map[string]string{}
 	for _, s := range sessions {
@@ -322,7 +322,9 @@ func (s *Sessions) freeze(ctx context.Context, in HandoffInput) (freezing, error
 	return freezing{redGreen: sameAsFrozen(cur, in.Freeze.Tests, hashes)}, nil
 }
 
-// rejectingReviews names the sessions of the task of the plan-review role whose kept copy rejects the plan with a reason (rejectReasons).
+// rejectingReviews names the sessions of the task of the plan-review role that are no approval: those whose kept copy rejects the plan, and those
+// whose verdict cannot be established from the kept copy (absent, other bytes than the result names, no review form). An unreadable review is no
+// approval of an amendment (task T-t94t, round 1).
 func (s *Sessions) rejectingReviews(ctx context.Context, task string, sessions [][]string) (map[string]bool, error) {
 	out := map[string]bool{}
 	for _, r := range sessions {
@@ -333,9 +335,11 @@ func (s *Sessions) rejectingReviews(ctx context.Context, task string, sessions [
 		if err != nil {
 			return nil, err
 		}
-		if _, ok, err := s.rejectReasons(ctx, task, r[sessionID], rows); err != nil {
+		review, verdict, _, err := s.readPlanReview(ctx, task, r[sessionID], rows)
+		if err != nil {
 			return nil, err
-		} else if ok {
+		}
+		if review && (verdict == "" || verdict == "reject") {
 			out[r[sessionID]] = true
 		}
 	}

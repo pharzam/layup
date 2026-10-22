@@ -93,6 +93,10 @@ type loopView struct {
 	// Rejects holds the reason lines of each plan review whose kept copy is the file its result names by hash and
 	// rejects with at least one reason.
 	Rejects map[string][]string
+	// Unread holds the plan reviews that ended completed whose verdict cannot be established from the kept copy (absent, other bytes than the result
+	// names by hash, or no plan review form); Verdicts holds the verdict word of each plan review whose kept copy is read.
+	Unread   map[string]bool
+	Verdicts map[string]string
 }
 
 // loopStep is a position with what its act needs: the session it concerns, the message of a stop or a wait,
@@ -534,8 +538,15 @@ func loopPosition(v loopView) loopStep {
 		step, pair string
 		run, end   position
 	}{{plans, "the plan", "task plan → plan review", posPlan, posPlanFinish}, {reviews, "the plan review", "plan review → developer", posReview, posReviewFinish}} {
-		st, id, msg := v.stage(c.ids, c.step, c.pair)
+		pair := c.pair
+		if c.end == posReviewFinish && len(c.ids) > 0 && v.Verdicts[c.ids[len(c.ids)-1]] == "reject" {
+			pair = "plan review → task plan" // a reject is checked on the pair to the planner
+		}
+		st, id, msg := v.stage(c.ids, c.step, pair)
 		step.Session = id
+		if c.end == posReviewFinish && st == stDone && v.Unread[id] {
+			return stop(fmt.Sprintf("%s: the plan review %s cannot be read from its kept copy", v.Task, id))
+		}
 		if c.end == posReviewFinish {
 			switch _, rejected := v.rejectOf(id, rep); {
 			case st == stStop && v.legacyRejectOf(id, rep): // an earlier binary's invalid verdict-field of a reject: its handoff is recorded again
@@ -631,14 +642,19 @@ func loopPosition(v loopView) loopStep {
 	return step
 }
 
-// rejectReasons gives the reasons of the plan review of a session when its kept copy is the file that its result names by hash and rejects with at
-// least one reason (RejectReasonsOK); a copy that the store lacks, or whose bytes are not the named ones, gives none.
-func (s *Sessions) rejectReasons(ctx context.Context, task, id string, result [][]string) ([]string, bool, error) {
-	data, ok, err := s.keptComment(ctx, task, id, PlanReviewFile, result)
-	if err != nil || !ok || !RejectReasonsOK(data) {
-		return nil, false, err
+// readPlanReview reads the plan review of a session from its result: review is whether the result names a comment file plan-review.md (a verifier's
+// does not), and verdict is its verdict word when the kept copy is the file the result names by hash and has the plan review form, else "" (the
+// review is unread: the copy is absent, of other bytes, or no review). data are the bytes read.
+func (s *Sessions) readPlanReview(ctx context.Context, task, id string, result [][]string) (review bool, verdict string, data []byte, err error) {
+	if !slices.ContainsFunc(result, func(r []string) bool { return r[0] == "comment" && r[2] == "result/"+PlanReviewFile }) {
+		return false, "", nil, nil
 	}
-	return PlanReviewReasons(data), true, nil
+	data, ok, err := s.keptComment(ctx, task, id, PlanReviewFile, result)
+	if err != nil || !ok {
+		return true, "", nil, err
+	}
+	verdict, _ = ParsePlanReview(data)
+	return true, verdict, data, nil
 }
 
 // shapeView reads the records that the position is told from.
@@ -647,7 +663,7 @@ func (s *Sessions) shapeView(ctx context.Context, task string) (loopView, error)
 	if err != nil {
 		return loopView{}, err
 	}
-	v := loopView{Task: task, Kind: t.Kind, Status: map[string]string{}, Records: map[string]ReviewRecord{}, Results: map[string][][]string{}, Issue: t.Issue, Rejects: map[string][]string{}}
+	v := loopView{Task: task, Kind: t.Kind, Status: map[string]string{}, Records: map[string]ReviewRecord{}, Results: map[string][][]string{}, Issue: t.Issue, Rejects: map[string][]string{}, Unread: map[string]bool{}, Verdicts: map[string]string{}}
 	if v.Events, err = s.readTable(ctx, eventsPath(task), records.ReadEvents); err != nil {
 		return v, err
 	}
@@ -677,10 +693,18 @@ func (s *Sessions) shapeView(ctx context.Context, task string) (loopView, error)
 	}
 	for _, sess := range v.Sessions { // the reasons of each plan review that rejected: its kept copy is the file its result names by hash
 		if id := sess[sessionID]; sess[sessionRole] == stepRole("verification") && v.Status[id] == "completed" {
-			if reasons, ok, err := s.rejectReasons(ctx, task, id, v.Results[id]); err != nil {
+			review, verdict, data, err := s.readPlanReview(ctx, task, id, v.Results[id])
+			switch {
+			case err != nil:
 				return v, err
-			} else if ok {
-				v.Rejects[id] = reasons
+			case !review:
+			case verdict == "":
+				v.Unread[id] = true // a valid handoff over a copy that cannot be read is no approval
+			default:
+				v.Verdicts[id] = verdict
+				if RejectReasonsOK(data) {
+					v.Rejects[id] = PlanReviewReasons(data)
+				}
 			}
 		}
 	}

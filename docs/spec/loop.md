@@ -2897,6 +2897,10 @@ parsed review records of the valid handoffs, so each position is told from the r
   - **The records of an earlier binary.** A review whose latest handoff is `invalid verdict-field` and which meets the rule but for its handoff (its kept copy is a hash-checked reject with a reason)
     is recorded again, as `plan review, task plan`, by the `finish` of its stage, and then read as above. The old event stays (a different outcome of a session is a new event) and no file is repaired.
     A copy that is absent, of other bytes or a bare reject keeps the stop.
+  - **An unreadable review is no approval** (round 1). A plan review that ended `completed` and whose verdict cannot be established from its kept copy (absent, other bytes than its result names by
+    hash, or no plan-review form) is *unread*. When the last review of the stage has a valid handoff and is unread, the stop is `<task>: the plan review <session> cannot be read from its kept copy`:
+    the lost evidence of a reject never lets the rejected plan, or a plan with no review of its own, reach the developer. The amendment reader likewise counts an unread review as no approval.
+    A bare reject is checked on the pair it was recorded on, so its stop reads `the handoff plan review → task plan is invalid reject-reasons`; the label `plan review → developer` stays for that pair's own failures.
   - **Rejected:** a reject that stays `invalid verdict-field` (it would fail the ratio of valid handoffs of `REQ-005` and the first rule of the demo for every reject); a count shared with the
     code review's rounds (one early plan reject would spend the only round of the code review); an Operator command or a wait to resume (no autonomy, and no bound the records define).
 

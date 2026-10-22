@@ -97,7 +97,7 @@ func TestABareRejectIsAnInvalidHandoffAndStartsNoAttempt(t *testing.T) {
 	d.ctlWrite("plan-verdicts", "bare-reject\n")
 	spec, _ := d.open()
 	got, err := d.advance(spec, nil)
-	if err != nil || !strings.Contains(got.Stop, "is invalid reject-reasons comment ") || got.Verified {
+	if err != nil || !strings.Contains(got.Stop, "plan review → task plan is invalid reject-reasons comment ") || got.Verified {
 		t.Fatalf("AdvanceShapeTask = %+v, %v; want the stop with an invalid reject-reasons", got, err)
 	}
 	if bad := d.invalidHandoffs(spec); len(bad) != 1 || !strings.Contains(bad[0], "invalid reject-reasons comment ") {
@@ -239,6 +239,66 @@ func TestTheDemoRecordsOfTUt9gGiveAttempt4WithNoRepair(t *testing.T) {
 		}
 		if got := d.handoffsOf(spec, review); len(got) != 1 {
 			t.Errorf("%s: the handoffs of the review %v; want only the old one", c.name, got)
+		}
+	}
+}
+
+// Round 1 (F1): the reject handoff is valid and its kept copy is then lost (absent, or other bytes than the result names). The driver stops with the
+// review named, before and after the new plan is handed off, and runs no developer; the controls are the same runs with the copy intact.
+func TestReviewerValidRejectLostCopyCannotAuthorizeDeveloper(t *testing.T) {
+	t.Parallel()
+	for _, c := range []struct {
+		name, fail string
+		nth        int // the commit of the matching message to fail, counted from 1
+		attempts   int
+	}{{"before the new plan", "layup run: attempt 2 of", 1, 1}, {"after the new plan", "the handoff task plan to plan review of", 2, 2}} {
+		for _, lost := range []string{"intact", "missing", "mismatched"} {
+			d := newDrvWorld(t, loopPerms)
+			d.ctlWrite("plan-verdicts", "reject\napprove\n")
+			spec, _ := d.open()
+			seen := 0
+			_, err := d.advance(spec, func(s *Sessions) {
+				s.Store = &faultStore{SessionStore: s.Store, fail: func(m string) error {
+					if strings.Contains(m, c.fail) {
+						if seen++; seen == c.nth {
+							return errors.New("the commit failed")
+						}
+					}
+					return nil
+				}}
+			})
+			if err == nil {
+				t.Fatalf("%s: AdvanceShapeTask did not fail", c.name)
+			}
+			d.restart()
+			review := d.byRole(spec, stepRole("verification"))[0]
+			tweak := func(s *Sessions) {}
+			switch lost {
+			case "missing":
+				tweak = func(s *Sessions) {
+					s.Store = &keptFault{SessionStore: s.Store, path: KeptPath(spec, review, PlanReviewFile)}
+				}
+			case "mismatched":
+				tweak = func(s *Sessions) {
+					s.Store = &keptFault{SessionStore: s.Store, path: KeptPath(spec, review, PlanReviewFile), data: []byte("verdict: approve\n")}
+				}
+			}
+			got, err := d.advance(spec, tweak)
+			if lost == "intact" {
+				if err != nil || !got.Verified {
+					t.Errorf("%s, the control: %+v, %v; want the verified head", c.name, got, err)
+				}
+				continue
+			}
+			if err != nil || got.Verified || !strings.Contains(got.Stop, "the plan review "+review+" cannot be read from its kept copy") {
+				t.Errorf("%s, %s copy: %+v, %v; want the stop that names the review", c.name, lost, got, err)
+			}
+			if n := len(d.byRole(spec, stepRole("specification"))); n != 0 {
+				t.Errorf("%s, %s copy: %d developer sessions; want none", c.name, lost, n)
+			}
+			if n := len(d.attempts(spec)); n != c.attempts {
+				t.Errorf("%s, %s copy: %d attempts; want %d", c.name, lost, n, c.attempts)
+			}
 		}
 	}
 }

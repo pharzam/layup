@@ -760,3 +760,54 @@ func TestThePlanOfTheAttemptAfterARejectIsGivenTheReasons(t *testing.T) {
 		t.Errorf("after the crashed plan's retry: %+v; want the plan of attempt 3", got)
 	}
 }
+
+// Round 1 of T-t94t (F1): a plan review whose verdict cannot be established from its hash-checked kept copy is no approval. A valid handoff over a
+// lost copy was read as an approval (the reject left no entry), so the developer ran on a rejected or an unreviewed plan.
+func (b *viewBuilder) unread(id string) *viewBuilder {
+	if b.v.Unread == nil {
+		b.v.Unread = map[string]bool{}
+	}
+	b.v.Unread[id] = true
+	return b
+}
+
+func TestReviewerUnreadReviewIsNoApprovalInThePosition(t *testing.T) {
+	const stop = "the plan review S-r1 cannot be read from its kept copy"
+	// Before the new plan: the review is the last of the stage. The control has its copy.
+	before := func() *viewBuilder { return upTo("specification", 7) }
+	// After the new plan of the replan attempt is handed off, and with the earlier reject lost, the old review would stand for the new plan's.
+	after := func() *viewBuilder {
+		return upTo("specification", 7).ev("attempt", "2", "", shB, "", "").start("S-p2", rolePlan, "2", shB).end("S-p2", "2", "done", "completed").
+			ev("handoff", "2", "S-p2", "", "", "valid comment 14-1")
+	}
+	for _, c := range []struct {
+		name  string
+		build func() *viewBuilder
+		ctl   position
+	}{{"before the new plan", before, posReplan}, {"after the new plan", after, posReview}} {
+		if got := c.build().reject("S-r1", "no steps").at(); got.Pos != c.ctl {
+			t.Errorf("%s, the control with its copy: %d %q; want position %d", c.name, got.Pos, got.Msg, c.ctl)
+		}
+		for _, lost := range []string{"missing", "mismatched"} { // both leave the review unread: the view cannot tell them apart, the reader refuses both
+			got := c.build().unread("S-r1").at()
+			if got.Pos != posStop || !strings.Contains(got.Msg, stop) {
+				t.Errorf("%s, %s kept copy: %d %q; want the stop %q and never the developer", c.name, lost, got.Pos, got.Msg, stop)
+			}
+		}
+	}
+}
+
+// Round 1 of T-t94t (F2): a bare reject is checked on the pair plan review to task plan, and the stop names that pair.
+func TestReviewerBareRejectNamesActualPair(t *testing.T) {
+	b := upTo("specification", 6).ev("handoff", "1", "S-r1", "", "", "invalid reject-reasons comment 12-1")
+	b.v.Verdicts = map[string]string{"S-r1": "reject"}
+	if got := b.at(); got.Pos != posStop || !strings.Contains(got.Msg, "plan review → task plan is invalid reject-reasons comment 12-1") {
+		t.Errorf("a bare reject: %d %q; want the stop naming plan review → task plan", got.Pos, got.Msg)
+	}
+	// The developer pair keeps its label for its own failures.
+	c := upTo("specification", 6).ev("handoff", "1", "S-r1", "", "", "invalid verdict-field comment 12-1")
+	c.v.Verdicts = map[string]string{"S-r1": "approve"}
+	if got := c.at(); got.Pos != posStop || !strings.Contains(got.Msg, "plan review → developer is invalid verdict-field") {
+		t.Errorf("an invalid approve: %d %q; want the developer pair", got.Pos, got.Msg)
+	}
+}

@@ -4,7 +4,7 @@ Task T-t94t, issue #483: a plan review that rejects the plan sends the task back
 
 ## 1. The scaffolding
 
-Committed first (`ed16bfe9`, green): inert stubs only. `handoff.InForce` returns its rows unchanged; `PlanReviewReasons` returns nil and `RejectReasonsOK` false; `planRejects` returns 0 and `rejectionOf` nil; the position `posReplan` is declared and never chosen; the view field `Rejects` exists. The signature of `amendmentPending` gained its third argument, which is not read yet. The item `reject-reasons`, the 14th default row, the reopened lists, the stable `qaKind`, the route of `finishStage`, the instruction block, its constant and `plan-review.txt` are not in the scaffolding: they are the operative edits of the slices below. The package compiled and `go vet` (no tag, `integration`) was clean before the red runs, so no red below is a compile failure.
+Committed first (`ed16bfe9`, green): inert stubs only. `handoff.InForce` returns its rows unchanged; `PlanReviewReasons` returns nil and `RejectReasonsOK` false; `planRejects` returns 0 and `rejectionOf` nil; the position `posReplan` is declared and never chosen; the view field `Rejects` exists. The signature of `amendmentPending` gained its third argument, which was not read yet; that inert change is in the working tree before the red run and landed in the commit `588c145b` (it is not in `ed16bfe9`, which does not touch `frozen.go`). The item `reject-reasons`, the 14th default row, the reopened lists, the stable `qaKind`, the route of `finishStage`, the instruction block, its constant and `plan-review.txt` are not in the scaffolding: they are the operative edits of the slices below. The package compiled and `go vet` (no tag, `integration`) was clean before the red runs, so no red below is a compile failure.
 
 ## 2. Red (assertion failures on the current behaviour)
 
@@ -55,3 +55,16 @@ The operative edits were made in their slices before this run (`internal/handoff
 - The full integration level, `go test -count=1 -tags=integration -timeout 30m ./...` (output in `/home/layup/.cache/layup-session/T-t94t-full-integration.txt`): every package ok, exit 0, finished 2026-10-22T12:30:31Z (`internal/run` 242.4 s, `cmd/layup` 88.4 s).
 - E2E, `go test -count=1 -tags=e2e -timeout 10m ./...` (`/home/layup/.cache/layup-session/T-t94t-e2e.txt`): every package ok, exit 0, finished 2026-10-22T12:32:12Z. The scenario `cmd/layup/loop_e2e_test.go` is unchanged; it asserts each handoff `valid` on the table of 14 rows, and the reject route is proved by the integration tests above, not by the e2e contract.
 - `go build ./...`, `go vet ./...` (no tag, `integration`, `e2e`), `gofmt -l .`, `git diff --check origin/main HEAD`, the six lints (`adr-lint`, `prd-lint`, `link-lint`, `run-discipline-tests` 138 passed, `nested-checkout-check`, `setup-check`) and `freeze-check/run-all.sh` (85 passed): clean.
+
+## 4. Round 1 (GPT-6 Astra, material; findings F1 to F3)
+
+Red, written before the code (`go test -count=1 ./internal/run`, 2026-10-22T13:04:50Z, and the integration tests by name):
+
+| Test | First failing assertion |
+| --- | --- |
+| `TestReviewerUnreadReviewIsNoApprovalInThePosition` | 4 cases (missing and mismatched, before and after the new plan): position 6, the developer; want the stop `the plan review S-r1 cannot be read from its kept copy` |
+| `TestReviewerValidRejectLostCopyCannotAuthorizeDeveloper` (integration) | 4 cases: `Verified:true`, one developer session; want the stop and no developer. The controls (copy intact, before and after the new plan) are green. |
+| `TestReviewerLostRejectCannotApproveAmendment` | `a missing copy: map[]; want named as not approving: true`, and the mismatched copy; the intact reject and the intact approve are green |
+| `TestReviewerBareRejectNamesActualPair`, `TestABareRejectIsAnInvalidHandoffAndStartsNoAttempt` | the stop reads `plan review → developer is invalid reject-reasons`; want `plan review → task plan is invalid reject-reasons` |
+
+Green: `readPlanReview` tells a checked verdict from an unread review (the view fields `Unread` and `Verdicts`), the driver stops on a valid handoff over an unread review, the label of the stage follows the verdict, and the amendment reader names an unreadable review with the rejecting ones. Unit, the new integration tests and the neighbours: ok, 2026-10-22T13:05:23Z. The full levels are recorded below.

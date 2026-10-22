@@ -396,3 +396,32 @@ func TestARejectingReviewIsNoReviewOfAnAmendment(t *testing.T) {
 		t.Error("a review that rejected is the review of an amendment")
 	}
 }
+
+// Round 1 of T-t94t (F1): a plan review whose rejection evidence is lost (absent or other bytes than the result names) is no approval of an amendment;
+// the reader of the sessions names it with the rejecting ones, and an approval whose copy is intact is not named.
+func TestReviewerLostRejectCannotApproveAmendment(t *testing.T) {
+	const text = "verdict: reject\nno steps\n"
+	for _, c := range []struct {
+		name string
+		text string
+		edit func(w *handoffWorld, id string)
+		want bool
+	}{
+		{"an intact reject", text, func(*handoffWorld, string) {}, true},
+		{"a missing copy", text, func(w *handoffWorld, id string) { delete(w.store.files, KeptPath("T-ab12", id, PlanReviewFile)) }, true},
+		{"a mismatched copy", text, func(w *handoffWorld, id string) {
+			w.store.files[KeptPath("T-ab12", id, PlanReviewFile)] = []byte("verdict: approve\n")
+		}, true},
+		{"an intact approve", "verdict: approve\n", func(*handoffWorld, string) {}, false},
+	} {
+		w := newHandoffWorld(t)
+		w.session(t, planSess, 1, "qa-engineer", "")
+		w.store.files["tasks/T-ab12/results/"+planSess+".tsv"] = []byte(resultTop + "status\t1\tcompleted\t—\tdone\ncomment\t1\tresult/" + PlanReviewFile + "\t" + commentSum(c.text) + "\t—\n")
+		w.store.files[KeptPath("T-ab12", planSess, PlanReviewFile)] = []byte(c.text)
+		c.edit(w, planSess)
+		got, err := w.s.rejectingReviews(context.Background(), "T-ab12", w.sess)
+		if err != nil || got[planSess] != c.want {
+			t.Errorf("%s: %v, %v; want named as not approving: %v", c.name, got, err, c.want)
+		}
+	}
+}
