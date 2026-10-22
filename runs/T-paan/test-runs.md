@@ -2,7 +2,7 @@
 
 ## Red, before any edit of the blocks, the constants or the goldens
 
-Command: `go test -count=1 ./internal/run/ -run TestEachStepOfASpecificationTaskStatesTheBetsCellsAndRecord`
+Command: `go test -count=1 ./internal/run/ -run 'TestEachStepOfASpecificationTaskStatesTheBetsCellsAndRecord'`
 Start 2026-10-22T14:42:38Z, end 2026-10-22T14:42:40Z, exit 1 (the missing-text failures: the three summary sentences in each of the prompts and
 constants of plan-of-a-task, plan-review and verification, and the two headings of the contract in loop.md; the specification control passes).
 
@@ -35,7 +35,7 @@ FAIL
 
 ## Green
 
-Command: `go test -count=1 ./internal/run/ -run TestEachStepOfASpecificationTaskStatesTheBetsCellsAndRecord`
+Command: `go test -count=1 ./internal/run/ -run 'TestEachStepOfASpecificationTaskStatesTheBetsCellsAndRecord'`
 Start 2026-10-22T14:45:28Z, end 2026-10-22T14:45:28Z, exit 0: ok  	github.com/pharzam/layup/internal/run	0.003s
 
 Command: `go test -count=1 -tags=integration ./internal/run/ -run 'Instruction|Prompt|Golden'`

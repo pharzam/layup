@@ -1,6 +1,6 @@
 # T-paan conditions of the plan review (6343519315)
 
-| Condition | Where it is met |
+| Condition | Evidence |
 | --------- | --------------- |
 | 1. The sentence keeps both sides: blank until the first bet, "not —", no numbered facts record, code supplies both at the rendered commit; the exclusion is limited to requests that the task supply them; filled cells or a task-written record remain defects | `internal/run/instructions.go:31`, `internal/run/instructions.go:43`, `internal/run/instructions.go:91`; `docs/spec/loop.md:2308`, `docs/spec/loop.md:2309` |
 | 2. Reopened specification tasks keep their existing lines, cells and record | the last sentence at `internal/run/instructions.go:31`, `:43`, `:91`; `docs/spec/loop.md:2308` |
