@@ -177,7 +177,7 @@ func TestALossFoundByAProbeWriteIsKnownAtTheEnd(t *testing.T) {
 	last := rows[len(rows)-1]
 	data, _ := os.ReadFile(count)
 	if last.Name != "probe" || last.Result != "fail" || !strings.Contains(last.Detail, "the lease names the run "+nextRun) || strings.Count(string(data), "x") != 2 ||
-		!strings.Contains(leaseText(t, w), "\theld\n") || strings.Contains(recordsLog(t, w), "lease: released") {
+		!strings.Contains(leaseText(t, w), "\theld\n") || strings.Count(recordsLog(t, w), "lease: released\n") != 1 { // the one release is Start's own
 		t.Errorf("the last row %+v, %d refused pushes, the lease:\n%s\nlog:\n%s\nwant probe fail naming the loss, 2 pushes, held, no release", last, strings.Count(string(data), "x"), leaseText(t, w), recordsLog(t, w))
 	}
 }
