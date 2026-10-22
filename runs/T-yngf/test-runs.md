@@ -47,7 +47,7 @@ The code: `endLease` (join the heartbeat, read the lease, release on a context t
 
 ## 5. Round 1, F1: every fenced records path notes the loss
 
-Red (an assertion failure on 7c0d788, before the fix; the fix's scaffolding is only the test), `TMPDIR=... go test -count=1 -tags=integration -run` on `TestALossFoundByAProbeWriteIsKnownAtTheEnd` and `TestTwoRefusedReleasesMakeNoThirdAttempt`, 2026-10-22T11:10:39Z, exit 1: the probe row failed naming the loss and the hook counted 2 refused pushes, but `lease.tsv` ended `released` and the log began with `lease: released`, the third push after the loss. `TestTwoRefusedReleasesMakeNoThirdAttempt` stayed green (a control, now on the shared hook helper).
+Red (an assertion failure on 7c0d788, before the fix; the fix's scaffolding is only the test), the integration run of `TestALossFoundByAProbeWriteIsKnownAtTheEnd` and `TestTwoRefusedReleasesMakeNoThirdAttempt`, 2026-10-22T11:10:39Z, exit 1: the probe row failed naming the loss and the hook counted 2 refused pushes, but `lease.tsv` ended `released` and the log began with `lease: released`, the third push after the loss. `TestTwoRefusedReleasesMakeNoThirdAttempt` stayed green (a control, now on the shared hook helper).
 
 Green: the fix (`Sessions.Lost`, `(*state).fenced`, `noteLoss` in `Sessions.commit` and `holdsLease`): unit with `-race -count=3` exit 0; the integration tests of the restart world exit 0 (times in the output of the full run below). Note 4 of the review: the heartbeat test now lands the in-flight beat (`land`), and asserts `lease: heartbeat 1` before `lease: released` as the last write.
 
