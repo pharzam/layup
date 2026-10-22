@@ -1798,7 +1798,7 @@ activation batch are tasks like any other.
 - **Its checks.** The whole output is refused when it holds no decision, when a decision's name is not a word of lowercase letters, digits
   and `-`, when a decision's table fails the reader of the block `options`, or when a decision has fewer than two options (at least two
   options, above). A refused output is a failed step, and the next run starts a new session. The evidence of a pass ("a path or a link")
-  is checked for its presence only: the block names no base to resolve a path against, a known limit.
+  is checked for its presence only: the block names no base to resolve a path against, a known limit. Both prompts of the session (the options and the rewrite) require exactly the character `—` (U+2014), named in the prompt by its character and its code point, as the evidence of a fail, and say that `-` or any other text is refused; the reader refuses it (the two sessions of the demo of #370 wrote `-`, and both outputs were refused).
 - **What is kept** is `spec/options/<decision>.tsv` for each decision, in the one records commit of the session's end.
 
 **The sources of the constraints** (**decided here**, R10, task `T-3f94`; the notes of round 1 of #349). At each run `layup run` builds the

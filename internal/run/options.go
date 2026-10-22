@@ -272,8 +272,8 @@ tab-separated values, with the header line
 and one row for each option and each constraint of the list below.
 - The decision and the option are each a word of lowercase letters, digits and -. The decision is none of the names draft, spans, answers, tests and tasks.
 - The constraint is an ID of the list below. An option has a row for every constraint of the list, and may have rows for others.
-- The result is pass or fail. For a pass the evidence is the path of a file or a link that shows it, never a dash. For a fail the
-  evidence is a dash, and nothing else.
+- The result is pass or fail. For a pass the evidence is the path of a file or a link that shows it. For a fail the evidence is
+  the single character "—" (U+2014), the empty value, and nothing else; a hyphen - or any other text is refused.
 {constraints}
 The constraints that apply, by their IDs:
 {list}
@@ -293,7 +293,7 @@ options, at least two, that meet the constraints of the list below. The tables t
 Write the output file in the form of the tables, as tab-separated values with the header line
 "decision<TAB>option<TAB>constraint<TAB>result<TAB>evidence"
 and one row for each option and each constraint of the list, for these decisions and for no other. A pass has a path or a link as its
-evidence, a fail has a dash. The decision and the option are each a word of lowercase letters, digits and -. The decision is none of the names draft, spans, answers, tests and tasks.
+evidence. For a fail the evidence is the single character "—" (U+2014), the empty value, and nothing else; a hyphen - or any other text is refused. The decision and the option are each a word of lowercase letters, digits and -. The decision is none of the names draft, spans, answers, tests and tasks.
 
 The constraints that apply, by their IDs:
 {list}
