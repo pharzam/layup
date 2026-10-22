@@ -48,7 +48,7 @@ func words(cell string) []string {
 	return out
 }
 
-// The default rows are the thirteen of the table "The checks of a handoff" of
+// The default rows are the fourteen of the table "The checks of a handoff" of
 // docs/spec/loop.md, in its order, with its kinds and its items.
 func TestTheDefaultRowsAreTheTableOfTheSpecification(t *testing.T) {
 	text := spec(t, "loop.md")

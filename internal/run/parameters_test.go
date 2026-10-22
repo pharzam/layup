@@ -452,6 +452,7 @@ func TestASetOfTransitionsIsJudgedByTheCopyItNames(t *testing.T) {
 		{"the default and a pair of the Operator's", extra, "", ""},
 		{"a row of code's own handoff with no schema", withRendered("artifacts", "rendering-equal"), "", ""},
 		{"a missing default pair", handoffTable(t, dropped), "bound", "developer (specification)"},
+		{"a table of 13 rows lacks the later pair: a set is strict", handoffTable(t, original13()), "bound", "plan review -> task plan"},
 		{"a row of code's own handoff that lists schema", withRendered("schema", "artifacts", "rendering-equal"), "bound", "code (rendered task)"},
 		{"a body that is no table", []byte("the table is below\n"), "bound", ""},
 		{"a table in a code fence", []byte("```\n" + string(good) + "```\n"), "bound", ""},

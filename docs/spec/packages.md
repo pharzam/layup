@@ -296,7 +296,7 @@ and `internal/cli` does not change.
 
 `internal/handoff` holds the form and the table. Every other item is computed by
 the caller (`internal/run`): the comment items `plan-fields`, `verdict-field`,
-`nothing-material` and `findings-located` from the kept copy of a comment,
+`reject-reasons` (task `T-t94t`), `nothing-material` and `findings-located` from the kept copy of a comment,
 `spec-sections` and `rendering-equal` with `internal/spec` (`HasSection`) and
 `internal/rules` (`RenderingEqual`, which shares `RecordRendered` with `Judge`),
 and `tests-red-green` from typed per-test results whose producing run is `M2g`'s.

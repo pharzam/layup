@@ -13,7 +13,7 @@ import (
 func h64(c string) string { return strings.Repeat(c, 64) }
 func h40(c string) string { return strings.Repeat(c, 40) }
 
-// The thirteen default rows, as docs/spec/loop.md gives them (the integration
+// The fourteen default rows, as docs/spec/loop.md gives them (the integration
 // test reads them from the specification).
 var wantDefault = []Row{
 	{"task plan", "plan review", []string{"plan"}, []string{"schema", "artifacts", "plan-fields"}},
@@ -29,12 +29,16 @@ var wantDefault = []Row{
 	{"specification", "milestone plan", []string{"task-file"}, []string{"artifacts", "heading-ids"}},
 	{"asking role", "owner role", []string{"question"}, []string{"schema", "question-row"}},
 	{"owner role", "asking role", []string{"answer"}, []string{"schema", "answer-row"}},
+	{"plan review", "task plan", []string{"plan-review"}, []string{"schema", "artifacts", "reject-reasons"}},
 }
 
-func TestTheDefaultRowsAreTheThirteenOfTheSpecification(t *testing.T) {
+// original13 is the table that a target wrote at its first task before the row 14 existed.
+func original13() []Row { return Default()[:13] }
+
+func TestTheDefaultRowsAreTheFourteenOfTheSpecification(t *testing.T) {
 	got := Default()
-	if len(got) != 13 {
-		t.Fatalf("%d default rows, want 13", len(got))
+	if len(got) != 14 {
+		t.Fatalf("%d default rows, want 14", len(got))
 	}
 	for i, w := range wantDefault {
 		if got[i].From != w.From || got[i].To != w.To || !slices.Equal(got[i].Artifacts, w.Artifacts) || !slices.Equal(got[i].Items, w.Items) {
@@ -69,7 +73,7 @@ func TestTheListsAreTheWordsOfTheSpecification(t *testing.T) {
 	if got, want := Kinds(), []string{"plan", "plan-review", "review-record", "task-file", "commits", "rows", "patch", "rendering", "question", "answer"}; !slices.Equal(got, want) {
 		t.Errorf("kinds %v, want %v", got, want)
 	}
-	if got, want := Items(), []string{"schema", "artifacts", "plan-fields", "verdict-field", "tests-red-green", "spec-sections", "patch-per-kind", "register-rows", "rendering-equal", "nothing-material", "findings-located", "heading-ids", "question-row", "answer-row"}; !slices.Equal(got, want) {
+	if got, want := Items(), []string{"schema", "artifacts", "plan-fields", "verdict-field", "tests-red-green", "spec-sections", "patch-per-kind", "register-rows", "rendering-equal", "nothing-material", "findings-located", "heading-ids", "question-row", "answer-row", "reject-reasons"}; !slices.Equal(got, want) {
 		t.Errorf("items %v, want %v", got, want)
 	}
 }
@@ -103,7 +107,7 @@ func TestWriteThenReadGivesTheDefaultTable(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(got) != 13 || got[3].From != "developer (specification)" || !slices.Equal(got[3].Items, []string{"schema", "artifacts", "spec-sections"}) {
+	if len(got) != 14 || got[3].From != "developer (specification)" || !slices.Equal(got[3].Items, []string{"schema", "artifacts", "spec-sections"}) {
 		t.Fatalf("read back %+v", got)
 	}
 }
@@ -256,8 +260,8 @@ func TestWhatAnAgentWritesNeverMakesAHandoffValid(t *testing.T) {
 
 // Each pair of the default table is checked with its own kinds and items.
 func TestEachDefaultPairNeedsItsOwnItemsAndKinds(t *testing.T) {
-	if len(Default()) != 13 {
-		t.Fatalf("%d default rows, want 13", len(Default()))
+	if len(Default()) != 14 {
+		t.Fatalf("%d default rows, want 14", len(Default()))
 	}
 	for _, r := range Default() {
 		h := Handoff{From: r.From, To: r.To, SchemaOK: true, Items: map[string]bool{}}
@@ -592,5 +596,47 @@ func TestCheckTableRefusesARowOfCodesOwnHandoffThatListsSchema(t *testing.T) {
 		case tc.why != "" && (err == nil || !strings.Contains(err.Error(), tc.why)):
 			t.Errorf("%s: err %v, want one that names %q", name, err, tc.why)
 		}
+	}
+}
+
+// Task T-t94t (#483): the row 14, plan review to task plan, is the only default pair that a table written before it lacks. A read puts the
+// table in force (InForce): the file's rows and, for a later pair the file lacks, its default row. A set stays strict (CheckTable).
+func TestATableWrittenBeforeALaterPairTakesItsDefaultRow(t *testing.T) {
+	old := original13()
+	if err := CheckTable(InForce(old)); err != nil {
+		t.Fatalf("the table of 13 rows in force: %v", err)
+	}
+	h := Handoff{From: "plan review", To: "task plan", SchemaOK: true, Items: map[string]bool{"reject-reasons": true},
+		Artifacts: []Artifact{{Kind: "plan-review", Comment: &Comment{ID: 12, Seen: 1, File: h64("a"), Copy: h64("a"), Forge: h64("a")}}}}
+	if v := Check(InForce(old), h); !v.Valid || v.Detail != "valid comment 12-1" {
+		t.Errorf("a reject on the table of 13 rows in force: %+v; want valid", v)
+	}
+	if v := Check(old, h); v.Valid {
+		t.Errorf("a reject on the table of 13 rows as it is: %+v; want invalid pair", v)
+	}
+	if len(old) != 13 || len(InForce(old)) != 14 {
+		t.Errorf("InForce changed the rows it was given or added %d rows; want 13 given and 14 in force", len(InForce(old))-len(old))
+	}
+}
+
+func TestASetThatLacksALaterPairIsRefused(t *testing.T) {
+	if err := CheckTable(original13()); err == nil || !strings.Contains(err.Error(), "plan review -> task plan") {
+		t.Errorf("CheckTable of 13 rows: %v; want the missing pair named", err)
+	}
+}
+
+// The limits of InForce (condition 4 of the plan review): it adds only a later pair.
+func TestInForceAddsNoOriginalPairAndKeepsACustomizedRow(t *testing.T) {
+	def := Default()
+	for i := 0; i < 13; i++ {
+		short := slices.Concat(def[:i:i], def[i+1:13])
+		if err := CheckTable(InForce(short)); err == nil || !strings.Contains(err.Error(), def[i].From+" -> "+def[i].To) {
+			t.Errorf("without original pair %d: %v; want the pair named", i+1, err)
+		}
+	}
+	custom := append(slices.Clone(original13()), Row{"plan review", "task plan", []string{"plan-review"}, []string{"schema", "artifacts"}})
+	got := InForce(custom)
+	if len(got) != 14 || !slices.Equal(got[13].Items, []string{"schema", "artifacts"}) {
+		t.Errorf("a customized row 14: %+v; want it kept as the file has it", got)
 	}
 }

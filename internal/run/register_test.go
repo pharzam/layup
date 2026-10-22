@@ -225,6 +225,27 @@ func TestAnExistingTransitionTableIsKeptAndAnInvalidOneRefusesTheTask(t *testing
 	}
 }
 
+// Task T-t94t (#483), condition 4 of the plan review: registration reads a table written before the pair plan review to task plan had a row
+// (InForce), keeps its bytes, and still refuses a table that lacks an original pair.
+func TestARegistrationKeepsATableWrittenBeforeALaterPair(t *testing.T) {
+	old := transitionBytes(t, original13())
+	files, err := registerFiles(nil, old, aTask("T-aaaa"))
+	if err != nil {
+		t.Fatalf("the table of 13 rows: %v", err)
+	}
+	if _, has := files["transitions.tsv"]; has || len(files) != 1 {
+		t.Errorf("the table of 13 rows: %d files, with transitions.tsv %v; want tasks.tsv alone, the table's bytes kept", len(files), has)
+	}
+	if files, err := registerFiles(nil, transitionBytes(t, original13()[1:]), aTask("T-aaaa")); err == nil || !strings.Contains(err.Error(), "task plan -> plan review") || files != nil {
+		t.Errorf("a table of 12 rows lacking an original pair: %v, files %v; want the pair named and no file", err, files)
+	}
+	for _, rows := range [][]handoff.Row{append(original13(), handoff.Row{From: "plan review", To: "task plan", Artifacts: []string{"plan-review"}, Items: []string{"schema", "artifacts"}})} {
+		if _, err := registerFiles(nil, transitionBytes(t, rows), aTask("T-aaaa")); err != nil {
+			t.Errorf("a customized row 14: %v; want it kept", err)
+		}
+	}
+}
+
 func TestAnExistingRegisterThatReadRefusesStopsTheWrite(t *testing.T) {
 	cycle := handWritten(t, []Task{aTask("T-aaaa", "T-bbbb"), aTask("T-bbbb", "T-aaaa")})
 	for _, c := range []struct {

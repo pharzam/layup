@@ -124,7 +124,7 @@ func TestAStageThatEndedIsFinishedAndAStageThatStoppedIsRunAgain(t *testing.T) {
 		{"a plan whose status is blocked", upTo("specification", 2).end("S-p1", "1", "done", "blocked"), posStop, "ended blocked"},
 		{"a refused session", upTo("specification", 2).ev("refused", "1", "S-p1", "", "", "artifact"), posStop, "was refused (artifact)"},
 		{"an invalid plan handoff", upTo("specification", 3).ev("handoff", "1", "S-p1", "", "", "invalid plan-fields"), posStop, "task plan → plan review is invalid plan-fields"},
-		{"a plan review that rejects", upTo("specification", 6).ev("handoff", "1", "S-r1", "", "", "invalid verdict-field"), posStop, "plan review → developer is invalid verdict-field"},
+		{"a plan review whose copy is no reject (task T-t94t: a reject with a reason is a handoff to the planner)", upTo("specification", 6).ev("handoff", "1", "S-r1", "", "", "invalid verdict-field"), posStop, "plan review → developer is invalid verdict-field"},
 		{"an invalid developer handoff", upTo("specification", 11).ev("handoff", "1", "S-d1", "", "", "invalid spec-sections"), posStop, "is invalid spec-sections"},
 		{"a developer that ended with no commit pushed", upTo("specification", 9), posStop, "ended with no push"},
 		{"a push with no result", upTo("specification", 10), posStop, "a push with no result"},
@@ -571,5 +571,280 @@ func TestAnArtifactRefusalOfTheVerifierCountsNoReviewRound(t *testing.T) {
 	d := c.ev("attempt", "3", "", shB, "", "").devRound("3", shG).verdict("3", shG, "material", 1)
 	if got := d.at(); got.Pos != posWait || !strings.Contains(got.Msg, "the review-cycle cap 1 is reached") {
 		t.Errorf("two material rounds around the retry: %d %q; want the wait at the cap", got.Pos, got.Msg)
+	}
+}
+
+// Task T-t94t (#483): a plan review that rejects the plan sends the task back to its planner. The rule of the one admitted reject: a review no retry
+// replaced, whose result is completed, whose kept copy is the file its result names by hash and rejects with a reason (the view's Rejects), and whose
+// latest handoff is valid. Counting, reopening and the reasons all read it.
+
+// reject adds the reasons of the kept copy of a plan review, as shapeView reads them.
+func (b *viewBuilder) reject(id string, reasons ...string) *viewBuilder {
+	if b.v.Rejects == nil {
+		b.v.Rejects = map[string][]string{}
+	}
+	b.v.Rejects[id] = reasons
+	return b
+}
+
+// planRound adds a plan and its handoff, then a plan review that ended and the handoff of the detail, in the attempt.
+func (b *viewBuilder) planRound(attempt, plan, review string, planComment, reviewComment int, detail string) *viewBuilder {
+	b.start(plan, rolePlan, attempt, shB).end(plan, attempt, "done", "completed").ev("handoff", attempt, plan, "", "", "valid comment "+strconv.Itoa(planComment)+"-1")
+	return b.start(review, roleQA, attempt, shB).end(review, attempt, "done", "completed").ev("handoff", attempt, review, "", "", detail+" comment "+strconv.Itoa(reviewComment)+"-1")
+}
+
+func TestARejectedPlanStartsANewAttemptWithThePlanReopened(t *testing.T) {
+	b := upTo("specification", 7).reject("S-r1", "no ordered steps")
+	if got := b.at(); got.Pos != posReplan || got.Attempt != 1 || got.Base != shB {
+		t.Fatalf("a valid reject: %d %q; want the replan of attempt 1 at the base", got.Pos, got.Msg)
+	}
+	b.ev("attempt", "2", "", shB, "", "")
+	if got := b.at(); got.Pos != posPlan || got.Attempt != 2 {
+		t.Fatalf("after the new attempt: %+v; want the plan of attempt 2, the plan and the review of attempt 1 passed over", got)
+	}
+	b.start("S-p2", rolePlan, "2", shB).end("S-p2", "2", "done", "completed")
+	if got := b.at(); got.Pos != posPlanFinish || got.Session != "S-p2" {
+		t.Fatalf("the new plan ended: %+v; want to finish S-p2", got)
+	}
+	b.ev("handoff", "2", "S-p2", "", "", "valid comment 14-1")
+	if got := b.at(); got.Pos != posReview || got.Session != "" {
+		t.Fatalf("the new plan handed off: %+v; want the plan review to run (not the review of attempt 1)", got)
+	}
+	b.start("S-r2", roleQA, "2", shB).end("S-r2", "2", "done", "completed").ev("handoff", "2", "S-r2", "", "", "valid comment 15-1")
+	if got := b.at(); got.Pos != posDeveloper || got.Attempt != 2 {
+		t.Errorf("the approving review of attempt 2: %+v; want the developer", got)
+	}
+	// The same facts with a review whose copy rejects with no reason, or an approve, are no reject.
+	if got := upTo("specification", 7).at(); got.Pos != posDeveloper {
+		t.Errorf("a valid handoff of a review that is no reject: %+v; want the developer", got)
+	}
+}
+
+func TestTheRejectsAreBoundedByAnOwnCountOfTheCycleCap(t *testing.T) {
+	b := upTo("specification", 7).reject("S-r1", "no ordered steps").ev("attempt", "2", "", shB, "", "").planRound("2", "S-p2", "S-r2", 14, 15, "valid").reject("S-r2", "still none")
+	if n := planRejects(b.v); n != 2 {
+		t.Errorf("planRejects = %d; want 2", n)
+	}
+	if got := b.at(); got.Pos != posStop || got.Msg != "T-sp01: the plan review rejected the plan 2 times" {
+		t.Errorf("the second reject: %d %q; want the stop \"T-sp01: the plan review rejected the plan 2 times\"", got.Pos, got.Msg)
+	}
+	// A material round of the verifier counts none of them.
+	m := upTo("specification", 14).ev("handoff", "1", "S-v1", "", "", "valid comment 13-1").copyOf("S-v1", "material", 1)
+	if n := planRejects(m.v); n != 0 {
+		t.Errorf("planRejects with a material verifier = %d; want 0", n)
+	}
+	if got := m.at(); got.Pos != posNextAttempt {
+		t.Errorf("a material round: %+v; want the next attempt (the plan count is its own)", got)
+	}
+}
+
+func TestARejectAfterARetryReopensThePlan(t *testing.T) {
+	b := upTo("specification", 4).start("S-r1", roleQA, "1", shB).end("S-r1", "1", "crash", "").ev("attempt", "2", "", shB, "", "").
+		start("S-r2", roleQA, "2", shB).end("S-r2", "2", "done", "completed").ev("handoff", "2", "S-r2", "", "", "valid comment 15-1").reject("S-r2", "no steps")
+	if got := b.at(); got.Pos != posReplan || got.Attempt != 2 {
+		t.Fatalf("a reject in attempt 2: %+v; want the replan", got)
+	}
+	if rep := replacedOf(b.v); !maps.Equal(rep, Replaced{"1": "S-r1"}) {
+		t.Errorf("replacedOf = %v; want attempt 1 replaced by the retry", rep)
+	}
+	if got := b.ev("attempt", "3", "", shB, "", "").at(); got.Pos != posPlan || got.Attempt != 3 {
+		t.Errorf("attempt 3: %+v; want the plan", got)
+	}
+}
+
+// demoRecords is the records of T-ut9g up to the handoff of S-0ef59a25: the plan review of attempt 1 crashed, the one of attempt 2 ended done and was
+// refused for an artifact, the one of attempt 3 rejected and its handoff is the invalid verdict-field of the earlier binary. Both kept copies reject,
+// with different reasons.
+func demoRecords() *viewBuilder {
+	b := newView("specification").ev("attempt", "1", "", shB, "", "").start("S-fb051a4c", rolePlan, "1", shB).end("S-fb051a4c", "1", "done", "completed").
+		ev("handoff", "1", "S-fb051a4c", "", "", "valid comment 11-1").start("S-38157561", roleQA, "1", shB).end("S-38157561", "1", "crash", "").
+		ev("attempt", "2", "", shB, "", "").start("S-141cc16c", roleQA, "2", shB)
+	artifactEnd(b, "S-141cc16c", "2", "completed", "artifact").reject("S-141cc16c", "an older reason of attempt 2")
+	return b.ev("attempt", "3", "", shB, "", "").start("S-0ef59a25", roleQA, "3", shB).end("S-0ef59a25", "3", "done", "completed").
+		ev("handoff", "3", "S-0ef59a25", "", "", "invalid verdict-field comment 6339776504-1").reject("S-0ef59a25", "no ordered steps", "no plan for the Won't rows", "no size base", "no demo sentence")
+}
+
+func TestTheDemoRecordsOfTUt9gGiveAttempt4(t *testing.T) {
+	b := demoRecords()
+	if got := b.at(); got.Pos != posReviewFinish || got.Session != "S-0ef59a25" || got.Attempt != 3 {
+		t.Fatalf("the demo's records: %+v; want the handoff of S-0ef59a25 recorded again (the invalid verdict-field of a reject with reasons)", got)
+	}
+	b.ev("handoff", "3", "S-0ef59a25", "", "", "valid comment 6339776504-1")
+	if got := b.at(); got.Pos != posReplan || got.Attempt != 3 || got.Base != shB {
+		t.Fatalf("the demo's records, handoff recorded: %+v; want the replan of attempt 3 at the base", got)
+	}
+	if n := planRejects(b.v); n != 1 {
+		t.Errorf("planRejects = %d; want 1, S-141cc16c (refused, replaced) not counted", n)
+	}
+	if got := b.ev("attempt", "4", "", shB, "", "").at(); got.Pos != posPlan || got.Attempt != 4 {
+		t.Fatalf("attempt 4: %+v; want the plan", got)
+	}
+	want := []Finding{{Rule: "plan-review:reject", Text: "no ordered steps"}, {Rule: "plan-review:reject", Text: "no plan for the Won't rows"}, {Rule: "plan-review:reject", Text: "no size base"}, {Rule: "plan-review:reject", Text: "no demo sentence"}}
+	if got := rejectionOf(b.v, 4); !slices.Equal(got, want) {
+		t.Errorf("rejectionOf(4) = %+v; want the four reasons of S-0ef59a25 and none of S-141cc16c", got)
+	}
+}
+
+// Condition 2 of the plan review: a review that was refused or replaced is no admitted reject, whatever its copy says.
+func TestARefusedOrReplacedReviewWhoseCopyRejectsReopensNothingAndSuppliesNothing(t *testing.T) {
+	// S-141cc16c, refused for an artifact and not yet replaced (attempt 2 is the latest): the retry, not the replan.
+	b := newView("specification").ev("attempt", "1", "", shB, "", "").start("S-fb051a4c", rolePlan, "1", shB).end("S-fb051a4c", "1", "done", "completed").
+		ev("handoff", "1", "S-fb051a4c", "", "", "valid comment 11-1").start("S-141cc16c", roleQA, "1", shB)
+	artifactEnd(b, "S-141cc16c", "1", "completed", "artifact").reject("S-141cc16c", "other reasons")
+	if got := b.at(); got.Pos != posRetry || got.Session != "S-141cc16c" {
+		t.Errorf("a refused review whose copy rejects: %+v; want the retry", got)
+	}
+	if n := planRejects(b.v); n != 0 {
+		t.Errorf("planRejects = %d; want 0", n)
+	}
+	if got := b.ev("attempt", "2", "", shB, "", "").at(); got.Pos != posReview || got.Attempt != 2 {
+		t.Errorf("after the retry's attempt: %+v; want the plan review (the plan is not reopened)", got)
+	}
+	if got := rejectionOf(b.v, 2); got != nil {
+		t.Errorf("rejectionOf(2) = %+v; want none from a refused review", got)
+	}
+	// A done review with a copy that rejects and no handoff yet is finished first, not a reject.
+	c := upTo("specification", 6).reject("S-r1", "x")
+	if got := c.at(); got.Pos != posReviewFinish {
+		t.Errorf("a review with no handoff: %+v; want to finish it", got)
+	}
+	if n := planRejects(c.v); n != 0 {
+		t.Errorf("planRejects with no handoff = %d; want 0", n)
+	}
+}
+
+// A bare reject is an invalid reject-reasons: the stop, and no attempt (condition 3).
+func TestABareRejectIsAStopAndStartsNoAttempt(t *testing.T) {
+	b := upTo("specification", 6).ev("handoff", "1", "S-r1", "", "", "invalid reject-reasons comment 12-1")
+	if got := b.at(); got.Pos != posStop || !strings.Contains(got.Msg, "is invalid reject-reasons comment 12-1") {
+		t.Errorf("a bare reject: %+v; want the stop with the invalid handoff", got)
+	}
+	if n := planRejects(b.v); n != 0 {
+		t.Errorf("planRejects = %d; want 0", n)
+	}
+}
+
+// qaKind classifies by the first valid plan handoff, which no later plan moves: a review stays a review and no retry is unwound (the red control).
+func TestAPlanReviewKeepsItsStageWhenALaterPlanIsHandedOff(t *testing.T) {
+	b := demoRecords()
+	before := replacedOf(b.v)
+	b.ev("handoff", "3", "S-0ef59a25", "", "", "valid comment 6339776504-1").ev("attempt", "4", "", shB, "", "").start("S-p4", rolePlan, "4", shB).end("S-p4", "4", "done", "completed").
+		ev("handoff", "4", "S-p4", "", "", "valid comment 7000000001-1")
+	for _, id := range []string{"S-38157561", "S-141cc16c", "S-0ef59a25"} {
+		if got := b.v.stageOf(id); got != stageReview {
+			t.Errorf("stageOf(%s) = %q after the plan of attempt 4; want %q", id, got, stageReview)
+		}
+	}
+	if after := replacedOf(b.v); !maps.Equal(before, after) || len(after) != 2 {
+		t.Errorf("replacedOf after the new plan = %v, before %v; want the same two replaced attempts", after, before)
+	}
+	if got := b.at(); got.Pos != posReview || got.Attempt != 4 {
+		t.Errorf("attempt 4 with its plan handed off: %+v; want the plan review", got)
+	}
+}
+
+// The reasons go to the planner of every attempt after the reject, across a question and a crashed plan's retry, and to no other step.
+func TestThePlanOfTheAttemptAfterARejectIsGivenTheReasons(t *testing.T) {
+	b := upTo("specification", 7).reject("S-r1", "no ordered steps", "no demo sentence")
+	want := []Finding{{Rule: "plan-review:reject", Text: "no ordered steps"}, {Rule: "plan-review:reject", Text: "no demo sentence"}}
+	if got := rejectionOf(b.v, 1); got != nil {
+		t.Errorf("rejectionOf(1) = %+v; want none for the first plan", got)
+	}
+	b.ev("attempt", "2", "", shB, "", "").start("S-p2", rolePlan, "2", shB).end("S-p2", "2", "crash", "").ev("attempt", "3", "", shB, "", "")
+	for _, attempt := range []int{2, 3} {
+		if got := rejectionOf(b.v, attempt); !slices.Equal(got, want) {
+			t.Errorf("rejectionOf(%d) = %+v; want the two reasons", attempt, got)
+		}
+	}
+	if got := b.at(); got.Pos != posPlan || got.Attempt != 3 {
+		t.Errorf("after the crashed plan's retry: %+v; want the plan of attempt 3", got)
+	}
+}
+
+// Round 1 of T-t94t (F1): a plan review whose verdict cannot be established from its hash-checked kept copy is no approval. A valid handoff over a
+// lost copy was read as an approval (the reject left no entry), so the developer ran on a rejected or an unreviewed plan.
+func (b *viewBuilder) unread(id string) *viewBuilder {
+	if b.v.Unread == nil {
+		b.v.Unread = map[string]bool{}
+	}
+	b.v.Unread[id] = true
+	return b
+}
+
+func TestReviewerUnreadReviewIsNoApprovalInThePosition(t *testing.T) {
+	const stop = "the plan review S-r1 cannot be read from its kept copy"
+	// Before the new plan: the review is the last of the stage. The control has its copy.
+	before := func() *viewBuilder { return upTo("specification", 7) }
+	// After the new plan of the replan attempt is handed off, and with the earlier reject lost, the old review would stand for the new plan's.
+	after := func() *viewBuilder {
+		return upTo("specification", 7).ev("attempt", "2", "", shB, "", "").start("S-p2", rolePlan, "2", shB).end("S-p2", "2", "done", "completed").
+			ev("handoff", "2", "S-p2", "", "", "valid comment 14-1")
+	}
+	for _, c := range []struct {
+		name  string
+		build func() *viewBuilder
+		ctl   position
+	}{{"before the new plan", before, posReplan}, {"after the new plan", after, posReview}} {
+		if got := c.build().reject("S-r1", "no steps").at(); got.Pos != c.ctl {
+			t.Errorf("%s, the control with its copy: %d %q; want position %d", c.name, got.Pos, got.Msg, c.ctl)
+		}
+		for _, lost := range []string{"missing", "mismatched"} { // both leave the review unread: the view cannot tell them apart, the reader refuses both
+			got := c.build().unread("S-r1").at()
+			if got.Pos != posStop || !strings.Contains(got.Msg, stop) {
+				t.Errorf("%s, %s kept copy: %d %q; want the stop %q and never the developer", c.name, lost, got.Pos, got.Msg, stop)
+			}
+		}
+	}
+}
+
+// Round 1 of T-t94t (F2): a bare reject is checked on the pair plan review to task plan, and the stop names that pair.
+func TestReviewerBareRejectNamesActualPair(t *testing.T) {
+	b := upTo("specification", 6).ev("handoff", "1", "S-r1", "", "", "invalid reject-reasons comment 12-1")
+	b.v.Verdicts = map[string]string{"S-r1": "reject"}
+	if got := b.at(); got.Pos != posStop || !strings.Contains(got.Msg, "plan review → task plan is invalid reject-reasons comment 12-1") {
+		t.Errorf("a bare reject: %d %q; want the stop naming plan review → task plan", got.Pos, got.Msg)
+	}
+	// The developer pair keeps its label for its own failures.
+	c := upTo("specification", 6).ev("handoff", "1", "S-r1", "", "", "invalid verdict-field comment 12-1")
+	c.v.Verdicts = map[string]string{"S-r1": "approve"}
+	if got := c.at(); got.Pos != posStop || !strings.Contains(got.Msg, "plan review → developer is invalid verdict-field") {
+		t.Errorf("an invalid approve: %d %q; want the developer pair", got.Pos, got.Msg)
+	}
+}
+
+// End 3 of T-t94t (F4, F5 of round 2). F4: a readable reject without a reason is no approval even when a customized table admits its handoff to the
+// planner as valid. F5: a legacy bare reject keeps the pair it was recorded on.
+func TestReviewerCustomizedRejectRowCannotApproveBareReject(t *testing.T) {
+	with := func(verdict, detail string, reasons ...string) loopStep {
+		b := upTo("specification", 6).ev("handoff", "1", "S-r1", "", "", detail)
+		b.v.Verdicts = map[string]string{"S-r1": verdict}
+		if len(reasons) > 0 {
+			b.reject("S-r1", reasons...)
+		}
+		return b.at()
+	}
+	if got := with("reject", "valid comment 12-1"); got.Pos != posStop || !strings.Contains(got.Msg, "the plan review S-r1 rejected the plan and gave no reason") {
+		t.Errorf("a bare reject whose handoff is valid: %d %q; want the stop, never the developer", got.Pos, got.Msg)
+	}
+	for _, c := range []struct {
+		name, verdict, detail string
+		reasons               []string
+		want                  position
+	}{
+		{"an approve", "approve", "valid comment 12-1", nil, posDeveloper},
+		{"a reject with a reason", "reject", "valid comment 12-1", []string{"no steps"}, posReplan},
+		{"an unparseable copy", "", "valid comment 12-1", nil, posDeveloper},
+	} {
+		if got := with(c.verdict, c.detail, c.reasons...); got.Pos != c.want {
+			t.Errorf("the control %s: %d %q; want position %d", c.name, got.Pos, got.Msg, c.want)
+		}
+	}
+}
+
+func TestReviewerLegacyBareRejectKeepsRecordedPair(t *testing.T) {
+	b := upTo("specification", 6).ev("handoff", "1", "S-r1", "", "", "invalid verdict-field comment 12-1")
+	b.v.Verdicts = map[string]string{"S-r1": "reject"}
+	if got := b.at(); got.Pos != posStop || !strings.Contains(got.Msg, "plan review → developer is invalid verdict-field") {
+		t.Errorf("a legacy bare reject: %d %q; want the stop on plan review → developer", got.Pos, got.Msg)
 	}
 }

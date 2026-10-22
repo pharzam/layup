@@ -1,8 +1,8 @@
 package run
 
 // This file holds the parse of the three comment forms of the task loop and the
-// four handoff items read from them (docs/spec/loop.md, The items a caller
-// computes: The fields and the blocks of a comment; task T-4pje, #396, row 66l of
+// handoff items read from them (docs/spec/loop.md, The items a caller
+// computes, the owning table of the items; The fields and the blocks of a comment; task T-4pje, #396, row 66l of
 // the plan of M2e). The step that wires the parse into the loop is row 66k's.
 
 import (
@@ -234,6 +234,28 @@ func PlanFieldsOK(data []byte) bool {
 func VerdictFieldOK(data []byte) bool {
 	v, ok := ParsePlanReview(data)
 	return ok && v != "reject"
+}
+
+// PlanReviewReasons gives the reasons of a plan review's kept copy: each of its lines that is not blank and is not the line verdict:, in order, with a
+// trailing carriage return and trailing spaces left off. A copy that is no UTF-8 text has none.
+func PlanReviewReasons(data []byte) []string {
+	if !utf8.Valid(data) {
+		return nil
+	}
+	var out []string
+	for _, line := range strings.Split(string(data), "\n") {
+		if line = strings.TrimRight(line, " \r"); line != "" && !strings.HasPrefix(line, "verdict: ") {
+			out = append(out, line)
+		}
+	}
+	return out
+}
+
+// RejectReasonsOK is the item reject-reasons of a plan review's kept copy: it parses with the verdict reject and gives at least one reason, so a
+// bare reject, which gives the planner nothing to act on, is false (task T-t94t).
+func RejectReasonsOK(data []byte) bool {
+	v, ok := ParsePlanReview(data)
+	return ok && v == "reject" && len(PlanReviewReasons(data)) > 0
 }
 
 // FindingsLocatedOK is the item findings-located of a review record's kept copy:
