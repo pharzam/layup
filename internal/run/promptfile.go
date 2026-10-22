@@ -60,6 +60,7 @@ type PromptContext struct {
 	facts              string
 	record             string
 	extras             taskExtras
+	rulePaths          []rules.Entry
 	reopen             []string // the row of the task in spec/reopenings.tsv
 	questions, answers []string // the question IDs of the answer step, the answer IDs this attempt cites (row 66z)
 }
@@ -179,7 +180,7 @@ func buildPrompt(src promptSrc) (*PromptContext, error) {
 		return nil, noInstruction(src.Step.Step)
 	}
 	c := &PromptContext{Input: map[string][]byte{}, task: src.Task, step: src.Step.Step, findings: src.Findings,
-		kind: src.Kind, issue: src.Issue, base: src.Base, extras: src.Extras, questions: src.Questions, answers: src.AnswerIDs, reopen: src.Reopen}
+		kind: src.Kind, issue: src.Issue, base: src.Base, extras: src.Extras, questions: src.Questions, answers: src.AnswerIDs, reopen: src.Reopen, rulePaths: src.Rules}
 	if src.Step.Step == "specification" {
 		var err error
 		if src.Reopen != nil { // the numbered facts record is pinned, never predicted (loop.md, the specification task that a changed class reopens)
@@ -414,7 +415,7 @@ func (c *PromptContext) Text(root string) []byte {
 	v := map[string]string{"task": c.task, "kind": c.kind, "issue": strconv.Itoa(c.issue), "result": path.Join(root, "result", "result.tsv"),
 		"comment": path.Join(root, "result", commentFiles[c.step]), "head": c.base, "from": c.extras.From,
 		"labels": labelList(DefaultOwners()), "facts": c.facts, "record": c.record,
-		"questions": strings.Join(c.questions, " "), "answers": strings.Join(c.answers, " ")}
+		"questions": strings.Join(c.questions, " "), "answers": strings.Join(c.answers, " "), "rule-paths": rulePathList(c.rulePaths)}
 	instruction := stepInstructions[c.step]
 	if c.step == "specification" && c.reopen != nil {
 		instruction = reopenedInstruction

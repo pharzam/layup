@@ -11,7 +11,8 @@ package rules
 import (
 	"bufio"
 	"bytes"
-
+	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -170,4 +171,70 @@ func Check(names []string, reg []Entry, guardrails Change) (reason, path string)
 		return "rule-path", p
 	}
 	return "", ""
+}
+
+// PayloadPaths gives the paths that a refused payload (git diff --binary --no-renames) changes, in the order of its headers (docs/spec/loop.md, The findings
+// of a refused rule path; task T-dtw6, #491). A line that starts at the first column with "diff --git" is a candidate header and must be well formed: the
+// sides a/P and b/P, each raw or quoted by git, that both decode to one non-empty P; the first malformed candidate is an error. Every other line (metadata,
+// hunk lines, the base85 body of a binary patch, blank lines) is ignored, and a payload with no header is an error. The caller adds the payload's name.
+func PayloadPaths(diff []byte) ([]string, error) {
+	var paths []string
+	for _, line := range strings.Split(string(diff), "\n") {
+		if !strings.HasPrefix(line, "diff --git") {
+			continue
+		}
+		p, err := headerPath(strings.TrimPrefix(line, "diff --git"))
+		if err != nil {
+			return nil, fmt.Errorf("%q: %w", line, err)
+		}
+		paths = append(paths, p)
+	}
+	if len(paths) == 0 {
+		return nil, errors.New("no diff --git header")
+	}
+	return paths, nil
+}
+
+// headerPath reads the sides of a header after "diff --git". A path may hold spaces, so each space is tried as the separator and the first split whose two
+// decoded sides are a/P and b/P of one P wins.
+func headerPath(rest string) (string, error) {
+	rest, ok := strings.CutPrefix(rest, " ")
+	if !ok {
+		return "", errors.New("no space after diff --git")
+	}
+	why := errors.New("not two sides")
+	for i := 0; i < len(rest); i++ {
+		if rest[i] != ' ' {
+			continue
+		}
+		a, errA := side(rest[:i], "a/")
+		b, errB := side(rest[i+1:], "b/")
+		switch {
+		case errA != nil:
+			why = errA
+		case errB != nil:
+			why = errB
+		case a != b:
+			why = fmt.Errorf("the sides differ: %q and %q", a, b)
+		default:
+			return a, nil
+		}
+	}
+	return "", why
+}
+
+// side decodes one side of a header: raw or quoted as git quotes a path, then the prefix; the path left must be non-empty.
+func side(s, prefix string) (string, error) {
+	if strings.HasPrefix(s, `"`) {
+		u, err := strconv.Unquote(s)
+		if err != nil {
+			return "", fmt.Errorf("a malformed quoted side %s", s)
+		}
+		s = u
+	}
+	p, ok := strings.CutPrefix(s, prefix)
+	if !ok || p == "" {
+		return "", fmt.Errorf("the side %q is not %sP", s, prefix)
+	}
+	return p, nil
 }

@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -19,6 +20,7 @@ import (
 	"github.com/pharzam/layup/internal/handoff"
 	"github.com/pharzam/layup/internal/records"
 	"github.com/pharzam/layup/internal/route"
+	"github.com/pharzam/layup/internal/rules"
 	"github.com/pharzam/layup/internal/session"
 	"github.com/pharzam/layup/internal/spec"
 )
@@ -287,8 +289,114 @@ const (
 
 // The classes of an eligible end: a crash or no-result (uncertain), and a done refused for the artifact alone.
 const (
-	classUncertain, classArtifact = "uncertain", "artifact"
+	classUncertain, classArtifact, classRulePath = "uncertain", "artifact", "rule-path"
 )
+
+// rulePathFindings gives one finding for each path of a refused payload that the register given (the current one) matches, in the order of the payload;
+// docs/guardrails.md is named with the exception of its own register row, whether or not the refused change passed it (loop.md, The findings of a refused rule path).
+func rulePathFindings(paths []string, reg []rules.Entry) []Finding {
+	var out []Finding
+	for _, p := range paths {
+		if e, ok := rules.Match(reg, p); ok {
+			then := "change nothing of it"
+			if e.Exception != "" {
+				then = "only " + e.Exception + " may change it"
+			}
+			text := "a rule path that the last attempt changed, so its session was refused and nothing of it was pushed: " + then
+			out = append(out, Finding{Rule: classRulePath, File: p, Text: text})
+		}
+	}
+	return out
+}
+
+// refusalReason is the reason of a refusal detail: the word before the first space.
+func refusalReason(detail string) string { r, _, _ := strings.Cut(detail, " "); return r }
+
+// rulePathDetail is the detail of a rule-path refusal: the reason and the SHA-256 of the payload (push.go, refuse).
+var rulePathDetail = regexp.MustCompile(`^rule-path ([0-9a-f]{64})$`)
+
+// rulePathPaths reads, at the records boundary, the paths that the payload of the refusal of a session changed: the detail must be rule-path and the 64
+// hexadecimal digits, payloads/<sha> must exist and its diff must be readable. Any failure is the run's own error and names the payload.
+func rulePathPaths(v loopView, id string, read func(path string) ([]byte, error)) ([]string, error) {
+	detail := ""
+	for _, e := range v.Events {
+		if e[1] == "refused" && e[3] == id {
+			detail = e[6]
+		}
+	}
+	m := rulePathDetail.FindStringSubmatch(detail)
+	if m == nil {
+		return nil, fmt.Errorf("%s: the session %s was refused (%s), which is not rule-path and the 64 hexadecimal digits of its payload", v.Task, id, detail)
+	}
+	name := "payloads/" + m[1]
+	data, err := read(name)
+	if err == nil && data == nil {
+		err = errors.New("the payload is not in the records")
+	}
+	var paths []string
+	if err == nil {
+		paths, err = rules.PayloadPaths(data)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("%s: %s: %w", v.Task, name, err)
+	}
+	return paths, nil
+}
+
+// rulePathReplaced gives the sessions whose rule-path refusal caused the replacement of an attempt in the run of replaced attempts just before attempt,
+// nearest first: an attempt replaced for another class is passed over, an attempt that no retry replaced ends the run.
+func rulePathReplaced(v loopView, attempt int) []string {
+	rep, out := replacedOf(v), []string(nil)
+	for a := attempt - 1; a > 0 && rep[strconv.Itoa(a)] != ""; a-- {
+		if id, _, class := v.eligibleEnd(strconv.Itoa(a)); class == classRulePath {
+			out = append(out, id)
+		}
+	}
+	return out
+}
+
+// rulePathGuidance gives the findings that the developer of attempt is told: the paths of those payloads that the register given matches, each once.
+func rulePathGuidance(v loopView, attempt int, reg []rules.Entry, read func(path string) ([]byte, error)) ([]Finding, error) {
+	var out []Finding
+	for _, id := range rulePathReplaced(v, attempt) {
+		paths, err := rulePathPaths(v, id, read)
+		if err != nil {
+			return nil, err
+		}
+		for _, f := range rulePathFindings(paths, reg) {
+			if !slices.ContainsFunc(out, func(g Finding) bool { return g.File == f.File }) {
+				out = append(out, f)
+			}
+		}
+	}
+	return out, nil
+}
+
+// refusedPayloadReadable is the check before a retry attempt of the class rule-path is recorded: a payload that cannot be read stops the run before another
+// session starts (the Operator, 6346348137).
+func (s *Sessions) refusedPayloadReadable(ctx context.Context, v loopView, st loopStep) error {
+	if id, _, class := v.eligibleEnd(strconv.Itoa(st.Attempt)); class == classRulePath {
+		_, err := rulePathPaths(v, id, func(p string) ([]byte, error) { return s.Store.ReadFile(ctx, p) })
+		return err
+	}
+	return nil
+}
+
+// rulePathFindingsFor gives the guidance of the developer of the attempt with the current register; it reads nothing when no refusal of the class is behind it.
+func (s *Sessions) rulePathFindingsFor(ctx context.Context, v loopView, attempt int) ([]Finding, error) {
+	if len(rulePathReplaced(v, attempt)) == 0 {
+		return nil, nil
+	}
+	data, err := s.readRecord(ctx, "rule-paths.tsv")
+	if err != nil {
+		return nil, err
+	}
+	reg, err := rules.ReadRegister(data.Data)
+	if err != nil {
+		return nil, fmt.Errorf("rule-paths.tsv: %w", err)
+	}
+	return rulePathGuidance(v, attempt, reg, func(p string) ([]byte, error) { return s.Store.ReadFile(ctx, p) })
+}
 
 // stageOf gives the stage of a session by its start row and its role, "" for none: an answer session has none, and neither has the
 // close-out or an owner role.
@@ -313,8 +421,9 @@ func (v loopView) stageOf(id string) string {
 }
 
 // eligibleEnd gives the last session of the attempt, its stage and the class of its end, when the end is one that a retry replaces
-// (loop.md, The driver of a Shape task, "An uncertain end gets one new attempt"): "uncertain" for a crash or no-result with no refusal, and "artifact"
-// for a done with the status completed whose refusals are exactly one event, artifact. A session that has no stage has none. "" for none.
+// (loop.md, The driver of a Shape task, "An uncertain end gets one new attempt"): "uncertain" for a crash or no-result with no refusal, "artifact"
+// for a done with the status completed whose refusals are exactly one event, artifact, and "rule-path" for the same with the one refusal rule-path
+// (task T-dtw6, #491). A session that has no stage has none. "" for none.
 func (v loopView) eligibleEnd(attempt string) (id, stage, class string) {
 	for _, e := range v.Events {
 		if e[1] == "session" && e[2] == attempt {
@@ -338,6 +447,8 @@ func (v loopView) eligibleEnd(attempt string) (id, stage, class string) {
 		class = classUncertain
 	case refusals == 1 && detail == "artifact" && end == "done" && v.Status[id] == "completed":
 		class = classArtifact
+	case refusals == 1 && end == "done" && v.Status[id] == "completed" && refusalReason(detail) == "rule-path":
+		class = classRulePath // the exact reason only: rule-paths (no readable register) and the others stay stops
 	default:
 		return "", "", ""
 	}
@@ -769,7 +880,12 @@ func (s *Sessions) AdvanceShapeTask(ctx context.Context, in ShapeTaskInput) (Adv
 		case posAttempt:
 			_, err = s.StartAttempt(ctx, in.Task, firstBase(v.Events, in.Base))
 		case posRetry, posReplan:
-			_, err = s.StartAttempt(ctx, in.Task, st.Base)
+			if st.Pos == posRetry {
+				err = s.refusedPayloadReadable(ctx, v, st)
+			}
+			if err == nil {
+				_, err = s.StartAttempt(ctx, in.Task, st.Base)
+			}
 		case posPlan, posReview, posDeveloper:
 			stop, err = s.runStage(ctx, in, v, st)
 		case posPlanFinish, posReviewFinish, posVerifierFinish:
@@ -879,6 +995,11 @@ func (s *Sessions) runStage(ctx context.Context, in ShapeTaskInput, v loopView, 
 				return stop, err
 			}
 		}
+		guidance, err := s.rulePathFindingsFor(ctx, v, st.Attempt)
+		if err != nil {
+			return "", err
+		}
+		findings = append(findings, guidance...)
 		fallthrough
 	default:
 		h, m, err = s.PairFor(ctx, res.Role, res.Tier, in.Harnesses, in.Models, nil)
