@@ -1505,6 +1505,8 @@ failure modes worth keeping.
 - ❌ **A reader-facing limit chosen without sizing it against the real data.** The line limit of the bet brief (`brief.lines`, 100) was chosen for readability while the brief copied every fact and open question. The unit fixtures had 2 to 4 facts and passed; on an Intake of the size of the M2d target's (319 answers, 150
   setup questions still open) the parts of code alone were 531 lines and the bet could never start. It is silent because a hand-written fixture is far below the size at which a limit binds. **The check:** before choosing a limit that a reader sees, count the lower bound of what it limits on the real records, keep a fixture of that size in the tests and pre-register the room left for a session's text (20 lines here). Learned in `T-36xw`, #471.
 
+- ❌ **A prompt that names a record's empty value in words.** The two Shape options prompts said a fail's evidence is "a dash", while the reader requires — (U+2014) and refuses `-`; on the real target two sessions wrote `-` and both outputs were refused. It is silent because a unit fixture writes the right character by hand, and only a model writes the hyphen. **The check:** every prompt that asks for a record names the empty value by its character and code point, and a test takes that character from the rendered prompt and passes it to the reader. Learned in `T-c3zv`, #473.
+
 ## 3. Validation — how you check you are not fooling yourself
 
 A result is **untrusted** until it passes the checks below, and the pass is a

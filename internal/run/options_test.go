@@ -177,3 +177,38 @@ func TestThePromptsListTheConstraintsAndTheFiles(t *testing.T) {
 		}
 	}
 }
+
+// A fail has the empty value in evidence, which the TSV rules write as — (U+2014). The prompts name that
+// character, in quotes, and not in words: two sessions of the demo of #370 wrote "-" (task T-c3zv, #473).
+func TestEachOptionsPromptNamesTheEmptyEvidenceOfAFail(t *testing.T) {
+	cs := []spec.Constraint{{ID: "Inv-1"}}
+	in := map[string]string{"draft.tsv": "/s/d", "spans.tsv": "/s/s", "problem-statement.md": "/s/p", "answers.tsv": "/s/a", "reasons.txt": "/s/r"}
+	prompts := map[string]string{"options": string(optionsPrompt(cs)(in, "/s/o")), "rewrite": string(rewritePrompt(cs)(in, "/s/o"))}
+	const lead, tail = `the single character "`, `" (U+2014)`
+	for name, p := range prompts {
+		if strings.Contains(p, "a dash") {
+			t.Errorf("the %s prompt names the empty evidence in words (a dash)", name)
+		}
+		if !strings.Contains(p, "a hyphen - or any other text is refused") {
+			t.Errorf("the %s prompt does not say that a hyphen or other text is refused:\n%s", name, p)
+		}
+		i := strings.Index(p, lead)
+		if i < 0 {
+			t.Errorf("the %s prompt lacks %q:\n%s", name, lead, p)
+			continue
+		}
+		rest := p[i+len(lead):]
+		j := strings.Index(rest, tail)
+		if j < 0 {
+			t.Errorf("the %s prompt lacks the closing %q after the character", name, tail)
+			continue
+		}
+		token := rest[:j] // the bytes between the quotes, as the prompt gives them
+		if _, err := spec.ReadOptions([]byte(optHead + "pg\tInv-1\tfail\t" + token + "\n")); err != nil {
+			t.Errorf("the %s prompt quotes %q for the evidence of a fail, which the reader refuses: %v", name, token, err)
+		}
+	}
+	if _, err := spec.ReadOptions([]byte(optHead + "pg\tInv-1\tfail\t-\n")); err == nil {
+		t.Error("control: a fail with - in evidence is read; want a refusal")
+	}
+}
