@@ -886,3 +886,143 @@ func TestARestartBeforeOrAfterTheArtifactRetryAttemptStartsExactlyOne(t *testing
 		}
 	}
 }
+
+// A read of the records that fails or finds nothing under payloads/: the payload of a refused diff that the run cannot read.
+type payloadFault struct {
+	SessionStore
+	err error
+}
+
+func (f *payloadFault) ReadFile(ctx context.Context, p string) ([]byte, error) {
+	if strings.HasPrefix(p, "payloads/") {
+		return nil, f.err
+	}
+	return f.SessionStore.ReadFile(ctx, p)
+}
+
+// refusedRulePaths counts the events refused rule-path of the task.
+func (d *drvWorld) refusedRulePaths(task string) int {
+	n := 0
+	for _, e := range d.eventsOf(task) {
+		if e[1] == "refused" && strings.HasPrefix(e[6], "rule-path ") {
+			n++
+		}
+	}
+	return n
+}
+
+// onlyAttempt2Pushed asserts the safety property of the existing push path (plan review condition 3): the refused head of attempt 1 got no push event,
+// no bind and no branch on the forge, and attempt 2 started from the recorded base and was pushed and bound alone.
+func (d *drvWorld) onlyAttempt2Pushed(task string) {
+	d.t.Helper()
+	for _, kind := range []string{"push", "bound"} {
+		var got []string
+		for _, e := range d.eventsOf(task) {
+			if e[1] == kind {
+				got = append(got, e[2])
+			}
+		}
+		if !slices.Equal(got, []string{"2"}) {
+			d.t.Errorf("the events %s are of the attempts %v; want attempt 2 only, the refused head of attempt 1 is neither pushed nor bound", kind, got)
+		}
+	}
+	if out := gitOut(d.t, d.w.bare, "for-each-ref", "refs/heads/task/"+task+"/1"); out != "" {
+		d.t.Errorf("the forge holds the branch of the refused head: %q", out)
+	}
+	if out := gitOut(d.t, d.w.bare, "for-each-ref", "refs/heads/task/"+task+"/2"); out == "" {
+		d.t.Error("the forge holds no branch for attempt 2")
+	}
+	if got := d.attempts(task); len(got) != 2 || got[0] != got[1] {
+		d.t.Errorf("the bases of the attempts %v; want attempt 2 from the recorded base of attempt 1", got)
+	}
+}
+
+// loop.md, An uncertain end gets one new attempt, the class rule path (task T-dtw6, #491): a developer whose commit changes AGENTS.md is refused for the
+// rule path at the push, and the task gets one new attempt at the same base whose developer's prompt names the path; the refused head is never pushed.
+func TestADeveloperRefusedForARulePathGetsOneNewAttemptThatNamesThePath(t *testing.T) {
+	t.Parallel()
+	d := newDrvWorld(t, loopPerms)
+	d.ctlWrite("rulepath-specification", "1")
+	d.ctlWrite("rulepath-shape-architecture", "1")
+	spec, arch := d.open()
+	for _, c := range []struct{ task, step string }{{spec, "specification"}, {arch, "shape-architecture"}} {
+		d.mustVerify(c.task)
+		if n := d.refusedRulePaths(c.task); n != 1 {
+			t.Errorf("%s: %d events refused rule-path; want 1", c.step, n)
+		}
+		d.onlyAttempt2Pushed(c.task)
+		prompts := d.promptsOf(c.task)
+		if len(prompts) != 5 || !strings.Contains(prompts[3], "\n- rule-path AGENTS.md: ") || strings.Contains(prompts[2], "- rule-path AGENTS.md") {
+			t.Fatalf("%s: %d prompts; want the finding rule-path AGENTS.md in the developer's prompt of attempt 2 and not in attempt 1's", c.step, len(prompts))
+		}
+		if want := "The rule paths of the target are AGENTS.md, docs/guardrails.md (except added lines in section 2), docs/rules/, and each file whose name ends with .sh;"; !strings.Contains(prompts[2], want) {
+			t.Errorf("%s: the developer's prompt of attempt 1 does not hold %q", c.step, want)
+		}
+		sha := ""
+		for _, e := range d.eventsOf(c.task) {
+			if e[1] == "refused" {
+				sha = strings.TrimPrefix(e[6], "rule-path ")
+			}
+		}
+		if payload := keptRecord(t, d.w, "payloads/"+sha); !strings.Contains(payload, "diff --git a/AGENTS.md b/AGENTS.md") {
+			t.Errorf("%s: the payload payloads/%s does not hold the diff of AGENTS.md", c.step, sha)
+		}
+	}
+}
+
+// A restart between the refusal and the new attempt, or between the new attempt and its first session, in a fresh clone, starts exactly one attempt, and
+// its developer is still told the path, read from the records.
+func TestARestartBeforeOrAfterTheRulePathRetryAttemptStartsExactlyOne(t *testing.T) {
+	t.Parallel()
+	for _, c := range []struct{ name, fail string }{{"before the attempt", "layup run: attempt 2 of"}, {"after the attempt", ", attempt 2 of "}} {
+		d := newDrvWorld(t, loopPerms)
+		d.ctlWrite("rulepath-specification", "1")
+		spec, _ := d.open()
+		_, err := d.advance(spec, func(s *Sessions) {
+			s.Store = &faultStore{SessionStore: s.Store, fail: func(m string) error {
+				if strings.Contains(m, c.fail) {
+					return errors.New("the commit failed")
+				}
+				return nil
+			}}
+		})
+		if err == nil {
+			t.Fatalf("%s: AdvanceShapeTask did not fail", c.name)
+		}
+		d.restart()
+		d.mustVerify(spec)
+		if n := len(d.byRole(spec, stepRole("specification"))); n != 2 {
+			t.Errorf("%s: %d developer sessions; want 2", c.name, n)
+		}
+		d.onlyAttempt2Pushed(spec)
+		if prompts := d.promptsOf(spec); len(prompts) != 5 || !strings.Contains(prompts[3], "\n- rule-path AGENTS.md: ") {
+			t.Errorf("%s: %d prompts; want the finding in the developer's prompt of attempt 2 after the restart", c.name, len(prompts))
+		}
+	}
+}
+
+// Operator decision 3 (6346348137): a payload that is missing or cannot be read is the run's own error, raised before the new attempt is recorded and
+// so before another developer session starts; with the payload readable again, the task goes on.
+func TestARefusedPayloadThatCannotBeReadStopsTheRunBeforeAnotherDeveloper(t *testing.T) {
+	t.Parallel()
+	for _, c := range []struct {
+		name string
+		err  error
+	}{{"a payload that is missing", nil}, {"a payload that cannot be read", errors.New("the read failed")}} {
+		d := newDrvWorld(t, loopPerms)
+		d.ctlWrite("rulepath-specification", "1")
+		spec, _ := d.open()
+		_, err := d.advance(spec, func(s *Sessions) { s.Store = &payloadFault{SessionStore: s.Store, err: c.err} })
+		if err == nil || !strings.Contains(err.Error(), "payloads/") {
+			t.Fatalf("%s: AdvanceShapeTask = %v; want the run's error that names payloads/<sha>", c.name, err)
+		}
+		if n, a := len(d.byRole(spec, stepRole("specification"))), len(d.attempts(spec)); n != 1 || a != 1 {
+			t.Errorf("%s: %d developer sessions and %d attempts; want 1 and 1: no attempt is recorded", c.name, n, a)
+		}
+		d.restart()
+		d.mustVerify(spec)
+		if n := len(d.byRole(spec, stepRole("specification"))); n != 2 {
+			t.Errorf("%s: %d developer sessions after the read works; want 2", c.name, n)
+		}
+	}
+}

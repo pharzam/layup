@@ -80,6 +80,7 @@ func TestAPromptFileIsBuiltFromTheRecordsOfARealTaskAndTheSessionReadsTheFiles(t
 	}
 	spec := harness(t, l.a, copyAll())
 	spec.Role, spec.Attempt, spec.Context = roleOfStep("implement"), 2, pc
+	spec.Pair.Context = 100000 // the sentence of the rule paths (task T-dtw6) made the prompt longer than the 1000 tokens of the stand-in pair
 	id, err := l.r.TaskSession(ctx, spec)
 	if err != nil {
 		t.Fatalf("TaskSession: %q, %v", id, err)
