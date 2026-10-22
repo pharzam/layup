@@ -21,7 +21,7 @@ Evidence: [test runs](../../runs/T-yngf/test-runs.md), [conditions](../../runs/T
 
 ## Findings, and their closing
 
-Round 1, F1 (material): a loss found by a fenced write outside `r.write` (the probe's, through `Sessions`) was not remembered, so the end tried a release after a terminal loss. Fixed in the same branch, test first (`TestALossFoundByAProbeWriteIsKnownAtTheEnd`, red then green in the test runs, section 5). Round 1's notes 1 to 4 and 7 are also round 2's notes 1 to 4 and 7 below.
+Round 1, F1 (material): a loss found by a fenced write outside `r.write` (the probe's, through `Sessions`) was not remembered, so the end tried a release after a terminal loss. Fixed in the same branch, test first (`TestALossFoundByAProbeWriteIsKnownAtTheEnd`, red then green in the test runs, section 5).
 
 Round 2 raised no finding. Its notes:
 
@@ -29,7 +29,7 @@ Round 2 raised no finding. Its notes:
 - Note 5 (the acceptance row of `run.md` did not name a loss found by a session's write): applied as a document change.
 - Notes 6, 8 and 9 (the in-flight beat cancelled by the stop is the old rule of `leaseStep`; the landing figure; history that still says "held"): closed with no change. The landing figure is 640 lines over 20 files against the limit 600/20, so the Operator approves it at merge.
 - Note 7 (no plan row for `T-yngf`): no plan row.
-- Round 1's note 1 (the world's operator resolves `HEAD` in a directory with no `.git`, and git can walk up into an enclosing repository when `TMPDIR` is inside the checkout) is a revealed, off-path defect, filed by the coordinator as its own issue and not fixed here.
+- Round 1's note 1 (the world's operator resolves `HEAD` in a directory with no `.git`, and git can walk up into an enclosing repository when `TMPDIR` is inside the checkout) is a revealed, off-path defect, not fixed here; the coordinator opens an issue for it.
 
 ## Verification and verdict
 
