@@ -239,16 +239,14 @@ so a person reads it with no tool. A plain `git clone` carries the branch as
    of an issue: the restart runs step 7 for that issue again, with no second
    announcement, as the row already says `opening` (a duplicate issue is
    possible, known limit below). When each step of Start is done, the next
-   phase is Intake (`M2c`): the row is `done`, and the run releases the lease and
-   exits. `M2c` replaces this row with its steps ([`intake.md`](intake.md#the-steps-of-intake)):
+   phase is Intake (`M2c`): the row is `done`, and the run ends as
+   [The release at the end of a restart](#the-lease-and-fencing) says. `M2c` replaces this row with its steps ([`intake.md`](intake.md#the-steps-of-intake)):
    when each step of Start is done (`issue.intake` and `issue.control` are numbers
    and `watch` is written), the steps of Intake take the place of `phase`, the
-   first `rule-gaps` (task `T-qk66`), and the run releases the lease after its
-   last row; a release that fails makes that row `fail`, its `detail` naming the
-   lease. **Decided here** (task `T-hxb9`): a step `done` with a detail that
+   first `rule-gaps` (task `T-qk66`). **Decided here** (task `T-hxb9`): a step `done` with a detail that
    starts with "waiting" (a step of Intake that waits for a human) is the last
-   row that the restart runs, as a `fail` is, and the run then releases the
-   lease and exits 0. **Decided here** (task `T-2j13`): once the Scaffold is done
+   row that the restart runs, as a `fail` is, and the run then ends as that
+   rule says and exits 0. **Decided here** (task `T-2j13`): once the Scaffold is done
    (the rule is in [`scaffold.md`](scaffold.md#at-each-later-start)), the row
    `forge-check` comes between `lease` and `probe` and not at the end, and a row
    of it that is not `pass` makes it the last row of the restart; **decided here** (task `T-3f94`, row 66h): then the row `shape` is the last of the chain, after `scaffold-push`, and, **decided here** (task `T-2vva`, row 66j), the row `bet` follows `shape` once the Scaffold is done, and, **decided here** (task `T-9nbf`, row 66k), the row `loop` follows `bet`: it is the last row of the restart, and a restart that reaches it ends with `loop` `done` or `fail` ([`loop.md`](loop.md#the-step-loop)). **Decided here** (task `T-qk66`): the rows after `clone` come from the
@@ -292,6 +290,23 @@ As `architecture.md` §2, with these values decided here:
   heartbeat beats from step 6 on, in its own task; the run ends it before the
   release and before any exit, and a lost beat stops the step that runs, which
   is `fail` with the loss.
+- **The release at the end of a restart** (task `T-yngf`, #479; the one home of
+  the rule). After the last row of a restart, `done` or `fail`, with Start done
+  or not, the run stops and joins the heartbeat, and only then reads its lease.
+  If the lease row names this run, says `held` and no loss is known, the run
+  releases it through Fencing, on a context that the cancellation of the steps
+  does not cancel and that ends after one minute. `phase` releases the lease
+  itself, so a lease already `released` is not released again, and a release of
+  `phase` that failed is tried once more here. A loss is known once a beat or a
+  records write has had a `LostError`, which is also two refusals while the row
+  still names this run; after it the run tries no release. An error of the
+  release, a `LostError` found here too, is named after the failure of the last
+  row, `detail` `…; the lease: …`, and its result stays `fail`; a last row `done`
+  becomes `fail` with `the lease: …`, as does an error of the heartbeat. An
+  error of the heartbeat that is not a loss does not stop the release. The
+  release is one commit of `lease.tsv` on the last pushed base, so the records
+  the failed step committed stay and a failed payload is no commit; the next
+  restart takes the released lease at once, with no wait.
 
 ### A human decision
 
@@ -365,10 +380,10 @@ check of `M2c` posts there.
 | A host directory with no `registers/harnesses.tsv` | exit 2, "a missing or unreadable file" ([`README.md`](README.md#commands)) |
 | `--new` after an earlier Start that stopped before step 6, on the same host | the run removes `DIR/roots/OWNER/NAME/` and `DIR/targets/OWNER/NAME/` and starts again (step 3) |
 
-**Known limit:** a step that fails after step 6 of Start, or after the row
-`lease` of a restart (the steps of Intake among them, task `T-1u2v`), for a
-reason other than a lost lease leaves the lease `held`, so the next restart
-waits `3 × lease.H` before it takes the lease over (task `T-ax3r`).
+**Known limit:** a step of Start (`layup run --new`) that fails after step 6
+leaves the lease `held`, so the next restart waits `3 × lease.H` before it takes
+the lease over (task `T-ax3r`). A restart releases its lease after a `fail` too
+(task `T-yngf`, [the release](#the-lease-and-fencing)).
 
 **Known limit:** a run that stops after it opens an issue and before the records
 commit of its number leaves an issue that the records do not name; the restart
@@ -413,6 +428,9 @@ resolved pin and the root commit come from the same calls as S02 and S03 of
 | A human decision | unit | An author ID in `approvers.tsv` with an empty App field, in the rule's role, is a decision; an App comment, a review, a review comment, a commit, a reaction and an edit are not; Intake takes `operator` and `idea-owner`, an acceptance `idea-owner` only. |
 | Copy before read | unit | A copy writes the body, the author ID and login, the comment ID, the App field, the times and the SHA-256; an edit adds a row with the next `seen`, and the first copy stays; an unchanged comment adds none. |
 | The records of Start | unit | Each new record kind is refused with a wrong header; its Go schema equals its block (`tsv.Compare`), and the owner moves its name from `notYetBuilt` to `built`. |
+| The release at the end of a restart | unit | With the stand-in store: a last row `fail` or `done` releases a held lease; a release error and a loss, two refusals included, are named after the failure; a known loss, a lease not held and a released one try no write; the heartbeat is joined before `r.lease` is read, and a beat in flight ends before the release; a context of the steps that ended does not stop it, and it is bounded. |
+| The release at the end of a restart | integration | On the restart world: a step of Intake, a step before `phase` and a step inside it each leave the lease `released`, and the next restart (another run ID) takes it with no wait; another run's takeover and two refused releases publish no release; a committed records prefix is kept, a failed payload is no commit, and a fresh restart resumes. |
+| The release at the end of a restart | e2e | The binary: a later start that fails at `forge-check` leaves the lease `released` (`TestTheStepsOfTheScaffold`). |
 | Input states | unit | Each row of the table of input states gives its result. |
 | The GitHub adapter | integration | Against an `httptest` server on loopback: the JWT and the installation token, each call of [`forge.md`](forge.md#the-calls-of-m2a), and a server that lacks a capability or a permission, which stops `forge` and names it: the permission, or the call and the status ([`forge.md`](forge.md#the-test-of-the-adapter)). |
 | Start | integration | Against the `httptest` forge and a real local bare repository with the real `internal/git`: the first records commit holds the pin, the briefs byte for byte, `approvers.tsv`, `start.tsv` and the lease row; a restart with another LAYUP version fails at `version`. |
