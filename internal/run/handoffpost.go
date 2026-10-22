@@ -437,7 +437,9 @@ func (s *Sessions) holdsLease(ctx context.Context) error {
 		return err
 	}
 	if lease.Run != s.RunID || lease.State != "held" {
-		return &LostError{Holder: lease.Run}
+		err := &LostError{Holder: lease.Run}
+		s.lost(err)
+		return err
 	}
 	return nil
 }

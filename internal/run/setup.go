@@ -363,7 +363,7 @@ func (r *state) removeProse(ctx context.Context, p proseDone, reason string) err
 		reason = reason[:200]
 	}
 	message := "layup run: the files of the session " + p.Session + ", removed: " + reason
-	return Fenced(ctx, r.store, r.cfg.RunID, func(ctx context.Context) error { return r.store.Remove(ctx, paths, message) })
+	return r.fenced(ctx, func(ctx context.Context) error { return r.store.Remove(ctx, paths, message) })
 }
 
 // setupStep is the step setup of the restart, after follow-up-answers: "done before"

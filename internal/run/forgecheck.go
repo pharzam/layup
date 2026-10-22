@@ -565,7 +565,7 @@ func (r *state) forgeCheckStep(ctx context.Context) Step {
 		},
 		activity: func(ref string) error { _, err := r.cfg.Forge.Activity(ctx, ref); return err },
 		commit: func(table []byte) error {
-			return Fenced(ctx, r.store, r.cfg.RunID, func(ctx context.Context) error {
+			return r.fenced(ctx, func(ctx context.Context) error {
 				return r.store.Commit(ctx, map[string][]byte{"setup/forge-check.tsv": table}, forgeCheckMessage)
 			})
 		},

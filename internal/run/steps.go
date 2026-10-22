@@ -2,6 +2,7 @@ package run
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -90,6 +91,9 @@ type state struct {
 	cancel                         context.CancelFunc // ends the context of the steps
 	mu                             sync.Mutex
 	lostBeat                       error           // a beat that was lost
+	lostLease                      *LostError      // a fencing loss that is known; the run releases nothing after it (endLease)
+	viaLease                       Store           // a test's stand-in for the store that the lease goes through; nil: store
+	endTimeout                     time.Duration   // a test's bound for the release at the end; zero: leaseEndTimeout
 	sessionsHook                   func(*Sessions) // a test's fault for the Sessions that the step loop makes (loop.go)
 }
 
@@ -140,12 +144,72 @@ func Restart(ctx context.Context, cfg Config) []Step {
 		}
 	}
 	rows = append(rows, r.steps(ctx, restartNames(startDone, r.scaffoldDone), len(rows), tail)...)
-	if end := &rows[len(rows)-1]; startDone && end.Result == "done" {
-		if s := r.leaseStep(ctx); s.Result == "fail" {
-			end.Result, end.Detail = "fail", r.clean("the lease: "+s.Detail)
+	return r.endLease(ctx, rows)
+}
+
+// endLease is the end of a restart's hold on the lease (docs/spec/run.md, The lease and fencing; task T-yngf, #479). It first stops and joins the
+// heartbeat, and only then reads r.lease, which the heartbeat writes. The lease is released when this run holds it (its row names the run and says
+// held) and no fencing loss is known, whatever the last row is: a release that phaseStep already made leaves the row released, so none is made twice, and
+// one that failed there is tried once more. The release goes through Fenced, on a context that the steps' cancellation does not cancel and that
+// ends after endTimeout. An error found here is named beside the failure it follows ("; the lease: ..."), a loss too, and a last row done becomes fail
+// with it (the old rule); the row of a fail keeps its result.
+func (r *state) endLease(ctx context.Context, rows []Step) []Step {
+	var beatErr error
+	if r.stopBeat != nil {
+		beatErr = r.stopBeat()
+	}
+	r.noteLoss(beatErr)
+	r.mu.Lock()
+	var known error // not the typed nil of lostLease
+	if r.lostLease != nil {
+		known = r.lostLease
+	}
+	r.mu.Unlock()
+	var relErr error
+	if known == nil && r.lease.Run == r.cfg.RunID && r.lease.State == "held" {
+		timeout := r.endTimeout
+		if timeout == 0 {
+			timeout = leaseEndTimeout
 		}
+		rctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), timeout)
+		defer cancel()
+		relErr = Release(rctx, r.leaseStore(), &r.lease)
+		r.noteLoss(relErr)
+	}
+	end := &rows[len(rows)-1]
+	text := func(err error) string { return r.clean(strings.SplitN(err.Error(), "\n", 2)[0]) }
+	switch {
+	case end.Result == "done":
+		if err := cmp.Or(relErr, beatErr, known); err != nil {
+			end.Result, end.Detail = "fail", "the lease: "+text(err)
+		}
+	case relErr != nil && !strings.Contains(end.Detail, text(relErr)):
+		end.Detail += "; the lease: " + text(relErr)
 	}
 	return rows
+}
+
+// noteLoss remembers a fencing loss: after it the run releases nothing.
+func (r *state) noteLoss(err error) {
+	var lost *LostError
+	if errors.As(err, &lost) {
+		r.mu.Lock()
+		defer r.mu.Unlock()
+		if r.lostLease == nil {
+			r.lostLease = lost
+		}
+	}
+}
+
+// leaseEndTimeout bounds the release at the end of a restart.
+const leaseEndTimeout = time.Minute
+
+// leaseStore is the store that the lease goes through: the records store.
+func (r *state) leaseStore() Store {
+	if r.viaLease != nil {
+		return r.viaLease
+	}
+	return r.store
 }
 
 // afterScaffold gives the steps that follow the Scaffold, in order (loop.md, REQ-005 — The steps of the loop after the Scaffold).
@@ -551,7 +615,14 @@ func (r *state) writeStart(ctx context.Context, message string) error {
 
 // write makes a records commit through fencing.
 func (r *state) write(ctx context.Context, files map[string][]byte, message string) error {
-	return Fenced(ctx, r.store, r.cfg.RunID, func(ctx context.Context) error { return r.store.commit(ctx, files, message, "") })
+	return r.fenced(ctx, func(ctx context.Context) error { return r.store.commit(ctx, files, message, "") })
+}
+
+// fenced is Fenced for this run's records writes: a loss it finds is remembered, so the end releases nothing after it (endLease; task T-yngf).
+func (r *state) fenced(ctx context.Context, write func(context.Context) error) error {
+	err := Fenced(ctx, r.store, r.cfg.RunID, write)
+	r.noteLoss(err)
+	return err
 }
 
 // recordsStep is step 6: the first records commit, an orphan commit as S15
@@ -601,8 +672,9 @@ func (r *state) beat() {
 	hb, stop := context.WithCancel(context.Background())
 	result := make(chan error, 1)
 	go func() {
-		err := Heartbeat(hb, r.store, r.cfg.Clock, &r.lease, time.Duration(r.cfg.LeaseH)*time.Minute)
+		err := Heartbeat(hb, r.leaseStore(), r.cfg.Clock, &r.lease, time.Duration(r.cfg.LeaseH)*time.Minute)
 		if err != nil {
+			r.noteLoss(err)
 			r.mu.Lock()
 			r.lostBeat = err
 			r.mu.Unlock()
@@ -730,7 +802,8 @@ func (r *state) leaseStep(ctx context.Context) Step {
 			return fail("lease", err)
 		}
 	}
-	if err := Release(ctx, r.store, &r.lease); err != nil {
+	if err := Release(ctx, r.leaseStore(), &r.lease); err != nil {
+		r.noteLoss(err)
 		return fail("lease", err)
 	}
 	return done("lease", "released")

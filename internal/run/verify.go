@@ -219,7 +219,7 @@ func (r *state) verifyStep(ctx context.Context) Step {
 		files: func() (map[string][]byte, error) { return setupOutputs(dir) },
 		tree:  func() ([]byte, error) { return setupTree(filepath.Join(dir, workpkg.TargetPath)) },
 		commit: func(files map[string][]byte) error {
-			return Fenced(ctx, r.store, r.cfg.RunID, func(ctx context.Context) error { return r.store.Commit(ctx, files, setupMessage) })
+			return r.fenced(ctx, func(ctx context.Context) error { return r.store.Commit(ctx, files, setupMessage) })
 		},
 	}.do()
 }

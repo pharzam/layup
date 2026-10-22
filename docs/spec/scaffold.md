@@ -1037,7 +1037,7 @@ lease released. **Stage 5:** a later start,
 with `forge-check` fifth, the steps of Intake and of the Scaffold done before (but `follow-up` and
 `follow-up-answers`, with their own details), the lease released and a new table in Git history;
 then a forge that gives no rule for `layup-records`: exit 1, the rows ending at `forge-check`, no
-`probe` row, the table committed with that `fail`, and the lease held.
+`probe` row, the table committed with that `fail`, and the lease released (task `T-yngf`: it was held).
 
 The scenario shows the binary's plumbing, the files, the branches and the tables, and not that
 GitHub holds the rules or refuses the probe in those words: the demo row above, on a real
