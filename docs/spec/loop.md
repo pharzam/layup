@@ -1794,22 +1794,18 @@ own judgement of it.
   file (the options table and the chosen option as the only survivor, [The instruction of a task
   step](#the-instruction-of-a-task-step)), which writes it into the target's architecture; it merges in the merge order
   below, after the specification.
-- **The contract of the survivors.** Decided here (R10, task `T-0xr7`, #493). A
-  task of kind `architecture` writes as decided each decision that has one survivor,
-  and writes each decision that has more than one as a section `Decision pending the
-  bet` that lists its survivors and decides nothing, because the bet chooses among
-  them (the bullet above). After the bet the chosen option is the one survivor of its
-  decision, so the same sentence still holds. The prompt of the steps that judge that
-  work, the plan, the plan review and the verification, states the contract in its
-  third paragraph, so that a plan that chooses among survivors is corrected, and the
-  deferral to the bet is never asked of the task as a choice.
-- **The review scope of the survivors.** Decided here (R10, task `T-0xr7`, #493). The
-  exemption is limited to the deferral itself: a reviewer withdraws a finding whose
-  basis is that no option was chosen for a decision with more than one survivor, and
-  asks for no choice. A pending section is still checked for a survivor that is
-  wrong (a non-survivor listed, or a survivor left out), a choice hidden in it, a
-  contradiction and every other defect; a decision of one survivor is checked as any
-  other, and so is the rest of the work.
+- **The contract of the survivors.** Decided here (R10, task `T-0xr7`, #493). A task of kind
+  `architecture` writes as decided each decision that has one survivor, and writes each decision
+  that has more than one as a section `Decision pending the bet` that lists its survivors and
+  decides nothing, because the bet chooses among them (the bullet above); after the bet the chosen
+  option is the one survivor, so the sentence still holds. The plan, the plan review and the
+  verification of that task state it in their third paragraph, so that a plan that chooses among
+  survivors is corrected and the deferral is never asked of the task as a choice.
+- **The review scope of the survivors.** Decided here (R10, task `T-0xr7`, #493). The exemption is
+  the deferral itself: a finding whose basis is that no option was chosen for a decision with more
+  than one survivor is withdrawn. A pending section is still checked for a wrong survivor (a
+  non-survivor listed, a survivor left out), a choice hidden in it and a contradiction; a decision
+  of one survivor and the rest of the work are checked as any other.
 - **Every option dropped:** the architect session writes new options once; if they
   are dropped too, the round made no progress. `layup run` posts a comment on the
   milestone's issue that names each dropped option with its failed rows, and stops
@@ -2846,29 +2842,25 @@ parsed review records of the valid handoffs, so each position is told from the r
   always a wait, and never another cycle. The findings of an attempt are those of the record of the attempt before it that no retry replaced, else the rows of its
   head's gate table; never an older record. The cap is 1, and 2 for a task that has the grant of the next bullet.
 - **One more cycle at the cap.** Decided here (R10, task `T-0xr7`, #493, the Operator's decisions of 2026-10-22). The Operator answers the wait
-  at the cap with a comment on the **control issue**, `cycle <task> because <reason>`: one line, once its trailing white space is trimmed, with one
-  space between the parts, a task ID of the form `T-xxxx`, and a reason that is neither empty nor `—`. A body whose first word is not `cycle` is
-  no command. **The copy is the record:** `parametersBoundary` already copies every comment of the control issue that is no App's, before `shape`,
-  `bet` and `loop` act, and the grant is read from `copies.tsv` and from the task's own events on every view; no row, file, comment or event kind
-  is added, and a restart reads the same grant. **The order of judgement** of a command, each refusal a progress line `cycle: refused comment <ID>:
-  <item>: <reason>` that writes no row, no file and no comment (as a refused `set`), and the same refusal again at the next boundary: (1) `form`;
-  (2) `author`: a first copy (seen 1), by no App, by an account of `approvers.tsv` in the role `operator`; (3) `issue`: the control issue;
-  (4) `task`: a task of `tasks.tsv`; (5) `cap`; (6) `bound`. A command is judged before it is filtered to a task, so that a malformed command, a
-  command with no such task and a command on another issue are each reported. **The cap, from the recorded history:** the cap round is the round
-  number `shapeCycleCap`+1 among the rounds with findings, in the order of the sessions (the second, while the cap is 1). A command is eligible only
-  if its comment ID is strictly greater than the ID in the handoff `valid comment <ID>-<seen>` of the cap round's record (the IDs of one forge grow
-  with time, as the supersession of a `set` relies on), and only if the verdict of that record is `material`: a task with fewer rounds, and a
-  task whose cap round is `not mergeable, findings recorded`, give the item `cap`, because that record is always a wait that grants no cycle and so
-  consumes no grant. Eligibility reads no position, so a grant that was accepted stays accepted after its attempt starts, and a command posted
-  before the cap round stays refused. **The bound is one grant per task:** the earliest eligible command is the grant; each later one is refused
-  with the item `bound`. With the grant the cap is 2: the next attempt starts at the base of the one before it with the findings of the cap round's
-  record, and a third round with findings is the wait `waiting for the Operator: <task>: the review-cycle cap 2 is reached with findings open`.
-  While the task has no grant the wait says so: `…the review-cycle cap 1 is reached with findings open; the Operator may grant one more cycle with
-  `cycle <task> because <reason>` on the control issue`. The plan-reject count and the retries are not raised, and the independence of the
-  verifier and the stop `not-active` are unchanged. A further grant, and the diagnosis and the stall package, are `M3d`'s. **Rejected:** `set
-  cycle.<task> 2 because …` (a per-task row family in the static `parameters.tsv`, and a judge of the parameters that reads the state of the tasks);
-  an answer on the task's issue in the grammar of `architecture.md` §11 (a new copier, and `M3d`'s grammar taken early); a new event `granted` (an
-  enum value, a fenced write and a second source of the same fact).
+  at the cap with a comment on the **control issue**, `cycle <task> because <reason>`: one line (trailing white space trimmed), one space between
+  the parts, a task ID `T-xxxx`, and a reason that is neither empty nor `—`; a body whose first word is not `cycle` is no command. **The copy is
+  the record:** the boundary already copies every comment of the control issue that is no App's before `shape`, `bet` and `loop` act, and the grant
+  is read from `copies.tsv` and the task's events on every view; no row, file, comment or event kind is added. **The order of judgement,** each
+  refusal a progress line `cycle: refused comment <ID>: <item>: <reason>` that writes nothing (as a refused `set`) and is repeated at the next
+  boundary: (1) `form`; (2) `author`: a first copy (seen 1), by no App, by an account of `approvers.tsv` in the role `operator`; (3) `issue`: the
+  control issue; (4) `task`: a task of `tasks.tsv`; (5) `cap`; (6) `bound`. Every copy of a command is judged before it is filtered to a task, so a
+  malformed command, an unknown task and another issue are each reported. **The cap, from the recorded history:** the cap round is the round number
+  `shapeCycleCap`+1 among the rounds with findings, in the order of the sessions. A command is eligible only if its comment ID is strictly greater
+  than the ID in the handoff `valid comment <ID>-<seen>` of that round (the IDs of one forge grow with time, as the supersession of a `set` relies
+  on) and the verdict of that record is `material`: a task with fewer rounds, and a cap round that is `not mergeable, findings recorded` (always
+  a wait, which grants no cycle and so consumes no grant), give the item `cap`. Eligibility reads no position, so an accepted grant stays accepted
+  after its attempt starts, and a command posted before the cap round stays refused. **One grant per task:** the earliest eligible command is the
+  grant, each later one is refused with `bound`. With the grant the cap is 2: the next attempt starts at the base with the findings of the cap
+  round's record, and a third round with findings is the wait `…the review-cycle cap 2 is reached with findings open`. With no grant the wait
+  adds `; the Operator may grant one more cycle with `cycle <task> because <reason>` on the control issue`. The plan-reject count, the retries,
+  the independence of the verifier and the stop `not-active` are unchanged; a further grant, the diagnosis and the stall package are `M3d`'s.
+  **Rejected:** `set cycle.<task> 2 because …` (a per-task row family in the static `parameters.tsv`); an answer on the task's issue in the grammar
+  of `architecture.md` §11 (a new copier, `M3d`'s grammar taken early); a new event `granted` (an enum value, a fenced write, a second source).
 - **After the four statuses of a head,** an `error` of any of them, or `not-active` of `layup/verify` (posted before the stop,
   `NFR-004`), is a stop, and no attempt starts. Otherwise a failure of `layup/gates`, `layup/spec` or `layup/rules` starts the next
   attempt at the base of this one, with the findings of the gate's table, then those of `layup/spec`, then that of `layup/rules`

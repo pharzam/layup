@@ -12,9 +12,8 @@ import (
 	"github.com/pharzam/layup/internal/records"
 )
 
-// The command `cycle <task> because <reason>` of the Operator (docs/spec/loop.md, One more cycle at the cap; task T-0xr7, #493): one more
-// fix-and-review cycle for a Shape task that is at the review-cycle cap. The copy of the comment in copies.tsv is the record, and nothing else is
-// written: the grant is read, on every view, from the copies and from the task's own events.
+// The command `cycle <task> because <reason>` of the Operator (docs/spec/loop.md, One more cycle at the cap; task T-0xr7, #493): one more fix-and-review
+// cycle for a Shape task at the review-cycle cap. The copy of the comment is the record; the grant is read from the copies and the task's events.
 
 // cycleTask is the form id(T-xxxx) of a task ID (internal/tsv, idPattern).
 var cycleTask = regexp.MustCompile(`^T-[a-z0-9]{4}$`)
@@ -22,9 +21,8 @@ var cycleTask = regexp.MustCompile(`^T-[a-z0-9]{4}$`)
 // A cycleLine is the two parts of a command: its task and its reason.
 type cycleLine struct{ Task, Reason string }
 
-// parseCycle reads the body of a comment as `cycle <task> because <reason>`: one line, once its trailing white space is trimmed, with one space between
-// the parts, a task of the form id(T-xxxx), and a reason that is not empty and not —. A body whose first word is not cycle is no command (false, no
-// error); one that starts with the word and breaks the form is a command that is refused (true, the error).
+// parseCycle reads a body as `cycle <task> because <reason>`: one line, trailing white space trimmed, one space between the parts, a task of the form
+// id(T-xxxx), a reason that is not empty and not —. A first word other than cycle is no command (false, no error); a broken form is refused (true, the error).
 func parseCycle(body string) (cycleLine, bool, error) {
 	text := strings.TrimRight(body, " \t\r\n")
 	first := text
@@ -34,24 +32,22 @@ func parseCycle(body string) (cycleLine, bool, error) {
 	if first != "cycle" {
 		return cycleLine{}, false, nil
 	}
-	const form = "the form is `cycle <task> because <reason>`, on one line"
-	if strings.ContainsAny(text, "\r\n") {
-		return cycleLine{}, true, fmt.Errorf("%s: this comment has more than one line", form)
-	}
+	const form = "the form is `cycle <task> because <reason>`, on one line, with a task of the form T-xxxx"
 	f := strings.Split(text, " ")
-	if len(f) < 4 || !cycleTask.MatchString(f[1]) || f[2] != "because" {
-		return cycleLine{}, true, fmt.Errorf("%s, with a task of the form T-xxxx", form)
-	}
-	reason := strings.Join(f[3:], " ")
-	if reason == "" || reason == "—" {
+	switch reason := strings.Join(f[min(3, len(f)):], " "); {
+	case strings.ContainsAny(text, "\r\n"):
+		return cycleLine{}, true, fmt.Errorf("%s: this comment has more than one line", form)
+	case len(f) < 4 || !cycleTask.MatchString(f[1]) || f[2] != "because":
+		return cycleLine{}, true, fmt.Errorf("%s", form)
+	case reason == "" || reason == "—":
 		return cycleLine{}, true, fmt.Errorf("%s: the reason is not empty and not —", form)
+	default:
+		return cycleLine{Task: f[1], Reason: reason}, true, nil
 	}
-	return cycleLine{Task: f[1], Reason: reason}, true, nil
 }
 
-// judgeCommand judges a copy against the first three items of the order of docs/spec/loop.md: the form; the author (a first copy, by no App, by an
-// account of approvers.tsv in the role operator); the issue (the control issue). It gives the command, whether the body is one, and the refusal.
-// The task, the cap and the bound are judged against the records of the task (judgeGrants and the boundary).
+// judgeCommand judges a copy by the first three items of the order of loop.md: the form; the author (a first copy, by no App, by an account of the role
+// operator); the issue (the control issue). The task, the cap and the bound are judged against the records (the boundary and judgeGrants).
 func judgeCommand(c setInput, control int, approvers [][]string) (cycleLine, bool, *Refusal) {
 	line, isCycle, err := parseCycle(c.Body)
 	if !isCycle {
@@ -72,8 +68,8 @@ func judgeCommand(c setInput, control int, approvers [][]string) (cycleLine, boo
 	return line, true, nil
 }
 
-// capRound gives the review record of the cap round: the round number shapeCycleCap+1 among the rounds that reviewRounds counts, in the order of the
-// sessions. It gives the comment of its valid handoff and its verdict; found is false when the task has fewer rounds.
+// capRound gives the comment of the valid handoff and the verdict of the cap round: round number shapeCycleCap+1 among those reviewRounds counts, in the
+// order of the sessions; found is false when the task has fewer.
 func capRound(v loopView) (comment int64, verdict string, found bool) {
 	n := 0
 	for _, s := range v.Sessions {
@@ -93,12 +89,11 @@ func capRound(v loopView) (comment int64, verdict string, found bool) {
 	return 0, "", false
 }
 
-// judgeGrants judges the commands that name the task of v against its recorded history, in the order of the comment IDs, and gives the comment of the
-// grant (0 for none) and the refusals of the items cap and bound. The order of the items for a command is: form, author, issue (judgeCommand), task
-// (the boundary), cap, bound. A command is eligible only after the cap round, that is the second counted review round of the task, and only if that
-// round did not end `not mergeable, findings recorded`, whose wait grants no cycle and so consumes no grant; its comment ID is strictly greater than
-// that of the cap round's record (the IDs of one forge grow with time). The earliest eligible command is the grant, and each later one is refused
-// with the item bound. Nothing in the judgement reads the position, so a grant stays accepted after its attempt starts.
+// judgeGrants judges the commands that name the task of v against its recorded history, in the order of the comment IDs, and gives the grant (a comment
+// ID, 0 for none) and the refusals of the items cap and bound (the order: form, author, issue, task, cap, bound). A command is eligible if the task has a
+// cap round whose verdict is not `not mergeable, findings recorded` (that wait grants no cycle and consumes no grant) and its ID is strictly greater than
+// that of the cap round's record (the IDs of one forge grow with time). The earliest eligible command is the grant; each later one is refused with the
+// item bound. Nothing reads the position, so a grant stays accepted after its attempt starts.
 func judgeGrants(v loopView, cands []setInput) (grant int64, refused []Refusal) {
 	capID, verdict, found := capRound(v)
 	sorted := slices.Clone(cands)
@@ -145,11 +140,8 @@ func (s *Sessions) cycleCommands(ctx context.Context, copies [][]string) ([]setI
 			continue
 		}
 		body, err := s.Store.ReadFile(ctx, row[copyBody])
-		if err != nil {
-			return nil, fmt.Errorf("the copy %s: %w", row[copyBody], err)
-		}
-		if body == nil {
-			return nil, fmt.Errorf("the copy %s is not in the records", row[copyBody])
+		if err != nil || body == nil {
+			return nil, fmt.Errorf("the copy %s: %v", row[copyBody], err)
 		}
 		if _, isCycle, _ := parseCycle(string(body)); isCycle {
 			out = append(out, setInput{Row: row, Body: string(body)})
@@ -158,9 +150,8 @@ func (s *Sessions) cycleCommands(ctx context.Context, copies [][]string) ([]setI
 	return out, nil
 }
 
-// cycleBoundary is what the boundary calls after the copies are made: it judges every command of the copies and reports each refusal as a progress line
-// `cycle: refused comment N: <item>: <reason>`, the items being form, author, issue, task, cap and bound, in that order of judgement. A refusal changes and
-// records nothing, and the same command is judged again at the next boundary with the same result; a grant needs no write, because its copy is the record.
+// cycleBoundary is what the boundary calls once the copies are made: it judges every command of the copies and reports each refusal as a progress line
+// `cycle: refused comment N: <item>: <reason>`. A refusal changes and records nothing and is judged again at the next boundary; a grant needs no write.
 func (r *state) cycleBoundary(ctx context.Context) ([]Refusal, error) {
 	control, err := strconv.Atoi(r.value("issue.control"))
 	if err != nil {
@@ -175,23 +166,13 @@ func (r *state) cycleBoundary(ctx context.Context) ([]Refusal, error) {
 	if err != nil || len(cands) == 0 {
 		return nil, err
 	}
-	data, err := r.store.ReadFile(ctx, tasksPath)
-	if err != nil {
-		return nil, err
-	}
-	var tasks []Task
-	if data != nil {
-		if tasks, err = ReadRegister(data); err != nil {
-			return nil, fmt.Errorf("%s: %w", tasksPath, err)
-		}
-	}
 	var refused []Refusal
 	judged := map[string]bool{}
 	for _, c := range cands {
 		line, _, ref := judgeCommand(c, control, r.approvers)
-		if ref == nil && !slices.ContainsFunc(tasks, func(t Task) bool { return t.ID == line.Task }) {
+		if _, err := s.taskRow(ctx, line.Task); ref == nil && err != nil {
 			id, _ := strconv.ParseInt(c.Row[copyComment], 10, 64)
-			ref = &Refusal{Comment: id, Item: "task", Reason: fmt.Sprintf("%s is not a task of tasks.tsv", line.Task)}
+			ref = &Refusal{Comment: id, Item: "task", Reason: err.Error()}
 		}
 		if ref != nil {
 			refused = append(refused, *ref)

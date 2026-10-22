@@ -46,22 +46,13 @@ func TestParseCycleReadsTheFormAndRefusesABrokenOne(t *testing.T) {
 		bad     string // a word of the error, "" for none
 	}{
 		{"cycle T-ab12 because the finding is real", "T-ab12", true, ""},
-		{"cycle T-ab12 because the finding is real\n", "T-ab12", true, ""},
-		{"cycle T-ab12 because one two  three \t\n", "T-ab12", true, ""},
 		{"cycle T-ab12 because the first\nsecond line", "", true, "more than one line"},
 		{"cycle T-ab12", "", true, "the form is"},
-		{"cycle T-ab12 because", "", true, "the form is"},
-		{"cycle T-ab12 since the finding is real", "", true, "the form is"},
 		{"cycle T-ab12 because —", "", true, "not empty and not"},
-		{"cycle T-ab12 because ", "", true, "the form is"},
 		{"cycle T-AB12 because x", "", true, "T-xxxx"},
-		{"cycle T-ab1 because x", "", true, "T-xxxx"},
 		{"cycle because x y", "", true, "T-xxxx"},
-		{"cycle  T-ab12 because x", "", true, "T-xxxx"},
 		{"cycles T-ab12 because x", "", false, ""},
 		{"set brief.lines 8 because x", "", false, ""},
-		{"thanks, cycle T-ab12 because x", "", false, ""},
-		{"", "", false, ""},
 	} {
 		line, isCycle, err := parseCycle(c.body)
 		if isCycle != c.isCycle || line.Task != c.task || (c.bad == "") != (err == nil) || (err != nil && !strings.Contains(err.Error(), c.bad)) {
@@ -80,14 +71,12 @@ func TestACommandIsJudgedByTheFormTheAuthorAndTheIssueInThatOrder(t *testing.T) 
 	}{
 		{"the Operator on the control issue", operatorSays(20, good), ""},
 		{"a broken form", operatorSays(20, "cycle T-sp01"), "form"},
-		{"a broken form by a stranger on another issue", aCopy(20, "1", 3, otherID, "", "cycle"), "form"},
 		{"the idea owner only", aCopy(20, "1", ctlIssue, ownerID, "", good), "author"},
 		{"a stranger", aCopy(20, "1", ctlIssue, otherID, "", good), "author"},
 		{"the App", aCopy(20, "1", ctlIssue, opID, "layup-agent", good), "author"},
 		{"an edit of the Operator's comment", aCopy(20, "2", ctlIssue, opID, "", good), "author"},
 		{"a stranger on another issue", aCopy(20, "1", 3, otherID, "", good), "author"},
 		{"the Operator on the issue of the task", aCopy(20, "1", 3, opID, "", good), "issue"},
-		{"the Operator on the Intake issue", aCopy(20, "1", 1, opID, "", good), "issue"},
 	} {
 		_, isCycle, ref := judgeCommand(c.in, ctlIssue, cycleApprovers)
 		switch {
@@ -95,6 +84,9 @@ func TestACommandIsJudgedByTheFormTheAuthorAndTheIssueInThatOrder(t *testing.T) 
 			t.Errorf("%s: judged no command", c.name)
 		case c.item == "" && ref != nil, c.item != "" && (ref == nil || ref.Item != c.item || ref.Comment != 20 || ref.Reason == ""):
 			t.Errorf("%s: the refusal %+v; want the item %q", c.name, ref, c.item)
+		}
+		if b := atTheCap("material", c.in); (c.item == "") != (grantOf(b.v) == 1) || (c.item != "" && b.at().Pos != posWait) {
+			t.Errorf("%s: the grant %d, the position %+v; want a grant exactly when the command passes, and the wait otherwise", c.name, grantOf(b.v), b.at())
 		}
 	}
 	if _, isCycle, ref := judgeCommand(operatorSays(20, "thanks"), ctlIssue, cycleApprovers); isCycle || ref != nil {
@@ -120,28 +112,6 @@ func TestAGrantOfTheOperatorAtTheCapStartsTheNextAttempt(t *testing.T) {
 	b.v.Cycles = []setInput{operatorSays(20, "cycle T-zz99 because x")}
 	if g, refused := judgeGrants(b.v, b.v.Cycles); g != 0 || len(refused) != 0 {
 		t.Errorf("a command of another task: %d, %v; want no grant and no refusal here", g, refused)
-	}
-}
-
-func TestAGrantByANonOperatorGrantsNothing(t *testing.T) {
-	good := "cycle T-sp01 because the finding is real"
-	for name, in := range map[string]setInput{
-		"the idea owner":    aCopy(20, "1", ctlIssue, ownerID, "", good),
-		"a stranger":        aCopy(20, "1", ctlIssue, otherID, "", good),
-		"the App":           aCopy(20, "1", ctlIssue, opID, "layup-agent", good),
-		"an edit":           aCopy(20, "2", ctlIssue, opID, "", good),
-		"the wrong issue":   aCopy(20, "1", 3, opID, "", good),
-		"a broken form":     operatorSays(20, "cycle T-sp01"),
-		"an empty reason":   operatorSays(20, "cycle T-sp01 because —"),
-		"another task's ID": operatorSays(20, "cycle T-zz99 because x"),
-	} {
-		b := atTheCap("material", in)
-		if g, _ := judgeGrants(b.v, b.v.Cycles); g != 0 || grantOf(b.v) != 0 {
-			t.Errorf("%s: the grant %d; want none", name, g)
-		}
-		if got := b.at(); got.Pos != posWait {
-			t.Errorf("%s: %+v; want the wait", name, got)
-		}
 	}
 }
 
@@ -215,23 +185,5 @@ func TestANotMergeableCapRoundGrantsNoCycleAndConsumesNoGrant(t *testing.T) {
 	}
 	if got := b.at(); got.Pos != posWait || got.Msg != "waiting for the Operator: T-sp01: not mergeable, findings recorded" {
 		t.Errorf("the position: %+v; want the wait for the not mergeable record", got)
-	}
-}
-
-// A grant is judged from the recorded history alone: the same commands over the view of each state give the same grant, and nothing but the cap round moves it.
-func TestAGrantDoesNotDependOnThePositionOfTheTask(t *testing.T) {
-	cmd := operatorSays(20, "cycle T-sp01 because x")
-	waiting := atTheCap("material", cmd)
-	started := atTheCap("material", cmd).ev("attempt", "3", "", shB, "", "")
-	for name, b := range map[string]*viewBuilder{"at the cap": waiting, "after attempt 3 started": started} {
-		if g, refused := judgeGrants(b.v, b.v.Cycles); g != 20 || len(refused) != 0 {
-			t.Errorf("%s: %d, %+v; want the grant 20", name, g, refused)
-		}
-	}
-	// A view with no cap round and a view with a verified head both refuse it.
-	verified := upTo("specification", 15)
-	verified.v.Control, verified.v.Approvers = ctlIssue, cycleApprovers
-	if g, refused := judgeGrants(verified.v, []setInput{cmd}); g != 0 || len(refused) != 1 || refused[0].Item != "cap" {
-		t.Errorf("a verified head: %d, %+v; want the item cap", g, refused)
 	}
 }

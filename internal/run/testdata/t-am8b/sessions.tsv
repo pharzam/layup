@@ -1,8 +1,0 @@
-session	task	attempt	role	harness	version	model	base	records	prompt_bytes	prompt_tokens	context	cap	wall	vars	policy
-S-7b0b85b1	T-am8b	1	software-engineer	claude	2.1.306 (Claude Code)	claude-opus-5-5	d03c8650303fbdff49986ef5478ed53d11219964	514ceead01f3da8cb7a897157f5e348559f10f55	17725	4432	1000000	5.00	30	ANTHROPIC_DEFAULT_HAIKU_MODEL=claude-sonnet-5-5	—
-S-cbc711fa	T-am8b	1	qa-engineer	codex	codex-cli 0.163.0	gpt-6.1-sol	d03c8650303fbdff49986ef5478ed53d11219964	b561d19ecc5b07cb69fd14a920af1a4a32ddfba4	18321	4581	1050000	—	30	—	—
-S-06aeffc9	T-am8b	1	systems-architect	claude	2.1.306 (Claude Code)	claude-opus-5-5	d03c8650303fbdff49986ef5478ed53d11219964	8be914b5b28636328894d44c4cadee49bb7e2df7	17264	4316	1000000	5.00	30	ANTHROPIC_DEFAULT_HAIKU_MODEL=claude-sonnet-5-5	—
-S-663a38fe	T-am8b	2	systems-architect	claude	2.1.306 (Claude Code)	claude-opus-5-5	d03c8650303fbdff49986ef5478ed53d11219964	7345d30202edd632b034c26a5ae1e142b99c656d	18362	4591	1000000	5.00	30	ANTHROPIC_DEFAULT_HAIKU_MODEL=claude-sonnet-5-5	—
-S-d9e5873f	T-am8b	2	qa-engineer	codex	codex-cli 0.163.0	gpt-6.1-sol	c17c28c8c9c3578056f960aa98ba907bfbd15fc7	8068113d16d5d61bed7e637d4d536b5dda7f6761	18364	4591	1050000	—	30	—	—
-S-045c56f7	T-am8b	3	systems-architect	claude	2.1.306 (Claude Code)	claude-opus-5-5	d03c8650303fbdff49986ef5478ed53d11219964	e1820676c8c0fc33c6417c6fabd4c7ed5c1401c3	19292	4823	1000000	5.00	30	ANTHROPIC_DEFAULT_HAIKU_MODEL=claude-sonnet-5-5	—
-S-0465b007	T-am8b	3	qa-engineer	codex	codex-cli 0.163.0	gpt-6.1-sol	0ebf7d9e0f4f91881cce4d1368c9e62826fcc98a	5b052aa1c6f38c2e814ad65c7d7a05df4700aa78	18496	4624	1050000	—	30	—	—

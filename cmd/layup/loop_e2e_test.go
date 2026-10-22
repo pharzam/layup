@@ -245,17 +245,13 @@ tests:
 	shape-architecture)
 		printf '## The database: pg\n\nThe decision db is decided: pg.\n' > docs/spec/architecture.md
 		printf 'adr\n' > docs/adr/0001-db.md
-		rev=first; grep -q 'round-one' ../prompt.md && rev=second; grep -q 'round-two' ../prompt.md && rev=final # task T-0xr7: the revision follows the findings in the prompt
+		rev=one; grep -q 'round-one' ../prompt.md && rev=two; grep -q 'round-two' ../prompt.md && rev=final # task T-0xr7: the revision follows the findings in the prompt
 		printf 'the task file\nrev: %s\n' $rev > docs/tasks/$task.md
 		artifacts docs/tasks/$task.md docs/spec/architecture.md docs/adr/0001-db.md ;;
 	verification) # the first two revisions of the architecture are material (task T-0xr7, #493); every other head is not
-		verdict='nothing material in scope'; bullets=
-		case $(sed -n 's/^rev: //p' docs/tasks/$task.md) in
-		first) verdict=material; bullets='- docs/spec/architecture.md:1 spec: round-one: the section is thin
-' ;;
-		second) verdict=material; bullets='- docs/spec/architecture.md:1 spec: round-two: the section is thin
-' ;;
-		esac
+		verdict='nothing material in scope'; bullets=; rev=$(sed -n 's/^rev: //p' docs/tasks/$task.md)
+		case $rev in one|two) verdict=material; bullets="- docs/spec/architecture.md:1 spec: round-$rev: the section is thin
+" ;; esac
 		comment review-record.md "head: $(git rev-parse HEAD)
 verdict: $verdict
 findings:
@@ -453,8 +449,8 @@ func TestTheSpecificationTaskEndToEnd(t *testing.T) {
 	}
 	restart("stage 4", 0, slices.Concat(front, intake, scaffold, []string{"forge-check"}))
 
-	// Stage 5a (task T-0xr7, #493): the verifier finds the architecture material twice, so the run waits at the review-cycle cap of 1 and names the command
-	// of the Operator; the Operator's comment on the control issue is the answer, and the restart that follows runs the third attempt.
+	// Stage 5a (task T-0xr7, #493): the verifier finds the architecture material twice, so the run waits at the cap of 1 and names the Operator's command; the
+	// Operator's comment on the control issue answers it, and the restart that follows runs the third attempt.
 	r, rows := restart("stage 5a", 0, slices.Concat(later, []string{"shape"}))
 	waiting, _ := layuprun.ReadRegister([]byte(record(t, w, "tasks.tsv")))
 	if len(waiting) != 2 || waiting[1].Kind != "architecture" {

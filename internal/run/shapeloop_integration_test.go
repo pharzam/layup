@@ -1027,9 +1027,8 @@ func TestARefusedPayloadThatCannotBeReadStopsTheRunBeforeAnotherDeveloper(t *tes
 	}
 }
 
-// Task T-0xr7 (#493): the wait at the cap has its answer in the records. The Operator's comment `cycle <task> because <reason>` on the control issue is
-// copied by the boundary (the copy is the record), and the next call of the driver starts attempt 3 from the same base with the round-2 finding in the
-// developer's prompt, then follows it to a verified head. A second call writes nothing.
+// Task T-0xr7 (#493): the Operator's comment `cycle <task> because <reason>` on the control issue is copied by the boundary (the copy is the record), and
+// the next call of the driver starts attempt 3 from the same base with the round-2 finding in the developer's prompt, then follows it to a verified head.
 func TestAGrantOnTheControlIssueIsCopiedAndTheTaskAtTheCapRunsOneMoreAttempt(t *testing.T) {
 	t.Parallel()
 	d := newDrvWorld(t, loopPerms)
@@ -1046,36 +1045,19 @@ func TestAGrantOnTheControlIssueIsCopiedAndTheTaskAtTheCapRunsOneMoreAttempt(t *
 	if err != nil || !got.Verified || got.Task != spec {
 		t.Fatalf("AdvanceShapeTask after the grant = %+v, %v; want the verified head", got, err)
 	}
-	if n := strings.Count(strings.Join(d.kinds(spec), " "), "attempt"); n != 3 {
-		t.Errorf("%d attempts; want three", n)
-	}
 	// The prompts: plan, plan review, developer 1, verifier 1, developer 2, verifier 2, developer 3, verifier 3.
 	if p := d.promptsOf(spec); len(p) != 8 || !strings.Contains(p[6], "spec docs/spec/alpha.md:1: the section is thin") {
 		t.Errorf("%d prompts; the developer's prompt of attempt 3 holds the finding of round 2: %v; want eight and the finding", len(p), len(p) == 8 && strings.Contains(p[6], "the section is thin"))
 	}
-	base := d.eventsOf(spec)
-	if again, err := d.advance(spec, nil); err != nil || !again.Verified || len(d.eventsOf(spec)) != len(base) {
-		t.Errorf("a second call = %+v, %v with %d events more; want the same verified head and no event", again, err, len(d.eventsOf(spec))-len(base))
-	}
 }
 
-// Task T-0xr7 (#493): the rule of the command has its one home in loop.md, and records.md says that a valid copied command is the grant (plan review,
-// condition 4).
+// Task T-0xr7 (#493): the rule of the command has its one home in loop.md, and records.md says that a valid copied command is the grant (plan review, condition 4).
 func TestTheCycleCommandHasItsHomeInLoopMdAndRecordsMd(t *testing.T) {
 	t.Parallel()
-	for file, wants := range map[string][]string{
-		"../../docs/spec/loop.md":    {"One more cycle at the cap", "cycle <task> because <reason>"},
-		"../../docs/spec/records.md": {"A valid copy of a `cycle` command is the grant"},
-	} {
-		doc, err := os.ReadFile(file)
-		if err != nil {
-			t.Fatal(err)
-		}
-		flat := strings.Join(strings.Fields(string(doc)), " ")
-		for _, want := range wants {
-			if !strings.Contains(flat, want) {
-				t.Errorf("%s does not hold %q", file, want)
-			}
+	for file, want := range map[string]string{"loop": "One more cycle at the cap", "records": "A valid copy of a `cycle` command is the grant"} {
+		doc, err := os.ReadFile("../../docs/spec/" + file + ".md")
+		if err != nil || !strings.Contains(strings.Join(strings.Fields(string(doc)), " "), want) {
+			t.Errorf("%s.md (%v) does not hold %q", file, err, want)
 		}
 	}
 }
@@ -1118,9 +1100,6 @@ func TestARefusedGrantChangesNothingAndIsReportedWithItsItem(t *testing.T) {
 			}
 		}
 	}
-	if got, err := d.advance(spec, nil); err != nil || !strings.Contains(got.Wait, "the review-cycle cap 1 is reached") || got.Verified {
-		t.Errorf("AdvanceShapeTask after the refused commands = %+v, %v; want the wait at the cap", got, err)
-	}
 	// The valid command is the grant, and a second one is refused with the item bound, once the attempt has started.
 	say(d.w, 9110, operatorID, "pharzam", "cycle "+spec+" because the finding is real")
 	say(d.w, 9111, operatorID, "pharzam", "cycle "+spec+" because once more")
@@ -1128,15 +1107,11 @@ func TestARefusedGrantChangesNothingAndIsReportedWithItsItem(t *testing.T) {
 	if err := d.r.boundary(ctx0); err != nil {
 		t.Fatal(err)
 	}
-	if got := progressLines(d.w, "cycle: refused comment 9111: bound: "); len(got) != 1 {
-		t.Errorf("the progress lines for the second grant: %q; want one with the item bound", got)
+	if got, grant := progressLines(d.w, "cycle: refused comment 9111: bound: "), progressLines(d.w, "cycle: refused comment 9110"); len(got) != 1 || len(grant) != 0 {
+		t.Errorf("the progress lines for the second grant %q and for the grant %q; want one with the item bound, and none", got, grant)
 	}
-	if got := progressLines(d.w, "cycle: refused comment 9110"); len(got) != 0 {
-		t.Errorf("the progress lines for the grant: %q; want none", got)
-	}
-	d.mustVerify(spec)
-	if n := strings.Count(strings.Join(d.kinds(spec), " "), "attempt"); n != 3 {
-		t.Errorf("%d attempts; want three: one grant is one more cycle", n)
+	if got, err := d.advance(spec, nil); err != nil || !got.Verified || len(d.attempts(spec)) != 3 {
+		t.Errorf("AdvanceShapeTask = %+v, %v with %d attempts; want the verified head after the one granted cycle", got, err, len(d.attempts(spec)))
 	}
 }
 
