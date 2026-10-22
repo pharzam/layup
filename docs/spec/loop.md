@@ -2780,7 +2780,7 @@ parsed review records of the valid handoffs, so each position is told from the r
 | to the verifier | the developer's session is bound and has no handoff | `RecordHandoff` with the commits and the task file |
 | ship | the handoff is valid and no verifier session of the attempt has the bound head as its base | the draft pull request, the four statuses, the acceptance of a specification that waits for its bet, then the verifier |
 | verdict | the verifier's handoff is valid | `LinkReviewRecord`, the four statuses with `layup/verify`, then the verified head, the next attempt or a wait |
-| retry | the last session of the latest attempt has an eligible end (below), not yet spent by an earlier retry of its stage, and no attempt follows | `StartAttempt` at the base of the latest attempt (**decided here**, task `T-qjjd`, #475) |
+| retry | the last session of the latest attempt has an eligible end (below), not yet spent by an earlier retry of its stage, and no attempt follows (read after the question, before the stages) | `StartAttempt` at the base of the latest attempt (**decided here**, task `T-qjjd`, #475) |
 | question | the latest attempt has a session that ended `done` with the status `needs_context` and no attempt follows | the stage P1 to P8 of [A question during the work](#the-checks-of-a-handoff): one act, then a fresh read; the position comes before the stages of the plan, the plan review, the developer and the verifier, and replaces the stop for that status (**decided here**, task `T-r7b9`, row 66z) |
 
 - **Which sessions push.** A task session of a step that reads (`plan-of-a-task`, `plan-review`, `verification` and, from row 66z, `answer-to-a-question`) has no push: a
@@ -2846,7 +2846,7 @@ parsed review records of the valid handoffs, so each position is told from the r
     counts, not any end of that attempt: a verifier's crash spends the verifier's retry and not the developer's, whose earlier session ended `done`), the
     attempt has no event `closed` or `rebased` and no `refused push-lost`, and the event `attempt` of the next number follows that end at the same base.
   - **The act** is `StartAttempt` at the base of the attempt it replaces, under the same route rules, so the retry of a verifier runs a new developer from the
-    task's base (the verifier's own base is the developer's head). A retry adds at most five task sessions. It follows at the task's next opportunity to advance,
+    task's base (the verifier's own base is the developer's head). The four retries add at most five task sessions. It follows at the task's next opportunity to advance,
     in the current run or a later one; a stop between the end and the new attempt leaves the end as the last record, and the next call starts exactly one attempt.
     A second eligible end of the same stage is the stop `the session <id> of <step> ended <class>`, as before.
   - **A replaced attempt is passed over.** Its eligible session is left out of the stage lists of the position (so the plan review, which spans attempts, runs
@@ -2855,7 +2855,7 @@ parsed review records of the valid handoffs, so each position is told from the r
     read the same inputs, given once to `replacedOf`: the events, the rows of `sessions.tsv` (roles and bases), the status of each kept result and the kind of the
     task. A retry counts no review round (`reviewRounds` counts valid handoffs `verifier → developer`).
   - **Reviewer independence** is unchanged: the authors are computed as before. A crashed plan session's harness stays a plan author, on the safe side; a crashed
-    developer never pushed, so it is no author.
+    developer's push, if any, is on its own attempt's branch and in no later diff, so it is no author.
   - **Not in `M2e`:** the retry of the close-out, of the answer session, of `wall` and `output`, and every further retry, its diagnosis and its limit, are the stall
     procedure's (`M3d`). The cause of a crash is not readable yet (the stderr tail is `#476`).
 
