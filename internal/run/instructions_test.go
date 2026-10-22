@@ -639,3 +639,32 @@ func TestThePlanReviewIsToldThePlanFormOfTheTarget(t *testing.T) {
 		}
 	}
 }
+
+// Task T-paan (#488): the MoSCoW and Phase cells and the numbered facts record are the bet's. The specification step already says so; the plan,
+// its review and the verification of a specification task judge the same work, so each of them is told the contract, in a summary of the
+// bet's subsection of loop.md (the one canonical home). The summary keeps both sides: the task writes none of it, and a plan that promises it,
+// or cells and a record the task wrote, are defects; a finding that the absence is wrong is not. A reopened task keeps what exists.
+func TestEachStepOfASpecificationTaskStatesTheBetsCellsAndRecord(t *testing.T) {
+	summary := []string{
+		"The initial task of kind specification leaves the MoSCoW and Phase cells of the PRD blank (not —) until the first bet and writes no numbered facts record, because code supplies both at the rendered commit",
+		"never ask that task to supply them, correct a plan that promises them, and treat cells it filled or a facts record it wrote as defects",
+		"A reopened task of kind specification keeps the cells, lines and record that already exist.",
+	}
+	for _, step := range []string{"plan-of-a-task", "plan-review", "verification"} {
+		for _, want := range summary {
+			if !strings.Contains(promptText(t, step, "specification"), want) {
+				t.Errorf("the prompt of %s for a task of kind specification does not hold %q", step, want)
+			}
+			if !strings.Contains(stepInstructions[step], want) {
+				t.Errorf("the constant of %s does not hold %q", step, want)
+			}
+		}
+	}
+	// The control: the specification step keeps both restrictions of the contract.
+	spec := promptText(t, "specification", "specification")
+	for _, want := range []string{"Leave the MoSCoW and Phase cells empty (not —): code fills them at the bet.", "Write nothing under docs/facts/: code renders it at the first bet."} {
+		if !strings.Contains(spec, want) {
+			t.Errorf("the prompt of specification does not hold %q", want)
+		}
+	}
+}
