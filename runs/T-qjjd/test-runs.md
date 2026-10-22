@@ -23,7 +23,7 @@ Unit: `go test -count=1 ./internal/run`, 08:35:02Z to 08:35:03Z, exit 1.
 | `TestTheFindingsPassOverTwoReplacedAttempts` | `findingsOf for attempt 4 = [], "cccc..."; want the finding of S-v1 and no gate head`; `priorAttempt(4) = 3; want 1` |
 | `TestAnAnswerIsAcceptedByTheAttemptThatReplacesTwoCrashedOnes` | `after two replaced attempts: "", false; want accepted by S-cccccccc of attempt 4`; `OpenQuestions after two replaced attempts = 1; want 0` |
 
-Integration: `TMPDIR=... go test -count=1 -tags=integration ./internal/run -run '<the five names below>'`, 08:34:52Z to 08:34:57Z, exit 1.
+Integration: the five tests below, run by name with the integration tag, 08:34:52Z to 08:34:57Z, exit 1.
 
 | Test | First failing assertion |
 | --- | --- |
@@ -46,7 +46,7 @@ Integration: `TMPDIR=... go test -count=1 -tags=integration ./internal/run -run 
 The rule: `retries`, `replacedOf`, `priorAttempt`, `stageOf`, `eligibleEnd` and `posRetry` with its act in `internal/run/shapeloop.go`; `PromptFile` (`promptfile.go`), `AnswerAccepted` (`answer.go`) and `Position` -> `OpenQuestions` (`tier.go`) take the same `Replaced`, built from one `loopView` (events, session rows with roles and bases, the status of each kept result, the task kind).
 
 - Unit level, `go test -count=1 ./...`: exit 0 (all five red tests of section 2 and both guards pass).
-- Integration subset of section 2 plus `Position|Question`: `go test -count=1 -tags=integration ./internal/run -run '...'`, 08:36:12Z to 08:36:38Z, exit 0.
+- Integration subset: the five tests of section 2 plus the tests named Position and Question, run by name with the integration tag, 08:36:12Z to 08:36:38Z, exit 0.
 - The full gates are listed in section 5.
 
 ## 5. Gates
