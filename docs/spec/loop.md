@@ -48,7 +48,7 @@ holds the rule.
 | # | Step | Actor | Input | Checked by code | Rule in |
 | - | ---- | ----- | ----- | --------------- | ------- |
 | 1 | the issue | `layup run` | the requirement IDs and the Definition of Done of the task's row | the row of `tasks.tsv` names each requirement ID and each predecessor | [The task register](#the-task-register) |
-| 2 | the plan and its review | a plan session; a plan-review session on another harness | the issue, the specification sections of the requirement IDs | the plan has its four fixed fields and lists its tests by ID; the review has the verdict field `approve` or `approve-with-conditions` | [The transition table](#the-transition-table) |
+| 2 | the plan and its review | a plan session; a plan-review session on another harness | the issue, the specification sections of the requirement IDs | the plan has its four fixed fields and lists its tests by ID; the review has the verdict field `approve` or `approve-with-conditions`, or `reject` with at least one reason, which goes back to the plan ([A rejected plan goes back to the planner](#the-driver-of-a-shape-task)) | [The transition table](#the-transition-table) |
 | 3 | the developer | a developer session | the plan, the findings of the last attempt | the typed result ([`session.md`](session.md#req-005--the-result-of-a-session)); the tests of the plan fail at the base and pass at the head | [The checks of a handoff](#the-checks-of-a-handoff) |
 | 4 | the draft pull request | `layup run` | the branch of the attempt | no rule-path change ([`architecture.md`](../architecture.md) §6, prevention layer 2); the title in the form of the `pr-title` check; the body links the issue and the records commit the task started from | [The pull request](#the-pull-request) |
 | 5 | the checks | the target's CI, `layup gate`, `layup spec check`, `layup/rules` | each new head | the four statuses | [The four `layup/` statuses](#req-007--the-four-layup-statuses) |
@@ -299,7 +299,8 @@ one author harness (`architecture.md` §8, "Attempts"). **Decided here:**
   and the cycle cap of the target for the review rounds of step 6; an attempt
   that ends with no commit is an `attempt` row with no `push` row, and the next
   attempt starts as above. The one new attempt of an uncertain end of a task session is the rule of
-  [An uncertain end gets one new attempt](#the-driver-of-a-shape-task); every further retry is `M3d`'s.
+  [An uncertain end gets one new attempt](#the-driver-of-a-shape-task); every further retry is `M3d`'s. The one replan of a rejected plan is the rule of
+  [A rejected plan goes back to the planner](#the-driver-of-a-shape-task), with a count of its own.
   The loops of the failures of `layup/spec` and `layup/rules` are covered by the same limit (decided here, task `T-tnxn`):
   they are bounded only by the budget cap and by the acts of one call of the driver, and count no review round.
 
@@ -493,9 +494,10 @@ In the result file write the row "comment<TAB>1<TAB>result/plan.md<TAB><the SHA-
 
 ```text instruction-plan-review
 Review the plan of the task {task} (kind {kind}, issue {issue}), the newest plan among the handoffs listed above, against the issue row, the requirements, the decision records and the rule files: its coverage of the requirements, its list of tests, and its fit with the decision records and the rule files. Change no file of the repository and make no commit.
+The plan form of the target is the four fields size, open questions, new interfaces and new dependencies, and the list tests:. A plan of a task of kind specification or architecture lists no test, so an empty tests: list is the form of that plan and is never a reason to reject; a plan of a task of kind build lists at least one test. A budget, a demo sentence and a goal count are LAYUP's own items and no part of the target's plan form: never reject a plan because it lacks one.
 Write the review as the file {comment}, in this form, the first line starting at the first column and ended by a line feed:
 verdict: <approve, approve-with-conditions or reject>
-The line verdict: is written once, and its value is exactly one of the three words approve, approve-with-conditions and reject. After it, write the conditions or the reasons as plain lines that do not start with "verdict: ". This is the form the target reads; it is not the table "| Field | Value |" of LAYUP's own reviews, which you must not write.
+The line verdict: is written once, and its value is exactly one of the three words approve, approve-with-conditions and reject. After it, write the conditions or the reasons as plain lines that do not start with "verdict: ". A review with the verdict reject gives at least one reason as a plain line, and a reject with no reason line is refused. This is the form the target reads; it is not the table "| Field | Value |" of LAYUP's own reviews, which you must not write.
 In the result file write the row "comment<TAB>1<TAB>result/plan-review.md<TAB><the SHA-256 of {comment}><TAB>—".
 ```
 
@@ -729,6 +731,14 @@ the Operator can replace. **Decided here:**
   satisfiable when #377 gives the kind `answer` of the block `result`), and a row
   that leaves out an item is the Operator's to leave out. The function
   `handoff.CheckTable` makes the check, at the `set` and at each read of the table.
+- **The table in force** (**decided here**, R10, task `T-t94t`, #483). The default has fourteen rows: the thirteen above and, last, the row of a plan review
+  that rejects the plan, `plan review, task plan` (`plan-review`; `schema`, `artifacts`, `reject-reasons`), to which `architecture.md` §8 gives no route
+  (as it gives none to the row of the architecture task). A target wrote its table at its first task from the thirteen rows then in the binary, and code
+  never rewrites it from the default, so a read of the table (`RecordHandoff` and the register) puts it in force with `handoff.InForce`: the rows of
+  the file and, for a **later pair** the file lacks (today the one pair `plan review, task plan`), its default row, with no write. The thirteen others
+  are required of every table at every read, a row of the file for the later pair is kept as the file has it, and a `set transitions` is not read through
+  `InForce`: the replacement lists all fourteen pairs (`CheckTable`, at the `set` and at the parameter reader). The SHA-256 of the file stays the
+  value of the row `transitions` of `parameters.tsv`.
 - The Operator replaces the table with `set transitions <sha256> because
   <reason>` on the control issue ([The parameter change](#req-012--the-parameter-change)),
   where the value is the SHA-256 of a copied comment **of the control issue** (a
@@ -761,6 +771,7 @@ leave the transition to the agent).
 | `heading-ids` | a heading of `docs/spec/` holds each requirement ID of the milestone (`M2g`) |
 | `question-row` | a question row names the records it concerns |
 | `answer-row` | an answer row cites the records it rests on |
+| `reject-reasons` | the review has the verdict `reject` and at least one line of reasons |
 
 ### The checks of a handoff
 
@@ -795,7 +806,7 @@ agent writes never makes it valid (`F-0003#59`, Sol-21, Fable-M14).
    nor is one for `spec-sections` or `rendering-equal` (**decided here**, task `T-yeav`,
    #404: they are computed from the tree at the head, in the row of the pair that lists
    them). Every other item is the caller's result, passed in the value it hands the check
-   (`plan-fields`, `verdict-field`, `nothing-material`, `findings-located`, `heading-ids`
+   (`plan-fields`, `verdict-field`, `reject-reasons`, `nothing-material`, `findings-located`, `heading-ids`
    and `register-rows` from the text of a comment or a table; `tests-red-green`
    and `patch-per-kind` from a program, a gate run
    or a read of a commit): an item it does not pass is false. The rows that compute
@@ -820,6 +831,7 @@ agent writes never makes it valid (`F-0003#59`, Sol-21, Fable-M14).
 | specification, milestone plan | `task-file` | `artifacts`, `heading-ids` (`M2g`) |
 | asking role, owner role | `question` | `schema`, `question-row` |
 | owner role, asking role | `answer` | `schema`, `answer-row` |
+| plan review, task plan | `plan-review` | `schema`, `artifacts`, `reject-reasons` |
 
 **A question during the work.** A session that meets a question ends with the
 status `needs_context` and the question: its text, its own label for the kind,
@@ -1015,6 +1027,7 @@ of the block. These are the forms the loop's sessions write for a target;
 | `artifacts` | the commits and the copies: each named artifact is there with its hash, a comment by its three equal hashes | `internal/handoff` `Check` (row 61, done) | M2e |
 | `plan-fields` | the plan comment's kept copy: it parses in the pinned form — the four fields each once, the `tests:` marker once, and each `- ` line of its block a `- <id> <path>`; an empty block is valid | `internal/run` (row 66l, `T-4pje`) | M2e |
 | `verdict-field` | the plan-review copy: its `verdict:` is `approve` or `approve-with-conditions` (`reject` is false) | `internal/run` (row 66l, `T-4pje`) | M2e |
+| `reject-reasons` | the plan-review copy: its `verdict:` is `reject` (once, as `verdict-field` reads it) and it has at least one other line that is not blank, the reasons (`approve`, a bare `reject` and an unparseable copy are false). **Decided here** (task `T-t94t`, #483): a reject with no reason gives the planner nothing to act on, so its handoff to the planner is `invalid reject-reasons` and the task stops | `internal/run` (`RejectReasonsOK`, task `T-t94t`) | M2e |
 | `tests-red-green` | typed per-test results — the ID, the base verdict, the head verdict and the source hash of each listed test: each fails at the base and passes at the head, and its source hash is the frozen list's | `internal/run` from typed values (row 66e — #361's typed boundary); the producer — the gate run of the task's test kind and the mapping of an ID to its file — is the specification task of `M2g`'s | M2e item, `M2g` producer |
 | `spec-sections` | the `docs/spec/` files at the head and the task's requirement IDs: a non-empty section whose heading holds each ID — the `sections` predicate of the full check over the task's IDs. **Decided here** (task `T-yeav`, #404): the files are the regular files (mode `100644`, type blob) whose names end in `.md` directly in `docs/spec/` of the head's tree, read with `git ls-tree` and `git show` in the run's clone — a nested file, a link, a gitlink, an executable file and a file of another extension are not read; the IDs are the `requirements` of the task's row of `tasks.tsv`; no ID, no file, no head or one ID without its section is false; the head is code's: the SHA of the `bound` event of the handoff's session, never the clone's `HEAD` and never a field of the caller | `internal/spec` (`HasSection`, the one predicate that `sections` also calls), wired by `internal/run` (row 66n, `T-yeav`, #404) | M2e |
 | `patch-per-kind` | the batch's known-bad patches: `layup gate` passes on the head and fails on each patch of a kind the batch touches | the rule-batch tasks of `M2f` | M2f |
@@ -1038,7 +1051,7 @@ false. The parsed plan fields likewise feed the task's tier and context read:
 the parse is row 66l's, the consuming wiring the step loop's (row 66k and its size children) — a
 declaration of the boundary, nothing of it claimed built. An item is true only
 for the comment kind it reads (a `plan-fields` listed on a review-record row is
-false), the four comment items are computed from the kept copy and overwrite the
+false), the five comment items are computed from the kept copy and overwrite the
 caller's value whether it is `true` or `false`, and a handoff with no kept copy,
 or that code writes, has them false.
 
@@ -1111,7 +1124,7 @@ The plan lists its tests by ID (`architecture.md` §8 step 2). **Decided here**
   the plan role (`software-engineer`), then one from a session of the plan-review role
   (`qa-engineer`) **whose event `session` comes after it**: the order is the events', never the
   clock's (the `at` of two events can be one second), and a verifier's review record, which
-  shares the plan reviewer's role, is no review of a plan that began after its session. With an
+  shares the plan reviewer's role, is no review of a plan that began after its session, and neither is a plan review that rejected the plan (its kept copy is a reject with a reason, `reject-reasons`; task `T-t94t`), which is a valid handoff to the planner. With an
   amendment pending the results alone decide, the next valid handoff to the verifier writes the
   list again whole (when it differs; a test whose source and hash did not change keeps its
   harness, any other takes the session's) and uses the amendment up, as it is that developer's
@@ -2781,6 +2794,7 @@ parsed review records of the valid handoffs, so each position is told from the r
 | ship | the handoff is valid and no verifier session of the attempt has the bound head as its base | the draft pull request, the four statuses, the acceptance of a specification that waits for its bet, then the verifier |
 | verdict | the verifier's handoff is valid | `LinkReviewRecord`, the four statuses with `layup/verify`, then the verified head, the next attempt or a wait |
 | retry | the last session of the latest attempt has an eligible end (below), not yet spent by an earlier retry of its stage and class, and no attempt follows (read after the question, before the stages; a session that ended `done` with the status `needs_context` is the question, never a retry, refused or not) | `StartAttempt` at the base of the latest attempt (**decided here**, tasks `T-qjjd`, #475, and `T-0sj8`, #478) |
+| replan | the last plan review of the stage is a rejection (below) and the count allows one more | `StartAttempt` at the base of the latest attempt (**decided here**, task `T-t94t`, #483) |
 | question | the latest attempt has a session that ended `done` with the status `needs_context` and no attempt follows | the stage P1 to P8 of [A question during the work](#the-checks-of-a-handoff): one act, then a fresh read; the position comes before the stages of the plan, the plan review, the developer and the verifier, and replaces the stop for that status (**decided here**, task `T-r7b9`, row 66z) |
 
 - **Which sessions push.** A task session of a step that reads (`plan-of-a-task`, `plan-review`, `verification` and, from row 66z, `answer-to-a-question`) has no push: a
@@ -2790,7 +2804,7 @@ parsed review records of the valid handoffs, so each position is told from the r
   of an environment question). Only the developer's session is ever bound; a session that has a `push` and no `bound`, or none of them
   after it ended `completed`, is a stop (the repair of a push is `RepairTask`'s). The close-out session of row 66y is bound too, after the verifier's last handoff: `FinishTask` tells the verified head over the events up to that handoff.
 - **The plan review and the verifier**, both of the role `qa-engineer`, are told apart by the order of the events, never the clock: a
-  session that starts after the last valid plan handoff (a handoff of a comment: **decided here**, task `T-r7b9`, a question or an answer handoff of
+  session that starts after the first valid plan handoff (the first, never the last, so that the plan of a replanned attempt turns no earlier review into a stop: task `T-t94t`; a handoff of a comment: **decided here**, task `T-r7b9`, a question or an answer handoff of
   a session of the plan role is no plan handoff) and before the first `push` of the task is the plan review; one that starts after a
   `bound` of the developer's session of its attempt, with that SHA as its base, is a verifier. Any other `qa-engineer` session is a stop.
 - **The base of a session** may be off the default branch: the bound head that a verifier reviews, or the specification's verified head
@@ -2864,6 +2878,27 @@ parsed review records of the valid handoffs, so each position is told from the r
     developer's push, if any, is on its own attempt's branch and in no later diff, so it is no author.
   - **Not in `M2e`:** the retry of the close-out, of the answer session, of `wall` and `output`, and every further retry, its diagnosis and its limit, are the stall
     procedure's (`M3d`). The cause of a crash is not readable yet (the stderr tail is `#476`).
+- **A rejected plan goes back to the planner** (**decided here**, R10, task `T-t94t`, #483, with the Operator's decisions 6340236265; the demo of row 68b found
+  `T-ut9g` stopped for good by a plan review that ended `done` with `verdict: reject`, which was `invalid verdict-field`). The rule has one home, here:
+  - **The handoff.** The review's `finish` records the pair `plan review, task plan` when the kept copy parses with the verdict `reject`, and `plan review, developer`
+    for any other verdict. A reject that gives at least one reason is a **valid** handoff (the item `reject-reasons`), so the record keeps the ratio of valid
+    handoffs of `REQ-005` honest. A **bare reject** (no reason) is `invalid reject-reasons`: a stop with no new attempt, and the instruction of the step says a reject gives its reasons.
+  - **One rule of a rejection** counts, reopens and supplies the reasons: a plan review that no retry replaced, whose result is `done` with the status `completed`,
+    whose kept copy is the file its result names by hash and rejects with a reason, and whose **latest** handoff is valid. A refused or replaced review whose copy says
+    `reject` is none of it (the refused review of an attempt that a retry replaced counted in no way), and a kept copy that is absent or of other bytes is no rejection.
+  - **The act.** A rejection in the latest attempt, when the count of rejections (the plan reviews that meet the rule) is the cap of its own, `shapeCycleCap` (1), or less, is the position
+    *replan*: `StartAttempt` at the base of the latest attempt. The count is the Operator's own (not the code review's rounds: a material verdict does not move it, and it moves no round). With more than
+    that the stop is `<task>: the plan review rejected the plan <n> times`; no answer of the Operator resumes it in `M2e` (the stall procedure of `M3d` takes it later).
+  - **The plan stage reopens.** The sessions of the plan and of the plan review of the attempts up to the highest attempt with a rejection before the latest are passed over, so the plan stage runs
+    again; the developer and the verifier are already those of the latest attempt. The plan review of the new plan is on a harness outside every plan author (unchanged).
+  - **The reasons reach the planner** as the findings of its prompt (`rejectionOf`): each reason line of the kept copy of the most recent rejection in an attempt before this one, as a finding
+    with the rule `plan-review:reject`, under "findings of the last attempt:" in the input `handoffs-and-answers`; a question attempt or a retried plan inside the replan attempt keeps them.
+    The first plan, the developer and the verifier get none. The reject copy is also a valid comment handoff, so the next plan and its review list it with the other handoffs.
+  - **The records of an earlier binary.** A review whose latest handoff is `invalid verdict-field` and which meets the rule but for its handoff (its kept copy is a hash-checked reject with a reason)
+    is recorded again, as `plan review, task plan`, by the `finish` of its stage, and then read as above. The old event stays (a different outcome of a session is a new event) and no file is repaired.
+    A copy that is absent, of other bytes or a bare reject keeps the stop.
+  - **Rejected:** a reject that stays `invalid verdict-field` (it would fail the ratio of valid handoffs of `REQ-005` and the first rule of the demo for every reject); a count shared with the
+    code review's rounds (one early plan reject would spend the only round of the code review); an Operator command or a wait to resume (no autonomy, and no bound the records define).
 
 ## NFR-004 — A check that did not run
 
@@ -2904,13 +2939,14 @@ the milestone covers it end to end.
 | A handoff is valid only by its table (inventory) | unit | A handoff with a wrong schema, an artifact that is not in the commits, a hash that differs, a required item that is false, and a pair with no row is each invalid, naming the item; a field that an agent writes never makes one valid; a comment artifact whose body at the forge differs from its copy is invalid. |
 | The artifact that is a comment (`gov-issue-68`) | unit; integration | With the stand-in forge (the `httptest` forge for the integration part), for each of the kinds `plan`, `plan-review` and `review-record`: the session's file, the comment that code posts from its bytes, the copy and its row, the `handoff` event with the comment ID that code read, the three equal hashes; an edited comment is a new copy and the first handoff is invalid; a result that holds a comment ID is refused; a `comment` row is checked against the session's `result/` file, its file is kept byte for byte in the commit of the result, and an `artifact` row against the head; a run that stops after the end, between the post and the copy, or before the post, posts once from the records; a lost lease posts nothing. |
 | The route of a question and the acceptance of an answer | unit; integration | A question goes to the owner role of its kind when its `needs_human` word is `no` and its label is one of the four, and to the Operator for `yes`, for any other word and for any other label; a replaced owner map routes by its roles; the items `question-row` and `answer-row` are computed from the result, whatever the caller passes; an answer is accepted by the next attempt that ends `completed` and cites its ID in the status row, with no question of that attempt citing it, and by no other attempt, and only when its session is of the owner role (the rule of "A question during the work": an answer of a developer, of the owner of another kind, of a session with no start row, to a human question or to questions of more than one owner role is refused, and the owner role's is accepted, from `sessions.tsv` and through `Position`); with the real `git`, a question session, the session of the owner role and the next attempt give the records from which the route and the acceptance are read. |
-| The comment items of the task loop (row 66l, `T-4pje`) | unit; integration (the kept copy, the records and the forge) | `plan-fields`, `verdict-field`, `findings-located` and `nothing-material` are computed from the kept copy of a comment and, for the last, the verifier's recorded `base`: each item is true or false by its own rule in the table of the items (a plan-review copy that parses with `verdict: reject` is false), and a handoff listing the item is `valid` or `invalid <item>` by the computed result, never by a caller's literal of either value. |
+| The comment items of the task loop (row 66l, `T-4pje`) | unit; integration (the kept copy, the records and the forge) | `plan-fields`, `verdict-field`, `findings-located` and `nothing-material` are computed from the kept copy of a comment and, for the last, the verifier's recorded `base`: each item is true or false by its own rule in the table of the items (a plan-review copy that parses with `verdict: reject` is false for `verdict-field`; `reject-reasons` is true only for a reject with a reason), and a handoff listing the item is `valid` or `invalid <item>` by the computed result, never by a caller's literal of either value. |
 | The tree items of the task loop (row 66n, `T-yeav`) | unit; integration (a real `git` tree) | `spec-sections` and `rendering-equal` are computed from the `docs/spec/` files or the tree at the head, never from the caller's literal of either value: a handoff of a developer (specification) or of the rendered task is `valid` or `invalid <item>` by the tree at the `bound` head or at the head that code sets, a head that a session handoff supplies is not read, an item that the row of the pair does not list is not computed, and a failed call of `git` or of the register is an error with no event. |
 | The input of the full spec check (row 66p, `T-cav3`) | unit; integration (a real `git` tree and the records of a target after Intake and the Scaffold) | `specInput` builds each field of `FullInput` from its named record or from the tree at the head: a missing required record, a record its reader refuses or a failed `git` call is an error with the zero input and no write, an absent `spec/inventory.tsv` is "before the first bet", `PSBRecords` is read from the one numbered facts file at the head (none is empty, two are an error), `AnswersRecord` is `""`, and the copy is the caller's. |
 | The specification task that a changed class reopens (row 66ab, `T-4naq`) | unit; integration (the records, the `httptest` forge, real git, scripted harnesses, `state.sessions()`) | After the specification's event `merged`, one specification task is opened for each fact that the bet re-classed into `need`, `constraint` or `measure` (a fact changed from `need` to `constraint` included, a fact out of scope or unchanged not), with the requirement IDs of one number space allocated once in `spec/reopenings.tsv` before any call of the forge, no reuse by kind and the specification as its predecessor; nothing is opened before the event, and a restart after the allocation or after the registration leaves the same IDs and one registered task for each row (the known window between the issue and the row leaves a second issue); a lost lease opens no issue; the reopened prompt carries the PRD, the row and the pinned numbered record, and a session that follows it gives a valid handoff and a green `layup/spec`; and a fact whose task has not merged is exempt from `needs` and `measures` at every head but its own task's, so the rendered head of the specification passes and a reopened task without its line fails. |
 | The question and answer comments (row 66o, `T-gyvo`) | unit; integration (the committed rows of a real end) | The question and answer comments are composed from their rows, byte for byte, with the row's `n` in the ID, and refused with no bytes for a row or a start row off the reader's schema, types or rules, a row of another kind, an ID off its form, or a body that `CheckCommentBody` refuses; posting them is the step loop's (row 66z, a size child of row 66k). |
 | A question during the work, in the loop (row 66z, `T-r7b9`) | unit; integration (the records, the `httptest` forge, real `git`, scripted harnesses, `state.sessions()`) | A session that ends `needs_context` during Shape, with no bet, has its question posted and copied on the task's issue, its handoff recorded, and, when all its questions go to one owner role, the answer session `answer-to-a-question` of that role (read-only, at the base of the last asking session) and the answer comment posted and copied (each answer row selecting its question by its column `n`), the handoff back recorded and the next attempt started; a human-routed question and questions of more than one owner role end in the wait `waiting for the Operator: <task>: question <id>` with no answer session; the stages are told from the records and repeated safely (a restart after each act writes each comment, handoff, session and attempt once), an invalid recorded handoff and a question or answer row that cannot be composed stay stops, an answer session that fails, asks again or answers too few or too many rows is a stop, and the plan and plan review that asked run again after the answer; an open material finding keeps `Position` uphill: the source is the last verifier, told by its position and head binding and qualified after its selection, so an unbound session of the role, a verifier that asked or has not ended, and a verifier with no review record, no valid comment handoff or a record of another head never clear a finding and never let an older clean record stand in their place; a verifier that asked at the head it was bound to (not the base of the attempt) is answered at that head. |
-| The transition table | unit | The default rows are the thirteen of the table (the twelve of `architecture.md` §8 and the row of the target's architecture task, which §8 names a task and gives no row); a replacement table is refused for a missing default pair, a kind or an item not in the lists, and a row of code's own handoff (`code (rendered task)`) that lists `schema`, while another row keeps its `schema`, and the steps that are `layup run`'s own acts need no row. |
+| The transition table | unit | The default rows are the fourteen of the table (the twelve of `architecture.md` §8, the row of the target's architecture task, which §8 names a task and gives no row, and the row of a plan review that rejects, `plan review, task plan`); a table written with the thirteen first rows is put in force with the fourteenth at each read and keeps its bytes, while a missing original pair is refused at every read and a `set` must list all fourteen; a replacement table is refused for a missing default pair, a kind or an item not in the lists, and a row of code's own handoff (`code (rendered task)`) that lists `schema`, while another row keeps its `schema`, and the steps that are `layup run`'s own acts need no row. |
+| A rejected plan goes back to the planner (row 68b3, `T-t94t`) | unit; integration (the records, the `httptest` forge, real git, scripted harnesses, `state.sessions()`) | A plan review whose kept copy rejects with a reason is a valid handoff to the planner and gives a new attempt at the same base with the plan stage reopened, whose plan prompt holds the reasons; a bare reject is `invalid reject-reasons` and a stop with no attempt; the second rejection stops with `the plan review rejected the plan 2 times` (a count of its own); a refused or replaced review whose copy rejects reopens nothing and supplies nothing; kept bytes that are absent or not the named ones trigger neither the recovery nor a replan; a plan handed off later turns no earlier review into a stop; the records of an earlier binary (the thirteen-row table, `invalid verdict-field`) give the next attempt with no repair; the amendment reader ignores a rejecting review. The instruction `plan-review` states the plan form of the target (its four fields and `tests:`), that an empty `tests:` list is never a reason to reject, that a budget, a demo sentence and a goal count are no part of that form, and that a reject gives its reasons (the rendered prompt, not the golden file alone). |
 | The replacement of the transition table at the boundary | integration | With the stand-in forge and real git: `set transitions <sha256>` names a copy of a comment of the control issue; the new table is the bytes of that copy, written with the row `transitions` in one records commit, so its SHA-256 is the row's value; the old table stays in Git history and the next task keeps the new one; a hash of no copy or of a copy of another issue, a body that is no table (a code fence, a carriage return) and a table that fails the check each refuse with the item `bound` (`value` for a value that is no SHA-256) and write nothing. |
 | `layup spec check`, the full check (inventory) | unit | Each rule of the table fails on its input and passes on its fixture; before the first bet a task that touches neither the PRD nor `docs/spec/` is `clear`; `did not run` is a failure. |
 | `layup/gates` (inventory, `later-gate-status`) | unit; integration | Each row combination maps to the status by the table, `not-active` is never a success, a `pending` kind with a product path is `failure`; with the stand-in forge, the status is posted once for an unchanged state. |
@@ -3016,7 +3052,7 @@ known-bad patches, the activation of the `pending` kinds at the first bet, and
 with it the item `patch-per-kind` of a rule-batch handoff) and
 `layup audit` (`M2f`); the Operator's code-owner review of a rule batch that touches
 the gate paths and the amendment of ADR-0017 and ADR-0019 decision 2 that records the use of code
-owners (#336, `M2f` or earlier). A bet that raises `U` or the appetite, which `architecture.md` §10 makes a rendered change of `budget.tsv` (a later milestone; in `M2e` a brief that does not fit is reshaped), and a command form of the full check for the PRD, `docs/spec/` and the register (a later task). The escalation screen of an answer (`M3`) and the stall package, the stall
+owners (#336, `M2f` or earlier). A bet that raises `U` or the appetite, which `architecture.md` §10 makes a rendered change of `budget.tsv` (a later milestone; in `M2e` a brief that does not fit is reshaped), and a command form of the full check for the PRD, `docs/spec/` and the register (a later task). The escalation screen of an answer (`M3`), the plan that the plan review rejects past its cap of rejects, and the stall package, the stall
 triggers and their procedure, which Shape's round with no progress and the loops of
 failures wait for (`M3d`). The milestone plan, the build tasks and their merge order,
 the execution of the named tests of a plan (the producer of `tests-red-green`), the

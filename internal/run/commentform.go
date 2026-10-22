@@ -236,11 +236,27 @@ func VerdictFieldOK(data []byte) bool {
 	return ok && v != "reject"
 }
 
-// PlanReviewReasons gives the reason lines of a plan review's kept copy.
-func PlanReviewReasons(data []byte) []string { return nil }
+// PlanReviewReasons gives the reasons of a plan review's kept copy: each of its lines that is not blank and is not the line verdict:, in order, with a
+// trailing carriage return and trailing spaces left off. A copy that is no UTF-8 text has none.
+func PlanReviewReasons(data []byte) []string {
+	if !utf8.Valid(data) {
+		return nil
+	}
+	var out []string
+	for _, line := range strings.Split(string(data), "\n") {
+		if line = strings.TrimRight(line, " \r"); line != "" && !strings.HasPrefix(line, "verdict: ") {
+			out = append(out, line)
+		}
+	}
+	return out
+}
 
-// RejectReasonsOK is the item reject-reasons of a plan review's kept copy.
-func RejectReasonsOK(data []byte) bool { return false }
+// RejectReasonsOK is the item reject-reasons of a plan review's kept copy: it parses with the verdict reject and gives at least one reason, so a
+// bare reject, which gives the planner nothing to act on, is false (task T-t94t).
+func RejectReasonsOK(data []byte) bool {
+	v, ok := ParsePlanReview(data)
+	return ok && v == "reject" && len(PlanReviewReasons(data)) > 0
+}
 
 // FindingsLocatedOK is the item findings-located of a review record's kept copy:
 // the whole record parses and the block holds at least one finding.

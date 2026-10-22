@@ -89,8 +89,12 @@ new interfaces: —
 new dependencies: —
 tests:
 '; extra ;;
-plan-review) comment plan-review.md "verdict: $(cat $ctl/plan-verdict 2>/dev/null || echo approve)
-"; extra ;;
+plan-review) # plan-verdicts: the line of the n-th call is approve, reject (with one reason) or bare-reject (task T-t94t, #483)
+  v=$(sed -n ${n}p $ctl/plan-verdicts 2>/dev/null); [ -n "$v" ] || v=approve
+  case $v in reject) v=reject; r='the plan gives no ordered steps
+' ;; bare-reject) v=reject; r= ;; *) r= ;; esac
+  comment plan-review.md "verdict: $v
+$r"; extra ;;
 specification)
   if [ -e $ctl/reopen-$task ]; then # a reopened task (row 66ab): the line that its prompt shows under the heading, and the section of its requirement
     mkdir -p docs/spec docs/tasks; prd=$(ls docs/prd/PRD-*.md)

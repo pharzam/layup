@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strconv"
+	"strings"
 
 	"github.com/pharzam/layup/internal/gate"
 	"github.com/pharzam/layup/internal/git"
@@ -148,7 +149,8 @@ func (v loopView) lastHandoff(id string) (string, bool) {
 
 // qaKind tells the two sessions of the role qa-engineer apart by the order of the events, never the clock: the
 // verifier starts after a bound of the developer's session of its own attempt, at that SHA; the plan review starts
-// after the last valid handoff of the plan and before the first push.
+// after the first valid handoff of the plan and before the first push. The first, never the last: a plan handed
+// off after the review (the plan of a replanned attempt) must not turn an earlier review into neither (task T-t94t).
 func (v loopView) qaKind(s []string) (review, verifier bool) {
 	start := v.startIndex(s[sessionID])
 	if start < 0 {
@@ -157,7 +159,9 @@ func (v loopView) qaKind(s []string) (review, verifier bool) {
 	plan, push := -1, len(v.Events)
 	for i, e := range v.Events {
 		if ok, comment := validHandoff(e[6]); e[1] == "handoff" && ok && comment && v.role(e[3]) == stepRole("plan-of-a-task") {
-			plan = i // a handoff of a comment: the question and the answer handoffs of a session of this role are none
+			if plan < 0 {
+				plan = i // a handoff of a comment: the question and the answer handoffs of a session of this role are none
+			}
 		}
 		if e[1] == "push" && i < push {
 			push = i
@@ -390,11 +394,70 @@ func priorAttempt(rep Replaced, b int) int {
 	return a
 }
 
-// planRejects counts the plan reviews that rejected the plan and were admitted.
-func planRejects(v loopView) int { return 0 }
+// rejectOf is the one rule of a rejection (loop.md, The driver of a Shape task, "A rejected plan goes back to the planner"), for counting, for
+// reopening the plan stage and for the reasons the planner is given: a plan review that no retry replaced, whose result is completed, whose kept
+// copy is the file the result names by hash and rejects with a reason (the view's Rejects), and whose latest handoff is valid. It gives the reasons.
+func (v loopView) rejectOf(id string, rep Replaced) ([]string, bool) {
+	reasons, found := v.Rejects[id]
+	if !found || v.stageOf(id) != stageReview || rep[v.startRow(id)[sessionAttempt]] == id {
+		return nil, false
+	}
+	if o, _ := v.outcome(id, "the plan review"); o != finished {
+		return nil, false
+	}
+	detail, handedOff := v.lastHandoff(id)
+	if ok, _ := validHandoff(detail); !handedOff || !ok {
+		return nil, false
+	}
+	return reasons, true
+}
 
-// rejectionOf gives the reasons of the plan review that rejected the plan in an attempt before this one.
-func rejectionOf(v loopView, attempt int) []Finding { return nil }
+// legacyRejectOf reports whether a plan review is a reject whose handoff an earlier binary recorded as plan review to developer, invalid
+// verdict-field: it meets every condition of rejectOf but the handoff, which is to be recorded again, as the pair plan review to task plan.
+func (v loopView) legacyRejectOf(id string, rep Replaced) bool {
+	if _, found := v.Rejects[id]; !found || v.stageOf(id) != stageReview || rep[v.startRow(id)[sessionAttempt]] == id {
+		return false
+	}
+	detail, _ := v.lastHandoff(id)
+	o, _ := v.outcome(id, "the plan review")
+	return o == finished && strings.HasPrefix(detail, "invalid verdict-field")
+}
+
+// planRejects counts the plan reviews that rejected the plan by the rule of rejectOf.
+func planRejects(v loopView) int {
+	rep, n := replacedOf(v), 0
+	for _, s := range v.Sessions {
+		if _, ok := v.rejectOf(s[sessionID], rep); ok {
+			n++
+		}
+	}
+	return n
+}
+
+// reopenedBy gives the highest attempt before this one in which a plan review rejected the plan (rejectOf), 0 for none, and its reasons: the plan
+// stage runs again in the attempts after it, and the sessions of the plan and of the plan review of the attempts up to it are passed over.
+func reopenedBy(v loopView, rep Replaced, attempt int) (int, []string) {
+	best, reasons := 0, []string(nil)
+	for _, s := range v.Sessions {
+		if r, ok := v.rejectOf(s[sessionID], rep); ok {
+			if a, _ := strconv.Atoi(s[sessionAttempt]); a < attempt && a >= best {
+				best, reasons = a, r
+			}
+		}
+	}
+	return best, reasons
+}
+
+// rejectionOf gives the reasons of the plan review that rejected the plan in the latest attempt before this one, as the findings the planner of this
+// attempt is given; none for the first plan.
+func rejectionOf(v loopView, attempt int) []Finding {
+	_, reasons := reopenedBy(v, replacedOf(v), attempt)
+	var out []Finding
+	for _, r := range reasons {
+		out = append(out, Finding{Rule: "plan-review:reject", Text: r})
+	}
+	return out
+}
 
 // loopPosition gives the first step of the table of loop.md, The task loop, that the records show not done.
 func loopPosition(v loopView) loopStep {
@@ -436,18 +499,23 @@ func loopPosition(v loopView) loopStep {
 		step.Pos, step.Session = posRetry, pending
 		return step
 	}
+	reopened, _ := reopenedBy(v, rep, attempt) // the plan and the plan review of the attempts up to it are passed over
 	var plans, reviews, devs, verifiers []string
 	for _, s := range v.Sessions {
 		id, a := s[sessionID], s[sessionAttempt]
+		n, _ := strconv.Atoi(a)
 		if rep[a] == id || v.answerSession(s) || (a != strconv.Itoa(attempt) && v.Status[id] == "needs_context") {
 			continue // the answer session of an attempt, and a session that asked in an earlier attempt: its stage runs again in this one
 		}
 		switch s[sessionRole] {
 		case stepRole("plan-of-a-task"):
-			plans = append(plans, id)
+			if n > reopened {
+				plans = append(plans, id)
+			}
 		case stepRole("verification"):
 			review, verifier := v.qaKind(s)
 			switch {
+			case review && n <= reopened:
 			case review:
 				reviews = append(reviews, id)
 			case verifier && a == strconv.Itoa(attempt):
@@ -468,6 +536,18 @@ func loopPosition(v loopView) loopStep {
 	}{{plans, "the plan", "task plan → plan review", posPlan, posPlanFinish}, {reviews, "the plan review", "plan review → developer", posReview, posReviewFinish}} {
 		st, id, msg := v.stage(c.ids, c.step, c.pair)
 		step.Session = id
+		if c.end == posReviewFinish {
+			switch _, rejected := v.rejectOf(id, rep); {
+			case st == stStop && v.legacyRejectOf(id, rep): // an earlier binary's invalid verdict-field of a reject: its handoff is recorded again
+				step.Pos = posReviewFinish
+				return step
+			case st == stDone && rejected && planRejects(v) <= shapeCycleCap:
+				step.Pos = posReplan
+				return step
+			case st == stDone && rejected:
+				return stop(fmt.Sprintf("%s: the plan review rejected the plan %d times", v.Task, planRejects(v)))
+			}
+		}
 		switch st {
 		case stRun:
 			step.Pos = c.run
@@ -551,13 +631,23 @@ func loopPosition(v loopView) loopStep {
 	return step
 }
 
+// rejectReasons gives the reasons of the plan review of a session when its kept copy is the file that its result names by hash and rejects with at
+// least one reason (RejectReasonsOK); a copy that the store lacks, or whose bytes are not the named ones, gives none.
+func (s *Sessions) rejectReasons(ctx context.Context, task, id string, result [][]string) ([]string, bool, error) {
+	data, ok, err := s.keptComment(ctx, task, id, PlanReviewFile, result)
+	if err != nil || !ok || !RejectReasonsOK(data) {
+		return nil, false, err
+	}
+	return PlanReviewReasons(data), true, nil
+}
+
 // shapeView reads the records that the position is told from.
 func (s *Sessions) shapeView(ctx context.Context, task string) (loopView, error) {
 	t, err := s.taskRow(ctx, task)
 	if err != nil {
 		return loopView{}, err
 	}
-	v := loopView{Task: task, Kind: t.Kind, Status: map[string]string{}, Records: map[string]ReviewRecord{}, Results: map[string][][]string{}, Issue: t.Issue}
+	v := loopView{Task: task, Kind: t.Kind, Status: map[string]string{}, Records: map[string]ReviewRecord{}, Results: map[string][][]string{}, Issue: t.Issue, Rejects: map[string][]string{}}
 	if v.Events, err = s.readTable(ctx, eventsPath(task), records.ReadEvents); err != nil {
 		return v, err
 	}
@@ -582,6 +672,15 @@ func (s *Sessions) shapeView(ctx context.Context, task string) (loopView, error)
 		for _, r := range rows {
 			if r[0] == "status" {
 				v.Status[e[3]] = r[2]
+			}
+		}
+	}
+	for _, sess := range v.Sessions { // the reasons of each plan review that rejected: its kept copy is the file its result names by hash
+		if id := sess[sessionID]; sess[sessionRole] == stepRole("verification") && v.Status[id] == "completed" {
+			if reasons, ok, err := s.rejectReasons(ctx, task, id, v.Results[id]); err != nil {
+				return v, err
+			} else if ok {
+				v.Rejects[id] = reasons
 			}
 		}
 	}
@@ -640,7 +739,7 @@ func (s *Sessions) AdvanceShapeTask(ctx context.Context, in ShapeTaskInput) (Adv
 			stop, wait, err = s.askStage(ctx, in, v, st)
 		case posAttempt:
 			_, err = s.StartAttempt(ctx, in.Task, firstBase(v.Events, in.Base))
-		case posRetry:
+		case posRetry, posReplan:
 			_, err = s.StartAttempt(ctx, in.Task, st.Base)
 		case posPlan, posReview, posDeveloper:
 			stop, err = s.runStage(ctx, in, v, st)
@@ -736,6 +835,9 @@ func (s *Sessions) runStage(ctx context.Context, in ShapeTaskInput, v loopView, 
 	var h, m []string
 	var findings []Finding
 	switch st.Pos {
+	case posPlan:
+		findings = rejectionOf(v, st.Attempt) // the reasons of a plan review that rejected the plan of an attempt before this one
+		h, m, err = s.PairFor(ctx, res.Role, res.Tier, in.Harnesses, in.Models, nil)
 	case posReview:
 		if h, m, err = s.ReviewerPair(ctx, in.Task, PlanReview, st.Base, "", in.Harnesses, in.Models); errors.Is(err, ErrNoHarnessOutsideAuthors) {
 			return fmt.Sprintf("%s: no harness outside the authors of the plan", in.Task), nil
@@ -792,6 +894,13 @@ func (s *Sessions) finishStage(ctx context.Context, v loopView, st loopStep) err
 	switch st.Pos {
 	case posReviewFinish:
 		file, from, to, kind = PlanReviewFile, "plan review", "developer", "plan-review"
+		data, err := s.Store.ReadFile(ctx, KeptPath(v.Task, st.Session, file))
+		if err != nil {
+			return err
+		}
+		if verdict, ok := ParsePlanReview(data); ok && verdict == "reject" {
+			to = "task plan" // a reject goes back to the planner; the item reject-reasons says whether it gave a reason
+		}
 	case posVerifierFinish:
 		file, from, kind = ReviewRecordFile, "verifier", "review-record"
 		data, err := s.Store.ReadFile(ctx, KeptPath(v.Task, st.Session, file))

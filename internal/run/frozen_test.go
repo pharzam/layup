@@ -230,7 +230,7 @@ func (a *amend) freezeAt(id string) {
 	a.add("handoff", id, "valid")
 }
 
-func (a *amend) pending() bool { return amendmentPending(a.events, a.sessions) }
+func (a *amend) pending() bool { return amendmentPending(a.events, a.sessions, nil) }
 
 func newAmend(t *testing.T) *amend {
 	a := &amend{t: t}
@@ -381,5 +381,18 @@ func TestAListGivenToAnotherHandoffIsIgnored(t *testing.T) {
 	}
 	if _, ok := w.store.files[testsPath("T-ab12")]; ok {
 		t.Error("a list was written")
+	}
+}
+
+// Task T-t94t (#483): a plan review that rejected is a valid handoff, to the planner; it is no review of an amendment.
+func TestARejectingReviewIsNoReviewOfAnAmendment(t *testing.T) {
+	a := newAmend(t)
+	a.plan("S-a0000001", "valid comment 701-1")
+	a.review("S-a0000002", "valid comment 702-1")
+	if !amendmentPending(a.events, a.sessions, map[string]bool{"S-a0000009": true}) {
+		t.Fatal("the control: a review that did not reject is no amendment")
+	}
+	if amendmentPending(a.events, a.sessions, map[string]bool{"S-a0000002": true}) {
+		t.Error("a review that rejected is the review of an amendment")
 	}
 }

@@ -169,7 +169,10 @@ func validHandoff(detail string) (valid, comment bool) {
 // after that handoff. The order is the events', never the clock's; a verifier's
 // record shares the plan reviewer's role, so only a session that started after
 // the new plan is its review.
-func amendmentPending(events, sessions [][]string) bool {
+//
+// A plan review that rejected the plan is a valid handoff to the planner (task T-t94t); it is no review of an amendment, and rejecting names the sessions
+// whose kept copy rejects (rejectingReviews).
+func amendmentPending(events, sessions [][]string, rejecting map[string]bool) bool {
 	role := map[string]string{}
 	for _, s := range sessions {
 		role[s[sessionID]] = s[sessionRole]
@@ -190,7 +193,7 @@ func amendmentPending(events, sessions [][]string) bool {
 		}
 		for j := i + 1; j < len(events); j++ {
 			f := events[j]
-			if _, c := validHandoff(f[6]); f[1] == "handoff" && c && role[f[3]] == stepRole("plan-review") && started(f[3]) > i {
+			if _, c := validHandoff(f[6]); f[1] == "handoff" && c && role[f[3]] == stepRole("plan-review") && !rejecting[f[3]] && started(f[3]) > i {
 				return true
 			}
 		}
@@ -286,6 +289,10 @@ func (s *Sessions) freeze(ctx context.Context, in HandoffInput) (freezing, error
 	if err != nil {
 		return freezing{}, err
 	}
+	rejecting, err := s.rejectingReviews(ctx, in.Task, sessions)
+	if err != nil {
+		return freezing{}, err
+	}
 	hashes := map[string]string{}
 	for _, t := range in.Freeze.Tests {
 		if t.Source == "" {
@@ -305,7 +312,7 @@ func (s *Sessions) freeze(ctx context.Context, in HandoffInput) (freezing, error
 	switch {
 	case cur == nil:
 		return freezing{true, freezeRows(nil, in.Freeze.Tests, hashes, start[sessionHarness], s.Now())}, nil
-	case amendmentPending(events, sessions):
+	case amendmentPending(events, sessions, rejecting):
 		rows := freezeRows(cur, in.Freeze.Tests, hashes, start[sessionHarness], s.Now())
 		if sameList(cur, rows) {
 			return freezing{true, nil}, nil
@@ -313,6 +320,26 @@ func (s *Sessions) freeze(ctx context.Context, in HandoffInput) (freezing, error
 		return freezing{true, rows}, nil
 	}
 	return freezing{redGreen: sameAsFrozen(cur, in.Freeze.Tests, hashes)}, nil
+}
+
+// rejectingReviews names the sessions of the task of the plan-review role whose kept copy rejects the plan with a reason (rejectReasons).
+func (s *Sessions) rejectingReviews(ctx context.Context, task string, sessions [][]string) (map[string]bool, error) {
+	out := map[string]bool{}
+	for _, r := range sessions {
+		if r[sessionTask] != task || r[sessionRole] != stepRole("plan-review") {
+			continue
+		}
+		rows, err := s.readTable(ctx, "tasks/"+task+"/results/"+r[sessionID]+".tsv", records.ReadResult)
+		if err != nil {
+			return nil, err
+		}
+		if _, ok, err := s.rejectReasons(ctx, task, r[sessionID], rows); err != nil {
+			return nil, err
+		} else if ok {
+			out[r[sessionID]] = true
+		}
+	}
+	return out, nil
 }
 
 // sameList reports whether two lists hold the same tests, sources, hashes and
