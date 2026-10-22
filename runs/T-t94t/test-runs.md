@@ -68,3 +68,5 @@ Red, written before the code (`go test -count=1 ./internal/run`, 2026-10-22T13:0
 | `TestReviewerBareRejectNamesActualPair`, `TestABareRejectIsAnInvalidHandoffAndStartsNoAttempt` | the stop reads `plan review → developer is invalid reject-reasons`; want `plan review → task plan is invalid reject-reasons` |
 
 Green: `readPlanReview` tells a checked verdict from an unread review (the view fields `Unread` and `Verdicts`), the driver stops on a valid handoff over an unread review, the label of the stage follows the verdict, and the amendment reader names an unreadable review with the rejecting ones. Unit, the new integration tests and the neighbours: ok, 2026-10-22T13:05:23Z. The full levels are recorded below.
+
+Round 1 gates: the full integration level (`/home/layup/.cache/layup-session/T-t94t-full-integration-2.txt`) every package ok, exit 0, 2026-10-22T13:10:14Z; e2e every package ok, 13:11:55Z; build, vet (no tag, `integration`, `e2e`), gofmt, the six lints and `freeze-check/run-all.sh` (85 passed) clean.
