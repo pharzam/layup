@@ -13,6 +13,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/pharzam/layup/internal/rules"
 	"github.com/pharzam/layup/internal/spec"
 )
 
@@ -26,6 +27,31 @@ const (
 
 // stepInstructions is the instruction of each task step that has one, by step: the
 // blocks instruction-<step> of loop.md.
+// rulePathsSentence is the sentence of the instructions of the three steps that commit (task T-dtw6, #491; loop.md, The instruction of a task step): it
+// names the rule paths of the register and the refusal that a change to one brings. {rule-paths} is filled by rulePathList.
+const rulePathsSentence = "The rule paths of the target are {rule-paths}, and each file whose name ends with .sh; a path that ends with / is each path under it. " +
+	"Change none of them, even to keep current a document that a rule file tells you to keep current: a change to one refuses the whole session, and nothing of it is pushed. " +
+	"Leave such a document as it is and name it in the reason of the status row. A rule path listed under the findings of the last attempt is one that the last attempt changed."
+
+// rulePathList renders the patterns of the register for the sentence, in the register's order, with the exception of a row after it; a row that
+// ends with .sh is left out, because the sentence names that kind of file in one clause.
+func rulePathList(reg []rules.Entry) string {
+	var out []string
+	for _, e := range reg {
+		if strings.HasSuffix(e.Pattern, ".sh") {
+			continue
+		}
+		if e.Exception != "" {
+			e.Pattern += " (except " + e.Exception + ")"
+		}
+		out = append(out, e.Pattern)
+	}
+	if len(out) == 0 {
+		return "none"
+	}
+	return strings.Join(out, ", ")
+}
+
 var stepInstructions = map[string]string{
 	"plan-of-a-task": `Plan the task {task} (kind {kind}, issue {issue}) from the files listed above: the issue row, the requirements, the decision records, the handoffs and findings, and the rule files. Change no file of the repository and make no commit.
 The initial task of kind specification leaves the MoSCoW and Phase cells of the PRD blank (not —) until the first bet and writes no numbered facts record, because code supplies both at the rendered commit: never ask that task to supply them, correct a plan that promises them, and treat cells it filled or a facts record it wrote as defects. A reopened task of kind specification keeps the cells, lines and record that already exist.
@@ -47,7 +73,7 @@ verdict: <approve, approve-with-conditions or reject>
 The line verdict: is written once, and its value is exactly one of the three words approve, approve-with-conditions and reject. After it, write the conditions or the reasons as plain lines that do not start with "verdict: ". A review with the verdict reject gives at least one reason as a plain line, and a reject with no reason line is refused. This is the form the target reads; it is not the table "| Field | Value |" of LAYUP's own reviews, which you must not write.
 In the result file write the row "comment<TAB>1<TAB>result/plan-review.md<TAB><the SHA-256 of {comment}><TAB>—".
 `,
-	"specification": `Write the specification of the task {task} (kind {kind}, issue {issue}) from the revised draft and its facts listed above: spec/draft.tsv, spec/spans.tsv, start/problem-statement.md and intake/answers.tsv. Commit your work in this repository in one or more commits; push nothing.
+	"specification": `Write the specification of the task {task} (kind {kind}, issue {issue}) from the revised draft and its facts listed above: spec/draft.tsv, spec/spans.tsv, start/problem-statement.md and intake/answers.tsv. Commit your work in this repository in one or more commits; push nothing. ` + rulePathsSentence + `
 The IDs. The row R-NNN of kind requirement in spec/draft.tsv is the requirement REQ-NNN, and the row R-NNN of kind non-functional is NFR-NNN, with the same three digits. A row of kind success-criterion is no requirement and has no such ID. Keep the IDs as the draft listed above numbers them; never renumber one.
 In docs/prd/ write the product requirements document of the target, with one row for each requirement ID, in these forms (every line starts at the first column):
 
@@ -79,12 +105,12 @@ In docs/spec/ write, for each requirement ID, a section whose heading holds the 
 Write docs/tasks/{task}.md, the task's file, in the form of the target's docs/tasks/. Write nothing under docs/facts/: code renders it at the first bet.
 The required outputs for the result file are docs/tasks/{task}.md and each file of docs/prd/ and docs/spec/ that you wrote.
 `,
-	"shape-architecture": `Write the architecture of the target for the task {task} (kind {kind}, issue {issue}) from the options tables of its decisions and the survivors of the filter, both listed above under decision-records, with the revised draft and its facts. Commit your work in this repository in one or more commits; push nothing.
+	"shape-architecture": `Write the architecture of the target for the task {task} (kind {kind}, issue {issue}) from the options tables of its decisions and the survivors of the filter, both listed above under decision-records, with the revised draft and its facts. Commit your work in this repository in one or more commits; push nothing. ` + rulePathsSentence + `
 For each decision that has one survivor, write that option as decided. For each decision that has more than one survivor, write a section with the heading "Decision pending the bet" that lists its survivors and decides nothing. Never choose among survivors, and never write an option that is not a survivor.
 Write the architecture under docs/spec/ and the decision records under docs/adr/, in the form of the rule files listed above, and write docs/tasks/{task}.md, the task's file, in the form of the target's docs/tasks/.
 The required outputs for the result file are docs/tasks/{task}.md and each file of docs/spec/ and docs/adr/ that you wrote.
 `,
-	"implement": `Implement the task {task} (kind {kind}, issue {issue}) as its plan says: the plan and its review are among the handoffs listed above. For each test the plan lists, write the failing test first, watch it fail for the right reason, then write the change. Answer each finding listed under the findings of the last attempt. When tests.tsv is listed above, change none of the test files it names. Keep docs/tasks/{task}.md, the task's file, current. Commit your work in this repository in one or more commits; push nothing.
+	"implement": `Implement the task {task} (kind {kind}, issue {issue}) as its plan says: the plan and its review are among the handoffs listed above. For each test the plan lists, write the failing test first, watch it fail for the right reason, then write the change. Answer each finding listed under the findings of the last attempt. When tests.tsv is listed above, change none of the test files it names. Keep docs/tasks/{task}.md, the task's file, current. Commit your work in this repository in one or more commits; push nothing. ` + rulePathsSentence + `
 The required outputs for the result file are docs/tasks/{task}.md and each file you wrote or changed.
 `,
 	"verification": `Verify the change of the task {task} (kind {kind}, issue {issue}) from {from} to {head}, the commit your repository is at: review the changes from {from} to {head} against the plan, the requirements, the decision records, the rule files and the frozen list tests.tsv, as listed above. Change no file of the repository and make no commit.

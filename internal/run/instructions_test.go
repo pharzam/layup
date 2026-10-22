@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/pharzam/layup/internal/records"
+	"github.com/pharzam/layup/internal/rules"
 	"github.com/pharzam/layup/internal/session"
 	"github.com/pharzam/layup/internal/spec"
 )
@@ -665,6 +666,48 @@ func TestEachStepOfASpecificationTaskStatesTheBetsCellsAndRecord(t *testing.T) {
 	for _, want := range []string{"Leave the MoSCoW and Phase cells empty (not —): code fills them at the bet.", "Write nothing under docs/facts/: code renders it at the first bet."} {
 		if !strings.Contains(spec, want) {
 			t.Errorf("the prompt of specification does not hold %q", want)
+		}
+	}
+}
+
+// Task T-dtw6 (#491): the instruction of each step that commits names the rule paths of the target and the refusal. The four blocks are the specification,
+// the reopened specification, the architecture and the implementation; the driver of the implementation is outside this task (a build task is not run in
+// M2e, loop.md, The driver of a Shape task), so its rendered instruction is tested here and nothing more. Four steps read without a commit
+// (the plan review, the verifier, the answer and the plan), and the close-out makes a restricted commit of two files: none holds the sentence.
+func TestEachCommittingStepNamesTheRulePathsAndTheirRefusal(t *testing.T) {
+	const sentence = "The rule paths of the target are AGENTS.md, docs/rules/, docs/guardrails.md (except added lines in section 2), and each file whose name ends with .sh; " +
+		"a path that ends with / is each path under it. Change none of them, even to keep current a document that a rule file tells you to keep current: " +
+		"a change to one refuses the whole session, and nothing of it is pushed. Leave such a document as it is and name it in the reason of the status row. " +
+		"A rule path listed under the findings of the last attempt is one that the last attempt changed."
+	reg := []rules.Entry{{Pattern: "AGENTS.md"}, {Pattern: "docs/rules/"}, {Pattern: rules.GuardrailsPath, Exception: rules.ExceptionGuardrails}, {Pattern: "x.sh"}}
+	render := func(src promptSrc) string {
+		t.Helper()
+		src.Rules = reg
+		c, err := buildPrompt(src)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return string(c.Text(rootDir))
+	}
+	for name, src := range map[string]promptSrc{"specification": stepSrc(t, "specification", "specification"), "shape-architecture": stepSrc(t, "shape-architecture", "architecture"),
+		"implement": stepSrc(t, "implement", "build"), "reopened need": reopenSrc(t, "specification", "need"), "reopened constraint": reopenSrc(t, "specification", "constraint"),
+		"reopened measure": reopenSrc(t, "specification", "measure")} {
+		text := render(src)
+		if !strings.Contains(text, sentence) || strings.Contains(text, "x.sh") || leftover.MatchString(text) {
+			t.Errorf("%s: the prompt does not hold the sentence with the register's list, or holds x.sh or a placeholder", name)
+		}
+	}
+	for _, step := range []string{"specification", "shape-architecture", "implement"} {
+		if !strings.Contains(stepInstructions[step], "{rule-paths}") {
+			t.Errorf("the constant of %s does not hold the placeholder {rule-paths}", step)
+		}
+	}
+	if !strings.Contains(reopenedInstruction, "{rule-paths}") {
+		t.Error("the reopened instruction does not hold the placeholder {rule-paths}")
+	}
+	for _, c := range goldenCases {
+		if committing := c.step == "specification" || c.step == "shape-architecture" || c.step == "implement"; !committing && strings.Contains(render(stepSrc(t, c.step, c.kind)), "The rule paths of the target") {
+			t.Errorf("the prompt of %s, a step that makes no commit or a restricted one, names the rule paths", c.step)
 		}
 	}
 }

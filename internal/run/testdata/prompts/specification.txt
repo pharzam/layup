@@ -30,7 +30,7 @@ rule-files:
 - docs/rules/a.md 1ed5f7c4bd0d52c69b29af102469935a79798bb799316ab8bad8291fcb3bef03
 
 The work of this step:
-Write the specification of the task T-ab12 (kind specification, issue 701) from the revised draft and its facts listed above: spec/draft.tsv, spec/spans.tsv, start/problem-statement.md and intake/answers.tsv. Commit your work in this repository in one or more commits; push nothing.
+Write the specification of the task T-ab12 (kind specification, issue 701) from the revised draft and its facts listed above: spec/draft.tsv, spec/spans.tsv, start/problem-statement.md and intake/answers.tsv. Commit your work in this repository in one or more commits; push nothing. The rule paths of the target are AGENTS.md, docs/rules/, and each file whose name ends with .sh; a path that ends with / is each path under it. Change none of them, even to keep current a document that a rule file tells you to keep current: a change to one refuses the whole session, and nothing of it is pushed. Leave such a document as it is and name it in the reason of the status row. A rule path listed under the findings of the last attempt is one that the last attempt changed.
 The IDs. The row R-NNN of kind requirement in spec/draft.tsv is the requirement REQ-NNN, and the row R-NNN of kind non-functional is NFR-NNN, with the same three digits. A row of kind success-criterion is no requirement and has no such ID. Keep the IDs as the draft listed above numbers them; never renumber one.
 In docs/prd/ write the product requirements document of the target, with one row for each requirement ID, in these forms (every line starts at the first column):
 
