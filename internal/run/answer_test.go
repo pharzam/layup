@@ -67,7 +67,7 @@ func answered() map[string][][]string {
 }
 
 func TestAnAnswerIsAcceptedByTheNextAttemptThatCitesIt(t *testing.T) {
-	who, ok := AnswerAccepted(taskEvents(strings.Split(stdEvents, "\n")...), answered(), stdRoles(), Owners(DefaultOwners()), answerID)
+	who, ok := AnswerAccepted(taskEvents(strings.Split(stdEvents, "\n")...), answered(), stdRoles(), Owners(DefaultOwners()), answerID, nil)
 	if !ok || who != nextSess {
 		t.Errorf("AnswerAccepted = %q, %v; want accepted by %s, the session of attempt 2", who, ok, nextSess)
 	}
@@ -117,7 +117,7 @@ func TestAnAnswerIsNotAcceptedUnlessEachConditionHolds(t *testing.T) {
 				return m
 			}(), answerID, "S-dddddddd"},
 	} {
-		who, ok := AnswerAccepted(taskEvents(strings.Split(c.events, "\n")...), c.results, stdRoles(), Owners(DefaultOwners()), c.id)
+		who, ok := AnswerAccepted(taskEvents(strings.Split(c.events, "\n")...), c.results, stdRoles(), Owners(DefaultOwners()), c.id, nil)
 		if ok != (c.want != "") || who != c.want {
 			t.Errorf("%s: %q, %v; want %q", c.name, who, ok, c.want)
 		}
@@ -178,7 +178,7 @@ func TestAnAnswerOfASessionOutsideTheOwnerRoleIsNotAccepted(t *testing.T) {
 		if owners == nil {
 			owners = DefaultOwners()
 		}
-		who, ok := AnswerAccepted(taskEvents(strings.Split(c.events, "\n")...), c.results, c.roles, owners, answerID)
+		who, ok := AnswerAccepted(taskEvents(strings.Split(c.events, "\n")...), c.results, c.roles, owners, answerID, nil)
 		if ok != (c.want != "") || who != c.want {
 			t.Errorf("%s: %q, %v; want %q", c.name, who, ok, c.want)
 		}
@@ -192,7 +192,7 @@ func TestTwoLedgersThatDifferOnlyInTheRoleOfTheAnsweringSessionAreToldApart(t *t
 	for role, want := range map[string]string{"software-architect": nextSess, "software-developer": ""} {
 		roles := stdRoles()
 		roles[ownerSess] = role
-		if who, ok := AnswerAccepted(ev, answered(), roles, DefaultOwners(), answerID); who != want || ok != (want != "") {
+		if who, ok := AnswerAccepted(ev, answered(), roles, DefaultOwners(), answerID, nil); who != want || ok != (want != "") {
 			t.Errorf("an answer of %s: %q, %v; want %q", role, who, ok, want)
 		}
 	}
@@ -217,5 +217,28 @@ func TestTheOwnerRoleIsReadFromTheQuestionsAndTheOwnerMapGiven(t *testing.T) {
 	}
 	if who, ok := answerOwner(ev, answered(), "2", Owners(DefaultOwners())); ok {
 		t.Errorf("answerOwner of an attempt that asked nothing = %q, true", who)
+	}
+}
+
+// loop.md, An uncertain end gets one new attempt (task T-qjjd, #475): "the next attempt" of an answer is the first one after the asking attempt that
+// a retry did not replace; an attempt started for another reason is the next one, and is the only one.
+func TestAnAnswerIsAcceptedByTheAttemptThatReplacesTwoCrashedOnes(t *testing.T) {
+	const crashes = "attempt 1\nsession 1 " + askSess + "\nresult 1 " + askSess + " done\nsession 1 " + ownerSess + "\nresult 1 " + ownerSess + " done\n" +
+		"attempt 2\nsession 2 S-dddddddd\nresult 2 S-dddddddd crash\nattempt 3\nsession 3 S-eeeeeeee\nresult 3 S-eeeeeeee crash\n"
+	events := func(tail string) [][]string { return taskEvents(strings.Split(crashes+tail, "\n")...) }
+	both, one := Replaced{"2": "S-dddddddd", "3": "S-eeeeeeee"}, Replaced{"2": "S-dddddddd"}
+	atFour := "attempt 4\nsession 4 " + nextSess + "\nresult 4 " + nextSess + " done"
+	if who, ok := AnswerAccepted(events(atFour), answered(), stdRoles(), Owners(DefaultOwners()), answerID, both); !ok || who != nextSess {
+		t.Errorf("after two replaced attempts: %q, %v; want accepted by %s of attempt 4", who, ok, nextSess)
+	}
+	if n := OpenQuestions(events(atFour), answered(), stdRoles(), Owners(DefaultOwners()), both); n != 0 {
+		t.Errorf("OpenQuestions after two replaced attempts = %d; want 0, the answer accepted", n)
+	}
+	// Guards: with one of the two replaced, attempt 3 is the next one and it has no completed session; an attempt that no retry replaced is the next.
+	if who, ok := AnswerAccepted(events(atFour), answered(), stdRoles(), Owners(DefaultOwners()), answerID, one); ok {
+		t.Errorf("with attempt 3 not replaced: accepted by %q; want none, attempt 3 is the next and it did not end done", who)
+	}
+	if who, ok := AnswerAccepted(events(atFour), answered(), stdRoles(), Owners(DefaultOwners()), answerID, nil); ok {
+		t.Errorf("with no attempt replaced: accepted by %q; want none, attempt 2 is the next", who)
 	}
 }

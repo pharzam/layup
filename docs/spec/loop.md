@@ -298,7 +298,8 @@ one author harness (`architecture.md` §8, "Attempts"). **Decided here:**
   stall triggers) but the budget cap of `M2c` (`intake.md`, the budget of Intake)
   and the cycle cap of the target for the review rounds of step 6; an attempt
   that ends with no commit is an `attempt` row with no `push` row, and the next
-  attempt starts as above.
+  attempt starts as above. The one new attempt of an uncertain end of a task session is the rule of
+  [An uncertain end gets one new attempt](#the-driver-of-a-shape-task); every further retry is `M3d`'s.
   The loops of the failures of `layup/spec` and `layup/rules` are covered by the same limit (decided here, task `T-tnxn`):
   they are bounded only by the budget cap and by the acts of one call of the driver, and count no review round.
 
@@ -852,7 +853,7 @@ the row's `n`; a result **cites** an ID when it is a word of the `reason` of its
 `question` row. The session of the owner role is recorded under the attempt it answers
 (no attempt starts for it); the answer is the answer to the attempt that last ended
 `needs_context` before that session started, and the **next attempt** is the attempt
-with the next number, started after that session ended and neither `closed` nor
+with the next number (passing over an attempt that a retry replaced, [An uncertain end gets one new attempt](#the-driver-of-a-shape-task)), started after that session ended and neither `closed` nor
 `rebased`; one of its sessions that ended `done` with the status `completed` and the
 cite accepts it, the first in the order of the events. The acceptance is a function of
 the records (`internal/run`'s `AnswerAccepted`), not a record of its own: the columns of
@@ -2767,7 +2768,7 @@ pass, and holds nothing.
 the forge alone. It calls `RepairTask` first, then reads the task's records and acts on the first position of the table of
 [The task loop](#req-005--the-task-loop) that they show not done, then reads again. It gives `Advance{Task, Verified, Head, Wait, Stop}`: a
 verified head (`Head` is the bound head that the verifier found nothing material in), a wait for the Operator, or a stop. A stop and a wait repeat on the next call, which reads the same records: there is no
-automatic retry. `loopPosition` is a pure function of the events, the rows of `sessions.tsv`, the status of each kept result and the
+automatic retry but the one new attempt of an eligible end ([An uncertain end gets one new attempt](#the-driver-of-a-shape-task)). `loopPosition` is a pure function of the events, the rows of `sessions.tsv`, the status of each kept result and the
 parsed review records of the valid handoffs, so each position is told from the records alone, and a stage whose session has ended is
 **finished from its kept files** and never run again:
 
@@ -2779,6 +2780,7 @@ parsed review records of the valid handoffs, so each position is told from the r
 | to the verifier | the developer's session is bound and has no handoff | `RecordHandoff` with the commits and the task file |
 | ship | the handoff is valid and no verifier session of the attempt has the bound head as its base | the draft pull request, the four statuses, the acceptance of a specification that waits for its bet, then the verifier |
 | verdict | the verifier's handoff is valid | `LinkReviewRecord`, the four statuses with `layup/verify`, then the verified head, the next attempt or a wait |
+| retry | the last session of the latest attempt has an eligible end (below), not yet spent by an earlier retry of its stage, and no attempt follows | `StartAttempt` at the base of the latest attempt (**decided here**, task `T-qjjd`, #475) |
 | question | the latest attempt has a session that ended `done` with the status `needs_context` and no attempt follows | the stage P1 to P8 of [A question during the work](#the-checks-of-a-handoff): one act, then a fresh read; the position comes before the stages of the plan, the plan review, the developer and the verifier, and replaces the stop for that status (**decided here**, task `T-r7b9`, row 66z) |
 
 - **Which sessions push.** A task session of a step that reads (`plan-of-a-task`, `plan-review`, `verification` and, from row 66z, `answer-to-a-question`) has no push: a
@@ -2801,7 +2803,7 @@ parsed review records of the valid handoffs, so each position is told from the r
   the verified head. `material` posts the status `layup/verify` as a failure at the reviewed head and, if the rounds number the cap or
   fewer, starts the next attempt at the base of this one, with the findings of that record; otherwise it is a wait
   (`waiting for the Operator: <task>: the review-cycle cap 1 is reached with findings open`). `not mergeable, findings recorded` is
-  always a wait, and never another cycle. The findings of an attempt are those of the record of the attempt before it, else the rows of its
+  always a wait, and never another cycle. The findings of an attempt are those of the record of the attempt before it that no retry replaced, else the rows of its
   head's gate table; never an older record.
 - **After the four statuses of a head,** an `error` of any of them, or `not-active` of `layup/verify` (posted before the stop,
   `NFR-004`), is a stop, and no attempt starts. Otherwise a failure of `layup/gates`, `layup/spec` or `layup/rules` starts the next
@@ -2829,7 +2831,33 @@ parsed review records of the valid handoffs, so each position is told from the r
   that waits for its bet.
 - **A developer session that ended with the status `completed` and no `push`** is a stop (`<task>: the session <id> ended with no push`):
   the push hook did not run, and its resume is the step loop's. Every other end that is not `completed` (a refusal, another class or
-  status) is a stop that names the session.
+  status) is a stop that names the session, except an eligible end ([An uncertain end gets one new attempt](#the-driver-of-a-shape-task)).
+- **An uncertain end gets one new attempt** (**decided here**, R10, task `T-qjjd`, #475, with the Operator's decisions 6334968394 and 6336044551; the
+  demo of row 68b found `T-ut9g` stopped for good by a plan review that ended `crash`). The rule has one home, here, and is told from the records alone:
+  - **The stage of a session** is checked in this order. An answer session has none. The plan role is *the plan*. The developer role of the task's kind is
+    *the developer*. The role `qa-engineer` is *the plan review* or *the verifier*, by the order of the events (above). Any other role (the close-out, an
+    owner role) has none.
+  - **An eligible end** is the end of the last session of an attempt (by the order of the events `session`) when its event `result` is `crash` or `no-result`,
+    the task has no event `refused` of that session, and the session has a stage. `wall` and `output` stay stops in `M2e` (a full wall or a runaway output
+    is the stall procedure's, `M3d`), `start` is never retried (it fails the same way again), and the close-out and the answer session stay stops (a new attempt
+    would drop the verified head or the question).
+  - **The bound is once per stage**, so at most four retry attempts per task, whatever the classes of the ends. An attempt is *replaced by a retry* when its
+    last session has an eligible end, no earlier replaced attempt was caused by an eligible end of the same stage (the end that caused each replacement
+    counts, not any end of that attempt: a verifier's crash spends the verifier's retry and not the developer's, whose earlier session ended `done`), the
+    attempt has no event `closed` or `rebased` and no `refused push-lost`, and the event `attempt` of the next number follows that end at the same base.
+  - **The act** is `StartAttempt` at the base of the attempt it replaces, under the same route rules, so the retry of a verifier runs a new developer from the
+    task's base (the verifier's own base is the developer's head). A retry adds at most five task sessions. It follows at the task's next opportunity to advance,
+    in the current run or a later one; a stop between the end and the new attempt leaves the end as the last record, and the next call starts exactly one attempt.
+    A second eligible end of the same stage is the stop `the session <id> of <step> ended <class>`, as before.
+  - **A replaced attempt is passed over.** Its eligible session is left out of the stage lists of the position (so the plan review, which spans attempts, runs
+    again in the new one), and the three readers of "the attempt before" take the nearest attempt that no retry replaced: the findings of the developer
+    (`findingsOf`), the answer IDs of a prompt file (`PromptFile`) and the next attempt of an answer (`AnswerAccepted`, through `OpenQuestions` and `Position`). They
+    read the same inputs, given once to `replacedOf`: the events, the rows of `sessions.tsv` (roles and bases), the status of each kept result and the kind of the
+    task. A retry counts no review round (`reviewRounds` counts valid handoffs `verifier → developer`).
+  - **Reviewer independence** is unchanged: the authors are computed as before. A crashed plan session's harness stays a plan author, on the safe side; a crashed
+    developer never pushed, so it is no author.
+  - **Not in `M2e`:** the retry of the close-out, of the answer session, of `wall` and `output`, and every further retry, its diagnosis and its limit, are the stall
+    procedure's (`M3d`). The cause of a crash is not readable yet (the stderr tail is `#476`).
 
 ## NFR-004 — A check that did not run
 
@@ -2881,6 +2909,7 @@ the milestone covers it end to end.
 | `layup spec check`, the full check (inventory) | unit | Each rule of the table fails on its input and passes on its fixture; before the first bet a task that touches neither the PRD nor `docs/spec/` is `clear`; `did not run` is a failure. |
 | `layup/gates` (inventory, `later-gate-status`) | unit; integration | Each row combination maps to the status by the table, `not-active` is never a success, a `pending` kind with a product path is `failure`; with the stand-in forge, the status is posted once for an unchanged state. |
 | `layup/rules`, the basic rule | unit | A change to a rule path fails; a rendered record equal to code's rendering passes; one that differs by a byte fails; the register is read at the base. |
+| An uncertain end gets one new attempt (row 68b1, `T-qjjd`) | unit; integration (the records, the `httptest` forge, real git, scripted harnesses, `state.sessions()`) | The last session of an attempt, of the plan, the plan review, the developer or the verifier, that ended `crash` or `no-result` and was not refused is the position retry, at the base of the attempt, and the stage runs again in the new attempt (the verifier's retry runs a developer); the bound is once per stage whatever the classes, counted by the end that caused each replacement (a verifier crash, its retry and the developer's first crash is a retry; a crash then a no-result stops with `ended no-result`); `wall`, `output`, `start`, a refused session, a closed, rebased or push-lost attempt, an end that is not the last session, a successor at another base or before the end, the close-out and a crashed answer session (even of a plan or developer role) replace nothing; a retry counts no review round; the findings, the answer IDs of the prompt file and the acceptance of an answer pass over replaced attempts, across two consecutive replacements of different stages; a restart before or after the new attempt starts exactly one. |
 | The findings of `layup/spec` and `layup/rules` start a new attempt (row 66aa, `T-tnxn`) | unit; integration (the `httptest` forge, real git, scripted harnesses) | The fail rows of a head's table are findings `spec:<rule>` in the order of the rules, the failure of the basic rule is `rules:<reason>` with its path, a pass, a clear row and an error are none; the next attempt takes the gate findings, then the given ones; an expected failure of a batch task is none and an active gate row is one; a stop or a Go error comes before any retry. Through `state.sessions()`, a failed `layup/spec` or `layup/rules` at the head of a Shape task starts one new attempt at the same base whose prompt file holds the findings, a restart after the failed statuses starts exactly one, and the specification that waits for its bet starts none. |
 | `layup/verify` and the independence | unit | The authors of a plan review and of a verification from the ledger; no harness outside them is `failure` `not-active`; a waiting verifier is `pending`. |
 | The ready and merge rule (inventory, `later-gate-status`) | integration | With the stand-in forge, a pull request whose head has one context not `success`, no status, a status of another source, or an `error`, or a required job of GitHub Actions with no check run or a conclusion other than `success` (a ruleset that requires none, or a malformed required check, included), is not marked ready and does not merge; with the four `success` it is marked ready and merged at the head SHA, and a moved head is refused, its statuses are read again in the same call and no second merge is sent from the old read. |

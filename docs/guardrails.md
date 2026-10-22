@@ -1507,6 +1507,8 @@ failure modes worth keeping.
 
 - ❌ **A prompt that names a record's empty value in words.** The two Shape options prompts said a fail's evidence is "a dash", while the reader requires — (U+2014) and refuses `-`; on the real target two sessions wrote `-` and both outputs were refused. It is silent because a unit fixture writes the right character by hand, and only a model writes the hyphen. **The check:** every prompt that asks for a record names the empty value by its character and code point, and a test takes that character from the rendered prompt and passes it to the reader. Learned in `T-c3zv`, #473.
 
+- ❌ **A stop told from the records repeats at every restart.** A task session that ended `crash` stopped the Shape task `T-ut9g` for good: `loopPosition` is a pure function of the records, so each restart read the same `result crash` and stopped the same way, and the demo of M2e could not pass. It is silent because the stop message names only the class, and a test that builds the records by hand (one attempt, one crash) pins the stop as correct. **The check:** an end that may be transient gets one bounded retry that the records alone define (here: the eligible end that caused each replacement, once per stage), and a test rebuilds the state through `restarted` before and after the retry attempt commit. Learned in `T-qjjd`, #475.
+
 ## 3. Validation — how you check you are not fooling yourself
 
 A result is **untrusted** until it passes the checks below, and the pass is a

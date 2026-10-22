@@ -60,7 +60,11 @@ func (d *drvWorld) ctlWrite(name, text string) {
 // harnessSteps is what the scripted harness does at each step; a test names a file of ctl/ to change it.
 func harnessSteps(ctl string) string {
 	return `ctl=` + ctl + `
-case "$line" in "Prompt file"*) keep ;; esac
+case "$line" in "Prompt file"*) keep
+  # crash-<step> and noresult-<step> hold the numbers of the calls of that step that end exit 3, or exit 0 with no result file (task T-qjjd)
+  n=$(cat $ctl/calls-$step 2>/dev/null || echo 0); n=$((n+1)); echo $n > $ctl/calls-$step
+  for w in $(cat $ctl/crash-$step 2>/dev/null); do [ $w = $n ] && { echo "the harness failed" >&2; exit 3; }; done
+  for w in $(cat $ctl/noresult-$step 2>/dev/null); do [ $w = $n ] && exit 0; done ;; esac
 case $step in
 "You write the options"*|"You rewrite the options"*) # the options sessions of Shape: the file options-<n> of ctl/ is the n-th output
   out=$(sed -n 's/^The output file: //p')

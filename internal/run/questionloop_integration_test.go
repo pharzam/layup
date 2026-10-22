@@ -153,7 +153,7 @@ func TestANeedsContextEndIsAnsweredByTheOwnerRoleAndTheNextAttemptStarts(t *test
 	}
 	// The next attempt cites the answer and the answer is accepted by it.
 	events, results, roles := d.ledgerOf(task)
-	if by, ok := AnswerAccepted(events, results, roles, Owners(DefaultOwners()), owner+".1"); !ok || roles[by] != stepRole("plan-of-a-task") {
+	if by, ok := AnswerAccepted(events, results, roles, Owners(DefaultOwners()), owner+".1", nil); !ok || roles[by] != stepRole("plan-of-a-task") {
 		t.Errorf("AnswerAccepted(%s.1) = %q, %v; want the plan session of attempt 2", owner, by, ok)
 	}
 }
@@ -194,7 +194,7 @@ func TestAVerifierThatAsksIsAnsweredAtTheHeadItWasBoundTo(t *testing.T) {
 	if open, err := d.r.sessions().openMaterial(context.Background(), task, events, d.sessionsOf(task), results); err != nil || open {
 		t.Errorf("openMaterial after the verifier of attempt 2 cleared the work = %v, %v; want false", open, err)
 	}
-	if by, ok := AnswerAccepted(events, results, roles, Owners(DefaultOwners()), owners[0]+".1"); !ok || roles[by] == "" {
+	if by, ok := AnswerAccepted(events, results, roles, Owners(DefaultOwners()), owners[0]+".1", nil); !ok || roles[by] == "" {
 		t.Errorf("AnswerAccepted(%s.1) = %q, %v; want the answer accepted by the next attempt", owners[0], by, ok)
 	}
 }
@@ -452,4 +452,50 @@ func (l *loopRun) record(attempt int, dev, text, to string) string {
 		l.t.Fatalf("the handoff of the review record: %+v, %v", v, err)
 	}
 	return id
+}
+
+// Two consecutive replacements of different stages after an answered question (task T-qjjd, #475): a developer and then a verifier crash. The
+// prompts of every later attempt list the answer's ID, which the attempt after both replacements cites, and the answer is accepted by it.
+func TestTheAnswerReachesTheAttemptAfterTwoRetries(t *testing.T) {
+	t.Parallel()
+	d := newAskWorld(t)
+	task, _ := d.open()
+	d.ctlWrite("ask-verification", askArch)
+	d.ctlWrite("crash-specification", "2")
+	d.ctlWrite("crash-verification", "1")
+	if got, err := d.advance(task, nil); err != nil || !got.Verified {
+		t.Fatalf("AdvanceShapeTask = %+v, %v; want the verified head", got, err)
+	}
+	owner := d.byRole(task, "software-architect")[0]
+	v, err := d.r.sessions().shapeView(context.Background(), task)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rep := replacedOf(v)
+	if len(rep) != 2 || rep["2"] == "" || rep["3"] == "" {
+		t.Fatalf("replaced %v; want the attempts 2 and 3", rep)
+	}
+	ids := 0
+	for _, p := range d.promptsOf(task) {
+		if strings.Contains(p, "Their IDs are "+owner+".1") {
+			ids++
+		}
+	}
+	if ids != 5 {
+		t.Errorf("%d prompts list the answer ID; want 5, those of every session after the answer's attempt", ids)
+	}
+	roles := sessionRoles(v.Sessions)
+	by, ok := AnswerAccepted(v.Events, v.Results, roles, Owners(DefaultOwners()), owner+".1", rep)
+	attempt := ""
+	for _, r := range v.Sessions {
+		if r[sessionID] == by {
+			attempt = r[sessionAttempt]
+		}
+	}
+	if !ok || attempt != "4" || roles[by] != stepRole("specification") {
+		t.Errorf("AnswerAccepted = %q, %v (attempt %q); want the developer of attempt 4", by, ok, attempt)
+	}
+	if n := OpenQuestions(v.Events, v.Results, roles, Owners(DefaultOwners()), rep); n != 0 {
+		t.Errorf("OpenQuestions = %d; want 0", n)
+	}
 }
