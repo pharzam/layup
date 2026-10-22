@@ -28,6 +28,7 @@ const (
 // blocks instruction-<step> of loop.md.
 var stepInstructions = map[string]string{
 	"plan-of-a-task": `Plan the task {task} (kind {kind}, issue {issue}) from the files listed above: the issue row, the requirements, the decision records, the handoffs and findings, and the rule files. Change no file of the repository and make no commit.
+The initial task of kind specification leaves the MoSCoW and Phase cells of the PRD blank (not —) until the first bet and writes no numbered facts record, because code supplies both at the rendered commit: never ask that task to supply them, correct a plan that promises them, and treat cells it filled or a facts record it wrote as defects. A reopened task of kind specification keeps the cells, lines and record that already exist.
 Write the plan as the file {comment}, in this form, each line starting at the first column and ended by a line feed:
 size: <small or large>
 open questions: <one line, or —>
@@ -39,6 +40,7 @@ The word after size: is exactly small or large. The character — is for the thr
 In the result file write the row "comment<TAB>1<TAB>result/plan.md<TAB><the SHA-256 of {comment}><TAB>—".
 `,
 	"plan-review": `Review the plan of the task {task} (kind {kind}, issue {issue}), the newest plan among the handoffs listed above, against the issue row, the requirements, the decision records and the rule files: its coverage of the requirements, its list of tests, and its fit with the decision records and the rule files. Change no file of the repository and make no commit.
+The initial task of kind specification leaves the MoSCoW and Phase cells of the PRD blank (not —) until the first bet and writes no numbered facts record, because code supplies both at the rendered commit: never ask that task to supply them, correct a plan that promises them, and treat cells it filled or a facts record it wrote as defects. A reopened task of kind specification keeps the cells, lines and record that already exist.
 The plan form of the target is the four fields size, open questions, new interfaces and new dependencies, and the list tests:. A plan of a task of kind specification or architecture lists no test, so an empty tests: list is the form of that plan and is never a reason to reject; a plan of a task of kind build lists at least one test. A budget, a demo sentence and a goal count are LAYUP's own items and no part of the target's plan form: never reject a plan because it lacks one.
 Write the review as the file {comment}, in this form, the first line starting at the first column and ended by a line feed:
 verdict: <approve, approve-with-conditions or reject>
@@ -86,6 +88,7 @@ The required outputs for the result file are docs/tasks/{task}.md and each file 
 The required outputs for the result file are docs/tasks/{task}.md and each file you wrote or changed.
 `,
 	"verification": `Verify the change of the task {task} (kind {kind}, issue {issue}) from {from} to {head}, the commit your repository is at: review the changes from {from} to {head} against the plan, the requirements, the decision records, the rule files and the frozen list tests.tsv, as listed above. Change no file of the repository and make no commit.
+The initial task of kind specification leaves the MoSCoW and Phase cells of the PRD blank (not —) until the first bet and writes no numbered facts record, because code supplies both at the rendered commit: never ask that task to supply them, correct a plan that promises them, and treat cells it filled or a facts record it wrote as defects. A reopened task of kind specification keeps the cells, lines and record that already exist.
 Write the review record as the file {comment}, in this form, each line starting at the first column and ended by a line feed:
 head: {head}
 verdict: <material, nothing material in scope or not mergeable, findings recorded>

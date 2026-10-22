@@ -511,6 +511,22 @@ func TestTheInstructionBlocksOfLoopMd(t *testing.T) {
 	}
 }
 
+// Task T-paan (#488), round 1 (M1): the canonical home of the contract of the cells and the record, with its review-scope limit, is the bet's
+// subsection of loop.md. Reading the document is integration level; the rendered prompts are the unit test
+// TestEachStepOfASpecificationTaskStatesTheBetsCellsAndRecord.
+func TestTheInstructionContractOfTheCellsAndTheRecordHasItsHomeInLoopMd(t *testing.T) {
+	t.Parallel()
+	doc, err := os.ReadFile("../../docs/spec/loop.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"The contract of the cells and the record", "The review scope of the contract"} {
+		if !strings.Contains(string(doc), want) {
+			t.Errorf("loop.md does not hold %q", want)
+		}
+	}
+}
+
 // loop.md, The specification output: the specimen that follows the forms of the
 // instruction is a specification that waits for its bet, by the pinned prd-lint of the target.
 func TestTheSpecimenOfTheSpecificationInstructionIsAcceptedByThePinnedPrdLint(t *testing.T) {

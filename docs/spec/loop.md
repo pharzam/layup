@@ -479,8 +479,11 @@ Write docs/tasks/{task}.md, the task's file, in the form of the target's docs/ta
 The required outputs for the result file are docs/tasks/{task}.md, the file of docs/prd/ that you wrote and, for a need or a constraint, each file of docs/spec/ that you wrote.
 ```
 
+The second paragraph of each of the blocks `instruction-plan-of-a-task`, `instruction-plan-review` and `instruction-verification` is a summary, with one text, of [the contract of the cells and the record](#the-rendered-commit-and-the-confirmed-inventory) and of its review scope (task `T-paan`); the specification block and the reopened block keep the clause that each of them states.
+
 ```text instruction-plan-of-a-task
 Plan the task {task} (kind {kind}, issue {issue}) from the files listed above: the issue row, the requirements, the decision records, the handoffs and findings, and the rule files. Change no file of the repository and make no commit.
+The initial task of kind specification leaves the MoSCoW and Phase cells of the PRD blank (not —) until the first bet and writes no numbered facts record, because code supplies both at the rendered commit: never ask that task to supply them, correct a plan that promises them, and treat cells it filled or a facts record it wrote as defects. A reopened task of kind specification keeps the cells, lines and record that already exist.
 Write the plan as the file {comment}, in this form, each line starting at the first column and ended by a line feed:
 size: <small or large>
 open questions: <one line, or —>
@@ -494,6 +497,7 @@ In the result file write the row "comment<TAB>1<TAB>result/plan.md<TAB><the SHA-
 
 ```text instruction-plan-review
 Review the plan of the task {task} (kind {kind}, issue {issue}), the newest plan among the handoffs listed above, against the issue row, the requirements, the decision records and the rule files: its coverage of the requirements, its list of tests, and its fit with the decision records and the rule files. Change no file of the repository and make no commit.
+The initial task of kind specification leaves the MoSCoW and Phase cells of the PRD blank (not —) until the first bet and writes no numbered facts record, because code supplies both at the rendered commit: never ask that task to supply them, correct a plan that promises them, and treat cells it filled or a facts record it wrote as defects. A reopened task of kind specification keeps the cells, lines and record that already exist.
 The plan form of the target is the four fields size, open questions, new interfaces and new dependencies, and the list tests:. A plan of a task of kind specification or architecture lists no test, so an empty tests: list is the form of that plan and is never a reason to reject; a plan of a task of kind build lists at least one test. A budget, a demo sentence and a goal count are LAYUP's own items and no part of the target's plan form: never reject a plan because it lacks one.
 Write the review as the file {comment}, in this form, the first line starting at the first column and ended by a line feed:
 verdict: <approve, approve-with-conditions or reject>
@@ -549,6 +553,7 @@ The required outputs for the result file are docs/tasks/{task}.md and each file 
 
 ```text instruction-verification
 Verify the change of the task {task} (kind {kind}, issue {issue}) from {from} to {head}, the commit your repository is at: review the changes from {from} to {head} against the plan, the requirements, the decision records, the rule files and the frozen list tests.tsv, as listed above. Change no file of the repository and make no commit.
+The initial task of kind specification leaves the MoSCoW and Phase cells of the PRD blank (not —) until the first bet and writes no numbered facts record, because code supplies both at the rendered commit: never ask that task to supply them, correct a plan that promises them, and treat cells it filled or a facts record it wrote as defects. A reopened task of kind specification keeps the cells, lines and record that already exist.
 Write the review record as the file {comment}, in this form, each line starting at the first column and ended by a line feed:
 head: {head}
 verdict: <material, nothing material in scope or not mergeable, findings recorded>
@@ -2300,6 +2305,8 @@ At the first bet, code adds the **rendered commit** to the specification's head
   MoSCoW is not an empty cell; a line of any other form on either stream — a real
   violation, the filename refusal `err()` sends to stderr, a stray line — or an
   empty output refuses the head, and any other exit is an error, not a verdict.
+- **The contract of the cells and the record.** **Decided here** (R10, task `T-paan`, #488, which makes the contract of the specification step one rule for every step that judges it): the initial specification task leaves the MoSCoW and Phase cells of the PRD blank, written as an empty cell and never as `—`, until the first bet, and writes no numbered facts record under `docs/facts/`, because code supplies the cells and the record at the rendered commit above (a record the task wrote would stop the rendering). A task that is reopened ([the specification task that a changed class reopens](#the-specification-task-that-a-changed-class-reopens)) keeps the lines, the cells and the numbered facts record that already exist and writes pending prose, never a new table row.
+- **The review scope of the contract.** The limit binds the request, never the absence: a plan that promises that the task fills the cells or writes the record is corrected, and cells that the task filled or a numbered facts record that it wrote are defects; but the blank cells and the missing record at the head of the initial specification task are the form that code expects, so a plan-review condition or a verifier finding that asks the task to supply them, or that calls their absence wrong, is itself a defect of the review and is withdrawn. The blocks `instruction-plan-of-a-task`, `instruction-plan-review` and `instruction-verification` below carry one sentence that summarises this contract, and `instruction-specification` states its two restrictions in its own words ("Leave the MoSCoW and Phase cells empty (not —)" and "Write nothing under docs/facts/"); the blocks are the text of record of their code constants and no second rule.
 - At a later bet, code renders the change as a rendered task of its own, with a
   plan ("render from copy N") that a plan-review and a verifier session check (row 66t, moved to `M2g`; `M2e` fails closed at a later bet, [the step bet](#the-step-bet)).
 
