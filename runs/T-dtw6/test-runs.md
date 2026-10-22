@@ -32,3 +32,14 @@ Integration (`-tags=integration`, the tests below by name), exit 1, finished 202
 Regression controls (green before and after, they pin what stays a stop or a question): `TestARefusalOfAnotherKindOrStatusIsNoRulePathRetry` (`rule-paths` with and without a payload, `rule-pathx`, `workflow`, `base`, `push-refused`, `rule-path` with `artifact` in both orders, two `rule-path` refusals, a crash or wall refused, the statuses `blocked` and none, the close-out, the answer sessions, and the `needs_context` question).
 
 The goldens are not red tests of their own: `TestThePromptFileOfEachStepIsItsGoldenFile` and `TestReopenedSpecificationPromptIsItsGoldenFile` go red when the instruction changes (slice 3) and green when the six files are updated in the same commit.
+
+## 2. Green
+
+The change was committed in slices, each with its tests, because the hook refuses a red commit: the parser (`0f484e5f`), the findings (`3c97ec34`), the prompt rendering with the six goldens and the four blocks of `loop.md` (`a8a94b74`), the retry class, the guidance and the records boundary (`437b50e1`), then the documents. Times are from `date -u` after each run.
+
+- Unit, `go test -count=1 ./...`: every package ok (the hook run at each commit).
+- The new integration tests: ok, 2026-10-22T17:17:05Z.
+- The first full integration run failed once, at `TestAPromptFileIsBuiltFromTheRecordsOfARealTaskAndTheSessionReadsTheFiles`: `refused: context 1091 1000`, because the sentence made the prompt longer than the 1000 tokens of the stand-in pair. The test now gives the pair `Context = 100000`, as its neighbours do (`fae66d7a`).
+- The full integration level, `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration -timeout 30m ./...` (output in `/home/layup/.cache/layup-session/T-dtw6-full-integration.txt`), on the final code: every package ok, exit 0, finished 2026-10-22T17:30:07Z.
+- E2E, `go test -count=1 -tags=e2e -timeout 10m ./...`: every package ok, exit 0, 2026-10-22T17:31:43Z.
+- `go build ./...`, `go vet ./...` (no tag, `integration`, `e2e`), `gofmt -l .`, the six lints and `git diff --check origin/main HEAD`: clean. `setup-check.sh` reports only `kit-history FAIL orphan: docs/tasks/T-dtw6.md has no line in backlog.md or completed.md`, which the close-out's completed-log line ends.
