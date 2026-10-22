@@ -46,5 +46,5 @@ ADR-0007, recorded, not budgeted. Tokens as the harness reported them; build and
 | Plan review | reasoning | GPT-6.1 Sol (Codex) | xhigh | 190,312 | 2026-10-22T10:03:28Z to 10:09:54Z |
 | Build | execution | Claude Sonnet 5.5 (subagent) | not recorded | not kept | 2026-10-22T10:13:40Z to 10:26:26Z (first to last commit) |
 | Review round 1 | reasoning | Claude Fable 5.1 (OpenCode, max) | max | 12,077,857 (USD 8.38) | 2026-10-22T10:27:45Z to 10:42:39Z |
-| Close-out | execution | Claude Sonnet 5.5 (subagent) | not recorded | not kept | not kept; its commit follows b59c0c2 at 2026-10-22T10:43:51Z |
+| Close-out | execution | Claude Sonnet 5.5 (subagent) | not recorded | not kept | not kept; its commit f86eca2 at 2026-10-22T10:43:52Z |
 | **Total** | | | | 12,268,169 reported (the two numeric entries); the complete total is not reported | not reported |
