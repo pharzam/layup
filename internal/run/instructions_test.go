@@ -3,7 +3,6 @@ package run
 import (
 	"embed"
 	"fmt"
-	"os"
 	"regexp"
 	"slices"
 	"strings"
@@ -666,16 +665,6 @@ func TestEachStepOfASpecificationTaskStatesTheBetsCellsAndRecord(t *testing.T) {
 	for _, want := range []string{"Leave the MoSCoW and Phase cells empty (not —): code fills them at the bet.", "Write nothing under docs/facts/: code renders it at the first bet."} {
 		if !strings.Contains(spec, want) {
 			t.Errorf("the prompt of specification does not hold %q", want)
-		}
-	}
-	// The canonical home of the complete contract, with the review-scope limit, is the bet's subsection.
-	doc, err := os.ReadFile("../../docs/spec/loop.md")
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, want := range []string{"The contract of the cells and the record", "The review scope of the contract"} {
-		if !strings.Contains(string(doc), want) {
-			t.Errorf("loop.md does not hold %q", want)
 		}
 	}
 }

@@ -40,3 +40,9 @@ Start 2026-10-22T14:45:28Z, end 2026-10-22T14:45:28Z, exit 0: ok  	github.com/ph
 
 Command: `go test -count=1 -tags=integration ./internal/run/ -run 'Instruction|Prompt|Golden'`
 Start 2026-10-22T14:45:28Z, end 2026-10-22T14:45:36Z, exit 0: ok  	github.com/pharzam/layup/internal/run	7.395s
+
+## Round 1 (M1): the document check moves to integration level
+
+Falsifier: `docs/spec/loop.md` moved away from the tree, `go test -count=1 ./internal/run/` still passes (the unit level reads no document); the file was put back.
+
+Command: `go test -count=1 -tags=integration ./internal/run/ -run 'Instruction|Prompt|Golden'` (includes TestTheInstructionContractOfTheCellsAndTheRecordHasItsHomeInLoopMd). Start 2026-10-22T14:56:54Z, end 2026-10-22T14:57:04Z, exit 0.
