@@ -287,7 +287,7 @@ func TestTheStepsOfTheScaffold(t *testing.T) {
 	if got := checks(); got[3][0] != "rules:layup-records" || got[3][1] != "fail" {
 		t.Errorf("setup/forge-check.tsv after the failing later start: %q; want the row rules:layup-records fail", got)
 	}
-	leaseIs("held")
+	leaseIs("released") // T-yngf (#479): a failed restart releases the lease; it was held, the known limit
 }
 
 // angled gives the marker of a name, with the angle quotes U+2039 and U+203A.

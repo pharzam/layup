@@ -306,7 +306,7 @@ func (r *state) registerTaskWith(ctx context.Context, t Task, extra map[string][
 		}
 		files[p] = data
 	}
-	return Fenced(ctx, r.store, r.cfg.RunID, func(ctx context.Context) error {
+	return r.fenced(ctx, func(ctx context.Context) error {
 		return r.store.Commit(ctx, files, "tasks: register "+t.ID)
 	})
 }

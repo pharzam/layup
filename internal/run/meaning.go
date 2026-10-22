@@ -136,7 +136,7 @@ func meaningText(input map[string]string, output string) []byte {
 func (r *state) sessions() *Sessions {
 	control, _ := strconv.Atoi(r.value("issue.control"))
 	return &Sessions{Store: r.store, RunID: r.cfg.RunID, Host: r.cfg.Dir, Target: r.cfg.Owner + "/" + r.cfg.Name, Clone: r.target,
-		Branch: r.defaultBranch, Now: r.cfg.Clock.Now, Forge: r.cfg.Forge, Control: control, App: r.cfg.Register.AppSlug, Bot: r.botID, Web: r.cfg.Register.Web, Prices: r.cfg.Prices}
+		Branch: r.defaultBranch, Now: r.cfg.Clock.Now, Forge: r.cfg.Forge, Control: control, App: r.cfg.Register.AppSlug, Bot: r.botID, Web: r.cfg.Register.Web, Prices: r.cfg.Prices, Lost: r.noteLoss}
 }
 
 // meaningStep is the step meaning of Intake: "done before" when

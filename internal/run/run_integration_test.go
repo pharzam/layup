@@ -53,6 +53,7 @@ type fakeGitHub struct {
 	checkRuns  map[string][]map[string]any // the latest check runs of each SHA (row 66g)
 	pulls      pullRoutes                  // the pull requests (row 66g)
 	issueTexts [][2]string                 // the title and the body of each issue opened (task T-jy6f)
+	defBranch  string                      // the default branch that the repository answers; "main" when empty (task T-yngf)
 }
 
 func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
@@ -71,7 +72,11 @@ func (f *fakeGitHub) serve(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(201)
 		json.NewEncoder(w).Encode(map[string]any{"token": "ghs_runtest", "expires_at": "2099-01-01T00:00:00Z"})
 	case call == "GET /repos/acme/target":
-		json.NewEncoder(w).Encode(map[string]any{"default_branch": "main", "visibility": "public"})
+		def := "main"
+		if f.defBranch != "" {
+			def = f.defBranch
+		}
+		json.NewEncoder(w).Encode(map[string]any{"default_branch": def, "visibility": "public"})
 	case call == "GET /repos/acme/target/branches":
 		out, err := exec.Command("git", "-C", f.bare, "for-each-ref", "--format=%(refname:short) %(objectname)", "refs/heads").Output()
 		if err != nil {
@@ -888,7 +893,7 @@ func TestTheStepMeaning(t *testing.T) {
 // A quote that occurs twice refuses the session's file: meaning is fail,
 // naming the session, and nothing of the file is committed; with no route for
 // systems-architect, meaning is fail (pair) and no session starts. Each fail
-// leaves the lease held (run.md, the known limit).
+// releases the lease (run.md, The lease and fencing; task T-yngf, #479: it was held, the known limit).
 func TestTheStepMeaningFails(t *testing.T) {
 	t.Parallel()
 	for _, c := range []struct{ name, meaning, detail string }{
@@ -918,8 +923,8 @@ func TestTheStepMeaningFails(t *testing.T) {
 			if strings.Contains(gitOut(t, w.bare, "ls-tree", "-r", "--name-only", "refs/heads/layup-records"), "intake/meaning.tsv") {
 				t.Error("a refused file is a record")
 			}
-			if !strings.Contains(show(t, w.bare, "refs/heads/layup-records", "lease.tsv"), "\theld\n") {
-				t.Error("the lease is not held after a fail")
+			if !strings.Contains(show(t, w.bare, "refs/heads/layup-records", "lease.tsv"), "\treleased\n") {
+				t.Error("the lease is not released after a fail") // T-yngf: was held, the known limit
 			}
 			// With no pair, no session of systems-architect starts (round 1 of #218).
 			if c.meaning == "" && strings.Contains(show(t, w.bare, "refs/heads/layup-records", "sessions.tsv"), "\tsystems-architect\t") {
@@ -978,7 +983,7 @@ func TestTheStepsNumberingAndSpans(t *testing.T) {
 
 // The demo of row 44: after a failed span check the run stops at spans, so no
 // row after it runs and no batch is posted, with spec/check.tsv committed and
-// the lease held; the next restart (after the takeover) runs numbering again
+// the lease released (T-yngf; it was held); the next restart runs numbering again
 // with a new session, and spans passes, both records replaced.
 func TestAFailedSpanCheckRunsNumberingAgain(t *testing.T) {
 	t.Parallel()
@@ -995,8 +1000,8 @@ func TestAFailedSpanCheckRunsNumberingAgain(t *testing.T) {
 	if got := show(t, w.bare, "refs/heads/layup-records", "spec/check.tsv"); !strings.Contains(got, "\ncover\tfail\tbyte 10 is in 2 spans\n") {
 		t.Errorf("spec/check.tsv:\n%s", got)
 	}
-	if !strings.Contains(show(t, w.bare, "refs/heads/layup-records", "lease.tsv"), "\theld\n") {
-		t.Error("the lease is not held after the fail")
+	if !strings.Contains(show(t, w.bare, "refs/heads/layup-records", "lease.tsv"), "\treleased\n") {
+		t.Error("the lease is not released after the fail") // T-yngf: was held, the known limit
 	}
 	// A rerun whose session writes the same table fails the same way: its
 	// table equals the last spec/check.tsv, which is kept as it is.
@@ -1112,7 +1117,7 @@ func TestTheStepCompleteness(t *testing.T) {
 
 // The demo of row 45b: with no admitted pair of qa-engineer on another
 // harness, completeness is fail, the last row (no batch), no session of
-// qa-engineer starts, and the lease is held.
+// qa-engineer starts, and the lease is released (T-yngf; it was held).
 func TestTheCompletenessReviewWithNoOtherHarness(t *testing.T) {
 	t.Parallel()
 	for _, c := range []struct {
@@ -1134,8 +1139,8 @@ func TestTheCompletenessReviewWithNoOtherHarness(t *testing.T) {
 			if strings.Contains(show(t, w.bare, "refs/heads/layup-records", "sessions.tsv"), "\tqa-engineer\t") {
 				t.Error("a session of qa-engineer started")
 			}
-			if !strings.Contains(show(t, w.bare, "refs/heads/layup-records", "lease.tsv"), "\theld\n") {
-				t.Error("the lease is not held after the fail")
+			if !strings.Contains(show(t, w.bare, "refs/heads/layup-records", "lease.tsv"), "\treleased\n") {
+				t.Error("the lease is not released after the fail") // T-yngf: was held, the known limit
 			}
 		})
 	}
