@@ -14,7 +14,7 @@ The red could not be committed alone: the pre-commit hook runs the unit level an
 
 The two sentences of `internal/run/options.go` (`optionsPromptText`, `rewritePromptText`) now say `the single character "—" (U+2014), the empty value, and nothing else; a hyphen - or any other text is refused`; the pass clause no longer says "never a dash".
 
-- `go test -count=1 -run '^TestEachOptionsPromptNamesTheEmptyEvidenceOfAFail$|TestThePromptsList' -v ./internal/run/`: exit 0, both pass.
+- `go test -count=1 -run '^TestEachOptionsPromptNamesTheEmptyEvidenceOfAFail$|TestThePromptsList' -v ./internal/run/`: exit 0, passes.
 - Unit level, `go test -count=1 ./...`, 05:37:06Z, exit 0.
 - `go build ./...`, `go vet ./...` (no tag, `integration`, `e2e`), `gofmt -l .`: clean.
 - `go test -count=1 -tags=integration ./internal/run/ -run 'Options|Shape'`, 05:37:24Z, exit 0 (8.3 s).
