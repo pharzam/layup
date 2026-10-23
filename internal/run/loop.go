@@ -287,7 +287,10 @@ func (r *state) boundary(ctx context.Context) error {
 	if skip, err := boundaryRule(params, tasks); skip || err != nil {
 		return err
 	}
-	_, _, err = r.parametersBoundary(ctx)
+	if _, _, err = r.parametersBoundary(ctx); err != nil {
+		return err
+	}
+	_, err = r.cycleBoundary(ctx)
 	return err
 }
 

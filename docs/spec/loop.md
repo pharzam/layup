@@ -479,11 +479,12 @@ Write docs/tasks/{task}.md, the task's file, in the form of the target's docs/ta
 The required outputs for the result file are docs/tasks/{task}.md, the file of docs/prd/ that you wrote and, for a need or a constraint, each file of docs/spec/ that you wrote.
 ```
 
-The second paragraph of each of the blocks `instruction-plan-of-a-task`, `instruction-plan-review` and `instruction-verification` is a summary, with one text, of [the contract of the cells and the record](#the-rendered-commit-and-the-confirmed-inventory) and of its review scope (task `T-paan`); the specification block and the reopened block keep the clause that each of them states.
+The second paragraph of each of the blocks `instruction-plan-of-a-task`, `instruction-plan-review` and `instruction-verification` is a summary, with one text, of [the contract of the cells and the record](#the-rendered-commit-and-the-confirmed-inventory) and of its review scope (task `T-paan`); the third is a summary, with one text, of the contract of the survivors (its bullet in Shape) and of its review scope (task `T-0xr7`, #493); the specification block and the reopened block keep the clause that each of them states, and the architecture block keeps its own words.
 
 ```text instruction-plan-of-a-task
 Plan the task {task} (kind {kind}, issue {issue}) from the files listed above: the issue row, the requirements, the decision records, the handoffs and findings, and the rule files. Change no file of the repository and make no commit.
 The initial task of kind specification leaves the MoSCoW and Phase cells of the PRD blank (not —) until the first bet and writes no numbered facts record, because code supplies both at the rendered commit: never ask that task to supply them, correct a plan that promises them, and treat cells it filled or a facts record it wrote as defects. A reopened task of kind specification keeps the cells, lines and record that already exist.
+A task of kind architecture writes as decided each decision that has one survivor among the survivors listed above, and writes each decision that has more than one as a section "Decision pending the bet" that lists its survivors and decides nothing, because the bet chooses among them: correct a plan that chooses among survivors, never ask that task to choose among them, and never treat the deferral itself (no option chosen for a decision with more than one survivor) as a defect; check a decision of one survivor, a survivor that is wrong, a choice hidden in a pending section, a contradiction, and the rest of the work, as any other.
 Write the plan as the file {comment}, in this form, each line starting at the first column and ended by a line feed:
 size: <small or large>
 open questions: <one line, or —>
@@ -498,6 +499,7 @@ In the result file write the row "comment<TAB>1<TAB>result/plan.md<TAB><the SHA-
 ```text instruction-plan-review
 Review the plan of the task {task} (kind {kind}, issue {issue}), the newest plan among the handoffs listed above, against the issue row, the requirements, the decision records and the rule files: its coverage of the requirements, its list of tests, and its fit with the decision records and the rule files. Change no file of the repository and make no commit.
 The initial task of kind specification leaves the MoSCoW and Phase cells of the PRD blank (not —) until the first bet and writes no numbered facts record, because code supplies both at the rendered commit: never ask that task to supply them, correct a plan that promises them, and treat cells it filled or a facts record it wrote as defects. A reopened task of kind specification keeps the cells, lines and record that already exist.
+A task of kind architecture writes as decided each decision that has one survivor among the survivors listed above, and writes each decision that has more than one as a section "Decision pending the bet" that lists its survivors and decides nothing, because the bet chooses among them: correct a plan that chooses among survivors, never ask that task to choose among them, and never treat the deferral itself (no option chosen for a decision with more than one survivor) as a defect; check a decision of one survivor, a survivor that is wrong, a choice hidden in a pending section, a contradiction, and the rest of the work, as any other.
 The plan form of the target is the four fields size, open questions, new interfaces and new dependencies, and the list tests:. A plan of a task of kind specification or architecture lists no test, so an empty tests: list is the form of that plan and is never a reason to reject; a plan of a task of kind build lists at least one test. A budget, a demo sentence and a goal count are LAYUP's own items and no part of the target's plan form: never reject a plan because it lacks one.
 Write the review as the file {comment}, in this form, the first line starting at the first column and ended by a line feed:
 verdict: <approve, approve-with-conditions or reject>
@@ -554,6 +556,7 @@ The required outputs for the result file are docs/tasks/{task}.md and each file 
 ```text instruction-verification
 Verify the change of the task {task} (kind {kind}, issue {issue}) from {from} to {head}, the commit your repository is at: review the changes from {from} to {head} against the plan, the requirements, the decision records, the rule files and the frozen list tests.tsv, as listed above. Change no file of the repository and make no commit.
 The initial task of kind specification leaves the MoSCoW and Phase cells of the PRD blank (not —) until the first bet and writes no numbered facts record, because code supplies both at the rendered commit: never ask that task to supply them, correct a plan that promises them, and treat cells it filled or a facts record it wrote as defects. A reopened task of kind specification keeps the cells, lines and record that already exist.
+A task of kind architecture writes as decided each decision that has one survivor among the survivors listed above, and writes each decision that has more than one as a section "Decision pending the bet" that lists its survivors and decides nothing, because the bet chooses among them: correct a plan that chooses among survivors, never ask that task to choose among them, and never treat the deferral itself (no option chosen for a decision with more than one survivor) as a defect; check a decision of one survivor, a survivor that is wrong, a choice hidden in a pending section, a contradiction, and the rest of the work, as any other.
 Write the review record as the file {comment}, in this form, each line starting at the first column and ended by a line feed:
 head: {head}
 verdict: <material, nothing material in scope or not mergeable, findings recorded>
@@ -1791,6 +1794,18 @@ own judgement of it.
   file (the options table and the chosen option as the only survivor, [The instruction of a task
   step](#the-instruction-of-a-task-step)), which writes it into the target's architecture; it merges in the merge order
   below, after the specification.
+- **The contract of the survivors.** Decided here (R10, task `T-0xr7`, #493). A task of kind
+  `architecture` writes as decided each decision that has one survivor, and writes each decision
+  that has more than one as a section `Decision pending the bet` that lists its survivors and
+  decides nothing, because the bet chooses among them (the bullet above); after the bet the chosen
+  option is the one survivor, so the sentence still holds. The plan, the plan review and the
+  verification of that task state it in their third paragraph, so that a plan that chooses among
+  survivors is corrected and the deferral is never asked of the task as a choice.
+- **The review scope of the survivors.** Decided here (R10, task `T-0xr7`, #493). The exemption is
+  the deferral itself: a finding whose basis is that no option was chosen for a decision with more
+  than one survivor is withdrawn. A pending section is still checked for a wrong survivor (a
+  non-survivor listed, a survivor left out), a choice hidden in it and a contradiction; a decision
+  of one survivor and the rest of the work are checked as any other.
 - **Every option dropped:** the architect session writes new options once; if they
   are dropped too, the round made no progress. `layup run` posts a comment on the
   milestone's issue that names each dropped option with its failed rows, and stops
@@ -2825,7 +2840,27 @@ parsed review records of the valid handoffs, so each position is told from the r
   fewer, starts the next attempt at the base of this one, with the findings of that record; otherwise it is a wait
   (`waiting for the Operator: <task>: the review-cycle cap 1 is reached with findings open`). `not mergeable, findings recorded` is
   always a wait, and never another cycle. The findings of an attempt are those of the record of the attempt before it that no retry replaced, else the rows of its
-  head's gate table; never an older record.
+  head's gate table; never an older record. The cap is 1, and 2 for a task that has the grant of the next bullet.
+- **One more cycle at the cap.** Decided here (R10, task `T-0xr7`, #493, the Operator's decisions of 2026-10-22). The Operator answers the wait
+  at the cap with a comment on the **control issue**, `cycle <task> because <reason>`: one line (trailing white space trimmed), one space between
+  the parts, a task ID `T-xxxx`, and a reason that is neither empty nor `—`; a body whose first word is not `cycle` is no command. **The copy is
+  the record:** the boundary already copies every comment of the control issue that is no App's before `shape`, `bet` and `loop` act, and the grant
+  is read from `copies.tsv` and the task's events on every view; no row, file, comment or event kind is added. **The order of judgement,** each
+  refusal a progress line `cycle: refused comment <ID>: <item>: <reason>` that writes nothing (as a refused `set`) and is repeated at the next
+  boundary: (1) `form`; (2) `author`: a first copy (seen 1), by no App, by an account of `approvers.tsv` in the role `operator`; (3) `issue`: the
+  control issue; (4) `task`: a task of `tasks.tsv`; (5) `cap`; (6) `bound`. Every copy of a command is judged before it is filtered to a task, so a
+  malformed command, an unknown task and another issue are each reported. **The cap, from the recorded history:** the cap round is the round number
+  `shapeCycleCap`+1 among the rounds with findings, in the order of the sessions. A command is eligible only if its comment ID is strictly greater
+  than the ID in the handoff `valid comment <ID>-<seen>` of that round (the IDs of one forge grow with time, as the supersession of a `set` relies
+  on) and the verdict of that record is `material`: a task with fewer rounds, and a cap round that is `not mergeable, findings recorded` (always
+  a wait, which grants no cycle and so consumes no grant), give the item `cap`. Eligibility reads no position, so an accepted grant stays accepted
+  after its attempt starts, and a command posted before the cap round stays refused. **One grant per task:** the earliest eligible command is the
+  grant, each later one is refused with `bound`. With the grant the cap is 2: the next attempt starts at the base with the findings of the cap
+  round's record, and a third round with findings is the wait `…the review-cycle cap 2 is reached with findings open`. With no grant the wait
+  adds `; the Operator may grant one more cycle with `cycle <task> because <reason>` on the control issue`. The plan-reject count, the retries,
+  the independence of the verifier and the stop `not-active` are unchanged; a further grant, the diagnosis and the stall package are `M3d`'s.
+  **Rejected:** `set cycle.<task> 2 because …` (a per-task row family in the static `parameters.tsv`); an answer on the task's issue in the grammar
+  of `architecture.md` §11 (a new copier, `M3d`'s grammar taken early); a new event `granted` (an enum value, a fenced write, a second source).
 - **After the four statuses of a head,** an `error` of any of them, or `not-active` of `layup/verify` (posted before the stop,
   `NFR-004`), is a stop, and no attempt starts. Otherwise a failure of `layup/gates`, `layup/spec` or `layup/rules` starts the next
   attempt at the base of this one, with the findings of the gate's table, then those of `layup/spec`, then that of `layup/rules`
@@ -2927,7 +2962,7 @@ parsed review records of the valid handoffs, so each position is told from the r
     the lost evidence of a reject never lets the rejected plan, or a plan with no review of its own, reach the developer. The amendment reader likewise counts an unread review as no approval.
     A bare reject is checked on the pair it was recorded on, so its stop reads `the handoff plan review → task plan is invalid reject-reasons`; the label `plan review → developer` stays for that pair's own failures, and for an earlier binary's `invalid verdict-field` of a reject that no recovery takes up. A reject with no reason is a stop even when the Operator's table admits its handoff as valid: `<task>: the plan review <session> rejected the plan and gave no reason (its handoff is valid on this table, and a reject with no reason stops)`.
   - **Rejected:** a reject that stays `invalid verdict-field` (it would fail the ratio of valid handoffs of `REQ-005` and the first rule of the demo for every reject); a count shared with the
-    code review's rounds (one early plan reject would spend the only round of the code review); an Operator command or a wait to resume (no autonomy, and no bound the records define).
+    code review's rounds (one early plan reject would spend the only round of the code review); an Operator command or a wait to resume for the plan-reject count (no autonomy, and no bound the records define; the grant of one more cycle at the cap of the code review is the bullet "One more cycle at the cap" of the driver of a Shape task, task `T-0xr7`).
 
 ## NFR-004 — A check that did not run
 
@@ -3085,7 +3120,7 @@ with it the item `patch-per-kind` of a rule-batch handoff) and
 the gate paths and the amendment of ADR-0017 and ADR-0019 decision 2 that records the use of code
 owners (#336, `M2f` or earlier). A bet that raises `U` or the appetite, which `architecture.md` §10 makes a rendered change of `budget.tsv` (a later milestone; in `M2e` a brief that does not fit is reshaped), and a command form of the full check for the PRD, `docs/spec/` and the register (a later task). The escalation screen of an answer (`M3`), the plan that the plan review rejects past its cap of rejects, and the stall package, the stall
 triggers and their procedure, which Shape's round with no progress and the loops of
-failures wait for (`M3d`). The milestone plan, the build tasks and their merge order,
+failures wait for (`M3d`), which replaces the wait at the cap of the review cycle and gives any cycle past the one that the Operator's command grants. The milestone plan, the build tasks and their merge order,
 the execution of the named tests of a plan (the producer of `tests-red-green`), the
 execution of a frozen-test amendment in the loop (the Operator's decision on #367,
 comment 6252712313, as it needs that producer; the predicates of row 66e stay as built), the

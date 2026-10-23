@@ -711,3 +711,29 @@ func TestEachCommittingStepNamesTheRulePathsAndTheirRefusal(t *testing.T) {
 		}
 	}
 }
+
+// Task T-0xr7 (#493): the three steps that judge the work of an architecture task state the contract of the survivors that only the architecture step
+// stated, so that a plan that chooses among survivors is corrected, the deferral to the bet is never a defect, and nothing else is exempt (plan review
+// of #493, condition 2). The sentence is the same in each constant, and the architecture step keeps its own words.
+func TestEachStepOfAnArchitectureTaskStatesThatTheSurvivorsAreTheBets(t *testing.T) {
+	summary := []string{
+		"A task of kind architecture writes as decided each decision that has one survivor among the survivors listed above",
+		"writes each decision that has more than one as a section \"Decision pending the bet\" that lists its survivors and decides nothing, because the bet chooses among them",
+		"correct a plan that chooses among survivors, never ask that task to choose among them, and never treat the deferral itself (no option chosen for a decision with more than one survivor) as a defect",
+		"check a decision of one survivor, a survivor that is wrong, a choice hidden in a pending section, a contradiction, and the rest of the work, as any other",
+	}
+	for _, step := range []string{"plan-of-a-task", "plan-review", "verification"} {
+		for _, want := range summary {
+			if !strings.Contains(promptText(t, step, "architecture"), want) {
+				t.Errorf("the prompt of %s for a task of kind architecture does not hold %q", step, want)
+			}
+			if !strings.Contains(stepInstructions[step], want) {
+				t.Errorf("the constant of %s does not hold %q", step, want)
+			}
+		}
+	}
+	// The control: the architecture step keeps its own words, with the second rule that a non-survivor is never written.
+	if arch := promptText(t, "shape-architecture", "architecture"); !strings.Contains(arch, "Never choose among survivors, and never write an option that is not a survivor.") {
+		t.Errorf("the prompt of shape-architecture lost its rule of the survivors")
+	}
+}

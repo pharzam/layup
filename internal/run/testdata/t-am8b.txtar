@@ -1,0 +1,140 @@
+-- approvers.tsv --
+id	role	login	since	source
+1675602	operator	pharzam	2026-10-22T14:41:16Z	start
+1675602	idea-owner	pharzam	2026-10-22T14:41:16Z	start
+-- copies.tsv --
+comment	seen	issue	author_id	author_login	app	created	copied	sha256	body
+6345850877	1	6	335371832	layup-agent[bot]	layup-agent	2026-10-22T16:29:48Z	2026-10-22T16:29:49Z	2dcd5928ea8ecfb603c8080671423d83b5002d8bed8edbbbcdbf0b9037a7d0eb	copies/6345850877-1.md
+6347751487	1	6	335371832	layup-agent[bot]	layup-agent	2026-10-22T18:05:50Z	2026-10-22T18:05:51Z	f0b96845f869c4f972fdd5acd5972bd4a535eef9131f8043d35332b5b45ad0c1	copies/6347751487-1.md
+6347893425	1	6	335371832	layup-agent[bot]	layup-agent	2026-10-22T18:12:51Z	2026-10-22T18:12:52Z	b1de04dbcbc961f4e8716f6172e50121644ed1dcd20ec707919551c49938ffe0	copies/6347893425-1.md
+-- copies/6345850877-1.md --
+verdict: approve-with-conditions
+Before adding ADRs 0010-0016, resolve the record-placement conflict under R10 with a decision note or ADR and update the affected guidance in the same change. The plan puts tally-specific build, package, parser and counting decisions in docs/adr/, while docs/adr/README.md, “What belongs in this directory”, restricts that directory to constitutive records “generic enough to carry onto any domain”. docs/engineering-discipline.md, “Architecture Decision Records”, also directs architecturally significant structure and interface decisions there. Make the permitted home for these product decisions explicit; do not silently bypass the restriction.
+The seven selected options all survive their supplied constraint filters. The cmd/tally layout and unicode.IsSpace selections include reasons for choosing between surviving alternatives; the remaining selections have one survivor each. The choices support REQ-001 through REQ-017 and NFR-018 through NFR-024 without adding product scope or external dependencies.
+The four fields and empty tests: list satisfy the architecture plan form. No implementation tests are required in this task. Preserve the existing blank MoSCoW and Phase cells and existing facts records; the plan correctly promises no Go code or new facts record.
+At plan scope, the selected technical approach has one reading; the record-placement conflict above is the condition to resolve before execution. This review approves architecture and scope only, not implementation correctness or performance.
+-- copies/6347751487-1.md --
+head: c17c28c8c9c3578056f960aa98ba907bfbd15fc7
+verdict: material
+findings:
+- docs/tasks/T-am8b.md:43 R12: The supplied plan explicitly selects cmd-tally-count-subpackage and unicode-isspace, and its independent review approves both selections with only a record-placement condition. This change instead defers both choices to the bet, omits their ADRs, and introduces a rule prohibiting selection when multiple options survive. Multiple survivors do not invalidate the reviewed choices. Restore the selected architecture and its decision records, or record an authorized plan revision before treating the replacement scope as approved.
+- docs/adr/0013-parse-flags-by-hand.md:23 R13: The unconditional rule classifies every multi-character argument starting with a hyphen as a flag group, including arguments after a filename, while lines 38-40 explicitly leave that case for the idea owner. Thus tally file -l is both specified as selecting lines and declared unresolved; SPEC-0002 step 1 repeats the unconditional rule. Limit the decision to the supported argument positions and explicitly preserve the unresolved case, or obtain a fact resolving it, so the architecture gives one instruction to the implementer.
+-- copies/6347893425-1.md --
+head: 0ebf7d9e0f4f91881cce4d1368c9e62826fcc98a
+verdict: material
+findings:
+- docs/tasks/T-am8b.md:49 R12: The supplied plan selects cmd-tally-count-subpackage and unicode-isspace, and its independent review approves both subject only to resolving record placement. This paragraph asserts an operator instruction reversing those selections, but no such instruction or confirmation is present in the supplied issue, plan, answers or handoffs; it explicitly leaves confirmation pending. The architecture still defers both reviewed choices and omits their ADRs. Restore the selected architecture and records, or supply the authorized revision and record its confirmation on the issue before treating the replacement scope as approved.
+- docs/adr/README.md:20 R10: The record-placement resolution adds product ADRs but retains the rule that records cite only sibling constitutive documents. ADR-0010 instead requires citations of the product PRD and specification, and ADR-0011 through ADR-0015 use those citations. Thus the guidance still both prohibits and requires the new records' product references. Update this rule to explicitly permit product requirements and specifications, consistent with ADR-0010, so the plan review's record-placement condition is fully resolved.
+-- sessions.tsv --
+session	task	attempt	role	harness	version	model	base	records	prompt_bytes	prompt_tokens	context	cap	wall	vars	policy
+S-7b0b85b1	T-am8b	1	software-engineer	claude	2.1.306 (Claude Code)	claude-opus-5-5	d03c8650303fbdff49986ef5478ed53d11219964	514ceead01f3da8cb7a897157f5e348559f10f55	17725	4432	1000000	5.00	30	ANTHROPIC_DEFAULT_HAIKU_MODEL=claude-sonnet-5-5	—
+S-cbc711fa	T-am8b	1	qa-engineer	codex	codex-cli 0.163.0	gpt-6.1-sol	d03c8650303fbdff49986ef5478ed53d11219964	b561d19ecc5b07cb69fd14a920af1a4a32ddfba4	18321	4581	1050000	—	30	—	—
+S-06aeffc9	T-am8b	1	systems-architect	claude	2.1.306 (Claude Code)	claude-opus-5-5	d03c8650303fbdff49986ef5478ed53d11219964	8be914b5b28636328894d44c4cadee49bb7e2df7	17264	4316	1000000	5.00	30	ANTHROPIC_DEFAULT_HAIKU_MODEL=claude-sonnet-5-5	—
+S-663a38fe	T-am8b	2	systems-architect	claude	2.1.306 (Claude Code)	claude-opus-5-5	d03c8650303fbdff49986ef5478ed53d11219964	7345d30202edd632b034c26a5ae1e142b99c656d	18362	4591	1000000	5.00	30	ANTHROPIC_DEFAULT_HAIKU_MODEL=claude-sonnet-5-5	—
+S-d9e5873f	T-am8b	2	qa-engineer	codex	codex-cli 0.163.0	gpt-6.1-sol	c17c28c8c9c3578056f960aa98ba907bfbd15fc7	8068113d16d5d61bed7e637d4d536b5dda7f6761	18364	4591	1050000	—	30	—	—
+S-045c56f7	T-am8b	3	systems-architect	claude	2.1.306 (Claude Code)	claude-opus-5-5	d03c8650303fbdff49986ef5478ed53d11219964	e1820676c8c0fc33c6417c6fabd4c7ed5c1401c3	19292	4823	1000000	5.00	30	ANTHROPIC_DEFAULT_HAIKU_MODEL=claude-sonnet-5-5	—
+S-0465b007	T-am8b	3	qa-engineer	codex	codex-cli 0.163.0	gpt-6.1-sol	0ebf7d9e0f4f91881cce4d1368c9e62826fcc98a	5b052aa1c6f38c2e814ad65c7d7a05df4700aa78	18496	4624	1050000	—	30	—	—
+-- tasks.tsv --
+task	issue	kind	requirements	size	predecessors	pr	opened
+T-yzst	3	specification	REQ-001 REQ-002 REQ-003 REQ-004 REQ-005 REQ-006 REQ-007 REQ-008 REQ-009 REQ-010 REQ-011 REQ-012 REQ-013 REQ-014 REQ-015 REQ-016 REQ-017 NFR-018 NFR-019 NFR-020 NFR-021 NFR-022 NFR-023 NFR-024	—	—	5	2026-10-22T16:15:16Z
+T-am8b	6	architecture	REQ-001 REQ-002 REQ-003 REQ-004 REQ-005 REQ-006 REQ-007 REQ-008 REQ-009 REQ-010 REQ-011 REQ-012 REQ-013 REQ-014 REQ-015 REQ-016 REQ-017 NFR-018 NFR-019 NFR-020 NFR-021 NFR-022 NFR-023 NFR-024	—	—	8	2026-10-22T16:27:39Z
+-- tasks/T-am8b/events.tsv --
+n	kind	attempt	session	base	sha	detail	time
+1	attempt	1	—	d03c8650303fbdff49986ef5478ed53d11219964	—	—	2026-10-22T16:27:41Z
+2	session	1	S-7b0b85b1	—	—	—	2026-10-22T16:27:43Z
+3	result	1	S-7b0b85b1	—	—	done	2026-10-22T16:28:20Z
+4	handoff	1	S-7b0b85b1	—	—	valid comment 6345823799-1	2026-10-22T16:28:28Z
+5	session	1	S-cbc711fa	—	—	—	2026-10-22T16:28:31Z
+6	result	1	S-cbc711fa	—	—	done	2026-10-22T16:29:42Z
+7	handoff	1	S-cbc711fa	—	—	valid comment 6345850877-1	2026-10-22T16:29:52Z
+8	session	1	S-06aeffc9	—	—	—	2026-10-22T16:29:55Z
+9	result	1	S-06aeffc9	—	—	done	2026-10-22T16:33:17Z
+10	refused	1	S-06aeffc9	—	—	rule-path c844bf5e1782b4e70f954fc15330f9b2b0e18023599eef8fcf6ca4098e359833	2026-10-22T16:33:21Z
+11	attempt	2	—	d03c8650303fbdff49986ef5478ed53d11219964	—	—	2026-10-22T18:00:44Z
+12	session	2	S-663a38fe	—	—	—	2026-10-22T18:00:47Z
+13	result	2	S-663a38fe	—	—	done	2026-10-22T18:03:47Z
+14	push	2	S-663a38fe	—	c17c28c8c9c3578056f960aa98ba907bfbd15fc7	task/T-am8b/2	2026-10-22T18:03:50Z
+15	bound	2	S-663a38fe	—	c17c28c8c9c3578056f960aa98ba907bfbd15fc7	task/T-am8b/2	2026-10-22T18:03:56Z
+16	handoff	2	S-663a38fe	—	—	valid	2026-10-22T18:04:01Z
+17	session	2	S-d9e5873f	—	—	—	2026-10-22T18:04:27Z
+18	result	2	S-d9e5873f	—	—	done	2026-10-22T18:05:43Z
+19	handoff	2	S-d9e5873f	—	—	valid comment 6347751487-1	2026-10-22T18:05:54Z
+20	attempt	3	—	d03c8650303fbdff49986ef5478ed53d11219964	—	—	2026-10-22T18:06:05Z
+21	session	3	S-045c56f7	—	—	—	2026-10-22T18:06:08Z
+22	result	3	S-045c56f7	—	—	done	2026-10-22T18:10:19Z
+23	push	3	S-045c56f7	—	0ebf7d9e0f4f91881cce4d1368c9e62826fcc98a	task/T-am8b/3	2026-10-22T18:10:22Z
+24	bound	3	S-045c56f7	—	0ebf7d9e0f4f91881cce4d1368c9e62826fcc98a	task/T-am8b/3	2026-10-22T18:10:30Z
+25	handoff	3	S-045c56f7	—	—	valid	2026-10-22T18:10:35Z
+26	session	3	S-0465b007	—	—	—	2026-10-22T18:11:11Z
+27	result	3	S-0465b007	—	—	done	2026-10-22T18:12:45Z
+28	handoff	3	S-0465b007	—	—	valid comment 6347893425-1	2026-10-22T18:12:55Z
+-- tasks/T-am8b/results/S-045c56f7.tsv --
+kind	n	value	sha256	reason
+status	1	completed	—	Architecture written: five single-survivor decisions as ADR-0011 to ADR-0015, ADR-0010 resolves record placement, SPEC-0002 leaves module layout and white-space class pending the bet (a plan revision recorded in T-am8b for the reviewer), and the parser after the first file name stays an open question for the idea owner; rule file docs/engineering-discipline.md (its ADR section) left as is
+artifact	1	docs/tasks/T-am8b.md	47f4770f8b226efa084f2c36eab86e9f9b4a588fa5b88d6497762d2d7655b2f9	—
+artifact	2	docs/spec/SPEC-0002-tally-architecture.md	cf08cc271d1156ea3a59edcffd647592ca053be2311e49a50c36e629b84a1212	—
+artifact	3	docs/adr/0010-record-product-architecture-decisions.md	92cec388d4b5e43a611f88bf968648dcf76ee2be854d2c18ec3e733b0dfa6ca1	—
+artifact	4	docs/adr/0011-build-with-go-build-only.md	fd0d9172766881b5faa8158b7edbbd208742b0e9c2cfeb6fbddc9ba735a2dc69	—
+artifact	5	docs/adr/0012-count-with-three-functions-over-a-teed-reader.md	f7209008c4aae5ea6577a86fbb288df34198fe3ab69fe92c678bffb44b9d1f42	—
+artifact	6	docs/adr/0013-parse-flags-by-hand.md	4df046ec3537753e6b85e0fff660a361e7ba0f377a3c8f01e0b5653adad6da98	—
+artifact	7	docs/adr/0014-stream-through-a-fixed-buffer.md	655c62d74830a7041b19d28d245c814ac21b6cedba6af207bbb998cb3fe6fa5a	—
+artifact	8	docs/adr/0015-validate-utf8-in-the-stream.md	c05ee883b0876a27a71542b19783966dd9b7c4807826cacc0b289a674a77cba9	—
+artifact	9	docs/adr/README.md	cce82dbabe4e84b533a6e96307a6d24bbadfd228db29fb2aa40d400dfc5b7980	—
+-- tasks/T-am8b/results/S-0465b007.tsv --
+kind	n	value	sha256	reason
+status	1	completed	—	Reviewed the frozen change; two material findings recorded.
+comment	1	result/review-record.md	b1de04dbcbc961f4e8716f6172e50121644ed1dcd20ec707919551c49938ffe0	—
+-- tasks/T-am8b/results/S-0465b007/review-record.md --
+head: 0ebf7d9e0f4f91881cce4d1368c9e62826fcc98a
+verdict: material
+findings:
+- docs/tasks/T-am8b.md:49 R12: The supplied plan selects cmd-tally-count-subpackage and unicode-isspace, and its independent review approves both subject only to resolving record placement. This paragraph asserts an operator instruction reversing those selections, but no such instruction or confirmation is present in the supplied issue, plan, answers or handoffs; it explicitly leaves confirmation pending. The architecture still defers both reviewed choices and omits their ADRs. Restore the selected architecture and records, or supply the authorized revision and record its confirmation on the issue before treating the replacement scope as approved.
+- docs/adr/README.md:20 R10: The record-placement resolution adds product ADRs but retains the rule that records cite only sibling constitutive documents. ADR-0010 instead requires citations of the product PRD and specification, and ADR-0011 through ADR-0015 use those citations. Thus the guidance still both prohibits and requires the new records' product references. Update this rule to explicitly permit product requirements and specifications, consistent with ADR-0010, so the plan review's record-placement condition is fully resolved.
+-- tasks/T-am8b/results/S-06aeffc9.tsv --
+kind	n	value	sha256	reason
+status	1	completed	—	Architecture written: SPEC-0002 with two decisions pending the bet, ADR-0010 resolving record placement, ADR-0011 to ADR-0015 for the five single-survivor decisions, task file T-am8b
+artifact	1	docs/tasks/T-am8b.md	4aff6823484fa89f53f151417d3450abe90ee06d20a3a6b25dd10b7cd7a324c5	—
+artifact	2	docs/spec/SPEC-0002-tally-architecture.md	f0f1d500c25742da54719006f112df4d4d1fbd2f818835a2c873c12ea51f7854	—
+artifact	3	docs/adr/0010-record-product-architecture-decisions.md	f27fe9809ef72a44525063800b8453fd15db4ccaab66379f1e359e687f3e8008	—
+artifact	4	docs/adr/0011-build-with-go-build-only.md	8c7bf8b58d11af7ac32afa4b9ab6375fa9fa3d5b02e5b2f2b18dfd952f4609ee	—
+artifact	5	docs/adr/0012-count-with-three-functions-over-a-teed-reader.md	39fc05a235a40b8930094782471c41570125c3f10561bf044a2bea7ad55779a3	—
+artifact	6	docs/adr/0013-parse-flags-by-hand.md	2ceeedfd00baf008c981d3ab8865fc06884d009a052d64097defb9a0261b1d53	—
+artifact	7	docs/adr/0014-stream-through-a-fixed-buffer.md	3ff0f4c2480e3f00410095af081f704677432b0a22dc9150fbbecdb0dae188bc	—
+artifact	8	docs/adr/0015-validate-utf-8-in-the-stream.md	c04faccd6dff2bc9962ecfcaffd1b4022a422aa8ed0fa6b20c6f342fa11842e9	—
+artifact	9	docs/adr/README.md	2f1cc2055f4a2f479aa947e09bb612126db63fe17c9fd2eb943029fe496c32e2	—
+-- tasks/T-am8b/results/S-663a38fe.tsv --
+kind	n	value	sha256	reason
+status	1	completed	—	Five single-survivor decisions are recorded as ADR-0011 to ADR-0015, module layout and white-space class are pending the bet in SPEC-0002, and ADR-0010 resolves the record placement; the rule file docs/engineering-discipline.md (Architecture Decision Records) is left as it is although it still describes adr/ as constitutive records only
+artifact	1	docs/tasks/T-am8b.md	28dfe162a764570dc25096448a30728b483fba1d0c5ca7f717dce5b448ae11ec	—
+artifact	2	docs/spec/SPEC-0002-architecture.md	8b709070cf5e2cc24fdeec048b42fe555f7b528c17a7b2a3689f4946d4ede2ec	—
+artifact	3	docs/adr/0010-hold-product-architecture-decisions-here.md	a10b6aa857ebe1ff13ab155ef02e6a39561ed3cf446d187d602c7209f89c1d3f	—
+artifact	4	docs/adr/0011-build-with-go-build-only.md	c83ba5ed106837cc0132f92f69929f6aa2e252ec941eb05ba5f46276761d8a54	—
+artifact	5	docs/adr/0012-count-through-three-functions-over-a-teed-reader.md	b13e37c00db0e52f9270fbf1440b53253fca39973fe724f07b790f31986b85d6	—
+artifact	6	docs/adr/0013-parse-flags-by-hand.md	9c0762a7bf614a702c20e36e5ac71cf34262b3f8449b20bdfdf0901ef4b81768	—
+artifact	7	docs/adr/0014-stream-through-a-fixed-buffer.md	599a2876a36ab319c626e773adab71434fa8da88a962317c4bf7d974c9645897	—
+artifact	8	docs/adr/0015-validate-utf-8-in-the-stream-and-print-after-eof.md	a7f66d31ba6becd0cf941836943e0b4befcc9dce696dcd058ec3230e34878ae4	—
+artifact	9	docs/adr/README.md	3f679297093349d1eca1c69be70d62875e81988cb8b4aa53f57b8939b0ca0c69	—
+-- tasks/T-am8b/results/S-7b0b85b1.tsv --
+kind	n	value	sha256	reason
+comment	1	result/plan.md	910992dafa8b88b520c422a8ed7e15a067cf8eaf9f0580a9534963cb4697dbb8	—
+status	1	completed	—	plan of the architecture task T-am8b written with both tied decisions resolved and no test listed
+-- tasks/T-am8b/results/S-cbc711fa.tsv --
+kind	n	value	sha256	reason
+status	1	completed	—	Reviewed T-am8b architecture plan; approval has a governance reconciliation condition.
+comment	1	result/plan-review.md	2dcd5928ea8ecfb603c8080671423d83b5002d8bed8edbbbcdbf0b9037a7d0eb	—
+-- tasks/T-am8b/results/S-cbc711fa/plan-review.md --
+verdict: approve-with-conditions
+Before adding ADRs 0010-0016, resolve the record-placement conflict under R10 with a decision note or ADR and update the affected guidance in the same change. The plan puts tally-specific build, package, parser and counting decisions in docs/adr/, while docs/adr/README.md, “What belongs in this directory”, restricts that directory to constitutive records “generic enough to carry onto any domain”. docs/engineering-discipline.md, “Architecture Decision Records”, also directs architecturally significant structure and interface decisions there. Make the permitted home for these product decisions explicit; do not silently bypass the restriction.
+The seven selected options all survive their supplied constraint filters. The cmd/tally layout and unicode.IsSpace selections include reasons for choosing between surviving alternatives; the remaining selections have one survivor each. The choices support REQ-001 through REQ-017 and NFR-018 through NFR-024 without adding product scope or external dependencies.
+The four fields and empty tests: list satisfy the architecture plan form. No implementation tests are required in this task. Preserve the existing blank MoSCoW and Phase cells and existing facts records; the plan correctly promises no Go code or new facts record.
+At plan scope, the selected technical approach has one reading; the record-placement conflict above is the condition to resolve before execution. This review approves architecture and scope only, not implementation correctness or performance.
+-- tasks/T-am8b/results/S-d9e5873f.tsv --
+kind	n	value	sha256	reason
+status	1	completed	—	Review completed with two material findings; repository unchanged.
+comment	1	result/review-record.md	f0b96845f869c4f972fdd5acd5972bd4a535eef9131f8043d35332b5b45ad0c1	—
+-- tasks/T-am8b/results/S-d9e5873f/review-record.md --
+head: c17c28c8c9c3578056f960aa98ba907bfbd15fc7
+verdict: material
+findings:
+- docs/tasks/T-am8b.md:43 R12: The supplied plan explicitly selects cmd-tally-count-subpackage and unicode-isspace, and its independent review approves both selections with only a record-placement condition. This change instead defers both choices to the bet, omits their ADRs, and introduces a rule prohibiting selection when multiple options survive. Multiple survivors do not invalidate the reviewed choices. Restore the selected architecture and its decision records, or record an authorized plan revision before treating the replacement scope as approved.
+- docs/adr/0013-parse-flags-by-hand.md:23 R13: The unconditional rule classifies every multi-character argument starting with a hyphen as a flag group, including arguments after a filename, while lines 38-40 explicitly leave that case for the idea owner. Thus tally file -l is both specified as selecting lines and declared unresolved; SPEC-0002 step 1 repeats the unconditional rule. Limit the decision to the supported argument positions and explicitly preserve the unresolved case, or obtain a fact resolving it, so the architecture gives one instruction to the implementer.
