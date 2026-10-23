@@ -123,3 +123,5 @@ FAIL
 ```
 
 Green: the same selector and `go test -count=1 -run 'Cycle|Grant|Command' ./internal/run/` exit 0, and the unit level exit 0.
+
+Integration after the F3 fix: `TMPDIR=/home/layup/.cache/layup-session/tmp-green go test -count=1 -tags=integration ./internal/run/`, start 2026-10-22T19:43:46Z, end 2026-10-22T19:47:50Z, exit 0 (`ok internal/run 241.401s`).
