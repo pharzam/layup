@@ -262,7 +262,7 @@ reviewed as one, never the narrow exception of
 | The demo of `M2a` (`runs/T-fnsr/`): the Operator's Start of `pharzam/layup-uat` and its root push, the Operator's read of `layup-records` with a plain `git clone`, and `check.sh` with its offline test `check-test.sh` | uat | NFR-001, NFR-002, NFR-006, REQ-002 | F-0003#42 | — | ADR-0014 | T-fnsr | green |
 | The demo of `M2b` (`runs/T-x7cs/`): the uat test `TestTheDemoOfM2b` (`internal/run/demo_uat_test.go`, tag `uat`) on `pharzam/layup-uat-m2b`: the probe of two real harnesses, one developer session whose commit lands on `task/<task>/1` with its telemetry row, each write of LAYUP by the App's bot | uat | REQ-013, REQ-003, REQ-005, REQ-011, NFR-001 | F-0003#52 | — | ADR-0020 | T-x7cs | green |
 | `M2f/uat/rule-protection` | uat | REQ-003 | F-0003#43 | guardrails.md §1.1 Inv-3 | ADR-0017 | M2f | planned |
-| `M2e/uat/role-handoffs` | uat | REQ-005 | F-0003#45 | — | ADR-0019 | M2e | planned |
+| `M2e/uat/role-handoffs` (partly demonstrated by the demo of row 68b, `runs/T-8s13/`: Start, Intake, the Scaffold, Shape and its filter, the specification task verified, the architecture task through four attempts, every handoff that ran recorded and the failed ones fixed; the bet, the rendered commit, `loop`'s merges, rule 5 and the acceptance are #495) | uat | REQ-005 | F-0003#45 | — | ADR-0019 | M2e | planned |
 | `M3c/uat/clarification` | uat | REQ-006 | F-0003#46 | — | ADR-0019 | M3c | planned |
 | `M3b/e2e/escalation` | e2e | REQ-008 | F-0003#48 | — | ADR-0022 | M3b | planned |
 | `M3d/e2e/stall-procedure` | e2e | REQ-010 | F-0003#49 | — | ADR-0023 | M3d | planned |
