@@ -31,4 +31,4 @@ after each rebuild is in test-runs.md.
 
 ## The follow-up
 
-#495 (open): the demo of M2e, the remaining steps (the bet, loop's merges, rule 5 and the acceptance) on a real target, after the milestone that gives an answer at a wait.
+#495 (open): the demo of M2e, the remaining steps (the bet, loop's merges, rule 5 and the acceptance) on a real target, after the milestone that gives an answer at a wait; and AC2's missing proof, authenticated forge evidence of the Operator's ruleset applies.

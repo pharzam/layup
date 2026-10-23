@@ -67,7 +67,7 @@ Round 1 of the review found that `brief-bound.sh` hid git failures behind pipeli
 the header `|\tMetric\t|\t...Fact\t|` on the 81-line fixture (wants `M_prd=2 L=81 room=19 G2=fail`, as the space form), an unreadable head (`no-such-verified-head`) and a missing
 records ref; the last two want a non-zero exit and neither `G2=pass` nor `stop=no` in the output.
 
-- Red: `sh runs/T-8s13/brief-bound-test.sh` on the script of 7a64e43, 2026-10-23T06:28:59Z to 06:29:00Z (from `date -u`). Nine `ok` and two `FAIL`. The tab case printed `M_prd=0 L=80 room=20 G2=pass`.
+- Red: `sh runs/T-8s13/brief-bound-test.sh` on the script of 7a64e43, 2026-10-23T06:28:59Z to 06:29:00Z (from `date -u`). Ten `ok` and two `FAIL` (corrected at the close-out from "nine": round 2, note 2). The tab case printed `M_prd=0 L=80 room=20 G2=pass`.
   The unreadable head printed `fatal: Not a valid object name`, then `G2=pass`, and the script exited 0. The third case (missing ref) was already green: its first read, under `set -e`, stopped the script before any line.
 - Fix: every git read goes through one function that checks the status before the output is parsed (exit 2 and a message); the head is verified first; all reads run before the first line is printed;
   the header test trims spaces and tabs, as `tableCells` of `internal/spec/full.go` does.
