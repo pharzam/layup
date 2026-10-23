@@ -24,6 +24,7 @@ change, reviewed as one.
 
 ## Log
 
+- **2026-10-23** — **T-8s13** — Row 68b of `M2e`: the demo of M2e, partly demonstrated by the Operator's decision 6358553535 (Start, Intake, the Scaffold, Shape and its filter, the specification task verified, the architecture task through four attempts; the bet, the rendered commit, `loop`'s merges, rule 5 and the acceptance are #495), with nine defects found and fixed as tasks of their own (#370, [detail](T-8s13.md))
 - **2026-10-22** — **T-0xr7** — The plan, its review and the verification of an architecture task state that the survivors of a decision are the bet's, and the Operator's comment `cycle <task> because <reason>` on the control issue grants one more review cycle at the cap, one per task, the copy being the record (#493, [detail](T-0xr7.md))
 - **2026-10-22** — **T-dtw6** — Every step that commits is told the rule paths of the target and that a change to one refuses the session, and a task session refused for a rule path alone gets one new attempt per stage whose developer is told the paths, read from the refused payload by a fail-closed reader; a payload that is missing or unreadable is the run's error, and a second refusal of a stage is final (#491, [detail](T-dtw6.md))
 - **2026-10-22** — **T-paan** — The plan, its review and the verification of a specification task state that the MoSCoW and Phase cells and the numbered facts record are the bet's: one summary sentence in three instruction blocks, the contract in one home of `loop.md` (#488, [detail](T-paan.md))
