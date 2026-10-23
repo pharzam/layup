@@ -265,6 +265,10 @@ sha256 sha256 - the SHA-256 of the body
 body path - the file of the body on the records branch: `copies/<comment>-<seen>.md`
 ```
 
+A copy of a comment of the control issue whose body is `cycle <task> because <reason>` is the record of an Operator's command (task `T-0xr7`, #493;
+`loop.md`, One more cycle at the cap). A valid copy of a `cycle` command is the grant of one more review cycle to the task it names, and no other row or
+event records it; a refused command has its copy too, and grants nothing.
+
 ```tsv-schema harness-register host:registers/harnesses.tsv
 harness id(<word>) key the harness ID, for example `claude`
 cap decimal - the spend cap of one session in US dollars; `—` for a harness with no token count or no spend cap

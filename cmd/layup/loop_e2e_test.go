@@ -33,7 +33,7 @@ type pull struct {
 	number                   int
 	node, branch, base, body string
 	head, mergeSHA           string
-	draft, merged            bool
+	draft, merged, closed    bool
 }
 
 // m2eRoutes are the calls of M2e that the fake forge plays: the comments of the issues of the tasks, the commit statuses, the check runs, and the pull requests.
@@ -47,6 +47,9 @@ type m2eRoutes struct {
 func (p *pull) wire() map[string]any {
 	w := map[string]any{"number": p.number, "node_id": p.node, "state": "open", "draft": p.draft, "merged": p.merged, "merged_at": nil,
 		"merge_commit_sha": strings.Repeat("9", 40), "head": map[string]any{"sha": p.head}, "body": p.body}
+	if p.closed {
+		w["state"] = "closed" // the pull request of an attempt that a material verdict left (task T-0xr7)
+	}
 	if p.merged {
 		w["state"], w["merged_at"], w["merge_commit_sha"] = "closed", "2026-10-18T12:00:00Z", p.mergeSHA
 	}
@@ -148,7 +151,9 @@ func (m *m2eRoutes) serve(f *fakeForge, w http.ResponseWriter, r *http.Request) 
 			reply(404, map[string]string{"message": "Not Found"})
 			return true
 		}
-		if r.Method == "PATCH" {
+		if r.Method == "PATCH" && in.State == "closed" {
+			m.pulls[n-1].closed = true
+		} else if r.Method == "PATCH" {
 			m.pulls[n-1].body = in.Body
 		}
 		reply(200, m.pulls[n-1].wire())
@@ -240,12 +245,17 @@ tests:
 	shape-architecture)
 		printf '## The database: pg\n\nThe decision db is decided: pg.\n' > docs/spec/architecture.md
 		printf 'adr\n' > docs/adr/0001-db.md
-		printf 'the task file\n' > docs/tasks/$task.md
+		rev=one; grep -q 'round-one' ../prompt.md && rev=two; grep -q 'round-two' ../prompt.md && rev=final # task T-0xr7: the revision follows the findings in the prompt
+		printf 'the task file\nrev: %s\n' $rev > docs/tasks/$task.md
 		artifacts docs/tasks/$task.md docs/spec/architecture.md docs/adr/0001-db.md ;;
-	verification) comment review-record.md "head: $(git rev-parse HEAD)
-verdict: nothing material in scope
+	verification) # the first two revisions of the architecture are material (task T-0xr7, #493); every other head is not
+		verdict='nothing material in scope'; bullets=; rev=$(sed -n 's/^rev: //p' docs/tasks/$task.md)
+		case $rev in one|two) verdict=material; bullets="- docs/spec/architecture.md:1 spec: round-$rev: the section is thin
+" ;; esac
+		comment review-record.md "head: $(git rev-parse HEAD)
+verdict: $verdict
 findings:
-" ;;
+$bullets" ;;
 	close-out)
 		printf 'the task file, closed out\n' > docs/tasks/$task.md; printf 'the log of %s\n' $task >> docs/tasks/completed.md
 		artifacts docs/tasks/$task.md docs/tasks/completed.md ;;
@@ -335,7 +345,13 @@ func loopMerged(t *testing.T, w runWorld, task layuprun.Task) (head string) {
 	if len(at) != 1 || !regexp.MustCompile(`^[0-9a-f]{40}$`).MatchString(head) {
 		t.Fatalf("%s: %d merge requests of the pull request %d, at the head %q; want one", task.ID, len(at), task.PR, head)
 	}
-	if tip, _ := gitRun(w.bare, "rev-parse", "refs/heads/task/"+task.ID+"/1"); strings.TrimSpace(tip) != head {
+	attempt := 1 // the branch of the last attempt: the architecture task has three (task T-0xr7)
+	for _, e := range eventsOfTask(t, w, task.ID) {
+		if n, _ := strconv.Atoi(e[2]); e[1] == "attempt" && n > attempt {
+			attempt = n
+		}
+	}
+	if tip, _ := gitRun(w.bare, "rev-parse", "refs/heads/task/"+task.ID+"/"+strconv.Itoa(attempt)); strings.TrimSpace(tip) != head {
 		t.Errorf("%s: the merge request's sha %s is not the head of the branch %s", task.ID, head, strings.TrimSpace(tip))
 	}
 	pre := w.forge.reqs[:at[0]]
@@ -381,7 +397,7 @@ func TestTheSpecificationTaskEndToEnd(t *testing.T) {
 	}
 	leaks(t, "Start", w, first)
 	env := goEnv(t)
-	runs := 1 // the binary is run seven times: Start and six restarts
+	runs := 1 // the binary is run eight times: Start and seven restarts
 	restart := func(stage string, code int, names []string) (result, map[string][2]string) {
 		t.Helper()
 		runs++
@@ -433,9 +449,25 @@ func TestTheSpecificationTaskEndToEnd(t *testing.T) {
 	}
 	restart("stage 4", 0, slices.Concat(front, intake, scaffold, []string{"forge-check"}))
 
+	// Stage 5a (task T-0xr7, #493): the verifier finds the architecture material twice, so the run waits at the cap of 1 and names the Operator's command; the
+	// Operator's comment on the control issue answers it, and the restart that follows runs the third attempt.
+	r, rows := restart("stage 5a", 0, slices.Concat(later, []string{"shape"}))
+	waiting, _ := layuprun.ReadRegister([]byte(record(t, w, "tasks.tsv")))
+	if len(waiting) != 2 || waiting[1].Kind != "architecture" {
+		t.Fatalf("stage 5a: tasks.tsv %+v; want the specification then the architecture task", waiting)
+	}
+	archID := waiting[1].ID
+	wantWait := "waiting for the Operator: " + archID + ": the review-cycle cap 1 is reached with findings open; the Operator may grant one more cycle with `cycle " + archID + " because <reason>` on the control issue"
+	if rows["shape"] != [2]string{"done", wantWait} {
+		t.Fatalf("stage 5a: the shape row %q; want the wait %q\n%s", rows["shape"], wantWait, r.stdout)
+	}
+	w.forge.mu.Lock()
+	w.forge.people2 = append(w.forge.people2, map[string]any{"id": 5000, "user": map[string]any{"id": 101, "login": "pharzam"},
+		"created_at": "2026-10-08T13:45:00Z", "updated_at": "2026-10-08T13:45:00Z", "body": "cycle " + archID + " because the findings of round 2 are real\n"})
+	w.forge.mu.Unlock()
 	// Stage 5: the restart that runs Shape to the verified heads of its two tasks, and the bet to its wait for the answer on the brief.
 	tail := slices.Concat(later, []string{"shape", "bet"})
-	r, rows := restart("stage 5", 0, tail)
+	r, rows = restart("stage 5", 0, tail)
 	reg, err := layuprun.ReadRegister([]byte(record(t, w, "tasks.tsv")))
 	if err != nil || len(reg) != 2 || reg[0].Kind != "specification" || reg[1].Kind != "architecture" {
 		t.Fatalf("tasks.tsv: %+v, %v; want the specification then the architecture task of Shape", reg, err)
@@ -454,6 +486,17 @@ func TestTheSpecificationTaskEndToEnd(t *testing.T) {
 	if rows["shape"] != [2]string{"done", "1 decisions, each with a survivor; " + spec.ID + " and " + arch.ID + " verified"} || !strings.HasPrefix(rows["bet"][1], "waiting: the answer of the bet on the brief ") ||
 		briefs() != 1 || !strings.Contains(record(t, w, "parameters.tsv"), "\nbrief.lines\t80\t") {
 		t.Fatalf("stage 5: the rows %q, %d briefs\n%s\n%s", rows, briefs(), r.stdout, r.stderr)
+	}
+	// Stage 5, task T-0xr7: the Operator's comment is the record of the grant, and the architecture task has three attempts from one base.
+	attempts, bases := 0, map[string]bool{}
+	for _, e := range eventsOfTask(t, w, arch.ID) {
+		if e[1] == "attempt" {
+			attempts++
+			bases[e[4]] = true
+		}
+	}
+	if !strings.Contains("\n"+record(t, w, "copies.tsv"), "\n5000\t1\t2\t101\tpharzam\t") || attempts != 3 || len(bases) != 1 {
+		t.Errorf("stage 5: %d attempts of %s from %d bases, the copy of the grant in copies.tsv: %v; want three attempts from one base and the copy", attempts, arch.ID, len(bases), strings.Contains(record(t, w, "copies.tsv"), "\n5000\t"))
 	}
 	// Stage 5, task T-36xw (#471): the Operator's answers are ranges with a link to bets/1/facts.md at a pinned records commit that holds the file.
 	posted := ""
@@ -573,8 +616,8 @@ func TestTheSpecificationTaskEndToEnd(t *testing.T) {
 	if rows["loop"] != [2]string{"done", "done before"} || len(writes) != 0 || comments() != 1 {
 		t.Errorf("stage 7: the loop row %q, the writes %q, %d briefs; want done before and none", rows["loop"], writes, comments())
 	}
-	if runs != 7 {
-		t.Errorf("the binary was run %d times; want 7", runs)
+	if runs != 8 {
+		t.Errorf("the binary was run %d times; want 8", runs)
 	}
 
 	// No secret: no session exited 9 (the harness refuses a token in its environment), and no token is in the records.

@@ -99,6 +99,11 @@ type loopView struct {
 	// names by hash, or no plan review form); Verdicts holds the verdict word of each plan review whose kept copy is read.
 	Unread   map[string]bool
 	Verdicts map[string]string
+	// The commands of the Operator (task T-0xr7, #493): the control issue, the accounts of approvers.tsv and the copies of comments by no App that
+	// begin with the word cycle. Cycles is read only when the task has more rounds with findings than the cap, the one view that needs a grant.
+	Control   int
+	Approvers [][]string
+	Cycles    []setInput
 }
 
 // loopStep is a position with what its act needs: the session it concerns, the message of a stop or a wait,
@@ -750,10 +755,14 @@ func loopPosition(v loopView) loopStep {
 		step.Pos = posVerified
 	case rec.Verdict == "not mergeable, findings recorded":
 		step.Pos, step.Msg = posWait, fmt.Sprintf("waiting for the Operator: %s: not mergeable, findings recorded", v.Task)
-	case reviewRounds(v) <= shapeCycleCap:
+	case reviewRounds(v) <= shapeCycleCap+grantOf(v):
 		step.Pos = posNextAttempt
 	default:
-		step.Pos, step.Msg = posWait, fmt.Sprintf("waiting for the Operator: %s: the review-cycle cap %d is reached with findings open", v.Task, shapeCycleCap)
+		granted := grantOf(v)
+		step.Pos, step.Msg = posWait, fmt.Sprintf("waiting for the Operator: %s: the review-cycle cap %d is reached with findings open", v.Task, shapeCycleCap+granted)
+		if granted == 0 {
+			step.Msg += fmt.Sprintf("; the Operator may grant one more cycle with `cycle %s because <reason>` on the control issue", v.Task)
+		}
 	}
 	return step
 }
@@ -847,6 +856,19 @@ func (s *Sessions) shapeView(ctx context.Context, task string) (loopView, error)
 			if rec, ok := ParseReviewRecord(data); ok {
 				v.Records[id] = rec
 			}
+		}
+	}
+	if reviewRounds(v) > shapeCycleCap { // a grant is read only by a task that is past the cap (task T-0xr7)
+		v.Control = s.Control
+		if data, err := s.Store.ReadFile(ctx, "approvers.tsv"); err != nil {
+			return v, err
+		} else if data != nil {
+			if v.Approvers, err = records.ReadApprovers(data); err != nil {
+				return v, fmt.Errorf("approvers.tsv: %w", err)
+			}
+		}
+		if v.Cycles, err = s.cycleCommands(ctx, copies); err != nil {
+			return v, err
 		}
 	}
 	return v, nil
